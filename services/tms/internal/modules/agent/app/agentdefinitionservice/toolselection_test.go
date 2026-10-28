@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttemplate"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -47,7 +48,7 @@ func testRegistries() (*agenttest.StubActionRegistry, *agenttest.StubQueryRegist
 	return actions, queries
 }
 
-func definition(template agentdefinition.Template, tools ...string) *agentdefinition.Definition {
+func definition(template agenttemplate.Template, tools ...string) *agentdefinition.Definition {
 	d := &agentdefinition.Definition{
 		Name:            "Test",
 		Template:        template,
@@ -86,14 +87,14 @@ func TestValidateToolSelection_AcceptsAnyRegisteredToolOnAnyTemplate(t *testing.
 		t,
 		validate(
 			t,
-			definition(agentdefinition.TemplateCustomerAssistant, "billing_correct_charge_codes"),
+			definition(agenttemplate.TemplateCustomerAssistant, "billing_correct_charge_codes"),
 		),
 	)
 	assert.Empty(
 		t,
 		validate(
 			t,
-			definition(agentdefinition.TemplateGeneralAssistant, "reassign_move", "shipment_get"),
+			definition(agenttemplate.TemplateGeneralAssistant, "reassign_move", "shipment_get"),
 		),
 	)
 	assert.Empty(t, validate(t, definition("", "customer_update")))
@@ -102,7 +103,7 @@ func TestValidateToolSelection_AcceptsAnyRegisteredToolOnAnyTemplate(t *testing.
 func TestValidateToolSelection_RefusesUnknownTools(t *testing.T) {
 	t.Parallel()
 
-	errs := validate(t, definition(agentdefinition.TemplateDispatchAssistant, "exec_shell"))
+	errs := validate(t, definition(agenttemplate.TemplateDispatchAssistant, "exec_shell"))
 	assert.True(t, errs["toolNames[0]"], "a tool that does not exist cannot be configured")
 }
 
@@ -110,7 +111,7 @@ func TestValidateToolSelection_ReportsEachOffendingToolByIndex(t *testing.T) {
 	t.Parallel()
 
 	errs := validate(t, definition(
-		agentdefinition.TemplateDispatchAssistant,
+		agenttemplate.TemplateDispatchAssistant,
 		"reassign_move",
 		"shipment_get",
 		"exec_shell",
@@ -162,7 +163,7 @@ func TestRegisteredStarterTools_DropsToolsNotYetRegistered(t *testing.T) {
 	t.Parallel()
 
 	actions, queries := testRegistries()
-	tools := registeredStarterTools(agentdefinition.TemplateBillingException, actions, queries)
+	tools := registeredStarterTools(agenttemplate.TemplateBillingException, actions, queries)
 
 	assert.Equal(t, []string{"shipment_get", "billing_correct_charge_codes"}, tools,
 		"starter tools that no registry provides are not offered")

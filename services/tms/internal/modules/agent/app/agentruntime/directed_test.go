@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
@@ -18,7 +18,7 @@ const directedStep = "Mark shipment SEED-PAY-001 ready to invoice."
 
 // directedRequest is a turn in a conversation with an agent that lists no
 // other agent, on which the person handed a step to the Report Builder.
-func directedRequest(delegate agentdefinition.RuntimeDelegate) *agentruntimeports.RunRequest {
+func directedRequest(delegate agentturn.RuntimeDelegate) *agentruntimeports.RunRequest {
 	req := delegatingRequest()
 	req.Input = directedStep
 	req.Directed = &agentruntimeports.DirectedTask{Delegate: delegate, Task: directedStep}
@@ -283,7 +283,7 @@ func TestDriveDirected_HandsOverTheRecordsInPlay(t *testing.T) {
 	fx := &delegateRecorder{run: scriptedDelegateRun(delegate)}
 	req := directedRequest(delegate)
 	req.Records = []agent.EntityRef{{Type: "shipment", ID: "shp_01M4HYAB7FKYM27B5JC48Q68MB"}}
-	req.Context.Anchors = []agentdefinition.RuntimeAnchor{
+	req.Context.Anchors = []agentturn.RuntimeAnchor{
 		{Kind: "invoice", ID: "inv_01M4HYAB7FKYM27B5JC48Q68MC"},
 		{Kind: "worker", ID: "wrk_01M4HYAB7FKYM27B5JC48Q68MD", Note: "withheld"},
 	}
@@ -310,7 +310,7 @@ func TestDriveDirected_TheRecordsInPlaySurviveTheTurnsState(t *testing.T) {
 	delegate := reportBuilder()
 	rt := newRuntime(&scriptedCompletion{}, &stubQueryRegistry{}, &stubActionRegistry{}, nil)
 	req := directedRequest(delegate)
-	req.Context.Anchors = []agentdefinition.RuntimeAnchor{
+	req.Context.Anchors = []agentturn.RuntimeAnchor{
 		{Kind: "shipment", ID: "shp_01M4J2YG6896P8QFJPH2DB8PBA"},
 	}
 

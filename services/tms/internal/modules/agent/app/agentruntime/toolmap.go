@@ -4,7 +4,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 )
 
@@ -13,7 +13,7 @@ const (
 	maxToolAreaResources = 6
 )
 
-func (s *Service) toolMap(names []string) []agentdefinition.ToolNamespace {
+func (s *Service) toolMap(names []string) []agentturn.ToolNamespace {
 	if s.registry == nil {
 		s.registry = permissioncatalog.NewRegistry()
 	}
@@ -46,15 +46,15 @@ func (s *Service) toolMap(names []string) []agentdefinition.ToolNamespace {
 		}
 	}
 
-	out := make([]agentdefinition.ToolNamespace, 0, len(areas))
+	out := make([]agentturn.ToolNamespace, 0, len(areas))
 	for label, entry := range areas {
 		slices.Sort(entry.resources)
-		namespace := agentdefinition.ToolNamespace{Name: label, Tools: entry.tools}
+		namespace := agentturn.ToolNamespace{Name: label, Tools: entry.tools}
 		namespace.Covers = entry.resources[:min(len(entry.resources), maxToolAreaResources)]
 		namespace.MoreCovered = len(entry.resources) - len(namespace.Covers)
 		out = append(out, namespace)
 	}
-	slices.SortFunc(out, func(a, b agentdefinition.ToolNamespace) int {
+	slices.SortFunc(out, func(a, b agentturn.ToolNamespace) int {
 		return strings.Compare(a.Name, b.Name)
 	})
 

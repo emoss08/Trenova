@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow/agentflowcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/modelcall/modelcallcontract"
@@ -99,7 +100,7 @@ func (h *harness) delegatingRun(
 		ID:   pulid.MustNew("atrn_"),
 	}
 	req := rc.request()
-	req.Context.Delegates = []agentdefinition.RuntimeDelegate{{
+	req.Context.Delegates = []agentturn.RuntimeDelegate{{
 		ID:    delegate.ID,
 		Name:  delegate.Name,
 		Tools: delegate.ToolNames,
@@ -267,7 +268,7 @@ func TestDeclinedDelegate_AStopIsNotARefusal(t *testing.T) {
 	t.Parallel()
 
 	call := agentruntime.DelegateCall{
-		Delegate: agentdefinition.RuntimeDelegate{Name: "Shipment Desk"},
+		Delegate: agentturn.RuntimeDelegate{Name: "Shipment Desk"},
 	}
 
 	stopped := declinedDelegate(call, temporal.NewCanceledError())

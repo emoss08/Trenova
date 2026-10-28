@@ -8,6 +8,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition/agentdefinitiondb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentinstructions"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmark"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreset"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttemplate"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -63,23 +67,23 @@ func CreateSystemAgentDefinitions(ctx context.Context, db *keel.DB, scope Scope)
 }
 
 func SystemAgentDefinitions(orgID, buID pulid.ID) []*agentdefinition.Definition {
-	billing := agentdefinition.TemplateBillingException
-	dispatch := agentdefinition.TemplateDispatchAssignment
+	billing := agenttemplate.TemplateBillingException
+	dispatch := agenttemplate.TemplateDispatchAssignment
 
 	return []*agentdefinition.Definition{
 		{
 			OrganizationID:  orgID,
 			BusinessUnitID:  buID,
-			Name:            billing.Label(),
-			Description:     billing.Description(),
+			Name:            agenttemplate.Label(billing),
+			Description:     agenttemplate.Description(billing),
 			Template:        billing,
-			Icon:            agentdefinition.IconReceipt,
-			Accent:          agentdefinition.AccentAmber,
-			Instructions:    billing.StarterInstructions(),
-			ToolNames:       billing.StarterTools(),
-			AutonomyCeiling: billing.StarterCeiling(),
-			TriggerMode:     billing.StarterTrigger(),
-			EventKinds:      billing.StarterEvents(),
+			Icon:            agentmark.IconReceipt,
+			Accent:          agentmark.AccentAmber,
+			Instructions:    agentinstructions.StarterInstructions(billing),
+			ToolNames:       agentpreset.StarterTools(billing),
+			AutonomyCeiling: agentpreset.StarterCeiling(billing),
+			TriggerMode:     agentpreset.StarterTrigger(billing),
+			EventKinds:      agentpreset.StarterEvents(billing),
 			OutputMode:      agentdefinition.OutputReport,
 			ShadowMode:      true,
 			SystemKey:       SystemAgentKeyBillingException,
@@ -94,20 +98,20 @@ func SystemAgentDefinitions(orgID, buID pulid.ID) []*agentdefinition.Definition 
 		{
 			OrganizationID: orgID,
 			BusinessUnitID: buID,
-			Name:           dispatch.Label(),
-			Description:    dispatch.Description(),
+			Name:           agenttemplate.Label(dispatch),
+			Description:    agenttemplate.Description(dispatch),
 			Template:       dispatch,
-			Icon:           agentdefinition.IconRoute,
-			Accent:         agentdefinition.AccentIndigo,
-			Instructions:   dispatch.StarterInstructions(),
-			ToolNames:      dispatch.StarterTools(),
+			Icon:           agentmark.IconRoute,
+			Accent:         agentmark.AccentIndigo,
+			Instructions:   agentinstructions.StarterInstructions(dispatch),
+			ToolNames:      agentpreset.StarterTools(dispatch),
 			ToolTiers: map[string]agent.AutonomyTier{
 				"dispatch_assign_move": agent.TierPropose,
 			},
-			AutonomyCeiling: dispatch.StarterCeiling(),
-			TriggerMode:     dispatch.StarterTrigger(),
-			EventKinds:      dispatch.StarterEvents(),
-			CronExpression:  dispatch.StarterCron(),
+			AutonomyCeiling: agentpreset.StarterCeiling(dispatch),
+			TriggerMode:     agentpreset.StarterTrigger(dispatch),
+			EventKinds:      agentpreset.StarterEvents(dispatch),
+			CronExpression:  agentpreset.StarterCron(dispatch),
 			OutputMode:      agentdefinition.OutputReport,
 			ShadowMode:      true,
 			SystemKey:       SystemAgentKeyDispatchAssignment,

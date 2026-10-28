@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -217,7 +218,7 @@ func reopen(
 		return
 	}
 
-	rc := agentdefinition.RuntimeContext{
+	rc := agentturn.RuntimeContext{
 		OrganizationName: p.base.Context.OrganizationName,
 		Timezone:         p.base.Context.Timezone,
 		Now:              FixedNow,
@@ -312,8 +313,8 @@ func contextFor(
 	c *Case,
 	definitions map[pulid.ID]*agentdefinition.Definition,
 	tenant Tenant,
-) agentdefinition.RuntimeContext {
-	rc := agentdefinition.RuntimeContext{
+) agentturn.RuntimeContext {
+	rc := agentturn.RuntimeContext{
 		OrganizationName: "Acme Freight",
 		BusinessUnitName: "West Coast",
 		Timezone:         "America/Chicago",
@@ -326,7 +327,7 @@ func contextFor(
 
 	source := c.Source
 	if source.Subject != nil {
-		rc.Subject = &agentdefinition.RuntimeSubject{
+		rc.Subject = &agentturn.RuntimeSubject{
 			Type:            agent.SubjectType(source.Subject.Type),
 			ID:              source.Subject.ID,
 			Label:           source.Subject.Label,
@@ -335,11 +336,11 @@ func contextFor(
 		}
 	}
 	if source.Attachment != nil {
-		rc.Attachments = []agentdefinition.RuntimeAttachment{{
+		rc.Attachments = []agentturn.RuntimeAttachment{{
 			DocumentID:  source.Attachment.DocumentID,
 			FileName:    source.Attachment.FileName,
 			ContentType: "application/pdf",
-			Reading:     agentdefinition.AttachmentReadingDone,
+			Reading:     agentturn.AttachmentReadingDone,
 			Text:        source.Attachment.Excerpt,
 		}}
 	}
@@ -349,7 +350,7 @@ func contextFor(
 	if !c.Agent.Unattended {
 		for idx := range c.Delegates {
 			delegate := definitions[pulid.ID(c.Delegates[idx].ID)]
-			rc.Delegates = append(rc.Delegates, agentdefinition.RuntimeDelegate{
+			rc.Delegates = append(rc.Delegates, agentturn.RuntimeDelegate{
 				ID:    delegate.ID,
 				Name:  delegate.Name,
 				Tools: slices.Clone(delegate.ToolNames),
@@ -535,7 +536,7 @@ func (fx *effects) delegate(
 	req := &agentruntimeports.RunRequest{
 		Definition: definition,
 		Actor:      parentReq.Actor,
-		Context: agentdefinition.RuntimeContext{
+		Context: agentturn.RuntimeContext{
 			OrganizationName: parentReq.Context.OrganizationName,
 			Timezone:         parentReq.Context.Timezone,
 			Now:              FixedNow,

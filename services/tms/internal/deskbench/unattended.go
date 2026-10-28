@@ -11,6 +11,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentinstructions"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreset"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttemplate"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
@@ -49,8 +52,8 @@ type Fire struct {
 	StopWhileWaiting bool                          `yaml:"stopWhileWaiting" json:"stopWhileWaiting,omitempty"`
 }
 
-func (f *Fire) Template() agentdefinition.Template {
-	return agentdefinition.Template(strings.TrimSpace(f.Agent))
+func (f *Fire) Template() agenttemplate.Template {
+	return agenttemplate.Template(strings.TrimSpace(f.Agent))
 }
 
 func (f *Fire) Label() string {
@@ -67,12 +70,12 @@ func (f *Fire) validate(where string) error {
 		return fmt.Errorf("%s: fire.agent %q is not an agent template", where, f.Agent)
 	}
 
-	switch template.StarterTrigger() {
+	switch agentpreset.StarterTrigger(template) {
 	case agentdefinition.TriggerEvent:
 		if f.Schedule {
 			return fmt.Errorf("%s: %s is started by events, not a schedule", where, template)
 		}
-		if !slices.Contains(template.StarterEvents(), f.Event) {
+		if !slices.Contains(agentpreset.StarterEvents(template), f.Event) {
 			return fmt.Errorf("%s: %s does not answer the event %q", where, template, f.Event)
 		}
 		if strings.TrimSpace(f.Subject) == "" {
@@ -97,11 +100,11 @@ func (f *Fire) validate(where string) error {
 	return f.validateShape(where, template)
 }
 
-func (f *Fire) validateShape(where string, template agentdefinition.Template) error {
+func (f *Fire) validateShape(where string, template agenttemplate.Template) error {
 	if f.Ceiling != "" && !f.Ceiling.IsValid() {
 		return fmt.Errorf("%s: fire.ceiling %q is not an autonomy tier", where, f.Ceiling)
 	}
-	held := template.StarterTools()
+	held := agentpreset.StarterTools(template)
 	for tool, tier := range f.ToolTiers {
 		if !tier.IsValid() {
 			return fmt.Errorf("%s: fire.toolTiers.%s %q is not an autonomy tier", where, tool, tier)
@@ -115,56 +118,56 @@ func (f *Fire) validateShape(where string, template agentdefinition.Template) er
 	return nil
 }
 
-func (f *Fire) ceiling(template agentdefinition.Template) agent.AutonomyTier {
+func (f *Fire) ceiling(template agenttemplate.Template) agent.AutonomyTier {
 	if f.Ceiling != "" {
 		return f.Ceiling
 	}
 
-	return template.StarterCeiling()
+	return agentpreset.StarterCeiling(template)
 }
 
-func UnattendedTemplates() []agentdefinition.Template {
-	all := []agentdefinition.Template{
-		agentdefinition.TemplateBillingException,
-		agentdefinition.TemplateShipmentIntake,
-		agentdefinition.TemplateCashApplication,
-		agentdefinition.TemplateDetentionDesk,
-		agentdefinition.TemplateCredentialDesk,
-		agentdefinition.TemplateCustomerUpdateDesk,
-		agentdefinition.TemplateCarrierRiskDesk,
-		agentdefinition.TemplateIntakeDesk,
-		agentdefinition.TemplateLoadEntryCheck,
-		agentdefinition.TemplateServiceFailureDesk,
-		agentdefinition.TemplateInsightAnalyst,
-		agentdefinition.TemplateEDIDesk,
-		agentdefinition.TemplateBooksKeeper,
-		agentdefinition.TemplateFactoringClerk,
-		agentdefinition.TemplateDispatchAssignment,
-		agentdefinition.TemplateLoadMonitor,
+func UnattendedTemplates() []agenttemplate.Template {
+	all := []agenttemplate.Template{
+		agenttemplate.TemplateBillingException,
+		agenttemplate.TemplateShipmentIntake,
+		agenttemplate.TemplateCashApplication,
+		agenttemplate.TemplateDetentionDesk,
+		agenttemplate.TemplateCredentialDesk,
+		agenttemplate.TemplateCustomerUpdateDesk,
+		agenttemplate.TemplateCarrierRiskDesk,
+		agenttemplate.TemplateIntakeDesk,
+		agenttemplate.TemplateLoadEntryCheck,
+		agenttemplate.TemplateServiceFailureDesk,
+		agenttemplate.TemplateInsightAnalyst,
+		agenttemplate.TemplateEDIDesk,
+		agenttemplate.TemplateBooksKeeper,
+		agenttemplate.TemplateFactoringClerk,
+		agenttemplate.TemplateDispatchAssignment,
+		agenttemplate.TemplateLoadMonitor,
 	}
 
-	return slices.DeleteFunc(all, func(template agentdefinition.Template) bool {
-		trigger := template.StarterTrigger()
+	return slices.DeleteFunc(all, func(template agenttemplate.Template) bool {
+		trigger := agentpreset.StarterTrigger(template)
 		return trigger != agentdefinition.TriggerEvent &&
 			trigger != agentdefinition.TriggerScheduled
 	})
 }
 
-func UnattendedAgentName(template agentdefinition.Template) string {
-	return BenchAgentPrefix + template.Label() + unattendedSuffix
+func UnattendedAgentName(template agenttemplate.Template) string {
+	return BenchAgentPrefix + agenttemplate.Label(template) + unattendedSuffix
 }
 
-func unattendedShape(template agentdefinition.Template) *agentdefinition.Definition {
+func unattendedShape(template agenttemplate.Template) *agentdefinition.Definition {
 	definition := &agentdefinition.Definition{
 		Name:              UnattendedAgentName(template),
-		Description:       template.Description(),
+		Description:       agenttemplate.Description(template),
 		Template:          template,
-		Instructions:      template.StarterInstructions(),
-		ToolNames:         agentdefinition.WithoutCoreTools(template.StarterTools()),
-		AutonomyCeiling:   template.StarterCeiling(),
-		DataAccessCeiling: template.StarterDataAccess(),
-		TriggerMode:       template.StarterTrigger(),
-		EventKinds:        template.StarterEvents(),
+		Instructions:      agentinstructions.StarterInstructions(template),
+		ToolNames:         agentdefinition.WithoutCoreTools(agentpreset.StarterTools(template)),
+		AutonomyCeiling:   agentpreset.StarterCeiling(template),
+		DataAccessCeiling: agentpreset.StarterDataAccess(template),
+		TriggerMode:       agentpreset.StarterTrigger(template),
+		EventKinds:        agentpreset.StarterEvents(template),
 		OutputMode:        agentdefinition.OutputReport,
 		ContextProviders:  slices.Clone(unattendedContext),
 		LearningOff:       true,
@@ -217,7 +220,7 @@ func (s *Session) allAgents(ctx context.Context) ([]*agentdefinition.Definition,
 
 func (s *Session) unattendedAgent(
 	ctx context.Context,
-	template agentdefinition.Template,
+	template agenttemplate.Template,
 ) (*agentdefinition.Definition, error) {
 	agents, err := s.allAgents(ctx)
 	if err != nil {
@@ -328,7 +331,7 @@ func (s *Session) shapeForRun(
 	fire *Fire,
 	enabled bool,
 ) error {
-	ceiling := definition.Template.StarterCeiling()
+	ceiling := agentpreset.StarterCeiling(definition.Template)
 	var tiers map[string]agent.AutonomyTier
 	if enabled {
 		ceiling = fire.ceiling(definition.Template)

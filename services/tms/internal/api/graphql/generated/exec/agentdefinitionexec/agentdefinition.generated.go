@@ -12,8 +12,13 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentlint"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentreach"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentshadow"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentstarter"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentsuggestion"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttemplate"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttestprompt"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentversion"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
@@ -1007,14 +1012,15 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNRole2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋpermissionᚐRoleᚄ),
 			},
 			{
-				Name:      "starters",
-				NonNull:   true,
-				IsMethod:  true,
-				HasChild:  true,
-				ChildType: "AgentStarter",
+				Name:       "starters",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "AgentStarter",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentdefinition.Definition)
-					return obj.Starters(), nil
+					return gqlexec.Resolver[resolverAgentDefinition](ec, "AgentDefinition").Starters(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNAgentStarter2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentdefinitionᚐStarterᚄ),
 			},
@@ -1163,7 +1169,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*agentdefinition.DefinitionVersion)
+					obj := o.(*agentversion.DefinitionVersion)
 					return obj.ID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -1173,7 +1179,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*agentdefinition.DefinitionVersion)
+					obj := o.(*agentversion.DefinitionVersion)
 					return obj.Version, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -1183,7 +1189,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*agentdefinition.DefinitionVersion)
+					obj := o.(*agentversion.DefinitionVersion)
 					return obj.Summary, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -1193,7 +1199,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "User",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*agentdefinition.DefinitionVersion)
+					obj := o.(*agentversion.DefinitionVersion)
 					return obj.Author, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser),
@@ -1203,7 +1209,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*agentdefinition.DefinitionVersion)
+					obj := o.(*agentversion.DefinitionVersion)
 					return obj.CreatedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -1676,7 +1682,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*agentdefinition.Starter)
+					obj := o.(*agentstarter.Starter)
 					return obj.Label, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -1686,7 +1692,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*agentdefinition.Starter)
+					obj := o.(*agentstarter.Starter)
 					return obj.Prompt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -1698,7 +1704,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*agentdefinition.TestPrompt)
+					obj := o.(*agenttestprompt.TestPrompt)
 					return obj.ID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -1708,7 +1714,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*agentdefinition.TestPrompt)
+					obj := o.(*agenttestprompt.TestPrompt)
 					return obj.Prompt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -1718,7 +1724,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*agentdefinition.TestPrompt)
+					obj := o.(*agenttestprompt.TestPrompt)
 					return obj.CreatedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -1912,14 +1918,15 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
 			{
-				Name:      "starters",
-				NonNull:   true,
-				IsMethod:  true,
-				HasChild:  true,
-				ChildType: "AgentStarter",
+				Name:       "starters",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "AgentStarter",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentdefinition.Definition)
-					return obj.Starters(), nil
+					return gqlexec.Resolver[resolverMyAgent](ec, "MyAgent").Starters(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNAgentStarter2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentdefinitionᚐStarterᚄ),
 			},
@@ -2238,13 +2245,14 @@ var Shard = &gqlexec.Shard{
 }
 
 type resolverAgentDefinition interface {
-	Template(ctx context.Context, obj *agentdefinition.Definition) (*agentdefinition.Template, error)
+	Template(ctx context.Context, obj *agentdefinition.Definition) (*agenttemplate.Template, error)
 	ToolTiers(ctx context.Context, obj *agentdefinition.Definition) (map[string]any, error)
 	EventKinds(ctx context.Context, obj *agentdefinition.Definition) ([]string, error)
 	MonthlyBudgetUsd(ctx context.Context, obj *agentdefinition.Definition) (*string, error)
 	ToolDailyLimits(ctx context.Context, obj *agentdefinition.Definition) (map[string]any, error)
 	Delegates(ctx context.Context, obj *agentdefinition.Definition) ([]*agentdefinition.Definition, error)
 	AccessRoles(ctx context.Context, obj *agentdefinition.Definition) ([]*permission.Role, error)
+	Starters(ctx context.Context, obj *agentdefinition.Definition) ([]agentstarter.Starter, error)
 	PendingProposals(ctx context.Context, obj *agentdefinition.Definition) (int, error)
 	OpenRuns(ctx context.Context, obj *agentdefinition.Definition) (int, error)
 }
@@ -2260,7 +2268,7 @@ type resolverAgentInstructionFinding interface {
 }
 
 type resolverMutation interface {
-	KeepAgentTestPrompt(ctx context.Context, agentID string, prompt string) (*agentdefinition.TestPrompt, error)
+	KeepAgentTestPrompt(ctx context.Context, agentID string, prompt string) (*agenttestprompt.TestPrompt, error)
 	DeleteAgentTestPrompt(ctx context.Context, agentID string, id string) (bool, error)
 	SetAgentAccess(ctx context.Context, agentID string, input gqlmodel.SetAgentAccessInput) (*agentdefinition.Definition, error)
 	SetAgentUnattendedRole(ctx context.Context, agentID string, roleID *string) (*agentdefinition.Definition, error)
@@ -2271,7 +2279,8 @@ type resolverMutation interface {
 }
 
 type resolverMyAgent interface {
-	Template(ctx context.Context, obj *agentdefinition.Definition) (*agentdefinition.Template, error)
+	Template(ctx context.Context, obj *agentdefinition.Definition) (*agenttemplate.Template, error)
+	Starters(ctx context.Context, obj *agentdefinition.Definition) ([]agentstarter.Starter, error)
 	Delegates(ctx context.Context, obj *agentdefinition.Definition) ([]*agentdefinition.Definition, error)
 }
 
@@ -2280,13 +2289,13 @@ type resolverQuery interface {
 	AgentInstructionLint(ctx context.Context, input gqlmodel.AgentInstructionLintInput) ([]*agentlint.Finding, error)
 	AgentShadowReport(ctx context.Context, agentID string, days *int) (*agentshadow.Report, error)
 	AgentDefinition(ctx context.Context, id string) (*agentdefinition.Definition, error)
-	AgentDefinitionVersions(ctx context.Context, agentID string, limit *int) ([]*agentdefinition.DefinitionVersion, error)
+	AgentDefinitionVersions(ctx context.Context, agentID string, limit *int) ([]*agentversion.DefinitionVersion, error)
 	AgentDefinitionVersionDraft(ctx context.Context, agentID string, version int) (*agentdefinition.Definition, error)
 	MyAgents(ctx context.Context, input gqlmodel.MyAgentsInput) (*gqlmodel.MyAgentConnection, error)
 	MyAgentMatch(ctx context.Context, input gqlmodel.MyAgentMatchInput) (*gqlmodel.MyAgentMatch, error)
 	SuggestedAgentAudience(ctx context.Context, agentID string) (*gqlmodel.AgentAudienceSuggestion, error)
 	AgentAccessPreview(ctx context.Context, input gqlmodel.AgentAccessPreviewInput) (*gqlmodel.AgentAccessPreview, error)
-	AgentTestPrompts(ctx context.Context, agentID string) ([]*agentdefinition.TestPrompt, error)
+	AgentTestPrompts(ctx context.Context, agentID string) ([]*agenttestprompt.TestPrompt, error)
 	AgentCapabilities(ctx context.Context, agentID string) (*agentports.AgentCapabilities, error)
 	AgentDraftingAvailable(ctx context.Context) (bool, error)
 }
@@ -3242,7 +3251,7 @@ func marshalNAgentAccessPreview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return ec.MarshalType(ctx, sel, "AgentAccessPreview", v)
 }
 
-func marshalNAgentAudienceCoverage2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentdefinitionᚐAudienceCoverage(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v agentdefinition.AudienceCoverage) graphql.Marshaler {
+func marshalNAgentAudienceCoverage2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentdefinitionᚐAudienceCoverage(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v agentreach.AudienceCoverage) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -3398,15 +3407,15 @@ func marshalNAgentDefinitionEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return ec.MarshalType(ctx, sel, "AgentDefinitionEdge", v)
 }
 
-func marshalNAgentDefinitionVersion2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentdefinitionᚐDefinitionVersionᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*agentdefinition.DefinitionVersion) graphql.Marshaler {
-	return gqlexec.List[*agentdefinition.DefinitionVersion]{
+func marshalNAgentDefinitionVersion2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentdefinitionᚐDefinitionVersionᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*agentversion.DefinitionVersion) graphql.Marshaler {
+	return gqlexec.List[*agentversion.DefinitionVersion]{
 		Elem:        marshalNAgentDefinitionVersion2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentdefinitionᚐDefinitionVersion,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNAgentDefinitionVersion2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentdefinitionᚐDefinitionVersion(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *agentdefinition.DefinitionVersion) graphql.Marshaler {
+func marshalNAgentDefinitionVersion2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentdefinitionᚐDefinitionVersion(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *agentversion.DefinitionVersion) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -3498,27 +3507,27 @@ func marshalNAgentShadowReport2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋ
 	return ec.MarshalType(ctx, sel, "AgentShadowReport", v)
 }
 
-func marshalNAgentStarter2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentdefinitionᚐStarter(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v agentdefinition.Starter) graphql.Marshaler {
+func marshalNAgentStarter2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentdefinitionᚐStarter(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v agentstarter.Starter) graphql.Marshaler {
 	return ec.MarshalType(ctx, sel, "AgentStarter", &v)
 }
 
-func marshalNAgentStarter2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentdefinitionᚐStarterᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []agentdefinition.Starter) graphql.Marshaler {
-	return gqlexec.List[agentdefinition.Starter]{
+func marshalNAgentStarter2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentdefinitionᚐStarterᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []agentstarter.Starter) graphql.Marshaler {
+	return gqlexec.List[agentstarter.Starter]{
 		Elem:        marshalNAgentStarter2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentdefinitionᚐStarter,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNAgentTestPrompt2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentdefinitionᚐTestPromptᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*agentdefinition.TestPrompt) graphql.Marshaler {
-	return gqlexec.List[*agentdefinition.TestPrompt]{
+func marshalNAgentTestPrompt2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentdefinitionᚐTestPromptᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*agenttestprompt.TestPrompt) graphql.Marshaler {
+	return gqlexec.List[*agenttestprompt.TestPrompt]{
 		Elem:        marshalNAgentTestPrompt2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentdefinitionᚐTestPrompt,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNAgentTestPrompt2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentdefinitionᚐTestPrompt(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *agentdefinition.TestPrompt) graphql.Marshaler {
+func marshalNAgentTestPrompt2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentdefinitionᚐTestPrompt(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *agenttestprompt.TestPrompt) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -3712,7 +3721,7 @@ func marshalOAgentDefinition2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmo
 	return ec.MarshalType(ctx, sel, "AgentDefinition", v)
 }
 
-func marshalOAgentTemplate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentdefinitionᚐTemplate(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *agentdefinition.Template) graphql.Marshaler {
+func marshalOAgentTemplate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentdefinitionᚐTemplate(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *agenttemplate.Template) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

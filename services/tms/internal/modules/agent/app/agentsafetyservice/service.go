@@ -10,6 +10,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolpolicy"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentreach"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -35,7 +37,7 @@ type toolPolicies interface {
 }
 
 type toolHolder interface {
-	ToolSummaries(definition *agentdefinition.Definition) []agentdefinition.ToolSummary
+	ToolSummaries(definition *agentdefinition.Definition) []agentturn.ToolSummary
 }
 
 type Params struct {
@@ -265,14 +267,14 @@ func (s *Service) ReachWarnings(
 	if definition.OpenToEveryone() {
 		if sensitive := s.sensitiveTools(s.heldPolicies(definition)); len(sensitive) > 0 {
 			warnings = append(warnings, agenttoolports.AgentReachWarning{
-				Kind:  agentdefinition.ReachOpenWithSensitiveTools,
+				Kind:  agentreach.ReachOpenWithSensitiveTools,
 				Tools: sensitive,
 			})
 		}
 	}
 	if definition.ReachableByNobody(req.GrantedRoles) {
 		warnings = append(warnings, agenttoolports.AgentReachWarning{
-			Kind:  agentdefinition.ReachNoAudience,
+			Kind:  agentreach.ReachNoAudience,
 			Tools: []string{},
 		})
 	}

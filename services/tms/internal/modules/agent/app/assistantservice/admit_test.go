@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentguard"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/stretchr/testify/assert"
@@ -74,12 +74,12 @@ type rendezvousContexts struct {
 func (c *rendezvousContexts) Build(
 	ctx context.Context,
 	_ *agentruntimeports.RuntimeContextRequest,
-) (agentdefinition.RuntimeContext, error) {
+) (agentturn.RuntimeContext, error) {
 	c.calls.Add(1)
 	close(c.meet.contextStarted)
 	c.meet.contextSawGuard.Store(waitFor(ctx, c.meet.guardStarted))
 
-	return agentdefinition.RuntimeContext{Timezone: "America/Chicago"}, nil
+	return agentturn.RuntimeContext{Timezone: "America/Chicago"}, nil
 }
 
 func admitService(

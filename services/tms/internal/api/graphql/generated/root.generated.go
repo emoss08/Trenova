@@ -3,46 +3,6 @@
 package generated
 
 import (
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingbackfill"
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingdrift"
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountinginbound"
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingmapping"
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/dotclearinghouse"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/dotrandom"
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edicarrierinvoice"
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
-	"github.com/emoss08/trenova/internal/modules/edi/domain/ediinboundfile"
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edimessage"
-	"github.com/emoss08/trenova/internal/modules/edi/domain/editransfer"
-	"github.com/emoss08/trenova/internal/modules/edi/domain/ladingproject"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/boardgrouping"
-	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringledgerports"
-	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringremittanceports"
-	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringsubmissionports"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingdriftports"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountinginboundports"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingmappingports"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/ptoledgerports"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerdqfports"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerptoports"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/approvaldelegation"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/employment"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/profilechange"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/pto"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/timesheet"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerchecklist"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercompliance"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerdot"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerleave"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerpolicy"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerreview"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerschedule"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/workertraining"
 	"context"
 	"sync"
 
@@ -191,6 +151,12 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/modules/accounting/app/journalcardservice"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingbackfill"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingdrift"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountinginbound"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingmapping"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accounttype"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
@@ -199,6 +165,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalreversal"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalsource"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/manualjournal"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingdriftports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountinginboundports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingmappingports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -207,7 +177,11 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentprofile"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentshadow"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentstarter"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentsuggestion"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttemplate"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttestprompt"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentversion"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiaudit"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aicontrolsummary"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aicorrection"
@@ -234,7 +208,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/latecharge"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerledgerports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringledgerports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringremittanceports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringsubmissionports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/latechargeports"
@@ -256,6 +233,12 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionshadowports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edicarrierinvoice"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/ediinboundfile"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edimessage"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/editransfer"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/ladingproject"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmentcontinuity"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmentmanufacturer"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmenttype"
@@ -269,6 +252,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/boardgrouping"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/checkcall"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/customertracking"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/order"
@@ -325,7 +309,27 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workeroverviewservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workersafetyservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workertrainingservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/approvaldelegation"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/dotclearinghouse"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/dotrandom"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/employment"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/profilechange"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/pto"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/timesheet"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerchecklist"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercompliance"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerdot"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerleave"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerpolicy"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerreview"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerschedule"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workertraining"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/ptoledgerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerdqfports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerptoports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/customfield"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/email"
@@ -811,13 +815,14 @@ type AgentDecisionResolver interface {
 }
 
 type AgentDefinitionResolver interface {
-	Template(ctx context.Context, obj *agentdefinition.Definition) (*agentdefinition.Template, error)
+	Template(ctx context.Context, obj *agentdefinition.Definition) (*agenttemplate.Template, error)
 	ToolTiers(ctx context.Context, obj *agentdefinition.Definition) (map[string]any, error)
 	EventKinds(ctx context.Context, obj *agentdefinition.Definition) ([]string, error)
 	MonthlyBudgetUsd(ctx context.Context, obj *agentdefinition.Definition) (*string, error)
 	ToolDailyLimits(ctx context.Context, obj *agentdefinition.Definition) (map[string]any, error)
 	Delegates(ctx context.Context, obj *agentdefinition.Definition) ([]*agentdefinition.Definition, error)
 	AccessRoles(ctx context.Context, obj *agentdefinition.Definition) ([]*permission.Role, error)
+	Starters(ctx context.Context, obj *agentdefinition.Definition) ([]agentstarter.Starter, error)
 	PendingProposals(ctx context.Context, obj *agentdefinition.Definition) (int, error)
 	OpenRuns(ctx context.Context, obj *agentdefinition.Definition) (int, error)
 }
@@ -2030,7 +2035,7 @@ type MutationResolver interface {
 	AddMyAgentProfileGuidance(ctx context.Context, input gqlmodel.AgentProfileGuidanceInput) (*agentprofile.Guidance, error)
 	RetireMyAgentProfileGuidance(ctx context.Context, id string) (*agentprofile.Guidance, error)
 	RegenerateMyAgentProfile(ctx context.Context) (bool, error)
-	KeepAgentTestPrompt(ctx context.Context, agentID string, prompt string) (*agentdefinition.TestPrompt, error)
+	KeepAgentTestPrompt(ctx context.Context, agentID string, prompt string) (*agenttestprompt.TestPrompt, error)
 	DeleteAgentTestPrompt(ctx context.Context, agentID string, id string) (bool, error)
 	SetAgentAccess(ctx context.Context, agentID string, input gqlmodel.SetAgentAccessInput) (*agentdefinition.Definition, error)
 	SetAgentUnattendedRole(ctx context.Context, agentID string, roleID *string) (*agentdefinition.Definition, error)
@@ -2611,7 +2616,8 @@ type MutationResolver interface {
 }
 
 type MyAgentResolver interface {
-	Template(ctx context.Context, obj *agentdefinition.Definition) (*agentdefinition.Template, error)
+	Template(ctx context.Context, obj *agentdefinition.Definition) (*agenttemplate.Template, error)
+	Starters(ctx context.Context, obj *agentdefinition.Definition) ([]agentstarter.Starter, error)
 	Delegates(ctx context.Context, obj *agentdefinition.Definition) ([]*agentdefinition.Definition, error)
 }
 
@@ -2805,13 +2811,13 @@ type QueryResolver interface {
 	AgentInstructionLint(ctx context.Context, input gqlmodel.AgentInstructionLintInput) ([]*agentlint.Finding, error)
 	AgentShadowReport(ctx context.Context, agentID string, days *int) (*agentshadow.Report, error)
 	AgentDefinition(ctx context.Context, id string) (*agentdefinition.Definition, error)
-	AgentDefinitionVersions(ctx context.Context, agentID string, limit *int) ([]*agentdefinition.DefinitionVersion, error)
+	AgentDefinitionVersions(ctx context.Context, agentID string, limit *int) ([]*agentversion.DefinitionVersion, error)
 	AgentDefinitionVersionDraft(ctx context.Context, agentID string, version int) (*agentdefinition.Definition, error)
 	MyAgents(ctx context.Context, input gqlmodel.MyAgentsInput) (*gqlmodel.MyAgentConnection, error)
 	MyAgentMatch(ctx context.Context, input gqlmodel.MyAgentMatchInput) (*gqlmodel.MyAgentMatch, error)
 	SuggestedAgentAudience(ctx context.Context, agentID string) (*gqlmodel.AgentAudienceSuggestion, error)
 	AgentAccessPreview(ctx context.Context, input gqlmodel.AgentAccessPreviewInput) (*gqlmodel.AgentAccessPreview, error)
-	AgentTestPrompts(ctx context.Context, agentID string) ([]*agentdefinition.TestPrompt, error)
+	AgentTestPrompts(ctx context.Context, agentID string) ([]*agenttestprompt.TestPrompt, error)
 	AgentCapabilities(ctx context.Context, agentID string) (*agentports.AgentCapabilities, error)
 	AgentDraftingAvailable(ctx context.Context) (bool, error)
 	AgentProposalPreview(ctx context.Context, id string, modifications map[string]any) (*agent.ProposalPreview, error)

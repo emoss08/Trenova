@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow/agentflowcontract"
@@ -254,7 +255,7 @@ func (a *Activities) caseBackgroundInput(
 	definition *agentdefinition.Definition,
 	actor *permissionports.RequestActor,
 ) (*replayInput, error) {
-	var subject *agentdefinition.RuntimeSubject
+	var subject *agentturn.RuntimeSubject
 	if evalCase.SubjectType != "" {
 		described, err := a.subjects.Describe(ctx, tenant, evalCase.SubjectType, evalCase.SubjectID)
 		if errortypes.IsNotFoundError(err) {
@@ -670,7 +671,7 @@ func (a *Activities) originalProposals(
 type replayInput struct {
 	input   string
 	history []conversation.Message
-	context agentdefinition.RuntimeContext
+	context agentturn.RuntimeContext
 }
 
 // replayInput rebuilds what the source run was asked. A background run is

@@ -8,6 +8,11 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentinstructions"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreset"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentprompt"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttemplate"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
@@ -316,24 +321,24 @@ func (s *Service) withdrawAndDelete(
 }
 
 func (s *Service) Templates() []agentdefinitionports.AgentTemplateDescriptor {
-	templates := agentdefinition.AllTemplates()
+	templates := agenttemplate.AllTemplates()
 	descriptors := make([]agentdefinitionports.AgentTemplateDescriptor, 0, len(templates))
 
 	for _, template := range templates {
 		descriptors = append(descriptors, agentdefinitionports.AgentTemplateDescriptor{
 			Template:             template,
-			Label:                template.Label(),
-			Description:          template.Description(),
-			StarterInstructions:  template.StarterInstructions(),
+			Label:                agenttemplate.Label(template),
+			Description:          agenttemplate.Description(template),
+			StarterInstructions:  agentinstructions.StarterInstructions(template),
 			StarterTools:         registeredStarterTools(template, s.tools, s.queryTools),
-			StarterTrigger:       template.StarterTrigger(),
-			StarterEvents:        template.StarterEvents(),
-			StarterCron:          template.StarterCron(),
-			StarterCeiling:       template.StarterCeiling(),
-			StarterDataAccess:    template.StarterDataAccess(),
+			StarterTrigger:       agentpreset.StarterTrigger(template),
+			StarterEvents:        agentpreset.StarterEvents(template),
+			StarterCron:          agentpreset.StarterCron(template),
+			StarterCeiling:       agentpreset.StarterCeiling(template),
+			StarterDataAccess:    agentpreset.StarterDataAccess(template),
 			StarterOutput:        starterOutput(template),
-			StarterDailyRunLimit: template.StarterDailyRunLimit(),
-			StarterShadow:        template.StarterShadow(),
+			StarterDailyRunLimit: agentpreset.StarterDailyRunLimit(template),
+			StarterShadow:        agentpreset.StarterShadow(template),
 			ContextProviders:     agentdefinition.AllContextProviders(),
 		})
 	}
@@ -341,8 +346,8 @@ func (s *Service) Templates() []agentdefinitionports.AgentTemplateDescriptor {
 	return descriptors
 }
 
-func starterOutput(template agentdefinition.Template) agentdefinition.OutputMode {
-	if template.StarterTrigger() == agentdefinition.TriggerChat {
+func starterOutput(template agenttemplate.Template) agentdefinition.OutputMode {
+	if agentpreset.StarterTrigger(template) == agentdefinition.TriggerChat {
 		return agentdefinition.OutputConversational
 	}
 
@@ -393,7 +398,7 @@ func (s *Service) PreviewPrompt(
 	}
 	apply(definition, req.Definition)
 
-	runtimeContext := agentdefinition.RuntimeContext{
+	runtimeContext := agentturn.RuntimeContext{
 		Trigger: definition.TriggerMode.RunTrigger(),
 	}
 	if s.contexts != nil {
@@ -408,7 +413,7 @@ func (s *Service) PreviewPrompt(
 		runtimeContext = built
 	}
 
-	return definition.BuildSystemPrompt(runtimeContext), nil
+	return agentprompt.BuildSystemPrompt(definition, runtimeContext), nil
 }
 
 // validate checks the definition as it would be saved. previous is the

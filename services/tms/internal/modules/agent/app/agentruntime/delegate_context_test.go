@@ -7,7 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -20,8 +20,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func shipmentDesk() agentdefinition.RuntimeDelegate {
-	return agentdefinition.RuntimeDelegate{
+func shipmentDesk() agentturn.RuntimeDelegate {
+	return agentturn.RuntimeDelegate{
 		ID:          pulid.MustNew("agdef_"),
 		Name:        "Shipment Desk",
 		Description: "Creates and changes shipments.",
@@ -38,7 +38,7 @@ func callTurn(id, name string, args map[string]any) *llmports.ChatCompletionResu
 
 type handOffParams struct {
 	lookup   *agenttest.StubQueryTool
-	delegate agentdefinition.RuntimeDelegate
+	delegate agentturn.RuntimeDelegate
 	args     map[string]any
 }
 
@@ -255,7 +255,7 @@ func TestDelegateContext_BoundsWhatAllTheResultsCarry(t *testing.T) {
 func TestDelegateTaskSpec_NamesTheRegistrysRecordKinds(t *testing.T) {
 	t.Parallel()
 
-	spec := delegateTaskSpec([]agentdefinition.RuntimeDelegate{shipmentDesk()})
+	spec := delegateTaskSpec([]agentturn.RuntimeDelegate{shipmentDesk()})
 	properties := spec.Parameters[toolschema.KeyProperties].(map[string]any)
 
 	records := properties["records"].(map[string]any)

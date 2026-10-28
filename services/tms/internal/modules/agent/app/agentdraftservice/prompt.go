@@ -6,6 +6,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentinstructions"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmark"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -83,7 +85,7 @@ func draftContext(in *draftContextInput) llmports.DelimitedContext {
 
 func tightenContext(instructions string) llmports.DelimitedContext {
 	sections := make([]llmports.ContextSection, 0, 2)
-	if variables := agentdefinition.InstructionVariables(instructions); len(variables) > 0 {
+	if variables := agentinstructions.InstructionVariables(instructions); len(variables) > 0 {
 		sections = append(sections, llmports.ContextSection{
 			Title:   "placeholders",
 			Trusted: true,
@@ -136,8 +138,8 @@ func describeEvents() string {
 }
 
 func describeIdentity() string {
-	return "icons: " + strings.Join(agentdefinition.KnownIcons(), ", ") +
-		"\naccents: " + strings.Join(agentdefinition.KnownAccents(), ", ")
+	return "icons: " + strings.Join(agentmark.KnownIcons(), ", ") +
+		"\naccents: " + strings.Join(agentmark.KnownAccents(), ", ")
 }
 
 func maxTierOf(entry *agentdefinitionports.ToolCatalogEntry) agent.AutonomyTier {
@@ -178,8 +180,8 @@ func draftSchema() map[string]any {
 	properties := map[string]any{
 		"name":         stringField("Two to four words naming the job."),
 		"description":  stringField("One sentence saying what the agent does."),
-		"icon":         enumField(agentdefinition.KnownIcons()),
-		"accent":       enumField(agentdefinition.KnownAccents()),
+		"icon":         enumField(agentmark.KnownIcons()),
+		"accent":       enumField(agentmark.KnownAccents()),
 		"instructions": stringField("What the agent does and how, addressed to the agent."),
 		"guardrails": map[string]any{
 			"type":     "array",

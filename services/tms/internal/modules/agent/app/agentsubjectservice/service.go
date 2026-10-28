@@ -13,7 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountinginboundports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/insight"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/insightports"
@@ -171,7 +171,7 @@ func (s *Service) Describe(
 	tenant pagination.TenantInfo,
 	subjectType agent.SubjectType,
 	subjectID pulid.ID,
-) (*agentdefinition.RuntimeSubject, error) {
+) (*agentturn.RuntimeSubject, error) {
 	switch subjectType {
 	case agent.SubjectBillingQueueItem:
 		return s.billingQueueItem(ctx, tenant, subjectID)
@@ -224,7 +224,7 @@ func (s *Service) Describe(
 	case agent.SubjectOrganization, "":
 		return nil, nil
 	default:
-		return &agentdefinition.RuntimeSubject{
+		return &agentturn.RuntimeSubject{
 			Type:  subjectType,
 			ID:    subjectID.String(),
 			Label: string(subjectType),
@@ -236,7 +236,7 @@ func (s *Service) billingQueueItem(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 	itemID pulid.ID,
-) (*agentdefinition.RuntimeSubject, error) {
+) (*agentturn.RuntimeSubject, error) {
 	item, err := s.billingQueue.GetByID(ctx, &billingqueueports.GetBillingQueueItemByIDRequest{
 		TenantInfo:            tenant,
 		ItemID:                itemID,
@@ -272,7 +272,7 @@ func (s *Service) billingQueueItem(
 		label = "Billing queue item for shipment " + item.ShipmentID.String()
 	}
 
-	return &agentdefinition.RuntimeSubject{
+	return &agentturn.RuntimeSubject{
 		Type:  agent.SubjectBillingQueueItem,
 		ID:    itemID.String(),
 		Label: label,
@@ -284,9 +284,9 @@ func (s *Service) shipmentMove(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 	moveID pulid.ID,
-) (*agentdefinition.RuntimeSubject, error) {
+) (*agentturn.RuntimeSubject, error) {
 	if s.console == nil {
-		return &agentdefinition.RuntimeSubject{
+		return &agentturn.RuntimeSubject{
 			Type:  agent.SubjectShipmentMove,
 			ID:    moveID.String(),
 			Label: "Shipment move",
@@ -298,7 +298,7 @@ func (s *Service) shipmentMove(
 		return nil, fmt.Errorf("load shipment move: %w", err)
 	}
 
-	subject := &agentdefinition.RuntimeSubject{
+	subject := &agentturn.RuntimeSubject{
 		Type:  agent.SubjectShipmentMove,
 		ID:    moveID.String(),
 		Label: "Shipment move",
@@ -388,8 +388,8 @@ func (s *Service) shipment(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 	shipmentID pulid.ID,
-) (*agentdefinition.RuntimeSubject, error) {
-	subject := &agentdefinition.RuntimeSubject{
+) (*agentturn.RuntimeSubject, error) {
+	subject := &agentturn.RuntimeSubject{
 		Type:  agent.SubjectShipment,
 		ID:    shipmentID.String(),
 		Label: "Shipment",
@@ -456,8 +456,8 @@ func (s *Service) document(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 	documentID pulid.ID,
-) (*agentdefinition.RuntimeSubject, error) {
-	subject := &agentdefinition.RuntimeSubject{
+) (*agentturn.RuntimeSubject, error) {
+	subject := &agentturn.RuntimeSubject{
 		Type:  agent.SubjectDocument,
 		ID:    documentID.String(),
 		Label: "Document",
@@ -499,8 +499,8 @@ func (s *Service) insight(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 	insightID pulid.ID,
-) (*agentdefinition.RuntimeSubject, error) {
-	subject := &agentdefinition.RuntimeSubject{
+) (*agentturn.RuntimeSubject, error) {
+	subject := &agentturn.RuntimeSubject{
 		Type:  agent.SubjectInsight,
 		ID:    insightID.String(),
 		Label: "Insight",
@@ -550,8 +550,8 @@ func (s *Service) bankReceipt(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 	receiptID pulid.ID,
-) (*agentdefinition.RuntimeSubject, error) {
-	subject := &agentdefinition.RuntimeSubject{
+) (*agentturn.RuntimeSubject, error) {
+	subject := &agentturn.RuntimeSubject{
 		Type:  agent.SubjectBankReceipt,
 		ID:    receiptID.String(),
 		Label: "Bank receipt",
@@ -633,8 +633,8 @@ func (s *Service) detentionOccurrence(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 	occurrenceID pulid.ID,
-) (*agentdefinition.RuntimeSubject, error) {
-	subject := &agentdefinition.RuntimeSubject{
+) (*agentturn.RuntimeSubject, error) {
+	subject := &agentturn.RuntimeSubject{
 		Type:  agent.SubjectDetentionOccurrence,
 		ID:    occurrenceID.String(),
 		Label: "Detention occurrence",
@@ -697,8 +697,8 @@ func (s *Service) worker(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 	workerID pulid.ID,
-) (*agentdefinition.RuntimeSubject, error) {
-	subject := &agentdefinition.RuntimeSubject{
+) (*agentturn.RuntimeSubject, error) {
+	subject := &agentturn.RuntimeSubject{
 		Type:  agent.SubjectWorker,
 		ID:    workerID.String(),
 		Label: "Driver",
@@ -808,8 +808,8 @@ func (s *Service) carrierIntelEvent(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 	eventID pulid.ID,
-) (*agentdefinition.RuntimeSubject, error) {
-	subject := &agentdefinition.RuntimeSubject{
+) (*agentturn.RuntimeSubject, error) {
+	subject := &agentturn.RuntimeSubject{
 		Type:  agent.SubjectCarrierIntelEvent,
 		ID:    eventID.String(),
 		Label: "Carrier finding",
@@ -863,8 +863,8 @@ func (s *Service) ediInboundFile(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 	fileID pulid.ID,
-) (*agentdefinition.RuntimeSubject, error) {
-	subject := &agentdefinition.RuntimeSubject{
+) (*agentturn.RuntimeSubject, error) {
+	subject := &agentturn.RuntimeSubject{
 		Type:  agent.SubjectEDIInboundFile,
 		ID:    fileID.String(),
 		Label: "EDI inbound file",
@@ -915,8 +915,8 @@ func (s *Service) inboundMessage(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 	messageID pulid.ID,
-) (*agentdefinition.RuntimeSubject, error) {
-	subject := &agentdefinition.RuntimeSubject{
+) (*agentturn.RuntimeSubject, error) {
+	subject := &agentturn.RuntimeSubject{
 		Type:  agent.SubjectInboundMessage,
 		ID:    messageID.String(),
 		Label: "Inbound message",
@@ -972,8 +972,8 @@ func (s *Service) report(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 	definitionID pulid.ID,
-) (*agentdefinition.RuntimeSubject, error) {
-	subject := &agentdefinition.RuntimeSubject{
+) (*agentturn.RuntimeSubject, error) {
+	subject := &agentturn.RuntimeSubject{
 		Type:  agent.SubjectReport,
 		ID:    definitionID.String(),
 		Label: "Report",
@@ -1012,8 +1012,8 @@ func (s *Service) dashboard(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 	dashboardID pulid.ID,
-) (*agentdefinition.RuntimeSubject, error) {
-	subject := &agentdefinition.RuntimeSubject{
+) (*agentturn.RuntimeSubject, error) {
+	subject := &agentturn.RuntimeSubject{
 		Type:  agent.SubjectDashboard,
 		ID:    dashboardID.String(),
 		Label: "Dashboard",
@@ -1052,8 +1052,8 @@ func (s *Service) formulaTemplate(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 	templateID pulid.ID,
-) (*agentdefinition.RuntimeSubject, error) {
-	subject := &agentdefinition.RuntimeSubject{
+) (*agentturn.RuntimeSubject, error) {
+	subject := &agentturn.RuntimeSubject{
 		Type:  agent.SubjectFormulaTemplate,
 		ID:    templateID.String(),
 		Label: "Formula template",
@@ -1089,8 +1089,8 @@ func (s *Service) formulaLibrary(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 	libraryID pulid.ID,
-) (*agentdefinition.RuntimeSubject, error) {
-	subject := &agentdefinition.RuntimeSubject{
+) (*agentturn.RuntimeSubject, error) {
+	subject := &agentturn.RuntimeSubject{
 		Type:  agent.SubjectFormulaLibrary,
 		ID:    libraryID.String(),
 		Label: "Formula library",
@@ -1150,8 +1150,8 @@ func (s *Service) accountingConnection(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 	connectionID pulid.ID,
-) (*agentdefinition.RuntimeSubject, error) {
-	subject := &agentdefinition.RuntimeSubject{
+) (*agentturn.RuntimeSubject, error) {
+	subject := &agentturn.RuntimeSubject{
 		Type:  agent.SubjectAccountingConnection,
 		ID:    connectionID.String(),
 		Label: "Accounting connection",
@@ -1191,8 +1191,8 @@ func (s *Service) accountingSyncRecord(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 	recordID pulid.ID,
-) (*agentdefinition.RuntimeSubject, error) {
-	subject := &agentdefinition.RuntimeSubject{
+) (*agentturn.RuntimeSubject, error) {
+	subject := &agentturn.RuntimeSubject{
 		Type:  agent.SubjectAccountingSyncRecord,
 		ID:    recordID.String(),
 		Label: "Accounting sync record",
@@ -1231,8 +1231,8 @@ func (s *Service) accountingInboundChange(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 	changeID pulid.ID,
-) (*agentdefinition.RuntimeSubject, error) {
-	subject := &agentdefinition.RuntimeSubject{
+) (*agentturn.RuntimeSubject, error) {
+	subject := &agentturn.RuntimeSubject{
 		Type:  agent.SubjectAccountingInbound,
 		ID:    changeID.String(),
 		Label: "Payment recorded in the books",
@@ -1272,8 +1272,8 @@ func (s *Service) accountingDriftFinding(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 	findingID pulid.ID,
-) (*agentdefinition.RuntimeSubject, error) {
-	subject := &agentdefinition.RuntimeSubject{
+) (*agentturn.RuntimeSubject, error) {
+	subject := &agentturn.RuntimeSubject{
 		Type:  agent.SubjectAccountingDrift,
 		ID:    findingID.String(),
 		Label: "Books differ from Trenova",

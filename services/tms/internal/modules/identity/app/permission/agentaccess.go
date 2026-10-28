@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentreach"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -154,7 +155,7 @@ func (e *engine) coverageOf(
 	perms := e.inheritedPermissions(role, byID)
 	result := permissionports.RoleCoverage{
 		RoleID:           role.ID,
-		Coverage:         agentdefinition.CoverageNone,
+		Coverage:         agentreach.CoverageNone,
 		MissingResources: []permission.Resource{},
 	}
 	if _, ok := e.resolveResourcePermission(
@@ -178,9 +179,9 @@ func (e *engine) coverageOf(
 		}
 	}
 
-	result.Coverage = agentdefinition.CoverageFull
+	result.Coverage = agentreach.CoverageFull
 	if len(result.MissingResources) > 0 {
-		result.Coverage = agentdefinition.CoveragePartial
+		result.Coverage = agentreach.CoveragePartial
 	}
 
 	return result

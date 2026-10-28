@@ -7,7 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
@@ -198,7 +198,7 @@ func anchorRefs(scope *anchorScope) []agent.EntityRef {
 func (s *Service) anchorRecords(
 	ctx context.Context,
 	scope *anchorScope,
-) []agentdefinition.RuntimeAnchor {
+) []agentturn.RuntimeAnchor {
 	if s.anchors == nil {
 		return nil
 	}

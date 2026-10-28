@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
@@ -31,7 +31,7 @@ func TestRun_HandsAToolTheRunsTimezoneWhereverItIsAsked(t *testing.T) {
 		Definition: autoDefinition("report_update"),
 		Actor:      testActor(),
 		Input:      "update",
-		Context:    agentdefinition.RuntimeContext{Timezone: "America/Chicago"},
+		Context:    agentturn.RuntimeContext{Timezone: "America/Chicago"},
 	})
 	require.NoError(t, err)
 
@@ -63,7 +63,7 @@ func TestRun_TheFilingBaselineReadsTheRunsTimezone(t *testing.T) {
 		Definition: testDefinition("shipment_place_hold"),
 		Actor:      testActor(),
 		Input:      "hold it",
-		Context:    agentdefinition.RuntimeContext{Timezone: "America/Denver"},
+		Context:    agentturn.RuntimeContext{Timezone: "America/Denver"},
 	})
 	require.NoError(t, err)
 

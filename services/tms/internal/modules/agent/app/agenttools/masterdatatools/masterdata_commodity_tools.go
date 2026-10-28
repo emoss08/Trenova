@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreset"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -168,7 +168,7 @@ func commodityFields() []masterField[commodity.Commodity] {
 func NewCreateCommodityTool(commodities CommodityKeeper) agenttoolports.AgentTool {
 	return newMasterCreateTool(&masterCreateSpec[commodity.Commodity]{
 		record: commodityRecord,
-		name:   agentdefinition.ToolCreateCommodity,
+		name:   agentpreset.ToolCreateCommodity,
 		description: "Add a commodity shipments can carry, with its freight class, " +
 			"temperature range, dimensions and handling. Name the hazardous material it is " +
 			"when it is hazmat, and check masterdata_list_commodities first.",

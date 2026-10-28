@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttemplate"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
@@ -23,7 +24,7 @@ func TestUsableDefinition_AQuickQuestionHoldsEveryReadButExtensions(t *testing.T
 	}}
 	svc := newService(&scriptedCompletion{}, queries, &stubActionRegistry{})
 	svc.queries = queries
-	general := chatDefinition("Help", agentdefinition.TemplateGeneralAssistant)
+	general := chatDefinition("Help", agenttemplate.TemplateGeneralAssistant)
 	svc.definitions = &stubDefinitionList{definitions: []*agentdefinition.Definition{general}}
 	actor := testActor()
 	req := &assistantports.SendMessageRequest{TenantInfo: actor.TenantInfo()}

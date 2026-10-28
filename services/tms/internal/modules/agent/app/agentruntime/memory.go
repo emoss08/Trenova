@@ -5,6 +5,8 @@ import (
 	"slices"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemoryprompt"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
@@ -16,13 +18,13 @@ import (
 func (s *Service) memoriesForPrompt(
 	ctx context.Context,
 	req *agentruntimeports.RunRequest,
-	rc *agentdefinition.RuntimeContext,
-) agentdefinition.MemoryFit {
+	rc *agentturn.RuntimeContext,
+) agentmemoryprompt.MemoryFit {
 	if !req.Definition.HasContextProvider(agentdefinition.ContextMemory) {
-		return agentdefinition.MemoryFit{}
+		return agentmemoryprompt.MemoryFit{}
 	}
 
-	fit := req.Definition.PlanMemories(rc)
+	fit := agentmemoryprompt.PlanMemories(req.Definition, rc)
 	if len(fit.Used) == 0 || s.memories == nil || req.Actor == nil {
 		return fit
 	}

@@ -7,6 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -81,12 +82,12 @@ func TestContextBuilder_ReadsTheMemoriesOfWhatTheTurnIsAbout(t *testing.T) {
 		Definition: definition,
 		Actor:      testActor(),
 		Trigger:    agent.RunTriggerChat,
-		Subject:    &agentdefinition.RuntimeSubject{Type: agent.SubjectShipment, ID: shipment},
-		Page: &agentdefinition.PageContext{
+		Subject:    &agentturn.RuntimeSubject{Type: agent.SubjectShipment, ID: shipment},
+		Page: &agentturn.PageContext{
 			EntityType: "customer",
 			EntityID:   customer.String(),
 		},
-		Mentions:         []agentdefinition.RuntimeMention{{Type: "location", ID: location}},
+		Mentions:         []agentturn.RuntimeMention{{Type: "location", ID: location}},
 		DelegatorRecords: []agent.EntityRef{{Type: "worker", ID: parentRecord}},
 	})
 	require.NoError(t, err)
@@ -137,7 +138,7 @@ func TestOpenTurn_CarriesWhatFitsTheBudgetAndCountsOnlyThat(t *testing.T) {
 		Definition: definition,
 		Actor:      testActor(),
 		Input:      "What do we know?",
-		Context:    agentdefinition.RuntimeContext{Memories: pool},
+		Context:    agentturn.RuntimeContext{Memories: pool},
 	})
 
 	assert.Equal(t, []pulid.ID{pool[0].ID, pool[1].ID, pool[2].ID}, memories.used,
@@ -160,7 +161,7 @@ func TestOpenTurn_ReadsNoMemoryForAnAgentThatDoesNotAskForIt(t *testing.T) {
 		Definition: definition,
 		Actor:      testActor(),
 		Input:      "Hello",
-		Context: agentdefinition.RuntimeContext{Memories: []*agent.Memory{{
+		Context: agentturn.RuntimeContext{Memories: []*agent.Memory{{
 			ID:      pulid.MustNew("amem_"),
 			Content: "From an email.",
 			Tainted: true,
@@ -230,7 +231,7 @@ func TestOpenTurn_CountsOnlyTheMemoriesThatBearOnTheTurn(t *testing.T) {
 		Definition: testDefinition(),
 		Actor:      testActor(),
 		Input:      "Let the customer know the load delivered.",
-		Context: agentdefinition.RuntimeContext{
+		Context: agentturn.RuntimeContext{
 			Memories: []*agent.Memory{rule, bearing, unrelated},
 			MemoryRelevance: agent.MemoryRelevance{
 				Judged: true,

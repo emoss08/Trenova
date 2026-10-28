@@ -9,6 +9,7 @@ import (
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmark"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -116,8 +117,8 @@ func sanitizeDraft(
 		CronTimezone:      trigger.timezone,
 		EventKinds:        trigger.events,
 		IntervalSeconds:   trigger.interval,
-		Icon:              s.identity("icon", reply.Icon, agentdefinition.IsKnownIcon),
-		Accent:            s.identity("accent", reply.Accent, agentdefinition.IsKnownAccent),
+		Icon:              s.identity("icon", reply.Icon, agentmark.IsKnownIcon),
+		Accent:            s.identity("accent", reply.Accent, agentmark.IsKnownAccent),
 		OutputMode:        outputMode(reply.OutputMode, trigger.mode),
 		TenantInfo:        in.tenantInfo,
 	}

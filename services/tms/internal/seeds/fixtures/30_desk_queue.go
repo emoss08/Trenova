@@ -5,15 +5,14 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
-
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttemplate"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
 	"github.com/emoss08/trenova/pkg/productguide"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -27,7 +26,7 @@ type queueSeedSubject struct {
 }
 
 type queueSeedAgent struct {
-	template agentdefinition.Template
+	template agenttemplate.Template
 	status   agent.RunStatus
 	summary  string
 	runOn    queueSeedSubject
@@ -184,7 +183,7 @@ func (r *deskSeedRefs) queueSpecs() []queueSeedSpec {
 				"4 loads tendered for Oct 6–10",
 			},
 			agent: &queueSeedAgent{
-				template: agentdefinition.TemplateCarrierRiskDesk,
+				template: agenttemplate.TemplateCarrierRiskDesk,
 				status:   agent.RunStatusGatheringContext,
 				runOn:    r.shipmentSubject("SEED-SHP-008"),
 			},
@@ -231,7 +230,7 @@ func (r *deskSeedRefs) queueSpecs() []queueSeedSpec {
 			},
 			seen: true,
 			agent: &queueSeedAgent{
-				template: agentdefinition.TemplateDetentionDesk,
+				template: agenttemplate.TemplateDetentionDesk,
 				status:   agent.RunStatusDiagnosing,
 				runOn:    r.shipmentSubject("SEED-SHP-001"),
 			},
@@ -264,7 +263,7 @@ func (r *deskSeedRefs) queueSpecs() []queueSeedSpec {
 			subject:  danaSubject,
 			seen:     true,
 			agent: &queueSeedAgent{
-				template: agentdefinition.TemplateCredentialDesk,
+				template: agenttemplate.TemplateCredentialDesk,
 				status:   agent.RunStatusAwaitingDecision,
 				summary:  "Waiting for you to approve the reminder",
 				runOn:    danaSubject,
@@ -313,7 +312,7 @@ func (r *deskSeedRefs) queueSpecs() []queueSeedSpec {
 			subject:  r.shipmentSubject("SEED-SHP-002"),
 			seen:     true,
 			agent: &queueSeedAgent{
-				template: agentdefinition.TemplateLoadMonitor,
+				template: agenttemplate.TemplateLoadMonitor,
 				status:   agent.RunStatusCompleted,
 				summary:  "Customer notified · watching",
 				runOn:    r.shipmentSubject("SEED-SHP-002"),

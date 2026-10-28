@@ -11,6 +11,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttemplate"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"gopkg.in/yaml.v3"
@@ -143,7 +144,7 @@ func (s *Session) syncAgent(ctx context.Context, spec *AgentSpec, outcome *Agent
 			&agentdefinitionports.SaveAgentDefinitionRequest{
 				Name:              spec.Name,
 				Description:       spec.Description,
-				Template:          agentdefinition.Template(spec.Template),
+				Template:          agenttemplate.Template(spec.Template),
 				Instructions:      spec.Instructions,
 				ToolNames:         tools,
 				AutonomyCeiling:   ceiling,
@@ -175,7 +176,7 @@ func (s *Session) syncAgent(ctx context.Context, spec *AgentSpec, outcome *Agent
 		Comment:    agentSyncComment,
 		Edit: func(definition *agentdefinition.Definition) error {
 			definition.Description = spec.Description
-			definition.Template = agentdefinition.Template(spec.Template)
+			definition.Template = agenttemplate.Template(spec.Template)
 			definition.Instructions = spec.Instructions
 			definition.ToolNames = tools
 			definition.AutonomyCeiling = ceiling

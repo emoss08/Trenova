@@ -5,8 +5,8 @@ import (
 	"slices"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"go.uber.org/zap"
@@ -126,11 +126,11 @@ func afterExternalContent(tier agent.AutonomyTier, external bool) (agent.Autonom
 }
 
 func withSummaries(
-	summaries []agentdefinition.ToolSummary,
-	extra []agentdefinition.ToolSummary,
-) []agentdefinition.ToolSummary {
+	summaries []agentturn.ToolSummary,
+	extra []agentturn.ToolSummary,
+) []agentturn.ToolSummary {
 	for _, summary := range extra {
-		if !slices.ContainsFunc(summaries, func(existing agentdefinition.ToolSummary) bool {
+		if !slices.ContainsFunc(summaries, func(existing agentturn.ToolSummary) bool {
 			return existing.Name == summary.Name
 		}) {
 			summaries = append(summaries, summary)

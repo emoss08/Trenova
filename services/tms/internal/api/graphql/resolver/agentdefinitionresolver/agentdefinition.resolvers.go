@@ -16,6 +16,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentlint"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentshadow"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentstarter"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttemplate"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttestprompt"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentversion"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentshadowports"
@@ -24,7 +28,7 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
-func (r *AgentDefinitionResolver) Template(ctx context.Context, obj *agentdefinition.Definition) (*agentdefinition.Template, error) {
+func (r *AgentDefinitionResolver) Template(ctx context.Context, obj *agentdefinition.Definition) (*agenttemplate.Template, error) {
 	return definitionTemplate(obj), nil
 }
 
@@ -70,6 +74,10 @@ func (r *AgentDefinitionResolver) Delegates(ctx context.Context, obj *agentdefin
 
 func (r *AgentDefinitionResolver) AccessRoles(ctx context.Context, obj *agentdefinition.Definition) ([]*permission.Role, error) {
 	return r.AgentDefinitionAccessRoles(ctx, obj)
+}
+
+func (r *AgentDefinitionResolver) Starters(ctx context.Context, obj *agentdefinition.Definition) ([]agentstarter.Starter, error) {
+	return agentstarter.Starters(obj), nil
 }
 
 func (r *AgentDefinitionResolver) PendingProposals(ctx context.Context, obj *agentdefinition.Definition) (int, error) {
@@ -148,8 +156,12 @@ func (r *MutationResolver) SetRoleAgentAccess(ctx context.Context, roleID string
 	return result.Role, nil
 }
 
-func (r *MyAgentResolver) Template(ctx context.Context, obj *agentdefinition.Definition) (*agentdefinition.Template, error) {
+func (r *MyAgentResolver) Template(ctx context.Context, obj *agentdefinition.Definition) (*agenttemplate.Template, error) {
 	return definitionTemplate(obj), nil
+}
+
+func (r *MyAgentResolver) Starters(ctx context.Context, obj *agentdefinition.Definition) ([]agentstarter.Starter, error) {
+	return agentstarter.Starters(obj), nil
 }
 
 func (r *MyAgentResolver) Delegates(ctx context.Context, obj *agentdefinition.Definition) ([]*agentdefinition.Definition, error) {
@@ -335,7 +347,7 @@ func (r *QueryResolver) AgentCapabilities(ctx context.Context, agentID string) (
 	}, actorutil.FromAuthContext(authCtx))
 }
 
-func (r *QueryResolver) AgentDefinitionVersions(ctx context.Context, agentID string, limit *int) ([]*agentdefinition.DefinitionVersion, error) {
+func (r *QueryResolver) AgentDefinitionVersions(ctx context.Context, agentID string, limit *int) ([]*agentversion.DefinitionVersion, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceAgentDefinition, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -428,7 +440,7 @@ func (r *QueryResolver) AgentInstructionLint(ctx context.Context, input gqlmodel
 	return out, nil
 }
 
-func (r *MutationResolver) KeepAgentTestPrompt(ctx context.Context, agentID string, prompt string) (*agentdefinition.TestPrompt, error) {
+func (r *MutationResolver) KeepAgentTestPrompt(ctx context.Context, agentID string, prompt string) (*agenttestprompt.TestPrompt, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceAgentDefinition, permission.OpUpdate)
 	if err != nil {
 		return nil, err
@@ -472,7 +484,7 @@ func (r *MutationResolver) DeleteAgentTestPrompt(ctx context.Context, agentID st
 	return true, nil
 }
 
-func (r *QueryResolver) AgentTestPrompts(ctx context.Context, agentID string) ([]*agentdefinition.TestPrompt, error) {
+func (r *QueryResolver) AgentTestPrompts(ctx context.Context, agentID string) ([]*agenttestprompt.TestPrompt, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceAgentDefinition, permission.OpRead)
 	if err != nil {
 		return nil, err

@@ -12,6 +12,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreset"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aianalytics"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/codemode"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
@@ -130,7 +132,7 @@ type toolSetRequest struct {
 	// conversation with artifacts beside it.
 	publishes bool
 	// delegates are the agents the turn may hand a task to.
-	delegates []agentdefinition.RuntimeDelegate
+	delegates []agentturn.RuntimeDelegate
 	decisions bool
 	// extensions is what the turn already read of the organization's
 	// extensions; nil reads them again.
@@ -258,7 +260,7 @@ func (s *Service) openToolSet(ctx context.Context, req *toolSetRequest) *toolSet
 	set.disclosed = true
 	set.held = len(selected)
 	set.query = s.vectorize(ctx, &req.query)
-	for _, name := range req.definition.Template.StandingTools() {
+	for _, name := range agentpreset.StandingTools(req.definition.Template) {
 		s.load(set, name)
 	}
 	for _, descriptor := range s.catalog.RankHybrid(agenttoolcatalog.Query{

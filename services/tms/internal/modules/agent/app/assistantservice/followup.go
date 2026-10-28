@@ -11,7 +11,7 @@ import (
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -200,18 +200,18 @@ func refusedAsk(note string) string {
 
 func (s *Service) anchorChanged(
 	ctx context.Context,
-	anchors []agentdefinition.RuntimeAnchor,
+	anchors []agentturn.RuntimeAnchor,
 	changed []agent.EntityRef,
 	actor *permissionports.RequestActor,
 	tenant pagination.TenantInfo,
-) []agentdefinition.RuntimeAnchor {
+) []agentturn.RuntimeAnchor {
 	if s.anchors == nil || len(changed) == 0 {
 		return anchors
 	}
 
 	unread := make([]agent.EntityRef, 0, len(changed))
 	anchored := func(id string) bool {
-		return slices.ContainsFunc(anchors, func(a agentdefinition.RuntimeAnchor) bool {
+		return slices.ContainsFunc(anchors, func(a agentturn.RuntimeAnchor) bool {
 			return a.ID == id
 		}) || slices.ContainsFunc(unread, func(r agent.EntityRef) bool { return r.ID == id })
 	}

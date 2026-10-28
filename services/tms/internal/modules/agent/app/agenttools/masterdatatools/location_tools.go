@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreset"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -76,7 +76,7 @@ func NewCreateLocationTool(p CreateLocationToolParams) agenttoolports.AgentTool 
 	}
 }
 
-func (t *CreateLocationTool) Name() string { return agentdefinition.ToolCreateLocation }
+func (t *CreateLocationTool) Name() string { return agentpreset.ToolCreateLocation }
 
 func (t *CreateLocationTool) Description() string {
 	return "Create a location record for a pickup or delivery address that has none, such " +

@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
@@ -17,5 +17,5 @@ type RecordAnchorRequest struct {
 }
 
 type RecordAnchorReader interface {
-	Anchor(ctx context.Context, req *RecordAnchorRequest) []agentdefinition.RuntimeAnchor
+	Anchor(ctx context.Context, req *RecordAnchorRequest) []agentturn.RuntimeAnchor
 }

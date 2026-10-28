@@ -6,7 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreset"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -167,7 +167,7 @@ func customerPolicy() masterPolicy {
 func NewCreateCustomerTool(customers CustomerKeeper, states StateLookup) agenttoolports.AgentTool {
 	return newMasterCreateTool(&masterCreateSpec[customer.Customer]{
 		record: customerRecord,
-		name:   agentdefinition.ToolCreateCustomer,
+		name:   agentpreset.ToolCreateCustomer,
 		description: "Add a customer the organization ships for: its code, name, billing " +
 			"address and DOT and MC numbers. Check customer_list first. Billing terms " +
 			"start from the organization's defaults; who is emailed status updates is " +

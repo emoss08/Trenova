@@ -8,6 +8,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttemplate"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
@@ -354,7 +355,7 @@ func (c *creatingConversations) CreateThread(
 	return thread, nil
 }
 
-func chatDefinition(name string, template agentdefinition.Template) *agentdefinition.Definition {
+func chatDefinition(name string, template agenttemplate.Template) *agentdefinition.Definition {
 	d := testDefinition()
 	d.ID = pulid.MustNew("agdef_")
 	d.Name = name
@@ -374,8 +375,8 @@ func TestAsk_AnswersOnAHiddenThreadWithTheGeneralAssistant(t *testing.T) {
 		textTurn("Twelve loads are late."),
 	}}
 	svc := newService(completion, &stubQueryRegistry{}, &stubActionRegistry{})
-	dispatch := chatDefinition("Dispatch", agentdefinition.TemplateDispatchAssistant)
-	general := chatDefinition("Assistant", agentdefinition.TemplateGeneralAssistant)
+	dispatch := chatDefinition("Dispatch", agenttemplate.TemplateDispatchAssistant)
+	general := chatDefinition("Assistant", agenttemplate.TemplateGeneralAssistant)
 	definitions := &stubDefinitionList{
 		definitions: []*agentdefinition.Definition{dispatch, general},
 	}
@@ -404,7 +405,7 @@ func TestAsk_AnswersOnAHiddenThreadWithTheGeneralAssistant(t *testing.T) {
 	assert.Equal(t, "template", definitions.last.Filter.FieldFilters[0].Field)
 	assert.Equal(
 		t,
-		string(agentdefinition.TemplateGeneralAssistant),
+		string(agenttemplate.TemplateGeneralAssistant),
 		definitions.last.Filter.FieldFilters[0].Value,
 	)
 	require.NotNil(t, conversations.created)
@@ -429,7 +430,7 @@ func TestAsk_RefusesWithoutTheGeneralAssistantRatherThanAskingAnotherAgent(t *te
 	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{textTurn("ok")}}
 	svc := newService(completion, &stubQueryRegistry{}, &stubActionRegistry{})
 	activity := chatDefinition("Agent Activity Desk", "")
-	dispatch := chatDefinition("Dispatch", agentdefinition.TemplateDispatchAssistant)
+	dispatch := chatDefinition("Dispatch", agenttemplate.TemplateDispatchAssistant)
 	definitions := &stubDefinitionList{
 		definitions: []*agentdefinition.Definition{activity, dispatch},
 	}

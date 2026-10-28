@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
@@ -161,8 +162,8 @@ func (s *Service) delegateContext(
 	ctx context.Context,
 	parent, delegate *agentdefinition.Definition,
 	req *OpenDelegateRequest,
-) agentdefinition.RuntimeContext {
-	bare := agentdefinition.RuntimeContext{
+) agentturn.RuntimeContext {
+	bare := agentturn.RuntimeContext{
 		Trigger:          agent.RunTriggerChat,
 		DelegatedBy:      parent.Name,
 		DelegatorRecords: req.Records,

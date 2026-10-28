@@ -9,6 +9,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolpolicy"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreset"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttemplate"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -181,11 +183,11 @@ func prerequisitesOf(tool any) []string {
 }
 
 func registeredStarterTools(
-	template agentdefinition.Template,
+	template agenttemplate.Template,
 	actions agenttoolports.AgentToolRegistry,
 	queries agenttoolports.AgentQueryToolRegistry,
 ) []string {
-	starters := template.StarterTools()
+	starters := agentpreset.StarterTools(template)
 	tools := make([]string, 0, len(starters))
 	for _, name := range starters {
 		if _, ok := queries.Get(name); ok {

@@ -8,6 +8,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolpolicy"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentreach"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -53,13 +55,13 @@ type fakeHolder struct{}
 
 func (fakeHolder) ToolSummaries(
 	definition *agentdefinition.Definition,
-) []agentdefinition.ToolSummary {
-	out := make([]agentdefinition.ToolSummary, 0, len(definition.ToolNames)+1)
+) []agentturn.ToolSummary {
+	out := make([]agentturn.ToolSummary, 0, len(definition.ToolNames)+1)
 	for _, name := range append(definition.ToolNames, definition.ToolNames...) {
-		out = append(out, agentdefinition.ToolSummary{Name: name})
+		out = append(out, agentturn.ToolSummary{Name: name})
 	}
 
-	return append(out, agentdefinition.ToolSummary{Name: "unregistered_tool"})
+	return append(out, agentturn.ToolSummary{Name: "unregistered_tool"})
 }
 
 type fakeDefinitions struct {
@@ -262,13 +264,13 @@ func TestReachWarnsAboutAnOpenAgentWithSensitiveToolsAndAnAgentNobodyCanUse(t *t
 		Subject: &agenttoolports.AgentSafetySubject{Agent: open},
 	})
 	require.Len(t, warnings, 1)
-	assert.Equal(t, agentdefinition.ReachOpenWithSensitiveTools, warnings[0].Kind)
+	assert.Equal(t, agentreach.ReachOpenWithSensitiveTools, warnings[0].Kind)
 	assert.Equal(t, []string{"customer_send_email"}, warnings[0].Tools)
 
 	restricted := agentWith("Customer desk", "customer_send_email")
 	restricted.AccessMode = agentdefinition.AccessRoles
 	assert.Equal(t, []agenttoolports.AgentReachWarning{{
-		Kind:  agentdefinition.ReachNoAudience,
+		Kind:  agentreach.ReachNoAudience,
 		Tools: []string{},
 	}}, svc.ReachWarnings(&agenttoolports.AgentReachRequest{
 		Subject: &agenttoolports.AgentSafetySubject{Agent: restricted},

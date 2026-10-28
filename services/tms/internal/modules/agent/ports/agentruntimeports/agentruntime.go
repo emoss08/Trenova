@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/board"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/codemode"
@@ -98,7 +99,7 @@ type ProposalTarget struct {
 type RunRequest struct {
 	Definition *agentdefinition.Definition
 	Actor      *permissionports.RequestActor
-	Context    agentdefinition.RuntimeContext
+	Context    agentturn.RuntimeContext
 	// RunID is set for a background run so auto-executing tools can tie what
 	// they do to it. A chat turn has no run until proposals are recorded.
 	RunID pulid.ID
@@ -263,8 +264,8 @@ func (d *Delegation) Scope(agentID pulid.ID) assistantports.DelegateScope {
 // DirectedTask is a task the person gave another agent from inside a
 // conversation, checked as theirs to give before the turn opens.
 type DirectedTask struct {
-	Delegate agentdefinition.RuntimeDelegate `json:"delegate"`
-	Task     string                          `json:"task"`
+	Delegate agentturn.RuntimeDelegate `json:"delegate"`
+	Task     string                    `json:"task"`
 	// Records are the conversation's subject and records in play when the
 	// turn opened, handed to the agent with the task. They ride on the task
 	// because a restored turn's request does not carry the anchors.
@@ -565,7 +566,7 @@ type AgentRuntime interface {
 	// ToolSummaries describes the tools a definition may use, in the shape the
 	// prompt lists them. A configured tool that is no longer registered is
 	// omitted rather than described.
-	ToolSummaries(definition *agentdefinition.Definition) []agentdefinition.ToolSummary
+	ToolSummaries(definition *agentdefinition.Definition) []agentturn.ToolSummary
 	// PermittedTools keeps the named tools the actor may use, the check a
 	// turn's own tool set is narrowed by.
 	PermittedTools(
@@ -585,24 +586,24 @@ type AgentSubjectDescriber interface {
 		tenant pagination.TenantInfo,
 		subjectType agent.SubjectType,
 		subjectID pulid.ID,
-	) (*agentdefinition.RuntimeSubject, error)
+	) (*agentturn.RuntimeSubject, error)
 }
 
 type RuntimeContextBuilder interface {
-	Build(ctx context.Context, req *RuntimeContextRequest) (agentdefinition.RuntimeContext, error)
+	Build(ctx context.Context, req *RuntimeContextRequest) (agentturn.RuntimeContext, error)
 }
 
 type RuntimeContextRequest struct {
 	Definition *agentdefinition.Definition
 	Actor      *permissionports.RequestActor
 	Trigger    agent.RunTrigger
-	Subject    *agentdefinition.RuntimeSubject
-	Page       *agentdefinition.PageContext
+	Subject    *agentturn.RuntimeSubject
+	Page       *agentturn.PageContext
 	Surface    agent.Surface
 	// Attachments and Mentions are what the person handed over with the
 	// message that started this turn.
-	Attachments []agentdefinition.RuntimeAttachment
-	Mentions    []agentdefinition.RuntimeMention
+	Attachments []agentturn.RuntimeAttachment
+	Mentions    []agentturn.RuntimeMention
 	// Facts are what the person pinned for the agents to keep in mind for
 	// the whole conversation.
 	Facts []string

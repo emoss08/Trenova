@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttemplate"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
@@ -21,9 +22,9 @@ const (
 	DefaultUserEmail = "admin@trenova.app"
 )
 
-var defaultAgentTemplates = []agentdefinition.Template{
-	agentdefinition.TemplateGeneralAssistant,
-	agentdefinition.TemplateDispatchAssistant,
+var defaultAgentTemplates = []agenttemplate.Template{
+	agenttemplate.TemplateGeneralAssistant,
+	agenttemplate.TemplateDispatchAssistant,
 }
 
 type Session struct {

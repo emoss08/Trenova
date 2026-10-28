@@ -4,6 +4,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentjobs/agentcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/modelcall/modelcallcontract"
@@ -25,19 +26,19 @@ const (
 )
 
 type PrepareRunResult struct {
-	Definition             *agentdefinition.Definition     `json:"definition"`
-	Subject                *agentdefinition.RuntimeSubject `json:"subject,omitempty"`
-	ShadowMode             bool                            `json:"shadowMode"`
-	DecisionTimeoutSeconds int                             `json:"decisionTimeoutSeconds"`
-	RunTimeoutSeconds      int                             `json:"runTimeoutSeconds"`
+	Definition             *agentdefinition.Definition `json:"definition"`
+	Subject                *agentturn.RuntimeSubject   `json:"subject,omitempty"`
+	ShadowMode             bool                        `json:"shadowMode"`
+	DecisionTimeoutSeconds int                         `json:"decisionTimeoutSeconds"`
+	RunTimeoutSeconds      int                         `json:"runTimeoutSeconds"`
 }
 
 // OpenRunInput is a prepared run, to be opened as a turn.
 type OpenRunInput struct {
-	Payload    *agentcontract.AgentRunPayload  `json:"payload"`
-	Definition *agentdefinition.Definition     `json:"definition"`
-	Subject    *agentdefinition.RuntimeSubject `json:"subject,omitempty"`
-	Shadow     bool                            `json:"shadow"`
+	Payload    *agentcontract.AgentRunPayload `json:"payload"`
+	Definition *agentdefinition.Definition    `json:"definition"`
+	Subject    *agentturn.RuntimeSubject      `json:"subject,omitempty"`
+	Shadow     bool                           `json:"shadow"`
 }
 
 // OpenRunResult is the run as the workflow drives it.
@@ -48,12 +49,12 @@ type OpenRunResult struct {
 
 // FinishRunInput is what a run's loop came to.
 type FinishRunInput struct {
-	Payload    *agentcontract.AgentRunPayload  `json:"payload"`
-	Definition *agentdefinition.Definition     `json:"definition"`
-	Subject    *agentdefinition.RuntimeSubject `json:"subject,omitempty"`
-	Run        *agentruntimeports.RunResult    `json:"run,omitempty"`
-	Failure    *modelcallcontract.Failure      `json:"failure,omitempty"`
-	Events     []temporaltype.StreamItem       `json:"events,omitempty"`
+	Payload    *agentcontract.AgentRunPayload `json:"payload"`
+	Definition *agentdefinition.Definition    `json:"definition"`
+	Subject    *agentturn.RuntimeSubject      `json:"subject,omitempty"`
+	Run        *agentruntimeports.RunResult   `json:"run,omitempty"`
+	Failure    *modelcallcontract.Failure     `json:"failure,omitempty"`
+	Events     []temporaltype.StreamItem      `json:"events,omitempty"`
 }
 
 // FinishRunResult is what a finished run left for a person to decide.

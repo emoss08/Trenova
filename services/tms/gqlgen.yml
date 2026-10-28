@@ -2763,7 +2763,7 @@ models:
       - github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports.AIRetrievalFailedEntry
   AgentStarter:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition.Starter
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentstarter.Starter
   AgentDefinition:
     model:
       - github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition.Definition
@@ -2782,23 +2782,27 @@ models:
         resolver: true
       accessRoles:
         resolver: true
+      starters:
+        resolver: true
   MyAgent:
     model:
       - github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition.Definition
     fields:
       template:
         resolver: true
+      starters:
+        resolver: true
       delegates:
         resolver: true
   AgentDefinitionVersion:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition.DefinitionVersion
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentversion.DefinitionVersion
   AgentShadowReport:
     model:
       - github.com/emoss08/trenova/internal/modules/agent/domain/agentshadow.Report
   AgentTestPrompt:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition.TestPrompt
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agenttestprompt.TestPrompt
   AgentInstructionFinding:
     model:
       - github.com/emoss08/trenova/internal/modules/agent/domain/agentlint.Finding
@@ -2834,7 +2838,7 @@ models:
       - github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition.DataAccessCeiling
   AgentAudienceCoverage:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition.AudienceCoverage
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentreach.AudienceCoverage
   AgentEgressClass:
     model:
       - github.com/emoss08/trenova/internal/modules/agent/domain/agent.EgressClass
@@ -2941,7 +2945,7 @@ models:
         value: github.com/emoss08/trenova/internal/modules/agent/domain/agent.AutonomySimulated
   AgentReachWarningKind:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition.ReachWarningKind
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentreach.ReachWarningKind
   AgentReachWarning:
     model:
       - github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports.AgentReachWarning
@@ -2998,7 +3002,7 @@ models:
         resolver: true
   AgentTemplate:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition.Template
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agenttemplate.Template
   AgentTriggerMode:
     model:
       - github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition.TriggerMode

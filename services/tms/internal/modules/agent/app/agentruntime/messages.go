@@ -6,7 +6,8 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmessage"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -193,10 +194,10 @@ func replayUserMessage(
 	}
 	budget := 0
 	if recent {
-		budget = agentdefinition.AttachmentTextBudget
+		budget = agentmessage.AttachmentTextBudget
 	}
 	attachments := earlierAttachments(msg.Attachments, files)
-	rendered := agentdefinition.RenderAttachments(attachments, budget)
+	rendered := agentmessage.RenderAttachments(attachments, budget)
 	replayed := llmports.Message{
 		Role:    llmports.RoleUser,
 		Content: rendered.Block + content,
@@ -216,8 +217,8 @@ func replayUserMessage(
 // text is in, the replay carries the text instead.
 func unreadFiles(
 	content string,
-	attachments []agentdefinition.RuntimeAttachment,
-	rendered *agentdefinition.RenderedAttachments,
+	attachments []agentturn.RuntimeAttachment,
+	rendered *agentmessage.RenderedAttachments,
 ) []llmports.MessageFile {
 	files := messageFiles(content, attachments, rendered)
 	unread := make(map[string]bool, len(attachments))
@@ -493,15 +494,15 @@ func modelHistory(history []conversation.Message) []conversation.Message {
 func earlierAttachments(
 	stored []conversation.MessageAttachment,
 	files map[string]string,
-) []agentdefinition.RuntimeAttachment {
+) []agentturn.RuntimeAttachment {
 	if len(stored) == 0 {
 		return nil
 	}
 
-	attachments := make([]agentdefinition.RuntimeAttachment, 0, len(stored))
+	attachments := make([]agentturn.RuntimeAttachment, 0, len(stored))
 	for idx := range stored {
 		id := stored[idx].DocumentID.String()
-		attachments = append(attachments, agentdefinition.RuntimeAttachment{
+		attachments = append(attachments, agentturn.RuntimeAttachment{
 			DocumentID:  id,
 			FileName:    stored[idx].FileName,
 			ContentType: stored[idx].ContentType,
@@ -520,8 +521,8 @@ func earlierAttachments(
 // read files reads the content as it is.
 func messageFiles(
 	content string,
-	attachments []agentdefinition.RuntimeAttachment,
-	rendered *agentdefinition.RenderedAttachments,
+	attachments []agentturn.RuntimeAttachment,
+	rendered *agentmessage.RenderedAttachments,
 ) []llmports.MessageFile {
 	if len(attachments) == 0 || len(rendered.Entries) != len(attachments) {
 		return nil

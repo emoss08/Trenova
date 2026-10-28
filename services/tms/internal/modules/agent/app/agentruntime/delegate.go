@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
@@ -86,7 +87,7 @@ var delegateJSON = sonic.Config{SortMapKeys: true}.Froze()
 // delegateTaskSpec is the tool a turn hands a task to another agent with.
 // agentId is limited to the agents the turn may ask, so a model cannot name
 // one it was not offered.
-func delegateTaskSpec(delegates []agentdefinition.RuntimeDelegate) kernelports.ToolSpec {
+func delegateTaskSpec(delegates []agentturn.RuntimeDelegate) kernelports.ToolSpec {
 	ids := make([]string, 0, len(delegates))
 	for _, delegate := range delegates {
 		ids = append(ids, delegate.ID.String())
@@ -150,9 +151,9 @@ func delegateTaskSpec(delegates []agentdefinition.RuntimeDelegate) kernelports.T
 
 // DelegateCall is one task the loop has decided to hand to another agent.
 type DelegateCall struct {
-	Call     llmports.ToolCall               `json:"call"`
-	Delegate agentdefinition.RuntimeDelegate `json:"delegate"`
-	Task     string                          `json:"task"`
+	Call     llmports.ToolCall         `json:"call"`
+	Delegate agentturn.RuntimeDelegate `json:"delegate"`
+	Task     string                    `json:"task"`
 	// StepScope separates the delegate's steps from this turn's in the
 	// ledger they share.
 	StepScope string `json:"stepScope"`
@@ -334,7 +335,7 @@ func (s *Service) fanOut(
 // the turn may hand out.
 type handedTask struct {
 	call     llmports.ToolCall
-	delegate agentdefinition.RuntimeDelegate
+	delegate agentturn.RuntimeDelegate
 	task     string
 	handed   *DelegateContext
 	// directed says the person chose the agent, so its opening skips the
@@ -498,18 +499,18 @@ func usedCallIDsOf(messages []conversation.Message) []string {
 // refusal names what is wrong so the model can fix the call.
 func (t *Turn) delegateFor(
 	arguments map[string]any,
-) (agentdefinition.RuntimeDelegate, string, string) {
+) (agentturn.RuntimeDelegate, string, string) {
 	raw := strings.TrimSpace(stringArg(arguments, delegateAgentParam))
 	task := strings.TrimSpace(stringArg(arguments, delegateTaskParam))
 
 	switch {
 	case raw == "":
-		return agentdefinition.RuntimeDelegate{}, "", "agentId is required. " + t.delegateNames()
+		return agentturn.RuntimeDelegate{}, "", "agentId is required. " + t.delegateNames()
 	case task == "":
-		return agentdefinition.RuntimeDelegate{}, "", "task is required: say what the agent " +
+		return agentturn.RuntimeDelegate{}, "", "task is required: say what the agent " +
 			"should do and what to hand back."
 	case utf8.RuneCountInString(task) > MaxDelegateTaskRunes:
-		return agentdefinition.RuntimeDelegate{}, "", fmt.Sprintf(
+		return agentturn.RuntimeDelegate{}, "", fmt.Sprintf(
 			"task is longer than %d characters. Say what to do and what to hand back, "+
 				"with only the names, ids and figures it needs.", MaxDelegateTaskRunes,
 		)
@@ -524,7 +525,7 @@ func (t *Turn) delegateFor(
 		}
 	}
 
-	return agentdefinition.RuntimeDelegate{}, "", fmt.Sprintf(
+	return agentturn.RuntimeDelegate{}, "", fmt.Sprintf(
 		"%q is not an agent you can ask. %s", raw, t.delegateNames(),
 	)
 }
@@ -677,7 +678,7 @@ func tagDelegated(
 // shown it as delegate_finished and the delegating model reads it as the
 // call's result, so both are told the same thing.
 func delegateReport(
-	delegate agentdefinition.RuntimeDelegate,
+	delegate agentturn.RuntimeDelegate,
 	callID string,
 	run DelegateRun,
 ) assistantports.AssistantDelegateFinishedEvent {

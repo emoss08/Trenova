@@ -5,6 +5,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreset"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttemplate"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -119,7 +121,7 @@ func TestRaisedDataAccess_RaisesToTheTemplateAndNeverLowers(t *testing.T) {
 
 	access, raised := raisedDataAccess(
 		agentdefinition.DataAccessInternal,
-		agentdefinition.TemplateReportAnalyst.StarterDataAccess(),
+		agentpreset.StarterDataAccess(agenttemplate.TemplateReportAnalyst),
 	)
 	assert.True(t, raised, "the report analyst reads amounts, which are Restricted")
 	assert.Equal(t, agentdefinition.DataAccessRestricted, access)

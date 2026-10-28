@@ -8,6 +8,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentguard"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttestprompt"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -51,7 +53,7 @@ func (p *DryRunPlan) RunRequest(actor *permissionports.RequestActor) *agentrunti
 	return &agentruntimeports.RunRequest{
 		Definition:   p.Definition,
 		Actor:        actor,
-		Context:      agentdefinition.RuntimeContext{Timezone: p.Timezone},
+		Context:      agentturn.RuntimeContext{Timezone: p.Timezone},
 		Input:        p.Input,
 		RunID:        p.RunID,
 		UsagePurpose: aiusageports.AIUsagePurposeEvaluation,
@@ -71,7 +73,7 @@ func (s *Service) PrepareDryRun(
 	switch {
 	case prompt == "":
 		multiErr.Add("prompt", errortypes.ErrRequired, "Enter a message to try the agent with")
-	case utf8.RuneCountInString(prompt) > agentdefinition.MaxTestPromptRunes:
+	case utf8.RuneCountInString(prompt) > agenttestprompt.MaxTestPromptRunes:
 		multiErr.Add(
 			"prompt",
 			errortypes.ErrInvalidLength,

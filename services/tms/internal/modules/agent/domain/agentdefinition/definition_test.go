@@ -8,6 +8,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentinstructions"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreset"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttemplate"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -65,7 +68,7 @@ func TestValidate_RejectsAnUnknownTemplate(t *testing.T) {
 	t.Parallel()
 
 	d := validDefinition()
-	d.Template = agentdefinition.Template("Bogus")
+	d.Template = agenttemplate.Template("Bogus")
 
 	assert.True(t, fieldErrors(t, d)["template"])
 }
@@ -97,7 +100,7 @@ func TestValidate_AllowsToolsOnAnyTemplate(t *testing.T) {
 	t.Parallel()
 
 	d := validDefinition()
-	d.Template = agentdefinition.TemplateGeneralAssistant
+	d.Template = agenttemplate.TemplateGeneralAssistant
 	d.ToolNames = []string{"billing_correct_charge_codes"}
 
 	assert.False(t, fieldErrors(t, d)["toolNames"],
@@ -402,25 +405,25 @@ func TestIsDue(t *testing.T) {
 func TestTemplates_DescribeEveryStarter(t *testing.T) {
 	t.Parallel()
 
-	for _, template := range agentdefinition.AllTemplates() {
+	for _, template := range agenttemplate.AllTemplates() {
 		assert.True(t, template.IsValid())
-		assert.NotEmpty(t, template.Label())
-		assert.NotEmpty(t, template.Description())
-		assert.NotEmpty(t, template.StarterInstructions())
-		assert.True(t, template.StarterTrigger().IsValid())
+		assert.NotEmpty(t, agenttemplate.Label(template))
+		assert.NotEmpty(t, agenttemplate.Description(template))
+		assert.NotEmpty(t, agentinstructions.StarterInstructions(template))
+		assert.True(t, agentpreset.StarterTrigger(template).IsValid())
 	}
 
 	assert.Equal(
 		t,
 		agentdefinition.TriggerEvent,
-		agentdefinition.TemplateBillingException.StarterTrigger(),
+		agentpreset.StarterTrigger(agenttemplate.TemplateBillingException),
 	)
 	assert.Contains(
 		t,
-		agentdefinition.TemplateBillingException.StarterEvents(),
+		agentpreset.StarterEvents(agenttemplate.TemplateBillingException),
 		agent.EventBillingQueueItemException,
 	)
-	assert.Empty(t, agentdefinition.TemplateGeneralAssistant.StarterTools())
+	assert.Empty(t, agentpreset.StarterTools(agenttemplate.TemplateGeneralAssistant))
 }
 
 /*
@@ -441,18 +444,18 @@ this test is what keeps the lists honest as the catalog grows.
 func TestTemplates_CarryTheToolsTheirPurposeRequires(t *testing.T) {
 	t.Parallel()
 
-	assert.Contains(t, agentdefinition.TemplateComplianceAssistant.StarterTools(),
+	assert.Contains(t, agentpreset.StarterTools(agenttemplate.TemplateComplianceAssistant),
 		"worker_list_credentials",
 		"a compliance agent that cannot filter credentials by date cannot do its job")
 
-	assert.Contains(t, agentdefinition.TemplateDispatchAssistant.StarterTools(),
+	assert.Contains(t, agentpreset.StarterTools(agenttemplate.TemplateDispatchAssistant),
 		"worker_list_credentials",
 		"dispatch decides who is legal to send")
-	assert.Contains(t, agentdefinition.TemplateDispatchAssistant.StarterTools(),
+	assert.Contains(t, agentpreset.StarterTools(agenttemplate.TemplateDispatchAssistant),
 		"worker_list_time_off",
 		"dispatch decides who is available")
 
-	assert.Contains(t, agentdefinition.TemplateBillingAssistant.StarterTools(),
+	assert.Contains(t, agentpreset.StarterTools(agenttemplate.TemplateBillingAssistant),
 		"shipment_list")
 }
 
@@ -491,12 +494,12 @@ func TestTemplates_BillingAgentsHoldTheLifecycleTheyWork(t *testing.T) {
 		"invoice_send",
 	}
 
-	assistant := agentdefinition.TemplateBillingAssistant.StarterTools()
+	assistant := agentpreset.StarterTools(agenttemplate.TemplateBillingAssistant)
 	for _, tool := range slices.Concat(reads, assistantReads, moneyless, personal) {
 		assert.Contains(t, assistant, tool)
 	}
 
-	desk := agentdefinition.TemplateBillingException.StarterTools()
+	desk := agentpreset.StarterTools(agenttemplate.TemplateBillingException)
 	for _, tool := range slices.Concat(reads, moneyless, settlements) {
 		assert.Contains(t, desk, tool)
 	}
@@ -510,12 +513,12 @@ func TestTemplates_BillingAgentsHoldTheLifecycleTheyWork(t *testing.T) {
 func TestTemplates_StarterToolsAreWellFormed(t *testing.T) {
 	t.Parallel()
 
-	for _, template := range agentdefinition.AllTemplates() {
+	for _, template := range agenttemplate.AllTemplates() {
 		seen := make(map[string]struct{})
-		for _, tool := range template.StarterTools() {
-			assert.NotEmpty(t, tool, template.Label())
+		for _, tool := range agentpreset.StarterTools(template) {
+			assert.NotEmpty(t, tool, agenttemplate.Label(template))
 			_, duplicate := seen[tool]
-			assert.False(t, duplicate, "%s lists %q twice", template.Label(), tool)
+			assert.False(t, duplicate, "%s lists %q twice", agenttemplate.Label(template), tool)
 			seen[tool] = struct{}{}
 		}
 	}
@@ -556,11 +559,16 @@ func TestApplyDefaults_KeepsTheCapsAlreadySet(t *testing.T) {
 func TestRoleDesksStartWithTheMorningBriefing(t *testing.T) {
 	t.Parallel()
 
-	for _, template := range []agentdefinition.Template{
-		agentdefinition.TemplateDispatchAssistant,
-		agentdefinition.TemplateBillingAssistant,
-		agentdefinition.TemplateComplianceAssistant,
+	for _, template := range []agenttemplate.Template{
+		agenttemplate.TemplateDispatchAssistant,
+		agenttemplate.TemplateBillingAssistant,
+		agenttemplate.TemplateComplianceAssistant,
 	} {
-		assert.Contains(t, template.StarterTools(), "insight_get_daily_briefing", template)
+		assert.Contains(
+			t,
+			agentpreset.StarterTools(template),
+			"insight_get_daily_briefing",
+			template,
+		)
 	}
 }

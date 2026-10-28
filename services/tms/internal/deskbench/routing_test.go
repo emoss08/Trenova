@@ -9,6 +9,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentsuggestion"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttemplate"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -93,18 +94,18 @@ func TestRoutingPasses(t *testing.T) {
 	dispatch := &agentdefinition.Definition{
 		ID:       pulid.MustNew("agdef_"),
 		Name:     "Dispatch",
-		Template: agentdefinition.TemplateDispatchAssistant,
+		Template: agenttemplate.TemplateDispatchAssistant,
 	}
 	billing := &agentdefinition.Definition{
 		ID:       pulid.MustNew("agdef_"),
 		Name:     "Billing",
-		Template: agentdefinition.TemplateBillingAssistant,
+		Template: agenttemplate.TemplateBillingAssistant,
 	}
 	better := &agentports.AgentMatch{Outcome: agentsuggestion.MatchBetterAgent, Agent: billing}
 	compliance := &agentdefinition.Definition{
 		ID:       pulid.MustNew("agdef_"),
 		Name:     "Compliance",
-		Template: agentdefinition.TemplateComplianceAssistant,
+		Template: agenttemplate.TemplateComplianceAssistant,
 	}
 	current := &agentports.AgentMatch{Outcome: agentsuggestion.MatchCurrentAgent, Agent: dispatch}
 	delegated := &agentports.AgentMatch{
@@ -147,8 +148,8 @@ func TestUnreachableExpectation_NamesTheAgentsNoEnabledChatAgentIs(t *testing.T)
 	t.Parallel()
 
 	agents := []*agentdefinition.Definition{
-		{Name: "Dispatch desk", Template: agentdefinition.TemplateDispatchAssistant},
-		{Name: "Master data steward", Template: agentdefinition.TemplateMasterDataSteward},
+		{Name: "Dispatch desk", Template: agenttemplate.TemplateDispatchAssistant},
+		{Name: "Master data steward", Template: agenttemplate.TemplateMasterDataSteward},
 	}
 
 	assert.Equal(t, "no enabled chat agent is CustomerAssistant",
@@ -216,11 +217,11 @@ func TestShippedRoutingCases_NameAgentsByTheirTemplates(t *testing.T) {
 		RoutingExpectNothing: true,
 	}
 	for _, routing := range cases {
-		assert.True(t, agentdefinition.Template(routing.From).IsValid(),
+		assert.True(t, agenttemplate.Template(routing.From).IsValid(),
 			"%s asks from %q, which is not a template", routing.Name, routing.From)
 		for _, option := range strings.Split(routing.Expect, "|") {
 			option = strings.TrimSpace(option)
-			assert.True(t, keywords[option] || agentdefinition.Template(option).IsValid(),
+			assert.True(t, keywords[option] || agenttemplate.Template(option).IsValid(),
 				"%s expects %q, which is neither a template nor current, none or nothing",
 				routing.Name, option)
 		}
@@ -233,12 +234,12 @@ func TestProfileConfusion_CountsWhatEachCaseExpectedAgainstWhatItGot(t *testing.
 	dispatch := &agentdefinition.Definition{
 		ID: pulid.MustNew(
 			"agdef_",
-		), Name: "Dispatch", Template: agentdefinition.TemplateDispatchAssistant,
+		), Name: "Dispatch", Template: agenttemplate.TemplateDispatchAssistant,
 	}
 	billing := &agentdefinition.Definition{
 		ID: pulid.MustNew(
 			"agdef_",
-		), Name: "Billing", Template: agentdefinition.TemplateBillingAssistant,
+		), Name: "Billing", Template: agenttemplate.TemplateBillingAssistant,
 	}
 	kept := &agentports.AgentMatch{Outcome: agentsuggestion.MatchCurrentAgent, Agent: dispatch}
 	moved := &agentports.AgentMatch{Outcome: agentsuggestion.MatchBetterAgent, Agent: billing}

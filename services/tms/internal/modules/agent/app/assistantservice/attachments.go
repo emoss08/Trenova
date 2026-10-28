@@ -8,7 +8,7 @@ import (
 	"sync"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent"
@@ -35,7 +35,7 @@ const (
 type turnContext struct {
 	page        *agent.PageContext
 	attachments []conversation.MessageAttachment
-	runtime     []agentdefinition.RuntimeAttachment
+	runtime     []agentturn.RuntimeAttachment
 	mentions    []agent.EntityRef
 }
 
@@ -62,7 +62,7 @@ func (s *Service) resolveAttachments(
 	ids []pulid.ID,
 	actor *permissionports.RequestActor,
 	tenant pagination.TenantInfo,
-) ([]conversation.MessageAttachment, []agentdefinition.RuntimeAttachment, error) {
+) ([]conversation.MessageAttachment, []agentturn.RuntimeAttachment, error) {
 	if len(ids) == 0 {
 		return nil, nil, nil
 	}
@@ -104,7 +104,7 @@ func (s *Service) resolveAttachments(
 	wg.Wait()
 
 	stored := make([]conversation.MessageAttachment, 0, len(ids))
-	runtime := make([]agentdefinition.RuntimeAttachment, 0, len(ids))
+	runtime := make([]agentturn.RuntimeAttachment, 0, len(ids))
 	for i := range slots {
 		slot := &slots[i]
 		if slot.problem != "" {
@@ -133,7 +133,7 @@ func (s *Service) resolveAttachments(
 // its slot empty.
 type attachmentSlot struct {
 	stored  *conversation.MessageAttachment
-	runtime agentdefinition.RuntimeAttachment
+	runtime agentturn.RuntimeAttachment
 	problem string
 }
 
@@ -178,12 +178,12 @@ func (s *Service) describeAttachment(
 	documentID pulid.ID,
 	fileName, contentType string,
 	tenant pagination.TenantInfo,
-) agentdefinition.RuntimeAttachment {
-	attachment := agentdefinition.RuntimeAttachment{
+) agentturn.RuntimeAttachment {
+	attachment := agentturn.RuntimeAttachment{
 		DocumentID:  documentID.String(),
 		FileName:    fileName,
 		ContentType: contentType,
-		Reading:     agentdefinition.AttachmentReadingPending,
+		Reading:     agentturn.AttachmentReadingPending,
 	}
 	if s.contents == nil {
 		return attachment
@@ -257,16 +257,16 @@ func (s *Service) earlierFileTexts(
 	return files
 }
 
-func readingOf(status documentcontent.Status) agentdefinition.AttachmentReading {
+func readingOf(status documentcontent.Status) agentturn.AttachmentReading {
 	switch status {
 	case documentcontent.StatusExtracted, documentcontent.StatusIndexed:
-		return agentdefinition.AttachmentReadingDone
+		return agentturn.AttachmentReadingDone
 	case documentcontent.StatusFailed:
-		return agentdefinition.AttachmentReadingFailed
+		return agentturn.AttachmentReadingFailed
 	case documentcontent.StatusPending, documentcontent.StatusExtracting:
-		return agentdefinition.AttachmentReadingPending
+		return agentturn.AttachmentReadingPending
 	default:
-		return agentdefinition.AttachmentReadingPending
+		return agentturn.AttachmentReadingPending
 	}
 }
 

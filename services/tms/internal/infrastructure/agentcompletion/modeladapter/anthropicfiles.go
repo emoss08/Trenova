@@ -10,7 +10,7 @@ import (
 
 	"github.com/anthropics/anthropic-sdk-go"
 	"github.com/anthropics/anthropic-sdk-go/packages/param"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmessage"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 )
 
@@ -94,7 +94,7 @@ func swapEntries(content string, sent []*MessageFile) string {
 	slices.SortFunc(ordered, func(a, b *MessageFile) int { return b.EntryStart - a.EntryStart })
 	for _, file := range ordered {
 		start, end := file.EntryStart, file.EntryEnd
-		lead := agentdefinition.AttachmentEntryLead(file.DocumentID)
+		lead := agentmessage.AttachmentEntryLead(file.DocumentID)
 		if start < 0 || end <= start || end > len(content) ||
 			!strings.HasPrefix(content[start:end], lead) {
 			continue

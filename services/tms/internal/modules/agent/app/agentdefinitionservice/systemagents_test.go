@@ -7,6 +7,9 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentinstructions"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreset"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttemplate"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -123,12 +126,12 @@ func TestEnsureSystem_CreatesTheAgentFromItsTemplateOnce(t *testing.T) {
 	assert.Equal(t, 1, store.inserted)
 	require.Len(t, audit.entries, 1, "the first use is audited, later ones are reads")
 
-	template := agentdefinition.TemplateImportAssistant
-	assert.Equal(t, template.Label(), first.Name)
+	template := agenttemplate.TemplateImportAssistant
+	assert.Equal(t, agenttemplate.Label(template), first.Name)
 	assert.Equal(t, template, first.Template)
-	assert.Equal(t, template.StarterTools(), first.ToolNames)
-	assert.Equal(t, template.StarterInstructions(), first.Instructions)
-	assert.Equal(t, template.StarterCeiling(), first.AutonomyCeiling)
+	assert.Equal(t, agentpreset.StarterTools(template), first.ToolNames)
+	assert.Equal(t, agentinstructions.StarterInstructions(template), first.Instructions)
+	assert.Equal(t, agentpreset.StarterCeiling(template), first.AutonomyCeiling)
 	assert.Equal(t, agentdefinition.TriggerChat, first.TriggerMode)
 	assert.Equal(t, agentdefinition.AccessEveryone, first.AccessMode)
 	assert.True(t, first.Enabled)
@@ -178,7 +181,7 @@ func TestEnsureSystem_ConcurrentFirstUsesShareOneAgent(t *testing.T) {
 func TestEnsureSystem_TakesAnotherNameWhenOneIsInUse(t *testing.T) {
 	t.Parallel()
 
-	label := agentdefinition.TemplateFormulaAssistant.Label()
+	label := agenttemplate.Label(agenttemplate.TemplateFormulaAssistant)
 	store := newSystemStore(label)
 	s := &Service{l: zap.NewNop(), repo: store, audit: &auditLog{}}
 

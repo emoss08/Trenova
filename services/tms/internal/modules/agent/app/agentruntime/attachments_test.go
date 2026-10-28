@@ -5,6 +5,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmessage"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -33,11 +35,11 @@ func TestOpenTurn_PutsTheFilesOnTheMessageTheyCameWith(t *testing.T) {
 		Definition: testDefinition(),
 		Actor:      testActor(),
 		Input:      "Here it is",
-		Context: agentdefinition.RuntimeContext{
-			Attachments: []agentdefinition.RuntimeAttachment{{
+		Context: agentturn.RuntimeContext{
+			Attachments: []agentturn.RuntimeAttachment{{
 				DocumentID: documentID,
 				FileName:   "rate_confirmation_ch_robinson.pdf",
-				Reading:    agentdefinition.AttachmentReadingDone,
+				Reading:    agentturn.AttachmentReadingDone,
 				Text:       "SHIPPER#1:   BEX Logistics-OH Consolidation   Pick Up Date:   08/02/22",
 			}},
 		},
@@ -178,16 +180,16 @@ func TestOpenTurn_CarriesEachFileAndWhereItsEntryStands(t *testing.T) {
 		Definition: definition,
 		Actor:      testActor(),
 		Input:      "Check these",
-		Context: agentdefinition.RuntimeContext{
+		Context: agentturn.RuntimeContext{
 			Timezone: "America/Chicago",
-			Attachments: []agentdefinition.RuntimeAttachment{
+			Attachments: []agentturn.RuntimeAttachment{
 				{
 					DocumentID:  pdf,
 					FileName:    "ratecon.pdf",
 					ContentType: "application/pdf",
 					FileSize:    48_213,
 					PageCount:   2,
-					Reading:     agentdefinition.AttachmentReadingDone,
+					Reading:     agentturn.AttachmentReadingDone,
 					Text:        "Linehaul $2,400.",
 				},
 				{
@@ -195,7 +197,7 @@ func TestOpenTurn_CarriesEachFileAndWhereItsEntryStands(t *testing.T) {
 					FileName:    "seal.png",
 					ContentType: "image/png",
 					FileSize:    912_004,
-					Reading:     agentdefinition.AttachmentReadingFailed,
+					Reading:     agentturn.AttachmentReadingFailed,
 				},
 			},
 		},
@@ -217,13 +219,13 @@ func TestOpenTurn_CarriesEachFileAndWhereItsEntryStands(t *testing.T) {
 		entry := asked.Content[file.EntryStart:file.EntryEnd]
 		assert.True(
 			t,
-			strings.HasPrefix(entry, agentdefinition.AttachmentEntryLead(file.DocumentID)),
+			strings.HasPrefix(entry, agentmessage.AttachmentEntryLead(file.DocumentID)),
 		)
 		assert.True(
 			t,
 			strings.HasPrefix(
 				file.NativeEntry,
-				agentdefinition.AttachmentEntryLead(file.DocumentID),
+				agentmessage.AttachmentEntryLead(file.DocumentID),
 			),
 		)
 	}
@@ -244,8 +246,8 @@ func TestOpenTurn_GivesADelegatedTaskNoFiles(t *testing.T) {
 		Actor:      testActor(),
 		Input:      "Summarize the rate",
 		Delegation: &agentruntimeports.Delegation{CallID: "call_1", StepScope: "scope"},
-		Context: agentdefinition.RuntimeContext{
-			Attachments: []agentdefinition.RuntimeAttachment{{
+		Context: agentturn.RuntimeContext{
+			Attachments: []agentturn.RuntimeAttachment{{
 				DocumentID:  pulid.MustNew("doc_").String(),
 				FileName:    "ratecon.pdf",
 				ContentType: "application/pdf",

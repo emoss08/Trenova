@@ -8,6 +8,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolpolicy"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentprompt"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/shared/hashutils"
@@ -16,7 +18,7 @@ import (
 )
 
 const (
-	fingerprintPromptVersion   = agentdefinition.PromptVersion
+	fingerprintPromptVersion   = agentprompt.PromptVersion
 	canonicalOrganizationName  = "Canonical organization"
 	canonicalBusinessUnitName  = "Canonical business unit"
 	canonicalTimezone          = "UTC"
@@ -143,8 +145,8 @@ func (s *Service) toolSpecHash(definition *agentdefinition.Definition, held []st
 	return hashutils.SHA256BytesHex(encoded)
 }
 
-func canonicalRuntimeContext(tools []agentdefinition.ToolSummary) agentdefinition.RuntimeContext {
-	return agentdefinition.RuntimeContext{
+func canonicalRuntimeContext(tools []agentturn.ToolSummary) agentturn.RuntimeContext {
+	return agentturn.RuntimeContext{
 		OrganizationName: canonicalOrganizationName,
 		BusinessUnitName: canonicalBusinessUnitName,
 		Timezone:         canonicalTimezone,
@@ -167,7 +169,7 @@ func (s *Service) Fingerprint(
 	slices.Sort(sorted)
 	sorted = slices.Compact(sorted)
 
-	prompt := definition.BuildSystemPrompt(
+	prompt := agentprompt.BuildSystemPrompt(definition,
 		canonicalRuntimeContext(s.summarize(definition, held)),
 	)
 

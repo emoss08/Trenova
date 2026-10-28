@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
@@ -58,8 +59,8 @@ type toollessRuntime struct {
 	agentruntimeports.AgentRuntime
 }
 
-func (toollessRuntime) ToolSummaries(*agentdefinition.Definition) []agentdefinition.ToolSummary {
-	return []agentdefinition.ToolSummary{}
+func (toollessRuntime) ToolSummaries(*agentdefinition.Definition) []agentturn.ToolSummary {
+	return []agentturn.ToolSummary{}
 }
 
 func (toollessRuntime) PermittedTools(

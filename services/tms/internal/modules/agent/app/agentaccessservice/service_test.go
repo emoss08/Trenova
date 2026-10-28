@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -528,10 +529,10 @@ type summarizingRuntime struct {
 
 func (r summarizingRuntime) ToolSummaries(
 	*agentdefinition.Definition,
-) []agentdefinition.ToolSummary {
-	out := make([]agentdefinition.ToolSummary, 0, len(r.names))
+) []agentturn.ToolSummary {
+	out := make([]agentturn.ToolSummary, 0, len(r.names))
 	for _, name := range r.names {
-		out = append(out, agentdefinition.ToolSummary{Name: name})
+		out = append(out, agentturn.ToolSummary{Name: name})
 	}
 
 	return out

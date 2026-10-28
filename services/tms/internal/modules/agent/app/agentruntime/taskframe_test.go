@@ -3,7 +3,7 @@ package agentruntime
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttaskframe"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -22,7 +22,7 @@ func TestOpenTurn_RanksTheOpeningToolsOnTheWrittenNeed(t *testing.T) {
 		"the bare follow-up names nothing a tool covers")
 
 	framed := *vague
-	framed.Context.Frame = agentdefinition.ChatFrame(
+	framed.Context.Frame = agenttaskframe.ChatFrame(
 		"List the trailers whose inspection is due.",
 		"list trailers by inspection date",
 	)

@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttemplate"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/briefing"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
@@ -62,12 +63,12 @@ func queueRefs(t *testing.T) *deskSeedRefs {
 		{ID: pulid.MustNew("wrk_"), FirstName: "Dana", LastName: "Ortiz"},
 		{ID: pulid.MustNew("wrk_"), FirstName: "Tom", LastName: "Reyes"},
 	}
-	refs.definitions = map[agentdefinition.Template]*agentdefinition.Definition{}
-	for _, template := range []agentdefinition.Template{
-		agentdefinition.TemplateCarrierRiskDesk,
-		agentdefinition.TemplateDetentionDesk,
-		agentdefinition.TemplateCredentialDesk,
-		agentdefinition.TemplateLoadMonitor,
+	refs.definitions = map[agenttemplate.Template]*agentdefinition.Definition{}
+	for _, template := range []agenttemplate.Template{
+		agenttemplate.TemplateCarrierRiskDesk,
+		agenttemplate.TemplateDetentionDesk,
+		agenttemplate.TemplateCredentialDesk,
+		agenttemplate.TemplateLoadMonitor,
 	} {
 		refs.definitions[template] = &agentdefinition.Definition{
 			ID:       pulid.MustNew("adef_"),

@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentreach"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -76,7 +77,7 @@ type RoleAgents struct {
 // it is granted the agent now.
 type AgentAudienceRole struct {
 	Role             *permission.Role
-	Coverage         agentdefinition.AudienceCoverage
+	Coverage         agentreach.AudienceCoverage
 	MissingResources []permission.Resource
 	Granted          bool
 }

@@ -7,6 +7,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentlint"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttemplate"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentversion"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -18,7 +20,7 @@ type SaveAgentDefinitionRequest struct {
 	ID                     pulid.ID
 	Name                   string
 	Description            string
-	Template               agentdefinition.Template
+	Template               agenttemplate.Template
 	Instructions           string
 	Guardrails             []string
 	ToolNames              []string
@@ -74,7 +76,7 @@ type PatchAgentDefinitionRequest struct {
 }
 
 type AgentTemplateDescriptor struct {
-	Template             agentdefinition.Template          `json:"template"`
+	Template             agenttemplate.Template            `json:"template"`
 	Label                string                            `json:"label"`
 	Description          string                            `json:"description"`
 	StarterInstructions  string                            `json:"starterInstructions"`
@@ -180,7 +182,7 @@ type AgentDefinitionService interface {
 	ListVersions(
 		ctx context.Context,
 		req *ListAgentDefinitionVersionsRequest,
-	) ([]*agentdefinition.DefinitionVersion, error)
+	) ([]*agentversion.DefinitionVersion, error)
 	RestoreVersion(
 		ctx context.Context,
 		req *GetAgentDefinitionVersionRequest,

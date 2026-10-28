@@ -7,11 +7,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenttrackingports"
-
 	"github.com/emoss08/trenova/internal/modules/agent/app/subjectaccess"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/tractorports"
@@ -23,6 +21,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/app/detentionservice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenttrackingports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/telematicsports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -83,7 +82,7 @@ type kindRead struct {
 	now      int64
 }
 
-type kindReader func(ctx context.Context, read *kindRead) (map[pulid.ID]*agentdefinition.RuntimeAnchor, error)
+type kindReader func(ctx context.Context, read *kindRead) (map[pulid.ID]*agentturn.RuntimeAnchor, error)
 
 type Service struct {
 	logger      *zap.Logger
@@ -161,7 +160,7 @@ type kindBatch struct {
 func (s *Service) Anchor(
 	ctx context.Context,
 	req *agentports.RecordAnchorRequest,
-) []agentdefinition.RuntimeAnchor {
+) []agentturn.RuntimeAnchor {
 	if req == nil || len(req.Records) == 0 {
 		return nil
 	}
@@ -174,7 +173,7 @@ func (s *Service) Anchor(
 	zone, _ := timeutils.ResolveZone(timezone)
 	now := s.now()
 
-	read := make(map[pulid.ID]*agentdefinition.RuntimeAnchor, len(anchors))
+	read := make(map[pulid.ID]*agentturn.RuntimeAnchor, len(anchors))
 	notes := make(map[pulid.ID]string, len(anchors))
 	var (
 		mu sync.Mutex
@@ -245,7 +244,7 @@ func (s *Service) readBatch(
 	batch *kindBatch,
 	read *kindRead,
 	actor *permissionports.RequestActor,
-) (map[pulid.ID]*agentdefinition.RuntimeAnchor, string) {
+) (map[pulid.ID]*agentturn.RuntimeAnchor, string) {
 	allowed, err := s.mayRead(ctx, actor, batch.kind)
 	if err != nil {
 		s.logger.Warn("could not check access to records in play",
@@ -268,8 +267,8 @@ func (s *Service) readBatch(
 
 func (s *Service) plan(
 	records []agent.EntityRef,
-) ([]agentdefinition.RuntimeAnchor, []*kindBatch) {
-	anchors := make([]agentdefinition.RuntimeAnchor, 0, len(records))
+) ([]agentturn.RuntimeAnchor, []*kindBatch) {
+	anchors := make([]agentturn.RuntimeAnchor, 0, len(records))
 	batches := make([]*kindBatch, 0, 4)
 	seen := make(map[string]struct{}, len(records))
 	for _, record := range records {
@@ -286,7 +285,7 @@ func (s *Service) plan(
 			continue
 		}
 		seen[id] = struct{}{}
-		anchors = append(anchors, agentdefinition.RuntimeAnchor{
+		anchors = append(anchors, agentturn.RuntimeAnchor{
 			Kind: string(kind), ID: id, Label: record.Label,
 		})
 		if _, readable := s.readers[kind]; !readable {

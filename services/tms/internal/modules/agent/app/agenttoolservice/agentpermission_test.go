@@ -8,6 +8,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentquerytoolservice"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreset"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttemplate"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/testutil/providertest"
@@ -54,15 +56,15 @@ func toolPermissions(t *testing.T) map[string]toolPermission {
 // backgroundTools are the tools the templates that run without a person
 // hold — their starters and the core tools every agent carries — which is the
 // set an agent principal has to be able to call.
-func backgroundTools(t *testing.T) map[string][]agentdefinition.Template {
+func backgroundTools(t *testing.T) map[string][]agenttemplate.Template {
 	t.Helper()
 
-	out := map[string][]agentdefinition.Template{}
-	for _, template := range agentdefinition.AllTemplates() {
-		if template.StarterTrigger() == agentdefinition.TriggerChat {
+	out := map[string][]agenttemplate.Template{}
+	for _, template := range agenttemplate.AllTemplates() {
+		if agentpreset.StarterTrigger(template) == agentdefinition.TriggerChat {
 			continue
 		}
-		for _, tool := range template.StarterTools() {
+		for _, tool := range agentpreset.StarterTools(template) {
 			out[tool] = append(out[tool], template)
 		}
 		for _, tool := range agentdefinition.CoreTools() {

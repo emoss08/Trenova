@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentversion"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/editconflict"
@@ -32,7 +33,7 @@ func (s *Service) versioned(
 		}
 		if err = s.versions.Create(
 			ctx,
-			agentdefinition.NewVersion(saved, before, author),
+			agentversion.NewVersion(saved, before, author),
 		); err != nil {
 			return nil, err
 		}
@@ -110,7 +111,7 @@ func (s *Service) editConflict(ctx context.Context, req *conflictRequest) error 
 		s.l.Warn("could not read the version the person loaded", zap.Error(err))
 	}
 	if loaded != nil {
-		detail.Changes = agentdefinition.Changes(loaded.Snapshot, current)
+		detail.Changes = agentversion.Changes(loaded.Snapshot, current)
 	}
 
 	return editconflict.Error(detail, req.cause)
@@ -119,7 +120,7 @@ func (s *Service) editConflict(ctx context.Context, req *conflictRequest) error 
 func (s *Service) ListVersions(
 	ctx context.Context,
 	req *agentdefinitionports.ListAgentDefinitionVersionsRequest,
-) ([]*agentdefinition.DefinitionVersion, error) {
+) ([]*agentversion.DefinitionVersion, error) {
 	if _, err := s.repo.GetByID(ctx, agentdefinitionports.GetAgentDefinitionByIDRequest{
 		ID:         req.AgentDefinitionID,
 		TenantInfo: req.TenantInfo,

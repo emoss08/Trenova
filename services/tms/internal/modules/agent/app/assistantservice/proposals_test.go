@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/proposalrecorder"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttemplate"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
@@ -226,7 +227,7 @@ func proposalTestParams(
 		Definition: &agentdefinition.Definition{
 			ID:              pulid.MustNew("agd_"),
 			Name:            "Dispatch helper",
-			Template:        agentdefinition.TemplateDispatchAssistant,
+			Template:        agenttemplate.TemplateDispatchAssistant,
 			AutonomyCeiling: agent.TierPropose,
 			Version:         3,
 		},

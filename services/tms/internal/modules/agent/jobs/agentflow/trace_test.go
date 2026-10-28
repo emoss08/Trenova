@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace/aitracetest"
 	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
@@ -82,7 +82,7 @@ func delegateInput(t *testing.T) *OpenDelegateInput {
 		Run: rc,
 		Call: agentruntime.DelegateCall{
 			Call:     llmports.ToolCall{ID: "call_task_7", Name: "delegate_task"},
-			Delegate: agentdefinition.RuntimeDelegate{ID: delegate.ID, Name: delegate.Name},
+			Delegate: agentturn.RuntimeDelegate{ID: delegate.ID, Name: delegate.Name},
 			Task:     "Find load 12345.",
 		},
 	}

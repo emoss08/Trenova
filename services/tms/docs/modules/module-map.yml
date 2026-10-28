@@ -824,10 +824,24 @@ modules:
       - agentdefinition
       - agentdryrun
       - agentextension
+      - agentinstructions
       - agentlint
+      - agentmark
+      - agentmemoryprompt
+      - agentmessage
+      - agentpageprompt
+      - agentpreset
+      - agentprompt
       - agentquality
+      - agentreach
       - agentroster
       - agentshadow
+      - agentstarter
+      - agenttaskframe
+      - agenttemplate
+      - agenttestprompt
+      - agentturn
+      - agentversion
       - agentwait
       - aianalytics
       - aiaudit

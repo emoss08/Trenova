@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
@@ -70,7 +71,7 @@ func (s *Service) showAttachments(
 	thread *conversation.Thread,
 	actor *permissionports.RequestActor,
 	tenant pagination.TenantInfo,
-	attachments []agentdefinition.RuntimeAttachment,
+	attachments []agentturn.RuntimeAttachment,
 ) {
 	if len(attachments) == 0 || thread.Origin.AnswersInline() {
 		return

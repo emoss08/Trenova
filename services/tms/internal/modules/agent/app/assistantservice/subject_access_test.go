@@ -6,6 +6,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttemplate"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -76,10 +78,10 @@ func (r *recordingSubjects) Describe(
 	_ pagination.TenantInfo,
 	subjectType agent.SubjectType,
 	subjectID pulid.ID,
-) (*agentdefinition.RuntimeSubject, error) {
+) (*agentturn.RuntimeSubject, error) {
 	r.described++
 
-	return &agentdefinition.RuntimeSubject{
+	return &agentturn.RuntimeSubject{
 		Type:  subjectType,
 		ID:    subjectID.String(),
 		Label: "Driver Ada Lovelace",
@@ -166,7 +168,7 @@ func TestStartThread_NeedsNoGrantWithoutARecord(t *testing.T) {
 func TestStartThread_RefusesAnAgentThatRunsOnItsOwn(t *testing.T) {
 	t.Parallel()
 
-	desk := chatDefinition("Intake desk", agentdefinition.TemplateIntakeDesk)
+	desk := chatDefinition("Intake desk", agenttemplate.TemplateIntakeDesk)
 	desk.TriggerMode = agentdefinition.TriggerEvent
 	svc, conversations, _ := subjectService(desk)
 

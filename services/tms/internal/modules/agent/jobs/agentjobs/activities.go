@@ -17,6 +17,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/watchtowersources"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmessage"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentprompt"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttaskframe"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentwait"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow"
@@ -51,7 +55,7 @@ import (
 
 const (
 	maxSummaryChars = 2000
-	promptVersion   = agentdefinition.PromptVersion
+	promptVersion   = agentprompt.PromptVersion
 )
 
 type ActivitiesParams struct {
@@ -243,7 +247,7 @@ func (a *Activities) runRequest(
 	ctx context.Context,
 	payload *agentcontract.AgentRunPayload,
 	definition *agentdefinition.Definition,
-	subject *agentdefinition.RuntimeSubject,
+	subject *agentturn.RuntimeSubject,
 ) (*agentruntimeports.RunRequest, error) {
 	tenant := payload.TenantInfo()
 	actor, err := a.unattendedActor(ctx, tenant, definition)
@@ -278,7 +282,7 @@ func (a *Activities) runRequest(
 	if err != nil {
 		return nil, fmt.Errorf("build runtime context: %w", err)
 	}
-	runtimeContext.Frame = agentdefinition.BackgroundFrame(
+	runtimeContext.Frame = agenttaskframe.BackgroundFrame(
 		payload.Trigger,
 		payload.EventKind,
 		definition.Template,
@@ -483,7 +487,7 @@ func (a *Activities) recordTrajectory(
 type settleRunParams struct {
 	Payload    *agentcontract.AgentRunPayload
 	Definition *agentdefinition.Definition
-	Subject    *agentdefinition.RuntimeSubject
+	Subject    *agentturn.RuntimeSubject
 	Outcome    *agentruntimeports.RunResult
 	// Failed says the loop did not finish. What it proposed is still filed,
 	// but the run is not left awaiting a decision it will never hear.
@@ -839,13 +843,13 @@ func (a *Activities) resumedWait(
 
 func backgroundInput(
 	payload *agentcontract.AgentRunPayload,
-	subject *agentdefinition.RuntimeSubject,
+	subject *agentturn.RuntimeSubject,
 ) string {
-	return agentdefinition.BackgroundRunInput(payload.Trigger, payload.EventKind, subject)
+	return agentmessage.BackgroundRunInput(payload.Trigger, payload.EventKind, subject)
 }
 
 func subjectEvidence(
-	subject *agentdefinition.RuntimeSubject,
+	subject *agentturn.RuntimeSubject,
 	runID pulid.ID,
 ) proposalrecorder.EvidenceFunc {
 	return func(action agentruntimeports.PendingAction, _ pulid.ID) []agent.EvidenceRef {
@@ -868,7 +872,7 @@ func subjectEvidence(
 
 func hashSubject(
 	definition *agentdefinition.Definition,
-	subject *agentdefinition.RuntimeSubject,
+	subject *agentturn.RuntimeSubject,
 ) string {
 	encoded, err := sonic.Marshal(map[string]any{
 		"definition": definition.ID,
@@ -1040,7 +1044,7 @@ type recordProposalsParams struct {
 	Run        *agent.AgentRun
 	Actions    []agentruntimeports.PendingAction
 	PlanTitle  string
-	Subject    *agentdefinition.RuntimeSubject
+	Subject    *agentturn.RuntimeSubject
 	TenantInfo pagination.TenantInfo
 	Taint      *agent.RunTaint
 }

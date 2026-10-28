@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttemplate"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
@@ -607,20 +608,20 @@ func TestHandOff_SuggestsTheStarterThatListensForTheEvent(t *testing.T) {
 	cases := []struct {
 		event    agent.EventKind
 		source   watchtower.SourceKind
-		template agentdefinition.Template
+		template agenttemplate.Template
 	}{
 		{agent.EventShipmentCreated, watchtower.SourceServiceFailure,
-			agentdefinition.TemplateLoadEntryCheck},
+			agenttemplate.TemplateLoadEntryCheck},
 		{agent.EventShipmentMoveUnassigned, watchtower.SourceMoveCoverage,
-			agentdefinition.TemplateDispatchAssignment},
+			agenttemplate.TemplateDispatchAssignment},
 		{agent.EventServiceFailureDetected, watchtower.SourceServiceFailure,
-			agentdefinition.TemplateServiceFailureDesk},
+			agenttemplate.TemplateServiceFailureDesk},
 		{agent.EventInsightDetected, watchtower.SourceInsight,
-			agentdefinition.TemplateInsightAnalyst},
+			agenttemplate.TemplateInsightAnalyst},
 		{agent.EventEDIFileQuarantined, watchtower.SourceEDIInboundQuarantined,
-			agentdefinition.TemplateEDIDesk},
+			agenttemplate.TemplateEDIDesk},
 		{agent.EventBillingQueueItemOnHold, watchtower.SourceBillingException,
-			agentdefinition.TemplateBillingException},
+			agenttemplate.TemplateBillingException},
 	}
 
 	for _, tc := range cases {

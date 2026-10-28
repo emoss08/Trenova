@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentwait"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
@@ -108,7 +109,7 @@ func TestShowAttachments_ShowsWhatWasReadOffAnAttachedFile(t *testing.T) {
 	documentID := pulid.MustNew("doc_")
 	reader := &draftReader{draft: readDraft(documentID)}
 	svc, repo := cardService(reader)
-	attachments := []agentdefinition.RuntimeAttachment{{DocumentID: documentID.String()}}
+	attachments := []agentturn.RuntimeAttachment{{DocumentID: documentID.String()}}
 
 	svc.showAttachments(
 		t.Context(),
@@ -135,7 +136,7 @@ func TestShowAttachments_ShowsNothingUntilSomethingIsRead(t *testing.T) {
 	draft := readDraft(documentID)
 	draft["fields"] = map[string]any{}
 	svc, repo := cardService(&draftReader{draft: draft})
-	attachments := []agentdefinition.RuntimeAttachment{{DocumentID: documentID.String()}}
+	attachments := []agentturn.RuntimeAttachment{{DocumentID: documentID.String()}}
 
 	svc.showAttachments(
 		t.Context(),
@@ -153,7 +154,7 @@ func TestShowAttachments_AFileWithNoDraftShowsNoCard(t *testing.T) {
 	t.Parallel()
 
 	svc, repo := cardService(&draftReader{})
-	attachments := []agentdefinition.RuntimeAttachment{{DocumentID: pulid.MustNew("doc_").String()}}
+	attachments := []agentturn.RuntimeAttachment{{DocumentID: pulid.MustNew("doc_").String()}}
 
 	svc.showAttachments(
 		t.Context(),
@@ -176,7 +177,7 @@ func TestShowAttachments_KeepsNoCardWhereTheAnswerIsReadAlone(t *testing.T) {
 	thread.Origin = conversation.ThreadOriginAsk
 
 	svc.showAttachments(t.Context(), thread, testActor(), testActor().TenantInfo(),
-		[]agentdefinition.RuntimeAttachment{{DocumentID: documentID.String()}})
+		[]agentturn.RuntimeAttachment{{DocumentID: documentID.String()}})
 
 	assert.Empty(t, repo.upserts)
 }

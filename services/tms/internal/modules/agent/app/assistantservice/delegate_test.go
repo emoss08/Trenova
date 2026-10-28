@@ -9,6 +9,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmark"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
@@ -188,7 +190,7 @@ func newDelegateFixture() *delegateFixture {
 			},
 			Call: agentruntime.DelegateCall{
 				Call:      llmports.ToolCall{ID: "call_1", Name: "delegate_task"},
-				Delegate:  agentdefinition.RuntimeDelegate{ID: delegate.ID, Name: delegate.Name},
+				Delegate:  agentturn.RuntimeDelegate{ID: delegate.ID, Name: delegate.Name},
 				Task:      "Create the on-time report and return its id.",
 				StepScope: "scope-1",
 			},
@@ -464,8 +466,8 @@ func TestNameDelegatedSteps_ServesTheDelegatesMarkInOneQuery(t *testing.T) {
 	t.Parallel()
 
 	f := newDelegateFixture()
-	f.delegate.Icon = agentdefinition.IconReceipt
-	f.delegate.Accent = agentdefinition.AccentTeal
+	f.delegate.Icon = agentmark.IconReceipt
+	f.delegate.Accent = agentmark.AccentTeal
 	plain := &agentdefinition.Definition{ID: pulid.MustNew("agdef_"), Name: "Plain Agent"}
 	deleted := pulid.MustNew("agdef_")
 	definitions := f.svc.definitions.(*delegateDefinitions)
@@ -504,8 +506,8 @@ func TestNameDelegatedSteps_ServesTheDelegatesMarkInOneQuery(t *testing.T) {
 				DelegateCallID: "call_3",
 				AgentID:        deleted,
 				AgentName:      "Gone Agent",
-				Icon:           agentdefinition.IconTruck,
-				Accent:         agentdefinition.AccentRose,
+				Icon:           agentmark.IconTruck,
+				Accent:         agentmark.AccentRose,
 				Status:         conversation.DelegateStatusCompleted,
 			},
 		},
@@ -517,19 +519,19 @@ func TestNameDelegatedSteps_ServesTheDelegatesMarkInOneQuery(t *testing.T) {
 
 	assert.Empty(t, messages[0].AgentName, "the conversation's own messages are left alone")
 	assert.Equal(t, "Report Builder", messages[1].AgentName)
-	assert.Equal(t, agentdefinition.IconReceipt, messages[1].AgentIcon)
-	assert.Equal(t, agentdefinition.AccentTeal, messages[1].AgentAccent)
+	assert.Equal(t, agentmark.IconReceipt, messages[1].AgentIcon)
+	assert.Equal(t, agentmark.AccentTeal, messages[1].AgentAccent)
 
 	assert.Equal(t, "Plain Agent", messages[2].AgentName)
 	assert.Empty(t, messages[2].AgentIcon, "no icon of its own: the reader draws its initials")
 	assert.Equal(t, plain.ResolvedAccent(), messages[2].AgentAccent)
 
-	assert.Equal(t, agentdefinition.IconReceipt, messages[3].DelegateReport.Icon)
-	assert.Equal(t, agentdefinition.AccentTeal, messages[3].DelegateReport.Accent)
+	assert.Equal(t, agentmark.IconReceipt, messages[3].DelegateReport.Icon)
+	assert.Equal(t, agentmark.AccentTeal, messages[3].DelegateReport.Accent)
 
-	assert.Equal(t, agentdefinition.IconTruck, messages[4].DelegateReport.Icon,
+	assert.Equal(t, agentmark.IconTruck, messages[4].DelegateReport.Icon,
 		"a deleted agent keeps the mark the turn recorded")
-	assert.Equal(t, agentdefinition.AccentRose, messages[4].DelegateReport.Accent)
+	assert.Equal(t, agentmark.AccentRose, messages[4].DelegateReport.Accent)
 }
 
 type capturingContexts struct {
@@ -539,10 +541,10 @@ type capturingContexts struct {
 func (c *capturingContexts) Build(
 	_ context.Context,
 	req *agentruntimeports.RuntimeContextRequest,
-) (agentdefinition.RuntimeContext, error) {
+) (agentturn.RuntimeContext, error) {
 	c.asked = req
 
-	return agentdefinition.RuntimeContext{
+	return agentturn.RuntimeContext{
 		Trigger:          req.Trigger,
 		DelegatedBy:      req.DelegatedBy,
 		DelegatorRecords: req.DelegatorRecords,

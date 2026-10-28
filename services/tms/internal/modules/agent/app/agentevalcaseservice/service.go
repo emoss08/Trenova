@@ -7,6 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentprompt"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aifeedback"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
@@ -34,7 +35,7 @@ import (
 	"go.uber.org/zap"
 )
 
-const promptVersion = agentdefinition.PromptVersion
+const promptVersion = agentprompt.PromptVersion
 
 type caseStore interface {
 	Create(ctx context.Context, entity *agentquality.EvalCase) (*agentquality.EvalCase, error)

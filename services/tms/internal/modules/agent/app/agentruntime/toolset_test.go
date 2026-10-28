@@ -9,6 +9,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolcatalog"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreset"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentprompt"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttemplate"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
@@ -191,7 +195,7 @@ func TestNewToolSet_PreselectsOnTheOperatorsWords(t *testing.T) {
 func TestNewToolSet_AFormulaAssistantAlwaysHoldsItsFormulaTools(t *testing.T) {
 	t.Parallel()
 
-	standing := agentdefinition.TemplateFormulaAssistant.StandingTools()
+	standing := agentpreset.StandingTools(agenttemplate.TemplateFormulaAssistant)
 	require.NotEmpty(t, standing)
 	formulaTools := make([]*agenttest.StubQueryTool, 0, len(standing))
 	for _, name := range standing {
@@ -199,7 +203,7 @@ func TestNewToolSet_AFormulaAssistantAlwaysHoldsItsFormulaTools(t *testing.T) {
 	}
 	service, names := wideRuntime(t, formulaTools...)
 	definition := testDefinition(names...)
-	definition.Template = agentdefinition.TemplateFormulaAssistant
+	definition.Template = agenttemplate.TemplateFormulaAssistant
 
 	set := service.newToolSet(
 		t.Context(),
@@ -339,11 +343,11 @@ func TestSystemPrompt_SaysTheToolListIsPartialWhenDisclosed(t *testing.T) {
 	summaries := service.ToolSummaries(definition)
 	require.NotEmpty(t, summaries)
 
-	disclosed := definition.BuildSystemPrompt(runtimeContextWith(summaries, true))
+	disclosed := agentprompt.BuildSystemPrompt(definition, runtimeContextWith(summaries, true))
 	assert.Contains(t, disclosed, findToolsName)
 	assert.Contains(t, disclosed, "call find_tools before you tell")
 
-	whole := definition.BuildSystemPrompt(runtimeContextWith(summaries, false))
+	whole := agentprompt.BuildSystemPrompt(definition, runtimeContextWith(summaries, false))
 	assert.NotContains(t, whole, findToolsName)
 	assert.Contains(t, whole, "are the only ones you have")
 }
@@ -352,7 +356,7 @@ func TestSystemPrompt_DisclosedSectionNamesAreasNotTools(t *testing.T) {
 	t.Parallel()
 
 	definition := testDefinition("report_list", "shipment_get")
-	summaries := []agentdefinition.ToolSummary{
+	summaries := []agentturn.ToolSummary{
 		{
 			Name:        "report_list",
 			Description: "List saved reports by name. Filter by owner, schedule or last run.",
@@ -366,12 +370,12 @@ func TestSystemPrompt_DisclosedSectionNamesAreasNotTools(t *testing.T) {
 		},
 	}
 	rc := runtimeContextWith(summaries, true)
-	rc.ToolMap = []agentdefinition.ToolNamespace{
+	rc.ToolMap = []agentturn.ToolNamespace{
 		{Name: "Reports", Covers: []string{"report"}, Tools: 1},
 		{Name: "Shipments", Covers: []string{"shipment"}, Tools: 1},
 	}
 
-	parts := definition.BuildSystemPromptParts(&rc)
+	parts := agentprompt.BuildSystemPromptParts(definition, &rc)
 
 	assert.Contains(t, parts.Stable, "What find_tools can load, by area of Trenova:")
 	assert.Contains(t, parts.Stable, "- Reports (1 tool): report")
@@ -381,10 +385,10 @@ func TestSystemPrompt_DisclosedSectionNamesAreasNotTools(t *testing.T) {
 }
 
 func runtimeContextWith(
-	summaries []agentdefinition.ToolSummary,
+	summaries []agentturn.ToolSummary,
 	disclosed bool,
-) agentdefinition.RuntimeContext {
-	return agentdefinition.RuntimeContext{Tools: summaries, ToolsDisclosed: disclosed}
+) agentturn.RuntimeContext {
+	return agentturn.RuntimeContext{Tools: summaries, ToolsDisclosed: disclosed}
 }
 
 // Asked four times whether a reports tool existed, the assistant said no four
@@ -1022,7 +1026,7 @@ func TestResolveFind_AStrongNewMatchNeedsNoDelegate(t *testing.T) {
 			definition: testDefinition(held...),
 			actor:      testActor(),
 			input:      "hello",
-			delegates: []agentdefinition.RuntimeDelegate{{
+			delegates: []agentturn.RuntimeDelegate{{
 				ID:    pulid.MustNew("agdef_"),
 				Name:  "Operations",
 				Tools: []string{"shipment_list"},

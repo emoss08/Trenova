@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/productguideports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
@@ -126,7 +127,7 @@ func TestContextBuilder_DescribesThePageFromTheGuide(t *testing.T) {
 		Definition: testDefinition(),
 		Actor:      testActor(),
 		Trigger:    agent.RunTriggerChat,
-		Page:       &agentdefinition.PageContext{Path: "/billing/invoices?item=inv_1"},
+		Page:       &agentturn.PageContext{Path: "/billing/invoices?item=inv_1"},
 	})
 	require.NoError(t, err)
 

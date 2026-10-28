@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentprompt"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow/agentflowcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentjobs/agentcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
@@ -39,7 +40,7 @@ const (
 	SystemKeyBillingException   = "billing_exception"
 	SystemKeyDispatchAssignment = "dispatch_assignment"
 
-	definitionPromptVersion = agentdefinition.PromptVersion
+	definitionPromptVersion = agentprompt.PromptVersion
 	inlinePromptVersion     = "inline-v1"
 	provisionalHash         = "pending"
 	workflowIDPrefix        = "agent-run-"

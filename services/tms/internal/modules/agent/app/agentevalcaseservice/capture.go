@@ -6,8 +6,9 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmessage"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aifeedback"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
@@ -377,7 +378,7 @@ func (s *Service) backgroundInput(
 	tenantInfo pagination.TenantInfo,
 	run *agent.AgentRun,
 ) string {
-	var subject *agentdefinition.RuntimeSubject
+	var subject *agentturn.RuntimeSubject
 	if s.subjects != nil {
 		described, err := s.subjects.Describe(ctx, tenantInfo, run.SubjectType, run.SubjectID)
 		if err != nil {
@@ -390,14 +391,14 @@ func (s *Service) backgroundInput(
 		}
 	}
 	if subject == nil {
-		subject = &agentdefinition.RuntimeSubject{
+		subject = &agentturn.RuntimeSubject{
 			Type:  run.SubjectType,
 			ID:    run.SubjectID.String(),
 			Label: string(run.SubjectType),
 		}
 	}
 
-	return agentdefinition.BackgroundRunInput(run.Trigger, "", subject)
+	return agentmessage.BackgroundRunInput(run.Trigger, "", subject)
 }
 
 func (s *Service) freezeChat(

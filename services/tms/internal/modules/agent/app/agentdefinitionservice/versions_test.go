@@ -5,8 +5,9 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentversion"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/pkg/dberror"
@@ -19,11 +20,11 @@ import (
 )
 
 type versionStore struct {
-	created  []*agentdefinition.DefinitionVersion
-	byNumber map[int64]*agentdefinition.DefinitionVersion
+	created  []*agentversion.DefinitionVersion
+	byNumber map[int64]*agentversion.DefinitionVersion
 }
 
-func (v *versionStore) Create(_ context.Context, version *agentdefinition.DefinitionVersion) error {
+func (v *versionStore) Create(_ context.Context, version *agentversion.DefinitionVersion) error {
 	v.created = append(v.created, version)
 	return nil
 }
@@ -31,14 +32,14 @@ func (v *versionStore) Create(_ context.Context, version *agentdefinition.Defini
 func (v *versionStore) List(
 	context.Context,
 	*agentdefinitionports.ListAgentDefinitionVersionsRequest,
-) ([]*agentdefinition.DefinitionVersion, error) {
+) ([]*agentversion.DefinitionVersion, error) {
 	return v.created, nil
 }
 
 func (v *versionStore) Get(
 	_ context.Context,
 	req *agentdefinitionports.GetAgentDefinitionVersionRequest,
-) (*agentdefinition.DefinitionVersion, error) {
+) (*agentversion.DefinitionVersion, error) {
 	version, ok := v.byNumber[req.Version]
 	if !ok {
 		return nil, errortypes.NewNotFoundError("Agent version")
@@ -49,8 +50,8 @@ func (v *versionStore) Get(
 func (v *versionStore) LatestAt(
 	_ context.Context,
 	req *agentdefinitionports.GetAgentDefinitionVersionAtRequest,
-) (*agentdefinition.DefinitionVersion, error) {
-	var best *agentdefinition.DefinitionVersion
+) (*agentversion.DefinitionVersion, error) {
+	var best *agentversion.DefinitionVersion
 	for number, version := range v.byNumber {
 		if number <= req.Version && (best == nil || number > best.Version) {
 			best = version
@@ -122,7 +123,7 @@ func TestEditConflictSaysWhoSavedWhatSinceTheLoadedVersion(t *testing.T) {
 	svc := &Service{
 		l:    zap.NewNop(),
 		repo: &stubDefinitionRepo{existing: current},
-		versions: &versionStore{byNumber: map[int64]*agentdefinition.DefinitionVersion{
+		versions: &versionStore{byNumber: map[int64]*agentversion.DefinitionVersion{
 			4: {Version: 4, Snapshot: loaded},
 			5: {Version: 5, Snapshot: current, Author: other},
 		}},
@@ -171,16 +172,19 @@ func TestRestoreVersionIsADraftOnTheCurrentVersion(t *testing.T) {
 	svc := &Service{
 		l:    zap.NewNop(),
 		repo: &stubDefinitionRepo{existing: current},
-		versions: &versionStore{byNumber: map[int64]*agentdefinition.DefinitionVersion{
+		versions: &versionStore{byNumber: map[int64]*agentversion.DefinitionVersion{
 			2: {Version: 2, Snapshot: earlier},
 		}},
 	}
 
-	draft, err := svc.RestoreVersion(t.Context(), &agentdefinitionports.GetAgentDefinitionVersionRequest{
-		TenantInfo:        testTenant(),
-		AgentDefinitionID: current.ID,
-		Version:           2,
-	})
+	draft, err := svc.RestoreVersion(
+		t.Context(),
+		&agentdefinitionports.GetAgentDefinitionVersionRequest{
+			TenantInfo:        testTenant(),
+			AgentDefinitionID: current.ID,
+			Version:           2,
+		},
+	)
 
 	require.NoError(t, err)
 	assert.Equal(t, "Earlier instructions.", draft.Instructions)

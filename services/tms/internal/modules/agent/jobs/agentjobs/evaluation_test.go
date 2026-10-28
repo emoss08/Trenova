@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentjobs/agentcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
@@ -150,10 +151,10 @@ type recordingContexts struct {
 func (c *recordingContexts) Build(
 	_ context.Context,
 	req *agentruntimeports.RuntimeContextRequest,
-) (agentdefinition.RuntimeContext, error) {
+) (agentturn.RuntimeContext, error) {
 	c.requests = append(c.requests, req)
 
-	return agentdefinition.RuntimeContext{Timezone: "America/Chicago"}, nil
+	return agentturn.RuntimeContext{Timezone: "America/Chicago"}, nil
 }
 
 type replayWorld struct {

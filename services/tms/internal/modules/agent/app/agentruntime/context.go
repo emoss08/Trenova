@@ -8,6 +8,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentprofileports"
@@ -76,9 +77,9 @@ func NewContextBuilder(p ContextBuilderParams) agentruntimeports.RuntimeContextB
 func (b *ContextBuilder) Build(
 	ctx context.Context,
 	req *agentruntimeports.RuntimeContextRequest,
-) (agentdefinition.RuntimeContext, error) {
+) (agentturn.RuntimeContext, error) {
 	definition := req.Definition
-	rc := agentdefinition.RuntimeContext{
+	rc := agentturn.RuntimeContext{
 		Now:              timeutils.NowUnix(),
 		Trigger:          req.Trigger,
 		Surface:          req.Surface,
@@ -101,7 +102,7 @@ func (b *ContextBuilder) Build(
 	// own result, which is put together below in the order it always was.
 	var (
 		wg        sync.WaitGroup
-		delegates []agentdefinition.RuntimeDelegate
+		delegates []agentturn.RuntimeDelegate
 		org       organizationContext
 		user      *userContext
 		memories  *agentmemoryports.MemoryContext
@@ -122,7 +123,7 @@ func (b *ContextBuilder) Build(
 	// about one of Acme's shipments. The prompt keeps what its budget holds.
 	if definition.HasContextProvider(agentdefinition.ContextMemory) && b.memories != nil {
 		records := rc.MemoryRecords()
-		toolNames := agentdefinition.ToolNamesOf(rc.Tools)
+		toolNames := agentturn.ToolNamesOf(rc.Tools)
 		wg.Go(func() { memories = b.readMemories(ctx, req, records, toolNames, tenant) })
 	}
 	if b.profiles != nil {
@@ -266,7 +267,7 @@ func (b *ContextBuilder) readMemories(
 // a person in a conversation, the only turn that holds agent_find_page and
 // agent_open_page.
 func (b *ContextBuilder) describeTrenova(
-	rc *agentdefinition.RuntimeContext,
+	rc *agentturn.RuntimeContext,
 	req *agentruntimeports.RuntimeContextRequest,
 ) {
 	if b.guide == nil {
@@ -288,13 +289,13 @@ func (b *ContextBuilder) describeTrenova(
 	rc.PageGuide = b.runtimePage(req.Page.Path)
 }
 
-func (b *ContextBuilder) runtimePage(path string) *agentdefinition.RuntimePage {
+func (b *ContextBuilder) runtimePage(path string) *agentturn.RuntimePage {
 	page, ok := b.guide.PageForPath(path)
 	if !ok {
 		return nil
 	}
 
-	return &agentdefinition.RuntimePage{
+	return &agentturn.RuntimePage{
 		Name:     page.Name,
 		Location: page.Location(),
 		Summary:  stringutils.FirstNonEmpty(page.Summary, page.Description),
@@ -310,7 +311,7 @@ func (b *ContextBuilder) runtimePage(path string) *agentdefinition.RuntimePage {
 func (b *ContextBuilder) delegates(
 	ctx context.Context,
 	req *agentruntimeports.RuntimeContextRequest,
-) []agentdefinition.RuntimeDelegate {
+) []agentturn.RuntimeDelegate {
 	definition := req.Definition
 	if req.Trigger != agent.RunTriggerChat || !definition.Delegates() ||
 		b.definitions == nil || req.Actor == nil {
@@ -342,13 +343,13 @@ func (b *ContextBuilder) delegates(
 		byID[delegate.ID] = delegate
 	}
 
-	delegates := make([]agentdefinition.RuntimeDelegate, 0, len(definition.DelegateIDs))
+	delegates := make([]agentturn.RuntimeDelegate, 0, len(definition.DelegateIDs))
 	for _, id := range definition.DelegateIDs {
 		delegate, ok := byID[id]
 		if !ok || definition.DelegateRefusal(delegate) != "" || !usable.Allows(delegate) {
 			continue
 		}
-		named := delegate.AsDelegate()
+		named := agentturn.AsDelegate(delegate)
 		named.Tools = b.delegateTools(ctx, req.Actor, delegate)
 		delegates = append(delegates, named)
 	}
@@ -400,7 +401,7 @@ func (b *ContextBuilder) memoryQuery(
 // userContext is what the turn is told about the person, and their timezone
 // for when the organization has none.
 type userContext struct {
-	user     *agentdefinition.RuntimeUser
+	user     *agentturn.RuntimeUser
 	timezone string
 }
 
@@ -433,7 +434,7 @@ func (b *ContextBuilder) describeUser(
 		}
 	}
 	return &userContext{
-		user: &agentdefinition.RuntimeUser{
+		user: &agentturn.RuntimeUser{
 			Name:     user.Name,
 			Email:    user.EmailAddress,
 			Roles:    roles,

@@ -3,7 +3,7 @@ package agentruntime
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -20,8 +20,8 @@ func TestTurn_CarriesTheSharedPartOfItsPromptThroughItsState(t *testing.T) {
 		Definition: testDefinition(),
 		Actor:      testActor(),
 		Input:      "Where is S1?",
-		Context: agentdefinition.RuntimeContext{
-			Page: &agentdefinition.PageContext{
+		Context: agentturn.RuntimeContext{
+			Page: &agentturn.PageContext{
 				Path:       "/shipments/shp_1",
 				EntityType: "shipment",
 				EntityID:   "shp_1",

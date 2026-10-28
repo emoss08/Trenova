@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttemplate"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -220,7 +221,7 @@ func (h *Handler) getBySystemKey(c *gin.Context) {
 type saveAgentRequest struct {
 	Name                   string                            `json:"name"`
 	Description            string                            `json:"description"`
-	Template               agentdefinition.Template          `json:"template"`
+	Template               agenttemplate.Template            `json:"template"`
 	Instructions           string                            `json:"instructions"`
 	Guardrails             []string                          `json:"guardrails"`
 	ToolNames              []string                          `json:"toolNames"`

@@ -6,6 +6,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreset"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttemplate"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
@@ -31,7 +33,7 @@ func (p *provisioner) EnsureSystem(
 	p.asked = append(p.asked, req)
 	definition, ok := p.definitions[req.SystemKey]
 	if !ok {
-		definition, _ = agentdefinition.NewPageAgent(req.SystemKey, req.TenantInfo, req.SystemKey)
+		definition, _ = agentpreset.NewPageAgent(req.SystemKey, req.TenantInfo, req.SystemKey)
 		definition.ID = pulid.MustNew("agdef_")
 		p.definitions[req.SystemKey] = definition
 	}
@@ -167,7 +169,7 @@ func TestOpenPageThread_NamesTheAgentThePageTalksTo(t *testing.T) {
 
 	assert.Equal(t, opened.Thread.AgentDefinitionID, opened.Agent.ID)
 	assert.Equal(t, agentdefinition.SystemKeyFormulaAssistant, opened.Agent.SystemKey)
-	assert.Equal(t, agentdefinition.TemplateFormulaAssistant, opened.Agent.Template)
+	assert.Equal(t, agenttemplate.TemplateFormulaAssistant, opened.Agent.Template)
 	assert.NotEmpty(t, opened.Agent.Name)
 	assert.NotEmpty(t, opened.Agent.ToolNames)
 	assert.NotEmpty(t, opened.Agent.Starters)
@@ -294,7 +296,7 @@ func TestOpenPageThread_RefusesAnAgentTurnedOff(t *testing.T) {
 	t.Parallel()
 
 	fixture := newPageFixture("document:read")
-	disabled, _ := agentdefinition.NewPageAgent(
+	disabled, _ := agentpreset.NewPageAgent(
 		agentdefinition.SystemKeyImportAssistant, fixture.actor.TenantInfo(), "Import helper",
 	)
 	disabled.ID = pulid.MustNew("agdef_")
@@ -337,7 +339,7 @@ func TestOpenPageThread_StartsAfreshWhenTheAgentWasReplaced(t *testing.T) {
 	first, err := fixture.open(t, conversation.ThreadOriginImport, "", documentID)
 	require.NoError(t, err)
 
-	replaced, _ := agentdefinition.NewPageAgent(
+	replaced, _ := agentpreset.NewPageAgent(
 		agentdefinition.SystemKeyImportAssistant, fixture.actor.TenantInfo(), "Import",
 	)
 	replaced.ID = pulid.MustNew("agdef_")

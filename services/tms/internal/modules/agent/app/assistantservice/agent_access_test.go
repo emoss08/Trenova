@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttemplate"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
@@ -275,9 +276,9 @@ func TestAsk_ChoosesTheGeneralAssistantOnlyWhenThePersonMayUseIt(t *testing.T) {
 
 	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{textTurn("ok")}}
 	svc := newService(completion, &stubQueryRegistry{}, &stubActionRegistry{})
-	general := chatDefinition("Assistant", agentdefinition.TemplateGeneralAssistant)
+	general := chatDefinition("Assistant", agenttemplate.TemplateGeneralAssistant)
 	general.AccessMode = agentdefinition.AccessRoles
-	dispatch := chatDefinition("Dispatch", agentdefinition.TemplateDispatchAssistant)
+	dispatch := chatDefinition("Dispatch", agenttemplate.TemplateDispatchAssistant)
 	definitions := &stubDefinitionList{
 		definitions: []*agentdefinition.Definition{general, dispatch},
 	}

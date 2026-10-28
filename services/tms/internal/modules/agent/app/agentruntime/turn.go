@@ -12,6 +12,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmessage"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentprompt"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/codemode"
@@ -84,7 +87,7 @@ type Turn struct {
 	result  *agentruntimeports.RunResult
 	// delegates are the agents the turn may hand a task to, taken when it
 	// opened, and delegations how many tasks it has handed out.
-	delegates   []agentdefinition.RuntimeDelegate
+	delegates   []agentturn.RuntimeDelegate
 	delegations int
 	// directed is a task the person handed straight to another agent, which
 	// the turn runs instead of asking its own model.
@@ -344,8 +347,8 @@ type TurnState struct {
 	Result    agentruntimeports.RunResult `json:"result"`
 	// Delegates are the agents the turn may hand a task to, and Delegations
 	// how many it has handed out.
-	Delegates   []agentdefinition.RuntimeDelegate `json:"delegates,omitempty"`
-	Delegations int                               `json:"delegations,omitempty"`
+	Delegates   []agentturn.RuntimeDelegate `json:"delegates,omitempty"`
+	Delegations int                         `json:"delegations,omitempty"`
 	// Directed is a task the person handed straight to another agent.
 	Directed *agentruntimeports.DirectedTask `json:"directed,omitempty"`
 	// Command is the extension command the turn is held to.
@@ -578,7 +581,7 @@ func (s *Service) OpenTurn(ctx context.Context, req *agentruntimeports.RunReques
 	if !s.codeMode.Offered(req.CodeMode, s.scriptsOffered(ctx, req)) {
 		held, job.beyond = s.withoutScripts(definition, held, job.beyond)
 	}
-	var delegates []agentdefinition.RuntimeDelegate
+	var delegates []agentturn.RuntimeDelegate
 	if req.MayDelegate() {
 		delegates = slices.Clone(runtimeContext.Delegates)
 	} else {
@@ -649,14 +652,14 @@ func (s *Service) OpenTurn(ctx context.Context, req *agentruntimeports.RunReques
 	if command != "" {
 		input = commandInput(command, input)
 	}
-	var attached agentdefinition.RenderedAttachments
+	var attached agentmessage.RenderedAttachments
 	if req.Delegation == nil {
-		attached = agentdefinition.RenderAttachments(
-			runtimeContext.Attachments, agentdefinition.AttachmentTextBudget,
+		attached = agentmessage.RenderAttachments(
+			runtimeContext.Attachments, agentmessage.AttachmentTextBudget,
 		)
 		input = attached.Block + input
 		input = outOfViewDecisions(history, req.Proposals) + input
-		input = agentdefinition.DescribeAnchors(
+		input = agentmessage.DescribeAnchors(
 			runtimeContext.Anchors, now, runtimeContext.Timezone,
 		) + input
 	}
@@ -670,7 +673,7 @@ func (s *Service) OpenTurn(ctx context.Context, req *agentruntimeports.RunReques
 	})
 	taint, opened := openTaint(req, &runtimeContext, now)
 
-	prompt := definition.BuildSystemPromptParts(&runtimeContext)
+	prompt := agentprompt.BuildSystemPromptParts(definition, &runtimeContext)
 
 	return &Turn{
 		s:            s,
@@ -718,7 +721,7 @@ func (t *Turn) localNow(fx TurnEffects) time.Time {
 // prompt already reads ("Today is"), so the question's clock line, its records'
 // ages and its taint marks agree with it, and a replay with a fixed clock sends
 // the same request every run.
-func turnNow(rc *agentdefinition.RuntimeContext) int64 {
+func turnNow(rc *agentturn.RuntimeContext) int64 {
 	if rc.Now > 0 {
 		return rc.Now
 	}

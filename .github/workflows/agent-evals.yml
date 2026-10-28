@@ -15,6 +15,16 @@ on:
       - "claude/**"
     paths:
       - "services/tms/internal/modules/agent/domain/agentdefinition/**"
+      - "services/tms/internal/modules/agent/domain/agentprompt/**"
+      - "services/tms/internal/modules/agent/domain/agentturn/**"
+      - "services/tms/internal/modules/agent/domain/agentmessage/**"
+      - "services/tms/internal/modules/agent/domain/agentmemoryprompt/**"
+      - "services/tms/internal/modules/agent/domain/agentpageprompt/**"
+      - "services/tms/internal/modules/agent/domain/agenttaskframe/**"
+      - "services/tms/internal/modules/agent/domain/agentinstructions/**"
+      - "services/tms/internal/modules/agent/domain/agenttemplate/**"
+      - "services/tms/internal/modules/agent/domain/agentpreset/**"
+      - "services/tms/internal/modules/agent/domain/agentstarter/**"
       - "services/tms/internal/modules/agent/app/agentruntime/**"
       - "services/tms/internal/modules/agent/app/agenttoolservice/**"
       - "services/tms/internal/modules/agent/app/agentquerytoolservice/**"
@@ -44,6 +54,16 @@ on:
     types: [opened, synchronize, reopened, labeled]
     paths:
       - "services/tms/internal/modules/agent/domain/agentdefinition/**"
+      - "services/tms/internal/modules/agent/domain/agentprompt/**"
+      - "services/tms/internal/modules/agent/domain/agentturn/**"
+      - "services/tms/internal/modules/agent/domain/agentmessage/**"
+      - "services/tms/internal/modules/agent/domain/agentmemoryprompt/**"
+      - "services/tms/internal/modules/agent/domain/agentpageprompt/**"
+      - "services/tms/internal/modules/agent/domain/agenttaskframe/**"
+      - "services/tms/internal/modules/agent/domain/agentinstructions/**"
+      - "services/tms/internal/modules/agent/domain/agenttemplate/**"
+      - "services/tms/internal/modules/agent/domain/agentpreset/**"
+      - "services/tms/internal/modules/agent/domain/agentstarter/**"
       - "services/tms/internal/modules/agent/app/agentruntime/**"
       - "services/tms/internal/modules/agent/app/agenttoolservice/**"
       - "services/tms/internal/modules/agent/app/agentquerytoolservice/**"
@@ -109,7 +129,7 @@ jobs:
         run: |
           set -euo pipefail
           go test -tags=nomsgpack -count=1 -run 'TestPromptSnapshots' \
-            ./internal/modules/agent/domain/agentdefinition/
+            ./internal/modules/agent/domain/agentprompt/
 
       - name: Tool catalog snapshot
         working-directory: ./services/tms

@@ -6,6 +6,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreset"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttemplate"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
@@ -26,52 +28,52 @@ func TestFire_Validation(t *testing.T) {
 	t.Parallel()
 
 	event := &Fire{
-		Agent:   string(agentdefinition.TemplateBillingException),
+		Agent:   string(agenttemplate.TemplateBillingException),
 		Event:   agent.EventBillingQueueItemException,
 		Subject: "select id from billing_queue_items limit 1",
 	}
 	require.NoError(t, fireScenario(event).Validate())
 	assert.True(t, fireScenario(event).Unattended())
 
-	schedule := &Fire{Agent: string(agentdefinition.TemplateLoadMonitor), Schedule: true}
+	schedule := &Fire{Agent: string(agenttemplate.TemplateLoadMonitor), Schedule: true}
 	require.NoError(t, fireScenario(schedule).Validate())
 
 	cases := map[string]*Fire{
 		"an event the template does not answer": {
 			Agent: string(
-				agentdefinition.TemplateBillingException,
+				agenttemplate.TemplateBillingException,
 			), Event: agent.EventShipmentCreated,
 			Subject: "select 1",
 		},
 		"an event run with no subject": {
-			Agent: string(agentdefinition.TemplateBillingException),
+			Agent: string(agenttemplate.TemplateBillingException),
 			Event: agent.EventBillingQueueItemException,
 		},
 		"a scheduled agent fired by an event": {
-			Agent: string(agentdefinition.TemplateLoadMonitor), Event: agent.EventShipmentCreated,
+			Agent: string(agenttemplate.TemplateLoadMonitor), Event: agent.EventShipmentCreated,
 		},
 		"a chat agent": {
-			Agent:    string(agentdefinition.TemplateDispatchAssistant),
+			Agent:    string(agenttemplate.TemplateDispatchAssistant),
 			Schedule: true,
 		},
 		"an unknown template": {Agent: "NoSuchDesk", Schedule: true},
 		"a subject that writes": {
-			Agent: string(agentdefinition.TemplateBillingException),
+			Agent: string(agenttemplate.TemplateBillingException),
 			Event: agent.EventBillingQueueItemException, Subject: "delete from shipments",
 		},
 		"a ceiling that is no tier": {
 			Agent: string(
-				agentdefinition.TemplateLoadMonitor,
+				agenttemplate.TemplateLoadMonitor,
 			), Schedule: true, Ceiling: "Sometimes",
 		},
 		"a tier that is no tier": {
-			Agent: string(agentdefinition.TemplateLoadMonitor), Schedule: true,
+			Agent: string(agenttemplate.TemplateLoadMonitor), Schedule: true,
 			ToolTiers: map[string]agent.AutonomyTier{
 				agentdefinition.CoreToolRaiseException: "Loud",
 			},
 		},
 		"a tier on a tool the agent does not hold": {
-			Agent: string(agentdefinition.TemplateLoadMonitor), Schedule: true,
+			Agent: string(agenttemplate.TemplateLoadMonitor), Schedule: true,
 			ToolTiers: map[string]agent.AutonomyTier{"invoice_post": agent.TierPropose},
 		},
 	}
@@ -80,7 +82,7 @@ func TestFire_Validation(t *testing.T) {
 	}
 
 	shaped := &Fire{
-		Agent:   string(agentdefinition.TemplateBillingException),
+		Agent:   string(agenttemplate.TemplateBillingException),
 		Event:   agent.EventBillingQueueItemException,
 		Subject: "select id from billing_queue_items limit 1",
 		Ceiling: agent.TierPropose,
@@ -90,9 +92,9 @@ func TestFire_Validation(t *testing.T) {
 		StopWhileWaiting: true,
 	}
 	require.NoError(t, fireScenario(shaped).Validate(), "a core tool's tier may be set")
-	assert.Equal(t, agent.TierPropose, shaped.ceiling(agentdefinition.TemplateBillingException))
-	assert.Equal(t, agentdefinition.TemplateBillingException.StarterCeiling(),
-		event.ceiling(agentdefinition.TemplateBillingException))
+	assert.Equal(t, agent.TierPropose, shaped.ceiling(agenttemplate.TemplateBillingException))
+	assert.Equal(t, agentpreset.StarterCeiling(agenttemplate.TemplateBillingException),
+		event.ceiling(agenttemplate.TemplateBillingException))
 
 	twoSteps := fireScenario(schedule)
 	twoSteps.Steps = append(twoSteps.Steps, Step{Say: "and then?"})
@@ -106,11 +108,11 @@ func TestUnattendedTemplates_CoverEveryEventAndScheduledTemplate(t *testing.T) {
 	t.Parallel()
 
 	templates := UnattendedTemplates()
-	assert.Contains(t, templates, agentdefinition.TemplateLoadMonitor)
-	assert.Contains(t, templates, agentdefinition.TemplateDispatchAssignment)
-	assert.Contains(t, templates, agentdefinition.TemplateEDIDesk)
+	assert.Contains(t, templates, agenttemplate.TemplateLoadMonitor)
+	assert.Contains(t, templates, agenttemplate.TemplateDispatchAssignment)
+	assert.Contains(t, templates, agenttemplate.TemplateEDIDesk)
 	for _, template := range templates {
-		trigger := template.StarterTrigger()
+		trigger := agentpreset.StarterTrigger(template)
 		assert.True(t,
 			trigger == agentdefinition.TriggerEvent || trigger == agentdefinition.TriggerScheduled,
 			template)
@@ -127,7 +129,7 @@ func TestUnattendedTemplates_CoverEveryEventAndScheduledTemplate(t *testing.T) {
 func TestUnattendedMatches_ResetsToolTiersALeftRunSet(t *testing.T) {
 	t.Parallel()
 
-	template := agentdefinition.TemplateBillingException
+	template := agenttemplate.TemplateBillingException
 	existing := unattendedShape(template)
 	assert.True(t, unattendedMatches(existing, unattendedShape(template)))
 

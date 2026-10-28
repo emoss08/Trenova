@@ -5,8 +5,9 @@ import (
 	"io"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentstarter"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttemplate"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/codemode"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
@@ -824,15 +825,15 @@ type OpenPageThreadRequest struct {
 }
 
 type PageAgent struct {
-	ID          pulid.ID                  `json:"id"`
-	Name        string                    `json:"name"`
-	Description string                    `json:"description"`
-	Template    agentdefinition.Template  `json:"template"`
-	Icon        string                    `json:"icon"`
-	Accent      string                    `json:"accent"`
-	SystemKey   string                    `json:"systemKey"`
-	ToolNames   []string                  `json:"toolNames"`
-	Starters    []agentdefinition.Starter `json:"starters"`
+	ID          pulid.ID               `json:"id"`
+	Name        string                 `json:"name"`
+	Description string                 `json:"description"`
+	Template    agenttemplate.Template `json:"template"`
+	Icon        string                 `json:"icon"`
+	Accent      string                 `json:"accent"`
+	SystemKey   string                 `json:"systemKey"`
+	ToolNames   []string               `json:"toolNames"`
+	Starters    []agentstarter.Starter `json:"starters"`
 }
 
 type PageThread struct {

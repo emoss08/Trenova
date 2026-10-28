@@ -6,6 +6,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentreach"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -24,10 +26,10 @@ type heldRuntime struct {
 
 func (heldRuntime) ToolSummaries(
 	definition *agentdefinition.Definition,
-) []agentdefinition.ToolSummary {
-	out := make([]agentdefinition.ToolSummary, 0, len(definition.ToolNames))
+) []agentturn.ToolSummary {
+	out := make([]agentturn.ToolSummary, 0, len(definition.ToolNames))
 	for _, name := range definition.ToolNames {
-		out = append(out, agentdefinition.ToolSummary{Name: name})
+		out = append(out, agentturn.ToolSummary{Name: name})
 	}
 
 	return out
@@ -47,7 +49,7 @@ func (p *coveringPermissions) RoleCoverage(
 	for _, id := range req.RoleIDs {
 		out = append(out, permissionports.RoleCoverage{
 			RoleID:           id,
-			Coverage:         agentdefinition.CoverageFull,
+			Coverage:         agentreach.CoverageFull,
 			MissingResources: []permission.Resource{},
 		})
 	}

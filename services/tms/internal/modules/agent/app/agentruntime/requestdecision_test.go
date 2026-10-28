@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -73,10 +73,10 @@ func runDecision(
 }
 
 func chatRequest(proposals ...agentruntimeports.ProposalOutcome) *agentruntimeports.RunRequest {
-	pending := make([]agentdefinition.PendingProposal, 0, len(proposals))
+	pending := make([]agentturn.PendingProposal, 0, len(proposals))
 	for _, proposal := range proposals {
 		if proposal.Pending() {
-			pending = append(pending, agentdefinition.PendingProposal{
+			pending = append(pending, agentturn.PendingProposal{
 				ProposalID: proposal.ProposalID,
 				ToolName:   proposal.ToolName,
 				Rationale:  proposal.Rationale,
@@ -87,7 +87,7 @@ func chatRequest(proposals ...agentruntimeports.ProposalOutcome) *agentruntimepo
 	return &agentruntimeports.RunRequest{
 		Definition: testDefinition(),
 		Actor:      testActor(),
-		Context:    agentdefinition.RuntimeContext{PendingProposals: pending},
+		Context:    agentturn.RuntimeContext{PendingProposals: pending},
 		Input:      "Approved",
 		ThreadID:   pulid.MustNew("athr_"),
 		Proposals:  proposals,

@@ -7,7 +7,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreset"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttemplate"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -18,9 +19,9 @@ type eventKindsMove struct {
 	to        []agent.EventKind
 }
 
-var systemAgentTemplates = map[string]agentdefinition.Template{
-	"billing_exception":   agentdefinition.TemplateBillingException,
-	"dispatch_assignment": agentdefinition.TemplateDispatchAssignment,
+var systemAgentTemplates = map[string]agenttemplate.Template{
+	"billing_exception":   agenttemplate.TemplateBillingException,
+	"dispatch_assignment": agenttemplate.TemplateDispatchAssignment,
 }
 
 func systemAgentEventKindMoves() []eventKindsMove {
@@ -92,9 +93,9 @@ func TestSystemAgentEventKindsMigrations_EndOnWhatEachTemplateListensFor(t *test
 	}
 
 	for systemKey, template := range systemAgentTemplates {
-		assert.Truef(t, slices.Equal(latest[systemKey], template.StarterEvents()),
+		assert.Truef(t, slices.Equal(latest[systemKey], agentpreset.StarterEvents(template)),
 			"%s's template listens for %v but the last migration leaves it on %v; add a migration "+
 				"that moves rows still on the previous default",
-			systemKey, template.StarterEvents(), latest[systemKey])
+			systemKey, agentpreset.StarterEvents(template), latest[systemKey])
 	}
 }

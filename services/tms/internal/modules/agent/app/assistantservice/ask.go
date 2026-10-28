@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttemplate"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
@@ -124,7 +125,7 @@ func generalAssistants(
 				{
 					Field:    definitionTemplateField,
 					Operator: dbtype.OpEqual,
-					Value:    string(agentdefinition.TemplateGeneralAssistant),
+					Value:    string(agenttemplate.TemplateGeneralAssistant),
 				},
 			},
 		},

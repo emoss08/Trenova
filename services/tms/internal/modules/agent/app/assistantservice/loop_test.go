@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttemplate"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
@@ -62,7 +63,7 @@ func testActor() *permissionports.RequestActor {
 func testDefinition(tools ...string) *agentdefinition.Definition {
 	d := &agentdefinition.Definition{
 		Name:            "Dispatch helper",
-		Template:        agentdefinition.TemplateDispatchAssistant,
+		Template:        agenttemplate.TemplateDispatchAssistant,
 		Instructions:    "Help the dispatch desk.",
 		AutonomyCeiling: agent.TierPropose,
 		ToolNames:       tools,

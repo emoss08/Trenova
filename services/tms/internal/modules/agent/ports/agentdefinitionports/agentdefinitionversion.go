@@ -3,7 +3,7 @@ package agentdefinitionports
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentversion"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -27,21 +27,21 @@ type GetAgentDefinitionVersionRequest struct {
 type GetAgentDefinitionVersionAtRequest = GetAgentDefinitionVersionRequest
 
 type AgentDefinitionVersionRepository interface {
-	Create(ctx context.Context, version *agentdefinition.DefinitionVersion) error
+	Create(ctx context.Context, version *agentversion.DefinitionVersion) error
 	// List returns the newest versions first, with their authors and
 	// without their snapshots.
 	List(
 		ctx context.Context,
 		req *ListAgentDefinitionVersionsRequest,
-	) ([]*agentdefinition.DefinitionVersion, error)
+	) ([]*agentversion.DefinitionVersion, error)
 	Get(
 		ctx context.Context,
 		req *GetAgentDefinitionVersionRequest,
-	) (*agentdefinition.DefinitionVersion, error)
+	) (*agentversion.DefinitionVersion, error)
 	// LatestAt returns the newest version at or before the one asked for, with
 	// its author, or nil when there is none.
 	LatestAt(
 		ctx context.Context,
 		req *GetAgentDefinitionVersionAtRequest,
-	) (*agentdefinition.DefinitionVersion, error)
+	) (*agentversion.DefinitionVersion, error)
 }

@@ -6,6 +6,8 @@ import (
 	"strconv"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreset"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttemplate"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -33,7 +35,7 @@ func (s *Service) EnsureSystem(
 	}
 
 	for attempt := range maxSystemNameAttempts {
-		definition, _ := agentdefinition.NewPageAgent(
+		definition, _ := agentpreset.NewPageAgent(
 			req.SystemKey,
 			req.TenantInfo,
 			systemAgentName(template, attempt),
@@ -67,7 +69,7 @@ func (s *Service) EnsureSystem(
 	return nil, errortypes.NewBusinessError(
 		"{0} could not be set up because other agents already use its name. Rename the agent "+
 			"called {0} in AI Control and try again.",
-		template.Label(),
+		agenttemplate.Label(template),
 	)
 }
 
@@ -95,14 +97,14 @@ func (s *Service) systemAgent(
 	return nil, fmt.Errorf("read system agent %s: %w", req.SystemKey, err)
 }
 
-func systemAgentName(template agentdefinition.Template, attempt int) string {
+func systemAgentName(template agenttemplate.Template, attempt int) string {
 	switch attempt {
 	case 0:
-		return template.Label()
+		return agenttemplate.Label(template)
 	case 1:
-		return template.Label() + " (built-in)"
+		return agenttemplate.Label(template) + " (built-in)"
 	default:
-		return template.Label() + " (built-in " + strconv.Itoa(attempt) + ")"
+		return agenttemplate.Label(template) + " (built-in " + strconv.Itoa(attempt) + ")"
 	}
 }
 

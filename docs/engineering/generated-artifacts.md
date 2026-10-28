@@ -164,7 +164,7 @@ schema or policy, or adding or removing a tool means refreshing them**:
 
 ```bash
 cd services/tms
-go test -run TestPromptSnapshots ./internal/modules/agent/domain/agentdefinition/ -update
+go test -run TestPromptSnapshots ./internal/modules/agent/domain/agentprompt/ -update
 go test -run TestToolCatalogSnapshot ./internal/modules/agent/app/agentevalgate/ -update
 ```
 

@@ -25,6 +25,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/codemode"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
@@ -174,7 +175,7 @@ func (rc *RunContext) request() *agentruntimeports.RunRequest {
 	return &agentruntimeports.RunRequest{
 		Definition:          rc.Definition,
 		Actor:               rc.Actor,
-		Context:             agentdefinition.RuntimeContext{Timezone: rc.Timezone},
+		Context:             agentturn.RuntimeContext{Timezone: rc.Timezone},
 		Input:               rc.Input,
 		RunID:               rc.RunID,
 		ThreadID:            rc.ThreadID,

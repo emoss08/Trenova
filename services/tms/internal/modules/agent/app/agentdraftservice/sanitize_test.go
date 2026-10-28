@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmark"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -50,8 +51,8 @@ func chatReply() *draftReply {
 	return &draftReply{
 		Name:            "Customer desk",
 		Description:     "Answers customer questions.",
-		Icon:            agentdefinition.IconHeadset,
-		Accent:          agentdefinition.AccentTeal,
+		Icon:            agentmark.IconHeadset,
+		Accent:          agentmark.AccentTeal,
 		Instructions:    "Answer questions about customers and their shipments.",
 		Guardrails:      []string{"Never promise a delivery date."},
 		TriggerMode:     string(agentdefinition.TriggerChat),
@@ -94,8 +95,8 @@ func TestSanitizeDraftKeepsAValidDraftAndStartsItInShadow(t *testing.T) {
 
 	assert.Empty(t, notes)
 	assert.Equal(t, "Customer desk", req.Name)
-	assert.Equal(t, agentdefinition.IconHeadset, req.Icon)
-	assert.Equal(t, agentdefinition.AccentTeal, req.Accent)
+	assert.Equal(t, agentmark.IconHeadset, req.Icon)
+	assert.Equal(t, agentmark.AccentTeal, req.Accent)
 	assert.Equal(t, []string{"shipment_get"}, req.ToolNames)
 	assert.Empty(t, req.ToolTiers)
 	assert.Equal(t, agent.TierActWithApproval, req.AutonomyCeiling)

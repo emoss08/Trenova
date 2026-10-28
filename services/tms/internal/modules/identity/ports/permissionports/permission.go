@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentreach"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -243,6 +244,6 @@ type RoleCoverageRequest struct {
 
 type RoleCoverage struct {
 	RoleID           pulid.ID
-	Coverage         agentdefinition.AudienceCoverage
+	Coverage         agentreach.AudienceCoverage
 	MissingResources []permission.Resource
 }

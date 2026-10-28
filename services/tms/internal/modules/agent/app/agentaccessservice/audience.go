@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentreach"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -239,7 +240,7 @@ func audienceRoles(
 		if !ok {
 			entry = permissionports.RoleCoverage{
 				RoleID:           role.ID,
-				Coverage:         agentdefinition.CoverageNone,
+				Coverage:         agentreach.CoverageNone,
 				MissingResources: []permission.Resource{},
 			}
 		}

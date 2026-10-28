@@ -7,7 +7,7 @@ import (
 	"sync"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreset"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/equipmenttypeports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -101,7 +101,7 @@ func newFindShipmentRecordsTool(p *ShipmentRecordsToolParams) agenttoolports.Age
 	}
 }
 
-func (t *findShipmentRecordsTool) Name() string { return agentdefinition.ToolFindShipmentRecords }
+func (t *findShipmentRecordsTool) Name() string { return agentpreset.ToolFindShipmentRecords }
 
 func (t *findShipmentRecordsTool) Description() string {
 	return "Match the customer, stop locations and commodities a new shipment names, in " +

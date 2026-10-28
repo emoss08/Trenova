@@ -7,6 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
@@ -21,7 +22,7 @@ import (
 // before it is answered.
 type turnChecks struct {
 	attachments        []conversation.MessageAttachment
-	runtimeAttachments []agentdefinition.RuntimeAttachment
+	runtimeAttachments []agentturn.RuntimeAttachment
 	attachmentsErr     error
 
 	definition    *agentdefinition.Definition
@@ -39,8 +40,8 @@ type turnChecks struct {
 	historyErr error
 
 	proposals    []agentruntimeports.ProposalOutcome
-	subject      *agentdefinition.RuntimeSubject
-	anchors      []agentdefinition.RuntimeAnchor
+	subject      *agentturn.RuntimeSubject
+	anchors      []agentturn.RuntimeAnchor
 	earlierFiles map[string]string
 }
 
@@ -219,7 +220,7 @@ func (s *Service) directedTask(
 	}
 
 	return &agentruntimeports.DirectedTask{
-		Delegate: definition.AsDelegate(),
+		Delegate: agentturn.AsDelegate(definition),
 		Task:     strings.TrimSpace(req.Content),
 	}, nil
 }

@@ -9,6 +9,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentguard"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttaskframe"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/codemode"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
@@ -29,7 +31,7 @@ type TurnRequest struct {
 	Actor      *permissionports.RequestActor
 	History    []conversation.Message
 	Input      string
-	Page       *agentdefinition.PageContext
+	Page       *agentturn.PageContext
 	Surface    agent.Surface
 	// PreferredProviderID is the reader's chosen model for this conversation.
 	PreferredProviderID pulid.ID
@@ -39,18 +41,18 @@ type TurnRequest struct {
 	Proposals []agentruntimeports.ProposalOutcome
 	// Subject is the record the conversation is about, when it was opened
 	// from one.
-	Subject *agentdefinition.RuntimeSubject
+	Subject *agentturn.RuntimeSubject
 	// Attachments and Mentions are what the person handed over with the
 	// message: files, and records named from the composer.
-	Attachments []agentdefinition.RuntimeAttachment
-	Mentions    []agentdefinition.RuntimeMention
+	Attachments []agentturn.RuntimeAttachment
+	Mentions    []agentturn.RuntimeMention
 	// Taint is the outside content the conversation has already read, which
 	// every later turn in it opens with.
 	Taint *agent.RunTaint
 	// Facts are what the person pinned for the agents to keep in mind for
 	// the whole conversation.
 	Facts          []string
-	Anchors        []agentdefinition.RuntimeAnchor
+	Anchors        []agentturn.RuntimeAnchor
 	TrenovaWritten bool
 	EarlierFiles   map[string]string
 	// OutsideText says the turn's input carries text written outside the
@@ -83,7 +85,7 @@ func (s *Service) admit(
 	req *TurnRequest,
 ) (agentguard.Decision, *agentruntimeports.RunRequest) {
 	var decision agentguard.Decision
-	var runtimeContext agentdefinition.RuntimeContext
+	var runtimeContext agentturn.RuntimeContext
 	if req.TrenovaWritten {
 		decision = trenovaWrittenDecision()
 		runtimeContext = s.buildContext(ctx, req)
@@ -109,7 +111,7 @@ func (s *Service) admit(
 		}
 	}
 
-	runtimeContext.Frame = agentdefinition.ChatFrame(decision.Goal, decision.Need)
+	runtimeContext.Frame = agenttaskframe.ChatFrame(decision.Goal, decision.Need)
 	runtimeContext.PendingProposals = pendingProposals(req.Proposals)
 	runtimeContext.Anchors = req.Anchors
 
@@ -192,8 +194,8 @@ func turnResultOf(
 func (s *Service) buildContext(
 	ctx context.Context,
 	req *TurnRequest,
-) agentdefinition.RuntimeContext {
-	bare := agentdefinition.RuntimeContext{
+) agentturn.RuntimeContext {
+	bare := agentturn.RuntimeContext{
 		Trigger:     agent.RunTriggerChat,
 		Page:        req.Page,
 		Surface:     req.Surface,
@@ -246,12 +248,12 @@ func (s *Service) describeSubject(
 	thread *conversation.Thread,
 	actor *permissionports.RequestActor,
 	tenant pagination.TenantInfo,
-) *agentdefinition.RuntimeSubject {
+) *agentturn.RuntimeSubject {
 	if !thread.HasSubject() {
 		return nil
 	}
 
-	bare := &agentdefinition.RuntimeSubject{
+	bare := &agentturn.RuntimeSubject{
 		Type:  thread.SubjectType,
 		ID:    thread.SubjectID.String(),
 		Label: stringutils.HumanizeSnakeCase(string(thread.SubjectType)),
@@ -529,11 +531,11 @@ func recentTurns(history []conversation.Message) []agentguard.Turn {
 // pendingProposals names the undecided proposals for the prompt.
 func pendingProposals(
 	outcomes []agentruntimeports.ProposalOutcome,
-) []agentdefinition.PendingProposal {
-	pending := make([]agentdefinition.PendingProposal, 0, len(outcomes))
+) []agentturn.PendingProposal {
+	pending := make([]agentturn.PendingProposal, 0, len(outcomes))
 	for _, outcome := range outcomes {
 		if outcome.Pending() {
-			pending = append(pending, agentdefinition.PendingProposal{
+			pending = append(pending, agentturn.PendingProposal{
 				ProposalID: outcome.ProposalID,
 				PlanID:     outcome.PlanID,
 				ToolName:   outcome.ToolName,

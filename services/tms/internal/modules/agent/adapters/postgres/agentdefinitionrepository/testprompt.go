@@ -6,8 +6,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition/agentdefinitiondb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttestprompt"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"go.uber.org/fx"
@@ -30,12 +30,12 @@ func NewTestPromptRepository(p TestPromptParams) agentdefinitionports.AgentTestP
 func (r *testPromptRepository) List(
 	ctx context.Context,
 	req *agentdefinitionports.ListAgentTestPromptsRequest,
-) ([]*agentdefinition.TestPrompt, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agentdefinition.TestPrompt, error) {
+) ([]*agenttestprompt.TestPrompt, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agenttestprompt.TestPrompt, error) {
 		p := agentdefinitiondb.TestPrompts
 		prompts, err := p.Where(p.AgentDefinitionID.Eq(req.AgentDefinitionID)).
 			Order(p.CreatedAt.Asc(), p.ID.Asc()).
-			Limit(agentdefinition.MaxTestPrompts).
+			Limit(agenttestprompt.MaxTestPrompts).
 			List(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return nil, fmt.Errorf("list agent test prompts: %w", err)
@@ -59,7 +59,10 @@ func (r *testPromptRepository) Count(
 	})
 }
 
-func (r *testPromptRepository) Create(ctx context.Context, prompt *agentdefinition.TestPrompt) error {
+func (r *testPromptRepository) Create(
+	ctx context.Context,
+	prompt *agenttestprompt.TestPrompt,
+) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		if err := agentdefinitiondb.TestPrompts.Create(ctx, r.db.Keel(ctx), prompt); err != nil {
 			return fmt.Errorf("keep agent test prompt: %w", err)

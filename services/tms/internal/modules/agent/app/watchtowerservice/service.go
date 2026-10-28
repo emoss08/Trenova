@@ -6,6 +6,8 @@ import (
 	"slices"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreset"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttemplate"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
@@ -391,8 +393,8 @@ func (s *Service) HandOff(
 
 			return result, nil
 		}
-		for _, template := range agentdefinition.AllTemplates() {
-			for _, kind := range template.StarterEvents() {
+		for _, template := range agenttemplate.AllTemplates() {
+			for _, kind := range agentpreset.StarterEvents(template) {
 				if kind == item.EventKind {
 					result.Templates = append(result.Templates, template)
 				}

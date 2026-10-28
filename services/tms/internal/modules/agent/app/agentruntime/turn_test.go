@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/stretchr/testify/assert"
@@ -25,7 +26,7 @@ func openedTurn(t *testing.T, definition *agentdefinition.Definition, input stri
 		Definition: definition,
 		Actor:      testActor(),
 		Input:      input,
-		Context: agentdefinition.RuntimeContext{
+		Context: agentturn.RuntimeContext{
 			Timezone: "America/Chicago",
 			Now:      1790000000,
 		},
@@ -84,14 +85,14 @@ func TestOpenTurn_OpensTheQuestionWithTheRecordsInPlayAndNeverKeepsThem(t *testi
 		Definition: testDefinition(),
 		Actor:      testActor(),
 		Input:      "is it still on time?",
-		Context: agentdefinition.RuntimeContext{
+		Context: agentturn.RuntimeContext{
 			Timezone: "America/Chicago",
 			Now:      1790000000,
-			Anchors: []agentdefinition.RuntimeAnchor{{
+			Anchors: []agentturn.RuntimeAnchor{{
 				Kind:  "shipment",
 				ID:    "shp_01M49Z0FTJPBFF0HBFFNGYRY9B",
 				Label: "SEED-DET-001",
-				Facts: []agentdefinition.AnchorFact{{Name: "status", Value: "Delayed"}},
+				Facts: []agentturn.AnchorFact{{Name: "status", Value: "Delayed"}},
 			}},
 		},
 	})
@@ -115,8 +116,8 @@ func TestOpenTurn_OpensTheQuestionWithTheRecordsInPlayAndNeverKeepsThem(t *testi
 func TestWatchedRecords_AddsTheReadableRecordsInPlay(t *testing.T) {
 	t.Parallel()
 
-	req := &agentruntimeports.RunRequest{Context: agentdefinition.RuntimeContext{
-		Anchors: []agentdefinition.RuntimeAnchor{
+	req := &agentruntimeports.RunRequest{Context: agentturn.RuntimeContext{
+		Anchors: []agentturn.RuntimeAnchor{
 			{Kind: "shipment", ID: "shp_01M49Z0FTJPBFF0HBFFNGYRY9B"},
 			{
 				Kind: "invoice",

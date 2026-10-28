@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttemplate"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -128,7 +129,7 @@ type HandOffWatchtowerItemResult struct {
 	Run         *agent.AgentRun
 	Subscribers []*agentdefinition.Definition
 	Candidates  []*agentdefinition.Definition
-	Templates   []agentdefinition.Template
+	Templates   []agenttemplate.Template
 }
 
 type WatchtowerSweepResult struct {

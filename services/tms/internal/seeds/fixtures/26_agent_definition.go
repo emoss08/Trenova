@@ -4,13 +4,16 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition/agentdefinitiondb"
-
 	"github.com/emoss08/keel"
 	"github.com/emoss08/keel/seed"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/tenantbootstrap"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition/agentdefinitiondb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentinstructions"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmark"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreset"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttemplate"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 )
@@ -149,11 +152,11 @@ func (s *AgentDefinitionSeed) reconcileToolNames(
 	for _, definition := range existing {
 		merged, toolsChanged := mergeToolNames(
 			definition.ToolNames,
-			definition.Template.StarterTools(),
+			agentpreset.StarterTools(definition.Template),
 		)
 		access, accessRaised := raisedDataAccess(
 			definition.DataAccessCeiling,
-			definition.Template.StarterDataAccess(),
+			agentpreset.StarterDataAccess(definition.Template),
 		)
 		if !toolsChanged && !accessRaised {
 			continue
@@ -213,23 +216,27 @@ func (s *AgentDefinitionSeed) definitions(orgID, buID pulid.ID) []*agentdefiniti
 			OrganizationID: orgID,
 			BusinessUnitID: buID,
 			Name:           SeedAgentDispatchName,
-			Icon:           agentdefinition.IconTruck,
-			Accent:         agentdefinition.AccentIndigo,
+			Icon:           agentmark.IconTruck,
+			Accent:         agentmark.AccentIndigo,
 			Description:    "Looks up shipments and drivers for the dispatch team.",
-			Template:       agentdefinition.TemplateDispatchAssistant,
-			Instructions: agentdefinition.TemplateDispatchAssistant.StarterInstructions() + "\n\n" +
+			Template:       agenttemplate.TemplateDispatchAssistant,
+			Instructions: agentinstructions.StarterInstructions(
+				agenttemplate.TemplateDispatchAssistant,
+			) + "\n\n" +
 				"We run mostly reefer freight out of the Los Angeles terminal. When a driver is " +
 				"asked about, check hours of service before anything else.",
 			Guardrails: []string{"Promise a delivery time to a customer", "Change a rate"},
 			ToolNames: append(
-				agentdefinition.TemplateDispatchAssistant.StarterTools(),
+				agentpreset.StarterTools(agenttemplate.TemplateDispatchAssistant),
 				"dispatch_get_board",
 				"worker_send_message",
 			),
-			AutonomyCeiling:   agent.TierActWithApproval,
-			DataAccessCeiling: agentdefinition.TemplateDispatchAssistant.StarterDataAccess(),
-			TriggerMode:       agentdefinition.TriggerChat,
-			Enabled:           true,
+			AutonomyCeiling: agent.TierActWithApproval,
+			DataAccessCeiling: agentpreset.StarterDataAccess(
+				agenttemplate.TemplateDispatchAssistant,
+			),
+			TriggerMode: agentdefinition.TriggerChat,
+			Enabled:     true,
 
 			MaxChangeItems: 500,
 
@@ -243,16 +250,74 @@ func (s *AgentDefinitionSeed) definitions(orgID, buID pulid.ID) []*agentdefiniti
 			OrganizationID: orgID,
 			BusinessUnitID: buID,
 			Name:           SeedAgentBillingName,
-			Icon:           agentdefinition.IconReceipt,
-			Accent:         agentdefinition.AccentAmber,
+			Icon:           agentmark.IconReceipt,
+			Accent:         agentmark.AccentAmber,
 			Description:    "Works blocked billing queue items and proposes what to do about them.",
-			Template:       agentdefinition.TemplateBillingAssistant,
-			Instructions: agentdefinition.TemplateBillingAssistant.StarterInstructions() + "\n\n" +
+			Template:       agenttemplate.TemplateBillingAssistant,
+			Instructions: agentinstructions.StarterInstructions(
+				agenttemplate.TemplateBillingAssistant,
+			) + "\n\n" +
 				"Never propose a rate change. If a rate looks wrong, flag it for a person and say " +
 				"which document you would want to see.",
-			ToolNames:         agentdefinition.TemplateBillingAssistant.StarterTools(),
-			AutonomyCeiling:   agent.TierPropose,
-			DataAccessCeiling: agentdefinition.TemplateBillingAssistant.StarterDataAccess(),
+			ToolNames:       agentpreset.StarterTools(agenttemplate.TemplateBillingAssistant),
+			AutonomyCeiling: agent.TierPropose,
+			DataAccessCeiling: agentpreset.StarterDataAccess(
+				agenttemplate.TemplateBillingAssistant,
+			),
+			TriggerMode: agentdefinition.TriggerChat,
+			Enabled:     true,
+
+			MaxChangeItems: 500,
+
+			BusinessHoursStart: 420,
+
+			BusinessHoursEnd: 1080,
+
+			AccessMode: agentdefinition.AccessEveryone,
+		},
+		{
+			OrganizationID: orgID,
+			BusinessUnitID: buID,
+			Name:           SeedAgentSettlementsName,
+			Icon:           agentmark.IconBanknote,
+			Accent:         agentmark.AccentEmeral,
+			Description:    agenttemplate.Description(agenttemplate.TemplateSettlementsClerk),
+			Template:       agenttemplate.TemplateSettlementsClerk,
+			Instructions: agentinstructions.StarterInstructions(
+				agenttemplate.TemplateSettlementsClerk,
+			),
+			ToolNames: agentpreset.StarterTools(agenttemplate.TemplateSettlementsClerk),
+			AutonomyCeiling: agentpreset.StarterCeiling(
+				agenttemplate.TemplateSettlementsClerk,
+			),
+			DataAccessCeiling: agentpreset.StarterDataAccess(
+				agenttemplate.TemplateSettlementsClerk,
+			),
+			TriggerMode: agentdefinition.TriggerChat,
+			Enabled:     true,
+
+			MaxChangeItems: 500,
+
+			BusinessHoursStart: 420,
+
+			BusinessHoursEnd: 1080,
+
+			AccessMode: agentdefinition.AccessEveryone,
+		},
+		{
+			OrganizationID: orgID,
+			BusinessUnitID: buID,
+			Name:           SeedAgentReceivablesName,
+			Icon:           agentmark.IconCoins,
+			Accent:         agentmark.AccentSky,
+			Description:    agenttemplate.Description(agenttemplate.TemplateReceivables),
+			Template:       agenttemplate.TemplateReceivables,
+			Instructions: agentinstructions.StarterInstructions(
+				agenttemplate.TemplateReceivables,
+			),
+			ToolNames:         agentpreset.StarterTools(agenttemplate.TemplateReceivables),
+			AutonomyCeiling:   agentpreset.StarterCeiling(agenttemplate.TemplateReceivables),
+			DataAccessCeiling: agentpreset.StarterDataAccess(agenttemplate.TemplateReceivables),
 			TriggerMode:       agentdefinition.TriggerChat,
 			Enabled:           true,
 
@@ -265,19 +330,27 @@ func (s *AgentDefinitionSeed) definitions(orgID, buID pulid.ID) []*agentdefiniti
 			AccessMode: agentdefinition.AccessEveryone,
 		},
 		{
-			OrganizationID:    orgID,
-			BusinessUnitID:    buID,
-			Name:              SeedAgentSettlementsName,
-			Icon:              agentdefinition.IconBanknote,
-			Accent:            agentdefinition.AccentEmeral,
-			Description:       agentdefinition.TemplateSettlementsClerk.Description(),
-			Template:          agentdefinition.TemplateSettlementsClerk,
-			Instructions:      agentdefinition.TemplateSettlementsClerk.StarterInstructions(),
-			ToolNames:         agentdefinition.TemplateSettlementsClerk.StarterTools(),
-			AutonomyCeiling:   agentdefinition.TemplateSettlementsClerk.StarterCeiling(),
-			DataAccessCeiling: agentdefinition.TemplateSettlementsClerk.StarterDataAccess(),
-			TriggerMode:       agentdefinition.TriggerChat,
-			Enabled:           true,
+			OrganizationID: orgID,
+			BusinessUnitID: buID,
+			Name:           SeedAgentMasterDataName,
+			Icon:           agentmark.IconFile,
+			Accent:         agentmark.AccentSlate,
+			Description:    agenttemplate.Description(agenttemplate.TemplateMasterDataSteward),
+			Template:       agenttemplate.TemplateMasterDataSteward,
+			Instructions: agentinstructions.StarterInstructions(
+				agenttemplate.TemplateMasterDataSteward,
+			),
+			ToolNames: agentpreset.StarterTools(
+				agenttemplate.TemplateMasterDataSteward,
+			),
+			AutonomyCeiling: agentpreset.StarterCeiling(
+				agenttemplate.TemplateMasterDataSteward,
+			),
+			DataAccessCeiling: agentpreset.StarterDataAccess(
+				agenttemplate.TemplateMasterDataSteward,
+			),
+			TriggerMode: agentdefinition.TriggerChat,
+			Enabled:     true,
 
 			MaxChangeItems: 500,
 
@@ -288,19 +361,29 @@ func (s *AgentDefinitionSeed) definitions(orgID, buID pulid.ID) []*agentdefiniti
 			AccessMode: agentdefinition.AccessEveryone,
 		},
 		{
-			OrganizationID:    orgID,
-			BusinessUnitID:    buID,
-			Name:              SeedAgentReceivablesName,
-			Icon:              agentdefinition.IconCoins,
-			Accent:            agentdefinition.AccentSky,
-			Description:       agentdefinition.TemplateReceivables.Description(),
-			Template:          agentdefinition.TemplateReceivables,
-			Instructions:      agentdefinition.TemplateReceivables.StarterInstructions(),
-			ToolNames:         agentdefinition.TemplateReceivables.StarterTools(),
-			AutonomyCeiling:   agentdefinition.TemplateReceivables.StarterCeiling(),
-			DataAccessCeiling: agentdefinition.TemplateReceivables.StarterDataAccess(),
-			TriggerMode:       agentdefinition.TriggerChat,
-			Enabled:           true,
+			OrganizationID: orgID,
+			BusinessUnitID: buID,
+			Name:           SeedAgentWorkforceName,
+			Icon:           agentmark.IconClipboard,
+			Accent:         agentmark.AccentViolet,
+			Description: agenttemplate.Description(
+				agenttemplate.TemplateWorkforceCoordinator,
+			),
+			Template: agenttemplate.TemplateWorkforceCoordinator,
+			Instructions: agentinstructions.StarterInstructions(
+				agenttemplate.TemplateWorkforceCoordinator,
+			),
+			ToolNames: agentpreset.StarterTools(
+				agenttemplate.TemplateWorkforceCoordinator,
+			),
+			AutonomyCeiling: agentpreset.StarterCeiling(
+				agenttemplate.TemplateWorkforceCoordinator,
+			),
+			DataAccessCeiling: agentpreset.StarterDataAccess(
+				agenttemplate.TemplateWorkforceCoordinator,
+			),
+			TriggerMode: agentdefinition.TriggerChat,
+			Enabled:     true,
 
 			MaxChangeItems: 500,
 
@@ -311,19 +394,23 @@ func (s *AgentDefinitionSeed) definitions(orgID, buID pulid.ID) []*agentdefiniti
 			AccessMode: agentdefinition.AccessEveryone,
 		},
 		{
-			OrganizationID:    orgID,
-			BusinessUnitID:    buID,
-			Name:              SeedAgentMasterDataName,
-			Icon:              agentdefinition.IconFile,
-			Accent:            agentdefinition.AccentSlate,
-			Description:       agentdefinition.TemplateMasterDataSteward.Description(),
-			Template:          agentdefinition.TemplateMasterDataSteward,
-			Instructions:      agentdefinition.TemplateMasterDataSteward.StarterInstructions(),
-			ToolNames:         agentdefinition.TemplateMasterDataSteward.StarterTools(),
-			AutonomyCeiling:   agentdefinition.TemplateMasterDataSteward.StarterCeiling(),
-			DataAccessCeiling: agentdefinition.TemplateMasterDataSteward.StarterDataAccess(),
-			TriggerMode:       agentdefinition.TriggerChat,
-			Enabled:           true,
+			OrganizationID: orgID,
+			BusinessUnitID: buID,
+			Name:           SeedAgentFuelTaxName,
+			Icon:           agentmark.IconGauge,
+			Accent:         agentmark.AccentAmber,
+			Description:    agenttemplate.Description(agenttemplate.TemplateFuelTaxClerk),
+			Template:       agenttemplate.TemplateFuelTaxClerk,
+			Instructions: agentinstructions.StarterInstructions(
+				agenttemplate.TemplateFuelTaxClerk,
+			),
+			ToolNames:       agentpreset.StarterTools(agenttemplate.TemplateFuelTaxClerk),
+			AutonomyCeiling: agentpreset.StarterCeiling(agenttemplate.TemplateFuelTaxClerk),
+			DataAccessCeiling: agentpreset.StarterDataAccess(
+				agenttemplate.TemplateFuelTaxClerk,
+			),
+			TriggerMode: agentdefinition.TriggerChat,
+			Enabled:     true,
 
 			MaxChangeItems: 500,
 
@@ -334,65 +421,23 @@ func (s *AgentDefinitionSeed) definitions(orgID, buID pulid.ID) []*agentdefiniti
 			AccessMode: agentdefinition.AccessEveryone,
 		},
 		{
-			OrganizationID:    orgID,
-			BusinessUnitID:    buID,
-			Name:              SeedAgentWorkforceName,
-			Icon:              agentdefinition.IconClipboard,
-			Accent:            agentdefinition.AccentViolet,
-			Description:       agentdefinition.TemplateWorkforceCoordinator.Description(),
-			Template:          agentdefinition.TemplateWorkforceCoordinator,
-			Instructions:      agentdefinition.TemplateWorkforceCoordinator.StarterInstructions(),
-			ToolNames:         agentdefinition.TemplateWorkforceCoordinator.StarterTools(),
-			AutonomyCeiling:   agentdefinition.TemplateWorkforceCoordinator.StarterCeiling(),
-			DataAccessCeiling: agentdefinition.TemplateWorkforceCoordinator.StarterDataAccess(),
-			TriggerMode:       agentdefinition.TriggerChat,
-			Enabled:           true,
-
-			MaxChangeItems: 500,
-
-			BusinessHoursStart: 420,
-
-			BusinessHoursEnd: 1080,
-
-			AccessMode: agentdefinition.AccessEveryone,
-		},
-		{
-			OrganizationID:    orgID,
-			BusinessUnitID:    buID,
-			Name:              SeedAgentFuelTaxName,
-			Icon:              agentdefinition.IconGauge,
-			Accent:            agentdefinition.AccentAmber,
-			Description:       agentdefinition.TemplateFuelTaxClerk.Description(),
-			Template:          agentdefinition.TemplateFuelTaxClerk,
-			Instructions:      agentdefinition.TemplateFuelTaxClerk.StarterInstructions(),
-			ToolNames:         agentdefinition.TemplateFuelTaxClerk.StarterTools(),
-			AutonomyCeiling:   agentdefinition.TemplateFuelTaxClerk.StarterCeiling(),
-			DataAccessCeiling: agentdefinition.TemplateFuelTaxClerk.StarterDataAccess(),
-			TriggerMode:       agentdefinition.TriggerChat,
-			Enabled:           true,
-
-			MaxChangeItems: 500,
-
-			BusinessHoursStart: 420,
-
-			BusinessHoursEnd: 1080,
-
-			AccessMode: agentdefinition.AccessEveryone,
-		},
-		{
-			OrganizationID:    orgID,
-			BusinessUnitID:    buID,
-			Name:              SeedAgentReportName,
-			Icon:              agentdefinition.IconCompass,
-			Accent:            agentdefinition.AccentIndigo,
-			Description:       agentdefinition.TemplateReportAnalyst.Description(),
-			Template:          agentdefinition.TemplateReportAnalyst,
-			Instructions:      agentdefinition.TemplateReportAnalyst.StarterInstructions(),
-			ToolNames:         agentdefinition.TemplateReportAnalyst.StarterTools(),
-			AutonomyCeiling:   agentdefinition.TemplateReportAnalyst.StarterCeiling(),
-			DataAccessCeiling: agentdefinition.TemplateReportAnalyst.StarterDataAccess(),
-			TriggerMode:       agentdefinition.TriggerChat,
-			Enabled:           true,
+			OrganizationID: orgID,
+			BusinessUnitID: buID,
+			Name:           SeedAgentReportName,
+			Icon:           agentmark.IconCompass,
+			Accent:         agentmark.AccentIndigo,
+			Description:    agenttemplate.Description(agenttemplate.TemplateReportAnalyst),
+			Template:       agenttemplate.TemplateReportAnalyst,
+			Instructions: agentinstructions.StarterInstructions(
+				agenttemplate.TemplateReportAnalyst,
+			),
+			ToolNames:       agentpreset.StarterTools(agenttemplate.TemplateReportAnalyst),
+			AutonomyCeiling: agentpreset.StarterCeiling(agenttemplate.TemplateReportAnalyst),
+			DataAccessCeiling: agentpreset.StarterDataAccess(
+				agenttemplate.TemplateReportAnalyst,
+			),
+			TriggerMode: agentdefinition.TriggerChat,
+			Enabled:     true,
 
 			MaxChangeItems: 500,
 
@@ -406,17 +451,23 @@ func (s *AgentDefinitionSeed) definitions(orgID, buID pulid.ID) []*agentdefiniti
 			OrganizationID: orgID,
 			BusinessUnitID: buID,
 			Name:           "Compliance desk",
-			Icon:           agentdefinition.IconShield,
-			Accent:         agentdefinition.AccentTeal,
+			Icon:           agentmark.IconShield,
+			Accent:         agentmark.AccentTeal,
 			Description:    "Answers questions about driver qualification and what is expiring.",
-			Template:       agentdefinition.TemplateComplianceAssistant,
-			Instructions: agentdefinition.TemplateComplianceAssistant.StarterInstructions() + "\n\n" +
+			Template:       agenttemplate.TemplateComplianceAssistant,
+			Instructions: agentinstructions.StarterInstructions(
+				agenttemplate.TemplateComplianceAssistant,
+			) + "\n\n" +
 				"Medical cards and hazmat endorsements are the two we most often miss.",
-			ToolNames:         agentdefinition.TemplateComplianceAssistant.StarterTools(),
-			AutonomyCeiling:   agent.TierPropose,
-			DataAccessCeiling: agentdefinition.TemplateComplianceAssistant.StarterDataAccess(),
-			TriggerMode:       agentdefinition.TriggerChat,
-			Enabled:           true,
+			ToolNames: agentpreset.StarterTools(
+				agenttemplate.TemplateComplianceAssistant,
+			),
+			AutonomyCeiling: agent.TierPropose,
+			DataAccessCeiling: agentpreset.StarterDataAccess(
+				agenttemplate.TemplateComplianceAssistant,
+			),
+			TriggerMode: agentdefinition.TriggerChat,
+			Enabled:     true,
 
 			MaxChangeItems: 500,
 
@@ -427,19 +478,25 @@ func (s *AgentDefinitionSeed) definitions(orgID, buID pulid.ID) []*agentdefiniti
 			AccessMode: agentdefinition.AccessEveryone,
 		},
 		{
-			OrganizationID:    orgID,
-			BusinessUnitID:    buID,
-			Name:              "Customer service",
-			Icon:              agentdefinition.IconHeadset,
-			Accent:            agentdefinition.AccentRose,
-			Description:       "Shipment status for the customer-facing team. Off until reviewed.",
-			Template:          agentdefinition.TemplateCustomerAssistant,
-			Instructions:      agentdefinition.TemplateCustomerAssistant.StarterInstructions(),
-			ToolNames:         agentdefinition.TemplateCustomerAssistant.StarterTools(),
-			AutonomyCeiling:   agent.TierPropose,
-			DataAccessCeiling: agentdefinition.TemplateCustomerAssistant.StarterDataAccess(),
-			TriggerMode:       agentdefinition.TriggerChat,
-			Enabled:           false,
+			OrganizationID: orgID,
+			BusinessUnitID: buID,
+			Name:           "Customer service",
+			Icon:           agentmark.IconHeadset,
+			Accent:         agentmark.AccentRose,
+			Description:    "Shipment status for the customer-facing team. Off until reviewed.",
+			Template:       agenttemplate.TemplateCustomerAssistant,
+			Instructions: agentinstructions.StarterInstructions(
+				agenttemplate.TemplateCustomerAssistant,
+			),
+			ToolNames: agentpreset.StarterTools(
+				agenttemplate.TemplateCustomerAssistant,
+			),
+			AutonomyCeiling: agent.TierPropose,
+			DataAccessCeiling: agentpreset.StarterDataAccess(
+				agenttemplate.TemplateCustomerAssistant,
+			),
+			TriggerMode: agentdefinition.TriggerChat,
+			Enabled:     false,
 
 			MaxChangeItems: 500,
 
@@ -453,16 +510,20 @@ func (s *AgentDefinitionSeed) definitions(orgID, buID pulid.ID) []*agentdefiniti
 			OrganizationID: orgID,
 			BusinessUnitID: buID,
 			Name:           "Help",
-			Icon:           agentdefinition.IconSparkle,
-			Accent:         agentdefinition.AccentSlate,
+			Icon:           agentmark.IconSparkle,
+			Accent:         agentmark.AccentSlate,
 			Description: "Explains how to do things in Trenova and answers quick questions from " +
 				"the command palette. Reads what the person may read; changes nothing.",
-			Template:          agentdefinition.TemplateGeneralAssistant,
-			Instructions:      agentdefinition.TemplateGeneralAssistant.StarterInstructions(),
-			AutonomyCeiling:   agent.TierPropose,
-			DataAccessCeiling: agentdefinition.TemplateGeneralAssistant.StarterDataAccess(),
-			TriggerMode:       agentdefinition.TriggerChat,
-			Enabled:           true,
+			Template: agenttemplate.TemplateGeneralAssistant,
+			Instructions: agentinstructions.StarterInstructions(
+				agenttemplate.TemplateGeneralAssistant,
+			),
+			AutonomyCeiling: agent.TierPropose,
+			DataAccessCeiling: agentpreset.StarterDataAccess(
+				agenttemplate.TemplateGeneralAssistant,
+			),
+			TriggerMode: agentdefinition.TriggerChat,
+			Enabled:     true,
 
 			MaxChangeItems: 500,
 
@@ -476,8 +537,8 @@ func (s *AgentDefinitionSeed) definitions(orgID, buID pulid.ID) []*agentdefiniti
 			OrganizationID: orgID,
 			BusinessUnitID: buID,
 			Name:           "Morning operations digest",
-			Icon:           agentdefinition.IconGauge,
-			Accent:         agentdefinition.AccentSky,
+			Icon:           agentmark.IconGauge,
+			Accent:         agentmark.AccentSky,
 			Description:    "A weekday summary of what is stuck, late or unassigned, ready before the desk opens.",
 			Instructions: "Each weekday morning, review shipments that are late, moves without a driver, " +
 				"and billing items that are blocked. Write a short digest grouped by urgency with the " +
@@ -509,18 +570,20 @@ func (s *AgentDefinitionSeed) definitions(orgID, buID pulid.ID) []*agentdefiniti
 			AccessMode: agentdefinition.AccessEveryone,
 		},
 		{
-			OrganizationID:  orgID,
-			BusinessUnitID:  buID,
-			Name:            SeedAgentIntakeDeskName,
-			Icon:            agentdefinition.IconInbox,
-			Accent:          agentdefinition.AccentViolet,
-			Description:     agentdefinition.TemplateIntakeDesk.Description(),
-			Template:        agentdefinition.TemplateIntakeDesk,
-			Instructions:    agentdefinition.TemplateIntakeDesk.StarterInstructions(),
-			ToolNames:       agentdefinition.TemplateIntakeDesk.StarterTools(),
-			AutonomyCeiling: agentdefinition.TemplateIntakeDesk.StarterCeiling(),
-			TriggerMode:     agentdefinition.TemplateIntakeDesk.StarterTrigger(),
-			EventKinds:      agentdefinition.TemplateIntakeDesk.StarterEvents(),
+			OrganizationID: orgID,
+			BusinessUnitID: buID,
+			Name:           SeedAgentIntakeDeskName,
+			Icon:           agentmark.IconInbox,
+			Accent:         agentmark.AccentViolet,
+			Description:    agenttemplate.Description(agenttemplate.TemplateIntakeDesk),
+			Template:       agenttemplate.TemplateIntakeDesk,
+			Instructions: agentinstructions.StarterInstructions(
+				agenttemplate.TemplateIntakeDesk,
+			),
+			ToolNames:       agentpreset.StarterTools(agenttemplate.TemplateIntakeDesk),
+			AutonomyCeiling: agentpreset.StarterCeiling(agenttemplate.TemplateIntakeDesk),
+			TriggerMode:     agentpreset.StarterTrigger(agenttemplate.TemplateIntakeDesk),
+			EventKinds:      agentpreset.StarterEvents(agenttemplate.TemplateIntakeDesk),
 			OutputMode:      agentdefinition.OutputReport,
 			// Shadowed: in development the desk proposes against the seeded
 			// inbox without sending real mail until somebody turns it loose.
@@ -545,42 +608,42 @@ func (s *AgentDefinitionSeed) definitions(orgID, buID pulid.ID) []*agentdefiniti
 
 			AccessMode: agentdefinition.AccessEveryone,
 		},
-		watchtowerDesk(orgID, buID, agentdefinition.TemplateLoadMonitor,
-			agentdefinition.IconRadar, agentdefinition.AccentSky),
-		watchtowerDesk(orgID, buID, agentdefinition.TemplateDetentionDesk,
-			agentdefinition.IconGauge, agentdefinition.AccentAmber),
-		watchtowerDesk(orgID, buID, agentdefinition.TemplateCredentialDesk,
-			agentdefinition.IconClipboard, agentdefinition.AccentTeal),
-		watchtowerDesk(orgID, buID, agentdefinition.TemplateCarrierRiskDesk,
-			agentdefinition.IconShield, agentdefinition.AccentRose),
-		watchtowerDesk(orgID, buID, agentdefinition.TemplateEDIDesk,
-			agentdefinition.IconFile, agentdefinition.AccentIndigo),
-		watchtowerDesk(orgID, buID, agentdefinition.TemplateServiceFailureDesk,
-			agentdefinition.IconHeadset, agentdefinition.AccentViolet),
-		watchtowerDesk(orgID, buID, agentdefinition.TemplateCashApplication,
-			agentdefinition.IconBanknote, agentdefinition.AccentEmeral),
+		watchtowerDesk(orgID, buID, agenttemplate.TemplateLoadMonitor,
+			agentmark.IconRadar, agentmark.AccentSky),
+		watchtowerDesk(orgID, buID, agenttemplate.TemplateDetentionDesk,
+			agentmark.IconGauge, agentmark.AccentAmber),
+		watchtowerDesk(orgID, buID, agenttemplate.TemplateCredentialDesk,
+			agentmark.IconClipboard, agentmark.AccentTeal),
+		watchtowerDesk(orgID, buID, agenttemplate.TemplateCarrierRiskDesk,
+			agentmark.IconShield, agentmark.AccentRose),
+		watchtowerDesk(orgID, buID, agenttemplate.TemplateEDIDesk,
+			agentmark.IconFile, agentmark.AccentIndigo),
+		watchtowerDesk(orgID, buID, agenttemplate.TemplateServiceFailureDesk,
+			agentmark.IconHeadset, agentmark.AccentViolet),
+		watchtowerDesk(orgID, buID, agenttemplate.TemplateCashApplication,
+			agentmark.IconBanknote, agentmark.AccentEmeral),
 	}
 }
 
 func watchtowerDesk(
 	orgID, buID pulid.ID,
-	template agentdefinition.Template,
+	template agenttemplate.Template,
 	icon, accent string,
 ) *agentdefinition.Definition {
 	return &agentdefinition.Definition{
 		OrganizationID:  orgID,
 		BusinessUnitID:  buID,
-		Name:            template.Label(),
+		Name:            agenttemplate.Label(template),
 		Icon:            icon,
 		Accent:          accent,
-		Description:     template.Description(),
+		Description:     agenttemplate.Description(template),
 		Template:        template,
-		Instructions:    template.StarterInstructions(),
-		ToolNames:       template.StarterTools(),
-		AutonomyCeiling: template.StarterCeiling(),
-		TriggerMode:     template.StarterTrigger(),
-		EventKinds:      template.StarterEvents(),
-		CronExpression:  template.StarterCron(),
+		Instructions:    agentinstructions.StarterInstructions(template),
+		ToolNames:       agentpreset.StarterTools(template),
+		AutonomyCeiling: agentpreset.StarterCeiling(template),
+		TriggerMode:     agentpreset.StarterTrigger(template),
+		EventKinds:      agentpreset.StarterEvents(template),
+		CronExpression:  agentpreset.StarterCron(template),
 		CronTimezone:    "America/Los_Angeles",
 		OutputMode:      agentdefinition.OutputReport,
 		ShadowMode:      true,

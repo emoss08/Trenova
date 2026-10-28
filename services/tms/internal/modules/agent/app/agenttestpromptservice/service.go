@@ -3,7 +3,7 @@ package agenttestpromptservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttestprompt"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/typeutils"
@@ -31,7 +31,7 @@ func New(p Params) *Service {
 func (s *Service) List(
 	ctx context.Context,
 	req *agentdefinitionports.ListAgentTestPromptsRequest,
-) ([]*agentdefinition.TestPrompt, error) {
+) ([]*agenttestprompt.TestPrompt, error) {
 	if err := s.agentExists(ctx, req); err != nil {
 		return nil, err
 	}
@@ -41,8 +41,8 @@ func (s *Service) List(
 func (s *Service) Keep(
 	ctx context.Context,
 	req *agentdefinitionports.KeepAgentTestPromptRequest,
-) (*agentdefinition.TestPrompt, error) {
-	prompt := &agentdefinition.TestPrompt{
+) (*agenttestprompt.TestPrompt, error) {
+	prompt := &agenttestprompt.TestPrompt{
 		BusinessUnitID:    req.TenantInfo.BuID,
 		OrganizationID:    req.TenantInfo.OrgID,
 		AgentDefinitionID: req.AgentDefinitionID,
@@ -67,7 +67,7 @@ func (s *Service) Keep(
 	if err != nil {
 		return nil, err
 	}
-	if count >= agentdefinition.MaxTestPrompts {
+	if count >= agenttestprompt.MaxTestPrompts {
 		return nil, errortypes.NewBusinessError(
 			"An agent keeps at most 20 prompts. Remove one before keeping another.",
 		)
@@ -79,11 +79,17 @@ func (s *Service) Keep(
 	return prompt, nil
 }
 
-func (s *Service) Delete(ctx context.Context, req *agentdefinitionports.DeleteAgentTestPromptRequest) error {
+func (s *Service) Delete(
+	ctx context.Context,
+	req *agentdefinitionports.DeleteAgentTestPromptRequest,
+) error {
 	return s.prompts.Delete(ctx, req)
 }
 
-func (s *Service) agentExists(ctx context.Context, req *agentdefinitionports.ListAgentTestPromptsRequest) error {
+func (s *Service) agentExists(
+	ctx context.Context,
+	req *agentdefinitionports.ListAgentTestPromptsRequest,
+) error {
 	_, err := s.definitions.GetByID(ctx, agentdefinitionports.GetAgentDefinitionByIDRequest{
 		ID:         req.AgentDefinitionID,
 		TenantInfo: req.TenantInfo,

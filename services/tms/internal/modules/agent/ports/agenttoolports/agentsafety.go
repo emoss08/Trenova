@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentreach"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/memtable"
@@ -55,7 +56,7 @@ type AgentSafetySubject struct {
 }
 
 type AgentReachWarning struct {
-	Kind  agentdefinition.ReachWarningKind
+	Kind  agentreach.ReachWarningKind
 	Tools []string
 }
 

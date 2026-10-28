@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentreach"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -128,7 +129,7 @@ func FullCoverage(req *permissionports.RoleCoverageRequest) []permissionports.Ro
 	for _, id := range req.RoleIDs {
 		out = append(out, permissionports.RoleCoverage{
 			RoleID:           id,
-			Coverage:         agentdefinition.CoverageFull,
+			Coverage:         agentreach.CoverageFull,
 			MissingResources: []permission.Resource{},
 		})
 	}

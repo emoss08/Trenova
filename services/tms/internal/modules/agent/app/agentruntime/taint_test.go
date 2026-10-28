@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolpolicy"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
@@ -89,8 +90,8 @@ func TestOpenTurn_ASubjectWrittenOutsideTheOrganizationTaintsTheTurn(t *testing.
 			Actor:      testActor(),
 			Input:      "Work the subject.",
 			Unattended: true,
-			Context: agentdefinition.RuntimeContext{
-				Subject: &agentdefinition.RuntimeSubject{Type: subjectType, ID: subjectID},
+			Context: agentturn.RuntimeContext{
+				Subject: &agentturn.RuntimeSubject{Type: subjectType, ID: subjectID},
 			},
 		})
 
@@ -114,8 +115,8 @@ func TestOpenTurn_MasterDataIsNotOutsideContent(t *testing.T) {
 		Definition: testDefinition(),
 		Actor:      testActor(),
 		Input:      "Cover the move.",
-		Context: agentdefinition.RuntimeContext{
-			Subject: &agentdefinition.RuntimeSubject{
+		Context: agentturn.RuntimeContext{
+			Subject: &agentturn.RuntimeSubject{
 				Type:  agent.SubjectShipmentMove,
 				ID:    pulid.MustNew("smv_").String(),
 				Label: "Move for Acme Freight",
@@ -140,8 +141,8 @@ func TestOpenTurn_AttachmentsAndTaintedMemoriesTaintTheTurn(t *testing.T) {
 		Definition: testDefinition(),
 		Actor:      testActor(),
 		Input:      "What does this say?",
-		Context: agentdefinition.RuntimeContext{
-			Attachments: []agentdefinition.RuntimeAttachment{
+		Context: agentturn.RuntimeContext{
+			Attachments: []agentturn.RuntimeAttachment{
 				{DocumentID: documentID, FileName: "rate-con.pdf", Text: "Rate: $900"},
 			},
 			Memories: []*agent.Memory{
@@ -171,7 +172,7 @@ func TestOpenTurn_AReviewedMemoryDoesNotTaintTheTurn(t *testing.T) {
 		Definition: testDefinition(),
 		Actor:      testActor(),
 		Input:      "Run the on-time report.",
-		Context: agentdefinition.RuntimeContext{
+		Context: agentturn.RuntimeContext{
 			Memories: []*agent.Memory{{
 				ID:               pulid.MustNew("amem_"),
 				Kind:             agent.MemoryKindInstruction,
@@ -385,8 +386,8 @@ func TestRun_AnnouncesWhatTheOpeningAddedBeforeTheFirstReply(t *testing.T) {
 		Definition: testDefinition(),
 		Actor:      testActor(),
 		Input:      "What is this?",
-		Context: agentdefinition.RuntimeContext{
-			Attachments: []agentdefinition.RuntimeAttachment{
+		Context: agentturn.RuntimeContext{
+			Attachments: []agentturn.RuntimeAttachment{
 				{DocumentID: pulid.MustNew("doc_").String()},
 			},
 		},

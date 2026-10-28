@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentguard"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
@@ -149,7 +150,7 @@ func TestRun_AnswersAndRecordsTheTurn(t *testing.T) {
 	result, err := rt.Run(t.Context(), &agentruntimeports.RunRequest{
 		Definition: testDefinition(),
 		Actor:      testActor(),
-		Context:    agentdefinition.RuntimeContext{OrganizationName: "Acme Freight"},
+		Context:    agentturn.RuntimeContext{OrganizationName: "Acme Freight"},
 		Input:      "Who is on load 12345?",
 	})
 	require.NoError(t, err)
@@ -834,7 +835,7 @@ func TestRun_HandsQueryToolsTheOrganizationsTimezone(t *testing.T) {
 	_, err := rt.Run(t.Context(), &agentruntimeports.RunRequest{
 		Definition: testDefinition("shipment_get"),
 		Actor:      testActor(),
-		Context:    agentdefinition.RuntimeContext{Timezone: "America/Chicago"},
+		Context:    agentturn.RuntimeContext{Timezone: "America/Chicago"},
 		Input:      "where is S1",
 	})
 	require.NoError(t, err)

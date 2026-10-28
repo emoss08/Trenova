@@ -5,11 +5,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/testutil/mocks/permissionportsmock"
-
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentreach"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/testutil/mocks/permissionportsmock"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -366,14 +366,14 @@ func TestRoleCoverage_FullPartialAndNone(t *testing.T) {
 		byRole[entry.RoleID] = entry
 	}
 
-	assert.Equal(t, agentdefinition.CoverageFull, byRole[full].Coverage,
+	assert.Equal(t, agentreach.CoverageFull, byRole[full].Coverage,
 		"the assistant is inherited from the base role")
 	assert.Empty(t, byRole[full].MissingResources)
-	assert.Equal(t, agentdefinition.CoveragePartial, byRole[partial].Coverage)
+	assert.Equal(t, agentreach.CoveragePartial, byRole[partial].Coverage)
 	assert.Equal(t,
 		[]permission.Resource{permission.ResourceShipment, permission.ResourceWorker},
 		byRole[partial].MissingResources,
 		"each missing resource is named once")
-	assert.Equal(t, agentdefinition.CoverageNone, byRole[none].Coverage,
+	assert.Equal(t, agentreach.CoverageNone, byRole[none].Coverage,
 		"a role that cannot use the assistant covers nothing")
 }

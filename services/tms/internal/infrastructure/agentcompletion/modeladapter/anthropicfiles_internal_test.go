@@ -11,7 +11,8 @@ import (
 	"testing"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmessage"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -47,7 +48,8 @@ func filesServer(t *testing.T, refuse bool) (*httptest.Server, func() []map[stri
 		mu.Unlock()
 
 		encoded, _ := sonic.MarshalString(body["messages"])
-		if refuse && (strings.Contains(encoded, `"document"`) || strings.Contains(encoded, `"image"`)) {
+		if refuse &&
+			(strings.Contains(encoded, `"document"`) || strings.Contains(encoded, `"image"`)) {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusBadRequest)
 			_, _ = w.Write([]byte(`{"type":"error","error":{"type":"invalid_request_error",` +
@@ -113,8 +115,8 @@ func (s *fileStore) readsOf(documentID string) int {
 
 // attachedMessage is a user message as a turn opens it: the attachments block
 // rendered ahead of what the person wrote, and each file placed in it.
-func attachedMessage(attachments ...agentdefinition.RuntimeAttachment) Message {
-	rendered := agentdefinition.RenderAttachments(attachments, agentdefinition.AttachmentTextBudget)
+func attachedMessage(attachments ...agentturn.RuntimeAttachment) Message {
+	rendered := agentmessage.RenderAttachments(attachments, agentmessage.AttachmentTextBudget)
 	content := rendered.Block + "What does the rate confirmation pay?"
 	files := make([]MessageFile, 0, len(attachments))
 	for idx := range attachments {
@@ -134,30 +136,34 @@ func attachedMessage(attachments ...agentdefinition.RuntimeAttachment) Message {
 	return Message{Role: RoleUser, Content: content, Files: files}
 }
 
-func pdfAttachment() agentdefinition.RuntimeAttachment {
-	return agentdefinition.RuntimeAttachment{
+func pdfAttachment() agentturn.RuntimeAttachment {
+	return agentturn.RuntimeAttachment{
 		DocumentID:  pdfID,
 		FileName:    "ratecon.pdf",
 		ContentType: "application/pdf",
 		FileSize:    int64(len(pdfBytes)),
 		PageCount:   3,
-		Reading:     agentdefinition.AttachmentReadingDone,
+		Reading:     agentturn.AttachmentReadingDone,
 		Text:        pdfText,
 	}
 }
 
-func imageAttachment() agentdefinition.RuntimeAttachment {
-	return agentdefinition.RuntimeAttachment{
+func imageAttachment() agentturn.RuntimeAttachment {
+	return agentturn.RuntimeAttachment{
 		DocumentID:  imageID,
 		FileName:    "seal.png",
 		ContentType: "image/png",
 		FileSize:    int64(len(imageBytes)),
-		Reading:     agentdefinition.AttachmentReadingFailed,
+		Reading:     agentturn.AttachmentReadingFailed,
 	}
 }
 
 func filesCall(url, model string, store *fileStore, messages ...Message) *Call {
-	call := callFor(aiprovider.KindAnthropicMessages, url, &Request{Messages: messages, MaxTokens: 1024})
+	call := callFor(
+		aiprovider.KindAnthropicMessages,
+		url,
+		&Request{Messages: messages, MaxTokens: 1024},
+	)
 	call.Provider.Model = model
 	call.APIKey = "sk-provider"
 	if store != nil {
@@ -237,7 +243,12 @@ func TestAnthropicAdapter_SendsAnAttachedImageAfterALineNamingIt(t *testing.T) {
 	t.Parallel()
 
 	server, bodies := filesServer(t, false)
-	call := filesCall(server.URL, "claude-sonnet-5-5", newFileStore(), attachedMessage(imageAttachment()))
+	call := filesCall(
+		server.URL,
+		"claude-sonnet-5-5",
+		newFileStore(),
+		attachedMessage(imageAttachment()),
+	)
 
 	_, err := NewAnthropicAdapter().Complete(t.Context(), call)
 	require.NoError(t, err)
@@ -298,7 +309,7 @@ func TestAnthropicAdapter_SendsAFileItCannotTakeAsItsText(t *testing.T) {
 	long := pdfAttachment()
 	long.DocumentID = "doc_01LONG"
 	long.PageCount = 120
-	notes := agentdefinition.RuntimeAttachment{
+	notes := agentturn.RuntimeAttachment{
 		DocumentID:  docxID,
 		FileName:    "notes.docx",
 		ContentType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
@@ -331,7 +342,11 @@ func TestAnthropicAdapter_SendsAFileItCannotTakeAsItsText(t *testing.T) {
 		{DocumentID: "doc_01LOCKED", Reason: FileFallbackUnreadable},
 		{DocumentID: "doc_01GONE", Reason: FileFallbackUnavailable},
 	}, resp.Files.Fallbacks)
-	assert.Zero(t, store.readsOf("doc_01LONG"), "120 pages is past what a 200,000-token model takes")
+	assert.Zero(
+		t,
+		store.readsOf("doc_01LONG"),
+		"120 pages is past what a 200,000-token model takes",
+	)
 	assert.Zero(t, store.readsOf(docxID))
 	assert.Zero(t, store.readsOf("doc_01BIGPHOTO"))
 

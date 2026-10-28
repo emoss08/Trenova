@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolpolicy"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
@@ -14,8 +14,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func ediShipmentSubject(shipmentID string) *agentdefinition.RuntimeSubject {
-	return &agentdefinition.RuntimeSubject{
+func ediShipmentSubject(shipmentID string) *agentturn.RuntimeSubject {
+	return &agentturn.RuntimeSubject{
 		Type:            agent.SubjectShipment,
 		ID:              shipmentID,
 		Label:           "Shipment PRO S-2001",
@@ -35,7 +35,7 @@ func TestOpenTurn_AShipmentEnteredByEDIOpensTainted(t *testing.T) {
 		Actor:      testActor(),
 		Input:      "Check the new shipment.",
 		Unattended: true,
-		Context: agentdefinition.RuntimeContext{
+		Context: agentturn.RuntimeContext{
 			Trigger: agent.RunTriggerEvent,
 			Subject: ediShipmentSubject(shipmentID),
 		},
@@ -64,7 +64,7 @@ func TestOpenTurn_AShipmentEnteredByHandOpensClean(t *testing.T) {
 		Actor:      testActor(),
 		Input:      "Check the new shipment.",
 		Unattended: true,
-		Context:    agentdefinition.RuntimeContext{Subject: subject},
+		Context:    agentturn.RuntimeContext{Subject: subject},
 	})
 
 	require.NotNil(t, turn.Taint())
@@ -88,7 +88,7 @@ func TestRun_AnEDIEnteredShipmentHoldsMoneyForAPerson(t *testing.T) {
 		Actor:      testActor(),
 		Input:      "Check the new shipment.",
 		Unattended: true,
-		Context: agentdefinition.RuntimeContext{
+		Context: agentturn.RuntimeContext{
 			Trigger: agent.RunTriggerEvent,
 			Subject: ediShipmentSubject(pulid.MustNew("shp_").String()),
 		},

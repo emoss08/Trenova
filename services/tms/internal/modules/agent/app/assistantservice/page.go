@@ -7,6 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentstarter"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
@@ -157,7 +158,7 @@ func pageAgentOf(definition *agentdefinition.Definition) assistantports.PageAgen
 		Accent:      definition.Accent,
 		SystemKey:   definition.SystemKey,
 		ToolNames:   slices.Clone(definition.ToolNames),
-		Starters:    definition.Starters(),
+		Starters:    agentstarter.Starters(definition),
 	}
 }
 

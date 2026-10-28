@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolpolicy"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/codemode"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
@@ -1155,19 +1156,19 @@ const truncationNotice = "\n\n_This reply was cut off before it finished. " +
 
 func (s *Service) ToolSummaries(
 	definition *agentdefinition.Definition,
-) []agentdefinition.ToolSummary {
+) []agentturn.ToolSummary {
 	return s.summarize(definition, s.heldTools(definition))
 }
 
 func (s *Service) summarize(
 	definition *agentdefinition.Definition,
 	names []string,
-) []agentdefinition.ToolSummary {
-	summaries := make([]agentdefinition.ToolSummary, 0, len(names))
+) []agentturn.ToolSummary {
+	summaries := make([]agentturn.ToolSummary, 0, len(names))
 
 	for _, name := range names {
 		if tool, ok := s.queryTools.Get(name); ok {
-			summaries = append(summaries, agentdefinition.ToolSummary{
+			summaries = append(summaries, agentturn.ToolSummary{
 				Name:        tool.Name(),
 				Description: tool.Description(),
 				Query:       true,
@@ -1183,7 +1184,7 @@ func (s *Service) summarize(
 		}
 
 		policy := tool.Policy()
-		summaries = append(summaries, agentdefinition.ToolSummary{
+		summaries = append(summaries, agentturn.ToolSummary{
 			Name:                tool.Name(),
 			Description:         tool.Description(),
 			Tier:                agenttoolpolicy.StaticTier(definition, policy),
@@ -1308,10 +1309,10 @@ func tagReasoning(completion *llmports.ChatCompletionResult) {
 // usableSummaries keeps the summaries of the tools the turn may call and
 // marks which are loaded, so the prompt and the request agree.
 func usableSummaries(
-	summaries []agentdefinition.ToolSummary,
+	summaries []agentturn.ToolSummary,
 	tools *toolSet,
-) []agentdefinition.ToolSummary {
-	kept := make([]agentdefinition.ToolSummary, 0, len(summaries))
+) []agentturn.ToolSummary {
+	kept := make([]agentturn.ToolSummary, 0, len(summaries))
 	for _, summary := range summaries {
 		if !slices.Contains(tools.allowed, summary.Name) {
 			continue

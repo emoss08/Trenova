@@ -420,7 +420,7 @@ findings:
     fixedIn: "uncommitted; verified by the new lumper-charge-on-a-load case (both models: one $175 lumper proposed, approved and on SEED-SHP-008)"
     files:
       - services/tms/internal/modules/agent/app/agenttools/shipmenttools/shipment_edit_tools.go
-      - services/tms/internal/modules/agent/domain/agentdefinition/tools.go
+      - services/tms/internal/modules/agent/domain/agentpreset/tools.go
       - services/tms/deskbench/scenarios/billing.yaml
   - id: DB-018
     title: A one-day time-off request is refused by its own validation
@@ -465,7 +465,7 @@ findings:
       dropping reads a held write already brings. The seed and the local agents match.
     fixedIn: "uncommitted; verified in .deskbench/runs/20261010-101625-run: get_dispatch_board, record_stop_actual, get_shipment_tracking, get_worker_hos, explain_rate, approve_detention and email_customer were all called by the agents that now hold them"
     files:
-      - services/tms/internal/modules/agent/domain/agentdefinition/tools.go
+      - services/tms/internal/modules/agent/domain/agentpreset/tools.go
       - services/tms/internal/modules/agent/app/agenttools/masterdatatools/desk_tools.go
       - services/tms/internal/modules/agent/app/agenttools/operationstools/monitoring_tools.go
       - services/tms/internal/infrastructure/database/seeds/development/26_agent_definition.go
@@ -720,7 +720,7 @@ findings:
       - services/tms/internal/modules/agent/app/recordanchorservice/
       - services/tms/internal/modules/agent/app/assistantservice/workingset.go
       - services/tms/internal/modules/agent/domain/conversation/workingset.go
-      - services/tms/internal/modules/agent/domain/agentdefinition/anchors.go
+      - services/tms/internal/modules/agent/domain/agentmessage/anchors.go
       - services/tms/internal/modules/operations/app/shipmenttracking/facts.go
       - docs/engineering/agent-runtime.md
     fixedIn: .deskbench/runs/20261009-195808-run
@@ -1202,7 +1202,7 @@ findings:
       - services/tms/internal/modules/operations/app/dispatcheligibility/finding.go
       - services/tms/internal/modules/agent/app/agentquerytoolservice/dispatch_tools.go
       - services/tms/internal/modules/agent/app/agentquerytoolservice/listcatalog.go
-      - services/tms/internal/modules/agent/domain/agentdefinition/prompt.go
+      - services/tms/internal/modules/agent/domain/agentprompt/prompt.go
       - services/tms/internal/infrastructure/database/seeds/development/06_test_data.go
 
   - id: DB-051
@@ -1617,7 +1617,7 @@ findings:
       assignment, not to hold it back.
     fixedIn: uncommitted; to verify in a run
     files:
-      - services/tms/internal/modules/agent/domain/agentdefinition/prompt.go
+      - services/tms/internal/modules/agent/domain/agentprompt/prompt.go
       - services/tms/internal/modules/agent/app/agentquerytoolservice/dispatch_tools.go
 
   - id: DB-069
@@ -2051,7 +2051,7 @@ findings:
     fix: '"Proposals awaiting a decision" says those cannot be taken back: say so, ask the person to reject, propose the right one.'
     fixedIn: uncommitted
     files:
-      - services/tms/internal/modules/agent/domain/agentdefinition/prompt.go
+      - services/tms/internal/modules/agent/domain/agentprompt/prompt.go
 
   - id: DB-092
     title: '"Rolling" took two calls and no total, and three checks were too literal for the data'
@@ -3254,7 +3254,7 @@ findings:
       native PDF's text was in content-stream order, putting the terms first and every label away
       from its value, and pdfium's rect mode doubled and spaced the glyphs of a browser-printed PDF.
     fix: >
-      The files ride on the message they came with (agentdefinition.DescribeAttachments), with up
+      The files ride on the message they came with (agentmessage.DescribeAttachments), with up
       to 24,000 characters of text, and every later turn replays the message with the files named.
       read_attachment is a core tool, loaded on any conversation with a file, reading only the
       person's own uploads to the thread and waiting for a file still being read. A native PDF page
@@ -3262,7 +3262,7 @@ findings:
       confirmation parser reads a row's cells. Document reads return what was found
       (documentcontent.Findings) instead of the raw analysis, which crowded the text out.
     files:
-      - services/tms/internal/modules/agent/domain/agentdefinition/attachments.go
+      - services/tms/internal/modules/agent/domain/agentmessage/attachments.go
       - services/tms/internal/modules/agent/app/agentquerytoolservice/attachment_tool.go
       - services/tms/internal/infrastructure/pdfrender/pdfreader/layout.go
       - services/tms/internal/modules/documents/jobs/documentintelligencejobs/stopextraction.go
@@ -4029,8 +4029,8 @@ findings:
       nothing. analyze_data's description says it is how the agent calculates. The Report
       analyst template no longer says "never calculate what the report did not".
     files:
-      - services/tms/internal/modules/agent/domain/agentdefinition/prompt.go
-      - services/tms/internal/modules/agent/domain/agentdefinition/focused_templates.go
+      - services/tms/internal/modules/agent/domain/agentprompt/prompt.go
+      - services/tms/internal/modules/agent/domain/agentpreset/focused_templates.go
       - services/tms/internal/modules/agent/app/agentquerytoolservice/report_tools.go
       - services/tms/internal/modules/agent/app/agentquerytoolservice/analysis_tool.go
       - services/tms/internal/modules/agent/ports/agentports/agenttool.go
@@ -4188,7 +4188,7 @@ findings:
       it is, even when read_attachment found no text, and never to call such a file unreadable
       before analyzing it.
     files:
-      - services/tms/internal/modules/agent/domain/agentdefinition/prompt.go
+      - services/tms/internal/modules/agent/domain/agentprompt/prompt.go
     fixedIn: uncommitted; verified by .deskbench/runs/20261018-002226-run (3 of 3 name Riverside)
 
   - id: DB-182
@@ -4232,7 +4232,7 @@ findings:
       the agent; run_report and get_report_run say of a complete result that a figure its rows do
       not state, such as a share, a total or a difference, is not read off them.
     files:
-      - services/tms/internal/modules/agent/domain/agentdefinition/prompt.go
+      - services/tms/internal/modules/agent/domain/agentprompt/prompt.go
       - services/tms/internal/modules/agent/app/agentquerytoolservice/report_tools.go
     fixedIn: >
       uncommitted; verified by .deskbench/runs/20261018-001820-run and 20261018-002226-run (3 of 3
@@ -4255,7 +4255,7 @@ findings:
       (Python with pandas, numpy and matplotlib over the organization's reports and attached
       files, no installs, no internet) and never to say it cannot run Python.
     files:
-      - services/tms/internal/modules/agent/domain/agentdefinition/prompt.go
+      - services/tms/internal/modules/agent/domain/agentprompt/prompt.go
     fixedIn: uncommitted; verified by .deskbench/runs/20261018-003104-run ("My Python has no package installs and no internet access")
 
   - id: DB-185
@@ -4450,7 +4450,7 @@ findings:
       recall@8) so the miss shows as a number in every baseline.
     fix: Not fixed in Phase 0 by decision; the rebuild of context assembly owns it.
     files:
-      - services/tms/internal/modules/agent/domain/agentdefinition/runinput.go
+      - services/tms/internal/modules/agent/domain/agentmessage/runinput.go
       - services/tms/internal/modules/agent/app/agentruntime/toolset.go
 
   - id: DB-192
@@ -4493,7 +4493,7 @@ findings:
     files:
       - services/tms/internal/modules/agent/app/agentevents/publisher.go
       - services/tms/internal/modules/agent/ports/agentports/agentevents.go
-      - services/tms/internal/modules/agent/domain/agentdefinition/runinput.go
+      - services/tms/internal/modules/agent/domain/agentmessage/runinput.go
 
   - id: DB-194
     title: EDIDesk is told to read raw X12 it cannot read at its starter data access
@@ -4509,7 +4509,7 @@ findings:
       The chat EDI desk on the bench runs at Restricted, so fire runs and chat runs differ.
     files:
       - services/tms/internal/modules/agent/domain/agentdefinition/dataaccess.go
-      - services/tms/internal/modules/agent/domain/agentdefinition/instructions.go
+      - services/tms/internal/modules/agent/domain/agentinstructions/instructions.go
       - services/tms/internal/modules/agent/app/agentquerytoolservice/edi_tools.go
 
   - id: DB-195
@@ -4524,7 +4524,7 @@ findings:
       open notice per factor is allowed (uq_factoring_noas_open), NoaService.Draft has no
       supersede path, and releasing the current notice is forbidden by the same instructions.
     files:
-      - services/tms/internal/modules/agent/domain/agentdefinition/instructions.go
+      - services/tms/internal/modules/agent/domain/agentinstructions/instructions.go
       - services/tms/internal/modules/agent/app/agenttools/factoringtools/noa_tools.go
       - services/tms/internal/modules/billing/app/factoringservice/noa.go
 
@@ -4547,7 +4547,7 @@ findings:
       so every agent that holds it holds the read. Open until a bench run of the scenario shows
       it.
     files:
-      - services/tms/internal/modules/agent/domain/agentdefinition/tools.go
+      - services/tms/internal/modules/agent/domain/agentpreset/tools.go
       - services/tms/internal/modules/agent/app/agenttools/workforcetools/request_missing_docs.go
 
   - id: DB-197
@@ -4561,8 +4561,8 @@ findings:
       holds no get_customer_update_preferences, so a customer set to None is emailed.
       CustomerUpdateDesk and ServiceFailureDesk are both told to respect None.
     files:
-      - services/tms/internal/modules/agent/domain/agentdefinition/instructions.go
-      - services/tms/internal/modules/agent/domain/agentdefinition/tools.go
+      - services/tms/internal/modules/agent/domain/agentinstructions/instructions.go
+      - services/tms/internal/modules/agent/domain/agentpreset/tools.go
 
   - id: DB-198
     title: CarrierRiskDesk's instructions contradict themselves on closing a finding
@@ -4575,7 +4575,7 @@ findings:
       "closed … CarrierBlocked when they are not to be used" sits beside "Never close a finding that
       is still true"; a revoked authority is both.
     files:
-      - services/tms/internal/modules/agent/domain/agentdefinition/instructions.go
+      - services/tms/internal/modules/agent/domain/agentinstructions/instructions.go
 
   - id: DB-199
     title: Two agents run on every accounting.connection_degraded event
@@ -4587,7 +4587,7 @@ findings:
       The event is in both BillingException's and BooksKeeper's starter events, so both investigate
       one connection and may raise duplicate exceptions while BooksKeeper may pause syncing.
     files:
-      - services/tms/internal/modules/agent/domain/agentdefinition/triggers.go
+      - services/tms/internal/modules/agent/domain/agentpreset/triggers.go
 
   - id: DB-200
     title: The development seed has no subject for most event templates
@@ -5448,7 +5448,7 @@ findings:
       LoadMonitor, DetentionDesk) or add a shipment comment read with a paging cursor.
     files:
       - services/tms/internal/modules/agent/app/agentquerytoolservice/shipment_tools.go
-      - services/tms/internal/modules/agent/domain/agentdefinition/starters.go
+      - services/tms/internal/modules/agent/domain/agentstarter/starters.go
 
   - id: DB-234
     title: Shipment search cannot find a load by the customer's PO or external reference

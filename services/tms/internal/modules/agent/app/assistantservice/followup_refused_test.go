@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -22,15 +22,15 @@ type recordedAnchors struct {
 func (r *recordedAnchors) Anchor(
 	_ context.Context,
 	req *agentports.RecordAnchorRequest,
-) []agentdefinition.RuntimeAnchor {
+) []agentturn.RuntimeAnchor {
 	r.asked = append(r.asked, req)
-	out := make([]agentdefinition.RuntimeAnchor, 0, len(req.Records))
+	out := make([]agentturn.RuntimeAnchor, 0, len(req.Records))
 	for _, record := range req.Records {
-		out = append(out, agentdefinition.RuntimeAnchor{
+		out = append(out, agentturn.RuntimeAnchor{
 			Kind:  "shipment",
 			ID:    record.ID,
 			Label: "SEED-BENCH-CM-01",
-			Facts: []agentdefinition.AnchorFact{
+			Facts: []agentturn.AnchorFact{
 				{Name: "status", Value: "Canceled for Range Logistics"},
 				{Name: "canceled", Value: "by Admin: Range pulled the load by phone"},
 			},
@@ -155,7 +155,7 @@ func TestAnchorChanged_ReadsOnlyTheRefusedRecordsNotAlreadyInPlay(t *testing.T) 
 	actor := testActor()
 
 	got := svc.anchorChanged(t.Context(),
-		[]agentdefinition.RuntimeAnchor{{Kind: "shipment", ID: inPlay}},
+		[]agentturn.RuntimeAnchor{{Kind: "shipment", ID: inPlay}},
 		[]agent.EntityRef{{ID: inPlay}, {ID: unread}, {ID: unread}},
 		actor, actor.TenantInfo())
 

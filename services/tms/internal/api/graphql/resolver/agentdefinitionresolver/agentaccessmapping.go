@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttemplate"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -190,7 +191,7 @@ func myAgentColumns(ctx context.Context, nodePathPrefix string) []string {
 	return definitionColumns(ctx, projection.MyAgentSpec, nodePathPrefix)
 }
 
-func definitionTemplate(obj *agentdefinition.Definition) *agentdefinition.Template {
+func definitionTemplate(obj *agentdefinition.Definition) *agenttemplate.Template {
 	if obj.Template == "" {
 		return nil
 	}

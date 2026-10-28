@@ -479,7 +479,7 @@ A turn's user message carries the files attached to it as references
 (`llmports.Message.Files`): the document id, name, type, size, pages, and
 where the file's entry sits in the attachments block (`EntryStart`/`EntryEnd`),
 with the entry that replaces it when the file itself is sent (`NativeEntry`,
-rendered by `agentdefinition.RenderAttachments`). Only the current message's
+rendered by `agentmessage.RenderAttachments`). Only the current message's
 files are carried; an earlier message's are named in the replay and read with
 `agent_read_attachment`, and a delegate's task carries none. Bytes never cross a
 durable boundary.
@@ -822,7 +822,7 @@ held back, the prompt still says memories exist and to call `agent_list_memories
 the task may depend on one.
 
 **What counts as used.** Carrying a memory and using it are different things.
-`Definition.PlanMemories` returns the carried memories and, separately, those
+`agentmemoryprompt.PlanMemories` returns the carried memories and, separately, those
 that were used (`MemoryFit.Used`): memories about a tool picked for the turn (a
 disclosed turn's loaded tools), and any carried memory that bears on the turn.
 A memory about a record the turn is about or names is carried whatever was
@@ -1084,13 +1084,13 @@ selection with a confusion matrix ([desk-bench.md](desk-bench.md#routing)).
 
 ## The task frame and the domain primer
 
-Every turn knows what it is for before it starts (`agentdefinition.TaskFrame`,
+Every turn knows what it is for before it starts (`agentturn.TaskFrame`,
 `RuntimeContext.Frame`), and every agent knows how Trenova's records fit
 together.
 
 - **Unattended runs** are framed from what started them, with no model call:
   `BackgroundFrame(trigger, eventKind, template)` reads the event → playbook
-  table in `domain/agentdefinition/taskframe.go`. Every `agent.EventKind` has a
+  table in `domain/agenttaskframe/taskframe.go`. Every `agent.EventKind` has a
   playbook (`TestEventPlaybook_EveryEventAnAgentCanStartOnHasOne`), a scheduled
   starter has its own (the load monitor's `watch-the-board`), any other
   schedule or continuous pass gets `scheduled-pass`, and a run a wait started
@@ -1584,7 +1584,7 @@ batch reader:
 Other kinds (a customer, a location) are named but not read: nothing on them
 changes under a conversation. What was read reaches the model as a
 `<records_in_play>` block ahead of the question, after the `Now:` line
-(`agentdefinition.DescribeAnchors`). It says the block is current and wins over
+(`agentmessage.DescribeAnchors`). It says the block is current and wins over
 anything said earlier, and every fact taken from a report rather than the record
 itself carries its age, "reported 40m ago", with "too old to plan on" past the
 tracking snapshot's own staleness (`shipmenttracking.PositionStale`, `HOSStale`).
@@ -1951,7 +1951,7 @@ reads that were loaded alongside it. A `find_tools` need that names a tool the
 agent holds outright (`worker_list`) loads that tool first, ahead of the ranked
 matches, since the prompt lists what can be loaded by name. That is the only place the order of a
 piece of work is written: a template's starter instructions
-(`agentdefinition.Template.StarterInstructions`) hold its persona, what it puts
+(`agentinstructions.StarterInstructions`) hold its persona, what it puts
 first, its rules and what is always a person's decision, and name none of its
 tools (`TestTemplates_InstructionsLeaveTheOrderOfWorkToTheTools`). Walking
 through tools in prose told every turn about tools it had not loaded, went
@@ -2267,7 +2267,7 @@ cannot be used to read another record's file, and reads what document
 intelligence has made of each one.
 
 The files reach the model on the message they came with, never in the system
-prompt: `agentdefinition.DescribeAttachments` writes an `<attachments>` block
+prompt: `agentmessage.DescribeAttachments` writes an `<attachments>` block
 ahead of the question, after `<records_in_play>`, naming each file (id, name,
 type, pages, what it looks like, whether its reading has finished) with its text
 inside `<file_text>`. The message's files share `AttachmentTextBudget` (24,000
@@ -2486,10 +2486,10 @@ conversation is the same from the first call of the turn to the last.
   and the recipes, over every tool held. The turn's own part is the task frame, the runtime
   context, memories and proposals waiting on a decision. The turn carries the
   shared part's length (`TurnState.SystemStable`) to the adapter.
-  `agentdefinition.PromptVersion` names this shape (v11) on runs, evaluation
+  `agentprompt.PromptVersion` names this shape (v11) on runs, evaluation
   cases and fingerprints; the snapshots under
-  `domain/agentdefinition/testdata/prompts` are regenerated with
-  `go test -run TestPromptSnapshots ./internal/modules/agent/domain/agentdefinition/ -update`.
+  `domain/agentprompt/testdata/prompts` are regenerated with
+  `go test -run TestPromptSnapshots ./internal/modules/agent/domain/agentprompt/ -update`.
 - **Anthropic** declares every tool, deferred ones with `defer_loading`, and
   answers a load with `tool_reference` blocks in the tool result that loaded
   it, after its text (`anthropicToolResult`); a reference to anything the
@@ -3163,7 +3163,7 @@ unattended, so the agent permission ceiling does not grow for them.
 ## Tools no template holds
 
 Every action tool is on a starter template unless it is deliberately withheld, and
-`withheldFromEveryTemplate` (`agentdefinition/focused_templates_test.go`) keeps each withheld
+`withheldFromEveryTemplate` (`agentpreset/focused_templates_test.go`) keeps each withheld
 tool off every template with its reason. An organization can still add any of them to an agent
 it builds in AI control. The privileged accounting writes are explained in
 [agent-accounting-tools.md](agent-accounting-tools.md#who-holds-them), rate agreement review in

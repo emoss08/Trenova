@@ -10,6 +10,7 @@ import (
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
@@ -55,8 +56,8 @@ func (fx *delegateRecorder) eventNames() []string {
 	return names
 }
 
-func reportBuilder() agentdefinition.RuntimeDelegate {
-	return agentdefinition.RuntimeDelegate{
+func reportBuilder() agentturn.RuntimeDelegate {
+	return agentturn.RuntimeDelegate{
 		ID:          pulid.MustNew("agdef_"),
 		Name:        "Report Builder",
 		Description: "Builds and saves reports. It knows every dataset.",
@@ -66,11 +67,11 @@ func reportBuilder() agentdefinition.RuntimeDelegate {
 	}
 }
 
-func delegatingRequest(delegates ...agentdefinition.RuntimeDelegate) *agentruntimeports.RunRequest {
+func delegatingRequest(delegates ...agentturn.RuntimeDelegate) *agentruntimeports.RunRequest {
 	return &agentruntimeports.RunRequest{
 		Definition: testDefinition(),
 		Actor:      testActor(),
-		Context:    agentdefinition.RuntimeContext{Delegates: delegates},
+		Context:    agentturn.RuntimeContext{Delegates: delegates},
 		Input:      "Build a dashboard of this month's on-time delivery.",
 		ThreadID:   pulid.MustNew("athr_"),
 		StepOwner: agentruntimeports.RunStepOwner{
@@ -121,7 +122,7 @@ func driveWith(
 
 // scriptedDelegateRun is what the Report Builder did when asked: it saved a
 // private report on its own and proposed sharing it, which waits on the person.
-func scriptedDelegateRun(delegate agentdefinition.RuntimeDelegate) DelegateRun {
+func scriptedDelegateRun(delegate agentturn.RuntimeDelegate) DelegateRun {
 	definition := &agentdefinition.Definition{ID: delegate.ID, Name: delegate.Name}
 
 	return DelegateRun{

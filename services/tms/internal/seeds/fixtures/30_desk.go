@@ -5,25 +5,24 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition/agentdefinitiondb"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/briefing/briefingdb"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/insight/insightdb"
-	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage/inboundmessagedb"
-
-	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower/watchtowerdb"
-
 	"github.com/emoss08/keel"
 	"github.com/emoss08/keel/seed"
 	"github.com/emoss08/trenova/internal/modules/agent/app/watchtowerservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/watchtowersources"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition/agentdefinitiondb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttemplate"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/briefing"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/briefing/briefingdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/insight"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/insight/insightdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower/watchtowerdb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage/inboundmessagedb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -85,7 +84,7 @@ type deskSeedRefs struct {
 	exceptions  []*agent.AgentException
 	insights    []*insight.Insight
 	agentNames  map[pulid.ID]string
-	definitions map[agentdefinition.Template]*agentdefinition.Definition
+	definitions map[agenttemplate.Template]*agentdefinition.Definition
 	shipments   map[string]*shipment.Shipment
 	workers     []*worker.Worker
 	now         int64
@@ -220,7 +219,7 @@ func (r *deskSeedRefs) loadAgentNames(ctx context.Context, db *keel.DB) error {
 	}
 
 	byDefinition := make(map[pulid.ID]string, len(definitions))
-	r.definitions = make(map[agentdefinition.Template]*agentdefinition.Definition, len(definitions))
+	r.definitions = make(map[agenttemplate.Template]*agentdefinition.Definition, len(definitions))
 	for _, definition := range definitions {
 		byDefinition[definition.ID] = definition.Name
 		if definition.Template != "" && definition.Enabled {

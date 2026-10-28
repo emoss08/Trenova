@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
@@ -97,7 +98,7 @@ func (p *TurnPlan) RunRequest(actor *permissionports.RequestActor) *agentruntime
 	return &agentruntimeports.RunRequest{
 		Definition:          p.Definition,
 		Actor:               actor,
-		Context:             agentdefinition.RuntimeContext{Timezone: p.Timezone},
+		Context:             agentturn.RuntimeContext{Timezone: p.Timezone},
 		Input:               p.Input,
 		PreferredProviderID: p.PreferredProviderID,
 		// A model the person picked is the model they get; an administrator's
