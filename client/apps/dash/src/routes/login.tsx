@@ -1,3 +1,4 @@
+import { useQueryClient } from "@tanstack/react-query";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { SignOutNoticeAlert } from "@trenova/shared/components/session/sign-out-notice-alert";
 import { signOutNoticeFrom } from "@trenova/shared/lib/sign-out-notice";
@@ -14,6 +15,7 @@ export function DashLoginPage() {
   const t = useT();
 
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [searchParams] = useSearchParams();
   const signOutNotice = signOutNoticeFrom(searchParams);
   const login = useAuthStore((state) => state.login);
@@ -40,6 +42,7 @@ export function DashLoginPage() {
         setChallenge(outcome.challenge);
         return;
       }
+      queryClient.clear();
       void navigate("/dash", { replace: true });
     } catch {
       setError(t("We couldn't sign you in. Check your email and password and try again."));
@@ -62,6 +65,7 @@ export function DashLoginPage() {
         code: useRecovery ? "" : code,
         recoveryCode: useRecovery ? code : "",
       });
+      queryClient.clear();
       void navigate("/dash", { replace: true });
     } catch {
       setError(t("That code didn't work. Check it and try again, or sign in again."));

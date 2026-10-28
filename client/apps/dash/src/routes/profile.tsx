@@ -47,13 +47,18 @@ export function DashProfilePage() {
 
   const navigate = useNavigate();
   const logout = useAuthStore((state) => state.logout);
+  const queryClient = useQueryClient();
   const { theme, setTheme } = useTheme();
   const profile = useDashProfile();
   const features = useDashFeatures();
 
   const handleLogout = async () => {
-    await logout();
-    void navigate("/dash/login", { replace: true });
+    try {
+      await logout();
+    } finally {
+      queryClient.clear();
+      void navigate("/dash/login", { replace: true });
+    }
   };
 
   return (

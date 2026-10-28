@@ -1,4 +1,5 @@
 import type { SignOutNotice } from "@trenova/shared/lib/sign-out-notice";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, cleanup, render } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { DashIdleTimeout } from "./dash-idle-timeout";
@@ -32,6 +33,15 @@ vi.mock("@trenova/shared/components/session/idle-session-guard", () => ({
   },
 }));
 
+function renderTimeout(queryClient = new QueryClient()) {
+  render(
+    <QueryClientProvider client={queryClient}>
+      <DashIdleTimeout />
+    </QueryClientProvider>,
+  );
+  return queryClient;
+}
+
 async function endSession(notice: SignOutNotice | undefined) {
   await act(async () => {
     mocks.endSession!(notice);
@@ -53,7 +63,7 @@ describe("DashIdleTimeout", () => {
 
   it("signs an idle driver out and tells the Dash sign-in why", async () => {
     mocks.logout.mockResolvedValue(undefined);
-    render(<DashIdleTimeout />);
+    renderTimeout();
 
     await endSession("idle");
 
@@ -63,7 +73,7 @@ describe("DashIdleTimeout", () => {
 
   it("still reaches the sign-in page when the server already ended the session", async () => {
     mocks.logout.mockRejectedValue(new Error("Session has expired"));
-    render(<DashIdleTimeout />);
+    renderTimeout();
 
     await endSession("expired");
 
@@ -74,10 +84,22 @@ describe("DashIdleTimeout", () => {
 
   it("shows no notice when the driver chose to sign out", async () => {
     mocks.logout.mockResolvedValue(undefined);
-    render(<DashIdleTimeout />);
+    renderTimeout();
 
     await endSession(undefined);
 
     expect(mocks.navigate).toHaveBeenCalledWith("/dash/login", { replace: true });
+  });
+
+  it("forgets the driver's pay and loads, so the next driver on the phone never sees them", async () => {
+    mocks.logout.mockResolvedValue(undefined);
+    const queryClient = new QueryClient();
+    queryClient.setQueryData(["dash-total-comp"], { totalMinor: 125000 });
+    queryClient.setQueryData(["dash-loads"], [{ id: "shp_1" }]);
+    renderTimeout(queryClient);
+
+    await endSession("idle");
+
+    expect(queryClient.getQueryCache().getAll()).toEqual([]);
   });
 });
