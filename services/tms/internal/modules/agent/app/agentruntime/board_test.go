@@ -114,7 +114,7 @@ func TestRun_RefusesABoardNamingARecordNoToolReturned(t *testing.T) {
 	assert.NotContains(t, result.Messages[4].Content, read)
 }
 
-func TestRun_RefusesABoardWhoseWordsStateFiguresNothingRead(t *testing.T) {
+func TestRun_RefusesABoardWhoseWordsStateFigures(t *testing.T) {
 	t.Parallel()
 
 	id := pulid.MustNew("shp_").String()
@@ -130,7 +130,8 @@ func TestRun_RefusesABoardWhoseWordsStateFiguresNothingRead(t *testing.T) {
 
 	assert.Empty(t, observer.boards)
 	assert.True(t, result.Messages[4].ToolFailed)
-	assert.Contains(t, result.Messages[4].Content, "nothing this conversation read")
+	assert.Contains(t, result.Messages[4].Content,
+		`verdict states "$48,210.55 in"; the board reads every figure live from its blocks`)
 }
 
 func TestRun_RefusesABoardThatDoesNotParse(t *testing.T) {

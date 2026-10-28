@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 	"slices"
+	"strconv"
 	"strings"
 	"unicode/utf8"
 
@@ -501,7 +502,23 @@ func (p *parser) limit(fields map[string]any, path string, most, fallback int) i
 var emphasis = strings.NewReplacer("**", "", "__", "", "`", "")
 
 func (p *parser) words(fields map[string]any, key, path string, most int, required bool) string {
-	return p.limited(fields, key, path, most, required, emphasis.Replace)
+	text := p.limited(fields, key, path, most, required, emphasis.Replace)
+	if figures := Figures(PlainText(text)); len(figures) > 0 {
+		p.addf("%s states %s; the board reads every figure live from its blocks, so write "+
+			"the words without it and cite the block that shows it", path, figureList(figures))
+	}
+
+	return text
+}
+
+func figureList(figures []string) string {
+	named := figures[:min(len(figures), maxFiguresNamed)]
+	quoted := make([]string, 0, len(named))
+	for _, figure := range named {
+		quoted = append(quoted, strconv.Quote(figure))
+	}
+
+	return strings.Join(quoted, ", ")
 }
 
 func (p *parser) text(fields map[string]any, key, path string, most int, required bool) string {

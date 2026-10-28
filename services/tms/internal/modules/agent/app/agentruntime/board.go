@@ -24,8 +24,9 @@ const showBoardDescription = "Lay out your answer to a question that spans sever
 	"explains a set of records, a close or a lane, and would otherwise be a long reply. You " +
 	"write only the words: the title, a verdict of one or two sentences, prose and at most two " +
 	"notes. Every number, status, row and count is read by Trenova from what each block names " +
-	"when the person opens the board, so never write a figure in the words: point at the block " +
-	"that shows it. Name only records your tools returned in this conversation, by their ids. " +
+	"when the person opens the board, so never write a figure in the words (a duration, an " +
+	"amount, a percentage or a count is refused; record numbers, times of day and dates are " +
+	"fine): point at the block that shows it. Name only records your tools returned in this conversation, by their ids. " +
 	"Cite a block in the verdict or in prose as [words][n], n being the block's position from " +
 	"1; only blocks that read data can be cited. Blocks: figures (1 to 4 figures, each a " +
 	"metric, records with a measure and how to add them up, or an analysis figure); records " +
@@ -271,12 +272,6 @@ func (t *Turn) showBoard(arguments map[string]any) toolOutcome {
 			"conversation returned. Read them first, or leave them out; never write an id from "+
 			"memory.", showBoardName, strings.Join(unread, ", "))
 	}
-	if figures := readFinding(t, boardWords(&request.Board)).figures; len(figures) > 0 {
-		return failedOutcome("Tool %q was not run: its words state %s, which nothing this "+
-			"conversation read. The board shows its figures from its blocks; write the words "+
-			"without numbers and cite the block that shows them.",
-			showBoardName, strings.Join(figures, ", "))
-	}
 
 	return outcome
 }
@@ -307,24 +302,6 @@ func (t *Turn) unreadRecords(refs map[permission.Resource][]pulid.ID) []string {
 	slices.Sort(unread)
 
 	return unread
-}
-
-func boardWords(shown *board.Board) string {
-	words := make([]string, 0, len(shown.Blocks)+2)
-	words = append(words, shown.Title, board.PlainText(shown.Verdict))
-	for idx := range shown.Blocks {
-		block := &shown.Blocks[idx]
-		words = append(words, block.Title, board.PlainText(block.Text))
-		for figure := range block.Figures {
-			words = append(words, block.Figures[figure].Label)
-		}
-		for check := range block.Checks {
-			words = append(words, block.Checks[check].Title, block.Checks[check].Detail)
-		}
-	}
-
-	return strings.Join(slices.DeleteFunc(words, func(word string) bool { return word == "" }),
-		"\n")
 }
 
 func boardContent(shown *agentports.ShownArtifact) string {
