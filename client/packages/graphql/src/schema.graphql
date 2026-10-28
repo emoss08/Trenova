@@ -29559,6 +29559,10 @@ type ShipmentAnalytics {
   """
   customerMix: ShipmentCustomerMix
   detentionWatchlist: ShipmentDetentionWatchlist
+  """
+  The next day's moves as the dispatch board counts them, covered or not.
+  """
+  dispatch: ShipmentDispatchCounts
   emptyMilePercent: ShipmentEmptyMile
   """Null for a reader whose ceiling withholds the state of a location."""
   laneHeatmap: ShipmentLaneHeatmap
@@ -30353,6 +30357,19 @@ type ShipmentDetentionWatchlistItem {
   dwellLabel: String!
   shipmentId: String!
   tone: String!
+}
+
+"""
+The next day's moves by each one's next stop, the pickup until it is picked up
+and then the delivery: past its window (late), due within four hours (dueNow)
+or later today (dueToday), and the moves nobody covers (uncovered).
+"""
+type ShipmentDispatchCounts {
+  dueNow: Int!
+  dueToday: Int!
+  late: Int!
+  moves: Int!
+  uncovered: Int!
 }
 
 type ShipmentDistanceMoveResult {
