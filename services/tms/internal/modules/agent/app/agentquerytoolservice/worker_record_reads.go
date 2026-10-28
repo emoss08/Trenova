@@ -75,9 +75,9 @@ const (
 		"active credentials expiring within that many days from now, soonest first, a page " +
 		"at a time: the tool for any " +
 		"question about who is expiring, lapsed or out of compliance by a date. Narrow by " +
-		"credentialTypeCode, such as MED_CARD or CDL. Each row's worker says if dispatchable; " +
-		"canBeAssigned false is already off dispatch, so no hold. It yields the credentialId " +
-		"and credentialTypeId the credential tools take."
+		"credentialTypeCode, such as MED_CARD or CDL. Whether a driver can be dispatched is " +
+		"worker_list's dispatchable. It yields the credentialId and credentialTypeId the " +
+		"credential tools take."
 	noteFallingDue   = "Leave it out for the credentials falling due across the organization."
 	noteEveryWorker  = "Leave it out for every worker's."
 	fieldPrivacyCase = "privacyCase"

@@ -18901,10 +18901,7 @@ export type DeskWorkerCredentialListQueryVariables = Exact<{
 }>;
 
 
-export type DeskWorkerCredentialListQuery = { workerCredentials: Array<{ id: string, workerId: string, credentialTypeId: string, status: WorkerCredentialStatus, issuingAuthority: string | null, issuedAt: number | null, expiresAt: number | null, daysUntilExpiry: number | null, health: WorkerCredentialHealth, verifiedAt: number | null, documentId: string | null, credentialType: { ' $fragmentRefs'?: { 'WorkerCredentialTypeReferenceFragment': WorkerCredentialTypeReferenceFragment } } | null, worker: (
-      { canBeAssigned: boolean, assignmentBlocked: string, profile: { complianceStatus: ComplianceStatus } | null }
-      & { ' $fragmentRefs'?: { 'WorkerReferenceFragment': WorkerReferenceFragment } }
-    ) | null }> };
+export type DeskWorkerCredentialListQuery = { workerCredentials: Array<{ id: string, workerId: string, credentialTypeId: string, status: WorkerCredentialStatus, issuingAuthority: string | null, issuedAt: number | null, expiresAt: number | null, daysUntilExpiry: number | null, health: WorkerCredentialHealth, verifiedAt: number | null, documentId: string | null, credentialType: { ' $fragmentRefs'?: { 'WorkerCredentialTypeReferenceFragment': WorkerCredentialTypeReferenceFragment } } | null, worker: { ' $fragmentRefs'?: { 'WorkerReferenceFragment': WorkerReferenceFragment } } | null }> };
 
 export type DeskWorkerCredentialTypesQueryVariables = Exact<{
   input: WorkerCredentialTypesInput;
