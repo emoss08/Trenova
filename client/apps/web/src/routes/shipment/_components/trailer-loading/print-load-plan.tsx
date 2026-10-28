@@ -1,6 +1,8 @@
+import { printDocument } from "@/lib/data-table-print";
+import { getDestinationStop, getOriginStop } from "@/lib/shipment-utils";
 import { intlLocale } from "@trenova/shared/i18n/format";
 import { getLocale, translate } from "@trenova/shared/i18n/runtime";
-import { getDestinationStop, getOriginStop } from "@/lib/shipment-utils";
+import { escapeHtml } from "@trenova/shared/lib/html";
 import type { LoadingOptimizationResult } from "@/types/loading-optimization";
 import type { Shipment } from "@trenova/shared/types/shipment";
 import { useFormContext, useWatch } from "react-hook-form";
@@ -64,14 +66,10 @@ function formatDate() {
   });
 }
 
-function esc(s: string) {
-  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-}
-
 // The printed plan is built when it is printed, so it reads in the language the person is
 // using then; every translation is escaped, since it is placed into raw HTML.
 function L(message: string, ...args: unknown[]): string {
-  return esc(translate(message, ...args));
+  return escapeHtml(translate(message, ...args));
 }
 
 function buildHandlingNotes(p: LoadingOptimizationResult["placements"][0]): string {
@@ -87,7 +85,7 @@ function buildHandlingNotes(p: LoadingOptimizationResult["placements"][0]): stri
   if (p.stackable) notes.push(L("Stackable"));
   if (p.minTemp != null && p.maxTemp != null)
     notes.push(`\u2744 ${p.minTemp}\u2013${p.maxTemp}\u00b0F`);
-  if (p.loadingInstructions) notes.push(esc(p.loadingInstructions));
+  if (p.loadingInstructions) notes.push(escapeHtml(p.loadingInstructions));
   return notes.join(" &bull; ") || "\u2014";
 }
 
@@ -95,11 +93,14 @@ export function buildLoadPlanBlob(data: LoadingOptimizationResult, meta: Shipmen
   return new Blob([buildLoadPlanHTML(data, meta)], { type: "text/html" });
 }
 
-export function printLoadPlan(data: LoadingOptimizationResult, meta: ShipmentMeta) {
-  const w = window.open("", "_blank", "width=800,height=1100");
-  if (!w) return;
-  w.document.write(buildLoadPlanHTML(data, meta));
-  w.document.close();
+/**
+ * Opens the print dialog on the plan from a hidden frame, the way every printed page in the
+ * app is printed (lib/data-table-print). The plan carries no script: the Content Security
+ * Policy blocks inline scripts in any document the app opens, and a saved plan is a
+ * shipment document that must not run anything when someone opens it.
+ */
+export function printLoadPlan(data: LoadingOptimizationResult, meta: ShipmentMeta): Promise<void> {
+  return printDocument(buildLoadPlanHTML(data, meta));
 }
 
 function buildLoadPlanHTML(data: LoadingOptimizationResult, meta: ShipmentMeta): string {
@@ -114,7 +115,7 @@ function buildLoadPlanHTML(data: LoadingOptimizationResult, meta: ShipmentMeta):
       // i18n-ignore: print HTML markup; visible phrases go through L()
       return `<tr ${rowBg}>
         <td style="text-align:center;font-weight:700;color:#6b7280">${i + 1}</td>
-        <td style="font-weight:600">${esc(p.commodityName)}</td>
+        <td style="font-weight:600">${escapeHtml(p.commodityName)}</td>
         <td style="text-align:right;font-variant-numeric:tabular-nums">${p.weight.toLocaleString()}</td>
         <td style="text-align:right">${p.pieces}</td>
         <td style="text-align:right;font-variant-numeric:tabular-nums">${p.positionFeet}</td>
@@ -141,7 +142,7 @@ function buildLoadPlanHTML(data: LoadingOptimizationResult, meta: ShipmentMeta):
       const color = warn.severity === "error" ? "var(--danger)" : "var(--warning)";
       const icon = warn.severity === "error" ? "\u26d4" : "\u26a0";
       // i18n-ignore: print HTML markup; visible phrases go through L()
-      return `<div style="display:flex;gap:6px;align-items:flex-start;margin-bottom:4px"><span style="color:${color}">${icon}</span><span style="font-size:11px">${esc(warn.message)}</span></div>`;
+      return `<div style="display:flex;gap:6px;align-items:flex-start;margin-bottom:4px"><span style="color:${color}">${icon}</span><span style="font-size:11px">${escapeHtml(warn.message)}</span></div>`;
     })
     .join("");
 
@@ -209,9 +210,9 @@ function buildLoadPlanHTML(data: LoadingOptimizationResult, meta: ShipmentMeta):
       <div class="subtitle">${L("Trenova Transportation Management")}</div>
     </div>
     <div class="header-right">
-      <div class="pro">${esc(meta.proNumber)}</div>
+      <div class="pro">${escapeHtml(meta.proNumber)}</div>
       <div>${L("BOL: {0}", meta.bol)}</div>
-      ${meta.customerName ? `<div>${esc(meta.customerName)}</div>` : ""}
+      ${meta.customerName ? `<div>${escapeHtml(meta.customerName)}</div>` : ""}
     </div>
   </div>
 
@@ -222,22 +223,22 @@ function buildLoadPlanHTML(data: LoadingOptimizationResult, meta: ShipmentMeta):
   <div class="route-bar">
     <div class="route-point">
       <div class="label">${L("Origin")}</div>
-      <div class="name">${esc(meta.originName)}</div>
-      ${/* i18n-ignore: print HTML markup; visible phrases go through L() */ meta.originAddress ? `<div class="addr">${esc(meta.originAddress)}</div>` : ""}
+      <div class="name">${escapeHtml(meta.originName)}</div>
+      ${/* i18n-ignore: print HTML markup; visible phrases go through L() */ meta.originAddress ? `<div class="addr">${escapeHtml(meta.originAddress)}</div>` : ""}
     </div>
     <div class="route-arrow">\u2192</div>
     <div class="route-point">
       <div class="label">${L("Destination")}</div>
-      <div class="name">${esc(meta.destinationName)}</div>
-      ${/* i18n-ignore: print HTML markup; visible phrases go through L() */ meta.destinationAddress ? `<div class="addr">${esc(meta.destinationAddress)}</div>` : ""}
+      <div class="name">${escapeHtml(meta.destinationName)}</div>
+      ${/* i18n-ignore: print HTML markup; visible phrases go through L() */ meta.destinationAddress ? `<div class="addr">${escapeHtml(meta.destinationAddress)}</div>` : ""}
     </div>
     ${
       meta.trailerCode || meta.driverName
         ? // i18n-ignore: print HTML markup; visible phrases go through L()
           `
     <div class="route-info">
-      ${/* i18n-ignore: print HTML markup; visible phrases go through L() */ meta.trailerCode ? `<div><strong>${L("Trailer:")}</strong> ${esc(meta.trailerCode)}</div>` : ""}
-      ${/* i18n-ignore: print HTML markup; visible phrases go through L() */ meta.driverName ? `<div><strong>${L("Driver:")}</strong> ${esc(meta.driverName)}</div>` : ""}
+      ${/* i18n-ignore: print HTML markup; visible phrases go through L() */ meta.trailerCode ? `<div><strong>${L("Trailer:")}</strong> ${escapeHtml(meta.trailerCode)}</div>` : ""}
+      ${/* i18n-ignore: print HTML markup; visible phrases go through L() */ meta.driverName ? `<div><strong>${L("Driver:")}</strong> ${escapeHtml(meta.driverName)}</div>` : ""}
     </div>`
         : ""
     }
@@ -306,9 +307,9 @@ function buildLoadPlanHTML(data: LoadingOptimizationResult, meta: ShipmentMeta):
         return `<div style="display:flex;gap:8px;align-items:flex-start;margin-bottom:6px;padding:6px 10px;border-radius:4px;${priorityStyle}">
         <span style="font-size:9px;font-weight:700;white-space:nowrap;margin-top:1px">${priorityLabel}</span>
         <div style="font-size:11px">
-          <strong>${esc(r.title)}</strong>
-          <div style="margin-top:1px;opacity:0.8">${esc(r.description)}</div>
-          ${/* i18n-ignore: print HTML markup; visible phrases go through L() */ r.impact ? `<div style="margin-top:2px;font-weight:600;font-size:10px">${esc(r.impact)}</div>` : ""}
+          <strong>${escapeHtml(r.title)}</strong>
+          <div style="margin-top:1px;opacity:0.8">${escapeHtml(r.description)}</div>
+          ${/* i18n-ignore: print HTML markup; visible phrases go through L() */ r.impact ? `<div style="margin-top:2px;font-weight:600;font-size:10px">${escapeHtml(r.impact)}</div>` : ""}
         </div>
       </div>`;
       })
@@ -359,7 +360,6 @@ function buildLoadPlanHTML(data: LoadingOptimizationResult, meta: ShipmentMeta):
     <span>${formatDate()}</span>
   </div>
 
-  <script>window.onload = function() { window.print(); }</script>
 </body>
 </html>`;
 }

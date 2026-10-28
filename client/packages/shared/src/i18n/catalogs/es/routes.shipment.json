@@ -667,6 +667,7 @@
   "The original delivery becomes the handoff point. A new move continues from there to a new destination.": "La entrega original se convierte en el punto de traspaso. Un nuevo tramo continúa desde allí hasta un nuevo destino.",
   "The permit assessment could not be loaded for this shipment.": "No se pudo cargar la evaluación de permisos de este envío.",
   "The preview could not be drawn": "No se pudo mostrar la vista previa",
+  "The print preview could not be opened.": "No se pudo abrir la vista previa de impresión.",
   "The rate agreement covering this lane will replace the rating method, the tariff's input values and every charge the contract applies automatically. Anything you have set by hand on those fields is discarded.": "El acuerdo de tarifas que cubre esta ruta reemplazará el método de tarificación, los valores de entrada de la tarifa y todos los cargos que el contrato aplica automáticamente. Se descarta todo lo que haya establecido a mano en esos campos.",
   "The rate confirmation workflow is complete.": "El flujo de trabajo de la confirmación de tarifa se ha completado.",
   "The rating method and its input values below came from the contract, along with {0, plural, one {# automatic charge} other {# automatic charges}}. Change any of them and this shipment is priced by hand instead.": "El método de tarificación y sus valores de entrada, a continuación, provienen del contrato, junto con {0, plural, one {# cargo automático} other {# cargos automáticos}}. Si cambia cualquiera de ellos, este envío se tarificará a mano.",

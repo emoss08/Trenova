@@ -273993,6 +273993,15 @@
       "go/other"
     ]
   },
+  "The print preview could not be opened.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
   "The printable form of any report. One template serves every report definition, so columns are positional rather than named.": {
     "sites": 1,
     "scope": [

@@ -29309,6 +29309,7 @@
   "The primary provider was unavailable; the fallback provider answered.": "主要供應商無法使用；已由備援供應商回應。",
   "The primary worker assigned to this tractor.": "指派至此牽引車的主要駕駛員。",
   "The print job could not be split into pages": "無法將列印工作拆分成頁面",
+  "The print preview could not be opened.": "無法開啟列印預覽。",
   "The printable form of any report. One template serves every report definition, so columns are positional rather than named.": "任何報表的可列印形式。單一範本適用於所有報表定義，因此欄位是依位置而非依名稱。",
   "The printable notice attached to the email, which is the artifact a customer is shown when a detention charge is disputed.": "附加於電子郵件中的可列印通知，也是滯留費遭爭議時向客戶出示的憑據。",
   "The production year of the tractor.": "此牽引車的出廠年份。",

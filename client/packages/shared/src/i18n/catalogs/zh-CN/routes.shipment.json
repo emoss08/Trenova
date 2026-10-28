@@ -667,6 +667,7 @@
   "The original delivery becomes the handoff point. A new move continues from there to a new destination.": "原送货点将成为交接点。新的运程将自该处继续前往新的目的地。",
   "The permit assessment could not be loaded for this shipment.": "无法加载此运单的许可评估。",
   "The preview could not be drawn": "无法显示预览",
+  "The print preview could not be opened.": "无法打开打印预览。",
   "The rate agreement covering this lane will replace the rating method, the tariff's input values and every charge the contract applies automatically. Anything you have set by hand on those fields is discarded.": "覆盖此路线的费率协议将替换计价方式、运价表的输入值，以及合同自动应用的所有费用。您在这些字段中手动设置的内容将被丢弃。",
   "The rate confirmation workflow is complete.": "运价确认书工作流已完成。",
   "The rating method and its input values below came from the contract, along with {0, plural, one {# automatic charge} other {# automatic charges}}. Change any of them and this shipment is priced by hand instead.": "下方的计价方式和输入值来自合同，另含{0, plural, other { # 项自动费用}}。更改其中任何一项，此运单即改为手动计价。",

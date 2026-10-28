@@ -29309,6 +29309,7 @@
   "The primary provider was unavailable; the fallback provider answered.": "El proveedor principal no estaba disponible; respondió el proveedor de respaldo.",
   "The primary worker assigned to this tractor.": "El trabajador principal asignado a este tractocamión.",
   "The print job could not be split into pages": "No se pudo dividir el trabajo de impresión en páginas",
+  "The print preview could not be opened.": "No se pudo abrir la vista previa de impresión.",
   "The printable form of any report. One template serves every report definition, so columns are positional rather than named.": "La forma imprimible de cualquier informe. Una única plantilla sirve para todas las definiciones, por lo que las columnas son posicionales en lugar de nominales.",
   "The printable notice attached to the email, which is the artifact a customer is shown when a detention charge is disputed.": "El aviso imprimible adjunto al correo, que es el documento que se muestra al cliente cuando se disputa un cargo por demoras.",
   "The production year of the tractor.": "El año de fabricación del tractocamión.",

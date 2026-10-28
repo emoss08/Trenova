@@ -1,7 +1,11 @@
 import { registerCatalogSource, setLocale } from "@trenova/shared/i18n/runtime";
 import type { LoadingOptimizationResult } from "@/types/loading-optimization";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { buildLoadPlanBlob, type ShipmentMeta } from "../print-load-plan";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
+import { buildLoadPlanBlob, printLoadPlan, type ShipmentMeta } from "../print-load-plan";
+
+const mocks = vi.hoisted(() => ({ printDocument: vi.fn() }));
+
+vi.mock("@/lib/data-table-print", () => ({ printDocument: mocks.printDocument }));
 
 const SPANISH: Record<string, string> = {
   "Load Plan": "Plan de carga",
@@ -93,5 +97,41 @@ describe("buildLoadPlanBlob", () => {
 
     expect(html).toContain("<th>Manejo y &lt;notas&gt;</th>");
     expect(html).toContain("Paint &lt;thinner&gt;");
+  });
+});
+
+describe("printLoadPlan", () => {
+  it("prints the plan from the app's print frame, with no script for the CSP to block", async () => {
+    mocks.printDocument.mockResolvedValue(undefined);
+    const open = vi.spyOn(window, "open");
+
+    await printLoadPlan(result, meta);
+
+    expect(open).not.toHaveBeenCalled();
+    expect(mocks.printDocument).toHaveBeenCalledTimes(1);
+    const html = mocks.printDocument.mock.calls[0]?.[0] as string;
+    expect(html).toContain("<h1>Load Plan</h1>");
+    expect(html).not.toContain("<script");
+    open.mockRestore();
+  });
+
+  it("tells the caller when the print preview could not be opened", async () => {
+    const refused = new Error("The print preview could not be opened.");
+    mocks.printDocument.mockRejectedValue(refused);
+
+    await expect(printLoadPlan(result, meta)).rejects.toBe(refused);
+  });
+
+  it("saves a plan that runs nothing when the document is opened", async () => {
+    expect(await buildLoadPlanBlob(result, meta).text()).not.toContain("<script");
+  });
+
+  it("escapes quotes in a customer's name like any other text", async () => {
+    const html = await buildLoadPlanBlob(result, {
+      ...meta,
+      customerName: `O'Neil "Big" Freight`,
+    }).text();
+
+    expect(html).toContain("<div>O&#39;Neil &quot;Big&quot; Freight</div>");
   });
 });

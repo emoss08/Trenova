@@ -162,7 +162,11 @@ export default function LoadPlannerDialog({
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => printLoadPlan(data, shipmentMeta)}
+                onClick={() => {
+                  printLoadPlan(data, shipmentMeta).catch(() => {
+                    toast.error(t("The print preview could not be opened."));
+                  });
+                }}
               >
                 <PrinterIcon className="size-3.5" />
                 {t("Print")}
