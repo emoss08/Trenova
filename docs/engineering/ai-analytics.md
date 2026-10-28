@@ -128,6 +128,14 @@ rebuilds the last 30 days from the sources.
   columns). Nothing here divides a cost by tokens: costs are read per run and per completed
   run, and tokens beside them, so the advisor's share needs no split. A per-token figure added
   later must take `advisor_cost_usd` out of the cost, or add the advisor's tokens, first.
+  A call answered through a provider's batch API (an unattended suite's judge, see
+  "Evaluations" in [agent-runtime.md](agent-runtime.md#evaluations)) is a usage row with
+  `batched` true and `cost_usd` already at the batch discount (`aiprovider.BatchDiscount`,
+  half of every token price, through `Provider.BatchCostForTask`); a per-token figure must
+  read `batched` before comparing its rate with an unbatched row's. Its id is derived from the
+  batch and the item (`pulid.Derived`) and it is written with `CreateOrSkip`, so reading the
+  same results again records nothing twice. An item the provider never ran (expired,
+  canceled) has no row; one it ran and failed has a failed row, as a synchronous attempt does.
   A unit keeps the advisor's part apart as well: `advisor_calls`, `advisor_prompt_tokens`
   (input, cache reads and cache writes together), `advisor_output_tokens` and
   `advisor_cost_usd`, summed from the usage rows' `advisor_*` columns. `cost_usd` still includes

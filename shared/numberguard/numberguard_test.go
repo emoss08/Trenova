@@ -452,3 +452,101 @@ func TestCheckNumbers_AListAfterACodeEndsAtMoney(t *testing.T) {
 
 	assert.Equal(t, []string{"104"}, check.Unsupported)
 }
+
+func TestDerived_FollowsWorkingTheProseShowsInSteps(t *testing.T) {
+	t.Parallel()
+
+	cases := map[string]struct {
+		prose string
+		read  []decimal.Decimal
+	}{
+		"a product of two read figures plus a third (DB-244)": {
+			prose: "A 400-mile load prices at $1,240 for the miles plus $150 for the tarp, " +
+				"$1,390 in all. The $3.10 rate is the default.",
+			read: values(400, 3.10, 150),
+		},
+		"a payment applied oldest first": {
+			prose: "The $3,200 pays $1,562.50 on the oldest invoice and $1,637.50 of the " +
+				"$2,531.25 one, leaving $893.75 open on it.",
+			read: values(3200, 1562.50, 2531.25),
+		},
+		"the total of a list of loads": {
+			prose: "- SEED-SHP-002: $1,900, New.\n- SEED-SHP-009: $3,700, delivered.\n" +
+				"- SEED-DET-009: $2,700, delivered.\n\n- SEED-DET-003: $3,150, completed.\n" +
+				"- SEED-PAY-009: $2,600, completed.\n- SEED-PAY-003: $2,950, completed.\n\n" +
+				"Total on these loads is $17,000.",
+			read: values(1900, 3700, 2700, 3150, 2600, 2950),
+		},
+		"the total of a table column": {
+			prose: "| Invoice | Open |\n| --- | --- |\n| SEED-INV-0007 | $1,562.50 |\n" +
+				"| SEED-INV-0006 | $2,531.25 |\n| SEED-INV-0005 | $2,081.25 |\n\n" +
+				"Together they come to $6,175.00.",
+			read: values(1562.50, 2531.25, 2081.25),
+		},
+		"the total of one sentence's amounts": {
+			prose: "The three invoices, $1,562.50, $2,531.25 and $2,081.25, come to $6,175.00.",
+			read:  values(1562.50, 2531.25, 2081.25),
+		},
+	}
+	for name, tc := range cases {
+		check := numberguard.CheckAmounts(tc.prose,
+			append(tc.read, numberguard.Derived(tc.prose, tc.read)...))
+		assert.True(t, check.OK, "%s: %v", name, check.Unsupported)
+	}
+}
+
+func TestDerived_StillCatchesWhatTheProseDoesNotShow(t *testing.T) {
+	t.Parallel()
+
+	cases := map[string]struct {
+		prose string
+		read  []decimal.Decimal
+		want  []string
+	}{
+		"a wrong second step": {
+			prose: "A 400-mile load prices at $1,240 for the miles plus $150 for the tarp, " +
+				"$1,490 in all, at the $3.10 rate.",
+			read: values(400, 3.10, 150),
+			want: []string{"1,490"},
+		},
+		"a wrong list total": {
+			prose: "- SEED-SHP-002: $1,900\n- SEED-SHP-009: $3,700\n- SEED-DET-009: $2,700\n\n" +
+				"Total on these loads is $8,900.",
+			read: values(1900, 3700, 2700),
+			want: []string{"8,900"},
+		},
+		"a share whose sides the prose leaves out (DB-186)": {
+			prose: "About 52.3% of the $87,310.40 billed is still open.",
+			read:  values(87310.40, 45662.16),
+			want:  []string{"52.3"},
+		},
+		"a step built on an invented figure": {
+			prose: "A $40,000 fee on the $6,000,000 invoice leaves $6,040,000, and $6,080,000 " +
+				"with a second one.",
+			read: values(6000000),
+			want: []string{"40,000", "6,040,000", "6,080,000"},
+		},
+		"a rate is not an amount of a total": {
+			prose: "Stops run $12.50 per stop: $40 for the first two and $25 for the next, " +
+				"$77.50 in all.",
+			read: values(12.50, 40, 25),
+			want: []string{"77.50"},
+		},
+	}
+	for name, tc := range cases {
+		check := numberguard.CheckAmounts(tc.prose,
+			append(tc.read, numberguard.Derived(tc.prose, tc.read)...))
+		assert.Equal(t, tc.want, check.Unsupported, name)
+	}
+}
+
+func TestSentences_KeepsADecimalPointInItsFigure(t *testing.T) {
+	t.Parallel()
+
+	assert.Equal(t, []string{
+		"112 gallons at $3.89 come to $435.68.",
+		" Logged!",
+		"- Next?",
+		" yes",
+	}, numberguard.Sentences("112 gallons at $3.89 come to $435.68. Logged!\n- Next? yes"))
+}

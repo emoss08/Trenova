@@ -90,7 +90,8 @@ func recordIDParam(schema map[string]any) (string, bool) {
 	found := ""
 	for name, raw := range properties {
 		property, _ := raw.(map[string]any)
-		if toolschema.RecordOf(property) == "" {
+		items, _ := property[toolschema.KeyItems].(map[string]any)
+		if toolschema.RecordOf(property) == "" && toolschema.RecordOf(items) == "" {
 			continue
 		}
 		if found != "" {

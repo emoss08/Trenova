@@ -581,7 +581,7 @@ func encodedDocument(t *testing.T, result any) map[string]any {
 }
 
 func shipmentArgs(fixture shipmentFixture, detail string) map[string]any {
-	args := map[string]any{"shipmentId": fixture.entity.ID.String()}
+	args := map[string]any{"shipmentIds": []any{fixture.entity.ID.String()}}
 	if detail != "" {
 		args["detail"] = detail
 	}
@@ -1153,7 +1153,7 @@ func TestGetShipment_ReadsTheShipmentAPersonNamedByItsProNumber(t *testing.T) {
 	assert.Contains(t, string(encoded), fixture.entity.ID.String())
 
 	_, err = tool.Query(t.Context(), testParams(map[string]any{}))
-	require.ErrorContains(t, err, "shipmentId or proNumber")
+	require.ErrorContains(t, err, "shipmentIds or proNumber")
 }
 
 func TestShipmentList_NarrowsASearchByWordsWithTheFiltersAndPagesIt(t *testing.T) {

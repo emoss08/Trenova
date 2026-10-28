@@ -10,6 +10,7 @@ var Module = fx.Module("completion-router",
 	fx.Provide(
 		newService,
 		asCompletionService,
+		asBatchCompletionService,
 		asEmbeddingService,
 		asProviderAvailability,
 		asScriptProviders,
@@ -18,6 +19,8 @@ var Module = fx.Module("completion-router",
 )
 
 func asCompletionService(s *Service) agentports.CompletionService { return s }
+
+func asBatchCompletionService(s *Service) agentports.BatchCompletionService { return s }
 
 func asEmbeddingService(s *Service) aiusageports.EmbeddingService { return s }
 

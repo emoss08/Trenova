@@ -1,7 +1,9 @@
 package pulid
 
 import (
+	"bytes"
 	"crypto/rand"
+	"crypto/sha256"
 	"database/sql/driver"
 	"errors"
 	"fmt"
@@ -44,6 +46,12 @@ func newULIDAt(t time.Time) ulid.ULID {
 func MustNew(prefix string) ID { return MustNewAt(prefix, time.Now()) }
 
 func MustNewAt(prefix string, t time.Time) ID { return ID(prefix + newULIDAt(t).String()) }
+
+func Derived(prefix string, t time.Time, key string) ID {
+	sum := sha256.Sum256([]byte(key))
+
+	return ID(prefix + ulid.MustNew(ulid.Timestamp(t), bytes.NewReader(sum[:])).String())
+}
 
 func Must(prefix string) *ID {
 	id := MustNew(prefix)

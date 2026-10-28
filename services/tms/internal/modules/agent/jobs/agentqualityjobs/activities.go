@@ -39,6 +39,18 @@ type qualityEngine interface {
 		ctx context.Context,
 		req *agentqualityservice.JudgeCaseRequest,
 	) (*agentqualityservice.JudgedCase, error)
+	SubmitJudgeBatch(
+		ctx context.Context,
+		req *agentqualityservice.SubmitJudgeBatchRequest,
+	) (*agentqualityservice.JudgeBatch, error)
+	CheckJudgeBatch(
+		ctx context.Context,
+		req *agentqualityservice.CheckJudgeBatchRequest,
+	) (*agentqualityservice.JudgeBatchStatus, error)
+	CollectJudgeBatch(
+		ctx context.Context,
+		req *agentqualityservice.CollectJudgeBatchRequest,
+	) (*agentqualityservice.CollectedJudgeBatch, error)
 	FinalizeSuite(
 		ctx context.Context,
 		req *agentqualityservice.FinalizeSuiteRequest,
@@ -139,6 +151,33 @@ func (a *Activities) JudgeCaseActivity(
 	judged, err := a.quality.JudgeCase(ctx, req)
 
 	return judged, nonRetryable(err)
+}
+
+func (a *Activities) SubmitJudgeBatchActivity(
+	ctx context.Context,
+	req *agentqualityservice.SubmitJudgeBatchRequest,
+) (*agentqualityservice.JudgeBatch, error) {
+	batch, err := a.quality.SubmitJudgeBatch(ctx, req)
+
+	return batch, nonRetryable(err)
+}
+
+func (a *Activities) CheckJudgeBatchActivity(
+	ctx context.Context,
+	req *agentqualityservice.CheckJudgeBatchRequest,
+) (*agentqualityservice.JudgeBatchStatus, error) {
+	status, err := a.quality.CheckJudgeBatch(ctx, req)
+
+	return status, nonRetryable(err)
+}
+
+func (a *Activities) CollectJudgeBatchActivity(
+	ctx context.Context,
+	req *agentqualityservice.CollectJudgeBatchRequest,
+) (*agentqualityservice.CollectedJudgeBatch, error) {
+	collected, err := a.quality.CollectJudgeBatch(ctx, req)
+
+	return collected, nonRetryable(err)
 }
 
 func (a *Activities) FinalizeSuiteActivity(

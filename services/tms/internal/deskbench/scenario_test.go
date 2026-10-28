@@ -209,7 +209,11 @@ func TestValidate_ARequirementNamesOneThingTheEnvironmentNeeds(t *testing.T) {
 		deskbench.Requirement{Extension: "BrowserUse"},
 		deskbench.Requirement{EmailProfile: "Notifications"},
 		deskbench.Requirement{EDILading: "ACMEMFG"},
+		deskbench.Requirement{DocumentText: true},
 	).Validate())
+	require.ErrorContains(t, scenario(deskbench.Requirement{
+		EDILading: "ACMEMFG", DocumentText: true,
+	}).Validate(), "names one of")
 	require.ErrorContains(t, scenario(deskbench.Requirement{}).Validate(), "names one of")
 	require.ErrorContains(t, scenario(deskbench.Requirement{
 		Extension: "BrowserUse", EmailProfile: "General",

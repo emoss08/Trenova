@@ -46,6 +46,32 @@ func (r *repository) Create(ctx context.Context, record *aiusage.AIUsageRecord) 
 	})
 }
 
+func (r *repository) CreateOrSkip(
+	ctx context.Context,
+	records []*aiusage.AIUsageRecord,
+) (int64, error) {
+	if len(records) == 0 {
+		return 0, nil
+	}
+
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int64, error) {
+		u := aiusagedb.AIUsageRecords
+		inserted, err := u.CreateOrSkip(
+			ctx,
+			r.db.Keel(ctx),
+			records,
+			u.ID,
+			u.BusinessUnitID,
+			u.OrganizationID,
+		)
+		if err != nil {
+			return 0, fmt.Errorf("record ai usage: %w", err)
+		}
+
+		return inserted, nil
+	})
+}
+
 // totalsRow is the shape every aggregate query decodes into: up to three
 // grouping keys, then the totals. Percentiles are taken over successful calls
 // only, in SQL, because a failure refused in a millisecond is not a fast

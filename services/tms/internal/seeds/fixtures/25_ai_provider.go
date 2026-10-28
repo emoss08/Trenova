@@ -132,21 +132,19 @@ func (s *AIProviderSeed) providers(orgID, buID pulid.ID) []*aiprovider.Provider 
 			OrganizationID: orgID,
 			BusinessUnitID: buID,
 			Name:           SeedAIProviderHostedName,
-			Description: "A hosted frontier model, marked trusted so it may serve billing " +
-				"diagnosis. Disabled until an API key is added.",
+			Description: "Claude Haiku 5.5, the model the Desk is tuned for, serving every " +
+				"task but embeddings and trusted for billing diagnosis. Disabled until an " +
+				"API key is added.",
 			Kind:                 aiprovider.KindAnthropicMessages,
-			Model:                "claude-sonnet-5",
+			Model:                "claude-haiku-5-5",
 			StructuredOutputMode: aiprovider.StructuredOutputJSONSchema,
 			ReasoningEffort:      aiprovider.ReasoningOff,
 			MaxTokens:            16384,
-			Tasks: []aiprovider.Task{
-				aiprovider.TaskBillingDiagnosis,
-				aiprovider.TaskAssistantChat,
-			},
-			Priority: 5,
-			Trusted:  true,
-			Enabled:  false,
-			Scripts:  true,
+			Tasks:                hostedTasks(),
+			Priority:             5,
+			Trusted:              true,
+			Enabled:              false,
+			Scripts:              true,
 
 			ThinkingStyle: aiprovider.ThinkingStyleAuto,
 
@@ -161,4 +159,19 @@ func (s *AIProviderSeed) providers(orgID, buID pulid.ID) []*aiprovider.Provider 
 			OnCap: aiprovider.CapActionNext,
 		},
 	}
+}
+
+// hostedTasks is every task the hosted model serves: all but embeddings, which
+// the Messages API has no endpoint for. The Desk is tuned for this model, and a
+// task left to the local servers alone (the scope classifier, reading a
+// document) stops working on a machine that does not run them.
+func hostedTasks() []aiprovider.Task {
+	tasks := make([]aiprovider.Task, 0, len(aiprovider.AllTasks()))
+	for _, task := range aiprovider.AllTasks() {
+		if task != aiprovider.TaskEmbedding {
+			tasks = append(tasks, task)
+		}
+	}
+
+	return tasks
 }

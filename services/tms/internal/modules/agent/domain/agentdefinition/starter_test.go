@@ -346,6 +346,7 @@ func TestTemplates_DataAccessFollowsWhatEachDeskReads(t *testing.T) {
 		agentdefinition.TemplateEDIDesk:            agentdefinition.DataAccessInternal,
 		agentdefinition.TemplateBillingException:   agentdefinition.DataAccessInternal,
 		agentdefinition.TemplateFormulaAssistant:   agentdefinition.DataAccessRestricted,
+		agentdefinition.TemplateReportAnalyst:      agentdefinition.DataAccessRestricted,
 	}
 	for template, want := range cases {
 		require.Equalf(t, want, template.StarterDataAccess(), "%s", template.Label())

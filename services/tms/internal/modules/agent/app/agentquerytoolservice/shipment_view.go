@@ -71,23 +71,14 @@ func newShipmentActivity(
 		if comment == nil || comment.IsDeleted() {
 			continue
 		}
-		outside := comment.WrittenOutside()
+		row, outside := commentRowOf(comment)
 		if outside {
 			activity.outside = append(activity.outside, agent.RecordRef{
 				EntityType: agent.TaintEntityShipmentComment,
 				ID:         comment.ID.String(),
 			})
 		}
-		activity.RecentComments = append(activity.RecentComments, shipmentCommentRow{
-			ID:             comment.ID.String(),
-			Type:           string(comment.Type),
-			Visibility:     string(comment.Visibility),
-			Source:         string(comment.Source),
-			Author:         commentAuthor(comment),
-			Comment:        strings.TrimSpace(comment.Comment),
-			WrittenOutside: outside,
-			CreatedAt:      comment.CreatedAt,
-		})
+		activity.RecentComments = append(activity.RecentComments, row)
 	}
 	if len(activity.outside) > 0 {
 		activity.CommentsNote = outsideCommentsNote
@@ -97,6 +88,21 @@ func newShipmentActivity(
 }
 
 func (a *shipmentActivity) TaintedRecords() []agent.RecordRef { return a.outside }
+
+func commentRowOf(comment *shipment.ShipmentComment) (shipmentCommentRow, bool) {
+	outside := comment.WrittenOutside()
+
+	return shipmentCommentRow{
+		ID:             comment.ID.String(),
+		Type:           string(comment.Type),
+		Visibility:     string(comment.Visibility),
+		Source:         string(comment.Source),
+		Author:         commentAuthor(comment),
+		Comment:        strings.TrimSpace(comment.Comment),
+		WrittenOutside: outside,
+		CreatedAt:      comment.CreatedAt,
+	}, outside
+}
 
 type shipmentView struct {
 	*shipment.Shipment
@@ -133,9 +139,7 @@ func holdRowOf(hold *shipment.ShipmentHold) shipmentHoldRow {
 	if hold.HoldReason != nil {
 		row.Reason = strings.TrimSpace(hold.HoldReason.Label)
 	}
-	if hold.Source == shipment.HoldSourceUser || hold.Source == shipment.HoldSourceRule {
-		row.Notes = strings.TrimSpace(hold.Notes)
-	}
+	row.Notes = holdNote(hold)
 
 	return row
 }
@@ -475,4 +479,12 @@ func freightLineTexts(lines []shipment.FreightLine) []string {
 		out = append(out, lines[i].Label+": "+lines[i].Amount.StringFixed(2))
 	}
 	return out
+}
+
+func holdNote(hold *shipment.ShipmentHold) string {
+	if hold.Source != shipment.HoldSourceUser && hold.Source != shipment.HoldSourceRule {
+		return ""
+	}
+
+	return strings.TrimSpace(hold.Notes)
 }

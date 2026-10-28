@@ -193,7 +193,7 @@ because nothing brings them back. Saved report views are one person's preference
 | Template | Runs | Holds |
 | --- | --- | --- |
 | Fuel and IFTA clerk | chat, at a Propose ceiling, Internal data access | `fuel_list_purchases`, `fuel_record_purchase`, `fuel_correct_purchase`, `fuel_delete_purchase`, `fuel_list_cards`, `fuel_assign_card`, `fuel_list_purchase_imports`, `fuel_resolve_purchase_import_rows`, `fuel_commit_purchase_import`, `fuel_discard_purchase_import`, `fuel_list_ifta_jurisdictions`, `fuel_list_ifta_mileage_entries`, `fuel_record_ifta_mileage_entry`, `fuel_correct_ifta_mileage_entry`, `fuel_delete_ifta_mileage_entry`, `fuel_recalculate_jurisdiction_miles`, `fuel_backfill_jurisdiction_miles`, `fuel_list_ifta_returns`, `fuel_generate_ifta_return`, `fuel_recalculate_ifta_return`, `fuel_delete_ifta_return`, `fuel_amend_ifta_return`, `rate_list_fuel_index_prices`, `rate_record_fuel_index_price`, `rate_correct_fuel_index_price` |
-| Report analyst | chat, at a Propose ceiling, Internal data access | `report_list`, `report_get`, `report_preview`, `report_run`, `report_get_run`, `report_list_runs`, `report_compare_runs`, `report_cancel_run`, `report_list_datasets`, `report_get_dataset`, `report_create`, `report_update`, `report_fork`, `report_reset_fork`, `report_delete`, `report_list_schedules`, `report_create_schedule`, `report_update_schedule`, `report_delete_schedule`, `report_list_dashboards`, `report_create_dashboard`, `report_add_dashboard_tile`, `report_delete_dashboard` |
+| Report analyst | chat, at a Propose ceiling, Restricted data access | `report_list`, `report_get`, `report_preview`, `report_run`, `report_get_run`, `report_list_runs`, `report_compare_runs`, `report_cancel_run`, `report_list_datasets`, `report_get_dataset`, `report_create`, `report_update`, `report_fork`, `report_reset_fork`, `report_delete`, `report_list_schedules`, `report_create_schedule`, `report_update_schedule`, `report_delete_schedule`, `report_list_dashboards`, `report_create_dashboard`, `report_add_dashboard_tile`, `report_delete_dashboard` |
 | Formula assistant | chat, at a Propose ceiling | `customer_list`, `carrier_list`, `location_list`, `rate_list_imports`, `rate_list_fuel_index_prices`, `rate_create_agreement`, `rate_update_agreement_draft`, `rate_duplicate_agreement`, `rate_submit_agreement`, `rate_run_simulation`, `rate_amend_agreement_rules`, `rate_apply_increase`, `rate_suspend_agreement`, `rate_resume_agreement`, `rate_archive_agreement`, `rate_commit_import`, `rate_discard_import`, `rate_record_fuel_index_price`, `rate_correct_fuel_index_price` |
 
 The fuel and IFTA clerk keeps the fuel tax record and holds 33 of its 56 tools: every fuel
@@ -213,8 +213,10 @@ The report analyst holds every report administration tool on this page and the r
 dashboard builders they sit beside, 23 tools in all. It is a chat agent acting as the person, so
 the service still lets only a run's starter cancel it and only a schedule's owner change it, and
 `report_create_schedule` and `report_update_schedule` stay sent-outside: held once the turn read
-outside content and never past Ask first. Its data access is Internal, so a report column above
-it is left out and named. The insight analyst, an unattended desk, keeps its report reads and
+outside content and never past Ask first. Its data access is Restricted, because what it
+analyzes is money: open balances, revenue and pay are Restricted amounts, and an analyst held to
+Internal read them from a report run but not from the receivable and invoice reads it reaches
+through `find_tools`, so it could not check a figure against the records. The insight analyst, an unattended desk, keeps its report reads and
 holds none of the report writes.
 
 All three run at a Propose ceiling, so every write they make waits for a person, and none needs

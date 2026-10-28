@@ -271,3 +271,27 @@ func TestCheckBudget(t *testing.T) {
 	})
 	assert.True(t, zero.Stop, "a zero budget stops every replay")
 }
+
+func TestCheckBudget_HoldsWhatRunningJudgeBatchesWillCost(t *testing.T) {
+	t.Parallel()
+
+	room := agentquality.CheckBudget(agentquality.BudgetInput{
+		NightlySpent: decimal.RequireFromString("3.00"),
+		MonthlySpent: decimal.RequireFromString("10.00"),
+		NightlyCap:   agentquality.DefaultNightlyBudgetUSD,
+		MonthlyCap:   agentquality.DefaultMonthlyBudgetUSD,
+		Committed:    decimal.RequireFromString("0.50"),
+	})
+	assert.False(t, room.Stop)
+	assert.True(t, room.Room.Equal(decimal.RequireFromString("1.50")), room.Room.String())
+
+	held := agentquality.CheckBudget(agentquality.BudgetInput{
+		NightlySpent: decimal.RequireFromString("4.60"),
+		MonthlySpent: decimal.RequireFromString("10.00"),
+		NightlyCap:   agentquality.DefaultNightlyBudgetUSD,
+		MonthlyCap:   agentquality.DefaultMonthlyBudgetUSD,
+		Committed:    decimal.RequireFromString("0.40"),
+	})
+	assert.True(t, held.Stop, "spend and what running batches will cost reach the cap")
+	assert.Contains(t, held.Reason, "held for judge batches")
+}

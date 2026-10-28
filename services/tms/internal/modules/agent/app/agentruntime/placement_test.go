@@ -1,6 +1,7 @@
 package agentruntime
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
@@ -110,16 +111,38 @@ func TestStrayArtifactLinks(t *testing.T) {
 	}
 }
 
-// The Formula Desk ended its reply with the card as a sentence of its own.
-// Asked once, it names the card inside a sentence, and only that reply is kept.
-func TestDrive_AsksAgainForAnArtifactNamedOutsideASentence(t *testing.T) {
+// The Formula Desk ended its reply with the card as a sentence of its own,
+// and Haiku ended one with the shipment card on a line of its own (DB-148).
+// Each was asked again, and the person watched a finished answer restart to
+// move a link. The link is now cut and joined to the reply's own sentence,
+// with nothing asked again.
+func TestDrive_MovesALinkStandingApartIntoTheRepliesSentence(t *testing.T) {
 	t.Parallel()
 
 	card := formulaCard()
 	stray := "**Per CWT (Hundredweight)** is active. It charges the base rate for each " +
 		"100 lb, rounded up. " + ArtifactRef(&card)
-	fixed := "**Per CWT (Hundredweight)** is active; " + ArtifactRef(&card) +
-		" charges the base rate for each 100 lb, rounded up."
+
+	result, events, completion := placementRun(t, &card, nil, stray)
+
+	assert.Equal(t, "**Per CWT (Hundredweight)** is active. It charges the base rate for each "+
+		"100 lb, rounded up ("+ArtifactRef(&card)+").", result.Reply)
+	assert.Empty(t, StrayArtifactLinks(result.Reply))
+	assert.False(t, retried(events))
+	assert.Len(t, completion.Requests, 2, "the model is not asked again")
+	assert.Equal(t, []agentports.RegroundAction{agentports.RegroundPlaceArtifacts},
+		regroundedActions(events))
+}
+
+// A link in a table cell sits where cutting it could leave the row saying
+// nothing, so the model is asked once to name it in a sentence.
+func TestDrive_AsksAgainForALinkInATable(t *testing.T) {
+	t.Parallel()
+
+	card := formulaCard()
+	stray := "It is active.\n\n| Template | Basis |\n| --- | --- |\n| " + ArtifactRef(&card) +
+		" | CWT |"
+	fixed := "It is active; " + ArtifactRef(&card) + " charges by the hundredweight."
 
 	result, events, completion := placementRun(t, &card, nil, stray, fixed)
 
@@ -136,13 +159,12 @@ func TestDrive_AsksAgainForAnArtifactNamedOutsideASentence(t *testing.T) {
 }
 
 // A model that does it again is not asked a third time: the link is taken out
-// of where it stood and named in a sentence of its own at the end.
+// of where it stood and joined to the reply's sentence nearest it.
 func TestDrive_PlacesALinkTheRewriteStillLeftOutsideASentence(t *testing.T) {
 	t.Parallel()
 
 	card := formulaCard()
-	stray := "It is active. It charges the base rate for each 100 lb, rounded up. " +
-		ArtifactRef(&card)
+	stray := "| Template |\n| --- |\n| " + ArtifactRef(&card) + " |"
 
 	result, events, completion := placementRun(t, &card, nil, stray, "**"+ArtifactRef(&card)+
 		"**\n\nIt is active. It charges the base rate for each 100 lb, rounded up.")
@@ -155,6 +177,110 @@ func TestDrive_PlacesALinkTheRewriteStillLeftOutsideASentence(t *testing.T) {
 		agentports.RegroundRelinkArtifacts,
 		agentports.RegroundPlaceArtifacts,
 	}, regroundedActions(events))
+}
+
+func TestPlaced_JoinsAStrayLinkToTheSentenceNearestIt(t *testing.T) {
+	t.Parallel()
+
+	card := formulaCard()
+	table := keptShipments(15)
+	ref := ArtifactRef(&card)
+	cases := []struct {
+		name      string
+		reply     string
+		want      string
+		withTable bool
+		fail      bool
+	}{
+		{
+			name: "on a line of its own at the end (DB-148, delayed-reefer-detail)",
+			reply: "The late reefer is **SEED-SHP-010**.\n\n- **Pickup:** reached 22h late.\n" +
+				"- **No ETA:** no truck is reporting.\n\nI can rank the drivers who could " +
+				"take the LA leg.\n\n" + ref,
+			want: "The late reefer is **SEED-SHP-010**.\n\n- **Pickup:** reached 22h late.\n" +
+				"- **No ETA:** no truck is reporting.\n\nI can rank the drivers who could " +
+				"take the LA leg (" + ref + ").",
+		},
+		{
+			name:  "after a weight answer (DB-148, codemode-control-weight-question)",
+			reply: "**SEED-SHP-004** weighs **38,000**. It is still unassigned.\n\n" + ref,
+			want:  "**SEED-SHP-004** weighs **38,000**. It is still unassigned (" + ref + ").",
+		},
+		{
+			name:  "trailing after a list",
+			reply: "Two loads are late:\n\n- PRO-1\n- PRO-2\n\n**" + ref + "**",
+			want:  "Two loads are late:\n\n- PRO-1\n- PRO-2 (" + ref + ")",
+		},
+		{
+			name:  "after a sentence on its own line",
+			reply: "It is active. " + ref + "\n\nWant the rest?",
+			want:  "It is active (" + ref + ").\n\nWant the rest?",
+		},
+		{
+			name:  "leading the reply, joined to the first sentence below",
+			reply: ref + "\n\nIt is active.",
+			want:  "It is active (" + ref + ").",
+		},
+		{
+			name:  "as a list item of its own",
+			reply: "It is active.\n\n- " + ref,
+			want:  "It is active (" + ref + ").",
+		},
+		{
+			name:  "already named in a sentence, cut without naming it twice",
+			reply: "Its details are in " + ref + ".\n\n" + ref,
+			want:  "Its details are in " + ref + ".",
+		},
+		{
+			name: "beside a left-out table, each where it belongs",
+			reply: "Fifteen loads are late. The oldest is Acme's.\n\nI can call the " +
+				"carriers.\n\n" + ref,
+			want: "Fifteen loads are late. The oldest is Acme's (" + ArtifactRef(&table) +
+				").\n\nI can call the carriers (" + ref + ").",
+			withTable: true,
+		},
+		{
+			name:  "with no prose to join",
+			reply: "| A |\n| - |\n| 1 |\n\n" + ref,
+			want:  "| A |\n| - |\n| 1 |\n\n" + ref,
+			fail:  true,
+		},
+	}
+	for _, tc := range cases {
+		turn := &Turn{artifacts: []agentports.ShownArtifact{card}}
+		if tc.withTable {
+			turn.artifacts = append(turn.artifacts, table)
+		}
+		problems := turn.placementProblems(tc.reply)
+		assert.True(t, problems.mendable(), tc.name)
+
+		got, ok := turn.placed(tc.reply, &problems)
+		assert.Equal(t, tc.want, got, tc.name)
+		assert.Equal(t, !tc.fail, ok, tc.name)
+		if !tc.fail {
+			assert.Empty(t, StrayArtifactLinks(got), tc.name)
+		}
+	}
+}
+
+func TestPlacementProblems_OnlyALinkStandingApartIsMendable(t *testing.T) {
+	t.Parallel()
+
+	card := formulaCard()
+	ref := ArtifactRef(&card)
+	turn := &Turn{artifacts: []agentports.ShownArtifact{card}}
+
+	for name, reply := range map[string]string{
+		"in a table cell":   "It is active.\n\n| Template |\n| --- |\n| " + ref + " |",
+		"in a heading":      "## Rates in " + ref + "\n\nIt is active.",
+		"in a fenced block": "It is active.\n\n```\n" + ref + "\n```",
+		"beside an invented id": "It is active.\n\n" + ref +
+			" [x](artifact:art_01MADEUP0000000000000000000)",
+	} {
+		problems := turn.placementProblems(reply)
+		assert.False(t, problems.empty(), name)
+		assert.False(t, problems.mendable(), name)
+	}
 }
 
 // A table the reply was told to point to, and did not, is asked for.
@@ -266,7 +392,7 @@ func TestDrive_NamesALeftOutTableInTheRepliesOwnLanguage(t *testing.T) {
 		regroundedActions(events))
 }
 
-func TestWithRefs(t *testing.T) {
+func TestLinkRefs_JoinsRefsToTheFirstSentence(t *testing.T) {
 	t.Parallel()
 
 	a := "[Shipments](artifact:art_1)"
@@ -337,7 +463,7 @@ func TestWithRefs(t *testing.T) {
 		{name: "unchanged with nothing to name", text: "It is active.", want: "It is active."},
 	}
 	for _, tc := range cases {
-		got := withRefs(tc.text, tc.refs)
+		got, _ := linkRefs(strings.Split(tc.text, "\n"), nil, tc.refs)
 		assert.Equal(t, tc.want, got, tc.name)
 		assert.NotContains(t, got, "The full", tc.name)
 	}

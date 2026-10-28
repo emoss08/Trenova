@@ -3282,6 +3282,25 @@ findings:
       the placement guard rewrites it (relink_artifacts), costing a model call; the implicit
       "artifacts named without a correction" check fails on both models. Seen against the
       uncommitted artifactref.go and placement.go changes in the working tree.
+    evidence: >
+      .deskbench/runs/20261027-haiku-volume-fixed: delayed-reefer-detail and
+      codemode-control-weight-question-script each ended a finished reply with the shipment card
+      on a line of its own; each was restarted (relink_artifacts) to move the link into the last
+      sentence, and failed "artifacts named without a correction".
+    cause: >
+      Only a reply whose one fault was a left-out artifact was mended without the model; a link
+      standing apart from any sentence always cost a second model call, though cutting it and
+      joining it to the sentence beside it is as good as the rewrite.
+    fix: >
+      placementProblems.mendable: a stray link on a prose line outside a fence (on its own line,
+      after a list, after a sentence that has ended) is cut and joined, in parentheses, to the
+      reply's own prose line nearest above where it stood (else the first below), with a
+      place_artifacts and a reply_replaced and no retrying. A link in a table cell, a heading or a
+      fenced block, an id nobody holds, and a reply with no prose to join keep relink_artifacts.
+      The bench check is unchanged: it counts only a reply that was asked again.
+    files:
+      - services/tms/internal/modules/agent/app/agentruntime/placement.go
+    fixedIn: uncommitted; TestDrive_MovesALinkStandingApartIntoTheRepliesSentence, TestPlaced_JoinsAStrayLinkToTheSentenceNearestIt
 
   - id: DB-149
     title: Haiku states a rate agreement price no tool returned, and retracts it a turn later
@@ -5645,8 +5664,15 @@ findings:
       formula-asked-for-in-the-desk, 17,000 in palette-customer-by-name), each a figure the model
       worked out from what it read.
     fix: >
-      Not fixed. Check a proposal-field claim against what the conversation read as well as what
-      the proposal holds; for derived figures see DB-145 and DB-230.
+      The field claim is checked against what the conversation read (readResults). Derived
+      figures: numberguard.Derived follows the reply's working a second step and totals what it
+      lists (each list's and table column's amounts, three or more in one sentence), every operand
+      a figure the reply states, so 1,390 = 400 mi x $3.10 + $150 shown as $1,240 plus $150, and
+      17,000 after the six loads it totals, are checked rather than rewritten. A figure said of the
+      filed change keeps the one-step check. The 5.6 in analysis-chart-asked-for was a $5.6M top-10
+      total the reply did not list; it still goes to a script, as does 410 in the formula's own
+      made-up 100-mile test.
+    fixedIn: uncommitted; TestGroundingGuard_ChecksArithmeticOnWhatTheConversationRead, TestDerived_FollowsWorkingTheProseShowsInSteps
 
   - id: DB-245
     title: An injected bank account number is copied into the exception a person reads
@@ -5880,3 +5906,68 @@ findings:
       exception notes as an untrusted source so a money write after reading them is held, and say
       in BillingException's instructions that a charge is waived only on the organization's own
       policy or a person's word.
+
+  - id: DB-255
+    title: A load built on records the same plan just created changes its preview before it can be approved
+    status: open
+    severity: high
+    area: agent proposals / previews
+    found: 2026-10-27, .deskbench/runs/20261027-haiku-volume-fixed
+    models: [claude-haiku-5-5]
+    scenarios: [shipment-from-scratch-with-a-new-customer]
+    problem: >
+      The plan created Silverline's customer, two locations and a commodity; once approved, the
+      agent proposed shipment_create on them. Approving it with the preview digest the reviewer
+      saw was refused both times: "What this change would do has changed since you reviewed it".
+      No other shipment_create case was refused (create-shipment-from-a-sentence and
+      load-with-no-price-and-no-contract passed), and nothing touched the proposal between review
+      and approval. A person in the Desk would meet the same refusal on every load entered for a
+      brand-new customer or location.
+    cause: >
+      Not confirmed. The likely cause is work that finishes after the locations are created
+      (geocoding, then the distance and the rate that read it), so the first preview has no
+      distance and the one computed at the decision does. To confirm, preview the proposal twice
+      a minute apart and diff the two previews' Changes fields.
+    fix: >
+      Not fixed. If it is the distance: either compute a new location's coordinates before its
+      creation proposal reports success (so a load proposed after it previews complete), or keep
+      the shipment_create proposal from being filed until its locations are geocoded; and have
+      the bench, like the Desk, read a changed preview again and decide once more, counting it.
+
+  - id: DB-256
+    title: Report runs show an agent amounts its data-access ceiling withholds
+    status: open
+    severity: high
+    area: reporting / agent data access
+    found: 2026-10-27, .deskbench/runs/20261027-haiku-volume-fixed
+    models: [claude-haiku-5-5]
+    scenarios: [analysis-figure-checked-against-the-database]
+    problem: >
+      The Report analyst ran at Internal data access, where invoice and receivable amounts are
+      withheld, yet a report run handed it those amounts; only receivable_list_open_items and
+      invoice_list withheld them, so it could analyze a report but never check one of its figures
+      against the records. The template now defaults to Restricted, which fixes the case, but any
+      agent held to Internal still reads Restricted amounts through a report run.
+    fix: >
+      Not fixed. Apply the reader's data-access ceiling to report runs an agent starts or reads,
+      the way the read tools apply it, and test that an Internal agent's report run withholds
+      Restricted columns.
+
+  - id: DB-257
+    title: Carried-over PTO never expired in the daily run, and the seed skipped this year's rollover
+    status: open
+    severity: high
+    area: workforce / PTO ledger
+    found: 2026-10-27, .deskbench/runs/20261027-haiku-volume-fixed
+    models: [claude-haiku-5-5]
+    scenarios: [approve-pending-time-off]
+    problem: >
+      worker_approve_pto refused requests the worker's balance covered: the PTO seed posted
+      accruals but never this year's rollover, so the balance projected an overdue year-end
+      rollover (19.50 vacation days read as 1.25). Behind it, the rollover cursor compared keys
+      as strings, so once January's carryover posted, the expiry of carried days never posted in
+      the daily runs, and would then have blocked next year's carryover.
+    fix: >
+      Fixed in code, not yet confirmed by a bench run: RolloverDue compares by year then phase
+      (ptoledgerservice/calculator.go, with tests), and the seed posts rollovers as the daily
+      accrual run does (fixtures/17_pto_policy.go).

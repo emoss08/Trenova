@@ -42,11 +42,11 @@ func (d *Definition) DataAccessSensitivity() permission.FieldSensitivity {
 
 func (t Template) StarterDataAccess() DataAccessCeiling {
 	switch t {
-	case TemplateCashApplication, TemplateLoadEntryCheck, TemplateInsightAnalyst:
+	case TemplateCashApplication, TemplateLoadEntryCheck, TemplateInsightAnalyst,
+		TemplateReportAnalyst:
 		return DataAccessRestricted
 	case TemplateMasterDataSteward,
 		TemplateFuelTaxClerk,
-		TemplateReportAnalyst,
 		TemplateFactoringClerk:
 		return DataAccessInternal
 	default:

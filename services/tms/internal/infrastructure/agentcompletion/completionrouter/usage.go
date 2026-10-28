@@ -71,6 +71,24 @@ func (s *Service) record(ctx context.Context, attempt *usageAttempt) {
 		return
 	}
 
+	row := usageRow(ctx, attempt)
+	providerName := attempt.provider.Name
+	detached, cancel := context.WithTimeout(
+		dbscope.WithValidTenant(context.WithoutCancel(ctx), attempt.tenant.DBTenant()),
+		recordTimeout,
+	)
+	go func() {
+		defer cancel()
+		if err := s.usage.Create(detached, row); err != nil {
+			s.logger.Warn("ai usage record dropped",
+				zap.String("provider", providerName),
+				zap.Error(err),
+			)
+		}
+	}()
+}
+
+func usageRow(ctx context.Context, attempt *usageAttempt) *aiusage.AIUsageRecord {
 	row := &aiusage.AIUsageRecord{
 		OrganizationID:    attempt.tenant.OrgID,
 		BusinessUnitID:    attempt.tenant.BuID,
@@ -117,23 +135,11 @@ func (s *Service) record(ctx context.Context, attempt *usageAttempt) {
 		row.CacheReadTokens = attempt.outcome.CacheReadTokens
 		row.CacheWriteTokens = attempt.outcome.CacheWriteTokens
 		row.CostUSD = attempt.outcome.cost(attempt.provider, attempt.task)
+		row.Batched = attempt.outcome.Batched
 		recordAdvisor(row, attempt.outcome.Advisor, attempt.provider.Kind)
 	}
 
-	providerName := attempt.provider.Name
-	detached, cancel := context.WithTimeout(
-		dbscope.WithValidTenant(context.WithoutCancel(ctx), attempt.tenant.DBTenant()),
-		recordTimeout,
-	)
-	go func() {
-		defer cancel()
-		if err := s.usage.Create(detached, row); err != nil {
-			s.logger.Warn("ai usage record dropped",
-				zap.String("provider", providerName),
-				zap.Error(err),
-			)
-		}
-	}()
+	return row
 }
 
 func recordAdvisor(

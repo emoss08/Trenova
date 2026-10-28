@@ -35,3 +35,14 @@ type ActiveHoldReader interface {
 		req *ActiveHoldsRequest,
 	) ([]*shipment.ShipmentHold, error)
 }
+
+type NewestCommentsRequest struct {
+	ShipmentIDs []pulid.ID
+}
+
+type NewestCommentReader interface {
+	NewestComments(
+		ctx context.Context,
+		req *NewestCommentsRequest,
+	) ([]*shipment.ShipmentComment, error)
+}

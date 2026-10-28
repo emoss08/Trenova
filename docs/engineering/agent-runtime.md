@@ -1098,7 +1098,11 @@ together.
   tool cannot strand it (the test refuses anything shaped like one). The
   frame is set in `agentjobs.runRequest`, after the context is built.
 - **Chat turns** are framed by the scope classifier, which already runs on
-  every turn person-written input reaches (`agentguard/classifier.go`). Its
+  every turn person-written input reaches (`agentguard/classifier.go`). It is served by the
+  providers assigned to ScopeClassification and then by the ones serving AssistantChat
+  (`Task.BorrowsFrom`), so an organization that never assigned the task, or whose assigned
+  providers are down, still has its guard: a classifier that cannot run lets the request
+  through on the deterministic rules alone. Its
   schema also asks for a `goal` (one sentence) and a `need` (what the work must
   read and change, as plain phrases); both are empty for a refused request,
   and a request the classifier timed out on, failed on or found only in the
@@ -2076,7 +2080,22 @@ for filed changes too): "$6,050,147.60 is open,
 $50,147.60 without the $6,000,000 invoice" and "112 gallons at $3.89 come to $435.68" were each
 rewritten after an analysis nobody needed, while a wrong result is still unsupported, and a share
 whose two sides the reply leaves out still goes to a script. The person's own figures are
-paired the same way. The reply is read twice, and the second reading only narrows the first: a
+paired the same way. The working may take a second step, and may total what the reply lists
+(`numberguard.Derived`): a figure the first step works out is an operand of the second, so
+"$1,240 for the miles plus $150 for the tarp, $1,390 total" (400 mi × $3.10 + $150, DB-244) and
+"$1,637.50 of the $2,531.25, leaving $893.75" are checked rather than rewritten; and the sum of a
+list's amounts (each item's first money figure that is not a rate), of a table column's, and of
+three or more amounts in one sentence is a figure the reply shows ("Total on these loads is
+$17,000" after the six loads). Every operand is a figure the reply states and the conversation
+read (or the person stated, or an earlier step worked out), so the work is bounded by the reply,
+not by how much the conversation read: at most sixteen operands, two steps (600 values a step),
+and one total per list, column and sentence. Pairing every figure the conversation read was
+rejected: a report of a few dozen figures yields thousands of quotients, and with the half-unit
+and 0.5% tolerances nearly any percentage would match one, which would undo DB-186; a share
+whose sides the reply leaves out still goes to a script. A figure a reply on a filed change
+states in a sentence about the change (`changeSpeak`: "the proposal bills $1,390") is held to the
+one-step working only; one it states about what the conversation read gets the derived support.
+The reply is read twice, and the second reading only narrows the first: a
 figure the separated reading (`ReadSeparated`) found read stays read and is an operand of the
 working (`narrowed`). The stricter reading leaves out a bare year, and a 2,000 lb unit weight in a
 tool's JSON looked like one, so "2,000 lb, so 20 of them come to 40,000 lb" was rewritten. A percentage is supported by the fraction it renders (52.3% by 0.523), and
@@ -2137,16 +2156,24 @@ or document it must name (`ShownArtifact.MustBeLinked`, the same rule that keeps
 when the reply forgets it; only the newest version of each lineage the turn showed, since a
 later version takes the earlier one's place in `Turn.keepShown`), or names an id the
 conversation never held is discarded once, the way
-the grounding guard does it, unless leaving out an artifact it must name is its only fault: that
-reply is not asked again; what it left out is linked from its own first sentence
-(`reply_regrounded` `place_artifacts`, then `reply_replaced`).
+the grounding guard does it, unless every fault is one the server mends as well as a rewrite
+(`placementProblems.mendable`): an artifact it must name and left out, and a link standing apart
+from any sentence on a prose line outside a fence (on its own line, after a list, after a
+sentence that has ended), whose cutting leaves every sentence whole. That reply is not asked
+again: each stray link is cut and joined to the reply's own prose line nearest above where it
+stood (or, with none above, the first below), a left-out artifact to its first line that ends a
+sentence, an artifact the reply already names in a sentence is only cut, and the result is a
+`reply_regrounded` `place_artifacts`, then `reply_replaced`.
 Leaving out a table it searched (Shipments, Invoices, Time offs) was 14 of the 16 placement
-restarts in a run over every scenario, and each one showed the person a finished answer starting
-over to add a link. Otherwise the reply is discarded once: a `retrying` event, a `reply_regrounded` `relink_artifacts`, and a
-correction naming each link as it should be written. A rewrite that still breaks the contract, or
-a reply written after the tool budget was spent, is not asked again: each stray link is cut from
-where it stood, an id nobody holds is left as its words, and what was cut or left out is linked
-from the reply's first line that ends a sentence (`withRefs`), sent as a `reply_replaced` after a
+restarts in a run over every scenario, and Haiku 5.5 ending a reply with its card on a line of
+its own was the rest (DB-148); each one showed the person a finished answer starting over to move
+a link. A link in a table cell, a heading or a fenced block, where cutting it could leave the row
+or heading saying nothing, an id nobody holds, and a reply with no prose line to join keep the
+rewrite: the reply is discarded once, a `retrying` event, a `reply_regrounded` `relink_artifacts`,
+and a correction naming each link as it should be written. A rewrite that still breaks the
+contract, or a reply written after the tool budget was spent, is not asked again: it is placed
+the same way (`Turn.placed`), an id nobody holds is left as its words, and a link with no prose
+to join stands on a line of its own at the end, sent as a `reply_replaced` after a
 `reply_regrounded` `place_artifacts`. The server writes no words of its own there: it does not
 know the turn's language, and an English "The full table is in …" closed a Spanish reply
 (DB-237). The links go in parentheses before the sentence's closing punctuation ("Hay quince
@@ -2532,6 +2559,52 @@ enum is refused with the allowed values and the corrected call runs. The
 model's side is scripted, so a case fails on the runtime and never on a model;
 every case must pass.
 
+### Judging in a batch
+
+Nobody waits on a scheduled suite, so its LLM judge runs through the provider's batch API at
+half price. `AgentQualitySweepWorkflow` starts each `AgentSuiteRunWorkflow` with
+`Unattended: true`; a run a person starts from AI Control leaves it false and judges each
+sampled case at once with `JudgeCaseActivity`, as before.
+
+- **Submit.** After scoring, an unattended run sends every sampled case in one
+  `SubmitJudgeBatchActivity` (no retry: a submit that fails falls back to judging each case,
+  never to a second batch). `agentqualityservice.SubmitJudgeBatch` reads the suite's
+  evaluations and the agent's cases in three bounded queries, builds each request with
+  `judgeRequest`, the builder `JudgeCase` uses, and hands them to
+  `agentports.BatchCompletionService`. The completion router batches only on the provider it
+  would ask first for `EvaluationJudge`, and only when that provider's adapter is a
+  `modeladapter.BatchRunner` that takes batches for it: today an Anthropic Messages provider
+  on the Claude API itself (`Provider.OnClaudeAPI`, Message Batches through the SDK's
+  `Beta.Messages.Batches`). Anything else is `ErrBatchUnsupported` and the run judges each
+  case. Each batched request is the synchronous request (`anthropicParams` and
+  `applyOutputSchema`) copied field for field into the batch's params
+  (`anthropicBatchParams`), sent with the provider's decrypted key (previous key on a 401),
+  egress client and timeout, and retried in process on a busy answer as a call is.
+- **Budget.** The submit checks the budget first (a spent budget stops the run as
+  `BudgetStopped`) and passes what is left (`BudgetDecision.Room`) as the batch's spend limit:
+  the router prices each request at the batch rate from its estimated prompt and its output
+  ceiling and sends the longest prefix that fits (`ErrBatchOverBudget` when none does). What
+  it left out is judged one case at a time later, each behind its own budget check. A batch's
+  estimate is held against the budget of every later suite in the same sweep
+  (`SweepResult.CommittedUSD` → `SuiteRunPayload.CommittedUSD` →
+  `BudgetInput.Committed`) until the sweep ends, even after the batch is read, so a sweep
+  can stop early but never overspend on batches still running.
+- **Hand-off.** Once the batch is accepted, the suite run starts
+  `AgentSuiteJudgeWorkflow` (ID `<suite run workflow ID>/judge`, abandoned on close) with the
+  batch handle (provider, batch ID, the evaluation IDs sent and those deferred) and returns
+  `Running` with `Judging`, so the sweep moves on to the next agent instead of waiting out a
+  batch that can take hours. If the child cannot be started the run waits for the batch itself.
+- **Wait.** The judge workflow sleeps 1 minute, then doubles to at most 15, polling
+  `CheckJudgeBatchActivity`, for at most 25 hours (Anthropic ends every batch within 24). The
+  wait is about a hundred polls, so it stays in one execution; only the handle is in history.
+- **Collect.** `CollectJudgeBatchActivity` reads the results once the batch has ended
+  (`BatchResults`, which records each item's usage at the batch rate, idempotently) and keeps
+  each judgement with `recordJudgement`, the recorder `JudgeCase` uses. A judgement already
+  kept is counted, not written again, so a retried collection writes nothing twice. An item
+  that errored, expired, was canceled, came back unusable or is missing is judged on its own
+  with `JudgeCaseActivity`, as is everything when the batch never ends or its results cannot
+  be read. The judge workflow then finalizes the run.
+
 ### Dry runs
 
 `AgentDryRunWorkflow` is the agent builder's "Try it": a draft agent, unsaved,
@@ -2708,6 +2781,8 @@ repository and cache, and the history route in the same change.
   four at a time, keyed for fairness by organization. One tenant's failure is
   its child's — retried on its own and named in the result — and costs no other
   tenant its run. The sweep is anchored to one instant.
+- **Unattended suite judging** submits one Message Batch per suite and hands the wait to its
+  own workflow ("Judging in a batch" above), so a serial sweep never waits on a batch.
 - **Document extraction** submits once and then waits on a durable timer,
   polling the provider until it answers or the longest wait passes, all in one
   execution's history.

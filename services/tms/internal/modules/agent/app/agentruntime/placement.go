@@ -1,6 +1,7 @@
 package agentruntime
 
 import (
+	"slices"
 	"strings"
 	"unicode"
 	"unicode/utf8"
@@ -17,6 +18,8 @@ const (
 		"so it was moved into one."
 	placementNamedReason = "The reply left out an artifact the person needs, so it was " +
 		"named in the reply's own words."
+	placementMovedReason = "The reply named an artifact outside a sentence, so it was " +
+		"moved into the reply's own sentence beside it."
 	cutMarkup          = "*_"
 	cutTrailers        = ".,;:!?"
 	closingPunctuation = ".!?;,…。！？；，"
@@ -33,23 +36,36 @@ type strayLink struct {
 	end   int
 	id    string
 	words string
+	// apart is a stray link on a prose line outside a fence: the sentence
+	// round it holds no word, so cutting it leaves every sentence whole.
+	apart bool
 }
 
 type placementProblems struct {
 	stray    []strayLink
 	missing  []agentports.ShownArtifact
 	invented []strayLink
+	// named is the artifacts the reply already names inside a sentence, which
+	// a stray link of the same artifact is cut from without naming it twice.
+	named map[string]bool
 }
 
 func (p *placementProblems) empty() bool {
 	return len(p.stray) == 0 && len(p.missing) == 0 && len(p.invented) == 0
 }
 
-// onlyLeftOut reports whether the reply's one fault is an artifact it never
-// named, which linking it from the reply's own sentence repairs as well as a
-// rewrite does.
-func (p *placementProblems) onlyLeftOut() bool {
-	return len(p.missing) > 0 && len(p.stray) == 0 && len(p.invented) == 0
+// mendable reports whether every fault of the reply is one the server repairs
+// as well as a rewrite does: an artifact it never named, and a link standing
+// apart from any sentence, on its own line, after a list or after a sentence
+// that has ended. An id nobody holds, and a link in a table, a heading or a
+// fenced block, sits where cutting it could break what is round it, so the
+// model is asked again.
+func (p *placementProblems) mendable() bool {
+	if len(p.invented) > 0 {
+		return false
+	}
+
+	return !slices.ContainsFunc(p.stray, func(link strayLink) bool { return !link.apart })
 }
 
 func (s *Service) placeArtifacts(
@@ -69,18 +85,25 @@ func (s *Service) placeArtifacts(
 
 	// A reply that only left out a table it searched (Shipments, Invoices,
 	// Time offs) was asked again in about one turn in ten, and the person
-	// watched a finished answer restart to add a link. The fallback links it
-	// from the reply's own first sentence without asking the model again, and
-	// writes no words of its own, since the turn's language is the model's
-	// (DB-237).
-	if !state.retried && problems.onlyLeftOut() {
-		state.retried = true
-		placed := t.placed(completion.Text, &problems)
-		fx.Emit(passEvent(agentports.RegroundPlaceArtifacts, placementNamedReason, nil))
-		fx.Emit(replyReplacedEvent(placed, placementNamedReason))
-		completion.Text = placed
+	// watched a finished answer restart to add a link. A reply that ended with
+	// its card on a line of its own was asked again the same way (DB-148).
+	// Both are repaired without asking the model again: a stray link is cut and
+	// joined to the reply's own sentence nearest above where it stood, a
+	// left-out one to the reply's first sentence, and the server writes no
+	// words of its own, since the turn's language is the model's (DB-237).
+	if !state.retried && problems.mendable() {
+		if placed, ok := t.placed(completion.Text, &problems); ok {
+			state.retried = true
+			reason := placementNamedReason
+			if len(problems.stray) > 0 {
+				reason = placementMovedReason
+			}
+			fx.Emit(passEvent(agentports.RegroundPlaceArtifacts, reason, nil))
+			fx.Emit(replyReplacedEvent(placed, reason))
+			completion.Text = placed
 
-		return false
+			return false
+		}
 	}
 
 	if !state.retried {
@@ -108,7 +131,7 @@ func (s *Service) placeArtifacts(
 		return true
 	}
 
-	placed := t.placed(completion.Text, &problems)
+	placed, _ := t.placed(completion.Text, &problems)
 	fx.Emit(passEvent(agentports.RegroundPlaceArtifacts, placementPlacedReason, nil))
 	fx.Emit(replyReplacedEvent(placed, placementPlacedReason))
 	completion.Text = placed
@@ -117,7 +140,7 @@ func (s *Service) placeArtifacts(
 }
 
 func (t *Turn) placementProblems(reply string) placementProblems {
-	var problems placementProblems
+	problems := placementProblems{named: make(map[string]bool, 4)}
 	linked := make(map[string]bool, 4)
 	for _, link := range artifactLinkSpans(reply) {
 		linked[link.id] = true
@@ -125,7 +148,10 @@ func (t *Turn) placementProblems(reply string) placementProblems {
 		case !t.knowsArtifact(link.id):
 			problems.invented = append(problems.invented, link)
 		case !inSentence(reply, link):
+			_, _, link.apart = linkLine(reply, link)
 			problems.stray = append(problems.stray, link)
+		default:
+			problems.named[link.id] = true
 		}
 	}
 	for idx := range t.artifacts {
@@ -212,7 +238,13 @@ func (t *Turn) refFor(link strayLink) string {
 	return artifactRefOf(link.id, link.words)
 }
 
-func (t *Turn) placed(reply string, problems *placementProblems) string {
+// placed is the reply with each stray link cut from where it stood and joined
+// to the reply's own prose line nearest above that place (or, with none above,
+// the first below), each left-out artifact joined to the reply's first line
+// that ends a sentence, and an id nobody holds left as its words. ok is false
+// when a stray link found no prose line to join, and it then stands on a line
+// of its own at the end.
+func (t *Turn) placed(reply string, problems *placementProblems) (string, bool) {
 	cuts := make(map[int]strayLink, len(problems.stray)+len(problems.invented))
 	for _, link := range problems.stray {
 		cuts[link.start] = widenCut(reply, link)
@@ -226,10 +258,13 @@ func (t *Turn) placed(reply string, problems *placementProblems) string {
 		invented[link.id] = true
 	}
 
-	var b strings.Builder
-	b.Grow(len(reply) + 128)
-	lineStart := 0
-	for lineStart <= len(reply) {
+	seen := make(map[string]bool, len(problems.named)+len(problems.stray)+len(problems.missing))
+	for id := range problems.named {
+		seen[id] = true
+	}
+	lines := make([]string, 0, strings.Count(reply, "\n")+1)
+	anchors := make([]refAnchor, 0, len(problems.stray))
+	for lineStart := 0; lineStart <= len(reply); {
 		lineEnd := strings.IndexByte(reply[lineStart:], '\n')
 		if lineEnd < 0 {
 			lineEnd = len(reply)
@@ -237,24 +272,22 @@ func (t *Turn) placed(reply string, problems *placementProblems) string {
 			lineEnd += lineStart
 		}
 		line, cut := cutLinks(reply, lineStart, lineEnd, cuts, invented)
-		if !cut || hasWord(line) {
-			b.WriteString(strings.TrimRight(line, " \t"))
-			if lineEnd < len(reply) {
-				b.WriteByte('\n')
+		kept := !cut || hasWord(line)
+		for _, link := range problems.stray {
+			if link.start < lineStart || link.start >= lineEnd || seen[link.id] {
+				continue
 			}
+			seen[link.id] = true
+			anchors = append(anchors, refAnchor{at: len(lines), kept: kept, ref: t.refFor(link)})
+		}
+		if kept {
+			line = indentedAs(reply[lineStart:lineEnd], line)
+			lines = append(lines, strings.TrimRight(line, " \t"))
 		}
 		lineStart = lineEnd + 1
 	}
 
-	refs := make([]string, 0, len(problems.stray)+len(problems.missing))
-	seen := make(map[string]bool, cap(refs))
-	for _, link := range problems.stray {
-		if seen[link.id] {
-			continue
-		}
-		seen[link.id] = true
-		refs = append(refs, t.refFor(link))
-	}
+	refs := make([]string, 0, len(problems.missing))
 	for idx := range problems.missing {
 		shown := &problems.missing[idx]
 		if seen[shown.ID.String()] {
@@ -264,7 +297,17 @@ func (t *Turn) placed(reply string, problems *placementProblems) string {
 		refs = append(refs, ArtifactRef(shown))
 	}
 
-	return withRefs(strings.TrimRight(collapseBlankLines(b.String()), " \t\n"), refs)
+	text, ok := linkRefs(lines, anchors, refs)
+
+	return strings.TrimRight(collapseBlankLines(text), " \t\n"), ok
+}
+
+// indentedAs is a line a link was cut from, indented as the line it was: a
+// link that led the line leaves the space after it at the line's start.
+func indentedAs(original, line string) string {
+	indent := original[:len(original)-len(strings.TrimLeft(original, " \t"))]
+
+	return indent + strings.TrimLeft(line, " \t")
 }
 
 func cutLinks(
@@ -311,6 +354,92 @@ func widenCut(reply string, link strayLink) strayLink {
 	return link
 }
 
+// refAnchor is where a stray link stood among the lines left once it was cut:
+// on line at when that line kept words of its own, else just before it.
+type refAnchor struct {
+	at   int
+	kept bool
+	ref  string
+}
+
+// linkRefs joins each anchored ref to the prose line nearest above where it
+// stood, or the first below, and refs to the first line that ends a sentence,
+// each line's refs in one parenthesis. What finds no prose line goes on a line
+// of its own at the end; ok is false when an anchored ref is among it.
+func linkRefs(lines []string, anchors []refAnchor, refs []string) (string, bool) {
+	prose := proseFlags(lines)
+	attach := make(map[int][]string, len(anchors)+1)
+	loose := make([]string, 0, len(anchors)+len(refs))
+	for _, anchor := range anchors {
+		if at, found := nearestProse(prose, anchor); found {
+			attach[at] = append(attach[at], anchor.ref)
+			continue
+		}
+		loose = append(loose, anchor.ref)
+	}
+	ok := len(loose) == 0
+	if len(refs) > 0 {
+		if at, found := firstSentence(lines, prose); found {
+			attach[at] = append(attach[at], refs...)
+		} else {
+			loose = append(loose, refs...)
+		}
+	}
+
+	joined := slices.Clone(lines)
+	for at, named := range attach {
+		joined[at] = attachRefs(joined[at], named)
+	}
+	text := strings.Join(joined, "\n")
+	if len(loose) == 0 {
+		return text, ok
+	}
+	trimmed := strings.TrimRight(text, " \t\n")
+	if trimmed == "" {
+		return strings.Join(loose, refSeparator), ok
+	}
+
+	return trimmed + "\n\n" + strings.Join(loose, refSeparator), ok
+}
+
+func nearestProse(prose []bool, anchor refAnchor) (int, bool) {
+	from := anchor.at - 1
+	if anchor.kept {
+		from = anchor.at
+	}
+	for idx := min(from, len(prose)-1); idx >= 0; idx-- {
+		if prose[idx] {
+			return idx, true
+		}
+	}
+	for idx := from + 1; idx < len(prose); idx++ {
+		if prose[idx] {
+			return idx, true
+		}
+	}
+
+	return 0, false
+}
+
+func firstSentence(lines []string, prose []bool) (int, bool) {
+	first := -1
+	for idx, line := range lines {
+		if !prose[idx] {
+			continue
+		}
+		if first < 0 {
+			first = idx
+		}
+		bare := strings.TrimRight(line, " \t"+cutMarkup)
+		last, _ := utf8.DecodeLastRuneInString(bare)
+		if strings.ContainsRune(closingPunctuation+introducingColons, last) {
+			return idx, true
+		}
+	}
+
+	return first, first >= 0
+}
+
 type textLine struct {
 	start int
 	end   int
@@ -326,12 +455,7 @@ func proseLines(text string) []textLine {
 		} else {
 			end += start
 		}
-		line := text[start:end]
-		trimmed := strings.TrimSpace(line)
-		switch {
-		case strings.HasPrefix(trimmed, "```") || strings.HasPrefix(trimmed, "~~~"):
-			fenced = !fenced
-		case !fenced && proseLine(line) && hasWord(artifactLink.ReplaceAllString(line, "")):
+		if proseStep(text[start:end], &fenced) {
 			lines = append(lines, textLine{start: start, end: end})
 		}
 		start = end + 1
@@ -340,31 +464,28 @@ func proseLines(text string) []textLine {
 	return lines
 }
 
-func withRefs(text string, refs []string) string {
-	if len(refs) == 0 {
-		return text
-	}
-	if lines := proseLines(text); len(lines) > 0 {
-		return attachAt(text, firstSentenceLine(text, lines), refs)
-	}
-	joined := strings.Join(refs, refSeparator)
-	if text == "" {
-		return joined
+// proseFlags reports, line by line, which lines are prose a link can join.
+func proseFlags(lines []string) []bool {
+	flags := make([]bool, len(lines))
+	fenced := false
+	for idx, line := range lines {
+		flags[idx] = proseStep(line, &fenced)
 	}
 
-	return text + "\n\n" + joined
+	return flags
 }
 
-func firstSentenceLine(text string, lines []textLine) textLine {
-	for _, line := range lines {
-		bare := strings.TrimRight(text[line.start:line.end], " \t"+cutMarkup)
-		last, _ := utf8.DecodeLastRuneInString(bare)
-		if strings.ContainsRune(closingPunctuation+introducingColons, last) {
-			return line
-		}
+// proseStep reports whether the line is prose with words of its own, outside
+// a fence, a table and a heading, and keeps track of the fences it passes.
+func proseStep(line string, fenced *bool) bool {
+	trimmed := strings.TrimSpace(line)
+	if strings.HasPrefix(trimmed, "```") || strings.HasPrefix(trimmed, "~~~") {
+		*fenced = !*fenced
+
+		return false
 	}
 
-	return lines[0]
+	return !*fenced && proseLine(line) && hasWord(artifactLink.ReplaceAllString(line, ""))
 }
 
 func attachAt(text string, line textLine, refs []string) string {
@@ -435,7 +556,9 @@ func artifactLinkSpansIn(text string, start, end int) []strayLink {
 	return links
 }
 
-func inSentence(text string, link strayLink) bool {
+// linkLine is the line the link stands on, and whether it is a prose line
+// outside a fence.
+func linkLine(text string, link strayLink) (int, int, bool) {
 	lineStart := strings.LastIndexByte(text[:link.start], '\n') + 1
 	lineEnd := strings.IndexByte(text[link.end:], '\n')
 	if lineEnd < 0 {
@@ -443,8 +566,13 @@ func inSentence(text string, link strayLink) bool {
 	} else {
 		lineEnd += link.end
 	}
-	line := text[lineStart:lineEnd]
-	if insideFence(text[:lineStart]) || !proseLine(line) {
+
+	return lineStart, lineEnd, !insideFence(text[:lineStart]) && proseLine(text[lineStart:lineEnd])
+}
+
+func inSentence(text string, link strayLink) bool {
+	lineStart, lineEnd, prose := linkLine(text, link)
+	if !prose {
 		return false
 	}
 
