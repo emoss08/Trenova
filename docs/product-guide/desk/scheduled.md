@@ -47,7 +47,7 @@ Keywords: delete schedule, cancel schedule, remove schedule, stop for good
 ### Schedule a new request
 Keywords: new schedule, add schedule, schedule a report, recurring report, schedule this, every day, everyday, daily
 1. In a conversation on [Desk](/desk), send a message that starts with when it should run, then what to ask. For example: "every weekday at 7:30am, list shipments still not dispatched for today" or "everyday at 9:30am EST, give me today's operations board". "Every day", "everyday" and "daily" all run every day; "every weekday" runs Monday to Friday; "every Monday" (or any other day) runs once a week. You can also type /schedule, then the when and the request.
-2. Or ask the agent to schedule something it already answered, such as "schedule this to run every day at 9:30 AM Eastern". It writes out the request in full and proposes the schedule: select **Approve** on the proposal to keep it. Its **Scheduled** card then says **From a proposal you approved**, and the request it shows is the one the agent wrote out.
+2. Or ask the agent to schedule something it already answered, such as "schedule this to run every day at 9:30 AM Eastern". It writes out the request in full and proposes the schedule: select **Approve** on the proposal to keep it. Its **Scheduled** card then says **From a proposal you approved · results will post into this conversation**, and the request it shows is the one the agent wrote out.
 3. A **Scheduled** card appears in the conversation, and the request is listed on [Scheduled requests](/desk/scheduled).
 
 ## Notes
