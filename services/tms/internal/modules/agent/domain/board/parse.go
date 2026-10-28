@@ -42,8 +42,8 @@ func (p *parser) addf(format string, args ...any) {
 func Parse(arguments map[string]any) (board *Board, problems []string) {
 	p := &parser{}
 	board = &Board{
-		Title:   p.text(arguments, "title", "title", MaxTitleRunes, true),
-		Verdict: p.text(arguments, "verdict", "verdict", MaxVerdictRunes, true),
+		Title:   p.words(arguments, "title", "title", MaxTitleRunes, true),
+		Verdict: p.words(arguments, "verdict", "verdict", MaxVerdictRunes, true),
 	}
 
 	raw, isList := arguments["blocks"].([]any)
@@ -141,9 +141,13 @@ func (p *parser) block(fields map[string]any, at int) Block {
 		}
 	}
 
+	titleMost := MaxBlockTitleRunes
+	if blockType == BlockNote {
+		titleMost = MaxNoteTitleRunes
+	}
 	block := Block{
 		Type:  blockType,
-		Title: p.text(fields, "title", path+".title", MaxBlockTitleRunes, false),
+		Title: p.words(fields, "title", path+".title", titleMost, false),
 		Half:  fields["half"] == true,
 	}
 	switch blockType {
@@ -178,7 +182,7 @@ func (p *parser) block(fields map[string]any, at int) Block {
 	case BlockMeter:
 		p.meter(fields, path, &block)
 	case BlockProse:
-		block.Text = p.text(fields, "text", path+".text", MaxProseRunes, true)
+		block.Text = p.words(fields, "text", path+".text", MaxProseRunes, true)
 	case BlockNote:
 		p.note(fields, path, &block)
 	}
@@ -197,11 +201,9 @@ func (p *parser) timeline(fields map[string]any, path string, block *Block) {
 
 func (p *parser) note(fields map[string]any, path string, block *Block) {
 	block.Tone = p.tone(fields, path)
-	block.Text = p.text(fields, "text", path+".text", MaxNoteTextRunes, true)
+	block.Text = p.words(fields, "text", path+".text", MaxNoteTextRunes, true)
 	if block.Title == "" {
 		p.addf("%s.title is required: what the note says in a line", path)
-	} else if utf8.RuneCountInString(block.Title) > MaxNoteTitleRunes {
-		p.addf("%s.title is longer than %d characters", path, MaxNoteTitleRunes)
 	}
 	if _, named := fields[fieldRecords]; named {
 		block.Records = p.records(fields[fieldRecords], path+".records", 1, MaxNoteRecords)
@@ -222,7 +224,7 @@ func (p *parser) figures(raw any, path string) []FigureSource {
 			p.addf("%s is not an object", at)
 			continue
 		}
-		figure := FigureSource{Label: p.text(fields, "label", at+".label", MaxLabelRunes, true)}
+		figure := FigureSource{Label: p.words(fields, "label", at+".label", MaxLabelRunes, true)}
 		sources := 0
 		if metric := strings.TrimSpace(stringOf(fields["metric"])); metric != "" {
 			sources++
@@ -266,9 +268,9 @@ func (p *parser) checks(raw any, path string) []Check {
 			continue
 		}
 		check := Check{
-			Title:  p.text(fields, "title", at+".title", MaxCheckTitleRunes, true),
+			Title:  p.words(fields, "title", at+".title", MaxCheckTitleRunes, true),
 			Tone:   p.tone(fields, at),
-			Detail: p.text(fields, "detail", at+".detail", MaxCheckDetailRunes, false),
+			Detail: p.words(fields, "detail", at+".detail", MaxCheckDetailRunes, false),
 		}
 		_, named := fields[fieldRecords]
 		metric := strings.TrimSpace(stringOf(fields["metric"]))
@@ -304,7 +306,7 @@ func (p *parser) compareRows(raw any, path string) []CompareRow {
 		}
 		row := CompareRow{
 			Column: p.text(fields, "column", at+".column", MaxColumnRunes, true),
-			Label:  p.text(fields, "label", at+".label", MaxLabelRunes, false),
+			Label:  p.words(fields, "label", at+".label", MaxLabelRunes, false),
 		}
 		switch better := Better(strings.TrimSpace(stringOf(fields["better"]))); better {
 		case "", BetterHigher, BetterLower:
@@ -496,12 +498,31 @@ func (p *parser) limit(fields map[string]any, path string, most, fallback int) i
 	return limit
 }
 
+var emphasis = strings.NewReplacer("**", "", "__", "", "`", "")
+
+func (p *parser) words(fields map[string]any, key, path string, most int, required bool) string {
+	return p.limited(fields, key, path, most, required, emphasis.Replace)
+}
+
 func (p *parser) text(fields map[string]any, key, path string, most int, required bool) string {
+	return p.limited(fields, key, path, most, required, nil)
+}
+
+func (p *parser) limited(
+	fields map[string]any,
+	key, path string,
+	most int,
+	required bool,
+	plain func(string) string,
+) string {
 	value, present := fields[key]
 	text, isText := value.(string)
 	if present && !isText {
 		p.addf("%s is text", path)
 		return ""
+	}
+	if plain != nil {
+		text = plain(text)
 	}
 	text = strings.Join(strings.Fields(text), " ")
 	switch {

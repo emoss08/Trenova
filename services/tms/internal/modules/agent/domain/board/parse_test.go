@@ -271,3 +271,30 @@ func TestSegmentsSplitsCitationsOutOfText(t *testing.T) {
 	assert.Equal(t, "Four are held behind one driver's hours, two at the dock.",
 		board.PlainText("Four are held behind [one driver's hours][3], two [at the dock][2]."))
 }
+
+func TestParseWritesTheWordsPlainAndHoldsANoteToItsOwnLimits(t *testing.T) {
+	t.Parallel()
+
+	args := lateBoard()
+	args["verdict"] = "**Four of the six** are held behind __[one driver's hours][3]__."
+	blocks := args["blocks"].([]any)
+	note := blocks[3].(map[string]any)
+	note["title"] = strings.Repeat("a", board.MaxNoteTitleRunes)
+	note["text"] = "Call `S2610-041` first."
+
+	parsed, problems := board.Parse(args)
+
+	require.Empty(t, problems)
+	assert.Equal(t, "Four of the six are held behind [one driver's hours][3].", parsed.Verdict)
+	assert.Equal(t, strings.Repeat("a", board.MaxNoteTitleRunes), parsed.Blocks[3].Title)
+	assert.Equal(t, "Call S2610-041 first.", parsed.Blocks[3].Text)
+
+	note["title"] = strings.Repeat("a", board.MaxNoteTitleRunes+1)
+	_, problems = board.Parse(args)
+	assert.Equal(t, []string{"blocks[4].title is longer than 80 characters"}, problems)
+
+	blocks[0].(map[string]any)["title"] = strings.Repeat("a", board.MaxBlockTitleRunes+1)
+	note["title"] = "Re-tender the two furthest behind"
+	_, problems = board.Parse(args)
+	assert.Equal(t, []string{"blocks[1].title is longer than 60 characters"}, problems)
+}
