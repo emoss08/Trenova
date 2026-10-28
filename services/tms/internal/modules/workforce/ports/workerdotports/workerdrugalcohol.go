@@ -3,6 +3,8 @@ package workerdotports
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/dotclearinghouse"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/dotrandom"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerdot"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
@@ -190,41 +192,41 @@ type WorkerDrugAlcoholRepository interface {
 	ListQueries(
 		ctx context.Context,
 		req *ListClearinghouseQueriesRequest,
-	) ([]*workerdot.WorkerClearinghouseQuery, error)
+	) ([]*dotclearinghouse.WorkerClearinghouseQuery, error)
 	GetQueryByID(
 		ctx context.Context,
 		req *GetClearinghouseQueryByIDRequest,
-	) (*workerdot.WorkerClearinghouseQuery, error)
+	) (*dotclearinghouse.WorkerClearinghouseQuery, error)
 	CreateQuery(
 		ctx context.Context,
-		entity *workerdot.WorkerClearinghouseQuery,
-	) (*workerdot.WorkerClearinghouseQuery, error)
+		entity *dotclearinghouse.WorkerClearinghouseQuery,
+	) (*dotclearinghouse.WorkerClearinghouseQuery, error)
 	UpdateQuery(
 		ctx context.Context,
-		entity *workerdot.WorkerClearinghouseQuery,
-	) (*workerdot.WorkerClearinghouseQuery, error)
+		entity *dotclearinghouse.WorkerClearinghouseQuery,
+	) (*dotclearinghouse.WorkerClearinghouseQuery, error)
 
 	ListPools(
 		ctx context.Context,
 		req *ListDOTRandomPoolsRequest,
-	) (*pagination.CursorListResult[*workerdot.DOTRandomPool], error)
+	) (*pagination.CursorListResult[*dotrandom.DOTRandomPool], error)
 	GetPoolByID(
 		ctx context.Context,
 		req *GetDOTRandomPoolByIDRequest,
-	) (*workerdot.DOTRandomPool, error)
+	) (*dotrandom.DOTRandomPool, error)
 	GetDefaultPool(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
-	) (*workerdot.DOTRandomPool, error)
+	) (*dotrandom.DOTRandomPool, error)
 	PoolCodeExists(ctx context.Context, req *DOTRandomPoolCodeExistsRequest) (bool, error)
 	CreatePool(
 		ctx context.Context,
-		entity *workerdot.DOTRandomPool,
-	) (*workerdot.DOTRandomPool, error)
+		entity *dotrandom.DOTRandomPool,
+	) (*dotrandom.DOTRandomPool, error)
 	UpdatePool(
 		ctx context.Context,
-		entity *workerdot.DOTRandomPool,
-	) (*workerdot.DOTRandomPool, error)
+		entity *dotrandom.DOTRandomPool,
+	) (*dotrandom.DOTRandomPool, error)
 	ClearDefaultPool(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
@@ -234,41 +236,41 @@ type WorkerDrugAlcoholRepository interface {
 	ListDraws(
 		ctx context.Context,
 		req *ListDOTRandomDrawsRequest,
-	) ([]*workerdot.DOTRandomDraw, error)
+	) ([]*dotrandom.DOTRandomDraw, error)
 	GetDrawByID(
 		ctx context.Context,
 		req *GetDOTRandomDrawByIDRequest,
-	) (*workerdot.DOTRandomDraw, error)
+	) (*dotrandom.DOTRandomDraw, error)
 	GetDrawByPeriod(
 		ctx context.Context,
 		req *GetDOTRandomDrawByPeriodRequest,
-	) (*workerdot.DOTRandomDraw, error)
+	) (*dotrandom.DOTRandomDraw, error)
 	// CreateDrawWithEntries writes the round and the names it produced in one
 	// transaction: a draw whose entries failed to land would be evidence of a
 	// selection that never happened.
 	CreateDrawWithEntries(
 		ctx context.Context,
-		draw *workerdot.DOTRandomDraw,
-		entries []*workerdot.DOTRandomDrawEntry,
-	) (*workerdot.DOTRandomDraw, error)
+		draw *dotrandom.DOTRandomDraw,
+		entries []*dotrandom.DOTRandomDrawEntry,
+	) (*dotrandom.DOTRandomDraw, error)
 	UpdateDraw(
 		ctx context.Context,
-		entity *workerdot.DOTRandomDraw,
-	) (*workerdot.DOTRandomDraw, error)
+		entity *dotrandom.DOTRandomDraw,
+	) (*dotrandom.DOTRandomDraw, error)
 	ListPoolCandidates(ctx context.Context, req *ListPoolCandidatesRequest) ([]pulid.ID, error)
 
 	ListDrawEntries(
 		ctx context.Context,
 		req *ListDOTRandomDrawEntriesRequest,
-	) ([]*workerdot.DOTRandomDrawEntry, error)
+	) ([]*dotrandom.DOTRandomDrawEntry, error)
 	GetDrawEntryByID(
 		ctx context.Context,
 		req *GetDOTRandomDrawEntryByIDRequest,
-	) (*workerdot.DOTRandomDrawEntry, error)
+	) (*dotrandom.DOTRandomDrawEntry, error)
 	UpdateDrawEntry(
 		ctx context.Context,
-		entity *workerdot.DOTRandomDrawEntry,
-	) (*workerdot.DOTRandomDrawEntry, error)
+		entity *dotrandom.DOTRandomDrawEntry,
+	) (*dotrandom.DOTRandomDrawEntry, error)
 
 	UpdateProfileRollup(ctx context.Context, req *UpdateDrugAlcoholRollupRequest) error
 	ListWorkersWithClearinghouseDue(

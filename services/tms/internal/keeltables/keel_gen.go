@@ -153,6 +153,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/fuelpurchase/fuelpurchasedb"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/ifta/iftadb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/approvaldelegation/approvaldelegationdb"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/dotclearinghouse/dotclearinghousedb"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/dotrandom/dotrandomdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/employment/employmentdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/permit/permitdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/portalinvitation/portalinvitationdb"
@@ -378,9 +380,9 @@ func All() []*schema.Table {
 		documentuploaddb.DocumentUploadSessionsSchema(),
 		documentdb.DocumentsSchema(),
 		dothazmatreferencedb.DotHazmatReferencesSchema(),
-		workerdotdb.DOTRandomDrawEntriesSchema(),
-		workerdotdb.DOTRandomDrawsSchema(),
-		workerdotdb.DOTRandomPoolsSchema(),
+		dotrandomdb.DOTRandomDrawEntriesSchema(),
+		dotrandomdb.DOTRandomDrawsSchema(),
+		dotrandomdb.DOTRandomPoolsSchema(),
 		driverpaydb.ExpensesSchema(),
 		driversettlementdb.PayEventsSchema(),
 		driverpaydb.PayProfileComponentsSchema(),
@@ -669,7 +671,7 @@ func All() []*schema.Table {
 		workerchecklistdb.WorkerChecklistTemplateItemsSchema(),
 		workerchecklistdb.WorkerChecklistTemplatesSchema(),
 		workerchecklistdb.WorkerChecklistsSchema(),
-		workerdotdb.WorkerClearinghouseQueriesSchema(),
+		dotclearinghousedb.WorkerClearinghouseQueriesSchema(),
 		workercredentialdb.WorkerCredentialTypesSchema(),
 		workercredentialdb.WorkerCredentialsSchema(),
 		workersafetydb.WorkerDisciplinaryActionsSchema(),

@@ -9,6 +9,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerdrugalcoholservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/dotclearinghouse"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/dotrandom"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerdot"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -232,7 +234,7 @@ func dotViolationUpdateRequest(
 func clearinghouseQueryFromInput(
 	input *gqlmodel.RecordClearinghouseQueryInput,
 	tenantInfo pagination.TenantInfo,
-) (*workerdot.WorkerClearinghouseQuery, error) {
+) (*dotclearinghouse.WorkerClearinghouseQuery, error) {
 	workerID, err := pulid.MustParse(input.WorkerID)
 	if err != nil {
 		return nil, errortypes.NewValidationError(
@@ -250,12 +252,12 @@ func clearinghouseQueryFromInput(
 		)
 	}
 
-	entity := &workerdot.WorkerClearinghouseQuery{
+	entity := &dotclearinghouse.WorkerClearinghouseQuery{
 		OrganizationID:    tenantInfo.OrgID,
 		BusinessUnitID:    tenantInfo.BuID,
 		WorkerID:          workerID,
 		QueryType:         input.QueryType,
-		Result:            workerdot.ClearinghouseResultPending,
+		Result:            dotclearinghouse.ClearinghouseResultPending,
 		ConsentObtainedAt: gqlscalar.Int64Ptr(input.ConsentObtainedAt),
 		ConsentExpiresAt:  gqlscalar.Int64Ptr(input.ConsentExpiresAt),
 		RequestedAt:       gqlscalar.Int64Value(input.RequestedAt),
@@ -312,8 +314,8 @@ func completeQueryRequest(
 func randomPoolFromInput(
 	input *gqlmodel.DOTRandomPoolInput,
 	tenantInfo pagination.TenantInfo,
-) *workerdot.DOTRandomPool {
-	entity := &workerdot.DOTRandomPool{
+) *dotrandom.DOTRandomPool {
+	entity := &dotrandom.DOTRandomPool{
 		OrganizationID:      tenantInfo.OrgID,
 		BusinessUnitID:      tenantInfo.BuID,
 		Code:                strings.TrimSpace(input.Code),
@@ -337,12 +339,12 @@ func randomPoolFromInput(
 }
 
 func randomPoolCursorConnectionToModel(
-	result *pagination.CursorListResult[*workerdot.DOTRandomPool],
+	result *pagination.CursorListResult[*dotrandom.DOTRandomPool],
 ) (*gqlmodel.DOTRandomPoolConnection, error) {
 	edges, err := gqlconnection.EntityCursorEdges(
 		result.Items,
 		result,
-		func(node *workerdot.DOTRandomPool, cursor string) *gqlmodel.DOTRandomPoolEdge {
+		func(node *dotrandom.DOTRandomPool, cursor string) *gqlmodel.DOTRandomPoolEdge {
 			return &gqlmodel.DOTRandomPoolEdge{Node: node, Cursor: cursor}
 		},
 	)

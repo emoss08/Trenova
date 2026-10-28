@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerdrugalcoholservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/dotrandom"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerdot"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -26,8 +27,8 @@ type fakeDrugAlcohol struct {
 
 	guard *agenttoolstest.WriteGuard
 	test  *workerdot.WorkerDOTTest
-	draw  *workerdot.DOTRandomDraw
-	entry *workerdot.DOTRandomDrawEntry
+	draw  *dotrandom.DOTRandomDraw
+	entry *dotrandom.DOTRandomDrawEntry
 
 	recorded  *workerdot.WorkerDOTTest
 	cancelled []string
@@ -48,17 +49,17 @@ func newFakeDrugAlcohol() *fakeDrugAlcohol {
 			Result:    workerdot.DOTResultPending,
 			Version:   2,
 		},
-		draw: &workerdot.DOTRandomDraw{
+		draw: &dotrandom.DOTRandomDraw{
 			ID:        pulid.MustNew("drdraw_"),
 			PeriodKey: "2026-Q3",
-			Status:    workerdot.RandomDrawStatusDraft,
+			Status:    dotrandom.RandomDrawStatusDraft,
 			Version:   1,
 		},
-		entry: &workerdot.DOTRandomDrawEntry{
+		entry: &dotrandom.DOTRandomDrawEntry{
 			ID:        pulid.MustNew("drde_"),
 			Substance: workerdot.DOTSubstanceDrug,
 			Rank:      1,
-			Status:    workerdot.RandomEntrySelected,
+			Status:    dotrandom.RandomEntrySelected,
 			Version:   1,
 		},
 	}
@@ -127,11 +128,11 @@ func (f *fakeDrugAlcohol) CancelTest(
 func (f *fakeDrugAlcohol) PlanRunDraw(
 	_ context.Context,
 	req *workerdrugalcoholservice.RunDrawRequest,
-) (*workerdot.DOTRandomDraw, error) {
-	return &workerdot.DOTRandomDraw{
+) (*dotrandom.DOTRandomDraw, error) {
+	return &dotrandom.DOTRandomDraw{
 		PoolID:          req.PoolID,
 		PeriodKey:       "2026-Q3",
-		Status:          workerdot.RandomDrawStatusDraft,
+		Status:          dotrandom.RandomDrawStatusDraft,
 		PoolSize:        40,
 		DrugSelected:    5,
 		AlcoholSelected: 1,
@@ -141,7 +142,7 @@ func (f *fakeDrugAlcohol) PlanRunDraw(
 func (f *fakeDrugAlcohol) RunDraw(
 	_ context.Context,
 	req *workerdrugalcoholservice.RunDrawRequest,
-) (*workerdot.DOTRandomDraw, error) {
+) (*dotrandom.DOTRandomDraw, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
 	}
@@ -155,7 +156,7 @@ func (f *fakeDrugAlcohol) PlanFinalizeDraw(
 	pulid.ID,
 ) (*workerdrugalcoholservice.DrawChange, error) {
 	after := *f.draw
-	after.Status = workerdot.RandomDrawStatusFinal
+	after.Status = dotrandom.RandomDrawStatusFinal
 	return &workerdrugalcoholservice.DrawChange{Before: f.draw, After: &after}, nil
 }
 
@@ -164,7 +165,7 @@ func (f *fakeDrugAlcohol) FinalizeDraw(
 	_ pagination.TenantInfo,
 	id pulid.ID,
 	_ pulid.ID,
-) (*workerdot.DOTRandomDraw, error) {
+) (*dotrandom.DOTRandomDraw, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
 	}
@@ -176,7 +177,7 @@ func (f *fakeDrugAlcohol) PlanUpdateDrawEntry(
 	_ context.Context,
 	req *workerdrugalcoholservice.UpdateEntryRequest,
 ) (*workerdrugalcoholservice.EntryChange, error) {
-	if req.Status == workerdot.RandomEntryExcused && req.ExcuseReason == "" {
+	if req.Status == dotrandom.RandomEntryExcused && req.ExcuseReason == "" {
 		return nil, errortypes.NewValidationError("excuseReason", errortypes.ErrRequired,
 			"An excused selection says why")
 	}
@@ -189,7 +190,7 @@ func (f *fakeDrugAlcohol) PlanUpdateDrawEntry(
 func (f *fakeDrugAlcohol) UpdateDrawEntry(
 	_ context.Context,
 	req *workerdrugalcoholservice.UpdateEntryRequest,
-) (*workerdot.DOTRandomDrawEntry, error) {
+) (*dotrandom.DOTRandomDrawEntry, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
 	}
@@ -352,5 +353,5 @@ func TestUpdateDOTRandomSelection_AnExcuseSaysWhy(t *testing.T) {
 	assert.Contains(t, preview.Summary, "Excused")
 	require.NoError(t, tool.Execute(t.Context(), params))
 	require.NotNil(t, draws.moved)
-	assert.Equal(t, workerdot.RandomEntryExcused, draws.moved.Status)
+	assert.Equal(t, dotrandom.RandomEntryExcused, draws.moved.Status)
 }

@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerdrugalcoholservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/dotrandom"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerdot"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -56,10 +57,10 @@ var dotTestSubstances = agenttoolschema.Source(
 
 var randomSelectionMoves = agenttoolschema.Source(
 	"dotRandomSelection.agentMove",
-	[]workerdot.RandomEntryStatus{
-		workerdot.RandomEntryNotified,
-		workerdot.RandomEntryExcused,
-		workerdot.RandomEntryMissed,
+	[]dotrandom.RandomEntryStatus{
+		dotrandom.RandomEntryNotified,
+		dotrandom.RandomEntryExcused,
+		dotrandom.RandomEntryMissed,
 	},
 )
 
@@ -111,11 +112,11 @@ type DrugAlcoholKeeper interface {
 	PlanRunDraw(
 		ctx context.Context,
 		req *workerdrugalcoholservice.RunDrawRequest,
-	) (*workerdot.DOTRandomDraw, error)
+	) (*dotrandom.DOTRandomDraw, error)
 	RunDraw(
 		ctx context.Context,
 		req *workerdrugalcoholservice.RunDrawRequest,
-	) (*workerdot.DOTRandomDraw, error)
+	) (*dotrandom.DOTRandomDraw, error)
 	PlanFinalizeDraw(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
@@ -126,7 +127,7 @@ type DrugAlcoholKeeper interface {
 		tenantInfo pagination.TenantInfo,
 		id pulid.ID,
 		userID pulid.ID,
-	) (*workerdot.DOTRandomDraw, error)
+	) (*dotrandom.DOTRandomDraw, error)
 	PlanCancelDraw(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
@@ -139,7 +140,7 @@ type DrugAlcoholKeeper interface {
 		id pulid.ID,
 		reason string,
 		userID pulid.ID,
-	) (*workerdot.DOTRandomDraw, error)
+	) (*dotrandom.DOTRandomDraw, error)
 	PlanUpdateDrawEntry(
 		ctx context.Context,
 		req *workerdrugalcoholservice.UpdateEntryRequest,
@@ -147,7 +148,7 @@ type DrugAlcoholKeeper interface {
 	UpdateDrawEntry(
 		ctx context.Context,
 		req *workerdrugalcoholservice.UpdateEntryRequest,
-	) (*workerdot.DOTRandomDrawEntry, error)
+	) (*dotrandom.DOTRandomDrawEntry, error)
 }
 
 func DrugAlcoholToolProviders() []any {
@@ -167,7 +168,7 @@ func dotTestRecord(test *workerdot.WorkerDOTTest) toolpreview.Record {
 		test.Version)
 }
 
-func drawRecord(draw *workerdot.DOTRandomDraw) toolpreview.Record {
+func drawRecord(draw *dotrandom.DOTRandomDraw) toolpreview.Record {
 	return wfRecord(permission.ResourceDOTRandomPool, draw.ID,
 		"Random testing round "+draw.PeriodKey, draw.Version)
 }
@@ -454,14 +455,14 @@ func newRunDOTRandomDrawTool(draws DrugAlcoholKeeper) agenttoolports.AgentTool {
 	spec.SearchTerms = []string{"random drug test", "random selection", "testing pool"}
 
 	return toolspec.NewReceivableTool(spec, toolspec.ReceivablePlan[
-		*workerdrugalcoholservice.RunDrawRequest, *workerdot.DOTRandomDraw,
+		*workerdrugalcoholservice.RunDrawRequest, *dotrandom.DOTRandomDraw,
 	]{
 		Request: drawRequestFrom,
 		Plan: func(
 			ctx context.Context,
 			req *workerdrugalcoholservice.RunDrawRequest,
 			_ *agenttoolports.ToolExecuteParams,
-		) (*workerdot.DOTRandomDraw, error) {
+		) (*dotrandom.DOTRandomDraw, error) {
 			return draws.PlanRunDraw(ctx, req)
 		},
 		Refused: func(*workerdrugalcoholservice.RunDrawRequest) string {
@@ -469,7 +470,7 @@ func newRunDOTRandomDrawTool(draws DrugAlcoholKeeper) agenttoolports.AgentTool {
 		},
 		Render: func(
 			_ *workerdrugalcoholservice.RunDrawRequest,
-			planned *workerdot.DOTRandomDraw,
+			planned *dotrandom.DOTRandomDraw,
 		) (*agent.ToolPreview, error) {
 			label := "Random testing round " + planned.PeriodKey
 			if planned.Pool != nil {

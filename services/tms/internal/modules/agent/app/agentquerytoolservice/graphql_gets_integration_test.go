@@ -21,6 +21,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/app/telematicsservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workercredentialservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerdrugalcoholservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/dotrandom"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/telematics"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerdot"
@@ -198,26 +199,26 @@ func TestConvertedGets_ReadOneRecordOfTheTenantUnderRowLevelSecurity(t *testing.
 				if err != nil {
 					return pulid.Nil, err
 				}
-				pool, err := draws.CreatePool(ctx, &workerdot.DOTRandomPool{
+				pool, err := draws.CreatePool(ctx, &dotrandom.DOTRandomPool{
 					BusinessUnitID: bu, OrganizationID: org, Code: "P" + label,
 					Name: "Pool " + label, Status: domaintypes.StatusActive,
-					Period: workerdot.RandomPeriodQuarterly, DrugRatePercent: 50,
+					Period: dotrandom.RandomPeriodQuarterly, DrugRatePercent: 50,
 					AlcoholRatePercent: 10, IncludedDriverTypes: []string{},
 				})
 				if err != nil {
 					return pulid.Nil, err
 				}
 				now := timeutils.NowUnix()
-				row, err := draws.CreateDrawWithEntries(ctx, &workerdot.DOTRandomDraw{
+				row, err := draws.CreateDrawWithEntries(ctx, &dotrandom.DOTRandomDraw{
 					ID: pulid.MustNew("drdraw_"), BusinessUnitID: bu, OrganizationID: org,
 					PoolID: pool.ID, PeriodKey: "2026-Q" + label, PeriodStart: now - 86400*30,
-					PeriodEnd: now + 86400*60, Status: workerdot.RandomDrawStatusFinal,
+					PeriodEnd: now + 86400*60, Status: dotrandom.RandomDrawStatusFinal,
 					PoolSize: 1, DrugTarget: 1, DrugSelected: 1, Seed: "seed" + label,
 					Method: "sha256-rank", DrawnAt: now, FinalizedAt: &now,
-				}, []*workerdot.DOTRandomDrawEntry{{
+				}, []*dotrandom.DOTRandomDrawEntry{{
 					ID: pulid.MustNew("drde_"), BusinessUnitID: bu, OrganizationID: org,
 					WorkerID: workerID, Substance: workerdot.DOTSubstanceDrug, Rank: 1,
-					Status: workerdot.RandomEntrySelected,
+					Status: dotrandom.RandomEntrySelected,
 				}})
 				return created(row, err)
 			},

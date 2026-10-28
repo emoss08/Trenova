@@ -5,6 +5,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerdrugalcoholservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/dotclearinghouse"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/dotrandom"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerdot"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerdotports"
@@ -27,11 +29,11 @@ import (
 type fakeRepo struct {
 	tests      map[pulid.ID]*workerdot.WorkerDOTTest
 	violations map[pulid.ID]*workerdot.WorkerDOTViolation
-	queries    map[pulid.ID]*workerdot.WorkerClearinghouseQuery
-	entries    map[pulid.ID]*workerdot.DOTRandomDrawEntry
-	draws      map[pulid.ID]*workerdot.DOTRandomDraw
-	pools      map[pulid.ID]*workerdot.DOTRandomPool
-	defaults   *workerdot.DOTRandomPool
+	queries    map[pulid.ID]*dotclearinghouse.WorkerClearinghouseQuery
+	entries    map[pulid.ID]*dotrandom.DOTRandomDrawEntry
+	draws      map[pulid.ID]*dotrandom.DOTRandomDraw
+	pools      map[pulid.ID]*dotrandom.DOTRandomPool
+	defaults   *dotrandom.DOTRandomPool
 	candidates []pulid.ID
 	rollups    []workerdotports.DrugAlcoholRollup
 }
@@ -40,10 +42,10 @@ func newFakeRepo() *fakeRepo {
 	return &fakeRepo{
 		tests:      map[pulid.ID]*workerdot.WorkerDOTTest{},
 		violations: map[pulid.ID]*workerdot.WorkerDOTViolation{},
-		queries:    map[pulid.ID]*workerdot.WorkerClearinghouseQuery{},
-		entries:    map[pulid.ID]*workerdot.DOTRandomDrawEntry{},
-		draws:      map[pulid.ID]*workerdot.DOTRandomDraw{},
-		pools:      map[pulid.ID]*workerdot.DOTRandomPool{},
+		queries:    map[pulid.ID]*dotclearinghouse.WorkerClearinghouseQuery{},
+		entries:    map[pulid.ID]*dotrandom.DOTRandomDrawEntry{},
+		draws:      map[pulid.ID]*dotrandom.DOTRandomDraw{},
+		pools:      map[pulid.ID]*dotrandom.DOTRandomPool{},
 	}
 }
 
@@ -154,8 +156,8 @@ func (f *fakeRepo) UpdateViolation(
 func (f *fakeRepo) ListQueries(
 	_ context.Context,
 	req *workerdotports.ListClearinghouseQueriesRequest,
-) ([]*workerdot.WorkerClearinghouseQuery, error) {
-	out := make([]*workerdot.WorkerClearinghouseQuery, 0, len(f.queries))
+) ([]*dotclearinghouse.WorkerClearinghouseQuery, error) {
+	out := make([]*dotclearinghouse.WorkerClearinghouseQuery, 0, len(f.queries))
 	for _, query := range f.queries {
 		if !req.WorkerID.IsNil() && query.WorkerID != req.WorkerID {
 			continue
@@ -168,7 +170,7 @@ func (f *fakeRepo) ListQueries(
 func (f *fakeRepo) GetQueryByID(
 	_ context.Context,
 	req *workerdotports.GetClearinghouseQueryByIDRequest,
-) (*workerdot.WorkerClearinghouseQuery, error) {
+) (*dotclearinghouse.WorkerClearinghouseQuery, error) {
 	query, ok := f.queries[req.ID]
 	if !ok {
 		return nil, errortypes.NewNotFoundError("query not found")
@@ -178,8 +180,8 @@ func (f *fakeRepo) GetQueryByID(
 
 func (f *fakeRepo) CreateQuery(
 	_ context.Context,
-	entity *workerdot.WorkerClearinghouseQuery,
-) (*workerdot.WorkerClearinghouseQuery, error) {
+	entity *dotclearinghouse.WorkerClearinghouseQuery,
+) (*dotclearinghouse.WorkerClearinghouseQuery, error) {
 	if entity.ID.IsNil() {
 		entity.ID = pulid.MustNew("wchq_")
 	}
@@ -189,8 +191,8 @@ func (f *fakeRepo) CreateQuery(
 
 func (f *fakeRepo) UpdateQuery(
 	_ context.Context,
-	entity *workerdot.WorkerClearinghouseQuery,
-) (*workerdot.WorkerClearinghouseQuery, error) {
+	entity *dotclearinghouse.WorkerClearinghouseQuery,
+) (*dotclearinghouse.WorkerClearinghouseQuery, error) {
 	f.queries[entity.ID] = entity
 	return entity, nil
 }
@@ -198,14 +200,14 @@ func (f *fakeRepo) UpdateQuery(
 func (f *fakeRepo) ListPools(
 	_ context.Context,
 	_ *workerdotports.ListDOTRandomPoolsRequest,
-) (*pagination.CursorListResult[*workerdot.DOTRandomPool], error) {
-	return &pagination.CursorListResult[*workerdot.DOTRandomPool]{}, nil
+) (*pagination.CursorListResult[*dotrandom.DOTRandomPool], error) {
+	return &pagination.CursorListResult[*dotrandom.DOTRandomPool]{}, nil
 }
 
 func (f *fakeRepo) GetPoolByID(
 	_ context.Context,
 	req *workerdotports.GetDOTRandomPoolByIDRequest,
-) (*workerdot.DOTRandomPool, error) {
+) (*dotrandom.DOTRandomPool, error) {
 	pool, ok := f.pools[req.ID]
 	if !ok {
 		return nil, errortypes.NewNotFoundError("pool not found")
@@ -216,7 +218,7 @@ func (f *fakeRepo) GetPoolByID(
 func (f *fakeRepo) GetDefaultPool(
 	_ context.Context,
 	_ pagination.TenantInfo,
-) (*workerdot.DOTRandomPool, error) {
+) (*dotrandom.DOTRandomPool, error) {
 	return f.defaults, nil
 }
 
@@ -229,8 +231,8 @@ func (f *fakeRepo) PoolCodeExists(
 
 func (f *fakeRepo) CreatePool(
 	_ context.Context,
-	entity *workerdot.DOTRandomPool,
-) (*workerdot.DOTRandomPool, error) {
+	entity *dotrandom.DOTRandomPool,
+) (*dotrandom.DOTRandomPool, error) {
 	if entity.ID.IsNil() {
 		entity.ID = pulid.MustNew("drpool_")
 	}
@@ -240,8 +242,8 @@ func (f *fakeRepo) CreatePool(
 
 func (f *fakeRepo) UpdatePool(
 	_ context.Context,
-	entity *workerdot.DOTRandomPool,
-) (*workerdot.DOTRandomPool, error) {
+	entity *dotrandom.DOTRandomPool,
+) (*dotrandom.DOTRandomPool, error) {
 	f.pools[entity.ID] = entity
 	return entity, nil
 }
@@ -257,8 +259,8 @@ func (f *fakeRepo) ClearDefaultPool(
 func (f *fakeRepo) ListDraws(
 	_ context.Context,
 	_ *workerdotports.ListDOTRandomDrawsRequest,
-) ([]*workerdot.DOTRandomDraw, error) {
-	out := make([]*workerdot.DOTRandomDraw, 0, len(f.draws))
+) ([]*dotrandom.DOTRandomDraw, error) {
+	out := make([]*dotrandom.DOTRandomDraw, 0, len(f.draws))
 	for _, draw := range f.draws {
 		out = append(out, draw)
 	}
@@ -268,7 +270,7 @@ func (f *fakeRepo) ListDraws(
 func (f *fakeRepo) GetDrawByID(
 	_ context.Context,
 	req *workerdotports.GetDOTRandomDrawByIDRequest,
-) (*workerdot.DOTRandomDraw, error) {
+) (*dotrandom.DOTRandomDraw, error) {
 	draw, ok := f.draws[req.ID]
 	if !ok {
 		return nil, errortypes.NewNotFoundError("draw not found")
@@ -279,10 +281,10 @@ func (f *fakeRepo) GetDrawByID(
 func (f *fakeRepo) GetDrawByPeriod(
 	_ context.Context,
 	req *workerdotports.GetDOTRandomDrawByPeriodRequest,
-) (*workerdot.DOTRandomDraw, error) {
+) (*dotrandom.DOTRandomDraw, error) {
 	for _, draw := range f.draws {
 		if draw.PoolID == req.PoolID && draw.PeriodKey == req.PeriodKey &&
-			draw.Status != workerdot.RandomDrawStatusCancelled {
+			draw.Status != dotrandom.RandomDrawStatusCancelled {
 			return draw, nil
 		}
 	}
@@ -291,9 +293,9 @@ func (f *fakeRepo) GetDrawByPeriod(
 
 func (f *fakeRepo) CreateDrawWithEntries(
 	_ context.Context,
-	draw *workerdot.DOTRandomDraw,
-	entries []*workerdot.DOTRandomDrawEntry,
-) (*workerdot.DOTRandomDraw, error) {
+	draw *dotrandom.DOTRandomDraw,
+	entries []*dotrandom.DOTRandomDrawEntry,
+) (*dotrandom.DOTRandomDraw, error) {
 	if draw.ID.IsNil() {
 		draw.ID = pulid.MustNew("drdraw_")
 	}
@@ -311,8 +313,8 @@ func (f *fakeRepo) CreateDrawWithEntries(
 
 func (f *fakeRepo) UpdateDraw(
 	_ context.Context,
-	entity *workerdot.DOTRandomDraw,
-) (*workerdot.DOTRandomDraw, error) {
+	entity *dotrandom.DOTRandomDraw,
+) (*dotrandom.DOTRandomDraw, error) {
 	f.draws[entity.ID] = entity
 	return entity, nil
 }
@@ -327,8 +329,8 @@ func (f *fakeRepo) ListPoolCandidates(
 func (f *fakeRepo) ListDrawEntries(
 	_ context.Context,
 	req *workerdotports.ListDOTRandomDrawEntriesRequest,
-) ([]*workerdot.DOTRandomDrawEntry, error) {
-	out := make([]*workerdot.DOTRandomDrawEntry, 0, len(f.entries))
+) ([]*dotrandom.DOTRandomDrawEntry, error) {
+	out := make([]*dotrandom.DOTRandomDrawEntry, 0, len(f.entries))
 	for _, entry := range f.entries {
 		if !req.DrawID.IsNil() && entry.DrawID != req.DrawID {
 			continue
@@ -341,7 +343,7 @@ func (f *fakeRepo) ListDrawEntries(
 func (f *fakeRepo) GetDrawEntryByID(
 	_ context.Context,
 	req *workerdotports.GetDOTRandomDrawEntryByIDRequest,
-) (*workerdot.DOTRandomDrawEntry, error) {
+) (*dotrandom.DOTRandomDrawEntry, error) {
 	entry, ok := f.entries[req.ID]
 	if !ok {
 		return nil, errortypes.NewNotFoundError("entry not found")
@@ -351,8 +353,8 @@ func (f *fakeRepo) GetDrawEntryByID(
 
 func (f *fakeRepo) UpdateDrawEntry(
 	_ context.Context,
-	entity *workerdot.DOTRandomDrawEntry,
-) (*workerdot.DOTRandomDrawEntry, error) {
+	entity *dotrandom.DOTRandomDrawEntry,
+) (*dotrandom.DOTRandomDrawEntry, error) {
 	f.entries[entity.ID] = entity
 	return entity, nil
 }
@@ -706,13 +708,13 @@ func TestRecordTest_ClosesTheRandomSelection(t *testing.T) {
 	t.Parallel()
 	h := newHarness(t)
 
-	entry := &workerdot.DOTRandomDrawEntry{
+	entry := &dotrandom.DOTRandomDrawEntry{
 		ID:             pulid.MustNew("drde_"),
 		OrganizationID: h.tenant.OrgID,
 		BusinessUnitID: h.tenant.BuID,
 		WorkerID:       h.workerID,
 		Substance:      workerdot.DOTSubstanceDrug,
-		Status:         workerdot.RandomEntryNotified,
+		Status:         dotrandom.RandomEntryNotified,
 	}
 	h.repo.entries[entry.ID] = entry
 
@@ -726,21 +728,21 @@ func TestRecordTest_ClosesTheRandomSelection(t *testing.T) {
 	created, err := h.svc.RecordTest(t.Context(), test, h.userID)
 	require.NoError(t, err)
 
-	assert.Equal(t, workerdot.RandomEntryCompleted, entry.Status)
+	assert.Equal(t, dotrandom.RandomEntryCompleted, entry.Status)
 	assert.Equal(t, created.ID, entry.TestID)
 	require.NotNil(t, entry.CompletedAt)
 }
 
-func newPool(tenant pagination.TenantInfo) *workerdot.DOTRandomPool {
-	return &workerdot.DOTRandomPool{
+func newPool(tenant pagination.TenantInfo) *dotrandom.DOTRandomPool {
+	return &dotrandom.DOTRandomPool{
 		ID:                 pulid.MustNew("drpool_"),
 		OrganizationID:     tenant.OrgID,
 		BusinessUnitID:     tenant.BuID,
 		Code:               "DOT",
 		Name:               "DOT Random Pool",
-		Period:             workerdot.RandomPeriodQuarterly,
-		DrugRatePercent:    workerdot.DOTMinimumDrugRatePercent,
-		AlcoholRatePercent: workerdot.DOTMinimumAlcoholRatePercent,
+		Period:             dotrandom.RandomPeriodQuarterly,
+		DrugRatePercent:    dotrandom.DOTMinimumDrugRatePercent,
+		AlcoholRatePercent: dotrandom.DOTMinimumAlcoholRatePercent,
 		IsDefault:          true,
 	}
 }
@@ -773,7 +775,7 @@ func TestRunDraw_SelectsToTargetAndRecordsItsEvidence(t *testing.T) {
 	// Without the seed and the method the selection is unverifiable, which is
 	// the whole point of keeping the round.
 	assert.NotEmpty(t, draw.Seed)
-	assert.Equal(t, workerdot.RandomSelectionMethod, draw.Method)
+	assert.Equal(t, dotrandom.RandomSelectionMethod, draw.Method)
 	assert.NotEmpty(t, draw.PeriodKey)
 	assert.Greater(t, draw.PeriodEnd, draw.PeriodStart)
 }
@@ -837,21 +839,21 @@ func TestUpdateDrawEntry_CompletionIsNotSetByHand(t *testing.T) {
 	t.Parallel()
 	h := newHarness(t)
 
-	entry := &workerdot.DOTRandomDrawEntry{
+	entry := &dotrandom.DOTRandomDrawEntry{
 		ID:             pulid.MustNew("drde_"),
 		OrganizationID: h.tenant.OrgID,
 		BusinessUnitID: h.tenant.BuID,
 		DrawID:         pulid.MustNew("drdraw_"),
 		WorkerID:       h.workerID,
 		Substance:      workerdot.DOTSubstanceDrug,
-		Status:         workerdot.RandomEntrySelected,
+		Status:         dotrandom.RandomEntrySelected,
 	}
 	h.repo.entries[entry.ID] = entry
 
 	_, err := h.svc.UpdateDrawEntry(t.Context(), &workerdrugalcoholservice.UpdateEntryRequest{
 		TenantInfo: h.tenant,
 		EntryID:    entry.ID,
-		Status:     workerdot.RandomEntryCompleted,
+		Status:     dotrandom.RandomEntryCompleted,
 		UserID:     h.userID,
 	})
 
@@ -863,11 +865,11 @@ func TestCompleteQuery_RefreshesTheStanding(t *testing.T) {
 	t.Parallel()
 	h := newHarness(t)
 
-	query, err := h.svc.RecordQuery(t.Context(), &workerdot.WorkerClearinghouseQuery{
+	query, err := h.svc.RecordQuery(t.Context(), &dotclearinghouse.WorkerClearinghouseQuery{
 		OrganizationID: h.tenant.OrgID,
 		BusinessUnitID: h.tenant.BuID,
 		WorkerID:       h.workerID,
-		QueryType:      workerdot.ClearinghouseQueryAnnualLimited,
+		QueryType:      dotclearinghouse.ClearinghouseQueryAnnualLimited,
 		RequestedAt:    1_700_000_000,
 	}, h.userID)
 	require.NoError(t, err)
@@ -875,7 +877,7 @@ func TestCompleteQuery_RefreshesTheStanding(t *testing.T) {
 	_, err = h.svc.CompleteQuery(t.Context(), &workerdrugalcoholservice.CompleteQueryRequest{
 		TenantInfo:     h.tenant,
 		QueryID:        query.ID,
-		Result:         workerdot.ClearinghouseResultViolationsFound,
+		Result:         dotclearinghouse.ClearinghouseResultViolationsFound,
 		CompletedAt:    1_700_100_000,
 		ViolationCount: 1,
 		UserID:         h.userID,
@@ -892,11 +894,11 @@ func TestCompleteQuery_AnsweredQueryCannotBeAnsweredAgain(t *testing.T) {
 	t.Parallel()
 	h := newHarness(t)
 
-	query, err := h.svc.RecordQuery(t.Context(), &workerdot.WorkerClearinghouseQuery{
+	query, err := h.svc.RecordQuery(t.Context(), &dotclearinghouse.WorkerClearinghouseQuery{
 		OrganizationID: h.tenant.OrgID,
 		BusinessUnitID: h.tenant.BuID,
 		WorkerID:       h.workerID,
-		QueryType:      workerdot.ClearinghouseQueryAnnualLimited,
+		QueryType:      dotclearinghouse.ClearinghouseQueryAnnualLimited,
 		RequestedAt:    1_700_000_000,
 	}, h.userID)
 	require.NoError(t, err)
@@ -904,7 +906,7 @@ func TestCompleteQuery_AnsweredQueryCannotBeAnsweredAgain(t *testing.T) {
 	req := &workerdrugalcoholservice.CompleteQueryRequest{
 		TenantInfo:  h.tenant,
 		QueryID:     query.ID,
-		Result:      workerdot.ClearinghouseResultNoViolations,
+		Result:      dotclearinghouse.ClearinghouseResultNoViolations,
 		CompletedAt: 1_700_100_000,
 		UserID:      h.userID,
 	}

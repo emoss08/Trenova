@@ -16,40 +16,42 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerdrugalcoholservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/dotclearinghouse"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/dotrandom"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerdot"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerdotports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
-func (r *DOTRandomDrawResolver) DrawnByID(ctx context.Context, obj *workerdot.DOTRandomDraw) (*string, error) {
+func (r *DOTRandomDrawResolver) DrawnByID(ctx context.Context, obj *dotrandom.DOTRandomDraw) (*string, error) {
 	return gqlid.IDPtr(obj.DrawnByID), nil
 }
 
-func (r *DOTRandomDrawResolver) FinalizedAt(ctx context.Context, obj *workerdot.DOTRandomDraw) (*int, error) {
+func (r *DOTRandomDrawResolver) FinalizedAt(ctx context.Context, obj *dotrandom.DOTRandomDraw) (*int, error) {
 	return gqlscalar.IntPtr(obj.FinalizedAt), nil
 }
 
-func (r *DOTRandomDrawResolver) Entries(ctx context.Context, obj *workerdot.DOTRandomDraw) ([]*workerdot.DOTRandomDrawEntry, error) {
+func (r *DOTRandomDrawResolver) Entries(ctx context.Context, obj *dotrandom.DOTRandomDraw) ([]*dotrandom.DOTRandomDrawEntry, error) {
 	if obj.Entries == nil {
-		return []*workerdot.DOTRandomDrawEntry{}, nil
+		return []*dotrandom.DOTRandomDrawEntry{}, nil
 	}
 	return obj.Entries, nil
 }
 
-func (r *DOTRandomDrawEntryResolver) NotifiedAt(ctx context.Context, obj *workerdot.DOTRandomDrawEntry) (*int, error) {
+func (r *DOTRandomDrawEntryResolver) NotifiedAt(ctx context.Context, obj *dotrandom.DOTRandomDrawEntry) (*int, error) {
 	return gqlscalar.IntPtr(obj.NotifiedAt), nil
 }
 
-func (r *DOTRandomDrawEntryResolver) CompletedAt(ctx context.Context, obj *workerdot.DOTRandomDrawEntry) (*int, error) {
+func (r *DOTRandomDrawEntryResolver) CompletedAt(ctx context.Context, obj *dotrandom.DOTRandomDrawEntry) (*int, error) {
 	return gqlscalar.IntPtr(obj.CompletedAt), nil
 }
 
-func (r *DOTRandomDrawEntryResolver) TestID(ctx context.Context, obj *workerdot.DOTRandomDrawEntry) (*string, error) {
+func (r *DOTRandomDrawEntryResolver) TestID(ctx context.Context, obj *dotrandom.DOTRandomDrawEntry) (*string, error) {
 	return gqlid.IDPtr(obj.TestID), nil
 }
 
-func (r *DOTRandomPoolResolver) MeetsDOTMinimums(ctx context.Context, obj *workerdot.DOTRandomPool) (bool, error) {
+func (r *DOTRandomPoolResolver) MeetsDOTMinimums(ctx context.Context, obj *dotrandom.DOTRandomPool) (bool, error) {
 	return obj.MeetsDOTMinimums(), nil
 }
 
@@ -132,7 +134,7 @@ func (r *MutationResolver) UpdateDOTViolation(ctx context.Context, input gqlmode
 	return r.WorkerDrugAlcoholService.UpdateViolation(ctx, req)
 }
 
-func (r *MutationResolver) RecordClearinghouseQuery(ctx context.Context, input gqlmodel.RecordClearinghouseQueryInput) (*workerdot.WorkerClearinghouseQuery, error) {
+func (r *MutationResolver) RecordClearinghouseQuery(ctx context.Context, input gqlmodel.RecordClearinghouseQueryInput) (*dotclearinghouse.WorkerClearinghouseQuery, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceWorkerDOTTest, permission.OpCreate)
 	if err != nil {
 		return nil, err
@@ -145,7 +147,7 @@ func (r *MutationResolver) RecordClearinghouseQuery(ctx context.Context, input g
 	return r.WorkerDrugAlcoholService.RecordQuery(ctx, entity, authCtx.UserID)
 }
 
-func (r *MutationResolver) CompleteClearinghouseQuery(ctx context.Context, input gqlmodel.CompleteClearinghouseQueryInput) (*workerdot.WorkerClearinghouseQuery, error) {
+func (r *MutationResolver) CompleteClearinghouseQuery(ctx context.Context, input gqlmodel.CompleteClearinghouseQueryInput) (*dotclearinghouse.WorkerClearinghouseQuery, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceWorkerDOTTest, permission.OpUpdate)
 	if err != nil {
 		return nil, err
@@ -158,7 +160,7 @@ func (r *MutationResolver) CompleteClearinghouseQuery(ctx context.Context, input
 	return r.WorkerDrugAlcoholService.CompleteQuery(ctx, req)
 }
 
-func (r *MutationResolver) CreateDOTRandomPool(ctx context.Context, input gqlmodel.DOTRandomPoolInput) (*workerdot.DOTRandomPool, error) {
+func (r *MutationResolver) CreateDOTRandomPool(ctx context.Context, input gqlmodel.DOTRandomPoolInput) (*dotrandom.DOTRandomPool, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceDOTRandomPool, permission.OpCreate)
 	if err != nil {
 		return nil, err
@@ -168,7 +170,7 @@ func (r *MutationResolver) CreateDOTRandomPool(ctx context.Context, input gqlmod
 	return r.WorkerDrugAlcoholService.CreatePool(ctx, entity, authCtx.UserID)
 }
 
-func (r *MutationResolver) UpdateDOTRandomPool(ctx context.Context, id string, version int, input gqlmodel.DOTRandomPoolInput) (*workerdot.DOTRandomPool, error) {
+func (r *MutationResolver) UpdateDOTRandomPool(ctx context.Context, id string, version int, input gqlmodel.DOTRandomPoolInput) (*dotrandom.DOTRandomPool, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceDOTRandomPool, permission.OpUpdate)
 	if err != nil {
 		return nil, err
@@ -185,7 +187,7 @@ func (r *MutationResolver) UpdateDOTRandomPool(ctx context.Context, id string, v
 	return r.WorkerDrugAlcoholService.UpdatePool(ctx, entity, authCtx.UserID)
 }
 
-func (r *MutationResolver) RunDOTRandomDraw(ctx context.Context, input gqlmodel.RunDOTRandomDrawInput) (*workerdot.DOTRandomDraw, error) {
+func (r *MutationResolver) RunDOTRandomDraw(ctx context.Context, input gqlmodel.RunDOTRandomDrawInput) (*dotrandom.DOTRandomDraw, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceDOTRandomPool, permission.OpManage)
 	if err != nil {
 		return nil, err
@@ -205,7 +207,7 @@ func (r *MutationResolver) RunDOTRandomDraw(ctx context.Context, input gqlmodel.
 	})
 }
 
-func (r *MutationResolver) FinalizeDOTRandomDraw(ctx context.Context, id string) (*workerdot.DOTRandomDraw, error) {
+func (r *MutationResolver) FinalizeDOTRandomDraw(ctx context.Context, id string) (*dotrandom.DOTRandomDraw, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceDOTRandomPool, permission.OpManage)
 	if err != nil {
 		return nil, err
@@ -223,7 +225,7 @@ func (r *MutationResolver) FinalizeDOTRandomDraw(ctx context.Context, id string)
 	)
 }
 
-func (r *MutationResolver) CancelDOTRandomDraw(ctx context.Context, id string, reason string) (*workerdot.DOTRandomDraw, error) {
+func (r *MutationResolver) CancelDOTRandomDraw(ctx context.Context, id string, reason string) (*dotrandom.DOTRandomDraw, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceDOTRandomPool, permission.OpManage)
 	if err != nil {
 		return nil, err
@@ -242,7 +244,7 @@ func (r *MutationResolver) CancelDOTRandomDraw(ctx context.Context, id string, r
 	)
 }
 
-func (r *MutationResolver) UpdateDOTRandomDrawEntry(ctx context.Context, input gqlmodel.UpdateDOTRandomDrawEntryInput) (*workerdot.DOTRandomDrawEntry, error) {
+func (r *MutationResolver) UpdateDOTRandomDrawEntry(ctx context.Context, input gqlmodel.UpdateDOTRandomDrawEntryInput) (*dotrandom.DOTRandomDrawEntry, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceDOTRandomPool, permission.OpManage)
 	if err != nil {
 		return nil, err
@@ -333,7 +335,7 @@ func (r *QueryResolver) WorkerDOTViolations(ctx context.Context, workerID string
 	return r.WorkerDrugAlcoholService.ListViolations(ctx, resolvercore.TenantInfo(authCtx), id)
 }
 
-func (r *QueryResolver) WorkerClearinghouseQueries(ctx context.Context, workerID string) ([]*workerdot.WorkerClearinghouseQuery, error) {
+func (r *QueryResolver) WorkerClearinghouseQueries(ctx context.Context, workerID string) ([]*dotclearinghouse.WorkerClearinghouseQuery, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceWorkerDOTTest, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -410,7 +412,7 @@ func (r *QueryResolver) DOTRandomPools(ctx context.Context, input gqlmodel.DOTRa
 	return randomPoolCursorConnectionToModel(result)
 }
 
-func (r *QueryResolver) DOTRandomPool(ctx context.Context, id string) (*workerdot.DOTRandomPool, error) {
+func (r *QueryResolver) DOTRandomPool(ctx context.Context, id string) (*dotrandom.DOTRandomPool, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceDOTRandomPool, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -423,7 +425,7 @@ func (r *QueryResolver) DOTRandomPool(ctx context.Context, id string) (*workerdo
 	return r.WorkerDrugAlcoholService.GetPool(ctx, resolvercore.TenantInfo(authCtx), poolID)
 }
 
-func (r *QueryResolver) DOTRandomDraws(ctx context.Context, poolID *string) ([]*workerdot.DOTRandomDraw, error) {
+func (r *QueryResolver) DOTRandomDraws(ctx context.Context, poolID *string) ([]*dotrandom.DOTRandomDraw, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceDOTRandomPool, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -442,7 +444,7 @@ func (r *QueryResolver) DOTRandomDraws(ctx context.Context, poolID *string) ([]*
 	})
 }
 
-func (r *QueryResolver) DOTRandomDraw(ctx context.Context, id string) (*workerdot.DOTRandomDraw, error) {
+func (r *QueryResolver) DOTRandomDraw(ctx context.Context, id string) (*dotrandom.DOTRandomDraw, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceDOTRandomPool, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -455,7 +457,7 @@ func (r *QueryResolver) DOTRandomDraw(ctx context.Context, id string) (*workerdo
 	return r.WorkerDrugAlcoholService.GetDraw(ctx, resolvercore.TenantInfo(authCtx), drawID)
 }
 
-func (r *QueryResolver) WorkerRandomSelections(ctx context.Context, workerID string) ([]*workerdot.DOTRandomDrawEntry, error) {
+func (r *QueryResolver) WorkerRandomSelections(ctx context.Context, workerID string) ([]*dotrandom.DOTRandomDrawEntry, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceWorkerDOTTest, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -481,23 +483,23 @@ func (r *QueryResolver) WorkerRandomSelections(ctx context.Context, workerID str
 	)
 }
 
-func (r *WorkerClearinghouseQueryResolver) ConsentObtainedAt(ctx context.Context, obj *workerdot.WorkerClearinghouseQuery) (*int, error) {
+func (r *WorkerClearinghouseQueryResolver) ConsentObtainedAt(ctx context.Context, obj *dotclearinghouse.WorkerClearinghouseQuery) (*int, error) {
 	return gqlscalar.IntPtr(obj.ConsentObtainedAt), nil
 }
 
-func (r *WorkerClearinghouseQueryResolver) ConsentExpiresAt(ctx context.Context, obj *workerdot.WorkerClearinghouseQuery) (*int, error) {
+func (r *WorkerClearinghouseQueryResolver) ConsentExpiresAt(ctx context.Context, obj *dotclearinghouse.WorkerClearinghouseQuery) (*int, error) {
 	return gqlscalar.IntPtr(obj.ConsentExpiresAt), nil
 }
 
-func (r *WorkerClearinghouseQueryResolver) CompletedAt(ctx context.Context, obj *workerdot.WorkerClearinghouseQuery) (*int, error) {
+func (r *WorkerClearinghouseQueryResolver) CompletedAt(ctx context.Context, obj *dotclearinghouse.WorkerClearinghouseQuery) (*int, error) {
 	return gqlscalar.IntPtr(obj.CompletedAt), nil
 }
 
-func (r *WorkerClearinghouseQueryResolver) DocumentID(ctx context.Context, obj *workerdot.WorkerClearinghouseQuery) (*string, error) {
+func (r *WorkerClearinghouseQueryResolver) DocumentID(ctx context.Context, obj *dotclearinghouse.WorkerClearinghouseQuery) (*string, error) {
 	return gqlid.IDPtr(obj.DocumentID), nil
 }
 
-func (r *WorkerClearinghouseQueryResolver) PerformedByID(ctx context.Context, obj *workerdot.WorkerClearinghouseQuery) (*string, error) {
+func (r *WorkerClearinghouseQueryResolver) PerformedByID(ctx context.Context, obj *dotclearinghouse.WorkerClearinghouseQuery) (*string, error) {
 	return gqlid.IDPtr(obj.PerformedByID), nil
 }
 

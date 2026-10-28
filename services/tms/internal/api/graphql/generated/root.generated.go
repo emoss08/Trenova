@@ -3,6 +3,8 @@
 package generated
 
 import (
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/dotclearinghouse"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/dotrandom"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edicarrierinvoice"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/ediinboundfile"
@@ -1227,19 +1229,19 @@ type CustomerTrackingProfileResolver interface {
 }
 
 type DOTRandomDrawResolver interface {
-	DrawnByID(ctx context.Context, obj *workerdot.DOTRandomDraw) (*string, error)
-	FinalizedAt(ctx context.Context, obj *workerdot.DOTRandomDraw) (*int, error)
-	Entries(ctx context.Context, obj *workerdot.DOTRandomDraw) ([]*workerdot.DOTRandomDrawEntry, error)
+	DrawnByID(ctx context.Context, obj *dotrandom.DOTRandomDraw) (*string, error)
+	FinalizedAt(ctx context.Context, obj *dotrandom.DOTRandomDraw) (*int, error)
+	Entries(ctx context.Context, obj *dotrandom.DOTRandomDraw) ([]*dotrandom.DOTRandomDrawEntry, error)
 }
 
 type DOTRandomDrawEntryResolver interface {
-	NotifiedAt(ctx context.Context, obj *workerdot.DOTRandomDrawEntry) (*int, error)
-	CompletedAt(ctx context.Context, obj *workerdot.DOTRandomDrawEntry) (*int, error)
-	TestID(ctx context.Context, obj *workerdot.DOTRandomDrawEntry) (*string, error)
+	NotifiedAt(ctx context.Context, obj *dotrandom.DOTRandomDrawEntry) (*int, error)
+	CompletedAt(ctx context.Context, obj *dotrandom.DOTRandomDrawEntry) (*int, error)
+	TestID(ctx context.Context, obj *dotrandom.DOTRandomDrawEntry) (*string, error)
 }
 
 type DOTRandomPoolResolver interface {
-	MeetsDOTMinimums(ctx context.Context, obj *workerdot.DOTRandomPool) (bool, error)
+	MeetsDOTMinimums(ctx context.Context, obj *dotrandom.DOTRandomPool) (bool, error)
 }
 
 type DQFFileResolver interface {
@@ -2550,14 +2552,14 @@ type MutationResolver interface {
 	CancelDOTTest(ctx context.Context, id string, reason string) (*workerdot.WorkerDOTTest, error)
 	RecordDOTViolation(ctx context.Context, input gqlmodel.RecordDOTViolationInput) (*workerdot.WorkerDOTViolation, error)
 	UpdateDOTViolation(ctx context.Context, input gqlmodel.UpdateDOTViolationInput) (*workerdot.WorkerDOTViolation, error)
-	RecordClearinghouseQuery(ctx context.Context, input gqlmodel.RecordClearinghouseQueryInput) (*workerdot.WorkerClearinghouseQuery, error)
-	CompleteClearinghouseQuery(ctx context.Context, input gqlmodel.CompleteClearinghouseQueryInput) (*workerdot.WorkerClearinghouseQuery, error)
-	CreateDOTRandomPool(ctx context.Context, input gqlmodel.DOTRandomPoolInput) (*workerdot.DOTRandomPool, error)
-	UpdateDOTRandomPool(ctx context.Context, id string, version int, input gqlmodel.DOTRandomPoolInput) (*workerdot.DOTRandomPool, error)
-	RunDOTRandomDraw(ctx context.Context, input gqlmodel.RunDOTRandomDrawInput) (*workerdot.DOTRandomDraw, error)
-	FinalizeDOTRandomDraw(ctx context.Context, id string) (*workerdot.DOTRandomDraw, error)
-	CancelDOTRandomDraw(ctx context.Context, id string, reason string) (*workerdot.DOTRandomDraw, error)
-	UpdateDOTRandomDrawEntry(ctx context.Context, input gqlmodel.UpdateDOTRandomDrawEntryInput) (*workerdot.DOTRandomDrawEntry, error)
+	RecordClearinghouseQuery(ctx context.Context, input gqlmodel.RecordClearinghouseQueryInput) (*dotclearinghouse.WorkerClearinghouseQuery, error)
+	CompleteClearinghouseQuery(ctx context.Context, input gqlmodel.CompleteClearinghouseQueryInput) (*dotclearinghouse.WorkerClearinghouseQuery, error)
+	CreateDOTRandomPool(ctx context.Context, input gqlmodel.DOTRandomPoolInput) (*dotrandom.DOTRandomPool, error)
+	UpdateDOTRandomPool(ctx context.Context, id string, version int, input gqlmodel.DOTRandomPoolInput) (*dotrandom.DOTRandomPool, error)
+	RunDOTRandomDraw(ctx context.Context, input gqlmodel.RunDOTRandomDrawInput) (*dotrandom.DOTRandomDraw, error)
+	FinalizeDOTRandomDraw(ctx context.Context, id string) (*dotrandom.DOTRandomDraw, error)
+	CancelDOTRandomDraw(ctx context.Context, id string, reason string) (*dotrandom.DOTRandomDraw, error)
+	UpdateDOTRandomDrawEntry(ctx context.Context, input gqlmodel.UpdateDOTRandomDrawEntryInput) (*dotrandom.DOTRandomDrawEntry, error)
 	RecordWorkerEmploymentEvent(ctx context.Context, input gqlmodel.RecordWorkerEmploymentEventInput) (*workeremploymentservice.RecordResult, error)
 	AmendWorkerEmploymentEvent(ctx context.Context, input gqlmodel.AmendWorkerEmploymentEventInput) (*employment.WorkerEmploymentEvent, error)
 	RecordWorkerInjury(ctx context.Context, input gqlmodel.RecordWorkerInjuryInput) (*workersafety.WorkerInjury, error)
@@ -3395,13 +3397,13 @@ type QueryResolver interface {
 	WorkerDOTTest(ctx context.Context, id string) (*workerdot.WorkerDOTTest, error)
 	OpenDOTTests(ctx context.Context) ([]*workerdot.WorkerDOTTest, error)
 	WorkerDOTViolations(ctx context.Context, workerID string) ([]*workerdot.WorkerDOTViolation, error)
-	WorkerClearinghouseQueries(ctx context.Context, workerID string) ([]*workerdot.WorkerClearinghouseQuery, error)
+	WorkerClearinghouseQueries(ctx context.Context, workerID string) ([]*dotclearinghouse.WorkerClearinghouseQuery, error)
 	WorkerDrugAlcoholStanding(ctx context.Context, workerID string) (*workerdot.DrugAlcoholStanding, error)
 	DOTRandomPools(ctx context.Context, input gqlmodel.DOTRandomPoolsInput) (*gqlmodel.DOTRandomPoolConnection, error)
-	DOTRandomPool(ctx context.Context, id string) (*workerdot.DOTRandomPool, error)
-	DOTRandomDraws(ctx context.Context, poolID *string) ([]*workerdot.DOTRandomDraw, error)
-	DOTRandomDraw(ctx context.Context, id string) (*workerdot.DOTRandomDraw, error)
-	WorkerRandomSelections(ctx context.Context, workerID string) ([]*workerdot.DOTRandomDrawEntry, error)
+	DOTRandomPool(ctx context.Context, id string) (*dotrandom.DOTRandomPool, error)
+	DOTRandomDraws(ctx context.Context, poolID *string) ([]*dotrandom.DOTRandomDraw, error)
+	DOTRandomDraw(ctx context.Context, id string) (*dotrandom.DOTRandomDraw, error)
+	WorkerRandomSelections(ctx context.Context, workerID string) ([]*dotrandom.DOTRandomDrawEntry, error)
 	WorkerEmploymentEvents(ctx context.Context, workerID string, kinds []employment.EmploymentEventKind) ([]*employment.WorkerEmploymentEvent, error)
 	WorkerEmploymentEvent(ctx context.Context, id string) (*employment.WorkerEmploymentEvent, error)
 	WorkerInjuries(ctx context.Context, workerID *string, caseYear *int, recordableOnly *bool, openOnly *bool, limit *int) ([]*workersafety.WorkerInjury, error)
@@ -3739,11 +3741,11 @@ type WorkerChecklistTemplateItemResolver interface {
 }
 
 type WorkerClearinghouseQueryResolver interface {
-	ConsentObtainedAt(ctx context.Context, obj *workerdot.WorkerClearinghouseQuery) (*int, error)
-	ConsentExpiresAt(ctx context.Context, obj *workerdot.WorkerClearinghouseQuery) (*int, error)
-	CompletedAt(ctx context.Context, obj *workerdot.WorkerClearinghouseQuery) (*int, error)
-	DocumentID(ctx context.Context, obj *workerdot.WorkerClearinghouseQuery) (*string, error)
-	PerformedByID(ctx context.Context, obj *workerdot.WorkerClearinghouseQuery) (*string, error)
+	ConsentObtainedAt(ctx context.Context, obj *dotclearinghouse.WorkerClearinghouseQuery) (*int, error)
+	ConsentExpiresAt(ctx context.Context, obj *dotclearinghouse.WorkerClearinghouseQuery) (*int, error)
+	CompletedAt(ctx context.Context, obj *dotclearinghouse.WorkerClearinghouseQuery) (*int, error)
+	DocumentID(ctx context.Context, obj *dotclearinghouse.WorkerClearinghouseQuery) (*string, error)
+	PerformedByID(ctx context.Context, obj *dotclearinghouse.WorkerClearinghouseQuery) (*string, error)
 }
 
 type WorkerCredentialResolver interface {

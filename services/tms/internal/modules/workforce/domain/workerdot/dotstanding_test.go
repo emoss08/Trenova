@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/dotclearinghouse"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerdot"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -12,11 +13,11 @@ import (
 )
 
 func answeredQuery(
-	queryType workerdot.ClearinghouseQueryType,
-	result workerdot.ClearinghouseResult,
+	queryType dotclearinghouse.ClearinghouseQueryType,
+	result dotclearinghouse.ClearinghouseResult,
 	at int64,
-) *workerdot.WorkerClearinghouseQuery {
-	return &workerdot.WorkerClearinghouseQuery{
+) *dotclearinghouse.WorkerClearinghouseQuery {
+	return &dotclearinghouse.WorkerClearinghouseQuery{
 		QueryType:   queryType,
 		Result:      result,
 		RequestedAt: at,
@@ -137,14 +138,14 @@ func TestEvaluateDrugAlcoholStanding(t *testing.T) {
 	t.Run("a clearinghouse hit prohibits", func(t *testing.T) {
 		t.Parallel()
 		found := answeredQuery(
-			workerdot.ClearinghouseQueryAnnualLimited,
-			workerdot.ClearinghouseResultViolationsFound,
+			dotclearinghouse.ClearinghouseQueryAnnualLimited,
+			dotclearinghouse.ClearinghouseResultViolationsFound,
 			1_700_300_000,
 		)
 		found.ViolationCount = 1
 
 		standing := workerdot.EvaluateDrugAlcoholStanding(workerdot.DrugAlcoholInput{
-			Queries: []*workerdot.WorkerClearinghouseQuery{found},
+			Queries: []*dotclearinghouse.WorkerClearinghouseQuery{found},
 		})
 
 		assert.Equal(t, worker.DrugAlcoholProhibited, standing.Status)
@@ -155,14 +156,14 @@ func TestEvaluateDrugAlcoholStanding(t *testing.T) {
 	t.Run("a later clean query supersedes an older hit", func(t *testing.T) {
 		t.Parallel()
 		found := answeredQuery(
-			workerdot.ClearinghouseQueryAnnualLimited,
-			workerdot.ClearinghouseResultViolationsFound,
+			dotclearinghouse.ClearinghouseQueryAnnualLimited,
+			dotclearinghouse.ClearinghouseResultViolationsFound,
 			1_700_300_000,
 		)
 		found.ViolationCount = 1
 		clean := answeredQuery(
-			workerdot.ClearinghouseQueryAnnualLimited,
-			workerdot.ClearinghouseResultNoViolations,
+			dotclearinghouse.ClearinghouseQueryAnnualLimited,
+			dotclearinghouse.ClearinghouseResultNoViolations,
 			1_740_000_000,
 		)
 
@@ -175,7 +176,7 @@ func TestEvaluateDrugAlcoholStanding(t *testing.T) {
 					1_690_000_000,
 				),
 			},
-			Queries: []*workerdot.WorkerClearinghouseQuery{found, clean},
+			Queries: []*dotclearinghouse.WorkerClearinghouseQuery{found, clean},
 		})
 
 		assert.Equal(t, worker.DrugAlcoholClear, standing.Status)
@@ -186,10 +187,10 @@ func TestEvaluateDrugAlcoholStanding(t *testing.T) {
 	t.Run("a consent denial prohibits", func(t *testing.T) {
 		t.Parallel()
 		standing := workerdot.EvaluateDrugAlcoholStanding(workerdot.DrugAlcoholInput{
-			Queries: []*workerdot.WorkerClearinghouseQuery{
+			Queries: []*dotclearinghouse.WorkerClearinghouseQuery{
 				answeredQuery(
-					workerdot.ClearinghouseQueryAnnualLimited,
-					workerdot.ClearinghouseResultConsentDenied,
+					dotclearinghouse.ClearinghouseQueryAnnualLimited,
+					dotclearinghouse.ClearinghouseResultConsentDenied,
 					1_700_300_000,
 				),
 			},
@@ -204,15 +205,15 @@ func TestEvaluateDrugAlcoholStanding(t *testing.T) {
 		latest := time.Date(2026, time.February, 4, 0, 0, 0, 0, time.UTC).Unix()
 
 		standing := workerdot.EvaluateDrugAlcoholStanding(workerdot.DrugAlcoholInput{
-			Queries: []*workerdot.WorkerClearinghouseQuery{
+			Queries: []*dotclearinghouse.WorkerClearinghouseQuery{
 				answeredQuery(
-					workerdot.ClearinghouseQueryAnnualLimited,
-					workerdot.ClearinghouseResultNoViolations,
+					dotclearinghouse.ClearinghouseQueryAnnualLimited,
+					dotclearinghouse.ClearinghouseResultNoViolations,
 					latest,
 				),
 				answeredQuery(
-					workerdot.ClearinghouseQueryPreEmploymentFull,
-					workerdot.ClearinghouseResultNoViolations,
+					dotclearinghouse.ClearinghouseQueryPreEmploymentFull,
+					dotclearinghouse.ClearinghouseResultNoViolations,
 					first,
 				),
 			},
@@ -232,10 +233,10 @@ func TestEvaluateDrugAlcoholStanding(t *testing.T) {
 	t.Run("a pending query neither clears nor resets", func(t *testing.T) {
 		t.Parallel()
 		standing := workerdot.EvaluateDrugAlcoholStanding(workerdot.DrugAlcoholInput{
-			Queries: []*workerdot.WorkerClearinghouseQuery{
+			Queries: []*dotclearinghouse.WorkerClearinghouseQuery{
 				{
-					QueryType:   workerdot.ClearinghouseQueryAnnualLimited,
-					Result:      workerdot.ClearinghouseResultPending,
+					QueryType:   dotclearinghouse.ClearinghouseQueryAnnualLimited,
+					Result:      dotclearinghouse.ClearinghouseResultPending,
 					RequestedAt: 1_700_300_000,
 				},
 			},

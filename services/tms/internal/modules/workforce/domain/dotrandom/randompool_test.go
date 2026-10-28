@@ -1,10 +1,10 @@
-package workerdot_test
+package dotrandom_test
 
 import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerdot"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/dotrandom"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -13,10 +13,10 @@ import (
 func TestRandomPool_TargetsFor(t *testing.T) {
 	t.Parallel()
 
-	pool := &workerdot.DOTRandomPool{
-		Period:             workerdot.RandomPeriodQuarterly,
-		DrugRatePercent:    workerdot.DOTMinimumDrugRatePercent,
-		AlcoholRatePercent: workerdot.DOTMinimumAlcoholRatePercent,
+	pool := &dotrandom.DOTRandomPool{
+		Period:             dotrandom.RandomPeriodQuarterly,
+		DrugRatePercent:    dotrandom.DOTMinimumDrugRatePercent,
+		AlcoholRatePercent: dotrandom.DOTMinimumAlcoholRatePercent,
 	}
 
 	// 100 drivers at 50% a year is 50 collections, spread over four rounds.
@@ -36,8 +36,8 @@ func TestRandomPool_TargetsFor(t *testing.T) {
 	assert.Equal(t, 0, drug)
 	assert.Equal(t, 0, alcohol)
 
-	annual := &workerdot.DOTRandomPool{
-		Period:             workerdot.RandomPeriodAnnual,
+	annual := &dotrandom.DOTRandomPool{
+		Period:             dotrandom.RandomPeriodAnnual,
 		DrugRatePercent:    50,
 		AlcoholRatePercent: 10,
 	}
@@ -46,8 +46,8 @@ func TestRandomPool_TargetsFor(t *testing.T) {
 	assert.Equal(t, 10, alcohol)
 
 	// A target can never exceed the pool, however the rates are set.
-	huge := &workerdot.DOTRandomPool{
-		Period:             workerdot.RandomPeriodMonthly,
+	huge := &dotrandom.DOTRandomPool{
+		Period:             dotrandom.RandomPeriodMonthly,
 		DrugRatePercent:    100,
 		AlcoholRatePercent: 100,
 	}
@@ -58,21 +58,21 @@ func TestRandomPool_TargetsFor(t *testing.T) {
 func TestRandomPool_MeetsDOTMinimums(t *testing.T) {
 	t.Parallel()
 
-	assert.True(t, (&workerdot.DOTRandomPool{DrugRatePercent: 50, AlcoholRatePercent: 10}).
+	assert.True(t, (&dotrandom.DOTRandomPool{DrugRatePercent: 50, AlcoholRatePercent: 10}).
 		MeetsDOTMinimums())
-	assert.False(t, (&workerdot.DOTRandomPool{DrugRatePercent: 25, AlcoholRatePercent: 10}).
+	assert.False(t, (&dotrandom.DOTRandomPool{DrugRatePercent: 25, AlcoholRatePercent: 10}).
 		MeetsDOTMinimums())
-	assert.False(t, (&workerdot.DOTRandomPool{DrugRatePercent: 50, AlcoholRatePercent: 5}).
+	assert.False(t, (&dotrandom.DOTRandomPool{DrugRatePercent: 50, AlcoholRatePercent: 5}).
 		MeetsDOTMinimums())
 }
 
 func TestRandomPool_Includes(t *testing.T) {
 	t.Parallel()
 
-	all := &workerdot.DOTRandomPool{}
+	all := &dotrandom.DOTRandomPool{}
 	assert.True(t, all.Includes("Employee"))
 
-	some := &workerdot.DOTRandomPool{IncludedDriverTypes: []string{"Employee"}}
+	some := &dotrandom.DOTRandomPool{IncludedDriverTypes: []string{"Employee"}}
 	assert.True(t, some.Includes("Employee"))
 	assert.False(t, some.Includes("OwnerOperator"))
 }
@@ -85,16 +85,16 @@ func TestSelectRandom(t *testing.T) {
 		candidates = append(candidates, pulid.MustNew("wrk_"))
 	}
 
-	first := workerdot.SelectRandom(candidates, "seed-one", 10)
+	first := dotrandom.SelectRandom(candidates, "seed-one", 10)
 	require.Len(t, first, 10)
 
 	// The whole point of recording the seed is that the draw can be re-run: the
 	// same seed over the same roster must produce the same names in the same
 	// order, years later.
-	again := workerdot.SelectRandom(candidates, "seed-one", 10)
+	again := dotrandom.SelectRandom(candidates, "seed-one", 10)
 	assert.Equal(t, first, again)
 
-	other := workerdot.SelectRandom(candidates, "seed-two", 10)
+	other := dotrandom.SelectRandom(candidates, "seed-two", 10)
 	assert.NotEqual(t, first, other)
 
 	// Nobody is drawn twice in one round.
@@ -106,9 +106,9 @@ func TestSelectRandom(t *testing.T) {
 
 	// Asking for more names than the pool holds returns the pool, not an error
 	// and not a short slice padded with anything.
-	assert.Len(t, workerdot.SelectRandom(candidates, "seed-one", 500), 50)
-	assert.Nil(t, workerdot.SelectRandom(candidates, "seed-one", 0))
-	assert.Nil(t, workerdot.SelectRandom(nil, "seed-one", 5))
+	assert.Len(t, dotrandom.SelectRandom(candidates, "seed-one", 500), 50)
+	assert.Nil(t, dotrandom.SelectRandom(candidates, "seed-one", 0))
+	assert.Nil(t, dotrandom.SelectRandom(nil, "seed-one", 5))
 }
 
 // The roster arrives in whatever order the database returned it. A draw that
@@ -128,8 +128,8 @@ func TestSelectRandom_IgnoresInputOrder(t *testing.T) {
 	}
 
 	assert.Equal(t,
-		workerdot.SelectRandom(candidates, "seed", 7),
-		workerdot.SelectRandom(reversed, "seed", 7),
+		dotrandom.SelectRandom(candidates, "seed", 7),
+		dotrandom.SelectRandom(reversed, "seed", 7),
 	)
 }
 
@@ -138,10 +138,10 @@ func TestPeriodKeyFor(t *testing.T) {
 
 	at := time.Date(2026, time.August, 17, 12, 0, 0, 0, time.UTC)
 
-	assert.Equal(t, "2026-M08", workerdot.PeriodKeyFor(workerdot.RandomPeriodMonthly, at))
-	assert.Equal(t, "2026-Q3", workerdot.PeriodKeyFor(workerdot.RandomPeriodQuarterly, at))
-	assert.Equal(t, "2026-H2", workerdot.PeriodKeyFor(workerdot.RandomPeriodSemiAnnual, at))
-	assert.Equal(t, "2026", workerdot.PeriodKeyFor(workerdot.RandomPeriodAnnual, at))
+	assert.Equal(t, "2026-M08", dotrandom.PeriodKeyFor(dotrandom.RandomPeriodMonthly, at))
+	assert.Equal(t, "2026-Q3", dotrandom.PeriodKeyFor(dotrandom.RandomPeriodQuarterly, at))
+	assert.Equal(t, "2026-H2", dotrandom.PeriodKeyFor(dotrandom.RandomPeriodSemiAnnual, at))
+	assert.Equal(t, "2026", dotrandom.PeriodKeyFor(dotrandom.RandomPeriodAnnual, at))
 }
 
 func TestPeriodBoundsFor(t *testing.T) {
@@ -149,14 +149,14 @@ func TestPeriodBoundsFor(t *testing.T) {
 
 	at := time.Date(2026, time.August, 17, 12, 0, 0, 0, time.UTC)
 
-	start, end := workerdot.PeriodBoundsFor(workerdot.RandomPeriodQuarterly, at)
+	start, end := dotrandom.PeriodBoundsFor(dotrandom.RandomPeriodQuarterly, at)
 	assert.Equal(t, time.Date(2026, time.July, 1, 0, 0, 0, 0, time.UTC).Unix(), start)
 	assert.Equal(t, time.Date(2026, time.October, 1, 0, 0, 0, 0, time.UTC).Unix(), end)
 
 	// A December round must roll into the next year rather than wrapping to
 	// January of the same one.
 	december := time.Date(2026, time.December, 31, 23, 0, 0, 0, time.UTC)
-	start, end = workerdot.PeriodBoundsFor(workerdot.RandomPeriodMonthly, december)
+	start, end = dotrandom.PeriodBoundsFor(dotrandom.RandomPeriodMonthly, december)
 	assert.Equal(t, time.Date(2026, time.December, 1, 0, 0, 0, 0, time.UTC).Unix(), start)
 	assert.Equal(t, time.Date(2027, time.January, 1, 0, 0, 0, 0, time.UTC).Unix(), end)
 }
@@ -164,7 +164,7 @@ func TestPeriodBoundsFor(t *testing.T) {
 func TestRandomDraw_ShortOfTarget(t *testing.T) {
 	t.Parallel()
 
-	draw := &workerdot.DOTRandomDraw{
+	draw := &dotrandom.DOTRandomDraw{
 		DrugTarget:      13,
 		DrugSelected:    9,
 		AlcoholTarget:   3,

@@ -765,19 +765,19 @@ models:
       - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.DrugAlcoholStatus
   ClearinghouseQueryType:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerdot.ClearinghouseQueryType
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/dotclearinghouse.ClearinghouseQueryType
   ClearinghouseResult:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerdot.ClearinghouseResult
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/dotclearinghouse.ClearinghouseResult
   RandomPeriod:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerdot.RandomPeriod
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/dotrandom.RandomPeriod
   RandomDrawStatus:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerdot.RandomDrawStatus
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/dotrandom.RandomDrawStatus
   RandomEntryStatus:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerdot.RandomEntryStatus
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/dotrandom.RandomEntryStatus
   WorkerDOTTest:
     model:
       - github.com/emoss08/trenova/internal/modules/workforce/domain/workerdot.WorkerDOTTest
@@ -828,7 +828,7 @@ models:
         resolver: true
   WorkerClearinghouseQuery:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerdot.WorkerClearinghouseQuery
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/dotclearinghouse.WorkerClearinghouseQuery
     fields:
       consentObtainedAt:
         resolver: true
@@ -842,13 +842,13 @@ models:
         resolver: true
   DOTRandomPool:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerdot.DOTRandomPool
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/dotrandom.DOTRandomPool
     fields:
       meetsDotMinimums:
         resolver: true
   DOTRandomDraw:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerdot.DOTRandomDraw
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/dotrandom.DOTRandomDraw
     fields:
       drawnById:
         resolver: true
@@ -858,7 +858,7 @@ models:
         resolver: true
   DOTRandomDrawEntry:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerdot.DOTRandomDrawEntry
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/dotrandom.DOTRandomDrawEntry
     fields:
       notifiedAt:
         resolver: true

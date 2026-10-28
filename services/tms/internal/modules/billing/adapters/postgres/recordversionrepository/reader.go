@@ -55,6 +55,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement/driversettlementdb"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/fuelpurchase/fuelpurchasedb"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/ifta/iftadb"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/dotrandom/dotrandomdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/employment/employmentdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/permit/permitdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/timesheet/timesheetdb"
@@ -354,11 +355,11 @@ var lookups = map[permission.Resource]lookup{
 	}),
 	permission.ResourceDOTRandomPool: {kinds: map[string]lookup{
 		"drdraw_": by(func(id pulid.ID) keel.Projection {
-			t := workerdotdb.DOTRandomDraws
+			t := dotrandomdb.DOTRandomDraws
 			return t.Pick(t.Version).Where(t.ID.Eq(id))
 		}),
 		"drde_": by(func(id pulid.ID) keel.Projection {
-			t := workerdotdb.DOTRandomDrawEntries
+			t := dotrandomdb.DOTRandomDrawEntries
 			return t.Pick(t.Version).Where(t.ID.Eq(id))
 		}),
 	}},

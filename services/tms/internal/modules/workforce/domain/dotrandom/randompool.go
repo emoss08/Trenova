@@ -1,4 +1,4 @@
-package workerdot
+package dotrandom
 
 import (
 	"context"
@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerdot"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -451,13 +452,13 @@ type DOTRandomDrawEntry struct {
 	DrawID         pulid.ID `json:"drawId"         keel:"draw_id"`
 	WorkerID       pulid.ID `json:"workerId"       keel:"worker_id"`
 
-	Substance    DOTTestSubstance  `json:"substance"    keel:"substance"`
-	Rank         int32             `json:"rank"         keel:"rank"`
-	Status       RandomEntryStatus `json:"status"       keel:"status"`
-	NotifiedAt   *int64            `json:"notifiedAt"   keel:"notified_at"`
-	CompletedAt  *int64            `json:"completedAt"  keel:"completed_at"`
-	TestID       pulid.ID          `json:"testId"       keel:"test_id,nullzero"`
-	ExcuseReason string            `json:"excuseReason" keel:"excuse_reason,nullzero"`
+	Substance    workerdot.DOTTestSubstance `json:"substance"    keel:"substance"`
+	Rank         int32                      `json:"rank"         keel:"rank"`
+	Status       RandomEntryStatus          `json:"status"       keel:"status"`
+	NotifiedAt   *int64                     `json:"notifiedAt"   keel:"notified_at"`
+	CompletedAt  *int64                     `json:"completedAt"  keel:"completed_at"`
+	TestID       pulid.ID                   `json:"testId"       keel:"test_id,nullzero"`
+	ExcuseReason string                     `json:"excuseReason" keel:"excuse_reason,nullzero"`
 
 	Version   int64 `json:"version"   keel:"version,version"`
 	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
@@ -475,7 +476,9 @@ func (e *DOTRandomDrawEntry) Validate(multiErr *errortypes.MultiError) {
 		validation.Field(
 			&e.Substance,
 			validation.Required.Error("Substance is required"),
-			domainvalidation.ValidEnum[DOTTestSubstance]("Substance must be Drug or Alcohol"),
+			domainvalidation.ValidEnum[workerdot.DOTTestSubstance](
+				"Substance must be Drug or Alcohol",
+			),
 		),
 		validation.Field(
 			&e.Status,

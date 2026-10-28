@@ -81,6 +81,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement/driversettlementdb"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/fuelpurchase/fuelpurchasedb"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/ifta/iftadb"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/dotclearinghouse/dotclearinghousedb"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/dotrandom/dotrandomdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/employment/employmentdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/permit/permitdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/timesheet/timesheetdb"
@@ -313,11 +315,11 @@ var kindMinters = map[permission.RecordKind]minter{
 		employmentdb.WorkerEmploymentVerificationsSchema(),
 	),
 	permission.KindClearinghouseQuery: prefixed(
-		workerdotdb.WorkerClearinghouseQueriesSchema(),
+		dotclearinghousedb.WorkerClearinghouseQueriesSchema(),
 	),
-	permission.KindDOTRandomPool:      prefixed(workerdotdb.DOTRandomPoolsSchema()),
-	permission.KindDOTRandomDraw:      prefixed(workerdotdb.DOTRandomDrawsSchema()),
-	permission.KindDOTRandomSelection: prefixed(workerdotdb.DOTRandomDrawEntriesSchema()),
+	permission.KindDOTRandomPool:      prefixed(dotrandomdb.DOTRandomPoolsSchema()),
+	permission.KindDOTRandomDraw:      prefixed(dotrandomdb.DOTRandomDrawsSchema()),
+	permission.KindDOTRandomSelection: prefixed(dotrandomdb.DOTRandomDrawEntriesSchema()),
 	permission.KindAIAuditEvent:       prefixed(aiauditdb.AIAuditEventsSchema()),
 	permission.KindAIAuditExport:      prefixed(aiauditdb.AIAuditExportsSchema()),
 	permission.KindAssistantThread:    prefixed(conversationdb.ThreadsSchema()),

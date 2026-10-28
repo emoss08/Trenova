@@ -3,6 +3,8 @@
 package gqlmodel
 
 import (
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/dotclearinghouse"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/dotrandom"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edicarrierinvoice"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/ediinboundfile"
@@ -2522,7 +2524,7 @@ type CompleteAccountingAuthorizationInput struct {
 
 type CompleteClearinghouseQueryInput struct {
 	QueryID        string                     `json:"queryId"`
-	Result         workerdot.ClearinghouseResult `json:"result"`
+	Result         dotclearinghouse.ClearinghouseResult `json:"result"`
 	CompletedAt    *int                       `json:"completedAt,omitempty"`
 	ViolationCount *int                       `json:"violationCount,omitempty"`
 	Reference      *string                    `json:"reference,omitempty"`
@@ -2910,7 +2912,7 @@ type DOTRandomPoolConnection struct {
 }
 
 type DOTRandomPoolEdge struct {
-	Node   *workerdot.DOTRandomPool `json:"node"`
+	Node   *dotrandom.DOTRandomPool `json:"node"`
 	Cursor string                `json:"cursor"`
 }
 
@@ -2919,7 +2921,7 @@ type DOTRandomPoolInput struct {
 	Name                string              `json:"name"`
 	Description         *string             `json:"description,omitempty"`
 	Status              *domaintypes.Status `json:"status,omitempty"`
-	Period              workerdot.RandomPeriod `json:"period"`
+	Period              dotrandom.RandomPeriod `json:"period"`
 	DrugRatePercent     int                 `json:"drugRatePercent"`
 	AlcoholRatePercent  int                 `json:"alcoholRatePercent"`
 	IncludedDriverTypes []string            `json:"includedDriverTypes,omitempty"`
@@ -7620,11 +7622,11 @@ type RecentDecision struct {
 
 type RecordClearinghouseQueryInput struct {
 	WorkerID          string                        `json:"workerId"`
-	QueryType         workerdot.ClearinghouseQueryType `json:"queryType"`
+	QueryType         dotclearinghouse.ClearinghouseQueryType `json:"queryType"`
 	RequestedAt       *int                          `json:"requestedAt,omitempty"`
 	ConsentObtainedAt *int                          `json:"consentObtainedAt,omitempty"`
 	ConsentExpiresAt  *int                          `json:"consentExpiresAt,omitempty"`
-	Result            *workerdot.ClearinghouseResult   `json:"result,omitempty"`
+	Result            *dotclearinghouse.ClearinghouseResult   `json:"result,omitempty"`
 	CompletedAt       *int                          `json:"completedAt,omitempty"`
 	ViolationCount    *int                          `json:"violationCount,omitempty"`
 	Reference         *string                       `json:"reference,omitempty"`
@@ -11703,7 +11705,7 @@ type UpdateCustomerTrackingProfileInput struct {
 
 type UpdateDOTRandomDrawEntryInput struct {
 	EntryID      string                   `json:"entryId"`
-	Status       workerdot.RandomEntryStatus `json:"status"`
+	Status       dotrandom.RandomEntryStatus `json:"status"`
 	ExcuseReason *string                  `json:"excuseReason,omitempty"`
 }
 

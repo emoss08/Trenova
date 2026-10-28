@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/dotrandom"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerdot"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerdotports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
@@ -411,12 +412,12 @@ func (s *Service) closeDrawEntry(
 		log.Warn("failed to read draw entry for test", zap.Error(err))
 		return nil
 	}
-	if dbEntry.Status == workerdot.RandomEntryCompleted {
+	if dbEntry.Status == dotrandom.RandomEntryCompleted {
 		return nil
 	}
 
 	completedAt := entity.EffectiveAt()
-	dbEntry.Status = workerdot.RandomEntryCompleted
+	dbEntry.Status = dotrandom.RandomEntryCompleted
 	dbEntry.CompletedAt = &completedAt
 	dbEntry.TestID = entity.ID
 

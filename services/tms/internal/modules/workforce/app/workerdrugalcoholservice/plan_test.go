@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerdrugalcoholservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/dotrandom"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerdot"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -88,28 +89,28 @@ func TestPlanFinalizeAndCancelDraw(t *testing.T) {
 	t.Parallel()
 	h := newHarness(t)
 
-	draw := &workerdot.DOTRandomDraw{
+	draw := &dotrandom.DOTRandomDraw{
 		ID:             pulid.MustNew("drdraw_"),
 		OrganizationID: h.tenant.OrgID,
 		BusinessUnitID: h.tenant.BuID,
-		Status:         workerdot.RandomDrawStatusDraft,
+		Status:         dotrandom.RandomDrawStatusDraft,
 		PeriodKey:      "2026-Q3",
 	}
 	h.repo.draws[draw.ID] = draw
 
 	final, err := h.svc.PlanFinalizeDraw(t.Context(), h.tenant, draw.ID)
 	require.NoError(t, err)
-	assert.Equal(t, workerdot.RandomDrawStatusFinal, final.After.Status)
+	assert.Equal(t, dotrandom.RandomDrawStatusFinal, final.After.Status)
 	assert.NotNil(t, final.After.FinalizedAt)
-	assert.Equal(t, workerdot.RandomDrawStatusDraft, h.repo.draws[draw.ID].Status)
+	assert.Equal(t, dotrandom.RandomDrawStatusDraft, h.repo.draws[draw.ID].Status)
 
 	_, err = h.svc.PlanCancelDraw(t.Context(), h.tenant, draw.ID, "")
 	require.Error(t, err)
 	cancelled, err := h.svc.PlanCancelDraw(t.Context(), h.tenant, draw.ID, "Wrong roster")
 	require.NoError(t, err)
-	assert.Equal(t, workerdot.RandomDrawStatusCancelled, cancelled.After.Status)
+	assert.Equal(t, dotrandom.RandomDrawStatusCancelled, cancelled.After.Status)
 
-	draw.Status = workerdot.RandomDrawStatusFinal
+	draw.Status = dotrandom.RandomDrawStatusFinal
 	_, err = h.svc.PlanFinalizeDraw(t.Context(), h.tenant, draw.ID)
 	require.Error(t, err)
 }
@@ -118,14 +119,14 @@ func TestPlanUpdateDrawEntry_StampsTheNotice(t *testing.T) {
 	t.Parallel()
 	h := newHarness(t)
 
-	entry := &workerdot.DOTRandomDrawEntry{
+	entry := &dotrandom.DOTRandomDrawEntry{
 		ID:             pulid.MustNew("drde_"),
 		OrganizationID: h.tenant.OrgID,
 		BusinessUnitID: h.tenant.BuID,
 		DrawID:         pulid.MustNew("drdraw_"),
 		WorkerID:       h.workerID,
 		Substance:      workerdot.DOTSubstanceDrug,
-		Status:         workerdot.RandomEntrySelected,
+		Status:         dotrandom.RandomEntrySelected,
 	}
 	h.repo.entries[entry.ID] = entry
 
@@ -133,17 +134,17 @@ func TestPlanUpdateDrawEntry_StampsTheNotice(t *testing.T) {
 		&workerdrugalcoholservice.UpdateEntryRequest{
 			TenantInfo: h.tenant,
 			EntryID:    entry.ID,
-			Status:     workerdot.RandomEntryNotified,
+			Status:     dotrandom.RandomEntryNotified,
 		})
 	require.NoError(t, err)
-	assert.Equal(t, workerdot.RandomEntryNotified, change.After.Status)
+	assert.Equal(t, dotrandom.RandomEntryNotified, change.After.Status)
 	assert.NotNil(t, change.After.NotifiedAt)
 	assert.Nil(t, h.repo.entries[entry.ID].NotifiedAt)
 
 	_, err = h.svc.PlanUpdateDrawEntry(t.Context(), &workerdrugalcoholservice.UpdateEntryRequest{
 		TenantInfo: h.tenant,
 		EntryID:    entry.ID,
-		Status:     workerdot.RandomEntryCompleted,
+		Status:     dotrandom.RandomEntryCompleted,
 	})
 	require.Error(t, err)
 }

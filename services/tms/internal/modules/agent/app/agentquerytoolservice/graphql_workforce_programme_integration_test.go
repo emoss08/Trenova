@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/adapters/postgres/workerrepository"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/schedulingservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerdrugalcoholservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/dotrandom"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerdot"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerschedule"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerdotports"
@@ -119,10 +120,10 @@ func writeProgramme(
 		}
 	}
 
-	pool := func(code string, status domaintypes.Status) *workerdot.DOTRandomPool {
-		row, poolErr := draws.CreatePool(ctx, &workerdot.DOTRandomPool{
+	pool := func(code string, status domaintypes.Status) *dotrandom.DOTRandomPool {
+		row, poolErr := draws.CreatePool(ctx, &dotrandom.DOTRandomPool{
 			BusinessUnitID: bu, OrganizationID: org, Code: code + label, Name: "Pool " + code,
-			Status: status, Period: workerdot.RandomPeriodQuarterly, DrugRatePercent: 50,
+			Status: status, Period: dotrandom.RandomPeriodQuarterly, DrugRatePercent: 50,
 			AlcoholRatePercent: 10, IncludedDriverTypes: []string{},
 		})
 		require.NoError(t, poolErr)
@@ -130,16 +131,16 @@ func writeProgramme(
 	}
 	active, retired := pool("A", domaintypes.StatusActive), pool("I", domaintypes.StatusInactive)
 	out.pool, out.retiredPool = active.ID.String(), retired.ID.String()
-	draw, err := draws.CreateDrawWithEntries(ctx, &workerdot.DOTRandomDraw{
+	draw, err := draws.CreateDrawWithEntries(ctx, &dotrandom.DOTRandomDraw{
 		ID: pulid.MustNew("drdraw_"), BusinessUnitID: bu, OrganizationID: org,
 		PoolID: active.ID, PeriodKey: "2026-Q4", PeriodStart: now - 86400*30,
-		PeriodEnd: now + 86400*60, Status: workerdot.RandomDrawStatusFinal, PoolSize: 1,
+		PeriodEnd: now + 86400*60, Status: dotrandom.RandomDrawStatusFinal, PoolSize: 1,
 		DrugTarget: 1, DrugSelected: 1, Seed: "seed" + label, Method: "sha256-rank",
 		DrawnAt: now, FinalizedAt: &now,
-	}, []*workerdot.DOTRandomDrawEntry{{
+	}, []*dotrandom.DOTRandomDrawEntry{{
 		ID: pulid.MustNew("drde_"), BusinessUnitID: bu, OrganizationID: org,
 		WorkerID: driver.ID, Substance: workerdot.DOTSubstanceDrug, Rank: 1,
-		Status: workerdot.RandomEntrySelected,
+		Status: dotrandom.RandomEntrySelected,
 	}})
 	require.NoError(t, err)
 	out.draw = draw.ID.String()

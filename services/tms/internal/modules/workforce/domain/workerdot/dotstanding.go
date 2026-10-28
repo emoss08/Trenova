@@ -1,6 +1,7 @@
 package workerdot
 
 import (
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/dotclearinghouse"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/shared/typeutils"
 )
@@ -30,7 +31,7 @@ type DrugAlcoholStanding struct {
 type DrugAlcoholInput struct {
 	Tests         []*WorkerDOTTest
 	OpenViolation *WorkerDOTViolation
-	Queries       []*WorkerClearinghouseQuery
+	Queries       []*dotclearinghouse.WorkerClearinghouseQuery
 }
 
 // EvaluateDrugAlcoholStanding reduces a worker's testing file to the roll-up
@@ -91,13 +92,13 @@ func (s *DrugAlcoholStanding) applyTests(in DrugAlcoholInput) {
 // applyQueries tracks the twelve-month clock. The clock runs from the most
 // recent answered query of any kind: a full query tells the employer everything
 // a limited one would, so running one resets the year.
-func (s *DrugAlcoholStanding) applyQueries(queries []*WorkerClearinghouseQuery) {
+func (s *DrugAlcoholStanding) applyQueries(queries []*dotclearinghouse.WorkerClearinghouseQuery) {
 	for _, query := range queries {
 		if query == nil || !query.Result.IsResolved() || query.CompletedAt == nil {
 			continue
 		}
-		if query.QueryType == ClearinghouseQueryPreEmploymentFull &&
-			query.Result == ClearinghouseResultNoViolations {
+		if query.QueryType == dotclearinghouse.ClearinghouseQueryPreEmploymentFull &&
+			query.Result == dotclearinghouse.ClearinghouseResultNoViolations {
 			s.HasPreEmploymentQuery = true
 		}
 		if s.LastClearinghouseQueryAt == nil || *query.CompletedAt > *s.LastClearinghouseQueryAt {
@@ -113,9 +114,9 @@ func (s *DrugAlcoholStanding) applyQueries(queries []*WorkerClearinghouseQuery) 
 // holding it against the driver forever would make the return-to-duty process
 // pointless.
 func (s *DrugAlcoholStanding) clearinghouseProhibits(
-	queries []*WorkerClearinghouseQuery,
+	queries []*dotclearinghouse.WorkerClearinghouseQuery,
 ) bool {
-	var latest *WorkerClearinghouseQuery
+	var latest *dotclearinghouse.WorkerClearinghouseQuery
 	for _, query := range queries {
 		if query == nil || !query.Result.IsResolved() || query.CompletedAt == nil {
 			continue

@@ -310,6 +310,8 @@ modules:
     level: 5
     domain:
       - approvaldelegation
+      - dotclearinghouse
+      - dotrandom
       - employment
       - permit
       - portalinvitation

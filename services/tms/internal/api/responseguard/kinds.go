@@ -25,6 +25,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/fuelpurchase"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/dotclearinghouse"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/dotrandom"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/employment"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/profilechange"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/timesheet"
@@ -75,7 +77,7 @@ var namedKinds = map[reflect.Type]permission.Resource{
 	reflect.TypeFor[workerleave.WorkerLeaveCase]():                 permission.ResourceWorkerLeave,
 	reflect.TypeFor[workerleave.WorkerLeaveEntry]():                permission.ResourceWorkerLeave,
 	reflect.TypeFor[workerdot.WorkerDOTViolation]():                permission.ResourceWorkerDOTTest,
-	reflect.TypeFor[workerdot.WorkerClearinghouseQuery]():          permission.ResourceWorkerDOTTest,
+	reflect.TypeFor[dotclearinghouse.WorkerClearinghouseQuery]():   permission.ResourceWorkerDOTTest,
 	reflect.TypeFor[workersafety.OSHAAnnualSummary]():              permission.ResourceWorkerInjury,
 	reflect.TypeFor[timesheet.TimeClockEntry]():                    permission.ResourceTimesheet,
 	reflect.TypeFor[timesheet.PayrollExport]():                     permission.ResourceTimesheet,
@@ -88,8 +90,8 @@ var namedKinds = map[reflect.Type]permission.Resource{
 	reflect.TypeFor[driverpay.WorkerPayAssignment]():               permission.ResourceDriverPayProfile,
 	reflect.TypeFor[driversettlement.PayEvent]():                   permission.ResourceDriverSettlement,
 	reflect.TypeFor[fuelsurcharge.FuelIndexPrice]():                permission.ResourceFuelSurchargeProgram,
-	reflect.TypeFor[workerdot.DOTRandomDraw]():                     permission.ResourceDOTRandomPool,
-	reflect.TypeFor[workerdot.DOTRandomDrawEntry]():                permission.ResourceDOTRandomPool,
+	reflect.TypeFor[dotrandom.DOTRandomDraw]():                     permission.ResourceDOTRandomPool,
+	reflect.TypeFor[dotrandom.DOTRandomDrawEntry]():                permission.ResourceDOTRandomPool,
 	reflect.TypeFor[workerschedule.WorkerShiftAssignment]():        permission.ResourceWorkerSchedule,
 	reflect.TypeFor[workerschedule.WorkerAvailabilityPreference](): permission.ResourceWorkerSchedule,
 	reflect.TypeFor[workerschedule.ShiftSwapRequest]():             permission.ResourceShiftSwap,

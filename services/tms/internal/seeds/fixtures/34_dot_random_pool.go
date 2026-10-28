@@ -5,8 +5,8 @@ import (
 	"fmt"
 
 	"github.com/emoss08/keel/seed"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerdot"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerdot/workerdotdb"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/dotrandom"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/dotrandom/dotrandomdb"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 )
 
@@ -34,20 +34,20 @@ func (s *DOTRandomPoolSeed) Run(ctx context.Context, sr *seed.Run) error {
 		return err
 	}
 
-	pool := &workerdot.DOTRandomPool{
+	pool := &dotrandom.DOTRandomPool{
 		OrganizationID:      org.ID,
 		BusinessUnitID:      org.BusinessUnitID,
 		Code:                seededPoolCode,
 		Name:                "All DOT drivers",
 		Description:         "Every CDL driver in safety-sensitive work, drawn each quarter.",
 		Status:              domaintypes.StatusActive,
-		Period:              workerdot.RandomPeriodQuarterly,
+		Period:              dotrandom.RandomPeriodQuarterly,
 		DrugRatePercent:     seededDrugRatePercent,
 		AlcoholRatePercent:  seededAlcoholRatePercent,
 		IsDefault:           true,
 		IncludedDriverTypes: []string{},
 	}
-	if err = workerdotdb.DOTRandomPools.Create(ctx, db, pool); err != nil {
+	if err = dotrandomdb.DOTRandomPools.Create(ctx, db, pool); err != nil {
 		return fmt.Errorf("insert the random testing pool: %w", err)
 	}
 
