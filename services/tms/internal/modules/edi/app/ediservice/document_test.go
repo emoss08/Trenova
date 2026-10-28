@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentevent"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenteventports"
@@ -53,11 +53,11 @@ func TestResolvePayloadInvoiceIDResolves210Payload(t *testing.T) {
 	payload, err := svc.resolvePayload(t.Context(), &PreviewEDIDocumentRequest{
 		TenantInfo: tenantInfo,
 		InvoiceID:  invoiceID,
-	}, edi.TransactionSet210)
+	}, edidocument.TransactionSet210)
 
 	require.NoError(t, err)
 	require.NotNil(t, payload.FreightInvoice)
-	require.Equal(t, edi.TransactionSet210, payload.TransactionSet)
+	require.Equal(t, edidocument.TransactionSet210, payload.TransactionSet)
 	require.Equal(t, invoiceID, payload.FreightInvoice.InvoiceID)
 	require.Equal(t, shipmentID, payload.FreightInvoice.ShipmentID)
 }
@@ -94,11 +94,11 @@ func TestResolvePayloadShipmentEventIDResolves214Payload(t *testing.T) {
 	payload, err := svc.resolvePayload(t.Context(), &PreviewEDIDocumentRequest{
 		TenantInfo:      tenantInfo,
 		ShipmentEventID: eventID,
-	}, edi.TransactionSet214)
+	}, edidocument.TransactionSet214)
 
 	require.NoError(t, err)
 	require.NotNil(t, payload.ShipmentStatus)
-	require.Equal(t, edi.TransactionSet214, payload.TransactionSet)
+	require.Equal(t, edidocument.TransactionSet214, payload.TransactionSet)
 	require.Equal(t, shipmentID, payload.ShipmentStatus.ShipmentID)
 	require.Equal(t, "AF", payload.ShipmentStatus.StatusCode)
 }
@@ -107,7 +107,7 @@ func TestResolvePayloadRejectsSourceTransactionMismatch(t *testing.T) {
 	svc := &Service{}
 	_, err := svc.resolvePayload(t.Context(), &PreviewEDIDocumentRequest{
 		InvoiceID: pulid.MustNew("inv_"),
-	}, edi.TransactionSet204)
+	}, edidocument.TransactionSet204)
 
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "invoice")
@@ -140,7 +140,7 @@ func TestResolvePayloadRejectsShipmentEventMismatch(t *testing.T) {
 		TenantInfo:      tenantInfo,
 		ShipmentID:      requestShipmentID,
 		ShipmentEventID: eventID,
-	}, edi.TransactionSet214)
+	}, edidocument.TransactionSet214)
 
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "Shipment ID must match")

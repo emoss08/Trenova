@@ -3,7 +3,8 @@ package servicefailureports
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edipayload"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -312,8 +313,8 @@ type ServiceFailureDetectionPlan struct {
 }
 
 type ServiceFailureEDIPayloadResult struct {
-	Payload     edi.DocumentPayload `json:"payload"`
-	Diagnostics []edi.Diagnostic    `json:"diagnostics"`
+	Payload     edipayload.DocumentPayload `json:"payload"`
+	Diagnostics []edidocument.Diagnostic   `json:"diagnostics"`
 }
 
 type ServiceFailureEvaluator interface {

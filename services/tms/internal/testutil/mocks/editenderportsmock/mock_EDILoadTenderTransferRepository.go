@@ -5,11 +5,11 @@
 package editenderportsmock
 
 import (
+	"github.com/emoss08/trenova/internal/modules/edi/domain/editransfer"
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/edi/ports/editenderports"
 
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/pkg/pagination"
 	mock "github.com/stretchr/testify/mock"
 )
@@ -42,26 +42,26 @@ func (_m *MockEDILoadTenderTransferRepository) EXPECT() *MockEDILoadTenderTransf
 }
 
 // CreateTransfer provides a mock function for the type MockEDILoadTenderTransferRepository
-func (_mock *MockEDILoadTenderTransferRepository) CreateTransfer(ctx context.Context, entity *edi.EDITransfer) (*edi.EDITransfer, error) {
+func (_mock *MockEDILoadTenderTransferRepository) CreateTransfer(ctx context.Context, entity *editransfer.EDITransfer) (*editransfer.EDITransfer, error) {
 	ret := _mock.Called(ctx, entity)
 
 	if len(ret) == 0 {
 		panic("no return value specified for CreateTransfer")
 	}
 
-	var r0 *edi.EDITransfer
+	var r0 *editransfer.EDITransfer
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *edi.EDITransfer) (*edi.EDITransfer, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *editransfer.EDITransfer) (*editransfer.EDITransfer, error)); ok {
 		return returnFunc(ctx, entity)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *edi.EDITransfer) *edi.EDITransfer); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *editransfer.EDITransfer) *editransfer.EDITransfer); ok {
 		r0 = returnFunc(ctx, entity)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*edi.EDITransfer)
+			r0 = ret.Get(0).(*editransfer.EDITransfer)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *edi.EDITransfer) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *editransfer.EDITransfer) error); ok {
 		r1 = returnFunc(ctx, entity)
 	} else {
 		r1 = ret.Error(1)
@@ -76,20 +76,20 @@ type MockEDILoadTenderTransferRepository_CreateTransfer_Call struct {
 
 // CreateTransfer is a helper method to define mock.On call
 //   - ctx context.Context
-//   - entity *edi.EDITransfer
+//   - entity *editransfer.EDITransfer
 func (_e *MockEDILoadTenderTransferRepository_Expecter) CreateTransfer(ctx any, entity any) *MockEDILoadTenderTransferRepository_CreateTransfer_Call {
 	return &MockEDILoadTenderTransferRepository_CreateTransfer_Call{Call: _e.mock.On("CreateTransfer", ctx, entity)}
 }
 
-func (_c *MockEDILoadTenderTransferRepository_CreateTransfer_Call) Run(run func(ctx context.Context, entity *edi.EDITransfer)) *MockEDILoadTenderTransferRepository_CreateTransfer_Call {
+func (_c *MockEDILoadTenderTransferRepository_CreateTransfer_Call) Run(run func(ctx context.Context, entity *editransfer.EDITransfer)) *MockEDILoadTenderTransferRepository_CreateTransfer_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 *edi.EDITransfer
+		var arg1 *editransfer.EDITransfer
 		if args[1] != nil {
-			arg1 = args[1].(*edi.EDITransfer)
+			arg1 = args[1].(*editransfer.EDITransfer)
 		}
 		run(
 			arg0,
@@ -99,34 +99,34 @@ func (_c *MockEDILoadTenderTransferRepository_CreateTransfer_Call) Run(run func(
 	return _c
 }
 
-func (_c *MockEDILoadTenderTransferRepository_CreateTransfer_Call) Return(eDITransfer *edi.EDITransfer, err error) *MockEDILoadTenderTransferRepository_CreateTransfer_Call {
+func (_c *MockEDILoadTenderTransferRepository_CreateTransfer_Call) Return(eDITransfer *editransfer.EDITransfer, err error) *MockEDILoadTenderTransferRepository_CreateTransfer_Call {
 	_c.Call.Return(eDITransfer, err)
 	return _c
 }
 
-func (_c *MockEDILoadTenderTransferRepository_CreateTransfer_Call) RunAndReturn(run func(ctx context.Context, entity *edi.EDITransfer) (*edi.EDITransfer, error)) *MockEDILoadTenderTransferRepository_CreateTransfer_Call {
+func (_c *MockEDILoadTenderTransferRepository_CreateTransfer_Call) RunAndReturn(run func(ctx context.Context, entity *editransfer.EDITransfer) (*editransfer.EDITransfer, error)) *MockEDILoadTenderTransferRepository_CreateTransfer_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetActionableInboundTransferByExternalReference provides a mock function for the type MockEDILoadTenderTransferRepository
-func (_mock *MockEDILoadTenderTransferRepository) GetActionableInboundTransferByExternalReference(ctx context.Context, req editenderports.GetActionableInboundEDITransferByExternalReferenceRequest) (*edi.EDITransfer, error) {
+func (_mock *MockEDILoadTenderTransferRepository) GetActionableInboundTransferByExternalReference(ctx context.Context, req editenderports.GetActionableInboundEDITransferByExternalReferenceRequest) (*editransfer.EDITransfer, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetActionableInboundTransferByExternalReference")
 	}
 
-	var r0 *edi.EDITransfer
+	var r0 *editransfer.EDITransfer
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, editenderports.GetActionableInboundEDITransferByExternalReferenceRequest) (*edi.EDITransfer, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, editenderports.GetActionableInboundEDITransferByExternalReferenceRequest) (*editransfer.EDITransfer, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, editenderports.GetActionableInboundEDITransferByExternalReferenceRequest) *edi.EDITransfer); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, editenderports.GetActionableInboundEDITransferByExternalReferenceRequest) *editransfer.EDITransfer); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*edi.EDITransfer)
+			r0 = ret.Get(0).(*editransfer.EDITransfer)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, editenderports.GetActionableInboundEDITransferByExternalReferenceRequest) error); ok {
@@ -167,34 +167,34 @@ func (_c *MockEDILoadTenderTransferRepository_GetActionableInboundTransferByExte
 	return _c
 }
 
-func (_c *MockEDILoadTenderTransferRepository_GetActionableInboundTransferByExternalReference_Call) Return(eDITransfer *edi.EDITransfer, err error) *MockEDILoadTenderTransferRepository_GetActionableInboundTransferByExternalReference_Call {
+func (_c *MockEDILoadTenderTransferRepository_GetActionableInboundTransferByExternalReference_Call) Return(eDITransfer *editransfer.EDITransfer, err error) *MockEDILoadTenderTransferRepository_GetActionableInboundTransferByExternalReference_Call {
 	_c.Call.Return(eDITransfer, err)
 	return _c
 }
 
-func (_c *MockEDILoadTenderTransferRepository_GetActionableInboundTransferByExternalReference_Call) RunAndReturn(run func(ctx context.Context, req editenderports.GetActionableInboundEDITransferByExternalReferenceRequest) (*edi.EDITransfer, error)) *MockEDILoadTenderTransferRepository_GetActionableInboundTransferByExternalReference_Call {
+func (_c *MockEDILoadTenderTransferRepository_GetActionableInboundTransferByExternalReference_Call) RunAndReturn(run func(ctx context.Context, req editenderports.GetActionableInboundEDITransferByExternalReferenceRequest) (*editransfer.EDITransfer, error)) *MockEDILoadTenderTransferRepository_GetActionableInboundTransferByExternalReference_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetInboundStatusCounts provides a mock function for the type MockEDILoadTenderTransferRepository
-func (_mock *MockEDILoadTenderTransferRepository) GetInboundStatusCounts(ctx context.Context, req editenderports.GetEDITransferStatusCountsRequest) (map[edi.TransferStatus]int, error) {
+func (_mock *MockEDILoadTenderTransferRepository) GetInboundStatusCounts(ctx context.Context, req editenderports.GetEDITransferStatusCountsRequest) (map[editransfer.TransferStatus]int, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetInboundStatusCounts")
 	}
 
-	var r0 map[edi.TransferStatus]int
+	var r0 map[editransfer.TransferStatus]int
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, editenderports.GetEDITransferStatusCountsRequest) (map[edi.TransferStatus]int, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, editenderports.GetEDITransferStatusCountsRequest) (map[editransfer.TransferStatus]int, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, editenderports.GetEDITransferStatusCountsRequest) map[edi.TransferStatus]int); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, editenderports.GetEDITransferStatusCountsRequest) map[editransfer.TransferStatus]int); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(map[edi.TransferStatus]int)
+			r0 = ret.Get(0).(map[editransfer.TransferStatus]int)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, editenderports.GetEDITransferStatusCountsRequest) error); ok {
@@ -235,34 +235,34 @@ func (_c *MockEDILoadTenderTransferRepository_GetInboundStatusCounts_Call) Run(r
 	return _c
 }
 
-func (_c *MockEDILoadTenderTransferRepository_GetInboundStatusCounts_Call) Return(transferStatusToInt map[edi.TransferStatus]int, err error) *MockEDILoadTenderTransferRepository_GetInboundStatusCounts_Call {
+func (_c *MockEDILoadTenderTransferRepository_GetInboundStatusCounts_Call) Return(transferStatusToInt map[editransfer.TransferStatus]int, err error) *MockEDILoadTenderTransferRepository_GetInboundStatusCounts_Call {
 	_c.Call.Return(transferStatusToInt, err)
 	return _c
 }
 
-func (_c *MockEDILoadTenderTransferRepository_GetInboundStatusCounts_Call) RunAndReturn(run func(ctx context.Context, req editenderports.GetEDITransferStatusCountsRequest) (map[edi.TransferStatus]int, error)) *MockEDILoadTenderTransferRepository_GetInboundStatusCounts_Call {
+func (_c *MockEDILoadTenderTransferRepository_GetInboundStatusCounts_Call) RunAndReturn(run func(ctx context.Context, req editenderports.GetEDITransferStatusCountsRequest) (map[editransfer.TransferStatus]int, error)) *MockEDILoadTenderTransferRepository_GetInboundStatusCounts_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetTransferByID provides a mock function for the type MockEDILoadTenderTransferRepository
-func (_mock *MockEDILoadTenderTransferRepository) GetTransferByID(ctx context.Context, req editenderports.GetEDITransferByIDRequest) (*edi.EDITransfer, error) {
+func (_mock *MockEDILoadTenderTransferRepository) GetTransferByID(ctx context.Context, req editenderports.GetEDITransferByIDRequest) (*editransfer.EDITransfer, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetTransferByID")
 	}
 
-	var r0 *edi.EDITransfer
+	var r0 *editransfer.EDITransfer
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, editenderports.GetEDITransferByIDRequest) (*edi.EDITransfer, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, editenderports.GetEDITransferByIDRequest) (*editransfer.EDITransfer, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, editenderports.GetEDITransferByIDRequest) *edi.EDITransfer); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, editenderports.GetEDITransferByIDRequest) *editransfer.EDITransfer); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*edi.EDITransfer)
+			r0 = ret.Get(0).(*editransfer.EDITransfer)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, editenderports.GetEDITransferByIDRequest) error); ok {
@@ -303,34 +303,34 @@ func (_c *MockEDILoadTenderTransferRepository_GetTransferByID_Call) Run(run func
 	return _c
 }
 
-func (_c *MockEDILoadTenderTransferRepository_GetTransferByID_Call) Return(eDITransfer *edi.EDITransfer, err error) *MockEDILoadTenderTransferRepository_GetTransferByID_Call {
+func (_c *MockEDILoadTenderTransferRepository_GetTransferByID_Call) Return(eDITransfer *editransfer.EDITransfer, err error) *MockEDILoadTenderTransferRepository_GetTransferByID_Call {
 	_c.Call.Return(eDITransfer, err)
 	return _c
 }
 
-func (_c *MockEDILoadTenderTransferRepository_GetTransferByID_Call) RunAndReturn(run func(ctx context.Context, req editenderports.GetEDITransferByIDRequest) (*edi.EDITransfer, error)) *MockEDILoadTenderTransferRepository_GetTransferByID_Call {
+func (_c *MockEDILoadTenderTransferRepository_GetTransferByID_Call) RunAndReturn(run func(ctx context.Context, req editenderports.GetEDITransferByIDRequest) (*editransfer.EDITransfer, error)) *MockEDILoadTenderTransferRepository_GetTransferByID_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetTransferForUpdate provides a mock function for the type MockEDILoadTenderTransferRepository
-func (_mock *MockEDILoadTenderTransferRepository) GetTransferForUpdate(ctx context.Context, req editenderports.GetEDITransferForUpdateRequest) (*edi.EDITransfer, error) {
+func (_mock *MockEDILoadTenderTransferRepository) GetTransferForUpdate(ctx context.Context, req editenderports.GetEDITransferForUpdateRequest) (*editransfer.EDITransfer, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetTransferForUpdate")
 	}
 
-	var r0 *edi.EDITransfer
+	var r0 *editransfer.EDITransfer
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, editenderports.GetEDITransferForUpdateRequest) (*edi.EDITransfer, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, editenderports.GetEDITransferForUpdateRequest) (*editransfer.EDITransfer, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, editenderports.GetEDITransferForUpdateRequest) *edi.EDITransfer); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, editenderports.GetEDITransferForUpdateRequest) *editransfer.EDITransfer); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*edi.EDITransfer)
+			r0 = ret.Get(0).(*editransfer.EDITransfer)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, editenderports.GetEDITransferForUpdateRequest) error); ok {
@@ -371,34 +371,34 @@ func (_c *MockEDILoadTenderTransferRepository_GetTransferForUpdate_Call) Run(run
 	return _c
 }
 
-func (_c *MockEDILoadTenderTransferRepository_GetTransferForUpdate_Call) Return(eDITransfer *edi.EDITransfer, err error) *MockEDILoadTenderTransferRepository_GetTransferForUpdate_Call {
+func (_c *MockEDILoadTenderTransferRepository_GetTransferForUpdate_Call) Return(eDITransfer *editransfer.EDITransfer, err error) *MockEDILoadTenderTransferRepository_GetTransferForUpdate_Call {
 	_c.Call.Return(eDITransfer, err)
 	return _c
 }
 
-func (_c *MockEDILoadTenderTransferRepository_GetTransferForUpdate_Call) RunAndReturn(run func(ctx context.Context, req editenderports.GetEDITransferForUpdateRequest) (*edi.EDITransfer, error)) *MockEDILoadTenderTransferRepository_GetTransferForUpdate_Call {
+func (_c *MockEDILoadTenderTransferRepository_GetTransferForUpdate_Call) RunAndReturn(run func(ctx context.Context, req editenderports.GetEDITransferForUpdateRequest) (*editransfer.EDITransfer, error)) *MockEDILoadTenderTransferRepository_GetTransferForUpdate_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetTransfersByIDs provides a mock function for the type MockEDILoadTenderTransferRepository
-func (_mock *MockEDILoadTenderTransferRepository) GetTransfersByIDs(ctx context.Context, req editenderports.GetEDITransfersByIDsRequest) ([]*edi.EDITransfer, error) {
+func (_mock *MockEDILoadTenderTransferRepository) GetTransfersByIDs(ctx context.Context, req editenderports.GetEDITransfersByIDsRequest) ([]*editransfer.EDITransfer, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetTransfersByIDs")
 	}
 
-	var r0 []*edi.EDITransfer
+	var r0 []*editransfer.EDITransfer
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, editenderports.GetEDITransfersByIDsRequest) ([]*edi.EDITransfer, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, editenderports.GetEDITransfersByIDsRequest) ([]*editransfer.EDITransfer, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, editenderports.GetEDITransfersByIDsRequest) []*edi.EDITransfer); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, editenderports.GetEDITransfersByIDsRequest) []*editransfer.EDITransfer); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*edi.EDITransfer)
+			r0 = ret.Get(0).([]*editransfer.EDITransfer)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, editenderports.GetEDITransfersByIDsRequest) error); ok {
@@ -439,34 +439,34 @@ func (_c *MockEDILoadTenderTransferRepository_GetTransfersByIDs_Call) Run(run fu
 	return _c
 }
 
-func (_c *MockEDILoadTenderTransferRepository_GetTransfersByIDs_Call) Return(eDITransfers []*edi.EDITransfer, err error) *MockEDILoadTenderTransferRepository_GetTransfersByIDs_Call {
+func (_c *MockEDILoadTenderTransferRepository_GetTransfersByIDs_Call) Return(eDITransfers []*editransfer.EDITransfer, err error) *MockEDILoadTenderTransferRepository_GetTransfersByIDs_Call {
 	_c.Call.Return(eDITransfers, err)
 	return _c
 }
 
-func (_c *MockEDILoadTenderTransferRepository_GetTransfersByIDs_Call) RunAndReturn(run func(ctx context.Context, req editenderports.GetEDITransfersByIDsRequest) ([]*edi.EDITransfer, error)) *MockEDILoadTenderTransferRepository_GetTransfersByIDs_Call {
+func (_c *MockEDILoadTenderTransferRepository_GetTransfersByIDs_Call) RunAndReturn(run func(ctx context.Context, req editenderports.GetEDITransfersByIDsRequest) ([]*editransfer.EDITransfer, error)) *MockEDILoadTenderTransferRepository_GetTransfersByIDs_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // ListInbound provides a mock function for the type MockEDILoadTenderTransferRepository
-func (_mock *MockEDILoadTenderTransferRepository) ListInbound(ctx context.Context, req *editenderports.ListEDITransfersRequest) (*pagination.ListResult[*edi.EDITransfer], error) {
+func (_mock *MockEDILoadTenderTransferRepository) ListInbound(ctx context.Context, req *editenderports.ListEDITransfersRequest) (*pagination.ListResult[*editransfer.EDITransfer], error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListInbound")
 	}
 
-	var r0 *pagination.ListResult[*edi.EDITransfer]
+	var r0 *pagination.ListResult[*editransfer.EDITransfer]
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *editenderports.ListEDITransfersRequest) (*pagination.ListResult[*edi.EDITransfer], error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *editenderports.ListEDITransfersRequest) (*pagination.ListResult[*editransfer.EDITransfer], error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *editenderports.ListEDITransfersRequest) *pagination.ListResult[*edi.EDITransfer]); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *editenderports.ListEDITransfersRequest) *pagination.ListResult[*editransfer.EDITransfer]); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*pagination.ListResult[*edi.EDITransfer])
+			r0 = ret.Get(0).(*pagination.ListResult[*editransfer.EDITransfer])
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, *editenderports.ListEDITransfersRequest) error); ok {
@@ -507,34 +507,34 @@ func (_c *MockEDILoadTenderTransferRepository_ListInbound_Call) Run(run func(ctx
 	return _c
 }
 
-func (_c *MockEDILoadTenderTransferRepository_ListInbound_Call) Return(listResult *pagination.ListResult[*edi.EDITransfer], err error) *MockEDILoadTenderTransferRepository_ListInbound_Call {
+func (_c *MockEDILoadTenderTransferRepository_ListInbound_Call) Return(listResult *pagination.ListResult[*editransfer.EDITransfer], err error) *MockEDILoadTenderTransferRepository_ListInbound_Call {
 	_c.Call.Return(listResult, err)
 	return _c
 }
 
-func (_c *MockEDILoadTenderTransferRepository_ListInbound_Call) RunAndReturn(run func(ctx context.Context, req *editenderports.ListEDITransfersRequest) (*pagination.ListResult[*edi.EDITransfer], error)) *MockEDILoadTenderTransferRepository_ListInbound_Call {
+func (_c *MockEDILoadTenderTransferRepository_ListInbound_Call) RunAndReturn(run func(ctx context.Context, req *editenderports.ListEDITransfersRequest) (*pagination.ListResult[*editransfer.EDITransfer], error)) *MockEDILoadTenderTransferRepository_ListInbound_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // ListInboundCursor provides a mock function for the type MockEDILoadTenderTransferRepository
-func (_mock *MockEDILoadTenderTransferRepository) ListInboundCursor(ctx context.Context, req *editenderports.ListEDITransfersRequest) (*pagination.CursorListResult[*edi.EDITransfer], error) {
+func (_mock *MockEDILoadTenderTransferRepository) ListInboundCursor(ctx context.Context, req *editenderports.ListEDITransfersRequest) (*pagination.CursorListResult[*editransfer.EDITransfer], error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListInboundCursor")
 	}
 
-	var r0 *pagination.CursorListResult[*edi.EDITransfer]
+	var r0 *pagination.CursorListResult[*editransfer.EDITransfer]
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *editenderports.ListEDITransfersRequest) (*pagination.CursorListResult[*edi.EDITransfer], error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *editenderports.ListEDITransfersRequest) (*pagination.CursorListResult[*editransfer.EDITransfer], error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *editenderports.ListEDITransfersRequest) *pagination.CursorListResult[*edi.EDITransfer]); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *editenderports.ListEDITransfersRequest) *pagination.CursorListResult[*editransfer.EDITransfer]); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*pagination.CursorListResult[*edi.EDITransfer])
+			r0 = ret.Get(0).(*pagination.CursorListResult[*editransfer.EDITransfer])
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, *editenderports.ListEDITransfersRequest) error); ok {
@@ -575,34 +575,34 @@ func (_c *MockEDILoadTenderTransferRepository_ListInboundCursor_Call) Run(run fu
 	return _c
 }
 
-func (_c *MockEDILoadTenderTransferRepository_ListInboundCursor_Call) Return(cursorListResult *pagination.CursorListResult[*edi.EDITransfer], err error) *MockEDILoadTenderTransferRepository_ListInboundCursor_Call {
+func (_c *MockEDILoadTenderTransferRepository_ListInboundCursor_Call) Return(cursorListResult *pagination.CursorListResult[*editransfer.EDITransfer], err error) *MockEDILoadTenderTransferRepository_ListInboundCursor_Call {
 	_c.Call.Return(cursorListResult, err)
 	return _c
 }
 
-func (_c *MockEDILoadTenderTransferRepository_ListInboundCursor_Call) RunAndReturn(run func(ctx context.Context, req *editenderports.ListEDITransfersRequest) (*pagination.CursorListResult[*edi.EDITransfer], error)) *MockEDILoadTenderTransferRepository_ListInboundCursor_Call {
+func (_c *MockEDILoadTenderTransferRepository_ListInboundCursor_Call) RunAndReturn(run func(ctx context.Context, req *editenderports.ListEDITransfersRequest) (*pagination.CursorListResult[*editransfer.EDITransfer], error)) *MockEDILoadTenderTransferRepository_ListInboundCursor_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // ListOutbound provides a mock function for the type MockEDILoadTenderTransferRepository
-func (_mock *MockEDILoadTenderTransferRepository) ListOutbound(ctx context.Context, req *editenderports.ListEDITransfersRequest) (*pagination.ListResult[*edi.EDITransfer], error) {
+func (_mock *MockEDILoadTenderTransferRepository) ListOutbound(ctx context.Context, req *editenderports.ListEDITransfersRequest) (*pagination.ListResult[*editransfer.EDITransfer], error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListOutbound")
 	}
 
-	var r0 *pagination.ListResult[*edi.EDITransfer]
+	var r0 *pagination.ListResult[*editransfer.EDITransfer]
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *editenderports.ListEDITransfersRequest) (*pagination.ListResult[*edi.EDITransfer], error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *editenderports.ListEDITransfersRequest) (*pagination.ListResult[*editransfer.EDITransfer], error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *editenderports.ListEDITransfersRequest) *pagination.ListResult[*edi.EDITransfer]); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *editenderports.ListEDITransfersRequest) *pagination.ListResult[*editransfer.EDITransfer]); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*pagination.ListResult[*edi.EDITransfer])
+			r0 = ret.Get(0).(*pagination.ListResult[*editransfer.EDITransfer])
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, *editenderports.ListEDITransfersRequest) error); ok {
@@ -643,34 +643,34 @@ func (_c *MockEDILoadTenderTransferRepository_ListOutbound_Call) Run(run func(ct
 	return _c
 }
 
-func (_c *MockEDILoadTenderTransferRepository_ListOutbound_Call) Return(listResult *pagination.ListResult[*edi.EDITransfer], err error) *MockEDILoadTenderTransferRepository_ListOutbound_Call {
+func (_c *MockEDILoadTenderTransferRepository_ListOutbound_Call) Return(listResult *pagination.ListResult[*editransfer.EDITransfer], err error) *MockEDILoadTenderTransferRepository_ListOutbound_Call {
 	_c.Call.Return(listResult, err)
 	return _c
 }
 
-func (_c *MockEDILoadTenderTransferRepository_ListOutbound_Call) RunAndReturn(run func(ctx context.Context, req *editenderports.ListEDITransfersRequest) (*pagination.ListResult[*edi.EDITransfer], error)) *MockEDILoadTenderTransferRepository_ListOutbound_Call {
+func (_c *MockEDILoadTenderTransferRepository_ListOutbound_Call) RunAndReturn(run func(ctx context.Context, req *editenderports.ListEDITransfersRequest) (*pagination.ListResult[*editransfer.EDITransfer], error)) *MockEDILoadTenderTransferRepository_ListOutbound_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // ListOutboundCursor provides a mock function for the type MockEDILoadTenderTransferRepository
-func (_mock *MockEDILoadTenderTransferRepository) ListOutboundCursor(ctx context.Context, req *editenderports.ListEDITransfersRequest) (*pagination.CursorListResult[*edi.EDITransfer], error) {
+func (_mock *MockEDILoadTenderTransferRepository) ListOutboundCursor(ctx context.Context, req *editenderports.ListEDITransfersRequest) (*pagination.CursorListResult[*editransfer.EDITransfer], error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListOutboundCursor")
 	}
 
-	var r0 *pagination.CursorListResult[*edi.EDITransfer]
+	var r0 *pagination.CursorListResult[*editransfer.EDITransfer]
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *editenderports.ListEDITransfersRequest) (*pagination.CursorListResult[*edi.EDITransfer], error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *editenderports.ListEDITransfersRequest) (*pagination.CursorListResult[*editransfer.EDITransfer], error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *editenderports.ListEDITransfersRequest) *pagination.CursorListResult[*edi.EDITransfer]); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *editenderports.ListEDITransfersRequest) *pagination.CursorListResult[*editransfer.EDITransfer]); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*pagination.CursorListResult[*edi.EDITransfer])
+			r0 = ret.Get(0).(*pagination.CursorListResult[*editransfer.EDITransfer])
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, *editenderports.ListEDITransfersRequest) error); ok {
@@ -711,34 +711,34 @@ func (_c *MockEDILoadTenderTransferRepository_ListOutboundCursor_Call) Run(run f
 	return _c
 }
 
-func (_c *MockEDILoadTenderTransferRepository_ListOutboundCursor_Call) Return(cursorListResult *pagination.CursorListResult[*edi.EDITransfer], err error) *MockEDILoadTenderTransferRepository_ListOutboundCursor_Call {
+func (_c *MockEDILoadTenderTransferRepository_ListOutboundCursor_Call) Return(cursorListResult *pagination.CursorListResult[*editransfer.EDITransfer], err error) *MockEDILoadTenderTransferRepository_ListOutboundCursor_Call {
 	_c.Call.Return(cursorListResult, err)
 	return _c
 }
 
-func (_c *MockEDILoadTenderTransferRepository_ListOutboundCursor_Call) RunAndReturn(run func(ctx context.Context, req *editenderports.ListEDITransfersRequest) (*pagination.CursorListResult[*edi.EDITransfer], error)) *MockEDILoadTenderTransferRepository_ListOutboundCursor_Call {
+func (_c *MockEDILoadTenderTransferRepository_ListOutboundCursor_Call) RunAndReturn(run func(ctx context.Context, req *editenderports.ListEDITransfersRequest) (*pagination.CursorListResult[*editransfer.EDITransfer], error)) *MockEDILoadTenderTransferRepository_ListOutboundCursor_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // SelectOptions provides a mock function for the type MockEDILoadTenderTransferRepository
-func (_mock *MockEDILoadTenderTransferRepository) SelectOptions(ctx context.Context, req *editenderports.EDITransferSelectOptionsRequest) (*pagination.ListResult[*edi.EDITransfer], error) {
+func (_mock *MockEDILoadTenderTransferRepository) SelectOptions(ctx context.Context, req *editenderports.EDITransferSelectOptionsRequest) (*pagination.ListResult[*editransfer.EDITransfer], error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for SelectOptions")
 	}
 
-	var r0 *pagination.ListResult[*edi.EDITransfer]
+	var r0 *pagination.ListResult[*editransfer.EDITransfer]
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *editenderports.EDITransferSelectOptionsRequest) (*pagination.ListResult[*edi.EDITransfer], error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *editenderports.EDITransferSelectOptionsRequest) (*pagination.ListResult[*editransfer.EDITransfer], error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *editenderports.EDITransferSelectOptionsRequest) *pagination.ListResult[*edi.EDITransfer]); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *editenderports.EDITransferSelectOptionsRequest) *pagination.ListResult[*editransfer.EDITransfer]); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*pagination.ListResult[*edi.EDITransfer])
+			r0 = ret.Get(0).(*pagination.ListResult[*editransfer.EDITransfer])
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, *editenderports.EDITransferSelectOptionsRequest) error); ok {
@@ -779,34 +779,34 @@ func (_c *MockEDILoadTenderTransferRepository_SelectOptions_Call) Run(run func(c
 	return _c
 }
 
-func (_c *MockEDILoadTenderTransferRepository_SelectOptions_Call) Return(listResult *pagination.ListResult[*edi.EDITransfer], err error) *MockEDILoadTenderTransferRepository_SelectOptions_Call {
+func (_c *MockEDILoadTenderTransferRepository_SelectOptions_Call) Return(listResult *pagination.ListResult[*editransfer.EDITransfer], err error) *MockEDILoadTenderTransferRepository_SelectOptions_Call {
 	_c.Call.Return(listResult, err)
 	return _c
 }
 
-func (_c *MockEDILoadTenderTransferRepository_SelectOptions_Call) RunAndReturn(run func(ctx context.Context, req *editenderports.EDITransferSelectOptionsRequest) (*pagination.ListResult[*edi.EDITransfer], error)) *MockEDILoadTenderTransferRepository_SelectOptions_Call {
+func (_c *MockEDILoadTenderTransferRepository_SelectOptions_Call) RunAndReturn(run func(ctx context.Context, req *editenderports.EDITransferSelectOptionsRequest) (*pagination.ListResult[*editransfer.EDITransfer], error)) *MockEDILoadTenderTransferRepository_SelectOptions_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // SetApprovalWorkflowRunID provides a mock function for the type MockEDILoadTenderTransferRepository
-func (_mock *MockEDILoadTenderTransferRepository) SetApprovalWorkflowRunID(ctx context.Context, req editenderports.SetEDITransferApprovalWorkflowRunIDRequest) (*edi.EDITransfer, error) {
+func (_mock *MockEDILoadTenderTransferRepository) SetApprovalWorkflowRunID(ctx context.Context, req editenderports.SetEDITransferApprovalWorkflowRunIDRequest) (*editransfer.EDITransfer, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for SetApprovalWorkflowRunID")
 	}
 
-	var r0 *edi.EDITransfer
+	var r0 *editransfer.EDITransfer
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, editenderports.SetEDITransferApprovalWorkflowRunIDRequest) (*edi.EDITransfer, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, editenderports.SetEDITransferApprovalWorkflowRunIDRequest) (*editransfer.EDITransfer, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, editenderports.SetEDITransferApprovalWorkflowRunIDRequest) *edi.EDITransfer); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, editenderports.SetEDITransferApprovalWorkflowRunIDRequest) *editransfer.EDITransfer); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*edi.EDITransfer)
+			r0 = ret.Get(0).(*editransfer.EDITransfer)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, editenderports.SetEDITransferApprovalWorkflowRunIDRequest) error); ok {
@@ -847,37 +847,37 @@ func (_c *MockEDILoadTenderTransferRepository_SetApprovalWorkflowRunID_Call) Run
 	return _c
 }
 
-func (_c *MockEDILoadTenderTransferRepository_SetApprovalWorkflowRunID_Call) Return(eDITransfer *edi.EDITransfer, err error) *MockEDILoadTenderTransferRepository_SetApprovalWorkflowRunID_Call {
+func (_c *MockEDILoadTenderTransferRepository_SetApprovalWorkflowRunID_Call) Return(eDITransfer *editransfer.EDITransfer, err error) *MockEDILoadTenderTransferRepository_SetApprovalWorkflowRunID_Call {
 	_c.Call.Return(eDITransfer, err)
 	return _c
 }
 
-func (_c *MockEDILoadTenderTransferRepository_SetApprovalWorkflowRunID_Call) RunAndReturn(run func(ctx context.Context, req editenderports.SetEDITransferApprovalWorkflowRunIDRequest) (*edi.EDITransfer, error)) *MockEDILoadTenderTransferRepository_SetApprovalWorkflowRunID_Call {
+func (_c *MockEDILoadTenderTransferRepository_SetApprovalWorkflowRunID_Call) RunAndReturn(run func(ctx context.Context, req editenderports.SetEDITransferApprovalWorkflowRunIDRequest) (*editransfer.EDITransfer, error)) *MockEDILoadTenderTransferRepository_SetApprovalWorkflowRunID_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // UpdateTransfer provides a mock function for the type MockEDILoadTenderTransferRepository
-func (_mock *MockEDILoadTenderTransferRepository) UpdateTransfer(ctx context.Context, entity *edi.EDITransfer) (*edi.EDITransfer, error) {
+func (_mock *MockEDILoadTenderTransferRepository) UpdateTransfer(ctx context.Context, entity *editransfer.EDITransfer) (*editransfer.EDITransfer, error) {
 	ret := _mock.Called(ctx, entity)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateTransfer")
 	}
 
-	var r0 *edi.EDITransfer
+	var r0 *editransfer.EDITransfer
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *edi.EDITransfer) (*edi.EDITransfer, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *editransfer.EDITransfer) (*editransfer.EDITransfer, error)); ok {
 		return returnFunc(ctx, entity)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *edi.EDITransfer) *edi.EDITransfer); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *editransfer.EDITransfer) *editransfer.EDITransfer); ok {
 		r0 = returnFunc(ctx, entity)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*edi.EDITransfer)
+			r0 = ret.Get(0).(*editransfer.EDITransfer)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *edi.EDITransfer) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *editransfer.EDITransfer) error); ok {
 		r1 = returnFunc(ctx, entity)
 	} else {
 		r1 = ret.Error(1)
@@ -892,20 +892,20 @@ type MockEDILoadTenderTransferRepository_UpdateTransfer_Call struct {
 
 // UpdateTransfer is a helper method to define mock.On call
 //   - ctx context.Context
-//   - entity *edi.EDITransfer
+//   - entity *editransfer.EDITransfer
 func (_e *MockEDILoadTenderTransferRepository_Expecter) UpdateTransfer(ctx any, entity any) *MockEDILoadTenderTransferRepository_UpdateTransfer_Call {
 	return &MockEDILoadTenderTransferRepository_UpdateTransfer_Call{Call: _e.mock.On("UpdateTransfer", ctx, entity)}
 }
 
-func (_c *MockEDILoadTenderTransferRepository_UpdateTransfer_Call) Run(run func(ctx context.Context, entity *edi.EDITransfer)) *MockEDILoadTenderTransferRepository_UpdateTransfer_Call {
+func (_c *MockEDILoadTenderTransferRepository_UpdateTransfer_Call) Run(run func(ctx context.Context, entity *editransfer.EDITransfer)) *MockEDILoadTenderTransferRepository_UpdateTransfer_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 *edi.EDITransfer
+		var arg1 *editransfer.EDITransfer
 		if args[1] != nil {
-			arg1 = args[1].(*edi.EDITransfer)
+			arg1 = args[1].(*editransfer.EDITransfer)
 		}
 		run(
 			arg0,
@@ -915,12 +915,12 @@ func (_c *MockEDILoadTenderTransferRepository_UpdateTransfer_Call) Run(run func(
 	return _c
 }
 
-func (_c *MockEDILoadTenderTransferRepository_UpdateTransfer_Call) Return(eDITransfer *edi.EDITransfer, err error) *MockEDILoadTenderTransferRepository_UpdateTransfer_Call {
+func (_c *MockEDILoadTenderTransferRepository_UpdateTransfer_Call) Return(eDITransfer *editransfer.EDITransfer, err error) *MockEDILoadTenderTransferRepository_UpdateTransfer_Call {
 	_c.Call.Return(eDITransfer, err)
 	return _c
 }
 
-func (_c *MockEDILoadTenderTransferRepository_UpdateTransfer_Call) RunAndReturn(run func(ctx context.Context, entity *edi.EDITransfer) (*edi.EDITransfer, error)) *MockEDILoadTenderTransferRepository_UpdateTransfer_Call {
+func (_c *MockEDILoadTenderTransferRepository_UpdateTransfer_Call) RunAndReturn(run func(ctx context.Context, entity *editransfer.EDITransfer) (*editransfer.EDITransfer, error)) *MockEDILoadTenderTransferRepository_UpdateTransfer_Call {
 	_c.Call.Return(run)
 	return _c
 }

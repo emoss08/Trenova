@@ -1,9 +1,10 @@
-package edi_test
+package editransfer_test
 
 import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/editransfer"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 )
@@ -16,7 +17,7 @@ func TestEDITransferCounterparty_IsThePartnerTheReadingOrganizationKeeps(t *test
 	senderRecordOfReceiver := &edi.EDIPartner{Name: "Acme Foods"}
 	receiverRecordOfSender := &edi.EDIPartner{Name: "Lone Star Logistics"}
 
-	internal := &edi.EDITransfer{
+	internal := &editransfer.EDITransfer{
 		SourceOrganizationID: sender,
 		TargetOrganizationID: receiver,
 		SourcePartner:        senderRecordOfReceiver,
@@ -27,14 +28,14 @@ func TestEDITransferCounterparty_IsThePartnerTheReadingOrganizationKeeps(t *test
 	assert.Same(t, receiverRecordOfSender, internal.Counterparty(receiver))
 	assert.Same(t, senderRecordOfReceiver, internal.Counterparty(sender))
 
-	readByReceiver := &edi.EDITransfer{
+	readByReceiver := &editransfer.EDITransfer{
 		SourceOrganizationID: sender,
 		TargetOrganizationID: receiver,
 		TargetPartner:        receiverRecordOfSender,
 	}
 	assert.Same(t, receiverRecordOfSender, readByReceiver.Counterparty(receiver))
 
-	readBySender := &edi.EDITransfer{
+	readBySender := &editransfer.EDITransfer{
 		SourceOrganizationID: sender,
 		TargetOrganizationID: receiver,
 		SourcePartner:        senderRecordOfReceiver,
@@ -42,7 +43,7 @@ func TestEDITransferCounterparty_IsThePartnerTheReadingOrganizationKeeps(t *test
 	assert.Same(t, senderRecordOfReceiver, readBySender.Counterparty(sender))
 
 	walmart := &edi.EDIPartner{Name: "Walmart"}
-	fromFile := &edi.EDITransfer{
+	fromFile := &editransfer.EDITransfer{
 		SourceOrganizationID: receiver,
 		TargetOrganizationID: receiver,
 		SourcePartner:        walmart,
@@ -51,5 +52,5 @@ func TestEDITransferCounterparty_IsThePartnerTheReadingOrganizationKeeps(t *test
 	assert.True(t, fromFile.ReceivedBy(receiver))
 	assert.Same(t, walmart, fromFile.Counterparty(receiver))
 
-	assert.Nil(t, (&edi.EDITransfer{TargetOrganizationID: receiver}).Counterparty(receiver))
+	assert.Nil(t, (&editransfer.EDITransfer{TargetOrganizationID: receiver}).Counterparty(receiver))
 }

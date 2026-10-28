@@ -34,6 +34,12 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document/documentdb"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage/inboundmessagedb"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi/edidb"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edicarrierinvoice/edicarrierinvoicedb"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/ediinboundfile/ediinboundfiledb"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edimessage/edimessagedb"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edisync/edisyncdb"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/editenderchange/editenderchangedb"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/editransfer/editransferdb"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmentmanufacturer/equipmentmanufacturerdb"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmenttype/equipmenttypedb"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/fleetcode/fleetcodedb"
@@ -361,13 +367,13 @@ var kindMinters = map[permission.RecordKind]minter{
 	permission.KindReportRun:         prefixed(reportdb.ReportRunsSchema()),
 	permission.KindReportSchedule:    prefixed(reportdb.ReportSchedulesSchema()),
 	permission.KindEDIPartner:        prefixed(edidb.EDIPartnersSchema()),
-	permission.KindEDIInboundFile:    prefixed(edidb.EDIInboundFilesSchema()),
-	permission.KindEDITransfer:       prefixed(edidb.EDITransfersSchema()),
-	permission.KindEDIMessage:        prefixed(edidb.EDIMessagesSchema()),
-	permission.KindEDIShipmentLink:   prefixed(edidb.ShipmentLinksSchema()),
-	permission.KindEDITenderChange:   prefixed(edidb.TenderChangesSchema()),
-	permission.KindEDITransferChange: prefixed(edidb.TransferChangesSchema()),
-	permission.KindEDICarrierInvoice: prefixed(edidb.CarrierInvoicesSchema()),
+	permission.KindEDIInboundFile:    prefixed(ediinboundfiledb.EDIInboundFilesSchema()),
+	permission.KindEDITransfer:       prefixed(editransferdb.EDITransfersSchema()),
+	permission.KindEDIMessage:        prefixed(edimessagedb.EDIMessagesSchema()),
+	permission.KindEDIShipmentLink:   prefixed(edisyncdb.ShipmentLinksSchema()),
+	permission.KindEDITenderChange:   prefixed(editenderchangedb.TenderChangesSchema()),
+	permission.KindEDITransferChange: prefixed(edisyncdb.TransferChangesSchema()),
+	permission.KindEDICarrierInvoice: prefixed(edicarrierinvoicedb.CarrierInvoicesSchema()),
 	permission.KindScannedDocument:   prefixed(capturedb.CaptureItemsSchema()),
 	permission.KindIFTAJurisdiction:  prefixed(iftadb.JurisdictionsSchema()),
 	permission.KindIFTAReturn:        prefixed(iftadb.ReturnsSchema()),

@@ -8,7 +8,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/x12field"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediconnectiondraftports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 )
@@ -142,8 +143,8 @@ func checkFieldKey(multiErr *errortypes.MultiError, key string) {
 
 func checkSetDirection(
 	multiErr *errortypes.MultiError,
-	set edi.TransactionSet,
-	direction edi.DocumentDirection,
+	set edidocument.TransactionSet,
+	direction edidocument.DocumentDirection,
 ) {
 	if !slices.Contains(supportedSets, set) {
 		multiErr.Add(
@@ -188,11 +189,11 @@ func withRedactedQuotes(
 	redacted.Gaps = slices.Clone(req.Gaps)
 	for index := range redacted.Gaps {
 		redactCitation(&redacted.Gaps[index].Citation)
-		redacted.Gaps[index].Summary = edi.RedactSecrets(redacted.Gaps[index].Summary)
+		redacted.Gaps[index].Summary = x12field.RedactSecrets(redacted.Gaps[index].Summary)
 	}
 	return &redacted
 }
 
 func redactCitation(citation *ediconnectiondraftports.DraftCitation) {
-	citation.Quote = edi.RedactSecrets(citation.Quote)
+	citation.Quote = x12field.RedactSecrets(citation.Quote)
 }

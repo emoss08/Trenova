@@ -6,6 +6,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/app/edilading"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/ladingproject"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediconnectiondraftports"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -45,7 +47,7 @@ type setupService interface {
 		ctx context.Context,
 		req *edipartnerports.ResetEDIControlNumberRequest,
 		actor *permissionports.RequestActor,
-	) (*edi.EDIControlNumberSequence, error)
+	) (*edidocument.EDIControlNumberSequence, error)
 }
 
 type projectStore interface {
@@ -53,11 +55,11 @@ type projectStore interface {
 		ctx context.Context,
 		req *edilading.ImportRequest,
 		actor *permissionports.RequestActor,
-	) (*edi.LadingVersion, error)
+	) (*ladingproject.LadingVersion, error)
 	Samples(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
-		version *edi.LadingVersion,
+		version *ladingproject.LadingVersion,
 	) ([]lading.Sample, error)
 }
 

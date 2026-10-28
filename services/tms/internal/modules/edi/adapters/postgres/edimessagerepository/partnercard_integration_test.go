@@ -13,6 +13,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/adapters/postgres/edimessagerepository"
 	"github.com/emoss08/trenova/internal/modules/edi/adapters/postgres/edipartnerrepository"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/ediinboundfile"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edimessage"
 	"github.com/emoss08/trenova/internal/modules/edi/editest"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/edimessageports"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
@@ -32,10 +35,10 @@ import (
 
 type partnerCardMessage struct {
 	partner  pulid.ID
-	set      edi.TransactionSet
-	dir      edi.DocumentDirection
+	set      edidocument.TransactionSet
+	dir      edidocument.DocumentDirection
 	docType  pulid.ID
-	delivery edi.MessageDeliveryStatus
+	delivery edimessage.MessageDeliveryStatus
 	age      int64
 }
 
@@ -50,11 +53,14 @@ func TestPartnerCardReadsKeepToOnePartner(t *testing.T) {
 	scope := tenantWithoutPartners(t, ctx, db)
 	ctx = scope.Ctx
 	org := scope.Info
-	documentType := func(set edi.TransactionSet, direction edi.DocumentDirection) pulid.ID {
+	documentType := func(set edidocument.TransactionSet, direction edidocument.DocumentDirection) pulid.ID {
 		return findDocumentType(t, ctx, db, set, direction).ID
 	}
-	outbound214 := documentType(edi.TransactionSet214, edi.DocumentDirectionOutbound)
-	inbound204 := documentType(edi.TransactionSet204, edi.DocumentDirectionInbound)
+	outbound214 := documentType(
+		edidocument.TransactionSet214,
+		edidocument.DocumentDirectionOutbound,
+	)
+	inbound204 := documentType(edidocument.TransactionSet204, edidocument.DocumentDirectionInbound)
 	tenantInfo := org
 
 	newPartner := func(code string) *edi.EDIPartner {
@@ -101,80 +107,94 @@ func TestPartnerCardReadsKeepToOnePartner(t *testing.T) {
 	messages := []partnerCardMessage{
 		{
 			tyson.ID,
-			edi.TransactionSet214,
-			edi.DocumentDirectionOutbound,
+			edidocument.TransactionSet214,
+			edidocument.DocumentDirectionOutbound,
 			outbound214,
-			edi.MessageDeliveryStatusSent,
+			edimessage.MessageDeliveryStatusSent,
 			60,
 		},
 		{
 			tyson.ID,
-			edi.TransactionSet214,
-			edi.DocumentDirectionOutbound,
+			edidocument.TransactionSet214,
+			edidocument.DocumentDirectionOutbound,
 			outbound214,
-			edi.MessageDeliveryStatusSent,
+			edimessage.MessageDeliveryStatusSent,
 			2 * day,
 		},
 		{
 			tyson.ID,
-			edi.TransactionSet214,
-			edi.DocumentDirectionOutbound,
+			edidocument.TransactionSet214,
+			edidocument.DocumentDirectionOutbound,
 			outbound214,
-			edi.MessageDeliveryStatusFailed,
+			edimessage.MessageDeliveryStatusFailed,
 			3 * day,
 		},
 		{
 			tyson.ID,
-			edi.TransactionSet214,
-			edi.DocumentDirectionOutbound,
+			edidocument.TransactionSet214,
+			edidocument.DocumentDirectionOutbound,
 			outbound214,
-			edi.MessageDeliveryStatusDeadLettered,
+			edimessage.MessageDeliveryStatusDeadLettered,
 			day,
 		},
 		{
 			tyson.ID,
-			edi.TransactionSet214,
-			edi.DocumentDirectionOutbound,
+			edidocument.TransactionSet214,
+			edidocument.DocumentDirectionOutbound,
 			outbound214,
-			edi.MessageDeliveryStatusSent,
+			edimessage.MessageDeliveryStatusSent,
 			10 * day,
 		},
-		{tyson.ID, edi.TransactionSet204, edi.DocumentDirectionInbound, inbound204, "", 120},
-		{tyson.ID, edi.TransactionSet204, edi.DocumentDirectionInbound, inbound204, "", 5 * day},
+		{
+			tyson.ID,
+			edidocument.TransactionSet204,
+			edidocument.DocumentDirectionInbound,
+			inbound204,
+			"",
+			120,
+		},
+		{
+			tyson.ID,
+			edidocument.TransactionSet204,
+			edidocument.DocumentDirectionInbound,
+			inbound204,
+			"",
+			5 * day,
+		},
 		{
 			other.ID,
-			edi.TransactionSet214,
-			edi.DocumentDirectionOutbound,
+			edidocument.TransactionSet214,
+			edidocument.DocumentDirectionOutbound,
 			outbound214,
-			edi.MessageDeliveryStatusSent,
+			edimessage.MessageDeliveryStatusSent,
 			60,
 		},
 		{
 			other.ID,
-			edi.TransactionSet214,
-			edi.DocumentDirectionOutbound,
+			edidocument.TransactionSet214,
+			edidocument.DocumentDirectionOutbound,
 			outbound214,
-			edi.MessageDeliveryStatusDeadLettered,
+			edimessage.MessageDeliveryStatusDeadLettered,
 			60,
 		},
 	}
 	for index, entry := range messages {
-		message := &edi.EDIMessage{
+		message := &edimessage.EDIMessage{
 			BusinessUnitID:           org.BuID,
 			OrganizationID:           org.OrgID,
 			EDIPartnerID:             entry.partner,
 			DocumentTypeID:           entry.docType,
 			Direction:                entry.dir,
-			Standard:                 edi.EDIStandardX12,
+			Standard:                 edidocument.EDIStandardX12,
 			TransactionSet:           entry.set,
-			X12Version:               edi.DefaultX12204Version,
-			Status:                   edi.MessageStatusGenerated,
+			X12Version:               edidocument.DefaultX12204Version,
+			Status:                   edimessage.MessageStatusGenerated,
 			RawX12:                   "ISA*TEST~",
 			InterchangeControlNumber: fmt.Sprintf("%09d", index+1),
 			GroupControlNumber:       fmt.Sprintf("%d", index+1),
 			TransactionControlNumber: fmt.Sprintf("%04d", index+1),
 			DeliveryStatus:           entry.delivery,
-			AckStatus:                edi.MessageAcknowledgmentStatusNotExpected,
+			AckStatus:                edimessage.MessageAcknowledgmentStatusNotExpected,
 			GeneratedAt:              now - entry.age,
 		}
 		require.NoError(t, create(ctx, db, message), "message %d", index)
@@ -203,16 +223,16 @@ func TestPartnerCardReadsKeepToOnePartner(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, sets, 2)
 	assert.Equal(t, edimessageports.EDIPartnerSetActivityRow{
-		TransactionSet:    edi.TransactionSet214,
-		Direction:         edi.DocumentDirectionOutbound,
+		TransactionSet:    edidocument.TransactionSet214,
+		Direction:         edidocument.DocumentDirectionOutbound,
 		Count:             4,
 		FailedCount:       1,
 		DeadLetteredCount: 1,
 		LastAt:            now - 60,
 	}, *sets[0], "outbound first; the ten-day-old 214 and the other partner's are not counted")
 	assert.Equal(t, edimessageports.EDIPartnerSetActivityRow{
-		TransactionSet: edi.TransactionSet204,
-		Direction:      edi.DocumentDirectionInbound,
+		TransactionSet: edidocument.TransactionSet204,
+		Direction:      edidocument.DocumentDirectionInbound,
 		Count:          2,
 		LastAt:         now - 120,
 	}, *sets[1], "an inbound set never counts a failure")
@@ -282,7 +302,7 @@ func TestPartnerCardReadsKeepToOnePartner(t *testing.T) {
 		{tyson, tysonMailbox, 9 * day},
 		{other, otherMailbox, 60},
 	} {
-		file := &edi.EDIInboundFile{
+		file := &ediinboundfile.EDIInboundFile{
 			BusinessUnitID:         org.BuID,
 			OrganizationID:         org.OrgID,
 			CommunicationProfileID: entry.profile.ID,
@@ -292,7 +312,7 @@ func TestPartnerCardReadsKeepToOnePartner(t *testing.T) {
 			FileName:               "drop.csv",
 			Checksum:               pulid.MustNew("chk_").String(),
 			RawContent:             "not x12",
-			Status:                 edi.InboundFileStatusQuarantined,
+			Status:                 ediinboundfile.InboundFileStatusQuarantined,
 			FailureReason:          "not an interchange",
 			ReceivedAt:             now - entry.age,
 		}

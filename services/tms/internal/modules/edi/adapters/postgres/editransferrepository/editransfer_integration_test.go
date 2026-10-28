@@ -12,6 +12,14 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/adapters/postgres/editransferrepository"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi/edidb"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument/edidocumentdb"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/ediinboundfile"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/ediinboundfile/ediinboundfiledb"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edimessage"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edimessage/edimessagedb"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/editransfer"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/editransfer/editransferdb"
 	"github.com/emoss08/trenova/internal/modules/edi/editest"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/editenderports"
 	"github.com/emoss08/trenova/internal/testutil/seededtest"
@@ -44,8 +52,9 @@ func seedTransfers(t *testing.T) *transferFixture {
 	scope := editest.FirstTenant(t, ctx, db)
 	ctx = scope.Ctx
 	org := scope.Info
-	dt := edidb.EDIDocumentTypes
-	documentType, err := dt.Where(dt.TransactionSet.Eq(edi.TransactionSet204)).First(ctx, db)
+	dt := edidocumentdb.EDIDocumentTypes
+	documentType, err := dt.Where(dt.TransactionSet.Eq(edidocument.TransactionSet204)).
+		First(ctx, db)
 	require.NoError(t, err)
 
 	fixture := &transferFixture{
@@ -77,7 +86,7 @@ func seedTransfers(t *testing.T) *transferFixture {
 
 	now := timeutils.NowUnix()
 	file := func(name string) pulid.ID {
-		row := &edi.EDIInboundFile{
+		row := &ediinboundfile.EDIInboundFile{
 			CommunicationProfileID: profile.ID,
 			EDIPartnerID:           fixture.sender.ID,
 			Method:                 edi.ConnectionMethodSFTP,
@@ -85,33 +94,33 @@ func seedTransfers(t *testing.T) *transferFixture {
 			FileName:               name,
 			Checksum:               name,
 			RawContent:             "ISA~",
-			Status:                 edi.InboundFileStatusProcessed,
+			Status:                 ediinboundfile.InboundFileStatusProcessed,
 			ReceivedAt:             now,
 		}
-		require.NoError(t, edidb.EDIInboundFiles.Create(ctx, db, row))
+		require.NoError(t, ediinboundfiledb.EDIInboundFiles.Create(ctx, db, row))
 		return row.ID
 	}
 	fixture.fileA = file("ACME_A.x12")
 	fileB := file("ACME_B.x12")
 
 	tender := func(fileID pulid.ID, bol string) pulid.ID {
-		message := &edi.EDIMessage{
+		message := &edimessage.EDIMessage{
 			EDIPartnerID:             fixture.sender.ID,
 			DocumentTypeID:           documentType.ID,
 			InboundFileID:            fileID,
-			Direction:                edi.DocumentDirectionInbound,
-			Standard:                 edi.EDIStandardX12,
-			TransactionSet:           edi.TransactionSet204,
-			X12Version:               edi.DefaultX12204Version,
-			Status:                   edi.MessageStatusGenerated,
+			Direction:                edidocument.DocumentDirectionInbound,
+			Standard:                 edidocument.EDIStandardX12,
+			TransactionSet:           edidocument.TransactionSet204,
+			X12Version:               edidocument.DefaultX12204Version,
+			Status:                   edimessage.MessageStatusGenerated,
 			InterchangeControlNumber: "000000001",
 			GroupControlNumber:       "1",
 			TransactionControlNumber: bol,
 			GeneratedAt:              now,
 		}
-		require.NoError(t, edidb.EDIMessages.Create(ctx, db, message))
+		require.NoError(t, edimessagedb.EDIMessages.Create(ctx, db, message))
 
-		transfer := &edi.EDITransfer{
+		transfer := &editransfer.EDITransfer{
 			SourceOrganizationID: org.OrgID,
 			SourceBusinessUnitID: org.BuID,
 			TargetOrganizationID: org.OrgID,
@@ -119,11 +128,11 @@ func seedTransfers(t *testing.T) *transferFixture {
 			SourcePartnerID:      fixture.sender.ID,
 			TargetPartnerID:      fixture.receiver.ID,
 			InboundMessageID:     message.ID,
-			Status:               edi.TransferStatusMappingRequired,
-			TenderPayload:        edi.LoadTenderPayload{BOL: bol},
+			Status:               editransfer.TransferStatusMappingRequired,
+			TenderPayload:        editransfer.LoadTenderPayload{BOL: bol},
 			SubmittedAt:          now,
 		}
-		require.NoError(t, edidb.EDITransfers.Create(ctx, db, transfer))
+		require.NoError(t, editransferdb.EDITransfers.Create(ctx, db, transfer))
 		return transfer.ID
 	}
 	fixture.fromA = tender(fixture.fileA, "BOL-A")

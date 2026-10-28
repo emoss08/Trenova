@@ -10,6 +10,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edimessage"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/editransfer"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -45,16 +48,16 @@ func (f *fakeLoadTenders) SubmitLoadTender(
 	_ context.Context,
 	req *ediservice.SubmitLoadTenderRequest,
 	actor *permissionports.RequestActor,
-) (*edi.EDITransfer, error) {
+) (*editransfer.EDITransfer, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
 	}
 	f.submitted, f.actor = req, actor
 
-	return &edi.EDITransfer{ID: pulid.MustNew("edilt_")}, nil
+	return &editransfer.EDITransfer{ID: pulid.MustNew("edilt_")}, nil
 }
 
-func tenderPlan(status edi.TransferStatus) *ediservice.LoadTenderPlan {
+func tenderPlan(status editransfer.TransferStatus) *ediservice.LoadTenderPlan {
 	return &ediservice.LoadTenderPlan{
 		SourceShipment: &shipment.Shipment{
 			ID:        pulid.MustNew("shp_"),
@@ -64,10 +67,10 @@ func tenderPlan(status edi.TransferStatus) *ediservice.LoadTenderPlan {
 		},
 		SourcePartner: &edi.EDIPartner{ID: pulid.MustNew("edip_"), Name: "Acme Brokerage"},
 		TargetPartner: &edi.EDIPartner{ID: pulid.MustNew("edip_"), Name: "Northwind Carrier"},
-		Payload: edi.LoadTenderPayload{
+		Payload: editransfer.LoadTenderPayload{
 			BOL:           "BOL-88",
 			CustomerLabel: "Acme Foods",
-			Moves: []edi.LoadTenderMove{{Stops: []edi.LoadTenderStop{
+			Moves: []editransfer.LoadTenderMove{{Stops: []editransfer.LoadTenderStop{
 				{Type: "Pickup", LocationLabel: "Dallas DC"},
 				{Type: "Delivery", LocationLabel: "Tulsa Store"},
 			}}},
@@ -81,7 +84,7 @@ func TestSendEDILoadTender_PreviewsTheTenderAndTheShipmentThenSendsOnlyWhenAppro
 	t.Parallel()
 
 	tenders := &fakeLoadTenders{
-		plan:  tenderPlan(edi.TransferStatusPendingApproval),
+		plan:  tenderPlan(editransfer.TransferStatusPendingApproval),
 		guard: &agenttoolstest.WriteGuard{},
 	}
 	tool := NewSendEDILoadTenderTool(tenders).(*SendEDILoadTenderTool)
@@ -133,7 +136,7 @@ func TestSendEDILoadTender_WarnsWhenTheReceiverMustMapItFirst(t *testing.T) {
 	t.Parallel()
 
 	tenders := &fakeLoadTenders{
-		plan:  tenderPlan(edi.TransferStatusMappingRequired),
+		plan:  tenderPlan(editransfer.TransferStatusMappingRequired),
 		guard: &agenttoolstest.WriteGuard{},
 	}
 	tool := NewSendEDILoadTenderTool(tenders).(*SendEDILoadTenderTool)
@@ -185,13 +188,13 @@ func (f *fakeDocuments) PlanGenerateDocument(
 func (f *fakeDocuments) GenerateDocument(
 	_ context.Context,
 	req *ediservice.GenerateEDIDocumentRequest,
-) (*edi.EDIMessage, error) {
+) (*edimessage.EDIMessage, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
 	}
 	f.generated = req
 
-	return &edi.EDIMessage{ID: pulid.MustNew("edimsg_")}, nil
+	return &edimessage.EDIMessage{ID: pulid.MustNew("edimsg_")}, nil
 }
 
 func TestSendEDIStatusUpdate_PreviewsTheRenderedStatusAndNeverTakesAPayload(t *testing.T) {
@@ -202,8 +205,8 @@ func TestSendEDIStatusUpdate_PreviewsTheRenderedStatusAndNeverTakesAPayload(t *t
 			RawX12:       "ISA*00*~ST*214*0001~B10*PRO-88*BOL-88~",
 			SegmentCount: 3,
 			PartnerName:  "Acme Trucking",
-			Diagnostics: []edi.Diagnostic{{
-				Severity: edi.ValidationSeverityWarning,
+			Diagnostics: []edidocument.Diagnostic{{
+				Severity: edidocument.ValidationSeverityWarning,
 				Message:  "AT7 reason code defaulted",
 			}},
 		},
@@ -241,8 +244,8 @@ func TestSendEDIStatusUpdate_PreviewsTheRenderedStatusAndNeverTakesAPayload(t *t
 		documents.planned.Payload,
 		"the document is built from the record, never the model",
 	)
-	assert.Equal(t, edi.TransactionSet214, documents.planned.TransactionSet)
-	assert.Equal(t, edi.DocumentDirectionOutbound, documents.planned.Direction)
+	assert.Equal(t, edidocument.TransactionSet214, documents.planned.TransactionSet)
+	assert.Equal(t, edidocument.DocumentDirectionOutbound, documents.planned.Direction)
 
 	require.ErrorIs(
 		t,

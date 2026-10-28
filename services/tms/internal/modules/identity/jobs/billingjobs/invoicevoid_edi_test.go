@@ -4,14 +4,15 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/mocks/ediportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/invoiceportsmock"
-
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edimessage"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/internal/modules/identity/jobs/billingjobs/billingcontract"
+	"github.com/emoss08/trenova/internal/testutil/mocks/ediportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/invoiceportsmock"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
@@ -63,7 +64,10 @@ func TestInvoicePDFResourceAnchorsByWhatTheInvoiceHas(t *testing.T) {
 	require.Error(t, err)
 }
 
-func autoPostPayload(invoiceID pulid.ID, tenantInfo pagination.TenantInfo) *billingcontract.AutoPostInvoicePayload {
+func autoPostPayload(
+	invoiceID pulid.ID,
+	tenantInfo pagination.TenantInfo,
+) *billingcontract.AutoPostInvoicePayload {
 	return &billingcontract.AutoPostInvoicePayload{
 		BasePayload: temporaltype.BasePayload{
 			OrganizationID: tenantInfo.OrgID,
@@ -225,7 +229,10 @@ func TestSendInvoiceEDIActivityMarksNotConfiguredWithTheFirstBlocker(t *testing.
 
 	f := newEDIActivityFixture(t)
 	f.expectPlan(
-		&invoiceports.InvoiceEDISendPlan{Enabled: true, Blockers: []string{"no partner", "no profile"}},
+		&invoiceports.InvoiceEDISendPlan{
+			Enabled:  true,
+			Blockers: []string{"no partner", "no profile"},
+		},
 	)
 	f.invoiceRepo.EXPECT().
 		UpdateEDISendStatus(mock.Anything, invoiceports.UpdateInvoiceEDISendStatusRequest{
@@ -323,11 +330,11 @@ func TestSendInvoiceEDIActivityGeneratesForExternalAndSendsForInternalPartners(t
 				GenerateDocument(mock.Anything, mock.MatchedBy(func(req *ediports.GenerateEDIDocumentRequest) bool {
 					return req.InvoiceID == f.inv.ID &&
 						req.EDIPartnerID == plan.PartnerID &&
-						req.TransactionSet == edi.TransactionSet210 &&
-						req.Direction == edi.DocumentDirectionOutbound &&
+						req.TransactionSet == edidocument.TransactionSet210 &&
+						req.Direction == edidocument.DocumentDirectionOutbound &&
 						req.GeneratedByID == f.tenantInfo.UserID
 				})).
-				Return(&edi.EDIMessage{ID: messageID}, nil).
+				Return(&edimessage.EDIMessage{ID: messageID}, nil).
 				Once()
 			f.invoiceRepo.EXPECT().
 				UpdateEDISendStatus(mock.Anything, mock.MatchedBy(func(req invoiceports.UpdateInvoiceEDISendStatusRequest) bool {

@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/editransfer"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/editenderports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -23,8 +24,8 @@ import (
 )
 
 type fakeTransfers struct {
-	transfer   *edi.EDITransfer
-	unresolved []edi.MappingResolution
+	transfer   *editransfer.EDITransfer
+	unresolved []editransfer.MappingResolution
 	guard      *agenttoolstest.WriteGuard
 	directions []string
 	approved   *ediservice.ApproveTransferRequest
@@ -37,7 +38,7 @@ type fakeTransfers struct {
 func (f *fakeTransfers) GetTransfer(
 	_ context.Context,
 	req editenderports.GetEDITransferByIDRequest,
-) (*edi.EDITransfer, error) {
+) (*editransfer.EDITransfer, error) {
 	f.directions = append(f.directions, req.Direction)
 	if req.ID != f.transfer.ID {
 		return nil, errortypes.NewNotFoundError("EDITenderTransfer not found")
@@ -96,7 +97,7 @@ func (f *fakeTransfers) ApproveTransfer(
 	_ context.Context,
 	req *ediservice.ApproveTransferRequest,
 	actor *permissionports.RequestActor,
-) (*edi.EDITransfer, error) {
+) (*editransfer.EDITransfer, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
 	}
@@ -109,7 +110,7 @@ func (f *fakeTransfers) RejectTransfer(
 	_ context.Context,
 	req *ediservice.RejectTransferRequest,
 	actor *permissionports.RequestActor,
-) (*edi.EDITransfer, error) {
+) (*editransfer.EDITransfer, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
 	}
@@ -122,7 +123,7 @@ func (f *fakeTransfers) CancelTransfer(
 	_ context.Context,
 	req *ediservice.CancelTransferRequest,
 	actor *permissionports.RequestActor,
-) (*edi.EDITransfer, error) {
+) (*editransfer.EDITransfer, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
 	}
@@ -135,7 +136,7 @@ func (f *fakeTransfers) ExpireTransfer(
 	_ context.Context,
 	req *ediservice.ExpireTransferRequest,
 	actor *permissionports.RequestActor,
-) (*edi.EDITransfer, error) {
+) (*editransfer.EDITransfer, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
 	}
@@ -144,10 +145,10 @@ func (f *fakeTransfers) ExpireTransfer(
 	return f.transfer, nil
 }
 
-func inboundTender(status edi.TransferStatus) *edi.EDITransfer {
+func inboundTender(status editransfer.TransferStatus) *editransfer.EDITransfer {
 	partner := &edi.EDIPartner{Name: "Acme Shipper"}
 
-	return &edi.EDITransfer{
+	return &editransfer.EDITransfer{
 		ID:               pulid.MustNew("edilt_"),
 		Status:           status,
 		InboundMessageID: pulid.MustNew("edimsg_"),
@@ -155,17 +156,17 @@ func inboundTender(status edi.TransferStatus) *edi.EDITransfer {
 		TargetPartner:    partner,
 		SourcePartner:    partner,
 		Version:          4,
-		TenderPayload: edi.LoadTenderPayload{
+		TenderPayload: editransfer.LoadTenderPayload{
 			BOL:           "BOL-77",
 			CustomerLabel: "Acme Foods",
-			Moves: []edi.LoadTenderMove{{Stops: []edi.LoadTenderStop{
+			Moves: []editransfer.LoadTenderMove{{Stops: []editransfer.LoadTenderStop{
 				{Type: "Pickup"}, {Type: "Delivery"},
 			}}},
 		},
 	}
 }
 
-func tenderParams(transfer *edi.EDITransfer, extra map[string]any) map[string]any {
+func tenderParams(transfer *editransfer.EDITransfer, extra map[string]any) map[string]any {
 	params := map[string]any{paramEDITransferID: transfer.ID.String()}
 	for key, value := range extra {
 		params[key] = value
@@ -208,7 +209,7 @@ func TestAcceptEDILoadTender_PreviewsTheShipmentAndThe990ThenRunsOnlyWhenApprove
 	t.Parallel()
 
 	transfers := &fakeTransfers{
-		transfer: inboundTender(edi.TransferStatusPendingApproval),
+		transfer: inboundTender(editransfer.TransferStatusPendingApproval),
 		guard:    &agenttoolstest.WriteGuard{},
 	}
 	tool := NewAcceptEDILoadTenderTool(transfers).(*EdiTransferDecisionTool)
@@ -259,8 +260,8 @@ func TestAcceptEDILoadTender_RefusesATenderWhoseMappingsAreIncomplete(t *testing
 	t.Parallel()
 
 	transfers := &fakeTransfers{
-		transfer:   inboundTender(edi.TransferStatusMappingRequired),
-		unresolved: []edi.MappingResolution{{EntityType: edi.MappingEntityTypeCustomer}},
+		transfer:   inboundTender(editransfer.TransferStatusMappingRequired),
+		unresolved: []editransfer.MappingResolution{{EntityType: edi.MappingEntityTypeCustomer}},
 		guard:      &agenttoolstest.WriteGuard{},
 	}
 	tool := NewAcceptEDILoadTenderTool(transfers).(*EdiTransferDecisionTool)
@@ -282,7 +283,7 @@ func TestDeclineEDILoadTender_CarriesTheReasonToThePartner(t *testing.T) {
 	t.Parallel()
 
 	transfers := &fakeTransfers{
-		transfer: inboundTender(edi.TransferStatusPendingApproval),
+		transfer: inboundTender(editransfer.TransferStatusPendingApproval),
 		guard:    &agenttoolstest.WriteGuard{},
 	}
 	tool := NewDeclineEDILoadTenderTool(transfers).(*EdiTransferDecisionTool)
@@ -348,7 +349,7 @@ func TestCancelAndExpireEDILoadTender_ReadTheSideTheServiceActsOn(t *testing.T) 
 			t.Parallel()
 
 			transfers := &fakeTransfers{
-				transfer: inboundTender(edi.TransferStatusPendingApproval),
+				transfer: inboundTender(editransfer.TransferStatusPendingApproval),
 				guard:    &agenttoolstest.WriteGuard{},
 			}
 			transfers.transfer.InboundMessageID = pulid.Nil
@@ -390,7 +391,7 @@ func TestEDITenderDecisions_RefuseAFinalizedTransfer(t *testing.T) {
 		NewExpireEDILoadTenderTool,
 	} {
 		transfers := &fakeTransfers{
-			transfer: inboundTender(edi.TransferStatusApproved),
+			transfer: inboundTender(editransfer.TransferStatusApproved),
 			guard:    &agenttoolstest.WriteGuard{},
 		}
 		tool := build(transfers).(*EdiTransferDecisionTool)
@@ -417,7 +418,7 @@ func TestEDITenderDecisions_RefuseAnActorFromAnotherTenant(t *testing.T) {
 	t.Parallel()
 
 	transfers := &fakeTransfers{
-		transfer: inboundTender(edi.TransferStatusPendingApproval),
+		transfer: inboundTender(editransfer.TransferStatusPendingApproval),
 		guard:    &agenttoolstest.WriteGuard{},
 	}
 	tool := NewAcceptEDILoadTenderTool(transfers)

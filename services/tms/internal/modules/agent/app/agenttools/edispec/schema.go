@@ -4,6 +4,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediconnectiondraft"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediconnectiondraftports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/toolschema"
@@ -38,15 +39,18 @@ const (
 
 var (
 	fieldSource = agenttoolschema.Source("edi.connectionDraftField", ediconnectiondraft.FieldKeys())
-	setSource   = agenttoolschema.Source("edi.connectionDraftTransactionSet", []edi.TransactionSet{
-		edi.TransactionSet204,
-		edi.TransactionSet210,
-		edi.TransactionSet214,
-		edi.TransactionSet990,
-	})
+	setSource   = agenttoolschema.Source(
+		"edi.connectionDraftTransactionSet",
+		[]edidocument.TransactionSet{
+			edidocument.TransactionSet204,
+			edidocument.TransactionSet210,
+			edidocument.TransactionSet214,
+			edidocument.TransactionSet990,
+		},
+	)
 	directionSource = agenttoolschema.Source("edi.documentDirection", []string{
-		string(edi.DocumentDirectionInbound),
-		string(edi.DocumentDirectionOutbound),
+		string(edidocument.DocumentDirectionInbound),
+		string(edidocument.DocumentDirectionOutbound),
 	})
 	usageSource = agenttoolschema.Source(
 		"edi.requirementUsage",

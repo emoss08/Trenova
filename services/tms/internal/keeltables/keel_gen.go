@@ -74,6 +74,14 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage/inboundmessagedb"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/triage/triagedb"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi/edidb"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edicarrierinvoice/edicarrierinvoicedb"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument/edidocumentdb"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/ediinboundfile/ediinboundfiledb"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edimessage/edimessagedb"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edisync/edisyncdb"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/editenderchange/editenderchangedb"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/editransfer/editransferdb"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/ladingproject/ladingprojectdb"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmentcontinuity/equipmentcontinuitydb"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmentmanufacturer/equipmentmanufacturerdb"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmenttype/equipmenttypedb"
@@ -380,30 +388,30 @@ func All() []*schema.Table {
 		driversettlementdb.SettlementBatchesSchema(),
 		driversettlementdb.SettlementLinesSchema(),
 		driversettlementdb.SettlementsSchema(),
-		edidb.CarrierInvoicesSchema(),
+		edicarrierinvoicedb.CarrierInvoicesSchema(),
 		edidb.EDICommunicationProfilesSchema(),
 		edidb.EDIConnectionsSchema(),
-		edidb.EDIControlNumberSequencesSchema(),
-		edidb.EDIDocumentTypesSchema(),
-		edidb.FlowEventsSchema(),
-		edidb.FlowInstancesSchema(),
-		edidb.EDIInboundFilesSchema(),
-		edidb.LadingProjectsSchema(),
-		edidb.LadingReplaysSchema(),
-		edidb.LadingSamplesSchema(),
-		edidb.LadingShadowResultsSchema(),
-		edidb.LadingVersionsSchema(),
-		edidb.EDITransfersSchema(),
+		edidocumentdb.EDIControlNumberSequencesSchema(),
+		edidocumentdb.EDIDocumentTypesSchema(),
+		ladingprojectdb.FlowEventsSchema(),
+		ladingprojectdb.FlowInstancesSchema(),
+		ediinboundfiledb.EDIInboundFilesSchema(),
+		ladingprojectdb.LadingProjectsSchema(),
+		ladingprojectdb.LadingReplaysSchema(),
+		ladingprojectdb.LadingSamplesSchema(),
+		ladingprojectdb.LadingShadowResultsSchema(),
+		ladingprojectdb.LadingVersionsSchema(),
+		editransferdb.EDITransfersSchema(),
 		edidb.EDIMappingProfileItemsSchema(),
 		edidb.EDIMappingProfilesSchema(),
-		edidb.EDIMessageValidationErrorsSchema(),
-		edidb.EDIMessagesSchema(),
+		edimessagedb.EDIMessageValidationErrorsSchema(),
+		edimessagedb.EDIMessagesSchema(),
 		edidb.EDIPartnersSchema(),
-		edidb.ShipmentLinksSchema(),
-		edidb.TenderChangesSchema(),
-		edidb.TenderRecipientsSchema(),
-		edidb.EDITransactionSetsSchema(),
-		edidb.TransferChangesSchema(),
+		edisyncdb.ShipmentLinksSchema(),
+		editenderchangedb.TenderChangesSchema(),
+		editenderchangedb.TenderRecipientsSchema(),
+		edidocumentdb.EDITransactionSetsSchema(),
+		edisyncdb.TransferChangesSchema(),
 		emaildb.EventsSchema(),
 		emaildb.AttachmentsSchema(),
 		emaildb.MessagesSchema(),

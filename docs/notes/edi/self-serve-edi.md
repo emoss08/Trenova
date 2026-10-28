@@ -32,7 +32,7 @@ lines of TypeScript) found:
   `edi_transaction_loop_definitions`, `edi_transaction_segment_definitions`,
   `edi_transaction_element_definitions` and `edi_code_list_definitions` have no reader and no
   writer. The inspector names 16 segments from a map in `dictionary.go`.
-- **Six transaction sets, closed.** `edi.TransactionSet` is an enum of 204, 210, 214, 990,
+- **Six transaction sets, closed.** `edidocument.TransactionSet` is an enum of 204, 210, 214, 990,
   997 and 999, so a partner who needs a 211, 824 or 856 cannot be set up.
 - **Logic that only the server can run.** Template conditions and element values use Starlark
   (`go.starlark.net`) and a Go transform pipeline, so the designer cannot preview or check a

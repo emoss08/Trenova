@@ -8,6 +8,8 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/modules/edi/app/edix12inspect"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/ediinboundfile"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/editenderports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
@@ -75,7 +77,7 @@ func (f *fakeTenderResponseRecorder) RecordResponse(
 
 type tenderOfferRouteFixture struct {
 	service       *Service
-	file          *edi.EDIInboundFile
+	file          *ediinboundfile.EDIInboundFile
 	partner       *edi.EDIPartner
 	tenderRepo    *fakeTenderRepository
 	recorder      *fakeTenderResponseRecorder
@@ -89,7 +91,7 @@ func newTenderOfferRouteFixture(t *testing.T) *tenderOfferRouteFixture {
 	buID := pulid.MustNew("bu_")
 	partnerID := pulid.MustNew("edip_")
 	fixture := &tenderOfferRouteFixture{
-		file: &edi.EDIInboundFile{
+		file: &ediinboundfile.EDIInboundFile{
 			ID:             pulid.MustNew("ediinf_"),
 			OrganizationID: orgID,
 			BusinessUnitID: buID,
@@ -155,7 +157,7 @@ func parse990Transaction(t *testing.T, raw string) (*parsedTransaction, *tenderR
 	require.NoError(t, err)
 	require.Len(t, interchange.transactions, 1)
 	transaction := &interchange.transactions[0]
-	require.Equal(t, edi.TransactionSet990, transaction.set)
+	require.Equal(t, edidocument.TransactionSet990, transaction.set)
 	details := &tenderResponseDetails{}
 	if b1 := findSegment(transaction.segments, "B1"); b1 != nil {
 		details.scac = elementValue(b1, 1)

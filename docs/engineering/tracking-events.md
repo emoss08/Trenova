@@ -32,7 +32,7 @@ EDI 214 (every AT7)  ─────────────────┴ Reco
 | Repository and table | `adapters/postgres/trackingeventrepository`, migration `20261231008990_tracking_events` |
 | Telematics port | `workforce/ports/telematicsports.StopVisitRecorder` |
 | Driver portal port | `workforce/ports/driverportalports.StopReporter` |
-| EDI 214 parser and stop targeting | `edi/app/ediinboundservice/parse.go`, `edi/app/ediservice/stopactuals214.go`, `edi/domain/edi/x12time.go` |
+| EDI 214 parser and stop targeting | `edi/app/ediinboundservice/parse.go`, `edi/app/ediservice/stopactuals214.go`, `edi/domain/x12field/x12time.go` |
 | Carrier tracking link and check calls | `checkcallservice`; see [check-calls.md](check-calls.md) |
 | GraphQL read | `shipmentTrackingEvents(shipmentId)` in `shipment.graphqls`; the web app does not show it |
 
@@ -134,7 +134,7 @@ The parser reads every `AT7` in every `LX` loop. Each status keeps:
 A time code names a zone. `ET`, `CT`, `MT`, `PT`, `AT` (Alaska), `HT`, `TT` (Atlantic) and `NT`
 follow daylight saving; the `S` and `D` variants are fixed offsets; `UT` and `GM` are UTC.
 `LT`, an unknown code or no code is local time at the stop, read in the stop location's time
-zone once the stop is known (UTC when the location has none). `edi.X12DateTime` does the
+zone once the stop is known (UTC when the location has none). `x12field.X12DateTime` does the
 conversion.
 
 `X3`, `AF`, `X1`, `D1` and `CD` move stop actuals. The stop is the one whose sequence the

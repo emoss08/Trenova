@@ -11,6 +11,12 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edimessage"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edipayload"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edisync"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/editenderchange"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/editransfer"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/editenderports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -61,8 +67,8 @@ func (s *Service) AfterShipmentUpdate(
 
 func (s *Service) createTenderChangeForRecipient(
 	ctx context.Context,
-	recipient *edi.TenderRecipient,
-	newPayload *edi.LoadTenderPayload,
+	recipient *editenderchange.TenderRecipient,
+	newPayload *editransfer.LoadTenderPayload,
 	sourceShipmentVersion int64,
 	actor *permissionports.RequestActor,
 ) error {
@@ -72,24 +78,24 @@ func (s *Service) createTenderChangeForRecipient(
 		return nil
 	}
 
-	status := edi.TenderChangeStatusPendingReview
-	if recipient.RecipientKind == edi.TenderRecipientKindExternal {
-		status = edi.TenderChangeStatusQueued
+	status := editenderchange.TenderChangeStatusPendingReview
+	if recipient.RecipientKind == editenderchange.TenderRecipientKindExternal {
+		status = editenderchange.TenderChangeStatusQueued
 	}
-	change := &edi.TenderChange{
+	change := &editenderchange.TenderChange{
 		BusinessUnitID:       recipient.BusinessUnitID,
 		SourceOrganizationID: recipient.SourceOrganizationID,
 		SourceShipmentID:     recipient.SourceShipmentID,
 		RecipientID:          recipient.ID,
 		RecipientKind:        recipient.RecipientKind,
 		Status:               status,
-		ChangeType:           edi.TenderChangeTypeLoadTender,
+		ChangeType:           editenderchange.TenderChangeTypeLoadTender,
 		IdempotencyKey: fmt.Sprintf(
 			"%s:%d:%s:%s",
 			recipient.ID,
 			sourceShipmentVersion,
 			newHash,
-			edi.TenderChangeTypeLoadTender,
+			editenderchange.TenderChangeTypeLoadTender,
 		),
 		SourceShipmentVersion:   sourceShipmentVersion,
 		PreviousBaselinePayload: recipient.LatestBaselinePayload,
@@ -113,15 +119,15 @@ func (s *Service) createTenderChangeForRecipient(
 		editenderports.SupersedeActionableEDITenderChangesRequest{
 			RecipientID:     recipient.ID,
 			ExcludeChangeID: result.TenderChange.ID,
-			Statuses: []edi.TenderChangeStatus{
-				edi.TenderChangeStatusPendingReview,
-				edi.TenderChangeStatusQueued,
+			Statuses: []editenderchange.TenderChangeStatus{
+				editenderchange.TenderChangeStatusPendingReview,
+				editenderchange.TenderChangeStatusQueued,
 			},
 		},
 	); err != nil {
 		return err
 	}
-	if recipient.RecipientKind == edi.TenderRecipientKindExternal {
+	if recipient.RecipientKind == editenderchange.TenderRecipientKindExternal {
 		return s.generateExternalTenderChange(ctx, recipient, result.TenderChange, actor)
 	}
 	return nil
@@ -129,12 +135,12 @@ func (s *Service) createTenderChangeForRecipient(
 
 func (s *Service) generateExternalTenderChange(
 	ctx context.Context,
-	recipient *edi.TenderRecipient,
-	change *edi.TenderChange,
+	recipient *editenderchange.TenderRecipient,
+	change *editenderchange.TenderChange,
 	actor *permissionports.RequestActor,
 ) error {
 	payload := change.NewTenderPayload
-	payload.PurposeCode = edi.LoadTenderPurposeChange
+	payload.PurposeCode = editransfer.LoadTenderPurposeChange
 	message, err := s.GenerateDocument(ctx, &GenerateEDIDocumentRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID:  recipient.SourceOrganizationID,
@@ -143,21 +149,21 @@ func (s *Service) generateExternalTenderChange(
 		},
 		EDIPartnerID:         recipient.EDIPartnerID,
 		ShipmentID:           recipient.SourceShipmentID,
-		TransactionSet:       edi.TransactionSet204,
-		Direction:            edi.DocumentDirectionOutbound,
+		TransactionSet:       edidocument.TransactionSet204,
+		Direction:            edidocument.DocumentDirectionOutbound,
 		Payload:              loadTenderDocumentPayload(&payload),
 		GeneratedByID:        actorUserID(actor),
 		DisableDeliveryQueue: true,
 	})
 	if err != nil {
-		change.Status = edi.TenderChangeStatusFailed
+		change.Status = editenderchange.TenderChangeStatusFailed
 		change.FailureReason = err.Error()
 		_, updateErr := s.tenderChangeRepo.UpdateTenderChange(ctx, change)
 		return updateErr
 	}
 
 	change.OutboundMessageID = message.ID
-	change.Status = edi.TenderChangeStatusQueued
+	change.Status = editenderchange.TenderChangeStatusQueued
 	change.FailureReason = ""
 	if _, err = s.tenderChangeRepo.UpdateTenderChange(ctx, change); err != nil {
 		return err
@@ -176,14 +182,14 @@ func (s *Service) generateExternalTenderChange(
 func (s *Service) ListTenderChanges(
 	ctx context.Context,
 	req *editenderports.ListEDITenderChangesRequest,
-) (*pagination.ListResult[*edi.TenderChange], error) {
+) (*pagination.ListResult[*editenderchange.TenderChange], error) {
 	return s.tenderChangeRepo.ListTenderChanges(ctx, req)
 }
 
 func (s *Service) GetTenderChange(
 	ctx context.Context,
 	req editenderports.GetEDITenderChangeByIDRequest,
-) (*edi.TenderChange, error) {
+) (*editenderchange.TenderChange, error) {
 	return s.tenderChangeRepo.GetTenderChangeByID(ctx, req)
 }
 
@@ -191,24 +197,24 @@ func (s *Service) ApplyTenderChange(
 	ctx context.Context,
 	req *TenderChangeActionRequest,
 	actor *permissionports.RequestActor,
-) (*edi.TenderChange, error) {
-	return s.reviewTenderChange(ctx, req, actor, edi.TenderChangeStatusApplied)
+) (*editenderchange.TenderChange, error) {
+	return s.reviewTenderChange(ctx, req, actor, editenderchange.TenderChangeStatusApplied)
 }
 
 func (s *Service) RejectTenderChange(
 	ctx context.Context,
 	req *TenderChangeActionRequest,
 	actor *permissionports.RequestActor,
-) (*edi.TenderChange, error) {
-	return s.reviewTenderChange(ctx, req, actor, edi.TenderChangeStatusRejected)
+) (*editenderchange.TenderChange, error) {
+	return s.reviewTenderChange(ctx, req, actor, editenderchange.TenderChangeStatusRejected)
 }
 
 func (s *Service) reviewTenderChange(
 	ctx context.Context,
 	req *TenderChangeActionRequest,
 	actor *permissionports.RequestActor,
-	status edi.TenderChangeStatus,
-) (*edi.TenderChange, error) {
+	status editenderchange.TenderChangeStatus,
+) (*editenderchange.TenderChange, error) {
 	if req == nil {
 		return nil, errortypes.NewValidationError(
 			"request",
@@ -238,7 +244,7 @@ func (s *Service) reviewTenderChange(
 	now := timeutils.NowUnix()
 	var applyErr error
 	err = s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
-		if status == edi.TenderChangeStatusApplied {
+		if status == editenderchange.TenderChangeStatusApplied {
 			if applyErr = s.applyApprovedTenderChange(
 				txCtx,
 				req.TenantInfo,
@@ -249,7 +255,7 @@ func (s *Service) reviewTenderChange(
 			}
 		}
 		MarkTenderChangeReviewed(change, &ChangeReviewMark{
-			Applied:    status == edi.TenderChangeStatusApplied,
+			Applied:    status == editenderchange.TenderChangeStatusApplied,
 			ReviewerID: actor.UserID,
 			Reason:     req.Reason,
 			At:         now,
@@ -278,7 +284,7 @@ func (s *Service) reviewTenderChange(
 func (s *Service) applyApprovedTenderChange(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	change *edi.TenderChange,
+	change *editenderchange.TenderChange,
 	actor *permissionports.RequestActor,
 ) error {
 	recipient, err := s.tenderRecipientRepo.GetTenderRecipientByID(
@@ -300,8 +306,8 @@ func (s *Service) applyApprovedTenderChange(
 func (s *Service) applyPendingTransferTenderChange(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	recipient *edi.TenderRecipient,
-	change *edi.TenderChange,
+	recipient *editenderchange.TenderRecipient,
+	change *editenderchange.TenderChange,
 ) error {
 	transfer, err := s.transferRepo.GetTransferForUpdate(
 		ctx,
@@ -331,7 +337,7 @@ func (s *Service) applyPendingTransferTenderChange(
 	transfer.TenderPayload = change.NewTenderPayload
 	transfer.MappingSnapshot = preview.All
 	if !transfer.Status.IsFinal() {
-		transfer.Status = edi.TransferStatusPendingApproval
+		transfer.Status = editransfer.TransferStatusPendingApproval
 	}
 	if _, err = s.transferRepo.UpdateTransfer(ctx, transfer); err != nil {
 		return err
@@ -340,14 +346,14 @@ func (s *Service) applyPendingTransferTenderChange(
 		ctx,
 		recipient,
 		&change.NewTenderPayload,
-		edi.TenderRecipientBaselineStatusSent,
+		editenderchange.TenderRecipientBaselineStatusSent,
 	)
 }
 
 func (s *Service) applyLinkedShipmentTenderChange(
 	ctx context.Context,
-	recipient *edi.TenderRecipient,
-	change *edi.TenderChange,
+	recipient *editenderchange.TenderRecipient,
+	change *editenderchange.TenderChange,
 	actor *permissionports.RequestActor,
 ) error {
 	targetTenantInfo, err := tenderRecipientTenantInfo(recipient)
@@ -409,12 +415,12 @@ func (s *Service) applyLinkedShipmentTenderChange(
 		ctx,
 		recipient,
 		&change.NewTenderPayload,
-		edi.TenderRecipientBaselineStatusAccepted,
+		editenderchange.TenderRecipientBaselineStatusAccepted,
 	)
 }
 
 func validateTenderChangeReviewer(
-	change *edi.TenderChange,
+	change *editenderchange.TenderChange,
 	tenantInfo pagination.TenantInfo,
 ) error {
 	if change == nil || change.Recipient == nil {
@@ -424,7 +430,7 @@ func validateTenderChangeReviewer(
 			"EDI tender change recipient is required for review",
 		)
 	}
-	if change.Recipient.RecipientKind != edi.TenderRecipientKindInternal {
+	if change.Recipient.RecipientKind != editenderchange.TenderRecipientKindInternal {
 		return errortypes.NewValidationError(
 			"recipientKind",
 			errortypes.ErrInvalidOperation,
@@ -443,7 +449,7 @@ func validateTenderChangeReviewer(
 }
 
 func tenderRecipientTenantInfo(
-	recipient *edi.TenderRecipient,
+	recipient *editenderchange.TenderRecipient,
 ) (pagination.TenantInfo, error) {
 	if recipient == nil || recipient.RecipientOrganizationID.IsNil() {
 		return pagination.TenantInfo{}, errortypes.NewValidationError(
@@ -460,12 +466,12 @@ func tenderRecipientTenantInfo(
 
 func (s *Service) advanceTenderRecipientBaseline(
 	ctx context.Context,
-	recipient *edi.TenderRecipient,
-	payload *edi.LoadTenderPayload,
-	status edi.TenderRecipientBaselineStatus,
+	recipient *editenderchange.TenderRecipient,
+	payload *editransfer.LoadTenderPayload,
+	status editenderchange.TenderRecipientBaselineStatus,
 ) error {
 	baseline := *payload
-	baseline.PurposeCode = edi.LoadTenderPurposeOriginal
+	baseline.PurposeCode = editransfer.LoadTenderPurposeOriginal
 	recipient.LatestBaselinePayload = baseline
 	recipient.LatestBaselineHash = tenderPayloadHash(&baseline)
 	recipient.BaselineRecordedAt = timeutils.NowUnix()
@@ -476,20 +482,20 @@ func (s *Service) advanceTenderRecipientBaseline(
 
 func (s *Service) upsertInternalTenderRecipient(
 	ctx context.Context,
-	transfer *edi.EDITransfer,
-	link *edi.ShipmentLink,
-	status edi.TenderRecipientBaselineStatus,
+	transfer *editransfer.EDITransfer,
+	link *edisync.ShipmentLink,
+	status editenderchange.TenderRecipientBaselineStatus,
 ) error {
 	if s.tenderRecipientRepo == nil || transfer == nil {
 		return nil
 	}
 	payload := transfer.TenderPayload
-	payload.PurposeCode = edi.LoadTenderPurposeOriginal
-	recipient := &edi.TenderRecipient{
+	payload.PurposeCode = editransfer.LoadTenderPurposeOriginal
+	recipient := &editenderchange.TenderRecipient{
 		BusinessUnitID:          transfer.SourceBusinessUnitID,
 		SourceOrganizationID:    transfer.SourceOrganizationID,
 		SourceShipmentID:        transfer.SourceShipmentID,
-		RecipientKind:           edi.TenderRecipientKindInternal,
+		RecipientKind:           editenderchange.TenderRecipientKindInternal,
 		RecipientOrganizationID: transfer.TargetOrganizationID,
 		EDIPartnerID:            transfer.TargetPartnerID,
 		OriginalTransferID:      transfer.ID,
@@ -497,7 +503,7 @@ func (s *Service) upsertInternalTenderRecipient(
 		LatestBaselineHash:      tenderPayloadHash(&payload),
 		BaselineRecordedAt:      timeutils.NowUnix(),
 		BaselineStatus:          status,
-		Status:                  edi.TenderRecipientStatusActive,
+		Status:                  editenderchange.TenderRecipientStatusActive,
 	}
 	if link != nil {
 		recipient.ShipmentLinkID = link.ID
@@ -511,14 +517,14 @@ func (s *Service) upsertInternalTenderRecipient(
 
 func (s *Service) upsertExternalTenderRecipient(
 	ctx context.Context,
-	message *edi.EDIMessage,
+	message *edimessage.EDIMessage,
 	partner *edi.EDIPartner,
 ) error {
 	if s.tenderRecipientRepo == nil || message == nil || partner == nil ||
-		message.TransactionSet != edi.TransactionSet204 ||
-		message.Direction != edi.DocumentDirectionOutbound ||
+		message.TransactionSet != edidocument.TransactionSet204 ||
+		message.Direction != edidocument.DocumentDirectionOutbound ||
 		message.PayloadSnapshot.LoadTender == nil ||
-		message.PayloadSnapshot.LoadTender.PurposeCode == edi.LoadTenderPurposeChange {
+		message.PayloadSnapshot.LoadTender.PurposeCode == editransfer.LoadTenderPurposeChange {
 		return nil
 	}
 	if partner.Kind != edi.PartnerKindExternal {
@@ -542,19 +548,19 @@ func (s *Service) upsertExternalTenderRecipient(
 		commProfile = nil
 	}
 	payload := *message.PayloadSnapshot.LoadTender
-	payload.PurposeCode = edi.LoadTenderPurposeOriginal
-	recipient := &edi.TenderRecipient{
+	payload.PurposeCode = editransfer.LoadTenderPurposeOriginal
+	recipient := &editenderchange.TenderRecipient{
 		BusinessUnitID:        message.BusinessUnitID,
 		SourceOrganizationID:  message.OrganizationID,
 		SourceShipmentID:      payload.ShipmentID,
-		RecipientKind:         edi.TenderRecipientKindExternal,
+		RecipientKind:         editenderchange.TenderRecipientKindExternal,
 		EDIPartnerID:          message.EDIPartnerID,
 		OriginalMessageID:     message.ID,
 		LatestBaselinePayload: payload,
 		LatestBaselineHash:    tenderPayloadHash(&payload),
 		BaselineRecordedAt:    timeutils.NowUnix(),
-		BaselineStatus:        edi.TenderRecipientBaselineStatusSent,
-		Status:                edi.TenderRecipientStatusActive,
+		BaselineStatus:        editenderchange.TenderRecipientBaselineStatusSent,
+		Status:                editenderchange.TenderRecipientStatusActive,
 	}
 	if commProfile != nil {
 		recipient.CommunicationProfileID = commProfile.ID
@@ -568,9 +574,9 @@ func (s *Service) upsertExternalTenderRecipient(
 
 func applyTenderPayloadToShipment(
 	target *shipment.Shipment,
-	payload *edi.LoadTenderPayload,
-	transfer *edi.EDITransfer,
-	resolutions []edi.MappingResolution,
+	payload *editransfer.LoadTenderPayload,
+	transfer *editransfer.EDITransfer,
+	resolutions []editransfer.MappingResolution,
 ) {
 	mappings := resolutionIndex(resolutions)
 	target.ServiceTypeID = mustMappedID(
@@ -605,8 +611,8 @@ func applyTenderPayloadToShipment(
 
 func mappedTenderMoves(
 	target *shipment.Shipment,
-	payload *edi.LoadTenderPayload,
-	transfer *edi.EDITransfer,
+	payload *editransfer.LoadTenderPayload,
+	transfer *editransfer.EDITransfer,
 	mappings map[edi.MappingEntityType]map[pulid.ID]pulid.ID,
 ) []*shipment.ShipmentMove {
 	existingMoves := make(map[int64]*shipment.ShipmentMove, len(target.Moves))
@@ -645,7 +651,7 @@ func mappedTenderMoves(
 func mappedTenderStops(
 	existingMove *shipment.ShipmentMove,
 	target *shipment.Shipment,
-	move edi.LoadTenderMove,
+	move editransfer.LoadTenderMove,
 	mappings map[edi.MappingEntityType]map[pulid.ID]pulid.ID,
 ) []*shipment.Stop {
 	existingStops := map[int64]*shipment.Stop{}
@@ -696,8 +702,8 @@ func mappedTenderStops(
 
 func mappedTenderCommodities(
 	target *shipment.Shipment,
-	payload *edi.LoadTenderPayload,
-	transfer *edi.EDITransfer,
+	payload *editransfer.LoadTenderPayload,
+	transfer *editransfer.EDITransfer,
 	mappings map[edi.MappingEntityType]map[pulid.ID]pulid.ID,
 ) []*shipment.ShipmentCommodity {
 	commodities := make([]*shipment.ShipmentCommodity, 0, len(payload.Commodities))
@@ -732,8 +738,8 @@ func mappedTenderCommodities(
 
 func mappedTenderCharges(
 	target *shipment.Shipment,
-	payload *edi.LoadTenderPayload,
-	transfer *edi.EDITransfer,
+	payload *editransfer.LoadTenderPayload,
+	transfer *editransfer.EDITransfer,
 	mappings map[edi.MappingEntityType]map[pulid.ID]pulid.ID,
 ) []*shipment.AdditionalCharge {
 	charges := make([]*shipment.AdditionalCharge, 0, len(payload.AdditionalCharges))
@@ -784,7 +790,7 @@ func mustMappedID(
 	return targetID
 }
 
-func tenderPayloadHash(payload *edi.LoadTenderPayload) string {
+func tenderPayloadHash(payload *editransfer.LoadTenderPayload) string {
 	if payload == nil {
 		return ""
 	}
@@ -799,8 +805,8 @@ func tenderPayloadHash(payload *edi.LoadTenderPayload) string {
 }
 
 func diffTenderPayloads(
-	previous *edi.LoadTenderPayload,
-	next *edi.LoadTenderPayload,
+	previous *editransfer.LoadTenderPayload,
+	next *editransfer.LoadTenderPayload,
 ) map[string]any {
 	prevMap := tenderPayloadMap(previous)
 	nextMap := tenderPayloadMap(next)
@@ -821,7 +827,7 @@ func diffTenderPayloads(
 	return diff
 }
 
-func tenderPayloadMap(payload *edi.LoadTenderPayload) map[string]any {
+func tenderPayloadMap(payload *editransfer.LoadTenderPayload) map[string]any {
 	result := map[string]any{}
 	if payload == nil {
 		return result
@@ -838,9 +844,9 @@ func tenderPayloadMap(payload *edi.LoadTenderPayload) map[string]any {
 	return result
 }
 
-func loadTenderDocumentPayload(payload *edi.LoadTenderPayload) *edi.DocumentPayload {
-	documentPayload := edi.NewLoadTenderDocumentPayload(*payload)
-	documentPayload.PurposeCode = edi.LoadTenderPurposeChange
+func loadTenderDocumentPayload(payload *editransfer.LoadTenderPayload) *edipayload.DocumentPayload {
+	documentPayload := edipayload.NewLoadTenderDocumentPayload(*payload)
+	documentPayload.PurposeCode = editransfer.LoadTenderPurposeChange
 	return &documentPayload
 }
 

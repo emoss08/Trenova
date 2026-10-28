@@ -7,7 +7,9 @@ import (
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edisync"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/editenderchange"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/editransfer"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/editenderports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -62,17 +64,24 @@ func (h *Handler) listTenderChanges(c *gin.Context) {
 		sourceShipmentID = parsed
 	}
 
-	pagination.List(c, req, h.eh, func() (*pagination.ListResult[*edi.TenderChange], error) {
-		return h.service.ListTenderChanges(
-			c.Request.Context(),
-			&editenderports.ListEDITenderChangesRequest{
-				Filter:           req,
-				RecipientID:      recipientID,
-				SourceShipmentID: sourceShipmentID,
-				Status:           edi.TenderChangeStatus(helpers.QueryString(c, "status", "")),
-			},
-		)
-	})
+	pagination.List(
+		c,
+		req,
+		h.eh,
+		func() (*pagination.ListResult[*editenderchange.TenderChange], error) {
+			return h.service.ListTenderChanges(
+				c.Request.Context(),
+				&editenderports.ListEDITenderChangesRequest{
+					Filter:           req,
+					RecipientID:      recipientID,
+					SourceShipmentID: sourceShipmentID,
+					Status: editenderchange.TenderChangeStatus(
+						helpers.QueryString(c, "status", ""),
+					),
+				},
+			)
+		},
+	)
 }
 
 func (h *Handler) getTenderChange(c *gin.Context) {
@@ -112,7 +121,7 @@ func (h *Handler) tenderChangeAction(
 		context.Context,
 		*ediservice.TenderChangeActionRequest,
 		*permissionports.RequestActor,
-	) (*edi.TenderChange, error),
+	) (*editenderchange.TenderChange, error),
 ) {
 	authCtx := authctx.GetAuthContext(c)
 	changeID, err := pulid.MustParse(c.Param("changeID"))
@@ -150,7 +159,7 @@ func (h *Handler) transferChangeAction(
 		context.Context,
 		*ediservice.TransferChangeActionRequest,
 		*permissionports.RequestActor,
-	) (*edi.TransferChange, error),
+	) (*edisync.TransferChange, error),
 ) {
 	authCtx := authctx.GetAuthContext(c)
 	changeID, err := pulid.MustParse(c.Param("changeID"))
@@ -185,7 +194,7 @@ func (h *Handler) transferChangeAction(
 func (h *Handler) withTransfer(
 	c *gin.Context,
 	direction string,
-	fn func(*gin.Context, *edi.EDITransfer),
+	fn func(*gin.Context, *editransfer.EDITransfer),
 ) {
 	authCtx := authctx.GetAuthContext(c)
 	transferID, err := pulid.MustParse(c.Param("transferID"))

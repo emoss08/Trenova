@@ -11,7 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/editransfer"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentserviceports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -90,9 +90,9 @@ func tenderDecisionChanges(outcome *tenderOutcome, orgID pulid.ID) ([]*agent.Rec
 	return changes, nil
 }
 
-func tenderResponseChange(after *edi.EDITransfer) *agent.RecordChange {
+func tenderResponseChange(after *editransfer.EDITransfer) *agent.RecordChange {
 	if after == nil || after.InboundMessageID.IsNil() ||
-		(after.Status != edi.TransferStatusRejected && after.Status != edi.TransferStatusProcessing) {
+		(after.Status != editransfer.TransferStatusRejected && after.Status != editransfer.TransferStatusProcessing) {
 		return nil
 	}
 
@@ -139,7 +139,7 @@ func tenderResponseWord(code string) string {
 	return "Declined (D)"
 }
 
-func tenderStops(transfer *edi.EDITransfer) int {
+func tenderStops(transfer *editransfer.EDITransfer) int {
 	stops := 0
 	for _, move := range transfer.TenderPayload.Moves {
 		stops += len(move.Stops)
@@ -152,7 +152,7 @@ func tenderSubject(outcome *tenderOutcome, call *tenderCall) string {
 	return "load tender" + transferIdentity(outcome.before, call.tenant.OrgID)
 }
 
-func tellsPartner(transfer *edi.EDITransfer) string {
+func tellsPartner(transfer *editransfer.EDITransfer) string {
 	if transfer.InboundMessageID.IsNotNil() {
 		return "The partner is sent a 990"
 	}

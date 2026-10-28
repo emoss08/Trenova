@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediconnectiondraftports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -88,8 +89,8 @@ func readyPlan() *ediconnectiondraftports.ConnectionDraftPlan {
 			Connection: ediconnectiondraftports.DraftConnection{
 				Sets: []ediconnectiondraftports.DraftSetDirection{
 					{
-						TransactionSet: edi.TransactionSet204,
-						Direction:      edi.DocumentDirectionInbound,
+						TransactionSet: edidocument.TransactionSet204,
+						Direction:      edidocument.DocumentDirectionInbound,
 					},
 				},
 			},
@@ -104,8 +105,8 @@ func readyPlan() *ediconnectiondraftports.ConnectionDraftPlan {
 				},
 			},
 			Sets: []ediconnectiondraftports.DraftSet{{
-				TransactionSet: edi.TransactionSet204,
-				Direction:      edi.DocumentDirectionInbound,
+				TransactionSet: edidocument.TransactionSet204,
+				Direction:      edidocument.DocumentDirectionInbound,
 				Unmet:          []ediconnectiondraftports.DraftRequirementCheck{{SegmentID: "MS1"}},
 			}},
 			Gaps: []ediconnectiondraftports.DraftGap{{Summary: "Appendix B is missing"}},
@@ -141,8 +142,8 @@ func readyPlan() *ediconnectiondraftports.ConnectionDraftPlan {
 			Change: ediconnectiondraftports.ChangeKindSame,
 		},
 		ControlNumbers: []ediconnectiondraftports.PlannedControlNumber{{
-			After: &edi.EDIControlNumberSequence{
-				Kind:      edi.ControlNumberKindInterchange,
+			After: &edidocument.EDIControlNumberSequence{
+				Kind:      edidocument.ControlNumberKindInterchange,
 				NextValue: 1000,
 			},
 			Change: ediconnectiondraftports.ChangeKindAdd,

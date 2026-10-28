@@ -108,7 +108,7 @@ again instead.
   value taken from it cites the sample's page and its ISA segment. A sample printed in a PDF reads
   back with its fixed-width padding squeezed and its long lines wrapped; the finder joins the
   wrap and the parser reads the squeezed ISA.
-- **Quotes are redacted** before they are stored or shown (`edi.RedactSecrets`). Anything after a
+- **Quotes are redacted** before they are stored or shown (`x12field.RedactSecrets`). Anything after a
   password, passphrase, secret, key or token label, and any PEM block, is masked, and a sample's
   ISA02 and ISA04 are masked with `X`. The planner redacts every quote and gap summary as it reads
   the request, and checks a quote against the page in its original and its redacted form, so a

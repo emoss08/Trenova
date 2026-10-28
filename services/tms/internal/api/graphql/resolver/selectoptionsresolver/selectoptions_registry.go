@@ -9,6 +9,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/editransfer"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -488,7 +490,9 @@ func ediCommunicationProfileSelectOption(
 	}
 }
 
-func ediDocumentTypeSelectOptionItem(entity *edi.EDIDocumentType) selectOptionConnectionItem {
+func ediDocumentTypeSelectOptionItem(
+	entity *edidocument.EDIDocumentType,
+) selectOptionConnectionItem {
 	return selectOptionConnectionItemFor(
 		ediDocumentTypeSelectOption(entity),
 		entity.CreatedAt,
@@ -496,7 +500,7 @@ func ediDocumentTypeSelectOptionItem(entity *edi.EDIDocumentType) selectOptionCo
 	)
 }
 
-func ediDocumentTypeSelectOption(entity *edi.EDIDocumentType) *gqlmodel.SelectOption {
+func ediDocumentTypeSelectOption(entity *edidocument.EDIDocumentType) *gqlmodel.SelectOption {
 	return &gqlmodel.SelectOption{
 		ID:    entity.ID.String(),
 		Label: entity.Code + " - " + entity.Name,
@@ -512,7 +516,9 @@ func ediDocumentTypeSelectOption(entity *edi.EDIDocumentType) *gqlmodel.SelectOp
 	}
 }
 
-func ediTransactionSetSelectOptionItem(entity *edi.EDITransactionSet) selectOptionConnectionItem {
+func ediTransactionSetSelectOptionItem(
+	entity *edidocument.EDITransactionSet,
+) selectOptionConnectionItem {
 	return selectOptionConnectionItemFor(
 		ediTransactionSetSelectOption(entity),
 		entity.CreatedAt,
@@ -520,7 +526,7 @@ func ediTransactionSetSelectOptionItem(entity *edi.EDITransactionSet) selectOpti
 	)
 }
 
-func ediTransactionSetSelectOption(entity *edi.EDITransactionSet) *gqlmodel.SelectOption {
+func ediTransactionSetSelectOption(entity *edidocument.EDITransactionSet) *gqlmodel.SelectOption {
 	return &gqlmodel.SelectOption{
 		ID:          entity.ID.String(),
 		Label:       string(entity.Code) + " - " + entity.Name,
@@ -572,8 +578,8 @@ func ediPartnerSelectOption(entity *edi.EDIPartner) *gqlmodel.SelectOption {
 
 func ediTransferSelectOptionItemFor(
 	orgID pulid.ID,
-) func(*edi.EDITransfer) selectOptionConnectionItem {
-	return func(entity *edi.EDITransfer) selectOptionConnectionItem {
+) func(*editransfer.EDITransfer) selectOptionConnectionItem {
+	return func(entity *editransfer.EDITransfer) selectOptionConnectionItem {
 		return selectOptionConnectionItemFor(
 			ediTransferSelectOption(entity, orgID),
 			entity.CreatedAt,
@@ -582,7 +588,10 @@ func ediTransferSelectOptionItemFor(
 	}
 }
 
-func ediTransferSelectOption(entity *edi.EDITransfer, orgID pulid.ID) *gqlmodel.SelectOption {
+func ediTransferSelectOption(
+	entity *editransfer.EDITransfer,
+	orgID pulid.ID,
+) *gqlmodel.SelectOption {
 	label := entity.TenderPayload.BOL
 	if label == "" {
 		label = "Load tender " + entity.ID.String()
@@ -658,7 +667,7 @@ func ediConnectionID(entity *edi.EDIConnection) pulid.ID {
 	return entity.ID
 }
 
-func ediTransferID(entity *edi.EDITransfer) pulid.ID {
+func ediTransferID(entity *editransfer.EDITransfer) pulid.ID {
 	return entity.ID
 }
 

@@ -7,7 +7,9 @@ import (
 	"strconv"
 
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edipayload"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edisync"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/editenderports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/internaledilifecycle"
@@ -81,13 +83,13 @@ type shipmentLinkRepository interface {
 	GetShipmentLinksByShipmentID(
 		ctx context.Context,
 		req editenderports.GetEDIShipmentLinksByShipmentIDRequest,
-	) ([]*edi.ShipmentLink, error)
+	) ([]*edisync.ShipmentLink, error)
 }
 
 type transferChangeRepository interface {
 	CreateTransferChangeIdempotent(
 		ctx context.Context,
-		entity *edi.TransferChange,
+		entity *edisync.TransferChange,
 	) (*editenderports.CreateEDITransferChangeIdempotentResult, error)
 }
 
@@ -97,8 +99,8 @@ type side struct {
 }
 
 type syncContext struct {
-	link          *edi.ShipmentLink
-	direction     edi.TransferChangeDirection
+	link          *edisync.ShipmentLink
+	direction     edisync.TransferChangeDirection
 	source        *shipment.Shipment
 	target        *shipment.Shipment
 	changed       *shipment.Shipment
@@ -109,7 +111,7 @@ type syncContext struct {
 	changeType    string
 	cancelReason  string
 	canceledByID  pulid.ID
-	transfer      *edi.TransferChange
+	transfer      *edisync.TransferChange
 	mirroredEvent *shipmentevent.Event
 	updated       *shipment.Shipment
 	lifecyclePlan *internaledilifecycle.Plan
@@ -170,7 +172,7 @@ func (o *Observer) OnShipmentEvent(ctx context.Context, event *shipmentevent.Eve
 func (o *Observer) handleLink(
 	ctx context.Context,
 	event *shipmentevent.Event,
-	link *edi.ShipmentLink,
+	link *edisync.ShipmentLink,
 ) error {
 	if link == nil {
 		return nil
@@ -192,7 +194,7 @@ func (o *Observer) handleLink(
 			return txErr
 		}
 		result.transfer = inserted.TransferChange
-		if !inserted.Created || result.transfer.Status != edi.TransferChangeStatusApplied {
+		if !inserted.Created || result.transfer.Status != edisync.TransferChangeStatusApplied {
 			return nil
 		}
 
@@ -228,7 +230,7 @@ func (o *Observer) handleLink(
 func (o *Observer) buildSyncContext(
 	ctx context.Context,
 	event *shipmentevent.Event,
-	link *edi.ShipmentLink,
+	link *edisync.ShipmentLink,
 ) (syncContext, error) {
 	result, ok := resolveDirection(event, link)
 	if !ok {
@@ -246,7 +248,7 @@ func (o *Observer) buildSyncContext(
 	result.source = source
 	result.target = target
 
-	if result.direction == edi.TransferChangeDirectionSourceToTarget {
+	if result.direction == edisync.TransferChangeDirectionSourceToTarget {
 		result.changed = source
 		result.opposite = target
 	} else {
@@ -268,7 +270,7 @@ func (o *Observer) buildSyncContext(
 		}
 		if plan != nil && (len(plan.Diffs) > 0 || len(plan.Conflicts) > 0) {
 			result.lifecyclePlan = plan
-			result.changeType = edi.TransferChangeTypeShipmentLifecycle214
+			result.changeType = edisync.TransferChangeTypeShipmentLifecycle214
 			result.next = plan.OppositePrepared.Status
 			result.transfer = buildTransferChange(event, result)
 			prepareTransferChange(result.transfer, result)
@@ -292,7 +294,7 @@ func (o *Observer) buildSyncContext(
 
 func (o *Observer) getLinkedShipments(
 	ctx context.Context,
-	link *edi.ShipmentLink,
+	link *edisync.ShipmentLink,
 ) (*shipment.Shipment, *shipment.Shipment, error) {
 	source, err := o.shipmentRepo.GetByID(ctx, &shipmentports.GetShipmentByIDRequest{
 		ID: link.SourceShipmentID,
@@ -334,7 +336,7 @@ func (o *Observer) applyChange(
 		BuID:  result.link.BusinessUnitID,
 	}
 
-	if result.changeType == edi.TransferChangeTypeShipmentCancel214 {
+	if result.changeType == edisync.TransferChangeTypeShipmentCancel214 {
 		return o.shipmentRepo.Cancel(ctx, &shipmentports.CancelShipmentRequest{
 			TenantInfo:      tenantInfo,
 			ShipmentID:      result.oppositeSide.shipmentID,
@@ -345,7 +347,7 @@ func (o *Observer) applyChange(
 		})
 	}
 
-	if result.changeType == edi.TransferChangeTypeShipmentLifecycle214 {
+	if result.changeType == edisync.TransferChangeTypeShipmentLifecycle214 {
 		return o.lifecycleApplier.ApplyPrepared(ctx, result.lifecyclePlan)
 	}
 
@@ -410,12 +412,12 @@ func (o *Observer) publishResult(ctx context.Context, result syncContext) {
 
 func resolveDirection(
 	event *shipmentevent.Event,
-	link *edi.ShipmentLink,
+	link *edisync.ShipmentLink,
 ) (syncContext, bool) {
 	if event.OrganizationID == link.SourceOrganizationID &&
 		event.ShipmentID == link.SourceShipmentID {
 		return syncContext{
-			direction: edi.TransferChangeDirectionSourceToTarget,
+			direction: edisync.TransferChangeDirectionSourceToTarget,
 			oppositeSide: side{
 				organizationID: link.TargetOrganizationID,
 				shipmentID:     link.TargetShipmentID,
@@ -425,7 +427,7 @@ func resolveDirection(
 	if event.OrganizationID == link.TargetOrganizationID &&
 		event.ShipmentID == link.TargetShipmentID {
 		return syncContext{
-			direction: edi.TransferChangeDirectionTargetToSource,
+			direction: edisync.TransferChangeDirectionTargetToSource,
 			oppositeSide: side{
 				organizationID: link.SourceOrganizationID,
 				shipmentID:     link.SourceShipmentID,
@@ -438,7 +440,7 @@ func resolveDirection(
 func buildTransferChange(
 	event *shipmentevent.Event,
 	result syncContext,
-) *edi.TransferChange {
+) *edisync.TransferChange {
 	idempotencyKey := fmt.Sprintf(
 		"%s:%s:%s:%s",
 		result.link.ID,
@@ -453,7 +455,7 @@ func buildTransferChange(
 		"previousStatus": string(result.opposite.Status),
 		"newStatus":      string(result.next),
 	}
-	if result.changeType == edi.TransferChangeTypeShipmentLifecycle214 &&
+	if result.changeType == edisync.TransferChangeTypeShipmentLifecycle214 &&
 		result.lifecyclePlan != nil {
 		diff = map[string]any{
 			"field":          "stopActuals",
@@ -463,7 +465,7 @@ func buildTransferChange(
 		}
 	}
 
-	return &edi.TransferChange{
+	return &edisync.TransferChange{
 		BusinessUnitID:        result.link.BusinessUnitID,
 		ShipmentLinkID:        result.link.ID,
 		Direction:             result.direction,
@@ -476,60 +478,60 @@ func buildTransferChange(
 	}
 }
 
-func prepareTransferChange(change *edi.TransferChange, result syncContext) {
-	change.Status = edi.TransferChangeStatusApplied
-	change.ConflictStatus = edi.TransferChangeConflictNone
+func prepareTransferChange(change *edisync.TransferChange, result syncContext) {
+	change.Status = edisync.TransferChangeStatusApplied
+	change.ConflictStatus = edisync.TransferChangeConflictNone
 	now := timeutils.NowUnix()
 	change.AppliedAt = &now
 
 	var cancelBlocker error
-	if result.changeType == edi.TransferChangeTypeShipmentCancel214 {
+	if result.changeType == edisync.TransferChangeTypeShipmentCancel214 {
 		cancelBlocker = shipmentstate.ValidateCancel(result.opposite)
 	}
 
 	switch {
-	case result.link.Status != edi.ShipmentLinkStatusActive:
-		change.Status = edi.TransferChangeStatusIgnored
+	case result.link.Status != edisync.ShipmentLinkStatusActive:
+		change.Status = edisync.TransferChangeStatusIgnored
 		change.AppliedAt = nil
 		change.Payload["ignoredReason"] = "shipment link is not active"
-	case result.link.SyncPolicy == edi.ShipmentSyncPolicyReadOnly:
-		change.Status = edi.TransferChangeStatusIgnored
+	case result.link.SyncPolicy == edisync.ShipmentSyncPolicyReadOnly:
+		change.Status = edisync.TransferChangeStatusIgnored
 		change.AppliedAt = nil
 		change.Payload["ignoredReason"] = "shipment link is read-only"
 	case result.opposite.Status == result.next &&
-		result.changeType != edi.TransferChangeTypeShipmentLifecycle214:
-		change.Status = edi.TransferChangeStatusIgnored
+		result.changeType != edisync.TransferChangeTypeShipmentLifecycle214:
+		change.Status = edisync.TransferChangeStatusIgnored
 		change.AppliedAt = nil
 		change.Payload["ignoredReason"] = ignoredSameStatusReason(result)
-	case result.changeType == edi.TransferChangeTypeShipmentLifecycle214 &&
+	case result.changeType == edisync.TransferChangeTypeShipmentLifecycle214 &&
 		result.lifecyclePlan != nil &&
 		result.lifecyclePlan.ConflictReason != "":
-		change.Status = edi.TransferChangeStatusPendingReview
-		change.ConflictStatus = edi.TransferChangeConflictConflict
+		change.Status = edisync.TransferChangeStatusPendingReview
+		change.ConflictStatus = edisync.TransferChangeConflictConflict
 		change.ConflictReason = result.lifecyclePlan.ConflictReason
 		change.AppliedAt = nil
 		change.Payload["conflictReason"] = change.ConflictReason
 		change.Payload["conflicts"] = result.lifecyclePlan.Conflicts
 	case cancelBlocker != nil:
-		change.Status = edi.TransferChangeStatusPendingReview
-		change.ConflictStatus = edi.TransferChangeConflictConflict
+		change.Status = edisync.TransferChangeStatusPendingReview
+		change.ConflictStatus = edisync.TransferChangeConflictConflict
 		change.ConflictReason = "Cannot cancel linked shipment: " + cancelBlocker.Error()
 		change.AppliedAt = nil
 		change.Payload["conflictReason"] = change.ConflictReason
-	case result.changeType != edi.TransferChangeTypeShipmentLifecycle214 &&
+	case result.changeType != edisync.TransferChangeTypeShipmentLifecycle214 &&
 		!shipmentstate.CanTransitionShipmentStatus(result.opposite.Status, result.next):
-		change.Status = edi.TransferChangeStatusPendingReview
-		change.ConflictStatus = edi.TransferChangeConflictConflict
+		change.Status = edisync.TransferChangeStatusPendingReview
+		change.ConflictStatus = edisync.TransferChangeConflictConflict
 		change.ConflictReason = "Cannot transition linked shipment from " +
 			string(result.opposite.Status) + " to " + string(result.next)
 		change.AppliedAt = nil
 		change.Payload["conflictReason"] = change.ConflictReason
-	case result.link.SyncPolicy == edi.ShipmentSyncPolicyManualReview:
-		change.Status = edi.TransferChangeStatusPendingReview
+	case result.link.SyncPolicy == edisync.ShipmentSyncPolicyManualReview:
+		change.Status = edisync.TransferChangeStatusPendingReview
 		change.AppliedAt = nil
 		change.Payload["reviewReason"] = "shipment link requires manual review"
 	case !canAutoApply(result.link.SyncPolicy):
-		change.Status = edi.TransferChangeStatusIgnored
+		change.Status = edisync.TransferChangeStatusIgnored
 		change.AppliedAt = nil
 		change.Payload["ignoredReason"] = "shipment link sync policy does not auto-apply status"
 	}
@@ -538,13 +540,13 @@ func prepareTransferChange(change *edi.TransferChange, result syncContext) {
 func buildPayload(event *shipmentevent.Event, result syncContext) map[string]any {
 	previousStatus := result.opposite.Status
 	newStatus := result.next
-	if result.changeType == edi.TransferChangeTypeShipmentLifecycle214 &&
+	if result.changeType == edisync.TransferChangeTypeShipmentLifecycle214 &&
 		result.lifecyclePlan != nil {
 		previousStatus = result.lifecyclePlan.OppositeOriginal.Status
 		newStatus = result.lifecyclePlan.OppositePrepared.Status
 	}
 
-	statusPayload := edi.ShipmentStatusPayload{
+	statusPayload := edipayload.ShipmentStatusPayload{
 		ShipmentID: result.changed.ID,
 		BOL:        result.changed.BOL,
 		ProNumber:  result.changed.ProNumber,
@@ -565,7 +567,7 @@ func buildPayload(event *shipmentevent.Event, result syncContext) map[string]any
 	}
 
 	payload := map[string]any{
-		"transactionSet": string(edi.TransactionSet214),
+		"transactionSet": string(edidocument.TransactionSet214),
 		"shipmentStatus": statusPayload,
 		"sourceEventId":  event.ID.String(),
 		"shipmentLinkId": result.link.ID.String(),
@@ -583,10 +585,10 @@ func buildPayload(event *shipmentevent.Event, result syncContext) map[string]any
 		"previousStatus": string(previousStatus),
 		"newStatus":      string(newStatus),
 	}
-	if result.changeType == edi.TransferChangeTypeShipmentCancel214 {
+	if result.changeType == edisync.TransferChangeTypeShipmentCancel214 {
 		payload["cancellationReason"] = result.cancelReason
 	}
-	if result.changeType == edi.TransferChangeTypeShipmentLifecycle214 &&
+	if result.changeType == edisync.TransferChangeTypeShipmentLifecycle214 &&
 		result.lifecyclePlan != nil {
 		payload["matchedStopActualDiffs"] = result.lifecyclePlan.Diffs
 	}
@@ -602,20 +604,20 @@ func buildMirroredEvent(
 	summary := "Status synced from internal EDI 214"
 	previousStatus := result.opposite.Status
 	newStatus := result.next
-	if result.changeType == edi.TransferChangeTypeShipmentLifecycle214 &&
+	if result.changeType == edisync.TransferChangeTypeShipmentLifecycle214 &&
 		result.lifecyclePlan != nil {
 		summary = "Lifecycle synced from internal EDI 214"
 		previousStatus = result.lifecyclePlan.OppositeOriginal.Status
 		newStatus = result.updated.Status
 	}
 	metadata := map[string]any{
-		"proNumber":                           result.updated.ProNumber,
-		"previousStatus":                      string(previousStatus),
-		"newStatus":                           string(newStatus),
-		edi.InternalEDIMirroredFromEventIDKey: sourceEvent.ID.String(),
-		edi.InternalEDIShipmentLinkIDKey:      result.link.ID.String(),
+		"proNumber":      result.updated.ProNumber,
+		"previousStatus": string(previousStatus),
+		"newStatus":      string(newStatus),
+		edisync.InternalEDIMirroredFromEventIDKey: sourceEvent.ID.String(),
+		edisync.InternalEDIShipmentLinkIDKey:      result.link.ID.String(),
 	}
-	if result.changeType == edi.TransferChangeTypeShipmentCancel214 {
+	if result.changeType == edisync.TransferChangeTypeShipmentCancel214 {
 		eventType = shipmentevent.TypeShipmentCanceled
 		summary = "Cancellation synced from internal EDI 214"
 		metadata["reason"] = result.cancelReason
@@ -675,13 +677,13 @@ func isLifecycleCandidate(event *shipmentevent.Event) bool {
 
 func changeTypeForEvent(event *shipmentevent.Event) string {
 	if event.Type == shipmentevent.TypeShipmentCanceled {
-		return edi.TransferChangeTypeShipmentCancel214
+		return edisync.TransferChangeTypeShipmentCancel214
 	}
-	return edi.TransferChangeTypeShipmentStatus214
+	return edisync.TransferChangeTypeShipmentStatus214
 }
 
 func ignoredSameStatusReason(result syncContext) string {
-	if result.changeType == edi.TransferChangeTypeShipmentCancel214 {
+	if result.changeType == edisync.TransferChangeTypeShipmentCancel214 {
 		return "linked shipment is already canceled"
 	}
 	return "linked shipment already has status"
@@ -694,13 +696,13 @@ func canceledByIDForEvent(event *shipmentevent.Event) pulid.ID {
 	return pulid.Nil
 }
 
-func canAutoApply(policy edi.ShipmentSyncPolicy) bool {
-	return policy == edi.ShipmentSyncPolicyAutoOperational ||
-		policy == edi.ShipmentSyncPolicyAutoAllSafe
+func canAutoApply(policy edisync.ShipmentSyncPolicy) bool {
+	return policy == edisync.ShipmentSyncPolicyAutoOperational ||
+		policy == edisync.ShipmentSyncPolicyAutoAllSafe
 }
 
 func hasMirroredSource(event *shipmentevent.Event) bool {
-	return metadataString(event.Metadata, edi.InternalEDIMirroredFromEventIDKey) != ""
+	return metadataString(event.Metadata, edisync.InternalEDIMirroredFromEventIDKey) != ""
 }
 
 func metadataString(metadata map[string]any, key string) string {

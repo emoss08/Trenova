@@ -12,6 +12,12 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ladingdoc"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edicarrierinvoice"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/ediinboundfile"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edimessage"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edipayload"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/editenderchange"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/editenderports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
@@ -43,7 +49,7 @@ import (
 
 type tenderedCarrierFixture struct {
 	service       *Service
-	file          *edi.EDIInboundFile
+	file          *ediinboundfile.EDIInboundFile
 	partner       *edi.EDIPartner
 	tenderRepo    *fakeTenderRepository
 	recipientRepo *editenderportsmock.MockEDITenderRecipientRepository
@@ -82,7 +88,7 @@ func buildTenderedCarrierFixture(t *testing.T, withStopActuals bool) *tenderedCa
 	buID := pulid.MustNew("bu_")
 	partnerID := pulid.MustNew("edip_")
 	fixture := &tenderedCarrierFixture{
-		file: &edi.EDIInboundFile{
+		file: &ediinboundfile.EDIInboundFile{
 			ID:             pulid.MustNew("ediinf_"),
 			OrganizationID: orgID,
 			BusinessUnitID: buID,
@@ -178,7 +184,7 @@ func parse214Transaction(t *testing.T, raw string) (*parsedTransaction, *shipmen
 	require.NoError(t, err)
 	require.Len(t, interchange.transactions, 1)
 	transaction := &interchange.transactions[0]
-	require.Equal(t, edi.TransactionSet214, transaction.set)
+	require.Equal(t, edidocument.TransactionSet214, transaction.set)
 
 	client := lading.Default()
 	starter, err := client.Starter(t.Context(), &lading.StarterRequest{
@@ -230,7 +236,7 @@ func TestRouteShipmentStatus_RecipientHitDoesNotUseOfferFallback(t *testing.T) {
 
 	fixture := newTenderedCarrierFixture(t)
 	shipmentID := pulid.MustNew("shp_")
-	recipient := &edi.TenderRecipient{
+	recipient := &editenderchange.TenderRecipient{
 		ID:                   pulid.MustNew("editr_"),
 		SourceOrganizationID: fixture.file.OrganizationID,
 		BusinessUnitID:       fixture.file.BusinessUnitID,
@@ -614,14 +620,14 @@ func TestRouteShipmentStatus_OfferInfrastructureErrorPropagates(t *testing.T) {
 }
 
 func (f *tenderedCarrierFixture) freightInvoiceMessage(
-	payload *edi.FreightInvoicePayload,
-) *edi.EDIMessage {
-	return &edi.EDIMessage{
+	payload *edipayload.FreightInvoicePayload,
+) *edimessage.EDIMessage {
+	return &edimessage.EDIMessage{
 		ID:             pulid.MustNew("edim_"),
 		OrganizationID: f.file.OrganizationID,
 		BusinessUnitID: f.file.BusinessUnitID,
-		PayloadSnapshot: edi.DocumentPayload{
-			TransactionSet: edi.TransactionSet210,
+		PayloadSnapshot: edipayload.DocumentPayload{
+			TransactionSet: edidocument.TransactionSet210,
 			FreightInvoice: payload,
 		},
 	}
@@ -660,18 +666,18 @@ func TestRouteFreightInvoice_RecipientMissMatchesAcceptedOfferByBOL(t *testing.T
 		).
 		Once()
 
-	var recordedInvoice *edi.CarrierInvoice
+	var recordedInvoice *edicarrierinvoice.CarrierInvoice
 	fixture.invoiceRepo.EXPECT().
 		CreateCarrierInvoice(mock.Anything, mock.Anything).
 		RunAndReturn(
-			func(_ context.Context, entity *edi.CarrierInvoice) (*edi.CarrierInvoice, error) {
+			func(_ context.Context, entity *edicarrierinvoice.CarrierInvoice) (*edicarrierinvoice.CarrierInvoice, error) {
 				recordedInvoice = entity
 				return entity, nil
 			},
 		).
 		Once()
 
-	payload := &edi.FreightInvoicePayload{
+	payload := &edipayload.FreightInvoicePayload{
 		InvoiceNumber:    "INV-1",
 		BOL:              "BOL-42",
 		TotalAmount:      decimal.NullDecimal{Decimal: decimal.NewFromInt(1500), Valid: true},
@@ -700,7 +706,7 @@ func TestRouteFreightInvoice_RecipientMissMatchesAcceptedOfferByBOL(t *testing.T
 	require.True(t, recordedInvoice.ExpectedAmount.Decimal.Equal(offer.Rate))
 	require.Equal(
 		t,
-		edi.CarrierInvoiceReconciliationStatusMatched,
+		edicarrierinvoice.CarrierInvoiceReconciliationStatusMatched,
 		recordedInvoice.ReconciliationStatus,
 	)
 }
@@ -723,18 +729,18 @@ func TestRouteFreightInvoice_PerMileOfferLeavesExpectedAmountNull(t *testing.T) 
 		).
 		Once()
 
-	var recordedInvoice *edi.CarrierInvoice
+	var recordedInvoice *edicarrierinvoice.CarrierInvoice
 	fixture.invoiceRepo.EXPECT().
 		CreateCarrierInvoice(mock.Anything, mock.Anything).
 		RunAndReturn(
-			func(_ context.Context, entity *edi.CarrierInvoice) (*edi.CarrierInvoice, error) {
+			func(_ context.Context, entity *edicarrierinvoice.CarrierInvoice) (*edicarrierinvoice.CarrierInvoice, error) {
 				recordedInvoice = entity
 				return entity, nil
 			},
 		).
 		Once()
 
-	payload := &edi.FreightInvoicePayload{
+	payload := &edipayload.FreightInvoicePayload{
 		InvoiceNumber:    "INV-1",
 		BOL:              "BOL-42",
 		TotalAmount:      decimal.NullDecimal{Decimal: decimal.NewFromInt(1500), Valid: true},
@@ -779,7 +785,7 @@ func TestRouteFreightInvoice_TenderedOfferAutoMatches(t *testing.T) {
 	fixture.invoiceRepo.EXPECT().
 		CreateCarrierInvoice(mock.Anything, mock.Anything).
 		RunAndReturn(
-			func(_ context.Context, entity *edi.CarrierInvoice) (*edi.CarrierInvoice, error) {
+			func(_ context.Context, entity *edicarrierinvoice.CarrierInvoice) (*edicarrierinvoice.CarrierInvoice, error) {
 				entity.ID = invoiceID
 				return entity, nil
 			},
@@ -798,7 +804,7 @@ func TestRouteFreightInvoice_TenderedOfferAutoMatches(t *testing.T) {
 		}, nil).
 		Once()
 
-	payload := &edi.FreightInvoicePayload{
+	payload := &edipayload.FreightInvoicePayload{
 		InvoiceNumber:    "INV-1",
 		BOL:              "BOL-42",
 		TotalAmount:      decimal.NullDecimal{Decimal: decimal.NewFromInt(1500), Valid: true},
@@ -841,7 +847,7 @@ func TestRouteFreightInvoice_AutoMatchWarningsSurfaceOnFile(t *testing.T) {
 	fixture.invoiceRepo.EXPECT().
 		CreateCarrierInvoice(mock.Anything, mock.Anything).
 		RunAndReturn(
-			func(_ context.Context, entity *edi.CarrierInvoice) (*edi.CarrierInvoice, error) {
+			func(_ context.Context, entity *edicarrierinvoice.CarrierInvoice) (*edicarrierinvoice.CarrierInvoice, error) {
 				entity.ID = pulid.MustNew("edici_")
 				return entity, nil
 			},
@@ -857,7 +863,7 @@ func TestRouteFreightInvoice_AutoMatchWarningsSurfaceOnFile(t *testing.T) {
 		}, nil).
 		Once()
 
-	payload := &edi.FreightInvoicePayload{
+	payload := &edipayload.FreightInvoicePayload{
 		InvoiceNumber:    "INV-1",
 		BOL:              "BOL-42",
 		TotalAmount:      decimal.NullDecimal{Decimal: decimal.NewFromInt(1500), Valid: true},
@@ -897,7 +903,7 @@ func TestRouteFreightInvoice_AutoMatchErrorDegradesToWarning(t *testing.T) {
 	fixture.invoiceRepo.EXPECT().
 		CreateCarrierInvoice(mock.Anything, mock.Anything).
 		RunAndReturn(
-			func(_ context.Context, entity *edi.CarrierInvoice) (*edi.CarrierInvoice, error) {
+			func(_ context.Context, entity *edicarrierinvoice.CarrierInvoice) (*edicarrierinvoice.CarrierInvoice, error) {
 				entity.ID = pulid.MustNew("edici_")
 				return entity, nil
 			},
@@ -908,7 +914,7 @@ func TestRouteFreightInvoice_AutoMatchErrorDegradesToWarning(t *testing.T) {
 		Return(nil, errors.New("settlement database unavailable")).
 		Once()
 
-	payload := &edi.FreightInvoicePayload{
+	payload := &edipayload.FreightInvoicePayload{
 		InvoiceNumber:    "INV-1",
 		BOL:              "BOL-42",
 		TotalAmount:      decimal.NullDecimal{Decimal: decimal.NewFromInt(1500), Valid: true},
@@ -939,14 +945,14 @@ func TestRouteFreightInvoice_NoOfferSkipsAutoMatch(t *testing.T) {
 	fixture.invoiceRepo.EXPECT().
 		CreateCarrierInvoice(mock.Anything, mock.Anything).
 		RunAndReturn(
-			func(_ context.Context, entity *edi.CarrierInvoice) (*edi.CarrierInvoice, error) {
+			func(_ context.Context, entity *edicarrierinvoice.CarrierInvoice) (*edicarrierinvoice.CarrierInvoice, error) {
 				entity.ID = pulid.MustNew("edici_")
 				return entity, nil
 			},
 		).
 		Once()
 
-	payload := &edi.FreightInvoicePayload{
+	payload := &edipayload.FreightInvoicePayload{
 		InvoiceNumber:    "INV-1",
 		BOL:              "BOL-42",
 		TotalAmount:      decimal.NullDecimal{Decimal: decimal.NewFromInt(1500), Valid: true},
@@ -971,18 +977,18 @@ func TestRouteFreightInvoice_RecipientMissAndOfferMissStillRecordsInvoice(t *tes
 	fixture := newTenderedCarrierFixture(t)
 	fixture.expectRecipientMiss()
 
-	var recordedInvoice *edi.CarrierInvoice
+	var recordedInvoice *edicarrierinvoice.CarrierInvoice
 	fixture.invoiceRepo.EXPECT().
 		CreateCarrierInvoice(mock.Anything, mock.Anything).
 		RunAndReturn(
-			func(_ context.Context, entity *edi.CarrierInvoice) (*edi.CarrierInvoice, error) {
+			func(_ context.Context, entity *edicarrierinvoice.CarrierInvoice) (*edicarrierinvoice.CarrierInvoice, error) {
 				recordedInvoice = entity
 				return entity, nil
 			},
 		).
 		Once()
 
-	payload := &edi.FreightInvoicePayload{
+	payload := &edipayload.FreightInvoicePayload{
 		InvoiceNumber:    "INV-1",
 		BOL:              "BOL-42",
 		TotalAmount:      decimal.NullDecimal{Decimal: decimal.NewFromInt(1500), Valid: true},

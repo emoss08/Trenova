@@ -5,6 +5,12 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edimessage"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edipayload"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edisync"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/editenderchange"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/editransfer"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/edimessageports"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/editenderports"
@@ -27,8 +33,8 @@ const (
 )
 
 type TransferApprovalPlan struct {
-	Transfer      *edi.EDITransfer
-	After         *edi.EDITransfer
+	Transfer      *editransfer.EDITransfer
+	After         *editransfer.EDITransfer
 	Mapping       *MappingPreview
 	Shipment      *shipment.Shipment
 	SendsResponse bool
@@ -36,7 +42,7 @@ type TransferApprovalPlan struct {
 }
 
 type DeliveryPlan struct {
-	Message *edi.EDIMessage
+	Message *edimessage.EDIMessage
 	Profile *edi.EDICommunicationProfile
 }
 
@@ -44,21 +50,21 @@ type LoadTenderPlan struct {
 	SourceShipment *shipment.Shipment
 	SourcePartner  *edi.EDIPartner
 	TargetPartner  *edi.EDIPartner
-	Payload        edi.LoadTenderPayload
+	Payload        editransfer.LoadTenderPayload
 	Mapping        *MappingPreview
-	Status         edi.TransferStatus
+	Status         editransfer.TransferStatus
 }
 
 type TransferApprovalMark struct {
 	BusinessUnitID pulid.ID
-	Mapping        []edi.MappingResolution
+	Mapping        []editransfer.MappingResolution
 	ApproverID     pulid.ID
 	At             int64
 }
 
-func MarkTransferApprovalStarted(transfer *edi.EDITransfer, mark *TransferApprovalMark) {
+func MarkTransferApprovalStarted(transfer *editransfer.EDITransfer, mark *TransferApprovalMark) {
 	at := mark.At
-	transfer.Status = edi.TransferStatusProcessing
+	transfer.Status = editransfer.TransferStatusProcessing
 	transfer.TargetBusinessUnitID = mark.BusinessUnitID
 	transfer.MappingSnapshot = mark.Mapping
 	transfer.ApprovedByID = mark.ApproverID
@@ -69,21 +75,26 @@ func MarkTransferApprovalStarted(transfer *edi.EDITransfer, mark *TransferApprov
 	transfer.FailureReason = ""
 }
 
-func MarkTransferRejected(transfer *edi.EDITransfer, reason string, actorID pulid.ID, at int64) {
-	transfer.Status = edi.TransferStatusRejected
+func MarkTransferRejected(
+	transfer *editransfer.EDITransfer,
+	reason string,
+	actorID pulid.ID,
+	at int64,
+) {
+	transfer.Status = editransfer.TransferStatusRejected
 	transfer.RejectionReason = reason
 	transfer.RejectedByID = actorID
 	transfer.RejectedAt = &at
 }
 
-func MarkTransferCanceled(transfer *edi.EDITransfer, actorID pulid.ID, at int64) {
-	transfer.Status = edi.TransferStatusCanceled
+func MarkTransferCanceled(transfer *editransfer.EDITransfer, actorID pulid.ID, at int64) {
+	transfer.Status = editransfer.TransferStatusCanceled
 	transfer.CanceledByID = actorID
 	transfer.CanceledAt = &at
 }
 
-func MarkTransferExpired(transfer *edi.EDITransfer, at int64) {
-	transfer.Status = edi.TransferStatusExpired
+func MarkTransferExpired(transfer *editransfer.EDITransfer, at int64) {
+	transfer.Status = editransfer.TransferStatusExpired
 	transfer.ProcessedAt = &at
 }
 
@@ -94,11 +105,11 @@ type ChangeReviewMark struct {
 	At         int64
 }
 
-func MarkTenderChangeReviewed(change *edi.TenderChange, mark *ChangeReviewMark) {
+func MarkTenderChangeReviewed(change *editenderchange.TenderChange, mark *ChangeReviewMark) {
 	at := mark.At
-	change.Status = edi.TenderChangeStatusRejected
+	change.Status = editenderchange.TenderChangeStatusRejected
 	if mark.Applied {
-		change.Status = edi.TenderChangeStatusApplied
+		change.Status = editenderchange.TenderChangeStatusApplied
 		change.AppliedByID = mark.ReviewerID
 		change.AppliedAt = &at
 	}
@@ -109,11 +120,11 @@ func MarkTenderChangeReviewed(change *edi.TenderChange, mark *ChangeReviewMark) 
 	}
 }
 
-func MarkTransferChangeReviewed(change *edi.TransferChange, mark *ChangeReviewMark) {
+func MarkTransferChangeReviewed(change *edisync.TransferChange, mark *ChangeReviewMark) {
 	at := mark.At
-	change.Status = edi.TransferChangeStatusRejected
+	change.Status = edisync.TransferChangeStatusRejected
 	if mark.Applied {
-		change.Status = edi.TransferChangeStatusApplied
+		change.Status = edisync.TransferChangeStatusApplied
 		change.AppliedByID = mark.ReviewerID
 		change.AppliedAt = &at
 	}
@@ -124,11 +135,11 @@ func MarkTransferChangeReviewed(change *edi.TransferChange, mark *ChangeReviewMa
 	}
 }
 
-func TenderResponseFor(transfer *edi.EDITransfer) *edi.TenderResponsePayload {
+func TenderResponseFor(transfer *editransfer.EDITransfer) *edipayload.TenderResponsePayload {
 	return buildTenderResponsePayload(transfer).TenderResponse
 }
 
-func RequireActionableTransfer(transfer *edi.EDITransfer, verb string) error {
+func RequireActionableTransfer(transfer *editransfer.EDITransfer, verb string) error {
 	if transfer != nil && transfer.Status.IsActionable() {
 		return nil
 	}
@@ -174,8 +185,11 @@ func TransferRejectionReason(raw string) (string, error) {
 	return reason, nil
 }
 
-func CheckTenderChangeReview(change *edi.TenderChange, tenantInfo pagination.TenantInfo) error {
-	if change == nil || change.Status != edi.TenderChangeStatusPendingReview {
+func CheckTenderChangeReview(
+	change *editenderchange.TenderChange,
+	tenantInfo pagination.TenantInfo,
+) error {
+	if change == nil || change.Status != editenderchange.TenderChangeStatusPendingReview {
 		return errortypes.NewValidationError(
 			"status",
 			errortypes.ErrInvalidOperation,
@@ -188,10 +202,10 @@ func CheckTenderChangeReview(change *edi.TenderChange, tenantInfo pagination.Ten
 
 func (s *Service) CheckTransferChangeReview(
 	ctx context.Context,
-	change *edi.TransferChange,
+	change *edisync.TransferChange,
 	tenantInfo pagination.TenantInfo,
 ) error {
-	if change == nil || change.Status != edi.TransferChangeStatusPendingReview {
+	if change == nil || change.Status != edisync.TransferChangeStatusPendingReview {
 		return errortypes.NewValidationError(
 			"status",
 			errortypes.ErrInvalidOperation,
@@ -283,14 +297,14 @@ func (s *Service) PlanRetryMessageDelivery(
 	if err != nil {
 		return nil, err
 	}
-	if message.Direction != edi.DocumentDirectionOutbound {
+	if message.Direction != edidocument.DocumentDirectionOutbound {
 		return nil, errortypes.NewValidationError(
 			"messageId",
 			errortypes.ErrInvalidOperation,
 			"Only outbound EDI messages can be delivered",
 		)
 	}
-	if message.DeliveryStatus != edi.MessageDeliveryStatusQueued &&
+	if message.DeliveryStatus != edimessage.MessageDeliveryStatusQueued &&
 		!message.DeliveryStatus.IsRetryable() {
 		return nil, errortypes.NewValidationError(
 			"deliveryStatus",
@@ -321,14 +335,14 @@ func (s *Service) PlanReplayMessageDelivery(
 	if err != nil {
 		return nil, err
 	}
-	if message.Direction != edi.DocumentDirectionOutbound {
+	if message.Direction != edidocument.DocumentDirectionOutbound {
 		return nil, errortypes.NewValidationError(
 			"messageId",
 			errortypes.ErrInvalidOperation,
 			"Only outbound EDI messages can be replayed",
 		)
 	}
-	if message.DeliveryStatus != edi.MessageDeliveryStatusSent {
+	if message.DeliveryStatus != edimessage.MessageDeliveryStatusSent {
 		return nil, errortypes.NewValidationError(
 			"deliveryStatus",
 			errortypes.ErrInvalidOperation,
@@ -353,7 +367,7 @@ func (s *Service) PlanReplayMessageDelivery(
 func (s *Service) deliverableMessage(
 	ctx context.Context,
 	req *RetryMessageDeliveryRequest,
-) (*edi.EDIMessage, error) {
+) (*edimessage.EDIMessage, error) {
 	if req == nil || req.MessageID.IsNil() {
 		return nil, errortypes.NewValidationError(
 			"messageId",
@@ -386,7 +400,7 @@ type PreviewTenderResponseRequest struct {
 type TenderResponsePreview struct {
 	OutboundDocumentPreview
 
-	Transfer *edi.EDITransfer
+	Transfer *editransfer.EDITransfer
 	Choice   TenderResponseChoice
 }
 
@@ -424,7 +438,7 @@ func (s *Service) PreviewTenderResponse(
 
 func tenderResponseRequest(
 	tenantInfo pagination.TenantInfo,
-	transfer *edi.EDITransfer,
+	transfer *editransfer.EDITransfer,
 	actorID pulid.ID,
 ) *GenerateEDIDocumentRequest {
 	payload := buildTenderResponsePayload(transfer)
@@ -433,19 +447,19 @@ func tenderResponseRequest(
 		TenantInfo:     tenantInfo,
 		EDIPartnerID:   transfer.TargetPartnerID,
 		TransferID:     transfer.ID,
-		TransactionSet: edi.TransactionSet990,
-		Direction:      edi.DocumentDirectionOutbound,
+		TransactionSet: edidocument.TransactionSet990,
+		Direction:      edidocument.DocumentDirectionOutbound,
 		Payload:        &payload,
 		GeneratedByID:  actorID,
 	}
 }
 
 func tenderResponseToPreview(
-	transfer *edi.EDITransfer,
+	transfer *editransfer.EDITransfer,
 	partnerID pulid.ID,
 	choice TenderResponseChoice,
 	reason string,
-) (*edi.EDITransfer, error) {
+) (*editransfer.EDITransfer, error) {
 	if transfer.InboundMessageID.IsNil() {
 		return nil, errortypes.NewValidationError(
 			"transferId",
@@ -463,7 +477,7 @@ func tenderResponseToPreview(
 
 	answered := *transfer
 	switch {
-	case transfer.Status == edi.TransferStatusApproved || transfer.Status == edi.TransferStatusRejected:
+	case transfer.Status == editransfer.TransferStatusApproved || transfer.Status == editransfer.TransferStatusRejected:
 		decided := tenderChoiceOf(transfer)
 		if choice != "" && choice != decided {
 			return nil, errortypes.NewValidationError(
@@ -476,9 +490,9 @@ func tenderResponseToPreview(
 	case transfer.Status.IsActionable():
 		switch choice {
 		case TenderResponseAccept:
-			answered.Status = edi.TransferStatusApproved
+			answered.Status = editransfer.TransferStatusApproved
 		case TenderResponseDecline:
-			answered.Status = edi.TransferStatusRejected
+			answered.Status = editransfer.TransferStatusRejected
 			answered.RejectionReason = strings.TrimSpace(reason)
 		default:
 			return nil, errortypes.NewValidationError(
@@ -499,8 +513,8 @@ func tenderResponseToPreview(
 	return &answered, nil
 }
 
-func tenderChoiceOf(transfer *edi.EDITransfer) TenderResponseChoice {
-	if transfer.Status == edi.TransferStatusRejected {
+func tenderChoiceOf(transfer *editransfer.EDITransfer) TenderResponseChoice {
+	if transfer.Status == editransfer.TransferStatusRejected {
 		return TenderResponseDecline
 	}
 
@@ -515,10 +529,10 @@ type TransferChangeEffect struct {
 func (s *Service) PlanTransferChangeEffect(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	change *edi.TransferChange,
+	change *edisync.TransferChange,
 ) (*TransferChangeEffect, error) {
 	switch change.ChangeType {
-	case edi.TransferChangeTypeShipmentStatus214, edi.TransferChangeTypeShipmentCancel214:
+	case edisync.TransferChangeTypeShipmentStatus214, edisync.TransferChangeTypeShipmentCancel214:
 	default:
 		return &TransferChangeEffect{}, nil
 	}

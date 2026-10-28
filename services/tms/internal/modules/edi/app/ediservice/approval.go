@@ -5,7 +5,9 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edisync"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/editenderchange"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/editransfer"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/editenderports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -41,7 +43,7 @@ func (s *Service) MappingPreview(
 // mapping.
 func (s *Service) MappingPreviewOf(
 	ctx context.Context,
-	transfer *edi.EDITransfer,
+	transfer *editransfer.EDITransfer,
 ) (*MappingPreview, error) {
 	targetPartner, err := s.partnerRepo.GetByID(ctx, edipartnerports.GetEDIPartnerByIDRequest{
 		ID: transfer.TargetPartnerID,
@@ -62,7 +64,7 @@ func (s *Service) ApproveTransfer(
 	ctx context.Context,
 	req *ApproveTransferRequest,
 	actor *permissionports.RequestActor,
-) (*edi.EDITransfer, error) {
+) (*editransfer.EDITransfer, error) {
 	if actor == nil || actor.UserID.IsNil() {
 		return nil, errortypes.NewValidationError(
 			"approver",
@@ -71,8 +73,8 @@ func (s *Service) ApproveTransfer(
 		)
 	}
 
-	var original *edi.EDITransfer
-	var updated *edi.EDITransfer
+	var original *editransfer.EDITransfer
+	var updated *editransfer.EDITransfer
 	var preview *MappingPreview
 	err := s.db.Transact(
 		ctx,
@@ -172,7 +174,7 @@ func (s *Service) ApproveTransfer(
 
 func (s *Service) startApprovalWorkflow(
 	ctx context.Context,
-	transfer *edi.EDITransfer,
+	transfer *editransfer.EDITransfer,
 	tenantInfo pagination.TenantInfo,
 	actor *permissionports.RequestActor,
 ) (string, error) {
@@ -215,16 +217,16 @@ func (s *Service) startApprovalWorkflow(
 
 func (s *Service) restoreTransferAfterWorkflowStartFailure(
 	ctx context.Context,
-	transfer *edi.EDITransfer,
+	transfer *editransfer.EDITransfer,
 	preview *MappingPreview,
 ) {
 	if transfer == nil {
 		return
 	}
 
-	transfer.Status = edi.TransferStatusPendingApproval
+	transfer.Status = editransfer.TransferStatusPendingApproval
 	if preview != nil && len(preview.Unresolved) > 0 {
-		transfer.Status = edi.TransferStatusMappingRequired
+		transfer.Status = editransfer.TransferStatusMappingRequired
 	}
 	transfer.ApprovedByID = pulid.Nil
 	transfer.ApprovedAt = nil
@@ -251,8 +253,8 @@ func (s *Service) ProcessLoadTenderApproval(
 	ctx = dbscope.WithValidTenant(ctx, payload.TenantInfo.DBTenant())
 	result := new(ApproveLoadTenderTransferWorkflowResult)
 	var processingErr error
-	var approvedTransfer *edi.EDITransfer
-	var acceptedInternalTransfer *edi.EDITransfer
+	var approvedTransfer *editransfer.EDITransfer
+	var acceptedInternalTransfer *editransfer.EDITransfer
 
 	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		transfer, err := s.transferRepo.GetTransferForUpdate(
@@ -267,7 +269,8 @@ func (s *Service) ProcessLoadTenderApproval(
 			return err
 		}
 
-		if transfer.Status == edi.TransferStatusApproved && transfer.TargetShipmentID.IsNotNil() {
+		if transfer.Status == editransfer.TransferStatusApproved &&
+			transfer.TargetShipmentID.IsNotNil() {
 			processedAt := timeutils.NowUnix()
 			if transfer.ProcessedAt != nil {
 				processedAt = *transfer.ProcessedAt
@@ -283,17 +286,17 @@ func (s *Service) ProcessLoadTenderApproval(
 
 		//nolint:exhaustive // Only terminal and processing states require special approval handling.
 		switch transfer.Status {
-		case edi.TransferStatusRejected,
-			edi.TransferStatusExpired,
-			edi.TransferStatusCanceled,
-			edi.TransferStatusFailed:
+		case editransfer.TransferStatusRejected,
+			editransfer.TransferStatusExpired,
+			editransfer.TransferStatusCanceled,
+			editransfer.TransferStatusFailed:
 			processingErr = temporal.NewNonRetryableApplicationError(
 				"EDI transfer is no longer approval eligible",
 				"TransferNotApprovalEligible",
 				nil,
 			)
 			return nil
-		case edi.TransferStatusProcessing:
+		case editransfer.TransferStatusProcessing:
 		default:
 			processingErr = temporal.NewNonRetryableApplicationError(
 				"EDI transfer is not processing approval",
@@ -320,7 +323,7 @@ func (s *Service) ProcessLoadTenderApproval(
 		}
 		if len(preview.Unresolved) > 0 {
 			now := timeutils.NowUnix()
-			transfer.Status = edi.TransferStatusMappingRequired
+			transfer.Status = editransfer.TransferStatusMappingRequired
 			transfer.MappingSnapshot = preview.All
 			transfer.ProcessedAt = &now
 			if _, err = s.transferRepo.UpdateTransfer(txCtx, transfer); err != nil {
@@ -360,7 +363,7 @@ func (s *Service) ProcessLoadTenderApproval(
 		}
 
 		now := timeutils.NowUnix()
-		transfer.Status = edi.TransferStatusApproved
+		transfer.Status = editransfer.TransferStatusApproved
 		transfer.TargetShipmentID = createdShipment.ID
 		transfer.MappingSnapshot = preview.All
 		transfer.ProcessedAt = &now
@@ -394,16 +397,16 @@ func (s *Service) ProcessLoadTenderApproval(
 			return err
 		}
 
-		link, err := s.shipmentLinkRepo.CreateShipmentLink(txCtx, &edi.ShipmentLink{
+		link, err := s.shipmentLinkRepo.CreateShipmentLink(txCtx, &edisync.ShipmentLink{
 			BusinessUnitID:       transfer.SourceBusinessUnitID,
 			SourceOrganizationID: transfer.SourceOrganizationID,
 			TargetOrganizationID: transfer.TargetOrganizationID,
 			SourceShipmentID:     transfer.SourceShipmentID,
 			TargetShipmentID:     createdShipment.ID,
 			TenderTransferID:     transfer.ID,
-			SyncPolicy:           edi.ShipmentSyncPolicyAutoOperational,
-			FieldOwnership:       edi.DefaultShipmentFieldOwnership(),
-			Status:               edi.ShipmentLinkStatusActive,
+			SyncPolicy:           edisync.ShipmentSyncPolicyAutoOperational,
+			FieldOwnership:       edisync.DefaultShipmentFieldOwnership(),
+			Status:               edisync.ShipmentLinkStatusActive,
 		})
 		if err != nil {
 			return err
@@ -412,7 +415,7 @@ func (s *Service) ProcessLoadTenderApproval(
 			txCtx,
 			transfer,
 			link,
-			edi.TenderRecipientBaselineStatusAccepted,
+			editenderchange.TenderRecipientBaselineStatusAccepted,
 		); err != nil {
 			return err
 		}
@@ -455,7 +458,7 @@ func (s *Service) ProcessLoadTenderApproval(
 	return result, nil
 }
 
-func (s *Service) acceptSourceTender(ctx context.Context, transfer *edi.EDITransfer) error {
+func (s *Service) acceptSourceTender(ctx context.Context, transfer *editransfer.EDITransfer) error {
 	if transfer.SourceShipmentID.IsNil() {
 		return nil
 	}
@@ -517,11 +520,11 @@ func (s *Service) acceptSourceTender(ctx context.Context, transfer *edi.EDITrans
 
 func (s *Service) failTransferInTransaction(
 	ctx context.Context,
-	transfer *edi.EDITransfer,
+	transfer *editransfer.EDITransfer,
 	err error,
 ) error {
 	now := timeutils.NowUnix()
-	transfer.Status = edi.TransferStatusFailed
+	transfer.Status = editransfer.TransferStatusFailed
 	transfer.FailureReason = err.Error()
 	transfer.ProcessedAt = &now
 	if _, updateErr := s.transferRepo.UpdateTransfer(ctx, transfer); updateErr != nil {
@@ -534,7 +537,7 @@ func (s *Service) RejectTransfer(
 	ctx context.Context,
 	req *RejectTransferRequest,
 	actor *permissionports.RequestActor,
-) (*edi.EDITransfer, error) {
+) (*editransfer.EDITransfer, error) {
 	reason, err := TransferRejectionReason(req.Reason)
 	if err != nil {
 		return nil, err
@@ -545,8 +548,8 @@ func (s *Service) RejectTransfer(
 		return nil, err
 	}
 
-	var original edi.EDITransfer
-	var updated *edi.EDITransfer
+	var original editransfer.EDITransfer
+	var updated *editransfer.EDITransfer
 	err = s.db.Transact(sourceCtx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		transfer, err := s.transferRepo.GetTransferForUpdate(
 			txCtx,
@@ -613,9 +616,9 @@ func (s *Service) CancelTransfer(
 	ctx context.Context,
 	req *CancelTransferRequest,
 	actor *permissionports.RequestActor,
-) (*edi.EDITransfer, error) {
-	var original edi.EDITransfer
-	var updated *edi.EDITransfer
+) (*editransfer.EDITransfer, error) {
+	var original editransfer.EDITransfer
+	var updated *editransfer.EDITransfer
 	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		transfer, err := s.transferRepo.GetTransferForUpdate(
 			txCtx,
@@ -675,14 +678,14 @@ func (s *Service) ExpireTransfer(
 	ctx context.Context,
 	req *ExpireTransferRequest,
 	actor *permissionports.RequestActor,
-) (*edi.EDITransfer, error) {
+) (*editransfer.EDITransfer, error) {
 	sourceCtx, err := s.transferSourceContext(ctx, req.TransferID, req.TenantInfo, "")
 	if err != nil {
 		return nil, err
 	}
 
-	var original edi.EDITransfer
-	var updated *edi.EDITransfer
+	var original editransfer.EDITransfer
+	var updated *editransfer.EDITransfer
 	err = s.db.Transact(sourceCtx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		transfer, err := s.transferRepo.GetTransferForUpdate(
 			txCtx,

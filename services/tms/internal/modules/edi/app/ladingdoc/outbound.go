@@ -8,7 +8,8 @@ import (
 	"time"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edipayload"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/editransfer"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -118,13 +119,13 @@ func encode(document any) (jsonutils.RawJSON, error) {
 	return encoded, nil
 }
 
-func purposeOf(code edi.LoadTenderPurposeCode) string {
+func purposeOf(code editransfer.LoadTenderPurposeCode) string {
 	switch code {
-	case edi.LoadTenderPurposeChange:
+	case editransfer.LoadTenderPurposeChange:
 		return PurposeChange
-	case edi.LoadTenderPurposeCancel:
+	case editransfer.LoadTenderPurposeCancel:
 		return PurposeCancel
-	case edi.LoadTenderPurposeOriginal:
+	case editransfer.LoadTenderPurposeOriginal:
 	}
 	return PurposeOriginal
 }
@@ -140,7 +141,7 @@ func stopTypeOf(stopType string) string {
 
 // FromLoadTender is the loadTender document of a tender Trenova offers.
 func FromLoadTender(
-	payload *edi.LoadTenderPayload,
+	payload *editransfer.LoadTenderPayload,
 	key string,
 	zones Zones,
 	custom map[string]any,
@@ -245,7 +246,7 @@ func FromLoadTender(
 
 // FromTenderResponse is the tenderResponse document of Trenova's answer to a tender.
 func FromTenderResponse(
-	payload *edi.TenderResponsePayload,
+	payload *edipayload.TenderResponsePayload,
 	key, scac string,
 	respondedAt int64,
 	zone string,
@@ -268,7 +269,7 @@ func FromTenderResponse(
 
 // FromShipmentStatus is the shipmentStatus document of what happened to a load.
 func FromShipmentStatus(
-	payload *edi.ShipmentStatusPayload,
+	payload *edipayload.ShipmentStatusPayload,
 	key string,
 	zones Zones,
 	custom map[string]any,
@@ -335,7 +336,7 @@ func FromShipmentStatus(
 
 // FromFreightInvoice is the freightInvoice document of an invoice Trenova bills.
 func FromFreightInvoice(
-	payload *edi.FreightInvoicePayload,
+	payload *edipayload.FreightInvoicePayload,
 	key, zone string,
 	custom map[string]any,
 ) (jsonutils.RawJSON, error) {

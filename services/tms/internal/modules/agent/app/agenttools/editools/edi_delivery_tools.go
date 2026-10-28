@@ -12,7 +12,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediinboundservice"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/ediinboundfile"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edimessage"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/edimessageports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/toolschema"
@@ -50,14 +51,14 @@ type ediMessageReplayer interface {
 	ReplayMessageDelivery(
 		ctx context.Context,
 		req *ediservice.RetryMessageDeliveryRequest,
-	) (*edi.EDIMessage, error)
+	) (*edimessage.EDIMessage, error)
 }
 
 type inboundFileReprocessor interface {
 	GetInboundFile(
 		ctx context.Context,
 		req edimessageports.GetEDIInboundFileByIDRequest,
-	) (*edi.EDIInboundFile, error)
+	) (*ediinboundfile.EDIInboundFile, error)
 	BulkReprocessInboundFiles(
 		ctx context.Context,
 		req *ediinboundservice.BulkReprocessInboundFilesRequest,

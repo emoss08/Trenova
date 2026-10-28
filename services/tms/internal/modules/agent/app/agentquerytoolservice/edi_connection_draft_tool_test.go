@@ -6,7 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/edispec"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediconnectiondraftports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -119,7 +119,7 @@ func TestDraftEDIConnection_ReadsTheGuideThePersonAttachedAndPlansFromIt(t *test
 		},
 	}, planner.req.Values[0])
 	require.Len(t, planner.req.Requirements, 1)
-	assert.Equal(t, edi.TransactionSet214, planner.req.Requirements[0].TransactionSet)
+	assert.Equal(t, edidocument.TransactionSet214, planner.req.Requirements[0].TransactionSet)
 	assert.Equal(t, 1, planner.req.Requirements[0].ElementPosition)
 
 	view := result.(*connectionDraftView)
@@ -191,8 +191,8 @@ func TestDraftEDIConnection_NamesWhatTheReplyMustTellThePerson(t *testing.T) {
 			Match: ediconnectiondraftports.PartnerMatchNew,
 		},
 		Sets: []ediconnectiondraftports.DraftSet{{
-			TransactionSet: edi.TransactionSet214,
-			Direction:      edi.DocumentDirectionOutbound,
+			TransactionSet: edidocument.TransactionSet214,
+			Direction:      edidocument.DocumentDirectionOutbound,
 			Unmet: []ediconnectiondraftports.DraftRequirementCheck{{
 				SegmentID: "MS1", ElementPosition: 1, Usage: ediconnectiondraftports.RequirementUsageMandatory,
 				Source: ediconnectiondraftports.DraftSource{
@@ -293,13 +293,13 @@ func TestDraftEDIConnection_NamesWhatARevisedGuideChanges(t *testing.T) {
 			Page: n,
 		}
 	}
-	interchange := func(set edi.TransactionSet) ediconnectiondraftports.DraftSet {
+	interchange := func(set edidocument.TransactionSet) ediconnectiondraftports.DraftSet {
 		return ediconnectiondraftports.DraftSet{
 			TransactionSet: set,
-			Direction:      edi.DocumentDirectionOutbound,
+			Direction:      edidocument.DocumentDirectionOutbound,
 			Change:         ediconnectiondraftports.ChangeKindChange,
 			ControlNumbers: []ediconnectiondraftports.DraftControlNumber{{
-				Kind: edi.ControlNumberKindInterchange, Start: 5000, Current: 1000,
+				Kind: edidocument.ControlNumberKindInterchange, Start: 5000, Current: 1000,
 				Change: ediconnectiondraftports.ChangeKindChange, Source: page(3),
 			}},
 		}
@@ -323,12 +323,12 @@ func TestDraftEDIConnection_NamesWhatARevisedGuideChanges(t *testing.T) {
 		},
 		Sets: []ediconnectiondraftports.DraftSet{
 			{
-				TransactionSet: edi.TransactionSet204,
-				Direction:      edi.DocumentDirectionInbound,
+				TransactionSet: edidocument.TransactionSet204,
+				Direction:      edidocument.DocumentDirectionInbound,
 				Change:         ediconnectiondraftports.ChangeKindSame,
 			},
-			interchange(edi.TransactionSet990),
-			interchange(edi.TransactionSet214),
+			interchange(edidocument.TransactionSet990),
+			interchange(edidocument.TransactionSet214),
 		},
 	}}
 	tool := newDraftEDIConnectionTool(planner, &fakeGuideReader{})

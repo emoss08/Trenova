@@ -8,6 +8,11 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/app/edilading"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/ediinboundfile"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edimessage"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/editransfer"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/ladingproject"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/edimessageports"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ladingports"
@@ -27,7 +32,7 @@ import (
 
 type inboundFixture struct {
 	service            *Service
-	file               *edi.EDIInboundFile
+	file               *ediinboundfile.EDIInboundFile
 	partner            *edi.EDIPartner
 	inboundFileRepo    *edimessageportsmock.MockEDIInboundFileRepository
 	partnerRepo        *edipartnerportsmock.MockEDIPartnerRepository
@@ -49,7 +54,7 @@ func newInboundFixture(t *testing.T, rawContent string) *inboundFixture {
 	buID := pulid.MustNew("bu_")
 	partnerID := pulid.MustNew("edip_")
 	fixture := &inboundFixture{
-		file: &edi.EDIInboundFile{
+		file: &ediinboundfile.EDIInboundFile{
 			ID:                     pulid.MustNew("ediinf_"),
 			OrganizationID:         orgID,
 			BusinessUnitID:         buID,
@@ -58,7 +63,7 @@ func newInboundFixture(t *testing.T, rawContent string) *inboundFixture {
 			Method:                 edi.ConnectionMethodSFTP,
 			FileName:               "inbound.x12",
 			RawContent:             rawContent,
-			Status:                 edi.InboundFileStatusReceived,
+			Status:                 ediinboundfile.InboundFileStatusReceived,
 		},
 		partner: &edi.EDIPartner{
 			ID:                partnerID,
@@ -155,15 +160,15 @@ func (f *inboundFixture) expectActiveVersion(t *testing.T, acknowledge ...string
 		Maybe()
 	f.projects.EXPECT().GetRunnableVersions(mock.Anything, mock.Anything).
 		Return(&ladingports.RunnableLadingVersions{
-			Project: &edi.LadingProject{
+			Project: &ladingproject.LadingProject{
 				ID:           pulid.MustNew("ldp_"),
 				EDIPartnerID: f.partner.ID,
 				Settings:     map[string]any{},
 			},
-			Active: &edi.LadingVersion{
+			Active: &ladingproject.LadingVersion{
 				ID:       pulid.MustNew("ldv_"),
 				Number:   1,
-				Status:   edi.LadingVersionStatusActive,
+				Status:   ladingproject.LadingVersionStatusActive,
 				Files:    starter.Files,
 				Manifest: *check,
 				Version:  1,
@@ -176,20 +181,20 @@ func (f *inboundFixture) expectActiveVersion(t *testing.T, acknowledge ...string
 // expectFlows lets the partner's flow open, step and journal instances.
 func (f *inboundFixture) expectFlows() {
 	f.flowRepo.EXPECT().OpenInstance(mock.Anything, mock.Anything).
-		RunAndReturn(func(_ context.Context, instance *edi.FlowInstance) (*edi.FlowInstance, error) {
+		RunAndReturn(func(_ context.Context, instance *ladingproject.FlowInstance) (*ladingproject.FlowInstance, error) {
 			instance.ID = pulid.MustNew("edfi_")
 			return instance, nil
 		}).
 		Maybe()
 	f.flowRepo.EXPECT().SaveInstance(mock.Anything, mock.Anything).
-		RunAndReturn(func(_ context.Context, instance *edi.FlowInstance) (*edi.FlowInstance, error) {
+		RunAndReturn(func(_ context.Context, instance *ladingproject.FlowInstance) (*ladingproject.FlowInstance, error) {
 			return instance, nil
 		}).
 		Maybe()
 	f.flowRepo.EXPECT().AppendEvent(mock.Anything, mock.Anything).Return(nil).Maybe()
 	f.messageRepo.EXPECT().LinkMessageFlow(mock.Anything, mock.Anything).
-		RunAndReturn(func(_ context.Context, req *edimessageports.LinkEDIMessageFlowRequest) (*edi.EDIMessage, error) {
-			return &edi.EDIMessage{ID: req.ID, FlowInstanceID: req.FlowInstanceID}, nil
+		RunAndReturn(func(_ context.Context, req *edimessageports.LinkEDIMessageFlowRequest) (*edimessage.EDIMessage, error) {
+			return &edimessage.EDIMessage{ID: req.ID, FlowInstanceID: req.FlowInstanceID}, nil
 		}).
 		Maybe()
 }
@@ -201,9 +206,9 @@ func (f *inboundFixture) tenantInfo() pagination.TenantInfo {
 	}
 }
 
-func (f *inboundFixture) expectFileLoadAndUpdates(t *testing.T) *edi.EDIInboundFile {
+func (f *inboundFixture) expectFileLoadAndUpdates(t *testing.T) *ediinboundfile.EDIInboundFile {
 	t.Helper()
-	var lastUpdated edi.EDIInboundFile
+	var lastUpdated ediinboundfile.EDIInboundFile
 	f.inboundFileRepo.EXPECT().
 		GetInboundFileByID(mock.Anything, edimessageports.GetEDIInboundFileByIDRequest{
 			ID:         f.file.ID,
@@ -213,7 +218,7 @@ func (f *inboundFixture) expectFileLoadAndUpdates(t *testing.T) *edi.EDIInboundF
 		Once()
 	f.inboundFileRepo.EXPECT().
 		UpdateInboundFile(mock.Anything, mock.Anything).
-		RunAndReturn(func(_ context.Context, updated *edi.EDIInboundFile) (*edi.EDIInboundFile, error) {
+		RunAndReturn(func(_ context.Context, updated *ediinboundfile.EDIInboundFile) (*ediinboundfile.EDIInboundFile, error) {
 			lastUpdated = *updated
 			return updated, nil
 		})
@@ -230,17 +235,17 @@ func (f *inboundFixture) expectPartnerLoad() {
 		Once()
 }
 
-func (f *inboundFixture) expectInboundDocumentType(set edi.TransactionSet) {
+func (f *inboundFixture) expectInboundDocumentType(set edidocument.TransactionSet) {
 	f.documentTypeRepo.EXPECT().
 		ListDocumentTypes(mock.Anything, edipartnerports.ListEDIDocumentTypesRequest{
-			Standard:       edi.EDIStandardX12,
+			Standard:       edidocument.EDIStandardX12,
 			TransactionSet: set,
-			Direction:      edi.DocumentDirectionInbound,
+			Direction:      edidocument.DocumentDirectionInbound,
 		}).
-		Return([]*edi.EDIDocumentType{{
+		Return([]*edidocument.EDIDocumentType{{
 			ID:             pulid.MustNew("edidt_"),
 			TransactionSet: set,
-			Direction:      edi.DocumentDirectionInbound,
+			Direction:      edidocument.DocumentDirectionInbound,
 			DefaultVersion: "004010",
 		}}, nil).
 		Once()
@@ -249,7 +254,7 @@ func (f *inboundFixture) expectInboundDocumentType(set edi.TransactionSet) {
 func (f *inboundFixture) expectMessageCreate() {
 	f.messageRepo.EXPECT().
 		CreateMessageWithDiagnostics(mock.Anything, mock.Anything).
-		RunAndReturn(func(_ context.Context, req edimessageports.CreateEDIMessageWithDiagnosticsRequest) (*edi.EDIMessage, error) {
+		RunAndReturn(func(_ context.Context, req edimessageports.CreateEDIMessageWithDiagnosticsRequest) (*edimessage.EDIMessage, error) {
 			message := *req.Message
 			message.ID = pulid.MustNew("edimsg_")
 			return &message, nil
@@ -275,16 +280,16 @@ func TestProcessInboundFile_Reconciles997Acknowledgment(t *testing.T) {
 	lastUpdate := fixture.expectFileLoadAndUpdates(t)
 	fixture.expectPartnerLoad()
 	fixture.expectActiveVersion(t)
-	fixture.expectInboundDocumentType(edi.TransactionSet997)
+	fixture.expectInboundDocumentType(edidocument.TransactionSet997)
 	fixture.expectMessageCreate()
 
-	originalMessage := &edi.EDIMessage{
+	originalMessage := &edimessage.EDIMessage{
 		ID:             pulid.MustNew("edimsg_"),
 		OrganizationID: fixture.file.OrganizationID,
 		BusinessUnitID: fixture.file.BusinessUnitID,
 		EDIPartnerID:   fixture.partner.ID,
-		Direction:      edi.DocumentDirectionOutbound,
-		AckStatus:      edi.MessageAcknowledgmentStatusPending,
+		Direction:      edidocument.DocumentDirectionOutbound,
+		AckStatus:      edimessage.MessageAcknowledgmentStatusPending,
 	}
 	fixture.messageRepo.EXPECT().
 		GetOutboundMessageForAck(mock.Anything, mock.MatchedBy(
@@ -292,7 +297,7 @@ func TestProcessInboundFile_Reconciles997Acknowledgment(t *testing.T) {
 				return req.PartnerID == fixture.partner.ID &&
 					req.GroupControlNumber == "42" &&
 					req.TransactionControlNumber == "0042" &&
-					req.TransactionSet == edi.TransactionSet204
+					req.TransactionSet == edidocument.TransactionSet204
 			},
 		)).
 		Return(originalMessage, nil).
@@ -301,7 +306,7 @@ func TestProcessInboundFile_Reconciles997Acknowledgment(t *testing.T) {
 		UpdateMessageAcknowledgment(mock.Anything, mock.MatchedBy(
 			func(req *edimessageports.UpdateEDIMessageAcknowledgmentRequest) bool {
 				return req.ID == originalMessage.ID &&
-					req.AckStatus == edi.MessageAcknowledgmentStatusAccepted &&
+					req.AckStatus == edimessage.MessageAcknowledgmentStatusAccepted &&
 					req.AckMessageID.IsNotNil()
 			},
 		)).
@@ -314,7 +319,7 @@ func TestProcessInboundFile_Reconciles997Acknowledgment(t *testing.T) {
 	})
 
 	require.NoError(t, err)
-	require.Equal(t, edi.InboundFileStatusProcessed, file.Status)
+	require.Equal(t, ediinboundfile.InboundFileStatusProcessed, file.Status)
 	require.Equal(t, "000000101", lastUpdate.InterchangeControlNumber)
 }
 
@@ -326,7 +331,7 @@ func TestProcessInboundFile_Creates204TransferRequiringMapping(t *testing.T) {
 	fixture.file.RawContent = starterSample(t, starter, "samples/tender-original.x12")
 	fixture.expectFileLoadAndUpdates(t)
 	fixture.expectPartnerLoad()
-	fixture.expectInboundDocumentType(edi.TransactionSet204)
+	fixture.expectInboundDocumentType(edidocument.TransactionSet204)
 	fixture.expectMessageCreate()
 	fixture.expectFlows()
 
@@ -334,14 +339,14 @@ func TestProcessInboundFile_Creates204TransferRequiringMapping(t *testing.T) {
 		GetMappingItems(mock.Anything, mock.Anything).
 		Return([]*edi.EDIMappingProfileItem{}, nil)
 	fixture.transferRepo.EXPECT().
-		CreateTransfer(mock.Anything, mock.MatchedBy(func(transfer *edi.EDITransfer) bool {
-			return transfer.Status == edi.TransferStatusMappingRequired &&
+		CreateTransfer(mock.Anything, mock.MatchedBy(func(transfer *editransfer.EDITransfer) bool {
+			return transfer.Status == editransfer.TransferStatusMappingRequired &&
 				transfer.InboundMessageID.IsNotNil() &&
 				transfer.SourceShipmentID.IsNil() &&
 				transfer.TargetPartnerID == fixture.partner.ID &&
 				transfer.TenderPayload.BOL == "BOL-55"
 		})).
-		RunAndReturn(func(_ context.Context, transfer *edi.EDITransfer) (*edi.EDITransfer, error) {
+		RunAndReturn(func(_ context.Context, transfer *editransfer.EDITransfer) (*editransfer.EDITransfer, error) {
 			transfer.ID = pulid.MustNew("edilt_")
 			return transfer, nil
 		}).
@@ -353,7 +358,7 @@ func TestProcessInboundFile_Creates204TransferRequiringMapping(t *testing.T) {
 	})
 
 	require.NoError(t, err)
-	require.Equal(t, edi.InboundFileStatusPartiallyProcessed, file.Status)
+	require.Equal(t, ediinboundfile.InboundFileStatusPartiallyProcessed, file.Status)
 	require.Contains(t, file.FailureReason, "requires mapping")
 }
 
@@ -369,7 +374,7 @@ func TestProcessInboundFile_QuarantinesUnparseableContent(t *testing.T) {
 	})
 
 	require.NoError(t, err)
-	require.Equal(t, edi.InboundFileStatusQuarantined, file.Status)
+	require.Equal(t, ediinboundfile.InboundFileStatusQuarantined, file.Status)
 	require.NotEmpty(t, file.FailureReason)
 }
 

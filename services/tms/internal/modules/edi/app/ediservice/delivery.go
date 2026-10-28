@@ -11,6 +11,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/edi/app/editransport"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edimessage"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/editenderchange"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/edimessageports"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/editenderports"
@@ -73,7 +76,7 @@ func (s *Service) deliverMessage(
 		&edimessageports.UpdateEDIMessageDeliveryRequest{
 			ID:                    message.ID,
 			TenantInfo:            messageTenantInfo(message),
-			DeliveryStatus:        edi.MessageDeliveryStatusSending,
+			DeliveryStatus:        edimessage.MessageDeliveryStatusSending,
 			DeliveryRemotePath:    message.DeliveryRemotePath,
 			IncrementAttempts:     true,
 			DeliveryLastAttemptAt: &now,
@@ -129,7 +132,7 @@ func (s *Service) deliverMessage(
 			&edimessageports.UpdateEDIMessageDeliveryRequest{
 				ID:                    message.ID,
 				TenantInfo:            messageTenantInfo(message),
-				DeliveryStatus:        edi.MessageDeliveryStatusSending,
+				DeliveryStatus:        edimessage.MessageDeliveryStatusSending,
 				DeliveryRemotePath:    remotePath,
 				AS2MessageID:          as2MessageID,
 				AS2MIC:                as2MIC,
@@ -151,7 +154,7 @@ func (s *Service) deliverMessage(
 		&edimessageports.UpdateEDIMessageDeliveryRequest{
 			ID:                    message.ID,
 			TenantInfo:            messageTenantInfo(message),
-			DeliveryStatus:        edi.MessageDeliveryStatusSent,
+			DeliveryStatus:        edimessage.MessageDeliveryStatusSent,
 			DeliveryRemotePath:    remotePath,
 			AS2MessageID:          as2MessageID,
 			AS2MIC:                as2MIC,
@@ -187,7 +190,7 @@ func deliveryStatusLabel(deliveryErr error, pending bool) string {
 func (s *Service) loadDeliverableMessage(
 	ctx context.Context,
 	payload *DeliverEDIMessageWorkflowPayload,
-) (*edi.EDIMessage, *DeliverEDIMessageWorkflowResult, error) {
+) (*edimessage.EDIMessage, *DeliverEDIMessageWorkflowResult, error) {
 	if payload == nil || payload.MessageID.IsNil() {
 		return nil, nil, temporal.NewNonRetryableApplicationError(
 			"EDI message ID is required for delivery",
@@ -202,14 +205,14 @@ func (s *Service) loadDeliverableMessage(
 	if err != nil {
 		return nil, nil, err
 	}
-	if message.Direction != edi.DocumentDirectionOutbound {
+	if message.Direction != edidocument.DocumentDirectionOutbound {
 		return nil, nil, temporal.NewNonRetryableApplicationError(
 			"only outbound EDI messages can be delivered",
 			"MessageNotOutbound",
 			nil,
 		)
 	}
-	if message.DeliveryStatus == edi.MessageDeliveryStatusSent {
+	if message.DeliveryStatus == edimessage.MessageDeliveryStatusSent {
 		return nil, &DeliverEDIMessageWorkflowResult{
 			MessageID:      message.ID,
 			DeliveryStatus: message.DeliveryStatus,
@@ -231,7 +234,7 @@ func (s *Service) loadDeliverableMessage(
 
 func (s *Service) recordDeliveryFailure(
 	ctx context.Context,
-	message *edi.EDIMessage,
+	message *edimessage.EDIMessage,
 	remotePath string,
 	attemptedAt *int64,
 	deliveryErr error,
@@ -241,7 +244,7 @@ func (s *Service) recordDeliveryFailure(
 		&edimessageports.UpdateEDIMessageDeliveryRequest{
 			ID:                    message.ID,
 			TenantInfo:            messageTenantInfo(message),
-			DeliveryStatus:        edi.MessageDeliveryStatusFailed,
+			DeliveryStatus:        edimessage.MessageDeliveryStatusFailed,
 			DeliveryRemotePath:    remotePath,
 			DeliveryLastAttemptAt: attemptedAt,
 			DeliveryLastError:     deliveryErr.Error(),
@@ -270,7 +273,7 @@ func (s *Service) MarkMessageDeadLettered(
 	if err != nil {
 		return err
 	}
-	if message.DeliveryStatus == edi.MessageDeliveryStatusSent {
+	if message.DeliveryStatus == edimessage.MessageDeliveryStatusSent {
 		return nil
 	}
 	now := timeutils.NowUnix()
@@ -279,7 +282,7 @@ func (s *Service) MarkMessageDeadLettered(
 		&edimessageports.UpdateEDIMessageDeliveryRequest{
 			ID:                    message.ID,
 			TenantInfo:            messageTenantInfo(message),
-			DeliveryStatus:        edi.MessageDeliveryStatusDeadLettered,
+			DeliveryStatus:        edimessage.MessageDeliveryStatusDeadLettered,
 			DeliveryRemotePath:    message.DeliveryRemotePath,
 			DeliveryLastAttemptAt: &now,
 			DeliveryLastError:     payload.Reason,
@@ -318,7 +321,7 @@ func (s *Service) MarkMessageDeadLettered(
 func (s *Service) RetryMessageDelivery(
 	ctx context.Context,
 	req *RetryMessageDeliveryRequest,
-) (*edi.EDIMessage, error) {
+) (*edimessage.EDIMessage, error) {
 	plan, err := s.PlanRetryMessageDelivery(ctx, req)
 	if err != nil {
 		return nil, err
@@ -329,7 +332,7 @@ func (s *Service) RetryMessageDelivery(
 		&edimessageports.UpdateEDIMessageDeliveryRequest{
 			ID:                    plan.Message.ID,
 			TenantInfo:            messageTenantInfo(plan.Message),
-			DeliveryStatus:        edi.MessageDeliveryStatusQueued,
+			DeliveryStatus:        edimessage.MessageDeliveryStatusQueued,
 			DeliveryRemotePath:    plan.Message.DeliveryRemotePath,
 			DeliveryLastAttemptAt: &now,
 			DeliveryLastError:     plan.Message.DeliveryLastError,
@@ -347,7 +350,7 @@ func (s *Service) RetryMessageDelivery(
 func (s *Service) ReplayMessageDelivery(
 	ctx context.Context,
 	req *RetryMessageDeliveryRequest,
-) (*edi.EDIMessage, error) {
+) (*edimessage.EDIMessage, error) {
 	plan, err := s.PlanReplayMessageDelivery(ctx, req)
 	if err != nil {
 		return nil, err
@@ -358,7 +361,7 @@ func (s *Service) ReplayMessageDelivery(
 		&edimessageports.UpdateEDIMessageDeliveryRequest{
 			ID:                    plan.Message.ID,
 			TenantInfo:            messageTenantInfo(plan.Message),
-			DeliveryStatus:        edi.MessageDeliveryStatusQueued,
+			DeliveryStatus:        edimessage.MessageDeliveryStatusQueued,
 			DeliveryRemotePath:    plan.Message.DeliveryRemotePath,
 			DeliveryLastAttemptAt: &now,
 		},
@@ -381,7 +384,7 @@ func (s *Service) ResetControlNumber(
 	ctx context.Context,
 	req *edipartnerports.ResetEDIControlNumberRequest,
 	actor *permissionports.RequestActor,
-) (*edi.EDIControlNumberSequence, error) {
+) (*edidocument.EDIControlNumberSequence, error) {
 	if err := validateControlNumberRequest(req); err != nil {
 		return nil, err
 	}
@@ -409,7 +412,7 @@ func (s *Service) StartControlNumber(
 	ctx context.Context,
 	req *edipartnerports.ResetEDIControlNumberRequest,
 	actor *permissionports.RequestActor,
-) (*edi.EDIControlNumberSequence, error) {
+) (*edidocument.EDIControlNumberSequence, error) {
 	if err := validateControlNumberRequest(req); err != nil {
 		return nil, err
 	}
@@ -442,9 +445,9 @@ func validateControlNumberRequest(req *edipartnerports.ResetEDIControlNumberRequ
 		multiErr.Add("documentTypeId", errortypes.ErrRequired, "Document type is required")
 	}
 	switch req.Kind {
-	case edi.ControlNumberKindInterchange,
-		edi.ControlNumberKindGroup,
-		edi.ControlNumberKindTransaction:
+	case edidocument.ControlNumberKindInterchange,
+		edidocument.ControlNumberKindGroup,
+		edidocument.ControlNumberKindTransaction:
 	default:
 		multiErr.Add(
 			"kind",
@@ -463,11 +466,11 @@ func validateControlNumberRequest(req *edipartnerports.ResetEDIControlNumberRequ
 
 func (s *Service) queueMessageForDelivery(
 	ctx context.Context,
-	message *edi.EDIMessage,
+	message *edimessage.EDIMessage,
 ) error {
 	if message == nil ||
-		message.Direction != edi.DocumentDirectionOutbound ||
-		message.Status != edi.MessageStatusGenerated {
+		message.Direction != edidocument.DocumentDirectionOutbound ||
+		message.Status != edimessage.MessageStatusGenerated {
 		return nil
 	}
 	partner, err := s.partnerRepo.GetByID(ctx, edipartnerports.GetEDIPartnerByIDRequest{
@@ -487,14 +490,14 @@ func (s *Service) queueMessageForDelivery(
 		}
 		return err
 	}
-	if message.DeliveryStatus != edi.MessageDeliveryStatusQueued {
+	if message.DeliveryStatus != edimessage.MessageDeliveryStatusQueued {
 		now := timeutils.NowUnix()
 		updated, updateErr := s.messageRepo.UpdateMessageDelivery(
 			ctx,
 			&edimessageports.UpdateEDIMessageDeliveryRequest{
 				ID:                    message.ID,
 				TenantInfo:            messageTenantInfo(message),
-				DeliveryStatus:        edi.MessageDeliveryStatusQueued,
+				DeliveryStatus:        edimessage.MessageDeliveryStatusQueued,
 				DeliveryLastAttemptAt: &now,
 			},
 		)
@@ -508,7 +511,7 @@ func (s *Service) queueMessageForDelivery(
 
 func (s *Service) startDeliveryWorkflow(
 	ctx context.Context,
-	message *edi.EDIMessage,
+	message *edimessage.EDIMessage,
 	profile *edi.EDICommunicationProfile,
 ) error {
 	if s.workflowStarter == nil || !s.workflowStarter.Enabled() {
@@ -548,7 +551,7 @@ func (s *Service) startDeliveryWorkflow(
 
 func (s *Service) deliveryProfileForMessage(
 	ctx context.Context,
-	message *edi.EDIMessage,
+	message *edimessage.EDIMessage,
 ) (*edi.EDICommunicationProfile, error) {
 	change, found, err := s.tenderChangeForOutboundMessage(ctx, message)
 	if err != nil {
@@ -605,8 +608,8 @@ func (s *Service) ProfileTransportSecrets(
 
 func (s *Service) tenderChangeForOutboundMessage(
 	ctx context.Context,
-	message *edi.EDIMessage,
-) (*edi.TenderChange, bool, error) {
+	message *edimessage.EDIMessage,
+) (*editenderchange.TenderChange, bool, error) {
 	change, err := s.tenderChangeRepo.GetTenderChangeByOutboundMessageID(
 		ctx,
 		editenderports.GetEDITenderChangeByOutboundMessageIDRequest{
@@ -625,17 +628,17 @@ func (s *Service) tenderChangeForOutboundMessage(
 
 func (s *Service) completeTenderChangeDelivery(
 	ctx context.Context,
-	message *edi.EDIMessage,
+	message *edimessage.EDIMessage,
 ) error {
 	change, found, err := s.tenderChangeForOutboundMessage(ctx, message)
 	if err != nil || !found {
 		return err
 	}
-	if change.Status != edi.TenderChangeStatusQueued &&
-		change.Status != edi.TenderChangeStatusFailed {
+	if change.Status != editenderchange.TenderChangeStatusQueued &&
+		change.Status != editenderchange.TenderChangeStatusFailed {
 		return nil
 	}
-	change.Status = edi.TenderChangeStatusSent
+	change.Status = editenderchange.TenderChangeStatusSent
 	change.FailureReason = ""
 	if _, err = s.tenderChangeRepo.UpdateTenderChange(ctx, change); err != nil {
 		return err
@@ -647,29 +650,29 @@ func (s *Service) completeTenderChangeDelivery(
 		ctx,
 		change.Recipient,
 		&change.NewTenderPayload,
-		edi.TenderRecipientBaselineStatusSent,
+		editenderchange.TenderRecipientBaselineStatusSent,
 	)
 }
 
 func (s *Service) failTenderChangeDelivery(
 	ctx context.Context,
-	message *edi.EDIMessage,
+	message *edimessage.EDIMessage,
 	reason string,
 ) error {
 	change, found, err := s.tenderChangeForOutboundMessage(ctx, message)
 	if err != nil || !found {
 		return err
 	}
-	if change.Status != edi.TenderChangeStatusQueued {
+	if change.Status != editenderchange.TenderChangeStatusQueued {
 		return nil
 	}
-	change.Status = edi.TenderChangeStatusFailed
+	change.Status = editenderchange.TenderChangeStatusFailed
 	change.FailureReason = reason
 	_, err = s.tenderChangeRepo.UpdateTenderChange(ctx, change)
 	return err
 }
 
-func messageTenantInfo(message *edi.EDIMessage) pagination.TenantInfo {
+func messageTenantInfo(message *edimessage.EDIMessage) pagination.TenantInfo {
 	return pagination.TenantInfo{
 		OrgID: message.OrganizationID,
 		BuID:  message.BusinessUnitID,
@@ -685,13 +688,13 @@ func buildDeliverMessageWorkflowID(messageID pulid.ID) string {
 // console. Any other message, or a write failure, leaves the invoice alone.
 func (s *Service) syncInvoiceEDIStatus(
 	ctx context.Context,
-	message *edi.EDIMessage,
+	message *edimessage.EDIMessage,
 	status invoice.EDISendStatus,
 	lastError string,
 	sentAt *int64,
 ) {
 	if message == nil || message.InvoiceID.IsNil() ||
-		message.TransactionSet != edi.TransactionSet210 || s.invoiceRepo == nil {
+		message.TransactionSet != edidocument.TransactionSet210 || s.invoiceRepo == nil {
 		return
 	}
 	if err := s.invoiceRepo.UpdateEDISendStatus(ctx, invoiceports.UpdateInvoiceEDISendStatusRequest{
@@ -713,7 +716,7 @@ func (s *Service) syncInvoiceEDIStatus(
 	s.publishInvoiceEDIStatus(ctx, message)
 }
 
-func (s *Service) publishInvoiceEDIStatus(ctx context.Context, message *edi.EDIMessage) {
+func (s *Service) publishInvoiceEDIStatus(ctx context.Context, message *edimessage.EDIMessage) {
 	if s.realtime == nil {
 		return
 	}

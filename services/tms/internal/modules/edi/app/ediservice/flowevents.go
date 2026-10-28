@@ -9,7 +9,9 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/edi/app/edilading"
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/editransfer"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/ladingproject"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ladingports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -148,7 +150,7 @@ func LoadStateOf(status shipment.Status) string {
 func (s *Service) tellLoad(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	instance *edi.FlowInstance,
+	instance *ladingproject.FlowInstance,
 	load *lading.LoadState,
 ) error {
 	var summary lading.FlowSummary
@@ -177,7 +179,7 @@ func (s *Service) tellLoad(
 func (s *Service) sendShipmentStatus(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	instance *edi.FlowInstance,
+	instance *ladingproject.FlowInstance,
 	event *shipmentevent.Event,
 ) error {
 	request := &GenerateEDIDocumentRequest{
@@ -185,8 +187,8 @@ func (s *Service) sendShipmentStatus(
 		EDIPartnerID:    instance.EDIPartnerID,
 		ShipmentID:      event.ShipmentID,
 		ShipmentEventID: event.ID,
-		TransactionSet:  edi.TransactionSet214,
-		Direction:       edi.DocumentDirectionOutbound,
+		TransactionSet:  edidocument.TransactionSet214,
+		Direction:       edidocument.DocumentDirectionOutbound,
 		IdempotencyKey:  fmt.Sprintf("flow-214:%s:%s", instance.EDIPartnerID, event.ID),
 	}
 	o, err := s.resolveOutbound(ctx, previewRequest(request))
@@ -210,7 +212,7 @@ func (s *Service) sendShipmentStatus(
 
 // attachFlowShipment records the shipment an approved tender became on the flows that follow
 // the tender, and tells them the load now exists.
-func (s *Service) attachFlowShipment(ctx context.Context, transfer *edi.EDITransfer) {
+func (s *Service) attachFlowShipment(ctx context.Context, transfer *editransfer.EDITransfer) {
 	tenantInfo := pagination.TenantInfo{
 		OrgID: transfer.TargetOrganizationID,
 		BuID:  transfer.TargetBusinessUnitID,

@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/edi/app/edilading"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/ladingproject"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ladingports"
@@ -181,10 +182,13 @@ func TestResolveServiceFailure214CandidateSkippedReasons(t *testing.T) {
 					continue
 				}
 				call.Return(&ladingports.RunnableLadingVersions{
-					Project: &edi.LadingProject{ID: pulid.MustNew("ldp_"), EDIPartnerID: partnerID},
-					Active: &edi.LadingVersion{
+					Project: &ladingproject.LadingProject{
+						ID:           pulid.MustNew("ldp_"),
+						EDIPartnerID: partnerID,
+					},
+					Active: &ladingproject.LadingVersion{
 						ID:       pulid.MustNew("ldv_"),
-						Status:   edi.LadingVersionStatusActive,
+						Status:   ladingproject.LadingVersionStatusActive,
 						Manifest: lading.Check{Flows: flows},
 					},
 				}, nil).Once()

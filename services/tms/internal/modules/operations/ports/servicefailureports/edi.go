@@ -1,7 +1,7 @@
 package servicefailureports
 
 import (
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -29,5 +29,5 @@ type ServiceFailure214LifecycleResult struct {
 	SkippedReason string                   `json:"skippedReason,omitempty"`
 	EDIPartnerID  pulid.ID                 `json:"ediPartnerId,omitempty"`
 	Mandatory     bool                     `json:"mandatory"`
-	Diagnostics   []edi.Diagnostic         `json:"diagnostics"`
+	Diagnostics   []edidocument.Diagnostic `json:"diagnostics"`
 }

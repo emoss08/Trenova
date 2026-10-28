@@ -15,6 +15,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/app/edilading"
 	"github.com/emoss08/trenova/internal/modules/edi/app/editransport"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/ediinboundfile"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edimessage"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediconnectiondraftports"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/edimessageports"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
@@ -115,14 +118,14 @@ func TestGetPartnerCard_ReadsOnePartnerOverItsWindows(t *testing.T) {
 	tenant := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
 	partnerID := pulid.MustNew("edip_")
 	partner := &edi.EDIPartner{ID: partnerID, Code: "TYSON", Name: "Tyson Foods"}
-	overdue := &edi.EDIMessage{ID: pulid.MustNew("edimsg_"), EDIPartnerID: partnerID}
-	dead := &edi.EDIMessage{ID: pulid.MustNew("edimsg_"), EDIPartnerID: partnerID}
-	quarantined := &edi.EDIInboundFile{ID: pulid.MustNew("ediinf_")}
+	overdue := &edimessage.EDIMessage{ID: pulid.MustNew("edimsg_"), EDIPartnerID: partnerID}
+	dead := &edimessage.EDIMessage{ID: pulid.MustNew("edimsg_"), EDIPartnerID: partnerID}
+	quarantined := &ediinboundfile.EDIInboundFile{ID: pulid.MustNew("ediinf_")}
 	scorecard := &edimessageports.EDIPartnerScorecardRow{PartnerID: partnerID, SentCount: 1284}
 	sets := []*edimessageports.EDIPartnerSetActivityRow{
 		{
-			TransactionSet: edi.TransactionSet("214"),
-			Direction:      edi.DocumentDirectionOutbound,
+			TransactionSet: edidocument.TransactionSet("214"),
+			Direction:      edidocument.DocumentDirectionOutbound,
 			Count:          1284,
 		},
 	}
@@ -151,7 +154,7 @@ func TestGetPartnerCard_ReadsOnePartnerOverItsWindows(t *testing.T) {
 	var countsReq edimessageports.GetEDIMessageStatusCountsRequest
 	r.messages.EXPECT().GetAckStatusCounts(mock.Anything, mock.Anything).
 		Run(func(_ context.Context, req edimessageports.GetEDIMessageStatusCountsRequest) { countsReq = req }).
-		Return(map[edi.MessageAcknowledgmentStatus]int{edi.MessageAcknowledgmentStatusAccepted: 1399}, nil)
+		Return(map[edimessage.MessageAcknowledgmentStatus]int{edimessage.MessageAcknowledgmentStatusAccepted: 1399}, nil)
 	var setsReq *edimessageports.GetEDIPartnerSetActivityRequest
 	r.messages.EXPECT().GetPartnerSetActivity(mock.Anything, mock.Anything).
 		Run(func(_ context.Context, req *edimessageports.GetEDIPartnerSetActivityRequest) { setsReq = req }).
@@ -164,7 +167,7 @@ func TestGetPartnerCard_ReadsOnePartnerOverItsWindows(t *testing.T) {
 	r.messages.EXPECT().ListOverdueAcks(mock.Anything, mock.Anything).
 		Run(func(_ context.Context, req *edimessageports.ListOverdueEDIAcksRequest) { overdueReq = req }).
 		Return(&edimessageports.OverdueEDIAcks{
-			Messages: []*edi.EDIMessage{overdue},
+			Messages: []*edimessage.EDIMessage{overdue},
 			Partners: []*edimessageports.OverdueEDIAckPartner{
 				{PartnerID: partnerID, Count: 3, OldestGeneratedAt: 1_700_000_000},
 			},
@@ -172,13 +175,13 @@ func TestGetPartnerCard_ReadsOnePartnerOverItsWindows(t *testing.T) {
 	var deadReq *edimessageports.ListRecentEDIMessageFailuresRequest
 	r.messages.EXPECT().ListRecentDeadLettered(mock.Anything, mock.Anything).
 		Run(func(_ context.Context, req *edimessageports.ListRecentEDIMessageFailuresRequest) { deadReq = req }).
-		Return([]*edi.EDIMessage{dead}, nil)
+		Return([]*edimessage.EDIMessage{dead}, nil)
 	var filesReq edimessageports.ListRecentQuarantinedEDIInboundFilesRequest
 	r.files.EXPECT().ListRecentQuarantined(mock.Anything, mock.Anything).
 		Run(func(_ context.Context, req edimessageports.ListRecentQuarantinedEDIInboundFilesRequest) {
 			filesReq = req
 		}).
-		Return([]*edi.EDIInboundFile{quarantined}, nil)
+		Return([]*ediinboundfile.EDIInboundFile{quarantined}, nil)
 
 	before := timeutils.NowUnix()
 	card, err := r.service().GetPartnerCard(t.Context(), &GetEDIPartnerCardRequest{
@@ -227,13 +230,13 @@ func TestGetPartnerCard_ReadsOnePartnerOverItsWindows(t *testing.T) {
 	assert.Same(t, partner, card.Partner)
 	assert.Same(t, scorecard, card.Activity.Scorecard)
 	assert.Equal(t, sets, card.Activity.Sets)
-	assert.Equal(t, 1399, card.Activity.AckCounts[edi.MessageAcknowledgmentStatusAccepted])
+	assert.Equal(t, 1399, card.Activity.AckCounts[edimessage.MessageAcknowledgmentStatusAccepted])
 	assert.Equal(t, 3, card.Attention.OverdueAckCount)
 	assert.Equal(t, 3, card.Activity.OverdueAckCount, "the figures and the attention agree")
 	assert.Equal(t, int64(1_700_000_000), card.Attention.OldestOverdueAt)
-	assert.Equal(t, []*edi.EDIMessage{overdue}, card.Attention.OverdueAcks)
-	assert.Equal(t, []*edi.EDIMessage{dead}, card.Attention.DeadLettered)
-	assert.Equal(t, []*edi.EDIInboundFile{quarantined}, card.Attention.Quarantined)
+	assert.Equal(t, []*edimessage.EDIMessage{overdue}, card.Attention.OverdueAcks)
+	assert.Equal(t, []*edimessage.EDIMessage{dead}, card.Attention.DeadLettered)
+	assert.Equal(t, []*ediinboundfile.EDIInboundFile{quarantined}, card.Attention.Quarantined)
 	assert.Nil(t, card.Carriers, "carriers are not read unless asked for")
 }
 

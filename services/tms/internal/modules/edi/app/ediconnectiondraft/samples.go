@@ -6,7 +6,8 @@ import (
 	"unicode"
 
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediinboundservice"
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/x12field"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediconnectiondraftports"
 )
 
@@ -21,7 +22,7 @@ type specSample struct {
 	raw         string
 	parsed      *ediinboundservice.ParsedSample
 	err         error
-	direction   edi.DocumentDirection
+	direction   edidocument.DocumentDirection
 	identifying bool
 }
 
@@ -135,7 +136,7 @@ func (s *specSample) parse(ctx context.Context) {
 	s.parsed, s.err = ediinboundservice.ParseSample(ctx, s.raw)
 }
 
-func (s *specSample) transactionSet() edi.TransactionSet {
+func (s *specSample) transactionSet() edidocument.TransactionSet {
 	if s.parsed == nil || len(s.parsed.Transactions) == 0 {
 		return ""
 	}
@@ -161,7 +162,7 @@ func (s *specSample) source(note string) ediconnectiondraftports.DraftSource {
 	return ediconnectiondraftports.DraftSource{
 		Kind:  ediconnectiondraftports.SourceKindSample,
 		Page:  s.page,
-		Quote: clampQuote(edi.RedactSecrets(s.isaSegment())),
+		Quote: clampQuote(x12field.RedactSecrets(s.isaSegment())),
 		Note:  note,
 	}
 }
@@ -173,23 +174,25 @@ func (s *specSample) orient(partnerIDs []string) {
 	for _, id := range partnerIDs {
 		switch id {
 		case s.parsed.SenderID:
-			s.direction = edi.DocumentDirectionInbound
+			s.direction = edidocument.DocumentDirectionInbound
 			s.identifying = true
 			return
 		case s.parsed.ReceiverID:
-			s.direction = edi.DocumentDirectionOutbound
+			s.direction = edidocument.DocumentDirectionOutbound
 			s.identifying = true
 			return
 		}
 	}
 	switch s.transactionSet() {
-	case edi.TransactionSet204:
-		s.direction = edi.DocumentDirectionInbound
+	case edidocument.TransactionSet204:
+		s.direction = edidocument.DocumentDirectionInbound
 		s.identifying = true
-	case edi.TransactionSet210, edi.TransactionSet214, edi.TransactionSet990:
-		s.direction = edi.DocumentDirectionOutbound
+	case edidocument.TransactionSet210,
+		edidocument.TransactionSet214,
+		edidocument.TransactionSet990:
+		s.direction = edidocument.DocumentDirectionOutbound
 		s.identifying = true
-	case edi.TransactionSet997, edi.TransactionSet999:
+	case edidocument.TransactionSet997, edidocument.TransactionSet999:
 	}
 }
 
@@ -204,7 +207,7 @@ type sampleParties struct {
 
 func (s *specSample) parties() sampleParties {
 	p := s.parsed
-	if s.direction == edi.DocumentDirectionOutbound {
+	if s.direction == edidocument.DocumentDirectionOutbound {
 		return sampleParties{
 			partnerQualifier: p.ReceiverQualifier,
 			partnerID:        p.ReceiverID,

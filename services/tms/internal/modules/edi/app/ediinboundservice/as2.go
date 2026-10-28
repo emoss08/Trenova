@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
 	"github.com/emoss08/trenova/internal/modules/edi/app/editransport"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/ediinboundfile"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/editransportports"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -175,7 +176,7 @@ func (s *Service) receiveAS2Message(
 func (s *Service) startInboundProcessing(
 	ctx context.Context,
 	profile *edi.EDICommunicationProfile,
-	file *edi.EDIInboundFile,
+	file *ediinboundfile.EDIInboundFile,
 ) {
 	request := &ProcessInboundFileRequest{
 		FileID: file.ID,

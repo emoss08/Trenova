@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
 	"github.com/emoss08/trenova/internal/modules/edi/app/editransport"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/ediinboundfile"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
 	"github.com/emoss08/trenova/internal/testutil/mocks/edimessageportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/edipartnerportsmock"
@@ -110,12 +111,12 @@ func TestReceiveAS2MessageStagesFileAndReturnsMDN(t *testing.T) {
 		Return(false, nil).
 		Once()
 	inboundFileRepo.EXPECT().
-		CreateInboundFile(mock.Anything, mock.MatchedBy(func(file *edi.EDIInboundFile) bool {
+		CreateInboundFile(mock.Anything, mock.MatchedBy(func(file *ediinboundfile.EDIInboundFile) bool {
 			return file.Method == edi.ConnectionMethodAS2 &&
 				file.RawContent == as2ReceiverPayload &&
 				file.EDIPartnerID == partnerID
 		})).
-		RunAndReturn(func(_ context.Context, file *edi.EDIInboundFile) (*edi.EDIInboundFile, error) {
+		RunAndReturn(func(_ context.Context, file *ediinboundfile.EDIInboundFile) (*ediinboundfile.EDIInboundFile, error) {
 			file.ID = pulid.MustNew("ediinf_")
 			return file, nil
 		}).
@@ -279,10 +280,10 @@ func TestReceiveAS2MessageAcceptsUnsignedWhenRequirementsDisabled(t *testing.T) 
 		Return(false, nil).
 		Once()
 	inboundFileRepo.EXPECT().
-		CreateInboundFile(mock.Anything, mock.MatchedBy(func(file *edi.EDIInboundFile) bool {
+		CreateInboundFile(mock.Anything, mock.MatchedBy(func(file *ediinboundfile.EDIInboundFile) bool {
 			return file.RawContent == as2ReceiverPayload && file.EDIPartnerID == partnerID
 		})).
-		RunAndReturn(func(_ context.Context, file *edi.EDIInboundFile) (*edi.EDIInboundFile, error) {
+		RunAndReturn(func(_ context.Context, file *ediinboundfile.EDIInboundFile) (*ediinboundfile.EDIInboundFile, error) {
 			file.ID = pulid.MustNew("ediinf_")
 			return file, nil
 		}).

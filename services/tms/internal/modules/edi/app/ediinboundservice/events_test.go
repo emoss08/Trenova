@@ -7,6 +7,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/ediinboundfile"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/editransfer"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -26,19 +29,19 @@ func TestProcessInboundFile_WakesIntakeOnlyOnQuarantine(t *testing.T) {
 	cases := []struct {
 		name       string
 		rawContent string
-		wantStatus edi.InboundFileStatus
+		wantStatus ediinboundfile.InboundFileStatus
 		wantEvents int
 	}{
 		{
 			name:       "a file that cannot be parsed wakes intake",
 			rawContent: "this is not x12",
-			wantStatus: edi.InboundFileStatusQuarantined,
+			wantStatus: ediinboundfile.InboundFileStatusQuarantined,
 			wantEvents: 1,
 		},
 		{
 			name:       "an empty file is quarantined and wakes intake",
 			rawContent: "",
-			wantStatus: edi.InboundFileStatusQuarantined,
+			wantStatus: ediinboundfile.InboundFileStatusQuarantined,
 			wantEvents: 1,
 		},
 	}
@@ -87,7 +90,7 @@ func TestProcessInboundFile_RaisesTheTenderItCarriedAndNotAQuarantine(t *testing
 
 	fixture.expectFileLoadAndUpdates(t)
 	fixture.expectPartnerLoad()
-	fixture.expectInboundDocumentType(edi.TransactionSet204)
+	fixture.expectInboundDocumentType(edidocument.TransactionSet204)
 	fixture.expectMessageCreate()
 	fixture.expectFlows()
 
@@ -96,7 +99,7 @@ func TestProcessInboundFile_RaisesTheTenderItCarriedAndNotAQuarantine(t *testing
 		Return([]*edi.EDIMappingProfileItem{}, nil)
 	fixture.transferRepo.EXPECT().
 		CreateTransfer(mock.Anything, mock.Anything).
-		RunAndReturn(func(_ context.Context, transfer *edi.EDITransfer) (*edi.EDITransfer, error) {
+		RunAndReturn(func(_ context.Context, transfer *editransfer.EDITransfer) (*editransfer.EDITransfer, error) {
 			transfer.ID = pulid.MustNew("edilt_")
 			return transfer, nil
 		}).
@@ -108,7 +111,7 @@ func TestProcessInboundFile_RaisesTheTenderItCarriedAndNotAQuarantine(t *testing
 	})
 
 	require.NoError(t, err)
-	require.Equal(t, edi.InboundFileStatusPartiallyProcessed, file.Status)
+	require.Equal(t, ediinboundfile.InboundFileStatusPartiallyProcessed, file.Status)
 	require.Len(t, publisher.events, 1)
 	require.Equal(t, agent.EventEDITenderReceived, publisher.events[0].Kind)
 	require.Equal(t, fixture.file.ID, publisher.events[0].SubjectID)

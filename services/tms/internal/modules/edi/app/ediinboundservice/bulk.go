@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/ediinboundfile"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -43,7 +43,7 @@ func (s *Service) BulkReprocessInboundFiles(
 	return result, nil
 }
 
-func CheckReprocessable(file *edi.EDIInboundFile) error {
+func CheckReprocessable(file *ediinboundfile.EDIInboundFile) error {
 	if file != nil && file.Status.IsReprocessable() {
 		return nil
 	}

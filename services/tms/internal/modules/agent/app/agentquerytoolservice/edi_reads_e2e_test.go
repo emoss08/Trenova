@@ -13,6 +13,12 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediinboundservice"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edicarrierinvoice"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/ediinboundfile"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edimessage"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edipayload"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/editransfer"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/edimessageports"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
@@ -101,40 +107,40 @@ func (f *fakeEDIPartnerRepo) ListCursor(
 func (f *fakeEDIInboundFileRepo) ListInboundFilesCursor(
 	_ context.Context,
 	req *edimessageports.ListEDIInboundFilesRequest,
-) (*pagination.CursorListResult[*edi.EDIInboundFile], error) {
+) (*pagination.CursorListResult[*ediinboundfile.EDIInboundFile], error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.files = req
 
-	return withEdges(&pagination.CursorListResult[*edi.EDIInboundFile]{
-		Items: []*edi.EDIInboundFile{inboundFileFixture("ISA*00~")},
+	return withEdges(&pagination.CursorListResult[*ediinboundfile.EDIInboundFile]{
+		Items: []*ediinboundfile.EDIInboundFile{inboundFileFixture("ISA*00~")},
 	}), nil
 }
 
 func (f *fakeEDIInboundFileRepo) GetInboundFileByID(
 	_ context.Context,
 	req edimessageports.GetEDIInboundFileByIDRequest,
-) (*edi.EDIInboundFile, error) {
+) (*ediinboundfile.EDIInboundFile, error) {
 	file := inboundFileFixture("ISA*00*RAW~")
 	file.ID = req.ID
 
 	return file, nil
 }
 
-func inboundFileFixture(raw string) *edi.EDIInboundFile {
-	messages := make([]*edi.EDIMessage, 0, 52)
+func inboundFileFixture(raw string) *ediinboundfile.EDIInboundFile {
+	messages := make([]*edimessage.EDIMessage, 0, 52)
 	for range 52 {
-		messages = append(messages, &edi.EDIMessage{
-			ID: pulid.MustNew("edimsg_"), TransactionSet: edi.TransactionSet204,
-			Direction: edi.DocumentDirectionInbound, RawX12: "ST*204*0001~",
+		messages = append(messages, &edimessage.EDIMessage{
+			ID: pulid.MustNew("edimsg_"), TransactionSet: edidocument.TransactionSet204,
+			Direction: edidocument.DocumentDirectionInbound, RawX12: "ST*204*0001~",
 		})
 	}
 
-	return &edi.EDIInboundFile{
+	return &ediinboundfile.EDIInboundFile{
 		ID:            pulid.MustNew("ediinf_"),
 		FileName:      "204_20260921.x12",
 		Method:        edi.ConnectionMethodSFTP,
-		Status:        edi.InboundFileStatusQuarantined,
+		Status:        ediinboundfile.InboundFileStatusQuarantined,
 		FailureReason: "ISA receiver does not match",
 		RawContent:    raw,
 		ReceivedAt:    1_790_000_000,
@@ -149,25 +155,25 @@ func inboundFileFixture(raw string) *edi.EDIInboundFile {
 func (f *fakeEDIMessageRepo) ListMessagesCursor(
 	_ context.Context,
 	req *edimessageports.ListEDIMessagesRequest,
-) (*pagination.CursorListResult[*edi.EDIMessage], error) {
+) (*pagination.CursorListResult[*edimessage.EDIMessage], error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.messages = req
 
-	return withEdges(&pagination.CursorListResult[*edi.EDIMessage]{
-		Items: []*edi.EDIMessage{messageFixture()},
+	return withEdges(&pagination.CursorListResult[*edimessage.EDIMessage]{
+		Items: []*edimessage.EDIMessage{messageFixture()},
 	}), nil
 }
 
 func (f *fakeEDIMessageRepo) GetMessageByID(
 	_ context.Context,
 	req edimessageports.GetEDIMessageByIDRequest,
-) (*edi.EDIMessage, error) {
+) (*edimessage.EDIMessage, error) {
 	message := messageFixture()
 	message.ID = req.ID
 	for range 55 {
 		message.ValidationErrors = append(message.ValidationErrors,
-			&edi.EDIMessageValidationError{
+			&edimessage.EDIMessageValidationError{
 				Severity: "Error", Code: "E101", SegmentID: "B10", ElementPosition: 2,
 				Message: "Reference is missing",
 			})
@@ -176,35 +182,37 @@ func (f *fakeEDIMessageRepo) GetMessageByID(
 	return message, nil
 }
 
-func messageFixture() *edi.EDIMessage {
-	return &edi.EDIMessage{
+func messageFixture() *edimessage.EDIMessage {
+	return &edimessage.EDIMessage{
 		ID:                       pulid.MustNew("edimsg_"),
 		EDIPartnerID:             ediPartnerFixture,
-		Direction:                edi.DocumentDirectionOutbound,
-		TransactionSet:           edi.TransactionSet214,
-		Status:                   edi.MessageStatusGenerated,
+		Direction:                edidocument.DocumentDirectionOutbound,
+		TransactionSet:           edidocument.TransactionSet214,
+		Status:                   edimessage.MessageStatusGenerated,
 		RawX12:                   "ISA*00*SECRET~ST*214*0001~",
-		DeliveryStatus:           edi.MessageDeliveryStatusDeadLettered,
+		DeliveryStatus:           edimessage.MessageDeliveryStatusDeadLettered,
 		DeliveryLastError:        "connection refused",
-		AckStatus:                edi.MessageAcknowledgmentStatusPending,
+		AckStatus:                edimessage.MessageAcknowledgmentStatusPending,
 		TransactionControlNumber: "0001",
 		GeneratedAt:              timeutils.NowUnix() - 7200,
-		PayloadSnapshot:          edi.DocumentPayload{TransactionSet: edi.TransactionSet214},
+		PayloadSnapshot: edipayload.DocumentPayload{
+			TransactionSet: edidocument.TransactionSet214,
+		},
 	}
 }
 
 func (f *fakeEDIMessageRepo) GetAckStatusCounts(
 	_ context.Context,
 	req edimessageports.GetEDIMessageStatusCountsRequest,
-) (map[edi.MessageAcknowledgmentStatus]int, error) {
+) (map[edimessage.MessageAcknowledgmentStatus]int, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.counts = req
 
-	return map[edi.MessageAcknowledgmentStatus]int{
-		edi.MessageAcknowledgmentStatusPending:  2,
-		edi.MessageAcknowledgmentStatusAccepted: 5,
-		edi.MessageAcknowledgmentStatusRejected: 1,
+	return map[edimessage.MessageAcknowledgmentStatus]int{
+		edimessage.MessageAcknowledgmentStatusPending:  2,
+		edimessage.MessageAcknowledgmentStatusAccepted: 5,
+		edimessage.MessageAcknowledgmentStatusRejected: 1,
 	}, nil
 }
 
@@ -214,9 +222,9 @@ func (f *fakeEDIMessageRepo) GetAckStatusCountsByPartner(
 ) ([]*edimessageports.EDIPartnerAckStatusCount, error) {
 	return []*edimessageports.EDIPartnerAckStatusCount{
 		{PartnerID: ediPartnerFixture, PartnerName: "Acme", PartnerCode: "ACME",
-			AckStatus: edi.MessageAcknowledgmentStatusAccepted, Count: 5},
+			AckStatus: edimessage.MessageAcknowledgmentStatusAccepted, Count: 5},
 		{PartnerID: ediPartnerFixture, PartnerName: "Acme", PartnerCode: "ACME",
-			AckStatus: edi.MessageAcknowledgmentStatusPending, Count: 2},
+			AckStatus: edimessage.MessageAcknowledgmentStatusPending, Count: 2},
 	}, nil
 }
 
@@ -234,7 +242,7 @@ func (f *fakeEDIMessageRepo) ListOverdueAcks(
 	message := messageFixture()
 
 	return &edimessageports.OverdueEDIAcks{
-		Messages: []*edi.EDIMessage{message},
+		Messages: []*edimessage.EDIMessage{message},
 		Partners: []*edimessageports.OverdueEDIAckPartner{{
 			PartnerID: ediPartnerFixture, PartnerName: "Acme", PartnerCode: "ACME",
 			Count: 3, OldestGeneratedAt: message.GeneratedAt,
@@ -245,70 +253,72 @@ func (f *fakeEDIMessageRepo) ListOverdueAcks(
 func (f *fakeEDIMessageRepo) ListRecentDeadLettered(
 	context.Context,
 	*edimessageports.ListRecentEDIMessageFailuresRequest,
-) ([]*edi.EDIMessage, error) {
-	return []*edi.EDIMessage{messageFixture()}, nil
+) ([]*edimessage.EDIMessage, error) {
+	return []*edimessage.EDIMessage{messageFixture()}, nil
 }
 
 func (f *ediFakes) listTransfers(
 	req *editenderports.ListEDITransfersRequest,
 	outbound bool,
-) *pagination.CursorListResult[*edi.EDITransfer] {
+) *pagination.CursorListResult[*editransfer.EDITransfer] {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.transfers, f.outbound = req, outbound
 
-	return withEdges(&pagination.CursorListResult[*edi.EDITransfer]{
-		Items: []*edi.EDITransfer{tenderFixture(f.org)},
+	return withEdges(&pagination.CursorListResult[*editransfer.EDITransfer]{
+		Items: []*editransfer.EDITransfer{tenderFixture(f.org)},
 	})
 }
 
 func (f *fakeEDITransferRepo) ListInboundCursor(
 	_ context.Context,
 	req *editenderports.ListEDITransfersRequest,
-) (*pagination.CursorListResult[*edi.EDITransfer], error) {
+) (*pagination.CursorListResult[*editransfer.EDITransfer], error) {
 	return f.listTransfers(req, false), nil
 }
 
 func (f *fakeEDITransferRepo) ListOutboundCursor(
 	_ context.Context,
 	req *editenderports.ListEDITransfersRequest,
-) (*pagination.CursorListResult[*edi.EDITransfer], error) {
+) (*pagination.CursorListResult[*editransfer.EDITransfer], error) {
 	return f.listTransfers(req, true), nil
 }
 
 func (f *fakeEDITransferRepo) GetTransferByID(
 	_ context.Context,
 	req editenderports.GetEDITransferByIDRequest,
-) (*edi.EDITransfer, error) {
+) (*editransfer.EDITransfer, error) {
 	tender := tenderFixture(pulid.MustNew("org_"))
 	tender.ID = req.ID
-	tender.Status = edi.TransferStatusApproved
+	tender.Status = editransfer.TransferStatusApproved
 
 	return tender, nil
 }
 
 // tenderFixture is a load tender another organization sent to org.
-func tenderFixture(org pulid.ID) *edi.EDITransfer {
+func tenderFixture(org pulid.ID) *editransfer.EDITransfer {
 	start, end := int64(1_790_000_000), int64(1_790_007_200)
 
-	return &edi.EDITransfer{
+	return &editransfer.EDITransfer{
 		ID:                   pulid.MustNew("edilt_"),
 		SourceOrganizationID: pulid.MustNew("org_"),
 		TargetOrganizationID: org,
-		Status:               edi.TransferStatusPendingApproval,
+		Status:               editransfer.TransferStatusPendingApproval,
 		TargetPartner:        &edi.EDIPartner{ID: ediPartnerFixture, Code: "ACME", Name: "Acme"},
-		TenderPayload: edi.LoadTenderPayload{
+		TenderPayload: editransfer.LoadTenderPayload{
 			BOL:               "BOL-5",
 			CustomerLabel:     "Acme Foods",
 			TotalChargeAmount: decimal.NewNullDecimal(decimal.RequireFromString("1850.00")),
-			Moves: []edi.LoadTenderMove{{Stops: []edi.LoadTenderStop{
+			Moves: []editransfer.LoadTenderMove{{Stops: []editransfer.LoadTenderStop{
 				{
 					Type: "Pickup", LocationName: "Acme DC", LocationCity: "Dallas",
 					ScheduledWindowStart: start, ScheduledWindowEnd: &end,
 				},
 				{Type: "Delivery", LocationName: "Store 12", LocationCity: "Tulsa"},
 			}}},
-			Commodities: []edi.LoadTenderCommodity{{CommodityLabel: "Produce", Weight: 40000}},
+			Commodities: []editransfer.LoadTenderCommodity{
+				{CommodityLabel: "Produce", Weight: 40000},
+			},
 		},
 	}
 }
@@ -316,28 +326,28 @@ func tenderFixture(org pulid.ID) *edi.EDITransfer {
 func (f *fakeEDICarrierInvoiceRepo) ListCarrierInvoices(
 	_ context.Context,
 	req *ediports.ListEDICarrierInvoicesRequest,
-) (*pagination.ListResult[*edi.CarrierInvoice], error) {
+) (*pagination.ListResult[*edicarrierinvoice.CarrierInvoice], error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.invoices = req
 	total := decimal.NewNullDecimal(decimal.RequireFromString("1200.00"))
-	items := []*edi.CarrierInvoice{
+	items := []*edicarrierinvoice.CarrierInvoice{
 		{
 			ID: pulid.MustNew("edici_"), InvoiceNumber: "INV-1", TotalAmount: total,
-			ReconciliationStatus: edi.CarrierInvoiceReconciliationStatusMappingRequired,
+			ReconciliationStatus: edicarrierinvoice.CarrierInvoiceReconciliationStatusMappingRequired,
 			ReferenceNumbers:     map[string]string{"SCAC": "ACME"},
 		},
 		{
 			ID: pulid.MustNew("edici_"), InvoiceNumber: "INV-2", TotalAmount: total,
 			CarrierID:            pulid.MustNew("car_"),
-			ReconciliationStatus: edi.CarrierInvoiceReconciliationStatusUnmatched,
+			ReconciliationStatus: edicarrierinvoice.CarrierInvoiceReconciliationStatusUnmatched,
 		},
 	}
 	if limit := req.Filter.Pagination.Limit; limit > 0 && limit < len(items) {
 		items = items[:limit]
 	}
 
-	return &pagination.ListResult[*edi.CarrierInvoice]{
+	return &pagination.ListResult[*edicarrierinvoice.CarrierInvoice]{
 		Items:      items,
 		Total:      len(items),
 		TotalExact: true,
@@ -569,7 +579,7 @@ func TestEDICarrierInvoices_ThroughTheExecutor(t *testing.T) {
 	require.NoError(t, err)
 
 	require.NotNil(t, fakes.invoices)
-	assert.Equal(t, edi.CarrierInvoiceReconciliationStatusMappingRequired,
+	assert.Equal(t, edicarrierinvoice.CarrierInvoiceReconciliationStatusMappingRequired,
 		fakes.invoices.ReconciliationStatus)
 	require.NotNil(t, fakes.identity)
 	assert.Equal(t, "ACME", fakes.identity.SCAC)

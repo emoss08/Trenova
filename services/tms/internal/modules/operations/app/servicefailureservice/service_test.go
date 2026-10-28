@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
@@ -708,8 +708,8 @@ func TestPreflightServiceFailure214BlocksMandatoryDiagnostics(t *testing.T) {
 			Trigger:   servicefailureports.ServiceFailureEDITriggerReviewed,
 			Action:    ediports.ServiceFailureEDIActionBlocked,
 			Mandatory: true,
-			Diagnostics: []edi.Diagnostic{{
-				Severity: edi.ValidationSeverityError,
+			Diagnostics: []edidocument.Diagnostic{{
+				Severity: edidocument.ValidationSeverityError,
 				Path:     "shipmentStatus.statusReasonCode",
 				Message:  "status reason required",
 			}},

@@ -10,6 +10,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edipayload"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/editransfer"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentevent"
@@ -21,31 +24,39 @@ import (
 	"github.com/shopspring/decimal"
 )
 
-func buildTenderPayload(source *shipment.Shipment) edi.LoadTenderPayload {
-	payload := edi.LoadTenderPayload{
-		PurposeCode:              edi.LoadTenderPurposeOriginal,
-		ShipmentID:               source.ID,
-		BusinessUnitID:           source.BusinessUnitID,
-		OrganizationID:           source.OrganizationID,
-		ServiceTypeID:            source.ServiceTypeID,
-		ServiceTypeLabel:         serviceTypeLabel(source),
-		ShipmentTypeID:           source.ShipmentTypeID,
-		ShipmentTypeLabel:        shipmentTypeLabel(source),
-		CustomerID:               source.CustomerID,
-		CustomerLabel:            customerLabel(source),
-		FormulaTemplateID:        source.FormulaTemplateID,
-		FormulaTemplateLabel:     formulaTemplateLabel(source),
-		BOL:                      source.BOL,
-		Pieces:                   source.Pieces,
-		Weight:                   source.Weight,
-		TemperatureMin:           source.TemperatureMin,
-		TemperatureMax:           source.TemperatureMax,
-		FreightChargeAmount:      source.FreightChargeAmount,
-		OtherChargeAmount:        source.OtherChargeAmount,
-		TotalChargeAmount:        source.TotalChargeAmount,
-		Moves:                    make([]edi.LoadTenderMove, 0, len(source.Moves)),
-		Commodities:              make([]edi.LoadTenderCommodity, 0, len(source.Commodities)),
-		AdditionalCharges:        make([]edi.LoadTenderCharge, 0, len(source.AdditionalCharges)),
+func buildTenderPayload(source *shipment.Shipment) editransfer.LoadTenderPayload {
+	payload := editransfer.LoadTenderPayload{
+		PurposeCode:          editransfer.LoadTenderPurposeOriginal,
+		ShipmentID:           source.ID,
+		BusinessUnitID:       source.BusinessUnitID,
+		OrganizationID:       source.OrganizationID,
+		ServiceTypeID:        source.ServiceTypeID,
+		ServiceTypeLabel:     serviceTypeLabel(source),
+		ShipmentTypeID:       source.ShipmentTypeID,
+		ShipmentTypeLabel:    shipmentTypeLabel(source),
+		CustomerID:           source.CustomerID,
+		CustomerLabel:        customerLabel(source),
+		FormulaTemplateID:    source.FormulaTemplateID,
+		FormulaTemplateLabel: formulaTemplateLabel(source),
+		BOL:                  source.BOL,
+		Pieces:               source.Pieces,
+		Weight:               source.Weight,
+		TemperatureMin:       source.TemperatureMin,
+		TemperatureMax:       source.TemperatureMax,
+		FreightChargeAmount:  source.FreightChargeAmount,
+		OtherChargeAmount:    source.OtherChargeAmount,
+		TotalChargeAmount:    source.TotalChargeAmount,
+		Moves:                make([]editransfer.LoadTenderMove, 0, len(source.Moves)),
+		Commodities: make(
+			[]editransfer.LoadTenderCommodity,
+			0,
+			len(source.Commodities),
+		),
+		AdditionalCharges: make(
+			[]editransfer.LoadTenderCharge,
+			0,
+			len(source.AdditionalCharges),
+		),
 		RequiredMappingEntityIDs: map[edi.MappingEntityType][]pulid.ID{},
 	}
 	addRequiredID(
@@ -94,7 +105,7 @@ func buildTenderPayload(source *shipment.Shipment) edi.LoadTenderPayload {
 	}
 
 	for _, charge := range source.AdditionalCharges {
-		payload.AdditionalCharges = append(payload.AdditionalCharges, edi.LoadTenderCharge{
+		payload.AdditionalCharges = append(payload.AdditionalCharges, editransfer.LoadTenderCharge{
 			AccessorialChargeID:    charge.AccessorialChargeID,
 			AccessorialLabel:       accessorialLabel(charge),
 			AccessorialCode:        accessorialCode(charge),
@@ -113,16 +124,16 @@ func buildTenderPayload(source *shipment.Shipment) edi.LoadTenderPayload {
 	return payload
 }
 
-func loadTenderMoveFromShipmentMove(move *shipment.ShipmentMove) edi.LoadTenderMove {
-	tenderMove := edi.LoadTenderMove{
+func loadTenderMoveFromShipmentMove(move *shipment.ShipmentMove) editransfer.LoadTenderMove {
+	tenderMove := editransfer.LoadTenderMove{
 		Loaded:   move.Loaded,
 		Sequence: move.Sequence,
 		Distance: move.Distance,
-		Stops:    make([]edi.LoadTenderStop, 0, len(move.Stops)),
+		Stops:    make([]editransfer.LoadTenderStop, 0, len(move.Stops)),
 	}
 	for _, stop := range move.Stops {
 		locLabel, locAddr := stopLocationDetails(stop)
-		tenderStop := edi.LoadTenderStop{
+		tenderStop := editransfer.LoadTenderStop{
 			LocationID:           stop.LocationID,
 			LocationLabel:        locLabel,
 			Type:                 string(stop.Type),
@@ -152,8 +163,8 @@ func loadTenderMoveFromShipmentMove(move *shipment.ShipmentMove) edi.LoadTenderM
 
 func loadTenderCommodityFromShipmentCommodity(
 	commodity *shipment.ShipmentCommodity,
-) edi.LoadTenderCommodity {
-	return edi.LoadTenderCommodity{
+) editransfer.LoadTenderCommodity {
+	return editransfer.LoadTenderCommodity{
 		CommodityID:          commodity.CommodityID,
 		CommodityLabel:       commodityLabel(commodity),
 		CommodityName:        commodityName(commodity),
@@ -163,8 +174,8 @@ func loadTenderCommodityFromShipmentCommodity(
 	}
 }
 
-func buildFreightInvoicePayload(source *invoice.Invoice) edi.DocumentPayload {
-	payload := edi.FreightInvoicePayload{
+func buildFreightInvoicePayload(source *invoice.Invoice) edipayload.DocumentPayload {
+	payload := edipayload.FreightInvoicePayload{
 		InvoiceID:     source.ID,
 		InvoiceNumber: source.Number,
 		InvoiceDate:   source.InvoiceDate,
@@ -189,7 +200,7 @@ func buildFreightInvoicePayload(source *invoice.Invoice) edi.DocumentPayload {
 			Decimal: source.TotalAmount,
 			Valid:   true,
 		},
-		LineCharges: make([]edi.FreightInvoiceCharge, 0, len(source.Lines)),
+		LineCharges: make([]edipayload.FreightInvoiceCharge, 0, len(source.Lines)),
 		ReferenceNumbers: map[string]string{
 			"qualifier": "BM",
 			"bol": stringutils.FirstNonEmpty(
@@ -222,7 +233,7 @@ func buildFreightInvoicePayload(source *invoice.Invoice) edi.DocumentPayload {
 	consolidated := source.ShipmentCount > 1
 
 	for _, line := range lines {
-		charge := edi.FreightInvoiceCharge{
+		charge := edipayload.FreightInvoiceCharge{
 			Sequence:    int64(line.LineNumber),
 			Code:        specialChargeCode(line),
 			Description: line.Description,
@@ -240,8 +251,8 @@ func buildFreightInvoicePayload(source *invoice.Invoice) edi.DocumentPayload {
 		payload.Shipments = freightInvoiceShipments(lines)
 	}
 
-	return edi.DocumentPayload{
-		TransactionSet: edi.TransactionSet210,
+	return edipayload.DocumentPayload{
+		TransactionSet: edidocument.TransactionSet210,
 		FreightInvoice: &payload,
 	}
 }
@@ -252,9 +263,9 @@ func buildFreightInvoicePayload(source *invoice.Invoice) edi.DocumentPayload {
 // reads them rather than taking a list that could disagree. Order-level charges
 // carry no shipment and contribute no reference, which is correct: they belong
 // to the invoice, not to any one load.
-func freightInvoiceShipments(lines []*invoice.InvoiceLine) []edi.FreightInvoiceShipment {
+func freightInvoiceShipments(lines []*invoice.InvoiceLine) []edipayload.FreightInvoiceShipment {
 	order := make([]pulid.ID, 0, len(lines))
-	byID := make(map[pulid.ID]*edi.FreightInvoiceShipment, len(lines))
+	byID := make(map[pulid.ID]*edipayload.FreightInvoiceShipment, len(lines))
 
 	for _, line := range lines {
 		if line.ShipmentID.IsNil() {
@@ -263,7 +274,7 @@ func freightInvoiceShipments(lines []*invoice.InvoiceLine) []edi.FreightInvoiceS
 		existing, seen := byID[line.ShipmentID]
 		if !seen {
 			order = append(order, line.ShipmentID)
-			byID[line.ShipmentID] = &edi.FreightInvoiceShipment{
+			byID[line.ShipmentID] = &edipayload.FreightInvoiceShipment{
 				ShipmentID: line.ShipmentID,
 				ProNumber:  line.ShipmentProNumber,
 				BOL:        line.ShipmentBOL,
@@ -274,7 +285,7 @@ func freightInvoiceShipments(lines []*invoice.InvoiceLine) []edi.FreightInvoiceS
 		existing.Amount = decimal.NewNullDecimal(existing.Amount.Decimal.Add(line.Amount))
 	}
 
-	out := make([]edi.FreightInvoiceShipment, 0, len(order))
+	out := make([]edipayload.FreightInvoiceShipment, 0, len(order))
 	for _, id := range order {
 		out = append(out, *byID[id])
 	}
@@ -282,14 +293,14 @@ func freightInvoiceShipments(lines []*invoice.InvoiceLine) []edi.FreightInvoiceS
 	return out
 }
 
-func buildShipmentStatusPayload(source *shipment.Shipment) edi.DocumentPayload {
+func buildShipmentStatusPayload(source *shipment.Shipment) edipayload.DocumentPayload {
 	if source == nil {
-		return edi.DocumentPayload{
-			TransactionSet: edi.TransactionSet214,
-			ShipmentStatus: &edi.ShipmentStatusPayload{References: map[string]string{}},
+		return edipayload.DocumentPayload{
+			TransactionSet: edidocument.TransactionSet214,
+			ShipmentStatus: &edipayload.ShipmentStatusPayload{References: map[string]string{}},
 		}
 	}
-	payload := edi.ShipmentStatusPayload{
+	payload := edipayload.ShipmentStatusPayload{
 		ShipmentID: source.ID,
 		StatusCode: "X3",
 		References: map[string]string{
@@ -308,8 +319,8 @@ func buildShipmentStatusPayload(source *shipment.Shipment) edi.DocumentPayload {
 		payload.EventTime = stop.ScheduledWindowStart
 		applyShipmentStatusStop(&payload, stop)
 	}
-	return edi.DocumentPayload{
-		TransactionSet: edi.TransactionSet214,
+	return edipayload.DocumentPayload{
+		TransactionSet: edidocument.TransactionSet214,
 		ShipmentStatus: &payload,
 	}
 }
@@ -317,8 +328,8 @@ func buildShipmentStatusPayload(source *shipment.Shipment) edi.DocumentPayload {
 func buildShipmentEventStatusPayload(
 	event *shipmentevent.Event,
 	source *shipment.Shipment,
-) edi.DocumentPayload {
-	payload := edi.ShipmentStatusPayload{
+) edipayload.DocumentPayload {
+	payload := edipayload.ShipmentStatusPayload{
 		ShipmentID: event.ShipmentID,
 		StatusCode: shipmentEventStatusCode(event),
 		EventDate:  event.OccurredAt,
@@ -357,8 +368,8 @@ func buildShipmentEventStatusPayload(
 	}
 	stop := shipmentEventStop(event, source)
 	applyShipmentStatusStop(&payload, stop)
-	return edi.DocumentPayload{
-		TransactionSet: edi.TransactionSet214,
+	return edipayload.DocumentPayload{
+		TransactionSet: edidocument.TransactionSet214,
 		ShipmentStatus: &payload,
 	}
 }
@@ -402,9 +413,9 @@ func (s *Service) BuildShipmentStatusPayloadForServiceFailure(
 func buildServiceFailureShipmentStatusPayload(
 	failure *servicefailure.ServiceFailure,
 	source *shipment.Shipment,
-) edi.DocumentPayload {
+) edipayload.DocumentPayload {
 	eventTimestamp := serviceFailureEventTimestamp(failure)
-	status := edi.ShipmentStatusPayload{
+	status := edipayload.ShipmentStatusPayload{
 		ShipmentID:           failure.ShipmentID,
 		StatusCode:           serviceFailureStatusCode(failure),
 		StatusReasonCode:     serviceFailureReasonCode(failure),
@@ -451,8 +462,8 @@ func buildServiceFailureShipmentStatusPayload(
 	applyShipmentStatusStop(&status, stop)
 	applyServiceFailureEquipment(&status, source, move)
 
-	return edi.DocumentPayload{
-		TransactionSet: edi.TransactionSet214,
+	return edipayload.DocumentPayload{
+		TransactionSet: edidocument.TransactionSet214,
 		ShipmentStatus: &status,
 	}
 }
@@ -548,7 +559,7 @@ func serviceFailureStop(source *shipment.Shipment, stopID pulid.ID) *shipment.St
 }
 
 func applyServiceFailureEquipment(
-	payload *edi.ShipmentStatusPayload,
+	payload *edipayload.ShipmentStatusPayload,
 	source *shipment.Shipment,
 	move *shipment.ShipmentMove,
 ) {
@@ -563,18 +574,20 @@ func applyServiceFailureEquipment(
 	}
 }
 
-func serviceFailurePayloadDiagnostics(payload *edi.ShipmentStatusPayload) []edi.Diagnostic {
+func serviceFailurePayloadDiagnostics(
+	payload *edipayload.ShipmentStatusPayload,
+) []edidocument.Diagnostic {
 	return serviceFailure214Diagnostics(payload)
 }
 
-func buildTenderResponsePayload(transfer *edi.EDITransfer) edi.DocumentPayload {
+func buildTenderResponsePayload(transfer *editransfer.EDITransfer) edipayload.DocumentPayload {
 	responseCode := "A"
 	reasonCode := ""
-	if transfer.Status == edi.TransferStatusRejected {
+	if transfer.Status == editransfer.TransferStatusRejected {
 		responseCode = "D"
 		reasonCode = "ZZ"
 	}
-	payload := edi.TenderResponsePayload{
+	payload := edipayload.TenderResponsePayload{
 		TransferID:      transfer.ID,
 		ShipmentID:      transfer.SourceShipmentID,
 		BOL:             transfer.TenderPayload.BOL,
@@ -583,8 +596,8 @@ func buildTenderResponsePayload(transfer *edi.EDITransfer) edi.DocumentPayload {
 		RejectionReason: transfer.RejectionReason,
 		Status:          transfer.Status,
 	}
-	return edi.DocumentPayload{
-		TransactionSet: edi.TransactionSet990,
+	return edipayload.DocumentPayload{
+		TransactionSet: edidocument.TransactionSet990,
 		TenderResponse: &payload,
 	}
 }
@@ -616,7 +629,10 @@ func shipmentEventStatusCode(event *shipmentevent.Event) string {
 	return "X3"
 }
 
-func applyShipmentStatusShipment(payload *edi.ShipmentStatusPayload, source *shipment.Shipment) {
+func applyShipmentStatusShipment(
+	payload *edipayload.ShipmentStatusPayload,
+	source *shipment.Shipment,
+) {
 	if source == nil {
 		return
 	}
@@ -630,7 +646,7 @@ func applyShipmentStatusShipment(payload *edi.ShipmentStatusPayload, source *shi
 	payload.Pieces = source.Pieces
 }
 
-func applyShipmentStatusStop(payload *edi.ShipmentStatusPayload, stop *shipment.Stop) {
+func applyShipmentStatusStop(payload *edipayload.ShipmentStatusPayload, stop *shipment.Stop) {
 	if payload == nil || stop == nil {
 		return
 	}
@@ -747,7 +763,7 @@ func shipmentProNumber(source *shipment.Shipment) string {
 }
 
 func sourceLabelIndex(
-	payload *edi.LoadTenderPayload,
+	payload *editransfer.LoadTenderPayload,
 ) map[edi.MappingEntityType]map[pulid.ID]string {
 	labels := map[edi.MappingEntityType]map[pulid.ID]string{}
 	setLabel(labels, edi.MappingEntityTypeCustomer, payload.CustomerID, payload.CustomerLabel)
@@ -867,7 +883,7 @@ func stopLocationDetails(stop *shipment.Stop) (label, address string) {
 	return stringutils.FirstNonEmpty(label, address), address
 }
 
-func stopLabel(stop *edi.LoadTenderStop) string {
+func stopLabel(stop *editransfer.LoadTenderStop) string {
 	return stringutils.FirstNonEmpty(
 		stop.LocationLabel,
 		joinCodeName(stop.LocationCode, stop.LocationName),

@@ -1,11 +1,14 @@
 package ediservice
 
 import (
-	"github.com/emoss08/trenova/internal/testutil/mocks/ediportsmock"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edicarrierinvoice"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edimessage"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edipayload"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/testutil/mocks/ediportsmock"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -17,7 +20,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func duplicateInvoiceFixture() (*edi.EDIPartner, *edi.EDIMessage, *edi.FreightInvoicePayload) {
+func duplicateInvoiceFixture() (*edi.EDIPartner, *edimessage.EDIMessage, *edipayload.FreightInvoicePayload) {
 	orgID := pulid.MustNew("org_")
 	buID := pulid.MustNew("bu_")
 	partner := &edi.EDIPartner{
@@ -26,8 +29,12 @@ func duplicateInvoiceFixture() (*edi.EDIPartner, *edi.EDIMessage, *edi.FreightIn
 		BusinessUnitID: buID,
 		Code:           "ACME",
 	}
-	message := &edi.EDIMessage{ID: pulid.MustNew("edim_"), OrganizationID: orgID, BusinessUnitID: buID}
-	payload := &edi.FreightInvoicePayload{
+	message := &edimessage.EDIMessage{
+		ID:             pulid.MustNew("edim_"),
+		OrganizationID: orgID,
+		BusinessUnitID: buID,
+	}
+	payload := &edipayload.FreightInvoicePayload{
 		InvoiceNumber:    "inv-1 ",
 		TotalAmount:      decimal.NullDecimal{Decimal: decimal.NewFromInt(1600), Valid: true},
 		ReferenceNumbers: map[string]string{},
@@ -39,24 +46,33 @@ func TestRecordInboundFreightInvoice_ReturnsTheInvoiceAlreadyRecorded(t *testing
 	t.Parallel()
 
 	partner, message, payload := duplicateInvoiceFixture()
-	recorded := &edi.CarrierInvoice{
+	recorded := &edicarrierinvoice.CarrierInvoice{
 		ID:            pulid.MustNew("edici_"),
 		InvoiceNumber: "INV-1",
 		TotalAmount:   decimal.NullDecimal{Decimal: decimal.NewFromInt(1500), Valid: true},
 	}
 	invoiceRepo := ediportsmock.NewMockEDICarrierInvoiceRepository(t)
-	invoiceRepo.EXPECT().GetCarrierInvoiceByNumber(mock.Anything, &ediports.GetEDICarrierInvoiceByNumberRequest{
-		TenantInfo:    pagination.TenantInfo{OrgID: message.OrganizationID, BuID: message.BusinessUnitID},
-		PartnerID:     partner.ID,
-		InvoiceNumber: "inv-1 ",
-	}).Return(recorded, nil).Once()
+	invoiceRepo.EXPECT().
+		GetCarrierInvoiceByNumber(mock.Anything, &ediports.GetEDICarrierInvoiceByNumberRequest{
+			TenantInfo: pagination.TenantInfo{
+				OrgID: message.OrganizationID,
+				BuID:  message.BusinessUnitID,
+			},
+			PartnerID:     partner.ID,
+			InvoiceNumber: "inv-1 ",
+		}).
+		Return(recorded, nil).
+		Once()
 	service := &Service{l: zap.NewNop(), carrierInvoiceRepo: invoiceRepo}
 
-	result, err := service.RecordInboundFreightInvoice(t.Context(), &RecordInboundFreightInvoiceRequest{
-		Partner: partner,
-		Message: message,
-		Payload: payload,
-	})
+	result, err := service.RecordInboundFreightInvoice(
+		t.Context(),
+		&RecordInboundFreightInvoiceRequest{
+			Partner: partner,
+			Message: message,
+			Payload: payload,
+		},
+	)
 
 	require.NoError(t, err)
 	assert.True(t, result.AlreadyRecorded)
@@ -71,7 +87,7 @@ func TestRecordInboundFreightInvoice_LosingTheInsertRaceReturnsTheWinner(t *test
 	t.Parallel()
 
 	partner, message, payload := duplicateInvoiceFixture()
-	winner := &edi.CarrierInvoice{
+	winner := &edicarrierinvoice.CarrierInvoice{
 		ID:            pulid.MustNew("edici_"),
 		InvoiceNumber: "INV-1",
 		TotalAmount:   payload.TotalAmount,
@@ -85,11 +101,14 @@ func TestRecordInboundFreightInvoice_LosingTheInsertRaceReturnsTheWinner(t *test
 		Return(winner, nil).Once()
 	service := &Service{l: zap.NewNop(), carrierInvoiceRepo: invoiceRepo}
 
-	result, err := service.RecordInboundFreightInvoice(t.Context(), &RecordInboundFreightInvoiceRequest{
-		Partner: partner,
-		Message: message,
-		Payload: payload,
-	})
+	result, err := service.RecordInboundFreightInvoice(
+		t.Context(),
+		&RecordInboundFreightInvoiceRequest{
+			Partner: partner,
+			Message: message,
+			Payload: payload,
+		},
+	)
 
 	require.NoError(t, err)
 	assert.True(t, result.AlreadyRecorded)

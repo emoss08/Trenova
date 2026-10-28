@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edimessage"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/edimessageports"
 	"github.com/emoss08/trenova/internal/testutil/mocks/edimessageportsmock"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -21,29 +21,41 @@ func TestGetEDIAckHealth_GroupsOverdueMessagesByPartnerOldestFirst(t *testing.T)
 
 	tenant := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
 	acme, bolt, quiet := pulid.MustNew("edip_"), pulid.MustNew("edip_"), pulid.MustNew("edip_")
-	oldest := &edi.EDIMessage{ID: pulid.MustNew("edimsg_"), EDIPartnerID: acme, GeneratedAt: 100}
-	boltOld := &edi.EDIMessage{ID: pulid.MustNew("edimsg_"), EDIPartnerID: bolt, GeneratedAt: 200}
-	acmeOld := &edi.EDIMessage{ID: pulid.MustNew("edimsg_"), EDIPartnerID: acme, GeneratedAt: 300}
-	dead := &edi.EDIMessage{ID: pulid.MustNew("edimsg_"), EDIPartnerID: bolt}
+	oldest := &edimessage.EDIMessage{
+		ID:           pulid.MustNew("edimsg_"),
+		EDIPartnerID: acme,
+		GeneratedAt:  100,
+	}
+	boltOld := &edimessage.EDIMessage{
+		ID:           pulid.MustNew("edimsg_"),
+		EDIPartnerID: bolt,
+		GeneratedAt:  200,
+	}
+	acmeOld := &edimessage.EDIMessage{
+		ID:           pulid.MustNew("edimsg_"),
+		EDIPartnerID: acme,
+		GeneratedAt:  300,
+	}
+	dead := &edimessage.EDIMessage{ID: pulid.MustNew("edimsg_"), EDIPartnerID: bolt}
 
 	repo := edimessageportsmock.NewMockEDIMessageRepository(t)
 	var countsReq edimessageports.GetEDIMessageStatusCountsRequest
 	repo.EXPECT().GetAckStatusCounts(mock.Anything, mock.Anything).
 		Run(func(_ context.Context, req edimessageports.GetEDIMessageStatusCountsRequest) { countsReq = req }).
-		Return(map[edi.MessageAcknowledgmentStatus]int{
-			edi.MessageAcknowledgmentStatusPending:  4,
-			edi.MessageAcknowledgmentStatusAccepted: 9,
+		Return(map[edimessage.MessageAcknowledgmentStatus]int{
+			edimessage.MessageAcknowledgmentStatusPending:  4,
+			edimessage.MessageAcknowledgmentStatusAccepted: 9,
 		}, nil)
 	var byPartnerReq edimessageports.GetEDIMessageStatusCountsRequest
 	repo.EXPECT().GetAckStatusCountsByPartner(mock.Anything, mock.Anything).
 		Run(func(_ context.Context, req edimessageports.GetEDIMessageStatusCountsRequest) { byPartnerReq = req }).
 		Return([]*edimessageports.EDIPartnerAckStatusCount{
 			{PartnerID: acme, PartnerName: "Acme", PartnerCode: "ACME",
-				AckStatus: edi.MessageAcknowledgmentStatusAccepted, Count: 7},
+				AckStatus: edimessage.MessageAcknowledgmentStatusAccepted, Count: 7},
 			{PartnerID: acme, PartnerName: "Acme", PartnerCode: "ACME",
-				AckStatus: edi.MessageAcknowledgmentStatusPending, Count: 3},
+				AckStatus: edimessage.MessageAcknowledgmentStatusPending, Count: 3},
 			{PartnerID: bolt, PartnerName: "Bolt", PartnerCode: "BOLT",
-				AckStatus: edi.MessageAcknowledgmentStatusRejected, Count: 1},
+				AckStatus: edimessage.MessageAcknowledgmentStatusRejected, Count: 1},
 		}, nil)
 	var countReq edimessageports.GetEDIOverdueAckCountRequest
 	repo.EXPECT().GetOverdueAckCount(mock.Anything, mock.Anything).
@@ -53,7 +65,7 @@ func TestGetEDIAckHealth_GroupsOverdueMessagesByPartnerOldestFirst(t *testing.T)
 	repo.EXPECT().ListOverdueAcks(mock.Anything, mock.Anything).
 		Run(func(_ context.Context, req *edimessageports.ListOverdueEDIAcksRequest) { listReq = req }).
 		Return(&edimessageports.OverdueEDIAcks{
-			Messages: []*edi.EDIMessage{oldest, boltOld, acmeOld},
+			Messages: []*edimessage.EDIMessage{oldest, boltOld, acmeOld},
 			Partners: []*edimessageports.OverdueEDIAckPartner{
 				{PartnerID: acme, PartnerName: "Acme", Count: 2, OldestGeneratedAt: 100},
 				{PartnerID: bolt, PartnerName: "Bolt", Count: 1, OldestGeneratedAt: 200},
@@ -63,7 +75,7 @@ func TestGetEDIAckHealth_GroupsOverdueMessagesByPartnerOldestFirst(t *testing.T)
 	var deadReq *edimessageports.ListRecentEDIMessageFailuresRequest
 	repo.EXPECT().ListRecentDeadLettered(mock.Anything, mock.Anything).
 		Run(func(_ context.Context, req *edimessageports.ListRecentEDIMessageFailuresRequest) { deadReq = req }).
-		Return([]*edi.EDIMessage{dead}, nil)
+		Return([]*edimessage.EDIMessage{dead}, nil)
 
 	service := &Service{l: zap.NewNop(), messageRepo: repo}
 	before := timeutils.NowUnix()
@@ -86,32 +98,32 @@ func TestGetEDIAckHealth_GroupsOverdueMessagesByPartnerOldestFirst(t *testing.T)
 	assert.Equal(t, []*EDIPartnerAckCounts{
 		{
 			PartnerID: acme, PartnerName: "Acme", PartnerCode: "ACME",
-			Counts: map[edi.MessageAcknowledgmentStatus]int{
-				edi.MessageAcknowledgmentStatusAccepted: 7,
-				edi.MessageAcknowledgmentStatusPending:  3,
+			Counts: map[edimessage.MessageAcknowledgmentStatus]int{
+				edimessage.MessageAcknowledgmentStatusAccepted: 7,
+				edimessage.MessageAcknowledgmentStatusPending:  3,
 			},
 		},
 		{
 			PartnerID: bolt, PartnerName: "Bolt", PartnerCode: "BOLT",
-			Counts: map[edi.MessageAcknowledgmentStatus]int{
-				edi.MessageAcknowledgmentStatusRejected: 1,
+			Counts: map[edimessage.MessageAcknowledgmentStatus]int{
+				edimessage.MessageAcknowledgmentStatusRejected: 1,
 			},
 		},
 	}, health.AckCountsByPartner)
 
 	assert.Equal(t, 4, health.OverdueAckCount)
-	assert.Equal(t, 9, health.AckStatusCounts[edi.MessageAcknowledgmentStatusAccepted])
+	assert.Equal(t, 9, health.AckStatusCounts[edimessage.MessageAcknowledgmentStatusAccepted])
 	require.Len(t, health.OverdueByPartner, 3)
 	assert.Equal(t, acme, health.OverdueByPartner[0].PartnerID)
-	assert.Equal(t, []*edi.EDIMessage{oldest, acmeOld}, health.OverdueByPartner[0].Messages)
+	assert.Equal(t, []*edimessage.EDIMessage{oldest, acmeOld}, health.OverdueByPartner[0].Messages)
 	assert.Equal(t, bolt, health.OverdueByPartner[1].PartnerID)
-	assert.Equal(t, []*edi.EDIMessage{boltOld}, health.OverdueByPartner[1].Messages)
+	assert.Equal(t, []*edimessage.EDIMessage{boltOld}, health.OverdueByPartner[1].Messages)
 	assert.Equal(t, quiet, health.OverdueByPartner[2].PartnerID)
 	assert.Empty(t, health.OverdueByPartner[2].Messages,
 		"a partner the row limit left out keeps its count")
 	assert.Equal(t, 1, health.OverdueByPartner[2].OverdueCount)
 	assert.Equal(t, 1, health.OverdueOmitted)
-	assert.Equal(t, []*edi.EDIMessage{dead}, health.RecentDeadLettered)
+	assert.Equal(t, []*edimessage.EDIMessage{dead}, health.RecentDeadLettered)
 }
 
 func TestGetEDIAckHealth_KeepsToOnePartnerAndTheAgeAsked(t *testing.T) {
@@ -121,7 +133,7 @@ func TestGetEDIAckHealth_KeepsToOnePartnerAndTheAgeAsked(t *testing.T) {
 	repo := edimessageportsmock.NewMockEDIMessageRepository(t)
 	repo.EXPECT().GetAckStatusCounts(mock.Anything, mock.MatchedBy(
 		func(req edimessageports.GetEDIMessageStatusCountsRequest) bool { return req.PartnerID == partner },
-	)).Return(map[edi.MessageAcknowledgmentStatus]int{}, nil)
+	)).Return(map[edimessage.MessageAcknowledgmentStatus]int{}, nil)
 	repo.EXPECT().GetAckStatusCountsByPartner(mock.Anything, mock.MatchedBy(
 		func(req edimessageports.GetEDIMessageStatusCountsRequest) bool { return req.PartnerID == partner },
 	)).Return(nil, nil)

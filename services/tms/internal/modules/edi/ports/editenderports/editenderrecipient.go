@@ -3,7 +3,7 @@ package editenderports
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/editenderchange"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -19,7 +19,7 @@ type ListEDITenderRecipientsForSourceShipmentRequest struct {
 }
 
 type UpsertEDITenderRecipientRequest struct {
-	Recipient *edi.TenderRecipient `json:"recipient"`
+	Recipient *editenderchange.TenderRecipient `json:"recipient"`
 }
 
 type GetActiveExternalEDITenderRecipientByReferenceRequest struct {
@@ -32,21 +32,21 @@ type EDITenderRecipientRepository interface {
 	GetTenderRecipientByID(
 		ctx context.Context,
 		req GetEDITenderRecipientByIDRequest,
-	) (*edi.TenderRecipient, error)
+	) (*editenderchange.TenderRecipient, error)
 	ListActiveTenderRecipientsForSourceShipment(
 		ctx context.Context,
 		req ListEDITenderRecipientsForSourceShipmentRequest,
-	) ([]*edi.TenderRecipient, error)
+	) ([]*editenderchange.TenderRecipient, error)
 	UpsertTenderRecipient(
 		ctx context.Context,
 		req UpsertEDITenderRecipientRequest,
-	) (*edi.TenderRecipient, error)
+	) (*editenderchange.TenderRecipient, error)
 	UpdateTenderRecipient(
 		ctx context.Context,
-		entity *edi.TenderRecipient,
-	) (*edi.TenderRecipient, error)
+		entity *editenderchange.TenderRecipient,
+	) (*editenderchange.TenderRecipient, error)
 	GetActiveExternalRecipientByShipmentReference(
 		ctx context.Context,
 		req GetActiveExternalEDITenderRecipientByReferenceRequest,
-	) (*edi.TenderRecipient, error)
+	) (*editenderchange.TenderRecipient, error)
 }

@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/ladingproject"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ladingports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/testutil/mocks/ladingportsmock"
@@ -49,17 +49,19 @@ func projectsWith(t *testing.T, repo ladingports.LadingProjectRepository) *Proje
 	}
 }
 
-func sampleRefs(samples []lading.Sample) ([]edi.LadingSampleRef, []*edi.LadingSample) {
-	refs := make([]edi.LadingSampleRef, 0, len(samples))
-	stored := make([]*edi.LadingSample, 0, len(samples))
+func sampleRefs(
+	samples []lading.Sample,
+) ([]ladingproject.LadingSampleRef, []*ladingproject.LadingSample) {
+	refs := make([]ladingproject.LadingSampleRef, 0, len(samples))
+	stored := make([]*ladingproject.LadingSample, 0, len(samples))
 	for _, sample := range samples {
 		digest := lading.Digest(sample.Content)
-		refs = append(refs, edi.LadingSampleRef{
+		refs = append(refs, ladingproject.LadingSampleRef{
 			Path:   sample.Path,
 			Digest: digest,
 			Size:   len(sample.Content),
 		})
-		stored = append(stored, &edi.LadingSample{
+		stored = append(stored, &ladingproject.LadingSample{
 			Digest:  digest,
 			Size:    len(sample.Content),
 			Content: sample.Content,
@@ -73,21 +75,21 @@ func TestSaveDraft_ChecksTheFilesWithTheSamplesTheirTestsRead(t *testing.T) {
 
 	starter := carrierStarter(t)
 	tenantInfo := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
-	draft := &edi.LadingVersion{
+	draft := &ladingproject.LadingVersion{
 		ID:        pulid.MustNew("ldv_"),
 		ProjectID: pulid.MustNew("ldp_"),
-		Status:    edi.LadingVersionStatusDraft,
+		Status:    ladingproject.LadingVersionStatusDraft,
 		Version:   3,
 	}
 	repo := ladingportsmock.NewMockLadingProjectRepository(t)
 	repo.EXPECT().GetVersion(mock.Anything, mock.Anything).Return(draft, nil)
-	var saved *edi.LadingVersion
+	var saved *ladingproject.LadingVersion
 	repo.EXPECT().SaveDraft(mock.Anything, mock.Anything, mock.Anything).
 		RunAndReturn(func(
 			_ context.Context,
-			version *edi.LadingVersion,
-			_ []*edi.LadingSample,
-		) (*edi.LadingVersion, error) {
+			version *ladingproject.LadingVersion,
+			_ []*ladingproject.LadingSample,
+		) (*ladingproject.LadingVersion, error) {
 			saved = version
 			return version, nil
 		})
@@ -113,11 +115,11 @@ func TestNewDraft_ChecksTheVersionWithItsStoredSamples(t *testing.T) {
 	starter := carrierStarter(t)
 	refs, stored := sampleRefs(starter.Samples)
 	tenantInfo := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
-	active := &edi.LadingVersion{
+	active := &ladingproject.LadingVersion{
 		ID:        pulid.MustNew("ldv_"),
 		ProjectID: pulid.MustNew("ldp_"),
 		Number:    2,
-		Status:    edi.LadingVersionStatusActive,
+		Status:    ladingproject.LadingVersionStatusActive,
 		Files:     starter.Files,
 		Samples:   refs,
 	}
@@ -127,13 +129,13 @@ func TestNewDraft_ChecksTheVersionWithItsStoredSamples(t *testing.T) {
 		return req.ProjectID == active.ProjectID && len(req.Digests) == len(stored)
 	})
 	repo.EXPECT().GetSamples(mock.Anything, sameProject).Return(stored, nil)
-	var created *edi.LadingVersion
+	var created *ladingproject.LadingVersion
 	repo.EXPECT().CreateVersion(mock.Anything, mock.Anything, mock.Anything).
 		RunAndReturn(func(
 			_ context.Context,
-			version *edi.LadingVersion,
-			_ []*edi.LadingSample,
-		) (*edi.LadingVersion, error) {
+			version *ladingproject.LadingVersion,
+			_ []*ladingproject.LadingSample,
+		) (*ladingproject.LadingVersion, error) {
 			created = version
 			return version, nil
 		})
@@ -146,7 +148,7 @@ func TestNewDraft_ChecksTheVersionWithItsStoredSamples(t *testing.T) {
 
 	require.NoError(t, err)
 	require.NotNil(t, created)
-	assert.Equal(t, edi.LadingVersionStatusDraft, created.Status)
+	assert.Equal(t, ladingproject.LadingVersionStatusDraft, created.Status)
 	assert.Zero(t, created.ErrorCount, "%+v", created.Manifest.Files)
 	assert.Equal(t, refs, created.Samples)
 }

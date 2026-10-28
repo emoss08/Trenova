@@ -10,6 +10,11 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edicarrierinvoice"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/ediinboundfile"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edimessage"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/editransfer"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/ladingproject"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
@@ -52,18 +57,18 @@ var namedKinds = map[reflect.Type]permission.Resource{
 	reflect.TypeFor[report.ReportDefinition]():                     permission.ResourceReport,
 	reflect.TypeFor[servicefailure.ReasonCode]():                   permission.ResourceServiceFailureReasonCode,
 	reflect.TypeFor[edi.EDIPartner]():                              permission.ResourceEDI,
-	reflect.TypeFor[edi.EDIMessage]():                              permission.ResourceEDI,
+	reflect.TypeFor[edimessage.EDIMessage]():                       permission.ResourceEDI,
 	reflect.TypeFor[edi.EDICommunicationProfile]():                 permission.ResourceEDI,
-	reflect.TypeFor[edi.EDITransfer]():                             permission.ResourceEDI,
-	reflect.TypeFor[edi.EDIInboundFile]():                          permission.ResourceEDI,
-	reflect.TypeFor[edi.LadingProject]():                           permission.ResourceEDI,
-	reflect.TypeFor[edi.LadingVersion]():                           permission.ResourceEDI,
-	reflect.TypeFor[edi.LadingSample]():                            permission.ResourceEDI,
-	reflect.TypeFor[edi.LadingReplay]():                            permission.ResourceEDI,
-	reflect.TypeFor[edi.LadingShadowResult]():                      permission.ResourceEDI,
-	reflect.TypeFor[edi.FlowInstance]():                            permission.ResourceEDI,
-	reflect.TypeFor[edi.FlowEvent]():                               permission.ResourceEDI,
-	reflect.TypeFor[edi.CarrierInvoice]():                          permission.ResourceCarrierInvoiceMatch,
+	reflect.TypeFor[editransfer.EDITransfer]():                     permission.ResourceEDI,
+	reflect.TypeFor[ediinboundfile.EDIInboundFile]():               permission.ResourceEDI,
+	reflect.TypeFor[ladingproject.LadingProject]():                 permission.ResourceEDI,
+	reflect.TypeFor[ladingproject.LadingVersion]():                 permission.ResourceEDI,
+	reflect.TypeFor[ladingproject.LadingSample]():                  permission.ResourceEDI,
+	reflect.TypeFor[ladingproject.LadingReplay]():                  permission.ResourceEDI,
+	reflect.TypeFor[ladingproject.LadingShadowResult]():            permission.ResourceEDI,
+	reflect.TypeFor[ladingproject.FlowInstance]():                  permission.ResourceEDI,
+	reflect.TypeFor[ladingproject.FlowEvent]():                     permission.ResourceEDI,
+	reflect.TypeFor[edicarrierinvoice.CarrierInvoice]():            permission.ResourceCarrierInvoiceMatch,
 	reflect.TypeFor[email.Profile]():                               permission.ResourceEmailProfile,
 	reflect.TypeFor[email.Message]():                               permission.ResourceEmailLog,
 	reflect.TypeFor[glaccount.GLAccount]():                         permission.ResourceGeneralLedgerAccount,

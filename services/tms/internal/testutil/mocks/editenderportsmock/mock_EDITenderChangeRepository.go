@@ -5,11 +5,11 @@
 package editenderportsmock
 
 import (
+	"github.com/emoss08/trenova/internal/modules/edi/domain/editenderchange"
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/edi/ports/editenderports"
 
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/pkg/pagination"
 	mock "github.com/stretchr/testify/mock"
 )
@@ -42,7 +42,7 @@ func (_m *MockEDITenderChangeRepository) EXPECT() *MockEDITenderChangeRepository
 }
 
 // CreateTenderChangeIdempotent provides a mock function for the type MockEDITenderChangeRepository
-func (_mock *MockEDITenderChangeRepository) CreateTenderChangeIdempotent(ctx context.Context, entity *edi.TenderChange) (*editenderports.CreateEDITenderChangeIdempotentResult, error) {
+func (_mock *MockEDITenderChangeRepository) CreateTenderChangeIdempotent(ctx context.Context, entity *editenderchange.TenderChange) (*editenderports.CreateEDITenderChangeIdempotentResult, error) {
 	ret := _mock.Called(ctx, entity)
 
 	if len(ret) == 0 {
@@ -51,17 +51,17 @@ func (_mock *MockEDITenderChangeRepository) CreateTenderChangeIdempotent(ctx con
 
 	var r0 *editenderports.CreateEDITenderChangeIdempotentResult
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *edi.TenderChange) (*editenderports.CreateEDITenderChangeIdempotentResult, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *editenderchange.TenderChange) (*editenderports.CreateEDITenderChangeIdempotentResult, error)); ok {
 		return returnFunc(ctx, entity)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *edi.TenderChange) *editenderports.CreateEDITenderChangeIdempotentResult); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *editenderchange.TenderChange) *editenderports.CreateEDITenderChangeIdempotentResult); ok {
 		r0 = returnFunc(ctx, entity)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*editenderports.CreateEDITenderChangeIdempotentResult)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *edi.TenderChange) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *editenderchange.TenderChange) error); ok {
 		r1 = returnFunc(ctx, entity)
 	} else {
 		r1 = ret.Error(1)
@@ -76,20 +76,20 @@ type MockEDITenderChangeRepository_CreateTenderChangeIdempotent_Call struct {
 
 // CreateTenderChangeIdempotent is a helper method to define mock.On call
 //   - ctx context.Context
-//   - entity *edi.TenderChange
+//   - entity *editenderchange.TenderChange
 func (_e *MockEDITenderChangeRepository_Expecter) CreateTenderChangeIdempotent(ctx any, entity any) *MockEDITenderChangeRepository_CreateTenderChangeIdempotent_Call {
 	return &MockEDITenderChangeRepository_CreateTenderChangeIdempotent_Call{Call: _e.mock.On("CreateTenderChangeIdempotent", ctx, entity)}
 }
 
-func (_c *MockEDITenderChangeRepository_CreateTenderChangeIdempotent_Call) Run(run func(ctx context.Context, entity *edi.TenderChange)) *MockEDITenderChangeRepository_CreateTenderChangeIdempotent_Call {
+func (_c *MockEDITenderChangeRepository_CreateTenderChangeIdempotent_Call) Run(run func(ctx context.Context, entity *editenderchange.TenderChange)) *MockEDITenderChangeRepository_CreateTenderChangeIdempotent_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 *edi.TenderChange
+		var arg1 *editenderchange.TenderChange
 		if args[1] != nil {
-			arg1 = args[1].(*edi.TenderChange)
+			arg1 = args[1].(*editenderchange.TenderChange)
 		}
 		run(
 			arg0,
@@ -104,29 +104,29 @@ func (_c *MockEDITenderChangeRepository_CreateTenderChangeIdempotent_Call) Retur
 	return _c
 }
 
-func (_c *MockEDITenderChangeRepository_CreateTenderChangeIdempotent_Call) RunAndReturn(run func(ctx context.Context, entity *edi.TenderChange) (*editenderports.CreateEDITenderChangeIdempotentResult, error)) *MockEDITenderChangeRepository_CreateTenderChangeIdempotent_Call {
+func (_c *MockEDITenderChangeRepository_CreateTenderChangeIdempotent_Call) RunAndReturn(run func(ctx context.Context, entity *editenderchange.TenderChange) (*editenderports.CreateEDITenderChangeIdempotentResult, error)) *MockEDITenderChangeRepository_CreateTenderChangeIdempotent_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetTenderChangeByID provides a mock function for the type MockEDITenderChangeRepository
-func (_mock *MockEDITenderChangeRepository) GetTenderChangeByID(ctx context.Context, req editenderports.GetEDITenderChangeByIDRequest) (*edi.TenderChange, error) {
+func (_mock *MockEDITenderChangeRepository) GetTenderChangeByID(ctx context.Context, req editenderports.GetEDITenderChangeByIDRequest) (*editenderchange.TenderChange, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetTenderChangeByID")
 	}
 
-	var r0 *edi.TenderChange
+	var r0 *editenderchange.TenderChange
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, editenderports.GetEDITenderChangeByIDRequest) (*edi.TenderChange, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, editenderports.GetEDITenderChangeByIDRequest) (*editenderchange.TenderChange, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, editenderports.GetEDITenderChangeByIDRequest) *edi.TenderChange); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, editenderports.GetEDITenderChangeByIDRequest) *editenderchange.TenderChange); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*edi.TenderChange)
+			r0 = ret.Get(0).(*editenderchange.TenderChange)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, editenderports.GetEDITenderChangeByIDRequest) error); ok {
@@ -167,34 +167,34 @@ func (_c *MockEDITenderChangeRepository_GetTenderChangeByID_Call) Run(run func(c
 	return _c
 }
 
-func (_c *MockEDITenderChangeRepository_GetTenderChangeByID_Call) Return(tenderChange *edi.TenderChange, err error) *MockEDITenderChangeRepository_GetTenderChangeByID_Call {
+func (_c *MockEDITenderChangeRepository_GetTenderChangeByID_Call) Return(tenderChange *editenderchange.TenderChange, err error) *MockEDITenderChangeRepository_GetTenderChangeByID_Call {
 	_c.Call.Return(tenderChange, err)
 	return _c
 }
 
-func (_c *MockEDITenderChangeRepository_GetTenderChangeByID_Call) RunAndReturn(run func(ctx context.Context, req editenderports.GetEDITenderChangeByIDRequest) (*edi.TenderChange, error)) *MockEDITenderChangeRepository_GetTenderChangeByID_Call {
+func (_c *MockEDITenderChangeRepository_GetTenderChangeByID_Call) RunAndReturn(run func(ctx context.Context, req editenderports.GetEDITenderChangeByIDRequest) (*editenderchange.TenderChange, error)) *MockEDITenderChangeRepository_GetTenderChangeByID_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetTenderChangeByOutboundMessageID provides a mock function for the type MockEDITenderChangeRepository
-func (_mock *MockEDITenderChangeRepository) GetTenderChangeByOutboundMessageID(ctx context.Context, req editenderports.GetEDITenderChangeByOutboundMessageIDRequest) (*edi.TenderChange, error) {
+func (_mock *MockEDITenderChangeRepository) GetTenderChangeByOutboundMessageID(ctx context.Context, req editenderports.GetEDITenderChangeByOutboundMessageIDRequest) (*editenderchange.TenderChange, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetTenderChangeByOutboundMessageID")
 	}
 
-	var r0 *edi.TenderChange
+	var r0 *editenderchange.TenderChange
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, editenderports.GetEDITenderChangeByOutboundMessageIDRequest) (*edi.TenderChange, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, editenderports.GetEDITenderChangeByOutboundMessageIDRequest) (*editenderchange.TenderChange, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, editenderports.GetEDITenderChangeByOutboundMessageIDRequest) *edi.TenderChange); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, editenderports.GetEDITenderChangeByOutboundMessageIDRequest) *editenderchange.TenderChange); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*edi.TenderChange)
+			r0 = ret.Get(0).(*editenderchange.TenderChange)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, editenderports.GetEDITenderChangeByOutboundMessageIDRequest) error); ok {
@@ -235,34 +235,34 @@ func (_c *MockEDITenderChangeRepository_GetTenderChangeByOutboundMessageID_Call)
 	return _c
 }
 
-func (_c *MockEDITenderChangeRepository_GetTenderChangeByOutboundMessageID_Call) Return(tenderChange *edi.TenderChange, err error) *MockEDITenderChangeRepository_GetTenderChangeByOutboundMessageID_Call {
+func (_c *MockEDITenderChangeRepository_GetTenderChangeByOutboundMessageID_Call) Return(tenderChange *editenderchange.TenderChange, err error) *MockEDITenderChangeRepository_GetTenderChangeByOutboundMessageID_Call {
 	_c.Call.Return(tenderChange, err)
 	return _c
 }
 
-func (_c *MockEDITenderChangeRepository_GetTenderChangeByOutboundMessageID_Call) RunAndReturn(run func(ctx context.Context, req editenderports.GetEDITenderChangeByOutboundMessageIDRequest) (*edi.TenderChange, error)) *MockEDITenderChangeRepository_GetTenderChangeByOutboundMessageID_Call {
+func (_c *MockEDITenderChangeRepository_GetTenderChangeByOutboundMessageID_Call) RunAndReturn(run func(ctx context.Context, req editenderports.GetEDITenderChangeByOutboundMessageIDRequest) (*editenderchange.TenderChange, error)) *MockEDITenderChangeRepository_GetTenderChangeByOutboundMessageID_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // ListTenderChanges provides a mock function for the type MockEDITenderChangeRepository
-func (_mock *MockEDITenderChangeRepository) ListTenderChanges(ctx context.Context, req *editenderports.ListEDITenderChangesRequest) (*pagination.ListResult[*edi.TenderChange], error) {
+func (_mock *MockEDITenderChangeRepository) ListTenderChanges(ctx context.Context, req *editenderports.ListEDITenderChangesRequest) (*pagination.ListResult[*editenderchange.TenderChange], error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListTenderChanges")
 	}
 
-	var r0 *pagination.ListResult[*edi.TenderChange]
+	var r0 *pagination.ListResult[*editenderchange.TenderChange]
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *editenderports.ListEDITenderChangesRequest) (*pagination.ListResult[*edi.TenderChange], error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *editenderports.ListEDITenderChangesRequest) (*pagination.ListResult[*editenderchange.TenderChange], error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *editenderports.ListEDITenderChangesRequest) *pagination.ListResult[*edi.TenderChange]); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *editenderports.ListEDITenderChangesRequest) *pagination.ListResult[*editenderchange.TenderChange]); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*pagination.ListResult[*edi.TenderChange])
+			r0 = ret.Get(0).(*pagination.ListResult[*editenderchange.TenderChange])
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, *editenderports.ListEDITenderChangesRequest) error); ok {
@@ -303,12 +303,12 @@ func (_c *MockEDITenderChangeRepository_ListTenderChanges_Call) Run(run func(ctx
 	return _c
 }
 
-func (_c *MockEDITenderChangeRepository_ListTenderChanges_Call) Return(listResult *pagination.ListResult[*edi.TenderChange], err error) *MockEDITenderChangeRepository_ListTenderChanges_Call {
+func (_c *MockEDITenderChangeRepository_ListTenderChanges_Call) Return(listResult *pagination.ListResult[*editenderchange.TenderChange], err error) *MockEDITenderChangeRepository_ListTenderChanges_Call {
 	_c.Call.Return(listResult, err)
 	return _c
 }
 
-func (_c *MockEDITenderChangeRepository_ListTenderChanges_Call) RunAndReturn(run func(ctx context.Context, req *editenderports.ListEDITenderChangesRequest) (*pagination.ListResult[*edi.TenderChange], error)) *MockEDITenderChangeRepository_ListTenderChanges_Call {
+func (_c *MockEDITenderChangeRepository_ListTenderChanges_Call) RunAndReturn(run func(ctx context.Context, req *editenderports.ListEDITenderChangesRequest) (*pagination.ListResult[*editenderchange.TenderChange], error)) *MockEDITenderChangeRepository_ListTenderChanges_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -371,26 +371,26 @@ func (_c *MockEDITenderChangeRepository_SupersedeActionableTenderChanges_Call) R
 }
 
 // UpdateTenderChange provides a mock function for the type MockEDITenderChangeRepository
-func (_mock *MockEDITenderChangeRepository) UpdateTenderChange(ctx context.Context, entity *edi.TenderChange) (*edi.TenderChange, error) {
+func (_mock *MockEDITenderChangeRepository) UpdateTenderChange(ctx context.Context, entity *editenderchange.TenderChange) (*editenderchange.TenderChange, error) {
 	ret := _mock.Called(ctx, entity)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateTenderChange")
 	}
 
-	var r0 *edi.TenderChange
+	var r0 *editenderchange.TenderChange
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *edi.TenderChange) (*edi.TenderChange, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *editenderchange.TenderChange) (*editenderchange.TenderChange, error)); ok {
 		return returnFunc(ctx, entity)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *edi.TenderChange) *edi.TenderChange); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *editenderchange.TenderChange) *editenderchange.TenderChange); ok {
 		r0 = returnFunc(ctx, entity)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*edi.TenderChange)
+			r0 = ret.Get(0).(*editenderchange.TenderChange)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *edi.TenderChange) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *editenderchange.TenderChange) error); ok {
 		r1 = returnFunc(ctx, entity)
 	} else {
 		r1 = ret.Error(1)
@@ -405,20 +405,20 @@ type MockEDITenderChangeRepository_UpdateTenderChange_Call struct {
 
 // UpdateTenderChange is a helper method to define mock.On call
 //   - ctx context.Context
-//   - entity *edi.TenderChange
+//   - entity *editenderchange.TenderChange
 func (_e *MockEDITenderChangeRepository_Expecter) UpdateTenderChange(ctx any, entity any) *MockEDITenderChangeRepository_UpdateTenderChange_Call {
 	return &MockEDITenderChangeRepository_UpdateTenderChange_Call{Call: _e.mock.On("UpdateTenderChange", ctx, entity)}
 }
 
-func (_c *MockEDITenderChangeRepository_UpdateTenderChange_Call) Run(run func(ctx context.Context, entity *edi.TenderChange)) *MockEDITenderChangeRepository_UpdateTenderChange_Call {
+func (_c *MockEDITenderChangeRepository_UpdateTenderChange_Call) Run(run func(ctx context.Context, entity *editenderchange.TenderChange)) *MockEDITenderChangeRepository_UpdateTenderChange_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 *edi.TenderChange
+		var arg1 *editenderchange.TenderChange
 		if args[1] != nil {
-			arg1 = args[1].(*edi.TenderChange)
+			arg1 = args[1].(*editenderchange.TenderChange)
 		}
 		run(
 			arg0,
@@ -428,12 +428,12 @@ func (_c *MockEDITenderChangeRepository_UpdateTenderChange_Call) Run(run func(ct
 	return _c
 }
 
-func (_c *MockEDITenderChangeRepository_UpdateTenderChange_Call) Return(tenderChange *edi.TenderChange, err error) *MockEDITenderChangeRepository_UpdateTenderChange_Call {
+func (_c *MockEDITenderChangeRepository_UpdateTenderChange_Call) Return(tenderChange *editenderchange.TenderChange, err error) *MockEDITenderChangeRepository_UpdateTenderChange_Call {
 	_c.Call.Return(tenderChange, err)
 	return _c
 }
 
-func (_c *MockEDITenderChangeRepository_UpdateTenderChange_Call) RunAndReturn(run func(ctx context.Context, entity *edi.TenderChange) (*edi.TenderChange, error)) *MockEDITenderChangeRepository_UpdateTenderChange_Call {
+func (_c *MockEDITenderChangeRepository_UpdateTenderChange_Call) RunAndReturn(run func(ctx context.Context, entity *editenderchange.TenderChange) (*editenderchange.TenderChange, error)) *MockEDITenderChangeRepository_UpdateTenderChange_Call {
 	_c.Call.Return(run)
 	return _c
 }

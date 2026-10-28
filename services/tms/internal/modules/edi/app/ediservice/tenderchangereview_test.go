@@ -5,7 +5,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/editenderchange"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/editenderports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
@@ -45,12 +45,12 @@ func TestService_ApplyTenderChange_ApplyFailureSurfacesErrorAndKeepsPendingRevie
 		Return(nil, applyErr).
 		Once()
 	fixture.tenderChangeRepo.EXPECT().
-		UpdateTenderChange(mock.Anything, mock.MatchedBy(func(updated *edi.TenderChange) bool {
-			return updated.Status == edi.TenderChangeStatusPendingReview &&
+		UpdateTenderChange(mock.Anything, mock.MatchedBy(func(updated *editenderchange.TenderChange) bool {
+			return updated.Status == editenderchange.TenderChangeStatusPendingReview &&
 				updated.FailureReason == applyErr.Error() &&
 				updated.ConflictMetadata["reason"] == applyErr.Error()
 		})).
-		RunAndReturn(func(_ context.Context, updated *edi.TenderChange) (*edi.TenderChange, error) {
+		RunAndReturn(func(_ context.Context, updated *editenderchange.TenderChange) (*editenderchange.TenderChange, error) {
 			return updated, nil
 		}).
 		Once()
@@ -85,13 +85,13 @@ func TestService_RejectTenderChange_UpdatesStatusWithoutApplying(t *testing.T) {
 		Return(change, nil).
 		Once()
 	fixture.tenderChangeRepo.EXPECT().
-		UpdateTenderChange(mock.Anything, mock.MatchedBy(func(updated *edi.TenderChange) bool {
-			return updated.Status == edi.TenderChangeStatusRejected &&
+		UpdateTenderChange(mock.Anything, mock.MatchedBy(func(updated *editenderchange.TenderChange) bool {
+			return updated.Status == editenderchange.TenderChangeStatusRejected &&
 				updated.ReviewedByID == fixture.actor.UserID &&
 				updated.ReviewedAt != nil &&
 				updated.FailureReason == "Not applicable"
 		})).
-		RunAndReturn(func(_ context.Context, updated *edi.TenderChange) (*edi.TenderChange, error) {
+		RunAndReturn(func(_ context.Context, updated *editenderchange.TenderChange) (*editenderchange.TenderChange, error) {
 			return updated, nil
 		}).
 		Once()
@@ -107,7 +107,7 @@ func TestService_RejectTenderChange_UpdatesStatusWithoutApplying(t *testing.T) {
 	)
 
 	require.NoError(t, err)
-	require.Equal(t, edi.TenderChangeStatusRejected, result.Status)
+	require.Equal(t, editenderchange.TenderChangeStatusRejected, result.Status)
 }
 
 type tenderChangeReviewFixture struct {
@@ -147,17 +147,17 @@ func (f *tenderChangeReviewFixture) tenantInfo() pagination.TenantInfo {
 	return pagination.TenantInfo{OrgID: f.recipientOrgID, BuID: f.buID}
 }
 
-func (f *tenderChangeReviewFixture) pendingChange() *edi.TenderChange {
+func (f *tenderChangeReviewFixture) pendingChange() *editenderchange.TenderChange {
 	recipientID := pulid.MustNew("editr_")
-	return &edi.TenderChange{
+	return &editenderchange.TenderChange{
 		ID:             pulid.MustNew("editch_"),
 		BusinessUnitID: f.buID,
 		RecipientID:    recipientID,
-		RecipientKind:  edi.TenderRecipientKindInternal,
-		Status:         edi.TenderChangeStatusPendingReview,
-		Recipient: &edi.TenderRecipient{
+		RecipientKind:  editenderchange.TenderRecipientKindInternal,
+		Status:         editenderchange.TenderChangeStatusPendingReview,
+		Recipient: &editenderchange.TenderRecipient{
 			ID:                      recipientID,
-			RecipientKind:           edi.TenderRecipientKindInternal,
+			RecipientKind:           editenderchange.TenderRecipientKindInternal,
 			RecipientOrganizationID: f.recipientOrgID,
 			BusinessUnitID:          f.buID,
 		},

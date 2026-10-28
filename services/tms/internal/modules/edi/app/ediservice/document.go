@@ -14,6 +14,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/app/edix12inspect"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ladingdoc"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edimessage"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edipayload"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/editransfer"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/edimessageports"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
@@ -39,26 +43,26 @@ const provisionalInterchange = "000000000"
 func (s *Service) ListDocumentTypes(
 	ctx context.Context,
 	req edipartnerports.ListEDIDocumentTypesRequest,
-) ([]*edi.EDIDocumentType, error) {
+) ([]*edidocument.EDIDocumentType, error) {
 	return s.documentTypeRepo.ListDocumentTypes(ctx, req)
 }
 
 func (s *Service) SelectDocumentTypeOptions(
 	ctx context.Context,
 	req *edipartnerports.EDIDocumentTypeSelectOptionsRequest,
-) (*pagination.ListResult[*edi.EDIDocumentType], error) {
+) (*pagination.ListResult[*edidocument.EDIDocumentType], error) {
 	return s.documentTypeRepo.SelectDocumentTypeOptions(ctx, req)
 }
 
 func (s *Service) documentTypeFor(
 	ctx context.Context,
-	transactionSet edi.TransactionSet,
-	direction edi.DocumentDirection,
-) (*edi.EDIDocumentType, error) {
+	transactionSet edidocument.TransactionSet,
+	direction edidocument.DocumentDirection,
+) (*edidocument.EDIDocumentType, error) {
 	documentTypes, err := s.documentTypeRepo.ListDocumentTypes(
 		ctx,
 		edipartnerports.ListEDIDocumentTypesRequest{
-			Standard:       edi.EDIStandardX12,
+			Standard:       edidocument.EDIStandardX12,
 			TransactionSet: transactionSet,
 			Direction:      direction,
 		},
@@ -78,15 +82,15 @@ type outbound struct {
 	partner      *edi.EDIPartner
 	program      *edilading.Program
 	programs     *edilading.Programs
-	set          edi.TransactionSet
+	set          edidocument.TransactionSet
 	mapName      string
 	flow         *lading.Flow
 	clause       *lading.Clause
 	event        string
 	key          string
-	payload      edi.DocumentPayload
+	payload      edipayload.DocumentPayload
 	document     jsonutils.RawJSON
-	documentType *edi.EDIDocumentType
+	documentType *edidocument.EDIDocumentType
 	shipmentID   pulid.ID
 }
 
@@ -176,7 +180,7 @@ func (s *Service) resolveOutbound(
 	if o.documentType, err = s.documentTypeFor(
 		ctx,
 		set,
-		edi.DocumentDirectionOutbound,
+		edidocument.DocumentDirectionOutbound,
 	); err != nil {
 		return nil, err
 	}
@@ -191,7 +195,7 @@ func (o *outbound) chooseMap(asked string) error {
 	if o.event != "" {
 		o.flow, o.clause = manifest.Sending(set, o.event)
 	}
-	if o.clause == nil && o.set == edi.TransactionSet990 {
+	if o.clause == nil && o.set == edidocument.TransactionSet990 {
 		o.flow, o.clause = manifest.Responding(set)
 	}
 	switch {
@@ -219,7 +223,7 @@ func (o *outbound) chooseMap(asked string) error {
 	return nil
 }
 
-func flowEventFor(req *PreviewEDIDocumentRequest, payload *edi.DocumentPayload) string {
+func flowEventFor(req *PreviewEDIDocumentRequest, payload *edipayload.DocumentPayload) string {
 	switch {
 	case req.InvoiceID.IsNotNil():
 		return "InvoicePosted"
@@ -230,7 +234,7 @@ func flowEventFor(req *PreviewEDIDocumentRequest, payload *edi.DocumentPayload) 
 			return statusEvent(payload.ShipmentStatus.StatusCode)
 		}
 	case payload.LoadTender != nil && req.TransferID.IsNil():
-		if payload.LoadTender.PurposeCode == edi.LoadTenderPurposeCancel {
+		if payload.LoadTender.PurposeCode == editransfer.LoadTenderPurposeCancel {
 			return "TenderCancelled"
 		}
 		return "TenderOffered"
@@ -258,7 +262,7 @@ func statusEvent(code string) string {
 func (s *Service) zones(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	payload *edi.DocumentPayload,
+	payload *edipayload.DocumentPayload,
 ) ladingdoc.Zones {
 	zones := ladingdoc.Zones{Locations: map[pulid.ID]string{}}
 	ladingContext, err := s.lading.Context(ctx, tenantInfo)
@@ -453,15 +457,15 @@ func (s *Service) render(
 	return result, nil
 }
 
-func outputDiagnostics(output *lading.WriteResult) []edi.Diagnostic {
+func outputDiagnostics(output *lading.WriteResult) []edidocument.Diagnostic {
 	diagnostics := make(
-		[]edi.Diagnostic,
+		[]edidocument.Diagnostic,
 		0,
 		len(output.Findings)+len(output.Validation)+len(output.Outcomes),
 	)
 	for index := range output.Findings {
 		finding := &output.Findings[index]
-		diagnostics = append(diagnostics, edi.Diagnostic{
+		diagnostics = append(diagnostics, edidocument.Diagnostic{
 			Severity: severityOf(finding.Severity),
 			Code:     finding.Code,
 			Path:     finding.Path,
@@ -471,7 +475,7 @@ func outputDiagnostics(output *lading.WriteResult) []edi.Diagnostic {
 	for index := range output.Validation {
 		finding := &output.Validation[index]
 		diagnostic := edix12inspect.FindingDiagnostic(finding, i18n.Default)
-		diagnostics = append(diagnostics, edi.Diagnostic{
+		diagnostics = append(diagnostics, edidocument.Diagnostic{
 			Severity:        diagnostic.Severity,
 			Code:            diagnostic.Code,
 			SegmentID:       diagnostic.SegmentID,
@@ -482,11 +486,11 @@ func outputDiagnostics(output *lading.WriteResult) []edi.Diagnostic {
 	}
 	for index := range output.Outcomes {
 		outcome := &output.Outcomes[index]
-		severity := edi.ValidationSeverityError
+		severity := edidocument.ValidationSeverityError
 		if outcome.Kind == lading.OutcomeWarn {
-			severity = edi.ValidationSeverityWarning
+			severity = edidocument.ValidationSeverityWarning
 		}
-		diagnostics = append(diagnostics, edi.Diagnostic{
+		diagnostics = append(diagnostics, edidocument.Diagnostic{
 			Severity: severity,
 			Code:     "lading-" + outcome.Kind,
 			Path:     outcome.Path,
@@ -496,14 +500,14 @@ func outputDiagnostics(output *lading.WriteResult) []edi.Diagnostic {
 	return diagnostics
 }
 
-func severityOf(severity string) edi.ValidationSeverity {
+func severityOf(severity string) edidocument.ValidationSeverity {
 	switch severity {
 	case lading.SeverityError:
-		return edi.ValidationSeverityError
+		return edidocument.ValidationSeverityError
 	case lading.SeverityWarning:
-		return edi.ValidationSeverityWarning
+		return edidocument.ValidationSeverityWarning
 	default:
-		return edi.ValidationSeverityInfo
+		return edidocument.ValidationSeverityInfo
 	}
 }
 
@@ -549,7 +553,7 @@ func interchangeVersion(program *edilading.Program) string {
 		program.Manifest.Partner.Interchange.Version != "" {
 		return program.Manifest.Partner.Interchange.Version
 	}
-	return edi.DefaultX12204Version
+	return edidocument.DefaultX12204Version
 }
 
 func (s *Service) PreviewDocument(
@@ -627,7 +631,7 @@ func previewRequest(req *GenerateEDIDocumentRequest) *PreviewEDIDocumentRequest 
 func (s *Service) GenerateDocument(
 	ctx context.Context,
 	req *GenerateEDIDocumentRequest,
-) (*edi.EDIMessage, error) {
+) (*edimessage.EDIMessage, error) {
 	if req != nil && req.SourceMessageID.IsNotNil() {
 		return s.generateMessageAcknowledgment(ctx, req)
 	}
@@ -648,7 +652,7 @@ func (s *Service) sendThroughFlow(
 	ctx context.Context,
 	req *GenerateEDIDocumentRequest,
 	o *outbound,
-) (*edi.EDIMessage, error) {
+) (*edimessage.EDIMessage, error) {
 	dispatched, err := s.flows.Dispatch(ctx, &edilading.DispatchRequest{
 		TenantInfo:  req.TenantInfo,
 		PartnerID:   o.partner.ID,
@@ -690,7 +694,7 @@ func (s *Service) write(
 	req *GenerateEDIDocumentRequest,
 	o *outbound,
 	options *writeOptions,
-) (*edi.EDIMessage, error) {
+) (*edimessage.EDIMessage, error) {
 	control, err := s.allocateControl(ctx, req.TenantInfo, o)
 	if err != nil {
 		return nil, err
@@ -708,7 +712,7 @@ func (s *Service) write(
 	if shipmentID.IsNil() {
 		shipmentID = req.ShipmentID
 	}
-	message := &edi.EDIMessage{
+	message := &edimessage.EDIMessage{
 		BusinessUnitID:           req.TenantInfo.BuID,
 		OrganizationID:           req.TenantInfo.OrgID,
 		EDIPartnerID:             o.partner.ID,
@@ -719,11 +723,11 @@ func (s *Service) write(
 		ShipmentID:               shipmentID,
 		TransferID:               req.TransferID,
 		InvoiceID:                req.InvoiceID,
-		Direction:                edi.DocumentDirectionOutbound,
-		Standard:                 edi.EDIStandardX12,
+		Direction:                edidocument.DocumentDirectionOutbound,
+		Standard:                 edidocument.EDIStandardX12,
 		TransactionSet:           o.set,
 		X12Version:               interchangeVersion(o.program),
-		Status:                   edi.MessageStatusGenerated,
+		Status:                   edimessage.MessageStatusGenerated,
 		InterchangeControlNumber: fmt.Sprintf("%09d", control.Interchange),
 		GroupControlNumber:       strconv.FormatUint(control.Group, 10),
 		TransactionControlNumber: fmt.Sprintf("%04d", control.Transaction),
@@ -785,10 +789,10 @@ func (s *Service) allocateControl(
 			TenantInfo:     tenantInfo,
 			PartnerID:      o.partner.ID,
 			DocumentTypeID: o.documentType.ID,
-			Kinds: []edi.ControlNumberKind{
-				edi.ControlNumberKindInterchange,
-				edi.ControlNumberKindGroup,
-				edi.ControlNumberKindTransaction,
+			Kinds: []edidocument.ControlNumberKind{
+				edidocument.ControlNumberKindInterchange,
+				edidocument.ControlNumberKindGroup,
+				edidocument.ControlNumberKindTransaction,
 			},
 		},
 	)
@@ -798,16 +802,16 @@ func (s *Service) allocateControl(
 	var control lading.Control
 	if control.Interchange, err = controlNumberOf(
 		allocated,
-		edi.ControlNumberKindInterchange,
+		edidocument.ControlNumberKindInterchange,
 	); err != nil {
 		return lading.Control{}, err
 	}
-	if control.Group, err = controlNumberOf(allocated, edi.ControlNumberKindGroup); err != nil {
+	if control.Group, err = controlNumberOf(allocated, edidocument.ControlNumberKindGroup); err != nil {
 		return lading.Control{}, err
 	}
 	if control.Transaction, err = controlNumberOf(
 		allocated,
-		edi.ControlNumberKindTransaction,
+		edidocument.ControlNumberKindTransaction,
 	); err != nil {
 		return lading.Control{}, err
 	}
@@ -815,8 +819,8 @@ func (s *Service) allocateControl(
 }
 
 func controlNumberOf(
-	allocated map[edi.ControlNumberKind]int64,
-	kind edi.ControlNumberKind,
+	allocated map[edidocument.ControlNumberKind]int64,
+	kind edidocument.ControlNumberKind,
 ) (uint64, error) {
 	number, ok := allocated[kind]
 	if !ok || number <= 0 {
@@ -829,7 +833,7 @@ func (s *Service) shadowOutbound(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	o *outbound,
-	message *edi.EDIMessage,
+	message *edimessage.EDIMessage,
 ) {
 	if s.replayer == nil || o.programs == nil || o.programs.Shadow == nil {
 		return
@@ -846,7 +850,7 @@ func (s *Service) shadowOutbound(
 }
 
 // ackStatusFor is pending when the flow that sends the set expects the partner to acknowledge it.
-func ackStatusFor(o *outbound) edi.MessageAcknowledgmentStatus {
+func ackStatusFor(o *outbound) edimessage.MessageAcknowledgmentStatus {
 	manifest := o.program.Manifest
 	for index := range manifest.Flows {
 		flow := &manifest.Flows[index]
@@ -857,17 +861,19 @@ func ackStatusFor(o *outbound) edi.MessageAcknowledgmentStatus {
 			candidate := &flow.Clauses[clause]
 			if (candidate.Kind == lading.ClauseSend || candidate.Kind == lading.ClauseRespond) &&
 				candidate.Set == string(o.set) {
-				return edi.MessageAcknowledgmentStatusPending
+				return edimessage.MessageAcknowledgmentStatusPending
 			}
 		}
 	}
-	return edi.MessageAcknowledgmentStatusNotExpected
+	return edimessage.MessageAcknowledgmentStatusNotExpected
 }
 
-func messageDiagnostics(diagnostics []edi.Diagnostic) []*edi.EDIMessageValidationError {
-	out := make([]*edi.EDIMessageValidationError, 0, len(diagnostics))
+func messageDiagnostics(
+	diagnostics []edidocument.Diagnostic,
+) []*edimessage.EDIMessageValidationError {
+	out := make([]*edimessage.EDIMessageValidationError, 0, len(diagnostics))
 	for _, diagnostic := range diagnostics {
-		out = append(out, &edi.EDIMessageValidationError{
+		out = append(out, &edimessage.EDIMessageValidationError{
 			Severity:        diagnostic.Severity,
 			Code:            diagnostic.Code,
 			SegmentID:       diagnostic.SegmentID,
@@ -883,7 +889,7 @@ func messageDiagnostics(diagnostics []edi.Diagnostic) []*edi.EDIMessageValidatio
 func (s *Service) generatedDocument(
 	ctx context.Context,
 	req *GenerateEDIDocumentRequest,
-) (*edi.EDIMessage, bool, error) {
+) (*edimessage.EDIMessage, bool, error) {
 	if req.IdempotencyKey == "" {
 		return nil, false, nil
 	}
@@ -925,14 +931,14 @@ func (s *Service) generatedDocument(
 func (s *Service) ListMessages(
 	ctx context.Context,
 	req *edimessageports.ListEDIMessagesRequest,
-) (*pagination.ListResult[*edi.EDIMessage], error) {
+) (*pagination.ListResult[*edimessage.EDIMessage], error) {
 	return s.messageRepo.ListMessages(ctx, req)
 }
 
 func (s *Service) GetMessage(
 	ctx context.Context,
 	req edimessageports.GetEDIMessageByIDRequest,
-) (*edi.EDIMessage, error) {
+) (*edimessage.EDIMessage, error) {
 	return s.messageRepo.GetMessageByID(ctx, req)
 }
 
@@ -964,12 +970,12 @@ func (s *Service) InspectMessage(
 	if err != nil {
 		return nil, err
 	}
-	diagnostics := make([]edi.Diagnostic, 0, len(message.ValidationErrors))
+	diagnostics := make([]edidocument.Diagnostic, 0, len(message.ValidationErrors))
 	for _, diagnostic := range message.ValidationErrors {
 		if strings.HasPrefix(diagnostic.Code, edix12inspect.FindingCodePrefix) {
 			continue
 		}
-		diagnostics = append(diagnostics, edi.Diagnostic{
+		diagnostics = append(diagnostics, edidocument.Diagnostic{
 			Severity:        diagnostic.Severity,
 			Code:            diagnostic.Code,
 			SegmentID:       diagnostic.SegmentID,
@@ -1005,21 +1011,22 @@ func (s *Service) InspectMessage(
 func (s *Service) resolvePayload(
 	ctx context.Context,
 	req *PreviewEDIDocumentRequest,
-	transactionSet edi.TransactionSet,
-) (edi.DocumentPayload, error) {
+	transactionSet edidocument.TransactionSet,
+) (edipayload.DocumentPayload, error) {
 	if req.Payload != nil {
 		payload := *req.Payload
 		payload.Normalize()
 		return payload, nil
 	}
 	if !req.TransferID.IsNil() {
-		if transactionSet != edi.TransactionSet204 && transactionSet != edi.TransactionSet990 {
-			return edi.DocumentPayload{}, sourceTransactionSetError(
+		if transactionSet != edidocument.TransactionSet204 &&
+			transactionSet != edidocument.TransactionSet990 {
+			return edipayload.DocumentPayload{}, sourceTransactionSetError(
 				"transferId",
 				"transfer",
 				transactionSet,
-				edi.TransactionSet204,
-				edi.TransactionSet990,
+				edidocument.TransactionSet204,
+				edidocument.TransactionSet990,
 			)
 		}
 		transfer, err := s.transferRepo.GetTransferByID(
@@ -1031,20 +1038,20 @@ func (s *Service) resolvePayload(
 			},
 		)
 		if err != nil {
-			return edi.DocumentPayload{}, err
+			return edipayload.DocumentPayload{}, err
 		}
-		if transactionSet == edi.TransactionSet990 {
+		if transactionSet == edidocument.TransactionSet990 {
 			return buildTenderResponsePayload(transfer), nil
 		}
-		return edi.NewLoadTenderDocumentPayload(transfer.TenderPayload), nil
+		return edipayload.NewLoadTenderDocumentPayload(transfer.TenderPayload), nil
 	}
 	if !req.InvoiceID.IsNil() {
-		if transactionSet != edi.TransactionSet210 {
-			return edi.DocumentPayload{}, sourceTransactionSetError(
+		if transactionSet != edidocument.TransactionSet210 {
+			return edipayload.DocumentPayload{}, sourceTransactionSetError(
 				"invoiceId",
 				"invoice",
 				transactionSet,
-				edi.TransactionSet210,
+				edidocument.TransactionSet210,
 			)
 		}
 		invoiceEntity, err := s.invoiceRepo.GetByID(ctx, invoiceports.GetInvoiceByIDRequest{
@@ -1052,10 +1059,10 @@ func (s *Service) resolvePayload(
 			TenantInfo: req.TenantInfo,
 		})
 		if err != nil {
-			return edi.DocumentPayload{}, err
+			return edipayload.DocumentPayload{}, err
 		}
 		if invoiceEntity.Status == invoice.StatusVoided {
-			return edi.DocumentPayload{}, errortypes.NewValidationError(
+			return edipayload.DocumentPayload{}, errortypes.NewValidationError(
 				"invoiceId",
 				errortypes.ErrInvalidOperation,
 				"Invoice {0} has been voided and cannot be sent as a freight invoice",
@@ -1065,12 +1072,12 @@ func (s *Service) resolvePayload(
 		return buildFreightInvoicePayload(invoiceEntity), nil
 	}
 	if !req.ShipmentEventID.IsNil() {
-		if transactionSet != edi.TransactionSet214 {
-			return edi.DocumentPayload{}, sourceTransactionSetError(
+		if transactionSet != edidocument.TransactionSet214 {
+			return edipayload.DocumentPayload{}, sourceTransactionSetError(
 				"shipmentEventId",
 				"shipment event",
 				transactionSet,
-				edi.TransactionSet214,
+				edidocument.TransactionSet214,
 			)
 		}
 		event, err := s.shipmentEventRepo.GetByID(
@@ -1081,10 +1088,10 @@ func (s *Service) resolvePayload(
 			},
 		)
 		if err != nil {
-			return edi.DocumentPayload{}, err
+			return edipayload.DocumentPayload{}, err
 		}
 		if req.ShipmentID.IsNotNil() && req.ShipmentID != event.ShipmentID {
-			return edi.DocumentPayload{}, errortypes.NewValidationError(
+			return edipayload.DocumentPayload{}, errortypes.NewValidationError(
 				"shipmentId",
 				errortypes.ErrInvalidReference,
 				"Shipment ID must match the shipment event",
@@ -1098,17 +1105,17 @@ func (s *Service) resolvePayload(
 			},
 		})
 		if err != nil {
-			return edi.DocumentPayload{}, err
+			return edipayload.DocumentPayload{}, err
 		}
 		return buildShipmentEventStatusPayload(event, source), nil
 	}
 	if !req.ServiceFailureID.IsNil() {
-		if transactionSet != edi.TransactionSet214 {
-			return edi.DocumentPayload{}, sourceTransactionSetError(
+		if transactionSet != edidocument.TransactionSet214 {
+			return edipayload.DocumentPayload{}, sourceTransactionSetError(
 				"serviceFailureId",
 				"service failure",
 				transactionSet,
-				edi.TransactionSet214,
+				edidocument.TransactionSet214,
 			)
 		}
 		result, err := s.BuildShipmentStatusPayloadForServiceFailure(
@@ -1119,20 +1126,21 @@ func (s *Service) resolvePayload(
 			},
 		)
 		if err != nil {
-			return edi.DocumentPayload{}, err
+			return edipayload.DocumentPayload{}, err
 		}
 		return result.Payload, nil
 	}
 	if req.ShipmentID.IsNil() {
-		return edi.DocumentPayload{}, missingSourceError(transactionSet)
+		return edipayload.DocumentPayload{}, missingSourceError(transactionSet)
 	}
-	if transactionSet != edi.TransactionSet204 && transactionSet != edi.TransactionSet214 {
-		return edi.DocumentPayload{}, sourceTransactionSetError(
+	if transactionSet != edidocument.TransactionSet204 &&
+		transactionSet != edidocument.TransactionSet214 {
+		return edipayload.DocumentPayload{}, sourceTransactionSetError(
 			"shipmentId",
 			"shipment",
 			transactionSet,
-			edi.TransactionSet204,
-			edi.TransactionSet214,
+			edidocument.TransactionSet204,
+			edidocument.TransactionSet214,
 		)
 	}
 	source, err := s.shipmentSvc.Get(ctx, &shipmentports.GetShipmentByIDRequest{
@@ -1143,20 +1151,20 @@ func (s *Service) resolvePayload(
 		},
 	})
 	if err != nil {
-		return edi.DocumentPayload{}, err
+		return edipayload.DocumentPayload{}, err
 	}
-	if transactionSet == edi.TransactionSet214 {
+	if transactionSet == edidocument.TransactionSet214 {
 		return buildShipmentStatusPayload(source), nil
 	}
-	return edi.NewLoadTenderDocumentPayload(buildTenderPayload(source)), nil
+	return edipayload.NewLoadTenderDocumentPayload(buildTenderPayload(source)), nil
 
 }
 
 func sourceTransactionSetError(
 	field string,
 	source string,
-	actual edi.TransactionSet,
-	allowed ...edi.TransactionSet,
+	actual edidocument.TransactionSet,
+	allowed ...edidocument.TransactionSet,
 ) error {
 	allowedValues := make([]string, 0, len(allowed))
 	for _, transactionSet := range allowed {
@@ -1172,28 +1180,28 @@ func sourceTransactionSetError(
 	)
 }
 
-func missingSourceError(transactionSet edi.TransactionSet) error {
+func missingSourceError(transactionSet edidocument.TransactionSet) error {
 	//nolint:exhaustive // Only transaction sets with source-specific validation need custom errors.
 	switch transactionSet {
-	case edi.TransactionSet210:
+	case edidocument.TransactionSet210:
 		return errortypes.NewValidationError(
 			"invoiceId",
 			errortypes.ErrRequired,
 			"Invoice ID or payload is required for 210 documents",
 		)
-	case edi.TransactionSet214:
+	case edidocument.TransactionSet214:
 		return errortypes.NewValidationError(
 			"shipmentEventId",
 			errortypes.ErrRequired,
 			"Shipment event ID, shipment ID, or payload is required for 214 documents",
 		)
-	case edi.TransactionSet990:
+	case edidocument.TransactionSet990:
 		return errortypes.NewValidationError(
 			"transferId",
 			errortypes.ErrRequired,
 			"Transfer ID or payload is required for 990 documents",
 		)
-	case edi.TransactionSet997, edi.TransactionSet999:
+	case edidocument.TransactionSet997, edidocument.TransactionSet999:
 		return errortypes.NewValidationError(
 			"sourceMessageId",
 			errortypes.ErrRequired,
@@ -1208,7 +1216,7 @@ func missingSourceError(transactionSet edi.TransactionSet) error {
 	}
 }
 
-func documentShipmentID(payload edi.DocumentPayload) pulid.ID {
+func documentShipmentID(payload edipayload.DocumentPayload) pulid.ID {
 	payload.Normalize()
 	if payload.Shipment != nil {
 		return payload.Shipment.ShipmentID
@@ -1225,10 +1233,10 @@ func documentShipmentID(payload edi.DocumentPayload) pulid.ID {
 	return pulid.Nil
 }
 
-func diagnosticsToValidationError(diagnostics []edi.Diagnostic) error {
+func diagnosticsToValidationError(diagnostics []edidocument.Diagnostic) error {
 	multiErr := errortypes.NewMultiError()
 	for _, diagnostic := range diagnostics {
-		if diagnostic.Severity != edi.ValidationSeverityError {
+		if diagnostic.Severity != edidocument.ValidationSeverityError {
 			continue
 		}
 		field := stringutils.FirstNonEmpty(diagnostic.Path, diagnostic.SegmentID, "edi")

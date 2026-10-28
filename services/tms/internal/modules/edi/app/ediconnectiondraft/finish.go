@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/x12field"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediconnectiondraftports"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -209,7 +210,7 @@ func (p *planner) buildGaps() {
 		}
 		gap := ediconnectiondraftports.DraftGap{
 			Kind:    input.Kind,
-			Summary: clampQuote(edi.RedactSecrets(strings.TrimSpace(input.Summary))),
+			Summary: clampQuote(x12field.RedactSecrets(strings.TrimSpace(input.Summary))),
 			Source:  documentSource(page, input.Citation, ""),
 		}
 		if !check.ok {
@@ -229,14 +230,14 @@ func (p *planner) buildSamples(ctx context.Context) {
 			Parsed:         sample.err == nil,
 		}
 		if sample.err != nil {
-			out.Error = edi.RedactSecrets(sample.err.Error())
+			out.Error = x12field.RedactSecrets(sample.err.Error())
 			p.draft.Samples = append(p.draft.Samples, out)
 			continue
 		}
 		overview := sample.parsed.Inspection
 		overview.Diagnostics = slices.Clone(overview.Diagnostics)
 		for index := range overview.Diagnostics {
-			overview.Diagnostics[index].Message = edi.RedactSecrets(
+			overview.Diagnostics[index].Message = x12field.RedactSecrets(
 				overview.Diagnostics[index].Message,
 			)
 		}

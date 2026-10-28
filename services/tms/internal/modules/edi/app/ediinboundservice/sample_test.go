@@ -3,7 +3,7 @@ package ediinboundservice
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -35,7 +35,7 @@ func TestParseSample_ReadsTheEnvelopeAndEachTransaction(t *testing.T) {
 	assert.Equal(t, "004010", sample.GroupVersion)
 	require.Len(t, sample.Transactions, 1)
 	transaction := sample.Transactions[0]
-	assert.Equal(t, edi.TransactionSet204, transaction.TransactionSet)
+	assert.Equal(t, edidocument.TransactionSet204, transaction.TransactionSet)
 	assert.Equal(t, "0001", transaction.ControlNumber)
 }
 

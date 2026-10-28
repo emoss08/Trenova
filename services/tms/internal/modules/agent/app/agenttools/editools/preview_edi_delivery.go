@@ -13,7 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediinboundservice"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edimessage"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/edimessageports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -69,7 +69,7 @@ func previewedIDs(ids []pulid.ID) ([]pulid.ID, bool) {
 	return ids[:agent.MaxPreviewRecords], true
 }
 
-func messageLabel(message *edi.EDIMessage) string {
+func messageLabel(message *edimessage.EDIMessage) string {
 	label := fmt.Sprintf("%s %s", message.TransactionSet, message.InterchangeControlNumber)
 	if message.Partner != nil && message.Partner.Name != "" {
 		label += " to " + message.Partner.Name
@@ -78,7 +78,7 @@ func messageLabel(message *edi.EDIMessage) string {
 	return strings.TrimSpace(label)
 }
 
-func messagePartner(message *edi.EDIMessage) string {
+func messagePartner(message *edimessage.EDIMessage) string {
 	if message.Partner != nil && message.Partner.Name != "" {
 		return message.Partner.Name
 	}
@@ -99,7 +99,7 @@ func deliveryChange(plan *ediservice.DeliveryPlan) (*agent.RecordChange, error) 
 		Label:    messageLabel(message),
 		Version:  changepreview.PinnedVersion(message.Version),
 	}, &ediRecordView{DeliveryStatus: string(message.DeliveryStatus)}, &ediRecordView{
-		DeliveryStatus: string(edi.MessageDeliveryStatusQueued),
+		DeliveryStatus: string(edimessage.MessageDeliveryStatusQueued),
 		Outcome:        "Sent again " + route,
 	}, toolpreview.Labels(ediRecordLabels))
 	if err != nil {

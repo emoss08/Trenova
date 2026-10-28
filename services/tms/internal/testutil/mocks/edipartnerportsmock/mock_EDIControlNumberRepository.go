@@ -5,11 +5,11 @@
 package edipartnerportsmock
 
 import (
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
 
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -41,23 +41,23 @@ func (_m *MockEDIControlNumberRepository) EXPECT() *MockEDIControlNumberReposito
 }
 
 // AllocateControlNumbers provides a mock function for the type MockEDIControlNumberRepository
-func (_mock *MockEDIControlNumberRepository) AllocateControlNumbers(ctx context.Context, req edipartnerports.AllocateEDIControlNumbersRequest) (map[edi.ControlNumberKind]int64, error) {
+func (_mock *MockEDIControlNumberRepository) AllocateControlNumbers(ctx context.Context, req edipartnerports.AllocateEDIControlNumbersRequest) (map[edidocument.ControlNumberKind]int64, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for AllocateControlNumbers")
 	}
 
-	var r0 map[edi.ControlNumberKind]int64
+	var r0 map[edidocument.ControlNumberKind]int64
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, edipartnerports.AllocateEDIControlNumbersRequest) (map[edi.ControlNumberKind]int64, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, edipartnerports.AllocateEDIControlNumbersRequest) (map[edidocument.ControlNumberKind]int64, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, edipartnerports.AllocateEDIControlNumbersRequest) map[edi.ControlNumberKind]int64); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, edipartnerports.AllocateEDIControlNumbersRequest) map[edidocument.ControlNumberKind]int64); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(map[edi.ControlNumberKind]int64)
+			r0 = ret.Get(0).(map[edidocument.ControlNumberKind]int64)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, edipartnerports.AllocateEDIControlNumbersRequest) error); ok {
@@ -98,34 +98,34 @@ func (_c *MockEDIControlNumberRepository_AllocateControlNumbers_Call) Run(run fu
 	return _c
 }
 
-func (_c *MockEDIControlNumberRepository_AllocateControlNumbers_Call) Return(controlNumberKindToInt64 map[edi.ControlNumberKind]int64, err error) *MockEDIControlNumberRepository_AllocateControlNumbers_Call {
+func (_c *MockEDIControlNumberRepository_AllocateControlNumbers_Call) Return(controlNumberKindToInt64 map[edidocument.ControlNumberKind]int64, err error) *MockEDIControlNumberRepository_AllocateControlNumbers_Call {
 	_c.Call.Return(controlNumberKindToInt64, err)
 	return _c
 }
 
-func (_c *MockEDIControlNumberRepository_AllocateControlNumbers_Call) RunAndReturn(run func(ctx context.Context, req edipartnerports.AllocateEDIControlNumbersRequest) (map[edi.ControlNumberKind]int64, error)) *MockEDIControlNumberRepository_AllocateControlNumbers_Call {
+func (_c *MockEDIControlNumberRepository_AllocateControlNumbers_Call) RunAndReturn(run func(ctx context.Context, req edipartnerports.AllocateEDIControlNumbersRequest) (map[edidocument.ControlNumberKind]int64, error)) *MockEDIControlNumberRepository_AllocateControlNumbers_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // ResetControlNumber provides a mock function for the type MockEDIControlNumberRepository
-func (_mock *MockEDIControlNumberRepository) ResetControlNumber(ctx context.Context, req *edipartnerports.ResetEDIControlNumberRequest) (*edi.EDIControlNumberSequence, error) {
+func (_mock *MockEDIControlNumberRepository) ResetControlNumber(ctx context.Context, req *edipartnerports.ResetEDIControlNumberRequest) (*edidocument.EDIControlNumberSequence, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ResetControlNumber")
 	}
 
-	var r0 *edi.EDIControlNumberSequence
+	var r0 *edidocument.EDIControlNumberSequence
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *edipartnerports.ResetEDIControlNumberRequest) (*edi.EDIControlNumberSequence, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *edipartnerports.ResetEDIControlNumberRequest) (*edidocument.EDIControlNumberSequence, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *edipartnerports.ResetEDIControlNumberRequest) *edi.EDIControlNumberSequence); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *edipartnerports.ResetEDIControlNumberRequest) *edidocument.EDIControlNumberSequence); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*edi.EDIControlNumberSequence)
+			r0 = ret.Get(0).(*edidocument.EDIControlNumberSequence)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, *edipartnerports.ResetEDIControlNumberRequest) error); ok {
@@ -166,34 +166,34 @@ func (_c *MockEDIControlNumberRepository_ResetControlNumber_Call) Run(run func(c
 	return _c
 }
 
-func (_c *MockEDIControlNumberRepository_ResetControlNumber_Call) Return(eDIControlNumberSequence *edi.EDIControlNumberSequence, err error) *MockEDIControlNumberRepository_ResetControlNumber_Call {
+func (_c *MockEDIControlNumberRepository_ResetControlNumber_Call) Return(eDIControlNumberSequence *edidocument.EDIControlNumberSequence, err error) *MockEDIControlNumberRepository_ResetControlNumber_Call {
 	_c.Call.Return(eDIControlNumberSequence, err)
 	return _c
 }
 
-func (_c *MockEDIControlNumberRepository_ResetControlNumber_Call) RunAndReturn(run func(ctx context.Context, req *edipartnerports.ResetEDIControlNumberRequest) (*edi.EDIControlNumberSequence, error)) *MockEDIControlNumberRepository_ResetControlNumber_Call {
+func (_c *MockEDIControlNumberRepository_ResetControlNumber_Call) RunAndReturn(run func(ctx context.Context, req *edipartnerports.ResetEDIControlNumberRequest) (*edidocument.EDIControlNumberSequence, error)) *MockEDIControlNumberRepository_ResetControlNumber_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // StartControlNumber provides a mock function for the type MockEDIControlNumberRepository
-func (_mock *MockEDIControlNumberRepository) StartControlNumber(ctx context.Context, req *edipartnerports.ResetEDIControlNumberRequest) (*edi.EDIControlNumberSequence, error) {
+func (_mock *MockEDIControlNumberRepository) StartControlNumber(ctx context.Context, req *edipartnerports.ResetEDIControlNumberRequest) (*edidocument.EDIControlNumberSequence, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for StartControlNumber")
 	}
 
-	var r0 *edi.EDIControlNumberSequence
+	var r0 *edidocument.EDIControlNumberSequence
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *edipartnerports.ResetEDIControlNumberRequest) (*edi.EDIControlNumberSequence, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *edipartnerports.ResetEDIControlNumberRequest) (*edidocument.EDIControlNumberSequence, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *edipartnerports.ResetEDIControlNumberRequest) *edi.EDIControlNumberSequence); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *edipartnerports.ResetEDIControlNumberRequest) *edidocument.EDIControlNumberSequence); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*edi.EDIControlNumberSequence)
+			r0 = ret.Get(0).(*edidocument.EDIControlNumberSequence)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, *edipartnerports.ResetEDIControlNumberRequest) error); ok {
@@ -234,12 +234,12 @@ func (_c *MockEDIControlNumberRepository_StartControlNumber_Call) Run(run func(c
 	return _c
 }
 
-func (_c *MockEDIControlNumberRepository_StartControlNumber_Call) Return(eDIControlNumberSequence *edi.EDIControlNumberSequence, err error) *MockEDIControlNumberRepository_StartControlNumber_Call {
+func (_c *MockEDIControlNumberRepository_StartControlNumber_Call) Return(eDIControlNumberSequence *edidocument.EDIControlNumberSequence, err error) *MockEDIControlNumberRepository_StartControlNumber_Call {
 	_c.Call.Return(eDIControlNumberSequence, err)
 	return _c
 }
 
-func (_c *MockEDIControlNumberRepository_StartControlNumber_Call) RunAndReturn(run func(ctx context.Context, req *edipartnerports.ResetEDIControlNumberRequest) (*edi.EDIControlNumberSequence, error)) *MockEDIControlNumberRepository_StartControlNumber_Call {
+func (_c *MockEDIControlNumberRepository_StartControlNumber_Call) RunAndReturn(run func(ctx context.Context, req *edipartnerports.ResetEDIControlNumberRequest) (*edidocument.EDIControlNumberSequence, error)) *MockEDIControlNumberRepository_StartControlNumber_Call {
 	_c.Call.Return(run)
 	return _c
 }

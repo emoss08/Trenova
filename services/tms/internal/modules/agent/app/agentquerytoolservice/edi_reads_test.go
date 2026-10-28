@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/ports/graphqlreadports"
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edimessage"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -46,17 +46,17 @@ func TestAckAnswer_SaysWhatCameBackOutOfWhatWasSent(t *testing.T) {
 	t.Parallel()
 
 	assert.Equal(t, "nothing sent in this window expects an acknowledgment",
-		ackAnswer(map[edi.MessageAcknowledgmentStatus]int{
-			edi.MessageAcknowledgmentStatusNotExpected: 4,
+		ackAnswer(map[edimessage.MessageAcknowledgmentStatus]int{
+			edimessage.MessageAcknowledgmentStatusNotExpected: 4,
 		}))
 	assert.Equal(t,
 		"3 of 5 came back with a 997 or 999 (2 accepted, 1 rejected); 1 still awaiting one; "+
 			"1 marked Failed",
-		ackAnswer(map[edi.MessageAcknowledgmentStatus]int{
-			edi.MessageAcknowledgmentStatusAccepted: 2,
-			edi.MessageAcknowledgmentStatusRejected: 1,
-			edi.MessageAcknowledgmentStatusPending:  1,
-			edi.MessageAcknowledgmentStatusFailed:   1,
+		ackAnswer(map[edimessage.MessageAcknowledgmentStatus]int{
+			edimessage.MessageAcknowledgmentStatusAccepted: 2,
+			edimessage.MessageAcknowledgmentStatusRejected: 1,
+			edimessage.MessageAcknowledgmentStatusPending:  1,
+			edimessage.MessageAcknowledgmentStatusFailed:   1,
 		}))
 }
 

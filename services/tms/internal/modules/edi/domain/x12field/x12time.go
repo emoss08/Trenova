@@ -1,4 +1,4 @@
-package edi
+package x12field
 
 import (
 	"strings"

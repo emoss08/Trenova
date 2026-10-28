@@ -5,11 +5,11 @@
 package ediportsmock
 
 import (
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edimessage"
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/edi/ports/edimessageports"
 
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
 	mock "github.com/stretchr/testify/mock"
@@ -111,23 +111,23 @@ func (_c *MockEDIService_BuildShipmentStatusPayloadForServiceFailure_Call) RunAn
 }
 
 // GenerateDocument provides a mock function for the type MockEDIService
-func (_mock *MockEDIService) GenerateDocument(ctx context.Context, req *ediports.GenerateEDIDocumentRequest) (*edi.EDIMessage, error) {
+func (_mock *MockEDIService) GenerateDocument(ctx context.Context, req *ediports.GenerateEDIDocumentRequest) (*edimessage.EDIMessage, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GenerateDocument")
 	}
 
-	var r0 *edi.EDIMessage
+	var r0 *edimessage.EDIMessage
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *ediports.GenerateEDIDocumentRequest) (*edi.EDIMessage, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *ediports.GenerateEDIDocumentRequest) (*edimessage.EDIMessage, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *ediports.GenerateEDIDocumentRequest) *edi.EDIMessage); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *ediports.GenerateEDIDocumentRequest) *edimessage.EDIMessage); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*edi.EDIMessage)
+			r0 = ret.Get(0).(*edimessage.EDIMessage)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, *ediports.GenerateEDIDocumentRequest) error); ok {
@@ -168,12 +168,12 @@ func (_c *MockEDIService_GenerateDocument_Call) Run(run func(ctx context.Context
 	return _c
 }
 
-func (_c *MockEDIService_GenerateDocument_Call) Return(eDIMessage *edi.EDIMessage, err error) *MockEDIService_GenerateDocument_Call {
+func (_c *MockEDIService_GenerateDocument_Call) Return(eDIMessage *edimessage.EDIMessage, err error) *MockEDIService_GenerateDocument_Call {
 	_c.Call.Return(eDIMessage, err)
 	return _c
 }
 
-func (_c *MockEDIService_GenerateDocument_Call) RunAndReturn(run func(ctx context.Context, req *ediports.GenerateEDIDocumentRequest) (*edi.EDIMessage, error)) *MockEDIService_GenerateDocument_Call {
+func (_c *MockEDIService_GenerateDocument_Call) RunAndReturn(run func(ctx context.Context, req *ediports.GenerateEDIDocumentRequest) (*edimessage.EDIMessage, error)) *MockEDIService_GenerateDocument_Call {
 	_c.Call.Return(run)
 	return _c
 }

@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -30,7 +30,7 @@ func TestInspectX12_ReadsSeparatorsFromTheISAAndWarnsWhenTheProfileDisagrees(t *
 
 	conflicting := inspect(t, &InspectX12Request{
 		RawX12: valid204("*", "~", ">", "^"),
-		Envelope: &edi.X12EnvelopeSettings{
+		Envelope: &edidocument.X12EnvelopeSettings{
 			ElementSeparator:   "|",
 			SegmentTerminator:  "!",
 			ComponentSeparator: ":",
@@ -45,7 +45,7 @@ func TestInspectX12_ReadsAFragmentWithTheProfilesSeparators(t *testing.T) {
 
 	result := inspect(t, &InspectX12Request{
 		RawX12: "ST|990|0001!B1|SIML|SHIP-1|20260107|A!SE|3|0001!",
-		Envelope: &edi.X12EnvelopeSettings{
+		Envelope: &edidocument.X12EnvelopeSettings{
 			ElementSeparator:  "|",
 			SegmentTerminator: "!",
 		},
@@ -53,7 +53,7 @@ func TestInspectX12_ReadsAFragmentWithTheProfilesSeparators(t *testing.T) {
 	assert.Equal(t, SeparatorSourceEnvelope, result.Separators.Source)
 	require.Len(t, result.Segments, 3)
 	assert.Equal(t, "Beginning Segment for Booking or Pick-up/Delivery", result.Segments[1].Name)
-	assert.Equal(t, edi.TransactionSet("990"), result.TransactionSet)
+	assert.Equal(t, edidocument.TransactionSet("990"), result.TransactionSet)
 	assert.Empty(t, result.Diagnostics)
 }
 
@@ -98,7 +98,7 @@ func TestInspectX12_ReportsGuideFindingsWithTheirPlace(t *testing.T) {
 		}
 	}
 	require.NotZero(t, missing)
-	assert.Equal(t, edi.ValidationSeverityError, missing.Severity)
+	assert.Equal(t, edidocument.ValidationSeverityError, missing.Severity)
 	assert.Equal(t, DiagnosticSourceValidation, missing.Source)
 	assert.Equal(t, "N1", missing.SegmentID)
 	assert.Equal(t, 8, missing.SegmentIndex)
@@ -136,9 +136,9 @@ func TestInspectX12_MergesRenderDiagnostics(t *testing.T) {
 
 	result := inspect(t, &InspectX12Request{
 		RawX12: valid204("*", "~", ">", "^"),
-		Diagnostics: []edi.Diagnostic{
+		Diagnostics: []edidocument.Diagnostic{
 			{
-				Severity:        edi.ValidationSeverityError,
+				Severity:        edidocument.ValidationSeverityError,
 				Code:            "required",
 				SegmentID:       "B2",
 				ElementPosition: 4,

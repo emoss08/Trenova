@@ -18,7 +18,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice/invoicedb"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document/documentdb"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage/inboundmessagedb"
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi/edidb"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/ediinboundfile/ediinboundfiledb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention/detentiondb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel/carrierinteldb"
@@ -97,7 +97,7 @@ var subjectTables = map[agent.SubjectType]subjectExists{
 		return keel.ExistsInto(t.Where(t.ID.Eq(id)), found)
 	},
 	agent.SubjectEDIInboundFile: func(id pulid.ID, found *bool) keel.BatchItem {
-		t := edidb.EDIInboundFiles
+		t := ediinboundfiledb.EDIInboundFiles
 		return keel.ExistsInto(t.Where(t.ID.Eq(id)), found)
 	},
 	agent.SubjectInboundMessage: func(id pulid.ID, found *bool) keel.BatchItem {

@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/editransfer"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -66,7 +66,7 @@ func (t *SendEDILoadTenderTool) Preview(
 		"Would tender shipment %s to %s over EDI and mark it Tendered until they answer.",
 		plan.SourceShipment.ProNumber, receiver,
 	)
-	if plan.Status == edi.TransferStatusMappingRequired {
+	if plan.Status == editransfer.TransferStatusMappingRequired {
 		summary += fmt.Sprintf(
 			" %s has to map %d of its customers, locations or other records to its own "+
 				"before it can accept.",
@@ -77,7 +77,7 @@ func (t *SendEDILoadTenderTool) Preview(
 	return toolpreview.Build(summary, sent, marked), nil
 }
 
-func tenderBody(payload *edi.LoadTenderPayload) string {
+func tenderBody(payload *editransfer.LoadTenderPayload) string {
 	lines := make([]string, 0, 4)
 	if payload.BOL != "" {
 		lines = append(lines, "BOL: "+payload.BOL)

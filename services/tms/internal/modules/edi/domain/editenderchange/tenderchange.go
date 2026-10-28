@@ -1,9 +1,10 @@
-package edi
+package editenderchange
 
 import (
 	"context"
 
 	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/editransfer"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -26,7 +27,7 @@ type TenderRecipient struct {
 	OriginalTransferID      pulid.ID                      `json:"originalTransferId"      keel:"original_transfer_id,nullzero"`
 	ShipmentLinkID          pulid.ID                      `json:"shipmentLinkId"          keel:"shipment_link_id,nullzero"`
 	OriginalMessageID       pulid.ID                      `json:"originalMessageId"       keel:"original_message_id,nullzero"`
-	LatestBaselinePayload   LoadTenderPayload             `json:"latestBaselinePayload"   keel:"latest_baseline_payload,jsonb"`
+	LatestBaselinePayload   editransfer.LoadTenderPayload `json:"latestBaselinePayload"   keel:"latest_baseline_payload,jsonb"`
 	LatestBaselineHash      string                        `json:"latestBaselineHash"      keel:"latest_baseline_hash"`
 	BaselineRecordedAt      int64                         `json:"baselineRecordedAt"      keel:"baseline_recorded_at"`
 	BaselineStatus          TenderRecipientBaselineStatus `json:"baselineStatus"          keel:"baseline_status"`
@@ -58,35 +59,35 @@ func (r *TenderRecipient) BeforeCreate(ctx context.Context) error {
 type TenderChange struct {
 	keel.Table `keel:"edi_tender_changes"`
 
-	ID                      pulid.ID            `json:"id"                      keel:"id,pk,autoid:editcg_"`
-	BusinessUnitID          pulid.ID            `json:"businessUnitId"          keel:"business_unit_id,pk,tenant"`
-	SourceOrganizationID    pulid.ID            `json:"sourceOrganizationId"    keel:"source_organization_id"`
-	SourceShipmentID        pulid.ID            `json:"sourceShipmentId"        keel:"source_shipment_id"`
-	RecipientID             pulid.ID            `json:"recipientId"             keel:"recipient_id"`
-	RecipientKind           TenderRecipientKind `json:"recipientKind"           keel:"recipient_kind"`
-	Status                  TenderChangeStatus  `json:"status"                  keel:"status"`
-	ChangeType              string              `json:"changeType"              keel:"change_type"`
-	IdempotencyKey          string              `json:"idempotencyKey"          keel:"idempotency_key"`
-	SourceShipmentVersion   int64               `json:"sourceShipmentVersion"   keel:"source_shipment_version"`
-	PreviousBaselinePayload LoadTenderPayload   `json:"previousBaselinePayload" keel:"previous_baseline_payload,jsonb"`
-	NewTenderPayload        LoadTenderPayload   `json:"newTenderPayload"        keel:"new_tender_payload,jsonb"`
-	PreviousBaselineHash    string              `json:"previousBaselineHash"    keel:"previous_baseline_hash"`
-	NewPayloadHash          string              `json:"newPayloadHash"          keel:"new_payload_hash"`
-	DiffSummary             map[string]any      `json:"diffSummary"             keel:"diff_summary,jsonb"`
-	ConflictMetadata        map[string]any      `json:"conflictMetadata"        keel:"conflict_metadata,jsonb"`
-	InternalTransferID      pulid.ID            `json:"internalTransferId"      keel:"internal_transfer_id,nullzero"`
-	ShipmentLinkID          pulid.ID            `json:"shipmentLinkId"          keel:"shipment_link_id,nullzero"`
-	OutboundMessageID       pulid.ID            `json:"outboundMessageId"       keel:"outbound_message_id,nullzero"`
-	ReviewedByID            pulid.ID            `json:"reviewedById"            keel:"reviewed_by_id,nullzero"`
-	ReviewedAt              *int64              `json:"reviewedAt"              keel:"reviewed_at"`
-	AppliedByID             pulid.ID            `json:"appliedById"             keel:"applied_by_id,nullzero"`
-	AppliedAt               *int64              `json:"appliedAt"               keel:"applied_at"`
-	FailureReason           string              `json:"failureReason"           keel:"failure_reason,nullzero"`
-	SearchVector            string              `json:"-"                       keel:"search_vector,tsvector,readonly,noselect"`
-	Rank                    string              `json:"-"                       keel:"rank,computed"`
-	Version                 int64               `json:"version"                 keel:"version,version"`
-	CreatedAt               int64               `json:"createdAt"               keel:"created_at,autocreate"`
-	UpdatedAt               int64               `json:"updatedAt"               keel:"updated_at,autoupdate"`
+	ID                      pulid.ID                      `json:"id"                      keel:"id,pk,autoid:editcg_"`
+	BusinessUnitID          pulid.ID                      `json:"businessUnitId"          keel:"business_unit_id,pk,tenant"`
+	SourceOrganizationID    pulid.ID                      `json:"sourceOrganizationId"    keel:"source_organization_id"`
+	SourceShipmentID        pulid.ID                      `json:"sourceShipmentId"        keel:"source_shipment_id"`
+	RecipientID             pulid.ID                      `json:"recipientId"             keel:"recipient_id"`
+	RecipientKind           TenderRecipientKind           `json:"recipientKind"           keel:"recipient_kind"`
+	Status                  TenderChangeStatus            `json:"status"                  keel:"status"`
+	ChangeType              string                        `json:"changeType"              keel:"change_type"`
+	IdempotencyKey          string                        `json:"idempotencyKey"          keel:"idempotency_key"`
+	SourceShipmentVersion   int64                         `json:"sourceShipmentVersion"   keel:"source_shipment_version"`
+	PreviousBaselinePayload editransfer.LoadTenderPayload `json:"previousBaselinePayload" keel:"previous_baseline_payload,jsonb"`
+	NewTenderPayload        editransfer.LoadTenderPayload `json:"newTenderPayload"        keel:"new_tender_payload,jsonb"`
+	PreviousBaselineHash    string                        `json:"previousBaselineHash"    keel:"previous_baseline_hash"`
+	NewPayloadHash          string                        `json:"newPayloadHash"          keel:"new_payload_hash"`
+	DiffSummary             map[string]any                `json:"diffSummary"             keel:"diff_summary,jsonb"`
+	ConflictMetadata        map[string]any                `json:"conflictMetadata"        keel:"conflict_metadata,jsonb"`
+	InternalTransferID      pulid.ID                      `json:"internalTransferId"      keel:"internal_transfer_id,nullzero"`
+	ShipmentLinkID          pulid.ID                      `json:"shipmentLinkId"          keel:"shipment_link_id,nullzero"`
+	OutboundMessageID       pulid.ID                      `json:"outboundMessageId"       keel:"outbound_message_id,nullzero"`
+	ReviewedByID            pulid.ID                      `json:"reviewedById"            keel:"reviewed_by_id,nullzero"`
+	ReviewedAt              *int64                        `json:"reviewedAt"              keel:"reviewed_at"`
+	AppliedByID             pulid.ID                      `json:"appliedById"             keel:"applied_by_id,nullzero"`
+	AppliedAt               *int64                        `json:"appliedAt"               keel:"applied_at"`
+	FailureReason           string                        `json:"failureReason"           keel:"failure_reason,nullzero"`
+	SearchVector            string                        `json:"-"                       keel:"search_vector,tsvector,readonly,noselect"`
+	Rank                    string                        `json:"-"                       keel:"rank,computed"`
+	Version                 int64                         `json:"version"                 keel:"version,version"`
+	CreatedAt               int64                         `json:"createdAt"               keel:"created_at,autocreate"`
+	UpdatedAt               int64                         `json:"updatedAt"               keel:"updated_at,autoupdate"`
 
 	Recipient *TenderRecipient `json:"recipient,omitempty" keel:"belongs:recipient_id"`
 }
@@ -248,12 +249,12 @@ func (c *TenderChange) Validate(multiErr *errortypes.MultiError) {
 		),
 		validation.Field(&c.ChangeType,
 			validation.Required.Error("Change type is required"),
-			validation.Length(1, maxChangeTypeLength).
+			validation.Length(1, maxTenderChangeTypeLength).
 				Error("Change type cannot be longer than 100 characters"),
 		),
 		validation.Field(&c.IdempotencyKey,
 			validation.Required.Error("Idempotency key is required"),
-			validation.Length(1, maxIdempotencyKeyLength).
+			validation.Length(1, maxTenderIdempotencyKeyLength).
 				Error("Idempotency key cannot be longer than 255 characters"),
 		),
 		validation.Field(&c.SourceShipmentVersion,
@@ -294,4 +295,8 @@ func (c *TenderChange) Validate(multiErr *errortypes.MultiError) {
 	c.NewTenderPayload.Validate(multiErr.WithPrefix("newTenderPayload"))
 }
 
-const maxTenderHashLength = 128
+const (
+	maxTenderHashLength           = 128
+	maxTenderChangeTypeLength     = 100
+	maxTenderIdempotencyKeyLength = 255
+)

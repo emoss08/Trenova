@@ -7,6 +7,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/edi/app/edilading"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edimessage"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edipayload"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/edimessageports"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
@@ -105,8 +108,8 @@ func (s *Service) serviceFailure214Lifecycle(
 		EDIPartnerID:     candidate.partner.ID,
 		ShipmentID:       failure.ShipmentID,
 		ServiceFailureID: failure.ID,
-		TransactionSet:   edi.TransactionSet214,
-		Direction:        edi.DocumentDirectionOutbound,
+		TransactionSet:   edidocument.TransactionSet214,
+		Direction:        edidocument.DocumentDirectionOutbound,
 		Payload:          &payload,
 		GeneratedByID:    req.GeneratedByID,
 	}
@@ -153,7 +156,7 @@ func (s *Service) applyServiceFailure214ReasonMapping(
 	tenantInfo pagination.TenantInfo,
 	partnerID pulid.ID,
 	failure *servicefailure.ServiceFailure,
-	payload *edi.ShipmentStatusPayload,
+	payload *edipayload.ShipmentStatusPayload,
 ) error {
 	if payload == nil ||
 		failure == nil ||
@@ -319,7 +322,7 @@ func (s *Service) resolveServiceFailure214Candidate(
 			return nil, nil, programErr
 		}
 		if _, clause := program.Manifest.Sending(
-			string(edi.TransactionSet214),
+			string(edidocument.TransactionSet214),
 			serviceFailureEvent,
 		); clause == nil {
 			flowSilent = true
@@ -385,7 +388,7 @@ func buildServiceFailure214LifecyclePayload(
 	failure *servicefailure.ServiceFailure,
 	source *shipment.Shipment,
 	trigger servicefailureports.ServiceFailureEDITrigger,
-) edi.DocumentPayload {
+) edipayload.DocumentPayload {
 	payload := buildServiceFailureShipmentStatusPayload(failure, source)
 	if payload.ShipmentStatus == nil {
 		return payload
@@ -402,15 +405,17 @@ func normalizedX12Code(value string) string {
 	return strings.ToUpper(strings.TrimSpace(value))
 }
 
-func serviceFailure214Diagnostics(payload *edi.ShipmentStatusPayload) []edi.Diagnostic {
+func serviceFailure214Diagnostics(
+	payload *edipayload.ShipmentStatusPayload,
+) []edidocument.Diagnostic {
 	if payload == nil {
-		return []edi.Diagnostic{requiredServiceFailure214Diagnostic(
+		return []edidocument.Diagnostic{requiredServiceFailure214Diagnostic(
 			"shipmentStatus",
 			"EDI 214 shipment status payload is required",
 			"Build the shipment status payload before generating the 214.",
 		)}
 	}
-	diagnostics := make([]edi.Diagnostic, 0, 6)
+	diagnostics := make([]edidocument.Diagnostic, 0, 6)
 	statusCode := normalizedX12Code(payload.StatusCode)
 	reasonCode := normalizedX12Code(payload.StatusReasonCode)
 	if payload.EventDate == 0 {
@@ -437,9 +442,11 @@ func serviceFailure214Diagnostics(payload *edi.ShipmentStatusPayload) []edi.Diag
 	return diagnostics
 }
 
-func requiredServiceFailure214Diagnostic(path, message, suggestedFix string) edi.Diagnostic {
-	diagnostic := edi.Diagnostic{
-		Severity:     edi.ValidationSeverityError,
+func requiredServiceFailure214Diagnostic(
+	path, message, suggestedFix string,
+) edidocument.Diagnostic {
+	diagnostic := edidocument.Diagnostic{
+		Severity:     edidocument.ValidationSeverityError,
 		Code:         "required",
 		SegmentID:    "AT7",
 		Path:         path,
@@ -452,9 +459,9 @@ func requiredServiceFailure214Diagnostic(path, message, suggestedFix string) edi
 	return diagnostic
 }
 
-func hasErrorDiagnostics(diagnostics []edi.Diagnostic) bool {
+func hasErrorDiagnostics(diagnostics []edidocument.Diagnostic) bool {
 	for _, diagnostic := range diagnostics {
-		if diagnostic.Severity == edi.ValidationSeverityError {
+		if diagnostic.Severity == edidocument.ValidationSeverityError {
 			return true
 		}
 	}
@@ -469,19 +476,19 @@ func skippedServiceFailure214Result(
 		Trigger:       trigger,
 		Action:        ediports.ServiceFailureEDIActionSkipped,
 		SkippedReason: reason,
-		Diagnostics:   []edi.Diagnostic{},
+		Diagnostics:   []edidocument.Diagnostic{},
 	}
 }
 
 func duplicateServiceFailure214Result(
 	trigger servicefailureports.ServiceFailureEDITrigger,
-	message *edi.EDIMessage,
+	message *edimessage.EDIMessage,
 ) *servicefailureports.ServiceFailure214LifecycleResult {
 	return &servicefailureports.ServiceFailure214LifecycleResult{
 		Trigger:      trigger,
 		Action:       ediports.ServiceFailureEDIActionDuplicate,
 		MessageID:    message.ID,
 		EDIPartnerID: message.EDIPartnerID,
-		Diagnostics:  []edi.Diagnostic{},
+		Diagnostics:  []edidocument.Diagnostic{},
 	}
 }

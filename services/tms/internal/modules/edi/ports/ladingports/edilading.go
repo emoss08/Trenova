@@ -3,7 +3,8 @@ package ladingports
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edimessage"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/ladingproject"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -19,9 +20,9 @@ type ListLadingProjectsRequest struct {
 }
 
 type CreateLadingProjectRequest struct {
-	Project *edi.LadingProject
-	Draft   *edi.LadingVersion
-	Samples []*edi.LadingSample
+	Project *ladingproject.LadingProject
+	Draft   *ladingproject.LadingVersion
+	Samples []*ladingproject.LadingSample
 }
 
 type GetLadingVersionRequest struct {
@@ -49,8 +50,8 @@ type ActivateLadingVersionRequest struct {
 }
 
 type ActivatedLadingVersion struct {
-	Version    *edi.LadingVersion
-	Superseded *edi.LadingVersion
+	Version    *ladingproject.LadingVersion
+	Superseded *ladingproject.LadingVersion
 }
 
 type GetRunnableLadingVersionRequest struct {
@@ -59,44 +60,62 @@ type GetRunnableLadingVersionRequest struct {
 }
 
 type RunnableLadingVersions struct {
-	Project *edi.LadingProject
-	Active  *edi.LadingVersion
-	Shadow  *edi.LadingVersion
+	Project *ladingproject.LadingProject
+	Active  *ladingproject.LadingVersion
+	Shadow  *ladingproject.LadingVersion
 }
 
 type LadingProjectRepository interface {
-	GetProject(ctx context.Context, req GetLadingProjectRequest) (*edi.LadingProject, error)
+	GetProject(
+		ctx context.Context,
+		req GetLadingProjectRequest,
+	) (*ladingproject.LadingProject, error)
 	ListProjects(
 		ctx context.Context,
 		req *ListLadingProjectsRequest,
-	) (*pagination.ListResult[*edi.LadingProject], error)
-	CreateProject(ctx context.Context, req *CreateLadingProjectRequest) (*edi.LadingProject, error)
+	) (*pagination.ListResult[*ladingproject.LadingProject], error)
+	CreateProject(
+		ctx context.Context,
+		req *CreateLadingProjectRequest,
+	) (*ladingproject.LadingProject, error)
 	UpdateProjectSettings(
 		ctx context.Context,
-		project *edi.LadingProject,
-	) (*edi.LadingProject, error)
+		project *ladingproject.LadingProject,
+	) (*ladingproject.LadingProject, error)
 	SetShadowVersion(
 		ctx context.Context,
-		project *edi.LadingProject,
-	) (*edi.LadingProject, error)
-	GetVersion(ctx context.Context, req GetLadingVersionRequest) (*edi.LadingVersion, error)
-	ListVersions(ctx context.Context, req ListLadingVersionsRequest) ([]*edi.LadingVersion, error)
+		project *ladingproject.LadingProject,
+	) (*ladingproject.LadingProject, error)
+	GetVersion(
+		ctx context.Context,
+		req GetLadingVersionRequest,
+	) (*ladingproject.LadingVersion, error)
+	ListVersions(
+		ctx context.Context,
+		req ListLadingVersionsRequest,
+	) ([]*ladingproject.LadingVersion, error)
 	CreateVersion(
 		ctx context.Context,
-		version *edi.LadingVersion,
-		samples []*edi.LadingSample,
-	) (*edi.LadingVersion, error)
+		version *ladingproject.LadingVersion,
+		samples []*ladingproject.LadingSample,
+	) (*ladingproject.LadingVersion, error)
 	SaveDraft(
 		ctx context.Context,
-		version *edi.LadingVersion,
-		samples []*edi.LadingSample,
-	) (*edi.LadingVersion, error)
-	UpdateVersionStatus(ctx context.Context, version *edi.LadingVersion) (*edi.LadingVersion, error)
+		version *ladingproject.LadingVersion,
+		samples []*ladingproject.LadingSample,
+	) (*ladingproject.LadingVersion, error)
+	UpdateVersionStatus(
+		ctx context.Context,
+		version *ladingproject.LadingVersion,
+	) (*ladingproject.LadingVersion, error)
 	ActivateVersion(
 		ctx context.Context,
 		req ActivateLadingVersionRequest,
 	) (*ActivatedLadingVersion, error)
-	GetSamples(ctx context.Context, req GetLadingSamplesRequest) ([]*edi.LadingSample, error)
+	GetSamples(
+		ctx context.Context,
+		req GetLadingSamplesRequest,
+	) ([]*ladingproject.LadingSample, error)
 	GetRunnableVersions(
 		ctx context.Context,
 		req GetRunnableLadingVersionRequest,
@@ -116,12 +135,12 @@ type GetFlowInstanceByKeyRequest struct {
 }
 
 type ListFlowInstancesRequest struct {
-	Filter     *pagination.QueryOptions `json:"filter"`
-	Cursor     pagination.CursorInfo    `json:"-"`
-	PartnerID  pulid.ID                 `json:"partnerId"`
-	ShipmentID pulid.ID                 `json:"shipmentId"`
-	TransferID pulid.ID                 `json:"transferId"`
-	Statuses   []edi.FlowInstanceStatus `json:"statuses"`
+	Filter     *pagination.QueryOptions           `json:"filter"`
+	Cursor     pagination.CursorInfo              `json:"-"`
+	PartnerID  pulid.ID                           `json:"partnerId"`
+	ShipmentID pulid.ID                           `json:"shipmentId"`
+	TransferID pulid.ID                           `json:"transferId"`
+	Statuses   []ladingproject.FlowInstanceStatus `json:"statuses"`
 }
 
 type ListShipmentFlowInstancesRequest struct {
@@ -143,28 +162,40 @@ type GetFlowSendMessageRequest struct {
 }
 
 type FlowRepository interface {
-	GetInstance(ctx context.Context, req GetFlowInstanceRequest) (*edi.FlowInstance, error)
+	GetInstance(
+		ctx context.Context,
+		req GetFlowInstanceRequest,
+	) (*ladingproject.FlowInstance, error)
 	GetInstanceByKey(
 		ctx context.Context,
 		req GetFlowInstanceByKeyRequest,
-	) (*edi.FlowInstance, error)
-	OpenInstance(ctx context.Context, instance *edi.FlowInstance) (*edi.FlowInstance, error)
-	SaveInstance(ctx context.Context, instance *edi.FlowInstance) (*edi.FlowInstance, error)
-	AppendEvent(ctx context.Context, event *edi.FlowEvent) error
+	) (*ladingproject.FlowInstance, error)
+	OpenInstance(
+		ctx context.Context,
+		instance *ladingproject.FlowInstance,
+	) (*ladingproject.FlowInstance, error)
+	SaveInstance(
+		ctx context.Context,
+		instance *ladingproject.FlowInstance,
+	) (*ladingproject.FlowInstance, error)
+	AppendEvent(ctx context.Context, event *ladingproject.FlowEvent) error
 	ListOpenInstances(
 		ctx context.Context,
 		req *ListShipmentFlowInstancesRequest,
-	) ([]*edi.FlowInstance, error)
+	) ([]*ladingproject.FlowInstance, error)
 	ListInstancesCursor(
 		ctx context.Context,
 		req *ListFlowInstancesRequest,
-	) (*pagination.CursorListResult[*edi.FlowInstance], error)
+	) (*pagination.CursorListResult[*ladingproject.FlowInstance], error)
 	ListInstances(
 		ctx context.Context,
 		req *ListFlowInstancesRequest,
-	) (*pagination.ListResult[*edi.FlowInstance], error)
-	ListEvents(ctx context.Context, req ListFlowEventsRequest) ([]*edi.FlowEvent, error)
-	GetSendMessage(ctx context.Context, req GetFlowSendMessageRequest) (*edi.EDIMessage, error)
+	) (*pagination.ListResult[*ladingproject.FlowInstance], error)
+	ListEvents(ctx context.Context, req ListFlowEventsRequest) ([]*ladingproject.FlowEvent, error)
+	GetSendMessage(
+		ctx context.Context,
+		req GetFlowSendMessageRequest,
+	) (*edimessage.EDIMessage, error)
 }
 
 type GetLadingReplayRequest struct {
@@ -192,15 +223,24 @@ type LadingShadowSummary struct {
 }
 
 type LadingReplayRepository interface {
-	CreateReplay(ctx context.Context, replay *edi.LadingReplay) (*edi.LadingReplay, error)
-	GetReplay(ctx context.Context, req GetLadingReplayRequest) (*edi.LadingReplay, error)
-	ListReplays(ctx context.Context, req ListLadingReplaysRequest) ([]*edi.LadingReplay, error)
-	FinishReplay(ctx context.Context, replay *edi.LadingReplay) (*edi.LadingReplay, error)
-	RecordShadowResult(ctx context.Context, result *edi.LadingShadowResult) error
+	CreateReplay(
+		ctx context.Context,
+		replay *ladingproject.LadingReplay,
+	) (*ladingproject.LadingReplay, error)
+	GetReplay(ctx context.Context, req GetLadingReplayRequest) (*ladingproject.LadingReplay, error)
+	ListReplays(
+		ctx context.Context,
+		req ListLadingReplaysRequest,
+	) ([]*ladingproject.LadingReplay, error)
+	FinishReplay(
+		ctx context.Context,
+		replay *ladingproject.LadingReplay,
+	) (*ladingproject.LadingReplay, error)
+	RecordShadowResult(ctx context.Context, result *ladingproject.LadingShadowResult) error
 	ListShadowResults(
 		ctx context.Context,
 		req ListLadingShadowResultsRequest,
-	) ([]*edi.LadingShadowResult, error)
+	) ([]*ladingproject.LadingShadowResult, error)
 	SummarizeShadow(
 		ctx context.Context,
 		req ListLadingShadowResultsRequest,

@@ -1,4 +1,4 @@
-package edi
+package edidocument
 
 type Diagnostic struct {
 	Severity        ValidationSeverity `json:"severity"`

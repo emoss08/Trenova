@@ -5,11 +5,11 @@
 package ladingportsmock
 
 import (
+	"github.com/emoss08/trenova/internal/modules/edi/domain/ladingproject"
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ladingports"
 
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -41,26 +41,26 @@ func (_m *MockLadingReplayRepository) EXPECT() *MockLadingReplayRepository_Expec
 }
 
 // CreateReplay provides a mock function for the type MockLadingReplayRepository
-func (_mock *MockLadingReplayRepository) CreateReplay(ctx context.Context, replay *edi.LadingReplay) (*edi.LadingReplay, error) {
+func (_mock *MockLadingReplayRepository) CreateReplay(ctx context.Context, replay *ladingproject.LadingReplay) (*ladingproject.LadingReplay, error) {
 	ret := _mock.Called(ctx, replay)
 
 	if len(ret) == 0 {
 		panic("no return value specified for CreateReplay")
 	}
 
-	var r0 *edi.LadingReplay
+	var r0 *ladingproject.LadingReplay
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *edi.LadingReplay) (*edi.LadingReplay, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *ladingproject.LadingReplay) (*ladingproject.LadingReplay, error)); ok {
 		return returnFunc(ctx, replay)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *edi.LadingReplay) *edi.LadingReplay); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *ladingproject.LadingReplay) *ladingproject.LadingReplay); ok {
 		r0 = returnFunc(ctx, replay)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*edi.LadingReplay)
+			r0 = ret.Get(0).(*ladingproject.LadingReplay)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *edi.LadingReplay) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *ladingproject.LadingReplay) error); ok {
 		r1 = returnFunc(ctx, replay)
 	} else {
 		r1 = ret.Error(1)
@@ -75,20 +75,20 @@ type MockLadingReplayRepository_CreateReplay_Call struct {
 
 // CreateReplay is a helper method to define mock.On call
 //   - ctx context.Context
-//   - replay *edi.LadingReplay
+//   - replay *ladingproject.LadingReplay
 func (_e *MockLadingReplayRepository_Expecter) CreateReplay(ctx any, replay any) *MockLadingReplayRepository_CreateReplay_Call {
 	return &MockLadingReplayRepository_CreateReplay_Call{Call: _e.mock.On("CreateReplay", ctx, replay)}
 }
 
-func (_c *MockLadingReplayRepository_CreateReplay_Call) Run(run func(ctx context.Context, replay *edi.LadingReplay)) *MockLadingReplayRepository_CreateReplay_Call {
+func (_c *MockLadingReplayRepository_CreateReplay_Call) Run(run func(ctx context.Context, replay *ladingproject.LadingReplay)) *MockLadingReplayRepository_CreateReplay_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 *edi.LadingReplay
+		var arg1 *ladingproject.LadingReplay
 		if args[1] != nil {
-			arg1 = args[1].(*edi.LadingReplay)
+			arg1 = args[1].(*ladingproject.LadingReplay)
 		}
 		run(
 			arg0,
@@ -98,37 +98,37 @@ func (_c *MockLadingReplayRepository_CreateReplay_Call) Run(run func(ctx context
 	return _c
 }
 
-func (_c *MockLadingReplayRepository_CreateReplay_Call) Return(ladingReplay *edi.LadingReplay, err error) *MockLadingReplayRepository_CreateReplay_Call {
+func (_c *MockLadingReplayRepository_CreateReplay_Call) Return(ladingReplay *ladingproject.LadingReplay, err error) *MockLadingReplayRepository_CreateReplay_Call {
 	_c.Call.Return(ladingReplay, err)
 	return _c
 }
 
-func (_c *MockLadingReplayRepository_CreateReplay_Call) RunAndReturn(run func(ctx context.Context, replay *edi.LadingReplay) (*edi.LadingReplay, error)) *MockLadingReplayRepository_CreateReplay_Call {
+func (_c *MockLadingReplayRepository_CreateReplay_Call) RunAndReturn(run func(ctx context.Context, replay *ladingproject.LadingReplay) (*ladingproject.LadingReplay, error)) *MockLadingReplayRepository_CreateReplay_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // FinishReplay provides a mock function for the type MockLadingReplayRepository
-func (_mock *MockLadingReplayRepository) FinishReplay(ctx context.Context, replay *edi.LadingReplay) (*edi.LadingReplay, error) {
+func (_mock *MockLadingReplayRepository) FinishReplay(ctx context.Context, replay *ladingproject.LadingReplay) (*ladingproject.LadingReplay, error) {
 	ret := _mock.Called(ctx, replay)
 
 	if len(ret) == 0 {
 		panic("no return value specified for FinishReplay")
 	}
 
-	var r0 *edi.LadingReplay
+	var r0 *ladingproject.LadingReplay
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *edi.LadingReplay) (*edi.LadingReplay, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *ladingproject.LadingReplay) (*ladingproject.LadingReplay, error)); ok {
 		return returnFunc(ctx, replay)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *edi.LadingReplay) *edi.LadingReplay); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *ladingproject.LadingReplay) *ladingproject.LadingReplay); ok {
 		r0 = returnFunc(ctx, replay)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*edi.LadingReplay)
+			r0 = ret.Get(0).(*ladingproject.LadingReplay)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *edi.LadingReplay) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *ladingproject.LadingReplay) error); ok {
 		r1 = returnFunc(ctx, replay)
 	} else {
 		r1 = ret.Error(1)
@@ -143,20 +143,20 @@ type MockLadingReplayRepository_FinishReplay_Call struct {
 
 // FinishReplay is a helper method to define mock.On call
 //   - ctx context.Context
-//   - replay *edi.LadingReplay
+//   - replay *ladingproject.LadingReplay
 func (_e *MockLadingReplayRepository_Expecter) FinishReplay(ctx any, replay any) *MockLadingReplayRepository_FinishReplay_Call {
 	return &MockLadingReplayRepository_FinishReplay_Call{Call: _e.mock.On("FinishReplay", ctx, replay)}
 }
 
-func (_c *MockLadingReplayRepository_FinishReplay_Call) Run(run func(ctx context.Context, replay *edi.LadingReplay)) *MockLadingReplayRepository_FinishReplay_Call {
+func (_c *MockLadingReplayRepository_FinishReplay_Call) Run(run func(ctx context.Context, replay *ladingproject.LadingReplay)) *MockLadingReplayRepository_FinishReplay_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 *edi.LadingReplay
+		var arg1 *ladingproject.LadingReplay
 		if args[1] != nil {
-			arg1 = args[1].(*edi.LadingReplay)
+			arg1 = args[1].(*ladingproject.LadingReplay)
 		}
 		run(
 			arg0,
@@ -166,34 +166,34 @@ func (_c *MockLadingReplayRepository_FinishReplay_Call) Run(run func(ctx context
 	return _c
 }
 
-func (_c *MockLadingReplayRepository_FinishReplay_Call) Return(ladingReplay *edi.LadingReplay, err error) *MockLadingReplayRepository_FinishReplay_Call {
+func (_c *MockLadingReplayRepository_FinishReplay_Call) Return(ladingReplay *ladingproject.LadingReplay, err error) *MockLadingReplayRepository_FinishReplay_Call {
 	_c.Call.Return(ladingReplay, err)
 	return _c
 }
 
-func (_c *MockLadingReplayRepository_FinishReplay_Call) RunAndReturn(run func(ctx context.Context, replay *edi.LadingReplay) (*edi.LadingReplay, error)) *MockLadingReplayRepository_FinishReplay_Call {
+func (_c *MockLadingReplayRepository_FinishReplay_Call) RunAndReturn(run func(ctx context.Context, replay *ladingproject.LadingReplay) (*ladingproject.LadingReplay, error)) *MockLadingReplayRepository_FinishReplay_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetReplay provides a mock function for the type MockLadingReplayRepository
-func (_mock *MockLadingReplayRepository) GetReplay(ctx context.Context, req ladingports.GetLadingReplayRequest) (*edi.LadingReplay, error) {
+func (_mock *MockLadingReplayRepository) GetReplay(ctx context.Context, req ladingports.GetLadingReplayRequest) (*ladingproject.LadingReplay, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetReplay")
 	}
 
-	var r0 *edi.LadingReplay
+	var r0 *ladingproject.LadingReplay
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, ladingports.GetLadingReplayRequest) (*edi.LadingReplay, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, ladingports.GetLadingReplayRequest) (*ladingproject.LadingReplay, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, ladingports.GetLadingReplayRequest) *edi.LadingReplay); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, ladingports.GetLadingReplayRequest) *ladingproject.LadingReplay); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*edi.LadingReplay)
+			r0 = ret.Get(0).(*ladingproject.LadingReplay)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, ladingports.GetLadingReplayRequest) error); ok {
@@ -234,34 +234,34 @@ func (_c *MockLadingReplayRepository_GetReplay_Call) Run(run func(ctx context.Co
 	return _c
 }
 
-func (_c *MockLadingReplayRepository_GetReplay_Call) Return(ladingReplay *edi.LadingReplay, err error) *MockLadingReplayRepository_GetReplay_Call {
+func (_c *MockLadingReplayRepository_GetReplay_Call) Return(ladingReplay *ladingproject.LadingReplay, err error) *MockLadingReplayRepository_GetReplay_Call {
 	_c.Call.Return(ladingReplay, err)
 	return _c
 }
 
-func (_c *MockLadingReplayRepository_GetReplay_Call) RunAndReturn(run func(ctx context.Context, req ladingports.GetLadingReplayRequest) (*edi.LadingReplay, error)) *MockLadingReplayRepository_GetReplay_Call {
+func (_c *MockLadingReplayRepository_GetReplay_Call) RunAndReturn(run func(ctx context.Context, req ladingports.GetLadingReplayRequest) (*ladingproject.LadingReplay, error)) *MockLadingReplayRepository_GetReplay_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // ListReplays provides a mock function for the type MockLadingReplayRepository
-func (_mock *MockLadingReplayRepository) ListReplays(ctx context.Context, req ladingports.ListLadingReplaysRequest) ([]*edi.LadingReplay, error) {
+func (_mock *MockLadingReplayRepository) ListReplays(ctx context.Context, req ladingports.ListLadingReplaysRequest) ([]*ladingproject.LadingReplay, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListReplays")
 	}
 
-	var r0 []*edi.LadingReplay
+	var r0 []*ladingproject.LadingReplay
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, ladingports.ListLadingReplaysRequest) ([]*edi.LadingReplay, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, ladingports.ListLadingReplaysRequest) ([]*ladingproject.LadingReplay, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, ladingports.ListLadingReplaysRequest) []*edi.LadingReplay); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, ladingports.ListLadingReplaysRequest) []*ladingproject.LadingReplay); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*edi.LadingReplay)
+			r0 = ret.Get(0).([]*ladingproject.LadingReplay)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, ladingports.ListLadingReplaysRequest) error); ok {
@@ -302,34 +302,34 @@ func (_c *MockLadingReplayRepository_ListReplays_Call) Run(run func(ctx context.
 	return _c
 }
 
-func (_c *MockLadingReplayRepository_ListReplays_Call) Return(ladingReplays []*edi.LadingReplay, err error) *MockLadingReplayRepository_ListReplays_Call {
+func (_c *MockLadingReplayRepository_ListReplays_Call) Return(ladingReplays []*ladingproject.LadingReplay, err error) *MockLadingReplayRepository_ListReplays_Call {
 	_c.Call.Return(ladingReplays, err)
 	return _c
 }
 
-func (_c *MockLadingReplayRepository_ListReplays_Call) RunAndReturn(run func(ctx context.Context, req ladingports.ListLadingReplaysRequest) ([]*edi.LadingReplay, error)) *MockLadingReplayRepository_ListReplays_Call {
+func (_c *MockLadingReplayRepository_ListReplays_Call) RunAndReturn(run func(ctx context.Context, req ladingports.ListLadingReplaysRequest) ([]*ladingproject.LadingReplay, error)) *MockLadingReplayRepository_ListReplays_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // ListShadowResults provides a mock function for the type MockLadingReplayRepository
-func (_mock *MockLadingReplayRepository) ListShadowResults(ctx context.Context, req ladingports.ListLadingShadowResultsRequest) ([]*edi.LadingShadowResult, error) {
+func (_mock *MockLadingReplayRepository) ListShadowResults(ctx context.Context, req ladingports.ListLadingShadowResultsRequest) ([]*ladingproject.LadingShadowResult, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListShadowResults")
 	}
 
-	var r0 []*edi.LadingShadowResult
+	var r0 []*ladingproject.LadingShadowResult
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, ladingports.ListLadingShadowResultsRequest) ([]*edi.LadingShadowResult, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, ladingports.ListLadingShadowResultsRequest) ([]*ladingproject.LadingShadowResult, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, ladingports.ListLadingShadowResultsRequest) []*edi.LadingShadowResult); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, ladingports.ListLadingShadowResultsRequest) []*ladingproject.LadingShadowResult); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*edi.LadingShadowResult)
+			r0 = ret.Get(0).([]*ladingproject.LadingShadowResult)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, ladingports.ListLadingShadowResultsRequest) error); ok {
@@ -370,18 +370,18 @@ func (_c *MockLadingReplayRepository_ListShadowResults_Call) Run(run func(ctx co
 	return _c
 }
 
-func (_c *MockLadingReplayRepository_ListShadowResults_Call) Return(ladingShadowResults []*edi.LadingShadowResult, err error) *MockLadingReplayRepository_ListShadowResults_Call {
+func (_c *MockLadingReplayRepository_ListShadowResults_Call) Return(ladingShadowResults []*ladingproject.LadingShadowResult, err error) *MockLadingReplayRepository_ListShadowResults_Call {
 	_c.Call.Return(ladingShadowResults, err)
 	return _c
 }
 
-func (_c *MockLadingReplayRepository_ListShadowResults_Call) RunAndReturn(run func(ctx context.Context, req ladingports.ListLadingShadowResultsRequest) ([]*edi.LadingShadowResult, error)) *MockLadingReplayRepository_ListShadowResults_Call {
+func (_c *MockLadingReplayRepository_ListShadowResults_Call) RunAndReturn(run func(ctx context.Context, req ladingports.ListLadingShadowResultsRequest) ([]*ladingproject.LadingShadowResult, error)) *MockLadingReplayRepository_ListShadowResults_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // RecordShadowResult provides a mock function for the type MockLadingReplayRepository
-func (_mock *MockLadingReplayRepository) RecordShadowResult(ctx context.Context, result *edi.LadingShadowResult) error {
+func (_mock *MockLadingReplayRepository) RecordShadowResult(ctx context.Context, result *ladingproject.LadingShadowResult) error {
 	ret := _mock.Called(ctx, result)
 
 	if len(ret) == 0 {
@@ -389,7 +389,7 @@ func (_mock *MockLadingReplayRepository) RecordShadowResult(ctx context.Context,
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *edi.LadingShadowResult) error); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *ladingproject.LadingShadowResult) error); ok {
 		r0 = returnFunc(ctx, result)
 	} else {
 		r0 = ret.Error(0)
@@ -404,20 +404,20 @@ type MockLadingReplayRepository_RecordShadowResult_Call struct {
 
 // RecordShadowResult is a helper method to define mock.On call
 //   - ctx context.Context
-//   - result *edi.LadingShadowResult
+//   - result *ladingproject.LadingShadowResult
 func (_e *MockLadingReplayRepository_Expecter) RecordShadowResult(ctx any, result any) *MockLadingReplayRepository_RecordShadowResult_Call {
 	return &MockLadingReplayRepository_RecordShadowResult_Call{Call: _e.mock.On("RecordShadowResult", ctx, result)}
 }
 
-func (_c *MockLadingReplayRepository_RecordShadowResult_Call) Run(run func(ctx context.Context, result *edi.LadingShadowResult)) *MockLadingReplayRepository_RecordShadowResult_Call {
+func (_c *MockLadingReplayRepository_RecordShadowResult_Call) Run(run func(ctx context.Context, result *ladingproject.LadingShadowResult)) *MockLadingReplayRepository_RecordShadowResult_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 *edi.LadingShadowResult
+		var arg1 *ladingproject.LadingShadowResult
 		if args[1] != nil {
-			arg1 = args[1].(*edi.LadingShadowResult)
+			arg1 = args[1].(*ladingproject.LadingShadowResult)
 		}
 		run(
 			arg0,
@@ -432,7 +432,7 @@ func (_c *MockLadingReplayRepository_RecordShadowResult_Call) Return(err error) 
 	return _c
 }
 
-func (_c *MockLadingReplayRepository_RecordShadowResult_Call) RunAndReturn(run func(ctx context.Context, result *edi.LadingShadowResult) error) *MockLadingReplayRepository_RecordShadowResult_Call {
+func (_c *MockLadingReplayRepository_RecordShadowResult_Call) RunAndReturn(run func(ctx context.Context, result *ladingproject.LadingShadowResult) error) *MockLadingReplayRepository_RecordShadowResult_Call {
 	_c.Call.Return(run)
 	return _c
 }

@@ -11,6 +11,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/app/edilading"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ladingdoc"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/ladingproject"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediconnectiondraftports"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
 	"github.com/emoss08/trenova/pkg/lading"
@@ -47,8 +49,8 @@ type requirement struct {
 }
 
 type exchange struct {
-	set          edi.TransactionSet
-	direction    edi.DocumentDirection
+	set          edidocument.TransactionSet
+	direction    edidocument.DocumentDirection
 	index        int
 	version      string
 	ack          string
@@ -69,18 +71,18 @@ type guideLine struct {
 }
 
 type guideFile struct {
-	set   edi.TransactionSet
+	set   edidocument.TransactionSet
 	name  string
 	path  string
 	file  lading.File
 	lines []guideLine
 }
 
-func setKey(set edi.TransactionSet, direction edi.DocumentDirection) string {
+func setKey(set edidocument.TransactionSet, direction edidocument.DocumentDirection) string {
 	return string(set) + "/" + string(direction)
 }
 
-func guidePath(set edi.TransactionSet) string {
+func guidePath(set edidocument.TransactionSet) string {
 	return guideDirectory + string(set) + ".lading"
 }
 
@@ -93,8 +95,8 @@ func elementRef(segment string, position int) string {
 
 func (p *planner) documentTypeID(
 	ctx context.Context,
-	set edi.TransactionSet,
-	direction edi.DocumentDirection,
+	set edidocument.TransactionSet,
+	direction edidocument.DocumentDirection,
 ) (pulid.ID, error) {
 	key := setKey(set, direction)
 	if id, ok := p.docTypes[key]; ok {
@@ -103,7 +105,7 @@ func (p *planner) documentTypeID(
 	types, err := p.s.documentTypes.ListDocumentTypes(
 		ctx,
 		edipartnerports.ListEDIDocumentTypesRequest{
-			Standard:       edi.EDIStandardX12,
+			Standard:       edidocument.EDIStandardX12,
 			TransactionSet: set,
 			Direction:      direction,
 		},
@@ -119,8 +121,8 @@ func (p *planner) documentTypeID(
 }
 
 func (p *planner) requirementsFor(
-	set edi.TransactionSet,
-	direction edi.DocumentDirection,
+	set edidocument.TransactionSet,
+	direction edidocument.DocumentDirection,
 ) ([]*requirement, []ediconnectiondraftports.DraftRequirementCheck) {
 	accepted := make([]*requirement, 0)
 	unverified := make([]ediconnectiondraftports.DraftRequirementCheck, 0)
@@ -202,8 +204,8 @@ func (p *planner) buildSets(ctx context.Context) ([]*exchange, error) {
 
 func (p *planner) buildSet(
 	ctx context.Context,
-	set edi.TransactionSet,
-	direction edi.DocumentDirection,
+	set edidocument.TransactionSet,
+	direction edidocument.DocumentDirection,
 	current bool,
 ) (*exchange, error) {
 	documentTypeID, err := p.documentTypeID(ctx, set, direction)
@@ -252,7 +254,7 @@ func (p *planner) buildSet(
 			}
 		}
 	}
-	if direction == edi.DocumentDirectionOutbound {
+	if direction == edidocument.DocumentDirectionOutbound {
 		draft.ControlNumbers = p.controlNumbers(set, direction, documentTypeID)
 	}
 	p.draft.Sets = append(p.draft.Sets, draft)
@@ -283,8 +285,8 @@ func usableValue(value *ediconnectiondraftports.DraftValue) (string, bool) {
 }
 
 func (p *planner) controlNumbers(
-	set edi.TransactionSet,
-	direction edi.DocumentDirection,
+	set edidocument.TransactionSet,
+	direction edidocument.DocumentDirection,
 	documentTypeID pulid.ID,
 ) []ediconnectiondraftports.DraftControlNumber {
 	out := make([]ediconnectiondraftports.DraftControlNumber, 0, len(controlNumberKinds))
@@ -452,8 +454,8 @@ func (p *planner) pair(first, second string) *[2]string {
 func roleFor(exchanges []*exchange) string {
 	carrier, broker := 0, 0
 	for _, exchanged := range exchanges {
-		inbound := exchanged.direction == edi.DocumentDirectionInbound
-		tender := exchanged.set == edi.TransactionSet204
+		inbound := exchanged.direction == edidocument.DocumentDirectionInbound
+		tender := exchanged.set == edidocument.TransactionSet204
 		if inbound == tender {
 			carrier++
 		} else {
@@ -472,7 +474,8 @@ func (p *planner) acknowledgment(exchanges []*exchange) (acknowledge string, win
 		if exchanged.ack != "" {
 			counts[exchanged.ack]++
 		}
-		if exchanged.direction == edi.DocumentDirectionOutbound && exchanged.window > window {
+		if exchanged.direction == edidocument.DocumentDirectionOutbound &&
+			exchanged.window > window {
 			window = exchanged.window
 		}
 	}
@@ -515,7 +518,7 @@ func partnerName(files []lading.File) string {
 }
 
 func (p *planner) adaptProject(
-	version *edi.LadingVersion,
+	version *ladingproject.LadingVersion,
 	starter []lading.File,
 	exchanges []*exchange,
 ) (files []lading.File, guided map[string]string) {
@@ -545,7 +548,7 @@ func (p *planner) adaptProject(
 	guided = map[string]string{}
 	for _, guide := range manifest.Guides {
 		if guide.Set != "" && guide.Path != "" &&
-			guide.Path != guidePath(edi.TransactionSet(guide.Set)) {
+			guide.Path != guidePath(edidocument.TransactionSet(guide.Set)) {
 			guided[guide.Set] = guide.Name
 		}
 	}
@@ -569,9 +572,13 @@ func (p *planner) adaptProject(
 	return files, guided
 }
 
-func mapsSet(manifest *lading.Check, set edi.TransactionSet, direction edi.DocumentDirection) bool {
+func mapsSet(
+	manifest *lading.Check,
+	set edidocument.TransactionSet,
+	direction edidocument.DocumentDirection,
+) bool {
 	wanted := lading.DirectionOutbound
-	if direction == edi.DocumentDirectionInbound {
+	if direction == edidocument.DocumentDirectionInbound {
 		wanted = lading.DirectionInbound
 	}
 	for index := range manifest.Maps {
@@ -587,8 +594,8 @@ func (p *planner) guides(
 	exchanges []*exchange,
 	kept map[string]string,
 ) []*guideFile {
-	bySet := map[edi.TransactionSet]*guideFile{}
-	order := make([]edi.TransactionSet, 0)
+	bySet := map[edidocument.TransactionSet]*guideFile{}
+	order := make([]edidocument.TransactionSet, 0)
 	label := firstNonEmpty(p.plannedPartner().Name, name)
 	for _, exchanged := range exchanges {
 		if _, ok := kept[string(exchanged.set)]; ok {
@@ -830,7 +837,7 @@ func lineAt(source string, offset int) int {
 func (p *planner) unmet(check *lading.Check, exchanges []*exchange) {
 	unwritten := unwrittenBySet(check)
 	for _, exchanged := range exchanges {
-		if exchanged.direction != edi.DocumentDirectionOutbound {
+		if exchanged.direction != edidocument.DocumentDirectionOutbound {
 			continue
 		}
 		names := unwritten[string(exchanged.set)]
@@ -939,7 +946,7 @@ func (p *planner) projectFailures(check *lading.Check, guides []*guideFile) {
 func projectFiles(
 	check *lading.Check,
 	files []lading.File,
-	before *edi.LadingVersion,
+	before *ladingproject.LadingVersion,
 ) []ediconnectiondraftports.DraftProjectFile {
 	previous := map[string]string{}
 	if before != nil {
@@ -1012,11 +1019,11 @@ func (p *planner) sampleUnmapped(
 	mapped map[mappingKey]bool,
 ) []ediconnectiondraftports.DraftUnmappedCode {
 	out := make([]ediconnectiondraftports.DraftUnmappedCode, 0)
-	if p.encoded == nil || sample.direction != edi.DocumentDirectionInbound ||
-		sample.transactionSet() != edi.TransactionSet204 {
+	if p.encoded == nil || sample.direction != edidocument.DocumentDirectionInbound ||
+		sample.transactionSet() != edidocument.TransactionSet204 {
 		return out
 	}
-	_, clause := p.manifest.Receiving(string(edi.TransactionSet204))
+	_, clause := p.manifest.Receiving(string(edidocument.TransactionSet204))
 	if clause == nil {
 		return out
 	}

@@ -11,6 +11,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/app/edilading"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/ladingproject"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediconnectiondraftports"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
@@ -105,8 +107,8 @@ type fakeDocumentTypes struct{}
 func (fakeDocumentTypes) ListDocumentTypes(
 	_ context.Context,
 	req edipartnerports.ListEDIDocumentTypesRequest,
-) ([]*edi.EDIDocumentType, error) {
-	return []*edi.EDIDocumentType{{
+) ([]*edidocument.EDIDocumentType, error) {
+	return []*edidocument.EDIDocumentType{{
 		ID:             documentTypeID(req.TransactionSet, req.Direction),
 		TransactionSet: req.TransactionSet,
 		Direction:      req.Direction,
@@ -116,11 +118,14 @@ func (fakeDocumentTypes) ListDocumentTypes(
 func (fakeDocumentTypes) SelectDocumentTypeOptions(
 	context.Context,
 	*edipartnerports.EDIDocumentTypeSelectOptionsRequest,
-) (*pagination.ListResult[*edi.EDIDocumentType], error) {
-	return &pagination.ListResult[*edi.EDIDocumentType]{}, nil
+) (*pagination.ListResult[*edidocument.EDIDocumentType], error) {
+	return &pagination.ListResult[*edidocument.EDIDocumentType]{}, nil
 }
 
-func documentTypeID(set edi.TransactionSet, direction edi.DocumentDirection) pulid.ID {
+func documentTypeID(
+	set edidocument.TransactionSet,
+	direction edidocument.DocumentDirection,
+) pulid.ID {
 	return pulid.ID("edidt_x12_" + string(set) + "_" + strings.ToLower(string(direction)))
 }
 
@@ -198,9 +203,9 @@ func (f *fakeSetup) StartControlNumber(
 	_ context.Context,
 	req *edipartnerports.ResetEDIControlNumberRequest,
 	_ *permissionports.RequestActor,
-) (*edi.EDIControlNumberSequence, error) {
+) (*edidocument.EDIControlNumberSequence, error) {
 	f.controls = append(f.controls, req)
-	return &edi.EDIControlNumberSequence{ID: pulid.MustNew("edicn_"), Kind: req.Kind}, nil
+	return &edidocument.EDIControlNumberSequence{ID: pulid.MustNew("edicn_"), Kind: req.Kind}, nil
 }
 
 type fakeProjects struct {
@@ -212,28 +217,28 @@ func (f *fakeProjects) Import(
 	_ context.Context,
 	req *edilading.ImportRequest,
 	_ *permissionports.RequestActor,
-) (*edi.LadingVersion, error) {
+) (*ladingproject.LadingVersion, error) {
 	if err := f.setup.fail("project"); err != nil {
 		return nil, err
 	}
 	f.imports = append(f.imports, req)
-	return &edi.LadingVersion{
+	return &ladingproject.LadingVersion{
 		ID:        pulid.MustNew("ldv_"),
 		ProjectID: pulid.MustNew("ldp_"),
 		Number:    1,
-		Status:    edi.LadingVersionStatusDraft,
+		Status:    ladingproject.LadingVersionStatusDraft,
 		Files:     req.Files,
 	}, nil
 }
 
 var storedSamples sync.Map
 
-func storeSamples(samples []lading.Sample) []edi.LadingSampleRef {
-	refs := make([]edi.LadingSampleRef, 0, len(samples))
+func storeSamples(samples []lading.Sample) []ladingproject.LadingSampleRef {
+	refs := make([]ladingproject.LadingSampleRef, 0, len(samples))
 	for _, sample := range samples {
 		digest := lading.Digest(sample.Content)
 		storedSamples.Store(digest, sample.Content)
-		refs = append(refs, edi.LadingSampleRef{
+		refs = append(refs, ladingproject.LadingSampleRef{
 			Path:   sample.Path,
 			Digest: digest,
 			Size:   len(sample.Content),
@@ -242,7 +247,7 @@ func storeSamples(samples []lading.Sample) []edi.LadingSampleRef {
 	return refs
 }
 
-func versionSamples(version *edi.LadingVersion) ([]lading.Sample, error) {
+func versionSamples(version *ladingproject.LadingVersion) ([]lading.Sample, error) {
 	samples := make([]lading.Sample, 0, len(version.Samples))
 	for _, ref := range version.Samples {
 		content, ok := storedSamples.Load(ref.Digest)
@@ -261,7 +266,7 @@ func versionSamples(version *edi.LadingVersion) ([]lading.Sample, error) {
 func (f *fakeProjects) Samples(
 	_ context.Context,
 	_ pagination.TenantInfo,
-	version *edi.LadingVersion,
+	version *ladingproject.LadingVersion,
 ) ([]lading.Sample, error) {
 	return versionSamples(version)
 }

@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/responseguard"
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/authctx"
@@ -37,10 +37,12 @@ func (h *Handler) listDocumentTypes(c *gin.Context) {
 	entities, err := h.service.ListDocumentTypes(
 		c.Request.Context(),
 		edipartnerports.ListEDIDocumentTypesRequest{
-			Standard:       edi.EDIStandard(helpers.QueryString(c, "standard", "")),
-			TransactionSet: edi.TransactionSet(helpers.QueryString(c, "transactionSet", "")),
-			Direction:      edi.DocumentDirection(helpers.QueryString(c, "direction", "")),
-			Status:         edi.DocumentStatus(helpers.QueryString(c, "status", "")),
+			Standard: edidocument.EDIStandard(helpers.QueryString(c, "standard", "")),
+			TransactionSet: edidocument.TransactionSet(
+				helpers.QueryString(c, "transactionSet", ""),
+			),
+			Direction: edidocument.DocumentDirection(helpers.QueryString(c, "direction", "")),
+			Status:    edidocument.DocumentStatus(helpers.QueryString(c, "status", "")),
 		},
 	)
 	if err != nil {
@@ -58,17 +60,21 @@ func (h *Handler) selectDocumentTypeOptions(c *gin.Context) {
 		c,
 		req,
 		h.eh,
-		func() (*pagination.ListResult[*edi.EDIDocumentType], error) {
+		func() (*pagination.ListResult[*edidocument.EDIDocumentType], error) {
 			return h.service.SelectDocumentTypeOptions(
 				c.Request.Context(),
 				&edipartnerports.EDIDocumentTypeSelectOptionsRequest{
 					SelectQueryRequest: req,
-					Standard:           edi.EDIStandard(helpers.QueryString(c, "standard", "")),
-					TransactionSet: edi.TransactionSet(
+					Standard: edidocument.EDIStandard(
+						helpers.QueryString(c, "standard", ""),
+					),
+					TransactionSet: edidocument.TransactionSet(
 						helpers.QueryString(c, "transactionSet", ""),
 					),
-					Direction: edi.DocumentDirection(helpers.QueryString(c, "direction", "")),
-					Status:    edi.DocumentStatus(helpers.QueryString(c, "status", "")),
+					Direction: edidocument.DocumentDirection(
+						helpers.QueryString(c, "direction", ""),
+					),
+					Status: edidocument.DocumentStatus(helpers.QueryString(c, "status", "")),
 				},
 			)
 		},

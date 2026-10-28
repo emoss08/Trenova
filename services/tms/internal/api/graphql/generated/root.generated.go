@@ -3,6 +3,12 @@
 package generated
 
 import (
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edicarrierinvoice"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/ediinboundfile"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edimessage"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/editransfer"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/ladingproject"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/boardgrouping"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringledgerports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringremittanceports"
@@ -1319,44 +1325,44 @@ type DrugAlcoholStandingResolver interface {
 }
 
 type EdiCarrierInvoiceResolver interface {
-	TotalAmount(ctx context.Context, obj *edi.CarrierInvoice) (*string, error)
-	ExpectedAmount(ctx context.Context, obj *edi.CarrierInvoice) (*string, error)
-	VarianceAmount(ctx context.Context, obj *edi.CarrierInvoice) (*string, error)
-	ReconciliationStatus(ctx context.Context, obj *edi.CarrierInvoice) (string, error)
-	SuggestedCarrier(ctx context.Context, obj *edi.CarrierInvoice) (*carrier.Carrier, error)
+	TotalAmount(ctx context.Context, obj *edicarrierinvoice.CarrierInvoice) (*string, error)
+	ExpectedAmount(ctx context.Context, obj *edicarrierinvoice.CarrierInvoice) (*string, error)
+	VarianceAmount(ctx context.Context, obj *edicarrierinvoice.CarrierInvoice) (*string, error)
+	ReconciliationStatus(ctx context.Context, obj *edicarrierinvoice.CarrierInvoice) (string, error)
+	SuggestedCarrier(ctx context.Context, obj *edicarrierinvoice.CarrierInvoice) (*carrier.Carrier, error)
 }
 
 type EdiFlowInstanceResolver interface {
-	Reason(ctx context.Context, obj *edi.FlowInstance) (*string, error)
+	Reason(ctx context.Context, obj *ladingproject.FlowInstance) (*string, error)
 }
 
 type EdiLadingVersionResolver interface {
-	Interchange(ctx context.Context, obj *edi.LadingVersion) (*gqlmodel.EDILadingInterchange, error)
-	Exchanges(ctx context.Context, obj *edi.LadingVersion) ([]*gqlmodel.EDILadingExchange, error)
+	Interchange(ctx context.Context, obj *ladingproject.LadingVersion) (*gqlmodel.EDILadingInterchange, error)
+	Exchanges(ctx context.Context, obj *ladingproject.LadingVersion) ([]*gqlmodel.EDILadingExchange, error)
 }
 
 type EdiMessageResolver interface {
-	TransactionSet(ctx context.Context, obj *edi.EDIMessage) (string, error)
+	TransactionSet(ctx context.Context, obj *edimessage.EDIMessage) (string, error)
 }
 
 type EdiTransferResolver interface {
-	TenderPayload(ctx context.Context, obj *edi.EDITransfer) (any, error)
-	MappingSnapshot(ctx context.Context, obj *edi.EDITransfer) (any, error)
-	Direction(ctx context.Context, obj *edi.EDITransfer) (gqlmodel.EDITransferDirection, error)
-	Counterparty(ctx context.Context, obj *edi.EDITransfer) (*edi.EDIPartner, error)
-	BOL(ctx context.Context, obj *edi.EDITransfer) (*string, error)
-	CustomerLabel(ctx context.Context, obj *edi.EDITransfer) (*string, error)
-	ServiceTypeLabel(ctx context.Context, obj *edi.EDITransfer) (*string, error)
-	ShipmentTypeLabel(ctx context.Context, obj *edi.EDITransfer) (*string, error)
-	Pieces(ctx context.Context, obj *edi.EDITransfer) (*int, error)
-	Weight(ctx context.Context, obj *edi.EDITransfer) (*int, error)
-	TemperatureMin(ctx context.Context, obj *edi.EDITransfer) (*int, error)
-	TemperatureMax(ctx context.Context, obj *edi.EDITransfer) (*int, error)
-	StopCount(ctx context.Context, obj *edi.EDITransfer) (int, error)
-	Stops(ctx context.Context, obj *edi.EDITransfer) ([]*gqlmodel.EDITenderStop, error)
-	Commodities(ctx context.Context, obj *edi.EDITransfer) ([]*gqlmodel.EDITenderCommodity, error)
-	Charges(ctx context.Context, obj *edi.EDITransfer) (*gqlmodel.EDITenderCharges, error)
-	CanDecide(ctx context.Context, obj *edi.EDITransfer) (bool, error)
+	TenderPayload(ctx context.Context, obj *editransfer.EDITransfer) (any, error)
+	MappingSnapshot(ctx context.Context, obj *editransfer.EDITransfer) (any, error)
+	Direction(ctx context.Context, obj *editransfer.EDITransfer) (gqlmodel.EDITransferDirection, error)
+	Counterparty(ctx context.Context, obj *editransfer.EDITransfer) (*edi.EDIPartner, error)
+	BOL(ctx context.Context, obj *editransfer.EDITransfer) (*string, error)
+	CustomerLabel(ctx context.Context, obj *editransfer.EDITransfer) (*string, error)
+	ServiceTypeLabel(ctx context.Context, obj *editransfer.EDITransfer) (*string, error)
+	ShipmentTypeLabel(ctx context.Context, obj *editransfer.EDITransfer) (*string, error)
+	Pieces(ctx context.Context, obj *editransfer.EDITransfer) (*int, error)
+	Weight(ctx context.Context, obj *editransfer.EDITransfer) (*int, error)
+	TemperatureMin(ctx context.Context, obj *editransfer.EDITransfer) (*int, error)
+	TemperatureMax(ctx context.Context, obj *editransfer.EDITransfer) (*int, error)
+	StopCount(ctx context.Context, obj *editransfer.EDITransfer) (int, error)
+	Stops(ctx context.Context, obj *editransfer.EDITransfer) ([]*gqlmodel.EDITenderStop, error)
+	Commodities(ctx context.Context, obj *editransfer.EDITransfer) ([]*gqlmodel.EDITenderCommodity, error)
+	Charges(ctx context.Context, obj *editransfer.EDITransfer) (*gqlmodel.EDITenderCharges, error)
+	CanDecide(ctx context.Context, obj *editransfer.EDITransfer) (bool, error)
 }
 
 type EquipmentContinuityResolver interface {
@@ -2110,7 +2116,7 @@ type MutationResolver interface {
 	AddCarrierSettlementAdjustment(ctx context.Context, input gqlmodel.AddCarrierSettlementAdjustmentInput) (*carriersettlement.CarrierSettlement, error)
 	RemoveCarrierSettlementAdjustment(ctx context.Context, input gqlmodel.RemoveCarrierSettlementAdjustmentInput) (*carriersettlement.CarrierSettlement, error)
 	UpdateCarrierSettlementControl(ctx context.Context, input gqlmodel.UpdateCarrierSettlementControlInput) (*tenant.CarrierSettlementControl, error)
-	LinkEDICarrierInvoiceToCarrier(ctx context.Context, invoiceID string, carrierID string) (*edi.CarrierInvoice, error)
+	LinkEDICarrierInvoiceToCarrier(ctx context.Context, invoiceID string, carrierID string) (*edicarrierinvoice.CarrierInvoice, error)
 	CreateCarrierInvoiceMatch(ctx context.Context, input gqlmodel.CreateCarrierInvoiceMatchInput) (*carriersettlement.InvoiceMatch, error)
 	AcceptCarrierInvoiceMatch(ctx context.Context, input gqlmodel.CarrierInvoiceMatchActionInput) (*carriersettlement.InvoiceMatch, error)
 	AcceptCarrierInvoiceMatchWithVariance(ctx context.Context, input gqlmodel.CarrierInvoiceMatchActionInput) (*carriersettlement.InvoiceMatch, error)
@@ -3050,10 +3056,10 @@ type QueryResolver interface {
 	EDIMessage(ctx context.Context, id string) (*gqlmodel.EDIMessageDetail, error)
 	EDIInboundFile(ctx context.Context, id string) (*gqlmodel.EDIInboundFileDetail, error)
 	EDIAckHealth(ctx context.Context, partnerID *string, transactionSet *string, overdueAfterSeconds *int, sinceHours *int) (*gqlmodel.EDIAckHealth, error)
-	EDIMessages(ctx context.Context, input gqlmodel.DataTableConnectionInput, transactionSet *string, direction *edi.DocumentDirection, partnerID *string) (*gqlmodel.EDIMessageConnection, error)
-	EDIInboundFiles(ctx context.Context, input gqlmodel.DataTableConnectionInput, status *edi.InboundFileStatus, partnerID *string) (*gqlmodel.EDIInboundFileConnection, error)
+	EDIMessages(ctx context.Context, input gqlmodel.DataTableConnectionInput, transactionSet *string, direction *edidocument.DocumentDirection, partnerID *string) (*gqlmodel.EDIMessageConnection, error)
+	EDIInboundFiles(ctx context.Context, input gqlmodel.DataTableConnectionInput, status *ediinboundfile.InboundFileStatus, partnerID *string) (*gqlmodel.EDIInboundFileConnection, error)
 	EDIMappingProfiles(ctx context.Context, input gqlmodel.DataTableConnectionInput, partnerID *string) (*gqlmodel.EDIMappingProfileConnection, error)
-	EDIFlowInstances(ctx context.Context, input gqlmodel.DataTableConnectionInput, partnerID *string, shipmentID *string, statuses []edi.FlowInstanceStatus) (*gqlmodel.EDIFlowInstanceConnection, error)
+	EDIFlowInstances(ctx context.Context, input gqlmodel.DataTableConnectionInput, partnerID *string, shipmentID *string, statuses []ladingproject.FlowInstanceStatus) (*gqlmodel.EDIFlowInstanceConnection, error)
 	EDISummary(ctx context.Context, sinceHours *int) (*gqlmodel.EDISummary, error)
 	EDIPartnerScorecards(ctx context.Context, sinceHours *int) ([]*gqlmodel.EDIPartnerScorecard, error)
 	EDIPartnerReadiness(ctx context.Context, partnerIds []string) ([]*gqlmodel.EDIPartnerReadinessState, error)

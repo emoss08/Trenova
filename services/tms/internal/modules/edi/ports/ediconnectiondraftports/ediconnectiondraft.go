@@ -5,6 +5,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/edi/app/edix12inspect"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/ladingproject"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/lading"
@@ -130,13 +132,13 @@ type DraftValueInput struct {
 }
 
 type DraftRequirementInput struct {
-	TransactionSet  edi.TransactionSet    `json:"transactionSet"`
-	Direction       edi.DocumentDirection `json:"direction"`
-	SegmentID       string                `json:"segment"`
-	ElementPosition int                   `json:"elementPosition,omitempty"`
-	Usage           RequirementUsage      `json:"usage"`
-	Codes           []string              `json:"codes,omitempty"`
-	Citation        DraftCitation         `json:"citation"`
+	TransactionSet  edidocument.TransactionSet    `json:"transactionSet"`
+	Direction       edidocument.DocumentDirection `json:"direction"`
+	SegmentID       string                        `json:"segment"`
+	ElementPosition int                           `json:"elementPosition,omitempty"`
+	Usage           RequirementUsage              `json:"usage"`
+	Codes           []string                      `json:"codes,omitempty"`
+	Citation        DraftCitation                 `json:"citation"`
 }
 
 type DraftMappingInput struct {
@@ -222,8 +224,8 @@ type DraftPartner struct {
 }
 
 type DraftSetDirection struct {
-	TransactionSet edi.TransactionSet    `json:"transactionSet"`
-	Direction      edi.DocumentDirection `json:"direction"`
+	TransactionSet edidocument.TransactionSet    `json:"transactionSet"`
+	Direction      edidocument.DocumentDirection `json:"direction"`
 }
 
 type DraftConnection struct {
@@ -254,24 +256,24 @@ type DraftRequirementCheck struct {
 }
 
 type DraftControlNumber struct {
-	Kind    edi.ControlNumberKind `json:"kind"`
-	Start   int64                 `json:"start"`
-	Current int64                 `json:"current,omitempty"`
-	Change  ChangeKind            `json:"change"`
-	Source  DraftSource           `json:"source"`
-	Problem string                `json:"problem,omitempty"`
+	Kind    edidocument.ControlNumberKind `json:"kind"`
+	Start   int64                         `json:"start"`
+	Current int64                         `json:"current,omitempty"`
+	Change  ChangeKind                    `json:"change"`
+	Source  DraftSource                   `json:"source"`
+	Problem string                        `json:"problem,omitempty"`
 }
 
 type DraftSet struct {
-	TransactionSet edi.TransactionSet      `json:"transactionSet"`
-	Direction      edi.DocumentDirection   `json:"direction"`
-	DocumentTypeID pulid.ID                `json:"documentTypeId,omitempty"`
-	Change         ChangeKind              `json:"change"`
-	Fields         []DraftValue            `json:"fields"`
-	Requirements   int                     `json:"requirements"`
-	Unmet          []DraftRequirementCheck `json:"unmet"`
-	Unverified     []DraftRequirementCheck `json:"unverified,omitempty"`
-	ControlNumbers []DraftControlNumber    `json:"controlNumbers,omitempty"`
+	TransactionSet edidocument.TransactionSet    `json:"transactionSet"`
+	Direction      edidocument.DocumentDirection `json:"direction"`
+	DocumentTypeID pulid.ID                      `json:"documentTypeId,omitempty"`
+	Change         ChangeKind                    `json:"change"`
+	Fields         []DraftValue                  `json:"fields"`
+	Requirements   int                           `json:"requirements"`
+	Unmet          []DraftRequirementCheck       `json:"unmet"`
+	Unverified     []DraftRequirementCheck       `json:"unverified,omitempty"`
+	ControlNumbers []DraftControlNumber          `json:"controlNumbers,omitempty"`
 }
 
 type DraftProjectFile struct {
@@ -327,8 +329,8 @@ type DraftUnmappedCode struct {
 
 type DraftSample struct {
 	Page           int                            `json:"page"`
-	TransactionSet edi.TransactionSet             `json:"transactionSet,omitempty"`
-	Direction      edi.DocumentDirection          `json:"direction,omitempty"`
+	TransactionSet edidocument.TransactionSet     `json:"transactionSet,omitempty"`
+	Direction      edidocument.DocumentDirection  `json:"direction,omitempty"`
 	Parsed         bool                           `json:"parsed"`
 	Error          string                         `json:"error,omitempty"`
 	Overview       *edix12inspect.InspectOverview `json:"overview,omitempty"`
@@ -422,11 +424,11 @@ type PlannedTransport struct {
 }
 
 type PlannedProject struct {
-	Project *edi.LadingProject `json:"project,omitempty"`
-	Before  *edi.LadingVersion `json:"before,omitempty"`
-	Files   []lading.File      `json:"files"`
-	Samples []lading.Sample    `json:"samples"`
-	Change  ChangeKind         `json:"change"`
+	Project *ladingproject.LadingProject `json:"project,omitempty"`
+	Before  *ladingproject.LadingVersion `json:"before,omitempty"`
+	Files   []lading.File                `json:"files"`
+	Samples []lading.Sample              `json:"samples"`
+	Change  ChangeKind                   `json:"change"`
 }
 
 type PlannedMapping struct {
@@ -436,9 +438,9 @@ type PlannedMapping struct {
 }
 
 type PlannedControlNumber struct {
-	Before *edi.EDIControlNumberSequence `json:"before,omitempty"`
-	After  *edi.EDIControlNumberSequence `json:"after"`
-	Change ChangeKind                    `json:"change"`
+	Before *edidocument.EDIControlNumberSequence `json:"before,omitempty"`
+	After  *edidocument.EDIControlNumberSequence `json:"after"`
+	Change ChangeKind                            `json:"change"`
 }
 
 type ConnectionDraftPlan struct {
@@ -490,12 +492,12 @@ type GetEDIPartnerSetupRequest struct {
 }
 
 type EDIPartnerSetup struct {
-	Partner               *edi.EDIPartner                 `json:"partner"`
-	CommunicationProfiles []*edi.EDICommunicationProfile  `json:"communicationProfiles"`
-	Project               *edi.LadingProject              `json:"project,omitempty"`
-	LatestVersion         *edi.LadingVersion              `json:"latestVersion,omitempty"`
-	MappingItems          []*edi.EDIMappingProfileItem    `json:"mappingItems"`
-	ControlNumbers        []*edi.EDIControlNumberSequence `json:"controlNumbers"`
+	Partner               *edi.EDIPartner                         `json:"partner"`
+	CommunicationProfiles []*edi.EDICommunicationProfile          `json:"communicationProfiles"`
+	Project               *ladingproject.LadingProject            `json:"project,omitempty"`
+	LatestVersion         *ladingproject.LadingVersion            `json:"latestVersion,omitempty"`
+	MappingItems          []*edi.EDIMappingProfileItem            `json:"mappingItems"`
+	ControlNumbers        []*edidocument.EDIControlNumberSequence `json:"controlNumbers"`
 }
 
 type InterchangeIdentity struct {

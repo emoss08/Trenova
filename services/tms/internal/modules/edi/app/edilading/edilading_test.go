@@ -5,7 +5,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edimessage"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/ladingproject"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ladingports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/customfield"
 	"github.com/emoss08/trenova/internal/testutil/mocks/ladingportsmock"
@@ -129,7 +131,7 @@ func TestValidateRunInput_TakesExactlyOneBoundedInput(t *testing.T) {
 func TestNotReady_NamesEveryReasonAVersionCannotBeCertified(t *testing.T) {
 	t.Parallel()
 
-	err := notReady(&edi.LadingReadiness{Errors: 2, Failing: 1, UncoveredFlowClauses: 3})
+	err := notReady(&ladingproject.LadingReadiness{Errors: 2, Failing: 1, UncoveredFlowClauses: 3})
 
 	var multi *errortypes.MultiError
 	require.ErrorAs(t, err, &multi)
@@ -155,7 +157,7 @@ func TestRequireReplays_NeedsAFreshReplayOfEveryInboundMapThatRejectsNothingNew(
 	t.Parallel()
 
 	tenantInfo := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
-	version := &edi.LadingVersion{
+	version := &ladingproject.LadingVersion{
 		ID:        pulid.MustNew("ldv_"),
 		UpdatedAt: 1_000,
 		Manifest: lading.Check{Maps: []lading.Map{
@@ -170,17 +172,17 @@ func TestRequireReplays_NeedsAFreshReplayOfEveryInboundMapThatRejectsNothingNew(
 			TenantInfo: tenantInfo,
 			VersionID:  version.ID,
 		}).
-		Return([]*edi.LadingReplay{
+		Return([]*ladingproject.LadingReplay{
 			{
-				Map: "tenderIn", Status: edi.LadingReplayStatusCompleted, CreatedAt: 1_500,
+				Map: "tenderIn", Status: ladingproject.LadingReplayStatusCompleted, CreatedAt: 1_500,
 				Summary: &lading.ReplaySummary{Total: 40, Same: 40},
 			},
 			{
-				Map: "statusIn", Status: edi.LadingReplayStatusCompleted, CreatedAt: 1_200,
+				Map: "statusIn", Status: ladingproject.LadingReplayStatusCompleted, CreatedAt: 1_200,
 				Summary: &lading.ReplaySummary{Total: 10, NewlyRejected: 2},
 			},
 			{
-				Map: "answerIn", Status: edi.LadingReplayStatusCompleted, CreatedAt: 900,
+				Map: "answerIn", Status: ladingproject.LadingReplayStatusCompleted, CreatedAt: 900,
 				Summary: &lading.ReplaySummary{Total: 5, Same: 5},
 			},
 		}, nil).
@@ -274,26 +276,26 @@ func TestValidateSettings_KeepsOnlyDeclaredSettingsOfTheirType(t *testing.T) {
 func TestReplayInput_ReadsWhatEachDirectionRan(t *testing.T) {
 	t.Parallel()
 
-	inbound := &edi.EDIMessage{
+	inbound := &edimessage.EDIMessage{
 		ID:          pulid.MustNew("edimsg_"),
 		RawX12:      "ISA*00~",
 		GeneratedAt: 1_767_787_200,
 	}
-	input, ok := replayInput(inbound, edi.DocumentDirectionInbound)
+	input, ok := replayInput(inbound, edidocument.DocumentDirectionInbound)
 	require.True(t, ok)
 	require.NotNil(t, input.Input.X12)
 	assert.Equal(t, "ISA*00~", *input.Input.X12)
 	assert.Equal(t, "2026-01-07T12:00:00Z", input.Now)
 
-	outbound := &edi.EDIMessage{
+	outbound := &edimessage.EDIMessage{
 		ID:       pulid.MustNew("edimsg_"),
 		Document: jsonutils.RawJSON(`{"key":"L-1"}`),
 	}
-	input, ok = replayInput(outbound, edi.DocumentDirectionOutbound)
+	input, ok = replayInput(outbound, edidocument.DocumentDirectionOutbound)
 	require.True(t, ok)
 	assert.JSONEq(t, `{"key":"L-1"}`, string(input.Input.Document))
 
-	_, ok = replayInput(&edi.EDIMessage{}, edi.DocumentDirectionOutbound)
+	_, ok = replayInput(&edimessage.EDIMessage{}, edidocument.DocumentDirectionOutbound)
 	assert.False(t, ok, "an outbound message from before Lading has no document to replay")
 }
 
@@ -314,11 +316,27 @@ func TestProgramAcknowledgment_IsWhatTheReceiveClauseNames(t *testing.T) {
 		},
 	}}}}
 
-	assert.Equal(t, edi.AcknowledgmentType997, program.Acknowledgment(edi.TransactionSet204))
-	assert.Equal(t, edi.AcknowledgmentType999, program.Acknowledgment(edi.TransactionSet214))
-	assert.Equal(t, edi.AcknowledgmentTypeNone, program.Acknowledgment(edi.TransactionSet210))
-	assert.Equal(t, edi.AcknowledgmentTypeNone, program.Acknowledgment(edi.TransactionSet990),
-		"a set the version does not receive is not acknowledged")
+	assert.Equal(
+		t,
+		edidocument.AcknowledgmentType997,
+		program.Acknowledgment(edidocument.TransactionSet204),
+	)
+	assert.Equal(
+		t,
+		edidocument.AcknowledgmentType999,
+		program.Acknowledgment(edidocument.TransactionSet214),
+	)
+	assert.Equal(
+		t,
+		edidocument.AcknowledgmentTypeNone,
+		program.Acknowledgment(edidocument.TransactionSet210),
+	)
+	assert.Equal(
+		t,
+		edidocument.AcknowledgmentTypeNone,
+		program.Acknowledgment(edidocument.TransactionSet990),
+		"a set the version does not receive is not acknowledged",
+	)
 }
 
 func TestShadowing_IsAShadowVersionWithinItsWindow(t *testing.T) {
@@ -329,17 +347,33 @@ func TestShadowing_IsAShadowVersionWithinItsWindow(t *testing.T) {
 
 	assert.True(
 		t,
-		shadowing(&edi.LadingVersion{Status: edi.LadingVersionStatusShadow, ShadowUntil: &future}),
+		shadowing(
+			&ladingproject.LadingVersion{
+				Status:      ladingproject.LadingVersionStatusShadow,
+				ShadowUntil: &future,
+			},
+		),
 	)
-	assert.False(
-		t,
-		shadowing(&edi.LadingVersion{Status: edi.LadingVersionStatusShadow, ShadowUntil: &past}),
-	)
-	assert.False(t, shadowing(&edi.LadingVersion{Status: edi.LadingVersionStatusShadow}))
 	assert.False(
 		t,
 		shadowing(
-			&edi.LadingVersion{Status: edi.LadingVersionStatusCertified, ShadowUntil: &future},
+			&ladingproject.LadingVersion{
+				Status:      ladingproject.LadingVersionStatusShadow,
+				ShadowUntil: &past,
+			},
+		),
+	)
+	assert.False(
+		t,
+		shadowing(&ladingproject.LadingVersion{Status: ladingproject.LadingVersionStatusShadow}),
+	)
+	assert.False(
+		t,
+		shadowing(
+			&ladingproject.LadingVersion{
+				Status:      ladingproject.LadingVersionStatusCertified,
+				ShadowUntil: &future,
+			},
 		),
 	)
 }
@@ -347,7 +381,7 @@ func TestShadowing_IsAShadowVersionWithinItsWindow(t *testing.T) {
 func TestSettings_EncodesEachValueForTheRun(t *testing.T) {
 	t.Parallel()
 
-	settings, err := Settings(&edi.LadingProject{Settings: map[string]any{
+	settings, err := Settings(&ladingproject.LadingProject{Settings: map[string]any{
 		"autoAccept": true,
 		"maxWeight":  map[string]any{"value": "44000", "unit": "lb"},
 	}})
@@ -355,7 +389,7 @@ func TestSettings_EncodesEachValueForTheRun(t *testing.T) {
 	assert.JSONEq(t, `true`, string(settings["autoAccept"]))
 	assert.JSONEq(t, `{"value":"44000","unit":"lb"}`, string(settings["maxWeight"]))
 
-	empty, err := Settings(&edi.LadingProject{})
+	empty, err := Settings(&ladingproject.LadingProject{})
 	require.NoError(t, err)
 	assert.Empty(t, empty, "a project with no settings sends none")
 }

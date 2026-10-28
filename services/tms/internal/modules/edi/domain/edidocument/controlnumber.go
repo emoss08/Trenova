@@ -1,4 +1,4 @@
-package edi
+package edidocument
 
 import (
 	"context"

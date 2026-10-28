@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edicarrierinvoice"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/carrierassignmentports"
@@ -190,7 +190,7 @@ func (s *Service) autoAcceptMatch(
 }
 
 func autoMatchSkipped(
-	invoice *edi.CarrierInvoice,
+	invoice *edicarrierinvoice.CarrierInvoice,
 	reason string,
 ) *carrierports.AutoMatchInboundInvoiceResult {
 	return &carrierports.AutoMatchInboundInvoiceResult{

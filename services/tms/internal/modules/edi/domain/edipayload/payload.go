@@ -1,24 +1,27 @@
 //nolint:gocritic // EDI payload value APIs are shared contracts across services and renderers.
-package edi
+package edipayload
 
 import (
 	"fmt"
 	"strings"
 
 	"github.com/bytedance/sonic"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/editransfer"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/x12field"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 )
 
 type DocumentPayload struct {
-	TransactionSet TransactionSet        `json:"transactionSet,omitempty"`
-	PurposeCode    LoadTenderPurposeCode `json:"purposeCode,omitempty"`
+	TransactionSet edidocument.TransactionSet        `json:"transactionSet,omitempty"`
+	PurposeCode    editransfer.LoadTenderPurposeCode `json:"purposeCode,omitempty"`
 	// DeliveryCommunicationProfileID pins outbound delivery to one
 	// communication profile; delivery falls back to the partner's active
 	// profile when unset.
 	DeliveryCommunicationProfileID pulid.ID                         `json:"deliveryCommunicationProfileId,omitempty"`
-	LoadTender                     *LoadTenderPayload               `json:"loadTender,omitempty"`
-	Shipment                       *LoadTenderPayload               `json:"shipment,omitempty"`
+	LoadTender                     *editransfer.LoadTenderPayload   `json:"loadTender,omitempty"`
+	Shipment                       *editransfer.LoadTenderPayload   `json:"shipment,omitempty"`
 	FreightInvoice                 *FreightInvoicePayload           `json:"invoice,omitempty"`
 	ShipmentStatus                 *ShipmentStatusPayload           `json:"shipmentStatus,omitempty"`
 	TenderResponse                 *TenderResponsePayload           `json:"tenderResponse,omitempty"`
@@ -127,22 +130,22 @@ type ShipmentStatusPayload struct {
 }
 
 type ShipmentStatusEvent struct {
-	Index                 int         `json:"index"`
-	StatusCode            string      `json:"statusCode,omitempty"`
-	ReasonCode            string      `json:"reasonCode,omitempty"`
-	AppointmentCode       string      `json:"appointmentCode,omitempty"`
-	AppointmentReasonCode string      `json:"appointmentReasonCode,omitempty"`
-	EventAt               int64       `json:"eventAt,omitempty"`
-	DateTime              X12DateTime `json:"dateTime"`
-	StopSequence          *int64      `json:"stopSequence,omitempty"`
-	City                  string      `json:"city,omitempty"`
-	StateCode             string      `json:"stateCode,omitempty"`
-	CountryCode           string      `json:"countryCode,omitempty"`
-	Latitude              *float64    `json:"latitude,omitempty"`
-	Longitude             *float64    `json:"longitude,omitempty"`
-	EquipmentOwner        string      `json:"equipmentOwner,omitempty"`
-	EquipmentNumber       string      `json:"equipmentNumber,omitempty"`
-	EquipmentType         string      `json:"equipmentType,omitempty"`
+	Index                 int                  `json:"index"`
+	StatusCode            string               `json:"statusCode,omitempty"`
+	ReasonCode            string               `json:"reasonCode,omitempty"`
+	AppointmentCode       string               `json:"appointmentCode,omitempty"`
+	AppointmentReasonCode string               `json:"appointmentReasonCode,omitempty"`
+	EventAt               int64                `json:"eventAt,omitempty"`
+	DateTime              x12field.X12DateTime `json:"dateTime"`
+	StopSequence          *int64               `json:"stopSequence,omitempty"`
+	City                  string               `json:"city,omitempty"`
+	StateCode             string               `json:"stateCode,omitempty"`
+	CountryCode           string               `json:"countryCode,omitempty"`
+	Latitude              *float64             `json:"latitude,omitempty"`
+	Longitude             *float64             `json:"longitude,omitempty"`
+	EquipmentOwner        string               `json:"equipmentOwner,omitempty"`
+	EquipmentNumber       string               `json:"equipmentNumber,omitempty"`
+	EquipmentType         string               `json:"equipmentType,omitempty"`
 }
 
 func (e *ShipmentStatusEvent) HasPlace() bool {
@@ -150,20 +153,20 @@ func (e *ShipmentStatusEvent) HasPlace() bool {
 }
 
 type TenderResponsePayload struct {
-	TransferID      pulid.ID       `json:"transferId,omitempty"`
-	ShipmentID      pulid.ID       `json:"shipmentId,omitempty"`
-	BOL             string         `json:"bol,omitempty"`
-	ResponseCode    string         `json:"responseCode,omitempty"`
-	ReasonCode      string         `json:"reasonCode,omitempty"`
-	RejectionReason string         `json:"rejectionReason,omitempty"`
-	Status          TransferStatus `json:"status,omitempty"`
+	TransferID      pulid.ID                   `json:"transferId,omitempty"`
+	ShipmentID      pulid.ID                   `json:"shipmentId,omitempty"`
+	BOL             string                     `json:"bol,omitempty"`
+	ResponseCode    string                     `json:"responseCode,omitempty"`
+	ReasonCode      string                     `json:"reasonCode,omitempty"`
+	RejectionReason string                     `json:"rejectionReason,omitempty"`
+	Status          editransfer.TransferStatus `json:"status,omitempty"`
 }
 
 type FunctionalAcknowledgmentPayload struct {
 	SourceMessageID                  pulid.ID                   `json:"sourceMessageId,omitempty"`
 	OriginalFunctionalGroupID        string                     `json:"originalFunctionalGroupId,omitempty"`
 	OriginalGroupControlNumber       string                     `json:"originalGroupControlNumber,omitempty"`
-	OriginalTransactionSet           TransactionSet             `json:"originalTransactionSet,omitempty"`
+	OriginalTransactionSet           edidocument.TransactionSet `json:"originalTransactionSet,omitempty"`
 	OriginalTransactionControlNumber string                     `json:"originalTransactionControlNumber,omitempty"`
 	GroupAcknowledgmentCode          string                     `json:"groupAcknowledgmentCode,omitempty"`
 	TransactionAcknowledgmentCode    string                     `json:"transactionAcknowledgmentCode,omitempty"`
@@ -177,7 +180,7 @@ type ImplementationAckPayload struct {
 	SourceMessageID                  pulid.ID                   `json:"sourceMessageId,omitempty"`
 	OriginalFunctionalGroupID        string                     `json:"originalFunctionalGroupId,omitempty"`
 	OriginalGroupControlNumber       string                     `json:"originalGroupControlNumber,omitempty"`
-	OriginalTransactionSet           TransactionSet             `json:"originalTransactionSet,omitempty"`
+	OriginalTransactionSet           edidocument.TransactionSet `json:"originalTransactionSet,omitempty"`
 	OriginalTransactionControlNumber string                     `json:"originalTransactionControlNumber,omitempty"`
 	GroupAcknowledgmentCode          string                     `json:"groupAcknowledgmentCode,omitempty"`
 	TransactionAcknowledgmentCode    string                     `json:"transactionAcknowledgmentCode,omitempty"`
@@ -195,12 +198,12 @@ type AcknowledgmentDiagnostic struct {
 	Message         string `json:"message,omitempty"`
 }
 
-func NewLoadTenderDocumentPayload(payload LoadTenderPayload) DocumentPayload {
+func NewLoadTenderDocumentPayload(payload editransfer.LoadTenderPayload) DocumentPayload {
 	if payload.PurposeCode == "" {
-		payload.PurposeCode = LoadTenderPurposeOriginal
+		payload.PurposeCode = editransfer.LoadTenderPurposeOriginal
 	}
 	return DocumentPayload{
-		TransactionSet: TransactionSet204,
+		TransactionSet: edidocument.TransactionSet204,
 		PurposeCode:    payload.PurposeCode,
 		LoadTender:     &payload,
 		Shipment:       &payload,
@@ -217,17 +220,17 @@ func (p *DocumentPayload) Normalize() {
 	if p.TransactionSet == "" {
 		switch {
 		case p.LoadTender != nil || p.Shipment != nil:
-			p.TransactionSet = TransactionSet204
+			p.TransactionSet = edidocument.TransactionSet204
 		case p.FreightInvoice != nil:
-			p.TransactionSet = TransactionSet210
+			p.TransactionSet = edidocument.TransactionSet210
 		case p.ShipmentStatus != nil:
-			p.TransactionSet = TransactionSet214
+			p.TransactionSet = edidocument.TransactionSet214
 		case p.TenderResponse != nil:
-			p.TransactionSet = TransactionSet990
+			p.TransactionSet = edidocument.TransactionSet990
 		case p.FunctionalAcknowledgment != nil:
-			p.TransactionSet = TransactionSet997
+			p.TransactionSet = edidocument.TransactionSet997
 		case p.ImplementationAcknowledgment != nil:
-			p.TransactionSet = TransactionSet999
+			p.TransactionSet = edidocument.TransactionSet999
 		}
 	}
 	if p.PurposeCode == "" {
@@ -246,7 +249,7 @@ func (p *DocumentPayload) Normalize() {
 		}
 	}
 	if (p.LoadTender != nil || p.Shipment != nil) && p.PurposeCode == "" {
-		p.PurposeCode = LoadTenderPurposeOriginal
+		p.PurposeCode = editransfer.LoadTenderPurposeOriginal
 		if p.LoadTender != nil {
 			p.LoadTender.PurposeCode = p.PurposeCode
 		}
@@ -268,7 +271,7 @@ func (p *DocumentPayload) UnmarshalJSON(data []byte) error {
 		return nil
 	}
 
-	var legacy LoadTenderPayload
+	var legacy editransfer.LoadTenderPayload
 	if err := sonic.Unmarshal(data, &legacy); err != nil {
 		return fmt.Errorf("decode legacy load tender payload: %w", err)
 	}

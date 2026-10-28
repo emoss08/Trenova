@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/editenderports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -68,7 +68,7 @@ func (r *Deps) resolveEDIDocumentTypeSelectOptions(
 		items := orderedSelectOptionItems(
 			req.IDs,
 			result.Items,
-			func(e *edi.EDIDocumentType) pulid.ID { return e.ID },
+			func(e *edidocument.EDIDocumentType) pulid.ID { return e.ID },
 			ediDocumentTypeSelectOptionItem,
 		)
 		return selectOptionConnection(items, len(items), 0)
@@ -107,8 +107,12 @@ func (r *Deps) resolveEDITransactionSetSelectOptions(
 		&edipartnerports.EDITransactionSetSelectOptionsRequest{
 			SelectQueryRequest: selectQuery,
 			IDs:                req.IDs,
-			Standard:           edi.EDIStandard(selectOptionStringFilter(req.Filters, "standard")),
-			Status:             edi.DocumentStatus(selectOptionStringFilter(req.Filters, "status")),
+			Standard: edidocument.EDIStandard(
+				selectOptionStringFilter(req.Filters, "standard"),
+			),
+			Status: edidocument.DocumentStatus(
+				selectOptionStringFilter(req.Filters, "status"),
+			),
 		},
 	)
 	if err != nil {
@@ -119,7 +123,7 @@ func (r *Deps) resolveEDITransactionSetSelectOptions(
 		items := orderedSelectOptionItems(
 			req.IDs,
 			result.Items,
-			func(e *edi.EDITransactionSet) pulid.ID { return e.ID },
+			func(e *edidocument.EDITransactionSet) pulid.ID { return e.ID },
 			ediTransactionSetSelectOptionItem,
 		)
 		return selectOptionConnection(items, len(items), 0)

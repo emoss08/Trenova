@@ -2,6 +2,8 @@ package ediconnectiondraft
 
 import (
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/ladingproject"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediconnectiondraftports"
 	"github.com/emoss08/trenova/pkg/lading"
 	"github.com/emoss08/trenova/shared/maputils"
@@ -11,7 +13,7 @@ import (
 type currentSetup struct {
 	setup     *ediconnectiondraftports.EDIPartnerSetup
 	transport *edi.EDICommunicationProfile
-	version   *edi.LadingVersion
+	version   *ladingproject.LadingVersion
 	exchanged map[string]bool
 	values    map[string]string
 }
@@ -99,11 +101,11 @@ func readMaps(current *currentSetup, manifest *lading.Check) {
 		if item.Set == "" {
 			continue
 		}
-		set := edi.TransactionSet(item.Set)
-		direction := edi.DocumentDirectionOutbound
+		set := edidocument.TransactionSet(item.Set)
+		direction := edidocument.DocumentDirectionOutbound
 		guide := item.To
 		if item.Direction == lading.DirectionInbound {
-			direction = edi.DocumentDirectionInbound
+			direction = edidocument.DocumentDirectionInbound
 			guide = item.From
 		}
 		current.exchanged[setKey(set, direction)] = true
@@ -125,8 +127,8 @@ func readAcknowledgments(values map[string]string, manifest *lading.Check) {
 			if ack == lading.AcknowledgeNone {
 				ack = ackNone
 			}
-			set := edi.TransactionSet(clause.Set)
-			values[setField(set, edi.DocumentDirectionInbound, setAttrAck)] = ack
+			set := edidocument.TransactionSet(clause.Set)
+			values[setField(set, edidocument.DocumentDirectionInbound, setAttrAck)] = ack
 		}
 	}
 }
@@ -155,8 +157,8 @@ func pickTransport(
 
 func (c *currentSetup) sequence(
 	documentTypeID pulid.ID,
-	kind edi.ControlNumberKind,
-) *edi.EDIControlNumberSequence {
+	kind edidocument.ControlNumberKind,
+) *edidocument.EDIControlNumberSequence {
 	if c.setup == nil {
 		return nil
 	}

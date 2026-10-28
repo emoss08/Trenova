@@ -6,6 +6,10 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edicarrierinvoice"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edimessage"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edipayload"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/editenderchange"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -20,14 +24,14 @@ import (
 
 type RecordInboundFreightInvoiceRequest struct {
 	Partner       *edi.EDIPartner
-	Message       *edi.EDIMessage
-	Recipient     *edi.TenderRecipient
+	Message       *edimessage.EDIMessage
+	Recipient     *editenderchange.TenderRecipient
 	AcceptedOffer *tender.TenderOffer
-	Payload       *edi.FreightInvoicePayload
+	Payload       *edipayload.FreightInvoicePayload
 }
 
 type RecordInboundFreightInvoiceResult struct {
-	Invoice         *edi.CarrierInvoice
+	Invoice         *edicarrierinvoice.CarrierInvoice
 	Warnings        []string
 	AlreadyRecorded bool
 }
@@ -125,7 +129,7 @@ func (s *Service) RecordInboundFreightInvoice(
 func (s *Service) recordedCarrierInvoice(
 	ctx context.Context,
 	partner *edi.EDIPartner,
-	incoming *edi.CarrierInvoice,
+	incoming *edicarrierinvoice.CarrierInvoice,
 ) (*RecordInboundFreightInvoiceResult, error) {
 	existing, err := s.carrierInvoiceRepo.GetCarrierInvoiceByNumber(
 		ctx,
@@ -181,10 +185,10 @@ func invoiceTotalText(total decimal.NullDecimal) string {
 
 func carrierInvoiceFromPayload(
 	partner *edi.EDIPartner,
-	message *edi.EDIMessage,
-	payload *edi.FreightInvoicePayload,
-) *edi.CarrierInvoice {
-	entity := &edi.CarrierInvoice{
+	message *edimessage.EDIMessage,
+	payload *edipayload.FreightInvoicePayload,
+) *edicarrierinvoice.CarrierInvoice {
+	entity := &edicarrierinvoice.CarrierInvoice{
 		BusinessUnitID:    message.BusinessUnitID,
 		OrganizationID:    message.OrganizationID,
 		EDIPartnerID:      partner.ID,
@@ -213,7 +217,7 @@ func carrierInvoiceFromPayload(
 func (s *Service) resolveCarrierInvoiceCustomer(
 	ctx context.Context,
 	partner *edi.EDIPartner,
-	entity *edi.CarrierInvoice,
+	entity *edicarrierinvoice.CarrierInvoice,
 ) (bool, error) {
 	if entity.BillToName == "" {
 		return false, nil
@@ -241,16 +245,16 @@ func (s *Service) resolveCarrierInvoiceCustomer(
 }
 
 func reconcileCarrierInvoice(
-	entity *edi.CarrierInvoice,
+	entity *edicarrierinvoice.CarrierInvoice,
 	customerResolved bool,
 	notes *[]string,
-) edi.CarrierInvoiceReconciliationStatus {
-	status := edi.CarrierInvoiceReconciliationStatusMatched
+) edicarrierinvoice.CarrierInvoiceReconciliationStatus {
+	status := edicarrierinvoice.CarrierInvoiceReconciliationStatusMatched
 	if entity.TotalAmount.Valid && entity.ExpectedAmount.Valid {
 		variance := entity.TotalAmount.Decimal.Sub(entity.ExpectedAmount.Decimal)
 		entity.VarianceAmount = decimal.NullDecimal{Decimal: variance, Valid: true}
 		if !variance.IsZero() {
-			status = edi.CarrierInvoiceReconciliationStatusVariance
+			status = edicarrierinvoice.CarrierInvoiceReconciliationStatusVariance
 			*notes = append(*notes, fmt.Sprintf(
 				"carrier invoice %s differs from the tendered amount by %s",
 				entity.InvoiceNumber,
@@ -258,21 +262,21 @@ func reconcileCarrierInvoice(
 			))
 		}
 	} else {
-		status = edi.CarrierInvoiceReconciliationStatusVariance
+		status = edicarrierinvoice.CarrierInvoiceReconciliationStatusVariance
 		*notes = append(*notes, fmt.Sprintf(
 			"carrier invoice %s cannot be compared: invoice or tendered amount is missing",
 			entity.InvoiceNumber,
 		))
 	}
 	if entity.BillToName != "" && !customerResolved {
-		status = edi.CarrierInvoiceReconciliationStatusMappingRequired
+		status = edicarrierinvoice.CarrierInvoiceReconciliationStatusMappingRequired
 		*notes = append(*notes, fmt.Sprintf(
 			"bill-to party %q has no customer mapping for this partner",
 			entity.BillToName,
 		))
 	}
 	if entity.ShipmentID.IsNil() {
-		status = edi.CarrierInvoiceReconciliationStatusUnmatched
+		status = edicarrierinvoice.CarrierInvoiceReconciliationStatusUnmatched
 		*notes = append(*notes, fmt.Sprintf(
 			"carrier invoice %s could not be matched to an outbound tender",
 			entity.InvoiceNumber,
@@ -285,7 +289,7 @@ func (s *Service) recordCarrierInvoiceShipmentComment(
 	ctx context.Context,
 	shipmentID pulid.ID,
 	tenantInfo pagination.TenantInfo,
-	invoice *edi.CarrierInvoice,
+	invoice *edicarrierinvoice.CarrierInvoice,
 ) {
 	comment := fmt.Sprintf(
 		"EDI 210 carrier invoice %s received from trading partner",
@@ -298,18 +302,18 @@ func (s *Service) recordCarrierInvoiceShipmentComment(
 		}
 	}
 	switch invoice.ReconciliationStatus {
-	case edi.CarrierInvoiceReconciliationStatusMatched:
+	case edicarrierinvoice.CarrierInvoiceReconciliationStatusMatched:
 		comment += "; amount matches the tendered rate"
-	case edi.CarrierInvoiceReconciliationStatusVariance:
+	case edicarrierinvoice.CarrierInvoiceReconciliationStatusVariance:
 		if invoice.VarianceAmount.Valid {
 			comment += "; variance of " + invoice.VarianceAmount.Decimal.String() +
 				" against the tendered rate"
 		} else {
 			comment += "; amounts could not be compared"
 		}
-	case edi.CarrierInvoiceReconciliationStatusMappingRequired:
+	case edicarrierinvoice.CarrierInvoiceReconciliationStatusMappingRequired:
 		comment += "; bill-to customer mapping is required"
-	case edi.CarrierInvoiceReconciliationStatusUnmatched:
+	case edicarrierinvoice.CarrierInvoiceReconciliationStatusUnmatched:
 	}
 	metadata := map[string]any{
 		"carrierInvoiceId":     invoice.ID,

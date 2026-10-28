@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/edi/app/edix12inspect"
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
 )
 
 type ParsedSample struct {
@@ -24,8 +24,8 @@ type ParsedSample struct {
 }
 
 type ParsedSampleTransaction struct {
-	TransactionSet edi.TransactionSet `json:"transactionSet"`
-	ControlNumber  string             `json:"controlNumber"`
+	TransactionSet edidocument.TransactionSet `json:"transactionSet"`
+	ControlNumber  string                     `json:"controlNumber"`
 }
 
 func ParseSample(ctx context.Context, rawX12 string) (*ParsedSample, error) {

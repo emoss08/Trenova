@@ -3,6 +3,9 @@
 package agentquerytoolservice
 
 import (
+	"github.com/emoss08/trenova/internal/modules/edi/domain/ediinboundfile"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edimessage"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/editransfer"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workertraining"
 	accountingsync "github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	fiscalperiod "github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
@@ -1842,7 +1845,7 @@ var graphQLReads = map[string]graphQLRead{
 		RootField: "ediInboundFiles",
 		Node:      "EdiInboundFile",
 		Resource:  "edi",
-		Entity:    func() domaintypes.PostgresSearchable { return new(edi.EDIInboundFile) },
+		Entity:    func() domaintypes.PostgresSearchable { return new(ediinboundfile.EDIInboundFile) },
 		Variables: []graphQLVariable{
 			{Name: "includeTotalCount", Type: "Boolean", NonNull: false, List: false, Kind: "scalar", Description: "true also returns totalCountExact: Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."},
 			{Name: "input", Type: "DataTableConnectionInput", NonNull: true, List: false, Kind: "input"},
@@ -1908,7 +1911,7 @@ var graphQLReads = map[string]graphQLRead{
 		RootField: "ediMessages",
 		Node:      "EdiMessage",
 		Resource:  "edi",
-		Entity:    func() domaintypes.PostgresSearchable { return new(edi.EDIMessage) },
+		Entity:    func() domaintypes.PostgresSearchable { return new(edimessage.EDIMessage) },
 		Variables: []graphQLVariable{
 			{Name: "includeTotalCount", Type: "Boolean", NonNull: false, List: false, Kind: "scalar", Description: "true also returns totalCountExact: Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."},
 			{Name: "input", Type: "DataTableConnectionInput", NonNull: true, List: false, Kind: "input"},
@@ -2047,7 +2050,7 @@ var graphQLReads = map[string]graphQLRead{
 		RootField: "ediTransfers",
 		Node:      "EdiTransfer",
 		Resource:  "edi",
-		Entity:    func() domaintypes.PostgresSearchable { return new(edi.EDITransfer) },
+		Entity:    func() domaintypes.PostgresSearchable { return new(editransfer.EDITransfer) },
 		Variables: []graphQLVariable{
 			{Name: "direction", Type: "EdiTransferDirection", NonNull: true, List: false, Kind: "enum", Enum: []string{"Inbound", "Outbound"}, Description: "Inbound for the tenders partners sent in, Outbound for the ones this organization sent."},
 			{Name: "inboundFileId", Type: "ID", NonNull: false, List: false, Kind: "scalar", Description: "Only the tenders one inbound file carried."},

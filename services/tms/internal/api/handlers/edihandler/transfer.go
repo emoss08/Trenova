@@ -6,7 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/editransfer"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/editenderports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -182,7 +182,7 @@ func (h *Handler) listInboundTransfers(c *gin.Context) {
 		inboundFileID = parsed
 	}
 
-	pagination.List(c, req, h.eh, func() (*pagination.ListResult[*edi.EDITransfer], error) {
+	pagination.List(c, req, h.eh, func() (*pagination.ListResult[*editransfer.EDITransfer], error) {
 		return h.service.ListInboundTransfers(
 			c.Request.Context(),
 			&editenderports.ListEDITransfersRequest{Filter: req, InboundFileID: inboundFileID},
@@ -210,7 +210,7 @@ func (h *Handler) listOutboundTransfers(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 	req := pagination.NewQueryOptions(c, authCtx)
 
-	pagination.List(c, req, h.eh, func() (*pagination.ListResult[*edi.EDITransfer], error) {
+	pagination.List(c, req, h.eh, func() (*pagination.ListResult[*editransfer.EDITransfer], error) {
 		return h.service.ListOutboundTransfers(
 			c.Request.Context(),
 			&editenderports.ListEDITransfersRequest{Filter: req},
@@ -219,7 +219,7 @@ func (h *Handler) listOutboundTransfers(c *gin.Context) {
 }
 
 func (h *Handler) getTransfer(c *gin.Context) {
-	h.withTransfer(c, "", func(gCtx *gin.Context, transfer *edi.EDITransfer) {
+	h.withTransfer(c, "", func(gCtx *gin.Context, transfer *editransfer.EDITransfer) {
 		helpers.JSON(gCtx, http.StatusOK, transfer)
 	})
 }

@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/adapters/postgres/ediscope"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi/edidb"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/ladingproject/ladingprojectdb"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
 	"github.com/emoss08/trenova/pkg/dberror"
@@ -227,7 +228,7 @@ func readinessQuery(
 	ep := edidb.EDIPartners
 	cp := edidb.EDICommunicationProfiles
 	mi := edidb.EDIMappingProfileItems
-	lp := edidb.LadingProjects
+	lp := ladingprojectdb.LadingProjects
 
 	return ep.Pick(
 		ep.ID,

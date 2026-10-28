@@ -4,6 +4,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/app/editransport"
 	"github.com/emoss08/trenova/internal/modules/edi/app/edix12inspect"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edimessage"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/editransfer"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -107,16 +110,16 @@ type PreviewEDIDocumentRequest = ediports.PreviewEDIDocumentRequest
 type GenerateEDIDocumentRequest = ediports.GenerateEDIDocumentRequest
 
 type InspectX12Request struct {
-	TenantInfo     pagination.TenantInfo    `json:"-"`
-	RawX12         string                   `json:"rawX12"`
-	TransactionSet edi.TransactionSet       `json:"transactionSet"`
-	X12Version     string                   `json:"x12Version"`
-	Envelope       *edi.X12EnvelopeSettings `json:"envelope"`
-	Diagnostics    []edi.Diagnostic         `json:"diagnostics"`
+	TenantInfo     pagination.TenantInfo            `json:"-"`
+	RawX12         string                           `json:"rawX12"`
+	TransactionSet edidocument.TransactionSet       `json:"transactionSet"`
+	X12Version     string                           `json:"x12Version"`
+	Envelope       *edidocument.X12EnvelopeSettings `json:"envelope"`
+	Diagnostics    []edidocument.Diagnostic         `json:"diagnostics"`
 }
 
 type EDIMessageInspection struct {
-	Message    *edi.EDIMessage                `json:"message"`
+	Message    *edimessage.EDIMessage         `json:"message"`
 	Inspection edix12inspect.InspectX12Result `json:"inspection"`
 	Provenance EDIInspectionProvenance        `json:"provenance"`
 }
@@ -132,9 +135,9 @@ type EDIInspectionProvenance struct {
 type EDIDocumentPreview = ediports.EDIDocumentPreview
 
 type MappingPreview struct {
-	Resolved   []edi.MappingResolution `json:"resolved"`
-	Unresolved []edi.MappingResolution `json:"unresolved"`
-	All        []edi.MappingResolution `json:"all"`
+	Resolved   []editransfer.MappingResolution `json:"resolved"`
+	Unresolved []editransfer.MappingResolution `json:"unresolved"`
+	All        []editransfer.MappingResolution `json:"all"`
 }
 
 type ApproveLoadTenderTransferWorkflowPayload struct {
@@ -156,9 +159,9 @@ type DeliverEDIMessageWorkflowPayload struct {
 }
 
 type DeliverEDIMessageWorkflowResult struct {
-	MessageID      pulid.ID                  `json:"messageId"`
-	DeliveryStatus edi.MessageDeliveryStatus `json:"deliveryStatus"`
-	RemotePath     string                    `json:"remotePath"`
+	MessageID      pulid.ID                         `json:"messageId"`
+	DeliveryStatus edimessage.MessageDeliveryStatus `json:"deliveryStatus"`
+	RemotePath     string                           `json:"remotePath"`
 }
 
 type MarkEDIMessageDeadLetteredPayload struct {

@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/edi/app/edilading"
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -13,8 +13,8 @@ import (
 
 // envelopeOf is the envelope Trenova writes to a partner, from the interchange its partner file
 // declares: Trenova is the sender and the partner the receiver.
-func envelopeOf(program *edilading.Program) edi.X12EnvelopeSettings {
-	envelope := edi.DefaultX12EnvelopeSettings()
+func envelopeOf(program *edilading.Program) edidocument.X12EnvelopeSettings {
+	envelope := edidocument.DefaultX12EnvelopeSettings()
 	partner := program.Manifest.Partner
 	if partner == nil || partner.Interchange == nil {
 		return envelope
@@ -59,10 +59,10 @@ func (s *Service) partnerEnvelope(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	partnerID pulid.ID,
-) (edi.X12EnvelopeSettings, *edilading.Program, error) {
+) (edidocument.X12EnvelopeSettings, *edilading.Program, error) {
 	program, err := s.lading.Active(ctx, tenantInfo, partnerID)
 	if err != nil {
-		return edi.X12EnvelopeSettings{}, nil, err
+		return edidocument.X12EnvelopeSettings{}, nil, err
 	}
 	return envelopeOf(program), program, nil
 }

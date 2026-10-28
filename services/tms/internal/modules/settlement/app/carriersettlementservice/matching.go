@@ -3,7 +3,7 @@ package carriersettlementservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edicarrierinvoice"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -44,7 +44,7 @@ func (s *Service) GetInvoiceMatch(
 func (s *Service) ListUnmatchedEDIInvoices(
 	ctx context.Context,
 	req *ediports.ListEDICarrierInvoicesRequest,
-) (*pagination.ListResult[*edi.CarrierInvoice], error) {
+) (*pagination.ListResult[*edicarrierinvoice.CarrierInvoice], error) {
 	return s.ediInvoiceRepo.ListCarrierInvoices(ctx, req)
 }
 
@@ -78,7 +78,7 @@ func (s *Service) SuggestCarrierForInvoice(
 func (s *Service) SuggestCarrierFor(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	invoice *edi.CarrierInvoice,
+	invoice *edicarrierinvoice.CarrierInvoice,
 ) (*carrier.Carrier, error) {
 	scac := referenceValue(invoice.ReferenceNumbers, "SCAC", "scac")
 	dot := referenceValue(invoice.ReferenceNumbers, "DOT", "dot", "DOT_NUMBER")
@@ -106,7 +106,7 @@ func (s *Service) LinkInvoiceToCarrier(
 	tenantInfo pagination.TenantInfo,
 	invoiceID, carrierID pulid.ID,
 	actor *permissionports.RequestActor,
-) (*edi.CarrierInvoice, error) {
+) (*edicarrierinvoice.CarrierInvoice, error) {
 	if err := requireActor(actor, "Carrier invoice linking"); err != nil {
 		return nil, err
 	}
@@ -407,12 +407,12 @@ func (s *Service) RejectMatch(
 
 func (s *Service) syncEDIInvoiceReconciliation(
 	ctx context.Context,
-	invoice *edi.CarrierInvoice,
+	invoice *edicarrierinvoice.CarrierInvoice,
 	match *carriersettlement.InvoiceMatch,
 ) {
-	status := edi.CarrierInvoiceReconciliationStatusMatched
+	status := edicarrierinvoice.CarrierInvoiceReconciliationStatusMatched
 	if match.Status == carriersettlement.InvoiceMatchStatusVariance {
-		status = edi.CarrierInvoiceReconciliationStatusVariance
+		status = edicarrierinvoice.CarrierInvoiceReconciliationStatusVariance
 	}
 	invoice.ReconciliationStatus = status
 	invoice.ExpectedAmount = decimalFromMinorNull(match.ExpectedTotalMinor)
@@ -443,7 +443,7 @@ func (s *Service) markEDIInvoiceReconciled(
 			zap.Error(err), zap.String("invoiceId", match.EDICarrierInvoiceID.String()))
 		return
 	}
-	invoice.ReconciliationStatus = edi.CarrierInvoiceReconciliationStatusMatched
+	invoice.ReconciliationStatus = edicarrierinvoice.CarrierInvoiceReconciliationStatusMatched
 	if _, err = s.ediInvoiceRepo.UpdateCarrierInvoice(ctx, invoice); err != nil {
 		s.l.Error("failed to mark EDI carrier invoice reconciled",
 			zap.Error(err), zap.String("invoiceId", invoice.ID.String()))

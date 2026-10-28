@@ -3,26 +3,27 @@ package edimessageports
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edimessage"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
 type ListEDIMessagesRequest struct {
-	Filter         *pagination.QueryOptions        `json:"filter"`
-	Cursor         pagination.CursorInfo           `json:"-"`
-	TransactionSet edi.TransactionSet              `json:"transactionSet"`
-	Direction      edi.DocumentDirection           `json:"direction"`
-	PartnerID      pulid.ID                        `json:"partnerId"`
-	Status         edi.MessageStatus               `json:"status"`
-	Query          string                          `json:"query"`
-	GeneratedFrom  int64                           `json:"generatedFrom"`
-	GeneratedTo    int64                           `json:"generatedTo"`
-	AckStatus      edi.MessageAcknowledgmentStatus `json:"ackStatus"`
-	ShipmentID     pulid.ID                        `json:"shipmentId"`
-	InvoiceID      pulid.ID                        `json:"invoiceId"`
-	CreatedAfter   int64                           `json:"createdAfter"`
-	CreatedBefore  int64                           `json:"createdBefore"`
+	Filter         *pagination.QueryOptions               `json:"filter"`
+	Cursor         pagination.CursorInfo                  `json:"-"`
+	TransactionSet edidocument.TransactionSet             `json:"transactionSet"`
+	Direction      edidocument.DocumentDirection          `json:"direction"`
+	PartnerID      pulid.ID                               `json:"partnerId"`
+	Status         edimessage.MessageStatus               `json:"status"`
+	Query          string                                 `json:"query"`
+	GeneratedFrom  int64                                  `json:"generatedFrom"`
+	GeneratedTo    int64                                  `json:"generatedTo"`
+	AckStatus      edimessage.MessageAcknowledgmentStatus `json:"ackStatus"`
+	ShipmentID     pulid.ID                               `json:"shipmentId"`
+	InvoiceID      pulid.ID                               `json:"invoiceId"`
+	CreatedAfter   int64                                  `json:"createdAfter"`
+	CreatedBefore  int64                                  `json:"createdBefore"`
 }
 
 type GetEDIMessageByIDRequest struct {
@@ -36,8 +37,8 @@ type GetEDIMessageByIdempotencyKeyRequest struct {
 }
 
 type CreateEDIMessageWithDiagnosticsRequest struct {
-	Message     *edi.EDIMessage                  `json:"message"`
-	Diagnostics []*edi.EDIMessageValidationError `json:"diagnostics"`
+	Message     *edimessage.EDIMessage                  `json:"message"`
+	Diagnostics []*edimessage.EDIMessageValidationError `json:"diagnostics"`
 }
 
 type GetServiceFailure214LifecycleMessageRequest struct {
@@ -52,23 +53,23 @@ type GetServiceFailure214StatusRequest struct {
 }
 
 type ServiceFailure214StatusRow struct {
-	ServiceFailureID  pulid.ID                        `json:"serviceFailureId"`
-	ReviewedMessageID pulid.ID                        `json:"reviewedMessageId,omitempty"`
-	ResolvedMessageID pulid.ID                        `json:"resolvedMessageId,omitempty"`
-	LastMessageID     pulid.ID                        `json:"lastMessageId,omitempty"`
-	GeneratedStatus   edi.MessageStatus               `json:"generatedStatus,omitempty"`
-	DeliveryStatus    edi.MessageDeliveryStatus       `json:"deliveryStatus,omitempty"`
-	AckStatus         edi.MessageAcknowledgmentStatus `json:"ackStatus,omitempty"`
-	LastDiagnostic    string                          `json:"lastDiagnostic,omitempty"`
-	LastGeneratedAt   int64                           `json:"lastGeneratedAt,omitempty"`
+	ServiceFailureID  pulid.ID                               `json:"serviceFailureId"`
+	ReviewedMessageID pulid.ID                               `json:"reviewedMessageId,omitempty"`
+	ResolvedMessageID pulid.ID                               `json:"resolvedMessageId,omitempty"`
+	LastMessageID     pulid.ID                               `json:"lastMessageId,omitempty"`
+	GeneratedStatus   edimessage.MessageStatus               `json:"generatedStatus,omitempty"`
+	DeliveryStatus    edimessage.MessageDeliveryStatus       `json:"deliveryStatus,omitempty"`
+	AckStatus         edimessage.MessageAcknowledgmentStatus `json:"ackStatus,omitempty"`
+	LastDiagnostic    string                                 `json:"lastDiagnostic,omitempty"`
+	LastGeneratedAt   int64                                  `json:"lastGeneratedAt,omitempty"`
 }
 
 type GetEDIOutboundMessageForAckRequest struct {
-	TenantInfo               pagination.TenantInfo `json:"tenantInfo"`
-	PartnerID                pulid.ID              `json:"partnerId"`
-	TransactionSet           edi.TransactionSet    `json:"transactionSet"`
-	GroupControlNumber       string                `json:"groupControlNumber"`
-	TransactionControlNumber string                `json:"transactionControlNumber"`
+	TenantInfo               pagination.TenantInfo      `json:"tenantInfo"`
+	PartnerID                pulid.ID                   `json:"partnerId"`
+	TransactionSet           edidocument.TransactionSet `json:"transactionSet"`
+	GroupControlNumber       string                     `json:"groupControlNumber"`
+	TransactionControlNumber string                     `json:"transactionControlNumber"`
 }
 
 type LinkEDIMessageFlowRequest struct {
@@ -78,32 +79,32 @@ type LinkEDIMessageFlowRequest struct {
 }
 
 type UpdateEDIMessageAcknowledgmentRequest struct {
-	ID            pulid.ID                        `json:"id"`
-	TenantInfo    pagination.TenantInfo           `json:"tenantInfo"`
-	AckStatus     edi.MessageAcknowledgmentStatus `json:"ackStatus"`
-	AckMessageID  pulid.ID                        `json:"ackMessageId"`
-	AckReceivedAt *int64                          `json:"ackReceivedAt"`
-	AckLastError  string                          `json:"ackLastError"`
+	ID            pulid.ID                               `json:"id"`
+	TenantInfo    pagination.TenantInfo                  `json:"tenantInfo"`
+	AckStatus     edimessage.MessageAcknowledgmentStatus `json:"ackStatus"`
+	AckMessageID  pulid.ID                               `json:"ackMessageId"`
+	AckReceivedAt *int64                                 `json:"ackReceivedAt"`
+	AckLastError  string                                 `json:"ackLastError"`
 }
 
 type UpdateEDIMessageDeliveryRequest struct {
-	ID                    pulid.ID                  `json:"id"`
-	TenantInfo            pagination.TenantInfo     `json:"tenantInfo"`
-	DeliveryStatus        edi.MessageDeliveryStatus `json:"deliveryStatus"`
-	DeliveryRemotePath    string                    `json:"deliveryRemotePath"`
-	AS2MessageID          string                    `json:"as2MessageId"`
-	AS2MIC                string                    `json:"as2Mic"`
-	IncrementAttempts     bool                      `json:"incrementAttempts"`
-	DeliveryLastAttemptAt *int64                    `json:"deliveryLastAttemptAt"`
-	DeliverySentAt        *int64                    `json:"deliverySentAt"`
-	DeliveryLastError     string                    `json:"deliveryLastError"`
+	ID                    pulid.ID                         `json:"id"`
+	TenantInfo            pagination.TenantInfo            `json:"tenantInfo"`
+	DeliveryStatus        edimessage.MessageDeliveryStatus `json:"deliveryStatus"`
+	DeliveryRemotePath    string                           `json:"deliveryRemotePath"`
+	AS2MessageID          string                           `json:"as2MessageId"`
+	AS2MIC                string                           `json:"as2Mic"`
+	IncrementAttempts     bool                             `json:"incrementAttempts"`
+	DeliveryLastAttemptAt *int64                           `json:"deliveryLastAttemptAt"`
+	DeliverySentAt        *int64                           `json:"deliverySentAt"`
+	DeliveryLastError     string                           `json:"deliveryLastError"`
 }
 
 type GetEDIMessageStatusCountsRequest struct {
-	TenantInfo     pagination.TenantInfo `json:"tenantInfo"`
-	Since          int64                 `json:"since"`
-	PartnerID      pulid.ID              `json:"partnerId"`
-	TransactionSet edi.TransactionSet    `json:"transactionSet,omitempty"`
+	TenantInfo     pagination.TenantInfo      `json:"tenantInfo"`
+	Since          int64                      `json:"since"`
+	PartnerID      pulid.ID                   `json:"partnerId"`
+	TransactionSet edidocument.TransactionSet `json:"transactionSet,omitempty"`
 }
 
 type GetEDIPartnerScorecardsRequest struct {
@@ -146,8 +147,8 @@ type GetEDIPartnerSetActivityRequest struct {
 }
 
 type EDIPartnerSetActivityRow struct {
-	TransactionSet    edi.TransactionSet
-	Direction         edi.DocumentDirection
+	TransactionSet    edidocument.TransactionSet
+	Direction         edidocument.DocumentDirection
 	Count             int64
 	FailedCount       int64
 	DeadLetteredCount int64
@@ -163,18 +164,18 @@ type EDIVolumePoint struct {
 }
 
 type GetEDIOverdueAckCountRequest struct {
-	TenantInfo     pagination.TenantInfo `json:"tenantInfo"`
-	PendingSince   int64                 `json:"pendingSince"`
-	PartnerID      pulid.ID              `json:"partnerId"`
-	TransactionSet edi.TransactionSet    `json:"transactionSet,omitempty"`
+	TenantInfo     pagination.TenantInfo      `json:"tenantInfo"`
+	PendingSince   int64                      `json:"pendingSince"`
+	PartnerID      pulid.ID                   `json:"partnerId"`
+	TransactionSet edidocument.TransactionSet `json:"transactionSet,omitempty"`
 }
 
 type ListOverdueEDIAcksRequest struct {
-	TenantInfo     pagination.TenantInfo `json:"tenantInfo"`
-	PendingSince   int64                 `json:"pendingSince"`
-	PartnerID      pulid.ID              `json:"partnerId"`
-	TransactionSet edi.TransactionSet    `json:"transactionSet,omitempty"`
-	Limit          int                   `json:"limit"`
+	TenantInfo     pagination.TenantInfo      `json:"tenantInfo"`
+	PendingSince   int64                      `json:"pendingSince"`
+	PartnerID      pulid.ID                   `json:"partnerId"`
+	TransactionSet edidocument.TransactionSet `json:"transactionSet,omitempty"`
+	Limit          int                        `json:"limit"`
 }
 
 type OverdueEDIAckPartner struct {
@@ -189,81 +190,87 @@ type EDIPartnerAckStatusCount struct {
 	PartnerID   pulid.ID
 	PartnerName string
 	PartnerCode string
-	AckStatus   edi.MessageAcknowledgmentStatus
+	AckStatus   edimessage.MessageAcknowledgmentStatus
 	Count       int
 }
 
 type OverdueEDIAcks struct {
-	Messages []*edi.EDIMessage
+	Messages []*edimessage.EDIMessage
 	Partners []*OverdueEDIAckPartner
 }
 
 type ListRecentEDIMessageFailuresRequest struct {
-	TenantInfo     pagination.TenantInfo `json:"tenantInfo"`
-	PartnerID      pulid.ID              `json:"partnerId"`
-	TransactionSet edi.TransactionSet    `json:"transactionSet,omitempty"`
-	Since          int64                 `json:"since"`
-	Limit          int                   `json:"limit"`
+	TenantInfo     pagination.TenantInfo      `json:"tenantInfo"`
+	PartnerID      pulid.ID                   `json:"partnerId"`
+	TransactionSet edidocument.TransactionSet `json:"transactionSet,omitempty"`
+	Since          int64                      `json:"since"`
+	Limit          int                        `json:"limit"`
 }
 
 type ListEDIReplayMessagesRequest struct {
-	TenantInfo     pagination.TenantInfo `json:"tenantInfo"`
-	PartnerID      pulid.ID              `json:"partnerId"`
-	TransactionSet edi.TransactionSet    `json:"transactionSet"`
-	Direction      edi.DocumentDirection `json:"direction"`
-	From           int64                 `json:"from"`
-	To             int64                 `json:"to"`
-	AfterID        pulid.ID              `json:"afterId"`
-	Limit          int                   `json:"limit"`
+	TenantInfo     pagination.TenantInfo         `json:"tenantInfo"`
+	PartnerID      pulid.ID                      `json:"partnerId"`
+	TransactionSet edidocument.TransactionSet    `json:"transactionSet"`
+	Direction      edidocument.DocumentDirection `json:"direction"`
+	From           int64                         `json:"from"`
+	To             int64                         `json:"to"`
+	AfterID        pulid.ID                      `json:"afterId"`
+	Limit          int                           `json:"limit"`
 }
 
 type EDIMessageRepository interface {
 	ListReplayMessages(
 		ctx context.Context,
 		req *ListEDIReplayMessagesRequest,
-	) ([]*edi.EDIMessage, error)
+	) ([]*edimessage.EDIMessage, error)
 	ListMessages(
 		ctx context.Context,
 		req *ListEDIMessagesRequest,
-	) (*pagination.ListResult[*edi.EDIMessage], error)
+	) (*pagination.ListResult[*edimessage.EDIMessage], error)
 	ListMessagesCursor(
 		ctx context.Context,
 		req *ListEDIMessagesRequest,
-	) (*pagination.CursorListResult[*edi.EDIMessage], error)
-	GetMessageByID(ctx context.Context, req GetEDIMessageByIDRequest) (*edi.EDIMessage, error)
+	) (*pagination.CursorListResult[*edimessage.EDIMessage], error)
+	GetMessageByID(
+		ctx context.Context,
+		req GetEDIMessageByIDRequest,
+	) (*edimessage.EDIMessage, error)
 	GetMessageByIdempotencyKey(
 		ctx context.Context,
 		req GetEDIMessageByIdempotencyKeyRequest,
-	) (*edi.EDIMessage, error)
+	) (*edimessage.EDIMessage, error)
 	CreateMessageWithDiagnostics(
 		ctx context.Context,
 		req CreateEDIMessageWithDiagnosticsRequest,
-	) (*edi.EDIMessage, error)
+	) (*edimessage.EDIMessage, error)
 	GetServiceFailure214LifecycleMessage(
 		ctx context.Context,
 		req GetServiceFailure214LifecycleMessageRequest,
-	) (*edi.EDIMessage, error)
+	) (*edimessage.EDIMessage, error)
 	GetServiceFailure214Status(
 		ctx context.Context,
 		req GetServiceFailure214StatusRequest,
 	) (*ServiceFailure214StatusRow, error)
-	LinkMessageFlow(ctx context.Context, req *LinkEDIMessageFlowRequest) (*edi.EDIMessage, error)
+	LinkMessageFlow(
+		ctx context.Context,
+		req *LinkEDIMessageFlowRequest,
+	) (*edimessage.EDIMessage, error)
 	UpdateMessageDelivery(
 		ctx context.Context,
 		req *UpdateEDIMessageDeliveryRequest,
-	) (*edi.EDIMessage, error)
+	) (*edimessage.EDIMessage, error)
 	GetOutboundMessageByAS2MessageID(
 		ctx context.Context,
 		as2MessageID string,
-	) (*edi.EDIMessage, error)
+	) (*edimessage.EDIMessage, error)
 	GetDeliveryStatusCounts(
 		ctx context.Context,
 		req GetEDIMessageStatusCountsRequest,
-	) (map[edi.MessageDeliveryStatus]int, error)
+	) (map[edimessage.MessageDeliveryStatus]int, error)
 	GetAckStatusCounts(
 		ctx context.Context,
 		req GetEDIMessageStatusCountsRequest,
-	) (map[edi.MessageAcknowledgmentStatus]int, error)
+	) (map[edimessage.MessageAcknowledgmentStatus]int, error)
 	GetAckStatusCountsByPartner(
 		ctx context.Context,
 		req GetEDIMessageStatusCountsRequest,
@@ -273,7 +280,7 @@ type EDIMessageRepository interface {
 	ListRecentDeadLettered(
 		ctx context.Context,
 		req *ListRecentEDIMessageFailuresRequest,
-	) ([]*edi.EDIMessage, error)
+	) ([]*edimessage.EDIMessage, error)
 	CountDeadLetteredSince(ctx context.Context, since int64) (int64, error)
 	GetPartnerScorecards(
 		ctx context.Context,
@@ -288,9 +295,9 @@ type EDIMessageRepository interface {
 	GetOutboundMessageForAck(
 		ctx context.Context,
 		req GetEDIOutboundMessageForAckRequest,
-	) (*edi.EDIMessage, error)
+	) (*edimessage.EDIMessage, error)
 	UpdateMessageAcknowledgment(
 		ctx context.Context,
 		req *UpdateEDIMessageAcknowledgmentRequest,
-	) (*edi.EDIMessage, error)
+	) (*edimessage.EDIMessage, error)
 }

@@ -5,6 +5,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edipayload"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/editransfer"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -175,7 +178,7 @@ func TestBuildFreightInvoicePayload(t *testing.T) {
 
 	payload := buildFreightInvoicePayload(source)
 
-	require.Equal(t, edi.TransactionSet210, payload.TransactionSet)
+	require.Equal(t, edidocument.TransactionSet210, payload.TransactionSet)
 	require.NotNil(t, payload.FreightInvoice)
 	require.Equal(t, source.ID, payload.FreightInvoice.InvoiceID)
 	require.Equal(t, "INV-1001", payload.FreightInvoice.InvoiceNumber)
@@ -189,9 +192,24 @@ func TestBuildFreightInvoicePayload(t *testing.T) {
 	require.Equal(t, "PRO-1001", payload.FreightInvoice.ReferenceNumbers["pro"])
 	require.Len(t, payload.FreightInvoice.LineCharges, 3)
 	require.Equal(t, int64(1), payload.FreightInvoice.LineCharges[0].Sequence)
-	require.Equal(t, "400", payload.FreightInvoice.LineCharges[0].Code, "freight is X12 special charge 400")
-	require.Equal(t, "LFT", payload.FreightInvoice.LineCharges[1].Code, "an accessorial sends its catalog code")
-	require.Equal(t, "400", payload.FreightInvoice.LineCharges[2].Code, "every freight line is freight")
+	require.Equal(
+		t,
+		"400",
+		payload.FreightInvoice.LineCharges[0].Code,
+		"freight is X12 special charge 400",
+	)
+	require.Equal(
+		t,
+		"LFT",
+		payload.FreightInvoice.LineCharges[1].Code,
+		"an accessorial sends its catalog code",
+	)
+	require.Equal(
+		t,
+		"400",
+		payload.FreightInvoice.LineCharges[2].Code,
+		"every freight line is freight",
+	)
 }
 
 func TestBuildShipmentEventStatusPayload(t *testing.T) {
@@ -244,7 +262,7 @@ func TestBuildShipmentEventStatusPayload(t *testing.T) {
 
 	payload := buildShipmentEventStatusPayload(event, source)
 
-	require.Equal(t, edi.TransactionSet214, payload.TransactionSet)
+	require.Equal(t, edidocument.TransactionSet214, payload.TransactionSet)
 	require.NotNil(t, payload.ShipmentStatus)
 	require.Equal(t, shipmentID, payload.ShipmentStatus.ShipmentID)
 	require.Equal(t, "BOL-214", payload.ShipmentStatus.BOL)
@@ -276,12 +294,12 @@ func TestBuildShipmentStatusPayloadSkipsNilMoveFallback(t *testing.T) {
 		Moves: []*shipment.ShipmentMove{nil},
 	}
 
-	var payload edi.DocumentPayload
+	var payload edipayload.DocumentPayload
 	require.NotPanics(t, func() {
 		payload = buildShipmentStatusPayload(source)
 	})
 
-	require.Equal(t, edi.TransactionSet214, payload.TransactionSet)
+	require.Equal(t, edidocument.TransactionSet214, payload.TransactionSet)
 	require.NotNil(t, payload.ShipmentStatus)
 	require.Equal(t, source.ID, payload.ShipmentStatus.ShipmentID)
 	require.Equal(t, "BOL-NIL-MOVE", payload.ShipmentStatus.BOL)
@@ -416,7 +434,7 @@ func TestBuildServiceFailureShipmentStatusPayload_UsesServiceFailureTimestampPre
 func TestServiceFailurePayloadDiagnostics_RequiresReasonForSD(t *testing.T) {
 	t.Parallel()
 
-	diagnostics := serviceFailurePayloadDiagnostics(&edi.ShipmentStatusPayload{
+	diagnostics := serviceFailurePayloadDiagnostics(&edipayload.ShipmentStatusPayload{
 		StatusCode: "SD",
 		EventDate:  1,
 		EventTime:  1,
@@ -427,18 +445,18 @@ func TestServiceFailurePayloadDiagnostics_RequiresReasonForSD(t *testing.T) {
 	require.Equal(t, "AT7", diagnostics[0].SegmentID)
 	require.Equal(t, 2, diagnostics[0].ElementPosition)
 	require.Equal(t, "shipmentStatus.statusReasonCode", diagnostics[0].Path)
-	require.Empty(t, serviceFailurePayloadDiagnostics(&edi.ShipmentStatusPayload{
+	require.Empty(t, serviceFailurePayloadDiagnostics(&edipayload.ShipmentStatusPayload{
 		StatusCode:       "SD",
 		StatusReasonCode: "NS",
 		EventDate:        1,
 		EventTime:        1,
 	}))
-	require.Len(t, serviceFailurePayloadDiagnostics(&edi.ShipmentStatusPayload{
+	require.Len(t, serviceFailurePayloadDiagnostics(&edipayload.ShipmentStatusPayload{
 		StatusCode: " sd ",
 		EventDate:  1,
 		EventTime:  1,
 	}), 1)
-	require.Empty(t, serviceFailurePayloadDiagnostics(&edi.ShipmentStatusPayload{
+	require.Empty(t, serviceFailurePayloadDiagnostics(&edipayload.ShipmentStatusPayload{
 		StatusCode: "A3",
 		EventDate:  1,
 		EventTime:  1,
@@ -471,7 +489,11 @@ func TestBuildServiceFailure214LifecyclePayloadStatusPrecedence(t *testing.T) {
 	)
 	require.Equal(t, "A3", payload.ShipmentStatus.StatusCode)
 	require.Equal(t, "CA", payload.ShipmentStatus.StatusReasonCode)
-	require.Equal(t, "Reviewed", payload.ShipmentStatus.References[serviceFailure214TriggerReference])
+	require.Equal(
+		t,
+		"Reviewed",
+		payload.ShipmentStatus.References[serviceFailure214TriggerReference],
+	)
 
 	base.X12StatusCodeOverride = " sd "
 	payload = buildServiceFailure214LifecyclePayload(
@@ -501,7 +523,7 @@ func TestBuildServiceFailure214LifecyclePayloadStatusPrecedence(t *testing.T) {
 func TestServiceFailurePayloadDiagnosticsRequiresEventDateAndTime(t *testing.T) {
 	t.Parallel()
 
-	diagnostics := serviceFailurePayloadDiagnostics(&edi.ShipmentStatusPayload{
+	diagnostics := serviceFailurePayloadDiagnostics(&edipayload.ShipmentStatusPayload{
 		StatusCode:       "A3",
 		StatusReasonCode: "NS",
 	})
@@ -510,7 +532,7 @@ func TestServiceFailurePayloadDiagnosticsRequiresEventDateAndTime(t *testing.T) 
 	require.Contains(t, diagnosticPaths(diagnostics), "shipmentStatus.eventTime")
 }
 
-func diagnosticPaths(diagnostics []edi.Diagnostic) []string {
+func diagnosticPaths(diagnostics []edidocument.Diagnostic) []string {
 	paths := make([]string, 0, len(diagnostics))
 	for _, diagnostic := range diagnostics {
 		paths = append(paths, diagnostic.Path)
@@ -559,21 +581,25 @@ func TestShipmentStatusPayloads_CarryTheShippersReferenceAndTheWeight(t *testing
 		buildShipmentEventStatusPayload(event, tendered).ShipmentStatus.ShipperReference)
 
 	untendered := &shipment.Shipment{ID: pulid.MustNew("shp_"), ProNumber: "PRO-1043", BOL: "BOL-1"}
-	require.Equal(t, "BOL-1", buildShipmentStatusPayload(untendered).ShipmentStatus.ShipperReference,
-		"without the shipper's own reference the bill of lading stands for it")
+	require.Equal(
+		t,
+		"BOL-1",
+		buildShipmentStatusPayload(untendered).ShipmentStatus.ShipperReference,
+		"without the shipper's own reference the bill of lading stands for it",
+	)
 	require.Nil(t, buildShipmentStatusPayload(untendered).ShipmentStatus.Weight)
 }
 
 func TestATenderedRateIsRatedByHand(t *testing.T) {
 	mapped := pulid.MustNew("ft_")
 
-	tendered := &edi.LoadTenderPayload{
+	tendered := &editransfer.LoadTenderPayload{
 		FreightChargeAmount: decimal.NewNullDecimal(decimal.NewFromInt(1850)),
 	}
 	require.True(t, tenderedTemplate(tendered, mapped).IsNil(),
 		"the receiver bills the tendered rate, so no tariff re-rates it")
 
-	unpriced := &edi.LoadTenderPayload{}
+	unpriced := &editransfer.LoadTenderPayload{}
 	require.Equal(t, mapped, tenderedTemplate(unpriced, mapped),
 		"a tender without a rate is priced by the mapped tariff")
 }

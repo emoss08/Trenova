@@ -1,7 +1,9 @@
-package edi
+package ladingproject
 
 import (
 	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
 	"github.com/emoss08/trenova/pkg/lading"
 	"github.com/emoss08/trenova/pkg/wasmmodule"
 	"github.com/emoss08/trenova/shared/jsonutils"
@@ -101,8 +103,8 @@ type LadingProject struct {
 	CreatedAt         int64          `json:"createdAt"         keel:"created_at,autocreate"`
 	UpdatedAt         int64          `json:"updatedAt"         keel:"updated_at,autoupdate"`
 
-	Partner       *EDIPartner    `json:"partner,omitempty"       keel:"belongs:edi_partner_id"`
-	ActiveVersion *LadingVersion `json:"activeVersion,omitempty" keel:"belongs:active_version_id"`
+	Partner       *edi.EDIPartner `json:"partner,omitempty"       keel:"belongs:edi_partner_id"`
+	ActiveVersion *LadingVersion  `json:"activeVersion,omitempty" keel:"belongs:active_version_id"`
 }
 
 func (p *LadingProject) GetID() pulid.ID {
@@ -210,7 +212,7 @@ type FlowInstance struct {
 	CreatedAt      int64               `json:"createdAt"      keel:"created_at,autocreate"`
 	UpdatedAt      int64               `json:"updatedAt"      keel:"updated_at,autoupdate"`
 
-	Partner *EDIPartner `json:"partner,omitempty" keel:"belongs:edi_partner_id"`
+	Partner *edi.EDIPartner `json:"partner,omitempty" keel:"belongs:edi_partner_id"`
 }
 
 func (i *FlowInstance) GetID() pulid.ID {
@@ -288,16 +290,16 @@ type LadingReplayItem struct {
 type LadingShadowResult struct {
 	keel.Table `keel:"edi_lading_shadow_results"`
 
-	ID             pulid.ID               `json:"id"             keel:"id,pk,autoid:ldsh_"`
-	BusinessUnitID pulid.ID               `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	OrganizationID pulid.ID               `json:"organizationId" keel:"organization_id,pk,tenant"`
-	VersionID      pulid.ID               `json:"versionId"      keel:"version_id"`
-	MessageID      pulid.ID               `json:"messageId"      keel:"message_id"`
-	TransactionSet TransactionSet         `json:"transactionSet" keel:"transaction_set"`
-	Same           bool                   `json:"same"           keel:"same"`
-	Differences    []lading.Difference    `json:"differences"    keel:"differences,jsonb"`
-	NewOutcomes    []lading.ReplayOutcome `json:"newOutcomes"    keel:"new_outcomes,jsonb"`
-	GoneOutcomes   []lading.ReplayOutcome `json:"goneOutcomes"   keel:"gone_outcomes,jsonb"`
-	Error          string                 `json:"error"          keel:"error,nullzero"`
-	CreatedAt      int64                  `json:"createdAt"      keel:"created_at,autocreate"`
+	ID             pulid.ID                   `json:"id"             keel:"id,pk,autoid:ldsh_"`
+	BusinessUnitID pulid.ID                   `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID                   `json:"organizationId" keel:"organization_id,pk,tenant"`
+	VersionID      pulid.ID                   `json:"versionId"      keel:"version_id"`
+	MessageID      pulid.ID                   `json:"messageId"      keel:"message_id"`
+	TransactionSet edidocument.TransactionSet `json:"transactionSet" keel:"transaction_set"`
+	Same           bool                       `json:"same"           keel:"same"`
+	Differences    []lading.Difference        `json:"differences"    keel:"differences,jsonb"`
+	NewOutcomes    []lading.ReplayOutcome     `json:"newOutcomes"    keel:"new_outcomes,jsonb"`
+	GoneOutcomes   []lading.ReplayOutcome     `json:"goneOutcomes"   keel:"gone_outcomes,jsonb"`
+	Error          string                     `json:"error"          keel:"error,nullzero"`
+	CreatedAt      int64                      `json:"createdAt"      keel:"created_at,autocreate"`
 }

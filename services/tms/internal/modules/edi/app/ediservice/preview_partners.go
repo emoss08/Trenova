@@ -5,7 +5,10 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edisync"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/editenderchange"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/editransfer"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/editenderports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -22,7 +25,7 @@ type PartnerNotice struct {
 	PartnerID      pulid.ID
 	OrganizationID pulid.ID
 	PartnerName    string
-	TransactionSet edi.TransactionSet
+	TransactionSet edidocument.TransactionSet
 	Purpose        string
 	StatusCode     string
 	Changed        []string
@@ -32,9 +35,9 @@ type PartnerNotice struct {
 // tenderChangePlan is the 204 change a shipment update would send, and the
 // recipients whose baseline it differs from.
 type tenderChangePlan struct {
-	payload    *edi.LoadTenderPayload
+	payload    *editransfer.LoadTenderPayload
 	hash       string
-	recipients []*edi.TenderRecipient
+	recipients []*editenderchange.TenderRecipient
 }
 
 // planTenderChanges decides which recipients a shipment update reaches: the
@@ -54,7 +57,7 @@ func (s *Service) planTenderChanges(
 
 	oldPayload := buildTenderPayload(original)
 	newPayload := buildTenderPayload(updated)
-	newPayload.PurposeCode = edi.LoadTenderPurposeChange
+	newPayload.PurposeCode = editransfer.LoadTenderPurposeChange
 	newHash := tenderPayloadHash(&newPayload)
 	if tenderPayloadHash(&oldPayload) == newHash {
 		return nil, nil //nolint:nilnil // a nil plan means the update sends no 204 change
@@ -78,7 +81,7 @@ func (s *Service) planTenderChanges(
 	plan := &tenderChangePlan{
 		payload:    &newPayload,
 		hash:       newHash,
-		recipients: make([]*edi.TenderRecipient, 0, len(recipients)),
+		recipients: make([]*editenderchange.TenderRecipient, 0, len(recipients)),
 	}
 	for _, recipient := range recipients {
 		if recipient == nil || recipient.LatestBaselineHash == newHash {
@@ -120,10 +123,10 @@ func (s *Service) PreviewTenderChanges(
 			PartnerID:      recipient.EDIPartnerID,
 			OrganizationID: recipient.RecipientOrganizationID,
 			PartnerName:    s.partnerName(ctx, recipient),
-			TransactionSet: edi.TransactionSet204,
+			TransactionSet: edidocument.TransactionSet204,
 			Purpose:        "Change",
 			Changed:        changed,
-			HeldForReview:  recipient.RecipientKind != edi.TenderRecipientKindExternal,
+			HeldForReview:  recipient.RecipientKind != editenderchange.TenderRecipientKindExternal,
 		})
 	}
 
@@ -155,7 +158,7 @@ func (s *Service) PreviewCancelNotices(
 
 	notices := make([]*PartnerNotice, 0, len(links))
 	for _, link := range links {
-		if link == nil || link.Status != edi.ShipmentLinkStatusActive {
+		if link == nil || link.Status != edisync.ShipmentLinkStatusActive {
 			continue
 		}
 		opposite := link.TargetOrganizationID
@@ -166,7 +169,7 @@ func (s *Service) PreviewCancelNotices(
 			RecordID:       link.ID,
 			OrganizationID: opposite,
 			PartnerName:    "Linked trading partner",
-			TransactionSet: edi.TransactionSet214,
+			TransactionSet: edidocument.TransactionSet214,
 			Purpose:        "Cancel",
 			StatusCode:     "A7",
 		})
@@ -175,7 +178,10 @@ func (s *Service) PreviewCancelNotices(
 	return notices, nil
 }
 
-func (s *Service) partnerName(ctx context.Context, recipient *edi.TenderRecipient) string {
+func (s *Service) partnerName(
+	ctx context.Context,
+	recipient *editenderchange.TenderRecipient,
+) string {
 	if recipient.EDIPartnerID.IsNil() || s.partnerRepo == nil {
 		return "Linked trading partner"
 	}

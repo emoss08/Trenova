@@ -9,6 +9,8 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/edi/adapters/postgres/edimessagerepository"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edimessage"
 	"github.com/emoss08/trenova/internal/modules/edi/editest"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/edimessageports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -23,8 +25,8 @@ const overdueAge = int64(4 * 60 * 60)
 type ackHealthMessage struct {
 	name     string
 	partner  int
-	ack      edi.MessageAcknowledgmentStatus
-	delivery edi.MessageDeliveryStatus
+	ack      edimessage.MessageAcknowledgmentStatus
+	delivery edimessage.MessageDeliveryStatus
 	age      int64
 }
 
@@ -38,8 +40,8 @@ func TestOverdueAcks_ListAndCountAgreeOnWhatIsOverdue(t *testing.T) {
 		t,
 		ctx,
 		db,
-		edi.TransactionSet204,
-		edi.DocumentDirectionOutbound,
+		edidocument.TransactionSet204,
+		edidocument.DocumentDirectionOutbound,
 	)
 	tenant := org
 
@@ -57,32 +59,38 @@ func TestOverdueAcks_ListAndCountAgreeOnWhatIsOverdue(t *testing.T) {
 	}
 
 	now := timeutils.NowUnix()
-	sent := edi.MessageDeliveryStatusSent
-	pending := edi.MessageAcknowledgmentStatusPending
+	sent := edimessage.MessageDeliveryStatusSent
+	pending := edimessage.MessageAcknowledgmentStatusPending
 	fixtures := []ackHealthMessage{
 		{"acmeOldest", 0, pending, sent, 30 * 60 * 60},
 		{"boltOld", 1, pending, sent, 20 * 60 * 60},
 		{"acmeOld", 0, pending, sent, 6 * 60 * 60},
 		{"acmeJustPending", 0, pending, sent, 60 * 60},
-		{"boltAcceptedOld", 1, edi.MessageAcknowledgmentStatusAccepted, sent, 40 * 60 * 60},
-		{"boltErrorsOld", 1, edi.MessageAcknowledgmentStatusAcceptedWithErrors, sent, 40 * 60 * 60},
-		{"acmeDead", 0, edi.MessageAcknowledgmentStatusNotExpected,
-			edi.MessageDeliveryStatusDeadLettered, 60},
-		{"boltDead", 1, edi.MessageAcknowledgmentStatusNotExpected,
-			edi.MessageDeliveryStatusDeadLettered, 120},
+		{"boltAcceptedOld", 1, edimessage.MessageAcknowledgmentStatusAccepted, sent, 40 * 60 * 60},
+		{
+			"boltErrorsOld",
+			1,
+			edimessage.MessageAcknowledgmentStatusAcceptedWithErrors,
+			sent,
+			40 * 60 * 60,
+		},
+		{"acmeDead", 0, edimessage.MessageAcknowledgmentStatusNotExpected,
+			edimessage.MessageDeliveryStatusDeadLettered, 60},
+		{"boltDead", 1, edimessage.MessageAcknowledgmentStatusNotExpected,
+			edimessage.MessageDeliveryStatusDeadLettered, 120},
 	}
 	ids := make(map[string]pulid.ID, len(fixtures))
 	for index, entry := range fixtures {
-		message := &edi.EDIMessage{
+		message := &edimessage.EDIMessage{
 			BusinessUnitID:           org.BuID,
 			OrganizationID:           org.OrgID,
 			EDIPartnerID:             partners[entry.partner].ID,
 			DocumentTypeID:           documentType.ID,
-			Direction:                edi.DocumentDirectionOutbound,
-			Standard:                 edi.EDIStandardX12,
-			TransactionSet:           edi.TransactionSet214,
-			X12Version:               edi.DefaultX12204Version,
-			Status:                   edi.MessageStatusGenerated,
+			Direction:                edidocument.DocumentDirectionOutbound,
+			Standard:                 edidocument.EDIStandardX12,
+			TransactionSet:           edidocument.TransactionSet214,
+			X12Version:               edidocument.DefaultX12204Version,
+			Status:                   edimessage.MessageStatusGenerated,
 			RawX12:                   "ISA*TEST~",
 			InterchangeControlNumber: fmt.Sprintf("%09d", index+1),
 			GroupControlNumber:       fmt.Sprintf("%d", index+1),
@@ -186,11 +194,11 @@ func TestOverdueAcks_ListAndCountAgreeOnWhatIsOverdue(t *testing.T) {
 			},
 		)
 		require.NoError(t, err)
-		require.Equal(t, map[edi.MessageAcknowledgmentStatus]int{
-			edi.MessageAcknowledgmentStatusPending:            1,
-			edi.MessageAcknowledgmentStatusAccepted:           1,
-			edi.MessageAcknowledgmentStatusAcceptedWithErrors: 1,
-			edi.MessageAcknowledgmentStatusNotExpected:        1,
+		require.Equal(t, map[edimessage.MessageAcknowledgmentStatus]int{
+			edimessage.MessageAcknowledgmentStatusPending:            1,
+			edimessage.MessageAcknowledgmentStatusAccepted:           1,
+			edimessage.MessageAcknowledgmentStatusAcceptedWithErrors: 1,
+			edimessage.MessageAcknowledgmentStatusNotExpected:        1,
 		}, counts)
 
 		dead, err := repo.ListRecentDeadLettered(
@@ -209,7 +217,7 @@ func TestOverdueAcks_ListAndCountAgreeOnWhatIsOverdue(t *testing.T) {
 		count, err := repo.GetOverdueAckCount(ctx, edimessageports.GetEDIOverdueAckCountRequest{
 			TenantInfo:     tenant,
 			PendingSince:   pendingSince,
-			TransactionSet: edi.TransactionSet214,
+			TransactionSet: edidocument.TransactionSet214,
 		})
 		require.NoError(t, err)
 		require.Equal(t, 3, count)
@@ -217,7 +225,7 @@ func TestOverdueAcks_ListAndCountAgreeOnWhatIsOverdue(t *testing.T) {
 		none, err := repo.GetOverdueAckCount(ctx, edimessageports.GetEDIOverdueAckCountRequest{
 			TenantInfo:     tenant,
 			PendingSince:   pendingSince,
-			TransactionSet: edi.TransactionSet210,
+			TransactionSet: edidocument.TransactionSet210,
 		})
 		require.NoError(t, err)
 		require.Zero(t, none, "every fixture is a 214")
@@ -225,7 +233,7 @@ func TestOverdueAcks_ListAndCountAgreeOnWhatIsOverdue(t *testing.T) {
 		overdue, err := repo.ListOverdueAcks(ctx, &edimessageports.ListOverdueEDIAcksRequest{
 			TenantInfo:     tenant,
 			PendingSince:   pendingSince,
-			TransactionSet: edi.TransactionSet210,
+			TransactionSet: edidocument.TransactionSet210,
 			Limit:          10,
 		})
 		require.NoError(t, err)
@@ -236,7 +244,7 @@ func TestOverdueAcks_ListAndCountAgreeOnWhatIsOverdue(t *testing.T) {
 			ctx,
 			edimessageports.GetEDIMessageStatusCountsRequest{
 				TenantInfo:     tenant,
-				TransactionSet: edi.TransactionSet210,
+				TransactionSet: edidocument.TransactionSet210,
 			},
 		)
 		require.NoError(t, err)
@@ -246,7 +254,7 @@ func TestOverdueAcks_ListAndCountAgreeOnWhatIsOverdue(t *testing.T) {
 			ctx,
 			edimessageports.GetEDIMessageStatusCountsRequest{
 				TenantInfo:     tenant,
-				TransactionSet: edi.TransactionSet214,
+				TransactionSet: edidocument.TransactionSet214,
 				PartnerID:      partners[1].ID,
 			},
 		)
@@ -257,7 +265,7 @@ func TestOverdueAcks_ListAndCountAgreeOnWhatIsOverdue(t *testing.T) {
 			ctx,
 			&edimessageports.ListRecentEDIMessageFailuresRequest{
 				TenantInfo:     tenant,
-				TransactionSet: edi.TransactionSet210,
+				TransactionSet: edidocument.TransactionSet210,
 				Limit:          5,
 			},
 		)
@@ -277,19 +285,19 @@ func TestOverdueAcks_ListAndCountAgreeOnWhatIsOverdue(t *testing.T) {
 		require.Equal(t, []*edimessageports.EDIPartnerAckStatusCount{
 			{
 				PartnerID: partners[0].ID, PartnerName: "Acme Retail", PartnerCode: "ACK-HEALTH-0",
-				AckStatus: edi.MessageAcknowledgmentStatusNotExpected, Count: 1,
+				AckStatus: edimessage.MessageAcknowledgmentStatusNotExpected, Count: 1,
 			},
 			{
 				PartnerID: partners[0].ID, PartnerName: "Acme Retail", PartnerCode: "ACK-HEALTH-0",
-				AckStatus: edi.MessageAcknowledgmentStatusPending, Count: 3,
+				AckStatus: edimessage.MessageAcknowledgmentStatusPending, Count: 3,
 			},
 			{
 				PartnerID: partners[1].ID, PartnerName: "Bolt Logistics", PartnerCode: "ACK-HEALTH-1",
-				AckStatus: edi.MessageAcknowledgmentStatusNotExpected, Count: 1,
+				AckStatus: edimessage.MessageAcknowledgmentStatusNotExpected, Count: 1,
 			},
 			{
 				PartnerID: partners[1].ID, PartnerName: "Bolt Logistics", PartnerCode: "ACK-HEALTH-1",
-				AckStatus: edi.MessageAcknowledgmentStatusPending, Count: 1,
+				AckStatus: edimessage.MessageAcknowledgmentStatusPending, Count: 1,
 			},
 		}, rows, "by partner name, then status, and only what was sent in the window")
 
@@ -301,16 +309,16 @@ func TestOverdueAcks_ListAndCountAgreeOnWhatIsOverdue(t *testing.T) {
 			},
 		)
 		require.NoError(t, err)
-		counts := make(map[edi.MessageAcknowledgmentStatus]int, len(one))
+		counts := make(map[edimessage.MessageAcknowledgmentStatus]int, len(one))
 		for _, row := range one {
 			require.Equal(t, partners[1].ID, row.PartnerID)
 			counts[row.AckStatus] = row.Count
 		}
-		require.Equal(t, map[edi.MessageAcknowledgmentStatus]int{
-			edi.MessageAcknowledgmentStatusPending:            1,
-			edi.MessageAcknowledgmentStatusAccepted:           1,
-			edi.MessageAcknowledgmentStatusAcceptedWithErrors: 1,
-			edi.MessageAcknowledgmentStatusNotExpected:        1,
+		require.Equal(t, map[edimessage.MessageAcknowledgmentStatus]int{
+			edimessage.MessageAcknowledgmentStatusPending:            1,
+			edimessage.MessageAcknowledgmentStatusAccepted:           1,
+			edimessage.MessageAcknowledgmentStatusAcceptedWithErrors: 1,
+			edimessage.MessageAcknowledgmentStatusNotExpected:        1,
 		}, counts, "the same counts GetAckStatusCounts gives for one partner")
 	})
 
@@ -326,7 +334,7 @@ func TestOverdueAcks_ListAndCountAgreeOnWhatIsOverdue(t *testing.T) {
 	})
 }
 
-func messageIDs(messages []*edi.EDIMessage) []pulid.ID {
+func messageIDs(messages []*edimessage.EDIMessage) []pulid.ID {
 	ids := make([]pulid.ID, 0, len(messages))
 	for _, message := range messages {
 		ids = append(ids, message.ID)
@@ -371,9 +379,9 @@ func TestDevelopmentSeed_TheEDIPartnerHasAcknowledgmentsInEveryState(t *testing.
 		PartnerID:  partner.ID,
 	})
 	require.NoError(t, err)
-	require.Equal(t, 4, counts[edi.MessageAcknowledgmentStatusPending])
-	require.Equal(t, 1, counts[edi.MessageAcknowledgmentStatusAcceptedWithErrors])
-	require.Equal(t, 1, counts[edi.MessageAcknowledgmentStatusRejected])
+	require.Equal(t, 4, counts[edimessage.MessageAcknowledgmentStatusPending])
+	require.Equal(t, 1, counts[edimessage.MessageAcknowledgmentStatusAcceptedWithErrors])
+	require.Equal(t, 1, counts[edimessage.MessageAcknowledgmentStatusRejected])
 
 	dead, err := repo.ListRecentDeadLettered(
 		ctx,

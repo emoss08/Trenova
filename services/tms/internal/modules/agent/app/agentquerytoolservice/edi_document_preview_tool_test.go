@@ -6,7 +6,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/editransfer"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -68,8 +69,8 @@ func TestPreviewEDIDocument_RendersA214ThroughTheSendPathWithItsFindings(t *test
 			RawX12:       rendered214,
 			SegmentCount: 5,
 			X12Version:   "004010",
-			Diagnostics: []edi.Diagnostic{{
-				Severity:        edi.ValidationSeverityError,
+			Diagnostics: []edidocument.Diagnostic{{
+				Severity:        edidocument.ValidationSeverityError,
 				Code:            "required",
 				SegmentID:       "B10",
 				ElementPosition: 1,
@@ -83,7 +84,10 @@ func TestPreviewEDIDocument_RendersA214ThroughTheSendPathWithItsFindings(t *test
 	}}
 	partnerID := pulid.MustNew("edip_")
 	shipmentID := pulid.MustNew("shp_")
-	tool := newPreviewEDIDocumentTool(fake, readers(permission.ResourceEDI, permission.ResourceShipment))
+	tool := newPreviewEDIDocumentTool(
+		fake,
+		readers(permission.ResourceEDI, permission.ResourceShipment),
+	)
 
 	params := chatParams(map[string]any{
 		paramTransactionSet: "214",
@@ -97,8 +101,8 @@ func TestPreviewEDIDocument_RendersA214ThroughTheSendPathWithItsFindings(t *test
 	require.NotNil(t, req)
 	assert.Equal(t, partnerID, req.EDIPartnerID)
 	assert.Equal(t, shipmentID, req.ShipmentID)
-	assert.Equal(t, edi.TransactionSet214, req.TransactionSet)
-	assert.Equal(t, edi.DocumentDirectionOutbound, req.Direction,
+	assert.Equal(t, edidocument.TransactionSet214, req.TransactionSet)
+	assert.Equal(t, edidocument.DocumentDirectionOutbound, req.Direction,
 		"the request edi_send_status_update makes")
 	assert.Equal(t, params.OrganizationID, req.TenantInfo.OrgID)
 
@@ -125,7 +129,10 @@ func TestPreviewEDIDocument_RendersA214ThroughTheSendPathWithItsFindings(t *test
 func TestPreviewEDIDocument_AnswersATenderWithThe990ItWouldSend(t *testing.T) {
 	t.Parallel()
 
-	transfer := &edi.EDITransfer{ID: pulid.MustNew("edilt_"), Status: edi.TransferStatusPendingApproval}
+	transfer := &editransfer.EDITransfer{
+		ID:     pulid.MustNew("edilt_"),
+		Status: editransfer.TransferStatusPendingApproval,
+	}
 	fake := &fakeDocumentPreviewer{response: &ediservice.TenderResponsePreview{
 		OutboundDocumentPreview: ediservice.OutboundDocumentPreview{
 			Document: &ediservice.EDIDocumentPreview{
@@ -169,7 +176,9 @@ func TestPreviewEDIDocument_WithholdsTheX12BelowRestrictedButKeepsTheFindings(t 
 		Document: &ediservice.EDIDocumentPreview{
 			RawX12:      rendered214,
 			PartnerName: "Acme Retail",
-			Diagnostics: []edi.Diagnostic{{Severity: edi.ValidationSeverityWarning, Message: "N1 missing"}},
+			Diagnostics: []edidocument.Diagnostic{
+				{Severity: edidocument.ValidationSeverityWarning, Message: "N1 missing"},
+			},
 		},
 	}}
 	tool := newPreviewEDIDocumentTool(fake, &fakePermissions{})
@@ -215,7 +224,10 @@ func TestPreviewEDIDocument_SaysWhoseAccessHeldTheX12Back(t *testing.T) {
 				PartnerName: "Acme Retail",
 			},
 		}}
-		result, err := newPreviewEDIDocumentTool(fake, permissions).Query(t.Context(), chatParams(map[string]any{
+		result, err := newPreviewEDIDocumentTool(
+			fake,
+			permissions,
+		).Query(t.Context(), chatParams(map[string]any{
 			paramTransactionSet: "214",
 			paramPartnerID:      pulid.MustNew("edip_").String(),
 			paramShipmentID:     pulid.MustNew("shp_").String(),

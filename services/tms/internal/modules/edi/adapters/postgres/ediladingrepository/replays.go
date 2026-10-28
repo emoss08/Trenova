@@ -7,8 +7,8 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi/edidb"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/ladingproject"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/ladingproject/ladingprojectdb"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ladingports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/lading"
@@ -36,13 +36,13 @@ func NewReplays(p Params) ladingports.LadingReplayRepository {
 
 func (r *replays) CreateReplay(
 	ctx context.Context,
-	replay *edi.LadingReplay,
-) (*edi.LadingReplay, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*edi.LadingReplay, error) {
+	replay *ladingproject.LadingReplay,
+) (*ladingproject.LadingReplay, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*ladingproject.LadingReplay, error) {
 		if replay.Items == nil {
-			replay.Items = []edi.LadingReplayItem{}
+			replay.Items = []ladingproject.LadingReplayItem{}
 		}
-		if err := edidb.LadingReplays.Create(ctx, r.db.Keel(ctx), replay); err != nil {
+		if err := ladingprojectdb.LadingReplays.Create(ctx, r.db.Keel(ctx), replay); err != nil {
 			return nil, replayErrors.Map(err, replay.VersionID.String())
 		}
 		return replay, nil
@@ -52,9 +52,9 @@ func (r *replays) CreateReplay(
 func (r *replays) GetReplay(
 	ctx context.Context,
 	req ladingports.GetLadingReplayRequest,
-) (*edi.LadingReplay, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*edi.LadingReplay, error) {
-		rp := edidb.LadingReplays
+) (*ladingproject.LadingReplay, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*ladingproject.LadingReplay, error) {
+		rp := ladingprojectdb.LadingReplays
 		replay, err := rp.Where(rp.ID.Eq(req.ID)).One(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return nil, replayErrors.Map(err, req.ID.String())
@@ -66,9 +66,9 @@ func (r *replays) GetReplay(
 func (r *replays) ListReplays(
 	ctx context.Context,
 	req ladingports.ListLadingReplaysRequest,
-) ([]*edi.LadingReplay, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*edi.LadingReplay, error) {
-		rp := edidb.LadingReplays
+) ([]*ladingproject.LadingReplay, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*ladingproject.LadingReplay, error) {
+		rp := ladingprojectdb.LadingReplays
 		limit := req.Limit
 		if limit <= 0 || limit > maxReplaysListed {
 			limit = maxReplaysListed
@@ -83,12 +83,12 @@ func (r *replays) ListReplays(
 
 func (r *replays) FinishReplay(
 	ctx context.Context,
-	replay *edi.LadingReplay,
-) (*edi.LadingReplay, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*edi.LadingReplay, error) {
-		rp := edidb.LadingReplays
+	replay *ladingproject.LadingReplay,
+) (*ladingproject.LadingReplay, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*ladingproject.LadingReplay, error) {
+		rp := ladingprojectdb.LadingReplays
 		if replay.Items == nil {
-			replay.Items = []edi.LadingReplayItem{}
+			replay.Items = []ladingproject.LadingReplayItem{}
 		}
 		err := rp.Save(
 			ctx,
@@ -107,7 +107,10 @@ func (r *replays) FinishReplay(
 	})
 }
 
-func (r *replays) RecordShadowResult(ctx context.Context, result *edi.LadingShadowResult) error {
+func (r *replays) RecordShadowResult(
+	ctx context.Context,
+	result *ladingproject.LadingShadowResult,
+) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		if result.Differences == nil {
 			result.Differences = []lading.Difference{}
@@ -118,11 +121,11 @@ func (r *replays) RecordShadowResult(ctx context.Context, result *edi.LadingShad
 		if result.GoneOutcomes == nil {
 			result.GoneOutcomes = []lading.ReplayOutcome{}
 		}
-		s := edidb.LadingShadowResults
+		s := ladingprojectdb.LadingShadowResults
 		_, err := s.CreateOrSkip(
 			ctx,
 			r.db.Keel(ctx),
-			[]*edi.LadingShadowResult{result},
+			[]*ladingproject.LadingShadowResult{result},
 			s.VersionID,
 			s.BusinessUnitID,
 			s.OrganizationID,
@@ -135,18 +138,22 @@ func (r *replays) RecordShadowResult(ctx context.Context, result *edi.LadingShad
 func (r *replays) ListShadowResults(
 	ctx context.Context,
 	req ladingports.ListLadingShadowResultsRequest,
-) ([]*edi.LadingShadowResult, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*edi.LadingShadowResult, error) {
-		s := edidb.LadingShadowResults
-		limit := req.Limit
-		if limit <= 0 || limit > maxShadowResultsListed {
-			limit = maxShadowResultsListed
-		}
-		return s.Where(
-			s.VersionID.Eq(req.VersionID),
-			keel.When(req.OnlyDiffering, s.Same.Eq(false)),
-		).Order(s.CreatedAt.Desc(), s.ID.Desc()).Limit(limit).List(ctx, r.db.Keel(ctx))
-	})
+) ([]*ladingproject.LadingShadowResult, error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*ladingproject.LadingShadowResult, error) {
+			s := ladingprojectdb.LadingShadowResults
+			limit := req.Limit
+			if limit <= 0 || limit > maxShadowResultsListed {
+				limit = maxShadowResultsListed
+			}
+			return s.Where(
+				s.VersionID.Eq(req.VersionID),
+				keel.When(req.OnlyDiffering, s.Same.Eq(false)),
+			).Order(s.CreatedAt.Desc(), s.ID.Desc()).Limit(limit).List(ctx, r.db.Keel(ctx))
+		},
+	)
 }
 
 func (r *replays) SummarizeShadow(
@@ -158,7 +165,7 @@ func (r *replays) SummarizeShadow(
 		r.db,
 		func(ctx context.Context) (*ladingports.LadingShadowSummary, error) {
 			db := r.db.Keel(ctx)
-			s := edidb.LadingShadowResults
+			s := ladingprojectdb.LadingShadowResults
 			total, err := s.Where(s.VersionID.Eq(req.VersionID)).Count(ctx, db)
 			if err != nil {
 				return nil, err

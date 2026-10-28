@@ -11,7 +11,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edimessage"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/editransfer"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/shared/jsonschemautils"
@@ -41,7 +43,7 @@ type loadTenderSubmitter interface {
 		ctx context.Context,
 		req *ediservice.SubmitLoadTenderRequest,
 		actor *permissionports.RequestActor,
-	) (*edi.EDITransfer, error)
+	) (*editransfer.EDITransfer, error)
 }
 
 type ediDocumentGenerator interface {
@@ -52,7 +54,7 @@ type ediDocumentGenerator interface {
 	GenerateDocument(
 		ctx context.Context,
 		req *ediservice.GenerateEDIDocumentRequest,
-	) (*edi.EDIMessage, error)
+	) (*edimessage.EDIMessage, error)
 }
 
 func ediCreatePolicy(name, rationale string) agenttoolports.ToolPolicy {
@@ -224,8 +226,8 @@ func (t *SendEDIStatusUpdateTool) request(
 	req := &ediservice.GenerateEDIDocumentRequest{
 		TenantInfo:     toolparams.TenantFrom(*params),
 		EDIPartnerID:   partnerID,
-		TransactionSet: edi.TransactionSet214,
-		Direction:      edi.DocumentDirectionOutbound,
+		TransactionSet: edidocument.TransactionSet214,
+		Direction:      edidocument.DocumentDirectionOutbound,
 		GeneratedByID:  params.Actor.UserID,
 	}
 

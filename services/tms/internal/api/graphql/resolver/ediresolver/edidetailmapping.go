@@ -7,7 +7,10 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/ediinboundfile"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edimessage"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/editransfer"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -57,7 +60,7 @@ func optionalInt[T ~int16 | ~int32 | ~int64](value *T) *int {
 	return &out
 }
 
-func tenderStopCount(payload *edi.LoadTenderPayload) int {
+func tenderStopCount(payload *editransfer.LoadTenderPayload) int {
 	count := 0
 	for idx := range payload.Moves {
 		count += len(payload.Moves[idx].Stops)
@@ -66,7 +69,7 @@ func tenderStopCount(payload *edi.LoadTenderPayload) int {
 	return count
 }
 
-func tenderStopsToModel(payload *edi.LoadTenderPayload) []*gqlmodel.EDITenderStop {
+func tenderStopsToModel(payload *editransfer.LoadTenderPayload) []*gqlmodel.EDITenderStop {
 	out := make([]*gqlmodel.EDITenderStop, 0, tenderStopCount(payload))
 	for moveIdx := range payload.Moves {
 		stops := payload.Moves[moveIdx].Stops
@@ -99,7 +102,9 @@ func tenderStopsToModel(payload *edi.LoadTenderPayload) []*gqlmodel.EDITenderSto
 	return out
 }
 
-func tenderCommoditiesToModel(payload *edi.LoadTenderPayload) []*gqlmodel.EDITenderCommodity {
+func tenderCommoditiesToModel(
+	payload *editransfer.LoadTenderPayload,
+) []*gqlmodel.EDITenderCommodity {
 	out := make([]*gqlmodel.EDITenderCommodity, 0, len(payload.Commodities))
 	for idx := range payload.Commodities {
 		commodity := &payload.Commodities[idx]
@@ -117,7 +122,7 @@ func tenderCommoditiesToModel(payload *edi.LoadTenderPayload) []*gqlmodel.EDITen
 	return out
 }
 
-func tenderChargesToModel(payload *edi.LoadTenderPayload) *gqlmodel.EDITenderCharges {
+func tenderChargesToModel(payload *editransfer.LoadTenderPayload) *gqlmodel.EDITenderCharges {
 	charges := &gqlmodel.EDITenderCharges{
 		Freight:    fixedAmount(payload.FreightChargeAmount),
 		Other:      fixedAmount(payload.OtherChargeAmount),
@@ -149,7 +154,7 @@ func fixedAmount(amount decimal.NullDecimal) *string {
 	return &text
 }
 
-func mappingNeedsToModel(needs []edi.MappingResolution) []*gqlmodel.EDITransferMappingNeed {
+func mappingNeedsToModel(needs []editransfer.MappingResolution) []*gqlmodel.EDITransferMappingNeed {
 	out := make([]*gqlmodel.EDITransferMappingNeed, 0, len(needs))
 	for idx := range needs {
 		need := &needs[idx]
@@ -177,7 +182,7 @@ func rawText(raw string, purgedAt *int64) *gqlmodel.EDIRawText {
 	}
 }
 
-func ediMessageDetailToModel(message *edi.EDIMessage) *gqlmodel.EDIMessageDetail {
+func ediMessageDetailToModel(message *edimessage.EDIMessage) *gqlmodel.EDIMessageDetail {
 	detail := &gqlmodel.EDIMessageDetail{
 		Message:         message,
 		DiagnosticCount: len(message.ValidationErrors),
@@ -210,11 +215,13 @@ func ediMessageDetailToModel(message *edi.EDIMessage) *gqlmodel.EDIMessageDetail
 	return detail
 }
 
-func ediInboundFileDetailToModel(file *edi.EDIInboundFile) *gqlmodel.EDIInboundFileDetail {
+func ediInboundFileDetailToModel(
+	file *ediinboundfile.EDIInboundFile,
+) *gqlmodel.EDIInboundFileDetail {
 	detail := &gqlmodel.EDIInboundFileDetail{
 		File:         file,
 		MessageCount: len(file.Messages),
-		Messages:     make([]*edi.EDIMessage, 0, min(len(file.Messages), maxDetailMessages)),
+		Messages:     make([]*edimessage.EDIMessage, 0, min(len(file.Messages), maxDetailMessages)),
 		Raw:          rawText(file.RawContent, file.RawPurgedAt),
 	}
 	if file.CommunicationProfile != nil {
@@ -251,7 +258,7 @@ func ackHealthRequest(args *ackHealthArguments) (*ediservice.GetEDIAckHealthRequ
 		OverdueLimit: ackHealthOverdueRows,
 	}
 	if set := typeutils.ValueOrZero(args.transactionSet); set != "" {
-		req.TransactionSet = edi.TransactionSet(set)
+		req.TransactionSet = edidocument.TransactionSet(set)
 		if !req.TransactionSet.IsValid() {
 			return nil, errortypes.NewValidationError("transactionSet", errortypes.ErrInvalid,
 				"Transaction set must be 204, 210, 214, 990, 997 or 999")
@@ -329,17 +336,17 @@ func ediAckHealthToModel(health *ediservice.EDIAckHealth) *gqlmodel.EDIAckHealth
 
 // ackStatusOrder is the order acknowledgment counts are read in: what is
 // still awaited, then what came back, then what will not.
-var ackStatusOrder = [...]edi.MessageAcknowledgmentStatus{
-	edi.MessageAcknowledgmentStatusPending,
-	edi.MessageAcknowledgmentStatusAccepted,
-	edi.MessageAcknowledgmentStatusAcceptedWithErrors,
-	edi.MessageAcknowledgmentStatusRejected,
-	edi.MessageAcknowledgmentStatusFailed,
-	edi.MessageAcknowledgmentStatusNotExpected,
+var ackStatusOrder = [...]edimessage.MessageAcknowledgmentStatus{
+	edimessage.MessageAcknowledgmentStatusPending,
+	edimessage.MessageAcknowledgmentStatusAccepted,
+	edimessage.MessageAcknowledgmentStatusAcceptedWithErrors,
+	edimessage.MessageAcknowledgmentStatusRejected,
+	edimessage.MessageAcknowledgmentStatusFailed,
+	edimessage.MessageAcknowledgmentStatusNotExpected,
 }
 
 func ackStatusCountsToModel(
-	counts map[edi.MessageAcknowledgmentStatus]int,
+	counts map[edimessage.MessageAcknowledgmentStatus]int,
 ) []*gqlmodel.EDIAckStatusCount {
 	out := make([]*gqlmodel.EDIAckStatusCount, 0, len(ackStatusOrder))
 	for _, status := range ackStatusOrder {

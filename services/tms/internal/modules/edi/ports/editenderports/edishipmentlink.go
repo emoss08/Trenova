@@ -3,7 +3,7 @@ package editenderports
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edisync"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -26,14 +26,17 @@ type EDIShipmentLinkRepository interface {
 	ListShipmentLinks(
 		ctx context.Context,
 		req *ListEDIShipmentLinksRequest,
-	) (*pagination.ListResult[*edi.ShipmentLink], error)
+	) (*pagination.ListResult[*edisync.ShipmentLink], error)
 	GetShipmentLinkByID(
 		ctx context.Context,
 		req GetEDIShipmentLinkByIDRequest,
-	) (*edi.ShipmentLink, error)
+	) (*edisync.ShipmentLink, error)
 	GetShipmentLinksByShipmentID(
 		ctx context.Context,
 		req GetEDIShipmentLinksByShipmentIDRequest,
-	) ([]*edi.ShipmentLink, error)
-	CreateShipmentLink(ctx context.Context, entity *edi.ShipmentLink) (*edi.ShipmentLink, error)
+	) ([]*edisync.ShipmentLink, error)
+	CreateShipmentLink(
+		ctx context.Context,
+		entity *edisync.ShipmentLink,
+	) (*edisync.ShipmentLink, error)
 }

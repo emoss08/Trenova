@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/editransfer"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/editenderports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/mocks/editenderportsmock"
@@ -51,7 +51,7 @@ func TestEDIHandler_ListInboundTransfersFromOneInboundFile(t *testing.T) {
 		ListInbound(mock.Anything, mock.MatchedBy(func(req *editenderports.ListEDITransfersRequest) bool {
 			return req.InboundFileID == fileID
 		})).
-		Return(&pagination.ListResult[*edi.EDITransfer]{}, nil).
+		Return(&pagination.ListResult[*editransfer.EDITransfer]{}, nil).
 		Once()
 
 	runEDIRequest(

@@ -25,7 +25,11 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoicerun/invoicerundb"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document/documentdb"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage/inboundmessagedb"
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi/edidb"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/ediinboundfile/ediinboundfiledb"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edimessage/edimessagedb"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edisync/edisyncdb"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/editenderchange/editenderchangedb"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/editransfer/editransferdb"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor/tractordb"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/trailer/trailerdb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -211,23 +215,23 @@ var lookups = map[permission.Resource]lookup{
 	}),
 	permission.ResourceEDI: {kinds: map[string]lookup{
 		"edilt_": by(func(id pulid.ID) keel.Projection {
-			t := edidb.EDITransfers
+			t := editransferdb.EDITransfers
 			return t.Pick(t.Version).Where(t.ID.Eq(id))
 		}),
 		"editcg_": by(func(id pulid.ID) keel.Projection {
-			t := edidb.TenderChanges
+			t := editenderchangedb.TenderChanges
 			return t.Pick(t.Version).Where(t.ID.Eq(id))
 		}),
 		"editc_": by(func(id pulid.ID) keel.Projection {
-			t := edidb.TransferChanges
+			t := edisyncdb.TransferChanges
 			return t.Pick(t.Version).Where(t.ID.Eq(id))
 		}),
 		"edimsg_": by(func(id pulid.ID) keel.Projection {
-			t := edidb.EDIMessages
+			t := edimessagedb.EDIMessages
 			return t.Pick(t.Version).Where(t.ID.Eq(id))
 		}),
 		"ediinf_": by(func(id pulid.ID) keel.Projection {
-			t := edidb.EDIInboundFiles
+			t := ediinboundfiledb.EDIInboundFiles
 			return t.Pick(t.Version).Where(t.ID.Eq(id))
 		}),
 	}},

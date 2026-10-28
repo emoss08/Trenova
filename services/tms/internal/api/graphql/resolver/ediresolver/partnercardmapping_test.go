@@ -6,6 +6,10 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/ediinboundfile"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edimessage"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/ladingproject"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediconnectiondraftports"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/edimessageports"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
@@ -120,8 +124,8 @@ func TestEDIPartnerCardToModel_KeepsCarriersNullWhenNotRead(t *testing.T) {
 	require.NotNil(t, model.Lading, "a partner with no project has an empty Lading block")
 	assert.Nil(t, model.Lading.Project)
 	assert.Nil(t, model.Lading.Active)
-	assert.Equal(t, []*edi.EDIMessage{}, model.Attention.OverdueAcks)
-	assert.Equal(t, []*edi.EDIInboundFile{}, model.Attention.QuarantinedFiles)
+	assert.Equal(t, []*edimessage.EDIMessage{}, model.Attention.OverdueAcks)
+	assert.Equal(t, []*ediinboundfile.EDIInboundFile{}, model.Attention.QuarantinedFiles)
 
 	read := partnerCardFixture()
 	read.Carriers = []*carrier.CarrierEDIChannel{}
@@ -155,12 +159,12 @@ func TestEDIPartnerCardToModel_ReadsTheLinksAndFigures(t *testing.T) {
 	card.Activity.Sets = []*edimessageports.EDIPartnerSetActivityRow{
 		{
 			TransactionSet: "214",
-			Direction:      edi.DocumentDirectionOutbound,
+			Direction:      edidocument.DocumentDirectionOutbound,
 			Count:          1284,
 			FailedCount:    2,
 			LastAt:         1_700_000_500,
 		},
-		{TransactionSet: "204", Direction: edi.DocumentDirectionInbound, Count: 0},
+		{TransactionSet: "204", Direction: edidocument.DocumentDirectionInbound, Count: 0},
 	}
 
 	model := ediPartnerCardToModel(card)
@@ -185,12 +189,12 @@ func TestEDIPartnerCardToModel_ReadsTheLinksAndFigures(t *testing.T) {
 	assert.Equal(t, []*gqlmodel.EDIPartnerSetActivity{
 		{
 			TransactionSet: "214",
-			Direction:      edi.DocumentDirectionOutbound,
+			Direction:      edidocument.DocumentDirectionOutbound,
 			Count:          1284,
 			FailedCount:    2,
 			LastAt:         new(1_700_000_500),
 		},
-		{TransactionSet: "204", Direction: edi.DocumentDirectionInbound},
+		{TransactionSet: "204", Direction: edidocument.DocumentDirectionInbound},
 	}, model.Activity.Sets)
 	assert.Equal(t, 3, model.Activity.Scorecard.OverdueAckCount,
 		"overdue is counted once, by the attention's own read")
@@ -214,9 +218,12 @@ func TestEDIPartnerCardToModel_CarriesTheLadingVersionsRunning(t *testing.T) {
 
 	card := partnerCardFixture()
 	card.Lading = &ediservice.EDIPartnerLading{
-		Project: &edi.LadingProject{ID: pulid.MustNew("ldp_"), EDIPartnerID: card.Partner.ID},
-		Active:  &edi.LadingVersion{ID: pulid.MustNew("ldv_"), Number: 3},
-		Shadow:  &edi.LadingVersion{ID: pulid.MustNew("ldv_"), Number: 4},
+		Project: &ladingproject.LadingProject{
+			ID:           pulid.MustNew("ldp_"),
+			EDIPartnerID: card.Partner.ID,
+		},
+		Active: &ladingproject.LadingVersion{ID: pulid.MustNew("ldv_"), Number: 3},
+		Shadow: &ladingproject.LadingVersion{ID: pulid.MustNew("ldv_"), Number: 4},
 	}
 
 	model := ediPartnerCardToModel(card)
@@ -266,16 +273,16 @@ func TestLadingVersionModel_ReadsTheEnvelopeAndSetsFromTheManifest(t *testing.T)
 	assert.Equal(t, []*gqlmodel.EDILadingExchange{
 		{
 			TransactionSet: "204",
-			Direction:      edi.DocumentDirectionInbound,
+			Direction:      edidocument.DocumentDirectionInbound,
 			Map:            "tenderIn",
 			Acknowledgment: &ack,
 		},
 		{
-			TransactionSet: "214", Direction: edi.DocumentDirectionOutbound, Map: "statusOut",
+			TransactionSet: "214", Direction: edidocument.DocumentDirectionOutbound, Map: "statusOut",
 			Acknowledgment: &ack, AcknowledgmentWithin: &within,
 		},
 		{
-			TransactionSet: "990", Direction: edi.DocumentDirectionOutbound, Map: "answerOut",
+			TransactionSet: "990", Direction: edidocument.DocumentDirectionOutbound, Map: "answerOut",
 			Acknowledgment: &ack, AcknowledgmentWithin: &within,
 		},
 	}, ladingExchangesToModel(manifest), "a map that reads no X12 set is not an exchange")

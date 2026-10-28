@@ -8,6 +8,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/app/edilading"
 	"github.com/emoss08/trenova/internal/modules/edi/app/editransport"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/ediinboundfile"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edimessage"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/ladingproject"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/x12field"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediconnectiondraftports"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/edimessageports"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
@@ -74,7 +78,7 @@ type EDIPartnerActivity struct {
 	SeriesSince     int64
 	BucketSeconds   int64
 	Scorecard       *edimessageports.EDIPartnerScorecardRow
-	AckCounts       map[edi.MessageAcknowledgmentStatus]int
+	AckCounts       map[edimessage.MessageAcknowledgmentStatus]int
 	OverdueAckCount int
 	Sets            []*edimessageports.EDIPartnerSetActivityRow
 	Series          []*edimessageports.EDIVolumePoint
@@ -82,17 +86,17 @@ type EDIPartnerActivity struct {
 
 type EDIPartnerAttention struct {
 	OverdueAckAge   int64
-	OverdueAcks     []*edi.EDIMessage
+	OverdueAcks     []*edimessage.EDIMessage
 	OverdueAckCount int
 	OldestOverdueAt int64
-	DeadLettered    []*edi.EDIMessage
-	Quarantined     []*edi.EDIInboundFile
+	DeadLettered    []*edimessage.EDIMessage
+	Quarantined     []*ediinboundfile.EDIInboundFile
 }
 
 type EDIPartnerLading struct {
-	Project *edi.LadingProject
-	Active  *edi.LadingVersion
-	Shadow  *edi.LadingVersion
+	Project *ladingproject.LadingProject
+	Active  *ladingproject.LadingVersion
+	Shadow  *ladingproject.LadingVersion
 }
 
 type EDIPartnerCard struct {
@@ -182,7 +186,7 @@ func (s *Service) fillPartnerCardLading(
 	return nil
 }
 
-func withoutFiles(version *edi.LadingVersion) *edi.LadingVersion {
+func withoutFiles(version *ladingproject.LadingVersion) *ladingproject.LadingVersion {
 	summary := *version
 	summary.Files = nil
 	summary.Samples = nil
@@ -216,7 +220,7 @@ func partnerTransport(profile *edi.EDICommunicationProfile) *EDIPartnerTransport
 	transport := &EDIPartnerTransport{
 		Credentials:   CredentialRequirements(profile),
 		Certificates:  partnerCertificates(profile),
-		LastPollError: edi.RedactSecrets(profile.LastPollError),
+		LastPollError: x12field.RedactSecrets(profile.LastPollError),
 	}
 	transport.Profile = profileWithSecretState(profile)
 
@@ -363,7 +367,7 @@ func (s *Service) partnerCardAttention(
 	if err != nil {
 		return nil, err
 	}
-	attention.OverdueAcks = []*edi.EDIMessage{}
+	attention.OverdueAcks = []*edimessage.EDIMessage{}
 	if overdue != nil {
 		attention.OverdueAcks = overdue.Messages
 		for _, group := range overdue.Partners {

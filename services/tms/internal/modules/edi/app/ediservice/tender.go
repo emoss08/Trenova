@@ -4,6 +4,8 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/editenderchange"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/editransfer"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/editenderports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -148,9 +150,9 @@ func (s *Service) PlanLoadTender(
 		return nil, err
 	}
 
-	status := edi.TransferStatusPendingApproval
+	status := editransfer.TransferStatusPendingApproval
 	if len(preview.Unresolved) > 0 {
-		status = edi.TransferStatusMappingRequired
+		status = editransfer.TransferStatusMappingRequired
 	}
 
 	return &LoadTenderPlan{
@@ -168,13 +170,13 @@ func (s *Service) SubmitLoadTender(
 	ctx context.Context,
 	req *SubmitLoadTenderRequest,
 	actor *permissionports.RequestActor,
-) (*edi.EDITransfer, error) {
+) (*editransfer.EDITransfer, error) {
 	plan, err := s.PlanLoadTender(ctx, req)
 	if err != nil {
 		return nil, err
 	}
 
-	entity := &edi.EDITransfer{
+	entity := &editransfer.EDITransfer{
 		SourceOrganizationID: req.TenantInfo.OrgID,
 		SourceBusinessUnitID: req.TenantInfo.BuID,
 		TargetOrganizationID: plan.TargetPartner.OrganizationID,
@@ -188,7 +190,7 @@ func (s *Service) SubmitLoadTender(
 		SubmittedByID:        actor.UserID,
 	}
 
-	var created *edi.EDITransfer
+	var created *editransfer.EDITransfer
 	if s.db == nil {
 		created, err = s.transferRepo.CreateTransfer(ctx, entity)
 		if err != nil {
@@ -198,7 +200,7 @@ func (s *Service) SubmitLoadTender(
 			ctx,
 			created,
 			nil,
-			edi.TenderRecipientBaselineStatusSent,
+			editenderchange.TenderRecipientBaselineStatusSent,
 		); err != nil {
 			return nil, err
 		}
@@ -227,7 +229,7 @@ func (s *Service) SubmitLoadTender(
 					txCtx,
 					created,
 					nil,
-					edi.TenderRecipientBaselineStatusSent,
+					editenderchange.TenderRecipientBaselineStatusSent,
 				); err != nil {
 					return err
 				}

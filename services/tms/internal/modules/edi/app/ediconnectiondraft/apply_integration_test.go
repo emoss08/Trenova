@@ -19,6 +19,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi/edidb"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument/edidocumentdb"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/ladingproject"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/ladingproject/ladingprojectdb"
 	"github.com/emoss08/trenova/internal/modules/edi/editest"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediconnectiondraftports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
@@ -143,7 +146,7 @@ func TestApplyConnectionDraft_WritesTheWholeConnectionAndARerunIsAChangeSet(t *t
 	assert.Empty(t, transports[0].EncryptedSecrets)
 	assert.Equal(t, "ACMERETAILAS2", transports[0].Config["partnerAS2Id"])
 
-	lp := edidb.LadingProjects
+	lp := ladingprojectdb.LadingProjects
 	project, err := lp.Where(lp.EDIPartnerID.Eq(partner.ID)).One(ctx, db)
 	require.NoError(t, err)
 	assert.True(
@@ -151,12 +154,12 @@ func TestApplyConnectionDraft_WritesTheWholeConnectionAndARerunIsAChangeSet(t *t
 		project.ActiveVersionID.IsNil(),
 		"a drafted project runs nothing until it is certified",
 	)
-	lv := edidb.LadingVersions
+	lv := ladingprojectdb.LadingVersions
 	versions, err := lv.Where(lv.ProjectID.Eq(project.ID)).All(ctx, db)
 	require.NoError(t, err)
 	require.Len(t, versions, 1)
 	drafted := versions[0]
-	assert.Equal(t, edi.LadingVersionStatusDraft, drafted.Status)
+	assert.Equal(t, ladingproject.LadingVersionStatusDraft, drafted.Status)
 	assert.Equal(t, "Drafted from acme-retail-edi-guide.pdf", drafted.Notes)
 	paths := make([]string, 0, len(drafted.Files))
 	for _, file := range drafted.Files {
@@ -168,7 +171,7 @@ func TestApplyConnectionDraft_WritesTheWholeConnectionAndARerunIsAChangeSet(t *t
 	require.NotNil(t, drafted.Manifest.Partner.Interchange)
 	assert.Equal(t, "007912345", drafted.Manifest.Partner.Interchange.Them.ID)
 
-	cn := edidb.EDIControlNumberSequences
+	cn := edidocumentdb.EDIControlNumberSequences
 	sequences, err := cn.Where(cn.EDIPartnerID.Eq(partner.ID)).All(ctx, db)
 	require.NoError(t, err)
 	require.Len(t, sequences, 3)

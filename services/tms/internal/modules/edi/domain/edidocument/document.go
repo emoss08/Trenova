@@ -1,4 +1,4 @@
-package edi
+package edidocument
 
 import (
 	"github.com/emoss08/keel"
@@ -67,7 +67,7 @@ func (t *EDIDocumentType) Validate(multiErr *errortypes.MultiError) {
 		),
 		validation.Field(&t.Name,
 			validation.Required.Error("Name is required"),
-			validation.Length(1, maxEDINameLength).
+			validation.Length(1, maxNameLength).
 				Error("Name cannot be longer than 200 characters"),
 		),
 		validation.Field(&t.Standard,
@@ -99,8 +99,7 @@ func (t *EDIDocumentType) Validate(multiErr *errortypes.MultiError) {
 
 const (
 	maxEDICodeLength        = 20
-	maxEDINameLength        = 200
+	maxNameLength           = 200
 	functionalGroupIDLength = 2
-	maxSegmentIDLength      = 10
 	maxLoopIDLength         = 50
 )

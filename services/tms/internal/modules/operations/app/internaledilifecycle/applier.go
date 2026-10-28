@@ -3,7 +3,7 @@ package internaledilifecycle
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edisync"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentstate"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
@@ -32,20 +32,20 @@ type Params struct {
 }
 
 type PrepareRequest struct {
-	Link      *edi.ShipmentLink
-	Direction edi.TransferChangeDirection
+	Link      *edisync.ShipmentLink
+	Direction edisync.TransferChangeDirection
 }
 
 type PrepareLoadedRequest struct {
-	Link      *edi.ShipmentLink
-	Direction edi.TransferChangeDirection
+	Link      *edisync.ShipmentLink
+	Direction edisync.TransferChangeDirection
 	Source    *shipment.Shipment
 	Target    *shipment.Shipment
 }
 
 type Plan struct {
-	Link             *edi.ShipmentLink
-	Direction        edi.TransferChangeDirection
+	Link             *edisync.ShipmentLink
+	Direction        edisync.TransferChangeDirection
 	Source           *shipment.Shipment
 	Target           *shipment.Shipment
 	Changed          *shipment.Shipment
@@ -169,7 +169,7 @@ func (a *Applier) ApplyPrepared(ctx context.Context, plan *Plan) (*shipment.Ship
 
 func (a *Applier) loadShipments(
 	ctx context.Context,
-	link *edi.ShipmentLink,
+	link *edisync.ShipmentLink,
 ) (*shipment.Shipment, *shipment.Shipment, error) {
 	source, err := a.shipmentRepo.GetByID(ctx, &shipmentports.GetShipmentByIDRequest{
 		ID: link.SourceShipmentID,
@@ -213,7 +213,7 @@ func basePlan(req PrepareLoadedRequest) *Plan {
 		Source:    req.Source,
 		Target:    req.Target,
 	}
-	if req.Direction == edi.TransferChangeDirectionSourceToTarget {
+	if req.Direction == edisync.TransferChangeDirectionSourceToTarget {
 		plan.Changed = req.Source
 		plan.OppositeOriginal = req.Target
 		plan.OppositeInfo = pagination.TenantInfo{

@@ -11,6 +11,8 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/editransfer"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/editenderports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
@@ -70,19 +72,19 @@ func TestEDIHandler_DocumentTypeSelectOptionsRoute(t *testing.T) {
 		mock.Anything,
 		mock.MatchedBy(func(req *edipartnerports.EDIDocumentTypeSelectOptionsRequest) bool {
 			return req.SelectQueryRequest.Query == "204" &&
-				req.TransactionSet == edi.TransactionSet204 &&
-				req.Direction == edi.DocumentDirectionOutbound
+				req.TransactionSet == edidocument.TransactionSet204 &&
+				req.Direction == edidocument.DocumentDirectionOutbound
 		}),
-	).Return(&pagination.ListResult[*edi.EDIDocumentType]{
-		Items: []*edi.EDIDocumentType{{
+	).Return(&pagination.ListResult[*edidocument.EDIDocumentType]{
+		Items: []*edidocument.EDIDocumentType{{
 			ID:             pulid.MustNew("edidt_"),
 			Code:           "204",
 			Name:           "Motor Carrier Load Tender",
-			Standard:       edi.EDIStandardX12,
-			TransactionSet: edi.TransactionSet204,
-			Direction:      edi.DocumentDirectionOutbound,
-			DefaultVersion: edi.DefaultX12204Version,
-			Status:         edi.DocumentStatusActive,
+			Standard:       edidocument.EDIStandardX12,
+			TransactionSet: edidocument.TransactionSet204,
+			Direction:      edidocument.DocumentDirectionOutbound,
+			DefaultVersion: edidocument.DefaultX12204Version,
+			Status:         edidocument.DocumentStatusActive,
 		}},
 		Total:      1,
 		TotalExact: true,
@@ -105,14 +107,14 @@ func TestEDIHandler_DocumentTypeSelectOptionsRoute(t *testing.T) {
 func TestEDIHandler_TransactionSetCatalogRoutes(t *testing.T) {
 	t.Parallel()
 
-	tender := &edi.EDITransactionSet{
+	tender := &edidocument.EDITransactionSet{
 		ID:             pulid.ID("edits_x12_204"),
-		Standard:       edi.EDIStandardX12,
-		Code:           edi.TransactionSet204,
+		Standard:       edidocument.EDIStandardX12,
+		Code:           edidocument.TransactionSet204,
 		Name:           "Motor Carrier Load Tender",
 		Description:    "Outbound load tender document.",
-		DefaultVersion: edi.DefaultX12204Version,
-		Status:         edi.DocumentStatusActive,
+		DefaultVersion: edidocument.DefaultX12204Version,
+		Status:         edidocument.DocumentStatusActive,
 	}
 	repo := edipartnerportsmock.NewMockEDITransactionSetRepository(t)
 	repo.On(
@@ -120,12 +122,12 @@ func TestEDIHandler_TransactionSetCatalogRoutes(t *testing.T) {
 		mock.Anything,
 		mock.MatchedBy(func(req *edipartnerports.EDITransactionSetSelectOptionsRequest) bool {
 			return req.SelectQueryRequest.Query == "204" &&
-				req.Standard == edi.EDIStandardX12 &&
-				req.Status == edi.DocumentStatusActive &&
+				req.Standard == edidocument.EDIStandardX12 &&
+				req.Status == edidocument.DocumentStatusActive &&
 				len(req.IDs) == 0
 		}),
-	).Return(&pagination.ListResult[*edi.EDITransactionSet]{
-		Items:      []*edi.EDITransactionSet{tender},
+	).Return(&pagination.ListResult[*edidocument.EDITransactionSet]{
+		Items:      []*edidocument.EDITransactionSet{tender},
 		Total:      1,
 		TotalExact: true,
 	}, nil).Once()
@@ -138,8 +140,8 @@ func TestEDIHandler_TransactionSetCatalogRoutes(t *testing.T) {
 				req.SelectQueryRequest.Query == "" &&
 				req.SelectQueryRequest.Pagination.Limit == 1
 		}),
-	).Return(&pagination.ListResult[*edi.EDITransactionSet]{
-		Items:      []*edi.EDITransactionSet{tender},
+	).Return(&pagination.ListResult[*edidocument.EDITransactionSet]{
+		Items:      []*edidocument.EDITransactionSet{tender},
 		Total:      1,
 		TotalExact: true,
 	}, nil).Once()
@@ -149,7 +151,7 @@ func TestEDIHandler_TransactionSetCatalogRoutes(t *testing.T) {
 		mock.MatchedBy(func(req *edipartnerports.EDITransactionSetSelectOptionsRequest) bool {
 			return len(req.IDs) == 1 && req.IDs[0] == pulid.ID("edits_x12_000")
 		}),
-	).Return(&pagination.ListResult[*edi.EDITransactionSet]{}, nil).Once()
+	).Return(&pagination.ListResult[*edidocument.EDITransactionSet]{}, nil).Once()
 
 	handler := setupEDIHandler(t, func(params *ediservice.Params) {
 		params.TransactionSetRepo = repo
@@ -164,12 +166,12 @@ func TestEDIHandler_TransactionSetCatalogRoutes(t *testing.T) {
 		nil,
 		http.StatusOK,
 	)
-	var listResp pagination.Response[[]*edi.EDITransactionSet]
+	var listResp pagination.Response[[]*edidocument.EDITransactionSet]
 	require.NoError(t, listRecorder.ResponseJSON(&listResp))
 	require.Len(t, listResp.Results, 1)
 	assert.Equal(t, 1, listResp.Count)
 	assert.Equal(t, tender.ID, listResp.Results[0].ID)
-	assert.Equal(t, edi.TransactionSet204, listResp.Results[0].Code)
+	assert.Equal(t, edidocument.TransactionSet204, listResp.Results[0].Code)
 
 	oneRecorder := runEDIRequest(
 		t,
@@ -180,7 +182,7 @@ func TestEDIHandler_TransactionSetCatalogRoutes(t *testing.T) {
 		nil,
 		http.StatusOK,
 	)
-	var oneResp edi.EDITransactionSet
+	var oneResp edidocument.EDITransactionSet
 	require.NoError(t, oneRecorder.ResponseJSON(&oneResp))
 	assert.Equal(t, tender.ID, oneResp.ID)
 	assert.Equal(t, "Motor Carrier Load Tender", oneResp.Name)
@@ -202,15 +204,15 @@ func TestEDIHandler_DocumentTypeOptionAcceptsCatalogID(t *testing.T) {
 	repo := edipartnerportsmock.NewMockEDIDocumentTypeRepository(t)
 	repo.EXPECT().
 		ListDocumentTypes(mock.Anything, edipartnerports.ListEDIDocumentTypesRequest{}).
-		Return([]*edi.EDIDocumentType{{
+		Return([]*edidocument.EDIDocumentType{{
 			ID:             pulid.ID("edidt_x12_204_outbound"),
 			Code:           "X12-204-OUT",
 			Name:           "X12 204 Motor Carrier Load Tender",
-			Standard:       edi.EDIStandardX12,
-			TransactionSet: edi.TransactionSet204,
-			Direction:      edi.DocumentDirectionOutbound,
-			DefaultVersion: edi.DefaultX12204Version,
-			Status:         edi.DocumentStatusActive,
+			Standard:       edidocument.EDIStandardX12,
+			TransactionSet: edidocument.TransactionSet204,
+			Direction:      edidocument.DocumentDirectionOutbound,
+			DefaultVersion: edidocument.DefaultX12204Version,
+			Status:         edidocument.DocumentStatusActive,
 		}}, nil).
 		Once()
 
@@ -227,7 +229,7 @@ func TestEDIHandler_DocumentTypeOptionAcceptsCatalogID(t *testing.T) {
 		nil,
 		http.StatusOK,
 	)
-	var resp edi.EDIDocumentType
+	var resp edidocument.EDIDocumentType
 	require.NoError(t, recorder.ResponseJSON(&resp))
 	assert.Equal(t, pulid.ID("edidt_x12_204_outbound"), resp.ID)
 }
@@ -318,8 +320,8 @@ func TestEDIHandler_TransferListDirectionRoutes(t *testing.T) {
 		ListInbound(mock.Anything, mock.MatchedBy(func(req *editenderports.ListEDITransfersRequest) bool {
 			return req.Filter != nil
 		})).
-		Return(&pagination.ListResult[*edi.EDITransfer]{
-			Items:      []*edi.EDITransfer{},
+		Return(&pagination.ListResult[*editransfer.EDITransfer]{
+			Items:      []*editransfer.EDITransfer{},
 			Total:      0,
 			TotalExact: true,
 		}, nil).
@@ -328,8 +330,8 @@ func TestEDIHandler_TransferListDirectionRoutes(t *testing.T) {
 		ListOutbound(mock.Anything, mock.MatchedBy(func(req *editenderports.ListEDITransfersRequest) bool {
 			return req.Filter != nil
 		})).
-		Return(&pagination.ListResult[*edi.EDITransfer]{
-			Items:      []*edi.EDITransfer{},
+		Return(&pagination.ListResult[*editransfer.EDITransfer]{
+			Items:      []*editransfer.EDITransfer{},
 			Total:      0,
 			TotalExact: true,
 		}, nil).
@@ -458,15 +460,15 @@ func TestEDIHandler_SelectedValueRoutesReturnAutocompleteFields(t *testing.T) {
 		Once()
 	repo.EXPECT().
 		ListDocumentTypes(mock.Anything, edipartnerports.ListEDIDocumentTypesRequest{}).
-		Return([]*edi.EDIDocumentType{{
+		Return([]*edidocument.EDIDocumentType{{
 			ID:             documentTypeID,
 			Code:           "204",
 			Name:           "Motor Carrier Load Tender",
-			Standard:       edi.EDIStandardX12,
-			TransactionSet: edi.TransactionSet204,
-			Direction:      edi.DocumentDirectionOutbound,
-			DefaultVersion: edi.DefaultX12204Version,
-			Status:         edi.DocumentStatusActive,
+			Standard:       edidocument.EDIStandardX12,
+			TransactionSet: edidocument.TransactionSet204,
+			Direction:      edidocument.DocumentDirectionOutbound,
+			DefaultVersion: edidocument.DefaultX12204Version,
+			Status:         edidocument.DocumentStatusActive,
 		}}, nil).
 		Once()
 	profileRepo.EXPECT().
@@ -524,14 +526,14 @@ func TestEDIHandler_SelectedValueRoutesReturnAutocompleteFields(t *testing.T) {
 		nil,
 		http.StatusOK,
 	)
-	var documentTypeResp edi.EDIDocumentType
+	var documentTypeResp edidocument.EDIDocumentType
 	require.NoError(t, documentTypeRecorder.ResponseJSON(&documentTypeResp))
 	assert.Equal(t, documentTypeID, documentTypeResp.ID)
 	assert.Equal(t, "204", documentTypeResp.Code)
 	assert.Equal(t, "Motor Carrier Load Tender", documentTypeResp.Name)
-	assert.Equal(t, edi.TransactionSet204, documentTypeResp.TransactionSet)
-	assert.Equal(t, edi.DocumentDirectionOutbound, documentTypeResp.Direction)
-	assert.Equal(t, edi.DefaultX12204Version, documentTypeResp.DefaultVersion)
+	assert.Equal(t, edidocument.TransactionSet204, documentTypeResp.TransactionSet)
+	assert.Equal(t, edidocument.DocumentDirectionOutbound, documentTypeResp.Direction)
+	assert.Equal(t, edidocument.DefaultX12204Version, documentTypeResp.DefaultVersion)
 
 	communicationProfileRecorder := runEDIRequest(
 		t,

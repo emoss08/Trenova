@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/settlementpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edicarrierinvoice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
@@ -227,7 +227,7 @@ func TestCreateCarrierInvoiceMatch_MatchesAnEDIInvoiceOnly(t *testing.T) {
 	match := varianceMatch()
 	creator := &fakeMatchCreator{plan: &carriersettlementservice.CreateMatchPlan{
 		Match:   match,
-		Invoice: &edi.CarrierInvoice{},
+		Invoice: &edicarrierinvoice.CarrierInvoice{},
 	}}
 	tool := &CreateCarrierInvoiceMatchTool{matches: creator}
 	shipmentID := pulid.MustNew("shp_")
@@ -271,7 +271,7 @@ func (f *fakeInvoiceLinker) PlanLinkInvoice(
 	if f.refusal != nil {
 		return nil, f.refusal
 	}
-	before := &edi.CarrierInvoice{ID: invoiceID, InvoiceNumber: "INV-8812"}
+	before := &edicarrierinvoice.CarrierInvoice{ID: invoiceID, InvoiceNumber: "INV-8812"}
 	after := *before
 	after.CarrierID = carrierID
 
@@ -287,10 +287,10 @@ func (f *fakeInvoiceLinker) LinkInvoiceToCarrier(
 	_ pagination.TenantInfo,
 	_, carrierID pulid.ID,
 	_ *permissionports.RequestActor,
-) (*edi.CarrierInvoice, error) {
+) (*edicarrierinvoice.CarrierInvoice, error) {
 	f.linked = carrierID
 
-	return &edi.CarrierInvoice{}, nil
+	return &edicarrierinvoice.CarrierInvoice{}, nil
 }
 
 func TestLinkEDICarrierInvoice_NamesTheCarrier(t *testing.T) {

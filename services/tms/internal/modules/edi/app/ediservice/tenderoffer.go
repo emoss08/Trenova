@@ -3,7 +3,9 @@ package ediservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edipayload"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/editransfer"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
@@ -77,8 +79,8 @@ func (s *Service) SendTenderOffer(
 	message, err := s.GenerateDocument(ctx, &GenerateEDIDocumentRequest{
 		TenantInfo:                    req.TenantInfo,
 		EDIPartnerID:                  channel.EDIPartnerID,
-		TransactionSet:                edi.TransactionSet204,
-		Direction:                     edi.DocumentDirectionOutbound,
+		TransactionSet:                edidocument.TransactionSet204,
+		Direction:                     edidocument.DocumentDirectionOutbound,
 		Payload:                       payload,
 		CarrierSCAC:                   carrierOfferSCAC(offer, channel),
 		GeneratedByID:                 req.TenantInfo.UserID,
@@ -144,7 +146,7 @@ func buildCarrierOfferDocumentPayload(
 	offer *tender.TenderOffer,
 	source *shipment.Shipment,
 	channel *carrier.CarrierEDIChannel,
-) (*edi.DocumentPayload, error) {
+) (*edipayload.DocumentPayload, error) {
 	move := source.FindMove(offer.Tender.ShipmentMoveID)
 	if move == nil {
 		return nil, errortypes.NewBusinessError(
@@ -153,8 +155,8 @@ func buildCarrierOfferDocumentPayload(
 	}
 
 	offeredTotal := carrierOfferTotal(offer, move.Distance)
-	payload := edi.LoadTenderPayload{
-		PurposeCode:         edi.LoadTenderPurposeOriginal,
+	payload := editransfer.LoadTenderPayload{
+		PurposeCode:         editransfer.LoadTenderPurposeOriginal,
 		TenderOfferID:       offer.ID,
 		ShipmentID:          source.ID,
 		BusinessUnitID:      source.BusinessUnitID,
@@ -167,8 +169,8 @@ func buildCarrierOfferDocumentPayload(
 		FreightChargeAmount: offeredTotal,
 		TotalChargeAmount:   offeredTotal,
 		RatingDetail:        carrierOfferRatingDetail(offer, source),
-		Moves:               []edi.LoadTenderMove{loadTenderMoveFromShipmentMove(move)},
-		Commodities:         make([]edi.LoadTenderCommodity, 0, len(source.Commodities)),
+		Moves:               []editransfer.LoadTenderMove{loadTenderMoveFromShipmentMove(move)},
+		Commodities:         make([]editransfer.LoadTenderCommodity, 0, len(source.Commodities)),
 	}
 	for _, commodity := range source.Commodities {
 		if commodity == nil {
@@ -180,7 +182,7 @@ func buildCarrierOfferDocumentPayload(
 		)
 	}
 
-	documentPayload := edi.NewLoadTenderDocumentPayload(payload)
+	documentPayload := edipayload.NewLoadTenderDocumentPayload(payload)
 	if channel.CommunicationProfileID != nil && channel.CommunicationProfileID.IsNotNil() {
 		documentPayload.DeliveryCommunicationProfileID = *channel.CommunicationProfileID
 	}

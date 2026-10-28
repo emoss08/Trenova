@@ -5,11 +5,11 @@
 package ladingportsmock
 
 import (
+	"github.com/emoss08/trenova/internal/modules/edi/domain/ladingproject"
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ladingports"
 
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/pkg/pagination"
 	mock "github.com/stretchr/testify/mock"
 )
@@ -110,23 +110,23 @@ func (_c *MockLadingProjectRepository_ActivateVersion_Call) RunAndReturn(run fun
 }
 
 // CreateProject provides a mock function for the type MockLadingProjectRepository
-func (_mock *MockLadingProjectRepository) CreateProject(ctx context.Context, req *ladingports.CreateLadingProjectRequest) (*edi.LadingProject, error) {
+func (_mock *MockLadingProjectRepository) CreateProject(ctx context.Context, req *ladingports.CreateLadingProjectRequest) (*ladingproject.LadingProject, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for CreateProject")
 	}
 
-	var r0 *edi.LadingProject
+	var r0 *ladingproject.LadingProject
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *ladingports.CreateLadingProjectRequest) (*edi.LadingProject, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *ladingports.CreateLadingProjectRequest) (*ladingproject.LadingProject, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *ladingports.CreateLadingProjectRequest) *edi.LadingProject); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *ladingports.CreateLadingProjectRequest) *ladingproject.LadingProject); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*edi.LadingProject)
+			r0 = ret.Get(0).(*ladingproject.LadingProject)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, *ladingports.CreateLadingProjectRequest) error); ok {
@@ -167,37 +167,37 @@ func (_c *MockLadingProjectRepository_CreateProject_Call) Run(run func(ctx conte
 	return _c
 }
 
-func (_c *MockLadingProjectRepository_CreateProject_Call) Return(ladingProject *edi.LadingProject, err error) *MockLadingProjectRepository_CreateProject_Call {
+func (_c *MockLadingProjectRepository_CreateProject_Call) Return(ladingProject *ladingproject.LadingProject, err error) *MockLadingProjectRepository_CreateProject_Call {
 	_c.Call.Return(ladingProject, err)
 	return _c
 }
 
-func (_c *MockLadingProjectRepository_CreateProject_Call) RunAndReturn(run func(ctx context.Context, req *ladingports.CreateLadingProjectRequest) (*edi.LadingProject, error)) *MockLadingProjectRepository_CreateProject_Call {
+func (_c *MockLadingProjectRepository_CreateProject_Call) RunAndReturn(run func(ctx context.Context, req *ladingports.CreateLadingProjectRequest) (*ladingproject.LadingProject, error)) *MockLadingProjectRepository_CreateProject_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // CreateVersion provides a mock function for the type MockLadingProjectRepository
-func (_mock *MockLadingProjectRepository) CreateVersion(ctx context.Context, version *edi.LadingVersion, samples []*edi.LadingSample) (*edi.LadingVersion, error) {
+func (_mock *MockLadingProjectRepository) CreateVersion(ctx context.Context, version *ladingproject.LadingVersion, samples []*ladingproject.LadingSample) (*ladingproject.LadingVersion, error) {
 	ret := _mock.Called(ctx, version, samples)
 
 	if len(ret) == 0 {
 		panic("no return value specified for CreateVersion")
 	}
 
-	var r0 *edi.LadingVersion
+	var r0 *ladingproject.LadingVersion
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *edi.LadingVersion, []*edi.LadingSample) (*edi.LadingVersion, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *ladingproject.LadingVersion, []*ladingproject.LadingSample) (*ladingproject.LadingVersion, error)); ok {
 		return returnFunc(ctx, version, samples)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *edi.LadingVersion, []*edi.LadingSample) *edi.LadingVersion); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *ladingproject.LadingVersion, []*ladingproject.LadingSample) *ladingproject.LadingVersion); ok {
 		r0 = returnFunc(ctx, version, samples)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*edi.LadingVersion)
+			r0 = ret.Get(0).(*ladingproject.LadingVersion)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *edi.LadingVersion, []*edi.LadingSample) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *ladingproject.LadingVersion, []*ladingproject.LadingSample) error); ok {
 		r1 = returnFunc(ctx, version, samples)
 	} else {
 		r1 = ret.Error(1)
@@ -212,25 +212,25 @@ type MockLadingProjectRepository_CreateVersion_Call struct {
 
 // CreateVersion is a helper method to define mock.On call
 //   - ctx context.Context
-//   - version *edi.LadingVersion
-//   - samples []*edi.LadingSample
+//   - version *ladingproject.LadingVersion
+//   - samples []*ladingproject.LadingSample
 func (_e *MockLadingProjectRepository_Expecter) CreateVersion(ctx any, version any, samples any) *MockLadingProjectRepository_CreateVersion_Call {
 	return &MockLadingProjectRepository_CreateVersion_Call{Call: _e.mock.On("CreateVersion", ctx, version, samples)}
 }
 
-func (_c *MockLadingProjectRepository_CreateVersion_Call) Run(run func(ctx context.Context, version *edi.LadingVersion, samples []*edi.LadingSample)) *MockLadingProjectRepository_CreateVersion_Call {
+func (_c *MockLadingProjectRepository_CreateVersion_Call) Run(run func(ctx context.Context, version *ladingproject.LadingVersion, samples []*ladingproject.LadingSample)) *MockLadingProjectRepository_CreateVersion_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 *edi.LadingVersion
+		var arg1 *ladingproject.LadingVersion
 		if args[1] != nil {
-			arg1 = args[1].(*edi.LadingVersion)
+			arg1 = args[1].(*ladingproject.LadingVersion)
 		}
-		var arg2 []*edi.LadingSample
+		var arg2 []*ladingproject.LadingSample
 		if args[2] != nil {
-			arg2 = args[2].([]*edi.LadingSample)
+			arg2 = args[2].([]*ladingproject.LadingSample)
 		}
 		run(
 			arg0,
@@ -241,34 +241,34 @@ func (_c *MockLadingProjectRepository_CreateVersion_Call) Run(run func(ctx conte
 	return _c
 }
 
-func (_c *MockLadingProjectRepository_CreateVersion_Call) Return(ladingVersion *edi.LadingVersion, err error) *MockLadingProjectRepository_CreateVersion_Call {
+func (_c *MockLadingProjectRepository_CreateVersion_Call) Return(ladingVersion *ladingproject.LadingVersion, err error) *MockLadingProjectRepository_CreateVersion_Call {
 	_c.Call.Return(ladingVersion, err)
 	return _c
 }
 
-func (_c *MockLadingProjectRepository_CreateVersion_Call) RunAndReturn(run func(ctx context.Context, version *edi.LadingVersion, samples []*edi.LadingSample) (*edi.LadingVersion, error)) *MockLadingProjectRepository_CreateVersion_Call {
+func (_c *MockLadingProjectRepository_CreateVersion_Call) RunAndReturn(run func(ctx context.Context, version *ladingproject.LadingVersion, samples []*ladingproject.LadingSample) (*ladingproject.LadingVersion, error)) *MockLadingProjectRepository_CreateVersion_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetProject provides a mock function for the type MockLadingProjectRepository
-func (_mock *MockLadingProjectRepository) GetProject(ctx context.Context, req ladingports.GetLadingProjectRequest) (*edi.LadingProject, error) {
+func (_mock *MockLadingProjectRepository) GetProject(ctx context.Context, req ladingports.GetLadingProjectRequest) (*ladingproject.LadingProject, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetProject")
 	}
 
-	var r0 *edi.LadingProject
+	var r0 *ladingproject.LadingProject
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, ladingports.GetLadingProjectRequest) (*edi.LadingProject, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, ladingports.GetLadingProjectRequest) (*ladingproject.LadingProject, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, ladingports.GetLadingProjectRequest) *edi.LadingProject); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, ladingports.GetLadingProjectRequest) *ladingproject.LadingProject); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*edi.LadingProject)
+			r0 = ret.Get(0).(*ladingproject.LadingProject)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, ladingports.GetLadingProjectRequest) error); ok {
@@ -309,12 +309,12 @@ func (_c *MockLadingProjectRepository_GetProject_Call) Run(run func(ctx context.
 	return _c
 }
 
-func (_c *MockLadingProjectRepository_GetProject_Call) Return(ladingProject *edi.LadingProject, err error) *MockLadingProjectRepository_GetProject_Call {
+func (_c *MockLadingProjectRepository_GetProject_Call) Return(ladingProject *ladingproject.LadingProject, err error) *MockLadingProjectRepository_GetProject_Call {
 	_c.Call.Return(ladingProject, err)
 	return _c
 }
 
-func (_c *MockLadingProjectRepository_GetProject_Call) RunAndReturn(run func(ctx context.Context, req ladingports.GetLadingProjectRequest) (*edi.LadingProject, error)) *MockLadingProjectRepository_GetProject_Call {
+func (_c *MockLadingProjectRepository_GetProject_Call) RunAndReturn(run func(ctx context.Context, req ladingports.GetLadingProjectRequest) (*ladingproject.LadingProject, error)) *MockLadingProjectRepository_GetProject_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -388,23 +388,23 @@ func (_c *MockLadingProjectRepository_GetRunnableVersions_Call) RunAndReturn(run
 }
 
 // GetSamples provides a mock function for the type MockLadingProjectRepository
-func (_mock *MockLadingProjectRepository) GetSamples(ctx context.Context, req ladingports.GetLadingSamplesRequest) ([]*edi.LadingSample, error) {
+func (_mock *MockLadingProjectRepository) GetSamples(ctx context.Context, req ladingports.GetLadingSamplesRequest) ([]*ladingproject.LadingSample, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetSamples")
 	}
 
-	var r0 []*edi.LadingSample
+	var r0 []*ladingproject.LadingSample
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, ladingports.GetLadingSamplesRequest) ([]*edi.LadingSample, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, ladingports.GetLadingSamplesRequest) ([]*ladingproject.LadingSample, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, ladingports.GetLadingSamplesRequest) []*edi.LadingSample); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, ladingports.GetLadingSamplesRequest) []*ladingproject.LadingSample); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*edi.LadingSample)
+			r0 = ret.Get(0).([]*ladingproject.LadingSample)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, ladingports.GetLadingSamplesRequest) error); ok {
@@ -445,34 +445,34 @@ func (_c *MockLadingProjectRepository_GetSamples_Call) Run(run func(ctx context.
 	return _c
 }
 
-func (_c *MockLadingProjectRepository_GetSamples_Call) Return(ladingSamples []*edi.LadingSample, err error) *MockLadingProjectRepository_GetSamples_Call {
+func (_c *MockLadingProjectRepository_GetSamples_Call) Return(ladingSamples []*ladingproject.LadingSample, err error) *MockLadingProjectRepository_GetSamples_Call {
 	_c.Call.Return(ladingSamples, err)
 	return _c
 }
 
-func (_c *MockLadingProjectRepository_GetSamples_Call) RunAndReturn(run func(ctx context.Context, req ladingports.GetLadingSamplesRequest) ([]*edi.LadingSample, error)) *MockLadingProjectRepository_GetSamples_Call {
+func (_c *MockLadingProjectRepository_GetSamples_Call) RunAndReturn(run func(ctx context.Context, req ladingports.GetLadingSamplesRequest) ([]*ladingproject.LadingSample, error)) *MockLadingProjectRepository_GetSamples_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetVersion provides a mock function for the type MockLadingProjectRepository
-func (_mock *MockLadingProjectRepository) GetVersion(ctx context.Context, req ladingports.GetLadingVersionRequest) (*edi.LadingVersion, error) {
+func (_mock *MockLadingProjectRepository) GetVersion(ctx context.Context, req ladingports.GetLadingVersionRequest) (*ladingproject.LadingVersion, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetVersion")
 	}
 
-	var r0 *edi.LadingVersion
+	var r0 *ladingproject.LadingVersion
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, ladingports.GetLadingVersionRequest) (*edi.LadingVersion, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, ladingports.GetLadingVersionRequest) (*ladingproject.LadingVersion, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, ladingports.GetLadingVersionRequest) *edi.LadingVersion); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, ladingports.GetLadingVersionRequest) *ladingproject.LadingVersion); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*edi.LadingVersion)
+			r0 = ret.Get(0).(*ladingproject.LadingVersion)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, ladingports.GetLadingVersionRequest) error); ok {
@@ -513,34 +513,34 @@ func (_c *MockLadingProjectRepository_GetVersion_Call) Run(run func(ctx context.
 	return _c
 }
 
-func (_c *MockLadingProjectRepository_GetVersion_Call) Return(ladingVersion *edi.LadingVersion, err error) *MockLadingProjectRepository_GetVersion_Call {
+func (_c *MockLadingProjectRepository_GetVersion_Call) Return(ladingVersion *ladingproject.LadingVersion, err error) *MockLadingProjectRepository_GetVersion_Call {
 	_c.Call.Return(ladingVersion, err)
 	return _c
 }
 
-func (_c *MockLadingProjectRepository_GetVersion_Call) RunAndReturn(run func(ctx context.Context, req ladingports.GetLadingVersionRequest) (*edi.LadingVersion, error)) *MockLadingProjectRepository_GetVersion_Call {
+func (_c *MockLadingProjectRepository_GetVersion_Call) RunAndReturn(run func(ctx context.Context, req ladingports.GetLadingVersionRequest) (*ladingproject.LadingVersion, error)) *MockLadingProjectRepository_GetVersion_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // ListProjects provides a mock function for the type MockLadingProjectRepository
-func (_mock *MockLadingProjectRepository) ListProjects(ctx context.Context, req *ladingports.ListLadingProjectsRequest) (*pagination.ListResult[*edi.LadingProject], error) {
+func (_mock *MockLadingProjectRepository) ListProjects(ctx context.Context, req *ladingports.ListLadingProjectsRequest) (*pagination.ListResult[*ladingproject.LadingProject], error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListProjects")
 	}
 
-	var r0 *pagination.ListResult[*edi.LadingProject]
+	var r0 *pagination.ListResult[*ladingproject.LadingProject]
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *ladingports.ListLadingProjectsRequest) (*pagination.ListResult[*edi.LadingProject], error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *ladingports.ListLadingProjectsRequest) (*pagination.ListResult[*ladingproject.LadingProject], error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *ladingports.ListLadingProjectsRequest) *pagination.ListResult[*edi.LadingProject]); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *ladingports.ListLadingProjectsRequest) *pagination.ListResult[*ladingproject.LadingProject]); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*pagination.ListResult[*edi.LadingProject])
+			r0 = ret.Get(0).(*pagination.ListResult[*ladingproject.LadingProject])
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, *ladingports.ListLadingProjectsRequest) error); ok {
@@ -581,34 +581,34 @@ func (_c *MockLadingProjectRepository_ListProjects_Call) Run(run func(ctx contex
 	return _c
 }
 
-func (_c *MockLadingProjectRepository_ListProjects_Call) Return(listResult *pagination.ListResult[*edi.LadingProject], err error) *MockLadingProjectRepository_ListProjects_Call {
+func (_c *MockLadingProjectRepository_ListProjects_Call) Return(listResult *pagination.ListResult[*ladingproject.LadingProject], err error) *MockLadingProjectRepository_ListProjects_Call {
 	_c.Call.Return(listResult, err)
 	return _c
 }
 
-func (_c *MockLadingProjectRepository_ListProjects_Call) RunAndReturn(run func(ctx context.Context, req *ladingports.ListLadingProjectsRequest) (*pagination.ListResult[*edi.LadingProject], error)) *MockLadingProjectRepository_ListProjects_Call {
+func (_c *MockLadingProjectRepository_ListProjects_Call) RunAndReturn(run func(ctx context.Context, req *ladingports.ListLadingProjectsRequest) (*pagination.ListResult[*ladingproject.LadingProject], error)) *MockLadingProjectRepository_ListProjects_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // ListVersions provides a mock function for the type MockLadingProjectRepository
-func (_mock *MockLadingProjectRepository) ListVersions(ctx context.Context, req ladingports.ListLadingVersionsRequest) ([]*edi.LadingVersion, error) {
+func (_mock *MockLadingProjectRepository) ListVersions(ctx context.Context, req ladingports.ListLadingVersionsRequest) ([]*ladingproject.LadingVersion, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListVersions")
 	}
 
-	var r0 []*edi.LadingVersion
+	var r0 []*ladingproject.LadingVersion
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, ladingports.ListLadingVersionsRequest) ([]*edi.LadingVersion, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, ladingports.ListLadingVersionsRequest) ([]*ladingproject.LadingVersion, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, ladingports.ListLadingVersionsRequest) []*edi.LadingVersion); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, ladingports.ListLadingVersionsRequest) []*ladingproject.LadingVersion); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*edi.LadingVersion)
+			r0 = ret.Get(0).([]*ladingproject.LadingVersion)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, ladingports.ListLadingVersionsRequest) error); ok {
@@ -649,37 +649,37 @@ func (_c *MockLadingProjectRepository_ListVersions_Call) Run(run func(ctx contex
 	return _c
 }
 
-func (_c *MockLadingProjectRepository_ListVersions_Call) Return(ladingVersions []*edi.LadingVersion, err error) *MockLadingProjectRepository_ListVersions_Call {
+func (_c *MockLadingProjectRepository_ListVersions_Call) Return(ladingVersions []*ladingproject.LadingVersion, err error) *MockLadingProjectRepository_ListVersions_Call {
 	_c.Call.Return(ladingVersions, err)
 	return _c
 }
 
-func (_c *MockLadingProjectRepository_ListVersions_Call) RunAndReturn(run func(ctx context.Context, req ladingports.ListLadingVersionsRequest) ([]*edi.LadingVersion, error)) *MockLadingProjectRepository_ListVersions_Call {
+func (_c *MockLadingProjectRepository_ListVersions_Call) RunAndReturn(run func(ctx context.Context, req ladingports.ListLadingVersionsRequest) ([]*ladingproject.LadingVersion, error)) *MockLadingProjectRepository_ListVersions_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // SaveDraft provides a mock function for the type MockLadingProjectRepository
-func (_mock *MockLadingProjectRepository) SaveDraft(ctx context.Context, version *edi.LadingVersion, samples []*edi.LadingSample) (*edi.LadingVersion, error) {
+func (_mock *MockLadingProjectRepository) SaveDraft(ctx context.Context, version *ladingproject.LadingVersion, samples []*ladingproject.LadingSample) (*ladingproject.LadingVersion, error) {
 	ret := _mock.Called(ctx, version, samples)
 
 	if len(ret) == 0 {
 		panic("no return value specified for SaveDraft")
 	}
 
-	var r0 *edi.LadingVersion
+	var r0 *ladingproject.LadingVersion
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *edi.LadingVersion, []*edi.LadingSample) (*edi.LadingVersion, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *ladingproject.LadingVersion, []*ladingproject.LadingSample) (*ladingproject.LadingVersion, error)); ok {
 		return returnFunc(ctx, version, samples)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *edi.LadingVersion, []*edi.LadingSample) *edi.LadingVersion); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *ladingproject.LadingVersion, []*ladingproject.LadingSample) *ladingproject.LadingVersion); ok {
 		r0 = returnFunc(ctx, version, samples)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*edi.LadingVersion)
+			r0 = ret.Get(0).(*ladingproject.LadingVersion)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *edi.LadingVersion, []*edi.LadingSample) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *ladingproject.LadingVersion, []*ladingproject.LadingSample) error); ok {
 		r1 = returnFunc(ctx, version, samples)
 	} else {
 		r1 = ret.Error(1)
@@ -694,25 +694,25 @@ type MockLadingProjectRepository_SaveDraft_Call struct {
 
 // SaveDraft is a helper method to define mock.On call
 //   - ctx context.Context
-//   - version *edi.LadingVersion
-//   - samples []*edi.LadingSample
+//   - version *ladingproject.LadingVersion
+//   - samples []*ladingproject.LadingSample
 func (_e *MockLadingProjectRepository_Expecter) SaveDraft(ctx any, version any, samples any) *MockLadingProjectRepository_SaveDraft_Call {
 	return &MockLadingProjectRepository_SaveDraft_Call{Call: _e.mock.On("SaveDraft", ctx, version, samples)}
 }
 
-func (_c *MockLadingProjectRepository_SaveDraft_Call) Run(run func(ctx context.Context, version *edi.LadingVersion, samples []*edi.LadingSample)) *MockLadingProjectRepository_SaveDraft_Call {
+func (_c *MockLadingProjectRepository_SaveDraft_Call) Run(run func(ctx context.Context, version *ladingproject.LadingVersion, samples []*ladingproject.LadingSample)) *MockLadingProjectRepository_SaveDraft_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 *edi.LadingVersion
+		var arg1 *ladingproject.LadingVersion
 		if args[1] != nil {
-			arg1 = args[1].(*edi.LadingVersion)
+			arg1 = args[1].(*ladingproject.LadingVersion)
 		}
-		var arg2 []*edi.LadingSample
+		var arg2 []*ladingproject.LadingSample
 		if args[2] != nil {
-			arg2 = args[2].([]*edi.LadingSample)
+			arg2 = args[2].([]*ladingproject.LadingSample)
 		}
 		run(
 			arg0,
@@ -723,37 +723,37 @@ func (_c *MockLadingProjectRepository_SaveDraft_Call) Run(run func(ctx context.C
 	return _c
 }
 
-func (_c *MockLadingProjectRepository_SaveDraft_Call) Return(ladingVersion *edi.LadingVersion, err error) *MockLadingProjectRepository_SaveDraft_Call {
+func (_c *MockLadingProjectRepository_SaveDraft_Call) Return(ladingVersion *ladingproject.LadingVersion, err error) *MockLadingProjectRepository_SaveDraft_Call {
 	_c.Call.Return(ladingVersion, err)
 	return _c
 }
 
-func (_c *MockLadingProjectRepository_SaveDraft_Call) RunAndReturn(run func(ctx context.Context, version *edi.LadingVersion, samples []*edi.LadingSample) (*edi.LadingVersion, error)) *MockLadingProjectRepository_SaveDraft_Call {
+func (_c *MockLadingProjectRepository_SaveDraft_Call) RunAndReturn(run func(ctx context.Context, version *ladingproject.LadingVersion, samples []*ladingproject.LadingSample) (*ladingproject.LadingVersion, error)) *MockLadingProjectRepository_SaveDraft_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // SetShadowVersion provides a mock function for the type MockLadingProjectRepository
-func (_mock *MockLadingProjectRepository) SetShadowVersion(ctx context.Context, project *edi.LadingProject) (*edi.LadingProject, error) {
+func (_mock *MockLadingProjectRepository) SetShadowVersion(ctx context.Context, project *ladingproject.LadingProject) (*ladingproject.LadingProject, error) {
 	ret := _mock.Called(ctx, project)
 
 	if len(ret) == 0 {
 		panic("no return value specified for SetShadowVersion")
 	}
 
-	var r0 *edi.LadingProject
+	var r0 *ladingproject.LadingProject
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *edi.LadingProject) (*edi.LadingProject, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *ladingproject.LadingProject) (*ladingproject.LadingProject, error)); ok {
 		return returnFunc(ctx, project)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *edi.LadingProject) *edi.LadingProject); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *ladingproject.LadingProject) *ladingproject.LadingProject); ok {
 		r0 = returnFunc(ctx, project)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*edi.LadingProject)
+			r0 = ret.Get(0).(*ladingproject.LadingProject)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *edi.LadingProject) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *ladingproject.LadingProject) error); ok {
 		r1 = returnFunc(ctx, project)
 	} else {
 		r1 = ret.Error(1)
@@ -768,20 +768,20 @@ type MockLadingProjectRepository_SetShadowVersion_Call struct {
 
 // SetShadowVersion is a helper method to define mock.On call
 //   - ctx context.Context
-//   - project *edi.LadingProject
+//   - project *ladingproject.LadingProject
 func (_e *MockLadingProjectRepository_Expecter) SetShadowVersion(ctx any, project any) *MockLadingProjectRepository_SetShadowVersion_Call {
 	return &MockLadingProjectRepository_SetShadowVersion_Call{Call: _e.mock.On("SetShadowVersion", ctx, project)}
 }
 
-func (_c *MockLadingProjectRepository_SetShadowVersion_Call) Run(run func(ctx context.Context, project *edi.LadingProject)) *MockLadingProjectRepository_SetShadowVersion_Call {
+func (_c *MockLadingProjectRepository_SetShadowVersion_Call) Run(run func(ctx context.Context, project *ladingproject.LadingProject)) *MockLadingProjectRepository_SetShadowVersion_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 *edi.LadingProject
+		var arg1 *ladingproject.LadingProject
 		if args[1] != nil {
-			arg1 = args[1].(*edi.LadingProject)
+			arg1 = args[1].(*ladingproject.LadingProject)
 		}
 		run(
 			arg0,
@@ -791,37 +791,37 @@ func (_c *MockLadingProjectRepository_SetShadowVersion_Call) Run(run func(ctx co
 	return _c
 }
 
-func (_c *MockLadingProjectRepository_SetShadowVersion_Call) Return(ladingProject *edi.LadingProject, err error) *MockLadingProjectRepository_SetShadowVersion_Call {
+func (_c *MockLadingProjectRepository_SetShadowVersion_Call) Return(ladingProject *ladingproject.LadingProject, err error) *MockLadingProjectRepository_SetShadowVersion_Call {
 	_c.Call.Return(ladingProject, err)
 	return _c
 }
 
-func (_c *MockLadingProjectRepository_SetShadowVersion_Call) RunAndReturn(run func(ctx context.Context, project *edi.LadingProject) (*edi.LadingProject, error)) *MockLadingProjectRepository_SetShadowVersion_Call {
+func (_c *MockLadingProjectRepository_SetShadowVersion_Call) RunAndReturn(run func(ctx context.Context, project *ladingproject.LadingProject) (*ladingproject.LadingProject, error)) *MockLadingProjectRepository_SetShadowVersion_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // UpdateProjectSettings provides a mock function for the type MockLadingProjectRepository
-func (_mock *MockLadingProjectRepository) UpdateProjectSettings(ctx context.Context, project *edi.LadingProject) (*edi.LadingProject, error) {
+func (_mock *MockLadingProjectRepository) UpdateProjectSettings(ctx context.Context, project *ladingproject.LadingProject) (*ladingproject.LadingProject, error) {
 	ret := _mock.Called(ctx, project)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateProjectSettings")
 	}
 
-	var r0 *edi.LadingProject
+	var r0 *ladingproject.LadingProject
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *edi.LadingProject) (*edi.LadingProject, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *ladingproject.LadingProject) (*ladingproject.LadingProject, error)); ok {
 		return returnFunc(ctx, project)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *edi.LadingProject) *edi.LadingProject); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *ladingproject.LadingProject) *ladingproject.LadingProject); ok {
 		r0 = returnFunc(ctx, project)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*edi.LadingProject)
+			r0 = ret.Get(0).(*ladingproject.LadingProject)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *edi.LadingProject) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *ladingproject.LadingProject) error); ok {
 		r1 = returnFunc(ctx, project)
 	} else {
 		r1 = ret.Error(1)
@@ -836,20 +836,20 @@ type MockLadingProjectRepository_UpdateProjectSettings_Call struct {
 
 // UpdateProjectSettings is a helper method to define mock.On call
 //   - ctx context.Context
-//   - project *edi.LadingProject
+//   - project *ladingproject.LadingProject
 func (_e *MockLadingProjectRepository_Expecter) UpdateProjectSettings(ctx any, project any) *MockLadingProjectRepository_UpdateProjectSettings_Call {
 	return &MockLadingProjectRepository_UpdateProjectSettings_Call{Call: _e.mock.On("UpdateProjectSettings", ctx, project)}
 }
 
-func (_c *MockLadingProjectRepository_UpdateProjectSettings_Call) Run(run func(ctx context.Context, project *edi.LadingProject)) *MockLadingProjectRepository_UpdateProjectSettings_Call {
+func (_c *MockLadingProjectRepository_UpdateProjectSettings_Call) Run(run func(ctx context.Context, project *ladingproject.LadingProject)) *MockLadingProjectRepository_UpdateProjectSettings_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 *edi.LadingProject
+		var arg1 *ladingproject.LadingProject
 		if args[1] != nil {
-			arg1 = args[1].(*edi.LadingProject)
+			arg1 = args[1].(*ladingproject.LadingProject)
 		}
 		run(
 			arg0,
@@ -859,37 +859,37 @@ func (_c *MockLadingProjectRepository_UpdateProjectSettings_Call) Run(run func(c
 	return _c
 }
 
-func (_c *MockLadingProjectRepository_UpdateProjectSettings_Call) Return(ladingProject *edi.LadingProject, err error) *MockLadingProjectRepository_UpdateProjectSettings_Call {
+func (_c *MockLadingProjectRepository_UpdateProjectSettings_Call) Return(ladingProject *ladingproject.LadingProject, err error) *MockLadingProjectRepository_UpdateProjectSettings_Call {
 	_c.Call.Return(ladingProject, err)
 	return _c
 }
 
-func (_c *MockLadingProjectRepository_UpdateProjectSettings_Call) RunAndReturn(run func(ctx context.Context, project *edi.LadingProject) (*edi.LadingProject, error)) *MockLadingProjectRepository_UpdateProjectSettings_Call {
+func (_c *MockLadingProjectRepository_UpdateProjectSettings_Call) RunAndReturn(run func(ctx context.Context, project *ladingproject.LadingProject) (*ladingproject.LadingProject, error)) *MockLadingProjectRepository_UpdateProjectSettings_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // UpdateVersionStatus provides a mock function for the type MockLadingProjectRepository
-func (_mock *MockLadingProjectRepository) UpdateVersionStatus(ctx context.Context, version *edi.LadingVersion) (*edi.LadingVersion, error) {
+func (_mock *MockLadingProjectRepository) UpdateVersionStatus(ctx context.Context, version *ladingproject.LadingVersion) (*ladingproject.LadingVersion, error) {
 	ret := _mock.Called(ctx, version)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateVersionStatus")
 	}
 
-	var r0 *edi.LadingVersion
+	var r0 *ladingproject.LadingVersion
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *edi.LadingVersion) (*edi.LadingVersion, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *ladingproject.LadingVersion) (*ladingproject.LadingVersion, error)); ok {
 		return returnFunc(ctx, version)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *edi.LadingVersion) *edi.LadingVersion); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *ladingproject.LadingVersion) *ladingproject.LadingVersion); ok {
 		r0 = returnFunc(ctx, version)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*edi.LadingVersion)
+			r0 = ret.Get(0).(*ladingproject.LadingVersion)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *edi.LadingVersion) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *ladingproject.LadingVersion) error); ok {
 		r1 = returnFunc(ctx, version)
 	} else {
 		r1 = ret.Error(1)
@@ -904,20 +904,20 @@ type MockLadingProjectRepository_UpdateVersionStatus_Call struct {
 
 // UpdateVersionStatus is a helper method to define mock.On call
 //   - ctx context.Context
-//   - version *edi.LadingVersion
+//   - version *ladingproject.LadingVersion
 func (_e *MockLadingProjectRepository_Expecter) UpdateVersionStatus(ctx any, version any) *MockLadingProjectRepository_UpdateVersionStatus_Call {
 	return &MockLadingProjectRepository_UpdateVersionStatus_Call{Call: _e.mock.On("UpdateVersionStatus", ctx, version)}
 }
 
-func (_c *MockLadingProjectRepository_UpdateVersionStatus_Call) Run(run func(ctx context.Context, version *edi.LadingVersion)) *MockLadingProjectRepository_UpdateVersionStatus_Call {
+func (_c *MockLadingProjectRepository_UpdateVersionStatus_Call) Run(run func(ctx context.Context, version *ladingproject.LadingVersion)) *MockLadingProjectRepository_UpdateVersionStatus_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 *edi.LadingVersion
+		var arg1 *ladingproject.LadingVersion
 		if args[1] != nil {
-			arg1 = args[1].(*edi.LadingVersion)
+			arg1 = args[1].(*ladingproject.LadingVersion)
 		}
 		run(
 			arg0,
@@ -927,12 +927,12 @@ func (_c *MockLadingProjectRepository_UpdateVersionStatus_Call) Run(run func(ctx
 	return _c
 }
 
-func (_c *MockLadingProjectRepository_UpdateVersionStatus_Call) Return(ladingVersion *edi.LadingVersion, err error) *MockLadingProjectRepository_UpdateVersionStatus_Call {
+func (_c *MockLadingProjectRepository_UpdateVersionStatus_Call) Return(ladingVersion *ladingproject.LadingVersion, err error) *MockLadingProjectRepository_UpdateVersionStatus_Call {
 	_c.Call.Return(ladingVersion, err)
 	return _c
 }
 
-func (_c *MockLadingProjectRepository_UpdateVersionStatus_Call) RunAndReturn(run func(ctx context.Context, version *edi.LadingVersion) (*edi.LadingVersion, error)) *MockLadingProjectRepository_UpdateVersionStatus_Call {
+func (_c *MockLadingProjectRepository_UpdateVersionStatus_Call) RunAndReturn(run func(ctx context.Context, version *ladingproject.LadingVersion) (*ladingproject.LadingVersion, error)) *MockLadingProjectRepository_UpdateVersionStatus_Call {
 	_c.Call.Return(run)
 	return _c
 }

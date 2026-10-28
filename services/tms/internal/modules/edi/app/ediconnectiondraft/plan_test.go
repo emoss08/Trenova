@@ -10,6 +10,8 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/ladingproject"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediconnectiondraftports"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/lading"
@@ -115,52 +117,84 @@ func acmeValues() []ediconnectiondraftports.DraftValueInput {
 		value(fieldElementSep, "*", 3, "Element separator: * (asterisk)."),
 		value(fieldSegmentSep, "~", 3, "Segment terminator: ~ (tilde)."),
 		value(fieldComponentSep, ">", 3, "Sub-element separator: > (greater than)."),
-		value(controlNumberField(edi.ControlNumberKindInterchange), "1000", 3,
+		value(controlNumberField(edidocument.ControlNumberKindInterchange), "1000", 3,
 			"Carrier interchange control numbers (ISA13) must start at 1000"),
 		value(
-			setField(edi.TransactionSet204, edi.DocumentDirectionInbound, setAttrSupported),
+			setField(
+				edidocument.TransactionSet204,
+				edidocument.DocumentDirectionInbound,
+				setAttrSupported,
+			),
 			"true",
 			4,
 			"Acme sends the 204 Motor Carrier Load Tender to the carrier.",
 		),
 		value(
-			setField(edi.TransactionSet990, edi.DocumentDirectionOutbound, setAttrSupported),
+			setField(
+				edidocument.TransactionSet990,
+				edidocument.DocumentDirectionOutbound,
+				setAttrSupported,
+			),
 			"true",
 			4,
 			"The carrier answers each tender with a 990 Response to a Load Tender",
 		),
 		value(
-			setField(edi.TransactionSet214, edi.DocumentDirectionOutbound, setAttrSupported),
+			setField(
+				edidocument.TransactionSet214,
+				edidocument.DocumentDirectionOutbound,
+				setAttrSupported,
+			),
 			"true",
 			4,
 			"The carrier sends the 214 Transportation Carrier Shipment Status Message",
 		),
 		value(
-			setField(edi.TransactionSet210, edi.DocumentDirectionOutbound, setAttrSupported),
+			setField(
+				edidocument.TransactionSet210,
+				edidocument.DocumentDirectionOutbound,
+				setAttrSupported,
+			),
 			"true",
 			4,
 			"The carrier invoices with the 210 Motor Carrier Freight Details and Invoice.",
 		),
 		value(
-			setField(edi.TransactionSet990, edi.DocumentDirectionOutbound, setAttrAck),
+			setField(
+				edidocument.TransactionSet990,
+				edidocument.DocumentDirectionOutbound,
+				setAttrAck,
+			),
 			"997",
 			4,
 			"Acme expects a 997 Functional Acknowledgment for every 990, 214 and 210 within 4 hours.",
 		),
 		value(
-			setField(edi.TransactionSet990, edi.DocumentDirectionOutbound, setAttrAckWindowMinutes),
+			setField(
+				edidocument.TransactionSet990,
+				edidocument.DocumentDirectionOutbound,
+				setAttrAckWindowMinutes,
+			),
 			"240",
 			4,
 			"Acme expects a 997 Functional Acknowledgment for every 990, 214 and 210 within 4 hours.",
 		),
 		value(
-			setField(edi.TransactionSet214, edi.DocumentDirectionOutbound, setAttrAck),
+			setField(
+				edidocument.TransactionSet214,
+				edidocument.DocumentDirectionOutbound,
+				setAttrAck,
+			),
 			"997",
 			4,
 			"Acme expects a 997 Functional Acknowledgment for every 990, 214 and 210 within 4 hours.",
 		),
 		value(
-			setField(edi.TransactionSet210, edi.DocumentDirectionOutbound, setAttrAck),
+			setField(
+				edidocument.TransactionSet210,
+				edidocument.DocumentDirectionOutbound,
+				setAttrAck,
+			),
 			"997",
 			4,
 			"Acme expects a 997 Functional Acknowledgment for every 990, 214 and 210 within 4 hours.",
@@ -177,17 +211,17 @@ func acmeRequest(t *testing.T) *ediconnectiondraftports.ConnectionDraftRequest {
 		Values:     acmeValues(),
 		Requirements: []ediconnectiondraftports.DraftRequirementInput{
 			{
-				TransactionSet: edi.TransactionSet214, Direction: edi.DocumentDirectionOutbound,
+				TransactionSet: edidocument.TransactionSet214, Direction: edidocument.DocumentDirectionOutbound,
 				SegmentID: "MS1", Usage: ediconnectiondraftports.RequirementUsageMandatory,
 				Citation: cite(5, "MS1 Equipment Location is mandatory on every status."),
 			},
 			{
-				TransactionSet: edi.TransactionSet214, Direction: edi.DocumentDirectionOutbound,
+				TransactionSet: edidocument.TransactionSet214, Direction: edidocument.DocumentDirectionOutbound,
 				SegmentID: "K1", Usage: ediconnectiondraftports.RequirementUsageNotUsed,
 				Citation: cite(5, "K1 Remarks is not used."),
 			},
 			{
-				TransactionSet: edi.TransactionSet204, Direction: edi.DocumentDirectionInbound,
+				TransactionSet: edidocument.TransactionSet204, Direction: edidocument.DocumentDirectionInbound,
 				SegmentID: "B2", ElementPosition: 4, Usage: ediconnectiondraftports.RequirementUsageMandatory,
 				Citation: cite(5, "B2-04 Shipment Identification Number is mandatory."),
 			},
@@ -221,8 +255,8 @@ func valueOf(
 func setFor(
 	t *testing.T,
 	draft *ediconnectiondraftports.ConnectionDraft,
-	set edi.TransactionSet,
-	direction edi.DocumentDirection,
+	set edidocument.TransactionSet,
+	direction edidocument.DocumentDirection,
 ) ediconnectiondraftports.DraftSet {
 	t.Helper()
 	for _, drafted := range draft.Sets {
@@ -295,7 +329,7 @@ func TestPlan_DraftsAWholeNewConnectionFromTheSpec(t *testing.T) {
 	assert.Equal(t, edi.ConnectionMethodAS2, draft.Connection.Method)
 	assert.Len(t, draft.Sets, 4)
 
-	tender := setFor(t, draft, edi.TransactionSet204, edi.DocumentDirectionInbound)
+	tender := setFor(t, draft, edidocument.TransactionSet204, edidocument.DocumentDirectionInbound)
 	assert.Equal(t, ediconnectiondraftports.ChangeKindAdd, tender.Change)
 	assert.Equal(
 		t,
@@ -303,22 +337,26 @@ func TestPlan_DraftsAWholeNewConnectionFromTheSpec(t *testing.T) {
 		valueOf(
 			t,
 			tender.Fields,
-			setField(edi.TransactionSet204, edi.DocumentDirectionInbound, setAttrVersion),
+			setField(
+				edidocument.TransactionSet204,
+				edidocument.DocumentDirectionInbound,
+				setAttrVersion,
+			),
 		).Value,
 	)
 	assert.Equal(t, 1, tender.Requirements)
 	assert.Empty(t, tender.ControlNumbers, "inbound documents carry the partner's numbers")
 
-	status := setFor(t, draft, edi.TransactionSet214, edi.DocumentDirectionOutbound)
+	status := setFor(t, draft, edidocument.TransactionSet214, edidocument.DocumentDirectionOutbound)
 	ack := valueOf(
 		t,
 		status.Fields,
-		setField(edi.TransactionSet214, edi.DocumentDirectionOutbound, setAttrAck),
+		setField(edidocument.TransactionSet214, edidocument.DocumentDirectionOutbound, setAttrAck),
 	)
 	assert.Equal(t, "997", ack.Value)
 	require.Len(t, status.ControlNumbers, 1)
 	assert.Equal(t, int64(1000), status.ControlNumbers[0].Start)
-	assert.Equal(t, edi.ControlNumberKindInterchange, status.ControlNumbers[0].Kind)
+	assert.Equal(t, edidocument.ControlNumberKindInterchange, status.ControlNumbers[0].Kind)
 	assert.Equal(t, 2, status.Requirements, "MS1 is required and K1 is not used")
 	for _, unmet := range status.Unmet {
 		assert.Equal(t, 5, unmet.Source.Page, "an unmet rule cites the page that asks for it")
@@ -344,11 +382,20 @@ func TestPlan_DraftsAWholeNewConnectionFromTheSpec(t *testing.T) {
 		draftedFile(t, draft.Project, "guides/204.lading").Change,
 	)
 
-	response := setFor(t, draft, edi.TransactionSet990, edi.DocumentDirectionOutbound)
+	response := setFor(
+		t,
+		draft,
+		edidocument.TransactionSet990,
+		edidocument.DocumentDirectionOutbound,
+	)
 	window := valueOf(
 		t,
 		response.Fields,
-		setField(edi.TransactionSet990, edi.DocumentDirectionOutbound, setAttrAckWindowMinutes),
+		setField(
+			edidocument.TransactionSet990,
+			edidocument.DocumentDirectionOutbound,
+			setAttrAckWindowMinutes,
+		),
 	)
 	assert.Equal(t, "240", window.Value, "4 hours")
 
@@ -369,8 +416,8 @@ func TestPlan_DraftsAWholeNewConnectionFromTheSpec(t *testing.T) {
 	sample := draft.Samples[0]
 	assert.True(t, sample.Parsed)
 	assert.Equal(t, 7, sample.Page)
-	assert.Equal(t, edi.TransactionSet204, sample.TransactionSet)
-	assert.Equal(t, edi.DocumentDirectionInbound, sample.Direction)
+	assert.Equal(t, edidocument.TransactionSet204, sample.TransactionSet)
+	assert.Equal(t, edidocument.DocumentDirectionInbound, sample.Direction)
 	require.NotEmpty(t, sample.Checks)
 	for _, check := range sample.Checks {
 		assert.True(
@@ -715,7 +762,7 @@ func TestPlan_NeedsReadableText(t *testing.T) {
 
 // acmeVersion is the active Lading version a partner set up before this guide would have: the
 // carrier starter for Acme's interchange, receiving 204s and sending 214s.
-func acmeVersion(t *testing.T, projectID pulid.ID) *edi.LadingVersion {
+func acmeVersion(t *testing.T, projectID pulid.ID) *ladingproject.LadingVersion {
 	t.Helper()
 	client := lading.Default()
 	starter, err := client.Starter(t.Context(), &lading.StarterRequest{
@@ -743,11 +790,11 @@ func acmeVersion(t *testing.T, projectID pulid.ID) *edi.LadingVersion {
 	check, err := client.Check(t.Context(), encoded)
 	require.NoError(t, err)
 	require.Zero(t, check.Errors)
-	return &edi.LadingVersion{
+	return &ladingproject.LadingVersion{
 		ID:        pulid.MustNew("ldv_"),
 		ProjectID: projectID,
 		Number:    2,
-		Status:    edi.LadingVersionStatusActive,
+		Status:    ladingproject.LadingVersionStatusActive,
 		Files:     starter.Files,
 		Samples:   storeSamples(starter.Samples),
 		Manifest:  *check,
@@ -761,7 +808,7 @@ func existingAcme(
 	t.Helper()
 	partnerID := pulid.MustNew("edip_")
 	tenant := req.TenantInfo
-	project := &edi.LadingProject{
+	project := &ladingproject.LadingProject{
 		ID:             pulid.MustNew("ldp_"),
 		OrganizationID: tenant.OrgID,
 		BusinessUnitID: tenant.BuID,
@@ -792,9 +839,12 @@ func existingAcme(
 			EntityType: edi.MappingEntityTypeServiceType, SourceID: "OLD", TargetID: pulid.MustNew("st_"),
 			TargetLabel: "Legacy",
 		}},
-		ControlNumbers: []*edi.EDIControlNumberSequence{{
-			DocumentTypeID: documentTypeID(edi.TransactionSet214, edi.DocumentDirectionOutbound),
-			Kind:           edi.ControlNumberKindInterchange, NextValue: 5000,
+		ControlNumbers: []*edidocument.EDIControlNumberSequence{{
+			DocumentTypeID: documentTypeID(
+				edidocument.TransactionSet214,
+				edidocument.DocumentDirectionOutbound,
+			),
+			Kind: edidocument.ControlNumberKindInterchange, NextValue: 5000,
 		}},
 	}
 }
@@ -837,7 +887,7 @@ func TestPlan_ARevisedSpecForAKnownPartnerIsAChangeSet(t *testing.T) {
 	assert.Equal(t, ediconnectiondraftports.ChangeKindSame, draft.Transport.Change)
 	assert.Equal(t, domaintypes.StatusActive, draft.Transport.Status)
 
-	status := setFor(t, draft, edi.TransactionSet214, edi.DocumentDirectionOutbound)
+	status := setFor(t, draft, edidocument.TransactionSet214, edidocument.DocumentDirectionOutbound)
 	assert.NotEqual(
 		t,
 		ediconnectiondraftports.ChangeKindAdd,
@@ -852,7 +902,12 @@ func TestPlan_ARevisedSpecForAKnownPartnerIsAChangeSet(t *testing.T) {
 	assert.Equal(
 		t,
 		ediconnectiondraftports.ChangeKindAdd,
-		setFor(t, draft, edi.TransactionSet990, edi.DocumentDirectionOutbound).Change,
+		setFor(
+			t,
+			draft,
+			edidocument.TransactionSet990,
+			edidocument.DocumentDirectionOutbound,
+		).Change,
 	)
 
 	require.NotNil(t, draft.Project)
@@ -875,7 +930,10 @@ func TestPlan_ARevisedSpecForAKnownPartnerIsAChangeSet(t *testing.T) {
 	assert.Contains(
 		t,
 		gaps,
-		fmt.Sprintf(noMapSummary, titleSet(edi.TransactionSet990, edi.DocumentDirectionOutbound)),
+		fmt.Sprintf(
+			noMapSummary,
+			titleSet(edidocument.TransactionSet990, edidocument.DocumentDirectionOutbound),
+		),
 		"a set the project has no map for is named for the studio",
 	)
 
@@ -1003,8 +1061,8 @@ func TestPlan_NamesTheAcknowledgmentItChoseWhenTheGuideAsksForTwo(t *testing.T) 
 	req := acmeRequest(t)
 	for index := range req.Values {
 		if req.Values[index].Field == setField(
-			edi.TransactionSet210,
-			edi.DocumentDirectionOutbound,
+			edidocument.TransactionSet210,
+			edidocument.DocumentDirectionOutbound,
 			setAttrAck,
 		) {
 			req.Values[index] = value(req.Values[index].Field, "999", 4,

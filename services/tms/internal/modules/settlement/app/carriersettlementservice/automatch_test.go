@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edicarrierinvoice"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -76,8 +76,8 @@ func autoMatchInvoice(
 	tenantInfo pagination.TenantInfo,
 	carrierID pulid.ID,
 	total float64,
-) *edi.CarrierInvoice {
-	return &edi.CarrierInvoice{
+) *edicarrierinvoice.CarrierInvoice {
+	return &edicarrierinvoice.CarrierInvoice{
 		ID:             pulid.MustNew("edici_"),
 		OrganizationID: tenantInfo.OrgID,
 		BusinessUnitID: tenantInfo.BuID,
@@ -91,7 +91,7 @@ func autoMatchInvoice(
 
 func (deps *autoMatchDeps) expectInvoiceLoad(
 	tenantInfo pagination.TenantInfo,
-	invoice *edi.CarrierInvoice,
+	invoice *edicarrierinvoice.CarrierInvoice,
 ) {
 	deps.matches.On("GetOpenByEDIInvoiceID", mock.Anything, tenantInfo, invoice.ID).
 		Return(nil, nil)
@@ -196,10 +196,10 @@ func TestAutoMatchWithinToleranceCreatesMatched(t *testing.T) {
 			auditParams = append(auditParams, params)
 		}).
 		Return(nil)
-	var syncedInvoice *edi.CarrierInvoice
+	var syncedInvoice *edicarrierinvoice.CarrierInvoice
 	deps.invoices.On("UpdateCarrierInvoice", mock.Anything, mock.Anything).
 		Run(func(args mock.Arguments) {
-			syncedInvoice = args.Get(1).(*edi.CarrierInvoice)
+			syncedInvoice = args.Get(1).(*edicarrierinvoice.CarrierInvoice)
 		}).
 		Return(invoice, nil)
 
@@ -236,7 +236,7 @@ func TestAutoMatchWithinToleranceCreatesMatched(t *testing.T) {
 	require.NotNil(t, syncedInvoice)
 	assert.Equal(
 		t,
-		edi.CarrierInvoiceReconciliationStatusMatched,
+		edicarrierinvoice.CarrierInvoiceReconciliationStatusMatched,
 		syncedInvoice.ReconciliationStatus,
 	)
 	require.True(t, syncedInvoice.ExpectedAmount.Valid)
@@ -300,10 +300,10 @@ func TestAutoMatchOutsideToleranceCreatesVariance(t *testing.T) {
 	deps.assignments.On("FindForMatching", mock.Anything, mock.Anything).Return(assignment, nil)
 	created := deps.expectMatchCreate()
 	deps.audit.EXPECT().LogAction(mock.Anything, mock.Anything).Return(nil)
-	var syncedInvoice *edi.CarrierInvoice
+	var syncedInvoice *edicarrierinvoice.CarrierInvoice
 	deps.invoices.On("UpdateCarrierInvoice", mock.Anything, mock.Anything).
 		Run(func(args mock.Arguments) {
-			syncedInvoice = args.Get(1).(*edi.CarrierInvoice)
+			syncedInvoice = args.Get(1).(*edicarrierinvoice.CarrierInvoice)
 		}).
 		Return(invoice, nil)
 
@@ -327,7 +327,7 @@ func TestAutoMatchOutsideToleranceCreatesVariance(t *testing.T) {
 	require.NotNil(t, syncedInvoice)
 	assert.Equal(
 		t,
-		edi.CarrierInvoiceReconciliationStatusVariance,
+		edicarrierinvoice.CarrierInvoiceReconciliationStatusVariance,
 		syncedInvoice.ReconciliationStatus,
 	)
 }

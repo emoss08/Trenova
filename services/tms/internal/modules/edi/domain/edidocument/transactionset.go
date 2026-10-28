@@ -1,4 +1,4 @@
-package edi
+package edidocument
 
 import (
 	"github.com/emoss08/keel"
@@ -34,7 +34,7 @@ func (s *EDITransactionSet) Validate(multiErr *errortypes.MultiError) {
 		),
 		validation.Field(&s.Name,
 			validation.Required.Error("Name is required"),
-			validation.Length(1, maxEDINameLength).
+			validation.Length(1, maxNameLength).
 				Error("Name cannot be longer than 200 characters"),
 		),
 		validation.Field(&s.DefaultVersion,

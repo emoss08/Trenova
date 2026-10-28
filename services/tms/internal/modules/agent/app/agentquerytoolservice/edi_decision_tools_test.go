@@ -4,7 +4,9 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edisync"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/editenderchange"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/editransfer"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/editenderports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -13,43 +15,43 @@ import (
 )
 
 type fakeTenderChangeList struct {
-	changes []*edi.TenderChange
+	changes []*editenderchange.TenderChange
 	request *editenderports.ListEDITenderChangesRequest
 }
 
 func (f *fakeTenderChangeList) ListTenderChanges(
 	_ context.Context,
 	req *editenderports.ListEDITenderChangesRequest,
-) (*pagination.ListResult[*edi.TenderChange], error) {
+) (*pagination.ListResult[*editenderchange.TenderChange], error) {
 	f.request = req
 
-	return &pagination.ListResult[*edi.TenderChange]{Items: f.changes}, nil
+	return &pagination.ListResult[*editenderchange.TenderChange]{Items: f.changes}, nil
 }
 
 func TestListEDITenderChanges_SaysWhatChangedAndWhichWaitOnThisOrganization(t *testing.T) {
 	t.Parallel()
 
 	params := agentParams(map[string]any{paramStatus: "PendingReview"}, "")
-	change := &edi.TenderChange{
+	change := &editenderchange.TenderChange{
 		ID:     pulid.MustNew("editcg_"),
-		Status: edi.TenderChangeStatusPendingReview,
-		Recipient: &edi.TenderRecipient{
-			RecipientKind:           edi.TenderRecipientKindInternal,
+		Status: editenderchange.TenderChangeStatusPendingReview,
+		Recipient: &editenderchange.TenderRecipient{
+			RecipientKind:           editenderchange.TenderRecipientKindInternal,
 			RecipientOrganizationID: params.OrganizationID,
 		},
-		NewTenderPayload: edi.LoadTenderPayload{BOL: "BOL-5"},
+		NewTenderPayload: editransfer.LoadTenderPayload{BOL: "BOL-5"},
 		DiffSummary: map[string]any{
 			"weight": map[string]any{"previous": 20000, "next": 42000},
 			"moves":  map[string]any{"previous": []any{}, "next": []any{map[string]any{}}},
 		},
 	}
-	fake := &fakeTenderChangeList{changes: []*edi.TenderChange{change}}
+	fake := &fakeTenderChangeList{changes: []*editenderchange.TenderChange{change}}
 	tool := newListEDITenderChangesTool(fake)
 
 	result, err := tool.Query(t.Context(), params)
 	require.NoError(t, err)
 
-	assert.Equal(t, edi.TenderChangeStatusPendingReview, fake.request.Status)
+	assert.Equal(t, editenderchange.TenderChangeStatusPendingReview, fake.request.Status)
 	rows := result.(*gatedOutcome).Items.([]ediTenderChangeRow)
 	require.Len(t, rows, 1)
 	assert.True(t, rows[0].AwaitsThisOrganization)
@@ -61,29 +63,29 @@ func TestListEDITenderChanges_SaysWhatChangedAndWhichWaitOnThisOrganization(t *t
 }
 
 type fakeTransferChangeList struct {
-	changes []*edi.TransferChange
+	changes []*edisync.TransferChange
 	request *editenderports.ListEDITransferChangesRequest
 }
 
 func (f *fakeTransferChangeList) ListTransferChanges(
 	_ context.Context,
 	req *editenderports.ListEDITransferChangesRequest,
-) (*pagination.ListResult[*edi.TransferChange], error) {
+) (*pagination.ListResult[*edisync.TransferChange], error) {
 	f.request = req
 
-	return &pagination.ListResult[*edi.TransferChange]{Items: f.changes}, nil
+	return &pagination.ListResult[*edisync.TransferChange]{Items: f.changes}, nil
 }
 
 func TestListEDITransferChanges_GivesTheReportedStatus(t *testing.T) {
 	t.Parallel()
 
-	change := &edi.TransferChange{
+	change := &edisync.TransferChange{
 		ID:         pulid.MustNew("editc_"),
-		Status:     edi.TransferChangeStatusPendingReview,
-		ChangeType: edi.TransferChangeTypeShipmentStatus214,
+		Status:     edisync.TransferChangeStatusPendingReview,
+		ChangeType: edisync.TransferChangeTypeShipmentStatus214,
 		Payload:    map[string]any{"newStatus": "Completed"},
 	}
-	fake := &fakeTransferChangeList{changes: []*edi.TransferChange{change}}
+	fake := &fakeTransferChangeList{changes: []*edisync.TransferChange{change}}
 	tool := newListEDITransferChangesTool(fake)
 
 	result, err := tool.Query(t.Context(), agentParams(map[string]any{

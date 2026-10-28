@@ -6,7 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/edi/app/edilading"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/ladingproject"
 	"github.com/emoss08/trenova/internal/modules/edi/jobs/edijobs/edijobscontract"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.temporal.io/sdk/activity"
@@ -64,10 +64,10 @@ func ladingWorkflows() []temporaltype.WorkflowDefinition {
 func RunLadingReplayWorkflow(
 	ctx workflow.Context,
 	payload *edilading.ReplayWorkflowPayload,
-) (*edi.LadingReplay, error) {
+) (*ladingproject.LadingReplay, error) {
 	ctx = workflow.WithActivityOptions(ctx, replayActivityOptions)
 	var a *Activities
-	result := new(edi.LadingReplay)
+	result := new(ladingproject.LadingReplay)
 	if err := workflow.ExecuteActivity(ctx, a.RunLadingReplayActivity, payload).
 		Get(ctx, result); err != nil {
 		return nil, err
@@ -78,7 +78,7 @@ func RunLadingReplayWorkflow(
 func (a *Activities) RunLadingReplayActivity(
 	ctx context.Context,
 	payload *edilading.ReplayWorkflowPayload,
-) (*edi.LadingReplay, error) {
+) (*ladingproject.LadingReplay, error) {
 	replay, err := a.replayer.Run(ctx, payload, func(done int) {
 		activity.RecordHeartbeat(ctx, done)
 	})
@@ -153,7 +153,7 @@ func (a *Activities) DispatchFlowTimerActivity(
 		return 0, err
 	}
 	if instance == nil || instance.WakeAt == nil ||
-		instance.Status == edi.FlowInstanceStatusClosed {
+		instance.Status == ladingproject.FlowInstanceStatusClosed {
 		return 0, nil
 	}
 	return *instance.WakeAt, nil

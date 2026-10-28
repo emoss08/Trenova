@@ -3,16 +3,16 @@ package ediports
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edicarrierinvoice"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
 type ListEDICarrierInvoicesRequest struct {
-	Filter               *pagination.QueryOptions               `json:"filter"`
-	PartnerID            pulid.ID                               `json:"partnerId"`
-	ShipmentID           pulid.ID                               `json:"shipmentId"`
-	ReconciliationStatus edi.CarrierInvoiceReconciliationStatus `json:"reconciliationStatus"`
+	Filter               *pagination.QueryOptions                             `json:"filter"`
+	PartnerID            pulid.ID                                             `json:"partnerId"`
+	ShipmentID           pulid.ID                                             `json:"shipmentId"`
+	ReconciliationStatus edicarrierinvoice.CarrierInvoiceReconciliationStatus `json:"reconciliationStatus"`
 }
 
 type GetEDICarrierInvoiceByIDRequest struct {
@@ -30,21 +30,21 @@ type EDICarrierInvoiceRepository interface {
 	ListCarrierInvoices(
 		ctx context.Context,
 		req *ListEDICarrierInvoicesRequest,
-	) (*pagination.ListResult[*edi.CarrierInvoice], error)
+	) (*pagination.ListResult[*edicarrierinvoice.CarrierInvoice], error)
 	GetCarrierInvoiceByID(
 		ctx context.Context,
 		req GetEDICarrierInvoiceByIDRequest,
-	) (*edi.CarrierInvoice, error)
+	) (*edicarrierinvoice.CarrierInvoice, error)
 	GetCarrierInvoiceByNumber(
 		ctx context.Context,
 		req *GetEDICarrierInvoiceByNumberRequest,
-	) (*edi.CarrierInvoice, error)
+	) (*edicarrierinvoice.CarrierInvoice, error)
 	CreateCarrierInvoice(
 		ctx context.Context,
-		entity *edi.CarrierInvoice,
-	) (*edi.CarrierInvoice, error)
+		entity *edicarrierinvoice.CarrierInvoice,
+	) (*edicarrierinvoice.CarrierInvoice, error)
 	UpdateCarrierInvoice(
 		ctx context.Context,
-		entity *edi.CarrierInvoice,
-	) (*edi.CarrierInvoice, error)
+		entity *edicarrierinvoice.CarrierInvoice,
+	) (*edicarrierinvoice.CarrierInvoice, error)
 }

@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvertest"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
 	"github.com/emoss08/trenova/internal/modules/equipment/app/equipmentmanufacturerservice"
 	"github.com/emoss08/trenova/internal/modules/equipment/app/equipmenttypeservice"
@@ -403,21 +404,21 @@ func TestSelectOptions_EDIDocumentTypeCatalogIDs(t *testing.T) {
 	orgID := pulid.MustNew("org_")
 	buID := pulid.MustNew("bu_")
 	userID := pulid.MustNew("usr_")
-	outbound := &edi.EDIDocumentType{
+	outbound := &edidocument.EDIDocumentType{
 		ID:             pulid.ID("edidt_x12_204_outbound"),
 		Code:           "X12-204-OUT",
 		Name:           "X12 204 Motor Carrier Load Tender",
-		TransactionSet: edi.TransactionSet204,
-		Direction:      edi.DocumentDirectionOutbound,
+		TransactionSet: edidocument.TransactionSet204,
+		Direction:      edidocument.DocumentDirectionOutbound,
 		DefaultVersion: "004010",
 		CreatedAt:      1780415883,
 	}
-	inbound := &edi.EDIDocumentType{
+	inbound := &edidocument.EDIDocumentType{
 		ID:             pulid.ID("edidt_x12_990_inbound"),
 		Code:           "X12-990-IN",
 		Name:           "X12 990 Response to Load Tender",
-		TransactionSet: edi.TransactionSet990,
-		Direction:      edi.DocumentDirectionInbound,
+		TransactionSet: edidocument.TransactionSet990,
+		Direction:      edidocument.DocumentDirectionInbound,
 		DefaultVersion: "004010",
 		CreatedAt:      1780415884,
 	}
@@ -427,8 +428,8 @@ func TestSelectOptions_EDIDocumentTypeCatalogIDs(t *testing.T) {
 			return req.SelectQueryRequest.TenantInfo.OrgID == orgID &&
 				req.SelectQueryRequest.TenantInfo.BuID == buID
 		})).
-		Return(&pagination.ListResult[*edi.EDIDocumentType]{
-			Items:      []*edi.EDIDocumentType{outbound, inbound},
+		Return(&pagination.ListResult[*edidocument.EDIDocumentType]{
+			Items:      []*edidocument.EDIDocumentType{outbound, inbound},
 			Total:      2,
 			TotalExact: true,
 		}, nil).
@@ -503,23 +504,23 @@ func TestSelectOptions_EDITransactionSetCatalogIDs(t *testing.T) {
 	orgID := pulid.MustNew("org_")
 	buID := pulid.MustNew("bu_")
 	userID := pulid.MustNew("usr_")
-	tender := &edi.EDITransactionSet{
+	tender := &edidocument.EDITransactionSet{
 		ID:             pulid.ID("edits_x12_204"),
-		Standard:       edi.EDIStandardX12,
-		Code:           edi.TransactionSet204,
+		Standard:       edidocument.EDIStandardX12,
+		Code:           edidocument.TransactionSet204,
 		Name:           "Motor Carrier Load Tender",
 		Description:    "Outbound load tender document.",
 		DefaultVersion: "004010",
-		Status:         edi.DocumentStatusActive,
+		Status:         edidocument.DocumentStatusActive,
 		CreatedAt:      1780415883,
 	}
-	response := &edi.EDITransactionSet{
+	response := &edidocument.EDITransactionSet{
 		ID:             pulid.ID("edits_x12_990"),
-		Standard:       edi.EDIStandardX12,
-		Code:           edi.TransactionSet990,
+		Standard:       edidocument.EDIStandardX12,
+		Code:           edidocument.TransactionSet990,
 		Name:           "Response to Load Tender",
 		DefaultVersion: "004010",
-		Status:         edi.DocumentStatusActive,
+		Status:         edidocument.DocumentStatusActive,
 		CreatedAt:      1780415884,
 	}
 	repo := edipartnerportsmock.NewMockEDITransactionSetRepository(t)
@@ -528,11 +529,11 @@ func TestSelectOptions_EDITransactionSetCatalogIDs(t *testing.T) {
 			return req.SelectQueryRequest.TenantInfo.OrgID == orgID &&
 				req.SelectQueryRequest.TenantInfo.BuID == buID &&
 				len(req.IDs) == 0 &&
-				req.Status == edi.DocumentStatusActive &&
+				req.Status == edidocument.DocumentStatusActive &&
 				req.Standard == ""
 		})).
-		Return(&pagination.ListResult[*edi.EDITransactionSet]{
-			Items:      []*edi.EDITransactionSet{tender, response},
+		Return(&pagination.ListResult[*edidocument.EDITransactionSet]{
+			Items:      []*edidocument.EDITransactionSet{tender, response},
 			Total:      2,
 			TotalExact: true,
 		}, nil).
@@ -544,8 +545,8 @@ func TestSelectOptions_EDITransactionSetCatalogIDs(t *testing.T) {
 				req.IDs[1] == tender.ID &&
 				req.SelectQueryRequest.Pagination.Limit >= 2
 		})).
-		Return(&pagination.ListResult[*edi.EDITransactionSet]{
-			Items:      []*edi.EDITransactionSet{tender, response},
+		Return(&pagination.ListResult[*edidocument.EDITransactionSet]{
+			Items:      []*edidocument.EDITransactionSet{tender, response},
 			Total:      2,
 			TotalExact: true,
 		}, nil).

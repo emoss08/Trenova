@@ -4,8 +4,8 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/app/editransport"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edimessage"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/mock"
@@ -39,7 +39,7 @@ func TestDeliverEDIMessageWorkflow_Success(t *testing.T) {
 	env.OnActivity(a.DeliverEDIMessageActivity, mock.Anything, mock.Anything).
 		Return(&DeliverEDIMessageWorkflowResult{
 			MessageID:      payload.MessageID,
-			DeliveryStatus: edi.MessageDeliveryStatusSent,
+			DeliveryStatus: edimessage.MessageDeliveryStatusSent,
 			RemotePath:     "/outbound/file.x12",
 		}, nil).
 		Once()
@@ -50,7 +50,7 @@ func TestDeliverEDIMessageWorkflow_Success(t *testing.T) {
 	require.NoError(t, env.GetWorkflowError())
 	result := new(DeliverEDIMessageWorkflowResult)
 	require.NoError(t, env.GetWorkflowResult(result))
-	require.Equal(t, edi.MessageDeliveryStatusSent, result.DeliveryStatus)
+	require.Equal(t, edimessage.MessageDeliveryStatusSent, result.DeliveryStatus)
 	env.AssertNotCalled(t, "MarkEDIMessageDeadLetteredActivity")
 }
 

@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediconnectiondraftports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -82,27 +82,50 @@ func simulatorValues() []ediconnectiondraftports.DraftValueInput {
 		sim(fieldElementSep, "*", "Element separator: * (asterisk)."),
 		sim(fieldSegmentSep, "~", "Segment terminator: ~ (tilde)."),
 		sim(fieldComponentSep, ">", "Sub-element separator: > (greater than)."),
-		sim(controlNumberField(edi.ControlNumberKindInterchange), "1",
+		sim(controlNumberField(edidocument.ControlNumberKindInterchange), "1",
 			"Carrier interchange control numbers (ISA13) start at 1"),
-		sim(setField(edi.TransactionSet204, edi.DocumentDirectionInbound, setAttrSupported), "true",
-			"The simulator sends the 204 Motor Carrier Load Tender to the carrier."),
 		sim(
-			setField(edi.TransactionSet990, edi.DocumentDirectionOutbound, setAttrSupported),
+			setField(
+				edidocument.TransactionSet204,
+				edidocument.DocumentDirectionInbound,
+				setAttrSupported,
+			),
+			"true",
+			"The simulator sends the 204 Motor Carrier Load Tender to the carrier.",
+		),
+		sim(
+			setField(
+				edidocument.TransactionSet990,
+				edidocument.DocumentDirectionOutbound,
+				setAttrSupported,
+			),
 			"true",
 			"The carrier answers each tender with a 990 Response to a Load Tender.",
 		),
 		sim(
-			setField(edi.TransactionSet214, edi.DocumentDirectionOutbound, setAttrSupported),
+			setField(
+				edidocument.TransactionSet214,
+				edidocument.DocumentDirectionOutbound,
+				setAttrSupported,
+			),
 			"true",
 			"The carrier sends the 214 Transportation Carrier Shipment Status Message",
 		),
 		sim(
-			setField(edi.TransactionSet990, edi.DocumentDirectionOutbound, setAttrAck),
+			setField(
+				edidocument.TransactionSet990,
+				edidocument.DocumentDirectionOutbound,
+				setAttrAck,
+			),
 			"997",
 			"The simulator returns a 997 Functional Acknowledgment for every transaction set it receives.",
 		),
 		sim(
-			setField(edi.TransactionSet214, edi.DocumentDirectionOutbound, setAttrAck),
+			setField(
+				edidocument.TransactionSet214,
+				edidocument.DocumentDirectionOutbound,
+				setAttrAck,
+			),
 			"997",
 			"The simulator returns a 997 Functional Acknowledgment for every transaction set it receives.",
 		),
@@ -123,7 +146,7 @@ func TestPlan_ThePartnerSimulatorsGuideDraftsAConnectionToTheSimulator(t *testin
 			Document: simulatorGuide(t),
 			Values:   simulatorValues(),
 			Requirements: []ediconnectiondraftports.DraftRequirementInput{{
-				TransactionSet: edi.TransactionSet204, Direction: edi.DocumentDirectionInbound,
+				TransactionSet: edidocument.TransactionSet204, Direction: edidocument.DocumentDirectionInbound,
 				SegmentID: "L3", Usage: ediconnectiondraftports.RequirementUsageMandatory,
 				Citation: cite(1, "L3 Total Weight and Charges is mandatory."),
 			}},
@@ -147,8 +170,8 @@ func TestPlan_ThePartnerSimulatorsGuideDraftsAConnectionToTheSimulator(t *testin
 	require.Len(t, draft.Samples, 1, "the guide carries the tender the simulator sends")
 	sample := draft.Samples[0]
 	require.True(t, sample.Parsed, sample.Error)
-	assert.Equal(t, edi.TransactionSet204, sample.TransactionSet)
-	assert.Equal(t, edi.DocumentDirectionInbound, sample.Direction)
+	assert.Equal(t, edidocument.TransactionSet204, sample.TransactionSet)
+	assert.Equal(t, edidocument.DocumentDirectionInbound, sample.Direction)
 	require.NotEmpty(t, sample.Checks)
 	for _, check := range sample.Checks {
 		assert.True(t, check.Matches, "%s: the guide says %q, the simulator sends %q",

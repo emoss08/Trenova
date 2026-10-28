@@ -6,6 +6,9 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edicarrierinvoice"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edimessage"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edipayload"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentevent"
@@ -213,17 +216,17 @@ func TestRecordInboundFreightInvoice_AcceptedOfferStampsCarrierAndShipment(t *te
 				OrganizationID: orgID,
 				BusinessUnitID: buID,
 			}
-			message := &edi.EDIMessage{
+			message := &edimessage.EDIMessage{
 				ID:             pulid.MustNew("edim_"),
 				OrganizationID: orgID,
 				BusinessUnitID: buID,
 			}
 
-			var recordedInvoice *edi.CarrierInvoice
+			var recordedInvoice *edicarrierinvoice.CarrierInvoice
 			invoiceRepo.EXPECT().
 				CreateCarrierInvoice(mock.Anything, mock.Anything).
 				RunAndReturn(
-					func(_ context.Context, entity *edi.CarrierInvoice) (*edi.CarrierInvoice, error) {
+					func(_ context.Context, entity *edicarrierinvoice.CarrierInvoice) (*edicarrierinvoice.CarrierInvoice, error) {
 						recordedInvoice = entity
 						return entity, nil
 					},
@@ -236,7 +239,7 @@ func TestRecordInboundFreightInvoice_AcceptedOfferStampsCarrierAndShipment(t *te
 					Partner:       partner,
 					Message:       message,
 					AcceptedOffer: offer,
-					Payload: &edi.FreightInvoicePayload{
+					Payload: &edipayload.FreightInvoicePayload{
 						InvoiceNumber: "INV-1",
 						BOL:           "BOL-42",
 						TotalAmount: decimal.NullDecimal{
@@ -259,7 +262,7 @@ func TestRecordInboundFreightInvoice_AcceptedOfferStampsCarrierAndShipment(t *te
 				require.True(t, recordedInvoice.ExpectedAmount.Decimal.Equal(offer.Rate))
 				require.Equal(
 					t,
-					edi.CarrierInvoiceReconciliationStatusMatched,
+					edicarrierinvoice.CarrierInvoiceReconciliationStatusMatched,
 					recordedInvoice.ReconciliationStatus,
 				)
 			}

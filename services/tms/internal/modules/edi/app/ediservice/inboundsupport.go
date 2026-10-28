@@ -4,6 +4,10 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edimessage"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edipayload"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/editenderchange"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/editransfer"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/edimessageports"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/editenderports"
@@ -22,13 +26,13 @@ import (
 func (s *Service) BuildInboundMappingPreview(
 	ctx context.Context,
 	partner *edi.EDIPartner,
-	payload edi.LoadTenderPayload,
+	payload editransfer.LoadTenderPayload,
 ) (*MappingPreview, error) {
 	return s.buildMappingPreview(ctx, partner, payload)
 }
 
 type ApplyExternalTenderResponseRequest struct {
-	Recipient       *edi.TenderRecipient
+	Recipient       *editenderchange.TenderRecipient
 	Accepted        bool
 	ReasonCode      string
 	RejectionReason string
@@ -86,9 +90,9 @@ func (s *Service) ApplyExternalTenderResponse(
 		}
 	}
 	if req.Accepted {
-		recipient.BaselineStatus = edi.TenderRecipientBaselineStatusAccepted
+		recipient.BaselineStatus = editenderchange.TenderRecipientBaselineStatusAccepted
 	} else {
-		recipient.Status = edi.TenderRecipientStatusClosed
+		recipient.Status = editenderchange.TenderRecipientStatusClosed
 	}
 	recipient.BaselineRecordedAt = timeutils.NowUnix()
 	_, err := s.tenderRecipientRepo.UpdateTenderRecipient(ctx, recipient)
@@ -96,7 +100,7 @@ func (s *Service) ApplyExternalTenderResponse(
 }
 
 type RecordExternalShipmentStatusRequest struct {
-	Recipient   *edi.TenderRecipient
+	Recipient   *editenderchange.TenderRecipient
 	StatusCode  string
 	ReasonCode  string
 	ReferenceID string
@@ -175,7 +179,7 @@ type RecordTenderedShipmentStatusRequest struct {
 	ReasonCode   string
 	ReferenceID  string
 	EventAt      int64
-	Event        *edi.ShipmentStatusEvent
+	Event        *edipayload.ShipmentStatusEvent
 	RawReference string
 }
 
@@ -318,7 +322,7 @@ func externalShipmentStatusDescription(statusCode string) string {
 
 func (s *Service) generateExternalTenderResponse(
 	ctx context.Context,
-	transfer *edi.EDITransfer,
+	transfer *editransfer.EDITransfer,
 	actorID pulid.ID,
 ) {
 	if transfer == nil || transfer.InboundMessageID.IsNil() {
@@ -333,7 +337,7 @@ func (s *Service) generateExternalTenderResponse(
 	taken, _, err := s.DecideTender(ctx, &DecideTenderRequest{
 		TenantInfo: tenantInfo,
 		TransferID: transfer.ID,
-		Accept:     transfer.Status == edi.TransferStatusApproved,
+		Accept:     transfer.Status == editransfer.TransferStatusApproved,
 		Reason:     transfer.RejectionReason,
 		ActorID:    actorID,
 	})
@@ -376,21 +380,21 @@ func (s *Service) ListCommunicationProfilesCursor(
 func (s *Service) ListInboundTransfersCursor(
 	ctx context.Context,
 	req *editenderports.ListEDITransfersRequest,
-) (*pagination.CursorListResult[*edi.EDITransfer], error) {
+) (*pagination.CursorListResult[*editransfer.EDITransfer], error) {
 	return s.transferRepo.ListInboundCursor(ctx, req)
 }
 
 func (s *Service) ListOutboundTransfersCursor(
 	ctx context.Context,
 	req *editenderports.ListEDITransfersRequest,
-) (*pagination.CursorListResult[*edi.EDITransfer], error) {
+) (*pagination.CursorListResult[*editransfer.EDITransfer], error) {
 	return s.transferRepo.ListOutboundCursor(ctx, req)
 }
 
 func (s *Service) ListMessagesCursor(
 	ctx context.Context,
 	req *edimessageports.ListEDIMessagesRequest,
-) (*pagination.CursorListResult[*edi.EDIMessage], error) {
+) (*pagination.CursorListResult[*edimessage.EDIMessage], error) {
 	return s.messageRepo.ListMessagesCursor(ctx, req)
 }
 

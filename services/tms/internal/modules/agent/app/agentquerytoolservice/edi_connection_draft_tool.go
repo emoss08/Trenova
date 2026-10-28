@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediconnectiondraftports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 )
@@ -295,7 +295,7 @@ func appendValueChanges(changes []string, values []ediconnectiondraftports.Draft
 }
 
 type controlChange struct {
-	kind     edi.ControlNumberKind
+	kind     edidocument.ControlNumberKind
 	from, to int64
 	page     int
 }

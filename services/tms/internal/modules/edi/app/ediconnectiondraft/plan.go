@@ -9,6 +9,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediconnectiondraftports"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -28,9 +29,9 @@ const (
 )
 
 type controlWrite struct {
-	set       edi.TransactionSet
-	direction edi.DocumentDirection
-	kind      edi.ControlNumberKind
+	set       edidocument.TransactionSet
+	direction edidocument.DocumentDirection
+	kind      edidocument.ControlNumberKind
 	next      int64
 }
 
@@ -622,9 +623,9 @@ func (p *planner) buildConnection() {
 			Direction:      set.Direction,
 		})
 		switch set.Direction {
-		case edi.DocumentDirectionInbound:
+		case edidocument.DocumentDirectionInbound:
 			connection.Inbound = true
-		case edi.DocumentDirectionOutbound:
+		case edidocument.DocumentDirectionOutbound:
 			connection.Outbound = true
 		}
 	}
@@ -658,7 +659,7 @@ func (p *planner) addFailures(record string, errs []*errortypes.Error) {
 	}
 }
 
-func titleSet(set edi.TransactionSet, direction edi.DocumentDirection) string {
+func titleSet(set edidocument.TransactionSet, direction edidocument.DocumentDirection) string {
 	return fmt.Sprintf("%s %s", set, strings.ToLower(string(direction)))
 }
 

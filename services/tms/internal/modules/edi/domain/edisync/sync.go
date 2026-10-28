@@ -1,4 +1,4 @@
-package edi
+package edisync
 
 import (
 	"context"

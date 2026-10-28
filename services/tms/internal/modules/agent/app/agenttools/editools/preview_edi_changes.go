@@ -9,7 +9,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edisync"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/editenderchange"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/errortypes"
 )
@@ -49,7 +50,7 @@ func (t *EdiChangeReviewTool) Preview(
 }
 
 func planTenderChangeReview(
-	change *edi.TenderChange,
+	change *editenderchange.TenderChange,
 	call *changeReviewCall,
 ) (*changeReviewPlan, error) {
 	plan := &changeReviewPlan{summary: fmt.Sprintf(
@@ -68,7 +69,7 @@ func planTenderChangeReview(
 
 func describeTenderChangeReview(
 	plan *changeReviewPlan,
-	change *edi.TenderChange,
+	change *editenderchange.TenderChange,
 	call *changeReviewCall,
 ) error {
 	after := *change
@@ -111,7 +112,7 @@ func describeTenderChangeReview(
 func planTransferChangeReview(
 	ctx context.Context,
 	reviewer transferChangeReviewer,
-	change *edi.TransferChange,
+	change *edisync.TransferChange,
 	call *changeReviewCall,
 ) (*changeReviewPlan, error) {
 	plan := &changeReviewPlan{summary: fmt.Sprintf(
@@ -131,7 +132,7 @@ func planTransferChangeReview(
 
 type transferChangeReview struct {
 	reviewer transferChangeReviewer
-	change   *edi.TransferChange
+	change   *edisync.TransferChange
 	call     *changeReviewCall
 }
 
@@ -203,11 +204,11 @@ func changeStatusRecord[T any](
 
 func transferChangeWords(changeType string) string {
 	switch changeType {
-	case edi.TransferChangeTypeShipmentStatus214:
+	case edisync.TransferChangeTypeShipmentStatus214:
 		return "status update"
-	case edi.TransferChangeTypeShipmentCancel214:
+	case edisync.TransferChangeTypeShipmentCancel214:
 		return "cancellation"
-	case edi.TransferChangeTypeShipmentLifecycle214:
+	case edisync.TransferChangeTypeShipmentLifecycle214:
 		return "stop progress"
 	default:
 		return "change"

@@ -5,11 +5,11 @@
 package edimessageportsmock
 
 import (
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edimessage"
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/edi/ports/edimessageports"
 
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/pkg/pagination"
 	mock "github.com/stretchr/testify/mock"
 )
@@ -108,23 +108,23 @@ func (_c *MockEDIMessageRepository_CountDeadLetteredSince_Call) RunAndReturn(run
 }
 
 // CreateMessageWithDiagnostics provides a mock function for the type MockEDIMessageRepository
-func (_mock *MockEDIMessageRepository) CreateMessageWithDiagnostics(ctx context.Context, req edimessageports.CreateEDIMessageWithDiagnosticsRequest) (*edi.EDIMessage, error) {
+func (_mock *MockEDIMessageRepository) CreateMessageWithDiagnostics(ctx context.Context, req edimessageports.CreateEDIMessageWithDiagnosticsRequest) (*edimessage.EDIMessage, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for CreateMessageWithDiagnostics")
 	}
 
-	var r0 *edi.EDIMessage
+	var r0 *edimessage.EDIMessage
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, edimessageports.CreateEDIMessageWithDiagnosticsRequest) (*edi.EDIMessage, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, edimessageports.CreateEDIMessageWithDiagnosticsRequest) (*edimessage.EDIMessage, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, edimessageports.CreateEDIMessageWithDiagnosticsRequest) *edi.EDIMessage); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, edimessageports.CreateEDIMessageWithDiagnosticsRequest) *edimessage.EDIMessage); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*edi.EDIMessage)
+			r0 = ret.Get(0).(*edimessage.EDIMessage)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, edimessageports.CreateEDIMessageWithDiagnosticsRequest) error); ok {
@@ -165,34 +165,34 @@ func (_c *MockEDIMessageRepository_CreateMessageWithDiagnostics_Call) Run(run fu
 	return _c
 }
 
-func (_c *MockEDIMessageRepository_CreateMessageWithDiagnostics_Call) Return(eDIMessage *edi.EDIMessage, err error) *MockEDIMessageRepository_CreateMessageWithDiagnostics_Call {
+func (_c *MockEDIMessageRepository_CreateMessageWithDiagnostics_Call) Return(eDIMessage *edimessage.EDIMessage, err error) *MockEDIMessageRepository_CreateMessageWithDiagnostics_Call {
 	_c.Call.Return(eDIMessage, err)
 	return _c
 }
 
-func (_c *MockEDIMessageRepository_CreateMessageWithDiagnostics_Call) RunAndReturn(run func(ctx context.Context, req edimessageports.CreateEDIMessageWithDiagnosticsRequest) (*edi.EDIMessage, error)) *MockEDIMessageRepository_CreateMessageWithDiagnostics_Call {
+func (_c *MockEDIMessageRepository_CreateMessageWithDiagnostics_Call) RunAndReturn(run func(ctx context.Context, req edimessageports.CreateEDIMessageWithDiagnosticsRequest) (*edimessage.EDIMessage, error)) *MockEDIMessageRepository_CreateMessageWithDiagnostics_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetAckStatusCounts provides a mock function for the type MockEDIMessageRepository
-func (_mock *MockEDIMessageRepository) GetAckStatusCounts(ctx context.Context, req edimessageports.GetEDIMessageStatusCountsRequest) (map[edi.MessageAcknowledgmentStatus]int, error) {
+func (_mock *MockEDIMessageRepository) GetAckStatusCounts(ctx context.Context, req edimessageports.GetEDIMessageStatusCountsRequest) (map[edimessage.MessageAcknowledgmentStatus]int, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetAckStatusCounts")
 	}
 
-	var r0 map[edi.MessageAcknowledgmentStatus]int
+	var r0 map[edimessage.MessageAcknowledgmentStatus]int
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, edimessageports.GetEDIMessageStatusCountsRequest) (map[edi.MessageAcknowledgmentStatus]int, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, edimessageports.GetEDIMessageStatusCountsRequest) (map[edimessage.MessageAcknowledgmentStatus]int, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, edimessageports.GetEDIMessageStatusCountsRequest) map[edi.MessageAcknowledgmentStatus]int); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, edimessageports.GetEDIMessageStatusCountsRequest) map[edimessage.MessageAcknowledgmentStatus]int); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(map[edi.MessageAcknowledgmentStatus]int)
+			r0 = ret.Get(0).(map[edimessage.MessageAcknowledgmentStatus]int)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, edimessageports.GetEDIMessageStatusCountsRequest) error); ok {
@@ -233,12 +233,12 @@ func (_c *MockEDIMessageRepository_GetAckStatusCounts_Call) Run(run func(ctx con
 	return _c
 }
 
-func (_c *MockEDIMessageRepository_GetAckStatusCounts_Call) Return(messageAcknowledgmentStatusToInt map[edi.MessageAcknowledgmentStatus]int, err error) *MockEDIMessageRepository_GetAckStatusCounts_Call {
+func (_c *MockEDIMessageRepository_GetAckStatusCounts_Call) Return(messageAcknowledgmentStatusToInt map[edimessage.MessageAcknowledgmentStatus]int, err error) *MockEDIMessageRepository_GetAckStatusCounts_Call {
 	_c.Call.Return(messageAcknowledgmentStatusToInt, err)
 	return _c
 }
 
-func (_c *MockEDIMessageRepository_GetAckStatusCounts_Call) RunAndReturn(run func(ctx context.Context, req edimessageports.GetEDIMessageStatusCountsRequest) (map[edi.MessageAcknowledgmentStatus]int, error)) *MockEDIMessageRepository_GetAckStatusCounts_Call {
+func (_c *MockEDIMessageRepository_GetAckStatusCounts_Call) RunAndReturn(run func(ctx context.Context, req edimessageports.GetEDIMessageStatusCountsRequest) (map[edimessage.MessageAcknowledgmentStatus]int, error)) *MockEDIMessageRepository_GetAckStatusCounts_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -312,23 +312,23 @@ func (_c *MockEDIMessageRepository_GetAckStatusCountsByPartner_Call) RunAndRetur
 }
 
 // GetDeliveryStatusCounts provides a mock function for the type MockEDIMessageRepository
-func (_mock *MockEDIMessageRepository) GetDeliveryStatusCounts(ctx context.Context, req edimessageports.GetEDIMessageStatusCountsRequest) (map[edi.MessageDeliveryStatus]int, error) {
+func (_mock *MockEDIMessageRepository) GetDeliveryStatusCounts(ctx context.Context, req edimessageports.GetEDIMessageStatusCountsRequest) (map[edimessage.MessageDeliveryStatus]int, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetDeliveryStatusCounts")
 	}
 
-	var r0 map[edi.MessageDeliveryStatus]int
+	var r0 map[edimessage.MessageDeliveryStatus]int
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, edimessageports.GetEDIMessageStatusCountsRequest) (map[edi.MessageDeliveryStatus]int, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, edimessageports.GetEDIMessageStatusCountsRequest) (map[edimessage.MessageDeliveryStatus]int, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, edimessageports.GetEDIMessageStatusCountsRequest) map[edi.MessageDeliveryStatus]int); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, edimessageports.GetEDIMessageStatusCountsRequest) map[edimessage.MessageDeliveryStatus]int); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(map[edi.MessageDeliveryStatus]int)
+			r0 = ret.Get(0).(map[edimessage.MessageDeliveryStatus]int)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, edimessageports.GetEDIMessageStatusCountsRequest) error); ok {
@@ -369,34 +369,34 @@ func (_c *MockEDIMessageRepository_GetDeliveryStatusCounts_Call) Run(run func(ct
 	return _c
 }
 
-func (_c *MockEDIMessageRepository_GetDeliveryStatusCounts_Call) Return(messageDeliveryStatusToInt map[edi.MessageDeliveryStatus]int, err error) *MockEDIMessageRepository_GetDeliveryStatusCounts_Call {
+func (_c *MockEDIMessageRepository_GetDeliveryStatusCounts_Call) Return(messageDeliveryStatusToInt map[edimessage.MessageDeliveryStatus]int, err error) *MockEDIMessageRepository_GetDeliveryStatusCounts_Call {
 	_c.Call.Return(messageDeliveryStatusToInt, err)
 	return _c
 }
 
-func (_c *MockEDIMessageRepository_GetDeliveryStatusCounts_Call) RunAndReturn(run func(ctx context.Context, req edimessageports.GetEDIMessageStatusCountsRequest) (map[edi.MessageDeliveryStatus]int, error)) *MockEDIMessageRepository_GetDeliveryStatusCounts_Call {
+func (_c *MockEDIMessageRepository_GetDeliveryStatusCounts_Call) RunAndReturn(run func(ctx context.Context, req edimessageports.GetEDIMessageStatusCountsRequest) (map[edimessage.MessageDeliveryStatus]int, error)) *MockEDIMessageRepository_GetDeliveryStatusCounts_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetMessageByID provides a mock function for the type MockEDIMessageRepository
-func (_mock *MockEDIMessageRepository) GetMessageByID(ctx context.Context, req edimessageports.GetEDIMessageByIDRequest) (*edi.EDIMessage, error) {
+func (_mock *MockEDIMessageRepository) GetMessageByID(ctx context.Context, req edimessageports.GetEDIMessageByIDRequest) (*edimessage.EDIMessage, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetMessageByID")
 	}
 
-	var r0 *edi.EDIMessage
+	var r0 *edimessage.EDIMessage
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, edimessageports.GetEDIMessageByIDRequest) (*edi.EDIMessage, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, edimessageports.GetEDIMessageByIDRequest) (*edimessage.EDIMessage, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, edimessageports.GetEDIMessageByIDRequest) *edi.EDIMessage); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, edimessageports.GetEDIMessageByIDRequest) *edimessage.EDIMessage); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*edi.EDIMessage)
+			r0 = ret.Get(0).(*edimessage.EDIMessage)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, edimessageports.GetEDIMessageByIDRequest) error); ok {
@@ -437,34 +437,34 @@ func (_c *MockEDIMessageRepository_GetMessageByID_Call) Run(run func(ctx context
 	return _c
 }
 
-func (_c *MockEDIMessageRepository_GetMessageByID_Call) Return(eDIMessage *edi.EDIMessage, err error) *MockEDIMessageRepository_GetMessageByID_Call {
+func (_c *MockEDIMessageRepository_GetMessageByID_Call) Return(eDIMessage *edimessage.EDIMessage, err error) *MockEDIMessageRepository_GetMessageByID_Call {
 	_c.Call.Return(eDIMessage, err)
 	return _c
 }
 
-func (_c *MockEDIMessageRepository_GetMessageByID_Call) RunAndReturn(run func(ctx context.Context, req edimessageports.GetEDIMessageByIDRequest) (*edi.EDIMessage, error)) *MockEDIMessageRepository_GetMessageByID_Call {
+func (_c *MockEDIMessageRepository_GetMessageByID_Call) RunAndReturn(run func(ctx context.Context, req edimessageports.GetEDIMessageByIDRequest) (*edimessage.EDIMessage, error)) *MockEDIMessageRepository_GetMessageByID_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetMessageByIdempotencyKey provides a mock function for the type MockEDIMessageRepository
-func (_mock *MockEDIMessageRepository) GetMessageByIdempotencyKey(ctx context.Context, req edimessageports.GetEDIMessageByIdempotencyKeyRequest) (*edi.EDIMessage, error) {
+func (_mock *MockEDIMessageRepository) GetMessageByIdempotencyKey(ctx context.Context, req edimessageports.GetEDIMessageByIdempotencyKeyRequest) (*edimessage.EDIMessage, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetMessageByIdempotencyKey")
 	}
 
-	var r0 *edi.EDIMessage
+	var r0 *edimessage.EDIMessage
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, edimessageports.GetEDIMessageByIdempotencyKeyRequest) (*edi.EDIMessage, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, edimessageports.GetEDIMessageByIdempotencyKeyRequest) (*edimessage.EDIMessage, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, edimessageports.GetEDIMessageByIdempotencyKeyRequest) *edi.EDIMessage); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, edimessageports.GetEDIMessageByIdempotencyKeyRequest) *edimessage.EDIMessage); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*edi.EDIMessage)
+			r0 = ret.Get(0).(*edimessage.EDIMessage)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, edimessageports.GetEDIMessageByIdempotencyKeyRequest) error); ok {
@@ -505,34 +505,34 @@ func (_c *MockEDIMessageRepository_GetMessageByIdempotencyKey_Call) Run(run func
 	return _c
 }
 
-func (_c *MockEDIMessageRepository_GetMessageByIdempotencyKey_Call) Return(eDIMessage *edi.EDIMessage, err error) *MockEDIMessageRepository_GetMessageByIdempotencyKey_Call {
+func (_c *MockEDIMessageRepository_GetMessageByIdempotencyKey_Call) Return(eDIMessage *edimessage.EDIMessage, err error) *MockEDIMessageRepository_GetMessageByIdempotencyKey_Call {
 	_c.Call.Return(eDIMessage, err)
 	return _c
 }
 
-func (_c *MockEDIMessageRepository_GetMessageByIdempotencyKey_Call) RunAndReturn(run func(ctx context.Context, req edimessageports.GetEDIMessageByIdempotencyKeyRequest) (*edi.EDIMessage, error)) *MockEDIMessageRepository_GetMessageByIdempotencyKey_Call {
+func (_c *MockEDIMessageRepository_GetMessageByIdempotencyKey_Call) RunAndReturn(run func(ctx context.Context, req edimessageports.GetEDIMessageByIdempotencyKeyRequest) (*edimessage.EDIMessage, error)) *MockEDIMessageRepository_GetMessageByIdempotencyKey_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetOutboundMessageByAS2MessageID provides a mock function for the type MockEDIMessageRepository
-func (_mock *MockEDIMessageRepository) GetOutboundMessageByAS2MessageID(ctx context.Context, as2MessageID string) (*edi.EDIMessage, error) {
+func (_mock *MockEDIMessageRepository) GetOutboundMessageByAS2MessageID(ctx context.Context, as2MessageID string) (*edimessage.EDIMessage, error) {
 	ret := _mock.Called(ctx, as2MessageID)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetOutboundMessageByAS2MessageID")
 	}
 
-	var r0 *edi.EDIMessage
+	var r0 *edimessage.EDIMessage
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string) (*edi.EDIMessage, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) (*edimessage.EDIMessage, error)); ok {
 		return returnFunc(ctx, as2MessageID)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string) *edi.EDIMessage); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) *edimessage.EDIMessage); ok {
 		r0 = returnFunc(ctx, as2MessageID)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*edi.EDIMessage)
+			r0 = ret.Get(0).(*edimessage.EDIMessage)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, string) error); ok {
@@ -573,34 +573,34 @@ func (_c *MockEDIMessageRepository_GetOutboundMessageByAS2MessageID_Call) Run(ru
 	return _c
 }
 
-func (_c *MockEDIMessageRepository_GetOutboundMessageByAS2MessageID_Call) Return(eDIMessage *edi.EDIMessage, err error) *MockEDIMessageRepository_GetOutboundMessageByAS2MessageID_Call {
+func (_c *MockEDIMessageRepository_GetOutboundMessageByAS2MessageID_Call) Return(eDIMessage *edimessage.EDIMessage, err error) *MockEDIMessageRepository_GetOutboundMessageByAS2MessageID_Call {
 	_c.Call.Return(eDIMessage, err)
 	return _c
 }
 
-func (_c *MockEDIMessageRepository_GetOutboundMessageByAS2MessageID_Call) RunAndReturn(run func(ctx context.Context, as2MessageID string) (*edi.EDIMessage, error)) *MockEDIMessageRepository_GetOutboundMessageByAS2MessageID_Call {
+func (_c *MockEDIMessageRepository_GetOutboundMessageByAS2MessageID_Call) RunAndReturn(run func(ctx context.Context, as2MessageID string) (*edimessage.EDIMessage, error)) *MockEDIMessageRepository_GetOutboundMessageByAS2MessageID_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetOutboundMessageForAck provides a mock function for the type MockEDIMessageRepository
-func (_mock *MockEDIMessageRepository) GetOutboundMessageForAck(ctx context.Context, req edimessageports.GetEDIOutboundMessageForAckRequest) (*edi.EDIMessage, error) {
+func (_mock *MockEDIMessageRepository) GetOutboundMessageForAck(ctx context.Context, req edimessageports.GetEDIOutboundMessageForAckRequest) (*edimessage.EDIMessage, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetOutboundMessageForAck")
 	}
 
-	var r0 *edi.EDIMessage
+	var r0 *edimessage.EDIMessage
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, edimessageports.GetEDIOutboundMessageForAckRequest) (*edi.EDIMessage, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, edimessageports.GetEDIOutboundMessageForAckRequest) (*edimessage.EDIMessage, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, edimessageports.GetEDIOutboundMessageForAckRequest) *edi.EDIMessage); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, edimessageports.GetEDIOutboundMessageForAckRequest) *edimessage.EDIMessage); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*edi.EDIMessage)
+			r0 = ret.Get(0).(*edimessage.EDIMessage)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, edimessageports.GetEDIOutboundMessageForAckRequest) error); ok {
@@ -641,12 +641,12 @@ func (_c *MockEDIMessageRepository_GetOutboundMessageForAck_Call) Run(run func(c
 	return _c
 }
 
-func (_c *MockEDIMessageRepository_GetOutboundMessageForAck_Call) Return(eDIMessage *edi.EDIMessage, err error) *MockEDIMessageRepository_GetOutboundMessageForAck_Call {
+func (_c *MockEDIMessageRepository_GetOutboundMessageForAck_Call) Return(eDIMessage *edimessage.EDIMessage, err error) *MockEDIMessageRepository_GetOutboundMessageForAck_Call {
 	_c.Call.Return(eDIMessage, err)
 	return _c
 }
 
-func (_c *MockEDIMessageRepository_GetOutboundMessageForAck_Call) RunAndReturn(run func(ctx context.Context, req edimessageports.GetEDIOutboundMessageForAckRequest) (*edi.EDIMessage, error)) *MockEDIMessageRepository_GetOutboundMessageForAck_Call {
+func (_c *MockEDIMessageRepository_GetOutboundMessageForAck_Call) RunAndReturn(run func(ctx context.Context, req edimessageports.GetEDIOutboundMessageForAckRequest) (*edimessage.EDIMessage, error)) *MockEDIMessageRepository_GetOutboundMessageForAck_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -854,23 +854,23 @@ func (_c *MockEDIMessageRepository_GetPartnerSetActivity_Call) RunAndReturn(run 
 }
 
 // GetServiceFailure214LifecycleMessage provides a mock function for the type MockEDIMessageRepository
-func (_mock *MockEDIMessageRepository) GetServiceFailure214LifecycleMessage(ctx context.Context, req edimessageports.GetServiceFailure214LifecycleMessageRequest) (*edi.EDIMessage, error) {
+func (_mock *MockEDIMessageRepository) GetServiceFailure214LifecycleMessage(ctx context.Context, req edimessageports.GetServiceFailure214LifecycleMessageRequest) (*edimessage.EDIMessage, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetServiceFailure214LifecycleMessage")
 	}
 
-	var r0 *edi.EDIMessage
+	var r0 *edimessage.EDIMessage
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, edimessageports.GetServiceFailure214LifecycleMessageRequest) (*edi.EDIMessage, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, edimessageports.GetServiceFailure214LifecycleMessageRequest) (*edimessage.EDIMessage, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, edimessageports.GetServiceFailure214LifecycleMessageRequest) *edi.EDIMessage); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, edimessageports.GetServiceFailure214LifecycleMessageRequest) *edimessage.EDIMessage); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*edi.EDIMessage)
+			r0 = ret.Get(0).(*edimessage.EDIMessage)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, edimessageports.GetServiceFailure214LifecycleMessageRequest) error); ok {
@@ -911,12 +911,12 @@ func (_c *MockEDIMessageRepository_GetServiceFailure214LifecycleMessage_Call) Ru
 	return _c
 }
 
-func (_c *MockEDIMessageRepository_GetServiceFailure214LifecycleMessage_Call) Return(eDIMessage *edi.EDIMessage, err error) *MockEDIMessageRepository_GetServiceFailure214LifecycleMessage_Call {
+func (_c *MockEDIMessageRepository_GetServiceFailure214LifecycleMessage_Call) Return(eDIMessage *edimessage.EDIMessage, err error) *MockEDIMessageRepository_GetServiceFailure214LifecycleMessage_Call {
 	_c.Call.Return(eDIMessage, err)
 	return _c
 }
 
-func (_c *MockEDIMessageRepository_GetServiceFailure214LifecycleMessage_Call) RunAndReturn(run func(ctx context.Context, req edimessageports.GetServiceFailure214LifecycleMessageRequest) (*edi.EDIMessage, error)) *MockEDIMessageRepository_GetServiceFailure214LifecycleMessage_Call {
+func (_c *MockEDIMessageRepository_GetServiceFailure214LifecycleMessage_Call) RunAndReturn(run func(ctx context.Context, req edimessageports.GetServiceFailure214LifecycleMessageRequest) (*edimessage.EDIMessage, error)) *MockEDIMessageRepository_GetServiceFailure214LifecycleMessage_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -1058,23 +1058,23 @@ func (_c *MockEDIMessageRepository_GetVolumeSeries_Call) RunAndReturn(run func(c
 }
 
 // LinkMessageFlow provides a mock function for the type MockEDIMessageRepository
-func (_mock *MockEDIMessageRepository) LinkMessageFlow(ctx context.Context, req *edimessageports.LinkEDIMessageFlowRequest) (*edi.EDIMessage, error) {
+func (_mock *MockEDIMessageRepository) LinkMessageFlow(ctx context.Context, req *edimessageports.LinkEDIMessageFlowRequest) (*edimessage.EDIMessage, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for LinkMessageFlow")
 	}
 
-	var r0 *edi.EDIMessage
+	var r0 *edimessage.EDIMessage
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *edimessageports.LinkEDIMessageFlowRequest) (*edi.EDIMessage, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *edimessageports.LinkEDIMessageFlowRequest) (*edimessage.EDIMessage, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *edimessageports.LinkEDIMessageFlowRequest) *edi.EDIMessage); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *edimessageports.LinkEDIMessageFlowRequest) *edimessage.EDIMessage); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*edi.EDIMessage)
+			r0 = ret.Get(0).(*edimessage.EDIMessage)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, *edimessageports.LinkEDIMessageFlowRequest) error); ok {
@@ -1115,34 +1115,34 @@ func (_c *MockEDIMessageRepository_LinkMessageFlow_Call) Run(run func(ctx contex
 	return _c
 }
 
-func (_c *MockEDIMessageRepository_LinkMessageFlow_Call) Return(eDIMessage *edi.EDIMessage, err error) *MockEDIMessageRepository_LinkMessageFlow_Call {
+func (_c *MockEDIMessageRepository_LinkMessageFlow_Call) Return(eDIMessage *edimessage.EDIMessage, err error) *MockEDIMessageRepository_LinkMessageFlow_Call {
 	_c.Call.Return(eDIMessage, err)
 	return _c
 }
 
-func (_c *MockEDIMessageRepository_LinkMessageFlow_Call) RunAndReturn(run func(ctx context.Context, req *edimessageports.LinkEDIMessageFlowRequest) (*edi.EDIMessage, error)) *MockEDIMessageRepository_LinkMessageFlow_Call {
+func (_c *MockEDIMessageRepository_LinkMessageFlow_Call) RunAndReturn(run func(ctx context.Context, req *edimessageports.LinkEDIMessageFlowRequest) (*edimessage.EDIMessage, error)) *MockEDIMessageRepository_LinkMessageFlow_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // ListMessages provides a mock function for the type MockEDIMessageRepository
-func (_mock *MockEDIMessageRepository) ListMessages(ctx context.Context, req *edimessageports.ListEDIMessagesRequest) (*pagination.ListResult[*edi.EDIMessage], error) {
+func (_mock *MockEDIMessageRepository) ListMessages(ctx context.Context, req *edimessageports.ListEDIMessagesRequest) (*pagination.ListResult[*edimessage.EDIMessage], error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListMessages")
 	}
 
-	var r0 *pagination.ListResult[*edi.EDIMessage]
+	var r0 *pagination.ListResult[*edimessage.EDIMessage]
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *edimessageports.ListEDIMessagesRequest) (*pagination.ListResult[*edi.EDIMessage], error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *edimessageports.ListEDIMessagesRequest) (*pagination.ListResult[*edimessage.EDIMessage], error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *edimessageports.ListEDIMessagesRequest) *pagination.ListResult[*edi.EDIMessage]); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *edimessageports.ListEDIMessagesRequest) *pagination.ListResult[*edimessage.EDIMessage]); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*pagination.ListResult[*edi.EDIMessage])
+			r0 = ret.Get(0).(*pagination.ListResult[*edimessage.EDIMessage])
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, *edimessageports.ListEDIMessagesRequest) error); ok {
@@ -1183,34 +1183,34 @@ func (_c *MockEDIMessageRepository_ListMessages_Call) Run(run func(ctx context.C
 	return _c
 }
 
-func (_c *MockEDIMessageRepository_ListMessages_Call) Return(listResult *pagination.ListResult[*edi.EDIMessage], err error) *MockEDIMessageRepository_ListMessages_Call {
+func (_c *MockEDIMessageRepository_ListMessages_Call) Return(listResult *pagination.ListResult[*edimessage.EDIMessage], err error) *MockEDIMessageRepository_ListMessages_Call {
 	_c.Call.Return(listResult, err)
 	return _c
 }
 
-func (_c *MockEDIMessageRepository_ListMessages_Call) RunAndReturn(run func(ctx context.Context, req *edimessageports.ListEDIMessagesRequest) (*pagination.ListResult[*edi.EDIMessage], error)) *MockEDIMessageRepository_ListMessages_Call {
+func (_c *MockEDIMessageRepository_ListMessages_Call) RunAndReturn(run func(ctx context.Context, req *edimessageports.ListEDIMessagesRequest) (*pagination.ListResult[*edimessage.EDIMessage], error)) *MockEDIMessageRepository_ListMessages_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // ListMessagesCursor provides a mock function for the type MockEDIMessageRepository
-func (_mock *MockEDIMessageRepository) ListMessagesCursor(ctx context.Context, req *edimessageports.ListEDIMessagesRequest) (*pagination.CursorListResult[*edi.EDIMessage], error) {
+func (_mock *MockEDIMessageRepository) ListMessagesCursor(ctx context.Context, req *edimessageports.ListEDIMessagesRequest) (*pagination.CursorListResult[*edimessage.EDIMessage], error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListMessagesCursor")
 	}
 
-	var r0 *pagination.CursorListResult[*edi.EDIMessage]
+	var r0 *pagination.CursorListResult[*edimessage.EDIMessage]
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *edimessageports.ListEDIMessagesRequest) (*pagination.CursorListResult[*edi.EDIMessage], error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *edimessageports.ListEDIMessagesRequest) (*pagination.CursorListResult[*edimessage.EDIMessage], error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *edimessageports.ListEDIMessagesRequest) *pagination.CursorListResult[*edi.EDIMessage]); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *edimessageports.ListEDIMessagesRequest) *pagination.CursorListResult[*edimessage.EDIMessage]); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*pagination.CursorListResult[*edi.EDIMessage])
+			r0 = ret.Get(0).(*pagination.CursorListResult[*edimessage.EDIMessage])
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, *edimessageports.ListEDIMessagesRequest) error); ok {
@@ -1251,12 +1251,12 @@ func (_c *MockEDIMessageRepository_ListMessagesCursor_Call) Run(run func(ctx con
 	return _c
 }
 
-func (_c *MockEDIMessageRepository_ListMessagesCursor_Call) Return(cursorListResult *pagination.CursorListResult[*edi.EDIMessage], err error) *MockEDIMessageRepository_ListMessagesCursor_Call {
+func (_c *MockEDIMessageRepository_ListMessagesCursor_Call) Return(cursorListResult *pagination.CursorListResult[*edimessage.EDIMessage], err error) *MockEDIMessageRepository_ListMessagesCursor_Call {
 	_c.Call.Return(cursorListResult, err)
 	return _c
 }
 
-func (_c *MockEDIMessageRepository_ListMessagesCursor_Call) RunAndReturn(run func(ctx context.Context, req *edimessageports.ListEDIMessagesRequest) (*pagination.CursorListResult[*edi.EDIMessage], error)) *MockEDIMessageRepository_ListMessagesCursor_Call {
+func (_c *MockEDIMessageRepository_ListMessagesCursor_Call) RunAndReturn(run func(ctx context.Context, req *edimessageports.ListEDIMessagesRequest) (*pagination.CursorListResult[*edimessage.EDIMessage], error)) *MockEDIMessageRepository_ListMessagesCursor_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -1330,23 +1330,23 @@ func (_c *MockEDIMessageRepository_ListOverdueAcks_Call) RunAndReturn(run func(c
 }
 
 // ListRecentDeadLettered provides a mock function for the type MockEDIMessageRepository
-func (_mock *MockEDIMessageRepository) ListRecentDeadLettered(ctx context.Context, req *edimessageports.ListRecentEDIMessageFailuresRequest) ([]*edi.EDIMessage, error) {
+func (_mock *MockEDIMessageRepository) ListRecentDeadLettered(ctx context.Context, req *edimessageports.ListRecentEDIMessageFailuresRequest) ([]*edimessage.EDIMessage, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListRecentDeadLettered")
 	}
 
-	var r0 []*edi.EDIMessage
+	var r0 []*edimessage.EDIMessage
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *edimessageports.ListRecentEDIMessageFailuresRequest) ([]*edi.EDIMessage, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *edimessageports.ListRecentEDIMessageFailuresRequest) ([]*edimessage.EDIMessage, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *edimessageports.ListRecentEDIMessageFailuresRequest) []*edi.EDIMessage); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *edimessageports.ListRecentEDIMessageFailuresRequest) []*edimessage.EDIMessage); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*edi.EDIMessage)
+			r0 = ret.Get(0).([]*edimessage.EDIMessage)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, *edimessageports.ListRecentEDIMessageFailuresRequest) error); ok {
@@ -1387,34 +1387,34 @@ func (_c *MockEDIMessageRepository_ListRecentDeadLettered_Call) Run(run func(ctx
 	return _c
 }
 
-func (_c *MockEDIMessageRepository_ListRecentDeadLettered_Call) Return(eDIMessages []*edi.EDIMessage, err error) *MockEDIMessageRepository_ListRecentDeadLettered_Call {
+func (_c *MockEDIMessageRepository_ListRecentDeadLettered_Call) Return(eDIMessages []*edimessage.EDIMessage, err error) *MockEDIMessageRepository_ListRecentDeadLettered_Call {
 	_c.Call.Return(eDIMessages, err)
 	return _c
 }
 
-func (_c *MockEDIMessageRepository_ListRecentDeadLettered_Call) RunAndReturn(run func(ctx context.Context, req *edimessageports.ListRecentEDIMessageFailuresRequest) ([]*edi.EDIMessage, error)) *MockEDIMessageRepository_ListRecentDeadLettered_Call {
+func (_c *MockEDIMessageRepository_ListRecentDeadLettered_Call) RunAndReturn(run func(ctx context.Context, req *edimessageports.ListRecentEDIMessageFailuresRequest) ([]*edimessage.EDIMessage, error)) *MockEDIMessageRepository_ListRecentDeadLettered_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // ListReplayMessages provides a mock function for the type MockEDIMessageRepository
-func (_mock *MockEDIMessageRepository) ListReplayMessages(ctx context.Context, req *edimessageports.ListEDIReplayMessagesRequest) ([]*edi.EDIMessage, error) {
+func (_mock *MockEDIMessageRepository) ListReplayMessages(ctx context.Context, req *edimessageports.ListEDIReplayMessagesRequest) ([]*edimessage.EDIMessage, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListReplayMessages")
 	}
 
-	var r0 []*edi.EDIMessage
+	var r0 []*edimessage.EDIMessage
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *edimessageports.ListEDIReplayMessagesRequest) ([]*edi.EDIMessage, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *edimessageports.ListEDIReplayMessagesRequest) ([]*edimessage.EDIMessage, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *edimessageports.ListEDIReplayMessagesRequest) []*edi.EDIMessage); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *edimessageports.ListEDIReplayMessagesRequest) []*edimessage.EDIMessage); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*edi.EDIMessage)
+			r0 = ret.Get(0).([]*edimessage.EDIMessage)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, *edimessageports.ListEDIReplayMessagesRequest) error); ok {
@@ -1455,12 +1455,12 @@ func (_c *MockEDIMessageRepository_ListReplayMessages_Call) Run(run func(ctx con
 	return _c
 }
 
-func (_c *MockEDIMessageRepository_ListReplayMessages_Call) Return(eDIMessages []*edi.EDIMessage, err error) *MockEDIMessageRepository_ListReplayMessages_Call {
+func (_c *MockEDIMessageRepository_ListReplayMessages_Call) Return(eDIMessages []*edimessage.EDIMessage, err error) *MockEDIMessageRepository_ListReplayMessages_Call {
 	_c.Call.Return(eDIMessages, err)
 	return _c
 }
 
-func (_c *MockEDIMessageRepository_ListReplayMessages_Call) RunAndReturn(run func(ctx context.Context, req *edimessageports.ListEDIReplayMessagesRequest) ([]*edi.EDIMessage, error)) *MockEDIMessageRepository_ListReplayMessages_Call {
+func (_c *MockEDIMessageRepository_ListReplayMessages_Call) RunAndReturn(run func(ctx context.Context, req *edimessageports.ListEDIReplayMessagesRequest) ([]*edimessage.EDIMessage, error)) *MockEDIMessageRepository_ListReplayMessages_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -1532,23 +1532,23 @@ func (_c *MockEDIMessageRepository_PurgeRawX12Before_Call) RunAndReturn(run func
 }
 
 // UpdateMessageAcknowledgment provides a mock function for the type MockEDIMessageRepository
-func (_mock *MockEDIMessageRepository) UpdateMessageAcknowledgment(ctx context.Context, req *edimessageports.UpdateEDIMessageAcknowledgmentRequest) (*edi.EDIMessage, error) {
+func (_mock *MockEDIMessageRepository) UpdateMessageAcknowledgment(ctx context.Context, req *edimessageports.UpdateEDIMessageAcknowledgmentRequest) (*edimessage.EDIMessage, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateMessageAcknowledgment")
 	}
 
-	var r0 *edi.EDIMessage
+	var r0 *edimessage.EDIMessage
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *edimessageports.UpdateEDIMessageAcknowledgmentRequest) (*edi.EDIMessage, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *edimessageports.UpdateEDIMessageAcknowledgmentRequest) (*edimessage.EDIMessage, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *edimessageports.UpdateEDIMessageAcknowledgmentRequest) *edi.EDIMessage); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *edimessageports.UpdateEDIMessageAcknowledgmentRequest) *edimessage.EDIMessage); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*edi.EDIMessage)
+			r0 = ret.Get(0).(*edimessage.EDIMessage)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, *edimessageports.UpdateEDIMessageAcknowledgmentRequest) error); ok {
@@ -1589,34 +1589,34 @@ func (_c *MockEDIMessageRepository_UpdateMessageAcknowledgment_Call) Run(run fun
 	return _c
 }
 
-func (_c *MockEDIMessageRepository_UpdateMessageAcknowledgment_Call) Return(eDIMessage *edi.EDIMessage, err error) *MockEDIMessageRepository_UpdateMessageAcknowledgment_Call {
+func (_c *MockEDIMessageRepository_UpdateMessageAcknowledgment_Call) Return(eDIMessage *edimessage.EDIMessage, err error) *MockEDIMessageRepository_UpdateMessageAcknowledgment_Call {
 	_c.Call.Return(eDIMessage, err)
 	return _c
 }
 
-func (_c *MockEDIMessageRepository_UpdateMessageAcknowledgment_Call) RunAndReturn(run func(ctx context.Context, req *edimessageports.UpdateEDIMessageAcknowledgmentRequest) (*edi.EDIMessage, error)) *MockEDIMessageRepository_UpdateMessageAcknowledgment_Call {
+func (_c *MockEDIMessageRepository_UpdateMessageAcknowledgment_Call) RunAndReturn(run func(ctx context.Context, req *edimessageports.UpdateEDIMessageAcknowledgmentRequest) (*edimessage.EDIMessage, error)) *MockEDIMessageRepository_UpdateMessageAcknowledgment_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // UpdateMessageDelivery provides a mock function for the type MockEDIMessageRepository
-func (_mock *MockEDIMessageRepository) UpdateMessageDelivery(ctx context.Context, req *edimessageports.UpdateEDIMessageDeliveryRequest) (*edi.EDIMessage, error) {
+func (_mock *MockEDIMessageRepository) UpdateMessageDelivery(ctx context.Context, req *edimessageports.UpdateEDIMessageDeliveryRequest) (*edimessage.EDIMessage, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateMessageDelivery")
 	}
 
-	var r0 *edi.EDIMessage
+	var r0 *edimessage.EDIMessage
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *edimessageports.UpdateEDIMessageDeliveryRequest) (*edi.EDIMessage, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *edimessageports.UpdateEDIMessageDeliveryRequest) (*edimessage.EDIMessage, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *edimessageports.UpdateEDIMessageDeliveryRequest) *edi.EDIMessage); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *edimessageports.UpdateEDIMessageDeliveryRequest) *edimessage.EDIMessage); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*edi.EDIMessage)
+			r0 = ret.Get(0).(*edimessage.EDIMessage)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, *edimessageports.UpdateEDIMessageDeliveryRequest) error); ok {
@@ -1657,12 +1657,12 @@ func (_c *MockEDIMessageRepository_UpdateMessageDelivery_Call) Run(run func(ctx 
 	return _c
 }
 
-func (_c *MockEDIMessageRepository_UpdateMessageDelivery_Call) Return(eDIMessage *edi.EDIMessage, err error) *MockEDIMessageRepository_UpdateMessageDelivery_Call {
+func (_c *MockEDIMessageRepository_UpdateMessageDelivery_Call) Return(eDIMessage *edimessage.EDIMessage, err error) *MockEDIMessageRepository_UpdateMessageDelivery_Call {
 	_c.Call.Return(eDIMessage, err)
 	return _c
 }
 
-func (_c *MockEDIMessageRepository_UpdateMessageDelivery_Call) RunAndReturn(run func(ctx context.Context, req *edimessageports.UpdateEDIMessageDeliveryRequest) (*edi.EDIMessage, error)) *MockEDIMessageRepository_UpdateMessageDelivery_Call {
+func (_c *MockEDIMessageRepository_UpdateMessageDelivery_Call) RunAndReturn(run func(ctx context.Context, req *edimessageports.UpdateEDIMessageDeliveryRequest) (*edimessage.EDIMessage, error)) *MockEDIMessageRepository_UpdateMessageDelivery_Call {
 	_c.Call.Return(run)
 	return _c
 }

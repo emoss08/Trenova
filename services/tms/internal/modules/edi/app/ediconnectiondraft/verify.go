@@ -5,7 +5,7 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/x12field"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediconnectiondraftports"
 )
 
@@ -45,7 +45,7 @@ func newPageIndex(pages []ediconnectiondraftports.SpecPage) *pageIndex {
 		}
 		text := index.pages[page.Number]
 		index.normalized[page.Number] = normalizeForMatch(text)
-		index.redacted[page.Number] = normalizeForMatch(edi.RedactSecrets(text))
+		index.redacted[page.Number] = normalizeForMatch(x12field.RedactSecrets(text))
 	}
 	return index
 }
@@ -191,7 +191,7 @@ func documentSource(
 	return ediconnectiondraftports.DraftSource{
 		Kind:    ediconnectiondraftports.SourceKindDocument,
 		Page:    page,
-		Quote:   clampQuote(edi.RedactSecrets(citation.Quote)),
+		Quote:   clampQuote(x12field.RedactSecrets(citation.Quote)),
 		Section: strings.TrimSpace(citation.Section),
 		Note:    note,
 	}

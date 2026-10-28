@@ -2,6 +2,7 @@ package ediservice
 
 import (
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/editransfer"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -20,7 +21,7 @@ func mappingIndex(
 }
 
 func resolutionIndex(
-	resolutions []edi.MappingResolution,
+	resolutions []editransfer.MappingResolution,
 ) map[edi.MappingEntityType]map[pulid.ID]pulid.ID {
 	result := make(map[edi.MappingEntityType]map[pulid.ID]pulid.ID)
 	for _, resolution := range resolutions {
@@ -95,7 +96,7 @@ func requiredEntityTypes(
 	return result
 }
 
-func unresolvedMappingsError(unresolved []edi.MappingResolution) error {
+func unresolvedMappingsError(unresolved []editransfer.MappingResolution) error {
 	multiErr := errortypes.NewMultiError()
 	for _, item := range unresolved {
 		multiErr.Add(

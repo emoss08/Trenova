@@ -5,11 +5,11 @@
 package edimessageportsmock
 
 import (
+	"github.com/emoss08/trenova/internal/modules/edi/domain/ediinboundfile"
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/edi/ports/edimessageports"
 
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/pkg/pagination"
 	mock "github.com/stretchr/testify/mock"
 )
@@ -108,26 +108,26 @@ func (_c *MockEDIInboundFileRepository_CountQuarantinedSince_Call) RunAndReturn(
 }
 
 // CreateInboundFile provides a mock function for the type MockEDIInboundFileRepository
-func (_mock *MockEDIInboundFileRepository) CreateInboundFile(ctx context.Context, entity *edi.EDIInboundFile) (*edi.EDIInboundFile, error) {
+func (_mock *MockEDIInboundFileRepository) CreateInboundFile(ctx context.Context, entity *ediinboundfile.EDIInboundFile) (*ediinboundfile.EDIInboundFile, error) {
 	ret := _mock.Called(ctx, entity)
 
 	if len(ret) == 0 {
 		panic("no return value specified for CreateInboundFile")
 	}
 
-	var r0 *edi.EDIInboundFile
+	var r0 *ediinboundfile.EDIInboundFile
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *edi.EDIInboundFile) (*edi.EDIInboundFile, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *ediinboundfile.EDIInboundFile) (*ediinboundfile.EDIInboundFile, error)); ok {
 		return returnFunc(ctx, entity)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *edi.EDIInboundFile) *edi.EDIInboundFile); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *ediinboundfile.EDIInboundFile) *ediinboundfile.EDIInboundFile); ok {
 		r0 = returnFunc(ctx, entity)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*edi.EDIInboundFile)
+			r0 = ret.Get(0).(*ediinboundfile.EDIInboundFile)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *edi.EDIInboundFile) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *ediinboundfile.EDIInboundFile) error); ok {
 		r1 = returnFunc(ctx, entity)
 	} else {
 		r1 = ret.Error(1)
@@ -142,20 +142,20 @@ type MockEDIInboundFileRepository_CreateInboundFile_Call struct {
 
 // CreateInboundFile is a helper method to define mock.On call
 //   - ctx context.Context
-//   - entity *edi.EDIInboundFile
+//   - entity *ediinboundfile.EDIInboundFile
 func (_e *MockEDIInboundFileRepository_Expecter) CreateInboundFile(ctx any, entity any) *MockEDIInboundFileRepository_CreateInboundFile_Call {
 	return &MockEDIInboundFileRepository_CreateInboundFile_Call{Call: _e.mock.On("CreateInboundFile", ctx, entity)}
 }
 
-func (_c *MockEDIInboundFileRepository_CreateInboundFile_Call) Run(run func(ctx context.Context, entity *edi.EDIInboundFile)) *MockEDIInboundFileRepository_CreateInboundFile_Call {
+func (_c *MockEDIInboundFileRepository_CreateInboundFile_Call) Run(run func(ctx context.Context, entity *ediinboundfile.EDIInboundFile)) *MockEDIInboundFileRepository_CreateInboundFile_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 *edi.EDIInboundFile
+		var arg1 *ediinboundfile.EDIInboundFile
 		if args[1] != nil {
-			arg1 = args[1].(*edi.EDIInboundFile)
+			arg1 = args[1].(*ediinboundfile.EDIInboundFile)
 		}
 		run(
 			arg0,
@@ -165,12 +165,12 @@ func (_c *MockEDIInboundFileRepository_CreateInboundFile_Call) Run(run func(ctx 
 	return _c
 }
 
-func (_c *MockEDIInboundFileRepository_CreateInboundFile_Call) Return(eDIInboundFile *edi.EDIInboundFile, err error) *MockEDIInboundFileRepository_CreateInboundFile_Call {
+func (_c *MockEDIInboundFileRepository_CreateInboundFile_Call) Return(eDIInboundFile *ediinboundfile.EDIInboundFile, err error) *MockEDIInboundFileRepository_CreateInboundFile_Call {
 	_c.Call.Return(eDIInboundFile, err)
 	return _c
 }
 
-func (_c *MockEDIInboundFileRepository_CreateInboundFile_Call) RunAndReturn(run func(ctx context.Context, entity *edi.EDIInboundFile) (*edi.EDIInboundFile, error)) *MockEDIInboundFileRepository_CreateInboundFile_Call {
+func (_c *MockEDIInboundFileRepository_CreateInboundFile_Call) RunAndReturn(run func(ctx context.Context, entity *ediinboundfile.EDIInboundFile) (*ediinboundfile.EDIInboundFile, error)) *MockEDIInboundFileRepository_CreateInboundFile_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -242,23 +242,23 @@ func (_c *MockEDIInboundFileRepository_ExistsByChecksum_Call) RunAndReturn(run f
 }
 
 // GetInboundFileByID provides a mock function for the type MockEDIInboundFileRepository
-func (_mock *MockEDIInboundFileRepository) GetInboundFileByID(ctx context.Context, req edimessageports.GetEDIInboundFileByIDRequest) (*edi.EDIInboundFile, error) {
+func (_mock *MockEDIInboundFileRepository) GetInboundFileByID(ctx context.Context, req edimessageports.GetEDIInboundFileByIDRequest) (*ediinboundfile.EDIInboundFile, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetInboundFileByID")
 	}
 
-	var r0 *edi.EDIInboundFile
+	var r0 *ediinboundfile.EDIInboundFile
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, edimessageports.GetEDIInboundFileByIDRequest) (*edi.EDIInboundFile, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, edimessageports.GetEDIInboundFileByIDRequest) (*ediinboundfile.EDIInboundFile, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, edimessageports.GetEDIInboundFileByIDRequest) *edi.EDIInboundFile); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, edimessageports.GetEDIInboundFileByIDRequest) *ediinboundfile.EDIInboundFile); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*edi.EDIInboundFile)
+			r0 = ret.Get(0).(*ediinboundfile.EDIInboundFile)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, edimessageports.GetEDIInboundFileByIDRequest) error); ok {
@@ -299,34 +299,34 @@ func (_c *MockEDIInboundFileRepository_GetInboundFileByID_Call) Run(run func(ctx
 	return _c
 }
 
-func (_c *MockEDIInboundFileRepository_GetInboundFileByID_Call) Return(eDIInboundFile *edi.EDIInboundFile, err error) *MockEDIInboundFileRepository_GetInboundFileByID_Call {
+func (_c *MockEDIInboundFileRepository_GetInboundFileByID_Call) Return(eDIInboundFile *ediinboundfile.EDIInboundFile, err error) *MockEDIInboundFileRepository_GetInboundFileByID_Call {
 	_c.Call.Return(eDIInboundFile, err)
 	return _c
 }
 
-func (_c *MockEDIInboundFileRepository_GetInboundFileByID_Call) RunAndReturn(run func(ctx context.Context, req edimessageports.GetEDIInboundFileByIDRequest) (*edi.EDIInboundFile, error)) *MockEDIInboundFileRepository_GetInboundFileByID_Call {
+func (_c *MockEDIInboundFileRepository_GetInboundFileByID_Call) RunAndReturn(run func(ctx context.Context, req edimessageports.GetEDIInboundFileByIDRequest) (*ediinboundfile.EDIInboundFile, error)) *MockEDIInboundFileRepository_GetInboundFileByID_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetInboundFileStatusCounts provides a mock function for the type MockEDIInboundFileRepository
-func (_mock *MockEDIInboundFileRepository) GetInboundFileStatusCounts(ctx context.Context, req edimessageports.GetEDIInboundFileStatusCountsRequest) (map[edi.InboundFileStatus]int, error) {
+func (_mock *MockEDIInboundFileRepository) GetInboundFileStatusCounts(ctx context.Context, req edimessageports.GetEDIInboundFileStatusCountsRequest) (map[ediinboundfile.InboundFileStatus]int, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetInboundFileStatusCounts")
 	}
 
-	var r0 map[edi.InboundFileStatus]int
+	var r0 map[ediinboundfile.InboundFileStatus]int
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, edimessageports.GetEDIInboundFileStatusCountsRequest) (map[edi.InboundFileStatus]int, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, edimessageports.GetEDIInboundFileStatusCountsRequest) (map[ediinboundfile.InboundFileStatus]int, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, edimessageports.GetEDIInboundFileStatusCountsRequest) map[edi.InboundFileStatus]int); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, edimessageports.GetEDIInboundFileStatusCountsRequest) map[ediinboundfile.InboundFileStatus]int); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(map[edi.InboundFileStatus]int)
+			r0 = ret.Get(0).(map[ediinboundfile.InboundFileStatus]int)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, edimessageports.GetEDIInboundFileStatusCountsRequest) error); ok {
@@ -367,34 +367,34 @@ func (_c *MockEDIInboundFileRepository_GetInboundFileStatusCounts_Call) Run(run 
 	return _c
 }
 
-func (_c *MockEDIInboundFileRepository_GetInboundFileStatusCounts_Call) Return(inboundFileStatusToInt map[edi.InboundFileStatus]int, err error) *MockEDIInboundFileRepository_GetInboundFileStatusCounts_Call {
+func (_c *MockEDIInboundFileRepository_GetInboundFileStatusCounts_Call) Return(inboundFileStatusToInt map[ediinboundfile.InboundFileStatus]int, err error) *MockEDIInboundFileRepository_GetInboundFileStatusCounts_Call {
 	_c.Call.Return(inboundFileStatusToInt, err)
 	return _c
 }
 
-func (_c *MockEDIInboundFileRepository_GetInboundFileStatusCounts_Call) RunAndReturn(run func(ctx context.Context, req edimessageports.GetEDIInboundFileStatusCountsRequest) (map[edi.InboundFileStatus]int, error)) *MockEDIInboundFileRepository_GetInboundFileStatusCounts_Call {
+func (_c *MockEDIInboundFileRepository_GetInboundFileStatusCounts_Call) RunAndReturn(run func(ctx context.Context, req edimessageports.GetEDIInboundFileStatusCountsRequest) (map[ediinboundfile.InboundFileStatus]int, error)) *MockEDIInboundFileRepository_GetInboundFileStatusCounts_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // ListInboundFiles provides a mock function for the type MockEDIInboundFileRepository
-func (_mock *MockEDIInboundFileRepository) ListInboundFiles(ctx context.Context, req *edimessageports.ListEDIInboundFilesRequest) (*pagination.ListResult[*edi.EDIInboundFile], error) {
+func (_mock *MockEDIInboundFileRepository) ListInboundFiles(ctx context.Context, req *edimessageports.ListEDIInboundFilesRequest) (*pagination.ListResult[*ediinboundfile.EDIInboundFile], error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListInboundFiles")
 	}
 
-	var r0 *pagination.ListResult[*edi.EDIInboundFile]
+	var r0 *pagination.ListResult[*ediinboundfile.EDIInboundFile]
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *edimessageports.ListEDIInboundFilesRequest) (*pagination.ListResult[*edi.EDIInboundFile], error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *edimessageports.ListEDIInboundFilesRequest) (*pagination.ListResult[*ediinboundfile.EDIInboundFile], error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *edimessageports.ListEDIInboundFilesRequest) *pagination.ListResult[*edi.EDIInboundFile]); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *edimessageports.ListEDIInboundFilesRequest) *pagination.ListResult[*ediinboundfile.EDIInboundFile]); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*pagination.ListResult[*edi.EDIInboundFile])
+			r0 = ret.Get(0).(*pagination.ListResult[*ediinboundfile.EDIInboundFile])
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, *edimessageports.ListEDIInboundFilesRequest) error); ok {
@@ -435,34 +435,34 @@ func (_c *MockEDIInboundFileRepository_ListInboundFiles_Call) Run(run func(ctx c
 	return _c
 }
 
-func (_c *MockEDIInboundFileRepository_ListInboundFiles_Call) Return(listResult *pagination.ListResult[*edi.EDIInboundFile], err error) *MockEDIInboundFileRepository_ListInboundFiles_Call {
+func (_c *MockEDIInboundFileRepository_ListInboundFiles_Call) Return(listResult *pagination.ListResult[*ediinboundfile.EDIInboundFile], err error) *MockEDIInboundFileRepository_ListInboundFiles_Call {
 	_c.Call.Return(listResult, err)
 	return _c
 }
 
-func (_c *MockEDIInboundFileRepository_ListInboundFiles_Call) RunAndReturn(run func(ctx context.Context, req *edimessageports.ListEDIInboundFilesRequest) (*pagination.ListResult[*edi.EDIInboundFile], error)) *MockEDIInboundFileRepository_ListInboundFiles_Call {
+func (_c *MockEDIInboundFileRepository_ListInboundFiles_Call) RunAndReturn(run func(ctx context.Context, req *edimessageports.ListEDIInboundFilesRequest) (*pagination.ListResult[*ediinboundfile.EDIInboundFile], error)) *MockEDIInboundFileRepository_ListInboundFiles_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // ListInboundFilesCursor provides a mock function for the type MockEDIInboundFileRepository
-func (_mock *MockEDIInboundFileRepository) ListInboundFilesCursor(ctx context.Context, req *edimessageports.ListEDIInboundFilesRequest) (*pagination.CursorListResult[*edi.EDIInboundFile], error) {
+func (_mock *MockEDIInboundFileRepository) ListInboundFilesCursor(ctx context.Context, req *edimessageports.ListEDIInboundFilesRequest) (*pagination.CursorListResult[*ediinboundfile.EDIInboundFile], error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListInboundFilesCursor")
 	}
 
-	var r0 *pagination.CursorListResult[*edi.EDIInboundFile]
+	var r0 *pagination.CursorListResult[*ediinboundfile.EDIInboundFile]
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *edimessageports.ListEDIInboundFilesRequest) (*pagination.CursorListResult[*edi.EDIInboundFile], error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *edimessageports.ListEDIInboundFilesRequest) (*pagination.CursorListResult[*ediinboundfile.EDIInboundFile], error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *edimessageports.ListEDIInboundFilesRequest) *pagination.CursorListResult[*edi.EDIInboundFile]); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *edimessageports.ListEDIInboundFilesRequest) *pagination.CursorListResult[*ediinboundfile.EDIInboundFile]); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*pagination.CursorListResult[*edi.EDIInboundFile])
+			r0 = ret.Get(0).(*pagination.CursorListResult[*ediinboundfile.EDIInboundFile])
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, *edimessageports.ListEDIInboundFilesRequest) error); ok {
@@ -503,34 +503,34 @@ func (_c *MockEDIInboundFileRepository_ListInboundFilesCursor_Call) Run(run func
 	return _c
 }
 
-func (_c *MockEDIInboundFileRepository_ListInboundFilesCursor_Call) Return(cursorListResult *pagination.CursorListResult[*edi.EDIInboundFile], err error) *MockEDIInboundFileRepository_ListInboundFilesCursor_Call {
+func (_c *MockEDIInboundFileRepository_ListInboundFilesCursor_Call) Return(cursorListResult *pagination.CursorListResult[*ediinboundfile.EDIInboundFile], err error) *MockEDIInboundFileRepository_ListInboundFilesCursor_Call {
 	_c.Call.Return(cursorListResult, err)
 	return _c
 }
 
-func (_c *MockEDIInboundFileRepository_ListInboundFilesCursor_Call) RunAndReturn(run func(ctx context.Context, req *edimessageports.ListEDIInboundFilesRequest) (*pagination.CursorListResult[*edi.EDIInboundFile], error)) *MockEDIInboundFileRepository_ListInboundFilesCursor_Call {
+func (_c *MockEDIInboundFileRepository_ListInboundFilesCursor_Call) RunAndReturn(run func(ctx context.Context, req *edimessageports.ListEDIInboundFilesRequest) (*pagination.CursorListResult[*ediinboundfile.EDIInboundFile], error)) *MockEDIInboundFileRepository_ListInboundFilesCursor_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // ListRecentQuarantined provides a mock function for the type MockEDIInboundFileRepository
-func (_mock *MockEDIInboundFileRepository) ListRecentQuarantined(ctx context.Context, req edimessageports.ListRecentQuarantinedEDIInboundFilesRequest) ([]*edi.EDIInboundFile, error) {
+func (_mock *MockEDIInboundFileRepository) ListRecentQuarantined(ctx context.Context, req edimessageports.ListRecentQuarantinedEDIInboundFilesRequest) ([]*ediinboundfile.EDIInboundFile, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListRecentQuarantined")
 	}
 
-	var r0 []*edi.EDIInboundFile
+	var r0 []*ediinboundfile.EDIInboundFile
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, edimessageports.ListRecentQuarantinedEDIInboundFilesRequest) ([]*edi.EDIInboundFile, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, edimessageports.ListRecentQuarantinedEDIInboundFilesRequest) ([]*ediinboundfile.EDIInboundFile, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, edimessageports.ListRecentQuarantinedEDIInboundFilesRequest) []*edi.EDIInboundFile); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, edimessageports.ListRecentQuarantinedEDIInboundFilesRequest) []*ediinboundfile.EDIInboundFile); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*edi.EDIInboundFile)
+			r0 = ret.Get(0).([]*ediinboundfile.EDIInboundFile)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, edimessageports.ListRecentQuarantinedEDIInboundFilesRequest) error); ok {
@@ -571,12 +571,12 @@ func (_c *MockEDIInboundFileRepository_ListRecentQuarantined_Call) Run(run func(
 	return _c
 }
 
-func (_c *MockEDIInboundFileRepository_ListRecentQuarantined_Call) Return(eDIInboundFiles []*edi.EDIInboundFile, err error) *MockEDIInboundFileRepository_ListRecentQuarantined_Call {
+func (_c *MockEDIInboundFileRepository_ListRecentQuarantined_Call) Return(eDIInboundFiles []*ediinboundfile.EDIInboundFile, err error) *MockEDIInboundFileRepository_ListRecentQuarantined_Call {
 	_c.Call.Return(eDIInboundFiles, err)
 	return _c
 }
 
-func (_c *MockEDIInboundFileRepository_ListRecentQuarantined_Call) RunAndReturn(run func(ctx context.Context, req edimessageports.ListRecentQuarantinedEDIInboundFilesRequest) ([]*edi.EDIInboundFile, error)) *MockEDIInboundFileRepository_ListRecentQuarantined_Call {
+func (_c *MockEDIInboundFileRepository_ListRecentQuarantined_Call) RunAndReturn(run func(ctx context.Context, req edimessageports.ListRecentQuarantinedEDIInboundFilesRequest) ([]*ediinboundfile.EDIInboundFile, error)) *MockEDIInboundFileRepository_ListRecentQuarantined_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -648,26 +648,26 @@ func (_c *MockEDIInboundFileRepository_PurgeRawContentBefore_Call) RunAndReturn(
 }
 
 // UpdateInboundFile provides a mock function for the type MockEDIInboundFileRepository
-func (_mock *MockEDIInboundFileRepository) UpdateInboundFile(ctx context.Context, entity *edi.EDIInboundFile) (*edi.EDIInboundFile, error) {
+func (_mock *MockEDIInboundFileRepository) UpdateInboundFile(ctx context.Context, entity *ediinboundfile.EDIInboundFile) (*ediinboundfile.EDIInboundFile, error) {
 	ret := _mock.Called(ctx, entity)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateInboundFile")
 	}
 
-	var r0 *edi.EDIInboundFile
+	var r0 *ediinboundfile.EDIInboundFile
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *edi.EDIInboundFile) (*edi.EDIInboundFile, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *ediinboundfile.EDIInboundFile) (*ediinboundfile.EDIInboundFile, error)); ok {
 		return returnFunc(ctx, entity)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *edi.EDIInboundFile) *edi.EDIInboundFile); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *ediinboundfile.EDIInboundFile) *ediinboundfile.EDIInboundFile); ok {
 		r0 = returnFunc(ctx, entity)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*edi.EDIInboundFile)
+			r0 = ret.Get(0).(*ediinboundfile.EDIInboundFile)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *edi.EDIInboundFile) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *ediinboundfile.EDIInboundFile) error); ok {
 		r1 = returnFunc(ctx, entity)
 	} else {
 		r1 = ret.Error(1)
@@ -682,20 +682,20 @@ type MockEDIInboundFileRepository_UpdateInboundFile_Call struct {
 
 // UpdateInboundFile is a helper method to define mock.On call
 //   - ctx context.Context
-//   - entity *edi.EDIInboundFile
+//   - entity *ediinboundfile.EDIInboundFile
 func (_e *MockEDIInboundFileRepository_Expecter) UpdateInboundFile(ctx any, entity any) *MockEDIInboundFileRepository_UpdateInboundFile_Call {
 	return &MockEDIInboundFileRepository_UpdateInboundFile_Call{Call: _e.mock.On("UpdateInboundFile", ctx, entity)}
 }
 
-func (_c *MockEDIInboundFileRepository_UpdateInboundFile_Call) Run(run func(ctx context.Context, entity *edi.EDIInboundFile)) *MockEDIInboundFileRepository_UpdateInboundFile_Call {
+func (_c *MockEDIInboundFileRepository_UpdateInboundFile_Call) Run(run func(ctx context.Context, entity *ediinboundfile.EDIInboundFile)) *MockEDIInboundFileRepository_UpdateInboundFile_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 *edi.EDIInboundFile
+		var arg1 *ediinboundfile.EDIInboundFile
 		if args[1] != nil {
-			arg1 = args[1].(*edi.EDIInboundFile)
+			arg1 = args[1].(*ediinboundfile.EDIInboundFile)
 		}
 		run(
 			arg0,
@@ -705,12 +705,12 @@ func (_c *MockEDIInboundFileRepository_UpdateInboundFile_Call) Run(run func(ctx 
 	return _c
 }
 
-func (_c *MockEDIInboundFileRepository_UpdateInboundFile_Call) Return(eDIInboundFile *edi.EDIInboundFile, err error) *MockEDIInboundFileRepository_UpdateInboundFile_Call {
+func (_c *MockEDIInboundFileRepository_UpdateInboundFile_Call) Return(eDIInboundFile *ediinboundfile.EDIInboundFile, err error) *MockEDIInboundFileRepository_UpdateInboundFile_Call {
 	_c.Call.Return(eDIInboundFile, err)
 	return _c
 }
 
-func (_c *MockEDIInboundFileRepository_UpdateInboundFile_Call) RunAndReturn(run func(ctx context.Context, entity *edi.EDIInboundFile) (*edi.EDIInboundFile, error)) *MockEDIInboundFileRepository_UpdateInboundFile_Call {
+func (_c *MockEDIInboundFileRepository_UpdateInboundFile_Call) RunAndReturn(run func(ctx context.Context, entity *ediinboundfile.EDIInboundFile) (*ediinboundfile.EDIInboundFile, error)) *MockEDIInboundFileRepository_UpdateInboundFile_Call {
 	_c.Call.Return(run)
 	return _c
 }

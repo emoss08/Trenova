@@ -1,9 +1,11 @@
-package edi
+package ediinboundfile
 
 import (
 	"context"
 
 	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edimessage"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -15,35 +17,35 @@ import (
 type EDIInboundFile struct {
 	keel.Table `keel:"edi_inbound_files"`
 
-	ID                       pulid.ID          `json:"id"                       keel:"id,pk,autoid:ediinf_"`
-	BusinessUnitID           pulid.ID          `json:"businessUnitId"           keel:"business_unit_id,pk,tenant"`
-	OrganizationID           pulid.ID          `json:"organizationId"           keel:"organization_id,pk,tenant"`
-	CommunicationProfileID   pulid.ID          `json:"communicationProfileId"   keel:"communication_profile_id"`
-	EDIPartnerID             pulid.ID          `json:"ediPartnerId"             keel:"edi_partner_id,nullzero"`
-	Method                   ConnectionMethod  `json:"method"                   keel:"method"`
-	RemotePath               string            `json:"remotePath"               keel:"remote_path"`
-	FileName                 string            `json:"fileName"                 keel:"file_name"`
-	Checksum                 string            `json:"checksum"                 keel:"checksum"`
-	SizeBytes                int64             `json:"sizeBytes"                keel:"size_bytes"`
-	RawContent               string            `json:"rawContent"               keel:"raw_content"`
-	InterchangeControlNumber string            `json:"interchangeControlNumber" keel:"interchange_control_number,nullzero"`
-	ISASenderQualifier       string            `json:"isaSenderQualifier"       keel:"isa_sender_qualifier,nullzero"`
-	ISASenderID              string            `json:"isaSenderId"              keel:"isa_sender_id,nullzero"`
-	ISAReceiverQualifier     string            `json:"isaReceiverQualifier"     keel:"isa_receiver_qualifier,nullzero"`
-	ISAReceiverID            string            `json:"isaReceiverId"            keel:"isa_receiver_id,nullzero"`
-	Status                   InboundFileStatus `json:"status"                   keel:"status"`
-	FailureReason            string            `json:"failureReason"            keel:"failure_reason,nullzero"`
-	TransactionCount         int               `json:"transactionCount"         keel:"transaction_count"`
-	ReceivedAt               int64             `json:"receivedAt"               keel:"received_at"`
-	ProcessedAt              *int64            `json:"processedAt"              keel:"processed_at"`
-	RawPurgedAt              *int64            `json:"rawPurgedAt"              keel:"raw_purged_at"`
-	Version                  int64             `json:"version"                  keel:"version,version"`
-	CreatedAt                int64             `json:"createdAt"                keel:"created_at,autocreate"`
-	UpdatedAt                int64             `json:"updatedAt"                keel:"updated_at,autoupdate"`
+	ID                       pulid.ID             `json:"id"                       keel:"id,pk,autoid:ediinf_"`
+	BusinessUnitID           pulid.ID             `json:"businessUnitId"           keel:"business_unit_id,pk,tenant"`
+	OrganizationID           pulid.ID             `json:"organizationId"           keel:"organization_id,pk,tenant"`
+	CommunicationProfileID   pulid.ID             `json:"communicationProfileId"   keel:"communication_profile_id"`
+	EDIPartnerID             pulid.ID             `json:"ediPartnerId"             keel:"edi_partner_id,nullzero"`
+	Method                   edi.ConnectionMethod `json:"method"                   keel:"method"`
+	RemotePath               string               `json:"remotePath"               keel:"remote_path"`
+	FileName                 string               `json:"fileName"                 keel:"file_name"`
+	Checksum                 string               `json:"checksum"                 keel:"checksum"`
+	SizeBytes                int64                `json:"sizeBytes"                keel:"size_bytes"`
+	RawContent               string               `json:"rawContent"               keel:"raw_content"`
+	InterchangeControlNumber string               `json:"interchangeControlNumber" keel:"interchange_control_number,nullzero"`
+	ISASenderQualifier       string               `json:"isaSenderQualifier"       keel:"isa_sender_qualifier,nullzero"`
+	ISASenderID              string               `json:"isaSenderId"              keel:"isa_sender_id,nullzero"`
+	ISAReceiverQualifier     string               `json:"isaReceiverQualifier"     keel:"isa_receiver_qualifier,nullzero"`
+	ISAReceiverID            string               `json:"isaReceiverId"            keel:"isa_receiver_id,nullzero"`
+	Status                   InboundFileStatus    `json:"status"                   keel:"status"`
+	FailureReason            string               `json:"failureReason"            keel:"failure_reason,nullzero"`
+	TransactionCount         int                  `json:"transactionCount"         keel:"transaction_count"`
+	ReceivedAt               int64                `json:"receivedAt"               keel:"received_at"`
+	ProcessedAt              *int64               `json:"processedAt"              keel:"processed_at"`
+	RawPurgedAt              *int64               `json:"rawPurgedAt"              keel:"raw_purged_at"`
+	Version                  int64                `json:"version"                  keel:"version,version"`
+	CreatedAt                int64                `json:"createdAt"                keel:"created_at,autocreate"`
+	UpdatedAt                int64                `json:"updatedAt"                keel:"updated_at,autoupdate"`
 
-	Partner              *EDIPartner              `json:"partner,omitempty"              keel:"belongs:edi_partner_id"`
-	CommunicationProfile *EDICommunicationProfile `json:"communicationProfile,omitempty" keel:"belongs:communication_profile_id"`
-	Messages             []*EDIMessage            `json:"messages,omitempty"             keel:"many:inbound_file_id"`
+	Partner              *edi.EDIPartner              `json:"partner,omitempty"              keel:"belongs:edi_partner_id"`
+	CommunicationProfile *edi.EDICommunicationProfile `json:"communicationProfile,omitempty" keel:"belongs:communication_profile_id"`
+	Messages             []*edimessage.EDIMessage     `json:"messages,omitempty"             keel:"many:inbound_file_id"`
 }
 
 func (f *EDIInboundFile) BeforeUpdate(ctx context.Context) error {
@@ -116,7 +118,7 @@ func (f *EDIInboundFile) Validate(multiErr *errortypes.MultiError) {
 		),
 		validation.Field(&f.Method,
 			validation.Required.Error("Method is required"),
-			domainvalidation.ValidEnum[ConnectionMethod]("Method is invalid"),
+			domainvalidation.ValidEnum[edi.ConnectionMethod]("Method is invalid"),
 		),
 		validation.Field(&f.RemotePath, validation.Required.Error("Remote path is required")),
 		validation.Field(&f.FileName,
@@ -148,7 +150,7 @@ func (f *EDIInboundFile) Validate(multiErr *errortypes.MultiError) {
 			validation.Min(0).Error("Transaction count cannot be negative"),
 		),
 		validation.Field(&f.InterchangeControlNumber,
-			validation.Length(0, maxEDICodeLength).
+			validation.Length(0, maxInterchangeControlNumberLength).
 				Error("Interchange control number cannot be longer than 20 characters"),
 		),
 		validation.Field(&f.ISASenderQualifier,
@@ -179,4 +181,6 @@ const (
 	inboundChecksumLength    = 64
 	maxISAQualifierLength    = 4
 	maxISAIDLength           = 20
+
+	maxInterchangeControlNumberLength = 20
 )

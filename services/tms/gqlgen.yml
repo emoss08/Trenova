@@ -4540,22 +4540,22 @@ models:
       - github.com/emoss08/trenova/internal/modules/edi/domain/edi.ConnectionStatus
   EdiTransferStatus:
     model:
-      - github.com/emoss08/trenova/internal/modules/edi/domain/edi.TransferStatus
+      - github.com/emoss08/trenova/internal/modules/edi/domain/editransfer.TransferStatus
   EdiDocumentDirection:
     model:
-      - github.com/emoss08/trenova/internal/modules/edi/domain/edi.DocumentDirection
+      - github.com/emoss08/trenova/internal/modules/edi/domain/edidocument.DocumentDirection
   EdiMessageStatus:
     model:
-      - github.com/emoss08/trenova/internal/modules/edi/domain/edi.MessageStatus
+      - github.com/emoss08/trenova/internal/modules/edi/domain/edimessage.MessageStatus
   EdiMessageDeliveryStatus:
     model:
-      - github.com/emoss08/trenova/internal/modules/edi/domain/edi.MessageDeliveryStatus
+      - github.com/emoss08/trenova/internal/modules/edi/domain/edimessage.MessageDeliveryStatus
   EdiMessageAckStatus:
     model:
-      - github.com/emoss08/trenova/internal/modules/edi/domain/edi.MessageAcknowledgmentStatus
+      - github.com/emoss08/trenova/internal/modules/edi/domain/edimessage.MessageAcknowledgmentStatus
   EdiInboundFileStatus:
     model:
-      - github.com/emoss08/trenova/internal/modules/edi/domain/edi.InboundFileStatus
+      - github.com/emoss08/trenova/internal/modules/edi/domain/ediinboundfile.InboundFileStatus
   EdiMappingEntityType:
     model:
       - github.com/emoss08/trenova/internal/modules/edi/domain/edi.MappingEntityType
@@ -4576,13 +4576,13 @@ models:
       - github.com/emoss08/trenova/internal/modules/edi/domain/edi.EDICommunicationProfile
   EdiTransfer:
     model:
-      - github.com/emoss08/trenova/internal/modules/edi/domain/edi.EDITransfer
+      - github.com/emoss08/trenova/internal/modules/edi/domain/editransfer.EDITransfer
   EdiMessage:
     model:
-      - github.com/emoss08/trenova/internal/modules/edi/domain/edi.EDIMessage
+      - github.com/emoss08/trenova/internal/modules/edi/domain/edimessage.EDIMessage
   EdiInboundFile:
     model:
-      - github.com/emoss08/trenova/internal/modules/edi/domain/edi.EDIInboundFile
+      - github.com/emoss08/trenova/internal/modules/edi/domain/ediinboundfile.EDIInboundFile
   EdiMappingProfile:
     model:
       - github.com/emoss08/trenova/internal/modules/edi/domain/edi.EDIMappingProfile
@@ -4591,22 +4591,22 @@ models:
       - github.com/emoss08/trenova/internal/modules/edi/domain/edi.EDIMappingProfileItem
   EdiLadingVersionStatus:
     model:
-      - github.com/emoss08/trenova/internal/modules/edi/domain/edi.LadingVersionStatus
+      - github.com/emoss08/trenova/internal/modules/edi/domain/ladingproject.LadingVersionStatus
   EdiFlowInstanceStatus:
     model:
-      - github.com/emoss08/trenova/internal/modules/edi/domain/edi.FlowInstanceStatus
+      - github.com/emoss08/trenova/internal/modules/edi/domain/ladingproject.FlowInstanceStatus
   EdiLadingReadiness:
     model:
-      - github.com/emoss08/trenova/internal/modules/edi/domain/edi.LadingReadiness
+      - github.com/emoss08/trenova/internal/modules/edi/domain/ladingproject.LadingReadiness
   EdiLadingVersion:
     model:
-      - github.com/emoss08/trenova/internal/modules/edi/domain/edi.LadingVersion
+      - github.com/emoss08/trenova/internal/modules/edi/domain/ladingproject.LadingVersion
   EdiLadingProject:
     model:
-      - github.com/emoss08/trenova/internal/modules/edi/domain/edi.LadingProject
+      - github.com/emoss08/trenova/internal/modules/edi/domain/ladingproject.LadingProject
   EdiFlowInstance:
     model:
-      - github.com/emoss08/trenova/internal/modules/edi/domain/edi.FlowInstance
+      - github.com/emoss08/trenova/internal/modules/edi/domain/ladingproject.FlowInstance
   EquipmentManufacturer:
     model:
       - github.com/emoss08/trenova/internal/modules/equipment/domain/equipmentmanufacturer.EquipmentManufacturer
@@ -5365,7 +5365,7 @@ models:
       - github.com/emoss08/trenova/internal/modules/settlement/app/carriersettlementservice.WorkspaceSummary
   EdiCarrierInvoice:
     model:
-      - github.com/emoss08/trenova/internal/modules/edi/domain/edi.CarrierInvoice
+      - github.com/emoss08/trenova/internal/modules/edi/domain/edicarrierinvoice.CarrierInvoice
   CustomerPaymentStatus:
     model:
       - github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment.Status

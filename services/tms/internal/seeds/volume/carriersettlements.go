@@ -8,18 +8,24 @@ import (
 	"time"
 
 	"github.com/emoss08/keel"
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi/edidb"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
-	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier/carrierdb"
-	"github.com/emoss08/trenova/internal/modules/rating/domain/rateconfirmation/rateconfirmationdb"
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement/carriersettlementdb"
-
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edi/edidb"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edicarrierinvoice"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edicarrierinvoice/edicarrierinvoicedb"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument/edidocumentdb"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edimessage"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edimessage/edimessagedb"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edipayload"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier/carrierdb"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateconfirmation"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/rateconfirmation/rateconfirmationdb"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement/carriersettlementdb"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -134,8 +140,8 @@ type csSetup struct {
 type csRows struct {
 	partners    []*edi.EDIPartner
 	channels    []*carrier.CarrierEDIChannel
-	messages    []*edi.EDIMessage
-	invoices    []*edi.CarrierInvoice
+	messages    []*edimessage.EDIMessage
+	invoices    []*edicarrierinvoice.CarrierInvoice
 	rateCons    []*rateconfirmation.RateConfirmation
 	batches     []*carriersettlement.CarrierSettlementBatch
 	settlements []*csSettlement
@@ -493,11 +499,11 @@ func (g *generator) csInvoices(
 	setup *csSetup,
 	moves []*csMove,
 ) error {
-	dt := edidb.EDIDocumentTypes
+	dt := edidocumentdb.EDIDocumentTypes
 	docType, err := firstOrNil(ctx, g.db, dt.Where(
-		dt.Standard.Eq(edi.EDIStandardX12),
-		dt.TransactionSet.Eq(edi.TransactionSet210),
-		dt.Direction.Eq(edi.DocumentDirectionInbound),
+		dt.Standard.Eq(edidocument.EDIStandardX12),
+		dt.TransactionSet.Eq(edidocument.TransactionSet210),
+		dt.Direction.Eq(edidocument.DocumentDirectionInbound),
 	))
 	if err != nil {
 		return fmt.Errorf("load inbound 210 document type: %w", err)
@@ -528,7 +534,7 @@ func (g *generator) csInvoices(
 func (g *generator) csInvoice(
 	rows *csRows,
 	mv *csMove,
-	docType *edi.EDIDocumentType,
+	docType *edidocument.EDIDocumentType,
 	received int64,
 	tolerance int64,
 ) {
@@ -559,14 +565,14 @@ func (g *generator) csInvoice(
 	c.nextControl++
 	control := c.nextControl
 
-	charges := []edi.FreightInvoiceCharge{{
+	charges := []edipayload.FreightInvoiceCharge{{
 		Sequence:    1,
 		Code:        "400",
 		Description: "Linehaul",
 		Amount:      money.DecimalFromMinor(linehaul + min(variance, 0)),
 	}}
 	if fuel != 0 {
-		charges = append(charges, edi.FreightInvoiceCharge{
+		charges = append(charges, edipayload.FreightInvoiceCharge{
 			Sequence:    2,
 			Code:        "405",
 			Description: "Fuel surcharge",
@@ -574,7 +580,7 @@ func (g *generator) csInvoice(
 		})
 	}
 	if variance > 0 {
-		charges = append(charges, edi.FreightInvoiceCharge{
+		charges = append(charges, edipayload.FreightInvoiceCharge{
 			Sequence:    int64(len(charges) + 1),
 			Code:        strings.ToUpper(extra[:3]),
 			Description: extra,
@@ -586,7 +592,7 @@ func (g *generator) csInvoice(
 	invoiceDate := received - g.fake.between64(csHour, 20*csHour)
 	totalAmount := decimal.NewNullDecimal(money.DecimalFromMinor(total))
 	refs := map[string]string{"scac": c.entity.SCAC}
-	payload := &edi.FreightInvoicePayload{
+	payload := &edipayload.FreightInvoicePayload{
 		InvoiceNumber:    number,
 		InvoiceDate:      invoiceDate,
 		DeliveryDate:     deliveredAt,
@@ -600,31 +606,31 @@ func (g *generator) csInvoice(
 	}
 	raw, segments := csRaw210(c, g.refs.orgName, payload, control, received)
 
-	message := &edi.EDIMessage{
+	message := &edimessage.EDIMessage{
 		ID:                       idAt("edimsg_", received),
 		BusinessUnitID:           g.refs.buID,
 		OrganizationID:           g.refs.orgID,
 		EDIPartnerID:             c.partner.ID,
 		DocumentTypeID:           docType.ID,
-		Direction:                edi.DocumentDirectionInbound,
-		Standard:                 edi.EDIStandardX12,
-		TransactionSet:           edi.TransactionSet210,
+		Direction:                edidocument.DocumentDirectionInbound,
+		Standard:                 edidocument.EDIStandardX12,
+		TransactionSet:           edidocument.TransactionSet210,
 		X12Version:               docType.DefaultVersion,
-		Status:                   edi.MessageStatusGenerated,
+		Status:                   edimessage.MessageStatusGenerated,
 		InterchangeControlNumber: fmt.Sprintf("%09d", control),
 		GroupControlNumber:       fmt.Sprintf("%d", control),
 		TransactionControlNumber: "0001",
 		SegmentCount:             int64(segments),
 		RawX12:                   raw,
-		PayloadSnapshot: edi.DocumentPayload{
-			TransactionSet: edi.TransactionSet210,
+		PayloadSnapshot: edipayload.DocumentPayload{
+			TransactionSet: edidocument.TransactionSet210,
 			FreightInvoice: payload,
 		},
-		AckStatus:   edi.MessageAcknowledgmentStatusNotExpected,
+		AckStatus:   edimessage.MessageAcknowledgmentStatusNotExpected,
 		GeneratedAt: received,
 		Version:     1,
 	}
-	invoice := &edi.CarrierInvoice{
+	invoice := &edicarrierinvoice.CarrierInvoice{
 		ID:                   idAt("edici_", received),
 		BusinessUnitID:       g.refs.buID,
 		OrganizationID:       g.refs.orgID,
@@ -640,7 +646,7 @@ func (g *generator) csInvoice(
 		TotalAmount:          totalAmount,
 		LineCharges:          charges,
 		ReferenceNumbers:     refs,
-		ReconciliationStatus: edi.CarrierInvoiceReconciliationStatusUnmatched,
+		ReconciliationStatus: edicarrierinvoice.CarrierInvoiceReconciliationStatusUnmatched,
 		ReconciliationNotes: fmt.Sprintf(
 			"carrier invoice %s could not be matched to an outbound tender",
 			number,
@@ -687,10 +693,10 @@ func (g *generator) csInvoice(
 
 	invoice.ExpectedAmount = decimal.NewNullDecimal(money.DecimalFromMinor(expected))
 	invoice.VarianceAmount = decimal.NewNullDecimal(money.DecimalFromMinor(variance))
-	invoice.ReconciliationStatus = edi.CarrierInvoiceReconciliationStatusMatched
+	invoice.ReconciliationStatus = edicarrierinvoice.CarrierInvoiceReconciliationStatusMatched
 	invoice.ReconciliationNotes = ""
 	if match.Status == carriersettlement.InvoiceMatchStatusVariance {
-		invoice.ReconciliationStatus = edi.CarrierInvoiceReconciliationStatusVariance
+		invoice.ReconciliationStatus = edicarrierinvoice.CarrierInvoiceReconciliationStatusVariance
 		invoice.ReconciliationNotes = fmt.Sprintf(
 			"carrier invoice %s differs from the tendered amount by %s",
 			number,
@@ -713,7 +719,7 @@ func (g *generator) csInvoice(
 					matcher,
 					resolveAt,
 				)
-				invoice.ReconciliationStatus = edi.CarrierInvoiceReconciliationStatusMatched
+				invoice.ReconciliationStatus = edicarrierinvoice.CarrierInvoiceReconciliationStatusMatched
 				invoiceUpdated, matchUpdated = resolveAt, resolveAt
 			}
 		case carriersettlement.InvoiceMatchStatusVariance:
@@ -726,7 +732,7 @@ func (g *generator) csInvoice(
 			case roll < acceptOdds:
 				g.csResolveMatch(match, carriersettlement.InvoiceMatchStatusResolved,
 					"Accepted per the carrier's supporting paperwork", matcher, resolveAt)
-				invoice.ReconciliationStatus = edi.CarrierInvoiceReconciliationStatusMatched
+				invoice.ReconciliationStatus = edicarrierinvoice.CarrierInvoiceReconciliationStatusMatched
 				invoiceUpdated, matchUpdated = resolveAt, resolveAt
 				rows.events = append(rows.events, g.csVarianceEvent(mv, match, resolveAt))
 			case roll < acceptOdds+rejectOdds:
@@ -1448,11 +1454,11 @@ func (g *generator) csWrite(ctx context.Context, tx *keel.DB, rows *csRows) erro
 		},
 		{
 			csTableMessages,
-			func() error { return insertRows(ctx, tx, edidb.EDIMessages.Handle, rows.messages) },
+			func() error { return insertRows(ctx, tx, edimessagedb.EDIMessages.Handle, rows.messages) },
 		},
 		{
 			csTableInvoices,
-			func() error { return insertRows(ctx, tx, edidb.CarrierInvoices.Handle, rows.invoices) },
+			func() error { return insertRows(ctx, tx, edicarrierinvoicedb.CarrierInvoices.Handle, rows.invoices) },
 		},
 		{
 			csTableRateCons,
@@ -1622,7 +1628,7 @@ func (g *generator) csReport(rows *csRows) {
 func csRaw210(
 	c *csCarrier,
 	receiver string,
-	p *edi.FreightInvoicePayload,
+	p *edipayload.FreightInvoicePayload,
 	control int,
 	received int64,
 ) (string, int) {

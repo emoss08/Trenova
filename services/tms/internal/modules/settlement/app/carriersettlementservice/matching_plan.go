@@ -3,7 +3,7 @@ package carriersettlementservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edicarrierinvoice"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -276,8 +276,8 @@ func (s *Service) PerformMatchDecision(
 
 type LinkInvoicePlan struct {
 	Carrier *carrier.Carrier
-	Before  *edi.CarrierInvoice
-	After   *edi.CarrierInvoice
+	Before  *edicarrierinvoice.CarrierInvoice
+	After   *edicarrierinvoice.CarrierInvoice
 }
 
 func (s *Service) PlanLinkInvoice(
@@ -308,7 +308,7 @@ func (s *Service) PlanLinkInvoice(
 type matchDraft struct {
 	seed           *invoiceMatchSeed
 	assignment     *shipment.CarrierAssignment
-	invoice        *edi.CarrierInvoice
+	invoice        *edicarrierinvoice.CarrierInvoice
 	toleranceMinor int64
 }
 
@@ -318,7 +318,7 @@ type matchSource struct {
 	invoiceTotalMinor int64
 	proNumber         string
 	shipmentID        pulid.ID
-	invoice           *edi.CarrierInvoice
+	invoice           *edicarrierinvoice.CarrierInvoice
 }
 
 func requestedMatchSource(req *CreateMatchRequest) *matchSource {
@@ -523,7 +523,7 @@ func newInvoiceMatch(
 
 type CreateMatchPlan struct {
 	Match      *carriersettlement.InvoiceMatch
-	Invoice    *edi.CarrierInvoice
+	Invoice    *edicarrierinvoice.CarrierInvoice
 	Assignment *shipment.CarrierAssignment
 	Refusal    error
 }

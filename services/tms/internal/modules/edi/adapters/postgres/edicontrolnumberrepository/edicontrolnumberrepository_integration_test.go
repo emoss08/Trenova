@@ -12,6 +12,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/adapters/postgres/edicontrolnumberrepository"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi/edidb"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument/edidocumentdb"
 	"github.com/emoss08/trenova/internal/modules/edi/editest"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
 	"github.com/emoss08/trenova/internal/testutil/seededtest"
@@ -23,14 +25,14 @@ func seededDocumentType(
 	t *testing.T,
 	ctx context.Context,
 	db *keel.DB,
-	set edi.TransactionSet,
-) *edi.EDIDocumentType {
+	set edidocument.TransactionSet,
+) *edidocument.EDIDocumentType {
 	t.Helper()
 
-	dt := edidb.EDIDocumentTypes
+	dt := edidocumentdb.EDIDocumentTypes
 	documentType, err := dt.Where(
 		dt.TransactionSet.Eq(set),
-		dt.Direction.Eq(edi.DocumentDirectionOutbound),
+		dt.Direction.Eq(edidocument.DocumentDirectionOutbound),
 	).First(ctx, db)
 	require.NoError(t, err)
 
@@ -62,22 +64,22 @@ func TestAllocateControlNumbersConcurrentAllocationsAreUnique(t *testing.T) {
 
 	scope := editest.FirstTenant(t, ctx, db)
 	ctx, tenant := scope.Ctx, scope.Info
-	documentType := seededDocumentType(t, ctx, db, edi.TransactionSet204)
+	documentType := seededDocumentType(t, ctx, db, edidocument.TransactionSet204)
 	partner := createPartner(t, ctx, db, "CTRLNUM-TEST")
 
 	req := edipartnerports.AllocateEDIControlNumbersRequest{
 		TenantInfo:     tenant,
 		PartnerID:      partner.ID,
 		DocumentTypeID: documentType.ID,
-		Kinds: []edi.ControlNumberKind{
-			edi.ControlNumberKindInterchange,
-			edi.ControlNumberKindGroup,
-			edi.ControlNumberKindTransaction,
+		Kinds: []edidocument.ControlNumberKind{
+			edidocument.ControlNumberKindInterchange,
+			edidocument.ControlNumberKindGroup,
+			edidocument.ControlNumberKindTransaction,
 		},
 	}
 
 	const workers = 16
-	results := make([]map[edi.ControlNumberKind]int64, workers)
+	results := make([]map[edidocument.ControlNumberKind]int64, workers)
 	errs := make([]error, workers)
 	var wg sync.WaitGroup
 	wg.Add(workers)
@@ -89,10 +91,10 @@ func TestAllocateControlNumbersConcurrentAllocationsAreUnique(t *testing.T) {
 	}
 	wg.Wait()
 
-	seenByKind := map[edi.ControlNumberKind]map[int64]bool{
-		edi.ControlNumberKindInterchange: {},
-		edi.ControlNumberKindGroup:       {},
-		edi.ControlNumberKindTransaction: {},
+	seenByKind := map[edidocument.ControlNumberKind]map[int64]bool{
+		edidocument.ControlNumberKindInterchange: {},
+		edidocument.ControlNumberKindGroup:       {},
+		edidocument.ControlNumberKindTransaction: {},
 	}
 	for i := range workers {
 		require.NoError(t, errs[i])

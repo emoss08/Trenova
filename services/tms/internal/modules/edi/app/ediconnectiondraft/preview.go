@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediconnectiondraftports"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 )
@@ -69,7 +70,7 @@ func (s *Service) PreviewConnectionDraft(
 			plan.ControlNumbers,
 			ediconnectiondraftports.PlannedControlNumber{
 				Before: before,
-				After: &edi.EDIControlNumberSequence{
+				After: &edidocument.EDIControlNumberSequence{
 					BusinessUnitID: req.TenantInfo.BuID,
 					OrganizationID: req.TenantInfo.OrgID,
 					EDIPartnerID:   p.match.partnerID(),

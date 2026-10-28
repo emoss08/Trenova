@@ -9,6 +9,10 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/ediinboundfile"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edimessage"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/editransfer"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/ladingproject"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/edimessageports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -59,11 +63,11 @@ func ediCommunicationProfileConnectionToModel(
 }
 
 func ediTransferConnectionToModel(
-	result *pagination.CursorListResult[*edi.EDITransfer],
+	result *pagination.CursorListResult[*editransfer.EDITransfer],
 ) (*gqlmodel.EDITransferConnection, error) {
 	page, err := gqlconnection.EntityCursorConnection(
 		result,
-		func(node *edi.EDITransfer, cursor string) *gqlmodel.EDITransferEdge {
+		func(node *editransfer.EDITransfer, cursor string) *gqlmodel.EDITransferEdge {
 			return &gqlmodel.EDITransferEdge{Node: node, Cursor: cursor}
 		},
 		func(edge *gqlmodel.EDITransferEdge) string { return edge.Cursor },
@@ -81,11 +85,11 @@ func ediTransferConnectionToModel(
 }
 
 func ediMessageConnectionToModel(
-	result *pagination.CursorListResult[*edi.EDIMessage],
+	result *pagination.CursorListResult[*edimessage.EDIMessage],
 ) (*gqlmodel.EDIMessageConnection, error) {
 	page, err := gqlconnection.EntityCursorConnection(
 		result,
-		func(node *edi.EDIMessage, cursor string) *gqlmodel.EDIMessageEdge {
+		func(node *edimessage.EDIMessage, cursor string) *gqlmodel.EDIMessageEdge {
 			return &gqlmodel.EDIMessageEdge{Node: node, Cursor: cursor}
 		},
 		func(edge *gqlmodel.EDIMessageEdge) string { return edge.Cursor },
@@ -224,11 +228,11 @@ func summaryStatusCounts[T ~string](counts map[T]int) []*gqlmodel.EDISummaryStat
 }
 
 func ediFlowInstanceConnectionToModel(
-	result *pagination.CursorListResult[*edi.FlowInstance],
+	result *pagination.CursorListResult[*ladingproject.FlowInstance],
 ) (*gqlmodel.EDIFlowInstanceConnection, error) {
 	page, err := gqlconnection.EntityCursorConnection(
 		result,
-		func(node *edi.FlowInstance, cursor string) *gqlmodel.EDIFlowInstanceEdge {
+		func(node *ladingproject.FlowInstance, cursor string) *gqlmodel.EDIFlowInstanceEdge {
 			return &gqlmodel.EDIFlowInstanceEdge{Node: node, Cursor: cursor}
 		},
 		func(edge *gqlmodel.EDIFlowInstanceEdge) string { return edge.Cursor },
@@ -268,11 +272,11 @@ func ediMappingProfileConnectionToModel(
 }
 
 func ediInboundFileConnectionToModel(
-	result *pagination.CursorListResult[*edi.EDIInboundFile],
+	result *pagination.CursorListResult[*ediinboundfile.EDIInboundFile],
 ) (*gqlmodel.EDIInboundFileConnection, error) {
 	page, err := gqlconnection.EntityCursorConnection(
 		result,
-		func(node *edi.EDIInboundFile, cursor string) *gqlmodel.EDIInboundFileEdge {
+		func(node *ediinboundfile.EDIInboundFile, cursor string) *gqlmodel.EDIInboundFileEdge {
 			return &gqlmodel.EDIInboundFileEdge{Node: node, Cursor: cursor}
 		},
 		func(edge *gqlmodel.EDIInboundFileEdge) string { return edge.Cursor },

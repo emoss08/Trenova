@@ -7,6 +7,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edimessage"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/editransportports"
 	"github.com/emoss08/trenova/shared/httpsafe"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -114,10 +116,10 @@ func TestValidateEndpointConfig(t *testing.T) {
 func TestOutboundFileName(t *testing.T) {
 	t.Parallel()
 
-	message := &edi.EDIMessage{
+	message := &edimessage.EDIMessage{
 		ID:             pulid.MustNew("edimsg_"),
 		EDIPartnerID:   pulid.MustNew("edip_"),
-		TransactionSet: edi.TransactionSet204,
+		TransactionSet: edidocument.TransactionSet204,
 	}
 
 	t.Run("default pattern", func(t *testing.T) {

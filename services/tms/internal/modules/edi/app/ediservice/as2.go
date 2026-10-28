@@ -6,7 +6,7 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/modules/edi/app/editransport"
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edimessage"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/edimessageports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -58,7 +58,7 @@ func (s *Service) ApplyAS2MDN(ctx context.Context, req *ApplyAS2MDNRequest) erro
 		return err
 	}
 
-	if message.DeliveryStatus == edi.MessageDeliveryStatusSent {
+	if message.DeliveryStatus == edimessage.MessageDeliveryStatusSent {
 		return nil
 	}
 
@@ -89,7 +89,7 @@ func (s *Service) ApplyAS2MDN(ctx context.Context, req *ApplyAS2MDNRequest) erro
 		&edimessageports.UpdateEDIMessageDeliveryRequest{
 			ID:                    message.ID,
 			TenantInfo:            messageTenantInfo(message),
-			DeliveryStatus:        edi.MessageDeliveryStatusSent,
+			DeliveryStatus:        edimessage.MessageDeliveryStatusSent,
 			DeliveryRemotePath:    message.DeliveryRemotePath,
 			DeliveryLastAttemptAt: &now,
 			DeliverySentAt:        &now,
@@ -113,7 +113,7 @@ var errAS2MICMismatch = errors.New("AS2 MDN MIC does not match the transmitted c
 
 func (s *Service) authenticateAS2MDN(
 	ctx context.Context,
-	message *edi.EDIMessage,
+	message *edimessage.EDIMessage,
 	mdn *as2.ParsedMDN,
 	req *ApplyAS2MDNRequest,
 ) error {
@@ -152,7 +152,7 @@ func (s *Service) authenticateAS2MDN(
 
 func (s *Service) as2ConfigForMessage(
 	ctx context.Context,
-	message *edi.EDIMessage,
+	message *edimessage.EDIMessage,
 ) (*editransport.AS2Config, error) {
 	profile, err := s.deliveryProfileForMessage(ctx, message)
 	if err != nil {

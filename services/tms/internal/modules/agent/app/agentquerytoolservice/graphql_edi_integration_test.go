@@ -22,6 +22,16 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi/edidb"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edicarrierinvoice"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edicarrierinvoice/edicarrierinvoicedb"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/ediinboundfile"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/ediinboundfile/ediinboundfiledb"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edimessage"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edimessage/edimessagedb"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edipayload"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/editransfer"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/editransfer/editransferdb"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/carriersettlementservice"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
@@ -90,82 +100,84 @@ func writeEDIRows(
 	}
 	must(edidb.EDICommunicationProfiles.Create(ctx, admin, profile))
 
-	var files []*edi.EDIInboundFile
+	var files []*ediinboundfile.EDIInboundFile
 	for idx := range 3 {
-		file := &edi.EDIInboundFile{
+		file := &ediinboundfile.EDIInboundFile{
 			ID: pulid.MustNew("ediinf_"), OrganizationID: org, BusinessUnitID: bu,
 			CommunicationProfileID: profile.ID, EDIPartnerID: partners[0].ID,
 			Method: edi.ConnectionMethodSFTP, RemotePath: "/in",
 			FileName:  fmt.Sprintf("%s_204_%d.x12", label, idx+1),
 			Checksum:  pulid.MustNew("sum_").String(),
 			SizeBytes: 12, RawContent: "ISA*00*RAW~",
-			Status:     edi.InboundFileStatusProcessed,
+			Status:     ediinboundfile.InboundFileStatusProcessed,
 			ReceivedAt: now - int64(idx),
 		}
 		if idx == 0 {
-			file.Status = edi.InboundFileStatusQuarantined
+			file.Status = ediinboundfile.InboundFileStatusQuarantined
 		}
-		must(edidb.EDIInboundFiles.Create(ctx, admin, file))
+		must(ediinboundfiledb.EDIInboundFiles.Create(ctx, admin, file))
 		files = append(files, file)
 		out.files = append(out.files, file.ID.String())
 	}
 
-	var messages []*edi.EDIMessage
+	var messages []*edimessage.EDIMessage
 	for idx := range 3 {
-		message := &edi.EDIMessage{
+		message := &edimessage.EDIMessage{
 			ID: pulid.MustNew("edimsg_"), OrganizationID: org, BusinessUnitID: bu,
 			EDIPartnerID: partners[0].ID, DocumentTypeID: ediDocumentType,
-			Direction: edi.DocumentDirectionOutbound, Standard: edi.EDIStandardX12,
-			TransactionSet: edi.TransactionSet214, X12Version: "004010",
-			Status:                   edi.MessageStatusGenerated,
+			Direction: edidocument.DocumentDirectionOutbound, Standard: edidocument.EDIStandardX12,
+			TransactionSet: edidocument.TransactionSet214, X12Version: "004010",
+			Status:                   edimessage.MessageStatusGenerated,
 			InterchangeControlNumber: fmt.Sprintf("%09d", idx+1),
 			GroupControlNumber:       "1", TransactionControlNumber: "0001",
-			RawX12:          "ISA*00*SECRET~",
-			PayloadSnapshot: edi.DocumentPayload{TransactionSet: edi.TransactionSet214},
-			DeliveryStatus:  edi.MessageDeliveryStatusSent,
-			AckStatus:       edi.MessageAcknowledgmentStatusPending,
-			GeneratedAt:     now - int64(idx),
+			RawX12: "ISA*00*SECRET~",
+			PayloadSnapshot: edipayload.DocumentPayload{
+				TransactionSet: edidocument.TransactionSet214,
+			},
+			DeliveryStatus: edimessage.MessageDeliveryStatusSent,
+			AckStatus:      edimessage.MessageAcknowledgmentStatusPending,
+			GeneratedAt:    now - int64(idx),
 		}
 		if idx == 0 {
-			message.DeliveryStatus = edi.MessageDeliveryStatusDeadLettered
+			message.DeliveryStatus = edimessage.MessageDeliveryStatusDeadLettered
 		}
-		must(edidb.EDIMessages.Create(ctx, admin, message))
+		must(edimessagedb.EDIMessages.Create(ctx, admin, message))
 		messages = append(messages, message)
 		out.messages = append(out.messages, message.ID.String())
 	}
 
 	for idx := range 3 {
-		transfer := &edi.EDITransfer{
+		transfer := &editransfer.EDITransfer{
 			ID:                   pulid.MustNew("edilt_"),
 			SourceOrganizationID: org, SourceBusinessUnitID: bu,
 			TargetOrganizationID: org, TargetBusinessUnitID: bu,
 			SourcePartnerID: partners[1].ID, TargetPartnerID: partners[0].ID,
 			InboundMessageID: messages[0].ID,
-			Status:           edi.TransferStatusPendingApproval,
-			TenderPayload: edi.LoadTenderPayload{
+			Status:           editransfer.TransferStatusPendingApproval,
+			TenderPayload: editransfer.LoadTenderPayload{
 				BOL: fmt.Sprintf("%s-BOL-%d", label, idx+1),
-				Moves: []edi.LoadTenderMove{{Stops: []edi.LoadTenderStop{
+				Moves: []editransfer.LoadTenderMove{{Stops: []editransfer.LoadTenderStop{
 					{Type: "Pickup", LocationName: "DC " + label},
 				}}},
 			},
-			MappingSnapshot: []edi.MappingResolution{},
+			MappingSnapshot: []editransfer.MappingResolution{},
 			SubmittedAt:     now - int64(idx),
 		}
-		must(edidb.EDITransfers.Create(ctx, admin, transfer))
+		must(editransferdb.EDITransfers.Create(ctx, admin, transfer))
 		out.transfers = append(out.transfers, transfer.ID.String())
 	}
 
 	for idx := range 3 {
-		invoice := &edi.CarrierInvoice{
+		invoice := &edicarrierinvoice.CarrierInvoice{
 			ID: pulid.MustNew("edici_"), OrganizationID: org, BusinessUnitID: bu,
 			EDIPartnerID: partners[0].ID, InboundMessageID: messages[0].ID,
 			InvoiceNumber:        fmt.Sprintf("%s-INV-%d", label, idx+1),
 			InvoiceNumberKey:     fmt.Sprintf("%s-INV-%d", label, idx+1),
-			ReconciliationStatus: edi.CarrierInvoiceReconciliationStatusUnmatched,
-			LineCharges:          []edi.FreightInvoiceCharge{},
+			ReconciliationStatus: edicarrierinvoice.CarrierInvoiceReconciliationStatusUnmatched,
+			LineCharges:          []edipayload.FreightInvoiceCharge{},
 			ReferenceNumbers:     map[string]string{},
 		}
-		must(edidb.CarrierInvoices.Create(ctx, admin, invoice))
+		must(edicarrierinvoicedb.CarrierInvoices.Create(ctx, admin, invoice))
 		out.invoices = append(out.invoices, invoice.ID.String())
 	}
 

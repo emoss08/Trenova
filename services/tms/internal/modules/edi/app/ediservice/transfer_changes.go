@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edisync"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/editenderports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -18,14 +18,14 @@ import (
 func (s *Service) ListTransferChanges(
 	ctx context.Context,
 	req *editenderports.ListEDITransferChangesRequest,
-) (*pagination.ListResult[*edi.TransferChange], error) {
+) (*pagination.ListResult[*edisync.TransferChange], error) {
 	return s.transferChangeRepo.ListTransferChanges(ctx, req)
 }
 
 func (s *Service) GetTransferChange(
 	ctx context.Context,
 	req editenderports.GetEDITransferChangeByIDRequest,
-) (*edi.TransferChange, error) {
+) (*edisync.TransferChange, error) {
 	return s.transferChangeRepo.GetTransferChangeByID(ctx, req)
 }
 
@@ -33,24 +33,24 @@ func (s *Service) ApplyTransferChange(
 	ctx context.Context,
 	req *TransferChangeActionRequest,
 	actor *permissionports.RequestActor,
-) (*edi.TransferChange, error) {
-	return s.reviewTransferChange(ctx, req, actor, edi.TransferChangeStatusApplied)
+) (*edisync.TransferChange, error) {
+	return s.reviewTransferChange(ctx, req, actor, edisync.TransferChangeStatusApplied)
 }
 
 func (s *Service) RejectTransferChange(
 	ctx context.Context,
 	req *TransferChangeActionRequest,
 	actor *permissionports.RequestActor,
-) (*edi.TransferChange, error) {
-	return s.reviewTransferChange(ctx, req, actor, edi.TransferChangeStatusRejected)
+) (*edisync.TransferChange, error) {
+	return s.reviewTransferChange(ctx, req, actor, edisync.TransferChangeStatusRejected)
 }
 
 func (s *Service) reviewTransferChange(
 	ctx context.Context,
 	req *TransferChangeActionRequest,
 	actor *permissionports.RequestActor,
-	status edi.TransferChangeStatus,
-) (*edi.TransferChange, error) {
+	status edisync.TransferChangeStatus,
+) (*edisync.TransferChange, error) {
 	if actor == nil || actor.UserID.IsNil() {
 		return nil, errortypes.NewValidationError(
 			"userId",
@@ -73,7 +73,7 @@ func (s *Service) reviewTransferChange(
 		return nil, err
 	}
 
-	var updated *edi.TransferChange
+	var updated *edisync.TransferChange
 	now := timeutils.NowUnix()
 	original := *change
 	reviewCtx := dbscope.WithSystem(
@@ -84,7 +84,7 @@ func (s *Service) reviewTransferChange(
 		reviewCtx,
 		kernelports.TxOptions{},
 		func(txCtx context.Context) error {
-			if status == edi.TransferChangeStatusApplied {
+			if status == edisync.TransferChangeStatusApplied {
 				if txErr := s.applyApprovedTransferChange(
 					txCtx,
 					req.TenantInfo,
@@ -97,7 +97,7 @@ func (s *Service) reviewTransferChange(
 			}
 
 			MarkTransferChangeReviewed(change, &ChangeReviewMark{
-				Applied:    status == edi.TransferChangeStatusApplied,
+				Applied:    status == edisync.TransferChangeStatusApplied,
 				ReviewerID: actor.UserID,
 				Reason:     req.Reason,
 				At:         now,
@@ -129,7 +129,7 @@ func (s *Service) reviewTransferChange(
 
 func (s *Service) validateTransferChangeReviewer(
 	ctx context.Context,
-	change *edi.TransferChange,
+	change *edisync.TransferChange,
 	tenantInfo pagination.TenantInfo,
 ) error {
 	link, err := s.shipmentLinkRepo.GetShipmentLinkByID(
@@ -143,7 +143,7 @@ func (s *Service) validateTransferChangeReviewer(
 		return err
 	}
 	reviewerOrgID := link.TargetOrganizationID
-	if change.Direction == edi.TransferChangeDirectionTargetToSource {
+	if change.Direction == edisync.TransferChangeDirectionTargetToSource {
 		reviewerOrgID = link.SourceOrganizationID
 	}
 	if tenantInfo.OrgID != reviewerOrgID || tenantInfo.BuID != link.BusinessUnitID {
@@ -159,7 +159,7 @@ func (s *Service) validateTransferChangeReviewer(
 func (s *Service) commentTransferChangeReview(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	change *edi.TransferChange,
+	change *edisync.TransferChange,
 ) error {
 	link, err := s.shipmentLinkRepo.GetShipmentLinkByID(
 		ctx,

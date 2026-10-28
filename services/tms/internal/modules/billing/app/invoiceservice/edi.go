@@ -7,6 +7,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/ladingproject"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ladingports"
 	"github.com/emoss08/trenova/internal/modules/identity/jobs/billingjobs/billingcontract"
@@ -121,7 +123,7 @@ func (s *Service) ResolveEDISendPlans(
 // transport it would use, or the reason it cannot be used.
 type ediPartnerTarget struct {
 	Partner             *edi.EDIPartner
-	LadingVersion       *edi.LadingVersion
+	LadingVersion       *ladingproject.LadingVersion
 	CommunicationMethod edi.ConnectionMethod
 	Blockers            []string
 }
@@ -209,7 +211,7 @@ func (s *Service) invoiceLadingVersion(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	partner *edi.EDIPartner,
-) (version *edi.LadingVersion, found bool, err error) {
+) (version *ladingproject.LadingVersion, found bool, err error) {
 	if s.ediLadingProjects == nil {
 		return nil, false, nil
 	}
@@ -228,7 +230,7 @@ func (s *Service) invoiceLadingVersion(
 	}
 	maps := runnable.Active.Manifest.Maps
 	for index := range maps {
-		if maps[index].Set == string(edi.TransactionSet210) &&
+		if maps[index].Set == string(edidocument.TransactionSet210) &&
 			maps[index].Direction == lading.DirectionOutbound {
 			return runnable.Active, true, nil
 		}

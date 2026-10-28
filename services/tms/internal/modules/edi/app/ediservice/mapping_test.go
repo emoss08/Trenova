@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/editransfer"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
 	"github.com/emoss08/trenova/internal/testutil/mocks/edipartnerportsmock"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -16,7 +17,7 @@ func TestMappingResolutionIndex(t *testing.T) {
 	targetID := pulid.MustNew("cus_")
 	unresolvedID := pulid.MustNew("st_")
 
-	index := resolutionIndex([]edi.MappingResolution{
+	index := resolutionIndex([]editransfer.MappingResolution{
 		{
 			EntityType: edi.MappingEntityTypeCustomer,
 			SourceID:   sourceID,
@@ -78,12 +79,12 @@ func TestBuildMappingPreviewUsesTenderSourceLabelsForUnresolvedRows(t *testing.T
 			OrganizationID: orgID,
 			BusinessUnitID: buID,
 		},
-		edi.LoadTenderPayload{
+		editransfer.LoadTenderPayload{
 			CustomerID:    customerID,
 			CustomerLabel: "ACME - Acme Logistics",
-			Moves: []edi.LoadTenderMove{
+			Moves: []editransfer.LoadTenderMove{
 				{
-					Stops: []edi.LoadTenderStop{
+					Stops: []editransfer.LoadTenderStop{
 						{
 							LocationID:    locationID,
 							LocationLabel: "DAL - Dallas Terminal",
@@ -134,7 +135,7 @@ func TestBuildMappingPreviewKeepsSavedTargetLabelForResolvedRows(t *testing.T) {
 			OrganizationID: orgID,
 			BusinessUnitID: buID,
 		},
-		edi.LoadTenderPayload{
+		editransfer.LoadTenderPayload{
 			CustomerID:    sourceID,
 			CustomerLabel: "Tender source label",
 			RequiredMappingEntityIDs: map[edi.MappingEntityType][]pulid.ID{

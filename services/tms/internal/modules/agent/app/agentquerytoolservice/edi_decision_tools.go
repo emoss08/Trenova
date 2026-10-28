@@ -9,7 +9,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edisync"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/editenderchange"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/editenderports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/dbtype"
@@ -33,21 +34,21 @@ const (
 
 var (
 	tenderChangeStatuses = agenttoolschema.Source("edi.tenderChangeStatus", []string{
-		string(edi.TenderChangeStatusPendingReview),
-		string(edi.TenderChangeStatusApplied),
-		string(edi.TenderChangeStatusRejected),
-		string(edi.TenderChangeStatusQueued),
-		string(edi.TenderChangeStatusSent),
-		string(edi.TenderChangeStatusFailed),
-		string(edi.TenderChangeStatusIgnored),
-		string(edi.TenderChangeStatusSuperseded),
+		string(editenderchange.TenderChangeStatusPendingReview),
+		string(editenderchange.TenderChangeStatusApplied),
+		string(editenderchange.TenderChangeStatusRejected),
+		string(editenderchange.TenderChangeStatusQueued),
+		string(editenderchange.TenderChangeStatusSent),
+		string(editenderchange.TenderChangeStatusFailed),
+		string(editenderchange.TenderChangeStatusIgnored),
+		string(editenderchange.TenderChangeStatusSuperseded),
 	})
 	transferChangeStatuses = agenttoolschema.Source("edi.transferChangeStatus", []string{
-		string(edi.TransferChangeStatusPendingReview),
-		string(edi.TransferChangeStatusApplied),
-		string(edi.TransferChangeStatusRejected),
-		string(edi.TransferChangeStatusFailed),
-		string(edi.TransferChangeStatusIgnored),
+		string(edisync.TransferChangeStatusPendingReview),
+		string(edisync.TransferChangeStatusApplied),
+		string(edisync.TransferChangeStatusRejected),
+		string(edisync.TransferChangeStatusFailed),
+		string(edisync.TransferChangeStatusIgnored),
 	})
 )
 
@@ -65,14 +66,14 @@ type ediTenderChangeLister interface {
 	ListTenderChanges(
 		ctx context.Context,
 		req *editenderports.ListEDITenderChangesRequest,
-	) (*pagination.ListResult[*edi.TenderChange], error)
+	) (*pagination.ListResult[*editenderchange.TenderChange], error)
 }
 
 type ediTransferChangeLister interface {
 	ListTransferChanges(
 		ctx context.Context,
 		req *editenderports.ListEDITransferChangesRequest,
-	) (*pagination.ListResult[*edi.TransferChange], error)
+	) (*pagination.ListResult[*edisync.TransferChange], error)
 }
 
 func provideListEDITenderChangesTool(ediSvc *ediservice.Service) agenttoolports.AgentQueryTool {
@@ -173,7 +174,7 @@ func (t *listEDITenderChangesTool) Query(
 			Pagination: pagination.Info{Limit: window.fetch(), Offset: window.offset},
 		},
 		SourceShipmentID: shipmentID,
-		Status:           edi.TenderChangeStatus(status),
+		Status:           editenderchange.TenderChangeStatus(status),
 	})
 	if err != nil {
 		return nil, err
@@ -211,10 +212,10 @@ func (t *listEDITenderChangesTool) Query(
 	return gatedResult(&found, nil).withTaint(refs), nil
 }
 
-func awaitsReview(change *edi.TenderChange, orgID pulid.ID) bool {
-	return change.Status == edi.TenderChangeStatusPendingReview &&
+func awaitsReview(change *editenderchange.TenderChange, orgID pulid.ID) bool {
+	return change.Status == editenderchange.TenderChangeStatusPendingReview &&
 		change.Recipient != nil &&
-		change.Recipient.RecipientKind == edi.TenderRecipientKindInternal &&
+		change.Recipient.RecipientKind == editenderchange.TenderRecipientKindInternal &&
 		change.Recipient.RecipientOrganizationID == orgID
 }
 

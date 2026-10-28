@@ -7,6 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/edi/app/editransport"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
 	"github.com/emoss08/trenova/shared/as2"
 )
 
@@ -360,7 +361,10 @@ func setFields() []*fieldSpec {
 	return fields
 }
 
-func setFieldsFor(set edi.TransactionSet, direction edi.DocumentDirection) []*fieldSpec {
+func setFieldsFor(
+	set edidocument.TransactionSet,
+	direction edidocument.DocumentDirection,
+) []*fieldSpec {
 	prefix := setFieldPrefix(set, direction)
 	name := fmt.Sprintf("%s %s", set, strings.ToLower(string(direction)))
 	return []*fieldSpec{
@@ -424,15 +428,22 @@ func controlNumberFields() []*fieldSpec {
 	return fields
 }
 
-func setFieldPrefix(set edi.TransactionSet, direction edi.DocumentDirection) string {
+func setFieldPrefix(
+	set edidocument.TransactionSet,
+	direction edidocument.DocumentDirection,
+) string {
 	return fmt.Sprintf("sets.%s.%s.", set, strings.ToLower(string(direction)))
 }
 
-func setField(set edi.TransactionSet, direction edi.DocumentDirection, attr string) string {
+func setField(
+	set edidocument.TransactionSet,
+	direction edidocument.DocumentDirection,
+	attr string,
+) string {
 	return setFieldPrefix(set, direction) + attr
 }
 
-func controlNumberField(kind edi.ControlNumberKind) string {
+func controlNumberField(kind edidocument.ControlNumberKind) string {
 	return fmt.Sprintf(
 		"controlNumbers.%s.%s",
 		strings.ToLower(string(kind)),

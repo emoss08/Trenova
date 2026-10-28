@@ -5,11 +5,11 @@
 package editenderportsmock
 
 import (
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edisync"
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/edi/ports/editenderports"
 
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/pkg/pagination"
 	mock "github.com/stretchr/testify/mock"
 )
@@ -42,26 +42,26 @@ func (_m *MockEDITransferChangeRepository) EXPECT() *MockEDITransferChangeReposi
 }
 
 // CreateTransferChange provides a mock function for the type MockEDITransferChangeRepository
-func (_mock *MockEDITransferChangeRepository) CreateTransferChange(ctx context.Context, entity *edi.TransferChange) (*edi.TransferChange, error) {
+func (_mock *MockEDITransferChangeRepository) CreateTransferChange(ctx context.Context, entity *edisync.TransferChange) (*edisync.TransferChange, error) {
 	ret := _mock.Called(ctx, entity)
 
 	if len(ret) == 0 {
 		panic("no return value specified for CreateTransferChange")
 	}
 
-	var r0 *edi.TransferChange
+	var r0 *edisync.TransferChange
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *edi.TransferChange) (*edi.TransferChange, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *edisync.TransferChange) (*edisync.TransferChange, error)); ok {
 		return returnFunc(ctx, entity)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *edi.TransferChange) *edi.TransferChange); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *edisync.TransferChange) *edisync.TransferChange); ok {
 		r0 = returnFunc(ctx, entity)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*edi.TransferChange)
+			r0 = ret.Get(0).(*edisync.TransferChange)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *edi.TransferChange) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *edisync.TransferChange) error); ok {
 		r1 = returnFunc(ctx, entity)
 	} else {
 		r1 = ret.Error(1)
@@ -76,20 +76,20 @@ type MockEDITransferChangeRepository_CreateTransferChange_Call struct {
 
 // CreateTransferChange is a helper method to define mock.On call
 //   - ctx context.Context
-//   - entity *edi.TransferChange
+//   - entity *edisync.TransferChange
 func (_e *MockEDITransferChangeRepository_Expecter) CreateTransferChange(ctx any, entity any) *MockEDITransferChangeRepository_CreateTransferChange_Call {
 	return &MockEDITransferChangeRepository_CreateTransferChange_Call{Call: _e.mock.On("CreateTransferChange", ctx, entity)}
 }
 
-func (_c *MockEDITransferChangeRepository_CreateTransferChange_Call) Run(run func(ctx context.Context, entity *edi.TransferChange)) *MockEDITransferChangeRepository_CreateTransferChange_Call {
+func (_c *MockEDITransferChangeRepository_CreateTransferChange_Call) Run(run func(ctx context.Context, entity *edisync.TransferChange)) *MockEDITransferChangeRepository_CreateTransferChange_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 *edi.TransferChange
+		var arg1 *edisync.TransferChange
 		if args[1] != nil {
-			arg1 = args[1].(*edi.TransferChange)
+			arg1 = args[1].(*edisync.TransferChange)
 		}
 		run(
 			arg0,
@@ -99,18 +99,18 @@ func (_c *MockEDITransferChangeRepository_CreateTransferChange_Call) Run(run fun
 	return _c
 }
 
-func (_c *MockEDITransferChangeRepository_CreateTransferChange_Call) Return(transferChange *edi.TransferChange, err error) *MockEDITransferChangeRepository_CreateTransferChange_Call {
+func (_c *MockEDITransferChangeRepository_CreateTransferChange_Call) Return(transferChange *edisync.TransferChange, err error) *MockEDITransferChangeRepository_CreateTransferChange_Call {
 	_c.Call.Return(transferChange, err)
 	return _c
 }
 
-func (_c *MockEDITransferChangeRepository_CreateTransferChange_Call) RunAndReturn(run func(ctx context.Context, entity *edi.TransferChange) (*edi.TransferChange, error)) *MockEDITransferChangeRepository_CreateTransferChange_Call {
+func (_c *MockEDITransferChangeRepository_CreateTransferChange_Call) RunAndReturn(run func(ctx context.Context, entity *edisync.TransferChange) (*edisync.TransferChange, error)) *MockEDITransferChangeRepository_CreateTransferChange_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // CreateTransferChangeIdempotent provides a mock function for the type MockEDITransferChangeRepository
-func (_mock *MockEDITransferChangeRepository) CreateTransferChangeIdempotent(ctx context.Context, entity *edi.TransferChange) (*editenderports.CreateEDITransferChangeIdempotentResult, error) {
+func (_mock *MockEDITransferChangeRepository) CreateTransferChangeIdempotent(ctx context.Context, entity *edisync.TransferChange) (*editenderports.CreateEDITransferChangeIdempotentResult, error) {
 	ret := _mock.Called(ctx, entity)
 
 	if len(ret) == 0 {
@@ -119,17 +119,17 @@ func (_mock *MockEDITransferChangeRepository) CreateTransferChangeIdempotent(ctx
 
 	var r0 *editenderports.CreateEDITransferChangeIdempotentResult
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *edi.TransferChange) (*editenderports.CreateEDITransferChangeIdempotentResult, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *edisync.TransferChange) (*editenderports.CreateEDITransferChangeIdempotentResult, error)); ok {
 		return returnFunc(ctx, entity)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *edi.TransferChange) *editenderports.CreateEDITransferChangeIdempotentResult); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *edisync.TransferChange) *editenderports.CreateEDITransferChangeIdempotentResult); ok {
 		r0 = returnFunc(ctx, entity)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*editenderports.CreateEDITransferChangeIdempotentResult)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *edi.TransferChange) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *edisync.TransferChange) error); ok {
 		r1 = returnFunc(ctx, entity)
 	} else {
 		r1 = ret.Error(1)
@@ -144,20 +144,20 @@ type MockEDITransferChangeRepository_CreateTransferChangeIdempotent_Call struct 
 
 // CreateTransferChangeIdempotent is a helper method to define mock.On call
 //   - ctx context.Context
-//   - entity *edi.TransferChange
+//   - entity *edisync.TransferChange
 func (_e *MockEDITransferChangeRepository_Expecter) CreateTransferChangeIdempotent(ctx any, entity any) *MockEDITransferChangeRepository_CreateTransferChangeIdempotent_Call {
 	return &MockEDITransferChangeRepository_CreateTransferChangeIdempotent_Call{Call: _e.mock.On("CreateTransferChangeIdempotent", ctx, entity)}
 }
 
-func (_c *MockEDITransferChangeRepository_CreateTransferChangeIdempotent_Call) Run(run func(ctx context.Context, entity *edi.TransferChange)) *MockEDITransferChangeRepository_CreateTransferChangeIdempotent_Call {
+func (_c *MockEDITransferChangeRepository_CreateTransferChangeIdempotent_Call) Run(run func(ctx context.Context, entity *edisync.TransferChange)) *MockEDITransferChangeRepository_CreateTransferChangeIdempotent_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 *edi.TransferChange
+		var arg1 *edisync.TransferChange
 		if args[1] != nil {
-			arg1 = args[1].(*edi.TransferChange)
+			arg1 = args[1].(*edisync.TransferChange)
 		}
 		run(
 			arg0,
@@ -172,29 +172,29 @@ func (_c *MockEDITransferChangeRepository_CreateTransferChangeIdempotent_Call) R
 	return _c
 }
 
-func (_c *MockEDITransferChangeRepository_CreateTransferChangeIdempotent_Call) RunAndReturn(run func(ctx context.Context, entity *edi.TransferChange) (*editenderports.CreateEDITransferChangeIdempotentResult, error)) *MockEDITransferChangeRepository_CreateTransferChangeIdempotent_Call {
+func (_c *MockEDITransferChangeRepository_CreateTransferChangeIdempotent_Call) RunAndReturn(run func(ctx context.Context, entity *edisync.TransferChange) (*editenderports.CreateEDITransferChangeIdempotentResult, error)) *MockEDITransferChangeRepository_CreateTransferChangeIdempotent_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetTransferChangeByID provides a mock function for the type MockEDITransferChangeRepository
-func (_mock *MockEDITransferChangeRepository) GetTransferChangeByID(ctx context.Context, req editenderports.GetEDITransferChangeByIDRequest) (*edi.TransferChange, error) {
+func (_mock *MockEDITransferChangeRepository) GetTransferChangeByID(ctx context.Context, req editenderports.GetEDITransferChangeByIDRequest) (*edisync.TransferChange, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetTransferChangeByID")
 	}
 
-	var r0 *edi.TransferChange
+	var r0 *edisync.TransferChange
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, editenderports.GetEDITransferChangeByIDRequest) (*edi.TransferChange, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, editenderports.GetEDITransferChangeByIDRequest) (*edisync.TransferChange, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, editenderports.GetEDITransferChangeByIDRequest) *edi.TransferChange); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, editenderports.GetEDITransferChangeByIDRequest) *edisync.TransferChange); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*edi.TransferChange)
+			r0 = ret.Get(0).(*edisync.TransferChange)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, editenderports.GetEDITransferChangeByIDRequest) error); ok {
@@ -235,34 +235,34 @@ func (_c *MockEDITransferChangeRepository_GetTransferChangeByID_Call) Run(run fu
 	return _c
 }
 
-func (_c *MockEDITransferChangeRepository_GetTransferChangeByID_Call) Return(transferChange *edi.TransferChange, err error) *MockEDITransferChangeRepository_GetTransferChangeByID_Call {
+func (_c *MockEDITransferChangeRepository_GetTransferChangeByID_Call) Return(transferChange *edisync.TransferChange, err error) *MockEDITransferChangeRepository_GetTransferChangeByID_Call {
 	_c.Call.Return(transferChange, err)
 	return _c
 }
 
-func (_c *MockEDITransferChangeRepository_GetTransferChangeByID_Call) RunAndReturn(run func(ctx context.Context, req editenderports.GetEDITransferChangeByIDRequest) (*edi.TransferChange, error)) *MockEDITransferChangeRepository_GetTransferChangeByID_Call {
+func (_c *MockEDITransferChangeRepository_GetTransferChangeByID_Call) RunAndReturn(run func(ctx context.Context, req editenderports.GetEDITransferChangeByIDRequest) (*edisync.TransferChange, error)) *MockEDITransferChangeRepository_GetTransferChangeByID_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // ListTransferChanges provides a mock function for the type MockEDITransferChangeRepository
-func (_mock *MockEDITransferChangeRepository) ListTransferChanges(ctx context.Context, req *editenderports.ListEDITransferChangesRequest) (*pagination.ListResult[*edi.TransferChange], error) {
+func (_mock *MockEDITransferChangeRepository) ListTransferChanges(ctx context.Context, req *editenderports.ListEDITransferChangesRequest) (*pagination.ListResult[*edisync.TransferChange], error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListTransferChanges")
 	}
 
-	var r0 *pagination.ListResult[*edi.TransferChange]
+	var r0 *pagination.ListResult[*edisync.TransferChange]
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *editenderports.ListEDITransferChangesRequest) (*pagination.ListResult[*edi.TransferChange], error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *editenderports.ListEDITransferChangesRequest) (*pagination.ListResult[*edisync.TransferChange], error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *editenderports.ListEDITransferChangesRequest) *pagination.ListResult[*edi.TransferChange]); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *editenderports.ListEDITransferChangesRequest) *pagination.ListResult[*edisync.TransferChange]); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*pagination.ListResult[*edi.TransferChange])
+			r0 = ret.Get(0).(*pagination.ListResult[*edisync.TransferChange])
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, *editenderports.ListEDITransferChangesRequest) error); ok {
@@ -303,37 +303,37 @@ func (_c *MockEDITransferChangeRepository_ListTransferChanges_Call) Run(run func
 	return _c
 }
 
-func (_c *MockEDITransferChangeRepository_ListTransferChanges_Call) Return(listResult *pagination.ListResult[*edi.TransferChange], err error) *MockEDITransferChangeRepository_ListTransferChanges_Call {
+func (_c *MockEDITransferChangeRepository_ListTransferChanges_Call) Return(listResult *pagination.ListResult[*edisync.TransferChange], err error) *MockEDITransferChangeRepository_ListTransferChanges_Call {
 	_c.Call.Return(listResult, err)
 	return _c
 }
 
-func (_c *MockEDITransferChangeRepository_ListTransferChanges_Call) RunAndReturn(run func(ctx context.Context, req *editenderports.ListEDITransferChangesRequest) (*pagination.ListResult[*edi.TransferChange], error)) *MockEDITransferChangeRepository_ListTransferChanges_Call {
+func (_c *MockEDITransferChangeRepository_ListTransferChanges_Call) RunAndReturn(run func(ctx context.Context, req *editenderports.ListEDITransferChangesRequest) (*pagination.ListResult[*edisync.TransferChange], error)) *MockEDITransferChangeRepository_ListTransferChanges_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // UpdateTransferChange provides a mock function for the type MockEDITransferChangeRepository
-func (_mock *MockEDITransferChangeRepository) UpdateTransferChange(ctx context.Context, entity *edi.TransferChange) (*edi.TransferChange, error) {
+func (_mock *MockEDITransferChangeRepository) UpdateTransferChange(ctx context.Context, entity *edisync.TransferChange) (*edisync.TransferChange, error) {
 	ret := _mock.Called(ctx, entity)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateTransferChange")
 	}
 
-	var r0 *edi.TransferChange
+	var r0 *edisync.TransferChange
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *edi.TransferChange) (*edi.TransferChange, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *edisync.TransferChange) (*edisync.TransferChange, error)); ok {
 		return returnFunc(ctx, entity)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *edi.TransferChange) *edi.TransferChange); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *edisync.TransferChange) *edisync.TransferChange); ok {
 		r0 = returnFunc(ctx, entity)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*edi.TransferChange)
+			r0 = ret.Get(0).(*edisync.TransferChange)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *edi.TransferChange) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *edisync.TransferChange) error); ok {
 		r1 = returnFunc(ctx, entity)
 	} else {
 		r1 = ret.Error(1)
@@ -348,20 +348,20 @@ type MockEDITransferChangeRepository_UpdateTransferChange_Call struct {
 
 // UpdateTransferChange is a helper method to define mock.On call
 //   - ctx context.Context
-//   - entity *edi.TransferChange
+//   - entity *edisync.TransferChange
 func (_e *MockEDITransferChangeRepository_Expecter) UpdateTransferChange(ctx any, entity any) *MockEDITransferChangeRepository_UpdateTransferChange_Call {
 	return &MockEDITransferChangeRepository_UpdateTransferChange_Call{Call: _e.mock.On("UpdateTransferChange", ctx, entity)}
 }
 
-func (_c *MockEDITransferChangeRepository_UpdateTransferChange_Call) Run(run func(ctx context.Context, entity *edi.TransferChange)) *MockEDITransferChangeRepository_UpdateTransferChange_Call {
+func (_c *MockEDITransferChangeRepository_UpdateTransferChange_Call) Run(run func(ctx context.Context, entity *edisync.TransferChange)) *MockEDITransferChangeRepository_UpdateTransferChange_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 *edi.TransferChange
+		var arg1 *edisync.TransferChange
 		if args[1] != nil {
-			arg1 = args[1].(*edi.TransferChange)
+			arg1 = args[1].(*edisync.TransferChange)
 		}
 		run(
 			arg0,
@@ -371,12 +371,12 @@ func (_c *MockEDITransferChangeRepository_UpdateTransferChange_Call) Run(run fun
 	return _c
 }
 
-func (_c *MockEDITransferChangeRepository_UpdateTransferChange_Call) Return(transferChange *edi.TransferChange, err error) *MockEDITransferChangeRepository_UpdateTransferChange_Call {
+func (_c *MockEDITransferChangeRepository_UpdateTransferChange_Call) Return(transferChange *edisync.TransferChange, err error) *MockEDITransferChangeRepository_UpdateTransferChange_Call {
 	_c.Call.Return(transferChange, err)
 	return _c
 }
 
-func (_c *MockEDITransferChangeRepository_UpdateTransferChange_Call) RunAndReturn(run func(ctx context.Context, entity *edi.TransferChange) (*edi.TransferChange, error)) *MockEDITransferChangeRepository_UpdateTransferChange_Call {
+func (_c *MockEDITransferChangeRepository_UpdateTransferChange_Call) RunAndReturn(run func(ctx context.Context, entity *edisync.TransferChange) (*edisync.TransferChange, error)) *MockEDITransferChangeRepository_UpdateTransferChange_Call {
 	_c.Call.Return(run)
 	return _c
 }

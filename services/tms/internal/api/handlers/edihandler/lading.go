@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/modules/edi/app/edilading"
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/ladingproject"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ladingports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -297,7 +297,7 @@ type versionAction func(
 	context.Context,
 	*edilading.VersionRequest,
 	*permissionports.RequestActor,
-) (*edi.LadingVersion, error)
+) (*ladingproject.LadingVersion, error)
 
 func (h *Handler) ladingVersionAction(c *gin.Context, action versionAction) {
 	authCtx := authctx.GetAuthContext(c)
@@ -448,24 +448,29 @@ func (h *Handler) getLadingReplay(c *gin.Context) {
 func (h *Handler) listFlowInstances(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 	req := pagination.NewQueryOptions(c, authCtx)
-	statuses := make([]edi.FlowInstanceStatus, 0, 2)
+	statuses := make([]ladingproject.FlowInstanceStatus, 0, 2)
 	for _, status := range c.QueryArray("status") {
-		statuses = append(statuses, edi.FlowInstanceStatus(status))
+		statuses = append(statuses, ladingproject.FlowInstanceStatus(status))
 	}
 	partnerID := pulid.ID(helpers.QueryString(c, "partnerId", ""))
 	shipmentID := pulid.ID(helpers.QueryString(c, "shipmentId", ""))
 
-	pagination.List(c, req, h.eh, func() (*pagination.ListResult[*edi.FlowInstance], error) {
-		return h.service.ListFlowInstances(
-			c.Request.Context(),
-			&ladingports.ListFlowInstancesRequest{
-				Filter:     req,
-				PartnerID:  partnerID,
-				ShipmentID: shipmentID,
-				Statuses:   statuses,
-			},
-		)
-	})
+	pagination.List(
+		c,
+		req,
+		h.eh,
+		func() (*pagination.ListResult[*ladingproject.FlowInstance], error) {
+			return h.service.ListFlowInstances(
+				c.Request.Context(),
+				&ladingports.ListFlowInstancesRequest{
+					Filter:     req,
+					PartnerID:  partnerID,
+					ShipmentID: shipmentID,
+					Statuses:   statuses,
+				},
+			)
+		},
+	)
 }
 
 func (h *Handler) getFlowInstance(c *gin.Context) {

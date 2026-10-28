@@ -3,7 +3,7 @@ package ediconnectiondraft
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediconnectiondraftports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -31,7 +31,7 @@ func TestFindSamples_ReadsASamplePrintedInAPDF(t *testing.T) {
 	)
 
 	assert.Equal(t, 7, sample.page)
-	assert.Equal(t, edi.TransactionSet204, sample.transactionSet())
+	assert.Equal(t, edidocument.TransactionSet204, sample.transactionSet())
 	assert.Equal(t, "01", sample.parsed.SenderQualifier)
 	assert.Equal(t, "007912345", sample.parsed.SenderID)
 	assert.Equal(t, "02", sample.parsed.ReceiverQualifier)

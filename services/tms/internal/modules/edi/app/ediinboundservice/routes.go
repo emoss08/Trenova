@@ -8,6 +8,11 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/ediinboundfile"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edimessage"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edipayload"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/editenderchange"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/editransfer"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/edimessageports"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/editenderports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
@@ -22,9 +27,9 @@ import (
 
 func (s *Service) routeAcknowledgment(
 	ctx context.Context,
-	file *edi.EDIInboundFile,
+	file *ediinboundfile.EDIInboundFile,
 	partner *edi.EDIPartner,
-	message *edi.EDIMessage,
+	message *edimessage.EDIMessage,
 	transaction *parsedTransaction,
 ) []string {
 	entries := parseAcknowledgments(transaction)
@@ -96,18 +101,21 @@ func (s *Service) routeAcknowledgment(
 
 func acknowledgmentResolution(
 	entry *acknowledgmentEntry,
-) (status edi.MessageAcknowledgmentStatus, ackError string) {
+) (status edimessage.MessageAcknowledgmentStatus, ackError string) {
 	code := entry.acknowledgmentCode
 	if code == "" {
 		code = entry.groupAcknowledgmentCode
 	}
 	switch code {
 	case "A":
-		return edi.MessageAcknowledgmentStatusAccepted, ""
+		return edimessage.MessageAcknowledgmentStatusAccepted, ""
 	case "E":
-		return edi.MessageAcknowledgmentStatusAcceptedWithErrors, acknowledgmentDetails(code, entry)
+		return edimessage.MessageAcknowledgmentStatusAcceptedWithErrors, acknowledgmentDetails(
+			code,
+			entry,
+		)
 	default:
-		return edi.MessageAcknowledgmentStatusRejected, acknowledgmentDetails(code, entry)
+		return edimessage.MessageAcknowledgmentStatusRejected, acknowledgmentDetails(code, entry)
 	}
 }
 
@@ -130,7 +138,7 @@ func acknowledgmentDetails(code string, entry *acknowledgmentEntry) string {
 
 func (s *Service) routeTenderResponse(
 	ctx context.Context,
-	file *edi.EDIInboundFile,
+	file *ediinboundfile.EDIInboundFile,
 	partner *edi.EDIPartner,
 	transaction *parsedTransaction,
 	details *tenderResponseDetails,
@@ -192,7 +200,7 @@ type tenderOfferRouteOutcome struct {
 // through untouched.
 func (s *Service) routeTenderOfferResponse(
 	ctx context.Context,
-	file *edi.EDIInboundFile,
+	file *ediinboundfile.EDIInboundFile,
 	partner *edi.EDIPartner,
 	transaction *parsedTransaction,
 	details *tenderResponseDetails,
@@ -296,7 +304,7 @@ func tenderOfferReference(details *tenderResponseDetails) pulid.ID {
 
 func (s *Service) routeShipmentStatus(
 	ctx context.Context,
-	file *edi.EDIInboundFile,
+	file *ediinboundfile.EDIInboundFile,
 	partner *edi.EDIPartner,
 	transaction *parsedTransaction,
 	details *shipmentStatusDetails,
@@ -351,11 +359,11 @@ func (s *Service) routeShipmentStatus(
 	return nil, nil
 }
 
-func statusEventCode(event *edi.ShipmentStatusEvent) string {
+func statusEventCode(event *edipayload.ShipmentStatusEvent) string {
 	return stringutils.FirstNonEmpty(event.StatusCode, event.AppointmentCode)
 }
 
-func statusEventReason(event *edi.ShipmentStatusEvent) string {
+func statusEventReason(event *edipayload.ShipmentStatusEvent) string {
 	if event.StatusCode != "" {
 		return event.ReasonCode
 	}
@@ -363,9 +371,9 @@ func statusEventReason(event *edi.ShipmentStatusEvent) string {
 }
 
 func statusEventReference(
-	file *edi.EDIInboundFile,
+	file *ediinboundfile.EDIInboundFile,
 	details *shipmentStatusDetails,
-	event *edi.ShipmentStatusEvent,
+	event *edipayload.ShipmentStatusEvent,
 ) string {
 	return "edi_inbound_file:" + file.ID.String() + ":" + details.controlNumber + ":" +
 		strconv.Itoa(event.Index)
@@ -373,9 +381,9 @@ func statusEventReference(
 
 func (s *Service) routeFreightInvoice(
 	ctx context.Context,
-	file *edi.EDIInboundFile,
+	file *ediinboundfile.EDIInboundFile,
 	partner *edi.EDIPartner,
-	message *edi.EDIMessage,
+	message *edimessage.EDIMessage,
 	transaction *parsedTransaction,
 ) ([]string, error) {
 	payload := message.PayloadSnapshot.FreightInvoice
@@ -438,10 +446,10 @@ func (s *Service) routeFreightInvoice(
 
 func (s *Service) freightInvoiceRecipient(
 	ctx context.Context,
-	file *edi.EDIInboundFile,
+	file *ediinboundfile.EDIInboundFile,
 	partner *edi.EDIPartner,
-	payload *edi.FreightInvoicePayload,
-) (*edi.TenderRecipient, []string, error) {
+	payload *edipayload.FreightInvoicePayload,
+) (*editenderchange.TenderRecipient, []string, error) {
 	references := stringutils.NonEmptyStrings(
 		payload.ReferenceNumbers["shipmentId"],
 		payload.BOL,
@@ -479,11 +487,11 @@ func (s *Service) freightInvoiceRecipient(
 
 func (s *Service) routeLoadTender(
 	ctx context.Context,
-	file *edi.EDIInboundFile,
+	file *ediinboundfile.EDIInboundFile,
 	partner *edi.EDIPartner,
-	message *edi.EDIMessage,
+	message *edimessage.EDIMessage,
 	transaction *parsedTransaction,
-) (*edi.EDITransfer, []string, error) {
+) (*editransfer.EDITransfer, []string, error) {
 	payload := message.PayloadSnapshot.LoadTender
 	if payload == nil {
 		return nil, nil, fmt.Errorf(
@@ -502,7 +510,7 @@ func (s *Service) routeLoadTender(
 	}
 	tenantInfo := inboundFileTenant(file)
 	warnings := make([]string, 0)
-	if payload.PurposeCode == edi.LoadTenderPurposeChange {
+	if payload.PurposeCode == editransfer.LoadTenderPurposeChange {
 		supersedeWarnings, err := s.supersedePriorInboundTransfer(
 			ctx,
 			tenantInfo,
@@ -520,11 +528,11 @@ func (s *Service) routeLoadTender(
 	if err != nil {
 		return nil, warnings, err
 	}
-	status := edi.TransferStatusPendingApproval
+	status := editransfer.TransferStatusPendingApproval
 	if len(preview.Unresolved) > 0 {
-		status = edi.TransferStatusMappingRequired
+		status = editransfer.TransferStatusMappingRequired
 	}
-	transfer := &edi.EDITransfer{
+	transfer := &editransfer.EDITransfer{
 		SourceOrganizationID: file.OrganizationID,
 		SourceBusinessUnitID: file.BusinessUnitID,
 		TargetOrganizationID: file.OrganizationID,
@@ -541,7 +549,7 @@ func (s *Service) routeLoadTender(
 	if err != nil {
 		return nil, warnings, err
 	}
-	if status == edi.TransferStatusMappingRequired {
+	if status == editransfer.TransferStatusMappingRequired {
 		warnings = append(warnings, fmt.Sprintf(
 			"load tender %s/%s requires mapping before approval (%d unresolved entities)",
 			transaction.set,
@@ -556,7 +564,7 @@ func (s *Service) supersedePriorInboundTransfer(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	partner *edi.EDIPartner,
-	payload *edi.LoadTenderPayload,
+	payload *editransfer.LoadTenderPayload,
 	transaction *parsedTransaction,
 ) ([]string, error) {
 	externalRef, _ := payload.RatingDetail["externalShipmentId"].(string)
@@ -589,7 +597,7 @@ func (s *Service) supersedePriorInboundTransfer(
 		return nil, err
 	}
 	now := timeutils.NowUnix()
-	prior.Status = edi.TransferStatusCanceled
+	prior.Status = editransfer.TransferStatusCanceled
 	prior.FailureReason = fmt.Sprintf(
 		"Superseded by inbound load tender change %s",
 		transaction.controlNumber,

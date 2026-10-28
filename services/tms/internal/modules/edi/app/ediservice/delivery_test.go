@@ -7,6 +7,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edimessage"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/editenderchange"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/edimessageports"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/editenderports"
@@ -28,7 +31,7 @@ import (
 
 type deliveryFixture struct {
 	service         *Service
-	message         *edi.EDIMessage
+	message         *edimessage.EDIMessage
 	profile         *edi.EDICommunicationProfile
 	messageRepo     *edimessageportsmock.MockEDIMessageRepository
 	profileRepo     *edipartnerportsmock.MockEDICommunicationProfileRepository
@@ -46,15 +49,15 @@ func newDeliveryFixture(t *testing.T) *deliveryFixture {
 	buID := pulid.MustNew("bu_")
 	partnerID := pulid.MustNew("edip_")
 	fixture := &deliveryFixture{
-		message: &edi.EDIMessage{
+		message: &edimessage.EDIMessage{
 			ID:             pulid.MustNew("edimsg_"),
 			OrganizationID: orgID,
 			BusinessUnitID: buID,
 			EDIPartnerID:   partnerID,
-			Direction:      edi.DocumentDirectionOutbound,
-			Status:         edi.MessageStatusGenerated,
-			TransactionSet: edi.TransactionSet204,
-			DeliveryStatus: edi.MessageDeliveryStatusQueued,
+			Direction:      edidocument.DocumentDirectionOutbound,
+			Status:         edimessage.MessageStatusGenerated,
+			TransactionSet: edidocument.TransactionSet204,
+			DeliveryStatus: edimessage.MessageDeliveryStatusQueued,
 			RawX12:         "ISA*...~",
 		},
 		profile: &edi.EDICommunicationProfile{
@@ -132,7 +135,7 @@ func (f *deliveryFixture) expectResolveProfileByPartner() {
 }
 
 func (f *deliveryFixture) expectDeliveryUpdate(
-	status edi.MessageDeliveryStatus,
+	status edimessage.MessageDeliveryStatus,
 ) {
 	f.messageRepo.EXPECT().
 		UpdateMessageDelivery(
@@ -141,7 +144,7 @@ func (f *deliveryFixture) expectDeliveryUpdate(
 				return req.ID == f.message.ID && req.DeliveryStatus == status
 			}),
 		).
-		RunAndReturn(func(_ context.Context, req *edimessageports.UpdateEDIMessageDeliveryRequest) (*edi.EDIMessage, error) {
+		RunAndReturn(func(_ context.Context, req *edimessageports.UpdateEDIMessageDeliveryRequest) (*edimessage.EDIMessage, error) {
 			updated := *f.message
 			updated.DeliveryStatus = req.DeliveryStatus
 			updated.DeliveryRemotePath = req.DeliveryRemotePath
@@ -156,7 +159,7 @@ func TestService_DeliverMessage_SuccessMarksSentAndCompletesTenderChange(t *test
 	fixture := newDeliveryFixture(t)
 	fixture.expectLoadMessage()
 	fixture.expectResolveProfileByPartner()
-	fixture.expectDeliveryUpdate(edi.MessageDeliveryStatusSending)
+	fixture.expectDeliveryUpdate(edimessage.MessageDeliveryStatusSending)
 	fixture.transport.EXPECT().
 		Deliver(
 			mock.Anything,
@@ -167,15 +170,15 @@ func TestService_DeliverMessage_SuccessMarksSentAndCompletesTenderChange(t *test
 		).
 		Return(&editransportports.EDITransportResult{RemotePath: "/outbound/file.x12"}, nil).
 		Once()
-	fixture.expectDeliveryUpdate(edi.MessageDeliveryStatusSent)
+	fixture.expectDeliveryUpdate(edimessage.MessageDeliveryStatusSent)
 
-	recipient := &edi.TenderRecipient{
+	recipient := &editenderchange.TenderRecipient{
 		ID:     pulid.MustNew("editr_"),
-		Status: edi.TenderRecipientStatusActive,
+		Status: editenderchange.TenderRecipientStatusActive,
 	}
-	change := &edi.TenderChange{
+	change := &editenderchange.TenderChange{
 		ID:                pulid.MustNew("editch_"),
-		Status:            edi.TenderChangeStatusQueued,
+		Status:            editenderchange.TenderChangeStatusQueued,
 		OutboundMessageID: fixture.message.ID,
 		Recipient:         recipient,
 	}
@@ -190,19 +193,20 @@ func TestService_DeliverMessage_SuccessMarksSentAndCompletesTenderChange(t *test
 		Return(change, nil).
 		Once()
 	fixture.tenderChange.EXPECT().
-		UpdateTenderChange(mock.Anything, mock.MatchedBy(func(updated *edi.TenderChange) bool {
-			return updated.Status == edi.TenderChangeStatusSent && updated.FailureReason == ""
+		UpdateTenderChange(mock.Anything, mock.MatchedBy(func(updated *editenderchange.TenderChange) bool {
+			return updated.Status == editenderchange.TenderChangeStatusSent &&
+				updated.FailureReason == ""
 		})).
-		RunAndReturn(func(_ context.Context, updated *edi.TenderChange) (*edi.TenderChange, error) {
+		RunAndReturn(func(_ context.Context, updated *editenderchange.TenderChange) (*editenderchange.TenderChange, error) {
 			return updated, nil
 		}).
 		Once()
 	fixture.recipientRepo.EXPECT().
-		UpdateTenderRecipient(mock.Anything, mock.MatchedBy(func(updated *edi.TenderRecipient) bool {
+		UpdateTenderRecipient(mock.Anything, mock.MatchedBy(func(updated *editenderchange.TenderRecipient) bool {
 			return updated.ID == recipient.ID &&
-				updated.BaselineStatus == edi.TenderRecipientBaselineStatusSent
+				updated.BaselineStatus == editenderchange.TenderRecipientBaselineStatusSent
 		})).
-		RunAndReturn(func(_ context.Context, updated *edi.TenderRecipient) (*edi.TenderRecipient, error) {
+		RunAndReturn(func(_ context.Context, updated *editenderchange.TenderRecipient) (*editenderchange.TenderRecipient, error) {
 			return updated, nil
 		}).
 		Once()
@@ -210,7 +214,7 @@ func TestService_DeliverMessage_SuccessMarksSentAndCompletesTenderChange(t *test
 	result, err := fixture.service.DeliverMessage(t.Context(), fixture.payload())
 
 	require.NoError(t, err)
-	require.Equal(t, edi.MessageDeliveryStatusSent, result.DeliveryStatus)
+	require.Equal(t, edimessage.MessageDeliveryStatusSent, result.DeliveryStatus)
 	require.Equal(t, "/outbound/file.x12", result.RemotePath)
 }
 
@@ -221,7 +225,7 @@ func TestService_DeliverMessage_TransportFailureMarksFailedAndReturnsError(t *te
 	transportErr := errors.New("connect SFTP server: connection refused")
 	fixture.expectLoadMessage()
 	fixture.expectResolveProfileByPartner()
-	fixture.expectDeliveryUpdate(edi.MessageDeliveryStatusSending)
+	fixture.expectDeliveryUpdate(edimessage.MessageDeliveryStatusSending)
 	fixture.transport.EXPECT().
 		Deliver(mock.Anything, edi.ConnectionMethodSFTP, mock.Anything).
 		Return(nil, transportErr).
@@ -230,11 +234,11 @@ func TestService_DeliverMessage_TransportFailureMarksFailedAndReturnsError(t *te
 		UpdateMessageDelivery(
 			mock.Anything,
 			mock.MatchedBy(func(req *edimessageports.UpdateEDIMessageDeliveryRequest) bool {
-				return req.DeliveryStatus == edi.MessageDeliveryStatusFailed &&
+				return req.DeliveryStatus == edimessage.MessageDeliveryStatusFailed &&
 					req.DeliveryLastError == transportErr.Error()
 			}),
 		).
-		RunAndReturn(func(_ context.Context, req *edimessageports.UpdateEDIMessageDeliveryRequest) (*edi.EDIMessage, error) {
+		RunAndReturn(func(_ context.Context, req *edimessageports.UpdateEDIMessageDeliveryRequest) (*edimessage.EDIMessage, error) {
 			updated := *fixture.message
 			updated.DeliveryStatus = req.DeliveryStatus
 			return &updated, nil
@@ -251,14 +255,14 @@ func TestService_DeliverMessage_AlreadySentIsIdempotent(t *testing.T) {
 	t.Parallel()
 
 	fixture := newDeliveryFixture(t)
-	fixture.message.DeliveryStatus = edi.MessageDeliveryStatusSent
+	fixture.message.DeliveryStatus = edimessage.MessageDeliveryStatusSent
 	fixture.message.DeliveryRemotePath = "/outbound/sent.x12"
 	fixture.expectLoadMessage()
 
 	result, err := fixture.service.DeliverMessage(t.Context(), fixture.payload())
 
 	require.NoError(t, err)
-	require.Equal(t, edi.MessageDeliveryStatusSent, result.DeliveryStatus)
+	require.Equal(t, edimessage.MessageDeliveryStatusSent, result.DeliveryStatus)
 	require.Equal(t, "/outbound/sent.x12", result.RemotePath)
 }
 
@@ -266,7 +270,7 @@ func TestService_DeliverMessage_InboundMessageIsRejected(t *testing.T) {
 	t.Parallel()
 
 	fixture := newDeliveryFixture(t)
-	fixture.message.Direction = edi.DocumentDirectionInbound
+	fixture.message.Direction = edidocument.DocumentDirectionInbound
 	fixture.expectLoadMessage()
 
 	result, err := fixture.service.DeliverMessage(t.Context(), fixture.payload())
@@ -279,13 +283,13 @@ func TestService_MarkMessageDeadLettered_UpdatesMessageAndFailsTenderChange(t *t
 	t.Parallel()
 
 	fixture := newDeliveryFixture(t)
-	fixture.message.DeliveryStatus = edi.MessageDeliveryStatusFailed
+	fixture.message.DeliveryStatus = edimessage.MessageDeliveryStatusFailed
 	fixture.expectLoadMessage()
-	fixture.expectDeliveryUpdate(edi.MessageDeliveryStatusDeadLettered)
+	fixture.expectDeliveryUpdate(edimessage.MessageDeliveryStatusDeadLettered)
 
-	change := &edi.TenderChange{
+	change := &editenderchange.TenderChange{
 		ID:                pulid.MustNew("editch_"),
-		Status:            edi.TenderChangeStatusQueued,
+		Status:            editenderchange.TenderChangeStatusQueued,
 		OutboundMessageID: fixture.message.ID,
 	}
 	fixture.tenderChange.EXPECT().
@@ -293,11 +297,11 @@ func TestService_MarkMessageDeadLettered_UpdatesMessageAndFailsTenderChange(t *t
 		Return(change, nil).
 		Once()
 	fixture.tenderChange.EXPECT().
-		UpdateTenderChange(mock.Anything, mock.MatchedBy(func(updated *edi.TenderChange) bool {
-			return updated.Status == edi.TenderChangeStatusFailed &&
+		UpdateTenderChange(mock.Anything, mock.MatchedBy(func(updated *editenderchange.TenderChange) bool {
+			return updated.Status == editenderchange.TenderChangeStatusFailed &&
 				updated.FailureReason == "delivery exhausted"
 		})).
-		RunAndReturn(func(_ context.Context, updated *edi.TenderChange) (*edi.TenderChange, error) {
+		RunAndReturn(func(_ context.Context, updated *editenderchange.TenderChange) (*editenderchange.TenderChange, error) {
 			return updated, nil
 		}).
 		Once()
@@ -315,7 +319,7 @@ func TestService_RetryMessageDelivery_RejectsSentMessages(t *testing.T) {
 	t.Parallel()
 
 	fixture := newDeliveryFixture(t)
-	fixture.message.DeliveryStatus = edi.MessageDeliveryStatusSent
+	fixture.message.DeliveryStatus = edimessage.MessageDeliveryStatusSent
 	fixture.expectLoadMessage()
 
 	message, err := fixture.service.RetryMessageDelivery(t.Context(), &RetryMessageDeliveryRequest{
@@ -331,10 +335,10 @@ func TestService_RetryMessageDelivery_RequeuesFailedMessageAndStartsWorkflow(t *
 	t.Parallel()
 
 	fixture := newDeliveryFixture(t)
-	fixture.message.DeliveryStatus = edi.MessageDeliveryStatusDeadLettered
+	fixture.message.DeliveryStatus = edimessage.MessageDeliveryStatusDeadLettered
 	fixture.expectLoadMessage()
 	fixture.expectResolveProfileByPartner()
-	fixture.expectDeliveryUpdate(edi.MessageDeliveryStatusQueued)
+	fixture.expectDeliveryUpdate(edimessage.MessageDeliveryStatusQueued)
 	fixture.workflowStarter.EXPECT().Enabled().Return(true).Once()
 	fixture.workflowStarter.EXPECT().
 		StartWorkflow(mock.Anything, mock.MatchedBy(func(options client.StartWorkflowOptions) bool {
@@ -349,7 +353,7 @@ func TestService_RetryMessageDelivery_RequeuesFailedMessageAndStartsWorkflow(t *
 	})
 
 	require.NoError(t, err)
-	require.Equal(t, edi.MessageDeliveryStatusQueued, message.DeliveryStatus)
+	require.Equal(t, edimessage.MessageDeliveryStatusQueued, message.DeliveryStatus)
 }
 
 func TestService_QueueMessageForDelivery_SkipsInternalPartners(t *testing.T) {

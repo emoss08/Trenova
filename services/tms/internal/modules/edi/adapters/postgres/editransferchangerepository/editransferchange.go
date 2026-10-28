@@ -6,8 +6,8 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi/edidb"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edisync"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edisync/edisyncdb"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/editenderports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/listquery"
@@ -41,21 +41,26 @@ func New(p Params) editenderports.EDITransferChangeRepository {
 func (r *repository) ListTransferChanges(
 	ctx context.Context,
 	req *editenderports.ListEDITransferChangesRequest,
-) (*pagination.ListResult[*edi.TransferChange], error) {
+) (*pagination.ListResult[*edisync.TransferChange], error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) (*pagination.ListResult[*edi.TransferChange], error) {
-			tc := edidb.TransferChanges
+		func(ctx context.Context) (*pagination.ListResult[*edisync.TransferChange], error) {
+			tc := edisyncdb.TransferChanges
 			q := tc.Where(
 				linkedToOrganization(req.Filter.TenantInfo.OrgID),
 				keel.When(req.ShipmentLinkID.IsNotNil(), tc.ShipmentLinkID.Eq(req.ShipmentLinkID)),
 			)
 
-			return listquery.List(ctx, r.db.Keel(ctx), q, &listquery.Request[edi.TransferChange]{
-				Filter: req.Filter,
-				Then:   []keel.Order{tc.CreatedAt.Desc()},
-			})
+			return listquery.List(
+				ctx,
+				r.db.Keel(ctx),
+				q,
+				&listquery.Request[edisync.TransferChange]{
+					Filter: req.Filter,
+					Then:   []keel.Order{tc.CreatedAt.Desc()},
+				},
+			)
 		},
 	)
 }
@@ -63,9 +68,9 @@ func (r *repository) ListTransferChanges(
 func (r *repository) GetTransferChangeByID(
 	ctx context.Context,
 	req editenderports.GetEDITransferChangeByIDRequest,
-) (*edi.TransferChange, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*edi.TransferChange, error) {
-		tc := edidb.TransferChanges
+) (*edisync.TransferChange, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*edisync.TransferChange, error) {
+		tc := edisyncdb.TransferChanges
 		entity, err := tc.Where(tc.ID.Eq(req.ID), linkedToOrganization(req.TenantInfo.OrgID)).
 			One(ctx, r.db.Keel(ctx))
 		if err != nil {
@@ -78,10 +83,10 @@ func (r *repository) GetTransferChangeByID(
 
 func (r *repository) CreateTransferChange(
 	ctx context.Context,
-	entity *edi.TransferChange,
-) (*edi.TransferChange, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*edi.TransferChange, error) {
-		if err := edidb.TransferChanges.Create(ctx, r.db.Keel(ctx), entity); err != nil {
+	entity *edisync.TransferChange,
+) (*edisync.TransferChange, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*edisync.TransferChange, error) {
+		if err := edisyncdb.TransferChanges.Create(ctx, r.db.Keel(ctx), entity); err != nil {
 			return nil, transferChangeErrors.Map(err, entity.ID.String())
 		}
 
@@ -91,18 +96,18 @@ func (r *repository) CreateTransferChange(
 
 func (r *repository) CreateTransferChangeIdempotent(
 	ctx context.Context,
-	entity *edi.TransferChange,
+	entity *edisync.TransferChange,
 ) (*editenderports.CreateEDITransferChangeIdempotentResult, error) {
 	return dbtx.Write(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*editenderports.CreateEDITransferChangeIdempotentResult, error) {
 			db := r.db.Keel(ctx)
-			tc := edidb.TransferChanges
+			tc := edisyncdb.TransferChanges
 			created, err := tc.CreateOrSkip(
 				ctx,
 				db,
-				[]*edi.TransferChange{entity},
+				[]*edisync.TransferChange{entity},
 				tc.ShipmentLinkID,
 				tc.BusinessUnitID,
 				tc.Direction,
@@ -139,10 +144,10 @@ func (r *repository) CreateTransferChangeIdempotent(
 
 func (r *repository) UpdateTransferChange(
 	ctx context.Context,
-	entity *edi.TransferChange,
-) (*edi.TransferChange, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*edi.TransferChange, error) {
-		if err := edidb.TransferChanges.Save(ctx, r.db.Keel(ctx), entity); err != nil {
+	entity *edisync.TransferChange,
+) (*edisync.TransferChange, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*edisync.TransferChange, error) {
+		if err := edisyncdb.TransferChanges.Save(ctx, r.db.Keel(ctx), entity); err != nil {
 			return nil, transferChangeErrors.Map(err, entity.ID.String())
 		}
 
@@ -151,8 +156,8 @@ func (r *repository) UpdateTransferChange(
 }
 
 func linkedToOrganization(orgID pulid.ID) keel.Pred {
-	tc := edidb.TransferChanges
-	sl := edidb.ShipmentLinks
+	tc := edisyncdb.TransferChanges
+	sl := edisyncdb.ShipmentLinks
 	return keel.Exists(sl.Where(
 		sl.ID.EqCol(tc.ShipmentLinkID),
 		keel.Or(sl.SourceOrganizationID.Eq(orgID), sl.TargetOrganizationID.Eq(orgID)),

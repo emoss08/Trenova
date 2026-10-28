@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edipayload"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/trackingevent"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentmoveports"
@@ -91,7 +91,7 @@ func stopActualsPlanForStatusCode(statusCode string) (stopActuals214Plan, bool) 
 func resolve214TargetStop(
 	move *shipment.ShipmentMove,
 	plan stopActuals214Plan,
-	event *edi.ShipmentStatusEvent,
+	event *edipayload.ShipmentStatusEvent,
 ) (*shipment.Stop, trackingevent.MatchMethod) {
 	if event != nil && event.StopSequence != nil {
 		for _, stop := range move.ActiveStopsBySequence() {

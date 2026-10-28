@@ -14,6 +14,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice/invoicedb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment/invoiceadjustmentdb"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi/edidb"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edicarrierinvoice/edicarrierinvoicedb"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edimessage/edimessagedb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/checkcall/checkcalldb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/order/orderdb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
@@ -68,8 +70,8 @@ var tableBackdates = map[string]tableBackdate{
 	"driver_settlement_batches":         backdater(driversettlementdb.SettlementBatches.Handle),
 	"driver_settlement_lines":           backdater(driversettlementdb.SettlementLines.Handle),
 	"driver_settlements":                backdater(driversettlementdb.Settlements.Handle),
-	"edi_carrier_invoices":              backdater(edidb.CarrierInvoices.Handle),
-	"edi_messages":                      backdater(edidb.EDIMessages.Handle),
+	"edi_carrier_invoices":              backdater(edicarrierinvoicedb.CarrierInvoices.Handle),
+	"edi_messages":                      backdater(edimessagedb.EDIMessages.Handle),
 	"edi_partners":                      backdater(edidb.EDIPartners.Handle),
 	"escrow_accounts":                   backdater(driverpaydb.EscrowAccounts.Handle),
 	"escrow_transactions":               backdater(driverpaydb.EscrowTransactions.Handle),

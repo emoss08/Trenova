@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edimessage"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/ladingproject"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/edimessageports"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ladingports"
 	"github.com/emoss08/trenova/pkg/lading"
@@ -56,7 +58,7 @@ func (r *Replayer) Run(
 	ctx context.Context,
 	payload *ReplayWorkflowPayload,
 	heartbeat func(done int),
-) (*edi.LadingReplay, error) {
+) (*ladingproject.LadingReplay, error) {
 	replay, err := r.replays.GetReplay(ctx, ladingports.GetLadingReplayRequest{
 		TenantInfo: payload.TenantInfo,
 		ID:         payload.ReplayID,
@@ -64,17 +66,17 @@ func (r *Replayer) Run(
 	if err != nil {
 		return nil, err
 	}
-	if replay.Status != edi.LadingReplayStatusRunning {
+	if replay.Status != ladingproject.LadingReplayStatusRunning {
 		return replay, nil
 	}
 	result, runErr := r.run(ctx, payload.TenantInfo, replay, heartbeat)
 	now := timeutils.NowUnix()
 	replay.FinishedAt = &now
 	if runErr != nil {
-		replay.Status = edi.LadingReplayStatusFailed
+		replay.Status = ladingproject.LadingReplayStatusFailed
 		replay.Error = runErr.Error()
 	} else {
-		replay.Status = edi.LadingReplayStatusCompleted
+		replay.Status = ladingproject.LadingReplayStatusCompleted
 		replay.Summary = &result.summary
 		replay.Items = result.items
 	}
@@ -83,13 +85,13 @@ func (r *Replayer) Run(
 
 type replayResult struct {
 	summary lading.ReplaySummary
-	items   []edi.LadingReplayItem
+	items   []ladingproject.LadingReplayItem
 }
 
 func (r *Replayer) run(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	replay *edi.LadingReplay,
+	replay *ladingproject.LadingReplay,
 	heartbeat func(done int),
 ) (*replayResult, error) {
 	project, err := r.projects.GetProject(ctx, ladingports.GetLadingProjectRequest{
@@ -111,9 +113,9 @@ func (r *Replayer) run(
 	if target == nil {
 		return nil, fmt.Errorf("version %d has no map %s", after.Version.Number, replay.Map)
 	}
-	direction := edi.DocumentDirectionInbound
+	direction := edidocument.DocumentDirectionInbound
 	if target.Direction == lading.DirectionOutbound {
-		direction = edi.DocumentDirectionOutbound
+		direction = edidocument.DocumentDirectionOutbound
 	}
 	result := &replayResult{summary: lading.ReplaySummary{Fields: map[string]int{}}}
 	cursor := pulid.Nil
@@ -123,7 +125,7 @@ func (r *Replayer) run(
 			&edimessageports.ListEDIReplayMessagesRequest{
 				TenantInfo:     tenantInfo,
 				PartnerID:      project.EDIPartnerID,
-				TransactionSet: edi.TransactionSet(target.Set),
+				TransactionSet: edidocument.TransactionSet(target.Set),
 				Direction:      direction,
 				From:           replay.PeriodStart,
 				To:             replay.PeriodEnd,
@@ -171,7 +173,7 @@ func (r *Replayer) run(
 func (r *Replayer) program(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	project *edi.LadingProject,
+	project *ladingproject.LadingProject,
 	versionID pulid.ID,
 ) (*Program, error) {
 	version, err := r.projects.GetVersion(ctx, ladingports.GetLadingVersionRequest{
@@ -185,14 +187,14 @@ func (r *Replayer) program(
 }
 
 func replayInput(
-	message *edi.EDIMessage,
-	direction edi.DocumentDirection,
+	message *edimessage.EDIMessage,
+	direction edidocument.DocumentDirection,
 ) (lading.ReplayInput, bool) {
 	input := lading.ReplayInput{
 		ID:  message.ID.String(),
 		Now: time.Unix(message.GeneratedAt, 0).UTC().Format(time.RFC3339),
 	}
-	if direction == edi.DocumentDirectionInbound {
+	if direction == edidocument.DocumentDirectionInbound {
 		if message.RawX12 == "" {
 			return input, false
 		}
@@ -209,7 +211,7 @@ func replayInput(
 func (r *Replayer) batch(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	project *edi.LadingProject,
+	project *ladingproject.LadingProject,
 	before, after *Program,
 	name string,
 	inputs []lading.ReplayInput,
@@ -246,7 +248,7 @@ func (r *Replayer) batch(
 		if item.Same || len(result.items) >= maxReplayItemsKept {
 			continue
 		}
-		result.items = append(result.items, edi.LadingReplayItem{
+		result.items = append(result.items, ladingproject.LadingReplayItem{
 			MessageID:  pulid.ID(item.ID),
 			ReplayItem: *item,
 		})
@@ -309,7 +311,7 @@ type ShadowRunRequest struct {
 	Programs   *Programs
 	Map        string
 	MessageID  pulid.ID
-	Set        edi.TransactionSet
+	Set        edidocument.TransactionSet
 	Input      lading.RunInput
 	Lookups    []lading.LookupAnswer
 	Now        time.Time
@@ -343,7 +345,7 @@ func (r *Replayer) Shadow(ctx context.Context, req *ShadowRunRequest) {
 		}},
 		Settings: settings,
 	})
-	result := &edi.LadingShadowResult{
+	result := &ladingproject.LadingShadowResult{
 		OrganizationID: req.TenantInfo.OrgID,
 		BusinessUnitID: req.TenantInfo.BuID,
 		VersionID:      programs.Shadow.Version.ID,

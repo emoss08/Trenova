@@ -12,7 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edicarrierinvoice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/carriersettlementservice"
@@ -547,7 +547,7 @@ type invoiceLinker interface {
 		tenantInfo pagination.TenantInfo,
 		invoiceID, carrierID pulid.ID,
 		actor *permissionports.RequestActor,
-	) (*edi.CarrierInvoice, error)
+	) (*edicarrierinvoice.CarrierInvoice, error)
 }
 
 type LinkEDICarrierInvoiceTool struct {

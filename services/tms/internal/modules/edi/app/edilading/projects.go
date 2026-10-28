@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/ladingproject"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ladingports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -92,7 +93,7 @@ func (s *Projects) CreateProject(
 	ctx context.Context,
 	req *CreateProjectRequest,
 	actor *permissionports.RequestActor,
-) (*edi.LadingProject, error) {
+) (*ladingproject.LadingProject, error) {
 	if err := validateCreate(req); err != nil {
 		return nil, err
 	}
@@ -113,11 +114,11 @@ func (s *Projects) CreateProject(
 	}
 	draft.OrganizationID = req.TenantInfo.OrgID
 	draft.BusinessUnitID = req.TenantInfo.BuID
-	draft.Status = edi.LadingVersionStatusDraft
+	draft.Status = ladingproject.LadingVersionStatusDraft
 	draft.CreatedByID = req.TenantInfo.UserID
 	draft.Notes = "Started from Trenova's " + req.Role + " starter"
 	project, err := s.projects.CreateProject(ctx, &ladingports.CreateLadingProjectRequest{
-		Project: &edi.LadingProject{
+		Project: &ladingproject.LadingProject{
 			OrganizationID: req.TenantInfo.OrgID,
 			BusinessUnitID: req.TenantInfo.BuID,
 			EDIPartnerID:   partner.ID,
@@ -195,27 +196,27 @@ func validateCreate(req *CreateProjectRequest) error {
 func (s *Projects) GetProject(
 	ctx context.Context,
 	req *ladingports.GetLadingProjectRequest,
-) (*edi.LadingProject, error) {
+) (*ladingproject.LadingProject, error) {
 	return s.projects.GetProject(ctx, *req)
 }
 
 func (s *Projects) ListProjects(
 	ctx context.Context,
 	req *ladingports.ListLadingProjectsRequest,
-) (*pagination.ListResult[*edi.LadingProject], error) {
+) (*pagination.ListResult[*ladingproject.LadingProject], error) {
 	return s.projects.ListProjects(ctx, req)
 }
 
 func (s *Projects) ListVersions(
 	ctx context.Context,
 	req ladingports.ListLadingVersionsRequest,
-) ([]*edi.LadingVersion, error) {
+) ([]*ladingproject.LadingVersion, error) {
 	return s.projects.ListVersions(ctx, req)
 }
 
 type VersionDetail struct {
-	Version *edi.LadingVersion `json:"version"`
-	Samples []lading.Sample    `json:"samples"`
+	Version *ladingproject.LadingVersion `json:"version"`
+	Samples []lading.Sample              `json:"samples"`
 }
 
 // GetVersion is a version with its samples' contents, as the studio opens it.
@@ -237,7 +238,7 @@ func (s *Projects) GetVersion(
 func (s *Projects) Samples(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	version *edi.LadingVersion,
+	version *ladingproject.LadingVersion,
 ) ([]lading.Sample, error) {
 	if len(version.Samples) == 0 {
 		return []lading.Sample{}, nil
@@ -291,7 +292,7 @@ func (s *Projects) SaveDraft(
 	ctx context.Context,
 	req *SaveDraftRequest,
 	actor *permissionports.RequestActor,
-) (*edi.LadingVersion, error) {
+) (*ladingproject.LadingVersion, error) {
 	if err := validateProject(req.Files, req.Samples); err != nil {
 		return nil, err
 	}
@@ -344,7 +345,7 @@ func (s *Projects) SaveDraft(
 	return saved, nil
 }
 
-func versionSummary(version *edi.LadingVersion) map[string]any {
+func versionSummary(version *ladingproject.LadingVersion) map[string]any {
 	paths := make([]string, 0, len(version.Files))
 	for _, file := range version.Files {
 		paths = append(paths, file.Path)
@@ -367,7 +368,7 @@ func (s *Projects) checkedDraft(
 	tenantInfo pagination.TenantInfo,
 	files []lading.File,
 	samples []lading.Sample,
-) (*edi.LadingVersion, []*edi.LadingSample, error) {
+) (*ladingproject.LadingVersion, []*ladingproject.LadingSample, error) {
 	ladingContext, err := s.runtime.Context(ctx, tenantInfo)
 	if err != nil {
 		return nil, nil, err
@@ -380,12 +381,12 @@ func (s *Projects) checkedDraft(
 	if err != nil {
 		return nil, nil, err
 	}
-	refs := make([]edi.LadingSampleRef, 0, len(samples))
-	stored := make([]*edi.LadingSample, 0, len(samples))
+	refs := make([]ladingproject.LadingSampleRef, 0, len(samples))
+	stored := make([]*ladingproject.LadingSample, 0, len(samples))
 	seen := map[string]bool{}
 	for _, sample := range samples {
 		digest := lading.Digest(sample.Content)
-		refs = append(refs, edi.LadingSampleRef{
+		refs = append(refs, ladingproject.LadingSampleRef{
 			Path:   sample.Path,
 			Digest: digest,
 			Size:   len(sample.Content),
@@ -394,13 +395,13 @@ func (s *Projects) checkedDraft(
 			continue
 		}
 		seen[digest] = true
-		stored = append(stored, &edi.LadingSample{
+		stored = append(stored, &ladingproject.LadingSample{
 			Digest:  digest,
 			Size:    len(sample.Content),
 			Content: sample.Content,
 		})
 	}
-	return &edi.LadingVersion{
+	return &ladingproject.LadingVersion{
 		Files:        files,
 		Samples:      refs,
 		Manifest:     *check,
@@ -483,7 +484,7 @@ func (s *Projects) Import(
 	ctx context.Context,
 	req *ImportRequest,
 	actor *permissionports.RequestActor,
-) (*edi.LadingVersion, error) {
+) (*ladingproject.LadingVersion, error) {
 	project, err := s.projects.GetProject(ctx, ladingports.GetLadingProjectRequest{
 		TenantInfo: req.TenantInfo,
 		PartnerID:  req.PartnerID,
@@ -533,7 +534,7 @@ func (s *Projects) importProject(
 	ctx context.Context,
 	req *ImportRequest,
 	actor *permissionports.RequestActor,
-) (*edi.LadingVersion, error) {
+) (*ladingproject.LadingVersion, error) {
 	if err := validateProject(req.Files, req.Samples); err != nil {
 		return nil, err
 	}
@@ -550,11 +551,11 @@ func (s *Projects) importProject(
 	}
 	draft.OrganizationID = req.TenantInfo.OrgID
 	draft.BusinessUnitID = req.TenantInfo.BuID
-	draft.Status = edi.LadingVersionStatusDraft
+	draft.Status = ladingproject.LadingVersionStatusDraft
 	draft.CreatedByID = req.TenantInfo.UserID
 	draft.Notes = req.Notes
 	project, err := s.projects.CreateProject(ctx, &ladingports.CreateLadingProjectRequest{
-		Project: &edi.LadingProject{
+		Project: &ladingproject.LadingProject{
 			OrganizationID: req.TenantInfo.OrgID,
 			BusinessUnitID: req.TenantInfo.BuID,
 			EDIPartnerID:   partner.ID,
@@ -612,7 +613,7 @@ func (s *Projects) NewDraft(
 	ctx context.Context,
 	req *NewDraftRequest,
 	actor *permissionports.RequestActor,
-) (*edi.LadingVersion, error) {
+) (*ladingproject.LadingVersion, error) {
 	from, err := s.projects.GetVersion(ctx, ladingports.GetLadingVersionRequest{
 		TenantInfo: req.TenantInfo,
 		ID:         req.FromVersionID,
@@ -646,11 +647,11 @@ func (s *Projects) NewDraft(
 	if err != nil {
 		return nil, err
 	}
-	created, err := s.projects.CreateVersion(ctx, &edi.LadingVersion{
+	created, err := s.projects.CreateVersion(ctx, &ladingproject.LadingVersion{
 		OrganizationID:  req.TenantInfo.OrgID,
 		BusinessUnitID:  req.TenantInfo.BuID,
 		ProjectID:       req.ProjectID,
-		Status:          edi.LadingVersionStatusDraft,
+		Status:          ladingproject.LadingVersionStatusDraft,
 		ParentVersionID: from.ID,
 		Files:           from.Files,
 		Samples:         from.Samples,
@@ -796,7 +797,7 @@ func (s *Projects) Test(ctx context.Context, req *VersionRequest) (*lading.TestR
 func (s *Projects) test(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	version *edi.LadingVersion,
+	version *ladingproject.LadingVersion,
 ) (*lading.TestReport, error) {
 	samples, err := s.Samples(ctx, tenantInfo, version)
 	if err != nil {
@@ -816,8 +817,8 @@ func (s *Projects) test(
 	return s.runtime.client.Test(ctx, encoded)
 }
 
-func readinessOf(report *lading.TestReport) *edi.LadingReadiness {
-	return &edi.LadingReadiness{
+func readinessOf(report *lading.TestReport) *ladingproject.LadingReadiness {
+	return &ladingproject.LadingReadiness{
 		Errors:               report.Readiness.Errors,
 		Failing:              report.Readiness.Failing,
 		Tests:                report.Readiness.Tests,
@@ -834,7 +835,7 @@ func (s *Projects) Certify(
 	ctx context.Context,
 	req *VersionRequest,
 	actor *permissionports.RequestActor,
-) (*edi.LadingVersion, error) {
+) (*ladingproject.LadingVersion, error) {
 	version, err := s.projects.GetVersion(ctx, ladingports.GetLadingVersionRequest{
 		TenantInfo: req.TenantInfo,
 		ID:         req.VersionID,
@@ -875,7 +876,7 @@ func (s *Projects) Certify(
 	}
 	previous := versionSummary(version)
 	now := timeutils.NowUnix()
-	version.Status = edi.LadingVersionStatusCertified
+	version.Status = ladingproject.LadingVersionStatusCertified
 	version.Readiness = readiness
 	version.CertifiedAt = &now
 	version.CertifiedByID = req.TenantInfo.UserID
@@ -894,7 +895,7 @@ func (s *Projects) Certify(
 	return saved, nil
 }
 
-func notReady(readiness *edi.LadingReadiness) error {
+func notReady(readiness *ladingproject.LadingReadiness) error {
 	multiErr := errortypes.NewMultiError()
 	if readiness.Errors > 0 {
 		multiErr.Add(
@@ -924,7 +925,7 @@ func notReady(readiness *edi.LadingReadiness) error {
 func (s *Projects) requireReplays(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	version *edi.LadingVersion,
+	version *ladingproject.LadingVersion,
 ) error {
 	replays, err := s.replays.ListReplays(ctx, ladingports.ListLadingReplaysRequest{
 		TenantInfo: tenantInfo,
@@ -933,9 +934,9 @@ func (s *Projects) requireReplays(
 	if err != nil {
 		return err
 	}
-	latest := map[string]*edi.LadingReplay{}
+	latest := map[string]*ladingproject.LadingReplay{}
 	for _, replay := range replays {
-		if replay.Status != edi.LadingReplayStatusCompleted ||
+		if replay.Status != ladingproject.LadingReplayStatusCompleted ||
 			replay.CreatedAt < version.UpdatedAt {
 			continue
 		}
@@ -988,7 +989,7 @@ func (s *Projects) Activate(
 	ctx context.Context,
 	req *VersionRequest,
 	actor *permissionports.RequestActor,
-) (*edi.LadingVersion, error) {
+) (*ladingproject.LadingVersion, error) {
 	version, err := s.projects.GetVersion(ctx, ladingports.GetLadingVersionRequest{
 		TenantInfo: req.TenantInfo,
 		ID:         req.VersionID,
@@ -996,8 +997,8 @@ func (s *Projects) Activate(
 	if err != nil {
 		return nil, err
 	}
-	if version.Status != edi.LadingVersionStatusCertified &&
-		version.Status != edi.LadingVersionStatusShadow {
+	if version.Status != ladingproject.LadingVersionStatusCertified &&
+		version.Status != ladingproject.LadingVersionStatusShadow {
 		return nil, errortypes.NewBusinessError(
 			"Version {0} is {1}; only a certified version is activated",
 			version.Number,
@@ -1033,8 +1034,8 @@ func (s *Projects) Activate(
 func (s *Projects) ActivateStarter(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	project *edi.LadingProject,
-) (*edi.LadingVersion, error) {
+	project *ladingproject.LadingProject,
+) (*ladingproject.LadingVersion, error) {
 	versions, err := s.projects.ListVersions(ctx, ladingports.ListLadingVersionsRequest{
 		TenantInfo: tenantInfo,
 		ProjectID:  project.ID,
@@ -1062,7 +1063,7 @@ func (s *Projects) ActivateStarter(
 		return nil, notReady(readiness)
 	}
 	now := timeutils.NowUnix()
-	version.Status = edi.LadingVersionStatusCertified
+	version.Status = ladingproject.LadingVersionStatusCertified
 	version.Readiness = readiness
 	version.CertifiedAt = &now
 	if _, err = s.projects.UpdateVersionStatus(ctx, version); err != nil {
@@ -1084,7 +1085,7 @@ func (s *Projects) Archive(
 	ctx context.Context,
 	req *VersionRequest,
 	actor *permissionports.RequestActor,
-) (*edi.LadingVersion, error) {
+) (*ladingproject.LadingVersion, error) {
 	version, err := s.projects.GetVersion(ctx, ladingports.GetLadingVersionRequest{
 		TenantInfo: req.TenantInfo,
 		ID:         req.VersionID,
@@ -1093,21 +1094,21 @@ func (s *Projects) Archive(
 		return nil, err
 	}
 	switch version.Status {
-	case edi.LadingVersionStatusActive, edi.LadingVersionStatusShadow:
+	case ladingproject.LadingVersionStatusActive, ladingproject.LadingVersionStatusShadow:
 		return nil, errortypes.NewBusinessError(
 			"Version {0} is {1}; stop it before archiving it",
 			version.Number,
 			string(version.Status),
 		)
-	case edi.LadingVersionStatusArchived:
+	case ladingproject.LadingVersionStatusArchived:
 		return version, nil
-	case edi.LadingVersionStatusDraft,
-		edi.LadingVersionStatusCertified,
-		edi.LadingVersionStatusSuperseded:
+	case ladingproject.LadingVersionStatusDraft,
+		ladingproject.LadingVersionStatusCertified,
+		ladingproject.LadingVersionStatusSuperseded:
 	}
 	previous := versionSummary(version)
 	now := timeutils.NowUnix()
-	version.Status = edi.LadingVersionStatusArchived
+	version.Status = ladingproject.LadingVersionStatusArchived
 	version.ArchivedAt = &now
 	saved, err := s.projects.UpdateVersionStatus(ctx, version)
 	if err != nil {
@@ -1136,7 +1137,7 @@ func (s *Projects) StartShadow(
 	ctx context.Context,
 	req *ShadowRequest,
 	actor *permissionports.RequestActor,
-) (*edi.LadingVersion, error) {
+) (*ladingproject.LadingVersion, error) {
 	if req.Days < 1 || req.Days > MaxShadowDays {
 		return nil, errortypes.NewValidationError(
 			"days",
@@ -1151,7 +1152,7 @@ func (s *Projects) StartShadow(
 	if err != nil {
 		return nil, err
 	}
-	if version.Status != edi.LadingVersionStatusCertified {
+	if version.Status != ladingproject.LadingVersionStatusCertified {
 		return nil, errortypes.NewBusinessError(
 			"Version {0} is {1}; only a certified version shadows",
 			version.Number,
@@ -1176,7 +1177,7 @@ func (s *Projects) StartShadow(
 		}
 	}
 	until := time.Now().AddDate(0, 0, req.Days).Unix()
-	version.Status = edi.LadingVersionStatusShadow
+	version.Status = ladingproject.LadingVersionStatusShadow
 	version.ShadowUntil = &until
 	saved, err := s.projects.UpdateVersionStatus(ctx, version)
 	if err != nil {
@@ -1201,7 +1202,7 @@ func (s *Projects) StopShadow(
 	ctx context.Context,
 	req *VersionRequest,
 	actor *permissionports.RequestActor,
-) (*edi.LadingVersion, error) {
+) (*ladingproject.LadingVersion, error) {
 	version, err := s.projects.GetVersion(ctx, ladingports.GetLadingVersionRequest{
 		TenantInfo: req.TenantInfo,
 		ID:         req.VersionID,
@@ -1209,7 +1210,7 @@ func (s *Projects) StopShadow(
 	if err != nil {
 		return nil, err
 	}
-	if version.Status != edi.LadingVersionStatusShadow {
+	if version.Status != ladingproject.LadingVersionStatusShadow {
 		return version, nil
 	}
 	if err = s.stopShadow(ctx, req.TenantInfo, version.ID); err != nil {
@@ -1251,8 +1252,8 @@ func (s *Projects) stopShadow(
 	if err != nil {
 		return err
 	}
-	if version.Status == edi.LadingVersionStatusShadow {
-		version.Status = edi.LadingVersionStatusCertified
+	if version.Status == ladingproject.LadingVersionStatusShadow {
+		version.Status = ladingproject.LadingVersionStatusCertified
 		version.ShadowUntil = nil
 		if _, err = s.projects.UpdateVersionStatus(ctx, version); err != nil {
 			return err
@@ -1280,7 +1281,7 @@ func (s *Projects) UpdateSettings(
 	ctx context.Context,
 	req *UpdateSettingsRequest,
 	actor *permissionports.RequestActor,
-) (*edi.LadingProject, error) {
+) (*ladingproject.LadingProject, error) {
 	project, err := s.projects.GetProject(ctx, ladingports.GetLadingProjectRequest{
 		TenantInfo: req.TenantInfo,
 		ID:         req.ProjectID,
@@ -1412,7 +1413,7 @@ func (s *Projects) StartReplay(
 	ctx context.Context,
 	req *StartReplayRequest,
 	actor *permissionports.RequestActor,
-) (*edi.LadingReplay, error) {
+) (*ladingproject.LadingReplay, error) {
 	if err := validateReplayPeriod(req); err != nil {
 		return nil, err
 	}
@@ -1443,7 +1444,7 @@ func (s *Projects) StartReplay(
 	if err != nil {
 		return nil, err
 	}
-	replay, err := s.replays.CreateReplay(ctx, &edi.LadingReplay{
+	replay, err := s.replays.CreateReplay(ctx, &ladingproject.LadingReplay{
 		OrganizationID:   req.TenantInfo.OrgID,
 		BusinessUnitID:   req.TenantInfo.BuID,
 		ProjectID:        version.ProjectID,
@@ -1452,7 +1453,7 @@ func (s *Projects) StartReplay(
 		Map:              req.Map,
 		PeriodStart:      req.From,
 		PeriodEnd:        req.To,
-		Status:           edi.LadingReplayStatusRunning,
+		Status:           ladingproject.LadingReplayStatusRunning,
 		CreatedByID:      req.TenantInfo.UserID,
 	})
 	if err != nil {
@@ -1503,7 +1504,7 @@ func validateReplayPeriod(req *StartReplayRequest) error {
 func (s *Projects) replayAgainst(
 	ctx context.Context,
 	req *StartReplayRequest,
-	version *edi.LadingVersion,
+	version *ladingproject.LadingVersion,
 ) (pulid.ID, error) {
 	against := req.AgainstVersionID
 	if against.IsNil() {
@@ -1539,20 +1540,20 @@ type ReplayWorkflowPayload struct {
 func (s *Projects) GetReplay(
 	ctx context.Context,
 	req ladingports.GetLadingReplayRequest,
-) (*edi.LadingReplay, error) {
+) (*ladingproject.LadingReplay, error) {
 	return s.replays.GetReplay(ctx, req)
 }
 
 func (s *Projects) ListReplays(
 	ctx context.Context,
 	req ladingports.ListLadingReplaysRequest,
-) ([]*edi.LadingReplay, error) {
+) ([]*ladingproject.LadingReplay, error) {
 	return s.replays.ListReplays(ctx, req)
 }
 
 type ShadowReport struct {
-	Summary *ladingports.LadingShadowSummary `json:"summary"`
-	Results []*edi.LadingShadowResult        `json:"results"`
+	Summary *ladingports.LadingShadowSummary    `json:"summary"`
+	Results []*ladingproject.LadingShadowResult `json:"results"`
 }
 
 func (s *Projects) ShadowResults(

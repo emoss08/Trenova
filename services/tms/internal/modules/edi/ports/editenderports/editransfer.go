@@ -3,7 +3,7 @@ package editenderports
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/editransfer"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -56,53 +56,53 @@ type EDILoadTenderTransferRepository interface {
 	GetInboundStatusCounts(
 		ctx context.Context,
 		req GetEDITransferStatusCountsRequest,
-	) (map[edi.TransferStatus]int, error)
+	) (map[editransfer.TransferStatus]int, error)
 	ListInbound(
 		ctx context.Context,
 		req *ListEDITransfersRequest,
-	) (*pagination.ListResult[*edi.EDITransfer], error)
+	) (*pagination.ListResult[*editransfer.EDITransfer], error)
 	ListInboundCursor(
 		ctx context.Context,
 		req *ListEDITransfersRequest,
-	) (*pagination.CursorListResult[*edi.EDITransfer], error)
+	) (*pagination.CursorListResult[*editransfer.EDITransfer], error)
 	ListOutboundCursor(
 		ctx context.Context,
 		req *ListEDITransfersRequest,
-	) (*pagination.CursorListResult[*edi.EDITransfer], error)
+	) (*pagination.CursorListResult[*editransfer.EDITransfer], error)
 	ListOutbound(
 		ctx context.Context,
 		req *ListEDITransfersRequest,
-	) (*pagination.ListResult[*edi.EDITransfer], error)
+	) (*pagination.ListResult[*editransfer.EDITransfer], error)
 	GetTransferByID(
 		ctx context.Context,
 		req GetEDITransferByIDRequest,
-	) (*edi.EDITransfer, error)
+	) (*editransfer.EDITransfer, error)
 	GetTransfersByIDs(
 		ctx context.Context,
 		req GetEDITransfersByIDsRequest,
-	) ([]*edi.EDITransfer, error)
+	) ([]*editransfer.EDITransfer, error)
 	SelectOptions(
 		ctx context.Context,
 		req *EDITransferSelectOptionsRequest,
-	) (*pagination.ListResult[*edi.EDITransfer], error)
+	) (*pagination.ListResult[*editransfer.EDITransfer], error)
 	GetTransferForUpdate(
 		ctx context.Context,
 		req GetEDITransferForUpdateRequest,
-	) (*edi.EDITransfer, error)
+	) (*editransfer.EDITransfer, error)
 	CreateTransfer(
 		ctx context.Context,
-		entity *edi.EDITransfer,
-	) (*edi.EDITransfer, error)
+		entity *editransfer.EDITransfer,
+	) (*editransfer.EDITransfer, error)
 	UpdateTransfer(
 		ctx context.Context,
-		entity *edi.EDITransfer,
-	) (*edi.EDITransfer, error)
+		entity *editransfer.EDITransfer,
+	) (*editransfer.EDITransfer, error)
 	SetApprovalWorkflowRunID(
 		ctx context.Context,
 		req SetEDITransferApprovalWorkflowRunIDRequest,
-	) (*edi.EDITransfer, error)
+	) (*editransfer.EDITransfer, error)
 	GetActionableInboundTransferByExternalReference(
 		ctx context.Context,
 		req GetActionableInboundEDITransferByExternalReferenceRequest,
-	) (*edi.EDITransfer, error)
+	) (*editransfer.EDITransfer, error)
 }

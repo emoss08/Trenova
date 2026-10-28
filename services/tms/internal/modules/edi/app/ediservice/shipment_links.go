@@ -3,7 +3,7 @@ package ediservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edisync"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/editenderports"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
@@ -11,13 +11,13 @@ import (
 func (s *Service) ListShipmentLinks(
 	ctx context.Context,
 	req *editenderports.ListEDIShipmentLinksRequest,
-) (*pagination.ListResult[*edi.ShipmentLink], error) {
+) (*pagination.ListResult[*edisync.ShipmentLink], error) {
 	return s.shipmentLinkRepo.ListShipmentLinks(ctx, req)
 }
 
 func (s *Service) GetShipmentLink(
 	ctx context.Context,
 	req editenderports.GetEDIShipmentLinkByIDRequest,
-) (*edi.ShipmentLink, error) {
+) (*edisync.ShipmentLink, error) {
 	return s.shipmentLinkRepo.GetShipmentLinkByID(ctx, req)
 }

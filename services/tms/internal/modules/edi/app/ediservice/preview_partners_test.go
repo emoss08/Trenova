@@ -5,7 +5,10 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edisync"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/editenderchange"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/editransfer"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/editenderports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -34,18 +37,18 @@ func TestPreviewTenderChanges_NamesTheRecipientsAfterShipmentUpdateReaches(t *te
 	updated := *original
 	updated.BOL = "BOL-2"
 	baseline := buildTenderPayload(original)
-	baseline.PurposeCode = edi.LoadTenderPurposeChange
-	internal := &edi.TenderRecipient{
+	baseline.PurposeCode = editransfer.LoadTenderPurposeChange
+	internal := &editenderchange.TenderRecipient{
 		ID:                    pulid.MustNew("etr_"),
 		BusinessUnitID:        buID,
 		SourceOrganizationID:  orgID,
 		SourceShipmentID:      original.ID,
-		RecipientKind:         edi.TenderRecipientKindInternal,
+		RecipientKind:         editenderchange.TenderRecipientKindInternal,
 		LatestBaselinePayload: baseline,
 		LatestBaselineHash:    tenderPayloadHash(&baseline),
 	}
 	current := buildTenderPayload(&updated)
-	current.PurposeCode = edi.LoadTenderPurposeChange
+	current.PurposeCode = editransfer.LoadTenderPurposeChange
 	upToDate := *internal
 	upToDate.ID = pulid.MustNew("etr_")
 	upToDate.LatestBaselineHash = tenderPayloadHash(&current)
@@ -53,7 +56,7 @@ func TestPreviewTenderChanges_NamesTheRecipientsAfterShipmentUpdateReaches(t *te
 	recipients := editenderportsmock.NewMockEDITenderRecipientRepository(t)
 	recipients.EXPECT().
 		ListActiveTenderRecipientsForSourceShipment(mock.Anything, mock.Anything).
-		Return([]*edi.TenderRecipient{internal, &upToDate}, nil)
+		Return([]*editenderchange.TenderRecipient{internal, &upToDate}, nil)
 	changes := editenderportsmock.NewMockEDITenderChangeRepository(t)
 	svc := &Service{
 		l:                   zap.NewNop(),
@@ -66,12 +69,12 @@ func TestPreviewTenderChanges_NamesTheRecipientsAfterShipmentUpdateReaches(t *te
 	require.NoError(t, err)
 	require.Len(t, notices, 1, "a recipient already on the new baseline is sent nothing")
 
-	var created []*edi.TenderChange
+	var created []*editenderchange.TenderChange
 	changes.EXPECT().
 		CreateTenderChangeIdempotent(mock.Anything, mock.Anything).
 		RunAndReturn(func(
 			_ context.Context,
-			change *edi.TenderChange,
+			change *editenderchange.TenderChange,
 		) (*editenderports.CreateEDITenderChangeIdempotentResult, error) {
 			created = append(created, change)
 			return &editenderports.CreateEDITenderChangeIdempotentResult{
@@ -88,7 +91,7 @@ func TestPreviewTenderChanges_NamesTheRecipientsAfterShipmentUpdateReaches(t *te
 
 	notice := notices[0]
 	assert.Equal(t, created[0].RecipientID, notice.RecordID)
-	assert.Equal(t, edi.TransactionSet204, notice.TransactionSet)
+	assert.Equal(t, edidocument.TransactionSet204, notice.TransactionSet)
 	assert.True(t, notice.HeldForReview)
 	keys := make([]string, 0, len(created[0].DiffSummary))
 	for key := range created[0].DiffSummary {
@@ -107,20 +110,20 @@ func TestPreviewCancelNotices_NamesTheOtherSideOfEachActiveLink(t *testing.T) {
 	links := editenderportsmock.NewMockEDIShipmentLinkRepository(t)
 	links.EXPECT().
 		GetShipmentLinksByShipmentID(mock.Anything, mock.Anything).
-		Return([]*edi.ShipmentLink{
+		Return([]*edisync.ShipmentLink{
 			{
 				ID:                   pulid.MustNew("esl_"),
 				SourceOrganizationID: orgID,
 				SourceShipmentID:     shipmentID,
 				TargetOrganizationID: partnerOrg,
-				Status:               edi.ShipmentLinkStatusActive,
+				Status:               edisync.ShipmentLinkStatusActive,
 			},
 			{
 				ID:                   pulid.MustNew("esl_"),
 				SourceOrganizationID: orgID,
 				SourceShipmentID:     shipmentID,
 				TargetOrganizationID: pulid.MustNew("org_"),
-				Status:               edi.ShipmentLinkStatusClosed,
+				Status:               edisync.ShipmentLinkStatusClosed,
 			},
 		}, nil)
 	svc := &Service{l: zap.NewNop(), shipmentLinkRepo: links}
@@ -133,6 +136,6 @@ func TestPreviewCancelNotices_NamesTheOtherSideOfEachActiveLink(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, notices, 1)
 	assert.Equal(t, partnerOrg, notices[0].OrganizationID)
-	assert.Equal(t, edi.TransactionSet214, notices[0].TransactionSet)
+	assert.Equal(t, edidocument.TransactionSet214, notices[0].TransactionSet)
 	assert.Equal(t, "A7", notices[0].StatusCode)
 }

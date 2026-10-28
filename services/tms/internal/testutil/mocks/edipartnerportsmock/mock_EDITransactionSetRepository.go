@@ -5,11 +5,11 @@
 package edipartnerportsmock
 
 import (
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
 
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/pkg/pagination"
 	mock "github.com/stretchr/testify/mock"
 )
@@ -42,23 +42,23 @@ func (_m *MockEDITransactionSetRepository) EXPECT() *MockEDITransactionSetReposi
 }
 
 // SelectTransactionSetOptions provides a mock function for the type MockEDITransactionSetRepository
-func (_mock *MockEDITransactionSetRepository) SelectTransactionSetOptions(ctx context.Context, req *edipartnerports.EDITransactionSetSelectOptionsRequest) (*pagination.ListResult[*edi.EDITransactionSet], error) {
+func (_mock *MockEDITransactionSetRepository) SelectTransactionSetOptions(ctx context.Context, req *edipartnerports.EDITransactionSetSelectOptionsRequest) (*pagination.ListResult[*edidocument.EDITransactionSet], error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for SelectTransactionSetOptions")
 	}
 
-	var r0 *pagination.ListResult[*edi.EDITransactionSet]
+	var r0 *pagination.ListResult[*edidocument.EDITransactionSet]
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *edipartnerports.EDITransactionSetSelectOptionsRequest) (*pagination.ListResult[*edi.EDITransactionSet], error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *edipartnerports.EDITransactionSetSelectOptionsRequest) (*pagination.ListResult[*edidocument.EDITransactionSet], error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *edipartnerports.EDITransactionSetSelectOptionsRequest) *pagination.ListResult[*edi.EDITransactionSet]); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *edipartnerports.EDITransactionSetSelectOptionsRequest) *pagination.ListResult[*edidocument.EDITransactionSet]); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*pagination.ListResult[*edi.EDITransactionSet])
+			r0 = ret.Get(0).(*pagination.ListResult[*edidocument.EDITransactionSet])
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, *edipartnerports.EDITransactionSetSelectOptionsRequest) error); ok {
@@ -99,12 +99,12 @@ func (_c *MockEDITransactionSetRepository_SelectTransactionSetOptions_Call) Run(
 	return _c
 }
 
-func (_c *MockEDITransactionSetRepository_SelectTransactionSetOptions_Call) Return(listResult *pagination.ListResult[*edi.EDITransactionSet], err error) *MockEDITransactionSetRepository_SelectTransactionSetOptions_Call {
+func (_c *MockEDITransactionSetRepository_SelectTransactionSetOptions_Call) Return(listResult *pagination.ListResult[*edidocument.EDITransactionSet], err error) *MockEDITransactionSetRepository_SelectTransactionSetOptions_Call {
 	_c.Call.Return(listResult, err)
 	return _c
 }
 
-func (_c *MockEDITransactionSetRepository_SelectTransactionSetOptions_Call) RunAndReturn(run func(ctx context.Context, req *edipartnerports.EDITransactionSetSelectOptionsRequest) (*pagination.ListResult[*edi.EDITransactionSet], error)) *MockEDITransactionSetRepository_SelectTransactionSetOptions_Call {
+func (_c *MockEDITransactionSetRepository_SelectTransactionSetOptions_Call) RunAndReturn(run func(ctx context.Context, req *edipartnerports.EDITransactionSetSelectOptionsRequest) (*pagination.ListResult[*edidocument.EDITransactionSet], error)) *MockEDITransactionSetRepository_SelectTransactionSetOptions_Call {
 	_c.Call.Return(run)
 	return _c
 }

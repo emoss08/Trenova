@@ -13,7 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/editransfer"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/editenderports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -44,7 +44,7 @@ type ediTransferDecider interface {
 	GetTransfer(
 		ctx context.Context,
 		req editenderports.GetEDITransferByIDRequest,
-	) (*edi.EDITransfer, error)
+	) (*editransfer.EDITransfer, error)
 	PlanApproveTransfer(
 		ctx context.Context,
 		req *ediservice.ApproveTransferRequest,
@@ -54,22 +54,22 @@ type ediTransferDecider interface {
 		ctx context.Context,
 		req *ediservice.ApproveTransferRequest,
 		actor *permissionports.RequestActor,
-	) (*edi.EDITransfer, error)
+	) (*editransfer.EDITransfer, error)
 	RejectTransfer(
 		ctx context.Context,
 		req *ediservice.RejectTransferRequest,
 		actor *permissionports.RequestActor,
-	) (*edi.EDITransfer, error)
+	) (*editransfer.EDITransfer, error)
 	CancelTransfer(
 		ctx context.Context,
 		req *ediservice.CancelTransferRequest,
 		actor *permissionports.RequestActor,
-	) (*edi.EDITransfer, error)
+	) (*editransfer.EDITransfer, error)
 	ExpireTransfer(
 		ctx context.Context,
 		req *ediservice.ExpireTransferRequest,
 		actor *permissionports.RequestActor,
-	) (*edi.EDITransfer, error)
+	) (*editransfer.EDITransfer, error)
 }
 
 type tenderCall struct {
@@ -80,8 +80,8 @@ type tenderCall struct {
 }
 
 type tenderOutcome struct {
-	before   *edi.EDITransfer
-	after    *edi.EDITransfer
+	before   *editransfer.EDITransfer
+	after    *editransfer.EDITransfer
 	approval *ediservice.TransferApprovalPlan
 	refusal  error
 }
@@ -238,7 +238,7 @@ func (t *EdiTransferDecisionTool) Execute(
 type tenderSettlement struct {
 	direction string
 	verb      string
-	mark      func(*edi.EDITransfer)
+	mark      func(*editransfer.EDITransfer)
 }
 
 func (s tenderSettlement) settle(
@@ -305,7 +305,7 @@ func planDeclineTender(
 	return tenderSettlement{
 		direction: ediservice.TransferDirectionInbound,
 		verb:      ediservice.TransferVerbRejected,
-		mark: func(transfer *edi.EDITransfer) {
+		mark: func(transfer *editransfer.EDITransfer) {
 			ediservice.MarkTransferRejected(
 				transfer, call.reason, actorUserID(call.actor), timeutils.NowUnix(),
 			)
@@ -321,7 +321,7 @@ func planCancelTender(
 	return tenderSettlement{
 		direction: ediservice.TransferDirectionOutbound,
 		verb:      ediservice.TransferVerbCanceled,
-		mark: func(transfer *edi.EDITransfer) {
+		mark: func(transfer *editransfer.EDITransfer) {
 			ediservice.MarkTransferCanceled(transfer, actorUserID(call.actor), timeutils.NowUnix())
 		},
 	}.settle(ctx, decider, call)
@@ -335,7 +335,7 @@ func planExpireTender(
 	return tenderSettlement{
 		direction: ediservice.TransferDirectionAny,
 		verb:      ediservice.TransferVerbExpired,
-		mark: func(transfer *edi.EDITransfer) {
+		mark: func(transfer *editransfer.EDITransfer) {
 			ediservice.MarkTransferExpired(transfer, timeutils.NowUnix())
 		},
 	}.settle(ctx, decider, call)
@@ -447,11 +447,11 @@ func NewExpireEDILoadTenderTool(decider ediTransferDecider) agenttoolports.Agent
 	}}
 }
 
-func transferLabel(transfer *edi.EDITransfer, orgID pulid.ID) string {
+func transferLabel(transfer *editransfer.EDITransfer, orgID pulid.ID) string {
 	return "Load tender" + transferIdentity(transfer, orgID)
 }
 
-func transferIdentity(transfer *edi.EDITransfer, orgID pulid.ID) string {
+func transferIdentity(transfer *editransfer.EDITransfer, orgID pulid.ID) string {
 	if transfer == nil {
 		return ""
 	}

@@ -1,9 +1,11 @@
-package edi
+package edicarrierinvoice
 
 import (
 	"context"
 
 	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edipayload"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -62,7 +64,7 @@ type CarrierInvoice struct {
 	TotalAmount          decimal.NullDecimal                `json:"totalAmount"          keel:"total_amount"`
 	ExpectedAmount       decimal.NullDecimal                `json:"expectedAmount"       keel:"expected_amount"`
 	VarianceAmount       decimal.NullDecimal                `json:"varianceAmount"       keel:"variance_amount"`
-	LineCharges          []FreightInvoiceCharge             `json:"lineCharges"          keel:"line_charges,jsonb"`
+	LineCharges          []edipayload.FreightInvoiceCharge  `json:"lineCharges"          keel:"line_charges,jsonb"`
 	ReferenceNumbers     map[string]string                  `json:"referenceNumbers"     keel:"reference_numbers,jsonb"`
 	ReconciliationStatus CarrierInvoiceReconciliationStatus `json:"reconciliationStatus" keel:"reconciliation_status"`
 	ReconciliationNotes  string                             `json:"reconciliationNotes"  keel:"reconciliation_notes,nullzero"`
@@ -70,7 +72,7 @@ type CarrierInvoice struct {
 	CreatedAt            int64                              `json:"createdAt"            keel:"created_at,autocreate"`
 	UpdatedAt            int64                              `json:"updatedAt"            keel:"updated_at,autoupdate"`
 
-	Partner *EDIPartner `json:"partner,omitempty" keel:"belongs:edi_partner_id"`
+	Partner *edi.EDIPartner `json:"partner,omitempty" keel:"belongs:edi_partner_id"`
 }
 
 func (i *CarrierInvoice) BeforeUpdate(ctx context.Context) error {
@@ -134,7 +136,7 @@ func (i *CarrierInvoice) GetPostgresSearchConfig() domaintypes.PostgresSearchCon
 
 func (i *CarrierInvoice) BeforeSave(_ context.Context) error {
 	if i.LineCharges == nil {
-		i.LineCharges = []FreightInvoiceCharge{}
+		i.LineCharges = []edipayload.FreightInvoiceCharge{}
 	}
 	if i.ReferenceNumbers == nil {
 		i.ReferenceNumbers = map[string]string{}

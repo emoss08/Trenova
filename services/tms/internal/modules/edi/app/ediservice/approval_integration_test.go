@@ -13,8 +13,11 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/adapters/postgres/edishipmenttenderrepository"
 	"github.com/emoss08/trenova/internal/modules/edi/adapters/postgres/editenderrecipientrepository"
 	"github.com/emoss08/trenova/internal/modules/edi/adapters/postgres/editransferrepository"
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi/edidb"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edisync/edisyncdb"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/editenderchange"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/editenderchange/editenderchangedb"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/editransfer"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/editransfer/editransferdb"
 	"github.com/emoss08/trenova/internal/modules/edi/editest"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/editenderports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -70,7 +73,7 @@ type approvalHarness struct {
 	service   *Service
 	shipments *receivingShipments
 	tenders   editenderports.EDIShipmentTenderRepository
-	transfer  *edi.EDITransfer
+	transfer  *editransfer.EDITransfer
 	payload   *ApproveLoadTenderTransferWorkflowPayload
 }
 
@@ -78,7 +81,7 @@ func newApprovalHarness(t *testing.T) *approvalHarness {
 	t.Helper()
 
 	tender := editest.SeedInternalTender(t)
-	transfer := tender.NewTransfer(t, edi.TransferStatusProcessing)
+	transfer := tender.NewTransfer(t, editransfer.TransferStatusProcessing)
 	tender.NewRecipient(t, transfer)
 
 	conn := dbtest.NewRLSConnection(t, tender.Admin, tender.DSN)
@@ -156,24 +159,28 @@ func TestProcessLoadTenderApproval_AcceptsTheSourceTenderUnderRowLevelSecurity(t
 	)
 
 	admin := h.tender.Admin
-	stored, err := edidb.EDITransfers.Get(h.tender.Source.Ctx, admin, h.transfer.ID)
+	stored, err := editransferdb.EDITransfers.Get(h.tender.Source.Ctx, admin, h.transfer.ID)
 	require.NoError(t, err)
-	assert.Equal(t, edi.TransferStatusApproved, stored.Status)
+	assert.Equal(t, editransfer.TransferStatusApproved, stored.Status)
 	assert.Equal(t, result.TargetShipmentID, stored.TargetShipmentID)
 
-	sl := edidb.ShipmentLinks
+	sl := edisyncdb.ShipmentLinks
 	links, err := sl.Where(sl.TenderTransferID.Eq(h.transfer.ID)).All(h.tender.Source.Ctx, admin)
 	require.NoError(t, err)
 	require.Len(t, links, 1)
 	assert.Equal(t, h.tender.SourceShipment.ID, links[0].SourceShipmentID)
 	assert.Equal(t, result.TargetShipmentID, links[0].TargetShipmentID)
 
-	tr := edidb.TenderRecipients
+	tr := editenderchangedb.TenderRecipients
 	recipients, err := tr.Where(tr.OriginalTransferID.Eq(h.transfer.ID)).
 		All(h.tender.Source.Ctx, admin)
 	require.NoError(t, err)
 	require.Len(t, recipients, 1)
-	assert.Equal(t, edi.TenderRecipientBaselineStatusAccepted, recipients[0].BaselineStatus)
+	assert.Equal(
+		t,
+		editenderchange.TenderRecipientBaselineStatusAccepted,
+		recipients[0].BaselineStatus,
+	)
 	assert.Equal(t, links[0].ID, recipients[0].ShipmentLinkID)
 }
 

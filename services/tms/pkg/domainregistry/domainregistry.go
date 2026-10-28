@@ -8,6 +8,11 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoicerun"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/ediinboundfile"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edimessage"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/editransfer"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/ladingproject"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmentcontinuity"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/fleetcode"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/trailer"
@@ -78,19 +83,19 @@ func RegisterEntities() []any {
 		&edi.EDICommunicationProfile{},
 		&edi.EDIMappingProfile{},
 		&edi.EDIMappingProfileItem{},
-		&edi.EDITransfer{},
-		&edi.EDIDocumentType{},
-		&edi.LadingProject{},
-		&edi.LadingVersion{},
-		&edi.LadingSample{},
-		&edi.LadingReplay{},
-		&edi.LadingShadowResult{},
-		&edi.FlowInstance{},
-		&edi.FlowEvent{},
-		&edi.EDIControlNumberSequence{},
-		&edi.EDIMessage{},
-		&edi.EDIInboundFile{},
-		&edi.EDIMessageValidationError{},
+		&editransfer.EDITransfer{},
+		&edidocument.EDIDocumentType{},
+		&ladingproject.LadingProject{},
+		&ladingproject.LadingVersion{},
+		&ladingproject.LadingSample{},
+		&ladingproject.LadingReplay{},
+		&ladingproject.LadingShadowResult{},
+		&ladingproject.FlowInstance{},
+		&ladingproject.FlowEvent{},
+		&edidocument.EDIControlNumberSequence{},
+		&edimessage.EDIMessage{},
+		&ediinboundfile.EDIInboundFile{},
+		&edimessage.EDIMessageValidationError{},
 		&audit.Entry{},
 		&shipment.Assignment{},
 		&shipment.Stop{},

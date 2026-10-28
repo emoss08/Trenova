@@ -6,8 +6,8 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi/edidb"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/editenderchange"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/editenderchange/editenderchangedb"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/editenderports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/listquery"
@@ -18,9 +18,9 @@ import (
 
 var tenderChangeErrors = dberror.Mapping{Entity: "EDITenderChange"}
 
-var actionableStatuses = []edi.TenderChangeStatus{
-	edi.TenderChangeStatusPendingReview,
-	edi.TenderChangeStatusQueued,
+var actionableStatuses = []editenderchange.TenderChangeStatus{
+	editenderchange.TenderChangeStatusPendingReview,
+	editenderchange.TenderChangeStatusQueued,
 }
 
 type Params struct {
@@ -45,12 +45,12 @@ func New(p Params) editenderports.EDITenderChangeRepository {
 func (r *repository) ListTenderChanges(
 	ctx context.Context,
 	req *editenderports.ListEDITenderChangesRequest,
-) (*pagination.ListResult[*edi.TenderChange], error) {
+) (*pagination.ListResult[*editenderchange.TenderChange], error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) (*pagination.ListResult[*edi.TenderChange], error) {
-			tc := edidb.TenderChanges
+		func(ctx context.Context) (*pagination.ListResult[*editenderchange.TenderChange], error) {
+			tc := editenderchangedb.TenderChanges
 			q := tc.Where(
 				visibleTo(req.Filter.TenantInfo),
 				keel.When(req.RecipientID.IsNotNil(), tc.RecipientID.Eq(req.RecipientID)),
@@ -61,11 +61,16 @@ func (r *repository) ListTenderChanges(
 				keel.When(req.Status != "", tc.Status.Eq(req.Status)),
 			)
 
-			return listquery.List(ctx, r.db.Keel(ctx), q, &listquery.Request[edi.TenderChange]{
-				Filter: req.Filter,
-				Shape:  withRecipient,
-				Then:   []keel.Order{tc.CreatedAt.Desc()},
-			})
+			return listquery.List(
+				ctx,
+				r.db.Keel(ctx),
+				q,
+				&listquery.Request[editenderchange.TenderChange]{
+					Filter: req.Filter,
+					Shape:  withRecipient,
+					Then:   []keel.Order{tc.CreatedAt.Desc()},
+				},
+			)
 		},
 	)
 }
@@ -73,9 +78,9 @@ func (r *repository) ListTenderChanges(
 func (r *repository) GetTenderChangeByID(
 	ctx context.Context,
 	req editenderports.GetEDITenderChangeByIDRequest,
-) (*edi.TenderChange, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*edi.TenderChange, error) {
-		tc := edidb.TenderChanges
+) (*editenderchange.TenderChange, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*editenderchange.TenderChange, error) {
+		tc := editenderchangedb.TenderChanges
 		entity, err := withRecipient(tc.Where(tc.ID.Eq(req.ID), visibleTo(req.TenantInfo))).
 			One(ctx, r.db.Keel(ctx))
 		if err != nil {
@@ -89,9 +94,9 @@ func (r *repository) GetTenderChangeByID(
 func (r *repository) GetTenderChangeByOutboundMessageID(
 	ctx context.Context,
 	req editenderports.GetEDITenderChangeByOutboundMessageIDRequest,
-) (*edi.TenderChange, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*edi.TenderChange, error) {
-		tc := edidb.TenderChanges
+) (*editenderchange.TenderChange, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*editenderchange.TenderChange, error) {
+		tc := editenderchangedb.TenderChanges
 		entity, err := withRecipient(tc.Where(
 			tc.OutboundMessageID.Eq(req.OutboundMessageID),
 			visibleTo(req.TenantInfo),
@@ -106,18 +111,18 @@ func (r *repository) GetTenderChangeByOutboundMessageID(
 
 func (r *repository) CreateTenderChangeIdempotent(
 	ctx context.Context,
-	entity *edi.TenderChange,
+	entity *editenderchange.TenderChange,
 ) (*editenderports.CreateEDITenderChangeIdempotentResult, error) {
 	return dbtx.Write(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*editenderports.CreateEDITenderChangeIdempotentResult, error) {
 			db := r.db.Keel(ctx)
-			tc := edidb.TenderChanges
+			tc := editenderchangedb.TenderChanges
 			created, err := tc.CreateOrSkip(
 				ctx,
 				db,
-				[]*edi.TenderChange{entity},
+				[]*editenderchange.TenderChange{entity},
 				tc.RecipientID,
 				tc.SourceShipmentVersion,
 				tc.NewPayloadHash,
@@ -161,12 +166,12 @@ func (r *repository) SupersedeActionableTenderChanges(
 			statuses = actionableStatuses
 		}
 
-		tc := edidb.TenderChanges
+		tc := editenderchangedb.TenderChanges
 		_, err := tc.Where(
 			tc.RecipientID.Eq(req.RecipientID),
 			tc.Status.In(statuses...),
 			keel.When(req.ExcludeChangeID.IsNotNil(), tc.ID.Ne(req.ExcludeChangeID)),
-		).Update(ctx, r.db.Keel(ctx), tc.Status.To(edi.TenderChangeStatusSuperseded))
+		).Update(ctx, r.db.Keel(ctx), tc.Status.To(editenderchange.TenderChangeStatusSuperseded))
 
 		return tenderChangeErrors.Map(err, req.RecipientID.String())
 	})
@@ -174,10 +179,10 @@ func (r *repository) SupersedeActionableTenderChanges(
 
 func (r *repository) UpdateTenderChange(
 	ctx context.Context,
-	entity *edi.TenderChange,
-) (*edi.TenderChange, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*edi.TenderChange, error) {
-		if err := edidb.TenderChanges.Save(ctx, r.db.Keel(ctx), entity); err != nil {
+	entity *editenderchange.TenderChange,
+) (*editenderchange.TenderChange, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*editenderchange.TenderChange, error) {
+		if err := editenderchangedb.TenderChanges.Save(ctx, r.db.Keel(ctx), entity); err != nil {
 			return nil, tenderChangeErrors.Map(err, entity.ID.String())
 		}
 
@@ -185,13 +190,15 @@ func (r *repository) UpdateTenderChange(
 	})
 }
 
-func withRecipient(q *keel.Query[*edi.TenderChange]) *keel.Query[*edi.TenderChange] {
-	return q.Load(edidb.TenderChanges.Recipient())
+func withRecipient(
+	q *keel.Query[*editenderchange.TenderChange],
+) *keel.Query[*editenderchange.TenderChange] {
+	return q.Load(editenderchangedb.TenderChanges.Recipient())
 }
 
 func visibleTo(tenant pagination.TenantInfo) keel.Pred {
-	tc := edidb.TenderChanges
-	scope := edidb.TenderRecipients.As("etr_scope")
+	tc := editenderchangedb.TenderChanges
+	scope := editenderchangedb.TenderRecipients.As("etr_scope")
 
 	return keel.Or(
 		tc.SourceOrganizationID.Eq(tenant.OrgID),

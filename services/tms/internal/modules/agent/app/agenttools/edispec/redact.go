@@ -1,7 +1,7 @@
 package edispec
 
 import (
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/x12field"
 	"github.com/emoss08/trenova/shared/maputils"
 )
 
@@ -48,6 +48,6 @@ func redactEntry(key string, entry map[string]any) {
 
 func redactString(entry map[string]any, key string) {
 	if text, ok := entry[key].(string); ok {
-		entry[key] = edi.RedactSecrets(text)
+		entry[key] = x12field.RedactSecrets(text)
 	}
 }

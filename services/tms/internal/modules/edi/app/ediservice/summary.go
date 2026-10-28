@@ -3,7 +3,10 @@ package ediservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/ediinboundfile"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edimessage"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/editransfer"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/edimessageports"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/editenderports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -42,13 +45,13 @@ type GetEDIAttentionCountRequest struct {
 }
 
 type EDISummary struct {
-	DeliveryStatusCounts        map[edi.MessageDeliveryStatus]int
-	AckStatusCounts             map[edi.MessageAcknowledgmentStatus]int
-	InboundFileStatusCounts     map[edi.InboundFileStatus]int
-	InboundTransferStatusCounts map[edi.TransferStatus]int
+	DeliveryStatusCounts        map[edimessage.MessageDeliveryStatus]int
+	AckStatusCounts             map[edimessage.MessageAcknowledgmentStatus]int
+	InboundFileStatusCounts     map[ediinboundfile.InboundFileStatus]int
+	InboundTransferStatusCounts map[editransfer.TransferStatus]int
 	OverdueAckCount             int
-	RecentDeadLettered          []*edi.EDIMessage
-	RecentQuarantined           []*edi.EDIInboundFile
+	RecentDeadLettered          []*edimessage.EDIMessage
+	RecentQuarantined           []*ediinboundfile.EDIInboundFile
 }
 
 func (s *Service) GetEDISummary(
@@ -138,7 +141,7 @@ func (s *Service) GetEDISummary(
 type GetEDIAckHealthRequest struct {
 	TenantInfo     pagination.TenantInfo
 	PartnerID      pulid.ID
-	TransactionSet edi.TransactionSet
+	TransactionSet edidocument.TransactionSet
 	Since          int64
 	OverdueAckAge  int64
 	OverdueLimit   int
@@ -151,14 +154,14 @@ type EDIOverduePartner struct {
 	PartnerCode       string
 	OverdueCount      int
 	OldestGeneratedAt int64
-	Messages          []*edi.EDIMessage
+	Messages          []*edimessage.EDIMessage
 }
 
 type EDIPartnerAckCounts struct {
 	PartnerID   pulid.ID
 	PartnerName string
 	PartnerCode string
-	Counts      map[edi.MessageAcknowledgmentStatus]int
+	Counts      map[edimessage.MessageAcknowledgmentStatus]int
 }
 
 type EDIAckHealth struct {
@@ -169,12 +172,12 @@ type EDIAckHealth struct {
 	Since              int64
 	OverdueAckAge      int64
 	PendingSince       int64
-	AckStatusCounts    map[edi.MessageAcknowledgmentStatus]int
+	AckStatusCounts    map[edimessage.MessageAcknowledgmentStatus]int
 	AckCountsByPartner []*EDIPartnerAckCounts
 	OverdueAckCount    int
 	OverdueByPartner   []*EDIOverduePartner
 	OverdueOmitted     int
-	RecentDeadLettered []*edi.EDIMessage
+	RecentDeadLettered []*edimessage.EDIMessage
 }
 
 func (s *Service) GetEDIAckHealth(
@@ -274,7 +277,7 @@ func groupAckCounts(rows []*edimessageports.EDIPartnerAckStatusCount) []*EDIPart
 				PartnerID:   row.PartnerID,
 				PartnerName: row.PartnerName,
 				PartnerCode: row.PartnerCode,
-				Counts:      make(map[edi.MessageAcknowledgmentStatus]int),
+				Counts:      make(map[edimessage.MessageAcknowledgmentStatus]int),
 			}
 			byPartner[row.PartnerID] = group
 			groups = append(groups, group)
@@ -300,7 +303,7 @@ func groupOverdueAcks(
 			PartnerCode:       partner.PartnerCode,
 			OverdueCount:      partner.Count,
 			OldestGeneratedAt: partner.OldestGeneratedAt,
-			Messages:          make([]*edi.EDIMessage, 0, partner.Count),
+			Messages:          make([]*edimessage.EDIMessage, 0, partner.Count),
 		}
 		groups = append(groups, group)
 		byPartner[partner.PartnerID] = group
@@ -354,8 +357,8 @@ func (s *Service) GetEDIAttentionCount(
 		return 0, err
 	}
 
-	return deliveryCounts[edi.MessageDeliveryStatusDeadLettered] +
-		fileCounts[edi.InboundFileStatusQuarantined] +
+	return deliveryCounts[edimessage.MessageDeliveryStatusDeadLettered] +
+		fileCounts[ediinboundfile.InboundFileStatusQuarantined] +
 		overdueAcks, nil
 }
 

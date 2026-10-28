@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/ladingproject"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ladingports"
 	"github.com/emoss08/trenova/internal/modules/identity/jobs/billingjobs/billingcontract"
@@ -48,7 +49,7 @@ func TestBuildEDISendPlanBlockers(t *testing.T) {
 		Name: "AMD EDI",
 		Kind: edi.PartnerKindExternal,
 	}
-	version := &edi.LadingVersion{ID: pulid.MustNew("ldv_")}
+	version := &ladingproject.LadingVersion{ID: pulid.MustNew("ldv_")}
 
 	t.Run("profile switched off", func(t *testing.T) {
 		t.Parallel()
@@ -159,7 +160,7 @@ func TestInvoiceLadingVersionNeedsAnOutbound210Map(t *testing.T) {
 	tenantInfo := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
 	partner := &edi.EDIPartner{ID: pulid.MustNew("edip_"), Kind: edi.PartnerKindExternal}
 	withMaps := func(maps ...lading.Map) *ladingports.RunnableLadingVersions {
-		return &ladingports.RunnableLadingVersions{Active: &edi.LadingVersion{
+		return &ladingports.RunnableLadingVersions{Active: &ladingproject.LadingVersion{
 			ID:       pulid.MustNew("ldv_"),
 			Manifest: lading.Check{Maps: maps},
 		}}
@@ -333,7 +334,7 @@ func newEDIWiredFixture(t *testing.T, status invoice.EDISendStatus) *ediWiredFix
 	projects := ladingportsmock.NewMockLadingProjectRepository(t)
 	projects.EXPECT().
 		GetRunnableVersions(mock.Anything, mock.Anything).
-		Return(&ladingports.RunnableLadingVersions{Active: &edi.LadingVersion{
+		Return(&ladingports.RunnableLadingVersions{Active: &ladingproject.LadingVersion{
 			ID: pulid.MustNew("ldv_"),
 			Manifest: lading.Check{Maps: []lading.Map{
 				{Name: "invoiceOut", Set: "210", Direction: lading.DirectionOutbound},

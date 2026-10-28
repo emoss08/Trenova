@@ -12,7 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/ediinboundfile"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
@@ -433,7 +433,9 @@ func DescribeWeatherAlert(entity *weatheralert.WeatherAlert) watchtowerports.Wat
 }
 
 // DescribeQuarantinedFile is an EDI file that could not be processed.
-func DescribeQuarantinedFile(entity *edi.EDIInboundFile) watchtowerports.WatchtowerItemInput {
+func DescribeQuarantinedFile(
+	entity *ediinboundfile.EDIInboundFile,
+) watchtowerports.WatchtowerItemInput {
 	return watchtowerports.WatchtowerItemInput{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: entity.OrganizationID,

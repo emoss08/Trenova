@@ -6,7 +6,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edipayload"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/x12field"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -470,7 +471,7 @@ func TestRecordTenderedShipmentStatus_StopSequenceReferenceWins(t *testing.T) {
 	fixture.expectRecordStopActual(1)
 	sequence := fixture.final.Sequence
 	req := fixture.request("X1", 1767787200)
-	req.Event = &edi.ShipmentStatusEvent{StatusCode: "X1", StopSequence: &sequence}
+	req.Event = &edipayload.ShipmentStatusEvent{StatusCode: "X1", StopSequence: &sequence}
 
 	warnings, err := fixture.service.RecordTenderedShipmentStatus(t.Context(), req)
 
@@ -491,7 +492,7 @@ func TestRecordTenderedShipmentStatus_PlaceNamesTheStop(t *testing.T) {
 	missing := int64(42)
 	latitude, longitude := 39.7589, -84.1916
 	req := fixture.request("X1", 1767787200)
-	req.Event = &edi.ShipmentStatusEvent{
+	req.Event = &edipayload.ShipmentStatusEvent{
 		StatusCode:   "X1",
 		StopSequence: &missing,
 		City:         "DAYTON",
@@ -523,9 +524,9 @@ func TestRecordTenderedShipmentStatus_LocalTimeIsReadInTheStopZone(t *testing.T)
 	chicago, err := time.LoadLocation("America/Chicago")
 	require.NoError(t, err)
 	req := fixture.request("X3", time.Date(2026, 1, 7, 8, 0, 0, 0, time.UTC).Unix())
-	req.Event = &edi.ShipmentStatusEvent{
+	req.Event = &edipayload.ShipmentStatusEvent{
 		StatusCode: "X3",
-		DateTime:   edi.X12DateTime{Date: "20260107", Time: "0800", TimeCode: "LT"},
+		DateTime:   x12field.X12DateTime{Date: "20260107", Time: "0800", TimeCode: "LT"},
 	}
 
 	_, err = fixture.service.RecordTenderedShipmentStatus(t.Context(), req)
@@ -543,9 +544,9 @@ func TestRecordTenderedShipmentStatus_ZonedTimeIgnoresTheStopZone(t *testing.T) 
 	fixture.expectRecordStopActual(1)
 	eventAt := time.Date(2026, 1, 7, 13, 0, 0, 0, time.UTC).Unix()
 	req := fixture.request("X3", eventAt)
-	req.Event = &edi.ShipmentStatusEvent{
+	req.Event = &edipayload.ShipmentStatusEvent{
 		StatusCode: "X3",
-		DateTime:   edi.X12DateTime{Date: "20260107", Time: "0800", TimeCode: "ET"},
+		DateTime:   x12field.X12DateTime{Date: "20260107", Time: "0800", TimeCode: "ET"},
 	}
 
 	_, err := fixture.service.RecordTenderedShipmentStatus(t.Context(), req)

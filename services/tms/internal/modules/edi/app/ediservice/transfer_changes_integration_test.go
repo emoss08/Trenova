@@ -7,8 +7,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/edi/adapters/postgres/edishipmentlinkrepository"
 	"github.com/emoss08/trenova/internal/modules/edi/adapters/postgres/editransferchangerepository"
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi/edidb"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edisync"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edisync/edisyncdb"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/editransfer"
 	"github.com/emoss08/trenova/internal/modules/edi/editest"
 	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/userrepository"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
@@ -34,7 +35,7 @@ func TestRejectTransferChange_CommentsOnBothOrganizationsShipmentsUnderRowLevelS
 		WithEmail("system@example.com").
 		Build(t, tender.Ctx, admin)
 
-	transfer := tender.NewTransfer(t, edi.TransferStatusApproved)
+	transfer := tender.NewTransfer(t, editransfer.TransferStatusApproved)
 	received := testutil.CreateShipmentGraph(
 		t,
 		tender.Ctx,
@@ -48,7 +49,7 @@ func TestRejectTransferChange_CommentsOnBothOrganizationsShipmentsUnderRowLevelS
 			MoveStatuses: []shipment.MoveStatus{shipment.MoveStatusNew},
 		},
 	).Shipment
-	link := &edi.ShipmentLink{
+	link := &edisync.ShipmentLink{
 		BusinessUnitID:       tender.Source.Info.BuID,
 		SourceOrganizationID: tender.Source.Info.OrgID,
 		TargetOrganizationID: tender.Target.Info.OrgID,
@@ -56,15 +57,15 @@ func TestRejectTransferChange_CommentsOnBothOrganizationsShipmentsUnderRowLevelS
 		TargetShipmentID:     received.ID,
 		TenderTransferID:     transfer.ID,
 	}
-	require.NoError(t, edidb.ShipmentLinks.Create(tender.Source.Ctx, admin, link))
-	change := &edi.TransferChange{
+	require.NoError(t, edisyncdb.ShipmentLinks.Create(tender.Source.Ctx, admin, link))
+	change := &edisync.TransferChange{
 		ShipmentLinkID: link.ID,
-		Direction:      edi.TransferChangeDirectionSourceToTarget,
-		ChangeType:     edi.TransferChangeTypeShipmentStatus214,
+		Direction:      edisync.TransferChangeDirectionSourceToTarget,
+		ChangeType:     edisync.TransferChangeTypeShipmentStatus214,
 		IdempotencyKey: "status-" + link.ID.String(),
 		Payload:        map[string]any{"newStatus": string(shipment.StatusInTransit)},
 	}
-	require.NoError(t, edidb.TransferChanges.Create(tender.Source.Ctx, admin, change))
+	require.NoError(t, edisyncdb.TransferChanges.Create(tender.Source.Ctx, admin, change))
 
 	conn := dbtest.NewRLSConnection(t, admin, tender.DSN)
 	logger := zap.NewNop()
@@ -98,7 +99,7 @@ func TestRejectTransferChange_CommentsOnBothOrganizationsShipmentsUnderRowLevelS
 	)
 
 	require.NoError(t, err)
-	assert.Equal(t, edi.TransferChangeStatusRejected, reviewed.Status)
+	assert.Equal(t, edisync.TransferChangeStatusRejected, reviewed.Status)
 
 	sc := shipmentdb.ShipmentComments
 	for name, side := range map[string]struct {

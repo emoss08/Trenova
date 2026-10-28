@@ -5,11 +5,12 @@
 package ladingportsmock
 
 import (
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edimessage"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/ladingproject"
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ladingports"
 
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/pkg/pagination"
 	mock "github.com/stretchr/testify/mock"
 )
@@ -42,7 +43,7 @@ func (_m *MockFlowRepository) EXPECT() *MockFlowRepository_Expecter {
 }
 
 // AppendEvent provides a mock function for the type MockFlowRepository
-func (_mock *MockFlowRepository) AppendEvent(ctx context.Context, event *edi.FlowEvent) error {
+func (_mock *MockFlowRepository) AppendEvent(ctx context.Context, event *ladingproject.FlowEvent) error {
 	ret := _mock.Called(ctx, event)
 
 	if len(ret) == 0 {
@@ -50,7 +51,7 @@ func (_mock *MockFlowRepository) AppendEvent(ctx context.Context, event *edi.Flo
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *edi.FlowEvent) error); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *ladingproject.FlowEvent) error); ok {
 		r0 = returnFunc(ctx, event)
 	} else {
 		r0 = ret.Error(0)
@@ -65,20 +66,20 @@ type MockFlowRepository_AppendEvent_Call struct {
 
 // AppendEvent is a helper method to define mock.On call
 //   - ctx context.Context
-//   - event *edi.FlowEvent
+//   - event *ladingproject.FlowEvent
 func (_e *MockFlowRepository_Expecter) AppendEvent(ctx any, event any) *MockFlowRepository_AppendEvent_Call {
 	return &MockFlowRepository_AppendEvent_Call{Call: _e.mock.On("AppendEvent", ctx, event)}
 }
 
-func (_c *MockFlowRepository_AppendEvent_Call) Run(run func(ctx context.Context, event *edi.FlowEvent)) *MockFlowRepository_AppendEvent_Call {
+func (_c *MockFlowRepository_AppendEvent_Call) Run(run func(ctx context.Context, event *ladingproject.FlowEvent)) *MockFlowRepository_AppendEvent_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 *edi.FlowEvent
+		var arg1 *ladingproject.FlowEvent
 		if args[1] != nil {
-			arg1 = args[1].(*edi.FlowEvent)
+			arg1 = args[1].(*ladingproject.FlowEvent)
 		}
 		run(
 			arg0,
@@ -93,29 +94,29 @@ func (_c *MockFlowRepository_AppendEvent_Call) Return(err error) *MockFlowReposi
 	return _c
 }
 
-func (_c *MockFlowRepository_AppendEvent_Call) RunAndReturn(run func(ctx context.Context, event *edi.FlowEvent) error) *MockFlowRepository_AppendEvent_Call {
+func (_c *MockFlowRepository_AppendEvent_Call) RunAndReturn(run func(ctx context.Context, event *ladingproject.FlowEvent) error) *MockFlowRepository_AppendEvent_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetInstance provides a mock function for the type MockFlowRepository
-func (_mock *MockFlowRepository) GetInstance(ctx context.Context, req ladingports.GetFlowInstanceRequest) (*edi.FlowInstance, error) {
+func (_mock *MockFlowRepository) GetInstance(ctx context.Context, req ladingports.GetFlowInstanceRequest) (*ladingproject.FlowInstance, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetInstance")
 	}
 
-	var r0 *edi.FlowInstance
+	var r0 *ladingproject.FlowInstance
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, ladingports.GetFlowInstanceRequest) (*edi.FlowInstance, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, ladingports.GetFlowInstanceRequest) (*ladingproject.FlowInstance, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, ladingports.GetFlowInstanceRequest) *edi.FlowInstance); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, ladingports.GetFlowInstanceRequest) *ladingproject.FlowInstance); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*edi.FlowInstance)
+			r0 = ret.Get(0).(*ladingproject.FlowInstance)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, ladingports.GetFlowInstanceRequest) error); ok {
@@ -156,34 +157,34 @@ func (_c *MockFlowRepository_GetInstance_Call) Run(run func(ctx context.Context,
 	return _c
 }
 
-func (_c *MockFlowRepository_GetInstance_Call) Return(flowInstance *edi.FlowInstance, err error) *MockFlowRepository_GetInstance_Call {
+func (_c *MockFlowRepository_GetInstance_Call) Return(flowInstance *ladingproject.FlowInstance, err error) *MockFlowRepository_GetInstance_Call {
 	_c.Call.Return(flowInstance, err)
 	return _c
 }
 
-func (_c *MockFlowRepository_GetInstance_Call) RunAndReturn(run func(ctx context.Context, req ladingports.GetFlowInstanceRequest) (*edi.FlowInstance, error)) *MockFlowRepository_GetInstance_Call {
+func (_c *MockFlowRepository_GetInstance_Call) RunAndReturn(run func(ctx context.Context, req ladingports.GetFlowInstanceRequest) (*ladingproject.FlowInstance, error)) *MockFlowRepository_GetInstance_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetInstanceByKey provides a mock function for the type MockFlowRepository
-func (_mock *MockFlowRepository) GetInstanceByKey(ctx context.Context, req ladingports.GetFlowInstanceByKeyRequest) (*edi.FlowInstance, error) {
+func (_mock *MockFlowRepository) GetInstanceByKey(ctx context.Context, req ladingports.GetFlowInstanceByKeyRequest) (*ladingproject.FlowInstance, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetInstanceByKey")
 	}
 
-	var r0 *edi.FlowInstance
+	var r0 *ladingproject.FlowInstance
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, ladingports.GetFlowInstanceByKeyRequest) (*edi.FlowInstance, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, ladingports.GetFlowInstanceByKeyRequest) (*ladingproject.FlowInstance, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, ladingports.GetFlowInstanceByKeyRequest) *edi.FlowInstance); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, ladingports.GetFlowInstanceByKeyRequest) *ladingproject.FlowInstance); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*edi.FlowInstance)
+			r0 = ret.Get(0).(*ladingproject.FlowInstance)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, ladingports.GetFlowInstanceByKeyRequest) error); ok {
@@ -224,34 +225,34 @@ func (_c *MockFlowRepository_GetInstanceByKey_Call) Run(run func(ctx context.Con
 	return _c
 }
 
-func (_c *MockFlowRepository_GetInstanceByKey_Call) Return(flowInstance *edi.FlowInstance, err error) *MockFlowRepository_GetInstanceByKey_Call {
+func (_c *MockFlowRepository_GetInstanceByKey_Call) Return(flowInstance *ladingproject.FlowInstance, err error) *MockFlowRepository_GetInstanceByKey_Call {
 	_c.Call.Return(flowInstance, err)
 	return _c
 }
 
-func (_c *MockFlowRepository_GetInstanceByKey_Call) RunAndReturn(run func(ctx context.Context, req ladingports.GetFlowInstanceByKeyRequest) (*edi.FlowInstance, error)) *MockFlowRepository_GetInstanceByKey_Call {
+func (_c *MockFlowRepository_GetInstanceByKey_Call) RunAndReturn(run func(ctx context.Context, req ladingports.GetFlowInstanceByKeyRequest) (*ladingproject.FlowInstance, error)) *MockFlowRepository_GetInstanceByKey_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetSendMessage provides a mock function for the type MockFlowRepository
-func (_mock *MockFlowRepository) GetSendMessage(ctx context.Context, req ladingports.GetFlowSendMessageRequest) (*edi.EDIMessage, error) {
+func (_mock *MockFlowRepository) GetSendMessage(ctx context.Context, req ladingports.GetFlowSendMessageRequest) (*edimessage.EDIMessage, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetSendMessage")
 	}
 
-	var r0 *edi.EDIMessage
+	var r0 *edimessage.EDIMessage
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, ladingports.GetFlowSendMessageRequest) (*edi.EDIMessage, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, ladingports.GetFlowSendMessageRequest) (*edimessage.EDIMessage, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, ladingports.GetFlowSendMessageRequest) *edi.EDIMessage); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, ladingports.GetFlowSendMessageRequest) *edimessage.EDIMessage); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*edi.EDIMessage)
+			r0 = ret.Get(0).(*edimessage.EDIMessage)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, ladingports.GetFlowSendMessageRequest) error); ok {
@@ -292,34 +293,34 @@ func (_c *MockFlowRepository_GetSendMessage_Call) Run(run func(ctx context.Conte
 	return _c
 }
 
-func (_c *MockFlowRepository_GetSendMessage_Call) Return(eDIMessage *edi.EDIMessage, err error) *MockFlowRepository_GetSendMessage_Call {
+func (_c *MockFlowRepository_GetSendMessage_Call) Return(eDIMessage *edimessage.EDIMessage, err error) *MockFlowRepository_GetSendMessage_Call {
 	_c.Call.Return(eDIMessage, err)
 	return _c
 }
 
-func (_c *MockFlowRepository_GetSendMessage_Call) RunAndReturn(run func(ctx context.Context, req ladingports.GetFlowSendMessageRequest) (*edi.EDIMessage, error)) *MockFlowRepository_GetSendMessage_Call {
+func (_c *MockFlowRepository_GetSendMessage_Call) RunAndReturn(run func(ctx context.Context, req ladingports.GetFlowSendMessageRequest) (*edimessage.EDIMessage, error)) *MockFlowRepository_GetSendMessage_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // ListEvents provides a mock function for the type MockFlowRepository
-func (_mock *MockFlowRepository) ListEvents(ctx context.Context, req ladingports.ListFlowEventsRequest) ([]*edi.FlowEvent, error) {
+func (_mock *MockFlowRepository) ListEvents(ctx context.Context, req ladingports.ListFlowEventsRequest) ([]*ladingproject.FlowEvent, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListEvents")
 	}
 
-	var r0 []*edi.FlowEvent
+	var r0 []*ladingproject.FlowEvent
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, ladingports.ListFlowEventsRequest) ([]*edi.FlowEvent, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, ladingports.ListFlowEventsRequest) ([]*ladingproject.FlowEvent, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, ladingports.ListFlowEventsRequest) []*edi.FlowEvent); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, ladingports.ListFlowEventsRequest) []*ladingproject.FlowEvent); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*edi.FlowEvent)
+			r0 = ret.Get(0).([]*ladingproject.FlowEvent)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, ladingports.ListFlowEventsRequest) error); ok {
@@ -360,34 +361,34 @@ func (_c *MockFlowRepository_ListEvents_Call) Run(run func(ctx context.Context, 
 	return _c
 }
 
-func (_c *MockFlowRepository_ListEvents_Call) Return(flowEvents []*edi.FlowEvent, err error) *MockFlowRepository_ListEvents_Call {
+func (_c *MockFlowRepository_ListEvents_Call) Return(flowEvents []*ladingproject.FlowEvent, err error) *MockFlowRepository_ListEvents_Call {
 	_c.Call.Return(flowEvents, err)
 	return _c
 }
 
-func (_c *MockFlowRepository_ListEvents_Call) RunAndReturn(run func(ctx context.Context, req ladingports.ListFlowEventsRequest) ([]*edi.FlowEvent, error)) *MockFlowRepository_ListEvents_Call {
+func (_c *MockFlowRepository_ListEvents_Call) RunAndReturn(run func(ctx context.Context, req ladingports.ListFlowEventsRequest) ([]*ladingproject.FlowEvent, error)) *MockFlowRepository_ListEvents_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // ListInstances provides a mock function for the type MockFlowRepository
-func (_mock *MockFlowRepository) ListInstances(ctx context.Context, req *ladingports.ListFlowInstancesRequest) (*pagination.ListResult[*edi.FlowInstance], error) {
+func (_mock *MockFlowRepository) ListInstances(ctx context.Context, req *ladingports.ListFlowInstancesRequest) (*pagination.ListResult[*ladingproject.FlowInstance], error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListInstances")
 	}
 
-	var r0 *pagination.ListResult[*edi.FlowInstance]
+	var r0 *pagination.ListResult[*ladingproject.FlowInstance]
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *ladingports.ListFlowInstancesRequest) (*pagination.ListResult[*edi.FlowInstance], error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *ladingports.ListFlowInstancesRequest) (*pagination.ListResult[*ladingproject.FlowInstance], error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *ladingports.ListFlowInstancesRequest) *pagination.ListResult[*edi.FlowInstance]); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *ladingports.ListFlowInstancesRequest) *pagination.ListResult[*ladingproject.FlowInstance]); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*pagination.ListResult[*edi.FlowInstance])
+			r0 = ret.Get(0).(*pagination.ListResult[*ladingproject.FlowInstance])
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, *ladingports.ListFlowInstancesRequest) error); ok {
@@ -428,34 +429,34 @@ func (_c *MockFlowRepository_ListInstances_Call) Run(run func(ctx context.Contex
 	return _c
 }
 
-func (_c *MockFlowRepository_ListInstances_Call) Return(listResult *pagination.ListResult[*edi.FlowInstance], err error) *MockFlowRepository_ListInstances_Call {
+func (_c *MockFlowRepository_ListInstances_Call) Return(listResult *pagination.ListResult[*ladingproject.FlowInstance], err error) *MockFlowRepository_ListInstances_Call {
 	_c.Call.Return(listResult, err)
 	return _c
 }
 
-func (_c *MockFlowRepository_ListInstances_Call) RunAndReturn(run func(ctx context.Context, req *ladingports.ListFlowInstancesRequest) (*pagination.ListResult[*edi.FlowInstance], error)) *MockFlowRepository_ListInstances_Call {
+func (_c *MockFlowRepository_ListInstances_Call) RunAndReturn(run func(ctx context.Context, req *ladingports.ListFlowInstancesRequest) (*pagination.ListResult[*ladingproject.FlowInstance], error)) *MockFlowRepository_ListInstances_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // ListInstancesCursor provides a mock function for the type MockFlowRepository
-func (_mock *MockFlowRepository) ListInstancesCursor(ctx context.Context, req *ladingports.ListFlowInstancesRequest) (*pagination.CursorListResult[*edi.FlowInstance], error) {
+func (_mock *MockFlowRepository) ListInstancesCursor(ctx context.Context, req *ladingports.ListFlowInstancesRequest) (*pagination.CursorListResult[*ladingproject.FlowInstance], error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListInstancesCursor")
 	}
 
-	var r0 *pagination.CursorListResult[*edi.FlowInstance]
+	var r0 *pagination.CursorListResult[*ladingproject.FlowInstance]
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *ladingports.ListFlowInstancesRequest) (*pagination.CursorListResult[*edi.FlowInstance], error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *ladingports.ListFlowInstancesRequest) (*pagination.CursorListResult[*ladingproject.FlowInstance], error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *ladingports.ListFlowInstancesRequest) *pagination.CursorListResult[*edi.FlowInstance]); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *ladingports.ListFlowInstancesRequest) *pagination.CursorListResult[*ladingproject.FlowInstance]); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*pagination.CursorListResult[*edi.FlowInstance])
+			r0 = ret.Get(0).(*pagination.CursorListResult[*ladingproject.FlowInstance])
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, *ladingports.ListFlowInstancesRequest) error); ok {
@@ -496,34 +497,34 @@ func (_c *MockFlowRepository_ListInstancesCursor_Call) Run(run func(ctx context.
 	return _c
 }
 
-func (_c *MockFlowRepository_ListInstancesCursor_Call) Return(cursorListResult *pagination.CursorListResult[*edi.FlowInstance], err error) *MockFlowRepository_ListInstancesCursor_Call {
+func (_c *MockFlowRepository_ListInstancesCursor_Call) Return(cursorListResult *pagination.CursorListResult[*ladingproject.FlowInstance], err error) *MockFlowRepository_ListInstancesCursor_Call {
 	_c.Call.Return(cursorListResult, err)
 	return _c
 }
 
-func (_c *MockFlowRepository_ListInstancesCursor_Call) RunAndReturn(run func(ctx context.Context, req *ladingports.ListFlowInstancesRequest) (*pagination.CursorListResult[*edi.FlowInstance], error)) *MockFlowRepository_ListInstancesCursor_Call {
+func (_c *MockFlowRepository_ListInstancesCursor_Call) RunAndReturn(run func(ctx context.Context, req *ladingports.ListFlowInstancesRequest) (*pagination.CursorListResult[*ladingproject.FlowInstance], error)) *MockFlowRepository_ListInstancesCursor_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // ListOpenInstances provides a mock function for the type MockFlowRepository
-func (_mock *MockFlowRepository) ListOpenInstances(ctx context.Context, req *ladingports.ListShipmentFlowInstancesRequest) ([]*edi.FlowInstance, error) {
+func (_mock *MockFlowRepository) ListOpenInstances(ctx context.Context, req *ladingports.ListShipmentFlowInstancesRequest) ([]*ladingproject.FlowInstance, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListOpenInstances")
 	}
 
-	var r0 []*edi.FlowInstance
+	var r0 []*ladingproject.FlowInstance
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *ladingports.ListShipmentFlowInstancesRequest) ([]*edi.FlowInstance, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *ladingports.ListShipmentFlowInstancesRequest) ([]*ladingproject.FlowInstance, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *ladingports.ListShipmentFlowInstancesRequest) []*edi.FlowInstance); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *ladingports.ListShipmentFlowInstancesRequest) []*ladingproject.FlowInstance); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*edi.FlowInstance)
+			r0 = ret.Get(0).([]*ladingproject.FlowInstance)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, *ladingports.ListShipmentFlowInstancesRequest) error); ok {
@@ -564,37 +565,37 @@ func (_c *MockFlowRepository_ListOpenInstances_Call) Run(run func(ctx context.Co
 	return _c
 }
 
-func (_c *MockFlowRepository_ListOpenInstances_Call) Return(flowInstances []*edi.FlowInstance, err error) *MockFlowRepository_ListOpenInstances_Call {
+func (_c *MockFlowRepository_ListOpenInstances_Call) Return(flowInstances []*ladingproject.FlowInstance, err error) *MockFlowRepository_ListOpenInstances_Call {
 	_c.Call.Return(flowInstances, err)
 	return _c
 }
 
-func (_c *MockFlowRepository_ListOpenInstances_Call) RunAndReturn(run func(ctx context.Context, req *ladingports.ListShipmentFlowInstancesRequest) ([]*edi.FlowInstance, error)) *MockFlowRepository_ListOpenInstances_Call {
+func (_c *MockFlowRepository_ListOpenInstances_Call) RunAndReturn(run func(ctx context.Context, req *ladingports.ListShipmentFlowInstancesRequest) ([]*ladingproject.FlowInstance, error)) *MockFlowRepository_ListOpenInstances_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // OpenInstance provides a mock function for the type MockFlowRepository
-func (_mock *MockFlowRepository) OpenInstance(ctx context.Context, instance *edi.FlowInstance) (*edi.FlowInstance, error) {
+func (_mock *MockFlowRepository) OpenInstance(ctx context.Context, instance *ladingproject.FlowInstance) (*ladingproject.FlowInstance, error) {
 	ret := _mock.Called(ctx, instance)
 
 	if len(ret) == 0 {
 		panic("no return value specified for OpenInstance")
 	}
 
-	var r0 *edi.FlowInstance
+	var r0 *ladingproject.FlowInstance
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *edi.FlowInstance) (*edi.FlowInstance, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *ladingproject.FlowInstance) (*ladingproject.FlowInstance, error)); ok {
 		return returnFunc(ctx, instance)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *edi.FlowInstance) *edi.FlowInstance); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *ladingproject.FlowInstance) *ladingproject.FlowInstance); ok {
 		r0 = returnFunc(ctx, instance)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*edi.FlowInstance)
+			r0 = ret.Get(0).(*ladingproject.FlowInstance)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *edi.FlowInstance) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *ladingproject.FlowInstance) error); ok {
 		r1 = returnFunc(ctx, instance)
 	} else {
 		r1 = ret.Error(1)
@@ -609,20 +610,20 @@ type MockFlowRepository_OpenInstance_Call struct {
 
 // OpenInstance is a helper method to define mock.On call
 //   - ctx context.Context
-//   - instance *edi.FlowInstance
+//   - instance *ladingproject.FlowInstance
 func (_e *MockFlowRepository_Expecter) OpenInstance(ctx any, instance any) *MockFlowRepository_OpenInstance_Call {
 	return &MockFlowRepository_OpenInstance_Call{Call: _e.mock.On("OpenInstance", ctx, instance)}
 }
 
-func (_c *MockFlowRepository_OpenInstance_Call) Run(run func(ctx context.Context, instance *edi.FlowInstance)) *MockFlowRepository_OpenInstance_Call {
+func (_c *MockFlowRepository_OpenInstance_Call) Run(run func(ctx context.Context, instance *ladingproject.FlowInstance)) *MockFlowRepository_OpenInstance_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 *edi.FlowInstance
+		var arg1 *ladingproject.FlowInstance
 		if args[1] != nil {
-			arg1 = args[1].(*edi.FlowInstance)
+			arg1 = args[1].(*ladingproject.FlowInstance)
 		}
 		run(
 			arg0,
@@ -632,37 +633,37 @@ func (_c *MockFlowRepository_OpenInstance_Call) Run(run func(ctx context.Context
 	return _c
 }
 
-func (_c *MockFlowRepository_OpenInstance_Call) Return(flowInstance *edi.FlowInstance, err error) *MockFlowRepository_OpenInstance_Call {
+func (_c *MockFlowRepository_OpenInstance_Call) Return(flowInstance *ladingproject.FlowInstance, err error) *MockFlowRepository_OpenInstance_Call {
 	_c.Call.Return(flowInstance, err)
 	return _c
 }
 
-func (_c *MockFlowRepository_OpenInstance_Call) RunAndReturn(run func(ctx context.Context, instance *edi.FlowInstance) (*edi.FlowInstance, error)) *MockFlowRepository_OpenInstance_Call {
+func (_c *MockFlowRepository_OpenInstance_Call) RunAndReturn(run func(ctx context.Context, instance *ladingproject.FlowInstance) (*ladingproject.FlowInstance, error)) *MockFlowRepository_OpenInstance_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // SaveInstance provides a mock function for the type MockFlowRepository
-func (_mock *MockFlowRepository) SaveInstance(ctx context.Context, instance *edi.FlowInstance) (*edi.FlowInstance, error) {
+func (_mock *MockFlowRepository) SaveInstance(ctx context.Context, instance *ladingproject.FlowInstance) (*ladingproject.FlowInstance, error) {
 	ret := _mock.Called(ctx, instance)
 
 	if len(ret) == 0 {
 		panic("no return value specified for SaveInstance")
 	}
 
-	var r0 *edi.FlowInstance
+	var r0 *ladingproject.FlowInstance
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *edi.FlowInstance) (*edi.FlowInstance, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *ladingproject.FlowInstance) (*ladingproject.FlowInstance, error)); ok {
 		return returnFunc(ctx, instance)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *edi.FlowInstance) *edi.FlowInstance); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *ladingproject.FlowInstance) *ladingproject.FlowInstance); ok {
 		r0 = returnFunc(ctx, instance)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*edi.FlowInstance)
+			r0 = ret.Get(0).(*ladingproject.FlowInstance)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *edi.FlowInstance) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *ladingproject.FlowInstance) error); ok {
 		r1 = returnFunc(ctx, instance)
 	} else {
 		r1 = ret.Error(1)
@@ -677,20 +678,20 @@ type MockFlowRepository_SaveInstance_Call struct {
 
 // SaveInstance is a helper method to define mock.On call
 //   - ctx context.Context
-//   - instance *edi.FlowInstance
+//   - instance *ladingproject.FlowInstance
 func (_e *MockFlowRepository_Expecter) SaveInstance(ctx any, instance any) *MockFlowRepository_SaveInstance_Call {
 	return &MockFlowRepository_SaveInstance_Call{Call: _e.mock.On("SaveInstance", ctx, instance)}
 }
 
-func (_c *MockFlowRepository_SaveInstance_Call) Run(run func(ctx context.Context, instance *edi.FlowInstance)) *MockFlowRepository_SaveInstance_Call {
+func (_c *MockFlowRepository_SaveInstance_Call) Run(run func(ctx context.Context, instance *ladingproject.FlowInstance)) *MockFlowRepository_SaveInstance_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 *edi.FlowInstance
+		var arg1 *ladingproject.FlowInstance
 		if args[1] != nil {
-			arg1 = args[1].(*edi.FlowInstance)
+			arg1 = args[1].(*ladingproject.FlowInstance)
 		}
 		run(
 			arg0,
@@ -700,12 +701,12 @@ func (_c *MockFlowRepository_SaveInstance_Call) Run(run func(ctx context.Context
 	return _c
 }
 
-func (_c *MockFlowRepository_SaveInstance_Call) Return(flowInstance *edi.FlowInstance, err error) *MockFlowRepository_SaveInstance_Call {
+func (_c *MockFlowRepository_SaveInstance_Call) Return(flowInstance *ladingproject.FlowInstance, err error) *MockFlowRepository_SaveInstance_Call {
 	_c.Call.Return(flowInstance, err)
 	return _c
 }
 
-func (_c *MockFlowRepository_SaveInstance_Call) RunAndReturn(run func(ctx context.Context, instance *edi.FlowInstance) (*edi.FlowInstance, error)) *MockFlowRepository_SaveInstance_Call {
+func (_c *MockFlowRepository_SaveInstance_Call) RunAndReturn(run func(ctx context.Context, instance *ladingproject.FlowInstance) (*ladingproject.FlowInstance, error)) *MockFlowRepository_SaveInstance_Call {
 	_c.Call.Return(run)
 	return _c
 }

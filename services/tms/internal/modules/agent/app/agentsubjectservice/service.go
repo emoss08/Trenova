@@ -28,7 +28,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/ediinboundfile"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/edimessageports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmenttracking"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -894,7 +894,7 @@ func (s *Service) ediInboundFile(
 	if file.EDIPartnerID.IsNotNil() {
 		notes["ediPartnerId"] = file.EDIPartnerID.String()
 	}
-	if file.Status != edi.InboundFileStatusQuarantined {
+	if file.Status != ediinboundfile.InboundFileStatusQuarantined {
 		notes["warning"] = "This file is not held back in quarantine; do not act as if it " +
 			"were. Any load tenders it carried are listed by edi_list_transfers for this file."
 	}

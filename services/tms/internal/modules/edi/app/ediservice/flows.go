@@ -8,7 +8,10 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/edi/app/edilading"
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edimessage"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edipayload"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/ladingproject"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ladingports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -31,7 +34,7 @@ type FlowActionContext struct {
 	GeneratedByID        pulid.ID
 	DisableDeliveryQueue bool
 	IdempotencyKey       string
-	Payload              *edi.DocumentPayload
+	Payload              *edipayload.DocumentPayload
 	TransferID           pulid.ID
 }
 
@@ -42,11 +45,11 @@ func (s *Service) ExecuteFlowActions(
 	tenantInfo pagination.TenantInfo,
 	dispatched *edilading.Dispatched,
 	actionCtx *FlowActionContext,
-) ([]*edi.EDIMessage, error) {
+) ([]*edimessage.EDIMessage, error) {
 	if actionCtx == nil {
 		actionCtx = &FlowActionContext{}
 	}
-	sent := make([]*edi.EDIMessage, 0)
+	sent := make([]*edimessage.EDIMessage, 0)
 	var failures []error
 	for index := range dispatched.Actions {
 		action := &dispatched.Actions[index]
@@ -84,7 +87,7 @@ func (s *Service) SendFlowMessage(
 	dispatched *edilading.Dispatched,
 	action *lading.FlowAction,
 	actionCtx *FlowActionContext,
-) (*edi.EDIMessage, error) {
+) (*edimessage.EDIMessage, error) {
 	instance := dispatched.Instance
 	partner, err := s.partnerRepo.GetByID(ctx, edipartnerports.GetEDIPartnerByIDRequest{
 		ID:         instance.EDIPartnerID,
@@ -93,8 +96,8 @@ func (s *Service) SendFlowMessage(
 	if err != nil {
 		return nil, err
 	}
-	set := edi.TransactionSet(action.Set)
-	documentType, err := s.documentTypeFor(ctx, set, edi.DocumentDirectionOutbound)
+	set := edidocument.TransactionSet(action.Set)
+	documentType, err := s.documentTypeFor(ctx, set, edidocument.DocumentDirectionOutbound)
 	if err != nil {
 		return nil, err
 	}
@@ -106,7 +109,7 @@ func (s *Service) SendFlowMessage(
 		document:     action.Document,
 		documentType: documentType,
 		shipmentID:   instance.ShipmentID,
-		payload:      edi.DocumentPayload{TransactionSet: set},
+		payload:      edipayload.DocumentPayload{TransactionSet: set},
 	}
 	if dispatched.Program.Manifest.Map(action.Map) == nil {
 		return nil, errortypes.NewBusinessError(
@@ -125,7 +128,7 @@ func (s *Service) SendFlowMessage(
 		TenantInfo:           tenantInfo,
 		EDIPartnerID:         partner.ID,
 		TransactionSet:       set,
-		Direction:            edi.DocumentDirectionOutbound,
+		Direction:            edidocument.DocumentDirectionOutbound,
 		ShipmentID:           instance.ShipmentID,
 		TransferID:           transferID,
 		GeneratedByID:        actionCtx.GeneratedByID,
@@ -154,7 +157,7 @@ func (s *Service) SendFlowMessage(
 	return message, nil
 }
 
-func flowIdempotencyKey(given string, instance *edi.FlowInstance, sendID string) string {
+func flowIdempotencyKey(given string, instance *ladingproject.FlowInstance, sendID string) string {
 	if given != "" {
 		return given
 	}
@@ -164,7 +167,7 @@ func flowIdempotencyKey(given string, instance *edi.FlowInstance, sendID string)
 func (s *Service) resendFlowMessage(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	instance *edi.FlowInstance,
+	instance *ladingproject.FlowInstance,
 	sendID string,
 ) error {
 	message, err := s.flowRepo.GetSendMessage(ctx, ladingports.GetFlowSendMessageRequest{
@@ -184,7 +187,7 @@ func (s *Service) resendFlowMessage(
 
 func (s *Service) alertFlow(
 	ctx context.Context,
-	instance *edi.FlowInstance,
+	instance *ladingproject.FlowInstance,
 	eventType string,
 	reason *wasmmodule.Message,
 ) {
@@ -220,7 +223,7 @@ func (s *Service) DispatchFlowTimer(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	instanceID pulid.ID,
-) (*edi.FlowInstance, error) {
+) (*ladingproject.FlowInstance, error) {
 	instance, err := s.flowRepo.GetInstance(ctx, ladingports.GetFlowInstanceRequest{
 		TenantInfo: tenantInfo,
 		ID:         instanceID,
@@ -258,7 +261,7 @@ type NotifyFlowEventRequest struct {
 func (s *Service) NotifyFlowEvent(
 	ctx context.Context,
 	req *NotifyFlowEventRequest,
-) ([]*edi.EDIMessage, error) {
+) ([]*edimessage.EDIMessage, error) {
 	program, err := s.lading.Active(ctx, req.TenantInfo, req.PartnerID)
 	if err != nil {
 		if errors.Is(err, edilading.ErrNoProject) || errors.Is(err, edilading.ErrNoActiveVersion) {
@@ -302,7 +305,7 @@ type DecideTenderRequest struct {
 func (s *Service) DecideTender(
 	ctx context.Context,
 	req *DecideTenderRequest,
-) (bool, []*edi.EDIMessage, error) {
+) (bool, []*edimessage.EDIMessage, error) {
 	instances, err := s.flowRepo.ListInstances(ctx, &ladingports.ListFlowInstancesRequest{
 		Filter: &pagination.QueryOptions{
 			TenantInfo: req.TenantInfo,
@@ -350,7 +353,7 @@ func (s *Service) DecideTender(
 func (s *Service) AcknowledgeFlowMessage(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	message *edi.EDIMessage,
+	message *edimessage.EDIMessage,
 	accepted bool,
 ) error {
 	if message == nil || message.FlowInstanceID.IsNil() {
@@ -382,21 +385,21 @@ func (s *Service) AcknowledgeFlowMessage(
 func (s *Service) ListFlowInstances(
 	ctx context.Context,
 	req *ladingports.ListFlowInstancesRequest,
-) (*pagination.ListResult[*edi.FlowInstance], error) {
+) (*pagination.ListResult[*ladingproject.FlowInstance], error) {
 	return s.flowRepo.ListInstances(ctx, req)
 }
 
 func (s *Service) ListFlowInstancesCursor(
 	ctx context.Context,
 	req *ladingports.ListFlowInstancesRequest,
-) (*pagination.CursorListResult[*edi.FlowInstance], error) {
+) (*pagination.CursorListResult[*ladingproject.FlowInstance], error) {
 	return s.flowRepo.ListInstancesCursor(ctx, req)
 }
 
 type FlowInstanceDetail struct {
-	Instance *edi.FlowInstance  `json:"instance"`
-	Summary  lading.FlowSummary `json:"summary"`
-	Events   []*edi.FlowEvent   `json:"events"`
+	Instance *ladingproject.FlowInstance `json:"instance"`
+	Summary  lading.FlowSummary          `json:"summary"`
+	Events   []*ladingproject.FlowEvent  `json:"events"`
 }
 
 func (s *Service) GetFlowInstance(
@@ -429,7 +432,7 @@ func (s *Service) ReleaseFlowInstance(
 	ctx context.Context,
 	req ladingports.GetFlowInstanceRequest,
 	actor *permissionports.RequestActor,
-) (*edi.FlowInstance, error) {
+) (*ladingproject.FlowInstance, error) {
 	released, err := s.flows.Release(ctx, req.TenantInfo, req.ID, req.TenantInfo.UserID)
 	if err != nil {
 		return nil, err

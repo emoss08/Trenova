@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/editransfer"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmentmanufacturer"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmenttype"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/fleetcode"
@@ -166,13 +167,13 @@ func TestSelectOptionMappers(t *testing.T) {
 
 	tenderSender := pulid.MustNew("org_")
 	tenderReceiver := pulid.MustNew("org_")
-	transferEntity := &edi.EDITransfer{
+	transferEntity := &editransfer.EDITransfer{
 		ID:                   pulid.MustNew("edilt_"),
 		SourceOrganizationID: tenderSender,
 		TargetOrganizationID: tenderReceiver,
-		Status:               edi.TransferStatusSubmitted,
+		Status:               editransfer.TransferStatusSubmitted,
 		CreatedAt:            1780415500,
-		TenderPayload: edi.LoadTenderPayload{
+		TenderPayload: editransfer.LoadTenderPayload{
 			BOL:           "BOL-3003",
 			CustomerLabel: "ACME Freight",
 		},
@@ -182,21 +183,25 @@ func TestSelectOptionMappers(t *testing.T) {
 	transferOption := ediTransferSelectOption(transferEntity, tenderReceiver)
 	assert.Equal(t, "BOL-3003", transferOption.Label)
 	assert.Equal(t, "ACME Freight", *transferOption.Description)
-	assert.Equal(t, string(edi.TransferStatusSubmitted), transferOption.Meta["status"])
+	assert.Equal(t, string(editransfer.TransferStatusSubmitted), transferOption.Meta["status"])
 	assert.Equal(t, "Partner B", transferOption.Meta["partner"])
 	assert.NotContains(t, transferOption.Meta, "sourcePartner")
 	assert.NotContains(t, transferOption.Meta, "targetPartner")
-	assert.Equal(t, "Partner A", ediTransferSelectOption(transferEntity, tenderSender).Meta["partner"])
+	assert.Equal(
+		t,
+		"Partner A",
+		ediTransferSelectOption(transferEntity, tenderSender).Meta["partner"],
+	)
 	assert.Equal(
 		t,
 		transferEntity.CreatedAt,
 		ediTransferSelectOptionItemFor(tenderReceiver)(transferEntity).cursor.At,
 	)
 
-	fallbackTransfer := &edi.EDITransfer{
+	fallbackTransfer := &editransfer.EDITransfer{
 		ID:                   pulid.MustNew("edilt_"),
 		TargetOrganizationID: tenderReceiver,
-		Status:               edi.TransferStatusSubmitted,
+		Status:               editransfer.TransferStatusSubmitted,
 		CreatedAt:            1780415600,
 	}
 	unnamedTransfer := ediTransferSelectOption(fallbackTransfer, tenderReceiver)

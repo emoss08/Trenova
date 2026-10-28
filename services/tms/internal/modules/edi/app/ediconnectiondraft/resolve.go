@@ -5,7 +5,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/x12field"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediconnectiondraftports"
 )
 
@@ -84,7 +84,7 @@ func readValue(
 	}
 	if c.status == ediconnectiondraftports.ValueStatusInvalid ||
 		c.status == ediconnectiondraftports.ValueStatusUnverified {
-		c.value = edi.RedactSecrets(c.value)
+		c.value = x12field.RedactSecrets(c.value)
 	}
 
 	return c

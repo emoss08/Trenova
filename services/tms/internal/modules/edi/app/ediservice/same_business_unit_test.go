@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/editransfer"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -111,11 +112,11 @@ func TestService_SubmitLoadTenderRequiresReciprocalPartnerInSameBusinessUnit(t *
 		})).
 		Return(&edi.EDICommunicationProfile{ID: pulid.MustNew("edicp_")}, nil)
 
-	var createdTransfer *edi.EDITransfer
+	var createdTransfer *editransfer.EDITransfer
 	transferRepo := editenderportsmock.NewMockEDILoadTenderTransferRepository(t)
 	transferRepo.EXPECT().
-		CreateTransfer(mock.Anything, mock.AnythingOfType("*edi.EDITransfer")).
-		RunAndReturn(func(_ context.Context, entity *edi.EDITransfer) (*edi.EDITransfer, error) {
+		CreateTransfer(mock.Anything, mock.AnythingOfType("*editransfer.EDITransfer")).
+		RunAndReturn(func(_ context.Context, entity *editransfer.EDITransfer) (*editransfer.EDITransfer, error) {
 			createdTransfer = entity
 			return entity, nil
 		})

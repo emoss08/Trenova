@@ -5,11 +5,11 @@
 package editenderportsmock
 
 import (
+	"github.com/emoss08/trenova/internal/modules/edi/domain/editenderchange"
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/edi/ports/editenderports"
 
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -41,23 +41,23 @@ func (_m *MockEDITenderRecipientRepository) EXPECT() *MockEDITenderRecipientRepo
 }
 
 // GetActiveExternalRecipientByShipmentReference provides a mock function for the type MockEDITenderRecipientRepository
-func (_mock *MockEDITenderRecipientRepository) GetActiveExternalRecipientByShipmentReference(ctx context.Context, req editenderports.GetActiveExternalEDITenderRecipientByReferenceRequest) (*edi.TenderRecipient, error) {
+func (_mock *MockEDITenderRecipientRepository) GetActiveExternalRecipientByShipmentReference(ctx context.Context, req editenderports.GetActiveExternalEDITenderRecipientByReferenceRequest) (*editenderchange.TenderRecipient, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetActiveExternalRecipientByShipmentReference")
 	}
 
-	var r0 *edi.TenderRecipient
+	var r0 *editenderchange.TenderRecipient
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, editenderports.GetActiveExternalEDITenderRecipientByReferenceRequest) (*edi.TenderRecipient, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, editenderports.GetActiveExternalEDITenderRecipientByReferenceRequest) (*editenderchange.TenderRecipient, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, editenderports.GetActiveExternalEDITenderRecipientByReferenceRequest) *edi.TenderRecipient); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, editenderports.GetActiveExternalEDITenderRecipientByReferenceRequest) *editenderchange.TenderRecipient); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*edi.TenderRecipient)
+			r0 = ret.Get(0).(*editenderchange.TenderRecipient)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, editenderports.GetActiveExternalEDITenderRecipientByReferenceRequest) error); ok {
@@ -98,34 +98,34 @@ func (_c *MockEDITenderRecipientRepository_GetActiveExternalRecipientByShipmentR
 	return _c
 }
 
-func (_c *MockEDITenderRecipientRepository_GetActiveExternalRecipientByShipmentReference_Call) Return(tenderRecipient *edi.TenderRecipient, err error) *MockEDITenderRecipientRepository_GetActiveExternalRecipientByShipmentReference_Call {
+func (_c *MockEDITenderRecipientRepository_GetActiveExternalRecipientByShipmentReference_Call) Return(tenderRecipient *editenderchange.TenderRecipient, err error) *MockEDITenderRecipientRepository_GetActiveExternalRecipientByShipmentReference_Call {
 	_c.Call.Return(tenderRecipient, err)
 	return _c
 }
 
-func (_c *MockEDITenderRecipientRepository_GetActiveExternalRecipientByShipmentReference_Call) RunAndReturn(run func(ctx context.Context, req editenderports.GetActiveExternalEDITenderRecipientByReferenceRequest) (*edi.TenderRecipient, error)) *MockEDITenderRecipientRepository_GetActiveExternalRecipientByShipmentReference_Call {
+func (_c *MockEDITenderRecipientRepository_GetActiveExternalRecipientByShipmentReference_Call) RunAndReturn(run func(ctx context.Context, req editenderports.GetActiveExternalEDITenderRecipientByReferenceRequest) (*editenderchange.TenderRecipient, error)) *MockEDITenderRecipientRepository_GetActiveExternalRecipientByShipmentReference_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetTenderRecipientByID provides a mock function for the type MockEDITenderRecipientRepository
-func (_mock *MockEDITenderRecipientRepository) GetTenderRecipientByID(ctx context.Context, req editenderports.GetEDITenderRecipientByIDRequest) (*edi.TenderRecipient, error) {
+func (_mock *MockEDITenderRecipientRepository) GetTenderRecipientByID(ctx context.Context, req editenderports.GetEDITenderRecipientByIDRequest) (*editenderchange.TenderRecipient, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetTenderRecipientByID")
 	}
 
-	var r0 *edi.TenderRecipient
+	var r0 *editenderchange.TenderRecipient
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, editenderports.GetEDITenderRecipientByIDRequest) (*edi.TenderRecipient, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, editenderports.GetEDITenderRecipientByIDRequest) (*editenderchange.TenderRecipient, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, editenderports.GetEDITenderRecipientByIDRequest) *edi.TenderRecipient); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, editenderports.GetEDITenderRecipientByIDRequest) *editenderchange.TenderRecipient); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*edi.TenderRecipient)
+			r0 = ret.Get(0).(*editenderchange.TenderRecipient)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, editenderports.GetEDITenderRecipientByIDRequest) error); ok {
@@ -166,34 +166,34 @@ func (_c *MockEDITenderRecipientRepository_GetTenderRecipientByID_Call) Run(run 
 	return _c
 }
 
-func (_c *MockEDITenderRecipientRepository_GetTenderRecipientByID_Call) Return(tenderRecipient *edi.TenderRecipient, err error) *MockEDITenderRecipientRepository_GetTenderRecipientByID_Call {
+func (_c *MockEDITenderRecipientRepository_GetTenderRecipientByID_Call) Return(tenderRecipient *editenderchange.TenderRecipient, err error) *MockEDITenderRecipientRepository_GetTenderRecipientByID_Call {
 	_c.Call.Return(tenderRecipient, err)
 	return _c
 }
 
-func (_c *MockEDITenderRecipientRepository_GetTenderRecipientByID_Call) RunAndReturn(run func(ctx context.Context, req editenderports.GetEDITenderRecipientByIDRequest) (*edi.TenderRecipient, error)) *MockEDITenderRecipientRepository_GetTenderRecipientByID_Call {
+func (_c *MockEDITenderRecipientRepository_GetTenderRecipientByID_Call) RunAndReturn(run func(ctx context.Context, req editenderports.GetEDITenderRecipientByIDRequest) (*editenderchange.TenderRecipient, error)) *MockEDITenderRecipientRepository_GetTenderRecipientByID_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // ListActiveTenderRecipientsForSourceShipment provides a mock function for the type MockEDITenderRecipientRepository
-func (_mock *MockEDITenderRecipientRepository) ListActiveTenderRecipientsForSourceShipment(ctx context.Context, req editenderports.ListEDITenderRecipientsForSourceShipmentRequest) ([]*edi.TenderRecipient, error) {
+func (_mock *MockEDITenderRecipientRepository) ListActiveTenderRecipientsForSourceShipment(ctx context.Context, req editenderports.ListEDITenderRecipientsForSourceShipmentRequest) ([]*editenderchange.TenderRecipient, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListActiveTenderRecipientsForSourceShipment")
 	}
 
-	var r0 []*edi.TenderRecipient
+	var r0 []*editenderchange.TenderRecipient
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, editenderports.ListEDITenderRecipientsForSourceShipmentRequest) ([]*edi.TenderRecipient, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, editenderports.ListEDITenderRecipientsForSourceShipmentRequest) ([]*editenderchange.TenderRecipient, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, editenderports.ListEDITenderRecipientsForSourceShipmentRequest) []*edi.TenderRecipient); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, editenderports.ListEDITenderRecipientsForSourceShipmentRequest) []*editenderchange.TenderRecipient); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*edi.TenderRecipient)
+			r0 = ret.Get(0).([]*editenderchange.TenderRecipient)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, editenderports.ListEDITenderRecipientsForSourceShipmentRequest) error); ok {
@@ -234,37 +234,37 @@ func (_c *MockEDITenderRecipientRepository_ListActiveTenderRecipientsForSourceSh
 	return _c
 }
 
-func (_c *MockEDITenderRecipientRepository_ListActiveTenderRecipientsForSourceShipment_Call) Return(tenderRecipients []*edi.TenderRecipient, err error) *MockEDITenderRecipientRepository_ListActiveTenderRecipientsForSourceShipment_Call {
+func (_c *MockEDITenderRecipientRepository_ListActiveTenderRecipientsForSourceShipment_Call) Return(tenderRecipients []*editenderchange.TenderRecipient, err error) *MockEDITenderRecipientRepository_ListActiveTenderRecipientsForSourceShipment_Call {
 	_c.Call.Return(tenderRecipients, err)
 	return _c
 }
 
-func (_c *MockEDITenderRecipientRepository_ListActiveTenderRecipientsForSourceShipment_Call) RunAndReturn(run func(ctx context.Context, req editenderports.ListEDITenderRecipientsForSourceShipmentRequest) ([]*edi.TenderRecipient, error)) *MockEDITenderRecipientRepository_ListActiveTenderRecipientsForSourceShipment_Call {
+func (_c *MockEDITenderRecipientRepository_ListActiveTenderRecipientsForSourceShipment_Call) RunAndReturn(run func(ctx context.Context, req editenderports.ListEDITenderRecipientsForSourceShipmentRequest) ([]*editenderchange.TenderRecipient, error)) *MockEDITenderRecipientRepository_ListActiveTenderRecipientsForSourceShipment_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // UpdateTenderRecipient provides a mock function for the type MockEDITenderRecipientRepository
-func (_mock *MockEDITenderRecipientRepository) UpdateTenderRecipient(ctx context.Context, entity *edi.TenderRecipient) (*edi.TenderRecipient, error) {
+func (_mock *MockEDITenderRecipientRepository) UpdateTenderRecipient(ctx context.Context, entity *editenderchange.TenderRecipient) (*editenderchange.TenderRecipient, error) {
 	ret := _mock.Called(ctx, entity)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateTenderRecipient")
 	}
 
-	var r0 *edi.TenderRecipient
+	var r0 *editenderchange.TenderRecipient
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *edi.TenderRecipient) (*edi.TenderRecipient, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *editenderchange.TenderRecipient) (*editenderchange.TenderRecipient, error)); ok {
 		return returnFunc(ctx, entity)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *edi.TenderRecipient) *edi.TenderRecipient); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *editenderchange.TenderRecipient) *editenderchange.TenderRecipient); ok {
 		r0 = returnFunc(ctx, entity)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*edi.TenderRecipient)
+			r0 = ret.Get(0).(*editenderchange.TenderRecipient)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *edi.TenderRecipient) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *editenderchange.TenderRecipient) error); ok {
 		r1 = returnFunc(ctx, entity)
 	} else {
 		r1 = ret.Error(1)
@@ -279,20 +279,20 @@ type MockEDITenderRecipientRepository_UpdateTenderRecipient_Call struct {
 
 // UpdateTenderRecipient is a helper method to define mock.On call
 //   - ctx context.Context
-//   - entity *edi.TenderRecipient
+//   - entity *editenderchange.TenderRecipient
 func (_e *MockEDITenderRecipientRepository_Expecter) UpdateTenderRecipient(ctx any, entity any) *MockEDITenderRecipientRepository_UpdateTenderRecipient_Call {
 	return &MockEDITenderRecipientRepository_UpdateTenderRecipient_Call{Call: _e.mock.On("UpdateTenderRecipient", ctx, entity)}
 }
 
-func (_c *MockEDITenderRecipientRepository_UpdateTenderRecipient_Call) Run(run func(ctx context.Context, entity *edi.TenderRecipient)) *MockEDITenderRecipientRepository_UpdateTenderRecipient_Call {
+func (_c *MockEDITenderRecipientRepository_UpdateTenderRecipient_Call) Run(run func(ctx context.Context, entity *editenderchange.TenderRecipient)) *MockEDITenderRecipientRepository_UpdateTenderRecipient_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 *edi.TenderRecipient
+		var arg1 *editenderchange.TenderRecipient
 		if args[1] != nil {
-			arg1 = args[1].(*edi.TenderRecipient)
+			arg1 = args[1].(*editenderchange.TenderRecipient)
 		}
 		run(
 			arg0,
@@ -302,34 +302,34 @@ func (_c *MockEDITenderRecipientRepository_UpdateTenderRecipient_Call) Run(run f
 	return _c
 }
 
-func (_c *MockEDITenderRecipientRepository_UpdateTenderRecipient_Call) Return(tenderRecipient *edi.TenderRecipient, err error) *MockEDITenderRecipientRepository_UpdateTenderRecipient_Call {
+func (_c *MockEDITenderRecipientRepository_UpdateTenderRecipient_Call) Return(tenderRecipient *editenderchange.TenderRecipient, err error) *MockEDITenderRecipientRepository_UpdateTenderRecipient_Call {
 	_c.Call.Return(tenderRecipient, err)
 	return _c
 }
 
-func (_c *MockEDITenderRecipientRepository_UpdateTenderRecipient_Call) RunAndReturn(run func(ctx context.Context, entity *edi.TenderRecipient) (*edi.TenderRecipient, error)) *MockEDITenderRecipientRepository_UpdateTenderRecipient_Call {
+func (_c *MockEDITenderRecipientRepository_UpdateTenderRecipient_Call) RunAndReturn(run func(ctx context.Context, entity *editenderchange.TenderRecipient) (*editenderchange.TenderRecipient, error)) *MockEDITenderRecipientRepository_UpdateTenderRecipient_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // UpsertTenderRecipient provides a mock function for the type MockEDITenderRecipientRepository
-func (_mock *MockEDITenderRecipientRepository) UpsertTenderRecipient(ctx context.Context, req editenderports.UpsertEDITenderRecipientRequest) (*edi.TenderRecipient, error) {
+func (_mock *MockEDITenderRecipientRepository) UpsertTenderRecipient(ctx context.Context, req editenderports.UpsertEDITenderRecipientRequest) (*editenderchange.TenderRecipient, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpsertTenderRecipient")
 	}
 
-	var r0 *edi.TenderRecipient
+	var r0 *editenderchange.TenderRecipient
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, editenderports.UpsertEDITenderRecipientRequest) (*edi.TenderRecipient, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, editenderports.UpsertEDITenderRecipientRequest) (*editenderchange.TenderRecipient, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, editenderports.UpsertEDITenderRecipientRequest) *edi.TenderRecipient); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, editenderports.UpsertEDITenderRecipientRequest) *editenderchange.TenderRecipient); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*edi.TenderRecipient)
+			r0 = ret.Get(0).(*editenderchange.TenderRecipient)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, editenderports.UpsertEDITenderRecipientRequest) error); ok {
@@ -370,12 +370,12 @@ func (_c *MockEDITenderRecipientRepository_UpsertTenderRecipient_Call) Run(run f
 	return _c
 }
 
-func (_c *MockEDITenderRecipientRepository_UpsertTenderRecipient_Call) Return(tenderRecipient *edi.TenderRecipient, err error) *MockEDITenderRecipientRepository_UpsertTenderRecipient_Call {
+func (_c *MockEDITenderRecipientRepository_UpsertTenderRecipient_Call) Return(tenderRecipient *editenderchange.TenderRecipient, err error) *MockEDITenderRecipientRepository_UpsertTenderRecipient_Call {
 	_c.Call.Return(tenderRecipient, err)
 	return _c
 }
 
-func (_c *MockEDITenderRecipientRepository_UpsertTenderRecipient_Call) RunAndReturn(run func(ctx context.Context, req editenderports.UpsertEDITenderRecipientRequest) (*edi.TenderRecipient, error)) *MockEDITenderRecipientRepository_UpsertTenderRecipient_Call {
+func (_c *MockEDITenderRecipientRepository_UpsertTenderRecipient_Call) RunAndReturn(run func(ctx context.Context, req editenderports.UpsertEDITenderRecipientRequest) (*editenderchange.TenderRecipient, error)) *MockEDITenderRecipientRepository_UpsertTenderRecipient_Call {
 	_c.Call.Return(run)
 	return _c
 }

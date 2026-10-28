@@ -9,6 +9,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edimessage"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/editransportports"
 	"github.com/emoss08/trenova/shared/httpsafe"
 	"github.com/emoss08/trenova/shared/maputils"
@@ -130,7 +131,7 @@ func uploadFile(
 	return client.WriteFile(remotePath, []byte(contents))
 }
 
-func OutboundFileName(profile *edi.EDICommunicationProfile, message *edi.EDIMessage) string {
+func OutboundFileName(profile *edi.EDICommunicationProfile, message *edimessage.EDIMessage) string {
 	pattern := defaultFileNamingPattern
 	if profile != nil {
 		pattern = stringutils.WithDefault(

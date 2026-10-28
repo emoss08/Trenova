@@ -6,7 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edimessage"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/emoss08/trenova/shared/typeutils"
@@ -345,7 +345,7 @@ func ackHealthMeaning(record map[string]any, _ map[string]struct{}, _ clock) {
 	record["overdueAfter"] = timeutils.FormatLongDurationMs(int64(overdueAge) * 1000)
 	counts := ackCountsOf(record)
 	record["acknowledged"] = acknowledged(counts)
-	record["awaiting"] = counts[edi.MessageAcknowledgmentStatusPending]
+	record["awaiting"] = counts[edimessage.MessageAcknowledgmentStatusPending]
 	partners, _ := record["partners"].([]any)
 	for _, raw := range partners {
 		partner, ok := raw.(map[string]any)
@@ -354,7 +354,7 @@ func ackHealthMeaning(record map[string]any, _ map[string]struct{}, _ clock) {
 		}
 		own := ackCountsOf(partner)
 		partner["acknowledged"] = acknowledged(own)
-		partner["awaiting"] = own[edi.MessageAcknowledgmentStatusPending]
+		partner["awaiting"] = own[edimessage.MessageAcknowledgmentStatusPending]
 		partner["answer"] = ackAnswer(own)
 	}
 	groups, _ := record["overdueByPartner"].([]any)
@@ -398,22 +398,22 @@ func waited(asOf, since int) string {
 }
 
 // ackCountsOf reads a record's acknowledgment counts by status.
-func ackCountsOf(record map[string]any) map[edi.MessageAcknowledgmentStatus]int {
+func ackCountsOf(record map[string]any) map[edimessage.MessageAcknowledgmentStatus]int {
 	rows, _ := record[fieldAckCounts].([]any)
-	counts := make(map[edi.MessageAcknowledgmentStatus]int, len(rows))
+	counts := make(map[edimessage.MessageAcknowledgmentStatus]int, len(rows))
 	for _, raw := range rows {
 		row, ok := raw.(map[string]any)
 		if !ok {
 			continue
 		}
 		count, _ := typeutils.IntOf(row[fieldAckCount])
-		counts[edi.MessageAcknowledgmentStatus(stringOf(row[fieldAckStatus]))] = count
+		counts[edimessage.MessageAcknowledgmentStatus(stringOf(row[fieldAckStatus]))] = count
 	}
 
 	return counts
 }
 
-func acknowledged(counts map[edi.MessageAcknowledgmentStatus]int) int {
+func acknowledged(counts map[edimessage.MessageAcknowledgmentStatus]int) int {
 	total := 0
 	for status, count := range counts {
 		if status.IsReceived() {
@@ -426,10 +426,10 @@ func acknowledged(counts map[edi.MessageAcknowledgmentStatus]int) int {
 
 // ackAnswer is one partner's acknowledgments in a sentence: how many came
 // back of those expected, by outcome, and how many are awaited or failed.
-func ackAnswer(counts map[edi.MessageAcknowledgmentStatus]int) string {
+func ackAnswer(counts map[edimessage.MessageAcknowledgmentStatus]int) string {
 	received := acknowledged(counts)
-	awaiting := counts[edi.MessageAcknowledgmentStatusPending]
-	failed := counts[edi.MessageAcknowledgmentStatusFailed]
+	awaiting := counts[edimessage.MessageAcknowledgmentStatusPending]
+	failed := counts[edimessage.MessageAcknowledgmentStatusFailed]
 	expected := received + awaiting + failed
 	if expected == 0 {
 		return "nothing sent in this window expects an acknowledgment"
@@ -437,12 +437,12 @@ func ackAnswer(counts map[edi.MessageAcknowledgmentStatus]int) string {
 
 	outcomes := make([]string, 0, 3)
 	for _, outcome := range []struct {
-		status edi.MessageAcknowledgmentStatus
+		status edimessage.MessageAcknowledgmentStatus
 		word   string
 	}{
-		{edi.MessageAcknowledgmentStatusAccepted, "accepted"},
-		{edi.MessageAcknowledgmentStatusAcceptedWithErrors, "accepted with errors"},
-		{edi.MessageAcknowledgmentStatusRejected, "rejected"},
+		{edimessage.MessageAcknowledgmentStatusAccepted, "accepted"},
+		{edimessage.MessageAcknowledgmentStatusAcceptedWithErrors, "accepted with errors"},
+		{edimessage.MessageAcknowledgmentStatusRejected, "rejected"},
 	} {
 		if count := counts[outcome.status]; count > 0 {
 			outcomes = append(outcomes, fmt.Sprintf("%d %s", count, outcome.word))

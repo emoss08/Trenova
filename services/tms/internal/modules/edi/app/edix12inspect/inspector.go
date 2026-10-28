@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
 	"github.com/emoss08/trenova/pkg/x12"
 	"github.com/emoss08/trenova/shared/i18n"
 )
@@ -25,7 +25,7 @@ func InspectX12(ctx context.Context, req *InspectX12Request) (*InspectX12Result,
 				X12Version:     req.X12Version,
 				Diagnostics: []NormalizedDiagnostic{
 					{
-						Severity:     edi.ValidationSeverityError,
+						Severity:     edidocument.ValidationSeverityError,
 						Code:         "x12.document.empty",
 						Source:       DiagnosticSourceInspection,
 						Message:      "X12 payload is empty.",
@@ -59,7 +59,7 @@ func IsFragment(rawX12 string) bool {
 func DetectSeparators(
 	ctx context.Context,
 	rawX12 string,
-	envelope *edi.X12EnvelopeSettings,
+	envelope *edidocument.X12EnvelopeSettings,
 ) (X12Separators, error) {
 	reading, err := x12.Default().Read(ctx, &x12.ReadRequest{
 		Text:       rawX12,
@@ -101,7 +101,7 @@ func resultFromReading(
 		Reading:   reading,
 	}
 	if result.TransactionSet == "" && len(result.Transactions) > 0 {
-		result.TransactionSet = edi.TransactionSet(result.Transactions[0].TransactionSet)
+		result.TransactionSet = edidocument.TransactionSet(result.Transactions[0].TransactionSet)
 	}
 	if result.X12Version == "" {
 		result.X12Version = readingVersion(reading)
@@ -110,7 +110,7 @@ func resultFromReading(
 	return result
 }
 
-func envelopeSeparators(envelope *edi.X12EnvelopeSettings) *x12.Separators {
+func envelopeSeparators(envelope *edidocument.X12EnvelopeSettings) *x12.Separators {
 	if !envelopeSeparatorsPresent(envelope) {
 		return nil
 	}
@@ -124,7 +124,7 @@ func envelopeSeparators(envelope *edi.X12EnvelopeSettings) *x12.Separators {
 
 func separatorsFromReading(
 	reading *x12.Reading,
-	envelope *edi.X12EnvelopeSettings,
+	envelope *edidocument.X12EnvelopeSettings,
 ) (X12Separators, []NormalizedDiagnostic) {
 	separators := X12Separators{
 		Element:    reading.Separators.Element,
@@ -154,7 +154,7 @@ func separatorsFromReading(
 	}
 	separators.HasConflict = true
 	return separators, []NormalizedDiagnostic{{
-		Severity:  edi.ValidationSeverityWarning,
+		Severity:  edidocument.ValidationSeverityWarning,
 		Code:      "x12.separator.conflict",
 		Source:    DiagnosticSourceInspection,
 		SegmentID: isaSegmentID,

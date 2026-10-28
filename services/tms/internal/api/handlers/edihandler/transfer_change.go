@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/emoss08/trenova/internal/api/helpers"
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edisync"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/editenderports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/authctx"
@@ -49,7 +49,7 @@ func (h *Handler) listTransferChanges(c *gin.Context) {
 		linkID = parsed
 	}
 
-	pagination.List(c, req, h.eh, func() (*pagination.ListResult[*edi.TransferChange], error) {
+	pagination.List(c, req, h.eh, func() (*pagination.ListResult[*edisync.TransferChange], error) {
 		return h.service.ListTransferChanges(
 			c.Request.Context(),
 			&editenderports.ListEDITransferChangesRequest{

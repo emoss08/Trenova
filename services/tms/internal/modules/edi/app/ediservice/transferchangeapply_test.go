@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edisync"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/editenderports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/internaledilifecycle"
@@ -25,9 +25,9 @@ import (
 func TestService_ApplyTransferChange_CancelsLinkedShipment(t *testing.T) {
 	t.Parallel()
 
-	fixture := newTransferChangeApplyFixture(t, edi.TransferChangeDirectionSourceToTarget)
+	fixture := newTransferChangeApplyFixture(t, edisync.TransferChangeDirectionSourceToTarget)
 	change := fixture.pendingChange(
-		edi.TransferChangeTypeShipmentCancel214,
+		edisync.TransferChangeTypeShipmentCancel214,
 		shipment.StatusCanceled,
 	)
 	change.Payload["cancellationReason"] = "Customer canceled"
@@ -47,7 +47,7 @@ func TestService_ApplyTransferChange_CancelsLinkedShipment(t *testing.T) {
 		Return(fixture.canceledTarget(), nil).
 		Once()
 	fixture.expectInsertMirroredEvent(shipmentevent.TypeShipmentCanceled)
-	fixture.expectUpdateReviewedChange(edi.TransferChangeStatusApplied)
+	fixture.expectUpdateReviewedChange(edisync.TransferChangeStatusApplied)
 
 	updated, err := fixture.service.ApplyTransferChange(
 		t.Context(),
@@ -59,22 +59,22 @@ func TestService_ApplyTransferChange_CancelsLinkedShipment(t *testing.T) {
 	)
 
 	require.NoError(t, err)
-	require.Equal(t, edi.TransferChangeStatusApplied, updated.Status)
+	require.Equal(t, edisync.TransferChangeStatusApplied, updated.Status)
 	require.Equal(t, fixture.actor.UserID, updated.AppliedByID)
 }
 
 func TestService_RejectTransferChange_DoesNotCancelLinkedShipment(t *testing.T) {
 	t.Parallel()
 
-	fixture := newTransferChangeApplyFixture(t, edi.TransferChangeDirectionSourceToTarget)
+	fixture := newTransferChangeApplyFixture(t, edisync.TransferChangeDirectionSourceToTarget)
 	change := fixture.pendingChange(
-		edi.TransferChangeTypeShipmentCancel214,
+		edisync.TransferChangeTypeShipmentCancel214,
 		shipment.StatusCanceled,
 	)
 
 	fixture.expectLoadPendingChange(change)
 	fixture.expectLoadLink(2)
-	fixture.expectUpdateReviewedChange(edi.TransferChangeStatusRejected)
+	fixture.expectUpdateReviewedChange(edisync.TransferChangeStatusRejected)
 
 	updated, err := fixture.service.RejectTransferChange(
 		t.Context(),
@@ -87,16 +87,16 @@ func TestService_RejectTransferChange_DoesNotCancelLinkedShipment(t *testing.T) 
 	)
 
 	require.NoError(t, err)
-	require.Equal(t, edi.TransferChangeStatusRejected, updated.Status)
+	require.Equal(t, edisync.TransferChangeStatusRejected, updated.Status)
 	require.Equal(t, "Rejected by reviewer", updated.FailureReason)
 }
 
 func TestService_ApplyTransferChange_StatusRegressionAppliesLinkedShipmentStatus(t *testing.T) {
 	t.Parallel()
 
-	fixture := newTransferChangeApplyFixture(t, edi.TransferChangeDirectionTargetToSource)
+	fixture := newTransferChangeApplyFixture(t, edisync.TransferChangeDirectionTargetToSource)
 	change := fixture.pendingChange(
-		edi.TransferChangeTypeShipmentStatus214,
+		edisync.TransferChangeTypeShipmentStatus214,
 		shipment.StatusInTransit,
 	)
 	fixture.source.Status = shipment.StatusNew
@@ -116,7 +116,7 @@ func TestService_ApplyTransferChange_StatusRegressionAppliesLinkedShipmentStatus
 		Return(fixture.statusUpdatedSource(shipment.StatusInTransit), nil).
 		Once()
 	fixture.expectInsertMirroredEvent(shipmentevent.TypeStatusChanged)
-	fixture.expectUpdateReviewedChange(edi.TransferChangeStatusApplied)
+	fixture.expectUpdateReviewedChange(edisync.TransferChangeStatusApplied)
 
 	updated, err := fixture.service.ApplyTransferChange(
 		t.Context(),
@@ -128,13 +128,13 @@ func TestService_ApplyTransferChange_StatusRegressionAppliesLinkedShipmentStatus
 	)
 
 	require.NoError(t, err)
-	require.Equal(t, edi.TransferChangeStatusApplied, updated.Status)
+	require.Equal(t, edisync.TransferChangeStatusApplied, updated.Status)
 }
 
 func TestService_ApplyTransferChange_LifecycleAppliesActualsThroughCoordinator(t *testing.T) {
 	t.Parallel()
 
-	fixture := newTransferChangeApplyFixture(t, edi.TransferChangeDirectionTargetToSource)
+	fixture := newTransferChangeApplyFixture(t, edisync.TransferChangeDirectionTargetToSource)
 	fixture.installLifecycleStops()
 	fixture.source.Status = shipment.StatusNew
 	fixture.target.Status = shipment.StatusInTransit
@@ -143,7 +143,7 @@ func TestService_ApplyTransferChange_LifecycleAppliesActualsThroughCoordinator(t
 	fixture.target.Moves[0].Stops[0].ActualArrival = &arrival
 	fixture.target.Moves[0].Stops[0].ActualDeparture = &departure
 	change := fixture.pendingChange(
-		edi.TransferChangeTypeShipmentLifecycle214,
+		edisync.TransferChangeTypeShipmentLifecycle214,
 		shipment.StatusInTransit,
 	)
 
@@ -166,7 +166,7 @@ func TestService_ApplyTransferChange_LifecycleAppliesActualsThroughCoordinator(t
 		}).
 		Once()
 	fixture.expectInsertMirroredEvent(shipmentevent.TypeStatusChanged)
-	fixture.expectUpdateReviewedChange(edi.TransferChangeStatusApplied)
+	fixture.expectUpdateReviewedChange(edisync.TransferChangeStatusApplied)
 
 	updated, err := fixture.service.ApplyTransferChange(
 		t.Context(),
@@ -178,16 +178,16 @@ func TestService_ApplyTransferChange_LifecycleAppliesActualsThroughCoordinator(t
 	)
 
 	require.NoError(t, err)
-	require.Equal(t, edi.TransferChangeStatusApplied, updated.Status)
+	require.Equal(t, edisync.TransferChangeStatusApplied, updated.Status)
 }
 
 type transferChangeApplyFixture struct {
 	service            *Service
-	link               *edi.ShipmentLink
+	link               *edisync.ShipmentLink
 	source             *shipment.Shipment
 	target             *shipment.Shipment
 	actor              *permissionports.RequestActor
-	direction          edi.TransferChangeDirection
+	direction          edisync.TransferChangeDirection
 	transferChangeRepo *editenderportsmock.MockEDITransferChangeRepository
 	shipmentLinkRepo   *editenderportsmock.MockEDIShipmentLinkRepository
 	shipmentRepo       *shipmentportsmock.MockShipmentRepository
@@ -196,7 +196,7 @@ type transferChangeApplyFixture struct {
 
 func newTransferChangeApplyFixture(
 	t *testing.T,
-	direction edi.TransferChangeDirection,
+	direction edisync.TransferChangeDirection,
 ) *transferChangeApplyFixture {
 	t.Helper()
 
@@ -207,15 +207,15 @@ func newTransferChangeApplyFixture(
 	targetID := pulid.MustNew("shp_")
 
 	fixture := &transferChangeApplyFixture{
-		link: &edi.ShipmentLink{
+		link: &edisync.ShipmentLink{
 			ID:                   pulid.MustNew("edislink_"),
 			BusinessUnitID:       buID,
 			SourceOrganizationID: sourceOrgID,
 			TargetOrganizationID: targetOrgID,
 			SourceShipmentID:     sourceID,
 			TargetShipmentID:     targetID,
-			SyncPolicy:           edi.ShipmentSyncPolicyManualReview,
-			Status:               edi.ShipmentLinkStatusActive,
+			SyncPolicy:           edisync.ShipmentSyncPolicyManualReview,
+			Status:               edisync.ShipmentLinkStatusActive,
 		},
 		source: &shipment.Shipment{
 			ID:             sourceID,
@@ -263,15 +263,15 @@ func newTransferChangeApplyFixture(
 func (f *transferChangeApplyFixture) pendingChange(
 	changeType string,
 	nextStatus shipment.Status,
-) *edi.TransferChange {
-	return &edi.TransferChange{
+) *edisync.TransferChange {
+	return &edisync.TransferChange{
 		ID:             pulid.MustNew("editc_"),
 		BusinessUnitID: f.link.BusinessUnitID,
 		ShipmentLinkID: f.link.ID,
 		Direction:      f.direction,
 		ChangeType:     changeType,
-		Status:         edi.TransferChangeStatusPendingReview,
-		ConflictStatus: edi.TransferChangeConflictNone,
+		Status:         edisync.TransferChangeStatusPendingReview,
+		ConflictStatus: edisync.TransferChangeConflictNone,
 		IdempotencyKey: pulid.MustNew("idk_").String(),
 		Payload: map[string]any{
 			"sourceEventId": pulid.MustNew("se_").String(),
@@ -281,7 +281,7 @@ func (f *transferChangeApplyFixture) pendingChange(
 }
 
 func (f *transferChangeApplyFixture) tenantInfo() pagination.TenantInfo {
-	if f.direction == edi.TransferChangeDirectionTargetToSource {
+	if f.direction == edisync.TransferChangeDirectionTargetToSource {
 		return pagination.TenantInfo{
 			OrgID: f.link.SourceOrganizationID,
 			BuID:  f.link.BusinessUnitID,
@@ -293,7 +293,7 @@ func (f *transferChangeApplyFixture) tenantInfo() pagination.TenantInfo {
 	}
 }
 
-func (f *transferChangeApplyFixture) expectLoadPendingChange(change *edi.TransferChange) {
+func (f *transferChangeApplyFixture) expectLoadPendingChange(change *edisync.TransferChange) {
 	f.transferChangeRepo.EXPECT().
 		GetTransferChangeByID(
 			mock.Anything,
@@ -341,21 +341,23 @@ func (f *transferChangeApplyFixture) expectInsertMirroredEvent(eventType shipmen
 		Insert(mock.Anything, mock.MatchedBy(func(event *shipmentevent.Event) bool {
 			return event.Type == eventType &&
 				event.ActorType == shipmentevent.ActorEDI &&
-				event.Metadata[edi.InternalEDIMirroredFromEventIDKey] != "" &&
-				event.Metadata[edi.InternalEDIShipmentLinkIDKey] == f.link.ID.String()
+				event.Metadata[edisync.InternalEDIMirroredFromEventIDKey] != "" &&
+				event.Metadata[edisync.InternalEDIShipmentLinkIDKey] == f.link.ID.String()
 		})).
 		Return(nil).
 		Once()
 }
 
-func (f *transferChangeApplyFixture) expectUpdateReviewedChange(status edi.TransferChangeStatus) {
+func (f *transferChangeApplyFixture) expectUpdateReviewedChange(
+	status edisync.TransferChangeStatus,
+) {
 	f.transferChangeRepo.EXPECT().
-		UpdateTransferChange(mock.Anything, mock.MatchedBy(func(change *edi.TransferChange) bool {
+		UpdateTransferChange(mock.Anything, mock.MatchedBy(func(change *edisync.TransferChange) bool {
 			return change.Status == status &&
 				change.ReviewedByID == f.actor.UserID &&
 				change.ReviewedAt != nil
 		})).
-		RunAndReturn(func(_ context.Context, change *edi.TransferChange) (*edi.TransferChange, error) {
+		RunAndReturn(func(_ context.Context, change *edisync.TransferChange) (*edisync.TransferChange, error) {
 			return change, nil
 		}).
 		Once()

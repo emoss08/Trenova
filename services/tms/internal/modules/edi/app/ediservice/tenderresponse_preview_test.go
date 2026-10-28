@@ -3,7 +3,8 @@ package ediservice
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/editransfer"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -11,14 +12,14 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func externalTender(status edi.TransferStatus) *edi.EDITransfer {
-	return &edi.EDITransfer{
+func externalTender(status editransfer.TransferStatus) *editransfer.EDITransfer {
+	return &editransfer.EDITransfer{
 		ID:               pulid.MustNew("edilt_"),
 		TargetPartnerID:  pulid.MustNew("edip_"),
 		InboundMessageID: pulid.MustNew("edimsg_"),
 		SourceShipmentID: pulid.MustNew("shp_"),
 		Status:           status,
-		TenderPayload:    edi.LoadTenderPayload{BOL: "BOL-990"},
+		TenderPayload:    editransfer.LoadTenderPayload{BOL: "BOL-990"},
 	}
 }
 
@@ -26,7 +27,7 @@ func TestTenderResponseRequest_IsTheRequestTheSendMakes(t *testing.T) {
 	t.Parallel()
 
 	tenant := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
-	transfer := externalTender(edi.TransferStatusRejected)
+	transfer := externalTender(editransfer.TransferStatusRejected)
 	transfer.RejectionReason = "No capacity Friday"
 	actor := pulid.MustNew("usr_")
 
@@ -34,8 +35,8 @@ func TestTenderResponseRequest_IsTheRequestTheSendMakes(t *testing.T) {
 
 	assert.Equal(t, transfer.TargetPartnerID, req.EDIPartnerID)
 	assert.Equal(t, transfer.ID, req.TransferID)
-	assert.Equal(t, edi.TransactionSet990, req.TransactionSet)
-	assert.Equal(t, edi.DocumentDirectionOutbound, req.Direction)
+	assert.Equal(t, edidocument.TransactionSet990, req.TransactionSet)
+	assert.Equal(t, edidocument.DocumentDirectionOutbound, req.Direction)
 	assert.Equal(t, actor, req.GeneratedByID)
 	require.NotNil(t, req.Payload)
 	require.NotNil(t, req.Payload.TenderResponse)
@@ -49,7 +50,7 @@ func TestTenderResponseToPreview_SettlesWhichAnswerTheDocumentCarries(t *testing
 	t.Run("an undecided tender needs the answer to preview", func(t *testing.T) {
 		t.Parallel()
 
-		transfer := externalTender(edi.TransferStatusPendingApproval)
+		transfer := externalTender(editransfer.TransferStatusPendingApproval)
 		_, err := tenderResponseToPreview(transfer, transfer.TargetPartnerID, "", "")
 		require.Error(t, err)
 		assert.True(t, errortypes.IsError(err))
@@ -58,25 +59,25 @@ func TestTenderResponseToPreview_SettlesWhichAnswerTheDocumentCarries(t *testing
 	t.Run("accepting one", func(t *testing.T) {
 		t.Parallel()
 
-		transfer := externalTender(edi.TransferStatusPendingApproval)
+		transfer := externalTender(editransfer.TransferStatusPendingApproval)
 		previewed, err := tenderResponseToPreview(
 			transfer, transfer.TargetPartnerID, TenderResponseAccept, "",
 		)
 		require.NoError(t, err)
-		assert.Equal(t, edi.TransferStatusApproved, previewed.Status)
-		assert.Equal(t, edi.TransferStatusPendingApproval, transfer.Status,
+		assert.Equal(t, editransfer.TransferStatusApproved, previewed.Status)
+		assert.Equal(t, editransfer.TransferStatusPendingApproval, transfer.Status,
 			"the stored transfer is never changed")
 	})
 
 	t.Run("declining one with a reason", func(t *testing.T) {
 		t.Parallel()
 
-		transfer := externalTender(edi.TransferStatusMappingRequired)
+		transfer := externalTender(editransfer.TransferStatusMappingRequired)
 		previewed, err := tenderResponseToPreview(
 			transfer, transfer.TargetPartnerID, TenderResponseDecline, "Lane not served",
 		)
 		require.NoError(t, err)
-		assert.Equal(t, edi.TransferStatusRejected, previewed.Status)
+		assert.Equal(t, editransfer.TransferStatusRejected, previewed.Status)
 		assert.Equal(t, "Lane not served", previewed.RejectionReason)
 		assert.Equal(t, "D", buildTenderResponsePayload(previewed).TenderResponse.ResponseCode)
 	})
@@ -84,10 +85,10 @@ func TestTenderResponseToPreview_SettlesWhichAnswerTheDocumentCarries(t *testing
 	t.Run("a decided tender answers as it was decided", func(t *testing.T) {
 		t.Parallel()
 
-		transfer := externalTender(edi.TransferStatusApproved)
+		transfer := externalTender(editransfer.TransferStatusApproved)
 		previewed, err := tenderResponseToPreview(transfer, transfer.TargetPartnerID, "", "")
 		require.NoError(t, err)
-		assert.Equal(t, edi.TransferStatusApproved, previewed.Status)
+		assert.Equal(t, editransfer.TransferStatusApproved, previewed.Status)
 
 		_, err = tenderResponseToPreview(
 			transfer, transfer.TargetPartnerID, TenderResponseDecline, "",
@@ -98,7 +99,7 @@ func TestTenderResponseToPreview_SettlesWhichAnswerTheDocumentCarries(t *testing
 	t.Run("a tender from another Trenova organization has no 990", func(t *testing.T) {
 		t.Parallel()
 
-		transfer := externalTender(edi.TransferStatusPendingApproval)
+		transfer := externalTender(editransfer.TransferStatusPendingApproval)
 		transfer.InboundMessageID = pulid.Nil
 		_, err := tenderResponseToPreview(
 			transfer, transfer.TargetPartnerID, TenderResponseAccept, "",
@@ -110,7 +111,7 @@ func TestTenderResponseToPreview_SettlesWhichAnswerTheDocumentCarries(t *testing
 	t.Run("another partner's tender", func(t *testing.T) {
 		t.Parallel()
 
-		transfer := externalTender(edi.TransferStatusPendingApproval)
+		transfer := externalTender(editransfer.TransferStatusPendingApproval)
 		_, err := tenderResponseToPreview(
 			transfer, pulid.MustNew("edip_"), TenderResponseAccept, "",
 		)
@@ -121,7 +122,7 @@ func TestTenderResponseToPreview_SettlesWhichAnswerTheDocumentCarries(t *testing
 	t.Run("a tender in flight", func(t *testing.T) {
 		t.Parallel()
 
-		transfer := externalTender(edi.TransferStatusProcessing)
+		transfer := externalTender(editransfer.TransferStatusProcessing)
 		_, err := tenderResponseToPreview(
 			transfer, transfer.TargetPartnerID, TenderResponseAccept, "",
 		)

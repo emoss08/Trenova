@@ -4,7 +4,9 @@ import (
 	"context"
 	"errors"
 
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edimessage"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edipayload"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/edimessageports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
@@ -31,39 +33,39 @@ const ServiceFailureEDIActionDuplicate servicefailureports.ServiceFailureEDIActi
 const ServiceFailureEDIActionQueued servicefailureports.ServiceFailureEDIAction = "queued"
 
 type PreviewEDIDocumentRequest struct {
-	TenantInfo       pagination.TenantInfo `json:"-"`
-	Map              string                `json:"map"`
-	EDIPartnerID     pulid.ID              `json:"ediPartnerId"`
-	ShipmentID       pulid.ID              `json:"shipmentId"`
-	TransferID       pulid.ID              `json:"transferId"`
-	InvoiceID        pulid.ID              `json:"invoiceId"`
-	ShipmentEventID  pulid.ID              `json:"shipmentEventId"`
-	ServiceFailureID pulid.ID              `json:"serviceFailureId"`
-	SourceMessageID  pulid.ID              `json:"sourceMessageId"`
-	TransactionSet   edi.TransactionSet    `json:"transactionSet"`
-	Direction        edi.DocumentDirection `json:"direction"`
-	Payload          *edi.DocumentPayload  `json:"payload"`
-	CarrierSCAC      string                `json:"carrierScac"`
+	TenantInfo       pagination.TenantInfo         `json:"-"`
+	Map              string                        `json:"map"`
+	EDIPartnerID     pulid.ID                      `json:"ediPartnerId"`
+	ShipmentID       pulid.ID                      `json:"shipmentId"`
+	TransferID       pulid.ID                      `json:"transferId"`
+	InvoiceID        pulid.ID                      `json:"invoiceId"`
+	ShipmentEventID  pulid.ID                      `json:"shipmentEventId"`
+	ServiceFailureID pulid.ID                      `json:"serviceFailureId"`
+	SourceMessageID  pulid.ID                      `json:"sourceMessageId"`
+	TransactionSet   edidocument.TransactionSet    `json:"transactionSet"`
+	Direction        edidocument.DocumentDirection `json:"direction"`
+	Payload          *edipayload.DocumentPayload   `json:"payload"`
+	CarrierSCAC      string                        `json:"carrierScac"`
 }
 
 type GenerateEDIDocumentRequest struct {
-	TenantInfo                    pagination.TenantInfo `json:"-"`
-	Map                           string                `json:"map"`
-	EDIPartnerID                  pulid.ID              `json:"ediPartnerId"`
-	ShipmentID                    pulid.ID              `json:"shipmentId"`
-	TransferID                    pulid.ID              `json:"transferId"`
-	InvoiceID                     pulid.ID              `json:"invoiceId"`
-	ShipmentEventID               pulid.ID              `json:"shipmentEventId"`
-	ServiceFailureID              pulid.ID              `json:"serviceFailureId"`
-	SourceMessageID               pulid.ID              `json:"sourceMessageId"`
-	TransactionSet                edi.TransactionSet    `json:"transactionSet"`
-	Direction                     edi.DocumentDirection `json:"direction"`
-	Payload                       *edi.DocumentPayload  `json:"payload"`
-	CarrierSCAC                   string                `json:"-"`
-	GeneratedByID                 pulid.ID              `json:"-"`
-	DisableDeliveryQueue          bool                  `json:"-"`
-	SuppressTenderRecipientUpsert bool                  `json:"-"`
-	IdempotencyKey                string                `json:"-"`
+	TenantInfo                    pagination.TenantInfo         `json:"-"`
+	Map                           string                        `json:"map"`
+	EDIPartnerID                  pulid.ID                      `json:"ediPartnerId"`
+	ShipmentID                    pulid.ID                      `json:"shipmentId"`
+	TransferID                    pulid.ID                      `json:"transferId"`
+	InvoiceID                     pulid.ID                      `json:"invoiceId"`
+	ShipmentEventID               pulid.ID                      `json:"shipmentEventId"`
+	ServiceFailureID              pulid.ID                      `json:"serviceFailureId"`
+	SourceMessageID               pulid.ID                      `json:"sourceMessageId"`
+	TransactionSet                edidocument.TransactionSet    `json:"transactionSet"`
+	Direction                     edidocument.DocumentDirection `json:"direction"`
+	Payload                       *edipayload.DocumentPayload   `json:"payload"`
+	CarrierSCAC                   string                        `json:"-"`
+	GeneratedByID                 pulid.ID                      `json:"-"`
+	DisableDeliveryQueue          bool                          `json:"-"`
+	SuppressTenderRecipientUpsert bool                          `json:"-"`
+	IdempotencyKey                string                        `json:"-"`
 }
 
 type ServiceFailure214LifecycleRequest struct {
@@ -88,7 +90,10 @@ type EDIService interface {
 		ctx context.Context,
 		req *PreviewEDIDocumentRequest,
 	) (*EDIDocumentPreview, error)
-	GenerateDocument(ctx context.Context, req *GenerateEDIDocumentRequest) (*edi.EDIMessage, error)
+	GenerateDocument(
+		ctx context.Context,
+		req *GenerateEDIDocumentRequest,
+	) (*edimessage.EDIMessage, error)
 	PreviewServiceFailure214ForLifecycle(
 		ctx context.Context,
 		req *ServiceFailure214LifecycleRequest,
@@ -104,17 +109,17 @@ type EDIService interface {
 }
 
 type EDIDocumentPreview struct {
-	PartnerName              string            `json:"partnerName"`
-	RawX12                   string            `json:"rawX12"`
-	SegmentCount             int64             `json:"segmentCount"`
-	X12Version               string            `json:"x12Version"`
-	InterchangeControlNumber string            `json:"interchangeControlNumber"`
-	GroupControlNumber       string            `json:"groupControlNumber"`
-	TransactionControlNumber string            `json:"transactionControlNumber"`
-	Diagnostics              []edi.Diagnostic  `json:"diagnostics"`
-	LadingVersionID          pulid.ID          `json:"ladingVersionId"`
-	Map                      string            `json:"map"`
-	Document                 jsonutils.RawJSON `json:"document"`
-	Lineage                  []lading.Lineage  `json:"lineage"`
-	Outcomes                 []lading.Outcome  `json:"outcomes"`
+	PartnerName              string                   `json:"partnerName"`
+	RawX12                   string                   `json:"rawX12"`
+	SegmentCount             int64                    `json:"segmentCount"`
+	X12Version               string                   `json:"x12Version"`
+	InterchangeControlNumber string                   `json:"interchangeControlNumber"`
+	GroupControlNumber       string                   `json:"groupControlNumber"`
+	TransactionControlNumber string                   `json:"transactionControlNumber"`
+	Diagnostics              []edidocument.Diagnostic `json:"diagnostics"`
+	LadingVersionID          pulid.ID                 `json:"ladingVersionId"`
+	Map                      string                   `json:"map"`
+	Document                 jsonutils.RawJSON        `json:"document"`
+	Lineage                  []lading.Lineage         `json:"lineage"`
+	Outcomes                 []lading.Outcome         `json:"outcomes"`
 }

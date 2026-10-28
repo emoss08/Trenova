@@ -3,6 +3,12 @@
 package gqlmodel
 
 import (
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edicarrierinvoice"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/ediinboundfile"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edimessage"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/editransfer"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/ladingproject"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/pickupwindow"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/quickfilter"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringremittanceports"
@@ -4478,16 +4484,16 @@ type EDIAckHealth struct {
 	// How many overdue messages are counted but not listed.
 	OverdueNotListed int `json:"overdueNotListed"`
 	// Messages dead-lettered recently, newest first.
-	RecentDeadLettered []*edi.EDIMessage `json:"recentDeadLettered"`
+	RecentDeadLettered []*edimessage.EDIMessage `json:"recentDeadLettered"`
 }
 
 type EDIAckStatusCount struct {
-	Status edi.MessageAcknowledgmentStatus `json:"status"`
+	Status edimessage.MessageAcknowledgmentStatus `json:"status"`
 	Count  int                             `json:"count"`
 }
 
 type EDICarrierInvoiceList struct {
-	Items      []*edi.CarrierInvoice `json:"items"`
+	Items      []*edicarrierinvoice.CarrierInvoice `json:"items"`
 	TotalCount int                   `json:"totalCount"`
 	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
 	TotalCountExact bool `json:"totalCountExact"`
@@ -4515,7 +4521,7 @@ type EDIFlowInstanceConnection struct {
 }
 
 type EDIFlowInstanceEdge struct {
-	Node   *edi.FlowInstance `json:"node"`
+	Node   *ladingproject.FlowInstance `json:"node"`
 	Cursor string            `json:"cursor"`
 }
 
@@ -4529,25 +4535,25 @@ type EDIInboundFileConnection struct {
 
 // One inbound EDI file as its detail reads it, with the transaction sets parsed from it.
 type EDIInboundFileDetail struct {
-	File *edi.EDIInboundFile `json:"file"`
+	File *ediinboundfile.EDIInboundFile `json:"file"`
 	// The communication profile the file was picked up through.
 	CommunicationProfileName *string `json:"communicationProfileName,omitempty"`
 	MessageCount             int     `json:"messageCount"`
 	// The transaction sets parsed from the file, the first 50.
-	Messages []*edi.EDIMessage `json:"messages"`
+	Messages []*edimessage.EDIMessage `json:"messages"`
 	// The raw file as it was received, its first 16 KB; null once purged under the retention policy.
 	Raw *EDIRawText `json:"raw,omitempty"`
 }
 
 type EDIInboundFileEdge struct {
-	Node   *edi.EDIInboundFile `json:"node"`
+	Node   *ediinboundfile.EDIInboundFile `json:"node"`
 	Cursor string              `json:"cursor"`
 }
 
 // A set a Lading version exchanges with the partner.
 type EDILadingExchange struct {
 	TransactionSet string                `json:"transactionSet"`
-	Direction      edi.DocumentDirection `json:"direction"`
+	Direction      edidocument.DocumentDirection `json:"direction"`
 	Map            string                `json:"map"`
 	// The acknowledgment that answers it: the one Trenova sends back for an inbound set, the one the flow expects for an outbound set. Null when none is.
 	Acknowledgment *string `json:"acknowledgment,omitempty"`
@@ -4598,7 +4604,7 @@ type EDIMessageConnection struct {
 
 // One EDI message as its detail reads it: the document it decoded to and every finding.
 type EDIMessageDetail struct {
-	Message *edi.EDIMessage `json:"message"`
+	Message *edimessage.EDIMessage `json:"message"`
 	// What the document says, decoded from its X12.
 	Decoded         any `json:"decoded,omitempty"`
 	DiagnosticCount int `json:"diagnosticCount"`
@@ -4620,7 +4626,7 @@ type EDIMessageDiagnostic struct {
 }
 
 type EDIMessageEdge struct {
-	Node   *edi.EDIMessage `json:"node"`
+	Node   *edimessage.EDIMessage `json:"node"`
 	Cursor string          `json:"cursor"`
 }
 
@@ -4631,7 +4637,7 @@ type EDIOverduePartnerAcks struct {
 	OverdueCount      int    `json:"overdueCount"`
 	OldestGeneratedAt int    `json:"oldestGeneratedAt"`
 	// The partner's oldest overdue messages, a few at most.
-	Messages []*edi.EDIMessage `json:"messages"`
+	Messages []*edimessage.EDIMessage `json:"messages"`
 }
 
 type EDIPartnerAckCounts struct {
@@ -4657,11 +4663,11 @@ type EDIPartnerAttention struct {
 	OverdueAckCount      int  `json:"overdueAckCount"`
 	OldestOverdueAt      *int `json:"oldestOverdueAt,omitempty"`
 	// The oldest overdue messages, a few at most.
-	OverdueAcks []*edi.EDIMessage `json:"overdueAcks"`
+	OverdueAcks []*edimessage.EDIMessage `json:"overdueAcks"`
 	// Messages dead-lettered within the activity window, newest first.
-	DeadLettered []*edi.EDIMessage `json:"deadLettered"`
+	DeadLettered []*edimessage.EDIMessage `json:"deadLettered"`
 	// Files from the partner set aside within the activity window, newest first.
-	QuarantinedFiles []*edi.EDIInboundFile `json:"quarantinedFiles"`
+	QuarantinedFiles []*ediinboundfile.EDIInboundFile `json:"quarantinedFiles"`
 }
 
 // Everything the Desk's EDI partner card draws about one partner, read in one request.
@@ -4716,11 +4722,11 @@ type EDIPartnerEdge struct {
 }
 
 type EDIPartnerLading struct {
-	Project *edi.LadingProject `json:"project,omitempty"`
+	Project *ladingproject.LadingProject `json:"project,omitempty"`
 	// The version Trenova runs for the partner.
-	Active *edi.LadingVersion `json:"active,omitempty"`
+	Active *ladingproject.LadingVersion `json:"active,omitempty"`
 	// The version compared with it on live traffic, if one is.
-	Shadow *edi.LadingVersion `json:"shadow,omitempty"`
+	Shadow *ladingproject.LadingVersion `json:"shadow,omitempty"`
 }
 
 type EDIPartnerMappingSummary struct {
@@ -4762,7 +4768,7 @@ type EDIPartnerScorecard struct {
 
 type EDIPartnerSetActivity struct {
 	TransactionSet    string                `json:"transactionSet"`
-	Direction         edi.DocumentDirection `json:"direction"`
+	Direction         edidocument.DocumentDirection `json:"direction"`
 	Count             int                   `json:"count"`
 	FailedCount       int                   `json:"failedCount"`
 	DeadLetteredCount int                   `json:"deadLetteredCount"`
@@ -4856,7 +4862,7 @@ type EDITransferConnection struct {
 
 // One load tender as its card reads it, with what accepting it still waits on.
 type EDITransferDetail struct {
-	Transfer *edi.EDITransfer `json:"transfer"`
+	Transfer *editransfer.EDITransfer `json:"transfer"`
 	// The partner's codes not yet mapped, read only for an inbound tender that can still be decided; accepting it waits on them.
 	UnresolvedMappings []*EDITransferMappingNeed `json:"unresolvedMappings"`
 	// Whether the tender can be accepted now: inbound, still open, and every code mapped.
@@ -4864,7 +4870,7 @@ type EDITransferDetail struct {
 }
 
 type EDITransferEdge struct {
-	Node   *edi.EDITransfer `json:"node"`
+	Node   *editransfer.EDITransfer `json:"node"`
 	Cursor string           `json:"cursor"`
 }
 

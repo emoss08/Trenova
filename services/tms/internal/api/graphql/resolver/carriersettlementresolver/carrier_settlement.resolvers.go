@@ -18,7 +18,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/loaderfields"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edicarrierinvoice"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
@@ -41,19 +41,19 @@ func (r *CarrierSettlementResolver) PaidExchangeRate(ctx context.Context, obj *c
 	return gqldecimal.NullDecimalStringPtr(obj.PaidExchangeRate), nil
 }
 
-func (r *EdiCarrierInvoiceResolver) TotalAmount(ctx context.Context, obj *edi.CarrierInvoice) (*string, error) {
+func (r *EdiCarrierInvoiceResolver) TotalAmount(ctx context.Context, obj *edicarrierinvoice.CarrierInvoice) (*string, error) {
 	return gqldecimal.NullDecimalStringPtr(obj.TotalAmount), nil
 }
 
-func (r *EdiCarrierInvoiceResolver) ExpectedAmount(ctx context.Context, obj *edi.CarrierInvoice) (*string, error) {
+func (r *EdiCarrierInvoiceResolver) ExpectedAmount(ctx context.Context, obj *edicarrierinvoice.CarrierInvoice) (*string, error) {
 	return gqldecimal.NullDecimalStringPtr(obj.ExpectedAmount), nil
 }
 
-func (r *EdiCarrierInvoiceResolver) VarianceAmount(ctx context.Context, obj *edi.CarrierInvoice) (*string, error) {
+func (r *EdiCarrierInvoiceResolver) VarianceAmount(ctx context.Context, obj *edicarrierinvoice.CarrierInvoice) (*string, error) {
 	return gqldecimal.NullDecimalStringPtr(obj.VarianceAmount), nil
 }
 
-func (r *EdiCarrierInvoiceResolver) ReconciliationStatus(ctx context.Context, obj *edi.CarrierInvoice) (string, error) {
+func (r *EdiCarrierInvoiceResolver) ReconciliationStatus(ctx context.Context, obj *edicarrierinvoice.CarrierInvoice) (string, error) {
 	return string(obj.ReconciliationStatus), nil
 }
 
@@ -236,7 +236,7 @@ func (r *MutationResolver) UpdateCarrierSettlementControl(ctx context.Context, i
 	return r.CarrierSettlementService.UpdateControl(ctx, entity, actorutil.FromAuthContext(authCtx))
 }
 
-func (r *MutationResolver) LinkEDICarrierInvoiceToCarrier(ctx context.Context, invoiceID string, carrierID string) (*edi.CarrierInvoice, error) {
+func (r *MutationResolver) LinkEDICarrierInvoiceToCarrier(ctx context.Context, invoiceID string, carrierID string) (*edicarrierinvoice.CarrierInvoice, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceCarrierInvoiceMatch, permission.OpUpdate)
 	if err != nil {
 		return nil, err
@@ -489,7 +489,7 @@ func (r *QueryResolver) EDICarrierInvoices(ctx context.Context, reconciliationSt
 		Filter: listFilterOptions(resolvercore.TenantInfo(authCtx), limit, offset),
 	}
 	if reconciliationStatus != nil && *reconciliationStatus != "" {
-		req.ReconciliationStatus = edi.CarrierInvoiceReconciliationStatus(*reconciliationStatus)
+		req.ReconciliationStatus = edicarrierinvoice.CarrierInvoiceReconciliationStatus(*reconciliationStatus)
 		if !req.ReconciliationStatus.IsValid() {
 			return nil, errortypes.NewValidationError("reconciliationStatus", errortypes.ErrInvalid,
 				"Reconciliation status must be Unmatched, MappingRequired, Matched or Variance")
@@ -586,7 +586,7 @@ func (r *CarrierSettlementResolver) VoidedBy(ctx context.Context, obj *carrierse
 	return loaderfields.LoadUser(ctx, obj.VoidedByID)
 }
 
-func (r *EdiCarrierInvoiceResolver) SuggestedCarrier(ctx context.Context, obj *edi.CarrierInvoice) (*carrier.Carrier, error) {
+func (r *EdiCarrierInvoiceResolver) SuggestedCarrier(ctx context.Context, obj *edicarrierinvoice.CarrierInvoice) (*carrier.Carrier, error) {
 	authCtx, ok := gqlctx.AuthContext(ctx)
 	if !ok || authCtx == nil || obj.CarrierID.IsNotNil() {
 		return nil, nil

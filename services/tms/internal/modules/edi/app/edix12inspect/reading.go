@@ -4,7 +4,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
 	"github.com/emoss08/trenova/pkg/x12"
 	"github.com/emoss08/trenova/shared/i18n"
 )
@@ -51,15 +51,15 @@ func FindingDiagnostic(finding *x12.Finding, locale i18n.Locale) NormalizedDiagn
 	return diagnostic
 }
 
-func FindingSeverity(severity x12.Severity) edi.ValidationSeverity {
+func FindingSeverity(severity x12.Severity) edidocument.ValidationSeverity {
 	switch severity {
 	case x12.SeverityError:
-		return edi.ValidationSeverityError
+		return edidocument.ValidationSeverityError
 	case x12.SeverityWarning:
-		return edi.ValidationSeverityWarning
+		return edidocument.ValidationSeverityWarning
 	case x12.SeverityInfo:
 	}
-	return edi.ValidationSeverityInfo
+	return edidocument.ValidationSeverityInfo
 }
 
 func FindingPath(finding *x12.Finding) string {
@@ -181,11 +181,11 @@ func buildSummary(result *InspectX12Result) InspectSummary {
 	}
 	for index := range result.Diagnostics {
 		switch result.Diagnostics[index].Severity {
-		case edi.ValidationSeverityError:
+		case edidocument.ValidationSeverityError:
 			summary.ErrorCount++
-		case edi.ValidationSeverityWarning:
+		case edidocument.ValidationSeverityWarning:
 			summary.WarningCount++
-		case edi.ValidationSeverityInfo:
+		case edidocument.ValidationSeverityInfo:
 			summary.InfoCount++
 		}
 	}
@@ -209,7 +209,7 @@ func splitComponents(value, componentSeparator string) []X12Component {
 }
 
 func normalizeRenderDiagnostics(
-	diagnostics []edi.Diagnostic,
+	diagnostics []edidocument.Diagnostic,
 	segments []X12Segment,
 ) []NormalizedDiagnostic {
 	normalized := make([]NormalizedDiagnostic, 0, len(diagnostics))
@@ -229,7 +229,7 @@ func normalizeRenderDiagnostics(
 	return normalized
 }
 
-func sourceForDiagnostic(diagnostic *edi.Diagnostic) DiagnosticSource {
+func sourceForDiagnostic(diagnostic *edidocument.Diagnostic) DiagnosticSource {
 	code := strings.ToLower(diagnostic.Code)
 	path := strings.ToLower(diagnostic.Path)
 	switch {
@@ -248,7 +248,7 @@ func sourceForDiagnostic(diagnostic *edi.Diagnostic) DiagnosticSource {
 	}
 }
 
-func segmentIndexForDiagnostic(segments []X12Segment, diagnostic *edi.Diagnostic) int {
+func segmentIndexForDiagnostic(segments []X12Segment, diagnostic *edidocument.Diagnostic) int {
 	if diagnostic.SegmentID == "" {
 		return 0
 	}
@@ -268,7 +268,7 @@ func parsePositiveInt(value string) int {
 	return parsed
 }
 
-func envelopeSeparatorsPresent(envelope *edi.X12EnvelopeSettings) bool {
+func envelopeSeparatorsPresent(envelope *edidocument.X12EnvelopeSettings) bool {
 	return envelope != nil &&
 		(envelope.ElementSeparator != "" || envelope.SegmentTerminator != "" ||
 			envelope.ComponentSeparator != "" || envelope.RepetitionSeparator != "")

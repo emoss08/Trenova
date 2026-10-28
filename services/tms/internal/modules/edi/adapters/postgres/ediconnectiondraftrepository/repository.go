@@ -10,6 +10,9 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi/edidb"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument/edidocumentdb"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/ladingproject"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/ladingproject/ladingprojectdb"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediconnectiondraftports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure/servicefailuredb"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer/customerdb"
@@ -30,11 +33,11 @@ const configPartnerAS2ID = "partnerAS2Id"
 
 var partnerErrors = dberror.Mapping{Entity: "EDIPartner"}
 
-var identifyingStatuses = []edi.LadingVersionStatus{
-	edi.LadingVersionStatusDraft,
-	edi.LadingVersionStatusCertified,
-	edi.LadingVersionStatusActive,
-	edi.LadingVersionStatusShadow,
+var identifyingStatuses = []ladingproject.LadingVersionStatus{
+	ladingproject.LadingVersionStatusDraft,
+	ladingproject.LadingVersionStatusCertified,
+	ladingproject.LadingVersionStatusActive,
+	ladingproject.LadingVersionStatusShadow,
 }
 
 type Params struct {
@@ -188,7 +191,7 @@ func (r *repository) partnerIDsByInterchange(
 	}
 
 	db := r.db.Keel(ctx)
-	lv := edidb.LadingVersions
+	lv := ladingprojectdb.LadingVersions
 	qualifier := strings.TrimSpace(req.ISAQualifier)
 	projectIDs, err := keel.Into[pulid.ID](ctx, db, lv.Pick(lv.ProjectID).
 		DistinctOn(lv.ProjectID).
@@ -203,7 +206,7 @@ func (r *repository) partnerIDsByInterchange(
 	if err != nil || len(projectIDs) == 0 {
 		return nil, err
 	}
-	lp := edidb.LadingProjects
+	lp := ladingprojectdb.LadingProjects
 	return keel.Into[pulid.ID](ctx, db, lp.Pick(lp.EDIPartnerID).
 		Where(lp.ID.In(projectIDs...)).
 		Limit(len(projectIDs)))
@@ -247,12 +250,12 @@ func (r *repository) GetPartnerSetup(
 			db := r.db.Keel(ctx)
 			ep := edidb.EDIPartners
 			cp := edidb.EDICommunicationProfiles
-			lp := edidb.LadingProjects
+			lp := ladingprojectdb.LadingProjects
 			mi := edidb.EDIMappingProfileItems
-			cn := edidb.EDIControlNumberSequences
+			cn := edidocumentdb.EDIControlNumberSequences
 
 			setup := new(ediconnectiondraftports.EDIPartnerSetup)
-			var projects []*edi.LadingProject
+			var projects []*ladingproject.LadingProject
 			err := keel.Batch(
 				ctx,
 				db,
@@ -276,7 +279,7 @@ func (r *repository) GetPartnerSetup(
 				return setup, nil
 			}
 			setup.Project = projects[0]
-			lv := edidb.LadingVersions
+			lv := ladingprojectdb.LadingVersions
 			versions, err := lv.Where(lv.ProjectID.Eq(setup.Project.ID)).
 				Order(lv.Number.Desc()).
 				Limit(1).
@@ -300,7 +303,7 @@ func (r *repository) GetInterchangeIdentity(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*ediconnectiondraftports.InterchangeIdentity, error) {
-			lv := edidb.LadingVersions
+			lv := ladingprojectdb.LadingVersions
 			qualifier := lv.Manifest.Text("partner", "interchange", "us", "qualifier").Coalesce("")
 			senderID := lv.Manifest.Text("partner", "interchange", "us", "id")
 			applicationID := lv.Manifest.Text("partner", "interchange", "group", "ours").
@@ -311,7 +314,7 @@ func (r *repository) GetInterchangeIdentity(
 				r.db.Keel(ctx),
 				lv.
 					Where(
-						lv.Status.Eq(edi.LadingVersionStatusActive),
+						lv.Status.Eq(ladingproject.LadingVersionStatusActive),
 						senderID.Trim().NullIf("").IsNotNull(),
 					).
 					Group(qualifier, senderID, applicationID).

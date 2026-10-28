@@ -14,6 +14,11 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/ediinboundfile"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edimessage"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/editransfer"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/ladingproject"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/edimessageports"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/editenderports"
@@ -25,15 +30,15 @@ import (
 	"github.com/emoss08/trenova/shared/timeutils"
 )
 
-func (r *EdiMessageResolver) TransactionSet(ctx context.Context, obj *edi.EDIMessage) (string, error) {
+func (r *EdiMessageResolver) TransactionSet(ctx context.Context, obj *edimessage.EDIMessage) (string, error) {
 	return string(obj.TransactionSet), nil
 }
 
-func (r *EdiTransferResolver) TenderPayload(ctx context.Context, obj *edi.EDITransfer) (any, error) {
+func (r *EdiTransferResolver) TenderPayload(ctx context.Context, obj *editransfer.EDITransfer) (any, error) {
 	return obj.TenderPayload, nil
 }
 
-func (r *EdiTransferResolver) MappingSnapshot(ctx context.Context, obj *edi.EDITransfer) (any, error) {
+func (r *EdiTransferResolver) MappingSnapshot(ctx context.Context, obj *editransfer.EDITransfer) (any, error) {
 	return obj.MappingSnapshot, nil
 }
 
@@ -104,7 +109,7 @@ func (r *QueryResolver) EDITransfers(ctx context.Context, input gqlmodel.DataTab
 		Cursor:        tableInput.Cursor,
 		InboundFileID: fileID,
 	}
-	var result *pagination.CursorListResult[*edi.EDITransfer]
+	var result *pagination.CursorListResult[*editransfer.EDITransfer]
 	if direction == gqlmodel.EDITransferDirectionInbound {
 		result, err = r.EdiService.ListInboundTransfersCursor(ctx, req)
 	} else {
@@ -117,7 +122,7 @@ func (r *QueryResolver) EDITransfers(ctx context.Context, input gqlmodel.DataTab
 	return ediTransferConnectionToModel(result)
 }
 
-func (r *QueryResolver) EDIMessages(ctx context.Context, input gqlmodel.DataTableConnectionInput, transactionSet *string, direction *edi.DocumentDirection, partnerID *string) (*gqlmodel.EDIMessageConnection, error) {
+func (r *QueryResolver) EDIMessages(ctx context.Context, input gqlmodel.DataTableConnectionInput, transactionSet *string, direction *edidocument.DocumentDirection, partnerID *string) (*gqlmodel.EDIMessageConnection, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceEDI, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -133,7 +138,7 @@ func (r *QueryResolver) EDIMessages(ctx context.Context, input gqlmodel.DataTabl
 		Cursor: tableInput.Cursor,
 	}
 	if transactionSet != nil {
-		req.TransactionSet = edi.TransactionSet(*transactionSet)
+		req.TransactionSet = edidocument.TransactionSet(*transactionSet)
 	}
 	if direction != nil {
 		req.Direction = *direction
@@ -154,7 +159,7 @@ func (r *QueryResolver) EDIMessages(ctx context.Context, input gqlmodel.DataTabl
 	return ediMessageConnectionToModel(result)
 }
 
-func (r *QueryResolver) EDIInboundFiles(ctx context.Context, input gqlmodel.DataTableConnectionInput, status *edi.InboundFileStatus, partnerID *string) (*gqlmodel.EDIInboundFileConnection, error) {
+func (r *QueryResolver) EDIInboundFiles(ctx context.Context, input gqlmodel.DataTableConnectionInput, status *ediinboundfile.InboundFileStatus, partnerID *string) (*gqlmodel.EDIInboundFileConnection, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceEDI, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -219,7 +224,7 @@ func (r *QueryResolver) EDIMappingProfiles(ctx context.Context, input gqlmodel.D
 	return ediMappingProfileConnectionToModel(result)
 }
 
-func (r *QueryResolver) EDIFlowInstances(ctx context.Context, input gqlmodel.DataTableConnectionInput, partnerID *string, shipmentID *string, statuses []edi.FlowInstanceStatus) (*gqlmodel.EDIFlowInstanceConnection, error) {
+func (r *QueryResolver) EDIFlowInstances(ctx context.Context, input gqlmodel.DataTableConnectionInput, partnerID *string, shipmentID *string, statuses []ladingproject.FlowInstanceStatus) (*gqlmodel.EDIFlowInstanceConnection, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceEDI, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -254,7 +259,7 @@ func (r *QueryResolver) EDIFlowInstances(ctx context.Context, input gqlmodel.Dat
 	return ediFlowInstanceConnectionToModel(result)
 }
 
-func (r *EdiFlowInstanceResolver) Reason(ctx context.Context, obj *edi.FlowInstance) (*string, error) {
+func (r *EdiFlowInstanceResolver) Reason(ctx context.Context, obj *ladingproject.FlowInstance) (*string, error) {
 	if obj.Reason == nil || obj.Reason.IsZero() {
 		return nil, nil
 	}
@@ -373,66 +378,66 @@ func (r *QueryResolver) EDIPartnerCard(ctx context.Context, id string) (*gqlmode
 	return ediPartnerCardToModel(card), nil
 }
 
-func (r *EdiTransferResolver) Direction(ctx context.Context, obj *edi.EDITransfer) (gqlmodel.EDITransferDirection, error) {
+func (r *EdiTransferResolver) Direction(ctx context.Context, obj *editransfer.EDITransfer) (gqlmodel.EDITransferDirection, error) {
 	if obj.ReceivedBy(callerOrganization(ctx)) {
 		return gqlmodel.EDITransferDirectionInbound, nil
 	}
 	return gqlmodel.EDITransferDirectionOutbound, nil
 }
 
-func (r *EdiTransferResolver) Counterparty(ctx context.Context, obj *edi.EDITransfer) (*edi.EDIPartner, error) {
+func (r *EdiTransferResolver) Counterparty(ctx context.Context, obj *editransfer.EDITransfer) (*edi.EDIPartner, error) {
 	return obj.Counterparty(callerOrganization(ctx)), nil
 }
 
-func (r *EdiTransferResolver) BOL(ctx context.Context, obj *edi.EDITransfer) (*string, error) {
+func (r *EdiTransferResolver) BOL(ctx context.Context, obj *editransfer.EDITransfer) (*string, error) {
 	return optionalText(obj.TenderPayload.BOL), nil
 }
 
-func (r *EdiTransferResolver) CustomerLabel(ctx context.Context, obj *edi.EDITransfer) (*string, error) {
+func (r *EdiTransferResolver) CustomerLabel(ctx context.Context, obj *editransfer.EDITransfer) (*string, error) {
 	return optionalText(obj.TenderPayload.CustomerLabel), nil
 }
 
-func (r *EdiTransferResolver) ServiceTypeLabel(ctx context.Context, obj *edi.EDITransfer) (*string, error) {
+func (r *EdiTransferResolver) ServiceTypeLabel(ctx context.Context, obj *editransfer.EDITransfer) (*string, error) {
 	return optionalText(obj.TenderPayload.ServiceTypeLabel), nil
 }
 
-func (r *EdiTransferResolver) ShipmentTypeLabel(ctx context.Context, obj *edi.EDITransfer) (*string, error) {
+func (r *EdiTransferResolver) ShipmentTypeLabel(ctx context.Context, obj *editransfer.EDITransfer) (*string, error) {
 	return optionalText(obj.TenderPayload.ShipmentTypeLabel), nil
 }
 
-func (r *EdiTransferResolver) Pieces(ctx context.Context, obj *edi.EDITransfer) (*int, error) {
+func (r *EdiTransferResolver) Pieces(ctx context.Context, obj *editransfer.EDITransfer) (*int, error) {
 	return optionalInt(obj.TenderPayload.Pieces), nil
 }
 
-func (r *EdiTransferResolver) Weight(ctx context.Context, obj *edi.EDITransfer) (*int, error) {
+func (r *EdiTransferResolver) Weight(ctx context.Context, obj *editransfer.EDITransfer) (*int, error) {
 	return optionalInt(obj.TenderPayload.Weight), nil
 }
 
-func (r *EdiTransferResolver) TemperatureMin(ctx context.Context, obj *edi.EDITransfer) (*int, error) {
+func (r *EdiTransferResolver) TemperatureMin(ctx context.Context, obj *editransfer.EDITransfer) (*int, error) {
 	return optionalInt(obj.TenderPayload.TemperatureMin), nil
 }
 
-func (r *EdiTransferResolver) TemperatureMax(ctx context.Context, obj *edi.EDITransfer) (*int, error) {
+func (r *EdiTransferResolver) TemperatureMax(ctx context.Context, obj *editransfer.EDITransfer) (*int, error) {
 	return optionalInt(obj.TenderPayload.TemperatureMax), nil
 }
 
-func (r *EdiTransferResolver) StopCount(ctx context.Context, obj *edi.EDITransfer) (int, error) {
+func (r *EdiTransferResolver) StopCount(ctx context.Context, obj *editransfer.EDITransfer) (int, error) {
 	return tenderStopCount(&obj.TenderPayload), nil
 }
 
-func (r *EdiTransferResolver) Stops(ctx context.Context, obj *edi.EDITransfer) ([]*gqlmodel.EDITenderStop, error) {
+func (r *EdiTransferResolver) Stops(ctx context.Context, obj *editransfer.EDITransfer) ([]*gqlmodel.EDITenderStop, error) {
 	return tenderStopsToModel(&obj.TenderPayload), nil
 }
 
-func (r *EdiTransferResolver) Commodities(ctx context.Context, obj *edi.EDITransfer) ([]*gqlmodel.EDITenderCommodity, error) {
+func (r *EdiTransferResolver) Commodities(ctx context.Context, obj *editransfer.EDITransfer) ([]*gqlmodel.EDITenderCommodity, error) {
 	return tenderCommoditiesToModel(&obj.TenderPayload), nil
 }
 
-func (r *EdiTransferResolver) Charges(ctx context.Context, obj *edi.EDITransfer) (*gqlmodel.EDITenderCharges, error) {
+func (r *EdiTransferResolver) Charges(ctx context.Context, obj *editransfer.EDITransfer) (*gqlmodel.EDITenderCharges, error) {
 	return tenderChargesToModel(&obj.TenderPayload), nil
 }
 
-func (r *EdiTransferResolver) CanDecide(ctx context.Context, obj *edi.EDITransfer) (bool, error) {
+func (r *EdiTransferResolver) CanDecide(ctx context.Context, obj *editransfer.EDITransfer) (bool, error) {
 	return obj.Status.IsActionable(), nil
 }
 
@@ -538,14 +543,14 @@ func (r *QueryResolver) EDIAckHealth(ctx context.Context, partnerID *string, tra
 
 func (r *EdiLadingVersionResolver) Interchange(
 	_ context.Context,
-	obj *edi.LadingVersion,
+	obj *ladingproject.LadingVersion,
 ) (*gqlmodel.EDILadingInterchange, error) {
 	return ladingInterchangeToModel(&obj.Manifest), nil
 }
 
 func (r *EdiLadingVersionResolver) Exchanges(
 	_ context.Context,
-	obj *edi.LadingVersion,
+	obj *ladingproject.LadingVersion,
 ) ([]*gqlmodel.EDILadingExchange, error) {
 	return ladingExchangesToModel(&obj.Manifest), nil
 }

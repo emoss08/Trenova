@@ -1,9 +1,10 @@
-package edi
+package editransfer
 
 import (
 	"context"
 
 	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -14,33 +15,33 @@ import (
 )
 
 type LoadTenderPayload struct {
-	PurposeCode              LoadTenderPurposeCode            `json:"purposeCode,omitempty"`
-	TenderOfferID            pulid.ID                         `json:"tenderOfferId,omitempty"`
-	ShipmentID               pulid.ID                         `json:"shipmentId"`
-	BusinessUnitID           pulid.ID                         `json:"businessUnitId"`
-	OrganizationID           pulid.ID                         `json:"organizationId"`
-	ServiceTypeID            pulid.ID                         `json:"serviceTypeId"`
-	ServiceTypeLabel         string                           `json:"serviceTypeLabel,omitempty"`
-	ShipmentTypeID           pulid.ID                         `json:"shipmentTypeId,omitempty"`
-	ShipmentTypeLabel        string                           `json:"shipmentTypeLabel,omitempty"`
-	CustomerID               pulid.ID                         `json:"customerId"`
-	CustomerLabel            string                           `json:"customerLabel,omitempty"`
-	FormulaTemplateID        pulid.ID                         `json:"formulaTemplateId"`
-	FormulaTemplateLabel     string                           `json:"formulaTemplateLabel,omitempty"`
-	BOL                      string                           `json:"bol,omitempty"`
-	Pieces                   *int64                           `json:"pieces,omitempty"`
-	Weight                   *int64                           `json:"weight,omitempty"`
-	TemperatureMin           *int16                           `json:"temperatureMin,omitempty"`
-	TemperatureMax           *int16                           `json:"temperatureMax,omitempty"`
-	FreightChargeAmount      decimal.NullDecimal              `json:"freightChargeAmount"`
-	OtherChargeAmount        decimal.NullDecimal              `json:"otherChargeAmount"`
-	TotalChargeAmount        decimal.NullDecimal              `json:"totalChargeAmount"`
-	RatingDetail             map[string]any                   `json:"ratingDetail,omitempty"`
-	Moves                    []LoadTenderMove                 `json:"moves"`
-	Commodities              []LoadTenderCommodity            `json:"commodities"`
-	AdditionalCharges        []LoadTenderCharge               `json:"additionalCharges"`
-	RequiredMappingEntityIDs map[MappingEntityType][]pulid.ID `json:"requiredMappingEntityIds"`
-	CustomFields             map[string]any                   `json:"customFields,omitempty"`
+	PurposeCode              LoadTenderPurposeCode                `json:"purposeCode,omitempty"`
+	TenderOfferID            pulid.ID                             `json:"tenderOfferId,omitempty"`
+	ShipmentID               pulid.ID                             `json:"shipmentId"`
+	BusinessUnitID           pulid.ID                             `json:"businessUnitId"`
+	OrganizationID           pulid.ID                             `json:"organizationId"`
+	ServiceTypeID            pulid.ID                             `json:"serviceTypeId"`
+	ServiceTypeLabel         string                               `json:"serviceTypeLabel,omitempty"`
+	ShipmentTypeID           pulid.ID                             `json:"shipmentTypeId,omitempty"`
+	ShipmentTypeLabel        string                               `json:"shipmentTypeLabel,omitempty"`
+	CustomerID               pulid.ID                             `json:"customerId"`
+	CustomerLabel            string                               `json:"customerLabel,omitempty"`
+	FormulaTemplateID        pulid.ID                             `json:"formulaTemplateId"`
+	FormulaTemplateLabel     string                               `json:"formulaTemplateLabel,omitempty"`
+	BOL                      string                               `json:"bol,omitempty"`
+	Pieces                   *int64                               `json:"pieces,omitempty"`
+	Weight                   *int64                               `json:"weight,omitempty"`
+	TemperatureMin           *int16                               `json:"temperatureMin,omitempty"`
+	TemperatureMax           *int16                               `json:"temperatureMax,omitempty"`
+	FreightChargeAmount      decimal.NullDecimal                  `json:"freightChargeAmount"`
+	OtherChargeAmount        decimal.NullDecimal                  `json:"otherChargeAmount"`
+	TotalChargeAmount        decimal.NullDecimal                  `json:"totalChargeAmount"`
+	RatingDetail             map[string]any                       `json:"ratingDetail,omitempty"`
+	Moves                    []LoadTenderMove                     `json:"moves"`
+	Commodities              []LoadTenderCommodity                `json:"commodities"`
+	AdditionalCharges        []LoadTenderCharge                   `json:"additionalCharges"`
+	RequiredMappingEntityIDs map[edi.MappingEntityType][]pulid.ID `json:"requiredMappingEntityIds"`
+	CustomFields             map[string]any                       `json:"customFields,omitempty"`
 }
 
 type LoadTenderMove struct {
@@ -90,12 +91,12 @@ type LoadTenderCharge struct {
 }
 
 type MappingResolution struct {
-	EntityType  MappingEntityType `json:"entityType"`
-	SourceID    pulid.ID          `json:"sourceId"`
-	SourceLabel string            `json:"sourceLabel,omitempty"`
-	TargetID    pulid.ID          `json:"targetId,omitempty"`
-	TargetLabel string            `json:"targetLabel,omitempty"`
-	Resolved    bool              `json:"resolved"`
+	EntityType  edi.MappingEntityType `json:"entityType"`
+	SourceID    pulid.ID              `json:"sourceId"`
+	SourceLabel string                `json:"sourceLabel,omitempty"`
+	TargetID    pulid.ID              `json:"targetId,omitempty"`
+	TargetLabel string                `json:"targetLabel,omitempty"`
+	Resolved    bool                  `json:"resolved"`
 }
 
 type EDITransfer struct {
@@ -132,8 +133,8 @@ type EDITransfer struct {
 	CreatedAt             int64               `json:"createdAt"             keel:"created_at,autocreate"`
 	UpdatedAt             int64               `json:"updatedAt"             keel:"updated_at,autoupdate"`
 
-	SourcePartner *EDIPartner `json:"sourcePartner,omitempty" keel:"belongs:source_partner_id"`
-	TargetPartner *EDIPartner `json:"targetPartner,omitempty" keel:"belongs:target_partner_id"`
+	SourcePartner *edi.EDIPartner `json:"sourcePartner,omitempty" keel:"belongs:source_partner_id"`
+	TargetPartner *edi.EDIPartner `json:"targetPartner,omitempty" keel:"belongs:target_partner_id"`
 }
 
 func (t *EDITransfer) BeforeUpdate(ctx context.Context) error {
@@ -166,7 +167,7 @@ func (t *EDITransfer) ReceivedBy(orgID pulid.ID) bool {
 	return t.TargetOrganizationID == orgID
 }
 
-func (t *EDITransfer) Counterparty(orgID pulid.ID) *EDIPartner {
+func (t *EDITransfer) Counterparty(orgID pulid.ID) *edi.EDIPartner {
 	if t.ReceivedBy(orgID) {
 		return t.TargetPartner
 	}
@@ -241,11 +242,11 @@ func (t *EDITransfer) Validate(multiErr *errortypes.MultiError) {
 			),
 		),
 		validation.Field(&t.ApprovalWorkflowID,
-			validation.Length(0, maxAS2FieldLength).
+			validation.Length(0, maxWorkflowIDLength).
 				Error("Approval workflow cannot be longer than 255 characters"),
 		),
 		validation.Field(&t.ApprovalWorkflowRunID,
-			validation.Length(0, maxAS2FieldLength).
+			validation.Length(0, maxWorkflowIDLength).
 				Error("Approval workflow run cannot be longer than 255 characters"),
 		),
 		validation.Field(&t.SubmittedAt,
@@ -334,4 +335,7 @@ func (s *LoadTenderStop) Validate(multiErr *errortypes.MultiError) {
 	))
 }
 
-const minStopsPerMove = 2
+const (
+	minStopsPerMove     = 2
+	maxWorkflowIDLength = 255
+)

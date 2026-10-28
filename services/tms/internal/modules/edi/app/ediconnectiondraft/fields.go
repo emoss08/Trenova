@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
 )
 
 type fieldScope int
@@ -107,20 +108,20 @@ var (
 	fileMethods   = []edi.ConnectionMethod{edi.ConnectionMethodSFTP, edi.ConnectionMethodVAN}
 	as2Only       = []edi.ConnectionMethod{edi.ConnectionMethodAS2}
 	vanOnly       = []edi.ConnectionMethod{edi.ConnectionMethodVAN}
-	supportedSets = []edi.TransactionSet{
-		edi.TransactionSet204,
-		edi.TransactionSet210,
-		edi.TransactionSet214,
-		edi.TransactionSet990,
+	supportedSets = []edidocument.TransactionSet{
+		edidocument.TransactionSet204,
+		edidocument.TransactionSet210,
+		edidocument.TransactionSet214,
+		edidocument.TransactionSet990,
 	}
-	directions = []edi.DocumentDirection{
-		edi.DocumentDirectionInbound,
-		edi.DocumentDirectionOutbound,
+	directions = []edidocument.DocumentDirection{
+		edidocument.DocumentDirectionInbound,
+		edidocument.DocumentDirectionOutbound,
 	}
-	controlNumberKinds = []edi.ControlNumberKind{
-		edi.ControlNumberKindInterchange,
-		edi.ControlNumberKindGroup,
-		edi.ControlNumberKindTransaction,
+	controlNumberKinds = []edidocument.ControlNumberKind{
+		edidocument.ControlNumberKindInterchange,
+		edidocument.ControlNumberKindGroup,
+		edidocument.ControlNumberKindTransaction,
 	}
 )
 

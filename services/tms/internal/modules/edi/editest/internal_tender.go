@@ -9,6 +9,10 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi/edidb"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/editenderchange"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/editenderchange/editenderchangedb"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/editransfer"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/editransfer/editransferdb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/internal/testutil"
@@ -124,10 +128,13 @@ func (it *InternalTender) SourceTenderStatus(t *testing.T) *shipment.TenderStatu
 	return stored.TenderStatus
 }
 
-func (it *InternalTender) NewTransfer(t *testing.T, status edi.TransferStatus) *edi.EDITransfer {
+func (it *InternalTender) NewTransfer(
+	t *testing.T,
+	status editransfer.TransferStatus,
+) *editransfer.EDITransfer {
 	t.Helper()
 
-	transfer := &edi.EDITransfer{
+	transfer := &editransfer.EDITransfer{
 		SourceOrganizationID: it.Source.Info.OrgID,
 		SourceBusinessUnitID: it.Source.Info.BuID,
 		TargetOrganizationID: it.Target.Info.OrgID,
@@ -136,7 +143,7 @@ func (it *InternalTender) NewTransfer(t *testing.T, status edi.TransferStatus) *
 		TargetPartnerID:      it.TargetPartner.ID,
 		SourceShipmentID:     it.SourceShipment.ID,
 		Status:               status,
-		TenderPayload: edi.LoadTenderPayload{
+		TenderPayload: editransfer.LoadTenderPayload{
 			ShipmentID:     it.SourceShipment.ID,
 			BusinessUnitID: it.Source.Info.BuID,
 			OrganizationID: it.Source.Info.OrgID,
@@ -145,33 +152,41 @@ func (it *InternalTender) NewTransfer(t *testing.T, status edi.TransferStatus) *
 		SubmittedByID: it.Source.Info.UserID,
 		SubmittedAt:   timeutils.NowUnix(),
 	}
-	require.NoError(t, edidb.EDITransfers.Create(it.Source.Ctx, it.Admin, transfer))
+	require.NoError(t, editransferdb.EDITransfers.Create(it.Source.Ctx, it.Admin, transfer))
 
 	return transfer
 }
 
-func (it *InternalTender) Recipient(transfer *edi.EDITransfer) *edi.TenderRecipient {
-	return &edi.TenderRecipient{
+func (it *InternalTender) Recipient(
+	transfer *editransfer.EDITransfer,
+) *editenderchange.TenderRecipient {
+	return &editenderchange.TenderRecipient{
 		BusinessUnitID:          transfer.SourceBusinessUnitID,
 		SourceOrganizationID:    transfer.SourceOrganizationID,
 		SourceShipmentID:        transfer.SourceShipmentID,
-		RecipientKind:           edi.TenderRecipientKindInternal,
+		RecipientKind:           editenderchange.TenderRecipientKindInternal,
 		RecipientOrganizationID: transfer.TargetOrganizationID,
 		EDIPartnerID:            transfer.TargetPartnerID,
 		OriginalTransferID:      transfer.ID,
 		LatestBaselinePayload:   transfer.TenderPayload,
 		LatestBaselineHash:      transfer.ID.String(),
 		BaselineRecordedAt:      timeutils.NowUnix(),
-		BaselineStatus:          edi.TenderRecipientBaselineStatusSent,
-		Status:                  edi.TenderRecipientStatusActive,
+		BaselineStatus:          editenderchange.TenderRecipientBaselineStatusSent,
+		Status:                  editenderchange.TenderRecipientStatusActive,
 	}
 }
 
-func (it *InternalTender) NewRecipient(t *testing.T, transfer *edi.EDITransfer) *edi.TenderRecipient {
+func (it *InternalTender) NewRecipient(
+	t *testing.T,
+	transfer *editransfer.EDITransfer,
+) *editenderchange.TenderRecipient {
 	t.Helper()
 
 	recipient := it.Recipient(transfer)
-	require.NoError(t, edidb.TenderRecipients.Create(it.Source.Ctx, it.Admin, recipient))
+	require.NoError(
+		t,
+		editenderchangedb.TenderRecipients.Create(it.Source.Ctx, it.Admin, recipient),
+	)
 
 	return recipient
 }

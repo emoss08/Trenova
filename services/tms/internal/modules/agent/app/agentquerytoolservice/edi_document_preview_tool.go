@@ -11,7 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
 	"github.com/emoss08/trenova/internal/modules/edi/app/edix12inspect"
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -34,9 +34,9 @@ const (
 
 var (
 	previewTransactionSets = agenttoolschema.Source("edi.previewTransactionSet", []string{
-		string(edi.TransactionSet204),
-		string(edi.TransactionSet214),
-		string(edi.TransactionSet990),
+		string(edidocument.TransactionSet204),
+		string(edidocument.TransactionSet214),
+		string(edidocument.TransactionSet990),
 	})
 	tenderResponses = agenttoolschema.Source("edi.tenderResponseChoice", []string{
 		string(ediservice.TenderResponseAccept),
@@ -141,7 +141,7 @@ type ediDocumentPreviewView struct {
 func (v *ediDocumentPreviewView) TaintedRecords() []agent.RecordRef { return v.outside }
 
 type documentPreviewCall struct {
-	set        edi.TransactionSet
+	set        edidocument.TransactionSet
 	partnerID  pulid.ID
 	shipmentID pulid.ID
 	transferID pulid.ID
@@ -166,7 +166,7 @@ func (t *previewEDIDocumentTool) Query(
 	}
 
 	tenant := tenantOf(params)
-	if call.set == edi.TransactionSet990 {
+	if call.set == edidocument.TransactionSet990 {
 		answered, pErr := t.documents.PreviewTenderResponse(
 			ctx,
 			&ediservice.PreviewTenderResponseRequest{
@@ -197,7 +197,7 @@ func (t *previewEDIDocumentTool) Query(
 		EDIPartnerID:   call.partnerID,
 		ShipmentID:     call.shipmentID,
 		TransactionSet: call.set,
-		Direction:      edi.DocumentDirectionOutbound,
+		Direction:      edidocument.DocumentDirectionOutbound,
 		GeneratedByID:  params.Actor.UserID,
 	})
 	if err != nil {
@@ -239,7 +239,7 @@ func readDocumentPreviewCall(params map[string]any) (*documentPreviewCall, error
 	if set == "" {
 		return nil, fmt.Errorf("parameter %q is required: 204, 214 or 990", paramTransactionSet)
 	}
-	call := &documentPreviewCall{set: edi.TransactionSet(set)}
+	call := &documentPreviewCall{set: edidocument.TransactionSet(set)}
 	if call.partnerID, err = requirePulid(params, paramPartnerID); err != nil {
 		return nil, err
 	}
@@ -256,7 +256,7 @@ func readDocumentPreviewCall(params map[string]any) (*documentPreviewCall, error
 	call.response = ediservice.TenderResponseChoice(response)
 	call.reason = strings.TrimSpace(optionalString(params, paramDeclineReason))
 
-	if call.set == edi.TransactionSet990 {
+	if call.set == edidocument.TransactionSet990 {
 		err = call.check990()
 	} else {
 		err = call.checkShipmentDocument()
@@ -307,7 +307,7 @@ func (t *previewEDIDocumentTool) mayReadSource(
 	params *agenttoolports.QueryToolParams,
 	call *documentPreviewCall,
 ) error {
-	if call.set == edi.TransactionSet990 {
+	if call.set == edidocument.TransactionSet990 {
 		if !t.access.mayReadRecord(ctx, params, permission.ResourceEDI, call.transferID.String()) {
 			return errors.New("the person you are working for may not read that tender, so " +
 				"its 990 was not rendered")
@@ -325,7 +325,7 @@ func (t *previewEDIDocumentTool) mayReadSource(
 
 func documentPreviewView(
 	ctx context.Context,
-	set edi.TransactionSet,
+	set edidocument.TransactionSet,
 	preview *ediservice.OutboundDocumentPreview,
 ) (*ediDocumentPreviewView, error) {
 	document := preview.Document
@@ -367,7 +367,7 @@ func documentPreviewView(
 	return view, nil
 }
 
-func previewFindings(diagnostics []edi.Diagnostic) []ediDiagnosticRow {
+func previewFindings(diagnostics []edidocument.Diagnostic) []ediDiagnosticRow {
 	rows := make([]ediDiagnosticRow, 0, min(len(diagnostics), maxMessageDiagnostics))
 	for idx := range diagnostics {
 		if len(rows) == maxMessageDiagnostics {

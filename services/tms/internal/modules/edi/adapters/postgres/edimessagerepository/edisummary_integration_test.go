@@ -11,6 +11,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/adapters/postgres/edimessagerepository"
 	"github.com/emoss08/trenova/internal/modules/edi/adapters/postgres/editransferrepository"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/ediinboundfile"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edimessage"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/editransfer"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/edimessageports"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/editenderports"
 	"github.com/emoss08/trenova/internal/testutil/seededtest"
@@ -33,8 +37,8 @@ func TestEDISummaryCounts(t *testing.T) {
 		t,
 		ctx,
 		db,
-		edi.TransactionSet204,
-		edi.DocumentDirectionOutbound,
+		edidocument.TransactionSet204,
+		edidocument.DocumentDirectionOutbound,
 	)
 	tenantInfo := org
 
@@ -58,27 +62,43 @@ func TestEDISummaryCounts(t *testing.T) {
 
 	now := timeutils.NowUnix()
 	messageStatuses := []struct {
-		delivery edi.MessageDeliveryStatus
-		ack      edi.MessageAcknowledgmentStatus
+		delivery edimessage.MessageDeliveryStatus
+		ack      edimessage.MessageAcknowledgmentStatus
 		age      int64
 	}{
-		{edi.MessageDeliveryStatusSent, edi.MessageAcknowledgmentStatusAccepted, 60},
-		{edi.MessageDeliveryStatusSent, edi.MessageAcknowledgmentStatusPending, 10 * 60 * 60},
-		{edi.MessageDeliveryStatusFailed, edi.MessageAcknowledgmentStatusNotExpected, 60},
-		{edi.MessageDeliveryStatusDeadLettered, edi.MessageAcknowledgmentStatusNotExpected, 60},
-		{edi.MessageDeliveryStatusDeadLettered, edi.MessageAcknowledgmentStatusNotExpected, 120},
+		{edimessage.MessageDeliveryStatusSent, edimessage.MessageAcknowledgmentStatusAccepted, 60},
+		{
+			edimessage.MessageDeliveryStatusSent,
+			edimessage.MessageAcknowledgmentStatusPending,
+			10 * 60 * 60,
+		},
+		{
+			edimessage.MessageDeliveryStatusFailed,
+			edimessage.MessageAcknowledgmentStatusNotExpected,
+			60,
+		},
+		{
+			edimessage.MessageDeliveryStatusDeadLettered,
+			edimessage.MessageAcknowledgmentStatusNotExpected,
+			60,
+		},
+		{
+			edimessage.MessageDeliveryStatusDeadLettered,
+			edimessage.MessageAcknowledgmentStatusNotExpected,
+			120,
+		},
 	}
 	for index, entry := range messageStatuses {
-		message := &edi.EDIMessage{
+		message := &edimessage.EDIMessage{
 			BusinessUnitID:           org.BuID,
 			OrganizationID:           org.OrgID,
 			EDIPartnerID:             partner.ID,
 			DocumentTypeID:           documentType.ID,
-			Direction:                edi.DocumentDirectionOutbound,
-			Standard:                 edi.EDIStandardX12,
-			TransactionSet:           edi.TransactionSet204,
-			X12Version:               edi.DefaultX12204Version,
-			Status:                   edi.MessageStatusGenerated,
+			Direction:                edidocument.DocumentDirectionOutbound,
+			Standard:                 edidocument.EDIStandardX12,
+			TransactionSet:           edidocument.TransactionSet204,
+			X12Version:               edidocument.DefaultX12204Version,
+			Status:                   edimessage.MessageStatusGenerated,
 			RawX12:                   "ISA*TEST~",
 			InterchangeControlNumber: fmt.Sprintf("%09d", index+1),
 			GroupControlNumber:       fmt.Sprintf("%d", index+1),
@@ -87,7 +107,7 @@ func TestEDISummaryCounts(t *testing.T) {
 			AckStatus:                entry.ack,
 			GeneratedAt:              now - entry.age,
 		}
-		if entry.delivery == edi.MessageDeliveryStatusDeadLettered {
+		if entry.delivery == edimessage.MessageDeliveryStatusDeadLettered {
 			message.DeliveryLastError = "delivery failed"
 		}
 		require.NoError(t, create(ctx, db, message), "message %d", index)
@@ -103,18 +123,18 @@ func TestEDISummaryCounts(t *testing.T) {
 		edimessageports.GetEDIMessageStatusCountsRequest{TenantInfo: tenantInfo},
 	)
 	require.NoError(t, err)
-	require.Equal(t, 2, deliveryCounts[edi.MessageDeliveryStatusSent])
-	require.Equal(t, 1, deliveryCounts[edi.MessageDeliveryStatusFailed])
-	require.Equal(t, 2, deliveryCounts[edi.MessageDeliveryStatusDeadLettered])
+	require.Equal(t, 2, deliveryCounts[edimessage.MessageDeliveryStatusSent])
+	require.Equal(t, 1, deliveryCounts[edimessage.MessageDeliveryStatusFailed])
+	require.Equal(t, 2, deliveryCounts[edimessage.MessageDeliveryStatusDeadLettered])
 
 	ackCounts, err := messageRepo.GetAckStatusCounts(
 		ctx,
 		edimessageports.GetEDIMessageStatusCountsRequest{TenantInfo: tenantInfo},
 	)
 	require.NoError(t, err)
-	require.Equal(t, 1, ackCounts[edi.MessageAcknowledgmentStatusAccepted])
-	require.Equal(t, 1, ackCounts[edi.MessageAcknowledgmentStatusPending])
-	require.Equal(t, 3, ackCounts[edi.MessageAcknowledgmentStatusNotExpected])
+	require.Equal(t, 1, ackCounts[edimessage.MessageAcknowledgmentStatusAccepted])
+	require.Equal(t, 1, ackCounts[edimessage.MessageAcknowledgmentStatusPending])
+	require.Equal(t, 3, ackCounts[edimessage.MessageAcknowledgmentStatusNotExpected])
 
 	overdue, err := messageRepo.GetOverdueAckCount(
 		ctx,
@@ -135,14 +155,14 @@ func TestEDISummaryCounts(t *testing.T) {
 	require.NotNil(t, deadLettered[0].Partner)
 	require.Equal(t, "delivery failed", deadLettered[0].DeliveryLastError)
 
-	fileStatuses := []edi.InboundFileStatus{
-		edi.InboundFileStatusProcessed,
-		edi.InboundFileStatusQuarantined,
-		edi.InboundFileStatusQuarantined,
-		edi.InboundFileStatusPartiallyProcessed,
+	fileStatuses := []ediinboundfile.InboundFileStatus{
+		ediinboundfile.InboundFileStatusProcessed,
+		ediinboundfile.InboundFileStatusQuarantined,
+		ediinboundfile.InboundFileStatusQuarantined,
+		ediinboundfile.InboundFileStatusPartiallyProcessed,
 	}
 	for index, status := range fileStatuses {
-		file := &edi.EDIInboundFile{
+		file := &ediinboundfile.EDIInboundFile{
 			BusinessUnitID:         org.BuID,
 			OrganizationID:         org.OrgID,
 			CommunicationProfileID: profile.ID,
@@ -168,9 +188,9 @@ func TestEDISummaryCounts(t *testing.T) {
 		edimessageports.GetEDIInboundFileStatusCountsRequest{TenantInfo: tenantInfo},
 	)
 	require.NoError(t, err)
-	require.Equal(t, 1, fileCounts[edi.InboundFileStatusProcessed])
-	require.Equal(t, 2, fileCounts[edi.InboundFileStatusQuarantined])
-	require.Equal(t, 1, fileCounts[edi.InboundFileStatusPartiallyProcessed])
+	require.Equal(t, 1, fileCounts[ediinboundfile.InboundFileStatusProcessed])
+	require.Equal(t, 2, fileCounts[ediinboundfile.InboundFileStatusQuarantined])
+	require.Equal(t, 1, fileCounts[ediinboundfile.InboundFileStatusPartiallyProcessed])
 
 	quarantined, err := fileRepo.ListRecentQuarantined(
 		ctx,
@@ -182,14 +202,14 @@ func TestEDISummaryCounts(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, quarantined, 2)
 
-	transferStatuses := []edi.TransferStatus{
-		edi.TransferStatusMappingRequired,
-		edi.TransferStatusMappingRequired,
-		edi.TransferStatusPendingApproval,
-		edi.TransferStatusFailed,
+	transferStatuses := []editransfer.TransferStatus{
+		editransfer.TransferStatusMappingRequired,
+		editransfer.TransferStatusMappingRequired,
+		editransfer.TransferStatusPendingApproval,
+		editransfer.TransferStatusFailed,
 	}
 	for index, status := range transferStatuses {
-		transfer := &edi.EDITransfer{
+		transfer := &editransfer.EDITransfer{
 			SourceOrganizationID: org.OrgID,
 			SourceBusinessUnitID: org.BuID,
 			TargetOrganizationID: org.OrgID,
@@ -197,7 +217,7 @@ func TestEDISummaryCounts(t *testing.T) {
 			SourcePartnerID:      partner.ID,
 			TargetPartnerID:      partner.ID,
 			Status:               status,
-			TenderPayload:        edi.LoadTenderPayload{},
+			TenderPayload:        editransfer.LoadTenderPayload{},
 			SubmittedAt:          now - int64(index),
 		}
 		require.NoError(t, create(ctx, db, transfer), "transfer %d", index)
@@ -212,7 +232,7 @@ func TestEDISummaryCounts(t *testing.T) {
 		editenderports.GetEDITransferStatusCountsRequest{TenantInfo: tenantInfo},
 	)
 	require.NoError(t, err)
-	require.Equal(t, 2, transferCounts[edi.TransferStatusMappingRequired])
-	require.Equal(t, 1, transferCounts[edi.TransferStatusPendingApproval])
-	require.Equal(t, 1, transferCounts[edi.TransferStatusFailed])
+	require.Equal(t, 2, transferCounts[editransfer.TransferStatusMappingRequired])
+	require.Equal(t, 1, transferCounts[editransfer.TransferStatusPendingApproval])
+	require.Equal(t, 1, transferCounts[editransfer.TransferStatusFailed])
 }

@@ -10,6 +10,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediinboundservice"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/ediinboundfile"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edimessage"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/edimessageports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -20,13 +23,13 @@ import (
 )
 
 type fakeDeliveries struct {
-	messages map[pulid.ID]*edi.EDIMessage
+	messages map[pulid.ID]*edimessage.EDIMessage
 	guard    *agenttoolstest.WriteGuard
 	retried  *ediservice.BulkRetryMessageDeliveryRequest
 	replayed *ediservice.RetryMessageDeliveryRequest
 }
 
-func (f *fakeDeliveries) message(id pulid.ID) (*edi.EDIMessage, error) {
+func (f *fakeDeliveries) message(id pulid.ID) (*edimessage.EDIMessage, error) {
 	message, ok := f.messages[id]
 	if !ok {
 		return nil, errortypes.NewNotFoundError("EDIMessage not found")
@@ -64,7 +67,7 @@ func (f *fakeDeliveries) PlanReplayMessageDelivery(
 	if err != nil {
 		return nil, err
 	}
-	if message.DeliveryStatus != edi.MessageDeliveryStatusSent {
+	if message.DeliveryStatus != edimessage.MessageDeliveryStatusSent {
 		return nil, errortypes.NewValidationError(
 			"deliveryStatus", errortypes.ErrInvalidOperation,
 			"Only delivered EDI messages can be replayed; use retry for failed messages",
@@ -89,7 +92,7 @@ func (f *fakeDeliveries) BulkRetryMessageDelivery(
 func (f *fakeDeliveries) ReplayMessageDelivery(
 	_ context.Context,
 	req *ediservice.RetryMessageDeliveryRequest,
-) (*edi.EDIMessage, error) {
+) (*edimessage.EDIMessage, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
 	}
@@ -98,11 +101,11 @@ func (f *fakeDeliveries) ReplayMessageDelivery(
 	return f.messages[req.MessageID], nil
 }
 
-func outboundMessage(status edi.MessageDeliveryStatus) *edi.EDIMessage {
-	return &edi.EDIMessage{
+func outboundMessage(status edimessage.MessageDeliveryStatus) *edimessage.EDIMessage {
+	return &edimessage.EDIMessage{
 		ID:                       pulid.MustNew("edimsg_"),
-		Direction:                edi.DocumentDirectionOutbound,
-		TransactionSet:           edi.TransactionSet214,
+		Direction:                edidocument.DocumentDirectionOutbound,
+		TransactionSet:           edidocument.TransactionSet214,
 		InterchangeControlNumber: "000000042",
 		DeliveryStatus:           status,
 		DeliveryLastError:        "connection refused",
@@ -141,10 +144,10 @@ func TestEDIDeliveryTools_ArePersonOnlyProposals(t *testing.T) {
 func TestRetryEDIMessageDelivery_PreviewsEachMessageAndRefusalWithoutItsContent(t *testing.T) {
 	t.Parallel()
 
-	failed := outboundMessage(edi.MessageDeliveryStatusFailed)
-	sent := outboundMessage(edi.MessageDeliveryStatusSent)
+	failed := outboundMessage(edimessage.MessageDeliveryStatusFailed)
+	sent := outboundMessage(edimessage.MessageDeliveryStatusSent)
 	deliveries := &fakeDeliveries{
-		messages: map[pulid.ID]*edi.EDIMessage{failed.ID: failed, sent.ID: sent},
+		messages: map[pulid.ID]*edimessage.EDIMessage{failed.ID: failed, sent.ID: sent},
 		guard:    &agenttoolstest.WriteGuard{},
 	}
 	tool := NewRetryEDIMessageDeliveryTool(deliveries).(*RetryEDIMessageDeliveryTool)
@@ -191,10 +194,10 @@ func TestRetryEDIMessageDelivery_PreviewsEachMessageAndRefusalWithoutItsContent(
 func TestReplayEDIMessage_SendsADeliveredDocumentAgainOnlyWhenApproved(t *testing.T) {
 	t.Parallel()
 
-	sent := outboundMessage(edi.MessageDeliveryStatusSent)
-	failed := outboundMessage(edi.MessageDeliveryStatusFailed)
+	sent := outboundMessage(edimessage.MessageDeliveryStatusSent)
+	failed := outboundMessage(edimessage.MessageDeliveryStatusFailed)
 	deliveries := &fakeDeliveries{
-		messages: map[pulid.ID]*edi.EDIMessage{sent.ID: sent, failed.ID: failed},
+		messages: map[pulid.ID]*edimessage.EDIMessage{sent.ID: sent, failed.ID: failed},
 		guard:    &agenttoolstest.WriteGuard{},
 	}
 	tool := NewReplayEDIMessageTool(deliveries).(*ReplayEDIMessageTool)
@@ -234,7 +237,7 @@ func TestReplayEDIMessage_SendsADeliveredDocumentAgainOnlyWhenApproved(t *testin
 }
 
 type fakeReprocessor struct {
-	files       map[pulid.ID]*edi.EDIInboundFile
+	files       map[pulid.ID]*ediinboundfile.EDIInboundFile
 	guard       *agenttoolstest.WriteGuard
 	reprocessed *ediinboundservice.BulkReprocessInboundFilesRequest
 }
@@ -242,7 +245,7 @@ type fakeReprocessor struct {
 func (f *fakeReprocessor) GetInboundFile(
 	_ context.Context,
 	req edimessageports.GetEDIInboundFileByIDRequest,
-) (*edi.EDIInboundFile, error) {
+) (*ediinboundfile.EDIInboundFile, error) {
 	file, ok := f.files[req.ID]
 	if !ok {
 		return nil, errortypes.NewNotFoundError("EDIInboundFile not found")
@@ -271,20 +274,20 @@ func (f *fakeReprocessor) BulkReprocessInboundFiles(
 func TestReprocessEDIInboundFiles_PreviewsWhichFilesWouldRunAgain(t *testing.T) {
 	t.Parallel()
 
-	quarantined := &edi.EDIInboundFile{
+	quarantined := &ediinboundfile.EDIInboundFile{
 		ID:            pulid.MustNew("ediinf_"),
 		FileName:      "204_0921.x12",
-		Status:        edi.InboundFileStatusQuarantined,
+		Status:        ediinboundfile.InboundFileStatusQuarantined,
 		FailureReason: "partner could not be resolved",
 		Version:       5,
 	}
-	processed := &edi.EDIInboundFile{
+	processed := &ediinboundfile.EDIInboundFile{
 		ID:       pulid.MustNew("ediinf_"),
 		FileName: "214_0921.x12",
-		Status:   edi.InboundFileStatusProcessed,
+		Status:   ediinboundfile.InboundFileStatusProcessed,
 	}
 	files := &fakeReprocessor{
-		files: map[pulid.ID]*edi.EDIInboundFile{
+		files: map[pulid.ID]*ediinboundfile.EDIInboundFile{
 			quarantined.ID: quarantined,
 			processed.ID:   processed,
 		},

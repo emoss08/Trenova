@@ -612,6 +612,16 @@ modules:
     level: 8
     domain:
       - edi
+      - edicarrierinvoice
+      - edidocument
+      - ediinboundfile
+      - edimessage
+      - edipayload
+      - edisync
+      - editenderchange
+      - editransfer
+      - ladingproject
+      - x12field
     service:
       - ediinboundservice
       - ediservice

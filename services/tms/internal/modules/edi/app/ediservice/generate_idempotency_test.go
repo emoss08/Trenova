@@ -4,6 +4,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edimessage"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/edimessageports"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
 	"github.com/emoss08/trenova/internal/testutil/mocks/edimessageportsmock"
@@ -21,14 +23,14 @@ func TestGenerateDocument_ReturnsTheDocumentAlreadyGeneratedForItsKey(t *testing
 
 	tenant := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
 	key := TenderOfferDocumentKey(pulid.MustNew("tof_"))
-	existing := &edi.EDIMessage{
+	existing := &edimessage.EDIMessage{
 		ID:             pulid.MustNew("emsg_"),
 		OrganizationID: tenant.OrgID,
 		BusinessUnitID: tenant.BuID,
-		TransactionSet: edi.TransactionSet204,
+		TransactionSet: edidocument.TransactionSet204,
 		EDIPartnerID:   pulid.MustNew("edip_"),
-		Direction:      edi.DocumentDirectionOutbound,
-		Status:         edi.MessageStatusGenerated,
+		Direction:      edidocument.DocumentDirectionOutbound,
+		Status:         edimessage.MessageStatusGenerated,
 		IdempotencyKey: key,
 	}
 
@@ -51,8 +53,8 @@ func TestGenerateDocument_ReturnsTheDocumentAlreadyGeneratedForItsKey(t *testing
 
 	message, err := svc.GenerateDocument(t.Context(), &GenerateEDIDocumentRequest{
 		TenantInfo:     tenant,
-		TransactionSet: edi.TransactionSet204,
-		Direction:      edi.DocumentDirectionOutbound,
+		TransactionSet: edidocument.TransactionSet204,
+		Direction:      edidocument.DocumentDirectionOutbound,
 		IdempotencyKey: key,
 	})
 
@@ -70,14 +72,14 @@ func TestGenerateDocument_RefusesAKeyThatNamesAnotherTransactionSet(t *testing.T
 			TenantInfo:     tenant,
 			IdempotencyKey: "shared-key",
 		}).
-		Return(&edi.EDIMessage{TransactionSet: edi.TransactionSet214}, nil).
+		Return(&edimessage.EDIMessage{TransactionSet: edidocument.TransactionSet214}, nil).
 		Once()
 
 	svc := &Service{l: zap.NewNop(), messageRepo: messages}
 
 	_, err := svc.GenerateDocument(t.Context(), &GenerateEDIDocumentRequest{
 		TenantInfo:     tenant,
-		TransactionSet: edi.TransactionSet204,
+		TransactionSet: edidocument.TransactionSet204,
 		IdempotencyKey: "shared-key",
 	})
 

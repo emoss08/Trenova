@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edisync"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/editenderports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/internaledilifecycle"
@@ -17,7 +17,7 @@ import (
 )
 
 type approvedTransferChangeContext struct {
-	link         *edi.ShipmentLink
+	link         *edisync.ShipmentLink
 	opposite     *shipment.Shipment
 	oppositeInfo pagination.TenantInfo
 	oppositeID   pulid.ID
@@ -27,19 +27,19 @@ type approvedTransferChangeContext struct {
 func (s *Service) applyApprovedTransferChange(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	change *edi.TransferChange,
+	change *edisync.TransferChange,
 	actor *permissionports.RequestActor,
 	appliedAt int64,
 ) error {
 	switch change.ChangeType {
-	case edi.TransferChangeTypeShipmentStatus214,
-		edi.TransferChangeTypeShipmentCancel214,
-		edi.TransferChangeTypeShipmentLifecycle214:
+	case edisync.TransferChangeTypeShipmentStatus214,
+		edisync.TransferChangeTypeShipmentCancel214,
+		edisync.TransferChangeTypeShipmentLifecycle214:
 	default:
 		return nil
 	}
 
-	if change.ChangeType == edi.TransferChangeTypeShipmentLifecycle214 {
+	if change.ChangeType == edisync.TransferChangeTypeShipmentLifecycle214 {
 		return s.applyApprovedLifecycleTransferChange(ctx, tenantInfo, change, appliedAt)
 	}
 
@@ -53,7 +53,7 @@ func (s *Service) applyApprovedTransferChange(
 
 	var updated *shipment.Shipment
 	switch change.ChangeType {
-	case edi.TransferChangeTypeShipmentCancel214:
+	case edisync.TransferChangeTypeShipmentCancel214:
 		if err = shipmentstate.ValidateCancel(applyCtx.opposite); err != nil {
 			return err
 		}
@@ -65,7 +65,7 @@ func (s *Service) applyApprovedTransferChange(
 			CancelReason:    transferChangePayloadString(change.Payload, "cancellationReason"),
 			ExpectedVersion: applyCtx.opposite.Version,
 		})
-	case edi.TransferChangeTypeShipmentStatus214:
+	case edisync.TransferChangeTypeShipmentStatus214:
 		updated, err = s.shipmentRepo.UpdateStatus(
 			ctx,
 			&shipmentports.UpdateShipmentStatusRequest{
@@ -113,7 +113,7 @@ func (s *Service) recomputeOrderForUpdatedShipment(
 func (s *Service) applyApprovedLifecycleTransferChange(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	change *edi.TransferChange,
+	change *edisync.TransferChange,
 	appliedAt int64,
 ) error {
 	link, err := s.shipmentLinkRepo.GetShipmentLinkByID(
@@ -172,7 +172,7 @@ func (s *Service) applyApprovedLifecycleTransferChange(
 func (s *Service) buildApprovedTransferChangeContext(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	change *edi.TransferChange,
+	change *edisync.TransferChange,
 ) (approvedTransferChangeContext, error) {
 	link, err := s.shipmentLinkRepo.GetShipmentLinkByID(
 		ctx,
@@ -191,7 +191,7 @@ func (s *Service) buildApprovedTransferChangeContext(
 	}
 
 	nextStatus := shipment.Status(transferChangePayloadString(change.Payload, "newStatus"))
-	if change.ChangeType == edi.TransferChangeTypeShipmentCancel214 {
+	if change.ChangeType == edisync.TransferChangeTypeShipmentCancel214 {
 		nextStatus = shipment.StatusCanceled
 	}
 	if nextStatus == "" {
@@ -205,7 +205,7 @@ func (s *Service) buildApprovedTransferChangeContext(
 		link:       link,
 		nextStatus: nextStatus,
 	}
-	if change.Direction == edi.TransferChangeDirectionSourceToTarget {
+	if change.Direction == edisync.TransferChangeDirectionSourceToTarget {
 		result.opposite = target
 		result.oppositeID = link.TargetShipmentID
 		result.oppositeInfo = pagination.TenantInfo{
@@ -226,7 +226,7 @@ func (s *Service) buildApprovedTransferChangeContext(
 
 func (s *Service) getTransferChangeShipments(
 	ctx context.Context,
-	link *edi.ShipmentLink,
+	link *edisync.ShipmentLink,
 ) (*shipment.Shipment, *shipment.Shipment, error) {
 	source, err := s.shipmentRepo.GetByID(ctx, &shipmentports.GetShipmentByIDRequest{
 		ID: link.SourceShipmentID,
@@ -254,7 +254,7 @@ func (s *Service) getTransferChangeShipments(
 }
 
 func buildApprovedTransferChangeEvent(
-	change *edi.TransferChange,
+	change *edisync.TransferChange,
 	ctx approvedTransferChangeContext,
 	updated *shipment.Shipment,
 	occurredAt int64,
@@ -265,13 +265,13 @@ func buildApprovedTransferChangeEvent(
 		"proNumber":      updated.ProNumber,
 		"previousStatus": string(ctx.opposite.Status),
 		"newStatus":      string(ctx.nextStatus),
-		edi.InternalEDIMirroredFromEventIDKey: transferChangePayloadString(
+		edisync.InternalEDIMirroredFromEventIDKey: transferChangePayloadString(
 			change.Payload,
 			"sourceEventId",
 		),
-		edi.InternalEDIShipmentLinkIDKey: ctx.link.ID.String(),
+		edisync.InternalEDIShipmentLinkIDKey: ctx.link.ID.String(),
 	}
-	if change.ChangeType == edi.TransferChangeTypeShipmentCancel214 {
+	if change.ChangeType == edisync.TransferChangeTypeShipmentCancel214 {
 		eventType = shipmentevent.TypeShipmentCanceled
 		summary = "Cancellation synced from internal EDI 214"
 		metadata["reason"] = transferChangePayloadString(change.Payload, "cancellationReason")
@@ -292,7 +292,7 @@ func buildApprovedTransferChangeEvent(
 }
 
 func buildApprovedLifecycleTransferChangeEvent(
-	change *edi.TransferChange,
+	change *edisync.TransferChange,
 	plan *internaledilifecycle.Plan,
 	updated *shipment.Shipment,
 	occurredAt int64,
@@ -311,11 +311,11 @@ func buildApprovedLifecycleTransferChangeEvent(
 			"previousStatus":         string(plan.OppositeOriginal.Status),
 			"newStatus":              string(updated.Status),
 			"matchedStopActualDiffs": plan.Diffs,
-			edi.InternalEDIMirroredFromEventIDKey: transferChangePayloadString(
+			edisync.InternalEDIMirroredFromEventIDKey: transferChangePayloadString(
 				change.Payload,
 				"sourceEventId",
 			),
-			edi.InternalEDIShipmentLinkIDKey: plan.Link.ID.String(),
+			edisync.InternalEDIShipmentLinkIDKey: plan.Link.ID.String(),
 		},
 		OccurredAt: occurredAt,
 	}

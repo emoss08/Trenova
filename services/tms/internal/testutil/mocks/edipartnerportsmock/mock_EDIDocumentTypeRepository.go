@@ -5,11 +5,11 @@
 package edipartnerportsmock
 
 import (
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
 
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/pkg/pagination"
 	mock "github.com/stretchr/testify/mock"
 )
@@ -42,23 +42,23 @@ func (_m *MockEDIDocumentTypeRepository) EXPECT() *MockEDIDocumentTypeRepository
 }
 
 // ListDocumentTypes provides a mock function for the type MockEDIDocumentTypeRepository
-func (_mock *MockEDIDocumentTypeRepository) ListDocumentTypes(ctx context.Context, req edipartnerports.ListEDIDocumentTypesRequest) ([]*edi.EDIDocumentType, error) {
+func (_mock *MockEDIDocumentTypeRepository) ListDocumentTypes(ctx context.Context, req edipartnerports.ListEDIDocumentTypesRequest) ([]*edidocument.EDIDocumentType, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListDocumentTypes")
 	}
 
-	var r0 []*edi.EDIDocumentType
+	var r0 []*edidocument.EDIDocumentType
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, edipartnerports.ListEDIDocumentTypesRequest) ([]*edi.EDIDocumentType, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, edipartnerports.ListEDIDocumentTypesRequest) ([]*edidocument.EDIDocumentType, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, edipartnerports.ListEDIDocumentTypesRequest) []*edi.EDIDocumentType); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, edipartnerports.ListEDIDocumentTypesRequest) []*edidocument.EDIDocumentType); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*edi.EDIDocumentType)
+			r0 = ret.Get(0).([]*edidocument.EDIDocumentType)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, edipartnerports.ListEDIDocumentTypesRequest) error); ok {
@@ -99,34 +99,34 @@ func (_c *MockEDIDocumentTypeRepository_ListDocumentTypes_Call) Run(run func(ctx
 	return _c
 }
 
-func (_c *MockEDIDocumentTypeRepository_ListDocumentTypes_Call) Return(eDIDocumentTypes []*edi.EDIDocumentType, err error) *MockEDIDocumentTypeRepository_ListDocumentTypes_Call {
+func (_c *MockEDIDocumentTypeRepository_ListDocumentTypes_Call) Return(eDIDocumentTypes []*edidocument.EDIDocumentType, err error) *MockEDIDocumentTypeRepository_ListDocumentTypes_Call {
 	_c.Call.Return(eDIDocumentTypes, err)
 	return _c
 }
 
-func (_c *MockEDIDocumentTypeRepository_ListDocumentTypes_Call) RunAndReturn(run func(ctx context.Context, req edipartnerports.ListEDIDocumentTypesRequest) ([]*edi.EDIDocumentType, error)) *MockEDIDocumentTypeRepository_ListDocumentTypes_Call {
+func (_c *MockEDIDocumentTypeRepository_ListDocumentTypes_Call) RunAndReturn(run func(ctx context.Context, req edipartnerports.ListEDIDocumentTypesRequest) ([]*edidocument.EDIDocumentType, error)) *MockEDIDocumentTypeRepository_ListDocumentTypes_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // SelectDocumentTypeOptions provides a mock function for the type MockEDIDocumentTypeRepository
-func (_mock *MockEDIDocumentTypeRepository) SelectDocumentTypeOptions(ctx context.Context, req *edipartnerports.EDIDocumentTypeSelectOptionsRequest) (*pagination.ListResult[*edi.EDIDocumentType], error) {
+func (_mock *MockEDIDocumentTypeRepository) SelectDocumentTypeOptions(ctx context.Context, req *edipartnerports.EDIDocumentTypeSelectOptionsRequest) (*pagination.ListResult[*edidocument.EDIDocumentType], error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for SelectDocumentTypeOptions")
 	}
 
-	var r0 *pagination.ListResult[*edi.EDIDocumentType]
+	var r0 *pagination.ListResult[*edidocument.EDIDocumentType]
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *edipartnerports.EDIDocumentTypeSelectOptionsRequest) (*pagination.ListResult[*edi.EDIDocumentType], error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *edipartnerports.EDIDocumentTypeSelectOptionsRequest) (*pagination.ListResult[*edidocument.EDIDocumentType], error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *edipartnerports.EDIDocumentTypeSelectOptionsRequest) *pagination.ListResult[*edi.EDIDocumentType]); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *edipartnerports.EDIDocumentTypeSelectOptionsRequest) *pagination.ListResult[*edidocument.EDIDocumentType]); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*pagination.ListResult[*edi.EDIDocumentType])
+			r0 = ret.Get(0).(*pagination.ListResult[*edidocument.EDIDocumentType])
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, *edipartnerports.EDIDocumentTypeSelectOptionsRequest) error); ok {
@@ -167,12 +167,12 @@ func (_c *MockEDIDocumentTypeRepository_SelectDocumentTypeOptions_Call) Run(run 
 	return _c
 }
 
-func (_c *MockEDIDocumentTypeRepository_SelectDocumentTypeOptions_Call) Return(listResult *pagination.ListResult[*edi.EDIDocumentType], err error) *MockEDIDocumentTypeRepository_SelectDocumentTypeOptions_Call {
+func (_c *MockEDIDocumentTypeRepository_SelectDocumentTypeOptions_Call) Return(listResult *pagination.ListResult[*edidocument.EDIDocumentType], err error) *MockEDIDocumentTypeRepository_SelectDocumentTypeOptions_Call {
 	_c.Call.Return(listResult, err)
 	return _c
 }
 
-func (_c *MockEDIDocumentTypeRepository_SelectDocumentTypeOptions_Call) RunAndReturn(run func(ctx context.Context, req *edipartnerports.EDIDocumentTypeSelectOptionsRequest) (*pagination.ListResult[*edi.EDIDocumentType], error)) *MockEDIDocumentTypeRepository_SelectDocumentTypeOptions_Call {
+func (_c *MockEDIDocumentTypeRepository_SelectDocumentTypeOptions_Call) RunAndReturn(run func(ctx context.Context, req *edipartnerports.EDIDocumentTypeSelectOptionsRequest) (*pagination.ListResult[*edidocument.EDIDocumentType], error)) *MockEDIDocumentTypeRepository_SelectDocumentTypeOptions_Call {
 	_c.Call.Return(run)
 	return _c
 }

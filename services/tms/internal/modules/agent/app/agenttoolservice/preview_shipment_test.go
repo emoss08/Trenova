@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -37,7 +37,7 @@ func (f *fakePartnerNotices) PreviewTenderChanges(
 	return []*ediservice.PartnerNotice{{
 		RecordID:       pulid.MustNew("etr_"),
 		PartnerName:    "Halstead Grocery EDI",
-		TransactionSet: edi.TransactionSet204,
+		TransactionSet: edidocument.TransactionSet204,
 		Purpose:        "Change",
 		Changed:        []string{"bol"},
 	}}, nil
@@ -51,7 +51,7 @@ func (f *fakePartnerNotices) PreviewCancelNotices(
 	return []*ediservice.PartnerNotice{{
 		RecordID:       pulid.MustNew("esl_"),
 		PartnerName:    "Linked trading partner",
-		TransactionSet: edi.TransactionSet214,
+		TransactionSet: edidocument.TransactionSet214,
 		Purpose:        "Cancel",
 		StatusCode:     "A7",
 	}}, nil

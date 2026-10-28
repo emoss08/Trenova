@@ -12,7 +12,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edisync"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/editenderchange"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/editenderports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -42,44 +43,44 @@ type tenderChangeReviewer interface {
 	GetTenderChange(
 		ctx context.Context,
 		req editenderports.GetEDITenderChangeByIDRequest,
-	) (*edi.TenderChange, error)
+	) (*editenderchange.TenderChange, error)
 	ApplyTenderChange(
 		ctx context.Context,
 		req *ediservice.TenderChangeActionRequest,
 		actor *permissionports.RequestActor,
-	) (*edi.TenderChange, error)
+	) (*editenderchange.TenderChange, error)
 	RejectTenderChange(
 		ctx context.Context,
 		req *ediservice.TenderChangeActionRequest,
 		actor *permissionports.RequestActor,
-	) (*edi.TenderChange, error)
+	) (*editenderchange.TenderChange, error)
 }
 
 type transferChangeReviewer interface {
 	GetTransferChange(
 		ctx context.Context,
 		req editenderports.GetEDITransferChangeByIDRequest,
-	) (*edi.TransferChange, error)
+	) (*edisync.TransferChange, error)
 	CheckTransferChangeReview(
 		ctx context.Context,
-		change *edi.TransferChange,
+		change *edisync.TransferChange,
 		tenantInfo pagination.TenantInfo,
 	) error
 	PlanTransferChangeEffect(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
-		change *edi.TransferChange,
+		change *edisync.TransferChange,
 	) (*ediservice.TransferChangeEffect, error)
 	ApplyTransferChange(
 		ctx context.Context,
 		req *ediservice.TransferChangeActionRequest,
 		actor *permissionports.RequestActor,
-	) (*edi.TransferChange, error)
+	) (*edisync.TransferChange, error)
 	RejectTransferChange(
 		ctx context.Context,
 		req *ediservice.TransferChangeActionRequest,
 		actor *permissionports.RequestActor,
-	) (*edi.TransferChange, error)
+	) (*edisync.TransferChange, error)
 }
 
 type changeReviewCall struct {

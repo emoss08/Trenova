@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediconnectiondraftports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -108,7 +109,7 @@ func TestApply_WritesANewConnectionInactive(t *testing.T) {
 	)
 	for _, control := range h.setup.controls {
 		assert.Equal(t, int64(1000), control.NextValue)
-		assert.Equal(t, edi.ControlNumberKindInterchange, control.Kind)
+		assert.Equal(t, edidocument.ControlNumberKindInterchange, control.Kind)
 	}
 	assert.Empty(t, h.setup.mappings)
 	assert.NotEmpty(t, applied.Writes)
@@ -149,8 +150,12 @@ func TestApply_UpdatesOnlyWhatChangedOnAKnownPartner(t *testing.T) {
 	require.Len(t, h.projects.imports, 1, "the guide's requirements go into a new draft")
 	assert.Equal(t, existing.Partner.ID, h.projects.imports[0].PartnerID)
 	for _, control := range h.setup.controls {
-		assert.NotEqual(t, documentTypeID(edi.TransactionSet214, edi.DocumentDirectionOutbound),
-			control.DocumentTypeID, "the 214's numbers are never moved back")
+		assert.NotEqual(
+			t,
+			documentTypeID(edidocument.TransactionSet214, edidocument.DocumentDirectionOutbound),
+			control.DocumentTypeID,
+			"the 214's numbers are never moved back",
+		)
 	}
 }
 

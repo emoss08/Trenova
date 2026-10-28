@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/editransfer"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
@@ -18,7 +19,7 @@ import (
 func (s *Service) buildMappingPreview(
 	ctx context.Context,
 	partner *edi.EDIPartner,
-	payload edi.LoadTenderPayload,
+	payload editransfer.LoadTenderPayload,
 ) (*MappingPreview, error) {
 	required := payload.RequiredMappingEntityIDs
 	sourceIDs := flattenRequiredIDs(required)
@@ -38,12 +39,12 @@ func (s *Service) buildMappingPreview(
 	index := mappingIndex(items)
 	sourceLabels := sourceLabelIndex(&payload)
 
-	all := make([]edi.MappingResolution, 0, len(sourceIDs))
+	all := make([]editransfer.MappingResolution, 0, len(sourceIDs))
 	for _, entityType := range requiredEntityTypes(required) {
 		ids := append([]pulid.ID(nil), required[entityType]...)
 		slices.Sort(ids)
 		for _, sourceID := range ids {
-			resolution := edi.MappingResolution{
+			resolution := editransfer.MappingResolution{
 				EntityType:  entityType,
 				SourceID:    sourceID,
 				SourceLabel: sourceLabels[entityType][sourceID],
@@ -61,8 +62,8 @@ func (s *Service) buildMappingPreview(
 		}
 	}
 
-	resolved := make([]edi.MappingResolution, 0, len(all))
-	unresolved := make([]edi.MappingResolution, 0)
+	resolved := make([]editransfer.MappingResolution, 0, len(all))
+	unresolved := make([]editransfer.MappingResolution, 0)
 	for _, resolution := range all {
 		if resolution.Resolved {
 			resolved = append(resolved, resolution)
@@ -80,9 +81,9 @@ func (s *Service) buildMappingPreview(
 
 //nolint:funlen // Shipment reconstruction maps each payload section directly into the shipment aggregate.
 func (s *Service) buildTargetShipment(
-	transfer *edi.EDITransfer,
+	transfer *editransfer.EDITransfer,
 	businessUnitID pulid.ID,
-	resolutions []edi.MappingResolution,
+	resolutions []editransfer.MappingResolution,
 	approverID pulid.ID,
 ) (*shipment.Shipment, error) {
 	mappings := resolutionIndex(resolutions)
@@ -226,7 +227,7 @@ func externalShipmentReference(ratingDetail map[string]any) string {
 	)
 }
 
-func tenderedTemplate(payload *edi.LoadTenderPayload, mapped pulid.ID) pulid.ID {
+func tenderedTemplate(payload *editransfer.LoadTenderPayload, mapped pulid.ID) pulid.ID {
 	if payload.FreightChargeAmount.Valid {
 		return pulid.Nil
 	}

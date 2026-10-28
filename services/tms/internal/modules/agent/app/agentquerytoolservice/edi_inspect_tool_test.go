@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
 	"github.com/emoss08/trenova/internal/modules/edi/app/edix12inspect"
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -73,7 +73,7 @@ func TestInspectX12_ReadsPastedX12WithTheInboundFileCardsOverview(t *testing.T) 
 		}
 	}
 	require.NotNil(t, seCount, "SE says 9 segments where the set has 4")
-	assert.Equal(t, edi.ValidationSeverityError, seCount.Severity)
+	assert.Equal(t, edidocument.ValidationSeverityError, seCount.Severity)
 	assert.Positive(t, seCount.SegmentIndex)
 	assert.Contains(t, view.Note, "trading partner")
 }

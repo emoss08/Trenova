@@ -13,6 +13,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/edi/app/editransport"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edimessage"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/edimessageports"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
 	"github.com/emoss08/trenova/internal/testutil/mocks/edimessageportsmock"
@@ -62,21 +64,21 @@ func newMDNSigner(t *testing.T, commonName string) *mdnSigner {
 	}
 }
 
-func pendingAS2Message(messageID string) *edi.EDIMessage {
-	return &edi.EDIMessage{
+func pendingAS2Message(messageID string) *edimessage.EDIMessage {
+	return &edimessage.EDIMessage{
 		ID:             pulid.MustNew("edimsg_"),
 		OrganizationID: pulid.MustNew("org_"),
 		BusinessUnitID: pulid.MustNew("bu_"),
 		EDIPartnerID:   pulid.MustNew("edip_"),
-		Direction:      edi.DocumentDirectionOutbound,
-		DeliveryStatus: edi.MessageDeliveryStatusSending,
+		Direction:      edidocument.DocumentDirectionOutbound,
+		DeliveryStatus: edimessage.MessageDeliveryStatusSending,
 		AS2MessageID:   messageID,
 		AS2MIC:         as2TestMIC,
 	}
 }
 
 func as2DeliveryProfile(
-	message *edi.EDIMessage,
+	message *edimessage.EDIMessage,
 	partner *mdnSigner,
 ) *edi.EDICommunicationProfile {
 	config := map[string]any{
@@ -107,7 +109,7 @@ type mdnTestHarness struct {
 
 func newMDNTestHarness(
 	t *testing.T,
-	message *edi.EDIMessage,
+	message *edimessage.EDIMessage,
 	partner *mdnSigner,
 ) *mdnTestHarness {
 	t.Helper()
@@ -148,8 +150,8 @@ func newMDNTestHarness(
 }
 
 func (h *mdnTestHarness) expectDeliveryStatus(
-	message *edi.EDIMessage,
-	status edi.MessageDeliveryStatus,
+	message *edimessage.EDIMessage,
+	status edimessage.MessageDeliveryStatus,
 ) {
 	h.messageRepo.EXPECT().
 		UpdateMessageDelivery(
@@ -158,7 +160,7 @@ func (h *mdnTestHarness) expectDeliveryStatus(
 				return req.ID == message.ID && req.DeliveryStatus == status
 			}),
 		).
-		RunAndReturn(func(_ context.Context, req *edimessageports.UpdateEDIMessageDeliveryRequest) (*edi.EDIMessage, error) {
+		RunAndReturn(func(_ context.Context, req *edimessageports.UpdateEDIMessageDeliveryRequest) (*edimessage.EDIMessage, error) {
 			message.DeliveryStatus = req.DeliveryStatus
 			return message, nil
 		}).
@@ -181,7 +183,7 @@ func TestApplyAS2MDNResolvesPendingDeliveryWhenMICMatches(t *testing.T) {
 
 	message := pendingAS2Message("<pending-123@trenova.as2>")
 	h := newMDNTestHarness(t, message, nil)
-	h.expectDeliveryStatus(message, edi.MessageDeliveryStatusSent)
+	h.expectDeliveryStatus(message, edimessage.MessageDeliveryStatusSent)
 
 	err := h.service.ApplyAS2MDN(t.Context(), buildMDN(t, &as2.BuildMDNOptions{
 		OriginalMessageID:  message.AS2MessageID,
@@ -189,7 +191,7 @@ func TestApplyAS2MDNResolvesPendingDeliveryWhenMICMatches(t *testing.T) {
 	}))
 
 	require.NoError(t, err)
-	assert.Equal(t, edi.MessageDeliveryStatusSent, message.DeliveryStatus)
+	assert.Equal(t, edimessage.MessageDeliveryStatusSent, message.DeliveryStatus)
 }
 
 func TestApplyAS2MDNRejectsUnauthenticatedFailureReceipt(t *testing.T) {
@@ -205,7 +207,7 @@ func TestApplyAS2MDNRejectsUnauthenticatedFailureReceipt(t *testing.T) {
 
 	require.Error(t, err)
 	assert.True(t, errortypes.IsAuthenticationError(err))
-	assert.Equal(t, edi.MessageDeliveryStatusSending, message.DeliveryStatus)
+	assert.Equal(t, edimessage.MessageDeliveryStatusSending, message.DeliveryStatus)
 }
 
 func TestApplyAS2MDNRejectsReceiptWithAnotherMessagesMIC(t *testing.T) {
@@ -221,7 +223,7 @@ func TestApplyAS2MDNRejectsReceiptWithAnotherMessagesMIC(t *testing.T) {
 
 	require.Error(t, err)
 	assert.True(t, errortypes.IsAuthenticationError(err))
-	assert.Equal(t, edi.MessageDeliveryStatusSending, message.DeliveryStatus)
+	assert.Equal(t, edimessage.MessageDeliveryStatusSending, message.DeliveryStatus)
 }
 
 func TestApplyAS2MDNRequiresSignatureWhenPartnerCertificateIsConfigured(t *testing.T) {
@@ -238,7 +240,7 @@ func TestApplyAS2MDNRequiresSignatureWhenPartnerCertificateIsConfigured(t *testi
 
 	require.Error(t, err)
 	assert.True(t, errortypes.IsAuthenticationError(err))
-	assert.Equal(t, edi.MessageDeliveryStatusSending, message.DeliveryStatus)
+	assert.Equal(t, edimessage.MessageDeliveryStatusSending, message.DeliveryStatus)
 }
 
 func TestApplyAS2MDNRejectsReceiptSignedByAnotherKey(t *testing.T) {
@@ -258,7 +260,7 @@ func TestApplyAS2MDNRejectsReceiptSignedByAnotherKey(t *testing.T) {
 
 	require.Error(t, err)
 	assert.True(t, errortypes.IsAuthenticationError(err))
-	assert.Equal(t, edi.MessageDeliveryStatusSending, message.DeliveryStatus)
+	assert.Equal(t, edimessage.MessageDeliveryStatusSending, message.DeliveryStatus)
 }
 
 func TestApplyAS2MDNFailsDeliveryOnSignedRejectedDisposition(t *testing.T) {
@@ -267,7 +269,7 @@ func TestApplyAS2MDNFailsDeliveryOnSignedRejectedDisposition(t *testing.T) {
 	partner := newMDNSigner(t, "partner")
 	message := pendingAS2Message("<pending-signed-3@trenova.as2>")
 	h := newMDNTestHarness(t, message, partner)
-	h.expectDeliveryStatus(message, edi.MessageDeliveryStatusFailed)
+	h.expectDeliveryStatus(message, edimessage.MessageDeliveryStatusFailed)
 
 	err := h.service.ApplyAS2MDN(t.Context(), buildMDN(t, &as2.BuildMDNOptions{
 		OriginalMessageID:  message.AS2MessageID,
@@ -277,7 +279,7 @@ func TestApplyAS2MDNFailsDeliveryOnSignedRejectedDisposition(t *testing.T) {
 	}))
 
 	require.NoError(t, err)
-	assert.Equal(t, edi.MessageDeliveryStatusFailed, message.DeliveryStatus)
+	assert.Equal(t, edimessage.MessageDeliveryStatusFailed, message.DeliveryStatus)
 }
 
 func TestApplyAS2MDNFailsDeliveryOnSignedMICMismatch(t *testing.T) {
@@ -286,7 +288,7 @@ func TestApplyAS2MDNFailsDeliveryOnSignedMICMismatch(t *testing.T) {
 	partner := newMDNSigner(t, "partner")
 	message := pendingAS2Message("<pending-signed-4@trenova.as2>")
 	h := newMDNTestHarness(t, message, partner)
-	h.expectDeliveryStatus(message, edi.MessageDeliveryStatusFailed)
+	h.expectDeliveryStatus(message, edimessage.MessageDeliveryStatusFailed)
 
 	err := h.service.ApplyAS2MDN(t.Context(), buildMDN(t, &as2.BuildMDNOptions{
 		OriginalMessageID:  message.AS2MessageID,
@@ -296,5 +298,5 @@ func TestApplyAS2MDNFailsDeliveryOnSignedMICMismatch(t *testing.T) {
 	}))
 
 	require.NoError(t, err)
-	assert.Equal(t, edi.MessageDeliveryStatusFailed, message.DeliveryStatus)
+	assert.Equal(t, edimessage.MessageDeliveryStatusFailed, message.DeliveryStatus)
 }

@@ -7,15 +7,20 @@ import (
 	"strings"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
-	"github.com/emoss08/trenova/internal/modules/parties/domain/customer/customerdb"
-
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi/edidb"
-
 	"github.com/emoss08/keel"
 	"github.com/emoss08/keel/seed"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edi/edidb"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument/edidocumentdb"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edimessage"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edimessage/edimessagedb"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edipayload"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/ladingproject"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/ladingproject/ladingprojectdb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/customer/customerdb"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/lading"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -32,9 +37,9 @@ const (
 )
 
 type seedEDIMessage struct {
-	set      edi.TransactionSet
-	ack      edi.MessageAcknowledgmentStatus
-	delivery edi.MessageDeliveryStatus
+	set      edidocument.TransactionSet
+	ack      edimessage.MessageAcknowledgmentStatus
+	delivery edimessage.MessageDeliveryStatus
 	age      time.Duration
 	status   string
 	ackError string
@@ -42,26 +47,31 @@ type seedEDIMessage struct {
 }
 
 var seedEDIMessages = []seedEDIMessage{
-	{set: edi.TransactionSet214, ack: edi.MessageAcknowledgmentStatusPending,
-		delivery: edi.MessageDeliveryStatusSent, age: 31 * time.Hour, status: "X3"},
-	{set: edi.TransactionSet214, ack: edi.MessageAcknowledgmentStatusPending,
-		delivery: edi.MessageDeliveryStatusSent, age: 19 * time.Hour, status: "AF"},
-	{set: edi.TransactionSet214, ack: edi.MessageAcknowledgmentStatusPending,
-		delivery: edi.MessageDeliveryStatusSent, age: 6 * time.Hour, status: "X1"},
-	{set: edi.TransactionSet214, ack: edi.MessageAcknowledgmentStatusPending,
-		delivery: edi.MessageDeliveryStatusSent, age: 40 * time.Minute, status: "AF"},
-	{set: edi.TransactionSet214, ack: edi.MessageAcknowledgmentStatusAccepted,
-		delivery: edi.MessageDeliveryStatusSent, age: 50 * time.Hour, status: "D1"},
-	{set: edi.TransactionSet214, ack: edi.MessageAcknowledgmentStatusAccepted,
-		delivery: edi.MessageDeliveryStatusSent, age: 26 * time.Hour, status: "X3"},
-	{set: edi.TransactionSet214, ack: edi.MessageAcknowledgmentStatusAcceptedWithErrors,
-		delivery: edi.MessageDeliveryStatusSent, age: 22 * time.Hour, status: "X1",
-		ackError: "acknowledgment code E; Mandatory data element missing (code 1) segment MS1"},
-	{set: edi.TransactionSet214, ack: edi.MessageAcknowledgmentStatusRejected,
-		delivery: edi.MessageDeliveryStatusSent, age: 14 * time.Hour, status: "AF",
+	{set: edidocument.TransactionSet214, ack: edimessage.MessageAcknowledgmentStatusPending,
+		delivery: edimessage.MessageDeliveryStatusSent, age: 31 * time.Hour, status: "X3"},
+	{set: edidocument.TransactionSet214, ack: edimessage.MessageAcknowledgmentStatusPending,
+		delivery: edimessage.MessageDeliveryStatusSent, age: 19 * time.Hour, status: "AF"},
+	{set: edidocument.TransactionSet214, ack: edimessage.MessageAcknowledgmentStatusPending,
+		delivery: edimessage.MessageDeliveryStatusSent, age: 6 * time.Hour, status: "X1"},
+	{set: edidocument.TransactionSet214, ack: edimessage.MessageAcknowledgmentStatusPending,
+		delivery: edimessage.MessageDeliveryStatusSent, age: 40 * time.Minute, status: "AF"},
+	{set: edidocument.TransactionSet214, ack: edimessage.MessageAcknowledgmentStatusAccepted,
+		delivery: edimessage.MessageDeliveryStatusSent, age: 50 * time.Hour, status: "D1"},
+	{set: edidocument.TransactionSet214, ack: edimessage.MessageAcknowledgmentStatusAccepted,
+		delivery: edimessage.MessageDeliveryStatusSent, age: 26 * time.Hour, status: "X3"},
+	{
+		set:      edidocument.TransactionSet214,
+		ack:      edimessage.MessageAcknowledgmentStatusAcceptedWithErrors,
+		delivery: edimessage.MessageDeliveryStatusSent,
+		age:      22 * time.Hour,
+		status:   "X1",
+		ackError: "acknowledgment code E; Mandatory data element missing (code 1) segment MS1",
+	},
+	{set: edidocument.TransactionSet214, ack: edimessage.MessageAcknowledgmentStatusRejected,
+		delivery: edimessage.MessageDeliveryStatusSent, age: 14 * time.Hour, status: "AF",
 		ackError: "acknowledgment code R; Invalid code value (code 7) segment AT7"},
-	{set: edi.TransactionSet214, ack: edi.MessageAcknowledgmentStatusNotExpected,
-		delivery: edi.MessageDeliveryStatusDeadLettered, age: 3 * time.Hour, status: "X6",
+	{set: edidocument.TransactionSet214, ack: edimessage.MessageAcknowledgmentStatusNotExpected,
+		delivery: edimessage.MessageDeliveryStatusDeadLettered, age: 3 * time.Hour, status: "X6",
 		error: "sftp: dial tcp 127.0.0.1:9222: connect: connection refused (5 attempts)"},
 }
 
@@ -146,7 +156,7 @@ func seedLadingProject(
 	tenant pagination.TenantInfo,
 	partner *edi.EDIPartner,
 	org lading.Org,
-) (*edi.LadingVersion, error) {
+) (*ladingproject.LadingVersion, error) {
 	client := lading.Default()
 	starter, err := client.Starter(ctx, &lading.StarterRequest{
 		Name:  SeedEDIPartnerCode,
@@ -179,26 +189,26 @@ func seedLadingProject(
 		return nil, fmt.Errorf("the carrier starter is not ready: %+v", report.Readiness)
 	}
 
-	project := &edi.LadingProject{
+	project := &ladingproject.LadingProject{
 		BusinessUnitID:    tenant.BuID,
 		OrganizationID:    tenant.OrgID,
 		EDIPartnerID:      partner.ID,
 		Settings:          map[string]any{},
 		NextVersionNumber: 2,
 	}
-	if err = edidb.LadingProjects.Create(ctx, db, project); err != nil {
+	if err = ladingprojectdb.LadingProjects.Create(ctx, db, project); err != nil {
 		return nil, fmt.Errorf("insert the Lading project: %w", err)
 	}
 
-	refs := make([]edi.LadingSampleRef, 0, len(starter.Samples))
+	refs := make([]ladingproject.LadingSampleRef, 0, len(starter.Samples))
 	for _, sample := range starter.Samples {
 		digest := lading.Digest(sample.Content)
-		refs = append(refs, edi.LadingSampleRef{
+		refs = append(refs, ladingproject.LadingSampleRef{
 			Path:   sample.Path,
 			Digest: digest,
 			Size:   len(sample.Content),
 		})
-		if err = edidb.LadingSamples.Create(ctx, db, &edi.LadingSample{
+		if err = ladingprojectdb.LadingSamples.Create(ctx, db, &ladingproject.LadingSample{
 			BusinessUnitID: tenant.BuID,
 			OrganizationID: tenant.OrgID,
 			ProjectID:      project.ID,
@@ -211,16 +221,16 @@ func seedLadingProject(
 	}
 
 	now := timeutils.NowUnix()
-	version := &edi.LadingVersion{
+	version := &ladingproject.LadingVersion{
 		BusinessUnitID: tenant.BuID,
 		OrganizationID: tenant.OrgID,
 		ProjectID:      project.ID,
 		Number:         1,
-		Status:         edi.LadingVersionStatusActive,
+		Status:         ladingproject.LadingVersionStatusActive,
 		Files:          starter.Files,
 		Samples:        refs,
 		Manifest:       *check,
-		Readiness: &edi.LadingReadiness{
+		Readiness: &ladingproject.LadingReadiness{
 			Errors:               report.Readiness.Errors,
 			Failing:              report.Readiness.Failing,
 			Tests:                report.Readiness.Tests,
@@ -234,11 +244,11 @@ func seedLadingProject(
 		CertifiedAt:  &now,
 		ActivatedAt:  &now,
 	}
-	if err = edidb.LadingVersions.Create(ctx, db, version); err != nil {
+	if err = ladingprojectdb.LadingVersions.Create(ctx, db, version); err != nil {
 		return nil, fmt.Errorf("insert the Lading version: %w", err)
 	}
 	project.ActiveVersionID = version.ID
-	if err = edidb.LadingProjects.Save(ctx, db, project); err != nil {
+	if err = ladingprojectdb.LadingProjects.Save(ctx, db, project); err != nil {
 		return nil, fmt.Errorf("activate the Lading version: %w", err)
 	}
 	return version, nil
@@ -249,12 +259,12 @@ func seedOutboundMessages(
 	db *keel.DB,
 	tenant pagination.TenantInfo,
 	partner *edi.EDIPartner,
-	version *edi.LadingVersion,
+	version *ladingproject.LadingVersion,
 ) error {
-	documentType, err := edidb.EDIDocumentTypes.Where(
-		edidb.EDIDocumentTypes.Standard.Eq(edi.EDIStandardX12),
-		edidb.EDIDocumentTypes.TransactionSet.Eq(edi.TransactionSet214),
-		edidb.EDIDocumentTypes.Direction.Eq(edi.DocumentDirectionOutbound),
+	documentType, err := edidocumentdb.EDIDocumentTypes.Where(
+		edidocumentdb.EDIDocumentTypes.Standard.Eq(edidocument.EDIStandardX12),
+		edidocumentdb.EDIDocumentTypes.TransactionSet.Eq(edidocument.TransactionSet214),
+		edidocumentdb.EDIDocumentTypes.Direction.Eq(edidocument.DocumentDirectionOutbound),
 	).First(ctx, db)
 	if err != nil {
 		return fmt.Errorf("find the outbound 214 document type: %w", err)
@@ -277,26 +287,26 @@ func seedOutboundMessages(
 		load := shipments[idx%len(shipments)]
 		generated := now.Add(-entry.age)
 		control := idx + 1
-		message := &edi.EDIMessage{
+		message := &edimessage.EDIMessage{
 			BusinessUnitID:           tenant.BuID,
 			OrganizationID:           tenant.OrgID,
 			EDIPartnerID:             partner.ID,
 			DocumentTypeID:           documentType.ID,
 			LadingVersionID:          version.ID,
 			ShipmentID:               load.ID,
-			Direction:                edi.DocumentDirectionOutbound,
-			Standard:                 edi.EDIStandardX12,
+			Direction:                edidocument.DocumentDirectionOutbound,
+			Standard:                 edidocument.EDIStandardX12,
 			TransactionSet:           entry.set,
-			X12Version:               edi.DefaultX12204Version,
-			Status:                   edi.MessageStatusGenerated,
+			X12Version:               edidocument.DefaultX12204Version,
+			Status:                   edimessage.MessageStatusGenerated,
 			InterchangeControlNumber: fmt.Sprintf("%09d", 5000+control),
 			GroupControlNumber:       fmt.Sprintf("%d", 5000+control),
 			TransactionControlNumber: fmt.Sprintf("%04d", control),
 			SegmentCount:             5,
 			RawX12:                   seed214(generated, control, load, entry.status),
-			PayloadSnapshot: edi.DocumentPayload{
-				TransactionSet: edi.TransactionSet214,
-				ShipmentStatus: &edi.ShipmentStatusPayload{
+			PayloadSnapshot: edipayload.DocumentPayload{
+				TransactionSet: edidocument.TransactionSet214,
+				ShipmentStatus: &edipayload.ShipmentStatusPayload{
 					ShipmentID: load.ID,
 					BOL:        load.BOL,
 					ProNumber:  load.ProNumber,
@@ -312,25 +322,25 @@ func seedOutboundMessages(
 			AckLastError:      entry.ackError,
 			GeneratedAt:       generated.Unix(),
 		}
-		if entry.delivery == edi.MessageDeliveryStatusDeadLettered {
+		if entry.delivery == edimessage.MessageDeliveryStatusDeadLettered {
 			message.DeliveryAttempts = 5
 		}
-		if entry.delivery == edi.MessageDeliveryStatusSent {
+		if entry.delivery == edimessage.MessageDeliveryStatusSent {
 			sentAt := generated.Add(30 * time.Second).Unix()
 			message.DeliverySentAt = &sentAt
 		}
-		if entry.ack != edi.MessageAcknowledgmentStatusPending &&
-			entry.ack != edi.MessageAcknowledgmentStatusNotExpected {
+		if entry.ack != edimessage.MessageAcknowledgmentStatusPending &&
+			entry.ack != edimessage.MessageAcknowledgmentStatusNotExpected {
 			ackedAt := generated.Add(9 * time.Minute).Unix()
 			message.AckReceivedAt = &ackedAt
 		}
-		if err := edidb.EDIMessages.Create(ctx, db, message); err != nil {
+		if err := edimessagedb.EDIMessages.Create(ctx, db, message); err != nil {
 			return fmt.Errorf("insert 214 %d: %w", control, err)
 		}
 		if err := backdate(
 			ctx,
 			db,
-			edidb.EDIMessages.Handle,
+			edimessagedb.EDIMessages.Handle,
 			[]string{message.ID.String()},
 			[]int64{generated.Unix()},
 		); err != nil {

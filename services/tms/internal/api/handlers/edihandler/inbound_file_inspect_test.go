@@ -11,7 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediinboundservice"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
 	"github.com/emoss08/trenova/internal/modules/edi/app/edix12inspect"
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/ediinboundfile"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/edimessageports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/mocks/edimessageportsmock"
@@ -61,7 +61,7 @@ func TestEDIHandler_InspectInboundFileLaysOutTheFileItHolds(t *testing.T) {
 		GetInboundFileByID(mock.Anything, mock.MatchedBy(func(req edimessageports.GetEDIInboundFileByIDRequest) bool {
 			return req.ID == fileID && !req.IncludeMessages
 		})).
-		Return(&edi.EDIInboundFile{ID: fileID, RawContent: inspectedInterchange}, nil).
+		Return(&ediinboundfile.EDIInboundFile{ID: fileID, RawContent: inspectedInterchange}, nil).
 		Once()
 
 	ctx := runEDIRequest(
@@ -101,7 +101,7 @@ func TestEDIHandler_InspectInboundFileRefusesAPurgedFile(t *testing.T) {
 	files := edimessageportsmock.NewMockEDIInboundFileRepository(t)
 	files.EXPECT().
 		GetInboundFileByID(mock.Anything, mock.Anything).
-		Return(&edi.EDIInboundFile{ID: fileID, RawPurgedAt: &purgedAt}, nil).
+		Return(&ediinboundfile.EDIInboundFile{ID: fileID, RawPurgedAt: &purgedAt}, nil).
 		Once()
 
 	runEDIRequest(
