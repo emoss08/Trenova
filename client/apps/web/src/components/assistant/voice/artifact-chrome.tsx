@@ -61,6 +61,7 @@ export const ARTIFACT_KINDS: Record<
   extraction: { label: "Extraction", icon: ScanTextIcon },
   edi_connection_draft: { label: "EDI draft", icon: Dataflow03Icon },
   analysis: { label: "Analysis", icon: LineChartUp01Icon },
+  board: { label: "Board", icon: LayoutAlt04Icon },
   portal_task: { label: "Portal task", icon: BrowserIcon },
 };
 

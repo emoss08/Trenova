@@ -60,6 +60,7 @@ var familyOfKind = map[Kind]Family{
 	KindEDIConnectionDraft: FamilyExtract,
 	KindAnalysis:           FamilyReport,
 	KindPortalTask:         FamilyReport,
+	KindBoard:              FamilyReport,
 }
 
 // FamilyOf is the family an artifact is listed under.

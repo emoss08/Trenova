@@ -310,6 +310,7 @@ func (t *toolSet) addConversational(req toolSetRequest) {
 	}
 	if req.publishes {
 		t.add(publishArtifactSpec())
+		t.add(showBoardSpec())
 	}
 	if len(req.delegates) > 0 && !req.delegated {
 		t.add(delegateTaskSpec(req.delegates))
@@ -457,8 +458,8 @@ func (s *Service) carryOver(set *toolSet, history []conversation.Message) {
 		}
 		for _, call := range message.ToolCalls {
 			switch call.Name {
-			case askUserName, publishArtifactName, delegateTaskName, requestDecisionName,
-				withdrawProposalName, namePlanName:
+			case askUserName, publishArtifactName, showBoardName, delegateTaskName,
+				requestDecisionName, withdrawProposalName, namePlanName:
 			case findToolsName:
 				if names, stored := found[call.ID]; stored {
 					for _, name := range names {

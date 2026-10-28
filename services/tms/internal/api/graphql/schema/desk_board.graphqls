@@ -1,0 +1,182 @@
+"""
+A board an agent laid out in a conversation, read now with the reader's own
+access: its words as the agent wrote them, and each block's figures, rows,
+checks and points read live from the records, analyses and metrics it names.
+"""
+type DeskBoardCard {
+  artifactId: ID!
+  threadId: ID!
+  title: String!
+  "The agent the board is credited to."
+  author: String!
+  "The question of the turn that showed the board."
+  question: String!
+  answeredAt: Timestamp!
+  readAt: Timestamp!
+  "The answer in a sentence or two, split where it cites a block."
+  verdict: [DeskBoardSegment!]!
+  blocks: [DeskBoardBlock!]!
+  "The board as it reads now, in markdown: what Copy as text copies."
+  markdown: String!
+}
+
+"""
+A run of words, and the block it cites when it cites one: the block's numeral,
+whether the block holds something to act on (warn) or not (info), and whether
+it could not be read.
+"""
+type DeskBoardSegment {
+  text: String!
+  numeral: Int!
+  tone: String!
+  struck: Boolean!
+}
+
+"""
+A value the server read: count, money, percent (a fraction), duration (in
+seconds), number or text.
+"""
+type DeskBoardValue {
+  kind: String!
+  number: Decimal!
+  currency: String!
+  text: String!
+}
+
+"""
+Where a block was read from: records (with how many it names and how many the
+reader may read), an analysis or a table by title, the organization's metrics,
+a record's history, the checks above, or several.
+"""
+type DeskBoardSource {
+  kind: String!
+  resource: String!
+  count: Int!
+  readable: Int!
+  title: String!
+}
+
+"""
+A record's measure: how far behind a shipment is, what an invoice still owes,
+how long a journal entry has waited. state says where the record is (late,
+held at a stop, onTime, delivered, open, settled) and at the moment it is
+measured against.
+"""
+type DeskBoardRowMeasure {
+  measure: String!
+  value: DeskBoardValue!
+  state: String!
+  at: Timestamp
+  tone: String!
+}
+
+"""
+A record a block names. A record the reader may not read, or that no longer
+exists, has readable false and nothing else.
+"""
+type DeskBoardRow {
+  resource: String!
+  id: ID!
+  readable: Boolean!
+  label: String!
+  subtitle: String!
+  status: String!
+  measure: DeskBoardRowMeasure
+}
+
+type DeskBoardFigure {
+  label: String!
+  "Absent when its source cannot be read."
+  value: DeskBoardValue
+  "What it was when the board was shown, when it has moved since."
+  was: DeskBoardValue
+  tone: String!
+}
+
+type DeskBoardCompareLine {
+  label: String!
+  "higher or lower, when the row has a winner."
+  better: String!
+  "One value per column, absent where the column's record has none."
+  cells: [DeskBoardValue]!
+  wins: [Boolean!]!
+}
+
+type DeskBoardCompare {
+  columns: [DeskBoardRow!]!
+  lines: [DeskBoardCompareLine!]!
+  "How many rows each column won."
+  wins: [Int!]!
+}
+
+type DeskBoardTable {
+  "The first rows of the table, as an analysis keeps a table."
+  table: JSON!
+  total: Int!
+  "The analysis or table artifact the whole table opens as."
+  artifactId: ID
+}
+
+type DeskBoardEvent {
+  at: Timestamp!
+  operation: String!
+  actor: String!
+  principalType: String!
+  comment: String!
+  changes: JSON
+}
+
+type DeskBoardCheck {
+  title: String!
+  tone: String!
+  detail: String!
+  "How many of the records it names the reader may read, or its metric."
+  count: DeskBoardValue
+  was: DeskBoardValue
+  records: [DeskBoardRow!]!
+  "How many of its records the reader may not read."
+  hidden: Int!
+}
+
+type DeskBoardMeter {
+  clear: Int!
+  total: Int!
+  "One tone per check, clear first."
+  tones: [String!]!
+  percent: DeskBoardValue
+}
+
+"""
+One block of a board. type says which of the other fields it fills: figures,
+records (rows), compare, table, chart (an analysis chart spec), timeline
+(events, with the record in rows), checks, meter, prose (text) or note (text,
+noteTone and chips).
+"""
+type DeskBoardBlock {
+  type: String!
+  title: String!
+  half: Boolean!
+  "The block's exhibit numeral; 0 for prose and notes."
+  numeral: Int!
+  "ready, empty or unreadable."
+  state: String!
+  tone: String!
+  source: DeskBoardSource!
+  figures: [DeskBoardFigure!]!
+  measure: String!
+  rows: [DeskBoardRow!]!
+  compare: DeskBoardCompare
+  table: DeskBoardTable
+  chart: JSON
+  events: [DeskBoardEvent!]!
+  checks: [DeskBoardCheck!]!
+  meter: DeskBoardMeter
+  text: [DeskBoardSegment!]!
+  noteTone: String!
+  chips: [DeskBoardRow!]!
+}
+
+extend type Query {
+  "A board in one of the person's conversations, read now with their access."
+  deskBoardCard(threadId: ID!, artifactId: ID!): DeskBoardCard!
+}

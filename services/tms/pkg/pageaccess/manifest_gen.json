@@ -1,5 +1,5 @@
 {
-  "version": "sha256:5943af05ff420c3e4d36e1a9b57cd174df22d960e8bd74b89f03cdff608f341d",
+  "version": "sha256:8500d42737feca2b57040ae05436ffe42efb76e556acb03d4c0b1711c88c7c74",
   "screens": [
     {
       "path": "/",
@@ -13057,6 +13057,7 @@
         "DecideMyPlan",
         "DecideMyProposal",
         "DecideMyProposals",
+        "DeskBoardCard",
         "DeskCarrierCard",
         "DeskCarrierEligibility",
         "DeskCarrierIntel",
@@ -14664,6 +14665,7 @@
         "DecideMyPlan",
         "DecideMyProposal",
         "DecideMyProposals",
+        "DeskBoardCard",
         "DeskCarrierCard",
         "DeskCarrierEligibility",
         "DeskCarrierIntel",
@@ -16319,6 +16321,7 @@
         "DecideMyPlan",
         "DecideMyProposal",
         "DecideMyProposals",
+        "DeskBoardCard",
         "DeskCarrierCard",
         "DeskCarrierEligibility",
         "DeskCarrierIntel",
@@ -35480,6 +35483,13 @@
     {
       "name": "DenyCaptureDevicePairing",
       "type": "mutation",
+      "reads": [],
+      "linked": [],
+      "declared": []
+    },
+    {
+      "name": "DeskBoardCard",
+      "type": "query",
       "reads": [],
       "linked": [],
       "declared": []

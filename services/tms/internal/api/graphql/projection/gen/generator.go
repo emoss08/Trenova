@@ -36,6 +36,7 @@ const (
 	homeWidgetDTO       = "GraphQL home widget catalog DTO"
 	deskMemoryDTO       = "GraphQL Desk memory DTO built by its resolver"
 	reportRunDeskDTO    = "GraphQL Desk report run card DTO built by reporting.GetRunCard"
+	deskBoardDTO        = "GraphQL Desk board DTO built by boardcardservice.Card"
 	shipmentWorkflowDTO = "GraphQL shipment workflow DTO"
 	journalDTO          = "GraphQL journal DTO without column projection metadata"
 	costingDTO          = "GraphQL costing DTO without column projection metadata"
@@ -89,6 +90,20 @@ var nonProjectionObjects = map[string]string{
 	"DispatchFinding":                 "GraphQL dispatch console DTO",
 	"PendingDecisionAgentCount":       "GraphQL decision queue summary DTO",
 	"RecentDecision":                  "GraphQL recent-decisions DTO built by its resolver",
+	"DeskBoardBlock":                  deskBoardDTO,
+	"DeskBoardCard":                   deskBoardDTO,
+	"DeskBoardCheck":                  deskBoardDTO,
+	"DeskBoardCompare":                deskBoardDTO,
+	"DeskBoardCompareLine":            deskBoardDTO,
+	"DeskBoardEvent":                  deskBoardDTO,
+	"DeskBoardFigure":                 deskBoardDTO,
+	"DeskBoardMeter":                  deskBoardDTO,
+	"DeskBoardRow":                    deskBoardDTO,
+	"DeskBoardRowMeasure":             deskBoardDTO,
+	"DeskBoardSegment":                deskBoardDTO,
+	"DeskBoardSource":                 deskBoardDTO,
+	"DeskBoardTable":                  deskBoardDTO,
+	"DeskBoardValue":                  deskBoardDTO,
 	"DeskMemory":                      deskMemoryDTO,
 	"DeskMemoryCount":                 deskMemoryDTO,
 	"DeskMemoryLink":                  deskMemoryDTO,

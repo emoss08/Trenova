@@ -3062,6 +3062,170 @@ type DeliveryHourBucket struct {
 	Late      int `json:"late"`
 }
 
+// One block of a board. type says which of the other fields it fills: figures,
+// records (rows), compare, table, chart (an analysis chart spec), timeline
+// (events, with the record in rows), checks, meter, prose (text) or note (text,
+// noteTone and chips).
+type DeskBoardBlock struct {
+	Type  string `json:"type"`
+	Title string `json:"title"`
+	Half  bool   `json:"half"`
+	// The block's exhibit numeral; 0 for prose and notes.
+	Numeral int `json:"numeral"`
+	// ready, empty or unreadable.
+	State    string              `json:"state"`
+	Tone     string              `json:"tone"`
+	Source   *DeskBoardSource    `json:"source"`
+	Figures  []*DeskBoardFigure  `json:"figures"`
+	Measure  string              `json:"measure"`
+	Rows     []*DeskBoardRow     `json:"rows"`
+	Compare  *DeskBoardCompare   `json:"compare,omitempty"`
+	Table    *DeskBoardTable     `json:"table,omitempty"`
+	Chart    map[string]any      `json:"chart,omitempty"`
+	Events   []*DeskBoardEvent   `json:"events"`
+	Checks   []*DeskBoardCheck   `json:"checks"`
+	Meter    *DeskBoardMeter     `json:"meter,omitempty"`
+	Text     []*DeskBoardSegment `json:"text"`
+	NoteTone string              `json:"noteTone"`
+	Chips    []*DeskBoardRow     `json:"chips"`
+}
+
+// A board an agent laid out in a conversation, read now with the reader's own
+// access: its words as the agent wrote them, and each block's figures, rows,
+// checks and points read live from the records, analyses and metrics it names.
+type DeskBoardCard struct {
+	ArtifactID string `json:"artifactId"`
+	ThreadID   string `json:"threadId"`
+	Title      string `json:"title"`
+	// The agent the board is credited to.
+	Author string `json:"author"`
+	// The question of the turn that showed the board.
+	Question   string `json:"question"`
+	AnsweredAt int    `json:"answeredAt"`
+	ReadAt     int    `json:"readAt"`
+	// The answer in a sentence or two, split where it cites a block.
+	Verdict []*DeskBoardSegment `json:"verdict"`
+	Blocks  []*DeskBoardBlock   `json:"blocks"`
+	// The board as it reads now, in markdown: what Copy as text copies.
+	Markdown string `json:"markdown"`
+}
+
+type DeskBoardCheck struct {
+	Title  string `json:"title"`
+	Tone   string `json:"tone"`
+	Detail string `json:"detail"`
+	// How many of the records it names the reader may read, or its metric.
+	Count   *DeskBoardValue `json:"count,omitempty"`
+	Was     *DeskBoardValue `json:"was,omitempty"`
+	Records []*DeskBoardRow `json:"records"`
+	// How many of its records the reader may not read.
+	Hidden int `json:"hidden"`
+}
+
+type DeskBoardCompare struct {
+	Columns []*DeskBoardRow         `json:"columns"`
+	Lines   []*DeskBoardCompareLine `json:"lines"`
+	// How many rows each column won.
+	Wins []int `json:"wins"`
+}
+
+type DeskBoardCompareLine struct {
+	Label string `json:"label"`
+	// higher or lower, when the row has a winner.
+	Better string `json:"better"`
+	// One value per column, absent where the column's record has none.
+	Cells []*DeskBoardValue `json:"cells"`
+	Wins  []bool            `json:"wins"`
+}
+
+type DeskBoardEvent struct {
+	At            int            `json:"at"`
+	Operation     string         `json:"operation"`
+	Actor         string         `json:"actor"`
+	PrincipalType string         `json:"principalType"`
+	Comment       string         `json:"comment"`
+	Changes       map[string]any `json:"changes,omitempty"`
+}
+
+type DeskBoardFigure struct {
+	Label string `json:"label"`
+	// Absent when its source cannot be read.
+	Value *DeskBoardValue `json:"value,omitempty"`
+	// What it was when the board was shown, when it has moved since.
+	Was  *DeskBoardValue `json:"was,omitempty"`
+	Tone string          `json:"tone"`
+}
+
+type DeskBoardMeter struct {
+	Clear int `json:"clear"`
+	Total int `json:"total"`
+	// One tone per check, clear first.
+	Tones   []string        `json:"tones"`
+	Percent *DeskBoardValue `json:"percent,omitempty"`
+}
+
+// A record a block names. A record the reader may not read, or that no longer
+// exists, has readable false and nothing else.
+type DeskBoardRow struct {
+	Resource string               `json:"resource"`
+	ID       string               `json:"id"`
+	Readable bool                 `json:"readable"`
+	Label    string               `json:"label"`
+	Subtitle string               `json:"subtitle"`
+	Status   string               `json:"status"`
+	Measure  *DeskBoardRowMeasure `json:"measure,omitempty"`
+}
+
+// A record's measure: how far behind a shipment is, what an invoice still owes,
+// how long a journal entry has waited. state says where the record is (late,
+// held at a stop, onTime, delivered, open, settled) and at the moment it is
+// measured against.
+type DeskBoardRowMeasure struct {
+	Measure string          `json:"measure"`
+	Value   *DeskBoardValue `json:"value"`
+	State   string          `json:"state"`
+	At      *int            `json:"at,omitempty"`
+	Tone    string          `json:"tone"`
+}
+
+// A run of words, and the block it cites when it cites one: the block's numeral,
+// whether the block holds something to act on (warn) or not (info), and whether
+// it could not be read.
+type DeskBoardSegment struct {
+	Text    string `json:"text"`
+	Numeral int    `json:"numeral"`
+	Tone    string `json:"tone"`
+	Struck  bool   `json:"struck"`
+}
+
+// Where a block was read from: records (with how many it names and how many the
+// reader may read), an analysis or a table by title, the organization's metrics,
+// a record's history, the checks above, or several.
+type DeskBoardSource struct {
+	Kind     string `json:"kind"`
+	Resource string `json:"resource"`
+	Count    int    `json:"count"`
+	Readable int    `json:"readable"`
+	Title    string `json:"title"`
+}
+
+type DeskBoardTable struct {
+	// The first rows of the table, as an analysis keeps a table.
+	Table map[string]any `json:"table"`
+	Total int            `json:"total"`
+	// The analysis or table artifact the whole table opens as.
+	ArtifactID *string `json:"artifactId,omitempty"`
+}
+
+// A value the server read: count, money, percent (a fraction), duration (in
+// seconds), number or text.
+type DeskBoardValue struct {
+	Kind     string `json:"kind"`
+	Number   string `json:"number"`
+	Currency string `json:"currency"`
+	Text     string `json:"text"`
+}
+
 type DeskMemoriesInput struct {
 	// Page size; 50 when left out, at most 100.
 	First *int    `json:"first,omitempty"`

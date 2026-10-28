@@ -1,0 +1,194 @@
+query DeskBoardCard($threadId: ID!, $artifactId: ID!) {
+  deskBoardCard(threadId: $threadId, artifactId: $artifactId) {
+    artifactId
+    threadId
+    title
+    author
+    question
+    answeredAt
+    readAt
+    markdown
+    verdict {
+      text
+      numeral
+      tone
+      struck
+    }
+    blocks {
+      type
+      title
+      half
+      numeral
+      state
+      tone
+      source {
+        kind
+        resource
+        count
+        readable
+        title
+      }
+      figures {
+        label
+        value {
+          kind
+          number
+          currency
+          text
+        }
+        was {
+          kind
+          number
+          currency
+          text
+        }
+        tone
+      }
+      measure
+      rows {
+        resource
+        id
+        readable
+        label
+        subtitle
+        status
+        measure {
+          measure
+          value {
+            kind
+            number
+            currency
+            text
+          }
+          state
+          at
+          tone
+        }
+      }
+      compare {
+        columns {
+          resource
+          id
+          readable
+          label
+          subtitle
+          status
+          measure {
+            measure
+            value {
+              kind
+              number
+              currency
+              text
+            }
+            state
+            at
+            tone
+          }
+        }
+        lines {
+          label
+          better
+          cells {
+            kind
+            number
+            currency
+            text
+          }
+          wins
+        }
+        wins
+      }
+      table {
+        table
+        total
+        artifactId
+      }
+      chart
+      events {
+        at
+        operation
+        actor
+        principalType
+        comment
+        changes
+      }
+      checks {
+        title
+        tone
+        detail
+        count {
+          kind
+          number
+          currency
+          text
+        }
+        was {
+          kind
+          number
+          currency
+          text
+        }
+        records {
+          resource
+          id
+          readable
+          label
+          subtitle
+          status
+          measure {
+            measure
+            value {
+              kind
+              number
+              currency
+              text
+            }
+            state
+            at
+            tone
+          }
+        }
+        hidden
+      }
+      meter {
+        clear
+        total
+        tones
+        percent {
+          kind
+          number
+          currency
+          text
+        }
+      }
+      text {
+        text
+        numeral
+        tone
+        struck
+      }
+      noteTone
+      chips {
+        resource
+        id
+        readable
+        label
+        subtitle
+        status
+        measure {
+          measure
+          value {
+            kind
+            number
+            currency
+            text
+          }
+          state
+          at
+          tone
+        }
+      }
+    }
+  }
+}

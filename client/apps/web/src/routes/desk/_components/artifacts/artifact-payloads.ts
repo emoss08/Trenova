@@ -1054,3 +1054,71 @@ export function portalTaskFrom(artifact: AssistantArtifact): PortalTaskPayload {
     retrievedOn: stringOf(payload.retrievedOn),
   };
 }
+
+/** The kinds of block a board lays out, in the order the server names them. */
+export const BOARD_BLOCK_TYPES = [
+  "figures",
+  "records",
+  "compare",
+  "table",
+  "chart",
+  "timeline",
+  "checks",
+  "meter",
+  "prose",
+  "note",
+] as const;
+
+export type BoardBlockType = (typeof BOARD_BLOCK_TYPES)[number];
+
+/** One block of a board as it was laid out, before anything it names is read. */
+export type BoardLayoutBlock = {
+  type: BoardBlockType;
+  title: string;
+  half: boolean;
+  /** How many records, figures or checks the block names, for its skeleton. */
+  size: number;
+};
+
+/** A board as the agent laid it out: its words and the shape of its blocks. */
+export type BoardArtifact = {
+  title: string;
+  verdict: string;
+  author: string;
+  blocks: BoardLayoutBlock[];
+};
+
+function isBoardBlockType(value: unknown): value is BoardBlockType {
+  return typeof value === "string" && (BOARD_BLOCK_TYPES as readonly string[]).includes(value);
+}
+
+function blockSize(block: Record<string, unknown>): number {
+  for (const key of ["figures", "checks", "rows"] as const) {
+    const items = listOf(block[key]);
+    if (items.length > 0) return items.length;
+  }
+  const records = isRecord(block.records) ? listOf(block.records.ids) : [];
+  return records.length;
+}
+
+export function boardFrom(artifact: AssistantArtifact): BoardArtifact {
+  const payload = artifact.payload;
+  const board = isRecord(payload.board) ? payload.board : {};
+  const blocks: BoardLayoutBlock[] = [];
+  for (const raw of listOf(board.blocks)) {
+    if (!isRecord(raw) || !isBoardBlockType(raw.type)) continue;
+    blocks.push({
+      type: raw.type,
+      title: stringOf(raw.title),
+      half: raw.half === true,
+      size: blockSize(raw),
+    });
+  }
+
+  return {
+    title: stringOf(board.title) || artifact.title,
+    verdict: stringOf(board.verdict),
+    author: stringOf(payload.author),
+    blocks,
+  };
+}

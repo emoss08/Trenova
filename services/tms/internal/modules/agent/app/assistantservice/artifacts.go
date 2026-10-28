@@ -171,6 +171,9 @@ func (r *artifactRecorder) observe(
 	if request, ok := observation.Data.(agentports.DecisionRequest); ok {
 		return r.requestDecision(observation.Call.ID, request)
 	}
+	if request, ok := observation.Data.(agentports.BoardRequest); ok {
+		return r.showBoard(observation.Call.ID, request)
+	}
 	if observation.Call.Name == toolGetShipmentDraft && !observation.Failed {
 		if extraction := r.extraction(observation.Call.ID, observation.Data); extraction != nil {
 			saved, err := r.save(extraction)

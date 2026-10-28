@@ -10,7 +10,7 @@ policies, so this page cannot drift from what runs: CI regenerates it and fails
 when it differs. Each tool is listed once, under the furthest class its work
 can reach.
 
-Tools listed: 638.
+Tools listed: 639.
 
 ## The model
 
@@ -89,7 +89,7 @@ and Confidential fields never reach a model at all.
 | Class | Means | Runs at most | Held once tainted | Tools that reach it |
 | --- | --- | --- | --- | --- |
 | Reads only | Looks something up. Nothing changes and nothing is sent. | Automatic | No | 215 |
-| The caller's own records | Changes only the records of the person using the agent. | Automatic | No | 9 |
+| The caller's own records | Changes only the records of the person using the agent. | Automatic | No | 10 |
 | Inside the organization | Changes records only people inside the organization see. | Automatic | No | 266 |
 | Seen by a customer | Changes something a customer can see. | Ask first | Yes | 5 |
 | Seen by a driver | Changes something a driver can see. | Ask first | Yes | 23 |
@@ -329,6 +329,7 @@ Changes only the records of the person using the agent.
 | Remove home widget (`home_remove_widget`) | The caller's own records | Automatic | — | — | Changes only the caller's own home page. |
 | Publish artifact (`publish_artifact`) | The caller's own records | Automatic | — | — | Publishes a document into the caller's own conversation, where only they read it. |
 | Request decision (`request_decision`) | The caller's own records | Automatic | — | — | Opens, in the person's own conversation, the approval box on a proposal already waiting on them; it decides nothing and changes no record. |
+| Show board (`show_board`) | The caller's own records | Automatic | — | — | Lays out an answer as a board in the caller's own conversation. It writes no business record, and every value on it is read again with the viewer's access when the board is opened. |
 
 ## Inside the organization
 

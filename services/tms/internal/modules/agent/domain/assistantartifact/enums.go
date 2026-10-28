@@ -51,6 +51,10 @@ const (
 	// site, what it was asked, and the run as it goes, with the way to enter
 	// a sign-in code or sign in in the live browser while it waits.
 	KindPortalTask Kind = "portal_task"
+	// KindBoard is an agent's answer to a question across records, laid out as a
+	// short page: its words, and blocks that each read their figures, rows and
+	// checks live from the records, analyses and metrics they name.
+	KindBoard Kind = "board"
 )
 
 // AllKinds is the whole set, in the order they were added.
@@ -79,6 +83,7 @@ func AllKinds() []Kind {
 		KindEDIConnectionDraft,
 		KindAnalysis,
 		KindPortalTask,
+		KindBoard,
 	}
 }
 

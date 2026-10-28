@@ -49,6 +49,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/exceptionsourcerepository"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/insightrepository"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/recordlabelrepository"
+	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/recordsummaryrepository"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/roleagentgrantrepository"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/shipmentbriefrepository"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/shipmentimportchatrepository"
@@ -115,6 +116,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/assistantqueueservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/assistantturnservice"
+	"github.com/emoss08/trenova/internal/modules/agent/app/boardcardservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/briefingservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/briefingservice/briefingwriter"
 	"github.com/emoss08/trenova/internal/modules/agent/app/casechecklistservice"
@@ -218,6 +220,12 @@ func SharedOptions() fx.Option {
 			),
 			agentproposalbaselinerepository.New,
 			recordlabelrepository.New,
+			recordsummaryrepository.New,
+			fx.Annotate(
+				boardcardservice.New,
+				fx.As(fx.Self()),
+				fx.As(new(agentports.BoardFiller)),
+			),
 			aiusagerepository.New,
 			aiauditrepository.New,
 			aiauditrepository.NewSource,

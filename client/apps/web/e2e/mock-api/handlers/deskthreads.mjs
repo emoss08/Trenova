@@ -7,6 +7,7 @@ import { deskCaseThreads } from "./deskcase.mjs";
 import { ediDraftThreads } from "./deskedidraft.mjs";
 import { deskPlanThreads } from "./deskplan.mjs";
 import { deskReportThreads } from "./deskreport.mjs";
+import { deskBoardThreads } from "./deskboard.mjs";
 import { deskTableThreads } from "./desktable.mjs";
 import { extractionThreads } from "./deskextraction.mjs";
 import { formulaThreads } from "./formula-nova.mjs";
@@ -30,6 +31,7 @@ function threads(state) {
     ...deskPlanThreads(state),
     ...deskTableThreads(state),
     ...deskReportThreads(state),
+    ...deskBoardThreads(state),
     ...extractionThreads(state),
     ...triage,
     ...formulaThreads(state),

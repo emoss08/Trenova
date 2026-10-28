@@ -50,6 +50,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/customfielddefinitionexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/datatableinsightexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/decisionsexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/deskboardexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/deskmemoryexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/detentionexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/dispatchconsoleexec"
@@ -2910,6 +2911,7 @@ type QueryResolver interface {
 	PendingDecisions(ctx context.Context, input gqlmodel.PendingDecisionsInput) (*gqlmodel.PendingDecisionConnection, error)
 	PendingDecisionSummary(ctx context.Context) (*gqlmodel.PendingDecisionSummary, error)
 	RecentDecisions(ctx context.Context, since int, first *int) ([]*gqlmodel.RecentDecision, error)
+	DeskBoardCard(ctx context.Context, threadID string, artifactID string) (*gqlmodel.DeskBoardCard, error)
 	DeskMemories(ctx context.Context, input gqlmodel.DeskMemoriesInput) (*gqlmodel.DeskMemoryPage, error)
 	DeskMemoriesByIds(ctx context.Context, ids []string) ([]*gqlmodel.DeskMemory, error)
 	DeskMemorySettings(ctx context.Context) (*gqlmodel.DeskMemorySettings, error)
@@ -3935,6 +3937,7 @@ var registry = sync.OnceValues(func() (*gqlexec.Registry, error) {
 		customfielddefinitionexec.Shard,
 		datatableinsightexec.Shard,
 		decisionsexec.Shard,
+		deskboardexec.Shard,
 		deskmemoryexec.Shard,
 		detentionexec.Shard,
 		dispatchconsoleexec.Shard,

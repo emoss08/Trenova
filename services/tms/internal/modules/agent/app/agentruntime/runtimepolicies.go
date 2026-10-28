@@ -44,6 +44,16 @@ var runtimePolicySpecs = []runtimePolicySpec{
 			"only they read it.",
 	},
 	{
+		name:      showBoardName,
+		operation: permission.OpRead,
+		scope:     agent.ToolScopeRun,
+		egress:    agent.EgressPersonal,
+		effect:    agent.ToolEffectPresent,
+		rationale: "Lays out an answer as a board in the caller's own conversation. It writes " +
+			"no business record, and every value on it is read again with the viewer's " +
+			"access when the board is opened.",
+	},
+	{
 		name:      requestDecisionName,
 		operation: permission.OpRead,
 		scope:     agent.ToolScopeRun,

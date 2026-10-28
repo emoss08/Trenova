@@ -47,6 +47,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/customfielddefinitionresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/datatableinsightresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/decisionsresolver"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/deskboardresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/deskmemoryresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/detentionresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/dispatchconsoleresolver"
@@ -670,6 +671,10 @@ func FromServices(s *Services) *Resolver {
 	decisionsDeps := &decisionsresolver.Deps{
 		Core:                      s.Core,
 		AgentDecisionQueueService: s.AgentDecisionQueueService,
+	}
+	deskboardDeps := &deskboardresolver.Deps{
+		Core:       s.Core,
+		BoardCards: s.BoardCards,
 	}
 	deskmemoryDeps := &deskmemoryresolver.Deps{
 		Core:               s.Core,
@@ -1548,6 +1553,7 @@ func FromServices(s *Services) *Resolver {
 			customfielddefinitionQuery:    &customfielddefinitionQuery{Deps: customfielddefinitionDeps},
 			datatableinsightQuery:         &datatableinsightQuery{Deps: datatableinsightDeps},
 			decisionsQuery:                &decisionsQuery{Deps: decisionsDeps},
+			deskboardQuery:                &deskboardQuery{Deps: deskboardDeps},
 			deskmemoryQuery:               &deskmemoryQuery{Deps: deskmemoryDeps},
 			detentionQuery:                &detentionQuery{Deps: detentionDeps},
 			dispatchconsoleQuery:          &dispatchconsoleQuery{Deps: dispatchconsoleDeps},
@@ -2797,6 +2803,7 @@ type queryResolver struct {
 	*customfielddefinitionQuery
 	*datatableinsightQuery
 	*decisionsQuery
+	*deskboardQuery
 	*deskmemoryQuery
 	*detentionQuery
 	*dispatchconsoleQuery
@@ -3331,6 +3338,7 @@ type (
 	customfielddefinitionQuery      = customfielddefinitionresolver.QueryResolver
 	datatableinsightQuery           = datatableinsightresolver.QueryResolver
 	decisionsQuery                  = decisionsresolver.QueryResolver
+	deskboardQuery                  = deskboardresolver.QueryResolver
 	deskmemoryQuery                 = deskmemoryresolver.QueryResolver
 	detentionQuery                  = detentionresolver.QueryResolver
 	dispatchconsoleQuery            = dispatchconsoleresolver.QueryResolver

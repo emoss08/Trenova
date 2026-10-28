@@ -40,6 +40,5 @@
   "Select origin facility": "Seleccione la instalación de origen",
   "Shown wherever a tender references this guide.": "Se muestra dondequiera que una oferta haga referencia a esta guía.",
   "State only": "Solo el estado",
-  "Which lane this guide covers. The most specific matching guide wins: exact locations beat city+state, which beats state-only.": "Qué ruta cubre esta guía. Gana la guía coincidente más específica: las ubicaciones exactas superan a ciudad+estado, que a su vez supera al estado solo.",
-  "{0, plural, one {# carrier} other {# carriers}}": "{0, plural, one {# transportista} other {# transportistas}}"
+  "Which lane this guide covers. The most specific matching guide wins: exact locations beat city+state, which beats state-only.": "Qué ruta cubre esta guía. Gana la guía coincidente más específica: las ubicaciones exactas superan a ciudad+estado, que a su vez supera al estado solo."
 }

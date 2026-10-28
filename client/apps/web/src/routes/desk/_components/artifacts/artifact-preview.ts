@@ -4,6 +4,7 @@ import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import {
   analysisFrom,
   portalTaskFrom,
+  boardFrom,
   emailDraftFrom,
   entityCardFrom,
   planFrom,
@@ -91,6 +92,12 @@ export function artifactPreview(artifact: AssistantArtifact, t: TranslateFn): st
       return analysis.charts.length > 0
         ? t("{0, plural, one {# chart} other {# charts}}", analysis.charts.length)
         : "";
+    }
+    case "board": {
+      const exhibits = boardFrom(artifact).blocks.filter(
+        (block) => block.type !== "prose" && block.type !== "note",
+      ).length;
+      return exhibits > 0 ? t("{0, plural, one {# exhibit} other {# exhibits}}", exhibits) : "";
     }
     case "portal_task": {
       const task = portalTaskFrom(artifact);
