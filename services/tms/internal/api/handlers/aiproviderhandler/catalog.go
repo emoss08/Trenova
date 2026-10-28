@@ -482,6 +482,14 @@ func taskDescriptors() []TaskDescriptor {
 				"wrong answer.",
 		},
 		{
+			Task:        aiprovider.TaskChapterTitling,
+			Label:       "Desk chapters",
+			Description: "Decide whether a Desk question starts a new chapter and name it in a few words.",
+			VolumeGuidance: "One short call per question asked at the Desk, with no reasoning. " +
+				"Its title is cleaned and checked against the conversation afterwards, so the " +
+				"cheapest fast model will do. Without one it uses the Desk's own model.",
+		},
+		{
 			Task:        aiprovider.TaskInboundClassification,
 			Label:       "Inbound mail",
 			Description: "Decide what an email that arrived on a monitored address is.",

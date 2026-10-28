@@ -45,6 +45,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/briefingrepository"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/casechecklistrepository"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/conversationrepository"
+	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/assistantchapterrepository"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/conversationschedulerepository"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/exceptionsourcerepository"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/insightrepository"
@@ -112,6 +113,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/approvalwindow"
 	"github.com/emoss08/trenova/internal/modules/agent/app/assistantcaseservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/assistantfollowupservice"
+	"github.com/emoss08/trenova/internal/modules/agent/app/assistantchapterservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/assistanthandoffservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/assistantqueueservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice"
@@ -142,6 +144,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentjobs/agentcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentprofilejobs/agentprofilecontract"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/assistantjobs/assistantcontract"
+	"github.com/emoss08/trenova/internal/modules/agent/jobs/chapterjobs/chaptercontract"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/completionjobs/completioncontract"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/conversationschedulejobs/conversationschedulecontract"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
@@ -254,6 +257,8 @@ func SharedOptions() fx.Option {
 			conversationrepository.NewThreadOwners,
 			conversationrepository.NewPageThreads,
 			conversationschedulerepository.New,
+			assistantchapterrepository.New,
+			chaptercontract.NewScheduler,
 			aiproviderrepository.New,
 			watchtowerrepository.New,
 			exceptionsourcerepository.New,
@@ -288,6 +293,7 @@ func SharedOptions() fx.Option {
 			func(s *agentdraftservice.Service) agentports.AgentDraftingService { return s },
 			agentcapabilityservice.New,
 			assistanthandoffservice.New,
+			assistantchapterservice.New,
 			func(s agentdefinitionports.AgentDefinitionService) agentdefinitionports.SystemAgentProvisioner {
 				return s
 			},

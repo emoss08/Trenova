@@ -1,5 +1,5 @@
 import { DeskConversationSkeleton } from "@/components/desk-chat/desk-skeletons";
-import { useEffect } from "react";
+import { useCallback, useEffect } from "react";
 import { useParams, useSearchParams } from "react-router";
 import { DeskConversation } from "./_components/desk-conversation";
 import { DeskMissingConversation } from "./_components/desk-missing-conversation";
@@ -26,6 +26,16 @@ export function DeskConversationPage() {
     }, { replace: true });
   }, [linkedArtifact, openArtifact, setSearch, thread]);
 
+  // A link to one chapter opens the conversation scrolled to it.
+  const linkedChapter = search.get("c");
+  const chapterShown = useCallback(() => {
+    setSearch((current) => {
+      const next = new URLSearchParams(current);
+      next.delete("c");
+      return next;
+    }, { replace: true });
+  }, [setSearch]);
+
   if (desk.isLoading) {
     return <DeskConversationSkeleton />;
   }
@@ -49,6 +59,8 @@ export function DeskConversationPage() {
       agent={agent}
       agentsUnavailable={desk.agentsUnavailable}
       onStartNew={agent && !desk.isStarting ? () => desk.start(agent.id) : undefined}
+      linkedChapterId={linkedChapter}
+      onLinkedChapterShown={chapterShown}
     />
   );
 }

@@ -15,6 +15,8 @@ import {
   mentionCandidateListSchema,
   mentionPageSchema,
   deskSearchResultListSchema,
+  assistantChapterListSchema,
+  assistantChapterSchema,
   threadBudgetSchema,
   commandAvailabilitySchema,
   type DeskSearchKind,
@@ -602,6 +604,40 @@ export class AssistantService {
     return safeParse(agentWaitSchema, response, "Agent Wait");
   }
 
+  /** The conversation's chapters, oldest first. */
+  public async listChapters(
+    threadId: AssistantThread["id"],
+    { signal }: { signal?: AbortSignal } = {},
+  ) {
+    const response = await api.get(`/assistant/threads/${threadId}/chapters/`, { signal });
+    return safeParse(assistantChapterListSchema, response, "Assistant Chapter").items;
+  }
+
+  /** Starts a chapter at the turn the message belongs to. */
+  public async openChapter(threadId: AssistantThread["id"], messageId: string) {
+    const response = await api.post(`/assistant/threads/${threadId}/chapters/`, { messageId });
+    return safeParse(assistantChapterSchema, response, "Assistant Chapter");
+  }
+
+  /** Names a chapter; the title is the person's from then on. */
+  public async renameChapter(
+    threadId: AssistantThread["id"],
+    chapterId: string,
+    title: string,
+    version: number,
+  ) {
+    const response = await api.patch(`/assistant/threads/${threadId}/chapters/${chapterId}/`, {
+      title,
+      version,
+    });
+    return safeParse(assistantChapterSchema, response, "Assistant Chapter");
+  }
+
+  /** Ends a chapter where it starts, so what it held reads as part of the one before. */
+  public async removeChapter(threadId: AssistantThread["id"], chapterId: string) {
+    await api.delete(`/assistant/threads/${threadId}/chapters/${chapterId}/`);
+  }
+
   /** Where the conversation's case stands, what stands between its record and what comes next. */
   public async getCase(threadId: AssistantThread["id"], { signal }: { signal?: AbortSignal } = {}) {
     const response = await api.get(`/assistant/threads/${threadId}/case/`, { signal });
@@ -696,10 +732,12 @@ export class AssistantService {
     id: AssistantThread["id"],
     agentDefinitionId: string,
     facts: readonly string[] = [],
+    chapterId?: string,
   ) {
     const response = await api.post(`/assistant/threads/${id}/handoff/`, {
       agentDefinitionId,
       facts,
+      ...(chapterId ? { chapterId } : {}),
     });
     return safeParse(handoffResultSchema, response, "Assistant Handoff");
   }

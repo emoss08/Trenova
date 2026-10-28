@@ -85,6 +85,14 @@ export const assistant = createQueryKeys("assistant", {
     queryFn: ({ signal }: { signal?: AbortSignal }) =>
       apiService.assistantService.listWaits(threadId, { signal }),
   }),
+  // The conversation's chapters, oldest first. Kept fresh by the
+  // "assistant_chapters" event a chapter opening, being named or merged
+  // sends, and read again when a reply starts or ends.
+  chapters: (threadId: string) => ({
+    queryKey: ["assistant-chapters", threadId],
+    queryFn: ({ signal }: { signal?: AbortSignal }) =>
+      apiService.assistantService.listChapters(threadId, { signal }),
+  }),
   // Where the conversation's case stands and its checklist. Kept fresh by
   // the "assistant_case" and "agent_waits" events and by changes to the
   // record the case is about (lib/case-realtime.ts).

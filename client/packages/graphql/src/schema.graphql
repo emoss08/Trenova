@@ -1626,6 +1626,7 @@ enum AITask {
   AccountingMapping
   AssistantChat
   BillingDiagnosis
+  ChapterTitling
   DailyBriefing
   DocumentClassification
   DocumentExtraction
@@ -1840,6 +1841,7 @@ enum AIUsageFeature {
   AgentRecommendation
   AgentReflection
   AgentTurn
+  ConversationChapters
   DocumentIntelligenceExtract
   DocumentIntelligenceRoute
   FactoringRemittanceExtract
@@ -3951,6 +3953,10 @@ type AgentControl {
   aiTrainingConsentChangedAt: Timestamp
   """Who last turned training consent on or off."""
   aiTrainingConsentChangedById: ID
+  """
+  Desk conversations are no longer split into chapters and named by a model. People can still start chapters by hand.
+  """
+  autoChaptersOff: Boolean!
   businessUnitId: ID!
   createdAt: Timestamp!
   """
@@ -3997,6 +4003,10 @@ input AgentControlInput {
   Absent leaves training consent as it is. Only a signed-in person can change it.
   """
   aiTrainingConsent: Boolean
+  """
+  Absent leaves whether a model splits Desk conversations into named chapters as it is.
+  """
+  autoChaptersOff: Boolean
   """Absent leaves the organization's earned autonomy switch as it is."""
   earnedAutonomy: Boolean
   """Absent leaves whether agents learn from their work as it is."""

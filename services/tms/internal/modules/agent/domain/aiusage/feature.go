@@ -19,6 +19,7 @@ const (
 	FeatureAgentDrafting               = Feature("AgentDrafting")
 	FeatureAgentProfile                = Feature("AgentProfile")
 	FeatureAgentRecommendation         = Feature("AgentRecommendation")
+	FeatureConversationChapters        = Feature("ConversationChapters")
 )
 
 func AllFeatures() []Feature {
@@ -37,6 +38,7 @@ func AllFeatures() []Feature {
 		FeatureAgentDrafting,
 		FeatureAgentProfile,
 		FeatureAgentRecommendation,
+		FeatureConversationChapters,
 	}
 }
 

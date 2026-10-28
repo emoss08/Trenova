@@ -22,10 +22,11 @@ const (
 	deskSnippetLen  = 180
 )
 
-var deskSearchKinds = []string{"chat", "msg", "art", "dec"}
+var deskSearchKinds = []string{"chat", "chap", "msg", "art", "dec"}
 
-// SearchDesk finds what a person has in the Desk: conversations by title,
-// messages by what was said, and artifacts and decisions by title. Only their
+// SearchDesk finds what a person has in the Desk: conversations and their
+// chapters by title, messages by what was said, and artifacts and decisions
+// by title. Only their
 // own conversations are read, so nothing here needs a further permission.
 // With nothing typed it lists recent conversations and artifacts.
 func (s *Service) SearchDesk(

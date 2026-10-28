@@ -33,6 +33,9 @@ type Message struct {
 	// which can collide inside a single fast tool loop.
 	Sequence int  `json:"sequence" keel:"sequence"`
 	Role     Role `json:"role"     keel:"role"`
+	// TurnID is the turn that saved the message, which is where a chapter
+	// that turn opened starts. Empty on cards written outside a turn.
+	TurnID pulid.ID `json:"turnId,omitempty" keel:"turn_id,nullzero"`
 	// Kind is Message for everything but the note that starts the turn after
 	// a decision and the steps of another agent the turn handed work to; see
 	// MessageKind.

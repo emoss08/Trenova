@@ -378,6 +378,7 @@ type UpdateAgentControlRequest struct {
 	// PersonMonthlyMessages is absent to leave the allowance as it is.
 	PersonMonthlyMessages *int
 	LearningOff           *bool
+	AutoChaptersOff       *bool
 	AgentMoney            AgentMoneyLimitsUpdate
 	// Version is the version the person loaded. When it is given and someone
 	// saved since, the update is refused with what they changed; absent, the

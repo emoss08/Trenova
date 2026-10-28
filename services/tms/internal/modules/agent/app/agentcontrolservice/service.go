@@ -99,6 +99,9 @@ func (s *Service) Update(
 	if req.LearningOff != nil {
 		control.LearningOff = *req.LearningOff
 	}
+	if req.AutoChaptersOff != nil {
+		control.AutoChaptersOff = *req.AutoChaptersOff
+	}
 	applyAgentMoney(control, &req.AgentMoney)
 
 	me := errortypes.NewMultiError()

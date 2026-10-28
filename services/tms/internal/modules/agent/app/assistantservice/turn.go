@@ -374,6 +374,7 @@ func (s *Service) FinishTurn(
 
 	saved, err := s.conversations.AppendTurn(ctx, agentports.AppendTurnRequest{
 		ThreadID:   thread.ID,
+		TurnID:     req.TurnID,
 		TenantInfo: req.TenantInfo,
 		Messages:   turn.Messages,
 	})

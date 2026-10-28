@@ -17,6 +17,10 @@ type HandoffThreadRequest struct {
 	// Facts are pinned facts the person adds for the hand-off, carried
 	// after the conversation's own.
 	Facts []string
+	// ChapterID hands off one chapter: the new conversation is named for it
+	// and briefed from its messages alone. With a chapter the target may be
+	// the conversation's own agent, which continues the chapter on its own.
+	ChapterID pulid.ID
 }
 
 // HandoffThreadResult is the conversation the hand-off started and the card

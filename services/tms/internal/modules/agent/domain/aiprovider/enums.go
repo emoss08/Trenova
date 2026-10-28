@@ -214,6 +214,11 @@ const (
 	// cheap model that guesses wrong produces an unresolved line rather than a
 	// wrong answer.
 	TaskQueryCompose = Task("QueryCompose")
+	// TaskChapterTitling decides whether a Desk question starts a new
+	// chapter and names it in a few words. It runs once per question on a
+	// short prompt and its answer is cleaned and checked against the
+	// conversation afterwards, so the cheapest fast model is the right one.
+	TaskChapterTitling = Task("ChapterTitling")
 	// TaskInboundClassification decides what an email that arrived actually is.
 	// Like the other classifiers it answers with a label from a fixed set, and
 	// the label is re-checked against that set afterwards — a model that invents
@@ -236,7 +241,7 @@ const (
 // scope classifier falls back to the model answering the Desk, so a guard that
 // no provider was assigned to, or whose providers are down, still runs.
 func (t Task) BorrowsFrom() Task {
-	if t == TaskScopeClassification {
+	if t == TaskScopeClassification || t == TaskChapterTitling {
 		return TaskAssistantChat
 	}
 
@@ -254,6 +259,7 @@ func (t Task) IsValid() bool {
 		TaskOperationalInsights,
 		TaskDailyBriefing,
 		TaskQueryCompose,
+		TaskChapterTitling,
 		TaskInboundClassification,
 		TaskAccountingMapping,
 		TaskRemittanceExtraction,
@@ -278,6 +284,7 @@ func AllTasks() []Task {
 		TaskOperationalInsights,
 		TaskDailyBriefing,
 		TaskQueryCompose,
+		TaskChapterTitling,
 		TaskInboundClassification,
 		TaskAccountingMapping,
 		TaskRemittanceExtraction,

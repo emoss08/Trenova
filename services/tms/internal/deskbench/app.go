@@ -155,6 +155,9 @@ func open(ctx context.Context, opts OpenOptions) (*Bench, error) {
 		fx.Decorate(func(agentports.AgentReflectionScheduler) agentports.AgentReflectionScheduler {
 			return unlearned{}
 		}),
+		fx.Decorate(func(agentports.ChapterScheduler) agentports.ChapterScheduler {
+			return unchaptered{}
+		}),
 		fx.Decorate(func(inner agentports.AgentTrustService) agentports.AgentTrustService {
 			return untrusted{AgentTrustService: inner}
 		}),

@@ -17,6 +17,13 @@ func (unlearned) AfterTurn(context.Context, *agentports.ReflectOnThreadRequest) 
 
 func (unlearned) AfterRun(context.Context, *agentports.ReflectOnRunRequest) {}
 
+// unchaptered keeps chapter titling out of the bench: it is a model call per
+// question that the bench neither scores nor should pay for, and its calls
+// would land in the recorder beside the turns being measured.
+type unchaptered struct{}
+
+func (unchaptered) Cue(context.Context, *agentports.ChapterTurnRequest) {}
+
 // untrusted keeps the bench's decisions out of the earned-autonomy ledger.
 // The bench approves the same proposals run after run and rejects whatever a
 // case leaves waiting, so its streaks promoted billing_transfer to

@@ -20,6 +20,7 @@ type ResultKind = DeskSearchResult["kind"];
 
 const GROUP_ICONS: Record<ResultKind, DeskIconName> = {
   chat: "chat",
+  chap: "bookmark",
   msg: "copy",
   art: "table",
   dec: "inbox",
@@ -29,6 +30,8 @@ function groupLabel(kind: ResultKind, t: TranslateFn): string {
   switch (kind) {
     case "chat":
       return t("Conversations");
+    case "chap":
+      return t("Chapters");
     case "msg":
       return t("Messages");
     case "art":
@@ -38,13 +41,13 @@ function groupLabel(kind: ResultKind, t: TranslateFn): string {
   }
 }
 
-const FILTERS: DeskSearchKind[] = ["all", "chat", "msg", "art", "dec"];
+const FILTERS: DeskSearchKind[] = ["all", "chat", "chap", "msg", "art", "dec"];
 
 function filterLabel(kind: DeskSearchKind, t: TranslateFn): string {
   return kind === "all" ? t("All") : kind === "chat" ? t("Chats") : groupLabel(kind, t);
 }
 
-const KIND_ORDER: ResultKind[] = ["chat", "msg", "art", "dec"];
+const KIND_ORDER: ResultKind[] = ["chat", "chap", "msg", "art", "dec"];
 
 /** The text with every place it matches the query marked. */
 function Highlight({ text, query }: { text: string; query: string }) {
@@ -189,6 +192,8 @@ export function DeskSearchPalette({
       void navigate("/desk/decisions");
     } else if (result.kind === "art") {
       void navigate(`${conversationPath(result.threadId)}?a=${result.id}`);
+    } else if (result.kind === "chap") {
+      void navigate(`${conversationPath(result.threadId)}?c=${result.id}`);
     } else {
       void navigate(conversationPath(result.threadId));
     }
@@ -229,6 +234,10 @@ export function DeskSearchPalette({
     switch (result.kind) {
       case "chat":
         return [agent, when].filter(Boolean).join(" · ");
+      case "chap":
+        return [result.threadTitle || t("Untitled conversation"), agent, when]
+          .filter(Boolean)
+          .join(" · ");
       case "msg":
         return [
           result.status === "User" ? t("You") : agent,

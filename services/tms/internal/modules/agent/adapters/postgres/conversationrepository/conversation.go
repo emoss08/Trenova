@@ -459,6 +459,7 @@ func messagesQuery(req *agentports.ListMessagesRequest) *keel.Query[*conversatio
 		m.ThreadID.Eq(req.ThreadID),
 		before,
 		after,
+		keel.When(req.TurnID.IsNotNil(), m.TurnID.Eq(req.TurnID)),
 		keel.When(len(req.ExcludeKinds) > 0, m.Kind.NotIn(req.ExcludeKinds...)),
 		keel.When(len(req.Kinds) > 0, m.Kind.In(req.Kinds...)),
 		sinceCompaction,
@@ -595,6 +596,9 @@ func (r *repository) AppendTurn(
 			msg.OrganizationID = req.TenantInfo.OrgID
 			msg.BusinessUnitID = req.TenantInfo.BuID
 			msg.Sequence = first + idx
+			if msg.TurnID.IsNil() {
+				msg.TurnID = req.TurnID
+			}
 			batch = append(batch, msg)
 		}
 		conversation.StampUnstamped(batch, now)

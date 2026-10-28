@@ -84,6 +84,7 @@ type ActivitiesParams struct {
 	Workflows   kernelports.WorkflowStarter         `optional:"true"`
 	Reflections agentports.AgentReflectionScheduler `optional:"true"`
 	Queue       agentports.AssistantQueueSettler    `optional:"true"`
+	Chapters    agentports.ChapterScheduler         `optional:"true"`
 }
 
 // Activities are a turn's first and last steps. Everything between them is
@@ -102,6 +103,7 @@ type Activities struct {
 	workflows     kernelports.WorkflowStarter
 	reflections   agentports.AgentReflectionScheduler
 	queue         agentports.AssistantQueueSettler
+	chapters      agentports.ChapterScheduler
 }
 
 func NewActivities(p ActivitiesParams) *Activities {
@@ -117,6 +119,7 @@ func NewActivities(p ActivitiesParams) *Activities {
 		workflows:   p.Workflows,
 		reflections: p.Reflections,
 		queue:       p.Queue,
+		chapters:    p.Chapters,
 	}
 	// Assigned only when present: a nil pointer held by an interface is not
 	// a nil interface, and the notice would dereference it.
@@ -253,6 +256,7 @@ func (a *Activities) FinishTurnActivity(
 			conversation.AssistantTurnStatus(ending.Result.Status),
 		)
 		a.cueReflection(ctx, in)
+		a.cueChapter(ctx, in)
 		emitTurnRoots(ctx, in, turn, ending.Result.Status)
 
 		return ending, nil
@@ -272,6 +276,7 @@ func (a *Activities) FinishTurnActivity(
 	a.recordTrajectory(ctx, tenant, payload, in.Events, ending.Event)
 	ending.Next = a.continueTurn(ctx, in, conversation.AssistantTurnStatus(ending.Result.Status))
 	a.cueReflection(ctx, in)
+	a.cueChapter(ctx, in)
 	emitTurnRoots(ctx, in, turn, ending.Result.Status)
 
 	return ending, nil
@@ -445,6 +450,21 @@ func (a *Activities) cueReflection(ctx context.Context, in *FinishTurnInput) {
 		ThreadID:   payload.ThreadID,
 		UserID:     payload.Actor.UserID,
 		TurnID:     payload.TurnID,
+	})
+}
+
+func (a *Activities) cueChapter(ctx context.Context, in *FinishTurnInput) {
+	if a.chapters == nil {
+		return
+	}
+
+	payload := in.Payload
+	a.chapters.Cue(ctx, &agentports.ChapterTurnRequest{
+		TenantInfo: payload.TenantInfo(),
+		ThreadID:   payload.ThreadID,
+		UserID:     payload.Actor.UserID,
+		TurnID:     payload.TurnID,
+		Phase:      agentports.ChapterPhaseAnswered,
 	})
 }
 

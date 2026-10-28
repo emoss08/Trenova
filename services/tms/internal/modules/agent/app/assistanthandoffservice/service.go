@@ -19,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantartifactports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -46,6 +47,7 @@ type Params struct {
 	Artifacts     assistantartifactports.AssistantArtifactRepository
 	Assistant     agentports.AssistantService
 	Completion    agentports.StructuredCompleter `optional:"true"`
+	Chapters      agentports.AssistantChapterService `optional:"true"`
 }
 
 type Service struct {
@@ -55,6 +57,7 @@ type Service struct {
 	artifacts     assistantartifactports.AssistantArtifactRepository
 	assistant     agentports.AssistantService
 	completion    agentports.StructuredCompleter
+	chapters      agentports.AssistantChapterService
 }
 
 func New(p Params) agentports.AssistantHandoffService {
@@ -65,6 +68,7 @@ func New(p Params) agentports.AssistantHandoffService {
 		artifacts:     p.Artifacts,
 		assistant:     p.Assistant,
 		completion:    p.Completion,
+		chapters:      p.Chapters,
 	}
 }
 
@@ -89,9 +93,13 @@ func (s *Service) Handoff(
 	if err != nil {
 		return nil, err
 	}
-	if origin.AgentDefinitionID == req.AgentDefinitionID {
+	if origin.AgentDefinitionID == req.AgentDefinitionID && req.ChapterID.IsNil() {
 		return nil, errortypes.NewValidationError("agentDefinitionId", errortypes.ErrInvalid,
 			"This conversation is already with that agent")
+	}
+	span, err := s.chapterSpan(ctx, req, actor, tenant)
+	if err != nil {
+		return nil, err
 	}
 	source, err := s.definitions.GetByID(ctx, agentdefinitionports.GetAgentDefinitionByIDRequest{
 		ID:         origin.AgentDefinitionID,
@@ -101,12 +109,7 @@ func (s *Service) Handoff(
 		return nil, err
 	}
 
-	history, err := s.conversations.ListMessages(ctx, agentports.ListMessagesRequest{
-		ThreadID:     origin.ID,
-		TenantInfo:   tenant,
-		Limit:        historyMessages,
-		ExcludeKinds: conversation.ModelHiddenKinds(),
-	})
+	history, err := s.conversations.ListMessages(ctx, historyRequest(origin, tenant, span))
 	if err != nil {
 		return nil, err
 	}
@@ -122,7 +125,7 @@ func (s *Service) Handoff(
 	// anything is written or any model is asked.
 	thread, err := s.assistant.StartThread(ctx, &agentports.StartThreadRequest{
 		AgentDefinitionID:  req.AgentDefinitionID,
-		Title:              origin.Title,
+		Title:              handoffTitle(origin, span),
 		TenantInfo:         tenant,
 		Origin:             conversation.ThreadOriginDesk,
 		SubjectType:        origin.SubjectType,
@@ -252,4 +255,58 @@ func truncateRunes(text string, limit int) string {
 	runes := []rune(text)
 
 	return strings.TrimSpace(string(runes[:limit-1])) + "…"
+}
+
+func (s *Service) chapterSpan(
+	ctx context.Context,
+	req *agentports.HandoffThreadRequest,
+	actor *permissionports.RequestActor,
+	tenant pagination.TenantInfo,
+) (*agentports.ChapterSpan, error) {
+	if req.ChapterID.IsNil() {
+		return nil, nil
+	}
+	if s.chapters == nil {
+		return nil, errortypes.NewBusinessError("Chapters are not available here")
+	}
+
+	return s.chapters.Span(ctx, agentports.ChapterSpanRequest{
+		ID:         req.ChapterID,
+		ThreadID:   req.ThreadID,
+		UserID:     actor.UserID,
+		TenantInfo: tenant,
+	})
+}
+
+func historyRequest(
+	origin *conversation.Thread,
+	tenant pagination.TenantInfo,
+	span *agentports.ChapterSpan,
+) agentports.ListMessagesRequest {
+	req := agentports.ListMessagesRequest{
+		ThreadID:     origin.ID,
+		TenantInfo:   tenant,
+		Limit:        historyMessages,
+		ExcludeKinds: conversation.ModelHiddenKinds(),
+	}
+	if span == nil {
+		return req
+	}
+
+	after := span.From - 1
+	req.AfterSequence = &after
+	if span.Through != nil {
+		before := *span.Through + 1
+		req.BeforeSequence = &before
+	}
+
+	return req
+}
+
+func handoffTitle(origin *conversation.Thread, span *agentports.ChapterSpan) string {
+	if span == nil {
+		return origin.Title
+	}
+
+	return span.Chapter.Title
 }

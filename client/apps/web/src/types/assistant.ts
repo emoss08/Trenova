@@ -654,12 +654,12 @@ export const commandAvailabilitySchema = z.object({
 export type CommandAvailability = z.infer<typeof commandAvailabilitySchema>;
 
 /** What the Desk's search palette looks through. */
-export const deskSearchKinds = ["all", "chat", "msg", "art", "dec"] as const;
+export const deskSearchKinds = ["all", "chat", "chap", "msg", "art", "dec"] as const;
 export type DeskSearchKind = (typeof deskSearchKinds)[number];
 
-/** One conversation, message, artifact or decision the search palette found. */
+/** One conversation, chapter, message, artifact or decision the search palette found. */
 export const deskSearchResultSchema = z.object({
-  kind: z.enum(["chat", "msg", "art", "dec"]),
+  kind: z.enum(["chat", "chap", "msg", "art", "dec"]),
   id: z.string(),
   threadId: z.string(),
   agentId: z.string().optional().default(""),
@@ -923,6 +923,8 @@ export const assistantMessageSchema = z.object({
   threadId: z.string(),
   sequence: z.number(),
   role: messageRoleSchema,
+  /** The turn that saved the message; a chapter starts at the first message of the turn that opened it. */
+  turnId: z.string().nullish(),
   /**
    * Message for what a person or the model wrote; DecisionNote for the input
    * of the turn that follows a decision, which the thread shows as a note;
@@ -2246,3 +2248,34 @@ export const handoffResultSchema = z.object({
 });
 
 export type HandoffResult = z.infer<typeof handoffResultSchema>;
+
+/** Who named a chapter; a title the person wrote is never replaced. */
+export const chapterTitleSourceSchema = z.enum(["Model", "Question", "Person", "Schedule"]);
+export type ChapterTitleSource = z.infer<typeof chapterTitleSourceSchema>;
+
+/**
+ * One chapter of a conversation: a stretch about one subject, from the turn
+ * that opened it to the next chapter. `startSequence` is the first message it
+ * holds, null while the turn that opened it is still being written.
+ */
+export const assistantChapterSchema = z.object({
+  id: z.string(),
+  threadId: z.string(),
+  turnId: z.string(),
+  title: z.string(),
+  titleSource: chapterTitleSourceSchema.catch("Model"),
+  version: z.number(),
+  createdAt: z.number(),
+  updatedAt: z.number(),
+  startSequence: z.number().nullable().optional().default(null),
+  startedAt: z.number().optional().default(0),
+});
+
+export type AssistantChapter = z.infer<typeof assistantChapterSchema>;
+
+export const assistantChapterListSchema = z.object({
+  items: z
+    .array(assistantChapterSchema)
+    .nullish()
+    .transform((items) => items ?? []),
+});

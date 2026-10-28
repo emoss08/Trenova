@@ -2297,6 +2297,51 @@ every label a page away from its value. The rate confirmation parser reads such 
 consignee when no label names them. Documents read before this keep their old
 text until they are extracted again.
 
+### Chapters
+
+A conversation is split into chapters (`assistant_thread_chapters`), each opened by a turn and
+running to the next. A chapter is keyed by the turn that opened it, not by a message: the turn
+exists from its first moment, while its messages are saved only when it finishes, so the
+heading shows above a reply still being written. Every message carries the `turn_id` that saved
+it (`AppendTurnRequest.TurnID`), and a chapter's `startSequence` is read as the first message of
+its turn through `idx_assistant_messages_turn`, never stored, so the order a turn's messages and
+its chapter land in cannot race.
+
+`assistantturnservice.StartTurn` cues `Opened` and `FinishTurnActivity` cues `Answered` on
+`AssistantThreadChaptersWorkflow` (`chapterjobs`), one execution per thread on the chat queue at
+`PriorityOneShot`, signal-with-start, handling signals in order and ending after
+`chaptercontract.IdleWait` without one. Each signal is plan → model → apply
+(`assistantchapterservice.Plan`/`Apply`):
+
+- `Opened`: a person's first question opens chapter 1 and is named; a later question asks the
+  model whether it starts a new chapter (`chapter_decision`); a scheduled run always opens one
+  (`Schedule`, named even when titling is off, from its request); follow-ups, compactions and
+  wait resumptions continue their chapter.
+- `Answered`: a chapter whose turn saved nothing, or was refused, is removed unless the person
+  named it; one still named after its question, or opened by a question under five words, is
+  named again from the question and the reply.
+- `Requested`: a chapter the person started by hand (`POST …/chapters/`) is named from its turn.
+
+The model is `aiprovider.TaskChapterTitling`, which borrows the Desk's own providers when none is
+routed, at temperature 0, no reasoning, a 4-second hedge and 80 tokens, attributed to
+`aiusage.FeatureConversationChapters`. Its title is cleaned (`conversation.CleanChapterTitle`)
+and refused when it names a number the question, reply or recent turns do not hold
+(`numberguard`); a refused or missing answer opens nothing for a decision and falls back to the
+question for a chapter that must open. `TitleSource` says who named it; `Person` is never
+replaced by the model (`Retitle` guards on it). `AgentControl.AutoChaptersOff` turns the model
+off, not chapters; the desk bench replaces the scheduler with a no-op.
+
+Chapters feed four other paths: compaction moves its cut back to the latest chapter start that
+still keeps half the stretch and summarizes by chapter title (`snapToChapter`); a hand-off with a
+`chapterId` reads only that chapter's messages, is named after it and may go to the same agent;
+Desk search has a `chap` kind that opens the conversation at the chapter (`?c=`); the downloaded
+transcript heads each chapter. The client draws the heading and rail
+(`routes/desk/_components/chapters/`), finds the chapter in view from `data-chapter-turn`
+(`useChapterNav`), and counts each chapter's work from the lists it already holds, by time.
+
+A conversation holds at most `conversation.MaxChaptersPerThread` (200) chapters, which bounds
+every chapter read; the list is one statement joining each chapter's turn and its first message.
+
 ### History replay
 
 A turn replays the newest 120 messages, and their tool results are most of it.

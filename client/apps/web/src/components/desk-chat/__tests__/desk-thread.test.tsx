@@ -5,7 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { DeskThread, type DeskThreadProps } from "../desk-thread";
+import { DeskThread, type DeskThreadChapters, type DeskThreadProps } from "../desk-thread";
 
 const conversation = vi.hoisted(() => ({
   reply: "Two loads are stuck at the yard.",
@@ -90,12 +90,18 @@ function message(overrides: Partial<AssistantMessage>): AssistantMessage {
   } as AssistantMessage;
 }
 
-const question = message({ id: "msg_q", content: "Which loads are stuck?", sequence: 1 });
+const question = message({
+  id: "msg_q",
+  content: "Which loads are stuck?",
+  sequence: 1,
+  turnId: "atrn_1",
+});
 const reply = message({
   id: "msg_a",
   role: "Assistant",
   content: "Two loads are stuck at the yard.",
   sequence: 2,
+  turnId: "atrn_1",
 });
 
 vi.mock("@/components/assistant/use-thread-model", () => ({
@@ -172,6 +178,20 @@ const thread = {
   createdAt: 0,
 } as AssistantThread;
 
+/** Chapters as the Desk passes them: a heading for each turn named, and a rail that says which is in view. */
+function chaptersOf(
+  titles: Record<string, string>,
+  start: (messageId: string) => void = () => undefined,
+): DeskThreadChapters {
+  return {
+    heading: (turnId) => (titles[turnId] ? <p>{titles[turnId]}</p> : null),
+    liveTurnId: null,
+    rail: (nav) => <span>{`rail at ${nav.current ?? "none"}`}</span>,
+    startAt: (entry) =>
+      entry.turnId && titles[entry.turnId] ? undefined : () => start(entry.id),
+  };
+}
+
 function renderThread(props: Partial<DeskThreadProps> = {}) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
 
@@ -200,15 +220,38 @@ function renderThread(props: Partial<DeskThreadProps> = {}) {
  */
 describe("DeskThread in the Desk's density", () => {
   it("draws the question as a heading and the reply under it, with its time in the gutter", () => {
-    const { container } = renderThread({ chapters: { of: () => 0, toggle: () => undefined } });
+    const { container } = renderThread({ chapters: chaptersOf({}) });
 
     const stage = container.querySelector(".dk-stage");
     expect(stage).not.toHaveClass("dk-dense");
     expect(screen.getByText("Which loads are stuck?")).toHaveClass("dk-q");
     expect(screen.getByText("Two loads are stuck at the yard.")).toBeInTheDocument();
     expect(container.querySelector(".dk-time")).not.toBeNull();
-    expect(screen.getByRole("button", { name: "Pin as chapter" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Start a chapter here" })).toBeInTheDocument();
     expect(screen.getByText(/Desk can make mistakes/)).toBeInTheDocument();
+  });
+
+  it("sets a chapter's heading above the question that opens it and the rail in the corner", () => {
+    const started = vi.fn();
+    const { container } = renderThread({
+      chapters: chaptersOf({ atrn_1: "Stuck loads at the yard" }, started),
+    });
+
+    const heading = container.querySelector('[data-chapter-turn="atrn_1"]');
+    expect(heading).toHaveTextContent("Stuck loads at the yard");
+    expect(heading?.nextElementSibling).toHaveTextContent("Which loads are stuck?");
+    expect(container.querySelector(".dk-chap-rail-slot")).toHaveTextContent("rail at atrn_1");
+    expect(screen.queryByRole("button", { name: "Start a chapter here" })).toBeNull();
+    expect(started).not.toHaveBeenCalled();
+  });
+
+  it("starts a chapter where the reply was asked", () => {
+    const started = vi.fn();
+    renderThread({ chapters: chaptersOf({}, started) });
+
+    fireEvent.click(screen.getByRole("button", { name: "Start a chapter here" }));
+
+    expect(started).toHaveBeenCalledWith("msg_a");
   });
 
   it("keeps a pane beside the thread for the workspace it is given", () => {
@@ -240,7 +283,7 @@ describe("DeskThread in the compact density", () => {
   it("leaves out what only the Desk has", () => {
     const { container } = renderThread({ density: "compact" });
 
-    expect(screen.queryByRole("button", { name: "Pin as chapter" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Start a chapter here" })).toBeNull();
     expect(screen.getByRole("button", { name: "Copy reply" })).toBeInTheDocument();
     expect(screen.queryByRole("complementary", { name: "Artifacts" })).toBeNull();
     expect(container.querySelector(".dk-stage")).not.toHaveClass("dk-open");

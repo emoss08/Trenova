@@ -673,6 +673,17 @@ Keywords: self-improving agents, learning, reflection, look back, lessons, proce
    agent look back, what was said, the conversation or run it was drawn from, and the memory it
    replaces or that has replaced it.
 
+### Turn Desk chapter names on or off
+Keywords: chapters, chapter titles, name chapters, desk chapters, conversation outline
+1. Open [AI control](/admin/agent-control) on **Overview**. In **Organization-wide**, select
+   **Edit** and turn **Name Desk chapters** on or off, then save. It is on unless someone turned it off.
+2. While it is on, a small model starts a chapter as a Desk conversation turns to a new subject
+   and names it in a few words. It is one short call per question, and its cost shows as
+   **Desk chapters** in usage. To choose the model, assign **Desk chapters** to a provider under
+   **Routing**; without one it uses the model that answers the Desk.
+3. While it is off, people can still start and name chapters themselves, and requests run on a
+   schedule still open a chapter of their own.
+
 ## Notes
 An embedding provider turns memories, documents and mail into vectors so agents can find them by
 what they mean rather than by the exact words; until one is set up, agents search by keywords

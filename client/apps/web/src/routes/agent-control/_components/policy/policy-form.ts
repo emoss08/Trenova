@@ -35,6 +35,7 @@ export const policyFormSchema = z.object({
   earnedAutonomy: z.boolean(),
   promotionThreshold: z.number().int().min(1).max(1000),
   learnsFromWork: z.boolean(),
+  chaptersByModel: z.boolean(),
   personMonthlyMessages: z.number().int().min(0),
   agentMoney: z
     .object({
@@ -78,6 +79,7 @@ export function toPolicyForm(control: AgentControl): PolicyFormValues {
     earnedAutonomy: control.earnedAutonomy,
     promotionThreshold: control.promotionThreshold,
     learnsFromWork: !control.learningOff,
+    chaptersByModel: !control.autoChaptersOff,
     personMonthlyMessages: control.personMonthlyMessages,
     agentMoney: {
       callCeilingCents: decimalToCents(control.agentMoneyCallCeiling),
@@ -106,6 +108,7 @@ export function toControlInput(
     earnedAutonomy: values.earnedAutonomy,
     promotionThreshold: values.promotionThreshold,
     learningOff: !values.learnsFromWork,
+    autoChaptersOff: !values.chaptersByModel,
     personMonthlyMessages: values.personMonthlyMessages,
     agentMoneyCallCeiling: centsToDecimal(values.agentMoney.callCeilingCents),
     agentMoneyRunCalls: values.agentMoney.runCalls,

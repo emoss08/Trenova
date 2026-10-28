@@ -66,6 +66,30 @@ func deskChats(terms *deskTerms) keel.Projection {
 		Limit(terms.req.LimitPerKind)
 }
 
+func deskChapters(terms *deskTerms) keel.Projection {
+	c := conversationdb.Chapters
+	t := conversationdb.Threads
+
+	return c.Join(t, t.ID.EqCol(c.ThreadID)).
+		Pick(
+			keel.Text("chap"),
+			c.ID,
+			t.ID,
+			t.AgentDefinitionID,
+			c.Title,
+			t.Title.Coalesce(""),
+			keel.Text(""),
+			c.TitleSource,
+			c.CreatedAt,
+		).
+		Where(
+			deskThreads(t, terms),
+			keel.When(terms.term != "", c.Title.ILike(terms.contains)),
+		).
+		Order(c.CreatedAt.Desc()).
+		Limit(terms.req.LimitPerKind)
+}
+
 func deskMessages(terms *deskTerms) keel.Projection {
 	m := conversationdb.Messages
 	t := conversationdb.Threads
@@ -150,6 +174,7 @@ func deskDecisions(terms *deskTerms) keel.Projection {
 
 var deskSearchQueries = map[string]deskQuery{
 	"chat": deskChats,
+	"chap": deskChapters,
 	"msg":  deskMessages,
 	"art":  deskArtifacts,
 	"dec":  deskDecisions,

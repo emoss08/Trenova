@@ -60,6 +60,29 @@ export function DeskRow({
   );
 }
 
+/**
+ * The row a chapter's heading sits in, above the question that opens it. It
+ * carries the turn it opens so the conversation can tell which chapter is in
+ * view and scroll to one.
+ */
+export function DeskChapterRow({
+  turnId,
+  first = false,
+  children,
+}: {
+  turnId: string;
+  first?: boolean;
+  children: ReactNode;
+}) {
+  return (
+    <div className={cn("dk-r dk-chap", first && "dk-first")} data-chapter-turn={turnId}>
+      <div className="dk-g" />
+      <div className="dk-c">{children}</div>
+      <div className="dk-m" />
+    </div>
+  );
+}
+
 /** How a question is set: a heading when it is short, a quiet block when it runs long. */
 export function questionSize(text: string): "short" | "mid" | "long" {
   if (text.length > 90) {
@@ -163,9 +186,8 @@ export const DeskReply = memo(function DeskReply({
   asks = NO_ASKS,
   dockedAskId = null,
   sentAnswer = null,
-  chapter,
   closesTurn = false,
-  onTogglePin,
+  onStartChapter,
   onOpenArtifact,
 }: {
   entry: Extract<ThreadEntry, { kind: "assistant" }>;
@@ -179,14 +201,13 @@ export const DeskReply = memo(function DeskReply({
   dockedAskId?: string | null;
   /** The answer just sent to one of the reply's questions, before it is saved. */
   sentAnswer?: AskAnswerSent | null;
-  chapter: number;
   /**
    * The reply is the last of its turn, so it says which of the turn's steps
    * did not go through, between its words and the actions under them.
    */
   closesTurn?: boolean;
-  /** Pins or unpins the reply as a chapter, by its message id. Left out, replies have no chapters. */
-  onTogglePin?: (messageId: string) => void;
+  /** Starts a chapter where the reply's question was asked. Left out, the reply offers none. */
+  onStartChapter?: () => void;
   onOpenArtifact: (id: string) => void;
 }) {
   const { message, tools } = entry;
@@ -246,11 +267,7 @@ export const DeskReply = memo(function DeskReply({
         <DeskMemorySavedList ids={savedMemories} served={message.memories} />
       )}
       {message.content !== "" && (
-        <DeskMessageActions
-          text={content}
-          chapter={chapter}
-          onTogglePin={onTogglePin ? () => onTogglePin(message.id) : undefined}
-        />
+        <DeskMessageActions text={content} onStartChapter={onStartChapter} />
       )}
     </>
   );
