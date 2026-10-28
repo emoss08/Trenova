@@ -431,9 +431,10 @@ func (b *ContextBuilder) describeUser(
 	}
 	return &userContext{
 		user: &agentdefinition.RuntimeUser{
-			Name:  user.Name,
-			Email: user.EmailAddress,
-			Roles: roles,
+			Name:     user.Name,
+			Email:    user.EmailAddress,
+			Roles:    roles,
+			Timezone: user.Timezone,
 		},
 		timezone: user.Timezone,
 	}

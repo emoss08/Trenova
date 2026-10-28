@@ -3,7 +3,8 @@
 // comes.
 //
 // A schedule is made by sending a message that opens with a cadence ("every
-// weekday at 7:30, what's blocking the billing queue?") or with /schedule. The
+// weekday at 7:30, what's blocking the billing queue?") or with /schedule, or
+// by approving the schedule an agent proposed with agent_create_schedule. The
 // message is kept in the conversation as the schedule's card and is not
 // answered there and then: the request is asked on its first slot, or at once
 // with Run now. Answering it immediately as well would make the card's own
@@ -136,6 +137,7 @@ type Service struct {
 var (
 	_ conversationscheduleports.ConversationScheduleRunner  = (*Service)(nil)
 	_ conversationscheduleports.ConversationThreadSchedules = (*Service)(nil)
+	_ conversationscheduleports.ConversationSchedulePlanner = (*Service)(nil)
 )
 
 func New(p Params) *Service {
@@ -172,6 +174,12 @@ func NewRunner(s *Service) conversationscheduleports.ConversationScheduleRunner 
 // NewThreadSchedules is the same service, as what deleting a conversation
 // asks to settle its schedules.
 func NewThreadSchedules(s *Service) conversationscheduleports.ConversationThreadSchedules {
+	return s
+}
+
+// NewPlanner is the same service, as what an agent's schedule proposal asks
+// to check and keep.
+func NewPlanner(s *Service) conversationscheduleports.ConversationSchedulePlanner {
 	return s
 }
 
@@ -226,6 +234,10 @@ func (s *Service) Create(ctx context.Context, req CreateRequest) (*CreateResult,
 		return nil, err
 	}
 
+	timezone := parsed.Timezone
+	if timezone == "" {
+		timezone = s.timezoneFor(ctx, tenant, req.Actor.UserID)
+	}
 	schedule := &conversationschedule.Schedule{
 		OrganizationID: tenant.OrgID,
 		BusinessUnitID: tenant.BuID,
@@ -234,7 +246,7 @@ func (s *Service) Create(ctx context.Context, req CreateRequest) (*CreateResult,
 		Prompt:         parsed.Prompt,
 		Cadence:        parsed.Cadence,
 		CronExpression: parsed.CronExpression,
-		Timezone:       s.timezoneFor(ctx, tenant, req.Actor.UserID),
+		Timezone:       timezone,
 		Enabled:        true,
 	}
 	schedule.NextRunAt = schedule.Next(s.now())
@@ -245,15 +257,23 @@ func (s *Service) Create(ctx context.Context, req CreateRequest) (*CreateResult,
 		return nil, multiErr
 	}
 
+	return s.keep(ctx, schedule, conversation.Message{Content: text})
+}
+
+// keep saves a schedule with the message that draws its card, puts it on
+// the scheduler and tells the person's tabs.
+func (s *Service) keep(
+	ctx context.Context,
+	schedule *conversationschedule.Schedule,
+	card conversation.Message,
+) (*CreateResult, error) {
+	card.Role = conversation.RoleUser
+	card.Kind = conversation.MessageKindSchedule
 	saved, message, err := s.schedules.Create(
 		ctx,
 		conversationscheduleports.CreateConversationScheduleRequest{
-			Schedule: schedule,
-			Message: conversation.Message{
-				Role:    conversation.RoleUser,
-				Kind:    conversation.MessageKindSchedule,
-				Content: text,
-			},
+			Schedule:    schedule,
+			Message:     card,
 			ThreadTitle: conversation.TitleFrom(schedule.Prompt),
 		},
 	)
@@ -265,6 +285,136 @@ func (s *Service) Create(ctx context.Context, req CreateRequest) (*CreateResult,
 	s.announce(ctx, saved, actionCreated)
 
 	return &CreateResult{Schedule: saved, Message: message}, nil
+}
+
+// Plan is the schedule a planned request would keep, checked the way Create
+// checks one, and the schedule the conversation already keeps that asks the
+// same thing at the same time on the same clock, when there is one. Nothing
+// is written: it is what an agent's proposal shows before anyone approves it.
+func (s *Service) Plan(
+	ctx context.Context,
+	req conversationscheduleports.PlanConversationScheduleRequest,
+) (*conversationscheduleports.PlannedConversationSchedule, error) {
+	tenant := tenantOf(req.Actor)
+	if err := s.requireAutomation(ctx, tenant); err != nil {
+		return nil, err
+	}
+
+	thread, err := s.threads.GetThread(ctx, agentports.GetThreadRequest{
+		ID:         req.ThreadID,
+		UserID:     req.Actor.UserID,
+		TenantInfo: tenant,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	actor := req.Actor
+	allowed, err := s.mayUseAgent(ctx, thread, &actor, tenant)
+	if err != nil {
+		return nil, err
+	}
+	if !allowed {
+		return nil, errortypes.NewBusinessError(
+			"You can't schedule requests to this agent any more",
+		)
+	}
+
+	timezone := s.timezoneFor(ctx, tenant, req.Actor.UserID)
+	if strings.TrimSpace(req.Timezone) != "" {
+		zone, ok := conversationschedule.ResolveZone(req.Timezone)
+		if !ok {
+			return nil, errortypes.NewValidationError(
+				"timezone",
+				errortypes.ErrInvalid,
+				"“{0}” isn't a time zone. Use one such as America/New_York.",
+				req.Timezone,
+			)
+		}
+		timezone = zone
+	}
+
+	schedule := &conversationschedule.Schedule{
+		OrganizationID: tenant.OrgID,
+		BusinessUnitID: tenant.BuID,
+		ThreadID:       thread.ID,
+		UserID:         req.Actor.UserID,
+		Timezone:       timezone,
+		Enabled:        true,
+	}
+	multiErr := errortypes.NewMultiError()
+	schedule.Change(req.Edit, multiErr)
+	if multiErr.HasErrors() {
+		return nil, multiErr
+	}
+	schedule.NextRunAt = schedule.Next(s.now())
+
+	kept, err := s.OfThread(ctx, conversationscheduleports.ThreadSchedulesRequest{
+		ThreadID:   thread.ID,
+		UserID:     req.Actor.UserID,
+		TenantInfo: tenant,
+	})
+	if err != nil {
+		return nil, err
+	}
+	existing := sameAs(kept, schedule)
+	if existing == nil {
+		if err = s.withinLimits(ctx, tenant, req.Actor.UserID, thread.ID); err != nil {
+			return nil, err
+		}
+	}
+
+	return &conversationscheduleports.PlannedConversationSchedule{
+		Schedule: schedule,
+		Existing: existing,
+	}, nil
+}
+
+// CreatePlanned keeps a planned request in its conversation. Its card names
+// the proposal that asked for it and carries the request as the proposal
+// worded it, so it is never shown as words the person typed. A schedule the
+// conversation already keeps for the same request, time and clock is
+// returned rather than added again, so approving one proposal twice, or two
+// proposals for the same thing, keeps one schedule.
+func (s *Service) CreatePlanned(
+	ctx context.Context,
+	req conversationscheduleports.PlanConversationScheduleRequest,
+) (*conversationscheduleports.PlannedConversationSchedule, error) {
+	planned, err := s.Plan(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	if planned.Existing != nil {
+		return planned, nil
+	}
+
+	kept, err := s.keep(ctx, planned.Schedule, conversation.Message{
+		Content:    planned.Schedule.Asked(),
+		ProposalID: req.ProposalID,
+	})
+	if err != nil {
+		return nil, err
+	}
+	planned.Schedule = kept.Schedule
+
+	return planned, nil
+}
+
+// sameAs is the kept schedule that asks what this one asks, when and on the
+// clock it would, or nil.
+func sameAs(
+	kept []*conversationschedule.Schedule,
+	schedule *conversationschedule.Schedule,
+) *conversationschedule.Schedule {
+	for _, other := range kept {
+		if other.CronExpression == schedule.CronExpression &&
+			other.Timezone == schedule.Timezone &&
+			strings.EqualFold(strings.TrimSpace(other.Prompt), schedule.Prompt) {
+			return other
+		}
+	}
+
+	return nil
 }
 
 // withinLimits refuses a schedule past what one conversation or one person

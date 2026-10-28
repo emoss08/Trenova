@@ -72,14 +72,18 @@ func systemPrompt(in *promptInput) string {
 		b.WriteString("from the person's own words.\n")
 	}
 	b.WriteString("- Procedure: the steps that worked for a task here, when the agent had to find ")
-	b.WriteString("them out: a tool that failed until its input changed, an order of calls that ")
-	b.WriteString("finally worked, what a person changed or refused in a proposal. Write it as ")
+	b.WriteString("them out and no tool told it: a tool that failed until its input changed in ")
+	b.WriteString("a way its refusal did not name, an order of calls that finally worked, what a ")
+	b.WriteString("person changed or refused in a proposal. Write it as ")
 	b.WriteString("short numbered steps that name the tools and what each needs, so a later run ")
 	b.WriteString("can follow it.\n")
 	b.WriteString("- Fact: something about this organization, a customer, a location, a driver or ")
 	b.WriteString("a carrier that the agent had to find out or was told and no record holds.\n\n")
 
-	b.WriteString("Never keep a one-off request; what a record already says; figures or statuses ")
+	b.WriteString("Never keep a one-off request; what a record already says; what a tool's own ")
+	b.WriteString("refusal, schema or note tells the agent every time it is called, such as a ")
+	b.WriteString("limit it names or what it says to change, since the tool says it again; ")
+	b.WriteString("figures or statuses ")
 	b.WriteString("that will change, such as a shipment's current status or today's counts; ")
 	b.WriteString("personal or sensitive details about people; credentials; anything a person ")
 	b.WriteString(

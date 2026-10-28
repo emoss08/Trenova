@@ -43,9 +43,10 @@ function cadencePattern(source: string, flags: string): RegExp {
  * The cadences the server reads, one pattern per language, each the same
  * source as its Go twin in conversationschedule/cadence.go. Groups: 1 the
  * /schedule prefix, 2 the whole cadence, 3 its unit, 4 its time, 5 the
- * separator after it, 6 the request. Chinese opens ordinary questions with
- * 每天 too, so without the /schedule command a Chinese cadence counts only
- * with a time or a separator right after it.
+ * separator after it, 6 the request. Sentences open with "daily",
+ * "everyday" and 每天 too ("daily revenue last week?", "每天有多少票货？"), so
+ * without the /schedule command those cadences count only with a time or a
+ * separator right after them.
  */
 const SCHEDULE_GRAMMARS: readonly { pattern: RegExp; needsMarker: boolean }[] = [
   {
@@ -56,6 +57,14 @@ const SCHEDULE_GRAMMARS: readonly { pattern: RegExp; needsMarker: boolean }[] = 
       "is",
     ),
     needsMarker: false,
+  },
+  {
+    pattern: cadencePattern(
+      String.raw`^(/schedule\s+)?((daily|everyday)\b` +
+        String.raw`(?:\s+at\s+([\d:]+(?:\s*(?:am|pm)\b)?))?)([,:]?)\s*(.*)$`,
+      "is",
+    ),
+    needsMarker: true,
   },
   {
     pattern: cadencePattern(
@@ -82,7 +91,7 @@ const SCHEDULE_GRAMMARS: readonly { pattern: RegExp; needsMarker: boolean }[] = 
   },
 ];
 
-type CadenceMatch = { when: string; request: string };
+type CadenceMatch = { when: string; time: string; separator: string; request: string };
 
 /**
  * The cadence at the start of a text and the request after it, read the way
@@ -95,10 +104,15 @@ function matchCadence(text: string, explicit: boolean): CadenceMatch | null {
       continue;
     }
     if (needsMarker && !explicit && !match[1] && !match[4] && !match[5]) {
-      return null;
+      continue;
     }
 
-    return { when: match[2] ?? "", request: match[6] ?? "" };
+    return {
+      when: match[2] ?? "",
+      time: match[4] ?? "",
+      separator: match[5] ?? "",
+      request: match[6] ?? "",
+    };
   }
 
   return null;
@@ -119,6 +133,51 @@ export function isScheduleRequest(text: string): boolean {
 }
 
 /**
+ * The clock named right after a time, "EST", "Pacific time", which the server
+ * reads as the schedule's own (conversationschedule.leadingZone): the words it
+ * knows, and the pattern they are read with.
+ */
+const ZONE_PATTERN = cadencePattern(
+  String.raw`^([a-z]+)\b(?:\s+(?:standard|daylight))?(?:\s+time\b)?`,
+  "i",
+);
+
+const NAMED_ZONES = new Set([
+  "et",
+  "est",
+  "edt",
+  "eastern",
+  "ct",
+  "cst",
+  "cdt",
+  "central",
+  "mt",
+  "mst",
+  "mdt",
+  "mountain",
+  "pt",
+  "pst",
+  "pdt",
+  "pacific",
+  "akt",
+  "akst",
+  "akdt",
+  "alaska",
+  "ht",
+  "hst",
+  "hawaii",
+  "utc",
+  "gmt",
+]);
+
+/** The clock at the start of a request, as typed, or "" when it names none. */
+function leadingZone(request: string): string {
+  const match = ZONE_PATTERN.exec(request);
+
+  return match && NAMED_ZONES.has((match[1] ?? "").toLowerCase()) ? match[0] : "";
+}
+
+/**
  * A time still being typed after a cadence: "every Monday at", "cada lunes a
  * las", "a las 8 de la", "每周一 8".
  */
@@ -131,7 +190,8 @@ const TIME_IN_PROGRESS = [
 
 /**
  * The /schedule command's slots: the cadence, however many words it takes,
- * then the request. Until a cadence is read the whole text is the "when".
+ * with the clock named after its time, then the request. Until a cadence is
+ * read the whole text is the "when".
  */
 export function splitScheduleSlots(rest: string): string[] {
   const match = matchCadence(rest.trim(), true);
@@ -139,12 +199,21 @@ export function splitScheduleSlots(rest: string): string[] {
     return [rest.trim(), ""];
   }
 
-  const request = match.request.trim();
+  let when = match.when.trim();
+  let request = match.request.trim();
   if (request !== "" && TIME_IN_PROGRESS.some((pattern) => pattern.test(request))) {
     return [rest.trim(), ""];
   }
+  const zone = match.time !== "" && match.separator === "" ? leadingZone(request) : "";
+  if (zone !== "") {
+    when = `${when} ${zone}`;
+    request = request
+      .slice(zone.length)
+      .replace(/^[\s,:]+/, "")
+      .trim();
+  }
 
-  return [match.when.trim(), request];
+  return [when, request];
 }
 
 export const SLASH_COMMANDS: readonly SlashCommand[] = [

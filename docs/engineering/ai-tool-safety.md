@@ -10,7 +10,7 @@ policies, so this page cannot drift from what runs: CI regenerates it and fails
 when it differs. Each tool is listed once, under the furthest class its work
 can reach.
 
-Tools listed: 639.
+Tools listed: 640.
 
 ## The model
 
@@ -89,7 +89,7 @@ and Confidential fields never reach a model at all.
 | Class | Means | Runs at most | Held once tainted | Tools that reach it |
 | --- | --- | --- | --- | --- |
 | Reads only | Looks something up. Nothing changes and nothing is sent. | Automatic | No | 215 |
-| The caller's own records | Changes only the records of the person using the agent. | Automatic | No | 10 |
+| The caller's own records | Changes only the records of the person using the agent. | Automatic | No | 11 |
 | Inside the organization | Changes records only people inside the organization see. | Automatic | No | 266 |
 | Seen by a customer | Changes something a customer can see. | Ask first | Yes | 5 |
 | Seen by a driver | Changes something a driver can see. | Ask first | Yes | 23 |
@@ -324,6 +324,7 @@ Changes only the records of the person using the agent.
 
 | Tool | Classes | Max tier | Condition | Reads outside text | Rationale |
 | --- | --- | --- | --- | --- | --- |
+| Create agent schedule (`agent_create_schedule`) | The caller's own records | Ask first | — | — | Repeats a request in the person's own conversation, asked as them with the access they have when it runs. A person approves every schedule, so an agent never sets its own workload. |
 | Add home widget (`home_add_widget`) | The caller's own records | Automatic | — | — | Changes only the caller's own home page. |
 | Arrange home layout (`home_arrange_layout`) | The caller's own records | Automatic | — | — | Changes only the caller's own home page. |
 | Remove home widget (`home_remove_widget`) | The caller's own records | Automatic | — | — | Changes only the caller's own home page. |

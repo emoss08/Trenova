@@ -11,6 +11,15 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
+// UrgencyNowSeconds and UrgencyTodaySeconds are how far ahead a move's next
+// stop may open and still be due now or due today. The board's urgency
+// buckets and its summary counts read the same two, so a count and the moves
+// it counts never disagree.
+const (
+	UrgencyNowSeconds   = int64(4 * 3600)
+	UrgencyTodaySeconds = int64(24 * 3600)
+)
+
 type DispatchBoardFilter struct {
 	TenantInfo     pagination.TenantInfo
 	WindowStart    int64
@@ -164,11 +173,20 @@ type WorkerAcceptanceStats struct {
 	AvgAckLatencySeconds float64  `json:"avgAckLatencySeconds"`
 }
 
+// BoardSummary counts the moves in the board's window. LateMoves and
+// AtRiskMoves are coverage alarms: uncovered moves whose pickup window has
+// opened, and uncovered moves whose pickup opens within UrgencyNowSeconds.
+// OverdueMoves, DueNowMoves and DueTodayMoves count every move, covered or
+// not, by its next stop the way each move's urgency reads it: the pickup until
+// it is picked up, then the delivery.
 type BoardSummary struct {
 	UncoveredMoves   int     `json:"uncoveredMoves"`
 	CoveredMoves     int     `json:"coveredMoves"`
 	LateMoves        int     `json:"lateMoves"`
 	AtRiskMoves      int     `json:"atRiskMoves"`
+	OverdueMoves     int     `json:"overdueMoves"`
+	DueNowMoves      int     `json:"dueNowMoves"`
+	DueTodayMoves    int     `json:"dueTodayMoves"`
 	UnseatedDrivers  int     `json:"unseatedDrivers"`
 	AvailableDrivers int     `json:"availableDrivers"`
 	AssignedToday    int     `json:"assignedToday"`

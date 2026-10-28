@@ -57,6 +57,11 @@ type Message struct {
 	// ScheduleID is the conversation schedule a Schedule message made. The
 	// schedule may since have been deleted; the card then says so.
 	ScheduleID pulid.ID `json:"scheduleId,omitempty" keel:"schedule_id,nullzero"`
+	// ProposalID is the agent proposal whose approval made a Schedule card.
+	// Its words are the request the agent wrote out and the person approved,
+	// not words they typed, so it is drawn as the approved proposal. Empty on
+	// a card the person typed and on every other message.
+	ProposalID pulid.ID `json:"proposalId,omitempty" keel:"proposal_id,nullzero"`
 	// Handoff is what a hand-off carried, on the card it left in the
 	// conversation handed off and on the brief that opens the new one. Nil
 	// on every other message.

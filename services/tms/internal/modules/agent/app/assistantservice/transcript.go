@@ -406,6 +406,16 @@ func writeTranscriptMessage(
 		return
 	}
 
+	// A schedule an agent proposed is the request the person approved, worded
+	// by the agent, so it reads as that rather than as something they said.
+	if m.Kind == conversation.MessageKindSchedule && m.ProposalID.IsNotNil() {
+		fmt.Fprintf(b, "_Scheduled from an approved proposal (`%s`) · %s_\n\n",
+			m.ProposalID, transcriptTime(m.CreatedAt))
+		writeText(b, m.Content)
+
+		return
+	}
+
 	if m.Kind == conversation.MessageKindWorldChange {
 		fmt.Fprintf(b, "_Records changed while the agent worked · %s_\n\n",
 			transcriptTime(m.CreatedAt))

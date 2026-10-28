@@ -249,9 +249,10 @@ function useDeskSchedules(threadId: string, timezone: string): DeskThreadSchedul
       isRequest: isScheduleRequest,
       create,
       pending,
-      card: (scheduleId: string) => (
+      card: (scheduleId: string, proposed: boolean) => (
         <DeskScheduleCard
           schedule={loaded ? (byId.get(scheduleId) ?? null) : undefined}
+          proposed={proposed}
           now={clock}
           timezone={timezone}
           disabled={actions.busy}

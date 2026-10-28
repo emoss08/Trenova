@@ -6,7 +6,7 @@ import { Operation, Resource } from "@trenova/shared/types/permission";
 import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { DeskBoardBody } from "../desk-board-body";
-import { boardArtifact, closeBoard, lateBoard } from "./fixtures";
+import { block, boardArtifact, closeBoard, count, lateBoard } from "./fixtures";
 
 const fetchers = vi.hoisted(() => ({ card: vi.fn() }));
 
@@ -214,5 +214,40 @@ describe("DeskBoardBody", () => {
     );
 
     expect(await screen.findByText(/could not be read|nope/u)).toBeInTheDocument();
+  });
+});
+
+/*
+An operations board asks for five figures. The card sets them as three and
+two, each row its own run, in the order they were given.
+*/
+describe("DeskBoardBody's figures", () => {
+  it("sets five figures in a row of three and a row of two", async () => {
+    const board = lateBoard();
+    board.blocks = [
+      block({
+        type: "figures",
+        title: "Today at a glance",
+        numeral: 1,
+        source: { kind: "metrics", resource: "", count: 0, readable: 0, title: "" },
+        figures: [
+          { label: "Active shipments", value: count(556), was: null, tone: "" },
+          { label: "On-time %", value: count(0), was: null, tone: "" },
+          { label: "At risk", value: count(54), was: null, tone: "" },
+          { label: "Unassigned", value: count(337), was: null, tone: "" },
+          { label: "Revenue today", value: count(0), was: null, tone: "" },
+        ],
+      }),
+    ];
+    draw(board);
+
+    const figures = await screen.findByRole("region", { name: "Today at a glance" });
+    const rows = [...figures.querySelectorAll(".dk-bd-read")].map((row) =>
+      [...row.querySelectorAll("dt")].map((term) => term.textContent),
+    );
+    expect(rows).toEqual([
+      ["Active shipments", "On-time %", "At risk"],
+      ["Unassigned", "Revenue today"],
+    ]);
   });
 });

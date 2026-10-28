@@ -113482,6 +113482,15 @@
       "apps/web/lib"
     ]
   },
+  "From a proposal you approved · results will post into this conversation": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "From another Trenova organization": {
     "sites": 1,
     "scope": [
@@ -137122,6 +137131,15 @@
       "go/other"
     ]
   },
+  "Late moves": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/home"
+    ]
+  },
   "Late or missed stops with no resolution recorded.": {
     "sites": 1,
     "scope": [
@@ -137138,6 +137156,15 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "Late with nobody on it": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Late {0}": {
@@ -154672,6 +154699,24 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "Moves due now": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/home"
+    ]
+  },
+  "Moves due today": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/home"
     ]
   },
   "Moves in the window with no driver — click to show every urgency bucket.": {
@@ -180083,6 +180128,15 @@
     ]
   },
   "Only the person who started a transfer can stop it": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Only the person whose conversation this is can schedule a request in it": {
     "sites": 1,
     "scope": [
       "go"
@@ -237451,6 +237505,15 @@
     ]
   },
   "Send one connection's queued documents to its accounting system": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Send one schedule per message. “{0}” is another one.": {
     "sites": 1,
     "scope": [
       "go"
@@ -298277,12 +298340,14 @@
     ]
   },
   "Uncovered moves": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
-      "go"
+      "go",
+      "ts"
     ],
     "areas": [
-      "go/other"
+      "go/other",
+      "routes/home"
     ]
   },
   "Uncovered pickups": {
@@ -320938,7 +321003,7 @@
     ]
   },
   "You can't schedule requests to this agent any more": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -331079,6 +331144,24 @@
       "routes/agent-control"
     ]
   },
+  "next stop later today": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/home"
+    ]
+  },
+  "next stop within 4 hours": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/home"
+    ]
+  },
   "next try {0}": {
     "sites": 1,
     "scope": [
@@ -331149,6 +331232,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "no driver or carrier": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/home"
     ]
   },
   "no limit matched": {
@@ -342052,6 +342144,15 @@
     ],
     "areas": [
       "routes/inbox"
+    ]
+  },
+  "{0, plural, one {of # move in the next day} other {of # moves in the next day}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/home"
     ]
   },
   "{0, plural, one {of # row read} other {of # rows read}}": {
@@ -359009,6 +359110,15 @@
     ]
   },
   "“{0}” isn't a time of day. Try “7:30 am” or “17:30”.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "“{0}” isn't a time zone. Use one such as America/New_York.": {
     "sites": 1,
     "scope": [
       "go"

@@ -88,15 +88,15 @@ func TestLateness_MeasuresFromTheWindowsClose(t *testing.T) {
 	const now = int64(1_790_000_000)
 	end := now + 1800
 	open := &shipmentports.BoardMove{OriginWindowStart: now - 1800, OriginWindowEnd: &end}
-	what, by := lateness(open, now)
+	what, seconds := lateness(open, now)
 	assert.Equal(t, "pick up", what)
-	assert.Empty(t, by, "the pickup window is still open")
+	assert.Empty(t, lateFor(seconds), "the pickup window is still open")
 
 	closed := now - 22*3600
 	overdue := &shipmentports.BoardMove{OriginWindowStart: closed - 7200, OriginWindowEnd: &closed}
-	what, by = lateness(overdue, now)
+	what, seconds = lateness(overdue, now)
 	assert.Equal(t, "pick up", what)
-	assert.Equal(t, "22h 00m", by)
+	assert.Equal(t, "22h 00m", lateFor(seconds))
 
 	arrived := now - 5*86_400
 	deadline := now - 3*86_400
@@ -106,7 +106,54 @@ func TestLateness_MeasuresFromTheWindowsClose(t *testing.T) {
 		DestinationWindowStart: deadline - 3600,
 		DestinationWindowEnd:   &deadline,
 	}
-	what, by = lateness(delivering, now)
+	what, seconds = lateness(delivering, now)
 	assert.Equal(t, "deliver", what)
-	assert.Equal(t, "3d 0h", by)
+	assert.Equal(t, "3d 0h", lateFor(seconds))
+}
+
+/*
+Asked for the operations board, Haiku named the first late move "the most
+overdue": it was three hours behind, with others fourteen hours behind further
+down, because late moves kept the board's own order. Late moves now come
+furthest behind first within what they are late to do.
+*/
+func TestBoardView_ListsLateMovesFurthestBehindFirst(t *testing.T) {
+	t.Parallel()
+
+	const now = int64(1_790_000_000)
+	arrived := now - 5*86_400
+	delivering := func(pro string, behind int64) *dispatchconsoleservice.BoardMove {
+		deadline := now - behind
+		return &dispatchconsoleservice.BoardMove{
+			BoardMove: &shipmentports.BoardMove{
+				MoveID:                 pulid.MustNew("sm_"),
+				ShipmentID:             pulid.MustNew("shp_"),
+				ProNumber:              pro,
+				ShipmentStatus:         shipment.StatusDelayed,
+				OriginWindowStart:      arrived,
+				OriginActualArrive:     &arrived,
+				DestinationWindowStart: deadline - 3600,
+				DestinationWindowEnd:   &deadline,
+			},
+			Urgency: dispatchconsoleservice.UrgencyLate,
+		}
+	}
+	board := &dispatchconsoleservice.Board{
+		WindowStart: now,
+		WindowEnd:   now + 86_400,
+		Moves: []*dispatchconsoleservice.BoardMove{
+			delivering("THREE-HOURS", 3*3600),
+			delivering("FOURTEEN-HOURS", 14*3600),
+			delivering("ELEVEN-HOURS", 11*3600),
+		},
+	}
+
+	view := boardViewOf(board, "UTC")
+
+	order := make([]string, 0, len(view.Moves))
+	for _, row := range view.Moves {
+		order = append(order, row.ProNumber)
+	}
+	assert.Equal(t, []string{"FOURTEEN-HOURS", "ELEVEN-HOURS", "THREE-HOURS"}, order)
+	assert.Equal(t, "14h 00m", view.Moves[0].LateBy)
 }

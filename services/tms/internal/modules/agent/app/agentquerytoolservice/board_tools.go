@@ -1,6 +1,7 @@
 package agentquerytoolservice
 
 import (
+	"cmp"
 	"context"
 	"fmt"
 	"slices"
@@ -32,15 +33,16 @@ const (
 )
 
 type boardMoveRow struct {
-	MoveID          string  `json:"moveId"`
-	ShipmentID      string  `json:"shipmentId"`
-	ProNumber       string  `json:"proNumber"`
-	Customer        string  `json:"customer,omitempty"`
-	ShipmentStatus  string  `json:"shipmentStatus"`
-	MoveStatus      string  `json:"moveStatus"`
-	Urgency         string  `json:"urgency"`
-	LateTo          string  `json:"lateTo,omitempty"`
-	LateBy          string  `json:"lateBy,omitempty"`
+	MoveID          string `json:"moveId"`
+	ShipmentID      string `json:"shipmentId"`
+	ProNumber       string `json:"proNumber"`
+	Customer        string `json:"customer,omitempty"`
+	ShipmentStatus  string `json:"shipmentStatus"`
+	MoveStatus      string `json:"moveStatus"`
+	Urgency         string `json:"urgency"`
+	LateTo          string `json:"lateTo,omitempty"`
+	LateBy          string `json:"lateBy,omitempty"`
+	lateSeconds     int64
 	MinutesToPickup int64   `json:"minutesToPickup"`
 	Covered         bool    `json:"covered"`
 	Coverage        string  `json:"coverage"`
@@ -86,15 +88,22 @@ type boardView struct {
 	Counts  map[string]int   `json:"urgencyCounts"`
 }
 
+// boardSummaryRow counts every move in the window, not only the moves listed.
+// The console's "late" and "at risk" are coverage alarms for uncovered moves;
+// called lateMoves beside an urgency count of Late an agent read 6 against 34
+// as the board disagreeing with itself, so each is named for what it counts.
 type boardSummaryRow struct {
-	UncoveredMoves   int     `json:"uncoveredMoves"`
-	CoveredMoves     int     `json:"coveredMoves"`
-	LateMoves        int     `json:"lateMoves"`
-	AtRiskMoves      int     `json:"atRiskMoves"`
-	AvailableDrivers int     `json:"availableDrivers"`
-	UnseatedDrivers  int     `json:"unseatedDrivers"`
-	AssignedToday    int     `json:"assignedToday"`
-	UtilizationPct   float64 `json:"utilizationPercent"`
+	UncoveredMoves      int     `json:"uncoveredMoves"`
+	CoveredMoves        int     `json:"coveredMoves"`
+	OverdueMoves        int     `json:"overdueMoves"`
+	DueNowMoves         int     `json:"dueNowMoves"`
+	DueTodayMoves       int     `json:"dueTodayMoves"`
+	UncoveredPastPickup int     `json:"uncoveredPastPickup"`
+	UncoveredPickupSoon int     `json:"uncoveredPickupSoon"`
+	AvailableDrivers    int     `json:"availableDrivers"`
+	UnseatedDrivers     int     `json:"unseatedDrivers"`
+	AssignedToday       int     `json:"assignedToday"`
+	UtilizationPct      float64 `json:"utilizationPercent"`
 }
 
 type getDispatchBoardTool struct {
@@ -115,12 +124,16 @@ func (t *getDispatchBoardTool) Description() string {
 		"\"what is uncovered\" and \"who is free\". Urgency follows the move's next stop: " +
 		"the pickup window until it is picked up, then the delivery window. Each late " +
 		"move's lateTo says whether it is late to pick up or to deliver, " +
-		"and lateBy how long past the window's close it is, the way to say it; " +
+		"and lateBy how long past the window's close it is, the way to say it. Late moves " +
+		"come first, late to deliver then late to pick up, each furthest behind first; " +
 		"check shipment_get_tracking on a late move " +
 		"before acting on it, since arrivals are sometimes recorded late. A rundown or " +
 		"a list answers from the board as it stands, saying what each is late to do, " +
-		"rather than tracking each move. To act on one load, such as a note or a " +
-		"change, find it with shipment_list."
+		"rather than tracking each move. summary counts every move in the window, listed " +
+		"or not: overdueMoves, dueNowMoves and dueTodayMoves by urgency, and " +
+		"uncoveredPastPickup and uncoveredPickupSoon among the uncovered. On a board, show " +
+		"them with the metrics movesLate, movesDueNow, movesDueToday and movesUncovered. To " +
+		"act on one load, such as a note or a change, find it with shipment_list."
 }
 
 func (t *getDispatchBoardTool) ParamSchema() map[string]any {
@@ -197,14 +210,17 @@ func boardViewOf(board *dispatchconsoleservice.Board, timezone string) boardView
 	}
 	if board.Summary != nil {
 		view.Summary = &boardSummaryRow{
-			UncoveredMoves:   board.Summary.UncoveredMoves,
-			CoveredMoves:     board.Summary.CoveredMoves,
-			LateMoves:        board.Summary.LateMoves,
-			AtRiskMoves:      board.Summary.AtRiskMoves,
-			AvailableDrivers: board.Summary.AvailableDrivers,
-			UnseatedDrivers:  board.Summary.UnseatedDrivers,
-			AssignedToday:    board.Summary.AssignedToday,
-			UtilizationPct:   board.Summary.UtilizationPct,
+			UncoveredMoves:      board.Summary.UncoveredMoves,
+			CoveredMoves:        board.Summary.CoveredMoves,
+			OverdueMoves:        board.Summary.OverdueMoves,
+			DueNowMoves:         board.Summary.DueNowMoves,
+			DueTodayMoves:       board.Summary.DueTodayMoves,
+			UncoveredPastPickup: board.Summary.LateMoves,
+			UncoveredPickupSoon: board.Summary.AtRiskMoves,
+			AvailableDrivers:    board.Summary.AvailableDrivers,
+			UnseatedDrivers:     board.Summary.UnseatedDrivers,
+			AssignedToday:       board.Summary.AssignedToday,
+			UtilizationPct:      board.Summary.UtilizationPct,
 		}
 	}
 
@@ -215,12 +231,20 @@ func boardViewOf(board *dispatchconsoleservice.Board, timezone string) boardView
 		}
 		view.Counts[string(move.Urgency)]++
 		row := toBoardMoveRow(move, timezone)
-		row.LateTo, row.LateBy = lateness(move.BoardMove, board.WindowStart)
+		row.LateTo, row.lateSeconds = lateness(move.BoardMove, board.WindowStart)
+		row.LateBy = lateFor(row.lateSeconds)
 		late.add(&row)
 		view.Moves = append(view.Moves, row)
 	}
+	// Late to deliver, then late to pick up, each furthest behind first: an
+	// agent read the first late move as the most overdue when it was only the
+	// oldest pickup, three hours behind with others fourteen hours behind.
 	slices.SortStableFunc(view.Moves, func(a, b boardMoveRow) int {
-		return lateRank(a.LateTo) - lateRank(b.LateTo)
+		if rank := lateRank(a.LateTo) - lateRank(b.LateTo); rank != 0 {
+			return rank
+		}
+
+		return cmp.Compare(b.lateSeconds, a.lateSeconds)
 	})
 	for _, driver := range board.Drivers {
 		if driver == nil || driver.BoardDriver == nil {
@@ -230,7 +254,8 @@ func boardViewOf(board *dispatchconsoleservice.Board, timezone string) boardView
 	}
 
 	view.Note = fmt.Sprintf(
-		"%d moves and %d drivers in the window. Urgency counts: %s. Urgency follows each "+
+		"%d moves and %d drivers listed. Urgency counts among the moves listed: %s; summary "+
+			"counts every move in the window, so quote it for totals. Urgency follows each "+
 			"move's next stop, the pickup until it is picked up and then the delivery; "+
 			"lateTo says what each is late to do: %d late to pick up, %d late to deliver.%s",
 		len(view.Moves), len(view.Drivers), countsText(view.Counts),
@@ -246,28 +271,28 @@ const (
 	millisPerSecond = 1000
 )
 
-// lateness is what a move is late to do at now, and how long past the
+// lateness is what a move is late to do at now, and how many seconds past the
 // window's close it is: pick up, when its pickup window has opened with no
 // arrival recorded, or deliver, when it was picked up and its delivery
 // window has closed. A move picked up and still inside its delivery window
 // is not late, whatever its pickup-based urgency says. A pickup window still
-// open has no lateBy yet.
-func lateness(move *shipmentports.BoardMove, now int64) (lateTo, lateBy string) {
+// open is not past its close yet, so it has no seconds.
+func lateness(move *shipmentports.BoardMove, now int64) (lateTo string, lateSeconds int64) {
 	if move.OriginActualArrive == nil || *move.OriginActualArrive <= 0 {
 		if move.OriginWindowStart > 0 && move.OriginWindowStart < now {
 			pickupClose := closeOf(move.OriginWindowStart, move.OriginWindowEnd)
-			return lateToPickUp, lateFor(now - pickupClose)
+			return lateToPickUp, max(now-pickupClose, 0)
 		}
 
-		return "", ""
+		return "", 0
 	}
 
 	deadline := closeOf(move.DestinationWindowStart, move.DestinationWindowEnd)
 	if deadline > 0 && deadline < now {
-		return lateToDeliver, lateFor(now - deadline)
+		return lateToDeliver, now - deadline
 	}
 
-	return "", ""
+	return "", 0
 }
 
 func closeOf(start int64, end *int64) int64 {

@@ -443,3 +443,65 @@ describe("DeskThread's dock for a held change", () => {
     expect(screen.queryByText(/to approve/)).toBeNull();
   });
 });
+
+/*
+A schedule the person approved from an agent's proposal is kept as a card
+worded as the request the agent wrote out. Drawn like one they typed, it read
+as their own words. It is drawn as its card alone; one they typed keeps their
+words above it.
+*/
+describe("DeskThread's schedule cards", () => {
+  function schedules() {
+    return {
+      isRequest: () => false,
+      create: () => undefined,
+      pending: null,
+      card: (scheduleId: string, proposed: boolean) => (
+        <div>{`card ${scheduleId} ${proposed ? "proposed" : "typed"}`}</div>
+      ),
+    };
+  }
+
+  it("draws a schedule approved from a proposal as its card, not as the person's words", () => {
+    conversation.more = [
+      {
+        kind: "schedule",
+        message: message({
+          id: "msg_s",
+          kind: "Schedule",
+          content: "Every day at 10:15 AM, Give me today's operations board",
+          scheduleId: "csch_1",
+          proposalId: "ap_1",
+          sequence: 3,
+        }),
+      },
+    ];
+    renderThread({ schedules: schedules() });
+
+    expect(screen.getByText("card csch_1 proposed")).toBeInTheDocument();
+    expect(
+      screen.queryByText("Every day at 10:15 AM, Give me today's operations board"),
+    ).toBeNull();
+  });
+
+  it("keeps the words of a schedule the person typed above its card", () => {
+    conversation.more = [
+      {
+        kind: "schedule",
+        message: message({
+          id: "msg_s",
+          kind: "Schedule",
+          content: "every day at 10:15am, give me today's operations board",
+          scheduleId: "csch_2",
+          sequence: 3,
+        }),
+      },
+    ];
+    renderThread({ schedules: schedules() });
+
+    expect(screen.getByText("card csch_2 typed")).toBeInTheDocument();
+    expect(
+      screen.getByText("every day at 10:15am, give me today's operations board"),
+    ).toHaveClass("dk-q");
+  });
+});

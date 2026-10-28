@@ -933,6 +933,11 @@ export const assistantMessageSchema = z.object({
   kind: messageKindSchema.catch("Message").default("Message"),
   /** On a Schedule message: the schedule it made, which may since be deleted. */
   scheduleId: z.string().nullish(),
+  /**
+   * On a Schedule message an agent proposed: the proposal whose approval made
+   * it. Its words are the request the agent wrote out, not the person's.
+   */
+  proposalId: z.string().nullish(),
   /** On a Delegated message: the agent that took the step. */
   agentId: z.string().nullish(),
   /** On a Delegated message: the delegate_task call it answers. */

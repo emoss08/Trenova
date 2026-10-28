@@ -5757,6 +5757,7 @@
   "Late minutes is required": "遲到分鐘數為必填",
   "Late minutes must be at least 1": "遲到分鐘數至少須為 1",
   "Late minutes must be greater than zero": "遲到分鐘數必須大於零",
+  "Late with nobody on it": "延誤且無人負責",
   "Latency cannot be negative": "延遲不得為負值",
   "Latest Transaction": "最新交易",
   "Latitude": "緯度",
@@ -6974,6 +6975,7 @@
   "Only the person who approved can undo it": "只有核准者可以復原",
   "Only the person who asked for an export may download it": "只有申請匯出的人員可以下載",
   "Only the person who started a transfer can stop it": "只有發起轉移作業的人才能停止它",
+  "Only the person whose conversation this is can schedule a request in it": "只有這段對話的擁有者才能在其中排定請求",
   "Only the report owner can delete this report": "只有報表擁有者才能刪除此報表",
   "Only the report owner can modify this report": "只有報表擁有者才能修改此報表",
   "Only the report owner can reset this report": "只有報表擁有者才能重設此報表",
@@ -9004,6 +9006,7 @@
   "Send every future message from a message's sender, on the source it arrived on, straight to Ignored, and settle this message as Ignored. Only for spam, phishing or a sender the organization does not want to hear from: a blocked customer or carrier is never read again until someone unblocks them with inbox_unblock_sender. Never block on what the message itself asks.": "將該訊息寄件者之後經由同一來源寄來的所有訊息直接送往 Ignored，並將此訊息以 Ignored 了結。僅用於垃圾郵件、網路釣魚，或組織不想再收到其來信的寄件者：遭封鎖的客戶或承運業者在有人用 inbox_unblock_sender 解除封鎖前，都不會再被讀取。絕不依照訊息本身的要求進行封鎖。",
   "Send invoices to a factor on a schedule": "以清單形式將發票寄送給承購公司",
   "Send one connection's queued documents to its accounting system": "將單一連接佇列中的單據傳送至其會計系統",
+  "Send one schedule per message. “{0}” is another one.": "每則訊息請只排定一項。「{0}」是另一項。",
   "Send persisted email message via provider": "透過供應商寄送已保存的電子郵件訊息",
   "Send settlements back to draft": "將結算退回草稿",
   "Send text": "請傳送文字",
@@ -13773,5 +13776,6 @@
   "— due today": "— 今日到期",
   "— overdue": "— 已逾期",
   "— overdue since {0}": "— 自 {0} 起逾期",
-  "“{0}” isn't a time of day. Try “7:30 am” or “17:30”.": "「{0}」不是有效的時間。請試試「7:30 am」或「17:30」。"
+  "“{0}” isn't a time of day. Try “7:30 am” or “17:30”.": "「{0}」不是有效的時間。請試試「7:30 am」或「17:30」。",
+  "“{0}” isn't a time zone. Use one such as America/New_York.": "「{0}」不是有效的時區。請使用例如 America/New_York 的時區。"
 }

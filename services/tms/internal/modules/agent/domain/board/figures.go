@@ -15,7 +15,13 @@ var (
 		`\b\d{1,4}[/-]\d{1,2}(?:[/-]\d{1,4})?\b|` +
 		`\b(?:jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)[a-z]*\.?\s+\d{1,2}(?:st|nd|rd|th)?\b|` +
 		`\b\d{1,2}(?:st|nd|rd|th)?\s+(?:jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)[a-z]*\b|` +
-		`\b(?:19|20)\d{2}\b`)
+		`\b(?:19|20)\d{2}\b|` +
+		// A span of time named from now ("the next 24 hours", "the past 7
+		// days") says which time the board covers, like a date; it is not a
+		// reading that goes stale. Refused as a figure, an agent had no block
+		// to move "the board covers the next 24 hours" into.
+		`\b(?:next|past|last|coming|previous|prior|following)\s+\d{1,3}\s+` +
+		`(?:hours?|days?|weeks?|months?)\b`)
 	figureNumber = regexp.MustCompile(`\d[\d,]*(?:\.\d+)?`)
 	figureUnit   = regexp.MustCompile(`^(?i)(?:%|(?:h|hr|hrs|m|min|mins|d|s|mi|km|k|lb|lbs)\b)`)
 	figureWord   = regexp.MustCompile(`^\s+[\p{L}%]+`)

@@ -442,19 +442,38 @@ const ON_SCREEN_RESOURCES = new Set([
 export const ARTIFACT_THREAD_PREFIX = ["assistant", "artifacts", "assistant-artifacts"] as const;
 
 /**
+ * Where one conversation's messages are cached, the same way:
+ * `queries.assistant.messages(id)` under `["assistant", "messages",
+ * "assistant-messages", id]`.
+ */
+export const MESSAGES_THREAD_PREFIX = ["assistant", "messages", "assistant-messages"] as const;
+
+/**
  * The caches an event reaches. Most events reach every root their resource
  * names. A page arriving on a capture batch is the exception: a scanner sends
  * one every second or two, and it changes only the queue, its counts and that
  * batch, never a record's requests or a batch nobody has open, so it reaches
  * those alone and only where they are on screen. A Desk conversation's lists
  * refetch only on screen, and an artifact naming its conversation reaches that
- * conversation's artifacts alone.
+ * conversation's artifacts alone. A schedule made in a conversation also
+ * reaches that conversation's messages: one an agent proposed is kept when
+ * the person approves it, with a card no message box put on screen.
  */
 export function invalidationFor(event: ResourceInvalidationEvent): Invalidation {
   if (event.resource === "assistant_artifact") {
     const threadId = event.entity?.threadId;
     if (typeof threadId === "string" && threadId !== "") {
       return { roots: [[...ARTIFACT_THREAD_PREFIX, threadId]], activeOnly: true, activeRoots: [] };
+    }
+  }
+  if (event.resource === "conversation_schedules" && event.action === "created") {
+    const threadId = event.entity?.threadId;
+    if (typeof threadId === "string" && threadId !== "") {
+      return {
+        roots: [...(RESOURCE_QUERY_KEY_MAP.conversation_schedules ?? [])],
+        activeOnly: true,
+        activeRoots: [[...MESSAGES_THREAD_PREFIX, threadId]],
+      };
     }
   }
   if (event.resource === "capture_batch" && event.action === "page.received") {

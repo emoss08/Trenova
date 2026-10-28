@@ -1023,8 +1023,9 @@ another agent is the profile's **mode**, worked out once when the turn opens
 | `delegated` | A task the person directed to another agent | The delegate's tools, without `agent_open_page` | Nothing |
 
 `agent_open_page` is held only by the turn the person is in, `agent_raise_exception` only by
-a run, and `agent_guide_profile` only by a conversation with a person; the mode
-decides each (`profileHolds`). The mode travels on `TurnState.Mode`, so a turn
+a run, and `agent_guide_profile` and `agent_create_schedule` only by a conversation with a
+person (the schedule also needs the conversation it posts into); the mode decides each
+(`profileHolds`). The mode travels on `TurnState.Mode`, so a turn
 restored in workflow code is the same profile it was opened as.
 
 ### Discovery across desks
@@ -2359,7 +2360,7 @@ conversation is the same from the first call of the turn to the last.
   put their schemas into the workflow's history on every call.
 - **A small core loaded.** On a turn that can search, the core tools few turns
   call (`agent_create_wait`, `agent_cancel_wait`, `agent_raise_exception`,
-  `agent_guide_profile`; `deferredCoreTools`) are deferred unless
+  `agent_guide_profile`, `agent_create_schedule`; `deferredCoreTools`) are deferred unless
   the request names what they do, and are found like any other. Memory and the
   product guide stay loaded, because the prompt tells the model when to use them.
   An unattended run also loads `agent_raise_exception` (`defersCoreTool`): handing the

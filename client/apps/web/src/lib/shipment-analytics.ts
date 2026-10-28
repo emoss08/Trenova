@@ -78,6 +78,17 @@ export type ShipmentAnalyticsData = {
     unassigned: number;
     driverReady: number;
   };
+  /**
+   * The next day's moves as the dispatch board counts them, covered or not, by
+   * each move's next stop.
+   */
+  dispatch: {
+    moves: number;
+    late: number;
+    dueNow: number;
+    dueToday: number;
+    uncovered: number;
+  };
   hosNearLimit: {
     items: { driverId: string; name: string; hoursLeftLabel: string; tone: Tone }[];
   };
@@ -209,6 +220,13 @@ export const defaultAnalyticsData: ShipmentAnalyticsData = {
     unassigned: 5,
     driverReady: 7,
   },
+  dispatch: {
+    moves: 40,
+    late: 6,
+    dueNow: 4,
+    dueToday: 11,
+    uncovered: 8,
+  },
   hosNearLimit: {
     items: [
       { driverId: "D-211", name: "J. Park", hoursLeftLabel: "02:15 left", tone: "danger" },
@@ -277,6 +295,7 @@ export function mergeShipmentAnalyticsWithDefaults(
     atRisk: { ...defaultAnalyticsData.atRisk, ...data.atRisk },
     unassigned: { ...defaultAnalyticsData.unassigned, ...data.unassigned },
     readyToDispatch: { ...defaultAnalyticsData.readyToDispatch, ...data.readyToDispatch },
+    dispatch: { ...defaultAnalyticsData.dispatch, ...data.dispatch },
     hosNearLimit:
       (data.hosNearLimit as ShipmentAnalyticsData["hosNearLimit"] | undefined) ??
       defaultAnalyticsData.hosNearLimit,

@@ -295,3 +295,38 @@ func TestFailedToolLabel_NamesWhyTheCallDidNotRun(t *testing.T) {
 		assert.Equal(t, want, failedToolLabel(verdict), verdict)
 	}
 }
+
+/*
+A schedule the agent proposed and the person approved is kept as a card in
+the conversation, worded as the request the agent wrote out. The export said
+"You" over it, as if the person had typed it. It reads as the approved
+proposal; a schedule the person typed still reads as theirs.
+*/
+func TestTranscript_ShowsAProposedScheduleAsTheApprovedProposal(t *testing.T) {
+	t.Parallel()
+
+	proposalID := pulid.MustNew("ap_")
+	proposed := &conversation.Message{
+		Role:       conversation.RoleUser,
+		Kind:       conversation.MessageKindSchedule,
+		Content:    "Every day at 10:15 AM, Give me today's operations board",
+		ScheduleID: pulid.MustNew("csch_"),
+		ProposalID: proposalID,
+		CreatedAt:  1_790_000_100,
+	}
+	var b strings.Builder
+	writeTranscriptMessage(&b, proposed, "Billing exceptions", false)
+
+	assert.Contains(t, b.String(),
+		"_Scheduled from an approved proposal (`"+proposalID.String()+"`) · ")
+	assert.Contains(t, b.String(), "Every day at 10:15 AM, Give me today's operations board")
+	assert.NotContains(t, b.String(), "## You")
+
+	typed := *proposed
+	typed.ProposalID = pulid.Nil
+	typed.Content = "every day at 10:15am, give me today's operations board"
+	b.Reset()
+	writeTranscriptMessage(&b, &typed, "Billing exceptions", false)
+
+	assert.True(t, strings.HasPrefix(b.String(), "## You · "), b.String())
+}

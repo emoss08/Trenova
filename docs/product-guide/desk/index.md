@@ -288,8 +288,8 @@ Keywords: hand off, handoff, transfer, pass to another agent, switch agent keep 
 5. A card in this conversation says who it was handed to and what went with it (**Carried over**). Select **Open their conversation** to go there. The new conversation has a matching card with **Open the earlier conversation**. Both conversations stay open.
 
 ### Have an agent run a request on a schedule
-Keywords: schedule, recurring, every morning, every weekday, every Monday, daily report, run automatically
-1. In a conversation on [Desk](/desk), send a message that starts with when it should run, then what to ask. For example: "every weekday at 7:30am, list shipments still not dispatched for today". You can also type /schedule, then the when and the request.
+Keywords: schedule, recurring, every morning, every day, everyday, daily, every weekday, every Monday, daily report, run automatically, schedule this
+1. In a conversation on [Desk](/desk), send a message that starts with when it should run, then what to ask. For example: "every weekday at 7:30am, list shipments still not dispatched for today" or "everyday at 9:30am EST, give me today's operations board". You can also type /schedule, then the when and the request, or ask the agent to "schedule this every day at 9:30": it proposes the schedule, and you approve it.
 2. Instead of an answer, a **Scheduled** card appears: **Results will post into this conversation**. The card shows the request, how often it runs and when it runs next.
 3. On the card, open **Schedule actions** (the three dots) and select **Edit** to change it, **Pause** to stop it for now, **Resume** to start it again, or **Delete** to remove it. A deleted one shows **Schedule deleted**.
 4. To see every request you have scheduled, across all of your conversations, open [Scheduled requests](/desk/scheduled) from **Scheduled** in the sidebar. You can run, pause, resume or delete each one there.

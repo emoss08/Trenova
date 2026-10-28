@@ -27,6 +27,15 @@ var requestPattern = cadencePattern(
 		`(?:\s+at\s+([\d:]+(?:\s*(?:am|pm)\b)?))?)([,:]?)\s*(.*)$`,
 )
 
+// dailyRequestPattern reads "daily at 9:30, …" and "everyday at 9:30, …".
+// Sentences open with either word too ("daily revenue last week?",
+// "everyday is fine"), so it counts only with a time or a separator after
+// it, or under /schedule.
+var dailyRequestPattern = cadencePattern(
+	`(?is)^(/schedule\s+)?((daily|everyday)\b` +
+		`(?:\s+at\s+([\d:]+(?:\s*(?:am|pm)\b)?))?)([,:]?)\s*(.*)$`,
+)
+
 var spanishRequestPattern = cadencePattern(
 	`(?is)^(/schedule\s+)?((?:cada|todos\s+los|todas\s+las)\s+` +
 		`(d[ií]as?\s+(?:laborables?|h[aá]bil(?:es)?)|d[ií]as?|ma[nñ]anas?|lunes|martes|` +
@@ -89,6 +98,12 @@ type grammar struct {
 
 var grammars = []grammar{
 	{pattern: requestPattern, unit: strings.ToLower, clock: parseClock},
+	{
+		pattern:     dailyRequestPattern,
+		unit:        func(string) string { return "day" },
+		clock:       parseClock,
+		needsMarker: true,
+	},
 	{pattern: spanishRequestPattern, unit: spanishUnit, clock: parseSpanishClock},
 	{
 		pattern:     chineseRequestPattern,
@@ -99,10 +114,11 @@ var grammars = []grammar{
 }
 
 type cadenceMatch struct {
-	grammar grammar
-	unit    string
-	clock   string
-	request string
+	grammar   grammar
+	unit      string
+	clock     string
+	separator string
+	request   string
 }
 
 func matchCadence(text string) (*cadenceMatch, bool) {
@@ -112,14 +128,15 @@ func matchCadence(text string) (*cadenceMatch, bool) {
 			continue
 		}
 		if g.needsMarker && match[1] == "" && match[4] == "" && match[5] == "" {
-			return nil, false
+			continue
 		}
 
 		return &cadenceMatch{
-			grammar: g,
-			unit:    match[3],
-			clock:   match[4],
-			request: match[6],
+			grammar:   g,
+			unit:      match[3],
+			clock:     match[4],
+			separator: match[5],
+			request:   match[6],
 		}, true
 	}
 
@@ -147,6 +164,10 @@ type Request struct {
 	Cadence string
 	// CronExpression is the same cadence as a five-field cron.
 	CronExpression string
+	// Timezone is the clock the message named after its time ("at 9:30am
+	// EST"), as an IANA name, or empty when it named none and the schedule
+	// keeps the person's own.
+	Timezone string
 }
 
 // IsRequest reports whether a message asks for a schedule rather than an
@@ -166,7 +187,8 @@ func IsRequest(text string) bool {
 // ParseRequest reads a message as a scheduled request.
 //
 // The cadence is "every" or "each" and one of weekday, day, morning, a day of
-// the week or week, then an optional "at h[:mm] am|pm". A day or a morning
+// the week or week, or "daily" or "everyday", then an optional "at h[:mm]
+// am|pm" and the clock it is on ("EST", "Pacific time"). A day or a morning
 // runs every day, a week runs on Mondays, and no time means 8:00 AM. A time
 // without am or pm is read on a 24-hour clock. The rest is the request.
 func ParseRequest(text string) (*Request, error) {
@@ -186,13 +208,27 @@ func ParseRequest(text string) (*Request, error) {
 		return nil, err
 	}
 
-	prompt := leadingFiller.ReplaceAllString(strings.TrimSpace(match.request), "")
+	request := strings.TrimSpace(match.request)
+	zone := ""
+	if match.clock != "" && match.separator == "" {
+		zone, request = leadingZone(request)
+	}
+
+	prompt := leadingFiller.ReplaceAllString(request, "")
 	prompt = strings.TrimSpace(prompt)
 	if prompt == "" {
 		return nil, errortypes.NewValidationError(
 			"content",
 			errortypes.ErrRequired,
 			"Say what to ask after when it should run",
+		)
+	}
+	if other := laterCadence(prompt); other != "" {
+		return nil, errortypes.NewValidationError(
+			"content",
+			errortypes.ErrInvalid,
+			"Send one schedule per message. “{0}” is another one.",
+			other,
 		)
 	}
 	if utf8.RuneCountInString(prompt) > MaxPromptLength {
@@ -212,7 +248,23 @@ func ParseRequest(text string) (*Request, error) {
 		Prompt:         capitalise(prompt),
 		Cadence:        label,
 		CronExpression: cron,
+		Timezone:       zone,
 	}, nil
+}
+
+// laterCadence is a line after the first that opens with a cadence of its
+// own, or empty. Several schedules pasted into one message were kept as one,
+// the later ones asked as part of the first one's request.
+func laterCadence(prompt string) string {
+	lines := strings.Split(prompt, "\n")
+	for _, line := range lines[1:] {
+		line = strings.TrimSpace(line)
+		if _, ok := matchCadence(line); ok {
+			return line
+		}
+	}
+
+	return ""
 }
 
 // cadenceAt is a cadence as the person reads it, "Every weekday · 7:30 AM",
@@ -289,6 +341,14 @@ func (s *Schedule) Change(edit Edit, multiErr *errortypes.MultiError) {
 	s.Prompt = changed.Prompt
 	s.Cadence = changed.Cadence
 	s.CronExpression = changed.CronExpression
+}
+
+// Asked is the schedule as a request the composer reads back as one, "Every
+// day · 9:30 AM" and its prompt written "Every day at 9:30 AM, Give me…". It
+// is the card's words for a schedule nobody typed, such as one an agent
+// proposed and the person approved.
+func (s *Schedule) Asked() string {
+	return strings.Replace(s.Cadence, " · ", " at ", 1) + ", " + s.Prompt
 }
 
 // cadenceOf is the label and the cron day-of-week field for a unit.

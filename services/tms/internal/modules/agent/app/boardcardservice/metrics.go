@@ -48,6 +48,12 @@ type shipmentCards struct {
 		AvgCPM       float64  `json:"avgCpm"`
 		AvgMarginPct *float64 `json:"avgMarginPct"`
 	} `json:"profitability"`
+	Dispatch struct {
+		Late      int64 `json:"late"`
+		DueNow    int64 `json:"dueNow"`
+		DueToday  int64 `json:"dueToday"`
+		Uncovered int64 `json:"uncovered"`
+	} `json:"dispatch"`
 }
 
 func (s *Service) metricAllowed(
@@ -190,6 +196,14 @@ func shipmentMetric(key string, cards *shipmentCards) *board.Value {
 		return dollars(cards.RevenueToday.RPM)
 	case "costPerMile":
 		return dollars(cards.Profitability.AvgCPM)
+	case "movesLate":
+		return count(cards.Dispatch.Late)
+	case "movesDueNow":
+		return count(cards.Dispatch.DueNow)
+	case "movesDueToday":
+		return count(cards.Dispatch.DueToday)
+	case "movesUncovered":
+		return count(cards.Dispatch.Uncovered)
 	default:
 		return nil
 	}

@@ -298,7 +298,8 @@ func (b *Builder) coverage(ctx context.Context, req Request, facts *Facts) {
 
 	facts.set("coverage.uncovered", summary.UncoveredMoves)
 	facts.set("coverage.covered", summary.CoveredMoves)
-	facts.set("coverage.late", summary.LateMoves)
+	facts.set("coverage.late", summary.OverdueMoves)
+	facts.set("coverage.lateUncovered", summary.LateMoves)
 	facts.set("coverage.atRisk", summary.AtRiskMoves)
 	facts.set("coverage.availableDrivers", summary.AvailableDrivers)
 
@@ -322,7 +323,14 @@ func (b *Builder) coverage(ctx context.Context, req Request, facts *Facts) {
 				Path:  dispatchPath,
 			},
 			{Label: "Covered moves", Value: strconv.Itoa(summary.CoveredMoves), Path: dispatchPath},
-			{Label: "Running late", Value: strconv.Itoa(summary.LateMoves), Path: dispatchPath},
+			// Every move past its next stop's window, covered or not, and the
+			// console's own "late": the uncovered ones still needing a driver.
+			{Label: "Running late", Value: strconv.Itoa(summary.OverdueMoves), Path: dispatchPath},
+			{
+				Label: "Late with nobody on it",
+				Value: strconv.Itoa(summary.LateMoves),
+				Path:  dispatchPath,
+			},
 			{Label: "At risk", Value: strconv.Itoa(summary.AtRiskMoves), Path: dispatchPath},
 			{Label: "Drivers available", Value: strconv.Itoa(summary.AvailableDrivers)},
 		},

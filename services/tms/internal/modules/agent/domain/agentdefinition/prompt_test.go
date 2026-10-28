@@ -797,3 +797,24 @@ func TestBuildSystemPrompt_AnswersInThePersonsLanguage(t *testing.T) {
 	assert.Contains(t, prompt, "Answer in the language the person writes in")
 	assert.Contains(t, prompt, "the values you send to tools stay as each tool declares them")
 }
+
+/*
+The agent tells the time on the organization's clock and a schedule runs on
+the person's. Where the two differ, the prompt names the person's, so the
+agent offers "8:00 AM Eastern" to a person in New York rather than Pacific.
+*/
+func TestBuildSystemPrompt_NamesThePersonsClockWhereItIsNotTheOrganizations(t *testing.T) {
+	t.Parallel()
+
+	definition := definitionWithInstructions("Help.")
+	rc := fullContext()
+	rc.User.Timezone = "America/New_York"
+
+	assert.Contains(t, definition.BuildSystemPrompt(rc),
+		"- Their own clock: America/New_York, not the organization's. A schedule they ask "+
+			"for runs on their own clock unless they name another, so say its time on theirs.")
+
+	rc.User.Timezone = rc.Timezone
+	assert.NotContains(t, definition.BuildSystemPrompt(rc), "Their own clock",
+		"a person on the organization's clock is not told it twice")
+}

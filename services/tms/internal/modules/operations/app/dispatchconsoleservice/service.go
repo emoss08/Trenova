@@ -21,9 +21,9 @@ import (
 
 const (
 	secondsPerHour = int64(3600)
-	secondsPerDay  = int64(86400)
+	secondsPerDay  = shipmentports.UrgencyTodaySeconds
 
-	nowThresholdSeconds = int64(4 * 3600)
+	nowThresholdSeconds = shipmentports.UrgencyNowSeconds
 
 	defaultCandidateLimit = 25
 )

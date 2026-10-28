@@ -18,6 +18,10 @@ var metricKinds = map[string]ValueKind{
 	"arTotalOpen":            ValueMoney,
 	"arOverdue":              ValueMoney,
 	"arDaysSalesOutstanding": ValueNumber,
+	"movesLate":              ValueCount,
+	"movesDueNow":            ValueCount,
+	"movesDueToday":          ValueCount,
+	"movesUncovered":         ValueCount,
 }
 
 func MetricKind(key string) (ValueKind, bool) {

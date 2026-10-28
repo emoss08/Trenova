@@ -18,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/portaltools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/receivabletools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/reporttools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/scheduletools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/shipmenttools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/tendertools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/webwatchtools"
@@ -117,6 +118,7 @@ func ToolProviders() []any {
 		receivabletools.NewRaiseExceptionTool,
 		carriertools.NewWaitUntilTool,
 		carriertools.NewCancelWaitTool,
+		scheduletools.NewCreateScheduleTool,
 		shipmenttools.NewAddShipmentCommentTool,
 		shipmenttools.NewPlaceShipmentHoldTool,
 		shipmenttools.NewReleaseShipmentHoldTool,

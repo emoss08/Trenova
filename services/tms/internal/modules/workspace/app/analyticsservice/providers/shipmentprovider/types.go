@@ -134,3 +134,15 @@ type ProfitabilityCard struct {
 	ShipmentCount     int      `json:"shipmentCount"`
 	TotalMiles        float64  `json:"totalMiles"`
 }
+
+// DispatchCard counts the next day's moves the way the dispatch board reads
+// them, covered or not, by each move's next stop: past its window (Late), due
+// within four hours (DueNow) or later today (DueToday), and those with nobody
+// on them (Uncovered).
+type DispatchCard struct {
+	Moves     int `json:"moves"`
+	Late      int `json:"late"`
+	DueNow    int `json:"dueNow"`
+	DueToday  int `json:"dueToday"`
+	Uncovered int `json:"uncovered"`
+}

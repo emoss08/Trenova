@@ -33,6 +33,7 @@ import {
   boardTone,
   checkGroups,
   formatBoardValue,
+  figureRows,
   furthestOf,
   initialsOf,
   measureIsTrack,
@@ -235,8 +236,40 @@ export function Empty({ block }: { block: DeskBoardBlock }) {
   );
 }
 
-/** Figures, read now; one that moved since the answer says what it was. */
+/**
+ * Figures, read now; one that moved since the answer says what it was. More
+ * than four are set in balanced rows (figureRows), each its own run.
+ */
 export function Readout({
+  figures,
+  answeredAt,
+  now,
+}: {
+  figures: DeskBoardFigure[];
+  answeredAt: number;
+  now: number;
+}) {
+  const rows = figureRows(figures.length);
+  if (rows.length <= 1) {
+    return <ReadoutRow figures={figures} answeredAt={answeredAt} now={now} />;
+  }
+
+  const starts = rows.map((_, index) => rows.slice(0, index).reduce((sum, n) => sum + n, 0));
+  return (
+    <div className="dk-bd-reads">
+      {rows.map((size, index) => (
+        <ReadoutRow
+          key={starts[index]}
+          figures={figures.slice(starts[index], starts[index] + size)}
+          answeredAt={answeredAt}
+          now={now}
+        />
+      ))}
+    </div>
+  );
+}
+
+function ReadoutRow({
   figures,
   answeredAt,
   now,

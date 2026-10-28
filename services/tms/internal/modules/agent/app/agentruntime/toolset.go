@@ -286,6 +286,7 @@ var deferredCoreTools = []string{
 	agentdefinition.CoreToolCancelWait,
 	agentdefinition.CoreToolGuideProfile,
 	agentdefinition.CoreToolRaiseException,
+	agentdefinition.CoreToolSchedule,
 	agentdefinition.CoreToolWaitUntil,
 }
 

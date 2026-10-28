@@ -14,6 +14,25 @@ import { cardMomentAfter, cardTime, money } from "../../record-card/record-card-
 /** How much a board's block asks of the reader: blocks it, worth a look, worth knowing, clear. */
 export type BoardTone = "bad" | "warn" | "info" | "ok" | "";
 
+/** How many figures the card sets side by side in one row. */
+export const FIGURES_PER_ROW = 4;
+
+/**
+ * The rows a run of figures is drawn in: one row of up to four, or balanced
+ * rows of at most four, the longer first. Five are three and two rather than
+ * four and a lone one; eight are four and four.
+ */
+export function figureRows(count: number): number[] {
+  if (count <= 0) {
+    return [];
+  }
+  const rows = Math.ceil(count / FIGURES_PER_ROW);
+  const base = Math.floor(count / rows);
+  const longer = count % rows;
+
+  return Array.from({ length: rows }, (_, index) => (index < longer ? base + 1 : base));
+}
+
 export function boardTone(value: string): BoardTone {
   return value === "bad" || value === "warn" || value === "info" || value === "ok" ? value : "";
 }

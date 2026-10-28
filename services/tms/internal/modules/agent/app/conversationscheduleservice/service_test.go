@@ -413,6 +413,7 @@ func TestCreate_KeepsTheScheduleItsCardAndItsTemporalSchedule(t *testing.T) {
 	assert.Equal(t, conversation.MessageKindSchedule, message.Kind)
 	assert.Equal(t, conversation.RoleUser, message.Role)
 	assert.Equal(t, text, message.Content, "the card keeps the person's words")
+	assert.True(t, message.ProposalID.IsNil(), "a card the person typed is theirs")
 	assert.Equal(t, schedule.ID, message.ScheduleID)
 
 	require.Len(t, f.syncer.synced, 1)
@@ -454,6 +455,158 @@ func TestCreate_FallsBackToTheOrganizationsClockThenUTC(t *testing.T) {
 
 	f.service.clocks = fixedClocks{user: "Not/AZone", organization: ""}
 	assert.Equal(t, "UTC", f.create(t, "every day check loads").Schedule.Timezone)
+}
+
+/*
+"Every day at 9:30 AM EST, …" runs at 9:30 in New York, not at 9:30 on the
+person's own clock in Chicago.
+*/
+func TestCreate_KeepsTheClockTheMessageNames(t *testing.T) {
+	t.Parallel()
+
+	f := newFixture()
+	schedule := f.create(t, "everyday at 9:30 AM EST, give me today's operations board").Schedule
+
+	assert.Equal(t, "America/New_York", schedule.Timezone)
+	assert.Equal(t, "30 9 * * *", schedule.CronExpression)
+	assert.Equal(t, "Give me today's operations board", schedule.Prompt)
+	require.NotNil(t, schedule.NextRunAt)
+	// Saturday 3 October, 9:30 in New York (EDT) is 13:30 UTC, an hour and a
+	// half from now; 9:30 in Chicago would have been 14:30.
+	assert.Equal(t, saturdayNoon+90*60, *schedule.NextRunAt)
+}
+
+func (f *fixture) plan(
+	edit conversationschedule.Edit,
+	zone string,
+) conversationscheduleports.PlanConversationScheduleRequest {
+	return conversationscheduleports.PlanConversationScheduleRequest{
+		ThreadID: f.thread.ID,
+		Edit:     edit,
+		Timezone: zone,
+		Actor:    f.owner,
+	}
+}
+
+/*
+A schedule an agent proposed is checked without being kept, so the proposal
+shows what would run; approving it keeps it with a card worded as the request
+a person would have typed, on the clock the agent named.
+*/
+func TestCreatePlanned_KeepsWhatPlanShowed(t *testing.T) {
+	t.Parallel()
+
+	f := newFixture()
+	req := f.plan(conversationschedule.Edit{
+		Prompt: "give me today's operations board",
+		Repeat: "day",
+		Time:   "09:30",
+	}, "EST")
+	req.ProposalID = pulid.MustNew("ap_")
+
+	planned, err := f.service.Plan(t.Context(), req)
+	require.NoError(t, err)
+	assert.Nil(t, planned.Existing)
+	assert.Equal(t, "Every day · 9:30 AM", planned.Schedule.Cadence)
+	assert.Equal(t, "America/New_York", planned.Schedule.Timezone)
+	assert.Empty(t, f.schedules.rows, "planning keeps nothing")
+	assert.Empty(t, f.syncer.synced)
+
+	kept, err := f.service.CreatePlanned(t.Context(), req)
+	require.NoError(t, err)
+	require.Nil(t, kept.Existing)
+	require.Len(t, f.schedules.rows, 1)
+	assert.Equal(t, "Give me today's operations board", kept.Schedule.Prompt)
+	assert.Equal(t, "30 9 * * *", kept.Schedule.CronExpression)
+	assert.Equal(t, f.thread.UserID, kept.Schedule.UserID)
+
+	require.Len(t, f.schedules.messages, 1)
+	assert.Equal(t,
+		"Every day at 9:30 AM, Give me today's operations board",
+		f.schedules.messages[0].Content,
+	)
+	assert.Equal(t, conversation.MessageKindSchedule, f.schedules.messages[0].Kind)
+	assert.Equal(t, req.ProposalID, f.schedules.messages[0].ProposalID,
+		"the card names the proposal it was approved from, not the person's words")
+	require.Len(t, f.syncer.synced, 1)
+	require.Len(t, f.realtime.published, 1)
+}
+
+/*
+Approving the same schedule twice, or a second proposal for what the
+conversation already runs, keeps one schedule and says which.
+*/
+func TestCreatePlanned_KeepsOneScheduleForTheSameRequest(t *testing.T) {
+	t.Parallel()
+
+	f := newFixture()
+	req := f.plan(conversationschedule.Edit{
+		Prompt: "Unbilled loads",
+		Repeat: "weekday",
+		Time:   "07:30",
+	}, "")
+
+	first, err := f.service.CreatePlanned(t.Context(), req)
+	require.NoError(t, err)
+	assert.Equal(t, "America/Chicago", first.Schedule.Timezone, "no clock named is the person's")
+
+	req.Edit.Prompt = "  unbilled loads "
+	second, err := f.service.CreatePlanned(t.Context(), req)
+	require.NoError(t, err)
+	require.NotNil(t, second.Existing)
+	assert.Equal(t, first.Schedule.ID, second.Existing.ID)
+	assert.Len(t, f.schedules.rows, 1)
+	assert.Len(t, f.schedules.messages, 1)
+
+	req.Timezone = "America/Denver"
+	third, err := f.service.CreatePlanned(t.Context(), req)
+	require.NoError(t, err)
+	assert.Nil(t, third.Existing, "the same time on another clock is another schedule")
+	assert.Len(t, f.schedules.rows, 2)
+}
+
+func TestPlan_RefusesWhatItCannotKeep(t *testing.T) {
+	t.Parallel()
+
+	edit := conversationschedule.Edit{Prompt: "Check loads", Repeat: "day", Time: "08:00"}
+
+	t.Run("a clock it does not know", func(t *testing.T) {
+		t.Parallel()
+		f := newFixture()
+		_, err := f.service.Plan(t.Context(), f.plan(edit, "Mars/Olympus"))
+		var invalid *errortypes.Error
+		require.ErrorAs(t, err, &invalid)
+		assert.Equal(t, "timezone", invalid.Field)
+	})
+
+	t.Run("a cadence the editor does not offer", func(t *testing.T) {
+		t.Parallel()
+		f := newFixture()
+		bad := edit
+		bad.Repeat = "hourly"
+		_, err := f.service.Plan(t.Context(), f.plan(bad, ""))
+		require.Error(t, err)
+	})
+
+	t.Run("someone else's conversation", func(t *testing.T) {
+		t.Parallel()
+		f := newFixture()
+		req := f.plan(edit, "")
+		req.Actor.UserID = pulid.MustNew("usr_")
+		_, err := f.service.CreatePlanned(t.Context(), req)
+		require.Error(t, err)
+		assert.True(t, errortypes.IsNotFoundError(err))
+		assert.Empty(t, f.schedules.rows)
+	})
+
+	t.Run("an agent the person may no longer ask", func(t *testing.T) {
+		t.Parallel()
+		f := newFixture()
+		f.permissions.denied = true
+		_, err := f.service.CreatePlanned(t.Context(), f.plan(edit, ""))
+		require.Error(t, err)
+		assert.Empty(t, f.schedules.rows)
+	})
 }
 
 func TestCreate_RefusesWhatItCannotKeep(t *testing.T) {

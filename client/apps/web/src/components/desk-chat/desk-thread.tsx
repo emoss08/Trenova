@@ -149,8 +149,11 @@ export type DeskThreadSchedules = {
   create: (text: string, restore?: (text: string) => void) => void;
   /** A schedule request on its way to the server, shown as asked. */
   pending: string | null;
-  /** The card under a schedule request: when it runs, and switches for it. */
-  card: (scheduleId: string) => ReactNode;
+  /**
+   * The card under a schedule request: when it runs, and switches for it.
+   * `proposed` is a schedule an agent proposed and the person approved.
+   */
+  card: (scheduleId: string, proposed: boolean) => ReactNode;
 };
 
 export type DeskThreadProps = {
@@ -1065,13 +1068,26 @@ export function DeskThread({
                       }
                       if (entry.kind === "schedule") {
                         const scheduleId = entry.message.scheduleId ?? "";
+                        // A schedule an agent proposed carries the words it
+                        // wrote out, not the person's: only its card is drawn.
+                        if (entry.message.proposalId) {
+                          return schedules ? (
+                            <DeskRow
+                              key={entry.message.id}
+                              kind="event"
+                              first={isFirst(entry.message.id)}
+                            >
+                              {schedules.card(scheduleId, true)}
+                            </DeskRow>
+                          ) : null;
+                        }
                         return (
                           <Fragment key={entry.message.id}>
                             <DeskRow kind="question" first={isFirst(entry.message.id)}>
                               <DeskQuestion text={entry.message.content} />
                             </DeskRow>
                             {schedules && (
-                              <DeskRow kind="event">{schedules.card(scheduleId)}</DeskRow>
+                              <DeskRow kind="event">{schedules.card(scheduleId, false)}</DeskRow>
                             )}
                           </Fragment>
                         );

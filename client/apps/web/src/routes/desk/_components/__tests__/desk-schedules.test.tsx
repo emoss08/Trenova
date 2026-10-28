@@ -75,6 +75,28 @@ describe("scheduleLine", () => {
       "Every weekday · 7:30 AM · paused",
     );
   });
+
+  /*
+  "Everyday at 9:30am EST" runs at 9:30 in New York. Read in Chicago, the next
+  run is on the reader's clock, so the cadence names the clock it keeps.
+  */
+  it("names the schedule's clock when it is not the reader's", () => {
+    const eastern = schedule({
+      cadence: "Every day · 9:30 AM",
+      cronExpression: "30 9 * * *",
+      timezone: "America/New_York",
+      // Saturday 3 October, 9:30 in New York is 8:30 in Chicago.
+      nextRunAt: 1791034200,
+    });
+
+    const eightInChicago = saturdayNoon - 4 * 3600;
+    expect(scheduleLine(eastern, eightInChicago, chicago, t)).toBe(
+      "Every day · 9:30 AM ET · next Today · 8:30 AM",
+    );
+    expect(scheduleLine(eastern, eightInChicago, "America/New_York", t)).toBe(
+      "Every day · 9:30 AM · next Today · 9:30 AM",
+    );
+  });
 });
 
 describe("patchScheduleList", () => {
@@ -235,6 +257,28 @@ describe("DeskScheduleCard", () => {
     expect(onToggle).toHaveBeenCalledWith(expect.objectContaining({ id: "csch_1" }));
     await chooseFromMenu("Delete");
     expect(onDelete).toHaveBeenCalledWith(expect.objectContaining({ id: "csch_1" }));
+  });
+
+  /*
+  A schedule the person approved from an agent's proposal has no request of
+  theirs above it, so its card says where it came from.
+  */
+  it("says a card approved from a proposal came from one", () => {
+    render(
+      <DeskScheduleCard
+        schedule={schedule()}
+        now={saturdayNoon}
+        timezone={chicago}
+        proposed
+        onToggle={vi.fn()}
+        onDelete={vi.fn()}
+      />,
+    );
+
+    expect(
+      screen.getByText("From a proposal you approved · results will post into this conversation"),
+    ).toBeTruthy();
+    expect(screen.queryByText("Results will post into this conversation")).toBeNull();
   });
 
   it("opens the editor on the schedule from its card", async () => {

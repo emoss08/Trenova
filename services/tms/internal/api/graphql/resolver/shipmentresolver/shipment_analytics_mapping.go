@@ -23,6 +23,7 @@ func shipmentAnalyticsToModel(data kernelports.AnalyticsData) (*gqlmodel.Shipmen
 		AtRisk:             atRiskFromAnalytics(data["atRisk"]),
 		Unassigned:         unassignedFromAnalytics(data["unassigned"]),
 		ReadyToDispatch:    readyToDispatchFromAnalytics(data["readyToDispatch"]),
+		Dispatch:           dispatchFromAnalytics(data["dispatch"]),
 		DetentionWatchlist: detentionWatchlistFromAnalytics(data["detentionWatchlist"]),
 		CustomerMix:        customerMixFromAnalytics(data["customerMix"]),
 		TomorrowsPickups:   tomorrowsPickupsFromAnalytics(data["tomorrowsPickups"]),
@@ -164,6 +165,20 @@ func readyToDispatchFromAnalytics(value any) *gqlmodel.ShipmentReadyToDispatch {
 		Delta:       intutils.IntValue(card["delta"]),
 		Unassigned:  intutils.IntValue(card["unassigned"]),
 		DriverReady: intutils.IntValue(card["driverReady"]),
+	}
+}
+
+func dispatchFromAnalytics(value any) *gqlmodel.ShipmentDispatchCounts {
+	card := analyticsObject(value)
+	if card == nil {
+		return nil
+	}
+	return &gqlmodel.ShipmentDispatchCounts{
+		Moves:     intutils.IntValue(card["moves"]),
+		Late:      intutils.IntValue(card["late"]),
+		DueNow:    intutils.IntValue(card["dueNow"]),
+		DueToday:  intutils.IntValue(card["dueToday"]),
+		Uncovered: intutils.IntValue(card["uncovered"]),
 	}
 }
 

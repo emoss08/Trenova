@@ -70,6 +70,9 @@ func (s *Service) profileHolds(req *agentports.RunRequest, mode ProfileMode, nam
 		return req.RunID.IsNotNil()
 	case agentdefinition.CoreToolGuideProfile:
 		return mode == ProfileConversation && req.Actor.PersonUserID().IsNotNil()
+	case agentdefinition.CoreToolSchedule:
+		return mode == ProfileConversation && req.Actor.PersonUserID().IsNotNil() &&
+			req.ThreadID.IsNotNil()
 	}
 	if mode != ProfileFanOut {
 		return true

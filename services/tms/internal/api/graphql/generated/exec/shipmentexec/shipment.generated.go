@@ -79,6 +79,7 @@ var Shard = &gqlexec.Shard{
 		{Name: "ShipmentCustomerMixEntry", Implementors: []string{"ShipmentCustomerMixEntry"}},
 		{Name: "ShipmentDetentionWatchlist", Implementors: []string{"ShipmentDetentionWatchlist"}},
 		{Name: "ShipmentDetentionWatchlistItem", Implementors: []string{"ShipmentDetentionWatchlistItem"}},
+		{Name: "ShipmentDispatchCounts", Implementors: []string{"ShipmentDispatchCounts"}},
 		{Name: "ShipmentDistanceMoveResult", Implementors: []string{"ShipmentDistanceMoveResult"}},
 		{Name: "ShipmentDistanceResponse", Implementors: []string{"ShipmentDistanceResponse"}},
 		{Name: "ShipmentDuplicateResponse", Implementors: []string{"ShipmentDuplicateResponse"}},
@@ -2741,6 +2742,16 @@ var Shard = &gqlexec.Shard{
 					return obj.ReadyToDispatch, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOShipmentReadyToDispatch2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentReadyToDispatch),
+			},
+			{
+				Name:      "dispatch",
+				HasChild:  true,
+				ChildType: "ShipmentDispatchCounts",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ShipmentAnalytics)
+					return obj.Dispatch, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOShipmentDispatchCounts2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentDispatchCounts),
 			},
 			{
 				Name:      "detentionWatchlist",
@@ -6079,6 +6090,58 @@ var Shard = &gqlexec.Shard{
 					return obj.Tone, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+		}},
+		{Object: "ShipmentDispatchCounts", Fields: []*gqlexec.Field{
+			{
+				Name:     "moves",
+				NonNull:  true,
+				ChildErr: errNoChild9,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ShipmentDispatchCounts)
+					return obj.Moves, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "late",
+				NonNull:  true,
+				ChildErr: errNoChild9,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ShipmentDispatchCounts)
+					return obj.Late, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "dueNow",
+				NonNull:  true,
+				ChildErr: errNoChild9,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ShipmentDispatchCounts)
+					return obj.DueNow, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "dueToday",
+				NonNull:  true,
+				ChildErr: errNoChild9,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ShipmentDispatchCounts)
+					return obj.DueToday, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "uncovered",
+				NonNull:  true,
+				ChildErr: errNoChild9,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ShipmentDispatchCounts)
+					return obj.Uncovered, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
 			},
 		}},
 		{Object: "ShipmentDistanceMoveResult", Fields: []*gqlexec.Field{
@@ -14959,6 +15022,13 @@ func marshalOShipmentDetentionWatchlist2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋin
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "ShipmentDetentionWatchlist", v)
+}
+
+func marshalOShipmentDispatchCounts2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentDispatchCounts(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.ShipmentDispatchCounts) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "ShipmentDispatchCounts", v)
 }
 
 func marshalOShipmentEmptyMile2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentEmptyMile(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.ShipmentEmptyMile) graphql.Marshaler {

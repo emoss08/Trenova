@@ -5,6 +5,7 @@ import { cardMomentAfter, cardTime } from "../../../record-card/record-card-valu
 import {
   boardReads,
   checkGroups,
+  figureRows,
   formatBoardValue,
   furthestOf,
   halfBlocks,
@@ -313,5 +314,22 @@ describe("small helpers", () => {
 
   it("stamps when the board was read", () => {
     expect(readStamp(lateBoard(), t)).toBe(`read ${cardTime(READ_AT)}`);
+  });
+});
+
+/*
+A figures block holds up to eight, and the card sets at most four side by
+side. More are set in balanced rows, the longer first, so five do not leave a
+lone figure on a second row.
+*/
+describe("figureRows", () => {
+  it("sets up to four in one row and more in balanced rows", () => {
+    expect(figureRows(0)).toEqual([]);
+    expect(figureRows(1)).toEqual([1]);
+    expect(figureRows(4)).toEqual([4]);
+    expect(figureRows(5)).toEqual([3, 2]);
+    expect(figureRows(6)).toEqual([3, 3]);
+    expect(figureRows(7)).toEqual([4, 3]);
+    expect(figureRows(8)).toEqual([4, 4]);
   });
 });
