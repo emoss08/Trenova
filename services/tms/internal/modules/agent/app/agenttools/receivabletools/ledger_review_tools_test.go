@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/app/fiscalperiodservice"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingmappingports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/accountingtools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
@@ -185,8 +186,8 @@ func TestCloseFiscalPeriod_ABlockedCloseIsAWouldFail(t *testing.T) {
 type fakeMappingReviewer struct {
 	rows      []*accountingsync.AccountingMapping
 	guard     *agenttoolstest.WriteGuard
-	confirmed *accountingsyncports.ConfirmAccountingMappingsRequest
-	rejected  *accountingsyncports.AccountingMappingActionRequest
+	confirmed *accountingmappingports.ConfirmAccountingMappingsRequest
+	rejected  *accountingmappingports.AccountingMappingActionRequest
 }
 
 func proposedMapping(label, externalID, name string) *accountingsync.AccountingMapping {
@@ -203,9 +204,9 @@ func proposedMapping(label, externalID, name string) *accountingsync.AccountingM
 
 func (f *fakeMappingReviewer) PlanConfirm(
 	_ context.Context,
-	req *accountingsyncports.ConfirmAccountingMappingsRequest,
-) (*accountingsyncports.AccountingMappingConfirmPlan, error) {
-	plan := &accountingsyncports.AccountingMappingConfirmPlan{}
+	req *accountingmappingports.ConfirmAccountingMappingsRequest,
+) (*accountingmappingports.AccountingMappingConfirmPlan, error) {
+	plan := &accountingmappingports.AccountingMappingConfirmPlan{}
 	for _, row := range f.rows {
 		after := row.Clone()
 		after.Confirm(&accountingsync.Choice{
@@ -215,7 +216,7 @@ func (f *fakeMappingReviewer) PlanConfirm(
 			ActorID:      req.UserID,
 			At:           1_790_000_000,
 		})
-		plan.Changes = append(plan.Changes, &accountingsyncports.AccountingMappingChange{
+		plan.Changes = append(plan.Changes, &accountingmappingports.AccountingMappingChange{
 			Before: row,
 			After:  after,
 		})
@@ -227,7 +228,7 @@ func (f *fakeMappingReviewer) PlanConfirm(
 
 func (f *fakeMappingReviewer) Confirm(
 	_ context.Context,
-	req *accountingsyncports.ConfirmAccountingMappingsRequest,
+	req *accountingmappingports.ConfirmAccountingMappingsRequest,
 ) ([]*accountingsync.AccountingMapping, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
@@ -239,19 +240,19 @@ func (f *fakeMappingReviewer) Confirm(
 
 func (f *fakeMappingReviewer) PlanReject(
 	context.Context,
-	*accountingsyncports.AccountingMappingActionRequest,
-) (*accountingsyncports.AccountingMappingChange, error) {
+	*accountingmappingports.AccountingMappingActionRequest,
+) (*accountingmappingports.AccountingMappingChange, error) {
 	after := f.rows[0].Clone()
 	if err := after.Reject(); err != nil {
 		return nil, err
 	}
 
-	return &accountingsyncports.AccountingMappingChange{Before: f.rows[0], After: after}, nil
+	return &accountingmappingports.AccountingMappingChange{Before: f.rows[0], After: after}, nil
 }
 
 func (f *fakeMappingReviewer) Reject(
 	_ context.Context,
-	req *accountingsyncports.AccountingMappingActionRequest,
+	req *accountingmappingports.AccountingMappingActionRequest,
 ) (*accountingsync.AccountingMapping, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err

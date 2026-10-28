@@ -8,14 +8,14 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/xero"
 )
 
 var (
-	_ accountingsyncports.AccountingReferenceReader  = (*Connector)(nil)
-	_ accountingsyncports.AccountingReferenceCreator = (*Connector)(nil)
+	_ accountingconnectorports.AccountingReferenceReader  = (*Connector)(nil)
+	_ accountingconnectorports.AccountingReferenceCreator = (*Connector)(nil)
 )
 
 const (
@@ -34,9 +34,9 @@ func (c *Connector) MaxReferencePageSize() int {
 
 func (c *Connector) ListReference(
 	ctx context.Context,
-	req *accountingsyncports.AccountingReferencePageRequest,
-) (*accountingsyncports.AccountingReferencePage, error) {
-	client, err := c.client(accountingsyncports.AccountingDocumentAuth{
+	req *accountingconnectorports.AccountingReferencePageRequest,
+) (*accountingconnectorports.AccountingReferencePage, error) {
+	client, err := c.client(accountingconnectorports.AccountingDocumentAuth{
 		RealmID:     req.RealmID,
 		AccessToken: req.AccessToken,
 	})
@@ -51,7 +51,7 @@ func (c *Connector) ListReference(
 			return nil, listErr
 		}
 		c.codes.store(client.TenantID(), accounts)
-		out := &accountingsyncports.AccountingReferencePage{
+		out := &accountingconnectorports.AccountingReferencePage{
 			Objects: make([]*accountingsync.AccountingReferenceObject, 0, len(accounts)),
 		}
 		for idx := range accounts {
@@ -67,14 +67,14 @@ func (c *Connector) ListReference(
 		if mapErr != nil {
 			return nil, mapErr
 		}
-		return &accountingsyncports.AccountingReferencePage{Objects: objects}, nil
+		return &accountingconnectorports.AccountingReferencePage{Objects: objects}, nil
 	case accountingsync.ReferenceKindCustomer, accountingsync.ReferenceKindVendor:
 		page := max(req.StartPosition, 1)
 		contacts, listErr := client.Contacts(ctx, page, nil)
 		if listErr != nil {
 			return nil, listErr
 		}
-		out := &accountingsyncports.AccountingReferencePage{
+		out := &accountingconnectorports.AccountingReferencePage{
 			Objects: make([]*accountingsync.AccountingReferenceObject, 0, len(contacts.Contacts)),
 		}
 		for idx := range contacts.Contacts {
@@ -88,7 +88,7 @@ func (c *Connector) ListReference(
 		}
 		return out, nil
 	case accountingsync.ReferenceKindTerm, accountingsync.ReferenceKindPaymentMethod:
-		return &accountingsyncports.AccountingReferencePage{}, nil
+		return &accountingconnectorports.AccountingReferencePage{}, nil
 	default:
 		return nil, fmt.Errorf("xero: unknown reference kind %q", req.Kind)
 	}
@@ -119,9 +119,9 @@ func (c *Connector) itemObjects(
 
 func (c *Connector) CreateReference(
 	ctx context.Context,
-	req *accountingsyncports.AccountingCreateReferenceRequest,
+	req *accountingconnectorports.AccountingCreateReferenceRequest,
 ) (*accountingsync.AccountingReferenceObject, error) {
-	client, err := c.client(accountingsyncports.AccountingDocumentAuth{
+	client, err := c.client(accountingconnectorports.AccountingDocumentAuth{
 		RealmID:     req.RealmID,
 		AccessToken: req.AccessToken,
 	})
@@ -187,7 +187,7 @@ func (c *Connector) SanitizeName(kind accountingsync.ReferenceKind, name string)
 	return strings.TrimSpace(stringutils.OneLine(name, xero.MaxContactNameLength))
 }
 
-func itemCode(draft *accountingsyncports.AccountingItemDraft) string {
+func itemCode(draft *accountingconnectorports.AccountingItemDraft) string {
 	source := strings.TrimSpace(draft.Sku)
 	if source == "" {
 		source = draft.Name
@@ -195,7 +195,7 @@ func itemCode(draft *accountingsyncports.AccountingItemDraft) string {
 	return strings.TrimSpace(stringutils.OneLine(source, xero.MaxItemCodeLength))
 }
 
-func contactInputOf(draft *accountingsyncports.AccountingPartyDraft) xero.ContactInput {
+func contactInputOf(draft *accountingconnectorports.AccountingPartyDraft) xero.ContactInput {
 	input := xero.ContactInput{
 		Name: strings.TrimSpace(
 			stringutils.OneLine(draft.DisplayName, xero.MaxContactNameLength),

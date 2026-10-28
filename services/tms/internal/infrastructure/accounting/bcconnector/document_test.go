@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/shared/businesscentral"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
@@ -24,8 +24,8 @@ func entity(name, id string) string {
 	return "/" + name + "(" + id + ")"
 }
 
-func salesDoc() *accountingsyncports.AccountingSalesDocument {
-	return &accountingsyncports.AccountingSalesDocument{
+func salesDoc() *accountingconnectorports.AccountingSalesDocument {
+	return &accountingconnectorports.AccountingSalesDocument{
 		Auth:               testAuth(),
 		RequestID:          testRequestID,
 		Kind:               accountingsync.SyncObjectInvoice,
@@ -35,7 +35,7 @@ func salesDoc() *accountingsyncports.AccountingSalesDocument {
 		DueDate:            "2026-10-31",
 		TermExternalID:     testTerm,
 		CurrencyCode:       "USD",
-		Lines: []accountingsyncports.AccountingDocumentLine{
+		Lines: []accountingconnectorports.AccountingDocumentLine{
 			{
 				Description:    "Linehaul",
 				ItemExternalID: testItem,
@@ -117,7 +117,7 @@ func TestDocumentLimits(t *testing.T) {
 	t.Parallel()
 
 	conn := testConnector(t, &fakeBC{})
-	assert.Equal(t, accountingsyncports.AccountingDocumentLimits{
+	assert.Equal(t, accountingconnectorports.AccountingDocumentLimits{
 		MaxDocNumberLength:      35,
 		SupportsDebitMemo:       false,
 		CanVoidCreditMemo:       true,
@@ -131,7 +131,7 @@ func TestDocumentURLLinksThePostedPageByNumber(t *testing.T) {
 
 	conn := testConnector(t, &fakeBC{})
 	auth := testAuth()
-	link := conn.DocumentURL(auth, accountingsyncports.AccountingDocumentLink{
+	link := conn.DocumentURL(auth, accountingconnectorports.AccountingDocumentLink{
 		Kind:       accountingsync.SyncObjectInvoice,
 		ExternalID: testInvoice,
 		DocNumber:  "PS-INV103001",
@@ -145,24 +145,27 @@ func TestDocumentURLLinksThePostedPageByNumber(t *testing.T) {
 		accountingsync.SyncObjectCarrierBill: "page=138",
 		accountingsync.SyncObjectDriverBill:  "page=138",
 	} {
-		got := conn.DocumentURL(auth, accountingsyncports.AccountingDocumentLink{Kind: kind, DocNumber: "N-1"})
+		got := conn.DocumentURL(
+			auth,
+			accountingconnectorports.AccountingDocumentLink{Kind: kind, DocNumber: "N-1"},
+		)
 		assert.Contains(t, got, page, kind)
 	}
 
-	assert.Empty(t, conn.DocumentURL(auth, accountingsyncports.AccountingDocumentLink{
+	assert.Empty(t, conn.DocumentURL(auth, accountingconnectorports.AccountingDocumentLink{
 		Kind: accountingsync.SyncObjectCustomerPayment, DocNumber: "T1",
 	}))
-	assert.Empty(t, conn.DocumentURL(auth, accountingsyncports.AccountingDocumentLink{
+	assert.Empty(t, conn.DocumentURL(auth, accountingconnectorports.AccountingDocumentLink{
 		Kind: accountingsync.SyncObjectInvoice, ExternalID: testInvoice,
 	}))
 	noName := auth
 	noName.CompanyName = ""
-	assert.Empty(t, conn.DocumentURL(noName, accountingsyncports.AccountingDocumentLink{
+	assert.Empty(t, conn.DocumentURL(noName, accountingconnectorports.AccountingDocumentLink{
 		Kind: accountingsync.SyncObjectInvoice, DocNumber: "N-1",
 	}))
 	badRealm := auth
 	badRealm.RealmID = "realm"
-	assert.Empty(t, conn.DocumentURL(badRealm, accountingsyncports.AccountingDocumentLink{
+	assert.Empty(t, conn.DocumentURL(badRealm, accountingconnectorports.AccountingDocumentLink{
 		Kind: accountingsync.SyncObjectInvoice, DocNumber: "N-1",
 	}))
 }
@@ -223,7 +226,11 @@ func TestCreateSalesInvoiceResumesADraftWithTheSameReference(t *testing.T) {
 	assert.Equal(t, testNewInvoice, result.ExternalID)
 	assert.Equal(t, "PS-INV-1003", result.DocNumber)
 	assert.Zero(t, fake.count(http.MethodPost, "/salesInvoices"))
-	assert.Equal(t, 1, fake.count(http.MethodPost, entity("salesInvoices", testNewInvoice)+postAction))
+	assert.Equal(
+		t,
+		1,
+		fake.count(http.MethodPost, entity("salesInvoices", testNewInvoice)+postAction),
+	)
 }
 
 func TestCreateSalesInvoiceResumesTheDocumentItsRefsName(t *testing.T) {
@@ -462,9 +469,12 @@ func TestVoidSalesDocumentPaths(t *testing.T) {
 			fake := &fakeBC{respond: server.respond}
 			conn := testConnector(t, fake)
 
-			result, err := conn.VoidSalesDocument(t.Context(), &accountingsyncports.AccountingDocumentRef{
-				Auth: testAuth(), RequestID: testRequestID, Kind: tc.kind, ExternalID: testInvoice,
-			})
+			result, err := conn.VoidSalesDocument(
+				t.Context(),
+				&accountingconnectorports.AccountingDocumentRef{
+					Auth: testAuth(), RequestID: testRequestID, Kind: tc.kind, ExternalID: testInvoice,
+				},
+			)
 			if tc.category != "" {
 				assert.Equal(t, tc.category, syncErrorOf(t, err).Category)
 				assert.Empty(t, fake.writes())
@@ -490,7 +500,7 @@ func TestVoidSalesDocumentOfAMissingDocumentSucceeds(t *testing.T) {
 
 	fake := &fakeBC{}
 	conn := testConnector(t, fake)
-	_, err := conn.VoidSalesDocument(t.Context(), &accountingsyncports.AccountingDocumentRef{
+	_, err := conn.VoidSalesDocument(t.Context(), &accountingconnectorports.AccountingDocumentRef{
 		Auth: testAuth(), Kind: accountingsync.SyncObjectInvoice, ExternalID: testInvoice,
 	})
 	require.NoError(t, err)
@@ -508,19 +518,46 @@ func TestClassifyDocumentError(t *testing.T) {
 		category accountingsync.SyncErrorCategory
 		retry    time.Duration
 	}{
-		{"rate limited", &businesscentral.APIError{Status: 429}, accountingsync.SyncErrorRateLimited, 30 * time.Second},
-		{"rate limited with wait", &businesscentral.APIError{Status: 429, RetryAfter: 7 * time.Second},
-			accountingsync.SyncErrorRateLimited, 7 * time.Second},
+		{
+			"rate limited",
+			&businesscentral.APIError{Status: 429},
+			accountingsync.SyncErrorRateLimited,
+			30 * time.Second,
+		},
+		{
+			"rate limited with wait",
+			&businesscentral.APIError{Status: 429, RetryAfter: 7 * time.Second},
+			accountingsync.SyncErrorRateLimited,
+			7 * time.Second,
+		},
 		{"auth", &businesscentral.APIError{Status: 401, Code: "Authentication_InvalidCredentials"},
 			accountingsync.SyncErrorAuth, 0},
-		{"revoked", &businesscentral.OAuthError{Code: "invalid_grant"}, accountingsync.SyncErrorAuth, 0},
-		{"forbidden", &businesscentral.APIError{Status: 403, Code: "Authorization_InsufficientPermissions"},
-			accountingsync.SyncErrorConfiguration, 0},
+		{
+			"revoked",
+			&businesscentral.OAuthError{Code: "invalid_grant"},
+			accountingsync.SyncErrorAuth,
+			0,
+		},
+		{
+			"forbidden",
+			&businesscentral.APIError{Status: 403, Code: "Authorization_InsufficientPermissions"},
+			accountingsync.SyncErrorConfiguration,
+			0,
+		},
 		{"not configured", ErrNotConfigured, accountingsync.SyncErrorConfiguration, 0},
-		{"unavailable", &businesscentral.APIError{Status: 503}, accountingsync.SyncErrorTransient, 0},
+		{
+			"unavailable",
+			&businesscentral.APIError{Status: 503},
+			accountingsync.SyncErrorTransient,
+			0,
+		},
 		{"timeout", &businesscentral.APIError{Status: 408}, accountingsync.SyncErrorTransient, 0},
-		{"duplicate", &businesscentral.APIError{Status: 400, Code: businesscentral.CodeEntityWithSameKey},
-			accountingsync.SyncErrorDuplicate, 0},
+		{
+			"duplicate",
+			&businesscentral.APIError{Status: 400, Code: businesscentral.CodeEntityWithSameKey},
+			accountingsync.SyncErrorDuplicate,
+			0,
+		},
 		{"duplicate name", errDuplicateName, accountingsync.SyncErrorDuplicate, 0},
 		{"changed", &businesscentral.APIError{Status: 400, Code: businesscentral.CodeEntityChanged},
 			accountingsync.SyncErrorConflict, 0},
@@ -528,8 +565,12 @@ func TestClassifyDocumentError(t *testing.T) {
 			Status: 400, Code: businesscentral.CodeDialogException,
 			Message: "Posting Date is not within your range of allowed posting dates",
 		}, accountingsync.SyncErrorClosedPeriod, 0},
-		{"missing", &businesscentral.APIError{Status: 404, Code: businesscentral.CodeRecordNotFound},
-			accountingsync.SyncErrorNotFound, 0},
+		{
+			"missing",
+			&businesscentral.APIError{Status: 404, Code: businesscentral.CodeRecordNotFound},
+			accountingsync.SyncErrorNotFound,
+			0,
+		},
 		{"dialog", &businesscentral.APIError{
 			Status: 400, Code: businesscentral.CodeDialogException, Message: "Item is blocked",
 		}, accountingsync.SyncErrorValidation, 0},

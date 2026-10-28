@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingdriftports"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -21,8 +21,8 @@ import (
 type fakeDriftOperator struct {
 	findings   map[pulid.ID]*accountingsync.AccountingDriftFinding
 	refuse     error
-	resolved   *accountingsyncports.ResolveAccountingDriftRequest
-	dismissed  *accountingsyncports.DismissAccountingDriftRequest
+	resolved   *accountingdriftports.ResolveAccountingDriftRequest
+	dismissed  *accountingdriftports.DismissAccountingDriftRequest
 	checked    integration.Type
 	lastActor  *permissionports.RequestActor
 	overviewID pulid.ID
@@ -39,16 +39,16 @@ func (f *fakeDriftOperator) finding(id pulid.ID) (*accountingsync.AccountingDrif
 
 func (f *fakeDriftOperator) Get(
 	_ context.Context,
-	req *accountingsyncports.GetAccountingDriftFindingRequest,
+	req *accountingdriftports.GetAccountingDriftFindingRequest,
 ) (*accountingsync.AccountingDriftFinding, error) {
 	return f.finding(req.ID)
 }
 
 func (f *fakeDriftOperator) PreviewResolve(
 	_ context.Context,
-	req *accountingsyncports.ResolveAccountingDriftRequest,
+	req *accountingdriftports.ResolveAccountingDriftRequest,
 	actor *permissionports.RequestActor,
-) (*accountingsyncports.AccountingDriftFixPreview, error) {
+) (*accountingdriftports.AccountingDriftFixPreview, error) {
 	f.lastActor = actor
 	if f.refuse != nil {
 		return nil, f.refuse
@@ -57,7 +57,7 @@ func (f *fakeDriftOperator) PreviewResolve(
 	if err != nil {
 		return nil, err
 	}
-	return &accountingsyncports.AccountingDriftFixPreview{
+	return &accountingdriftports.AccountingDriftFixPreview{
 		Finding:   finding,
 		Direction: req.Direction,
 		FixObject: accountingsync.DriftFixCreditMemo,
@@ -67,7 +67,7 @@ func (f *fakeDriftOperator) PreviewResolve(
 
 func (f *fakeDriftOperator) Resolve(
 	_ context.Context,
-	req *accountingsyncports.ResolveAccountingDriftRequest,
+	req *accountingdriftports.ResolveAccountingDriftRequest,
 	actor *permissionports.RequestActor,
 ) (*accountingsync.AccountingDriftFinding, error) {
 	f.resolved = req
@@ -77,9 +77,9 @@ func (f *fakeDriftOperator) Resolve(
 
 func (f *fakeDriftOperator) PreviewDismiss(
 	_ context.Context,
-	req *accountingsyncports.DismissAccountingDriftRequest,
+	req *accountingdriftports.DismissAccountingDriftRequest,
 	actor *permissionports.RequestActor,
-) (*accountingsyncports.AccountingDriftFixPreview, error) {
+) (*accountingdriftports.AccountingDriftFixPreview, error) {
 	f.lastActor = actor
 	if f.refuse != nil {
 		return nil, f.refuse
@@ -88,7 +88,7 @@ func (f *fakeDriftOperator) PreviewDismiss(
 	if err != nil {
 		return nil, err
 	}
-	return &accountingsyncports.AccountingDriftFixPreview{
+	return &accountingdriftports.AccountingDriftFixPreview{
 		Finding: finding,
 		Summary: "Dismiss the difference in the total of INV-1001 and keep both sides as they are.",
 	}, nil
@@ -96,7 +96,7 @@ func (f *fakeDriftOperator) PreviewDismiss(
 
 func (f *fakeDriftOperator) Dismiss(
 	_ context.Context,
-	req *accountingsyncports.DismissAccountingDriftRequest,
+	req *accountingdriftports.DismissAccountingDriftRequest,
 	actor *permissionports.RequestActor,
 ) (*accountingsync.AccountingDriftFinding, error) {
 	f.dismissed = req
@@ -106,9 +106,9 @@ func (f *fakeDriftOperator) Dismiss(
 
 func (f *fakeDriftOperator) Overview(
 	_ context.Context,
-	_ *accountingsyncports.AccountingDriftOverviewRequest,
-) (*accountingsyncports.AccountingDriftOverview, error) {
-	return &accountingsyncports.AccountingDriftOverview{
+	_ *accountingdriftports.AccountingDriftOverviewRequest,
+) (*accountingdriftports.AccountingDriftOverview, error) {
+	return &accountingdriftports.AccountingDriftOverview{
 		ConnectionID: f.overviewID,
 		ProviderName: "QuickBooks Online",
 	}, nil
@@ -118,9 +118,9 @@ func (f *fakeDriftOperator) CheckNow(
 	_ context.Context,
 	_ pagination.TenantInfo,
 	integrationType integration.Type,
-) (*accountingsyncports.AccountingDriftOverview, error) {
+) (*accountingdriftports.AccountingDriftOverview, error) {
 	f.checked = integrationType
-	return &accountingsyncports.AccountingDriftOverview{ConnectionID: f.overviewID}, nil
+	return &accountingdriftports.AccountingDriftOverview{ConnectionID: f.overviewID}, nil
 }
 
 func openDriftFinding() *accountingsync.AccountingDriftFinding {

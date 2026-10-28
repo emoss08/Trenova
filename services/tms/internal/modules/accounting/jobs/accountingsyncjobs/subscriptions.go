@@ -3,7 +3,7 @@ package accountingsyncjobs
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.temporal.io/sdk/activity"
@@ -61,7 +61,7 @@ func (a *Activities) KeepAccountingWebhookSubscriptionsActivity(
 	for page := range subscriptionMaxPages {
 		sweep, err := a.connections.SyncWebhookSubscriptions(
 			ctx,
-			&accountingsyncports.SyncAccountingWebhookSubscriptionsRequest{
+			&accountingconnectionports.SyncAccountingWebhookSubscriptionsRequest{
 				AfterID: after,
 				Limit:   subscriptionPageSize,
 			},

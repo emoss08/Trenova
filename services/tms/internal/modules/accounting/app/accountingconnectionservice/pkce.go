@@ -4,7 +4,7 @@ import (
 	"errors"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -49,7 +49,7 @@ func (s *Service) newCodeVerifier(
 func (s *Service) openCodeVerifier(
 	tenantInfo pagination.TenantInfo,
 	stateHash string,
-	state *accountingsyncports.AccountingOAuthState,
+	state *accountingconnectionports.AccountingOAuthState,
 ) (string, error) {
 	if !accountingsync.MustProfile(state.IntegrationType).PKCE {
 		return "", nil

@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -14,8 +14,8 @@ import (
 func listRequest(
 	kind accountingsync.ReferenceKind,
 	realm string,
-) *accountingsyncports.AccountingReferencePageRequest {
-	return &accountingsyncports.AccountingReferencePageRequest{
+) *accountingconnectorports.AccountingReferencePageRequest {
+	return &accountingconnectorports.AccountingReferencePageRequest{
 		RealmID:       realm,
 		AccessToken:   "access-token",
 		Kind:          kind,
@@ -195,8 +195,8 @@ func TestAccountClassOfCoversNetSuiteAccountTypes(t *testing.T) {
 
 func createRequest(
 	kind accountingsync.ReferenceKind,
-) *accountingsyncports.AccountingCreateReferenceRequest {
-	return &accountingsyncports.AccountingCreateReferenceRequest{
+) *accountingconnectorports.AccountingCreateReferenceRequest {
+	return &accountingconnectorports.AccountingCreateReferenceRequest{
 		RealmID:     testRef().String(),
 		AccessToken: "access-token",
 		RequestID:   testRequestID,
@@ -223,7 +223,7 @@ func TestCreateCustomerUpsertsByRequestIDWithTheSubsidiary(t *testing.T) {
 	}}
 	conn := testConnector(t, fake)
 	req := createRequest(accountingsync.ReferenceKindCustomer)
-	req.Party = &accountingsyncports.AccountingPartyDraft{
+	req.Party = &accountingconnectorports.AccountingPartyDraft{
 		DisplayName:  "Northwind",
 		CompanyName:  "Northwind Logistics",
 		Email:        "ap@northwind.example",
@@ -271,7 +271,7 @@ func TestCreatePartyRefusesADuplicateNameButResumesItsOwnRetry(t *testing.T) {
 	}}
 	conn := testConnector(t, fake)
 	req := createRequest(accountingsync.ReferenceKindVendor)
-	req.Party = &accountingsyncports.AccountingPartyDraft{
+	req.Party = &accountingconnectorports.AccountingPartyDraft{
 		DisplayName: "Swift Carriers LLC",
 		Is1099:      true,
 	}
@@ -308,7 +308,7 @@ func TestCreateItemFallsBackToANonInventorySaleItem(t *testing.T) {
 	}}
 	conn := testConnector(t, fake)
 	req := createRequest(accountingsync.ReferenceKindItem)
-	req.Item = &accountingsyncports.AccountingItemDraft{
+	req.Item = &accountingconnectorports.AccountingItemDraft{
 		Name:            "  Detention\n",
 		Description:     "Detention charges",
 		IncomeAccountID: "40",
@@ -345,7 +345,7 @@ func TestCreateReferenceRefusesKindsNetSuiteDoesNotTakeFromTrenova(t *testing.T)
 	_, err = conn.CreateReference(t.Context(), createRequest(accountingsync.ReferenceKindCustomer))
 	require.ErrorIs(t, err, errPartyDraftRequired)
 	req := createRequest(accountingsync.ReferenceKindCustomer)
-	req.Party = &accountingsyncports.AccountingPartyDraft{DisplayName: " "}
+	req.Party = &accountingconnectorports.AccountingPartyDraft{DisplayName: " "}
 	_, err = conn.CreateReference(t.Context(), req)
 	require.ErrorIs(t, err, errNameRequired)
 	assert.Equal(t, accountingsync.SyncErrorValidation, conn.ClassifyDocumentError(err).Category)
@@ -372,15 +372,18 @@ func TestUpsertCustomerAndVendorPatchExistingRecords(t *testing.T) {
 		return reply{}
 	}}
 	conn := testConnector(t, fake)
-	result, err := conn.UpsertCustomer(t.Context(), &accountingsyncports.AccountingCustomerDocument{
-		Auth:       testAuth(),
-		RequestID:  testRequestID,
-		ExternalID: testCustomer,
-		Party: accountingsyncports.AccountingPartyDraft{
-			DisplayName: "Acme Freight",
-			City:        "Austin",
+	result, err := conn.UpsertCustomer(
+		t.Context(),
+		&accountingconnectorports.AccountingCustomerDocument{
+			Auth:       testAuth(),
+			RequestID:  testRequestID,
+			ExternalID: testCustomer,
+			Party: accountingconnectorports.AccountingPartyDraft{
+				DisplayName: "Acme Freight",
+				City:        "Austin",
+			},
 		},
-	})
+	)
 	require.NoError(t, err)
 	assert.Equal(t, testCustomer, result.ExternalID)
 	assert.Equal(t, "Acme Freight", result.DocNumber)
@@ -389,10 +392,10 @@ func TestUpsertCustomerAndVendorPatchExistingRecords(t *testing.T) {
 	assert.Equal(t, "addressBook", patch.Query.Get("replace"))
 	assert.NotContains(t, patch.Body, "subsidiary")
 
-	result, err = conn.UpsertVendor(t.Context(), &accountingsyncports.AccountingVendorDocument{
+	result, err = conn.UpsertVendor(t.Context(), &accountingconnectorports.AccountingVendorDocument{
 		Auth:      testAuth(),
 		RequestID: testRequestID,
-		Party:     accountingsyncports.AccountingPartyDraft{DisplayName: "Rapid Haul"},
+		Party:     accountingconnectorports.AccountingPartyDraft{DisplayName: "Rapid Haul"},
 	})
 	require.NoError(t, err)
 	assert.Equal(t, "513", result.ExternalID)

@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync/accountingsyncdb"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"go.uber.org/fx"
@@ -32,7 +32,7 @@ type pendingCertificateRepository struct {
 
 func NewPendingCertificateRepository(
 	p PendingCertificateParams,
-) accountingsyncports.AccountingPendingCertificateRepository {
+) accountingconnectionports.AccountingPendingCertificateRepository {
 	return &pendingCertificateRepository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.accounting-pending-certificate-repository"),
@@ -41,7 +41,7 @@ func NewPendingCertificateRepository(
 
 func (r *pendingCertificateRepository) GetByType(
 	ctx context.Context,
-	req accountingsyncports.GetAccountingConnectionRequest,
+	req accountingconnectionports.GetAccountingConnectionRequest,
 ) (*accountingsync.AccountingPendingCertificate, error) {
 	return dbtx.Read(
 		ctx,
@@ -67,7 +67,7 @@ func (r *pendingCertificateRepository) Replace(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*accountingsync.AccountingPendingCertificate, error) {
-			if err := r.deleteByType(ctx, accountingsyncports.GetAccountingConnectionRequest{
+			if err := r.deleteByType(ctx, accountingconnectionports.GetAccountingConnectionRequest{
 				TenantInfo: pagination.TenantInfo{
 					OrgID: entity.OrganizationID,
 					BuID:  entity.BusinessUnitID,
@@ -93,7 +93,7 @@ func (r *pendingCertificateRepository) Replace(
 
 func (r *pendingCertificateRepository) Delete(
 	ctx context.Context,
-	req accountingsyncports.GetAccountingConnectionRequest,
+	req accountingconnectionports.GetAccountingConnectionRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		return r.deleteByType(ctx, req)
@@ -102,7 +102,7 @@ func (r *pendingCertificateRepository) Delete(
 
 func (r *pendingCertificateRepository) deleteByType(
 	ctx context.Context,
-	req accountingsyncports.GetAccountingConnectionRequest,
+	req accountingconnectionports.GetAccountingConnectionRequest,
 ) error {
 	pc := accountingsyncdb.AccountingPendingCertificates
 	_, err := pc.Where(pc.IntegrationType.Eq(req.IntegrationType)).Delete(ctx, r.db.Keel(ctx))

@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/shared/businesscentral"
 	"github.com/shopspring/decimal"
 )
@@ -28,8 +28,8 @@ const (
 
 func (c *Connector) SavePayment(
 	ctx context.Context,
-	doc *accountingsyncports.AccountingPaymentDocument,
-) (*accountingsyncports.AccountingDocumentResult, error) {
+	doc *accountingconnectorports.AccountingPaymentDocument,
+) (*accountingconnectorports.AccountingDocumentResult, error) {
 	if strings.TrimSpace(doc.ExternalID) != "" {
 		return nil, reversalRefused()
 	}
@@ -76,9 +76,9 @@ func (c *Connector) SavePayment(
 }
 
 func cashApplications(
-	doc *accountingsyncports.AccountingPaymentDocument,
-) ([]*accountingsyncports.AccountingPaymentApplication, error) {
-	cash := make([]*accountingsyncports.AccountingPaymentApplication, 0, len(doc.Applications))
+	doc *accountingconnectorports.AccountingPaymentDocument,
+) ([]*accountingconnectorports.AccountingPaymentApplication, error) {
+	cash := make([]*accountingconnectorports.AccountingPaymentApplication, 0, len(doc.Applications))
 	applied := decimal.Zero
 	for idx := range doc.Applications {
 		app := &doc.Applications[idx]
@@ -112,8 +112,8 @@ func cashApplications(
 }
 
 func customerPaymentLines(
-	doc *accountingsyncports.AccountingPaymentDocument,
-	cash []*accountingsyncports.AccountingPaymentApplication,
+	doc *accountingconnectorports.AccountingPaymentDocument,
+	cash []*accountingconnectorports.AccountingPaymentApplication,
 	number string,
 ) []businesscentral.PaymentInput {
 	lines := make([]businesscentral.PaymentInput, 0, len(cash))
@@ -137,7 +137,10 @@ func customerPaymentLines(
 	return lines
 }
 
-func finishPayment(result *accountingsyncports.AccountingDocumentResult, number, docType string) {
+func finishPayment(
+	result *accountingconnectorports.AccountingDocumentResult,
+	number, docType string,
+) {
 	result.ExternalID = number
 	result.DocNumber = number
 	result.Refs[accountingsync.ExternalRefDocument] = number
@@ -254,9 +257,9 @@ func addPaymentLines(ctx context.Context, w *journalWrite, batchID string) error
 type shortPayWrite struct {
 	client  *businesscentral.Client
 	posting *postingContext
-	doc     *accountingsyncports.AccountingPaymentDocument
+	doc     *accountingconnectorports.AccountingPaymentDocument
 	idx     int
-	result  *accountingsyncports.AccountingDocumentResult
+	result  *accountingconnectorports.AccountingDocumentResult
 }
 
 func shortPayRefKey(invoiceID string) string {
@@ -309,22 +312,22 @@ func (c *Connector) shortPay(ctx context.Context, w *shortPayWrite) error {
 
 func (c *Connector) VoidPayment(
 	_ context.Context,
-	_ *accountingsyncports.AccountingDocumentRef,
-) (*accountingsyncports.AccountingDocumentResult, error) {
+	_ *accountingconnectorports.AccountingDocumentRef,
+) (*accountingconnectorports.AccountingDocumentResult, error) {
 	return nil, reversalRefused()
 }
 
 func (c *Connector) CreateCreditApplication(
 	_ context.Context,
-	_ *accountingsyncports.AccountingCreditApplicationDocument,
-) (*accountingsyncports.AccountingDocumentResult, error) {
+	_ *accountingconnectorports.AccountingCreditApplicationDocument,
+) (*accountingconnectorports.AccountingDocumentResult, error) {
 	return nil, creditApplicationRefused()
 }
 
 func (c *Connector) VoidCreditApplication(
 	ctx context.Context,
-	ref *accountingsyncports.AccountingDocumentRef,
-) (*accountingsyncports.AccountingDocumentResult, error) {
+	ref *accountingconnectorports.AccountingDocumentRef,
+) (*accountingconnectorports.AccountingDocumentResult, error) {
 	memoID := appliedMemo(ref.Refs)
 	if memoID == "" {
 		return nil, creditApplicationRefused()

@@ -12,6 +12,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingmappingservice"
 	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingsyncservice"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingdriftports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingmappingports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentquerytoolservice"
 	"github.com/emoss08/trenova/internal/modules/billing/app/accountingdriftservice"
@@ -43,10 +46,10 @@ type accountingTenant struct {
 }
 
 type accountingRepos struct {
-	connections accountingsyncports.AccountingConnectionRepository
+	connections accountingconnectionports.AccountingConnectionRepository
 	records     accountingsyncports.AccountingSyncRecordRepository
-	findings    accountingsyncports.AccountingDriftFindingRepository
-	mappings    accountingsyncports.AccountingMappingRepository
+	findings    accountingdriftports.AccountingDriftFindingRepository
+	mappings    accountingmappingports.AccountingMappingRepository
 }
 
 func writeAccountingRows(
@@ -90,18 +93,21 @@ func writeAccountingRows(
 		accountingsync.SyncObjectCustomerPayment,
 	} {
 		objectID := pulid.MustNew("inv_")
-		queued = append(queued, accountingsync.NewAccountingSyncRecord(&accountingsync.NewSyncRecord{
-			TenantInfo:   info,
-			ConnectionID: created.ID,
-			Key: accountingsync.SyncRecordKey{
-				ObjectType: objectType,
-				ObjectID:   objectID,
-				Operation:  accountingsync.SyncOperationCreate,
-			},
-			ObjectNumber: label + "-" + string(rune('1'+idx)),
-			SourceEvent:  accountingsync.SyncSourceInvoicePosted,
-			At:           now + int64(idx),
-		}))
+		queued = append(
+			queued,
+			accountingsync.NewAccountingSyncRecord(&accountingsync.NewSyncRecord{
+				TenantInfo:   info,
+				ConnectionID: created.ID,
+				Key: accountingsync.SyncRecordKey{
+					ObjectType: objectType,
+					ObjectID:   objectID,
+					Operation:  accountingsync.SyncOperationCreate,
+				},
+				ObjectNumber: label + "-" + string(rune('1'+idx)),
+				SourceEvent:  accountingsync.SyncSourceInvoicePosted,
+				At:           now + int64(idx),
+			}),
+		)
 		if objectType == accountingsync.SyncObjectInvoice {
 			out.invoices = append(out.invoices, objectID.String())
 		}
@@ -192,7 +198,10 @@ func TestConvertedLists_AccountingReadsUnderRowLevelSecurity(t *testing.T) {
 		}),
 	}
 	engine := &mocks.DenyResourcesPermissionEngine{}
-	reader := agentreadtest.NewReader(t, agentreadtest.Options{Engine: engine, Resolvers: resolvers})
+	reader := agentreadtest.NewReader(
+		t,
+		agentreadtest.Options{Engine: engine, Resolvers: resolvers},
+	)
 	public := agentreadtest.NewReader(t, agentreadtest.Options{
 		Engine: &publicRole{}, Resolvers: resolvers,
 	})

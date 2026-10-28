@@ -9,10 +9,11 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -41,7 +42,9 @@ func sameTenant(conn *accountingsync.AccountingConnection, tenant pagination.Ten
 	return conn.OrganizationID == tenant.OrgID && conn.BusinessUnitID == tenant.BuID
 }
 
-func (f *fakeConnections) withoutTokens(conn *accountingsync.AccountingConnection) *accountingsync.AccountingConnection {
+func (f *fakeConnections) withoutTokens(
+	conn *accountingsync.AccountingConnection,
+) *accountingsync.AccountingConnection {
 	out := *conn
 	out.AccessTokenCiphertext = ""
 	out.RefreshTokenCiphertext = ""
@@ -49,7 +52,9 @@ func (f *fakeConnections) withoutTokens(conn *accountingsync.AccountingConnectio
 	return &out
 }
 
-func (f *fakeConnections) withTokens(conn *accountingsync.AccountingConnection) *accountingsync.AccountingConnection {
+func (f *fakeConnections) withTokens(
+	conn *accountingsync.AccountingConnection,
+) *accountingsync.AccountingConnection {
 	out := *conn
 	tokens := f.tokens[conn.ID]
 	out.AccessTokenCiphertext = tokens.access
@@ -60,7 +65,9 @@ func (f *fakeConnections) withTokens(conn *accountingsync.AccountingConnection) 
 	return &out
 }
 
-func (f *fakeConnections) byType(req accountingsyncports.GetAccountingConnectionRequest) *accountingsync.AccountingConnection {
+func (f *fakeConnections) byType(
+	req accountingconnectionports.GetAccountingConnectionRequest,
+) *accountingsync.AccountingConnection {
 	for _, row := range f.rows {
 		if sameTenant(row, req.TenantInfo) && row.IntegrationType == req.IntegrationType {
 			return row
@@ -71,7 +78,7 @@ func (f *fakeConnections) byType(req accountingsyncports.GetAccountingConnection
 
 func (f *fakeConnections) GetByType(
 	_ context.Context,
-	req accountingsyncports.GetAccountingConnectionRequest,
+	req accountingconnectionports.GetAccountingConnectionRequest,
 ) (*accountingsync.AccountingConnection, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -83,7 +90,7 @@ func (f *fakeConnections) GetByType(
 
 func (f *fakeConnections) GetByID(
 	_ context.Context,
-	req accountingsyncports.GetAccountingConnectionByIDRequest,
+	req accountingconnectionports.GetAccountingConnectionByIDRequest,
 ) (*accountingsync.AccountingConnection, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -110,7 +117,7 @@ func (f *fakeConnections) ListByTenant(
 
 func (f *fakeConnections) ListHoldingRealm(
 	_ context.Context,
-	req accountingsyncports.ListAccountingConnectionsByRealmRequest,
+	req accountingconnectionports.ListAccountingConnectionsByRealmRequest,
 ) ([]*accountingsync.AccountingConnection, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -131,7 +138,7 @@ func (f *fakeConnections) ListHoldingRealm(
 
 func (f *fakeConnections) ListDueForHealthCheck(
 	_ context.Context,
-	req accountingsyncports.ListDueAccountingConnectionsRequest,
+	req accountingconnectionports.ListDueAccountingConnectionsRequest,
 ) ([]*accountingsync.AccountingConnection, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -149,7 +156,7 @@ func (f *fakeConnections) ListDueForHealthCheck(
 
 func (f *fakeConnections) LockByTypeWithTokens(
 	_ context.Context,
-	req accountingsyncports.GetAccountingConnectionRequest,
+	req accountingconnectionports.GetAccountingConnectionRequest,
 ) (*accountingsync.AccountingConnection, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -161,7 +168,7 @@ func (f *fakeConnections) LockByTypeWithTokens(
 
 func (f *fakeConnections) LockWithTokens(
 	_ context.Context,
-	req accountingsyncports.GetAccountingConnectionByIDRequest,
+	req accountingconnectionports.GetAccountingConnectionByIDRequest,
 ) (*accountingsync.AccountingConnection, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -208,7 +215,7 @@ func (f *fakeConnections) Update(
 
 func (f *fakeConnections) StoreTokens(
 	_ context.Context,
-	req accountingsyncports.StoreAccountingTokensRequest,
+	req accountingconnectionports.StoreAccountingTokensRequest,
 ) error {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -231,7 +238,7 @@ func (f *fakeConnections) StoreTokens(
 
 func (f *fakeConnections) MarkWebhookReceived(
 	_ context.Context,
-	req accountingsyncports.MarkAccountingWebhookRequest,
+	req accountingconnectionports.MarkAccountingWebhookRequest,
 ) (int64, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -251,14 +258,14 @@ func (f *fakeConnections) MarkWebhookReceived(
 
 func (f *fakeConnections) SaveDriftCheck(
 	context.Context,
-	*accountingsyncports.SaveAccountingDriftCheckRequest,
+	*accountingconnectionports.SaveAccountingDriftCheckRequest,
 ) error {
 	return nil
 }
 
 func (f *fakeConnections) SaveChangeFeed(
 	_ context.Context,
-	req *accountingsyncports.SaveAccountingChangeFeedRequest,
+	req *accountingconnectionports.SaveAccountingChangeFeedRequest,
 ) (bool, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -280,7 +287,7 @@ func (f *fakeConnections) SaveChangeFeed(
 
 func (f *fakeConnections) MarkReferenceRefresh(
 	_ context.Context,
-	req accountingsyncports.MarkAccountingReferenceRefreshRequest,
+	req accountingconnectionports.MarkAccountingReferenceRefreshRequest,
 ) error {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -304,7 +311,7 @@ func (f *fakeConnections) MarkReferenceRefresh(
 
 func (f *fakeConnections) ListActive(
 	_ context.Context,
-	req accountingsyncports.ListActiveAccountingConnectionsRequest,
+	req accountingconnectionports.ListActiveAccountingConnectionsRequest,
 ) ([]*accountingsync.AccountingConnection, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -326,20 +333,20 @@ func (f *fakeConnections) ListActive(
 
 type fakeStates struct {
 	mu     sync.Mutex
-	states map[string]*accountingsyncports.AccountingOAuthState
+	states map[string]*accountingconnectionports.AccountingOAuthState
 	ttls   map[string]time.Duration
 }
 
 func newFakeStates() *fakeStates {
 	return &fakeStates{
-		states: map[string]*accountingsyncports.AccountingOAuthState{},
+		states: map[string]*accountingconnectionports.AccountingOAuthState{},
 		ttls:   map[string]time.Duration{},
 	}
 }
 
 func (f *fakeStates) Save(
 	_ context.Context,
-	state *accountingsyncports.AccountingOAuthState,
+	state *accountingconnectionports.AccountingOAuthState,
 	ttl time.Duration,
 ) error {
 	f.mu.Lock()
@@ -349,7 +356,10 @@ func (f *fakeStates) Save(
 	return nil
 }
 
-func (f *fakeStates) Take(_ context.Context, state string) (*accountingsyncports.AccountingOAuthState, error) {
+func (f *fakeStates) Take(
+	_ context.Context,
+	state string,
+) (*accountingconnectionports.AccountingOAuthState, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	found, ok := f.states[state]
@@ -427,9 +437,9 @@ type fakeConnector struct {
 	typ            integration.Type
 	cc             *fakeClientCredentials
 	available      bool
-	exchangeGrant  *accountingsyncports.AccountingTokenGrant
+	exchangeGrant  *accountingconnectorports.AccountingTokenGrant
 	exchangeErr    error
-	refreshGrant   *accountingsyncports.AccountingTokenGrant
+	refreshGrant   *accountingconnectorports.AccountingTokenGrant
 	refreshErrs    []error
 	refreshedWith  []string
 	factsErrs      []error
@@ -437,8 +447,8 @@ type fakeConnector struct {
 	facts          accountingsync.CompanyFacts
 	revoked        []string
 	exchangedCodes []string
-	exchanges      []accountingsyncports.AccountingCodeExchange
-	authorizations []accountingsyncports.AccountingAuthorizeRequest
+	exchanges      []accountingconnectorports.AccountingCodeExchange
+	authorizations []accountingconnectorports.AccountingAuthorizeRequest
 	refreshRealms  []string
 	revokeRealms   []string
 	webhookErr     error
@@ -446,13 +456,13 @@ type fakeConnector struct {
 	errCategories  map[error]accountingsync.ErrorCategory
 	redirectURL    string
 	verifyAppErr   error
-	bound          []*accountingsyncports.AccountingApp
-	companies      []accountingsyncports.AccountingCompany
+	bound          []*accountingconnectorports.AccountingApp
+	companies      []accountingconnectorports.AccountingCompany
 	companiesErr   error
-	released       []accountingsyncports.AccountingCompany
+	released       []accountingconnectorports.AccountingCompany
 }
 
-var testInstanceApp = accountingsyncports.AccountingApp{
+var testInstanceApp = accountingconnectorports.AccountingApp{
 	Source:               accountingsync.AppSourceInstance,
 	Environment:          accountingsync.AppEnvironmentSandbox,
 	ClientID:             "instance-client",
@@ -467,13 +477,13 @@ func newFakeConnector() *fakeConnector {
 		typ:         integration.TypeQuickBooksOnline,
 		available:   true,
 		redirectURL: "https://app.example.com/admin/integrations/quickbooks/callback",
-		exchangeGrant: &accountingsyncports.AccountingTokenGrant{
+		exchangeGrant: &accountingconnectorports.AccountingTokenGrant{
 			AccessToken:     "access-1",
 			RefreshToken:    "refresh-1",
 			AccessTokenTTL:  time.Hour,
 			RefreshTokenTTL: 100 * 24 * time.Hour,
 		},
-		refreshGrant: &accountingsyncports.AccountingTokenGrant{
+		refreshGrant: &accountingconnectorports.AccountingTokenGrant{
 			AccessToken:     "access-2",
 			RefreshToken:    "refresh-2",
 			AccessTokenTTL:  time.Hour,
@@ -491,7 +501,7 @@ func newFakeConnector() *fakeConnector {
 
 func (f *fakeConnector) IntegrationType() integration.Type { return f.typ }
 
-func (f *fakeConnector) InstanceApp() (*accountingsyncports.AccountingApp, bool) {
+func (f *fakeConnector) InstanceApp() (*accountingconnectorports.AccountingApp, bool) {
 	if !f.available {
 		return nil, false
 	}
@@ -501,14 +511,16 @@ func (f *fakeConnector) InstanceApp() (*accountingsyncports.AccountingApp, bool)
 
 func (f *fakeConnector) RedirectURL() string { return f.redirectURL }
 
-func (f *fakeConnector) Bind(app *accountingsyncports.AccountingApp) (accountingsyncports.AccountingConnector, error) {
+func (f *fakeConnector) Bind(
+	app *accountingconnectorports.AccountingApp,
+) (accountingconnectorports.AccountingConnector, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.bound = append(f.bound, app)
 	return &boundConnector{fakeConnector: f, app: app}, nil
 }
 
-func (f *fakeConnector) lastBound() *accountingsyncports.AccountingApp {
+func (f *fakeConnector) lastBound() *accountingconnectorports.AccountingApp {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	if len(f.bound) == 0 {
@@ -521,7 +533,7 @@ func (f *fakeConnector) VerifyApp(context.Context) error { return f.verifyAppErr
 
 type boundConnector struct {
 	*fakeConnector
-	app *accountingsyncports.AccountingApp
+	app *accountingconnectorports.AccountingApp
 }
 
 func (b *boundConnector) VerifyWebhook(signature string, body []byte) error {
@@ -535,7 +547,7 @@ func (b *boundConnector) VerifyWebhook(signature string, body []byte) error {
 }
 
 func (f *fakeConnector) AuthorizeURL(
-	req accountingsyncports.AccountingAuthorizeRequest,
+	req accountingconnectorports.AccountingAuthorizeRequest,
 ) (string, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -545,8 +557,8 @@ func (f *fakeConnector) AuthorizeURL(
 
 func (f *fakeConnector) ExchangeCode(
 	_ context.Context,
-	req *accountingsyncports.AccountingCodeExchange,
-) (*accountingsyncports.AccountingTokenGrant, error) {
+	req *accountingconnectorports.AccountingCodeExchange,
+) (*accountingconnectorports.AccountingTokenGrant, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.exchangedCodes = append(f.exchangedCodes, req.Code)
@@ -559,8 +571,8 @@ func (f *fakeConnector) ExchangeCode(
 
 func (f *fakeConnector) Refresh(
 	_ context.Context,
-	req *accountingsyncports.AccountingRefreshRequest,
-) (*accountingsyncports.AccountingTokenGrant, error) {
+	req *accountingconnectorports.AccountingRefreshRequest,
+) (*accountingconnectorports.AccountingTokenGrant, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.refreshedWith = append(f.refreshedWith, req.RefreshToken)
@@ -577,7 +589,7 @@ func (f *fakeConnector) Refresh(
 
 func (f *fakeConnector) Revoke(
 	_ context.Context,
-	req *accountingsyncports.AccountingRevokeRequest,
+	req *accountingconnectorports.AccountingRevokeRequest,
 ) error {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -607,24 +619,24 @@ func (f *fakeConnector) CompanyFacts(
 
 func (f *fakeConnector) Companies(
 	_ context.Context,
-	_ *accountingsyncports.AccountingTokenGrant,
+	_ *accountingconnectorports.AccountingTokenGrant,
 	callbackRealmID string,
-) ([]accountingsyncports.AccountingCompany, error) {
+) ([]accountingconnectorports.AccountingCompany, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	if f.companiesErr != nil {
 		return nil, f.companiesErr
 	}
 	if f.companies != nil {
-		return append([]accountingsyncports.AccountingCompany(nil), f.companies...), nil
+		return append([]accountingconnectorports.AccountingCompany(nil), f.companies...), nil
 	}
-	return []accountingsyncports.AccountingCompany{{ID: callbackRealmID}}, nil
+	return []accountingconnectorports.AccountingCompany{{ID: callbackRealmID}}, nil
 }
 
 func (f *fakeConnector) ReleaseCompanies(
 	_ context.Context,
-	_ *accountingsyncports.AccountingTokenGrant,
-	companies []accountingsyncports.AccountingCompany,
+	_ *accountingconnectorports.AccountingTokenGrant,
+	companies []accountingconnectorports.AccountingCompany,
 ) error {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -650,10 +662,12 @@ func (f *fakeConnector) ClassifyError(err error) accountingsync.ErrorCategory {
 
 type fakeRegistry struct {
 	connector *fakeConnector
-	bc        accountingsyncports.AccountingProvider
+	bc        accountingconnectorports.AccountingProvider
 }
 
-func (r fakeRegistry) For(typ integration.Type) (accountingsyncports.AccountingProvider, bool) {
+func (r fakeRegistry) For(
+	typ integration.Type,
+) (accountingconnectorports.AccountingProvider, bool) {
 	switch {
 	case typ == r.connector.typ:
 		return r.connector, true
@@ -746,7 +760,7 @@ func newFakeApps() *fakeApps {
 
 func (f *fakeApps) GetByType(
 	_ context.Context,
-	req accountingsyncports.GetAccountingAppCredentialRequest,
+	req accountingconnectionports.GetAccountingAppCredentialRequest,
 ) (*accountingsync.AccountingAppCredential, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -811,7 +825,7 @@ func (f *fakeApps) Update(
 
 func (f *fakeApps) Delete(
 	_ context.Context,
-	req accountingsyncports.GetAccountingAppCredentialRequest,
+	req accountingconnectionports.GetAccountingAppCredentialRequest,
 ) error {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -824,7 +838,11 @@ type fakePoller struct {
 	polled []pulid.ID
 }
 
-func (f *fakePoller) PollNow(_ context.Context, _ pagination.TenantInfo, connectionID pulid.ID) error {
+func (f *fakePoller) PollNow(
+	_ context.Context,
+	_ pagination.TenantInfo,
+	connectionID pulid.ID,
+) error {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.polled = append(f.polled, connectionID)

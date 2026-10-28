@@ -7,7 +7,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/jobs/accountingsyncjobs/accountingsynccontract"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingdriftports"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/testutil/agenteventstest"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -58,19 +59,20 @@ func (s *DriftWorkflowSuite) TestComparesEveryBatchThenBalancesThenFinishes() {
 		seen = append(seen, &copied)
 	}
 	s.env.OnActivity(a.ReconcileAccountingDriftActivity, mock.Anything, mock.Anything).
-		Return(&accountingsyncports.AccountingDriftBatchResult{
+		Return(&accountingdriftports.AccountingDriftBatchResult{
 			LastID: first, More: true, Compared: 200, Opened: 15, Events: 15,
 		}, nil).Once().Run(record)
 	s.env.OnActivity(a.ReconcileAccountingDriftActivity, mock.Anything, mock.Anything).
-		Return(&accountingsyncports.AccountingDriftBatchResult{
+		Return(&accountingdriftports.AccountingDriftBatchResult{
 			LastID: second, Compared: 40, Opened: 9, Events: 5, Resolved: 2,
 		}, nil).Once().Run(record)
 	s.env.OnActivity(a.ReconcileAccountingDriftBalancesActivity, mock.Anything, mock.Anything).
-		Return(&accountingsyncports.AccountingDriftBalanceResult{
+		Return(&accountingdriftports.AccountingDriftBalanceResult{
 			LastCustomerID: customer, More: true, Customers: 50, Opened: 1,
 		}, nil).Once().Run(record)
 	s.env.OnActivity(a.ReconcileAccountingDriftBalancesActivity, mock.Anything, mock.Anything).
-		Return(&accountingsyncports.AccountingDriftBalanceResult{Customers: 3}, nil).Once().Run(record)
+		Return(&accountingdriftports.AccountingDriftBalanceResult{Customers: 3}, nil).
+		Once().Run(record)
 	s.env.OnActivity(a.FinishAccountingDriftCheckActivity, mock.Anything, mock.Anything).
 		Return(nil).Once()
 
@@ -100,7 +102,7 @@ func (s *DriftWorkflowSuite) TestComparesEveryBatchThenBalancesThenFinishes() {
 func (s *DriftWorkflowSuite) TestStopsWithoutFinishingWhenTheConnectionHolds() {
 	var a *Activities
 	s.env.OnActivity(a.ReconcileAccountingDriftActivity, mock.Anything, mock.Anything).
-		Return(&accountingsyncports.AccountingDriftBatchResult{Held: true}, nil).Once()
+		Return(&accountingdriftports.AccountingDriftBatchResult{Held: true}, nil).Once()
 
 	s.env.ExecuteWorkflow(ReconcileAccountingDriftWorkflow, driftPayload())
 
@@ -124,7 +126,7 @@ func (s *DriftWorkflowSuite) TestContinuesAsNewAfterTheBatchLimitKeepingItsPlace
 	var a *Activities
 	last := pulid.MustNew("acctsr_")
 	s.env.OnActivity(a.ReconcileAccountingDriftActivity, mock.Anything, mock.Anything).
-		Return(&accountingsyncports.AccountingDriftBatchResult{LastID: last, More: true}, nil).
+		Return(&accountingdriftports.AccountingDriftBatchResult{LastID: last, More: true}, nil).
 		Times(driftBatchesPerRun)
 
 	s.env.ExecuteWorkflow(ReconcileAccountingDriftWorkflow, driftPayload())
@@ -153,13 +155,13 @@ func TestDriftWorkflowsAndSchedulesAreRegistered(t *testing.T) {
 }
 
 type fakeActiveConnections struct {
-	accountingsyncports.AccountingConnectionRepository
+	accountingconnectionports.AccountingConnectionRepository
 	rows []*accountingsync.AccountingConnection
 }
 
 func (f *fakeActiveConnections) ListActive(
 	_ context.Context,
-	req accountingsyncports.ListActiveAccountingConnectionsRequest,
+	req accountingconnectionports.ListActiveAccountingConnectionsRequest,
 ) ([]*accountingsync.AccountingConnection, error) {
 	out := []*accountingsync.AccountingConnection{}
 	for _, row := range f.rows {

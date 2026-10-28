@@ -5,7 +5,8 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/stretchr/testify/assert"
@@ -22,13 +23,18 @@ func newCertificateHarness(t *testing.T) *harness {
 	return h
 }
 
-func (h *harness) prepareCertificate(t *testing.T) *accountingsyncports.AccountingPreparedCertificate {
+func (h *harness) prepareCertificate(
+	t *testing.T,
+) *accountingconnectionports.AccountingPreparedCertificate {
 	t.Helper()
-	prepared, err := h.svc.PrepareCertificate(t.Context(), &accountingsyncports.PrepareAccountingCertificateRequest{
-		TenantInfo:      h.tenant,
-		UserID:          h.userID,
-		IntegrationType: integration.TypeNetSuite,
-	})
+	prepared, err := h.svc.PrepareCertificate(
+		t.Context(),
+		&accountingconnectionports.PrepareAccountingCertificateRequest{
+			TenantInfo:      h.tenant,
+			UserID:          h.userID,
+			IntegrationType: integration.TypeNetSuite,
+		},
+	)
 	require.NoError(t, err)
 	return prepared
 }
@@ -36,15 +42,18 @@ func (h *harness) prepareCertificate(t *testing.T) *accountingsyncports.Accounti
 func (h *harness) connectWithCertificate(
 	t *testing.T,
 	accountID, certificateID string,
-) (*accountingsyncports.AccountingAuthorizationCompletion, error) {
+) (*accountingconnectionports.AccountingAuthorizationCompletion, error) {
 	t.Helper()
-	return h.svc.ConnectWithCertificate(t.Context(), &accountingsyncports.ConnectAccountingWithCertificateRequest{
-		TenantInfo:      h.tenant,
-		UserID:          h.userID,
-		IntegrationType: integration.TypeNetSuite,
-		AccountID:       accountID,
-		CertificateID:   certificateID,
-	})
+	return h.svc.ConnectWithCertificate(
+		t.Context(),
+		&accountingconnectionports.ConnectAccountingWithCertificateRequest{
+			TenantInfo:      h.tenant,
+			UserID:          h.userID,
+			IntegrationType: integration.TypeNetSuite,
+			AccountID:       accountID,
+			CertificateID:   certificateID,
+		},
+	)
 }
 
 func (h *harness) certificateConnection(t *testing.T) *accountingsync.AccountingConnection {
@@ -62,23 +71,29 @@ func (h *harness) renewCertificate(
 	certificateID string,
 ) (*accountingsync.AccountingConnection, error) {
 	t.Helper()
-	return h.svc.RenewCertificate(t.Context(), &accountingsyncports.RenewAccountingCertificateRequest{
-		TenantInfo:    h.tenant,
-		UserID:        h.userID,
-		ConnectionID:  conn.ID,
-		CertificateID: certificateID,
-	})
+	return h.svc.RenewCertificate(
+		t.Context(),
+		&accountingconnectionports.RenewAccountingCertificateRequest{
+			TenantInfo:    h.tenant,
+			UserID:        h.userID,
+			ConnectionID:  conn.ID,
+			CertificateID: certificateID,
+		},
+	)
 }
 
 func TestPrepareCertificateIsRefusedForAProviderWithoutCertificates(t *testing.T) {
 	t.Parallel()
 
 	h := newHarness(t)
-	_, err := h.svc.PrepareCertificate(t.Context(), &accountingsyncports.PrepareAccountingCertificateRequest{
-		TenantInfo:      h.tenant,
-		UserID:          h.userID,
-		IntegrationType: integration.TypeQuickBooksOnline,
-	})
+	_, err := h.svc.PrepareCertificate(
+		t.Context(),
+		&accountingconnectionports.PrepareAccountingCertificateRequest{
+			TenantInfo:      h.tenant,
+			UserID:          h.userID,
+			IntegrationType: integration.TypeQuickBooksOnline,
+		},
+	)
 	require.Error(t, err)
 	assert.True(t, errortypes.IsBusinessError(err))
 	assert.Zero(t, h.certificates.count())
@@ -94,13 +109,19 @@ func TestPrepareCertificateSealsTheKeyAndReturnsTheCertificate(t *testing.T) {
 	assert.Equal(t, h.connector.clientCredentials().expiresAt.Unix(), prepared.ExpiresAt)
 	assert.Equal(t, []string{"Trenova"}, h.connector.clientCredentials().subjects)
 
-	pending, err := h.certificates.GetByType(t.Context(), accountingsyncports.GetAccountingConnectionRequest{
-		TenantInfo:      h.tenant,
-		IntegrationType: integration.TypeNetSuite,
-	})
+	pending, err := h.certificates.GetByType(
+		t.Context(),
+		accountingconnectionports.GetAccountingConnectionRequest{
+			TenantInfo:      h.tenant,
+			IntegrationType: integration.TypeNetSuite,
+		},
+	)
 	require.NoError(t, err)
 	assert.NotContains(t, pending.PrivateKeyCiphertext, "PRIVATE KEY")
-	key, err := h.encryption.DecryptStringWithAAD(pending.PrivateKeyCiphertext, pendingKeyAAD(pending))
+	key, err := h.encryption.DecryptStringWithAAD(
+		pending.PrivateKeyCiphertext,
+		pendingKeyAAD(pending),
+	)
 	require.NoError(t, err)
 	assert.Equal(t, h.connector.clientCredentials().preparedKeys[0], key)
 	assert.Equal(t, h.userID, pending.PreparedByID)
@@ -111,18 +132,24 @@ func TestPreparingAgainReplacesThePendingCertificate(t *testing.T) {
 
 	h := newCertificateHarness(t)
 	h.prepareCertificate(t)
-	first, err := h.certificates.GetByType(t.Context(), accountingsyncports.GetAccountingConnectionRequest{
-		TenantInfo:      h.tenant,
-		IntegrationType: integration.TypeNetSuite,
-	})
+	first, err := h.certificates.GetByType(
+		t.Context(),
+		accountingconnectionports.GetAccountingConnectionRequest{
+			TenantInfo:      h.tenant,
+			IntegrationType: integration.TypeNetSuite,
+		},
+	)
 	require.NoError(t, err)
 	h.prepareCertificate(t)
 
 	assert.Equal(t, 1, h.certificates.count())
-	second, err := h.certificates.GetByType(t.Context(), accountingsyncports.GetAccountingConnectionRequest{
-		TenantInfo:      h.tenant,
-		IntegrationType: integration.TypeNetSuite,
-	})
+	second, err := h.certificates.GetByType(
+		t.Context(),
+		accountingconnectionports.GetAccountingConnectionRequest{
+			TenantInfo:      h.tenant,
+			IntegrationType: integration.TypeNetSuite,
+		},
+	)
 	require.NoError(t, err)
 	assert.NotEqual(t, first.ID, second.ID)
 }
@@ -184,7 +211,11 @@ func TestConnectWithCertificateStoresTheKeyAndNoRefreshToken(t *testing.T) {
 	assert.Equal(t, "cert-access", h.decrypt(t, conn, accessTokenField, stored.access))
 	assert.Equal(t, cc.preparedKeys[0], h.decrypt(t, conn, clientKeyField, stored.clientKey))
 	assert.Zero(t, h.certificates.count(), "the pending certificate is consumed by the connection")
-	assert.Empty(t, h.connector.exchanges, "a certificate connection never uses the sign-in exchange")
+	assert.Empty(
+		t,
+		h.connector.exchanges,
+		"a certificate connection never uses the sign-in exchange",
+	)
 }
 
 func TestConnectWithCertificateRefusedByTheProviderKeepsThePendingCertificate(t *testing.T) {
@@ -219,19 +250,26 @@ func TestConnectWithCertificateOffersTheSubsidiariesAndKeepsTheKeyOutOfTheChoice
 	}
 	h.states.mu.Unlock()
 
-	conn, err := h.svc.ChooseCompany(t.Context(), &accountingsyncports.ChooseAccountingCompanyRequest{
-		TenantInfo:      h.tenant,
-		UserID:          h.userID,
-		IntegrationType: integration.TypeNetSuite,
-		ChoiceToken:     completion.ChoiceToken,
-		CompanyID:       "2222",
-	})
+	conn, err := h.svc.ChooseCompany(
+		t.Context(),
+		&accountingconnectionports.ChooseAccountingCompanyRequest{
+			TenantInfo:      h.tenant,
+			UserID:          h.userID,
+			IntegrationType: integration.TypeNetSuite,
+			ChoiceToken:     completion.ChoiceToken,
+			CompanyID:       "2222",
+		},
+	)
 	require.NoError(t, err)
 	assert.True(t, conn.UsesCertificate())
 	assert.Equal(t, "2222", conn.ExternalRealmID)
 	assert.Equal(t, testCertificateID, conn.ClientCertificateID)
 	stored := h.connections.tokens[conn.ID]
-	assert.Equal(t, h.connector.clientCredentials().preparedKeys[0], h.decrypt(t, conn, clientKeyField, stored.clientKey))
+	assert.Equal(
+		t,
+		h.connector.clientCredentials().preparedKeys[0],
+		h.decrypt(t, conn, clientKeyField, stored.clientKey),
+	)
 	assert.Zero(t, h.certificates.count())
 }
 
@@ -240,7 +278,7 @@ func TestCertificateConnectionTakesATokenPerAssertionAndNeverRefreshes(t *testin
 
 	h := newCertificateHarness(t)
 	conn := h.certificateConnection(t)
-	h.connector.clientCredentials().assertionGrant = &accountingsyncports.AccountingTokenGrant{
+	h.connector.clientCredentials().assertionGrant = &accountingconnectorports.AccountingTokenGrant{
 		AccessToken:    "cert-access-2",
 		AccessTokenTTL: time.Hour,
 	}
@@ -355,7 +393,12 @@ func TestRenewCertificateIsRefusedForASignInConnection(t *testing.T) {
 	t.Parallel()
 
 	h := newCertificateHarness(t)
-	completion, err := h.completeAs(t, integration.TypeNetSuite, h.startAs(t, integration.TypeNetSuite), netSuiteRealm)
+	completion, err := h.completeAs(
+		t,
+		integration.TypeNetSuite,
+		h.startAs(t, integration.TypeNetSuite),
+		netSuiteRealm,
+	)
 	require.NoError(t, err)
 	h.prepareCertificate(t)
 
@@ -370,21 +413,34 @@ func TestSigningInAfterACertificateConnectionDropsTheCertificate(t *testing.T) {
 
 	h := newCertificateHarness(t)
 	conn := h.certificateConnection(t)
-	_, err := h.svc.Disconnect(t.Context(), &accountingsyncports.DisconnectAccountingRequest{
+	_, err := h.svc.Disconnect(t.Context(), &accountingconnectionports.DisconnectAccountingRequest{
 		TenantInfo:      h.tenant,
 		UserID:          h.userID,
 		IntegrationType: integration.TypeNetSuite,
 	})
 	require.NoError(t, err)
 	assert.Empty(t, h.connections.tokens[conn.ID].clientKey)
-	assert.Empty(t, h.connector.revoked, "a certificate connection holds no refresh token to revoke")
+	assert.Empty(
+		t,
+		h.connector.revoked,
+		"a certificate connection holds no refresh token to revoke",
+	)
 
-	completion, err := h.completeAs(t, integration.TypeNetSuite, h.startAs(t, integration.TypeNetSuite), netSuiteRealm)
+	completion, err := h.completeAs(
+		t,
+		integration.TypeNetSuite,
+		h.startAs(t, integration.TypeNetSuite),
+		netSuiteRealm,
+	)
 	require.NoError(t, err)
 	reconnected := completion.Connection
 	assert.Equal(t, conn.ID, reconnected.ID)
 	assert.False(t, reconnected.UsesCertificate())
 	assert.Empty(t, reconnected.ClientCertificateID)
 	assert.Nil(t, reconnected.ClientCertificateExpiresAt)
-	assert.Equal(t, "refresh-1", h.decrypt(t, reconnected, refreshTokenField, h.connections.tokens[conn.ID].refresh))
+	assert.Equal(
+		t,
+		"refresh-1",
+		h.decrypt(t, reconnected, refreshTokenField, h.connections.tokens[conn.ID].refresh),
+	)
 }

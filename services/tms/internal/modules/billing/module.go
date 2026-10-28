@@ -1,7 +1,7 @@
 package billing
 
 import (
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingdriftports"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/accountsreceivablerepository"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/bankreceiptbatchrepository"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/bankreceiptrepository"
@@ -136,9 +136,9 @@ func SharedOptions() fx.Option {
 				fx.As(new(customerpaymentports.CustomerPaymentService)),
 			),
 			accountingdriftservice.New,
-			func(s *accountingdriftservice.Service) accountingsyncports.AccountingDriftReconciler { return s },
-			func(s *accountingdriftservice.Service) accountingsyncports.AccountingDriftRechecker { return s },
-			func(s *accountingdriftservice.Service) accountingsyncports.AccountingDriftService { return s },
+			func(s *accountingdriftservice.Service) accountingdriftports.AccountingDriftReconciler { return s },
+			func(s *accountingdriftservice.Service) accountingdriftports.AccountingDriftRechecker { return s },
+			func(s *accountingdriftservice.Service) accountingdriftports.AccountingDriftService { return s },
 			invoiceadjustmentservice.New,
 			detentioncreditservice.New,
 			func(s *detentioncreditservice.Service) detentionports.BilledDetentionCreditor { return s },

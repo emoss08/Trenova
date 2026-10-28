@@ -1,9 +1,10 @@
-package accountingsyncports
+package accountingdriftports
 
 import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -58,7 +59,7 @@ type FinishAccountingDriftCheckRequest struct {
 type RecheckAccountingDriftRequest struct {
 	TenantInfo   pagination.TenantInfo
 	ConnectionID pulid.ID
-	Documents    []AccountingChangedDocument
+	Documents    []accountingconnectorports.AccountingChangedDocument
 	EventBudget  int
 }
 

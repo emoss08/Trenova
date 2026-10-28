@@ -5,7 +5,7 @@ import (
 	"slices"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingmappingports"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -49,7 +49,7 @@ func (r *resolver) mapping(
 	}
 	row, err := r.s.mappingService.EnsureMapping(
 		ctx,
-		&accountingsyncports.EnsureAccountingMappingRequest{
+		&accountingmappingports.EnsureAccountingMappingRequest{
 			TenantInfo:   r.sess.tenant,
 			ConnectionID: r.sess.conn.ID,
 			TargetType:   target.TargetType,

@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/shared/businesscentral"
 	"github.com/emoss08/trenova/shared/hashutils"
 	"github.com/shopspring/decimal"
@@ -27,8 +27,8 @@ var errPurchaseDocumentType = errors.New(
 
 func (c *Connector) UpsertVendor(
 	ctx context.Context,
-	doc *accountingsyncports.AccountingVendorDocument,
-) (*accountingsyncports.AccountingDocumentResult, error) {
+	doc *accountingconnectorports.AccountingVendorDocument,
+) (*accountingconnectorports.AccountingDocumentResult, error) {
 	return c.upsertParty(ctx, &partyWrite{
 		auth:       doc.Auth,
 		kind:       businesscentral.PartyVendor,
@@ -46,8 +46,8 @@ func purchaseKindOf(credit bool) businesscentral.DocumentKind {
 
 func (c *Connector) CreatePurchaseDocument(
 	ctx context.Context,
-	doc *accountingsyncports.AccountingPurchaseDocument,
-) (*accountingsyncports.AccountingDocumentResult, error) {
+	doc *accountingconnectorports.AccountingPurchaseDocument,
+) (*accountingconnectorports.AccountingDocumentResult, error) {
 	if !doc.Kind.IsBill() {
 		return nil, errDocumentKind
 	}
@@ -61,9 +61,9 @@ func (c *Connector) CreatePurchaseDocument(
 func (c *Connector) writePurchase(
 	ctx context.Context,
 	client *businesscentral.Client,
-	doc *accountingsyncports.AccountingPurchaseDocument,
-	result *accountingsyncports.AccountingDocumentResult,
-) (*accountingsyncports.AccountingDocumentResult, error) {
+	doc *accountingconnectorports.AccountingPurchaseDocument,
+	result *accountingconnectorports.AccountingDocumentResult,
+) (*accountingconnectorports.AccountingDocumentResult, error) {
 	kind := purchaseKindOf(doc.VendorCredit)
 	input, err := c.purchaseInput(ctx, client, doc)
 	if err != nil {
@@ -92,7 +92,9 @@ func (c *Connector) writePurchase(
 	return result, nil
 }
 
-func accountTotals(lines []accountingsyncports.AccountingPurchaseLine) map[string]decimal.Decimal {
+func accountTotals(
+	lines []accountingconnectorports.AccountingPurchaseLine,
+) map[string]decimal.Decimal {
 	totals := make(map[string]decimal.Decimal, len(lines))
 	for idx := range lines {
 		key := refAccountPrefix + strings.ToLower(strings.TrimSpace(lines[idx].AccountExternalID))
@@ -104,7 +106,7 @@ func accountTotals(lines []accountingsyncports.AccountingPurchaseLine) map[strin
 func (c *Connector) purchaseInput(
 	ctx context.Context,
 	client *businesscentral.Client,
-	doc *accountingsyncports.AccountingPurchaseDocument,
+	doc *accountingconnectorports.AccountingPurchaseDocument,
 ) (*businesscentral.DocumentInput, error) {
 	lines, err := purchaseLines(doc.Lines)
 	if err != nil {
@@ -129,7 +131,7 @@ func (c *Connector) purchaseInput(
 }
 
 func purchaseLines(
-	lines []accountingsyncports.AccountingPurchaseLine,
+	lines []accountingconnectorports.AccountingPurchaseLine,
 ) ([]businesscentral.LineInput, error) {
 	if len(lines) == 0 {
 		return nil, errLinesRequired
@@ -155,10 +157,10 @@ func purchaseLines(
 }
 
 type purchaseWritten struct {
-	auth   accountingsyncports.AccountingDocumentAuth
+	auth   accountingconnectorports.AccountingDocumentAuth
 	kind   businesscentral.DocumentKind
 	doc    *businesscentral.Document
-	result *accountingsyncports.AccountingDocumentResult
+	result *accountingconnectorports.AccountingDocumentResult
 }
 
 func (c *Connector) finishPurchase(written *purchaseWritten) {
@@ -210,8 +212,8 @@ func purchaseIsCredit(refs map[string]string) (bool, error) {
 
 func (c *Connector) UpdatePurchaseDocument(
 	ctx context.Context,
-	doc *accountingsyncports.AccountingPurchaseDocument,
-) (*accountingsyncports.AccountingDocumentResult, error) {
+	doc *accountingconnectorports.AccountingPurchaseDocument,
+) (*accountingconnectorports.AccountingDocumentResult, error) {
 	if !doc.Kind.IsBill() {
 		return nil, errDocumentKind
 	}
@@ -257,7 +259,7 @@ func revisedNumber(number, requestID string) string {
 	return number + suffix
 }
 
-func firstAccount(lines []accountingsyncports.AccountingPurchaseLine) map[string]string {
+func firstAccount(lines []accountingconnectorports.AccountingPurchaseLine) map[string]string {
 	for idx := range lines {
 		if id := strings.TrimSpace(lines[idx].AccountExternalID); id != "" {
 			return map[string]string{refAccountPrefix + strings.ToLower(id): ""}
@@ -268,8 +270,8 @@ func firstAccount(lines []accountingsyncports.AccountingPurchaseLine) map[string
 
 func (c *Connector) VoidPurchaseDocument(
 	ctx context.Context,
-	ref *accountingsyncports.AccountingDocumentRef,
-) (*accountingsyncports.AccountingDocumentResult, error) {
+	ref *accountingconnectorports.AccountingDocumentRef,
+) (*accountingconnectorports.AccountingDocumentResult, error) {
 	if ref.Kind.IsBillPayment() {
 		return nil, reversalRefused()
 	}
@@ -433,8 +435,8 @@ func creditLine(key string, amount decimal.Decimal) businesscentral.LineInput {
 
 func (c *Connector) CreateBillPayment(
 	ctx context.Context,
-	doc *accountingsyncports.AccountingBillPaymentDocument,
-) (*accountingsyncports.AccountingDocumentResult, error) {
+	doc *accountingconnectorports.AccountingBillPaymentDocument,
+) (*accountingconnectorports.AccountingDocumentResult, error) {
 	if !doc.Kind.IsBillPayment() {
 		return nil, errDocumentKind
 	}
@@ -480,7 +482,7 @@ func (c *Connector) CreateBillPayment(
 
 func (c *Connector) UpdateBillPayment(
 	_ context.Context,
-	_ *accountingsyncports.AccountingBillPaymentDocument,
-) (*accountingsyncports.AccountingDocumentResult, error) {
+	_ *accountingconnectorports.AccountingBillPaymentDocument,
+) (*accountingconnectorports.AccountingDocumentResult, error) {
 	return nil, reversalRefused()
 }

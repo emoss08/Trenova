@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingmappingports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -22,7 +22,7 @@ func errAccountingNeedsAPerson() error {
 
 type accountingMappingActionFunc func(
 	context.Context,
-	*accountingsyncports.AccountingMappingActionRequest,
+	*accountingmappingports.AccountingMappingActionRequest,
 ) (*accountingsync.AccountingMapping, error)
 
 func (r *MutationResolver) accountingMappingAction(
@@ -43,7 +43,7 @@ func (r *MutationResolver) accountingMappingAction(
 		return nil, err
 	}
 
-	return action(ctx, &accountingsyncports.AccountingMappingActionRequest{
+	return action(ctx, &accountingmappingports.AccountingMappingActionRequest{
 		TenantInfo: base.TenantInfo(authCtx),
 		UserID:     authCtx.UserID,
 		ID:         mappingID,
@@ -59,7 +59,7 @@ const accountingMappingOptionsMost = 10
 // usable accounting system records of its kind whose names match.
 func (r *QueryResolver) accountingMappingDetail(
 	ctx context.Context,
-	find *accountingsyncports.SetAccountingMappingRequest,
+	find *accountingmappingports.SetAccountingMappingRequest,
 	optionsQuery string,
 ) (*gqlmodel.AccountingMappingDetail, error) {
 	mapping, err := r.AccountingMappingService.FindMapping(ctx, find)
@@ -75,7 +75,7 @@ func (r *QueryResolver) accountingMappingDetail(
 	}
 	detail.Options, err = r.AccountingMappingService.SearchReference(
 		ctx,
-		&accountingsyncports.SearchAccountingReferenceRequest{
+		&accountingmappingports.SearchAccountingReferenceRequest{
 			TenantInfo:      find.TenantInfo,
 			IntegrationType: find.IntegrationType,
 			Kind:            mapping.ProviderKind,
@@ -115,8 +115,8 @@ func accountingMappingConnectionToModel(
 
 func accountingMappingConfirmations(
 	input []*gqlmodel.ConfirmAccountingMappingInput,
-) ([]accountingsyncports.AccountingMappingConfirmation, error) {
-	items := make([]accountingsyncports.AccountingMappingConfirmation, 0, len(input))
+) ([]accountingmappingports.AccountingMappingConfirmation, error) {
+	items := make([]accountingmappingports.AccountingMappingConfirmation, 0, len(input))
 	for _, item := range input {
 		if item == nil {
 			continue
@@ -125,7 +125,7 @@ func accountingMappingConfirmations(
 		if err != nil {
 			return nil, err
 		}
-		items = append(items, accountingsyncports.AccountingMappingConfirmation{
+		items = append(items, accountingmappingports.AccountingMappingConfirmation{
 			ID:         id,
 			ExternalID: strings.TrimSpace(item.ExternalID),
 		})

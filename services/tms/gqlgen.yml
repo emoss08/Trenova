@@ -5594,7 +5594,7 @@ models:
         fieldName: ClientCertificateExpiresAt
   AccountingSyncStatus:
     model:
-      - github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports.AccountingSyncStatus
+      - github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports.AccountingSyncStatus
   AccountingProviderProfile:
     model:
       - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync.ProviderProfile
@@ -5605,19 +5605,19 @@ models:
         fieldName: InboundPayments
   AccountingPreparedCertificate:
     model:
-      - github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports.AccountingPreparedCertificate
+      - github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports.AccountingPreparedCertificate
   AccountingAuthMethod:
     model:
       - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync.AuthMethod
   AccountingWebhookSubscriptionSummary:
     model:
-      - github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports.AccountingWebhookSubscriptionSummary
+      - github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports.AccountingWebhookSubscriptionSummary
   AccountingCompany:
     model:
-      - github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports.AccountingCompany
+      - github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports.AccountingCompany
   CompleteAccountingAuthorizationPayload:
     model:
-      - github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports.AccountingAuthorizationCompletion
+      - github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports.AccountingAuthorizationCompletion
   AccountingSyncObjectType:
     model:
       - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync.SyncObjectType
@@ -5718,16 +5718,16 @@ models:
         resolver: true
   AccountingInboundSummary:
     model:
-      - github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports.AccountingInboundSummary
+      - github.com/emoss08/trenova/internal/modules/accounting/ports/accountinginboundports.AccountingInboundSummary
   AccountingInboundOverview:
     model:
-      - github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports.AccountingInboundOverview
+      - github.com/emoss08/trenova/internal/modules/accounting/ports/accountinginboundports.AccountingInboundOverview
   AccountingInboundPostingLine:
     model:
-      - github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports.AccountingInboundPostingLine
+      - github.com/emoss08/trenova/internal/modules/accounting/ports/accountinginboundports.AccountingInboundPostingLine
   AccountingInboundApplyPreview:
     model:
-      - github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports.AccountingInboundApplyPreview
+      - github.com/emoss08/trenova/internal/modules/accounting/ports/accountinginboundports.AccountingInboundApplyPreview
   AccountingDriftKind:
     model:
       - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync.DriftKind
@@ -5772,10 +5772,10 @@ models:
         resolver: true
   AccountingDriftSummary:
     model:
-      - github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports.AccountingDriftSummary
+      - github.com/emoss08/trenova/internal/modules/accounting/ports/accountingdriftports.AccountingDriftSummary
   AccountingDriftOverview:
     model:
-      - github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports.AccountingDriftOverview
+      - github.com/emoss08/trenova/internal/modules/accounting/ports/accountingdriftports.AccountingDriftOverview
   JournalReviewSummary:
     model:
       - github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports.JournalReviewSummary
@@ -5787,7 +5787,7 @@ models:
       - github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports.JournalReviewOutcome
   AccountingDriftFixPreview:
     model:
-      - github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports.AccountingDriftFixPreview
+      - github.com/emoss08/trenova/internal/modules/accounting/ports/accountingdriftports.AccountingDriftFixPreview
     fields:
       direction:
         resolver: true
@@ -5824,7 +5824,7 @@ models:
         resolver: true
   AccountingAppSettings:
     model:
-      - github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports.AccountingAppSettings
+      - github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports.AccountingAppSettings
     fields:
       activeSource:
         resolver: true
@@ -5881,13 +5881,13 @@ models:
         resolver: true
   AccountingMappingGroup:
     model:
-      - github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports.AccountingMappingGroup
+      - github.com/emoss08/trenova/internal/modules/accounting/ports/accountingmappingports.AccountingMappingGroup
   AccountingMappingSummary:
     model:
-      - github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports.AccountingMappingSummary
+      - github.com/emoss08/trenova/internal/modules/accounting/ports/accountingmappingports.AccountingMappingSummary
   AccountingAuthorizationStart:
     model:
-      - github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports.AccountingAuthorizationStart
+      - github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports.AccountingAuthorizationStart
   TrackingEvent:
     model:
       - github.com/emoss08/trenova/internal/modules/operations/domain/trackingevent.TrackingEvent

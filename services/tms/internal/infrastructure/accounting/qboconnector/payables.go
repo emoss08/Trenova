@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/shared/quickbooks"
 )
 
@@ -17,8 +17,8 @@ var errPurchaseDocumentType = errors.New(
 
 func (c *Connector) UpsertVendor(
 	ctx context.Context,
-	doc *accountingsyncports.AccountingVendorDocument,
-) (*accountingsyncports.AccountingDocumentResult, error) {
+	doc *accountingconnectorports.AccountingVendorDocument,
+) (*accountingconnectorports.AccountingDocumentResult, error) {
 	client, err := c.client(doc.Auth)
 	if err != nil {
 		return nil, err
@@ -35,7 +35,7 @@ func (c *Connector) UpsertVendor(
 	if err != nil {
 		return nil, err
 	}
-	return &accountingsyncports.AccountingDocumentResult{
+	return &accountingconnectorports.AccountingDocumentResult{
 		ExternalID: saved.ID,
 		DocNumber:  saved.Name,
 	}, nil
@@ -43,8 +43,8 @@ func (c *Connector) UpsertVendor(
 
 func (c *Connector) CreatePurchaseDocument(
 	ctx context.Context,
-	doc *accountingsyncports.AccountingPurchaseDocument,
-) (*accountingsyncports.AccountingDocumentResult, error) {
+	doc *accountingconnectorports.AccountingPurchaseDocument,
+) (*accountingconnectorports.AccountingDocumentResult, error) {
 	if !doc.Kind.IsBill() {
 		return nil, errDocumentKind
 	}
@@ -66,7 +66,7 @@ func (c *Connector) CreatePurchaseDocument(
 		return nil, err
 	}
 
-	return &accountingsyncports.AccountingDocumentResult{
+	return &accountingconnectorports.AccountingDocumentResult{
 		ExternalID: created.ID,
 		DocNumber:  created.DocNumber,
 		Refs: map[string]string{
@@ -80,7 +80,9 @@ func (c *Connector) CreatePurchaseDocument(
 	}, nil
 }
 
-func purchaseTxnOf(doc *accountingsyncports.AccountingPurchaseDocument) *quickbooks.PurchaseTxn {
+func purchaseTxnOf(
+	doc *accountingconnectorports.AccountingPurchaseDocument,
+) *quickbooks.PurchaseTxn {
 	txn := &quickbooks.PurchaseTxn{
 		VendorID:     doc.VendorExternalID,
 		APAccountID:  doc.APAccountExternalID,
@@ -108,8 +110,8 @@ func purchaseTxnOf(doc *accountingsyncports.AccountingPurchaseDocument) *quickbo
 
 func (c *Connector) VoidPurchaseDocument(
 	ctx context.Context,
-	ref *accountingsyncports.AccountingDocumentRef,
-) (*accountingsyncports.AccountingDocumentResult, error) {
+	ref *accountingconnectorports.AccountingDocumentRef,
+) (*accountingconnectorports.AccountingDocumentResult, error) {
 	if !ref.Kind.IsBill() {
 		return nil, errDocumentKind
 	}
@@ -153,8 +155,8 @@ func purchaseKindOf(refs map[string]string) (quickbooks.TxnKind, error) {
 
 func (c *Connector) CreateBillPayment(
 	ctx context.Context,
-	doc *accountingsyncports.AccountingBillPaymentDocument,
-) (*accountingsyncports.AccountingDocumentResult, error) {
+	doc *accountingconnectorports.AccountingBillPaymentDocument,
+) (*accountingconnectorports.AccountingDocumentResult, error) {
 	if !doc.Kind.IsBillPayment() {
 		return nil, errDocumentKind
 	}
@@ -167,7 +169,7 @@ func (c *Connector) CreateBillPayment(
 	if err != nil {
 		return nil, err
 	}
-	return &accountingsyncports.AccountingDocumentResult{
+	return &accountingconnectorports.AccountingDocumentResult{
 		ExternalID: paid.ID,
 		DocNumber:  paid.DocNumber,
 		Refs:       map[string]string{accountingsync.ExternalRefDocument: paid.ID},
@@ -175,7 +177,7 @@ func (c *Connector) CreateBillPayment(
 }
 
 func billPaymentTxnOf(
-	doc *accountingsyncports.AccountingBillPaymentDocument,
+	doc *accountingconnectorports.AccountingBillPaymentDocument,
 ) *quickbooks.BillPaymentTxn {
 	return &quickbooks.BillPaymentTxn{
 		VendorID:      doc.VendorExternalID,

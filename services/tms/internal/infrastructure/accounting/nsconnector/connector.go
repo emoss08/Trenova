@@ -10,7 +10,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/shared/hashutils"
 	"github.com/emoss08/trenova/shared/netsuite"
@@ -48,7 +48,7 @@ type Params struct {
 }
 
 type Provider struct {
-	instance    *accountingsyncports.AccountingApp
+	instance    *accountingconnectorports.AccountingApp
 	redirectURL string
 	apiOpts     []netsuite.Option
 	oauthOpts   []netsuite.Option
@@ -61,7 +61,7 @@ type Provider struct {
 	bound map[string]*Connector
 }
 
-var _ accountingsyncports.AccountingProvider = (*Provider)(nil)
+var _ accountingconnectorports.AccountingProvider = (*Provider)(nil)
 
 type Connector struct {
 	oauth      *netsuite.OAuthClient
@@ -73,8 +73,8 @@ type Connector struct {
 }
 
 var (
-	_ accountingsyncports.AccountingConnector                  = (*Connector)(nil)
-	_ accountingsyncports.AccountingClientCredentialsConnector = (*Connector)(nil)
+	_ accountingconnectorports.AccountingConnector                  = (*Connector)(nil)
+	_ accountingconnectorports.AccountingClientCredentialsConnector = (*Connector)(nil)
 )
 
 func New(p Params) (*Provider, error) {
@@ -91,7 +91,7 @@ func New(p Params) (*Provider, error) {
 		provider.apiOpts = append(provider.apiOpts, netsuite.WithLimiter(p.Limiter, limiterPrefix))
 	}
 	if cfg.IsConfigured(&p.Config.App) {
-		provider.instance = &accountingsyncports.AccountingApp{
+		provider.instance = &accountingconnectorports.AccountingApp{
 			Source:       accountingsync.AppSourceInstance,
 			Environment:  accountingsync.AppEnvironmentProduction,
 			ClientID:     strings.TrimSpace(cfg.ClientID),
@@ -105,7 +105,7 @@ func (p *Provider) IntegrationType() integration.Type {
 	return integration.TypeNetSuite
 }
 
-func (p *Provider) InstanceApp() (*accountingsyncports.AccountingApp, bool) {
+func (p *Provider) InstanceApp() (*accountingconnectorports.AccountingApp, bool) {
 	if p.instance == nil {
 		return nil, false
 	}
@@ -118,12 +118,12 @@ func (p *Provider) RedirectURL() string {
 }
 
 func (p *Provider) Bind(
-	app *accountingsyncports.AccountingApp,
-) (accountingsyncports.AccountingConnector, error) {
+	app *accountingconnectorports.AccountingApp,
+) (accountingconnectorports.AccountingConnector, error) {
 	return p.bind(app)
 }
 
-func (p *Provider) bind(app *accountingsyncports.AccountingApp) (*Connector, error) {
+func (p *Provider) bind(app *accountingconnectorports.AccountingApp) (*Connector, error) {
 	if app == nil {
 		return nil, ErrNotConfigured
 	}
@@ -172,7 +172,7 @@ func (p *Provider) ClassifyError(err error) accountingsync.ErrorCategory {
 	return classifyError(err)
 }
 
-func bindingKey(app *accountingsyncports.AccountingApp) string {
+func bindingKey(app *accountingconnectorports.AccountingApp) string {
 	return hashutils.SHA256Hex(
 		strings.TrimSpace(app.ClientID) + "\x00" + strings.TrimSpace(app.ClientSecret),
 	)
@@ -200,7 +200,7 @@ func accountOf(realmID string) (string, error) {
 }
 
 func (c *Connector) AuthorizeURL(
-	req accountingsyncports.AccountingAuthorizeRequest,
+	req accountingconnectorports.AccountingAuthorizeRequest,
 ) (string, error) {
 	if c.oauth == nil {
 		return "", errNoRedirect
@@ -213,8 +213,8 @@ func (c *Connector) AuthorizeURL(
 
 func (c *Connector) ExchangeCode(
 	ctx context.Context,
-	req *accountingsyncports.AccountingCodeExchange,
-) (*accountingsyncports.AccountingTokenGrant, error) {
+	req *accountingconnectorports.AccountingCodeExchange,
+) (*accountingconnectorports.AccountingTokenGrant, error) {
 	if c.oauth == nil {
 		return nil, errNoRedirect
 	}
@@ -235,8 +235,8 @@ func (c *Connector) ExchangeCode(
 
 func (c *Connector) Refresh(
 	ctx context.Context,
-	req *accountingsyncports.AccountingRefreshRequest,
-) (*accountingsyncports.AccountingTokenGrant, error) {
+	req *accountingconnectorports.AccountingRefreshRequest,
+) (*accountingconnectorports.AccountingTokenGrant, error) {
 	if c.oauth == nil {
 		return nil, errNoRedirect
 	}
@@ -256,7 +256,7 @@ func (c *Connector) Refresh(
 
 func (c *Connector) Revoke(
 	ctx context.Context,
-	req *accountingsyncports.AccountingRevokeRequest,
+	req *accountingconnectorports.AccountingRevokeRequest,
 ) error {
 	if c.oauth == nil {
 		return errNoRedirect
@@ -270,8 +270,8 @@ func (c *Connector) Revoke(
 
 func (c *Connector) ReleaseCompanies(
 	_ context.Context,
-	_ *accountingsyncports.AccountingTokenGrant,
-	_ []accountingsyncports.AccountingCompany,
+	_ *accountingconnectorports.AccountingTokenGrant,
+	_ []accountingconnectorports.AccountingCompany,
 ) error {
 	return nil
 }
@@ -281,7 +281,7 @@ func (c *Connector) VerifyApp(_ context.Context) error {
 		return errNoRedirect
 	}
 	if !validClientID(c.oauth.ClientID()) {
-		return accountingsyncports.ErrAccountingAppRejected
+		return accountingconnectorports.ErrAccountingAppRejected
 	}
 	return nil
 }
@@ -309,8 +309,8 @@ func (c *Connector) ClassifyError(err error) accountingsync.ErrorCategory {
 	return classifyError(err)
 }
 
-func grantOf(token *netsuite.Token) *accountingsyncports.AccountingTokenGrant {
-	grant := &accountingsyncports.AccountingTokenGrant{
+func grantOf(token *netsuite.Token) *accountingconnectorports.AccountingTokenGrant {
+	grant := &accountingconnectorports.AccountingTokenGrant{
 		AccessToken:    token.AccessToken,
 		RefreshToken:   token.RefreshToken,
 		AccessTokenTTL: token.ExpiresIn,

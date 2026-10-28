@@ -7,6 +7,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountinginboundports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingmappingports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingpayablesports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalperiodports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
@@ -24,7 +27,7 @@ type creditPlan struct {
 }
 
 type settlementPlan struct {
-	kind       accountingsyncports.PayableKind
+	kind       accountingpayablesports.PayableKind
 	id         pulid.ID
 	partyID    pulid.ID
 	number     string
@@ -44,7 +47,7 @@ type postingPlan struct {
 	cashMinor   int64
 	credits     []*creditPlan
 	settlements []*settlementPlan
-	lines       []accountingsyncports.AccountingInboundPostingLine
+	lines       []accountinginboundports.AccountingInboundPostingLine
 }
 
 func (p *postingPlan) block(
@@ -372,7 +375,7 @@ func allocate(
 			}
 			cash[inv.ID] += due
 		}
-		p.lines = append(p.lines, accountingsyncports.AccountingInboundPostingLine{
+		p.lines = append(p.lines, accountinginboundports.AccountingInboundPostingLine{
 			ObjectType:   line.ObjectType,
 			ObjectID:     inv.ID,
 			ObjectNumber: inv.Number,
@@ -392,7 +395,7 @@ func allocate(
 		if plan := byMemo[memoID]; plan != nil {
 			p.credits = append(p.credits, plan)
 		}
-		p.lines = append(p.lines, accountingsyncports.AccountingInboundPostingLine{
+		p.lines = append(p.lines, accountinginboundports.AccountingInboundPostingLine{
 			ObjectType:   accountingsync.SyncObjectCreditMemo,
 			ObjectID:     memoID,
 			ObjectNumber: invoices[memoID].Number,
@@ -416,7 +419,7 @@ func (s *Service) paymentMethod(
 	if change.Document.MethodExternalID != "" {
 		mappings, err := s.mappings.ListByConnection(
 			ctx,
-			&accountingsyncports.ListAccountingMappingsQuery{
+			&accountingmappingports.ListAccountingMappingsQuery{
 				TenantInfo:   change.TenantInfo(),
 				ConnectionID: conn.ID,
 				TargetTypes: []accountingsync.MappingTargetType{
@@ -477,7 +480,7 @@ func (s *Service) planBillPayment(ctx context.Context, p *postingPlan) error {
 		}
 		partyID = settlement.partyID
 		p.settlements = append(p.settlements, settlement)
-		p.lines = append(p.lines, accountingsyncports.AccountingInboundPostingLine{
+		p.lines = append(p.lines, accountinginboundports.AccountingInboundPostingLine{
 			ObjectType:   kinds[id],
 			ObjectID:     id,
 			ObjectNumber: settlement.number,
@@ -500,15 +503,15 @@ func (s *Service) planSettlement(
 	billType accountingsync.SyncObjectType,
 	paidMinor int64,
 ) (*settlementPlan, bool, error) {
-	kind := accountingsyncports.PayableCarrier
+	kind := accountingpayablesports.PayableCarrier
 	payment := accountingsync.SyncObjectCarrierBillPay
 	if billType == accountingsync.SyncObjectDriverBill {
-		kind = accountingsyncports.PayableDriver
+		kind = accountingpayablesports.PayableDriver
 		payment = accountingsync.SyncObjectDriverBillPay
 	}
 	settlement, err := s.payables.GetSettlement(
 		ctx,
-		&accountingsyncports.GetPayableSettlementRequest{
+		&accountingpayablesports.GetPayableSettlementRequest{
 			TenantInfo: p.change.TenantInfo(),
 			Kind:       kind,
 			ID:         id,

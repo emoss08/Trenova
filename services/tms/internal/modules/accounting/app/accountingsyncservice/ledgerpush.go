@@ -6,7 +6,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalentry"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingmappingports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/intutils"
@@ -179,7 +180,7 @@ func (s *Service) pushJournalEntry(
 		return nil, err
 	}
 
-	doc := &accountingsyncports.AccountingJournalDocument{
+	doc := &accountingconnectorports.AccountingJournalDocument{
 		Auth:         sess.auth,
 		RequestID:    record.RequestID,
 		Kind:         record.ObjectType,
@@ -282,7 +283,7 @@ func (s *Service) pushJournalDay(
 	}
 
 	day := timeutils.FormatCalendarDate(from, sess.loc)
-	doc := &accountingsyncports.AccountingJournalDocument{
+	doc := &accountingconnectorports.AccountingJournalDocument{
 		Auth:         sess.auth,
 		RequestID:    record.RequestID,
 		ExternalID:   externalID,
@@ -295,7 +296,7 @@ func (s *Service) pushJournalDay(
 			sentDateNote(dated, from, sess.loc),
 		Lines: docLines,
 	}
-	var written *accountingsyncports.AccountingDocumentResult
+	var written *accountingconnectorports.AccountingDocumentResult
 	if externalID != "" {
 		written, err = sess.journals.UpdateJournalEntry(ctx, doc)
 	} else {
@@ -316,7 +317,7 @@ func (s *Service) retireDay(
 	if externalID == "" {
 		return &noopError{reason: label + " nets to zero, so there is nothing to send"}
 	}
-	if _, err := sess.journals.DeleteJournalEntry(ctx, &accountingsyncports.AccountingDocumentRef{
+	if _, err := sess.journals.DeleteJournalEntry(ctx, &accountingconnectorports.AccountingDocumentRef{
 		Auth:       sess.auth,
 		RequestID:  record.RequestID,
 		Kind:       record.ObjectType,
@@ -456,7 +457,7 @@ func (s *Service) pushOpeningBalances(
 	if err != nil {
 		return nil, err
 	}
-	doc := &accountingsyncports.AccountingJournalDocument{
+	doc := &accountingconnectorports.AccountingJournalDocument{
 		Auth:         sess.auth,
 		RequestID:    record.RequestID,
 		Kind:         record.ObjectType,
@@ -559,7 +560,7 @@ func (s *Service) ledgerPartyNeeds(
 	}
 	refs, err := s.references.GetByExternalIDs(
 		ctx,
-		&accountingsyncports.GetAccountingReferenceObjectsRequest{
+		&accountingmappingports.GetAccountingReferenceObjectsRequest{
 			TenantInfo:   sess.tenant,
 			ConnectionID: sess.conn.ID,
 			Kind:         accountingsync.ReferenceKindAccount,
@@ -580,7 +581,7 @@ func (s *Service) ledgerDocLines(
 	sess *pushSession,
 	res *resolver,
 	req *ledgerLinesRequest,
-) ([]accountingsyncports.AccountingJournalLine, error) {
+) ([]accountingconnectorports.AccountingJournalLine, error) {
 	external, err := s.ledgerAccounts(ctx, res, sess, req.lines)
 	if err != nil {
 		return nil, err
@@ -641,20 +642,20 @@ func (s *Service) ledgerDocLines(
 		)
 	}
 
-	lines := make([]accountingsyncports.AccountingJournalLine, 0, len(entries))
+	lines := make([]accountingconnectorports.AccountingJournalLine, 0, len(entries))
 	for idx := range entries {
 		entry := &entries[idx]
 		if entry.netMinor == 0 {
 			continue
 		}
-		line := accountingsyncports.AccountingJournalLine{
-			Posting:           accountingsyncports.AccountingJournalDebit,
+		line := accountingconnectorports.AccountingJournalLine{
+			Posting:           accountingconnectorports.AccountingJournalDebit,
 			AccountExternalID: entry.externalAccount,
 			Amount:            money.DecimalFromMinor(intutils.AbsDiff(entry.netMinor, 0)),
 			Description:       entry.description,
 		}
 		if entry.netMinor < 0 {
-			line.Posting = accountingsyncports.AccountingJournalCredit
+			line.Posting = accountingconnectorports.AccountingJournalCredit
 		}
 		if entry.need != accountingsync.LedgerPartyNone {
 			if line.PartyKind, line.PartyExternalID, err = s.ledgerPartyRef(
@@ -678,12 +679,12 @@ func (s *Service) ledgerPartyRef(
 	res *resolver,
 	label string,
 	entry *ledgerEntry,
-) (accountingsyncports.AccountingJournalPartyKind, string, error) {
+) (accountingconnectorports.AccountingJournalPartyKind, string, error) {
 	wanted := providerKindLabel(accountingsync.ReferenceKindCustomer)
-	kind := accountingsyncports.AccountingJournalCustomer
+	kind := accountingconnectorports.AccountingJournalCustomer
 	if entry.need == accountingsync.LedgerPartyVendor {
 		wanted = providerKindLabel(accountingsync.ReferenceKindVendor)
-		kind = accountingsyncports.AccountingJournalVendor
+		kind = accountingconnectorports.AccountingJournalVendor
 	}
 	account := entry.accountLabel
 	if account == "" {

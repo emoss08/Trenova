@@ -1,10 +1,11 @@
-package accountingsyncports
+package accountingmappingports
 
 import (
 	"context"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -264,11 +265,11 @@ type AccountingMappingService interface {
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 		customerID pulid.ID,
-	) (*AccountingPartyDraft, error)
+	) (*accountingconnectorports.AccountingPartyDraft, error)
 	VendorParty(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 		targetType accountingsync.MappingTargetType,
 		objectID pulid.ID,
-	) (*AccountingPartyDraft, error)
+	) (*accountingconnectorports.AccountingPartyDraft, error)
 }

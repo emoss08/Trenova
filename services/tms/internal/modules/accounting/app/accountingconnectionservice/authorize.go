@@ -7,7 +7,8 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
@@ -38,7 +39,7 @@ type pendingGrant struct {
 }
 
 type authorizedApp struct {
-	connector accountingsyncports.AccountingConnector
+	connector accountingconnectorports.AccountingConnector
 	identity  accountingsync.AppIdentity
 	provider  string
 }
@@ -46,13 +47,13 @@ type authorizedApp struct {
 type companyConnect struct {
 	owner       *stateOwner
 	app         *authorizedApp
-	grant       *accountingsyncports.AccountingTokenGrant
-	company     accountingsyncports.AccountingCompany
+	grant       *accountingconnectorports.AccountingTokenGrant
+	company     accountingconnectorports.AccountingCompany
 	certificate *heldCertificate
 }
 
 func validateCompletion(
-	req *accountingsyncports.CompleteAccountingAuthorizationRequest,
+	req *accountingconnectionports.CompleteAccountingAuthorizationRequest,
 	profile *accountingsync.ProviderProfile,
 ) error {
 	multiErr := errortypes.NewMultiError()
@@ -78,8 +79,8 @@ func validateCompletion(
 
 func (s *Service) CompleteAuthorization(
 	ctx context.Context,
-	req *accountingsyncports.CompleteAccountingAuthorizationRequest,
-) (*accountingsyncports.AccountingAuthorizationCompletion, error) {
+	req *accountingconnectionports.CompleteAccountingAuthorizationRequest,
+) (*accountingconnectionports.AccountingAuthorizationCompletion, error) {
 	if err := s.requireIntegrations(ctx, req.TenantInfo); err != nil {
 		return nil, err
 	}
@@ -113,7 +114,7 @@ func (s *Service) CompleteAuthorization(
 		return nil, errStateExpired()
 	}
 
-	grant, err := app.connector.ExchangeCode(ctx, &accountingsyncports.AccountingCodeExchange{
+	grant, err := app.connector.ExchangeCode(ctx, &accountingconnectorports.AccountingCodeExchange{
 		Code:            req.Code,
 		CallbackRealmID: req.RealmID,
 		CodeVerifier:    verifier,
@@ -137,7 +138,7 @@ func (s *Service) CompleteAuthorization(
 		if connectErr != nil {
 			return nil, connectErr
 		}
-		return &accountingsyncports.AccountingAuthorizationCompletion{Connection: conn}, nil
+		return &accountingconnectionports.AccountingAuthorizationCompletion{Connection: conn}, nil
 	}
 
 	return s.offerCompanyChoice(ctx, &companyChoiceOffer{
@@ -153,16 +154,16 @@ func (s *Service) CompleteAuthorization(
 func (s *Service) grantedCompanies(
 	ctx context.Context,
 	app *authorizedApp,
-	grant *accountingsyncports.AccountingTokenGrant,
+	grant *accountingconnectorports.AccountingTokenGrant,
 	callbackRealmID string,
-) ([]accountingsyncports.AccountingCompany, error) {
+) ([]accountingconnectorports.AccountingCompany, error) {
 	granted, err := app.connector.Companies(ctx, grant, callbackRealmID)
 	if err != nil {
 		s.revokeQuietly(ctx, app.connector, grant.RefreshToken, callbackRealmID)
 		return nil, errortypes.NewBusinessError("Connected, but {0} would not say which company was authorized. Try connecting again.", app.provider).
 			WithInternal(err)
 	}
-	companies := make([]accountingsyncports.AccountingCompany, 0, len(granted))
+	companies := make([]accountingconnectorports.AccountingCompany, 0, len(granted))
 	for _, company := range granted {
 		if realmIDPattern.MatchString(company.ID) {
 			companies = append(companies, company)
@@ -185,17 +186,17 @@ func (s *Service) grantedCompanies(
 
 type companyChoiceOffer struct {
 	owner         *stateOwner
-	state         *accountingsyncports.AccountingOAuthState
+	state         *accountingconnectionports.AccountingOAuthState
 	app           *authorizedApp
-	grant         *accountingsyncports.AccountingTokenGrant
-	companies     []accountingsyncports.AccountingCompany
+	grant         *accountingconnectorports.AccountingTokenGrant
+	companies     []accountingconnectorports.AccountingCompany
 	grantRealm    string
 	certificateID string
 }
 
 func grantRealmOf(
 	callbackRealmID string,
-	companies []accountingsyncports.AccountingCompany,
+	companies []accountingconnectorports.AccountingCompany,
 ) string {
 	if callbackRealmID != "" || len(companies) == 0 {
 		return callbackRealmID
@@ -206,7 +207,7 @@ func grantRealmOf(
 func (s *Service) offerCompanyChoice(
 	ctx context.Context,
 	offer *companyChoiceOffer,
-) (*accountingsyncports.AccountingAuthorizationCompletion, error) {
+) (*accountingconnectionports.AccountingAuthorizationCompletion, error) {
 	token, tokenHash, err := tokenutils.New()
 	if err != nil {
 		s.revokeQuietly(ctx, offer.app.connector, offer.grant.RefreshToken, offer.grantRealm)
@@ -224,13 +225,13 @@ func (s *Service) offerCompanyChoice(
 		return nil, err
 	}
 
-	choices := make([]accountingsyncports.AccountingOAuthCompany, 0, len(offer.companies))
+	choices := make([]accountingconnectionports.AccountingOAuthCompany, 0, len(offer.companies))
 	for _, company := range offer.companies {
-		choices = append(choices, accountingsyncports.AccountingOAuthCompany(company))
+		choices = append(choices, accountingconnectionports.AccountingOAuthCompany(company))
 	}
 
 	now := timeutils.NowUnix()
-	if err = s.states.Save(ctx, &accountingsyncports.AccountingOAuthState{
+	if err = s.states.Save(ctx, &accountingconnectionports.AccountingOAuthState{
 		State:           tokenHash,
 		IntegrationType: offer.owner.integrationType,
 		UserID:          offer.owner.userID,
@@ -248,14 +249,14 @@ func (s *Service) offerCompanyChoice(
 			WithInternal(err)
 	}
 
-	return &accountingsyncports.AccountingAuthorizationCompletion{
+	return &accountingconnectionports.AccountingAuthorizationCompletion{
 		Companies:       offer.companies,
 		ChoiceToken:     token,
 		ChoiceExpiresAt: now + int64(companyChoiceTTL/time.Second),
 	}, nil
 }
 
-func validateChoice(req *accountingsyncports.ChooseAccountingCompanyRequest) error {
+func validateChoice(req *accountingconnectionports.ChooseAccountingCompanyRequest) error {
 	multiErr := errortypes.NewMultiError()
 	if strings.TrimSpace(req.ChoiceToken) == "" {
 		multiErr.Add(
@@ -275,7 +276,7 @@ func validateChoice(req *accountingsyncports.ChooseAccountingCompanyRequest) err
 
 func (s *Service) ChooseCompany(
 	ctx context.Context,
-	req *accountingsyncports.ChooseAccountingCompanyRequest,
+	req *accountingconnectionports.ChooseAccountingCompanyRequest,
 ) (*accountingsync.AccountingConnection, error) {
 	if err := s.requireIntegrations(ctx, req.TenantInfo); err != nil {
 		return nil, err
@@ -349,12 +350,12 @@ func (s *Service) ChooseCompany(
 }
 
 func splitChoice(
-	choices []accountingsyncports.AccountingOAuthCompany,
+	choices []accountingconnectionports.AccountingOAuthCompany,
 	companyID string,
-) (chosen *accountingsyncports.AccountingCompany, others []accountingsyncports.AccountingCompany) {
-	others = make([]accountingsyncports.AccountingCompany, 0, len(choices))
+) (chosen *accountingconnectorports.AccountingCompany, others []accountingconnectorports.AccountingCompany) {
+	others = make([]accountingconnectorports.AccountingCompany, 0, len(choices))
 	for _, choice := range choices {
-		company := accountingsyncports.AccountingCompany(choice)
+		company := accountingconnectorports.AccountingCompany(choice)
 		if chosen == nil && choice.ID == companyID {
 			chosen = &company
 			continue
@@ -366,9 +367,9 @@ func splitChoice(
 
 func (s *Service) releaseQuietly(
 	ctx context.Context,
-	connector accountingsyncports.AccountingConnector,
-	grant *accountingsyncports.AccountingTokenGrant,
-	companies []accountingsyncports.AccountingCompany,
+	connector accountingconnectorports.AccountingConnector,
+	grant *accountingconnectorports.AccountingTokenGrant,
+	companies []accountingconnectorports.AccountingCompany,
 ) {
 	if len(companies) == 0 {
 		return
@@ -380,9 +381,9 @@ func (s *Service) releaseQuietly(
 
 func (s *Service) authorizedApp(
 	ctx context.Context,
-	provider accountingsyncports.AccountingProvider,
+	provider accountingconnectorports.AccountingProvider,
 	owner *stateOwner,
-	state *accountingsyncports.AccountingOAuthState,
+	state *accountingconnectionports.AccountingOAuthState,
 ) (*authorizedApp, error) {
 	name := accountingsync.ProviderName(owner.integrationType)
 	app, err := s.appForTenant(ctx, owner.tenantInfo, provider)
@@ -471,7 +472,7 @@ func (s *Service) takeState(
 	ctx context.Context,
 	token string,
 	owner *stateOwner,
-) (*accountingsyncports.AccountingOAuthState, error) {
+) (*accountingconnectionports.AccountingOAuthState, error) {
 	state, err := s.states.Take(ctx, tokenutils.Hash(token))
 	if err != nil {
 		if errortypes.IsNotFoundError(err) {
@@ -503,8 +504,8 @@ func (s *Service) pendingGrantAAD(
 	}
 }
 
-func (g *pendingGrant) tokenGrant() *accountingsyncports.AccountingTokenGrant {
-	return &accountingsyncports.AccountingTokenGrant{
+func (g *pendingGrant) tokenGrant() *accountingconnectorports.AccountingTokenGrant {
+	return &accountingconnectorports.AccountingTokenGrant{
 		AccessToken:     g.AccessToken,
 		RefreshToken:    g.RefreshToken,
 		AccessTokenTTL:  g.AccessTokenTTL,
@@ -543,7 +544,7 @@ func (s *Service) openPendingGrant(
 type connectionSave struct {
 	owner       *stateOwner
 	realmID     string
-	grant       *accountingsyncports.AccountingTokenGrant
+	grant       *accountingconnectorports.AccountingTokenGrant
 	facts       *accountingsync.CompanyFacts
 	app         accountingsync.AppIdentity
 	provider    string
@@ -561,7 +562,7 @@ func (s *Service) saveConnection(
 	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		existing, lockErr := s.connections.LockByTypeWithTokens(
 			txCtx,
-			accountingsyncports.GetAccountingConnectionRequest{
+			accountingconnectionports.GetAccountingConnectionRequest{
 				TenantInfo:      owner.tenantInfo,
 				IntegrationType: owner.integrationType,
 			},
@@ -630,7 +631,7 @@ func errRealmTaken(provider string) error {
 func (s *Service) ensureRealmIsFree(ctx context.Context, in *companyConnect) error {
 	holders, err := s.connections.ListHoldingRealm(
 		ctx,
-		accountingsyncports.ListAccountingConnectionsByRealmRequest{
+		accountingconnectionports.ListAccountingConnectionsByRealmRequest{
 			IntegrationType: in.owner.integrationType,
 			RealmIDs:        []string{in.company.ID},
 		},

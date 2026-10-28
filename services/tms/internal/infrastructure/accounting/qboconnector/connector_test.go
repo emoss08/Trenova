@@ -13,7 +13,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/shared/quickbooks"
 	"github.com/emoss08/trenova/shared/restx"
 	"github.com/stretchr/testify/assert"
@@ -32,8 +32,8 @@ func newProvider(t *testing.T, qbo config.QuickBooksConfig) *Provider {
 	return provider
 }
 
-func tenantApp(environment accountingsync.AppEnvironment) *accountingsyncports.AccountingApp {
-	return &accountingsyncports.AccountingApp{
+func tenantApp(environment accountingsync.AppEnvironment) *accountingconnectorports.AccountingApp {
+	return &accountingconnectorports.AccountingApp{
 		Source:               accountingsync.AppSourceTenant,
 		Environment:          environment,
 		ClientID:             "tenant-id",
@@ -86,10 +86,16 @@ func TestConfiguredInstanceAppBuildsAuthorizeURLWithDerivedRedirect(t *testing.T
 
 	conn, err := provider.Bind(app)
 	require.NoError(t, err)
-	raw, err := conn.AuthorizeURL(accountingsyncports.AccountingAuthorizeRequest{State: "state-1"})
+	raw, err := conn.AuthorizeURL(
+		accountingconnectorports.AccountingAuthorizeRequest{State: "state-1"},
+	)
 	require.NoError(t, err)
 	assert.Contains(t, raw, "client_id=id")
-	assert.Contains(t, raw, "redirect_uri=https%3A%2F%2Fapp.example.com%2Fadmin%2Fintegrations%2Fquickbooks%2Fcallback")
+	assert.Contains(
+		t,
+		raw,
+		"redirect_uri=https%3A%2F%2Fapp.example.com%2Fadmin%2Fintegrations%2Fquickbooks%2Fcallback",
+	)
 	assert.Contains(t, raw, "state=state-1")
 }
 
@@ -110,7 +116,9 @@ func TestTenantAppBindsWithoutAnInstanceApp(t *testing.T) {
 	provider := newProvider(t, config.QuickBooksConfig{})
 	conn, err := provider.Bind(tenantApp(accountingsync.AppEnvironmentProduction))
 	require.NoError(t, err)
-	raw, err := conn.AuthorizeURL(accountingsyncports.AccountingAuthorizeRequest{State: "state-2"})
+	raw, err := conn.AuthorizeURL(
+		accountingconnectorports.AccountingAuthorizeRequest{State: "state-2"},
+	)
 	require.NoError(t, err)
 	assert.Contains(t, raw, "client_id=tenant-id")
 }
@@ -160,10 +168,13 @@ func TestWithoutARedirectAddressOAuthIsAConfigurationFailure(t *testing.T) {
 	assert.Empty(t, provider.RedirectURL())
 	conn, err := provider.Bind(tenantApp(accountingsync.AppEnvironmentSandbox))
 	require.NoError(t, err)
-	_, err = conn.AuthorizeURL(accountingsyncports.AccountingAuthorizeRequest{State: "state"})
+	_, err = conn.AuthorizeURL(accountingconnectorports.AccountingAuthorizeRequest{State: "state"})
 	require.Error(t, err)
 	assert.Equal(t, accountingsync.ErrorCategoryConfiguration, conn.ClassifyError(err))
-	_, err = conn.ExchangeCode(t.Context(), &accountingsyncports.AccountingCodeExchange{Code: "code"})
+	_, err = conn.ExchangeCode(
+		t.Context(),
+		&accountingconnectorports.AccountingCodeExchange{Code: "code"},
+	)
 	require.Error(t, err)
 	assert.Equal(t, accountingsync.ErrorCategoryConfiguration, conn.ClassifyError(err))
 }
@@ -207,7 +218,7 @@ func TestVerifyAppRejectsKeysTheProviderRefuses(t *testing.T) {
 	t.Parallel()
 
 	err := verifyAppAgainst(t, http.StatusUnauthorized, `{"error":"invalid_client"}`)
-	require.ErrorIs(t, err, accountingsyncports.ErrAccountingAppRejected)
+	require.ErrorIs(t, err, accountingconnectorports.ErrAccountingAppRejected)
 }
 
 func TestVerifyAppPassesOnOtherFailures(t *testing.T) {
@@ -215,7 +226,7 @@ func TestVerifyAppPassesOnOtherFailures(t *testing.T) {
 
 	err := verifyAppAgainst(t, http.StatusBadGateway, `{}`)
 	require.Error(t, err)
-	assert.NotErrorIs(t, err, accountingsyncports.ErrAccountingAppRejected)
+	assert.NotErrorIs(t, err, accountingconnectorports.ErrAccountingAppRejected)
 }
 
 func TestVerifyWebhookUsesTheBoundAppsVerifier(t *testing.T) {
@@ -239,9 +250,17 @@ func TestCompanyFactsCombinesInfoAndPreferences(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case "/v3/company/123/companyinfo/123":
-			_, _ = w.Write([]byte(`{"CompanyInfo":{"CompanyName":"Acme","LegalName":"Acme LLC","Country":"US"}}`))
+			_, _ = w.Write(
+				[]byte(
+					`{"CompanyInfo":{"CompanyName":"Acme","LegalName":"Acme LLC","Country":"US"}}`,
+				),
+			)
 		case "/v3/company/123/preferences":
-			_, _ = w.Write([]byte(`{"Preferences":{"CurrencyPrefs":{"MultiCurrencyEnabled":true,"HomeCurrency":{"value":"cad"}},"AccountingInfoPrefs":{"BookCloseDate":"2026-06-30","FirstMonthOfFiscalYear":"July"}}}`))
+			_, _ = w.Write(
+				[]byte(
+					`{"Preferences":{"CurrencyPrefs":{"MultiCurrencyEnabled":true,"HomeCurrency":{"value":"cad"}},"AccountingInfoPrefs":{"BookCloseDate":"2026-06-30","FirstMonthOfFiscalYear":"July"}}}`,
+				),
+			)
 		default:
 			w.WriteHeader(http.StatusNotFound)
 		}
@@ -276,14 +295,38 @@ func TestClassifyError(t *testing.T) {
 		want accountingsync.ErrorCategory
 	}{
 		{"nil", nil, ""},
-		{"revoked", &quickbooks.OAuthError{StatusCode: 400, Code: "invalid_grant"}, accountingsync.ErrorCategoryRevoked},
-		{"unauthorized", &quickbooks.FaultError{StatusCode: 401}, accountingsync.ErrorCategoryUnauthorized},
-		{"forbidden", &quickbooks.FaultError{StatusCode: 403}, accountingsync.ErrorCategoryUnauthorized},
-		{"rate limited", &quickbooks.FaultError{StatusCode: 429}, accountingsync.ErrorCategoryRateLimited},
+		{
+			"revoked",
+			&quickbooks.OAuthError{StatusCode: 400, Code: "invalid_grant"},
+			accountingsync.ErrorCategoryRevoked,
+		},
+		{
+			"unauthorized",
+			&quickbooks.FaultError{StatusCode: 401},
+			accountingsync.ErrorCategoryUnauthorized,
+		},
+		{
+			"forbidden",
+			&quickbooks.FaultError{StatusCode: 403},
+			accountingsync.ErrorCategoryUnauthorized,
+		},
+		{
+			"rate limited",
+			&quickbooks.FaultError{StatusCode: 429},
+			accountingsync.ErrorCategoryRateLimited,
+		},
 		{"server", &quickbooks.FaultError{StatusCode: 503}, accountingsync.ErrorCategoryTransient},
-		{"transport", &restx.TransportError{Err: errors.New("reset")}, accountingsync.ErrorCategoryTransient},
+		{
+			"transport",
+			&restx.TransportError{Err: errors.New("reset")},
+			accountingsync.ErrorCategoryTransient,
+		},
 		{"deadline", context.DeadlineExceeded, accountingsync.ErrorCategoryTransient},
-		{"validation", &quickbooks.FaultError{StatusCode: 400}, accountingsync.ErrorCategoryUnknown},
+		{
+			"validation",
+			&quickbooks.FaultError{StatusCode: 400},
+			accountingsync.ErrorCategoryUnknown,
+		},
 	}
 	for _, tc := range cases {
 		assert.Equal(t, tc.want, conn.ClassifyError(tc.err), tc.name)

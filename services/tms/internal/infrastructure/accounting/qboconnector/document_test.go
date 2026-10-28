@@ -11,7 +11,7 @@ import (
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/shared/quickbooks"
 	"github.com/emoss08/trenova/shared/restx"
 	"github.com/shopspring/decimal"
@@ -83,12 +83,12 @@ func documentConnector(t *testing.T, fake *fakeQBO) *Connector {
 	return conn
 }
 
-func auth() accountingsyncports.AccountingDocumentAuth {
-	return accountingsyncports.AccountingDocumentAuth{RealmID: "123", AccessToken: "token"}
+func auth() accountingconnectorports.AccountingDocumentAuth {
+	return accountingconnectorports.AccountingDocumentAuth{RealmID: "123", AccessToken: "token"}
 }
 
-func shortPaidPayment() *accountingsyncports.AccountingPaymentDocument {
-	return &accountingsyncports.AccountingPaymentDocument{
+func shortPaidPayment() *accountingconnectorports.AccountingPaymentDocument {
+	return &accountingconnectorports.AccountingPaymentDocument{
 		Auth:                     auth(),
 		RequestID:                docRequestID,
 		CustomerExternalID:       "58",
@@ -98,7 +98,7 @@ func shortPaidPayment() *accountingsyncports.AccountingPaymentDocument {
 		ReferenceNumber:          "ACH-1",
 		TotalAmount:              decimal.NewFromInt(975),
 		ShortPayItemExternalID:   "77",
-		Applications: []accountingsyncports.AccountingPaymentApplication{
+		Applications: []accountingconnectorports.AccountingPaymentApplication{
 			{
 				InvoiceExternalID: "145",
 				InvoiceNumber:     "INV-1001",
@@ -136,7 +136,13 @@ func TestSavePaymentWritesTheShortPayCreditThenLinksItInThePayment(t *testing.T)
 	assert.Equal(t, docRequestID, writes[1].RequestID)
 	lines := writes[1].Body["Line"].([]any)
 	require.Len(t, lines, 2)
-	assert.InDelta(t, 1000, lines[0].(map[string]any)["Amount"], 0.001, "the invoice is settled in full")
+	assert.InDelta(
+		t,
+		1000,
+		lines[0].(map[string]any)["Amount"],
+		0.001,
+		"the invoice is settled in full",
+	)
 	assert.InDelta(t, 25, lines[1].(map[string]any)["Amount"], 0.001)
 	assert.InDelta(t, 975, writes[1].Body["TotalAmt"], 0.001)
 }
@@ -228,22 +234,25 @@ func TestAdjustmentCreditMemoIsAppliedToItsInvoice(t *testing.T) {
 	}}
 	conn := documentConnector(t, fake)
 
-	result, err := conn.CreateSalesDocument(t.Context(), &accountingsyncports.AccountingSalesDocument{
-		Auth:               auth(),
-		RequestID:          docRequestID,
-		Kind:               accountingsync.SyncObjectCreditMemo,
-		CustomerExternalID: "58",
-		DocNumber:          "CM-1",
-		TxnDate:            "2026-09-22",
-		DueDate:            "2026-10-22",
-		TermExternalID:     "3",
-		Lines: []accountingsyncports.AccountingDocumentLine{{
-			ItemExternalID: "21",
-			Amount:         decimal.NewFromInt(400),
-		}},
-		ApplyToExternalID: "145",
-		ApplyAmount:       decimal.NewFromInt(400),
-	})
+	result, err := conn.CreateSalesDocument(
+		t.Context(),
+		&accountingconnectorports.AccountingSalesDocument{
+			Auth:               auth(),
+			RequestID:          docRequestID,
+			Kind:               accountingsync.SyncObjectCreditMemo,
+			CustomerExternalID: "58",
+			DocNumber:          "CM-1",
+			TxnDate:            "2026-09-22",
+			DueDate:            "2026-10-22",
+			TermExternalID:     "3",
+			Lines: []accountingconnectorports.AccountingDocumentLine{{
+				ItemExternalID: "21",
+				Amount:         decimal.NewFromInt(400),
+			}},
+			ApplyToExternalID: "145",
+			ApplyAmount:       decimal.NewFromInt(400),
+		},
+	)
 	require.NoError(t, err)
 	assert.Equal(t, "146", result.ExternalID)
 	assert.Equal(t, "148", result.Refs[accountingsync.ExternalRefApplication])
@@ -264,18 +273,21 @@ func TestDebitMemoIsSentAsAnInvoiceThatSaysSo(t *testing.T) {
 	}}
 	conn := documentConnector(t, fake)
 
-	_, err := conn.CreateSalesDocument(t.Context(), &accountingsyncports.AccountingSalesDocument{
-		Auth:               auth(),
-		RequestID:          docRequestID,
-		Kind:               accountingsync.SyncObjectDebitMemo,
-		CustomerExternalID: "58",
-		DocNumber:          "DM-1",
-		PrivateNote:        "Rebills INV-1001",
-		Lines: []accountingsyncports.AccountingDocumentLine{{
-			ItemExternalID: "21",
-			Amount:         decimal.NewFromInt(80),
-		}},
-	})
+	_, err := conn.CreateSalesDocument(
+		t.Context(),
+		&accountingconnectorports.AccountingSalesDocument{
+			Auth:               auth(),
+			RequestID:          docRequestID,
+			Kind:               accountingsync.SyncObjectDebitMemo,
+			CustomerExternalID: "58",
+			DocNumber:          "DM-1",
+			PrivateNote:        "Rebills INV-1001",
+			Lines: []accountingconnectorports.AccountingDocumentLine{{
+				ItemExternalID: "21",
+				Amount:         decimal.NewFromInt(80),
+			}},
+		},
+	)
 	require.NoError(t, err)
 	writes := fake.writes()
 	require.Len(t, writes, 1)
@@ -298,7 +310,7 @@ func TestVoidPaymentAlsoRemovesItsShortPayCredits(t *testing.T) {
 	}}
 	conn := documentConnector(t, fake)
 
-	_, err := conn.VoidPayment(t.Context(), &accountingsyncports.AccountingDocumentRef{
+	_, err := conn.VoidPayment(t.Context(), &accountingconnectorports.AccountingDocumentRef{
 		Auth:       auth(),
 		RequestID:  docRequestID,
 		Kind:       accountingsync.SyncObjectCustomerPayment,
@@ -323,7 +335,9 @@ func TestClassifyDocumentErrorNamesTheCategory(t *testing.T) {
 		return &quickbooks.FaultError{
 			StatusCode: status,
 			Type:       "ValidationFault",
-			Errors:     []quickbooks.FaultDetail{{Message: "m", Detail: "detail " + code, Code: code}},
+			Errors: []quickbooks.FaultDetail{
+				{Message: "m", Detail: "detail " + code, Code: code},
+			},
 		}
 	}
 
@@ -333,7 +347,10 @@ func TestClassifyDocumentErrorNamesTheCategory(t *testing.T) {
 	}{
 		{err: ErrNotConfigured, category: accountingsync.SyncErrorConfiguration},
 		{err: fault(http.StatusUnauthorized, "3200"), category: accountingsync.SyncErrorAuth},
-		{err: fault(http.StatusTooManyRequests, "003001"), category: accountingsync.SyncErrorRateLimited},
+		{
+			err:      fault(http.StatusTooManyRequests, "003001"),
+			category: accountingsync.SyncErrorRateLimited,
+		},
 		{err: fault(http.StatusBadRequest, "5010"), category: accountingsync.SyncErrorTransient},
 		{err: fault(http.StatusBadRequest, "6140"), category: accountingsync.SyncErrorDuplicate},
 		{err: fault(http.StatusBadRequest, "6240"), category: accountingsync.SyncErrorDuplicate},
@@ -342,7 +359,10 @@ func TestClassifyDocumentErrorNamesTheCategory(t *testing.T) {
 		{err: fault(http.StatusBadRequest, "2500"), category: accountingsync.SyncErrorMapping},
 		{err: fault(http.StatusBadRequest, "6000"), category: accountingsync.SyncErrorValidation},
 		{err: quickbooks.ErrDocNumberTooLong, category: accountingsync.SyncErrorValidation},
-		{err: fault(http.StatusInternalServerError, "10000"), category: accountingsync.SyncErrorTransient},
+		{
+			err:      fault(http.StatusInternalServerError, "10000"),
+			category: accountingsync.SyncErrorTransient,
+		},
 	}
 	for _, tt := range tests {
 		classified := conn.ClassifyDocumentError(tt.err)
@@ -361,22 +381,59 @@ func TestDocumentURLPointsAtTheRightScreen(t *testing.T) {
 	t.Parallel()
 
 	conn := newConnector(t, config.QuickBooksConfig{Environment: "sandbox"})
-	assert.Equal(t,
+	assert.Equal(
+		t,
 		"https://app.sandbox.qbo.intuit.com/app/invoice?txnId=145",
-		conn.DocumentURL(accountingsyncports.AccountingDocumentAuth{}, accountingsyncports.AccountingDocumentLink{Kind: accountingsync.SyncObjectDebitMemo, ExternalID: "145"}),
+		conn.DocumentURL(
+			accountingconnectorports.AccountingDocumentAuth{},
+			accountingconnectorports.AccountingDocumentLink{
+				Kind:       accountingsync.SyncObjectDebitMemo,
+				ExternalID: "145",
+			},
+		),
 	)
-	assert.Equal(t,
+	assert.Equal(
+		t,
 		"https://app.sandbox.qbo.intuit.com/app/recvpayment?txnId=148",
-		conn.DocumentURL(accountingsyncports.AccountingDocumentAuth{}, accountingsyncports.AccountingDocumentLink{Kind: accountingsync.SyncObjectCreditApplication, ExternalID: "148"}),
+		conn.DocumentURL(
+			accountingconnectorports.AccountingDocumentAuth{},
+			accountingconnectorports.AccountingDocumentLink{
+				Kind:       accountingsync.SyncObjectCreditApplication,
+				ExternalID: "148",
+			},
+		),
 	)
-	assert.Equal(t,
+	assert.Equal(
+		t,
 		"https://app.sandbox.qbo.intuit.com/app/customerdetail?nameId=58",
-		conn.DocumentURL(accountingsyncports.AccountingDocumentAuth{}, accountingsyncports.AccountingDocumentLink{Kind: accountingsync.SyncObjectCustomer, ExternalID: "58"}),
+		conn.DocumentURL(
+			accountingconnectorports.AccountingDocumentAuth{},
+			accountingconnectorports.AccountingDocumentLink{
+				Kind:       accountingsync.SyncObjectCustomer,
+				ExternalID: "58",
+			},
+		),
 	)
-	assert.Equal(t,
+	assert.Equal(
+		t,
 		"https://app.sandbox.qbo.intuit.com/app/journal?txnId=212",
-		conn.DocumentURL(accountingsyncports.AccountingDocumentAuth{}, accountingsyncports.AccountingDocumentLink{Kind: accountingsync.SyncObjectJournalSummary, ExternalID: "212"}),
+		conn.DocumentURL(
+			accountingconnectorports.AccountingDocumentAuth{},
+			accountingconnectorports.AccountingDocumentLink{
+				Kind:       accountingsync.SyncObjectJournalSummary,
+				ExternalID: "212",
+			},
+		),
 	)
-	assert.Empty(t, conn.DocumentURL(accountingsyncports.AccountingDocumentAuth{}, accountingsyncports.AccountingDocumentLink{Kind: accountingsync.SyncObjectInvoice, ExternalID: " "}))
+	assert.Empty(
+		t,
+		conn.DocumentURL(
+			accountingconnectorports.AccountingDocumentAuth{},
+			accountingconnectorports.AccountingDocumentLink{
+				Kind:       accountingsync.SyncObjectInvoice,
+				ExternalID: " ",
+			},
+		),
+	)
 	assert.Equal(t, quickbooks.MaxDocNumberLength, conn.DocumentLimits().MaxDocNumberLength)
 }

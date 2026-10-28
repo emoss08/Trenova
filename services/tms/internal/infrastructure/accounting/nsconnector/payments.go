@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/shared/netsuite"
 	"github.com/shopspring/decimal"
 )
@@ -24,8 +24,8 @@ var errApplyTarget = errors.New("netsuite: an applied amount needs the document 
 
 func (c *Connector) SavePayment(
 	ctx context.Context,
-	doc *accountingsyncports.AccountingPaymentDocument,
-) (*accountingsyncports.AccountingDocumentResult, error) {
+	doc *accountingconnectorports.AccountingPaymentDocument,
+) (*accountingconnectorports.AccountingDocumentResult, error) {
 	cash, err := cashApplications(doc)
 	if err != nil {
 		return nil, err
@@ -74,7 +74,9 @@ func (c *Connector) SavePayment(
 	return result, err
 }
 
-func cashApplications(doc *accountingsyncports.AccountingPaymentDocument) ([]applyLine, error) {
+func cashApplications(
+	doc *accountingconnectorports.AccountingPaymentDocument,
+) ([]applyLine, error) {
 	if !doc.TotalAmount.IsPositive() {
 		return nil, errAmountInvalid
 	}
@@ -100,7 +102,7 @@ func cashApplications(doc *accountingsyncports.AccountingPaymentDocument) ([]app
 }
 
 func finishPayment(
-	result *accountingsyncports.AccountingDocumentResult,
+	result *accountingconnectorports.AccountingDocumentResult,
 	saved *written,
 	docType string,
 ) {
@@ -158,10 +160,10 @@ func savePaymentRecord(ctx context.Context, s *session, p *paymentSave) (*writte
 
 type shortPayWrite struct {
 	session  *session
-	doc      *accountingsyncports.AccountingPaymentDocument
+	doc      *accountingconnectorports.AccountingPaymentDocument
 	idx      int
 	currency currencyFields
-	result   *accountingsyncports.AccountingDocumentResult
+	result   *accountingconnectorports.AccountingDocumentResult
 }
 
 func shortPayRefKey(invoiceID string) string {
@@ -215,8 +217,8 @@ func shortPay(ctx context.Context, w *shortPayWrite) error {
 
 func (c *Connector) VoidPayment(
 	ctx context.Context,
-	ref *accountingsyncports.AccountingDocumentRef,
-) (*accountingsyncports.AccountingDocumentResult, error) {
+	ref *accountingconnectorports.AccountingDocumentRef,
+) (*accountingconnectorports.AccountingDocumentResult, error) {
 	s, err := c.open(ref.Auth)
 	if err != nil {
 		return nil, err
@@ -258,8 +260,8 @@ func (c *Connector) VoidPayment(
 
 func (c *Connector) CreateCreditApplication(
 	ctx context.Context,
-	doc *accountingsyncports.AccountingCreditApplicationDocument,
-) (*accountingsyncports.AccountingDocumentResult, error) {
+	doc *accountingconnectorports.AccountingCreditApplicationDocument,
+) (*accountingconnectorports.AccountingDocumentResult, error) {
 	if !doc.Amount.IsPositive() {
 		return nil, errAmountInvalid
 	}
@@ -284,7 +286,7 @@ func (c *Connector) CreateCreditApplication(
 	if saved == nil {
 		return nil, err
 	}
-	return &accountingsyncports.AccountingDocumentResult{
+	return &accountingconnectorports.AccountingDocumentResult{
 		ExternalID: memo,
 		DocNumber:  saved.number,
 		Refs: map[string]string{
@@ -296,8 +298,8 @@ func (c *Connector) CreateCreditApplication(
 
 func (c *Connector) VoidCreditApplication(
 	ctx context.Context,
-	ref *accountingsyncports.AccountingDocumentRef,
-) (*accountingsyncports.AccountingDocumentResult, error) {
+	ref *accountingconnectorports.AccountingDocumentRef,
+) (*accountingconnectorports.AccountingDocumentResult, error) {
 	memo := strings.TrimSpace(ref.Refs[accountingsync.ExternalRefDocument])
 	if memo == "" {
 		memo = strings.TrimSpace(ref.ExternalID)

@@ -6,11 +6,12 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -18,19 +19,19 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func salesDocs(t *testing.T, h *harness) []*accountingsyncports.AccountingSalesDocument {
+func salesDocs(t *testing.T, h *harness) []*accountingconnectorports.AccountingSalesDocument {
 	t.Helper()
 	calls := h.writer.callsTo("CreateSalesDocument")
-	out := make([]*accountingsyncports.AccountingSalesDocument, 0, len(calls))
+	out := make([]*accountingconnectorports.AccountingSalesDocument, 0, len(calls))
 	for _, call := range calls {
-		doc, ok := call.doc.(*accountingsyncports.AccountingSalesDocument)
+		doc, ok := call.doc.(*accountingconnectorports.AccountingSalesDocument)
 		require.True(t, ok)
 		out = append(out, doc)
 	}
 	return out
 }
 
-func onlySalesDoc(t *testing.T, h *harness) *accountingsyncports.AccountingSalesDocument {
+func onlySalesDoc(t *testing.T, h *harness) *accountingconnectorports.AccountingSalesDocument {
 	t.Helper()
 	docs := salesDocs(t, h)
 	require.Len(t, docs, 1)
@@ -63,7 +64,11 @@ func TestInvoiceDocumentCarriesExternalIDsFromConfirmedMappings(t *testing.T) {
 	zero := freightLine("0")
 	inv := h.postedInvoice(customerID, invoiceSpec{
 		number: "INV-1001",
-		lines:  []*invoice.InvoiceLine{freightLine("1500.00"), chargeLine(chargeID, "200.00"), zero},
+		lines: []*invoice.InvoiceLine{
+			freightLine("1500.00"),
+			chargeLine(chargeID, "200.00"),
+			zero,
+		},
 	})
 	record := h.enqueueInvoice(t, inv)
 
@@ -125,13 +130,16 @@ func TestSyncedPayloadNeverCarriesTheAccessToken(t *testing.T) {
 func TestPayloadHashDoesNotDependOnTheCredentials(t *testing.T) {
 	t.Parallel()
 
-	doc := func(token string) *accountingsyncports.AccountingSalesDocument {
-		return &accountingsyncports.AccountingSalesDocument{
-			Auth:      accountingsyncports.AccountingDocumentAuth{RealmID: "1", AccessToken: token},
+	doc := func(token string) *accountingconnectorports.AccountingSalesDocument {
+		return &accountingconnectorports.AccountingSalesDocument{
+			Auth: accountingconnectorports.AccountingDocumentAuth{
+				RealmID:     "1",
+				AccessToken: token,
+			},
 			RequestID: "trn-1",
 			Kind:      accountingsync.SyncObjectInvoice,
 			DocNumber: "INV-1",
-			Lines: []accountingsyncports.AccountingDocumentLine{{
+			Lines: []accountingconnectorports.AccountingDocumentLine{{
 				ItemExternalID: "qb-item",
 				Amount:         decimal.RequireFromString("10.50"),
 			}},
@@ -194,7 +202,10 @@ func TestUnmappedCustomerQueuesACustomerCreateAndTheDocumentWaits(t *testing.T) 
 	h.updateConnection(func(conn *accountingsync.AccountingConnection) { conn.AutoSync = false })
 	customerID := pulid.MustNew("cus_")
 	customerRow := h.mappings.set(
-		h.conn, customerTarget(customerID, "Acme Freight"), accountingsync.MappingStateUnmatched, "",
+		h.conn,
+		customerTarget(customerID, "Acme Freight"),
+		accountingsync.MappingStateUnmatched,
+		"",
 	)
 	h.confirm(freightTarget(), "qb-item-freight")
 	inv := h.postedInvoice(customerID, invoiceSpec{})
@@ -210,7 +221,12 @@ func TestUnmappedCustomerQueuesACustomerCreateAndTheDocumentWaits(t *testing.T) 
 
 	assert.Equal(t, 1, first.Waiting)
 	assert.Empty(t, h.writer.callsTo("CreateSalesDocument"))
-	dependency := h.only(t, accountingsync.SyncObjectCustomer, customerID, accountingsync.SyncOperationCreate)
+	dependency := h.only(
+		t,
+		accountingsync.SyncObjectCustomer,
+		customerID,
+		accountingsync.SyncOperationCreate,
+	)
 	assert.Equal(t, accountingsync.SyncSourceDependencyOf, dependency.SourceEvent)
 	assert.Equal(t, accountingsync.SyncStatusQueued, dependency.Status,
 		"a dependency is never held for approval")
@@ -245,7 +261,12 @@ func TestDuplicateCustomerNameBlocksAsMappingAndRequeuesOnceMapped(t *testing.T)
 
 	h := newHarness(t)
 	customerID := pulid.MustNew("cus_")
-	h.mappings.set(h.conn, customerTarget(customerID, "Acme Freight"), accountingsync.MappingStateUnmatched, "")
+	h.mappings.set(
+		h.conn,
+		customerTarget(customerID, "Acme Freight"),
+		accountingsync.MappingStateUnmatched,
+		"",
+	)
 	h.confirm(freightTarget(), "qb-item-freight")
 	h.mappings.createErr = errortypes.NewBusinessError(
 		"{0} already exists in the accounting system; map {1} to it instead",
@@ -257,7 +278,12 @@ func TestDuplicateCustomerNameBlocksAsMappingAndRequeuesOnceMapped(t *testing.T)
 	h.drain(t)
 	h.drain(t)
 
-	dependency := h.only(t, accountingsync.SyncObjectCustomer, customerID, accountingsync.SyncOperationCreate)
+	dependency := h.only(
+		t,
+		accountingsync.SyncObjectCustomer,
+		customerID,
+		accountingsync.SyncOperationCreate,
+	)
 	assert.Equal(t, accountingsync.SyncStatusBlocked, dependency.Status)
 	assert.Equal(t, accountingsync.SyncErrorMapping, dependency.ErrorCategory,
 		"a duplicate name is a mapping problem: map the customer to the existing record")
@@ -282,7 +308,12 @@ func TestDuplicateCustomerNameBlocksAsMappingAndRequeuesOnceMapped(t *testing.T)
 		ErrorCategories: []accountingsync.SyncErrorCategory{accountingsync.SyncErrorMapping},
 	})
 	require.NoError(t, err)
-	assert.Equal(t, int64(1), requeued, "confirming the mapping re-queues the Mapping-blocked customer")
+	assert.Equal(
+		t,
+		int64(1),
+		requeued,
+		"confirming the mapping re-queues the Mapping-blocked customer",
+	)
 
 	h.drain(t)
 	h.records.makeDue(record.ID)
@@ -343,7 +374,10 @@ func TestDocumentDatedInAClosedPeriodBlocks(t *testing.T) {
 	customerID, _ := h.mappedCustomer("Acme")
 	h.confirm(freightTarget(), "qb-item-freight")
 	onClose := h.enqueueInvoice(t, h.postedInvoice(customerID, invoiceSpec{date: aprilTenth}))
-	afterClose := h.enqueueInvoice(t, h.postedInvoice(customerID, invoiceSpec{date: aprilTenth + 86400}))
+	afterClose := h.enqueueInvoice(
+		t,
+		h.postedInvoice(customerID, invoiceSpec{date: aprilTenth + 86400}),
+	)
 
 	h.drain(t)
 
@@ -369,7 +403,7 @@ func TestLongDocumentNumberIsLeftForTheProvider(t *testing.T) {
 
 	docs := salesDocs(t, h)
 	require.Len(t, docs, 2)
-	byNote := map[string]*accountingsyncports.AccountingSalesDocument{}
+	byNote := map[string]*accountingconnectorports.AccountingSalesDocument{}
 	for _, doc := range docs {
 		if doc.DocNumber == "" {
 			byNote["long"] = doc
@@ -420,7 +454,10 @@ func TestDebitMemoIsSentAsItsOwnKind(t *testing.T) {
 	h := newHarness(t)
 	customerID, _ := h.mappedCustomer("Acme")
 	h.confirm(freightTarget(), "qb-item-freight")
-	memo := h.postedInvoice(customerID, invoiceSpec{number: "DM-1", billType: billingqueue.BillTypeDebitMemo})
+	memo := h.postedInvoice(
+		customerID,
+		invoiceSpec{number: "DM-1", billType: billingqueue.BillTypeDebitMemo},
+	)
 	record := h.enqueueInvoice(t, memo)
 
 	h.drain(t)
@@ -613,12 +650,12 @@ func (h *harness) enqueuePayment(
 	return found[len(found)-1]
 }
 
-func paymentDocs(t *testing.T, h *harness) []*accountingsyncports.AccountingPaymentDocument {
+func paymentDocs(t *testing.T, h *harness) []*accountingconnectorports.AccountingPaymentDocument {
 	t.Helper()
 	calls := h.writer.callsTo("SavePayment")
-	out := make([]*accountingsyncports.AccountingPaymentDocument, 0, len(calls))
+	out := make([]*accountingconnectorports.AccountingPaymentDocument, 0, len(calls))
 	for _, call := range calls {
-		doc, ok := call.doc.(*accountingsyncports.AccountingPaymentDocument)
+		doc, ok := call.doc.(*accountingconnectorports.AccountingPaymentDocument)
 		require.True(t, ok)
 		out = append(out, doc)
 	}
@@ -689,7 +726,11 @@ func TestShortPayNeedsTheWriteOffItem(t *testing.T) {
 	blocked := h.records.get(record.ID)
 	assert.Equal(t, accountingsync.SyncStatusBlocked, blocked.Status)
 	assert.Equal(t, accountingsync.SyncErrorMapping, blocked.ErrorCategory)
-	assert.Equal(t, "Map The short-pay write-off item to a QuickBooks Online item", blocked.Resolution)
+	assert.Equal(
+		t,
+		"Map The short-pay write-off item to a QuickBooks Online item",
+		blocked.Resolution,
+	)
 
 	h.confirm(mappingTarget{
 		TargetType: accountingsync.TargetItemRole,
@@ -740,7 +781,10 @@ func TestUnmappedPaymentMethodAndDepositAccountBlock(t *testing.T) {
 					Key:        accountingsync.AccountRoleDeposit,
 				}, "qb-acct-undeposited")
 			}
-			payment := h.postedPayment(customerID, paymentSpec{method: customerpayment.MethodWire, amountMinor: 100})
+			payment := h.postedPayment(
+				customerID,
+				paymentSpec{method: customerpayment.MethodWire, amountMinor: 100},
+			)
 			record := h.enqueuePayment(t, payment, accountingsync.SyncOperationCreate)
 
 			h.drain(t)
@@ -762,15 +806,22 @@ func TestPaymentWaitsForTheInvoicesItLinks(t *testing.T) {
 	h.mapPaymentAccounts(customerpayment.MethodCheck)
 	inv := h.postedInvoice(customerID, invoiceSpec{number: "INV-1"})
 	payment := h.postedPayment(customerID, paymentSpec{
-		amountMinor:  150000,
-		applications: []*customerpayment.Application{{InvoiceID: inv.ID, AppliedAmountMinor: 150000}},
+		amountMinor: 150000,
+		applications: []*customerpayment.Application{
+			{InvoiceID: inv.ID, AppliedAmountMinor: 150000},
+		},
 	})
 	record := h.enqueuePayment(t, payment, accountingsync.SyncOperationCreate)
 
 	result := h.drain(t)
 
 	assert.Equal(t, 1, result.Waiting)
-	invoiceRecord := h.only(t, accountingsync.SyncObjectInvoice, inv.ID, accountingsync.SyncOperationCreate)
+	invoiceRecord := h.only(
+		t,
+		accountingsync.SyncObjectInvoice,
+		inv.ID,
+		accountingsync.SyncOperationCreate,
+	)
 	assert.Equal(t, accountingsync.SyncSourceDependencyOf, invoiceRecord.SourceEvent,
 		"a linked invoice that never passed an enqueue point is queued as a dependency")
 	assert.Equal(t, invoiceRecord.ID, h.records.get(record.ID).DependsOnRecordID)
@@ -788,8 +839,10 @@ func TestPaymentLinkingABlockedInvoiceIsNotSent(t *testing.T) {
 	h.drain(t)
 	require.Equal(t, accountingsync.SyncStatusBlocked, h.records.get(invoiceRecord.ID).Status)
 	payment := h.postedPayment(customerID, paymentSpec{
-		amountMinor:  150000,
-		applications: []*customerpayment.Application{{InvoiceID: inv.ID, AppliedAmountMinor: 150000}},
+		amountMinor: 150000,
+		applications: []*customerpayment.Application{
+			{InvoiceID: inv.ID, AppliedAmountMinor: 150000},
+		},
 	})
 	record := h.enqueuePayment(t, payment, accountingsync.SyncOperationCreate)
 
@@ -841,7 +894,9 @@ func TestPaymentVoidUsesTheSyncedPayment(t *testing.T) {
 	h.records.put(created)
 	payment.Version = 2
 	staleUpdate := NewRecordFor(h.conn, accountingsyncports.PaymentSyncRequest(
-		payment, accountingsync.SyncOperationUpdate, accountingsync.SyncSourceCustomerPaymentApplied,
+		payment,
+		accountingsync.SyncOperationUpdate,
+		accountingsync.SyncSourceCustomerPaymentApplied,
 	), time.Now().Add(time.Hour).Unix())
 	h.records.put(staleUpdate)
 	void := h.enqueuePayment(t, payment, accountingsync.SyncOperationVoid)
@@ -850,7 +905,7 @@ func TestPaymentVoidUsesTheSyncedPayment(t *testing.T) {
 
 	calls := h.writer.callsTo("VoidPayment")
 	require.Len(t, calls, 1)
-	ref, ok := calls[0].doc.(*accountingsyncports.AccountingDocumentRef)
+	ref, ok := calls[0].doc.(*accountingconnectorports.AccountingDocumentRef)
 	require.True(t, ok)
 	assert.Equal(t, "qb-pay-1", ref.ExternalID)
 	assert.Equal(t, accountingsync.SyncObjectCustomerPayment, ref.Kind)
@@ -905,7 +960,7 @@ func TestAPaymentLinkedAloneIsVoidedNormally(t *testing.T) {
 
 	calls := h.writer.callsTo("VoidPayment")
 	require.Len(t, calls, 1)
-	ref, ok := calls[0].doc.(*accountingsyncports.AccountingDocumentRef)
+	ref, ok := calls[0].doc.(*accountingconnectorports.AccountingDocumentRef)
 	require.True(t, ok)
 	assert.Equal(t, "qb-pay-301", ref.ExternalID)
 }
@@ -919,7 +974,10 @@ func TestVoidOfAPaymentThatNeverReachedTheBooksWithdrawsIt(t *testing.T) {
 	created := NewRecordFor(h.conn, accountingsyncports.PaymentSyncRequest(
 		payment, accountingsync.SyncOperationCreate, accountingsync.SyncSourceCustomerPaymentPosted,
 	), mayTenth)
-	created.MarkFailed(&accountingsync.SyncError{Category: accountingsync.SyncErrorMapping}, mayTenth)
+	created.MarkFailed(
+		&accountingsync.SyncError{Category: accountingsync.SyncErrorMapping},
+		mayTenth,
+	)
 	h.records.put(created)
 	void := h.enqueuePayment(t, payment, accountingsync.SyncOperationVoid)
 
@@ -959,15 +1017,21 @@ func TestCreditApplicationLinksTheInvoiceAndTheCreditMemo(t *testing.T) {
 	h.payments.mu.Lock()
 	h.payments.applications[app.ID] = app
 	h.payments.mu.Unlock()
-	require.NoError(t, h.enqueuer.Enqueue(t.Context(), accountingsyncports.CreditApplicationSyncRequest(
-		app, memo.Number, accountingsync.SyncOperationCreate, accountingsync.SyncSourceCreditMemoApplied,
-	)))
+	require.NoError(
+		t,
+		h.enqueuer.Enqueue(t.Context(), accountingsyncports.CreditApplicationSyncRequest(
+			app,
+			memo.Number,
+			accountingsync.SyncOperationCreate,
+			accountingsync.SyncSourceCreditMemoApplied,
+		)),
+	)
 
 	h.drain(t)
 
 	calls := h.writer.callsTo("CreateCreditApplication")
 	require.Len(t, calls, 1)
-	doc, ok := calls[0].doc.(*accountingsyncports.AccountingCreditApplicationDocument)
+	doc, ok := calls[0].doc.(*accountingconnectorports.AccountingCreditApplicationDocument)
 	require.True(t, ok)
 	assert.Equal(t, "qb-cust-Acme", doc.CustomerExternalID)
 	assert.Equal(t, "qb-inv-1", doc.InvoiceExternalID)
@@ -975,7 +1039,12 @@ func TestCreditApplicationLinksTheInvoiceAndTheCreditMemo(t *testing.T) {
 	assert.Equal(t, "2026-05-10", doc.TxnDate)
 	decimalEqual(t, "250", doc.Amount)
 	assert.Equal(t, "Applies CM-1 to INV-1", doc.PrivateNote)
-	record := h.only(t, accountingsync.SyncObjectCreditApplication, app.ID, accountingsync.SyncOperationCreate)
+	record := h.only(
+		t,
+		accountingsync.SyncObjectCreditApplication,
+		app.ID,
+		accountingsync.SyncOperationCreate,
+	)
 	assert.Equal(t, accountingsync.SyncStatusSynced, record.Status)
 	assert.Equal(t, "https://qbo.test/CreditApplication/"+record.ExternalID, record.ExternalURL)
 }
@@ -985,18 +1054,32 @@ func TestCustomerUpdatePushesThePartyToTheMappedRecord(t *testing.T) {
 
 	h := newHarness(t)
 	customerID, mapping := h.mappedCustomer("Acme")
-	h.mappings.parties[customerID] = &accountingsyncports.AccountingPartyDraft{DisplayName: "Acme", City: "Reno"}
-	require.NoError(t, h.enqueuer.Enqueue(t.Context(), accountingsyncports.CustomerSyncRequest(h.tenant, customerID, "Acme", 3)))
+	h.mappings.parties[customerID] = &accountingconnectorports.AccountingPartyDraft{
+		DisplayName: "Acme",
+		City:        "Reno",
+	}
+	require.NoError(
+		t,
+		h.enqueuer.Enqueue(
+			t.Context(),
+			accountingsyncports.CustomerSyncRequest(h.tenant, customerID, "Acme", 3),
+		),
+	)
 
 	h.drain(t)
 
 	calls := h.writer.callsTo("UpsertCustomer")
 	require.Len(t, calls, 1)
-	doc, ok := calls[0].doc.(*accountingsyncports.AccountingCustomerDocument)
+	doc, ok := calls[0].doc.(*accountingconnectorports.AccountingCustomerDocument)
 	require.True(t, ok)
 	assert.Equal(t, "qb-cust-Acme", doc.ExternalID)
 	assert.Equal(t, "Reno", doc.Party.City)
-	record := h.only(t, accountingsync.SyncObjectCustomer, customerID, accountingsync.SyncOperationUpdate)
+	record := h.only(
+		t,
+		accountingsync.SyncObjectCustomer,
+		customerID,
+		accountingsync.SyncOperationUpdate,
+	)
 	assert.Equal(t, record.RequestID, doc.RequestID)
 	assert.Equal(t, accountingsync.SyncStatusSynced, record.Status)
 	assert.Equal(t, []string{mapping.ID.String()}, record.MappingIDs)

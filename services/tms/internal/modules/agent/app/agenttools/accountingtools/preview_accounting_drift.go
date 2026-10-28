@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingdriftports"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -61,7 +61,7 @@ func driftFindingRecord(finding *accountingsync.AccountingDriftFinding) toolprev
 
 func applyDriftFix(
 	finding *accountingsync.AccountingDriftFinding,
-	fix *accountingsyncports.AccountingDriftFixPreview,
+	fix *accountingdriftports.AccountingDriftFixPreview,
 	actorID pulid.ID,
 	now int64,
 ) error {

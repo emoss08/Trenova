@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingpayablesports"
 	"github.com/emoss08/trenova/internal/modules/identity/app/exchangeratestamp"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -118,13 +118,13 @@ func (s *Service) stampPayment(
 
 func (s *Service) stampPayable(
 	sess *pushSession,
-	settlement *accountingsyncports.PayableSettlement,
+	settlement *accountingpayablesports.PayableSettlement,
 	paid bool,
 ) func(context.Context, decimal.Decimal, int64) error {
 	return func(ctx context.Context, rate decimal.Decimal, date int64) error {
 		return s.payables.StampExchangeRate(
 			ctx,
-			&accountingsyncports.StampPayableExchangeRateRequest{
+			&accountingpayablesports.StampPayableExchangeRateRequest{
 				TenantInfo: sess.tenant,
 				Kind:       settlement.Kind,
 				ID:         settlement.ID,

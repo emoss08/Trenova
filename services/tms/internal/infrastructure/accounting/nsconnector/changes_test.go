@@ -7,15 +7,15 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/shared/netsuite"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func changesRequest(cursor string) *accountingsyncports.ReadAccountingChangesRequest {
-	return &accountingsyncports.ReadAccountingChangesRequest{
+func changesRequest(cursor string) *accountingconnectorports.ReadAccountingChangesRequest {
+	return &accountingconnectorports.ReadAccountingChangesRequest{
 		Auth:         testAuth(),
 		Cursor:       cursor,
 		Now:          testNow,
@@ -69,7 +69,7 @@ func TestReadChangesReadsPaymentsBackWithTheirApplications(t *testing.T) {
 	require.Len(t, page.Payments, 1)
 	payment := page.Payments[0]
 	assert.Equal(t, accountingsync.InboundCustomerPayment, payment.Kind)
-	assert.Equal(t, accountingsyncports.AccountingChangeUpsert, payment.Operation)
+	assert.Equal(t, accountingconnectorports.AccountingChangeUpsert, payment.Operation)
 	assert.Equal(t, testPayment, payment.ExternalID)
 	assert.Equal(t, "PYMT-88", payment.Number)
 	assert.Equal(t, testCustomer, payment.PartyExternalID)
@@ -82,7 +82,7 @@ func TestReadChangesReadsPaymentsBackWithTheirApplications(t *testing.T) {
 	assert.Equal(t, testDeposit, payment.AccountExternalID)
 	assert.Equal(t, "ACH-5521", payment.ReferenceNumber)
 	assert.Equal(t, "Lee Ortega", payment.ModifiedBy)
-	assert.Equal(t, []accountingsyncports.AccountingInboundLine{
+	assert.Equal(t, []accountingconnectorports.AccountingInboundLine{
 		{
 			DocumentKind:       accountingsync.InboundDocInvoice,
 			DocumentExternalID: testInvoice,
@@ -101,13 +101,13 @@ func TestReadChangesReadsPaymentsBackWithTheirApplications(t *testing.T) {
 
 	require.Len(t, page.Documents, 2)
 	assert.Equal(t, testInvoice, page.Documents[0].ExternalID)
-	assert.Equal(t, accountingsyncports.AccountingChangeUpsert, page.Documents[0].Operation)
+	assert.Equal(t, accountingconnectorports.AccountingChangeUpsert, page.Documents[0].Operation)
 	assert.Equal(t, []accountingsync.SyncObjectType{
 		accountingsync.SyncObjectInvoice,
 		accountingsync.SyncObjectDebitMemo,
 	}, page.Documents[0].ObjectTypes)
 	assert.Equal(t, "Dana Whitfield", page.Documents[0].ModifiedBy)
-	assert.Equal(t, accountingsyncports.AccountingChangeVoid, page.Documents[1].Operation)
+	assert.Equal(t, accountingconnectorports.AccountingChangeVoid, page.Documents[1].Operation)
 	assert.Empty(t, page.Documents[1].ModifiedBy, "no system note names who voided 1205")
 	assert.False(t, page.DeletesUnread)
 	assert.True(t, page.More, "the invoice target said it has more")
@@ -187,9 +187,9 @@ func TestReadChangesFailsWhenSystemNotesAreBusy(t *testing.T) {
 }
 
 func normalizeLines(
-	lines []accountingsyncports.AccountingInboundLine,
-) []accountingsyncports.AccountingInboundLine {
-	out := make([]accountingsyncports.AccountingInboundLine, 0, len(lines))
+	lines []accountingconnectorports.AccountingInboundLine,
+) []accountingconnectorports.AccountingInboundLine {
+	out := make([]accountingconnectorports.AccountingInboundLine, 0, len(lines))
 	for _, line := range lines {
 		line.Amount = decimal.RequireFromString(line.Amount.String())
 		out = append(out, line)
@@ -264,10 +264,10 @@ func TestReadChangesFinishesWithReferencesAndDeletes(t *testing.T) {
 	assert.Equal(t, "350", deleted.Object.ExternalID)
 
 	require.Len(t, page.Documents, 1)
-	assert.Equal(t, accountingsyncports.AccountingChangeDelete, page.Documents[0].Operation)
+	assert.Equal(t, accountingconnectorports.AccountingChangeDelete, page.Documents[0].Operation)
 	assert.Equal(t, "1209", page.Documents[0].ExternalID)
 	require.Len(t, page.Payments, 2)
-	assert.Equal(t, accountingsyncports.AccountingChangeDelete, page.Payments[1].Operation)
+	assert.Equal(t, accountingconnectorports.AccountingChangeDelete, page.Payments[1].Operation)
 	assert.Equal(t, "1410", page.Payments[1].ExternalID)
 
 	_, termsRead := fake.query("FROM term")
@@ -306,11 +306,14 @@ func TestReadChangesWithNothingToReadKeepsTheCursor(t *testing.T) {
 	fake := &fakeNS{}
 	conn := testConnector(t, fake)
 	start := conn.ChangeCursorAt(testNow)
-	page, err := conn.ReadChanges(t.Context(), &accountingsyncports.ReadAccountingChangesRequest{
-		Auth:   testAuth(),
-		Cursor: start,
-		Now:    testNow,
-	})
+	page, err := conn.ReadChanges(
+		t.Context(),
+		&accountingconnectorports.ReadAccountingChangesRequest{
+			Auth:   testAuth(),
+			Cursor: start,
+			Now:    testNow,
+		},
+	)
 	require.NoError(t, err)
 	assert.Equal(t, start, page.NextCursor)
 	assert.Empty(t, fake.all())
@@ -350,16 +353,19 @@ func TestVendorPaymentsReadBackAsBillPayments(t *testing.T) {
 		return reply{}
 	}}
 	conn := testConnector(t, fake)
-	page, err := conn.ReadChanges(t.Context(), &accountingsyncports.ReadAccountingChangesRequest{
-		Auth:         testAuth(),
-		Now:          testNow,
-		BillPayments: true,
-	})
+	page, err := conn.ReadChanges(
+		t.Context(),
+		&accountingconnectorports.ReadAccountingChangesRequest{
+			Auth:         testAuth(),
+			Now:          testNow,
+			BillPayments: true,
+		},
+	)
 	require.NoError(t, err)
 	require.Len(t, page.Payments, 1)
 	payment := page.Payments[0]
 	assert.Equal(t, accountingsync.InboundBillPayment, payment.Kind)
-	assert.Equal(t, accountingsyncports.AccountingChangeVoid, payment.Operation)
+	assert.Equal(t, accountingconnectorports.AccountingChangeVoid, payment.Operation)
 	assert.Equal(t, testVendor, payment.PartyExternalID)
 	assert.True(t, payment.Amount.Equal(decimal.NewFromInt(900)))
 	assert.Equal(t, "CHK-1009", payment.ReferenceNumber)

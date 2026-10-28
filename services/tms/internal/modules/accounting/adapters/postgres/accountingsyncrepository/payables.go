@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalentry/journalentrydb"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingpayablesports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement"
@@ -43,7 +43,7 @@ type payablesRepository struct {
 	l  *zap.Logger
 }
 
-func NewPayablesRepository(p PayablesParams) accountingsyncports.AccountingPayablesSource {
+func NewPayablesRepository(p PayablesParams) accountingpayablesports.AccountingPayablesSource {
 	return &payablesRepository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.accounting-payables"),
@@ -52,12 +52,12 @@ func NewPayablesRepository(p PayablesParams) accountingsyncports.AccountingPayab
 
 func (r *payablesRepository) GetSettlement(
 	ctx context.Context,
-	req *accountingsyncports.GetPayableSettlementRequest,
-) (*accountingsyncports.PayableSettlement, error) {
+	req *accountingpayablesports.GetPayableSettlementRequest,
+) (*accountingpayablesports.PayableSettlement, error) {
 	switch req.Kind {
-	case accountingsyncports.PayableCarrier:
+	case accountingpayablesports.PayableCarrier:
 		return r.carrierSettlement(ctx, req)
-	case accountingsyncports.PayableDriver:
+	case accountingpayablesports.PayableDriver:
 		return r.driverSettlement(ctx, req)
 	default:
 		return nil, fmt.Errorf("accounting payables: unknown settlement kind %q", req.Kind)
@@ -66,20 +66,20 @@ func (r *payablesRepository) GetSettlement(
 
 func (r *payablesRepository) carrierSettlement(
 	ctx context.Context,
-	req *accountingsyncports.GetPayableSettlementRequest,
-) (*accountingsyncports.PayableSettlement, error) {
+	req *accountingpayablesports.GetPayableSettlementRequest,
+) (*accountingpayablesports.PayableSettlement, error) {
 	return dbtx.Write(
 		ctx,
 		r.db,
-		func(ctx context.Context) (*accountingsyncports.PayableSettlement, error) {
+		func(ctx context.Context) (*accountingpayablesports.PayableSettlement, error) {
 			cs := carriersettlementdb.CarrierSettlements
 			entity, err := cs.Where(cs.ID.Eq(req.ID)).Load(cs.Carrier()).One(ctx, r.db.Keel(ctx))
 			if err != nil {
 				return nil, carrierSettlementErrors.Map(err, req.ID.String())
 			}
 
-			out := &accountingsyncports.PayableSettlement{
-				Kind:                 accountingsyncports.PayableCarrier,
+			out := &accountingpayablesports.PayableSettlement{
+				Kind:                 accountingpayablesports.PayableCarrier,
 				ID:                   entity.ID,
 				Number:               entity.SettlementNumber,
 				PartyID:              entity.CarrierID,
@@ -136,12 +136,12 @@ func (r *payablesRepository) carrierSettlement(
 
 func (r *payablesRepository) driverSettlement(
 	ctx context.Context,
-	req *accountingsyncports.GetPayableSettlementRequest,
-) (*accountingsyncports.PayableSettlement, error) {
+	req *accountingpayablesports.GetPayableSettlementRequest,
+) (*accountingpayablesports.PayableSettlement, error) {
 	return dbtx.Write(
 		ctx,
 		r.db,
-		func(ctx context.Context) (*accountingsyncports.PayableSettlement, error) {
+		func(ctx context.Context) (*accountingpayablesports.PayableSettlement, error) {
 			ds := driversettlementdb.Settlements
 			entity, err := ds.Where(ds.ID.Eq(req.ID)).Load(ds.Worker()).One(ctx, r.db.Keel(ctx))
 			if err != nil {
@@ -153,8 +153,8 @@ func (r *payablesRepository) driverSettlement(
 				return nil, err
 			}
 
-			out := &accountingsyncports.PayableSettlement{
-				Kind:                 accountingsyncports.PayableDriver,
+			out := &accountingpayablesports.PayableSettlement{
+				Kind:                 accountingpayablesports.PayableDriver,
 				ID:                   entity.ID,
 				Number:               entity.SettlementNumber,
 				PartyID:              entity.WorkerID,
@@ -225,11 +225,11 @@ func (r *payablesRepository) journalLines(
 	ctx context.Context,
 	_ pagination.TenantInfo,
 	batchID *pulid.ID,
-) ([]accountingsyncports.PayableJournalLine, error) {
+) ([]accountingpayablesports.PayableJournalLine, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) ([]accountingsyncports.PayableJournalLine, error) {
+		func(ctx context.Context) ([]accountingpayablesports.PayableJournalLine, error) {
 			if batchID == nil || batchID.IsNil() {
 				return nil, nil
 			}
@@ -248,11 +248,11 @@ func (r *payablesRepository) journalLines(
 			}
 
 			byAccount := make(map[pulid.ID]int, len(lines))
-			out := make([]accountingsyncports.PayableJournalLine, 0, len(lines))
+			out := make([]accountingpayablesports.PayableJournalLine, 0, len(lines))
 			for _, line := range lines {
 				idx, seen := byAccount[line.GLAccountID]
 				if !seen {
-					entry := accountingsyncports.PayableJournalLine{AccountID: line.GLAccountID}
+					entry := accountingpayablesports.PayableJournalLine{AccountID: line.GLAccountID}
 					if line.GLAccount != nil {
 						entry.AccountCode = line.GLAccount.AccountCode
 						entry.AccountName = line.GLAccount.Name
@@ -270,7 +270,7 @@ func (r *payablesRepository) journalLines(
 }
 
 func carrierBankAccount(
-	paid []accountingsyncports.PayableJournalLine,
+	paid []accountingpayablesports.PayableJournalLine,
 	entity *carriersettlement.CarrierSettlement,
 	control *tenant.AccountingControl,
 ) pulid.ID {
@@ -286,11 +286,13 @@ func carrierBankAccount(
 	return control.DefaultCashAccountID
 }
 
-func defaultAccounts(control *tenant.AccountingControl) accountingsyncports.PayableDefaultAccounts {
+func defaultAccounts(
+	control *tenant.AccountingControl,
+) accountingpayablesports.PayableDefaultAccounts {
 	if control == nil {
-		return accountingsyncports.PayableDefaultAccounts{}
+		return accountingpayablesports.PayableDefaultAccounts{}
 	}
-	return accountingsyncports.PayableDefaultAccounts{
+	return accountingpayablesports.PayableDefaultAccounts{
 		Payable:                 control.DefaultAPAccountID,
 		PurchasedTransportation: control.DefaultPurchasedTransportationAccountID,
 		Cash:                    control.DefaultCashAccountID,
@@ -333,7 +335,7 @@ func (r *payablesRepository) invoiceNumbers(
 
 func (r *payablesRepository) StampExchangeRate(
 	ctx context.Context,
-	req *accountingsyncports.StampPayableExchangeRateRequest,
+	req *accountingpayablesports.StampPayableExchangeRateRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		rate := decimal.NullDecimal{Decimal: req.Rate, Valid: true}
@@ -343,7 +345,7 @@ func (r *payablesRepository) StampExchangeRate(
 			label    string
 		)
 		switch req.Kind {
-		case accountingsyncports.PayableCarrier:
+		case accountingpayablesports.PayableCarrier:
 			cs := carriersettlementdb.CarrierSettlements
 			rateCol, dateCol := cs.ExchangeRate, cs.ExchangeRateDate
 			if req.Paid {
@@ -357,7 +359,7 @@ func (r *payablesRepository) StampExchangeRate(
 				dateCol.To(req.Date),
 				cs.Version.ToExpr(cs.Version),
 			)
-		case accountingsyncports.PayableDriver:
+		case accountingpayablesports.PayableDriver:
 			ds := driversettlementdb.Settlements
 			rateCol, dateCol := ds.ExchangeRate, ds.ExchangeRateDate
 			if req.Paid {

@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/shared/xero"
 )
 
@@ -17,8 +17,8 @@ var errPurchaseDocumentType = errors.New(
 
 func (c *Connector) UpsertVendor(
 	ctx context.Context,
-	doc *accountingsyncports.AccountingVendorDocument,
-) (*accountingsyncports.AccountingDocumentResult, error) {
+	doc *accountingconnectorports.AccountingVendorDocument,
+) (*accountingconnectorports.AccountingDocumentResult, error) {
 	return c.upsertContact(ctx, &contactWrite{
 		auth:       doc.Auth,
 		requestID:  doc.RequestID,
@@ -30,7 +30,7 @@ func (c *Connector) UpsertVendor(
 func (c *Connector) purchaseBody(
 	ctx context.Context,
 	client *xero.Client,
-	doc *accountingsyncports.AccountingPurchaseDocument,
+	doc *accountingconnectorports.AccountingPurchaseDocument,
 ) (*documentBody, error) {
 	date, err := parseDate(doc.TxnDate)
 	if err != nil {
@@ -71,7 +71,7 @@ func (c *Connector) purchaseBody(
 }
 
 type purchaseWritten struct {
-	auth       accountingsyncports.AccountingDocumentAuth
+	auth       accountingconnectorports.AccountingDocumentAuth
 	kind       accountingsync.SyncObjectType
 	credit     bool
 	externalID string
@@ -80,7 +80,7 @@ type purchaseWritten struct {
 
 func (c *Connector) purchaseResult(
 	written *purchaseWritten,
-) *accountingsyncports.AccountingDocumentResult {
+) *accountingconnectorports.AccountingDocumentResult {
 	docType := xero.InvoiceTypePayable
 	if written.credit {
 		docType = xero.CreditNoteTypePayable
@@ -91,14 +91,14 @@ func (c *Connector) purchaseResult(
 		accountingsync.ExternalRefCreditDocument: strconv.FormatBool(written.credit),
 	}
 	if !written.credit {
-		if link := c.DocumentURL(written.auth, accountingsyncports.AccountingDocumentLink{
+		if link := c.DocumentURL(written.auth, accountingconnectorports.AccountingDocumentLink{
 			Kind:       written.kind,
 			ExternalID: written.externalID,
 		}); link != "" {
 			refs[accountingsync.ExternalRefURL] = link
 		}
 	}
-	return &accountingsyncports.AccountingDocumentResult{
+	return &accountingconnectorports.AccountingDocumentResult{
 		ExternalID: written.externalID,
 		DocNumber:  written.number,
 		Refs:       refs,
@@ -107,15 +107,15 @@ func (c *Connector) purchaseResult(
 
 func (c *Connector) CreatePurchaseDocument(
 	ctx context.Context,
-	doc *accountingsyncports.AccountingPurchaseDocument,
-) (*accountingsyncports.AccountingDocumentResult, error) {
+	doc *accountingconnectorports.AccountingPurchaseDocument,
+) (*accountingconnectorports.AccountingDocumentResult, error) {
 	return c.writePurchase(ctx, doc, "")
 }
 
 func (c *Connector) UpdatePurchaseDocument(
 	ctx context.Context,
-	doc *accountingsyncports.AccountingPurchaseDocument,
-) (*accountingsyncports.AccountingDocumentResult, error) {
+	doc *accountingconnectorports.AccountingPurchaseDocument,
+) (*accountingconnectorports.AccountingDocumentResult, error) {
 	id := strings.TrimSpace(doc.ExternalID)
 	if id == "" {
 		return nil, errExternalID
@@ -125,9 +125,9 @@ func (c *Connector) UpdatePurchaseDocument(
 
 func (c *Connector) writePurchase(
 	ctx context.Context,
-	doc *accountingsyncports.AccountingPurchaseDocument,
+	doc *accountingconnectorports.AccountingPurchaseDocument,
 	externalID string,
-) (*accountingsyncports.AccountingDocumentResult, error) {
+) (*accountingconnectorports.AccountingDocumentResult, error) {
 	if !doc.Kind.IsBill() {
 		return nil, errDocumentKind
 	}
@@ -198,8 +198,8 @@ func purchaseIsCredit(refs map[string]string) (bool, error) {
 
 func (c *Connector) VoidPurchaseDocument(
 	ctx context.Context,
-	ref *accountingsyncports.AccountingDocumentRef,
-) (*accountingsyncports.AccountingDocumentResult, error) {
+	ref *accountingconnectorports.AccountingDocumentRef,
+) (*accountingconnectorports.AccountingDocumentResult, error) {
 	if !ref.Kind.IsBill() {
 		return nil, errDocumentKind
 	}
@@ -227,8 +227,8 @@ func (c *Connector) VoidPurchaseDocument(
 
 func (c *Connector) CreateBillPayment(
 	ctx context.Context,
-	doc *accountingsyncports.AccountingBillPaymentDocument,
-) (*accountingsyncports.AccountingDocumentResult, error) {
+	doc *accountingconnectorports.AccountingBillPaymentDocument,
+) (*accountingconnectorports.AccountingDocumentResult, error) {
 	if !doc.Kind.IsBillPayment() {
 		return nil, errDocumentKind
 	}
@@ -237,8 +237,8 @@ func (c *Connector) CreateBillPayment(
 
 func (c *Connector) UpdateBillPayment(
 	ctx context.Context,
-	doc *accountingsyncports.AccountingBillPaymentDocument,
-) (*accountingsyncports.AccountingDocumentResult, error) {
+	doc *accountingconnectorports.AccountingBillPaymentDocument,
+) (*accountingconnectorports.AccountingDocumentResult, error) {
 	if !doc.Kind.IsBillPayment() {
 		return nil, errDocumentKind
 	}
@@ -266,9 +266,9 @@ func (c *Connector) UpdateBillPayment(
 
 func (c *Connector) writeBillPayment(
 	ctx context.Context,
-	doc *accountingsyncports.AccountingBillPaymentDocument,
+	doc *accountingconnectorports.AccountingBillPaymentDocument,
 	key string,
-) (*accountingsyncports.AccountingDocumentResult, error) {
+) (*accountingconnectorports.AccountingDocumentResult, error) {
 	date, err := parseDate(doc.TxnDate)
 	if err != nil {
 		return nil, err

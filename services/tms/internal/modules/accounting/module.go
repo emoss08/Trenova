@@ -27,6 +27,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/app/journalreversalservice"
 	"github.com/emoss08/trenova/internal/modules/accounting/app/manualjournalservice"
 	"github.com/emoss08/trenova/internal/modules/accounting/jobs/accountingsyncjobs/accountingsynccontract"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingdriftports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountinginboundports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingmappingports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"go.uber.org/fx"
 )
@@ -35,11 +39,13 @@ func SharedOptions() fx.Option {
 	return fx.Options(
 		fx.Provide(
 			accountingconnectionservice.New,
-			func(s *accountingconnectionservice.Service) accountingsyncports.AccountingConnectionService { return s },
+			func(s *accountingconnectionservice.Service) accountingconnectionports.AccountingConnectionService {
+				return s
+			},
 			accountingmappingservice.New,
-			func(s *accountingmappingservice.Service) accountingsyncports.AccountingMappingService { return s },
+			func(s *accountingmappingservice.Service) accountingmappingports.AccountingMappingService { return s },
 			accountinginboundservice.New,
-			func(s *accountinginboundservice.Service) accountingsyncports.AccountingInboundService { return s },
+			func(s *accountinginboundservice.Service) accountinginboundports.AccountingInboundService { return s },
 			glbalancerepository.New,
 			accountingsyncrepository.NewConnectionRepository,
 			accountingsyncrepository.NewAppCredentialRepository,
@@ -92,7 +98,7 @@ func SharedOptions() fx.Option {
 		)),
 		fx.Provide(fx.Annotate(
 			accountingsynccontract.NewDriftChecker,
-			fx.As(new(accountingsyncports.AccountingDriftChecker)),
+			fx.As(new(accountingdriftports.AccountingDriftChecker)),
 		)),
 	)
 }

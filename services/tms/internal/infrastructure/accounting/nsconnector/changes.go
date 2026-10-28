@@ -10,11 +10,11 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/shared/netsuite"
 )
 
-var _ accountingsyncports.AccountingChangeReader = (*Connector)(nil)
+var _ accountingconnectorports.AccountingChangeReader = (*Connector)(nil)
 
 const (
 	cursorVersion      = "n1"
@@ -187,8 +187,8 @@ func parsePosition(entry string) (string, keyset, bool) {
 	return name, keyset{at: time.Unix(at, 0).UTC(), id: internalID}, true
 }
 
-func (c *Connector) ChangeFeedLimits() accountingsyncports.AccountingChangeFeedLimits {
-	return accountingsyncports.AccountingChangeFeedLimits{
+func (c *Connector) ChangeFeedLimits() accountingconnectorports.AccountingChangeFeedLimits {
+	return accountingconnectorports.AccountingChangeFeedLimits{
 		MaxLookback:    0,
 		ReportsDeletes: true,
 		MaxPerRead:     maxChangesPerRead,
@@ -200,7 +200,7 @@ func (c *Connector) ChangeCursorAt(at time.Time) string {
 	return cursor.String()
 }
 
-func changeTargets(req *accountingsyncports.ReadAccountingChangesRequest) []*targetInfo {
+func changeTargets(req *accountingconnectorports.ReadAccountingChangesRequest) []*targetInfo {
 	wanted := make(map[string]bool, len(targetTable))
 	wanted[targetCustPayments] = req.Payments
 	wanted[targetVendPayments] = req.BillPayments
@@ -228,8 +228,8 @@ func changeTargets(req *accountingsyncports.ReadAccountingChangesRequest) []*tar
 
 func (c *Connector) ReadChanges(
 	ctx context.Context,
-	req *accountingsyncports.ReadAccountingChangesRequest,
-) (*accountingsyncports.AccountingChangePage, error) {
+	req *accountingconnectorports.ReadAccountingChangesRequest,
+) (*accountingconnectorports.AccountingChangePage, error) {
 	now := req.Now.UTC()
 	if req.Now.IsZero() {
 		now = c.now().UTC()
@@ -241,10 +241,10 @@ func (c *Connector) ReadChanges(
 	collect := &changeCollector{
 		targets: changeTargets(req),
 		budget:  maxChangesPerRead,
-		page: &accountingsyncports.AccountingChangePage{
-			Payments:   []accountingsyncports.AccountingInboundPayment{},
-			Documents:  []accountingsyncports.AccountingChangedDocument{},
-			References: []accountingsyncports.AccountingChangedReference{},
+		page: &accountingconnectorports.AccountingChangePage{
+			Payments:   []accountingconnectorports.AccountingInboundPayment{},
+			Documents:  []accountingconnectorports.AccountingChangedDocument{},
+			References: []accountingconnectorports.AccountingChangedReference{},
 		},
 	}
 	if len(collect.targets) > 0 {
@@ -264,7 +264,7 @@ type changeCollector struct {
 	session *session
 	editors *editorBook
 	targets []*targetInfo
-	page    *accountingsyncports.AccountingChangePage
+	page    *accountingconnectorports.AccountingChangePage
 	budget  int
 }
 
@@ -360,17 +360,20 @@ func (c *changeCollector) readTransactions(
 			}
 			continue
 		}
-		operation := accountingsyncports.AccountingChangeUpsert
+		operation := accountingconnectorports.AccountingChangeUpsert
 		if row.Voided.Value() {
-			operation = accountingsyncports.AccountingChangeVoid
+			operation = accountingconnectorports.AccountingChangeVoid
 		}
-		c.page.Documents = append(c.page.Documents, accountingsyncports.AccountingChangedDocument{
-			ObjectTypes: target.objects,
-			ExternalID:  row.id(),
-			Operation:   operation,
-			ModifiedAt:  unixOrZero(row.modified()),
-			ModifiedBy:  editors[row.id()],
-		})
+		c.page.Documents = append(
+			c.page.Documents,
+			accountingconnectorports.AccountingChangedDocument{
+				ObjectTypes: target.objects,
+				ExternalID:  row.id(),
+				Operation:   operation,
+				ModifiedAt:  unixOrZero(row.modified()),
+				ModifiedBy:  editors[row.id()],
+			},
+		)
 	}
 	return pos, page.HasMore && len(rows) > 0, nil
 }
@@ -416,11 +419,11 @@ func inboundPaymentOf(
 	kind accountingsync.InboundChangeKind,
 	row *transactionRow,
 	record *transactionRecord,
-) accountingsyncports.AccountingInboundPayment {
+) accountingconnectorports.AccountingInboundPayment {
 	party := record.party()
-	operation := accountingsyncports.AccountingChangeUpsert
+	operation := accountingconnectorports.AccountingChangeUpsert
 	if row.Voided.Value() {
-		operation = accountingsyncports.AccountingChangeVoid
+		operation = accountingconnectorports.AccountingChangeVoid
 	}
 	total := record.Payment
 	if kind == accountingsync.InboundBillPayment || total.IsZero() {
@@ -437,7 +440,7 @@ func inboundPaymentOf(
 	if reference == "" {
 		reference = number
 	}
-	out := accountingsyncports.AccountingInboundPayment{
+	out := accountingconnectorports.AccountingInboundPayment{
 		Kind:              kind,
 		Operation:         operation,
 		ExternalID:        row.id(),
@@ -454,7 +457,7 @@ func inboundPaymentOf(
 		AccountExternalID: record.Account.ID.Value(),
 		ReferenceNumber:   reference,
 		Lines: make(
-			[]accountingsyncports.AccountingInboundLine,
+			[]accountingconnectorports.AccountingInboundLine,
 			0,
 			len(record.Apply.Items),
 		),
@@ -464,7 +467,7 @@ func inboundPaymentOf(
 		if !line.Apply.Value() || string(line.Doc) == "" {
 			continue
 		}
-		out.Lines = append(out.Lines, accountingsyncports.AccountingInboundLine{
+		out.Lines = append(out.Lines, accountingconnectorports.AccountingInboundLine{
 			DocumentKind:       inboundDocumentKind(kind, line.Type),
 			DocumentExternalID: string(line.Doc),
 			Amount:             line.Amount.Abs(),
@@ -522,7 +525,7 @@ func (c *changeCollector) readReferences(
 		c.budget--
 		c.page.References = append(
 			c.page.References,
-			accountingsyncports.AccountingChangedReference{
+			accountingconnectorports.AccountingChangedReference{
 				Object: referenceObjectOf(target.reference, row),
 			},
 		)
@@ -596,10 +599,10 @@ func (c *changeCollector) deletedDocument(name, id string, at time.Time) {
 	if !c.wants(name) {
 		return
 	}
-	c.page.Documents = append(c.page.Documents, accountingsyncports.AccountingChangedDocument{
+	c.page.Documents = append(c.page.Documents, accountingconnectorports.AccountingChangedDocument{
 		ObjectTypes: lookupTarget(name).objects,
 		ExternalID:  id,
-		Operation:   accountingsyncports.AccountingChangeDelete,
+		Operation:   accountingconnectorports.AccountingChangeDelete,
 		ModifiedAt:  unixOrZero(at),
 	})
 }
@@ -608,12 +611,12 @@ func (c *changeCollector) deletedPayment(name, id string, at time.Time) {
 	if !c.wants(name) {
 		return
 	}
-	c.page.Payments = append(c.page.Payments, accountingsyncports.AccountingInboundPayment{
+	c.page.Payments = append(c.page.Payments, accountingconnectorports.AccountingInboundPayment{
 		Kind:       lookupTarget(name).payment,
-		Operation:  accountingsyncports.AccountingChangeDelete,
+		Operation:  accountingconnectorports.AccountingChangeDelete,
 		ExternalID: id,
 		ModifiedAt: unixOrZero(at),
-		Lines:      []accountingsyncports.AccountingInboundLine{},
+		Lines:      []accountingconnectorports.AccountingInboundLine{},
 	})
 }
 
@@ -621,11 +624,14 @@ func (c *changeCollector) deletedReference(name, id string) {
 	if !c.wants(name) {
 		return
 	}
-	c.page.References = append(c.page.References, accountingsyncports.AccountingChangedReference{
-		Object: &accountingsync.AccountingReferenceObject{
-			Kind:       lookupTarget(name).reference,
-			ExternalID: id,
+	c.page.References = append(
+		c.page.References,
+		accountingconnectorports.AccountingChangedReference{
+			Object: &accountingsync.AccountingReferenceObject{
+				Kind:       lookupTarget(name).reference,
+				ExternalID: id,
+			},
+			Deleted: true,
 		},
-		Deleted: true,
-	})
+	)
 }

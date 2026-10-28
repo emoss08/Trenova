@@ -6,7 +6,8 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -60,7 +61,7 @@ func pendingKeyAAD(
 
 func (s *Service) requireCertificates(
 	typ integration.Type,
-) (accountingsyncports.AccountingProvider, error) {
+) (accountingconnectorports.AccountingProvider, error) {
 	provider, err := s.provider(typ)
 	if err != nil {
 		return nil, err
@@ -72,10 +73,10 @@ func (s *Service) requireCertificates(
 }
 
 func clientCredentialsOf(
-	connector accountingsyncports.AccountingConnector,
+	connector accountingconnectorports.AccountingConnector,
 	provider string,
-) (accountingsyncports.AccountingClientCredentialsConnector, error) {
-	cc, ok := connector.(accountingsyncports.AccountingClientCredentialsConnector)
+) (accountingconnectorports.AccountingClientCredentialsConnector, error) {
+	cc, ok := connector.(accountingconnectorports.AccountingClientCredentialsConnector)
 	if !ok {
 		return nil, errCertificatesUnsupported(provider)
 	}
@@ -103,8 +104,8 @@ func (s *Service) certificateSubject(ctx context.Context, tenantInfo pagination.
 
 func (s *Service) PrepareCertificate(
 	ctx context.Context,
-	req *accountingsyncports.PrepareAccountingCertificateRequest,
-) (*accountingsyncports.AccountingPreparedCertificate, error) {
+	req *accountingconnectionports.PrepareAccountingCertificateRequest,
+) (*accountingconnectionports.AccountingPreparedCertificate, error) {
 	if err := s.requireIntegrations(ctx, req.TenantInfo); err != nil {
 		return nil, err
 	}
@@ -181,7 +182,7 @@ func (s *Service) heldPendingCertificate(
 	name := accountingsync.ProviderName(typ)
 	pending, err := s.certificates.GetByType(
 		ctx,
-		accountingsyncports.GetAccountingConnectionRequest{
+		accountingconnectionports.GetAccountingConnectionRequest{
 			TenantInfo:      tenantInfo,
 			IntegrationType: typ,
 		},
@@ -224,8 +225,8 @@ func errCertificateRefused(provider string, err error) error {
 
 func (s *Service) ConnectWithCertificate(
 	ctx context.Context,
-	req *accountingsyncports.ConnectAccountingWithCertificateRequest,
-) (*accountingsyncports.AccountingAuthorizationCompletion, error) {
+	req *accountingconnectionports.ConnectAccountingWithCertificateRequest,
+) (*accountingconnectionports.AccountingAuthorizationCompletion, error) {
 	if err := s.requireIntegrations(ctx, req.TenantInfo); err != nil {
 		return nil, err
 	}
@@ -271,7 +272,7 @@ func (s *Service) ConnectWithCertificate(
 		return nil, err
 	}
 
-	grant, err := cc.TokenFromCertificate(ctx, &accountingsyncports.AccountingCertificateGrant{
+	grant, err := cc.TokenFromCertificate(ctx, &accountingconnectorports.AccountingCertificateGrant{
 		RealmID:       accountID,
 		CertificateID: held.certificateID,
 		PrivateKeyPEM: []byte(held.privateKeyPEM),
@@ -301,12 +302,12 @@ func (s *Service) ConnectWithCertificate(
 		if connectErr != nil {
 			return nil, connectErr
 		}
-		return &accountingsyncports.AccountingAuthorizationCompletion{Connection: conn}, nil
+		return &accountingconnectionports.AccountingAuthorizationCompletion{Connection: conn}, nil
 	}
 
 	return s.offerCompanyChoice(ctx, &companyChoiceOffer{
 		owner: owner,
-		state: &accountingsyncports.AccountingOAuthState{
+		state: &accountingconnectionports.AccountingOAuthState{
 			AppSource:      authorized.identity.Source,
 			AppFingerprint: authorized.identity.Fingerprint,
 		},
@@ -320,7 +321,7 @@ func (s *Service) ConnectWithCertificate(
 
 func (s *Service) RenewCertificate(
 	ctx context.Context,
-	req *accountingsyncports.RenewAccountingCertificateRequest,
+	req *accountingconnectionports.RenewAccountingCertificateRequest,
 ) (*accountingsync.AccountingConnection, error) {
 	if err := s.requireIntegrations(ctx, req.TenantInfo); err != nil {
 		return nil, err
@@ -330,7 +331,7 @@ func (s *Service) RenewCertificate(
 	}
 	current, err := s.connections.GetByID(
 		ctx,
-		accountingsyncports.GetAccountingConnectionByIDRequest{
+		accountingconnectionports.GetAccountingConnectionByIDRequest{
 			TenantInfo: req.TenantInfo,
 			ID:         req.ConnectionID,
 		},
@@ -367,7 +368,7 @@ func (s *Service) RenewCertificate(
 	if err != nil {
 		return nil, err
 	}
-	grant, err := cc.TokenFromCertificate(ctx, &accountingsyncports.AccountingCertificateGrant{
+	grant, err := cc.TokenFromCertificate(ctx, &accountingconnectorports.AccountingCertificateGrant{
 		RealmID:       current.ExternalRealmID,
 		CertificateID: held.certificateID,
 		PrivateKeyPEM: []byte(held.privateKeyPEM),
@@ -416,7 +417,7 @@ func (s *Service) useCertificate(
 
 func (s *Service) tokenFromStoredCertificate(
 	ctx, txCtx context.Context,
-	connector accountingsyncports.AccountingConnector,
+	connector accountingconnectorports.AccountingConnector,
 	conn *accountingsync.AccountingConnection,
 	now int64,
 ) error {
@@ -428,7 +429,7 @@ func (s *Service) tokenFromStoredCertificate(
 	if err != nil {
 		return err
 	}
-	grant, err := cc.TokenFromCertificate(ctx, &accountingsyncports.AccountingCertificateGrant{
+	grant, err := cc.TokenFromCertificate(ctx, &accountingconnectorports.AccountingCertificateGrant{
 		RealmID:       conn.ExternalRealmID,
 		CertificateID: conn.ClientCertificateID,
 		PrivateKeyPEM: []byte(key),
@@ -463,7 +464,7 @@ func (s *Service) consumePendingCertificate(
 	if certificate == nil || s.certificates == nil {
 		return nil
 	}
-	return s.certificates.Delete(txCtx, accountingsyncports.GetAccountingConnectionRequest{
+	return s.certificates.Delete(txCtx, accountingconnectionports.GetAccountingConnectionRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: conn.OrganizationID,
 			BuID:  conn.BusinessUnitID,
@@ -476,13 +477,13 @@ func (s *Service) pendingCertificate(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	typ integration.Type,
-) (*accountingsyncports.AccountingPreparedCertificate, error) {
+) (*accountingconnectionports.AccountingPreparedCertificate, error) {
 	if s.certificates == nil || !accountingsync.MustProfile(typ).ClientCredentials {
 		return nil, nil //nolint:nilnil // no certificate is waiting
 	}
 	pending, err := s.certificates.GetByType(
 		ctx,
-		accountingsyncports.GetAccountingConnectionRequest{
+		accountingconnectionports.GetAccountingConnectionRequest{
 			TenantInfo:      tenantInfo,
 			IntegrationType: typ,
 		},
@@ -498,8 +499,8 @@ func (s *Service) pendingCertificate(
 
 func preparedCertificateOf(
 	pending *accountingsync.AccountingPendingCertificate,
-) *accountingsyncports.AccountingPreparedCertificate {
-	return &accountingsyncports.AccountingPreparedCertificate{
+) *accountingconnectionports.AccountingPreparedCertificate {
+	return &accountingconnectionports.AccountingPreparedCertificate{
 		IntegrationType: pending.IntegrationType,
 		CertificatePEM:  pending.CertificatePEM,
 		ExpiresAt:       pending.ExpiresAt,
@@ -508,10 +509,10 @@ func preparedCertificateOf(
 }
 
 type certificateRenewal struct {
-	req   *accountingsyncports.RenewAccountingCertificateRequest
+	req   *accountingconnectionports.RenewAccountingCertificateRequest
 	name  string
 	held  *heldCertificate
-	grant *accountingsyncports.AccountingTokenGrant
+	grant *accountingconnectorports.AccountingTokenGrant
 	now   int64
 }
 
@@ -529,7 +530,7 @@ func (s *Service) storeRenewedCertificate(
 	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		locked, lockErr := s.connections.LockWithTokens(
 			txCtx,
-			accountingsyncports.GetAccountingConnectionByIDRequest{
+			accountingconnectionports.GetAccountingConnectionByIDRequest{
 				TenantInfo: in.req.TenantInfo,
 				ID:         in.req.ConnectionID,
 			},
@@ -562,10 +563,13 @@ func (s *Service) storeRenewedCertificate(
 			return storeErr
 		}
 		out.conn = locked
-		return s.certificates.Delete(txCtx, accountingsyncports.GetAccountingConnectionRequest{
-			TenantInfo:      in.req.TenantInfo,
-			IntegrationType: locked.IntegrationType,
-		})
+		return s.certificates.Delete(
+			txCtx,
+			accountingconnectionports.GetAccountingConnectionRequest{
+				TenantInfo:      in.req.TenantInfo,
+				IntegrationType: locked.IntegrationType,
+			},
+		)
 	})
 	if err != nil {
 		return nil, err

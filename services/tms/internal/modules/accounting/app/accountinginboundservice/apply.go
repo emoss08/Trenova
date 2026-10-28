@@ -6,6 +6,9 @@ import (
 	"slices"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountinginboundports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingpayablesports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
@@ -37,9 +40,9 @@ func (b *blockedError) Error() string { return b.resolution }
 
 func (s *Service) Evaluate(
 	ctx context.Context,
-	req *accountingsyncports.EvaluateAccountingInboundRequest,
-) (*accountingsyncports.AccountingInboundEvaluation, error) {
-	result := new(accountingsyncports.AccountingInboundEvaluation)
+	req *accountinginboundports.EvaluateAccountingInboundRequest,
+) (*accountinginboundports.AccountingInboundEvaluation, error) {
+	result := new(accountinginboundports.AccountingInboundEvaluation)
 	conn, err := s.connectionByID(ctx, req.TenantInfo, req.ConnectionID)
 	if err != nil {
 		return nil, err
@@ -70,7 +73,7 @@ func (s *Service) Evaluate(
 	}
 	rows, err := s.changes.ListDetected(
 		ctx,
-		&accountingsyncports.ListDetectedAccountingInboundChangesRequest{
+		&accountinginboundports.ListDetectedAccountingInboundChangesRequest{
 			TenantInfo:     req.TenantInfo,
 			ConnectionID:   conn.ID,
 			DetectedBefore: s.now().Add(-accountingsync.InboundEvaluationSettle).Unix(),
@@ -135,11 +138,14 @@ func (s *Service) evaluateOne(
 	autoApply := false
 	var outcome accountingsync.InboundChangeStatus
 	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
-		change, err := s.changes.GetByID(txCtx, accountingsyncports.GetAccountingInboundChangeQuery{
-			TenantInfo: tenantOf(conn),
-			ID:         id,
-			ForUpdate:  true,
-		})
+		change, err := s.changes.GetByID(
+			txCtx,
+			accountinginboundports.GetAccountingInboundChangeQuery{
+				TenantInfo: tenantOf(conn),
+				ID:         id,
+				ForUpdate:  true,
+			},
+		)
 		if err != nil {
 			return err
 		}
@@ -222,11 +228,14 @@ func (s *Service) proposeAfterFailure(
 
 	var updated *accountingsync.AccountingInboundChange
 	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
-		change, err := s.changes.GetByID(txCtx, accountingsyncports.GetAccountingInboundChangeQuery{
-			TenantInfo: tenantOf(conn),
-			ID:         id,
-			ForUpdate:  true,
-		})
+		change, err := s.changes.GetByID(
+			txCtx,
+			accountinginboundports.GetAccountingInboundChangeQuery{
+				TenantInfo: tenantOf(conn),
+				ID:         id,
+				ForUpdate:  true,
+			},
+		)
 		if err != nil {
 			return err
 		}
@@ -253,7 +262,7 @@ func isBusinessError(err error) bool {
 
 func (s *Service) Apply(
 	ctx context.Context,
-	req *accountingsyncports.DecideAccountingInboundChangeRequest,
+	req *accountinginboundports.DecideAccountingInboundChangeRequest,
 	actor *permissionports.RequestActor,
 ) (*accountingsync.AccountingInboundChange, error) {
 	if actor == nil || actor.UserID.IsNil() {
@@ -261,7 +270,7 @@ func (s *Service) Apply(
 			"Applying a payment from the accounting system requires an authenticated user",
 		)
 	}
-	current, err := s.changes.GetByID(ctx, accountingsyncports.GetAccountingInboundChangeQuery{
+	current, err := s.changes.GetByID(ctx, accountinginboundports.GetAccountingInboundChangeQuery{
 		TenantInfo: req.TenantInfo,
 		ID:         req.ID,
 	})
@@ -359,11 +368,14 @@ func (s *Service) applyChange(
 	var updated *accountingsync.AccountingInboundChange
 	var previous map[string]any
 	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
-		change, err := s.changes.GetByID(txCtx, accountingsyncports.GetAccountingInboundChangeQuery{
-			TenantInfo: tenantOf(conn),
-			ID:         id,
-			ForUpdate:  true,
-		})
+		change, err := s.changes.GetByID(
+			txCtx,
+			accountinginboundports.GetAccountingInboundChangeQuery{
+				TenantInfo: tenantOf(conn),
+				ID:         id,
+				ForUpdate:  true,
+			},
+		)
 		if err != nil {
 			return err
 		}
@@ -424,7 +436,7 @@ func (s *Service) execute(
 			}
 			var err error
 			appliedType := accountingsync.AppliedCarrierSettlement
-			if settlement.kind == accountingsyncports.PayableDriver {
+			if settlement.kind == accountingpayablesports.PayableDriver {
 				appliedType = accountingsync.AppliedDriverSettlement
 				_, err = s.driverPayer.MarkPaid(ctx, req, actor)
 			} else {
@@ -514,7 +526,7 @@ func syncTypeOf(applied accountingsync.AppliedObjectType) accountingsync.SyncObj
 }
 
 type linkTarget struct {
-	urlOf func(link accountingsyncports.AccountingDocumentLink) string
+	urlOf func(link accountingconnectorports.AccountingDocumentLink) string
 }
 
 func (s *Service) linkTarget(
@@ -522,16 +534,16 @@ func (s *Service) linkTarget(
 	conn *accountingsync.AccountingConnection,
 ) *linkTarget {
 	target := &linkTarget{
-		urlOf: func(accountingsyncports.AccountingDocumentLink) string { return "" },
+		urlOf: func(accountingconnectorports.AccountingDocumentLink) string { return "" },
 	}
 	session, err := s.connService.Session(ctx, tenantOf(conn), conn.ID)
 	if err != nil {
 		s.l.Debug("linking without provider links: the connection cannot be used", zap.Error(err))
 		return target
 	}
-	if writer, ok := session.Connector.(accountingsyncports.AccountingDocumentWriter); ok {
-		auth := accountingsyncports.DocumentAuthFor(session.Connection, session.AccessToken)
-		target.urlOf = func(link accountingsyncports.AccountingDocumentLink) string {
+	if writer, ok := session.Connector.(accountingconnectorports.AccountingDocumentWriter); ok {
+		auth := accountingconnectorports.DocumentAuthFor(session.Connection, session.AccessToken)
+		target.urlOf = func(link accountingconnectorports.AccountingDocumentLink) string {
 			return writer.DocumentURL(auth, link)
 		}
 	}
@@ -566,7 +578,7 @@ func (s *Service) linkRecords(
 			}
 			if !record.Link(&accountingsync.SyncLink{
 				ExternalID: change.ExternalID,
-				ExternalURL: target.urlOf(accountingsyncports.AccountingDocumentLink{
+				ExternalURL: target.urlOf(accountingconnectorports.AccountingDocumentLink{
 					Kind:       objectType,
 					ExternalID: change.ExternalID,
 					DocNumber:  change.ExternalNumber,
@@ -586,9 +598,9 @@ func (s *Service) linkRecords(
 
 func (s *Service) PreviewApply(
 	ctx context.Context,
-	req *accountingsyncports.GetAccountingInboundChangeRequest,
-) (*accountingsyncports.AccountingInboundApplyPreview, error) {
-	change, err := s.changes.GetByID(ctx, accountingsyncports.GetAccountingInboundChangeQuery{
+	req *accountinginboundports.GetAccountingInboundChangeRequest,
+) (*accountinginboundports.AccountingInboundApplyPreview, error) {
+	change, err := s.changes.GetByID(ctx, accountinginboundports.GetAccountingInboundChangeQuery{
 		TenantInfo: req.TenantInfo,
 		ID:         req.ID,
 	})
@@ -604,7 +616,7 @@ func (s *Service) PreviewApply(
 		return nil, err
 	}
 
-	preview := &accountingsyncports.AccountingInboundApplyPreview{
+	preview := &accountinginboundports.AccountingInboundApplyPreview{
 		Change:    change,
 		PaidAt:    p.paidAt,
 		CashMinor: p.cashMinor,

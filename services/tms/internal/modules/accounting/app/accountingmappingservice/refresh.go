@@ -6,7 +6,9 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingmappingports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -27,7 +29,7 @@ func (s *Service) PullReference(
 	tenantInfo pagination.TenantInfo,
 	connectionID pulid.ID,
 	kind accountingsync.ReferenceKind,
-) (*accountingsyncports.AccountingReferencePull, error) {
+) (*accountingmappingports.AccountingReferencePull, error) {
 	if !kind.IsValid() {
 		return nil, fmt.Errorf("unknown reference kind %q", kind)
 	}
@@ -35,17 +37,17 @@ func (s *Service) PullReference(
 	if err != nil {
 		return nil, err
 	}
-	reader, ok := session.Connector.(accountingsyncports.AccountingReferenceReader)
+	reader, ok := session.Connector.(accountingconnectorports.AccountingReferenceReader)
 	if !ok {
 		return nil, errReferenceUnsupported
 	}
 	profile := accountingsync.MustProfile(session.Connection.IntegrationType)
 	if !profile.Has(kind) {
-		return &accountingsyncports.AccountingReferencePull{Kind: kind}, nil
+		return &accountingmappingports.AccountingReferencePull{Kind: kind}, nil
 	}
 
 	seenAt := timeutils.NowUnix()
-	pull := &accountingsyncports.AccountingReferencePull{Kind: kind}
+	pull := &accountingmappingports.AccountingReferencePull{Kind: kind}
 	start := 1
 	for pages := 0; start > 0; pages++ {
 		if pages >= maxReferencePagesGuard {
@@ -53,7 +55,7 @@ func (s *Service) PullReference(
 		}
 		page, listErr := reader.ListReference(
 			ctx,
-			&accountingsyncports.AccountingReferencePageRequest{
+			&accountingconnectorports.AccountingReferencePageRequest{
 				RealmID:       session.Connection.ExternalRealmID,
 				AccessToken:   session.AccessToken,
 				Kind:          kind,
@@ -67,7 +69,7 @@ func (s *Service) PullReference(
 		}
 		if err = s.references.Upsert(
 			ctx,
-			&accountingsyncports.UpsertAccountingReferenceObjectsRequest{
+			&accountingmappingports.UpsertAccountingReferenceObjectsRequest{
 				TenantInfo:   tenantInfo,
 				ConnectionID: connectionID,
 				Objects:      page.Objects,
@@ -82,7 +84,7 @@ func (s *Service) PullReference(
 
 	removed, err := s.references.MarkRemovedUnseen(
 		ctx,
-		&accountingsyncports.MarkAccountingReferenceRemovedRequest{
+		&accountingmappingports.MarkAccountingReferenceRemovedRequest{
 			TenantInfo:   tenantInfo,
 			ConnectionID: connectionID,
 			Kind:         kind,
@@ -101,11 +103,14 @@ func (s *Service) Rescore(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	connectionID pulid.ID,
-) (*accountingsyncports.AccountingRescoreResult, error) {
-	conn, err := s.connections.GetByID(ctx, accountingsyncports.GetAccountingConnectionByIDRequest{
-		TenantInfo: tenantInfo,
-		ID:         connectionID,
-	})
+) (*accountingmappingports.AccountingRescoreResult, error) {
+	conn, err := s.connections.GetByID(
+		ctx,
+		accountingconnectionports.GetAccountingConnectionByIDRequest{
+			TenantInfo: tenantInfo,
+			ID:         connectionID,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -113,7 +118,7 @@ func (s *Service) Rescore(
 	if err != nil {
 		return nil, err
 	}
-	result := &accountingsyncports.AccountingRescoreResult{Targets: len(targets)}
+	result := &accountingmappingports.AccountingRescoreResult{Targets: len(targets)}
 
 	fresh := make([]*accountingsync.AccountingMapping, 0, len(targets))
 	for _, t := range targets {
@@ -134,10 +139,13 @@ func (s *Service) Rescore(
 		return nil, err
 	}
 
-	rows, err := s.mappings.ListByConnection(ctx, &accountingsyncports.ListAccountingMappingsQuery{
-		TenantInfo:   tenantInfo,
-		ConnectionID: connectionID,
-	})
+	rows, err := s.mappings.ListByConnection(
+		ctx,
+		&accountingmappingports.ListAccountingMappingsQuery{
+			TenantInfo:   tenantInfo,
+			ConnectionID: connectionID,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -179,7 +187,7 @@ func (s *Service) Rescore(
 }
 
 func tallyRow(
-	result *accountingsyncports.AccountingRescoreResult,
+	result *accountingmappingports.AccountingRescoreResult,
 	row *accountingsync.AccountingMapping,
 ) {
 	if row.State == accountingsync.MappingStateProposed {
@@ -207,7 +215,7 @@ func (s *Service) loadReferences(
 	for _, kind := range accountingsync.AllReferenceKinds() {
 		refs, err := s.references.ListByKind(
 			ctx,
-			&accountingsyncports.ListAccountingReferenceObjectsRequest{
+			&accountingmappingports.ListAccountingReferenceObjectsRequest{
 				TenantInfo:   tenantInfo,
 				ConnectionID: connectionID,
 				Kind:         kind,
@@ -262,7 +270,7 @@ func (s *Service) MarkRefreshStarted(
 	now := timeutils.NowUnix()
 	return s.connections.MarkReferenceRefresh(
 		ctx,
-		accountingsyncports.MarkAccountingReferenceRefreshRequest{
+		accountingconnectionports.MarkAccountingReferenceRefreshRequest{
 			TenantInfo: tenantInfo,
 			ID:         connectionID,
 			StartedAt:  &now,
@@ -276,7 +284,7 @@ func (s *Service) MarkRefreshFinished(
 	connectionID pulid.ID,
 	failure string,
 ) error {
-	req := accountingsyncports.MarkAccountingReferenceRefreshRequest{
+	req := accountingconnectionports.MarkAccountingReferenceRefreshRequest{
 		TenantInfo: tenantInfo,
 		ID:         connectionID,
 		Error:      stringutils.TruncateRunes(failure, maxRefreshErrorLength),
@@ -289,10 +297,13 @@ func (s *Service) MarkRefreshFinished(
 		return err
 	}
 
-	conn, err := s.connections.GetByID(ctx, accountingsyncports.GetAccountingConnectionByIDRequest{
-		TenantInfo: tenantInfo,
-		ID:         connectionID,
-	})
+	conn, err := s.connections.GetByID(
+		ctx,
+		accountingconnectionports.GetAccountingConnectionByIDRequest{
+			TenantInfo: tenantInfo,
+			ID:         connectionID,
+		},
+	)
 	if err != nil {
 		s.l.Warn("could not reload the connection after a refresh", zap.Error(err))
 		return nil

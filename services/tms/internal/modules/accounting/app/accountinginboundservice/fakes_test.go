@@ -8,20 +8,25 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountinginboundports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingmappingports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingpayablesports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalperiodports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/carriersettlementports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -30,10 +35,10 @@ import (
 )
 
 type fakeConnections struct {
-	accountingsyncports.AccountingConnectionRepository
+	accountingconnectionports.AccountingConnectionRepository
 	mu    sync.Mutex
 	conn  *accountingsync.AccountingConnection
-	saves []accountingsyncports.SaveAccountingChangeFeedRequest
+	saves []accountingconnectionports.SaveAccountingChangeFeedRequest
 }
 
 func (f *fakeConnections) current() *accountingsync.AccountingConnection {
@@ -45,7 +50,7 @@ func (f *fakeConnections) current() *accountingsync.AccountingConnection {
 
 func (f *fakeConnections) GetByID(
 	_ context.Context,
-	req accountingsyncports.GetAccountingConnectionByIDRequest,
+	req accountingconnectionports.GetAccountingConnectionByIDRequest,
 ) (*accountingsync.AccountingConnection, error) {
 	if req.ID != f.conn.ID {
 		return nil, errortypes.NewNotFoundError("Accounting connection not found")
@@ -55,21 +60,21 @@ func (f *fakeConnections) GetByID(
 
 func (f *fakeConnections) GetByType(
 	_ context.Context,
-	_ accountingsyncports.GetAccountingConnectionRequest,
+	_ accountingconnectionports.GetAccountingConnectionRequest,
 ) (*accountingsync.AccountingConnection, error) {
 	return f.current(), nil
 }
 
 func (f *fakeConnections) SaveDriftCheck(
 	context.Context,
-	*accountingsyncports.SaveAccountingDriftCheckRequest,
+	*accountingconnectionports.SaveAccountingDriftCheckRequest,
 ) error {
 	return nil
 }
 
 func (f *fakeConnections) SaveChangeFeed(
 	_ context.Context,
-	req *accountingsyncports.SaveAccountingChangeFeedRequest,
+	req *accountingconnectionports.SaveAccountingChangeFeedRequest,
 ) (bool, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -90,15 +95,15 @@ func (f *fakeConnections) SaveChangeFeed(
 }
 
 type fakeConnector struct {
-	accountingsyncports.AccountingConnector
+	accountingconnectorports.AccountingConnector
 	mu      sync.Mutex
-	pages   []*accountingsyncports.AccountingChangePage
+	pages   []*accountingconnectorports.AccountingChangePage
 	readErr error
-	reads   []accountingsyncports.ReadAccountingChangesRequest
+	reads   []accountingconnectorports.ReadAccountingChangesRequest
 }
 
-func (f *fakeConnector) ChangeFeedLimits() accountingsyncports.AccountingChangeFeedLimits {
-	return accountingsyncports.AccountingChangeFeedLimits{MaxLookback: 30 * 24 * time.Hour}
+func (f *fakeConnector) ChangeFeedLimits() accountingconnectorports.AccountingChangeFeedLimits {
+	return accountingconnectorports.AccountingChangeFeedLimits{MaxLookback: 30 * 24 * time.Hour}
 }
 
 func (f *fakeConnector) ChangeCursorAt(at time.Time) string {
@@ -107,8 +112,8 @@ func (f *fakeConnector) ChangeCursorAt(at time.Time) string {
 
 func (f *fakeConnector) ReadChanges(
 	_ context.Context,
-	req *accountingsyncports.ReadAccountingChangesRequest,
-) (*accountingsyncports.AccountingChangePage, error) {
+	req *accountingconnectorports.ReadAccountingChangesRequest,
+) (*accountingconnectorports.AccountingChangePage, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.reads = append(f.reads, *req)
@@ -116,7 +121,7 @@ func (f *fakeConnector) ReadChanges(
 		return nil, f.readErr
 	}
 	if len(f.pages) == 0 {
-		return &accountingsyncports.AccountingChangePage{NextCursor: req.Cursor}, nil
+		return &accountingconnectorports.AccountingChangePage{NextCursor: req.Cursor}, nil
 	}
 	page := f.pages[0]
 	f.pages = f.pages[1:]
@@ -124,8 +129,8 @@ func (f *fakeConnector) ReadChanges(
 }
 
 func (f *fakeConnector) DocumentURL(
-	_ accountingsyncports.AccountingDocumentAuth,
-	link accountingsyncports.AccountingDocumentLink,
+	_ accountingconnectorports.AccountingDocumentAuth,
+	link accountingconnectorports.AccountingDocumentLink,
 ) string {
 	return "https://books.example/" + string(link.Kind) + "/" + link.ExternalID
 }
@@ -135,7 +140,7 @@ func (f *fakeConnector) ClassifyDocumentError(err error) *accountingsync.SyncErr
 }
 
 type fakeConnService struct {
-	accountingsyncports.AccountingConnectionService
+	accountingconnectionports.AccountingConnectionService
 	connections *fakeConnections
 	connector   *fakeConnector
 	failSession bool
@@ -145,11 +150,11 @@ func (f *fakeConnService) Session(
 	_ context.Context,
 	_ pagination.TenantInfo,
 	_ pulid.ID,
-) (*accountingsyncports.AccountingSession, error) {
+) (*accountingconnectionports.AccountingSession, error) {
 	if f.failSession {
 		return nil, errors.New("the connection needs to be reconnected")
 	}
-	return &accountingsyncports.AccountingSession{
+	return &accountingconnectionports.AccountingSession{
 		Connection:  f.connections.current(),
 		AccessToken: "token",
 		Connector:   writerConnector{fakeConnector: f.connector},
@@ -158,14 +163,14 @@ func (f *fakeConnService) Session(
 
 type writerConnector struct {
 	*fakeConnector
-	accountingsyncports.AccountingDocumentWriter
+	accountingconnectorports.AccountingDocumentWriter
 }
 
 func (w writerConnector) DocumentURL(
-	_ accountingsyncports.AccountingDocumentAuth,
-	link accountingsyncports.AccountingDocumentLink,
+	_ accountingconnectorports.AccountingDocumentAuth,
+	link accountingconnectorports.AccountingDocumentLink,
 ) string {
-	return w.fakeConnector.DocumentURL(accountingsyncports.AccountingDocumentAuth{}, link)
+	return w.fakeConnector.DocumentURL(accountingconnectorports.AccountingDocumentAuth{}, link)
 }
 
 func (w writerConnector) ClassifyDocumentError(err error) *accountingsync.SyncError {
@@ -178,7 +183,9 @@ type fakeRecords struct {
 	rows []*accountingsync.AccountingSyncRecord
 }
 
-func (f *fakeRecords) add(record *accountingsync.AccountingSyncRecord) *accountingsync.AccountingSyncRecord {
+func (f *fakeRecords) add(
+	record *accountingsync.AccountingSyncRecord,
+) *accountingsync.AccountingSyncRecord {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.rows = append(f.rows, record)
@@ -240,7 +247,8 @@ func (f *fakeRecords) CountInFlight(
 	defer f.mu.Unlock()
 	count := 0
 	for _, row := range f.rows {
-		if row.ConnectionID == req.ConnectionID && row.Status == accountingsync.SyncStatusInFlight &&
+		if row.ConnectionID == req.ConnectionID &&
+			row.Status == accountingsync.SyncStatusInFlight &&
 			slices.Contains(req.ObjectTypes, row.ObjectType) {
 			count++
 		}
@@ -265,12 +273,14 @@ func (f *fakeRecords) Update(
 }
 
 type fakeChanges struct {
-	accountingsyncports.AccountingInboundChangeRepository
+	accountinginboundports.AccountingInboundChangeRepository
 	mu   sync.Mutex
 	rows []*accountingsync.AccountingInboundChange
 }
 
-func cloneChange(c *accountingsync.AccountingInboundChange) *accountingsync.AccountingInboundChange {
+func cloneChange(
+	c *accountingsync.AccountingInboundChange,
+) *accountingsync.AccountingInboundChange {
 	out := *c
 	out.Document.Lines = make([]*accountingsync.InboundLine, 0, len(c.Document.Lines))
 	for _, line := range c.Document.Lines {
@@ -335,7 +345,7 @@ func (f *fakeChanges) Update(
 
 func (f *fakeChanges) GetByID(
 	_ context.Context,
-	req accountingsyncports.GetAccountingInboundChangeQuery,
+	req accountinginboundports.GetAccountingInboundChangeQuery,
 ) (*accountingsync.AccountingInboundChange, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -350,7 +360,7 @@ func (f *fakeChanges) GetByID(
 
 func (f *fakeChanges) ListByExternalIDs(
 	_ context.Context,
-	req *accountingsyncports.ListAccountingInboundChangesByExternalIDsRequest,
+	req *accountinginboundports.ListAccountingInboundChangesByExternalIDsRequest,
 ) ([]*accountingsync.AccountingInboundChange, error) {
 	out := []*accountingsync.AccountingInboundChange{}
 	for _, row := range f.all() {
@@ -364,11 +374,12 @@ func (f *fakeChanges) ListByExternalIDs(
 
 func (f *fakeChanges) ListDetected(
 	_ context.Context,
-	req *accountingsyncports.ListDetectedAccountingInboundChangesRequest,
+	req *accountinginboundports.ListDetectedAccountingInboundChangesRequest,
 ) ([]*accountingsync.AccountingInboundChange, error) {
 	out := []*accountingsync.AccountingInboundChange{}
 	for _, row := range f.all() {
-		if row.ConnectionID == req.ConnectionID && row.Status == accountingsync.InboundStatusDetected &&
+		if row.ConnectionID == req.ConnectionID &&
+			row.Status == accountingsync.InboundStatusDetected &&
 			row.DetectedAt <= req.DetectedBefore {
 			out = append(out, row)
 		}
@@ -378,18 +389,19 @@ func (f *fakeChanges) ListDetected(
 
 func (f *fakeChanges) ListAttention(
 	_ context.Context,
-	req *accountingsyncports.ListAccountingInboundAttentionRequest,
-) ([]accountingsyncports.AccountingInboundAttentionGroup, error) {
-	byReason := map[accountingsync.InboundChangeReason]*accountingsyncports.AccountingInboundAttentionGroup{}
+	req *accountinginboundports.ListAccountingInboundAttentionRequest,
+) ([]accountinginboundports.AccountingInboundAttentionGroup, error) {
+	byReason := map[accountingsync.InboundChangeReason]*accountinginboundports.AccountingInboundAttentionGroup{}
 	order := []accountingsync.InboundChangeReason{}
 	for _, row := range f.all() {
-		if row.ConnectionID != req.ConnectionID || row.Status != accountingsync.InboundStatusProposed ||
+		if row.ConnectionID != req.ConnectionID ||
+			row.Status != accountingsync.InboundStatusProposed ||
 			row.DetectedAt > req.DetectedBefore {
 			continue
 		}
 		group := byReason[row.Reason]
 		if group == nil {
-			group = &accountingsyncports.AccountingInboundAttentionGroup{
+			group = &accountinginboundports.AccountingInboundAttentionGroup{
 				Reason:           row.Reason,
 				OldestDetectedAt: row.DetectedAt,
 				SampleID:         row.ID,
@@ -399,7 +411,7 @@ func (f *fakeChanges) ListAttention(
 		}
 		group.Count++
 	}
-	out := make([]accountingsyncports.AccountingInboundAttentionGroup, 0, len(order))
+	out := make([]accountinginboundports.AccountingInboundAttentionGroup, 0, len(order))
 	for _, reason := range order {
 		out = append(out, *byReason[reason])
 	}
@@ -407,7 +419,7 @@ func (f *fakeChanges) ListAttention(
 }
 
 type fakeReferences struct {
-	accountingsyncports.AccountingReferenceObjectRepository
+	accountingmappingports.AccountingReferenceObjectRepository
 	mu       sync.Mutex
 	upserted []*accountingsync.AccountingReferenceObject
 	removed  map[accountingsync.ReferenceKind][]string
@@ -415,7 +427,7 @@ type fakeReferences struct {
 
 func (f *fakeReferences) Upsert(
 	_ context.Context,
-	req *accountingsyncports.UpsertAccountingReferenceObjectsRequest,
+	req *accountingmappingports.UpsertAccountingReferenceObjectsRequest,
 ) error {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -425,7 +437,7 @@ func (f *fakeReferences) Upsert(
 
 func (f *fakeReferences) MarkRemoved(
 	_ context.Context,
-	req *accountingsyncports.MarkAccountingReferencesRemovedRequest,
+	req *accountingmappingports.MarkAccountingReferencesRemovedRequest,
 ) (int64, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -437,13 +449,13 @@ func (f *fakeReferences) MarkRemoved(
 }
 
 type fakeMappings struct {
-	accountingsyncports.AccountingMappingRepository
+	accountingmappingports.AccountingMappingRepository
 	rows []*accountingsync.AccountingMapping
 }
 
 func (f *fakeMappings) ListByConnection(
 	_ context.Context,
-	req *accountingsyncports.ListAccountingMappingsQuery,
+	req *accountingmappingports.ListAccountingMappingsQuery,
 ) ([]*accountingsync.AccountingMapping, error) {
 	out := []*accountingsync.AccountingMapping{}
 	for _, row := range f.rows {
@@ -477,13 +489,13 @@ func (f *fakeInvoices) GetByIDs(
 }
 
 type fakePayables struct {
-	rows map[pulid.ID]*accountingsyncports.PayableSettlement
+	rows map[pulid.ID]*accountingpayablesports.PayableSettlement
 }
 
 func (f *fakePayables) GetSettlement(
 	_ context.Context,
-	req *accountingsyncports.GetPayableSettlementRequest,
-) (*accountingsyncports.PayableSettlement, error) {
+	req *accountingpayablesports.GetPayableSettlementRequest,
+) (*accountingpayablesports.PayableSettlement, error) {
 	row, ok := f.rows[req.ID]
 	if !ok || row.Kind != req.Kind {
 		return nil, errortypes.NewNotFoundError("Settlement not found")
@@ -554,7 +566,10 @@ type fakeCustomerPayments struct {
 
 func (f *fakeCustomerPayments) queue(objectType accountingsync.SyncObjectType, id pulid.ID) {
 	f.records.add(accountingsync.NewAccountingSyncRecord(&accountingsync.NewSyncRecord{
-		TenantInfo:   pagination.TenantInfo{OrgID: f.conn.OrganizationID, BuID: f.conn.BusinessUnitID},
+		TenantInfo: pagination.TenantInfo{
+			OrgID: f.conn.OrganizationID,
+			BuID:  f.conn.BusinessUnitID,
+		},
 		ConnectionID: f.conn.ID,
 		Key: accountingsync.SyncRecordKey{
 			ObjectType: objectType,
@@ -719,7 +734,7 @@ func (f *fakePermissions) Check(
 
 func (f *fakePayables) StampExchangeRate(
 	context.Context,
-	*accountingsyncports.StampPayableExchangeRateRequest,
+	*accountingpayablesports.StampPayableExchangeRateRequest,
 ) error {
 	return nil
 }

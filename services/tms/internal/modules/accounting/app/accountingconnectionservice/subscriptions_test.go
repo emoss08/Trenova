@@ -10,7 +10,8 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -29,8 +30,8 @@ var errSubscriptionGone = errors.New("subscription not found")
 type fakeSubscriber struct {
 	mu           sync.Mutex
 	seq          int
-	created      []accountingsyncports.AccountingSubscribeRequest
-	renewed      []accountingsyncports.AccountingRenewSubscriptionRequest
+	created      []accountingconnectorports.AccountingSubscribeRequest
+	renewed      []accountingconnectorports.AccountingRenewSubscriptionRequest
 	unsubscribed []string
 	subscribeErr error
 	renewErr     error
@@ -45,7 +46,9 @@ func (f *fakeSubscriber) grant(id, url string) *accountingsync.WebhookSubscripti
 	}
 }
 
-func (f *fakeSubscriber) subscribe(req *accountingsyncports.AccountingSubscribeRequest) (*accountingsync.WebhookSubscriptionGrant, error) {
+func (f *fakeSubscriber) subscribe(
+	req *accountingconnectorports.AccountingSubscribeRequest,
+) (*accountingsync.WebhookSubscriptionGrant, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	if f.subscribeErr != nil {
@@ -56,7 +59,9 @@ func (f *fakeSubscriber) subscribe(req *accountingsyncports.AccountingSubscribeR
 	return f.grant("sub-"+strconv.Itoa(f.seq), req.NotificationURL), nil
 }
 
-func (f *fakeSubscriber) renew(req *accountingsyncports.AccountingRenewSubscriptionRequest) (*accountingsync.WebhookSubscriptionGrant, error) {
+func (f *fakeSubscriber) renew(
+	req *accountingconnectorports.AccountingRenewSubscriptionRequest,
+) (*accountingsync.WebhookSubscriptionGrant, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	if f.renewErr != nil {
@@ -85,7 +90,9 @@ type bcProvider struct {
 
 func (p *bcProvider) IntegrationType() integration.Type { return integration.TypeBusinessCentral }
 
-func (p *bcProvider) Bind(app *accountingsyncports.AccountingApp) (accountingsyncports.AccountingConnector, error) {
+func (p *bcProvider) Bind(
+	app *accountingconnectorports.AccountingApp,
+) (accountingconnectorports.AccountingConnector, error) {
 	bound, err := p.fakeConnector.Bind(app)
 	if err != nil {
 		return nil, err
@@ -105,16 +112,18 @@ type wireNotification struct {
 	Resource       string `json:"resource"`
 }
 
-func (p *bcProvider) ParseNotifications(body []byte) ([]accountingsyncports.AccountingWebhookNotification, error) {
+func (p *bcProvider) ParseNotifications(
+	body []byte,
+) ([]accountingconnectorports.AccountingWebhookNotification, error) {
 	var envelope struct {
 		Value []wireNotification `json:"value"`
 	}
 	if err := sonic.Unmarshal(body, &envelope); err != nil {
 		return nil, err
 	}
-	out := make([]accountingsyncports.AccountingWebhookNotification, 0, len(envelope.Value))
+	out := make([]accountingconnectorports.AccountingWebhookNotification, 0, len(envelope.Value))
 	for _, n := range envelope.Value {
-		out = append(out, accountingsyncports.AccountingWebhookNotification{
+		out = append(out, accountingconnectorports.AccountingWebhookNotification{
 			SubscriptionID: n.SubscriptionID,
 			ClientState:    n.ClientState,
 			Resource:       n.Resource,
@@ -138,19 +147,22 @@ func (c *bcConnector) SubscriptionRenewWindow() time.Duration { return 24 * time
 
 func (c *bcConnector) Subscribe(
 	_ context.Context,
-	req *accountingsyncports.AccountingSubscribeRequest,
+	req *accountingconnectorports.AccountingSubscribeRequest,
 ) (*accountingsync.WebhookSubscriptionGrant, error) {
 	return c.sub.subscribe(req)
 }
 
 func (c *bcConnector) RenewSubscription(
 	_ context.Context,
-	req *accountingsyncports.AccountingRenewSubscriptionRequest,
+	req *accountingconnectorports.AccountingRenewSubscriptionRequest,
 ) (*accountingsync.WebhookSubscriptionGrant, error) {
 	return c.sub.renew(req)
 }
 
-func (c *bcConnector) Unsubscribe(_ context.Context, req *accountingsyncports.AccountingUnsubscribeRequest) error {
+func (c *bcConnector) Unsubscribe(
+	_ context.Context,
+	req *accountingconnectorports.AccountingUnsubscribeRequest,
+) error {
 	c.sub.mu.Lock()
 	defer c.sub.mu.Unlock()
 	c.sub.unsubscribed = append(c.sub.unsubscribed, req.ExternalID)
@@ -171,7 +183,7 @@ type fakeSubscriptions struct {
 
 func (f *fakeSubscriptions) ListByConnection(
 	_ context.Context,
-	req accountingsyncports.ListAccountingWebhookSubscriptionsRequest,
+	req accountingconnectionports.ListAccountingWebhookSubscriptionsRequest,
 ) ([]*accountingsync.AccountingWebhookSubscription, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -206,7 +218,7 @@ func (f *fakeSubscriptions) ListByExternalIDs(
 
 func (f *fakeSubscriptions) ListConnections(
 	_ context.Context,
-	req accountingsyncports.ListWebhookSubscriptionConnectionsRequest,
+	req accountingconnectionports.ListWebhookSubscriptionConnectionsRequest,
 ) ([]*accountingsync.AccountingConnection, error) {
 	f.conn.mu.Lock()
 	defer f.conn.mu.Unlock()
@@ -249,7 +261,7 @@ func (f *fakeSubscriptions) Update(
 
 func (f *fakeSubscriptions) Delete(
 	_ context.Context,
-	req accountingsyncports.DeleteAccountingWebhookSubscriptionRequest,
+	req accountingconnectionports.DeleteAccountingWebhookSubscriptionRequest,
 ) error {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -323,7 +335,7 @@ func (h *bcHarness) seedConnection(t *testing.T) *accountingsync.AccountingConne
 	}
 	conn.BindApp(testInstanceApp.Identity())
 	conn.EnableSync(accountingsync.SyncSettings{StartDate: now}, now)
-	grant, err := h.svc.seal(conn, &accountingsyncports.AccountingTokenGrant{
+	grant, err := h.svc.seal(conn, &accountingconnectorports.AccountingTokenGrant{
 		AccessToken:     "bc-access",
 		RefreshToken:    "bc-refresh",
 		AccessTokenTTL:  time.Hour,
@@ -342,11 +354,11 @@ func (h *bcHarness) seedConnection(t *testing.T) *accountingsync.AccountingConne
 	return conn
 }
 
-func (h *bcHarness) sweep(t *testing.T) *accountingsyncports.AccountingSubscriptionSweep {
+func (h *bcHarness) sweep(t *testing.T) *accountingconnectionports.AccountingSubscriptionSweep {
 	t.Helper()
 	sweep, err := h.svc.SyncWebhookSubscriptions(
 		t.Context(),
-		&accountingsyncports.SyncAccountingWebhookSubscriptionsRequest{Limit: 10},
+		&accountingconnectionports.SyncAccountingWebhookSubscriptionsRequest{Limit: 10},
 	)
 	require.NoError(t, err)
 	return sweep
@@ -356,15 +368,20 @@ func (h *bcHarness) notify(t *testing.T, appID string, body any) error {
 	t.Helper()
 	raw, err := sonic.Marshal(body)
 	require.NoError(t, err)
-	return h.svc.ReceiveWebhook(t.Context(), &accountingsyncports.ReceiveAccountingWebhookRequest{
-		IntegrationType: integration.TypeBusinessCentral,
-		AppID:           appID,
-		Body:            raw,
-	})
+	return h.svc.ReceiveWebhook(
+		t.Context(),
+		&accountingconnectionports.ReceiveAccountingWebhookRequest{
+			IntegrationType: integration.TypeBusinessCentral,
+			AppID:           appID,
+			Body:            raw,
+		},
+	)
 }
 
 func notification(id, state string) map[string]any {
-	return map[string]any{"value": []map[string]string{{"subscriptionId": id, "clientState": state}}}
+	return map[string]any{
+		"value": []map[string]string{{"subscriptionId": id, "clientState": state}},
+	}
 }
 
 func TestTheSweepSubscribesEveryResourceAndSealsItsSecret(t *testing.T) {
@@ -378,7 +395,11 @@ func TestTheSweepSubscribesEveryResourceAndSealsItsSecret(t *testing.T) {
 	require.Len(t, rows, 2)
 	for _, row := range rows {
 		assert.Equal(t, accountingsync.WebhookSubscriptionActive, row.Status)
-		assert.Equal(t, "https://api.example.com/api/v1/webhooks/accounting/businesscentral/", row.NotificationURL)
+		assert.Equal(
+			t,
+			"https://api.example.com/api/v1/webhooks/accounting/businesscentral/",
+			row.NotificationURL,
+		)
 		state := h.bc.sub.clientStateOf(row.Resource)
 		require.NotEmpty(t, state)
 		assert.NotContains(t, row.ClientStateCiphertext, state)
@@ -404,7 +425,11 @@ func TestSubscriptionsNearExpiryAreRenewedWithTheirSecret(t *testing.T) {
 	sweep := h.sweep(t)
 	assert.Equal(t, 2, sweep.Renewed)
 	for _, renewed := range h.bc.sub.renewed {
-		assert.Equal(t, h.bc.sub.clientStateOf(resourceOf(h, renewed.ExternalID)), renewed.ClientState)
+		assert.Equal(
+			t,
+			h.bc.sub.clientStateOf(resourceOf(h, renewed.ExternalID)),
+			renewed.ClientState,
+		)
 	}
 }
 
@@ -534,12 +559,19 @@ func TestANotificationOnAnotherAppsPathIsRefused(t *testing.T) {
 		Environment:     accountingsync.AppEnvironmentProduction,
 		ClientID:        "other-client",
 	}
-	sealed, err := h.encryption.EncryptStringWithAAD("other-secret", appAAD(other, clientSecretField))
+	sealed, err := h.encryption.EncryptStringWithAAD(
+		"other-secret",
+		appAAD(other, clientSecretField),
+	)
 	require.NoError(t, err)
 	other.ClientSecretCiphertext = sealed
 	h.apps.rows[integrationKey(pagination.TenantInfo{OrgID: other.OrganizationID, BuID: other.BusinessUnitID}, other.IntegrationType)] = other
 
-	err = h.notify(t, other.ID.String(), notification(row.ExternalSubscriptionID, h.bc.sub.clientStateOf(row.Resource)))
+	err = h.notify(
+		t,
+		other.ID.String(),
+		notification(row.ExternalSubscriptionID, h.bc.sub.clientStateOf(row.Resource)),
+	)
 	require.Error(t, err)
 	assert.True(t, errortypes.IsAuthenticationError(err))
 	assert.Nil(t, h.connections.rows[h.conn.ID].LastWebhookAt)
@@ -551,7 +583,7 @@ func TestDisconnectingReleasesTheSubscriptions(t *testing.T) {
 	h := newBCHarness(t)
 	h.sweep(t)
 
-	_, err := h.svc.Disconnect(t.Context(), &accountingsyncports.DisconnectAccountingRequest{
+	_, err := h.svc.Disconnect(t.Context(), &accountingconnectionports.DisconnectAccountingRequest{
 		TenantInfo:      h.tenant,
 		UserID:          h.userID,
 		IntegrationType: integration.TypeBusinessCentral,

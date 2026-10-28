@@ -5,14 +5,16 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func salesDoc(kind accountingsync.SyncObjectType) *accountingsyncports.AccountingSalesDocument {
-	return &accountingsyncports.AccountingSalesDocument{
+func salesDoc(
+	kind accountingsync.SyncObjectType,
+) *accountingconnectorports.AccountingSalesDocument {
+	return &accountingconnectorports.AccountingSalesDocument{
 		Auth:               testAuth(),
 		RequestID:          testRequestID,
 		Kind:               kind,
@@ -24,7 +26,7 @@ func salesDoc(kind accountingsync.SyncObjectType) *accountingsyncports.Accountin
 		CurrencyCode:       "USD",
 		PrivateNote:        "Shipment S-1",
 		CustomerMemo:       "Thank you",
-		Lines: []accountingsyncports.AccountingDocumentLine{
+		Lines: []accountingconnectorports.AccountingDocumentLine{
 			{
 				Description:    "Linehaul",
 				ItemExternalID: testItem,
@@ -250,8 +252,8 @@ func TestUpdateInAClosedPeriodIsAClosedPeriodFailure(t *testing.T) {
 func voidRef(
 	kind accountingsync.SyncObjectType,
 	id string,
-) *accountingsyncports.AccountingDocumentRef {
-	return &accountingsyncports.AccountingDocumentRef{
+) *accountingconnectorports.AccountingDocumentRef {
+	return &accountingconnectorports.AccountingDocumentRef{
 		Auth:       testAuth(),
 		RequestID:  testVoidRequest,
 		Kind:       kind,
@@ -580,7 +582,7 @@ func TestDocumentURLAndLimits(t *testing.T) {
 	link := func(kind accountingsync.SyncObjectType, id string) string {
 		return conn.DocumentURL(
 			auth,
-			accountingsyncports.AccountingDocumentLink{Kind: kind, ExternalID: id},
+			accountingconnectorports.AccountingDocumentLink{Kind: kind, ExternalID: id},
 		)
 	}
 	assert.Equal(t,
@@ -606,7 +608,7 @@ func TestDocumentURLAndLimits(t *testing.T) {
 	assert.Empty(t, link(accountingsync.SyncObjectInvoice, testInvoice))
 
 	limits := conn.DocumentLimits()
-	assert.Equal(t, accountingsyncports.AccountingDocumentLimits{
+	assert.Equal(t, accountingconnectorports.AccountingDocumentLimits{
 		MaxDocNumberLength:      45,
 		SupportsDebitMemo:       false,
 		CanVoidCreditMemo:       true,

@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingmappingports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -15,12 +15,15 @@ func TestPlanConfirmShowsTheConfirmationWithoutSavingIt(t *testing.T) {
 	h.rescore(t)
 
 	ar := h.keyed(t, accountingsync.TargetAccountRole, accountingsync.AccountRoleAR)
-	plan, err := h.svc.PlanConfirm(t.Context(), &accountingsyncports.ConfirmAccountingMappingsRequest{
-		TenantInfo: h.tenant,
-		UserID:     h.tenant.UserID,
-		Items:      shown(ar),
-		Source:     accountingsync.MappingSourceAgent,
-	})
+	plan, err := h.svc.PlanConfirm(
+		t.Context(),
+		&accountingmappingports.ConfirmAccountingMappingsRequest{
+			TenantInfo: h.tenant,
+			UserID:     h.tenant.UserID,
+			Items:      shown(ar),
+			Source:     accountingsync.MappingSourceAgent,
+		},
+	)
 
 	require.NoError(t, err)
 	require.Len(t, plan.Changes, 1)
@@ -38,11 +41,14 @@ func TestPlanRejectShowsTheRejectionWithoutSavingIt(t *testing.T) {
 	h.rescore(t)
 
 	cus := h.object(t, accountingsync.TargetCustomer, h.customerID)
-	change, err := h.svc.PlanReject(t.Context(), &accountingsyncports.AccountingMappingActionRequest{
-		TenantInfo: h.tenant,
-		UserID:     h.tenant.UserID,
-		ID:         cus.ID,
-	})
+	change, err := h.svc.PlanReject(
+		t.Context(),
+		&accountingmappingports.AccountingMappingActionRequest{
+			TenantInfo: h.tenant,
+			UserID:     h.tenant.UserID,
+			ID:         cus.ID,
+		},
+	)
 
 	require.NoError(t, err)
 	assert.Equal(t, "50", change.Before.ExternalID)

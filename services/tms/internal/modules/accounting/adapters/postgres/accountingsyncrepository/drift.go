@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync/accountingsyncdb"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingdriftports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -41,7 +41,7 @@ type driftFindingRepository struct {
 
 func NewDriftFindingRepository(
 	p DriftFindingParams,
-) accountingsyncports.AccountingDriftFindingRepository {
+) accountingdriftports.AccountingDriftFindingRepository {
 	return &driftFindingRepository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.accounting-drift-finding-repository"),
@@ -88,7 +88,7 @@ func (r *driftFindingRepository) Update(
 
 func (r *driftFindingRepository) GetByID(
 	ctx context.Context,
-	req accountingsyncports.GetAccountingDriftFindingQuery,
+	req accountingdriftports.GetAccountingDriftFindingQuery,
 ) (*accountingsync.AccountingDriftFinding, error) {
 	return dbtx.Write(
 		ctx,
@@ -112,7 +112,7 @@ func (r *driftFindingRepository) GetByID(
 
 func (r *driftFindingRepository) ListOpen(
 	ctx context.Context,
-	req *accountingsyncports.ListOpenAccountingDriftFindingsRequest,
+	req *accountingdriftports.ListOpenAccountingDriftFindingsRequest,
 ) ([]*accountingsync.AccountingDriftFinding, error) {
 	return dbtx.Write(
 		ctx,
@@ -135,7 +135,7 @@ func (r *driftFindingRepository) ListOpen(
 }
 
 func driftListFilters(
-	req *accountingsyncports.ListAccountingDriftFindingsConnectionRequest,
+	req *accountingdriftports.ListAccountingDriftFindingsConnectionRequest,
 ) []keel.Pred {
 	df := accountingsyncdb.AccountingDriftFindings
 	term := strings.TrimSpace(req.Search)
@@ -155,7 +155,7 @@ func driftListFilters(
 
 func (r *driftFindingRepository) ListConnection(
 	ctx context.Context,
-	req *accountingsyncports.ListAccountingDriftFindingsConnectionRequest,
+	req *accountingdriftports.ListAccountingDriftFindingsConnectionRequest,
 ) (*pagination.CursorListResult[*accountingsync.AccountingDriftFinding], error) {
 	return dbtx.Read(
 		ctx,
@@ -188,16 +188,16 @@ func (r *driftFindingRepository) ListConnection(
 
 func (r *driftFindingRepository) Summarize(
 	ctx context.Context,
-	req *accountingsyncports.SummarizeAccountingDriftRequest,
-) (*accountingsyncports.AccountingDriftSummary, error) {
+	req *accountingdriftports.SummarizeAccountingDriftRequest,
+) (*accountingdriftports.AccountingDriftSummary, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) (*accountingsyncports.AccountingDriftSummary, error) {
+		func(ctx context.Context) (*accountingdriftports.AccountingDriftSummary, error) {
 			df := accountingsyncdb.AccountingDriftFindings
 			open := df.Status.Eq(accountingsync.DriftStatusOpen)
 
-			summary, err := keel.IntoOne[accountingsyncports.AccountingDriftSummary](
+			summary, err := keel.IntoOne[accountingdriftports.AccountingDriftSummary](
 				ctx,
 				r.db.Keel(ctx),
 				df.Pick(
@@ -231,14 +231,14 @@ func (r *driftFindingRepository) Summarize(
 
 func (r *driftFindingRepository) ListAttention(
 	ctx context.Context,
-	req *accountingsyncports.ListAccountingDriftAttentionRequest,
-) ([]accountingsyncports.AccountingDriftAttentionGroup, error) {
+	req *accountingdriftports.ListAccountingDriftAttentionRequest,
+) ([]accountingdriftports.AccountingDriftAttentionGroup, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) ([]accountingsyncports.AccountingDriftAttentionGroup, error) {
+		func(ctx context.Context) ([]accountingdriftports.AccountingDriftAttentionGroup, error) {
 			df := accountingsyncdb.AccountingDriftFindings
-			groups, err := keel.Into[accountingsyncports.AccountingDriftAttentionGroup](
+			groups, err := keel.Into[accountingdriftports.AccountingDriftAttentionGroup](
 				ctx,
 				r.db.Keel(ctx),
 				df.Group(df.Kind).
@@ -254,7 +254,7 @@ func (r *driftFindingRepository) ListAttention(
 				return nil, err
 			}
 			if groups == nil {
-				groups = []accountingsyncports.AccountingDriftAttentionGroup{}
+				groups = []accountingdriftports.AccountingDriftAttentionGroup{}
 			}
 
 			return groups, nil

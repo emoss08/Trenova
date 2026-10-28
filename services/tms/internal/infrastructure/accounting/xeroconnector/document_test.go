@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/shared/restx"
 	"github.com/emoss08/trenova/shared/xero"
 	"github.com/shopspring/decimal"
@@ -24,7 +24,7 @@ func TestDocumentLimits(t *testing.T) {
 	t.Parallel()
 
 	limits := testConnector(t, &fakeXero{}).DocumentLimits()
-	assert.Equal(t, accountingsyncports.AccountingDocumentLimits{
+	assert.Equal(t, accountingconnectorports.AccountingDocumentLimits{
 		MaxDocNumberLength:      xero.MaxDocumentNumberLength,
 		SupportsDebitMemo:       false,
 		CanVoidCreditMemo:       true,
@@ -42,11 +42,31 @@ func TestDocumentURL(t *testing.T) {
 		code string
 		want string
 	}{
-		{accountingsync.SyncObjectInvoice, "!Ab12C", "https://go.xero.com/app/%21Ab12C/invoicing/view/" + testInvoice},
-		{accountingsync.SyncObjectDebitMemo, "!Ab12C", "https://go.xero.com/app/%21Ab12C/invoicing/view/" + testInvoice},
-		{accountingsync.SyncObjectCreditMemo, "!Ab12C", "https://go.xero.com/app/%21Ab12C/invoicing/view/" + testInvoice},
-		{accountingsync.SyncObjectCarrierBill, "!Ab12C", "https://go.xero.com/app/%21Ab12C/bills/view/" + testInvoice},
-		{accountingsync.SyncObjectDriverBill, "!Ab12C", "https://go.xero.com/app/%21Ab12C/bills/view/" + testInvoice},
+		{
+			accountingsync.SyncObjectInvoice,
+			"!Ab12C",
+			"https://go.xero.com/app/%21Ab12C/invoicing/view/" + testInvoice,
+		},
+		{
+			accountingsync.SyncObjectDebitMemo,
+			"!Ab12C",
+			"https://go.xero.com/app/%21Ab12C/invoicing/view/" + testInvoice,
+		},
+		{
+			accountingsync.SyncObjectCreditMemo,
+			"!Ab12C",
+			"https://go.xero.com/app/%21Ab12C/invoicing/view/" + testInvoice,
+		},
+		{
+			accountingsync.SyncObjectCarrierBill,
+			"!Ab12C",
+			"https://go.xero.com/app/%21Ab12C/bills/view/" + testInvoice,
+		},
+		{
+			accountingsync.SyncObjectDriverBill,
+			"!Ab12C",
+			"https://go.xero.com/app/%21Ab12C/bills/view/" + testInvoice,
+		},
 		{accountingsync.SyncObjectCustomerPayment, "!Ab12C", ""},
 		{accountingsync.SyncObjectCustomer, "!Ab12C", ""},
 		{accountingsync.SyncObjectInvoice, "", ""},
@@ -54,13 +74,35 @@ func TestDocumentURL(t *testing.T) {
 	for _, tc := range cases {
 		auth := testAuth()
 		auth.CompanyCode = tc.code
-		assert.Equal(t, tc.want, conn.DocumentURL(auth, accountingsyncports.AccountingDocumentLink{Kind: tc.kind, ExternalID: testInvoice}), string(tc.kind))
+		assert.Equal(
+			t,
+			tc.want,
+			conn.DocumentURL(
+				auth,
+				accountingconnectorports.AccountingDocumentLink{
+					Kind:       tc.kind,
+					ExternalID: testInvoice,
+				},
+			),
+			string(tc.kind),
+		)
 	}
-	assert.Empty(t, conn.DocumentURL(testAuth(), accountingsyncports.AccountingDocumentLink{Kind: accountingsync.SyncObjectInvoice, ExternalID: " "}))
+	assert.Empty(
+		t,
+		conn.DocumentURL(
+			testAuth(),
+			accountingconnectorports.AccountingDocumentLink{
+				Kind:       accountingsync.SyncObjectInvoice,
+				ExternalID: " ",
+			},
+		),
+	)
 }
 
-func salesDoc(kind accountingsync.SyncObjectType) *accountingsyncports.AccountingSalesDocument {
-	return &accountingsyncports.AccountingSalesDocument{
+func salesDoc(
+	kind accountingsync.SyncObjectType,
+) *accountingconnectorports.AccountingSalesDocument {
+	return &accountingconnectorports.AccountingSalesDocument{
 		Auth:               testAuth(),
 		RequestID:          testRequestID,
 		Kind:               kind,
@@ -70,7 +112,7 @@ func salesDoc(kind accountingsync.SyncObjectType) *accountingsyncports.Accountin
 		DueDate:            "2026-10-01",
 		CurrencyCode:       "USD",
 		PrivateNote:        "Load 42",
-		Lines: []accountingsyncports.AccountingDocumentLine{
+		Lines: []accountingconnectorports.AccountingDocumentLine{
 			{
 				Description:       "Line haul",
 				AccountExternalID: testRevenue,
@@ -245,10 +287,13 @@ func TestCreditMemoIsAllocatedToTheInvoiceItNames(t *testing.T) {
 	assert.NotContains(t, note, "DueDate")
 	assert.Equal(t, testRequestID+"-1", writes[1].Key)
 
-	again, err := conn.CreateSalesDocument(t.Context(), &accountingsyncports.AccountingSalesDocument{
-		Auth: testAuth(), RequestID: testRequestID, Kind: accountingsync.SyncObjectCreditMemo,
-		ApplyToExternalID: testInvoice, ApplyAmount: dec("100"), Refs: result.Refs,
-	})
+	again, err := conn.CreateSalesDocument(
+		t.Context(),
+		&accountingconnectorports.AccountingSalesDocument{
+			Auth: testAuth(), RequestID: testRequestID, Kind: accountingsync.SyncObjectCreditMemo,
+			ApplyToExternalID: testInvoice, ApplyAmount: dec("100"), Refs: result.Refs,
+		},
+	)
 	require.NoError(t, err)
 	assert.Equal(t, testCreditNote, again.ExternalID)
 	assert.Len(t, fake.writes(), 2)
@@ -269,9 +314,12 @@ func TestDebitMemoIsAnInvoiceWithAMarkedReference(t *testing.T) {
 	call, _ := fake.find(http.MethodPut, "/Invoices")
 	assert.Equal(t, "Debit memo. Load 42", firstDoc(t, call.Body, "Invoices")["Reference"])
 
-	_, err = conn.CreateSalesDocument(t.Context(), &accountingsyncports.AccountingSalesDocument{
-		Kind: accountingsync.SyncObjectCustomerPayment,
-	})
+	_, err = conn.CreateSalesDocument(
+		t.Context(),
+		&accountingconnectorports.AccountingSalesDocument{
+			Kind: accountingsync.SyncObjectCustomerPayment,
+		},
+	)
 	require.ErrorIs(t, err, errDocumentKind)
 }
 
@@ -321,10 +369,13 @@ func TestVoidInvoiceRemovesPaymentsAndAllocationsFirst(t *testing.T) {
 	}}
 	conn := testConnector(t, fake)
 
-	result, err := conn.VoidSalesDocument(t.Context(), &accountingsyncports.AccountingDocumentRef{
-		Auth: testAuth(), RequestID: testRequestID, Kind: accountingsync.SyncObjectInvoice,
-		ExternalID: testInvoice, Refs: map[string]string{"document": testInvoice},
-	})
+	result, err := conn.VoidSalesDocument(
+		t.Context(),
+		&accountingconnectorports.AccountingDocumentRef{
+			Auth: testAuth(), RequestID: testRequestID, Kind: accountingsync.SyncObjectInvoice,
+			ExternalID: testInvoice, Refs: map[string]string{"document": testInvoice},
+		},
+	)
 	require.NoError(t, err)
 	assert.Equal(t, testInvoice, result.ExternalID)
 
@@ -357,9 +408,12 @@ func TestVoidOfAnAlreadyVoidedOrMissingDocumentWritesNothing(t *testing.T) {
 		accountingsync.SyncObjectInvoice,
 		accountingsync.SyncObjectCreditMemo,
 	} {
-		_, err := conn.VoidSalesDocument(t.Context(), &accountingsyncports.AccountingDocumentRef{
-			Auth: testAuth(), RequestID: testRequestID, Kind: kind, ExternalID: testInvoice,
-		})
+		_, err := conn.VoidSalesDocument(
+			t.Context(),
+			&accountingconnectorports.AccountingDocumentRef{
+				Auth: testAuth(), RequestID: testRequestID, Kind: kind, ExternalID: testInvoice,
+			},
+		)
 		require.NoError(t, err)
 	}
 	assert.Empty(t, fake.writes())
@@ -381,7 +435,7 @@ func TestVoidCreditMemoRemovesItsAllocations(t *testing.T) {
 		}
 	}}
 	conn := testConnector(t, fake)
-	_, err := conn.VoidSalesDocument(t.Context(), &accountingsyncports.AccountingDocumentRef{
+	_, err := conn.VoidSalesDocument(t.Context(), &accountingconnectorports.AccountingDocumentRef{
 		Auth: testAuth(), RequestID: testRequestID, Kind: accountingsync.SyncObjectCreditMemo,
 		ExternalID: testCreditNote,
 	})
@@ -407,10 +461,13 @@ func TestCreditApplicationAllocatesAndVoidDeletesTheAllocation(t *testing.T) {
 	}}
 	conn := testConnector(t, fake)
 
-	result, err := conn.CreateCreditApplication(t.Context(), &accountingsyncports.AccountingCreditApplicationDocument{
-		Auth: testAuth(), RequestID: testRequestID, InvoiceExternalID: testInvoice,
-		CreditMemoExternalID: testCreditNote, Amount: dec("40"), TxnDate: "2026-09-02",
-	})
+	result, err := conn.CreateCreditApplication(
+		t.Context(),
+		&accountingconnectorports.AccountingCreditApplicationDocument{
+			Auth: testAuth(), RequestID: testRequestID, InvoiceExternalID: testInvoice,
+			CreditMemoExternalID: testCreditNote, Amount: dec("40"), TxnDate: "2026-09-02",
+		},
+	)
 	require.NoError(t, err)
 	assert.Equal(t, testAllocation, result.ExternalID)
 	assert.Equal(t, testCreditNote, result.Refs[refCreditNote])
@@ -418,22 +475,34 @@ func TestCreditApplicationAllocatesAndVoidDeletesTheAllocation(t *testing.T) {
 	require.True(t, ok)
 	assert.Equal(t, "2026-09-02", firstDoc(t, call.Body, "Allocations")["Date"])
 
-	_, err = conn.VoidCreditApplication(t.Context(), &accountingsyncports.AccountingDocumentRef{
-		Auth: testAuth(), RequestID: "void", Kind: accountingsync.SyncObjectCreditApplication,
-		ExternalID: testAllocation, Refs: result.Refs,
-	})
+	_, err = conn.VoidCreditApplication(
+		t.Context(),
+		&accountingconnectorports.AccountingDocumentRef{
+			Auth: testAuth(), RequestID: "void", Kind: accountingsync.SyncObjectCreditApplication,
+			ExternalID: testAllocation, Refs: result.Refs,
+		},
+	)
 	require.NoError(t, err)
-	_, ok = fake.find(http.MethodDelete, "/CreditNotes/"+testCreditNote+"/Allocations/"+testAllocation)
+	_, ok = fake.find(
+		http.MethodDelete,
+		"/CreditNotes/"+testCreditNote+"/Allocations/"+testAllocation,
+	)
 	assert.True(t, ok)
 
-	_, err = conn.VoidCreditApplication(t.Context(), &accountingsyncports.AccountingDocumentRef{
-		Auth: testAuth(), ExternalID: testAllocation, Refs: map[string]string{},
-	})
+	_, err = conn.VoidCreditApplication(
+		t.Context(),
+		&accountingconnectorports.AccountingDocumentRef{
+			Auth: testAuth(), ExternalID: testAllocation, Refs: map[string]string{},
+		},
+	)
 	require.ErrorIs(t, err, errCreditNoteID)
 
-	_, err = conn.CreateCreditApplication(t.Context(), &accountingsyncports.AccountingCreditApplicationDocument{
-		Auth: testAuth(), Amount: decimal.Zero,
-	})
+	_, err = conn.CreateCreditApplication(
+		t.Context(),
+		&accountingconnectorports.AccountingCreditApplicationDocument{
+			Auth: testAuth(), Amount: decimal.Zero,
+		},
+	)
 	require.ErrorIs(t, err, xero.ErrAmountNotPositive)
 }
 
@@ -454,12 +523,15 @@ func TestFindSalesDocumentByNumberAndTotal(t *testing.T) {
 	}}
 	conn := testConnector(t, fake)
 
-	find := func(kind accountingsync.SyncObjectType, number, total string) (*accountingsyncports.AccountingDocumentResult, bool) {
+	find := func(kind accountingsync.SyncObjectType, number, total string) (*accountingconnectorports.AccountingDocumentResult, bool) {
 		t.Helper()
-		found, ok, err := conn.FindDocument(t.Context(), &accountingsyncports.AccountingFindDocumentRequest{
-			Auth: testAuth(), Kind: kind, DocNumber: number, Total: dec(total),
-			RequestID: testRequestID,
-		})
+		found, ok, err := conn.FindDocument(
+			t.Context(),
+			&accountingconnectorports.AccountingFindDocumentRequest{
+				Auth: testAuth(), Kind: kind, DocNumber: number, Total: dec(total),
+				RequestID: testRequestID,
+			},
+		)
 		require.NoError(t, err)
 		return found, ok
 	}
@@ -484,9 +556,12 @@ func TestFindSalesDocumentByNumberAndTotal(t *testing.T) {
 	require.True(t, ok)
 	assert.Equal(t, testCreditNote, found.ExternalID)
 
-	_, _, err := conn.FindDocument(t.Context(), &accountingsyncports.AccountingFindDocumentRequest{
-		Auth: testAuth(), Kind: accountingsync.SyncObjectCustomer,
-	})
+	_, _, err := conn.FindDocument(
+		t.Context(),
+		&accountingconnectorports.AccountingFindDocumentRequest{
+			Auth: testAuth(), Kind: accountingsync.SyncObjectCustomer,
+		},
+	)
 	require.ErrorIs(t, err, errDocumentKind)
 }
 
@@ -506,7 +581,11 @@ func TestClassifyDocumentError(t *testing.T) {
 	}{
 		{"sync error passes through", mapping, accountingsync.SyncErrorMapping},
 		{"not configured", ErrNotConfigured, accountingsync.SyncErrorConfiguration},
-		{"revoked", &xero.OAuthError{Status: 400, Code: "invalid_grant"}, accountingsync.SyncErrorAuth},
+		{
+			"revoked",
+			&xero.OAuthError{Status: 400, Code: "invalid_grant"},
+			accountingsync.SyncErrorAuth,
+		},
 		{"unauthorized", apiError(401, ""), accountingsync.SyncErrorAuth},
 		{"scope", apiError(401, xero.TypeInsufficientScope), accountingsync.SyncErrorAuth},
 		{"disconnected", apiError(403, xero.TypeAuthUnsuccessful), accountingsync.SyncErrorAuth},
@@ -514,12 +593,36 @@ func TestClassifyDocumentError(t *testing.T) {
 		{"rate limited", apiError(429, ""), accountingsync.SyncErrorRateLimited},
 		{"offline", apiError(503, ""), accountingsync.SyncErrorTransient},
 		{"server", apiError(500, ""), accountingsync.SyncErrorTransient},
-		{"transport", &restx.TransportError{Err: errors.New("reset")}, accountingsync.SyncErrorTransient},
+		{
+			"transport",
+			&restx.TransportError{Err: errors.New("reset")},
+			accountingsync.SyncErrorTransient,
+		},
 		{"deadline", context.DeadlineExceeded, accountingsync.SyncErrorTransient},
-		{"duplicate number", apiError(400, xero.TypeValidation, "Invoice # must be unique."), accountingsync.SyncErrorDuplicate},
-		{"lock date", apiError(400, xero.TypeValidation, "The document date cannot be before the period lock date of 30 June 2026"), accountingsync.SyncErrorClosedPeriod},
-		{"archived account", apiError(400, xero.TypeValidation, "Account code '310' has been archived, or deleted."), accountingsync.SyncErrorMapping},
-		{"validation", apiError(400, xero.TypeValidation, "Email address must be valid."), accountingsync.SyncErrorValidation},
+		{
+			"duplicate number",
+			apiError(400, xero.TypeValidation, "Invoice # must be unique."),
+			accountingsync.SyncErrorDuplicate,
+		},
+		{
+			"lock date",
+			apiError(
+				400,
+				xero.TypeValidation,
+				"The document date cannot be before the period lock date of 30 June 2026",
+			),
+			accountingsync.SyncErrorClosedPeriod,
+		},
+		{
+			"archived account",
+			apiError(400, xero.TypeValidation, "Account code '310' has been archived, or deleted."),
+			accountingsync.SyncErrorMapping,
+		},
+		{
+			"validation",
+			apiError(400, xero.TypeValidation, "Email address must be valid."),
+			accountingsync.SyncErrorValidation,
+		},
 		{"local", xero.ErrLinesRequired, accountingsync.SyncErrorValidation},
 		{"bad date", errInvalidDate, accountingsync.SyncErrorValidation},
 		{"unknown", errors.New("strange"), accountingsync.SyncErrorTransient},
@@ -571,9 +674,9 @@ func TestUpsertCustomerCreatesThenUpdates(t *testing.T) {
 		return 0, ""
 	}}
 	conn := testConnector(t, fake)
-	doc := &accountingsyncports.AccountingCustomerDocument{
+	doc := &accountingconnectorports.AccountingCustomerDocument{
 		Auth: testAuth(), RequestID: testRequestID,
-		Party: accountingsyncports.AccountingPartyDraft{DisplayName: "Globex"},
+		Party: accountingconnectorports.AccountingPartyDraft{DisplayName: "Globex"},
 	}
 	created, err := conn.UpsertCustomer(t.Context(), doc)
 	require.NoError(t, err)

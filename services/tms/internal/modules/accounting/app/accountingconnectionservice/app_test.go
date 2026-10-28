@@ -4,8 +4,9 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -19,8 +20,8 @@ const (
 
 func (h *harness) saveApp(
 	t *testing.T,
-	req accountingsyncports.SaveAccountingAppRequest,
-) (*accountingsyncports.AccountingSyncStatus, error) {
+	req accountingconnectionports.SaveAccountingAppRequest,
+) (*accountingconnectionports.AccountingSyncStatus, error) {
 	t.Helper()
 	req.TenantInfo = h.tenant
 	req.UserID = h.userID
@@ -28,9 +29,9 @@ func (h *harness) saveApp(
 	return h.svc.SaveApp(t.Context(), &req)
 }
 
-func (h *harness) saveTenantApp(t *testing.T) *accountingsyncports.AccountingSyncStatus {
+func (h *harness) saveTenantApp(t *testing.T) *accountingconnectionports.AccountingSyncStatus {
 	t.Helper()
-	status, err := h.saveApp(t, accountingsyncports.SaveAccountingAppRequest{
+	status, err := h.saveApp(t, accountingconnectionports.SaveAccountingAppRequest{
 		Environment:          accountingsync.AppEnvironmentSandbox,
 		ClientID:             tenantClientID,
 		ClientSecret:         tenantSecret,
@@ -40,9 +41,9 @@ func (h *harness) saveTenantApp(t *testing.T) *accountingsyncports.AccountingSyn
 	return status
 }
 
-func (h *harness) removeApp(t *testing.T) (*accountingsyncports.AccountingSyncStatus, error) {
+func (h *harness) removeApp(t *testing.T) (*accountingconnectionports.AccountingSyncStatus, error) {
 	t.Helper()
-	return h.svc.RemoveApp(t.Context(), &accountingsyncports.RemoveAccountingAppRequest{
+	return h.svc.RemoveApp(t.Context(), &accountingconnectionports.RemoveAccountingAppRequest{
 		TenantInfo:      h.tenant,
 		UserID:          h.userID,
 		IntegrationType: integration.TypeQuickBooksOnline,
@@ -129,7 +130,7 @@ func TestSaveAppRequiresASecretForANewApp(t *testing.T) {
 	t.Parallel()
 
 	h := newHarness(t)
-	_, err := h.saveApp(t, accountingsyncports.SaveAccountingAppRequest{
+	_, err := h.saveApp(t, accountingconnectionports.SaveAccountingAppRequest{
 		Environment: accountingsync.AppEnvironmentSandbox,
 		ClientID:    tenantClientID,
 	})
@@ -142,7 +143,7 @@ func TestSaveAppValidatesItsInput(t *testing.T) {
 	t.Parallel()
 
 	h := newHarness(t)
-	_, err := h.saveApp(t, accountingsyncports.SaveAccountingAppRequest{
+	_, err := h.saveApp(t, accountingconnectionports.SaveAccountingAppRequest{
 		Environment:  "Staging",
 		ClientID:     "",
 		ClientSecret: tenantSecret,
@@ -150,7 +151,7 @@ func TestSaveAppValidatesItsInput(t *testing.T) {
 	require.Error(t, err)
 	assert.True(t, errortypes.IsError(err))
 
-	_, err = h.saveApp(t, accountingsyncports.SaveAccountingAppRequest{
+	_, err = h.saveApp(t, accountingconnectionports.SaveAccountingAppRequest{
 		Environment:  accountingsync.AppEnvironmentSandbox,
 		ClientID:     "bad client id!",
 		ClientSecret: tenantSecret,
@@ -164,8 +165,8 @@ func TestSaveAppRefusesKeysTheProviderRejects(t *testing.T) {
 	t.Parallel()
 
 	h := newHarness(t)
-	h.connector.verifyAppErr = accountingsyncports.ErrAccountingAppRejected
-	_, err := h.saveApp(t, accountingsyncports.SaveAccountingAppRequest{
+	h.connector.verifyAppErr = accountingconnectorports.ErrAccountingAppRejected
+	_, err := h.saveApp(t, accountingconnectionports.SaveAccountingAppRequest{
 		Environment:  accountingsync.AppEnvironmentSandbox,
 		ClientID:     tenantClientID,
 		ClientSecret: "wrong",
@@ -180,7 +181,7 @@ func TestSaveAppReportsAnUnreachableProviderWithoutSaving(t *testing.T) {
 
 	h := newHarness(t)
 	h.connector.verifyAppErr = errProvider
-	_, err := h.saveApp(t, accountingsyncports.SaveAccountingAppRequest{
+	_, err := h.saveApp(t, accountingconnectionports.SaveAccountingAppRequest{
 		Environment:  accountingsync.AppEnvironmentSandbox,
 		ClientID:     tenantClientID,
 		ClientSecret: tenantSecret,
@@ -195,7 +196,7 @@ func TestSaveAppRequiresARedirectAddress(t *testing.T) {
 
 	h := newHarness(t)
 	h.connector.redirectURL = ""
-	_, err := h.saveApp(t, accountingsyncports.SaveAccountingAppRequest{
+	_, err := h.saveApp(t, accountingconnectionports.SaveAccountingAppRequest{
 		Environment:  accountingsync.AppEnvironmentSandbox,
 		ClientID:     tenantClientID,
 		ClientSecret: tenantSecret,
@@ -210,7 +211,7 @@ func TestSaveAppKeepsTheStoredSecretWhenLeftBlank(t *testing.T) {
 
 	h := newHarness(t)
 	h.saveTenantApp(t)
-	_, err := h.saveApp(t, accountingsyncports.SaveAccountingAppRequest{
+	_, err := h.saveApp(t, accountingconnectionports.SaveAccountingAppRequest{
 		Environment: accountingsync.AppEnvironmentSandbox,
 		ClientID:    tenantClientID,
 	})
@@ -228,14 +229,14 @@ func TestChangingTheClientIDNeedsItsOwnSecretAndDropsTheOldVerifier(t *testing.T
 
 	h := newHarness(t)
 	h.saveTenantApp(t)
-	_, err := h.saveApp(t, accountingsyncports.SaveAccountingAppRequest{
+	_, err := h.saveApp(t, accountingconnectionports.SaveAccountingAppRequest{
 		Environment: accountingsync.AppEnvironmentSandbox,
 		ClientID:    "another-client",
 	})
 	require.Error(t, err)
 	assert.True(t, errortypes.IsError(err))
 
-	status, err := h.saveApp(t, accountingsyncports.SaveAccountingAppRequest{
+	status, err := h.saveApp(t, accountingconnectionports.SaveAccountingAppRequest{
 		Environment:  accountingsync.AppEnvironmentProduction,
 		ClientID:     "another-client",
 		ClientSecret: "another-secret",
@@ -250,7 +251,7 @@ func TestSaveAppCanClearTheVerifier(t *testing.T) {
 
 	h := newHarness(t)
 	h.saveTenantApp(t)
-	status, err := h.saveApp(t, accountingsyncports.SaveAccountingAppRequest{
+	status, err := h.saveApp(t, accountingconnectionports.SaveAccountingAppRequest{
 		Environment:               accountingsync.AppEnvironmentSandbox,
 		ClientID:                  tenantClientID,
 		ClearWebhookVerifierToken: true,
@@ -264,7 +265,7 @@ func TestSaveAppIsRefusedWhileConnectedThroughTheInstanceApp(t *testing.T) {
 
 	h := newHarness(t)
 	h.connect(t)
-	_, err := h.saveApp(t, accountingsyncports.SaveAccountingAppRequest{
+	_, err := h.saveApp(t, accountingconnectionports.SaveAccountingAppRequest{
 		Environment:  accountingsync.AppEnvironmentSandbox,
 		ClientID:     tenantClientID,
 		ClientSecret: tenantSecret,
@@ -281,14 +282,14 @@ func TestConnectedTenantAppCanRotateItsSecretButNotItsIdentity(t *testing.T) {
 	h.saveTenantApp(t)
 	h.connect(t)
 
-	_, err := h.saveApp(t, accountingsyncports.SaveAccountingAppRequest{
+	_, err := h.saveApp(t, accountingconnectionports.SaveAccountingAppRequest{
 		Environment:  accountingsync.AppEnvironmentSandbox,
 		ClientID:     tenantClientID,
 		ClientSecret: "rotated-secret",
 	})
 	require.NoError(t, err)
 
-	_, err = h.saveApp(t, accountingsyncports.SaveAccountingAppRequest{
+	_, err = h.saveApp(t, accountingconnectionports.SaveAccountingAppRequest{
 		Environment:  accountingsync.AppEnvironmentProduction,
 		ClientID:     tenantClientID,
 		ClientSecret: "rotated-secret",
@@ -312,7 +313,7 @@ func TestRemoveAppIsRefusedWhileConnectedThroughIt(t *testing.T) {
 	assert.True(t, errortypes.IsBusinessError(err))
 	assert.Len(t, h.apps.rows, 1)
 
-	_, err = h.svc.Disconnect(t.Context(), &accountingsyncports.DisconnectAccountingRequest{
+	_, err = h.svc.Disconnect(t.Context(), &accountingconnectionports.DisconnectAccountingRequest{
 		TenantInfo:      h.tenant,
 		UserID:          h.userID,
 		IntegrationType: integration.TypeQuickBooksOnline,
@@ -372,20 +373,29 @@ func TestReceiveWebhookVerifiesWithTheConnectionsOwnApp(t *testing.T) {
 	conn := h.connect(t)
 	h.connector.webhookRealms = []string{testRealm}
 
-	err := h.svc.ReceiveWebhook(t.Context(), &accountingsyncports.ReceiveAccountingWebhookRequest{
-		IntegrationType: integration.TypeQuickBooksOnline,
-		Signature:       "signed-by-someone-else",
-		Body:            []byte("[]"),
-	})
+	err := h.svc.ReceiveWebhook(
+		t.Context(),
+		&accountingconnectionports.ReceiveAccountingWebhookRequest{
+			IntegrationType: integration.TypeQuickBooksOnline,
+			Signature:       "signed-by-someone-else",
+			Body:            []byte("[]"),
+		},
+	)
 	require.Error(t, err)
 	assert.True(t, errortypes.IsAuthenticationError(err))
 	assert.Nil(t, h.connections.rows[conn.ID].LastWebhookAt)
 
-	require.NoError(t, h.svc.ReceiveWebhook(t.Context(), &accountingsyncports.ReceiveAccountingWebhookRequest{
-		IntegrationType: integration.TypeQuickBooksOnline,
-		Signature:       tenantVerifier,
-		Body:            []byte("[]"),
-	}))
+	require.NoError(
+		t,
+		h.svc.ReceiveWebhook(
+			t.Context(),
+			&accountingconnectionports.ReceiveAccountingWebhookRequest{
+				IntegrationType: integration.TypeQuickBooksOnline,
+				Signature:       tenantVerifier,
+				Body:            []byte("[]"),
+			},
+		),
+	)
 	assert.NotNil(t, h.connections.rows[conn.ID].LastWebhookAt)
 }
 
@@ -394,9 +404,15 @@ func TestReceiveWebhookForUnknownCompaniesIsIgnored(t *testing.T) {
 
 	h := newHarness(t)
 	h.connector.webhookRealms = []string{"nobody"}
-	require.NoError(t, h.svc.ReceiveWebhook(t.Context(), &accountingsyncports.ReceiveAccountingWebhookRequest{
-		IntegrationType: integration.TypeQuickBooksOnline,
-		Signature:       instanceVerifier,
-		Body:            []byte("[]"),
-	}))
+	require.NoError(
+		t,
+		h.svc.ReceiveWebhook(
+			t.Context(),
+			&accountingconnectionports.ReceiveAccountingWebhookRequest{
+				IntegrationType: integration.TypeQuickBooksOnline,
+				Signature:       instanceVerifier,
+				Body:            []byte("[]"),
+			},
+		),
+	)
 }

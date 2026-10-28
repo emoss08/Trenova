@@ -4,7 +4,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/shared/tokenutils"
 	"github.com/stretchr/testify/assert"
@@ -23,11 +24,14 @@ func newPKCEHarness(t *testing.T) *harness {
 
 func (h *harness) startAs(t *testing.T, typ integration.Type) string {
 	t.Helper()
-	_, err := h.svc.StartAuthorization(t.Context(), &accountingsyncports.StartAccountingAuthorizationRequest{
-		TenantInfo:      h.tenant,
-		UserID:          h.userID,
-		IntegrationType: typ,
-	})
+	_, err := h.svc.StartAuthorization(
+		t.Context(),
+		&accountingconnectionports.StartAccountingAuthorizationRequest{
+			TenantInfo:      h.tenant,
+			UserID:          h.userID,
+			IntegrationType: typ,
+		},
+	)
 	require.NoError(t, err)
 	require.NotEmpty(t, h.connector.authorizations)
 	return h.connector.authorizations[len(h.connector.authorizations)-1].State
@@ -37,19 +41,25 @@ func (h *harness) completeAs(
 	t *testing.T,
 	typ integration.Type,
 	state, realm string,
-) (*accountingsyncports.AccountingAuthorizationCompletion, error) {
+) (*accountingconnectionports.AccountingAuthorizationCompletion, error) {
 	t.Helper()
-	return h.svc.CompleteAuthorization(t.Context(), &accountingsyncports.CompleteAccountingAuthorizationRequest{
-		TenantInfo:      h.tenant,
-		UserID:          h.userID,
-		IntegrationType: typ,
-		State:           state,
-		Code:            "auth-code",
-		RealmID:         realm,
-	})
+	return h.svc.CompleteAuthorization(
+		t.Context(),
+		&accountingconnectionports.CompleteAccountingAuthorizationRequest{
+			TenantInfo:      h.tenant,
+			UserID:          h.userID,
+			IntegrationType: typ,
+			State:           state,
+			Code:            "auth-code",
+			RealmID:         realm,
+		},
+	)
 }
 
-func (h *harness) savedState(t *testing.T, state string) *accountingsyncports.AccountingOAuthState {
+func (h *harness) savedState(
+	t *testing.T,
+	state string,
+) *accountingconnectionports.AccountingOAuthState {
 	t.Helper()
 	h.states.mu.Lock()
 	defer h.states.mu.Unlock()
@@ -150,7 +160,12 @@ func TestCompleteAuthorizationHandsTheCallbackRealmToTheExchange(t *testing.T) {
 	t.Parallel()
 
 	h := newPKCEHarness(t)
-	_, err := h.completeAs(t, integration.TypeNetSuite, h.startAs(t, integration.TypeNetSuite), netSuiteRealm)
+	_, err := h.completeAs(
+		t,
+		integration.TypeNetSuite,
+		h.startAs(t, integration.TypeNetSuite),
+		netSuiteRealm,
+	)
 	require.NoError(t, err)
 
 	require.Len(t, h.connector.exchanges, 1)
@@ -178,7 +193,7 @@ func TestRefreshWithoutARefreshTokenKeepsTheStoredOneAndItsExpiry(t *testing.T) 
 			before := h.connections.tokens[conn.ID]
 			require.NotZero(t, before.refreshExpires)
 
-			h.connector.refreshGrant = &accountingsyncports.AccountingTokenGrant{
+			h.connector.refreshGrant = &accountingconnectorports.AccountingTokenGrant{
 				AccessToken:    "access-2",
 				AccessTokenTTL: h.connector.exchangeGrant.AccessTokenTTL,
 			}
@@ -198,7 +213,12 @@ func TestRefreshAndRevokeNameTheConnectionsRealm(t *testing.T) {
 	t.Parallel()
 
 	h := newPKCEHarness(t)
-	completion, err := h.completeAs(t, integration.TypeNetSuite, h.startAs(t, integration.TypeNetSuite), netSuiteRealm)
+	completion, err := h.completeAs(
+		t,
+		integration.TypeNetSuite,
+		h.startAs(t, integration.TypeNetSuite),
+		netSuiteRealm,
+	)
 	require.NoError(t, err)
 	conn := completion.Connection
 	h.expireAccessToken(conn)
@@ -207,7 +227,7 @@ func TestRefreshAndRevokeNameTheConnectionsRealm(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, []string{netSuiteRealm}, h.connector.refreshRealms)
 
-	_, err = h.svc.Disconnect(t.Context(), &accountingsyncports.DisconnectAccountingRequest{
+	_, err = h.svc.Disconnect(t.Context(), &accountingconnectionports.DisconnectAccountingRequest{
 		TenantInfo:      h.tenant,
 		UserID:          h.userID,
 		IntegrationType: integration.TypeNetSuite,

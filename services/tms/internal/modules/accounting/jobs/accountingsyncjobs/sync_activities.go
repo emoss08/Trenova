@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/jobs/accountingsyncjobs/accountingsynccontract"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -77,7 +78,7 @@ func (a *Activities) AccountingSafetyNetActivity(
 	for {
 		conns, err := a.connRepo.ListActive(
 			ctx,
-			accountingsyncports.ListActiveAccountingConnectionsRequest{
+			accountingconnectionports.ListActiveAccountingConnectionsRequest{
 				AfterID: afterID,
 				Limit:   safetyNetConnectionsPage,
 			},

@@ -5,12 +5,12 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/shared/netsuite"
 )
 
 func findTypeOf(
-	req *accountingsyncports.AccountingFindDocumentRequest,
+	req *accountingconnectorports.AccountingFindDocumentRequest,
 ) (typeCode string, searchable bool, err error) {
 	kind := req.Kind
 	switch {
@@ -35,8 +35,8 @@ func findTypeOf(
 
 func (c *Connector) FindDocument(
 	ctx context.Context,
-	req *accountingsyncports.AccountingFindDocumentRequest,
-) (*accountingsyncports.AccountingDocumentResult, bool, error) {
+	req *accountingconnectorports.AccountingFindDocumentRequest,
+) (*accountingconnectorports.AccountingDocumentResult, bool, error) {
 	typeCode, searchable, err := findTypeOf(req)
 	if err != nil || !searchable {
 		return nil, false, err
@@ -62,7 +62,7 @@ func findByNumber(
 	ctx context.Context,
 	client *netsuite.Client,
 	typeCode string,
-	req *accountingsyncports.AccountingFindDocumentRequest,
+	req *accountingconnectorports.AccountingFindDocumentRequest,
 ) (*transactionRow, bool, error) {
 	number := cleanText(req.DocNumber, maxTranIDLength)
 	if number == "" {
@@ -98,9 +98,9 @@ func findByNumber(
 }
 
 func foundResult(
-	req *accountingsyncports.AccountingFindDocumentRequest,
+	req *accountingconnectorports.AccountingFindDocumentRequest,
 	row *transactionRow,
-) *accountingsyncports.AccountingDocumentResult {
+) *accountingconnectorports.AccountingDocumentResult {
 	saved := &written{id: row.id(), number: row.TranID.Value()}
 	result := newResult(nil)
 	switch {

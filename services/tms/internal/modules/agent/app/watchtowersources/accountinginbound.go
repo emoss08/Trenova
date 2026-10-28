@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountinginboundports"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
@@ -63,7 +63,7 @@ func inboundAttentionText(
 
 func DescribeAccountingInboundAttention(
 	conn *accountingsync.AccountingConnection,
-	group *accountingsyncports.AccountingInboundAttentionGroup,
+	group *accountinginboundports.AccountingInboundAttentionGroup,
 ) (watchtowerports.WatchtowerItemInput, bool) {
 	if group == nil || group.Count <= 0 {
 		return watchtowerports.WatchtowerItemInput{}, false

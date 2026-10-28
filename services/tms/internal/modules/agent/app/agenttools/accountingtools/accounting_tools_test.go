@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -19,7 +19,7 @@ import (
 )
 
 type fakeAccountingChecker struct {
-	status  *accountingsyncports.AccountingSyncStatus
+	status  *accountingconnectionports.AccountingSyncStatus
 	checked []pulid.ID
 	tenant  pagination.TenantInfo
 	guard   agenttoolstest.WriteGuard
@@ -29,7 +29,7 @@ func (f *fakeAccountingChecker) Status(
 	_ context.Context,
 	tenant pagination.TenantInfo,
 	_ integration.Type,
-) (*accountingsyncports.AccountingSyncStatus, error) {
+) (*accountingconnectionports.AccountingSyncStatus, error) {
 	f.tenant = tenant
 	return f.status, nil
 }
@@ -49,8 +49,8 @@ func (f *fakeAccountingChecker) CheckHealth(
 
 func connectedStatus(
 	status accountingsync.ConnectionStatus,
-) *accountingsyncports.AccountingSyncStatus {
-	return &accountingsyncports.AccountingSyncStatus{
+) *accountingconnectionports.AccountingSyncStatus {
+	return &accountingconnectionports.AccountingSyncStatus{
 		IntegrationType: integration.TypeQuickBooksOnline,
 		ProviderName:    "QuickBooks Online",
 		Available:       true,
@@ -80,7 +80,7 @@ func TestCheckAccountingConnection_ChecksTheTenantsConnection(t *testing.T) {
 func TestCheckAccountingConnection_RefusesAConnectionThatNeedsAPerson(t *testing.T) {
 	t.Parallel()
 
-	for _, status := range []*accountingsyncports.AccountingSyncStatus{
+	for _, status := range []*accountingconnectionports.AccountingSyncStatus{
 		connectedStatus(accountingsync.ConnectionStatusRevoked),
 		connectedStatus(accountingsync.ConnectionStatusDisconnected),
 		{IntegrationType: integration.TypeQuickBooksOnline, ProviderName: "QuickBooks Online"},

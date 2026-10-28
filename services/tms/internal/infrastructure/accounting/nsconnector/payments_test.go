@@ -5,14 +5,14 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func paymentDoc() *accountingsyncports.AccountingPaymentDocument {
-	return &accountingsyncports.AccountingPaymentDocument{
+func paymentDoc() *accountingconnectorports.AccountingPaymentDocument {
+	return &accountingconnectorports.AccountingPaymentDocument{
 		Auth:                     testAuth(),
 		RequestID:                testRequestID,
 		CustomerExternalID:       testCustomer,
@@ -23,7 +23,7 @@ func paymentDoc() *accountingsyncports.AccountingPaymentDocument {
 		PrivateNote:              "Payment P-9",
 		TotalAmount:              decimal.NewFromInt(1450),
 		ShortPayItemExternalID:   testWriteOffItem,
-		Applications: []accountingsyncports.AccountingPaymentApplication{
+		Applications: []accountingconnectorports.AccountingPaymentApplication{
 			{
 				InvoiceExternalID: testInvoice,
 				InvoiceNumber:     "INV-1001",
@@ -283,7 +283,7 @@ func TestCreateCreditApplicationPatchesTheCreditMemoApplyList(t *testing.T) {
 	conn := testConnector(t, fake)
 	result, err := conn.CreateCreditApplication(
 		t.Context(),
-		&accountingsyncports.AccountingCreditApplicationDocument{
+		&accountingconnectorports.AccountingCreditApplicationDocument{
 			Auth:                 testAuth(),
 			RequestID:            testRequestID,
 			CustomerExternalID:   testCustomer,
@@ -307,7 +307,7 @@ func TestCreateCreditApplicationPatchesTheCreditMemoApplyList(t *testing.T) {
 
 	_, err = conn.CreateCreditApplication(
 		t.Context(),
-		&accountingsyncports.AccountingCreditApplicationDocument{
+		&accountingconnectorports.AccountingCreditApplicationDocument{
 			Auth:   testAuth(),
 			Amount: decimal.Zero,
 		},

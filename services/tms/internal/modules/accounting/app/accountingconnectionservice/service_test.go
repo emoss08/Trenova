@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
@@ -86,22 +86,31 @@ func newHarness(t *testing.T) *harness {
 
 func (h *harness) start(t *testing.T) string {
 	t.Helper()
-	started, err := h.svc.StartAuthorization(t.Context(), &accountingsyncports.StartAccountingAuthorizationRequest{
-		TenantInfo:      h.tenant,
-		UserID:          h.userID,
-		IntegrationType: integration.TypeQuickBooksOnline,
-	})
+	started, err := h.svc.StartAuthorization(
+		t.Context(),
+		&accountingconnectionports.StartAccountingAuthorizationRequest{
+			TenantInfo:      h.tenant,
+			UserID:          h.userID,
+			IntegrationType: integration.TypeQuickBooksOnline,
+		},
+	)
 	require.NoError(t, err)
-	state := strings.TrimPrefix(started.AuthorizeURL, "https://appcenter.intuit.com/connect/oauth2?state=")
+	state := strings.TrimPrefix(
+		started.AuthorizeURL,
+		"https://appcenter.intuit.com/connect/oauth2?state=",
+	)
 	require.NotEmpty(t, state)
 	return state
 }
 
-func (h *harness) complete(t *testing.T, state string) (*accountingsync.AccountingConnection, error) {
+func (h *harness) complete(
+	t *testing.T,
+	state string,
+) (*accountingsync.AccountingConnection, error) {
 	t.Helper()
 	completion, err := h.svc.CompleteAuthorization(
 		t.Context(),
-		&accountingsyncports.CompleteAccountingAuthorizationRequest{
+		&accountingconnectionports.CompleteAccountingAuthorizationRequest{
 			TenantInfo:      h.tenant,
 			UserID:          h.userID,
 			IntegrationType: integration.TypeQuickBooksOnline,
@@ -123,7 +132,11 @@ func (h *harness) connect(t *testing.T) *accountingsync.AccountingConnection {
 	return conn
 }
 
-func (h *harness) decrypt(t *testing.T, conn *accountingsync.AccountingConnection, field, ciphertext string) string {
+func (h *harness) decrypt(
+	t *testing.T,
+	conn *accountingsync.AccountingConnection,
+	field, ciphertext string,
+) string {
 	t.Helper()
 	value, err := h.encryption.DecryptStringWithAAD(ciphertext, connectionAAD(conn, field))
 	require.NoError(t, err)
@@ -149,11 +162,14 @@ func TestStartAuthorizationRefusesWhenTheAppIsNotConfigured(t *testing.T) {
 
 	h := newHarness(t)
 	h.connector.available = false
-	_, err := h.svc.StartAuthorization(t.Context(), &accountingsyncports.StartAccountingAuthorizationRequest{
-		TenantInfo:      h.tenant,
-		UserID:          h.userID,
-		IntegrationType: integration.TypeQuickBooksOnline,
-	})
+	_, err := h.svc.StartAuthorization(
+		t.Context(),
+		&accountingconnectionports.StartAccountingAuthorizationRequest{
+			TenantInfo:      h.tenant,
+			UserID:          h.userID,
+			IntegrationType: integration.TypeQuickBooksOnline,
+		},
+	)
 	require.Error(t, err)
 	assert.True(t, errortypes.IsBusinessError(err))
 	assert.Empty(t, h.states.states)
@@ -178,11 +194,14 @@ func TestStartAuthorizationRejectsNonAccountingTypes(t *testing.T) {
 	t.Parallel()
 
 	h := newHarness(t)
-	_, err := h.svc.StartAuthorization(t.Context(), &accountingsyncports.StartAccountingAuthorizationRequest{
-		TenantInfo:      h.tenant,
-		UserID:          h.userID,
-		IntegrationType: integration.TypeSamsara,
-	})
+	_, err := h.svc.StartAuthorization(
+		t.Context(),
+		&accountingconnectionports.StartAccountingAuthorizationRequest{
+			TenantInfo:      h.tenant,
+			UserID:          h.userID,
+			IntegrationType: integration.TypeSamsara,
+		},
+	)
 	require.Error(t, err)
 }
 
@@ -205,7 +224,10 @@ func TestCompleteAuthorizationConnectsWithEncryptedTokens(t *testing.T) {
 
 	other := *conn
 	other.ID = pulid.MustNew("acctc_")
-	_, err := h.encryption.DecryptStringWithAAD(stored.access, connectionAAD(&other, accessTokenField))
+	_, err := h.encryption.DecryptStringWithAAD(
+		stored.access,
+		connectionAAD(&other, accessTokenField),
+	)
 	require.Error(t, err, "a token must not decrypt under another connection's binding")
 
 	assert.True(t, h.integrations.enabled(h.tenant))
@@ -215,7 +237,12 @@ func TestCompleteAuthorizationConnectsWithEncryptedTokens(t *testing.T) {
 	assert.NotContains(t, serialized, "refresh-1")
 	assert.True(t, h.audit.entries[0].Critical)
 	assert.Empty(t, h.events.Published())
-	assert.Equal(t, []pulid.ID{conn.ID}, h.refresher.requested, "connecting starts the reference data refresh")
+	assert.Equal(
+		t,
+		[]pulid.ID{conn.ID},
+		h.refresher.requested,
+		"connecting starts the reference data refresh",
+	)
 }
 
 func TestCompleteAuthorizationSurvivesARefreshThatCannotStart(t *testing.T) {
@@ -247,14 +274,17 @@ func TestCompleteAuthorizationRefusesAnotherUsersState(t *testing.T) {
 
 	h := newHarness(t)
 	state := h.start(t)
-	_, err := h.svc.CompleteAuthorization(t.Context(), &accountingsyncports.CompleteAccountingAuthorizationRequest{
-		TenantInfo:      h.tenant,
-		UserID:          pulid.MustNew("usr_"),
-		IntegrationType: integration.TypeQuickBooksOnline,
-		State:           state,
-		Code:            "auth-code",
-		RealmID:         testRealm,
-	})
+	_, err := h.svc.CompleteAuthorization(
+		t.Context(),
+		&accountingconnectionports.CompleteAccountingAuthorizationRequest{
+			TenantInfo:      h.tenant,
+			UserID:          pulid.MustNew("usr_"),
+			IntegrationType: integration.TypeQuickBooksOnline,
+			State:           state,
+			Code:            "auth-code",
+			RealmID:         testRealm,
+		},
+	)
 	require.Error(t, err)
 	assert.True(t, errortypes.IsAuthorizationError(err))
 	assert.Empty(t, h.connector.exchangedCodes)
@@ -266,14 +296,20 @@ func TestCompleteAuthorizationRefusesAnotherTenantsState(t *testing.T) {
 
 	h := newHarness(t)
 	state := h.start(t)
-	_, err := h.svc.CompleteAuthorization(t.Context(), &accountingsyncports.CompleteAccountingAuthorizationRequest{
-		TenantInfo:      pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: h.tenant.BuID},
-		UserID:          h.userID,
-		IntegrationType: integration.TypeQuickBooksOnline,
-		State:           state,
-		Code:            "auth-code",
-		RealmID:         testRealm,
-	})
+	_, err := h.svc.CompleteAuthorization(
+		t.Context(),
+		&accountingconnectionports.CompleteAccountingAuthorizationRequest{
+			TenantInfo: pagination.TenantInfo{
+				OrgID: pulid.MustNew("org_"),
+				BuID:  h.tenant.BuID,
+			},
+			UserID:          h.userID,
+			IntegrationType: integration.TypeQuickBooksOnline,
+			State:           state,
+			Code:            "auth-code",
+			RealmID:         testRealm,
+		},
+	)
 	require.Error(t, err)
 	assert.True(t, errortypes.IsAuthorizationError(err))
 	assert.Empty(t, h.connector.exchangedCodes)
@@ -283,14 +319,17 @@ func TestCompleteAuthorizationValidatesInput(t *testing.T) {
 	t.Parallel()
 
 	h := newHarness(t)
-	_, err := h.svc.CompleteAuthorization(t.Context(), &accountingsyncports.CompleteAccountingAuthorizationRequest{
-		TenantInfo:      h.tenant,
-		UserID:          h.userID,
-		IntegrationType: integration.TypeQuickBooksOnline,
-		State:           "",
-		Code:            "",
-		RealmID:         "../etc",
-	})
+	_, err := h.svc.CompleteAuthorization(
+		t.Context(),
+		&accountingconnectionports.CompleteAccountingAuthorizationRequest{
+			TenantInfo:      h.tenant,
+			UserID:          h.userID,
+			IntegrationType: integration.TypeQuickBooksOnline,
+			State:           "",
+			Code:            "",
+			RealmID:         "../etc",
+		},
+	)
 	require.Error(t, err)
 	var multiErr *errortypes.MultiError
 	require.ErrorAs(t, err, &multiErr)
@@ -341,7 +380,11 @@ func TestReconnectAfterRevocationReusesTheRow(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, conn.ID, again.ID)
 	assert.Equal(t, accountingsync.ConnectionStatusConnected, h.connections.rows[conn.ID].Status)
-	assert.Equal(t, "access-2", h.decrypt(t, again, accessTokenField, h.connections.tokens[conn.ID].access))
+	assert.Equal(
+		t,
+		"access-2",
+		h.decrypt(t, again, accessTokenField, h.connections.tokens[conn.ID].access),
+	)
 	assert.Len(t, h.connections.rows, 1)
 }
 
@@ -351,14 +394,17 @@ func TestConnectingADifferentCompanyRequiresDisconnectingFirst(t *testing.T) {
 	h := newHarness(t)
 	h.connect(t)
 
-	_, err := h.svc.CompleteAuthorization(t.Context(), &accountingsyncports.CompleteAccountingAuthorizationRequest{
-		TenantInfo:      h.tenant,
-		UserID:          h.userID,
-		IntegrationType: integration.TypeQuickBooksOnline,
-		State:           h.start(t),
-		Code:            "auth-code",
-		RealmID:         "1111",
-	})
+	_, err := h.svc.CompleteAuthorization(
+		t.Context(),
+		&accountingconnectionports.CompleteAccountingAuthorizationRequest{
+			TenantInfo:      h.tenant,
+			UserID:          h.userID,
+			IntegrationType: integration.TypeQuickBooksOnline,
+			State:           h.start(t),
+			Code:            "auth-code",
+			RealmID:         "1111",
+		},
+	)
 	require.Error(t, err)
 	assert.True(t, errortypes.IsBusinessError(err))
 }
@@ -369,11 +415,14 @@ func TestDisconnectWipesTokensRevokesAndIsIdempotent(t *testing.T) {
 	h := newHarness(t)
 	conn := h.connect(t)
 
-	disconnected, err := h.svc.Disconnect(t.Context(), &accountingsyncports.DisconnectAccountingRequest{
-		TenantInfo:      h.tenant,
-		UserID:          h.userID,
-		IntegrationType: integration.TypeQuickBooksOnline,
-	})
+	disconnected, err := h.svc.Disconnect(
+		t.Context(),
+		&accountingconnectionports.DisconnectAccountingRequest{
+			TenantInfo:      h.tenant,
+			UserID:          h.userID,
+			IntegrationType: integration.TypeQuickBooksOnline,
+		},
+	)
 	require.NoError(t, err)
 	assert.Equal(t, accountingsync.ConnectionStatusDisconnected, disconnected.Status)
 	assert.Empty(t, h.connections.tokens[conn.ID].access)
@@ -384,7 +433,7 @@ func TestDisconnectWipesTokensRevokesAndIsIdempotent(t *testing.T) {
 	require.True(t, ok)
 	assert.True(t, health.resolved)
 
-	_, err = h.svc.Disconnect(t.Context(), &accountingsyncports.DisconnectAccountingRequest{
+	_, err = h.svc.Disconnect(t.Context(), &accountingconnectionports.DisconnectAccountingRequest{
 		TenantInfo:      h.tenant,
 		UserID:          h.userID,
 		IntegrationType: integration.TypeQuickBooksOnline,
@@ -505,21 +554,30 @@ func TestReceiveWebhookVerifiesBeforeRecording(t *testing.T) {
 	h.connector.webhookRealms = []string{testRealm, "unknown"}
 	h.connector.webhookErr = errProvider
 
-	err := h.svc.ReceiveWebhook(t.Context(), &accountingsyncports.ReceiveAccountingWebhookRequest{
-		IntegrationType: integration.TypeQuickBooksOnline,
-		Signature:       "bad",
-		Body:            []byte("[]"),
-	})
+	err := h.svc.ReceiveWebhook(
+		t.Context(),
+		&accountingconnectionports.ReceiveAccountingWebhookRequest{
+			IntegrationType: integration.TypeQuickBooksOnline,
+			Signature:       "bad",
+			Body:            []byte("[]"),
+		},
+	)
 	require.Error(t, err)
 	assert.True(t, errortypes.IsAuthenticationError(err))
 	assert.Nil(t, h.connections.rows[conn.ID].LastWebhookAt)
 
 	h.connector.webhookErr = nil
-	require.NoError(t, h.svc.ReceiveWebhook(t.Context(), &accountingsyncports.ReceiveAccountingWebhookRequest{
-		IntegrationType: integration.TypeQuickBooksOnline,
-		Signature:       instanceVerifier,
-		Body:            []byte("[]"),
-	}))
+	require.NoError(
+		t,
+		h.svc.ReceiveWebhook(
+			t.Context(),
+			&accountingconnectionports.ReceiveAccountingWebhookRequest{
+				IntegrationType: integration.TypeQuickBooksOnline,
+				Signature:       instanceVerifier,
+				Body:            []byte("[]"),
+			},
+		),
+	)
 	assert.NotNil(t, h.connections.rows[conn.ID].LastWebhookAt)
 }
 
@@ -529,7 +587,7 @@ func TestAVerifiedWebhookWakesTheChangeReaderOfASyncingConnection(t *testing.T) 
 	h := newHarness(t)
 	conn := h.connect(t)
 	h.connector.webhookRealms = []string{testRealm}
-	webhook := &accountingsyncports.ReceiveAccountingWebhookRequest{
+	webhook := &accountingconnectionports.ReceiveAccountingWebhookRequest{
 		IntegrationType: integration.TypeQuickBooksOnline,
 		Signature:       instanceVerifier,
 		Body:            []byte("[]"),
@@ -590,7 +648,7 @@ func TestSessionRefusesADisconnectedCompany(t *testing.T) {
 
 	h := newHarness(t)
 	conn := h.connect(t)
-	_, err := h.svc.Disconnect(t.Context(), &accountingsyncports.DisconnectAccountingRequest{
+	_, err := h.svc.Disconnect(t.Context(), &accountingconnectionports.DisconnectAccountingRequest{
 		TenantInfo:      h.tenant,
 		UserID:          h.userID,
 		IntegrationType: integration.TypeQuickBooksOnline,
@@ -626,12 +684,20 @@ func TestReportCallFailureRevokesOnlyForAuthorizationFailures(t *testing.T) {
 
 	transient := errors.New("timeout")
 	h.connector.errCategories[transient] = accountingsync.ErrorCategoryTransient
-	assert.Equal(t, accountingsync.ErrorCategoryTransient, h.svc.ReportCallFailure(t.Context(), h.tenant, conn.ID, transient))
+	assert.Equal(
+		t,
+		accountingsync.ErrorCategoryTransient,
+		h.svc.ReportCallFailure(t.Context(), h.tenant, conn.ID, transient),
+	)
 	assert.Equal(t, accountingsync.ConnectionStatusConnected, h.connections.rows[conn.ID].Status,
 		"a transient failure during a pull is not a health failure")
 
 	h.connector.errCategories[errProvider] = accountingsync.ErrorCategoryRevoked
-	assert.Equal(t, accountingsync.ErrorCategoryRevoked, h.svc.ReportCallFailure(t.Context(), h.tenant, conn.ID, errProvider))
+	assert.Equal(
+		t,
+		accountingsync.ErrorCategoryRevoked,
+		h.svc.ReportCallFailure(t.Context(), h.tenant, conn.ID, errProvider),
+	)
 	assert.Equal(t, accountingsync.ConnectionStatusRevoked, h.connections.rows[conn.ID].Status)
 	assert.Empty(t, h.connections.tokens[conn.ID].refresh)
 	require.Len(t, h.events.Published(), 1)

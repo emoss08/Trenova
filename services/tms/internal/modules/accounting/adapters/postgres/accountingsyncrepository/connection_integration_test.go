@@ -6,15 +6,14 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/pkg/dbscope"
-
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/dberror"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -62,7 +61,7 @@ func TestConnectionRepository_TokensAreReadOnlyUnderLockAndNeverOverwrittenByUpd
 	created, err := repo.Create(ctx, newConnection(tenant, data.User.ID, realm, now))
 	require.NoError(t, err)
 
-	read, err := repo.GetByType(ctx, accountingsyncports.GetAccountingConnectionRequest{
+	read, err := repo.GetByType(ctx, accountingconnectionports.GetAccountingConnectionRequest{
 		TenantInfo:      tenant,
 		IntegrationType: integration.TypeQuickBooksOnline,
 	})
@@ -78,12 +77,20 @@ func TestConnectionRepository_TokensAreReadOnlyUnderLockAndNeverOverwrittenByUpd
 	require.NoError(t, err)
 
 	err = conn.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
-		locked, lockErr := repo.LockWithTokens(txCtx, accountingsyncports.GetAccountingConnectionByIDRequest{
-			TenantInfo: tenant,
-			ID:         created.ID,
-		})
+		locked, lockErr := repo.LockWithTokens(
+			txCtx,
+			accountingconnectionports.GetAccountingConnectionByIDRequest{
+				TenantInfo: tenant,
+				ID:         created.ID,
+			},
+		)
 		require.NoError(t, lockErr)
-		assert.Equal(t, "cipher-access", locked.AccessTokenCiphertext, "Update must not clear tokens")
+		assert.Equal(
+			t,
+			"cipher-access",
+			locked.AccessTokenCiphertext,
+			"Update must not clear tokens",
+		)
 		assert.Equal(t, "cipher-refresh", locked.RefreshTokenCiphertext)
 		assert.Equal(t, "Acme Renamed", locked.ExternalCompanyName)
 		assert.Equal(t, accountingsync.ConnectionStatusDegraded, locked.Status)
@@ -92,7 +99,7 @@ func TestConnectionRepository_TokensAreReadOnlyUnderLockAndNeverOverwrittenByUpd
 	require.NoError(t, err)
 
 	refreshed := now + 10
-	require.NoError(t, repo.StoreTokens(ctx, accountingsyncports.StoreAccountingTokensRequest{
+	require.NoError(t, repo.StoreTokens(ctx, accountingconnectionports.StoreAccountingTokensRequest{
 		TenantInfo:             tenant,
 		ID:                     created.ID,
 		AccessTokenCiphertext:  "cipher-access-2",
@@ -102,25 +109,31 @@ func TestConnectionRepository_TokensAreReadOnlyUnderLockAndNeverOverwrittenByUpd
 		RefreshedAt:            &refreshed,
 		At:                     refreshed,
 	}))
-	locked, err := repo.LockByTypeWithTokens(ctx, accountingsyncports.GetAccountingConnectionRequest{
-		TenantInfo:      tenant,
-		IntegrationType: integration.TypeQuickBooksOnline,
-	})
+	locked, err := repo.LockByTypeWithTokens(
+		ctx,
+		accountingconnectionports.GetAccountingConnectionRequest{
+			TenantInfo:      tenant,
+			IntegrationType: integration.TypeQuickBooksOnline,
+		},
+	)
 	require.NoError(t, err)
 	assert.Equal(t, "cipher-access-2", locked.AccessTokenCiphertext)
 	assert.Equal(t, now+7200, locked.AccessTokenExpiresAt)
 	require.NotNil(t, locked.LastRefreshedAt)
 	assert.Equal(t, refreshed, *locked.LastRefreshedAt)
 
-	require.NoError(t, repo.StoreTokens(ctx, accountingsyncports.StoreAccountingTokensRequest{
+	require.NoError(t, repo.StoreTokens(ctx, accountingconnectionports.StoreAccountingTokensRequest{
 		TenantInfo: tenant,
 		ID:         created.ID,
 		At:         refreshed + 1,
 	}))
-	wiped, err := repo.LockWithTokens(ctx, accountingsyncports.GetAccountingConnectionByIDRequest{
-		TenantInfo: tenant,
-		ID:         created.ID,
-	})
+	wiped, err := repo.LockWithTokens(
+		ctx,
+		accountingconnectionports.GetAccountingConnectionByIDRequest{
+			TenantInfo: tenant,
+			ID:         created.ID,
+		},
+	)
 	require.NoError(t, err)
 	assert.Empty(t, wiped.AccessTokenCiphertext)
 	assert.Empty(t, wiped.RefreshTokenCiphertext)
@@ -133,18 +146,26 @@ func TestConnectionRepository_RealmIsHeldByOneTenantAtATime(t *testing.T) {
 	first := seedtest.SeedFullTestData(t, ctx, db)
 	ctx = first.Ctx(ctx)
 	second := seedtest.SeedAdditionalTenant(t, ctx, db, "QB")
-	repo := NewConnectionRepository(ConnectionParams{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()})
+	repo := NewConnectionRepository(
+		ConnectionParams{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()},
+	)
 	firstTenant := pagination.TenantInfo{OrgID: first.Organization.ID, BuID: first.BusinessUnit.ID}
-	secondTenant := pagination.TenantInfo{OrgID: second.Organization.ID, BuID: second.BusinessUnit.ID}
+	secondTenant := pagination.TenantInfo{
+		OrgID: second.Organization.ID,
+		BuID:  second.BusinessUnit.ID,
+	}
 	now := timeutils.NowUnix()
 
 	held, err := repo.Create(ctx, newConnection(firstTenant, first.User.ID, realm, now))
 	require.NoError(t, err)
 
-	holders, err := repo.ListHoldingRealm(ctx, accountingsyncports.ListAccountingConnectionsByRealmRequest{
-		IntegrationType: integration.TypeQuickBooksOnline,
-		RealmIDs:        []string{realm},
-	})
+	holders, err := repo.ListHoldingRealm(
+		ctx,
+		accountingconnectionports.ListAccountingConnectionsByRealmRequest{
+			IntegrationType: integration.TypeQuickBooksOnline,
+			RealmIDs:        []string{realm},
+		},
+	)
 	require.NoError(t, err)
 	require.Len(t, holders, 1)
 	assert.Equal(t, firstTenant.OrgID, holders[0].OrganizationID)
@@ -161,10 +182,13 @@ func TestConnectionRepository_RealmIsHeldByOneTenantAtATime(t *testing.T) {
 	_, err = repo.Create(second.Ctx(ctx), newConnection(secondTenant, second.User.ID, realm, now+6))
 	require.NoError(t, err, "a disconnected connection releases its company")
 
-	_, err = repo.GetByID(second.Ctx(ctx), accountingsyncports.GetAccountingConnectionByIDRequest{
-		TenantInfo: secondTenant,
-		ID:         held.ID,
-	})
+	_, err = repo.GetByID(
+		second.Ctx(ctx),
+		accountingconnectionports.GetAccountingConnectionByIDRequest{
+			TenantInfo: secondTenant,
+			ID:         held.ID,
+		},
+	)
 	require.Error(t, err)
 	assert.True(t, errortypes.IsNotFoundError(err), "one tenant cannot read another's connection")
 
@@ -180,37 +204,54 @@ func TestConnectionRepository_HealthQueueWebhooksAndVersioning(t *testing.T) {
 
 	data := seedtest.SeedFullTestData(t, ctx, db)
 	ctx = data.Ctx(ctx)
-	repo := NewConnectionRepository(ConnectionParams{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()})
+	repo := NewConnectionRepository(
+		ConnectionParams{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()},
+	)
 	tenant := pagination.TenantInfo{OrgID: data.Organization.ID, BuID: data.BusinessUnit.ID}
 	now := timeutils.NowUnix()
 
 	created, err := repo.Create(ctx, newConnection(tenant, data.User.ID, realm, now))
 	require.NoError(t, err)
 
-	due, err := repo.ListDueForHealthCheck(ctx, accountingsyncports.ListDueAccountingConnectionsRequest{
-		CheckedBefore: now - 60,
-		Limit:         10,
-	})
+	due, err := repo.ListDueForHealthCheck(
+		ctx,
+		accountingconnectionports.ListDueAccountingConnectionsRequest{
+			CheckedBefore: now - 60,
+			Limit:         10,
+		},
+	)
 	require.NoError(t, err)
 	assert.Empty(t, due, "checked just now")
 
-	due, err = repo.ListDueForHealthCheck(ctx, accountingsyncports.ListDueAccountingConnectionsRequest{
-		CheckedBefore: now + 60,
-		Limit:         10,
-	})
+	due, err = repo.ListDueForHealthCheck(
+		ctx,
+		accountingconnectionports.ListDueAccountingConnectionsRequest{
+			CheckedBefore: now + 60,
+			Limit:         10,
+		},
+	)
 	require.NoError(t, err)
 	require.Len(t, due, 1)
 	assert.Empty(t, due[0].RefreshTokenCiphertext)
 
-	updated, err := repo.MarkWebhookReceived(ctx, accountingsyncports.MarkAccountingWebhookRequest{
-		IntegrationType: integration.TypeQuickBooksOnline,
-		RealmIDs:        []string{realm, "someone-else"},
-		ReceivedAt:      now + 3,
-	})
+	updated, err := repo.MarkWebhookReceived(
+		ctx,
+		accountingconnectionports.MarkAccountingWebhookRequest{
+			IntegrationType: integration.TypeQuickBooksOnline,
+			RealmIDs:        []string{realm, "someone-else"},
+			ReceivedAt:      now + 3,
+		},
+	)
 	require.NoError(t, err)
 	assert.Equal(t, int64(1), updated)
 
-	fresh, err := repo.GetByID(ctx, accountingsyncports.GetAccountingConnectionByIDRequest{TenantInfo: tenant, ID: created.ID})
+	fresh, err := repo.GetByID(
+		ctx,
+		accountingconnectionports.GetAccountingConnectionByIDRequest{
+			TenantInfo: tenant,
+			ID:         created.ID,
+		},
+	)
 	require.NoError(t, err)
 	require.NotNil(t, fresh.LastWebhookAt)
 	assert.Equal(t, now+3, *fresh.LastWebhookAt)
@@ -224,10 +265,13 @@ func TestConnectionRepository_HealthQueueWebhooksAndVersioning(t *testing.T) {
 	fresh.Disconnect(data.User.ID, now+10)
 	_, err = repo.Update(ctx, fresh)
 	require.NoError(t, err)
-	due, err = repo.ListDueForHealthCheck(ctx, accountingsyncports.ListDueAccountingConnectionsRequest{
-		CheckedBefore: now + 60,
-		Limit:         10,
-	})
+	due, err = repo.ListDueForHealthCheck(
+		ctx,
+		accountingconnectionports.ListDueAccountingConnectionsRequest{
+			CheckedBefore: now + 60,
+			Limit:         10,
+		},
+	)
 	require.NoError(t, err)
 	assert.Empty(t, due, "disconnected connections are never checked")
 }
@@ -238,41 +282,53 @@ func TestConnectionRepository_ReferenceRefreshRunsUntilItFinishesEitherWay(t *te
 
 	data := seedtest.SeedFullTestData(t, ctx, db)
 	ctx = data.Ctx(ctx)
-	repo := NewConnectionRepository(ConnectionParams{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()})
+	repo := NewConnectionRepository(
+		ConnectionParams{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()},
+	)
 	tenant := pagination.TenantInfo{OrgID: data.Organization.ID, BuID: data.BusinessUnit.ID}
 	now := timeutils.NowUnix()
 
 	created, err := repo.Create(ctx, newConnection(tenant, data.User.ID, realm, now))
 	require.NoError(t, err)
 	get := func() *accountingsync.AccountingConnection {
-		conn, getErr := repo.GetByID(ctx, accountingsyncports.GetAccountingConnectionByIDRequest{TenantInfo: tenant, ID: created.ID})
+		conn, getErr := repo.GetByID(
+			ctx,
+			accountingconnectionports.GetAccountingConnectionByIDRequest{
+				TenantInfo: tenant,
+				ID:         created.ID,
+			},
+		)
 		require.NoError(t, getErr)
 		return conn
 	}
-	mark := func(req accountingsyncports.MarkAccountingReferenceRefreshRequest) {
+	mark := func(req accountingconnectionports.MarkAccountingReferenceRefreshRequest) {
 		req.TenantInfo = tenant
 		req.ID = created.ID
 		require.NoError(t, repo.MarkReferenceRefresh(ctx, req))
 	}
 
 	started := now
-	mark(accountingsyncports.MarkAccountingReferenceRefreshRequest{StartedAt: &started})
+	mark(accountingconnectionports.MarkAccountingReferenceRefreshRequest{StartedAt: &started})
 	require.NotNil(t, get().ReferenceRefreshStartedAt)
 
-	mark(accountingsyncports.MarkAccountingReferenceRefreshRequest{Error: "QuickBooks did not answer"})
+	mark(
+		accountingconnectionports.MarkAccountingReferenceRefreshRequest{
+			Error: "QuickBooks did not answer",
+		},
+	)
 	failed := get()
 	assert.Nil(t, failed.ReferenceRefreshStartedAt, "a failed refresh is no longer running")
 	assert.Equal(t, "QuickBooks did not answer", failed.ReferenceRefreshError)
 	assert.Nil(t, failed.ReferenceRefreshedAt)
 
 	restarted := now + 10
-	mark(accountingsyncports.MarkAccountingReferenceRefreshRequest{StartedAt: &restarted})
+	mark(accountingconnectionports.MarkAccountingReferenceRefreshRequest{StartedAt: &restarted})
 	running := get()
 	require.NotNil(t, running.ReferenceRefreshStartedAt)
 	assert.Empty(t, running.ReferenceRefreshError, "starting again clears the last failure")
 
 	finished := now + 20
-	mark(accountingsyncports.MarkAccountingReferenceRefreshRequest{RefreshedAt: &finished})
+	mark(accountingconnectionports.MarkAccountingReferenceRefreshRequest{RefreshedAt: &finished})
 	running.SetupStep = accountingsync.SetupStepStartDate
 	_, err = repo.Update(ctx, running)
 	require.NoError(t, err, "a copy read while the refresh ran still saves")
@@ -290,32 +346,46 @@ func TestConnectionRepository_DriftCheckKeepsItsLastSuccessThroughAFailure(t *te
 
 	data := seedtest.SeedFullTestData(t, ctx, db)
 	ctx = data.Ctx(ctx)
-	repo := NewConnectionRepository(ConnectionParams{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()})
+	repo := NewConnectionRepository(
+		ConnectionParams{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()},
+	)
 	tenant := pagination.TenantInfo{OrgID: data.Organization.ID, BuID: data.BusinessUnit.ID}
 	now := timeutils.NowUnix()
 
 	created, err := repo.Create(ctx, newConnection(tenant, data.User.ID, realm, now))
 	require.NoError(t, err)
 	get := func() *accountingsync.AccountingConnection {
-		conn, getErr := repo.GetByID(ctx, accountingsyncports.GetAccountingConnectionByIDRequest{TenantInfo: tenant, ID: created.ID})
+		conn, getErr := repo.GetByID(
+			ctx,
+			accountingconnectionports.GetAccountingConnectionByIDRequest{
+				TenantInfo: tenant,
+				ID:         created.ID,
+			},
+		)
 		require.NoError(t, getErr)
 		return conn
 	}
 
 	checked := now
-	require.NoError(t, repo.SaveDriftCheck(ctx, &accountingsyncports.SaveAccountingDriftCheckRequest{
-		TenantInfo: tenant,
-		ID:         created.ID,
-		CheckedAt:  &checked,
-	}))
+	require.NoError(
+		t,
+		repo.SaveDriftCheck(ctx, &accountingconnectionports.SaveAccountingDriftCheckRequest{
+			TenantInfo: tenant,
+			ID:         created.ID,
+			CheckedAt:  &checked,
+		}),
+	)
 	require.NotNil(t, get().DriftCheckedAt)
 
-	require.NoError(t, repo.SaveDriftCheck(ctx, &accountingsyncports.SaveAccountingDriftCheckRequest{
-		TenantInfo:    tenant,
-		ID:            created.ID,
-		ErrorCategory: accountingsync.SyncErrorAuth,
-		ErrorMessage:  "QuickBooks refused the authorization",
-	}))
+	require.NoError(
+		t,
+		repo.SaveDriftCheck(ctx, &accountingconnectionports.SaveAccountingDriftCheckRequest{
+			TenantInfo:    tenant,
+			ID:            created.ID,
+			ErrorCategory: accountingsync.SyncErrorAuth,
+			ErrorMessage:  "QuickBooks refused the authorization",
+		}),
+	)
 	failed := get()
 	require.NotNil(t, failed.DriftCheckedAt, "a failure keeps the last good check")
 	assert.Equal(t, checked, *failed.DriftCheckedAt)
@@ -323,21 +393,30 @@ func TestConnectionRepository_DriftCheckKeepsItsLastSuccessThroughAFailure(t *te
 	assert.Equal(t, "QuickBooks refused the authorization", failed.DriftErrorMessage)
 
 	later := now + 60
-	require.NoError(t, repo.SaveDriftCheck(ctx, &accountingsyncports.SaveAccountingDriftCheckRequest{
-		TenantInfo: tenant,
-		ID:         created.ID,
-		CheckedAt:  &later,
-	}))
+	require.NoError(
+		t,
+		repo.SaveDriftCheck(ctx, &accountingconnectionports.SaveAccountingDriftCheckRequest{
+			TenantInfo: tenant,
+			ID:         created.ID,
+			CheckedAt:  &later,
+		}),
+	)
 	recovered := get()
 	assert.Equal(t, later, *recovered.DriftCheckedAt)
 	assert.Empty(t, recovered.DriftErrorCategory)
 	assert.Empty(t, recovered.DriftErrorMessage)
 
 	other := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: tenant.BuID}
-	require.NoError(t, repo.SaveDriftCheck(dbscope.WithTenant(ctx, other.DBTenant()), &accountingsyncports.SaveAccountingDriftCheckRequest{
-		TenantInfo:   other,
-		ID:           created.ID,
-		ErrorMessage: "another tenant",
-	}))
+	require.NoError(
+		t,
+		repo.SaveDriftCheck(
+			dbscope.WithTenant(ctx, other.DBTenant()),
+			&accountingconnectionports.SaveAccountingDriftCheckRequest{
+				TenantInfo:   other,
+				ID:           created.ID,
+				ErrorMessage: "another tenant",
+			},
+		),
+	)
 	assert.Empty(t, get().DriftErrorMessage, "another tenant cannot write this connection")
 }

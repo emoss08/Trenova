@@ -11,7 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync/accountingsyncdb"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod/fiscalperioddb"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingdriftports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment/customerpaymentdb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
@@ -53,7 +53,7 @@ type driftSource struct {
 	l  *zap.Logger
 }
 
-func NewDriftSource(p DriftSourceParams) accountingsyncports.AccountingDriftSource {
+func NewDriftSource(p DriftSourceParams) accountingdriftports.AccountingDriftSource {
 	return &driftSource{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.accounting-drift-source"),
@@ -106,7 +106,7 @@ func latestSynced(
 
 func (s *driftSource) ListRecords(
 	ctx context.Context,
-	req *accountingsyncports.ListAccountingDriftRecordsRequest,
+	req *accountingdriftports.ListAccountingDriftRecordsRequest,
 ) ([]*accountingsync.AccountingSyncRecord, error) {
 	return dbtx.Read(
 		ctx,
@@ -137,14 +137,14 @@ func (s *driftSource) ListRecords(
 
 func (s *driftSource) ListStates(
 	ctx context.Context,
-	req *accountingsyncports.ListAccountingDriftStatesRequest,
-) ([]*accountingsyncports.AccountingDriftState, error) {
+	req *accountingdriftports.ListAccountingDriftStatesRequest,
+) ([]*accountingdriftports.AccountingDriftState, error) {
 	return dbtx.Read(
 		ctx,
 		s.db,
-		func(ctx context.Context) ([]*accountingsyncports.AccountingDriftState, error) {
+		func(ctx context.Context) ([]*accountingdriftports.AccountingDriftState, error) {
 			if len(req.ObjectIDs) == 0 {
-				return []*accountingsyncports.AccountingDriftState{}, nil
+				return []*accountingdriftports.AccountingDriftState{}, nil
 			}
 
 			var query keel.Projection
@@ -165,7 +165,7 @@ func (s *driftSource) ListStates(
 				return nil, fmt.Errorf("drift does not compare %s", req.ObjectType)
 			}
 
-			states, err := keel.Into[accountingsyncports.AccountingDriftState](
+			states, err := keel.Into[accountingdriftports.AccountingDriftState](
 				ctx,
 				s.db.Keel(ctx),
 				query,
@@ -197,7 +197,7 @@ func reflectedMemos(
 		))
 }
 
-func salesStates(req *accountingsyncports.ListAccountingDriftStatesRequest) keel.Projection {
+func salesStates(req *accountingdriftports.ListAccountingDriftStatesRequest) keel.Projection {
 	inv := invoicedb.Invoices
 	cus := customerdb.Customers
 	return inv.Join(cus, cus.ID.EqCol(inv.CustomerID)).
@@ -219,7 +219,7 @@ func salesStates(req *accountingsyncports.ListAccountingDriftStatesRequest) keel
 		Where(inv.ID.In(req.ObjectIDs...))
 }
 
-func paymentStates(req *accountingsyncports.ListAccountingDriftStatesRequest) keel.Projection {
+func paymentStates(req *accountingdriftports.ListAccountingDriftStatesRequest) keel.Projection {
 	cp := customerpaymentdb.Payments
 	cus := customerdb.Customers
 	return cp.Join(cus, cus.ID.EqCol(cp.CustomerID)).
@@ -239,7 +239,7 @@ func paymentStates(req *accountingsyncports.ListAccountingDriftStatesRequest) ke
 		Where(cp.ID.In(req.ObjectIDs...))
 }
 
-func applicationStates(req *accountingsyncports.ListAccountingDriftStatesRequest) keel.Projection {
+func applicationStates(req *accountingdriftports.ListAccountingDriftStatesRequest) keel.Projection {
 	cma := customerpaymentdb.CreditMemoApplications
 	inv := invoicedb.Invoices
 	cus := customerdb.Customers
@@ -271,7 +271,7 @@ func settlementVoided(
 	return isVoided
 }
 
-func carrierStates(req *accountingsyncports.ListAccountingDriftStatesRequest) keel.Projection {
+func carrierStates(req *accountingdriftports.ListAccountingDriftStatesRequest) keel.Projection {
 	cs := carriersettlementdb.CarrierSettlements
 	carr := carrierdb.Carriers
 	return cs.Join(carr, carr.ID.EqCol(cs.CarrierID)).
@@ -295,7 +295,7 @@ func carrierStates(req *accountingsyncports.ListAccountingDriftStatesRequest) ke
 		Where(cs.ID.In(req.ObjectIDs...))
 }
 
-func driverStates(req *accountingsyncports.ListAccountingDriftStatesRequest) keel.Projection {
+func driverStates(req *accountingdriftports.ListAccountingDriftStatesRequest) keel.Projection {
 	ds := driversettlementdb.Settlements
 	wrk := workerdb.Workers
 	return ds.Join(wrk, wrk.ID.EqCol(ds.WorkerID)).
@@ -320,7 +320,7 @@ func driverStates(req *accountingsyncports.ListAccountingDriftStatesRequest) kee
 }
 
 func balanceDocuments(
-	req *accountingsyncports.ListAccountingDriftBalancesRequest,
+	req *accountingdriftports.ListAccountingDriftBalancesRequest,
 ) *keel.Query[*accountingsync.AccountingSyncRecord] {
 	sr := accountingsyncdb.AccountingSyncRecords
 	inv := invoicedb.Invoices
@@ -331,12 +331,12 @@ func balanceDocuments(
 
 func (s *driftSource) ListBalances(
 	ctx context.Context,
-	req *accountingsyncports.ListAccountingDriftBalancesRequest,
-) ([]*accountingsyncports.AccountingDriftBalanceLine, error) {
+	req *accountingdriftports.ListAccountingDriftBalancesRequest,
+) ([]*accountingdriftports.AccountingDriftBalanceLine, error) {
 	return dbtx.Read(
 		ctx,
 		s.db,
-		func(ctx context.Context) ([]*accountingsyncports.AccountingDriftBalanceLine, error) {
+		func(ctx context.Context) ([]*accountingdriftports.AccountingDriftBalanceLine, error) {
 			customers := req.Customers
 			if customers <= 0 {
 				customers = defaultDriftCustomers
@@ -358,10 +358,10 @@ func (s *driftSource) ListBalances(
 				return nil, fmt.Errorf("list customers to balance: %w", err)
 			}
 			if len(ids) == 0 {
-				return []*accountingsyncports.AccountingDriftBalanceLine{}, nil
+				return []*accountingdriftports.AccountingDriftBalanceLine{}, nil
 			}
 
-			lines, err := keel.Into[accountingsyncports.AccountingDriftBalanceLine](
+			lines, err := keel.Into[accountingdriftports.AccountingDriftBalanceLine](
 				ctx,
 				db,
 				balanceDocuments(req).
@@ -392,7 +392,7 @@ func (s *driftSource) ListBalances(
 
 func (s *driftSource) ListPendingCustomers(
 	ctx context.Context,
-	req *accountingsyncports.ListAccountingDriftPendingCustomersRequest,
+	req *accountingdriftports.ListAccountingDriftPendingCustomersRequest,
 ) ([]pulid.ID, error) {
 	return dbtx.Read(ctx, s.db, func(ctx context.Context) ([]pulid.ID, error) {
 		if len(req.CustomerIDs) == 0 {
@@ -428,7 +428,7 @@ func (s *driftSource) ListPendingCustomers(
 }
 
 func waitingInbound(
-	req *accountingsyncports.ListAccountingDriftPendingCustomersRequest,
+	req *accountingdriftports.ListAccountingDriftPendingCustomersRequest,
 ) keel.Projection {
 	ic := accountingsyncdb.AccountingInboundChanges
 	return ic.Group(ic.PartyObjectID).
@@ -442,7 +442,7 @@ func waitingInbound(
 }
 
 func unsettledRecords(
-	req *accountingsyncports.ListAccountingDriftPendingCustomersRequest,
+	req *accountingdriftports.ListAccountingDriftPendingCustomersRequest,
 	objectTypes ...accountingsync.SyncObjectType,
 ) *keel.Query[*accountingsync.AccountingSyncRecord] {
 	sr := accountingsyncdb.AccountingSyncRecords
@@ -454,7 +454,7 @@ func unsettledRecords(
 }
 
 func unsettledSales(
-	req *accountingsyncports.ListAccountingDriftPendingCustomersRequest,
+	req *accountingdriftports.ListAccountingDriftPendingCustomersRequest,
 ) keel.Projection {
 	sr := accountingsyncdb.AccountingSyncRecords
 	inv := invoicedb.Invoices
@@ -471,7 +471,7 @@ func unsettledSales(
 }
 
 func unsettledPayments(
-	req *accountingsyncports.ListAccountingDriftPendingCustomersRequest,
+	req *accountingdriftports.ListAccountingDriftPendingCustomersRequest,
 ) keel.Projection {
 	sr := accountingsyncdb.AccountingSyncRecords
 	cp := customerpaymentdb.Payments
@@ -483,7 +483,7 @@ func unsettledPayments(
 }
 
 func unsettledApplications(
-	req *accountingsyncports.ListAccountingDriftPendingCustomersRequest,
+	req *accountingdriftports.ListAccountingDriftPendingCustomersRequest,
 ) keel.Projection {
 	sr := accountingsyncdb.AccountingSyncRecords
 	cma := customerpaymentdb.CreditMemoApplications

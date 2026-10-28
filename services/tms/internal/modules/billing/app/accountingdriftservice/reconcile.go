@@ -5,6 +5,8 @@ import (
 	"slices"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingdriftports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -23,9 +25,9 @@ type compareTally struct {
 
 func (s *Service) ReconcileBatch(
 	ctx context.Context,
-	req *accountingsyncports.ReconcileAccountingDriftRequest,
-) (*accountingsyncports.AccountingDriftBatchResult, error) {
-	result := &accountingsyncports.AccountingDriftBatchResult{LastID: req.AfterID}
+	req *accountingdriftports.ReconcileAccountingDriftRequest,
+) (*accountingdriftports.AccountingDriftBatchResult, error) {
+	result := &accountingdriftports.AccountingDriftBatchResult{LastID: req.AfterID}
 	sess, held, err := s.startRead(ctx, req.TenantInfo, req.ConnectionID)
 	if err != nil || held {
 		result.Held = held
@@ -43,7 +45,7 @@ func (s *Service) ReconcileBatch(
 	limit = intutils.Clamp(limit, 1, maxBatch)
 	records, err := s.source.ListRecords(
 		ctx,
-		&accountingsyncports.ListAccountingDriftRecordsRequest{
+		&accountingdriftports.ListAccountingDriftRecordsRequest{
 			TenantInfo:   sess.tenant,
 			ConnectionID: sess.conn.ID,
 			DatedFrom:    datedFrom,
@@ -69,9 +71,9 @@ func (s *Service) ReconcileBatch(
 
 func (s *Service) RecheckDocuments(
 	ctx context.Context,
-	req *accountingsyncports.RecheckAccountingDriftRequest,
-) (*accountingsyncports.AccountingDriftBatchResult, error) {
-	result := new(accountingsyncports.AccountingDriftBatchResult)
+	req *accountingdriftports.RecheckAccountingDriftRequest,
+) (*accountingdriftports.AccountingDriftBatchResult, error) {
+	result := new(accountingdriftports.AccountingDriftBatchResult)
 	if len(req.Documents) == 0 {
 		return result, nil
 	}
@@ -123,7 +125,7 @@ func (s *Service) finishTally(
 	sess *readSession,
 	tally *compareTally,
 	eventBudget int,
-	result *accountingsyncports.AccountingDriftBatchResult,
+	result *accountingdriftports.AccountingDriftBatchResult,
 ) {
 	result.Compared = tally.compared
 	result.Skipped = tally.skipped
@@ -139,7 +141,7 @@ func (s *Service) finishTally(
 func (s *Service) changedRecords(
 	ctx context.Context,
 	sess *readSession,
-	documents []accountingsyncports.AccountingChangedDocument,
+	documents []accountingconnectorports.AccountingChangedDocument,
 ) ([]*accountingsync.AccountingSyncRecord, error) {
 	ids := make([]string, 0, len(documents))
 	types := make([]accountingsync.SyncObjectType, 0, len(accountingsync.DriftObjectTypes()))
@@ -228,7 +230,7 @@ func (s *Service) compareRecords(
 		if obs != nil && sess.writer != nil {
 			obs.ExternalURL = sess.writer.DocumentURL(
 				sess.auth,
-				accountingsyncports.AccountingDocumentLink{
+				accountingconnectorports.AccountingDocumentLink{
 					Kind:       obs.ObjectType,
 					ExternalID: obs.ExternalID,
 					DocNumber:  c.record.ExternalDocNumber,
@@ -258,7 +260,7 @@ func (s *Service) applyObservations(
 ) error {
 	open, err := s.findings.ListOpen(
 		ctx,
-		&accountingsyncports.ListOpenAccountingDriftFindingsRequest{
+		&accountingdriftports.ListOpenAccountingDriftFindingsRequest{
 			TenantInfo:   sess.tenant,
 			ConnectionID: sess.conn.ID,
 			ObjectIDs:    objectIDs,
@@ -358,7 +360,7 @@ func (s *Service) compareType(
 	for _, record := range records {
 		ids = append(ids, record.ObjectID)
 	}
-	states, err := s.source.ListStates(ctx, &accountingsyncports.ListAccountingDriftStatesRequest{
+	states, err := s.source.ListStates(ctx, &accountingdriftports.ListAccountingDriftStatesRequest{
 		TenantInfo:   sess.tenant,
 		ConnectionID: sess.conn.ID,
 		ObjectType:   objectType,
@@ -367,7 +369,7 @@ func (s *Service) compareType(
 	if err != nil {
 		return nil, err
 	}
-	byObject := make(map[pulid.ID]*accountingsyncports.AccountingDriftState, len(states))
+	byObject := make(map[pulid.ID]*accountingdriftports.AccountingDriftState, len(states))
 	for _, state := range states {
 		byObject[state.ObjectID] = state
 	}
@@ -394,20 +396,20 @@ func (s *Service) readProvider(
 	sess *readSession,
 	objectType accountingsync.SyncObjectType,
 	records []*accountingsync.AccountingSyncRecord,
-) (map[string]*accountingsyncports.AccountingDocumentState, error) {
-	out := make(map[string]*accountingsyncports.AccountingDocumentState, len(records))
+) (map[string]*accountingconnectorports.AccountingDocumentState, error) {
+	out := make(map[string]*accountingconnectorports.AccountingDocumentState, len(records))
 	for start := 0; start < len(records); start += sess.limit {
 		chunk := records[start:min(start+sess.limit, len(records))]
-		targets := make([]accountingsyncports.AccountingDocumentTarget, 0, len(chunk))
+		targets := make([]accountingconnectorports.AccountingDocumentTarget, 0, len(chunk))
 		for _, record := range chunk {
-			targets = append(targets, accountingsyncports.AccountingDocumentTarget{
+			targets = append(targets, accountingconnectorports.AccountingDocumentTarget{
 				ExternalID: record.ExternalID,
 				Refs:       record.ExternalRefs,
 			})
 		}
 		states, err := sess.reader.ReadDocuments(
 			ctx,
-			&accountingsyncports.ReadAccountingDocumentsRequest{
+			&accountingconnectorports.ReadAccountingDocumentsRequest{
 				Auth:    sess.auth,
 				Kind:    objectType,
 				Targets: targets,

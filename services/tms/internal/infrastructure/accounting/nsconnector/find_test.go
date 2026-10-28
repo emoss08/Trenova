@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -13,8 +13,8 @@ import (
 
 func findRequest(
 	kind accountingsync.SyncObjectType,
-) *accountingsyncports.AccountingFindDocumentRequest {
-	return &accountingsyncports.AccountingFindDocumentRequest{
+) *accountingconnectorports.AccountingFindDocumentRequest {
+	return &accountingconnectorports.AccountingFindDocumentRequest{
 		Auth:                   testAuth(),
 		Kind:                   kind,
 		DocNumber:              "TRN-INV-1001",

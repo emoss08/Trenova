@@ -5,7 +5,8 @@ import (
 	"slices"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -35,7 +36,7 @@ func errWebhookUnverified() error {
 
 func (s *Service) ReceiveWebhook(
 	ctx context.Context,
-	req *accountingsyncports.ReceiveAccountingWebhookRequest,
+	req *accountingconnectionports.ReceiveAccountingWebhookRequest,
 ) error {
 	provider, err := s.provider(req.IntegrationType)
 	if err != nil {
@@ -62,7 +63,7 @@ func (s *Service) ReceiveWebhook(
 	}
 	holders, err := s.connections.ListHoldingRealm(
 		ctx,
-		accountingsyncports.ListAccountingConnectionsByRealmRequest{
+		accountingconnectionports.ListAccountingConnectionsByRealmRequest{
 			IntegrationType: req.IntegrationType,
 			RealmIDs:        realms,
 		},
@@ -89,8 +90,8 @@ func (s *Service) ReceiveWebhook(
 
 func (s *Service) webhookSender(
 	ctx context.Context,
-	provider accountingsyncports.AccountingProvider,
-	req *accountingsyncports.ReceiveAccountingWebhookRequest,
+	provider accountingconnectorports.AccountingProvider,
+	req *accountingconnectionports.ReceiveAccountingWebhookRequest,
 ) (*webhookSender, error) {
 	if req.AppID != "" {
 		return s.tenantWebhookSender(ctx, provider, req)
@@ -112,8 +113,8 @@ func (s *Service) webhookSender(
 
 func (s *Service) tenantWebhookSender(
 	ctx context.Context,
-	provider accountingsyncports.AccountingProvider,
-	req *accountingsyncports.ReceiveAccountingWebhookRequest,
+	provider accountingconnectorports.AccountingProvider,
+	req *accountingconnectionports.ReceiveAccountingWebhookRequest,
 ) (*webhookSender, error) {
 	app, sender, err := s.namedApp(ctx, req)
 	if err != nil {
@@ -131,8 +132,8 @@ func (s *Service) tenantWebhookSender(
 
 func (s *Service) namedApp(
 	ctx context.Context,
-	req *accountingsyncports.ReceiveAccountingWebhookRequest,
-) (*accountingsyncports.AccountingApp, *webhookSender, error) {
+	req *accountingconnectionports.ReceiveAccountingWebhookRequest,
+) (*accountingconnectorports.AccountingApp, *webhookSender, error) {
 	if !pulid.LooksLike(req.AppID) || pulid.ID(req.AppID).Prefix() != appCredentialPrefix {
 		return nil, nil, errWebhookUnverified()
 	}
@@ -155,7 +156,10 @@ func (s *Service) namedApp(
 	}, nil
 }
 
-func webhookRealms(provider accountingsyncports.AccountingProvider, body []byte) ([]string, error) {
+func webhookRealms(
+	provider accountingconnectorports.AccountingProvider,
+	body []byte,
+) ([]string, error) {
 	realms, err := provider.WebhookRealmIDs(body)
 	if err != nil {
 		return nil, errortypes.NewValidationError(
@@ -169,8 +173,8 @@ func webhookRealms(provider accountingsyncports.AccountingProvider, body []byte)
 
 func (s *Service) receiveLegacyWebhook(
 	ctx context.Context,
-	provider accountingsyncports.AccountingProvider,
-	req *accountingsyncports.ReceiveAccountingWebhookRequest,
+	provider accountingconnectorports.AccountingProvider,
+	req *accountingconnectionports.ReceiveAccountingWebhookRequest,
 ) error {
 	realms, err := webhookRealms(provider, req.Body)
 	if err != nil {
@@ -181,7 +185,7 @@ func (s *Service) receiveLegacyWebhook(
 	}
 	holders, err := s.connections.ListHoldingRealm(
 		ctx,
-		accountingsyncports.ListAccountingConnectionsByRealmRequest{
+		accountingconnectionports.ListAccountingConnectionsByRealmRequest{
 			IntegrationType: req.IntegrationType,
 			RealmIDs:        realms,
 		},
@@ -199,13 +203,13 @@ func (s *Service) receiveLegacyWebhook(
 
 func (s *Service) recordWebhook(
 	ctx context.Context,
-	req *accountingsyncports.ReceiveAccountingWebhookRequest,
+	req *accountingconnectionports.ReceiveAccountingWebhookRequest,
 	holders []*accountingsync.AccountingConnection,
 	verified []string,
 ) error {
 	if _, err := s.connections.MarkWebhookReceived(
 		ctx,
-		accountingsyncports.MarkAccountingWebhookRequest{
+		accountingconnectionports.MarkAccountingWebhookRequest{
 			IntegrationType: req.IntegrationType,
 			RealmIDs:        verified,
 			ReceivedAt:      timeutils.NowUnix(),
@@ -250,9 +254,9 @@ func connectionScope(
 
 func (s *Service) verifiedRealms(
 	ctx context.Context,
-	provider accountingsyncports.AccountingProvider,
+	provider accountingconnectorports.AccountingProvider,
 	holders []*accountingsync.AccountingConnection,
-	req *accountingsyncports.ReceiveAccountingWebhookRequest,
+	req *accountingconnectionports.ReceiveAccountingWebhookRequest,
 ) []string {
 	byApp := make(map[string]bool, len(holders))
 	verified := make([]string, 0, len(holders))

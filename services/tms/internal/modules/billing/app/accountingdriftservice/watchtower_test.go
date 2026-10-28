@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingdriftports"
 	"github.com/emoss08/trenova/internal/modules/agent/app/watchtowersources"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
@@ -42,10 +42,10 @@ func (f *fakeWatchtower) Resolve(
 
 func (f *fakeFindings) ListAttention(
 	_ context.Context,
-	req *accountingsyncports.ListAccountingDriftAttentionRequest,
-) ([]accountingsyncports.AccountingDriftAttentionGroup, error) {
-	groups := map[accountingsync.DriftKind]*accountingsyncports.AccountingDriftAttentionGroup{}
-	out := []accountingsyncports.AccountingDriftAttentionGroup{}
+	req *accountingdriftports.ListAccountingDriftAttentionRequest,
+) ([]accountingdriftports.AccountingDriftAttentionGroup, error) {
+	groups := map[accountingsync.DriftKind]*accountingdriftports.AccountingDriftAttentionGroup{}
+	out := []accountingdriftports.AccountingDriftAttentionGroup{}
 	for _, row := range f.all() {
 		if !row.IsOpen() || row.ConnectionID != req.ConnectionID ||
 			row.DetectedAt > req.DetectedBefore {
@@ -53,7 +53,7 @@ func (f *fakeFindings) ListAttention(
 		}
 		group, ok := groups[row.Kind]
 		if !ok {
-			out = append(out, accountingsyncports.AccountingDriftAttentionGroup{
+			out = append(out, accountingdriftports.AccountingDriftAttentionGroup{
 				Kind:             row.Kind,
 				OldestDetectedAt: row.DetectedAt,
 				SampleID:         row.ID,
@@ -75,10 +75,13 @@ func TestAFindingOlderThanADayReachesWatchtowerUntilItResolves(t *testing.T) {
 	h.provider(accountingsync.SyncObjectInvoice, "101", "1200.00")
 	h.reconcile(t)
 	finish := func() {
-		require.NoError(t, h.svc.FinishCheck(t.Context(), &accountingsyncports.FinishAccountingDriftCheckRequest{
-			TenantInfo:   h.tenant,
-			ConnectionID: h.conn.ID,
-		}))
+		require.NoError(
+			t,
+			h.svc.FinishCheck(t.Context(), &accountingdriftports.FinishAccountingDriftCheckRequest{
+				TenantInfo:   h.tenant,
+				ConnectionID: h.conn.ID,
+			}),
+		)
 	}
 
 	finish()
@@ -86,7 +89,10 @@ func TestAFindingOlderThanADayReachesWatchtowerUntilItResolves(t *testing.T) {
 
 	h.now = h.now.Add(25 * time.Hour)
 	finish()
-	sourceID := watchtowersources.AccountingDriftAttentionSourceID(h.conn, accountingsync.DriftAmountMismatch)
+	sourceID := watchtowersources.AccountingDriftAttentionSourceID(
+		h.conn,
+		accountingsync.DriftAmountMismatch,
+	)
 	require.Contains(t, board.open, sourceID)
 	item := board.open[sourceID]
 	assert.Equal(t, agent.SubjectAccountingDrift, item.SubjectType)

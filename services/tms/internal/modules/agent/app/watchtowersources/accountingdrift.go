@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingdriftports"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
@@ -73,7 +73,7 @@ func driftAttentionText(
 
 func DescribeAccountingDriftAttention(
 	conn *accountingsync.AccountingConnection,
-	group *accountingsyncports.AccountingDriftAttentionGroup,
+	group *accountingdriftports.AccountingDriftAttentionGroup,
 ) (watchtowerports.WatchtowerItemInput, bool) {
 	if group == nil || group.Count <= 0 {
 		return watchtowerports.WatchtowerItemInput{}, false

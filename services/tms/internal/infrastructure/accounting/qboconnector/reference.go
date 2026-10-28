@@ -6,13 +6,13 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/shared/quickbooks"
 )
 
 var (
-	_ accountingsyncports.AccountingReferenceReader  = (*Connector)(nil)
-	_ accountingsyncports.AccountingReferenceCreator = (*Connector)(nil)
+	_ accountingconnectorports.AccountingReferenceReader  = (*Connector)(nil)
+	_ accountingconnectorports.AccountingReferenceCreator = (*Connector)(nil)
 )
 
 func (c *Connector) MaxReferencePageSize() int {
@@ -21,8 +21,8 @@ func (c *Connector) MaxReferencePageSize() int {
 
 func (c *Connector) ListReference(
 	ctx context.Context,
-	req *accountingsyncports.AccountingReferencePageRequest,
-) (*accountingsyncports.AccountingReferencePage, error) {
+	req *accountingconnectorports.AccountingReferencePageRequest,
+) (*accountingconnectorports.AccountingReferencePage, error) {
 	kind, err := providerKind(req.Kind)
 	if err != nil {
 		return nil, err
@@ -37,7 +37,7 @@ func (c *Connector) ListReference(
 		return nil, err
 	}
 
-	out := &accountingsyncports.AccountingReferencePage{
+	out := &accountingconnectorports.AccountingReferencePage{
 		Objects:   make([]*accountingsync.AccountingReferenceObject, 0, len(page.Objects)),
 		NextStart: page.NextStart,
 	}
@@ -49,7 +49,7 @@ func (c *Connector) ListReference(
 
 func (c *Connector) CreateReference(
 	ctx context.Context,
-	req *accountingsyncports.AccountingCreateReferenceRequest,
+	req *accountingconnectorports.AccountingCreateReferenceRequest,
 ) (*accountingsync.AccountingReferenceObject, error) {
 	client, err := quickbooks.New(c.env, req.RealmID, req.AccessToken, c.apiOpts...)
 	if err != nil {
@@ -97,7 +97,7 @@ func (c *Connector) SanitizeName(kind accountingsync.ReferenceKind, name string)
 	return quickbooks.SanitizeName(name, quickbooks.MaxPartyNameLength)
 }
 
-func partyDraftOf(draft *accountingsyncports.AccountingPartyDraft) *quickbooks.PartyDraft {
+func partyDraftOf(draft *accountingconnectorports.AccountingPartyDraft) *quickbooks.PartyDraft {
 	if draft == nil {
 		return nil
 	}

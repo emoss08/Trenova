@@ -11,21 +11,25 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingmappingports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingpayablesports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/exchangerateports"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -37,13 +41,15 @@ func sameTenant(orgID, buID pulid.ID, tenantInfo pagination.TenantInfo) bool {
 	return orgID == tenantInfo.OrgID && buID == tenantInfo.BuID
 }
 
-func cloneConnection(conn *accountingsync.AccountingConnection) *accountingsync.AccountingConnection {
+func cloneConnection(
+	conn *accountingsync.AccountingConnection,
+) *accountingsync.AccountingConnection {
 	out := *conn
 	return &out
 }
 
 type fakeConnections struct {
-	accountingsyncports.AccountingConnectionRepository
+	accountingconnectionports.AccountingConnectionRepository
 
 	mu   sync.Mutex
 	rows map[pulid.ID]*accountingsync.AccountingConnection
@@ -67,7 +73,7 @@ func (f *fakeConnections) get(id pulid.ID) *accountingsync.AccountingConnection 
 
 func (f *fakeConnections) GetByType(
 	_ context.Context,
-	req accountingsyncports.GetAccountingConnectionRequest,
+	req accountingconnectionports.GetAccountingConnectionRequest,
 ) (*accountingsync.AccountingConnection, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -82,7 +88,7 @@ func (f *fakeConnections) GetByType(
 
 func (f *fakeConnections) GetByID(
 	_ context.Context,
-	req accountingsyncports.GetAccountingConnectionByIDRequest,
+	req accountingconnectionports.GetAccountingConnectionByIDRequest,
 ) (*accountingsync.AccountingConnection, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -286,12 +292,15 @@ func (f *fakeRecords) Enqueue(
 		Inserted: make([]*accountingsync.AccountingSyncRecord, 0, len(records)),
 	}
 	for _, record := range records {
-		duplicate := slices.ContainsFunc(f.rows, func(row *accountingsync.AccountingSyncRecord) bool {
-			return row.OrganizationID == record.OrganizationID &&
-				row.BusinessUnitID == record.BusinessUnitID &&
-				row.ConnectionID == record.ConnectionID &&
-				row.IdempotencyKey == record.IdempotencyKey
-		})
+		duplicate := slices.ContainsFunc(
+			f.rows,
+			func(row *accountingsync.AccountingSyncRecord) bool {
+				return row.OrganizationID == record.OrganizationID &&
+					row.BusinessUnitID == record.BusinessUnitID &&
+					row.ConnectionID == record.ConnectionID &&
+					row.IdempotencyKey == record.IdempotencyKey
+			},
+		)
 		if duplicate {
 			result.Existing++
 			continue
@@ -309,7 +318,8 @@ func (f *fakeRecords) GetByID(
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	idx := f.indexOf(req.ID)
-	if idx < 0 || !sameTenant(f.rows[idx].OrganizationID, f.rows[idx].BusinessUnitID, req.TenantInfo) {
+	if idx < 0 ||
+		!sameTenant(f.rows[idx].OrganizationID, f.rows[idx].BusinessUnitID, req.TenantInfo) {
 		return nil, errortypes.NewNotFoundError("Accounting sync record not found")
 	}
 	return cloneRecord(f.rows[idx]), nil
@@ -508,7 +518,13 @@ func (f *fakeRecords) CountByStatus(
 	out := make([]accountingsyncports.AccountingSyncStatusCount, 0, len(counts))
 	for _, status := range accountingsync.AllSyncStatuses() {
 		if counts[status] > 0 {
-			out = append(out, accountingsyncports.AccountingSyncStatusCount{Status: status, Count: counts[status]})
+			out = append(
+				out,
+				accountingsyncports.AccountingSyncStatusCount{
+					Status: status,
+					Count:  counts[status],
+				},
+			)
 		}
 	}
 	return out, nil
@@ -535,7 +551,8 @@ func (f *fakeRecords) Requeue(
 		if row.ConnectionID != req.ConnectionID || !row.Status.Retryable() {
 			continue
 		}
-		if len(req.ErrorCategories) > 0 && !slices.Contains(req.ErrorCategories, row.ErrorCategory) {
+		if len(req.ErrorCategories) > 0 &&
+			!slices.Contains(req.ErrorCategories, row.ErrorCategory) {
 			continue
 		}
 		if len(req.IDs) > 0 && !slices.Contains(req.IDs, row.ID) {
@@ -626,16 +643,24 @@ func (f *fakeRecords) ListCandidates(
 			) <= 0 {
 			continue
 		}
-		recorded := slices.ContainsFunc(f.rows, func(record *accountingsync.AccountingSyncRecord) bool {
-			return record.ConnectionID == req.ConnectionID && record.ObjectType == cand.ObjectType &&
-				record.ObjectID == cand.ObjectID && record.Operation == cand.Operation
-		})
+		recorded := slices.ContainsFunc(
+			f.rows,
+			func(record *accountingsync.AccountingSyncRecord) bool {
+				return record.ConnectionID == req.ConnectionID &&
+					record.ObjectType == cand.ObjectType &&
+					record.ObjectID == cand.ObjectID &&
+					record.Operation == cand.Operation
+			},
+		)
 		if !recorded {
 			out = append(out, cand)
 		}
 	}
 	slices.SortFunc(out, func(a, b accountingsyncports.AccountingSyncCandidate) int {
-		return cmp.Or(cmp.Compare(a.PostedAt, b.PostedAt), cmp.Compare(a.ObjectID.String(), b.ObjectID.String()))
+		return cmp.Or(
+			cmp.Compare(a.PostedAt, b.PostedAt),
+			cmp.Compare(a.ObjectID.String(), b.ObjectID.String()),
+		)
 	})
 	if req.Limit > 0 && len(out) > req.Limit {
 		out = out[:req.Limit]
@@ -791,9 +816,9 @@ type vendorPartyCall struct {
 type fakeMappingStore struct {
 	mu          sync.Mutex
 	rows        map[string]*accountingsync.AccountingMapping
-	created     []*accountingsyncports.CreateAccountingReferenceRecordRequest
+	created     []*accountingmappingports.CreateAccountingReferenceRecordRequest
 	createErr   error
-	parties     map[pulid.ID]*accountingsyncports.AccountingPartyDraft
+	parties     map[pulid.ID]*accountingconnectorports.AccountingPartyDraft
 	vendorCalls []vendorPartyCall
 	rescored    []pulid.ID
 }
@@ -802,17 +827,17 @@ func (f fakeMappingService) Rescore(
 	_ context.Context,
 	_ pagination.TenantInfo,
 	connectionID pulid.ID,
-) (*accountingsyncports.AccountingRescoreResult, error) {
+) (*accountingmappingports.AccountingRescoreResult, error) {
 	f.store.mu.Lock()
 	defer f.store.mu.Unlock()
 	f.store.rescored = append(f.store.rescored, connectionID)
-	return &accountingsyncports.AccountingRescoreResult{}, nil
+	return &accountingmappingports.AccountingRescoreResult{}, nil
 }
 
 func newFakeMappingStore() *fakeMappingStore {
 	return &fakeMappingStore{
 		rows:    map[string]*accountingsync.AccountingMapping{},
-		parties: map[pulid.ID]*accountingsyncports.AccountingPartyDraft{},
+		parties: map[pulid.ID]*accountingconnectorports.AccountingPartyDraft{},
 	}
 }
 
@@ -858,7 +883,7 @@ func (f *fakeMappingStore) set(
 }
 
 func (f *fakeMappingStore) ensure(
-	req *accountingsyncports.EnsureAccountingMappingRequest,
+	req *accountingmappingports.EnsureAccountingMappingRequest,
 ) *accountingsync.AccountingMapping {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -884,17 +909,22 @@ func (f *fakeMappingStore) ensure(
 }
 
 type fakeMappingRepo struct {
-	accountingsyncports.AccountingMappingRepository
+	accountingmappingports.AccountingMappingRepository
 	store *fakeMappingStore
 }
 
 func (f fakeMappingRepo) GetByTarget(
 	_ context.Context,
-	req *accountingsyncports.GetAccountingMappingByTargetRequest,
+	req *accountingmappingports.GetAccountingMappingByTargetRequest,
 ) (*accountingsync.AccountingMapping, error) {
 	f.store.mu.Lock()
 	defer f.store.mu.Unlock()
-	identity := mappingIdentity(req.ConnectionID, req.TargetType, req.TrenovaObjectID, req.TrenovaKey)
+	identity := mappingIdentity(
+		req.ConnectionID,
+		req.TargetType,
+		req.TrenovaObjectID,
+		req.TrenovaKey,
+	)
 	row, ok := f.store.rows[identity]
 	if !ok {
 		return nil, errortypes.NewNotFoundError("Mapping not found")
@@ -904,20 +934,20 @@ func (f fakeMappingRepo) GetByTarget(
 }
 
 type fakeMappingService struct {
-	accountingsyncports.AccountingMappingService
+	accountingmappingports.AccountingMappingService
 	store *fakeMappingStore
 }
 
 func (f fakeMappingService) EnsureMapping(
 	_ context.Context,
-	req *accountingsyncports.EnsureAccountingMappingRequest,
+	req *accountingmappingports.EnsureAccountingMappingRequest,
 ) (*accountingsync.AccountingMapping, error) {
 	return f.store.ensure(req), nil
 }
 
 func (f fakeMappingService) CreateReferenceRecord(
 	_ context.Context,
-	req *accountingsyncports.CreateAccountingReferenceRecordRequest,
+	req *accountingmappingports.CreateAccountingReferenceRecordRequest,
 ) (*accountingsync.AccountingMapping, error) {
 	f.store.mu.Lock()
 	defer f.store.mu.Unlock()
@@ -942,7 +972,7 @@ func (f fakeMappingService) CustomerParty(
 	_ context.Context,
 	_ pagination.TenantInfo,
 	customerID pulid.ID,
-) (*accountingsyncports.AccountingPartyDraft, error) {
+) (*accountingconnectorports.AccountingPartyDraft, error) {
 	f.store.mu.Lock()
 	defer f.store.mu.Unlock()
 	party, ok := f.store.parties[customerID]
@@ -958,7 +988,7 @@ func (f fakeMappingService) VendorParty(
 	_ pagination.TenantInfo,
 	targetType accountingsync.MappingTargetType,
 	objectID pulid.ID,
-) (*accountingsyncports.AccountingPartyDraft, error) {
+) (*accountingconnectorports.AccountingPartyDraft, error) {
 	f.store.mu.Lock()
 	defer f.store.mu.Unlock()
 	f.store.vendorCalls = append(f.store.vendorCalls, vendorPartyCall{
@@ -979,7 +1009,7 @@ type reportedFailure struct {
 }
 
 type fakeConnService struct {
-	accountingsyncports.AccountingConnectionService
+	accountingconnectionports.AccountingConnectionService
 
 	mu          sync.Mutex
 	connections *fakeConnections
@@ -993,7 +1023,7 @@ func (f *fakeConnService) Session(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	connectionID pulid.ID,
-) (*accountingsyncports.AccountingSession, error) {
+) (*accountingconnectionports.AccountingSession, error) {
 	f.mu.Lock()
 	sessionErr := f.sessionErr
 	token := f.accessToken
@@ -1001,14 +1031,21 @@ func (f *fakeConnService) Session(
 	if sessionErr != nil {
 		return nil, sessionErr
 	}
-	conn, err := f.connections.GetByID(ctx, accountingsyncports.GetAccountingConnectionByIDRequest{
-		TenantInfo: tenantInfo,
-		ID:         connectionID,
-	})
+	conn, err := f.connections.GetByID(
+		ctx,
+		accountingconnectionports.GetAccountingConnectionByIDRequest{
+			TenantInfo: tenantInfo,
+			ID:         connectionID,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
-	return &accountingsyncports.AccountingSession{Connection: conn, AccessToken: token, Connector: f.writer}, nil
+	return &accountingconnectionports.AccountingSession{
+		Connection:  conn,
+		AccessToken: token,
+		Connector:   f.writer,
+	}, nil
 }
 
 func (f *fakeConnService) ReportCallFailure(
@@ -1050,10 +1087,10 @@ type writerCall struct {
 }
 
 type fakeWriter struct {
-	accountingsyncports.AccountingConnector
+	accountingconnectorports.AccountingConnector
 
 	mu        sync.Mutex
-	limits    accountingsyncports.AccountingDocumentLimits
+	limits    accountingconnectorports.AccountingDocumentLimits
 	calls     []writerCall
 	errs      map[string][]error
 	partials  map[string]map[string]string
@@ -1065,7 +1102,7 @@ type fakeWriter struct {
 
 func newFakeWriter() *fakeWriter {
 	return &fakeWriter{
-		limits:    accountingsyncports.AccountingDocumentLimits{MaxDocNumberLength: 21},
+		limits:    accountingconnectorports.AccountingDocumentLimits{MaxDocNumberLength: 21},
 		errs:      map[string][]error{},
 		partials:  map[string]map[string]string{},
 		found:     map[string]string{},
@@ -1101,15 +1138,18 @@ func (f *fakeWriter) methods() []string {
 	return out
 }
 
-func (f *fakeWriter) record(method string, doc any) (*accountingsyncports.AccountingDocumentResult, error) {
+func (f *fakeWriter) record(
+	method string,
+	doc any,
+) (*accountingconnectorports.AccountingDocumentResult, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.calls = append(f.calls, writerCall{method: method, doc: doc})
 	if queued := f.errs[method]; len(queued) > 0 {
 		f.errs[method] = queued[1:]
-		var written *accountingsyncports.AccountingDocumentResult
+		var written *accountingconnectorports.AccountingDocumentResult
 		if refs := f.partials[method]; refs != nil {
-			written = &accountingsyncports.AccountingDocumentResult{Refs: maps.Clone(refs)}
+			written = &accountingconnectorports.AccountingDocumentResult{Refs: maps.Clone(refs)}
 		}
 		return written, queued[0]
 	}
@@ -1117,22 +1157,22 @@ func (f *fakeWriter) record(method string, doc any) (*accountingsyncports.Accoun
 	id := "qb-" + method + "-" + strconv.Itoa(f.nextID)
 	refs := map[string]string{accountingsync.ExternalRefDocument: id}
 	maps.Copy(refs, f.extraRefs[method])
-	return &accountingsyncports.AccountingDocumentResult{
+	return &accountingconnectorports.AccountingDocumentResult{
 		ExternalID: id,
 		DocNumber:  "QB" + id,
 		Refs:       refs,
 	}, nil
 }
 
-func (f *fakeWriter) DocumentLimits() accountingsyncports.AccountingDocumentLimits {
+func (f *fakeWriter) DocumentLimits() accountingconnectorports.AccountingDocumentLimits {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	return f.limits
 }
 
 func (f *fakeWriter) DocumentURL(
-	_ accountingsyncports.AccountingDocumentAuth,
-	link accountingsyncports.AccountingDocumentLink,
+	_ accountingconnectorports.AccountingDocumentAuth,
+	link accountingconnectorports.AccountingDocumentLink,
 ) string {
 	return "https://qbo.test/" + string(link.Kind) + "/" + link.ExternalID
 }
@@ -1154,15 +1194,15 @@ func (f *fakeWriter) ClassifyDocumentError(err error) *accountingsync.SyncError 
 
 func (f *fakeWriter) UpsertCustomer(
 	_ context.Context,
-	doc *accountingsyncports.AccountingCustomerDocument,
-) (*accountingsyncports.AccountingDocumentResult, error) {
+	doc *accountingconnectorports.AccountingCustomerDocument,
+) (*accountingconnectorports.AccountingDocumentResult, error) {
 	return f.record("UpsertCustomer", doc)
 }
 
 func (f *fakeWriter) CreateSalesDocument(
 	_ context.Context,
-	doc *accountingsyncports.AccountingSalesDocument,
-) (*accountingsyncports.AccountingDocumentResult, error) {
+	doc *accountingconnectorports.AccountingSalesDocument,
+) (*accountingconnectorports.AccountingDocumentResult, error) {
 	sent := *doc
 	sent.Refs = maps.Clone(doc.Refs)
 	return f.record("CreateSalesDocument", &sent)
@@ -1170,92 +1210,92 @@ func (f *fakeWriter) CreateSalesDocument(
 
 func (f *fakeWriter) VoidSalesDocument(
 	_ context.Context,
-	ref *accountingsyncports.AccountingDocumentRef,
-) (*accountingsyncports.AccountingDocumentResult, error) {
+	ref *accountingconnectorports.AccountingDocumentRef,
+) (*accountingconnectorports.AccountingDocumentResult, error) {
 	return f.record("VoidSalesDocument", ref)
 }
 
 func (f *fakeWriter) SavePayment(
 	_ context.Context,
-	doc *accountingsyncports.AccountingPaymentDocument,
-) (*accountingsyncports.AccountingDocumentResult, error) {
+	doc *accountingconnectorports.AccountingPaymentDocument,
+) (*accountingconnectorports.AccountingDocumentResult, error) {
 	return f.record("SavePayment", doc)
 }
 
 func (f *fakeWriter) VoidPayment(
 	_ context.Context,
-	ref *accountingsyncports.AccountingDocumentRef,
-) (*accountingsyncports.AccountingDocumentResult, error) {
+	ref *accountingconnectorports.AccountingDocumentRef,
+) (*accountingconnectorports.AccountingDocumentResult, error) {
 	return f.record("VoidPayment", ref)
 }
 
 func (f *fakeWriter) CreateCreditApplication(
 	_ context.Context,
-	doc *accountingsyncports.AccountingCreditApplicationDocument,
-) (*accountingsyncports.AccountingDocumentResult, error) {
+	doc *accountingconnectorports.AccountingCreditApplicationDocument,
+) (*accountingconnectorports.AccountingDocumentResult, error) {
 	return f.record("CreateCreditApplication", doc)
 }
 
 func (f *fakeWriter) VoidCreditApplication(
 	_ context.Context,
-	ref *accountingsyncports.AccountingDocumentRef,
-) (*accountingsyncports.AccountingDocumentResult, error) {
+	ref *accountingconnectorports.AccountingDocumentRef,
+) (*accountingconnectorports.AccountingDocumentResult, error) {
 	return f.record("VoidCreditApplication", ref)
 }
 
 func (f *fakeWriter) UpsertVendor(
 	_ context.Context,
-	doc *accountingsyncports.AccountingVendorDocument,
-) (*accountingsyncports.AccountingDocumentResult, error) {
+	doc *accountingconnectorports.AccountingVendorDocument,
+) (*accountingconnectorports.AccountingDocumentResult, error) {
 	return f.record("UpsertVendor", doc)
 }
 
 func (f *fakeWriter) CreatePurchaseDocument(
 	_ context.Context,
-	doc *accountingsyncports.AccountingPurchaseDocument,
-) (*accountingsyncports.AccountingDocumentResult, error) {
+	doc *accountingconnectorports.AccountingPurchaseDocument,
+) (*accountingconnectorports.AccountingDocumentResult, error) {
 	return f.record("CreatePurchaseDocument", doc)
 }
 
 func (f *fakeWriter) UpdateSalesDocument(
 	_ context.Context,
-	doc *accountingsyncports.AccountingSalesDocument,
-) (*accountingsyncports.AccountingDocumentResult, error) {
+	doc *accountingconnectorports.AccountingSalesDocument,
+) (*accountingconnectorports.AccountingDocumentResult, error) {
 	return f.record("UpdateSalesDocument", doc)
 }
 
 func (f *fakeWriter) UpdatePurchaseDocument(
 	_ context.Context,
-	doc *accountingsyncports.AccountingPurchaseDocument,
-) (*accountingsyncports.AccountingDocumentResult, error) {
+	doc *accountingconnectorports.AccountingPurchaseDocument,
+) (*accountingconnectorports.AccountingDocumentResult, error) {
 	return f.record("UpdatePurchaseDocument", doc)
 }
 
 func (f *fakeWriter) UpdateBillPayment(
 	_ context.Context,
-	doc *accountingsyncports.AccountingBillPaymentDocument,
-) (*accountingsyncports.AccountingDocumentResult, error) {
+	doc *accountingconnectorports.AccountingBillPaymentDocument,
+) (*accountingconnectorports.AccountingDocumentResult, error) {
 	return f.record("UpdateBillPayment", doc)
 }
 
 func (f *fakeWriter) VoidPurchaseDocument(
 	_ context.Context,
-	ref *accountingsyncports.AccountingDocumentRef,
-) (*accountingsyncports.AccountingDocumentResult, error) {
+	ref *accountingconnectorports.AccountingDocumentRef,
+) (*accountingconnectorports.AccountingDocumentResult, error) {
 	return f.record("VoidPurchaseDocument", ref)
 }
 
 func (f *fakeWriter) CreateBillPayment(
 	_ context.Context,
-	doc *accountingsyncports.AccountingBillPaymentDocument,
-) (*accountingsyncports.AccountingDocumentResult, error) {
+	doc *accountingconnectorports.AccountingBillPaymentDocument,
+) (*accountingconnectorports.AccountingDocumentResult, error) {
 	return f.record("CreateBillPayment", doc)
 }
 
 func (f *fakeWriter) FindDocument(
 	_ context.Context,
-	req *accountingsyncports.AccountingFindDocumentRequest,
-) (*accountingsyncports.AccountingDocumentResult, bool, error) {
+	req *accountingconnectorports.AccountingFindDocumentRequest,
+) (*accountingconnectorports.AccountingDocumentResult, bool, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.calls = append(f.calls, writerCall{method: "FindDocument", doc: req})
@@ -1263,7 +1303,10 @@ func (f *fakeWriter) FindDocument(
 	if !ok {
 		return nil, false, nil
 	}
-	return &accountingsyncports.AccountingDocumentResult{ExternalID: id, DocNumber: req.DocNumber}, true, nil
+	return &accountingconnectorports.AccountingDocumentResult{
+		ExternalID: id,
+		DocNumber:  req.DocNumber,
+	}, true, nil
 }
 
 type fakeInvoices struct {
@@ -1300,7 +1343,8 @@ func (f *fakeInvoices) GetByIDs(
 	defer f.mu.Unlock()
 	out := []*invoice.Invoice{}
 	for _, id := range req.InvoiceIDs {
-		if row, ok := f.rows[id]; ok && sameTenant(row.OrganizationID, row.BusinessUnitID, req.TenantInfo) {
+		if row, ok := f.rows[id]; ok &&
+			sameTenant(row.OrganizationID, row.BusinessUnitID, req.TenantInfo) {
 			out = append(out, row)
 		}
 	}
@@ -1381,7 +1425,10 @@ type fakeAudit struct {
 	comments []string
 }
 
-func (f *fakeAudit) LogAction(params *auditports.LogActionParams, opts ...auditports.LogOption) error {
+func (f *fakeAudit) LogAction(
+	params *auditports.LogActionParams,
+	opts ...auditports.LogOption,
+) error {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.entries = append(f.entries, params)
@@ -1460,14 +1507,21 @@ type fakeDispatcher struct {
 	backfilled error
 }
 
-func (f *fakeDispatcher) Kick(_ context.Context, _ pagination.TenantInfo, connectionID pulid.ID) error {
+func (f *fakeDispatcher) Kick(
+	_ context.Context,
+	_ pagination.TenantInfo,
+	connectionID pulid.ID,
+) error {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.kicks = append(f.kicks, connectionID)
 	return f.kickErr
 }
 
-func (f *fakeDispatcher) StartBackfill(_ context.Context, backfill *accountingsync.AccountingBackfill) error {
+func (f *fakeDispatcher) StartBackfill(
+	_ context.Context,
+	backfill *accountingsync.AccountingBackfill,
+) error {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.backfills = append(f.backfills, cloneBackfill(backfill))
@@ -1487,14 +1541,14 @@ func (f *fakeDispatcher) started() []*accountingsync.AccountingBackfill {
 }
 
 type payableRow struct {
-	settlement *accountingsyncports.PayableSettlement
+	settlement *accountingpayablesports.PayableSettlement
 	tenant     pagination.TenantInfo
 }
 
 type fakePayables struct {
 	mu    sync.Mutex
 	rows  map[pulid.ID]payableRow
-	calls []accountingsyncports.GetPayableSettlementRequest
+	calls []accountingpayablesports.GetPayableSettlementRequest
 }
 
 func newFakePayables() *fakePayables {
@@ -1503,20 +1557,22 @@ func newFakePayables() *fakePayables {
 
 func (f *fakePayables) put(
 	tenantInfo pagination.TenantInfo,
-	settlement *accountingsyncports.PayableSettlement,
+	settlement *accountingpayablesports.PayableSettlement,
 ) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.rows[settlement.ID] = payableRow{settlement: settlement, tenant: tenantInfo}
 }
 
-func (f *fakePayables) requests() []accountingsyncports.GetPayableSettlementRequest {
+func (f *fakePayables) requests() []accountingpayablesports.GetPayableSettlementRequest {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	return slices.Clone(f.calls)
 }
 
-func clonePayable(in *accountingsyncports.PayableSettlement) *accountingsyncports.PayableSettlement {
+func clonePayable(
+	in *accountingpayablesports.PayableSettlement,
+) *accountingpayablesports.PayableSettlement {
 	out := *in
 	out.Lines = slices.Clone(in.Lines)
 	out.InvoiceNumbers = slices.Clone(in.InvoiceNumbers)
@@ -1533,8 +1589,8 @@ func clonePayable(in *accountingsyncports.PayableSettlement) *accountingsyncport
 
 func (f *fakePayables) GetSettlement(
 	_ context.Context,
-	req *accountingsyncports.GetPayableSettlementRequest,
-) (*accountingsyncports.PayableSettlement, error) {
+	req *accountingpayablesports.GetPayableSettlementRequest,
+) (*accountingpayablesports.PayableSettlement, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.calls = append(f.calls, *req)
@@ -1610,7 +1666,7 @@ func (f *fakePayments) StampExchangeRate(
 
 func (f *fakePayables) StampExchangeRate(
 	_ context.Context,
-	req *accountingsyncports.StampPayableExchangeRateRequest,
+	req *accountingpayablesports.StampPayableExchangeRateRequest,
 ) error {
 	f.mu.Lock()
 	defer f.mu.Unlock()

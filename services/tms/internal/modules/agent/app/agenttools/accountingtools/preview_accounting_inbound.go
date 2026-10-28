@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountinginboundports"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -51,7 +51,7 @@ func inboundChangeRecord(change *accountingsync.AccountingInboundChange) toolpre
 	}
 }
 
-func inboundPostingSummary(preview *accountingsyncports.AccountingInboundApplyPreview) string {
+func inboundPostingSummary(preview *accountinginboundports.AccountingInboundApplyPreview) string {
 	change := preview.Change
 	currency := change.CurrencyCode
 	pays := make([]string, 0, len(preview.Lines))

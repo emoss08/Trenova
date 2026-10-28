@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/shared/netsuite"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
@@ -23,7 +23,7 @@ func (c *Connector) NormalizeAccountID(raw string) (string, error) {
 
 func (c *Connector) PrepareCertificate(
 	subject string,
-) (*accountingsyncports.AccountingCertificate, error) {
+) (*accountingconnectorports.AccountingCertificate, error) {
 	cert, err := netsuite.NewCertificate(netsuite.CertificateRequest{
 		Subject: stringutils.TruncateBytes(
 			cleanText(subject, maxCertificateSubject),
@@ -35,7 +35,7 @@ func (c *Connector) PrepareCertificate(
 	if err != nil {
 		return nil, err
 	}
-	return &accountingsyncports.AccountingCertificate{
+	return &accountingconnectorports.AccountingCertificate{
 		PrivateKeyPEM:  cert.PrivateKeyPEM,
 		CertificatePEM: cert.CertificatePEM,
 		ExpiresAt:      cert.ExpiresAt,
@@ -44,8 +44,8 @@ func (c *Connector) PrepareCertificate(
 
 func (c *Connector) TokenFromCertificate(
 	ctx context.Context,
-	grant *accountingsyncports.AccountingCertificateGrant,
-) (*accountingsyncports.AccountingTokenGrant, error) {
+	grant *accountingconnectorports.AccountingCertificateGrant,
+) (*accountingconnectorports.AccountingTokenGrant, error) {
 	if c.oauth == nil {
 		return nil, errNoRedirect
 	}
@@ -68,7 +68,7 @@ func (c *Connector) TokenFromCertificate(
 		}
 		return nil, err
 	}
-	return &accountingsyncports.AccountingTokenGrant{
+	return &accountingconnectorports.AccountingTokenGrant{
 		AccessToken:    token.AccessToken,
 		AccessTokenTTL: token.ExpiresIn,
 	}, nil

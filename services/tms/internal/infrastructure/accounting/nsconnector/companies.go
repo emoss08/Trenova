@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/shared/netsuite"
 )
 
@@ -23,9 +23,9 @@ var errNoCompany = errors.New("netsuite offered no active subsidiary this sign-i
 
 func (c *Connector) Companies(
 	ctx context.Context,
-	grant *accountingsyncports.AccountingTokenGrant,
+	grant *accountingconnectorports.AccountingTokenGrant,
 	callbackRealmID string,
-) ([]accountingsyncports.AccountingCompany, error) {
+) ([]accountingconnectorports.AccountingCompany, error) {
 	if grant == nil {
 		return nil, netsuite.ErrAccessTokenRequired
 	}
@@ -33,7 +33,7 @@ func (c *Connector) Companies(
 	if err != nil {
 		return nil, err
 	}
-	s, err := c.open(accountingsyncports.AccountingDocumentAuth{
+	s, err := c.open(accountingconnectorports.AccountingDocumentAuth{
 		RealmID:     account,
 		AccessToken: grant.AccessToken,
 	})
@@ -52,14 +52,14 @@ func (c *Connector) Companies(
 	default:
 		return nil, err
 	}
-	companies := make([]accountingsyncports.AccountingCompany, 0, len(subsidiaries))
+	companies := make([]accountingconnectorports.AccountingCompany, 0, len(subsidiaries))
 	for idx := range subsidiaries {
 		row := &subsidiaries[idx]
 		ref, refErr := netsuite.NewCompanyRef(account, row.ID.Value())
 		if refErr != nil {
 			continue
 		}
-		companies = append(companies, accountingsyncports.AccountingCompany{
+		companies = append(companies, accountingconnectorports.AccountingCompany{
 			ID:   ref.String(),
 			Name: companyLabel(row.Name.Value(), ref),
 		})
@@ -73,7 +73,7 @@ func (c *Connector) Companies(
 func singleCompany(
 	ctx context.Context,
 	s *session,
-) ([]accountingsyncports.AccountingCompany, error) {
+) ([]accountingconnectorports.AccountingCompany, error) {
 	home, err := homeOf(ctx, s.client, s.ref)
 	if err != nil {
 		if isUnreachable(err) {
@@ -81,7 +81,7 @@ func singleCompany(
 		}
 		return nil, err
 	}
-	return []accountingsyncports.AccountingCompany{{
+	return []accountingconnectorports.AccountingCompany{{
 		ID:   s.ref.AccountID,
 		Name: companyLabel(home.CompanyName.Value(), s.ref),
 	}}, nil
@@ -104,7 +104,7 @@ func (c *Connector) CompanyFacts(
 	ctx context.Context,
 	realmID, accessToken string,
 ) (*accountingsync.CompanyFacts, error) {
-	s, err := c.open(accountingsyncports.AccountingDocumentAuth{
+	s, err := c.open(accountingconnectorports.AccountingDocumentAuth{
 		RealmID:     realmID,
 		AccessToken: accessToken,
 	})

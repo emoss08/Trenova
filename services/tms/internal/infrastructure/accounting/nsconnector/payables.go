@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/shared/netsuite"
 )
 
@@ -17,8 +17,8 @@ var errPurchaseDocumentType = errors.New(
 
 func (c *Connector) UpsertVendor(
 	ctx context.Context,
-	doc *accountingsyncports.AccountingVendorDocument,
-) (*accountingsyncports.AccountingDocumentResult, error) {
+	doc *accountingconnectorports.AccountingVendorDocument,
+) (*accountingconnectorports.AccountingDocumentResult, error) {
 	return c.upsertParty(ctx, &partyWrite{
 		auth:       doc.Auth,
 		kind:       partyVendor,
@@ -37,23 +37,23 @@ func purchaseRecordOf(credit bool) string {
 
 func (c *Connector) CreatePurchaseDocument(
 	ctx context.Context,
-	doc *accountingsyncports.AccountingPurchaseDocument,
-) (*accountingsyncports.AccountingDocumentResult, error) {
+	doc *accountingconnectorports.AccountingPurchaseDocument,
+) (*accountingconnectorports.AccountingDocumentResult, error) {
 	return c.savePurchase(ctx, doc, false)
 }
 
 func (c *Connector) UpdatePurchaseDocument(
 	ctx context.Context,
-	doc *accountingsyncports.AccountingPurchaseDocument,
-) (*accountingsyncports.AccountingDocumentResult, error) {
+	doc *accountingconnectorports.AccountingPurchaseDocument,
+) (*accountingconnectorports.AccountingDocumentResult, error) {
 	return c.savePurchase(ctx, doc, true)
 }
 
 func (c *Connector) savePurchase(
 	ctx context.Context,
-	doc *accountingsyncports.AccountingPurchaseDocument,
+	doc *accountingconnectorports.AccountingPurchaseDocument,
 	update bool,
-) (*accountingsyncports.AccountingDocumentResult, error) {
+) (*accountingconnectorports.AccountingDocumentResult, error) {
 	if !doc.Kind.IsBill() {
 		return nil, errDocumentKind
 	}
@@ -100,7 +100,7 @@ func (c *Connector) savePurchase(
 func (c *Connector) purchaseBody(
 	ctx context.Context,
 	s *session,
-	doc *accountingsyncports.AccountingPurchaseDocument,
+	doc *accountingconnectorports.AccountingPurchaseDocument,
 ) (*transactionBody, error) {
 	lines, err := purchaseLines(doc.Lines)
 	if err != nil {
@@ -126,7 +126,7 @@ func (c *Connector) purchaseBody(
 	return body, nil
 }
 
-func purchaseLines(lines []accountingsyncports.AccountingPurchaseLine) ([]expenseLine, error) {
+func purchaseLines(lines []accountingconnectorports.AccountingPurchaseLine) ([]expenseLine, error) {
 	if len(lines) == 0 {
 		return nil, errLinesRequired
 	}
@@ -151,10 +151,10 @@ func purchaseLines(lines []accountingsyncports.AccountingPurchaseLine) ([]expens
 }
 
 type purchaseWritten struct {
-	auth   accountingsyncports.AccountingDocumentAuth
+	auth   accountingconnectorports.AccountingDocumentAuth
 	credit bool
 	saved  *written
-	result *accountingsyncports.AccountingDocumentResult
+	result *accountingconnectorports.AccountingDocumentResult
 }
 
 func finishPurchase(w *purchaseWritten) {
@@ -190,8 +190,8 @@ func purchaseIsCredit(refs map[string]string) (bool, error) {
 
 func (c *Connector) VoidPurchaseDocument(
 	ctx context.Context,
-	ref *accountingsyncports.AccountingDocumentRef,
-) (*accountingsyncports.AccountingDocumentResult, error) {
+	ref *accountingconnectorports.AccountingDocumentRef,
+) (*accountingconnectorports.AccountingDocumentResult, error) {
 	if !ref.Kind.IsBill() && !ref.Kind.IsBillPayment() {
 		return nil, errDocumentKind
 	}
@@ -247,23 +247,23 @@ func (c *Connector) VoidPurchaseDocument(
 
 func (c *Connector) CreateBillPayment(
 	ctx context.Context,
-	doc *accountingsyncports.AccountingBillPaymentDocument,
-) (*accountingsyncports.AccountingDocumentResult, error) {
+	doc *accountingconnectorports.AccountingBillPaymentDocument,
+) (*accountingconnectorports.AccountingDocumentResult, error) {
 	return c.saveBillPayment(ctx, doc, false)
 }
 
 func (c *Connector) UpdateBillPayment(
 	ctx context.Context,
-	doc *accountingsyncports.AccountingBillPaymentDocument,
-) (*accountingsyncports.AccountingDocumentResult, error) {
+	doc *accountingconnectorports.AccountingBillPaymentDocument,
+) (*accountingconnectorports.AccountingDocumentResult, error) {
 	return c.saveBillPayment(ctx, doc, true)
 }
 
 func (c *Connector) saveBillPayment(
 	ctx context.Context,
-	doc *accountingsyncports.AccountingBillPaymentDocument,
+	doc *accountingconnectorports.AccountingBillPaymentDocument,
 	update bool,
-) (*accountingsyncports.AccountingDocumentResult, error) {
+) (*accountingconnectorports.AccountingDocumentResult, error) {
 	if !doc.Kind.IsBillPayment() {
 		return nil, errDocumentKind
 	}

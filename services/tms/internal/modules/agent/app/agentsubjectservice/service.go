@@ -8,6 +8,9 @@ import (
 	"strings"
 
 	"github.com/bytedance/sonic"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingdriftports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountinginboundports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
@@ -64,32 +67,32 @@ type Params struct {
 	Logger            *zap.Logger
 	BillingQueue      billingqueueports.BillingQueueService
 	Shipments         shipmentserviceports.ShipmentService
-	Console           dispatchboardports.DispatchConsoleRepository           `optional:"true"`
-	Content           documentports.DocumentContentService                   `optional:"true"`
-	Insights          insightports.InsightRepository                         `optional:"true"`
-	BankReceipts      bankreceiptports.BankReceiptService                    `optional:"true"`
-	WorkItems         bankreceiptworkitemports.BankReceiptWorkItemRepository `optional:"true"`
-	Occurrences       detentionports.DetentionOccurrenceRepository           `optional:"true"`
-	Workers           workerports.WorkerRepository                           `optional:"true"`
-	Credentials       workercredentialports.WorkerCredentialRepository       `optional:"true"`
-	CarrierIntel      carrierintelports.CarrierIntelEventRepository          `optional:"true"`
-	EDIFiles          ediports.EDIInboundFileRepository                      `optional:"true"`
-	Inbound           inboundmessageports.InboundMessageRepository           `optional:"true"`
-	Reports           reportports.ReportDefinitionRepository                 `optional:"true"`
-	Dashboards        reportports.ReportDashboardRepository                  `optional:"true"`
-	Accounting        accountingsyncports.AccountingConnectionRepository     `optional:"true"`
-	SyncRecords       accountingsyncports.AccountingSyncRecordRepository     `optional:"true"`
-	AccountingInbound accountingsyncports.AccountingInboundChangeRepository  `optional:"true"`
-	AccountingDrift   accountingsyncports.AccountingDriftFindingRepository   `optional:"true"`
-	Dispatch          dispatchcontrolports.DispatchControlRepository         `optional:"true"`
-	Formulas          formulatemplateports.FormulaTemplateRepository         `optional:"true"`
-	FormulaLibraries  formulalibraryports.FormulaLibraryRepository           `optional:"true"`
-	Invoices          invoiceports.InvoiceRepository                         `optional:"true"`
-	Disputes          invoiceports.InvoiceDisputeRepository                  `optional:"true"`
-	Noas              factoringports.NoaRepository                           `optional:"true"`
-	Submissions       factoringports.SubmissionRepository                    `optional:"true"`
-	Remittances       factoringports.RemittanceRepository                    `optional:"true"`
-	StopEtas          stopetaports.Repository                                `optional:"true"`
+	Console           dispatchboardports.DispatchConsoleRepository             `optional:"true"`
+	Content           documentports.DocumentContentService                     `optional:"true"`
+	Insights          insightports.InsightRepository                           `optional:"true"`
+	BankReceipts      bankreceiptports.BankReceiptService                      `optional:"true"`
+	WorkItems         bankreceiptworkitemports.BankReceiptWorkItemRepository   `optional:"true"`
+	Occurrences       detentionports.DetentionOccurrenceRepository             `optional:"true"`
+	Workers           workerports.WorkerRepository                             `optional:"true"`
+	Credentials       workercredentialports.WorkerCredentialRepository         `optional:"true"`
+	CarrierIntel      carrierintelports.CarrierIntelEventRepository            `optional:"true"`
+	EDIFiles          ediports.EDIInboundFileRepository                        `optional:"true"`
+	Inbound           inboundmessageports.InboundMessageRepository             `optional:"true"`
+	Reports           reportports.ReportDefinitionRepository                   `optional:"true"`
+	Dashboards        reportports.ReportDashboardRepository                    `optional:"true"`
+	Accounting        accountingconnectionports.AccountingConnectionRepository `optional:"true"`
+	SyncRecords       accountingsyncports.AccountingSyncRecordRepository       `optional:"true"`
+	AccountingInbound accountinginboundports.AccountingInboundChangeRepository `optional:"true"`
+	AccountingDrift   accountingdriftports.AccountingDriftFindingRepository    `optional:"true"`
+	Dispatch          dispatchcontrolports.DispatchControlRepository           `optional:"true"`
+	Formulas          formulatemplateports.FormulaTemplateRepository           `optional:"true"`
+	FormulaLibraries  formulalibraryports.FormulaLibraryRepository             `optional:"true"`
+	Invoices          invoiceports.InvoiceRepository                           `optional:"true"`
+	Disputes          invoiceports.InvoiceDisputeRepository                    `optional:"true"`
+	Noas              factoringports.NoaRepository                             `optional:"true"`
+	Submissions       factoringports.SubmissionRepository                      `optional:"true"`
+	Remittances       factoringports.RemittanceRepository                      `optional:"true"`
+	StopEtas          stopetaports.Repository                                  `optional:"true"`
 }
 
 // Service describes the record an agent run or a conversation is about, so
@@ -111,10 +114,10 @@ type Service struct {
 	inbound           inboundmessageports.InboundMessageRepository
 	reports           reportports.ReportDefinitionRepository
 	dashboards        reportports.ReportDashboardRepository
-	accounting        accountingsyncports.AccountingConnectionRepository
+	accounting        accountingconnectionports.AccountingConnectionRepository
 	syncRecords       accountingsyncports.AccountingSyncRecordRepository
-	accountingInbound accountingsyncports.AccountingInboundChangeRepository
-	accountingDrift   accountingsyncports.AccountingDriftFindingRepository
+	accountingInbound accountinginboundports.AccountingInboundChangeRepository
+	accountingDrift   accountingdriftports.AccountingDriftFindingRepository
 	dispatch          dispatchcontrolports.DispatchControlRepository
 	formulas          formulatemplateports.FormulaTemplateRepository
 	formulaLibraries  formulalibraryports.FormulaLibraryRepository
@@ -1155,10 +1158,13 @@ func (s *Service) accountingConnection(
 		return subject, nil
 	}
 
-	found, err := s.accounting.GetByID(ctx, accountingsyncports.GetAccountingConnectionByIDRequest{
-		TenantInfo: tenant,
-		ID:         connectionID,
-	})
+	found, err := s.accounting.GetByID(
+		ctx,
+		accountingconnectionports.GetAccountingConnectionByIDRequest{
+			TenantInfo: tenant,
+			ID:         connectionID,
+		},
+	)
 	if err != nil {
 		return nil, fmt.Errorf("load accounting connection: %w", err)
 	}
@@ -1235,7 +1241,7 @@ func (s *Service) accountingInboundChange(
 
 	found, err := s.accountingInbound.GetByID(
 		ctx,
-		accountingsyncports.GetAccountingInboundChangeQuery{
+		accountinginboundports.GetAccountingInboundChangeQuery{
 			TenantInfo: tenant,
 			ID:         changeID,
 		},
@@ -1274,10 +1280,13 @@ func (s *Service) accountingDriftFinding(
 		return subject, nil
 	}
 
-	found, err := s.accountingDrift.GetByID(ctx, accountingsyncports.GetAccountingDriftFindingQuery{
-		TenantInfo: tenant,
-		ID:         findingID,
-	})
+	found, err := s.accountingDrift.GetByID(
+		ctx,
+		accountingdriftports.GetAccountingDriftFindingQuery{
+			TenantInfo: tenant,
+			ID:         findingID,
+		},
+	)
 	if err != nil {
 		return nil, fmt.Errorf("load accounting drift finding: %w", err)
 	}

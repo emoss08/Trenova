@@ -5,11 +5,11 @@ import (
 	"maps"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/shopspring/decimal"
 )
 
-type createFunc func() (*accountingsyncports.AccountingDocumentResult, error)
+type createFunc func() (*accountingconnectorports.AccountingDocumentResult, error)
 
 func outcomeUnknown(record *accountingsync.AccountingSyncRecord) bool {
 	if record.AttemptCount <= 1 {
@@ -23,9 +23,9 @@ func (s *Service) createAdopting(
 	ctx context.Context,
 	sess *pushSession,
 	record *accountingsync.AccountingSyncRecord,
-	match *accountingsyncports.AccountingFindDocumentRequest,
+	match *accountingconnectorports.AccountingFindDocumentRequest,
 	create createFunc,
-) (*accountingsyncports.AccountingDocumentResult, error) {
+) (*accountingconnectorports.AccountingDocumentResult, error) {
 	if sess.limits.IdempotencyWindow <= 0 {
 		return create()
 	}
@@ -60,9 +60,9 @@ func isDuplicate(sess *pushSession, err error) bool {
 }
 
 func adopted(
-	found *accountingsyncports.AccountingDocumentResult,
-) *accountingsyncports.AccountingDocumentResult {
-	result := &accountingsyncports.AccountingDocumentResult{
+	found *accountingconnectorports.AccountingDocumentResult,
+) *accountingconnectorports.AccountingDocumentResult {
+	result := &accountingconnectorports.AccountingDocumentResult{
 		ExternalID: found.ExternalID,
 		DocNumber:  found.DocNumber,
 		Refs:       make(map[string]string, len(found.Refs)+1),
@@ -72,7 +72,7 @@ func adopted(
 	return result
 }
 
-func salesTotal(lines []accountingsyncports.AccountingDocumentLine) decimal.Decimal {
+func salesTotal(lines []accountingconnectorports.AccountingDocumentLine) decimal.Decimal {
 	total := decimal.Zero
 	for idx := range lines {
 		total = total.Add(lines[idx].Amount)
@@ -80,7 +80,7 @@ func salesTotal(lines []accountingsyncports.AccountingDocumentLine) decimal.Deci
 	return total
 }
 
-func purchaseTotal(lines []accountingsyncports.AccountingPurchaseLine) decimal.Decimal {
+func purchaseTotal(lines []accountingconnectorports.AccountingPurchaseLine) decimal.Decimal {
 	total := decimal.Zero
 	for idx := range lines {
 		total = total.Add(lines[idx].Amount)
@@ -88,7 +88,9 @@ func purchaseTotal(lines []accountingsyncports.AccountingPurchaseLine) decimal.D
 	return total
 }
 
-func appliedInvoices(applications []accountingsyncports.AccountingPaymentApplication) []string {
+func appliedInvoices(
+	applications []accountingconnectorports.AccountingPaymentApplication,
+) []string {
 	ids := make([]string, 0, len(applications))
 	for idx := range applications {
 		ids = append(ids, applications[idx].InvoiceExternalID)

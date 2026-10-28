@@ -5,6 +5,8 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountinginboundports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
@@ -20,15 +22,15 @@ const (
 )
 
 type AccountingSyncSource struct {
-	repo    accountingsyncports.AccountingConnectionRepository
+	repo    accountingconnectionports.AccountingConnectionRepository
 	records accountingsyncports.AccountingSyncRecordRepository
-	inbound accountingsyncports.AccountingInboundChangeRepository
+	inbound accountinginboundports.AccountingInboundChangeRepository
 }
 
 func NewAccountingSyncSource(
-	repo accountingsyncports.AccountingConnectionRepository,
+	repo accountingconnectionports.AccountingConnectionRepository,
 	records accountingsyncports.AccountingSyncRecordRepository,
-	inbound accountingsyncports.AccountingInboundChangeRepository,
+	inbound accountinginboundports.AccountingInboundChangeRepository,
 ) watchtowerports.WatchtowerSource {
 	return &AccountingSyncSource{repo: repo, records: records, inbound: inbound}
 }
@@ -78,7 +80,7 @@ func (s *AccountingSyncSource) Snapshot(
 		}
 		inbound, inboundErr := s.inbound.ListAttention(
 			ctx,
-			&accountingsyncports.ListAccountingInboundAttentionRequest{
+			&accountinginboundports.ListAccountingInboundAttentionRequest{
 				TenantInfo:     tenant,
 				ConnectionID:   conn.ID,
 				DetectedBefore: now - int64(AccountingInboundAfter/time.Second),

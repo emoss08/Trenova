@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountinginboundports"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -18,16 +18,16 @@ import (
 
 type fakeInboundOperator struct {
 	changes  map[pulid.ID]*accountingsync.AccountingInboundChange
-	previews map[pulid.ID]*accountingsyncports.AccountingInboundApplyPreview
+	previews map[pulid.ID]*accountinginboundports.AccountingInboundApplyPreview
 
-	applied      *accountingsyncports.DecideAccountingInboundChangeRequest
+	applied      *accountinginboundports.DecideAccountingInboundChangeRequest
 	appliedActor *permissionports.RequestActor
-	ignored      *accountingsyncports.DecideAccountingInboundChangeRequest
+	ignored      *accountinginboundports.DecideAccountingInboundChangeRequest
 }
 
 func (f *fakeInboundOperator) Get(
 	_ context.Context,
-	req *accountingsyncports.GetAccountingInboundChangeRequest,
+	req *accountinginboundports.GetAccountingInboundChangeRequest,
 ) (*accountingsync.AccountingInboundChange, error) {
 	change, ok := f.changes[req.ID]
 	if !ok {
@@ -39,8 +39,8 @@ func (f *fakeInboundOperator) Get(
 
 func (f *fakeInboundOperator) PreviewApply(
 	_ context.Context,
-	req *accountingsyncports.GetAccountingInboundChangeRequest,
-) (*accountingsyncports.AccountingInboundApplyPreview, error) {
+	req *accountinginboundports.GetAccountingInboundChangeRequest,
+) (*accountinginboundports.AccountingInboundApplyPreview, error) {
 	preview, ok := f.previews[req.ID]
 	if !ok {
 		return nil, errortypes.NewNotFoundError("Accounting inbound change not found")
@@ -50,7 +50,7 @@ func (f *fakeInboundOperator) PreviewApply(
 
 func (f *fakeInboundOperator) Apply(
 	_ context.Context,
-	req *accountingsyncports.DecideAccountingInboundChangeRequest,
+	req *accountinginboundports.DecideAccountingInboundChangeRequest,
 	actor *permissionports.RequestActor,
 ) (*accountingsync.AccountingInboundChange, error) {
 	f.applied = req
@@ -60,7 +60,7 @@ func (f *fakeInboundOperator) Apply(
 
 func (f *fakeInboundOperator) Ignore(
 	_ context.Context,
-	req *accountingsyncports.DecideAccountingInboundChangeRequest,
+	req *accountinginboundports.DecideAccountingInboundChangeRequest,
 	_ *permissionports.RequestActor,
 ) (*accountingsync.AccountingInboundChange, error) {
 	f.ignored = req
@@ -84,12 +84,12 @@ func proposedPayment(
 
 func newInboundOperator(
 	change *accountingsync.AccountingInboundChange,
-	preview *accountingsyncports.AccountingInboundApplyPreview,
+	preview *accountinginboundports.AccountingInboundApplyPreview,
 ) *fakeInboundOperator {
 	preview.Change = change
 	return &fakeInboundOperator{
 		changes: map[pulid.ID]*accountingsync.AccountingInboundChange{change.ID: change},
-		previews: map[pulid.ID]*accountingsyncports.AccountingInboundApplyPreview{
+		previews: map[pulid.ID]*accountinginboundports.AccountingInboundApplyPreview{
 			change.ID: preview,
 		},
 	}
@@ -99,12 +99,12 @@ func TestApplyAccountingInboundChange_AppliesAsTheApprover(t *testing.T) {
 	t.Parallel()
 
 	change := proposedPayment(accountingsync.InboundStatusProposed)
-	operator := newInboundOperator(change, &accountingsyncports.AccountingInboundApplyPreview{
+	operator := newInboundOperator(change, &accountinginboundports.AccountingInboundApplyPreview{
 		CanApply:       true,
 		PaidAt:         1_790_208_000,
 		CashMinor:      145_025,
 		UnappliedMinor: 5_000,
-		Lines: []accountingsyncports.AccountingInboundPostingLine{{
+		Lines: []accountinginboundports.AccountingInboundPostingLine{{
 			ObjectType:   accountingsync.SyncObjectInvoice,
 			ObjectID:     pulid.MustNew("inv_"),
 			ObjectNumber: "INV-1001",
@@ -136,7 +136,7 @@ func TestApplyAccountingInboundChange_RefusesWhatNoLongerMatches(t *testing.T) {
 	t.Parallel()
 
 	change := proposedPayment(accountingsync.InboundStatusProposed)
-	operator := newInboundOperator(change, &accountingsyncports.AccountingInboundApplyPreview{
+	operator := newInboundOperator(change, &accountinginboundports.AccountingInboundApplyPreview{
 		Blocker: "Pays 1500.25 USD on INV-1001, which has 0.00 USD open in Trenova.",
 	})
 	tool := newApplyAccountingInboundChangeTool(operator)
@@ -153,7 +153,7 @@ func TestIgnoreAccountingInboundChange_IgnoresWithTheNote(t *testing.T) {
 	t.Parallel()
 
 	change := proposedPayment(accountingsync.InboundStatusProposed)
-	operator := newInboundOperator(change, &accountingsyncports.AccountingInboundApplyPreview{})
+	operator := newInboundOperator(change, &accountinginboundports.AccountingInboundApplyPreview{})
 	tool := newIgnoreAccountingInboundChangeTool(operator)
 	params := syncParams(map[string]any{
 		"inboundChangeId": change.ID.String(),
@@ -170,7 +170,7 @@ func TestIgnoreAccountingInboundChange_NeedsANoteAndAnOpenPayment(t *testing.T) 
 
 	applied := proposedPayment(accountingsync.InboundStatusApplied)
 	open := proposedPayment(accountingsync.InboundStatusProposed)
-	operator := newInboundOperator(applied, &accountingsyncports.AccountingInboundApplyPreview{})
+	operator := newInboundOperator(applied, &accountinginboundports.AccountingInboundApplyPreview{})
 	operator.changes[open.ID] = open
 	tool := newIgnoreAccountingInboundChangeTool(operator)
 

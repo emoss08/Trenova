@@ -12,7 +12,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/shared/netsuite"
 	"github.com/shopspring/decimal"
@@ -32,9 +32,9 @@ type sandbox struct {
 	conn    *Connector
 	account string
 	ref     netsuite.CompanyRef
-	grant   *accountingsyncports.AccountingTokenGrant
+	grant   *accountingconnectorports.AccountingTokenGrant
 	facts   *accountingsync.CompanyFacts
-	auth    accountingsyncports.AccountingDocumentAuth
+	auth    accountingconnectorports.AccountingDocumentAuth
 }
 
 func sandboxEnv(name string) string {
@@ -62,7 +62,7 @@ func openSandbox(t *testing.T) *sandbox {
 	require.NoError(t, err)
 
 	provider := newProvider(t, config.NetSuiteConfig{})
-	conn, err := provider.bind(&accountingsyncports.AccountingApp{
+	conn, err := provider.bind(&accountingconnectorports.AccountingApp{
 		Source:      accountingsync.AppSourceTenant,
 		Environment: accountingsync.AppEnvironmentProduction,
 		ClientID:    sandboxEnv("CLIENT_ID"),
@@ -71,11 +71,14 @@ func openSandbox(t *testing.T) *sandbox {
 
 	account, err := conn.NormalizeAccountID(sandboxEnv("ACCOUNT_ID"))
 	require.NoError(t, err)
-	grant, err := conn.TokenFromCertificate(t.Context(), &accountingsyncports.AccountingCertificateGrant{
-		RealmID:       account,
-		CertificateID: sandboxEnv("CERTIFICATE_ID"),
-		PrivateKeyPEM: key,
-	})
+	grant, err := conn.TokenFromCertificate(
+		t.Context(),
+		&accountingconnectorports.AccountingCertificateGrant{
+			RealmID:       account,
+			CertificateID: sandboxEnv("CERTIFICATE_ID"),
+			PrivateKeyPEM: key,
+		},
+	)
 	require.NoError(t, err, "the client-credentials request was refused")
 
 	ref := netsuite.CompanyRef{AccountID: account, SubsidiaryID: sandboxEnv("SUBSIDIARY_ID")}
@@ -88,7 +91,7 @@ func openSandbox(t *testing.T) *sandbox {
 		ref:     ref,
 		grant:   grant,
 		facts:   facts,
-		auth: accountingsyncports.AccountingDocumentAuth{
+		auth: accountingconnectorports.AccountingDocumentAuth{
 			RealmID:     ref.String(),
 			AccessToken: grant.AccessToken,
 			CompanyCode: facts.HomeCurrency,
@@ -130,12 +133,15 @@ func TestSandboxReadsEveryReferenceKind(t *testing.T) {
 	pageSize := min(50, s.conn.MaxReferencePageSize())
 	for _, kind := range accountingsync.MustProfile(integration.TypeNetSuite).ReferenceKinds {
 		t.Run(string(kind), func(t *testing.T) {
-			page, err := s.conn.ListReference(t.Context(), &accountingsyncports.AccountingReferencePageRequest{
-				RealmID:     s.auth.RealmID,
-				AccessToken: s.auth.AccessToken,
-				Kind:        kind,
-				PageSize:    pageSize,
-			})
+			page, err := s.conn.ListReference(
+				t.Context(),
+				&accountingconnectorports.AccountingReferencePageRequest{
+					RealmID:     s.auth.RealmID,
+					AccessToken: s.auth.AccessToken,
+					Kind:        kind,
+					PageSize:    pageSize,
+				},
+			)
 			require.NoError(t, err)
 			t.Logf("%s: %d on the first page", kind, len(page.Objects))
 		})
@@ -146,15 +152,18 @@ func TestSandboxReadsChangesAndDocumentStates(t *testing.T) {
 	s := openSandbox(t)
 
 	now := time.Now().UTC()
-	page, err := s.conn.ReadChanges(t.Context(), &accountingsyncports.ReadAccountingChangesRequest{
-		Auth:           s.auth,
-		Cursor:         s.conn.ChangeCursorAt(now.Add(-sandboxLookback)),
-		Now:            now,
-		Payments:       true,
-		BillPayments:   true,
-		Documents:      true,
-		ReferenceKinds: accountingsync.MustProfile(integration.TypeNetSuite).ReferenceKinds,
-	})
+	page, err := s.conn.ReadChanges(
+		t.Context(),
+		&accountingconnectorports.ReadAccountingChangesRequest{
+			Auth:           s.auth,
+			Cursor:         s.conn.ChangeCursorAt(now.Add(-sandboxLookback)),
+			Now:            now,
+			Payments:       true,
+			BillPayments:   true,
+			Documents:      true,
+			ReferenceKinds: accountingsync.MustProfile(integration.TypeNetSuite).ReferenceKinds,
+		},
+	)
 	require.NoError(t, err, "a SuiteQL table or column name in the change feed is wrong")
 	t.Logf("changes: %d payments, %d documents, %d references, more=%v, deletes unread=%v",
 		len(page.Payments), len(page.Documents), len(page.References), page.More,
@@ -163,16 +172,19 @@ func TestSandboxReadsChangesAndDocumentStates(t *testing.T) {
 		t.Log("the role cannot read deletedrecord; the drift reconciler finds deletions instead")
 	}
 
-	byKind := make(map[accountingsync.SyncObjectType][]accountingsyncports.AccountingDocumentTarget)
+	byKind := make(
+		map[accountingsync.SyncObjectType][]accountingconnectorports.AccountingDocumentTarget,
+	)
 	sampled := 0
 	for idx := range page.Documents {
 		doc := &page.Documents[idx]
-		if doc.Operation == accountingsyncports.AccountingChangeDelete || len(doc.ObjectTypes) == 0 ||
+		if doc.Operation == accountingconnectorports.AccountingChangeDelete ||
+			len(doc.ObjectTypes) == 0 ||
 			sampled == sandboxStateSample {
 			continue
 		}
 		byKind[doc.ObjectTypes[0]] = append(byKind[doc.ObjectTypes[0]],
-			accountingsyncports.AccountingDocumentTarget{ExternalID: doc.ExternalID})
+			accountingconnectorports.AccountingDocumentTarget{ExternalID: doc.ExternalID})
 		sampled++
 	}
 	if sampled == 0 {
@@ -182,14 +194,23 @@ func TestSandboxReadsChangesAndDocumentStates(t *testing.T) {
 
 	named := 0
 	for kind, targets := range byKind {
-		states, readErr := s.conn.ReadDocuments(t.Context(), &accountingsyncports.ReadAccountingDocumentsRequest{
-			Auth:    s.auth,
-			Kind:    kind,
-			Targets: targets,
-		})
+		states, readErr := s.conn.ReadDocuments(
+			t.Context(),
+			&accountingconnectorports.ReadAccountingDocumentsRequest{
+				Auth:    s.auth,
+				Kind:    kind,
+				Targets: targets,
+			},
+		)
 		require.NoError(t, readErr)
 		for _, state := range states {
-			assert.Truef(t, state.Found, "%s %s changed but reads as missing", kind, state.ExternalID)
+			assert.Truef(
+				t,
+				state.Found,
+				"%s %s changed but reads as missing",
+				kind,
+				state.ExternalID,
+			)
 			if state.ModifiedBy != "" {
 				named++
 			}
@@ -209,7 +230,7 @@ func TestSandboxInvoicePaymentLifecycle(t *testing.T) {
 	amount := decimal.NewFromInt(sandboxAmount)
 	today := started.Format(dateLayout)
 
-	doc := &accountingsyncports.AccountingSalesDocument{
+	doc := &accountingconnectorports.AccountingSalesDocument{
 		Auth:               s.auth,
 		RequestID:          requestID,
 		Kind:               accountingsync.SyncObjectInvoice,
@@ -219,7 +240,7 @@ func TestSandboxInvoicePaymentLifecycle(t *testing.T) {
 		DueDate:            started.AddDate(0, 0, 30).Format(dateLayout),
 		CurrencyCode:       s.facts.HomeCurrency,
 		PrivateNote:        "Trenova sandbox run " + suffix,
-		Lines: []accountingsyncports.AccountingDocumentLine{{
+		Lines: []accountingconnectorports.AccountingDocumentLine{{
 			Description:    "Trenova sandbox line",
 			ItemExternalID: sandboxEnv("ITEM_ID"),
 			Quantity:       decimal.NewFromInt(1),
@@ -233,13 +254,16 @@ func TestSandboxInvoicePaymentLifecycle(t *testing.T) {
 	t.Cleanup(func() {
 		cleanupCtx, cancel := context.WithTimeout(context.Background(), sandboxCleanupWait)
 		defer cancel()
-		_, voidErr := s.conn.VoidSalesDocument(cleanupCtx, &accountingsyncports.AccountingDocumentRef{
-			Auth:       s.auth,
-			RequestID:  requestID + "-cleanup",
-			Kind:       accountingsync.SyncObjectInvoice,
-			ExternalID: invoiceID,
-			Refs:       created.Refs,
-		})
+		_, voidErr := s.conn.VoidSalesDocument(
+			cleanupCtx,
+			&accountingconnectorports.AccountingDocumentRef{
+				Auth:       s.auth,
+				RequestID:  requestID + "-cleanup",
+				Kind:       accountingsync.SyncObjectInvoice,
+				ExternalID: invoiceID,
+				Refs:       created.Refs,
+			},
+		)
 		if voidErr != nil {
 			t.Logf("cleanup left invoice %s in the sandbox: %v", invoiceID, voidErr)
 		}
@@ -250,15 +274,18 @@ func TestSandboxInvoicePaymentLifecycle(t *testing.T) {
 	assert.Equal(t, invoiceID, again.ExternalID,
 		"PUT eid: did not upsert the invoice; creates need the POST fallback (§9.10 decision 6)")
 
-	found, ok, err := s.conn.FindDocument(ctx, &accountingsyncports.AccountingFindDocumentRequest{
-		Auth:                   s.auth,
-		Kind:                   accountingsync.SyncObjectInvoice,
-		DocNumber:              doc.DocNumber,
-		CounterpartyExternalID: doc.CustomerExternalID,
-		TxnDate:                today,
-		Total:                  amount,
-		RequestID:              requestID,
-	})
+	found, ok, err := s.conn.FindDocument(
+		ctx,
+		&accountingconnectorports.AccountingFindDocumentRequest{
+			Auth:                   s.auth,
+			Kind:                   accountingsync.SyncObjectInvoice,
+			DocNumber:              doc.DocNumber,
+			CounterpartyExternalID: doc.CustomerExternalID,
+			TxnDate:                today,
+			Total:                  amount,
+			RequestID:              requestID,
+		},
+	)
 	require.NoError(t, err)
 	require.True(t, ok)
 	assert.Equal(t, invoiceID, found.ExternalID)
@@ -269,14 +296,14 @@ func TestSandboxInvoicePaymentLifecycle(t *testing.T) {
 	require.NotNil(t, before.Balance)
 	assert.True(t, before.Balance.Equal(amount))
 	t.Logf("open in NetSuite to confirm the deep link: %s", s.conn.DocumentURL(s.auth,
-		accountingsyncports.AccountingDocumentLink{
+		accountingconnectorports.AccountingDocumentLink{
 			Kind:       accountingsync.SyncObjectInvoice,
 			ExternalID: invoiceID,
 			DocNumber:  created.DocNumber,
 		}))
 
 	time.Sleep(2 * time.Second)
-	paid, err := s.conn.SavePayment(ctx, &accountingsyncports.AccountingPaymentDocument{
+	paid, err := s.conn.SavePayment(ctx, &accountingconnectorports.AccountingPaymentDocument{
 		Auth:                     s.auth,
 		RequestID:                requestID + "-payment",
 		CustomerExternalID:       doc.CustomerExternalID,
@@ -286,7 +313,7 @@ func TestSandboxInvoicePaymentLifecycle(t *testing.T) {
 		ReferenceNumber:          "SBX-" + suffix,
 		PrivateNote:              "Trenova sandbox payment " + suffix,
 		TotalAmount:              amount,
-		Applications: []accountingsyncports.AccountingPaymentApplication{{
+		Applications: []accountingconnectorports.AccountingPaymentApplication{{
 			InvoiceExternalID: invoiceID,
 			InvoiceNumber:     created.DocNumber,
 			AppliedAmount:     amount,
@@ -294,7 +321,7 @@ func TestSandboxInvoicePaymentLifecycle(t *testing.T) {
 	})
 	require.NoError(t, err)
 	paymentID := paid.ExternalID
-	paymentRef := &accountingsyncports.AccountingDocumentRef{
+	paymentRef := &accountingconnectorports.AccountingDocumentRef{
 		Auth:       s.auth,
 		RequestID:  requestID + "-payment-void",
 		Kind:       accountingsync.SyncObjectCustomerPayment,
@@ -315,14 +342,14 @@ func TestSandboxInvoicePaymentLifecycle(t *testing.T) {
 	t.Logf("applying the payment moved the invoice's lastmodifieddate: %v",
 		after.ModifiedAt > before.ModifiedAt)
 
-	changes, err := s.conn.ReadChanges(ctx, &accountingsyncports.ReadAccountingChangesRequest{
+	changes, err := s.conn.ReadChanges(ctx, &accountingconnectorports.ReadAccountingChangesRequest{
 		Auth:     s.auth,
 		Cursor:   s.conn.ChangeCursorAt(started.Add(-time.Minute)),
 		Now:      time.Now().UTC(),
 		Payments: true,
 	})
 	require.NoError(t, err)
-	var readBack *accountingsyncports.AccountingInboundPayment
+	var readBack *accountingconnectorports.AccountingInboundPayment
 	for idx := range changes.Payments {
 		if changes.Payments[idx].ExternalID == paymentID {
 			readBack = &changes.Payments[idx]
@@ -337,7 +364,7 @@ func TestSandboxInvoicePaymentLifecycle(t *testing.T) {
 
 	_, err = s.conn.VoidPayment(ctx, paymentRef)
 	require.NoError(t, err)
-	_, err = s.conn.VoidSalesDocument(ctx, &accountingsyncports.AccountingDocumentRef{
+	_, err = s.conn.VoidSalesDocument(ctx, &accountingconnectorports.AccountingDocumentRef{
 		Auth:       s.auth,
 		RequestID:  requestID + "-void",
 		Kind:       accountingsync.SyncObjectInvoice,
@@ -353,13 +380,16 @@ func readSandboxInvoice(
 	t *testing.T,
 	s *sandbox,
 	id string,
-) *accountingsyncports.AccountingDocumentState {
+) *accountingconnectorports.AccountingDocumentState {
 	t.Helper()
-	states, err := s.conn.ReadDocuments(t.Context(), &accountingsyncports.ReadAccountingDocumentsRequest{
-		Auth:    s.auth,
-		Kind:    accountingsync.SyncObjectInvoice,
-		Targets: []accountingsyncports.AccountingDocumentTarget{{ExternalID: id}},
-	})
+	states, err := s.conn.ReadDocuments(
+		t.Context(),
+		&accountingconnectorports.ReadAccountingDocumentsRequest{
+			Auth:    s.auth,
+			Kind:    accountingsync.SyncObjectInvoice,
+			Targets: []accountingconnectorports.AccountingDocumentTarget{{ExternalID: id}},
+		},
+	)
 	require.NoError(t, err)
 	require.Len(t, states, 1)
 	return states[0]

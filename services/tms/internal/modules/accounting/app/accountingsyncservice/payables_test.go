@@ -5,6 +5,9 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingmappingports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingpayablesports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -44,8 +47,8 @@ func newPayableAccounts() payableAccounts {
 	}
 }
 
-func (a payableAccounts) defaults() accountingsyncports.PayableDefaultAccounts {
-	return accountingsyncports.PayableDefaultAccounts{
+func (a payableAccounts) defaults() accountingpayablesports.PayableDefaultAccounts {
+	return accountingpayablesports.PayableDefaultAccounts{
 		Payable:                 a.ap,
 		PurchasedTransportation: a.pt,
 		Cash:                    a.cash,
@@ -56,8 +59,8 @@ func glLine(
 	accountID pulid.ID,
 	code, name string,
 	debitMinor, creditMinor int64,
-) accountingsyncports.PayableJournalLine {
-	return accountingsyncports.PayableJournalLine{
+) accountingpayablesports.PayableJournalLine {
+	return accountingpayablesports.PayableJournalLine{
 		AccountID:   accountID,
 		AccountCode: code,
 		AccountName: name,
@@ -66,10 +69,12 @@ func glLine(
 	}
 }
 
-func (h *harness) carrierSettlement(accts payableAccounts) *accountingsyncports.PayableSettlement {
+func (h *harness) carrierSettlement(
+	accts payableAccounts,
+) *accountingpayablesports.PayableSettlement {
 	posted := settledPosted
-	settlement := &accountingsyncports.PayableSettlement{
-		Kind:             accountingsyncports.PayableCarrier,
+	settlement := &accountingpayablesports.PayableSettlement{
+		Kind:             accountingpayablesports.PayableCarrier,
 		ID:               pulid.MustNew("carstl_"),
 		Number:           "CS-1042",
 		PartyID:          pulid.MustNew("car_"),
@@ -86,7 +91,7 @@ func (h *harness) carrierSettlement(accts payableAccounts) *accountingsyncports.
 		PayableAccountID: accts.ap,
 		BankAccountID:    accts.cash,
 		Defaults:         accts.defaults(),
-		Lines: []accountingsyncports.PayableJournalLine{
+		Lines: []accountingpayablesports.PayableJournalLine{
 			glLine(accts.pt, "5000", "Purchased transportation", 150000, 0),
 			glLine(accts.fuel, "5010", "Fuel surcharge expense", 20000, 0),
 			glLine(accts.escrow, "2150", "Escrow liability", 0, 5000),
@@ -98,10 +103,12 @@ func (h *harness) carrierSettlement(accts payableAccounts) *accountingsyncports.
 	return settlement
 }
 
-func (h *harness) driverSettlement(accts payableAccounts) *accountingsyncports.PayableSettlement {
+func (h *harness) driverSettlement(
+	accts payableAccounts,
+) *accountingpayablesports.PayableSettlement {
 	posted := settledPosted
-	settlement := &accountingsyncports.PayableSettlement{
-		Kind:             accountingsyncports.PayableDriver,
+	settlement := &accountingpayablesports.PayableSettlement{
+		Kind:             accountingpayablesports.PayableDriver,
 		ID:               pulid.MustNew("dstl_"),
 		Number:           "DS-2201",
 		PartyID:          pulid.MustNew("wrk_"),
@@ -119,7 +126,7 @@ func (h *harness) driverSettlement(accts payableAccounts) *accountingsyncports.P
 		PayableAccountID: accts.settlementsPayable,
 		BankAccountID:    accts.cash,
 		Defaults:         accts.defaults(),
-		Lines: []accountingsyncports.PayableJournalLine{
+		Lines: []accountingpayablesports.PayableJournalLine{
 			glLine(accts.driverPay, "5100", "Owner-operator pay", 250000, 0),
 			glLine(accts.advance, "1250", "Fuel advances", 0, 30000),
 			glLine(accts.escrow, "2150", "Escrow liability", 0, 10000),
@@ -160,28 +167,44 @@ func roleTarget(key, label string) mappingTarget {
 }
 
 func glTarget(accountID pulid.ID, label string) mappingTarget {
-	return mappingTarget{TargetType: accountingsync.TargetGLAccount, ObjectID: accountID, Label: label}
+	return mappingTarget{
+		TargetType: accountingsync.TargetGLAccount,
+		ObjectID:   accountID,
+		Label:      label,
+	}
 }
 
 func (h *harness) mapPayableRoles() payableMappings {
 	return payableMappings{
 		apRole: h.confirm(roleTarget(accountingsync.AccountRoleAP, "Accounts payable"), "qb-ap"),
 		ptRole: h.confirm(
-			roleTarget(accountingsync.AccountRolePurchasedTransportation, "Purchased transportation"),
+			roleTarget(
+				accountingsync.AccountRolePurchasedTransportation,
+				"Purchased transportation",
+			),
 			"qb-pt",
 		),
-		deposit: h.confirm(roleTarget(accountingsync.AccountRoleDeposit, "Deposit account"), "qb-bank"),
+		deposit: h.confirm(
+			roleTarget(accountingsync.AccountRoleDeposit, "Deposit account"),
+			"qb-bank",
+		),
 	}
 }
 
 func (h *harness) mapCarrierBill(
 	accts payableAccounts,
-	settlement *accountingsyncports.PayableSettlement,
+	settlement *accountingpayablesports.PayableSettlement,
 ) payableMappings {
 	mapped := h.mapPayableRoles()
 	mapped.vendor = h.confirm(carrierVendorTarget(settlement.PartyID), "qb-vendor-swift")
-	mapped.fuel = h.confirm(glTarget(accts.fuel, "GL account 5010 Fuel surcharge expense"), "qb-fuel")
-	mapped.escrow = h.confirm(glTarget(accts.escrow, "GL account 2150 Escrow liability"), "qb-escrow")
+	mapped.fuel = h.confirm(
+		glTarget(accts.fuel, "GL account 5010 Fuel surcharge expense"),
+		"qb-fuel",
+	)
+	mapped.escrow = h.confirm(
+		glTarget(accts.escrow, "GL account 2150 Escrow liability"),
+		"qb-escrow",
+	)
 	return mapped
 }
 
@@ -210,7 +233,7 @@ func settlementRequest(
 	h *harness,
 	objectType accountingsync.SyncObjectType,
 	operation accountingsync.SyncOperation,
-	settlement *accountingsyncports.PayableSettlement,
+	settlement *accountingpayablesports.PayableSettlement,
 ) *accountingsyncports.AccountingSyncEnqueueRequest {
 	return accountingsyncports.SettlementSync(&accountingsyncports.SettlementSyncRequest{
 		TenantInfo:  h.tenant,
@@ -227,7 +250,7 @@ func (h *harness) enqueueSettlement(
 	t *testing.T,
 	objectType accountingsync.SyncObjectType,
 	operation accountingsync.SyncOperation,
-	settlement *accountingsyncports.PayableSettlement,
+	settlement *accountingpayablesports.PayableSettlement,
 ) *accountingsync.AccountingSyncRecord {
 	t.Helper()
 	req := settlementRequest(h, objectType, operation, settlement)
@@ -238,7 +261,7 @@ func (h *harness) enqueueSettlement(
 
 func (h *harness) syncedSettlementRecord(
 	objectType accountingsync.SyncObjectType,
-	settlement *accountingsyncports.PayableSettlement,
+	settlement *accountingpayablesports.PayableSettlement,
 	externalID string,
 	refs map[string]string,
 ) *accountingsync.AccountingSyncRecord {
@@ -247,7 +270,10 @@ func (h *harness) syncedSettlementRecord(
 		settlementRequest(h, objectType, accountingsync.SyncOperationCreate, settlement),
 		*settlement.PostedAt,
 	)
-	record.MarkSynced(&accountingsync.SyncResult{ExternalID: externalID, ExternalRefs: refs}, *settlement.PostedAt)
+	record.MarkSynced(
+		&accountingsync.SyncResult{ExternalID: externalID, ExternalRefs: refs},
+		*settlement.PostedAt,
+	)
 	h.records.put(record)
 	return record
 }
@@ -259,30 +285,36 @@ func (h *harness) sendDriverSettlements(at int64) {
 	})
 }
 
-func purchaseDocs(t *testing.T, h *harness) []*accountingsyncports.AccountingPurchaseDocument {
+func purchaseDocs(t *testing.T, h *harness) []*accountingconnectorports.AccountingPurchaseDocument {
 	t.Helper()
 	calls := h.writer.callsTo("CreatePurchaseDocument")
-	out := make([]*accountingsyncports.AccountingPurchaseDocument, 0, len(calls))
+	out := make([]*accountingconnectorports.AccountingPurchaseDocument, 0, len(calls))
 	for _, call := range calls {
-		doc, ok := call.doc.(*accountingsyncports.AccountingPurchaseDocument)
+		doc, ok := call.doc.(*accountingconnectorports.AccountingPurchaseDocument)
 		require.True(t, ok)
 		out = append(out, doc)
 	}
 	return out
 }
 
-func onlyPurchaseDoc(t *testing.T, h *harness) *accountingsyncports.AccountingPurchaseDocument {
+func onlyPurchaseDoc(
+	t *testing.T,
+	h *harness,
+) *accountingconnectorports.AccountingPurchaseDocument {
 	t.Helper()
 	docs := purchaseDocs(t, h)
 	require.Len(t, docs, 1)
 	return docs[0]
 }
 
-func onlyBillPayment(t *testing.T, h *harness) *accountingsyncports.AccountingBillPaymentDocument {
+func onlyBillPayment(
+	t *testing.T,
+	h *harness,
+) *accountingconnectorports.AccountingBillPaymentDocument {
 	t.Helper()
 	calls := h.writer.callsTo("CreateBillPayment")
 	require.Len(t, calls, 1)
-	doc, ok := calls[0].doc.(*accountingsyncports.AccountingBillPaymentDocument)
+	doc, ok := calls[0].doc.(*accountingconnectorports.AccountingBillPaymentDocument)
 	require.True(t, ok)
 	return doc
 }
@@ -293,7 +325,11 @@ type purchaseLineWant struct {
 	description string
 }
 
-func assertPurchaseLines(t *testing.T, want []purchaseLineWant, got []accountingsyncports.AccountingPurchaseLine) {
+func assertPurchaseLines(
+	t *testing.T,
+	want []purchaseLineWant,
+	got []accountingconnectorports.AccountingPurchaseLine,
+) {
 	t.Helper()
 	require.Len(t, got, len(want))
 	for idx := range want {
@@ -303,7 +339,12 @@ func assertPurchaseLines(t *testing.T, want []purchaseLineWant, got []accounting
 	}
 }
 
-func assertNothingSent(t *testing.T, h *harness, record *accountingsync.AccountingSyncRecord, reason string) {
+func assertNothingSent(
+	t *testing.T,
+	h *harness,
+	record *accountingsync.AccountingSyncRecord,
+	reason string,
+) {
 	t.Helper()
 	got := h.records.get(record.ID)
 	assert.True(t, got.Status.IsFinal(), "status %s", got.Status)
@@ -324,7 +365,12 @@ func TestCarrierBillIsBuiltFromTheJournalEntryWithoutThePayableLine(t *testing.T
 	accts := newPayableAccounts()
 	settlement := h.carrierSettlement(accts)
 	mapped := h.mapCarrierBill(accts, settlement)
-	record := h.enqueueSettlement(t, accountingsync.SyncObjectCarrierBill, accountingsync.SyncOperationCreate, settlement)
+	record := h.enqueueSettlement(
+		t,
+		accountingsync.SyncObjectCarrierBill,
+		accountingsync.SyncOperationCreate,
+		settlement,
+	)
 
 	result := h.drain(t)
 
@@ -340,7 +386,12 @@ func TestCarrierBillIsBuiltFromTheJournalEntryWithoutThePayableLine(t *testing.T
 	assert.Equal(t, "2026-04-10", doc.TxnDate, "the bill date is the journal's accounting date")
 	assert.Equal(t, "2026-04-17", doc.DueDate, "the due date is the settlement's pay date")
 	assert.Equal(t, "USD", doc.CurrencyCode)
-	assert.Equal(t, "SWH-88121", doc.DocNumber, "a single matched carrier invoice number is the bill number")
+	assert.Equal(
+		t,
+		"SWH-88121",
+		doc.DocNumber,
+		"a single matched carrier invoice number is the bill number",
+	)
 	assertPurchaseLines(t, []purchaseLineWant{
 		{account: "qb-pt", amount: "1500", description: "Purchased transportation"},
 		{account: "qb-fuel", amount: "200", description: "Fuel surcharge expense"},
@@ -362,24 +413,33 @@ func TestCarrierBillIsBuiltFromTheJournalEntryWithoutThePayableLine(t *testing.T
 		mapped.fuel.ID.String(),
 		mapped.escrow.ID.String(),
 	}, synced.MappingIDs)
-	assert.NotContains(t, synced.MappingIDs, mapped.deposit.ID.String(), "a mapping the bill did not use is not named")
+	assert.NotContains(
+		t,
+		synced.MappingIDs,
+		mapped.deposit.ID.String(),
+		"a mapping the bill did not use is not named",
+	)
 	assert.Equal(t, "SWH-88121", synced.Payload["DocNumber"])
 
 	for _, accountID := range []pulid.ID{accts.ap, accts.pt} {
 		row, err := fakeMappingRepo{store: h.mappings}.GetByTarget(t.Context(),
-			&accountingsyncports.GetAccountingMappingByTargetRequest{
+			&accountingmappingports.GetAccountingMappingByTargetRequest{
 				TenantInfo:      h.tenant,
 				ConnectionID:    h.conn.ID,
 				TargetType:      accountingsync.TargetGLAccount,
 				TrenovaObjectID: accountID,
 			})
-		require.NoError(t, err, "every account the bill touches gets a GL account mapping row to review")
+		require.NoError(
+			t,
+			err,
+			"every account the bill touches gets a GL account mapping row to review",
+		)
 		assert.Equal(t, accountingsync.MappingStateUnmatched, row.State)
 	}
 
 	requests := h.payables.requests()
 	require.NotEmpty(t, requests)
-	assert.Equal(t, accountingsyncports.PayableCarrier, requests[0].Kind)
+	assert.Equal(t, accountingpayablesports.PayableCarrier, requests[0].Kind)
 	assert.Equal(t, settlement.ID, requests[0].ID)
 	assert.Equal(t, h.tenant, requests[0].TenantInfo)
 }
@@ -394,7 +454,12 @@ func TestBillDatesAreCalendarDatesInTheOrganizationsTimezone(t *testing.T) {
 	settlement.PostedAt = &posted
 	settlement.PayDate = time.Date(2026, time.April, 17, 2, 0, 0, 0, time.UTC).Unix()
 	h.mapCarrierBill(accts, settlement)
-	h.enqueueSettlement(t, accountingsync.SyncObjectCarrierBill, accountingsync.SyncOperationCreate, settlement)
+	h.enqueueSettlement(
+		t,
+		accountingsync.SyncObjectCarrierBill,
+		accountingsync.SyncOperationCreate,
+		settlement,
+	)
 
 	h.drain(t)
 
@@ -410,14 +475,19 @@ func TestNegativeNetCarrierSettlementIsAVendorCreditWithEverySignFlipped(t *test
 	accts := newPayableAccounts()
 	settlement := h.carrierSettlement(accts)
 	settlement.NetMinor = -20000
-	settlement.Lines = []accountingsyncports.PayableJournalLine{
+	settlement.Lines = []accountingpayablesports.PayableJournalLine{
 		glLine(accts.pt, "5000", "Purchased transportation", 10000, 0),
 		glLine(accts.fuel, "5010", "Fuel surcharge expense", 2500, 0),
 		glLine(accts.escrow, "2150", "Escrow liability", 0, 32500),
 		glLine(accts.ap, "2000", "Accounts payable", 20000, 0),
 	}
 	h.mapCarrierBill(accts, settlement)
-	record := h.enqueueSettlement(t, accountingsync.SyncObjectCarrierBill, accountingsync.SyncOperationCreate, settlement)
+	record := h.enqueueSettlement(
+		t,
+		accountingsync.SyncObjectCarrierBill,
+		accountingsync.SyncOperationCreate,
+		settlement,
+	)
 
 	h.drain(t)
 
@@ -444,12 +514,17 @@ func TestZeroNetSettlementStillCreatesTheBill(t *testing.T) {
 	accts := newPayableAccounts()
 	settlement := h.carrierSettlement(accts)
 	settlement.NetMinor = 0
-	settlement.Lines = []accountingsyncports.PayableJournalLine{
+	settlement.Lines = []accountingpayablesports.PayableJournalLine{
 		glLine(accts.pt, "5000", "Purchased transportation", 40000, 0),
 		glLine(accts.escrow, "2150", "Escrow liability", 0, 40000),
 	}
 	h.mapCarrierBill(accts, settlement)
-	h.enqueueSettlement(t, accountingsync.SyncObjectCarrierBill, accountingsync.SyncOperationCreate, settlement)
+	h.enqueueSettlement(
+		t,
+		accountingsync.SyncObjectCarrierBill,
+		accountingsync.SyncOperationCreate,
+		settlement,
+	)
 
 	h.drain(t)
 
@@ -514,7 +589,12 @@ func TestBillNumberRules(t *testing.T) {
 			settlement.Number = tc.number
 			settlement.InvoiceNumbers = tc.invoices
 			h.mapCarrierBill(accts, settlement)
-			h.enqueueSettlement(t, accountingsync.SyncObjectCarrierBill, accountingsync.SyncOperationCreate, settlement)
+			h.enqueueSettlement(
+				t,
+				accountingsync.SyncObjectCarrierBill,
+				accountingsync.SyncOperationCreate,
+				settlement,
+			)
 
 			h.drain(t)
 
@@ -538,7 +618,12 @@ func TestBillURLComesFromTheProviderWhenItReturnsOne(t *testing.T) {
 	accts := newPayableAccounts()
 	settlement := h.carrierSettlement(accts)
 	h.mapCarrierBill(accts, settlement)
-	record := h.enqueueSettlement(t, accountingsync.SyncObjectCarrierBill, accountingsync.SyncOperationCreate, settlement)
+	record := h.enqueueSettlement(
+		t,
+		accountingsync.SyncObjectCarrierBill,
+		accountingsync.SyncOperationCreate,
+		settlement,
+	)
 
 	h.drain(t)
 
@@ -553,12 +638,12 @@ func TestSettlementWithNothingToSend(t *testing.T) {
 
 	tests := []struct {
 		name   string
-		mutate func(accts payableAccounts, s *accountingsyncports.PayableSettlement)
+		mutate func(accts payableAccounts, s *accountingpayablesports.PayableSettlement)
 		reason string
 	}{
 		{
 			name: "no journal lines and no amount",
-			mutate: func(_ payableAccounts, s *accountingsyncports.PayableSettlement) {
+			mutate: func(_ payableAccounts, s *accountingpayablesports.PayableSettlement) {
 				s.Lines = nil
 				s.NetMinor = 0
 			},
@@ -566,16 +651,18 @@ func TestSettlementWithNothingToSend(t *testing.T) {
 		},
 		{
 			name: "only the payable line",
-			mutate: func(accts payableAccounts, s *accountingsyncports.PayableSettlement) {
-				s.Lines = []accountingsyncports.PayableJournalLine{glLine(accts.ap, "2000", "Accounts payable", 0, 0)}
+			mutate: func(accts payableAccounts, s *accountingpayablesports.PayableSettlement) {
+				s.Lines = []accountingpayablesports.PayableJournalLine{
+					glLine(accts.ap, "2000", "Accounts payable", 0, 0),
+				}
 				s.NetMinor = 0
 			},
 			reason: "has no amounts",
 		},
 		{
 			name: "every line nets to zero",
-			mutate: func(accts payableAccounts, s *accountingsyncports.PayableSettlement) {
-				s.Lines = []accountingsyncports.PayableJournalLine{
+			mutate: func(accts payableAccounts, s *accountingpayablesports.PayableSettlement) {
+				s.Lines = []accountingpayablesports.PayableJournalLine{
 					glLine(accts.pt, "5000", "Purchased transportation", 5000, 5000),
 					glLine(accts.ap, "2000", "Accounts payable", 0, 0),
 				}
@@ -608,14 +695,14 @@ func TestSettlementThatCannotBeSentBlocks(t *testing.T) {
 
 	tests := []struct {
 		name     string
-		mutate   func(s *accountingsyncports.PayableSettlement)
+		mutate   func(s *accountingpayablesports.PayableSettlement)
 		remove   bool
 		category accountingsync.SyncErrorCategory
 		message  string
 	}{
 		{
 			name: "an amount but no journal entry",
-			mutate: func(s *accountingsyncports.PayableSettlement) {
+			mutate: func(s *accountingpayablesports.PayableSettlement) {
 				s.Lines = nil
 			},
 			category: accountingsync.SyncErrorValidation,
@@ -623,7 +710,7 @@ func TestSettlementThatCannotBeSentBlocks(t *testing.T) {
 		},
 		{
 			name: "never posted",
-			mutate: func(s *accountingsyncports.PayableSettlement) {
+			mutate: func(s *accountingpayablesports.PayableSettlement) {
 				s.PostedAt = nil
 			},
 			category: accountingsync.SyncErrorValidation,
@@ -631,7 +718,7 @@ func TestSettlementThatCannotBeSentBlocks(t *testing.T) {
 		},
 		{
 			name: "no payable account",
-			mutate: func(s *accountingsyncports.PayableSettlement) {
+			mutate: func(s *accountingpayablesports.PayableSettlement) {
 				s.PayableAccountID = pulid.Nil
 			},
 			category: accountingsync.SyncErrorConfiguration,
@@ -645,7 +732,7 @@ func TestSettlementThatCannotBeSentBlocks(t *testing.T) {
 		},
 		{
 			name: "in a currency the books do not keep",
-			mutate: func(s *accountingsyncports.PayableSettlement) {
+			mutate: func(s *accountingpayablesports.PayableSettlement) {
 				s.CurrencyCode = "CAD"
 			},
 			category: accountingsync.SyncErrorCurrency,
@@ -689,9 +776,17 @@ func TestConfirmedGLAccountMappingWinsOverTheRole(t *testing.T) {
 	accts := newPayableAccounts()
 	settlement := h.carrierSettlement(accts)
 	mapped := h.mapCarrierBill(accts, settlement)
-	ptAccount := h.confirm(glTarget(accts.pt, "GL account 5000 Purchased transportation"), "qb-gl-5000")
+	ptAccount := h.confirm(
+		glTarget(accts.pt, "GL account 5000 Purchased transportation"),
+		"qb-gl-5000",
+	)
 	apAccount := h.confirm(glTarget(accts.ap, "GL account 2000 Accounts payable"), "qb-gl-2000")
-	record := h.enqueueSettlement(t, accountingsync.SyncObjectCarrierBill, accountingsync.SyncOperationCreate, settlement)
+	record := h.enqueueSettlement(
+		t,
+		accountingsync.SyncObjectCarrierBill,
+		accountingsync.SyncOperationCreate,
+		settlement,
+	)
 
 	h.drain(t)
 
@@ -714,7 +809,12 @@ func TestUnconfirmedGLAccountMappingFallsBackToTheRole(t *testing.T) {
 	h.mapCarrierBill(accts, settlement)
 	h.mappings.set(h.conn, glTarget(accts.pt, "GL account 5000 Purchased transportation"),
 		accountingsync.MappingStateProposed, "qb-proposed")
-	h.enqueueSettlement(t, accountingsync.SyncObjectCarrierBill, accountingsync.SyncOperationCreate, settlement)
+	h.enqueueSettlement(
+		t,
+		accountingsync.SyncObjectCarrierBill,
+		accountingsync.SyncOperationCreate,
+		settlement,
+	)
 	h.drain(t)
 
 	assert.Equal(t, "qb-pt", onlyPurchaseDoc(t, h).Lines[0].AccountExternalID,
@@ -730,7 +830,12 @@ func TestUnmappedOverrideAccountBlocksNamingTheAccount(t *testing.T) {
 	h.mapPayableRoles()
 	h.confirm(carrierVendorTarget(settlement.PartyID), "qb-vendor-swift")
 	h.confirm(glTarget(accts.fuel, "GL account 5010 Fuel surcharge expense"), "qb-fuel")
-	record := h.enqueueSettlement(t, accountingsync.SyncObjectCarrierBill, accountingsync.SyncOperationCreate, settlement)
+	record := h.enqueueSettlement(
+		t,
+		accountingsync.SyncObjectCarrierBill,
+		accountingsync.SyncOperationCreate,
+		settlement,
+	)
 
 	result := h.drain(t)
 
@@ -738,17 +843,26 @@ func TestUnmappedOverrideAccountBlocksNamingTheAccount(t *testing.T) {
 	blocked := h.records.get(record.ID)
 	assert.Equal(t, accountingsync.SyncErrorMapping, blocked.ErrorCategory)
 	assert.Equal(t, "GL account 2150 Escrow liability is not mapped", blocked.ErrorMessage)
-	assert.Equal(t, "Map GL account 2150 Escrow liability to a QuickBooks Online account", blocked.Resolution,
-		"an override account is never filed under a role silently")
+	assert.Equal(
+		t,
+		"Map GL account 2150 Escrow liability to a QuickBooks Online account",
+		blocked.Resolution,
+		"an override account is never filed under a role silently",
+	)
 	escrow, err := fakeMappingRepo{store: h.mappings}.GetByTarget(t.Context(),
-		&accountingsyncports.GetAccountingMappingByTargetRequest{
+		&accountingmappingports.GetAccountingMappingByTargetRequest{
 			TenantInfo:      h.tenant,
 			ConnectionID:    h.conn.ID,
 			TargetType:      accountingsync.TargetGLAccount,
 			TrenovaObjectID: accts.escrow,
 		})
 	require.NoError(t, err)
-	assert.Equal(t, escrow.ID.String(), blocked.ErrorCode, "the block names the mapping row to fill in")
+	assert.Equal(
+		t,
+		escrow.ID.String(),
+		blocked.ErrorCode,
+		"the block names the mapping row to fill in",
+	)
 	assert.Empty(t, h.writer.callsTo("CreatePurchaseDocument"))
 }
 
@@ -762,7 +876,12 @@ func TestDefaultAccountWithoutItsRoleMappingBlocks(t *testing.T) {
 	h.confirm(roleTarget(accountingsync.AccountRoleAP, "Accounts payable"), "qb-ap")
 	h.confirm(glTarget(accts.fuel, "GL account 5010 Fuel surcharge expense"), "qb-fuel")
 	h.confirm(glTarget(accts.escrow, "GL account 2150 Escrow liability"), "qb-escrow")
-	record := h.enqueueSettlement(t, accountingsync.SyncObjectCarrierBill, accountingsync.SyncOperationCreate, settlement)
+	record := h.enqueueSettlement(
+		t,
+		accountingsync.SyncObjectCarrierBill,
+		accountingsync.SyncOperationCreate,
+		settlement,
+	)
 
 	h.drain(t)
 
@@ -783,13 +902,22 @@ func TestAPRoleDoesNotCoverANonDefaultPayableAccount(t *testing.T) {
 	settlement.PayableAccountID = override
 	settlement.Lines[3] = glLine(override, "2010", "Carrier payables", 0, 165000)
 	h.mapCarrierBill(accts, settlement)
-	record := h.enqueueSettlement(t, accountingsync.SyncObjectCarrierBill, accountingsync.SyncOperationCreate, settlement)
+	record := h.enqueueSettlement(
+		t,
+		accountingsync.SyncObjectCarrierBill,
+		accountingsync.SyncOperationCreate,
+		settlement,
+	)
 
 	h.drain(t)
 
 	blocked := h.records.get(record.ID)
 	assert.Equal(t, accountingsync.SyncErrorMapping, blocked.ErrorCategory)
-	assert.Equal(t, "Map GL account 2010 Carrier payables to a QuickBooks Online account", blocked.Resolution)
+	assert.Equal(
+		t,
+		"Map GL account 2010 Carrier payables to a QuickBooks Online account",
+		blocked.Resolution,
+	)
 }
 
 func TestUnmappedCarrierQueuesAVendorCreateAndTheBillWaits(t *testing.T) {
@@ -801,7 +929,12 @@ func TestUnmappedCarrierQueuesAVendorCreateAndTheBillWaits(t *testing.T) {
 	mapped := h.mapCarrierBill(accts, settlement)
 	vendorRow := h.mappings.set(h.conn, carrierVendorTarget(settlement.PartyID),
 		accountingsync.MappingStateUnmatched, "")
-	record := h.enqueueSettlement(t, accountingsync.SyncObjectCarrierBill, accountingsync.SyncOperationCreate, settlement)
+	record := h.enqueueSettlement(
+		t,
+		accountingsync.SyncObjectCarrierBill,
+		accountingsync.SyncOperationCreate,
+		settlement,
+	)
 
 	first := h.drain(t)
 
@@ -825,7 +958,11 @@ func TestUnmappedCarrierQueuesAVendorCreateAndTheBillWaits(t *testing.T) {
 	assert.Equal(t, vendorRow.ID, h.mappings.created[0].MappingID)
 	assert.Equal(t, accountingsync.MappingSourceCreatedInProvider, h.mappings.created[0].Source)
 	assert.Equal(t, h.conn.ConnectedByID, h.mappings.created[0].UserID)
-	assert.Empty(t, h.writer.callsTo("UpsertVendor"), "a vendor is created through the mapping service")
+	assert.Empty(
+		t,
+		h.writer.callsTo("UpsertVendor"),
+		"a vendor is created through the mapping service",
+	)
 	created := h.records.get(dependency.ID)
 	assert.Equal(t, accountingsync.SyncStatusSynced, created.Status)
 	assert.Equal(t, "qb-created-"+settlement.PartyID.String(), created.ExternalID)
@@ -835,7 +972,11 @@ func TestUnmappedCarrierQueuesAVendorCreateAndTheBillWaits(t *testing.T) {
 	third := h.drain(t)
 
 	assert.Equal(t, 1, third.Synced)
-	assert.Equal(t, "qb-created-"+settlement.PartyID.String(), onlyPurchaseDoc(t, h).VendorExternalID)
+	assert.Equal(
+		t,
+		"qb-created-"+settlement.PartyID.String(),
+		onlyPurchaseDoc(t, h).VendorExternalID,
+	)
 	assert.Contains(t, h.records.get(record.ID).MappingIDs, vendorRow.ID.String())
 	assert.NotContains(t, h.records.get(record.ID).MappingIDs, mapped.deposit.ID.String())
 }
@@ -847,13 +988,23 @@ func TestDuplicateVendorNameBlocksAsMapping(t *testing.T) {
 	accts := newPayableAccounts()
 	settlement := h.carrierSettlement(accts)
 	h.mapCarrierBill(accts, settlement)
-	h.mappings.set(h.conn, carrierVendorTarget(settlement.PartyID), accountingsync.MappingStateUnmatched, "")
+	h.mappings.set(
+		h.conn,
+		carrierVendorTarget(settlement.PartyID),
+		accountingsync.MappingStateUnmatched,
+		"",
+	)
 	h.mappings.createErr = errortypes.NewBusinessError(
 		"{0} already exists in the accounting system; map {1} to it instead",
 		"Swift Haulers LLC (Vendor)",
 		"Swift Haulers",
 	).WithInternal(providerFault(accountingsync.SyncErrorDuplicate, "Duplicate Name Exists Error", ""))
-	record := h.enqueueSettlement(t, accountingsync.SyncObjectCarrierBill, accountingsync.SyncOperationCreate, settlement)
+	record := h.enqueueSettlement(
+		t,
+		accountingsync.SyncObjectCarrierBill,
+		accountingsync.SyncOperationCreate,
+		settlement,
+	)
 
 	h.drain(t)
 	h.drain(t)
@@ -862,7 +1013,11 @@ func TestDuplicateVendorNameBlocksAsMapping(t *testing.T) {
 		accountingsync.SyncOperationCreate)
 	assert.Equal(t, accountingsync.SyncStatusBlocked, dependency.Status)
 	assert.Equal(t, accountingsync.SyncErrorMapping, dependency.ErrorCategory)
-	assert.Equal(t, "Map Swift Haulers to the existing QuickBooks Online vendor, then retry", dependency.Resolution)
+	assert.Equal(
+		t,
+		"Map Swift Haulers to the existing QuickBooks Online vendor, then retry",
+		dependency.Resolution,
+	)
 
 	h.records.makeDue(record.ID)
 	h.drain(t)
@@ -894,7 +1049,12 @@ func TestVendorCreateThatFailsValidationBlocksAsValidation(t *testing.T) {
 
 	h.drain(t)
 
-	record := h.only(t, accountingsync.SyncObjectDriverVendor, workerID, accountingsync.SyncOperationCreate)
+	record := h.only(
+		t,
+		accountingsync.SyncObjectDriverVendor,
+		workerID,
+		accountingsync.SyncOperationCreate,
+	)
 	assert.Equal(t, accountingsync.SyncStatusBlocked, record.Status)
 	assert.Equal(t, accountingsync.SyncErrorValidation, record.ErrorCategory)
 	assert.Contains(t, record.Resolution, "Correct the driver in Trenova")
@@ -916,11 +1076,20 @@ func TestVendorCreateWithAConfirmedMappingSendsNothing(t *testing.T) {
 
 	h.drain(t)
 
-	record := h.only(t, accountingsync.SyncObjectCarrierVendor, carrierID, accountingsync.SyncOperationCreate)
+	record := h.only(
+		t,
+		accountingsync.SyncObjectCarrierVendor,
+		carrierID,
+		accountingsync.SyncOperationCreate,
+	)
 	assert.Equal(t, accountingsync.SyncStatusSynced, record.Status)
 	assert.Equal(t, "qb-vendor-swift", record.ExternalID)
 	assert.Equal(t, []string{mapping.ID.String()}, record.MappingIDs)
-	assert.Empty(t, h.mappings.created, "a vendor mapped since the record was queued is not created twice")
+	assert.Empty(
+		t,
+		h.mappings.created,
+		"a vendor mapped since the record was queued is not created twice",
+	)
 	assert.Empty(t, h.writer.methods())
 }
 
@@ -954,15 +1123,26 @@ func TestVendorUpdatePushesThePartyToTheMappedVendor(t *testing.T) {
 			partyID := pulid.MustNew(tc.prefix)
 			target := tc.target(partyID)
 			mapping := h.confirm(target, "qb-vendor-77")
-			h.mappings.parties[partyID] = &accountingsyncports.AccountingPartyDraft{DisplayName: target.Label, City: "Reno"}
-			require.NoError(t, h.enqueuer.Enqueue(t.Context(),
-				accountingsyncports.VendorSyncRequest(h.tenant, tc.objectType, partyID, target.Label, 4)))
+			h.mappings.parties[partyID] = &accountingconnectorports.AccountingPartyDraft{
+				DisplayName: target.Label,
+				City:        "Reno",
+			}
+			require.NoError(t, h.enqueuer.Enqueue(
+				t.Context(),
+				accountingsyncports.VendorSyncRequest(
+					h.tenant,
+					tc.objectType,
+					partyID,
+					target.Label,
+					4,
+				),
+			))
 
 			h.drain(t)
 
 			calls := h.writer.callsTo("UpsertVendor")
 			require.Len(t, calls, 1)
-			doc, ok := calls[0].doc.(*accountingsyncports.AccountingVendorDocument)
+			doc, ok := calls[0].doc.(*accountingconnectorports.AccountingVendorDocument)
 			require.True(t, ok)
 			assert.Equal(t, "qb-vendor-77", doc.ExternalID)
 			assert.Equal(t, "Reno", doc.Party.City)
@@ -988,7 +1168,12 @@ func TestVendorUpdateWithoutAMappingSendsNothing(t *testing.T) {
 	require.NoError(t, h.enqueuer.Enqueue(t.Context(), accountingsyncports.VendorSyncRequest(
 		h.tenant, accountingsync.SyncObjectCarrierVendor, carrierID, "Swift Haulers", 2,
 	)))
-	record := h.only(t, accountingsync.SyncObjectCarrierVendor, carrierID, accountingsync.SyncOperationUpdate)
+	record := h.only(
+		t,
+		accountingsync.SyncObjectCarrierVendor,
+		carrierID,
+		accountingsync.SyncOperationUpdate,
+	)
 	h.mappings.set(h.conn, carrierVendorTarget(carrierID), accountingsync.MappingStateUnmatched, "")
 
 	h.drain(t)
@@ -1006,11 +1191,19 @@ func TestOwnerOperatorBillUsesTheDriverVendorAndItsPayableAccount(t *testing.T) 
 	settlement := h.driverSettlement(accts)
 	h.mapPayableRoles()
 	vendor := h.confirm(driverVendorTarget(settlement.PartyID), "qb-vendor-dana")
-	h.confirm(glTarget(accts.settlementsPayable, "GL account 2100 Settlements payable"), "qb-settlements")
+	h.confirm(
+		glTarget(accts.settlementsPayable, "GL account 2100 Settlements payable"),
+		"qb-settlements",
+	)
 	h.confirm(glTarget(accts.driverPay, "GL account 5100 Owner-operator pay"), "qb-oo-pay")
 	h.confirm(glTarget(accts.advance, "GL account 1250 Fuel advances"), "qb-advances")
 	h.confirm(glTarget(accts.escrow, "GL account 2150 Escrow liability"), "qb-escrow")
-	record := h.enqueueSettlement(t, accountingsync.SyncObjectDriverBill, accountingsync.SyncOperationCreate, settlement)
+	record := h.enqueueSettlement(
+		t,
+		accountingsync.SyncObjectDriverBill,
+		accountingsync.SyncOperationCreate,
+		settlement,
+	)
 
 	h.drain(t)
 
@@ -1024,14 +1217,17 @@ func TestOwnerOperatorBillUsesTheDriverVendorAndItsPayableAccount(t *testing.T) 
 		{account: "qb-advances", amount: "-300", description: "Fuel advances"},
 		{account: "qb-escrow", amount: "-100", description: "Escrow liability"},
 	}, doc.Lines)
-	assert.Equal(t, "Trenova owner-operator settlement DS-2201 · Period 2026-04-01 to 2026-04-07 · 1 shipment",
-		doc.PrivateNote)
+	assert.Equal(
+		t,
+		"Trenova owner-operator settlement DS-2201 · Period 2026-04-01 to 2026-04-07 · 1 shipment",
+		doc.PrivateNote,
+	)
 	synced := h.records.get(record.ID)
 	assert.Equal(t, accountingsync.SyncStatusSynced, synced.Status)
 	assert.Contains(t, synced.MappingIDs, vendor.ID.String())
 	requests := h.payables.requests()
 	require.NotEmpty(t, requests)
-	assert.Equal(t, accountingsyncports.PayableDriver, requests[0].Kind)
+	assert.Equal(t, accountingpayablesports.PayableDriver, requests[0].Kind)
 }
 
 func TestUnmappedOwnerOperatorQueuesADriverVendorCreate(t *testing.T) {
@@ -1044,7 +1240,12 @@ func TestUnmappedOwnerOperatorQueuesADriverVendorCreate(t *testing.T) {
 	h.mapPayableRoles()
 	driverRow := h.mappings.set(h.conn, driverVendorTarget(settlement.PartyID),
 		accountingsync.MappingStateUnmatched, "")
-	record := h.enqueueSettlement(t, accountingsync.SyncObjectDriverBill, accountingsync.SyncOperationCreate, settlement)
+	record := h.enqueueSettlement(
+		t,
+		accountingsync.SyncObjectDriverBill,
+		accountingsync.SyncOperationCreate,
+		settlement,
+	)
 
 	first := h.drain(t)
 
@@ -1080,12 +1281,22 @@ func TestCompanyDriverSettlementIsNeverSent(t *testing.T) {
 			settlement.OwnerOperator = false
 			paid := settledPaidAt
 			settlement.PaidAt = &paid
-			record := h.enqueueSettlement(t, objectType, accountingsync.SyncOperationCreate, settlement)
+			record := h.enqueueSettlement(
+				t,
+				objectType,
+				accountingsync.SyncOperationCreate,
+				settlement,
+			)
 
 			h.drain(t)
 
 			assertNothingSent(t, h, record, "payroll")
-			assert.Len(t, h.records.all(), 1, "no vendor or bill dependency is queued for a company driver")
+			assert.Len(
+				t,
+				h.records.all(),
+				1,
+				"no vendor or bill dependency is queued for a company driver",
+			)
 			assert.Empty(t, h.mappings.created)
 		})
 	}
@@ -1097,17 +1308,27 @@ func TestBillVoidOfASyncedBillDeletesThatDocument(t *testing.T) {
 	h := newHarness(t)
 	accts := newPayableAccounts()
 	settlement := h.carrierSettlement(accts)
-	created := h.syncedSettlementRecord(accountingsync.SyncObjectCarrierBill, settlement, "qb-vc-9", map[string]string{
-		accountingsync.ExternalRefDocument:     "qb-vc-9",
-		accountingsync.ExternalRefDocumentType: "VendorCredit",
-	})
-	void := h.enqueueSettlement(t, accountingsync.SyncObjectCarrierBill, accountingsync.SyncOperationVoid, settlement)
+	created := h.syncedSettlementRecord(
+		accountingsync.SyncObjectCarrierBill,
+		settlement,
+		"qb-vc-9",
+		map[string]string{
+			accountingsync.ExternalRefDocument:     "qb-vc-9",
+			accountingsync.ExternalRefDocumentType: "VendorCredit",
+		},
+	)
+	void := h.enqueueSettlement(
+		t,
+		accountingsync.SyncObjectCarrierBill,
+		accountingsync.SyncOperationVoid,
+		settlement,
+	)
 
 	h.drain(t)
 
 	calls := h.writer.callsTo("VoidPurchaseDocument")
 	require.Len(t, calls, 1)
-	ref, ok := calls[0].doc.(*accountingsyncports.AccountingDocumentRef)
+	ref, ok := calls[0].doc.(*accountingconnectorports.AccountingDocumentRef)
 	require.True(t, ok)
 	assert.Equal(t, "qb-vc-9", ref.ExternalID)
 	assert.Equal(t, accountingsync.SyncObjectCarrierBill, ref.Kind)
@@ -1179,7 +1400,9 @@ func TestBillVoidBeforeTheBillWasSent(t *testing.T) {
 	})
 }
 
-func (h *harness) paidCarrierSettlement(accts payableAccounts) *accountingsyncports.PayableSettlement {
+func (h *harness) paidCarrierSettlement(
+	accts payableAccounts,
+) *accountingpayablesports.PayableSettlement {
 	settlement := h.carrierSettlement(accts)
 	paid := settledPaidAt
 	settlement.PaidAt = &paid
@@ -1194,8 +1417,12 @@ func TestBillPaymentPaysTheSyncedBillFromTheCashAccount(t *testing.T) {
 	settlement := h.paidCarrierSettlement(accts)
 	mapped := h.mapCarrierBill(accts, settlement)
 	h.syncedSettlementRecord(accountingsync.SyncObjectCarrierBill, settlement, "qb-bill-1", nil)
-	record := h.enqueueSettlement(t, accountingsync.SyncObjectCarrierBillPay, accountingsync.SyncOperationCreate,
-		settlement)
+	record := h.enqueueSettlement(
+		t,
+		accountingsync.SyncObjectCarrierBillPay,
+		accountingsync.SyncOperationCreate,
+		settlement,
+	)
 
 	result := h.drain(t)
 
@@ -1205,16 +1432,28 @@ func TestBillPaymentPaysTheSyncedBillFromTheCashAccount(t *testing.T) {
 	assert.Equal(t, record.RequestID, doc.RequestID)
 	assert.Equal(t, "qb-vendor-swift", doc.VendorExternalID)
 	assert.Equal(t, "qb-bill-1", doc.BillExternalID)
-	assert.Equal(t, "qb-bank", doc.BankAccountExternalID, "the default cash account pays through the deposit role")
+	assert.Equal(
+		t,
+		"qb-bank",
+		doc.BankAccountExternalID,
+		"the default cash account pays through the deposit role",
+	)
 	assert.Equal(t, "CHK-5521", doc.DocNumber, "the number is the payment reference")
 	assert.Equal(t, "2026-04-18", doc.TxnDate, "the payment is dated the paid date")
 	assert.Equal(t, "USD", doc.CurrencyCode)
 	decimalEqual(t, "1650", doc.Amount)
-	assert.Equal(t, "Trenova payment of carrier settlement CS-1042 · Paid by ACH · Reference CHK-5521",
-		doc.PrivateNote)
+	assert.Equal(
+		t,
+		"Trenova payment of carrier settlement CS-1042 · Paid by ACH · Reference CHK-5521",
+		doc.PrivateNote,
+	)
 	synced := h.records.get(record.ID)
 	assert.Equal(t, accountingsync.SyncStatusSynced, synced.Status)
-	assert.ElementsMatch(t, []string{mapped.vendor.ID.String(), mapped.deposit.ID.String()}, synced.MappingIDs)
+	assert.ElementsMatch(
+		t,
+		[]string{mapped.vendor.ID.String(), mapped.deposit.ID.String()},
+		synced.MappingIDs,
+	)
 	assert.Equal(t, "https://qbo.test/CarrierBillPayment/"+synced.ExternalID, synced.ExternalURL)
 	assert.Empty(t, h.writer.callsTo("CreatePurchaseDocument"))
 }
@@ -1231,15 +1470,23 @@ func TestBillPaymentFromANonDefaultBankAccountNeedsItsOwnMapping(t *testing.T) {
 	h.syncedSettlementRecord(accountingsync.SyncObjectCarrierBill, settlement, "qb-bill-1", nil)
 	h.mappings.set(h.conn, glTarget(operating, "GL account 1010 Operating checking"),
 		accountingsync.MappingStateUnmatched, "")
-	record := h.enqueueSettlement(t, accountingsync.SyncObjectCarrierBillPay, accountingsync.SyncOperationCreate,
-		settlement)
+	record := h.enqueueSettlement(
+		t,
+		accountingsync.SyncObjectCarrierBillPay,
+		accountingsync.SyncOperationCreate,
+		settlement,
+	)
 
 	h.drain(t)
 
 	blocked := h.records.get(record.ID)
 	assert.Equal(t, accountingsync.SyncStatusBlocked, blocked.Status)
 	assert.Equal(t, accountingsync.SyncErrorMapping, blocked.ErrorCategory)
-	assert.Equal(t, "Map GL account 1010 Operating checking to a QuickBooks Online account", blocked.Resolution)
+	assert.Equal(
+		t,
+		"Map GL account 1010 Operating checking to a QuickBooks Online account",
+		blocked.Resolution,
+	)
 	assert.Empty(t, h.writer.callsTo("CreateBillPayment"))
 
 	h.confirm(glTarget(operating, "GL account 1010 Operating checking"), "qb-operating")
@@ -1262,10 +1509,19 @@ func TestBillPaymentWaitsForAnUnsentBill(t *testing.T) {
 	accts := newPayableAccounts()
 	settlement := h.paidCarrierSettlement(accts)
 	h.mapCarrierBill(accts, settlement)
-	bill := h.enqueueSettlement(t, accountingsync.SyncObjectCarrierBill, accountingsync.SyncOperationCreate, settlement)
+	bill := h.enqueueSettlement(
+		t,
+		accountingsync.SyncObjectCarrierBill,
+		accountingsync.SyncOperationCreate,
+		settlement,
+	)
 	h.records.postpone(bill.ID)
-	record := h.enqueueSettlement(t, accountingsync.SyncObjectCarrierBillPay, accountingsync.SyncOperationCreate,
-		settlement)
+	record := h.enqueueSettlement(
+		t,
+		accountingsync.SyncObjectCarrierBillPay,
+		accountingsync.SyncOperationCreate,
+		settlement,
+	)
 
 	result := h.drain(t)
 
@@ -1295,8 +1551,12 @@ func TestBillPaymentWithoutABillRecordQueuesTheBill(t *testing.T) {
 	accts := newPayableAccounts()
 	settlement := h.paidCarrierSettlement(accts)
 	h.mapCarrierBill(accts, settlement)
-	record := h.enqueueSettlement(t, accountingsync.SyncObjectCarrierBillPay, accountingsync.SyncOperationCreate,
-		settlement)
+	record := h.enqueueSettlement(
+		t,
+		accountingsync.SyncObjectCarrierBillPay,
+		accountingsync.SyncOperationCreate,
+		settlement,
+	)
 	_, err := h.svc.Release(t.Context(), &accountingsyncports.ReleaseAccountingSyncRequest{
 		TenantInfo:      h.tenant,
 		UserID:          h.userID,
@@ -1307,9 +1567,19 @@ func TestBillPaymentWithoutABillRecordQueuesTheBill(t *testing.T) {
 	first := h.drain(t)
 
 	assert.Equal(t, 1, first.Waiting)
-	bill := h.only(t, accountingsync.SyncObjectCarrierBill, settlement.ID, accountingsync.SyncOperationCreate)
+	bill := h.only(
+		t,
+		accountingsync.SyncObjectCarrierBill,
+		settlement.ID,
+		accountingsync.SyncOperationCreate,
+	)
 	assert.Equal(t, accountingsync.SyncSourceDependencyOf, bill.SourceEvent)
-	assert.Equal(t, accountingsync.SyncStatusQueued, bill.Status, "a dependency is never held for approval")
+	assert.Equal(
+		t,
+		accountingsync.SyncStatusQueued,
+		bill.Status,
+		"a dependency is never held for approval",
+	)
 	assert.Equal(t, "CS-1042", bill.ObjectNumber)
 	require.NotNil(t, bill.DocumentDate)
 	assert.Equal(t, settledPosted, *bill.DocumentDate)
@@ -1331,8 +1601,12 @@ func TestBillPaymentForABillBeforeTheStartDateSendsNothing(t *testing.T) {
 	accts := newPayableAccounts()
 	settlement := h.paidCarrierSettlement(accts)
 	h.mapCarrierBill(accts, settlement)
-	record := h.enqueueSettlement(t, accountingsync.SyncObjectCarrierBillPay, accountingsync.SyncOperationCreate,
-		settlement)
+	record := h.enqueueSettlement(
+		t,
+		accountingsync.SyncObjectCarrierBillPay,
+		accountingsync.SyncOperationCreate,
+		settlement,
+	)
 	h.updateConnection(func(conn *accountingsync.AccountingConnection) {
 		moved := settledPosted + 1
 		conn.SyncStartDate = &moved
@@ -1341,8 +1615,11 @@ func TestBillPaymentForABillBeforeTheStartDateSendsNothing(t *testing.T) {
 	h.drain(t)
 
 	assertNothingSent(t, h, record, "before the start date")
-	assert.Empty(t, h.records.find(accountingsync.SyncObjectCarrierBill, settlement.ID,
-		accountingsync.SyncOperationCreate), "no bill is queued for a settlement the books never got")
+	assert.Empty(t, h.records.find(
+		accountingsync.SyncObjectCarrierBill,
+		settlement.ID,
+		accountingsync.SyncOperationCreate,
+	), "no bill is queued for a settlement the books never got")
 }
 
 func TestBillPaymentOfABillThatWasNotSentSendsNothing(t *testing.T) {
@@ -1398,17 +1675,17 @@ func TestBillPaymentAmountRules(t *testing.T) {
 
 	tests := []struct {
 		name   string
-		mutate func(*accountingsyncports.PayableSettlement)
+		mutate func(*accountingpayablesports.PayableSettlement)
 		reason string
 	}{
 		{
 			name:   "a negative net was a vendor credit",
-			mutate: func(s *accountingsyncports.PayableSettlement) { s.NetMinor = -20000 },
+			mutate: func(s *accountingpayablesports.PayableSettlement) { s.NetMinor = -20000 },
 			reason: "vendor credit",
 		},
 		{
 			name:   "a zero net has nothing to pay",
-			mutate: func(s *accountingsyncports.PayableSettlement) { s.NetMinor = 0 },
+			mutate: func(s *accountingpayablesports.PayableSettlement) { s.NetMinor = 0 },
 			reason: "nothing to send",
 		},
 	}
@@ -1420,7 +1697,12 @@ func TestBillPaymentAmountRules(t *testing.T) {
 			settlement := h.paidCarrierSettlement(accts)
 			tc.mutate(settlement)
 			h.mapCarrierBill(accts, settlement)
-			h.syncedSettlementRecord(accountingsync.SyncObjectCarrierBill, settlement, "qb-vc-1", nil)
+			h.syncedSettlementRecord(
+				accountingsync.SyncObjectCarrierBill,
+				settlement,
+				"qb-vc-1",
+				nil,
+			)
 			record := h.enqueueSettlement(t, accountingsync.SyncObjectCarrierBillPay,
 				accountingsync.SyncOperationCreate, settlement)
 
@@ -1438,8 +1720,12 @@ func TestNegativeNetPaymentIsNotSentEvenWithoutABill(t *testing.T) {
 	accts := newPayableAccounts()
 	settlement := h.paidCarrierSettlement(accts)
 	settlement.NetMinor = -500
-	record := h.enqueueSettlement(t, accountingsync.SyncObjectCarrierBillPay, accountingsync.SyncOperationCreate,
-		settlement)
+	record := h.enqueueSettlement(
+		t,
+		accountingsync.SyncObjectCarrierBillPay,
+		accountingsync.SyncOperationCreate,
+		settlement,
+	)
 
 	h.drain(t)
 
@@ -1456,8 +1742,12 @@ func TestBillPaymentOfAnUnpaidSettlementBlocks(t *testing.T) {
 	settlement := h.carrierSettlement(accts)
 	h.mapCarrierBill(accts, settlement)
 	h.syncedSettlementRecord(accountingsync.SyncObjectCarrierBill, settlement, "qb-bill-1", nil)
-	record := h.enqueueSettlement(t, accountingsync.SyncObjectCarrierBillPay, accountingsync.SyncOperationCreate,
-		settlement)
+	record := h.enqueueSettlement(
+		t,
+		accountingsync.SyncObjectCarrierBillPay,
+		accountingsync.SyncOperationCreate,
+		settlement,
+	)
 
 	h.drain(t)
 
@@ -1480,7 +1770,12 @@ func TestOwnerOperatorBillPaymentUsesTheDriverVendor(t *testing.T) {
 	h.mapPayableRoles()
 	h.confirm(driverVendorTarget(settlement.PartyID), "qb-vendor-dana")
 	h.syncedSettlementRecord(accountingsync.SyncObjectDriverBill, settlement, "qb-bill-dana", nil)
-	h.enqueueSettlement(t, accountingsync.SyncObjectDriverBillPay, accountingsync.SyncOperationCreate, settlement)
+	h.enqueueSettlement(
+		t,
+		accountingsync.SyncObjectDriverBillPay,
+		accountingsync.SyncOperationCreate,
+		settlement,
+	)
 
 	h.drain(t)
 
@@ -1490,8 +1785,11 @@ func TestOwnerOperatorBillPaymentUsesTheDriverVendor(t *testing.T) {
 	assert.Equal(t, "qb-bill-dana", doc.BillExternalID)
 	assert.Equal(t, "qb-bank", doc.BankAccountExternalID)
 	decimalEqual(t, "2100", doc.Amount)
-	assert.Equal(t, "Trenova payment of owner-operator settlement DS-2201 · Paid by Direct deposit · Reference DD-778",
-		doc.PrivateNote)
+	assert.Equal(
+		t,
+		"Trenova payment of owner-operator settlement DS-2201 · Paid by Direct deposit · Reference DD-778",
+		doc.PrivateNote,
+	)
 }
 
 func TestVendorCreditFollowsTheLinesSentNotTheNetField(t *testing.T) {
@@ -1501,18 +1799,27 @@ func TestVendorCreditFollowsTheLinesSentNotTheNetField(t *testing.T) {
 	accts := newPayableAccounts()
 	settlement := h.carrierSettlement(accts)
 	settlement.NetMinor = 5000
-	settlement.Lines = []accountingsyncports.PayableJournalLine{
+	settlement.Lines = []accountingpayablesports.PayableJournalLine{
 		glLine(accts.pt, "5000", "Purchased transportation", 10000, 0),
 		glLine(accts.escrow, "2150", "Escrow liability", 0, 15000),
 		glLine(accts.ap, "2000", "Accounts payable", 5000, 0),
 	}
 	h.mapCarrierBill(accts, settlement)
-	h.enqueueSettlement(t, accountingsync.SyncObjectCarrierBill, accountingsync.SyncOperationCreate, settlement)
+	h.enqueueSettlement(
+		t,
+		accountingsync.SyncObjectCarrierBill,
+		accountingsync.SyncOperationCreate,
+		settlement,
+	)
 
 	h.drain(t)
 
 	doc := onlyPurchaseDoc(t, h)
-	assert.True(t, doc.VendorCredit, "lines that total below zero are a vendor credit whatever the net says")
+	assert.True(
+		t,
+		doc.VendorCredit,
+		"lines that total below zero are a vendor credit whatever the net says",
+	)
 	assertPurchaseLines(t, []purchaseLineWant{
 		{account: "qb-pt", amount: "-100", description: "Purchased transportation"},
 		{account: "qb-escrow", amount: "150", description: "Escrow liability"},
@@ -1529,8 +1836,12 @@ func TestBillPaymentReferenceIsCutToTheProvidersLimit(t *testing.T) {
 	settlement.PaymentReference = "  WIRE-2026-04-18-7781  "
 	h.mapCarrierBill(accts, settlement)
 	h.syncedSettlementRecord(accountingsync.SyncObjectCarrierBill, settlement, "qb-bill-1", nil)
-	h.enqueueSettlement(t, accountingsync.SyncObjectCarrierBillPay, accountingsync.SyncOperationCreate,
-		settlement)
+	h.enqueueSettlement(
+		t,
+		accountingsync.SyncObjectCarrierBillPay,
+		accountingsync.SyncOperationCreate,
+		settlement,
+	)
 
 	h.drain(t)
 

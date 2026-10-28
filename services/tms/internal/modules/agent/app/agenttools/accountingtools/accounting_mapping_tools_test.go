@@ -6,7 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingmappingservice"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingmappingports"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -22,12 +22,12 @@ import (
 type fakeMappingWriter struct {
 	row       *accountingsync.AccountingMapping
 	refs      []*accountingsync.AccountingReferenceObject
-	summary   *accountingsyncports.AccountingMappingSummary
-	found     *accountingsyncports.SetAccountingMappingRequest
-	set       *accountingsyncports.SetAccountingMappingRequest
-	cleared   *accountingsyncports.AccountingMappingActionRequest
-	created   *accountingsyncports.CreateAccountingReferenceRecordRequest
-	refreshed *accountingsyncports.AccountingSetupRequest
+	summary   *accountingmappingports.AccountingMappingSummary
+	found     *accountingmappingports.SetAccountingMappingRequest
+	set       *accountingmappingports.SetAccountingMappingRequest
+	cleared   *accountingmappingports.AccountingMappingActionRequest
+	created   *accountingmappingports.CreateAccountingReferenceRecordRequest
+	refreshed *accountingmappingports.AccountingSetupRequest
 	used      int
 	guard     agenttoolstest.WriteGuard
 }
@@ -53,7 +53,7 @@ func (f *fakeMappingWriter) GuardHistory(
 
 func (f *fakeMappingWriter) FindMapping(
 	_ context.Context,
-	req *accountingsyncports.SetAccountingMappingRequest,
+	req *accountingmappingports.SetAccountingMappingRequest,
 ) (*accountingsync.AccountingMapping, error) {
 	f.found = req
 	if f.row == nil {
@@ -65,7 +65,7 @@ func (f *fakeMappingWriter) FindMapping(
 
 func (f *fakeMappingWriter) GetReferenceObjects(
 	_ context.Context,
-	req *accountingsyncports.GetAccountingReferenceObjectsRequest,
+	req *accountingmappingports.GetAccountingReferenceObjectsRequest,
 ) ([]*accountingsync.AccountingReferenceObject, error) {
 	out := make([]*accountingsync.AccountingReferenceObject, 0, 1)
 	for _, ref := range f.refs {
@@ -79,7 +79,7 @@ func (f *fakeMappingWriter) GetReferenceObjects(
 
 func (f *fakeMappingWriter) Set(
 	_ context.Context,
-	req *accountingsyncports.SetAccountingMappingRequest,
+	req *accountingmappingports.SetAccountingMappingRequest,
 ) (*accountingsync.AccountingMapping, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
@@ -95,7 +95,7 @@ func (f *fakeMappingWriter) Set(
 
 func (f *fakeMappingWriter) Clear(
 	_ context.Context,
-	req *accountingsyncports.AccountingMappingActionRequest,
+	req *accountingmappingports.AccountingMappingActionRequest,
 ) (*accountingsync.AccountingMapping, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
@@ -109,7 +109,7 @@ func (f *fakeMappingWriter) Clear(
 
 func (f *fakeMappingWriter) CreateReferenceRecord(
 	_ context.Context,
-	req *accountingsyncports.CreateAccountingReferenceRecordRequest,
+	req *accountingmappingports.CreateAccountingReferenceRecordRequest,
 ) (*accountingsync.AccountingMapping, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
@@ -134,7 +134,7 @@ func (f *fakeMappingWriter) CreateReferenceRecord(
 
 func (f *fakeMappingWriter) RequestRefresh(
 	_ context.Context,
-	req *accountingsyncports.AccountingSetupRequest,
+	req *accountingmappingports.AccountingSetupRequest,
 ) (*accountingsync.AccountingConnection, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
@@ -147,7 +147,7 @@ func (f *fakeMappingWriter) Summary(
 	context.Context,
 	pagination.TenantInfo,
 	integration.Type,
-) (*accountingsyncports.AccountingMappingSummary, error) {
+) (*accountingmappingports.AccountingMappingSummary, error) {
 	return f.summary, nil
 }
 
@@ -302,7 +302,7 @@ func TestCreateAccountingReferenceRecord_OnlyCreatesWhatTrenovaMayCreate(t *test
 func TestRefreshAccountingReferenceData_NeedsAConnection(t *testing.T) {
 	t.Parallel()
 
-	writer := &fakeMappingWriter{summary: &accountingsyncports.AccountingMappingSummary{
+	writer := &fakeMappingWriter{summary: &accountingmappingports.AccountingMappingSummary{
 		ProviderName: "QuickBooks Online",
 	}}
 	tool := newRefreshAccountingReferenceDataTool(writer)

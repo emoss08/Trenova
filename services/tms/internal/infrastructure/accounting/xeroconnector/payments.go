@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/xero"
 	"github.com/shopspring/decimal"
@@ -33,7 +33,7 @@ type paymentWrite struct {
 	requestID  string
 	externalID string
 	refs       map[string]string
-	result     *accountingsyncports.AccountingDocumentResult
+	result     *accountingconnectorports.AccountingDocumentResult
 }
 
 func (w *paymentWrite) createKey() string {
@@ -45,8 +45,8 @@ func (w *paymentWrite) createKey() string {
 
 func (c *Connector) SavePayment(
 	ctx context.Context,
-	doc *accountingsyncports.AccountingPaymentDocument,
-) (*accountingsyncports.AccountingDocumentResult, error) {
+	doc *accountingconnectorports.AccountingPaymentDocument,
+) (*accountingconnectorports.AccountingDocumentResult, error) {
 	cash, err := cashApplications(doc)
 	if err != nil {
 		return nil, err
@@ -117,9 +117,9 @@ func (c *Connector) SavePayment(
 }
 
 func cashApplications(
-	doc *accountingsyncports.AccountingPaymentDocument,
-) ([]*accountingsyncports.AccountingPaymentApplication, error) {
-	cash := make([]*accountingsyncports.AccountingPaymentApplication, 0, len(doc.Applications))
+	doc *accountingconnectorports.AccountingPaymentDocument,
+) ([]*accountingconnectorports.AccountingPaymentApplication, error) {
+	cash := make([]*accountingconnectorports.AccountingPaymentApplication, 0, len(doc.Applications))
 	applied := decimal.Zero
 	for idx := range doc.Applications {
 		app := &doc.Applications[idx]
@@ -196,7 +196,10 @@ func clearPaymentRefs(refs map[string]string) {
 	}
 }
 
-func finishPayment(result *accountingsyncports.AccountingDocumentResult, payment *xero.Payment) {
+func finishPayment(
+	result *accountingconnectorports.AccountingDocumentResult,
+	payment *xero.Payment,
+) {
 	result.ExternalID = payment.PaymentID
 	result.DocNumber = payment.Reference
 	result.Refs[accountingsync.ExternalRefDocument] = payment.PaymentID
@@ -207,7 +210,10 @@ func finishPayment(result *accountingsyncports.AccountingDocumentResult, payment
 	}
 }
 
-func finishBatch(result *accountingsyncports.AccountingDocumentResult, batch *xero.BatchPayment) {
+func finishBatch(
+	result *accountingconnectorports.AccountingDocumentResult,
+	batch *xero.BatchPayment,
+) {
 	result.ExternalID = batch.BatchPaymentID
 	result.DocNumber = batch.Reference
 	result.Refs[accountingsync.ExternalRefDocument] = batch.BatchPaymentID
@@ -249,10 +255,10 @@ func shortPayRefKey(invoiceID string) string {
 func (c *Connector) shortPay(
 	ctx context.Context,
 	client *xero.Client,
-	doc *accountingsyncports.AccountingPaymentDocument,
+	doc *accountingconnectorports.AccountingPaymentDocument,
 	idx int,
 	date time.Time,
-	result *accountingsyncports.AccountingDocumentResult,
+	result *accountingconnectorports.AccountingDocumentResult,
 ) error {
 	app := &doc.Applications[idx]
 	if strings.TrimSpace(app.ShortPayCreditExternalID) != "" {
@@ -329,8 +335,8 @@ func (c *Connector) shortPay(
 
 func (c *Connector) VoidPayment(
 	ctx context.Context,
-	ref *accountingsyncports.AccountingDocumentRef,
-) (*accountingsyncports.AccountingDocumentResult, error) {
+	ref *accountingconnectorports.AccountingDocumentRef,
+) (*accountingconnectorports.AccountingDocumentResult, error) {
 	client, err := c.client(ref.Auth)
 	if err != nil {
 		return nil, err

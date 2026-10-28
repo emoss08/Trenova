@@ -3,6 +3,10 @@
 package agentread
 
 import (
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingdriftports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountinginboundports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingmappingports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerptoports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/assignmentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/ratingreviewports"
@@ -264,10 +268,10 @@ type ResolverParams struct {
 	fx.In
 
 	AccessorialChargeService     *accessorialchargeservice.Service
-	AccountingConnectionService  accountingsyncports.AccountingConnectionService
-	AccountingDriftService       accountingsyncports.AccountingDriftService
-	AccountingInboundService     accountingsyncports.AccountingInboundService
-	AccountingMappingService     accountingsyncports.AccountingMappingService
+	AccountingConnectionService  accountingconnectionports.AccountingConnectionService
+	AccountingDriftService       accountingdriftports.AccountingDriftService
+	AccountingInboundService     accountinginboundports.AccountingInboundService
+	AccountingMappingService     accountingmappingports.AccountingMappingService
 	AccountingSyncService        accountingsyncports.AccountingSyncService
 	AnalyticsService             kernelports.AnalyticsService
 	AssignmentService            assignmentports.AssignmentService

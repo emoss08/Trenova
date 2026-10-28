@@ -4,9 +4,9 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingpayablesports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
@@ -189,8 +189,12 @@ func TestABillSendsThePostedRateAndAPaymentThePaidRate(t *testing.T) {
 	settlement.ExchangeRateDate = &posted
 	h.payables.put(h.tenant, settlement)
 	h.mapCarrierBill(accts, settlement)
-	bill := h.enqueueSettlement(t, accountingsync.SyncObjectCarrierBill, accountingsync.SyncOperationCreate,
-		settlement)
+	bill := h.enqueueSettlement(
+		t,
+		accountingsync.SyncObjectCarrierBill,
+		accountingsync.SyncOperationCreate,
+		settlement,
+	)
 
 	h.drain(t)
 
@@ -198,19 +202,26 @@ func TestABillSendsThePostedRateAndAPaymentThePaidRate(t *testing.T) {
 	decimalEqual(t, "0.7450", onlyPurchaseDoc(t, h).ExchangeRate)
 	assert.Empty(t, h.rates.requests())
 
-	pay := h.enqueueSettlement(t, accountingsync.SyncObjectCarrierBillPay, accountingsync.SyncOperationCreate,
-		settlement)
+	pay := h.enqueueSettlement(
+		t,
+		accountingsync.SyncObjectCarrierBillPay,
+		accountingsync.SyncOperationCreate,
+		settlement,
+	)
 
 	h.drain(t)
 
 	assert.Equal(t, accountingsync.SyncStatusSynced, h.records.get(pay.ID).Status)
 	decimalEqual(t, "0.7312", onlyBillPayment(t, h).ExchangeRate)
 	assert.Equal(t, []string{"CAD/USD@2026-04-18"}, h.rates.requests())
-	stored, err := h.payables.GetSettlement(t.Context(), &accountingsyncports.GetPayableSettlementRequest{
-		TenantInfo: h.tenant,
-		Kind:       settlement.Kind,
-		ID:         settlement.ID,
-	})
+	stored, err := h.payables.GetSettlement(
+		t.Context(),
+		&accountingpayablesports.GetPayableSettlementRequest{
+			TenantInfo: h.tenant,
+			Kind:       settlement.Kind,
+			ID:         settlement.ID,
+		},
+	)
 	require.NoError(t, err)
 	require.True(t, stored.PaidExchangeRate.Valid, "the paid rate is kept on the settlement")
 	decimalEqual(t, "0.7312", stored.PaidExchangeRate.Decimal)

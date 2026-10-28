@@ -1,9 +1,10 @@
-package accountingsyncports
+package accountingconnectionports
 
 import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -91,7 +92,7 @@ type CompleteAccountingAuthorizationRequest struct {
 
 type AccountingAuthorizationCompletion struct {
 	Connection      *accountingsync.AccountingConnection
-	Companies       []AccountingCompany
+	Companies       []accountingconnectorports.AccountingCompany
 	ChoiceToken     string
 	ChoiceExpiresAt int64
 }
@@ -214,7 +215,7 @@ type AccountingConnectionService interface {
 type AccountingSession struct {
 	Connection  *accountingsync.AccountingConnection
 	AccessToken string
-	Connector   AccountingConnector
+	Connector   accountingconnectorports.AccountingConnector
 }
 
 type AccountingReferenceRefresher interface {

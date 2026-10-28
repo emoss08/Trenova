@@ -7,7 +7,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalentry"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingmappingports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -136,7 +137,7 @@ func (f *fakeLedger) ListActiveAccounts(
 }
 
 type fakeReferences struct {
-	accountingsyncports.AccountingReferenceObjectRepository
+	accountingmappingports.AccountingReferenceObjectRepository
 
 	mu   sync.Mutex
 	rows map[string]*accountingsync.AccountingReferenceObject
@@ -160,7 +161,7 @@ func (f *fakeReferences) account(externalID string, class accountingsync.Account
 
 func (f *fakeReferences) GetByExternalIDs(
 	_ context.Context,
-	req *accountingsyncports.GetAccountingReferenceObjectsRequest,
+	req *accountingmappingports.GetAccountingReferenceObjectsRequest,
 ) ([]*accountingsync.AccountingReferenceObject, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -175,8 +176,8 @@ func (f *fakeReferences) GetByExternalIDs(
 
 func (f *fakeWriter) CreateJournalEntry(
 	_ context.Context,
-	doc *accountingsyncports.AccountingJournalDocument,
-) (*accountingsyncports.AccountingDocumentResult, error) {
+	doc *accountingconnectorports.AccountingJournalDocument,
+) (*accountingconnectorports.AccountingDocumentResult, error) {
 	sent := *doc
 	sent.Lines = slices.Clone(doc.Lines)
 	return f.record("CreateJournalEntry", &sent)
@@ -184,8 +185,8 @@ func (f *fakeWriter) CreateJournalEntry(
 
 func (f *fakeWriter) UpdateJournalEntry(
 	_ context.Context,
-	doc *accountingsyncports.AccountingJournalDocument,
-) (*accountingsyncports.AccountingDocumentResult, error) {
+	doc *accountingconnectorports.AccountingJournalDocument,
+) (*accountingconnectorports.AccountingDocumentResult, error) {
 	sent := *doc
 	sent.Lines = slices.Clone(doc.Lines)
 	return f.record("UpdateJournalEntry", &sent)
@@ -193,7 +194,7 @@ func (f *fakeWriter) UpdateJournalEntry(
 
 func (f *fakeWriter) DeleteJournalEntry(
 	_ context.Context,
-	ref *accountingsyncports.AccountingDocumentRef,
-) (*accountingsyncports.AccountingDocumentResult, error) {
+	ref *accountingconnectorports.AccountingDocumentRef,
+) (*accountingconnectorports.AccountingDocumentResult, error) {
 	return f.record("DeleteJournalEntry", ref)
 }

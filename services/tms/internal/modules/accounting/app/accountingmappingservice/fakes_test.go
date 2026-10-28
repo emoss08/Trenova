@@ -7,7 +7,9 @@ import (
 	"sync"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingmappingports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
@@ -18,10 +20,10 @@ import (
 )
 
 type fakeConnections struct {
-	accountingsyncports.AccountingConnectionRepository
+	accountingconnectionports.AccountingConnectionRepository
 	mu      sync.Mutex
 	rows    map[pulid.ID]*accountingsync.AccountingConnection
-	refresh []accountingsyncports.MarkAccountingReferenceRefreshRequest
+	refresh []accountingconnectionports.MarkAccountingReferenceRefreshRequest
 }
 
 func newFakeConnections(conns ...*accountingsync.AccountingConnection) *fakeConnections {
@@ -34,7 +36,7 @@ func newFakeConnections(conns ...*accountingsync.AccountingConnection) *fakeConn
 
 func (f *fakeConnections) GetByType(
 	_ context.Context,
-	req accountingsyncports.GetAccountingConnectionRequest,
+	req accountingconnectionports.GetAccountingConnectionRequest,
 ) (*accountingsync.AccountingConnection, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -51,7 +53,7 @@ func (f *fakeConnections) GetByType(
 
 func (f *fakeConnections) GetByID(
 	_ context.Context,
-	req accountingsyncports.GetAccountingConnectionByIDRequest,
+	req accountingconnectionports.GetAccountingConnectionByIDRequest,
 ) (*accountingsync.AccountingConnection, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -78,21 +80,21 @@ func (f *fakeConnections) Update(
 
 func (f *fakeConnections) SaveDriftCheck(
 	context.Context,
-	*accountingsyncports.SaveAccountingDriftCheckRequest,
+	*accountingconnectionports.SaveAccountingDriftCheckRequest,
 ) error {
 	return nil
 }
 
 func (f *fakeConnections) SaveChangeFeed(
 	context.Context,
-	*accountingsyncports.SaveAccountingChangeFeedRequest,
+	*accountingconnectionports.SaveAccountingChangeFeedRequest,
 ) (bool, error) {
 	return false, nil
 }
 
 func (f *fakeConnections) MarkReferenceRefresh(
 	_ context.Context,
-	req accountingsyncports.MarkAccountingReferenceRefreshRequest,
+	req accountingconnectionports.MarkAccountingReferenceRefreshRequest,
 ) error {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -117,7 +119,7 @@ func refKey(kind accountingsync.ReferenceKind, externalID string) string {
 
 func (f *fakeReferences) Upsert(
 	_ context.Context,
-	req *accountingsyncports.UpsertAccountingReferenceObjectsRequest,
+	req *accountingmappingports.UpsertAccountingReferenceObjectsRequest,
 ) error {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -139,14 +141,14 @@ func (f *fakeReferences) Upsert(
 
 func (f *fakeReferences) MarkRemoved(
 	context.Context,
-	*accountingsyncports.MarkAccountingReferencesRemovedRequest,
+	*accountingmappingports.MarkAccountingReferencesRemovedRequest,
 ) (int64, error) {
 	return 0, nil
 }
 
 func (f *fakeReferences) MarkRemovedUnseen(
 	_ context.Context,
-	req *accountingsyncports.MarkAccountingReferenceRemovedRequest,
+	req *accountingmappingports.MarkAccountingReferenceRemovedRequest,
 ) (int64, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -162,7 +164,7 @@ func (f *fakeReferences) MarkRemovedUnseen(
 
 func (f *fakeReferences) ListByKind(
 	_ context.Context,
-	req *accountingsyncports.ListAccountingReferenceObjectsRequest,
+	req *accountingmappingports.ListAccountingReferenceObjectsRequest,
 ) ([]*accountingsync.AccountingReferenceObject, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -177,7 +179,7 @@ func (f *fakeReferences) ListByKind(
 
 func (f *fakeReferences) Search(
 	_ context.Context,
-	req *accountingsyncports.SearchAccountingReferenceObjectsRequest,
+	req *accountingmappingports.SearchAccountingReferenceObjectsRequest,
 ) ([]*accountingsync.AccountingReferenceObject, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -193,7 +195,7 @@ func (f *fakeReferences) Search(
 
 func (f *fakeReferences) GetByExternalIDs(
 	_ context.Context,
-	req *accountingsyncports.GetAccountingReferenceObjectsRequest,
+	req *accountingmappingports.GetAccountingReferenceObjectsRequest,
 ) ([]*accountingsync.AccountingReferenceObject, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -243,7 +245,7 @@ func (f *fakeMappings) byTarget(
 
 func (f *fakeMappings) ListByConnection(
 	_ context.Context,
-	req *accountingsyncports.ListAccountingMappingsQuery,
+	req *accountingmappingports.ListAccountingMappingsQuery,
 ) ([]*accountingsync.AccountingMapping, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -258,7 +260,7 @@ func (f *fakeMappings) ListByConnection(
 
 func (f *fakeMappings) ListConnection(
 	_ context.Context,
-	req *accountingsyncports.ListAccountingMappingsConnectionRequest,
+	req *accountingmappingports.ListAccountingMappingsConnectionRequest,
 ) (*pagination.CursorListResult[*accountingsync.AccountingMapping], error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -280,7 +282,7 @@ func (f *fakeMappings) ListConnection(
 
 func (f *fakeMappings) GetByID(
 	_ context.Context,
-	req accountingsyncports.GetAccountingMappingRequest,
+	req accountingmappingports.GetAccountingMappingRequest,
 ) (*accountingsync.AccountingMapping, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -293,7 +295,7 @@ func (f *fakeMappings) GetByID(
 
 func (f *fakeMappings) GetByIDs(
 	_ context.Context,
-	req accountingsyncports.GetAccountingMappingsByIDsRequest,
+	req accountingmappingports.GetAccountingMappingsByIDsRequest,
 ) ([]*accountingsync.AccountingMapping, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -308,7 +310,7 @@ func (f *fakeMappings) GetByIDs(
 
 func (f *fakeMappings) GetByTarget(
 	_ context.Context,
-	req *accountingsyncports.GetAccountingMappingByTargetRequest,
+	req *accountingmappingports.GetAccountingMappingByTargetRequest,
 ) (*accountingsync.AccountingMapping, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -409,7 +411,7 @@ func (f *fakeMappings) CountByState(
 	_ context.Context,
 	_ pagination.TenantInfo,
 	connectionID pulid.ID,
-) ([]accountingsyncports.AccountingMappingCount, error) {
+) ([]accountingmappingports.AccountingMappingCount, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	counts := make(map[[2]string]int)
@@ -418,9 +420,9 @@ func (f *fakeMappings) CountByState(
 			counts[[2]string{string(row.TargetType), string(row.State)}]++
 		}
 	}
-	out := make([]accountingsyncports.AccountingMappingCount, 0, len(counts))
+	out := make([]accountingmappingports.AccountingMappingCount, 0, len(counts))
 	for key, count := range counts {
-		out = append(out, accountingsyncports.AccountingMappingCount{
+		out = append(out, accountingmappingports.AccountingMappingCount{
 			TargetType: accountingsync.MappingTargetType(key[0]),
 			State:      accountingsync.MappingState(key[1]),
 			Count:      count,
@@ -439,13 +441,13 @@ func (f *fakeMappings) get(id pulid.ID) *accountingsync.AccountingMapping {
 }
 
 type fakeConnector struct {
-	accountingsyncports.AccountingConnector
+	accountingconnectorports.AccountingConnector
 	mu         sync.Mutex
 	pages      map[accountingsync.ReferenceKind][][]*accountingsync.AccountingReferenceObject
 	listErr    error
 	createErr  error
 	duplicate  bool
-	created    []*accountingsyncports.AccountingCreateReferenceRequest
+	created    []*accountingconnectorports.AccountingCreateReferenceRequest
 	createdObj *accountingsync.AccountingReferenceObject
 	onCreate   func()
 }
@@ -456,26 +458,29 @@ func (f *fakeConnector) MaxReferencePageSize() int { return 2 }
 
 func (f *fakeConnector) ListReference(
 	_ context.Context,
-	req *accountingsyncports.AccountingReferencePageRequest,
-) (*accountingsyncports.AccountingReferencePage, error) {
+	req *accountingconnectorports.AccountingReferencePageRequest,
+) (*accountingconnectorports.AccountingReferencePage, error) {
 	if f.listErr != nil {
 		return nil, f.listErr
 	}
 	pages := f.pages[req.Kind]
 	idx := (req.StartPosition - 1) / req.PageSize
 	if idx >= len(pages) {
-		return &accountingsyncports.AccountingReferencePage{}, nil
+		return &accountingconnectorports.AccountingReferencePage{}, nil
 	}
 	next := 0
 	if idx+1 < len(pages) {
 		next = req.StartPosition + req.PageSize
 	}
-	return &accountingsyncports.AccountingReferencePage{Objects: pages[idx], NextStart: next}, nil
+	return &accountingconnectorports.AccountingReferencePage{
+		Objects:   pages[idx],
+		NextStart: next,
+	}, nil
 }
 
 func (f *fakeConnector) CreateReference(
 	_ context.Context,
-	req *accountingsyncports.AccountingCreateReferenceRequest,
+	req *accountingconnectorports.AccountingCreateReferenceRequest,
 ) (*accountingsync.AccountingReferenceObject, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -496,8 +501,8 @@ func (f *fakeConnector) SanitizeName(_ accountingsync.ReferenceKind, name string
 }
 
 type fakeConnectionService struct {
-	accountingsyncports.AccountingConnectionService
-	session    *accountingsyncports.AccountingSession
+	accountingconnectionports.AccountingConnectionService
+	session    *accountingconnectionports.AccountingSession
 	sessionErr error
 	failures   []error
 }
@@ -506,7 +511,7 @@ func (f *fakeConnectionService) Session(
 	context.Context,
 	pagination.TenantInfo,
 	pulid.ID,
-) (*accountingsyncports.AccountingSession, error) {
+) (*accountingconnectionports.AccountingSession, error) {
 	if f.sessionErr != nil {
 		return nil, f.sessionErr
 	}

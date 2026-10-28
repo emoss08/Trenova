@@ -11,6 +11,7 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
@@ -26,13 +27,13 @@ var permissionResource = permission.ResourceAccountingSync.String()
 type pushSession struct {
 	tenant            pagination.TenantInfo
 	conn              *accountingsync.AccountingConnection
-	writer            accountingsyncports.AccountingDocumentWriter
-	journals          accountingsyncports.AccountingJournalWriter
-	auth              accountingsyncports.AccountingDocumentAuth
+	writer            accountingconnectorports.AccountingDocumentWriter
+	journals          accountingconnectorports.AccountingJournalWriter
+	auth              accountingconnectorports.AccountingDocumentAuth
 	loc               *time.Location
 	providerName      string
 	profile           accountingsync.ProviderProfile
-	limits            accountingsyncports.AccountingDocumentLimits
+	limits            accountingconnectorports.AccountingDocumentLimits
 	control           *tenant.AccountingControl
 	redatesToNextOpen bool
 }
@@ -87,7 +88,7 @@ func (s *Service) openSession(
 	if err != nil {
 		return nil, err
 	}
-	writer, ok := session.Connector.(accountingsyncports.AccountingDocumentWriter)
+	writer, ok := session.Connector.(accountingconnectorports.AccountingDocumentWriter)
 	if !ok {
 		return nil, fmt.Errorf(
 			"%s cannot receive documents from Trenova",
@@ -95,7 +96,7 @@ func (s *Service) openSession(
 		)
 	}
 
-	journals, _ := session.Connector.(accountingsyncports.AccountingJournalWriter)
+	journals, _ := session.Connector.(accountingconnectorports.AccountingJournalWriter)
 
 	loc, err := s.orgLocation(ctx, tenantInfo)
 	if err != nil {
@@ -111,7 +112,7 @@ func (s *Service) openSession(
 		conn:     session.Connection,
 		writer:   writer,
 		journals: journals,
-		auth: accountingsyncports.DocumentAuthFor(
+		auth: accountingconnectorports.DocumentAuthFor(
 			session.Connection,
 			session.AccessToken,
 		),
@@ -354,7 +355,7 @@ func (s *Service) pushOne(
 func finishedResult(
 	sess *pushSession,
 	record *accountingsync.AccountingSyncRecord,
-	written *accountingsyncports.AccountingDocumentResult,
+	written *accountingconnectorports.AccountingDocumentResult,
 	document any,
 	mappingIDs []string,
 ) (*pushResult, error) {
@@ -377,7 +378,7 @@ func finishedResult(
 		result.ExternalDocNumber = written.DocNumber
 		result.ExternalURL = sess.writer.DocumentURL(
 			sess.auth,
-			accountingsyncports.AccountingDocumentLink{
+			accountingconnectorports.AccountingDocumentLink{
 				Kind:       record.ObjectType,
 				ExternalID: written.ExternalID,
 				DocNumber:  written.DocNumber,
@@ -387,7 +388,7 @@ func finishedResult(
 	return &pushResult{result: result, refs: refs}, nil
 }
 
-func partial(written *accountingsyncports.AccountingDocumentResult) *pushResult {
+func partial(written *accountingconnectorports.AccountingDocumentResult) *pushResult {
 	if written == nil || len(written.Refs) == 0 {
 		return nil
 	}

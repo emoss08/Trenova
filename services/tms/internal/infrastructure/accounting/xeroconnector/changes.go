@@ -9,12 +9,12 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/shared/xero"
 	"github.com/shopspring/decimal"
 )
 
-var _ accountingsyncports.AccountingChangeReader = (*Connector)(nil)
+var _ accountingconnectorports.AccountingChangeReader = (*Connector)(nil)
 
 type changeTarget string
 
@@ -153,8 +153,8 @@ func nextSince(since, latest, started time.Time) time.Time {
 	return next
 }
 
-func (c *Connector) ChangeFeedLimits() accountingsyncports.AccountingChangeFeedLimits {
-	return accountingsyncports.AccountingChangeFeedLimits{
+func (c *Connector) ChangeFeedLimits() accountingconnectorports.AccountingChangeFeedLimits {
+	return accountingconnectorports.AccountingChangeFeedLimits{
 		MaxLookback:    0,
 		ReportsDeletes: true,
 		MaxPerRead:     xero.MaxPageSize,
@@ -165,7 +165,9 @@ func (c *Connector) ChangeCursorAt(at time.Time) string {
 	return formatInstant(at)
 }
 
-func changeTargets(req *accountingsyncports.ReadAccountingChangesRequest) ([]changeTarget, error) {
+func changeTargets(
+	req *accountingconnectorports.ReadAccountingChangesRequest,
+) ([]changeTarget, error) {
 	targets := make([]changeTarget, 0, 6)
 	if req.Payments || req.BillPayments {
 		targets = append(targets, targetPayments)
@@ -196,8 +198,8 @@ func changeTargets(req *accountingsyncports.ReadAccountingChangesRequest) ([]cha
 
 func (c *Connector) ReadChanges(
 	ctx context.Context,
-	req *accountingsyncports.ReadAccountingChangesRequest,
-) (*accountingsyncports.AccountingChangePage, error) {
+	req *accountingconnectorports.ReadAccountingChangesRequest,
+) (*accountingconnectorports.AccountingChangePage, error) {
 	now := req.Now.UTC()
 	if req.Now.IsZero() {
 		now = time.Now().UTC()
@@ -211,7 +213,7 @@ func (c *Connector) ReadChanges(
 		return nil, err
 	}
 	if len(targets) == 0 {
-		return &accountingsyncports.AccountingChangePage{NextCursor: cursor.String()}, nil
+		return &accountingconnectorports.AccountingChangePage{NextCursor: cursor.String()}, nil
 	}
 	client, err := c.client(req.Auth)
 	if err != nil {
@@ -264,8 +266,8 @@ func laterTime(a, b time.Time) time.Time {
 type changeCollector struct {
 	conn     *Connector
 	client   *xero.Client
-	req      *accountingsyncports.ReadAccountingChangesRequest
-	page     *accountingsyncports.AccountingChangePage
+	req      *accountingconnectorports.ReadAccountingChangesRequest
+	page     *accountingconnectorports.AccountingChangePage
 	latest   time.Time
 	payments []xero.Payment
 }
@@ -273,16 +275,16 @@ type changeCollector struct {
 func newChangeCollector(
 	conn *Connector,
 	client *xero.Client,
-	req *accountingsyncports.ReadAccountingChangesRequest,
+	req *accountingconnectorports.ReadAccountingChangesRequest,
 ) *changeCollector {
 	return &changeCollector{
 		conn:   conn,
 		client: client,
 		req:    req,
-		page: &accountingsyncports.AccountingChangePage{
-			Payments:   []accountingsyncports.AccountingInboundPayment{},
-			Documents:  []accountingsyncports.AccountingChangedDocument{},
-			References: []accountingsyncports.AccountingChangedReference{},
+		page: &accountingconnectorports.AccountingChangePage{
+			Payments:   []accountingconnectorports.AccountingInboundPayment{},
+			Documents:  []accountingconnectorports.AccountingChangedDocument{},
+			References: []accountingconnectorports.AccountingChangedReference{},
 		},
 	}
 }
@@ -294,7 +296,7 @@ func (c *changeCollector) seen(t time.Time) {
 func (c *changeCollector) continuePaging(
 	ctx context.Context,
 	cursor *changeCursor,
-) (*accountingsyncports.AccountingChangePage, error) {
+) (*accountingconnectorports.AccountingChangePage, error) {
 	more, err := c.read(ctx, cursor.targets[cursor.index], cursor.page, cursor.since)
 	if err != nil {
 		return nil, err
@@ -430,7 +432,7 @@ func (c *changeCollector) readAccounts(ctx context.Context, since *time.Time) er
 		c.seen(account.UpdatedAt)
 		c.page.References = append(
 			c.page.References,
-			accountingsyncports.AccountingChangedReference{
+			accountingconnectorports.AccountingChangedReference{
 				Object:  accountObjectOf(account),
 				Deleted: strings.EqualFold(account.Status, accountStatusDeleted),
 			},
@@ -454,7 +456,7 @@ func (c *changeCollector) readItems(ctx context.Context, since *time.Time) error
 	for _, obj := range objects {
 		c.page.References = append(
 			c.page.References,
-			accountingsyncports.AccountingChangedReference{Object: obj},
+			accountingconnectorports.AccountingChangedReference{Object: obj},
 		)
 	}
 	return nil
@@ -471,7 +473,7 @@ func (c *changeCollector) document(doc *changedDocument) {
 	if len(doc.types) == 0 || doc.externalID == "" {
 		return
 	}
-	c.page.Documents = append(c.page.Documents, accountingsyncports.AccountingChangedDocument{
+	c.page.Documents = append(c.page.Documents, accountingconnectorports.AccountingChangedDocument{
 		ObjectTypes: doc.types,
 		ExternalID:  doc.externalID,
 		Operation:   documentOperation(doc.status),
@@ -489,21 +491,21 @@ func (c *changeCollector) contact(contact *xero.Contact) {
 		}
 		c.page.References = append(
 			c.page.References,
-			accountingsyncports.AccountingChangedReference{
+			accountingconnectorports.AccountingChangedReference{
 				Object: contactObjectOf(kind, contact),
 			},
 		)
 	}
 }
 
-func documentOperation(status string) accountingsyncports.AccountingChangeOperation {
+func documentOperation(status string) accountingconnectorports.AccountingChangeOperation {
 	switch {
 	case strings.EqualFold(status, xero.StatusDeleted):
-		return accountingsyncports.AccountingChangeDelete
+		return accountingconnectorports.AccountingChangeDelete
 	case strings.EqualFold(status, xero.StatusVoided):
-		return accountingsyncports.AccountingChangeVoid
+		return accountingconnectorports.AccountingChangeVoid
 	default:
-		return accountingsyncports.AccountingChangeUpsert
+		return accountingconnectorports.AccountingChangeUpsert
 	}
 }
 
@@ -645,15 +647,15 @@ func (c *changeCollector) foreignCurrencies(
 
 func (g *inboundGroup) inbound(
 	currencies map[string]string,
-) accountingsyncports.AccountingInboundPayment {
+) accountingconnectorports.AccountingInboundPayment {
 	first := g.payments[0]
 	externalID := first.PaymentID
 	if first.BatchPaymentID != "" {
 		externalID = first.BatchPaymentID
 	}
-	out := accountingsyncports.AccountingInboundPayment{
+	out := accountingconnectorports.AccountingInboundPayment{
 		Kind:              g.shape.kind,
-		Operation:         accountingsyncports.AccountingChangeDelete,
+		Operation:         accountingconnectorports.AccountingChangeDelete,
 		ExternalID:        externalID,
 		Number:            first.Reference,
 		PartyExternalID:   first.ContactID,
@@ -662,7 +664,11 @@ func (g *inboundGroup) inbound(
 		Unapplied:         decimal.Zero,
 		AccountExternalID: first.AccountID,
 		ReferenceNumber:   first.Reference,
-		Lines:             make([]accountingsyncports.AccountingInboundLine, 0, len(g.payments)),
+		Lines: make(
+			[]accountingconnectorports.AccountingInboundLine,
+			0,
+			len(g.payments),
+		),
 	}
 	if isForeign(first) {
 		out.CurrencyCode = currencies[strings.ToLower(first.InvoiceID)]
@@ -672,9 +678,9 @@ func (g *inboundGroup) inbound(
 		if strings.EqualFold(payment.Status, xero.StatusDeleted) {
 			continue
 		}
-		out.Operation = accountingsyncports.AccountingChangeUpsert
+		out.Operation = accountingconnectorports.AccountingChangeUpsert
 		out.Amount = out.Amount.Add(payment.Amount)
-		out.Lines = append(out.Lines, accountingsyncports.AccountingInboundLine{
+		out.Lines = append(out.Lines, accountingconnectorports.AccountingInboundLine{
 			DocumentKind:       g.shape.document,
 			DocumentExternalID: payment.InvoiceID,
 			Amount:             payment.Amount,

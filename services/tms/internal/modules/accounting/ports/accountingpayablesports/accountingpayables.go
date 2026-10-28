@@ -1,4 +1,4 @@
-package accountingsyncports
+package accountingpayablesports
 
 import (
 	"context"

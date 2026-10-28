@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/shared/netsuite"
 	"github.com/shopspring/decimal"
 )
@@ -21,10 +21,10 @@ const (
 type session struct {
 	client *netsuite.Client
 	ref    netsuite.CompanyRef
-	auth   accountingsyncports.AccountingDocumentAuth
+	auth   accountingconnectorports.AccountingDocumentAuth
 }
 
-func (c *Connector) open(auth accountingsyncports.AccountingDocumentAuth) (*session, error) {
+func (c *Connector) open(auth accountingconnectorports.AccountingDocumentAuth) (*session, error) {
 	ref, err := netsuite.ParseCompanyRef(auth.RealmID)
 	if err != nil {
 		return nil, err

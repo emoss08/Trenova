@@ -7,6 +7,9 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingmappingports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingpayablesports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/money"
@@ -25,11 +28,11 @@ func partyLabel(objectType accountingsync.SyncObjectType) string {
 	return "Customer"
 }
 
-func payableKind(objectType accountingsync.SyncObjectType) accountingsyncports.PayableKind {
+func payableKind(objectType accountingsync.SyncObjectType) accountingpayablesports.PayableKind {
 	if objectType.IsDriverSettlement() {
-		return accountingsyncports.PayableDriver
+		return accountingpayablesports.PayableDriver
 	}
-	return accountingsyncports.PayableCarrier
+	return accountingpayablesports.PayableCarrier
 }
 
 func (s *Service) partyRef(
@@ -91,14 +94,14 @@ func (s *Service) pushParty(
 	if record.Operation == accountingsync.SyncOperationCreate {
 		if row.State == accountingsync.MappingStateConfirmed && row.ExternalID != "" {
 			res.used[row.ID] = struct{}{}
-			return finishedResult(sess, record, &accountingsyncports.AccountingDocumentResult{
+			return finishedResult(sess, record, &accountingconnectorports.AccountingDocumentResult{
 				ExternalID: row.ExternalID,
 				DocNumber:  row.ExternalName,
 			}, nil, res.mappingIDs())
 		}
 		created, createErr := s.mappingService.CreateReferenceRecord(
 			ctx,
-			&accountingsyncports.CreateAccountingReferenceRecordRequest{
+			&accountingmappingports.CreateAccountingReferenceRecordRequest{
 				TenantInfo: sess.tenant,
 				UserID:     sess.conn.ConnectedByID,
 				MappingID:  row.ID,
@@ -108,7 +111,7 @@ func (s *Service) pushParty(
 		if createErr != nil {
 			return nil, partyCreateError(sess, record.ObjectType, row, createErr)
 		}
-		return finishedResult(sess, record, &accountingsyncports.AccountingDocumentResult{
+		return finishedResult(sess, record, &accountingconnectorports.AccountingDocumentResult{
 			ExternalID: created.ExternalID,
 			DocNumber:  created.ExternalName,
 		}, nil, []string{created.ID.String()})
@@ -134,13 +137,13 @@ func (s *Service) upsertParty(
 	record *accountingsync.AccountingSyncRecord,
 	targetType accountingsync.MappingTargetType,
 	externalID string,
-) (*accountingsyncports.AccountingDocumentResult, any, error) {
+) (*accountingconnectorports.AccountingDocumentResult, any, error) {
 	if record.ObjectType == accountingsync.SyncObjectCustomer {
 		party, err := s.mappingService.CustomerParty(ctx, sess.tenant, record.ObjectID)
 		if err != nil {
 			return nil, nil, err
 		}
-		doc := &accountingsyncports.AccountingCustomerDocument{
+		doc := &accountingconnectorports.AccountingCustomerDocument{
 			Auth:       sess.auth,
 			RequestID:  record.RequestID,
 			ExternalID: externalID,
@@ -154,7 +157,7 @@ func (s *Service) upsertParty(
 	if err != nil {
 		return nil, nil, err
 	}
-	doc := &accountingsyncports.AccountingVendorDocument{
+	doc := &accountingconnectorports.AccountingVendorDocument{
 		Auth:       sess.auth,
 		RequestID:  record.RequestID,
 		ExternalID: externalID,
@@ -204,10 +207,10 @@ func (s *Service) payableSettlement(
 	ctx context.Context,
 	sess *pushSession,
 	record *accountingsync.AccountingSyncRecord,
-) (*accountingsyncports.PayableSettlement, error) {
+) (*accountingpayablesports.PayableSettlement, error) {
 	settlement, err := s.payables.GetSettlement(
 		ctx,
-		&accountingsyncports.GetPayableSettlementRequest{
+		&accountingpayablesports.GetPayableSettlementRequest{
 			TenantInfo: sess.tenant,
 			Kind:       payableKind(record.ObjectType),
 			ID:         record.ObjectID,
@@ -223,7 +226,7 @@ func (s *Service) payableSettlement(
 		}
 		return nil, err
 	}
-	if settlement.Kind == accountingsyncports.PayableDriver && !settlement.OwnerOperator {
+	if settlement.Kind == accountingpayablesports.PayableDriver && !settlement.OwnerOperator {
 		return nil, &noopError{
 			reason: "Company driver pay belongs to the payroll system, so it is not sent",
 		}
@@ -247,7 +250,7 @@ type accountRefRequest struct {
 
 func payableAccount(
 	accountID pulid.ID,
-	settlement *accountingsyncports.PayableSettlement,
+	settlement *accountingpayablesports.PayableSettlement,
 	missing string,
 ) *accountRefRequest {
 	return &accountRefRequest{
@@ -302,7 +305,7 @@ func (s *Service) accountRef(
 
 func roleForAccount(
 	accountID pulid.ID,
-	defaults accountingsyncports.PayableDefaultAccounts,
+	defaults accountingpayablesports.PayableDefaultAccounts,
 ) string {
 	switch accountID {
 	case defaults.Payable:
@@ -316,7 +319,7 @@ func roleForAccount(
 	}
 }
 
-func accountLabel(accountID pulid.ID, lines []accountingsyncports.PayableJournalLine) string {
+func accountLabel(accountID pulid.ID, lines []accountingpayablesports.PayableJournalLine) string {
 	for idx := range lines {
 		if lines[idx].AccountID != accountID {
 			continue
@@ -425,7 +428,7 @@ func (s *Service) pushBill(
 		return nil, err
 	}
 
-	doc := &accountingsyncports.AccountingPurchaseDocument{
+	doc := &accountingconnectorports.AccountingPurchaseDocument{
 		Auth:                sess.auth,
 		RequestID:           record.RequestID,
 		Kind:                record.ObjectType,
@@ -450,20 +453,20 @@ func (s *Service) pushBill(
 		doc.DocNumber = ""
 	}
 
-	var written *accountingsyncports.AccountingDocumentResult
+	var written *accountingconnectorports.AccountingDocumentResult
 	if target == nil {
 		written, err = s.createAdopting(
 			ctx,
 			sess,
 			record,
-			&accountingsyncports.AccountingFindDocumentRequest{
+			&accountingconnectorports.AccountingFindDocumentRequest{
 				DocNumber:              doc.DocNumber,
 				CounterpartyExternalID: doc.VendorExternalID,
 				TxnDate:                doc.TxnDate,
 				Total:                  purchaseTotal(doc.Lines),
 				Credit:                 doc.VendorCredit,
 			},
-			func() (*accountingsyncports.AccountingDocumentResult, error) {
+			func() (*accountingconnectorports.AccountingDocumentResult, error) {
 				return sess.writer.CreatePurchaseDocument(ctx, doc)
 			},
 		)
@@ -479,9 +482,9 @@ func (s *Service) pushBill(
 func (s *Service) billLines(
 	ctx context.Context,
 	res *resolver,
-	settlement *accountingsyncports.PayableSettlement,
-) ([]accountingsyncports.AccountingPurchaseLine, error) {
-	lines := make([]accountingsyncports.AccountingPurchaseLine, 0, len(settlement.Lines))
+	settlement *accountingpayablesports.PayableSettlement,
+) ([]accountingconnectorports.AccountingPurchaseLine, error) {
+	lines := make([]accountingconnectorports.AccountingPurchaseLine, 0, len(settlement.Lines))
 	for idx := range settlement.Lines {
 		line := &settlement.Lines[idx]
 		if line.AccountID == settlement.PayableAccountID || line.NetMinor() == 0 {
@@ -491,7 +494,7 @@ func (s *Service) billLines(
 		if err != nil {
 			return nil, err
 		}
-		lines = append(lines, accountingsyncports.AccountingPurchaseLine{
+		lines = append(lines, accountingconnectorports.AccountingPurchaseLine{
 			Description:       strings.TrimSpace(line.AccountName),
 			AccountExternalID: account,
 			Amount:            money.DecimalFromMinor(line.NetMinor()),
@@ -518,7 +521,7 @@ func withProviderURL(result *pushResult, err error) (*pushResult, error) {
 	return result, nil
 }
 
-func billNumber(settlement *accountingsyncports.PayableSettlement) string {
+func billNumber(settlement *accountingpayablesports.PayableSettlement) string {
 	if len(settlement.InvoiceNumbers) == 1 {
 		return settlement.InvoiceNumbers[0]
 	}
@@ -527,7 +530,7 @@ func billNumber(settlement *accountingsyncports.PayableSettlement) string {
 
 func billNote(
 	objectType accountingsync.SyncObjectType,
-	settlement *accountingsyncports.PayableSettlement,
+	settlement *accountingpayablesports.PayableSettlement,
 	loc *time.Location,
 ) string {
 	kind := "carrier settlement"
@@ -565,7 +568,7 @@ func (s *Service) pushBillVoid(
 	if done, voidErr := s.settleUnsent(ctx, created, record); done {
 		return nil, voidErr
 	}
-	ref := &accountingsyncports.AccountingDocumentRef{
+	ref := &accountingconnectorports.AccountingDocumentRef{
 		Auth:       sess.auth,
 		RequestID:  record.RequestID,
 		Kind:       record.ObjectType,
@@ -654,7 +657,7 @@ func (s *Service) pushBillPayment(
 		return nil, err
 	}
 
-	doc := &accountingsyncports.AccountingBillPaymentDocument{
+	doc := &accountingconnectorports.AccountingBillPaymentDocument{
 		Auth:                  sess.auth,
 		RequestID:             record.RequestID,
 		Kind:                  record.ObjectType,
@@ -672,7 +675,7 @@ func (s *Service) pushBillPayment(
 			sentDateNote(record, *settlement.PaidAt, sess.loc),
 		Amount: money.DecimalFromMinor(settlement.NetMinor),
 	}
-	var written *accountingsyncports.AccountingDocumentResult
+	var written *accountingconnectorports.AccountingDocumentResult
 	if target != nil {
 		doc.ExternalID = target.ExternalID
 		written, err = sess.writer.UpdateBillPayment(ctx, doc)
@@ -681,14 +684,14 @@ func (s *Service) pushBillPayment(
 			ctx,
 			sess,
 			record,
-			&accountingsyncports.AccountingFindDocumentRequest{
+			&accountingconnectorports.AccountingFindDocumentRequest{
 				DocNumber:              doc.DocNumber,
 				CounterpartyExternalID: vendorID,
 				TxnDate:                doc.TxnDate,
 				Total:                  doc.Amount,
 				AppliesToExternalIDs:   []string{billID},
 			},
-			func() (*accountingsyncports.AccountingDocumentResult, error) {
+			func() (*accountingconnectorports.AccountingDocumentResult, error) {
 				return sess.writer.CreateBillPayment(ctx, doc)
 			},
 		)
@@ -703,7 +706,7 @@ func (s *Service) billRef(
 	ctx context.Context,
 	sess *pushSession,
 	billType accountingsync.SyncObjectType,
-	settlement *accountingsyncports.PayableSettlement,
+	settlement *accountingpayablesports.PayableSettlement,
 ) (string, error) {
 	label := documentLabel(billType, settlement.Number)
 	existing, err := s.objectRecords(ctx, sess, billType, settlement.ID)
@@ -753,7 +756,7 @@ func (s *Service) billRef(
 
 func billPaymentNote(
 	objectType accountingsync.SyncObjectType,
-	settlement *accountingsyncports.PayableSettlement,
+	settlement *accountingpayablesports.PayableSettlement,
 ) string {
 	kind := "carrier settlement"
 	if objectType.IsDriverSettlement() {
@@ -777,9 +780,9 @@ func writeBill(
 	ctx context.Context,
 	sess *pushSession,
 	target *accountingsync.AccountingSyncRecord,
-	doc *accountingsyncports.AccountingPurchaseDocument,
+	doc *accountingconnectorports.AccountingPurchaseDocument,
 	label string,
-) (*accountingsyncports.AccountingDocumentResult, error) {
+) (*accountingconnectorports.AccountingDocumentResult, error) {
 	if sentAsCredit(target) != doc.VendorCredit {
 		return nil, blocked(
 			accountingsync.SyncErrorValidation,

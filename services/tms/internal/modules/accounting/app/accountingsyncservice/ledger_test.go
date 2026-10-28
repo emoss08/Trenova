@@ -5,11 +5,12 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalentry"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -129,20 +130,27 @@ func (h *harness) postJournal(
 ) {
 	t.Helper()
 	h.ledger.add(journal)
-	require.NoError(t, h.enqueuer.EnqueueJournal(t.Context(), &accountingsyncports.AccountingJournalPosted{
-		TenantInfo:     h.tenant,
-		EntryID:        journal.ID,
-		EntryNumber:    journal.EntryNumber,
-		EntryType:      journalentry.EntryType(journal.EntryType),
-		AccountingDate: journal.AccountingDate,
-	}))
+	require.NoError(
+		t,
+		h.enqueuer.EnqueueJournal(t.Context(), &accountingsyncports.AccountingJournalPosted{
+			TenantInfo:     h.tenant,
+			EntryID:        journal.ID,
+			EntryNumber:    journal.EntryNumber,
+			EntryType:      journalentry.EntryType(journal.EntryType),
+			AccountingDate: journal.AccountingDate,
+		}),
+	)
 }
 
-func onlyJournalDoc(t *testing.T, h *harness, method string) *accountingsyncports.AccountingJournalDocument {
+func onlyJournalDoc(
+	t *testing.T,
+	h *harness,
+	method string,
+) *accountingconnectorports.AccountingJournalDocument {
 	t.Helper()
 	calls := h.writer.callsTo(method)
 	require.Len(t, calls, 1)
-	doc, ok := calls[0].doc.(*accountingsyncports.AccountingJournalDocument)
+	doc, ok := calls[0].doc.(*accountingconnectorports.AccountingJournalDocument)
 	require.True(t, ok)
 	return doc
 }
@@ -157,7 +165,12 @@ func TestEnqueueJournalQueuesOneRecordPerEntryForADetailedLedger(t *testing.T) {
 
 	h.postJournal(t, journal)
 
-	record := h.only(t, accountingsync.SyncObjectJournalEntry, journal.ID, accountingsync.SyncOperationCreate)
+	record := h.only(
+		t,
+		accountingsync.SyncObjectJournalEntry,
+		journal.ID,
+		accountingsync.SyncOperationCreate,
+	)
 	assert.Equal(t, "JE-1001", record.ObjectNumber)
 	assert.Equal(t, accountingsync.SyncSourceJournalPosted, record.SourceEvent)
 	require.NotNil(t, record.DocumentDate)
@@ -250,22 +263,53 @@ func TestDailySummaryQueuesTheDayAndAnUpdateForLaterEntries(t *testing.T) {
 	h.postJournal(t, first)
 
 	dayID := pulid.ID("jday_20260410")
-	create := h.only(t, accountingsync.SyncObjectJournalSummary, dayID, accountingsync.SyncOperationCreate)
+	create := h.only(
+		t,
+		accountingsync.SyncObjectJournalSummary,
+		dayID,
+		accountingsync.SyncOperationCreate,
+	)
 	assert.Equal(t, "2026-04-10", create.ObjectNumber)
 	require.NotNil(t, create.DocumentDate)
-	assert.Equal(t, time.Date(2026, time.April, 10, 0, 0, 0, 0, chicago).Unix(), *create.DocumentDate)
-	assert.Empty(t, h.records.find(accountingsync.SyncObjectJournalSummary, dayID, accountingsync.SyncOperationUpdate))
-	assert.Empty(t, h.records.find(accountingsync.SyncObjectJournalEntry, first.ID, accountingsync.SyncOperationCreate))
+	assert.Equal(
+		t,
+		time.Date(2026, time.April, 10, 0, 0, 0, 0, chicago).Unix(),
+		*create.DocumentDate,
+	)
+	assert.Empty(
+		t,
+		h.records.find(
+			accountingsync.SyncObjectJournalSummary,
+			dayID,
+			accountingsync.SyncOperationUpdate,
+		),
+	)
+	assert.Empty(
+		t,
+		h.records.find(
+			accountingsync.SyncObjectJournalEntry,
+			first.ID,
+			accountingsync.SyncOperationCreate,
+		),
+	)
 
 	second := invoiceJournal(accts, pulid.MustNew("cus_"), "JE-2", evening+60, 200)
 	h.postJournal(t, second)
-	updates := h.records.find(accountingsync.SyncObjectJournalSummary, dayID, accountingsync.SyncOperationUpdate)
+	updates := h.records.find(
+		accountingsync.SyncObjectJournalSummary,
+		dayID,
+		accountingsync.SyncOperationUpdate,
+	)
 	require.Len(t, updates, 1)
 	assert.Greater(t, updates[0].Revision, create.Revision)
 
 	third := invoiceJournal(accts, pulid.MustNew("cus_"), "JE-3", evening+120, 300)
 	h.postJournal(t, third)
-	updates = h.records.find(accountingsync.SyncObjectJournalSummary, dayID, accountingsync.SyncOperationUpdate)
+	updates = h.records.find(
+		accountingsync.SyncObjectJournalSummary,
+		dayID,
+		accountingsync.SyncOperationUpdate,
+	)
 	require.Len(t, updates, 2)
 	statuses := []accountingsync.SyncStatus{updates[0].Status, updates[1].Status}
 	assert.ElementsMatch(t, []accountingsync.SyncStatus{
@@ -284,7 +328,12 @@ func TestDetailedJournalEntryIsSentWithAccountsAndTheCustomer(t *testing.T) {
 	mapped := h.mapLedger(accts, customerID)
 	journal := invoiceJournal(accts, customerID, "JE-1001", aprilTenth, 150_000)
 	h.postJournal(t, journal)
-	record := h.only(t, accountingsync.SyncObjectJournalEntry, journal.ID, accountingsync.SyncOperationCreate)
+	record := h.only(
+		t,
+		accountingsync.SyncObjectJournalEntry,
+		journal.ID,
+		accountingsync.SyncOperationCreate,
+	)
 
 	result := h.drain(t)
 
@@ -295,16 +344,25 @@ func TestDetailedJournalEntryIsSentWithAccountsAndTheCustomer(t *testing.T) {
 	assert.Equal(t, "JE-1001", doc.DocNumber)
 	assert.Equal(t, "2026-04-10", doc.TxnDate)
 	assert.Equal(t, "USD", doc.CurrencyCode)
-	assert.Equal(t, "Trenova journal entry JE-1001 (INV-JE-1001): Invoice INV-JE-1001", doc.PrivateNote)
+	assert.Equal(
+		t,
+		"Trenova journal entry JE-1001 (INV-JE-1001): Invoice INV-JE-1001",
+		doc.PrivateNote,
+	)
 	require.Len(t, doc.Lines, 2)
-	assert.Equal(t, accountingsyncports.AccountingJournalDebit, doc.Lines[0].Posting)
+	assert.Equal(t, accountingconnectorports.AccountingJournalDebit, doc.Lines[0].Posting)
 	assert.Equal(t, "qb-ar", doc.Lines[0].AccountExternalID)
 	assert.Equal(t, "1500", doc.Lines[0].Amount.String())
 	assert.Equal(t, "Invoice INV-JE-1001", doc.Lines[0].Description)
-	assert.Equal(t, accountingsyncports.AccountingJournalCustomer, doc.Lines[0].PartyKind)
+	assert.Equal(t, accountingconnectorports.AccountingJournalCustomer, doc.Lines[0].PartyKind)
 	assert.Equal(t, "qb-cust-58", doc.Lines[0].PartyExternalID)
-	assert.Equal(t, accountingsyncports.AccountingJournalCredit, doc.Lines[1].Posting)
-	assert.Equal(t, "qb-income", doc.Lines[1].AccountExternalID, "the revenue account falls back to its role")
+	assert.Equal(t, accountingconnectorports.AccountingJournalCredit, doc.Lines[1].Posting)
+	assert.Equal(
+		t,
+		"qb-income",
+		doc.Lines[1].AccountExternalID,
+		"the revenue account falls back to its role",
+	)
 	assert.Equal(t, "1500", doc.Lines[1].Amount.String())
 	assert.Empty(t, doc.Lines[1].PartyKind, "only receivable and payable lines name a party")
 	assert.Empty(t, doc.Lines[1].PartyExternalID)
@@ -331,7 +389,10 @@ func TestJournalLinePartyWinsOverTheEntrysSource(t *testing.T) {
 	other := pulid.MustNew("cus_")
 	h.confirm(customerTarget(other, "Other Shipper"), "qb-cust-77")
 	journal := invoiceJournal(accts, customerID, "JE-1002", aprilTenth, 5_000)
-	journal.Lines[0].Party = journalentryports.LedgerParty{Kind: journalentryports.LedgerPartyCustomer, ID: other}
+	journal.Lines[0].Party = journalentryports.LedgerParty{
+		Kind: journalentryports.LedgerPartyCustomer,
+		ID:   other,
+	}
 	h.postJournal(t, journal)
 
 	h.drain(t)
@@ -350,7 +411,12 @@ func TestJournalEntryBlocksWhenAReceivableLineHasNoCustomer(t *testing.T) {
 	journal := invoiceJournal(accts, pulid.MustNew("cus_"), "JE-1003", aprilTenth, 5_000)
 	journal.Party = journalentryports.LedgerParty{}
 	h.postJournal(t, journal)
-	record := h.only(t, accountingsync.SyncObjectJournalEntry, journal.ID, accountingsync.SyncOperationCreate)
+	record := h.only(
+		t,
+		accountingsync.SyncObjectJournalEntry,
+		journal.ID,
+		accountingsync.SyncOperationCreate,
+	)
 
 	h.drain(t)
 
@@ -376,7 +442,12 @@ func TestJournalEntryBlocksOnAPartyOfTheWrongKind(t *testing.T) {
 		Name: "Swift Haul",
 	}
 	h.postJournal(t, journal)
-	record := h.only(t, accountingsync.SyncObjectJournalEntry, journal.ID, accountingsync.SyncOperationCreate)
+	record := h.only(
+		t,
+		accountingsync.SyncObjectJournalEntry,
+		journal.ID,
+		accountingsync.SyncOperationCreate,
+	)
 
 	h.drain(t)
 
@@ -395,13 +466,23 @@ func TestJournalEntryWaitsForAnUnmappedCustomerToBeCreated(t *testing.T) {
 	newcomer := pulid.MustNew("cus_")
 	journal := invoiceJournal(accts, newcomer, "JE-1005", aprilTenth, 5_000)
 	h.postJournal(t, journal)
-	record := h.only(t, accountingsync.SyncObjectJournalEntry, journal.ID, accountingsync.SyncOperationCreate)
+	record := h.only(
+		t,
+		accountingsync.SyncObjectJournalEntry,
+		journal.ID,
+		accountingsync.SyncOperationCreate,
+	)
 
 	h.drain(t)
 
 	waiting := h.records.get(record.ID)
 	assert.NotEqual(t, accountingsync.SyncStatusSynced, waiting.Status)
-	dependency := h.only(t, accountingsync.SyncObjectCustomer, newcomer, accountingsync.SyncOperationCreate)
+	dependency := h.only(
+		t,
+		accountingsync.SyncObjectCustomer,
+		newcomer,
+		accountingsync.SyncOperationCreate,
+	)
 	assert.Equal(t, dependency.ID, waiting.DependsOnRecordID)
 	assert.Empty(t, h.writer.callsTo("CreateJournalEntry"))
 }
@@ -417,7 +498,12 @@ func TestJournalEntryBlocksOnAnUnmappedAccount(t *testing.T) {
 	journal := invoiceJournal(accts, customerID, "JE-1006", aprilTenth, 5_000)
 	journal.Lines[1] = cashLine(accts, 0, 5_000)
 	h.postJournal(t, journal)
-	record := h.only(t, accountingsync.SyncObjectJournalEntry, journal.ID, accountingsync.SyncOperationCreate)
+	record := h.only(
+		t,
+		accountingsync.SyncObjectJournalEntry,
+		journal.ID,
+		accountingsync.SyncOperationCreate,
+	)
 
 	h.drain(t)
 
@@ -438,7 +524,12 @@ func TestJournalEntryThatDoesNotBalanceIsBlocked(t *testing.T) {
 	journal := invoiceJournal(accts, customerID, "JE-1007", aprilTenth, 5_000)
 	journal.Lines[1].CreditMinor = 4_900
 	h.postJournal(t, journal)
-	record := h.only(t, accountingsync.SyncObjectJournalEntry, journal.ID, accountingsync.SyncOperationCreate)
+	record := h.only(
+		t,
+		accountingsync.SyncObjectJournalEntry,
+		journal.ID,
+		accountingsync.SyncOperationCreate,
+	)
 
 	h.drain(t)
 
@@ -475,7 +566,7 @@ func TestDailySummarySumsTheDayPerAccountAndCustomer(t *testing.T) {
 	assert.Equal(t, "2026-04-10", doc.TxnDate)
 	assert.Equal(t, "Trenova journal entries posted for 2026-04-10", doc.PrivateNote)
 	type want struct {
-		posting accountingsyncports.AccountingJournalPosting
+		posting accountingconnectorports.AccountingJournalPosting
 		account string
 		amount  string
 		party   string
@@ -490,9 +581,23 @@ func TestDailySummarySumsTheDayPerAccountAndCustomer(t *testing.T) {
 		})
 	}
 	assert.Equal(t, []want{
-		{posting: accountingsyncports.AccountingJournalDebit, account: "qb-ar", amount: "1500", party: "qb-cust-58"},
-		{posting: accountingsyncports.AccountingJournalCredit, account: "qb-income", amount: "1700"},
-		{posting: accountingsyncports.AccountingJournalDebit, account: "qb-ar", amount: "200", party: "qb-cust-90"},
+		{
+			posting: accountingconnectorports.AccountingJournalDebit,
+			account: "qb-ar",
+			amount:  "1500",
+			party:   "qb-cust-58",
+		},
+		{
+			posting: accountingconnectorports.AccountingJournalCredit,
+			account: "qb-income",
+			amount:  "1700",
+		},
+		{
+			posting: accountingconnectorports.AccountingJournalDebit,
+			account: "qb-ar",
+			amount:  "200",
+			party:   "qb-cust-90",
+		},
 	}, got)
 	assert.Equal(t, "1100 Accounts receivable, Acme Freight", doc.Lines[0].Description)
 
@@ -512,8 +617,18 @@ func TestDailySummaryUpdateWaitsForTheDaysFirstSend(t *testing.T) {
 	h.postJournal(t, invoiceJournal(accts, customerID, "JE-1", aprilTenth, 100))
 	h.postJournal(t, invoiceJournal(accts, customerID, "JE-2", aprilTenth+60, 100))
 	dayID := pulid.ID("jday_20260410")
-	create := h.only(t, accountingsync.SyncObjectJournalSummary, dayID, accountingsync.SyncOperationCreate)
-	update := h.only(t, accountingsync.SyncObjectJournalSummary, dayID, accountingsync.SyncOperationUpdate)
+	create := h.only(
+		t,
+		accountingsync.SyncObjectJournalSummary,
+		dayID,
+		accountingsync.SyncOperationCreate,
+	)
+	update := h.only(
+		t,
+		accountingsync.SyncObjectJournalSummary,
+		dayID,
+		accountingsync.SyncOperationUpdate,
+	)
 	h.records.postpone(create.ID)
 
 	h.drain(t)
@@ -546,13 +661,18 @@ func TestDailySummaryThatNowNetsToZeroDeletesTheProviderEntry(t *testing.T) {
 	}
 	h.postJournal(t, reversal)
 	dayID := pulid.ID("jday_20260410")
-	update := h.only(t, accountingsync.SyncObjectJournalSummary, dayID, accountingsync.SyncOperationUpdate)
+	update := h.only(
+		t,
+		accountingsync.SyncObjectJournalSummary,
+		dayID,
+		accountingsync.SyncOperationUpdate,
+	)
 
 	h.drain(t)
 
 	calls := h.writer.callsTo("DeleteJournalEntry")
 	require.Len(t, calls, 1)
-	ref, ok := calls[0].doc.(*accountingsyncports.AccountingDocumentRef)
+	ref, ok := calls[0].doc.(*accountingconnectorports.AccountingDocumentRef)
 	require.True(t, ok)
 	assert.Equal(t, "qb-CreateJournalEntry-1", ref.ExternalID)
 	assert.Equal(t, update.RequestID, ref.RequestID)
@@ -581,7 +701,12 @@ func TestDailySummaryThatNetsToZeroSendsNothing(t *testing.T) {
 	journal := invoiceJournal(accts, customerID, "JE-1", aprilTenth, 5_000)
 	journal.Lines = append(journal.Lines, arLine(accts, 0, 5_000), revenueLine(accts, 5_000, 0))
 	h.postJournal(t, journal)
-	record := h.only(t, accountingsync.SyncObjectJournalSummary, "jday_20260410", accountingsync.SyncOperationCreate)
+	record := h.only(
+		t,
+		accountingsync.SyncObjectJournalSummary,
+		"jday_20260410",
+		accountingsync.SyncOperationCreate,
+	)
 
 	h.drain(t)
 
@@ -610,12 +735,21 @@ func TestEnableSyncQueuesOpeningBalancesForTheLedgerOnce(t *testing.T) {
 	require.NoError(t, err)
 	assert.True(t, conn.SentOpeningBalances())
 
-	record := h.only(t, accountingsync.SyncObjectJournalSummary, "jopen_20260401", accountingsync.SyncOperationCreate)
+	record := h.only(
+		t,
+		accountingsync.SyncObjectJournalSummary,
+		"jopen_20260401",
+		accountingsync.SyncOperationCreate,
+	)
 	assert.True(t, record.IsOpeningBalances())
 	assert.Equal(t, accountingsync.SyncSourceOpeningBalances, record.SourceEvent)
 	assert.Equal(t, "2026-03-31", record.ObjectNumber)
 	require.NotNil(t, record.DocumentDate)
-	assert.Equal(t, time.Date(2026, time.March, 31, 0, 0, 0, 0, time.UTC).Unix(), *record.DocumentDate)
+	assert.Equal(
+		t,
+		time.Date(2026, time.March, 31, 0, 0, 0, 0, time.UTC).Unix(),
+		*record.DocumentDate,
+	)
 	assert.Equal(t, "Started sending journal entries to QuickBooks Online", h.audit.lastComment())
 
 	_, err = h.svc.EnableSync(t.Context(), &accountingsyncports.EnableAccountingSyncRequest{
@@ -670,7 +804,10 @@ func TestOpeningBalancesSendEveryBalanceBeforeTheStartDate(t *testing.T) {
 		EntryNumber:    "JE-OLD-2",
 		EntryType:      journalentry.EntryTypeStandard.String(),
 		AccountingDate: before + 86_400,
-		Party:          journalentryports.LedgerParty{Kind: journalentryports.LedgerPartyCustomer, ID: acme},
+		Party: journalentryports.LedgerParty{
+			Kind: journalentryports.LedgerPartyCustomer,
+			ID:   acme,
+		},
 		Lines: []journalentryports.LedgerJournalLine{
 			cashLine(accts, 30_000, 0),
 			arLine(accts, 0, 30_000),
@@ -711,7 +848,7 @@ func TestOpeningBalancesSendEveryBalanceBeforeTheStartDate(t *testing.T) {
 	amounts := map[string]string{}
 	for _, line := range doc.Lines {
 		sign := ""
-		if line.Posting == accountingsyncports.AccountingJournalCredit {
+		if line.Posting == accountingconnectorports.AccountingJournalCredit {
 			sign = "-"
 		}
 		amounts[line.AccountExternalID+"|"+line.PartyExternalID] = sign + line.Amount.String()
@@ -737,14 +874,34 @@ func TestSafetyNetQueuesLedgerDaysOnceEach(t *testing.T) {
 
 	h := newHarness(t)
 	h.ledgerMode(accountingsync.LedgerDailySummary)
-	h.addCandidates(accountingsync.SyncObjectJournalSummary, accountingsync.SyncOperationCreate, 3, syncEnabledAt+10)
-	h.addCandidates(accountingsync.SyncObjectInvoice, accountingsync.SyncOperationCreate, 2, syncEnabledAt+10)
-	h.addCandidates(accountingsync.SyncObjectJournalEntry, accountingsync.SyncOperationCreate, 2, syncEnabledAt+10)
+	h.addCandidates(
+		accountingsync.SyncObjectJournalSummary,
+		accountingsync.SyncOperationCreate,
+		3,
+		syncEnabledAt+10,
+	)
+	h.addCandidates(
+		accountingsync.SyncObjectInvoice,
+		accountingsync.SyncOperationCreate,
+		2,
+		syncEnabledAt+10,
+	)
+	h.addCandidates(
+		accountingsync.SyncObjectJournalEntry,
+		accountingsync.SyncOperationCreate,
+		2,
+		syncEnabledAt+10,
+	)
 
 	result := h.safetyNet(t)
 
 	assert.Equal(t, 1, result.Queued, "three entries on one day make one day record")
-	h.only(t, accountingsync.SyncObjectJournalSummary, "jday_20260410", accountingsync.SyncOperationCreate)
+	h.only(
+		t,
+		accountingsync.SyncObjectJournalSummary,
+		"jday_20260410",
+		accountingsync.SyncOperationCreate,
+	)
 	for _, call := range h.records.candidateCalls {
 		assert.NotEqual(t, accountingsync.SyncObjectInvoice, call.ObjectType,
 			"a ledger connection does not sweep documents")
@@ -829,14 +986,17 @@ func (h *harness) postReversal(
 	reversal.ReversalOfNumber = original.EntryNumber
 	reversal.ReversesEntryType = original.EntryType
 	h.ledger.add(reversal)
-	require.NoError(t, h.enqueuer.EnqueueJournal(t.Context(), &accountingsyncports.AccountingJournalPosted{
-		TenantInfo:     h.tenant,
-		EntryID:        reversal.ID,
-		EntryNumber:    reversal.EntryNumber,
-		EntryType:      journalentry.EntryTypeReversal,
-		ReversalOfID:   original.ID,
-		AccountingDate: reversal.AccountingDate,
-	}))
+	require.NoError(
+		t,
+		h.enqueuer.EnqueueJournal(t.Context(), &accountingsyncports.AccountingJournalPosted{
+			TenantInfo:     h.tenant,
+			EntryID:        reversal.ID,
+			EntryNumber:    reversal.EntryNumber,
+			EntryType:      journalentry.EntryTypeReversal,
+			ReversalOfID:   original.ID,
+			AccountingDate: reversal.AccountingDate,
+		}),
+	)
 }
 
 func TestReopeningAFiscalYearIsNotSent(t *testing.T) {
@@ -855,7 +1015,11 @@ func TestReopeningAFiscalYearIsNotSent(t *testing.T) {
 			closing.EntryType = closeType.String()
 			h.ledger.add(closing)
 
-			h.postReversal(t, invoiceJournal(accts, pulid.MustNew("cus_"), "JE-RV", aprilTenth, 900), closing)
+			h.postReversal(
+				t,
+				invoiceJournal(accts, pulid.MustNew("cus_"), "JE-RV", aprilTenth, 900),
+				closing,
+			)
 
 			assert.Empty(t, h.records.all())
 		})
@@ -873,10 +1037,18 @@ func TestReversalOfAnOrdinaryEntryIsSent(t *testing.T) {
 	original := invoiceJournal(accts, customerID, "JE-1", aprilTenth, 900)
 	h.ledger.add(original)
 	reversal := invoiceJournal(accts, customerID, "JE-2", aprilTenth, 900)
-	reversal.Lines = []journalentryports.LedgerJournalLine{arLine(accts, 0, 900), revenueLine(accts, 900, 0)}
+	reversal.Lines = []journalentryports.LedgerJournalLine{
+		arLine(accts, 0, 900),
+		revenueLine(accts, 900, 0),
+	}
 
 	h.postReversal(t, reversal, original)
-	record := h.only(t, accountingsync.SyncObjectJournalEntry, reversal.ID, accountingsync.SyncOperationCreate)
+	record := h.only(
+		t,
+		accountingsync.SyncObjectJournalEntry,
+		reversal.ID,
+		accountingsync.SyncOperationCreate,
+	)
 	h.drain(t)
 
 	assert.Equal(t, accountingsync.SyncStatusSynced, h.records.get(record.ID).Status)
@@ -896,7 +1068,12 @@ func TestAQueuedReversalOfAFiscalCloseIsNotSent(t *testing.T) {
 	h.ledger.add(original)
 	reversal := invoiceJournal(accts, customerID, "JE-2", aprilTenth, 900)
 	h.postReversal(t, reversal, original)
-	record := h.only(t, accountingsync.SyncObjectJournalEntry, reversal.ID, accountingsync.SyncOperationCreate)
+	record := h.only(
+		t,
+		accountingsync.SyncObjectJournalEntry,
+		reversal.ID,
+		accountingsync.SyncOperationCreate,
+	)
 	reversal.ReversesEntryType = journalentry.EntryTypeClosing.String()
 
 	h.drain(t)
@@ -919,10 +1096,18 @@ func TestDailySummaryUpdateFollowsTheLatestSendNotTheHighestRevision(t *testing.
 	h.postJournal(t, invoiceJournal(accts, customerID, "JE-1", aprilTenth, 5_000))
 	h.drain(t)
 	dayID := pulid.ID("jday_20260410")
-	create := h.only(t, accountingsync.SyncObjectJournalSummary, dayID, accountingsync.SyncOperationCreate)
+	create := h.only(
+		t,
+		accountingsync.SyncObjectJournalSummary,
+		dayID,
+		accountingsync.SyncOperationCreate,
+	)
 
 	reversal := invoiceJournal(accts, customerID, "JE-2", aprilTenth+60, 5_000)
-	reversal.Lines = []journalentryports.LedgerJournalLine{arLine(accts, 0, 5_000), revenueLine(accts, 5_000, 0)}
+	reversal.Lines = []journalentryports.LedgerJournalLine{
+		arLine(accts, 0, 5_000),
+		revenueLine(accts, 5_000, 0),
+	}
 	h.postJournal(t, reversal)
 	h.drain(t)
 	require.Len(t, h.writer.callsTo("DeleteJournalEntry"), 1)
@@ -950,7 +1135,12 @@ func TestDailySummaryUpdateWaitsOnALaterUpdateInFlight(t *testing.T) {
 	h.postJournal(t, invoiceJournal(accts, customerID, "JE-1", aprilTenth, 5_000))
 	h.drain(t)
 	dayID := pulid.ID("jday_20260410")
-	create := h.only(t, accountingsync.SyncObjectJournalSummary, dayID, accountingsync.SyncOperationCreate)
+	create := h.only(
+		t,
+		accountingsync.SyncObjectJournalSummary,
+		dayID,
+		accountingsync.SyncOperationCreate,
+	)
 	running := create.DayUpdate(create.Revision + 10)
 	running.Status = accountingsync.SyncStatusInFlight
 	h.records.put(running)
@@ -975,7 +1165,12 @@ func TestDailySummaryUpdateKeepsTheDateTheDayWasSentOn(t *testing.T) {
 	h.drain(t)
 	dayID := pulid.ID("jday_20260410")
 	create := h.records.get(
-		h.only(t, accountingsync.SyncObjectJournalSummary, dayID, accountingsync.SyncOperationCreate).ID,
+		h.only(
+			t,
+			accountingsync.SyncObjectJournalSummary,
+			dayID,
+			accountingsync.SyncOperationCreate,
+		).ID,
 	)
 	firstOpen := aprilTenth + 5*86_400
 	create.RedatedTo = &firstOpen

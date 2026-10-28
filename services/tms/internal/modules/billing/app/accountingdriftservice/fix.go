@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingdriftports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
@@ -109,7 +110,7 @@ func (s *Service) findingByID(
 	id pulid.ID,
 	forUpdate bool,
 ) (*accountingsync.AccountingDriftFinding, error) {
-	return s.findings.GetByID(ctx, accountingsyncports.GetAccountingDriftFindingQuery{
+	return s.findings.GetByID(ctx, accountingdriftports.GetAccountingDriftFindingQuery{
 		TenantInfo: tenant,
 		ID:         id,
 		ForUpdate:  forUpdate,
@@ -118,9 +119,9 @@ func (s *Service) findingByID(
 
 func (s *Service) PreviewResolve(
 	ctx context.Context,
-	req *accountingsyncports.ResolveAccountingDriftRequest,
+	req *accountingdriftports.ResolveAccountingDriftRequest,
 	actor *permissionports.RequestActor,
-) (*accountingsyncports.AccountingDriftFixPreview, error) {
+) (*accountingdriftports.AccountingDriftFixPreview, error) {
 	finding, err := s.findingByID(ctx, req.TenantInfo, req.ID, false)
 	if err != nil {
 		return nil, err
@@ -137,7 +138,7 @@ func (s *Service) PreviewResolve(
 
 func (s *Service) Resolve(
 	ctx context.Context,
-	req *accountingsyncports.ResolveAccountingDriftRequest,
+	req *accountingdriftports.ResolveAccountingDriftRequest,
 	actor *permissionports.RequestActor,
 ) (*accountingsync.AccountingDriftFinding, error) {
 	current, err := s.findingByID(ctx, req.TenantInfo, req.ID, false)

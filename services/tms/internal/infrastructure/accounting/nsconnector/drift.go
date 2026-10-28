@@ -5,16 +5,16 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/shared/netsuite"
 )
 
-var _ accountingsyncports.AccountingDocumentReader = (*Connector)(nil)
+var _ accountingconnectorports.AccountingDocumentReader = (*Connector)(nil)
 
 const maxIDsPerRead = 500
 
-func (c *Connector) DocumentReadLimits() accountingsyncports.AccountingDocumentReadLimits {
-	return accountingsyncports.AccountingDocumentReadLimits{MaxPerRead: maxIDsPerRead}
+func (c *Connector) DocumentReadLimits() accountingconnectorports.AccountingDocumentReadLimits {
+	return accountingconnectorports.AccountingDocumentReadLimits{MaxPerRead: maxIDsPerRead}
 }
 
 func readable(kind accountingsync.SyncObjectType) (bool, error) {
@@ -31,8 +31,8 @@ func readable(kind accountingsync.SyncObjectType) (bool, error) {
 
 func (c *Connector) ReadDocuments(
 	ctx context.Context,
-	req *accountingsyncports.ReadAccountingDocumentsRequest,
-) ([]*accountingsyncports.AccountingDocumentState, error) {
+	req *accountingconnectorports.ReadAccountingDocumentsRequest,
+) ([]*accountingconnectorports.AccountingDocumentState, error) {
 	ok, err := readable(req.Kind)
 	if err != nil {
 		return nil, err
@@ -47,10 +47,10 @@ func (c *Connector) ReadDocuments(
 	if err != nil {
 		return nil, err
 	}
-	out := make([]*accountingsyncports.AccountingDocumentState, 0, len(req.Targets))
+	out := make([]*accountingconnectorports.AccountingDocumentState, 0, len(req.Targets))
 	for idx := range req.Targets {
 		id := strings.TrimSpace(req.Targets[idx].ExternalID)
-		state := &accountingsyncports.AccountingDocumentState{ExternalID: id}
+		state := &accountingconnectorports.AccountingDocumentState{ExternalID: id}
 		if row, hit := found[id]; hit {
 			balance := row.remaining()
 			state.Found = true
@@ -69,7 +69,7 @@ func (c *Connector) ReadDocuments(
 
 func (c *Connector) readFound(
 	ctx context.Context,
-	auth accountingsyncports.AccountingDocumentAuth,
+	auth accountingconnectorports.AccountingDocumentAuth,
 	ids []int64,
 ) (found map[string]*transactionRow, editors map[string]string, err error) {
 	found = make(map[string]*transactionRow, len(ids))

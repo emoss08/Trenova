@@ -8,7 +8,8 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingmappingports"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
@@ -42,7 +43,7 @@ func creationRequestID(row *accountingsync.AccountingMapping) string {
 
 func (s *Service) CreateReferenceRecord(
 	ctx context.Context,
-	req *accountingsyncports.CreateAccountingReferenceRecordRequest,
+	req *accountingmappingports.CreateAccountingReferenceRecordRequest,
 ) (*accountingsync.AccountingMapping, error) {
 	row, err := s.GetMapping(ctx, req.TenantInfo, req.MappingID)
 	if err != nil {
@@ -66,14 +67,14 @@ func (s *Service) CreateReferenceRecord(
 	if err != nil {
 		return nil, err
 	}
-	creator, ok := session.Connector.(accountingsyncports.AccountingReferenceCreator)
+	creator, ok := session.Connector.(accountingconnectorports.AccountingReferenceCreator)
 	if !ok {
 		return nil, errortypes.NewBusinessError(
 			"This accounting system cannot create records from Trenova",
 		)
 	}
 
-	createReq := &accountingsyncports.AccountingCreateReferenceRequest{
+	createReq := &accountingconnectorports.AccountingCreateReferenceRequest{
 		RealmID:     session.Connection.ExternalRealmID,
 		AccessToken: session.AccessToken,
 		RequestID:   creationRequestID(row),
@@ -97,7 +98,7 @@ func (s *Service) CreateReferenceRecord(
 		).WithInternal(err)
 	}
 
-	if err = s.references.Upsert(ctx, &accountingsyncports.UpsertAccountingReferenceObjectsRequest{
+	if err = s.references.Upsert(ctx, &accountingmappingports.UpsertAccountingReferenceObjectsRequest{
 		TenantInfo:   req.TenantInfo,
 		ConnectionID: row.ConnectionID,
 		Objects:      []*accountingsync.AccountingReferenceObject{created},
@@ -169,10 +170,10 @@ func (s *Service) confirmCreated(
 
 func (s *Service) buildDraft(
 	ctx context.Context,
-	req *accountingsyncports.CreateAccountingReferenceRecordRequest,
+	req *accountingmappingports.CreateAccountingReferenceRecordRequest,
 	row *accountingsync.AccountingMapping,
-	creator accountingsyncports.AccountingReferenceCreator,
-	createReq *accountingsyncports.AccountingCreateReferenceRequest,
+	creator accountingconnectorports.AccountingReferenceCreator,
+	createReq *accountingconnectorports.AccountingCreateReferenceRequest,
 ) (string, error) {
 	switch row.ProviderKind {
 	case accountingsync.ReferenceKindItem:
@@ -191,7 +192,7 @@ func (s *Service) buildDraft(
 }
 
 func chosenName(
-	creator accountingsyncports.AccountingReferenceCreator,
+	creator accountingconnectorports.AccountingReferenceCreator,
 	kind accountingsync.ReferenceKind,
 	override string,
 	fallbacks ...string,
@@ -206,14 +207,14 @@ func chosenName(
 
 func (s *Service) itemDraft(
 	ctx context.Context,
-	req *accountingsyncports.CreateAccountingReferenceRecordRequest,
+	req *accountingmappingports.CreateAccountingReferenceRecordRequest,
 	row *accountingsync.AccountingMapping,
-	creator accountingsyncports.AccountingReferenceCreator,
-	createReq *accountingsyncports.AccountingCreateReferenceRequest,
+	creator accountingconnectorports.AccountingReferenceCreator,
+	createReq *accountingconnectorports.AccountingCreateReferenceRequest,
 ) (string, error) {
 	revenue, err := s.mappings.GetByTarget(
 		ctx,
-		&accountingsyncports.GetAccountingMappingByTargetRequest{
+		&accountingmappingports.GetAccountingMappingByTargetRequest{
 			TenantInfo:   req.TenantInfo,
 			ConnectionID: row.ConnectionID,
 			TargetType:   accountingsync.TargetAccountRole,
@@ -255,7 +256,7 @@ func (s *Service) itemDraft(
 	if err != nil {
 		return "", err
 	}
-	createReq.Item = &accountingsyncports.AccountingItemDraft{
+	createReq.Item = &accountingconnectorports.AccountingItemDraft{
 		Name:            name,
 		Description:     description,
 		Sku:             sku,
@@ -266,10 +267,10 @@ func (s *Service) itemDraft(
 
 func (s *Service) customerDraft(
 	ctx context.Context,
-	req *accountingsyncports.CreateAccountingReferenceRecordRequest,
+	req *accountingmappingports.CreateAccountingReferenceRecordRequest,
 	row *accountingsync.AccountingMapping,
-	creator accountingsyncports.AccountingReferenceCreator,
-	createReq *accountingsyncports.AccountingCreateReferenceRequest,
+	creator accountingconnectorports.AccountingReferenceCreator,
+	createReq *accountingconnectorports.AccountingCreateReferenceRequest,
 ) (string, error) {
 	cus, err := s.customerWithState(ctx, req.TenantInfo, row.TrenovaObjectID)
 	if err != nil {
@@ -303,8 +304,11 @@ func (s *Service) customerWithState(
 	return found[0], nil
 }
 
-func customerParty(cus *customer.Customer, name string) *accountingsyncports.AccountingPartyDraft {
-	return &accountingsyncports.AccountingPartyDraft{
+func customerParty(
+	cus *customer.Customer,
+	name string,
+) *accountingconnectorports.AccountingPartyDraft {
+	return &accountingconnectorports.AccountingPartyDraft{
 		DisplayName:  name,
 		CompanyName:  cus.Name,
 		AddressLine1: cus.AddressLine1,
@@ -319,7 +323,7 @@ func (s *Service) CustomerParty(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	customerID pulid.ID,
-) (*accountingsyncports.AccountingPartyDraft, error) {
+) (*accountingconnectorports.AccountingPartyDraft, error) {
 	cus, err := s.customerWithState(ctx, tenantInfo, customerID)
 	if err != nil {
 		return nil, err
@@ -329,10 +333,10 @@ func (s *Service) CustomerParty(
 
 func (s *Service) vendorDraft(
 	ctx context.Context,
-	req *accountingsyncports.CreateAccountingReferenceRecordRequest,
+	req *accountingmappingports.CreateAccountingReferenceRecordRequest,
 	row *accountingsync.AccountingMapping,
-	creator accountingsyncports.AccountingReferenceCreator,
-	createReq *accountingsyncports.AccountingCreateReferenceRequest,
+	creator accountingconnectorports.AccountingReferenceCreator,
+	createReq *accountingconnectorports.AccountingCreateReferenceRequest,
 ) (string, error) {
 	if row.TargetType == accountingsync.TargetDriver {
 		return s.driverDraft(ctx, req, row, creator, createReq)
@@ -375,8 +379,11 @@ func (s *Service) carrierWithState(
 	return found[0], nil
 }
 
-func carrierParty(carr *carrier.Carrier, name string) *accountingsyncports.AccountingPartyDraft {
-	draft := &accountingsyncports.AccountingPartyDraft{
+func carrierParty(
+	carr *carrier.Carrier,
+	name string,
+) *accountingconnectorports.AccountingPartyDraft {
+	draft := &accountingconnectorports.AccountingPartyDraft{
 		DisplayName: name,
 		CompanyName: carr.Name,
 		Email:       strings.TrimSpace(carr.Email),
@@ -388,10 +395,10 @@ func carrierParty(carr *carrier.Carrier, name string) *accountingsyncports.Accou
 
 func (s *Service) driverDraft(
 	ctx context.Context,
-	req *accountingsyncports.CreateAccountingReferenceRecordRequest,
+	req *accountingmappingports.CreateAccountingReferenceRecordRequest,
 	row *accountingsync.AccountingMapping,
-	creator accountingsyncports.AccountingReferenceCreator,
-	createReq *accountingsyncports.AccountingCreateReferenceRequest,
+	creator accountingconnectorports.AccountingReferenceCreator,
+	createReq *accountingconnectorports.AccountingCreateReferenceRequest,
 ) (string, error) {
 	wrk, err := s.workerWithState(ctx, req.TenantInfo, row.TrenovaObjectID)
 	if err != nil {
@@ -429,8 +436,8 @@ func (s *Service) workerWithState(
 	return wrk, nil
 }
 
-func driverParty(wrk *worker.Worker, name string) *accountingsyncports.AccountingPartyDraft {
-	return &accountingsyncports.AccountingPartyDraft{
+func driverParty(wrk *worker.Worker, name string) *accountingconnectorports.AccountingPartyDraft {
+	return &accountingconnectorports.AccountingPartyDraft{
 		DisplayName:  name,
 		Email:        strings.TrimSpace(wrk.Email),
 		AddressLine1: wrk.AddressLine1,
@@ -447,7 +454,7 @@ func (s *Service) VendorParty(
 	tenantInfo pagination.TenantInfo,
 	targetType accountingsync.MappingTargetType,
 	objectID pulid.ID,
-) (*accountingsyncports.AccountingPartyDraft, error) {
+) (*accountingconnectorports.AccountingPartyDraft, error) {
 	switch targetType {
 	case accountingsync.TargetCarrier:
 		carr, err := s.carrierWithState(ctx, tenantInfo, objectID)
@@ -466,7 +473,10 @@ func (s *Service) VendorParty(
 	}
 }
 
-func applyCarrierAddress(draft *accountingsyncports.AccountingPartyDraft, carr *carrier.Carrier) {
+func applyCarrierAddress(
+	draft *accountingconnectorports.AccountingPartyDraft,
+	carr *carrier.Carrier,
+) {
 	if strings.TrimSpace(carr.RemitAddressLine1) != "" {
 		draft.AddressLine1 = carr.RemitAddressLine1
 		draft.City = carr.RemitCity
@@ -505,7 +515,7 @@ func (s *Service) duplicateNameError(
 ) error {
 	existing, err := s.references.Search(
 		ctx,
-		&accountingsyncports.SearchAccountingReferenceObjectsRequest{
+		&accountingmappingports.SearchAccountingReferenceObjectsRequest{
 			TenantInfo:   tenantInfo,
 			ConnectionID: row.ConnectionID,
 			Kind:         row.ProviderKind,

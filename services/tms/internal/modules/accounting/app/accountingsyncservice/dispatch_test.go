@@ -6,10 +6,11 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/agent/app/watchtowersources"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
-	"github.com/emoss08/trenova/internal/modules/agent/app/watchtowersources"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -28,27 +29,46 @@ func TestDrainClaimsCustomersThenSalesDocumentsThenPayments(t *testing.T) {
 
 	h := newHarness(t)
 	customerID, _ := h.mappedCustomer("Acme")
-	h.mappings.parties[customerID] = &accountingsyncports.AccountingPartyDraft{DisplayName: "Acme"}
+	h.mappings.parties[customerID] = &accountingconnectorports.AccountingPartyDraft{
+		DisplayName: "Acme",
+	}
 	h.confirm(freightTarget(), "qb-item-freight")
 	h.mapPaymentAccounts(customerpayment.MethodCheck)
 	inv := h.postedInvoice(customerID, invoiceSpec{number: "INV-1"})
 	payment := h.postedPayment(customerID, paymentSpec{
-		amountMinor:  150000,
-		applications: []*customerpayment.Application{{InvoiceID: inv.ID, AppliedAmountMinor: 150000}},
+		amountMinor: 150000,
+		applications: []*customerpayment.Application{
+			{InvoiceID: inv.ID, AppliedAmountMinor: 150000},
+		},
 	})
 	h.enqueuePayment(t, payment, accountingsync.SyncOperationCreate)
 	h.enqueueInvoice(t, inv)
-	require.NoError(t, h.enqueuer.Enqueue(t.Context(), accountingsyncports.CustomerSyncRequest(h.tenant, customerID, "Acme", 2)))
+	require.NoError(
+		t,
+		h.enqueuer.Enqueue(
+			t.Context(),
+			accountingsyncports.CustomerSyncRequest(h.tenant, customerID, "Acme", 2),
+		),
+	)
 
 	result := h.drain(t)
 
 	assert.Equal(t, 3, result.Claimed)
 	assert.Equal(t, 3, result.Synced)
-	assert.Equal(t, []string{"UpsertCustomer", "CreateSalesDocument", "SavePayment"}, h.writer.methods(),
-		"a payment claimed with its invoice is sent after it, and links it")
+	assert.Equal(
+		t,
+		[]string{"UpsertCustomer", "CreateSalesDocument", "SavePayment"},
+		h.writer.methods(),
+		"a payment claimed with its invoice is sent after it, and links it",
+	)
 	docs := paymentDocs(t, h)
 	require.Len(t, docs, 1)
-	invoiceRecord := h.only(t, accountingsync.SyncObjectInvoice, inv.ID, accountingsync.SyncOperationCreate)
+	invoiceRecord := h.only(
+		t,
+		accountingsync.SyncObjectInvoice,
+		inv.ID,
+		accountingsync.SyncOperationCreate,
+	)
 	assert.Equal(t, invoiceRecord.ExternalID, docs[0].Applications[0].InvoiceExternalID)
 }
 
@@ -73,7 +93,11 @@ func TestDrainMarksASuccessfulPushSyncedAndRecordsTheAttempt(t *testing.T) {
 	assert.Equal(t, "qb-CreateSalesDocument-1", synced.ExternalID)
 	assert.Equal(t, "QBqb-CreateSalesDocument-1", synced.ExternalDocNumber)
 	assert.Equal(t, "https://qbo.test/Invoice/qb-CreateSalesDocument-1", synced.ExternalURL)
-	assert.Equal(t, "qb-CreateSalesDocument-1", synced.ExternalRefs[accountingsync.ExternalRefDocument])
+	assert.Equal(
+		t,
+		"qb-CreateSalesDocument-1",
+		synced.ExternalRefs[accountingsync.ExternalRefDocument],
+	)
 	assert.Nil(t, synced.NextAttemptAt)
 	assert.Nil(t, synced.LeaseExpiresAt)
 	attempts := h.records.attemptsFor(record.ID)
@@ -97,7 +121,10 @@ func TestTransientFailuresBackOffExponentiallyThenDeadLetter(t *testing.T) {
 			h := newHarness(t)
 			record := h.readyInvoice(t)
 			for range accountingsync.MaxSyncAttempts {
-				h.writer.failNext("CreateSalesDocument", providerFault(category, "Service unavailable", ""))
+				h.writer.failNext(
+					"CreateSalesDocument",
+					providerFault(category, "Service unavailable", ""),
+				)
 			}
 
 			wantDelay := 30 * time.Second
@@ -163,7 +190,11 @@ func TestAuthFailureReportsHealthAndWaitsWithoutSpendingAnAttempt(t *testing.T) 
 
 	h := newHarness(t)
 	record := h.readyInvoice(t)
-	cause := providerFault(accountingsync.SyncErrorAuth, "Token revoked", "Reconnect QuickBooks Online")
+	cause := providerFault(
+		accountingsync.SyncErrorAuth,
+		"Token revoked",
+		"Reconnect QuickBooks Online",
+	)
 	h.writer.failNext("CreateSalesDocument", cause)
 
 	result := h.drain(t)
@@ -249,7 +280,9 @@ func TestBlockedPushRefreshesTheWatchtowerAttention(t *testing.T) {
 		}
 	}
 	require.NotEmpty(t, blockedKey, "the blocked group is projected into the watchtower")
-	item, _ := h.watchtower.item(watchtowersources.AccountingSyncAttentionSourceID(h.conn, blockedKey))
+	item, _ := h.watchtower.item(
+		watchtowersources.AccountingSyncAttentionSourceID(h.conn, blockedKey),
+	)
 	assert.Equal(t, record.ID, item.SubjectID)
 }
 
@@ -272,7 +305,12 @@ func TestPartialWriteKeepsTheExternalRefsForTheReplay(t *testing.T) {
 
 	docs := salesDocs(t, h)
 	require.Len(t, docs, 2)
-	assert.Equal(t, "qb-cm-7", docs[1].Refs["shortPay:qb-inv"], "the retry replays the step already done")
+	assert.Equal(
+		t,
+		"qb-cm-7",
+		docs[1].Refs["shortPay:qb-inv"],
+		"the retry replays the step already done",
+	)
 	assert.Equal(t, docs[0].RequestID, docs[1].RequestID, "the request id is stable across retries")
 }
 

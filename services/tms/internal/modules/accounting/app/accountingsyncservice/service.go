@@ -6,6 +6,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingconnlookup"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingmappingports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingpayablesports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
@@ -46,20 +49,20 @@ type Params struct {
 
 	Logger            *zap.Logger
 	DB                kernelports.Transactor
-	Connections       accountingsyncports.AccountingConnectionRepository
+	Connections       accountingconnectionports.AccountingConnectionRepository
 	Records           accountingsyncports.AccountingSyncRecordRepository
 	Backfills         accountingsyncports.AccountingBackfillRepository
-	Mappings          accountingsyncports.AccountingMappingRepository
-	MappingService    accountingsyncports.AccountingMappingService
-	ConnectionService accountingsyncports.AccountingConnectionService
+	Mappings          accountingmappingports.AccountingMappingRepository
+	MappingService    accountingmappingports.AccountingMappingService
+	ConnectionService accountingconnectionports.AccountingConnectionService
 	Invoices          invoiceports.InvoiceRepository
 	Adjustments       invoiceadjustmentports.InvoiceAdjustmentRepository
 	Payments          customerpaymentports.CustomerPaymentRepository
 	Organizations     tenantports.OrganizationRepository
 	Controls          tenantports.AccountingControlRepository
-	Payables          accountingsyncports.AccountingPayablesSource
+	Payables          accountingpayablesports.AccountingPayablesSource
 	Ledger            journalentryports.AccountingLedgerSource
-	References        accountingsyncports.AccountingReferenceObjectRepository
+	References        accountingmappingports.AccountingReferenceObjectRepository
 	Rates             exchangerateports.ExchangeRateService
 	Policy            *accountingcontrolpolicyservice.Service
 	AuditService      auditports.AuditService
@@ -73,20 +76,20 @@ type Params struct {
 type Service struct {
 	l              *zap.Logger
 	db             kernelports.Transactor
-	connections    accountingsyncports.AccountingConnectionRepository
+	connections    accountingconnectionports.AccountingConnectionRepository
 	records        accountingsyncports.AccountingSyncRecordRepository
 	backfills      accountingsyncports.AccountingBackfillRepository
-	mappings       accountingsyncports.AccountingMappingRepository
-	mappingService accountingsyncports.AccountingMappingService
-	connService    accountingsyncports.AccountingConnectionService
+	mappings       accountingmappingports.AccountingMappingRepository
+	mappingService accountingmappingports.AccountingMappingService
+	connService    accountingconnectionports.AccountingConnectionService
 	invoices       invoiceports.InvoiceRepository
 	adjustments    invoiceadjustmentports.InvoiceAdjustmentRepository
 	payments       customerpaymentports.CustomerPaymentRepository
 	organizations  tenantports.OrganizationRepository
 	controls       tenantports.AccountingControlRepository
-	payables       accountingsyncports.AccountingPayablesSource
+	payables       accountingpayablesports.AccountingPayablesSource
 	ledger         journalentryports.AccountingLedgerSource
-	references     accountingsyncports.AccountingReferenceObjectRepository
+	references     accountingmappingports.AccountingReferenceObjectRepository
 	rates          exchangerateports.ExchangeRateService
 	policy         *accountingcontrolpolicyservice.Service
 	audit          auditports.AuditService
@@ -142,7 +145,7 @@ func (s *Service) connectionByID(
 	tenantInfo pagination.TenantInfo,
 	id pulid.ID,
 ) (*accountingsync.AccountingConnection, error) {
-	return s.connections.GetByID(ctx, accountingsyncports.GetAccountingConnectionByIDRequest{
+	return s.connections.GetByID(ctx, accountingconnectionports.GetAccountingConnectionByIDRequest{
 		TenantInfo: tenantInfo,
 		ID:         id,
 	})

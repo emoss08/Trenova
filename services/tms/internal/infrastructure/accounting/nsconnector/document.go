@@ -7,12 +7,12 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/shared/netsuite"
 	"github.com/shopspring/decimal"
 )
 
-var _ accountingsyncports.AccountingDocumentWriter = (*Connector)(nil)
+var _ accountingconnectorports.AccountingDocumentWriter = (*Connector)(nil)
 
 const (
 	recordInvoice         = "invoice"
@@ -43,8 +43,8 @@ var (
 	errAmountInvalid = errors.New("netsuite: the amount must be positive")
 )
 
-func (c *Connector) DocumentLimits() accountingsyncports.AccountingDocumentLimits {
-	return accountingsyncports.AccountingDocumentLimits{
+func (c *Connector) DocumentLimits() accountingconnectorports.AccountingDocumentLimits {
+	return accountingconnectorports.AccountingDocumentLimits{
 		MaxDocNumberLength:      maxTranIDLength,
 		SupportsDebitMemo:       false,
 		CanVoidCreditMemo:       true,
@@ -54,8 +54,8 @@ func (c *Connector) DocumentLimits() accountingsyncports.AccountingDocumentLimit
 }
 
 func (c *Connector) DocumentURL(
-	auth accountingsyncports.AccountingDocumentAuth,
-	link accountingsyncports.AccountingDocumentLink,
+	auth accountingconnectorports.AccountingDocumentAuth,
+	link accountingconnectorports.AccountingDocumentLink,
 ) string {
 	ref, err := netsuite.ParseCompanyRef(auth.RealmID)
 	if err != nil {
@@ -168,8 +168,8 @@ func salesRecordOf(kind accountingsync.SyncObjectType) (string, error) {
 
 func (c *Connector) UpsertCustomer(
 	ctx context.Context,
-	doc *accountingsyncports.AccountingCustomerDocument,
-) (*accountingsyncports.AccountingDocumentResult, error) {
+	doc *accountingconnectorports.AccountingCustomerDocument,
+) (*accountingconnectorports.AccountingDocumentResult, error) {
 	return c.upsertParty(ctx, &partyWrite{
 		auth:       doc.Auth,
 		kind:       partyCustomer,
@@ -181,8 +181,8 @@ func (c *Connector) UpsertCustomer(
 
 func (c *Connector) CreateSalesDocument(
 	ctx context.Context,
-	doc *accountingsyncports.AccountingSalesDocument,
-) (*accountingsyncports.AccountingDocumentResult, error) {
+	doc *accountingconnectorports.AccountingSalesDocument,
+) (*accountingconnectorports.AccountingDocumentResult, error) {
 	recordType, err := salesRecordOf(doc.Kind)
 	if err != nil {
 		return nil, err
@@ -207,8 +207,8 @@ func (c *Connector) CreateSalesDocument(
 
 func (c *Connector) UpdateSalesDocument(
 	ctx context.Context,
-	doc *accountingsyncports.AccountingSalesDocument,
-) (*accountingsyncports.AccountingDocumentResult, error) {
+	doc *accountingconnectorports.AccountingSalesDocument,
+) (*accountingconnectorports.AccountingDocumentResult, error) {
 	recordType, err := salesRecordOf(doc.Kind)
 	if err != nil {
 		return nil, err
@@ -237,7 +237,7 @@ func (c *Connector) UpdateSalesDocument(
 }
 
 func finishSales(
-	result *accountingsyncports.AccountingDocumentResult,
+	result *accountingconnectorports.AccountingDocumentResult,
 	saved *written,
 	body *transactionBody,
 ) {
@@ -256,7 +256,7 @@ func (c *Connector) salesBody(
 	ctx context.Context,
 	s *session,
 	recordType string,
-	doc *accountingsyncports.AccountingSalesDocument,
+	doc *accountingconnectorports.AccountingSalesDocument,
 ) (*transactionBody, error) {
 	lines, err := salesLines(doc.Lines)
 	if err != nil {
@@ -291,7 +291,7 @@ func (c *Connector) salesBody(
 	return body, nil
 }
 
-func salesLines(lines []accountingsyncports.AccountingDocumentLine) ([]itemLine, error) {
+func salesLines(lines []accountingconnectorports.AccountingDocumentLine) ([]itemLine, error) {
 	if len(lines) == 0 {
 		return nil, errLinesRequired
 	}
@@ -319,7 +319,7 @@ func salesLines(lines []accountingsyncports.AccountingDocumentLine) ([]itemLine,
 }
 
 func lineQuantity(
-	line *accountingsyncports.AccountingDocumentLine,
+	line *accountingconnectorports.AccountingDocumentLine,
 ) (quantity, rate decimal.Decimal) {
 	if line.Quantity.IsPositive() && !line.UnitPrice.IsNegative() &&
 		sameMoney(line.Quantity.Mul(line.UnitPrice), line.Amount) {
@@ -330,8 +330,8 @@ func lineQuantity(
 
 func (c *Connector) VoidSalesDocument(
 	ctx context.Context,
-	ref *accountingsyncports.AccountingDocumentRef,
-) (*accountingsyncports.AccountingDocumentResult, error) {
+	ref *accountingconnectorports.AccountingDocumentRef,
+) (*accountingconnectorports.AccountingDocumentResult, error) {
 	recordType, err := salesRecordOf(ref.Kind)
 	if err != nil {
 		return nil, err

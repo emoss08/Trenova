@@ -10,12 +10,12 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/shared/quickbooks"
 	"github.com/shopspring/decimal"
 )
 
-var _ accountingsyncports.AccountingDocumentWriter = (*Connector)(nil)
+var _ accountingconnectorports.AccountingDocumentWriter = (*Connector)(nil)
 
 const (
 	providerName        = "QuickBooks Online"
@@ -27,8 +27,8 @@ const (
 
 var errDocumentKind = errors.New("quickbooks: this record type is not a document QuickBooks holds")
 
-func (c *Connector) DocumentLimits() accountingsyncports.AccountingDocumentLimits {
-	return accountingsyncports.AccountingDocumentLimits{
+func (c *Connector) DocumentLimits() accountingconnectorports.AccountingDocumentLimits {
+	return accountingconnectorports.AccountingDocumentLimits{
 		MaxDocNumberLength:      quickbooks.MaxDocNumberLength,
 		SupportsDebitMemo:       false,
 		CanVoidCreditMemo:       false,
@@ -37,8 +37,8 @@ func (c *Connector) DocumentLimits() accountingsyncports.AccountingDocumentLimit
 }
 
 func (c *Connector) DocumentURL(
-	_ accountingsyncports.AccountingDocumentAuth,
-	link accountingsyncports.AccountingDocumentLink,
+	_ accountingconnectorports.AccountingDocumentAuth,
+	link accountingconnectorports.AccountingDocumentLink,
 ) string {
 	externalID := link.ExternalID
 	var path string
@@ -74,15 +74,15 @@ func (c *Connector) appURL(path, externalID string) string {
 }
 
 func (c *Connector) client(
-	auth accountingsyncports.AccountingDocumentAuth,
+	auth accountingconnectorports.AccountingDocumentAuth,
 ) (*quickbooks.Client, error) {
 	return quickbooks.New(c.env, auth.RealmID, auth.AccessToken, c.apiOpts...)
 }
 
 func (c *Connector) UpsertCustomer(
 	ctx context.Context,
-	doc *accountingsyncports.AccountingCustomerDocument,
-) (*accountingsyncports.AccountingDocumentResult, error) {
+	doc *accountingconnectorports.AccountingCustomerDocument,
+) (*accountingconnectorports.AccountingDocumentResult, error) {
 	client, err := c.client(doc.Auth)
 	if err != nil {
 		return nil, err
@@ -99,7 +99,7 @@ func (c *Connector) UpsertCustomer(
 	if err != nil {
 		return nil, err
 	}
-	return &accountingsyncports.AccountingDocumentResult{
+	return &accountingconnectorports.AccountingDocumentResult{
 		ExternalID: saved.ID,
 		DocNumber:  saved.Name,
 	}, nil
@@ -107,8 +107,8 @@ func (c *Connector) UpsertCustomer(
 
 func (c *Connector) CreateSalesDocument(
 	ctx context.Context,
-	doc *accountingsyncports.AccountingSalesDocument,
-) (*accountingsyncports.AccountingDocumentResult, error) {
+	doc *accountingconnectorports.AccountingSalesDocument,
+) (*accountingconnectorports.AccountingDocumentResult, error) {
 	client, err := c.client(doc.Auth)
 	if err != nil {
 		return nil, err
@@ -184,7 +184,7 @@ func (c *Connector) CreateSalesDocument(
 	return result, nil
 }
 
-func salesTxnOf(doc *accountingsyncports.AccountingSalesDocument) *quickbooks.SalesTxn {
+func salesTxnOf(doc *accountingconnectorports.AccountingSalesDocument) *quickbooks.SalesTxn {
 	note := doc.PrivateNote
 	if doc.Kind == accountingsync.SyncObjectDebitMemo {
 		note = strings.TrimSpace(debitMemoNotePrefix + ". " + note)
@@ -221,8 +221,8 @@ func salesTxnOf(doc *accountingsyncports.AccountingSalesDocument) *quickbooks.Sa
 
 func (c *Connector) VoidSalesDocument(
 	ctx context.Context,
-	ref *accountingsyncports.AccountingDocumentRef,
-) (*accountingsyncports.AccountingDocumentResult, error) {
+	ref *accountingconnectorports.AccountingDocumentRef,
+) (*accountingconnectorports.AccountingDocumentResult, error) {
 	client, err := c.client(ref.Auth)
 	if err != nil {
 		return nil, err
@@ -269,8 +269,8 @@ func (c *Connector) VoidSalesDocument(
 
 func (c *Connector) SavePayment(
 	ctx context.Context,
-	doc *accountingsyncports.AccountingPaymentDocument,
-) (*accountingsyncports.AccountingDocumentResult, error) {
+	doc *accountingconnectorports.AccountingPaymentDocument,
+) (*accountingconnectorports.AccountingDocumentResult, error) {
 	client, err := c.client(doc.Auth)
 	if err != nil {
 		return nil, err
@@ -326,16 +326,16 @@ func (c *Connector) SavePayment(
 	return result, nil
 }
 
-func shortPayRefKey(app *accountingsyncports.AccountingPaymentApplication) string {
+func shortPayRefKey(app *accountingconnectorports.AccountingPaymentApplication) string {
 	return accountingsync.ExternalRefShortPayPrefix + app.InvoiceExternalID
 }
 
 func (c *Connector) shortPayMemo(
 	ctx context.Context,
 	client *quickbooks.Client,
-	doc *accountingsyncports.AccountingPaymentDocument,
+	doc *accountingconnectorports.AccountingPaymentDocument,
 	idx int,
-	result *accountingsyncports.AccountingDocumentResult,
+	result *accountingconnectorports.AccountingDocumentResult,
 ) (string, error) {
 	app := &doc.Applications[idx]
 	if id := strings.TrimSpace(app.ShortPayCreditExternalID); id != "" {
@@ -379,8 +379,8 @@ func (c *Connector) shortPayMemo(
 
 func (c *Connector) VoidPayment(
 	ctx context.Context,
-	ref *accountingsyncports.AccountingDocumentRef,
-) (*accountingsyncports.AccountingDocumentResult, error) {
+	ref *accountingconnectorports.AccountingDocumentRef,
+) (*accountingconnectorports.AccountingDocumentResult, error) {
 	client, err := c.client(ref.Auth)
 	if err != nil {
 		return nil, err
@@ -412,8 +412,8 @@ func (c *Connector) VoidPayment(
 
 func (c *Connector) CreateCreditApplication(
 	ctx context.Context,
-	doc *accountingsyncports.AccountingCreditApplicationDocument,
-) (*accountingsyncports.AccountingDocumentResult, error) {
+	doc *accountingconnectorports.AccountingCreditApplicationDocument,
+) (*accountingconnectorports.AccountingDocumentResult, error) {
 	client, err := c.client(doc.Auth)
 	if err != nil {
 		return nil, err
@@ -441,7 +441,7 @@ func (c *Connector) CreateCreditApplication(
 	if err != nil {
 		return nil, err
 	}
-	return &accountingsyncports.AccountingDocumentResult{
+	return &accountingconnectorports.AccountingDocumentResult{
 		ExternalID: applied.ID,
 		Refs:       map[string]string{accountingsync.ExternalRefDocument: applied.ID},
 	}, nil
@@ -449,8 +449,8 @@ func (c *Connector) CreateCreditApplication(
 
 func (c *Connector) VoidCreditApplication(
 	ctx context.Context,
-	ref *accountingsyncports.AccountingDocumentRef,
-) (*accountingsyncports.AccountingDocumentResult, error) {
+	ref *accountingconnectorports.AccountingDocumentRef,
+) (*accountingconnectorports.AccountingDocumentResult, error) {
 	client, err := c.client(ref.Auth)
 	if err != nil {
 		return nil, err
@@ -459,7 +459,7 @@ func (c *Connector) VoidCreditApplication(
 		!quickbooks.IsObjectNotFound(err) {
 		return nil, err
 	}
-	return &accountingsyncports.AccountingDocumentResult{
+	return &accountingconnectorports.AccountingDocumentResult{
 		ExternalID: ref.ExternalID,
 		Refs:       map[string]string{},
 	}, nil
@@ -467,8 +467,8 @@ func (c *Connector) VoidCreditApplication(
 
 func (c *Connector) FindDocument(
 	ctx context.Context,
-	req *accountingsyncports.AccountingFindDocumentRequest,
-) (*accountingsyncports.AccountingDocumentResult, bool, error) {
+	req *accountingconnectorports.AccountingFindDocumentRequest,
+) (*accountingconnectorports.AccountingDocumentResult, bool, error) {
 	var kind quickbooks.TxnKind
 	switch req.Kind {
 	case accountingsync.SyncObjectInvoice, accountingsync.SyncObjectDebitMemo:
@@ -496,7 +496,7 @@ func (c *Connector) FindDocument(
 	if err != nil || !ok {
 		return nil, false, err
 	}
-	return &accountingsyncports.AccountingDocumentResult{
+	return &accountingconnectorports.AccountingDocumentResult{
 		ExternalID: found.ID,
 		DocNumber:  found.DocNumber,
 		Refs:       map[string]string{},
@@ -618,8 +618,8 @@ func truncateMessage(message string) string {
 	return string(runes[:maxFaultMessage])
 }
 
-func newResult(refs map[string]string) *accountingsyncports.AccountingDocumentResult {
+func newResult(refs map[string]string) *accountingconnectorports.AccountingDocumentResult {
 	copied := make(map[string]string, len(refs)+2)
 	maps.Copy(copied, refs)
-	return &accountingsyncports.AccountingDocumentResult{Refs: copied}
+	return &accountingconnectorports.AccountingDocumentResult{Refs: copied}
 }

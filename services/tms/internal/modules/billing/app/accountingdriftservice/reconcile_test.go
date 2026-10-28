@@ -7,7 +7,8 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingdriftports"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -17,8 +18,8 @@ import (
 func TestCompareRaisesTheKindEachDifferenceIs(t *testing.T) {
 	t.Parallel()
 
-	found := func(total string, voided bool) *accountingsyncports.AccountingDocumentState {
-		return &accountingsyncports.AccountingDocumentState{
+	found := func(total string, voided bool) *accountingconnectorports.AccountingDocumentState {
+		return &accountingconnectorports.AccountingDocumentState{
 			ExternalID: "9",
 			Found:      true,
 			Voided:     voided,
@@ -28,21 +29,21 @@ func TestCompareRaisesTheKindEachDifferenceIs(t *testing.T) {
 	cases := []struct {
 		name       string
 		objectType accountingsync.SyncObjectType
-		trenova    accountingsyncports.AccountingDriftState
-		provider   *accountingsyncports.AccountingDocumentState
+		trenova    accountingdriftports.AccountingDriftState
+		provider   *accountingconnectorports.AccountingDocumentState
 		kind       accountingsync.DriftKind
 		differs    bool
 	}{
 		{
 			name:       "same total",
 			objectType: accountingsync.SyncObjectInvoice,
-			trenova:    accountingsyncports.AccountingDriftState{AmountMinor: 125_000},
+			trenova:    accountingdriftports.AccountingDriftState{AmountMinor: 125_000},
 			provider:   found("1250.00", false),
 		},
 		{
 			name:       "provider total edited",
 			objectType: accountingsync.SyncObjectInvoice,
-			trenova:    accountingsyncports.AccountingDriftState{AmountMinor: 125_000},
+			trenova:    accountingdriftports.AccountingDriftState{AmountMinor: 125_000},
 			provider:   found("1200.00", false),
 			kind:       accountingsync.DriftAmountMismatch,
 			differs:    true,
@@ -50,13 +51,13 @@ func TestCompareRaisesTheKindEachDifferenceIs(t *testing.T) {
 		{
 			name:       "credit memo compares absolute totals",
 			objectType: accountingsync.SyncObjectCreditMemo,
-			trenova:    accountingsyncports.AccountingDriftState{AmountMinor: 5_000},
+			trenova:    accountingdriftports.AccountingDriftState{AmountMinor: 5_000},
 			provider:   found("-50.00", false),
 		},
 		{
 			name:       "a reflected memo already brought Trenova to the provider's total",
 			objectType: accountingsync.SyncObjectInvoice,
-			trenova: accountingsyncports.AccountingDriftState{
+			trenova: accountingdriftports.AccountingDriftState{
 				AmountMinor:    125_000,
 				ReflectedMinor: -5_000,
 			},
@@ -65,21 +66,24 @@ func TestCompareRaisesTheKindEachDifferenceIs(t *testing.T) {
 		{
 			name:       "deleted in the provider",
 			objectType: accountingsync.SyncObjectInvoice,
-			trenova:    accountingsyncports.AccountingDriftState{AmountMinor: 125_000},
-			provider:   &accountingsyncports.AccountingDocumentState{ExternalID: "9"},
+			trenova:    accountingdriftports.AccountingDriftState{AmountMinor: 125_000},
+			provider:   &accountingconnectorports.AccountingDocumentState{ExternalID: "9"},
 			kind:       accountingsync.DriftDeletedInProvider,
 			differs:    true,
 		},
 		{
 			name:       "deleted in the provider after Trenova voided it",
 			objectType: accountingsync.SyncObjectInvoice,
-			trenova:    accountingsyncports.AccountingDriftState{AmountMinor: 125_000, Voided: true},
-			provider:   &accountingsyncports.AccountingDocumentState{ExternalID: "9"},
+			trenova: accountingdriftports.AccountingDriftState{
+				AmountMinor: 125_000,
+				Voided:      true,
+			},
+			provider: &accountingconnectorports.AccountingDocumentState{ExternalID: "9"},
 		},
 		{
 			name:       "voided in the provider",
 			objectType: accountingsync.SyncObjectCustomerPayment,
-			trenova:    accountingsyncports.AccountingDriftState{AmountMinor: 40_000},
+			trenova:    accountingdriftports.AccountingDriftState{AmountMinor: 40_000},
 			provider:   found("400.00", true),
 			kind:       accountingsync.DriftVoidedInProvider,
 			differs:    true,
@@ -87,21 +91,27 @@ func TestCompareRaisesTheKindEachDifferenceIs(t *testing.T) {
 		{
 			name:       "voided on both sides",
 			objectType: accountingsync.SyncObjectCustomerPayment,
-			trenova:    accountingsyncports.AccountingDriftState{AmountMinor: 40_000, Voided: true},
-			provider:   found("0", true),
+			trenova: accountingdriftports.AccountingDriftState{
+				AmountMinor: 40_000,
+				Voided:      true,
+			},
+			provider: found("0", true),
 		},
 		{
 			name:       "voided in Trenova, live in the provider",
 			objectType: accountingsync.SyncObjectCarrierBill,
-			trenova:    accountingsyncports.AccountingDriftState{AmountMinor: 90_000, Voided: true},
-			provider:   found("900.00", false),
-			kind:       accountingsync.DriftStatusMismatch,
-			differs:    true,
+			trenova: accountingdriftports.AccountingDriftState{
+				AmountMinor: 90_000,
+				Voided:      true,
+			},
+			provider: found("900.00", false),
+			kind:     accountingsync.DriftStatusMismatch,
+			differs:  true,
 		},
 		{
 			name:       "a credit application has no amount to compare",
 			objectType: accountingsync.SyncObjectCreditApplication,
-			trenova:    accountingsyncports.AccountingDriftState{AmountMinor: 2_500},
+			trenova:    accountingdriftports.AccountingDriftState{AmountMinor: 2_500},
 			provider:   found("0", false),
 		},
 	}
@@ -305,21 +315,27 @@ func TestReconcilePagesByTheLastRecord(t *testing.T) {
 		h.synced(accountingsync.SyncObjectInvoice, id, 10_000)
 		h.provider(accountingsync.SyncObjectInvoice, id, "100.00")
 	}
-	first, err := h.svc.ReconcileBatch(t.Context(), &accountingsyncports.ReconcileAccountingDriftRequest{
-		TenantInfo:   h.tenant,
-		ConnectionID: h.conn.ID,
-		Limit:        2,
-	})
+	first, err := h.svc.ReconcileBatch(
+		t.Context(),
+		&accountingdriftports.ReconcileAccountingDriftRequest{
+			TenantInfo:   h.tenant,
+			ConnectionID: h.conn.ID,
+			Limit:        2,
+		},
+	)
 	require.NoError(t, err)
 	assert.True(t, first.More)
 	assert.Equal(t, h.source.records[1].ID, first.LastID)
 
-	second, err := h.svc.ReconcileBatch(t.Context(), &accountingsyncports.ReconcileAccountingDriftRequest{
-		TenantInfo:   h.tenant,
-		ConnectionID: h.conn.ID,
-		AfterID:      first.LastID,
-		Limit:        2,
-	})
+	second, err := h.svc.ReconcileBatch(
+		t.Context(),
+		&accountingdriftports.ReconcileAccountingDriftRequest{
+			TenantInfo:   h.tenant,
+			ConnectionID: h.conn.ID,
+			AfterID:      first.LastID,
+			Limit:        2,
+		},
+	)
 	require.NoError(t, err)
 	assert.False(t, second.More)
 	assert.Equal(t, 1, second.Compared)
@@ -333,11 +349,14 @@ func TestReconcileCapsEventsAtTheBudget(t *testing.T) {
 		h.synced(accountingsync.SyncObjectInvoice, id, 10_000)
 		h.provider(accountingsync.SyncObjectInvoice, id, "90.00")
 	}
-	result, err := h.svc.ReconcileBatch(t.Context(), &accountingsyncports.ReconcileAccountingDriftRequest{
-		TenantInfo:   h.tenant,
-		ConnectionID: h.conn.ID,
-		EventBudget:  2,
-	})
+	result, err := h.svc.ReconcileBatch(
+		t.Context(),
+		&accountingdriftports.ReconcileAccountingDriftRequest{
+			TenantInfo:   h.tenant,
+			ConnectionID: h.conn.ID,
+			EventBudget:  2,
+		},
+	)
 	require.NoError(t, err)
 
 	assert.Equal(t, 3, result.Opened)
@@ -377,10 +396,13 @@ func TestReconcileRecordsAProviderReadFailure(t *testing.T) {
 	h.synced(accountingsync.SyncObjectInvoice, "101", 125_000)
 	h.reader.failWith = errors.New("401 unauthorized")
 
-	_, err := h.svc.ReconcileBatch(t.Context(), &accountingsyncports.ReconcileAccountingDriftRequest{
-		TenantInfo:   h.tenant,
-		ConnectionID: h.conn.ID,
-	})
+	_, err := h.svc.ReconcileBatch(
+		t.Context(),
+		&accountingdriftports.ReconcileAccountingDriftRequest{
+			TenantInfo:   h.tenant,
+			ConnectionID: h.conn.ID,
+		},
+	)
 
 	require.Error(t, err)
 	conn := h.conns.current()
@@ -396,18 +418,21 @@ func TestRecheckComparesTheDocumentAChangeNames(t *testing.T) {
 	h.synced(accountingsync.SyncObjectInvoice, "102", 50_000)
 	h.provider(accountingsync.SyncObjectInvoice, "102", "400.00")
 
-	result, err := h.svc.RecheckDocuments(t.Context(), &accountingsyncports.RecheckAccountingDriftRequest{
-		TenantInfo:   h.tenant,
-		ConnectionID: h.conn.ID,
-		Documents: []accountingsyncports.AccountingChangedDocument{{
-			ObjectTypes: []accountingsync.SyncObjectType{
-				accountingsync.SyncObjectInvoice,
-				accountingsync.SyncObjectDebitMemo,
-			},
-			ExternalID: "101",
-		}},
-		EventBudget: 20,
-	})
+	result, err := h.svc.RecheckDocuments(
+		t.Context(),
+		&accountingdriftports.RecheckAccountingDriftRequest{
+			TenantInfo:   h.tenant,
+			ConnectionID: h.conn.ID,
+			Documents: []accountingconnectorports.AccountingChangedDocument{{
+				ObjectTypes: []accountingsync.SyncObjectType{
+					accountingsync.SyncObjectInvoice,
+					accountingsync.SyncObjectDebitMemo,
+				},
+				ExternalID: "101",
+			}},
+			EventBudget: 20,
+		},
+	)
 	require.NoError(t, err)
 
 	assert.Equal(t, 1, result.Compared)
@@ -437,15 +462,18 @@ func TestRecheckComparesTheRecreatedDocumentNotTheDeletedOne(t *testing.T) {
 	h.records.add(recreate)
 	h.provider(accountingsync.SyncObjectInvoice, "150", "1250.00")
 
-	result, err := h.svc.RecheckDocuments(t.Context(), &accountingsyncports.RecheckAccountingDriftRequest{
-		TenantInfo:   h.tenant,
-		ConnectionID: h.conn.ID,
-		Documents: []accountingsyncports.AccountingChangedDocument{{
-			ObjectTypes: []accountingsync.SyncObjectType{accountingsync.SyncObjectInvoice},
-			ExternalID:  "101",
-			Operation:   accountingsyncports.AccountingChangeDelete,
-		}},
-	})
+	result, err := h.svc.RecheckDocuments(
+		t.Context(),
+		&accountingdriftports.RecheckAccountingDriftRequest{
+			TenantInfo:   h.tenant,
+			ConnectionID: h.conn.ID,
+			Documents: []accountingconnectorports.AccountingChangedDocument{{
+				ObjectTypes: []accountingsync.SyncObjectType{accountingsync.SyncObjectInvoice},
+				ExternalID:  "101",
+				Operation:   accountingconnectorports.AccountingChangeDelete,
+			}},
+		},
+	)
 	require.NoError(t, err)
 
 	assert.Equal(t, 1, result.Compared)
@@ -459,10 +487,13 @@ func TestFinishCheckStampsTheConnection(t *testing.T) {
 	h := newHarness(t)
 	h.conn.DriftErrorMessage = "earlier failure"
 
-	require.NoError(t, h.svc.FinishCheck(t.Context(), &accountingsyncports.FinishAccountingDriftCheckRequest{
-		TenantInfo:   h.tenant,
-		ConnectionID: h.conn.ID,
-	}))
+	require.NoError(
+		t,
+		h.svc.FinishCheck(t.Context(), &accountingdriftports.FinishAccountingDriftCheckRequest{
+			TenantInfo:   h.tenant,
+			ConnectionID: h.conn.ID,
+		}),
+	)
 
 	conn := h.conns.current()
 	require.NotNil(t, conn.DriftCheckedAt)
@@ -476,10 +507,13 @@ func TestAReadFailureMessageIsKeptToItsLimit(t *testing.T) {
 	h.synced(accountingsync.SyncObjectInvoice, "101", 125_000)
 	h.reader.failWith = errors.New(strings.Repeat("x", 5000))
 
-	_, err := h.svc.ReconcileBatch(t.Context(), &accountingsyncports.ReconcileAccountingDriftRequest{
-		TenantInfo:   h.tenant,
-		ConnectionID: h.conn.ID,
-	})
+	_, err := h.svc.ReconcileBatch(
+		t.Context(),
+		&accountingdriftports.ReconcileAccountingDriftRequest{
+			TenantInfo:   h.tenant,
+			ConnectionID: h.conn.ID,
+		},
+	)
 
 	require.Error(t, err)
 	assert.Less(t, len(h.conns.current().DriftErrorMessage), 5000)

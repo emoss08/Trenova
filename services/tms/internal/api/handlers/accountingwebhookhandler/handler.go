@@ -7,7 +7,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/fx"
@@ -18,14 +19,14 @@ const maxWebhookBodyBytes = 1 << 20
 type Params struct {
 	fx.In
 
-	Service      accountingsyncports.AccountingConnectionService
-	Connectors   accountingsyncports.AccountingConnectorRegistry
+	Service      accountingconnectionports.AccountingConnectionService
+	Connectors   accountingconnectorports.AccountingConnectorRegistry
 	ErrorHandler *helpers.ErrorHandler
 }
 
 type Handler struct {
-	service    accountingsyncports.AccountingConnectionService
-	connectors accountingsyncports.AccountingConnectorRegistry
+	service    accountingconnectionports.AccountingConnectionService
+	connectors accountingconnectorports.AccountingConnectorRegistry
 	eh         *helpers.ErrorHandler
 }
 
@@ -48,7 +49,7 @@ func (h *Handler) RegisterPublicRoutes(rg *gin.RouterGroup) {
 
 func (h *Handler) resolve(
 	c *gin.Context,
-) (*accountingsync.ProviderProfile, accountingsyncports.AccountingProvider, bool) {
+) (*accountingsync.ProviderProfile, accountingconnectorports.AccountingProvider, bool) {
 	profile, ok := accountingsync.ProfileByWebhookSlug(strings.ToLower(c.Param("provider")))
 	if !ok {
 		return nil, nil, false
@@ -74,13 +75,13 @@ func (h *Handler) handshake(c *gin.Context) {
 func (h *Handler) answerHandshake(
 	c *gin.Context,
 	profile *accountingsync.ProviderProfile,
-	provider accountingsyncports.AccountingProvider,
+	provider accountingconnectorports.AccountingProvider,
 ) bool {
 	raw, present := c.GetQuery(validationTokenParam)
 	if !present || !profile.WebhookSubscriptions {
 		return false
 	}
-	subscribing, ok := provider.(accountingsyncports.AccountingSubscriptionProvider)
+	subscribing, ok := provider.(accountingconnectorports.AccountingSubscriptionProvider)
 	if !ok {
 		return false
 	}
@@ -118,7 +119,7 @@ func (h *Handler) receive(c *gin.Context) {
 
 	err = h.service.ReceiveWebhook(
 		c.Request.Context(),
-		&accountingsyncports.ReceiveAccountingWebhookRequest{
+		&accountingconnectionports.ReceiveAccountingWebhookRequest{
 			IntegrationType: typ,
 			AppID:           c.Param("app"),
 			Signature:       c.GetHeader(provider.WebhookSignatureHeader()),

@@ -7,7 +7,8 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
@@ -21,13 +22,13 @@ func newFakeCertificates() *fakeCertificates {
 	return &fakeCertificates{rows: map[string]*accountingsync.AccountingPendingCertificate{}}
 }
 
-func certificateKey(req accountingsyncports.GetAccountingConnectionRequest) string {
+func certificateKey(req accountingconnectionports.GetAccountingConnectionRequest) string {
 	return integrationKey(req.TenantInfo, req.IntegrationType)
 }
 
 func (f *fakeCertificates) GetByType(
 	_ context.Context,
-	req accountingsyncports.GetAccountingConnectionRequest,
+	req accountingconnectionports.GetAccountingConnectionRequest,
 ) (*accountingsync.AccountingPendingCertificate, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -46,7 +47,7 @@ func (f *fakeCertificates) Replace(
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	clone := *entity
-	f.rows[certificateKey(accountingsyncports.GetAccountingConnectionRequest{
+	f.rows[certificateKey(accountingconnectionports.GetAccountingConnectionRequest{
 		TenantInfo:      pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID},
 		IntegrationType: entity.IntegrationType,
 	})] = &clone
@@ -55,7 +56,7 @@ func (f *fakeCertificates) Replace(
 
 func (f *fakeCertificates) Delete(
 	_ context.Context,
-	req accountingsyncports.GetAccountingConnectionRequest,
+	req accountingconnectionports.GetAccountingConnectionRequest,
 ) error {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -86,7 +87,7 @@ type fakeClientCredentials struct {
 	preparedKeys   []string
 	assertions     []certificateCall
 	assertionErrs  []error
-	assertionGrant *accountingsyncports.AccountingTokenGrant
+	assertionGrant *accountingconnectorports.AccountingTokenGrant
 	expiresAt      time.Time
 }
 
@@ -100,14 +101,14 @@ func (f *fakeConnector) NormalizeAccountID(raw string) (string, error) {
 
 func (f *fakeConnector) PrepareCertificate(
 	subject string,
-) (*accountingsyncports.AccountingCertificate, error) {
+) (*accountingconnectorports.AccountingCertificate, error) {
 	cc := f.clientCredentials()
 	cc.mu.Lock()
 	defer cc.mu.Unlock()
 	cc.subjects = append(cc.subjects, subject)
 	key := testPrivateKeyPEM + subject
 	cc.preparedKeys = append(cc.preparedKeys, key)
-	return &accountingsyncports.AccountingCertificate{
+	return &accountingconnectorports.AccountingCertificate{
 		PrivateKeyPEM:  []byte(key),
 		CertificatePEM: []byte(testCertificatePEM),
 		ExpiresAt:      cc.expiresAt,
@@ -116,8 +117,8 @@ func (f *fakeConnector) PrepareCertificate(
 
 func (f *fakeConnector) TokenFromCertificate(
 	_ context.Context,
-	grant *accountingsyncports.AccountingCertificateGrant,
-) (*accountingsyncports.AccountingTokenGrant, error) {
+	grant *accountingconnectorports.AccountingCertificateGrant,
+) (*accountingconnectorports.AccountingTokenGrant, error) {
 	cc := f.clientCredentials()
 	cc.mu.Lock()
 	defer cc.mu.Unlock()
@@ -142,7 +143,7 @@ func (f *fakeConnector) clientCredentials() *fakeClientCredentials {
 	defer f.mu.Unlock()
 	if f.cc == nil {
 		f.cc = &fakeClientCredentials{
-			assertionGrant: &accountingsyncports.AccountingTokenGrant{
+			assertionGrant: &accountingconnectorports.AccountingTokenGrant{
 				AccessToken:    "cert-access",
 				AccessTokenTTL: time.Hour,
 			},

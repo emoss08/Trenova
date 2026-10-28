@@ -1,4 +1,4 @@
-package accountingsyncports
+package accountingmappingports
 
 import (
 	"testing"
@@ -17,18 +17,34 @@ func TestSetAccountingMappingRequestValidateTarget(t *testing.T) {
 		req   SetAccountingMappingRequest
 		valid bool
 	}{
-		{name: "by mapping id", req: SetAccountingMappingRequest{MappingID: pulid.MustNew("acctm_")}, valid: true},
-		{name: "nothing named", req: SetAccountingMappingRequest{}},
-		{name: "unknown target type", req: SetAccountingMappingRequest{TargetType: "Bogus", TrenovaKey: "ARAccount"}},
 		{
-			name:  "record target by id",
-			req:   SetAccountingMappingRequest{TargetType: accountingsync.TargetCustomer, TrenovaObjectID: recordID},
+			name:  "by mapping id",
+			req:   SetAccountingMappingRequest{MappingID: pulid.MustNew("acctm_")},
 			valid: true,
 		},
-		{name: "record target without id", req: SetAccountingMappingRequest{TargetType: accountingsync.TargetCustomer}},
+		{name: "nothing named", req: SetAccountingMappingRequest{}},
+		{
+			name: "unknown target type",
+			req:  SetAccountingMappingRequest{TargetType: "Bogus", TrenovaKey: "ARAccount"},
+		},
+		{
+			name: "record target by id",
+			req: SetAccountingMappingRequest{
+				TargetType:      accountingsync.TargetCustomer,
+				TrenovaObjectID: recordID,
+			},
+			valid: true,
+		},
+		{
+			name: "record target without id",
+			req:  SetAccountingMappingRequest{TargetType: accountingsync.TargetCustomer},
+		},
 		{
 			name: "record target by key",
-			req:  SetAccountingMappingRequest{TargetType: accountingsync.TargetCarrier, TrenovaKey: "Net30"},
+			req: SetAccountingMappingRequest{
+				TargetType: accountingsync.TargetCarrier,
+				TrenovaKey: "Net30",
+			},
 		},
 		{
 			name: "record target with both",
@@ -48,7 +64,10 @@ func TestSetAccountingMappingRequestValidateTarget(t *testing.T) {
 		},
 		{
 			name: "keyed target with a foreign key",
-			req:  SetAccountingMappingRequest{TargetType: accountingsync.TargetPaymentTerm, TrenovaKey: "ACH"},
+			req: SetAccountingMappingRequest{
+				TargetType: accountingsync.TargetPaymentTerm,
+				TrenovaKey: "ACH",
+			},
 		},
 		{
 			name: "keyed target with a record id",

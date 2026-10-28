@@ -5,12 +5,12 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/shared/businesscentral"
 	"github.com/google/uuid"
 )
 
-var _ accountingsyncports.AccountingDocumentReader = (*Connector)(nil)
+var _ accountingconnectorports.AccountingDocumentReader = (*Connector)(nil)
 
 const (
 	guidLength        = 36
@@ -24,15 +24,15 @@ var readOrder = []businesscentral.DocumentKind{
 	businesscentral.DocumentPurchaseCreditMemo,
 }
 
-func (c *Connector) DocumentReadLimits() accountingsyncports.AccountingDocumentReadLimits {
-	return accountingsyncports.AccountingDocumentReadLimits{
+func (c *Connector) DocumentReadLimits() accountingconnectorports.AccountingDocumentReadLimits {
+	return accountingconnectorports.AccountingDocumentReadLimits{
 		MaxPerRead: businesscentral.MaxIDsPerRead,
 	}
 }
 
 func readKindOf(
 	kind accountingsync.SyncObjectType,
-	target *accountingsyncports.AccountingDocumentTarget,
+	target *accountingconnectorports.AccountingDocumentTarget,
 ) (businesscentral.DocumentKind, bool, error) {
 	switch {
 	case kind.IsSalesDocument():
@@ -55,8 +55,8 @@ func readKindOf(
 
 func (c *Connector) ReadDocuments(
 	ctx context.Context,
-	req *accountingsyncports.ReadAccountingDocumentsRequest,
-) ([]*accountingsyncports.AccountingDocumentState, error) {
+	req *accountingconnectorports.ReadAccountingDocumentsRequest,
+) ([]*accountingconnectorports.AccountingDocumentState, error) {
 	plan := make(map[businesscentral.DocumentKind][]string, len(readOrder))
 	for idx := range req.Targets {
 		target := &req.Targets[idx]
@@ -71,13 +71,13 @@ func (c *Connector) ReadDocuments(
 		plan[kind] = append(plan[kind], id)
 	}
 	if len(plan) == 0 {
-		return []*accountingsyncports.AccountingDocumentState{}, nil
+		return []*accountingconnectorports.AccountingDocumentState{}, nil
 	}
 	client, err := c.client(req.Auth)
 	if err != nil {
 		return nil, err
 	}
-	out := make([]*accountingsyncports.AccountingDocumentState, 0, len(req.Targets))
+	out := make([]*accountingconnectorports.AccountingDocumentState, 0, len(req.Targets))
 	for _, kind := range readOrder {
 		states, readErr := readStates(ctx, client, kind, plan[kind])
 		if readErr != nil {
@@ -93,7 +93,7 @@ func readStates(
 	client *businesscentral.Client,
 	kind businesscentral.DocumentKind,
 	ids []string,
-) ([]*accountingsyncports.AccountingDocumentState, error) {
+) ([]*accountingconnectorports.AccountingDocumentState, error) {
 	valid := make([]string, 0, len(ids))
 	for _, id := range ids {
 		if readableID(id) {
@@ -114,9 +114,9 @@ func readStates(
 			found[strings.ToLower(docs[idx].ID)] = &docs[idx]
 		}
 	}
-	out := make([]*accountingsyncports.AccountingDocumentState, 0, len(ids))
+	out := make([]*accountingconnectorports.AccountingDocumentState, 0, len(ids))
 	for _, id := range ids {
-		state := &accountingsyncports.AccountingDocumentState{ExternalID: id}
+		state := &accountingconnectorports.AccountingDocumentState{ExternalID: id}
 		if doc, ok := found[strings.ToLower(id)]; ok {
 			balance := doc.RemainingAmount
 			state.Found = true

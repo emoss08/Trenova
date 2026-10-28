@@ -7,13 +7,13 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/shared/netsuite"
 )
 
 var (
-	_ accountingsyncports.AccountingReferenceReader  = (*Connector)(nil)
-	_ accountingsyncports.AccountingReferenceCreator = (*Connector)(nil)
+	_ accountingconnectorports.AccountingReferenceReader  = (*Connector)(nil)
+	_ accountingconnectorports.AccountingReferenceCreator = (*Connector)(nil)
 )
 
 const (
@@ -91,10 +91,10 @@ func (c *Connector) MaxReferencePageSize() int {
 
 func (c *Connector) ListReference(
 	ctx context.Context,
-	req *accountingsyncports.AccountingReferencePageRequest,
-) (*accountingsyncports.AccountingReferencePage, error) {
+	req *accountingconnectorports.AccountingReferencePageRequest,
+) (*accountingconnectorports.AccountingReferencePage, error) {
 	if req.Kind == accountingsync.ReferenceKindPaymentMethod {
-		return &accountingsyncports.AccountingReferencePage{
+		return &accountingconnectorports.AccountingReferencePage{
 			Objects: []*accountingsync.AccountingReferenceObject{},
 		}, nil
 	}
@@ -102,7 +102,7 @@ func (c *Connector) ListReference(
 	if err != nil {
 		return nil, err
 	}
-	s, err := c.open(accountingsyncports.AccountingDocumentAuth{
+	s, err := c.open(accountingconnectorports.AccountingDocumentAuth{
 		RealmID:     req.RealmID,
 		AccessToken: req.AccessToken,
 	})
@@ -128,7 +128,7 @@ func (c *Connector) ListReference(
 	if err != nil {
 		return nil, err
 	}
-	out := &accountingsyncports.AccountingReferencePage{
+	out := &accountingconnectorports.AccountingReferencePage{
 		Objects: make([]*accountingsync.AccountingReferenceObject, 0, len(rows)),
 	}
 	for idx := range rows {
@@ -263,7 +263,7 @@ func termObjectOf(row *referenceRow) *accountingsync.AccountingReferenceObject {
 
 func (c *Connector) CreateReference(
 	ctx context.Context,
-	req *accountingsyncports.AccountingCreateReferenceRequest,
+	req *accountingconnectorports.AccountingCreateReferenceRequest,
 ) (*accountingsync.AccountingReferenceObject, error) {
 	switch req.Kind {
 	case accountingsync.ReferenceKindItem:
@@ -281,7 +281,7 @@ func (c *Connector) CreateReference(
 	default:
 		return nil, fmt.Errorf("netsuite: unknown reference kind %q", req.Kind)
 	}
-	s, err := c.open(accountingsyncports.AccountingDocumentAuth{
+	s, err := c.open(accountingconnectorports.AccountingDocumentAuth{
 		RealmID:     req.RealmID,
 		AccessToken: req.AccessToken,
 	})
@@ -371,7 +371,7 @@ func (c *Connector) createItem(
 	ctx context.Context,
 	s *session,
 	requestID string,
-	draft *accountingsyncports.AccountingItemDraft,
+	draft *accountingconnectorports.AccountingItemDraft,
 ) (string, error) {
 	name := c.SanitizeName(accountingsync.ReferenceKindItem, draft.Name)
 	if name == "" {
@@ -435,7 +435,7 @@ type partyBody struct {
 	AddressBook    *sublist[addressLine] `json:"addressBook,omitempty"`
 }
 
-func partyBodyOf(kind partyKind, draft *accountingsyncports.AccountingPartyDraft) *partyBody {
+func partyBodyOf(kind partyKind, draft *accountingconnectorports.AccountingPartyDraft) *partyBody {
 	name := cleanText(draft.CompanyName, maxPartyNameLength)
 	if name == "" {
 		name = cleanText(draft.DisplayName, maxPartyNameLength)
@@ -471,7 +471,7 @@ func partyBodyOf(kind partyKind, draft *accountingsyncports.AccountingPartyDraft
 type partyCreate struct {
 	kind      partyKind
 	requestID string
-	draft     *accountingsyncports.AccountingPartyDraft
+	draft     *accountingconnectorports.AccountingPartyDraft
 }
 
 func createParty(ctx context.Context, s *session, p *partyCreate) (string, error) {
@@ -513,17 +513,17 @@ func (c *Connector) SanitizeName(kind accountingsync.ReferenceKind, name string)
 }
 
 type partyWrite struct {
-	auth       accountingsyncports.AccountingDocumentAuth
+	auth       accountingconnectorports.AccountingDocumentAuth
 	kind       partyKind
 	requestID  string
 	externalID string
-	party      *accountingsyncports.AccountingPartyDraft
+	party      *accountingconnectorports.AccountingPartyDraft
 }
 
 func (c *Connector) upsertParty(
 	ctx context.Context,
 	w *partyWrite,
-) (*accountingsyncports.AccountingDocumentResult, error) {
+) (*accountingconnectorports.AccountingDocumentResult, error) {
 	s, err := c.open(w.auth)
 	if err != nil {
 		return nil, err
@@ -553,7 +553,7 @@ func (c *Connector) upsertParty(
 	}); err != nil {
 		return nil, err
 	}
-	return &accountingsyncports.AccountingDocumentResult{
+	return &accountingconnectorports.AccountingDocumentResult{
 		ExternalID: id,
 		DocNumber:  body.CompanyName,
 		Refs:       map[string]string{},

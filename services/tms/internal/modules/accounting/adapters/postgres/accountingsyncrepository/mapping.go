@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync/accountingsyncdb"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingmappingports"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement/driversettlementdb"
@@ -45,7 +45,7 @@ type mappingRepository struct {
 	l  *zap.Logger
 }
 
-func NewMappingRepository(p MappingParams) accountingsyncports.AccountingMappingRepository {
+func NewMappingRepository(p MappingParams) accountingmappingports.AccountingMappingRepository {
 	return &mappingRepository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.accounting-mapping-repository"),
@@ -54,7 +54,7 @@ func NewMappingRepository(p MappingParams) accountingsyncports.AccountingMapping
 
 func (r *mappingRepository) ListByConnection(
 	ctx context.Context,
-	req *accountingsyncports.ListAccountingMappingsQuery,
+	req *accountingmappingports.ListAccountingMappingsQuery,
 ) ([]*accountingsync.AccountingMapping, error) {
 	return dbtx.Read(
 		ctx,
@@ -71,7 +71,9 @@ func (r *mappingRepository) ListByConnection(
 	)
 }
 
-func mappingFilters(req *accountingsyncports.ListAccountingMappingsConnectionRequest) []keel.Pred {
+func mappingFilters(
+	req *accountingmappingports.ListAccountingMappingsConnectionRequest,
+) []keel.Pred {
 	am := accountingsyncdb.AccountingMappings
 	term := stringutils.NormalizeName(req.Search)
 
@@ -100,7 +102,7 @@ func requiredTargets() keel.Pred {
 
 func (r *mappingRepository) ListConnection(
 	ctx context.Context,
-	req *accountingsyncports.ListAccountingMappingsConnectionRequest,
+	req *accountingmappingports.ListAccountingMappingsConnectionRequest,
 ) (*pagination.CursorListResult[*accountingsync.AccountingMapping], error) {
 	return dbtx.Read(
 		ctx,
@@ -133,7 +135,7 @@ func (r *mappingRepository) ListConnection(
 
 func (r *mappingRepository) GetByID(
 	ctx context.Context,
-	req accountingsyncports.GetAccountingMappingRequest,
+	req accountingmappingports.GetAccountingMappingRequest,
 ) (*accountingsync.AccountingMapping, error) {
 	return dbtx.Read(
 		ctx,
@@ -151,7 +153,7 @@ func (r *mappingRepository) GetByID(
 
 func (r *mappingRepository) GetByIDs(
 	ctx context.Context,
-	req accountingsyncports.GetAccountingMappingsByIDsRequest,
+	req accountingmappingports.GetAccountingMappingsByIDsRequest,
 ) ([]*accountingsync.AccountingMapping, error) {
 	return dbtx.Read(
 		ctx,
@@ -169,7 +171,7 @@ func (r *mappingRepository) GetByIDs(
 
 func (r *mappingRepository) GetByTarget(
 	ctx context.Context,
-	req *accountingsyncports.GetAccountingMappingByTargetRequest,
+	req *accountingmappingports.GetAccountingMappingByTargetRequest,
 ) (*accountingsync.AccountingMapping, error) {
 	return dbtx.Read(
 		ctx,
@@ -309,13 +311,13 @@ func (r *mappingRepository) CountByState(
 	ctx context.Context,
 	_ pagination.TenantInfo,
 	connectionID pulid.ID,
-) ([]accountingsyncports.AccountingMappingCount, error) {
+) ([]accountingmappingports.AccountingMappingCount, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) ([]accountingsyncports.AccountingMappingCount, error) {
+		func(ctx context.Context) ([]accountingmappingports.AccountingMappingCount, error) {
 			am := accountingsyncdb.AccountingMappings
-			counts, err := keel.Into[accountingsyncports.AccountingMappingCount](
+			counts, err := keel.Into[accountingmappingports.AccountingMappingCount](
 				ctx,
 				r.db.Keel(ctx),
 				am.Group(am.TargetType, am.State).
@@ -326,7 +328,7 @@ func (r *mappingRepository) CountByState(
 				return nil, err
 			}
 			if counts == nil {
-				counts = []accountingsyncports.AccountingMappingCount{}
+				counts = []accountingmappingports.AccountingMappingCount{}
 			}
 
 			return counts, nil

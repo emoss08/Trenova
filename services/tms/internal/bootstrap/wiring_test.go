@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/bootstrap/apiapp"
 	"github.com/emoss08/trenova/internal/bootstrap/core"
 	"github.com/emoss08/trenova/internal/bootstrap/workerapp"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingdriftports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/modules/agent/app/proposalrecorder"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
@@ -175,8 +176,8 @@ func TestWiring_BestEffortPortsAreActuallyProvided(t *testing.T) {
 						// The change feed compares edited documents only when
 						// the drift check is there; without it an edit waits
 						// for the nightly run.
-						accountingsyncports.AccountingDriftRechecker,
-						accountingsyncports.AccountingDriftChecker,
+						accountingdriftports.AccountingDriftRechecker,
+						accountingdriftports.AccountingDriftChecker,
 						accountingsyncports.AccountingSyncDispatcher,
 						proposalrecorder.PlanStore,
 						agentports.AgentTrustService,

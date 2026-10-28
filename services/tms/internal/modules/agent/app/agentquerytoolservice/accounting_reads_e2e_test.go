@@ -9,6 +9,9 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/agentread"
 	"github.com/emoss08/trenova/internal/api/graphql/agentread/agentreadtest"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingdriftports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingmappingports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/graphqlreadports"
@@ -24,15 +27,15 @@ import (
 )
 
 type fakeAccountingDrift struct {
-	accountingsyncports.AccountingDriftService
+	accountingdriftports.AccountingDriftService
 
 	mu   sync.Mutex
-	list *accountingsyncports.ListAccountingDriftFindingsRequest
+	list *accountingdriftports.ListAccountingDriftFindingsRequest
 }
 
 func (f *fakeAccountingDrift) List(
 	_ context.Context,
-	req *accountingsyncports.ListAccountingDriftFindingsRequest,
+	req *accountingdriftports.ListAccountingDriftFindingsRequest,
 ) (*pagination.CursorListResult[*accountingsync.AccountingDriftFinding], error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -57,11 +60,11 @@ func (f *fakeAccountingDrift) List(
 
 func (f *fakeAccountingDrift) Overview(
 	_ context.Context,
-	_ *accountingsyncports.AccountingDriftOverviewRequest,
-) (*accountingsyncports.AccountingDriftOverview, error) {
-	return &accountingsyncports.AccountingDriftOverview{
+	_ *accountingdriftports.AccountingDriftOverviewRequest,
+) (*accountingdriftports.AccountingDriftOverview, error) {
+	return &accountingdriftports.AccountingDriftOverview{
 		ConnectionID: pulid.MustNew("acctc_"), ToleranceMinor: 500, CurrencyCode: "USD",
-		Summary: &accountingsyncports.AccountingDriftSummary{},
+		Summary: &accountingdriftports.AccountingDriftSummary{},
 	}, nil
 }
 
@@ -148,12 +151,12 @@ func (f *fakeAccountingSync) ListAttempts(
 }
 
 type fakeAccountingMappings struct {
-	accountingsyncports.AccountingMappingService
+	accountingmappingports.AccountingMappingService
 
 	mu     sync.Mutex
-	list   *accountingsyncports.ListAccountingMappingsRequest
-	find   *accountingsyncports.SetAccountingMappingRequest
-	search *accountingsyncports.SearchAccountingReferenceRequest
+	list   *accountingmappingports.ListAccountingMappingsRequest
+	find   *accountingmappingports.SetAccountingMappingRequest
+	search *accountingmappingports.SearchAccountingReferenceRequest
 }
 
 func mappingFixture() *accountingsync.AccountingMapping {
@@ -174,7 +177,7 @@ func mappingFixture() *accountingsync.AccountingMapping {
 
 func (f *fakeAccountingMappings) ListMappings(
 	_ context.Context,
-	req *accountingsyncports.ListAccountingMappingsRequest,
+	req *accountingmappingports.ListAccountingMappingsRequest,
 ) (*pagination.CursorListResult[*accountingsync.AccountingMapping], error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -189,11 +192,11 @@ func (f *fakeAccountingMappings) Summary(
 	_ context.Context,
 	_ pagination.TenantInfo,
 	typ integration.Type,
-) (*accountingsyncports.AccountingMappingSummary, error) {
-	return &accountingsyncports.AccountingMappingSummary{
+) (*accountingmappingports.AccountingMappingSummary, error) {
+	return &accountingmappingports.AccountingMappingSummary{
 		IntegrationType: typ, ProviderName: "QuickBooks Online", RequiredTotal: 4,
 		RequiredConfirmed: 3,
-		Groups: []accountingsyncports.AccountingMappingGroup{{
+		Groups: []accountingmappingports.AccountingMappingGroup{{
 			TargetType: accountingsync.MappingTargetType("Customer"), Proposed: 1,
 		}},
 		Connection: &accountingsync.AccountingConnection{
@@ -205,7 +208,7 @@ func (f *fakeAccountingMappings) Summary(
 
 func (f *fakeAccountingMappings) FindMapping(
 	_ context.Context,
-	req *accountingsyncports.SetAccountingMappingRequest,
+	req *accountingmappingports.SetAccountingMappingRequest,
 ) (*accountingsync.AccountingMapping, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -216,7 +219,7 @@ func (f *fakeAccountingMappings) FindMapping(
 
 func (f *fakeAccountingMappings) SearchReference(
 	_ context.Context,
-	req *accountingsyncports.SearchAccountingReferenceRequest,
+	req *accountingmappingports.SearchAccountingReferenceRequest,
 ) ([]*accountingsync.AccountingReferenceObject, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -228,18 +231,18 @@ func (f *fakeAccountingMappings) SearchReference(
 }
 
 type fakeAccountingConnections struct {
-	accountingsyncports.AccountingConnectionService
+	accountingconnectionports.AccountingConnectionService
 }
 
 func (fakeAccountingConnections) Status(
 	_ context.Context,
 	_ pagination.TenantInfo,
 	typ integration.Type,
-) (*accountingsyncports.AccountingSyncStatus, error) {
+) (*accountingconnectionports.AccountingSyncStatus, error) {
 	start := int64(1)
-	return &accountingsyncports.AccountingSyncStatus{
+	return &accountingconnectionports.AccountingSyncStatus{
 		IntegrationType: typ, ProviderName: "QuickBooks Online", Available: true,
-		App: &accountingsyncports.AccountingAppSettings{},
+		App: &accountingconnectionports.AccountingAppSettings{},
 		Connection: &accountingsync.AccountingConnection{
 			ID:                  pulid.MustNew("acctc_"),
 			Status:              accountingsync.ConnectionStatusConnected,

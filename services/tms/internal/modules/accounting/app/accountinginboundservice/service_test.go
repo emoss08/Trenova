@@ -6,15 +6,17 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountinginboundports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingpayablesports"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/internal/testutil/agenteventstest"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -88,7 +90,7 @@ func newHarness(t *testing.T, policy accountingsync.InboundPaymentPolicy) *harne
 		references: &fakeReferences{},
 		mappings:   &fakeMappings{},
 		invoices:   &fakeInvoices{rows: map[pulid.ID]*invoice.Invoice{}},
-		payables:   &fakePayables{rows: map[pulid.ID]*accountingsyncports.PayableSettlement{}},
+		payables:   &fakePayables{rows: map[pulid.ID]*accountingpayablesports.PayableSettlement{}},
 		periods:    &fakePeriods{status: fiscalperiod.StatusOpen},
 		drivers:    &fakeDriverPayer{},
 		audit:      &fakeAudit{},
@@ -154,7 +156,11 @@ func (h *harness) syncedDocument(
 	h.records.add(record)
 }
 
-func (h *harness) invoice(number string, totalMinor, appliedMinor int64, externalID string) *invoice.Invoice {
+func (h *harness) invoice(
+	number string,
+	totalMinor, appliedMinor int64,
+	externalID string,
+) *invoice.Invoice {
 	inv := &invoice.Invoice{
 		ID:                 pulid.MustNew("inv_"),
 		OrganizationID:     h.tenant.OrgID,
@@ -188,11 +194,11 @@ func amount(value string) decimal.Decimal {
 
 func customerPayment(
 	externalID, total string,
-	lines ...accountingsyncports.AccountingInboundLine,
-) accountingsyncports.AccountingInboundPayment {
-	return accountingsyncports.AccountingInboundPayment{
+	lines ...accountingconnectorports.AccountingInboundLine,
+) accountingconnectorports.AccountingInboundPayment {
+	return accountingconnectorports.AccountingInboundPayment{
 		Kind:             accountingsync.InboundCustomerPayment,
-		Operation:        accountingsyncports.AccountingChangeUpsert,
+		Operation:        accountingconnectorports.AccountingChangeUpsert,
 		ExternalID:       externalID,
 		Number:           "10442",
 		ModifiedAt:       pollTime.Add(-time.Hour).Unix(),
@@ -209,42 +215,48 @@ func customerPayment(
 	}
 }
 
-func invoiceLine(externalID, value string) accountingsyncports.AccountingInboundLine {
-	return accountingsyncports.AccountingInboundLine{
+func invoiceLine(externalID, value string) accountingconnectorports.AccountingInboundLine {
+	return accountingconnectorports.AccountingInboundLine{
 		DocumentKind:       accountingsync.InboundDocInvoice,
 		DocumentExternalID: externalID,
 		Amount:             amount(value),
 	}
 }
 
-func creditLine(externalID, value string) accountingsyncports.AccountingInboundLine {
-	return accountingsyncports.AccountingInboundLine{
+func creditLine(externalID, value string) accountingconnectorports.AccountingInboundLine {
+	return accountingconnectorports.AccountingInboundLine{
 		DocumentKind:       accountingsync.InboundDocCreditMemo,
 		DocumentExternalID: externalID,
 		Amount:             amount(value),
 	}
 }
 
-func (h *harness) poll(t *testing.T, payments ...accountingsyncports.AccountingInboundPayment) {
+func (h *harness) poll(
+	t *testing.T,
+	payments ...accountingconnectorports.AccountingInboundPayment,
+) {
 	t.Helper()
-	h.connector.pages = append(h.connector.pages, &accountingsyncports.AccountingChangePage{
+	h.connector.pages = append(h.connector.pages, &accountingconnectorports.AccountingChangePage{
 		Payments:   payments,
 		NextCursor: "next",
 	})
-	_, err := h.svc.PollChanges(t.Context(), &accountingsyncports.PollAccountingChangesRequest{
+	_, err := h.svc.PollChanges(t.Context(), &accountinginboundports.PollAccountingChangesRequest{
 		TenantInfo:   h.tenant,
 		ConnectionID: h.conn.ID,
 	})
 	require.NoError(t, err)
 }
 
-func (h *harness) evaluate(t *testing.T) *accountingsyncports.AccountingInboundEvaluation {
+func (h *harness) evaluate(t *testing.T) *accountinginboundports.AccountingInboundEvaluation {
 	t.Helper()
 	h.now = h.now.Add(accountingsync.InboundEvaluationSettle + time.Second)
-	result, err := h.svc.Evaluate(t.Context(), &accountingsyncports.EvaluateAccountingInboundRequest{
-		TenantInfo:   h.tenant,
-		ConnectionID: h.conn.ID,
-	})
+	result, err := h.svc.Evaluate(
+		t.Context(),
+		&accountinginboundports.EvaluateAccountingInboundRequest{
+			TenantInfo:   h.tenant,
+			ConnectionID: h.conn.ID,
+		},
+	)
 	require.NoError(t, err)
 	return result
 }
@@ -283,10 +295,13 @@ func TestPollHoldsWhilePausedOrNotSyncing(t *testing.T) {
 	paused := pollTime.Unix()
 	h.conn.PausedAt = &paused
 
-	result, err := h.svc.PollChanges(t.Context(), &accountingsyncports.PollAccountingChangesRequest{
-		TenantInfo:   h.tenant,
-		ConnectionID: h.conn.ID,
-	})
+	result, err := h.svc.PollChanges(
+		t.Context(),
+		&accountinginboundports.PollAccountingChangesRequest{
+			TenantInfo:   h.tenant,
+			ConnectionID: h.conn.ID,
+		},
+	)
 	require.NoError(t, err)
 	assert.True(t, result.Held)
 	assert.Empty(t, h.connector.reads)
@@ -296,7 +311,12 @@ func TestPollRecordsAProviderPaymentAndSkipsOnesTrenovaSent(t *testing.T) {
 	t.Parallel()
 	h := newHarness(t, accountingsync.InboundPaymentsPropose)
 	h.invoice("INV-1001", 125_050, 0, "145")
-	h.syncedDocument(accountingsync.SyncObjectCustomerPayment, pulid.MustNew("cpay_"), "CP-9", "777")
+	h.syncedDocument(
+		accountingsync.SyncObjectCustomerPayment,
+		pulid.MustNew("cpay_"),
+		"CP-9",
+		"777",
+	)
 
 	h.poll(t,
 		customerPayment("301", "1250.50", invoiceLine("145", "1250.50")),
@@ -329,8 +349,8 @@ func TestPollRecordsNothingForPaymentsWhenThePolicyIsOff(t *testing.T) {
 func TestPollAppliesReferenceChangesAndAsksForARefreshWhenTheCursorExpired(t *testing.T) {
 	t.Parallel()
 	h := newHarness(t, accountingsync.InboundPaymentsPropose)
-	h.connector.pages = []*accountingsyncports.AccountingChangePage{{
-		References: []accountingsyncports.AccountingChangedReference{
+	h.connector.pages = []*accountingconnectorports.AccountingChangePage{{
+		References: []accountingconnectorports.AccountingChangedReference{
 			{Object: &accountingsync.AccountingReferenceObject{
 				Kind:       accountingsync.ReferenceKindCustomer,
 				ExternalID: "58",
@@ -348,10 +368,13 @@ func TestPollAppliesReferenceChangesAndAsksForARefreshWhenTheCursorExpired(t *te
 		CursorExpired: true,
 	}}
 
-	result, err := h.svc.PollChanges(t.Context(), &accountingsyncports.PollAccountingChangesRequest{
-		TenantInfo:   h.tenant,
-		ConnectionID: h.conn.ID,
-	})
+	result, err := h.svc.PollChanges(
+		t.Context(),
+		&accountinginboundports.PollAccountingChangesRequest{
+			TenantInfo:   h.tenant,
+			ConnectionID: h.conn.ID,
+		},
+	)
 	require.NoError(t, err)
 	assert.Equal(t, 2, result.References)
 	require.Len(t, h.references.upserted, 1)
@@ -364,11 +387,11 @@ func TestPollAppliesReferenceChangesAndAsksForARefreshWhenTheCursorExpired(t *te
 func TestPollSaysWhenTheReadCouldNotSeeDeletions(t *testing.T) {
 	t.Parallel()
 	h := newHarness(t, accountingsync.InboundPaymentsPropose)
-	h.connector.pages = []*accountingsyncports.AccountingChangePage{
+	h.connector.pages = []*accountingconnectorports.AccountingChangePage{
 		{NextCursor: "first", DeletesUnread: true},
 		{NextCursor: "second"},
 	}
-	poll := &accountingsyncports.PollAccountingChangesRequest{
+	poll := &accountinginboundports.PollAccountingChangesRequest{
 		TenantInfo:   h.tenant,
 		ConnectionID: h.conn.ID,
 	}
@@ -389,7 +412,7 @@ func TestPollRecordsAReadFailureAndKeepsTheCursor(t *testing.T) {
 	h.conn.ChangeCursor = "kept"
 	h.connector.readErr = errors.New("token expired")
 
-	_, err := h.svc.PollChanges(t.Context(), &accountingsyncports.PollAccountingChangesRequest{
+	_, err := h.svc.PollChanges(t.Context(), &accountinginboundports.PollAccountingChangesRequest{
 		TenantInfo:   h.tenant,
 		ConnectionID: h.conn.ID,
 	})
@@ -408,7 +431,7 @@ func TestAVoidedProviderPaymentSupersedesItsProposal(t *testing.T) {
 	h.evaluate(t)
 
 	voided := customerPayment("301", "0")
-	voided.Operation = accountingsyncports.AccountingChangeVoid
+	voided.Operation = accountingconnectorports.AccountingChangeVoid
 	h.poll(t, voided)
 
 	change := h.changes.byExternal("301")
@@ -422,10 +445,13 @@ func TestEvaluationWaitsForTheChangeToSettleAndForPushesInFlight(t *testing.T) {
 	h.invoice("INV-1001", 125_050, 0, "145")
 	h.poll(t, customerPayment("301", "1250.50", invoiceLine("145", "1250.50")))
 
-	early, err := h.svc.Evaluate(t.Context(), &accountingsyncports.EvaluateAccountingInboundRequest{
-		TenantInfo:   h.tenant,
-		ConnectionID: h.conn.ID,
-	})
+	early, err := h.svc.Evaluate(
+		t.Context(),
+		&accountinginboundports.EvaluateAccountingInboundRequest{
+			TenantInfo:   h.tenant,
+			ConnectionID: h.conn.ID,
+		},
+	)
 	require.NoError(t, err)
 	assert.Zero(t, early.Evaluated, "a change younger than the settle time is left alone")
 
@@ -579,7 +605,7 @@ func TestPaymentsThatDoNotMatchTrenovaAreProposedWithTheReason(t *testing.T) {
 	cases := []struct {
 		name    string
 		setup   func(h *harness)
-		payment accountingsyncports.AccountingInboundPayment
+		payment accountingconnectorports.AccountingInboundPayment
 		reason  accountingsync.InboundChangeReason
 		status  accountingsync.InboundChangeStatus
 	}{
@@ -682,10 +708,14 @@ func TestAPersonAppliesAProposalAsThemselves(t *testing.T) {
 	change := h.changes.byExternal("301")
 	actor := h.person()
 
-	applied, err := h.svc.Apply(t.Context(), &accountingsyncports.DecideAccountingInboundChangeRequest{
-		TenantInfo: h.tenant,
-		ID:         change.ID,
-	}, actor)
+	applied, err := h.svc.Apply(
+		t.Context(),
+		&accountinginboundports.DecideAccountingInboundChangeRequest{
+			TenantInfo: h.tenant,
+			ID:         change.ID,
+		},
+		actor,
+	)
 	require.NoError(t, err)
 	assert.Equal(t, accountingsync.InboundStatusApplied, applied.Status)
 	assert.Equal(t, actor.UserID, applied.DecidedByID)
@@ -693,7 +723,7 @@ func TestAPersonAppliesAProposalAsThemselves(t *testing.T) {
 	assert.Equal(t, actor.UserID, h.payments.posted[0].actor.UserID)
 	require.Len(t, h.audit.entries, 1)
 
-	_, err = h.svc.Apply(t.Context(), &accountingsyncports.DecideAccountingInboundChangeRequest{
+	_, err = h.svc.Apply(t.Context(), &accountinginboundports.DecideAccountingInboundChangeRequest{
 		TenantInfo: h.tenant,
 		ID:         change.ID,
 	}, actor)
@@ -709,7 +739,7 @@ func TestApplyingAMismatchIsRefusedWithItsReason(t *testing.T) {
 	h.evaluate(t)
 	change := h.changes.byExternal("301")
 
-	_, err := h.svc.Apply(t.Context(), &accountingsyncports.DecideAccountingInboundChangeRequest{
+	_, err := h.svc.Apply(t.Context(), &accountinginboundports.DecideAccountingInboundChangeRequest{
 		TenantInfo: h.tenant,
 		ID:         change.ID,
 	}, h.person())
@@ -729,10 +759,14 @@ func TestAProposalBlockedByAClosedPeriodAppliesOnceItReopens(t *testing.T) {
 	require.Equal(t, accountingsync.InboundReasonPeriodNotOpen, change.Reason)
 
 	h.periods.status = fiscalperiod.StatusOpen
-	applied, err := h.svc.Apply(t.Context(), &accountingsyncports.DecideAccountingInboundChangeRequest{
-		TenantInfo: h.tenant,
-		ID:         change.ID,
-	}, h.person())
+	applied, err := h.svc.Apply(
+		t.Context(),
+		&accountinginboundports.DecideAccountingInboundChangeRequest{
+			TenantInfo: h.tenant,
+			ID:         change.ID,
+		},
+		h.person(),
+	)
 	require.NoError(t, err)
 	assert.Equal(t, accountingsync.InboundStatusApplied, applied.Status)
 }
@@ -764,17 +798,25 @@ func TestIgnoringNeedsANote(t *testing.T) {
 	h.evaluate(t)
 	change := h.changes.byExternal("301")
 
-	_, err := h.svc.Ignore(t.Context(), &accountingsyncports.DecideAccountingInboundChangeRequest{
-		TenantInfo: h.tenant,
-		ID:         change.ID,
-	}, h.person())
+	_, err := h.svc.Ignore(
+		t.Context(),
+		&accountinginboundports.DecideAccountingInboundChangeRequest{
+			TenantInfo: h.tenant,
+			ID:         change.ID,
+		},
+		h.person(),
+	)
 	require.Error(t, err)
 
-	ignored, err := h.svc.Ignore(t.Context(), &accountingsyncports.DecideAccountingInboundChangeRequest{
-		TenantInfo: h.tenant,
-		ID:         change.ID,
-		Note:       "Entered in Trenova by hand already",
-	}, h.person())
+	ignored, err := h.svc.Ignore(
+		t.Context(),
+		&accountinginboundports.DecideAccountingInboundChangeRequest{
+			TenantInfo: h.tenant,
+			ID:         change.ID,
+			Note:       "Entered in Trenova by hand already",
+		},
+		h.person(),
+	)
 	require.NoError(t, err)
 	assert.Equal(t, accountingsync.InboundStatusIgnored, ignored.Status)
 	assert.Equal(t, "Entered in Trenova by hand already", ignored.Note)
@@ -783,8 +825,8 @@ func TestIgnoringNeedsANote(t *testing.T) {
 func (h *harness) carrierBill(number string, netMinor int64, externalID string) pulid.ID {
 	id := pulid.MustNew("carstl_")
 	posted := syncEnabledAt.Unix()
-	h.payables.rows[id] = &accountingsyncports.PayableSettlement{
-		Kind:         accountingsyncports.PayableCarrier,
+	h.payables.rows[id] = &accountingpayablesports.PayableSettlement{
+		Kind:         accountingpayablesports.PayableCarrier,
 		ID:           id,
 		Number:       number,
 		PartyID:      pulid.MustNew("car_"),
@@ -796,10 +838,13 @@ func (h *harness) carrierBill(number string, netMinor int64, externalID string) 
 	return id
 }
 
-func billPayment(externalID, total string, billExternalID, lineAmount string) accountingsyncports.AccountingInboundPayment {
-	return accountingsyncports.AccountingInboundPayment{
+func billPayment(
+	externalID, total string,
+	billExternalID, lineAmount string,
+) accountingconnectorports.AccountingInboundPayment {
+	return accountingconnectorports.AccountingInboundPayment{
 		Kind:            accountingsync.InboundBillPayment,
-		Operation:       accountingsyncports.AccountingChangeUpsert,
+		Operation:       accountingconnectorports.AccountingChangeUpsert,
 		ExternalID:      externalID,
 		Number:          "5521",
 		PartyExternalID: "77",
@@ -808,7 +853,7 @@ func billPayment(externalID, total string, billExternalID, lineAmount string) ac
 		Amount:          amount(total),
 		MethodName:      "Check",
 		ReferenceNumber: "5521",
-		Lines: []accountingsyncports.AccountingInboundLine{{
+		Lines: []accountingconnectorports.AccountingInboundLine{{
 			DocumentKind:       accountingsync.InboundDocBill,
 			DocumentExternalID: billExternalID,
 			Amount:             amount(lineAmount),
@@ -897,7 +942,7 @@ func TestApplyingNeedsPermissionToPostWhatThePaymentPays(t *testing.T) {
 	change := h.changes.byExternal("301")
 	h.perms.denied["customer_payment:create"] = true
 
-	_, err := h.svc.Apply(t.Context(), &accountingsyncports.DecideAccountingInboundChangeRequest{
+	_, err := h.svc.Apply(t.Context(), &accountinginboundports.DecideAccountingInboundChangeRequest{
 		TenantInfo: h.tenant,
 		ID:         change.ID,
 	}, h.person())
@@ -916,7 +961,7 @@ func TestApplyingABillPaymentNeedsSettlementPermission(t *testing.T) {
 	change := h.changes.byExternal("410")
 	h.perms.denied["carrier_settlement:update"] = true
 
-	_, err := h.svc.Apply(t.Context(), &accountingsyncports.DecideAccountingInboundChangeRequest{
+	_, err := h.svc.Apply(t.Context(), &accountinginboundports.DecideAccountingInboundChangeRequest{
 		TenantInfo: h.tenant,
 		ID:         change.ID,
 	}, h.person())

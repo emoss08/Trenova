@@ -6,6 +6,11 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingconnlookup"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingdriftports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountinginboundports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingmappingports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingpayablesports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalperiodports"
 	"github.com/emoss08/trenova/internal/modules/agent/app/watchtowersources"
@@ -45,14 +50,14 @@ type Params struct {
 
 	Logger            *zap.Logger
 	DB                kernelports.Transactor
-	Connections       accountingsyncports.AccountingConnectionRepository
-	ConnectionService accountingsyncports.AccountingConnectionService
+	Connections       accountingconnectionports.AccountingConnectionRepository
+	ConnectionService accountingconnectionports.AccountingConnectionService
 	Records           accountingsyncports.AccountingSyncRecordRepository
-	Changes           accountingsyncports.AccountingInboundChangeRepository
-	References        accountingsyncports.AccountingReferenceObjectRepository
-	Mappings          accountingsyncports.AccountingMappingRepository
+	Changes           accountinginboundports.AccountingInboundChangeRepository
+	References        accountingmappingports.AccountingReferenceObjectRepository
+	Mappings          accountingmappingports.AccountingMappingRepository
 	Invoices          invoiceports.InvoiceRepository
-	Payables          accountingsyncports.AccountingPayablesSource
+	Payables          accountingpayablesports.AccountingPayablesSource
 	FiscalPeriods     fiscalperiodports.FiscalPeriodRepository
 	Organizations     tenantports.OrganizationRepository
 	Users             tenantports.UserRepository
@@ -61,24 +66,24 @@ type Params struct {
 	DriverPayer       carriersettlementports.DriverSettlementPayer
 	AuditService      auditports.AuditService
 	Permissions       permissionports.PermissionEngine
-	Refresher         accountingsyncports.AccountingReferenceRefresher `optional:"true"`
-	Drift             accountingsyncports.AccountingDriftRechecker     `optional:"true"`
-	Publisher         agentports.AgentEventPublisher                   `optional:"true"`
-	Watchtower        watchtowerports.WatchtowerProjector              `optional:"true"`
-	Realtime          realtimeports.RealtimeService                    `optional:"true"`
+	Refresher         accountingconnectionports.AccountingReferenceRefresher `optional:"true"`
+	Drift             accountingdriftports.AccountingDriftRechecker          `optional:"true"`
+	Publisher         agentports.AgentEventPublisher                         `optional:"true"`
+	Watchtower        watchtowerports.WatchtowerProjector                    `optional:"true"`
+	Realtime          realtimeports.RealtimeService                          `optional:"true"`
 }
 
 type Service struct {
 	l                *zap.Logger
 	db               kernelports.Transactor
-	connections      accountingsyncports.AccountingConnectionRepository
-	connService      accountingsyncports.AccountingConnectionService
+	connections      accountingconnectionports.AccountingConnectionRepository
+	connService      accountingconnectionports.AccountingConnectionService
 	records          accountingsyncports.AccountingSyncRecordRepository
-	changes          accountingsyncports.AccountingInboundChangeRepository
-	references       accountingsyncports.AccountingReferenceObjectRepository
-	mappings         accountingsyncports.AccountingMappingRepository
+	changes          accountinginboundports.AccountingInboundChangeRepository
+	references       accountingmappingports.AccountingReferenceObjectRepository
+	mappings         accountingmappingports.AccountingMappingRepository
 	invoices         invoiceports.InvoiceRepository
-	payables         accountingsyncports.AccountingPayablesSource
+	payables         accountingpayablesports.AccountingPayablesSource
 	fiscalPeriods    fiscalperiodports.FiscalPeriodRepository
 	organizations    tenantports.OrganizationRepository
 	users            tenantports.UserRepository
@@ -87,15 +92,15 @@ type Service struct {
 	driverPayer      carriersettlementports.DriverSettlementPayer
 	audit            auditports.AuditService
 	permissions      permissionports.PermissionEngine
-	refresher        accountingsyncports.AccountingReferenceRefresher
-	drift            accountingsyncports.AccountingDriftRechecker
+	refresher        accountingconnectionports.AccountingReferenceRefresher
+	drift            accountingdriftports.AccountingDriftRechecker
 	publisher        agentports.AgentEventPublisher
 	watchtower       watchtowerports.WatchtowerProjector
 	realtime         realtimeports.RealtimeService
 	now              func() time.Time
 }
 
-var _ accountingsyncports.AccountingInboundService = (*Service)(nil)
+var _ accountinginboundports.AccountingInboundService = (*Service)(nil)
 
 //nolint:gocritic // dependency injection
 func New(p Params) *Service {
@@ -140,7 +145,7 @@ func (s *Service) connectionByID(
 	tenantInfo pagination.TenantInfo,
 	id pulid.ID,
 ) (*accountingsync.AccountingConnection, error) {
-	return s.connections.GetByID(ctx, accountingsyncports.GetAccountingConnectionByIDRequest{
+	return s.connections.GetByID(ctx, accountingconnectionports.GetAccountingConnectionByIDRequest{
 		TenantInfo: tenantInfo,
 		ID:         id,
 	})
@@ -156,7 +161,7 @@ func (s *Service) connectionFor(
 
 func (s *Service) List(
 	ctx context.Context,
-	req *accountingsyncports.ListAccountingInboundChangesRequest,
+	req *accountinginboundports.ListAccountingInboundChangesRequest,
 ) (*pagination.CursorListResult[*accountingsync.AccountingInboundChange], error) {
 	conn, err := s.connectionFor(ctx, req.TenantInfo, req.IntegrationType)
 	if err != nil {
@@ -169,7 +174,7 @@ func (s *Service) List(
 	filter.TenantInfo = req.TenantInfo
 	return s.changes.ListConnection(
 		ctx,
-		&accountingsyncports.ListAccountingInboundChangesConnectionRequest{
+		&accountinginboundports.ListAccountingInboundChangesConnectionRequest{
 			Filter:       filter,
 			Cursor:       req.Cursor,
 			ConnectionID: conn.ID,
@@ -183,9 +188,9 @@ func (s *Service) List(
 
 func (s *Service) Get(
 	ctx context.Context,
-	req *accountingsyncports.GetAccountingInboundChangeRequest,
+	req *accountinginboundports.GetAccountingInboundChangeRequest,
 ) (*accountingsync.AccountingInboundChange, error) {
-	return s.changes.GetByID(ctx, accountingsyncports.GetAccountingInboundChangeQuery{
+	return s.changes.GetByID(ctx, accountinginboundports.GetAccountingInboundChangeQuery{
 		TenantInfo: req.TenantInfo,
 		ID:         req.ID,
 	})
@@ -193,15 +198,15 @@ func (s *Service) Get(
 
 func (s *Service) Overview(
 	ctx context.Context,
-	req *accountingsyncports.AccountingInboundOverviewRequest,
-) (*accountingsyncports.AccountingInboundOverview, error) {
+	req *accountinginboundports.AccountingInboundOverviewRequest,
+) (*accountinginboundports.AccountingInboundOverview, error) {
 	conn, err := s.connectionFor(ctx, req.TenantInfo, req.IntegrationType)
 	if err != nil {
 		return nil, err
 	}
 	summary, err := s.changes.Summarize(
 		ctx,
-		&accountingsyncports.SummarizeAccountingInboundChangesRequest{
+		&accountinginboundports.SummarizeAccountingInboundChangesRequest{
 			TenantInfo:   req.TenantInfo,
 			ConnectionID: conn.ID,
 			DecidedSince: s.now().Add(-summaryWindow).Unix(),
@@ -210,7 +215,7 @@ func (s *Service) Overview(
 	if err != nil {
 		return nil, err
 	}
-	return &accountingsyncports.AccountingInboundOverview{
+	return &accountinginboundports.AccountingInboundOverview{
 		ConnectionID:  conn.ID,
 		Policy:        conn.PaymentPolicy(),
 		ChangesReadAt: conn.ChangesReadAt,
@@ -221,7 +226,7 @@ func (s *Service) Overview(
 
 func (s *Service) Ignore(
 	ctx context.Context,
-	req *accountingsyncports.DecideAccountingInboundChangeRequest,
+	req *accountinginboundports.DecideAccountingInboundChangeRequest,
 	actor *permissionports.RequestActor,
 ) (*accountingsync.AccountingInboundChange, error) {
 	if actor == nil || actor.UserID.IsNil() {
@@ -233,11 +238,14 @@ func (s *Service) Ignore(
 	var updated *accountingsync.AccountingInboundChange
 	var previous map[string]any
 	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
-		change, err := s.changes.GetByID(txCtx, accountingsyncports.GetAccountingInboundChangeQuery{
-			TenantInfo: req.TenantInfo,
-			ID:         req.ID,
-			ForUpdate:  true,
-		})
+		change, err := s.changes.GetByID(
+			txCtx,
+			accountinginboundports.GetAccountingInboundChangeQuery{
+				TenantInfo: req.TenantInfo,
+				ID:         req.ID,
+				ForUpdate:  true,
+			},
+		)
 		if err != nil {
 			return err
 		}
@@ -310,7 +318,7 @@ func (s *Service) refreshAttention(ctx context.Context, conn *accountingsync.Acc
 	tenant := tenantOf(conn)
 	groups, err := s.changes.ListAttention(
 		ctx,
-		&accountingsyncports.ListAccountingInboundAttentionRequest{
+		&accountinginboundports.ListAccountingInboundAttentionRequest{
 			TenantInfo:     tenant,
 			ConnectionID:   conn.ID,
 			DetectedBefore: s.now().Add(-watchtowersources.AccountingInboundAfter).Unix(),
@@ -321,7 +329,7 @@ func (s *Service) refreshAttention(ctx context.Context, conn *accountingsync.Acc
 		return
 	}
 	byReason := make(
-		map[accountingsync.InboundChangeReason]*accountingsyncports.AccountingInboundAttentionGroup,
+		map[accountingsync.InboundChangeReason]*accountinginboundports.AccountingInboundAttentionGroup,
 		len(groups),
 	)
 	for idx := range groups {

@@ -1,4 +1,4 @@
-package accountingsyncports
+package accountingdriftports
 
 import (
 	"context"

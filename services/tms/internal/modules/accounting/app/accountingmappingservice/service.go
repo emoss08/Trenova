@@ -5,6 +5,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingconnlookup"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingmappingports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/glaccountports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
@@ -38,34 +40,34 @@ type Params struct {
 
 	Logger             *zap.Logger
 	DB                 kernelports.Transactor
-	Connections        accountingsyncports.AccountingConnectionRepository
-	References         accountingsyncports.AccountingReferenceObjectRepository
-	Mappings           accountingsyncports.AccountingMappingRepository
-	ConnectionService  accountingsyncports.AccountingConnectionService
+	Connections        accountingconnectionports.AccountingConnectionRepository
+	References         accountingmappingports.AccountingReferenceObjectRepository
+	Mappings           accountingmappingports.AccountingMappingRepository
+	ConnectionService  accountingconnectionports.AccountingConnectionService
 	AccountingControls tenantports.AccountingControlRepository
 	GLAccounts         glaccountports.GLAccountRepository
 	Customers          customerports.CustomerRepository
 	Carriers           carrierports.CarrierRepository
 	Accessorials       accessorialchargeports.AccessorialChargeRepository
 	AuditService       auditports.AuditService
-	Completion         llmports.CompletionService                         `optional:"true"`
-	Refresher          accountingsyncports.AccountingReferenceRefresher   `optional:"true"`
-	Realtime           realtimeports.RealtimeService                      `optional:"true"`
-	SyncRecords        accountingsyncports.AccountingSyncRecordRepository `optional:"true"`
-	Dispatcher         accountingsyncports.AccountingSyncDispatcher       `optional:"true"`
-	Workers            workerports.WorkerRepository                       `optional:"true"`
-	SettlementControls tenantports.CarrierSettlementControlRepository     `optional:"true"`
-	PayCodes           driverpayports.PayCodeRepository                   `optional:"true"`
-	Ledger             journalentryports.AccountingLedgerSource           `optional:"true"`
+	Completion         llmports.CompletionService                             `optional:"true"`
+	Refresher          accountingconnectionports.AccountingReferenceRefresher `optional:"true"`
+	Realtime           realtimeports.RealtimeService                          `optional:"true"`
+	SyncRecords        accountingsyncports.AccountingSyncRecordRepository     `optional:"true"`
+	Dispatcher         accountingsyncports.AccountingSyncDispatcher           `optional:"true"`
+	Workers            workerports.WorkerRepository                           `optional:"true"`
+	SettlementControls tenantports.CarrierSettlementControlRepository         `optional:"true"`
+	PayCodes           driverpayports.PayCodeRepository                       `optional:"true"`
+	Ledger             journalentryports.AccountingLedgerSource               `optional:"true"`
 }
 
 type Service struct {
 	l                  *zap.Logger
 	db                 kernelports.Transactor
-	connections        accountingsyncports.AccountingConnectionRepository
-	references         accountingsyncports.AccountingReferenceObjectRepository
-	mappings           accountingsyncports.AccountingMappingRepository
-	connectionService  accountingsyncports.AccountingConnectionService
+	connections        accountingconnectionports.AccountingConnectionRepository
+	references         accountingmappingports.AccountingReferenceObjectRepository
+	mappings           accountingmappingports.AccountingMappingRepository
+	connectionService  accountingconnectionports.AccountingConnectionService
 	accountingControls tenantports.AccountingControlRepository
 	glAccounts         glaccountports.GLAccountRepository
 	ledger             journalentryports.AccountingLedgerSource
@@ -74,7 +76,7 @@ type Service struct {
 	accessorials       accessorialchargeports.AccessorialChargeRepository
 	audit              auditports.AuditService
 	completion         llmports.CompletionService
-	refresher          accountingsyncports.AccountingReferenceRefresher
+	refresher          accountingconnectionports.AccountingReferenceRefresher
 	realtime           realtimeports.RealtimeService
 	syncRecords        accountingsyncports.AccountingSyncRecordRepository
 	dispatcher         accountingsyncports.AccountingSyncDispatcher
@@ -83,7 +85,7 @@ type Service struct {
 	payCodes           driverpayports.PayCodeRepository
 }
 
-var _ accountingsyncports.AccountingMappingService = (*Service)(nil)
+var _ accountingmappingports.AccountingMappingService = (*Service)(nil)
 
 //nolint:gocritic // dependency injection
 func New(p Params) *Service {
@@ -124,9 +126,9 @@ func (s *Service) Summary(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	integrationType integration.Type,
-) (*accountingsyncports.AccountingMappingSummary, error) {
+) (*accountingmappingports.AccountingMappingSummary, error) {
 	profile := accountingsync.MustProfile(integrationType)
-	summary := &accountingsyncports.AccountingMappingSummary{
+	summary := &accountingmappingports.AccountingMappingSummary{
 		IntegrationType: integrationType,
 		ProviderName:    profile.Name,
 		RequiredTotal:   len(profile.RequiredTargets()),
@@ -155,7 +157,7 @@ func (s *Service) Summary(
 
 	required, err := s.mappings.ListConnection(
 		ctx,
-		&accountingsyncports.ListAccountingMappingsConnectionRequest{
+		&accountingmappingports.ListAccountingMappingsConnectionRequest{
 			Filter:       &pagination.QueryOptions{TenantInfo: tenantInfo},
 			Cursor:       pagination.CursorInfo{Limit: pagination.MaxLimit},
 			ConnectionID: conn.ID,
@@ -174,16 +176,21 @@ func (s *Service) Summary(
 }
 
 func groupCounts(
-	counts []accountingsyncports.AccountingMappingCount,
-) []accountingsyncports.AccountingMappingGroup {
-	byType := make(map[accountingsync.MappingTargetType]*accountingsyncports.AccountingMappingGroup)
+	counts []accountingmappingports.AccountingMappingCount,
+) []accountingmappingports.AccountingMappingGroup {
+	byType := make(
+		map[accountingsync.MappingTargetType]*accountingmappingports.AccountingMappingGroup,
+	)
 	groups := make(
-		[]accountingsyncports.AccountingMappingGroup,
+		[]accountingmappingports.AccountingMappingGroup,
 		0,
 		len(accountingsync.AllMappingTargetTypes()),
 	)
 	for _, targetType := range accountingsync.AllMappingTargetTypes() {
-		groups = append(groups, accountingsyncports.AccountingMappingGroup{TargetType: targetType})
+		groups = append(
+			groups,
+			accountingmappingports.AccountingMappingGroup{TargetType: targetType},
+		)
 	}
 	for idx := range groups {
 		byType[groups[idx].TargetType] = &groups[idx]
@@ -207,7 +214,7 @@ func groupCounts(
 
 func (s *Service) ListMappings(
 	ctx context.Context,
-	req *accountingsyncports.ListAccountingMappingsRequest,
+	req *accountingmappingports.ListAccountingMappingsRequest,
 ) (*pagination.CursorListResult[*accountingsync.AccountingMapping], error) {
 	conn, err := s.connectionFor(ctx, req.TenantInfo, req.IntegrationType)
 	if err != nil {
@@ -215,7 +222,7 @@ func (s *Service) ListMappings(
 	}
 	return s.mappings.ListConnection(
 		ctx,
-		&accountingsyncports.ListAccountingMappingsConnectionRequest{
+		&accountingmappingports.ListAccountingMappingsConnectionRequest{
 			Filter:       &pagination.QueryOptions{TenantInfo: req.TenantInfo},
 			Cursor:       req.Cursor,
 			ConnectionID: conn.ID,
@@ -232,7 +239,7 @@ func (s *Service) GetMapping(
 	tenantInfo pagination.TenantInfo,
 	id pulid.ID,
 ) (*accountingsync.AccountingMapping, error) {
-	return s.mappings.GetByID(ctx, accountingsyncports.GetAccountingMappingRequest{
+	return s.mappings.GetByID(ctx, accountingmappingports.GetAccountingMappingRequest{
 		TenantInfo: tenantInfo,
 		ID:         id,
 	})
@@ -243,7 +250,7 @@ func (s *Service) GetMappingsByIDs(
 	tenantInfo pagination.TenantInfo,
 	ids []pulid.ID,
 ) ([]*accountingsync.AccountingMapping, error) {
-	return s.mappings.GetByIDs(ctx, accountingsyncports.GetAccountingMappingsByIDsRequest{
+	return s.mappings.GetByIDs(ctx, accountingmappingports.GetAccountingMappingsByIDsRequest{
 		TenantInfo: tenantInfo,
 		IDs:        ids,
 	})
@@ -251,7 +258,7 @@ func (s *Service) GetMappingsByIDs(
 
 func (s *Service) FindMapping(
 	ctx context.Context,
-	req *accountingsyncports.SetAccountingMappingRequest,
+	req *accountingmappingports.SetAccountingMappingRequest,
 ) (*accountingsync.AccountingMapping, error) {
 	if err := req.ValidateTarget(); err != nil {
 		return nil, err
@@ -263,7 +270,7 @@ func (s *Service) FindMapping(
 	if err != nil {
 		return nil, err
 	}
-	return s.mappings.GetByTarget(ctx, &accountingsyncports.GetAccountingMappingByTargetRequest{
+	return s.mappings.GetByTarget(ctx, &accountingmappingports.GetAccountingMappingByTargetRequest{
 		TenantInfo:      req.TenantInfo,
 		ConnectionID:    conn.ID,
 		TargetType:      req.TargetType,
@@ -274,7 +281,7 @@ func (s *Service) FindMapping(
 
 func (s *Service) SearchReference(
 	ctx context.Context,
-	req *accountingsyncports.SearchAccountingReferenceRequest,
+	req *accountingmappingports.SearchAccountingReferenceRequest,
 ) ([]*accountingsync.AccountingReferenceObject, error) {
 	if !req.Kind.IsValid() {
 		return nil, errortypes.NewValidationError(
@@ -287,7 +294,7 @@ func (s *Service) SearchReference(
 	if err != nil {
 		return nil, err
 	}
-	return s.references.Search(ctx, &accountingsyncports.SearchAccountingReferenceObjectsRequest{
+	return s.references.Search(ctx, &accountingmappingports.SearchAccountingReferenceObjectsRequest{
 		TenantInfo:   req.TenantInfo,
 		ConnectionID: conn.ID,
 		Kind:         req.Kind,
@@ -299,11 +306,11 @@ func (s *Service) SearchReference(
 
 func (s *Service) GetReferenceObjects(
 	ctx context.Context,
-	req *accountingsyncports.GetAccountingReferenceObjectsRequest,
+	req *accountingmappingports.GetAccountingReferenceObjectsRequest,
 ) ([]*accountingsync.AccountingReferenceObject, error) {
 	return s.references.GetByExternalIDs(
 		ctx,
-		&accountingsyncports.GetAccountingReferenceObjectsRequest{
+		&accountingmappingports.GetAccountingReferenceObjectsRequest{
 			TenantInfo:   req.TenantInfo,
 			ConnectionID: req.ConnectionID,
 			Kind:         req.Kind,
@@ -320,7 +327,7 @@ func (s *Service) usableReference(
 ) (*accountingsync.AccountingReferenceObject, error) {
 	refs, err := s.references.GetByExternalIDs(
 		ctx,
-		&accountingsyncports.GetAccountingReferenceObjectsRequest{
+		&accountingmappingports.GetAccountingReferenceObjectsRequest{
 			TenantInfo:   tenantInfo,
 			ConnectionID: mapping.ConnectionID,
 			Kind:         mapping.ProviderKind,
@@ -361,7 +368,7 @@ func (s *Service) usableReference(
 
 func (s *Service) Confirm(
 	ctx context.Context,
-	req *accountingsyncports.ConfirmAccountingMappingsRequest,
+	req *accountingmappingports.ConfirmAccountingMappingsRequest,
 ) ([]*accountingsync.AccountingMapping, error) {
 	if len(req.Items) == 0 {
 		return []*accountingsync.AccountingMapping{}, nil
@@ -400,8 +407,8 @@ func (s *Service) Confirm(
 
 func (s *Service) PlanConfirm(
 	ctx context.Context,
-	req *accountingsyncports.ConfirmAccountingMappingsRequest,
-) (*accountingsyncports.AccountingMappingConfirmPlan, error) {
+	req *accountingmappingports.ConfirmAccountingMappingsRequest,
+) (*accountingmappingports.AccountingMappingConfirmPlan, error) {
 	if len(req.Items) > maxConfirmBatch {
 		return nil, errortypes.NewValidationError(
 			"ids",
@@ -419,7 +426,7 @@ func (s *Service) PlanConfirm(
 	for id := range expected {
 		ids = append(ids, id)
 	}
-	rows, err := s.mappings.GetByIDs(ctx, accountingsyncports.GetAccountingMappingsByIDsRequest{
+	rows, err := s.mappings.GetByIDs(ctx, accountingmappingports.GetAccountingMappingsByIDsRequest{
 		TenantInfo: req.TenantInfo,
 		IDs:        ids,
 	})
@@ -439,8 +446,8 @@ func (s *Service) PlanConfirm(
 	}
 
 	now := timeutils.NowUnix()
-	plan := &accountingsyncports.AccountingMappingConfirmPlan{
-		Changes:   make([]*accountingsyncports.AccountingMappingChange, 0, len(rows)),
+	plan := &accountingmappingports.AccountingMappingConfirmPlan{
+		Changes:   make([]*accountingmappingports.AccountingMappingChange, 0, len(rows)),
 		Confirmed: make([]*accountingsync.AccountingMapping, 0, len(rows)),
 	}
 	for _, row := range rows {
@@ -469,7 +476,7 @@ func (s *Service) PlanConfirm(
 			ActorID:      req.UserID,
 			At:           now,
 		})
-		plan.Changes = append(plan.Changes, &accountingsyncports.AccountingMappingChange{
+		plan.Changes = append(plan.Changes, &accountingmappingports.AccountingMappingChange{
 			Before: before,
 			After:  row,
 		})
@@ -481,8 +488,8 @@ func (s *Service) PlanConfirm(
 
 func (s *Service) PlanReject(
 	ctx context.Context,
-	req *accountingsyncports.AccountingMappingActionRequest,
-) (*accountingsyncports.AccountingMappingChange, error) {
+	req *accountingmappingports.AccountingMappingActionRequest,
+) (*accountingmappingports.AccountingMappingChange, error) {
 	row, err := s.GetMapping(ctx, req.TenantInfo, req.ID)
 	if err != nil {
 		return nil, err
@@ -493,12 +500,12 @@ func (s *Service) PlanReject(
 			WithInternal(err)
 	}
 
-	return &accountingsyncports.AccountingMappingChange{Before: before, After: row}, nil
+	return &accountingmappingports.AccountingMappingChange{Before: before, After: row}, nil
 }
 
 func (s *Service) Reject(
 	ctx context.Context,
-	req *accountingsyncports.AccountingMappingActionRequest,
+	req *accountingmappingports.AccountingMappingActionRequest,
 ) (*accountingsync.AccountingMapping, error) {
 	change, err := s.PlanReject(ctx, req)
 	if err != nil {
@@ -525,7 +532,7 @@ func (s *Service) Reject(
 
 func (s *Service) Set(
 	ctx context.Context,
-	req *accountingsyncports.SetAccountingMappingRequest,
+	req *accountingmappingports.SetAccountingMappingRequest,
 ) (*accountingsync.AccountingMapping, error) {
 	row, err := s.FindMapping(ctx, req)
 	if err != nil {
@@ -572,7 +579,7 @@ func (s *Service) Set(
 
 func (s *Service) Clear(
 	ctx context.Context,
-	req *accountingsyncports.AccountingMappingActionRequest,
+	req *accountingmappingports.AccountingMappingActionRequest,
 ) (*accountingsync.AccountingMapping, error) {
 	row, err := s.GetMapping(ctx, req.TenantInfo, req.ID)
 	if err != nil {
@@ -608,7 +615,7 @@ func (s *Service) Clear(
 
 func (s *Service) RequestRefresh(
 	ctx context.Context,
-	req *accountingsyncports.AccountingSetupRequest,
+	req *accountingmappingports.AccountingSetupRequest,
 ) (*accountingsync.AccountingConnection, error) {
 	conn, err := s.connectionFor(ctx, req.TenantInfo, req.IntegrationType)
 	if err != nil {
@@ -633,7 +640,7 @@ func (s *Service) RequestRefresh(
 
 func (s *Service) CompleteSetup(
 	ctx context.Context,
-	req *accountingsyncports.AccountingSetupRequest,
+	req *accountingmappingports.AccountingSetupRequest,
 ) (*accountingsync.AccountingConnection, error) {
 	summary, err := s.Summary(ctx, req.TenantInfo, req.IntegrationType)
 	if err != nil {

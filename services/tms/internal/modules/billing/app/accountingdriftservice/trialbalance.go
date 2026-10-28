@@ -9,6 +9,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accounttype"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingdriftports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingmappingports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
@@ -104,8 +107,8 @@ func (s *Service) reconcileTrialBalance(
 	ctx context.Context,
 	sess *readSession,
 	eventBudget int,
-) (*accountingsyncports.AccountingDriftBalanceResult, error) {
-	result := new(accountingsyncports.AccountingDriftBalanceResult)
+) (*accountingdriftports.AccountingDriftBalanceResult, error) {
+	result := new(accountingdriftports.AccountingDriftBalanceResult)
 	if sess.ledger == nil || sess.conn.SyncStartDate == nil {
 		return result, nil
 	}
@@ -137,16 +140,19 @@ func (s *Service) reconcileTrialBalance(
 		return result, nil
 	}
 
-	rows, err := sess.ledger.ReadTrialBalance(ctx, &accountingsyncports.ReadTrialBalanceRequest{
-		Auth:      sess.auth,
-		StartDate: window.fromDate,
-		EndDate:   window.endDate,
-	})
+	rows, err := sess.ledger.ReadTrialBalance(
+		ctx,
+		&accountingconnectorports.ReadTrialBalanceRequest{
+			Auth:      sess.auth,
+			StartDate: window.fromDate,
+			EndDate:   window.endDate,
+		},
+	)
 	if err != nil {
 		s.recordFailure(ctx, sess.conn, s.classify(sess, err))
 		return nil, err
 	}
-	provider := make(map[string]accountingsyncports.AccountingTrialBalanceRow, len(rows))
+	provider := make(map[string]accountingconnectorports.AccountingTrialBalanceRow, len(rows))
 	for idx := range rows {
 		provider[rows[idx].AccountExternalID] = rows[idx]
 	}
@@ -324,7 +330,7 @@ func (s *Service) groupByProviderAccount(
 ) ([]*providerAccount, error) {
 	mappings, err := s.mappings.ListByConnection(
 		ctx,
-		&accountingsyncports.ListAccountingMappingsQuery{
+		&accountingmappingports.ListAccountingMappingsQuery{
 			TenantInfo:   sess.tenant,
 			ConnectionID: sess.conn.ID,
 			TargetTypes: []accountingsync.MappingTargetType{
@@ -401,7 +407,7 @@ func (s *Service) withoutRetainedEarnings(
 	}
 	refs, err := s.references.GetByExternalIDs(
 		ctx,
-		&accountingsyncports.GetAccountingReferenceObjectsRequest{
+		&accountingmappingports.GetAccountingReferenceObjectsRequest{
 			TenantInfo:   sess.tenant,
 			ConnectionID: sess.conn.ID,
 			Kind:         accountingsync.ReferenceKindAccount,
@@ -426,7 +432,7 @@ func (s *Service) withoutRetainedEarnings(
 func trialObservation(
 	sess *readSession,
 	group *providerAccount,
-	row accountingsyncports.AccountingTrialBalanceRow,
+	row accountingconnectorports.AccountingTrialBalanceRow,
 	found bool,
 	currency string,
 	at int64,

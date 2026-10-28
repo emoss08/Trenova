@@ -7,7 +7,9 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountinginboundports"
 	"github.com/emoss08/trenova/internal/modules/agent/app/watchtowersources"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
@@ -53,46 +55,46 @@ type Params struct {
 
 	Logger        *zap.Logger
 	DB            kernelports.Transactor
-	Connections   accountingsyncports.AccountingConnectionRepository
-	Apps          accountingsyncports.AccountingAppCredentialRepository
-	States        accountingsyncports.AccountingOAuthStateRepository
+	Connections   accountingconnectionports.AccountingConnectionRepository
+	Apps          accountingconnectionports.AccountingAppCredentialRepository
+	States        accountingconnectionports.AccountingOAuthStateRepository
 	Integrations  integrationports.IntegrationRepository
-	Connectors    accountingsyncports.AccountingConnectorRegistry
+	Connectors    accountingconnectorports.AccountingConnectorRegistry
 	Encryption    *encryptionservice.Service
 	AuditService  auditports.AuditService
-	Realtime      realtimeports.RealtimeService                               `optional:"true"`
-	Watchtower    watchtowerports.WatchtowerProjector                         `optional:"true"`
-	Publisher     agentports.AgentEventPublisher                              `optional:"true"`
-	Refresher     accountingsyncports.AccountingReferenceRefresher            `optional:"true"`
-	Poller        accountingsyncports.AccountingChangePoller                  `optional:"true"`
-	Plans         platformplanports.PlanService                               `optional:"true"`
-	Subscriptions accountingsyncports.AccountingWebhookSubscriptionRepository `optional:"true"`
-	Certificates  accountingsyncports.AccountingPendingCertificateRepository  `optional:"true"`
-	Organizations tenantports.OrganizationRepository                          `optional:"true"`
+	Realtime      realtimeports.RealtimeService                                     `optional:"true"`
+	Watchtower    watchtowerports.WatchtowerProjector                               `optional:"true"`
+	Publisher     agentports.AgentEventPublisher                                    `optional:"true"`
+	Refresher     accountingconnectionports.AccountingReferenceRefresher            `optional:"true"`
+	Poller        accountinginboundports.AccountingChangePoller                     `optional:"true"`
+	Plans         platformplanports.PlanService                                     `optional:"true"`
+	Subscriptions accountingconnectionports.AccountingWebhookSubscriptionRepository `optional:"true"`
+	Certificates  accountingconnectionports.AccountingPendingCertificateRepository  `optional:"true"`
+	Organizations tenantports.OrganizationRepository                                `optional:"true"`
 }
 
 type Service struct {
 	l             *zap.Logger
 	db            kernelports.Transactor
-	connections   accountingsyncports.AccountingConnectionRepository
-	apps          accountingsyncports.AccountingAppCredentialRepository
-	states        accountingsyncports.AccountingOAuthStateRepository
+	connections   accountingconnectionports.AccountingConnectionRepository
+	apps          accountingconnectionports.AccountingAppCredentialRepository
+	states        accountingconnectionports.AccountingOAuthStateRepository
 	integrations  integrationports.IntegrationRepository
-	connectors    accountingsyncports.AccountingConnectorRegistry
+	connectors    accountingconnectorports.AccountingConnectorRegistry
 	encryption    *encryptionservice.Service
 	audit         auditports.AuditService
 	realtime      realtimeports.RealtimeService
 	watchtower    watchtowerports.WatchtowerProjector
 	publisher     agentports.AgentEventPublisher
-	refresher     accountingsyncports.AccountingReferenceRefresher
-	poller        accountingsyncports.AccountingChangePoller
+	refresher     accountingconnectionports.AccountingReferenceRefresher
+	poller        accountinginboundports.AccountingChangePoller
 	plans         platformplanports.PlanService
-	subscriptions accountingsyncports.AccountingWebhookSubscriptionRepository
-	certificates  accountingsyncports.AccountingPendingCertificateRepository
+	subscriptions accountingconnectionports.AccountingWebhookSubscriptionRepository
+	certificates  accountingconnectionports.AccountingPendingCertificateRepository
 	organizations tenantports.OrganizationRepository
 }
 
-var _ accountingsyncports.AccountingConnectionService = (*Service)(nil)
+var _ accountingconnectionports.AccountingConnectionService = (*Service)(nil)
 
 //nolint:gocritic // dependency injection
 func New(p Params) *Service {
@@ -134,7 +136,7 @@ func (s *Service) Status(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	typ integration.Type,
-) (*accountingsyncports.AccountingSyncStatus, error) {
+) (*accountingconnectionports.AccountingSyncStatus, error) {
 	provider, err := s.provider(typ)
 	if err != nil {
 		return nil, err
@@ -144,7 +146,7 @@ func (s *Service) Status(
 		return nil, err
 	}
 
-	status := &accountingsyncports.AccountingSyncStatus{
+	status := &accountingconnectionports.AccountingSyncStatus{
 		IntegrationType: typ,
 		ProviderName:    accountingsync.ProviderName(typ),
 		Profile:         accountingsync.MustProfile(typ),
@@ -152,10 +154,13 @@ func (s *Service) Status(
 		App:             settings,
 	}
 
-	conn, err := s.connections.GetByType(ctx, accountingsyncports.GetAccountingConnectionRequest{
-		TenantInfo:      tenantInfo,
-		IntegrationType: typ,
-	})
+	conn, err := s.connections.GetByType(
+		ctx,
+		accountingconnectionports.GetAccountingConnectionRequest{
+			TenantInfo:      tenantInfo,
+			IntegrationType: typ,
+		},
+	)
 	switch {
 	case err == nil:
 		status.Connection = conn
@@ -180,8 +185,8 @@ func (s *Service) Status(
 
 func (s *Service) StartAuthorization(
 	ctx context.Context,
-	req *accountingsyncports.StartAccountingAuthorizationRequest,
-) (*accountingsyncports.AccountingAuthorizationStart, error) {
+	req *accountingconnectionports.StartAccountingAuthorizationRequest,
+) (*accountingconnectionports.AccountingAuthorizationStart, error) {
 	if err := s.requireIntegrations(ctx, req.TenantInfo); err != nil {
 		return nil, err
 	}
@@ -221,7 +226,7 @@ func (s *Service) StartAuthorization(
 	}
 
 	now := timeutils.NowUnix()
-	if err = s.states.Save(ctx, &accountingsyncports.AccountingOAuthState{
+	if err = s.states.Save(ctx, &accountingconnectionports.AccountingOAuthState{
 		State:           tokenHash,
 		IntegrationType: req.IntegrationType,
 		UserID:          req.UserID,
@@ -236,7 +241,7 @@ func (s *Service) StartAuthorization(
 			WithInternal(err)
 	}
 
-	authorizeURL, err := connector.AuthorizeURL(accountingsyncports.AccountingAuthorizeRequest{
+	authorizeURL, err := connector.AuthorizeURL(accountingconnectorports.AccountingAuthorizeRequest{
 		State:         token,
 		CodeChallenge: challenge,
 	})
@@ -244,7 +249,7 @@ func (s *Service) StartAuthorization(
 		return nil, err
 	}
 
-	return &accountingsyncports.AccountingAuthorizationStart{
+	return &accountingconnectionports.AccountingAuthorizationStart{
 		AuthorizeURL: authorizeURL,
 		ExpiresAt:    now + int64(authorizationStateTTL/time.Second),
 	}, nil
@@ -269,7 +274,7 @@ func (s *Service) requestReferenceRefresh(
 func (s *Service) connect(
 	conn *accountingsync.AccountingConnection,
 	userID pulid.ID,
-	grant *accountingsyncports.AccountingTokenGrant,
+	grant *accountingconnectorports.AccountingTokenGrant,
 	facts *accountingsync.CompanyFacts,
 	now int64,
 ) error {
@@ -290,7 +295,7 @@ func (s *Service) connect(
 
 func (s *Service) Disconnect(
 	ctx context.Context,
-	req *accountingsyncports.DisconnectAccountingRequest,
+	req *accountingconnectionports.DisconnectAccountingRequest,
 ) (*accountingsync.AccountingConnection, error) {
 	provider, err := s.provider(req.IntegrationType)
 	if err != nil {
@@ -299,7 +304,7 @@ func (s *Service) Disconnect(
 
 	if current, getErr := s.connections.GetByType(
 		ctx,
-		accountingsyncports.GetAccountingConnectionRequest{
+		accountingconnectionports.GetAccountingConnectionRequest{
 			TenantInfo:      req.TenantInfo,
 			IntegrationType: req.IntegrationType,
 		},
@@ -316,7 +321,7 @@ func (s *Service) Disconnect(
 	err = s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		existing, lockErr := s.connections.LockByTypeWithTokens(
 			txCtx,
-			accountingsyncports.GetAccountingConnectionRequest{
+			accountingconnectionports.GetAccountingConnectionRequest{
 				TenantInfo:      req.TenantInfo,
 				IntegrationType: req.IntegrationType,
 			},
@@ -366,7 +371,7 @@ func (s *Service) Disconnect(
 
 func (s *Service) revokeStored(
 	ctx context.Context,
-	provider accountingsyncports.AccountingProvider,
+	provider accountingconnectorports.AccountingProvider,
 	conn *accountingsync.AccountingConnection,
 	refreshCiphertext string,
 ) {
@@ -385,7 +390,7 @@ func (s *Service) revokeStored(
 
 type tokenOutcome struct {
 	conn        *accountingsync.AccountingConnection
-	connector   accountingsyncports.AccountingConnector
+	connector   accountingconnectorports.AccountingConnector
 	accessToken string
 	failure     error
 	category    accountingsync.ErrorCategory
@@ -394,7 +399,7 @@ type tokenOutcome struct {
 
 func (s *Service) freshAccessToken(
 	ctx context.Context,
-	provider accountingsyncports.AccountingProvider,
+	provider accountingconnectorports.AccountingProvider,
 	tenantInfo pagination.TenantInfo,
 	connectionID pulid.ID,
 	now int64,
@@ -403,7 +408,7 @@ func (s *Service) freshAccessToken(
 	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		conn, lockErr := s.connections.LockWithTokens(
 			txCtx,
-			accountingsyncports.GetAccountingConnectionByIDRequest{
+			accountingconnectionports.GetAccountingConnectionByIDRequest{
 				TenantInfo: tenantInfo,
 				ID:         connectionID,
 			},
@@ -453,7 +458,7 @@ func (s *Service) freshAccessToken(
 
 func (s *Service) renewAccessToken(
 	ctx, txCtx context.Context,
-	connector accountingsyncports.AccountingConnector,
+	connector accountingconnectorports.AccountingConnector,
 	conn *accountingsync.AccountingConnection,
 	now int64,
 ) error {
@@ -473,7 +478,7 @@ func (s *Service) renewAccessToken(
 
 func (s *Service) refresh(
 	ctx, txCtx context.Context,
-	connector accountingsyncports.AccountingConnector,
+	connector accountingconnectorports.AccountingConnector,
 	conn *accountingsync.AccountingConnection,
 	now int64,
 ) error {
@@ -481,7 +486,7 @@ func (s *Service) refresh(
 	if err != nil {
 		return err
 	}
-	grant, err := connector.Refresh(ctx, &accountingsyncports.AccountingRefreshRequest{
+	grant, err := connector.Refresh(ctx, &accountingconnectorports.AccountingRefreshRequest{
 		RefreshToken: refreshToken,
 		RealmID:      conn.ExternalRealmID,
 	})
@@ -520,7 +525,7 @@ func (s *Service) CheckHealth(
 ) (*accountingsync.AccountingConnection, error) {
 	current, err := s.connections.GetByID(
 		ctx,
-		accountingsyncports.GetAccountingConnectionByIDRequest{
+		accountingconnectionports.GetAccountingConnectionByIDRequest{
 			TenantInfo: tenantInfo,
 			ID:         connectionID,
 		},
@@ -554,7 +559,7 @@ func (s *Service) CheckHealth(
 	err = s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		locked, lockErr := s.connections.LockWithTokens(
 			txCtx,
-			accountingsyncports.GetAccountingConnectionByIDRequest{
+			accountingconnectionports.GetAccountingConnectionByIDRequest{
 				TenantInfo: tenantInfo,
 				ID:         connectionID,
 			},
@@ -586,10 +591,10 @@ func (s *Service) Session(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	connectionID pulid.ID,
-) (*accountingsyncports.AccountingSession, error) {
+) (*accountingconnectionports.AccountingSession, error) {
 	current, err := s.connections.GetByID(
 		ctx,
-		accountingsyncports.GetAccountingConnectionByIDRequest{
+		accountingconnectionports.GetAccountingConnectionByIDRequest{
 			TenantInfo: tenantInfo,
 			ID:         connectionID,
 		},
@@ -620,7 +625,7 @@ func (s *Service) Session(
 		).WithInternal(outcome.failure)
 	}
 
-	return &accountingsyncports.AccountingSession{
+	return &accountingconnectionports.AccountingSession{
 		Connection:  outcome.conn,
 		AccessToken: outcome.accessToken,
 		Connector:   outcome.connector,
@@ -635,7 +640,7 @@ func (s *Service) ReportCallFailure(
 ) accountingsync.ErrorCategory {
 	current, err := s.connections.GetByID(
 		ctx,
-		accountingsyncports.GetAccountingConnectionByIDRequest{
+		accountingconnectionports.GetAccountingConnectionByIDRequest{
 			TenantInfo: tenantInfo,
 			ID:         connectionID,
 		},
@@ -660,7 +665,7 @@ func (s *Service) ReportCallFailure(
 	txErr := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		locked, lockErr := s.connections.LockWithTokens(
 			txCtx,
-			accountingsyncports.GetAccountingConnectionByIDRequest{
+			accountingconnectionports.GetAccountingConnectionByIDRequest{
 				TenantInfo: tenantInfo,
 				ID:         connectionID,
 			},
@@ -693,11 +698,11 @@ func errNotConnected(provider string) error {
 func (s *Service) CheckDue(
 	ctx context.Context,
 	limit int,
-) (*accountingsyncports.AccountingHealthSweep, error) {
+) (*accountingconnectionports.AccountingHealthSweep, error) {
 	now := timeutils.NowUnix()
 	due, err := s.connections.ListDueForHealthCheck(
 		ctx,
-		accountingsyncports.ListDueAccountingConnectionsRequest{
+		accountingconnectionports.ListDueAccountingConnectionsRequest{
 			CheckedBefore: now - HealthCheckInterval + 60,
 			Limit:         limit,
 		},
@@ -706,7 +711,7 @@ func (s *Service) CheckDue(
 		return nil, err
 	}
 
-	sweep := &accountingsyncports.AccountingHealthSweep{Listed: len(due)}
+	sweep := &accountingconnectionports.AccountingHealthSweep{Listed: len(due)}
 	for _, conn := range due {
 		if ctx.Err() != nil {
 			return sweep, ctx.Err()
@@ -900,13 +905,13 @@ func (s *Service) publishInvalidation(
 
 func (s *Service) revokeQuietly(
 	ctx context.Context,
-	connector accountingsyncports.AccountingConnector,
+	connector accountingconnectorports.AccountingConnector,
 	refreshToken, realmID string,
 ) {
 	if refreshToken == "" {
 		return
 	}
-	if err := connector.Revoke(ctx, &accountingsyncports.AccountingRevokeRequest{
+	if err := connector.Revoke(ctx, &accountingconnectorports.AccountingRevokeRequest{
 		Token:   refreshToken,
 		RealmID: realmID,
 	}); err != nil {
@@ -928,7 +933,7 @@ func connectionAAD(
 
 func (s *Service) seal(
 	conn *accountingsync.AccountingConnection,
-	grant *accountingsyncports.AccountingTokenGrant,
+	grant *accountingconnectorports.AccountingTokenGrant,
 	now int64,
 ) (accountingsync.TokenGrant, error) {
 	access, err := s.encryption.EncryptStringWithAAD(
@@ -977,8 +982,8 @@ func (s *Service) open(
 func tokensOf(
 	conn *accountingsync.AccountingConnection,
 	now int64,
-) accountingsyncports.StoreAccountingTokensRequest {
-	return accountingsyncports.StoreAccountingTokensRequest{
+) accountingconnectionports.StoreAccountingTokensRequest {
+	return accountingconnectionports.StoreAccountingTokensRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: conn.OrganizationID,
 			BuID:  conn.BusinessUnitID,

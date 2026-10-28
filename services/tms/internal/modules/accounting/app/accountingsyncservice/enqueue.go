@@ -6,6 +6,8 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingmappingports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
@@ -22,9 +24,9 @@ type EnqueuerParams struct {
 	fx.In
 
 	Logger      *zap.Logger
-	Connections accountingsyncports.AccountingConnectionRepository
+	Connections accountingconnectionports.AccountingConnectionRepository
 	Records     accountingsyncports.AccountingSyncRecordRepository
-	Mappings    accountingsyncports.AccountingMappingRepository
+	Mappings    accountingmappingports.AccountingMappingRepository
 	Orgs        tenantports.OrganizationRepository
 	Ledger      journalentryports.AccountingLedgerSource
 	Dispatcher  accountingsyncports.AccountingSyncDispatcher `optional:"true"`
@@ -32,9 +34,9 @@ type EnqueuerParams struct {
 
 type Enqueuer struct {
 	l           *zap.Logger
-	connections accountingsyncports.AccountingConnectionRepository
+	connections accountingconnectionports.AccountingConnectionRepository
 	records     accountingsyncports.AccountingSyncRecordRepository
-	mappings    accountingsyncports.AccountingMappingRepository
+	mappings    accountingmappingports.AccountingMappingRepository
 	orgs        tenantports.OrganizationRepository
 	ledger      journalentryports.AccountingLedgerSource
 	dispatcher  accountingsyncports.AccountingSyncDispatcher
@@ -381,7 +383,7 @@ func (e *Enqueuer) covers(
 
 	mapping, err := e.mappings.GetByTarget(
 		ctx,
-		&accountingsyncports.GetAccountingMappingByTargetRequest{
+		&accountingmappingports.GetAccountingMappingByTargetRequest{
 			TenantInfo:      req.TenantInfo,
 			ConnectionID:    conn.ID,
 			TargetType:      target,

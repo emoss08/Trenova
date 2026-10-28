@@ -10,6 +10,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/app/journalentryservice"
 	"github.com/emoss08/trenova/internal/modules/accounting/app/journalreversalservice"
 	"github.com/emoss08/trenova/internal/modules/accounting/app/manualjournalservice"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingdriftports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountinginboundports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingmappingports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalperiodports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalyearports"
@@ -280,11 +284,11 @@ type Params struct {
 	FuelSurchargeService         *fuelsurchargeservice.Service
 	CostingService               *costingservice.Service
 	DetentionService             *detentionservice.Service
-	AccountingConnectionService  accountingsyncports.AccountingConnectionService
-	AccountingMappingService     accountingsyncports.AccountingMappingService
+	AccountingConnectionService  accountingconnectionports.AccountingConnectionService
+	AccountingMappingService     accountingmappingports.AccountingMappingService
 	AccountingSyncService        accountingsyncports.AccountingSyncService
-	AccountingInboundService     accountingsyncports.AccountingInboundService
-	AccountingDriftService       accountingsyncports.AccountingDriftService
+	AccountingInboundService     accountinginboundports.AccountingInboundService
+	AccountingDriftService       accountingdriftports.AccountingDriftService
 	DetentionPolicyService       *detentionpolicyservice.Service
 	RateAgreementService         *rateagreementservice.Service
 	RateZoneService              *ratezoneservice.Service
@@ -517,11 +521,11 @@ type Services struct {
 	FuelSurchargeService         *fuelsurchargeservice.Service
 	CostingService               *costingservice.Service
 	DetentionService             *detentionservice.Service
-	AccountingConnections        accountingsyncports.AccountingConnectionService
-	AccountingMappingService     accountingsyncports.AccountingMappingService
+	AccountingConnections        accountingconnectionports.AccountingConnectionService
+	AccountingMappingService     accountingmappingports.AccountingMappingService
 	AccountingSync               accountingsyncports.AccountingSyncService
-	AccountingInbound            accountingsyncports.AccountingInboundService
-	AccountingDrift              accountingsyncports.AccountingDriftService
+	AccountingInbound            accountinginboundports.AccountingInboundService
+	AccountingDrift              accountingdriftports.AccountingDriftService
 	DetentionPolicyService       *detentionpolicyservice.Service
 	RateAgreementService         *rateagreementservice.Service
 	RateZoneService              *ratezoneservice.Service

@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/shared/xero"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -20,7 +20,7 @@ func TestChangeFeedLimitsAndCursorAt(t *testing.T) {
 	t.Parallel()
 
 	conn := testConnector(t, &fakeXero{})
-	assert.Equal(t, accountingsyncports.AccountingChangeFeedLimits{
+	assert.Equal(t, accountingconnectorports.AccountingChangeFeedLimits{
 		MaxLookback:    0,
 		ReportsDeletes: true,
 		MaxPerRead:     xero.MaxPageSize,
@@ -74,18 +74,33 @@ func TestNextSinceIsTheLatestChangeLessOneSecond(t *testing.T) {
 		want    time.Time
 	}{
 		{"nothing seen", time.Time{}, time.Time{}, since},
-		{"latest less a second", latest, time.Time{}, time.Date(2026, 9, 29, 11, 15, 29, 0, time.UTC)},
+		{
+			"latest less a second",
+			latest,
+			time.Time{},
+			time.Date(2026, 9, 29, 11, 15, 29, 0, time.UTC),
+		},
 		{"never before since", since, time.Time{}, since},
-		{"paging bounded by its start", latest, since.Add(30 * time.Minute), since.Add(30*time.Minute - time.Second)},
-		{"start after latest", latest, latest.Add(time.Hour), time.Date(2026, 9, 29, 11, 15, 29, 0, time.UTC)},
+		{
+			"paging bounded by its start",
+			latest,
+			since.Add(30 * time.Minute),
+			since.Add(30*time.Minute - time.Second),
+		},
+		{
+			"start after latest",
+			latest,
+			latest.Add(time.Hour),
+			time.Date(2026, 9, 29, 11, 15, 29, 0, time.UTC),
+		},
 	}
 	for _, tc := range cases {
 		assert.Equal(t, tc.want, nextSince(since, tc.latest, tc.started), tc.name)
 	}
 }
 
-func changesRequest(cursor string) *accountingsyncports.ReadAccountingChangesRequest {
-	return &accountingsyncports.ReadAccountingChangesRequest{
+func changesRequest(cursor string) *accountingconnectorports.ReadAccountingChangesRequest {
+	return &accountingconnectorports.ReadAccountingChangesRequest{
 		Auth:         testAuth(),
 		Cursor:       cursor,
 		Now:          pollNow,
@@ -152,7 +167,7 @@ func TestReadChangesMapsPaymentsDocumentsAndReferences(t *testing.T) {
 	require.Len(t, page.Payments, 3)
 	single := page.Payments[0]
 	assert.Equal(t, accountingsync.InboundCustomerPayment, single.Kind)
-	assert.Equal(t, accountingsyncports.AccountingChangeUpsert, single.Operation)
+	assert.Equal(t, accountingconnectorports.AccountingChangeUpsert, single.Operation)
 	assert.Equal(t, testPayment, single.ExternalID)
 	assert.Equal(t, testCustomer, single.PartyExternalID)
 	assert.Equal(t, "2026-09-15", single.TxnDate)
@@ -171,18 +186,18 @@ func TestReadChangesMapsPaymentsDocumentsAndReferences(t *testing.T) {
 
 	deleted := page.Payments[2]
 	assert.Equal(t, accountingsync.InboundBillPayment, deleted.Kind)
-	assert.Equal(t, accountingsyncports.AccountingChangeDelete, deleted.Operation)
+	assert.Equal(t, accountingconnectorports.AccountingChangeDelete, deleted.Operation)
 	assert.Empty(t, deleted.Lines)
 
 	require.Len(t, page.Documents, 3)
-	assert.Equal(t, accountingsyncports.AccountingChangeVoid, page.Documents[0].Operation)
+	assert.Equal(t, accountingconnectorports.AccountingChangeVoid, page.Documents[0].Operation)
 	assert.Equal(t, []accountingsync.SyncObjectType{
 		accountingsync.SyncObjectInvoice, accountingsync.SyncObjectDebitMemo,
 	}, page.Documents[0].ObjectTypes)
 	assert.Equal(t, []accountingsync.SyncObjectType{
 		accountingsync.SyncObjectCarrierBill, accountingsync.SyncObjectDriverBill,
 	}, page.Documents[1].ObjectTypes)
-	assert.Equal(t, accountingsyncports.AccountingChangeDelete, page.Documents[2].Operation)
+	assert.Equal(t, accountingconnectorports.AccountingChangeDelete, page.Documents[2].Operation)
 
 	require.Len(t, page.References, 2)
 	assert.Equal(t, accountingsync.AccountClassIncome, page.References[0].Object.AccountClass)
@@ -212,9 +227,12 @@ func TestReadChangesWithNothingNewKeepsTheCursor(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, "2026-09-29T12:00:00Z", fresh.NextCursor)
 
-	none, err := conn.ReadChanges(t.Context(), &accountingsyncports.ReadAccountingChangesRequest{
-		Auth: testAuth(), Cursor: "2026-09-29T10:00:00Z", Now: pollNow,
-	})
+	none, err := conn.ReadChanges(
+		t.Context(),
+		&accountingconnectorports.ReadAccountingChangesRequest{
+			Auth: testAuth(), Cursor: "2026-09-29T10:00:00Z", Now: pollNow,
+		},
+	)
 	require.NoError(t, err)
 	assert.Equal(t, "2026-09-29T10:00:00Z", none.NextCursor)
 
@@ -224,14 +242,19 @@ func TestReadChangesWithNothingNewKeepsTheCursor(t *testing.T) {
 
 func fullInvoicePage(start int, updated string) string {
 	var b strings.Builder
-	b.WriteString(`{"pagination":{"page":1,"pageSize":1000,"pageCount":2,"itemCount":1001},"Invoices":[`)
+	b.WriteString(
+		`{"pagination":{"page":1,"pageSize":1000,"pageCount":2,"itemCount":1001},"Invoices":[`,
+	)
 	for idx := range xero.MaxPageSize {
 		if idx > 0 {
 			b.WriteString(",")
 		}
-		fmt.Fprintf(&b,
+		fmt.Fprintf(
+			&b,
 			`{"InvoiceID":"00000000-0000-4000-8000-%012d","Type":"ACCREC","Status":"AUTHORISED","UpdatedDateUTC":"%s"}`,
-			start+idx, updated)
+			start+idx,
+			updated,
+		)
 	}
 	b.WriteString("]}")
 	return b.String()
@@ -257,7 +280,7 @@ func TestReadChangesPagesThroughAFullEndpoint(t *testing.T) {
 		}
 	}}
 	conn := testConnector(t, fake)
-	req := &accountingsyncports.ReadAccountingChangesRequest{
+	req := &accountingconnectorports.ReadAccountingChangesRequest{
 		Auth: testAuth(), Cursor: "2026-09-29T10:00:00Z", Now: pollNow, Documents: true,
 	}
 
@@ -265,7 +288,10 @@ func TestReadChangesPagesThroughAFullEndpoint(t *testing.T) {
 	require.NoError(t, err)
 	assert.True(t, first.More)
 	assert.Len(t, first.Documents, xero.MaxPageSize+1)
-	assert.True(t, strings.HasPrefix(first.NextCursor, "p|2026-09-29T10:00:00Z|2026-09-29T12:00:00Z|"))
+	assert.True(
+		t,
+		strings.HasPrefix(first.NextCursor, "p|2026-09-29T10:00:00Z|2026-09-29T12:00:00Z|"),
+	)
 
 	req.Cursor = first.NextCursor
 	req.Now = pollNow.Add(time.Minute)
@@ -303,9 +329,12 @@ func TestReadChangesPagingAdvancesAcrossTargets(t *testing.T) {
 		targets: []changeTarget{targetPayments, targetContacts},
 		page:    2,
 	}
-	page, err := conn.ReadChanges(t.Context(), &accountingsyncports.ReadAccountingChangesRequest{
-		Auth: testAuth(), Cursor: cursor.String(), Now: pollNow, Payments: true,
-	})
+	page, err := conn.ReadChanges(
+		t.Context(),
+		&accountingconnectorports.ReadAccountingChangesRequest{
+			Auth: testAuth(), Cursor: cursor.String(), Now: pollNow, Payments: true,
+		},
+	)
 	require.NoError(t, err)
 	assert.True(t, page.More)
 	next, err := parseChangeCursor(page.NextCursor, pollNow)
@@ -313,9 +342,12 @@ func TestReadChangesPagingAdvancesAcrossTargets(t *testing.T) {
 	assert.Equal(t, 1, next.index)
 	assert.Equal(t, 2, next.page)
 
-	done, err := conn.ReadChanges(t.Context(), &accountingsyncports.ReadAccountingChangesRequest{
-		Auth: testAuth(), Cursor: page.NextCursor, Now: pollNow, Payments: true,
-	})
+	done, err := conn.ReadChanges(
+		t.Context(),
+		&accountingconnectorports.ReadAccountingChangesRequest{
+			Auth: testAuth(), Cursor: page.NextCursor, Now: pollNow, Payments: true,
+		},
+	)
 	require.NoError(t, err)
 	assert.False(t, done.More)
 	assert.Equal(t, "2026-09-29T10:59:59Z", done.NextCursor)

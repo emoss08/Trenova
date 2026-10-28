@@ -6,6 +6,24 @@ filename: "mock_{{.InterfaceName}}.go"
 formatter: goimports
 template: testify
 packages:
+  github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/accounting/ports/accountingdriftports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/accounting/ports/accountinginboundports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/accounting/ports/accountingmappingports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/accounting/ports/accountingpayablesports:
+    config:
+      all: true
   github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports:
     config:
       all: true

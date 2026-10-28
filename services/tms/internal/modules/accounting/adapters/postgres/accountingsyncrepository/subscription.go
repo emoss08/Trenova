@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync/accountingsyncdb"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -38,7 +38,7 @@ type subscriptionRepository struct {
 
 func NewSubscriptionRepository(
 	p SubscriptionParams,
-) accountingsyncports.AccountingWebhookSubscriptionRepository {
+) accountingconnectionports.AccountingWebhookSubscriptionRepository {
 	return &subscriptionRepository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.accounting-webhook-subscription-repository"),
@@ -47,7 +47,7 @@ func NewSubscriptionRepository(
 
 func (r *subscriptionRepository) ListByConnection(
 	ctx context.Context,
-	req accountingsyncports.ListAccountingWebhookSubscriptionsRequest,
+	req accountingconnectionports.ListAccountingWebhookSubscriptionsRequest,
 ) ([]*accountingsync.AccountingWebhookSubscription, error) {
 	return dbtx.Read(
 		ctx,
@@ -93,7 +93,7 @@ func (r *subscriptionRepository) ListByExternalIDs(
 
 func (r *subscriptionRepository) ListConnections(
 	ctx context.Context,
-	req accountingsyncports.ListWebhookSubscriptionConnectionsRequest,
+	req accountingconnectionports.ListWebhookSubscriptionConnectionsRequest,
 ) ([]*accountingsync.AccountingConnection, error) {
 	if len(req.IntegrationTypes) == 0 {
 		return []*accountingsync.AccountingConnection{}, nil
@@ -180,7 +180,7 @@ func (r *subscriptionRepository) Update(
 
 func (r *subscriptionRepository) Delete(
 	ctx context.Context,
-	req accountingsyncports.DeleteAccountingWebhookSubscriptionRequest,
+	req accountingconnectionports.DeleteAccountingWebhookSubscriptionRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		ws := accountingsyncdb.AccountingWebhookSubscriptions

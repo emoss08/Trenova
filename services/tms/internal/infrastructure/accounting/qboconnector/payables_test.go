@@ -4,9 +4,9 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/shared/quickbooks"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
@@ -15,8 +15,8 @@ import (
 
 const objectNotFoundFault = `{"Fault":{"type":"ValidationFault","Error":[{"Message":"Object Not Found","code":"610"}]}}`
 
-func settlementBill() *accountingsyncports.AccountingPurchaseDocument {
-	return &accountingsyncports.AccountingPurchaseDocument{
+func settlementBill() *accountingconnectorports.AccountingPurchaseDocument {
+	return &accountingconnectorports.AccountingPurchaseDocument{
 		Auth:                auth(),
 		RequestID:           docRequestID,
 		Kind:                accountingsync.SyncObjectCarrierBill,
@@ -27,7 +27,7 @@ func settlementBill() *accountingsyncports.AccountingPurchaseDocument {
 		DueDate:             "2026-10-05",
 		CurrencyCode:        "USD",
 		PrivateNote:         "Trenova carrier settlement CS-1042",
-		Lines: []accountingsyncports.AccountingPurchaseLine{
+		Lines: []accountingconnectorports.AccountingPurchaseLine{
 			{
 				Description:       "Purchased transportation",
 				AccountExternalID: "61",
@@ -50,15 +50,18 @@ func TestUpsertVendorCreatesA1099VendorWhenUnmapped(t *testing.T) {
 	}}
 	conn := documentConnector(t, fake)
 
-	result, err := conn.UpsertVendor(t.Context(), &accountingsyncports.AccountingVendorDocument{
-		Auth:      auth(),
-		RequestID: docRequestID,
-		Party: accountingsyncports.AccountingPartyDraft{
-			DisplayName: "Dale Owner: Operator",
-			City:        "Reno",
-			Is1099:      true,
+	result, err := conn.UpsertVendor(
+		t.Context(),
+		&accountingconnectorports.AccountingVendorDocument{
+			Auth:      auth(),
+			RequestID: docRequestID,
+			Party: accountingconnectorports.AccountingPartyDraft{
+				DisplayName: "Dale Owner: Operator",
+				City:        "Reno",
+				Is1099:      true,
+			},
 		},
-	})
+	)
 	require.NoError(t, err)
 	assert.Equal(t, "95", result.ExternalID)
 	assert.Equal(t, "Dale Owner - Operator", result.DocNumber)
@@ -83,12 +86,17 @@ func TestUpsertVendorUpdatesAMappedVendor(t *testing.T) {
 	}}
 	conn := documentConnector(t, fake)
 
-	result, err := conn.UpsertVendor(t.Context(), &accountingsyncports.AccountingVendorDocument{
-		Auth:       auth(),
-		RequestID:  docRequestID,
-		ExternalID: "91",
-		Party:      accountingsyncports.AccountingPartyDraft{DisplayName: "Swift Haul LLC"},
-	})
+	result, err := conn.UpsertVendor(
+		t.Context(),
+		&accountingconnectorports.AccountingVendorDocument{
+			Auth:       auth(),
+			RequestID:  docRequestID,
+			ExternalID: "91",
+			Party: accountingconnectorports.AccountingPartyDraft{
+				DisplayName: "Swift Haul LLC",
+			},
+		},
+	)
 	require.NoError(t, err)
 	assert.Equal(t, "91", result.ExternalID)
 
@@ -119,8 +127,17 @@ func TestCreatePurchaseDocumentWritesABill(t *testing.T) {
 		accountingsync.ExternalRefCreditDocument: "false",
 		accountingsync.ExternalRefURL:            conn.env.AppBaseURL() + "/app/bill?txnId=210",
 	}, result.Refs)
-	assert.Equal(t, result.Refs[accountingsync.ExternalRefURL],
-		conn.DocumentURL(accountingsyncports.AccountingDocumentAuth{}, accountingsyncports.AccountingDocumentLink{Kind: accountingsync.SyncObjectCarrierBill, ExternalID: "210"}))
+	assert.Equal(
+		t,
+		result.Refs[accountingsync.ExternalRefURL],
+		conn.DocumentURL(
+			accountingconnectorports.AccountingDocumentAuth{},
+			accountingconnectorports.AccountingDocumentLink{
+				Kind:       accountingsync.SyncObjectCarrierBill,
+				ExternalID: "210",
+			},
+		),
+	)
 
 	writes := fake.writes()
 	require.Len(t, writes, 1)
@@ -149,7 +166,7 @@ func TestCreatePurchaseDocumentWritesAVendorCreditForANegativeNet(t *testing.T) 
 	doc.Kind = accountingsync.SyncObjectDriverBill
 	doc.VendorCredit = true
 	doc.DocNumber = "DS-77"
-	doc.Lines = []accountingsyncports.AccountingPurchaseLine{
+	doc.Lines = []accountingconnectorports.AccountingPurchaseLine{
 		{AccountExternalID: "72", Amount: decimal.NewFromInt(150)},
 	}
 	result, err := conn.CreatePurchaseDocument(t.Context(), doc)
@@ -228,13 +245,16 @@ func TestVoidPurchaseDocumentDeletesByDocumentType(t *testing.T) {
 			}}
 			conn := documentConnector(t, fake)
 
-			result, err := conn.VoidPurchaseDocument(t.Context(), &accountingsyncports.AccountingDocumentRef{
-				Auth:       auth(),
-				RequestID:  docRequestID,
-				Kind:       accountingsync.SyncObjectCarrierBill,
-				ExternalID: "210",
-				Refs:       tt.refs,
-			})
+			result, err := conn.VoidPurchaseDocument(
+				t.Context(),
+				&accountingconnectorports.AccountingDocumentRef{
+					Auth:       auth(),
+					RequestID:  docRequestID,
+					Kind:       accountingsync.SyncObjectCarrierBill,
+					ExternalID: "210",
+					Refs:       tt.refs,
+				},
+			)
 			require.NoError(t, err)
 			assert.Equal(t, "210", result.ExternalID)
 			assert.Equal(t, tt.refs, result.Refs)
@@ -257,13 +277,16 @@ func TestVoidPurchaseDocumentTreatsAMissingDocumentAsDeleted(t *testing.T) {
 	}}
 	conn := documentConnector(t, fake)
 
-	_, err := conn.VoidPurchaseDocument(t.Context(), &accountingsyncports.AccountingDocumentRef{
-		Auth:       auth(),
-		RequestID:  docRequestID,
-		Kind:       accountingsync.SyncObjectDriverBill,
-		ExternalID: "210",
-		Refs:       map[string]string{accountingsync.ExternalRefDocumentType: "Bill"},
-	})
+	_, err := conn.VoidPurchaseDocument(
+		t.Context(),
+		&accountingconnectorports.AccountingDocumentRef{
+			Auth:       auth(),
+			RequestID:  docRequestID,
+			Kind:       accountingsync.SyncObjectDriverBill,
+			ExternalID: "210",
+			Refs:       map[string]string{accountingsync.ExternalRefDocumentType: "Bill"},
+		},
+	)
 	require.NoError(t, err, "a bill already gone counts as deleted")
 	assert.Empty(t, fake.writes())
 }
@@ -279,12 +302,15 @@ func TestVoidPurchaseDocumentReportsOtherFaults(t *testing.T) {
 	}}
 	conn := documentConnector(t, fake)
 
-	result, err := conn.VoidPurchaseDocument(t.Context(), &accountingsyncports.AccountingDocumentRef{
-		Auth:       auth(),
-		RequestID:  docRequestID,
-		Kind:       accountingsync.SyncObjectCarrierBill,
-		ExternalID: "210",
-	})
+	result, err := conn.VoidPurchaseDocument(
+		t.Context(),
+		&accountingconnectorports.AccountingDocumentRef{
+			Auth:       auth(),
+			RequestID:  docRequestID,
+			Kind:       accountingsync.SyncObjectCarrierBill,
+			ExternalID: "210",
+		},
+	)
 	require.Error(t, err)
 	require.NotNil(t, result)
 	assert.Equal(t, accountingsync.SyncErrorClosedPeriod, conn.ClassifyDocumentError(err).Category)
@@ -299,17 +325,20 @@ func TestVoidPurchaseDocumentRejectsUnknownKinds(t *testing.T) {
 	}}
 	conn := documentConnector(t, fake)
 
-	_, err := conn.VoidPurchaseDocument(t.Context(), &accountingsyncports.AccountingDocumentRef{
-		Auth:       auth(),
-		RequestID:  docRequestID,
-		Kind:       accountingsync.SyncObjectCarrierBill,
-		ExternalID: "210",
-		Refs:       map[string]string{accountingsync.ExternalRefDocumentType: "Invoice"},
-	})
+	_, err := conn.VoidPurchaseDocument(
+		t.Context(),
+		&accountingconnectorports.AccountingDocumentRef{
+			Auth:       auth(),
+			RequestID:  docRequestID,
+			Kind:       accountingsync.SyncObjectCarrierBill,
+			ExternalID: "210",
+			Refs:       map[string]string{accountingsync.ExternalRefDocumentType: "Invoice"},
+		},
+	)
 	require.ErrorIs(t, err, errPurchaseDocumentType)
 	assert.Equal(t, accountingsync.SyncErrorValidation, conn.ClassifyDocumentError(err).Category)
 
-	_, err = conn.VoidPurchaseDocument(t.Context(), &accountingsyncports.AccountingDocumentRef{
+	_, err = conn.VoidPurchaseDocument(t.Context(), &accountingconnectorports.AccountingDocumentRef{
 		Auth:       auth(),
 		RequestID:  docRequestID,
 		Kind:       accountingsync.SyncObjectCarrierBillPay,
@@ -326,18 +355,21 @@ func TestCreateBillPaymentPaysTheSettlementBill(t *testing.T) {
 	}}
 	conn := documentConnector(t, fake)
 
-	result, err := conn.CreateBillPayment(t.Context(), &accountingsyncports.AccountingBillPaymentDocument{
-		Auth:                  auth(),
-		RequestID:             docRequestID,
-		Kind:                  accountingsync.SyncObjectCarrierBillPay,
-		VendorExternalID:      "91",
-		BankAccountExternalID: "35",
-		BillExternalID:        "210",
-		DocNumber:             "ACH-1",
-		TxnDate:               "2026-09-25",
-		PrivateNote:           "Paid by ACH",
-		Amount:                decimal.NewFromInt(1350),
-	})
+	result, err := conn.CreateBillPayment(
+		t.Context(),
+		&accountingconnectorports.AccountingBillPaymentDocument{
+			Auth:                  auth(),
+			RequestID:             docRequestID,
+			Kind:                  accountingsync.SyncObjectCarrierBillPay,
+			VendorExternalID:      "91",
+			BankAccountExternalID: "35",
+			BillExternalID:        "210",
+			DocNumber:             "ACH-1",
+			TxnDate:               "2026-09-25",
+			PrivateNote:           "Paid by ACH",
+			Amount:                decimal.NewFromInt(1350),
+		},
+	)
 	require.NoError(t, err)
 	assert.Equal(t, "212", result.ExternalID)
 	assert.Equal(t, "ACH-1", result.DocNumber)
@@ -365,7 +397,7 @@ func TestCreateBillPaymentRejectsInvalidInput(t *testing.T) {
 	}}
 	conn := documentConnector(t, fake)
 
-	doc := &accountingsyncports.AccountingBillPaymentDocument{
+	doc := &accountingconnectorports.AccountingBillPaymentDocument{
 		Auth:                  auth(),
 		RequestID:             docRequestID,
 		Kind:                  accountingsync.SyncObjectDriverBillPay,
@@ -418,9 +450,35 @@ func TestPayablesDocumentURLsAndLimits(t *testing.T) {
 		{kind: accountingsync.SyncObjectDriverBillPay, want: base + "/app/billpayment?txnId=91"},
 	}
 	for _, tt := range tests {
-		assert.Equal(t, tt.want, conn.DocumentURL(accountingsyncports.AccountingDocumentAuth{}, accountingsyncports.AccountingDocumentLink{Kind: tt.kind, ExternalID: " 91 "}), tt.kind)
+		assert.Equal(
+			t,
+			tt.want,
+			conn.DocumentURL(
+				accountingconnectorports.AccountingDocumentAuth{},
+				accountingconnectorports.AccountingDocumentLink{Kind: tt.kind, ExternalID: " 91 "},
+			),
+			tt.kind,
+		)
 	}
-	assert.Empty(t, conn.DocumentURL(accountingsyncports.AccountingDocumentAuth{}, accountingsyncports.AccountingDocumentLink{Kind: accountingsync.SyncObjectCarrierBill, ExternalID: ""}))
-	assert.Empty(t, conn.DocumentURL(accountingsyncports.AccountingDocumentAuth{}, accountingsyncports.AccountingDocumentLink{Kind: accountingsync.SyncObjectType("Estimate"), ExternalID: "91"}))
+	assert.Empty(
+		t,
+		conn.DocumentURL(
+			accountingconnectorports.AccountingDocumentAuth{},
+			accountingconnectorports.AccountingDocumentLink{
+				Kind:       accountingsync.SyncObjectCarrierBill,
+				ExternalID: "",
+			},
+		),
+	)
+	assert.Empty(
+		t,
+		conn.DocumentURL(
+			accountingconnectorports.AccountingDocumentAuth{},
+			accountingconnectorports.AccountingDocumentLink{
+				Kind:       accountingsync.SyncObjectType("Estimate"),
+				ExternalID: "91",
+			},
+		),
+	)
 	assert.False(t, conn.DocumentLimits().CanVoidPurchaseDocument)
 }

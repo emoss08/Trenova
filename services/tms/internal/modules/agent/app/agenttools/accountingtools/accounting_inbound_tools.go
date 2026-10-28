@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountinginboundports"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -32,20 +32,20 @@ const inboundChangeParamHelp = "The payment's id, from accounting_list_inbound_c
 type accountingInboundOperator interface {
 	Get(
 		ctx context.Context,
-		req *accountingsyncports.GetAccountingInboundChangeRequest,
+		req *accountinginboundports.GetAccountingInboundChangeRequest,
 	) (*accountingsync.AccountingInboundChange, error)
 	PreviewApply(
 		ctx context.Context,
-		req *accountingsyncports.GetAccountingInboundChangeRequest,
-	) (*accountingsyncports.AccountingInboundApplyPreview, error)
+		req *accountinginboundports.GetAccountingInboundChangeRequest,
+	) (*accountinginboundports.AccountingInboundApplyPreview, error)
 	Apply(
 		ctx context.Context,
-		req *accountingsyncports.DecideAccountingInboundChangeRequest,
+		req *accountinginboundports.DecideAccountingInboundChangeRequest,
 		actor *permissionports.RequestActor,
 	) (*accountingsync.AccountingInboundChange, error)
 	Ignore(
 		ctx context.Context,
-		req *accountingsyncports.DecideAccountingInboundChangeRequest,
+		req *accountinginboundports.DecideAccountingInboundChangeRequest,
 		actor *permissionports.RequestActor,
 	) (*accountingsync.AccountingInboundChange, error)
 }
@@ -67,12 +67,12 @@ func inboundLabel(change *accountingsync.AccountingInboundChange) string {
 
 func inboundRequest(
 	params *agenttoolports.ToolExecuteParams,
-) (*accountingsyncports.GetAccountingInboundChangeRequest, error) {
+) (*accountinginboundports.GetAccountingInboundChangeRequest, error) {
 	id, err := common.RequirePulid(params.Params, paramInboundChangeID)
 	if err != nil {
 		return nil, err
 	}
-	return &accountingsyncports.GetAccountingInboundChangeRequest{
+	return &accountinginboundports.GetAccountingInboundChangeRequest{
 		TenantInfo: common.TenantFrom(*params),
 		ID:         id,
 	}, nil
@@ -89,7 +89,7 @@ func newApplyAccountingInboundChangeTool(
 }
 
 func ProvideApplyAccountingInboundChangeTool(
-	inbound accountingsyncports.AccountingInboundService,
+	inbound accountinginboundports.AccountingInboundService,
 ) agenttoolports.AgentTool {
 	return newApplyAccountingInboundChangeTool(inbound)
 }
@@ -155,7 +155,7 @@ func (t *ApplyAccountingInboundChangeTool) Target(
 func (t *ApplyAccountingInboundChangeTool) PlanPreview(
 	ctx context.Context,
 	params *agenttoolports.ToolExecuteParams,
-) (*accountingsyncports.AccountingInboundApplyPreview, error) {
+) (*accountinginboundports.AccountingInboundApplyPreview, error) {
 	if err := common.GuardExecute(t, *params); err != nil {
 		return nil, err
 	}
@@ -196,7 +196,7 @@ func (t *ApplyAccountingInboundChangeTool) Execute(
 	if err != nil {
 		return err
 	}
-	_, err = t.inbound.Apply(ctx, &accountingsyncports.DecideAccountingInboundChangeRequest{
+	_, err = t.inbound.Apply(ctx, &accountinginboundports.DecideAccountingInboundChangeRequest{
 		TenantInfo: req.TenantInfo,
 		ID:         req.ID,
 	}, params.Actor)
@@ -214,7 +214,7 @@ func newIgnoreAccountingInboundChangeTool(
 }
 
 func ProvideIgnoreAccountingInboundChangeTool(
-	inbound accountingsyncports.AccountingInboundService,
+	inbound accountinginboundports.AccountingInboundService,
 ) agenttoolports.AgentTool {
 	return newIgnoreAccountingInboundChangeTool(inbound)
 }
@@ -268,7 +268,7 @@ func (t *IgnoreAccountingInboundChangeTool) Target(
 func (t *IgnoreAccountingInboundChangeTool) request(
 	ctx context.Context,
 	params *agenttoolports.ToolExecuteParams,
-) (*accountingsyncports.DecideAccountingInboundChangeRequest, *accountingsync.AccountingInboundChange, error) {
+) (*accountinginboundports.DecideAccountingInboundChangeRequest, *accountingsync.AccountingInboundChange, error) {
 	if err := common.GuardExecute(t, *params); err != nil {
 		return nil, nil, err
 	}
@@ -299,7 +299,7 @@ func (t *IgnoreAccountingInboundChangeTool) request(
 			string(change.Status),
 		)
 	}
-	return &accountingsyncports.DecideAccountingInboundChangeRequest{
+	return &accountinginboundports.DecideAccountingInboundChangeRequest{
 		TenantInfo: req.TenantInfo,
 		ID:         req.ID,
 		Note:       note,

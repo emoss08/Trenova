@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/shared/netsuite"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -22,11 +22,11 @@ func TestCompaniesOffersEveryActiveSubsidiaryUnderOneWorld(t *testing.T) {
 		return reply{}
 	}}
 	conn := testConnector(t, fake)
-	companies, err := conn.Companies(t.Context(), &accountingsyncports.AccountingTokenGrant{
+	companies, err := conn.Companies(t.Context(), &accountingconnectorports.AccountingTokenGrant{
 		AccessToken: "access-token",
 	}, "1234567_sb1")
 	require.NoError(t, err)
-	assert.Equal(t, []accountingsyncports.AccountingCompany{
+	assert.Equal(t, []accountingconnectorports.AccountingCompany{
 		{ID: "1234567_SB1-s1", Name: "Acme Holdings · 1234567_SB1 (Sandbox)"},
 		{ID: "1234567_SB1-s3", Name: "Acme US · 1234567_SB1 (Sandbox)"},
 	}, companies)
@@ -51,11 +51,11 @@ func TestCompaniesWithoutOneWorldIsTheAccount(t *testing.T) {
 		return reply{}
 	}}
 	conn := testConnector(t, fake)
-	companies, err := conn.Companies(t.Context(), &accountingsyncports.AccountingTokenGrant{
+	companies, err := conn.Companies(t.Context(), &accountingconnectorports.AccountingTokenGrant{
 		AccessToken: "access-token",
 	}, "1234567")
 	require.NoError(t, err)
-	assert.Equal(t, []accountingsyncports.AccountingCompany{
+	assert.Equal(t, []accountingconnectorports.AccountingCompany{
 		{ID: "1234567", Name: "Acme Freight · 1234567"},
 	}, companies)
 }
@@ -64,7 +64,7 @@ func TestCompaniesFailures(t *testing.T) {
 	t.Parallel()
 
 	conn := testConnector(t, &fakeNS{})
-	_, err := conn.Companies(t.Context(), &accountingsyncports.AccountingTokenGrant{
+	_, err := conn.Companies(t.Context(), &accountingconnectorports.AccountingTokenGrant{
 		AccessToken: "access-token",
 	}, testAccount)
 	require.ErrorIs(t, err, errNoCompany)
@@ -72,7 +72,7 @@ func TestCompaniesFailures(t *testing.T) {
 
 	_, err = conn.Companies(t.Context(), nil, testAccount)
 	require.ErrorIs(t, err, netsuite.ErrAccessTokenRequired)
-	_, err = conn.Companies(t.Context(), &accountingsyncports.AccountingTokenGrant{
+	_, err = conn.Companies(t.Context(), &accountingconnectorports.AccountingTokenGrant{
 		AccessToken: "access-token",
 	}, "")
 	require.ErrorIs(t, err, errNoAccount)
@@ -80,7 +80,7 @@ func TestCompaniesFailures(t *testing.T) {
 	unreachable := testConnector(t, &fakeNS{respond: func(nsCall) reply {
 		return fixtureReply(t, http.StatusNotFound, "error_404_nonexistent.json")
 	}})
-	_, err = unreachable.Companies(t.Context(), &accountingsyncports.AccountingTokenGrant{
+	_, err = unreachable.Companies(t.Context(), &accountingconnectorports.AccountingTokenGrant{
 		AccessToken: "access-token",
 	}, testAccount)
 	require.ErrorIs(t, err, errUnreachable)

@@ -1,4 +1,4 @@
-package accountingsyncports
+package accountingconnectionports
 
 import (
 	"context"

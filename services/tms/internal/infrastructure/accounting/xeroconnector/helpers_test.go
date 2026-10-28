@@ -12,7 +12,7 @@ import (
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/shared/restx"
 	"github.com/emoss08/trenova/shared/xero"
 	"github.com/stretchr/testify/assert"
@@ -142,8 +142,8 @@ func newProvider(t *testing.T, cfg config.XeroConfig) *Provider {
 	return provider
 }
 
-func tenantApp() *accountingsyncports.AccountingApp {
-	return &accountingsyncports.AccountingApp{
+func tenantApp() *accountingconnectorports.AccountingApp {
+	return &accountingconnectorports.AccountingApp{
 		Source:               accountingsync.AppSourceTenant,
 		Environment:          accountingsync.AppEnvironmentProduction,
 		ClientID:             "tenant-id",
@@ -172,8 +172,8 @@ func testConnector(t *testing.T, fake *fakeXero) *Connector {
 	return conn
 }
 
-func testAuth() accountingsyncports.AccountingDocumentAuth {
-	return accountingsyncports.AccountingDocumentAuth{
+func testAuth() accountingconnectorports.AccountingDocumentAuth {
+	return accountingconnectorports.AccountingDocumentAuth{
 		RealmID:     testTenant,
 		AccessToken: "access-token",
 		CompanyCode: "!Ab12C",

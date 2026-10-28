@@ -16,7 +16,7 @@ import (
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/shared/businesscentral"
 	"github.com/emoss08/trenova/shared/restx"
 	"github.com/stretchr/testify/assert"
@@ -183,8 +183,8 @@ func newProvider(t *testing.T, cfg config.BusinessCentralConfig) *Provider {
 	return provider
 }
 
-func tenantApp() *accountingsyncports.AccountingApp {
-	return &accountingsyncports.AccountingApp{
+func tenantApp() *accountingconnectorports.AccountingApp {
+	return &accountingconnectorports.AccountingApp{
 		Source:       accountingsync.AppSourceTenant,
 		Environment:  accountingsync.AppEnvironmentProduction,
 		ClientID:     "tenant-id",
@@ -222,8 +222,8 @@ func testRef() businesscentral.CompanyRef {
 	}
 }
 
-func testAuth() accountingsyncports.AccountingDocumentAuth {
-	return accountingsyncports.AccountingDocumentAuth{
+func testAuth() accountingconnectorports.AccountingDocumentAuth {
+	return accountingconnectorports.AccountingDocumentAuth{
 		RealmID:     testRef().String(),
 		AccessToken: "access-token",
 		CompanyName: "CRONUS USA, Inc.",

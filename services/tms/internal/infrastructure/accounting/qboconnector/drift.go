@@ -6,23 +6,23 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/shared/quickbooks"
 )
 
-var _ accountingsyncports.AccountingDocumentReader = (*Connector)(nil)
+var _ accountingconnectorports.AccountingDocumentReader = (*Connector)(nil)
 
 var errExternalIDRequired = errors.New(
 	"quickbooks: updating a document needs the id QuickBooks gave it",
 )
 
-func (c *Connector) DocumentReadLimits() accountingsyncports.AccountingDocumentReadLimits {
-	return accountingsyncports.AccountingDocumentReadLimits{MaxPerRead: quickbooks.MaxQueryIDs}
+func (c *Connector) DocumentReadLimits() accountingconnectorports.AccountingDocumentReadLimits {
+	return accountingconnectorports.AccountingDocumentReadLimits{MaxPerRead: quickbooks.MaxQueryIDs}
 }
 
 func readKindOf(
 	kind accountingsync.SyncObjectType,
-	target *accountingsyncports.AccountingDocumentTarget,
+	target *accountingconnectorports.AccountingDocumentTarget,
 ) (quickbooks.TxnKind, error) {
 	switch {
 	case kind == accountingsync.SyncObjectInvoice || kind == accountingsync.SyncObjectDebitMemo:
@@ -45,8 +45,8 @@ func readKindOf(
 
 func (c *Connector) ReadDocuments(
 	ctx context.Context,
-	req *accountingsyncports.ReadAccountingDocumentsRequest,
-) ([]*accountingsyncports.AccountingDocumentState, error) {
+	req *accountingconnectorports.ReadAccountingDocumentsRequest,
+) ([]*accountingconnectorports.AccountingDocumentState, error) {
 	groups := make(map[quickbooks.TxnKind][]string, 2)
 	order := make([]quickbooks.TxnKind, 0, 2)
 	for idx := range req.Targets {
@@ -84,12 +84,12 @@ func (c *Connector) ReadDocuments(
 		found[kind] = byID
 	}
 
-	out := make([]*accountingsyncports.AccountingDocumentState, 0, len(req.Targets))
+	out := make([]*accountingconnectorports.AccountingDocumentState, 0, len(req.Targets))
 	for idx := range req.Targets {
 		target := &req.Targets[idx]
 		kind, _ := readKindOf(req.Kind, target)
 		id := strings.TrimSpace(target.ExternalID)
-		state := &accountingsyncports.AccountingDocumentState{ExternalID: id}
+		state := &accountingconnectorports.AccountingDocumentState{ExternalID: id}
 		if provider, ok := found[kind][id]; ok {
 			state.Found = true
 			state.Voided = provider.Voided
@@ -107,8 +107,8 @@ func (c *Connector) ReadDocuments(
 
 func (c *Connector) UpdateSalesDocument(
 	ctx context.Context,
-	doc *accountingsyncports.AccountingSalesDocument,
-) (*accountingsyncports.AccountingDocumentResult, error) {
+	doc *accountingconnectorports.AccountingSalesDocument,
+) (*accountingconnectorports.AccountingDocumentResult, error) {
 	id := strings.TrimSpace(doc.ExternalID)
 	if id == "" {
 		return nil, errExternalIDRequired
@@ -149,8 +149,8 @@ func (c *Connector) UpdateSalesDocument(
 
 func (c *Connector) UpdatePurchaseDocument(
 	ctx context.Context,
-	doc *accountingsyncports.AccountingPurchaseDocument,
-) (*accountingsyncports.AccountingDocumentResult, error) {
+	doc *accountingconnectorports.AccountingPurchaseDocument,
+) (*accountingconnectorports.AccountingDocumentResult, error) {
 	if !doc.Kind.IsBill() {
 		return nil, errDocumentKind
 	}
@@ -175,7 +175,7 @@ func (c *Connector) UpdatePurchaseDocument(
 	if err != nil {
 		return nil, err
 	}
-	return &accountingsyncports.AccountingDocumentResult{
+	return &accountingconnectorports.AccountingDocumentResult{
 		ExternalID: saved.ID,
 		DocNumber:  saved.DocNumber,
 		Refs: map[string]string{
@@ -188,8 +188,8 @@ func (c *Connector) UpdatePurchaseDocument(
 
 func (c *Connector) UpdateBillPayment(
 	ctx context.Context,
-	doc *accountingsyncports.AccountingBillPaymentDocument,
-) (*accountingsyncports.AccountingDocumentResult, error) {
+	doc *accountingconnectorports.AccountingBillPaymentDocument,
+) (*accountingconnectorports.AccountingDocumentResult, error) {
 	if !doc.Kind.IsBillPayment() {
 		return nil, errDocumentKind
 	}
@@ -205,7 +205,7 @@ func (c *Connector) UpdateBillPayment(
 	if err != nil {
 		return nil, err
 	}
-	return &accountingsyncports.AccountingDocumentResult{
+	return &accountingconnectorports.AccountingDocumentResult{
 		ExternalID: paid.ID,
 		DocNumber:  paid.DocNumber,
 		Refs:       map[string]string{accountingsync.ExternalRefDocument: paid.ID},
@@ -235,8 +235,8 @@ func changedDocumentTypes(kind quickbooks.TxnKind) []accountingsync.SyncObjectTy
 
 func changedDocumentOf(
 	doc *quickbooks.ChangedDocument,
-) accountingsyncports.AccountingChangedDocument {
-	return accountingsyncports.AccountingChangedDocument{
+) accountingconnectorports.AccountingChangedDocument {
+	return accountingconnectorports.AccountingChangedDocument{
 		ObjectTypes: changedDocumentTypes(doc.Kind),
 		ExternalID:  doc.ID,
 		Operation:   changeOperation(&doc.ChangeMeta),

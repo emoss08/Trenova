@@ -5,6 +5,8 @@ import (
 	"strconv"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingmappingports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/glaccountports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
@@ -109,9 +111,9 @@ func (s *Service) requeueMappingBlocked(
 
 func (s *Service) EnsureMapping(
 	ctx context.Context,
-	req *accountingsyncports.EnsureAccountingMappingRequest,
+	req *accountingmappingports.EnsureAccountingMappingRequest,
 ) (*accountingsync.AccountingMapping, error) {
-	lookup := &accountingsyncports.GetAccountingMappingByTargetRequest{
+	lookup := &accountingmappingports.GetAccountingMappingByTargetRequest{
 		TenantInfo:      req.TenantInfo,
 		ConnectionID:    req.ConnectionID,
 		TargetType:      req.TargetType,
@@ -123,10 +125,13 @@ func (s *Service) EnsureMapping(
 		return row, err
 	}
 
-	conn, err := s.connections.GetByID(ctx, accountingsyncports.GetAccountingConnectionByIDRequest{
-		TenantInfo: req.TenantInfo,
-		ID:         req.ConnectionID,
-	})
+	conn, err := s.connections.GetByID(
+		ctx,
+		accountingconnectionports.GetAccountingConnectionByIDRequest{
+			TenantInfo: req.TenantInfo,
+			ID:         req.ConnectionID,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -163,7 +168,7 @@ func (s *Service) EnsureMapping(
 
 func (s *Service) targetFor(
 	ctx context.Context,
-	req *accountingsyncports.EnsureAccountingMappingRequest,
+	req *accountingmappingports.EnsureAccountingMappingRequest,
 ) (*target, error) {
 	switch req.TargetType {
 	case accountingsync.TargetCustomer:

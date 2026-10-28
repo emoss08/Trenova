@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/shared/xero"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -17,15 +17,18 @@ func listReference(
 	conn *Connector,
 	kind accountingsync.ReferenceKind,
 	start int,
-) *accountingsyncports.AccountingReferencePage {
+) *accountingconnectorports.AccountingReferencePage {
 	t.Helper()
-	page, err := conn.ListReference(t.Context(), &accountingsyncports.AccountingReferencePageRequest{
-		RealmID:       testTenant,
-		AccessToken:   "token",
-		Kind:          kind,
-		StartPosition: start,
-		PageSize:      conn.MaxReferencePageSize(),
-	})
+	page, err := conn.ListReference(
+		t.Context(),
+		&accountingconnectorports.AccountingReferencePageRequest{
+			RealmID:       testTenant,
+			AccessToken:   "token",
+			Kind:          kind,
+			StartPosition: start,
+			PageSize:      conn.MaxReferencePageSize(),
+		},
+	)
 	require.NoError(t, err)
 	return page
 }
@@ -178,18 +181,21 @@ func TestCreateItemUsesTheChargeCodeAndTheIncomeAccountCode(t *testing.T) {
 	}}
 	conn := testConnector(t, fake)
 
-	obj, err := conn.CreateReference(t.Context(), &accountingsyncports.AccountingCreateReferenceRequest{
-		RealmID:     testTenant,
-		AccessToken: "token",
-		RequestID:   testRequestID,
-		Kind:        accountingsync.ReferenceKindItem,
-		Item: &accountingsyncports.AccountingItemDraft{
-			Name:            "Detention",
-			Description:     "Detention time",
-			Sku:             "DET",
-			IncomeAccountID: testRevenue,
+	obj, err := conn.CreateReference(
+		t.Context(),
+		&accountingconnectorports.AccountingCreateReferenceRequest{
+			RealmID:     testTenant,
+			AccessToken: "token",
+			RequestID:   testRequestID,
+			Kind:        accountingsync.ReferenceKindItem,
+			Item: &accountingconnectorports.AccountingItemDraft{
+				Name:            "Detention",
+				Description:     "Detention time",
+				Sku:             "DET",
+				IncomeAccountID: testRevenue,
+			},
 		},
-	})
+	)
 	require.NoError(t, err)
 	assert.Equal(t, "9a1f0b2e-0000-4000-8000-000000000009", obj.ExternalID)
 	assert.Equal(t, testRevenue, obj.IncomeAccountExternalID)
@@ -216,17 +222,20 @@ func TestCreateContactsAndDuplicateNames(t *testing.T) {
 	}}
 	conn := testConnector(t, fake)
 
-	party := &accountingsyncports.AccountingPartyDraft{
+	party := &accountingconnectorports.AccountingPartyDraft{
 		DisplayName:  "Globex\n Shipping",
 		Email:        "ap@globex.test",
 		AddressLine1: "1 Main",
 		City:         "Dallas",
 		State:        "TX",
 	}
-	obj, err := conn.CreateReference(t.Context(), &accountingsyncports.AccountingCreateReferenceRequest{
-		RealmID: testTenant, AccessToken: "token", RequestID: "req-1",
-		Kind: accountingsync.ReferenceKindVendor, Party: party,
-	})
+	obj, err := conn.CreateReference(
+		t.Context(),
+		&accountingconnectorports.AccountingCreateReferenceRequest{
+			RealmID: testTenant, AccessToken: "token", RequestID: "req-1",
+			Kind: accountingsync.ReferenceKindVendor, Party: party,
+		},
+	)
 	require.NoError(t, err)
 	assert.Equal(t, accountingsync.ReferenceKindVendor, obj.Kind)
 	call, ok := fake.find(http.MethodPut, "/Contacts")
@@ -237,18 +246,24 @@ func TestCreateContactsAndDuplicateNames(t *testing.T) {
 	require.True(t, ok)
 	require.Len(t, addresses, 1)
 
-	_, err = conn.CreateReference(t.Context(), &accountingsyncports.AccountingCreateReferenceRequest{
-		RealmID: testTenant, AccessToken: "token", RequestID: "dup",
-		Kind: accountingsync.ReferenceKindCustomer, Party: party,
-	})
+	_, err = conn.CreateReference(
+		t.Context(),
+		&accountingconnectorports.AccountingCreateReferenceRequest{
+			RealmID: testTenant, AccessToken: "token", RequestID: "dup",
+			Kind: accountingsync.ReferenceKindCustomer, Party: party,
+		},
+	)
 	require.Error(t, err)
 	assert.True(t, conn.IsDuplicateName(err))
 	assert.Equal(t, accountingsync.SyncErrorDuplicate, conn.ClassifyDocumentError(err).Category)
 
-	_, err = conn.CreateReference(t.Context(), &accountingsyncports.AccountingCreateReferenceRequest{
-		RealmID: testTenant, AccessToken: "token", RequestID: "x",
-		Kind: accountingsync.ReferenceKindAccount,
-	})
+	_, err = conn.CreateReference(
+		t.Context(),
+		&accountingconnectorports.AccountingCreateReferenceRequest{
+			RealmID: testTenant, AccessToken: "token", RequestID: "x",
+			Kind: accountingsync.ReferenceKindAccount,
+		},
+	)
 	require.Error(t, err)
 }
 
@@ -260,5 +275,9 @@ func TestSanitizeName(t *testing.T) {
 	long := strings.Repeat("x", 80)
 	assert.Len(t, conn.SanitizeName(accountingsync.ReferenceKindItem, long), xero.MaxItemNameLength)
 	assert.Len(t, conn.SanitizeName(accountingsync.ReferenceKindVendor, long), 80)
-	assert.Equal(t, "Line haul", itemCode(&accountingsyncports.AccountingItemDraft{Name: "Line haul"}))
+	assert.Equal(
+		t,
+		"Line haul",
+		itemCode(&accountingconnectorports.AccountingItemDraft{Name: "Line haul"}),
+	)
 }

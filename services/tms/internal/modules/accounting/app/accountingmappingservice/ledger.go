@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingmappingports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -15,7 +15,7 @@ func (s *Service) ledgerRequirement(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	conn *accountingsync.AccountingConnection,
-	summary *accountingsyncports.AccountingMappingSummary,
+	summary *accountingmappingports.AccountingMappingSummary,
 ) error {
 	var since *int64
 	if conn.SyncStartDate != nil && !conn.SentOpeningBalances() {
@@ -30,7 +30,7 @@ func (s *Service) ledgerRequirement(
 	}
 	mappings, err := s.mappings.ListByConnection(
 		ctx,
-		&accountingsyncports.ListAccountingMappingsQuery{
+		&accountingmappingports.ListAccountingMappingsQuery{
 			TenantInfo:   tenantInfo,
 			ConnectionID: conn.ID,
 			TargetTypes: []accountingsync.MappingTargetType{

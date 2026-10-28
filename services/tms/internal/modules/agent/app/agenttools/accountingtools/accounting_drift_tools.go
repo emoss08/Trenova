@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingdriftports"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -34,37 +34,37 @@ const driftFindingHelp = "The finding's id, from accounting_list_drift_findings.
 type accountingDriftOperator interface {
 	Get(
 		ctx context.Context,
-		req *accountingsyncports.GetAccountingDriftFindingRequest,
+		req *accountingdriftports.GetAccountingDriftFindingRequest,
 	) (*accountingsync.AccountingDriftFinding, error)
 	PreviewResolve(
 		ctx context.Context,
-		req *accountingsyncports.ResolveAccountingDriftRequest,
+		req *accountingdriftports.ResolveAccountingDriftRequest,
 		actor *permissionports.RequestActor,
-	) (*accountingsyncports.AccountingDriftFixPreview, error)
+	) (*accountingdriftports.AccountingDriftFixPreview, error)
 	Resolve(
 		ctx context.Context,
-		req *accountingsyncports.ResolveAccountingDriftRequest,
+		req *accountingdriftports.ResolveAccountingDriftRequest,
 		actor *permissionports.RequestActor,
 	) (*accountingsync.AccountingDriftFinding, error)
 	PreviewDismiss(
 		ctx context.Context,
-		req *accountingsyncports.DismissAccountingDriftRequest,
+		req *accountingdriftports.DismissAccountingDriftRequest,
 		actor *permissionports.RequestActor,
-	) (*accountingsyncports.AccountingDriftFixPreview, error)
+	) (*accountingdriftports.AccountingDriftFixPreview, error)
 	Dismiss(
 		ctx context.Context,
-		req *accountingsyncports.DismissAccountingDriftRequest,
+		req *accountingdriftports.DismissAccountingDriftRequest,
 		actor *permissionports.RequestActor,
 	) (*accountingsync.AccountingDriftFinding, error)
 	Overview(
 		ctx context.Context,
-		req *accountingsyncports.AccountingDriftOverviewRequest,
-	) (*accountingsyncports.AccountingDriftOverview, error)
+		req *accountingdriftports.AccountingDriftOverviewRequest,
+	) (*accountingdriftports.AccountingDriftOverview, error)
 	CheckNow(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 		integrationType integration.Type,
-	) (*accountingsyncports.AccountingDriftOverview, error)
+	) (*accountingdriftports.AccountingDriftOverview, error)
 }
 
 func driftLabel(finding *accountingsync.AccountingDriftFinding) string {
@@ -88,7 +88,7 @@ func newResolveAccountingDriftTool(drift accountingDriftOperator) agenttoolports
 }
 
 func ProvideResolveAccountingDriftTool(
-	drift accountingsyncports.AccountingDriftService,
+	drift accountingdriftports.AccountingDriftService,
 ) agenttoolports.AgentTool {
 	return newResolveAccountingDriftTool(drift)
 }
@@ -157,7 +157,7 @@ func (t *ResolveAccountingDriftTool) Target(
 
 func (t *ResolveAccountingDriftTool) request(
 	params *agenttoolports.ToolExecuteParams,
-) (*accountingsyncports.ResolveAccountingDriftRequest, error) {
+) (*accountingdriftports.ResolveAccountingDriftRequest, error) {
 	if err := common.GuardExecute(t, *params); err != nil {
 		return nil, err
 	}
@@ -177,7 +177,7 @@ func (t *ResolveAccountingDriftTool) request(
 			"Direction must be PushTrenovaValue or AdjustTrenova",
 		)
 	}
-	return &accountingsyncports.ResolveAccountingDriftRequest{
+	return &accountingdriftports.ResolveAccountingDriftRequest{
 		TenantInfo: common.TenantFrom(*params),
 		ID:         id,
 		Direction:  direction,
@@ -187,7 +187,7 @@ func (t *ResolveAccountingDriftTool) request(
 func (t *ResolveAccountingDriftTool) plan(
 	ctx context.Context,
 	params *agenttoolports.ToolExecuteParams,
-) (*accountingsyncports.ResolveAccountingDriftRequest, *accountingsyncports.AccountingDriftFixPreview, error) {
+) (*accountingdriftports.ResolveAccountingDriftRequest, *accountingdriftports.AccountingDriftFixPreview, error) {
 	req, err := t.request(params)
 	if err != nil {
 		return nil, nil, err
@@ -228,7 +228,7 @@ func newDismissAccountingDriftTool(drift accountingDriftOperator) agenttoolports
 }
 
 func ProvideDismissAccountingDriftTool(
-	drift accountingsyncports.AccountingDriftService,
+	drift accountingdriftports.AccountingDriftService,
 ) agenttoolports.AgentTool {
 	return newDismissAccountingDriftTool(drift)
 }
@@ -283,7 +283,7 @@ func (t *DismissAccountingDriftTool) Target(
 func (t *DismissAccountingDriftTool) plan(
 	ctx context.Context,
 	params *agenttoolports.ToolExecuteParams,
-) (*accountingsyncports.DismissAccountingDriftRequest, *accountingsyncports.AccountingDriftFixPreview, error) {
+) (*accountingdriftports.DismissAccountingDriftRequest, *accountingdriftports.AccountingDriftFixPreview, error) {
 	if err := common.GuardExecute(t, *params); err != nil {
 		return nil, nil, err
 	}
@@ -299,7 +299,7 @@ func (t *DismissAccountingDriftTool) plan(
 			"Say why both sides stay as they are",
 		)
 	}
-	req := &accountingsyncports.DismissAccountingDriftRequest{
+	req := &accountingdriftports.DismissAccountingDriftRequest{
 		TenantInfo: common.TenantFrom(*params),
 		ID:         id,
 		Note: stringutils.TruncateRunes(
@@ -343,7 +343,7 @@ func newCheckAccountingDriftTool(drift accountingDriftOperator) agenttoolports.A
 }
 
 func ProvideCheckAccountingDriftTool(
-	drift accountingsyncports.AccountingDriftService,
+	drift accountingdriftports.AccountingDriftService,
 ) agenttoolports.AgentTool {
 	return newCheckAccountingDriftTool(drift)
 }
@@ -383,7 +383,7 @@ func (t *CheckAccountingDriftTool) Policy() agenttoolports.ToolPolicy {
 func (t *CheckAccountingDriftTool) setup(
 	ctx context.Context,
 	params *agenttoolports.ToolExecuteParams,
-) (integration.Type, *accountingsyncports.AccountingDriftOverview, error) {
+) (integration.Type, *accountingdriftports.AccountingDriftOverview, error) {
 	if err := common.GuardExecute(t, *params); err != nil {
 		return "", nil, err
 	}
@@ -391,7 +391,7 @@ func (t *CheckAccountingDriftTool) setup(
 	if err != nil {
 		return "", nil, err
 	}
-	overview, err := t.drift.Overview(ctx, &accountingsyncports.AccountingDriftOverviewRequest{
+	overview, err := t.drift.Overview(ctx, &accountingdriftports.AccountingDriftOverviewRequest{
 		TenantInfo:      common.TenantFrom(*params),
 		IntegrationType: system,
 	})

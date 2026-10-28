@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/shared/jsonflex"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/shopspring/decimal"
@@ -214,10 +214,10 @@ func sameMoney(a, b decimal.Decimal) bool {
 	return a.Round(moneyPlaces).Equal(b.Round(moneyPlaces))
 }
 
-func newResult(refs map[string]string) *accountingsyncports.AccountingDocumentResult {
+func newResult(refs map[string]string) *accountingconnectorports.AccountingDocumentResult {
 	copied := make(map[string]string, len(refs)+4)
 	maps.Copy(copied, refs)
-	return &accountingsyncports.AccountingDocumentResult{Refs: copied}
+	return &accountingconnectorports.AccountingDocumentResult{Refs: copied}
 }
 
 func unixOrZero(t time.Time) int64 {

@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -25,7 +25,7 @@ type ReferenceRefresher struct {
 	workflows kernelports.WorkflowStarter
 }
 
-var _ accountingsyncports.AccountingReferenceRefresher = (*ReferenceRefresher)(nil)
+var _ accountingconnectionports.AccountingReferenceRefresher = (*ReferenceRefresher)(nil)
 
 func NewReferenceRefresher(p RefresherParams) *ReferenceRefresher {
 	return &ReferenceRefresher{workflows: p.Workflows}

@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingdriftports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
@@ -67,7 +67,7 @@ func (h *harness) resolve(
 	actor *permissionports.RequestActor,
 ) (*accountingsync.AccountingDriftFinding, error) {
 	t.Helper()
-	return h.svc.Resolve(t.Context(), &accountingsyncports.ResolveAccountingDriftRequest{
+	return h.svc.Resolve(t.Context(), &accountingdriftports.ResolveAccountingDriftRequest{
 		TenantInfo: h.tenant,
 		ID:         finding.ID,
 		Direction:  direction,
@@ -251,7 +251,8 @@ func TestAdjustVoidsAnInvoiceTheProviderDeletedWithoutRebilling(t *testing.T) {
 	assert.Contains(t, h.invoices.voids[0].Reason, "deleted")
 	assert.Equal(t, accountingsync.DriftFixInvoiceVoid, updated.FixObjectType)
 	for _, record := range h.records.all() {
-		if record.ConnectionID == h.conn.ID && record.Operation == accountingsync.SyncOperationVoid {
+		if record.ConnectionID == h.conn.ID &&
+			record.Operation == accountingsync.SyncOperationVoid {
 			assert.Equal(t, accountingsync.SyncStatusSkipped, record.Status)
 		}
 	}
@@ -306,7 +307,8 @@ func TestAdjustReversesAPaymentTheProviderVoided(t *testing.T) {
 	assert.Equal(t, doc.record.ObjectID, h.payments.reversed[0].PaymentID)
 	assert.Equal(t, accountingsync.DriftFixPaymentReversal, updated.FixObjectType)
 	for _, record := range h.records.forObject(doc.record.ObjectID) {
-		if record.Operation == accountingsync.SyncOperationVoid && record.ConnectionID == h.conn.ID {
+		if record.Operation == accountingsync.SyncOperationVoid &&
+			record.ConnectionID == h.conn.ID {
 			assert.Equal(t, "401", record.ReflectedIn())
 		}
 	}
@@ -361,17 +363,25 @@ func TestPreviewSaysWhatTheFixDoesAndWritesNothing(t *testing.T) {
 	h := newHarness(t)
 	finding, _ := h.invoiceFinding(t, 125_000, "1200.00")
 
-	adjust, err := h.svc.PreviewResolve(t.Context(), &accountingsyncports.ResolveAccountingDriftRequest{
-		TenantInfo: h.tenant,
-		ID:         finding.ID,
-		Direction:  accountingsync.DriftAdjustTrenova,
-	}, h.person())
+	adjust, err := h.svc.PreviewResolve(
+		t.Context(),
+		&accountingdriftports.ResolveAccountingDriftRequest{
+			TenantInfo: h.tenant,
+			ID:         finding.ID,
+			Direction:  accountingsync.DriftAdjustTrenova,
+		},
+		h.person(),
+	)
 	require.NoError(t, err)
-	push, err := h.svc.PreviewResolve(t.Context(), &accountingsyncports.ResolveAccountingDriftRequest{
-		TenantInfo: h.tenant,
-		ID:         finding.ID,
-		Direction:  accountingsync.DriftPushTrenovaValue,
-	}, h.person())
+	push, err := h.svc.PreviewResolve(
+		t.Context(),
+		&accountingdriftports.ResolveAccountingDriftRequest{
+			TenantInfo: h.tenant,
+			ID:         finding.ID,
+			Direction:  accountingsync.DriftPushTrenovaValue,
+		},
+		h.person(),
+	)
 	require.NoError(t, err)
 
 	assert.Equal(t, accountingsync.DriftFixCreditMemo, adjust.FixObject)
@@ -392,7 +402,7 @@ func TestDismissNeedsANote(t *testing.T) {
 	h := newHarness(t)
 	finding, _ := h.invoiceFinding(t, 125_000, "1200.00")
 
-	_, err := h.svc.Dismiss(t.Context(), &accountingsyncports.DismissAccountingDriftRequest{
+	_, err := h.svc.Dismiss(t.Context(), &accountingdriftports.DismissAccountingDriftRequest{
 		TenantInfo: h.tenant,
 		ID:         finding.ID,
 		Note:       "   ",
@@ -402,7 +412,7 @@ func TestDismissNeedsANote(t *testing.T) {
 	require.ErrorAs(t, err, &validation)
 	assert.Equal(t, "note", validation.Field)
 
-	_, err = h.svc.PreviewDismiss(t.Context(), &accountingsyncports.DismissAccountingDriftRequest{
+	_, err = h.svc.PreviewDismiss(t.Context(), &accountingdriftports.DismissAccountingDriftRequest{
 		TenantInfo: h.tenant,
 		ID:         finding.ID,
 		Note:       "",
@@ -417,7 +427,7 @@ func TestAPersonMayDismissAnyFinding(t *testing.T) {
 	finding, _ := h.invoiceFinding(t, 125_000, "1200.00")
 	actor := h.person()
 
-	updated, err := h.svc.Dismiss(t.Context(), &accountingsyncports.DismissAccountingDriftRequest{
+	updated, err := h.svc.Dismiss(t.Context(), &accountingdriftports.DismissAccountingDriftRequest{
 		TenantInfo: h.tenant,
 		ID:         finding.ID,
 		Note:       "Agreed with the customer; the books keep their figure",
@@ -434,7 +444,7 @@ func TestAnAgentDismissesOnlyWithinTheTolerance(t *testing.T) {
 	h := newHarness(t)
 	finding, _ := h.invoiceFinding(t, 125_000, "1200.00")
 
-	_, err := h.svc.Dismiss(t.Context(), &accountingsyncports.DismissAccountingDriftRequest{
+	_, err := h.svc.Dismiss(t.Context(), &accountingdriftports.DismissAccountingDriftRequest{
 		TenantInfo: h.tenant,
 		ID:         finding.ID,
 		Note:       "Rounding",
@@ -443,7 +453,7 @@ func TestAnAgentDismissesOnlyWithinTheTolerance(t *testing.T) {
 	require.ErrorAs(t, err, &authz)
 	assert.True(t, h.findings.open()[0].IsOpen())
 
-	_, err = h.svc.PreviewDismiss(t.Context(), &accountingsyncports.DismissAccountingDriftRequest{
+	_, err = h.svc.PreviewDismiss(t.Context(), &accountingdriftports.DismissAccountingDriftRequest{
 		TenantInfo: h.tenant,
 		ID:         finding.ID,
 		Note:       "Rounding",
@@ -451,14 +461,18 @@ func TestAnAgentDismissesOnlyWithinTheTolerance(t *testing.T) {
 	require.ErrorAs(t, err, &authz, "the preview refuses what the dismissal would")
 
 	h.controls.tolerance = "50.00"
-	preview, err := h.svc.PreviewDismiss(t.Context(), &accountingsyncports.DismissAccountingDriftRequest{
-		TenantInfo: h.tenant,
-		ID:         finding.ID,
-		Note:       "Rounding",
-	}, h.agent())
+	preview, err := h.svc.PreviewDismiss(
+		t.Context(),
+		&accountingdriftports.DismissAccountingDriftRequest{
+			TenantInfo: h.tenant,
+			ID:         finding.ID,
+			Note:       "Rounding",
+		},
+		h.agent(),
+	)
 	require.NoError(t, err)
 	assert.True(t, preview.WithinTolerance)
-	updated, err := h.svc.Dismiss(t.Context(), &accountingsyncports.DismissAccountingDriftRequest{
+	updated, err := h.svc.Dismiss(t.Context(), &accountingdriftports.DismissAccountingDriftRequest{
 		TenantInfo: h.tenant,
 		ID:         finding.ID,
 		Note:       "Rounding",
@@ -473,7 +487,7 @@ func TestAnAgentNeverDismissesADeletedDocument(t *testing.T) {
 	h.controls.tolerance = "100000.00"
 	finding, _ := h.invoiceFinding(t, 125_000, "")
 
-	_, err := h.svc.Dismiss(t.Context(), &accountingsyncports.DismissAccountingDriftRequest{
+	_, err := h.svc.Dismiss(t.Context(), &accountingdriftports.DismissAccountingDriftRequest{
 		TenantInfo: h.tenant,
 		ID:         finding.ID,
 		Note:       "Looks fine",

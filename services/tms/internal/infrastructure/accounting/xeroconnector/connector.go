@@ -10,7 +10,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/shared/hashutils"
 	"github.com/emoss08/trenova/shared/restx"
@@ -49,7 +49,7 @@ type Params struct {
 }
 
 type Provider struct {
-	instance    *accountingsyncports.AccountingApp
+	instance    *accountingconnectorports.AccountingApp
 	redirectURL string
 	apiOpts     []xero.Option
 	oauthOpts   []xero.Option
@@ -61,7 +61,7 @@ type Provider struct {
 	bound map[string]*Connector
 }
 
-var _ accountingsyncports.AccountingProvider = (*Provider)(nil)
+var _ accountingconnectorports.AccountingProvider = (*Provider)(nil)
 
 type Connector struct {
 	oauth      *xero.OAuthClient
@@ -72,7 +72,7 @@ type Connector struct {
 	l          *zap.Logger
 }
 
-var _ accountingsyncports.AccountingConnector = (*Connector)(nil)
+var _ accountingconnectorports.AccountingConnector = (*Connector)(nil)
 
 func New(p Params) (*Provider, error) {
 	cfg := p.Config.Accounting.Xero
@@ -87,7 +87,7 @@ func New(p Params) (*Provider, error) {
 		provider.apiOpts = append(provider.apiOpts, xero.WithLimiter(p.Limiter, limiterPrefix))
 	}
 	if cfg.IsConfigured(&p.Config.App) {
-		provider.instance = &accountingsyncports.AccountingApp{
+		provider.instance = &accountingconnectorports.AccountingApp{
 			Source:               accountingsync.AppSourceInstance,
 			Environment:          accountingsync.AppEnvironmentProduction,
 			ClientID:             strings.TrimSpace(cfg.ClientID),
@@ -103,7 +103,7 @@ func (p *Provider) IntegrationType() integration.Type {
 	return integration.TypeXero
 }
 
-func (p *Provider) InstanceApp() (*accountingsyncports.AccountingApp, bool) {
+func (p *Provider) InstanceApp() (*accountingconnectorports.AccountingApp, bool) {
 	if p.instance == nil {
 		return nil, false
 	}
@@ -116,12 +116,12 @@ func (p *Provider) RedirectURL() string {
 }
 
 func (p *Provider) Bind(
-	app *accountingsyncports.AccountingApp,
-) (accountingsyncports.AccountingConnector, error) {
+	app *accountingconnectorports.AccountingApp,
+) (accountingconnectorports.AccountingConnector, error) {
 	return p.bind(app)
 }
 
-func (p *Provider) bind(app *accountingsyncports.AccountingApp) (*Connector, error) {
+func (p *Provider) bind(app *accountingconnectorports.AccountingApp) (*Connector, error) {
 	if app == nil {
 		return nil, ErrNotConfigured
 	}
@@ -174,7 +174,7 @@ func (p *Provider) ClassifyError(err error) accountingsync.ErrorCategory {
 	return classifyError(err)
 }
 
-func bindingKey(app *accountingsyncports.AccountingApp) string {
+func bindingKey(app *accountingconnectorports.AccountingApp) string {
 	return hashutils.SHA256Hex(strings.Join([]string{
 		strings.TrimSpace(app.ClientID),
 		strings.TrimSpace(app.ClientSecret),
@@ -192,12 +192,14 @@ func (c *Connector) options() []xero.Option {
 	return append(opts, c.apiOpts...)
 }
 
-func (c *Connector) client(auth accountingsyncports.AccountingDocumentAuth) (*xero.Client, error) {
+func (c *Connector) client(
+	auth accountingconnectorports.AccountingDocumentAuth,
+) (*xero.Client, error) {
 	return xero.New(auth.RealmID, auth.AccessToken, c.options()...)
 }
 
 func (c *Connector) AuthorizeURL(
-	req accountingsyncports.AccountingAuthorizeRequest,
+	req accountingconnectorports.AccountingAuthorizeRequest,
 ) (string, error) {
 	if c.oauth == nil {
 		return "", errNoRedirect
@@ -207,8 +209,8 @@ func (c *Connector) AuthorizeURL(
 
 func (c *Connector) ExchangeCode(
 	ctx context.Context,
-	req *accountingsyncports.AccountingCodeExchange,
-) (*accountingsyncports.AccountingTokenGrant, error) {
+	req *accountingconnectorports.AccountingCodeExchange,
+) (*accountingconnectorports.AccountingTokenGrant, error) {
 	if c.oauth == nil {
 		return nil, errNoRedirect
 	}
@@ -221,8 +223,8 @@ func (c *Connector) ExchangeCode(
 
 func (c *Connector) Refresh(
 	ctx context.Context,
-	req *accountingsyncports.AccountingRefreshRequest,
-) (*accountingsyncports.AccountingTokenGrant, error) {
+	req *accountingconnectorports.AccountingRefreshRequest,
+) (*accountingconnectorports.AccountingTokenGrant, error) {
 	if c.oauth == nil {
 		return nil, errNoRedirect
 	}
@@ -235,7 +237,7 @@ func (c *Connector) Refresh(
 
 func (c *Connector) Revoke(
 	ctx context.Context,
-	req *accountingsyncports.AccountingRevokeRequest,
+	req *accountingconnectorports.AccountingRevokeRequest,
 ) error {
 	if c.oauth == nil {
 		return errNoRedirect
@@ -249,9 +251,9 @@ func (c *Connector) connections(accessToken string) (*xero.ConnectionsClient, er
 
 func (c *Connector) Companies(
 	ctx context.Context,
-	grant *accountingsyncports.AccountingTokenGrant,
+	grant *accountingconnectorports.AccountingTokenGrant,
 	_ string,
-) ([]accountingsyncports.AccountingCompany, error) {
+) ([]accountingconnectorports.AccountingCompany, error) {
 	if grant == nil {
 		return nil, xero.ErrAccessTokenRequired
 	}
@@ -268,13 +270,13 @@ func (c *Connector) Companies(
 		return nil, err
 	}
 
-	companies := make([]accountingsyncports.AccountingCompany, 0, len(listed))
+	companies := make([]accountingconnectorports.AccountingCompany, 0, len(listed))
 	for idx := range listed {
 		conn := &listed[idx]
 		if !strings.EqualFold(conn.TenantType, tenantTypeOrg) || conn.TenantID == "" {
 			continue
 		}
-		companies = append(companies, accountingsyncports.AccountingCompany{
+		companies = append(companies, accountingconnectorports.AccountingCompany{
 			ID:           conn.TenantID,
 			Name:         conn.TenantName,
 			ConnectionID: conn.ID,
@@ -288,8 +290,8 @@ func (c *Connector) Companies(
 
 func (c *Connector) ReleaseCompanies(
 	ctx context.Context,
-	grant *accountingsyncports.AccountingTokenGrant,
-	companies []accountingsyncports.AccountingCompany,
+	grant *accountingconnectorports.AccountingTokenGrant,
+	companies []accountingconnectorports.AccountingCompany,
 ) error {
 	if len(companies) == 0 {
 		return nil
@@ -318,7 +320,7 @@ func (c *Connector) CompanyFacts(
 	ctx context.Context,
 	realmID, accessToken string,
 ) (*accountingsync.CompanyFacts, error) {
-	client, err := c.client(accountingsyncports.AccountingDocumentAuth{
+	client, err := c.client(accountingconnectorports.AccountingDocumentAuth{
 		RealmID:     realmID,
 		AccessToken: accessToken,
 	})
@@ -385,7 +387,7 @@ func (c *Connector) VerifyApp(ctx context.Context) error {
 	case err == nil, xero.IsInvalidGrant(err):
 		return nil
 	case xero.IsInvalidClient(err), xero.IsAuth(err):
-		return accountingsyncports.ErrAccountingAppRejected
+		return accountingconnectorports.ErrAccountingAppRejected
 	default:
 		return err
 	}
@@ -418,8 +420,8 @@ func classifyError(err error) accountingsync.ErrorCategory {
 	}
 }
 
-func grantOf(token *xero.Token) *accountingsyncports.AccountingTokenGrant {
-	return &accountingsyncports.AccountingTokenGrant{
+func grantOf(token *xero.Token) *accountingconnectorports.AccountingTokenGrant {
+	return &accountingconnectorports.AccountingTokenGrant{
 		AccessToken:     token.AccessToken,
 		RefreshToken:    token.RefreshToken,
 		AccessTokenTTL:  token.ExpiresIn,

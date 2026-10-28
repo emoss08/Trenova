@@ -5,14 +5,14 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func billDoc() *accountingsyncports.AccountingPurchaseDocument {
-	return &accountingsyncports.AccountingPurchaseDocument{
+func billDoc() *accountingconnectorports.AccountingPurchaseDocument {
+	return &accountingconnectorports.AccountingPurchaseDocument{
 		Auth:             testAuth(),
 		RequestID:        testRequestID,
 		Kind:             accountingsync.SyncObjectCarrierBill,
@@ -22,7 +22,7 @@ func billDoc() *accountingsyncports.AccountingPurchaseDocument {
 		DueDate:          "2026-11-01",
 		CurrencyCode:     "USD",
 		PrivateNote:      "Carrier settlement CS-12",
-		Lines: []accountingsyncports.AccountingPurchaseLine{
+		Lines: []accountingconnectorports.AccountingPurchaseLine{
 			{
 				Description:       "Load 4411",
 				AccountExternalID: testExpense,
@@ -141,7 +141,7 @@ func billStateResponder(
 	}
 }
 
-func billRef(refs map[string]string) *accountingsyncports.AccountingDocumentRef {
+func billRef(refs map[string]string) *accountingconnectorports.AccountingDocumentRef {
 	ref := voidRef(accountingsync.SyncObjectCarrierBill, testBill)
 	for key, value := range refs {
 		ref.Refs[key] = value
@@ -308,8 +308,8 @@ func TestPurchaseIsCreditReadsEitherRef(t *testing.T) {
 	require.ErrorIs(t, err, errPurchaseDocumentType)
 }
 
-func billPaymentDoc() *accountingsyncports.AccountingBillPaymentDocument {
-	return &accountingsyncports.AccountingBillPaymentDocument{
+func billPaymentDoc() *accountingconnectorports.AccountingBillPaymentDocument {
+	return &accountingconnectorports.AccountingBillPaymentDocument{
 		Auth:                  testAuth(),
 		RequestID:             testRequestID,
 		Kind:                  accountingsync.SyncObjectCarrierBillPay,

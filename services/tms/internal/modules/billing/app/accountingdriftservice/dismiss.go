@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingdriftports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -68,9 +68,9 @@ func (s *Service) checkDismiss(
 
 func (s *Service) PreviewDismiss(
 	ctx context.Context,
-	req *accountingsyncports.DismissAccountingDriftRequest,
+	req *accountingdriftports.DismissAccountingDriftRequest,
 	actor *permissionports.RequestActor,
-) (*accountingsyncports.AccountingDriftFixPreview, error) {
+) (*accountingdriftports.AccountingDriftFixPreview, error) {
 	if err := s.authorize(ctx, actor, dismissPermissions); err != nil {
 		return nil, err
 	}
@@ -82,7 +82,7 @@ func (s *Service) PreviewDismiss(
 	if err != nil {
 		return nil, err
 	}
-	return &accountingsyncports.AccountingDriftFixPreview{
+	return &accountingdriftports.AccountingDriftFixPreview{
 		Finding:         finding,
 		CurrencyCode:    finding.CurrencyCode,
 		ToleranceMinor:  tolerance,
@@ -95,7 +95,7 @@ func (s *Service) PreviewDismiss(
 
 func (s *Service) Dismiss(
 	ctx context.Context,
-	req *accountingsyncports.DismissAccountingDriftRequest,
+	req *accountingdriftports.DismissAccountingDriftRequest,
 	actor *permissionports.RequestActor,
 ) (*accountingsync.AccountingDriftFinding, error) {
 	if err := s.authorize(ctx, actor, dismissPermissions); err != nil {

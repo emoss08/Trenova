@@ -4,7 +4,8 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -19,10 +20,10 @@ type subscribedConnection struct {
 
 func (s *Service) receiveSubscribedWebhook(
 	ctx context.Context,
-	provider accountingsyncports.AccountingProvider,
-	req *accountingsyncports.ReceiveAccountingWebhookRequest,
+	provider accountingconnectorports.AccountingProvider,
+	req *accountingconnectionports.ReceiveAccountingWebhookRequest,
 ) error {
-	subscribing, ok := provider.(accountingsyncports.AccountingSubscriptionProvider)
+	subscribing, ok := provider.(accountingconnectorports.AccountingSubscriptionProvider)
 	if !ok || s.subscriptions == nil {
 		return errWebhookUnverified()
 	}
@@ -52,7 +53,7 @@ func (s *Service) receiveSubscribedWebhook(
 	for _, target := range verified {
 		conn, getErr := s.connections.GetByID(
 			dbscope.WithTenant(ctx, target.tenant.DBTenant()),
-			accountingsyncports.GetAccountingConnectionByIDRequest{
+			accountingconnectionports.GetAccountingConnectionByIDRequest{
 				TenantInfo: target.tenant,
 				ID:         target.id,
 			},
@@ -77,8 +78,8 @@ func (s *Service) receiveSubscribedWebhook(
 
 func (s *Service) subscribedSender(
 	ctx context.Context,
-	provider accountingsyncports.AccountingProvider,
-	req *accountingsyncports.ReceiveAccountingWebhookRequest,
+	provider accountingconnectorports.AccountingProvider,
+	req *accountingconnectionports.ReceiveAccountingWebhookRequest,
 ) (*webhookSender, error) {
 	if req.AppID != "" {
 		_, sender, err := s.namedApp(ctx, req)
@@ -93,8 +94,8 @@ func (s *Service) subscribedSender(
 
 func (s *Service) verifiedSubscriptions(
 	ctx context.Context,
-	req *accountingsyncports.ReceiveAccountingWebhookRequest,
-	notifications []accountingsyncports.AccountingWebhookNotification,
+	req *accountingconnectionports.ReceiveAccountingWebhookRequest,
+	notifications []accountingconnectorports.AccountingWebhookNotification,
 ) ([]subscribedConnection, error) {
 	ids := subscriptionIDs(notifications)
 	if len(ids) == 0 {

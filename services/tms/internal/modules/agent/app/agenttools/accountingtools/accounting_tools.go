@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -22,7 +22,7 @@ type accountingConnectionChecker interface {
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 		typ integration.Type,
-	) (*accountingsyncports.AccountingSyncStatus, error)
+	) (*accountingconnectionports.AccountingSyncStatus, error)
 	CheckHealth(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
@@ -41,7 +41,7 @@ func newCheckAccountingConnectionTool(
 }
 
 func ProvideCheckAccountingConnectionTool(
-	accounting accountingsyncports.AccountingConnectionService,
+	accounting accountingconnectionports.AccountingConnectionService,
 ) agenttoolports.AgentTool {
 	return newCheckAccountingConnectionTool(accounting)
 }

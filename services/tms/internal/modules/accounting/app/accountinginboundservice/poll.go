@@ -6,6 +6,11 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingdriftports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountinginboundports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingmappingports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -19,9 +24,9 @@ import (
 type readSession struct {
 	tenant pagination.TenantInfo
 	conn   *accountingsync.AccountingConnection
-	reader accountingsyncports.AccountingChangeReader
-	auth   accountingsyncports.AccountingDocumentAuth
-	writer accountingsyncports.AccountingDocumentWriter
+	reader accountingconnectorports.AccountingChangeReader
+	auth   accountingconnectorports.AccountingDocumentAuth
+	writer accountingconnectorports.AccountingDocumentWriter
 	loc    *time.Location
 }
 
@@ -50,14 +55,14 @@ func (s *Service) openRead(
 	if err != nil {
 		return nil, err
 	}
-	reader, ok := session.Connector.(accountingsyncports.AccountingChangeReader)
+	reader, ok := session.Connector.(accountingconnectorports.AccountingChangeReader)
 	if !ok {
 		return nil, fmt.Errorf(
 			"%s does not report its changes to Trenova",
 			accountingsync.ProviderName(conn.IntegrationType),
 		)
 	}
-	writer, _ := session.Connector.(accountingsyncports.AccountingDocumentWriter)
+	writer, _ := session.Connector.(accountingconnectorports.AccountingDocumentWriter)
 	loc, err := s.location(ctx, tenant)
 	if err != nil {
 		return nil, err
@@ -66,7 +71,7 @@ func (s *Service) openRead(
 		tenant: tenant,
 		conn:   session.Connection,
 		reader: reader,
-		auth:   accountingsyncports.DocumentAuthFor(session.Connection, session.AccessToken),
+		auth:   accountingconnectorports.DocumentAuthFor(session.Connection, session.AccessToken),
 		writer: writer,
 		loc:    loc,
 	}, nil
@@ -74,9 +79,9 @@ func (s *Service) openRead(
 
 func (s *Service) PollChanges(
 	ctx context.Context,
-	req *accountingsyncports.PollAccountingChangesRequest,
-) (*accountingsyncports.AccountingChangesPollResult, error) {
-	result := new(accountingsyncports.AccountingChangesPollResult)
+	req *accountinginboundports.PollAccountingChangesRequest,
+) (*accountinginboundports.AccountingChangesPollResult, error) {
+	result := new(accountinginboundports.AccountingChangesPollResult)
 	conn, err := s.connectionByID(ctx, req.TenantInfo, req.ConnectionID)
 	if err != nil {
 		return nil, err
@@ -101,15 +106,18 @@ func (s *Service) PollChanges(
 
 	now := s.now()
 	profile := accountingsync.MustProfile(sess.conn.IntegrationType)
-	page, err := sess.reader.ReadChanges(ctx, &accountingsyncports.ReadAccountingChangesRequest{
-		Auth:           sess.auth,
-		Cursor:         cursor,
-		Now:            now,
-		Payments:       profile.InboundPayments,
-		BillPayments:   profile.InboundPayments,
-		Documents:      s.drift != nil,
-		ReferenceKinds: profile.ReferenceKinds,
-	})
+	page, err := sess.reader.ReadChanges(
+		ctx,
+		&accountingconnectorports.ReadAccountingChangesRequest{
+			Auth:           sess.auth,
+			Cursor:         cursor,
+			Now:            now,
+			Payments:       profile.InboundPayments,
+			BillPayments:   profile.InboundPayments,
+			Documents:      s.drift != nil,
+			ReferenceKinds: profile.ReferenceKinds,
+		},
+	)
 	if err != nil {
 		s.recordReadFailure(ctx, sess, err)
 		return nil, err
@@ -129,7 +137,7 @@ func (s *Service) PollChanges(
 		result.Recorded = recorded
 		_, saveErr := s.connections.SaveChangeFeed(
 			txCtx,
-			&accountingsyncports.SaveAccountingChangeFeedRequest{
+			&accountingconnectionports.SaveAccountingChangeFeedRequest{
 				TenantInfo: sess.tenant,
 				ID:         sess.conn.ID,
 				Cursor:     page.NextCursor,
@@ -172,14 +180,14 @@ func (s *Service) PollChanges(
 func (s *Service) recheckDocuments(
 	ctx context.Context,
 	sess *readSession,
-	documents []accountingsyncports.AccountingChangedDocument,
+	documents []accountingconnectorports.AccountingChangedDocument,
 ) int {
 	if s.drift == nil || len(documents) == 0 {
 		return 0
 	}
 	checked, err := s.drift.RecheckDocuments(
 		ctx,
-		&accountingsyncports.RecheckAccountingDriftRequest{
+		&accountingdriftports.RecheckAccountingDriftRequest{
 			TenantInfo:   sess.tenant,
 			ConnectionID: sess.conn.ID,
 			Documents:    documents,
@@ -208,7 +216,7 @@ func (s *Service) startCursor(ctx context.Context, sess *readSession) (string, e
 	cursor := sess.reader.ChangeCursorAt(start)
 	if _, err := s.connections.SaveChangeFeed(
 		ctx,
-		&accountingsyncports.SaveAccountingChangeFeedRequest{
+		&accountingconnectionports.SaveAccountingChangeFeedRequest{
 			TenantInfo:  sess.tenant,
 			ID:          sess.conn.ID,
 			Cursor:      cursor,
@@ -240,7 +248,7 @@ func (s *Service) recordReadFailure(ctx context.Context, sess *readSession, read
 	}
 	if _, err := s.connections.SaveChangeFeed(
 		ctx,
-		&accountingsyncports.SaveAccountingChangeFeedRequest{
+		&accountingconnectionports.SaveAccountingChangeFeedRequest{
 			TenantInfo:    sess.tenant,
 			ID:            sess.conn.ID,
 			ErrorCategory: failure.Category,
@@ -254,7 +262,7 @@ func (s *Service) recordReadFailure(ctx context.Context, sess *readSession, read
 func (s *Service) applyReferences(
 	ctx context.Context,
 	sess *readSession,
-	changed []accountingsyncports.AccountingChangedReference,
+	changed []accountingconnectorports.AccountingChangedReference,
 	seenAt int64,
 ) (int, error) {
 	if len(changed) == 0 {
@@ -275,7 +283,7 @@ func (s *Service) applyReferences(
 		}
 		upserts = append(upserts, ref.Object)
 	}
-	if err := s.references.Upsert(ctx, &accountingsyncports.UpsertAccountingReferenceObjectsRequest{
+	if err := s.references.Upsert(ctx, &accountingmappingports.UpsertAccountingReferenceObjectsRequest{
 		TenantInfo:   sess.tenant,
 		ConnectionID: sess.conn.ID,
 		Objects:      upserts,
@@ -286,7 +294,7 @@ func (s *Service) applyReferences(
 	for kind, ids := range removed {
 		if _, err := s.references.MarkRemoved(
 			ctx,
-			&accountingsyncports.MarkAccountingReferencesRemovedRequest{
+			&accountingmappingports.MarkAccountingReferencesRemovedRequest{
 				TenantInfo:   sess.tenant,
 				ConnectionID: sess.conn.ID,
 				Kind:         kind,
@@ -303,7 +311,7 @@ func (s *Service) applyReferences(
 func (s *Service) recordPayments(
 	ctx context.Context,
 	sess *readSession,
-	payments []accountingsyncports.AccountingInboundPayment,
+	payments []accountingconnectorports.AccountingInboundPayment,
 	at int64,
 ) (int, error) {
 	recorded := 0
@@ -318,10 +326,10 @@ func (s *Service) recordPayments(
 }
 
 func paymentsOf(
-	payments []accountingsyncports.AccountingInboundPayment,
+	payments []accountingconnectorports.AccountingInboundPayment,
 	kind accountingsync.InboundChangeKind,
-) []*accountingsyncports.AccountingInboundPayment {
-	out := make([]*accountingsyncports.AccountingInboundPayment, 0, len(payments))
+) []*accountingconnectorports.AccountingInboundPayment {
+	out := make([]*accountingconnectorports.AccountingInboundPayment, 0, len(payments))
 	for idx := range payments {
 		if payments[idx].Kind == kind && payments[idx].ExternalID != "" {
 			out = append(out, &payments[idx])
@@ -334,7 +342,7 @@ func (s *Service) recordKind(
 	ctx context.Context,
 	sess *readSession,
 	kind accountingsync.InboundChangeKind,
-	payments []*accountingsyncports.AccountingInboundPayment,
+	payments []*accountingconnectorports.AccountingInboundPayment,
 	at int64,
 ) (int, error) {
 	if len(payments) == 0 {
@@ -351,7 +359,7 @@ func (s *Service) recordKind(
 	}
 	existing, err := s.changes.ListByExternalIDs(
 		ctx,
-		&accountingsyncports.ListAccountingInboundChangesByExternalIDsRequest{
+		&accountinginboundports.ListAccountingInboundChangesByExternalIDsRequest{
 			TenantInfo:   sess.tenant,
 			ConnectionID: sess.conn.ID,
 			Kind:         kind,
@@ -415,10 +423,10 @@ func (s *Service) recordOne(
 	sess *readSession,
 	policy accountingsync.InboundPaymentPolicy,
 	change *accountingsync.AccountingInboundChange,
-	payment *accountingsyncports.AccountingInboundPayment,
+	payment *accountingconnectorports.AccountingInboundPayment,
 	at int64,
 ) (bool, error) {
-	if payment.Operation != accountingsyncports.AccountingChangeUpsert {
+	if payment.Operation != accountingconnectorports.AccountingChangeUpsert {
 		if change == nil {
 			return false, nil
 		}
@@ -451,7 +459,7 @@ func (s *Service) recordOne(
 
 func (s *Service) observation(
 	sess *readSession,
-	payment *accountingsyncports.AccountingInboundPayment,
+	payment *accountingconnectorports.AccountingInboundPayment,
 	at int64,
 ) (*accountingsync.InboundObservation, error) {
 	txnDate, err := timeutils.ParseCalendarDate(payment.TxnDate, sess.loc)
@@ -477,11 +485,14 @@ func (s *Service) observation(
 	}
 	externalURL := ""
 	if sess.writer != nil {
-		externalURL = sess.writer.DocumentURL(sess.auth, accountingsyncports.AccountingDocumentLink{
-			Kind:       payment.Kind.SyncObjectType(),
-			ExternalID: payment.ExternalID,
-			DocNumber:  payment.Number,
-		})
+		externalURL = sess.writer.DocumentURL(
+			sess.auth,
+			accountingconnectorports.AccountingDocumentLink{
+				Kind:       payment.Kind.SyncObjectType(),
+				ExternalID: payment.ExternalID,
+				DocNumber:  payment.Number,
+			},
+		)
 	}
 	return &accountingsync.InboundObservation{
 		TenantInfo:         sess.tenant,
@@ -511,10 +522,10 @@ func (s *Service) observation(
 
 func removedResolution(
 	sess *readSession,
-	payment *accountingsyncports.AccountingInboundPayment,
+	payment *accountingconnectorports.AccountingInboundPayment,
 ) string {
 	provider := accountingsync.ProviderName(sess.conn.IntegrationType)
-	if payment.Operation == accountingsyncports.AccountingChangeDelete {
+	if payment.Operation == accountingconnectorports.AccountingChangeDelete {
 		return "Deleted in " + provider + " before it was applied, so there is nothing to apply."
 	}
 	return "Voided in " + provider + " before it was applied, so there is nothing to apply."
