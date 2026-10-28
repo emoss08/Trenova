@@ -207,9 +207,46 @@ func TestCompressRoundTrip(t *testing.T) {
 	require.NoError(t, err)
 	require.True(t, IsCompressedData(compressed))
 
-	decompressed, err := Decompress(compressed)
+	decompressed, err := Decompress(compressed, 0)
 	require.NoError(t, err)
 	require.Equal(t, testPayload, string(decompressed))
+}
+
+func TestDecompressRefusesContentPastTheLimit(t *testing.T) {
+	t.Parallel()
+
+	bomb, err := Compress(make([]byte, DefaultMaxDecompressedBytes+1))
+	require.NoError(t, err)
+	require.Less(t, len(bomb), 1<<20, "zeros compress to almost nothing")
+
+	_, err = Decompress(bomb, 0)
+	require.ErrorIs(t, err, ErrDecompressedTooLarge)
+
+	exact, err := Compress(make([]byte, 1024))
+	require.NoError(t, err)
+	content, err := Decompress(exact, 1024)
+	require.NoError(t, err)
+	require.Len(t, content, 1024)
+	_, err = Decompress(exact, 1023)
+	require.ErrorIs(t, err, ErrDecompressedTooLarge)
+}
+
+func TestParseMessageRefusesACompressionBombBeforeAnyCheck(t *testing.T) {
+	t.Parallel()
+
+	built, err := BuildMessage(&BuildMessageOptions{
+		From:     "SENDER-AS2",
+		To:       "RECEIVER-AS2",
+		Payload:  make([]byte, 4<<20),
+		Compress: true,
+	})
+	require.NoError(t, err)
+
+	_, err = ParseMessage(built.ContentType, built.Body, &ParseMessageOptions{
+		TransferEncoding: built.Headers.Get("Content-Transfer-Encoding"),
+		MaxContentBytes:  1 << 20,
+	})
+	require.ErrorIs(t, err, ErrDecompressedTooLarge)
 }
 
 func TestBuildAndParseSignedMDN(t *testing.T) {

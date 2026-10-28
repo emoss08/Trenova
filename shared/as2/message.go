@@ -190,6 +190,7 @@ type ParseMessageOptions struct {
 	TransferEncoding      string
 	RequireSignature      bool
 	RequireEncryption     bool
+	MaxContentBytes       int64
 }
 
 type ParsedMessage struct {
@@ -300,7 +301,7 @@ func ParseMessage(
 				currentBody,
 				currentHeaders.Get("Content-Transfer-Encoding"),
 			)
-			decompressed, decompressErr := Decompress(decoded)
+			decompressed, decompressErr := Decompress(decoded, opts.MaxContentBytes)
 			if decompressErr != nil {
 				return nil, decompressErr
 			}
