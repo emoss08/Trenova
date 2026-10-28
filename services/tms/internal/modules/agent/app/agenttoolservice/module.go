@@ -41,7 +41,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediinboundservice"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediconnectiondraftports"
 	"github.com/emoss08/trenova/internal/modules/equipment/app/tractorservice"
 	"github.com/emoss08/trenova/internal/modules/equipment/app/trailerservice"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -566,7 +566,7 @@ func provideSendEDIStatusUpdateTool(edi *ediservice.Service) agenttoolports.Agen
 }
 
 func provideApplyEDIConnectionDraftTool(
-	drafts ediports.EDIConnectionDraftService,
+	drafts ediconnectiondraftports.EDIConnectionDraftService,
 	documents documentports.DocumentRepository,
 	contents documentports.DocumentContentService,
 ) agenttoolports.AgentTool {

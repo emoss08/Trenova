@@ -73,7 +73,6 @@ debt:
   services/tms/internal/modules/edi/app/ediinboundservice: 3031
   services/tms/internal/modules/edi/app/ediservice: 13348
   services/tms/internal/modules/edi/domain/edi: 4132
-  services/tms/internal/modules/edi/ports/ediports: 2232
   services/tms/internal/modules/identity/domain/permission: 10640
   services/tms/internal/modules/identity/domain/tenant: 4567
   services/tms/internal/modules/operations/adapters/postgres/shipmentrepository: 3414

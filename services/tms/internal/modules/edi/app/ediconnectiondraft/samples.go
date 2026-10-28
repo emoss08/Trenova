@@ -7,7 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediinboundservice"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediconnectiondraftports"
 )
 
 const (
@@ -157,9 +157,9 @@ func (s *specSample) isaSegment() string {
 	return s.raw[:index+len(separator)]
 }
 
-func (s *specSample) source(note string) ediports.DraftSource {
-	return ediports.DraftSource{
-		Kind:  ediports.SourceKindSample,
+func (s *specSample) source(note string) ediconnectiondraftports.DraftSource {
+	return ediconnectiondraftports.DraftSource{
+		Kind:  ediconnectiondraftports.SourceKindSample,
 		Page:  s.page,
 		Quote: clampQuote(edi.RedactSecrets(s.isaSegment())),
 		Note:  note,
@@ -265,7 +265,7 @@ func (s *specSample) contribute(e *evidence) {
 			value:      normalized,
 			confidence: 1,
 			source:     s.source(note),
-			status:     ediports.ValueStatusAccepted,
+			status:     ediconnectiondraftports.ValueStatusAccepted,
 		})
 	}
 }

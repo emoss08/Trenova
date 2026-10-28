@@ -7,7 +7,12 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/edi/app/edilading"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/edimessageports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/editenderports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/editransportports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ladingports"
 	"github.com/emoss08/trenova/internal/modules/identity/app/planservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/platformplan"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
@@ -41,30 +46,30 @@ type Params struct {
 	fx.In
 
 	Logger              *zap.Logger
-	PartnerRepo         ediports.EDIPartnerRepository
-	MappingProfileRepo  ediports.EDIMappingProfileRepository
-	ConnectionRepo      ediports.EDIConnectionRepository
-	ProfileRepo         ediports.EDICommunicationProfileRepository
-	TransferRepo        ediports.EDILoadTenderTransferRepository
-	DocumentTypeRepo    ediports.EDIDocumentTypeRepository
-	TransactionSetRepo  ediports.EDITransactionSetRepository
-	ControlNumberRepo   ediports.EDIControlNumberRepository
-	MessageRepo         ediports.EDIMessageRepository
-	FlowRepo            ediports.FlowRepository
+	PartnerRepo         edipartnerports.EDIPartnerRepository
+	MappingProfileRepo  edipartnerports.EDIMappingProfileRepository
+	ConnectionRepo      edipartnerports.EDIConnectionRepository
+	ProfileRepo         edipartnerports.EDICommunicationProfileRepository
+	TransferRepo        editenderports.EDILoadTenderTransferRepository
+	DocumentTypeRepo    edipartnerports.EDIDocumentTypeRepository
+	TransactionSetRepo  edipartnerports.EDITransactionSetRepository
+	ControlNumberRepo   edipartnerports.EDIControlNumberRepository
+	MessageRepo         edimessageports.EDIMessageRepository
+	FlowRepo            ladingports.FlowRepository
 	LadingProjects      *edilading.Projects
 	Lading              *edilading.Runtime
 	Flows               *edilading.Flows
 	Replayer            *edilading.Replayer
 	LocationRepo        locationports.LocationRepository `optional:"true"`
 	CarrierInvoiceRepo  ediports.EDICarrierInvoiceRepository
-	InboundFileRepo     ediports.EDIInboundFileRepository
+	InboundFileRepo     edimessageports.EDIInboundFileRepository
 	InvoiceRepo         invoiceports.InvoiceRepository
 	ShipmentEventRepo   shipmenteventports.ShipmentEventRepository
 	ServiceFailureRepo  servicefailureports.ServiceFailureRepository
-	ShipmentLinkRepo    ediports.EDIShipmentLinkRepository
-	TransferChangeRepo  ediports.EDITransferChangeRepository
-	TenderRecipientRepo ediports.EDITenderRecipientRepository
-	TenderChangeRepo    ediports.EDITenderChangeRepository
+	ShipmentLinkRepo    editenderports.EDIShipmentLinkRepository
+	TransferChangeRepo  editenderports.EDITransferChangeRepository
+	TenderRecipientRepo editenderports.EDITenderRecipientRepository
+	TenderChangeRepo    editenderports.EDITenderChangeRepository
 	ShipmentCommentRepo shipmentcommentports.ShipmentCommentRepository
 	UserRepo            tenantports.UserRepository
 	ShipmentRepo        shipmentports.ShipmentRepository
@@ -80,9 +85,9 @@ type Params struct {
 	Validator           *Validator
 	DB                  kernelports.Transactor
 	Savepoints          kernelports.Savepointer
-	ShipmentTenderRepo  ediports.EDIShipmentTenderRepository
+	ShipmentTenderRepo  editenderports.EDIShipmentTenderRepository
 	Coordinator         *shipmentstate.Coordinator
-	Transport           ediports.EDITransportDispatcher
+	Transport           editransportports.EDITransportDispatcher
 	OrderDerivation     orderports.OrderDerivationService
 	Metrics             *metrics.Registry             `optional:"true"`
 	Plans               platformplanports.PlanService `optional:"true"`
@@ -92,31 +97,31 @@ type Params struct {
 
 type Service struct {
 	l                   *zap.Logger
-	partnerRepo         ediports.EDIPartnerRepository
-	mappingProfileRepo  ediports.EDIMappingProfileRepository
-	connectionRepo      ediports.EDIConnectionRepository
-	profileRepo         ediports.EDICommunicationProfileRepository
-	transferRepo        ediports.EDILoadTenderTransferRepository
-	documentTypeRepo    ediports.EDIDocumentTypeRepository
-	transactionSetRepo  ediports.EDITransactionSetRepository
-	controlNumberRepo   ediports.EDIControlNumberRepository
-	messageRepo         ediports.EDIMessageRepository
-	flowRepo            ediports.FlowRepository
+	partnerRepo         edipartnerports.EDIPartnerRepository
+	mappingProfileRepo  edipartnerports.EDIMappingProfileRepository
+	connectionRepo      edipartnerports.EDIConnectionRepository
+	profileRepo         edipartnerports.EDICommunicationProfileRepository
+	transferRepo        editenderports.EDILoadTenderTransferRepository
+	documentTypeRepo    edipartnerports.EDIDocumentTypeRepository
+	transactionSetRepo  edipartnerports.EDITransactionSetRepository
+	controlNumberRepo   edipartnerports.EDIControlNumberRepository
+	messageRepo         edimessageports.EDIMessageRepository
+	flowRepo            ladingports.FlowRepository
 	ladingProjects      *edilading.Projects
 	lading              *edilading.Runtime
 	flows               *edilading.Flows
 	replayer            *edilading.Replayer
 	locationRepo        locationports.LocationRepository
 	carrierInvoiceRepo  ediports.EDICarrierInvoiceRepository
-	inboundFileRepo     ediports.EDIInboundFileRepository
+	inboundFileRepo     edimessageports.EDIInboundFileRepository
 	invoiceRepo         invoiceports.InvoiceRepository
 	realtime            realtimeports.RealtimeService
 	shipmentEventRepo   shipmenteventports.ShipmentEventRepository
 	serviceFailureRepo  servicefailureports.ServiceFailureRepository
-	shipmentLinkRepo    ediports.EDIShipmentLinkRepository
-	transferChangeRepo  ediports.EDITransferChangeRepository
-	tenderRecipientRepo ediports.EDITenderRecipientRepository
-	tenderChangeRepo    ediports.EDITenderChangeRepository
+	shipmentLinkRepo    editenderports.EDIShipmentLinkRepository
+	transferChangeRepo  editenderports.EDITransferChangeRepository
+	tenderRecipientRepo editenderports.EDITenderRecipientRepository
+	tenderChangeRepo    editenderports.EDITenderChangeRepository
 	shipmentCommentRepo shipmentcommentports.ShipmentCommentRepository
 	userRepo            tenantports.UserRepository
 	shipmentRepo        shipmentports.ShipmentRepository
@@ -132,9 +137,9 @@ type Service struct {
 	validator           *Validator
 	db                  kernelports.Transactor
 	savepoints          kernelports.Savepointer
-	shipmentTenderRepo  ediports.EDIShipmentTenderRepository
+	shipmentTenderRepo  editenderports.EDIShipmentTenderRepository
 	coordinator         *shipmentstate.Coordinator
-	transport           ediports.EDITransportDispatcher
+	transport           editransportports.EDITransportDispatcher
 	orderDerivation     orderports.OrderDerivationService
 	lifecycleApplier    *internaledilifecycle.Applier
 	metrics             *metrics.EDI

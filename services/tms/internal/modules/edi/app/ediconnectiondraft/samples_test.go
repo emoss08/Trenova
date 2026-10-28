@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediconnectiondraftports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -18,11 +18,17 @@ const pdfSamplePage = "9. Sample 204\n" +
 func TestFindSamples_ReadsASamplePrintedInAPDF(t *testing.T) {
 	t.Parallel()
 
-	samples := findSamples(newPageIndex([]ediports.SpecPage{{Number: 7, Text: pdfSamplePage}}))
+	samples := findSamples(
+		newPageIndex([]ediconnectiondraftports.SpecPage{{Number: 7, Text: pdfSamplePage}}),
+	)
 	require.Len(t, samples, 1)
 	sample := samples[0]
 	sample.parse(t.Context())
-	require.NoError(t, sample.err, "a PDF squeezes the ISA's padding and wraps it; the sample still reads")
+	require.NoError(
+		t,
+		sample.err,
+		"a PDF squeezes the ISA's padding and wraps it; the sample still reads",
+	)
 
 	assert.Equal(t, 7, sample.page)
 	assert.Equal(t, edi.TransactionSet204, sample.transactionSet())

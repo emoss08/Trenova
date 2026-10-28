@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
@@ -218,7 +219,7 @@ func (s *Service) resolveCarrierInvoiceCustomer(
 		return false, nil
 	}
 	entity.BillToSourceID = edi.MappingSourceID(entity.BillToName)
-	items, err := s.mappingProfileRepo.GetMappingItems(ctx, ediports.GetMappingItemsRequest{
+	items, err := s.mappingProfileRepo.GetMappingItems(ctx, edipartnerports.GetMappingItemsRequest{
 		PartnerID: partner.ID,
 		TenantInfo: pagination.TenantInfo{
 			OrgID: partner.OrganizationID,

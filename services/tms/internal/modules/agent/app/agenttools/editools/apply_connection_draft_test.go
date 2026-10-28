@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediconnectiondraftports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/lading"
@@ -21,18 +21,18 @@ import (
 const draftDigest = "sha256:5f1c"
 
 type fakeConnectionDrafts struct {
-	plan     *ediports.ConnectionDraftPlan
+	plan     *ediconnectiondraftports.ConnectionDraftPlan
 	guard    *agenttoolstest.WriteGuard
-	planned  *ediports.ConnectionDraftRequest
-	applied  *ediports.ApplyConnectionDraftRequest
-	result   *ediports.AppliedConnectionDraft
+	planned  *ediconnectiondraftports.ConnectionDraftRequest
+	applied  *ediconnectiondraftports.ApplyConnectionDraftRequest
+	result   *ediconnectiondraftports.AppliedConnectionDraft
 	previews int
 }
 
 func (f *fakeConnectionDrafts) PreviewConnectionDraft(
 	_ context.Context,
-	req *ediports.ConnectionDraftRequest,
-) (*ediports.ConnectionDraftPlan, error) {
+	req *ediconnectiondraftports.ConnectionDraftRequest,
+) (*ediconnectiondraftports.ConnectionDraftPlan, error) {
 	f.previews++
 	f.planned = req
 	return f.plan, nil
@@ -40,8 +40,8 @@ func (f *fakeConnectionDrafts) PreviewConnectionDraft(
 
 func (f *fakeConnectionDrafts) ApplyConnectionDraft(
 	_ context.Context,
-	req *ediports.ApplyConnectionDraftRequest,
-) (*ediports.AppliedConnectionDraft, error) {
+	req *ediconnectiondraftports.ApplyConnectionDraftRequest,
+) (*ediconnectiondraftports.AppliedConnectionDraft, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
 	}
@@ -49,7 +49,7 @@ func (f *fakeConnectionDrafts) ApplyConnectionDraft(
 	if f.result != nil {
 		return f.result, nil
 	}
-	return &ediports.AppliedConnectionDraft{}, nil
+	return &ediconnectiondraftports.AppliedConnectionDraft{}, nil
 }
 
 type fakeSpecReader struct {
@@ -59,47 +59,58 @@ type fakeSpecReader struct {
 func (f *fakeSpecReader) Read(
 	_ context.Context,
 	req *edispec.ReadRequest,
-) (*ediports.SpecDocument, error) {
+) (*ediconnectiondraftports.SpecDocument, error) {
 	f.read = req
-	return &ediports.SpecDocument{
+	return &ediconnectiondraftports.SpecDocument{
 		ID:       req.DocumentID,
 		FileName: "acme-guide.pdf",
-		Pages:    []ediports.SpecPage{{Number: 1, Text: "Trading Partner Code: ACMERETAIL"}},
+		Pages: []ediconnectiondraftports.SpecPage{
+			{Number: 1, Text: "Trading Partner Code: ACMERETAIL"},
+		},
 	}, nil
 }
 
-func readyPlan() *ediports.ConnectionDraftPlan {
+func readyPlan() *ediconnectiondraftports.ConnectionDraftPlan {
 	existingID := pulid.MustNew("edip_")
-	return &ediports.ConnectionDraftPlan{
-		Draft: &ediports.ConnectionDraft{
+	return &ediconnectiondraftports.ConnectionDraftPlan{
+		Draft: &ediconnectiondraftports.ConnectionDraft{
 			FileName:       "acme-guide.pdf",
 			PageCount:      7,
 			DocumentDigest: draftDigest,
 			Ready:          true,
 			Changes:        3,
-			Partner: ediports.DraftPartner{
-				Match:  ediports.PartnerMatchExisting,
-				Fields: []ediports.DraftValue{{Field: "partner.name", Value: "Acme Retail Group"}},
-			},
-			Connection: ediports.DraftConnection{Sets: []ediports.DraftSetDirection{
-				{TransactionSet: edi.TransactionSet204, Direction: edi.DocumentDirectionInbound},
-			}},
-			Transport: &ediports.DraftTransport{Credentials: []ediports.CredentialRequirement{
-				{Label: "Partner signing certificate", Missing: true},
-				{
-					Label:    "AS2 private key for your signing certificate",
-					Required: true,
-					Missing:  true,
+			Partner: ediconnectiondraftports.DraftPartner{
+				Match: ediconnectiondraftports.PartnerMatchExisting,
+				Fields: []ediconnectiondraftports.DraftValue{
+					{Field: "partner.name", Value: "Acme Retail Group"},
 				},
-			}},
-			Sets: []ediports.DraftSet{{
+			},
+			Connection: ediconnectiondraftports.DraftConnection{
+				Sets: []ediconnectiondraftports.DraftSetDirection{
+					{
+						TransactionSet: edi.TransactionSet204,
+						Direction:      edi.DocumentDirectionInbound,
+					},
+				},
+			},
+			Transport: &ediconnectiondraftports.DraftTransport{
+				Credentials: []ediconnectiondraftports.CredentialRequirement{
+					{Label: "Partner signing certificate", Missing: true},
+					{
+						Label:    "AS2 private key for your signing certificate",
+						Required: true,
+						Missing:  true,
+					},
+				},
+			},
+			Sets: []ediconnectiondraftports.DraftSet{{
 				TransactionSet: edi.TransactionSet204,
 				Direction:      edi.DocumentDirectionInbound,
-				Unmet:          []ediports.DraftRequirementCheck{{SegmentID: "MS1"}},
+				Unmet:          []ediconnectiondraftports.DraftRequirementCheck{{SegmentID: "MS1"}},
 			}},
-			Gaps: []ediports.DraftGap{{Summary: "Appendix B is missing"}},
+			Gaps: []ediconnectiondraftports.DraftGap{{Summary: "Appendix B is missing"}},
 		},
-		Partner: ediports.PlannedPartner{
+		Partner: ediconnectiondraftports.PlannedPartner{
 			Before: &edi.EDIPartner{
 				ID:          existingID,
 				Name:        "Acme Retail Group",
@@ -109,9 +120,9 @@ func readyPlan() *ediports.ConnectionDraftPlan {
 			After: &edi.EDIPartner{
 				ID: existingID, Name: "Acme Retail Group", ContactName: "Dana Whitfield", Version: 4,
 			},
-			Change: ediports.ChangeKindChange,
+			Change: ediconnectiondraftports.ChangeKindChange,
 		},
-		Project: &ediports.PlannedProject{
+		Project: &ediconnectiondraftports.PlannedProject{
 			Files: []lading.File{
 				{Path: "partner.lading", Source: "partner acme \"Acme Retail Group\"\n"},
 				{
@@ -120,21 +131,21 @@ func readyPlan() *ediports.ConnectionDraftPlan {
 				},
 			},
 			Samples: []lading.Sample{{Path: "samples/spec-page-7.x12", Content: "ISA*00~"}},
-			Change:  ediports.ChangeKindAdd,
+			Change:  ediconnectiondraftports.ChangeKindAdd,
 		},
-		Transport: &ediports.PlannedTransport{
+		Transport: &ediconnectiondraftports.PlannedTransport{
 			After: &edi.EDICommunicationProfile{
 				Name:   "Acme AS2",
 				Status: domaintypes.StatusInactive,
 			},
-			Change: ediports.ChangeKindSame,
+			Change: ediconnectiondraftports.ChangeKindSame,
 		},
-		ControlNumbers: []ediports.PlannedControlNumber{{
+		ControlNumbers: []ediconnectiondraftports.PlannedControlNumber{{
 			After: &edi.EDIControlNumberSequence{
 				Kind:      edi.ControlNumberKindInterchange,
 				NextValue: 1000,
 			},
-			Change: ediports.ChangeKindAdd,
+			Change: ediconnectiondraftports.ChangeKindAdd,
 		}},
 	}
 }
@@ -219,15 +230,15 @@ func TestApplyConnectionDraft_WarnsWhenTheDraftCannotBeApplied(t *testing.T) {
 	t.Parallel()
 
 	cases := map[string]struct {
-		change   func(*ediports.ConnectionDraftPlan)
+		change   func(*ediconnectiondraftports.ConnectionDraftPlan)
 		contains string
 	}{
 		"a guide read differently": {
-			change:   func(plan *ediports.ConnectionDraftPlan) { plan.Draft.DocumentDigest = "sha256:0000" },
+			change:   func(plan *ediconnectiondraftports.ConnectionDraftPlan) { plan.Draft.DocumentDigest = "sha256:0000" },
 			contains: "reads differently",
 		},
 		"a decision left open": {
-			change: func(plan *ediports.ConnectionDraftPlan) {
+			change: func(plan *ediconnectiondraftports.ConnectionDraftPlan) {
 				plan.Draft.Ready = false
 				plan.Draft.Blockers = []string{"Decide time zone"}
 			},

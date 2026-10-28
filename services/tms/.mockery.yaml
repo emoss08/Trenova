@@ -234,7 +234,25 @@ packages:
   github.com/emoss08/trenova/internal/modules/documents/ports/triageports:
     config:
       all: true
+  github.com/emoss08/trenova/internal/modules/edi/ports/ediconnectiondraftports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/edi/ports/edimessageports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports:
+    config:
+      all: true
   github.com/emoss08/trenova/internal/modules/edi/ports/ediports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/edi/ports/editenderports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/edi/ports/editransportports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/edi/ports/ladingports:
     config:
       all: true
   github.com/emoss08/trenova/internal/modules/equipment/ports/equipmentcontinuityports:

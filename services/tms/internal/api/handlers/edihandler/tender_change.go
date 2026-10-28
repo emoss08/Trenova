@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/editenderports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/authctx"
@@ -65,7 +65,7 @@ func (h *Handler) listTenderChanges(c *gin.Context) {
 	pagination.List(c, req, h.eh, func() (*pagination.ListResult[*edi.TenderChange], error) {
 		return h.service.ListTenderChanges(
 			c.Request.Context(),
-			&ediports.ListEDITenderChangesRequest{
+			&editenderports.ListEDITenderChangesRequest{
 				Filter:           req,
 				RecipientID:      recipientID,
 				SourceShipmentID: sourceShipmentID,
@@ -85,7 +85,7 @@ func (h *Handler) getTenderChange(c *gin.Context) {
 
 	change, err := h.service.GetTenderChange(
 		c.Request.Context(),
-		ediports.GetEDITenderChangeByIDRequest{
+		editenderports.GetEDITenderChangeByIDRequest{
 			ID:         changeID,
 			TenantInfo: pagination.FromAuth(authCtx),
 		},
@@ -196,7 +196,7 @@ func (h *Handler) withTransfer(
 
 	transfer, err := h.service.GetTransfer(
 		c.Request.Context(),
-		ediports.GetEDITransferByIDRequest{
+		editenderports.GetEDITransferByIDRequest{
 			ID:         transferID,
 			TenantInfo: pagination.FromAuth(authCtx),
 			Direction:  direction,

@@ -7,15 +7,14 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/seededtest"
-
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/edi/adapters/postgres/edicontrolnumberrepository"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi/edidb"
 	"github.com/emoss08/trenova/internal/modules/edi/editest"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
+	"github.com/emoss08/trenova/internal/testutil/seededtest"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 )
@@ -66,7 +65,7 @@ func TestAllocateControlNumbersConcurrentAllocationsAreUnique(t *testing.T) {
 	documentType := seededDocumentType(t, ctx, db, edi.TransactionSet204)
 	partner := createPartner(t, ctx, db, "CTRLNUM-TEST")
 
-	req := ediports.AllocateEDIControlNumbersRequest{
+	req := edipartnerports.AllocateEDIControlNumbersRequest{
 		TenantInfo:     tenant,
 		PartnerID:      partner.ID,
 		DocumentTypeID: documentType.ID,

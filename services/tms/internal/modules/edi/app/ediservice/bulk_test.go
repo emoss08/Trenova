@@ -3,7 +3,7 @@ package ediservice
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/edimessageports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/mock"
@@ -29,7 +29,7 @@ func TestBulkRetryMessageDeliveryAggregatesFailures(t *testing.T) {
 	fixture := newDeliveryFixture(t)
 	missingID := pulid.MustNew("edimsg_")
 	fixture.messageRepo.EXPECT().
-		GetMessageByID(mock.Anything, mock.MatchedBy(func(req ediports.GetEDIMessageByIDRequest) bool {
+		GetMessageByID(mock.Anything, mock.MatchedBy(func(req edimessageports.GetEDIMessageByIDRequest) bool {
 			return req.ID == missingID
 		})).
 		Return(nil, errortypes.NewNotFoundError("EDIMessage not found")).

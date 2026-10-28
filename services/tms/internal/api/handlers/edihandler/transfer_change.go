@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/editenderports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -52,7 +52,7 @@ func (h *Handler) listTransferChanges(c *gin.Context) {
 	pagination.List(c, req, h.eh, func() (*pagination.ListResult[*edi.TransferChange], error) {
 		return h.service.ListTransferChanges(
 			c.Request.Context(),
-			&ediports.ListEDITransferChangesRequest{
+			&editenderports.ListEDITransferChangesRequest{
 				Filter:         req,
 				ShipmentLinkID: linkID,
 			},
@@ -70,7 +70,7 @@ func (h *Handler) getTransferChange(c *gin.Context) {
 
 	change, err := h.service.GetTransferChange(
 		c.Request.Context(),
-		ediports.GetEDITransferChangeByIDRequest{
+		editenderports.GetEDITransferChangeByIDRequest{
 			ID:         changeID,
 			TenantInfo: pagination.FromAuth(authCtx),
 		},

@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/editenderports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -33,7 +33,7 @@ func (h *Handler) listShipmentLinks(c *gin.Context) {
 	pagination.List(c, req, h.eh, func() (*pagination.ListResult[*edi.ShipmentLink], error) {
 		return h.service.ListShipmentLinks(
 			c.Request.Context(),
-			&ediports.ListEDIShipmentLinksRequest{Filter: req},
+			&editenderports.ListEDIShipmentLinksRequest{Filter: req},
 		)
 	})
 }
@@ -48,7 +48,7 @@ func (h *Handler) getShipmentLink(c *gin.Context) {
 
 	link, err := h.service.GetShipmentLink(
 		c.Request.Context(),
-		ediports.GetEDIShipmentLinkByIDRequest{
+		editenderports.GetEDIShipmentLinkByIDRequest{
 			ID:         linkID,
 			TenantInfo: pagination.FromAuth(authCtx),
 		},

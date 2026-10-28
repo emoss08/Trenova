@@ -10,9 +10,9 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/editenderports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
-	"github.com/emoss08/trenova/internal/testutil/mocks/ediportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/editenderportsmock"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/mock"
@@ -21,7 +21,7 @@ import (
 
 func setupTransferHandler(
 	t *testing.T,
-	transfers *ediportsmock.MockEDILoadTenderTransferRepository,
+	transfers *editenderportsmock.MockEDILoadTenderTransferRepository,
 ) *edihandler.Handler {
 	t.Helper()
 
@@ -33,10 +33,12 @@ func setupTransferHandler(
 	return edihandler.New(edihandler.Params{
 		Service:      ediservice.New(ediservice.Params{Logger: logger, TransferRepo: transfers}),
 		ErrorHandler: errorHandler,
-		PermissionMiddleware: middleware.NewPermissionMiddleware(middleware.PermissionMiddlewareParams{
-			PermissionEngine: &mocks.AllowAllPermissionEngine{},
-			ErrorHandler:     errorHandler,
-		}),
+		PermissionMiddleware: middleware.NewPermissionMiddleware(
+			middleware.PermissionMiddlewareParams{
+				PermissionEngine: &mocks.AllowAllPermissionEngine{},
+				ErrorHandler:     errorHandler,
+			},
+		),
 	})
 }
 
@@ -44,9 +46,9 @@ func TestEDIHandler_ListInboundTransfersFromOneInboundFile(t *testing.T) {
 	t.Parallel()
 
 	fileID := pulid.MustNew("ediinf_")
-	transfers := ediportsmock.NewMockEDILoadTenderTransferRepository(t)
+	transfers := editenderportsmock.NewMockEDILoadTenderTransferRepository(t)
 	transfers.EXPECT().
-		ListInbound(mock.Anything, mock.MatchedBy(func(req *ediports.ListEDITransfersRequest) bool {
+		ListInbound(mock.Anything, mock.MatchedBy(func(req *editenderports.ListEDITransfersRequest) bool {
 			return req.InboundFileID == fileID
 		})).
 		Return(&pagination.ListResult[*edi.EDITransfer]{}, nil).
@@ -68,7 +70,7 @@ func TestEDIHandler_ListInboundTransfersRefusesAMalformedInboundFileID(t *testin
 
 	runEDIRequest(
 		t,
-		setupTransferHandler(t, ediportsmock.NewMockEDILoadTenderTransferRepository(t)),
+		setupTransferHandler(t, editenderportsmock.NewMockEDILoadTenderTransferRepository(t)),
 		http.MethodGet,
 		"/api/v1/edi/transfers/",
 		map[string]string{"direction": "inbound", "inboundFileId": "not-an-id"},

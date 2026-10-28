@@ -5,20 +5,21 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/mocks/customerportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/ediportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/invoiceportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/kernelportsmock"
-
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ladingports"
 	"github.com/emoss08/trenova/internal/modules/identity/jobs/billingjobs/billingcontract"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/internal/testutil"
+	"github.com/emoss08/trenova/internal/testutil/mocks/customerportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/edipartnerportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/invoiceportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/kernelportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/ladingportsmock"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/lading"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -133,8 +134,8 @@ func TestResolvePartnerTargetInternalPartnerNeedsNoTransport(t *testing.T) {
 	tenantInfo := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
 	partner := &edi.EDIPartner{ID: pulid.MustNew("edip_"), Kind: edi.PartnerKindInternal}
 
-	projects := ediportsmock.NewMockLadingProjectRepository(t)
-	commProfiles := ediportsmock.NewMockEDICommunicationProfileRepository(t)
+	projects := ladingportsmock.NewMockLadingProjectRepository(t)
+	commProfiles := edipartnerportsmock.NewMockEDICommunicationProfileRepository(t)
 
 	svc := &Service{
 		l:                           zap.NewNop(),
@@ -157,8 +158,8 @@ func TestInvoiceLadingVersionNeedsAnOutbound210Map(t *testing.T) {
 
 	tenantInfo := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
 	partner := &edi.EDIPartner{ID: pulid.MustNew("edip_"), Kind: edi.PartnerKindExternal}
-	withMaps := func(maps ...lading.Map) *ediports.RunnableLadingVersions {
-		return &ediports.RunnableLadingVersions{Active: &edi.LadingVersion{
+	withMaps := func(maps ...lading.Map) *ladingports.RunnableLadingVersions {
+		return &ladingports.RunnableLadingVersions{Active: &edi.LadingVersion{
 			ID:       pulid.MustNew("ldv_"),
 			Manifest: lading.Check{Maps: maps},
 		}}
@@ -166,7 +167,7 @@ func TestInvoiceLadingVersionNeedsAnOutbound210Map(t *testing.T) {
 
 	tests := []struct {
 		name     string
-		runnable *ediports.RunnableLadingVersions
+		runnable *ladingports.RunnableLadingVersions
 		err      error
 		found    bool
 	}{
@@ -185,7 +186,7 @@ func TestInvoiceLadingVersionNeedsAnOutbound210Map(t *testing.T) {
 		},
 		{
 			name:     "no active version",
-			runnable: &ediports.RunnableLadingVersions{},
+			runnable: &ladingports.RunnableLadingVersions{},
 		},
 		{
 			name: "no project",
@@ -195,9 +196,9 @@ func TestInvoiceLadingVersionNeedsAnOutbound210Map(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			projects := ediportsmock.NewMockLadingProjectRepository(t)
+			projects := ladingportsmock.NewMockLadingProjectRepository(t)
 			projects.EXPECT().
-				GetRunnableVersions(mock.Anything, ediports.GetRunnableLadingVersionRequest{
+				GetRunnableVersions(mock.Anything, ladingports.GetRunnableLadingVersionRequest{
 					TenantInfo: tenantInfo,
 					PartnerID:  partner.ID,
 				}).
@@ -225,14 +226,14 @@ func TestResolvePartnerTargetReportsMissingProfiles(t *testing.T) {
 	tenantInfo := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
 	partner := &edi.EDIPartner{ID: pulid.MustNew("edip_"), Kind: edi.PartnerKindExternal}
 
-	projects := ediportsmock.NewMockLadingProjectRepository(t)
+	projects := ladingportsmock.NewMockLadingProjectRepository(t)
 	projects.EXPECT().
 		GetRunnableVersions(mock.Anything, mock.Anything).
 		Return(nil, errortypes.NewNotFoundError("LadingProject")).
 		Once()
-	commProfiles := ediportsmock.NewMockEDICommunicationProfileRepository(t)
+	commProfiles := edipartnerportsmock.NewMockEDICommunicationProfileRepository(t)
 	commProfiles.EXPECT().
-		GetActiveProfileByPartner(mock.Anything, ediports.GetActiveEDICommunicationProfileByPartnerRequest{
+		GetActiveProfileByPartner(mock.Anything, edipartnerports.GetActiveEDICommunicationProfileByPartnerRequest{
 			PartnerID:  partner.ID,
 			TenantInfo: tenantInfo,
 		}).
@@ -320,26 +321,26 @@ func newEDIWiredFixture(t *testing.T, status invoice.EDISendStatus) *ediWiredFix
 		}}, nil).
 		Maybe()
 
-	partners := ediportsmock.NewMockEDIPartnerRepository(t)
+	partners := edipartnerportsmock.NewMockEDIPartnerRepository(t)
 	partners.EXPECT().
-		ListOutboundPartnersByCustomerIDs(mock.Anything, ediports.ListEDIPartnersByCustomerIDsRequest{
+		ListOutboundPartnersByCustomerIDs(mock.Anything, edipartnerports.ListEDIPartnersByCustomerIDsRequest{
 			CustomerIDs: []pulid.ID{customerID},
 			TenantInfo:  tenantInfo,
 		}).
 		Return([]*edi.EDIPartner{{ID: partnerID, CustomerID: customerID, Name: "AMD EDI", Kind: edi.PartnerKindExternal}}, nil).
 		Maybe()
 
-	projects := ediportsmock.NewMockLadingProjectRepository(t)
+	projects := ladingportsmock.NewMockLadingProjectRepository(t)
 	projects.EXPECT().
 		GetRunnableVersions(mock.Anything, mock.Anything).
-		Return(&ediports.RunnableLadingVersions{Active: &edi.LadingVersion{
+		Return(&ladingports.RunnableLadingVersions{Active: &edi.LadingVersion{
 			ID: pulid.MustNew("ldv_"),
 			Manifest: lading.Check{Maps: []lading.Map{
 				{Name: "invoiceOut", Set: "210", Direction: lading.DirectionOutbound},
 			}},
 		}}, nil).
 		Maybe()
-	commProfiles := ediportsmock.NewMockEDICommunicationProfileRepository(t)
+	commProfiles := edipartnerportsmock.NewMockEDICommunicationProfileRepository(t)
 	commProfiles.EXPECT().
 		GetActiveProfileByPartner(mock.Anything, mock.Anything).
 		Return(&edi.EDICommunicationProfile{Method: edi.ConnectionMethodSFTP}, nil).

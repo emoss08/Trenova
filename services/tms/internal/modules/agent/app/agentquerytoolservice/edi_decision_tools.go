@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/editenderports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -64,14 +64,14 @@ func ediDecisionToolProviders() []any {
 type ediTenderChangeLister interface {
 	ListTenderChanges(
 		ctx context.Context,
-		req *ediports.ListEDITenderChangesRequest,
+		req *editenderports.ListEDITenderChangesRequest,
 	) (*pagination.ListResult[*edi.TenderChange], error)
 }
 
 type ediTransferChangeLister interface {
 	ListTransferChanges(
 		ctx context.Context,
-		req *ediports.ListEDITransferChangesRequest,
+		req *editenderports.ListEDITransferChangesRequest,
 	) (*pagination.ListResult[*edi.TransferChange], error)
 }
 
@@ -167,7 +167,7 @@ func (t *listEDITenderChangesTool) Query(
 		criteria.Field("shipment", shipmentID.String())
 	}
 
-	result, err := t.changes.ListTenderChanges(ctx, &ediports.ListEDITenderChangesRequest{
+	result, err := t.changes.ListTenderChanges(ctx, &editenderports.ListEDITenderChangesRequest{
 		Filter: &pagination.QueryOptions{
 			TenantInfo: tenantOf(params),
 			Pagination: pagination.Info{Limit: window.fetch(), Offset: window.offset},
@@ -318,7 +318,7 @@ func (t *listEDITransferChangesTool) Query(
 	}
 	window := readPage(params.Params, defaultListLimit, maxListLimit)
 
-	req := &ediports.ListEDITransferChangesRequest{
+	req := &editenderports.ListEDITransferChangesRequest{
 		Filter: &pagination.QueryOptions{
 			TenantInfo: tenantOf(params),
 			Pagination: pagination.Info{Limit: window.fetch(), Offset: window.offset},

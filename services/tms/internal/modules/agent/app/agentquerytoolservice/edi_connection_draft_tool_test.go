@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/edispec"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediconnectiondraftports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -15,14 +15,14 @@ import (
 )
 
 type fakeDraftPlanner struct {
-	draft *ediports.ConnectionDraft
-	req   *ediports.ConnectionDraftRequest
+	draft *ediconnectiondraftports.ConnectionDraft
+	req   *ediconnectiondraftports.ConnectionDraftRequest
 }
 
 func (f *fakeDraftPlanner) PlanConnectionDraft(
 	_ context.Context,
-	req *ediports.ConnectionDraftRequest,
-) (*ediports.ConnectionDraft, error) {
+	req *ediconnectiondraftports.ConnectionDraftRequest,
+) (*ediconnectiondraftports.ConnectionDraft, error) {
 	f.req = req
 	return f.draft, nil
 }
@@ -34,12 +34,14 @@ type fakeGuideReader struct {
 func (f *fakeGuideReader) Read(
 	_ context.Context,
 	req *edispec.ReadRequest,
-) (*ediports.SpecDocument, error) {
+) (*ediconnectiondraftports.SpecDocument, error) {
 	f.read = req
-	return &ediports.SpecDocument{
+	return &ediconnectiondraftports.SpecDocument{
 		ID:       req.DocumentID,
 		FileName: "acme-guide.pdf",
-		Pages:    []ediports.SpecPage{{Number: 1, Text: "Trading Partner Code: ACMERETAIL"}},
+		Pages: []ediconnectiondraftports.SpecPage{
+			{Number: 1, Text: "Trading Partner Code: ACMERETAIL"},
+		},
 	}, nil
 }
 
@@ -50,7 +52,11 @@ func guideArgs(documentID pulid.ID) map[string]any {
 			"field":      "partner.code",
 			"value":      "ACMERETAIL",
 			"confidence": 0.95,
-			"citation":   map[string]any{"page": 1, "quote": "Trading Partner Code: ACMERETAIL", "section": "1"},
+			"citation": map[string]any{
+				"page":    1,
+				"quote":   "Trading Partner Code: ACMERETAIL",
+				"section": "1",
+			},
 		}},
 		edispec.ParamRequirements: []any{map[string]any{
 			"transactionSet":  "214",
@@ -58,7 +64,10 @@ func guideArgs(documentID pulid.ID) map[string]any {
 			"segment":         "MS1",
 			"usage":           "Mandatory",
 			"elementPosition": 1,
-			"citation":        map[string]any{"page": 5, "quote": "MS1 Equipment Location is mandatory"},
+			"citation": map[string]any{
+				"page":  5,
+				"quote": "MS1 Equipment Location is mandatory",
+			},
 		}},
 	}
 }
@@ -66,12 +75,14 @@ func guideArgs(documentID pulid.ID) map[string]any {
 func TestDraftEDIConnection_ReadsTheGuideThePersonAttachedAndPlansFromIt(t *testing.T) {
 	t.Parallel()
 
-	planner := &fakeDraftPlanner{draft: &ediports.ConnectionDraft{
+	planner := &fakeDraftPlanner{draft: &ediconnectiondraftports.ConnectionDraft{
 		FileName: "acme-guide.pdf",
 		Ready:    true,
-		Partner: ediports.DraftPartner{
-			Match:  ediports.PartnerMatchNew,
-			Fields: []ediports.DraftValue{{Field: "partner.name", Value: "Acme Retail Group"}},
+		Partner: ediconnectiondraftports.DraftPartner{
+			Match: ediconnectiondraftports.PartnerMatchNew,
+			Fields: []ediconnectiondraftports.DraftValue{
+				{Field: "partner.name", Value: "Acme Retail Group"},
+			},
 		},
 	}}
 	reader := &fakeGuideReader{}
@@ -86,17 +97,26 @@ func TestDraftEDIConnection_ReadsTheGuideThePersonAttachedAndPlansFromIt(t *test
 	require.NotNil(t, reader.read)
 	assert.Equal(t, documentID, reader.read.DocumentID)
 	assert.Equal(t, params.ThreadID, reader.read.ThreadID)
-	assert.Equal(t, params.Actor.UserID, reader.read.AttachedBy, "only a guide this person attached")
+	assert.Equal(
+		t,
+		params.Actor.UserID,
+		reader.read.AttachedBy,
+		"only a guide this person attached",
+	)
 
 	require.NotNil(t, planner.req)
 	assert.Equal(t, params.OrganizationID, planner.req.TenantInfo.OrgID)
 	assert.Equal(t, "acme-guide.pdf", planner.req.Document.FileName)
 	require.Len(t, planner.req.Values, 1)
-	assert.Equal(t, ediports.DraftValueInput{
+	assert.Equal(t, ediconnectiondraftports.DraftValueInput{
 		Field:      "partner.code",
 		Value:      "ACMERETAIL",
 		Confidence: 0.95,
-		Citation:   ediports.DraftCitation{Page: 1, Quote: "Trading Partner Code: ACMERETAIL", Section: "1"},
+		Citation: ediconnectiondraftports.DraftCitation{
+			Page:    1,
+			Quote:   "Trading Partner Code: ACMERETAIL",
+			Section: "1",
+		},
 	}, planner.req.Values[0])
 	require.Len(t, planner.req.Requirements, 1)
 	assert.Equal(t, edi.TransactionSet214, planner.req.Requirements[0].TransactionSet)
@@ -111,9 +131,11 @@ func TestDraftEDIConnection_ReadsTheGuideThePersonAttachedAndPlansFromIt(t *test
 func TestDraftEDIConnection_AsksAboutWhatItHeld(t *testing.T) {
 	t.Parallel()
 
-	planner := &fakeDraftPlanner{draft: &ediports.ConnectionDraft{
+	planner := &fakeDraftPlanner{draft: &ediconnectiondraftports.ConnectionDraft{
 		Blockers: []string{"Decide time zone"},
-		Partner:  ediports.DraftPartner{Match: ediports.PartnerMatchExisting},
+		Partner: ediconnectiondraftports.DraftPartner{
+			Match: ediconnectiondraftports.PartnerMatchExisting,
+		},
 		FileName: "acme-guide-v4.pdf",
 	}}
 	tool := newDraftEDIConnectionTool(planner, &fakeGuideReader{})
@@ -134,7 +156,10 @@ func TestDraftEDIConnection_RefusesWithoutAPersonOrAGuide(t *testing.T) {
 
 	tool := newDraftEDIConnectionTool(&fakeDraftPlanner{}, &fakeGuideReader{})
 
-	_, err := tool.Query(t.Context(), agentParams(guideArgs(pulid.MustNew("doc_")), permission.SensitivityInternal))
+	_, err := tool.Query(
+		t.Context(),
+		agentParams(guideArgs(pulid.MustNew("doc_")), permission.SensitivityInternal),
+	)
 	require.ErrorIs(t, err, edispec.ErrNoConversation, "an agent on its own has no attachments")
 
 	args := guideArgs(pulid.MustNew("doc_"))
@@ -159,28 +184,38 @@ func TestDraftEDIConnection_CapsEveryLaterWriteInTheTurn(t *testing.T) {
 func TestDraftEDIConnection_NamesWhatTheReplyMustTellThePerson(t *testing.T) {
 	t.Parallel()
 
-	planner := &fakeDraftPlanner{draft: &ediports.ConnectionDraft{
+	planner := &fakeDraftPlanner{draft: &ediconnectiondraftports.ConnectionDraft{
 		FileName: "acme-guide.pdf",
 		Ready:    true,
-		Partner:  ediports.DraftPartner{Match: ediports.PartnerMatchNew},
-		Sets: []ediports.DraftSet{{
+		Partner: ediconnectiondraftports.DraftPartner{
+			Match: ediconnectiondraftports.PartnerMatchNew,
+		},
+		Sets: []ediconnectiondraftports.DraftSet{{
 			TransactionSet: edi.TransactionSet214,
 			Direction:      edi.DocumentDirectionOutbound,
-			Unmet: []ediports.DraftRequirementCheck{{
-				SegmentID: "MS1", ElementPosition: 1, Usage: ediports.RequirementUsageMandatory,
-				Source: ediports.DraftSource{Kind: ediports.SourceKindDocument, Page: 5},
+			Unmet: []ediconnectiondraftports.DraftRequirementCheck{{
+				SegmentID: "MS1", ElementPosition: 1, Usage: ediconnectiondraftports.RequirementUsageMandatory,
+				Source: ediconnectiondraftports.DraftSource{
+					Kind: ediconnectiondraftports.SourceKindDocument,
+					Page: 5,
+				},
 			}},
 		}},
-		Project: &ediports.DraftProject{Errors: 2},
-		Gaps: []ediports.DraftGap{{
-			Kind:    ediports.GapKindAmbiguous,
+		Project: &ediconnectiondraftports.DraftProject{Errors: 2},
+		Gaps: []ediconnectiondraftports.DraftGap{{
+			Kind:    ediconnectiondraftports.GapKindAmbiguous,
 			Summary: "Accessorial charge codes are in Appendix B, which is not in this document",
-			Source:  ediports.DraftSource{Kind: ediports.SourceKindDocument, Page: 6},
+			Source: ediconnectiondraftports.DraftSource{
+				Kind: ediconnectiondraftports.SourceKindDocument,
+				Page: 6,
+			},
 		}},
-		Transport: &ediports.DraftTransport{Credentials: []ediports.CredentialRequirement{
-			{Label: "AS2 private key", Required: true, Missing: true},
-			{Label: "Partner signing certificate", Missing: true},
-		}},
+		Transport: &ediconnectiondraftports.DraftTransport{
+			Credentials: []ediconnectiondraftports.CredentialRequirement{
+				{Label: "AS2 private key", Required: true, Missing: true},
+				{Label: "Partner signing certificate", Missing: true},
+			},
+		},
 	}}
 	tool := newDraftEDIConnectionTool(planner, &fakeGuideReader{})
 	params := chatParams(guideArgs(pulid.MustNew("doc_")), permission.SensitivityInternal)
@@ -201,24 +236,35 @@ func TestDraftEDIConnection_NamesWhatTheReplyMustTellThePerson(t *testing.T) {
 	assert.NotContains(t, note, "Partner signing certificate", "only what the connection needs")
 	assert.NotContains(t, note, "show the person the draft",
 		"the draft is pointed to inside a sentence, never set out on its own")
-	assert.Contains(t, note, "point the person to the draft in the sentence that says what it sets up")
+	assert.Contains(
+		t,
+		note,
+		"point the person to the draft in the sentence that says what it sets up",
+	)
 }
 
 func TestDraftEDIConnection_AsksOnlyTheQuestionWhileTheDraftIsBlocked(t *testing.T) {
 	t.Parallel()
 
-	planner := &fakeDraftPlanner{draft: &ediports.ConnectionDraft{
+	planner := &fakeDraftPlanner{draft: &ediconnectiondraftports.ConnectionDraft{
 		FileName: "acme-guide.pdf",
 		Blockers: []string{"Decide MDN mode"},
-		Partner:  ediports.DraftPartner{Match: ediports.PartnerMatchNew},
-		Gaps: []ediports.DraftGap{{
-			Kind:    ediports.GapKindAmbiguous,
+		Partner: ediconnectiondraftports.DraftPartner{
+			Match: ediconnectiondraftports.PartnerMatchNew,
+		},
+		Gaps: []ediconnectiondraftports.DraftGap{{
+			Kind:    ediconnectiondraftports.GapKindAmbiguous,
 			Summary: "Accessorial charge codes are in Appendix B, which is not in this document",
-			Source:  ediports.DraftSource{Kind: ediports.SourceKindDocument, Page: 6},
+			Source: ediconnectiondraftports.DraftSource{
+				Kind: ediconnectiondraftports.SourceKindDocument,
+				Page: 6,
+			},
 		}},
-		Transport: &ediports.DraftTransport{Credentials: []ediports.CredentialRequirement{
-			{Label: "AS2 private key", Required: true, Missing: true},
-		}},
+		Transport: &ediconnectiondraftports.DraftTransport{
+			Credentials: []ediconnectiondraftports.CredentialRequirement{
+				{Label: "AS2 private key", Required: true, Missing: true},
+			},
+		},
 	}}
 	tool := newDraftEDIConnectionTool(planner, &fakeGuideReader{})
 	params := chatParams(guideArgs(pulid.MustNew("doc_")), permission.SensitivityInternal)
@@ -241,40 +287,45 @@ func TestDraftEDIConnection_AsksOnlyTheQuestionWhileTheDraftIsBlocked(t *testing
 func TestDraftEDIConnection_NamesWhatARevisedGuideChanges(t *testing.T) {
 	t.Parallel()
 
-	page := func(n int) ediports.DraftSource {
-		return ediports.DraftSource{Kind: ediports.SourceKindDocument, Page: n}
+	page := func(n int) ediconnectiondraftports.DraftSource {
+		return ediconnectiondraftports.DraftSource{
+			Kind: ediconnectiondraftports.SourceKindDocument,
+			Page: n,
+		}
 	}
-	interchange := func(set edi.TransactionSet) ediports.DraftSet {
-		return ediports.DraftSet{
+	interchange := func(set edi.TransactionSet) ediconnectiondraftports.DraftSet {
+		return ediconnectiondraftports.DraftSet{
 			TransactionSet: set,
 			Direction:      edi.DocumentDirectionOutbound,
-			Change:         ediports.ChangeKindChange,
-			ControlNumbers: []ediports.DraftControlNumber{{
+			Change:         ediconnectiondraftports.ChangeKindChange,
+			ControlNumbers: []ediconnectiondraftports.DraftControlNumber{{
 				Kind: edi.ControlNumberKindInterchange, Start: 5000, Current: 1000,
-				Change: ediports.ChangeKindChange, Source: page(3),
+				Change: ediconnectiondraftports.ChangeKindChange, Source: page(3),
 			}},
 		}
 	}
-	planner := &fakeDraftPlanner{draft: &ediports.ConnectionDraft{
+	planner := &fakeDraftPlanner{draft: &ediconnectiondraftports.ConnectionDraft{
 		FileName: "acme-guide-v4.pdf",
 		Ready:    true,
 		Changes:  4,
-		Partner: ediports.DraftPartner{
-			Match:  ediports.PartnerMatchExisting,
-			Change: ediports.ChangeKindChange,
-			Fields: []ediports.DraftValue{
+		Partner: ediconnectiondraftports.DraftPartner{
+			Match:  ediconnectiondraftports.PartnerMatchExisting,
+			Change: ediconnectiondraftports.ChangeKindChange,
+			Fields: []ediconnectiondraftports.DraftValue{
 				{Label: "Partner name", Value: "Acme Retail Group", Current: "Acme Retail Group",
-					Change: ediports.ChangeKindSame, Source: page(1)},
+					Change: ediconnectiondraftports.ChangeKindSame, Source: page(1)},
 				{Label: "Contact name", Value: "Priya Raman", Current: "Dana Whitfield",
-					Change: ediports.ChangeKindChange, Source: page(1)},
+					Change: ediconnectiondraftports.ChangeKindChange, Source: page(1)},
 			},
 		},
-		Transport: &ediports.DraftTransport{Change: ediports.ChangeKindSame},
-		Sets: []ediports.DraftSet{
+		Transport: &ediconnectiondraftports.DraftTransport{
+			Change: ediconnectiondraftports.ChangeKindSame,
+		},
+		Sets: []ediconnectiondraftports.DraftSet{
 			{
 				TransactionSet: edi.TransactionSet204,
 				Direction:      edi.DocumentDirectionInbound,
-				Change:         ediports.ChangeKindSame,
+				Change:         ediconnectiondraftports.ChangeKindSame,
 			},
 			interchange(edi.TransactionSet990),
 			interchange(edi.TransactionSet214),
@@ -298,14 +349,18 @@ func TestDraftEDIConnection_NamesWhatARevisedGuideChanges(t *testing.T) {
 func TestDraftEDIConnection_ListsNoChangesForANewPartner(t *testing.T) {
 	t.Parallel()
 
-	planner := &fakeDraftPlanner{draft: &ediports.ConnectionDraft{
+	planner := &fakeDraftPlanner{draft: &ediconnectiondraftports.ConnectionDraft{
 		FileName: "acme-guide.pdf",
 		Ready:    true,
-		Partner: ediports.DraftPartner{
-			Match:  ediports.PartnerMatchNew,
-			Change: ediports.ChangeKindAdd,
-			Fields: []ediports.DraftValue{
-				{Label: "Partner name", Value: "Acme Retail Group", Change: ediports.ChangeKindAdd},
+		Partner: ediconnectiondraftports.DraftPartner{
+			Match:  ediconnectiondraftports.PartnerMatchNew,
+			Change: ediconnectiondraftports.ChangeKindAdd,
+			Fields: []ediconnectiondraftports.DraftValue{
+				{
+					Label:  "Partner name",
+					Value:  "Acme Retail Group",
+					Change: ediconnectiondraftports.ChangeKindAdd,
+				},
 			},
 		},
 	}}

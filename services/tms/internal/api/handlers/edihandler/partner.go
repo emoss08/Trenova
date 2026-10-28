@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -99,7 +99,7 @@ func (h *Handler) listPartners(c *gin.Context) {
 	pagination.List(c, req, h.eh, func() (*pagination.ListResult[*edi.EDIPartner], error) {
 		return h.service.ListPartners(
 			c.Request.Context(),
-			&ediports.ListEDIPartnersRequest{Filter: req},
+			&edipartnerports.ListEDIPartnersRequest{Filter: req},
 		)
 	})
 }
@@ -111,7 +111,7 @@ func (h *Handler) selectPartnerOptions(c *gin.Context) {
 	pagination.SelectOptions(c, req, h.eh, func() (*pagination.ListResult[*edi.EDIPartner], error) {
 		return h.service.SelectPartnerOptions(
 			c.Request.Context(),
-			&ediports.EDIPartnerSelectOptionsRequest{
+			&edipartnerports.EDIPartnerSelectOptionsRequest{
 				SelectQueryRequest: req,
 				Kind:               edi.PartnerKind(helpers.QueryString(c, "kind", "")),
 				EnabledForOutbound: helpers.QueryBool(c, "enabledForOutbound", false),
@@ -128,10 +128,13 @@ func (h *Handler) getPartner(c *gin.Context) {
 		return
 	}
 
-	entity, err := h.service.GetPartner(c.Request.Context(), ediports.GetEDIPartnerByIDRequest{
-		ID:         partnerID,
-		TenantInfo: pagination.FromAuth(authCtx),
-	})
+	entity, err := h.service.GetPartner(
+		c.Request.Context(),
+		edipartnerports.GetEDIPartnerByIDRequest{
+			ID:         partnerID,
+			TenantInfo: pagination.FromAuth(authCtx),
+		},
+	)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return

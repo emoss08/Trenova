@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/documents/ports/contentscanports"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/edimessageports"
 	"github.com/emoss08/trenova/internal/testutil/mocks/contentscanportsmock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -42,7 +42,7 @@ func TestProcessInboundFile_HoldsTheFileWhenTheScannerCannotCheckIt(t *testing.T
 		contentscanports.ErrScannerUnavailable,
 	)
 	fixture.inboundFileRepo.EXPECT().
-		GetInboundFileByID(mock.Anything, ediports.GetEDIInboundFileByIDRequest{
+		GetInboundFileByID(mock.Anything, edimessageports.GetEDIInboundFileByIDRequest{
 			ID:         fixture.file.ID,
 			TenantInfo: fixture.tenantInfo(),
 		}).

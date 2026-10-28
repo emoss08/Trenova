@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi/edidb"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
 	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"go.uber.org/fx"
@@ -28,7 +28,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) ediports.EDITransactionSetRepository {
+func New(p Params) edipartnerports.EDITransactionSetRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.edi-transaction-set-repository"),
@@ -37,7 +37,7 @@ func New(p Params) ediports.EDITransactionSetRepository {
 
 func (r *repository) SelectTransactionSetOptions(
 	ctx context.Context,
-	req *ediports.EDITransactionSetSelectOptionsRequest,
+	req *edipartnerports.EDITransactionSetSelectOptionsRequest,
 ) (*pagination.ListResult[*edi.EDITransactionSet], error) {
 	return dbtx.Read(
 		ctx,
@@ -58,7 +58,7 @@ func (r *repository) SelectTransactionSetOptions(
 }
 
 func transactionSetOptionsQuery(
-	req *ediports.EDITransactionSetSelectOptionsRequest,
+	req *edipartnerports.EDITransactionSetSelectOptionsRequest,
 ) *keel.Query[*edi.EDITransactionSet] {
 	ts := edidb.EDITransactionSets
 	return ts.Pick(

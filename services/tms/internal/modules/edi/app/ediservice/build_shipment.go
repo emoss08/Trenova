@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -22,7 +22,7 @@ func (s *Service) buildMappingPreview(
 ) (*MappingPreview, error) {
 	required := payload.RequiredMappingEntityIDs
 	sourceIDs := flattenRequiredIDs(required)
-	items, err := s.mappingProfileRepo.GetMappingItems(ctx, ediports.GetMappingItemsRequest{
+	items, err := s.mappingProfileRepo.GetMappingItems(ctx, edipartnerports.GetMappingItemsRequest{
 		PartnerID: partner.ID,
 		TenantInfo: pagination.TenantInfo{
 			OrgID: partner.OrganizationID,

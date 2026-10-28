@@ -9,7 +9,8 @@ import (
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/edi/app/edilading"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ladingports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -85,7 +86,7 @@ func (s *Service) SendFlowMessage(
 	actionCtx *FlowActionContext,
 ) (*edi.EDIMessage, error) {
 	instance := dispatched.Instance
-	partner, err := s.partnerRepo.GetByID(ctx, ediports.GetEDIPartnerByIDRequest{
+	partner, err := s.partnerRepo.GetByID(ctx, edipartnerports.GetEDIPartnerByIDRequest{
 		ID:         instance.EDIPartnerID,
 		TenantInfo: tenantInfo,
 	})
@@ -166,7 +167,7 @@ func (s *Service) resendFlowMessage(
 	instance *edi.FlowInstance,
 	sendID string,
 ) error {
-	message, err := s.flowRepo.GetSendMessage(ctx, ediports.GetFlowSendMessageRequest{
+	message, err := s.flowRepo.GetSendMessage(ctx, ladingports.GetFlowSendMessageRequest{
 		TenantInfo: tenantInfo,
 		InstanceID: instance.ID,
 		SendID:     sendID,
@@ -220,7 +221,7 @@ func (s *Service) DispatchFlowTimer(
 	tenantInfo pagination.TenantInfo,
 	instanceID pulid.ID,
 ) (*edi.FlowInstance, error) {
-	instance, err := s.flowRepo.GetInstance(ctx, ediports.GetFlowInstanceRequest{
+	instance, err := s.flowRepo.GetInstance(ctx, ladingports.GetFlowInstanceRequest{
 		TenantInfo: tenantInfo,
 		ID:         instanceID,
 	})
@@ -302,7 +303,7 @@ func (s *Service) DecideTender(
 	ctx context.Context,
 	req *DecideTenderRequest,
 ) (bool, []*edi.EDIMessage, error) {
-	instances, err := s.flowRepo.ListInstances(ctx, &ediports.ListFlowInstancesRequest{
+	instances, err := s.flowRepo.ListInstances(ctx, &ladingports.ListFlowInstancesRequest{
 		Filter: &pagination.QueryOptions{
 			TenantInfo: req.TenantInfo,
 			Pagination: pagination.Info{Limit: 1},
@@ -315,7 +316,7 @@ func (s *Service) DecideTender(
 	if len(instances.Items) == 0 {
 		return false, nil, nil
 	}
-	instance, err := s.flowRepo.GetInstance(ctx, ediports.GetFlowInstanceRequest{
+	instance, err := s.flowRepo.GetInstance(ctx, ladingports.GetFlowInstanceRequest{
 		TenantInfo: req.TenantInfo,
 		ID:         instances.Items[0].ID,
 	})
@@ -355,7 +356,7 @@ func (s *Service) AcknowledgeFlowMessage(
 	if message == nil || message.FlowInstanceID.IsNil() {
 		return nil
 	}
-	instance, err := s.flowRepo.GetInstance(ctx, ediports.GetFlowInstanceRequest{
+	instance, err := s.flowRepo.GetInstance(ctx, ladingports.GetFlowInstanceRequest{
 		TenantInfo: tenantInfo,
 		ID:         message.FlowInstanceID,
 	})
@@ -380,14 +381,14 @@ func (s *Service) AcknowledgeFlowMessage(
 
 func (s *Service) ListFlowInstances(
 	ctx context.Context,
-	req *ediports.ListFlowInstancesRequest,
+	req *ladingports.ListFlowInstancesRequest,
 ) (*pagination.ListResult[*edi.FlowInstance], error) {
 	return s.flowRepo.ListInstances(ctx, req)
 }
 
 func (s *Service) ListFlowInstancesCursor(
 	ctx context.Context,
-	req *ediports.ListFlowInstancesRequest,
+	req *ladingports.ListFlowInstancesRequest,
 ) (*pagination.CursorListResult[*edi.FlowInstance], error) {
 	return s.flowRepo.ListInstancesCursor(ctx, req)
 }
@@ -400,13 +401,13 @@ type FlowInstanceDetail struct {
 
 func (s *Service) GetFlowInstance(
 	ctx context.Context,
-	req ediports.GetFlowInstanceRequest,
+	req ladingports.GetFlowInstanceRequest,
 ) (*FlowInstanceDetail, error) {
 	instance, err := s.flowRepo.GetInstance(ctx, req)
 	if err != nil {
 		return nil, err
 	}
-	events, err := s.flowRepo.ListEvents(ctx, ediports.ListFlowEventsRequest{
+	events, err := s.flowRepo.ListEvents(ctx, ladingports.ListFlowEventsRequest{
 		TenantInfo: req.TenantInfo,
 		InstanceID: instance.ID,
 	})
@@ -426,7 +427,7 @@ func (s *Service) GetFlowInstance(
 // person has dealt with it.
 func (s *Service) ReleaseFlowInstance(
 	ctx context.Context,
-	req ediports.GetFlowInstanceRequest,
+	req ladingports.GetFlowInstanceRequest,
 	actor *permissionports.RequestActor,
 ) (*edi.FlowInstance, error) {
 	released, err := s.flows.Release(ctx, req.TenantInfo, req.ID, req.TenantInfo.UserID)

@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vikstrous/dataloadgen"
@@ -14,11 +14,11 @@ import (
 type EDIPartnerByCustomerIDLoaderFactoryParams struct {
 	fx.In
 
-	PartnerRepo ediports.EDIPartnerRepository
+	PartnerRepo edipartnerports.EDIPartnerRepository
 }
 
 type EDIPartnerByCustomerIDLoaderFactory struct {
-	partnerRepo ediports.EDIPartnerRepository
+	partnerRepo edipartnerports.EDIPartnerRepository
 }
 
 func NewEDIPartnerByCustomerIDLoaderFactory(
@@ -49,7 +49,7 @@ func (f *EDIPartnerByCustomerIDLoaderFactory) batchFunc(
 
 		partners, err := f.partnerRepo.ListInternalOutboundPartnersByCustomerIDs(
 			ctx,
-			ediports.ListEDIPartnersByCustomerIDsRequest{
+			edipartnerports.ListEDIPartnersByCustomerIDsRequest{
 				CustomerIDs: customerIDs,
 				TenantInfo:  tenantInfo,
 			},

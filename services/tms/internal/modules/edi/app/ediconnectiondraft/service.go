@@ -6,7 +6,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/app/edilading"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediconnectiondraftports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/lading"
@@ -38,11 +39,11 @@ type setupService interface {
 	) (*edi.EDICommunicationProfile, error)
 	SaveMappingProfile(
 		ctx context.Context,
-		req *ediports.SaveMappingItemsRequest,
+		req *edipartnerports.SaveMappingItemsRequest,
 	) ([]*edi.EDIMappingProfileItem, error)
 	StartControlNumber(
 		ctx context.Context,
-		req *ediports.ResetEDIControlNumberRequest,
+		req *edipartnerports.ResetEDIControlNumberRequest,
 		actor *permissionports.RequestActor,
 	) (*edi.EDIControlNumberSequence, error)
 }
@@ -63,8 +64,8 @@ type projectStore interface {
 type Params struct {
 	fx.In
 
-	Repo          ediports.EDIConnectionDraftRepository
-	DocumentTypes ediports.EDIDocumentTypeRepository
+	Repo          ediconnectiondraftports.EDIConnectionDraftRepository
+	DocumentTypes edipartnerports.EDIDocumentTypeRepository
 	Setup         *ediservice.Service
 	Validator     *ediservice.Validator
 	Lading        *edilading.Runtime
@@ -74,8 +75,8 @@ type Params struct {
 }
 
 type Service struct {
-	repo          ediports.EDIConnectionDraftRepository
-	documentTypes ediports.EDIDocumentTypeRepository
+	repo          ediconnectiondraftports.EDIConnectionDraftRepository
+	documentTypes edipartnerports.EDIDocumentTypeRepository
 	setup         setupService
 	validator     *ediservice.Validator
 	lading        *edilading.Runtime
@@ -84,7 +85,7 @@ type Service struct {
 	l             *zap.Logger
 }
 
-var _ ediports.EDIConnectionDraftService = (*Service)(nil)
+var _ ediconnectiondraftports.EDIConnectionDraftService = (*Service)(nil)
 
 func New(p Params) *Service { //nolint:gocritic // fx params are passed by value
 	return &Service{

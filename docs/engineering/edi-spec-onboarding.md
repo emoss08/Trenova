@@ -247,7 +247,7 @@ document digest.
 | Piece | Where |
 |---|---|
 | Planner, verification, diff, apply | `modules/edi/app/ediconnectiondraft/` |
-| Plan types and ports | `modules/edi/ports/ediports/ediconnectiondraft.go` |
+| Plan types and ports | `modules/edi/ports/ediconnectiondraftports/ediconnectiondraft.go` |
 | Repository | `modules/edi/adapters/postgres/ediconnectiondraftrepository/` |
 | Sample parse | `ediinboundservice.ParseSample` |
 | Tool input | `agent/app/agenttools/edispec/` |

@@ -27,7 +27,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/edimessageports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmenttracking"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/stopeta"
@@ -76,7 +76,7 @@ type Params struct {
 	Workers           workerports.WorkerRepository                             `optional:"true"`
 	Credentials       workercredentialports.WorkerCredentialRepository         `optional:"true"`
 	CarrierIntel      carrierintelports.CarrierIntelEventRepository            `optional:"true"`
-	EDIFiles          ediports.EDIInboundFileRepository                        `optional:"true"`
+	EDIFiles          edimessageports.EDIInboundFileRepository                 `optional:"true"`
 	Inbound           inboundmessageports.InboundMessageRepository             `optional:"true"`
 	Reports           reportports.ReportDefinitionRepository                   `optional:"true"`
 	Dashboards        reportports.ReportDashboardRepository                    `optional:"true"`
@@ -110,7 +110,7 @@ type Service struct {
 	workers           workerports.WorkerRepository
 	credentials       workercredentialports.WorkerCredentialRepository
 	carrierIntel      carrierintelports.CarrierIntelEventRepository
-	ediFiles          ediports.EDIInboundFileRepository
+	ediFiles          edimessageports.EDIInboundFileRepository
 	inbound           inboundmessageports.InboundMessageRepository
 	reports           reportports.ReportDefinitionRepository
 	dashboards        reportports.ReportDashboardRepository
@@ -871,7 +871,7 @@ func (s *Service) ediInboundFile(
 		return subject, nil
 	}
 
-	file, err := s.ediFiles.GetInboundFileByID(ctx, ediports.GetEDIInboundFileByIDRequest{
+	file, err := s.ediFiles.GetInboundFileByID(ctx, edimessageports.GetEDIInboundFileByIDRequest{
 		ID:              fileID,
 		TenantInfo:      tenant,
 		IncludeMessages: true,

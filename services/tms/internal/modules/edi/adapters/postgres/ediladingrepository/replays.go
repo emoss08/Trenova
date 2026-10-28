@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi/edidb"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ladingports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/lading"
 	"go.uber.org/zap"
@@ -27,7 +27,7 @@ type replays struct {
 	l  *zap.Logger
 }
 
-func NewReplays(p Params) ediports.LadingReplayRepository {
+func NewReplays(p Params) ladingports.LadingReplayRepository {
 	return &replays{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.edi-lading-replay-repository"),
@@ -51,7 +51,7 @@ func (r *replays) CreateReplay(
 
 func (r *replays) GetReplay(
 	ctx context.Context,
-	req ediports.GetLadingReplayRequest,
+	req ladingports.GetLadingReplayRequest,
 ) (*edi.LadingReplay, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*edi.LadingReplay, error) {
 		rp := edidb.LadingReplays
@@ -65,7 +65,7 @@ func (r *replays) GetReplay(
 
 func (r *replays) ListReplays(
 	ctx context.Context,
-	req ediports.ListLadingReplaysRequest,
+	req ladingports.ListLadingReplaysRequest,
 ) ([]*edi.LadingReplay, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*edi.LadingReplay, error) {
 		rp := edidb.LadingReplays
@@ -134,7 +134,7 @@ func (r *replays) RecordShadowResult(ctx context.Context, result *edi.LadingShad
 
 func (r *replays) ListShadowResults(
 	ctx context.Context,
-	req ediports.ListLadingShadowResultsRequest,
+	req ladingports.ListLadingShadowResultsRequest,
 ) ([]*edi.LadingShadowResult, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*edi.LadingShadowResult, error) {
 		s := edidb.LadingShadowResults
@@ -151,23 +151,28 @@ func (r *replays) ListShadowResults(
 
 func (r *replays) SummarizeShadow(
 	ctx context.Context,
-	req ediports.ListLadingShadowResultsRequest,
-) (*ediports.LadingShadowSummary, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*ediports.LadingShadowSummary, error) {
-		db := r.db.Keel(ctx)
-		s := edidb.LadingShadowResults
-		total, err := s.Where(s.VersionID.Eq(req.VersionID)).Count(ctx, db)
-		if err != nil {
-			return nil, err
-		}
-		same, err := s.Where(s.VersionID.Eq(req.VersionID), s.Same.Eq(true)).Count(ctx, db)
-		if err != nil {
-			return nil, err
-		}
-		failed, err := s.Where(s.VersionID.Eq(req.VersionID), s.Error.IsNotNull()).Count(ctx, db)
-		if err != nil {
-			return nil, err
-		}
-		return &ediports.LadingShadowSummary{Total: total, Same: same, Failed: failed}, nil
-	})
+	req ladingports.ListLadingShadowResultsRequest,
+) (*ladingports.LadingShadowSummary, error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*ladingports.LadingShadowSummary, error) {
+			db := r.db.Keel(ctx)
+			s := edidb.LadingShadowResults
+			total, err := s.Where(s.VersionID.Eq(req.VersionID)).Count(ctx, db)
+			if err != nil {
+				return nil, err
+			}
+			same, err := s.Where(s.VersionID.Eq(req.VersionID), s.Same.Eq(true)).Count(ctx, db)
+			if err != nil {
+				return nil, err
+			}
+			failed, err := s.Where(s.VersionID.Eq(req.VersionID), s.Error.IsNotNull()).
+				Count(ctx, db)
+			if err != nil {
+				return nil, err
+			}
+			return &ladingports.LadingShadowSummary{Total: total, Same: same, Failed: failed}, nil
+		},
+	)
 }

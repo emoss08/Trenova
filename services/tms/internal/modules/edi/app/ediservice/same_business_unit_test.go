@@ -5,11 +5,12 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
-	"github.com/emoss08/trenova/internal/testutil/mocks/ediportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/edipartnerportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/editenderportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentserviceportsmock"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -45,33 +46,33 @@ func TestService_SubmitLoadTenderRequiresReciprocalPartnerInSameBusinessUnit(t *
 		EnabledForOutbound: true,
 	}
 
-	partnerRepo := ediportsmock.NewMockEDIPartnerRepository(t)
+	partnerRepo := edipartnerportsmock.NewMockEDIPartnerRepository(t)
 	partnerRepo.EXPECT().
-		GetByID(mock.Anything, mock.MatchedBy(func(req ediports.GetEDIPartnerByIDRequest) bool {
+		GetByID(mock.Anything, mock.MatchedBy(func(req edipartnerports.GetEDIPartnerByIDRequest) bool {
 			return req.ID == sourcePartnerID &&
 				req.TenantInfo.OrgID == sourceOrgID &&
 				req.TenantInfo.BuID == buID
 		})).
 		Return(sourcePartner, nil)
 	partnerRepo.EXPECT().
-		GetReciprocalInternalPartner(mock.Anything, mock.MatchedBy(func(req ediports.GetReciprocalInternalPartnerRequest) bool {
+		GetReciprocalInternalPartner(mock.Anything, mock.MatchedBy(func(req edipartnerports.GetReciprocalInternalPartnerRequest) bool {
 			return req.SourceOrganizationID == sourceOrgID &&
 				req.TargetOrganizationID == targetOrgID &&
 				req.BusinessUnitID == buID
 		})).
 		Return(targetPartner, nil)
-	mappingProfileRepo := ediportsmock.NewMockEDIMappingProfileRepository(t)
+	mappingProfileRepo := edipartnerportsmock.NewMockEDIMappingProfileRepository(t)
 	mappingProfileRepo.EXPECT().
-		GetMappingItems(mock.Anything, mock.MatchedBy(func(req ediports.GetMappingItemsRequest) bool {
+		GetMappingItems(mock.Anything, mock.MatchedBy(func(req edipartnerports.GetMappingItemsRequest) bool {
 			return req.PartnerID == targetPartnerID &&
 				req.TenantInfo.OrgID == targetOrgID &&
 				req.TenantInfo.BuID == buID
 		})).
 		Return([]*edi.EDIMappingProfileItem{}, nil)
 
-	connectionRepo := ediportsmock.NewMockEDIConnectionRepository(t)
+	connectionRepo := edipartnerportsmock.NewMockEDIConnectionRepository(t)
 	connectionRepo.EXPECT().
-		GetActiveConnectionForPartner(mock.Anything, mock.MatchedBy(func(req ediports.GetActiveEDIConnectionForPartnerRequest) bool {
+		GetActiveConnectionForPartner(mock.Anything, mock.MatchedBy(func(req edipartnerports.GetActiveEDIConnectionForPartnerRequest) bool {
 			return req.PartnerID == sourcePartnerID &&
 				req.TenantInfo.OrgID == sourceOrgID &&
 				req.TenantInfo.BuID == buID &&
@@ -92,9 +93,9 @@ func TestService_SubmitLoadTenderRequiresReciprocalPartnerInSameBusinessUnit(t *
 			},
 		}, nil)
 
-	profileRepo := ediportsmock.NewMockEDICommunicationProfileRepository(t)
+	profileRepo := edipartnerportsmock.NewMockEDICommunicationProfileRepository(t)
 	profileRepo.EXPECT().
-		GetActiveProfileByPartner(mock.Anything, mock.MatchedBy(func(req ediports.GetActiveEDICommunicationProfileByPartnerRequest) bool {
+		GetActiveProfileByPartner(mock.Anything, mock.MatchedBy(func(req edipartnerports.GetActiveEDICommunicationProfileByPartnerRequest) bool {
 			return req.PartnerID == sourcePartnerID &&
 				req.TenantInfo.OrgID == sourceOrgID &&
 				req.TenantInfo.BuID == buID &&
@@ -102,7 +103,7 @@ func TestService_SubmitLoadTenderRequiresReciprocalPartnerInSameBusinessUnit(t *
 		})).
 		Return(&edi.EDICommunicationProfile{ID: pulid.MustNew("edicp_")}, nil)
 	profileRepo.EXPECT().
-		GetActiveProfileByPartner(mock.Anything, mock.MatchedBy(func(req ediports.GetActiveEDICommunicationProfileByPartnerRequest) bool {
+		GetActiveProfileByPartner(mock.Anything, mock.MatchedBy(func(req edipartnerports.GetActiveEDICommunicationProfileByPartnerRequest) bool {
 			return req.PartnerID == targetPartnerID &&
 				req.TenantInfo.OrgID == targetOrgID &&
 				req.TenantInfo.BuID == buID &&
@@ -111,7 +112,7 @@ func TestService_SubmitLoadTenderRequiresReciprocalPartnerInSameBusinessUnit(t *
 		Return(&edi.EDICommunicationProfile{ID: pulid.MustNew("edicp_")}, nil)
 
 	var createdTransfer *edi.EDITransfer
-	transferRepo := ediportsmock.NewMockEDILoadTenderTransferRepository(t)
+	transferRepo := editenderportsmock.NewMockEDILoadTenderTransferRepository(t)
 	transferRepo.EXPECT().
 		CreateTransfer(mock.Anything, mock.AnythingOfType("*edi.EDITransfer")).
 		RunAndReturn(func(_ context.Context, entity *edi.EDITransfer) (*edi.EDITransfer, error) {

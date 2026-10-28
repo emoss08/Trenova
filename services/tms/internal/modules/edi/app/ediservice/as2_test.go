@@ -1,7 +1,6 @@
 package ediservice
 
 import (
-	"github.com/emoss08/trenova/internal/testutil/mocks/ediportsmock"
 	"context"
 	"crypto/rand"
 	"crypto/rsa"
@@ -12,9 +11,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/app/editransport"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/edimessageports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
+	"github.com/emoss08/trenova/internal/testutil/mocks/edimessageportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/edipartnerportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/editenderportsmock"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/as2"
@@ -99,7 +102,7 @@ func as2DeliveryProfile(
 
 type mdnTestHarness struct {
 	service     *Service
-	messageRepo *ediportsmock.MockEDIMessageRepository
+	messageRepo *edimessageportsmock.MockEDIMessageRepository
 }
 
 func newMDNTestHarness(
@@ -109,17 +112,17 @@ func newMDNTestHarness(
 ) *mdnTestHarness {
 	t.Helper()
 
-	messageRepo := ediportsmock.NewMockEDIMessageRepository(t)
+	messageRepo := edimessageportsmock.NewMockEDIMessageRepository(t)
 	messageRepo.EXPECT().
 		GetOutboundMessageByAS2MessageID(mock.Anything, message.AS2MessageID).
 		Return(message, nil).
 		Once()
 
-	profileRepo := ediportsmock.NewMockEDICommunicationProfileRepository(t)
+	profileRepo := edipartnerportsmock.NewMockEDICommunicationProfileRepository(t)
 	profileRepo.EXPECT().
 		GetActiveProfileByPartner(
 			mock.Anything,
-			mock.MatchedBy(func(req ediports.GetActiveEDICommunicationProfileByPartnerRequest) bool {
+			mock.MatchedBy(func(req edipartnerports.GetActiveEDICommunicationProfileByPartnerRequest) bool {
 				return req.PartnerID == message.EDIPartnerID &&
 					req.TenantInfo.OrgID == message.OrganizationID
 			}),
@@ -127,7 +130,7 @@ func newMDNTestHarness(
 		Return(as2DeliveryProfile(message, partner), nil).
 		Once()
 
-	tenderChangeRepo := ediportsmock.NewMockEDITenderChangeRepository(t)
+	tenderChangeRepo := editenderportsmock.NewMockEDITenderChangeRepository(t)
 	tenderChangeRepo.EXPECT().
 		GetTenderChangeByOutboundMessageID(mock.Anything, mock.Anything).
 		Return(nil, errortypes.NewNotFoundError("tender change not found")).
@@ -151,11 +154,11 @@ func (h *mdnTestHarness) expectDeliveryStatus(
 	h.messageRepo.EXPECT().
 		UpdateMessageDelivery(
 			mock.Anything,
-			mock.MatchedBy(func(req *ediports.UpdateEDIMessageDeliveryRequest) bool {
+			mock.MatchedBy(func(req *edimessageports.UpdateEDIMessageDeliveryRequest) bool {
 				return req.ID == message.ID && req.DeliveryStatus == status
 			}),
 		).
-		RunAndReturn(func(_ context.Context, req *ediports.UpdateEDIMessageDeliveryRequest) (*edi.EDIMessage, error) {
+		RunAndReturn(func(_ context.Context, req *edimessageports.UpdateEDIMessageDeliveryRequest) (*edi.EDIMessage, error) {
 			message.DeliveryStatus = req.DeliveryStatus
 			return message, nil
 		}).

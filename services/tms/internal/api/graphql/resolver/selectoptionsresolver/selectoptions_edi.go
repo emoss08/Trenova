@@ -5,7 +5,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/editenderports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -19,7 +20,7 @@ func (r *Deps) resolveEDICommunicationProfileSelectOptions(
 		for _, id := range req.IDs {
 			entity, err := r.EdiService.GetCommunicationProfile(
 				ctx,
-				ediports.GetEDICommunicationProfileByIDRequest{
+				edipartnerports.GetEDICommunicationProfileByIDRequest{
 					ID:         id,
 					TenantInfo: req.TenantInfo,
 				},
@@ -35,7 +36,7 @@ func (r *Deps) resolveEDICommunicationProfileSelectOptions(
 
 	result, err := r.EdiService.SelectCommunicationProfileOptions(
 		ctx,
-		&ediports.EDICommunicationProfileSelectOptionsRequest{
+		&edipartnerports.EDICommunicationProfileSelectOptionsRequest{
 			SelectQueryRequest: req.SelectQuery,
 		},
 	)
@@ -57,7 +58,7 @@ func (r *Deps) resolveEDIDocumentTypeSelectOptions(
 	if len(req.IDs) > 0 {
 		result, err := r.EdiService.SelectDocumentTypeOptions(
 			ctx,
-			&ediports.EDIDocumentTypeSelectOptionsRequest{
+			&edipartnerports.EDIDocumentTypeSelectOptionsRequest{
 				SelectQueryRequest: req.SelectQuery,
 			},
 		)
@@ -75,7 +76,7 @@ func (r *Deps) resolveEDIDocumentTypeSelectOptions(
 
 	result, err := r.EdiService.SelectDocumentTypeOptions(
 		ctx,
-		&ediports.EDIDocumentTypeSelectOptionsRequest{
+		&edipartnerports.EDIDocumentTypeSelectOptionsRequest{
 			SelectQueryRequest: req.SelectQuery,
 		},
 	)
@@ -103,7 +104,7 @@ func (r *Deps) resolveEDITransactionSetSelectOptions(
 
 	result, err := r.EdiService.SelectTransactionSetOptions(
 		ctx,
-		&ediports.EDITransactionSetSelectOptionsRequest{
+		&edipartnerports.EDITransactionSetSelectOptionsRequest{
 			SelectQueryRequest: selectQuery,
 			IDs:                req.IDs,
 			Standard:           edi.EDIStandard(selectOptionStringFilter(req.Filters, "standard")),
@@ -140,7 +141,7 @@ func (r *Deps) resolveEDIMappingProfileSelectOptions(
 		for _, id := range req.IDs {
 			entity, err := r.EdiService.GetMappingProfileByID(
 				ctx,
-				ediports.GetMappingProfileByIDRequest{
+				edipartnerports.GetMappingProfileByIDRequest{
 					ProfileID:  id,
 					TenantInfo: req.TenantInfo,
 				},
@@ -156,7 +157,7 @@ func (r *Deps) resolveEDIMappingProfileSelectOptions(
 
 	result, err := r.EdiService.SelectMappingProfileOptions(
 		ctx,
-		&ediports.EDIMappingProfileSelectOptionsRequest{
+		&edipartnerports.EDIMappingProfileSelectOptionsRequest{
 			SelectQueryRequest: req.SelectQuery,
 		},
 	)
@@ -180,7 +181,7 @@ func (r *Deps) resolveEDIPartnerSelectOptions(
 		for _, id := range req.IDs {
 			entity, err := r.EdiService.GetPartner(
 				ctx,
-				ediports.GetEDIPartnerByIDRequest{
+				edipartnerports.GetEDIPartnerByIDRequest{
 					ID:         id,
 					TenantInfo: req.TenantInfo,
 				},
@@ -196,7 +197,7 @@ func (r *Deps) resolveEDIPartnerSelectOptions(
 
 	result, err := r.EdiService.SelectPartnerOptions(
 		ctx,
-		&ediports.EDIPartnerSelectOptionsRequest{
+		&edipartnerports.EDIPartnerSelectOptionsRequest{
 			SelectQueryRequest: req.SelectQuery,
 		},
 	)
@@ -218,7 +219,7 @@ func (r *Deps) resolveEDIConnectionSelectOptions(
 	if len(req.IDs) > 0 {
 		entities, err := r.EdiService.GetConnectionsByIDs(
 			ctx,
-			ediports.GetEDIConnectionsByIDsRequest{
+			edipartnerports.GetEDIConnectionsByIDsRequest{
 				TenantInfo:    req.TenantInfo,
 				ConnectionIDs: req.IDs,
 			},
@@ -238,7 +239,7 @@ func (r *Deps) resolveEDIConnectionSelectOptions(
 
 	result, err := r.EdiService.ConnectionSelectOptions(
 		ctx,
-		&ediports.EDIConnectionSelectOptionsRequest{
+		&edipartnerports.EDIConnectionSelectOptionsRequest{
 			SelectQueryRequest: req.SelectQuery,
 		},
 	)
@@ -260,7 +261,7 @@ func (r *Deps) resolveEDITransferSelectOptions(
 	if len(req.IDs) > 0 {
 		entities, err := r.EdiService.GetTransfersByIDs(
 			ctx,
-			ediports.GetEDITransfersByIDsRequest{
+			editenderports.GetEDITransfersByIDsRequest{
 				TenantInfo:  req.TenantInfo,
 				TransferIDs: req.IDs,
 			},
@@ -280,7 +281,7 @@ func (r *Deps) resolveEDITransferSelectOptions(
 
 	result, err := r.EdiService.TransferSelectOptions(
 		ctx,
-		&ediports.EDITransferSelectOptionsRequest{
+		&editenderports.EDITransferSelectOptionsRequest{
 			SelectQueryRequest: req.SelectQuery,
 		},
 	)

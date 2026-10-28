@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/dberror"
@@ -15,21 +15,21 @@ import (
 
 func (s *Service) ListPartners(
 	ctx context.Context,
-	req *ediports.ListEDIPartnersRequest,
+	req *edipartnerports.ListEDIPartnersRequest,
 ) (*pagination.ListResult[*edi.EDIPartner], error) {
 	return s.partnerRepo.List(ctx, req)
 }
 
 func (s *Service) SelectPartnerOptions(
 	ctx context.Context,
-	req *ediports.EDIPartnerSelectOptionsRequest,
+	req *edipartnerports.EDIPartnerSelectOptionsRequest,
 ) (*pagination.ListResult[*edi.EDIPartner], error) {
 	return s.partnerRepo.SelectOptions(ctx, req)
 }
 
 func (s *Service) GetPartner(
 	ctx context.Context,
-	req ediports.GetEDIPartnerByIDRequest,
+	req edipartnerports.GetEDIPartnerByIDRequest,
 ) (*edi.EDIPartner, error) {
 	return s.partnerRepo.GetByID(ctx, req)
 }
@@ -68,7 +68,7 @@ func (s *Service) UpdatePartner(
 		return nil, multiErr
 	}
 
-	original, err := s.partnerRepo.GetByID(ctx, ediports.GetEDIPartnerByIDRequest{
+	original, err := s.partnerRepo.GetByID(ctx, edipartnerports.GetEDIPartnerByIDRequest{
 		ID: entity.ID,
 		TenantInfo: pagination.TenantInfo{
 			OrgID: entity.OrganizationID,

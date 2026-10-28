@@ -6,9 +6,9 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ladingports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/customfield"
-	"github.com/emoss08/trenova/internal/testutil/mocks/ediportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/ladingportsmock"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/lading"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -69,8 +69,10 @@ func TestValidateProject_RefusesPathsThatLeaveTheProject(t *testing.T) {
 			field:   "samples[0].path",
 		},
 		{
-			name:  "a file over its size",
-			files: []lading.File{{Path: "partner.lading", Source: strings.Repeat("x", MaxFileBytes+1)}},
+			name: "a file over its size",
+			files: []lading.File{
+				{Path: "partner.lading", Source: strings.Repeat("x", MaxFileBytes+1)},
+			},
 			field: "files[0].source",
 		},
 	}
@@ -162,9 +164,9 @@ func TestRequireReplays_NeedsAFreshReplayOfEveryInboundMapThatRejectsNothingNew(
 			{Name: "answerIn", Direction: lading.DirectionInbound, Source: "x12"},
 		}},
 	}
-	replays := ediportsmock.NewMockLadingReplayRepository(t)
+	replays := ladingportsmock.NewMockLadingReplayRepository(t)
 	replays.EXPECT().
-		ListReplays(mock.Anything, ediports.ListLadingReplaysRequest{
+		ListReplays(mock.Anything, ladingports.ListLadingReplaysRequest{
 			TenantInfo: tenantInfo,
 			VersionID:  version.ID,
 		}).
@@ -201,8 +203,8 @@ func TestStartReplay_RecordsNothingWithoutTheWorkflowService(t *testing.T) {
 
 	projects := &Projects{
 		l:        zap.NewNop(),
-		projects: ediportsmock.NewMockLadingProjectRepository(t),
-		replays:  ediportsmock.NewMockLadingReplayRepository(t),
+		projects: ladingportsmock.NewMockLadingProjectRepository(t),
+		replays:  ladingportsmock.NewMockLadingReplayRepository(t),
 	}
 
 	replay, err := projects.StartReplay(t.Context(), &StartReplayRequest{
@@ -272,14 +274,21 @@ func TestValidateSettings_KeepsOnlyDeclaredSettingsOfTheirType(t *testing.T) {
 func TestReplayInput_ReadsWhatEachDirectionRan(t *testing.T) {
 	t.Parallel()
 
-	inbound := &edi.EDIMessage{ID: pulid.MustNew("edimsg_"), RawX12: "ISA*00~", GeneratedAt: 1_767_787_200}
+	inbound := &edi.EDIMessage{
+		ID:          pulid.MustNew("edimsg_"),
+		RawX12:      "ISA*00~",
+		GeneratedAt: 1_767_787_200,
+	}
 	input, ok := replayInput(inbound, edi.DocumentDirectionInbound)
 	require.True(t, ok)
 	require.NotNil(t, input.Input.X12)
 	assert.Equal(t, "ISA*00~", *input.Input.X12)
 	assert.Equal(t, "2026-01-07T12:00:00Z", input.Now)
 
-	outbound := &edi.EDIMessage{ID: pulid.MustNew("edimsg_"), Document: jsonutils.RawJSON(`{"key":"L-1"}`)}
+	outbound := &edi.EDIMessage{
+		ID:       pulid.MustNew("edimsg_"),
+		Document: jsonutils.RawJSON(`{"key":"L-1"}`),
+	}
 	input, ok = replayInput(outbound, edi.DocumentDirectionOutbound)
 	require.True(t, ok)
 	assert.JSONEq(t, `{"key":"L-1"}`, string(input.Input.Document))
@@ -296,7 +305,12 @@ func TestProgramAcknowledgment_IsWhatTheReceiveClauseNames(t *testing.T) {
 		Clauses: []lading.Clause{
 			{Kind: lading.ClauseReceive, Set: "204", Map: "tenderIn"},
 			{Kind: lading.ClauseReceive, Set: "214", Map: "statusIn", Acknowledge: "999"},
-			{Kind: lading.ClauseReceive, Set: "210", Map: "invoiceIn", Acknowledge: lading.AcknowledgeNone},
+			{
+				Kind:        lading.ClauseReceive,
+				Set:         "210",
+				Map:         "invoiceIn",
+				Acknowledge: lading.AcknowledgeNone,
+			},
 		},
 	}}}}
 
@@ -313,10 +327,21 @@ func TestShadowing_IsAShadowVersionWithinItsWindow(t *testing.T) {
 	future := time.Now().Add(time.Hour).Unix()
 	past := time.Now().Add(-time.Hour).Unix()
 
-	assert.True(t, shadowing(&edi.LadingVersion{Status: edi.LadingVersionStatusShadow, ShadowUntil: &future}))
-	assert.False(t, shadowing(&edi.LadingVersion{Status: edi.LadingVersionStatusShadow, ShadowUntil: &past}))
+	assert.True(
+		t,
+		shadowing(&edi.LadingVersion{Status: edi.LadingVersionStatusShadow, ShadowUntil: &future}),
+	)
+	assert.False(
+		t,
+		shadowing(&edi.LadingVersion{Status: edi.LadingVersionStatusShadow, ShadowUntil: &past}),
+	)
 	assert.False(t, shadowing(&edi.LadingVersion{Status: edi.LadingVersionStatusShadow}))
-	assert.False(t, shadowing(&edi.LadingVersion{Status: edi.LadingVersionStatusCertified, ShadowUntil: &future}))
+	assert.False(
+		t,
+		shadowing(
+			&edi.LadingVersion{Status: edi.LadingVersionStatusCertified, ShadowUntil: &future},
+		),
+	)
 }
 
 func TestSettings_EncodesEachValueForTheRun(t *testing.T) {

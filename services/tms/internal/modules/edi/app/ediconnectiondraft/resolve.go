@@ -6,19 +6,19 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediconnectiondraftports"
 )
 
 type candidate struct {
 	value      string
 	confidence float64
-	source     ediports.DraftSource
-	status     ediports.ValueStatus
+	source     ediconnectiondraftports.DraftSource
+	status     ediconnectiondraftports.ValueStatus
 	problem    string
 }
 
-func (c *candidate) public() ediports.DraftCandidate {
-	return ediports.DraftCandidate{
+func (c *candidate) public() ediconnectiondraftports.DraftCandidate {
+	return ediconnectiondraftports.DraftCandidate{
 		Value:      c.value,
 		Confidence: c.confidence,
 		Source:     c.source,
@@ -28,13 +28,13 @@ func (c *candidate) public() ediports.DraftCandidate {
 
 type evidence struct {
 	byField     map[string][]*candidate
-	resolutions map[string]ediports.DraftResolutionInput
+	resolutions map[string]ediconnectiondraftports.DraftResolutionInput
 }
 
 func newEvidence() *evidence {
 	return &evidence{
 		byField:     make(map[string][]*candidate),
-		resolutions: make(map[string]ediports.DraftResolutionInput),
+		resolutions: make(map[string]ediconnectiondraftports.DraftResolutionInput),
 	}
 }
 
@@ -42,7 +42,11 @@ func (e *evidence) add(field string, c *candidate) {
 	e.byField[field] = append(e.byField[field], c)
 }
 
-func readValue(pages *pageIndex, spec *fieldSpec, input *ediports.DraftValueInput) *candidate {
+func readValue(
+	pages *pageIndex,
+	spec *fieldSpec,
+	input *ediconnectiondraftports.DraftValueInput,
+) *candidate {
 	raw := input.Value
 	c := &candidate{value: strings.TrimSpace(raw), confidence: input.Confidence}
 
@@ -56,19 +60,19 @@ func readValue(pages *pageIndex, spec *fieldSpec, input *ediports.DraftValueInpu
 	normalized, err := spec.normalize(raw)
 	switch {
 	case !check.ok:
-		c.status = ediports.ValueStatusUnverified
+		c.status = ediconnectiondraftports.ValueStatusUnverified
 		c.problem = check.problem
 	case err != nil:
-		c.status = ediports.ValueStatusInvalid
+		c.status = ediconnectiondraftports.ValueStatusInvalid
 		c.problem = fmt.Sprintf("%s %s", spec.label, err.Error())
 	case !valueInQuote(spec, normalized, input.Citation.Quote) &&
 		!valueInQuote(spec, strings.TrimSpace(raw), input.Citation.Quote):
 		c.value = normalized
-		c.status = ediports.ValueStatusUnverified
+		c.status = ediconnectiondraftports.ValueStatusUnverified
 		c.problem = "The quote does not contain this value"
 	case input.Confidence < confidenceFloor:
 		c.value = normalized
-		c.status = ediports.ValueStatusHeld
+		c.status = ediconnectiondraftports.ValueStatusHeld
 		c.problem = fmt.Sprintf(
 			"Confidence %.2f is below %.2f",
 			input.Confidence,
@@ -76,9 +80,10 @@ func readValue(pages *pageIndex, spec *fieldSpec, input *ediports.DraftValueInpu
 		)
 	default:
 		c.value = normalized
-		c.status = ediports.ValueStatusAccepted
+		c.status = ediconnectiondraftports.ValueStatusAccepted
 	}
-	if c.status == ediports.ValueStatusInvalid || c.status == ediports.ValueStatusUnverified {
+	if c.status == ediconnectiondraftports.ValueStatusInvalid ||
+		c.status == ediconnectiondraftports.ValueStatusUnverified {
 		c.value = edi.RedactSecrets(c.value)
 	}
 
@@ -87,8 +92,8 @@ func readValue(pages *pageIndex, spec *fieldSpec, input *ediports.DraftValueInpu
 
 type fallback struct {
 	value  string
-	source ediports.DraftSource
-	status ediports.ValueStatus
+	source ediconnectiondraftports.DraftSource
+	status ediconnectiondraftports.ValueStatus
 }
 
 func resolveField(
@@ -97,8 +102,8 @@ func resolveField(
 	current string,
 	alternative *fallback,
 	required bool,
-) ediports.DraftValue {
-	out := &ediports.DraftValue{
+) ediconnectiondraftports.DraftValue {
+	out := &ediconnectiondraftports.DraftValue{
 		Field:    spec.key,
 		Label:    spec.label,
 		Current:  current,
@@ -120,10 +125,11 @@ func resolveField(
 	return *out
 }
 
-func resolveCandidates(out *ediports.DraftValue, candidates []*candidate) {
+func resolveCandidates(out *ediconnectiondraftports.DraftValue, candidates []*candidate) {
 	verified := make([]*candidate, 0, len(candidates))
 	for _, c := range candidates {
-		if c.status == ediports.ValueStatusAccepted || c.status == ediports.ValueStatusHeld {
+		if c.status == ediconnectiondraftports.ValueStatusAccepted ||
+			c.status == ediconnectiondraftports.ValueStatusHeld {
 			verified = append(verified, c)
 		}
 	}
@@ -131,7 +137,7 @@ func resolveCandidates(out *ediports.DraftValue, candidates []*candidate) {
 
 	switch {
 	case len(values) > 1:
-		out.Status = ediports.ValueStatusHeld
+		out.Status = ediconnectiondraftports.ValueStatusHeld
 		out.Reason = fmt.Sprintf(
 			"The document gives %d different values: %s",
 			len(values),
@@ -140,25 +146,25 @@ func resolveCandidates(out *ediports.DraftValue, candidates []*candidate) {
 		keepCurrent(out)
 	case len(values) == 1:
 		best := strongest(verified)
-		if best.status != ediports.ValueStatusAccepted && out.Current != "" &&
+		if best.status != ediconnectiondraftports.ValueStatusAccepted && out.Current != "" &&
 			best.value == out.Current {
 			out.Value = out.Current
-			out.Status = ediports.ValueStatusKept
+			out.Status = ediconnectiondraftports.ValueStatusKept
 			out.Confidence = best.confidence
 			out.Source = best.source
 			out.Reason = "The guide's value is the one already saved, so nothing changes"
-			out.Change = ediports.ChangeKindSame
+			out.Change = ediconnectiondraftports.ChangeKindSame
 			return
 		}
-		if best.status != ediports.ValueStatusAccepted {
-			out.Status = ediports.ValueStatusHeld
+		if best.status != ediconnectiondraftports.ValueStatusAccepted {
+			out.Status = ediconnectiondraftports.ValueStatusHeld
 			out.Confidence = best.confidence
 			out.Reason = best.problem
 			keepCurrent(out)
 			return
 		}
 		out.Value = best.value
-		out.Status = ediports.ValueStatusAccepted
+		out.Status = ediconnectiondraftports.ValueStatusAccepted
 		out.Confidence = best.confidence
 		out.Source = best.source
 		if len(candidates) == 1 {
@@ -173,73 +179,73 @@ func resolveCandidates(out *ediports.DraftValue, candidates []*candidate) {
 	}
 }
 
-func resolveAbsent(out *ediports.DraftValue, alternative *fallback, required bool) {
+func resolveAbsent(out *ediconnectiondraftports.DraftValue, alternative *fallback, required bool) {
 	out.Candidates = nil
 	switch {
 	case out.Current != "":
 		out.Value = out.Current
-		out.Status = ediports.ValueStatusKept
-		out.Source = ediports.DraftSource{
-			Kind: ediports.SourceKindConfiguration,
+		out.Status = ediconnectiondraftports.ValueStatusKept
+		out.Source = ediconnectiondraftports.DraftSource{
+			Kind: ediconnectiondraftports.SourceKindConfiguration,
 			Note: "The partner's current setting; the document does not mention it",
 		}
-		out.Change = ediports.ChangeKindSame
+		out.Change = ediconnectiondraftports.ChangeKindSame
 	case alternative != nil && alternative.value != "":
 		out.Value = alternative.value
 		out.Status = alternative.status
 		out.Source = alternative.source
-		out.Change = ediports.ChangeKindAdd
+		out.Change = ediconnectiondraftports.ChangeKindAdd
 	case required:
-		out.Status = ediports.ValueStatusMissing
+		out.Status = ediconnectiondraftports.ValueStatusMissing
 		out.Reason = "The document does not give it"
-		out.Change = ediports.ChangeKindNone
+		out.Change = ediconnectiondraftports.ChangeKindNone
 	default:
-		out.Status = ediports.ValueStatusMissing
-		out.Change = ediports.ChangeKindNone
+		out.Status = ediconnectiondraftports.ValueStatusMissing
+		out.Change = ediconnectiondraftports.ChangeKindNone
 	}
 }
 
 func applyResolution(
 	spec *fieldSpec,
-	out *ediports.DraftValue,
+	out *ediconnectiondraftports.DraftValue,
 	candidates []*candidate,
-	resolution *ediports.DraftResolutionInput,
+	resolution *ediconnectiondraftports.DraftResolutionInput,
 ) {
 	normalized, err := spec.normalize(resolution.Value)
 	if err != nil {
-		out.Status = ediports.ValueStatusInvalid
+		out.Status = ediconnectiondraftports.ValueStatusInvalid
 		out.Reason = fmt.Sprintf("The chosen value is not valid: %s %s", spec.label, err)
 		keepCurrent(out)
 		return
 	}
 
 	switch resolution.Source {
-	case ediports.ResolutionSourceCandidate:
+	case ediconnectiondraftports.ResolutionSourceCandidate:
 		for _, c := range candidates {
 			if c.value != normalized ||
-				(c.status != ediports.ValueStatusAccepted && c.status != ediports.ValueStatusHeld) {
+				(c.status != ediconnectiondraftports.ValueStatusAccepted && c.status != ediconnectiondraftports.ValueStatusHeld) {
 				continue
 			}
 			out.Value = normalized
-			out.Status = ediports.ValueStatusAccepted
+			out.Status = ediconnectiondraftports.ValueStatusAccepted
 			out.Confidence = c.confidence
 			out.Source = c.source
 			out.Source.Note = joinNotes(c.source.Note, "Chosen by the person")
 			withChange(out)
 			return
 		}
-		out.Status = ediports.ValueStatusInvalid
+		out.Status = ediconnectiondraftports.ValueStatusInvalid
 		out.Reason = fmt.Sprintf(
 			"%q is not one of the values the document gives for %s",
 			normalized,
 			spec.label,
 		)
 		keepCurrent(out)
-	case ediports.ResolutionSourcePerson:
+	case ediconnectiondraftports.ResolutionSourcePerson:
 		out.Value = normalized
-		out.Status = ediports.ValueStatusAccepted
-		out.Source = ediports.DraftSource{
-			Kind: ediports.SourceKindPerson,
+		out.Status = ediconnectiondraftports.ValueStatusAccepted
+		out.Source = ediconnectiondraftports.DraftSource{
+			Kind: ediconnectiondraftports.SourceKindPerson,
 			Note: joinNotes(
 				"Given by the person in this conversation",
 				strings.TrimSpace(resolution.Note),
@@ -247,30 +253,30 @@ func applyResolution(
 		}
 		withChange(out)
 	default:
-		out.Status = ediports.ValueStatusInvalid
+		out.Status = ediconnectiondraftports.ValueStatusInvalid
 		out.Reason = "A resolution must say whether it picks a cited value or one the person gave"
 		keepCurrent(out)
 	}
 }
 
-func keepCurrent(out *ediports.DraftValue) {
+func keepCurrent(out *ediconnectiondraftports.DraftValue) {
 	if out.Current != "" {
 		out.Value = out.Current
-		out.Change = ediports.ChangeKindSame
+		out.Change = ediconnectiondraftports.ChangeKindSame
 		return
 	}
 	out.Value = ""
-	out.Change = ediports.ChangeKindNone
+	out.Change = ediconnectiondraftports.ChangeKindNone
 }
 
-func withChange(out *ediports.DraftValue) {
+func withChange(out *ediconnectiondraftports.DraftValue) {
 	switch out.Current {
 	case "":
-		out.Change = ediports.ChangeKindAdd
+		out.Change = ediconnectiondraftports.ChangeKindAdd
 	case out.Value:
-		out.Change = ediports.ChangeKindSame
+		out.Change = ediconnectiondraftports.ChangeKindSame
 	default:
-		out.Change = ediports.ChangeKindChange
+		out.Change = ediconnectiondraftports.ChangeKindChange
 	}
 }
 
@@ -296,10 +302,10 @@ func strongest(candidates []*candidate) *candidate {
 
 func rank(c *candidate) float64 {
 	score := c.confidence
-	if c.status == ediports.ValueStatusAccepted {
+	if c.status == ediconnectiondraftports.ValueStatusAccepted {
 		score += 2
 	}
-	if c.source.Kind == ediports.SourceKindDocument {
+	if c.source.Kind == ediconnectiondraftports.SourceKindDocument {
 		score += 0.5
 	}
 	return score

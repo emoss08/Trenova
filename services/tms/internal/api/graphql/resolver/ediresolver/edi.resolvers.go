@@ -14,7 +14,10 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/edimessageports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/editenderports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ladingports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/i18n"
@@ -45,7 +48,7 @@ func (r *QueryResolver) EDIPartners(ctx context.Context, input gqlmodel.DataTabl
 		return nil, err
 	}
 
-	result, err := r.EdiService.ListPartnersCursor(ctx, &ediports.ListEDIPartnersRequest{
+	result, err := r.EdiService.ListPartnersCursor(ctx, &edipartnerports.ListEDIPartnersRequest{
 		Filter: tableInput.Filter,
 		Cursor: tableInput.Cursor,
 	})
@@ -69,7 +72,7 @@ func (r *QueryResolver) EDICommunicationProfiles(ctx context.Context, input gqlm
 
 	result, err := r.EdiService.ListCommunicationProfilesCursor(
 		ctx,
-		&ediports.ListEDICommunicationProfilesRequest{
+		&edipartnerports.ListEDICommunicationProfilesRequest{
 			Filter: tableInput.Filter,
 			Cursor: tableInput.Cursor,
 		},
@@ -96,7 +99,7 @@ func (r *QueryResolver) EDITransfers(ctx context.Context, input gqlmodel.DataTab
 	if err != nil {
 		return nil, err
 	}
-	req := &ediports.ListEDITransfersRequest{
+	req := &editenderports.ListEDITransfersRequest{
 		Filter:        tableInput.Filter,
 		Cursor:        tableInput.Cursor,
 		InboundFileID: fileID,
@@ -125,7 +128,7 @@ func (r *QueryResolver) EDIMessages(ctx context.Context, input gqlmodel.DataTabl
 		return nil, err
 	}
 
-	req := &ediports.ListEDIMessagesRequest{
+	req := &edimessageports.ListEDIMessagesRequest{
 		Filter: tableInput.Filter,
 		Cursor: tableInput.Cursor,
 	}
@@ -162,7 +165,7 @@ func (r *QueryResolver) EDIInboundFiles(ctx context.Context, input gqlmodel.Data
 		return nil, err
 	}
 
-	req := &ediports.ListEDIInboundFilesRequest{
+	req := &edimessageports.ListEDIInboundFilesRequest{
 		Filter: tableInput.Filter,
 		Cursor: tableInput.Cursor,
 	}
@@ -196,7 +199,7 @@ func (r *QueryResolver) EDIMappingProfiles(ctx context.Context, input gqlmodel.D
 		return nil, err
 	}
 
-	req := &ediports.ListEDIMappingProfilesRequest{
+	req := &edipartnerports.ListEDIMappingProfilesRequest{
 		Filter: tableInput.Filter,
 		Cursor: tableInput.Cursor,
 	}
@@ -227,7 +230,7 @@ func (r *QueryResolver) EDIFlowInstances(ctx context.Context, input gqlmodel.Dat
 		return nil, err
 	}
 
-	req := &ediports.ListFlowInstancesRequest{
+	req := &ladingports.ListFlowInstancesRequest{
 		Filter:   tableInput.Filter,
 		Cursor:   tableInput.Cursor,
 		Statuses: statuses,
@@ -443,7 +446,7 @@ func (r *QueryResolver) EDITransfer(ctx context.Context, id string) (*gqlmodel.E
 		return nil, err
 	}
 
-	req := ediports.GetEDITransferByIDRequest{ID: transferID, TenantInfo: resolvercore.TenantInfo(authCtx)}
+	req := editenderports.GetEDITransferByIDRequest{ID: transferID, TenantInfo: resolvercore.TenantInfo(authCtx)}
 	transfer, err := r.EdiService.GetTransfer(ctx, req)
 	if err != nil {
 		return nil, err
@@ -476,7 +479,7 @@ func (r *QueryResolver) EDIMessage(ctx context.Context, id string) (*gqlmodel.ED
 		return nil, err
 	}
 
-	message, err := r.EdiService.GetMessage(ctx, ediports.GetEDIMessageByIDRequest{
+	message, err := r.EdiService.GetMessage(ctx, edimessageports.GetEDIMessageByIDRequest{
 		ID:         messageID,
 		TenantInfo: resolvercore.TenantInfo(authCtx),
 	})
@@ -497,7 +500,7 @@ func (r *QueryResolver) EDIInboundFile(ctx context.Context, id string) (*gqlmode
 		return nil, err
 	}
 
-	file, err := r.EdiInboundService.GetInboundFile(ctx, ediports.GetEDIInboundFileByIDRequest{
+	file, err := r.EdiInboundService.GetInboundFile(ctx, edimessageports.GetEDIInboundFileByIDRequest{
 		ID:              fileID,
 		TenantInfo:      resolvercore.TenantInfo(authCtx),
 		IncludeMessages: true,

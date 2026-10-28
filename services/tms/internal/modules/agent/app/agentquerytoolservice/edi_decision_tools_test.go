@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/editenderports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -14,12 +14,12 @@ import (
 
 type fakeTenderChangeList struct {
 	changes []*edi.TenderChange
-	request *ediports.ListEDITenderChangesRequest
+	request *editenderports.ListEDITenderChangesRequest
 }
 
 func (f *fakeTenderChangeList) ListTenderChanges(
 	_ context.Context,
-	req *ediports.ListEDITenderChangesRequest,
+	req *editenderports.ListEDITenderChangesRequest,
 ) (*pagination.ListResult[*edi.TenderChange], error) {
 	f.request = req
 
@@ -62,12 +62,12 @@ func TestListEDITenderChanges_SaysWhatChangedAndWhichWaitOnThisOrganization(t *t
 
 type fakeTransferChangeList struct {
 	changes []*edi.TransferChange
-	request *ediports.ListEDITransferChangesRequest
+	request *editenderports.ListEDITransferChangesRequest
 }
 
 func (f *fakeTransferChangeList) ListTransferChanges(
 	_ context.Context,
-	req *ediports.ListEDITransferChangesRequest,
+	req *editenderports.ListEDITransferChangesRequest,
 ) (*pagination.ListResult[*edi.TransferChange], error) {
 	f.request = req
 

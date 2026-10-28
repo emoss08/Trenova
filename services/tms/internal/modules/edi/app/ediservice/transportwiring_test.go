@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/edi/app/editransport"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/editransportports"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/fx"
 	"go.uber.org/fx/fxtest"
@@ -14,7 +14,7 @@ import (
 func TestTransportModuleWiresAllDeliverableMethods(t *testing.T) {
 	t.Parallel()
 
-	var dispatcher ediports.EDITransportDispatcher
+	var dispatcher editransportports.EDITransportDispatcher
 	app := fxtest.New(
 		t,
 		fx.Supply(&config.Config{}),

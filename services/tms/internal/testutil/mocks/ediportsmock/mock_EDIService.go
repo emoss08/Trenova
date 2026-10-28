@@ -7,6 +7,8 @@ package ediportsmock
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/edi/ports/edimessageports"
+
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
@@ -245,7 +247,7 @@ func (_c *MockEDIService_GenerateServiceFailure214ForLifecycle_Call) RunAndRetur
 }
 
 // GetServiceFailure214Status provides a mock function for the type MockEDIService
-func (_mock *MockEDIService) GetServiceFailure214Status(ctx context.Context, req ediports.GetServiceFailure214StatusRequest) (*ediports.ServiceFailure214Status, error) {
+func (_mock *MockEDIService) GetServiceFailure214Status(ctx context.Context, req edimessageports.GetServiceFailure214StatusRequest) (*ediports.ServiceFailure214Status, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
@@ -254,17 +256,17 @@ func (_mock *MockEDIService) GetServiceFailure214Status(ctx context.Context, req
 
 	var r0 *ediports.ServiceFailure214Status
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, ediports.GetServiceFailure214StatusRequest) (*ediports.ServiceFailure214Status, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, edimessageports.GetServiceFailure214StatusRequest) (*ediports.ServiceFailure214Status, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, ediports.GetServiceFailure214StatusRequest) *ediports.ServiceFailure214Status); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, edimessageports.GetServiceFailure214StatusRequest) *ediports.ServiceFailure214Status); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*ediports.ServiceFailure214Status)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, ediports.GetServiceFailure214StatusRequest) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, edimessageports.GetServiceFailure214StatusRequest) error); ok {
 		r1 = returnFunc(ctx, req)
 	} else {
 		r1 = ret.Error(1)
@@ -284,15 +286,15 @@ func (_e *MockEDIService_Expecter) GetServiceFailure214Status(ctx any, req any) 
 	return &MockEDIService_GetServiceFailure214Status_Call{Call: _e.mock.On("GetServiceFailure214Status", ctx, req)}
 }
 
-func (_c *MockEDIService_GetServiceFailure214Status_Call) Run(run func(ctx context.Context, req ediports.GetServiceFailure214StatusRequest)) *MockEDIService_GetServiceFailure214Status_Call {
+func (_c *MockEDIService_GetServiceFailure214Status_Call) Run(run func(ctx context.Context, req edimessageports.GetServiceFailure214StatusRequest)) *MockEDIService_GetServiceFailure214Status_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 ediports.GetServiceFailure214StatusRequest
+		var arg1 edimessageports.GetServiceFailure214StatusRequest
 		if args[1] != nil {
-			arg1 = args[1].(ediports.GetServiceFailure214StatusRequest)
+			arg1 = args[1].(edimessageports.GetServiceFailure214StatusRequest)
 		}
 		run(
 			arg0,
@@ -307,7 +309,7 @@ func (_c *MockEDIService_GetServiceFailure214Status_Call) Return(v *ediports.Ser
 	return _c
 }
 
-func (_c *MockEDIService_GetServiceFailure214Status_Call) RunAndReturn(run func(ctx context.Context, req ediports.GetServiceFailure214StatusRequest) (*ediports.ServiceFailure214Status, error)) *MockEDIService_GetServiceFailure214Status_Call {
+func (_c *MockEDIService_GetServiceFailure214Status_Call) RunAndReturn(run func(ctx context.Context, req edimessageports.GetServiceFailure214StatusRequest) (*ediports.ServiceFailure214Status, error)) *MockEDIService_GetServiceFailure214Status_Call {
 	_c.Call.Return(run)
 	return _c
 }

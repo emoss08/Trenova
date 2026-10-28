@@ -2,14 +2,14 @@ package ediservice
 
 import (
 	"context"
-	"github.com/emoss08/trenova/internal/testutil/mocks/ediportsmock"
 	"slices"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/editenderports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/testutil/mocks/editenderportsmock"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -50,11 +50,11 @@ func TestPreviewTenderChanges_NamesTheRecipientsAfterShipmentUpdateReaches(t *te
 	upToDate.ID = pulid.MustNew("etr_")
 	upToDate.LatestBaselineHash = tenderPayloadHash(&current)
 
-	recipients := ediportsmock.NewMockEDITenderRecipientRepository(t)
+	recipients := editenderportsmock.NewMockEDITenderRecipientRepository(t)
 	recipients.EXPECT().
 		ListActiveTenderRecipientsForSourceShipment(mock.Anything, mock.Anything).
 		Return([]*edi.TenderRecipient{internal, &upToDate}, nil)
-	changes := ediportsmock.NewMockEDITenderChangeRepository(t)
+	changes := editenderportsmock.NewMockEDITenderChangeRepository(t)
 	svc := &Service{
 		l:                   zap.NewNop(),
 		tenderRecipientRepo: recipients,
@@ -72,9 +72,9 @@ func TestPreviewTenderChanges_NamesTheRecipientsAfterShipmentUpdateReaches(t *te
 		RunAndReturn(func(
 			_ context.Context,
 			change *edi.TenderChange,
-		) (*ediports.CreateEDITenderChangeIdempotentResult, error) {
+		) (*editenderports.CreateEDITenderChangeIdempotentResult, error) {
 			created = append(created, change)
-			return &ediports.CreateEDITenderChangeIdempotentResult{
+			return &editenderports.CreateEDITenderChangeIdempotentResult{
 				TenderChange: change,
 				Created:      true,
 			}, nil
@@ -104,7 +104,7 @@ func TestPreviewCancelNotices_NamesTheOtherSideOfEachActiveLink(t *testing.T) {
 
 	orgID, partnerOrg := pulid.MustNew("org_"), pulid.MustNew("org_")
 	shipmentID := pulid.MustNew("shp_")
-	links := ediportsmock.NewMockEDIShipmentLinkRepository(t)
+	links := editenderportsmock.NewMockEDIShipmentLinkRepository(t)
 	links.EXPECT().
 		GetShipmentLinksByShipmentID(mock.Anything, mock.Anything).
 		Return([]*edi.ShipmentLink{

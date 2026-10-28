@@ -4,8 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -33,7 +32,7 @@ func (s *Service) GetPartnerReadiness(
 	ctx context.Context,
 	req *GetEDIPartnerReadinessRequest,
 ) ([]*EDIPartnerReadiness, error) {
-	rows, err := s.partnerRepo.GetReadiness(ctx, &ediports.GetEDIPartnerReadinessRequest{
+	rows, err := s.partnerRepo.GetReadiness(ctx, &edipartnerports.GetEDIPartnerReadinessRequest{
 		TenantInfo: req.TenantInfo,
 		PartnerIDs: req.PartnerIDs,
 	})
@@ -47,7 +46,7 @@ func (s *Service) GetPartnerReadiness(
 	return states, nil
 }
 
-func buildPartnerReadiness(row *ediports.EDIPartnerReadinessRow) *EDIPartnerReadiness {
+func buildPartnerReadiness(row *edipartnerports.EDIPartnerReadinessRow) *EDIPartnerReadiness {
 	items := []EDIPartnerReadinessItem{
 		{
 			Key:      "details",

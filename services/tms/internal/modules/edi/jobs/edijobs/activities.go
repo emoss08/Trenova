@@ -6,7 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediinboundservice"
 	"github.com/emoss08/trenova/internal/modules/edi/app/edilading"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/edimessageports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -19,8 +19,8 @@ type ActivitiesParams struct {
 	Replayer          *edilading.Replayer
 	InboundService    *ediinboundservice.Service
 	DataRetentionRepo tenantports.DataRetentionRepository
-	InboundFileRepo   ediports.EDIInboundFileRepository
-	MessageRepo       ediports.EDIMessageRepository
+	InboundFileRepo   edimessageports.EDIInboundFileRepository
+	MessageRepo       edimessageports.EDIMessageRepository
 	Logger            *zap.Logger
 }
 
@@ -29,8 +29,8 @@ type Activities struct {
 	replayer          *edilading.Replayer
 	inboundService    *ediinboundservice.Service
 	dataRetentionRepo tenantports.DataRetentionRepository
-	inboundFileRepo   ediports.EDIInboundFileRepository
-	messageRepo       ediports.EDIMessageRepository
+	inboundFileRepo   edimessageports.EDIInboundFileRepository
+	messageRepo       edimessageports.EDIMessageRepository
 	logger            *zap.Logger
 }
 

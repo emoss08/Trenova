@@ -10,7 +10,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/app/edilading"
 	"github.com/emoss08/trenova/internal/modules/edi/app/edix12inspect"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/edimessageports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -151,7 +152,7 @@ func (s *Service) allocateAcknowledgmentNumbers(
 ) (acknowledgmentControlNumbers, error) {
 	allocated, err := s.controlNumberRepo.AllocateControlNumbers(
 		ctx,
-		ediports.AllocateEDIControlNumbersRequest{
+		edipartnerports.AllocateEDIControlNumbersRequest{
 			TenantInfo:     tenantInfo,
 			PartnerID:      partnerID,
 			DocumentTypeID: documentTypeID,
@@ -179,7 +180,7 @@ func (s *Service) createAcknowledgmentMessage(
 ) (created *edi.EDIMessage, replayed bool, err error) {
 	created, err = s.messageRepo.CreateMessageWithDiagnostics(
 		ctx,
-		ediports.CreateEDIMessageWithDiagnosticsRequest{Message: message},
+		edimessageports.CreateEDIMessageWithDiagnosticsRequest{Message: message},
 	)
 	if err == nil {
 		return created, false, nil
@@ -289,7 +290,7 @@ func (s *Service) messageAcknowledgmentSource(
 	if err != nil {
 		return nil, err
 	}
-	message, err := s.messageRepo.GetMessageByID(ctx, ediports.GetEDIMessageByIDRequest{
+	message, err := s.messageRepo.GetMessageByID(ctx, edimessageports.GetEDIMessageByIDRequest{
 		ID:         req.SourceMessageID,
 		TenantInfo: req.TenantInfo,
 	})

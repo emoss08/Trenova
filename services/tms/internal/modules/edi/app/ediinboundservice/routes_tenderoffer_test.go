@@ -5,14 +5,13 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/mocks/ediportsmock"
-
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/modules/edi/app/edix12inspect"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/editenderports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
+	"github.com/emoss08/trenova/internal/testutil/mocks/editenderportsmock"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/mock"
@@ -80,7 +79,7 @@ type tenderOfferRouteFixture struct {
 	partner       *edi.EDIPartner
 	tenderRepo    *fakeTenderRepository
 	recorder      *fakeTenderResponseRecorder
-	recipientRepo *ediportsmock.MockEDITenderRecipientRepository
+	recipientRepo *editenderportsmock.MockEDITenderRecipientRepository
 }
 
 func newTenderOfferRouteFixture(t *testing.T) *tenderOfferRouteFixture {
@@ -105,7 +104,7 @@ func newTenderOfferRouteFixture(t *testing.T) *tenderOfferRouteFixture {
 		},
 		tenderRepo:    &fakeTenderRepository{},
 		recorder:      &fakeTenderResponseRecorder{},
-		recipientRepo: ediportsmock.NewMockEDITenderRecipientRepository(t),
+		recipientRepo: editenderportsmock.NewMockEDITenderRecipientRepository(t),
 	}
 	fixture.service = &Service{
 		l:                   zap.NewNop(),
@@ -240,7 +239,10 @@ func TestRouteTenderResponse_OfferDeclineCodesRecordDecline(t *testing.T) {
 			fixture := newTenderOfferRouteFixture(t)
 			offerID := pulid.MustNew("tof_")
 			fixture.tenderRepo.offer = fixture.newOffer(offerID)
-			transaction, details := parse990Transaction(t, rawTenderResponse990(offerID.String(), code, ""))
+			transaction, details := parse990Transaction(
+				t,
+				rawTenderResponse990(offerID.String(), code, ""),
+			)
 
 			warnings, err := fixture.service.routeTenderResponse(
 				t.Context(),
@@ -384,7 +386,7 @@ func TestRouteTenderResponse_NoOfferReferenceFallsThroughToLegacy(t *testing.T) 
 		GetActiveExternalRecipientByShipmentReference(
 			mock.Anything,
 			mock.MatchedBy(
-				func(req ediports.GetActiveExternalEDITenderRecipientByReferenceRequest) bool {
+				func(req editenderports.GetActiveExternalEDITenderRecipientByReferenceRequest) bool {
 					return req.Reference == "SHIP-1001" && req.PartnerID == fixture.partner.ID
 				},
 			),

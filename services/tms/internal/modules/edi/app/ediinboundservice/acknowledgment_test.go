@@ -7,7 +7,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/edimessageports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -39,11 +40,11 @@ func TestProcessInboundFile_RejectsATenderThatBreaksItsGuideAndSaysWhyInThe997(t
 
 	var (
 		mu       sync.Mutex
-		messages []ediports.CreateEDIMessageWithDiagnosticsRequest
+		messages []edimessageports.CreateEDIMessageWithDiagnosticsRequest
 	)
 	fixture.messageRepo.EXPECT().
 		CreateMessageWithDiagnostics(mock.Anything, mock.Anything).
-		RunAndReturn(func(_ context.Context, req ediports.CreateEDIMessageWithDiagnosticsRequest) (*edi.EDIMessage, error) {
+		RunAndReturn(func(_ context.Context, req edimessageports.CreateEDIMessageWithDiagnosticsRequest) (*edi.EDIMessage, error) {
 			mu.Lock()
 			defer mu.Unlock()
 			messages = append(messages, req)
@@ -57,7 +58,7 @@ func TestProcessInboundFile_RejectsATenderThatBreaksItsGuideAndSaysWhyInThe997(t
 		Return(nil, errortypes.NewNotFoundError("EDIMessage")).
 		Once()
 	fixture.documentTypeRepo.EXPECT().
-		ListDocumentTypes(mock.Anything, ediports.ListEDIDocumentTypesRequest{
+		ListDocumentTypes(mock.Anything, edipartnerports.ListEDIDocumentTypesRequest{
 			Standard:       edi.EDIStandardX12,
 			TransactionSet: edi.TransactionSet997,
 			Direction:      edi.DocumentDirectionOutbound,

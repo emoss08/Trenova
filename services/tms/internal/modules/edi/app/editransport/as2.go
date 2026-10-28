@@ -14,7 +14,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/editransportports"
 	"github.com/emoss08/trenova/shared/as2"
 	"github.com/emoss08/trenova/shared/httpsafe"
 	"github.com/emoss08/trenova/shared/maputils"
@@ -169,8 +169,8 @@ func (t *AS2Transport) Method() edi.ConnectionMethod {
 
 func (t *AS2Transport) Deliver(
 	ctx context.Context,
-	req *ediports.EDITransportRequest,
-) (*ediports.EDITransportResult, error) {
+	req *editransportports.EDITransportRequest,
+) (*editransportports.EDITransportResult, error) {
 	if req == nil || req.Profile == nil {
 		return nil, ErrEDICommunicationProfileRequired
 	}
@@ -221,7 +221,7 @@ func (t *AS2Transport) Deliver(
 		)
 	}
 
-	result := &ediports.EDITransportResult{
+	result := &editransportports.EDITransportResult{
 		RemotePath: cfg.EndpointURL,
 		MessageID:  built.MessageID,
 		MIC:        built.MIC,

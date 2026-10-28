@@ -8,7 +8,7 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ladingports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/lading"
@@ -32,15 +32,15 @@ type FlowsParams struct {
 
 	Logger  *zap.Logger
 	Runtime *Runtime
-	Flows   ediports.FlowRepository
-	Timers  ediports.FlowTimerScheduler `optional:"true"`
+	Flows   ladingports.FlowRepository
+	Timers  ladingports.FlowTimerScheduler `optional:"true"`
 }
 
 type Flows struct {
 	l       *zap.Logger
 	runtime *Runtime
-	flows   ediports.FlowRepository
-	timers  ediports.FlowTimerScheduler
+	flows   ladingports.FlowRepository
+	timers  ladingports.FlowTimerScheduler
 }
 
 func NewFlows(p FlowsParams) *Flows {
@@ -218,7 +218,7 @@ func (f *Flows) step(
 			attempt == maxStepAttempts {
 			return nil, saveErr
 		}
-		instance, err = f.flows.GetInstance(ctx, ediports.GetFlowInstanceRequest{
+		instance, err = f.flows.GetInstance(ctx, ladingports.GetFlowInstanceRequest{
 			TenantInfo: req.TenantInfo,
 			ID:         instance.ID,
 		})
@@ -353,7 +353,7 @@ func (f *Flows) schedule(
 	if previous != nil && *previous == *instance.WakeAt {
 		return
 	}
-	if err := f.timers.Schedule(ctx, &ediports.ScheduleFlowTimerRequest{
+	if err := f.timers.Schedule(ctx, &ladingports.ScheduleFlowTimerRequest{
 		TenantInfo: tenantInfo,
 		InstanceID: instance.ID,
 		WakeAt:     *instance.WakeAt,
@@ -372,7 +372,7 @@ func (f *Flows) Release(
 	tenantInfo pagination.TenantInfo,
 	instanceID, actorID pulid.ID,
 ) (*edi.FlowInstance, error) {
-	instance, err := f.flows.GetInstance(ctx, ediports.GetFlowInstanceRequest{
+	instance, err := f.flows.GetInstance(ctx, ladingports.GetFlowInstanceRequest{
 		TenantInfo: tenantInfo,
 		ID:         instanceID,
 	})

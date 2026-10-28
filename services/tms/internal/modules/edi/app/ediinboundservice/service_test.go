@@ -4,16 +4,20 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/edi/app/edilading"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/testutil/mocks/ediportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
-	"github.com/emoss08/trenova/pkg/lading"
-
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
+	"github.com/emoss08/trenova/internal/modules/edi/app/edilading"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/edimessageports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ladingports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/testutil/mocks/edimessageportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/edipartnerportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/editenderportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/ladingportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
+	"github.com/emoss08/trenova/pkg/lading"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/mock"
@@ -25,17 +29,17 @@ type inboundFixture struct {
 	service            *Service
 	file               *edi.EDIInboundFile
 	partner            *edi.EDIPartner
-	inboundFileRepo    *ediportsmock.MockEDIInboundFileRepository
-	partnerRepo        *ediportsmock.MockEDIPartnerRepository
-	messageRepo        *ediportsmock.MockEDIMessageRepository
-	documentTypeRepo   *ediportsmock.MockEDIDocumentTypeRepository
-	projects           *ediportsmock.MockLadingProjectRepository
-	flowRepo           *ediportsmock.MockFlowRepository
+	inboundFileRepo    *edimessageportsmock.MockEDIInboundFileRepository
+	partnerRepo        *edipartnerportsmock.MockEDIPartnerRepository
+	messageRepo        *edimessageportsmock.MockEDIMessageRepository
+	documentTypeRepo   *edipartnerportsmock.MockEDIDocumentTypeRepository
+	projects           *ladingportsmock.MockLadingProjectRepository
+	flowRepo           *ladingportsmock.MockFlowRepository
 	orgs               *tenantportsmock.MockOrganizationRepository
-	transferRepo       *ediportsmock.MockEDILoadTenderTransferRepository
-	recipientRepo      *ediportsmock.MockEDITenderRecipientRepository
-	mappingProfileRepo *ediportsmock.MockEDIMappingProfileRepository
-	controlNumberRepo  *ediportsmock.MockEDIControlNumberRepository
+	transferRepo       *editenderportsmock.MockEDILoadTenderTransferRepository
+	recipientRepo      *editenderportsmock.MockEDITenderRecipientRepository
+	mappingProfileRepo *edipartnerportsmock.MockEDIMappingProfileRepository
+	controlNumberRepo  *edipartnerportsmock.MockEDIControlNumberRepository
 }
 
 func newInboundFixture(t *testing.T, rawContent string) *inboundFixture {
@@ -64,17 +68,17 @@ func newInboundFixture(t *testing.T, rawContent string) *inboundFixture {
 			Code:              "PARTNER",
 			EnabledForInbound: true,
 		},
-		inboundFileRepo:    ediportsmock.NewMockEDIInboundFileRepository(t),
-		partnerRepo:        ediportsmock.NewMockEDIPartnerRepository(t),
-		messageRepo:        ediportsmock.NewMockEDIMessageRepository(t),
-		documentTypeRepo:   ediportsmock.NewMockEDIDocumentTypeRepository(t),
-		projects:           ediportsmock.NewMockLadingProjectRepository(t),
-		flowRepo:           ediportsmock.NewMockFlowRepository(t),
+		inboundFileRepo:    edimessageportsmock.NewMockEDIInboundFileRepository(t),
+		partnerRepo:        edipartnerportsmock.NewMockEDIPartnerRepository(t),
+		messageRepo:        edimessageportsmock.NewMockEDIMessageRepository(t),
+		documentTypeRepo:   edipartnerportsmock.NewMockEDIDocumentTypeRepository(t),
+		projects:           ladingportsmock.NewMockLadingProjectRepository(t),
+		flowRepo:           ladingportsmock.NewMockFlowRepository(t),
 		orgs:               tenantportsmock.NewMockOrganizationRepository(t),
-		transferRepo:       ediportsmock.NewMockEDILoadTenderTransferRepository(t),
-		recipientRepo:      ediportsmock.NewMockEDITenderRecipientRepository(t),
-		mappingProfileRepo: ediportsmock.NewMockEDIMappingProfileRepository(t),
-		controlNumberRepo:  ediportsmock.NewMockEDIControlNumberRepository(t),
+		transferRepo:       editenderportsmock.NewMockEDILoadTenderTransferRepository(t),
+		recipientRepo:      editenderportsmock.NewMockEDITenderRecipientRepository(t),
+		mappingProfileRepo: edipartnerportsmock.NewMockEDIMappingProfileRepository(t),
+		controlNumberRepo:  edipartnerportsmock.NewMockEDIControlNumberRepository(t),
 	}
 	runtime := edilading.NewRuntime(edilading.RuntimeParams{
 		Logger:   zap.NewNop(),
@@ -150,7 +154,7 @@ func (f *inboundFixture) expectActiveVersion(t *testing.T, acknowledge ...string
 		Return(&tenant.Organization{Name: org.Name, ScacCode: org.SCAC, Timezone: org.Zone}, nil).
 		Maybe()
 	f.projects.EXPECT().GetRunnableVersions(mock.Anything, mock.Anything).
-		Return(&ediports.RunnableLadingVersions{
+		Return(&ladingports.RunnableLadingVersions{
 			Project: &edi.LadingProject{
 				ID:           pulid.MustNew("ldp_"),
 				EDIPartnerID: f.partner.ID,
@@ -184,7 +188,7 @@ func (f *inboundFixture) expectFlows() {
 		Maybe()
 	f.flowRepo.EXPECT().AppendEvent(mock.Anything, mock.Anything).Return(nil).Maybe()
 	f.messageRepo.EXPECT().LinkMessageFlow(mock.Anything, mock.Anything).
-		RunAndReturn(func(_ context.Context, req *ediports.LinkEDIMessageFlowRequest) (*edi.EDIMessage, error) {
+		RunAndReturn(func(_ context.Context, req *edimessageports.LinkEDIMessageFlowRequest) (*edi.EDIMessage, error) {
 			return &edi.EDIMessage{ID: req.ID, FlowInstanceID: req.FlowInstanceID}, nil
 		}).
 		Maybe()
@@ -201,7 +205,7 @@ func (f *inboundFixture) expectFileLoadAndUpdates(t *testing.T) *edi.EDIInboundF
 	t.Helper()
 	var lastUpdated edi.EDIInboundFile
 	f.inboundFileRepo.EXPECT().
-		GetInboundFileByID(mock.Anything, ediports.GetEDIInboundFileByIDRequest{
+		GetInboundFileByID(mock.Anything, edimessageports.GetEDIInboundFileByIDRequest{
 			ID:         f.file.ID,
 			TenantInfo: f.tenantInfo(),
 		}).
@@ -218,7 +222,7 @@ func (f *inboundFixture) expectFileLoadAndUpdates(t *testing.T) *edi.EDIInboundF
 
 func (f *inboundFixture) expectPartnerLoad() {
 	f.partnerRepo.EXPECT().
-		GetByID(mock.Anything, ediports.GetEDIPartnerByIDRequest{
+		GetByID(mock.Anything, edipartnerports.GetEDIPartnerByIDRequest{
 			ID:         f.partner.ID,
 			TenantInfo: f.tenantInfo(),
 		}).
@@ -228,7 +232,7 @@ func (f *inboundFixture) expectPartnerLoad() {
 
 func (f *inboundFixture) expectInboundDocumentType(set edi.TransactionSet) {
 	f.documentTypeRepo.EXPECT().
-		ListDocumentTypes(mock.Anything, ediports.ListEDIDocumentTypesRequest{
+		ListDocumentTypes(mock.Anything, edipartnerports.ListEDIDocumentTypesRequest{
 			Standard:       edi.EDIStandardX12,
 			TransactionSet: set,
 			Direction:      edi.DocumentDirectionInbound,
@@ -245,7 +249,7 @@ func (f *inboundFixture) expectInboundDocumentType(set edi.TransactionSet) {
 func (f *inboundFixture) expectMessageCreate() {
 	f.messageRepo.EXPECT().
 		CreateMessageWithDiagnostics(mock.Anything, mock.Anything).
-		RunAndReturn(func(_ context.Context, req ediports.CreateEDIMessageWithDiagnosticsRequest) (*edi.EDIMessage, error) {
+		RunAndReturn(func(_ context.Context, req edimessageports.CreateEDIMessageWithDiagnosticsRequest) (*edi.EDIMessage, error) {
 			message := *req.Message
 			message.ID = pulid.MustNew("edimsg_")
 			return &message, nil
@@ -284,7 +288,7 @@ func TestProcessInboundFile_Reconciles997Acknowledgment(t *testing.T) {
 	}
 	fixture.messageRepo.EXPECT().
 		GetOutboundMessageForAck(mock.Anything, mock.MatchedBy(
-			func(req ediports.GetEDIOutboundMessageForAckRequest) bool {
+			func(req edimessageports.GetEDIOutboundMessageForAckRequest) bool {
 				return req.PartnerID == fixture.partner.ID &&
 					req.GroupControlNumber == "42" &&
 					req.TransactionControlNumber == "0042" &&
@@ -295,7 +299,7 @@ func TestProcessInboundFile_Reconciles997Acknowledgment(t *testing.T) {
 		Once()
 	fixture.messageRepo.EXPECT().
 		UpdateMessageAcknowledgment(mock.Anything, mock.MatchedBy(
-			func(req *ediports.UpdateEDIMessageAcknowledgmentRequest) bool {
+			func(req *edimessageports.UpdateEDIMessageAcknowledgmentRequest) bool {
 				return req.ID == originalMessage.ID &&
 					req.AckStatus == edi.MessageAcknowledgmentStatusAccepted &&
 					req.AckMessageID.IsNotNil()

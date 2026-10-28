@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediconnectiondraftports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -13,7 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func approver(req *ediports.ConnectionDraftRequest) *permissionports.RequestActor {
+func approver(req *ediconnectiondraftports.ConnectionDraftRequest) *permissionports.RequestActor {
 	user := pulid.MustNew("usr_")
 	return &permissionports.RequestActor{
 		PrincipalID:    user,
@@ -28,11 +28,14 @@ func TestApply_WritesANewConnectionInactive(t *testing.T) {
 
 	h := newHarness(t)
 	req := acmeRequest(t)
-	applied, err := h.service.ApplyConnectionDraft(t.Context(), &ediports.ApplyConnectionDraftRequest{
-		Draft:                  req,
-		ExpectedDocumentDigest: DocumentDigest(req.Document.Pages),
-		Actor:                  approver(req),
-	})
+	applied, err := h.service.ApplyConnectionDraft(
+		t.Context(),
+		&ediconnectiondraftports.ApplyConnectionDraftRequest{
+			Draft:                  req,
+			ExpectedDocumentDigest: DocumentDigest(req.Document.Pages),
+			Actor:                  approver(req),
+		},
+	)
 	require.NoError(t, err)
 
 	assert.True(t, applied.Created)
@@ -51,7 +54,12 @@ func TestApply_WritesANewConnectionInactive(t *testing.T) {
 	assert.Equal(t, string(domaintypes.StatusInactive), transport.Status)
 	assert.Equal(t, "Acme Retail Group AS2", transport.Name)
 	assert.Equal(t, "ACMERETAILAS2", transport.Config["partnerAS2Id"])
-	assert.NotContains(t, transport.Config, "isaReceiverId", "the interchange lives in the Lading project")
+	assert.NotContains(
+		t,
+		transport.Config,
+		"isaReceiverId",
+		"the interchange lives in the Lading project",
+	)
 	assert.Empty(t, transport.Secrets, "no secret comes from the document")
 
 	require.Len(t, h.projects.imports, 1)
@@ -66,7 +74,12 @@ func TestApply_WritesANewConnectionInactive(t *testing.T) {
 	}
 	assert.Contains(t, partnerFile, "007912345", "the partner's interchange ID is in the project")
 	assert.Contains(t, partnerFile, "TRNV")
-	assert.Contains(t, partnerFile, "partner acmeretail", "the starter is named for the new partner")
+	assert.Contains(
+		t,
+		partnerFile,
+		"partner acmeretail",
+		"the starter is named for the new partner",
+	)
 	guides := map[string]string{}
 	for _, file := range imported.Files {
 		if strings.HasPrefix(file.Path, guideDirectory) {
@@ -77,7 +90,7 @@ func TestApply_WritesANewConnectionInactive(t *testing.T) {
 	for path, source := range guides {
 		assert.Contains(t, source, `"Acme Retail Group `, "%s names the new partner", path)
 	}
-	var project *ediports.DraftWrite
+	var project *ediconnectiondraftports.DraftWrite
 	for index := range applied.Writes {
 		if applied.Writes[index].Record == projectRecord {
 			project = &applied.Writes[index]
@@ -87,7 +100,12 @@ func TestApply_WritesANewConnectionInactive(t *testing.T) {
 	assert.Equal(t, writeCreated, project.Action)
 	assert.Equal(t, "Draft 1", project.Label)
 
-	require.Len(t, h.setup.controls, 3, "990, 214 and 210 each start their interchange numbers at 1000")
+	require.Len(
+		t,
+		h.setup.controls,
+		3,
+		"990, 214 and 210 each start their interchange numbers at 1000",
+	)
 	for _, control := range h.setup.controls {
 		assert.Equal(t, int64(1000), control.NextValue)
 		assert.Equal(t, edi.ControlNumberKindInterchange, control.Kind)
@@ -102,19 +120,27 @@ func TestApply_UpdatesOnlyWhatChangedOnAKnownPartner(t *testing.T) {
 	h := newHarness(t)
 	req := acmeRequest(t)
 	existing := existingAcme(t, req)
-	h.repo.partners = []*ediports.EDIPartnerSetup{existing}
+	h.repo.partners = []*ediconnectiondraftports.EDIPartnerSetup{existing}
 
-	applied, err := h.service.ApplyConnectionDraft(t.Context(), &ediports.ApplyConnectionDraftRequest{
-		Draft:                  req,
-		ExpectedDocumentDigest: DocumentDigest(req.Document.Pages),
-		Actor:                  approver(req),
-	})
+	applied, err := h.service.ApplyConnectionDraft(
+		t.Context(),
+		&ediconnectiondraftports.ApplyConnectionDraftRequest{
+			Draft:                  req,
+			ExpectedDocumentDigest: DocumentDigest(req.Document.Pages),
+			Actor:                  approver(req),
+		},
+	)
 	require.NoError(t, err)
 
 	assert.False(t, applied.Created)
 	require.Len(t, h.setup.partners, 1)
 	assert.Equal(t, existing.Partner.ID, h.setup.partners[0].ID)
-	assert.Equal(t, int64(4), h.setup.partners[0].Version, "the update is pinned to the version read")
+	assert.Equal(
+		t,
+		int64(4),
+		h.setup.partners[0].Version,
+		"the update is pinned to the version read",
+	)
 	assert.Equal(t, "Dana Whitfield", h.setup.partners[0].ContactName)
 	assert.Equal(t, domaintypes.StatusActive, h.setup.partners[0].Status)
 	assert.True(t, h.setup.partners[0].EnabledForInbound, "the 204 turns inbound on")
@@ -134,37 +160,44 @@ func TestApply_RefusesWhatThePersonDidNotApprove(t *testing.T) {
 	req := acmeRequest(t)
 	digest := DocumentDigest(req.Document.Pages)
 	cases := map[string]struct {
-		request  func() *ediports.ApplyConnectionDraftRequest
+		request  func() *ediconnectiondraftports.ApplyConnectionDraftRequest
 		contains string
 	}{
 		"no approver": {
-			request: func() *ediports.ApplyConnectionDraftRequest {
-				return &ediports.ApplyConnectionDraftRequest{Draft: req, ExpectedDocumentDigest: digest}
+			request: func() *ediconnectiondraftports.ApplyConnectionDraftRequest {
+				return &ediconnectiondraftports.ApplyConnectionDraftRequest{
+					Draft:                  req,
+					ExpectedDocumentDigest: digest,
+				}
 			},
 			contains: "must approve",
 		},
 		"an approver from another organization": {
-			request: func() *ediports.ApplyConnectionDraftRequest {
+			request: func() *ediconnectiondraftports.ApplyConnectionDraftRequest {
 				actor := approver(req)
 				actor.OrganizationID = pulid.MustNew("org_")
-				return &ediports.ApplyConnectionDraftRequest{Draft: req, ExpectedDocumentDigest: digest, Actor: actor}
+				return &ediconnectiondraftports.ApplyConnectionDraftRequest{
+					Draft:                  req,
+					ExpectedDocumentDigest: digest,
+					Actor:                  actor,
+				}
 			},
 			contains: "another organization",
 		},
 		"a document read differently": {
-			request: func() *ediports.ApplyConnectionDraftRequest {
-				return &ediports.ApplyConnectionDraftRequest{
+			request: func() *ediconnectiondraftports.ApplyConnectionDraftRequest {
+				return &ediconnectiondraftports.ApplyConnectionDraftRequest{
 					Draft: req, ExpectedDocumentDigest: "sha256:00", Actor: approver(req),
 				}
 			},
 			contains: "read differently",
 		},
 		"a draft with a decision left": {
-			request: func() *ediports.ApplyConnectionDraftRequest {
+			request: func() *ediconnectiondraftports.ApplyConnectionDraftRequest {
 				held := acmeRequest(t)
 				held.Document = req.Document
 				held.Values[1].Confidence = 0.4
-				return &ediports.ApplyConnectionDraftRequest{
+				return &ediconnectiondraftports.ApplyConnectionDraftRequest{
 					Draft: held, ExpectedDocumentDigest: digest, Actor: approver(held),
 				}
 			},
@@ -191,11 +224,14 @@ func TestApply_StopsAtTheFirstFailedWrite(t *testing.T) {
 	h := newHarness(t)
 	h.setup.failOn = "transport"
 	req := acmeRequest(t)
-	_, err := h.service.ApplyConnectionDraft(t.Context(), &ediports.ApplyConnectionDraftRequest{
-		Draft:                  req,
-		ExpectedDocumentDigest: DocumentDigest(req.Document.Pages),
-		Actor:                  approver(req),
-	})
+	_, err := h.service.ApplyConnectionDraft(
+		t.Context(),
+		&ediconnectiondraftports.ApplyConnectionDraftRequest{
+			Draft:                  req,
+			ExpectedDocumentDigest: DocumentDigest(req.Document.Pages),
+			Actor:                  approver(req),
+		},
+	)
 	require.Error(t, err)
 	assert.Empty(t, h.projects.imports, "the writes stop at the failed one")
 }

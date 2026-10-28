@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediconnectiondraftports"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -22,9 +22,9 @@ type mappingKey struct {
 }
 
 type mappingCandidate struct {
-	input  *ediports.DraftMappingInput
-	source ediports.DraftSource
-	status ediports.ValueStatus
+	input  *ediconnectiondraftports.DraftMappingInput
+	source ediconnectiondraftports.DraftSource
+	status ediconnectiondraftports.ValueStatus
 	reason string
 }
 
@@ -39,10 +39,13 @@ func (p *planner) buildMappings(ctx context.Context) error {
 	labels := map[edi.MappingEntityType]map[pulid.ID]string{}
 	if len(targets) > 0 {
 		var err error
-		labels, err = p.s.repo.ResolveMappingTargets(ctx, &ediports.ResolveEDIMappingTargetsRequest{
-			TenantInfo: p.req.TenantInfo,
-			Targets:    targets,
-		})
+		labels, err = p.s.repo.ResolveMappingTargets(
+			ctx,
+			&ediconnectiondraftports.ResolveEDIMappingTargetsRequest{
+				TenantInfo: p.req.TenantInfo,
+				Targets:    targets,
+			},
+		)
 		if err != nil {
 			return err
 		}
@@ -71,7 +74,7 @@ func (p *planner) buildMappings(ctx context.Context) error {
 			if _, mentioned := grouped[key]; mentioned {
 				continue
 			}
-			p.draft.Kept = append(p.draft.Kept, ediports.DraftKept{
+			p.draft.Kept = append(p.draft.Kept, ediconnectiondraftports.DraftKept{
 				Record: mappingRecordLabel,
 				Label: fmt.Sprintf(
 					"%s %s → %s is not in this spec; kept",
@@ -86,7 +89,7 @@ func (p *planner) buildMappings(ctx context.Context) error {
 }
 
 func (p *planner) readMapping(
-	input *ediports.DraftMappingInput,
+	input *ediconnectiondraftports.DraftMappingInput,
 	labels map[edi.MappingEntityType]map[pulid.ID]string,
 ) mappingCandidate {
 	check := p.pages.locate(input.Citation)
@@ -97,30 +100,30 @@ func (p *planner) readMapping(
 	candidate := mappingCandidate{
 		input:  input,
 		source: documentSource(page, input.Citation, check.problem),
-		status: ediports.ValueStatusAccepted,
+		status: ediconnectiondraftports.ValueStatusAccepted,
 	}
 	_, targetFound := labels[input.EntityType][input.TargetID]
 	switch {
 	case !check.ok:
-		candidate.status = ediports.ValueStatusUnverified
+		candidate.status = ediconnectiondraftports.ValueStatusUnverified
 		candidate.reason = check.problem
 	case strings.TrimSpace(input.SourceValue) == "":
-		candidate.status = ediports.ValueStatusInvalid
+		candidate.status = ediconnectiondraftports.ValueStatusInvalid
 		candidate.reason = "The partner's code is blank"
 	case !containsToken(normalizeForMatch(input.Citation.Quote), normalizeForMatch(input.SourceValue)):
-		candidate.status = ediports.ValueStatusUnverified
+		candidate.status = ediconnectiondraftports.ValueStatusUnverified
 		candidate.reason = "The quote does not contain the partner's code"
 	case input.TargetID.IsNil():
-		candidate.status = ediports.ValueStatusMissing
+		candidate.status = ediconnectiondraftports.ValueStatusMissing
 		candidate.reason = "Name the Trenova record this code maps to"
 	case !targetFound:
-		candidate.status = ediports.ValueStatusInvalid
+		candidate.status = ediconnectiondraftports.ValueStatusInvalid
 		candidate.reason = fmt.Sprintf(
 			"No %s with that ID exists in this organization",
 			input.EntityType,
 		)
 	case input.Confidence < confidenceFloor:
-		candidate.status = ediports.ValueStatusHeld
+		candidate.status = ediconnectiondraftports.ValueStatusHeld
 		candidate.reason = fmt.Sprintf(
 			"Confidence %.2f is below %.2f",
 			input.Confidence,
@@ -134,9 +137,9 @@ func (p *planner) settleMapping(
 	key mappingKey,
 	candidates []mappingCandidate,
 	labels map[edi.MappingEntityType]map[pulid.ID]string,
-) ediports.DraftMapping {
+) ediconnectiondraftports.DraftMapping {
 	first := candidates[0]
-	out := ediports.DraftMapping{
+	out := ediconnectiondraftports.DraftMapping{
 		EntityType:  key.entityType,
 		SourceID:    key.sourceID,
 		SourceLabel: strings.TrimSpace(first.input.SourceLabel),
@@ -144,17 +147,17 @@ func (p *planner) settleMapping(
 		Confidence:  first.input.Confidence,
 		Source:      first.source,
 		Reason:      first.reason,
-		Change:      ediports.ChangeKindNone,
+		Change:      ediconnectiondraftports.ChangeKindNone,
 	}
 	targetsSeen := make([]pulid.ID, 0, len(candidates))
 	for candidateIndex := range candidates {
 		candidate := &candidates[candidateIndex]
-		if candidate.status == ediports.ValueStatusAccepted &&
+		if candidate.status == ediconnectiondraftports.ValueStatusAccepted &&
 			!slices.Contains(targetsSeen, candidate.input.TargetID) {
 			targetsSeen = append(targetsSeen, candidate.input.TargetID)
 		}
-		if candidate.status == ediports.ValueStatusAccepted &&
-			out.Status != ediports.ValueStatusAccepted {
+		if candidate.status == ediconnectiondraftports.ValueStatusAccepted &&
+			out.Status != ediconnectiondraftports.ValueStatusAccepted {
 			out.Status = candidate.status
 			out.Source = candidate.source
 			out.Confidence = candidate.input.Confidence
@@ -162,7 +165,7 @@ func (p *planner) settleMapping(
 		}
 	}
 	if len(targetsSeen) > 1 {
-		out.Status = ediports.ValueStatusHeld
+		out.Status = ediconnectiondraftports.ValueStatusHeld
 		out.Reason = "The document maps this code to more than one record"
 		targetsSeen = nil
 	}
@@ -171,7 +174,7 @@ func (p *planner) settleMapping(
 	if current != nil {
 		out.CurrentTargetID = current.TargetID
 	}
-	if out.Status != ediports.ValueStatusAccepted || len(targetsSeen) == 0 {
+	if out.Status != ediconnectiondraftports.ValueStatusAccepted || len(targetsSeen) == 0 {
 		return out
 	}
 
@@ -179,11 +182,11 @@ func (p *planner) settleMapping(
 	out.TargetLabel = labels[key.entityType][out.TargetID]
 	switch {
 	case current == nil:
-		out.Change = ediports.ChangeKindAdd
+		out.Change = ediconnectiondraftports.ChangeKindAdd
 	case current.TargetID == out.TargetID:
-		out.Change = ediports.ChangeKindSame
+		out.Change = ediconnectiondraftports.ChangeKindSame
 	default:
-		out.Change = ediports.ChangeKindChange
+		out.Change = ediconnectiondraftports.ChangeKindChange
 	}
 	if out.Change.Writes() {
 		p.writes.mappings = append(p.writes.mappings, &edi.EDIMappingProfileItem{
@@ -204,7 +207,7 @@ func (p *planner) buildGaps() {
 		if page == 0 {
 			page = input.Citation.Page
 		}
-		gap := ediports.DraftGap{
+		gap := ediconnectiondraftports.DraftGap{
 			Kind:    input.Kind,
 			Summary: clampQuote(edi.RedactSecrets(strings.TrimSpace(input.Summary))),
 			Source:  documentSource(page, input.Citation, ""),
@@ -219,7 +222,7 @@ func (p *planner) buildGaps() {
 func (p *planner) buildSamples(ctx context.Context) {
 	mapped := p.draftedMappings()
 	for _, sample := range p.samples {
-		out := ediports.DraftSample{
+		out := ediconnectiondraftports.DraftSample{
 			Page:           sample.page,
 			TransactionSet: sample.transactionSet(),
 			Direction:      sample.direction,
@@ -246,9 +249,9 @@ func (p *planner) buildSamples(ctx context.Context) {
 	}
 }
 
-func (p *planner) sampleChecks(sample *specSample) []ediports.DraftSampleCheck {
+func (p *planner) sampleChecks(sample *specSample) []ediconnectiondraftports.DraftSampleCheck {
 	found := sample.envelopeValues()
-	checks := make([]ediports.DraftSampleCheck, 0, len(found))
+	checks := make([]ediconnectiondraftports.DraftSampleCheck, 0, len(found))
 	for _, key := range sampleFieldOrder {
 		value, ok := found[key]
 		if !ok || value == "" {
@@ -259,7 +262,7 @@ func (p *planner) sampleChecks(sample *specSample) []ediports.DraftSampleCheck {
 			value = normalized
 		}
 		expected, _ := p.usable(key)
-		checks = append(checks, ediports.DraftSampleCheck{
+		checks = append(checks, ediconnectiondraftports.DraftSampleCheck{
 			Field:    key,
 			Label:    spec.label,
 			Expected: expected,
@@ -279,7 +282,8 @@ func (p *planner) draftedMappings() map[mappingKey]bool {
 	}
 	for mappingIndex := range p.draft.Mappings {
 		mapping := &p.draft.Mappings[mappingIndex]
-		if mapping.Status == ediports.ValueStatusAccepted && mapping.TargetID.IsNotNil() {
+		if mapping.Status == ediconnectiondraftports.ValueStatusAccepted &&
+			mapping.TargetID.IsNotNil() {
 			mapped[mappingKey{entityType: mapping.EntityType, sourceID: mapping.SourceID}] = true
 		}
 	}
@@ -301,9 +305,9 @@ func (p *planner) settle() {
 	fillEmpty(draft)
 }
 
-func (p *planner) decisionSections() [][]ediports.DraftValue {
+func (p *planner) decisionSections() [][]ediconnectiondraftports.DraftValue {
 	draft := p.draft
-	sections := [][]ediports.DraftValue{draft.Partner.Fields, draft.Interchange}
+	sections := [][]ediconnectiondraftports.DraftValue{draft.Partner.Fields, draft.Interchange}
 	if draft.Transport != nil {
 		sections = append(sections, draft.Transport.Fields)
 	}
@@ -319,15 +323,15 @@ func (p *planner) decisionSections() [][]ediports.DraftValue {
 	}
 	for _, key := range loose {
 		if value, ok := p.values[key]; ok && !value.Status.Usable() {
-			sections = append(sections, []ediports.DraftValue{value})
+			sections = append(sections, []ediconnectiondraftports.DraftValue{value})
 		}
 	}
 	return sections
 }
 
-func (p *planner) decisions() []ediports.DraftValue {
+func (p *planner) decisions() []ediconnectiondraftports.DraftValue {
 	seen := make(map[string]bool)
-	decisions := make([]ediports.DraftValue, 0)
+	decisions := make([]ediconnectiondraftports.DraftValue, 0)
 	for _, section := range p.decisionSections() {
 		for index := range section {
 			value := &section[index]
@@ -341,9 +345,9 @@ func (p *planner) decisions() []ediports.DraftValue {
 	return decisions
 }
 
-func blockers(draft *ediports.ConnectionDraft) []string {
+func blockers(draft *ediconnectiondraftports.ConnectionDraft) []string {
 	out := make([]string, 0)
-	if draft.Partner.Match == ediports.PartnerMatchAmbiguous {
+	if draft.Partner.Match == ediconnectiondraftports.PartnerMatchAmbiguous {
 		out = append(out, "Name which existing partner this spec is for")
 	}
 	for index := range draft.Decisions {
@@ -353,7 +357,7 @@ func blockers(draft *ediports.ConnectionDraft) []string {
 	}
 	for index := range draft.Mappings {
 		mapping := &draft.Mappings[index]
-		if mapping.Status != ediports.ValueStatusAccepted {
+		if mapping.Status != ediconnectiondraftports.ValueStatusAccepted {
 			out = append(out, fmt.Sprintf(
 				"Settle the %s mapping for %s",
 				mapping.EntityType,
@@ -374,9 +378,9 @@ func blockers(draft *ediports.ConnectionDraft) []string {
 	return out
 }
 
-func countChanges(draft *ediports.ConnectionDraft) int {
+func countChanges(draft *ediconnectiondraftports.ConnectionDraft) int {
 	changes := 0
-	count := func(change ediports.ChangeKind) {
+	count := func(change ediconnectiondraftports.ChangeKind) {
 		if change.Writes() {
 			changes++
 		}
@@ -400,34 +404,38 @@ func countChanges(draft *ediports.ConnectionDraft) int {
 	return changes
 }
 
-func fillEmpty(draft *ediports.ConnectionDraft) {
+func fillEmpty(draft *ediconnectiondraftports.ConnectionDraft) {
 	if draft.Samples == nil {
-		draft.Samples = []ediports.DraftSample{}
+		draft.Samples = []ediconnectiondraftports.DraftSample{}
 	}
 	if draft.Gaps == nil {
-		draft.Gaps = []ediports.DraftGap{}
+		draft.Gaps = []ediconnectiondraftports.DraftGap{}
 	}
 	if draft.Mappings == nil {
-		draft.Mappings = []ediports.DraftMapping{}
+		draft.Mappings = []ediconnectiondraftports.DraftMapping{}
 	}
 	if draft.Failures == nil {
-		draft.Failures = []ediports.DraftFailure{}
+		draft.Failures = []ediconnectiondraftports.DraftFailure{}
 	}
 	if draft.Sets == nil {
-		draft.Sets = []ediports.DraftSet{}
+		draft.Sets = []ediconnectiondraftports.DraftSet{}
 	}
 	if draft.Kept == nil {
-		draft.Kept = []ediports.DraftKept{}
+		draft.Kept = []ediconnectiondraftports.DraftKept{}
 	}
 }
 
-func needsDecision(value *ediports.DraftValue) bool {
+func needsDecision(value *ediconnectiondraftports.DraftValue) bool {
 	switch value.Status {
-	case ediports.ValueStatusHeld, ediports.ValueStatusUnverified, ediports.ValueStatusInvalid:
+	case ediconnectiondraftports.ValueStatusHeld,
+		ediconnectiondraftports.ValueStatusUnverified,
+		ediconnectiondraftports.ValueStatusInvalid:
 		return true
-	case ediports.ValueStatusMissing:
+	case ediconnectiondraftports.ValueStatusMissing:
 		return value.Required
-	case ediports.ValueStatusAccepted, ediports.ValueStatusDefaulted, ediports.ValueStatusKept:
+	case ediconnectiondraftports.ValueStatusAccepted,
+		ediconnectiondraftports.ValueStatusDefaulted,
+		ediconnectiondraftports.ValueStatusKept:
 		return false
 	default:
 		return false

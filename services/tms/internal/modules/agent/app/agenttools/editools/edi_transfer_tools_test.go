@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/editenderports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -35,7 +35,7 @@ type fakeTransfers struct {
 
 func (f *fakeTransfers) GetTransfer(
 	_ context.Context,
-	req ediports.GetEDITransferByIDRequest,
+	req editenderports.GetEDITransferByIDRequest,
 ) (*edi.EDITransfer, error) {
 	f.directions = append(f.directions, req.Direction)
 	if req.ID != f.transfer.ID {
@@ -51,7 +51,7 @@ func (f *fakeTransfers) PlanApproveTransfer(
 	req *ediservice.ApproveTransferRequest,
 	actor *permissionports.RequestActor,
 ) (*ediservice.TransferApprovalPlan, error) {
-	transfer, err := f.GetTransfer(ctx, ediports.GetEDITransferByIDRequest{
+	transfer, err := f.GetTransfer(ctx, editenderports.GetEDITransferByIDRequest{
 		ID:        req.TransferID,
 		Direction: ediservice.TransferDirectionInbound,
 	})

@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediconnectiondraftports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -25,7 +25,7 @@ type threadOnlySpecReader struct {
 func (r *threadOnlySpecReader) Read(
 	ctx context.Context,
 	req *edispec.ReadRequest,
-) (*ediports.SpecDocument, error) {
+) (*ediconnectiondraftports.SpecDocument, error) {
 	if req.ThreadID.IsNil() {
 		return nil, edispec.ErrNoConversation
 	}
@@ -119,8 +119,8 @@ func TestApplyConnectionDraft_ReportsWhatItSavedAndWhatIsLeftToEnter(t *testing.
 
 	plan := readyPlan()
 	partnerID := pulid.MustNew("edip_")
-	write := func(record, label string) ediports.DraftWrite {
-		return ediports.DraftWrite{
+	write := func(record, label string) ediconnectiondraftports.DraftWrite {
+		return ediconnectiondraftports.DraftWrite{
 			Record: record,
 			ID:     pulid.MustNew("edidp_"),
 			Action: "Created",
@@ -130,10 +130,10 @@ func TestApplyConnectionDraft_ReportsWhatItSavedAndWhatIsLeftToEnter(t *testing.
 	drafts := &fakeConnectionDrafts{
 		plan:  plan,
 		guard: &agenttoolstest.WriteGuard{},
-		result: &ediports.AppliedConnectionDraft{
+		result: &ediconnectiondraftports.AppliedConnectionDraft{
 			PartnerID: partnerID,
 			Created:   true,
-			Writes: []ediports.DraftWrite{
+			Writes: []ediconnectiondraftports.DraftWrite{
 				write("Partner", "Acme Retail Group"),
 				write("Communication profile", "Acme Retail Group AS2"),
 				write("Document profile", "Acme 204 inbound"),
@@ -178,9 +178,9 @@ func TestApplyConnectionDraft_ReportsThatAnExistingPartnerKeepsItsStatus(t *test
 	drafts := &fakeConnectionDrafts{
 		plan:  plan,
 		guard: &agenttoolstest.WriteGuard{},
-		result: &ediports.AppliedConnectionDraft{
+		result: &ediconnectiondraftports.AppliedConnectionDraft{
 			PartnerID: pulid.MustNew("edip_"),
-			Writes: []ediports.DraftWrite{
+			Writes: []ediconnectiondraftports.DraftWrite{
 				{
 					Record: "Partner",
 					ID:     pulid.MustNew("edip_"),

@@ -6,14 +6,14 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/seededtest"
-
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/edi/adapters/postgres/ediinboundfilerepository"
 	"github.com/emoss08/trenova/internal/modules/edi/adapters/postgres/edimessagerepository"
 	"github.com/emoss08/trenova/internal/modules/edi/adapters/postgres/editransferrepository"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/edimessageports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/editenderports"
+	"github.com/emoss08/trenova/internal/testutil/seededtest"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/stretchr/testify/require"
@@ -29,7 +29,13 @@ func TestEDISummaryCounts(t *testing.T) {
 	scope := tenantWithoutPartners(t, ctx, db)
 	ctx = scope.Ctx
 	org := scope.Info
-	documentType := findDocumentType(t, ctx, db, edi.TransactionSet204, edi.DocumentDirectionOutbound)
+	documentType := findDocumentType(
+		t,
+		ctx,
+		db,
+		edi.TransactionSet204,
+		edi.DocumentDirectionOutbound,
+	)
 	tenantInfo := org
 
 	partner := &edi.EDIPartner{
@@ -94,7 +100,7 @@ func TestEDISummaryCounts(t *testing.T) {
 
 	deliveryCounts, err := messageRepo.GetDeliveryStatusCounts(
 		ctx,
-		ediports.GetEDIMessageStatusCountsRequest{TenantInfo: tenantInfo},
+		edimessageports.GetEDIMessageStatusCountsRequest{TenantInfo: tenantInfo},
 	)
 	require.NoError(t, err)
 	require.Equal(t, 2, deliveryCounts[edi.MessageDeliveryStatusSent])
@@ -103,7 +109,7 @@ func TestEDISummaryCounts(t *testing.T) {
 
 	ackCounts, err := messageRepo.GetAckStatusCounts(
 		ctx,
-		ediports.GetEDIMessageStatusCountsRequest{TenantInfo: tenantInfo},
+		edimessageports.GetEDIMessageStatusCountsRequest{TenantInfo: tenantInfo},
 	)
 	require.NoError(t, err)
 	require.Equal(t, 1, ackCounts[edi.MessageAcknowledgmentStatusAccepted])
@@ -112,7 +118,7 @@ func TestEDISummaryCounts(t *testing.T) {
 
 	overdue, err := messageRepo.GetOverdueAckCount(
 		ctx,
-		ediports.GetEDIOverdueAckCountRequest{
+		edimessageports.GetEDIOverdueAckCountRequest{
 			TenantInfo:   tenantInfo,
 			PendingSince: now - 4*60*60,
 		},
@@ -122,7 +128,7 @@ func TestEDISummaryCounts(t *testing.T) {
 
 	deadLettered, err := messageRepo.ListRecentDeadLettered(
 		ctx,
-		&ediports.ListRecentEDIMessageFailuresRequest{TenantInfo: tenantInfo, Limit: 5},
+		&edimessageports.ListRecentEDIMessageFailuresRequest{TenantInfo: tenantInfo, Limit: 5},
 	)
 	require.NoError(t, err)
 	require.Len(t, deadLettered, 2)
@@ -159,7 +165,7 @@ func TestEDISummaryCounts(t *testing.T) {
 	})
 	fileCounts, err := fileRepo.GetInboundFileStatusCounts(
 		ctx,
-		ediports.GetEDIInboundFileStatusCountsRequest{TenantInfo: tenantInfo},
+		edimessageports.GetEDIInboundFileStatusCountsRequest{TenantInfo: tenantInfo},
 	)
 	require.NoError(t, err)
 	require.Equal(t, 1, fileCounts[edi.InboundFileStatusProcessed])
@@ -168,7 +174,10 @@ func TestEDISummaryCounts(t *testing.T) {
 
 	quarantined, err := fileRepo.ListRecentQuarantined(
 		ctx,
-		ediports.ListRecentQuarantinedEDIInboundFilesRequest{TenantInfo: tenantInfo, Limit: 5},
+		edimessageports.ListRecentQuarantinedEDIInboundFilesRequest{
+			TenantInfo: tenantInfo,
+			Limit:      5,
+		},
 	)
 	require.NoError(t, err)
 	require.Len(t, quarantined, 2)
@@ -200,7 +209,7 @@ func TestEDISummaryCounts(t *testing.T) {
 	})
 	transferCounts, err := transferRepo.GetInboundStatusCounts(
 		ctx,
-		ediports.GetEDITransferStatusCountsRequest{TenantInfo: tenantInfo},
+		editenderports.GetEDITransferStatusCountsRequest{TenantInfo: tenantInfo},
 	)
 	require.NoError(t, err)
 	require.Equal(t, 2, transferCounts[edi.TransferStatusMappingRequired])

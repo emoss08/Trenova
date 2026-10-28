@@ -12,10 +12,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/testutil/mocks/ediportsmock"
-
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	obsmetrics "github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
+	"github.com/emoss08/trenova/internal/testutil/mocks/edimessageportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/edipartnerportsmock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -142,17 +142,17 @@ func newTestMonitoringServer(
 func withEDIMonitoring(t *testing.T, server *MonitoringServer) {
 	t.Helper()
 
-	ediMessageRepo := ediportsmock.NewMockEDIMessageRepository(t)
+	ediMessageRepo := edimessageportsmock.NewMockEDIMessageRepository(t)
 	ediMessageRepo.On("CountDeadLetteredSince", mock.Anything, mock.Anything).
 		Return(int64(0), nil).
 		Once()
 
-	ediInboundRepo := ediportsmock.NewMockEDIInboundFileRepository(t)
+	ediInboundRepo := edimessageportsmock.NewMockEDIInboundFileRepository(t)
 	ediInboundRepo.On("CountQuarantinedSince", mock.Anything, mock.Anything).
 		Return(int64(0), nil).
 		Once()
 
-	ediProfileRepo := ediportsmock.NewMockEDICommunicationProfileRepository(t)
+	ediProfileRepo := edipartnerportsmock.NewMockEDICommunicationProfileRepository(t)
 	ediProfileRepo.On("CountStaleInboundPollingProfiles", mock.Anything, mock.Anything).
 		Return(int64(0), nil).
 		Once()

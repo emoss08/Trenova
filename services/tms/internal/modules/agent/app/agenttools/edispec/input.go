@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediconnectiondraftports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -29,19 +29,19 @@ var (
 type Input struct {
 	DocumentID pulid.ID
 	Digest     string
-	Draft      *ediports.ConnectionDraftRequest
+	Draft      *ediconnectiondraftports.ConnectionDraftRequest
 }
 
 type rawInput struct {
-	DocumentID   string                           `json:"documentId"`
-	PartnerID    string                           `json:"ediPartnerId"`
-	CustomerID   string                           `json:"customerId"`
-	Digest       string                           `json:"documentDigest"`
-	Values       []ediports.DraftValueInput       `json:"values"`
-	Requirements []ediports.DraftRequirementInput `json:"requirements"`
-	Mappings     []ediports.DraftMappingInput     `json:"mappings"`
-	Gaps         []ediports.DraftGapInput         `json:"gaps"`
-	Resolutions  []ediports.DraftResolutionInput  `json:"resolutions"`
+	DocumentID   string                                          `json:"documentId"`
+	PartnerID    string                                          `json:"ediPartnerId"`
+	CustomerID   string                                          `json:"customerId"`
+	Digest       string                                          `json:"documentDigest"`
+	Values       []ediconnectiondraftports.DraftValueInput       `json:"values"`
+	Requirements []ediconnectiondraftports.DraftRequirementInput `json:"requirements"`
+	Mappings     []ediconnectiondraftports.DraftMappingInput     `json:"mappings"`
+	Gaps         []ediconnectiondraftports.DraftGapInput         `json:"gaps"`
+	Resolutions  []ediconnectiondraftports.DraftResolutionInput  `json:"resolutions"`
 }
 
 func Parse(params map[string]any, tenant pagination.TenantInfo) (*Input, error) {
@@ -70,7 +70,7 @@ func Parse(params map[string]any, tenant pagination.TenantInfo) (*Input, error) 
 	return &Input{
 		DocumentID: documentID,
 		Digest:     strings.TrimSpace(raw.Digest),
-		Draft: &ediports.ConnectionDraftRequest{
+		Draft: &ediconnectiondraftports.ConnectionDraftRequest{
 			TenantInfo:   tenant,
 			PartnerID:    partnerID,
 			CustomerID:   customerID,
@@ -140,7 +140,7 @@ type ReadRequest struct {
 func (r *DocumentReader) Read(
 	ctx context.Context,
 	req *ReadRequest,
-) (*ediports.SpecDocument, error) {
+) (*ediconnectiondraftports.SpecDocument, error) {
 	if req.ThreadID.IsNil() {
 		return nil, ErrNoConversation
 	}
@@ -182,15 +182,25 @@ func (r *DocumentReader) Read(
 		)
 	}
 
-	pages := make([]ediports.SpecPage, 0, len(content.Pages))
+	pages := make([]ediconnectiondraftports.SpecPage, 0, len(content.Pages))
 	for _, page := range content.Pages {
 		if page == nil {
 			continue
 		}
-		pages = append(pages, ediports.SpecPage{Number: page.PageNumber, Text: page.ExtractedText})
+		pages = append(
+			pages,
+			ediconnectiondraftports.SpecPage{Number: page.PageNumber, Text: page.ExtractedText},
+		)
 	}
 	if len(pages) == 0 && strings.TrimSpace(content.ContentText) != "" {
-		pages = append(pages, ediports.SpecPage{Number: 1, Text: content.ContentText})
+		pages = append(
+			pages,
+			ediconnectiondraftports.SpecPage{Number: 1, Text: content.ContentText},
+		)
 	}
-	return &ediports.SpecDocument{ID: doc.ID, FileName: doc.OriginalName, Pages: pages}, nil
+	return &ediconnectiondraftports.SpecDocument{
+		ID:       doc.ID,
+		FileName: doc.OriginalName,
+		Pages:    pages,
+	}, nil
 }

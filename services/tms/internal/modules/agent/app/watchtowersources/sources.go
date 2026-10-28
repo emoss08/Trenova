@@ -14,7 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/edimessageports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
@@ -485,11 +485,11 @@ func (s *WeatherSource) Snapshot(
 
 // EDIQuarantineSource puts held-back inbound files on the tower.
 type EDIQuarantineSource struct {
-	repo ediports.EDIInboundFileRepository
+	repo edimessageports.EDIInboundFileRepository
 }
 
 func NewEDIQuarantineSource(
-	repo ediports.EDIInboundFileRepository,
+	repo edimessageports.EDIInboundFileRepository,
 ) watchtowerports.WatchtowerSource {
 	return &EDIQuarantineSource{repo: repo}
 }
@@ -504,7 +504,7 @@ func (s *EDIQuarantineSource) Snapshot(
 ) ([]watchtowerports.WatchtowerItemInput, error) {
 	files, err := s.repo.ListRecentQuarantined(
 		ctx,
-		ediports.ListRecentQuarantinedEDIInboundFilesRequest{
+		edimessageports.ListRecentQuarantinedEDIInboundFilesRequest{
 			TenantInfo: tenant,
 			Limit:      snapshotLimit,
 		},

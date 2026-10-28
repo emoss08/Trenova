@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/editenderports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/internaledilifecycle"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -118,7 +118,7 @@ func (s *Service) applyApprovedLifecycleTransferChange(
 ) error {
 	link, err := s.shipmentLinkRepo.GetShipmentLinkByID(
 		ctx,
-		ediports.GetEDIShipmentLinkByIDRequest{
+		editenderports.GetEDIShipmentLinkByIDRequest{
 			ID:         change.ShipmentLinkID,
 			TenantInfo: tenantInfo,
 		},
@@ -176,7 +176,7 @@ func (s *Service) buildApprovedTransferChangeContext(
 ) (approvedTransferChangeContext, error) {
 	link, err := s.shipmentLinkRepo.GetShipmentLinkByID(
 		ctx,
-		ediports.GetEDIShipmentLinkByIDRequest{
+		editenderports.GetEDIShipmentLinkByIDRequest{
 			ID:         change.ShipmentLinkID,
 			TenantInfo: tenantInfo,
 		},

@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi/edidb"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediconnectiondraftports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure/servicefailuredb"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer/customerdb"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location/locationdb"
@@ -49,7 +49,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) ediports.EDIConnectionDraftRepository {
+func New(p Params) ediconnectiondraftports.EDIConnectionDraftRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.edi-connection-draft-repository"),
@@ -57,21 +57,21 @@ func New(p Params) ediports.EDIConnectionDraftRepository {
 }
 
 type matchSet struct {
-	matches map[pulid.ID]*ediports.EDIPartnerMatch
+	matches map[pulid.ID]*ediconnectiondraftports.EDIPartnerMatch
 	order   []pulid.ID
 }
 
 func newMatchSet() *matchSet {
 	return &matchSet{
-		matches: make(map[pulid.ID]*ediports.EDIPartnerMatch),
+		matches: make(map[pulid.ID]*ediconnectiondraftports.EDIPartnerMatch),
 		order:   make([]pulid.ID, 0, 4),
 	}
 }
 
-func (m *matchSet) add(partner *edi.EDIPartner) *ediports.EDIPartnerMatch {
+func (m *matchSet) add(partner *edi.EDIPartner) *ediconnectiondraftports.EDIPartnerMatch {
 	match, ok := m.matches[partner.ID]
 	if !ok {
-		match = &ediports.EDIPartnerMatch{Partner: partner}
+		match = &ediconnectiondraftports.EDIPartnerMatch{Partner: partner}
 		m.matches[partner.ID] = match
 		m.order = append(m.order, partner.ID)
 	}
@@ -90,7 +90,7 @@ func (m *matchSet) missing(ids ...[]pulid.ID) []pulid.ID {
 	return out
 }
 
-func (m *matchSet) mark(ids []pulid.ID, apply func(*ediports.EDIPartnerMatch)) {
+func (m *matchSet) mark(ids []pulid.ID, apply func(*ediconnectiondraftports.EDIPartnerMatch)) {
 	for _, id := range ids {
 		if match, ok := m.matches[id]; ok {
 			apply(match)
@@ -98,8 +98,8 @@ func (m *matchSet) mark(ids []pulid.ID, apply func(*ediports.EDIPartnerMatch)) {
 	}
 }
 
-func (m *matchSet) list() []*ediports.EDIPartnerMatch {
-	out := make([]*ediports.EDIPartnerMatch, 0, len(m.order))
+func (m *matchSet) list() []*ediconnectiondraftports.EDIPartnerMatch {
+	out := make([]*ediconnectiondraftports.EDIPartnerMatch, 0, len(m.order))
 	for _, id := range m.order {
 		out = append(out, m.matches[id])
 	}
@@ -108,52 +108,59 @@ func (m *matchSet) list() []*ediports.EDIPartnerMatch {
 
 func (r *repository) FindPartnerMatches(
 	ctx context.Context,
-	req *ediports.FindEDIPartnerMatchesRequest,
-) ([]*ediports.EDIPartnerMatch, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*ediports.EDIPartnerMatch, error) {
-		set := newMatchSet()
-		direct, err := r.partnersByIdentity(ctx, req)
-		if err != nil {
-			return nil, err
-		}
-		code := strings.TrimSpace(req.Code)
-		name := strings.TrimSpace(req.Name)
-		for _, partner := range direct {
-			match := set.add(partner)
-			match.ByCode = code != "" && strings.EqualFold(partner.Code, code)
-			match.ByName = name != "" && strings.EqualFold(partner.Name, name)
-			match.ByCustomer = req.CustomerID.IsNotNil() && partner.CustomerID == req.CustomerID
-		}
+	req *ediconnectiondraftports.FindEDIPartnerMatchesRequest,
+) ([]*ediconnectiondraftports.EDIPartnerMatch, error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*ediconnectiondraftports.EDIPartnerMatch, error) {
+			set := newMatchSet()
+			direct, err := r.partnersByIdentity(ctx, req)
+			if err != nil {
+				return nil, err
+			}
+			code := strings.TrimSpace(req.Code)
+			name := strings.TrimSpace(req.Name)
+			for _, partner := range direct {
+				match := set.add(partner)
+				match.ByCode = code != "" && strings.EqualFold(partner.Code, code)
+				match.ByName = name != "" && strings.EqualFold(partner.Name, name)
+				match.ByCustomer = req.CustomerID.IsNotNil() && partner.CustomerID == req.CustomerID
+			}
 
-		byInterchange, err := r.partnerIDsByInterchange(ctx, req)
-		if err != nil {
-			return nil, err
-		}
-		byAS2, err := r.partnerIDsByAS2(ctx, req)
-		if err != nil {
-			return nil, err
-		}
-		if extra := set.missing(byInterchange, byAS2); len(extra) > 0 {
-			partners, loadErr := r.partnersByIDs(ctx, extra)
-			if loadErr != nil {
-				return nil, loadErr
+			byInterchange, err := r.partnerIDsByInterchange(ctx, req)
+			if err != nil {
+				return nil, err
 			}
-			for _, partner := range partners {
-				set.add(partner)
+			byAS2, err := r.partnerIDsByAS2(ctx, req)
+			if err != nil {
+				return nil, err
 			}
-		}
-		set.mark(
-			byInterchange,
-			func(match *ediports.EDIPartnerMatch) { match.ByInterchange = true },
-		)
-		set.mark(byAS2, func(match *ediports.EDIPartnerMatch) { match.ByAS2 = true })
-		return set.list(), nil
-	})
+			if extra := set.missing(byInterchange, byAS2); len(extra) > 0 {
+				partners, loadErr := r.partnersByIDs(ctx, extra)
+				if loadErr != nil {
+					return nil, loadErr
+				}
+				for _, partner := range partners {
+					set.add(partner)
+				}
+			}
+			set.mark(
+				byInterchange,
+				func(match *ediconnectiondraftports.EDIPartnerMatch) { match.ByInterchange = true },
+			)
+			set.mark(
+				byAS2,
+				func(match *ediconnectiondraftports.EDIPartnerMatch) { match.ByAS2 = true },
+			)
+			return set.list(), nil
+		},
+	)
 }
 
 func (r *repository) partnersByIdentity(
 	ctx context.Context,
-	req *ediports.FindEDIPartnerMatchesRequest,
+	req *ediconnectiondraftports.FindEDIPartnerMatchesRequest,
 ) ([]*edi.EDIPartner, error) {
 	code := strings.TrimSpace(req.Code)
 	name := strings.TrimSpace(req.Name)
@@ -173,7 +180,7 @@ func (r *repository) partnersByIdentity(
 
 func (r *repository) partnerIDsByInterchange(
 	ctx context.Context,
-	req *ediports.FindEDIPartnerMatchesRequest,
+	req *ediconnectiondraftports.FindEDIPartnerMatchesRequest,
 ) ([]pulid.ID, error) {
 	isaID := strings.TrimSpace(req.ISAID)
 	if isaID == "" {
@@ -204,7 +211,7 @@ func (r *repository) partnerIDsByInterchange(
 
 func (r *repository) partnerIDsByAS2(
 	ctx context.Context,
-	req *ediports.FindEDIPartnerMatchesRequest,
+	req *ediconnectiondraftports.FindEDIPartnerMatchesRequest,
 ) ([]pulid.ID, error) {
 	as2ID := strings.TrimSpace(req.AS2ID)
 	if as2ID == "" {
@@ -231,84 +238,97 @@ func (r *repository) partnersByIDs(ctx context.Context, ids []pulid.ID) ([]*edi.
 
 func (r *repository) GetPartnerSetup(
 	ctx context.Context,
-	req *ediports.GetEDIPartnerSetupRequest,
-) (*ediports.EDIPartnerSetup, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*ediports.EDIPartnerSetup, error) {
-		db := r.db.Keel(ctx)
-		ep := edidb.EDIPartners
-		cp := edidb.EDICommunicationProfiles
-		lp := edidb.LadingProjects
-		mi := edidb.EDIMappingProfileItems
-		cn := edidb.EDIControlNumberSequences
+	req *ediconnectiondraftports.GetEDIPartnerSetupRequest,
+) (*ediconnectiondraftports.EDIPartnerSetup, error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*ediconnectiondraftports.EDIPartnerSetup, error) {
+			db := r.db.Keel(ctx)
+			ep := edidb.EDIPartners
+			cp := edidb.EDICommunicationProfiles
+			lp := edidb.LadingProjects
+			mi := edidb.EDIMappingProfileItems
+			cn := edidb.EDIControlNumberSequences
 
-		setup := new(ediports.EDIPartnerSetup)
-		var projects []*edi.LadingProject
-		err := keel.Batch(
-			ctx,
-			db,
-			keel.OneInto(ep.Where(ep.ID.Eq(req.PartnerID)), &setup.Partner),
-			keel.AllInto(
-				cp.Where(cp.EDIPartnerID.Eq(req.PartnerID)).Order(cp.CreatedAt.Asc()),
-				&setup.CommunicationProfiles,
-			),
-			keel.AllInto(lp.Where(lp.EDIPartnerID.Eq(req.PartnerID)).Limit(1), &projects),
-			keel.AllInto(
-				mi.Where(mi.EDIPartnerID.Eq(req.PartnerID)).
-					Order(mi.EntityType.Asc(), mi.SourceID.Asc()),
-				&setup.MappingItems,
-			),
-			keel.AllInto(cn.Where(cn.EDIPartnerID.Eq(req.PartnerID)), &setup.ControlNumbers),
-		)
-		if err != nil {
-			return nil, partnerErrors.Map(err, req.PartnerID.String())
-		}
-		if len(projects) == 0 {
+			setup := new(ediconnectiondraftports.EDIPartnerSetup)
+			var projects []*edi.LadingProject
+			err := keel.Batch(
+				ctx,
+				db,
+				keel.OneInto(ep.Where(ep.ID.Eq(req.PartnerID)), &setup.Partner),
+				keel.AllInto(
+					cp.Where(cp.EDIPartnerID.Eq(req.PartnerID)).Order(cp.CreatedAt.Asc()),
+					&setup.CommunicationProfiles,
+				),
+				keel.AllInto(lp.Where(lp.EDIPartnerID.Eq(req.PartnerID)).Limit(1), &projects),
+				keel.AllInto(
+					mi.Where(mi.EDIPartnerID.Eq(req.PartnerID)).
+						Order(mi.EntityType.Asc(), mi.SourceID.Asc()),
+					&setup.MappingItems,
+				),
+				keel.AllInto(cn.Where(cn.EDIPartnerID.Eq(req.PartnerID)), &setup.ControlNumbers),
+			)
+			if err != nil {
+				return nil, partnerErrors.Map(err, req.PartnerID.String())
+			}
+			if len(projects) == 0 {
+				return setup, nil
+			}
+			setup.Project = projects[0]
+			lv := edidb.LadingVersions
+			versions, err := lv.Where(lv.ProjectID.Eq(setup.Project.ID)).
+				Order(lv.Number.Desc()).
+				Limit(1).
+				All(ctx, db)
+			if err != nil {
+				return nil, err
+			}
+			if len(versions) > 0 {
+				setup.LatestVersion = versions[0]
+			}
 			return setup, nil
-		}
-		setup.Project = projects[0]
-		lv := edidb.LadingVersions
-		versions, err := lv.Where(lv.ProjectID.Eq(setup.Project.ID)).
-			Order(lv.Number.Desc()).
-			Limit(1).
-			All(ctx, db)
-		if err != nil {
-			return nil, err
-		}
-		if len(versions) > 0 {
-			setup.LatestVersion = versions[0]
-		}
-		return setup, nil
-	})
+		},
+	)
 }
 
 func (r *repository) GetInterchangeIdentity(
 	ctx context.Context,
 	_ pagination.TenantInfo,
-) (*ediports.InterchangeIdentity, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*ediports.InterchangeIdentity, error) {
-		lv := edidb.LadingVersions
-		qualifier := lv.Manifest.Text("partner", "interchange", "us", "qualifier").Coalesce("")
-		senderID := lv.Manifest.Text("partner", "interchange", "us", "id")
-		applicationID := lv.Manifest.Text("partner", "interchange", "group", "ours").Coalesce("")
+) (*ediconnectiondraftports.InterchangeIdentity, error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*ediconnectiondraftports.InterchangeIdentity, error) {
+			lv := edidb.LadingVersions
+			qualifier := lv.Manifest.Text("partner", "interchange", "us", "qualifier").Coalesce("")
+			senderID := lv.Manifest.Text("partner", "interchange", "us", "id")
+			applicationID := lv.Manifest.Text("partner", "interchange", "group", "ours").
+				Coalesce("")
 
-		identity, err := keel.IntoOne[ediports.InterchangeIdentity](ctx, r.db.Keel(ctx), lv.
-			Where(
-				lv.Status.Eq(edi.LadingVersionStatusActive),
-				senderID.Trim().NullIf("").IsNotNull(),
-			).
-			Group(qualifier, senderID, applicationID).
-			Pick(qualifier, senderID, applicationID, keel.Count()).
-			Order(keel.Count().Desc(), senderID.Asc()).
-			Limit(1))
-		if err != nil {
-			if dberror.IsNotFoundError(err) {
-				return &ediports.InterchangeIdentity{}, nil
+			identity, err := keel.IntoOne[ediconnectiondraftports.InterchangeIdentity](
+				ctx,
+				r.db.Keel(ctx),
+				lv.
+					Where(
+						lv.Status.Eq(edi.LadingVersionStatusActive),
+						senderID.Trim().NullIf("").IsNotNull(),
+					).
+					Group(qualifier, senderID, applicationID).
+					Pick(qualifier, senderID, applicationID, keel.Count()).
+					Order(keel.Count().Desc(), senderID.Asc()).
+					Limit(1),
+			)
+			if err != nil {
+				if dberror.IsNotFoundError(err) {
+					return &ediconnectiondraftports.InterchangeIdentity{}, nil
+				}
+				return nil, err
 			}
-			return nil, err
-		}
 
-		return &identity, nil
-	})
+			return &identity, nil
+		},
+	)
 }
 
 type mappingTarget func(ids []pulid.ID) keel.Projection
@@ -355,7 +375,7 @@ type targetRow struct {
 
 func (r *repository) ResolveMappingTargets(
 	ctx context.Context,
-	req *ediports.ResolveEDIMappingTargetsRequest,
+	req *ediconnectiondraftports.ResolveEDIMappingTargetsRequest,
 ) (map[edi.MappingEntityType]map[pulid.ID]string, error) {
 	return dbtx.Read(
 		ctx,

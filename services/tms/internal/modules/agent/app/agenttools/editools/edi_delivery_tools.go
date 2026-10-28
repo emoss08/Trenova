@@ -12,7 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediinboundservice"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/edimessageports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/jsonschemautils"
@@ -55,7 +55,7 @@ type ediMessageReplayer interface {
 type inboundFileReprocessor interface {
 	GetInboundFile(
 		ctx context.Context,
-		req ediports.GetEDIInboundFileByIDRequest,
+		req edimessageports.GetEDIInboundFileByIDRequest,
 	) (*edi.EDIInboundFile, error)
 	BulkReprocessInboundFiles(
 		ctx context.Context,

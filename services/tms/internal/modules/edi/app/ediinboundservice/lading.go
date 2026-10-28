@@ -11,7 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ladingdoc"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/edimessageports"
 	"github.com/emoss08/trenova/pkg/lading"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/x12"
@@ -253,7 +253,7 @@ func (s *Service) receive(ctx context.Context, in *received) transactionOutcome 
 		outcome.err = fmt.Errorf("the partner's flow %s: %w", in.read.flow, err)
 		return outcome
 	}
-	if _, err = s.messageRepo.LinkMessageFlow(ctx, &ediports.LinkEDIMessageFlowRequest{
+	if _, err = s.messageRepo.LinkMessageFlow(ctx, &edimessageports.LinkEDIMessageFlowRequest{
 		ID:             in.message.ID,
 		TenantInfo:     tenantInfo,
 		FlowInstanceID: dispatched.Instance.ID,

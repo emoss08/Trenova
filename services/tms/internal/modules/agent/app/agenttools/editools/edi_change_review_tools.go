@@ -11,7 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/editenderports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -39,7 +39,7 @@ var ediReviewDecisions = agenttoolschema.Source(
 type tenderChangeReviewer interface {
 	GetTenderChange(
 		ctx context.Context,
-		req ediports.GetEDITenderChangeByIDRequest,
+		req editenderports.GetEDITenderChangeByIDRequest,
 	) (*edi.TenderChange, error)
 	ApplyTenderChange(
 		ctx context.Context,
@@ -56,7 +56,7 @@ type tenderChangeReviewer interface {
 type transferChangeReviewer interface {
 	GetTransferChange(
 		ctx context.Context,
-		req ediports.GetEDITransferChangeByIDRequest,
+		req editenderports.GetEDITransferChangeByIDRequest,
 	) (*edi.TransferChange, error)
 	CheckTransferChangeReview(
 		ctx context.Context,
@@ -264,10 +264,13 @@ func NewReviewEDITenderChangeTool(reviewer tenderChangeReviewer) agenttoolports.
 		idGuidance: "The tender change, from edi_list_tender_changes. Never guess one.",
 		changeKind: permission.KindEDITenderChange,
 		plan: func(ctx context.Context, call *changeReviewCall) (*changeReviewPlan, error) {
-			change, err := reviewer.GetTenderChange(ctx, ediports.GetEDITenderChangeByIDRequest{
-				ID:         call.changeID,
-				TenantInfo: call.tenant,
-			})
+			change, err := reviewer.GetTenderChange(
+				ctx,
+				editenderports.GetEDITenderChangeByIDRequest{
+					ID:         call.changeID,
+					TenantInfo: call.tenant,
+				},
+			)
 			if err != nil {
 				return nil, err
 			}
@@ -312,7 +315,7 @@ func NewReviewEDITransferChangeTool(reviewer transferChangeReviewer) agenttoolpo
 		plan: func(ctx context.Context, call *changeReviewCall) (*changeReviewPlan, error) {
 			change, err := reviewer.GetTransferChange(
 				ctx,
-				ediports.GetEDITransferChangeByIDRequest{
+				editenderports.GetEDITransferChangeByIDRequest{
 					ID:         call.changeID,
 					TenantInfo: call.tenant,
 				},

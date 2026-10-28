@@ -5,17 +5,19 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/edi/app/edilading"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/testutil/mocks/ediportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
-	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/lading"
-
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ladingports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
+	"github.com/emoss08/trenova/internal/testutil/mocks/edipartnerportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/ladingportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/lading"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/mock"
@@ -41,10 +43,10 @@ func TestShipmentStatusCapabilityEnabledDefaultsTrueForMissingConnection(t *test
 	t.Parallel()
 
 	tenantInfo := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
-	connectionRepo := ediportsmock.NewMockEDIConnectionRepository(t)
+	connectionRepo := edipartnerportsmock.NewMockEDIConnectionRepository(t)
 	connectionID := pulid.MustNew("edic_")
 	connectionRepo.EXPECT().
-		GetConnectionByID(mock.Anything, ediports.GetEDIConnectionByIDRequest{
+		GetConnectionByID(mock.Anything, edipartnerports.GetEDIConnectionByIDRequest{
 			ID:         connectionID,
 			TenantInfo: tenantInfo,
 		}).
@@ -142,8 +144,8 @@ func TestResolveServiceFailure214CandidateSkippedReasons(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			partnerRepo := ediportsmock.NewMockEDIPartnerRepository(t)
-			projects := ediportsmock.NewMockLadingProjectRepository(t)
+			partnerRepo := edipartnerportsmock.NewMockEDIPartnerRepository(t)
+			projects := ladingportsmock.NewMockLadingProjectRepository(t)
 			orgs := tenantportsmock.NewMockOrganizationRepository(t)
 			orgs.EXPECT().GetByID(mock.Anything, mock.Anything).
 				Return(&tenant.Organization{Name: "Trenova", Timezone: "America/Chicago"}, nil).
@@ -158,7 +160,7 @@ func TestResolveServiceFailure214CandidateSkippedReasons(t *testing.T) {
 			}
 			if !tt.source.CustomerID.IsNil() {
 				partnerRepo.EXPECT().
-					List(mock.Anything, mock.AnythingOfType("*ediports.ListEDIPartnersRequest")).
+					List(mock.Anything, mock.AnythingOfType("*edipartnerports.ListEDIPartnersRequest")).
 					Return(&pagination.ListResult[*edi.EDIPartner]{
 						Items: tt.partners,
 						Total: len(tt.partners),
@@ -169,13 +171,16 @@ func TestResolveServiceFailure214CandidateSkippedReasons(t *testing.T) {
 				partnerID := tt.partners[index].ID
 				call := projects.EXPECT().GetRunnableVersions(
 					mock.Anything,
-					ediports.GetRunnableLadingVersionRequest{TenantInfo: tenantInfo, PartnerID: partnerID},
+					ladingports.GetRunnableLadingVersionRequest{
+						TenantInfo: tenantInfo,
+						PartnerID:  partnerID,
+					},
 				)
 				if flows == nil {
 					call.Return(nil, errortypes.NewNotFoundError("no project")).Once()
 					continue
 				}
-				call.Return(&ediports.RunnableLadingVersions{
+				call.Return(&ladingports.RunnableLadingVersions{
 					Project: &edi.LadingProject{ID: pulid.MustNew("ldp_"), EDIPartnerID: partnerID},
 					Active: &edi.LadingVersion{
 						ID:       pulid.MustNew("ldv_"),

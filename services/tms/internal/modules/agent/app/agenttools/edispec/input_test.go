@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediconnectiondraftports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -63,7 +63,10 @@ func newReadFixture() *readFixture {
 	}
 }
 
-func (f *readFixture) read(ctx context.Context, req *ReadRequest) (*ediports.SpecDocument, error) {
+func (f *readFixture) read(
+	ctx context.Context,
+	req *ReadRequest,
+) (*ediconnectiondraftports.SpecDocument, error) {
 	reader := NewDocumentReader(&fakeDocuments{doc: f.doc}, &fakeContents{content: f.content})
 	if req.DocumentID.IsNil() {
 		req.DocumentID = f.doc.ID
@@ -78,7 +81,14 @@ func TestRead_GivesThePagesOfAGuideAttachedToTheConversation(t *testing.T) {
 	spec, err := f.read(t.Context(), &ReadRequest{ThreadID: f.thread, AttachedBy: f.uploader})
 	require.NoError(t, err)
 	assert.Equal(t, "acme-guide.pdf", spec.FileName)
-	assert.Equal(t, []ediports.SpecPage{{Number: 1, Text: "Acme Retail Group"}, {Number: 2, Text: "AS2"}}, spec.Pages)
+	assert.Equal(
+		t,
+		[]ediconnectiondraftports.SpecPage{
+			{Number: 1, Text: "Acme Retail Group"},
+			{Number: 2, Text: "AS2"},
+		},
+		spec.Pages,
+	)
 
 	_, err = f.read(t.Context(), &ReadRequest{ThreadID: f.thread})
 	require.NoError(t, err, "an approver reads the conversation's own file")
@@ -92,7 +102,10 @@ func TestRead_RefusesAGuideFromElsewhere(t *testing.T) {
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "was not attached to this conversation")
 
-	_, err = f.read(t.Context(), &ReadRequest{ThreadID: f.thread, AttachedBy: pulid.MustNew("usr_")})
+	_, err = f.read(
+		t.Context(),
+		&ReadRequest{ThreadID: f.thread, AttachedBy: pulid.MustNew("usr_")},
+	)
 	require.Error(t, err, "another person's upload")
 
 	_, err = f.read(t.Context(), &ReadRequest{})
@@ -137,7 +150,11 @@ func TestParse_KeepsEveryCitationAsTheModelGaveIt(t *testing.T) {
 	require.Len(t, input.Draft.Gaps, 1)
 	assert.Equal(t, 6, input.Draft.Gaps[0].Citation.Page)
 	require.Len(t, input.Draft.Resolutions, 1)
-	assert.Equal(t, ediports.ResolutionSourcePerson, input.Draft.Resolutions[0].Source)
+	assert.Equal(
+		t,
+		ediconnectiondraftports.ResolutionSourcePerson,
+		input.Draft.Resolutions[0].Source,
+	)
 
 	_, err = Parse(map[string]any{ParamDocumentID: "not-an-id"}, tenant)
 	require.Error(t, err)
@@ -167,7 +184,9 @@ func TestRedactQuotes_KeepsSecretsOutOfTheStoredArguments(t *testing.T) {
 			"summary":  "The token: t-999 is sent by email",
 			"citation": map[string]any{"page": 6, "quote": "token: t-999"},
 		}},
-		ParamResolutions: []any{map[string]any{"field": "partner.timezone", "value": "America/Chicago"}},
+		ParamResolutions: []any{
+			map[string]any{"field": "partner.timezone", "value": "America/Chicago"},
+		},
 	}
 
 	redacted := RedactQuotes(params)
@@ -178,7 +197,11 @@ func TestRedactQuotes_KeepsSecretsOutOfTheStoredArguments(t *testing.T) {
 	assert.Equal(t, "acme", input.Draft.Values[0].Value)
 	assert.Equal(t, 2, input.Draft.Values[0].Citation.Page)
 	assert.Equal(t, "2.1", input.Draft.Values[0].Citation.Section)
-	assert.Equal(t, "ISA*01*XXXXXXXXXX*06*XXXXXXXXXX*ZZ*ACME", input.Draft.Requirements[0].Citation.Quote)
+	assert.Equal(
+		t,
+		"ISA*01*XXXXXXXXXX*06*XXXXXXXXXX*ZZ*ACME",
+		input.Draft.Requirements[0].Citation.Quote,
+	)
 	assert.Equal(t, "API key = [redacted] for code CL", input.Draft.Mappings[0].Citation.Quote)
 	assert.Equal(t, "The token: [redacted] is sent by email", input.Draft.Gaps[0].Summary)
 	assert.Equal(t, "token: [redacted]", input.Draft.Gaps[0].Citation.Quote)

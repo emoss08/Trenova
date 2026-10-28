@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/authctx"
@@ -62,7 +62,7 @@ func (h *Handler) listConnections(c *gin.Context) {
 	pagination.List(c, req, h.eh, func() (*pagination.ListResult[*edi.EDIConnection], error) {
 		return h.service.ListConnections(
 			c.Request.Context(),
-			&ediports.ListEDIConnectionsRequest{Filter: req},
+			&edipartnerports.ListEDIConnectionsRequest{Filter: req},
 		)
 	})
 }
@@ -104,7 +104,7 @@ func (h *Handler) getConnection(c *gin.Context) {
 
 	connection, err := h.service.GetConnection(
 		c.Request.Context(),
-		ediports.GetEDIConnectionByIDRequest{
+		edipartnerports.GetEDIConnectionByIDRequest{
 			ID:         connectionID,
 			TenantInfo: pagination.FromAuth(authCtx),
 		},

@@ -13,15 +13,19 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/edi/app/edilading"
-	"github.com/emoss08/trenova/pkg/errortypes"
-
 	"github.com/emoss08/trenova/internal/modules/edi/app/editransport"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediconnectiondraftports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/edimessageports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ladingports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
 	"github.com/emoss08/trenova/internal/testutil/mocks/carrierportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/ediportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/edimessageportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/edipartnerportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/ladingportsmock"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -32,24 +36,24 @@ import (
 )
 
 type partnerCardRepos struct {
-	partners *ediportsmock.MockEDIPartnerRepository
-	projects *ediportsmock.MockLadingProjectRepository
-	profiles *ediportsmock.MockEDICommunicationProfileRepository
-	mappings *ediportsmock.MockEDIMappingProfileRepository
-	messages *ediportsmock.MockEDIMessageRepository
-	files    *ediportsmock.MockEDIInboundFileRepository
+	partners *edipartnerportsmock.MockEDIPartnerRepository
+	projects *ladingportsmock.MockLadingProjectRepository
+	profiles *edipartnerportsmock.MockEDICommunicationProfileRepository
+	mappings *edipartnerportsmock.MockEDIMappingProfileRepository
+	messages *edimessageportsmock.MockEDIMessageRepository
+	files    *edimessageportsmock.MockEDIInboundFileRepository
 	carriers *carrierportsmock.MockCarrierRepository
 }
 
 func newPartnerCardRepos(t *testing.T) partnerCardRepos {
 	t.Helper()
 	return partnerCardRepos{
-		partners: ediportsmock.NewMockEDIPartnerRepository(t),
-		projects: ediportsmock.NewMockLadingProjectRepository(t),
-		profiles: ediportsmock.NewMockEDICommunicationProfileRepository(t),
-		mappings: ediportsmock.NewMockEDIMappingProfileRepository(t),
-		messages: ediportsmock.NewMockEDIMessageRepository(t),
-		files:    ediportsmock.NewMockEDIInboundFileRepository(t),
+		partners: edipartnerportsmock.NewMockEDIPartnerRepository(t),
+		projects: ladingportsmock.NewMockLadingProjectRepository(t),
+		profiles: edipartnerportsmock.NewMockEDICommunicationProfileRepository(t),
+		mappings: edipartnerportsmock.NewMockEDIMappingProfileRepository(t),
+		messages: edimessageportsmock.NewMockEDIMessageRepository(t),
+		files:    edimessageportsmock.NewMockEDIInboundFileRepository(t),
 		carriers: carrierportsmock.NewMockCarrierRepository(t),
 	}
 }
@@ -92,15 +96,15 @@ func expectPartnerCardQuiet(r partnerCardRepos, partnerID pulid.ID) {
 	r.profiles.EXPECT().ListProfilesByPartner(mock.Anything, mock.Anything).
 		Return([]*edi.EDICommunicationProfile{}, nil)
 	r.partners.EXPECT().GetReadiness(mock.Anything, mock.Anything).
-		Return([]*ediports.EDIPartnerReadinessRow{{PartnerID: partnerID, Kind: "External"}}, nil)
+		Return([]*edipartnerports.EDIPartnerReadinessRow{{PartnerID: partnerID, Kind: "External"}}, nil)
 	r.mappings.EXPECT().GetMappingSummary(mock.Anything, mock.Anything).
-		Return(&ediports.EDIMappingSummary{}, nil)
+		Return(&edipartnerports.EDIMappingSummary{}, nil)
 	r.messages.EXPECT().GetPartnerScorecards(mock.Anything, mock.Anything).Return(nil, nil)
 	r.messages.EXPECT().GetAckStatusCounts(mock.Anything, mock.Anything).Return(nil, nil)
 	r.messages.EXPECT().GetPartnerSetActivity(mock.Anything, mock.Anything).Return(nil, nil)
 	r.messages.EXPECT().GetVolumeSeries(mock.Anything, mock.Anything).Return(nil, nil)
 	r.messages.EXPECT().ListOverdueAcks(mock.Anything, mock.Anything).
-		Return(&ediports.OverdueEDIAcks{}, nil)
+		Return(&edimessageports.OverdueEDIAcks{}, nil)
 	r.messages.EXPECT().ListRecentDeadLettered(mock.Anything, mock.Anything).Return(nil, nil)
 	r.files.EXPECT().ListRecentQuarantined(mock.Anything, mock.Anything).Return(nil, nil)
 }
@@ -114,60 +118,64 @@ func TestGetPartnerCard_ReadsOnePartnerOverItsWindows(t *testing.T) {
 	overdue := &edi.EDIMessage{ID: pulid.MustNew("edimsg_"), EDIPartnerID: partnerID}
 	dead := &edi.EDIMessage{ID: pulid.MustNew("edimsg_"), EDIPartnerID: partnerID}
 	quarantined := &edi.EDIInboundFile{ID: pulid.MustNew("ediinf_")}
-	scorecard := &ediports.EDIPartnerScorecardRow{PartnerID: partnerID, SentCount: 1284}
-	sets := []*ediports.EDIPartnerSetActivityRow{
-		{TransactionSet: edi.TransactionSet("214"), Direction: edi.DocumentDirectionOutbound, Count: 1284},
+	scorecard := &edimessageports.EDIPartnerScorecardRow{PartnerID: partnerID, SentCount: 1284}
+	sets := []*edimessageports.EDIPartnerSetActivityRow{
+		{
+			TransactionSet: edi.TransactionSet("214"),
+			Direction:      edi.DocumentDirectionOutbound,
+			Count:          1284,
+		},
 	}
 
 	r := newPartnerCardRepos(t)
-	var partnerReq ediports.GetEDIPartnerByIDRequest
+	var partnerReq edipartnerports.GetEDIPartnerByIDRequest
 	r.partners.EXPECT().GetByID(mock.Anything, mock.Anything).
-		Run(func(_ context.Context, req ediports.GetEDIPartnerByIDRequest) { partnerReq = req }).
+		Run(func(_ context.Context, req edipartnerports.GetEDIPartnerByIDRequest) { partnerReq = req }).
 		Return(partner, nil)
-	var projectReq ediports.GetRunnableLadingVersionRequest
+	var projectReq ladingports.GetRunnableLadingVersionRequest
 	r.projects.EXPECT().GetRunnableVersions(mock.Anything, mock.Anything).
-		Run(func(_ context.Context, req ediports.GetRunnableLadingVersionRequest) { projectReq = req }).
+		Run(func(_ context.Context, req ladingports.GetRunnableLadingVersionRequest) { projectReq = req }).
 		Return(nil, errortypes.NewNotFoundError("no project"))
 	r.profiles.EXPECT().ListProfilesByPartner(mock.Anything, mock.Anything).
 		Return([]*edi.EDICommunicationProfile{}, nil)
 	r.partners.EXPECT().GetReadiness(mock.Anything, mock.Anything).
-		Return([]*ediports.EDIPartnerReadinessRow{{PartnerID: partnerID, Kind: "External"}}, nil)
-	var mappingReq ediports.GetEDIMappingSummaryRequest
+		Return([]*edipartnerports.EDIPartnerReadinessRow{{PartnerID: partnerID, Kind: "External"}}, nil)
+	var mappingReq edipartnerports.GetEDIMappingSummaryRequest
 	r.mappings.EXPECT().GetMappingSummary(mock.Anything, mock.Anything).
-		Run(func(_ context.Context, req ediports.GetEDIMappingSummaryRequest) { mappingReq = req }).
-		Return(&ediports.EDIMappingSummary{}, nil)
-	var scorecardReq *ediports.GetEDIPartnerScorecardsRequest
+		Run(func(_ context.Context, req edipartnerports.GetEDIMappingSummaryRequest) { mappingReq = req }).
+		Return(&edipartnerports.EDIMappingSummary{}, nil)
+	var scorecardReq *edimessageports.GetEDIPartnerScorecardsRequest
 	r.messages.EXPECT().GetPartnerScorecards(mock.Anything, mock.Anything).
-		Run(func(_ context.Context, req *ediports.GetEDIPartnerScorecardsRequest) { scorecardReq = req }).
-		Return([]*ediports.EDIPartnerScorecardRow{scorecard}, nil)
-	var countsReq ediports.GetEDIMessageStatusCountsRequest
+		Run(func(_ context.Context, req *edimessageports.GetEDIPartnerScorecardsRequest) { scorecardReq = req }).
+		Return([]*edimessageports.EDIPartnerScorecardRow{scorecard}, nil)
+	var countsReq edimessageports.GetEDIMessageStatusCountsRequest
 	r.messages.EXPECT().GetAckStatusCounts(mock.Anything, mock.Anything).
-		Run(func(_ context.Context, req ediports.GetEDIMessageStatusCountsRequest) { countsReq = req }).
+		Run(func(_ context.Context, req edimessageports.GetEDIMessageStatusCountsRequest) { countsReq = req }).
 		Return(map[edi.MessageAcknowledgmentStatus]int{edi.MessageAcknowledgmentStatusAccepted: 1399}, nil)
-	var setsReq *ediports.GetEDIPartnerSetActivityRequest
+	var setsReq *edimessageports.GetEDIPartnerSetActivityRequest
 	r.messages.EXPECT().GetPartnerSetActivity(mock.Anything, mock.Anything).
-		Run(func(_ context.Context, req *ediports.GetEDIPartnerSetActivityRequest) { setsReq = req }).
+		Run(func(_ context.Context, req *edimessageports.GetEDIPartnerSetActivityRequest) { setsReq = req }).
 		Return(sets, nil)
-	var seriesReq ediports.GetEDIVolumeSeriesRequest
+	var seriesReq edimessageports.GetEDIVolumeSeriesRequest
 	r.messages.EXPECT().GetVolumeSeries(mock.Anything, mock.Anything).
-		Run(func(_ context.Context, req ediports.GetEDIVolumeSeriesRequest) { seriesReq = req }).
-		Return([]*ediports.EDIVolumePoint{{BucketStart: 3600, OutboundCount: 4}}, nil)
-	var overdueReq *ediports.ListOverdueEDIAcksRequest
+		Run(func(_ context.Context, req edimessageports.GetEDIVolumeSeriesRequest) { seriesReq = req }).
+		Return([]*edimessageports.EDIVolumePoint{{BucketStart: 3600, OutboundCount: 4}}, nil)
+	var overdueReq *edimessageports.ListOverdueEDIAcksRequest
 	r.messages.EXPECT().ListOverdueAcks(mock.Anything, mock.Anything).
-		Run(func(_ context.Context, req *ediports.ListOverdueEDIAcksRequest) { overdueReq = req }).
-		Return(&ediports.OverdueEDIAcks{
+		Run(func(_ context.Context, req *edimessageports.ListOverdueEDIAcksRequest) { overdueReq = req }).
+		Return(&edimessageports.OverdueEDIAcks{
 			Messages: []*edi.EDIMessage{overdue},
-			Partners: []*ediports.OverdueEDIAckPartner{
+			Partners: []*edimessageports.OverdueEDIAckPartner{
 				{PartnerID: partnerID, Count: 3, OldestGeneratedAt: 1_700_000_000},
 			},
 		}, nil)
-	var deadReq *ediports.ListRecentEDIMessageFailuresRequest
+	var deadReq *edimessageports.ListRecentEDIMessageFailuresRequest
 	r.messages.EXPECT().ListRecentDeadLettered(mock.Anything, mock.Anything).
-		Run(func(_ context.Context, req *ediports.ListRecentEDIMessageFailuresRequest) { deadReq = req }).
+		Run(func(_ context.Context, req *edimessageports.ListRecentEDIMessageFailuresRequest) { deadReq = req }).
 		Return([]*edi.EDIMessage{dead}, nil)
-	var filesReq ediports.ListRecentQuarantinedEDIInboundFilesRequest
+	var filesReq edimessageports.ListRecentQuarantinedEDIInboundFilesRequest
 	r.files.EXPECT().ListRecentQuarantined(mock.Anything, mock.Anything).
-		Run(func(_ context.Context, req ediports.ListRecentQuarantinedEDIInboundFilesRequest) {
+		Run(func(_ context.Context, req edimessageports.ListRecentQuarantinedEDIInboundFilesRequest) {
 			filesReq = req
 		}).
 		Return([]*edi.EDIInboundFile{quarantined}, nil)
@@ -180,7 +188,7 @@ func TestGetPartnerCard_ReadsOnePartnerOverItsWindows(t *testing.T) {
 	require.NoError(t, err)
 	after := timeutils.NowUnix()
 
-	assert.Equal(t, ediports.GetEDIPartnerByIDRequest{
+	assert.Equal(t, edipartnerports.GetEDIPartnerByIDRequest{
 		ID: partnerID, TenantInfo: tenant, IncludeLinks: true,
 	}, partnerReq, "the customer and connection are read with the partner")
 	assert.Equal(t, partnerID, projectReq.PartnerID)
@@ -192,13 +200,13 @@ func TestGetPartnerCard_ReadsOnePartnerOverItsWindows(t *testing.T) {
 	assert.LessOrEqual(t, window, after-PartnerCardActivityWindowSeconds)
 	assert.Equal(t, partnerID, scorecardReq.PartnerID, "the scorecard is the partner's alone")
 	assert.Equal(t, window, scorecardReq.Since)
-	assert.Equal(t, ediports.GetEDIMessageStatusCountsRequest{
+	assert.Equal(t, edimessageports.GetEDIMessageStatusCountsRequest{
 		TenantInfo: tenant, Since: window, PartnerID: partnerID,
 	}, countsReq)
-	assert.Equal(t, &ediports.GetEDIPartnerSetActivityRequest{
+	assert.Equal(t, &edimessageports.GetEDIPartnerSetActivityRequest{
 		TenantInfo: tenant, PartnerID: partnerID, Since: window,
 	}, setsReq)
-	assert.Equal(t, ediports.GetEDIVolumeSeriesRequest{
+	assert.Equal(t, edimessageports.GetEDIVolumeSeriesRequest{
 		TenantInfo:    tenant,
 		Since:         window + PartnerCardActivityWindowSeconds - PartnerCardSeriesWindowSeconds,
 		BucketSeconds: PartnerCardSeriesBucketSeconds,
@@ -209,10 +217,10 @@ func TestGetPartnerCard_ReadsOnePartnerOverItsWindows(t *testing.T) {
 	assert.Equal(t, PartnerCardAttentionLimit, overdueReq.Limit)
 	assert.Equal(t, window+PartnerCardActivityWindowSeconds-DefaultOverdueAckAgeSeconds,
 		overdueReq.PendingSince, "overdue is the EDI overview's four hours")
-	assert.Equal(t, &ediports.ListRecentEDIMessageFailuresRequest{
+	assert.Equal(t, &edimessageports.ListRecentEDIMessageFailuresRequest{
 		TenantInfo: tenant, PartnerID: partnerID, Since: window, Limit: PartnerCardAttentionLimit,
 	}, deadReq, "only dead letters inside the window are drawn as needing a look")
-	assert.Equal(t, ediports.ListRecentQuarantinedEDIInboundFilesRequest{
+	assert.Equal(t, edimessageports.ListRecentQuarantinedEDIInboundFilesRequest{
 		TenantInfo: tenant, PartnerID: partnerID, Since: window, Limit: PartnerCardAttentionLimit,
 	}, filesReq)
 
@@ -255,11 +263,14 @@ func TestGetPartnerCard_DescribesTransportsWithoutTheirSecrets(t *testing.T) {
 		Return(&edi.EDIPartner{ID: partnerID}, nil)
 	expectPartnerCardQuiet(r, partnerID)
 	r.profiles.ExpectedCalls = nil
-	r.profiles.EXPECT().ListProfilesByPartner(mock.Anything, ediports.ListEDICommunicationProfilesByPartnerRequest{
-		PartnerID: partnerID,
-	}).Return([]*edi.EDICommunicationProfile{as2Profile, sftpProfile}, nil)
+	r.profiles.EXPECT().
+		ListProfilesByPartner(mock.Anything, edipartnerports.ListEDICommunicationProfilesByPartnerRequest{
+			PartnerID: partnerID,
+		}).
+		Return([]*edi.EDICommunicationProfile{as2Profile, sftpProfile}, nil)
 
-	card, err := r.service().GetPartnerCard(t.Context(), &GetEDIPartnerCardRequest{PartnerID: partnerID})
+	card, err := r.service().
+		GetPartnerCard(t.Context(), &GetEDIPartnerCardRequest{PartnerID: partnerID})
 	require.NoError(t, err)
 	require.Len(t, card.Transports, 2)
 
@@ -280,7 +291,7 @@ func TestGetPartnerCard_DescribesTransportsWithoutTheirSecrets(t *testing.T) {
 		Unreadable: true,
 	}, as2Transport.Certificates[1], "a PEM that does not parse is flagged, not dropped")
 
-	var basicAuth *ediports.CredentialRequirement
+	var basicAuth *ediconnectiondraftports.CredentialRequirement
 	for index := range as2Transport.Credentials {
 		if as2Transport.Credentials[index].Keys[0] == editransport.SecretKeyBasicAuthPassword {
 			basicAuth = &as2Transport.Credentials[index]
@@ -315,10 +326,12 @@ func TestGetPartnerCard_ReadsCarriersOnlyWhenAskedFor(t *testing.T) {
 	r.partners.EXPECT().GetByID(mock.Anything, mock.Anything).
 		Return(&edi.EDIPartner{ID: partnerID}, nil)
 	expectPartnerCardQuiet(r, partnerID)
-	r.carriers.EXPECT().ListEDIChannelsByPartner(mock.Anything, carrierports.ListCarrierEDIChannelsByPartnerRequest{
-		TenantInfo:   tenant,
-		EDIPartnerID: partnerID,
-	}).Return([]*carrier.CarrierEDIChannel{channel}, nil)
+	r.carriers.EXPECT().
+		ListEDIChannelsByPartner(mock.Anything, carrierports.ListCarrierEDIChannelsByPartnerRequest{
+			TenantInfo:   tenant,
+			EDIPartnerID: partnerID,
+		}).
+		Return([]*carrier.CarrierEDIChannel{channel}, nil)
 
 	card, err := r.service().GetPartnerCard(t.Context(), &GetEDIPartnerCardRequest{
 		TenantInfo:      tenant,

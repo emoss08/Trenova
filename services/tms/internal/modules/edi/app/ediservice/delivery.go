@@ -11,7 +11,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/edi/app/editransport"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/edimessageports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/editenderports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/editransportports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -67,7 +70,7 @@ func (s *Service) deliverMessage(
 	now := timeutils.NowUnix()
 	message, err = s.messageRepo.UpdateMessageDelivery(
 		ctx,
-		&ediports.UpdateEDIMessageDeliveryRequest{
+		&edimessageports.UpdateEDIMessageDeliveryRequest{
 			ID:                    message.ID,
 			TenantInfo:            messageTenantInfo(message),
 			DeliveryStatus:        edi.MessageDeliveryStatusSending,
@@ -86,7 +89,7 @@ func (s *Service) deliverMessage(
 	transportResult, deliveryErr := s.transport.Deliver(
 		ctx,
 		profile.Method,
-		&ediports.EDITransportRequest{
+		&editransportports.EDITransportRequest{
 			Profile:  profile,
 			Secrets:  secrets,
 			FileName: editransport.OutboundFileName(profile, message),
@@ -123,7 +126,7 @@ func (s *Service) deliverMessage(
 	if pending {
 		message, err = s.messageRepo.UpdateMessageDelivery(
 			ctx,
-			&ediports.UpdateEDIMessageDeliveryRequest{
+			&edimessageports.UpdateEDIMessageDeliveryRequest{
 				ID:                    message.ID,
 				TenantInfo:            messageTenantInfo(message),
 				DeliveryStatus:        edi.MessageDeliveryStatusSending,
@@ -145,7 +148,7 @@ func (s *Service) deliverMessage(
 
 	message, err = s.messageRepo.UpdateMessageDelivery(
 		ctx,
-		&ediports.UpdateEDIMessageDeliveryRequest{
+		&edimessageports.UpdateEDIMessageDeliveryRequest{
 			ID:                    message.ID,
 			TenantInfo:            messageTenantInfo(message),
 			DeliveryStatus:        edi.MessageDeliveryStatusSent,
@@ -192,7 +195,7 @@ func (s *Service) loadDeliverableMessage(
 			nil,
 		)
 	}
-	message, err := s.messageRepo.GetMessageByID(ctx, ediports.GetEDIMessageByIDRequest{
+	message, err := s.messageRepo.GetMessageByID(ctx, edimessageports.GetEDIMessageByIDRequest{
 		ID:         payload.MessageID,
 		TenantInfo: payload.TenantInfo,
 	})
@@ -235,7 +238,7 @@ func (s *Service) recordDeliveryFailure(
 ) {
 	if _, updateErr := s.messageRepo.UpdateMessageDelivery(
 		ctx,
-		&ediports.UpdateEDIMessageDeliveryRequest{
+		&edimessageports.UpdateEDIMessageDeliveryRequest{
 			ID:                    message.ID,
 			TenantInfo:            messageTenantInfo(message),
 			DeliveryStatus:        edi.MessageDeliveryStatusFailed,
@@ -260,7 +263,7 @@ func (s *Service) MarkMessageDeadLettered(
 	if payload == nil || payload.MessageID.IsNil() {
 		return errors.New("EDI message ID is required for dead-letter handling")
 	}
-	message, err := s.messageRepo.GetMessageByID(ctx, ediports.GetEDIMessageByIDRequest{
+	message, err := s.messageRepo.GetMessageByID(ctx, edimessageports.GetEDIMessageByIDRequest{
 		ID:         payload.MessageID,
 		TenantInfo: payload.TenantInfo,
 	})
@@ -273,7 +276,7 @@ func (s *Service) MarkMessageDeadLettered(
 	now := timeutils.NowUnix()
 	message, err = s.messageRepo.UpdateMessageDelivery(
 		ctx,
-		&ediports.UpdateEDIMessageDeliveryRequest{
+		&edimessageports.UpdateEDIMessageDeliveryRequest{
 			ID:                    message.ID,
 			TenantInfo:            messageTenantInfo(message),
 			DeliveryStatus:        edi.MessageDeliveryStatusDeadLettered,
@@ -323,7 +326,7 @@ func (s *Service) RetryMessageDelivery(
 	now := timeutils.NowUnix()
 	message, err := s.messageRepo.UpdateMessageDelivery(
 		ctx,
-		&ediports.UpdateEDIMessageDeliveryRequest{
+		&edimessageports.UpdateEDIMessageDeliveryRequest{
 			ID:                    plan.Message.ID,
 			TenantInfo:            messageTenantInfo(plan.Message),
 			DeliveryStatus:        edi.MessageDeliveryStatusQueued,
@@ -352,7 +355,7 @@ func (s *Service) ReplayMessageDelivery(
 	now := timeutils.NowUnix()
 	message, err := s.messageRepo.UpdateMessageDelivery(
 		ctx,
-		&ediports.UpdateEDIMessageDeliveryRequest{
+		&edimessageports.UpdateEDIMessageDeliveryRequest{
 			ID:                    plan.Message.ID,
 			TenantInfo:            messageTenantInfo(plan.Message),
 			DeliveryStatus:        edi.MessageDeliveryStatusQueued,
@@ -376,7 +379,7 @@ func (s *Service) ReplayMessageDelivery(
 
 func (s *Service) ResetControlNumber(
 	ctx context.Context,
-	req *ediports.ResetEDIControlNumberRequest,
+	req *edipartnerports.ResetEDIControlNumberRequest,
 	actor *permissionports.RequestActor,
 ) (*edi.EDIControlNumberSequence, error) {
 	if err := validateControlNumberRequest(req); err != nil {
@@ -404,7 +407,7 @@ func (s *Service) ResetControlNumber(
 
 func (s *Service) StartControlNumber(
 	ctx context.Context,
-	req *ediports.ResetEDIControlNumberRequest,
+	req *edipartnerports.ResetEDIControlNumberRequest,
 	actor *permissionports.RequestActor,
 ) (*edi.EDIControlNumberSequence, error) {
 	if err := validateControlNumberRequest(req); err != nil {
@@ -430,7 +433,7 @@ func (s *Service) StartControlNumber(
 	return sequence, nil
 }
 
-func validateControlNumberRequest(req *ediports.ResetEDIControlNumberRequest) error {
+func validateControlNumberRequest(req *edipartnerports.ResetEDIControlNumberRequest) error {
 	multiErr := errortypes.NewMultiError()
 	if req.PartnerID.IsNil() {
 		multiErr.Add("partnerId", errortypes.ErrRequired, "EDI partner is required")
@@ -467,7 +470,7 @@ func (s *Service) queueMessageForDelivery(
 		message.Status != edi.MessageStatusGenerated {
 		return nil
 	}
-	partner, err := s.partnerRepo.GetByID(ctx, ediports.GetEDIPartnerByIDRequest{
+	partner, err := s.partnerRepo.GetByID(ctx, edipartnerports.GetEDIPartnerByIDRequest{
 		ID:         message.EDIPartnerID,
 		TenantInfo: messageTenantInfo(message),
 	})
@@ -488,7 +491,7 @@ func (s *Service) queueMessageForDelivery(
 		now := timeutils.NowUnix()
 		updated, updateErr := s.messageRepo.UpdateMessageDelivery(
 			ctx,
-			&ediports.UpdateEDIMessageDeliveryRequest{
+			&edimessageports.UpdateEDIMessageDeliveryRequest{
 				ID:                    message.ID,
 				TenantInfo:            messageTenantInfo(message),
 				DeliveryStatus:        edi.MessageDeliveryStatusQueued,
@@ -556,7 +559,7 @@ func (s *Service) deliveryProfileForMessage(
 		change.Recipient.CommunicationProfileID.IsNotNil() {
 		return s.profileRepo.GetProfileByID(
 			ctx,
-			ediports.GetEDICommunicationProfileByIDRequest{
+			edipartnerports.GetEDICommunicationProfileByIDRequest{
 				ID:         change.Recipient.CommunicationProfileID,
 				TenantInfo: messageTenantInfo(message),
 			},
@@ -565,7 +568,7 @@ func (s *Service) deliveryProfileForMessage(
 	if pinned := message.PayloadSnapshot.DeliveryCommunicationProfileID; pinned.IsNotNil() {
 		return s.profileRepo.GetProfileByID(
 			ctx,
-			ediports.GetEDICommunicationProfileByIDRequest{
+			edipartnerports.GetEDICommunicationProfileByIDRequest{
 				ID:         pinned,
 				TenantInfo: messageTenantInfo(message),
 			},
@@ -576,7 +579,7 @@ func (s *Service) deliveryProfileForMessage(
 	}
 	return s.profileRepo.GetActiveProfileByPartner(
 		ctx,
-		ediports.GetActiveEDICommunicationProfileByPartnerRequest{
+		edipartnerports.GetActiveEDICommunicationProfileByPartnerRequest{
 			PartnerID:  message.EDIPartnerID,
 			TenantInfo: messageTenantInfo(message),
 			Methods:    deliverableMethods,
@@ -606,7 +609,7 @@ func (s *Service) tenderChangeForOutboundMessage(
 ) (*edi.TenderChange, bool, error) {
 	change, err := s.tenderChangeRepo.GetTenderChangeByOutboundMessageID(
 		ctx,
-		ediports.GetEDITenderChangeByOutboundMessageIDRequest{
+		editenderports.GetEDITenderChangeByOutboundMessageIDRequest{
 			OutboundMessageID: message.ID,
 			TenantInfo:        messageTenantInfo(message),
 		},

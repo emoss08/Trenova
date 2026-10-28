@@ -5,9 +5,9 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ladingports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/testutil/mocks/ediportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/ladingportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"github.com/emoss08/trenova/pkg/lading"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -33,7 +33,7 @@ func carrierStarter(t *testing.T) *lading.Starter {
 	return built
 }
 
-func projectsWith(t *testing.T, repo ediports.LadingProjectRepository) *Projects {
+func projectsWith(t *testing.T, repo ladingports.LadingProjectRepository) *Projects {
 	t.Helper()
 	orgs := tenantportsmock.NewMockOrganizationRepository(t)
 	orgs.EXPECT().GetByID(mock.Anything, mock.Anything).
@@ -79,7 +79,7 @@ func TestSaveDraft_ChecksTheFilesWithTheSamplesTheirTestsRead(t *testing.T) {
 		Status:    edi.LadingVersionStatusDraft,
 		Version:   3,
 	}
-	repo := ediportsmock.NewMockLadingProjectRepository(t)
+	repo := ladingportsmock.NewMockLadingProjectRepository(t)
 	repo.EXPECT().GetVersion(mock.Anything, mock.Anything).Return(draft, nil)
 	var saved *edi.LadingVersion
 	repo.EXPECT().SaveDraft(mock.Anything, mock.Anything, mock.Anything).
@@ -121,9 +121,9 @@ func TestNewDraft_ChecksTheVersionWithItsStoredSamples(t *testing.T) {
 		Files:     starter.Files,
 		Samples:   refs,
 	}
-	repo := ediportsmock.NewMockLadingProjectRepository(t)
+	repo := ladingportsmock.NewMockLadingProjectRepository(t)
 	repo.EXPECT().GetVersion(mock.Anything, mock.Anything).Return(active, nil)
-	sameProject := mock.MatchedBy(func(req ediports.GetLadingSamplesRequest) bool {
+	sameProject := mock.MatchedBy(func(req ladingports.GetLadingSamplesRequest) bool {
 		return req.ProjectID == active.ProjectID && len(req.Digests) == len(stored)
 	})
 	repo.EXPECT().GetSamples(mock.Anything, sameProject).Return(stored, nil)

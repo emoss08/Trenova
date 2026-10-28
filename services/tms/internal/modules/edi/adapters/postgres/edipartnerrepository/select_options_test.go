@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
 	"github.com/emoss08/trenova/internal/testutil/keeltest"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -13,7 +13,7 @@ import (
 func TestPartnerOptionsQuery_AppliesTheFiltersAndSearch(t *testing.T) {
 	t.Parallel()
 
-	q := partnerOptionsQuery(&ediports.EDIPartnerSelectOptionsRequest{
+	q := partnerOptionsQuery(&edipartnerports.EDIPartnerSelectOptionsRequest{
 		Kind:               edi.PartnerKindExternal,
 		EnabledForOutbound: true,
 	}).Where(partnerSearch("acme")).Limit(10)
@@ -33,7 +33,7 @@ func TestPartnerOptionsQuery_AppliesTheFiltersAndSearch(t *testing.T) {
 func TestReadinessQuery_ChecksEverySetupStepInOneStatement(t *testing.T) {
 	t.Parallel()
 
-	q := readinessQuery(&ediports.GetEDIPartnerReadinessRequest{
+	q := readinessQuery(&edipartnerports.GetEDIPartnerReadinessRequest{
 		PartnerIDs: []pulid.ID{"edip_1", "edip_2"},
 	})
 
@@ -49,6 +49,10 @@ func TestReadinessQuery_ChecksEverySetupStepInOneStatement(t *testing.T) {
 			`AND elp2."organization_id" = $2 AND elp2."edi_partner_id" = ep."id" `+
 			`AND elp2."active_version_id" IS NOT NULL)`,
 	)
-	assert.Contains(t, sql, `FROM "edi_partners" ep WHERE ep."business_unit_id" = $1 AND ep."organization_id" = $2 AND ep."id" = ANY($3)`)
+	assert.Contains(
+		t,
+		sql,
+		`FROM "edi_partners" ep WHERE ep."business_unit_id" = $1 AND ep."organization_id" = $2 AND ep."id" = ANY($3)`,
+	)
 	assert.Equal(t, []any{"bu_1", "org_1", []string{"edip_1", "edip_2"}, "", ""}, args)
 }

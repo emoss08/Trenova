@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/modules/edi/app/edilading"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ladingports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/authctx"
@@ -111,7 +111,7 @@ func (h *Handler) getPartnerLadingProject(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	project, err := h.projects.GetProject(c.Request.Context(), &ediports.GetLadingProjectRequest{
+	project, err := h.projects.GetProject(c.Request.Context(), &ladingports.GetLadingProjectRequest{
 		TenantInfo: tenantInfoFromAuth(authctx.GetAuthContext(c)),
 		PartnerID:  partnerID,
 	})
@@ -128,7 +128,7 @@ func (h *Handler) getLadingProject(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	project, err := h.projects.GetProject(c.Request.Context(), &ediports.GetLadingProjectRequest{
+	project, err := h.projects.GetProject(c.Request.Context(), &ladingports.GetLadingProjectRequest{
 		TenantInfo: tenantInfoFromAuth(authctx.GetAuthContext(c)),
 		ID:         projectID,
 	})
@@ -147,7 +147,7 @@ func (h *Handler) listLadingVersions(c *gin.Context) {
 	}
 	versions, err := h.projects.ListVersions(
 		c.Request.Context(),
-		ediports.ListLadingVersionsRequest{
+		ladingports.ListLadingVersionsRequest{
 			TenantInfo: tenantInfoFromAuth(authctx.GetAuthContext(c)),
 			ProjectID:  projectID,
 			Limit:      queryLimit(c),
@@ -218,7 +218,7 @@ func (h *Handler) getLadingVersion(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	detail, err := h.projects.GetVersion(c.Request.Context(), ediports.GetLadingVersionRequest{
+	detail, err := h.projects.GetVersion(c.Request.Context(), ladingports.GetLadingVersionRequest{
 		TenantInfo: tenantInfoFromAuth(authctx.GetAuthContext(c)),
 		ID:         versionID,
 	})
@@ -367,7 +367,7 @@ func (h *Handler) ladingShadowResults(c *gin.Context) {
 	}
 	report, err := h.projects.ShadowResults(
 		c.Request.Context(),
-		&ediports.ListLadingShadowResultsRequest{
+		&ladingports.ListLadingShadowResultsRequest{
 			TenantInfo:    tenantInfoFromAuth(authctx.GetAuthContext(c)),
 			VersionID:     versionID,
 			OnlyDiffering: helpers.QueryBool(c, "onlyDiffering"),
@@ -413,11 +413,14 @@ func (h *Handler) listLadingReplays(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	replays, err := h.projects.ListReplays(c.Request.Context(), ediports.ListLadingReplaysRequest{
-		TenantInfo: tenantInfoFromAuth(authctx.GetAuthContext(c)),
-		VersionID:  versionID,
-		Limit:      queryLimit(c),
-	})
+	replays, err := h.projects.ListReplays(
+		c.Request.Context(),
+		ladingports.ListLadingReplaysRequest{
+			TenantInfo: tenantInfoFromAuth(authctx.GetAuthContext(c)),
+			VersionID:  versionID,
+			Limit:      queryLimit(c),
+		},
+	)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -431,7 +434,7 @@ func (h *Handler) getLadingReplay(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	replay, err := h.projects.GetReplay(c.Request.Context(), ediports.GetLadingReplayRequest{
+	replay, err := h.projects.GetReplay(c.Request.Context(), ladingports.GetLadingReplayRequest{
 		TenantInfo: tenantInfoFromAuth(authctx.GetAuthContext(c)),
 		ID:         replayID,
 	})
@@ -453,12 +456,15 @@ func (h *Handler) listFlowInstances(c *gin.Context) {
 	shipmentID := pulid.ID(helpers.QueryString(c, "shipmentId", ""))
 
 	pagination.List(c, req, h.eh, func() (*pagination.ListResult[*edi.FlowInstance], error) {
-		return h.service.ListFlowInstances(c.Request.Context(), &ediports.ListFlowInstancesRequest{
-			Filter:     req,
-			PartnerID:  partnerID,
-			ShipmentID: shipmentID,
-			Statuses:   statuses,
-		})
+		return h.service.ListFlowInstances(
+			c.Request.Context(),
+			&ladingports.ListFlowInstancesRequest{
+				Filter:     req,
+				PartnerID:  partnerID,
+				ShipmentID: shipmentID,
+				Statuses:   statuses,
+			},
+		)
 	})
 }
 
@@ -468,10 +474,13 @@ func (h *Handler) getFlowInstance(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	detail, err := h.service.GetFlowInstance(c.Request.Context(), ediports.GetFlowInstanceRequest{
-		TenantInfo: tenantInfoFromAuth(authctx.GetAuthContext(c)),
-		ID:         instanceID,
-	})
+	detail, err := h.service.GetFlowInstance(
+		c.Request.Context(),
+		ladingports.GetFlowInstanceRequest{
+			TenantInfo: tenantInfoFromAuth(authctx.GetAuthContext(c)),
+			ID:         instanceID,
+		},
+	)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -488,7 +497,7 @@ func (h *Handler) releaseFlowInstance(c *gin.Context) {
 	}
 	released, err := h.service.ReleaseFlowInstance(
 		c.Request.Context(),
-		ediports.GetFlowInstanceRequest{TenantInfo: tenantInfoFromAuth(authCtx), ID: instanceID},
+		ladingports.GetFlowInstanceRequest{TenantInfo: tenantInfoFromAuth(authCtx), ID: instanceID},
 		actorutil.FromAuthContext(authCtx),
 	)
 	if err != nil {

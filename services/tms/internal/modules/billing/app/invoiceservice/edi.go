@@ -4,18 +4,18 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/pkg/lading"
-
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ladingports"
 	"github.com/emoss08/trenova/internal/modules/identity/jobs/billingjobs/billingcontract"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/lading"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -137,7 +137,7 @@ func (s *Service) outboundPartnersByCustomer(
 	}
 	partners, err := s.ediPartnerRepo.ListOutboundPartnersByCustomerIDs(
 		ctx,
-		ediports.ListEDIPartnersByCustomerIDsRequest{
+		edipartnerports.ListEDIPartnersByCustomerIDsRequest{
 			CustomerIDs: customerIDs,
 			TenantInfo:  tenantInfo,
 		},
@@ -186,7 +186,7 @@ func (s *Service) resolvePartnerTarget(
 	}
 	commProfile, err := s.ediCommunicationProfileRepo.GetActiveProfileByPartner(
 		ctx,
-		ediports.GetActiveEDICommunicationProfileByPartnerRequest{
+		edipartnerports.GetActiveEDICommunicationProfileByPartnerRequest{
 			PartnerID:  partner.ID,
 			TenantInfo: tenantInfo,
 		},
@@ -215,7 +215,7 @@ func (s *Service) invoiceLadingVersion(
 	}
 	runnable, err := s.ediLadingProjects.GetRunnableVersions(
 		ctx,
-		ediports.GetRunnableLadingVersionRequest{TenantInfo: tenantInfo, PartnerID: partner.ID},
+		ladingports.GetRunnableLadingVersionRequest{TenantInfo: tenantInfo, PartnerID: partner.ID},
 	)
 	if errortypes.IsNotFoundError(err) {
 		return nil, false, nil

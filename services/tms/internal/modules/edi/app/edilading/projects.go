@@ -9,7 +9,8 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ladingports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -42,9 +43,9 @@ type ProjectsParams struct {
 
 	Logger    *zap.Logger
 	Runtime   *Runtime
-	Projects  ediports.LadingProjectRepository
-	Replays   ediports.LadingReplayRepository
-	Partners  ediports.EDIPartnerRepository
+	Projects  ladingports.LadingProjectRepository
+	Replays   ladingports.LadingReplayRepository
+	Partners  edipartnerports.EDIPartnerRepository
 	Audit     auditports.AuditService
 	Workflows kernelports.WorkflowStarter `optional:"true"`
 }
@@ -52,9 +53,9 @@ type ProjectsParams struct {
 type Projects struct {
 	l         *zap.Logger
 	runtime   *Runtime
-	projects  ediports.LadingProjectRepository
-	replays   ediports.LadingReplayRepository
-	partners  ediports.EDIPartnerRepository
+	projects  ladingports.LadingProjectRepository
+	replays   ladingports.LadingReplayRepository
+	partners  edipartnerports.EDIPartnerRepository
 	audit     auditports.AuditService
 	workflows kernelports.WorkflowStarter
 }
@@ -95,7 +96,7 @@ func (s *Projects) CreateProject(
 	if err := validateCreate(req); err != nil {
 		return nil, err
 	}
-	partner, err := s.partners.GetByID(ctx, ediports.GetEDIPartnerByIDRequest{
+	partner, err := s.partners.GetByID(ctx, edipartnerports.GetEDIPartnerByIDRequest{
 		ID:         req.PartnerID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -115,7 +116,7 @@ func (s *Projects) CreateProject(
 	draft.Status = edi.LadingVersionStatusDraft
 	draft.CreatedByID = req.TenantInfo.UserID
 	draft.Notes = "Started from Trenova's " + req.Role + " starter"
-	project, err := s.projects.CreateProject(ctx, &ediports.CreateLadingProjectRequest{
+	project, err := s.projects.CreateProject(ctx, &ladingports.CreateLadingProjectRequest{
 		Project: &edi.LadingProject{
 			OrganizationID: req.TenantInfo.OrgID,
 			BusinessUnitID: req.TenantInfo.BuID,
@@ -193,21 +194,21 @@ func validateCreate(req *CreateProjectRequest) error {
 
 func (s *Projects) GetProject(
 	ctx context.Context,
-	req *ediports.GetLadingProjectRequest,
+	req *ladingports.GetLadingProjectRequest,
 ) (*edi.LadingProject, error) {
 	return s.projects.GetProject(ctx, *req)
 }
 
 func (s *Projects) ListProjects(
 	ctx context.Context,
-	req *ediports.ListLadingProjectsRequest,
+	req *ladingports.ListLadingProjectsRequest,
 ) (*pagination.ListResult[*edi.LadingProject], error) {
 	return s.projects.ListProjects(ctx, req)
 }
 
 func (s *Projects) ListVersions(
 	ctx context.Context,
-	req ediports.ListLadingVersionsRequest,
+	req ladingports.ListLadingVersionsRequest,
 ) ([]*edi.LadingVersion, error) {
 	return s.projects.ListVersions(ctx, req)
 }
@@ -220,7 +221,7 @@ type VersionDetail struct {
 // GetVersion is a version with its samples' contents, as the studio opens it.
 func (s *Projects) GetVersion(
 	ctx context.Context,
-	req ediports.GetLadingVersionRequest,
+	req ladingports.GetLadingVersionRequest,
 ) (*VersionDetail, error) {
 	version, err := s.projects.GetVersion(ctx, req)
 	if err != nil {
@@ -249,7 +250,7 @@ func (s *Projects) Samples(
 			digests = append(digests, ref.Digest)
 		}
 	}
-	stored, err := s.projects.GetSamples(ctx, ediports.GetLadingSamplesRequest{
+	stored, err := s.projects.GetSamples(ctx, ladingports.GetLadingSamplesRequest{
 		TenantInfo: tenantInfo,
 		ProjectID:  version.ProjectID,
 		Digests:    digests,
@@ -301,7 +302,7 @@ func (s *Projects) SaveDraft(
 			"Notes cannot be longer than 2,000 characters",
 		)
 	}
-	version, err := s.projects.GetVersion(ctx, ediports.GetLadingVersionRequest{
+	version, err := s.projects.GetVersion(ctx, ladingports.GetLadingVersionRequest{
 		TenantInfo: req.TenantInfo,
 		ID:         req.VersionID,
 	})
@@ -483,7 +484,7 @@ func (s *Projects) Import(
 	req *ImportRequest,
 	actor *permissionports.RequestActor,
 ) (*edi.LadingVersion, error) {
-	project, err := s.projects.GetProject(ctx, ediports.GetLadingProjectRequest{
+	project, err := s.projects.GetProject(ctx, ladingports.GetLadingProjectRequest{
 		TenantInfo: req.TenantInfo,
 		PartnerID:  req.PartnerID,
 	})
@@ -493,7 +494,7 @@ func (s *Projects) Import(
 	if err != nil {
 		return nil, err
 	}
-	versions, err := s.projects.ListVersions(ctx, ediports.ListLadingVersionsRequest{
+	versions, err := s.projects.ListVersions(ctx, ladingports.ListLadingVersionsRequest{
 		TenantInfo: req.TenantInfo,
 		ProjectID:  project.ID,
 		Limit:      1,
@@ -536,7 +537,7 @@ func (s *Projects) importProject(
 	if err := validateProject(req.Files, req.Samples); err != nil {
 		return nil, err
 	}
-	partner, err := s.partners.GetByID(ctx, ediports.GetEDIPartnerByIDRequest{
+	partner, err := s.partners.GetByID(ctx, edipartnerports.GetEDIPartnerByIDRequest{
 		ID:         req.PartnerID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -552,7 +553,7 @@ func (s *Projects) importProject(
 	draft.Status = edi.LadingVersionStatusDraft
 	draft.CreatedByID = req.TenantInfo.UserID
 	draft.Notes = req.Notes
-	project, err := s.projects.CreateProject(ctx, &ediports.CreateLadingProjectRequest{
+	project, err := s.projects.CreateProject(ctx, &ladingports.CreateLadingProjectRequest{
 		Project: &edi.LadingProject{
 			OrganizationID: req.TenantInfo.OrgID,
 			BusinessUnitID: req.TenantInfo.BuID,
@@ -572,7 +573,7 @@ func (s *Projects) importProject(
 		Current:   project,
 		Comment:   "Lading project created for " + partner.Code,
 	})
-	versions, err := s.projects.ListVersions(ctx, ediports.ListLadingVersionsRequest{
+	versions, err := s.projects.ListVersions(ctx, ladingports.ListLadingVersionsRequest{
 		TenantInfo: req.TenantInfo,
 		ProjectID:  project.ID,
 		Limit:      1,
@@ -612,7 +613,7 @@ func (s *Projects) NewDraft(
 	req *NewDraftRequest,
 	actor *permissionports.RequestActor,
 ) (*edi.LadingVersion, error) {
-	from, err := s.projects.GetVersion(ctx, ediports.GetLadingVersionRequest{
+	from, err := s.projects.GetVersion(ctx, ladingports.GetLadingVersionRequest{
 		TenantInfo: req.TenantInfo,
 		ID:         req.FromVersionID,
 	})
@@ -690,14 +691,14 @@ func (s *Projects) Run(ctx context.Context, req *RunVersionRequest) (*lading.Run
 	if err := validateRunInput(&req.Input); err != nil {
 		return nil, err
 	}
-	version, err := s.projects.GetVersion(ctx, ediports.GetLadingVersionRequest{
+	version, err := s.projects.GetVersion(ctx, ladingports.GetLadingVersionRequest{
 		TenantInfo: req.TenantInfo,
 		ID:         req.VersionID,
 	})
 	if err != nil {
 		return nil, err
 	}
-	project, err := s.projects.GetProject(ctx, ediports.GetLadingProjectRequest{
+	project, err := s.projects.GetProject(ctx, ladingports.GetLadingProjectRequest{
 		TenantInfo: req.TenantInfo,
 		ID:         version.ProjectID,
 	})
@@ -772,7 +773,7 @@ type VersionRequest struct {
 // Test runs every test and property of a version against its samples and records its
 // readiness.
 func (s *Projects) Test(ctx context.Context, req *VersionRequest) (*lading.TestReport, error) {
-	version, err := s.projects.GetVersion(ctx, ediports.GetLadingVersionRequest{
+	version, err := s.projects.GetVersion(ctx, ladingports.GetLadingVersionRequest{
 		TenantInfo: req.TenantInfo,
 		ID:         req.VersionID,
 	})
@@ -834,7 +835,7 @@ func (s *Projects) Certify(
 	req *VersionRequest,
 	actor *permissionports.RequestActor,
 ) (*edi.LadingVersion, error) {
-	version, err := s.projects.GetVersion(ctx, ediports.GetLadingVersionRequest{
+	version, err := s.projects.GetVersion(ctx, ladingports.GetLadingVersionRequest{
 		TenantInfo: req.TenantInfo,
 		ID:         req.VersionID,
 	})
@@ -860,7 +861,7 @@ func (s *Projects) Certify(
 		}
 		return nil, notReady(readiness)
 	}
-	project, err := s.projects.GetProject(ctx, ediports.GetLadingProjectRequest{
+	project, err := s.projects.GetProject(ctx, ladingports.GetLadingProjectRequest{
 		TenantInfo: req.TenantInfo,
 		ID:         version.ProjectID,
 	})
@@ -925,7 +926,7 @@ func (s *Projects) requireReplays(
 	tenantInfo pagination.TenantInfo,
 	version *edi.LadingVersion,
 ) error {
-	replays, err := s.replays.ListReplays(ctx, ediports.ListLadingReplaysRequest{
+	replays, err := s.replays.ListReplays(ctx, ladingports.ListLadingReplaysRequest{
 		TenantInfo: tenantInfo,
 		VersionID:  version.ID,
 	})
@@ -988,7 +989,7 @@ func (s *Projects) Activate(
 	req *VersionRequest,
 	actor *permissionports.RequestActor,
 ) (*edi.LadingVersion, error) {
-	version, err := s.projects.GetVersion(ctx, ediports.GetLadingVersionRequest{
+	version, err := s.projects.GetVersion(ctx, ladingports.GetLadingVersionRequest{
 		TenantInfo: req.TenantInfo,
 		ID:         req.VersionID,
 	})
@@ -1003,7 +1004,7 @@ func (s *Projects) Activate(
 			string(version.Status),
 		)
 	}
-	activated, err := s.projects.ActivateVersion(ctx, ediports.ActivateLadingVersionRequest{
+	activated, err := s.projects.ActivateVersion(ctx, ladingports.ActivateLadingVersionRequest{
 		TenantInfo: req.TenantInfo,
 		ProjectID:  version.ProjectID,
 		VersionID:  version.ID,
@@ -1034,7 +1035,7 @@ func (s *Projects) ActivateStarter(
 	tenantInfo pagination.TenantInfo,
 	project *edi.LadingProject,
 ) (*edi.LadingVersion, error) {
-	versions, err := s.projects.ListVersions(ctx, ediports.ListLadingVersionsRequest{
+	versions, err := s.projects.ListVersions(ctx, ladingports.ListLadingVersionsRequest{
 		TenantInfo: tenantInfo,
 		ProjectID:  project.ID,
 		Limit:      1,
@@ -1045,7 +1046,7 @@ func (s *Projects) ActivateStarter(
 	if len(versions) == 0 {
 		return nil, fmt.Errorf("lading project %s has no version", project.ID)
 	}
-	version, err := s.projects.GetVersion(ctx, ediports.GetLadingVersionRequest{
+	version, err := s.projects.GetVersion(ctx, ladingports.GetLadingVersionRequest{
 		TenantInfo: tenantInfo,
 		ID:         versions[0].ID,
 	})
@@ -1067,7 +1068,7 @@ func (s *Projects) ActivateStarter(
 	if _, err = s.projects.UpdateVersionStatus(ctx, version); err != nil {
 		return nil, err
 	}
-	activated, err := s.projects.ActivateVersion(ctx, ediports.ActivateLadingVersionRequest{
+	activated, err := s.projects.ActivateVersion(ctx, ladingports.ActivateLadingVersionRequest{
 		TenantInfo: tenantInfo,
 		ProjectID:  project.ID,
 		VersionID:  version.ID,
@@ -1084,7 +1085,7 @@ func (s *Projects) Archive(
 	req *VersionRequest,
 	actor *permissionports.RequestActor,
 ) (*edi.LadingVersion, error) {
-	version, err := s.projects.GetVersion(ctx, ediports.GetLadingVersionRequest{
+	version, err := s.projects.GetVersion(ctx, ladingports.GetLadingVersionRequest{
 		TenantInfo: req.TenantInfo,
 		ID:         req.VersionID,
 	})
@@ -1143,7 +1144,7 @@ func (s *Projects) StartShadow(
 			"A shadow runs for 1 to 30 days",
 		)
 	}
-	version, err := s.projects.GetVersion(ctx, ediports.GetLadingVersionRequest{
+	version, err := s.projects.GetVersion(ctx, ladingports.GetLadingVersionRequest{
 		TenantInfo: req.TenantInfo,
 		ID:         req.VersionID,
 	})
@@ -1157,7 +1158,7 @@ func (s *Projects) StartShadow(
 			string(version.Status),
 		)
 	}
-	project, err := s.projects.GetProject(ctx, ediports.GetLadingProjectRequest{
+	project, err := s.projects.GetProject(ctx, ladingports.GetLadingProjectRequest{
 		TenantInfo: req.TenantInfo,
 		ID:         version.ProjectID,
 	})
@@ -1201,7 +1202,7 @@ func (s *Projects) StopShadow(
 	req *VersionRequest,
 	actor *permissionports.RequestActor,
 ) (*edi.LadingVersion, error) {
-	version, err := s.projects.GetVersion(ctx, ediports.GetLadingVersionRequest{
+	version, err := s.projects.GetVersion(ctx, ladingports.GetLadingVersionRequest{
 		TenantInfo: req.TenantInfo,
 		ID:         req.VersionID,
 	})
@@ -1214,7 +1215,7 @@ func (s *Projects) StopShadow(
 	if err = s.stopShadow(ctx, req.TenantInfo, version.ID); err != nil {
 		return nil, err
 	}
-	stopped, err := s.projects.GetVersion(ctx, ediports.GetLadingVersionRequest{
+	stopped, err := s.projects.GetVersion(ctx, ladingports.GetLadingVersionRequest{
 		TenantInfo: req.TenantInfo,
 		ID:         req.VersionID,
 	})
@@ -1236,14 +1237,14 @@ func (s *Projects) stopShadow(
 	tenantInfo pagination.TenantInfo,
 	versionID pulid.ID,
 ) error {
-	version, err := s.projects.GetVersion(ctx, ediports.GetLadingVersionRequest{
+	version, err := s.projects.GetVersion(ctx, ladingports.GetLadingVersionRequest{
 		TenantInfo: tenantInfo,
 		ID:         versionID,
 	})
 	if err != nil {
 		return err
 	}
-	project, err := s.projects.GetProject(ctx, ediports.GetLadingProjectRequest{
+	project, err := s.projects.GetProject(ctx, ladingports.GetLadingProjectRequest{
 		TenantInfo: tenantInfo,
 		ID:         version.ProjectID,
 	})
@@ -1280,7 +1281,7 @@ func (s *Projects) UpdateSettings(
 	req *UpdateSettingsRequest,
 	actor *permissionports.RequestActor,
 ) (*edi.LadingProject, error) {
-	project, err := s.projects.GetProject(ctx, ediports.GetLadingProjectRequest{
+	project, err := s.projects.GetProject(ctx, ladingports.GetLadingProjectRequest{
 		TenantInfo: req.TenantInfo,
 		ID:         req.ProjectID,
 	})
@@ -1290,7 +1291,7 @@ func (s *Projects) UpdateSettings(
 	if project.ActiveVersionID.IsNil() {
 		return nil, errortypes.NewBusinessError("Activate a version before changing its settings")
 	}
-	active, err := s.projects.GetVersion(ctx, ediports.GetLadingVersionRequest{
+	active, err := s.projects.GetVersion(ctx, ladingports.GetLadingVersionRequest{
 		TenantInfo: req.TenantInfo,
 		ID:         project.ActiveVersionID,
 	})
@@ -1420,7 +1421,7 @@ func (s *Projects) StartReplay(
 			"Replays need the workflow service, which is not configured",
 		)
 	}
-	version, err := s.projects.GetVersion(ctx, ediports.GetLadingVersionRequest{
+	version, err := s.projects.GetVersion(ctx, ladingports.GetLadingVersionRequest{
 		TenantInfo: req.TenantInfo,
 		ID:         req.VersionID,
 	})
@@ -1506,7 +1507,7 @@ func (s *Projects) replayAgainst(
 ) (pulid.ID, error) {
 	against := req.AgainstVersionID
 	if against.IsNil() {
-		project, err := s.projects.GetProject(ctx, ediports.GetLadingProjectRequest{
+		project, err := s.projects.GetProject(ctx, ladingports.GetLadingProjectRequest{
 			TenantInfo: req.TenantInfo,
 			ID:         version.ProjectID,
 		})
@@ -1537,26 +1538,26 @@ type ReplayWorkflowPayload struct {
 
 func (s *Projects) GetReplay(
 	ctx context.Context,
-	req ediports.GetLadingReplayRequest,
+	req ladingports.GetLadingReplayRequest,
 ) (*edi.LadingReplay, error) {
 	return s.replays.GetReplay(ctx, req)
 }
 
 func (s *Projects) ListReplays(
 	ctx context.Context,
-	req ediports.ListLadingReplaysRequest,
+	req ladingports.ListLadingReplaysRequest,
 ) ([]*edi.LadingReplay, error) {
 	return s.replays.ListReplays(ctx, req)
 }
 
 type ShadowReport struct {
-	Summary *ediports.LadingShadowSummary `json:"summary"`
-	Results []*edi.LadingShadowResult     `json:"results"`
+	Summary *ladingports.LadingShadowSummary `json:"summary"`
+	Results []*edi.LadingShadowResult        `json:"results"`
 }
 
 func (s *Projects) ShadowResults(
 	ctx context.Context,
-	req *ediports.ListLadingShadowResultsRequest,
+	req *ladingports.ListLadingShadowResultsRequest,
 ) (*ShadowReport, error) {
 	summary, err := s.replays.SummarizeShadow(ctx, *req)
 	if err != nil {

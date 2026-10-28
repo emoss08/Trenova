@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi/edidb"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -74,7 +74,7 @@ func TestAS2IdentifierPairsAreUniqueAcrossTenants(t *testing.T) {
 
 	routed, err := repo.GetActiveAS2ProfileByIdentifiers(
 		ctx,
-		ediports.GetActiveAS2ProfileByIdentifiersRequest{
+		edipartnerports.GetActiveAS2ProfileByIdentifiersRequest{
 			LocalAS2ID:   "SHIPPER-AS2",
 			PartnerAS2ID: "CARRIER-AS2",
 		},
@@ -88,7 +88,10 @@ func TestAS2IdentifierPairsAreUniqueAcrossTenants(t *testing.T) {
 	_, err = repo.CreateProfile(ctxB, inactive)
 	require.NoError(t, err)
 
-	_, err = repo.GetProfileByID(ctxB, ediports.GetEDICommunicationProfileByIDRequest{ID: owned.ID})
+	_, err = repo.GetProfileByID(
+		ctxB,
+		edipartnerports.GetEDICommunicationProfileByIDRequest{ID: owned.ID},
+	)
 	require.True(t, errortypes.IsNotFoundError(err))
 }
 
@@ -106,18 +109,27 @@ func TestPollOutcomeKeepsTheProfileVersion(t *testing.T) {
 	created, err := repo.CreateProfile(tctx, profile)
 	require.NoError(t, err)
 
-	require.NoError(t, repo.RecordInboundPollOutcome(tctx, ediports.RecordEDIProfilePollOutcomeRequest{
-		ProfileID: created.ID,
-		PolledAt:  100,
-		Error:     "timeout",
-	}))
-	require.NoError(t, repo.RecordInboundPollOutcome(tctx, ediports.RecordEDIProfilePollOutcomeRequest{
-		ProfileID: created.ID,
-		PolledAt:  200,
-		Success:   true,
-	}))
+	require.NoError(
+		t,
+		repo.RecordInboundPollOutcome(tctx, edipartnerports.RecordEDIProfilePollOutcomeRequest{
+			ProfileID: created.ID,
+			PolledAt:  100,
+			Error:     "timeout",
+		}),
+	)
+	require.NoError(
+		t,
+		repo.RecordInboundPollOutcome(tctx, edipartnerports.RecordEDIProfilePollOutcomeRequest{
+			ProfileID: created.ID,
+			PolledAt:  200,
+			Success:   true,
+		}),
+	)
 
-	polled, err := repo.GetProfileByID(tctx, ediports.GetEDICommunicationProfileByIDRequest{ID: created.ID})
+	polled, err := repo.GetProfileByID(
+		tctx,
+		edipartnerports.GetEDICommunicationProfileByIDRequest{ID: created.ID},
+	)
 	require.NoError(t, err)
 	assert.Equal(t, created.Version, polled.Version)
 	require.NotNil(t, polled.LastPollSuccessAt)

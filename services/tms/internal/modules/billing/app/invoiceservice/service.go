@@ -25,7 +25,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/ports/latechargeports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ladingports"
 	"github.com/emoss08/trenova/internal/modules/identity/app/accountingcontrolpolicyservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/exchangeratestamp"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -105,14 +106,14 @@ type Params struct {
 	AccountingPolicy     *accountingcontrolpolicyservice.Service
 	BillingPolicy        *billingcontrolpolicyservice.Service
 
-	EDIPartnerRepo              ediports.EDIPartnerRepository              `optional:"true"`
-	EDILadingProjects           ediports.LadingProjectRepository           `optional:"true"`
-	EDICommunicationProfileRepo ediports.EDICommunicationProfileRepository `optional:"true"`
-	LateChargeRepo              latechargeports.LateChargeRepository       `optional:"true"`
-	AccountingSync              accountingsyncports.AccountingSyncEnqueuer `optional:"true"`
-	EmailSenders                emailports.EmailSenderResolver             `optional:"true"`
-	GLAccounts                  glaccountports.GLAccountRepository         `optional:"true"`
-	Config                      *config.Config                             `optional:"true"`
+	EDIPartnerRepo              edipartnerports.EDIPartnerRepository              `optional:"true"`
+	EDILadingProjects           ladingports.LadingProjectRepository               `optional:"true"`
+	EDICommunicationProfileRepo edipartnerports.EDICommunicationProfileRepository `optional:"true"`
+	LateChargeRepo              latechargeports.LateChargeRepository              `optional:"true"`
+	AccountingSync              accountingsyncports.AccountingSyncEnqueuer        `optional:"true"`
+	EmailSenders                emailports.EmailSenderResolver                    `optional:"true"`
+	GLAccounts                  glaccountports.GLAccountRepository                `optional:"true"`
+	Config                      *config.Config                                    `optional:"true"`
 	Permissions                 permissionports.PermissionEngine
 }
 
@@ -156,9 +157,9 @@ type Service struct {
 	accountingPolicy     *accountingcontrolpolicyservice.Service
 	billingPolicy        *billingcontrolpolicyservice.Service
 
-	ediPartnerRepo              ediports.EDIPartnerRepository
-	ediLadingProjects           ediports.LadingProjectRepository
-	ediCommunicationProfileRepo ediports.EDICommunicationProfileRepository
+	ediPartnerRepo              edipartnerports.EDIPartnerRepository
+	ediLadingProjects           ladingports.LadingProjectRepository
+	ediCommunicationProfileRepo edipartnerports.EDICommunicationProfileRepository
 	lateChargeRepo              latechargeports.LateChargeRepository
 	accountingSync              accountingsyncports.AccountingSyncEnqueuer
 	emailSenders                emailports.EmailSenderResolver

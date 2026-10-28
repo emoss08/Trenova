@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi/edidb"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ladingports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -39,7 +39,7 @@ type projects struct {
 	l  *zap.Logger
 }
 
-func NewProjects(p Params) ediports.LadingProjectRepository {
+func NewProjects(p Params) ladingports.LadingProjectRepository {
 	return &projects{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.edi-lading-project-repository"),
@@ -48,7 +48,7 @@ func NewProjects(p Params) ediports.LadingProjectRepository {
 
 func (r *projects) GetProject(
 	ctx context.Context,
-	req ediports.GetLadingProjectRequest,
+	req ladingports.GetLadingProjectRequest,
 ) (*edi.LadingProject, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*edi.LadingProject, error) {
 		p := edidb.LadingProjects
@@ -65,7 +65,7 @@ func (r *projects) GetProject(
 
 func (r *projects) ListProjects(
 	ctx context.Context,
-	req *ediports.ListLadingProjectsRequest,
+	req *ladingports.ListLadingProjectsRequest,
 ) (*pagination.ListResult[*edi.LadingProject], error) {
 	return dbtx.Read(
 		ctx,
@@ -87,7 +87,7 @@ func (r *projects) ListProjects(
 
 func (r *projects) CreateProject(
 	ctx context.Context,
-	req *ediports.CreateLadingProjectRequest,
+	req *ladingports.CreateLadingProjectRequest,
 ) (*edi.LadingProject, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*edi.LadingProject, error) {
 		db := r.db.Keel(ctx)
@@ -142,7 +142,7 @@ func (r *projects) SetShadowVersion(
 
 func (r *projects) GetVersion(
 	ctx context.Context,
-	req ediports.GetLadingVersionRequest,
+	req ladingports.GetLadingVersionRequest,
 ) (*edi.LadingVersion, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*edi.LadingVersion, error) {
 		v := edidb.LadingVersions
@@ -156,7 +156,7 @@ func (r *projects) GetVersion(
 
 func (r *projects) ListVersions(
 	ctx context.Context,
-	req ediports.ListLadingVersionsRequest,
+	req ladingports.ListLadingVersionsRequest,
 ) ([]*edi.LadingVersion, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*edi.LadingVersion, error) {
 		v := edidb.LadingVersions
@@ -261,12 +261,12 @@ func (r *projects) UpdateVersionStatus(
 
 func (r *projects) ActivateVersion(
 	ctx context.Context,
-	req ediports.ActivateLadingVersionRequest,
-) (*ediports.ActivatedLadingVersion, error) {
+	req ladingports.ActivateLadingVersionRequest,
+) (*ladingports.ActivatedLadingVersion, error) {
 	return dbtx.Write(
 		ctx,
 		r.db,
-		func(ctx context.Context) (*ediports.ActivatedLadingVersion, error) {
+		func(ctx context.Context) (*ladingports.ActivatedLadingVersion, error) {
 			db := r.db.Keel(ctx)
 			p := edidb.LadingProjects
 			v := edidb.LadingVersions
@@ -275,7 +275,7 @@ func (r *projects) ActivateVersion(
 				return nil, projectErrors.Map(err, req.ProjectID.String())
 			}
 			now := timeutils.NowUnix()
-			result := &ediports.ActivatedLadingVersion{}
+			result := &ladingports.ActivatedLadingVersion{}
 			if project.ActiveVersionID.IsNotNil() && project.ActiveVersionID != req.VersionID {
 				previous, getErr := v.Omit(v.Files, v.Samples, v.Manifest).
 					Where(v.ID.Eq(project.ActiveVersionID)).
@@ -326,7 +326,7 @@ func (r *projects) ActivateVersion(
 
 func (r *projects) GetSamples(
 	ctx context.Context,
-	req ediports.GetLadingSamplesRequest,
+	req ladingports.GetLadingSamplesRequest,
 ) ([]*edi.LadingSample, error) {
 	if len(req.Digests) == 0 {
 		return nil, nil
@@ -341,19 +341,19 @@ func (r *projects) GetSamples(
 
 func (r *projects) GetRunnableVersions(
 	ctx context.Context,
-	req ediports.GetRunnableLadingVersionRequest,
-) (*ediports.RunnableLadingVersions, error) {
+	req ladingports.GetRunnableLadingVersionRequest,
+) (*ladingports.RunnableLadingVersions, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) (*ediports.RunnableLadingVersions, error) {
+		func(ctx context.Context) (*ladingports.RunnableLadingVersions, error) {
 			db := r.db.Keel(ctx)
 			p := edidb.LadingProjects
 			project, err := p.Where(p.EDIPartnerID.Eq(req.PartnerID)).One(ctx, db)
 			if err != nil {
 				return nil, projectErrors.Map(err, req.PartnerID.String())
 			}
-			result := &ediports.RunnableLadingVersions{Project: project}
+			result := &ladingports.RunnableLadingVersions{Project: project}
 			ids := make([]pulid.ID, 0, 2)
 			if project.ActiveVersionID.IsNotNil() {
 				ids = append(ids, project.ActiveVersionID)

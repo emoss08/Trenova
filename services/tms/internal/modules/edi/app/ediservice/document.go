@@ -14,7 +14,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/app/edix12inspect"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ladingdoc"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/edimessageports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/editenderports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenteventports"
@@ -35,14 +38,14 @@ const provisionalInterchange = "000000000"
 
 func (s *Service) ListDocumentTypes(
 	ctx context.Context,
-	req ediports.ListEDIDocumentTypesRequest,
+	req edipartnerports.ListEDIDocumentTypesRequest,
 ) ([]*edi.EDIDocumentType, error) {
 	return s.documentTypeRepo.ListDocumentTypes(ctx, req)
 }
 
 func (s *Service) SelectDocumentTypeOptions(
 	ctx context.Context,
-	req *ediports.EDIDocumentTypeSelectOptionsRequest,
+	req *edipartnerports.EDIDocumentTypeSelectOptionsRequest,
 ) (*pagination.ListResult[*edi.EDIDocumentType], error) {
 	return s.documentTypeRepo.SelectDocumentTypeOptions(ctx, req)
 }
@@ -54,7 +57,7 @@ func (s *Service) documentTypeFor(
 ) (*edi.EDIDocumentType, error) {
 	documentTypes, err := s.documentTypeRepo.ListDocumentTypes(
 		ctx,
-		ediports.ListEDIDocumentTypesRequest{
+		edipartnerports.ListEDIDocumentTypesRequest{
 			Standard:       edi.EDIStandardX12,
 			TransactionSet: transactionSet,
 			Direction:      direction,
@@ -139,7 +142,7 @@ func (s *Service) resolveOutbound(
 			"An acknowledgment is written from the message it answers. Choose that message.",
 		)
 	}
-	partner, err := s.partnerRepo.GetByID(ctx, ediports.GetEDIPartnerByIDRequest{
+	partner, err := s.partnerRepo.GetByID(ctx, edipartnerports.GetEDIPartnerByIDRequest{
 		ID:         req.EDIPartnerID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -401,7 +404,7 @@ func (s *Service) tenderKey(
 	if transferID.IsNil() {
 		return ""
 	}
-	transfer, err := s.transferRepo.GetTransferByID(ctx, ediports.GetEDITransferByIDRequest{
+	transfer, err := s.transferRepo.GetTransferByID(ctx, editenderports.GetEDITransferByIDRequest{
 		ID:         transferID,
 		TenantInfo: tenantInfo,
 	})
@@ -736,7 +739,7 @@ func (s *Service) write(
 	}
 	created, err := s.messageRepo.CreateMessageWithDiagnostics(
 		ctx,
-		ediports.CreateEDIMessageWithDiagnosticsRequest{
+		edimessageports.CreateEDIMessageWithDiagnosticsRequest{
 			Message:     message,
 			Diagnostics: messageDiagnostics(diagnostics),
 		},
@@ -778,7 +781,7 @@ func (s *Service) allocateControl(
 ) (lading.Control, error) {
 	allocated, err := s.controlNumberRepo.AllocateControlNumbers(
 		ctx,
-		ediports.AllocateEDIControlNumbersRequest{
+		edipartnerports.AllocateEDIControlNumbersRequest{
 			TenantInfo:     tenantInfo,
 			PartnerID:      o.partner.ID,
 			DocumentTypeID: o.documentType.ID,
@@ -887,7 +890,7 @@ func (s *Service) generatedDocument(
 
 	existing, err := s.messageRepo.GetMessageByIdempotencyKey(
 		ctx,
-		ediports.GetEDIMessageByIdempotencyKeyRequest{
+		edimessageports.GetEDIMessageByIdempotencyKeyRequest{
 			TenantInfo:     req.TenantInfo,
 			IdempotencyKey: req.IdempotencyKey,
 		},
@@ -921,14 +924,14 @@ func (s *Service) generatedDocument(
 
 func (s *Service) ListMessages(
 	ctx context.Context,
-	req *ediports.ListEDIMessagesRequest,
+	req *edimessageports.ListEDIMessagesRequest,
 ) (*pagination.ListResult[*edi.EDIMessage], error) {
 	return s.messageRepo.ListMessages(ctx, req)
 }
 
 func (s *Service) GetMessage(
 	ctx context.Context,
-	req ediports.GetEDIMessageByIDRequest,
+	req edimessageports.GetEDIMessageByIDRequest,
 ) (*edi.EDIMessage, error) {
 	return s.messageRepo.GetMessageByID(ctx, req)
 }
@@ -955,7 +958,7 @@ func (s *Service) InspectX12(
 
 func (s *Service) InspectMessage(
 	ctx context.Context,
-	req ediports.GetEDIMessageByIDRequest,
+	req edimessageports.GetEDIMessageByIDRequest,
 ) (*EDIMessageInspection, error) {
 	message, err := s.messageRepo.GetMessageByID(ctx, req)
 	if err != nil {
@@ -1019,11 +1022,14 @@ func (s *Service) resolvePayload(
 				edi.TransactionSet990,
 			)
 		}
-		transfer, err := s.transferRepo.GetTransferByID(ctx, ediports.GetEDITransferByIDRequest{
-			ID:         req.TransferID,
-			TenantInfo: req.TenantInfo,
-			Direction:  "outbound",
-		})
+		transfer, err := s.transferRepo.GetTransferByID(
+			ctx,
+			editenderports.GetEDITransferByIDRequest{
+				ID:         req.TransferID,
+				TenantInfo: req.TenantInfo,
+				Direction:  "outbound",
+			},
+		)
 		if err != nil {
 			return edi.DocumentPayload{}, err
 		}

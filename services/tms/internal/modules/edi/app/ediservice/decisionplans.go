@@ -5,7 +5,9 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/edimessageports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/editenderports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -205,7 +207,7 @@ func (s *Service) PlanApproveTransfer(
 	req *ApproveTransferRequest,
 	actor *permissionports.RequestActor,
 ) (*TransferApprovalPlan, error) {
-	transfer, err := s.transferRepo.GetTransferByID(ctx, ediports.GetEDITransferByIDRequest{
+	transfer, err := s.transferRepo.GetTransferByID(ctx, editenderports.GetEDITransferByIDRequest{
 		ID:         req.TransferID,
 		TenantInfo: req.TenantInfo,
 		Direction:  TransferDirectionInbound,
@@ -235,7 +237,7 @@ func (s *Service) planApproval(
 	plan *TransferApprovalPlan,
 ) error {
 	transfer := plan.Transfer
-	targetPartner, err := s.partnerRepo.GetByID(ctx, ediports.GetEDIPartnerByIDRequest{
+	targetPartner, err := s.partnerRepo.GetByID(ctx, edipartnerports.GetEDIPartnerByIDRequest{
 		ID:         transfer.TargetPartnerID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -360,7 +362,7 @@ func (s *Service) deliverableMessage(
 		)
 	}
 
-	return s.messageRepo.GetMessageByID(ctx, ediports.GetEDIMessageByIDRequest{
+	return s.messageRepo.GetMessageByID(ctx, edimessageports.GetEDIMessageByIDRequest{
 		ID:         req.MessageID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -392,7 +394,7 @@ func (s *Service) PreviewTenderResponse(
 	ctx context.Context,
 	req *PreviewTenderResponseRequest,
 ) (*TenderResponsePreview, error) {
-	transfer, err := s.transferRepo.GetTransferByID(ctx, ediports.GetEDITransferByIDRequest{
+	transfer, err := s.transferRepo.GetTransferByID(ctx, editenderports.GetEDITransferByIDRequest{
 		ID:         req.TransferID,
 		TenantInfo: req.TenantInfo,
 		Direction:  TransferDirectionInbound,

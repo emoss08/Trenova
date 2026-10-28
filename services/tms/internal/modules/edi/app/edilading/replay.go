@@ -6,7 +6,8 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/edimessageports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ladingports"
 	"github.com/emoss08/trenova/pkg/lading"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -26,17 +27,17 @@ type ReplayerParams struct {
 
 	Logger   *zap.Logger
 	Runtime  *Runtime
-	Projects ediports.LadingProjectRepository
-	Replays  ediports.LadingReplayRepository
-	Messages ediports.EDIMessageRepository
+	Projects ladingports.LadingProjectRepository
+	Replays  ladingports.LadingReplayRepository
+	Messages edimessageports.EDIMessageRepository
 }
 
 type Replayer struct {
 	l        *zap.Logger
 	runtime  *Runtime
-	projects ediports.LadingProjectRepository
-	replays  ediports.LadingReplayRepository
-	messages ediports.EDIMessageRepository
+	projects ladingports.LadingProjectRepository
+	replays  ladingports.LadingReplayRepository
+	messages edimessageports.EDIMessageRepository
 }
 
 func NewReplayer(p ReplayerParams) *Replayer {
@@ -56,7 +57,7 @@ func (r *Replayer) Run(
 	payload *ReplayWorkflowPayload,
 	heartbeat func(done int),
 ) (*edi.LadingReplay, error) {
-	replay, err := r.replays.GetReplay(ctx, ediports.GetLadingReplayRequest{
+	replay, err := r.replays.GetReplay(ctx, ladingports.GetLadingReplayRequest{
 		TenantInfo: payload.TenantInfo,
 		ID:         payload.ReplayID,
 	})
@@ -91,7 +92,7 @@ func (r *Replayer) run(
 	replay *edi.LadingReplay,
 	heartbeat func(done int),
 ) (*replayResult, error) {
-	project, err := r.projects.GetProject(ctx, ediports.GetLadingProjectRequest{
+	project, err := r.projects.GetProject(ctx, ladingports.GetLadingProjectRequest{
 		TenantInfo: tenantInfo,
 		ID:         replay.ProjectID,
 	})
@@ -119,7 +120,7 @@ func (r *Replayer) run(
 	for done := 0; done < maxReplayMessages; {
 		messages, listErr := r.messages.ListReplayMessages(
 			ctx,
-			&ediports.ListEDIReplayMessagesRequest{
+			&edimessageports.ListEDIReplayMessagesRequest{
 				TenantInfo:     tenantInfo,
 				PartnerID:      project.EDIPartnerID,
 				TransactionSet: edi.TransactionSet(target.Set),
@@ -173,7 +174,7 @@ func (r *Replayer) program(
 	project *edi.LadingProject,
 	versionID pulid.ID,
 ) (*Program, error) {
-	version, err := r.projects.GetVersion(ctx, ediports.GetLadingVersionRequest{
+	version, err := r.projects.GetVersion(ctx, ladingports.GetLadingVersionRequest{
 		TenantInfo: tenantInfo,
 		ID:         versionID,
 	})

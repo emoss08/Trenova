@@ -8,7 +8,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/editenderports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/internaledilifecycle"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -33,8 +33,8 @@ type Params struct {
 	DB                 kernelports.Transactor
 	ShipmentRepo       shipmentports.ShipmentRepository
 	ShipmentEventRepo  shipmenteventports.ShipmentEventRepository
-	ShipmentLinkRepo   ediports.EDIShipmentLinkRepository
-	TransferChangeRepo ediports.EDITransferChangeRepository
+	ShipmentLinkRepo   editenderports.EDIShipmentLinkRepository
+	TransferChangeRepo editenderports.EDITransferChangeRepository
 	Realtime           realtimeports.RealtimeService
 	Invalidator        shipmentinvalidationports.ShipmentInvalidator
 	Coordinator        *shipmentstate.Coordinator
@@ -80,7 +80,7 @@ type shipmentEventRepository interface {
 type shipmentLinkRepository interface {
 	GetShipmentLinksByShipmentID(
 		ctx context.Context,
-		req ediports.GetEDIShipmentLinksByShipmentIDRequest,
+		req editenderports.GetEDIShipmentLinksByShipmentIDRequest,
 	) ([]*edi.ShipmentLink, error)
 }
 
@@ -88,7 +88,7 @@ type transferChangeRepository interface {
 	CreateTransferChangeIdempotent(
 		ctx context.Context,
 		entity *edi.TransferChange,
-	) (*ediports.CreateEDITransferChangeIdempotentResult, error)
+	) (*editenderports.CreateEDITransferChangeIdempotentResult, error)
 }
 
 type side struct {
@@ -145,7 +145,7 @@ func (o *Observer) OnShipmentEvent(ctx context.Context, event *shipmentevent.Eve
 
 	links, err := o.shipmentLinkRepo.GetShipmentLinksByShipmentID(
 		ctx,
-		ediports.GetEDIShipmentLinksByShipmentIDRequest{
+		editenderports.GetEDIShipmentLinksByShipmentIDRequest{
 			ShipmentID: event.ShipmentID,
 			TenantInfo: pagination.TenantInfo{
 				OrgID: event.OrganizationID,

@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/edimessageports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/timeutils"
 )
@@ -103,7 +103,7 @@ func ediMessageConnectionToModel(
 }
 
 func ediPartnerScorecardsToModel(
-	rows []*ediports.EDIPartnerScorecardRow,
+	rows []*edimessageports.EDIPartnerScorecardRow,
 ) []*gqlmodel.EDIPartnerScorecard {
 	now := timeutils.NowUnix()
 	cards := make([]*gqlmodel.EDIPartnerScorecard, 0, len(rows))

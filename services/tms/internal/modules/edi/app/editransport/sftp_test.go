@@ -7,7 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/editransportports"
 	"github.com/emoss08/trenova/shared/httpsafe"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/sftp"
@@ -179,7 +179,7 @@ func TestSFTPTransportRefusesPrivateHostsByDefault(t *testing.T) {
 		"authMode":     "password",
 		"knownHostKey": "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl",
 	}}
-	_, err = NewSFTPTransport(nil).Deliver(t.Context(), &ediports.EDITransportRequest{
+	_, err = NewSFTPTransport(nil).Deliver(t.Context(), &editransportports.EDITransportRequest{
 		Profile:  profile,
 		Secrets:  map[string]string{"password": "secret"},
 		FileName: "file.x12",
@@ -187,11 +187,13 @@ func TestSFTPTransportRefusesPrivateHostsByDefault(t *testing.T) {
 	})
 	require.ErrorIs(t, err, httpsafe.ErrBlockedAddress)
 
-	checks := NewSFTPTransport(nil).TestConnection(t.Context(), &ediports.EDITransportRequest{
+	checks := NewSFTPTransport(
+		nil,
+	).TestConnection(t.Context(), &editransportports.EDITransportRequest{
 		Profile: profile,
 		Secrets: map[string]string{"password": "secret"},
 	})
-	require.Equal(t, ediports.EDIConnectionCheckFailed, checks[len(checks)-1].Status)
+	require.Equal(t, editransportports.EDIConnectionCheckFailed, checks[len(checks)-1].Status)
 	require.Contains(t, checks[len(checks)-1].Message, "not permitted")
 }
 
@@ -199,7 +201,7 @@ func TestVANTransportRequiresMailboxID(t *testing.T) {
 	t.Parallel()
 
 	transport := NewVANTransport(nil)
-	_, err := transport.Deliver(t.Context(), &ediports.EDITransportRequest{
+	_, err := transport.Deliver(t.Context(), &editransportports.EDITransportRequest{
 		Profile:  &edi.EDICommunicationProfile{Config: map[string]any{}},
 		FileName: "file.x12",
 	})
@@ -210,12 +212,12 @@ func TestDispatcherRejectsUnsupportedMethod(t *testing.T) {
 	t.Parallel()
 
 	dispatcher := NewDispatcher(DispatcherParams{
-		Transports: []ediports.EDITransport{NewSFTPTransport(nil), NewVANTransport(nil)},
+		Transports: []editransportports.EDITransport{NewSFTPTransport(nil), NewVANTransport(nil)},
 	})
 	_, err := dispatcher.Deliver(
 		t.Context(),
 		edi.ConnectionMethodAS2,
-		&ediports.EDITransportRequest{},
+		&editransportports.EDITransportRequest{},
 	)
 	require.ErrorContains(t, err, "not supported")
 }

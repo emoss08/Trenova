@@ -11,13 +11,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/testutil/mocks/ediportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/kernelportsmock"
-
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
 	"github.com/emoss08/trenova/internal/modules/edi/app/editransport"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
+	"github.com/emoss08/trenova/internal/testutil/mocks/edimessageportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/edipartnerportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/kernelportsmock"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/as2"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -94,17 +94,17 @@ func TestReceiveAS2MessageStagesFileAndReturnsMDN(t *testing.T) {
 		},
 	}
 
-	profileRepo := ediportsmock.NewMockEDICommunicationProfileRepository(t)
+	profileRepo := edipartnerportsmock.NewMockEDICommunicationProfileRepository(t)
 	profileRepo.EXPECT().
 		GetActiveAS2ProfileByIdentifiers(
 			mock.Anything,
-			ediports.GetActiveAS2ProfileByIdentifiersRequest{
+			edipartnerports.GetActiveAS2ProfileByIdentifiersRequest{
 				LocalAS2ID:   "TRENOVA-AS2",
 				PartnerAS2ID: "PARTNER-AS2",
 			},
 		).
 		Return(profile, nil)
-	inboundFileRepo := ediportsmock.NewMockEDIInboundFileRepository(t)
+	inboundFileRepo := edimessageportsmock.NewMockEDIInboundFileRepository(t)
 	inboundFileRepo.EXPECT().
 		ExistsByChecksum(mock.Anything, mock.Anything).
 		Return(false, nil).
@@ -207,7 +207,7 @@ func TestReceiveAS2MessageRejectsUnsignedWhenPartnerCertConfigured(t *testing.T)
 			editransport.SecretKeyAS2PrivateKey: trenova.keyPEM,
 		},
 	}
-	profileRepo := ediportsmock.NewMockEDICommunicationProfileRepository(t)
+	profileRepo := edipartnerportsmock.NewMockEDICommunicationProfileRepository(t)
 	profileRepo.EXPECT().
 		GetActiveAS2ProfileByIdentifiers(mock.Anything, mock.Anything).
 		Return(profile, nil).
@@ -268,12 +268,12 @@ func TestReceiveAS2MessageAcceptsUnsignedWhenRequirementsDisabled(t *testing.T) 
 			editransport.SecretKeyAS2PrivateKey: trenova.keyPEM,
 		},
 	}
-	profileRepo := ediportsmock.NewMockEDICommunicationProfileRepository(t)
+	profileRepo := edipartnerportsmock.NewMockEDICommunicationProfileRepository(t)
 	profileRepo.EXPECT().
 		GetActiveAS2ProfileByIdentifiers(mock.Anything, mock.Anything).
 		Return(profile, nil).
 		Once()
-	inboundFileRepo := ediportsmock.NewMockEDIInboundFileRepository(t)
+	inboundFileRepo := edimessageportsmock.NewMockEDIInboundFileRepository(t)
 	inboundFileRepo.EXPECT().
 		ExistsByChecksum(mock.Anything, mock.Anything).
 		Return(false, nil).
@@ -326,7 +326,7 @@ func TestReceiveAS2MessageAcceptsUnsignedWhenRequirementsDisabled(t *testing.T) 
 func TestReceiveAS2MessageRejectsUnknownIdentifiers(t *testing.T) {
 	t.Parallel()
 
-	profileRepo := ediportsmock.NewMockEDICommunicationProfileRepository(t)
+	profileRepo := edipartnerportsmock.NewMockEDICommunicationProfileRepository(t)
 	profileRepo.EXPECT().
 		GetActiveAS2ProfileByIdentifiers(mock.Anything, mock.Anything).
 		Return(nil, errortypes.NewNotFoundError("EDICommunicationProfile not found")).
@@ -411,7 +411,7 @@ func TestReceiveAS2MessageReturnsFailureMDNOnBadPayload(t *testing.T) {
 			editransport.SecretKeyAS2PrivateKey: trenova.keyPEM,
 		},
 	}
-	profileRepo := ediportsmock.NewMockEDICommunicationProfileRepository(t)
+	profileRepo := edipartnerportsmock.NewMockEDICommunicationProfileRepository(t)
 	profileRepo.EXPECT().
 		GetActiveAS2ProfileByIdentifiers(mock.Anything, mock.Anything).
 		Return(profile, nil).

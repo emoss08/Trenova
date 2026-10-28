@@ -6,7 +6,8 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/editransportports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
@@ -19,7 +20,7 @@ import (
 
 func (s *Service) ListCommunicationProfiles(
 	ctx context.Context,
-	req *ediports.ListEDICommunicationProfilesRequest,
+	req *edipartnerports.ListEDICommunicationProfilesRequest,
 ) (*pagination.ListResult[*edi.EDICommunicationProfile], error) {
 	result, err := s.profileRepo.ListProfiles(ctx, req)
 	if err != nil {
@@ -34,7 +35,7 @@ func (s *Service) ListCommunicationProfiles(
 
 func (s *Service) SelectCommunicationProfileOptions(
 	ctx context.Context,
-	req *ediports.EDICommunicationProfileSelectOptionsRequest,
+	req *edipartnerports.EDICommunicationProfileSelectOptionsRequest,
 ) (*pagination.ListResult[*edi.EDICommunicationProfile], error) {
 	result, err := s.profileRepo.SelectProfileOptions(ctx, req)
 	if err != nil {
@@ -49,7 +50,7 @@ func (s *Service) SelectCommunicationProfileOptions(
 
 func (s *Service) GetCommunicationProfile(
 	ctx context.Context,
-	req ediports.GetEDICommunicationProfileByIDRequest,
+	req edipartnerports.GetEDICommunicationProfileByIDRequest,
 ) (*edi.EDICommunicationProfile, error) {
 	profile, err := s.profileRepo.GetProfileByID(ctx, req)
 	if err != nil {
@@ -65,8 +66,8 @@ type TestCommunicationProfileConnectionRequest struct {
 }
 
 type TestCommunicationProfileConnectionResult struct {
-	Success bool                          `json:"success"`
-	Checks  []ediports.EDIConnectionCheck `json:"checks"`
+	Success bool                                   `json:"success"`
+	Checks  []editransportports.EDIConnectionCheck `json:"checks"`
 }
 
 func (s *Service) TestCommunicationProfileConnection(
@@ -75,7 +76,7 @@ func (s *Service) TestCommunicationProfileConnection(
 ) (*TestCommunicationProfileConnectionResult, error) {
 	profile, err := s.profileRepo.GetProfileByID(
 		ctx,
-		ediports.GetEDICommunicationProfileByIDRequest{
+		edipartnerports.GetEDICommunicationProfileByIDRequest{
 			ID:         req.ProfileID,
 			TenantInfo: req.TenantInfo,
 		},
@@ -97,14 +98,14 @@ func (s *Service) TestCommunicationProfileConnection(
 	checks, err := s.transport.TestConnection(
 		ctx,
 		profile.Method,
-		&ediports.EDITransportRequest{Profile: profile, Secrets: secrets},
+		&editransportports.EDITransportRequest{Profile: profile, Secrets: secrets},
 	)
 	if err != nil {
 		return nil, errortypes.NewBusinessError(err.Error())
 	}
 	result := &TestCommunicationProfileConnectionResult{Success: true, Checks: checks}
 	for _, check := range checks {
-		if check.Status == ediports.EDIConnectionCheckFailed {
+		if check.Status == editransportports.EDIConnectionCheckFailed {
 			result.Success = false
 			break
 		}
@@ -169,7 +170,7 @@ func (s *Service) UpdateCommunicationProfile(
 ) (*edi.EDICommunicationProfile, error) {
 	existing, err := s.profileRepo.GetProfileByID(
 		ctx,
-		ediports.GetEDICommunicationProfileByIDRequest{
+		edipartnerports.GetEDICommunicationProfileByIDRequest{
 			ID:         req.ProfileID,
 			TenantInfo: req.TenantInfo,
 		},
@@ -297,7 +298,7 @@ func (s *Service) ensureProfileReferences(
 	entity *edi.EDICommunicationProfile,
 ) error {
 	if entity.EDIPartnerID.IsNotNil() {
-		if _, err := s.partnerRepo.GetByID(ctx, ediports.GetEDIPartnerByIDRequest{
+		if _, err := s.partnerRepo.GetByID(ctx, edipartnerports.GetEDIPartnerByIDRequest{
 			ID: entity.EDIPartnerID,
 			TenantInfo: pagination.TenantInfo{
 				OrgID: entity.OrganizationID,
@@ -311,7 +312,7 @@ func (s *Service) ensureProfileReferences(
 	if entity.EDIConnectionID.IsNotNil() {
 		_, err := s.connectionRepo.GetConnectionByID(
 			ctx,
-			ediports.GetEDIConnectionByIDRequest{
+			edipartnerports.GetEDIConnectionByIDRequest{
 				ID: entity.EDIConnectionID,
 				TenantInfo: pagination.TenantInfo{
 					OrgID: entity.OrganizationID,

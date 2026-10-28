@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediconnectiondraftports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 )
 
@@ -34,16 +34,19 @@ const (
 type connectionDraftPlanner interface {
 	PlanConnectionDraft(
 		ctx context.Context,
-		req *ediports.ConnectionDraftRequest,
-	) (*ediports.ConnectionDraft, error)
+		req *ediconnectiondraftports.ConnectionDraftRequest,
+	) (*ediconnectiondraftports.ConnectionDraft, error)
 }
 
 type specDocumentReader interface {
-	Read(ctx context.Context, req *edispec.ReadRequest) (*ediports.SpecDocument, error)
+	Read(
+		ctx context.Context,
+		req *edispec.ReadRequest,
+	) (*ediconnectiondraftports.SpecDocument, error)
 }
 
 func provideDraftEDIConnectionTool(
-	drafts ediports.EDIConnectionDraftService,
+	drafts ediconnectiondraftports.EDIConnectionDraftService,
 	documents documentports.DocumentRepository,
 	contents documentports.DocumentContentService,
 ) agenttoolports.AgentQueryTool {
@@ -101,7 +104,7 @@ func (t *draftEDIConnectionTool) Policy() agenttoolports.ToolPolicy {
 }
 
 type connectionDraftView struct {
-	*ediports.ConnectionDraft
+	*ediconnectiondraftports.ConnectionDraft
 
 	Title string `json:"title"`
 	Note  string `json:"note"`
@@ -144,7 +147,7 @@ func (t *draftEDIConnectionTool) Query(
 	}, nil
 }
 
-func draftTitle(draft *ediports.ConnectionDraft) string {
+func draftTitle(draft *ediconnectiondraftports.ConnectionDraft) string {
 	name := ""
 	for index := range draft.Partner.Fields {
 		if draft.Partner.Fields[index].Field == "partner.name" {
@@ -154,13 +157,13 @@ func draftTitle(draft *ediports.ConnectionDraft) string {
 	if name == "" {
 		name = draft.FileName
 	}
-	if draft.Partner.Match == ediports.PartnerMatchExisting {
+	if draft.Partner.Match == ediconnectiondraftports.PartnerMatchExisting {
 		return "Changes to " + name + " from its EDI guide"
 	}
 	return "EDI connection for " + name
 }
 
-func draftNote(draft *ediports.ConnectionDraft) string {
+func draftNote(draft *ediconnectiondraftports.ConnectionDraft) string {
 	if !draft.Ready {
 		return strings.Join([]string{
 			draftOutsideNote,
@@ -179,7 +182,7 @@ func draftNote(draft *ediports.ConnectionDraft) string {
 	return strings.Join(notes, " ")
 }
 
-func draftFindings(draft *ediports.ConnectionDraft) []string {
+func draftFindings(draft *ediconnectiondraftports.ConnectionDraft) []string {
 	findings := make([]string, 0, len(draft.Gaps)+len(draft.Sets)+1)
 	for index := range draft.Sets {
 		set := &draft.Sets[index]
@@ -208,15 +211,15 @@ func draftFindings(draft *ediports.ConnectionDraft) []string {
 	return findings
 }
 
-func draftChanges(draft *ediports.ConnectionDraft) []string {
-	if draft.Partner.Match != ediports.PartnerMatchExisting {
+func draftChanges(draft *ediconnectiondraftports.ConnectionDraft) []string {
+	if draft.Partner.Match != ediconnectiondraftports.PartnerMatchExisting {
 		return nil
 	}
 	changes := make([]string, 0, draft.Changes)
 	changes = appendValueChanges(changes, draft.Partner.Fields)
 	switch {
 	case draft.Transport == nil:
-	case draft.Transport.Change == ediports.ChangeKindAdd:
+	case draft.Transport.Change == ediconnectiondraftports.ChangeKindAdd:
 		changes = append(changes, fmt.Sprintf("adds the %s communication profile",
 			draft.Connection.Method))
 	default:
@@ -225,14 +228,15 @@ func draftChanges(draft *ediports.ConnectionDraft) []string {
 	changes = appendValueChanges(changes, draft.Interchange)
 	controls := make(map[controlChange][]string, len(draft.Sets))
 	order := make([]controlChange, 0, len(draft.Sets))
-	if project := draft.Project; project != nil && project.Change == ediports.ChangeKindChange {
+	if project := draft.Project; project != nil &&
+		project.Change == ediconnectiondraftports.ChangeKindChange {
 		for _, file := range project.Files {
 			switch file.Change {
-			case ediports.ChangeKindAdd:
+			case ediconnectiondraftports.ChangeKindAdd:
 				changes = append(changes, "adds "+file.Path+" to the Lading project")
-			case ediports.ChangeKindChange:
+			case ediconnectiondraftports.ChangeKindChange:
 				changes = append(changes, "rewrites "+file.Path+" in the Lading project")
-			case ediports.ChangeKindSame, ediports.ChangeKindNone:
+			case ediconnectiondraftports.ChangeKindSame, ediconnectiondraftports.ChangeKindNone:
 			}
 		}
 	}
@@ -240,7 +244,7 @@ func draftChanges(draft *ediports.ConnectionDraft) []string {
 		set := &draft.Sets[index]
 		name := fmt.Sprintf("%s %s", set.TransactionSet,
 			strings.ToLower(string(set.Direction)))
-		if set.Change == ediports.ChangeKindAdd {
+		if set.Change == ediconnectiondraftports.ChangeKindAdd {
 			changes = append(changes, "starts exchanging the "+name)
 			continue
 		}
@@ -274,17 +278,17 @@ func draftChanges(draft *ediports.ConnectionDraft) []string {
 	return changes
 }
 
-func appendValueChanges(changes []string, values []ediports.DraftValue) []string {
+func appendValueChanges(changes []string, values []ediconnectiondraftports.DraftValue) []string {
 	for index := range values {
 		value := &values[index]
 		switch value.Change {
-		case ediports.ChangeKindChange:
+		case ediconnectiondraftports.ChangeKindChange:
 			changes = append(changes, fmt.Sprintf("%s from %s to %s%s",
 				value.Label, value.Current, value.Value, onPage(value.Source.Page)))
-		case ediports.ChangeKindAdd:
+		case ediconnectiondraftports.ChangeKindAdd:
 			changes = append(changes, fmt.Sprintf("%s set to %s%s",
 				value.Label, value.Value, onPage(value.Source.Page)))
-		case ediports.ChangeKindSame, ediports.ChangeKindNone:
+		case ediconnectiondraftports.ChangeKindSame, ediconnectiondraftports.ChangeKindNone:
 		}
 	}
 	return changes

@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi/edidb"
 	"github.com/emoss08/trenova/internal/modules/edi/editest"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/editenderports"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/dberror"
@@ -43,10 +43,13 @@ func TestGetTenderRecipientByID_UnderRowLevelSecurityOnlyTheTwoPartiesSeeIt(t *t
 		Logger: zap.NewNop(),
 	})
 	read := func(scope editest.Tenant, claimed pagination.TenantInfo) (*edi.TenderRecipient, error) {
-		return repo.GetTenderRecipientByID(scope.Ctx, ediports.GetEDITenderRecipientByIDRequest{
-			ID:         recipient.ID,
-			TenantInfo: claimed,
-		})
+		return repo.GetTenderRecipientByID(
+			scope.Ctx,
+			editenderports.GetEDITenderRecipientByIDRequest{
+				ID:         recipient.ID,
+				TenantInfo: claimed,
+			},
+		)
 	}
 
 	for name, party := range map[string]editest.Tenant{
@@ -110,7 +113,7 @@ func TestTenderRecipients_LiveInTheirSourceShipmentsBusinessUnit(t *testing.T) {
 		Logger: zap.NewNop(),
 	})
 	other := editest.TenantOf(tender.Ctx, elsewhere.Info())
-	_, err = repo.GetTenderRecipientByID(other.Ctx, ediports.GetEDITenderRecipientByIDRequest{
+	_, err = repo.GetTenderRecipientByID(other.Ctx, editenderports.GetEDITenderRecipientByIDRequest{
 		ID:         foreign.ID,
 		TenantInfo: other.Info,
 	})

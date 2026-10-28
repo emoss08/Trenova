@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/editenderports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -34,7 +34,7 @@ func (s *Service) CancelInboundTender(
 	if req.Key != "" {
 		prior, err := s.transferRepo.GetActionableInboundTransferByExternalReference(
 			ctx,
-			ediports.GetActionableInboundEDITransferByExternalReferenceRequest{
+			editenderports.GetActionableInboundEDITransferByExternalReferenceRequest{
 				TenantInfo:        req.TenantInfo,
 				PartnerID:         req.Partner.ID,
 				ExternalReference: req.Key,

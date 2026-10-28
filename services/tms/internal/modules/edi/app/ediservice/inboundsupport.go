@@ -4,7 +4,9 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/edimessageports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/editenderports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentevent"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
@@ -359,42 +361,42 @@ func (s *Service) generateExternalTenderResponse(
 
 func (s *Service) ListPartnersCursor(
 	ctx context.Context,
-	req *ediports.ListEDIPartnersRequest,
+	req *edipartnerports.ListEDIPartnersRequest,
 ) (*pagination.CursorListResult[*edi.EDIPartner], error) {
 	return s.partnerRepo.ListCursor(ctx, req)
 }
 
 func (s *Service) ListCommunicationProfilesCursor(
 	ctx context.Context,
-	req *ediports.ListEDICommunicationProfilesRequest,
+	req *edipartnerports.ListEDICommunicationProfilesRequest,
 ) (*pagination.CursorListResult[*edi.EDICommunicationProfile], error) {
 	return s.profileRepo.ListProfilesCursor(ctx, req)
 }
 
 func (s *Service) ListInboundTransfersCursor(
 	ctx context.Context,
-	req *ediports.ListEDITransfersRequest,
+	req *editenderports.ListEDITransfersRequest,
 ) (*pagination.CursorListResult[*edi.EDITransfer], error) {
 	return s.transferRepo.ListInboundCursor(ctx, req)
 }
 
 func (s *Service) ListOutboundTransfersCursor(
 	ctx context.Context,
-	req *ediports.ListEDITransfersRequest,
+	req *editenderports.ListEDITransfersRequest,
 ) (*pagination.CursorListResult[*edi.EDITransfer], error) {
 	return s.transferRepo.ListOutboundCursor(ctx, req)
 }
 
 func (s *Service) ListMessagesCursor(
 	ctx context.Context,
-	req *ediports.ListEDIMessagesRequest,
+	req *edimessageports.ListEDIMessagesRequest,
 ) (*pagination.CursorListResult[*edi.EDIMessage], error) {
 	return s.messageRepo.ListMessagesCursor(ctx, req)
 }
 
 func (s *Service) ListMappingProfilesCursor(
 	ctx context.Context,
-	req *ediports.ListEDIMappingProfilesRequest,
+	req *edipartnerports.ListEDIMappingProfilesRequest,
 ) (*pagination.CursorListResult[*edi.EDIMappingProfile], error) {
 	return s.mappingProfileRepo.ListMappingProfilesCursor(ctx, req)
 }

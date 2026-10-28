@@ -13,7 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediinboundservice"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/edimessageports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -256,7 +256,7 @@ func (t *ReprocessEDIInboundFilesTool) planFile(
 	params *agenttoolports.ToolExecuteParams,
 	id pulid.ID,
 ) (plannedEDIRecord, error) {
-	file, err := t.files.GetInboundFile(ctx, ediports.GetEDIInboundFileByIDRequest{
+	file, err := t.files.GetInboundFile(ctx, edimessageports.GetEDIInboundFileByIDRequest{
 		ID:         id,
 		TenantInfo: common.TenantFrom(*params),
 	})

@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/edimessageports"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -434,7 +435,7 @@ func (h *Handler) edi214Status(c *gin.Context) {
 	}
 	status, err := h.ediService.GetServiceFailure214Status(
 		c.Request.Context(),
-		ediports.GetServiceFailure214StatusRequest{
+		edimessageports.GetServiceFailure214StatusRequest{
 			TenantInfo:       pagination.FromAuth(authCtx),
 			ServiceFailureID: id,
 		},

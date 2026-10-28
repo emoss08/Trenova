@@ -6,7 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/editenderports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/internaledilifecycle"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentinvalidation"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -643,7 +643,7 @@ type fakeShipmentLinkRepository struct {
 
 func (r *fakeShipmentLinkRepository) GetShipmentLinksByShipmentID(
 	context.Context,
-	ediports.GetEDIShipmentLinksByShipmentIDRequest,
+	editenderports.GetEDIShipmentLinksByShipmentIDRequest,
 ) ([]*edi.ShipmentLink, error) {
 	r.calls++
 	return r.links, nil
@@ -657,9 +657,9 @@ type fakeTransferChangeRepository struct {
 func (r *fakeTransferChangeRepository) CreateTransferChangeIdempotent(
 	_ context.Context,
 	entity *edi.TransferChange,
-) (*ediports.CreateEDITransferChangeIdempotentResult, error) {
+) (*editenderports.CreateEDITransferChangeIdempotentResult, error) {
 	if existing := r.existing[entity.IdempotencyKey]; existing != nil {
-		return &ediports.CreateEDITransferChangeIdempotentResult{
+		return &editenderports.CreateEDITransferChangeIdempotentResult{
 			TransferChange: existing,
 			Created:        false,
 		}, nil
@@ -669,7 +669,7 @@ func (r *fakeTransferChangeRepository) CreateTransferChangeIdempotent(
 	}
 	r.existing[entity.IdempotencyKey] = entity
 	r.created = append(r.created, entity)
-	return &ediports.CreateEDITransferChangeIdempotentResult{
+	return &editenderports.CreateEDITransferChangeIdempotentResult{
 		TransferChange: entity,
 		Created:        true,
 	}, nil

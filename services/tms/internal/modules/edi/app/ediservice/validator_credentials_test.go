@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediconnectiondraftports"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -108,18 +108,18 @@ func TestCredentialRequirements_NamesWhatAPersonMustEnter(t *testing.T) {
 	t.Parallel()
 
 	sftp := sftpProfileWithoutCredentials(domaintypes.StatusInactive)
-	assert.Equal(t, []ediports.CredentialRequirement{
+	assert.Equal(t, []ediconnectiondraftports.CredentialRequirement{
 		{
 			Keys:     []string{"knownHostKey"},
 			Label:    "Known host key",
-			Kind:     ediports.CredentialKindSetting,
+			Kind:     ediconnectiondraftports.CredentialKindSetting,
 			Required: true,
 			Missing:  true,
 		},
 		{
 			Keys:     []string{"password", "privateKey"},
 			Label:    "SFTP password or private key",
-			Kind:     ediports.CredentialKindSecret,
+			Kind:     ediconnectiondraftports.CredentialKindSecret,
 			Required: true,
 			Missing:  true,
 		},
@@ -131,9 +131,9 @@ func TestCredentialRequirements_NamesWhatAPersonMustEnter(t *testing.T) {
 }
 
 func missingOnly(
-	requirements []ediports.CredentialRequirement,
-) []ediports.CredentialRequirement {
-	out := make([]ediports.CredentialRequirement, 0, len(requirements))
+	requirements []ediconnectiondraftports.CredentialRequirement,
+) []ediconnectiondraftports.CredentialRequirement {
+	out := make([]ediconnectiondraftports.CredentialRequirement, 0, len(requirements))
 	for _, requirement := range requirements {
 		if requirement.Missing {
 			out = append(out, requirement)

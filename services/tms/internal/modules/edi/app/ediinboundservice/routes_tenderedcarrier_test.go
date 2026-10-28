@@ -12,7 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ladingdoc"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/editenderports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -26,6 +26,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/places/domain/location"
 	"github.com/emoss08/trenova/internal/testutil/mocks/carrierportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/ediportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/editenderportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentcommentportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/shipmenteventportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentmoveportsmock"
@@ -45,7 +46,7 @@ type tenderedCarrierFixture struct {
 	file          *edi.EDIInboundFile
 	partner       *edi.EDIPartner
 	tenderRepo    *fakeTenderRepository
-	recipientRepo *ediportsmock.MockEDITenderRecipientRepository
+	recipientRepo *editenderportsmock.MockEDITenderRecipientRepository
 	commentRepo   *shipmentcommentportsmock.MockShipmentCommentRepository
 	userRepo      *tenantportsmock.MockUserRepository
 	eventRepo     *shipmenteventportsmock.MockShipmentEventRepository
@@ -96,7 +97,7 @@ func buildTenderedCarrierFixture(t *testing.T, withStopActuals bool) *tenderedCa
 			EnabledForInbound: true,
 		},
 		tenderRepo:    &fakeTenderRepository{},
-		recipientRepo: ediportsmock.NewMockEDITenderRecipientRepository(t),
+		recipientRepo: editenderportsmock.NewMockEDITenderRecipientRepository(t),
 		commentRepo:   shipmentcommentportsmock.NewMockShipmentCommentRepository(t),
 		userRepo:      tenantportsmock.NewMockUserRepository(t),
 		eventRepo:     shipmenteventportsmock.NewMockShipmentEventRepository(t),
@@ -239,7 +240,7 @@ func TestRouteShipmentStatus_RecipientHitDoesNotUseOfferFallback(t *testing.T) {
 		GetActiveExternalRecipientByShipmentReference(
 			mock.Anything,
 			mock.MatchedBy(
-				func(req ediports.GetActiveExternalEDITenderRecipientByReferenceRequest) bool {
+				func(req editenderports.GetActiveExternalEDITenderRecipientByReferenceRequest) bool {
 					return req.Reference == "SHIP-1001" && req.PartnerID == fixture.partner.ID
 				},
 			),

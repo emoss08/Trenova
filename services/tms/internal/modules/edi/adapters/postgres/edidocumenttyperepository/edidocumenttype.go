@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi/edidb"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
 	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"go.uber.org/fx"
@@ -28,7 +28,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) ediports.EDIDocumentTypeRepository {
+func New(p Params) edipartnerports.EDIDocumentTypeRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.edi-document-type-repository"),
@@ -37,7 +37,7 @@ func New(p Params) ediports.EDIDocumentTypeRepository {
 
 func (r *repository) ListDocumentTypes(
 	ctx context.Context,
-	req ediports.ListEDIDocumentTypesRequest,
+	req edipartnerports.ListEDIDocumentTypesRequest,
 ) ([]*edi.EDIDocumentType, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*edi.EDIDocumentType, error) {
 		dt := edidb.EDIDocumentTypes
@@ -49,7 +49,7 @@ func (r *repository) ListDocumentTypes(
 
 func (r *repository) SelectDocumentTypeOptions(
 	ctx context.Context,
-	req *ediports.EDIDocumentTypeSelectOptionsRequest,
+	req *edipartnerports.EDIDocumentTypeSelectOptionsRequest,
 ) (*pagination.ListResult[*edi.EDIDocumentType], error) {
 	return dbtx.Read(
 		ctx,
@@ -70,7 +70,7 @@ func (r *repository) SelectDocumentTypeOptions(
 }
 
 func documentTypeOptionsQuery(
-	req *ediports.EDIDocumentTypeSelectOptionsRequest,
+	req *edipartnerports.EDIDocumentTypeSelectOptionsRequest,
 ) *keel.Query[*edi.EDIDocumentType] {
 	dt := edidb.EDIDocumentTypes
 	return dt.Pick(
@@ -84,7 +84,7 @@ func documentTypeOptionsQuery(
 		dt.Status,
 		dt.CreatedAt,
 	).
-		Where(documentTypeFilters(&ediports.ListEDIDocumentTypesRequest{
+		Where(documentTypeFilters(&edipartnerports.ListEDIDocumentTypesRequest{
 			Standard:       req.Standard,
 			TransactionSet: req.TransactionSet,
 			Direction:      req.Direction,
@@ -102,7 +102,7 @@ func documentTypeSearch(s string) keel.Pred {
 	)
 }
 
-func documentTypeFilters(req *ediports.ListEDIDocumentTypesRequest) []keel.Pred {
+func documentTypeFilters(req *edipartnerports.ListEDIDocumentTypesRequest) []keel.Pred {
 	dt := edidb.EDIDocumentTypes
 	return []keel.Pred{
 		keel.When(req.Standard != "", dt.Standard.Eq(req.Standard)),

@@ -16,7 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi/edidb"
 	"github.com/emoss08/trenova/internal/modules/edi/editest"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/editenderports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
@@ -69,7 +69,7 @@ type approvalHarness struct {
 	tender    *editest.InternalTender
 	service   *Service
 	shipments *receivingShipments
-	tenders   ediports.EDIShipmentTenderRepository
+	tenders   editenderports.EDIShipmentTenderRepository
 	transfer  *edi.EDITransfer
 	payload   *ApproveLoadTenderTransferWorkflowPayload
 }
@@ -202,7 +202,7 @@ func TestSetShipmentTenderStatus_FailsWhenTheScopeCannotSeeTheShipment(t *testin
 
 	err := h.tenders.SetShipmentTenderStatus(
 		h.tender.Target.Ctx,
-		ediports.SetEDIShipmentTenderStatusRequest{
+		editenderports.SetEDIShipmentTenderStatusRequest{
 			ShipmentID: h.tender.SourceShipment.ID,
 			TenantInfo: h.tender.Source.Info,
 			Status:     shipment.TenderStatusAccepted,

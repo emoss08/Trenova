@@ -9,7 +9,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediconnectiondraftports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 )
 
@@ -22,9 +22,9 @@ const (
 	MaxSummaryRunes = 500
 )
 
-func DocumentDigest(pages []ediports.SpecPage) string {
+func DocumentDigest(pages []ediconnectiondraftports.SpecPage) string {
 	ordered := slices.Clone(pages)
-	slices.SortStableFunc(ordered, func(a, b ediports.SpecPage) int {
+	slices.SortStableFunc(ordered, func(a, b ediconnectiondraftports.SpecPage) int {
 		return a.Number - b.Number
 	})
 	hash := sha256.New()
@@ -36,7 +36,7 @@ func DocumentDigest(pages []ediports.SpecPage) string {
 	return "sha256:" + hex.EncodeToString(hash.Sum(nil))
 }
 
-func validateRequest(req *ediports.ConnectionDraftRequest) error {
+func validateRequest(req *ediconnectiondraftports.ConnectionDraftRequest) error {
 	multiErr := errortypes.NewMultiError()
 	if req == nil {
 		multiErr.Add("", errortypes.ErrRequired, "A draft request is required")
@@ -90,7 +90,8 @@ func validateRequest(req *ediports.ConnectionDraftRequest) error {
 		}
 	}
 	for index, gap := range req.Gaps {
-		if gap.Kind != ediports.GapKindUnsupported && gap.Kind != ediports.GapKindAmbiguous {
+		if gap.Kind != ediconnectiondraftports.GapKindUnsupported &&
+			gap.Kind != ediconnectiondraftports.GapKindAmbiguous {
 			multiErr.WithIndex("gaps", index).
 				Add("kind", errortypes.ErrInvalid, "A gap is Unsupported or Ambiguous")
 		}
@@ -156,19 +157,21 @@ func checkSetDirection(
 	}
 }
 
-func validUsage(usage ediports.RequirementUsage) bool {
+func validUsage(usage ediconnectiondraftports.RequirementUsage) bool {
 	switch usage {
-	case ediports.RequirementUsageMandatory,
-		ediports.RequirementUsageOptional,
-		ediports.RequirementUsageConditional,
-		ediports.RequirementUsageNotUsed:
+	case ediconnectiondraftports.RequirementUsageMandatory,
+		ediconnectiondraftports.RequirementUsageOptional,
+		ediconnectiondraftports.RequirementUsageConditional,
+		ediconnectiondraftports.RequirementUsageNotUsed:
 		return true
 	default:
 		return false
 	}
 }
 
-func withRedactedQuotes(req *ediports.ConnectionDraftRequest) *ediports.ConnectionDraftRequest {
+func withRedactedQuotes(
+	req *ediconnectiondraftports.ConnectionDraftRequest,
+) *ediconnectiondraftports.ConnectionDraftRequest {
 	redacted := *req
 	redacted.Values = slices.Clone(req.Values)
 	for index := range redacted.Values {
@@ -190,6 +193,6 @@ func withRedactedQuotes(req *ediports.ConnectionDraftRequest) *ediports.Connecti
 	return &redacted
 }
 
-func redactCitation(citation *ediports.DraftCitation) {
+func redactCitation(citation *ediconnectiondraftports.DraftCitation) {
 	citation.Quote = edi.RedactSecrets(citation.Quote)
 }

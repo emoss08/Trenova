@@ -4,7 +4,9 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediconnectiondraftports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/edimessageports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 )
 
@@ -59,7 +61,7 @@ func ediPartnerTransportsToModel(
 }
 
 func ediTransportCredentialsToModel(
-	requirements []ediports.CredentialRequirement,
+	requirements []ediconnectiondraftports.CredentialRequirement,
 ) []*gqlmodel.EDITransportCredential {
 	models := make([]*gqlmodel.EDITransportCredential, 0, len(requirements))
 	for index := range requirements {
@@ -69,7 +71,7 @@ func ediTransportCredentialsToModel(
 		}
 		models = append(models, &gqlmodel.EDITransportCredential{
 			Key:      requirement.Keys[0],
-			Secret:   requirement.Kind == ediports.CredentialKindSecret,
+			Secret:   requirement.Kind == ediconnectiondraftports.CredentialKindSecret,
 			Required: requirement.Required,
 			OnFile:   !requirement.Missing,
 		})
@@ -124,7 +126,7 @@ func ediPartnerReadinessToModel(
 }
 
 func ediPartnerMappingsToModel(
-	summary *ediports.EDIMappingSummary,
+	summary *edipartnerports.EDIMappingSummary,
 ) *gqlmodel.EDIPartnerMappingSummary {
 	model := &gqlmodel.EDIPartnerMappingSummary{
 		Counts: make([]*gqlmodel.EDIMappingCount, 0, len(summary.Counts)),
@@ -151,7 +153,7 @@ func ediPartnerActivityToModel(
 	model := &gqlmodel.EDIPartnerActivity{
 		Since:           int(activity.Since),
 		SeriesSince:     int(activity.SeriesSince),
-		Scorecard:       ediPartnerScorecardsToModel([]*ediports.EDIPartnerScorecardRow{activity.Scorecard})[0],
+		Scorecard:       ediPartnerScorecardsToModel([]*edimessageports.EDIPartnerScorecardRow{activity.Scorecard})[0],
 		AckStatusCounts: summaryStatusCounts(activity.AckCounts),
 		Sets:            make([]*gqlmodel.EDIPartnerSetActivity, 0, len(activity.Sets)),
 		Series: ediVolumeSeriesToModel(&ediservice.EDIVolumeSeries{

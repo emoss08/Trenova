@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/edimessageports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
 	"github.com/emoss08/trenova/pkg/lading"
@@ -76,7 +77,7 @@ type ServiceFailure214LifecycleRequest struct {
 	ServiceFailure   *servicefailure.ServiceFailure               `json:"-"`
 }
 
-type ServiceFailure214Status = ServiceFailure214StatusRow
+type ServiceFailure214Status = edimessageports.ServiceFailure214StatusRow
 
 type EDIService interface {
 	BuildShipmentStatusPayloadForServiceFailure(
@@ -98,7 +99,7 @@ type EDIService interface {
 	) (*servicefailureports.ServiceFailure214LifecycleResult, error)
 	GetServiceFailure214Status(
 		ctx context.Context,
-		req GetServiceFailure214StatusRequest,
+		req edimessageports.GetServiceFailure214StatusRequest,
 	) (*ServiceFailure214Status, error)
 }
 

@@ -6,7 +6,7 @@ import (
 	"unicode"
 
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediconnectiondraftports"
 )
 
 const (
@@ -29,7 +29,7 @@ type pageIndex struct {
 	redacted   map[int]string
 }
 
-func newPageIndex(pages []ediports.SpecPage) *pageIndex {
+func newPageIndex(pages []ediconnectiondraftports.SpecPage) *pageIndex {
 	index := &pageIndex{
 		pages:      make(map[int]string, len(pages)),
 		order:      make([]int, 0, len(pages)),
@@ -82,7 +82,7 @@ type citationCheck struct {
 	problem string
 }
 
-func (p *pageIndex) locate(citation ediports.DraftCitation) citationCheck {
+func (p *pageIndex) locate(citation ediconnectiondraftports.DraftCitation) citationCheck {
 	quote := normalizeForMatch(citation.Quote)
 	if len([]rune(quote)) < minQuoteRunes {
 		return citationCheck{problem: "The citation has no quote to check"}
@@ -183,9 +183,13 @@ func clampQuote(value string) string {
 	return string(runes[:maxQuoteRunes]) + "…"
 }
 
-func documentSource(page int, citation ediports.DraftCitation, note string) ediports.DraftSource {
-	return ediports.DraftSource{
-		Kind:    ediports.SourceKindDocument,
+func documentSource(
+	page int,
+	citation ediconnectiondraftports.DraftCitation,
+	note string,
+) ediconnectiondraftports.DraftSource {
+	return ediconnectiondraftports.DraftSource{
+		Kind:    ediconnectiondraftports.SourceKindDocument,
 		Page:    page,
 		Quote:   clampQuote(edi.RedactSecrets(citation.Quote)),
 		Section: strings.TrimSpace(citation.Section),

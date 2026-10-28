@@ -6,7 +6,8 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/editenderports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -61,7 +62,7 @@ func (s *Service) planTenderChanges(
 
 	recipients, err := s.tenderRecipientRepo.ListActiveTenderRecipientsForSourceShipment(
 		ctx,
-		ediports.ListEDITenderRecipientsForSourceShipmentRequest{
+		editenderports.ListEDITenderRecipientsForSourceShipmentRequest{
 			TenantInfo: pagination.TenantInfo{
 				OrgID:  updated.OrganizationID,
 				BuID:   updated.BusinessUnitID,
@@ -143,7 +144,7 @@ func (s *Service) PreviewCancelNotices(
 
 	links, err := s.shipmentLinkRepo.GetShipmentLinksByShipmentID(
 		ctx,
-		ediports.GetEDIShipmentLinksByShipmentIDRequest{
+		editenderports.GetEDIShipmentLinksByShipmentIDRequest{
 			ShipmentID: shipmentID,
 			TenantInfo: tenantInfo,
 		},
@@ -179,7 +180,7 @@ func (s *Service) partnerName(ctx context.Context, recipient *edi.TenderRecipien
 		return "Linked trading partner"
 	}
 
-	partner, err := s.partnerRepo.GetByID(ctx, ediports.GetEDIPartnerByIDRequest{
+	partner, err := s.partnerRepo.GetByID(ctx, edipartnerports.GetEDIPartnerByIDRequest{
 		ID: recipient.EDIPartnerID,
 		TenantInfo: pagination.TenantInfo{
 			OrgID: recipient.SourceOrganizationID,

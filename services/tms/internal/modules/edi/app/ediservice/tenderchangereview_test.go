@@ -5,12 +5,11 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/dbtest"
-	"github.com/emoss08/trenova/internal/testutil/mocks/ediportsmock"
-
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/editenderports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/testutil/dbtest"
+	"github.com/emoss08/trenova/internal/testutil/mocks/editenderportsmock"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/mock"
@@ -28,7 +27,7 @@ func TestService_ApplyTenderChange_ApplyFailureSurfacesErrorAndKeepsPendingRevie
 	fixture.tenderChangeRepo.EXPECT().
 		GetTenderChangeByID(
 			mock.Anything,
-			ediports.GetEDITenderChangeByIDRequest{
+			editenderports.GetEDITenderChangeByIDRequest{
 				ID:         change.ID,
 				TenantInfo: fixture.tenantInfo(),
 			},
@@ -38,7 +37,7 @@ func TestService_ApplyTenderChange_ApplyFailureSurfacesErrorAndKeepsPendingRevie
 	fixture.tenderRecipientRepo.EXPECT().
 		GetTenderRecipientByID(
 			mock.Anything,
-			ediports.GetEDITenderRecipientByIDRequest{
+			editenderports.GetEDITenderRecipientByIDRequest{
 				ID:         change.RecipientID,
 				TenantInfo: fixture.tenantInfo(),
 			},
@@ -78,7 +77,7 @@ func TestService_RejectTenderChange_UpdatesStatusWithoutApplying(t *testing.T) {
 	fixture.tenderChangeRepo.EXPECT().
 		GetTenderChangeByID(
 			mock.Anything,
-			ediports.GetEDITenderChangeByIDRequest{
+			editenderports.GetEDITenderChangeByIDRequest{
 				ID:         change.ID,
 				TenantInfo: fixture.tenantInfo(),
 			},
@@ -116,8 +115,8 @@ type tenderChangeReviewFixture struct {
 	actor               *permissionports.RequestActor
 	recipientOrgID      pulid.ID
 	buID                pulid.ID
-	tenderChangeRepo    *ediportsmock.MockEDITenderChangeRepository
-	tenderRecipientRepo *ediportsmock.MockEDITenderRecipientRepository
+	tenderChangeRepo    *editenderportsmock.MockEDITenderChangeRepository
+	tenderRecipientRepo *editenderportsmock.MockEDITenderRecipientRepository
 }
 
 func newTenderChangeReviewFixture(t *testing.T) *tenderChangeReviewFixture {
@@ -126,8 +125,8 @@ func newTenderChangeReviewFixture(t *testing.T) *tenderChangeReviewFixture {
 	fixture := &tenderChangeReviewFixture{
 		recipientOrgID:      pulid.MustNew("org_"),
 		buID:                pulid.MustNew("bu_"),
-		tenderChangeRepo:    ediportsmock.NewMockEDITenderChangeRepository(t),
-		tenderRecipientRepo: ediportsmock.NewMockEDITenderRecipientRepository(t),
+		tenderChangeRepo:    editenderportsmock.NewMockEDITenderChangeRepository(t),
+		tenderRecipientRepo: editenderportsmock.NewMockEDITenderRecipientRepository(t),
 	}
 	fixture.actor = &permissionports.RequestActor{
 		UserID:         pulid.MustNew("usr_"),

@@ -6,7 +6,9 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediconnectiondraftports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/edimessageports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/pkg/lading"
@@ -29,12 +31,12 @@ func partnerCardFixture() *ediservice.EDIPartnerCard {
 				{Key: "lading-active", Label: "An active Lading version"},
 			},
 		},
-		Mappings: &ediports.EDIMappingSummary{},
+		Mappings: &edipartnerports.EDIMappingSummary{},
 		Activity: &ediservice.EDIPartnerActivity{
 			Since:         100,
 			SeriesSince:   50,
 			BucketSeconds: 3600,
-			Scorecard: &ediports.EDIPartnerScorecardRow{
+			Scorecard: &edimessageports.EDIPartnerScorecardRow{
 				PartnerID:   partnerID,
 				SentCount:   9,
 				FailedCount: 1,
@@ -57,10 +59,19 @@ func TestEDIPartnerCardToModel_NamesCredentialsWithoutValues(t *testing.T) {
 			LastPollSuccessAt: &pollSuccess,
 		},
 		LastPollError: "password: [redacted] refused",
-		Credentials: []ediports.CredentialRequirement{
-			{Keys: []string{"password", "privateKey"}, Kind: ediports.CredentialKindSecret, Required: true, Missing: true},
-			{Keys: []string{"knownHostKey"}, Kind: ediports.CredentialKindSetting, Required: true},
-			{Keys: nil, Kind: ediports.CredentialKindSecret},
+		Credentials: []ediconnectiondraftports.CredentialRequirement{
+			{
+				Keys:     []string{"password", "privateKey"},
+				Kind:     ediconnectiondraftports.CredentialKindSecret,
+				Required: true,
+				Missing:  true,
+			},
+			{
+				Keys:     []string{"knownHostKey"},
+				Kind:     ediconnectiondraftports.CredentialKindSetting,
+				Required: true,
+			},
+			{Keys: nil, Kind: ediconnectiondraftports.CredentialKindSecret},
 		},
 		Certificates: []ediservice.EDIPartnerCertificate{
 			{
@@ -134,15 +145,21 @@ func TestEDIPartnerCardToModel_ReadsTheLinksAndFigures(t *testing.T) {
 		},
 		{CarrierID: pulid.MustNew("car_")},
 	}
-	card.Mappings = &ediports.EDIMappingSummary{
+	card.Mappings = &edipartnerports.EDIMappingSummary{
 		ProfileID: pulid.MustNew("edimp_"),
 		UpdatedAt: 1_700_000_000,
-		Counts: []*ediports.EDIMappingEntityCount{
+		Counts: []*edipartnerports.EDIMappingEntityCount{
 			{EntityType: edi.MappingEntityTypeLocation, Count: 41},
 		},
 	}
-	card.Activity.Sets = []*ediports.EDIPartnerSetActivityRow{
-		{TransactionSet: "214", Direction: edi.DocumentDirectionOutbound, Count: 1284, FailedCount: 2, LastAt: 1_700_000_500},
+	card.Activity.Sets = []*edimessageports.EDIPartnerSetActivityRow{
+		{
+			TransactionSet: "214",
+			Direction:      edi.DocumentDirectionOutbound,
+			Count:          1284,
+			FailedCount:    2,
+			LastAt:         1_700_000_500,
+		},
 		{TransactionSet: "204", Direction: edi.DocumentDirectionInbound, Count: 0},
 	}
 
@@ -166,7 +183,13 @@ func TestEDIPartnerCardToModel_ReadsTheLinksAndFigures(t *testing.T) {
 		},
 	}, model.Mappings)
 	assert.Equal(t, []*gqlmodel.EDIPartnerSetActivity{
-		{TransactionSet: "214", Direction: edi.DocumentDirectionOutbound, Count: 1284, FailedCount: 2, LastAt: new(1_700_000_500)},
+		{
+			TransactionSet: "214",
+			Direction:      edi.DocumentDirectionOutbound,
+			Count:          1284,
+			FailedCount:    2,
+			LastAt:         new(1_700_000_500),
+		},
 		{TransactionSet: "204", Direction: edi.DocumentDirectionInbound},
 	}, model.Activity.Sets)
 	assert.Equal(t, 3, model.Activity.Scorecard.OverdueAckCount,
@@ -241,7 +264,12 @@ func TestLadingVersionModel_ReadsTheEnvelopeAndSetsFromTheManifest(t *testing.T)
 
 	ack, within := "997", 1800
 	assert.Equal(t, []*gqlmodel.EDILadingExchange{
-		{TransactionSet: "204", Direction: edi.DocumentDirectionInbound, Map: "tenderIn", Acknowledgment: &ack},
+		{
+			TransactionSet: "204",
+			Direction:      edi.DocumentDirectionInbound,
+			Map:            "tenderIn",
+			Acknowledgment: &ack,
+		},
 		{
 			TransactionSet: "214", Direction: edi.DocumentDirectionOutbound, Map: "statusOut",
 			Acknowledgment: &ack, AcknowledgmentWithin: &within,

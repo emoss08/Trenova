@@ -6,7 +6,8 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/editenderports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -25,7 +26,7 @@ import (
 
 func (s *Service) MappingPreview(
 	ctx context.Context,
-	req ediports.GetEDITransferByIDRequest,
+	req editenderports.GetEDITransferByIDRequest,
 ) (*MappingPreview, error) {
 	transfer, err := s.transferRepo.GetTransferByID(ctx, req)
 	if err != nil {
@@ -42,7 +43,7 @@ func (s *Service) MappingPreviewOf(
 	ctx context.Context,
 	transfer *edi.EDITransfer,
 ) (*MappingPreview, error) {
-	targetPartner, err := s.partnerRepo.GetByID(ctx, ediports.GetEDIPartnerByIDRequest{
+	targetPartner, err := s.partnerRepo.GetByID(ctx, edipartnerports.GetEDIPartnerByIDRequest{
 		ID: transfer.TargetPartnerID,
 		TenantInfo: pagination.TenantInfo{
 			OrgID: transfer.TargetOrganizationID,
@@ -79,7 +80,7 @@ func (s *Service) ApproveTransfer(
 		func(txCtx context.Context) error {
 			transfer, err := s.transferRepo.GetTransferForUpdate(
 				txCtx,
-				ediports.GetEDITransferForUpdateRequest{
+				editenderports.GetEDITransferForUpdateRequest{
 					ID:         req.TransferID,
 					TenantInfo: req.TenantInfo,
 					Direction:  "inbound",
@@ -95,7 +96,7 @@ func (s *Service) ApproveTransfer(
 			original = &originalCopy
 
 			if len(req.Mappings) > 0 {
-				if _, err = s.SaveMappingProfile(txCtx, &ediports.SaveMappingItemsRequest{
+				if _, err = s.SaveMappingProfile(txCtx, &edipartnerports.SaveMappingItemsRequest{
 					PartnerID:  transfer.TargetPartnerID,
 					TenantInfo: req.TenantInfo,
 					ActorID:    actor.UserID,
@@ -105,10 +106,13 @@ func (s *Service) ApproveTransfer(
 				}
 			}
 
-			targetPartner, err := s.partnerRepo.GetByID(txCtx, ediports.GetEDIPartnerByIDRequest{
-				ID:         transfer.TargetPartnerID,
-				TenantInfo: req.TenantInfo,
-			})
+			targetPartner, err := s.partnerRepo.GetByID(
+				txCtx,
+				edipartnerports.GetEDIPartnerByIDRequest{
+					ID:         transfer.TargetPartnerID,
+					TenantInfo: req.TenantInfo,
+				},
+			)
 			if err != nil {
 				return err
 			}
@@ -144,7 +148,7 @@ func (s *Service) ApproveTransfer(
 
 	if persisted, updateErr := s.transferRepo.SetApprovalWorkflowRunID(
 		ctx,
-		ediports.SetEDITransferApprovalWorkflowRunIDRequest{
+		editenderports.SetEDITransferApprovalWorkflowRunIDRequest{
 			ID:         updated.ID,
 			TenantInfo: req.TenantInfo,
 			RunID:      runID,
@@ -253,7 +257,7 @@ func (s *Service) ProcessLoadTenderApproval(
 	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		transfer, err := s.transferRepo.GetTransferForUpdate(
 			txCtx,
-			ediports.GetEDITransferForUpdateRequest{
+			editenderports.GetEDITransferForUpdateRequest{
 				ID:         payload.TransferID,
 				TenantInfo: payload.TenantInfo,
 				Direction:  "inbound",
@@ -299,7 +303,7 @@ func (s *Service) ProcessLoadTenderApproval(
 			return nil
 		}
 
-		targetPartner, err := s.partnerRepo.GetByID(txCtx, ediports.GetEDIPartnerByIDRequest{
+		targetPartner, err := s.partnerRepo.GetByID(txCtx, edipartnerports.GetEDIPartnerByIDRequest{
 			ID: transfer.TargetPartnerID,
 			TenantInfo: pagination.TenantInfo{
 				OrgID: transfer.TargetOrganizationID,
@@ -485,7 +489,7 @@ func (s *Service) acceptSourceTender(ctx context.Context, transfer *edi.EDITrans
 
 			links, err := s.shipmentLinkRepo.GetShipmentLinksByShipmentID(
 				txCtx,
-				ediports.GetEDIShipmentLinksByShipmentIDRequest{
+				editenderports.GetEDIShipmentLinksByShipmentIDRequest{
 					ShipmentID: source.ID,
 					TenantInfo: sourceTenant,
 				},
@@ -546,7 +550,7 @@ func (s *Service) RejectTransfer(
 	err = s.db.Transact(sourceCtx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		transfer, err := s.transferRepo.GetTransferForUpdate(
 			txCtx,
-			ediports.GetEDITransferForUpdateRequest{
+			editenderports.GetEDITransferForUpdateRequest{
 				ID:         req.TransferID,
 				TenantInfo: req.TenantInfo,
 				Direction:  "inbound",
@@ -615,7 +619,7 @@ func (s *Service) CancelTransfer(
 	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		transfer, err := s.transferRepo.GetTransferForUpdate(
 			txCtx,
-			ediports.GetEDITransferForUpdateRequest{
+			editenderports.GetEDITransferForUpdateRequest{
 				ID:         req.TransferID,
 				TenantInfo: req.TenantInfo,
 				Direction:  "outbound",
@@ -682,7 +686,7 @@ func (s *Service) ExpireTransfer(
 	err = s.db.Transact(sourceCtx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		transfer, err := s.transferRepo.GetTransferForUpdate(
 			txCtx,
-			ediports.GetEDITransferForUpdateRequest{
+			editenderports.GetEDITransferForUpdateRequest{
 				ID:         req.TransferID,
 				TenantInfo: req.TenantInfo,
 				Direction:  "",
@@ -742,7 +746,7 @@ func (s *Service) transferSourceContext(
 	tenantInfo pagination.TenantInfo,
 	direction string,
 ) (context.Context, error) {
-	transfer, err := s.transferRepo.GetTransferByID(ctx, ediports.GetEDITransferByIDRequest{
+	transfer, err := s.transferRepo.GetTransferByID(ctx, editenderports.GetEDITransferByIDRequest{
 		ID:         transferID,
 		TenantInfo: tenantInfo,
 		Direction:  direction,

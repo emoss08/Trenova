@@ -9,7 +9,8 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ladingports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/places/ports/locationports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/customfield"
@@ -72,8 +73,8 @@ type RuntimeParams struct {
 	fx.In
 
 	Logger       *zap.Logger
-	Projects     ediports.LadingProjectRepository
-	Mappings     ediports.EDIMappingProfileRepository
+	Projects     ladingports.LadingProjectRepository
+	Mappings     edipartnerports.EDIMappingProfileRepository
 	Orgs         tenantports.OrganizationRepository
 	Locations    locationports.LocationRepository
 	CustomFields customfieldports.CustomFieldDefinitionRepository
@@ -82,8 +83,8 @@ type RuntimeParams struct {
 type Runtime struct {
 	l            *zap.Logger
 	client       *lading.Client
-	projects     ediports.LadingProjectRepository
-	mappings     ediports.EDIMappingProfileRepository
+	projects     ladingports.LadingProjectRepository
+	mappings     edipartnerports.EDIMappingProfileRepository
 	orgs         tenantports.OrganizationRepository
 	locations    locationports.LocationRepository
 	customFields customfieldports.CustomFieldDefinitionRepository
@@ -113,10 +114,13 @@ func (r *Runtime) Load(
 	tenantInfo pagination.TenantInfo,
 	partnerID pulid.ID,
 ) (*Programs, error) {
-	runnable, err := r.projects.GetRunnableVersions(ctx, ediports.GetRunnableLadingVersionRequest{
-		TenantInfo: tenantInfo,
-		PartnerID:  partnerID,
-	})
+	runnable, err := r.projects.GetRunnableVersions(
+		ctx,
+		ladingports.GetRunnableLadingVersionRequest{
+			TenantInfo: tenantInfo,
+			PartnerID:  partnerID,
+		},
+	)
 	if err != nil {
 		if errortypes.IsNotFoundError(err) {
 			return nil, ErrNoProject
@@ -358,7 +362,7 @@ func (r *Runtime) Lookup(
 		}
 		sources = append(sources, edi.MappingSourceID(need.Code))
 	}
-	items, err := r.mappings.GetMappingItems(ctx, ediports.GetMappingItemsRequest{
+	items, err := r.mappings.GetMappingItems(ctx, edipartnerports.GetMappingItemsRequest{
 		PartnerID:   partnerID,
 		TenantInfo:  tenantInfo,
 		EntityTypes: types,

@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/editenderports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -17,14 +17,14 @@ import (
 
 func (s *Service) ListTransferChanges(
 	ctx context.Context,
-	req *ediports.ListEDITransferChangesRequest,
+	req *editenderports.ListEDITransferChangesRequest,
 ) (*pagination.ListResult[*edi.TransferChange], error) {
 	return s.transferChangeRepo.ListTransferChanges(ctx, req)
 }
 
 func (s *Service) GetTransferChange(
 	ctx context.Context,
-	req ediports.GetEDITransferChangeByIDRequest,
+	req editenderports.GetEDITransferChangeByIDRequest,
 ) (*edi.TransferChange, error) {
 	return s.transferChangeRepo.GetTransferChangeByID(ctx, req)
 }
@@ -61,7 +61,7 @@ func (s *Service) reviewTransferChange(
 
 	change, err := s.transferChangeRepo.GetTransferChangeByID(
 		ctx,
-		ediports.GetEDITransferChangeByIDRequest{
+		editenderports.GetEDITransferChangeByIDRequest{
 			ID:         req.ChangeID,
 			TenantInfo: req.TenantInfo,
 		},
@@ -134,7 +134,7 @@ func (s *Service) validateTransferChangeReviewer(
 ) error {
 	link, err := s.shipmentLinkRepo.GetShipmentLinkByID(
 		ctx,
-		ediports.GetEDIShipmentLinkByIDRequest{
+		editenderports.GetEDIShipmentLinkByIDRequest{
 			ID:         change.ShipmentLinkID,
 			TenantInfo: tenantInfo,
 		},
@@ -163,7 +163,7 @@ func (s *Service) commentTransferChangeReview(
 ) error {
 	link, err := s.shipmentLinkRepo.GetShipmentLinkByID(
 		ctx,
-		ediports.GetEDIShipmentLinkByIDRequest{
+		editenderports.GetEDIShipmentLinkByIDRequest{
 			ID:         change.ShipmentLinkID,
 			TenantInfo: tenantInfo,
 		},

@@ -4,19 +4,18 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/dbtest"
-	"github.com/emoss08/trenova/internal/testutil/mocks/ediportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/shipmenteventportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
-
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/editenderports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/internaledilifecycle"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentevent"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentstate"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/testutil/dbtest"
+	"github.com/emoss08/trenova/internal/testutil/mocks/editenderportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmenteventportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/mock"
@@ -189,8 +188,8 @@ type transferChangeApplyFixture struct {
 	target             *shipment.Shipment
 	actor              *permissionports.RequestActor
 	direction          edi.TransferChangeDirection
-	transferChangeRepo *ediportsmock.MockEDITransferChangeRepository
-	shipmentLinkRepo   *ediportsmock.MockEDIShipmentLinkRepository
+	transferChangeRepo *editenderportsmock.MockEDITransferChangeRepository
+	shipmentLinkRepo   *editenderportsmock.MockEDIShipmentLinkRepository
 	shipmentRepo       *shipmentportsmock.MockShipmentRepository
 	eventRepo          *shipmenteventportsmock.MockShipmentEventRepository
 }
@@ -241,8 +240,8 @@ func newTransferChangeApplyFixture(
 			BusinessUnitID: buID,
 		},
 		direction:          direction,
-		transferChangeRepo: ediportsmock.NewMockEDITransferChangeRepository(t),
-		shipmentLinkRepo:   ediportsmock.NewMockEDIShipmentLinkRepository(t),
+		transferChangeRepo: editenderportsmock.NewMockEDITransferChangeRepository(t),
+		shipmentLinkRepo:   editenderportsmock.NewMockEDIShipmentLinkRepository(t),
 		shipmentRepo:       shipmentportsmock.NewMockShipmentRepository(t),
 		eventRepo:          shipmenteventportsmock.NewMockShipmentEventRepository(t),
 	}
@@ -298,7 +297,7 @@ func (f *transferChangeApplyFixture) expectLoadPendingChange(change *edi.Transfe
 	f.transferChangeRepo.EXPECT().
 		GetTransferChangeByID(
 			mock.Anything,
-			ediports.GetEDITransferChangeByIDRequest{
+			editenderports.GetEDITransferChangeByIDRequest{
 				ID:         change.ID,
 				TenantInfo: f.tenantInfo(),
 			},
@@ -311,7 +310,7 @@ func (f *transferChangeApplyFixture) expectLoadLink(times int) {
 	f.shipmentLinkRepo.EXPECT().
 		GetShipmentLinkByID(
 			mock.Anything,
-			ediports.GetEDIShipmentLinkByIDRequest{
+			editenderports.GetEDIShipmentLinkByIDRequest{
 				ID:         f.link.ID,
 				TenantInfo: f.tenantInfo(),
 			},

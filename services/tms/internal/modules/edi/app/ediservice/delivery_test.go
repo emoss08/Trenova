@@ -1,15 +1,21 @@
 package ediservice
 
 import (
-	"github.com/emoss08/trenova/internal/testutil/mocks/ediportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/kernelportsmock"
 	"context"
 	"errors"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/edimessageports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/editenderports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/editransportports"
+	"github.com/emoss08/trenova/internal/testutil/mocks/edimessageportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/edipartnerportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/editenderportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/editransportportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/kernelportsmock"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
@@ -24,12 +30,12 @@ type deliveryFixture struct {
 	service         *Service
 	message         *edi.EDIMessage
 	profile         *edi.EDICommunicationProfile
-	messageRepo     *ediportsmock.MockEDIMessageRepository
-	profileRepo     *ediportsmock.MockEDICommunicationProfileRepository
-	partnerRepo     *ediportsmock.MockEDIPartnerRepository
-	tenderChange    *ediportsmock.MockEDITenderChangeRepository
-	recipientRepo   *ediportsmock.MockEDITenderRecipientRepository
-	transport       *ediportsmock.MockEDITransportDispatcher
+	messageRepo     *edimessageportsmock.MockEDIMessageRepository
+	profileRepo     *edipartnerportsmock.MockEDICommunicationProfileRepository
+	partnerRepo     *edipartnerportsmock.MockEDIPartnerRepository
+	tenderChange    *editenderportsmock.MockEDITenderChangeRepository
+	recipientRepo   *editenderportsmock.MockEDITenderRecipientRepository
+	transport       *editransportportsmock.MockEDITransportDispatcher
 	workflowStarter *kernelportsmock.MockWorkflowStarter
 }
 
@@ -59,12 +65,12 @@ func newDeliveryFixture(t *testing.T) *deliveryFixture {
 			Method:         edi.ConnectionMethodSFTP,
 			Config:         map[string]any{"host": "sftp.example.com"},
 		},
-		messageRepo:     ediportsmock.NewMockEDIMessageRepository(t),
-		profileRepo:     ediportsmock.NewMockEDICommunicationProfileRepository(t),
-		partnerRepo:     ediportsmock.NewMockEDIPartnerRepository(t),
-		tenderChange:    ediportsmock.NewMockEDITenderChangeRepository(t),
-		recipientRepo:   ediportsmock.NewMockEDITenderRecipientRepository(t),
-		transport:       ediportsmock.NewMockEDITransportDispatcher(t),
+		messageRepo:     edimessageportsmock.NewMockEDIMessageRepository(t),
+		profileRepo:     edipartnerportsmock.NewMockEDICommunicationProfileRepository(t),
+		partnerRepo:     edipartnerportsmock.NewMockEDIPartnerRepository(t),
+		tenderChange:    editenderportsmock.NewMockEDITenderChangeRepository(t),
+		recipientRepo:   editenderportsmock.NewMockEDITenderRecipientRepository(t),
+		transport:       editransportportsmock.NewMockEDITransportDispatcher(t),
 		workflowStarter: kernelportsmock.NewMockWorkflowStarter(t),
 	}
 	fixture.service = &Service{
@@ -93,7 +99,7 @@ func (f *deliveryFixture) payload() *DeliverEDIMessageWorkflowPayload {
 
 func (f *deliveryFixture) expectLoadMessage() {
 	f.messageRepo.EXPECT().
-		GetMessageByID(mock.Anything, ediports.GetEDIMessageByIDRequest{
+		GetMessageByID(mock.Anything, edimessageports.GetEDIMessageByIDRequest{
 			ID:         f.message.ID,
 			TenantInfo: messageTenantInfo(f.message),
 		}).
@@ -105,7 +111,7 @@ func (f *deliveryFixture) expectResolveProfileByPartner() {
 	f.tenderChange.EXPECT().
 		GetTenderChangeByOutboundMessageID(
 			mock.Anything,
-			ediports.GetEDITenderChangeByOutboundMessageIDRequest{
+			editenderports.GetEDITenderChangeByOutboundMessageIDRequest{
 				OutboundMessageID: f.message.ID,
 				TenantInfo:        messageTenantInfo(f.message),
 			},
@@ -115,7 +121,7 @@ func (f *deliveryFixture) expectResolveProfileByPartner() {
 	f.profileRepo.EXPECT().
 		GetActiveProfileByPartner(
 			mock.Anything,
-			ediports.GetActiveEDICommunicationProfileByPartnerRequest{
+			edipartnerports.GetActiveEDICommunicationProfileByPartnerRequest{
 				PartnerID:  f.message.EDIPartnerID,
 				TenantInfo: messageTenantInfo(f.message),
 				Methods:    deliverableMethods,
@@ -131,11 +137,11 @@ func (f *deliveryFixture) expectDeliveryUpdate(
 	f.messageRepo.EXPECT().
 		UpdateMessageDelivery(
 			mock.Anything,
-			mock.MatchedBy(func(req *ediports.UpdateEDIMessageDeliveryRequest) bool {
+			mock.MatchedBy(func(req *edimessageports.UpdateEDIMessageDeliveryRequest) bool {
 				return req.ID == f.message.ID && req.DeliveryStatus == status
 			}),
 		).
-		RunAndReturn(func(_ context.Context, req *ediports.UpdateEDIMessageDeliveryRequest) (*edi.EDIMessage, error) {
+		RunAndReturn(func(_ context.Context, req *edimessageports.UpdateEDIMessageDeliveryRequest) (*edi.EDIMessage, error) {
 			updated := *f.message
 			updated.DeliveryStatus = req.DeliveryStatus
 			updated.DeliveryRemotePath = req.DeliveryRemotePath
@@ -155,11 +161,11 @@ func TestService_DeliverMessage_SuccessMarksSentAndCompletesTenderChange(t *test
 		Deliver(
 			mock.Anything,
 			edi.ConnectionMethodSFTP,
-			mock.MatchedBy(func(req *ediports.EDITransportRequest) bool {
+			mock.MatchedBy(func(req *editransportports.EDITransportRequest) bool {
 				return req.Profile == fixture.profile && req.Contents == fixture.message.RawX12
 			}),
 		).
-		Return(&ediports.EDITransportResult{RemotePath: "/outbound/file.x12"}, nil).
+		Return(&editransportports.EDITransportResult{RemotePath: "/outbound/file.x12"}, nil).
 		Once()
 	fixture.expectDeliveryUpdate(edi.MessageDeliveryStatusSent)
 
@@ -176,7 +182,7 @@ func TestService_DeliverMessage_SuccessMarksSentAndCompletesTenderChange(t *test
 	fixture.tenderChange.EXPECT().
 		GetTenderChangeByOutboundMessageID(
 			mock.Anything,
-			ediports.GetEDITenderChangeByOutboundMessageIDRequest{
+			editenderports.GetEDITenderChangeByOutboundMessageIDRequest{
 				OutboundMessageID: fixture.message.ID,
 				TenantInfo:        messageTenantInfo(fixture.message),
 			},
@@ -223,12 +229,12 @@ func TestService_DeliverMessage_TransportFailureMarksFailedAndReturnsError(t *te
 	fixture.messageRepo.EXPECT().
 		UpdateMessageDelivery(
 			mock.Anything,
-			mock.MatchedBy(func(req *ediports.UpdateEDIMessageDeliveryRequest) bool {
+			mock.MatchedBy(func(req *edimessageports.UpdateEDIMessageDeliveryRequest) bool {
 				return req.DeliveryStatus == edi.MessageDeliveryStatusFailed &&
 					req.DeliveryLastError == transportErr.Error()
 			}),
 		).
-		RunAndReturn(func(_ context.Context, req *ediports.UpdateEDIMessageDeliveryRequest) (*edi.EDIMessage, error) {
+		RunAndReturn(func(_ context.Context, req *edimessageports.UpdateEDIMessageDeliveryRequest) (*edi.EDIMessage, error) {
 			updated := *fixture.message
 			updated.DeliveryStatus = req.DeliveryStatus
 			return &updated, nil
@@ -351,7 +357,7 @@ func TestService_QueueMessageForDelivery_SkipsInternalPartners(t *testing.T) {
 
 	fixture := newDeliveryFixture(t)
 	fixture.partnerRepo.EXPECT().
-		GetByID(mock.Anything, ediports.GetEDIPartnerByIDRequest{
+		GetByID(mock.Anything, edipartnerports.GetEDIPartnerByIDRequest{
 			ID:         fixture.message.EDIPartnerID,
 			TenantInfo: messageTenantInfo(fixture.message),
 		}).

@@ -13,7 +13,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediinboundservice"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/edimessageports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/editenderports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
@@ -35,33 +38,33 @@ import (
 type ediFakes struct {
 	mu        sync.Mutex
 	org       pulid.ID
-	partners  *ediports.ListEDIPartnersRequest
-	files     *ediports.ListEDIInboundFilesRequest
-	messages  *ediports.ListEDIMessagesRequest
-	transfers *ediports.ListEDITransfersRequest
+	partners  *edipartnerports.ListEDIPartnersRequest
+	files     *edimessageports.ListEDIInboundFilesRequest
+	messages  *edimessageports.ListEDIMessagesRequest
+	transfers *editenderports.ListEDITransfersRequest
 	outbound  bool
 	invoices  *ediports.ListEDICarrierInvoicesRequest
-	counts    ediports.GetEDIMessageStatusCountsRequest
+	counts    edimessageports.GetEDIMessageStatusCountsRequest
 	identity  *carrierports.FindCarrierByIdentityRequest
 }
 
 type fakeEDIPartnerRepo struct {
-	ediports.EDIPartnerRepository
+	edipartnerports.EDIPartnerRepository
 	*ediFakes
 }
 
 type fakeEDIInboundFileRepo struct {
-	ediports.EDIInboundFileRepository
+	edimessageports.EDIInboundFileRepository
 	*ediFakes
 }
 
 type fakeEDIMessageRepo struct {
-	ediports.EDIMessageRepository
+	edimessageports.EDIMessageRepository
 	*ediFakes
 }
 
 type fakeEDITransferRepo struct {
-	ediports.EDILoadTenderTransferRepository
+	editenderports.EDILoadTenderTransferRepository
 	*ediFakes
 }
 
@@ -79,7 +82,7 @@ var ediPartnerFixture = pulid.MustNew("edip_")
 
 func (f *fakeEDIPartnerRepo) ListCursor(
 	_ context.Context,
-	req *ediports.ListEDIPartnersRequest,
+	req *edipartnerports.ListEDIPartnersRequest,
 ) (*pagination.CursorListResult[*edi.EDIPartner], error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -97,7 +100,7 @@ func (f *fakeEDIPartnerRepo) ListCursor(
 
 func (f *fakeEDIInboundFileRepo) ListInboundFilesCursor(
 	_ context.Context,
-	req *ediports.ListEDIInboundFilesRequest,
+	req *edimessageports.ListEDIInboundFilesRequest,
 ) (*pagination.CursorListResult[*edi.EDIInboundFile], error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -110,7 +113,7 @@ func (f *fakeEDIInboundFileRepo) ListInboundFilesCursor(
 
 func (f *fakeEDIInboundFileRepo) GetInboundFileByID(
 	_ context.Context,
-	req ediports.GetEDIInboundFileByIDRequest,
+	req edimessageports.GetEDIInboundFileByIDRequest,
 ) (*edi.EDIInboundFile, error) {
 	file := inboundFileFixture("ISA*00*RAW~")
 	file.ID = req.ID
@@ -145,7 +148,7 @@ func inboundFileFixture(raw string) *edi.EDIInboundFile {
 
 func (f *fakeEDIMessageRepo) ListMessagesCursor(
 	_ context.Context,
-	req *ediports.ListEDIMessagesRequest,
+	req *edimessageports.ListEDIMessagesRequest,
 ) (*pagination.CursorListResult[*edi.EDIMessage], error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -158,7 +161,7 @@ func (f *fakeEDIMessageRepo) ListMessagesCursor(
 
 func (f *fakeEDIMessageRepo) GetMessageByID(
 	_ context.Context,
-	req ediports.GetEDIMessageByIDRequest,
+	req edimessageports.GetEDIMessageByIDRequest,
 ) (*edi.EDIMessage, error) {
 	message := messageFixture()
 	message.ID = req.ID
@@ -192,7 +195,7 @@ func messageFixture() *edi.EDIMessage {
 
 func (f *fakeEDIMessageRepo) GetAckStatusCounts(
 	_ context.Context,
-	req ediports.GetEDIMessageStatusCountsRequest,
+	req edimessageports.GetEDIMessageStatusCountsRequest,
 ) (map[edi.MessageAcknowledgmentStatus]int, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -207,9 +210,9 @@ func (f *fakeEDIMessageRepo) GetAckStatusCounts(
 
 func (f *fakeEDIMessageRepo) GetAckStatusCountsByPartner(
 	context.Context,
-	ediports.GetEDIMessageStatusCountsRequest,
-) ([]*ediports.EDIPartnerAckStatusCount, error) {
-	return []*ediports.EDIPartnerAckStatusCount{
+	edimessageports.GetEDIMessageStatusCountsRequest,
+) ([]*edimessageports.EDIPartnerAckStatusCount, error) {
+	return []*edimessageports.EDIPartnerAckStatusCount{
 		{PartnerID: ediPartnerFixture, PartnerName: "Acme", PartnerCode: "ACME",
 			AckStatus: edi.MessageAcknowledgmentStatusAccepted, Count: 5},
 		{PartnerID: ediPartnerFixture, PartnerName: "Acme", PartnerCode: "ACME",
@@ -219,20 +222,20 @@ func (f *fakeEDIMessageRepo) GetAckStatusCountsByPartner(
 
 func (f *fakeEDIMessageRepo) GetOverdueAckCount(
 	context.Context,
-	ediports.GetEDIOverdueAckCountRequest,
+	edimessageports.GetEDIOverdueAckCountRequest,
 ) (int, error) {
 	return 3, nil
 }
 
 func (f *fakeEDIMessageRepo) ListOverdueAcks(
 	context.Context,
-	*ediports.ListOverdueEDIAcksRequest,
-) (*ediports.OverdueEDIAcks, error) {
+	*edimessageports.ListOverdueEDIAcksRequest,
+) (*edimessageports.OverdueEDIAcks, error) {
 	message := messageFixture()
 
-	return &ediports.OverdueEDIAcks{
+	return &edimessageports.OverdueEDIAcks{
 		Messages: []*edi.EDIMessage{message},
-		Partners: []*ediports.OverdueEDIAckPartner{{
+		Partners: []*edimessageports.OverdueEDIAckPartner{{
 			PartnerID: ediPartnerFixture, PartnerName: "Acme", PartnerCode: "ACME",
 			Count: 3, OldestGeneratedAt: message.GeneratedAt,
 		}},
@@ -241,13 +244,13 @@ func (f *fakeEDIMessageRepo) ListOverdueAcks(
 
 func (f *fakeEDIMessageRepo) ListRecentDeadLettered(
 	context.Context,
-	*ediports.ListRecentEDIMessageFailuresRequest,
+	*edimessageports.ListRecentEDIMessageFailuresRequest,
 ) ([]*edi.EDIMessage, error) {
 	return []*edi.EDIMessage{messageFixture()}, nil
 }
 
 func (f *ediFakes) listTransfers(
-	req *ediports.ListEDITransfersRequest,
+	req *editenderports.ListEDITransfersRequest,
 	outbound bool,
 ) *pagination.CursorListResult[*edi.EDITransfer] {
 	f.mu.Lock()
@@ -261,21 +264,21 @@ func (f *ediFakes) listTransfers(
 
 func (f *fakeEDITransferRepo) ListInboundCursor(
 	_ context.Context,
-	req *ediports.ListEDITransfersRequest,
+	req *editenderports.ListEDITransfersRequest,
 ) (*pagination.CursorListResult[*edi.EDITransfer], error) {
 	return f.listTransfers(req, false), nil
 }
 
 func (f *fakeEDITransferRepo) ListOutboundCursor(
 	_ context.Context,
-	req *ediports.ListEDITransfersRequest,
+	req *editenderports.ListEDITransfersRequest,
 ) (*pagination.CursorListResult[*edi.EDITransfer], error) {
 	return f.listTransfers(req, true), nil
 }
 
 func (f *fakeEDITransferRepo) GetTransferByID(
 	_ context.Context,
-	req ediports.GetEDITransferByIDRequest,
+	req editenderports.GetEDITransferByIDRequest,
 ) (*edi.EDITransfer, error) {
 	tender := tenderFixture(pulid.MustNew("org_"))
 	tender.ID = req.ID

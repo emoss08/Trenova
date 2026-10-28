@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi/edidb"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/editenderports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -31,7 +31,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) ediports.EDITransferChangeRepository {
+func New(p Params) editenderports.EDITransferChangeRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.edi-transfer-change-repository"),
@@ -40,7 +40,7 @@ func New(p Params) ediports.EDITransferChangeRepository {
 
 func (r *repository) ListTransferChanges(
 	ctx context.Context,
-	req *ediports.ListEDITransferChangesRequest,
+	req *editenderports.ListEDITransferChangesRequest,
 ) (*pagination.ListResult[*edi.TransferChange], error) {
 	return dbtx.Read(
 		ctx,
@@ -62,7 +62,7 @@ func (r *repository) ListTransferChanges(
 
 func (r *repository) GetTransferChangeByID(
 	ctx context.Context,
-	req ediports.GetEDITransferChangeByIDRequest,
+	req editenderports.GetEDITransferChangeByIDRequest,
 ) (*edi.TransferChange, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*edi.TransferChange, error) {
 		tc := edidb.TransferChanges
@@ -92,11 +92,11 @@ func (r *repository) CreateTransferChange(
 func (r *repository) CreateTransferChangeIdempotent(
 	ctx context.Context,
 	entity *edi.TransferChange,
-) (*ediports.CreateEDITransferChangeIdempotentResult, error) {
+) (*editenderports.CreateEDITransferChangeIdempotentResult, error) {
 	return dbtx.Write(
 		ctx,
 		r.db,
-		func(ctx context.Context) (*ediports.CreateEDITransferChangeIdempotentResult, error) {
+		func(ctx context.Context) (*editenderports.CreateEDITransferChangeIdempotentResult, error) {
 			db := r.db.Keel(ctx)
 			tc := edidb.TransferChanges
 			created, err := tc.CreateOrSkip(
@@ -113,7 +113,7 @@ func (r *repository) CreateTransferChangeIdempotent(
 				return nil, transferChangeErrors.Map(err, entity.ID.String())
 			}
 			if created > 0 {
-				return &ediports.CreateEDITransferChangeIdempotentResult{
+				return &editenderports.CreateEDITransferChangeIdempotentResult{
 					TransferChange: entity,
 					Created:        true,
 				}, nil
@@ -129,7 +129,7 @@ func (r *repository) CreateTransferChangeIdempotent(
 				return nil, transferChangeErrors.Map(err, entity.ID.String())
 			}
 
-			return &ediports.CreateEDITransferChangeIdempotentResult{
+			return &editenderports.CreateEDITransferChangeIdempotentResult{
 				TransferChange: existing,
 				Created:        false,
 			}, nil

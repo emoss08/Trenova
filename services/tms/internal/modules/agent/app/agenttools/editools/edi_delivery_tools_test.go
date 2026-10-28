@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediinboundservice"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/edimessageports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/toolschema"
@@ -241,7 +241,7 @@ type fakeReprocessor struct {
 
 func (f *fakeReprocessor) GetInboundFile(
 	_ context.Context,
-	req ediports.GetEDIInboundFileByIDRequest,
+	req edimessageports.GetEDIInboundFileByIDRequest,
 ) (*edi.EDIInboundFile, error) {
 	file, ok := f.files[req.ID]
 	if !ok {

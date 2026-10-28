@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi/edidb"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ladingports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/lading"
 	"github.com/emoss08/trenova/pkg/listquery"
@@ -32,7 +32,7 @@ type flows struct {
 	l  *zap.Logger
 }
 
-func NewFlows(p Params) ediports.FlowRepository {
+func NewFlows(p Params) ladingports.FlowRepository {
 	return &flows{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.edi-flow-repository"),
@@ -41,7 +41,7 @@ func NewFlows(p Params) ediports.FlowRepository {
 
 func (r *flows) GetInstance(
 	ctx context.Context,
-	req ediports.GetFlowInstanceRequest,
+	req ladingports.GetFlowInstanceRequest,
 ) (*edi.FlowInstance, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*edi.FlowInstance, error) {
 		i := edidb.FlowInstances
@@ -55,7 +55,7 @@ func (r *flows) GetInstance(
 
 func (r *flows) GetInstanceByKey(
 	ctx context.Context,
-	req ediports.GetFlowInstanceByKeyRequest,
+	req ladingports.GetFlowInstanceByKeyRequest,
 ) (*edi.FlowInstance, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*edi.FlowInstance, error) {
 		i := edidb.FlowInstances
@@ -149,7 +149,7 @@ func (r *flows) AppendEvent(ctx context.Context, event *edi.FlowEvent) error {
 	})
 }
 
-func instanceFilters(req *ediports.ListFlowInstancesRequest) []keel.Pred {
+func instanceFilters(req *ladingports.ListFlowInstancesRequest) []keel.Pred {
 	i := edidb.FlowInstances
 	search := ""
 	if req.Filter != nil {
@@ -169,7 +169,7 @@ func instanceFilters(req *ediports.ListFlowInstancesRequest) []keel.Pred {
 
 func (r *flows) ListInstances(
 	ctx context.Context,
-	req *ediports.ListFlowInstancesRequest,
+	req *ladingports.ListFlowInstancesRequest,
 ) (*pagination.ListResult[*edi.FlowInstance], error) {
 	return dbtx.Read(
 		ctx,
@@ -189,7 +189,7 @@ func (r *flows) ListInstances(
 // at most a page of them.
 func (r *flows) ListOpenInstances(
 	ctx context.Context,
-	req *ediports.ListShipmentFlowInstancesRequest,
+	req *ladingports.ListShipmentFlowInstancesRequest,
 ) ([]*edi.FlowInstance, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*edi.FlowInstance, error) {
 		if req.ShipmentID.IsNil() && req.TransferID.IsNil() {
@@ -209,7 +209,7 @@ func (r *flows) ListOpenInstances(
 
 func (r *flows) ListInstancesCursor(
 	ctx context.Context,
-	req *ediports.ListFlowInstancesRequest,
+	req *ladingports.ListFlowInstancesRequest,
 ) (*pagination.CursorListResult[*edi.FlowInstance], error) {
 	return dbtx.Read(
 		ctx,
@@ -234,7 +234,7 @@ func (r *flows) ListInstancesCursor(
 
 func (r *flows) ListEvents(
 	ctx context.Context,
-	req ediports.ListFlowEventsRequest,
+	req ladingports.ListFlowEventsRequest,
 ) ([]*edi.FlowEvent, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*edi.FlowEvent, error) {
 		e := edidb.FlowEvents
@@ -251,7 +251,7 @@ func (r *flows) ListEvents(
 
 func (r *flows) GetSendMessage(
 	ctx context.Context,
-	req ediports.GetFlowSendMessageRequest,
+	req ladingports.GetFlowSendMessageRequest,
 ) (*edi.EDIMessage, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*edi.EDIMessage, error) {
 		m := edidb.EDIMessages

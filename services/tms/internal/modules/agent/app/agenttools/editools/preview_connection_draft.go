@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediconnectiondraftports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/lading"
@@ -74,7 +74,9 @@ func pinned(id pulid.ID, version int64) *int64 {
 	return common.PinnedVersion(version)
 }
 
-func draftChanges(plan *ediports.ConnectionDraftPlan) ([]*agent.RecordChange, error) {
+func draftChanges(
+	plan *ediconnectiondraftports.ConnectionDraftPlan,
+) ([]*agent.RecordChange, error) {
 	changes := make([]*agent.RecordChange, 0, 3+len(plan.Mappings))
 	add := func(change *agent.RecordChange, err error) error {
 		if err != nil {
@@ -192,7 +194,7 @@ func writeChange[T any](
 	return toolpreview.Changed(record, before, after, toolpreview.Only(fields...))
 }
 
-func draftPartnerName(draft *ediports.ConnectionDraft) string {
+func draftPartnerName(draft *ediconnectiondraftports.ConnectionDraft) string {
 	for index := range draft.Partner.Fields {
 		if draft.Partner.Fields[index].Field == "partner.name" &&
 			draft.Partner.Fields[index].Value != "" {
@@ -202,7 +204,7 @@ func draftPartnerName(draft *ediports.ConnectionDraft) string {
 	return draft.FileName
 }
 
-func draftSummary(draft *ediports.ConnectionDraft) string {
+func draftSummary(draft *ediconnectiondraftports.ConnectionDraft) string {
 	name := draftPartnerName(draft)
 	sets := make([]string, 0, len(draft.Connection.Sets))
 	for _, set := range draft.Connection.Sets {
@@ -212,7 +214,7 @@ func draftSummary(draft *ediports.ConnectionDraft) string {
 		)
 	}
 	verb := "Would set up"
-	if draft.Partner.Match == ediports.PartnerMatchExisting {
+	if draft.Partner.Match == ediconnectiondraftports.PartnerMatchExisting {
 		verb = "Would update"
 	}
 	summary := fmt.Sprintf(
@@ -223,13 +225,13 @@ func draftSummary(draft *ediports.ConnectionDraft) string {
 	if len(sets) > 0 {
 		summary += " It exchanges " + strings.Join(sets, ", ") + "."
 	}
-	if draft.Partner.Match == ediports.PartnerMatchNew {
+	if draft.Partner.Match == ediconnectiondraftports.PartnerMatchNew {
 		summary += " Everything new is inactive until a person enters its credentials and turns it on."
 	}
 	return summary + outstanding(draft)
 }
 
-func outstanding(draft *ediports.ConnectionDraft) string {
+func outstanding(draft *ediconnectiondraftports.ConnectionDraft) string {
 	notes := make([]string, 0, 3)
 	if missing := draft.CredentialsToEnter(); len(missing) > 0 {
 		notes = append(notes, "Before turning it on, enter: "+strings.Join(missing, ", ")+".")

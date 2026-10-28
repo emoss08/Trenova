@@ -26,6 +26,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/app/editransport"
 	"github.com/emoss08/trenova/internal/modules/edi/app/referencedataguard"
 	"github.com/emoss08/trenova/internal/modules/edi/jobs/edijobs/edijobscontract"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediconnectiondraftports"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"go.uber.org/fx"
 )
@@ -68,7 +69,7 @@ func SharedOptions() fx.Option {
 			func(s *ediservice.Service) ediports.EDIService { return s },
 			ediconnectiondraftrepository.New,
 			ediconnectiondraft.New,
-			func(s *ediconnectiondraft.Service) ediports.EDIConnectionDraftService { return s },
+			func(s *ediconnectiondraft.Service) ediconnectiondraftports.EDIConnectionDraftService { return s },
 		),
 		editransport.Module,
 	)

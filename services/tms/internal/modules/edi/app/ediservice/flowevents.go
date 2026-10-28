@@ -8,10 +8,10 @@ import (
 	"time"
 
 	"github.com/bytedance/sonic"
-
 	"github.com/emoss08/trenova/internal/modules/edi/app/edilading"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ladingports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentevent"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenteventports"
@@ -54,10 +54,13 @@ func (s *Service) HasShipmentFlows(
 	tenantInfo pagination.TenantInfo,
 	shipmentID pulid.ID,
 ) (bool, error) {
-	instances, err := s.flowRepo.ListOpenInstances(ctx, &ediports.ListShipmentFlowInstancesRequest{
-		TenantInfo: tenantInfo,
-		ShipmentID: shipmentID,
-	})
+	instances, err := s.flowRepo.ListOpenInstances(
+		ctx,
+		&ladingports.ListShipmentFlowInstancesRequest{
+			TenantInfo: tenantInfo,
+			ShipmentID: shipmentID,
+		},
+	)
 	if err != nil {
 		return false, err
 	}
@@ -79,10 +82,13 @@ func (s *Service) NotifyShipmentEvent(ctx context.Context, req *NotifyShipmentEv
 	if err != nil {
 		return err
 	}
-	instances, err := s.flowRepo.ListOpenInstances(ctx, &ediports.ListShipmentFlowInstancesRequest{
-		TenantInfo: req.TenantInfo,
-		ShipmentID: event.ShipmentID,
-	})
+	instances, err := s.flowRepo.ListOpenInstances(
+		ctx,
+		&ladingports.ListShipmentFlowInstancesRequest{
+			TenantInfo: req.TenantInfo,
+			ShipmentID: event.ShipmentID,
+		},
+	)
 	if err != nil || len(instances) == 0 {
 		return err
 	}
@@ -209,10 +215,13 @@ func (s *Service) attachFlowShipment(ctx context.Context, transfer *edi.EDITrans
 		OrgID: transfer.TargetOrganizationID,
 		BuID:  transfer.TargetBusinessUnitID,
 	}
-	instances, err := s.flowRepo.ListOpenInstances(ctx, &ediports.ListShipmentFlowInstancesRequest{
-		TenantInfo: tenantInfo,
-		TransferID: transfer.ID,
-	})
+	instances, err := s.flowRepo.ListOpenInstances(
+		ctx,
+		&ladingports.ListShipmentFlowInstancesRequest{
+			TenantInfo: tenantInfo,
+			TransferID: transfer.ID,
+		},
+	)
 	if err != nil {
 		s.l.Warn("failed to find the flows of an approved tender",
 			zap.String("transferId", transfer.ID.String()),

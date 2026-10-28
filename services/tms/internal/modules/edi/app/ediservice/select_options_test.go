@@ -4,8 +4,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
-	"github.com/emoss08/trenova/internal/testutil/mocks/ediportsmock"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
+	"github.com/emoss08/trenova/internal/testutil/mocks/edipartnerportsmock"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/mock"
@@ -15,7 +15,7 @@ import (
 func TestService_SelectDocumentTypeOptionsDelegatesTheRequest(t *testing.T) {
 	t.Parallel()
 
-	req := &ediports.EDIDocumentTypeSelectOptionsRequest{
+	req := &edipartnerports.EDIDocumentTypeSelectOptionsRequest{
 		SelectQueryRequest: &pagination.SelectQueryRequest{
 			TenantInfo: pagination.TenantInfo{
 				OrgID:  pulid.MustNew("org_"),
@@ -29,7 +29,7 @@ func TestService_SelectDocumentTypeOptionsDelegatesTheRequest(t *testing.T) {
 		TransactionSet: edi.TransactionSet204,
 		Direction:      edi.DocumentDirectionOutbound,
 	}
-	repo := ediportsmock.NewMockEDIDocumentTypeRepository(t)
+	repo := edipartnerportsmock.NewMockEDIDocumentTypeRepository(t)
 	repo.EXPECT().
 		SelectDocumentTypeOptions(mock.Anything, req).
 		Return(&pagination.ListResult[*edi.EDIDocumentType]{

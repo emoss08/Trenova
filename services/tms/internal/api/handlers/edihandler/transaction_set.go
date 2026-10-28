@@ -6,7 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/responseguard"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -40,7 +40,7 @@ func (h *Handler) selectTransactionSetOptions(c *gin.Context) {
 		func() (*pagination.ListResult[*edi.EDITransactionSet], error) {
 			return h.service.SelectTransactionSetOptions(
 				c.Request.Context(),
-				&ediports.EDITransactionSetSelectOptionsRequest{
+				&edipartnerports.EDITransactionSetSelectOptionsRequest{
 					SelectQueryRequest: req,
 					Standard:           edi.EDIStandard(helpers.QueryString(c, "standard", "")),
 					Status:             edi.DocumentStatus(helpers.QueryString(c, "status", "")),
@@ -68,7 +68,7 @@ func (h *Handler) getTransactionSetOption(c *gin.Context) {
 
 	result, err := h.service.SelectTransactionSetOptions(
 		c.Request.Context(),
-		&ediports.EDITransactionSetSelectOptionsRequest{
+		&edipartnerports.EDITransactionSetSelectOptionsRequest{
 			SelectQueryRequest: req,
 			IDs:                []pulid.ID{transactionSetID},
 		},

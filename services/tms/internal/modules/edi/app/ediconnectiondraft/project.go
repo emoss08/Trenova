@@ -11,7 +11,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/app/edilading"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ladingdoc"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediconnectiondraftports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
 	"github.com/emoss08/trenova/pkg/lading"
 	"github.com/emoss08/trenova/pkg/wasmmodule"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -40,8 +41,8 @@ var (
 )
 
 type requirement struct {
-	input  *ediports.DraftRequirementInput
-	source ediports.DraftSource
+	input  *ediconnectiondraftports.DraftRequirementInput
+	source ediconnectiondraftports.DraftSource
 	ref    string
 }
 
@@ -59,7 +60,7 @@ type projectWrite struct {
 	files   []lading.File
 	samples []lading.Sample
 	notes   string
-	change  ediports.ChangeKind
+	change  ediconnectiondraftports.ChangeKind
 }
 
 type guideLine struct {
@@ -99,11 +100,14 @@ func (p *planner) documentTypeID(
 	if id, ok := p.docTypes[key]; ok {
 		return id, nil
 	}
-	types, err := p.s.documentTypes.ListDocumentTypes(ctx, ediports.ListEDIDocumentTypesRequest{
-		Standard:       edi.EDIStandardX12,
-		TransactionSet: set,
-		Direction:      direction,
-	})
+	types, err := p.s.documentTypes.ListDocumentTypes(
+		ctx,
+		edipartnerports.ListEDIDocumentTypesRequest{
+			Standard:       edi.EDIStandardX12,
+			TransactionSet: set,
+			Direction:      direction,
+		},
+	)
 	if err != nil {
 		return pulid.Nil, err
 	}
@@ -117,9 +121,9 @@ func (p *planner) documentTypeID(
 func (p *planner) requirementsFor(
 	set edi.TransactionSet,
 	direction edi.DocumentDirection,
-) ([]*requirement, []ediports.DraftRequirementCheck) {
+) ([]*requirement, []ediconnectiondraftports.DraftRequirementCheck) {
 	accepted := make([]*requirement, 0)
-	unverified := make([]ediports.DraftRequirementCheck, 0)
+	unverified := make([]ediconnectiondraftports.DraftRequirementCheck, 0)
 	for inputIndex := range p.req.Requirements {
 		input := &p.req.Requirements[inputIndex]
 		if input.TransactionSet != set || input.Direction != direction {
@@ -154,12 +158,12 @@ func (p *planner) requirementsFor(
 }
 
 func requirementCheck(
-	input *ediports.DraftRequirementInput,
+	input *ediconnectiondraftports.DraftRequirementInput,
 	segment string,
-	source ediports.DraftSource,
+	source ediconnectiondraftports.DraftSource,
 	problem string,
-) ediports.DraftRequirementCheck {
-	return ediports.DraftRequirementCheck{
+) ediconnectiondraftports.DraftRequirementCheck {
+	return ediconnectiondraftports.DraftRequirementCheck{
 		SegmentID:       segment,
 		ElementPosition: input.ElementPosition,
 		Usage:           input.Usage,
@@ -178,8 +182,8 @@ func (p *planner) buildSets(ctx context.Context) ([]*exchange, error) {
 			wanted := supported.Status.Usable() && supported.Value == valueTrue
 			if !wanted {
 				if current && supported.Status.Usable() && supported.Value == valueFalse &&
-					supported.Change != ediports.ChangeKindSame {
-					p.draft.Kept = append(p.draft.Kept, ediports.DraftKept{
+					supported.Change != ediconnectiondraftports.ChangeKindSame {
+					p.draft.Kept = append(p.draft.Kept, ediconnectiondraftports.DraftKept{
 						Record: projectRecord + " " + titleSet(set, direction),
 						Label:  keptSetLabel,
 					})
@@ -209,8 +213,11 @@ func (p *planner) buildSet(
 	interchangeVersion, _ := p.usable(fieldX12Version)
 	versionFallback := &fallback{
 		value:  interchangeVersion,
-		status: ediports.ValueStatusDefaulted,
-		source: ediports.DraftSource{Kind: ediports.SourceKindDefault, Note: versionFromISA},
+		status: ediconnectiondraftports.ValueStatusDefaulted,
+		source: ediconnectiondraftports.DraftSource{
+			Kind: ediconnectiondraftports.SourceKindDefault,
+			Note: versionFromISA,
+		},
 	}
 	if source, ok := p.values[fieldX12Version]; ok && source.Status.Usable() {
 		versionFallback.source = source.Source
@@ -219,7 +226,7 @@ func (p *planner) buildSet(
 	version := p.resolve(setField(set, direction, setAttrVersion), versionFallback, true)
 	ack := p.resolve(setField(set, direction, setAttrAck), nil, false)
 	window := p.resolve(setField(set, direction, setAttrAckWindowMinutes), nil, false)
-	fields := []ediports.DraftValue{
+	fields := []ediconnectiondraftports.DraftValue{
 		p.values[setField(set, direction, setAttrSupported)],
 		version,
 		ack,
@@ -227,21 +234,21 @@ func (p *planner) buildSet(
 	}
 
 	requirements, unverified := p.requirementsFor(set, direction)
-	draft := ediports.DraftSet{
+	draft := ediconnectiondraftports.DraftSet{
 		TransactionSet: set,
 		Direction:      direction,
 		DocumentTypeID: documentTypeID,
-		Change:         ediports.ChangeKindAdd,
+		Change:         ediconnectiondraftports.ChangeKindAdd,
 		Fields:         fields,
 		Requirements:   len(requirements),
-		Unmet:          []ediports.DraftRequirementCheck{},
+		Unmet:          []ediconnectiondraftports.DraftRequirementCheck{},
 		Unverified:     unverified,
 	}
 	if current {
-		draft.Change = ediports.ChangeKindSame
+		draft.Change = ediconnectiondraftports.ChangeKindSame
 		for index := range fields {
 			if fields[index].Change.Writes() {
-				draft.Change = ediports.ChangeKindChange
+				draft.Change = ediconnectiondraftports.ChangeKindChange
 			}
 		}
 	}
@@ -268,7 +275,7 @@ func (p *planner) buildSet(
 	return built, nil
 }
 
-func usableValue(value *ediports.DraftValue) (string, bool) {
+func usableValue(value *ediconnectiondraftports.DraftValue) (string, bool) {
 	if !value.Status.Usable() || value.Value == "" {
 		return "", false
 	}
@@ -279,34 +286,34 @@ func (p *planner) controlNumbers(
 	set edi.TransactionSet,
 	direction edi.DocumentDirection,
 	documentTypeID pulid.ID,
-) []ediports.DraftControlNumber {
-	out := make([]ediports.DraftControlNumber, 0, len(controlNumberKinds))
+) []ediconnectiondraftports.DraftControlNumber {
+	out := make([]ediconnectiondraftports.DraftControlNumber, 0, len(controlNumberKinds))
 	for _, kind := range controlNumberKinds {
 		value, ok := p.values[controlNumberField(kind)]
 		if !ok || !value.Status.Usable() || value.Value == "" {
 			continue
 		}
 		start, _ := strconv.ParseInt(value.Value, 10, 64)
-		control := ediports.DraftControlNumber{
+		control := ediconnectiondraftports.DraftControlNumber{
 			Kind:   kind,
 			Start:  start,
-			Change: ediports.ChangeKindAdd,
+			Change: ediconnectiondraftports.ChangeKindAdd,
 			Source: value.Source,
 		}
 		if sequence := p.current.sequence(documentTypeID, kind); sequence != nil {
 			control.Current = sequence.NextValue
 			switch {
 			case sequence.NextValue == start:
-				control.Change = ediports.ChangeKindSame
+				control.Change = ediconnectiondraftports.ChangeKindSame
 			case sequence.NextValue > start:
-				control.Change = ediports.ChangeKindSame
+				control.Change = ediconnectiondraftports.ChangeKindSame
 				control.Problem = fmt.Sprintf(
 					"Kept at %d: starting at %d would reissue numbers the partner has already seen",
 					sequence.NextValue,
 					start,
 				)
 			default:
-				control.Change = ediports.ChangeKindChange
+				control.Change = ediconnectiondraftports.ChangeKindChange
 			}
 		}
 		if control.Change.Writes() {
@@ -335,8 +342,8 @@ func (p *planner) buildProject(ctx context.Context, exchanges []*exchange) error
 	files := starter.Files
 	samples := append(slices.Clone(starter.Samples), p.specSamples()...)
 	checked := samples
-	change := ediports.ChangeKindAdd
-	project := &ediports.DraftProject{Role: request.Role}
+	change := ediconnectiondraftports.ChangeKindAdd
+	project := &ediconnectiondraftports.DraftProject{Role: request.Role}
 	var guided map[string]string
 	if version := p.current.version; version != nil {
 		files, guided = p.adaptProject(version, starter.Files, exchanges)
@@ -374,9 +381,9 @@ func (p *planner) buildProject(ctx context.Context, exchanges []*exchange) error
 	project.Warnings = check.Warnings
 	project.Diagnostics = projectDiagnostics(check)
 	if p.current.version != nil {
-		change = ediports.ChangeKindChange
+		change = ediconnectiondraftports.ChangeKindChange
 		if sameFiles(p.current.version.Files, files) {
-			change = ediports.ChangeKindSame
+			change = ediconnectiondraftports.ChangeKindSame
 		}
 	}
 	project.Change = change
@@ -484,10 +491,12 @@ func (p *planner) acknowledgment(exchanges []*exchange) (acknowledge string, win
 		}
 	}
 	if len(asked) > 1 {
-		p.draft.Gaps = append(p.draft.Gaps, ediports.DraftGap{
-			Kind:    ediports.GapKindUnsupported,
+		p.draft.Gaps = append(p.draft.Gaps, ediconnectiondraftports.DraftGap{
+			Kind:    ediconnectiondraftports.GapKindUnsupported,
 			Summary: fmt.Sprintf(ackConflict, strings.Join(asked, " and "), chosen),
-			Source:  ediports.DraftSource{Kind: ediports.SourceKindDefault},
+			Source: ediconnectiondraftports.DraftSource{
+				Kind: ediconnectiondraftports.SourceKindDefault,
+			},
 		})
 	}
 	if chosen == ackNone {
@@ -542,16 +551,18 @@ func (p *planner) adaptProject(
 	}
 	for _, exchanged := range exchanges {
 		if name, ok := guided[string(exchanged.set)]; ok {
-			p.draft.Kept = append(p.draft.Kept, ediports.DraftKept{
+			p.draft.Kept = append(p.draft.Kept, ediconnectiondraftports.DraftKept{
 				Record: "Guide " + name,
 				Label:  keptGuideLabel,
 			})
 		}
 		if !mapsSet(manifest, exchanged.set, exchanged.direction) {
-			p.draft.Gaps = append(p.draft.Gaps, ediports.DraftGap{
-				Kind:    ediports.GapKindUnsupported,
+			p.draft.Gaps = append(p.draft.Gaps, ediconnectiondraftports.DraftGap{
+				Kind:    ediconnectiondraftports.GapKindUnsupported,
 				Summary: fmt.Sprintf(noMapSummary, titleSet(exchanged.set, exchanged.direction)),
-				Source:  ediports.DraftSource{Kind: ediports.SourceKindConfiguration},
+				Source: ediconnectiondraftports.DraftSource{
+					Kind: ediconnectiondraftports.SourceKindConfiguration,
+				},
 			})
 		}
 	}
@@ -624,15 +635,16 @@ func (p *planner) guides(
 	return out
 }
 
-func guideRule(input *ediports.DraftRequirementInput) (string, bool) {
+func guideRule(input *ediconnectiondraftports.DraftRequirementInput) (string, bool) {
 	segment := strings.ToUpper(strings.TrimSpace(input.SegmentID))
 	usage := ""
 	switch input.Usage {
-	case ediports.RequirementUsageMandatory:
+	case ediconnectiondraftports.RequirementUsageMandatory:
 		usage = "required"
-	case ediports.RequirementUsageNotUsed:
+	case ediconnectiondraftports.RequirementUsageNotUsed:
 		usage = "unused"
-	case ediports.RequirementUsageOptional, ediports.RequirementUsageConditional:
+	case ediconnectiondraftports.RequirementUsageOptional,
+		ediconnectiondraftports.RequirementUsageConditional:
 	}
 	if input.ElementPosition <= 0 {
 		if usage == "" {
@@ -647,7 +659,7 @@ func guideRule(input *ediports.DraftRequirementInput) (string, bool) {
 	if codes := guideCodes(
 		input.Codes,
 	); codes != "" &&
-		input.Usage != ediports.RequirementUsageNotUsed {
+		input.Usage != ediconnectiondraftports.RequirementUsageNotUsed {
 		rules = append(rules, "codes "+codes)
 	}
 	if len(rules) == 0 {
@@ -824,7 +836,7 @@ func (p *planner) unmet(check *lading.Check, exchanges []*exchange) {
 		names := unwritten[string(exchanged.set)]
 		set := &p.draft.Sets[exchanged.index]
 		for _, item := range exchanged.requirements {
-			if item.input.Usage != ediports.RequirementUsageMandatory {
+			if item.input.Usage != ediconnectiondraftports.RequirementUsageMandatory {
 				continue
 			}
 			problem, ok := names[item.ref]
@@ -915,7 +927,7 @@ func (p *planner) projectFailures(check *lading.Check, guides []*guideFile) {
 				diagnostic.Code == "x12-mandatory-unwritten" {
 				continue
 			}
-			p.draft.Failures = append(p.draft.Failures, ediports.DraftFailure{
+			p.draft.Failures = append(p.draft.Failures, ediconnectiondraftports.DraftFailure{
 				Record:  projectRecord,
 				Field:   file.Path,
 				Message: diagnostic.Message.String(),
@@ -928,33 +940,36 @@ func projectFiles(
 	check *lading.Check,
 	files []lading.File,
 	before *edi.LadingVersion,
-) []ediports.DraftProjectFile {
+) []ediconnectiondraftports.DraftProjectFile {
 	previous := map[string]string{}
 	if before != nil {
 		for _, file := range before.Files {
 			previous[file.Path] = file.Source
 		}
 	}
-	out := make([]ediports.DraftProjectFile, 0, len(files))
+	out := make([]ediconnectiondraftports.DraftProjectFile, 0, len(files))
 	for _, file := range files {
-		change := ediports.ChangeKindAdd
+		change := ediconnectiondraftports.ChangeKindAdd
 		if source, ok := previous[file.Path]; ok {
-			change = ediports.ChangeKindChange
+			change = ediconnectiondraftports.ChangeKindChange
 			if source == file.Source {
-				change = ediports.ChangeKindSame
+				change = ediconnectiondraftports.ChangeKindSame
 			}
 		}
 		kind := ""
 		if checked := checkedFile(check, file.Path); checked != nil {
 			kind = checked.Kind
 		}
-		out = append(out, ediports.DraftProjectFile{Path: file.Path, Kind: kind, Change: change})
+		out = append(
+			out,
+			ediconnectiondraftports.DraftProjectFile{Path: file.Path, Kind: kind, Change: change},
+		)
 	}
 	return out
 }
 
-func projectDiagnostics(check *lading.Check) []ediports.DraftDiagnostic {
-	out := make([]ediports.DraftDiagnostic, 0)
+func projectDiagnostics(check *lading.Check) []ediconnectiondraftports.DraftDiagnostic {
+	out := make([]ediconnectiondraftports.DraftDiagnostic, 0)
 	for fileIndex := range check.Files {
 		file := &check.Files[fileIndex]
 		for index := range file.Diagnostics {
@@ -962,7 +977,7 @@ func projectDiagnostics(check *lading.Check) []ediports.DraftDiagnostic {
 			if diagnostic.Severity == lading.SeverityInfo || len(out) == maxDiagnostics {
 				continue
 			}
-			out = append(out, ediports.DraftDiagnostic{
+			out = append(out, ediconnectiondraftports.DraftDiagnostic{
 				Path:     file.Path,
 				Severity: diagnostic.Severity,
 				Code:     diagnostic.Code,
@@ -995,8 +1010,8 @@ func (p *planner) sampleUnmapped(
 	ctx context.Context,
 	sample *specSample,
 	mapped map[mappingKey]bool,
-) []ediports.DraftUnmappedCode {
-	out := make([]ediports.DraftUnmappedCode, 0)
+) []ediconnectiondraftports.DraftUnmappedCode {
+	out := make([]ediconnectiondraftports.DraftUnmappedCode, 0)
 	if p.encoded == nil || sample.direction != edi.DocumentDirectionInbound ||
 		sample.transactionSet() != edi.TransactionSet204 {
 		return out
@@ -1037,10 +1052,10 @@ func (p *planner) sampleUnmapped(
 }
 
 func appendUnmapped(
-	out []ediports.DraftUnmappedCode,
+	out []ediconnectiondraftports.DraftUnmappedCode,
 	required map[edi.MappingEntityType][]pulid.ID,
 	mapped map[mappingKey]bool,
-) []ediports.DraftUnmappedCode {
+) []ediconnectiondraftports.DraftUnmappedCode {
 	entityTypes := make([]edi.MappingEntityType, 0, len(required))
 	for entityType := range required {
 		entityTypes = append(entityTypes, entityType)
@@ -1051,12 +1066,13 @@ func appendUnmapped(
 		slices.Sort(ids)
 		for _, id := range ids {
 			key := mappingKey{entityType: entityType, sourceID: id}
-			if mapped[key] || slices.ContainsFunc(out, func(code ediports.DraftUnmappedCode) bool {
-				return code.EntityType == entityType && code.SourceID == id
-			}) {
+			if mapped[key] ||
+				slices.ContainsFunc(out, func(code ediconnectiondraftports.DraftUnmappedCode) bool {
+					return code.EntityType == entityType && code.SourceID == id
+				}) {
 				continue
 			}
-			code := ediports.DraftUnmappedCode{EntityType: entityType, SourceID: id}
+			code := ediconnectiondraftports.DraftUnmappedCode{EntityType: entityType, SourceID: id}
 			if id == defaultMappingKey {
 				code.SourceLabel = "Default for every inbound tender"
 			}

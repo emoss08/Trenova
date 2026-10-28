@@ -7,6 +7,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/edi/app/edilading"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/edimessageports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -53,7 +55,7 @@ func (s *Service) serviceFailure214Lifecycle(
 
 	existing, err := s.messageRepo.GetServiceFailure214LifecycleMessage(
 		ctx,
-		ediports.GetServiceFailure214LifecycleMessageRequest{
+		edimessageports.GetServiceFailure214LifecycleMessageRequest{
 			TenantInfo:       req.TenantInfo,
 			ServiceFailureID: req.ServiceFailureID,
 			Trigger:          string(req.Trigger),
@@ -141,7 +143,7 @@ func (s *Service) serviceFailure214Lifecycle(
 
 func (s *Service) GetServiceFailure214Status(
 	ctx context.Context,
-	req ediports.GetServiceFailure214StatusRequest,
+	req edimessageports.GetServiceFailure214StatusRequest,
 ) (*ediports.ServiceFailure214Status, error) {
 	return s.messageRepo.GetServiceFailure214Status(ctx, req)
 }
@@ -160,7 +162,7 @@ func (s *Service) applyServiceFailure214ReasonMapping(
 		failure.ReasonCodeID.IsNil() {
 		return nil
 	}
-	items, err := s.mappingProfileRepo.GetMappingItems(ctx, ediports.GetMappingItemsRequest{
+	items, err := s.mappingProfileRepo.GetMappingItems(ctx, edipartnerports.GetMappingItemsRequest{
 		PartnerID:   partnerID,
 		TenantInfo:  tenantInfo,
 		EntityTypes: []edi.MappingEntityType{edi.MappingEntityTypeServiceFailureReasonCode},
@@ -269,7 +271,7 @@ func (s *Service) resolveServiceFailure214Candidate(
 			"shipment customer is not linked to an EDI partner",
 		), nil
 	}
-	partners, err := s.partnerRepo.List(ctx, &ediports.ListEDIPartnersRequest{
+	partners, err := s.partnerRepo.List(ctx, &edipartnerports.ListEDIPartnersRequest{
 		Filter: &pagination.QueryOptions{
 			TenantInfo: req.TenantInfo,
 			Pagination: pagination.Info{Limit: pagination.MaxLimit},
@@ -361,7 +363,7 @@ func (s *Service) shipmentStatusCapabilityEnabled(
 		var err error
 		connection, err = s.connectionRepo.GetConnectionByID(
 			ctx,
-			ediports.GetEDIConnectionByIDRequest{
+			edipartnerports.GetEDIConnectionByIDRequest{
 				ID:         partner.EDIConnectionID,
 				TenantInfo: tenantInfo,
 			},

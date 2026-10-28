@@ -6,7 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/edimessageports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -54,7 +54,7 @@ func (h *Handler) listMessages(c *gin.Context) {
 	pagination.List(c, req, h.eh, func() (*pagination.ListResult[*edi.EDIMessage], error) {
 		return h.service.ListMessages(
 			c.Request.Context(),
-			&ediports.ListEDIMessagesRequest{
+			&edimessageports.ListEDIMessagesRequest{
 				Filter:         req,
 				TransactionSet: edi.TransactionSet(helpers.QueryString(c, "transactionSet", "")),
 				Direction: edi.DocumentDirection(
@@ -79,7 +79,7 @@ func (h *Handler) getMessage(c *gin.Context) {
 	}
 	message, err := h.service.GetMessage(
 		c.Request.Context(),
-		ediports.GetEDIMessageByIDRequest{
+		edimessageports.GetEDIMessageByIDRequest{
 			ID:         messageID,
 			TenantInfo: pagination.FromAuth(authCtx),
 		},
@@ -100,7 +100,7 @@ func (h *Handler) inspectMessage(c *gin.Context) {
 	}
 	inspection, err := h.service.InspectMessage(
 		c.Request.Context(),
-		ediports.GetEDIMessageByIDRequest{
+		edimessageports.GetEDIMessageByIDRequest{
 			ID:         messageID,
 			TenantInfo: pagination.FromAuth(authCtx),
 		},

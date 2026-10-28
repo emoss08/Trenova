@@ -2,21 +2,24 @@ package ediconnectiondraft
 
 import (
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediconnectiondraftports"
 	"github.com/emoss08/trenova/pkg/lading"
 	"github.com/emoss08/trenova/shared/maputils"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
 type currentSetup struct {
-	setup     *ediports.EDIPartnerSetup
+	setup     *ediconnectiondraftports.EDIPartnerSetup
 	transport *edi.EDICommunicationProfile
 	version   *edi.LadingVersion
 	exchanged map[string]bool
 	values    map[string]string
 }
 
-func readCurrent(setup *ediports.EDIPartnerSetup, method edi.ConnectionMethod) *currentSetup {
+func readCurrent(
+	setup *ediconnectiondraftports.EDIPartnerSetup,
+	method edi.ConnectionMethod,
+) *currentSetup {
 	current := &currentSetup{
 		setup:     setup,
 		exchanged: map[string]bool{},

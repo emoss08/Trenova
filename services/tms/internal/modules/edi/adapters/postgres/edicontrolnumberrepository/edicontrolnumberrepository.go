@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi/edidb"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
@@ -30,7 +30,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) ediports.EDIControlNumberRepository {
+func New(p Params) edipartnerports.EDIControlNumberRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.edi-control-number-repository"),
@@ -54,7 +54,7 @@ func (k sequenceKey) where() []keel.Pred {
 
 func (r *repository) AllocateControlNumbers(
 	ctx context.Context,
-	req ediports.AllocateEDIControlNumbersRequest,
+	req edipartnerports.AllocateEDIControlNumbersRequest,
 ) (map[edi.ControlNumberKind]int64, error) {
 	return dbtx.Write(
 		ctx,
@@ -103,7 +103,7 @@ func (r *repository) AllocateControlNumbers(
 
 func (r *repository) ResetControlNumber(
 	ctx context.Context,
-	req *ediports.ResetEDIControlNumberRequest,
+	req *edipartnerports.ResetEDIControlNumberRequest,
 ) (*edi.EDIControlNumberSequence, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*edi.EDIControlNumberSequence, error) {
 		es := edidb.EDIControlNumberSequences
@@ -127,7 +127,7 @@ func (r *repository) ResetControlNumber(
 
 func (r *repository) StartControlNumber(
 	ctx context.Context,
-	req *ediports.ResetEDIControlNumberRequest,
+	req *edipartnerports.ResetEDIControlNumberRequest,
 ) (*edi.EDIControlNumberSequence, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*edi.EDIControlNumberSequence, error) {
 		db := r.db.Keel(ctx)

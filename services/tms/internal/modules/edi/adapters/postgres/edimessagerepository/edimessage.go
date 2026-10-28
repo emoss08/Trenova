@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi/edidb"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/edimessageports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/listquery"
@@ -55,7 +55,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) ediports.EDIMessageRepository {
+func New(p Params) edimessageports.EDIMessageRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.edi-message-repository"),
@@ -64,7 +64,7 @@ func New(p Params) ediports.EDIMessageRepository {
 
 func (r *repository) ListMessages(
 	ctx context.Context,
-	req *ediports.ListEDIMessagesRequest,
+	req *edimessageports.ListEDIMessagesRequest,
 ) (*pagination.ListResult[*edi.EDIMessage], error) {
 	return dbtx.Read(
 		ctx,
@@ -75,7 +75,7 @@ func (r *repository) ListMessages(
 	)
 }
 
-func archiveQuery(req *ediports.ListEDIMessagesRequest) *keel.Query[*edi.EDIMessage] {
+func archiveQuery(req *edimessageports.ListEDIMessagesRequest) *keel.Query[*edi.EDIMessage] {
 	m := edidb.EDIMessages
 	ve := edidb.EDIMessageValidationErrors
 	search := strings.TrimSpace(req.Query)
@@ -100,7 +100,7 @@ func archiveQuery(req *ediports.ListEDIMessagesRequest) *keel.Query[*edi.EDIMess
 
 func (r *repository) ListMessagesCursor(
 	ctx context.Context,
-	req *ediports.ListEDIMessagesRequest,
+	req *edimessageports.ListEDIMessagesRequest,
 ) (*pagination.CursorListResult[*edi.EDIMessage], error) {
 	return dbtx.Read(
 		ctx,
@@ -124,7 +124,7 @@ func (r *repository) ListMessagesCursor(
 	)
 }
 
-func messageListFilters(req *ediports.ListEDIMessagesRequest) []keel.Pred {
+func messageListFilters(req *edimessageports.ListEDIMessagesRequest) []keel.Pred {
 	m := edidb.EDIMessages
 	return []keel.Pred{
 		keel.When(req.TransactionSet != "", m.TransactionSet.Eq(req.TransactionSet)),
@@ -141,7 +141,7 @@ func messageListFilters(req *ediports.ListEDIMessagesRequest) []keel.Pred {
 
 func (r *repository) GetMessageByID(
 	ctx context.Context,
-	req ediports.GetEDIMessageByIDRequest,
+	req edimessageports.GetEDIMessageByIDRequest,
 ) (*edi.EDIMessage, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*edi.EDIMessage, error) {
 		m := edidb.EDIMessages
@@ -164,7 +164,7 @@ func (r *repository) GetMessageByID(
 
 func (r *repository) GetMessageByIdempotencyKey(
 	ctx context.Context,
-	req ediports.GetEDIMessageByIdempotencyKeyRequest,
+	req edimessageports.GetEDIMessageByIdempotencyKeyRequest,
 ) (*edi.EDIMessage, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*edi.EDIMessage, error) {
 		m := edidb.EDIMessages
@@ -179,7 +179,7 @@ func (r *repository) GetMessageByIdempotencyKey(
 
 func (r *repository) CreateMessageWithDiagnostics(
 	ctx context.Context,
-	req ediports.CreateEDIMessageWithDiagnosticsRequest,
+	req edimessageports.CreateEDIMessageWithDiagnosticsRequest,
 ) (*edi.EDIMessage, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*edi.EDIMessage, error) {
 		db := r.db.Keel(ctx)
@@ -209,7 +209,7 @@ func (r *repository) CreateMessageWithDiagnostics(
 
 func (r *repository) GetServiceFailure214LifecycleMessage(
 	ctx context.Context,
-	req ediports.GetServiceFailure214LifecycleMessageRequest,
+	req edimessageports.GetServiceFailure214LifecycleMessageRequest,
 ) (*edi.EDIMessage, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*edi.EDIMessage, error) {
 		entity, err := lifecycleMessageQuery(&req).First(ctx, r.db.Keel(ctx))
@@ -222,7 +222,7 @@ func (r *repository) GetServiceFailure214LifecycleMessage(
 }
 
 func lifecycleMessageQuery(
-	req *ediports.GetServiceFailure214LifecycleMessageRequest,
+	req *edimessageports.GetServiceFailure214LifecycleMessageRequest,
 ) *keel.Query[*edi.EDIMessage] {
 	m := edidb.EDIMessages
 	failureID := req.ServiceFailureID.String()
@@ -292,13 +292,13 @@ func serviceFailure214StatusQuery(failureID string) *keel.Query[*edi.EDIMessage]
 
 func (r *repository) GetServiceFailure214Status(
 	ctx context.Context,
-	req ediports.GetServiceFailure214StatusRequest,
-) (*ediports.ServiceFailure214StatusRow, error) {
+	req edimessageports.GetServiceFailure214StatusRequest,
+) (*edimessageports.ServiceFailure214StatusRow, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) (*ediports.ServiceFailure214StatusRow, error) {
-			rows, err := keel.Into[ediports.ServiceFailure214StatusRow](
+		func(ctx context.Context) (*edimessageports.ServiceFailure214StatusRow, error) {
+			rows, err := keel.Into[edimessageports.ServiceFailure214StatusRow](
 				ctx,
 				r.db.Keel(ctx),
 				serviceFailure214StatusQuery(req.ServiceFailureID.String()),
@@ -307,7 +307,7 @@ func (r *repository) GetServiceFailure214Status(
 				return nil, err
 			}
 			if len(rows) == 0 {
-				return &ediports.ServiceFailure214StatusRow{
+				return &edimessageports.ServiceFailure214StatusRow{
 					ServiceFailureID: req.ServiceFailureID,
 				}, nil
 			}
@@ -319,7 +319,7 @@ func (r *repository) GetServiceFailure214Status(
 
 func (r *repository) UpdateMessageDelivery(
 	ctx context.Context,
-	req *ediports.UpdateEDIMessageDeliveryRequest,
+	req *edimessageports.UpdateEDIMessageDeliveryRequest,
 ) (*edi.EDIMessage, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*edi.EDIMessage, error) {
 		if req == nil {
@@ -351,7 +351,7 @@ func (r *repository) UpdateMessageDelivery(
 
 func (r *repository) LinkMessageFlow(
 	ctx context.Context,
-	req *ediports.LinkEDIMessageFlowRequest,
+	req *edimessageports.LinkEDIMessageFlowRequest,
 ) (*edi.EDIMessage, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*edi.EDIMessage, error) {
 		m := edidb.EDIMessages
@@ -364,7 +364,7 @@ func (r *repository) LinkMessageFlow(
 
 func (r *repository) UpdateMessageAcknowledgment(
 	ctx context.Context,
-	req *ediports.UpdateEDIMessageAcknowledgmentRequest,
+	req *edimessageports.UpdateEDIMessageAcknowledgmentRequest,
 ) (*edi.EDIMessage, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*edi.EDIMessage, error) {
 		if req == nil {
@@ -436,7 +436,7 @@ type deliveryStatusCount struct {
 
 func (r *repository) GetDeliveryStatusCounts(
 	ctx context.Context,
-	req ediports.GetEDIMessageStatusCountsRequest,
+	req edimessageports.GetEDIMessageStatusCountsRequest,
 ) (map[edi.MessageDeliveryStatus]int, error) {
 	return dbtx.Read(
 		ctx,
@@ -473,7 +473,7 @@ type ackStatusCount struct {
 	Count  int64
 }
 
-func ackStatusFilters(req *ediports.GetEDIMessageStatusCountsRequest) []keel.Pred {
+func ackStatusFilters(req *edimessageports.GetEDIMessageStatusCountsRequest) []keel.Pred {
 	m := edidb.EDIMessages
 	return []keel.Pred{
 		m.AckStatus.IsNotNull(),
@@ -485,7 +485,7 @@ func ackStatusFilters(req *ediports.GetEDIMessageStatusCountsRequest) []keel.Pre
 
 func (r *repository) GetAckStatusCounts(
 	ctx context.Context,
-	req ediports.GetEDIMessageStatusCountsRequest,
+	req edimessageports.GetEDIMessageStatusCountsRequest,
 ) (map[edi.MessageAcknowledgmentStatus]int, error) {
 	return dbtx.Read(
 		ctx,
@@ -515,15 +515,15 @@ func (r *repository) GetAckStatusCounts(
 
 func (r *repository) GetAckStatusCountsByPartner(
 	ctx context.Context,
-	req ediports.GetEDIMessageStatusCountsRequest,
-) ([]*ediports.EDIPartnerAckStatusCount, error) {
+	req edimessageports.GetEDIMessageStatusCountsRequest,
+) ([]*edimessageports.EDIPartnerAckStatusCount, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) ([]*ediports.EDIPartnerAckStatusCount, error) {
+		func(ctx context.Context) ([]*edimessageports.EDIPartnerAckStatusCount, error) {
 			m := edidb.EDIMessages
 			partner := m.Partner()
-			rows, err := keel.Into[ediports.EDIPartnerAckStatusCount](
+			rows, err := keel.Into[edimessageports.EDIPartnerAckStatusCount](
 				ctx,
 				r.db.Keel(ctx),
 				m.Where(ackStatusFilters(&req)...).
@@ -542,13 +542,13 @@ func (r *repository) GetAckStatusCountsByPartner(
 
 func (r *repository) GetPartnerScorecards(
 	ctx context.Context,
-	req *ediports.GetEDIPartnerScorecardsRequest,
-) ([]*ediports.EDIPartnerScorecardRow, error) {
+	req *edimessageports.GetEDIPartnerScorecardsRequest,
+) ([]*edimessageports.EDIPartnerScorecardRow, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) ([]*ediports.EDIPartnerScorecardRow, error) {
-			rows, err := keel.Into[ediports.EDIPartnerScorecardRow](
+		func(ctx context.Context) ([]*edimessageports.EDIPartnerScorecardRow, error) {
+			rows, err := keel.Into[edimessageports.EDIPartnerScorecardRow](
 				ctx,
 				r.db.Keel(ctx),
 				scorecardQuery(req),
@@ -562,7 +562,9 @@ func (r *repository) GetPartnerScorecards(
 	)
 }
 
-func scorecardQuery(req *ediports.GetEDIPartnerScorecardsRequest) *keel.Query[*edi.EDIMessage] {
+func scorecardQuery(
+	req *edimessageports.GetEDIPartnerScorecardsRequest,
+) *keel.Query[*edi.EDIMessage] {
 	m := edidb.EDIMessages
 	partner := m.Partner()
 	outbound := m.Direction.Eq(edi.DocumentDirectionOutbound)
@@ -607,23 +609,27 @@ func scorecardQuery(req *ediports.GetEDIPartnerScorecardsRequest) *keel.Query[*e
 
 func (r *repository) GetVolumeSeries(
 	ctx context.Context,
-	req ediports.GetEDIVolumeSeriesRequest,
-) ([]*ediports.EDIVolumePoint, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*ediports.EDIVolumePoint, error) {
-		points, err := keel.Into[ediports.EDIVolumePoint](
-			ctx,
-			r.db.Keel(ctx),
-			volumeQuery(&req),
-		)
-		if err != nil {
-			return nil, err
-		}
+	req edimessageports.GetEDIVolumeSeriesRequest,
+) ([]*edimessageports.EDIVolumePoint, error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*edimessageports.EDIVolumePoint, error) {
+			points, err := keel.Into[edimessageports.EDIVolumePoint](
+				ctx,
+				r.db.Keel(ctx),
+				volumeQuery(&req),
+			)
+			if err != nil {
+				return nil, err
+			}
 
-		return pointers(points), nil
-	})
+			return pointers(points), nil
+		},
+	)
 }
 
-func volumeQuery(req *ediports.GetEDIVolumeSeriesRequest) *keel.Query[*edi.EDIMessage] {
+func volumeQuery(req *edimessageports.GetEDIVolumeSeriesRequest) *keel.Query[*edi.EDIMessage] {
 	m := edidb.EDIMessages
 	bucket := req.BucketSeconds
 	if bucket <= 0 {
@@ -654,15 +660,15 @@ func volumeQuery(req *ediports.GetEDIVolumeSeriesRequest) *keel.Query[*edi.EDIMe
 
 func (r *repository) GetPartnerSetActivity(
 	ctx context.Context,
-	req *ediports.GetEDIPartnerSetActivityRequest,
-) ([]*ediports.EDIPartnerSetActivityRow, error) {
+	req *edimessageports.GetEDIPartnerSetActivityRequest,
+) ([]*edimessageports.EDIPartnerSetActivityRow, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) ([]*ediports.EDIPartnerSetActivityRow, error) {
+		func(ctx context.Context) ([]*edimessageports.EDIPartnerSetActivityRow, error) {
 			m := edidb.EDIMessages
 			outbound := m.Direction.Eq(edi.DocumentDirectionOutbound)
-			rows, err := keel.Into[ediports.EDIPartnerSetActivityRow](
+			rows, err := keel.Into[edimessageports.EDIPartnerSetActivityRow](
 				ctx,
 				r.db.Keel(ctx),
 				m.Where(
@@ -713,7 +719,7 @@ func (f *overdueAckFilter) where() []keel.Pred {
 
 func (r *repository) GetOverdueAckCount(
 	ctx context.Context,
-	req ediports.GetEDIOverdueAckCountRequest,
+	req edimessageports.GetEDIOverdueAckCountRequest,
 ) (int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
 		filter := overdueAckFilter{
@@ -732,9 +738,9 @@ func (r *repository) GetOverdueAckCount(
 
 func (r *repository) ListOverdueAcks(
 	ctx context.Context,
-	req *ediports.ListOverdueEDIAcksRequest,
-) (*ediports.OverdueEDIAcks, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*ediports.OverdueEDIAcks, error) {
+	req *edimessageports.ListOverdueEDIAcksRequest,
+) (*edimessageports.OverdueEDIAcks, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*edimessageports.OverdueEDIAcks, error) {
 		db := r.db.Keel(ctx)
 		m := edidb.EDIMessages
 		partner := m.Partner()
@@ -744,7 +750,7 @@ func (r *repository) ListOverdueAcks(
 			transactionSet: req.TransactionSet,
 		}
 
-		groups, err := keel.Into[ediports.OverdueEDIAckPartner](
+		groups, err := keel.Into[edimessageports.OverdueEDIAckPartner](
 			ctx,
 			db,
 			m.Where(filter.where()...).
@@ -767,7 +773,7 @@ func (r *repository) ListOverdueAcks(
 		for _, group := range partners {
 			total += group.Count
 		}
-		overdue := &ediports.OverdueEDIAcks{
+		overdue := &edimessageports.OverdueEDIAcks{
 			Messages: make([]*edi.EDIMessage, 0, min(max(req.Limit, 0), total)),
 			Partners: partners,
 		}
@@ -792,7 +798,7 @@ func (r *repository) ListOverdueAcks(
 
 func (r *repository) ListRecentDeadLettered(
 	ctx context.Context,
-	req *ediports.ListRecentEDIMessageFailuresRequest,
+	req *edimessageports.ListRecentEDIMessageFailuresRequest,
 ) ([]*edi.EDIMessage, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*edi.EDIMessage, error) {
 		limit := req.Limit
@@ -817,7 +823,7 @@ func (r *repository) ListRecentDeadLettered(
 
 func (r *repository) ListReplayMessages(
 	ctx context.Context,
-	req *ediports.ListEDIReplayMessagesRequest,
+	req *edimessageports.ListEDIReplayMessagesRequest,
 ) ([]*edi.EDIMessage, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*edi.EDIMessage, error) {
 		m := edidb.EDIMessages
@@ -849,7 +855,7 @@ func (r *repository) ListReplayMessages(
 
 func (r *repository) PurgeRawX12Before(
 	ctx context.Context,
-	req ediports.PurgeEDIRawPayloadsRequest,
+	req edimessageports.PurgeEDIRawPayloadsRequest,
 ) (int64, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int64, error) {
 		m := edidb.EDIMessages
@@ -895,7 +901,7 @@ func (r *repository) CountDeadLetteredSince(ctx context.Context, since int64) (i
 
 func (r *repository) GetOutboundMessageForAck(
 	ctx context.Context,
-	req ediports.GetEDIOutboundMessageForAckRequest,
+	req edimessageports.GetEDIOutboundMessageForAckRequest,
 ) (*edi.EDIMessage, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*edi.EDIMessage, error) {
 		m := edidb.EDIMessages

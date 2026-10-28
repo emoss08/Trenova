@@ -6,8 +6,6 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/seededtest"
-
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/edi/adapters/postgres/edicommunicationprofilerepository"
 	"github.com/emoss08/trenova/internal/modules/edi/adapters/postgres/ediinboundfilerepository"
@@ -16,10 +14,12 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/adapters/postgres/edipartnerrepository"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/editest"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/edimessageports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
 	"github.com/emoss08/trenova/internal/modules/parties/adapters/postgres/carrierrepository"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
+	"github.com/emoss08/trenova/internal/testutil/seededtest"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -81,8 +81,14 @@ func TestPartnerCardReadsKeepToOnePartner(t *testing.T) {
 		}
 		require.NoError(t, create(ctx, db, profile))
 		if status != "" {
-			editest.Exec(t, ctx, db, "UPDATE edi_communication_profiles SET status = $1 WHERE id = $2",
-				status, profile.ID.String())
+			editest.Exec(
+				t,
+				ctx,
+				db,
+				"UPDATE edi_communication_profiles SET status = $1 WHERE id = $2",
+				status,
+				profile.ID.String(),
+			)
 		}
 		return profile
 	}
@@ -93,15 +99,64 @@ func TestPartnerCardReadsKeepToOnePartner(t *testing.T) {
 	now := timeutils.NowUnix()
 	const day = int64(24 * 60 * 60)
 	messages := []partnerCardMessage{
-		{tyson.ID, edi.TransactionSet214, edi.DocumentDirectionOutbound, outbound214, edi.MessageDeliveryStatusSent, 60},
-		{tyson.ID, edi.TransactionSet214, edi.DocumentDirectionOutbound, outbound214, edi.MessageDeliveryStatusSent, 2 * day},
-		{tyson.ID, edi.TransactionSet214, edi.DocumentDirectionOutbound, outbound214, edi.MessageDeliveryStatusFailed, 3 * day},
-		{tyson.ID, edi.TransactionSet214, edi.DocumentDirectionOutbound, outbound214, edi.MessageDeliveryStatusDeadLettered, day},
-		{tyson.ID, edi.TransactionSet214, edi.DocumentDirectionOutbound, outbound214, edi.MessageDeliveryStatusSent, 10 * day},
+		{
+			tyson.ID,
+			edi.TransactionSet214,
+			edi.DocumentDirectionOutbound,
+			outbound214,
+			edi.MessageDeliveryStatusSent,
+			60,
+		},
+		{
+			tyson.ID,
+			edi.TransactionSet214,
+			edi.DocumentDirectionOutbound,
+			outbound214,
+			edi.MessageDeliveryStatusSent,
+			2 * day,
+		},
+		{
+			tyson.ID,
+			edi.TransactionSet214,
+			edi.DocumentDirectionOutbound,
+			outbound214,
+			edi.MessageDeliveryStatusFailed,
+			3 * day,
+		},
+		{
+			tyson.ID,
+			edi.TransactionSet214,
+			edi.DocumentDirectionOutbound,
+			outbound214,
+			edi.MessageDeliveryStatusDeadLettered,
+			day,
+		},
+		{
+			tyson.ID,
+			edi.TransactionSet214,
+			edi.DocumentDirectionOutbound,
+			outbound214,
+			edi.MessageDeliveryStatusSent,
+			10 * day,
+		},
 		{tyson.ID, edi.TransactionSet204, edi.DocumentDirectionInbound, inbound204, "", 120},
 		{tyson.ID, edi.TransactionSet204, edi.DocumentDirectionInbound, inbound204, "", 5 * day},
-		{other.ID, edi.TransactionSet214, edi.DocumentDirectionOutbound, outbound214, edi.MessageDeliveryStatusSent, 60},
-		{other.ID, edi.TransactionSet214, edi.DocumentDirectionOutbound, outbound214, edi.MessageDeliveryStatusDeadLettered, 60},
+		{
+			other.ID,
+			edi.TransactionSet214,
+			edi.DocumentDirectionOutbound,
+			outbound214,
+			edi.MessageDeliveryStatusSent,
+			60,
+		},
+		{
+			other.ID,
+			edi.TransactionSet214,
+			edi.DocumentDirectionOutbound,
+			outbound214,
+			edi.MessageDeliveryStatusDeadLettered,
+			60,
+		},
 	}
 	for index, entry := range messages {
 		message := &edi.EDIMessage{
@@ -124,20 +179,30 @@ func TestPartnerCardReadsKeepToOnePartner(t *testing.T) {
 		}
 		require.NoError(t, create(ctx, db, message), "message %d", index)
 	}
-	editest.Exec(t, ctx, db, "UPDATE edi_messages SET updated_at = generated_at WHERE organization_id = $1",
-		org.OrgID.String())
+	editest.Exec(
+		t,
+		ctx,
+		db,
+		"UPDATE edi_messages SET updated_at = generated_at WHERE organization_id = $1",
+		org.OrgID.String(),
+	)
 
-	messageRepo := edimessagerepository.New(edimessagerepository.Params{DB: conn, Logger: zap.NewNop()})
+	messageRepo := edimessagerepository.New(
+		edimessagerepository.Params{DB: conn, Logger: zap.NewNop()},
+	)
 	weekAgo := now - 7*day
 
-	sets, err := messageRepo.GetPartnerSetActivity(ctx, &ediports.GetEDIPartnerSetActivityRequest{
-		TenantInfo: tenantInfo,
-		PartnerID:  tyson.ID,
-		Since:      weekAgo,
-	})
+	sets, err := messageRepo.GetPartnerSetActivity(
+		ctx,
+		&edimessageports.GetEDIPartnerSetActivityRequest{
+			TenantInfo: tenantInfo,
+			PartnerID:  tyson.ID,
+			Since:      weekAgo,
+		},
+	)
 	require.NoError(t, err)
 	require.Len(t, sets, 2)
-	assert.Equal(t, ediports.EDIPartnerSetActivityRow{
+	assert.Equal(t, edimessageports.EDIPartnerSetActivityRow{
 		TransactionSet:    edi.TransactionSet214,
 		Direction:         edi.DocumentDirectionOutbound,
 		Count:             4,
@@ -145,28 +210,31 @@ func TestPartnerCardReadsKeepToOnePartner(t *testing.T) {
 		DeadLetteredCount: 1,
 		LastAt:            now - 60,
 	}, *sets[0], "outbound first; the ten-day-old 214 and the other partner's are not counted")
-	assert.Equal(t, ediports.EDIPartnerSetActivityRow{
+	assert.Equal(t, edimessageports.EDIPartnerSetActivityRow{
 		TransactionSet: edi.TransactionSet204,
 		Direction:      edi.DocumentDirectionInbound,
 		Count:          2,
 		LastAt:         now - 120,
 	}, *sets[1], "an inbound set never counts a failure")
 
-	scorecards, err := messageRepo.GetPartnerScorecards(ctx, &ediports.GetEDIPartnerScorecardsRequest{
-		TenantInfo:             tenantInfo,
-		Since:                  weekAgo,
-		PartnerID:              tyson.ID,
-		OverdueAckPendingSince: now - 4*60*60,
-		PendingOver4hBefore:    now - 4*60*60,
-		PendingOver24hBefore:   now - day,
-	})
+	scorecards, err := messageRepo.GetPartnerScorecards(
+		ctx,
+		&edimessageports.GetEDIPartnerScorecardsRequest{
+			TenantInfo:             tenantInfo,
+			Since:                  weekAgo,
+			PartnerID:              tyson.ID,
+			OverdueAckPendingSince: now - 4*60*60,
+			PendingOver4hBefore:    now - 4*60*60,
+			PendingOver24hBefore:   now - day,
+		},
+	)
 	require.NoError(t, err)
 	require.Len(t, scorecards, 1, "the scorecard keeps to the partner asked for")
 	assert.Equal(t, tyson.ID, scorecards[0].PartnerID)
 	assert.Equal(t, int64(2), scorecards[0].SentCount)
 	assert.Equal(t, int64(2), scorecards[0].ReceivedCount)
 
-	series, err := messageRepo.GetVolumeSeries(ctx, ediports.GetEDIVolumeSeriesRequest{
+	series, err := messageRepo.GetVolumeSeries(ctx, edimessageports.GetEDIVolumeSeriesRequest{
 		TenantInfo:    tenantInfo,
 		Since:         now - 14*day,
 		BucketSeconds: 3600,
@@ -181,20 +249,26 @@ func TestPartnerCardReadsKeepToOnePartner(t *testing.T) {
 	assert.Equal(t, int64(5), outboundTotal, "every 214 of the partner's in fourteen days")
 	assert.Equal(t, int64(2), receivedTotal)
 
-	dead, err := messageRepo.ListRecentDeadLettered(ctx, &ediports.ListRecentEDIMessageFailuresRequest{
-		TenantInfo: tenantInfo,
-		PartnerID:  tyson.ID,
-		Since:      now - 2*60*60,
-		Limit:      5,
-	})
+	dead, err := messageRepo.ListRecentDeadLettered(
+		ctx,
+		&edimessageports.ListRecentEDIMessageFailuresRequest{
+			TenantInfo: tenantInfo,
+			PartnerID:  tyson.ID,
+			Since:      now - 2*60*60,
+			Limit:      5,
+		},
+	)
 	require.NoError(t, err)
 	assert.Empty(t, dead, "a dead letter older than the window is not drawn")
-	dead, err = messageRepo.ListRecentDeadLettered(ctx, &ediports.ListRecentEDIMessageFailuresRequest{
-		TenantInfo: tenantInfo,
-		PartnerID:  tyson.ID,
-		Since:      weekAgo,
-		Limit:      5,
-	})
+	dead, err = messageRepo.ListRecentDeadLettered(
+		ctx,
+		&edimessageports.ListRecentEDIMessageFailuresRequest{
+			TenantInfo: tenantInfo,
+			PartnerID:  tyson.ID,
+			Since:      weekAgo,
+			Limit:      5,
+		},
+	)
 	require.NoError(t, err)
 	require.Len(t, dead, 1)
 	assert.Equal(t, tyson.ID, dead[0].EDIPartnerID)
@@ -224,13 +298,18 @@ func TestPartnerCardReadsKeepToOnePartner(t *testing.T) {
 		}
 		require.NoError(t, create(ctx, db, file), "file %d", index)
 	}
-	fileRepo := ediinboundfilerepository.New(ediinboundfilerepository.Params{DB: conn, Logger: zap.NewNop()})
-	quarantined, err := fileRepo.ListRecentQuarantined(ctx, ediports.ListRecentQuarantinedEDIInboundFilesRequest{
-		TenantInfo: tenantInfo,
-		PartnerID:  tyson.ID,
-		Since:      weekAgo,
-		Limit:      5,
-	})
+	fileRepo := ediinboundfilerepository.New(
+		ediinboundfilerepository.Params{DB: conn, Logger: zap.NewNop()},
+	)
+	quarantined, err := fileRepo.ListRecentQuarantined(
+		ctx,
+		edimessageports.ListRecentQuarantinedEDIInboundFilesRequest{
+			TenantInfo: tenantInfo,
+			PartnerID:  tyson.ID,
+			Since:      weekAgo,
+			Limit:      5,
+		},
+	)
 	require.NoError(t, err)
 	require.Len(t, quarantined, 1, "only this partner's files inside the window")
 	assert.Equal(t, tyson.ID, quarantined[0].EDIPartnerID)
@@ -239,10 +318,13 @@ func TestPartnerCardReadsKeepToOnePartner(t *testing.T) {
 		DB:     conn,
 		Logger: zap.NewNop(),
 	})
-	profiles, err := profileRepo.ListProfilesByPartner(ctx, ediports.ListEDICommunicationProfilesByPartnerRequest{
-		TenantInfo: tenantInfo,
-		PartnerID:  tyson.ID,
-	})
+	profiles, err := profileRepo.ListProfilesByPartner(
+		ctx,
+		edipartnerports.ListEDICommunicationProfilesByPartnerRequest{
+			TenantInfo: tenantInfo,
+			PartnerID:  tyson.ID,
+		},
+	)
 	require.NoError(t, err)
 	require.Len(t, profiles, 2, "inactive transports are listed too")
 	assert.Equal(t, tysonMailbox.ID, profiles[0].ID, "the active transport first")
@@ -252,7 +334,7 @@ func TestPartnerCardReadsKeepToOnePartner(t *testing.T) {
 		DB:     conn,
 		Logger: zap.NewNop(),
 	})
-	empty, err := mappingRepo.GetMappingSummary(ctx, ediports.GetEDIMappingSummaryRequest{
+	empty, err := mappingRepo.GetMappingSummary(ctx, edipartnerports.GetEDIMappingSummaryRequest{
 		TenantInfo: tenantInfo,
 		PartnerID:  tyson.ID,
 	})
@@ -260,17 +342,29 @@ func TestPartnerCardReadsKeepToOnePartner(t *testing.T) {
 	assert.True(t, empty.ProfileID.IsNil(), "a partner never mapped has no profile")
 	assert.Empty(t, empty.Counts)
 
-	_, err = mappingRepo.SaveMappingItems(ctx, &ediports.SaveMappingItemsRequest{
+	_, err = mappingRepo.SaveMappingItems(ctx, &edipartnerports.SaveMappingItemsRequest{
 		PartnerID:  tyson.ID,
 		TenantInfo: tenantInfo,
 		Items: []*edi.EDIMappingProfileItem{
-			{EntityType: edi.MappingEntityTypeLocation, SourceID: pulid.MustNew("loc_"), TargetID: pulid.MustNew("loc_")},
-			{EntityType: edi.MappingEntityTypeLocation, SourceID: pulid.MustNew("loc_"), TargetID: pulid.MustNew("loc_")},
-			{EntityType: edi.MappingEntityTypeAccessorialCharge, SourceID: pulid.MustNew("acc_"), TargetID: pulid.MustNew("acc_")},
+			{
+				EntityType: edi.MappingEntityTypeLocation,
+				SourceID:   pulid.MustNew("loc_"),
+				TargetID:   pulid.MustNew("loc_"),
+			},
+			{
+				EntityType: edi.MappingEntityTypeLocation,
+				SourceID:   pulid.MustNew("loc_"),
+				TargetID:   pulid.MustNew("loc_"),
+			},
+			{
+				EntityType: edi.MappingEntityTypeAccessorialCharge,
+				SourceID:   pulid.MustNew("acc_"),
+				TargetID:   pulid.MustNew("acc_"),
+			},
 		},
 	})
 	require.NoError(t, err)
-	summary, err := mappingRepo.GetMappingSummary(ctx, ediports.GetEDIMappingSummaryRequest{
+	summary, err := mappingRepo.GetMappingSummary(ctx, edipartnerports.GetEDIMappingSummaryRequest{
 		TenantInfo: tenantInfo,
 		PartnerID:  tyson.ID,
 	})
@@ -286,11 +380,16 @@ func TestPartnerCardReadsKeepToOnePartner(t *testing.T) {
 		edi.MappingEntityTypeAccessorialCharge: 1,
 	}, counts)
 
-	partnerRepo := edipartnerrepository.New(edipartnerrepository.Params{DB: conn, Logger: zap.NewNop()})
-	plain, err := partnerRepo.GetByID(ctx, ediports.GetEDIPartnerByIDRequest{ID: tyson.ID, TenantInfo: tenantInfo})
+	partnerRepo := edipartnerrepository.New(
+		edipartnerrepository.Params{DB: conn, Logger: zap.NewNop()},
+	)
+	plain, err := partnerRepo.GetByID(
+		ctx,
+		edipartnerports.GetEDIPartnerByIDRequest{ID: tyson.ID, TenantInfo: tenantInfo},
+	)
 	require.NoError(t, err)
 	assert.Nil(t, plain.Connection)
-	linked, err := partnerRepo.GetByID(ctx, ediports.GetEDIPartnerByIDRequest{
+	linked, err := partnerRepo.GetByID(ctx, edipartnerports.GetEDIPartnerByIDRequest{
 		ID:           tyson.ID,
 		TenantInfo:   tenantInfo,
 		IncludeLinks: true,
@@ -313,7 +412,8 @@ func TestCarrierEDIChannelsByPartner(t *testing.T) {
 
 	conn := postgres.NewTestConnection(db)
 
-	rows, err := db.Pool().Query(ctx, `SELECT id, organization_id, business_unit_id, name FROM carriers
+	rows, err := db.Pool().
+		Query(ctx, `SELECT id, organization_id, business_unit_id, name FROM carriers
 		WHERE organization_id = (SELECT organization_id FROM carriers GROUP BY organization_id HAVING COUNT(*) >= 2 ORDER BY organization_id LIMIT 1)
 		ORDER BY name ASC LIMIT 2`)
 	require.NoError(t, err)
@@ -358,10 +458,13 @@ func TestCarrierEDIChannelsByPartner(t *testing.T) {
 	}
 
 	repo := carrierrepository.New(carrierrepository.Params{DB: conn, Logger: zap.NewNop()})
-	channels, err := repo.ListEDIChannelsByPartner(ctx, carrierports.ListCarrierEDIChannelsByPartnerRequest{
-		TenantInfo:   tenantInfo,
-		EDIPartnerID: van.ID,
-	})
+	channels, err := repo.ListEDIChannelsByPartner(
+		ctx,
+		carrierports.ListCarrierEDIChannelsByPartnerRequest{
+			TenantInfo:   tenantInfo,
+			EDIPartnerID: van.ID,
+		},
+	)
 	require.NoError(t, err)
 	require.Len(t, channels, 2, "only the channels through this partner")
 	assert.Equal(t, carriers[1].ID, channels[0].CarrierID, "the default channel first")

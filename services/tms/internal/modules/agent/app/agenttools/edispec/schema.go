@@ -4,7 +4,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediconnectiondraft"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediconnectiondraftports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/jsonschemautils"
@@ -48,12 +48,15 @@ var (
 		string(edi.DocumentDirectionInbound),
 		string(edi.DocumentDirectionOutbound),
 	})
-	usageSource = agenttoolschema.Source("edi.requirementUsage", []ediports.RequirementUsage{
-		ediports.RequirementUsageMandatory,
-		ediports.RequirementUsageOptional,
-		ediports.RequirementUsageConditional,
-		ediports.RequirementUsageNotUsed,
-	})
+	usageSource = agenttoolschema.Source(
+		"edi.requirementUsage",
+		[]ediconnectiondraftports.RequirementUsage{
+			ediconnectiondraftports.RequirementUsageMandatory,
+			ediconnectiondraftports.RequirementUsageOptional,
+			ediconnectiondraftports.RequirementUsageConditional,
+			ediconnectiondraftports.RequirementUsageNotUsed,
+		},
+	)
 	entitySource = agenttoolschema.Source("edi.mappingEntityType", []edi.MappingEntityType{
 		edi.MappingEntityTypeCustomer,
 		edi.MappingEntityTypeServiceType,
@@ -64,15 +67,15 @@ var (
 		edi.MappingEntityTypeAccessorialCharge,
 		edi.MappingEntityTypeServiceFailureReasonCode,
 	})
-	gapSource = agenttoolschema.Source("edi.specGapKind", []ediports.GapKind{
-		ediports.GapKindUnsupported,
-		ediports.GapKindAmbiguous,
+	gapSource = agenttoolschema.Source("edi.specGapKind", []ediconnectiondraftports.GapKind{
+		ediconnectiondraftports.GapKindUnsupported,
+		ediconnectiondraftports.GapKindAmbiguous,
 	})
 	resolutionSource = agenttoolschema.Source(
 		"edi.draftResolutionSource",
-		[]ediports.ResolutionSource{
-			ediports.ResolutionSourceCandidate,
-			ediports.ResolutionSourcePerson,
+		[]ediconnectiondraftports.ResolutionSource{
+			ediconnectiondraftports.ResolutionSourceCandidate,
+			ediconnectiondraftports.ResolutionSourcePerson,
 		},
 	)
 )

@@ -8,7 +8,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/app/edilading"
 	"github.com/emoss08/trenova/internal/modules/edi/app/editransport"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediconnectiondraftports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/edimessageports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -62,7 +64,7 @@ type EDIPartnerCertificate struct {
 
 type EDIPartnerTransport struct {
 	Profile       *edi.EDICommunicationProfile
-	Credentials   []ediports.CredentialRequirement
+	Credentials   []ediconnectiondraftports.CredentialRequirement
 	Certificates  []EDIPartnerCertificate
 	LastPollError string
 }
@@ -71,11 +73,11 @@ type EDIPartnerActivity struct {
 	Since           int64
 	SeriesSince     int64
 	BucketSeconds   int64
-	Scorecard       *ediports.EDIPartnerScorecardRow
+	Scorecard       *edimessageports.EDIPartnerScorecardRow
 	AckCounts       map[edi.MessageAcknowledgmentStatus]int
 	OverdueAckCount int
-	Sets            []*ediports.EDIPartnerSetActivityRow
-	Series          []*ediports.EDIVolumePoint
+	Sets            []*edimessageports.EDIPartnerSetActivityRow
+	Series          []*edimessageports.EDIVolumePoint
 }
 
 type EDIPartnerAttention struct {
@@ -98,7 +100,7 @@ type EDIPartnerCard struct {
 	Lading     *EDIPartnerLading
 	Transports []*EDIPartnerTransport
 	Readiness  *EDIPartnerReadiness
-	Mappings   *ediports.EDIMappingSummary
+	Mappings   *edipartnerports.EDIMappingSummary
 	Activity   *EDIPartnerActivity
 	Attention  *EDIPartnerAttention
 	Carriers   []*carrier.CarrierEDIChannel
@@ -108,7 +110,7 @@ func (s *Service) GetPartnerCard(
 	ctx context.Context,
 	req *GetEDIPartnerCardRequest,
 ) (*EDIPartnerCard, error) {
-	partner, err := s.partnerRepo.GetByID(ctx, ediports.GetEDIPartnerByIDRequest{
+	partner, err := s.partnerRepo.GetByID(ctx, edipartnerports.GetEDIPartnerByIDRequest{
 		ID:           req.PartnerID,
 		TenantInfo:   req.TenantInfo,
 		IncludeLinks: true,
@@ -129,7 +131,7 @@ func (s *Service) GetPartnerCard(
 	}
 	if card.Mappings, err = s.mappingProfileRepo.GetMappingSummary(
 		ctx,
-		ediports.GetEDIMappingSummaryRequest{TenantInfo: req.TenantInfo, PartnerID: req.PartnerID},
+		edipartnerports.GetEDIMappingSummaryRequest{TenantInfo: req.TenantInfo, PartnerID: req.PartnerID},
 	); err != nil {
 		return nil, err
 	}
@@ -193,7 +195,7 @@ func (s *Service) partnerCardTransports(
 ) ([]*EDIPartnerTransport, error) {
 	profiles, err := s.profileRepo.ListProfilesByPartner(
 		ctx,
-		ediports.ListEDICommunicationProfilesByPartnerRequest{
+		edipartnerports.ListEDICommunicationProfilesByPartnerRequest{
 			TenantInfo: req.TenantInfo,
 			PartnerID:  req.PartnerID,
 		},
@@ -286,7 +288,7 @@ func (s *Service) partnerCardActivity(
 
 	scorecards, err := s.messageRepo.GetPartnerScorecards(
 		ctx,
-		&ediports.GetEDIPartnerScorecardsRequest{
+		&edimessageports.GetEDIPartnerScorecardsRequest{
 			TenantInfo:             req.TenantInfo,
 			Since:                  activity.Since,
 			PartnerID:              req.PartnerID,
@@ -305,12 +307,12 @@ func (s *Service) partnerCardActivity(
 		}
 	}
 	if activity.Scorecard == nil {
-		activity.Scorecard = &ediports.EDIPartnerScorecardRow{PartnerID: req.PartnerID}
+		activity.Scorecard = &edimessageports.EDIPartnerScorecardRow{PartnerID: req.PartnerID}
 	}
 
 	if activity.AckCounts, err = s.messageRepo.GetAckStatusCounts(
 		ctx,
-		ediports.GetEDIMessageStatusCountsRequest{
+		edimessageports.GetEDIMessageStatusCountsRequest{
 			TenantInfo: req.TenantInfo,
 			Since:      activity.Since,
 			PartnerID:  req.PartnerID,
@@ -321,7 +323,7 @@ func (s *Service) partnerCardActivity(
 
 	if activity.Sets, err = s.messageRepo.GetPartnerSetActivity(
 		ctx,
-		&ediports.GetEDIPartnerSetActivityRequest{
+		&edimessageports.GetEDIPartnerSetActivityRequest{
 			TenantInfo: req.TenantInfo,
 			PartnerID:  req.PartnerID,
 			Since:      activity.Since,
@@ -332,7 +334,7 @@ func (s *Service) partnerCardActivity(
 
 	if activity.Series, err = s.messageRepo.GetVolumeSeries(
 		ctx,
-		ediports.GetEDIVolumeSeriesRequest{
+		edimessageports.GetEDIVolumeSeriesRequest{
 			TenantInfo:    req.TenantInfo,
 			Since:         activity.SeriesSince,
 			BucketSeconds: activity.BucketSeconds,
@@ -352,7 +354,7 @@ func (s *Service) partnerCardAttention(
 ) (*EDIPartnerAttention, error) {
 	attention := &EDIPartnerAttention{OverdueAckAge: DefaultOverdueAckAgeSeconds}
 
-	overdue, err := s.messageRepo.ListOverdueAcks(ctx, &ediports.ListOverdueEDIAcksRequest{
+	overdue, err := s.messageRepo.ListOverdueAcks(ctx, &edimessageports.ListOverdueEDIAcksRequest{
 		TenantInfo:   req.TenantInfo,
 		PendingSince: now - attention.OverdueAckAge,
 		PartnerID:    req.PartnerID,
@@ -375,7 +377,7 @@ func (s *Service) partnerCardAttention(
 	since := now - PartnerCardActivityWindowSeconds
 	if attention.DeadLettered, err = s.messageRepo.ListRecentDeadLettered(
 		ctx,
-		&ediports.ListRecentEDIMessageFailuresRequest{
+		&edimessageports.ListRecentEDIMessageFailuresRequest{
 			TenantInfo: req.TenantInfo,
 			PartnerID:  req.PartnerID,
 			Since:      since,
@@ -387,7 +389,7 @@ func (s *Service) partnerCardAttention(
 
 	if attention.Quarantined, err = s.inboundFileRepo.ListRecentQuarantined(
 		ctx,
-		ediports.ListRecentQuarantinedEDIInboundFilesRequest{
+		edimessageports.ListRecentQuarantinedEDIInboundFilesRequest{
 			TenantInfo: req.TenantInfo,
 			PartnerID:  req.PartnerID,
 			Since:      since,

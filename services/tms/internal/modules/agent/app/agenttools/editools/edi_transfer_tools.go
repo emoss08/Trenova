@@ -12,7 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/editenderports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -41,7 +41,7 @@ var ErrEDIDecisionNeedsAPerson = errors.New(
 type ediTransferDecider interface {
 	GetTransfer(
 		ctx context.Context,
-		req ediports.GetEDITransferByIDRequest,
+		req editenderports.GetEDITransferByIDRequest,
 	) (*edi.EDITransfer, error)
 	PlanApproveTransfer(
 		ctx context.Context,
@@ -244,7 +244,7 @@ func (s tenderSettlement) settle(
 	decider ediTransferDecider,
 	call *tenderCall,
 ) (*tenderOutcome, error) {
-	transfer, err := decider.GetTransfer(ctx, ediports.GetEDITransferByIDRequest{
+	transfer, err := decider.GetTransfer(ctx, editenderports.GetEDITransferByIDRequest{
 		ID:         call.transferID,
 		TenantInfo: call.tenant,
 		Direction:  s.direction,

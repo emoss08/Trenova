@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/editenderports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -30,7 +30,7 @@ type fakeTenderChanges struct {
 
 func (f *fakeTenderChanges) GetTenderChange(
 	_ context.Context,
-	req ediports.GetEDITenderChangeByIDRequest,
+	req editenderports.GetEDITenderChangeByIDRequest,
 ) (*edi.TenderChange, error) {
 	if req.ID != f.change.ID {
 		return nil, errortypes.NewNotFoundError("EDITenderChange not found")
@@ -77,7 +77,7 @@ type fakeTransferChanges struct {
 
 func (f *fakeTransferChanges) GetTransferChange(
 	_ context.Context,
-	req ediports.GetEDITransferChangeByIDRequest,
+	req editenderports.GetEDITransferChangeByIDRequest,
 ) (*edi.TransferChange, error) {
 	if req.ID != f.change.ID {
 		return nil, errortypes.NewNotFoundError("EDITransferChange not found")
