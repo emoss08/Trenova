@@ -36,6 +36,8 @@ const (
 	MeasureLate      = MeasureState("late")
 	MeasureHeld      = MeasureState("held")
 	MeasureOnTime    = MeasureState("onTime")
+	MeasureProjected = MeasureState("projected")
+	MeasureDue       = MeasureState("due")
 	MeasureDelivered = MeasureState("delivered")
 	MeasureOpen      = MeasureState("open")
 	MeasureSettled   = MeasureState("settled")

@@ -194,7 +194,8 @@ func measured(source *FigureSource, reads *Reads) (values []RowMeasure, readable
 			continue
 		}
 		readable++
-		if measure, has := summary.Measures[source.Measure]; has {
+		if measure, has := summary.Measures[source.Measure]; has &&
+			measure.State != MeasureProjected {
 			values = append(values, measure)
 		}
 	}

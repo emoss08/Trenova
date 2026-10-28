@@ -91,7 +91,38 @@ describe("measureReading", () => {
       tone: "warn",
       fraction: 0.5,
       held: false,
+      projected: false,
     });
+  });
+
+  it("says how late the estimate runs past a window still open", () => {
+    const reading = measureReading(
+      { measure: "lateness", value: duration(6 * 60), state: "projected", at: due, tone: "warn" },
+      60 * 60,
+      NOW,
+      t,
+    );
+    expect(reading).toEqual({
+      against: `Due ${cardMomentAfter(NOW, due)}`,
+      standing: "estimated 6m late",
+      tone: "warn",
+      fraction: 0.1,
+      held: false,
+      projected: true,
+    });
+  });
+
+  it("says a load due with no estimate is not estimated rather than on time", () => {
+    const reading = measureReading(
+      { measure: "lateness", value: duration(0), state: "due", at: due, tone: "" },
+      HOUR,
+      NOW,
+      t,
+    );
+    expect(reading.standing).toBe("not estimated");
+    expect(reading.against).toBe(`Due ${cardMomentAfter(NOW, due)}`);
+    expect(reading.fraction).toBe(0);
+    expect(reading.projected).toBe(false);
   });
 
   it("says a held load waits at the stop", () => {

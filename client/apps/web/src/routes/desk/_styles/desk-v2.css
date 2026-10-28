@@ -17860,6 +17860,11 @@ div.dk-bd-row:not(.dk-gone):hover {
     color-mix(in oklab, var(--dsk-warn) 55%, transparent) 3px 6px
   );
 }
+/* an estimate that runs past a window still open: outlined, not yet happened */
+.dk-bd-track > i.dk-bd-projected {
+  background: color-mix(in oklab, var(--dsk-warn) 14%, transparent);
+  box-shadow: inset 0 0 0 1px var(--dsk-warn);
+}
 .dk-bd-track > i.dk-bd-held {
   background: repeating-linear-gradient(
     -45deg,

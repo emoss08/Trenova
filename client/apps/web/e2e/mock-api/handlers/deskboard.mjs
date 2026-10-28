@@ -103,7 +103,15 @@ const LATE = [
     "held",
     5 * HOUR,
   ],
-  ["shp_board_0423", "S2610-0423", "Dallas, TX → Texarkana, AR", "Delayed", 95, "late", HOUR],
+  [
+    "shp_board_0423",
+    "S2610-0423",
+    "Dallas, TX → Texarkana, AR",
+    "InTransit",
+    25,
+    "projected",
+    -HOUR,
+  ],
 ];
 
 function lateRows(state) {

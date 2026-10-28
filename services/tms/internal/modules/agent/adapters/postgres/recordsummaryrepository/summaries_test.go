@@ -69,6 +69,11 @@ func stop(
 	}
 }
 
+func estimated(row stopRow, arrival int64) stopRow {
+	row.Estimate = at(arrival)
+	return row
+}
+
 func TestLateness_MeasuresTheNextStopAgainstItsWindow(t *testing.T) {
 	t.Parallel()
 
@@ -91,10 +96,25 @@ func TestLateness_MeasuresTheNextStopAgainstItsWindow(t *testing.T) {
 				stop(shipment.StopTypeDelivery, shipment.StopStatusInTransit, now-1800, at(now-2400), "Memphis")},
 			state: board.MeasureHeld, behind: 1800, tone: board.ToneWarn, measure: true,
 		},
-		"before the window closes": {
+		"before the window closes, estimated inside it": {
+			route: []stopRow{pickedUp,
+				estimated(stop(shipment.StopTypeDelivery, shipment.StopStatusNew, now+3600, nil, "Memphis"), now+1800)},
+			state: board.MeasureOnTime, behind: 0, tone: board.ToneOK, measure: true,
+		},
+		"before the window closes, estimated after it": {
+			route: []stopRow{pickedUp,
+				estimated(stop(shipment.StopTypeDelivery, shipment.StopStatusNew, now+3600, nil, "Memphis"), now+3960)},
+			state: board.MeasureProjected, behind: 360, tone: board.ToneWarn, measure: true,
+		},
+		"before the window closes, with no estimate": {
 			route: []stopRow{pickedUp,
 				stop(shipment.StopTypeDelivery, shipment.StopStatusNew, now+3600, nil, "Memphis")},
-			state: board.MeasureOnTime, behind: 0, tone: board.ToneOK, measure: true,
+			state: board.MeasureDue, behind: 0, tone: "", measure: true,
+		},
+		"past the window, whatever the estimate says": {
+			route: []stopRow{pickedUp,
+				estimated(stop(shipment.StopTypeDelivery, shipment.StopStatusNew, now-600, nil, "Memphis"), now+600)},
+			state: board.MeasureLate, behind: 600, tone: board.ToneWarn, measure: true,
 		},
 		"delivered after the window": {
 			route: []stopRow{pickedUp,

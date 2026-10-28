@@ -21,6 +21,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate/usstatedb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/stopeta/stopetadb"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier/carrierdb"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer/customerdb"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location/locationdb"
@@ -74,6 +75,7 @@ type stopRow struct {
 	WindowStart  int64
 	WindowEnd    *int64
 	Arrival      *int64
+	Estimate     *int64
 	City         string
 	State        string
 }
@@ -153,14 +155,16 @@ func stopsQuery(ids []pulid.ID) projection {
 	sm := shipmentdb.ShipmentMoves
 	loc := locationdb.Locations
 	st := usstatedb.UsStates
+	eta := stopetadb.StopETAs
 
 	return stp.Join(sm, sm.ID.EqCol(stp.ShipmentMoveID)).
 		LeftJoin(loc, loc.ID.EqCol(stp.LocationID)).
 		LeftJoin(st, st.ID.EqCol(loc.StateID)).
+		LeftJoin(eta, eta.StopID.EqCol(stp.ID)).
 		Pick(
 			sm.ShipmentID, sm.Sequence, stp.Sequence, text(stp.Type), text(stp.Status),
 			stp.ScheduledWindowStart, stp.ScheduledWindowEnd, stp.ActualArrival,
-			text(loc.City), text(st.Abbreviation),
+			eta.EstimatedArrival, text(loc.City), text(st.Abbreviation),
 		).
 		Where(sm.ShipmentID.In(ids...), stp.Status.Ne(shipment.StopStatusCanceled))
 }
@@ -344,8 +348,7 @@ func lateness(route []stopRow, now int64) (board.RowMeasure, bool) {
 		measure.At = due
 		switch {
 		case now <= due:
-			measure.State = board.MeasureOnTime
-			measure.Tone = board.ToneOK
+			ahead(&measure, stop.Estimate, due)
 		case stop.Arrival != nil && *stop.Arrival > 0:
 			measure.State = board.MeasureHeld
 			measure.Tone = board.ToneWarn
@@ -375,6 +378,20 @@ func lateness(route []stopRow, now int64) (board.RowMeasure, bool) {
 	}
 
 	return board.RowMeasure{}, false
+}
+
+func ahead(measure *board.RowMeasure, estimate *int64, due int64) {
+	switch {
+	case estimate == nil || *estimate <= 0:
+		measure.State = board.MeasureDue
+	case *estimate > due:
+		measure.State = board.MeasureProjected
+		measure.Tone = board.ToneWarn
+		measure.Value.Number = decimal.NewFromInt(*estimate - due)
+	default:
+		measure.State = board.MeasureOnTime
+		measure.Tone = board.ToneOK
+	}
 }
 
 func (r *Repository) invoices(

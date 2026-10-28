@@ -186,8 +186,15 @@ func measureText(measure *RowMeasure) string {
 	if measure == nil {
 		return ""
 	}
-	if measure.Measure == MeasureLateness && measure.Value.Number.IsZero() {
-		return "on time"
+	if measure.Measure == MeasureLateness {
+		switch {
+		case measure.State == MeasureDue:
+			return "not estimated"
+		case measure.State == MeasureProjected:
+			return "estimated " + FormatValue(&measure.Value) + " late"
+		case measure.Value.Number.IsZero():
+			return "on time"
+		}
 	}
 
 	return FormatValue(&measure.Value)

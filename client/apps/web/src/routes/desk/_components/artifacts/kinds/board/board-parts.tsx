@@ -318,7 +318,7 @@ function RowBody({ row, furthest, now }: { row: DeskBoardRow; furthest: number; 
           </span>
           <span className="dk-bd-track">
             <i
-              className={cn(reading.held && "dk-bd-held")}
+              className={cn(reading.held && "dk-bd-held", reading.projected && "dk-bd-projected")}
               style={{ width: `${Math.round(reading.fraction * 100)}%` }}
             />
           </span>

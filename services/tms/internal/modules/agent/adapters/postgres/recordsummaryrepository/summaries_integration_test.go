@@ -3,6 +3,8 @@
 package recordsummaryrepository_test
 
 import (
+	"cmp"
+	"slices"
 	"testing"
 	"time"
 
@@ -12,7 +14,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/board"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/stopeta"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/stopeta/stopetadb"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier/carrierdb"
 	"github.com/emoss08/trenova/internal/testutil/seededtest"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -113,4 +118,78 @@ func TestSummaries_ReadNothingOfAnotherTenant(t *testing.T) {
 
 	require.NoError(t, err)
 	assert.Empty(t, summaries[permission.ResourceShipment])
+}
+
+func TestSummaries_ReadALoadEstimatedToMissAWindowStillOpenAsProjected(t *testing.T) {
+	ctx, db, cleanup := seededtest.SetupTestDB(t)
+	t.Cleanup(cleanup)
+
+	sm := shipmentdb.ShipmentMoves
+	move, err := sm.AllTenants().Order(sm.ID.Asc()).First(dbscope.WithSystem(ctx, "test"), db)
+	require.NoError(t, err)
+	tenant := pagination.TenantInfo{OrgID: move.OrganizationID, BuID: move.BusinessUnitID}
+	ctx = dbscope.WithTenant(ctx, tenant.DBTenant())
+
+	moves, err := sm.Where(sm.ShipmentID.Eq(move.ShipmentID)).Limit(20).List(ctx, db)
+	require.NoError(t, err)
+	moveIDs := make([]pulid.ID, 0, len(moves))
+	sequences := make(map[pulid.ID]int64, len(moves))
+	for _, each := range moves {
+		moveIDs = append(moveIDs, each.ID)
+		sequences[each.ID] = each.Sequence
+	}
+	stp := shipmentdb.Stops
+	stops, err := stp.Where(stp.ShipmentMoveID.In(moveIDs...)).Limit(100).List(ctx, db)
+	require.NoError(t, err)
+	require.NotEmpty(t, stops)
+	slices.SortFunc(stops, func(a, b *shipment.Stop) int {
+		return cmp.Or(
+			cmp.Compare(sequences[a.ShipmentMoveID], sequences[b.ShipmentMoveID]),
+			cmp.Compare(a.Sequence, b.Sequence),
+		)
+	})
+
+	now := time.Now().Unix()
+	due := now + 3600
+	_, err = stp.Where(stp.ShipmentMoveID.In(moveIDs...)).Update(ctx, db,
+		stp.Status.To(shipment.StopStatusNew), stp.ScheduledWindowStart.To(due-1800),
+		stp.ScheduledWindowEnd.To(due))
+	require.NoError(t, err)
+	next := stops[0]
+	estimate := due + 600
+	require.NoError(t, stopetadb.StopETAs.Create(ctx, db, &stopeta.StopETA{
+		ID:               stopeta.NewID(),
+		OrganizationID:   tenant.OrgID,
+		BusinessUnitID:   tenant.BuID,
+		ShipmentID:       move.ShipmentID,
+		ShipmentMoveID:   next.ShipmentMoveID,
+		StopID:           next.ID,
+		MoveSequence:     sequences[next.ShipmentMoveID],
+		StopSequence:     next.Sequence,
+		EstimatedArrival: &estimate,
+		WindowEnd:        &due,
+		Verdict:          stopeta.VerdictLate,
+		Basis:            stopeta.BasisCheckCall,
+		DriveMethod:      stopeta.DriveMethodRouted,
+		ThresholdMinutes: 60,
+		ComputedAt:       now,
+	}))
+
+	repo := recordsummaryrepository.New(recordsummaryrepository.Params{
+		DB: postgres.NewTestConnection(db),
+	})
+	summaries, err := repo.Summaries(ctx, &agentports.RecordSummaryRequest{
+		Tenant: tenant,
+		Refs:   map[permission.Resource][]pulid.ID{permission.ResourceShipment: {move.ShipmentID}},
+		Now:    now,
+	})
+	require.NoError(t, err)
+
+	late, measured := summaries[permission.ResourceShipment][move.ShipmentID].
+		Measures[board.MeasureLateness]
+	require.True(t, measured)
+	assert.Equal(t, board.MeasureProjected, late.State)
+	assert.Equal(t, int64(600), late.Value.Number.IntPart())
+	assert.Equal(t, due, late.At)
+	assert.Equal(t, board.ToneWarn, late.Tone)
 }

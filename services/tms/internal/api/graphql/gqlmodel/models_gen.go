@@ -3178,8 +3178,8 @@ type DeskBoardRow struct {
 
 // A record's measure: how far behind a shipment is, what an invoice still owes,
 // how long a journal entry has waited. state says where the record is (late,
-// held at a stop, onTime, delivered, open, settled) and at the moment it is
-// measured against.
+// held at a stop, onTime, projected to miss a window still open, due with no
+// estimate, delivered, open, settled) and at the moment it is measured against.
 type DeskBoardRowMeasure struct {
 	Measure string          `json:"measure"`
 	Value   *DeskBoardValue `json:"value"`

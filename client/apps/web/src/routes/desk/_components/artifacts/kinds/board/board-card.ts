@@ -181,6 +181,8 @@ export type MeasureReading = {
   fraction: number;
   /** The record waits at a stop rather than on the road. */
   held: boolean;
+  /** The lateness is the estimate's, for a window still open. */
+  projected: boolean;
 };
 
 function seconds(value: DeskBoardValue): number {
@@ -199,7 +201,7 @@ export function measureReading(
   const at = measure.at ?? 0;
   const value = measure.value.kind === "duration" ? seconds(measure.value) : 0;
   const fraction = furthest > 0 ? Math.min(1, value / furthest) : 0;
-  const base = { tone, fraction, held: false };
+  const base = { tone, fraction, held: false, projected: false };
 
   switch (measure.measure) {
     case "lateness":
@@ -216,6 +218,20 @@ export function measureReading(
             held: true,
             against: at ? t("Due {0}", cardMomentAfter(now, at)) : "",
             standing: t("{0} at the stop", amount),
+          };
+        case "projected":
+          return {
+            ...base,
+            projected: true,
+            against: at ? t("Due {0}", cardMomentAfter(now, at)) : "",
+            standing: t("estimated {0} late", amount),
+          };
+        case "due":
+          return {
+            ...base,
+            fraction: 0,
+            against: at ? t("Due {0}", cardMomentAfter(now, at)) : "",
+            standing: t("not estimated"),
           };
         case "delivered":
           return {
