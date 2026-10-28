@@ -8,7 +8,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -44,7 +44,7 @@ const fieldRedatedByID = "redatedById"
 func syncRecordOptions() []toolpreview.Option {
 	return []toolpreview.Option{
 		toolpreview.Only(
-			common.FieldStatus,
+			changepreview.FieldStatus,
 			fieldAttemptCount,
 			fieldSkippedReason,
 			fieldSkippedByID,
@@ -86,7 +86,7 @@ func backfillOptions() []toolpreview.Option {
 			fieldRangeStart,
 			fieldRangeEnd,
 			fieldObjectTypes,
-			common.FieldStatus,
+			changepreview.FieldStatus,
 			fieldRequestedByID,
 		),
 		toolpreview.WithRefs(map[string]permission.Resource{
@@ -106,7 +106,7 @@ func syncRecordRecord(record *accountingsync.AccountingSyncRecord) toolpreview.R
 		Resource: permission.ResourceAccountingSync,
 		ID:       record.ID,
 		Label:    syncDocumentLabel(record),
-		Version:  common.PreviewVersion(record.Version),
+		Version:  changepreview.PreviewVersion(record.Version),
 	}
 }
 
@@ -115,13 +115,13 @@ func syncConnectionRecord(summary *accountingsyncports.AccountingSyncSummary) to
 		Resource: permission.ResourceAccountingIntegration,
 		ID:       summary.Connection.ID,
 		Label:    summary.ProviderName,
-		Version:  common.PreviewVersion(summary.Connection.Version),
+		Version:  changepreview.PreviewVersion(summary.Connection.Version),
 	}
 }
 
 func refusedSync(summary string, err error) (*agent.ToolPreview, error) {
-	if common.IsRefusal(err) {
-		return common.WarnWouldFail(toolpreview.Build(summary), err), nil
+	if changepreview.IsRefusal(err) {
+		return changepreview.WarnWouldFail(toolpreview.Build(summary), err), nil
 	}
 
 	return nil, err
@@ -175,7 +175,7 @@ func (t *RetryAccountingSyncTool) Preview(
 	summary := fmt.Sprintf(
 		"Would send %s to %s again; the accounting system recognizes a repeat, so nothing "+
 			"is entered twice.",
-		common.CountOf(len(plan.records), "document"),
+		changepreview.CountOf(len(plan.records), "document"),
 		plan.summary.ProviderName,
 	)
 	left, exact := 0, true
@@ -187,7 +187,7 @@ func (t *RetryAccountingSyncTool) Preview(
 		left, exact = max(waiting-len(plan.records), 0), waitingExact
 	}
 	if left > 0 {
-		leaves := common.CountOf(left, "other record")
+		leaves := changepreview.CountOf(left, "other record")
 		if !exact {
 			leaves = "about " + leaves
 		}
@@ -214,7 +214,7 @@ func (t *SkipAccountingSyncTool) Preview(
 		return refusedSync("Would keep a document out of the accounting system.", err)
 	}
 
-	plan, err := common.PlanUpdate(
+	plan, err := changepreview.PlanUpdate(
 		syncRecordRecord(record),
 		record,
 		func(skipped *accountingsync.AccountingSyncRecord) error {
@@ -247,7 +247,7 @@ func (t *redateAccountingSyncTool) Preview(
 	}
 
 	now := timeutils.NowUnix()
-	plan, err := common.PlanUpdate(
+	plan, err := changepreview.PlanUpdate(
 		syncRecordRecord(redatePlan.Before),
 		redatePlan.Before,
 		func(redated *accountingsync.AccountingSyncRecord) error {
@@ -295,7 +295,7 @@ func (t *PauseAccountingSyncTool) Preview(
 		"Would stop sending to %s; %s waiting now would wait until it resumes. Nothing is "+
 			"lost.",
 		summary.ProviderName,
-		common.CountOf(waitingToSend(summary), "document"),
+		changepreview.CountOf(waitingToSend(summary), "document"),
 	), change), nil
 }
 
@@ -326,7 +326,7 @@ func (t *ResumeAccountingSyncTool) Preview(
 		"Would start sending to %s again; %s queued would go out now and cannot be called "+
 			"back. It was paused because: %s",
 		summary.ProviderName,
-		common.CountOf(waitingToSend(summary), "document"),
+		changepreview.CountOf(waitingToSend(summary), "document"),
 		summary.Connection.PausedReason,
 	), change), nil
 }
@@ -372,8 +372,8 @@ func (t *RequestAccountingBackfillTool) Preview(
 			"Anything already entered there by hand would arrive twice, and nothing sent can "+
 			"be called back.",
 		strings.Join(sliceutils.Strings(plan.types), ", "),
-		common.DayLabel(plan.from),
-		common.DayLabel(plan.to),
+		changepreview.DayLabel(plan.from),
+		changepreview.DayLabel(plan.to),
 		plan.provider,
 	), change), nil
 }

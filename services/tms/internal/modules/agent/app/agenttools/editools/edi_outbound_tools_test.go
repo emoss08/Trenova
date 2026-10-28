@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
@@ -87,8 +87,8 @@ func TestSendEDILoadTender_PreviewsTheTenderAndTheShipmentThenSendsOnlyWhenAppro
 	tool := NewSendEDILoadTenderTool(tenders).(*SendEDILoadTenderTool)
 	partnerID := pulid.MustNew("edip_")
 	args := map[string]any{
-		common.FieldShipmentID: tenders.plan.SourceShipment.ID.String(),
-		paramEDIPartnerID:      partnerID.String(),
+		changepreview.FieldShipmentID: tenders.plan.SourceShipment.ID.String(),
+		paramEDIPartnerID:             partnerID.String(),
 	}
 
 	policy := tool.Policy()
@@ -138,7 +138,7 @@ func TestSendEDILoadTender_WarnsWhenTheReceiverMustMapItFirst(t *testing.T) {
 	}
 	tool := NewSendEDILoadTenderTool(tenders).(*SendEDILoadTenderTool)
 	args := agenttoolstest.AgentParamsFor(map[string]any{
-		common.FieldShipmentID: tenders.plan.SourceShipment.ID.String(),
+		changepreview.FieldShipmentID: tenders.plan.SourceShipment.ID.String(),
 	})
 
 	preview := agenttoolstest.PreviewWithoutWrites(
@@ -213,9 +213,9 @@ func TestSendEDIStatusUpdate_PreviewsTheRenderedStatusAndNeverTakesAPayload(t *t
 	partnerID := pulid.MustNew("edip_")
 	shipmentID := pulid.MustNew("shp_")
 	args := map[string]any{
-		paramEDIPartnerID:      partnerID.String(),
-		common.FieldShipmentID: shipmentID.String(),
-		"payload":              map[string]any{"transactionSet": "214"},
+		paramEDIPartnerID:             partnerID.String(),
+		changepreview.FieldShipmentID: shipmentID.String(),
+		"payload":                     map[string]any{"transactionSet": "214"},
 	}
 
 	policy := tool.Policy()
@@ -268,9 +268,9 @@ func TestSendEDIStatusUpdate_TakesExactlyOneSourceRecord(t *testing.T) {
 	require.Error(t, validator.Validate(t.Context(), none))
 
 	two := agenttoolstest.AgentParamsFor(map[string]any{
-		paramEDIPartnerID:      partner,
-		common.FieldShipmentID: pulid.MustNew("shp_").String(),
-		ParamServiceFailureID:  pulid.MustNew("sf_").String(),
+		paramEDIPartnerID:             partner,
+		changepreview.FieldShipmentID: pulid.MustNew("shp_").String(),
+		ParamServiceFailureID:         pulid.MustNew("sf_").String(),
 	})
 	err := validator.Validate(t.Context(), two)
 	require.Error(t, err)

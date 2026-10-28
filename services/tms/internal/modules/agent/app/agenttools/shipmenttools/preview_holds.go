@@ -5,7 +5,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -15,11 +16,11 @@ import (
 )
 
 var placedHoldFields = []string{
-	common.FieldShipmentID,
-	common.FieldType,
-	common.FieldSeverity,
+	changepreview.FieldShipmentID,
+	changepreview.FieldType,
+	changepreview.FieldSeverity,
 	"reasonCode",
-	common.FieldNotes,
+	changepreview.FieldNotes,
 	"blocksDispatch",
 	"blocksDelivery",
 	"blocksBilling",
@@ -28,8 +29,8 @@ var placedHoldFields = []string{
 }
 
 var placedHoldLabels = map[string]string{
-	common.FieldShipmentID: common.LabelShipment,
-	"reasonCode":           "Reason",
+	changepreview.FieldShipmentID: changepreview.LabelShipment,
+	"reasonCode":                  "Reason",
 }
 
 var ReleasedHoldFields = []string{"releasedAt"}
@@ -38,7 +39,7 @@ func PlacedHoldOptions() []toolpreview.Option {
 	return []toolpreview.Option{
 		toolpreview.Only(placedHoldFields...),
 		toolpreview.WithRefs(map[string]permission.Resource{
-			common.FieldShipmentID: permission.ResourceShipment,
+			changepreview.FieldShipmentID: permission.ResourceShipment,
 		}),
 		toolpreview.Labels(placedHoldLabels),
 		toolpreview.Volatile("startedAt"),
@@ -71,7 +72,7 @@ func (t *PlaceShipmentHoldTool) Preview(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
-	if err := common.GuardPreview(t, &params); err != nil {
+	if err := toolguard.GuardPreview(t, &params); err != nil {
 		return nil, err
 	}
 
@@ -82,8 +83,8 @@ func (t *PlaceShipmentHoldTool) Preview(
 
 	hold, err := t.holds.PreviewCreate(ctx, request, params.Actor)
 	if err != nil {
-		if common.IsRefusal(err) {
-			return common.WarnWouldFail(
+		if changepreview.IsRefusal(err) {
+			return changepreview.WarnWouldFail(
 				toolpreview.Build("Would put a shipment on hold."),
 				err,
 			), nil
@@ -111,7 +112,7 @@ func (t *ReleaseShipmentHoldTool) Preview(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
-	if err := common.GuardPreview(t, &params); err != nil {
+	if err := toolguard.GuardPreview(t, &params); err != nil {
 		return nil, err
 	}
 
@@ -136,8 +137,8 @@ func (t *ReleaseShipmentHoldTool) Preview(
 	)
 	released, err := t.holds.PreviewRelease(ctx, request, params.Actor)
 	if err != nil {
-		if common.IsRefusal(err) {
-			return common.WarnWouldFail(toolpreview.Build(summary), err), nil
+		if changepreview.IsRefusal(err) {
+			return changepreview.WarnWouldFail(toolpreview.Build(summary), err), nil
 		}
 
 		return nil, err
@@ -147,7 +148,7 @@ func (t *ReleaseShipmentHoldTool) Preview(
 		Resource: permission.ResourceShipmentHold,
 		ID:       current.ID,
 		Label:    holdLabel(current),
-		Version:  common.PreviewVersion(current.Version),
+		Version:  changepreview.PreviewVersion(current.Version),
 	}, current, released, toolpreview.Only(ReleasedHoldFields...), toolpreview.Volatile("releasedAt"))
 	if err != nil {
 		return nil, err

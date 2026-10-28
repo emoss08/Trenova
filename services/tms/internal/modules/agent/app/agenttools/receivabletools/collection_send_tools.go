@@ -5,7 +5,10 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/outboundpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -44,12 +47,12 @@ type statementView struct {
 }
 
 func customerNoteProperty(what string) map[string]any {
-	return common.StringProperty(what, maxCustomerEmailNoteChars)
+	return toolparams.StringProperty(what, maxCustomerEmailNoteChars)
 }
 
 func NewSendPaymentReminderTool(reminders paymentreminderports.Service) agenttoolports.AgentTool {
-	return common.NewReportingReceivableTool(
-		&common.ReceivableSpec{
+	return toolspec.NewReportingReceivableTool(
+		&toolspec.ReceivableSpec{
 			Name: toolSendPaymentReminder,
 			Recipe: []string{
 				toolListCollectionsWorklist,
@@ -71,16 +74,16 @@ func NewSendPaymentReminderTool(reminders paymentreminderports.Service) agenttoo
 			Rationale: "Emails the customer about what it owes, which cannot be called back; a " +
 				"person approves every reminder and sees the recipients and the email first.",
 			Target:   collectionTarget,
-			Artifact: common.CustomerRecordEntity,
+			Artifact: changepreview.CustomerRecordEntity,
 			Properties: map[string]any{
-				common.ParamCustomerID: collectionCustomerProperty(),
+				toolparams.ParamCustomerID: collectionCustomerProperty(),
 				paramCollectionNote: customerNoteProperty(
 					"A short note the customer reads above the list of invoices. Leave it out " +
 						"unless the person asked for one; never repeat the amounts the email " +
 						"already lists.",
 				),
 			},
-			Required: []string{common.ParamCustomerID},
+			Required: []string{toolparams.ParamCustomerID},
 			SearchTerms: []string{
 				"payment reminder",
 				"dunning email",
@@ -88,18 +91,21 @@ func NewSendPaymentReminderTool(reminders paymentreminderports.Service) agenttoo
 				"chase payment",
 			},
 		},
-		common.ReceivablePlan[
+		toolspec.ReceivablePlan[
 			*paymentreminderports.SendNowRequest,
 			[]*paymentreminderports.SendNowPreview,
 		]{
 			Request: func(
 				params *agenttoolports.ToolExecuteParams,
 			) (*paymentreminderports.SendNowRequest, error) {
-				customerID, err := common.RequirePulid(params.Params, common.ParamCustomerID)
+				customerID, err := toolparams.RequirePulid(
+					params.Params,
+					toolparams.ParamCustomerID,
+				)
 				if err != nil {
 					return nil, err
 				}
-				note, err := common.BoundedText(
+				note, err := toolparams.BoundedText(
 					params.Params,
 					paramCollectionNote,
 					maxCustomerEmailNoteChars,
@@ -108,7 +114,7 @@ func NewSendPaymentReminderTool(reminders paymentreminderports.Service) agenttoo
 					return nil, err
 				}
 				return &paymentreminderports.SendNowRequest{
-					TenantInfo: common.TenantFrom(*params),
+					TenantInfo: toolparams.TenantFrom(*params),
 					CustomerID: customerID,
 					Note:       note,
 				}, nil
@@ -143,7 +149,7 @@ func NewSendPaymentReminderTool(reminders paymentreminderports.Service) agenttoo
 				return &agent.ToolExecutionResult{
 					Action: "sent",
 					Kind:   "payment reminder",
-					IDs:    map[string]string{common.ParamCustomerID: req.CustomerID.String()},
+					IDs:    map[string]string{toolparams.ParamCustomerID: req.CustomerID.String()},
 					Record: customerRecord(req.CustomerID),
 					State:  strings.Join(states, "; "),
 				}, nil
@@ -182,12 +188,12 @@ func renderReminders(
 			return nil, err
 		}
 		change.Operation = agent.PreviewOperationSend
-		change.Message = common.PlannedEmailPreview(preview.Email)
+		change.Message = outboundpreview.PlannedEmailPreview(preview.Email)
 		changes = append(changes, change)
 	}
 
 	summary := fmt.Sprintf("Would email %s a payment reminder for %s totalling %s.",
-		name, common.CountOf(invoices, "overdue invoice"), strings.Join(totals, " and "))
+		name, changepreview.CountOf(invoices, "overdue invoice"), strings.Join(totals, " and "))
 
 	return toolpreview.Build(summary, changes...), nil
 }
@@ -195,8 +201,8 @@ func renderReminders(
 func NewSendCustomerStatementTool(
 	statements customerstatementports.Service,
 ) agenttoolports.AgentTool {
-	return common.NewReportingReceivableTool(
-		&common.ReceivableSpec{
+	return toolspec.NewReportingReceivableTool(
+		&toolspec.ReceivableSpec{
 			Name: toolSendCustomerStatement,
 			Recipe: []string{
 				toolGetCustomerStatement,
@@ -216,9 +222,9 @@ func NewSendCustomerStatementTool(
 				"called back; a person approves every statement and sees the recipients and the " +
 				"email first.",
 			Target:   collectionTarget,
-			Artifact: common.CustomerRecordEntity,
+			Artifact: changepreview.CustomerRecordEntity,
 			Properties: map[string]any{
-				common.ParamCustomerID: collectionCustomerProperty(),
+				toolparams.ParamCustomerID: collectionCustomerProperty(),
 				paramStatementStart: agenttoolschema.Date(
 					"The first day the statement covers. Leave it out to start from the " +
 						"account's first transaction.",
@@ -231,14 +237,14 @@ func NewSendCustomerStatementTool(
 						"person asked for one.",
 				),
 			},
-			Required: []string{common.ParamCustomerID},
+			Required: []string{toolparams.ParamCustomerID},
 			SearchTerms: []string{
 				"email statement",
 				"send statement",
 				"statement pdf",
 			},
 		},
-		common.ReceivablePlan[
+		toolspec.ReceivablePlan[
 			*customerstatementports.SendRequest,
 			*customerstatementports.SendPreview,
 		]{
@@ -267,7 +273,7 @@ func NewSendCustomerStatementTool(
 					Action: "sent",
 					Kind:   "customer statement",
 					Name:   sent.FileName,
-					IDs:    map[string]string{common.ParamCustomerID: req.CustomerID.String()},
+					IDs:    map[string]string{toolparams.ParamCustomerID: req.CustomerID.String()},
 					Record: customerRecord(req.CustomerID),
 					State: fmt.Sprintf("%s due, sent to %s",
 						sent.EndingBalance, strings.Join(sent.SentTo, ", ")),
@@ -280,11 +286,15 @@ func NewSendCustomerStatementTool(
 func statementRequest(
 	params *agenttoolports.ToolExecuteParams,
 ) (*customerstatementports.SendRequest, error) {
-	customerID, err := common.RequirePulid(params.Params, common.ParamCustomerID)
+	customerID, err := toolparams.RequirePulid(params.Params, toolparams.ParamCustomerID)
 	if err != nil {
 		return nil, err
 	}
-	note, err := common.BoundedText(params.Params, paramCollectionNote, maxCustomerEmailNoteChars)
+	note, err := toolparams.BoundedText(
+		params.Params,
+		paramCollectionNote,
+		maxCustomerEmailNoteChars,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -292,7 +302,7 @@ func statementRequest(
 	zone := timeutils.LoadLocation(params.Timezone)
 	req := &customerstatementports.SendRequest{
 		StatementRequest: customerstatementports.StatementRequest{
-			TenantInfo: common.TenantFrom(*params),
+			TenantInfo: toolparams.TenantFrom(*params),
 			CustomerID: customerID,
 		},
 		Note: note,
@@ -300,14 +310,14 @@ func statementRequest(
 	if raw := optionalText(params.Params, paramStatementStart); raw != "" {
 		start, parseErr := timeutils.ParseCalendarDate(raw, zone)
 		if parseErr != nil {
-			return nil, common.DateRefusal(paramStatementStart, raw, toolschema.FormatDate)
+			return nil, toolparams.DateRefusal(paramStatementStart, raw, toolschema.FormatDate)
 		}
 		req.StartDate = start
 	}
 	if raw := optionalText(params.Params, paramStatementAsOf); raw != "" {
 		day, parseErr := timeutils.ParseCalendarDate(raw, zone)
 		if parseErr != nil {
-			return nil, common.DateRefusal(paramStatementAsOf, raw, toolschema.FormatDate)
+			return nil, toolparams.DateRefusal(paramStatementAsOf, raw, toolschema.FormatDate)
 		}
 		req.AsOfDate = timeutils.NextDayStart(day, zone) - 1
 	}
@@ -316,7 +326,7 @@ func statementRequest(
 }
 
 func optionalText(params map[string]any, key string) string {
-	return strings.TrimSpace(common.OptionalString(params, key))
+	return strings.TrimSpace(toolparams.OptionalString(params, key))
 }
 
 func renderStatement(
@@ -345,7 +355,7 @@ func renderStatement(
 		return nil, err
 	}
 	change.Operation = agent.PreviewOperationSend
-	change.Message = common.PlannedEmailPreview(preview.Email)
+	change.Message = outboundpreview.PlannedEmailPreview(preview.Email)
 
 	summary := fmt.Sprintf("Would email %s its statement of account showing %s due.",
 		preview.CustomerName, view.EndingBalance)

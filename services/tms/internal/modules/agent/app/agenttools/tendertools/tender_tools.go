@@ -6,7 +6,8 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -116,20 +117,20 @@ func (t *TenderToRoutingGuideTool) Execute(
 func (t *TenderToRoutingGuideTool) request(
 	params *agenttoolports.ToolExecuteParams,
 ) (*tenderservice.CreateWaterfallTenderRequest, error) {
-	if err := common.GuardExecute(t, *params); err != nil {
+	if err := toolguard.GuardExecute(t, *params); err != nil {
 		return nil, err
 	}
 
-	moveID, err := common.RequirePulid(params.Params, "shipmentMoveId")
+	moveID, err := toolparams.RequirePulid(params.Params, "shipmentMoveId")
 	if err != nil {
 		return nil, err
 	}
 
 	req := &tenderservice.CreateWaterfallTenderRequest{
-		TenantInfo:     common.TenantFrom(*params),
+		TenantInfo:     toolparams.TenantFrom(*params),
 		ShipmentMoveID: moveID,
 	}
-	if guideID, ok, pErr := common.OptionalPulid(params.Params, "routingGuideId"); pErr != nil {
+	if guideID, ok, pErr := toolparams.OptionalPulid(params.Params, "routingGuideId"); pErr != nil {
 		return nil, pErr
 	} else if ok {
 		req.RoutingGuideID = &guideID
@@ -139,7 +140,7 @@ func (t *TenderToRoutingGuideTool) request(
 }
 
 func (t *TenderToRoutingGuideTool) Target(params map[string]any) (agenttoolports.ToolTarget, bool) {
-	return common.TargetOf(params, "shipmentMoveId", permission.ResourceShipmentMove)
+	return toolparams.TargetOf(params, "shipmentMoveId", permission.ResourceShipmentMove)
 }
 
 // tenderToCarriersTool offers a move to named carriers at named rates, either
@@ -268,21 +269,25 @@ func (t *TenderToCarriersTool) Execute(
 func (t *TenderToCarriersTool) request(
 	params *agenttoolports.ToolExecuteParams,
 ) (*tenderservice.CreateSpotTenderRequest, error) {
-	if err := common.GuardExecute(t, *params); err != nil {
+	if err := toolguard.GuardExecute(t, *params); err != nil {
 		return nil, err
 	}
 
-	moveID, err := common.RequirePulid(params.Params, "shipmentMoveId")
+	moveID, err := toolparams.RequirePulid(params.Params, "shipmentMoveId")
 	if err != nil {
 		return nil, err
 	}
-	mode, err := common.RequireEnum(params.Params, "mode", agenttoolschema.SpotTenderModes.Values)
+	mode, err := toolparams.RequireEnum(
+		params.Params,
+		"mode",
+		agenttoolschema.SpotTenderModes.Values,
+	)
 	if err != nil {
 		return nil, err
 	}
 
 	var lineParams []tenderLineParam
-	if err = common.DecodeParam(params.Params, "lines", &lineParams); err != nil {
+	if err = toolparams.DecodeParam(params.Params, "lines", &lineParams); err != nil {
 		return nil, err
 	}
 	if len(lineParams) == 0 || len(lineParams) > maxTenderLines {
@@ -303,11 +308,14 @@ func (t *TenderToCarriersTool) request(
 	}
 
 	return &tenderservice.CreateSpotTenderRequest{
-		TenantInfo:                common.TenantFrom(*params),
-		ShipmentMoveID:            moveID,
-		Mode:                      mode,
-		Lines:                     lines,
-		OverrideInsuranceWarnings: common.OptionalBool(params.Params, "overrideInsuranceWarnings"),
+		TenantInfo:     toolparams.TenantFrom(*params),
+		ShipmentMoveID: moveID,
+		Mode:           mode,
+		Lines:          lines,
+		OverrideInsuranceWarnings: toolparams.OptionalBool(
+			params.Params,
+			"overrideInsuranceWarnings",
+		),
 	}, nil
 }
 
@@ -363,7 +371,7 @@ func lineEnum[T ~string](
 	}
 	value := T(strings.TrimSpace(raw))
 	if !slices.Contains(source.Values, value) {
-		return "", common.ErrUnknownValue(
+		return "", toolparams.ErrUnknownValue(
 			fmt.Sprintf("lines[%d].%s", idx, key),
 			raw,
 			source.Names(),
@@ -374,5 +382,5 @@ func lineEnum[T ~string](
 }
 
 func (t *TenderToCarriersTool) Target(params map[string]any) (agenttoolports.ToolTarget, bool) {
-	return common.TargetOf(params, "shipmentMoveId", permission.ResourceShipmentMove)
+	return toolparams.TargetOf(params, "shipmentMoveId", permission.ResourceShipmentMove)
 }

@@ -4,7 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -36,7 +38,7 @@ const kindCredential = "credential"
 const maxCredentialField = 100
 
 var credentialFields = []string{
-	wfFieldWorkerID, paramCredentialTypeID, common.FieldStatus, paramCredentialNumber,
+	wfFieldWorkerID, paramCredentialTypeID, changepreview.FieldStatus, paramCredentialNumber,
 	paramIssuingAuthority, paramIssuedAt, paramExpiresAt, wfFieldDocument, wfFieldNotes,
 	"verifiedById", "verifiedAt", "archivedAt", "archiveReason",
 }
@@ -108,51 +110,51 @@ func credentialRecord(credential *workercredential.WorkerCredential) toolpreview
 
 func credentialFactProperties() map[string]any {
 	return map[string]any{
-		paramCredentialNumber: common.StringProperty("The number on the card or certificate, "+
+		paramCredentialNumber: toolparams.StringProperty("The number on the card or certificate, "+
 			"exactly as printed.", maxCredentialField),
-		paramIssuingAuthority: common.StringProperty("Who issued it, such as the state.",
+		paramIssuingAuthority: toolparams.StringProperty("Who issued it, such as the state.",
 			maxCredentialField),
-		paramIssuedAt:    agenttoolschema.Date("When it was issued."),
-		paramExpiresAt:   agenttoolschema.Date("When it expires."),
-		wfParamDocument:  wfDocumentProperty(),
-		common.ParamNote: wfNoteProperty("Anything the credential should say."),
+		paramIssuedAt:        agenttoolschema.Date("When it was issued."),
+		paramExpiresAt:       agenttoolschema.Date("When it expires."),
+		wfParamDocument:      wfDocumentProperty(),
+		toolparams.ParamNote: wfNoteProperty("Anything the credential should say."),
 	}
 }
 
 func applyCredentialFacts(entity *workercredential.WorkerCredential, params map[string]any) error {
 	var err error
-	if number, numErr := common.OptionalBoundedText(params, paramCredentialNumber,
+	if number, numErr := toolparams.OptionalBoundedText(params, paramCredentialNumber,
 		maxCredentialField); numErr != nil {
 		return numErr
 	} else if number != nil {
 		entity.Number = *number
 	}
-	if authority, authErr := common.OptionalBoundedText(params, paramIssuingAuthority,
+	if authority, authErr := toolparams.OptionalBoundedText(params, paramIssuingAuthority,
 		maxCredentialField); authErr != nil {
 		return authErr
 	} else if authority != nil {
 		entity.IssuingAuthority = *authority
 	}
-	if notes, notesErr := common.OptionalBoundedText(
+	if notes, notesErr := toolparams.OptionalBoundedText(
 		params,
-		common.ParamNote,
+		toolparams.ParamNote,
 		wfNoteChars,
 	); notesErr != nil {
 		return notesErr
 	} else if notes != nil {
 		entity.Notes = *notes
 	}
-	if issued, dayErr := common.OptionalScheduleDay(params, paramIssuedAt); dayErr != nil {
+	if issued, dayErr := toolparams.OptionalScheduleDay(params, paramIssuedAt); dayErr != nil {
 		return dayErr
 	} else if issued != nil {
 		entity.IssuedAt = issued
 	}
-	if expires, dayErr := common.OptionalScheduleDay(params, paramExpiresAt); dayErr != nil {
+	if expires, dayErr := toolparams.OptionalScheduleDay(params, paramExpiresAt); dayErr != nil {
 		return dayErr
 	} else if expires != nil {
 		entity.ExpiresAt = expires
 	}
-	documentID, err := common.OptionalID(params, wfParamDocument)
+	documentID, err := toolparams.OptionalID(params, wfParamDocument)
 	if err != nil {
 		return err
 	}
@@ -165,11 +167,11 @@ func applyCredentialFacts(entity *workercredential.WorkerCredential, params map[
 func credentialCreateFrom(
 	params *agenttoolports.ToolExecuteParams,
 ) (*workercredentialservice.CreateRequest, error) {
-	workerID, err := common.RequirePulid(params.Params, common.ParamWorkerID)
+	workerID, err := toolparams.RequirePulid(params.Params, toolparams.ParamWorkerID)
 	if err != nil {
 		return nil, err
 	}
-	typeID, err := common.RequirePulid(params.Params, paramCredentialTypeID)
+	typeID, err := toolparams.RequirePulid(params.Params, paramCredentialTypeID)
 	if err != nil {
 		return nil, err
 	}
@@ -195,14 +197,16 @@ func credentialCreateFrom(
 
 func newRecordWorkerCredentialTool(credentials CredentialKeeper) agenttoolports.AgentTool {
 	properties := credentialFactProperties()
-	properties[common.ParamWorkerID] = common.WorkerProperty()
+	properties[toolparams.ParamWorkerID] = toolparams.WorkerProperty()
 	properties[paramCredentialTypeID] = agenttoolschema.RecordIDText(
 		permission.ResourceWorkerCredentialType,
 		"The kind of credential, from worker_list_credentials. Never guess one.",
 	)
-	properties[paramRenew] = common.BooleanProperty("Whether this renews the worker's current " +
-		"credential of the same kind, which is archived as superseded. A second active " +
-		"one is refused without it.")
+	properties[paramRenew] = toolparams.BooleanProperty(
+		"Whether this renews the worker's current " +
+			"credential of the same kind, which is archived as superseded. A second active " +
+			"one is refused without it.",
+	)
 	spec := withSchema(wfSpec(
 		"worker_record_credential",
 		"Record a driver's licence, medical card, endorsement, TWIC or other credential, "+
@@ -214,10 +218,10 @@ func newRecordWorkerCredentialTool(credentials CredentialKeeper) agenttoolports.
 			"they may be dispatched; nothing is sent, and worker_archive_credential retires it.",
 		permission.ResourceWorkerCredential,
 		permission.OpCreate,
-	), properties, common.ParamWorkerID, paramCredentialTypeID)
+	), properties, toolparams.ParamWorkerID, paramCredentialTypeID)
 	spec.SearchTerms = []string{"licence", "license", "medical card", "endorsement", "renewal"}
 
-	return common.NewReportingReceivableTool(spec, common.ReceivablePlan[
+	return toolspec.NewReportingReceivableTool(spec, toolspec.ReceivablePlan[
 		*workercredentialservice.CreateRequest, *workercredentialservice.CreatePlan,
 	]{
 		Request: credentialCreateFrom,
@@ -250,7 +254,7 @@ func newRecordWorkerCredentialTool(credentials CredentialKeeper) agenttoolports.
 				archived := *plan.Superseded
 				archived.Status = workercredential.CredentialStatusArchived
 				superseded, supErr := toolpreview.Changed(credentialRecord(plan.Superseded),
-					plan.Superseded, &archived, wfOptions(common.FieldStatus)...)
+					plan.Superseded, &archived, wfOptions(changepreview.FieldStatus)...)
 				if supErr != nil {
 					return nil, supErr
 				}
@@ -283,7 +287,7 @@ func (e *credentialEdit) entity(
 	ctx context.Context,
 	credentials CredentialKeeper,
 ) (*workercredential.WorkerCredential, error) {
-	current, err := credentials.Get(ctx, common.TenantFrom(*e.params), e.id)
+	current, err := credentials.Get(ctx, toolparams.TenantFrom(*e.params), e.id)
 	if err != nil {
 		return nil, err
 	}
@@ -308,11 +312,11 @@ func newUpdateWorkerCredentialTool(credentials CredentialKeeper) agenttoolports.
 	), properties, paramCredentialID), paramCredentialID, permission.ResourceWorkerCredential)
 	spec.SearchTerms = []string{"fix credential", "correct license", "fix license"}
 
-	return common.NewReportingReceivableTool(spec, common.ReceivablePlan[
+	return toolspec.NewReportingReceivableTool(spec, toolspec.ReceivablePlan[
 		*credentialEdit, *workercredentialservice.CredentialChange,
 	]{
 		Request: func(params *agenttoolports.ToolExecuteParams) (*credentialEdit, error) {
-			id, err := common.RequirePulid(params.Params, paramCredentialID)
+			id, err := toolparams.RequirePulid(params.Params, paramCredentialID)
 			if err != nil {
 				return nil, err
 			}
@@ -379,24 +383,24 @@ func newAttachWorkerCredentialDocumentTool(credentials CredentialKeeper) agentto
 		permission.ResourceWorkerCredential)
 	spec.SearchTerms = []string{"scanned card", "card scan"}
 
-	return common.NewReportingReceivableTool(spec, common.ReceivablePlan[
+	return toolspec.NewReportingReceivableTool(spec, toolspec.ReceivablePlan[
 		*workercredentialservice.AttachDocumentRequest, *workercredentialservice.CredentialChange,
 	]{
 		Request: func(
 			params *agenttoolports.ToolExecuteParams,
 		) (*workercredentialservice.AttachDocumentRequest, error) {
-			id, err := common.RequirePulid(params.Params, paramCredentialID)
+			id, err := toolparams.RequirePulid(params.Params, paramCredentialID)
 			if err != nil {
 				return nil, err
 			}
-			documentID, err := common.RequirePulid(params.Params, wfParamDocument)
+			documentID, err := toolparams.RequirePulid(params.Params, wfParamDocument)
 			if err != nil {
 				return nil, err
 			}
 			return &workercredentialservice.AttachDocumentRequest{
 				ID:         id,
 				DocumentID: documentID,
-				TenantInfo: common.TenantFrom(*params),
+				TenantInfo: toolparams.TenantFrom(*params),
 				UserID:     params.Actor.UserID,
 			}, nil
 		},
@@ -448,16 +452,16 @@ func newArchiveWorkerCredentialTool(credentials CredentialKeeper) agenttoolports
 		permission.ResourceWorkerCredential,
 		permission.OpArchive,
 	), map[string]any{
-		paramCredentialID:  credentialIDProperty(),
-		common.FieldReason: common.StringProperty("Why it is archived.", wfShortChars),
-	}, paramCredentialID, common.FieldReason), paramCredentialID, permission.ResourceWorkerCredential)
+		paramCredentialID:         credentialIDProperty(),
+		changepreview.FieldReason: toolparams.StringProperty("Why it is archived.", wfShortChars),
+	}, paramCredentialID, changepreview.FieldReason), paramCredentialID, permission.ResourceWorkerCredential)
 	spec.MaxTier = agent.TierPropose
 	spec.Reversible = false
 
-	return common.NewReportingReceivableTool(spec, common.ReceivablePlan[
+	return toolspec.NewReportingReceivableTool(spec, toolspec.ReceivablePlan[
 		*reasonedRecord, *workercredentialservice.CredentialChange,
 	]{
-		Request: reasonedRecordFrom(paramCredentialID, common.FieldReason),
+		Request: reasonedRecordFrom(paramCredentialID, changepreview.FieldReason),
 		Plan: func(
 			ctx context.Context,
 			req *reasonedRecord,
@@ -475,8 +479,11 @@ func newArchiveWorkerCredentialTool(credentials CredentialKeeper) agenttoolports
 			_ *reasonedRecord,
 			change *workercredentialservice.CredentialChange,
 		) (*agent.ToolPreview, error) {
-			recorded, err := toolpreview.Changed(credentialRecord(change.Before), change.Before,
-				change.After, append(wfOptions(common.FieldStatus, "archivedAt", "archivedById",
+			recorded, err := toolpreview.Changed(
+				credentialRecord(change.Before),
+				change.Before,
+				change.After,
+				append(wfOptions(changepreview.FieldStatus, "archivedAt", "archivedById",
 					"archiveReason"), toolpreview.Volatile("archivedAt"))...)
 			if err != nil {
 				return nil, err

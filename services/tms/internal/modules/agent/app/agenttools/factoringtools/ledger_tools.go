@@ -6,8 +6,12 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/glaccountports"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/journalpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/masterdatatools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -41,7 +45,7 @@ const (
 
 type ledgerTool struct {
 	ledger   factoringledgerports.LedgerService
-	accounts common.LedgerAccounts
+	accounts journalpreview.LedgerAccounts
 }
 
 func ledgerPolicy(name, rationale string) agenttoolports.ToolPolicy {
@@ -61,18 +65,18 @@ func itemIDParam(description string) map[string]any {
 }
 
 func amountParam(description string) map[string]any {
-	return common.StringProperty(description+" A decimal such as 1250.00.", 0)
+	return toolparams.StringProperty(description+" A decimal such as 1250.00.", 0)
 }
 
 func requireApproval(name string, params *agenttoolports.ToolExecuteParams) error {
 	if !params.ApprovedFromProposal() {
-		return fmt.Errorf("%s: %w", name, common.ErrNeedsAPersonsApproval)
+		return fmt.Errorf("%s: %w", name, toolspec.ErrNeedsAPersonsApproval)
 	}
 	return nil
 }
 
 func optionalAmount(params map[string]any, key string) (*int64, error) {
-	value, present, err := common.OptionalDecimal(params, key)
+	value, present, err := toolparams.OptionalDecimal(params, key)
 	if err != nil || !present {
 		return nil, err
 	}
@@ -99,7 +103,7 @@ func (t *ledgerTool) movementChanges(
 		journals = append(journals, journal)
 		sets = append(sets, journal.Lines)
 	}
-	labels, err := common.AccountLabels(ctx, t.accounts, tenant, sets...)
+	labels, err := journalpreview.AccountLabels(ctx, t.accounts, tenant, sets...)
 	if err != nil {
 		return nil, err
 	}
@@ -233,7 +237,7 @@ func (t *RecordFactoringFundingTool) ParamSchema() map[string]any {
 						"the expected advance."),
 					paramFee: amountParam("What the factor kept as its fee, when it differs " +
 						"from the expected fee."),
-					paramReason: common.StringProperty(
+					paramReason: toolparams.StringProperty(
 						"Why the factor rejected it.",
 						maxReasonText,
 					),
@@ -242,7 +246,7 @@ func (t *RecordFactoringFundingTool) ParamSchema() map[string]any {
 				toolschema.KeyAdditionalProperties: false,
 			},
 		},
-		paramMemo: common.StringProperty("A note kept with the entries, such as the factor's "+
+		paramMemo: toolparams.StringProperty("A note kept with the entries, such as the factor's "+
 			"funding report number.", maxMemoLength),
 	}, paramSubmissionID, paramVersion, paramFundedOn, paramItems)
 }
@@ -255,24 +259,24 @@ func (t *RecordFactoringFundingTool) Policy() agenttoolports.ToolPolicy {
 func (t *RecordFactoringFundingTool) Target(
 	params map[string]any,
 ) (agenttoolports.ToolTarget, bool) {
-	return common.TargetOf(params, paramSubmissionID, permission.ResourceFactoringSubmission)
+	return toolparams.TargetOf(params, paramSubmissionID, permission.ResourceFactoringSubmission)
 }
 
 func (t *RecordFactoringFundingTool) request(
 	params *agenttoolports.ToolExecuteParams,
 ) (*factoringledgerports.RecordFundingRequest, error) {
-	if err := common.GuardExecute(t, *params); err != nil {
+	if err := toolguard.GuardExecute(t, *params); err != nil {
 		return nil, err
 	}
-	submissionID, err := common.RequirePulid(params.Params, paramSubmissionID)
+	submissionID, err := toolparams.RequirePulid(params.Params, paramSubmissionID)
 	if err != nil {
 		return nil, err
 	}
-	version, err := common.RequireIntInRange(params.Params, paramVersion, 0, maxVersion)
+	version, err := toolparams.RequireIntInRange(params.Params, paramVersion, 0, maxVersion)
 	if err != nil {
 		return nil, err
 	}
-	fundedOn, err := common.RequireDay(params.Params, paramFundedOn)
+	fundedOn, err := toolparams.RequireDay(params.Params, paramFundedOn)
 	if err != nil {
 		return nil, err
 	}
@@ -280,12 +284,12 @@ func (t *RecordFactoringFundingTool) request(
 	if err != nil {
 		return nil, err
 	}
-	memo, err := common.OptionalBoundedText(params.Params, paramMemo, maxMemoLength)
+	memo, err := toolparams.OptionalBoundedText(params.Params, paramMemo, maxMemoLength)
 	if err != nil {
 		return nil, err
 	}
 	req := &factoringledgerports.RecordFundingRequest{
-		TenantInfo:   common.TenantFrom(*params),
+		TenantInfo:   toolparams.TenantFrom(*params),
 		SubmissionID: submissionID,
 		Version:      int64(version),
 		FundedOn:     fundedOn,
@@ -311,12 +315,12 @@ func fundingItems(params map[string]any) ([]factoringledgerports.FundingItemInpu
 		if !isObject {
 			return nil, fmt.Errorf("%s[%d] must be an object", paramItems, idx)
 		}
-		itemID, err := common.RequirePulid(fields, paramItemID)
+		itemID, err := toolparams.RequirePulid(fields, paramItemID)
 		if err != nil {
 			return nil, fmt.Errorf("%s[%d]: %w", paramItems, idx, err)
 		}
 		outcome := factoring.FundingOutcome(
-			strings.TrimSpace(common.OptionalString(fields, paramOutcome)),
+			strings.TrimSpace(toolparams.OptionalString(fields, paramOutcome)),
 		)
 		if !outcome.IsValid() {
 			return nil, fmt.Errorf(
@@ -334,7 +338,7 @@ func fundingItems(params map[string]any) ([]factoringledgerports.FundingItemInpu
 		if err != nil {
 			return nil, fmt.Errorf("%s[%d]: %w", paramItems, idx, err)
 		}
-		reason, err := common.OptionalBoundedText(fields, paramReason, maxReasonText)
+		reason, err := toolparams.OptionalBoundedText(fields, paramReason, maxReasonText)
 		if err != nil {
 			return nil, fmt.Errorf("%s[%d]: %w", paramItems, idx, err)
 		}
@@ -411,13 +415,13 @@ func (t *RecordFactoringFundingTool) Preview(
 		"Would record schedule %s's funding on %s: %s funded (advance %s, fee %s, reserve %s) "+
 			"and %s rejected, booking %s.",
 		plan.After.Number,
-		common.DayLabel(req.FundedOn),
-		common.CountOf(plan.FundedCount, "invoice"),
+		changepreview.DayLabel(req.FundedOn),
+		changepreview.CountOf(plan.FundedCount, "invoice"),
 		formatMinor(currency, plan.AdvanceMinor),
 		formatMinor(currency, plan.FeeMinor),
 		formatMinor(currency, plan.ReserveMinor),
-		common.CountOf(plan.RejectCount, "invoice"),
-		common.CountOf(len(entries), "journal entry"),
+		changepreview.CountOf(plan.RejectCount, "invoice"),
+		changepreview.CountOf(len(entries), "journal entry"),
 	)}
 	sentences = append(sentences, bookingSentences(plan.Movements)...)
 	return toolpreview.Build(
@@ -469,7 +473,7 @@ func (t *ReserveMovementTool) ParamSchema() map[string]any {
 		),
 		paramVersion:  submissionVersionParam(),
 		paramOccurred: agenttoolschema.Date(t.spec.dateHelp),
-		paramReason:   common.StringProperty(t.spec.reasonHelp, maxReasonText),
+		paramReason:   toolparams.StringProperty(t.spec.reasonHelp, maxReasonText),
 	}
 	required := []string{paramSubmissionID, paramItemID, paramVersion, paramOccurred}
 	if t.spec.cashHelp != "" {
@@ -486,33 +490,33 @@ func (t *ReserveMovementTool) Policy() agenttoolports.ToolPolicy {
 }
 
 func (t *ReserveMovementTool) Target(params map[string]any) (agenttoolports.ToolTarget, bool) {
-	return common.TargetOf(params, paramSubmissionID, permission.ResourceFactoringSubmission)
+	return toolparams.TargetOf(params, paramSubmissionID, permission.ResourceFactoringSubmission)
 }
 
 func (t *ReserveMovementTool) request(
 	params *agenttoolports.ToolExecuteParams,
 ) (*factoringledgerports.ReserveMovementRequest, error) {
-	if err := common.GuardExecute(t, *params); err != nil {
+	if err := toolguard.GuardExecute(t, *params); err != nil {
 		return nil, err
 	}
-	submissionID, err := common.RequirePulid(params.Params, paramSubmissionID)
+	submissionID, err := toolparams.RequirePulid(params.Params, paramSubmissionID)
 	if err != nil {
 		return nil, err
 	}
-	itemID, err := common.RequirePulid(params.Params, paramItemID)
+	itemID, err := toolparams.RequirePulid(params.Params, paramItemID)
 	if err != nil {
 		return nil, err
 	}
-	version, err := common.RequireIntInRange(params.Params, paramVersion, 0, maxVersion)
+	version, err := toolparams.RequireIntInRange(params.Params, paramVersion, 0, maxVersion)
 	if err != nil {
 		return nil, err
 	}
-	occurredOn, err := common.RequireDay(params.Params, paramOccurred)
+	occurredOn, err := toolparams.RequireDay(params.Params, paramOccurred)
 	if err != nil {
 		return nil, err
 	}
 	req := &factoringledgerports.ReserveMovementRequest{
-		TenantInfo:   common.TenantFrom(*params),
+		TenantInfo:   toolparams.TenantFrom(*params),
 		SubmissionID: submissionID,
 		ItemID:       itemID,
 		Version:      int64(version),
@@ -524,14 +528,18 @@ func (t *ReserveMovementTool) request(
 		}
 	}
 	if t.spec.needsReason {
-		reason, reasonErr := common.RequireBoundedText(params.Params, paramReason, maxReasonText)
+		reason, reasonErr := toolparams.RequireBoundedText(
+			params.Params,
+			paramReason,
+			maxReasonText,
+		)
 		if reasonErr != nil {
 			return nil, reasonErr
 		}
 		req.Reason = reason
 		return req, nil
 	}
-	reason, err := common.OptionalBoundedText(params.Params, paramReason, maxReasonText)
+	reason, err := toolparams.OptionalBoundedText(params.Params, paramReason, maxReasonText)
 	if err != nil {
 		return nil, err
 	}
@@ -604,7 +612,7 @@ func (t *ReserveMovementTool) Preview(
 			Resource: permission.ResourceFactoringSubmission,
 			ID:       plan.Before.ID,
 			Label:    "Invoice " + plan.Item.InvoiceNumber + " on schedule " + plan.Before.Number,
-			Version:  common.PreviewVersion(plan.Before.Version),
+			Version:  changepreview.PreviewVersion(plan.Before.Version),
 		},
 		itemViewOf(plan.Before.Item(plan.Item.ID)),
 		itemViewOf(plan.Item),

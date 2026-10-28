@@ -4,7 +4,10 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/detentionpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -16,10 +19,12 @@ const ParamOccurrenceID = "occurrenceId"
 
 const kindDetention = "detention occurrence"
 
-func NewDisputeDetentionTool(detentions common.DetentionDisputer) agenttoolports.AgentTool {
-	return common.NewReportingReceivableTool(&common.ReceivableSpec{
+func NewDisputeDetentionTool(
+	detentions detentionpreview.DetentionDisputer,
+) agenttoolports.AgentTool {
+	return toolspec.NewReportingReceivableTool(&toolspec.ReceivableSpec{
 		Name:     "detention_open_dispute",
-		Artifact: common.DetentionRecordEntity,
+		Artifact: changepreview.DetentionRecordEntity,
 		Description: "Record that the customer disputes a detention charge, with what " +
 			"they said. The charge is kept as computed and held back from billing " +
 			"until a person settles the dispute by approving or waiving it. Use it " +
@@ -38,26 +43,26 @@ func NewDisputeDetentionTool(detentions common.DetentionDisputer) agenttoolports
 					"shipment_get. Never guess one.",
 				permission.KindDetentionOccurrence,
 			),
-			common.ParamNote: common.StringProperty(
+			toolparams.ParamNote: toolparams.StringProperty(
 				"What the customer disputes, in their words where "+
 					"you have them.",
-				common.MaxOperationNoteChars,
+				toolparams.MaxOperationNoteChars,
 			),
 		},
-		Required: []string{ParamOccurrenceID, common.ParamNote},
+		Required: []string{ParamOccurrenceID, toolparams.ParamNote},
 		Target: func(params map[string]any) (agenttoolports.ToolTarget, bool) {
-			return common.TargetOf(params, ParamOccurrenceID, permission.ResourceDetention)
+			return toolparams.TargetOf(params, ParamOccurrenceID, permission.ResourceDetention)
 		},
-	}, common.ReceivablePlan[*detentionservice.DisputeParams, *detentionservice.OccurrenceChange]{
+	}, toolspec.ReceivablePlan[*detentionservice.DisputeParams, *detentionservice.OccurrenceChange]{
 		Request: func(params *agenttoolports.ToolExecuteParams) (*detentionservice.DisputeParams, error) {
-			occurrenceID, err := common.RequirePulid(params.Params, ParamOccurrenceID)
+			occurrenceID, err := toolparams.RequirePulid(params.Params, ParamOccurrenceID)
 			if err != nil {
 				return nil, err
 			}
-			note, err := common.RequireBoundedText(
+			note, err := toolparams.RequireBoundedText(
 				params.Params,
-				common.ParamNote,
-				common.MaxOperationNoteChars,
+				toolparams.ParamNote,
+				toolparams.MaxOperationNoteChars,
 			)
 			if err != nil {
 				return nil, err
@@ -65,7 +70,7 @@ func NewDisputeDetentionTool(detentions common.DetentionDisputer) agenttoolports
 
 			return &detentionservice.DisputeParams{
 				OccurrenceID: occurrenceID,
-				TenantInfo:   common.TenantFrom(*params),
+				TenantInfo:   toolparams.TenantFrom(*params),
 				Note:         note,
 				UserID:       params.Actor.UserID,
 			}, nil
@@ -88,11 +93,11 @@ func NewDisputeDetentionTool(detentions common.DetentionDisputer) agenttoolports
 				"Would mark the %s %s detention charge %s disputed and hold it from billing: %s",
 				change.Before.BillableAmount.StringFixed(2),
 				change.Before.Currency,
-				common.DetentionPlace(change.Before),
+				detentionpreview.DetentionPlace(change.Before),
 				req.Note,
 			)
 
-			return common.DetentionDecisionPreview(summary, change, "disputedAt")
+			return detentionpreview.DetentionDecisionPreview(summary, change, "disputedAt")
 		},
 		Run: func(
 			ctx context.Context,
@@ -107,10 +112,10 @@ func NewDisputeDetentionTool(detentions common.DetentionDisputer) agenttoolports
 			return &agent.ToolExecutionResult{
 				Action: "disputed",
 				Kind:   kindDetention,
-				Record: common.RecordOf(common.DetentionRecordEntity, saved.ID),
+				Record: changepreview.RecordOf(changepreview.DetentionRecordEntity, saved.ID),
 				IDs: map[string]string{
-					ParamOccurrenceID:      saved.ID.String(),
-					common.ParamShipmentID: saved.ShipmentID.String(),
+					ParamOccurrenceID:          saved.ID.String(),
+					toolparams.ParamShipmentID: saved.ShipmentID.String(),
 				},
 			}, nil
 		},

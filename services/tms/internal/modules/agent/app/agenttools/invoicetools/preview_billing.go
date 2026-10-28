@@ -4,7 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/invoicepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -30,7 +31,7 @@ func (t *CorrectChargeCodeTool) Preview(
 			Resource: permission.ResourceShipment,
 			ID:       plan.Before.ID,
 			Label:    plan.Before.ProNumber,
-			Version:  common.PinnedVersion(plan.Before.Version),
+			Version:  changepreview.PinnedVersion(plan.Before.Version),
 		},
 		plan.Before,
 		plan.After,
@@ -39,7 +40,7 @@ func (t *CorrectChargeCodeTool) Preview(
 	if err != nil {
 		return nil, err
 	}
-	money, err := common.ChargeEditMoney(ctx, plan.Before, plan.After)
+	money, err := invoicepreview.ChargeEditMoney(ctx, plan.Before, plan.After)
 	if err != nil {
 		return nil, err
 	}
@@ -54,7 +55,7 @@ func (t *CorrectChargeCodeTool) Preview(
 			"with %s, taking its total from %s to %s.",
 		plan.Item.Number,
 		plan.Before.ProNumber,
-		common.CountOf(len(plan.After.AdditionalCharges), "charge"),
+		changepreview.CountOf(len(plan.After.AdditionalCharges), "charge"),
 		plan.Before.TotalChargeAmount.Decimal.StringFixed(2),
 		plan.After.TotalChargeAmount.Decimal.StringFixed(2),
 	)

@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentmemoryservice"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
@@ -17,10 +17,10 @@ import (
 const memoryLabelRunes = 80
 
 var rememberedFields = []string{
-	common.FieldKind,
-	common.FieldSubjectType,
+	changepreview.FieldKind,
+	changepreview.FieldSubjectType,
 	"subjectLabel",
-	common.FieldContent,
+	changepreview.FieldContent,
 	"expiresAt",
 	"tainted",
 }
@@ -31,14 +31,14 @@ var rememberedTypes = map[string]assistantartifact.DisplayType{
 	"expiresAt": assistantartifact.DisplayDate,
 }
 
-var retiredMemoryFields = []string{common.FieldStatus, "retiredAt"}
+var retiredMemoryFields = []string{changepreview.FieldStatus, "retiredAt"}
 
 func memoryRecord(memory *agent.Memory) toolpreview.Record {
 	return toolpreview.Record{
 		Resource: permission.ResourceAgentMemory,
 		ID:       memory.ID,
 		Label:    stringutils.Ellipsize(memory.Content, memoryLabelRunes),
-		Version:  common.PreviewVersion(memory.Version),
+		Version:  changepreview.PreviewVersion(memory.Version),
 	}
 }
 
@@ -53,9 +53,9 @@ func (t *RememberTool) Preview(
 
 	plan, err := t.memories.PreviewRemember(ctx, request, params.Actor)
 	if err != nil {
-		if common.IsRefusal(err) {
+		if changepreview.IsRefusal(err) {
 			summary := previewAudience(request.Scope, agent.MemoryStatusActive)
-			return common.WarnWouldFail(toolpreview.Build(summary), err), nil
+			return changepreview.WarnWouldFail(toolpreview.Build(summary), err), nil
 		}
 
 		return nil, err
@@ -96,7 +96,7 @@ func (t *RememberTool) Preview(
 		ByUserID: agentmemoryservice.StatusActor(params.Actor),
 		At:       timeutils.NowUnix(),
 	}
-	archived, err := common.PlanArchive(
+	archived, err := changepreview.PlanArchive(
 		memoryRecord(plan.Replaced),
 		plan.Replaced,
 		func(retired *agent.Memory) error {
@@ -126,8 +126,8 @@ func (t *ForgetMemoryTool) Preview(
 
 	memory, err := t.memories.PreviewSetStatus(ctx, &request, params.Actor)
 	if err != nil {
-		if common.IsRefusal(err) {
-			return common.WarnWouldFail(toolpreview.Build(
+		if changepreview.IsRefusal(err) {
+			return changepreview.WarnWouldFail(toolpreview.Build(
 				"Would retire the memory so no later run reads it.",
 			), err), nil
 		}
@@ -140,7 +140,7 @@ func (t *ForgetMemoryTool) Preview(
 		ByUserID: agentmemoryservice.StatusActor(params.Actor),
 		At:       timeutils.NowUnix(),
 	}
-	plan, err := common.PlanArchive(
+	plan, err := changepreview.PlanArchive(
 		memoryRecord(memory),
 		memory,
 		func(retired *agent.Memory) error {

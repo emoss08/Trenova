@@ -398,7 +398,7 @@ approves exactly the set that remains:
 | `settlement_approve_carrier` | `settlementIds` (carrier settlement) | the carrier settlement's approve decision |
 | `settlement_post_carrier` | `settlementIds` (carrier settlement) | the carrier settlement's post decision |
 
-Each such tool wraps a single-record tool (`agenttools/common/bulk_records.go`) and copies its
+Each such tool wraps a single-record tool (`agenttools/recordbatch/bulk_records.go`) and copies its
 policy: the same class, permission and floor. Phase 3 merged each of them with its
 single-record tool, so the single-record tool is an implementation the registered tool runs,
 not a tool of its own. A call naming one record is the single tool's call: its

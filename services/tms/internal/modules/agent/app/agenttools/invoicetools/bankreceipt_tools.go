@@ -5,7 +5,10 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/invoicepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -156,7 +159,7 @@ func (t *MatchBankReceiptTool) Policy() agenttoolports.ToolPolicy {
 }
 
 func (t *MatchBankReceiptTool) Target(params map[string]any) (agenttoolports.ToolTarget, bool) {
-	id, err := common.RequirePulid(params, "bankReceiptId")
+	id, err := toolparams.RequirePulid(params, "bankReceiptId")
 	if err != nil {
 		return agenttoolports.ToolTarget{}, false
 	}
@@ -189,23 +192,23 @@ func (t *MatchBankReceiptTool) request(
 	return &bankreceiptports.MatchBankReceiptRequest{
 		ReceiptID:  receiptID,
 		PaymentID:  paymentID,
-		TenantInfo: common.TenantFrom(params),
+		TenantInfo: toolparams.TenantFrom(params),
 	}, nil
 }
 
 func (t *MatchBankReceiptTool) arguments(
 	params agenttoolports.ToolExecuteParams,
 ) (pulid.ID, pulid.ID, error) {
-	if err := common.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return "", "", err
 	}
 
-	receiptID, err := common.RequirePulid(params.Params, "bankReceiptId")
+	receiptID, err := toolparams.RequirePulid(params.Params, "bankReceiptId")
 	if err != nil {
 		return "", "", err
 	}
 
-	paymentID, err := common.RequirePulid(params.Params, "customerPaymentId")
+	paymentID, err := toolparams.RequirePulid(params.Params, "customerPaymentId")
 	if err != nil {
 		return "", "", err
 	}
@@ -270,7 +273,7 @@ func (t *PostCustomerPaymentTool) ParamSchema() map[string]any {
 				"The paying customer, from customer_list or receivable_get_bank_receipt's "+
 					"suggestions.",
 			),
-			common.ParamAmount: map[string]any{
+			toolparams.ParamAmount: map[string]any{
 				"type":        "string",
 				"description": "The payment amount as a decimal string, such as 1250.00.",
 			},
@@ -299,7 +302,7 @@ func (t *PostCustomerPaymentTool) ParamSchema() map[string]any {
 							permission.ResourceInvoice,
 							"An open invoice of this customer, from invoice_list.",
 						),
-						common.ParamAmount: map[string]any{
+						toolparams.ParamAmount: map[string]any{
 							"type":        "string",
 							"description": "Applied to this invoice, as a decimal string.",
 						},
@@ -308,7 +311,7 @@ func (t *PostCustomerPaymentTool) ParamSchema() map[string]any {
 							"description": "Written off on this invoice as a short pay, if any.",
 						},
 					},
-					"required":             []string{"invoiceId", common.ParamAmount},
+					"required":             []string{"invoiceId", toolparams.ParamAmount},
 					"additionalProperties": false,
 				},
 			},
@@ -319,7 +322,7 @@ func (t *PostCustomerPaymentTool) ParamSchema() map[string]any {
 					"step.",
 			),
 		},
-		"required":             []string{"customerId", common.ParamAmount, "paymentDate"},
+		"required":             []string{"customerId", toolparams.ParamAmount, "paymentDate"},
 		"additionalProperties": false,
 	}
 }
@@ -343,12 +346,12 @@ func (t *PostCustomerPaymentTool) Policy() agenttoolports.ToolPolicy {
 		Reversible:    true,
 		ReadsExternal: agent.ExternalReadNever,
 		Rationale:     "Records a customer payment and applies it to invoices.",
-		Artifact:      common.CustomerRecordEntity,
+		Artifact:      changepreview.CustomerRecordEntity,
 	}
 }
 
 func (t *PostCustomerPaymentTool) Target(params map[string]any) (agenttoolports.ToolTarget, bool) {
-	id, err := common.RequirePulid(params, "bankReceiptId")
+	id, err := toolparams.RequirePulid(params, "bankReceiptId")
 	if err != nil {
 		return agenttoolports.ToolTarget{}, false
 	}
@@ -397,7 +400,7 @@ func (t *PostCustomerPaymentTool) ExecuteWithResult(
 			"customerId":        payment.CustomerID.String(),
 		},
 		Record: &agent.RecordRef{
-			EntityType: common.CustomerRecordEntity,
+			EntityType: changepreview.CustomerRecordEntity,
 			ID:         payment.CustomerID.String(),
 		},
 		State: fmt.Sprintf(
@@ -435,25 +438,25 @@ func (t *PostCustomerPaymentTool) arguments(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams,
 ) (postPaymentArgs, error) {
-	if err := common.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return postPaymentArgs{}, err
 	}
 
-	customerID, err := common.RequirePulid(params.Params, "customerId")
+	customerID, err := toolparams.RequirePulid(params.Params, "customerId")
 	if err != nil {
 		return postPaymentArgs{}, err
 	}
-	amount, err := common.RequireMoney(params.Params, common.ParamAmount)
+	amount, err := toolparams.RequireMoney(params.Params, toolparams.ParamAmount)
 	if err != nil {
 		return postPaymentArgs{}, err
 	}
-	paymentDate, err := common.RequireDay(params.Params, "paymentDate")
+	paymentDate, err := toolparams.RequireDay(params.Params, "paymentDate")
 	if err != nil {
 		return postPaymentArgs{}, err
 	}
 
 	method := defaultPaymentMethod
-	if raw := common.OptionalString(params.Params, "paymentMethod"); raw != "" {
+	if raw := toolparams.OptionalString(params.Params, "paymentMethod"); raw != "" {
 		method = customerpayment.Method(raw)
 		if !method.IsValid() {
 			return postPaymentArgs{}, fmt.Errorf(
@@ -469,20 +472,22 @@ func (t *PostCustomerPaymentTool) arguments(
 		return postPaymentArgs{}, err
 	}
 
-	tenant := common.TenantFrom(params)
+	tenant := toolparams.TenantFrom(params)
 	args := postPaymentArgs{request: &customerpaymentports.PostCustomerPaymentRequest{
-		CustomerID:      customerID,
-		PaymentDate:     paymentDate,
-		AccountingDate:  paymentDate,
-		AmountMinor:     amount,
-		PaymentMethod:   method,
-		ReferenceNumber: strings.TrimSpace(common.OptionalString(params.Params, "referenceNumber")),
-		Memo:            strings.TrimSpace(common.OptionalString(params.Params, "memo")),
-		Applications:    applications,
-		TenantInfo:      tenant,
+		CustomerID:     customerID,
+		PaymentDate:    paymentDate,
+		AccountingDate: paymentDate,
+		AmountMinor:    amount,
+		PaymentMethod:  method,
+		ReferenceNumber: strings.TrimSpace(
+			toolparams.OptionalString(params.Params, "referenceNumber"),
+		),
+		Memo:         strings.TrimSpace(toolparams.OptionalString(params.Params, "memo")),
+		Applications: applications,
+		TenantInfo:   tenant,
 	}}
 
-	receiptID, present, err := common.OptionalPulid(params.Params, "bankReceiptId")
+	receiptID, present, err := toolparams.OptionalPulid(params.Params, "bankReceiptId")
 	if err != nil {
 		return postPaymentArgs{}, err
 	}
@@ -557,7 +562,10 @@ func paymentApplications(
 	params map[string]any,
 	amount int64,
 ) ([]*customerpaymentports.CustomerPaymentApplicationInput, error) {
-	applications, total, err := common.ReadPaymentApplications(params, common.ParamApplications)
+	applications, total, err := invoicepreview.ReadPaymentApplications(
+		params,
+		invoicepreview.ParamApplications,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -625,7 +633,7 @@ func (t *ResolveBankReceiptWorkItemTool) ParamSchema() map[string]any {
 				permission.ResourceBankReceiptWorkItem,
 				"The work item's id, from receivable_get_bank_receipt.",
 			),
-			common.FieldResolution: agenttoolschema.Enum(
+			changepreview.FieldResolution: agenttoolschema.Enum(
 				"MarkedFalsePositive when the receipt is not a customer payment; "+
 					"RequiresExternalFollowUp when a person must ask the payer.",
 				bankReceiptResolutions,
@@ -663,7 +671,7 @@ func (t *ResolveBankReceiptWorkItemTool) Policy() agenttoolports.ToolPolicy {
 func (t *ResolveBankReceiptWorkItemTool) Target(
 	params map[string]any,
 ) (agenttoolports.ToolTarget, bool) {
-	id, err := common.RequirePulid(params, "workItemId")
+	id, err := toolparams.RequirePulid(params, "workItemId")
 	if err != nil {
 		return agenttoolports.ToolTarget{}, false
 	}
@@ -686,7 +694,7 @@ func (t *ResolveBankReceiptWorkItemTool) Execute(
 		return err
 	}
 
-	tenant := common.TenantFrom(params)
+	tenant := toolparams.TenantFrom(params)
 	if args.dismisses() {
 		_, err = t.items.Dismiss(ctx, args.dismissal(tenant), params.Actor)
 
@@ -726,17 +734,17 @@ func (a resolveWorkItemArgs) resolved(
 func (t *ResolveBankReceiptWorkItemTool) arguments(
 	params agenttoolports.ToolExecuteParams,
 ) (resolveWorkItemArgs, error) {
-	if err := common.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return resolveWorkItemArgs{}, err
 	}
 
-	id, err := common.RequirePulid(params.Params, "workItemId")
+	id, err := toolparams.RequirePulid(params.Params, "workItemId")
 	if err != nil {
 		return resolveWorkItemArgs{}, err
 	}
 
 	resolution := bankreceiptworkitem.ResolutionType(
-		common.OptionalString(params.Params, "resolution"),
+		toolparams.OptionalString(params.Params, "resolution"),
 	)
 	switch resolution {
 	case bankreceiptworkitem.ResolutionRequiresExternalFollowUp,
@@ -749,7 +757,7 @@ func (t *ResolveBankReceiptWorkItemTool) arguments(
 		)
 	}
 
-	note, err := common.RequireString(params.Params, "note")
+	note, err := toolparams.RequireString(params.Params, "note")
 	if err != nil {
 		return resolveWorkItemArgs{}, err
 	}

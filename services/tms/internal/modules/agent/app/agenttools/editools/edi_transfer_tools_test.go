@@ -5,7 +5,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
@@ -290,7 +291,7 @@ func TestDeclineEDILoadTender_CarriesTheReasonToThePartner(t *testing.T) {
 	require.Error(t, tool.Validate(t.Context(), missing), "a decline needs a reason")
 
 	args := tenderParams(transfers.transfer, map[string]any{
-		common.FieldReason: "No reefer capacity on that lane this week",
+		changepreview.FieldReason: "No reefer capacity on that lane this week",
 	})
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
@@ -394,7 +395,7 @@ func TestEDITenderDecisions_RefuseAFinalizedTransfer(t *testing.T) {
 		}
 		tool := build(transfers).(*EdiTransferDecisionTool)
 		args := agenttoolstest.AgentParamsFor(tenderParams(transfers.transfer, map[string]any{
-			common.FieldReason: "Duplicate of a tender already accepted",
+			changepreview.FieldReason: "Duplicate of a tender already accepted",
 		}))
 
 		err := tool.Validate(t.Context(), args)
@@ -423,6 +424,6 @@ func TestEDITenderDecisions_RefuseAnActorFromAnotherTenant(t *testing.T) {
 	params := agenttoolstest.ApprovedParams(tenderParams(transfers.transfer, nil))
 	params.OrganizationID = pulid.MustNew("org_")
 
-	require.ErrorIs(t, tool.Execute(t.Context(), params), common.ErrTenantMismatch)
+	require.ErrorIs(t, tool.Execute(t.Context(), params), toolguard.ErrTenantMismatch)
 	assert.Nil(t, transfers.approved)
 }

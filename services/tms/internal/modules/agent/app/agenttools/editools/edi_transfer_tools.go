@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -116,13 +118,13 @@ func (t *EdiTransferDecisionTool) ParamSchema() map[string]any {
 	}
 	required := []string{paramEDITransferID}
 	if t.decision.needsReason {
-		properties[common.FieldReason] = map[string]any{
+		properties[changepreview.FieldReason] = map[string]any{
 			toolschema.KeyType:      toolschema.TypeString,
 			toolschema.KeyMaxLength: maxTenderDeclineChars,
 			toolschema.KeyDescription: "Why the tender is declined, in a sentence the " +
 				"trading partner reads on the response it is sent.",
 		}
-		required = append(required, common.FieldReason)
+		required = append(required, changepreview.FieldReason)
 	}
 
 	return jsonschemautils.Object(properties, required...)
@@ -145,24 +147,24 @@ func (t *EdiTransferDecisionTool) Policy() agenttoolports.ToolPolicy {
 }
 
 func (t *EdiTransferDecisionTool) Target(params map[string]any) (agenttoolports.ToolTarget, bool) {
-	return common.TargetOf(params, paramEDITransferID, permission.ResourceEDI)
+	return toolparams.TargetOf(params, paramEDITransferID, permission.ResourceEDI)
 }
 
 func (t *EdiTransferDecisionTool) call(
 	params *agenttoolports.ToolExecuteParams,
 ) (*tenderCall, error) {
-	if err := common.GuardPreview(t, params); err != nil {
+	if err := toolguard.GuardPreview(t, params); err != nil {
 		return nil, err
 	}
 
-	transferID, err := common.RequirePulid(params.Params, paramEDITransferID)
+	transferID, err := toolparams.RequirePulid(params.Params, paramEDITransferID)
 	if err != nil {
 		return nil, err
 	}
 
 	call := &tenderCall{
 		transferID: transferID,
-		tenant:     common.TenantFrom(*params),
+		tenant:     toolparams.TenantFrom(*params),
 		actor:      params.Actor,
 	}
 	if !t.decision.needsReason {
@@ -170,7 +172,7 @@ func (t *EdiTransferDecisionTool) call(
 	}
 
 	call.reason, err = ediservice.TransferRejectionReason(
-		common.OptionalString(params.Params, common.FieldReason),
+		toolparams.OptionalString(params.Params, changepreview.FieldReason),
 	)
 	if err != nil {
 		return nil, err
@@ -178,7 +180,7 @@ func (t *EdiTransferDecisionTool) call(
 	if len(call.reason) > maxTenderDeclineChars {
 		return nil, fmt.Errorf(
 			"parameter %q is %d characters; a tender response carries at most %d",
-			common.FieldReason, len(call.reason), maxTenderDeclineChars,
+			changepreview.FieldReason, len(call.reason), maxTenderDeclineChars,
 		)
 	}
 
@@ -218,7 +220,7 @@ func (t *EdiTransferDecisionTool) Execute(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
-	if err := common.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
 	}
 	if !params.ApprovedFromProposal() {

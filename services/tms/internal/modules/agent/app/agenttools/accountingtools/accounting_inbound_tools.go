@@ -6,7 +6,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountinginboundports"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -68,12 +69,12 @@ func inboundLabel(change *accountingsync.AccountingInboundChange) string {
 func inboundRequest(
 	params *agenttoolports.ToolExecuteParams,
 ) (*accountinginboundports.GetAccountingInboundChangeRequest, error) {
-	id, err := common.RequirePulid(params.Params, paramInboundChangeID)
+	id, err := toolparams.RequirePulid(params.Params, paramInboundChangeID)
 	if err != nil {
 		return nil, err
 	}
 	return &accountinginboundports.GetAccountingInboundChangeRequest{
-		TenantInfo: common.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(*params),
 		ID:         id,
 	}, nil
 }
@@ -149,14 +150,14 @@ func (t *ApplyAccountingInboundChangeTool) Policy() agenttoolports.ToolPolicy {
 func (t *ApplyAccountingInboundChangeTool) Target(
 	params map[string]any,
 ) (agenttoolports.ToolTarget, bool) {
-	return common.TargetOf(params, paramInboundChangeID, permission.ResourceAccountingSync)
+	return toolparams.TargetOf(params, paramInboundChangeID, permission.ResourceAccountingSync)
 }
 
 func (t *ApplyAccountingInboundChangeTool) PlanPreview(
 	ctx context.Context,
 	params *agenttoolports.ToolExecuteParams,
 ) (*accountinginboundports.AccountingInboundApplyPreview, error) {
-	if err := common.GuardExecute(t, *params); err != nil {
+	if err := toolguard.GuardExecute(t, *params); err != nil {
 		return nil, err
 	}
 	req, err := inboundRequest(params)
@@ -262,21 +263,21 @@ func (t *IgnoreAccountingInboundChangeTool) Policy() agenttoolports.ToolPolicy {
 func (t *IgnoreAccountingInboundChangeTool) Target(
 	params map[string]any,
 ) (agenttoolports.ToolTarget, bool) {
-	return common.TargetOf(params, paramInboundChangeID, permission.ResourceAccountingSync)
+	return toolparams.TargetOf(params, paramInboundChangeID, permission.ResourceAccountingSync)
 }
 
 func (t *IgnoreAccountingInboundChangeTool) request(
 	ctx context.Context,
 	params *agenttoolports.ToolExecuteParams,
 ) (*accountinginboundports.DecideAccountingInboundChangeRequest, *accountingsync.AccountingInboundChange, error) {
-	if err := common.GuardExecute(t, *params); err != nil {
+	if err := toolguard.GuardExecute(t, *params); err != nil {
 		return nil, nil, err
 	}
 	req, err := inboundRequest(params)
 	if err != nil {
 		return nil, nil, err
 	}
-	raw, err := common.RequireString(params.Params, paramInboundNote)
+	raw, err := toolparams.RequireString(params.Params, paramInboundNote)
 	if err != nil {
 		return nil, nil, errortypes.NewValidationError(
 			paramInboundNote,

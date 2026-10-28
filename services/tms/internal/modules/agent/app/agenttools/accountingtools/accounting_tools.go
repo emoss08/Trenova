@@ -5,7 +5,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -105,7 +106,7 @@ func (t *CheckAccountingConnectionTool) Execute(
 		return err
 	}
 
-	_, err = t.accounting.CheckHealth(ctx, common.TenantFrom(params), conn.ID)
+	_, err = t.accounting.CheckHealth(ctx, toolparams.TenantFrom(params), conn.ID)
 	return err
 }
 
@@ -113,11 +114,11 @@ func (t *CheckAccountingConnectionTool) connection(
 	ctx context.Context,
 	params *agenttoolports.ToolExecuteParams,
 ) (*accountingsync.AccountingConnection, error) {
-	if err := common.GuardExecute(t, *params); err != nil {
+	if err := toolguard.GuardExecute(t, *params); err != nil {
 		return nil, err
 	}
 
-	system, err := common.RequireString(params.Params, "system")
+	system, err := toolparams.RequireString(params.Params, "system")
 	if err != nil {
 		return nil, err
 	}
@@ -126,7 +127,7 @@ func (t *CheckAccountingConnectionTool) connection(
 		return nil, agenttoolschema.ErrAccountingSystem()
 	}
 
-	status, err := t.accounting.Status(ctx, common.TenantFrom(*params), typ)
+	status, err := t.accounting.Status(ctx, toolparams.TenantFrom(*params), typ)
 	if err != nil {
 		return nil, err
 	}

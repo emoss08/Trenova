@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -273,10 +273,14 @@ func TestCreateLocation_RefusesWithoutAnIdempotencyKeyOrActor(t *testing.T) {
 
 	params := fixture.params(nil)
 	params.IdempotencyKey = ""
-	require.ErrorIs(t, fixture.tool.Execute(t.Context(), params), common.ErrMissingIdempotencyKey)
+	require.ErrorIs(
+		t,
+		fixture.tool.Execute(t.Context(), params),
+		toolguard.ErrMissingIdempotencyKey,
+	)
 
 	params = fixture.params(nil)
 	params.Actor = nil
-	require.ErrorIs(t, fixture.tool.Execute(t.Context(), params), common.ErrMissingActor)
+	require.ErrorIs(t, fixture.tool.Execute(t.Context(), params), toolguard.ErrMissingActor)
 	assert.Nil(t, fixture.creator.created)
 }

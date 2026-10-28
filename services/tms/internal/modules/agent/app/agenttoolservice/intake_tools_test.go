@@ -5,9 +5,9 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/operationstools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/tendertools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -134,11 +134,11 @@ func TestCreateShipment_RefusesAWriteWithoutAnIdempotencyKeyOrAMismatchedActor(t
 	)
 
 	params := agenttoolstest.ExecuteParams(map[string]any{"shipment": payload})
-	require.ErrorIs(t, tool.Execute(t.Context(), params), common.ErrMissingIdempotencyKey)
+	require.ErrorIs(t, tool.Execute(t.Context(), params), toolguard.ErrMissingIdempotencyKey)
 
 	params.IdempotencyKey = "idem-2"
 	params.Actor.BusinessUnitID = pulid.MustNew("bu_")
-	require.ErrorIs(t, tool.Execute(t.Context(), params), common.ErrTenantMismatch)
+	require.ErrorIs(t, tool.Execute(t.Context(), params), toolguard.ErrTenantMismatch)
 	assert.Nil(t, writer.Created)
 
 	params = agenttoolstest.ExecuteParams(

@@ -7,7 +7,9 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -145,7 +147,7 @@ func classifyGuideProfile(
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // ToolPolicy.Classify passes params by value
 ) agenttoolports.CallPolicy {
 	actor := params.Actor
-	if common.OptionalString(params.Params, fieldProfileAbout) != profileAboutMe ||
+	if toolparams.OptionalString(params.Params, fieldProfileAbout) != profileAboutMe ||
 		actor == nil || actor.PrincipalType != permissionports.PrincipalTypeUser ||
 		actor.UserID.IsNil() {
 		return agenttoolports.CallPolicy{Egress: agent.EgressInternal}
@@ -162,7 +164,7 @@ func (t *GuideProfileTool) request(
 		return nil, errGuidanceNeedsPerson
 	}
 
-	content := strings.TrimSpace(common.OptionalString(params.Params, fieldProfileGuidance))
+	content := strings.TrimSpace(toolparams.OptionalString(params.Params, fieldProfileGuidance))
 	switch {
 	case content == "":
 		return nil, errGuidanceRequired
@@ -171,9 +173,9 @@ func (t *GuideProfileTool) request(
 			agentprofile.MaxGuidanceChars)
 	}
 
-	tenant := common.TenantFrom(*params)
+	tenant := toolparams.TenantFrom(*params)
 	var ref agentprofileports.SubjectRef
-	switch common.OptionalString(params.Params, fieldProfileAbout) {
+	switch toolparams.OptionalString(params.Params, fieldProfileAbout) {
 	case profileAboutOrg:
 		ref = agentprofileports.OrganizationSubject(tenant)
 	case profileAboutMe:
@@ -220,9 +222,9 @@ func (t *GuideProfileTool) Execute(
 	return err
 }
 
-var guidanceFields = []string{"subject", common.FieldContent}
+var guidanceFields = []string{"subject", changepreview.FieldContent}
 
-var guidanceLabels = map[string]string{"subject": "About", common.FieldContent: "Guidance"}
+var guidanceLabels = map[string]string{"subject": "About", changepreview.FieldContent: "Guidance"}
 
 func (t *GuideProfileTool) Preview(
 	ctx context.Context,
@@ -235,8 +237,11 @@ func (t *GuideProfileTool) Preview(
 
 	planned, err := t.profiles.PlanGuidance(ctx, req)
 	if err != nil {
-		if common.IsRefusal(err) {
-			return common.WarnWouldFail(toolpreview.Build(guidanceSummary(req, false)), err), nil
+		if changepreview.IsRefusal(err) {
+			return changepreview.WarnWouldFail(
+				toolpreview.Build(guidanceSummary(req, false)),
+				err,
+			), nil
 		}
 
 		return nil, err
@@ -279,5 +284,5 @@ func (t *GuideProfileTool) Validate(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
 ) error {
-	return common.PreviewValidates(ctx, t, &params)
+	return toolspec.PreviewValidates(ctx, t, &params)
 }

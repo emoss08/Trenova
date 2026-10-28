@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -178,15 +180,15 @@ func carrierIDProperty(what string) map[string]any {
 }
 
 func targetCarrier(params map[string]any) (agenttoolports.ToolTarget, bool) {
-	return common.TargetOf(params, common.ParamCarrierID, permission.ResourceCarrier)
+	return toolparams.TargetOf(params, toolparams.ParamCarrierID, permission.ResourceCarrier)
 }
 
 func carrierIntelResult(action string, ids map[string]string) *agent.ToolExecutionResult {
 	result := &agent.ToolExecutionResult{Action: action, Kind: kindCarrierIntel, IDs: ids}
-	if id, err := pulid.Parse(ids[common.ParamCarrierID]); err == nil {
-		result.Record = common.RecordOf(common.CarrierRecordEntity, id)
-	} else if id, err = pulid.Parse(ids[common.FieldCustomerID]); err == nil {
-		result.Record = common.RecordOf(common.CustomerRecordEntity, id)
+	if id, err := pulid.Parse(ids[toolparams.ParamCarrierID]); err == nil {
+		result.Record = changepreview.RecordOf(changepreview.CarrierRecordEntity, id)
+	} else if id, err = pulid.Parse(ids[changepreview.FieldCustomerID]); err == nil {
+		result.Record = changepreview.RecordOf(changepreview.CustomerRecordEntity, id)
 	}
 
 	return result
@@ -225,9 +227,9 @@ func vetPreview(
 }
 
 func NewVetCarrierTool(intel carrierIntelOperator) agenttoolports.AgentTool {
-	return common.NewReportingReceivableTool(&common.ReceivableSpec{
+	return toolspec.NewReportingReceivableTool(&toolspec.ReceivableSpec{
 		Name:     "carrier_vet",
-		Artifact: common.CarrierRecordEntity,
+		Artifact: changepreview.CarrierRecordEntity,
 		Description: "Look a carrier up with the organization's carrier intelligence provider " +
 			"now: authority, insurance, safety and the organization's rules, recorded on the " +
 			"carrier. Use it before tendering to a carrier nobody has checked lately. A " +
@@ -241,35 +243,35 @@ func NewVetCarrierTool(intel carrierIntelOperator) agenttoolports.AgentTool {
 		Rationale: "Spends the organization's carrier intelligence budget on a lookup and " +
 			"records the result; nothing is sent to the carrier.",
 		Properties: map[string]any{
-			common.ParamCarrierID: carrierIDProperty("The carrier"),
+			toolparams.ParamCarrierID: carrierIDProperty("The carrier"),
 			paramDepth: agenttoolschema.Enum("How deep a lookup: FMCSA is the public record, "+
 				"Lite and Full add the provider's profile. Defaults to Full.", lookupDepths),
-			common.ParamForceResend: common.BooleanProperty(
+			toolparams.ParamForceResend: toolparams.BooleanProperty(
 				"Look up again even when the last result is " +
 					"still current. It is charged; only when the person asks.",
 			),
 		},
-		Required: []string{common.ParamCarrierID},
+		Required: []string{toolparams.ParamCarrierID},
 		Target:   targetCarrier,
-	}, common.ReceivablePlan[*carrierintelservice.VetCarrierRequest, *carrierintelservice.VetPlan]{
+	}, toolspec.ReceivablePlan[*carrierintelservice.VetCarrierRequest, *carrierintelservice.VetPlan]{
 		Request: func(
 			params *agenttoolports.ToolExecuteParams,
 		) (*carrierintelservice.VetCarrierRequest, error) {
-			carrierID, err := common.RequirePulid(params.Params, common.ParamCarrierID)
+			carrierID, err := toolparams.RequirePulid(params.Params, toolparams.ParamCarrierID)
 			if err != nil {
 				return nil, err
 			}
-			depth, _, err := common.OptionalEnum(params.Params, paramDepth, lookupDepths.Values)
+			depth, _, err := toolparams.OptionalEnum(params.Params, paramDepth, lookupDepths.Values)
 			if err != nil {
 				return nil, err
 			}
-			force, err := common.OptionalBoolPointer(params.Params, common.ParamForceResend)
+			force, err := toolparams.OptionalBoolPointer(params.Params, toolparams.ParamForceResend)
 			if err != nil {
 				return nil, err
 			}
 
 			return &carrierintelservice.VetCarrierRequest{
-				TenantInfo: common.TenantFrom(*params),
+				TenantInfo: toolparams.TenantFrom(*params),
 				CarrierID:  carrierID,
 				Depth:      depth,
 				Force:      force != nil && *force,
@@ -303,7 +305,7 @@ func NewVetCarrierTool(intel carrierIntelOperator) agenttoolports.AgentTool {
 
 			return fetchResult(
 				result,
-				map[string]string{common.ParamCarrierID: req.CarrierID.String()},
+				map[string]string{toolparams.ParamCarrierID: req.CarrierID.String()},
 			), nil
 		},
 	})
@@ -332,9 +334,9 @@ type brokerVet struct {
 }
 
 func NewVetCustomerBrokerTool(intel carrierIntelOperator) agenttoolports.AgentTool {
-	return common.NewReportingReceivableTool(&common.ReceivableSpec{
+	return toolspec.NewReportingReceivableTool(&toolspec.ReceivableSpec{
 		Name:     "customer_vet_broker",
-		Artifact: common.CustomerRecordEntity,
+		Artifact: changepreview.CustomerRecordEntity,
 		Description: "Check a customer that is a freight broker against the public FMCSA " +
 			"record by its DOT number: broker authority and bond. Use it before taking " +
 			"freight from a broker nobody has checked lately.",
@@ -347,33 +349,37 @@ func NewVetCustomerBrokerTool(intel carrierIntelOperator) agenttoolports.AgentTo
 		Rationale: "Spends the organization's carrier intelligence budget on a lookup and " +
 			"records the result; nothing is sent to the customer.",
 		Properties: map[string]any{
-			common.FieldCustomerID: agenttoolschema.RecordIDText(
+			changepreview.FieldCustomerID: agenttoolschema.RecordIDText(
 				permission.ResourceCustomer,
 				"The broker customer, from customer_list. Never "+
 					"guess one.",
 			),
-			common.ParamForceResend: common.BooleanProperty(
+			toolparams.ParamForceResend: toolparams.BooleanProperty(
 				"Look up again even when the last result is " +
 					"still current. It is charged; only when the person asks.",
 			),
 		},
-		Required: []string{common.FieldCustomerID},
+		Required: []string{changepreview.FieldCustomerID},
 		Target: func(params map[string]any) (agenttoolports.ToolTarget, bool) {
-			return common.TargetOf(params, common.FieldCustomerID, permission.ResourceCustomer)
+			return toolparams.TargetOf(
+				params,
+				changepreview.FieldCustomerID,
+				permission.ResourceCustomer,
+			)
 		},
-	}, common.ReceivablePlan[*brokerVet, *carrierintelservice.VetPlan]{
+	}, toolspec.ReceivablePlan[*brokerVet, *carrierintelservice.VetPlan]{
 		Request: func(params *agenttoolports.ToolExecuteParams) (*brokerVet, error) {
-			customerID, err := common.RequirePulid(params.Params, common.FieldCustomerID)
+			customerID, err := toolparams.RequirePulid(params.Params, changepreview.FieldCustomerID)
 			if err != nil {
 				return nil, err
 			}
-			force, err := common.OptionalBoolPointer(params.Params, common.ParamForceResend)
+			force, err := toolparams.OptionalBoolPointer(params.Params, toolparams.ParamForceResend)
 			if err != nil {
 				return nil, err
 			}
 
 			return &brokerVet{
-				tenant:     common.TenantFrom(*params),
+				tenant:     toolparams.TenantFrom(*params),
 				customerID: customerID,
 				force:      force != nil && *force,
 			}, nil
@@ -401,7 +407,7 @@ func NewVetCustomerBrokerTool(intel carrierIntelOperator) agenttoolports.AgentTo
 
 			return fetchResult(
 				result,
-				map[string]string{common.FieldCustomerID: req.customerID.String()},
+				map[string]string{changepreview.FieldCustomerID: req.customerID.String()},
 			), nil
 		},
 	})
@@ -412,9 +418,9 @@ type monitoringView struct {
 }
 
 func NewSetCarrierMonitoringTool(intel carrierIntelOperator) agenttoolports.AgentTool {
-	return common.NewReportingReceivableTool(&common.ReceivableSpec{
+	return toolspec.NewReportingReceivableTool(&toolspec.ReceivableSpec{
 		Name:     "carrier_set_monitoring",
-		Artifact: common.CarrierRecordEntity,
+		Artifact: changepreview.CarrierRecordEntity,
 		Description: "Turn continuous monitoring on or off for carriers, so the provider " +
 			"reports authority, insurance and safety changes as they happen. Carriers " +
 			"without a DOT number are skipped.",
@@ -433,14 +439,14 @@ func NewSetCarrierMonitoringTool(intel carrierIntelOperator) agenttoolports.Agen
 					"The carriers, from carrier_list.",
 					maxMonitoredCarriers,
 				)),
-			ParamEnabled: common.BooleanProperty("True to monitor them, false to stop."),
+			ParamEnabled: toolparams.BooleanProperty("True to monitor them, false to stop."),
 		},
 		Required: []string{paramCarrierIDs, ParamEnabled},
-	}, common.ReceivablePlan[*carrierintelservice.EnrollSubjectsRequest, []carrierintelservice.EnrollmentChange]{
+	}, toolspec.ReceivablePlan[*carrierintelservice.EnrollSubjectsRequest, []carrierintelservice.EnrollmentChange]{
 		Request: func(
 			params *agenttoolports.ToolExecuteParams,
 		) (*carrierintelservice.EnrollSubjectsRequest, error) {
-			ids, err := common.RequirePulidSlice(
+			ids, err := toolparams.RequirePulidSlice(
 				params.Params,
 				paramCarrierIDs,
 				maxMonitoredCarriers,
@@ -448,7 +454,7 @@ func NewSetCarrierMonitoringTool(intel carrierIntelOperator) agenttoolports.Agen
 			if err != nil {
 				return nil, err
 			}
-			enabled, err := common.OptionalBoolPointer(params.Params, ParamEnabled)
+			enabled, err := toolparams.OptionalBoolPointer(params.Params, ParamEnabled)
 			if err != nil {
 				return nil, err
 			}
@@ -457,7 +463,7 @@ func NewSetCarrierMonitoringTool(intel carrierIntelOperator) agenttoolports.Agen
 			}
 
 			return &carrierintelservice.EnrollSubjectsRequest{
-				TenantInfo: common.TenantFrom(*params),
+				TenantInfo: toolparams.TenantFrom(*params),
 				CarrierIDs: ids,
 				Enroll:     *enabled,
 			}, nil
@@ -487,7 +493,7 @@ func NewSetCarrierMonitoringTool(intel carrierIntelOperator) agenttoolports.Agen
 				action = "monitoring started"
 			}
 			out := carrierIntelResult(action, nil)
-			out.Name = common.CountOf(changed, "carrier")
+			out.Name = changepreview.CountOf(changed, "carrier")
 
 			return out, nil
 		},
@@ -523,7 +529,7 @@ func renderMonitoring(
 	if req.Enroll {
 		verb = "start monitoring"
 	}
-	summary := fmt.Sprintf("Would %s %s.", verb, common.CountOf(len(records), "carrier"))
+	summary := fmt.Sprintf("Would %s %s.", verb, changepreview.CountOf(len(records), "carrier"))
 	if skipped := len(req.CarrierIDs) - len(changes); skipped > 0 {
 		summary += fmt.Sprintf(" %d have no DOT number and are skipped.", skipped)
 	}
@@ -535,9 +541,9 @@ func renderMonitoring(
 }
 
 func NewMarkCarrierIntelReviewedTool(intel carrierIntelOperator) agenttoolports.AgentTool {
-	return common.NewReportingReceivableTool(&common.ReceivableSpec{
+	return toolspec.NewReportingReceivableTool(&toolspec.ReceivableSpec{
 		Name:     "carrier_record_intelligence_review",
-		Artifact: common.CarrierRecordEntity,
+		Artifact: changepreview.CarrierRecordEntity,
 		Description: "Record that a person reviewed a carrier's current intelligence " +
 			"result, with what they checked. It is their sign-off, so it only runs once " +
 			"they approve it.",
@@ -550,23 +556,23 @@ func NewMarkCarrierIntelReviewedTool(intel carrierIntelOperator) agenttoolports.
 		Rationale: "Puts a person's name on a carrier risk review; only that person can " +
 			"say they reviewed it.",
 		Properties: map[string]any{
-			common.ParamCarrierID: carrierIDProperty("The carrier"),
-			common.ParamNote: common.StringProperty("What was reviewed and concluded.",
+			toolparams.ParamCarrierID: carrierIDProperty("The carrier"),
+			toolparams.ParamNote: toolparams.StringProperty("What was reviewed and concluded.",
 				maxReviewNoteChars),
 		},
-		Required: []string{common.ParamCarrierID, common.ParamNote},
+		Required: []string{toolparams.ParamCarrierID, toolparams.ParamNote},
 		Target:   targetCarrier,
-	}, common.ReceivablePlan[*carrierintelservice.MarkReviewedRequest, *carrierintelservice.SnapshotChange]{
+	}, toolspec.ReceivablePlan[*carrierintelservice.MarkReviewedRequest, *carrierintelservice.SnapshotChange]{
 		Request: func(
 			params *agenttoolports.ToolExecuteParams,
 		) (*carrierintelservice.MarkReviewedRequest, error) {
-			carrierID, err := common.RequirePulid(params.Params, common.ParamCarrierID)
+			carrierID, err := toolparams.RequirePulid(params.Params, toolparams.ParamCarrierID)
 			if err != nil {
 				return nil, err
 			}
-			note, err := common.RequireBoundedText(
+			note, err := toolparams.RequireBoundedText(
 				params.Params,
-				common.ParamNote,
+				toolparams.ParamNote,
 				maxReviewNoteChars,
 			)
 			if err != nil {
@@ -574,7 +580,7 @@ func NewMarkCarrierIntelReviewedTool(intel carrierIntelOperator) agenttoolports.
 			}
 
 			return &carrierintelservice.MarkReviewedRequest{
-				TenantInfo: common.TenantFrom(*params),
+				TenantInfo: toolparams.TenantFrom(*params),
 				CarrierID:  carrierID,
 				Note:       note,
 			}, nil
@@ -597,10 +603,14 @@ func NewMarkCarrierIntelReviewedTool(intel carrierIntelOperator) agenttoolports.
 				toolpreview.Record{Resource: permission.ResourceCarrier, ID: req.CarrierID},
 				plan.Before,
 				plan.After,
-				toolpreview.Only(common.FieldReviewedByID, common.FieldReviewedAt, "reviewNote"),
-				toolpreview.Volatile(common.FieldReviewedAt),
+				toolpreview.Only(
+					changepreview.FieldReviewedByID,
+					changepreview.FieldReviewedAt,
+					"reviewNote",
+				),
+				toolpreview.Volatile(changepreview.FieldReviewedAt),
 				toolpreview.WithRefs(map[string]permission.Resource{
-					common.FieldReviewedByID: permission.ResourceUser,
+					changepreview.FieldReviewedByID: permission.ResourceUser,
 				}),
 			)
 			if err != nil {
@@ -622,7 +632,7 @@ func NewMarkCarrierIntelReviewedTool(intel carrierIntelOperator) agenttoolports.
 			}
 
 			return carrierIntelResult("reviewed",
-				map[string]string{common.ParamCarrierID: req.CarrierID.String()}), nil
+				map[string]string{toolparams.ParamCarrierID: req.CarrierID.String()}), nil
 		},
 	})
 }
@@ -663,10 +673,10 @@ func NewApplyCarrierIntelSuggestionsTool(
 	intel carrierIntelOperator,
 	permissions permissionChecker,
 ) agenttoolports.AgentTool {
-	return common.NewReportingReceivableTool(&common.ReceivableSpec{
+	return toolspec.NewReportingReceivableTool(&toolspec.ReceivableSpec{
 		Name:        "carrier_apply_intelligence_suggestions",
 		SearchTerms: []string{"carrier intelligence fix", "intelligence corrections"},
-		Artifact:    common.CarrierRecordEntity,
+		Artifact:    changepreview.CarrierRecordEntity,
 		Description: "Correct a carrier's profile where its intelligence result disagrees: " +
 			"name, DBA, MC number, safety rating, address, phone, email or insurance. Name the fields and policies to apply, or leave " +
 			"both out to apply every suggestion there is now.",
@@ -679,7 +689,7 @@ func NewApplyCarrierIntelSuggestionsTool(
 		Rationale: "Edits the carrier's own profile inside Trenova from what the provider " +
 			"reports; nothing is sent, and the old values are set back by hand.",
 		Properties: map[string]any{
-			common.ParamCarrierID: carrierIDProperty("The carrier"),
+			toolparams.ParamCarrierID: carrierIDProperty("The carrier"),
 			paramSuggestionFields: toolschema.KeepEmpty(map[string]any{
 				toolschema.KeyType:        toolschema.TypeArray,
 				toolschema.KeyDescription: "The profile fields to correct.",
@@ -696,9 +706,9 @@ func NewApplyCarrierIntelSuggestionsTool(
 				permission.KindInsurancePolicy,
 			)),
 		},
-		Required: []string{common.ParamCarrierID},
+		Required: []string{toolparams.ParamCarrierID},
 		Target:   targetCarrier,
-	}, common.ReceivablePlan[*suggestionChoice, *carrierintelservice.SuggestionPlan]{
+	}, toolspec.ReceivablePlan[*suggestionChoice, *carrierintelservice.SuggestionPlan]{
 		Request: readSuggestionChoice,
 		Plan: func(
 			ctx context.Context,
@@ -746,8 +756,8 @@ func NewApplyCarrierIntelSuggestionsTool(
 				return nil, err
 			}
 			out := carrierIntelResult("suggestions applied",
-				map[string]string{common.ParamCarrierID: req.CarrierID.String()})
-			out.Name = common.CountOf(applied, "correction")
+				map[string]string{toolparams.ParamCarrierID: req.CarrierID.String()})
+			out.Name = changepreview.CountOf(applied, "correction")
 
 			return out, nil
 		},
@@ -755,21 +765,21 @@ func NewApplyCarrierIntelSuggestionsTool(
 }
 
 func readSuggestionChoice(params *agenttoolports.ToolExecuteParams) (*suggestionChoice, error) {
-	carrierID, err := common.RequirePulid(params.Params, common.ParamCarrierID)
+	carrierID, err := toolparams.RequirePulid(params.Params, toolparams.ParamCarrierID)
 	if err != nil {
 		return nil, err
 	}
 	req := &carrierintelservice.ApplySuggestionsRequest{
-		TenantInfo: common.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(*params),
 		CarrierID:  carrierID,
 	}
 	if _, given := params.Params[paramSuggestionFields]; given {
 		var names []string
-		if err = common.DecodeParam(params.Params, paramSuggestionFields, &names); err != nil {
+		if err = toolparams.DecodeParam(params.Params, paramSuggestionFields, &names); err != nil {
 			return nil, err
 		}
 		for _, name := range names {
-			field, fieldErr := common.RequireEnum(map[string]any{paramSuggestionFields: name},
+			field, fieldErr := toolparams.RequireEnum(map[string]any{paramSuggestionFields: name},
 				paramSuggestionFields, syncFieldValues.Values)
 			if fieldErr != nil {
 				return nil, fieldErr
@@ -778,7 +788,7 @@ func readSuggestionChoice(params *agenttoolports.ToolExecuteParams) (*suggestion
 		}
 	}
 	if _, given := params.Params[paramPolicyIDs]; given {
-		if req.PolicyIDs, err = common.RequirePulidSlice(params.Params, paramPolicyIDs,
+		if req.PolicyIDs, err = toolparams.RequirePulidSlice(params.Params, paramPolicyIDs,
 			maxSuggestionPolicies); err != nil {
 			return nil, err
 		}
@@ -802,7 +812,7 @@ func renderSuggestions(
 				Resource: permission.ResourceCarrier,
 				ID:       plan.Before.ID,
 				Label:    plan.Before.Name,
-				Version:  common.PinnedVersion(plan.Before.Version),
+				Version:  changepreview.PinnedVersion(plan.Before.Version),
 			},
 			plan.Before,
 			plan.After,
@@ -815,11 +825,11 @@ func renderSuggestions(
 	}
 
 	summary := fmt.Sprintf("Would correct %s on carrier %s from its intelligence result",
-		common.CountOf(len(plan.Fields), "profile field"), plan.Before.Name)
+		changepreview.CountOf(len(plan.Fields), "profile field"), plan.Before.Name)
 	if len(plan.Insurance) > 0 {
 		summary += fmt.Sprintf(
 			" and update %s",
-			common.CountOf(len(plan.Insurance), "insurance policy"),
+			changepreview.CountOf(len(plan.Insurance), "insurance policy"),
 		)
 	}
 
@@ -830,9 +840,9 @@ func NewImportSourcedCarrierTool(
 	intel carrierIntelOperator,
 	permissions permissionChecker,
 ) agenttoolports.AgentTool {
-	return common.NewReportingReceivableTool(&common.ReceivableSpec{
+	return toolspec.NewReportingReceivableTool(&toolspec.ReceivableSpec{
 		Name:     "carrier_import",
-		Artifact: common.CarrierRecordEntity,
+		Artifact: changepreview.CarrierRecordEntity,
 		Description: "Add a carrier found through carrier sourcing to the organization's " +
 			"carriers by its DOT number, filled from the provider's profile. A DOT number " +
 			"already on a carrier is refused.",
@@ -845,20 +855,23 @@ func NewImportSourcedCarrierTool(
 		Rationale: "Creates a carrier inside Trenova from the provider's profile; nothing is " +
 			"sent to it, and one added in error is made inactive.",
 		Properties: map[string]any{
-			paramDOTNumber: common.StringProperty("The carrier's USDOT number, from the sourcing "+
-				"search.", maxDOTNumberChars),
-			paramCarrierCode: common.StringProperty(
+			paramDOTNumber: toolparams.StringProperty(
+				"The carrier's USDOT number, from the sourcing "+
+					"search.",
+				maxDOTNumberChars,
+			),
+			paramCarrierCode: toolparams.StringProperty(
 				"The short code to file it under. Left out, one "+
 					"is made from its name.",
 				maxCarrierCodeChars,
 			),
-			paramEnrollMonitoring: common.BooleanProperty(
+			paramEnrollMonitoring: toolparams.BooleanProperty(
 				"Start monitoring it at once. Monitoring " +
 					"is billed per carrier.",
 			),
 		},
 		Required: []string{paramDOTNumber},
-	}, common.ReceivablePlan[*carrierintelservice.ImportProspectRequest, *carrierintelservice.ImportPlan]{
+	}, toolspec.ReceivablePlan[*carrierintelservice.ImportProspectRequest, *carrierintelservice.ImportPlan]{
 		Request: importProspectRequest,
 		Plan: func(
 			ctx context.Context,
@@ -898,7 +911,7 @@ func NewImportSourcedCarrierTool(
 				return nil, err
 			}
 			out := carrierIntelResult("carrier added",
-				map[string]string{common.ParamCarrierID: created.ID.String()})
+				map[string]string{toolparams.ParamCarrierID: created.ID.String()})
 			out.Name = created.Name
 
 			return out, nil
@@ -942,9 +955,9 @@ type importView struct {
 }
 
 func NewVerifyCarrierEquipmentTool(intel carrierIntelOperator) agenttoolports.AgentTool {
-	return common.NewReportingReceivableTool(&common.ReceivableSpec{
+	return toolspec.NewReportingReceivableTool(&toolspec.ReceivableSpec{
 		Name:     "carrier_verify_equipment",
-		Artifact: common.CarrierRecordEntity,
+		Artifact: changepreview.CarrierRecordEntity,
 		Description: "Check that the truck or trailer a carrier sent for a load is registered " +
 			"to that carrier, by VIN or plate, and record the answer on the assignment. Take " +
 			"the numbers from the driver or the carrier's dispatch, never from a guess.",
@@ -961,16 +974,19 @@ func NewVerifyCarrierEquipmentTool(intel carrierIntelOperator) agenttoolports.Ag
 				"rate_list_confirmations or shipment_get. Never guess one.",
 				permission.KindCarrierAssignment),
 			paramUnitType: agenttoolschema.Enum("What was checked.", unitTypes),
-			paramVIN:      common.StringProperty("The vehicle identification number.", maxVINChars),
-			paramPlateNumber: common.StringProperty("The license plate number.",
+			paramVIN: toolparams.StringProperty(
+				"The vehicle identification number.",
+				maxVINChars,
+			),
+			paramPlateNumber: toolparams.StringProperty("The license plate number.",
 				maxPlateChars),
-			paramPlateState: common.StringProperty("The plate's two-letter state.",
+			paramPlateState: toolparams.StringProperty("The plate's two-letter state.",
 				maxPlateStateChars),
-			paramUnitNumber: common.StringProperty("The carrier's own unit number.",
+			paramUnitNumber: toolparams.StringProperty("The carrier's own unit number.",
 				maxUnitNumberChars),
 		},
 		Required: []string{paramCarrierAssignmentID, paramUnitType},
-	}, common.ReceivablePlan[*carrierintelservice.VerifyEquipmentRequest, *verificationPlan]{
+	}, toolspec.ReceivablePlan[*carrierintelservice.VerifyEquipmentRequest, *verificationPlan]{
 		Request: verifyEquipmentRequest,
 		Plan: func(
 			ctx context.Context,
@@ -998,7 +1014,7 @@ func NewVerifyCarrierEquipmentTool(intel carrierIntelOperator) agenttoolports.Ag
 				},
 				plan.verification,
 				toolpreview.Only(
-					common.ParamCarrierID,
+					toolparams.ParamCarrierID,
 					"expectedDotNumber",
 					paramUnitType,
 					paramVIN,
@@ -1007,7 +1023,7 @@ func NewVerifyCarrierEquipmentTool(intel carrierIntelOperator) agenttoolports.Ag
 					paramUnitNumber,
 				),
 				toolpreview.WithRefs(map[string]permission.Resource{
-					common.ParamCarrierID: permission.ResourceCarrier,
+					toolparams.ParamCarrierID: permission.ResourceCarrier,
 				}),
 			)
 			if err != nil {
@@ -1047,16 +1063,16 @@ type verificationPlan struct {
 func verifyEquipmentRequest(
 	params *agenttoolports.ToolExecuteParams,
 ) (*carrierintelservice.VerifyEquipmentRequest, error) {
-	assignmentID, err := common.RequirePulid(params.Params, paramCarrierAssignmentID)
+	assignmentID, err := toolparams.RequirePulid(params.Params, paramCarrierAssignmentID)
 	if err != nil {
 		return nil, err
 	}
-	unitType, err := common.RequireEnum(params.Params, paramUnitType, unitTypes.Values)
+	unitType, err := toolparams.RequireEnum(params.Params, paramUnitType, unitTypes.Values)
 	if err != nil {
 		return nil, err
 	}
 	req := &carrierintelservice.VerifyEquipmentRequest{
-		TenantInfo:          common.TenantFrom(*params),
+		TenantInfo:          toolparams.TenantFrom(*params),
 		CarrierAssignmentID: assignmentID,
 		UnitType:            unitType,
 	}
@@ -1070,7 +1086,7 @@ func verifyEquipmentRequest(
 		paramPlateState:  {&req.PlateState, maxPlateStateChars, true},
 		paramUnitNumber:  {&req.UnitNumber, maxUnitNumberChars, false},
 	} {
-		value, textErr := common.BoundedText(params.Params, key, spec.limit)
+		value, textErr := toolparams.BoundedText(params.Params, key, spec.limit)
 		if textErr != nil {
 			return nil, textErr
 		}
@@ -1086,21 +1102,21 @@ func verifyEquipmentRequest(
 func importProspectRequest(
 	params *agenttoolports.ToolExecuteParams,
 ) (*carrierintelservice.ImportProspectRequest, error) {
-	dot, err := common.RequireBoundedText(params.Params, paramDOTNumber, maxDOTNumberChars)
+	dot, err := toolparams.RequireBoundedText(params.Params, paramDOTNumber, maxDOTNumberChars)
 	if err != nil {
 		return nil, err
 	}
-	code, err := common.BoundedText(params.Params, paramCarrierCode, maxCarrierCodeChars)
+	code, err := toolparams.BoundedText(params.Params, paramCarrierCode, maxCarrierCodeChars)
 	if err != nil {
 		return nil, err
 	}
-	enroll, err := common.OptionalBoolPointer(params.Params, paramEnrollMonitoring)
+	enroll, err := toolparams.OptionalBoolPointer(params.Params, paramEnrollMonitoring)
 	if err != nil {
 		return nil, err
 	}
 
 	return &carrierintelservice.ImportProspectRequest{
-		TenantInfo:       common.TenantFrom(*params),
+		TenantInfo:       toolparams.TenantFrom(*params),
 		DOTNumber:        dot,
 		Code:             code,
 		EnrollMonitoring: enroll != nil && *enroll,

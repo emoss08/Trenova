@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/app/tenderservice"
@@ -225,8 +225,8 @@ func TestCancelTender_SendsTheTenderAndTheReason(t *testing.T) {
 
 	tenders := newFakeTenderManager(tender.StatusActive, tender.OfferStatusSent)
 	params := agenttoolstest.ExecuteParams(map[string]any{
-		fieldTenderID:      tenders.entity.ID.String(),
-		common.FieldReason: " Covered by our own driver ",
+		fieldTenderID:             tenders.entity.ID.String(),
+		changepreview.FieldReason: " Covered by our own driver ",
 	})
 
 	require.NoError(t, NewCancelTenderTool(tenders).Execute(t.Context(), params))
@@ -246,10 +246,13 @@ func TestCancelTender_ATenderAwaitingReviewIsAProposal(t *testing.T) {
 		tenders := newFakeTenderManager(status, tender.OfferStatusSent)
 		tool := NewCancelTenderTool(tenders)
 
-		return tool.Policy().Condition.Limit(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
-			fieldTenderID:      tenders.entity.ID.String(),
-			common.FieldReason: "Not needed",
-		}))
+		return tool.Policy().Condition.Limit(
+			t.Context(),
+			agenttoolstest.ExecuteParams(map[string]any{
+				fieldTenderID:             tenders.entity.ID.String(),
+				changepreview.FieldReason: "Not needed",
+			}),
+		)
 	}
 
 	assert.Equal(t, agent.TierActWithApproval, limit(tender.StatusActive))
@@ -269,22 +272,42 @@ func TestCancelTender_PreviewShowsTheTenderAndEachOfferItMoves(t *testing.T) {
 		tender.OfferStatusDeclined, tender.OfferStatusSent, tender.OfferStatusPending)
 	tool := NewCancelTenderTool(tenders).(*CancelTenderTool)
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, &tenders.guard, func() (*agent.ToolPreview, error) {
-		return tool.Preview(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
-			fieldTenderID:      tenders.entity.ID.String(),
-			common.FieldReason: "Covered by our own driver",
-		}))
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		&tenders.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.Preview(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
+				fieldTenderID:             tenders.entity.ID.String(),
+				changepreview.FieldReason: "Covered by our own driver",
+			}))
+		},
+	)
 
 	require.Len(t, preview.Changes, 3, "the tender and the two offers it moves")
 	record := agenttoolstest.PreviewChange(t, preview, 0)
 	assert.Equal(t, agent.PreviewOperationArchive, record.Operation)
 	assert.Equal(t, tenders.entity.ID, record.EntityID)
-	assert.Equal(t, "Canceled", agenttoolstest.FieldByPath(t, record, common.FieldStatus).After)
+	assert.Equal(
+		t,
+		"Canceled",
+		agenttoolstest.FieldByPath(t, record, changepreview.FieldStatus).After,
+	)
 	withdrawn := agenttoolstest.PreviewChange(t, preview, 1)
 	assert.Equal(t, "Offer 2 to Blue Mesa", withdrawn.Label)
-	assert.Equal(t, "Withdrawn", agenttoolstest.FieldByPath(t, withdrawn, common.FieldStatus).After)
-	assert.Equal(t, "Skipped", agenttoolstest.FieldByPath(t, agenttoolstest.PreviewChange(t, preview, 2), common.FieldStatus).After)
+	assert.Equal(
+		t,
+		"Withdrawn",
+		agenttoolstest.FieldByPath(t, withdrawn, changepreview.FieldStatus).After,
+	)
+	assert.Equal(
+		t,
+		"Skipped",
+		agenttoolstest.FieldByPath(
+			t,
+			agenttoolstest.PreviewChange(t, preview, 2),
+			changepreview.FieldStatus,
+		).After,
+	)
 	assert.Contains(t, preview.Summary, "1 offer carriers hold")
 	assert.Contains(t, preview.Summary, "1 carrier not yet asked")
 }
@@ -295,13 +318,16 @@ func TestRecordTenderResponse_RecordsAManualAnswer(t *testing.T) {
 	tenders := newFakeTenderManager(tender.StatusActive, tender.OfferStatusSent)
 	offerID := tenders.entity.Offers[0].ID
 
-	require.NoError(t, NewRecordTenderResponseTool(tenders).Execute(t.Context(), agenttoolstest.ExecuteParams(
-		map[string]any{
-			fieldOfferID:       offerID.String(),
-			fieldAction:        "Decline",
-			fieldDeclineReason: " No truck near Reno ",
-		},
-	)))
+	require.NoError(
+		t,
+		NewRecordTenderResponseTool(tenders).Execute(t.Context(), agenttoolstest.ExecuteParams(
+			map[string]any{
+				fieldOfferID:       offerID.String(),
+				fieldAction:        "Decline",
+				fieldDeclineReason: " No truck near Reno ",
+			},
+		)),
+	)
 
 	require.NotNil(t, tenders.answered)
 	assert.Equal(t, offerID, tenders.answered.OfferID)
@@ -358,21 +384,41 @@ func TestRecordTenderResponse_PreviewOfAnAcceptance(t *testing.T) {
 		tender.OfferStatusSent, tender.OfferStatusPending)
 	tool := NewRecordTenderResponseTool(tenders).(*RecordTenderResponseTool)
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, &tenders.guard, func() (*agent.ToolPreview, error) {
-		return tool.Preview(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
-			fieldOfferID: tenders.entity.Offers[0].ID.String(),
-			fieldAction:  "Accept",
-		}))
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		&tenders.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.Preview(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
+				fieldOfferID: tenders.entity.Offers[0].ID.String(),
+				fieldAction:  "Accept",
+			}))
+		},
+	)
 
 	record := agenttoolstest.PreviewChange(t, preview, 0)
-	assert.Equal(t, "Accepted", agenttoolstest.FieldByPath(t, record, common.FieldStatus).After)
+	assert.Equal(
+		t,
+		"Accepted",
+		agenttoolstest.FieldByPath(t, record, changepreview.FieldStatus).After,
+	)
 	accepted := agenttoolstest.PreviewChange(t, preview, 1)
 	assert.Equal(t, tenders.entity.Offers[0].ID, accepted.EntityID)
-	assert.Equal(t, "Accepted", agenttoolstest.FieldByPath(t, accepted, common.FieldStatus).After)
+	assert.Equal(
+		t,
+		"Accepted",
+		agenttoolstest.FieldByPath(t, accepted, changepreview.FieldStatus).After,
+	)
 	require.NotNil(t, accepted.Money)
 	assert.True(t, decimal.NewFromInt(1500).Equal(accepted.Money.TotalAfter.Decimal))
-	assert.Equal(t, "Skipped", agenttoolstest.FieldByPath(t, agenttoolstest.PreviewChange(t, preview, 2), common.FieldStatus).After)
+	assert.Equal(
+		t,
+		"Skipped",
+		agenttoolstest.FieldByPath(
+			t,
+			agenttoolstest.PreviewChange(t, preview, 2),
+			changepreview.FieldStatus,
+		).After,
+	)
 	assert.True(t, preview.Partial, "the rate confirmation the acceptance issues is not shown")
 	assert.Contains(t, preview.Summary, "Ridgeline accepted the offer")
 	assert.Contains(t, preview.Summary, "rate confirmation")
@@ -385,16 +431,24 @@ func TestRecordTenderResponse_PreviewOfADeclineShowsTheNextOffer(t *testing.T) {
 		tender.OfferStatusSent, tender.OfferStatusPending)
 	tool := NewRecordTenderResponseTool(tenders).(*RecordTenderResponseTool)
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, &tenders.guard, func() (*agent.ToolPreview, error) {
-		return tool.Preview(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
-			fieldOfferID:       tenders.entity.Offers[0].ID.String(),
-			fieldAction:        "Decline",
-			fieldDeclineReason: "No truck near Reno",
-		}))
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		&tenders.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.Preview(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
+				fieldOfferID:       tenders.entity.Offers[0].ID.String(),
+				fieldAction:        "Decline",
+				fieldDeclineReason: "No truck near Reno",
+			}))
+		},
+	)
 
 	declined := agenttoolstest.PreviewChange(t, preview, 0)
-	assert.Equal(t, "Declined", agenttoolstest.FieldByPath(t, declined, common.FieldStatus).After)
+	assert.Equal(
+		t,
+		"Declined",
+		agenttoolstest.FieldByPath(t, declined, changepreview.FieldStatus).After,
+	)
 	next := agenttoolstest.PreviewChange(t, preview, 1)
 	assert.Equal(t, agent.PreviewOperationSend, next.Operation)
 	require.NotNil(t, next.Message)
@@ -410,12 +464,16 @@ func TestRecordTenderResponse_PreviewWarnsOfAnOfferNoLongerOpen(t *testing.T) {
 	tenders.refusal = tenderservice.ErrOfferNoLongerAvailable
 	tool := NewRecordTenderResponseTool(tenders).(*RecordTenderResponseTool)
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, &tenders.guard, func() (*agent.ToolPreview, error) {
-		return tool.Preview(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
-			fieldOfferID: tenders.entity.Offers[0].ID.String(),
-			fieldAction:  "Accept",
-		}))
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		&tenders.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.Preview(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
+				fieldOfferID: tenders.entity.Offers[0].ID.String(),
+				fieldAction:  "Accept",
+			}))
+		},
+	)
 
 	assert.Empty(t, preview.Changes)
 	agenttoolstest.RequireWarning(t, preview, agent.PreviewWarningWouldFail)
@@ -435,14 +493,17 @@ func TestRecordTenderResponse_RecordsACounterWithItsRate(t *testing.T) {
 	tenders := newFakeTenderManager(tender.StatusActive, tender.OfferStatusSent)
 	offerID := tenders.entity.Offers[0].ID
 
-	require.NoError(t, NewRecordTenderResponseTool(tenders).Execute(t.Context(), agenttoolstest.ExecuteParams(
-		map[string]any{
-			fieldOfferID:     offerID.String(),
-			fieldAction:      "Counter",
-			fieldCounterRate: " 1850.00 ",
-			fieldCounterNote: " Fuel is up on this lane ",
-		},
-	)))
+	require.NoError(
+		t,
+		NewRecordTenderResponseTool(tenders).Execute(t.Context(), agenttoolstest.ExecuteParams(
+			map[string]any{
+				fieldOfferID:     offerID.String(),
+				fieldAction:      "Counter",
+				fieldCounterRate: " 1850.00 ",
+				fieldCounterNote: " Fuel is up on this lane ",
+			},
+		)),
+	)
 
 	require.NotNil(t, tenders.answered)
 	assert.Equal(t, tender.ResponseActionCounter, tenders.answered.Action)
@@ -483,13 +544,16 @@ func TestRecordTenderResponse_ACarrierBackingOutBouncesTheTender(t *testing.T) {
 	tenders := acceptedFake()
 	offerID := tenders.entity.Offers[0].ID
 
-	require.NoError(t, NewRecordTenderResponseTool(tenders).Execute(t.Context(), agenttoolstest.ExecuteParams(
-		map[string]any{
-			fieldOfferID:       offerID.String(),
-			fieldAction:        "BackedOut",
-			fieldDeclineReason: " Truck broke down in Joliet ",
-		},
-	)))
+	require.NoError(
+		t,
+		NewRecordTenderResponseTool(tenders).Execute(t.Context(), agenttoolstest.ExecuteParams(
+			map[string]any{
+				fieldOfferID:       offerID.String(),
+				fieldAction:        "BackedOut",
+				fieldDeclineReason: " Truck broke down in Joliet ",
+			},
+		)),
+	)
 
 	require.NotNil(t, tenders.bounced)
 	assert.Equal(t, offerID, tenders.bounced.OfferID)
@@ -515,16 +579,24 @@ func TestRecordTenderResponse_PreviewOfACounter(t *testing.T) {
 	tenders := newFakeTenderManager(tender.StatusActive, tender.OfferStatusSent)
 	tool := NewRecordTenderResponseTool(tenders).(*RecordTenderResponseTool)
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, &tenders.guard, func() (*agent.ToolPreview, error) {
-		return tool.Preview(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
-			fieldOfferID:     tenders.entity.Offers[0].ID.String(),
-			fieldAction:      "Counter",
-			fieldCounterRate: "1850",
-		}))
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		&tenders.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.Preview(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
+				fieldOfferID:     tenders.entity.Offers[0].ID.String(),
+				fieldAction:      "Counter",
+				fieldCounterRate: "1850",
+			}))
+		},
+	)
 
 	countered := agenttoolstest.PreviewChange(t, preview, 0)
-	assert.Equal(t, "Countered", agenttoolstest.FieldByPath(t, countered, common.FieldStatus).After)
+	assert.Equal(
+		t,
+		"Countered",
+		agenttoolstest.FieldByPath(t, countered, changepreview.FieldStatus).After,
+	)
 	assert.Contains(t, preview.Summary, "Ridgeline countered at 1850.00 USD flat")
 	assert.Contains(t, preview.Summary, "against 1500.00 USD flat offered")
 }
@@ -538,12 +610,16 @@ func TestRecordTenderResponse_PreviewOfTakingACounterPaysTheCounterRate(t *testi
 	tenders.entity.Offers[0].CounterNeedsApproval = true
 	tool := NewRecordTenderResponseTool(tenders).(*RecordTenderResponseTool)
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, &tenders.guard, func() (*agent.ToolPreview, error) {
-		return tool.Preview(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
-			fieldOfferID: tenders.entity.Offers[0].ID.String(),
-			fieldAction:  "Accept",
-		}))
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		&tenders.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.Preview(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
+				fieldOfferID: tenders.entity.Offers[0].ID.String(),
+				fieldAction:  "Accept",
+			}))
+		},
+	)
 
 	accepted := agenttoolstest.PreviewChange(t, preview, 1)
 	require.NotNil(t, accepted.Money)
@@ -558,18 +634,30 @@ func TestRecordTenderResponse_PreviewOfACarrierBackingOut(t *testing.T) {
 	tenders := acceptedFake()
 	tool := NewRecordTenderResponseTool(tenders).(*RecordTenderResponseTool)
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, &tenders.guard, func() (*agent.ToolPreview, error) {
-		return tool.Preview(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
-			fieldOfferID:       tenders.entity.Offers[0].ID.String(),
-			fieldAction:        "BackedOut",
-			fieldDeclineReason: "Truck broke down",
-		}))
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		&tenders.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.Preview(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
+				fieldOfferID:       tenders.entity.Offers[0].ID.String(),
+				fieldAction:        "BackedOut",
+				fieldDeclineReason: "Truck broke down",
+			}))
+		},
+	)
 
 	record := agenttoolstest.PreviewChange(t, preview, 0)
-	assert.Equal(t, "Active", agenttoolstest.FieldByPath(t, record, common.FieldStatus).After)
+	assert.Equal(
+		t,
+		"Active",
+		agenttoolstest.FieldByPath(t, record, changepreview.FieldStatus).After,
+	)
 	revoked := agenttoolstest.PreviewChange(t, preview, 1)
-	assert.Equal(t, "Revoked", agenttoolstest.FieldByPath(t, revoked, common.FieldStatus).After)
+	assert.Equal(
+		t,
+		"Revoked",
+		agenttoolstest.FieldByPath(t, revoked, changepreview.FieldStatus).After,
+	)
 	next := agenttoolstest.PreviewChange(t, preview, 2)
 	assert.Equal(t, agent.PreviewOperationSend, next.Operation)
 	assert.Equal(t, []string{"dispatchb@carrier.test"}, next.Message.To)

@@ -4,7 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -50,14 +51,14 @@ type sharedLinkView struct {
 //
 //nolint:gocritic // the Classify hook passes params by value
 func classifyShareLink(params agenttoolports.ToolExecuteParams) agenttoolports.CallPolicy {
-	if common.OptionalString(params.Params, paramRecipientEmail) != "" {
+	if toolparams.OptionalString(params.Params, paramRecipientEmail) != "" {
 		return agenttoolports.CallPolicy{Egress: agent.EgressExternalRecipient}
 	}
 	return agenttoolports.CallPolicy{Egress: agent.EgressCustomerVisible}
 }
 
 func shipmentTarget(params map[string]any) (agenttoolports.ToolTarget, bool) {
-	return common.TargetOf(params, common.ParamShipmentID, permission.ResourceShipment)
+	return toolparams.TargetOf(params, toolparams.ParamShipmentID, permission.ResourceShipment)
 }
 
 func NewShareCustomerTrackingLinkTool(
@@ -67,8 +68,8 @@ func NewShareCustomerTrackingLinkTool(
 }
 
 func newShareCustomerTrackingLinkTool(tracking customerTrackingLinker) agenttoolports.AgentTool {
-	return common.NewReceivableTool(
-		&common.ReceivableSpec{
+	return toolspec.NewReceivableTool(
+		&toolspec.ReceivableSpec{
 			Name:   toolShareCustomerTrackingLink,
 			Recipe: []string{toolShipmentList, toolShareCustomerTrackingLink},
 			Description: "Share a link to a shipment's tracking page with the customer, and email it " +
@@ -87,26 +88,31 @@ func newShareCustomerTrackingLinkTool(tracking customerTrackingLinker) agenttool
 				"outside the organization; the link can be revoked.",
 			Target: shipmentTarget,
 			Properties: map[string]any{
-				common.ParamShipmentID: agenttoolschema.RecordIDText(permission.ResourceShipment,
-					"The shipment to share, from the page, shipment_list."),
-				paramRecipientEmail: common.StringProperty(
+				toolparams.ParamShipmentID: agenttoolschema.RecordIDText(
+					permission.ResourceShipment,
+					"The shipment to share, from the page, shipment_list.",
+				),
+				paramRecipientEmail: toolparams.StringProperty(
 					"Where to email the link. Leave it out to share the link without emailing it.",
 					customertracking.MaxRecipientEmailLength,
 				),
 			},
-			Required: []string{common.ParamShipmentID},
+			Required: []string{toolparams.ParamShipmentID},
 		},
-		common.ReceivablePlan[*customertrackingports.IssueLinkRequest, *customertrackingports.LinkPreview]{
+		toolspec.ReceivablePlan[*customertrackingports.IssueLinkRequest, *customertrackingports.LinkPreview]{
 			Request: func(params *agenttoolports.ToolExecuteParams) (*customertrackingports.IssueLinkRequest, error) {
-				shipmentID, err := common.RequirePulid(params.Params, common.ParamShipmentID)
+				shipmentID, err := toolparams.RequirePulid(
+					params.Params,
+					toolparams.ParamShipmentID,
+				)
 				if err != nil {
 					return nil, err
 				}
-				tenant := common.TenantFrom(*params)
+				tenant := toolparams.TenantFrom(*params)
 				return &customertrackingports.IssueLinkRequest{
 					TenantInfo:     tenant,
 					ShipmentID:     shipmentID,
-					RecipientEmail: common.OptionalString(params.Params, paramRecipientEmail),
+					RecipientEmail: toolparams.OptionalString(params.Params, paramRecipientEmail),
 					IssuedByID:     tenant.UserID,
 				}, nil
 			},
@@ -171,8 +177,8 @@ func shareLink(
 		Kind:   "customer tracking link",
 		Name:   issued.URL,
 		IDs: map[string]string{
-			common.ParamShipmentID: req.ShipmentID.String(),
-			paramTrackingLinkID:    issued.Link.ID.String(),
+			toolparams.ParamShipmentID: req.ShipmentID.String(),
+			paramTrackingLinkID:        issued.Link.ID.String(),
 		},
 		State: "Link shared; not emailed",
 	}
@@ -197,8 +203,8 @@ func NewRevokeCustomerTrackingLinkTool(
 }
 
 func newRevokeCustomerTrackingLinkTool(tracking customerTrackingLinker) agenttoolports.AgentTool {
-	return common.NewReceivableTool(
-		&common.ReceivableSpec{
+	return toolspec.NewReceivableTool(
+		&toolspec.ReceivableSpec{
 			Name:   toolRevokeCustomerTrackingLink,
 			Recipe: []string{toolShipmentList, toolRevokeCustomerTrackingLink},
 			Description: "Stop every live customer tracking link on a shipment from working. Use " +
@@ -213,19 +219,24 @@ func newRevokeCustomerTrackingLinkTool(tracking customerTrackingLinker) agenttoo
 				"can be shared later.",
 			Target: shipmentTarget,
 			Properties: map[string]any{
-				common.ParamShipmentID: agenttoolschema.RecordIDText(permission.ResourceShipment,
+				toolparams.ParamShipmentID: agenttoolschema.RecordIDText(
+					permission.ResourceShipment,
 					"The shipment whose links to revoke, from the page or "+
-						"shipment_list."),
+						"shipment_list.",
+				),
 			},
-			Required: []string{common.ParamShipmentID},
+			Required: []string{toolparams.ParamShipmentID},
 		},
-		common.ReceivablePlan[*customertrackingports.RevokeLinkRequest, []*customertracking.Link]{
+		toolspec.ReceivablePlan[*customertrackingports.RevokeLinkRequest, []*customertracking.Link]{
 			Request: func(params *agenttoolports.ToolExecuteParams) (*customertrackingports.RevokeLinkRequest, error) {
-				shipmentID, err := common.RequirePulid(params.Params, common.ParamShipmentID)
+				shipmentID, err := toolparams.RequirePulid(
+					params.Params,
+					toolparams.ParamShipmentID,
+				)
 				if err != nil {
 					return nil, err
 				}
-				tenant := common.TenantFrom(*params)
+				tenant := toolparams.TenantFrom(*params)
 				return &customertrackingports.RevokeLinkRequest{
 					TenantInfo:  tenant,
 					ShipmentID:  shipmentID,
@@ -278,7 +289,7 @@ func newRevokeCustomerTrackingLinkTool(tracking customerTrackingLinker) agenttoo
 					Action: "revoked",
 					Kind:   "customer tracking link",
 					Name:   fmt.Sprintf("%d link(s)", revoked),
-					IDs:    map[string]string{common.ParamShipmentID: req.ShipmentID.String()},
+					IDs:    map[string]string{toolparams.ParamShipmentID: req.ShipmentID.String()},
 				}, nil
 			},
 		},

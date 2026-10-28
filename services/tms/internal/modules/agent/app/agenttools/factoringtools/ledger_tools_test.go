@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
@@ -238,7 +238,7 @@ func TestRecordFactoringFunding_PreviewsTheJournalAndRunsOnlyWhenApproved(t *tes
 	assert.Contains(t, preview.Summary, "1 invoice funded")
 
 	err := tool.Execute(t.Context(), params)
-	require.ErrorIs(t, err, common.ErrNeedsAPersonsApproval)
+	require.ErrorIs(t, err, toolspec.ErrNeedsAPersonsApproval)
 	assert.Nil(t, ledger.funding)
 
 	require.NoError(t, tool.Execute(t.Context(), agenttoolstest.Approved(params)))
@@ -324,7 +324,7 @@ func TestReleaseFactoringReserve_SaysWhenNothingIsBooked(t *testing.T) {
 	require.Len(t, preview.Changes, 1)
 	assert.Contains(t, preview.Summary, "Nothing is booked")
 
-	require.ErrorIs(t, tool.Execute(t.Context(), params), common.ErrNeedsAPersonsApproval)
+	require.ErrorIs(t, tool.Execute(t.Context(), params), toolspec.ErrNeedsAPersonsApproval)
 	require.NoError(t, tool.Execute(t.Context(), agenttoolstest.Approved(params)))
 	assert.Equal(t, "release", ledger.recorded)
 	assert.Nil(t, ledger.movement.CashMinor)

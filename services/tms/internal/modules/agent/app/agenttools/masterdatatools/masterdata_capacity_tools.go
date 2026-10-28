@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -164,18 +166,18 @@ var capacityRecord = &masterRecord[carriercapacity.Posting]{
 		return ids
 	},
 	view:       capacityViewOf,
-	linkEntity: common.CarrierRecordEntity,
+	linkEntity: changepreview.CarrierRecordEntity,
 	linkID:     func(entity *carriercapacity.Posting) pulid.ID { return entity.CarrierID },
 	options: []toolpreview.Option{toolpreview.WithRefs(map[string]permission.Resource{
-		common.ParamCarrierID: permission.ResourceCarrier,
-		"originLocationId":    permission.ResourceLocation,
-		"equipmentTypeId":     permission.ResourceEquipmentType,
+		toolparams.ParamCarrierID: permission.ResourceCarrier,
+		"originLocationId":        permission.ResourceLocation,
+		"equipmentTypeId":         permission.ResourceEquipmentType,
 	})},
 }
 
 func capacityFields() []masterField[carriercapacity.Posting] {
 	return []masterField[carriercapacity.Posting]{
-		masterID(common.ParamCarrierID, permission.ResourceCarrier,
+		masterID(toolparams.ParamCarrierID, permission.ResourceCarrier,
 			"The carrier offering the trucks, from carrier_list.",
 			func(p *carriercapacity.Posting) *pulid.ID { return &p.CarrierID }),
 		masterOptionalIDPointer("originLocationId", permission.ResourceLocation,
@@ -243,7 +245,7 @@ func NewCreateCarrierCapacityPostingTool(
 			"and carrier_delete_capacity_posting removes it.",
 		fields: capacityFields(),
 		required: []string{
-			common.ParamCarrierID,
+			toolparams.ParamCarrierID,
 			"availableFrom",
 			"availableTo",
 		},
@@ -291,7 +293,7 @@ func NewUpdateCarrierCapacityPostingTool(
 }
 
 func NewDeleteCarrierCapacityPostingTool(keeper CapacityKeeper) agenttoolports.AgentTool {
-	return common.NewReceivableTool(&common.ReceivableSpec{
+	return toolspec.NewReceivableTool(&toolspec.ReceivableSpec{
 		Name:        "carrier_delete_capacity_posting",
 		Description: "Remove a carrier capacity posting the carrier withdrew or that was entered by mistake.",
 		Resource:    permission.ResourceCarrierCapacityPosting,
@@ -311,9 +313,9 @@ func NewDeleteCarrierCapacityPostingTool(keeper CapacityKeeper) agenttoolports.A
 		SearchTerms:   []string{"remove carrier capacity", "withdraw truck posting"},
 		Prerequisites: []string{capacityRecord.lister},
 		Target:        capacityRecord.target,
-	}, common.ReceivablePlan[pulid.ID, *carriercapacity.Posting]{
+	}, toolspec.ReceivablePlan[pulid.ID, *carriercapacity.Posting]{
 		Request: func(params *agenttoolports.ToolExecuteParams) (pulid.ID, error) {
-			return common.RequirePulid(params.Params, paramPostingID)
+			return toolparams.RequirePulid(params.Params, paramPostingID)
 		},
 		Plan: func(
 			ctx context.Context,
@@ -322,7 +324,7 @@ func NewDeleteCarrierCapacityPostingTool(keeper CapacityKeeper) agenttoolports.A
 		) (*carriercapacity.Posting, error) {
 			return keeper.PlanDelete(ctx, &carriercapacityports.DeleteCarrierCapacityPostingRequest{
 				ID:         id,
-				TenantInfo: common.TenantFrom(*params),
+				TenantInfo: toolparams.TenantFrom(*params),
 			})
 		},
 		Refused: func(pulid.ID) string { return "Would remove a carrier capacity posting." },
@@ -341,7 +343,7 @@ func NewDeleteCarrierCapacityPostingTool(keeper CapacityKeeper) agenttoolports.A
 			id pulid.ID,
 			params *agenttoolports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
-			tenant := common.TenantFrom(*params)
+			tenant := toolparams.TenantFrom(*params)
 			current, err := keeper.Get(ctx, &carriercapacityports.GetCarrierCapacityPostingRequest{
 				ID:         id,
 				TenantInfo: tenant,
@@ -358,7 +360,7 @@ func NewDeleteCarrierCapacityPostingTool(keeper CapacityKeeper) agenttoolports.A
 			}
 
 			return &agent.ToolExecutionResult{
-				Action: common.ActionDeleted,
+				Action: changepreview.ActionDeleted,
 				Kind:   capacityKind,
 				IDs:    map[string]string{paramPostingID: id.String()},
 			}, nil

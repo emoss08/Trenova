@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/billing/app/billingtransferservice"
@@ -124,7 +124,7 @@ func TestTransferToBilling_PreviewSaysWhatHappensToEachShipment(t *testing.T) {
 	}}
 	tool := NewTransferToBillingTool(planner, &fakeRunStarter{}).(*TransferToBillingTool)
 	params := agenttoolstest.ExecuteParams(map[string]any{
-		common.ParamShipmentIDs: []any{
+		toolparams.ParamShipmentIDs: []any{
 			ready.String(), completed.String(), blocked.String(), ready.String(),
 		},
 		paramMarkCompletedReady: true,
@@ -188,7 +188,7 @@ func TestTransferToBilling_PreviewWarnsWhenNothingWouldGo(t *testing.T) {
 	tool := NewTransferToBillingTool(planner, &fakeRunStarter{}).(*TransferToBillingTool)
 
 	preview, err := tool.Preview(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
-		common.ParamShipmentIDs: []any{id.String()},
+		toolparams.ParamShipmentIDs: []any{id.String()},
 	}))
 	require.NoError(t, err)
 
@@ -218,8 +218,8 @@ func TestTransferToBilling_TransfersASmallSetInTheCall(t *testing.T) {
 	tool := NewTransferToBillingTool(planner, runs).(*TransferToBillingTool)
 
 	result, err := tool.ExecuteWithResult(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
-		common.ParamShipmentIDs: []any{first.String(), second.String()},
-		common.ParamBillType:    "DebitMemo",
+		toolparams.ParamShipmentIDs: []any{first.String(), second.String()},
+		toolparams.ParamBillType:    "DebitMemo",
 	}))
 	require.NoError(t, err)
 
@@ -239,7 +239,7 @@ func TestTransferToBilling_HandsALargeSetToABackgroundRun(t *testing.T) {
 	runs := &fakeRunStarter{}
 	tool := NewTransferToBillingTool(planner, runs).(*TransferToBillingTool)
 	params := agenttoolstest.ExecuteParams(map[string]any{
-		common.ParamShipmentIDs: shipmentIDs(
+		toolparams.ParamShipmentIDs: shipmentIDs(
 			shipmentbillingports.MaxBulkTransferToBillingShipments + 1,
 		),
 	})
@@ -269,7 +269,7 @@ func TestTransferToBilling_ReportsARunAlreadyGoing(t *testing.T) {
 	tool := NewTransferToBillingTool(&fakeTransferPlanner{}, &fakeRunStarter{err: busy})
 
 	err := tool.Execute(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
-		common.ParamShipmentIDs: shipmentIDs(
+		toolparams.ParamShipmentIDs: shipmentIDs(
 			shipmentbillingports.MaxBulkTransferToBillingShipments + 1,
 		),
 	}))
@@ -286,7 +286,7 @@ func TestTransferToBilling_PreviewOfALargeSetChecksTheFirstHundred(t *testing.T)
 	tool := NewTransferToBillingTool(planner, &fakeRunStarter{}).(*TransferToBillingTool)
 
 	preview, err := tool.Preview(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
-		common.ParamShipmentIDs: shipmentIDs(250),
+		toolparams.ParamShipmentIDs: shipmentIDs(250),
 	}))
 	require.NoError(t, err)
 
@@ -305,11 +305,11 @@ func TestTransferToBilling_RefusesArgumentsItCannotRun(t *testing.T) {
 	tool := NewTransferToBillingTool(&fakeTransferPlanner{}, &fakeRunStarter{}).(*TransferToBillingTool)
 
 	for name, params := range map[string]map[string]any{
-		"no shipments":  {common.ParamShipmentIDs: []any{}},
-		"not an id":     {common.ParamShipmentIDs: []any{"PRO-1"}},
-		"bad bill type": {common.ParamShipmentIDs: shipmentIDs(1), common.ParamBillType: "Invoices"},
+		"no shipments":  {toolparams.ParamShipmentIDs: []any{}},
+		"not an id":     {toolparams.ParamShipmentIDs: []any{"PRO-1"}},
+		"bad bill type": {toolparams.ParamShipmentIDs: shipmentIDs(1), toolparams.ParamBillType: "Invoices"},
 		"too many": {
-			common.ParamShipmentIDs: shipmentIDs(shipmentbillingports.MaxBillingTransferCandidateIDs + 1),
+			toolparams.ParamShipmentIDs: shipmentIDs(shipmentbillingports.MaxBillingTransferCandidateIDs + 1),
 		},
 	} {
 		t.Run(name, func(t *testing.T) {
@@ -329,10 +329,13 @@ func TestTransferToBilling_DeclaresItsShipmentsASubsetAPersonMayNarrow(t *testin
 	tool := NewTransferToBillingTool(&fakeTransferPlanner{}, &fakeRunStarter{})
 
 	proposed := shipmentIDs(2)
-	fields := agenttoolports.ProposalFields(tool, map[string]any{common.ParamShipmentIDs: proposed})
+	fields := agenttoolports.ProposalFields(
+		tool,
+		map[string]any{toolparams.ParamShipmentIDs: proposed},
+	)
 	var subset *toolschema.Field
 	for idx := range fields {
-		if fields[idx].Name == common.ParamShipmentIDs {
+		if fields[idx].Name == toolparams.ParamShipmentIDs {
 			subset = &fields[idx]
 			continue
 		}

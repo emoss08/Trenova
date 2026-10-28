@@ -4,7 +4,10 @@ import (
 	"context"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/outboundpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -31,25 +34,25 @@ func (t *RequestMissingDocsTool) compose(
 	ctx context.Context,
 	params *agenttoolports.ToolExecuteParams,
 ) (*docsRequest, error) {
-	if err := common.GuardExecute(t, *params); err != nil {
+	if err := toolguard.GuardExecute(t, *params); err != nil {
 		return nil, err
 	}
 
-	profileID, err := common.OptionalID(params.Params, "profileId")
+	profileID, err := toolparams.OptionalID(params.Params, "profileId")
 	if err != nil {
 		return nil, err
 	}
-	subject, err := common.RequireString(params.Params, common.PreviewFieldSubject)
+	subject, err := toolparams.RequireString(params.Params, changepreview.PreviewFieldSubject)
 	if err != nil {
 		return nil, err
 	}
-	body, err := common.RequireString(params.Params, "body")
+	body, err := toolparams.RequireString(params.Params, "body")
 	if err != nil {
 		return nil, err
 	}
 
 	var to []string
-	if err = common.DecodeParam(params.Params, "to", &to); err != nil {
+	if err = toolparams.DecodeParam(params.Params, "to", &to); err != nil {
 		return nil, err
 	}
 
@@ -97,7 +100,7 @@ func (t *RequestMissingDocsTool) Preview(
 		return nil, err
 	}
 
-	sender, err := common.ResolveEmailSender(ctx, t.senders, composed.send)
+	sender, err := outboundpreview.ResolveEmailSender(ctx, t.senders, composed.send)
 	if err != nil {
 		return nil, err
 	}
@@ -108,9 +111,9 @@ func (t *RequestMissingDocsTool) Preview(
 	)
 	send := toolpreview.Send(
 		toolpreview.Record{Resource: permission.ResourceCustomerCommunication, Label: label},
-		common.EmailMessagePreview(
+		outboundpreview.EmailMessagePreview(
 			sender,
-			common.RenderedEmailPreview(composed.send, composed.versionID),
+			outboundpreview.RenderedEmailPreview(composed.send, composed.versionID),
 		),
 	)
 
@@ -124,8 +127,12 @@ func (t *RequestMissingDocsTool) Preview(
 	}
 
 	preview := toolpreview.Build(summary+". It cannot be recalled once sent.", send)
-	common.WarnSuppressedRecipients(preview, sender)
-	common.WarnSensitiveContent(preview, composed.data.AgentSubject, composed.data.AgentBody)
+	outboundpreview.WarnSuppressedRecipients(preview, sender)
+	outboundpreview.WarnSensitiveContent(
+		preview,
+		composed.data.AgentSubject,
+		composed.data.AgentBody,
+	)
 
 	return preview, nil
 }

@@ -4,7 +4,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/shipmentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -17,14 +19,14 @@ import (
 )
 
 var uncancelFields = []string{
-	common.FieldStatus,
-	common.FieldCanceledAt,
-	common.FieldCanceledByID,
-	common.FieldCancelReason,
+	changepreview.FieldStatus,
+	changepreview.FieldCanceledAt,
+	changepreview.FieldCanceledByID,
+	changepreview.FieldCancelReason,
 }
 
 var rerateFields = []string{
-	common.FieldFormulaTemplateID, "tariffInputs", common.FieldFreightChargeAmount,
+	changepreview.FieldFormulaTemplateID, "tariffInputs", changepreview.FieldFreightChargeAmount,
 	"otherChargeAmount",
 	"totalChargeAmount",
 }
@@ -34,12 +36,12 @@ func renderUncancel(
 	plan *shipmentserviceports.ShipmentChangePreview,
 ) (*agent.ToolPreview, error) {
 	change, err := toolpreview.Changed(
-		common.ShipmentRecord(plan.Before),
+		shipmentpreview.ShipmentRecord(plan.Before),
 		plan.Before,
 		plan.After,
 		toolpreview.Only(uncancelFields...),
 		toolpreview.WithRefs(map[string]permission.Resource{
-			common.FieldCanceledByID: permission.ResourceUser,
+			changepreview.FieldCanceledByID: permission.ResourceUser,
 		}),
 	)
 	if err != nil {
@@ -58,12 +60,12 @@ func renderOwnershipTransfer(
 	plan *shipmentserviceports.ShipmentChangePreview,
 ) (*agent.ToolPreview, error) {
 	change, err := toolpreview.Changed(
-		common.ShipmentRecord(plan.Before),
+		shipmentpreview.ShipmentRecord(plan.Before),
 		plan.Before,
 		plan.After,
-		toolpreview.Only(common.ParamOwnerID),
+		toolpreview.Only(toolparams.ParamOwnerID),
 		toolpreview.WithRefs(map[string]permission.Resource{
-			common.ParamOwnerID: permission.ResourceUser,
+			toolparams.ParamOwnerID: permission.ResourceUser,
 		}),
 	)
 	if err != nil {
@@ -97,12 +99,12 @@ func renderRerate(
 	}
 
 	change, err := toolpreview.Changed(
-		common.ShipmentRecord(plan.Before),
+		shipmentpreview.ShipmentRecord(plan.Before),
 		plan.Before,
 		plan.After,
 		toolpreview.Only(rerateFields...),
 		toolpreview.WithRefs(map[string]permission.Resource{
-			common.FieldFormulaTemplateID: permission.ResourceFormulaTemplate,
+			changepreview.FieldFormulaTemplateID: permission.ResourceFormulaTemplate,
 		}),
 	)
 	if err != nil {
@@ -159,7 +161,7 @@ func renderDistance(
 				Resource: permission.ResourceShipmentMove,
 				ID:       move.ID,
 				Label:    fmt.Sprintf("%s move %d", plan.Before.ProNumber, move.Sequence+1),
-				Version:  common.MoveVersion(move),
+				Version:  shipmentpreview.MoveVersion(move),
 			},
 			&moveDistanceView{Distance: previous.Distance},
 			&moveDistanceView{Distance: move.Distance},
@@ -184,7 +186,7 @@ func renderDistance(
 
 	return toolpreview.Build(fmt.Sprintf(
 		"Would save new miles on %s of shipment %s, %.1f in all.",
-		common.CountOf(len(changes), "move"),
+		changepreview.CountOf(len(changes), "move"),
 		plan.Before.ProNumber,
 		total,
 	), changes...), nil
@@ -210,7 +212,7 @@ func renderDuplicate(
 		if copied == nil {
 			continue
 		}
-		change, err := common.ShipmentCopyChange(
+		change, err := shipmentpreview.ShipmentCopyChange(
 			fmt.Sprintf("Copy %d of %s", idx+1, plan.Source.ProNumber),
 			plan.Source.ProNumber,
 			copied,
@@ -229,7 +231,7 @@ func renderDuplicate(
 	return toolpreview.Build(fmt.Sprintf(
 		"Would copy shipment %s into %s, %s. Each copy gets its own pro number and order.",
 		plan.Source.ProNumber,
-		common.CountOf(req.Count, "new shipment"),
+		changepreview.CountOf(req.Count, "new shipment"),
 		dates,
 	), changes...), nil
 }

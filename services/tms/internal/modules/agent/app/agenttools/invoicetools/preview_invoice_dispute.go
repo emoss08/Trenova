@@ -3,7 +3,9 @@ package invoicetools
 import (
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/invoicepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
@@ -15,28 +17,28 @@ import (
 const fieldDisputeStatus = "disputeStatus"
 
 var disputeFields = []string{
-	common.FieldStatus,
+	changepreview.FieldStatus,
 	paramDisputeReasonCode,
 	paramDisputedAmount,
 	fieldDisputeNotes,
 	paramDisputeResolution,
 	paramResolutionNotes,
-	common.FieldResolvedByID,
-	common.FieldResolvedAt,
-	common.FieldOpenedByID,
-	common.ParamInvoiceID,
-	common.FieldCustomerID,
+	changepreview.FieldResolvedByID,
+	changepreview.FieldResolvedAt,
+	changepreview.FieldOpenedByID,
+	toolparams.ParamInvoiceID,
+	changepreview.FieldCustomerID,
 }
 
 var disputeRefs = map[string]permission.Resource{
-	common.ParamInvoiceID:    permission.ResourceInvoice,
-	common.FieldCustomerID:   permission.ResourceCustomer,
-	common.FieldOpenedByID:   permission.ResourceUser,
-	common.FieldResolvedByID: permission.ResourceUser,
+	toolparams.ParamInvoiceID:       permission.ResourceInvoice,
+	changepreview.FieldCustomerID:   permission.ResourceCustomer,
+	changepreview.FieldOpenedByID:   permission.ResourceUser,
+	changepreview.FieldResolvedByID: permission.ResourceUser,
 }
 
 func disputeLabel(inv *invoice.Invoice) string {
-	return "Dispute on " + common.InvoiceLabel(inv)
+	return "Dispute on " + invoicepreview.InvoiceLabel(inv)
 }
 
 func disputePreview(
@@ -50,7 +52,7 @@ func disputePreview(
 	opts := []toolpreview.Option{
 		toolpreview.Only(disputeFields...),
 		toolpreview.WithRefs(disputeRefs),
-		toolpreview.Volatile(common.FieldResolvedAt),
+		toolpreview.Volatile(changepreview.FieldResolvedAt),
 	}
 
 	var (
@@ -61,7 +63,7 @@ func disputePreview(
 		change, err = toolpreview.Create(record, plan.After, opts...)
 	} else {
 		record.ID = plan.Before.ID
-		record.Version = common.PinnedVersion(plan.Before.Version)
+		record.Version = changepreview.PinnedVersion(plan.Before.Version)
 		change, err = toolpreview.Changed(record, plan.Before, plan.After, opts...)
 	}
 	if err != nil {
@@ -69,7 +71,10 @@ func disputePreview(
 	}
 	toolpreview.AttachMoney(change, toolpreview.MoneyBlock(
 		plan.InvoiceBefore.CurrencyCode,
-		agent.MoneyLine{Label: "Disputed", After: common.KnownAmount(plan.After.DisputedAmount)},
+		agent.MoneyLine{
+			Label: "Disputed",
+			After: changepreview.KnownAmount(plan.After.DisputedAmount),
+		},
 	), toolpreview.SensitiveAs(paramDisputedAmount))
 
 	changes := []*agent.RecordChange{change}
@@ -77,8 +82,8 @@ func disputePreview(
 		flag, flagErr := toolpreview.Changed(toolpreview.Record{
 			Resource: permission.ResourceInvoice,
 			ID:       plan.InvoiceBefore.ID,
-			Label:    common.InvoiceLabel(plan.InvoiceBefore),
-			Version:  common.PinnedVersion(plan.InvoiceBefore.Version),
+			Label:    invoicepreview.InvoiceLabel(plan.InvoiceBefore),
+			Version:  changepreview.PinnedVersion(plan.InvoiceBefore.Version),
 		}, plan.InvoiceBefore, plan.InvoiceAfter, toolpreview.Only(fieldDisputeStatus))
 		if flagErr != nil {
 			return nil, flagErr
@@ -90,6 +95,6 @@ func disputePreview(
 		summary,
 		plan.After.ReasonCode,
 		money.FormatMinor(plan.After.DisputedAmountMinor, plan.InvoiceBefore.CurrencyCode),
-		common.InvoiceLabel(plan.InvoiceBefore),
+		invoicepreview.InvoiceLabel(plan.InvoiceBefore),
 	), changes...), nil
 }

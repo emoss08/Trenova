@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -54,10 +56,10 @@ var checklistItemMoves = agenttoolschema.Source(
 )
 
 var checklistItemFields = []string{
-	common.FieldStatus,
+	changepreview.FieldStatus,
 	wfFieldCompletedAt,
 	"completedById",
-	common.FieldNote,
+	changepreview.FieldNote,
 	paramEvidenceDocument,
 }
 
@@ -137,7 +139,7 @@ func newStartWorkerChecklistTool(checklists ChecklistKeeper) agenttoolports.Agen
 		permission.ResourceWorkerChecklist,
 		permission.OpCreate,
 	), map[string]any{
-		common.ParamWorkerID: common.WorkerProperty(),
+		toolparams.ParamWorkerID: toolparams.WorkerProperty(),
 		paramChecklistTemplate: agenttoolschema.RecordIDText(
 			permission.ResourceWorkerChecklistTemplate,
 			"The template, from worker_list_checklists. Never "+
@@ -145,28 +147,28 @@ func newStartWorkerChecklistTool(checklists ChecklistKeeper) agenttoolports.Agen
 		),
 		paramStartedAt: agenttoolschema.Date("The day it starts, which its items fall due from. " +
 			"Defaults to today."),
-	}, common.ParamWorkerID, paramChecklistTemplate)
+	}, toolparams.ParamWorkerID, paramChecklistTemplate)
 
-	return common.NewReportingReceivableTool(spec, common.ReceivablePlan[
+	return toolspec.NewReportingReceivableTool(spec, toolspec.ReceivablePlan[
 		*workerchecklistservice.StartRequest, *workerchecklistservice.StartPlan,
 	]{
 		Request: func(
 			params *agenttoolports.ToolExecuteParams,
 		) (*workerchecklistservice.StartRequest, error) {
-			workerID, err := common.RequirePulid(params.Params, common.ParamWorkerID)
+			workerID, err := toolparams.RequirePulid(params.Params, toolparams.ParamWorkerID)
 			if err != nil {
 				return nil, err
 			}
-			templateID, err := common.RequirePulid(params.Params, paramChecklistTemplate)
+			templateID, err := toolparams.RequirePulid(params.Params, paramChecklistTemplate)
 			if err != nil {
 				return nil, err
 			}
-			started, err := common.OptionalScheduleDay(params.Params, paramStartedAt)
+			started, err := toolparams.OptionalScheduleDay(params.Params, paramStartedAt)
 			if err != nil {
 				return nil, err
 			}
 			req := &workerchecklistservice.StartRequest{
-				TenantInfo: common.TenantFrom(*params),
+				TenantInfo: toolparams.TenantFrom(*params),
 				WorkerID:   workerID,
 				TemplateID: templateID,
 				UserID:     params.Actor.UserID,
@@ -197,8 +199,15 @@ func newStartWorkerChecklistTool(checklists ChecklistKeeper) agenttoolports.Agen
 			}
 			change, err := toolpreview.Create(
 				wfRecord(permission.ResourceWorkerChecklist, pulid.Nil, plan.Checklist.Name, 0),
-				plan.Checklist, wfOptions(wfFieldWorkerID, paramChecklistTemplate, "name",
-					common.FieldKind, common.FieldStatus, wfFieldStartedAt, "dueAt")...)
+				plan.Checklist, wfOptions(
+					wfFieldWorkerID,
+					paramChecklistTemplate,
+					"name",
+					changepreview.FieldKind,
+					changepreview.FieldStatus,
+					wfFieldStartedAt,
+					"dueAt",
+				)...)
 			if err != nil {
 				return nil, err
 			}
@@ -229,19 +238,19 @@ type checklistItemChange struct {
 func checklistItemChangeFrom(
 	params *agenttoolports.ToolExecuteParams,
 ) (*checklistItemChange, error) {
-	id, err := common.RequirePulid(params.Params, paramChecklistItemID)
+	id, err := toolparams.RequirePulid(params.Params, paramChecklistItemID)
 	if err != nil {
 		return nil, err
 	}
-	move, err := common.RequireEnum(params.Params, paramItemMove, checklistItemMoves.Values)
+	move, err := toolparams.RequireEnum(params.Params, paramItemMove, checklistItemMoves.Values)
 	if err != nil {
 		return nil, err
 	}
-	note, err := common.BoundedText(params.Params, common.FieldNote, wfNoteChars)
+	note, err := toolparams.BoundedText(params.Params, changepreview.FieldNote, wfNoteChars)
 	if err != nil {
 		return nil, err
 	}
-	evidence, err := common.OptionalID(params.Params, paramEvidenceDocument)
+	evidence, err := toolparams.OptionalID(params.Params, paramEvidenceDocument)
 	if err != nil {
 		return nil, err
 	}
@@ -252,13 +261,13 @@ func checklistItemChangeFrom(
 		}
 		return &checklistItemChange{move: move, reopen: &workerchecklistservice.ReopenItemRequest{
 			ID:         id,
-			TenantInfo: common.TenantFrom(*params),
+			TenantInfo: toolparams.TenantFrom(*params),
 			UserID:     params.Actor.UserID,
 		}}, nil
 	}
 	return &checklistItemChange{move: move, item: &workerchecklistservice.ItemRequest{
 		ID:                 id,
-		TenantInfo:         common.TenantFrom(*params),
+		TenantInfo:         toolparams.TenantFrom(*params),
 		Note:               note,
 		EvidenceDocumentID: evidence,
 		UserID:             params.Actor.UserID,
@@ -279,7 +288,11 @@ func (c *checklistItemChange) plan(
 	case checklistItemReopen:
 		return checklists.PlanReopenItem(ctx, c.reopen)
 	}
-	return nil, common.ErrUnknownValue(paramItemMove, string(c.move), checklistItemMoves.Names())
+	return nil, toolparams.ErrUnknownValue(
+		paramItemMove,
+		string(c.move),
+		checklistItemMoves.Names(),
+	)
 }
 
 func (c *checklistItemChange) run(
@@ -296,7 +309,11 @@ func (c *checklistItemChange) run(
 	case checklistItemReopen:
 		return checklists.ReopenItem(ctx, c.reopen)
 	}
-	return nil, common.ErrUnknownValue(paramItemMove, string(c.move), checklistItemMoves.Names())
+	return nil, toolparams.ErrUnknownValue(
+		paramItemMove,
+		string(c.move),
+		checklistItemMoves.Names(),
+	)
 }
 
 func newUpdateWorkerChecklistItemTool(checklists ChecklistKeeper) agenttoolports.AgentTool {
@@ -318,7 +335,7 @@ func newUpdateWorkerChecklistItemTool(checklists ChecklistKeeper) agenttoolports
 		),
 		paramItemMove: agenttoolschema.Enum("Complete, Skip, NotApplicable or Reopen.",
 			checklistItemMoves),
-		common.FieldNote: common.StringProperty(
+		changepreview.FieldNote: toolparams.StringProperty(
 			"What was done, or why it was skipped or does not apply. "+
 				"Required to skip or mark not applicable.",
 			wfNoteChars,
@@ -331,7 +348,7 @@ func newUpdateWorkerChecklistItemTool(checklists ChecklistKeeper) agenttoolports
 	}, paramChecklistItemID, paramItemMove), paramChecklistItemID,
 		permission.ResourceWorkerChecklist)
 
-	return common.NewReportingReceivableTool(spec, common.ReceivablePlan[
+	return toolspec.NewReportingReceivableTool(spec, toolspec.ReceivablePlan[
 		*checklistItemChange, *workerchecklistservice.ItemPlan,
 	]{
 		Request: checklistItemChangeFrom,
@@ -425,24 +442,27 @@ func newCancelWorkerChecklistTool(checklists ChecklistKeeper) agenttoolports.Age
 			"The checklist, from worker_list_checklists. Never "+
 				"guess one.",
 		),
-		common.FieldReason: common.StringProperty("Why it no longer applies.", wfShortChars),
-	}, paramChecklistID, common.FieldReason), paramChecklistID, permission.ResourceWorkerChecklist)
+		changepreview.FieldReason: toolparams.StringProperty(
+			"Why it no longer applies.",
+			wfShortChars,
+		),
+	}, paramChecklistID, changepreview.FieldReason), paramChecklistID, permission.ResourceWorkerChecklist)
 	spec.SearchTerms = []string{"drop checklist", "no longer applies"}
 	spec.MaxTier = agent.TierPropose
 
-	return common.NewReportingReceivableTool(spec, common.ReceivablePlan[
+	return toolspec.NewReportingReceivableTool(spec, toolspec.ReceivablePlan[
 		*workerchecklistservice.CancelRequest, *workerchecklistservice.ChecklistChange,
 	]{
 		Request: func(
 			params *agenttoolports.ToolExecuteParams,
 		) (*workerchecklistservice.CancelRequest, error) {
-			id, err := common.RequirePulid(params.Params, paramChecklistID)
+			id, err := toolparams.RequirePulid(params.Params, paramChecklistID)
 			if err != nil {
 				return nil, err
 			}
-			reason, err := common.RequireBoundedText(
+			reason, err := toolparams.RequireBoundedText(
 				params.Params,
-				common.FieldReason,
+				changepreview.FieldReason,
 				wfShortChars,
 			)
 			if err != nil {
@@ -450,7 +470,7 @@ func newCancelWorkerChecklistTool(checklists ChecklistKeeper) agenttoolports.Age
 			}
 			return &workerchecklistservice.CancelRequest{
 				ID:         id,
-				TenantInfo: common.TenantFrom(*params),
+				TenantInfo: toolparams.TenantFrom(*params),
 				Reason:     reason,
 				UserID:     params.Actor.UserID,
 			}, nil
@@ -469,8 +489,11 @@ func newCancelWorkerChecklistTool(checklists ChecklistKeeper) agenttoolports.Age
 			_ *workerchecklistservice.CancelRequest,
 			change *workerchecklistservice.ChecklistChange,
 		) (*agent.ToolPreview, error) {
-			recorded, err := toolpreview.Changed(checklistRecord(change.Before), change.Before,
-				change.After, append(wfOptions(common.FieldStatus, "cancelledAt", "cancelReason"),
+			recorded, err := toolpreview.Changed(
+				checklistRecord(change.Before),
+				change.Before,
+				change.After,
+				append(wfOptions(changepreview.FieldStatus, "cancelledAt", "cancelReason"),
 					toolpreview.Volatile("cancelledAt"))...)
 			if err != nil {
 				return nil, err

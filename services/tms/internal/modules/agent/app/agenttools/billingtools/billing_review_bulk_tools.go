@@ -3,7 +3,9 @@ package billingtools
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/billingqueuepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/recordbatch"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -45,27 +47,29 @@ const artifactBillingQueueItem = "billing_queue_item"
 // card, one decision, each item assigned as AssignBillerTool would.
 type AssignBillersTool struct {
 	single *AssignBillerTool
-	batch  *common.RecordBatch
+	batch  *recordbatch.RecordBatch
 }
 
-func NewAssignBillersTool(billing common.BillingQueueDecider) agenttoolports.AgentTool {
+func NewAssignBillersTool(
+	billing billingqueuepreview.BillingQueueDecider,
+) agenttoolports.AgentTool {
 	single, _ := NewAssignBillerTool(billing).(*AssignBillerTool)
 
 	return &AssignBillersTool{
 		single: single,
-		batch: &common.RecordBatch{
-			Param:       common.ParamBillingQueueItemIDs,
-			SingleParam: common.ParamBillingQueueItemID,
+		batch: &recordbatch.RecordBatch{
+			Param:       billingqueuepreview.ParamBillingQueueItemIDs,
+			SingleParam: billingqueuepreview.ParamBillingQueueItemID,
 			Resource:    permission.ResourceBillingQueue,
 			Kinds:       []permission.RecordKind{permission.KindBillingQueueItem},
-			Noun:        common.NounBillingQueueItem,
-			Nouns:       common.NounBillingQueueItems,
+			Noun:        billingqueuepreview.NounBillingQueueItem,
+			Nouns:       billingqueuepreview.NounBillingQueueItems,
 			Verb:        verbAssignBiller,
 			Past:        pastAssigned,
 			Shared:      []string{paramBillerID},
 			Single:      single,
 			Unchanged:   unchangedAlreadyThere,
-			Labels:      common.QueueItemNumbers(billing),
+			Labels:      billingqueuepreview.QueueItemNumbers(billing),
 		},
 	}
 }
@@ -85,13 +89,13 @@ func (t *AssignBillersTool) Target(params map[string]any) (agenttoolports.ToolTa
 }
 
 func (t *AssignBillersTool) SearchTerms() []string {
-	return []string{"biller", "reviewer", "assign me", "start review", common.SearchTermBulk}
+	return []string{"biller", "reviewer", "assign me", "start review", recordbatch.SearchTermBulk}
 }
 
 func (t *AssignBillersTool) Description() string { return bulkAssignBillersDescription }
 
 func (t *AssignBillersTool) ParamSchema() map[string]any {
-	return common.BulkIDsSchema(t.batch, bulkQueueItemIDsDescription, map[string]any{
+	return recordbatch.BulkIDsSchema(t.batch, bulkQueueItemIDsDescription, map[string]any{
 		paramBillerID: billerProperty(),
 	})
 }
@@ -144,27 +148,29 @@ func (t *AssignBillersTool) ExecuteWithResult(
 // TransitionToInReviewTool would.
 type TransitionItemsToInReviewTool struct {
 	single *TransitionToInReviewTool
-	batch  *common.RecordBatch
+	batch  *recordbatch.RecordBatch
 }
 
-func NewTransitionItemsToInReviewTool(billing common.BillingQueueDecider) agenttoolports.AgentTool {
+func NewTransitionItemsToInReviewTool(
+	billing billingqueuepreview.BillingQueueDecider,
+) agenttoolports.AgentTool {
 	single, _ := NewTransitionToInReviewTool(billing).(*TransitionToInReviewTool)
 
 	return &TransitionItemsToInReviewTool{
 		single: single,
-		batch: &common.RecordBatch{
-			Param:       common.ParamBillingQueueItemIDs,
-			SingleParam: common.ParamBillingQueueItemID,
+		batch: &recordbatch.RecordBatch{
+			Param:       billingqueuepreview.ParamBillingQueueItemIDs,
+			SingleParam: billingqueuepreview.ParamBillingQueueItemID,
 			Resource:    permission.ResourceBillingQueue,
 			Kinds:       []permission.RecordKind{permission.KindBillingQueueItem},
-			Noun:        common.NounBillingQueueItem,
-			Nouns:       common.NounBillingQueueItems,
+			Noun:        billingqueuepreview.NounBillingQueueItem,
+			Nouns:       billingqueuepreview.NounBillingQueueItems,
 			Verb:        verbMoveIntoReview,
 			Past:        pastMovedIntoReview,
 			Shared:      []string{paramBillerID},
 			Single:      single,
 			Unchanged:   unchangedAlreadyThere,
-			Labels:      common.QueueItemNumbers(billing),
+			Labels:      billingqueuepreview.QueueItemNumbers(billing),
 		},
 	}
 }
@@ -178,13 +184,13 @@ func (t *TransitionItemsToInReviewTool) Target(
 }
 
 func (t *TransitionItemsToInReviewTool) SearchTerms() []string {
-	return []string{"review", "unblock", common.SearchTermBulk}
+	return []string{"review", "unblock", recordbatch.SearchTermBulk}
 }
 
 func (t *TransitionItemsToInReviewTool) Description() string { return bulkInReviewDescription }
 
 func (t *TransitionItemsToInReviewTool) ParamSchema() map[string]any {
-	return common.BulkIDsSchema(t.batch, bulkQueueItemIDsDescription, map[string]any{
+	return recordbatch.BulkIDsSchema(t.batch, bulkQueueItemIDsDescription, map[string]any{
 		paramBillerID: billerProperty(),
 	})
 }
@@ -213,15 +219,15 @@ func (t *TransitionItemsToInReviewTool) tierLimit(
 	if params.Actor == nil {
 		return agent.TierPropose
 	}
-	ids, err := common.RequirePulidSlice(
+	ids, err := toolparams.RequirePulidSlice(
 		params.Params,
-		common.ParamBillingQueueItemIDs,
-		common.MaxBulkRecords,
+		billingqueuepreview.ParamBillingQueueItemIDs,
+		recordbatch.MaxBulkRecords,
 	)
 	if err != nil {
 		return agent.TierPropose
 	}
-	tenant := common.TenantFrom(params)
+	tenant := toolparams.TenantFrom(params)
 	for _, id := range ids {
 		if t.single.tierFor(ctx, tenant, id) == agent.TierPropose {
 			return agent.TierPropose

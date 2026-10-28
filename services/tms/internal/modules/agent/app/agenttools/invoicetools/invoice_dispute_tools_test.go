@@ -5,7 +5,9 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
@@ -131,10 +133,10 @@ func openDisputePlan() *invoiceports.InvoiceDisputePreview {
 
 func openDisputeParams(invoiceID pulid.ID) agenttoolports.ToolExecuteParams {
 	return agenttoolstest.ExecuteParams(map[string]any{
-		common.ParamInvoiceID:  invoiceID.String(),
-		paramDisputeReasonCode: string(invoice.DisputeReasonAccessorialDisputed),
-		paramDisputedAmount:    "150.00",
-		common.ParamNote:       " Customer disputes the detention line ",
+		toolparams.ParamInvoiceID: invoiceID.String(),
+		paramDisputeReasonCode:    string(invoice.DisputeReasonAccessorialDisputed),
+		paramDisputedAmount:       "150.00",
+		toolparams.ParamNote:      " Customer disputes the detention line ",
 	})
 }
 
@@ -200,11 +202,11 @@ func TestOpenInvoiceDispute_RefusesBadArguments(t *testing.T) {
 	invoiceID := pulid.MustNew("inv_").String()
 	cases := map[string]map[string]any{
 		"an unknown reason": {
-			common.ParamInvoiceID: invoiceID, paramDisputeReasonCode: "TooExpensive",
+			toolparams.ParamInvoiceID: invoiceID, paramDisputeReasonCode: "TooExpensive",
 			paramDisputedAmount: "10",
 		},
 		"a negative amount": {
-			common.ParamInvoiceID: invoiceID, paramDisputeReasonCode: "Other",
+			toolparams.ParamInvoiceID: invoiceID, paramDisputeReasonCode: "Other",
 			paramDisputedAmount: "-10",
 		},
 		"no invoice": {paramDisputeReasonCode: "Other", paramDisputedAmount: "10"},
@@ -264,9 +266,9 @@ func TestResolveInvoiceDispute_OnlyAPersonResolves(t *testing.T) {
 	disputer := &fakeDisputer{preview: resolvedDisputePlan(), guard: &agenttoolstest.WriteGuard{}}
 	tool := NewResolveInvoiceDisputeTool(disputer)
 	params := agenttoolstest.ExecuteParams(map[string]any{
-		common.ParamDisputeID:  disputer.preview.Before.ID.String(),
-		paramDisputeResolution: string(invoice.DisputeResolutionInvoiceUpheld),
-		paramResolutionNotes:   "Detention was on the rate confirmation",
+		toolparams.ParamDisputeID: disputer.preview.Before.ID.String(),
+		paramDisputeResolution:    string(invoice.DisputeResolutionInvoiceUpheld),
+		paramResolutionNotes:      "Detention was on the rate confirmation",
 	})
 
 	preview := agenttoolstest.PreviewWithoutWrites(
@@ -293,7 +295,7 @@ func TestResolveInvoiceDispute_OnlyAPersonResolves(t *testing.T) {
 		).After,
 	)
 
-	require.ErrorIs(t, tool.Execute(t.Context(), params), common.ErrNeedsAPersonsApproval)
+	require.ErrorIs(t, tool.Execute(t.Context(), params), toolspec.ErrNeedsAPersonsApproval)
 	assert.Nil(t, disputer.resolved)
 
 	params.ProposalID = pulid.MustNew("ap_")
@@ -315,12 +317,12 @@ func TestResolveInvoiceDispute_AnAgentPrincipalCannotEvenPreviewIt(t *testing.T)
 	disputer := &fakeDisputer{preview: resolvedDisputePlan()}
 	tool := NewResolveInvoiceDisputeTool(disputer).(agenttoolports.ToolPreviewer)
 	params := agenttoolstest.AgentParamsFor(map[string]any{
-		common.ParamDisputeID:  disputer.preview.Before.ID.String(),
-		paramDisputeResolution: string(invoice.DisputeResolutionInvoiceUpheld),
+		toolparams.ParamDisputeID: disputer.preview.Before.ID.String(),
+		paramDisputeResolution:    string(invoice.DisputeResolutionInvoiceUpheld),
 	})
 
 	_, err := tool.Preview(t.Context(), params)
-	require.ErrorIs(t, err, common.ErrAgentCannotApprove)
+	require.ErrorIs(t, err, toolguard.ErrAgentCannotApprove)
 }
 
 func TestWithdrawInvoiceDispute_WithdrawsWithItsNotes(t *testing.T) {
@@ -332,8 +334,8 @@ func TestWithdrawInvoiceDispute_WithdrawsWithItsNotes(t *testing.T) {
 	disputer := &fakeDisputer{preview: plan, guard: &agenttoolstest.WriteGuard{}}
 	tool := NewWithdrawInvoiceDisputeTool(disputer)
 	params := agenttoolstest.ExecuteParams(map[string]any{
-		common.ParamDisputeID: plan.Before.ID.String(),
-		common.ParamNote:      "Paid in full on the 12th",
+		toolparams.ParamDisputeID: plan.Before.ID.String(),
+		toolparams.ParamNote:      "Paid in full on the 12th",
 	})
 
 	preview := agenttoolstest.PreviewWithoutWrites(

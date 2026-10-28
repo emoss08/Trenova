@@ -5,7 +5,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -68,11 +69,11 @@ func ediRecordSet(
 	params *agenttoolports.ToolExecuteParams,
 	key string,
 ) ([]pulid.ID, error) {
-	if err := common.GuardPreview(tool, params); err != nil {
+	if err := toolguard.GuardPreview(tool, params); err != nil {
 		return nil, err
 	}
 
-	ids, err := common.RequirePulidSlice(params.Params, key, ediservice.MaxBulkEDIActionItems)
+	ids, err := toolparams.RequirePulidSlice(params.Params, key, ediservice.MaxBulkEDIActionItems)
 	if err != nil {
 		return nil, err
 	}
@@ -182,7 +183,7 @@ func (t *RetryEDIMessageDeliveryTool) ExecuteWithResult(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
 ) (*agent.ToolExecutionResult, error) {
-	if err := common.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return nil, err
 	}
 	if !params.ApprovedFromProposal() {
@@ -197,7 +198,7 @@ func (t *RetryEDIMessageDeliveryTool) ExecuteWithResult(
 	result, err := t.deliveries.BulkRetryMessageDelivery(
 		ctx,
 		&ediservice.BulkRetryMessageDeliveryRequest{
-			TenantInfo: common.TenantFrom(params),
+			TenantInfo: toolparams.TenantFrom(params),
 			MessageIDs: ids,
 		},
 	)
@@ -243,24 +244,24 @@ func (t *ReplayEDIMessageTool) Policy() agenttoolports.ToolPolicy {
 }
 
 func (t *ReplayEDIMessageTool) Target(params map[string]any) (agenttoolports.ToolTarget, bool) {
-	return common.TargetOf(params, paramEDIMessageID, permission.ResourceEDI)
+	return toolparams.TargetOf(params, paramEDIMessageID, permission.ResourceEDI)
 }
 
 func (t *ReplayEDIMessageTool) request(
 	params *agenttoolports.ToolExecuteParams,
 ) (*ediservice.RetryMessageDeliveryRequest, error) {
-	if err := common.GuardPreview(t, params); err != nil {
+	if err := toolguard.GuardPreview(t, params); err != nil {
 		return nil, err
 	}
 
-	messageID, err := common.RequirePulid(params.Params, paramEDIMessageID)
+	messageID, err := toolparams.RequirePulid(params.Params, paramEDIMessageID)
 	if err != nil {
 		return nil, err
 	}
 
 	return &ediservice.RetryMessageDeliveryRequest{
 		MessageID:  messageID,
-		TenantInfo: common.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(*params),
 	}, nil
 }
 
@@ -282,7 +283,7 @@ func (t *ReplayEDIMessageTool) Execute(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
-	if err := common.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
 	}
 	if !params.ApprovedFromProposal() {
@@ -365,7 +366,7 @@ func (t *ReprocessEDIInboundFilesTool) ExecuteWithResult(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
 ) (*agent.ToolExecutionResult, error) {
-	if err := common.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return nil, err
 	}
 	if !params.ApprovedFromProposal() {
@@ -380,7 +381,7 @@ func (t *ReprocessEDIInboundFilesTool) ExecuteWithResult(
 	result, err := t.files.BulkReprocessInboundFiles(
 		ctx,
 		&ediinboundservice.BulkReprocessInboundFilesRequest{
-			TenantInfo: common.TenantFrom(params),
+			TenantInfo: toolparams.TenantFrom(params),
 			FileIDs:    ids,
 		},
 	)

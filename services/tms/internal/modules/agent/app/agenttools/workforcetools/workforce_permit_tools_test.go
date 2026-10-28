@@ -5,7 +5,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -117,14 +118,14 @@ func TestRecordShipmentPermit_ChecksWhatTheStateIssued(t *testing.T) {
 	permits := newFakePermits()
 	tool := newRecordShipmentPermitTool(permits)
 	params := agenttoolstest.ExecuteParams(map[string]any{
-		common.ParamShipmentID: permits.permit.ShipmentID.String(),
-		paramStateID:           permits.permit.StateID.String(),
-		paramPermitNumber:      "OH-99812",
-		common.FieldStatus:     "Active",
-		paramPermitIssued:      "2026-09-29T00:00:00-04:00",
-		paramPermitExpiry:      "2026-10-04T23:59:00-04:00",
-		paramPermitCost:        "85.00",
-		common.ParamNote:       "Daylight travel only",
+		toolparams.ParamShipmentID: permits.permit.ShipmentID.String(),
+		paramStateID:               permits.permit.StateID.String(),
+		paramPermitNumber:          "OH-99812",
+		changepreview.FieldStatus:  "Active",
+		paramPermitIssued:          "2026-09-29T00:00:00-04:00",
+		paramPermitExpiry:          "2026-10-04T23:59:00-04:00",
+		paramPermitCost:            "85.00",
+		toolparams.ParamNote:       "Daylight travel only",
 	})
 
 	preview := agenttoolstest.PreviewWithoutWrites(
@@ -141,8 +142,8 @@ func TestRecordShipmentPermit_ChecksWhatTheStateIssued(t *testing.T) {
 	assert.Equal(t, params.OrganizationID, permits.created.OrganizationID)
 	assert.True(t, permits.created.Cost.Valid)
 	require.NotNil(t, permits.created.ExpiresAt)
-	assert.Equal(t, permits.permit.ShipmentID.String(), result.IDs[common.ParamShipmentID])
-	assert.Equal(t, common.ShipmentRecordEntity, result.Record.EntityType)
+	assert.Equal(t, permits.permit.ShipmentID.String(), result.IDs[toolparams.ParamShipmentID])
+	assert.Equal(t, changepreview.ShipmentRecordEntity, result.Record.EntityType)
 
 	policy := tool.Policy()
 	assert.Equal(t, permission.ResourcePermit, policy.Resource)
@@ -150,17 +151,17 @@ func TestRecordShipmentPermit_ChecksWhatTheStateIssued(t *testing.T) {
 
 	require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(),
 		agenttoolstest.ExecuteParams(map[string]any{
-			common.ParamShipmentID: permits.permit.ShipmentID.String(),
-			paramStateID:           permits.permit.StateID.String(),
-			paramPermitNumber:      "OH-99812",
-			common.FieldStatus:     "Active",
+			toolparams.ParamShipmentID: permits.permit.ShipmentID.String(),
+			paramStateID:               permits.permit.StateID.String(),
+			paramPermitNumber:          "OH-99812",
+			changepreview.FieldStatus:  "Active",
 		})), "an active permit records when it expires")
 	require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(),
 		agenttoolstest.ExecuteParams(map[string]any{
-			common.ParamShipmentID: permits.permit.ShipmentID.String(),
-			paramStateID:           permits.permit.StateID.String(),
-			paramPermitNumber:      "OH-99812",
-			paramPermitCost:        "-5",
+			toolparams.ParamShipmentID: permits.permit.ShipmentID.String(),
+			paramStateID:               permits.permit.StateID.String(),
+			paramPermitNumber:          "OH-99812",
+			paramPermitCost:            "-5",
 		})))
 }
 
@@ -170,9 +171,9 @@ func TestUpdateShipmentPermit_FindsThePermitOnItsShipment(t *testing.T) {
 	permits := newFakePermits()
 	tool := newUpdateShipmentPermitTool(permits)
 	params := agenttoolstest.ExecuteParams(map[string]any{
-		common.ParamShipmentID: permits.permit.ShipmentID.String(),
-		paramPermitID:          permits.permit.ID.String(),
-		common.FieldStatus:     "Void",
+		toolparams.ParamShipmentID: permits.permit.ShipmentID.String(),
+		paramPermitID:              permits.permit.ID.String(),
+		changepreview.FieldStatus:  "Void",
 	})
 
 	preview := agenttoolstest.PreviewWithoutWrites(
@@ -189,7 +190,7 @@ func TestUpdateShipmentPermit_FindsThePermitOnItsShipment(t *testing.T) {
 		agenttoolstest.FieldByPath(
 			t,
 			agenttoolstest.PreviewChange(t, preview, 0),
-			common.FieldStatus,
+			changepreview.FieldStatus,
 		).After,
 	)
 	require.NoError(t, tool.Execute(t.Context(), params))
@@ -199,8 +200,8 @@ func TestUpdateShipmentPermit_FindsThePermitOnItsShipment(t *testing.T) {
 
 	require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(),
 		agenttoolstest.ExecuteParams(map[string]any{
-			common.ParamShipmentID: pulid.MustNew("shp_").String(),
-			paramPermitID:          permits.permit.ID.String(),
-			common.FieldStatus:     "Void",
+			toolparams.ParamShipmentID: pulid.MustNew("shp_").String(),
+			paramPermitID:              permits.permit.ID.String(),
+			changepreview.FieldStatus:  "Void",
 		})), "a permit is changed only on the shipment it belongs to")
 }

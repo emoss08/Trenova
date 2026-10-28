@@ -4,7 +4,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/invoicepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment"
@@ -25,7 +27,7 @@ type adjustmentView struct {
 }
 
 var adjustmentRefs = map[string]permission.Resource{
-	common.ParamInvoiceID: permission.ResourceInvoice,
+	toolparams.ParamInvoiceID: permission.ResourceInvoice,
 }
 
 func adjustmentInvoiceLabel(number string) string {
@@ -52,9 +54,12 @@ func adjustmentMoney(
 		currency,
 		agent.MoneyLine{
 			Label: "Credited",
-			After: common.KnownAmount(figures.CreditTotalAmount.Abs()),
+			After: changepreview.KnownAmount(figures.CreditTotalAmount.Abs()),
 		},
-		agent.MoneyLine{Label: "Rebilled", After: common.KnownAmount(figures.RebillTotalAmount)},
+		agent.MoneyLine{
+			Label: "Rebilled",
+			After: changepreview.KnownAmount(figures.RebillTotalAmount),
+		},
 	), toolpreview.SensitiveAs("totalAmount"))
 }
 
@@ -122,7 +127,7 @@ func renderSubmission(req *adjustmentSubmission, plan *submissionPlan) (*agent.T
 		notes.WriteString(figureWarnings(figures))
 	}
 
-	subject := common.CountOf(len(plan.figures), "invoice adjustment")
+	subject := changepreview.CountOf(len(plan.figures), "invoice adjustment")
 	if plan.draft != nil {
 		subject = "the draft " + adjustmentLabel(plan.draft.Kind, plan.figures[0].InvoiceNumber)
 	}
@@ -194,7 +199,7 @@ func renderDraft(
 	adjustmentMoney(change, plan.Figures, plan.Invoice.CurrencyCode)
 
 	summary := fmt.Sprintf("Would save a draft %s adjustment of %s for a biller to submit; "+
-		"nothing is credited until then.", plan.After.Kind, common.InvoiceLabel(plan.Invoice))
+		"nothing is credited until then.", plan.After.Kind, invoicepreview.InvoiceLabel(plan.Invoice))
 	if refusal := figuresRefusal(
 		[]*invoiceadjustmentports.InvoiceAdjustmentPreview{plan.Figures},
 	); refusal != nil {
@@ -219,13 +224,13 @@ func renderDecision(
 		LineCount:      len(adjustment.Lines),
 	}
 	after := *before
-	verb := common.VerbApprove
+	verb := changepreview.VerbApprove
 	figures := plan.Figures
 	if req.approve {
 		after.Status = string(invoiceadjustment.StatusExecuted)
 		after.ApprovalStatus = string(invoiceadjustment.ApprovalStatusApproved)
 	} else {
-		verb = common.VerbReject
+		verb = changepreview.VerbReject
 		after.Status = string(invoiceadjustment.StatusRejected)
 		after.ApprovalStatus = string(invoiceadjustment.ApprovalStatusRejected)
 		figures = &invoiceadjustmentports.InvoiceAdjustmentPreview{
@@ -244,11 +249,11 @@ func renderDecision(
 	adjustmentMoney(change, figures, plan.Invoice.CurrencyCode)
 
 	summary := fmt.Sprintf("Would %s the %s adjustment of %s, crediting %s.",
-		verb, adjustment.Kind, common.InvoiceLabel(plan.Invoice),
+		verb, adjustment.Kind, invoicepreview.InvoiceLabel(plan.Invoice),
 		figures.CreditTotalAmount.Abs().StringFixed(2))
 	if req.approve {
 		summary = fmt.Sprintf("Would approve the %s adjustment of %s, which executes it: %s "+
-			"credited and %s rebilled.", adjustment.Kind, common.InvoiceLabel(plan.Invoice),
+			"credited and %s rebilled.", adjustment.Kind, invoicepreview.InvoiceLabel(plan.Invoice),
 			figures.CreditTotalAmount.Abs().StringFixed(2),
 			figures.RebillTotalAmount.StringFixed(2))
 	}

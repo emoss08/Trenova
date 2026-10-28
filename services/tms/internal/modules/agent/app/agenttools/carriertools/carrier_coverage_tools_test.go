@@ -5,7 +5,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/carrierpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -186,11 +187,11 @@ func (f *fakeCarrierCoverage) coverWith(status shipment.CarrierAssignmentStatus)
 
 func (f *fakeCarrierCoverage) assignParams(extra map[string]any) map[string]any {
 	params := map[string]any{
-		common.PreviewFieldShipmentMoveID: f.moveID().String(),
-		common.FieldCarrierID:             f.carrier.ID.String(),
-		"rateMethod":                      "Flat",
-		"baseRate":                        "1800.00",
-		"fuelSurcharge":                   "120",
+		changepreview.PreviewFieldShipmentMoveID: f.moveID().String(),
+		carrierpreview.FieldCarrierID:            f.carrier.ID.String(),
+		"rateMethod":                             "Flat",
+		"baseRate":                               "1800.00",
+		"fuelSurcharge":                          "120",
 	}
 	for key, value := range extra {
 		params[key] = value
@@ -337,10 +338,18 @@ func TestAssignMoveToCarrier_PreviewShowsTheCarrierItReplaces(t *testing.T) {
 
 	canceled := agenttoolstest.PreviewChange(t, preview, 1)
 	assert.Equal(t, agent.PreviewOperationArchive, canceled.Operation)
-	assert.Equal(t, "Canceled", agenttoolstest.FieldByPath(t, canceled, common.FieldStatus).After)
+	assert.Equal(
+		t,
+		"Canceled",
+		agenttoolstest.FieldByPath(t, canceled, changepreview.FieldStatus).After,
+	)
 	voided := agenttoolstest.PreviewChange(t, preview, 2)
 	assert.Equal(t, permission.ResourceRateConfirmation, voided.Resource)
-	assert.Equal(t, "Voided", agenttoolstest.FieldByPath(t, voided, common.FieldStatus).After)
+	assert.Equal(
+		t,
+		"Voided",
+		agenttoolstest.FieldByPath(t, voided, changepreview.FieldStatus).After,
+	)
 	assert.Contains(t, preview.Summary, "rate confirmation voided")
 	assert.Contains(t, preview.Summary, "Cargo liability expires in 10 days")
 }
@@ -377,8 +386,8 @@ func TestCancelCarrierAssignment_SendsTheMoveAndTheReason(t *testing.T) {
 		t,
 		NewCancelCarrierAssignmentTool(carriers).Execute(t.Context(), agenttoolstest.ExecuteParams(
 			map[string]any{
-				common.PreviewFieldShipmentMoveID: carriers.moveID().String(),
-				common.FieldReason:                "  Carrier's truck broke down ",
+				changepreview.PreviewFieldShipmentMoveID: carriers.moveID().String(),
+				changepreview.FieldReason:                "  Carrier's truck broke down ",
 			},
 		)),
 	)
@@ -395,7 +404,7 @@ func TestCancelCarrierAssignment_RequiresAReason(t *testing.T) {
 	err := NewCancelCarrierAssignmentTool(carriers).(*CancelCarrierAssignmentTool).Validate(
 		t.Context(),
 		agenttoolstest.ExecuteParams(
-			map[string]any{common.PreviewFieldShipmentMoveID: carriers.moveID().String()},
+			map[string]any{changepreview.PreviewFieldShipmentMoveID: carriers.moveID().String()},
 		),
 	)
 	require.Error(t, err)
@@ -408,8 +417,8 @@ func TestCancelCarrierAssignment_AConfirmedCarrierIsAProposal(t *testing.T) {
 
 	params := func(carriers *fakeCarrierCoverage) map[string]any {
 		return map[string]any{
-			common.PreviewFieldShipmentMoveID: carriers.moveID().String(),
-			common.FieldReason:                "Carrier fell off",
+			changepreview.PreviewFieldShipmentMoveID: carriers.moveID().String(),
+			changepreview.FieldReason:                "Carrier fell off",
 		}
 	}
 
@@ -448,8 +457,8 @@ func TestCancelCarrierAssignment_PreviewShowsTheCarrierComingOff(t *testing.T) {
 		&carriers.guard,
 		func() (*agent.ToolPreview, error) {
 			return tool.Preview(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
-				common.PreviewFieldShipmentMoveID: carriers.moveID().String(),
-				common.FieldReason:                "Carrier fell off",
+				changepreview.PreviewFieldShipmentMoveID: carriers.moveID().String(),
+				changepreview.FieldReason:                "Carrier fell off",
 			}))
 		},
 	)

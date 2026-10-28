@@ -8,7 +8,9 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -87,7 +89,7 @@ func (t *waitUntilTool) ParamSchema() map[string]any {
 		toolschema.KeyType: toolschema.TypeObject,
 		toolschema.KeyProperties: map[string]any{
 			"until": agenttoolschema.Enum("What to wait for.", waitKinds),
-			common.FieldDescription: map[string]any{
+			changepreview.FieldDescription: map[string]any{
 				toolschema.KeyType: toolschema.TypeString,
 				toolschema.KeyDescription: "What you are waiting for, in a few words a person reads " +
 					"beside the conversation: \"Truck 2214 to reach Kroger DC\".",
@@ -98,23 +100,23 @@ func (t *waitUntilTool) ParamSchema() map[string]any {
 					"meant to.",
 			},
 			"at": agenttoolschema.LocalDateTime("For Time: when to pick the work up."),
-			common.ParamShipmentMoveID: agenttoolschema.RecordIDText(
+			toolparams.ParamShipmentMoveID: agenttoolschema.RecordIDText(
 				permission.ResourceShipmentMove,
 				"For StopArrival, StopDeparture and AppointmentNear: the move the stop is on, from "+
 					"shipment_get.",
 			),
-			common.ParamStopID: agenttoolschema.RecordIDText(permission.ResourceShipmentStop,
+			toolparams.ParamStopID: agenttoolschema.RecordIDText(permission.ResourceShipmentStop,
 				"The stop, from shipment_get: required for AppointmentNear; for StopArrival "+
 					"and StopDeparture, leave it out to wait for the move's next one."),
-			common.FieldShipmentID: agenttoolschema.RecordIDText(
+			changepreview.FieldShipmentID: agenttoolschema.RecordIDText(
 				permission.ResourceShipment,
 				"For Reply: a reply about this shipment, from shipment_list or the run subject.",
 			),
-			common.ParamCarrierID: agenttoolschema.RecordIDText(permission.ResourceCarrier,
+			toolparams.ParamCarrierID: agenttoolschema.RecordIDText(permission.ResourceCarrier,
 				"For Reply: a reply from this carrier, from carrier_list."),
-			common.ParamCustomerID: agenttoolschema.RecordIDText(permission.ResourceCustomer,
+			toolparams.ParamCustomerID: agenttoolschema.RecordIDText(permission.ResourceCustomer,
 				"For Reply: a reply from this customer, from customer_list."),
-			common.ParamWorkerID: agenttoolschema.RecordIDText(permission.ResourceWorker,
+			toolparams.ParamWorkerID: agenttoolschema.RecordIDText(permission.ResourceWorker,
 				"For HOSDriveBelow: the driver, from worker_list."),
 			"detentionOccurrenceId": agenttoolschema.KindID(
 				"For FreeTimeEnding: the detention record, from detention_list_occurrences or the "+
@@ -136,7 +138,7 @@ func (t *waitUntilTool) ParamSchema() map[string]any {
 					"anyway. Defaults to 24; at most 168.",
 			},
 		},
-		toolschema.KeyRequired:             []string{"until", common.FieldDescription},
+		toolschema.KeyRequired:             []string{"until", changepreview.FieldDescription},
 		toolschema.KeyAdditionalProperties: false,
 	}
 }
@@ -150,7 +152,7 @@ func (t *waitUntilTool) Validate(
 	_ context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
 ) error {
-	if err := common.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
 	}
 	_, err := t.request(&params)
@@ -162,12 +164,12 @@ func (t *waitUntilTool) Preview(
 	_ context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
-	if err := common.GuardPreview(t, &params); err != nil {
+	if err := toolguard.GuardPreview(t, &params); err != nil {
 		return nil, err
 	}
 	request, err := t.request(&params)
 	if err != nil {
-		return common.WarnWouldFail(
+		return changepreview.WarnWouldFail(
 			toolpreview.Build("Would park this work until something happens."),
 			err,
 		), nil
@@ -197,7 +199,7 @@ func (t *waitUntilTool) ExecuteWithResult(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
 ) (*agent.ToolExecutionResult, error) {
-	if err := common.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return nil, err
 	}
 	if t.waits == nil {
@@ -224,7 +226,7 @@ func (t *waitUntilTool) ExecuteWithResult(
 func (t *waitUntilTool) request(
 	params *agenttoolports.ToolExecuteParams,
 ) (*agentwaitports.RegisterWaitRequest, error) {
-	until, err := common.RequireString(params.Params, "until")
+	until, err := toolparams.RequireString(params.Params, "until")
 	if err != nil {
 		return nil, err
 	}
@@ -233,7 +235,7 @@ func (t *waitUntilTool) request(
 		return nil, errortypes.NewValidationError("until", errortypes.ErrInvalid,
 			"until must be one of "+strings.Join(waitKinds.Names(), ", "))
 	}
-	description, err := common.RequireString(params.Params, common.FieldDescription)
+	description, err := toolparams.RequireString(params.Params, changepreview.FieldDescription)
 	if err != nil {
 		return nil, err
 	}
@@ -252,13 +254,13 @@ func (t *waitUntilTool) request(
 		Kind:            kind,
 		Condition:       condition,
 		Description:     description,
-		Then:            common.OptionalString(params.Params, "then"),
+		Then:            toolparams.OptionalString(params.Params, "then"),
 		LifetimeSeconds: giveUpAfter(params.Params),
 	}, nil
 }
 
 func giveUpAfter(params map[string]any) int64 {
-	hours := common.OptionalInt64(params, "giveUpAfterHours")
+	hours := toolparams.OptionalInt64(params, "giveUpAfterHours")
 	if hours <= 0 {
 		return 0
 	}
@@ -277,16 +279,16 @@ func waitCondition(
 		key    string
 		target *pulid.ID
 	}{
-		{common.ParamShipmentMoveID, &condition.ShipmentMoveID},
-		{common.ParamStopID, &condition.StopID},
-		{common.FieldShipmentID, &condition.ShipmentID},
-		{common.ParamCarrierID, &condition.CarrierID},
-		{common.ParamCustomerID, &condition.CustomerID},
-		{common.ParamWorkerID, &condition.WorkerID},
+		{toolparams.ParamShipmentMoveID, &condition.ShipmentMoveID},
+		{toolparams.ParamStopID, &condition.StopID},
+		{changepreview.FieldShipmentID, &condition.ShipmentID},
+		{toolparams.ParamCarrierID, &condition.CarrierID},
+		{toolparams.ParamCustomerID, &condition.CustomerID},
+		{toolparams.ParamWorkerID, &condition.WorkerID},
 		{"detentionOccurrenceId", &condition.DetentionOccurrenceID},
 	}
 	for _, field := range ids {
-		id, given, err := common.OptionalPulid(params.Params, field.key)
+		id, given, err := toolparams.OptionalPulid(params.Params, field.key)
 		if err != nil {
 			return condition, errortypes.NewValidationError(field.key, errortypes.ErrInvalid,
 				field.key+" is not a valid id")
@@ -295,13 +297,13 @@ func waitCondition(
 			*field.target = id
 		}
 	}
-	condition.MinutesBefore = int(common.OptionalInt64(params.Params, "minutesBefore"))
+	condition.MinutesBefore = int(toolparams.OptionalInt64(params.Params, "minutesBefore"))
 	if hours, ok := params.Params["driveHoursBelow"].(float64); ok {
 		condition.DriveMinutesBelow = int(math.Round(hours * 60))
 	}
 
 	if kind == agentwait.KindTime {
-		at, err := common.RequireLocalTime(
+		at, err := toolparams.RequireLocalTime(
 			params.Params,
 			"at",
 			timeutils.LoadLocation(params.Timezone),
@@ -353,10 +355,10 @@ func (t *cancelWaitTool) Validate(
 	_ context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
 ) error {
-	if err := common.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
 	}
-	_, err := common.RequirePulid(params.Params, paramWaitID)
+	_, err := toolparams.RequirePulid(params.Params, paramWaitID)
 
 	return err
 }
@@ -365,12 +367,12 @@ func (t *cancelWaitTool) Preview(
 	_ context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
-	if err := common.GuardPreview(t, &params); err != nil {
+	if err := toolguard.GuardPreview(t, &params); err != nil {
 		return nil, err
 	}
 	preview := toolpreview.Build("Would cancel the wait; the parked work would not be picked up.")
-	if _, err := common.RequirePulid(params.Params, paramWaitID); err != nil {
-		return common.WarnWouldFail(preview, err), nil
+	if _, err := toolparams.RequirePulid(params.Params, paramWaitID); err != nil {
+		return changepreview.WarnWouldFail(preview, err), nil
 	}
 
 	return preview, nil
@@ -380,13 +382,13 @@ func (t *cancelWaitTool) Execute(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
-	if err := common.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
 	}
 	if t.waits == nil {
 		return errNoWaitService
 	}
-	id, err := common.RequirePulid(params.Params, paramWaitID)
+	id, err := toolparams.RequirePulid(params.Params, paramWaitID)
 	if err != nil {
 		return err
 	}

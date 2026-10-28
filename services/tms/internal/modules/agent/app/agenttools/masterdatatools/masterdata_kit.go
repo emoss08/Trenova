@@ -7,7 +7,9 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -136,7 +138,7 @@ func (r *masterRecord[T]) record(entity *T) toolpreview.Record {
 	rec := toolpreview.Record{Resource: r.resource, Label: r.label(entity)}
 	if id := r.id(entity); id.IsNotNil() {
 		rec.ID = id
-		rec.Version = common.PinnedVersion(r.version(entity))
+		rec.Version = changepreview.PinnedVersion(r.version(entity))
 	}
 
 	return rec
@@ -156,12 +158,12 @@ func (r *masterRecord[T]) result(action string, entity *T) *agent.ToolExecutionR
 		Kind:   r.kind,
 		Name:   r.label(entity),
 		IDs:    map[string]string{r.idParam: id.String()},
-		Record: common.RecordOf(r.artifact(), r.artifactID(entity)),
+		Record: changepreview.RecordOf(r.artifact(), r.artifactID(entity)),
 	}
 }
 
 func (r *masterRecord[T]) target(params map[string]any) (agenttoolports.ToolTarget, bool) {
-	return common.TargetOf(params, r.idParam, r.resource)
+	return toolparams.TargetOf(params, r.idParam, r.resource)
 }
 
 type masterInput struct {
@@ -209,9 +211,9 @@ func clearable(update, clears bool, property map[string]any) map[string]any {
 func keepSuffix(update, clears bool) string {
 	switch {
 	case update && clears:
-		return common.KeepWhenLeftOut + masterClearsWhenEmpty
+		return toolparams.KeepWhenLeftOut + masterClearsWhenEmpty
 	case update:
-		return common.KeepWhenLeftOut
+		return toolparams.KeepWhenLeftOut
 	default:
 		return ""
 	}
@@ -229,7 +231,7 @@ func masterText[T any](
 			return clearable(
 				update,
 				!required,
-				common.StringProperty(description+keepSuffix(update, !required), limit),
+				toolparams.StringProperty(description+keepSuffix(update, !required), limit),
 			)
 		},
 		apply: func(_ context.Context, in *masterInput, entity *T) error {
@@ -282,7 +284,7 @@ func masterEnum[T any, E ~string](
 			return agenttoolschema.Enum(description+keepSuffix(update, false), source)
 		},
 		apply: func(_ context.Context, in *masterInput, entity *T) error {
-			value, err := common.RequireEnum(in.values, key, source.Values)
+			value, err := toolparams.RequireEnum(in.values, key, source.Values)
 			if err != nil {
 				return errortypes.NewValidationError(key, errortypes.ErrInvalid,
 					"Use one of {0}", strings.Join(source.Names(), ", "))
@@ -305,7 +307,7 @@ func masterEnumPointer[T any, E ~string](
 			return agenttoolschema.Enum(description+keepSuffix(update, false), source)
 		},
 		apply: func(_ context.Context, in *masterInput, entity *T) error {
-			value, err := common.RequireEnum(in.values, key, source.Values)
+			value, err := toolparams.RequireEnum(in.values, key, source.Values)
 			if err != nil {
 				return errortypes.NewValidationError(key, errortypes.ErrInvalid,
 					"Use one of {0}", strings.Join(source.Names(), ", "))
@@ -321,10 +323,10 @@ func masterBool[T any](key, description string, at func(*T) *bool) masterField[T
 	return masterField[T]{
 		key: key,
 		property: func(update bool) map[string]any {
-			return common.BooleanProperty(description + keepSuffix(update, false))
+			return toolparams.BooleanProperty(description + keepSuffix(update, false))
 		},
 		apply: func(_ context.Context, in *masterInput, entity *T) error {
-			value, err := common.OptionalBoolPointer(in.values, key)
+			value, err := toolparams.OptionalBoolPointer(in.values, key)
 			if err != nil || value == nil {
 				return errortypes.NewValidationError(key, errortypes.ErrInvalid,
 					"Send true or false")
@@ -344,7 +346,7 @@ func wholeNumber(in *masterInput, key string, minimum, maximum int) (*int, error
 	if text, isText := raw.(string); isText && strings.TrimSpace(text) == "" {
 		return nil, nil //nolint:nilnil // an empty number clears the value
 	}
-	value, err := common.RequireIntInRange(in.values, key, minimum, maximum)
+	value, err := toolparams.RequireIntInRange(in.values, key, minimum, maximum)
 	if err != nil {
 		return nil, errortypes.NewValidationError(key, errortypes.ErrInvalid,
 			"Send a whole number from {0} to {1}", minimum, maximum)
@@ -361,7 +363,11 @@ func masterInt[T any](
 	return masterField[T]{
 		key: key,
 		property: func(update bool) map[string]any {
-			return common.IntegerProperty(description+keepSuffix(update, false), minimum, maximum)
+			return toolparams.IntegerProperty(
+				description+keepSuffix(update, false),
+				minimum,
+				maximum,
+			)
 		},
 		apply: func(_ context.Context, in *masterInput, entity *T) error {
 			value, err := wholeNumber(in, key, minimum, maximum)
@@ -387,7 +393,11 @@ func masterOptionalInt[T any](
 	return masterField[T]{
 		key: key,
 		property: func(update bool) map[string]any {
-			return common.IntegerProperty(description+keepSuffix(update, false), minimum, maximum)
+			return toolparams.IntegerProperty(
+				description+keepSuffix(update, false),
+				minimum,
+				maximum,
+			)
 		},
 		apply: func(_ context.Context, in *masterInput, entity *T) error {
 			value, err := wholeNumber(in, key, minimum, maximum)
@@ -408,12 +418,12 @@ func masterDecimal[T any](key, description string, at func(*T) **float64) master
 			return clearable(
 				update,
 				true,
-				common.StringProperty(description+" A decimal such as 42.5."+
+				toolparams.StringProperty(description+" A decimal such as 42.5."+
 					keepSuffix(update, true), 0),
 			)
 		},
 		apply: func(_ context.Context, in *masterInput, entity *T) error {
-			value, present, err := common.OptionalDecimal(in.values, key)
+			value, present, err := toolparams.OptionalDecimal(in.values, key)
 			if err != nil || (present && value.IsNegative()) {
 				return errortypes.NewValidationError(key, errortypes.ErrInvalid,
 					"Send a decimal that is zero or more, such as 42.5")
@@ -442,7 +452,7 @@ func masterID[T any](
 			return agenttoolschema.RecordIDText(resource, description+keepSuffix(update, false))
 		},
 		apply: func(_ context.Context, in *masterInput, entity *T) error {
-			id, err := common.RequirePulid(in.values, key)
+			id, err := toolparams.RequirePulid(in.values, key)
 			if err != nil {
 				return errortypes.NewValidationError(key, errortypes.ErrInvalid,
 					"Send an id from the read tool named here; never guess one")
@@ -524,7 +534,7 @@ func masterState[T any](
 			return clearable(
 				update,
 				!required,
-				common.StringProperty(
+				toolparams.StringProperty(
 					description+" "+stateCodeNote+keepSuffix(update, !required),
 					2,
 				),
@@ -550,8 +560,14 @@ func masterStatePointer[T any](key, description string, at func(*T) **pulid.ID) 
 	return masterField[T]{
 		key: key,
 		property: func(update bool) map[string]any {
-			return clearable(update, true,
-				common.StringProperty(description+" "+stateCodeNote+keepSuffix(update, true), 2))
+			return clearable(
+				update,
+				true,
+				toolparams.StringProperty(
+					description+" "+stateCodeNote+keepSuffix(update, true),
+					2,
+				),
+			)
 		},
 		apply: func(ctx context.Context, in *masterInput, entity *T) error {
 			id, err := resolveState(ctx, in, key)
@@ -587,7 +603,7 @@ func masterDay[T any](key, description string, at func(*T) **int64) masterField[
 			}
 			day, err := time.Parse(time.DateOnly, text)
 			if err != nil {
-				return common.DateRefusal(key, text, toolschema.FormatDate)
+				return toolparams.DateRefusal(key, text, toolschema.FormatDate)
 			}
 			seconds := day.Unix()
 			*at(entity) = &seconds
@@ -649,9 +665,9 @@ func (p *masterPolicy) classify(
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // ToolPolicy.Classify passes params by value
 ) agenttoolports.CallPolicy {
 	switch {
-	case common.SendsAny(params.Params, p.moneyKeys...):
+	case toolparams.SendsAny(params.Params, p.moneyKeys...):
 		return agenttoolports.CallPolicy{Egress: agent.EgressMoney, MaxTier: agent.TierPropose}
-	case common.SendsAny(params.Params, p.outsideKeys...):
+	case toolparams.SendsAny(params.Params, p.outsideKeys...):
 		return agenttoolports.CallPolicy{
 			Egress:  agent.EgressExternalRecipient,
 			MaxTier: agent.TierPropose,
@@ -661,7 +677,7 @@ func (p *masterPolicy) classify(
 	}
 }
 
-func (p *masterPolicy) apply(spec *common.ReceivableSpec) *common.ReceivableSpec {
+func (p *masterPolicy) apply(spec *toolspec.ReceivableSpec) *toolspec.ReceivableSpec {
 	spec.Egress = agent.EgressInternal
 	spec.DefaultTier = p.defaultTier
 	spec.MaxTier = p.maxTier
@@ -680,8 +696,8 @@ func (p *masterPolicy) apply(spec *common.ReceivableSpec) *common.ReceivableSpec
 }
 
 func (p *masterPolicy) guard(name string, params *agenttoolports.ToolExecuteParams) error {
-	if common.SendsAny(params.Params, p.moneyKeys...) && !params.ApprovedFromProposal() {
-		return fmt.Errorf("%s: %w", name, common.ErrNeedsAPersonsApproval)
+	if toolparams.SendsAny(params.Params, p.moneyKeys...) && !params.ApprovedFromProposal() {
+		return fmt.Errorf("%s: %w", name, toolspec.ErrNeedsAPersonsApproval)
 	}
 
 	return nil
@@ -706,7 +722,7 @@ func (s *masterCreateSpec[T]) Build(
 	ctx context.Context,
 	params *agenttoolports.ToolExecuteParams,
 ) (*T, error) {
-	entity := s.fresh(common.TenantFrom(*params))
+	entity := s.fresh(toolparams.TenantFrom(*params))
 	for _, key := range s.required {
 		if _, given := params.Params[key]; !given {
 			return nil, errortypes.NewValidationError(key, errortypes.ErrRequired,
@@ -724,7 +740,7 @@ func (s *masterCreateSpec[T]) Build(
 func newMasterCreateTool[T any](spec *masterCreateSpec[T]) agenttoolports.AgentTool {
 	record := spec.record
 
-	return common.NewReportingReceivableTool(spec.policy.apply(&common.ReceivableSpec{
+	return toolspec.NewReportingReceivableTool(spec.policy.apply(&toolspec.ReceivableSpec{
 		Name:        spec.name,
 		Description: spec.description,
 		Resource:    record.resource,
@@ -736,7 +752,7 @@ func newMasterCreateTool[T any](spec *masterCreateSpec[T]) agenttoolports.AgentT
 		Properties:  masterProperties(spec.fields, false),
 		Required:    spec.required,
 		SearchTerms: spec.searchTerms,
-	}), common.ReceivablePlan[*agenttoolports.ToolExecuteParams, *masterPlanned[T]]{
+	}), toolspec.ReceivablePlan[*agenttoolports.ToolExecuteParams, *masterPlanned[T]]{
 		Request: func(params *agenttoolports.ToolExecuteParams) (*agenttoolports.ToolExecuteParams, error) {
 			return params, nil
 		},
@@ -817,7 +833,7 @@ type masterEdit struct {
 }
 
 func (s *masterUpdateSpec[T]) edit(params *agenttoolports.ToolExecuteParams) (*masterEdit, error) {
-	id, err := common.RequirePulid(params.Params, s.record.idParam)
+	id, err := toolparams.RequirePulid(params.Params, s.record.idParam)
 	if err != nil {
 		return nil, err
 	}
@@ -839,7 +855,7 @@ func (s *masterUpdateSpec[T]) Build(
 	edit *masterEdit,
 	params *agenttoolports.ToolExecuteParams,
 ) (*T, error) {
-	stored, err := s.get(ctx, common.TenantFrom(*params), edit.id)
+	stored, err := s.get(ctx, toolparams.TenantFrom(*params), edit.id)
 	if err != nil {
 		return nil, err
 	}
@@ -861,7 +877,7 @@ func newMasterUpdateTool[T any](spec *masterUpdateSpec[T]) agenttoolports.AgentT
 	properties[record.idParam] = agenttoolschema.RecordIDText(record.resource,
 		fmt.Sprintf("The %s to change, from %s. Never guess one.", record.kind, record.lister))
 
-	return common.NewReportingReceivableTool(spec.policy.apply(&common.ReceivableSpec{
+	return toolspec.NewReportingReceivableTool(spec.policy.apply(&toolspec.ReceivableSpec{
 		Name:          spec.name,
 		Description:   spec.description,
 		Resource:      record.resource,
@@ -874,7 +890,7 @@ func newMasterUpdateTool[T any](spec *masterUpdateSpec[T]) agenttoolports.AgentT
 		SearchTerms:   spec.searchTerms,
 		Prerequisites: []string{record.lister},
 		Target:        record.target,
-	}), common.ReceivablePlan[*masterEdit, *masterChanged[T]]{
+	}), toolspec.ReceivablePlan[*masterEdit, *masterChanged[T]]{
 		Request: spec.edit,
 		Plan: func(
 			ctx context.Context,
@@ -963,12 +979,16 @@ type masterStatusChange[S ~string] struct {
 func (s *masterStatusSpec[T, S]) change(
 	params *agenttoolports.ToolExecuteParams,
 ) (*masterStatusChange[S], error) {
-	ids, err := common.RequirePulidSlice(params.Params, s.record.idsParam,
+	ids, err := toolparams.RequirePulidSlice(params.Params, s.record.idsParam,
 		maxMasterRecordsPerStatusChange)
 	if err != nil {
 		return nil, err
 	}
-	status, err := common.RequireEnum(params.Params, common.FieldStatus, s.statuses.Values)
+	status, err := toolparams.RequireEnum(
+		params.Params,
+		changepreview.FieldStatus,
+		s.statuses.Values,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -979,7 +999,7 @@ func (s *masterStatusSpec[T, S]) change(
 func newMasterStatusTool[T any, S ~string](spec *masterStatusSpec[T, S]) agenttoolports.AgentTool {
 	record := spec.record
 
-	return common.NewReportingReceivableTool(spec.policy.apply(&common.ReceivableSpec{
+	return toolspec.NewReportingReceivableTool(spec.policy.apply(&toolspec.ReceivableSpec{
 		Name:        spec.name,
 		Description: spec.description,
 		Resource:    record.resource,
@@ -991,20 +1011,25 @@ func newMasterStatusTool[T any, S ~string](spec *masterStatusSpec[T, S]) agentto
 			record.idsParam: agenttoolschema.RecordIDs(record.resource, fmt.Sprintf(
 				"The %s records to change, by id from %s. One id is the normal case.",
 				record.kind, record.lister), maxMasterRecordsPerStatusChange),
-			common.FieldStatus: agenttoolschema.Enum("The status to set. "+spec.statusNote,
+			changepreview.FieldStatus: agenttoolschema.Enum("The status to set. "+spec.statusNote,
 				spec.statuses),
 		},
-		Required:      []string{record.idsParam, common.FieldStatus},
+		Required:      []string{record.idsParam, changepreview.FieldStatus},
 		SearchTerms:   spec.searchTerms,
 		Prerequisites: []string{record.lister},
-	}), common.ReceivablePlan[*masterStatusChange[S], *masterStatusPlanned[T]]{
+	}), toolspec.ReceivablePlan[*masterStatusChange[S], *masterStatusPlanned[T]]{
 		Request: spec.change,
 		Plan: func(
 			ctx context.Context,
 			change *masterStatusChange[S],
 			params *agenttoolports.ToolExecuteParams,
 		) (*masterStatusPlanned[T], error) {
-			changes, err := spec.plan(ctx, common.TenantFrom(*params), change.ids, change.status)
+			changes, err := spec.plan(
+				ctx,
+				toolparams.TenantFrom(*params),
+				change.ids,
+				change.status,
+			)
 			if err != nil {
 				return nil, err
 			}
@@ -1017,7 +1042,7 @@ func newMasterStatusTool[T any, S ~string](spec *masterStatusSpec[T, S]) agentto
 		},
 		Refused: func(change *masterStatusChange[S]) string {
 			return fmt.Sprintf("Would set %s to %s.",
-				common.CountOf(len(change.ids), record.kind), change.status)
+				changepreview.CountOf(len(change.ids), record.kind), change.status)
 		},
 		Render: func(
 			change *masterStatusChange[S],
@@ -1034,15 +1059,21 @@ func newMasterStatusTool[T any, S ~string](spec *masterStatusSpec[T, S]) agentto
 				changes = append(changes, built)
 			}
 
-			return toolpreview.Build(fmt.Sprintf("Would set %s to %s.",
-				common.CountOf(len(plan.changes), record.kind), change.status), changes...), nil
+			return toolpreview.Build(fmt.Sprintf(
+				"Would set %s to %s.",
+				changepreview.CountOf(
+					len(plan.changes),
+					record.kind,
+				),
+				change.status,
+			), changes...), nil
 		},
 		Run: func(
 			ctx context.Context,
 			change *masterStatusChange[S],
 			params *agenttoolports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
-			updated, err := spec.run(ctx, common.TenantFrom(*params), change.ids, change.status)
+			updated, err := spec.run(ctx, toolparams.TenantFrom(*params), change.ids, change.status)
 			if err != nil {
 				return nil, err
 			}
@@ -1054,7 +1085,7 @@ func newMasterStatusTool[T any, S ~string](spec *masterStatusSpec[T, S]) agentto
 			return &agent.ToolExecutionResult{
 				Action: ActionUpdated,
 				Kind:   record.kind,
-				Name:   common.CountOf(len(updated), record.kind),
+				Name:   changepreview.CountOf(len(updated), record.kind),
 				IDs:    ids,
 			}, nil
 		},

@@ -5,7 +5,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -33,7 +35,7 @@ func submissionRecord(sub *factoring.Submission) toolpreview.Record {
 		Resource: permission.ResourceFactoringSubmission,
 		ID:       sub.ID,
 		Label:    "Factoring schedule " + sub.Number,
-		Version:  common.PreviewVersion(sub.Version),
+		Version:  changepreview.PreviewVersion(sub.Version),
 	}
 }
 
@@ -72,16 +74,16 @@ func submissionVersionParam() map[string]any {
 func submissionActionRequest(
 	params *agenttoolports.ToolExecuteParams,
 ) (*factoringsubmissionports.SubmissionActionRequest, error) {
-	id, err := common.RequirePulid(params.Params, paramSubmissionID)
+	id, err := toolparams.RequirePulid(params.Params, paramSubmissionID)
 	if err != nil {
 		return nil, err
 	}
-	version, err := common.RequireIntInRange(params.Params, paramVersion, 0, maxVersion)
+	version, err := toolparams.RequireIntInRange(params.Params, paramVersion, 0, maxVersion)
 	if err != nil {
 		return nil, err
 	}
 	return &factoringsubmissionports.SubmissionActionRequest{
-		TenantInfo:   common.TenantFrom(*params),
+		TenantInfo:   toolparams.TenantFrom(*params),
 		SubmissionID: id,
 		Version:      int64(version),
 	}, nil
@@ -144,20 +146,20 @@ func (t *SubmitInvoicesToFactorTool) Policy() agenttoolports.ToolPolicy {
 func (t *SubmitInvoicesToFactorTool) Target(
 	params map[string]any,
 ) (agenttoolports.ToolTarget, bool) {
-	return common.TargetOf(params, paramFactorID, permission.ResourceFactoringCompany)
+	return toolparams.TargetOf(params, paramFactorID, permission.ResourceFactoringCompany)
 }
 
 func (t *SubmitInvoicesToFactorTool) request(
 	params *agenttoolports.ToolExecuteParams,
 ) (*factoringsubmissionports.PlanSubmissionRequest, error) {
-	if err := common.GuardExecute(t, *params); err != nil {
+	if err := toolguard.GuardExecute(t, *params); err != nil {
 		return nil, err
 	}
-	factorID, err := common.RequirePulid(params.Params, paramFactorID)
+	factorID, err := toolparams.RequirePulid(params.Params, paramFactorID)
 	if err != nil {
 		return nil, err
 	}
-	invoiceIDs, err := common.RequirePulidSlice(
+	invoiceIDs, err := toolparams.RequirePulidSlice(
 		params.Params,
 		paramInvoiceIDs,
 		factoring.MaxSubmissionInvoices,
@@ -166,7 +168,7 @@ func (t *SubmitInvoicesToFactorTool) request(
 		return nil, err
 	}
 	return &factoringsubmissionports.PlanSubmissionRequest{
-		TenantInfo:         common.TenantFrom(*params),
+		TenantInfo:         toolparams.TenantFrom(*params),
 		FactoringCompanyID: factorID,
 		InvoiceIDs:         invoiceIDs,
 		AgentRunID:         params.RunID,
@@ -238,7 +240,7 @@ func (t *SubmitInvoicesToFactorTool) Preview(
 	}
 
 	return toolpreview.Build(
-		"Would sell "+common.CountOf(plan.InvoiceCount, "invoice")+" ("+
+		"Would sell "+changepreview.CountOf(plan.InvoiceCount, "invoice")+" ("+
 			formatMinor(plan.CurrencyCode, plan.FaceMinor)+") to "+plan.FactoringCompanyName+
 			" by "+strings.ToLower(plan.TransportMethod.String())+" to "+plan.TransportTarget+
 			", expecting an advance of "+formatMinor(plan.CurrencyCode, plan.ExpectedAdvanceMinor)+
@@ -276,7 +278,7 @@ func planMessage(plan *factoringsubmissionports.SubmissionPlan) *agent.MessagePr
 		To:          strings.Split(plan.TransportTarget, ", "),
 		Subject:     "Schedule of accounts",
 		Attachments: attachments,
-		Body: "Schedule of " + common.CountOf(plan.InvoiceCount, "invoice") + " totalling " +
+		Body: "Schedule of " + changepreview.CountOf(plan.InvoiceCount, "invoice") + " totalling " +
 			formatMinor(plan.CurrencyCode, plan.FaceMinor) + ".",
 	}
 }
@@ -340,13 +342,13 @@ func (t *RetryFactoringSubmissionTool) Policy() agenttoolports.ToolPolicy {
 func (t *RetryFactoringSubmissionTool) Target(
 	params map[string]any,
 ) (agenttoolports.ToolTarget, bool) {
-	return common.TargetOf(params, paramSubmissionID, permission.ResourceFactoringSubmission)
+	return toolparams.TargetOf(params, paramSubmissionID, permission.ResourceFactoringSubmission)
 }
 
 func (t *RetryFactoringSubmissionTool) request(
 	params *agenttoolports.ToolExecuteParams,
 ) (*factoringsubmissionports.SubmissionActionRequest, error) {
-	if err := common.GuardExecute(t, *params); err != nil {
+	if err := toolguard.GuardExecute(t, *params); err != nil {
 		return nil, err
 	}
 	return submissionActionRequest(params)
@@ -400,7 +402,7 @@ func (t *RetryFactoringSubmissionTool) Preview(
 	}
 	return toolpreview.Build(
 		"Would send schedule "+plan.After.Number+" ("+
-			common.CountOf(plan.After.InvoiceCount, "invoice")+") again to "+
+			changepreview.CountOf(plan.After.InvoiceCount, "invoice")+") again to "+
 			plan.After.TransportTarget+". It last failed with: "+plan.Before.LastError,
 		change,
 	), nil
@@ -455,20 +457,20 @@ func (t *CancelFactoringSubmissionTool) Policy() agenttoolports.ToolPolicy {
 func (t *CancelFactoringSubmissionTool) Target(
 	params map[string]any,
 ) (agenttoolports.ToolTarget, bool) {
-	return common.TargetOf(params, paramSubmissionID, permission.ResourceFactoringSubmission)
+	return toolparams.TargetOf(params, paramSubmissionID, permission.ResourceFactoringSubmission)
 }
 
 func (t *CancelFactoringSubmissionTool) request(
 	params *agenttoolports.ToolExecuteParams,
 ) (*factoringsubmissionports.SubmissionActionRequest, error) {
-	if err := common.GuardExecute(t, *params); err != nil {
+	if err := toolguard.GuardExecute(t, *params); err != nil {
 		return nil, err
 	}
 	req, err := submissionActionRequest(params)
 	if err != nil {
 		return nil, err
 	}
-	reason, err := common.RequireBoundedText(params.Params, paramReason, maxCancelReason)
+	reason, err := toolparams.RequireBoundedText(params.Params, paramReason, maxCancelReason)
 	if err != nil {
 		return nil, err
 	}

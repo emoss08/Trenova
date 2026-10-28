@@ -7,7 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountinginboundports"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -47,7 +47,7 @@ func inboundChangeRecord(change *accountingsync.AccountingInboundChange) toolpre
 		Resource: permission.ResourceAccountingSync,
 		ID:       change.ID,
 		Label:    inboundLabel(change),
-		Version:  common.PreviewVersion(change.Version),
+		Version:  changepreview.PreviewVersion(change.Version),
 	}
 }
 
@@ -128,7 +128,7 @@ func (t *IgnoreAccountingInboundChangeTool) Preview(
 	}
 
 	now := timeutils.NowUnix()
-	plan, err := common.PlanUpdate(
+	plan, err := changepreview.PlanUpdate(
 		inboundChangeRecord(change),
 		change,
 		func(ignored *accountingsync.AccountingInboundChange) error {

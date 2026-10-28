@@ -4,7 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -63,10 +65,10 @@ var reviewFields = []string{
 	wfFieldWorkerID,
 	paramReviewTemplate,
 	"reviewerId",
-	common.FieldStatus,
+	changepreview.FieldStatus,
 	paramTitle,
-	common.FieldPeriodStart,
-	common.FieldPeriodEnd,
+	changepreview.FieldPeriodStart,
+	changepreview.FieldPeriodEnd,
 	paramRatings,
 	"overallScore",
 	paramReviewSummary,
@@ -139,48 +141,51 @@ func newStartPerformanceReviewTool(reviews ReviewKeeper) agenttoolports.AgentToo
 		permission.ResourcePerformanceReview,
 		permission.OpCreate,
 	), map[string]any{
-		common.ParamWorkerID: common.WorkerProperty(),
+		toolparams.ParamWorkerID: toolparams.WorkerProperty(),
 		paramReviewTemplate: agenttoolschema.RecordIDText(
 			permission.ResourcePerformanceReviewTemplate,
 			"The review template, from worker_list_performance_reviews. "+
 				"Never guess one.",
 		),
-		paramTitle: common.StringProperty(
+		paramTitle: toolparams.StringProperty(
 			"A title; defaults to the template and period.",
 			120,
 		),
-		common.FieldPeriodStart: agenttoolschema.Date("The first day the review covers."),
-		common.FieldPeriodEnd:   agenttoolschema.Date("The last day the review covers."),
-	}, common.ParamWorkerID, paramReviewTemplate, common.FieldPeriodStart, common.FieldPeriodEnd)
+		changepreview.FieldPeriodStart: agenttoolschema.Date("The first day the review covers."),
+		changepreview.FieldPeriodEnd:   agenttoolschema.Date("The last day the review covers."),
+	}, toolparams.ParamWorkerID, paramReviewTemplate, changepreview.FieldPeriodStart, changepreview.FieldPeriodEnd)
 
-	return common.NewReportingReceivableTool(spec, common.ReceivablePlan[
+	return toolspec.NewReportingReceivableTool(spec, toolspec.ReceivablePlan[
 		*performancereviewservice.CreateReviewRequest, *workerreview.PerformanceReview,
 	]{
 		Request: func(
 			params *agenttoolports.ToolExecuteParams,
 		) (*performancereviewservice.CreateReviewRequest, error) {
-			workerID, err := common.RequirePulid(params.Params, common.ParamWorkerID)
+			workerID, err := toolparams.RequirePulid(params.Params, toolparams.ParamWorkerID)
 			if err != nil {
 				return nil, err
 			}
-			templateID, err := common.RequirePulid(params.Params, paramReviewTemplate)
+			templateID, err := toolparams.RequirePulid(params.Params, paramReviewTemplate)
 			if err != nil {
 				return nil, err
 			}
-			start, err := common.RequireScheduleDay(params.Params, common.FieldPeriodStart)
+			start, err := toolparams.RequireScheduleDay(
+				params.Params,
+				changepreview.FieldPeriodStart,
+			)
 			if err != nil {
 				return nil, err
 			}
-			end, err := common.RequireScheduleDay(params.Params, common.FieldPeriodEnd)
+			end, err := toolparams.RequireScheduleDay(params.Params, changepreview.FieldPeriodEnd)
 			if err != nil {
 				return nil, err
 			}
-			title, err := common.BoundedText(params.Params, paramTitle, 120)
+			title, err := toolparams.BoundedText(params.Params, paramTitle, 120)
 			if err != nil {
 				return nil, err
 			}
 			return &performancereviewservice.CreateReviewRequest{
-				TenantInfo:  common.TenantFrom(*params),
+				TenantInfo:  toolparams.TenantFrom(*params),
 				WorkerID:    workerID,
 				TemplateID:  templateID,
 				Title:       title,
@@ -249,12 +254,12 @@ func (d *reviewDraft) request(
 	ctx context.Context,
 	reviews ReviewKeeper,
 ) (*performancereviewservice.UpdateReviewRequest, error) {
-	current, err := reviews.GetReview(ctx, common.TenantFrom(*d.params), d.id)
+	current, err := reviews.GetReview(ctx, toolparams.TenantFrom(*d.params), d.id)
 	if err != nil {
 		return nil, err
 	}
 	req := &performancereviewservice.UpdateReviewRequest{
-		TenantInfo:   common.TenantFrom(*d.params),
+		TenantInfo:   toolparams.TenantFrom(*d.params),
 		ID:           d.id,
 		Ratings:      append([]workerreview.ReviewRating(nil), current.Ratings...),
 		Summary:      current.Summary,
@@ -264,7 +269,7 @@ func (d *reviewDraft) request(
 		Version:      current.Version,
 		UserID:       d.params.Actor.UserID,
 	}
-	if req.Title, err = common.BoundedText(d.params.Params, paramTitle, 120); err != nil {
+	if req.Title, err = toolparams.BoundedText(d.params.Params, paramTitle, 120); err != nil {
 		return nil, err
 	}
 	if err = applyReviewText(req, d.params.Params); err != nil {
@@ -288,7 +293,7 @@ func applyReviewText(
 		{paramStrengths, &req.Strengths},
 		{paramImprovements, &req.Improvements},
 	} {
-		text, err := common.OptionalBoundedText(params, field.key, wfNoteChars)
+		text, err := toolparams.OptionalBoundedText(params, field.key, wfNoteChars)
 		if err != nil {
 			return err
 		}
@@ -307,7 +312,7 @@ func applyReviewRatings(
 		return nil
 	}
 	var ratings []reviewRatingParam
-	if err := common.DecodeParam(params, paramRatings, &ratings); err != nil {
+	if err := toolparams.DecodeParam(params, paramRatings, &ratings); err != nil {
 		return err
 	}
 	byKey := make(map[string]int, len(req.Ratings))
@@ -342,7 +347,7 @@ func applyReviewGoals(
 		return nil
 	}
 	var goals []reviewGoalParam
-	if err := common.DecodeParam(params, paramGoals, &goals); err != nil {
+	if err := toolparams.DecodeParam(params, paramGoals, &goals); err != nil {
 		return err
 	}
 	req.Goals = make([]workerreview.ReviewGoal, 0, len(goals))
@@ -352,7 +357,7 @@ func applyReviewGoals(
 			Status: workerreview.ReviewGoalStatusOpen,
 		}
 		if goal.Status != "" {
-			status, err := common.RequireEnum(map[string]any{paramGoalStatus: goal.Status},
+			status, err := toolparams.RequireEnum(map[string]any{paramGoalStatus: goal.Status},
 				paramGoalStatus, reviewGoalStatuses.Values)
 			if err != nil {
 				return fmt.Errorf("%s[%d]: %w", paramGoals, i, err)
@@ -360,7 +365,7 @@ func applyReviewGoals(
 			entry.Status = status
 		}
 		if goal.DueAt != "" {
-			due, err := common.RequireScheduleDay(map[string]any{paramGoalDueAt: goal.DueAt},
+			due, err := toolparams.RequireScheduleDay(map[string]any{paramGoalDueAt: goal.DueAt},
 				paramGoalDueAt)
 			if err != nil {
 				return fmt.Errorf("%s[%d]: %w", paramGoals, i, err)
@@ -375,7 +380,7 @@ func applyReviewGoals(
 func reviewDraftProperties() map[string]any {
 	return map[string]any{
 		paramReviewID: reviewIDProperty(),
-		paramTitle:    common.StringProperty("A new title.", 120),
+		paramTitle:    toolparams.StringProperty("A new title.", 120),
 		paramRatings: map[string]any{
 			toolschema.KeyType: toolschema.TypeArray,
 			toolschema.KeyDescription: "Scores for the review's items, each by the key " +
@@ -384,11 +389,16 @@ func reviewDraftProperties() map[string]any {
 			toolschema.KeyItems: map[string]any{
 				toolschema.KeyType: toolschema.TypeObject,
 				toolschema.KeyProperties: map[string]any{
-					paramRatingKey: common.StringProperty("The item's key.", wfShortChars),
-					paramRatingScore: common.IntegerProperty("The score, 1 to 5.", minReviewScore,
-						maxReviewScore),
-					paramRatingComment: common.StringProperty("Why that score, from the record.",
-						wfNoteChars),
+					paramRatingKey: toolparams.StringProperty("The item's key.", wfShortChars),
+					paramRatingScore: toolparams.IntegerProperty(
+						"The score, 1 to 5.",
+						minReviewScore,
+						maxReviewScore,
+					),
+					paramRatingComment: toolparams.StringProperty(
+						"Why that score, from the record.",
+						wfNoteChars,
+					),
 				},
 				toolschema.KeyRequired:             []string{paramRatingKey},
 				toolschema.KeyAdditionalProperties: false,
@@ -405,7 +415,7 @@ func reviewDraftProperties() map[string]any {
 			toolschema.KeyItems: map[string]any{
 				toolschema.KeyType: toolschema.TypeObject,
 				toolschema.KeyProperties: map[string]any{
-					paramGoalTitle: common.StringProperty("The goal.", wfShortChars),
+					paramGoalTitle: toolparams.StringProperty("The goal.", wfShortChars),
 					paramGoalDueAt: agenttoolschema.Date("When it is due."),
 					paramGoalStatus: agenttoolschema.Enum("Open, Done or Dropped. Defaults "+
 						"to Open.", reviewGoalStatuses),
@@ -434,11 +444,11 @@ func newDraftPerformanceReviewTool(reviews ReviewKeeper) agenttoolports.AgentToo
 	spec.SearchTerms = []string{"review scores", "score the review", "fill in review"}
 	spec.Recipe = []string{"worker_list_performance_reviews", "worker_update_performance_review"}
 
-	return common.NewReportingReceivableTool(spec, common.ReceivablePlan[
+	return toolspec.NewReportingReceivableTool(spec, toolspec.ReceivablePlan[
 		*reviewDraft, *performancereviewservice.ReviewChange,
 	]{
 		Request: func(params *agenttoolports.ToolExecuteParams) (*reviewDraft, error) {
-			id, err := common.RequirePulid(params.Params, paramReviewID)
+			id, err := toolparams.RequirePulid(params.Params, paramReviewID)
 			if err != nil {
 				return nil, err
 			}
@@ -499,9 +509,9 @@ func newDeletePerformanceReviewTool(reviews ReviewKeeper) agenttoolports.AgentTo
 	spec.MaxTier = agent.TierPropose
 	spec.Reversible = false
 
-	return common.NewReceivableTool(
+	return toolspec.NewReceivableTool(
 		spec,
-		common.ReceivablePlan[*recordDelete, *workerreview.PerformanceReview]{
+		toolspec.ReceivablePlan[*recordDelete, *workerreview.PerformanceReview]{
 			Request: recordDeleteFrom(paramReviewID),
 			Plan: func(
 				ctx context.Context,

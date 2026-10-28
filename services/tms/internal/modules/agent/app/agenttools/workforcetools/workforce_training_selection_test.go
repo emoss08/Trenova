@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -23,9 +23,9 @@ func TestRecordTrainingCompletion_TakesTheAssignmentsOwnWorkerAndCourseBesideIt(
 	training := newFakeTraining()
 	tool := newRecordTrainingCompletionTool(training)
 	params := agenttoolstest.ExecuteParams(map[string]any{
-		paramTrainingID:      training.record.ID.String(),
-		common.ParamWorkerID: training.record.WorkerID.String(),
-		paramCourseID:        training.record.CourseID.String(),
+		paramTrainingID:          training.record.ID.String(),
+		toolparams.ParamWorkerID: training.record.WorkerID.String(),
+		paramCourseID:            training.record.CourseID.String(),
 	})
 
 	require.NoError(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(), params))
@@ -40,9 +40,9 @@ func TestRecordTrainingCompletion_ARefusalForAnotherWorkersAssignmentShowsBothCa
 	training := newFakeTraining()
 	tool := newRecordTrainingCompletionTool(training)
 	params := agenttoolstest.ExecuteParams(map[string]any{
-		paramTrainingID:      training.record.ID.String(),
-		common.ParamWorkerID: pulid.MustNew("wrk_").String(),
-		paramCourseID:        training.record.CourseID.String(),
+		paramTrainingID:          training.record.ID.String(),
+		toolparams.ParamWorkerID: pulid.MustNew("wrk_").String(),
+		paramCourseID:            training.record.CourseID.String(),
 	})
 
 	err := tool.(agenttoolports.ToolValidator).Validate(t.Context(), params)

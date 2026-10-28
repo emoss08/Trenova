@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/masterdatatools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -30,7 +30,7 @@ func (t *TenderToRoutingGuideTool) Preview(
 	summary := fmt.Sprintf(
 		"Would offer the move down routing guide %s to %s, one at a time in this order.",
 		planned.Guide.Name,
-		common.CountOf(len(planned.Tender.Offers), "carrier"),
+		changepreview.CountOf(len(planned.Tender.Offers), "carrier"),
 	)
 	if screening := planned.Screening; screening != nil {
 		summary += masterdatatools.ScreeningSentence("Skipped as ineligible", screening.Skipped)
@@ -59,7 +59,7 @@ func (t *TenderToCarriersTool) Preview(
 		order = "one at a time in this order"
 	}
 	summary := fmt.Sprintf("Would offer the move to %s, %s.",
-		common.CountOf(len(planned.Tender.Offers), "carrier"), order)
+		changepreview.CountOf(len(planned.Tender.Offers), "carrier"), order)
 	if len(planned.Warnings) > 0 {
 		summary += " Eligibility warnings: " + strings.Join(planned.Warnings, "; ") + "."
 	}

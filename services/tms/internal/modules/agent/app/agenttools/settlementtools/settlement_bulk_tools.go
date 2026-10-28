@@ -3,7 +3,9 @@ package settlementtools
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/recordbatch"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/settlementpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/carriersettlementservice"
@@ -25,7 +27,7 @@ type settlementGetter[E any] func(
 ) (*E, error)
 
 type settlementBulkSpec[E any] struct {
-	ledger common.SettlementLedger[E]
+	ledger settlementpreview.SettlementLedger[E]
 	text   *lifecycleText
 	book   SettlementBook[E]
 	get    settlementGetter[E]
@@ -41,8 +43,8 @@ type settlementBulk struct {
 
 var approveSettlements = settlementBulk{
 	decision: approveDecision,
-	verb:     common.VerbApprove,
-	past:     common.PastApproved,
+	verb:     changepreview.VerbApprove,
+	past:     changepreview.PastApproved,
 	description: func(text *lifecycleText) string {
 		return "Propose approving pending " + text.noun + "s, one or up to 50 in one " +
 			"proposal the person decides together. Approving commits the organization to " +
@@ -61,7 +63,7 @@ var approveSettlements = settlementBulk{
 var postSettlements = settlementBulk{
 	decision: postDecision,
 	verb:     "post",
-	past:     common.PastPosted,
+	past:     changepreview.PastPosted,
 	description: func(text *lifecycleText) string {
 		return "Propose posting approved " + text.noun + "s to the general ledger, one or " +
 			"up to 50 in one proposal the person decides together. Each is " + text.postEach +
@@ -101,7 +103,7 @@ type SettlementBulkTool[E any] struct {
 	description string
 	rationale   string
 	single      *SettlementDecisionTool[E]
-	batch       *common.RecordBatch
+	batch       *recordbatch.RecordBatch
 }
 
 func newSettlementBulkTool[E any](
@@ -118,9 +120,9 @@ func newSettlementBulkTool[E any](
 		description: bulk.description(spec.text),
 		rationale:   bulk.rationale(spec.text),
 		single:      single,
-		batch: &common.RecordBatch{
+		batch: &recordbatch.RecordBatch{
 			Param:       paramSettlementIDs,
-			SingleParam: common.ParamSettlementID,
+			SingleParam: settlementpreview.ParamSettlementID,
 			Resource:    spec.ledger.Resource,
 			Noun:        spec.ledger.Noun,
 			Nouns:       spec.ledger.Noun + "s",
@@ -128,7 +130,7 @@ func newSettlementBulkTool[E any](
 			Past:        bulk.past,
 			Unchanged:   "is already " + bulk.past,
 			Single:      single,
-			NeedsPerson: common.ErrSettlementNeedsAPerson,
+			NeedsPerson: settlementpreview.ErrSettlementNeedsAPerson,
 			Labels:      settlementNumbers(spec.get, spec.ledger.Facts),
 		},
 	}
@@ -136,8 +138,8 @@ func newSettlementBulkTool[E any](
 
 func settlementNumbers[E any](
 	get settlementGetter[E],
-	facts func(*E) *common.SettlementFacts,
-) common.RecordLabels {
+	facts func(*E) *settlementpreview.SettlementFacts,
+) recordbatch.RecordLabels {
 	return func(
 		ctx context.Context,
 		tenant pagination.TenantInfo,
@@ -171,7 +173,7 @@ func (t *SettlementBulkTool[E]) Description() string { return t.description }
 func (t *SettlementBulkTool[E]) SearchTerms() []string { return t.single.SearchTerms() }
 
 func (t *SettlementBulkTool[E]) ParamSchema() map[string]any {
-	return common.BulkIDsSchema(t.batch,
+	return recordbatch.BulkIDsSchema(t.batch,
 		"The "+t.batch.Nouns+", by id from "+t.single.ledger.Sources+" or the proposals "+
 			"that made them. Never guess one.",
 		nil)
@@ -224,7 +226,7 @@ func driverBulkSpec(
 	s *driversettlementservice.Service,
 ) settlementBulkSpec[driversettlement.Settlement] {
 	spec := settlementBulkSpec[driversettlement.Settlement]{
-		ledger: common.DriverSettlementLedger(),
+		ledger: settlementpreview.DriverSettlementLedger(),
 		text:   driverLifecycle(),
 		book:   s,
 	}

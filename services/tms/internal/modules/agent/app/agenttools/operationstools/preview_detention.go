@@ -5,7 +5,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/detentionpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/outboundpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -30,12 +31,12 @@ func (t *WaiveDetentionTool) Preview(
 		"Would waive the %s %s detention charge %s as %s, giving up that revenue: %s",
 		change.Before.BillableAmount.StringFixed(2),
 		change.Before.Currency,
-		common.DetentionPlace(change.Before),
+		detentionpreview.DetentionPlace(change.Before),
 		request.Reason,
 		request.Note,
 	)
 
-	return common.DetentionDecisionPreview(summary, change, "waivedAt")
+	return detentionpreview.DetentionDecisionPreview(summary, change, "waivedAt")
 }
 
 func (t *SendDetentionNoticeTool) Preview(
@@ -68,10 +69,10 @@ func (t *SendDetentionNoticeTool) Preview(
 		Resource: permission.ResourceCustomer,
 		ID:       notice.Before.CustomerID,
 		Label:    notice.Before.CustomerName,
-	}, common.EmailMessagePreview(notice.Sender, message))
+	}, outboundpreview.EmailMessagePreview(notice.Sender, message))
 
 	status, err := toolpreview.Changed(
-		common.DetentionRecord(notice.Before),
+		detentionpreview.DetentionRecord(notice.Before),
 		notice.Before,
 		notice.After,
 		toolpreview.Volatile("noticeSentAt"),
@@ -84,13 +85,13 @@ func (t *SendDetentionNoticeTool) Preview(
 		fmt.Sprintf(
 			"Would send the customer the %s detention notice %s, to %s.",
 			strings.ToLower(string(notice.Kind)),
-			common.DetentionPlace(notice.Before),
+			detentionpreview.DetentionPlace(notice.Before),
 			strings.Join(notice.Recipients, ", "),
 		),
 		send,
 		status,
 	)
-	common.WarnSuppressedRecipients(preview, notice.Sender)
+	outboundpreview.WarnSuppressedRecipients(preview, notice.Sender)
 
 	return preview, nil
 }

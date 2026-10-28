@@ -5,7 +5,9 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -266,9 +268,9 @@ func TestVetCarrier_PreviewsTheLookupAndIsAMoneyWrite(t *testing.T) {
 	intel := newFakeCarrierIntel()
 	tool := NewVetCarrierTool(intel)
 	params := agenttoolstest.ExecuteParams(map[string]any{
-		common.ParamCarrierID:   intel.carrier.ID.String(),
-		paramDepth:              "Lite",
-		common.ParamForceResend: true,
+		toolparams.ParamCarrierID:   intel.carrier.ID.String(),
+		paramDepth:                  "Lite",
+		toolparams.ParamForceResend: true,
 	})
 
 	preview := agenttoolstest.PreviewWithoutWrites(
@@ -302,7 +304,10 @@ func TestVetCarrier_PreviewsTheLookupAndIsAMoneyWrite(t *testing.T) {
 	require.Error(t, tool.(agenttoolports.ToolValidator).Validate(
 		t.Context(),
 		agenttoolstest.ExecuteParams(
-			map[string]any{common.ParamCarrierID: intel.carrier.ID.String(), paramDepth: "Deep"},
+			map[string]any{
+				toolparams.ParamCarrierID: intel.carrier.ID.String(),
+				paramDepth:                "Deep",
+			},
 		),
 	))
 }
@@ -314,7 +319,7 @@ func TestVetCustomerBroker_ChecksTheCustomer(t *testing.T) {
 	tool := NewVetCustomerBrokerTool(intel)
 	customerID := pulid.MustNew("cus_")
 	params := agenttoolstest.ExecuteParams(
-		map[string]any{common.FieldCustomerID: customerID.String()},
+		map[string]any{changepreview.FieldCustomerID: customerID.String()},
 	)
 
 	preview := agenttoolstest.PreviewWithoutWrites(
@@ -378,8 +383,8 @@ func TestMarkCarrierIntelReviewed_IsAPersonsSignOff(t *testing.T) {
 	intel := newFakeCarrierIntel()
 	tool := NewMarkCarrierIntelReviewedTool(intel)
 	params := agenttoolstest.ExecuteParams(map[string]any{
-		common.ParamCarrierID: intel.carrier.ID.String(),
-		common.ParamNote:      "Insurance lapse was a filing delay; certificate on file",
+		toolparams.ParamCarrierID: intel.carrier.ID.String(),
+		toolparams.ParamNote:      "Insurance lapse was a filing delay; certificate on file",
 	})
 
 	preview := agenttoolstest.PreviewWithoutWrites(
@@ -399,7 +404,7 @@ func TestMarkCarrierIntelReviewed_IsAPersonsSignOff(t *testing.T) {
 		).After,
 	)
 
-	require.ErrorIs(t, tool.Execute(t.Context(), params), common.ErrNeedsAPersonsApproval)
+	require.ErrorIs(t, tool.Execute(t.Context(), params), toolspec.ErrNeedsAPersonsApproval)
 	require.NoError(t, tool.Execute(t.Context(), agenttoolstest.ApprovedParams(params.Params)))
 	require.NotNil(t, intel.reviewed)
 	assert.Equal(t, agent.TierPropose, tool.Policy().MaxTier)
@@ -412,7 +417,7 @@ func TestApplyCarrierIntelSuggestions_AppliesEverySuggestionWhenNoneAreNamed(t *
 	permissions := &agenttoolstest.FakePermissionCheck{Allowed: true}
 	tool := NewApplyCarrierIntelSuggestionsTool(intel, permissions)
 	params := agenttoolstest.ExecuteParams(
-		map[string]any{common.ParamCarrierID: intel.carrier.ID.String()},
+		map[string]any{toolparams.ParamCarrierID: intel.carrier.ID.String()},
 	)
 
 	preview := agenttoolstest.PreviewWithoutWrites(
@@ -435,8 +440,8 @@ func TestApplyCarrierIntelSuggestions_AppliesEverySuggestionWhenNoneAreNamed(t *
 	assert.Equal(t, permission.OpUpdate, permissions.Requests[0].Operation)
 
 	named := agenttoolstest.ExecuteParams(map[string]any{
-		common.ParamCarrierID: intel.carrier.ID.String(),
-		paramSuggestionFields: []any{"city"},
+		toolparams.ParamCarrierID: intel.carrier.ID.String(),
+		paramSuggestionFields:     []any{"city"},
 	})
 	require.NoError(t, tool.Execute(t.Context(), named))
 	assert.Equal(t, []carrierintel.SyncField{carrierintel.SyncFieldCity}, intel.applied.Fields)
@@ -448,8 +453,8 @@ func TestApplyCarrierIntelSuggestions_AppliesEverySuggestionWhenNoneAreNamed(t *
 	require.Error(t, refused.(agenttoolports.ToolValidator).Validate(t.Context(), params))
 	require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(),
 		agenttoolstest.ExecuteParams(map[string]any{
-			common.ParamCarrierID: intel.carrier.ID.String(),
-			paramSuggestionFields: []any{"fax"},
+			toolparams.ParamCarrierID: intel.carrier.ID.String(),
+			paramSuggestionFields:     []any{"fax"},
 		})))
 }
 

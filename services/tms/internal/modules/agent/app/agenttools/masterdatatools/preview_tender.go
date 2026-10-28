@@ -5,7 +5,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/carrierpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -25,10 +26,15 @@ func TenderPreview(
 	created, err := toolpreview.Create(
 		toolpreview.Record{Resource: permission.ResourceTender, Label: tenderLabel(planned)},
 		entity,
-		toolpreview.Only("mode", "status", common.PreviewFieldShipmentMoveID, "routingGuideId"),
+		toolpreview.Only(
+			"mode",
+			"status",
+			changepreview.PreviewFieldShipmentMoveID,
+			"routingGuideId",
+		),
 		toolpreview.WithRefs(map[string]permission.Resource{
-			common.PreviewFieldShipmentMoveID: permission.ResourceShipmentMove,
-			"routingGuideId":                  permission.ResourceRoutingGuide,
+			changepreview.PreviewFieldShipmentMoveID: permission.ResourceShipmentMove,
+			"routingGuideId":                         permission.ResourceRoutingGuide,
 		}),
 	)
 	if err != nil {
@@ -42,9 +48,9 @@ func TenderPreview(
 				"%d. %s (%s)",
 				offer.Rank,
 				offerCarrierName(planned, offer),
-				common.RateMethodWords(offer.RateMethod),
+				carrierpreview.RateMethodWords(offer.RateMethod),
 			),
-			After: common.KnownAmount(offer.Rate),
+			After: changepreview.KnownAmount(offer.Rate),
 		})
 	}
 	block := toolpreview.MoneyBlock(money.DefaultCurrencyCode, lines...)
@@ -73,7 +79,7 @@ func tenderOfferSend(
 		Subject: "Load tender offer",
 		Body: fmt.Sprintf("%s %s offered, to be accepted within %s.",
 			money.FormatMinor(money.MinorUnits(offer.Rate), money.DefaultCurrencyCode),
-			common.RateMethodWords(offer.RateMethod),
+			carrierpreview.RateMethodWords(offer.RateMethod),
 			time.Duration(offer.OfferTTLSeconds)*time.Second),
 	}
 	if sequential(planned.Tender.Mode) && index > 0 {
@@ -108,7 +114,7 @@ func offerCarrierName(planned *tenderservice.TenderPreview, offer *tender.Tender
 		return name
 	}
 
-	return common.LabelCarrier
+	return changepreview.LabelCarrier
 }
 
 func tenderLabel(planned *tenderservice.TenderPreview) string {

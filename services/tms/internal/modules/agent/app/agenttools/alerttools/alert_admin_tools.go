@@ -7,8 +7,10 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/masterdatatools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -73,16 +75,16 @@ func alertRecord(subscription *tablechangealert.TCASubscription) toolpreview.Rec
 		Resource: permission.ResourceTableChangeAlert,
 		ID:       subscription.ID,
 		Label:    subscription.Name,
-		Version:  common.PinnedVersion(subscription.Version),
+		Version:  changepreview.PinnedVersion(subscription.Version),
 	}
 }
 
 func targetAlert(params map[string]any) (agenttoolports.ToolTarget, bool) {
-	return common.TargetOf(params, ParamAlertID, permission.ResourceTableChangeAlert)
+	return toolparams.TargetOf(params, ParamAlertID, permission.ResourceTableChangeAlert)
 }
 
 func alertIDRequest(params *agenttoolports.ToolExecuteParams) (pulid.ID, error) {
-	return common.RequirePulid(params.Params, ParamAlertID)
+	return toolparams.RequirePulid(params.Params, ParamAlertID)
 }
 
 type alertEdit struct {
@@ -91,7 +93,7 @@ type alertEdit struct {
 }
 
 func alertEditFrom(params *agenttoolports.ToolExecuteParams) (*alertEdit, error) {
-	id, err := common.RequirePulid(params.Params, ParamAlertID)
+	id, err := toolparams.RequirePulid(params.Params, ParamAlertID)
 	if err != nil {
 		return nil, err
 	}
@@ -114,7 +116,7 @@ func (e *alertEdit) apply(subscription *tablechangealert.TCASubscription) error 
 		if _, given := e.values[key]; !given {
 			continue
 		}
-		text := strings.TrimSpace(common.OptionalString(e.values, key))
+		text := strings.TrimSpace(toolparams.OptionalString(e.values, key))
 		switch key {
 		case masterdatatools.MdName:
 			subscription.Name = text
@@ -131,14 +133,14 @@ func (e *alertEdit) apply(subscription *tablechangealert.TCASubscription) error 
 		}
 	}
 	if _, given := e.values["eventTypes"]; given {
-		events := common.StringSliceParam(e.values, "eventTypes")
+		events := toolparams.StringSliceParam(e.values, "eventTypes")
 		for idx, event := range events {
 			events[idx] = strings.ToUpper(event)
 		}
 		subscription.EventTypes = events
 	}
 	if _, given := e.values["watchedColumns"]; given {
-		subscription.WatchedColumns = common.StringSliceParam(e.values, "watchedColumns")
+		subscription.WatchedColumns = toolparams.StringSliceParam(e.values, "watchedColumns")
 	}
 	if _, given := e.values["conditions"]; given {
 		subscription.Conditions = alertConditions(e.values)
@@ -159,7 +161,7 @@ func (e *alertEdit) Build(
 		ctx,
 		tablechangealertports.GetTCASubscriptionByIDRequest{
 			SubscriptionID: e.id,
-			TenantInfo:     common.TenantFrom(*params),
+			TenantInfo:     toolparams.TenantFrom(*params),
 		},
 	)
 	if err != nil {
@@ -177,12 +179,12 @@ func (e *alertEdit) Build(
 }
 
 func NewUpdateTableChangeAlertTool(alerts AlertKeeper) agenttoolports.AgentTool {
-	properties := alertProperties(common.KeepWhenLeftOut)
+	properties := alertProperties(toolparams.KeepWhenLeftOut)
 	properties[ParamAlertID] = agenttoolschema.RecordIDText(
 		permission.ResourceTableChangeAlert, alertSupplier,
 	)
 
-	return common.NewReceivableTool(&common.ReceivableSpec{
+	return toolspec.NewReceivableTool(&toolspec.ReceivableSpec{
 		Name: "report_update_table_change_alert",
 		Description: "Change one of the person's change alerts: what it watches, which " +
 			"changes, the conditions or its message. Parts left out keep their value.",
@@ -202,7 +204,7 @@ func NewUpdateTableChangeAlertTool(alerts AlertKeeper) agenttoolports.AgentTool 
 			"watch different column",
 		},
 		Target: targetAlert,
-	}, common.ReceivablePlan[*alertEdit, *kernelports.RecordChange[tablechangealert.TCASubscription]]{
+	}, toolspec.ReceivablePlan[*alertEdit, *kernelports.RecordChange[tablechangealert.TCASubscription]]{
 		Request: alertEditFrom,
 		Plan: func(
 			ctx context.Context,
@@ -261,7 +263,7 @@ type alertStatusChange struct {
 }
 
 func NewSetTableChangeAlertStatusTool(alerts AlertKeeper) agenttoolports.AgentTool {
-	return common.NewReceivableTool(&common.ReceivableSpec{
+	return toolspec.NewReceivableTool(&toolspec.ReceivableSpec{
 		Name: "report_set_table_change_alert_status",
 		Description: "Pause one of the person's change alerts so it stops notifying them, or " +
 			"resume a paused one.",
@@ -277,23 +279,23 @@ func NewSetTableChangeAlertStatusTool(alerts AlertKeeper) agenttoolports.AgentTo
 			ParamAlertID: agenttoolschema.RecordIDText(
 				permission.ResourceTableChangeAlert, alertSupplier,
 			),
-			common.FieldStatus: agenttoolschema.Enum(
+			changepreview.FieldStatus: agenttoolschema.Enum(
 				"Paused stops its notices; Active resumes them.",
 				alertStatuses,
 			),
 		},
-		Required:    []string{ParamAlertID, common.FieldStatus},
+		Required:    []string{ParamAlertID, changepreview.FieldStatus},
 		SearchTerms: []string{"pause alert", "resume alert", "mute notification"},
 		Target:      targetAlert,
-	}, common.ReceivablePlan[*alertStatusChange, *kernelports.RecordChange[tablechangealert.TCASubscription]]{
+	}, toolspec.ReceivablePlan[*alertStatusChange, *kernelports.RecordChange[tablechangealert.TCASubscription]]{
 		Request: func(params *agenttoolports.ToolExecuteParams) (*alertStatusChange, error) {
 			id, err := alertIDRequest(params)
 			if err != nil {
 				return nil, err
 			}
-			status, err := common.RequireEnum(
+			status, err := toolparams.RequireEnum(
 				params.Params,
-				common.FieldStatus,
+				changepreview.FieldStatus,
 				alertStatuses.Values,
 			)
 			if err != nil {
@@ -307,7 +309,7 @@ func NewSetTableChangeAlertStatusTool(alerts AlertKeeper) agenttoolports.AgentTo
 			change *alertStatusChange,
 			params *agenttoolports.ToolExecuteParams,
 		) (*kernelports.RecordChange[tablechangealert.TCASubscription], error) {
-			return alerts.PlanSetSubscriptionStatus(ctx, change.id, common.TenantFrom(*params),
+			return alerts.PlanSetSubscriptionStatus(ctx, change.id, toolparams.TenantFrom(*params),
 				change.status)
 		},
 		Refused: func(change *alertStatusChange) string {
@@ -336,7 +338,7 @@ func NewSetTableChangeAlertStatusTool(alerts AlertKeeper) agenttoolports.AgentTo
 			if change.status == tablechangealert.SubscriptionStatusPaused {
 				set = alerts.PauseSubscription
 			}
-			updated, err := set(ctx, change.id, common.TenantFrom(*params))
+			updated, err := set(ctx, change.id, toolparams.TenantFrom(*params))
 			if err != nil {
 				return nil, err
 			}
@@ -352,7 +354,7 @@ func NewSetTableChangeAlertStatusTool(alerts AlertKeeper) agenttoolports.AgentTo
 }
 
 func NewDeleteTableChangeAlertTool(alerts AlertKeeper) agenttoolports.AgentTool {
-	return common.NewReceivableTool(&common.ReceivableSpec{
+	return toolspec.NewReceivableTool(&toolspec.ReceivableSpec{
 		Name:        "report_delete_table_change_alert",
 		Description: "Delete one of the person's change alerts they no longer want.",
 		Resource:    permission.ResourceTableChangeAlert,
@@ -368,14 +370,14 @@ func NewDeleteTableChangeAlertTool(alerts AlertKeeper) agenttoolports.AgentTool 
 		Required:    []string{ParamAlertID},
 		SearchTerms: []string{"delete alert", "remove notification", "stop alerting"},
 		Target:      targetAlert,
-	}, common.ReceivablePlan[pulid.ID, *tablechangealert.TCASubscription]{
+	}, toolspec.ReceivablePlan[pulid.ID, *tablechangealert.TCASubscription]{
 		Request: alertIDRequest,
 		Plan: func(
 			ctx context.Context,
 			id pulid.ID,
 			params *agenttoolports.ToolExecuteParams,
 		) (*tablechangealert.TCASubscription, error) {
-			return alerts.PlanDeleteSubscription(ctx, id, common.TenantFrom(*params))
+			return alerts.PlanDeleteSubscription(ctx, id, toolparams.TenantFrom(*params))
 		},
 		Refused: func(pulid.ID) string { return "Would delete a change alert." },
 		Render: func(
@@ -396,12 +398,12 @@ func NewDeleteTableChangeAlertTool(alerts AlertKeeper) agenttoolports.AgentTool 
 			id pulid.ID,
 			params *agenttoolports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
-			if err := alerts.DeleteSubscription(ctx, id, common.TenantFrom(*params)); err != nil {
+			if err := alerts.DeleteSubscription(ctx, id, toolparams.TenantFrom(*params)); err != nil {
 				return nil, err
 			}
 
 			return &agent.ToolExecutionResult{
-				Action: common.ActionDeleted,
+				Action: changepreview.ActionDeleted,
 				Kind:   masterdatatools.AlertKind,
 				IDs:    map[string]string{ParamAlertID: id.String()},
 			}, nil

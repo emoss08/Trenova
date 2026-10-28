@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -403,7 +403,7 @@ func TestRetryAccountingSync_RefusesWhatItCannotRetry(t *testing.T) {
 		"system":          "QuickBooksOnline",
 		"errorCategories": []any{"Transient"},
 	})
-	require.ErrorIs(t, tool.Execute(t.Context(), withoutKey), common.ErrMissingIdempotencyKey)
+	require.ErrorIs(t, tool.Execute(t.Context(), withoutKey), toolguard.ErrMissingIdempotencyKey)
 	assert.Nil(t, operator.retried)
 }
 

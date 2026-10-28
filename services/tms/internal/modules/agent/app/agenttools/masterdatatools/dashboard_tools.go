@@ -4,7 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -191,7 +192,7 @@ func (t *CreateDashboardTool) Validate(
 	return checkTileTargets(
 		ctx,
 		t.dashboards,
-		common.TenantFrom(params),
+		toolparams.TenantFrom(params),
 		tileParams(params.Params),
 		"tiles",
 	)
@@ -199,7 +200,7 @@ func (t *CreateDashboardTool) Validate(
 
 func (t *CreateDashboardTool) validateArgs(params map[string]any) error {
 	multiErr := errortypes.NewMultiError()
-	if common.OptionalString(params, "name") == "" {
+	if toolparams.OptionalString(params, "name") == "" {
 		multiErr.Add("name", errortypes.ErrRequired, "Give the dashboard a name")
 	}
 
@@ -227,18 +228,18 @@ func (t *CreateDashboardTool) validateArgs(params map[string]any) error {
 // the dashboard has no way to tell which it is.
 func validateTiles(tiles []map[string]any, multiErr *errortypes.MultiError) {
 	for i, tile := range tiles {
-		kind := report.TileKind(common.OptionalString(tile, "kind"))
+		kind := report.TileKind(toolparams.OptionalString(tile, "kind"))
 		field := fmt.Sprintf("tiles[%d]", i)
 
 		switch kind {
 		case report.TileKindText:
-			if common.OptionalString(tile, "text") == "" {
+			if toolparams.OptionalString(tile, "text") == "" {
 				multiErr.Add(field+".text", errortypes.ErrRequired,
 					"A text tile needs something to say")
 			}
 		case report.TileKindTable, report.TileKindChart, report.TileKindKPI:
-			definitionID := common.OptionalString(tile, "definitionId")
-			cannedKey := common.OptionalString(tile, "cannedKey")
+			definitionID := toolparams.OptionalString(tile, "definitionId")
+			cannedKey := toolparams.OptionalString(tile, "cannedKey")
 			switch {
 			case definitionID == "" && cannedKey == "":
 				multiErr.Add(field+".definitionId", errortypes.ErrRequired,
@@ -248,7 +249,7 @@ func validateTiles(tiles []map[string]any, multiErr *errortypes.MultiError) {
 				multiErr.Add(field, errortypes.ErrInvalid,
 					"Give a tile a definitionId or a cannedKey, not both")
 			}
-			if kind == report.TileKindKPI && common.OptionalString(tile, "columnId") == "" {
+			if kind == report.TileKindKPI && toolparams.OptionalString(tile, "columnId") == "" {
 				multiErr.Add(field+".columnId", errortypes.ErrRequired,
 					"A KPI tile needs the column whose number it shows")
 			}
@@ -263,7 +264,7 @@ func (t *CreateDashboardTool) Execute(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams,
 ) error {
-	if err := common.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
 	}
 
@@ -281,7 +282,7 @@ func (t *CreateDashboardTool) request(
 	params *agenttoolports.ToolExecuteParams,
 ) (*reporting.SaveDashboardRequest, error) {
 	visibility := report.VisibilityPrivate
-	if common.OptionalBool(params.Params, "shared") {
+	if toolparams.OptionalBool(params.Params, "shared") {
 		visibility = report.VisibilityShared
 	}
 
@@ -291,10 +292,10 @@ func (t *CreateDashboardTool) request(
 	}
 
 	return &reporting.SaveDashboardRequest{
-		Request:     reporting.Request{TenantInfo: common.TenantFrom(*params)},
-		Name:        common.OptionalString(params.Params, "name"),
-		Description: common.OptionalString(params.Params, "description"),
-		Category:    common.OptionalString(params.Params, "category"),
+		Request:     reporting.Request{TenantInfo: toolparams.TenantFrom(*params)},
+		Name:        toolparams.OptionalString(params.Params, "name"),
+		Description: toolparams.OptionalString(params.Params, "description"),
+		Category:    toolparams.OptionalString(params.Params, "category"),
 		Visibility:  visibility,
 		Layout:      &report.DashboardLayout{Tiles: tiles},
 	}, nil
@@ -377,8 +378,8 @@ func (t *AddDashboardTileTool) Validate(
 		return err
 	}
 
-	tenant := common.TenantFrom(params)
-	dashboardID, err := pulid.Parse(common.OptionalString(params.Params, "dashboardId"))
+	tenant := toolparams.TenantFrom(params)
+	dashboardID, err := pulid.Parse(toolparams.OptionalString(params.Params, "dashboardId"))
 	if err == nil {
 		_, err = t.dashboards.GetDashboard(ctx, &reporting.GetDashboardRequest{
 			Request:     reporting.Request{TenantInfo: tenant},
@@ -389,7 +390,7 @@ func (t *AddDashboardTileTool) Validate(
 		multiErr := errortypes.NewMultiError()
 		multiErr.Add("dashboardId", errortypes.ErrInvalid, fmt.Sprintf(
 			"%q is not a dashboard you can open; find it with report_list_dashboards",
-			common.OptionalString(params.Params, "dashboardId"),
+			toolparams.OptionalString(params.Params, "dashboardId"),
 		))
 		return multiErr
 	}
@@ -401,7 +402,7 @@ func (t *AddDashboardTileTool) Validate(
 
 func (t *AddDashboardTileTool) validateArgs(params map[string]any) error {
 	multiErr := errortypes.NewMultiError()
-	if common.OptionalString(params, "dashboardId") == "" {
+	if toolparams.OptionalString(params, "dashboardId") == "" {
 		multiErr.Add("dashboardId", errortypes.ErrRequired, "Name the dashboard to add to")
 	}
 
@@ -423,7 +424,7 @@ func (t *AddDashboardTileTool) Execute(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams,
 ) error {
-	if err := common.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
 	}
 
@@ -441,12 +442,12 @@ func (t *AddDashboardTileTool) request(
 	ctx context.Context,
 	params *agenttoolports.ToolExecuteParams,
 ) (*reporting.SaveDashboardRequest, *report.Dashboard, error) {
-	dashboardID, err := common.RequirePulid(params.Params, "dashboardId")
+	dashboardID, err := toolparams.RequirePulid(params.Params, "dashboardId")
 	if err != nil {
 		return nil, nil, err
 	}
 
-	tenant := common.TenantFrom(*params)
+	tenant := toolparams.TenantFrom(*params)
 	existing, err := t.dashboards.GetDashboard(ctx, &reporting.GetDashboardRequest{
 		Request:     reporting.Request{TenantInfo: tenant},
 		DashboardID: dashboardID,
@@ -492,7 +493,7 @@ func (t *AddDashboardTileTool) request(
 }
 
 func (t *AddDashboardTileTool) Target(params map[string]any) (agenttoolports.ToolTarget, bool) {
-	return common.TargetOf(params, "dashboardId", permission.ResourceDashboard)
+	return toolparams.TargetOf(params, "dashboardId", permission.ResourceDashboard)
 }
 
 func tileParams(params map[string]any) []map[string]any {
@@ -535,12 +536,12 @@ func buildTiles(tiles []map[string]any, startRow int) ([]report.DashboardTile, e
 	x, y, rowHeight := 0, startRow, 0
 
 	for _, tile := range tiles {
-		kind := report.TileKind(common.OptionalString(tile, "kind"))
+		kind := report.TileKind(toolparams.OptionalString(tile, "kind"))
 		width, height := defaultSpan(kind)
-		if requested := int(common.OptionalInt64(tile, "width")); requested > 0 {
+		if requested := int(toolparams.OptionalInt64(tile, "width")); requested > 0 {
 			width = min(requested, report.MaxTileSpan)
 		}
-		if requested := int(common.OptionalInt64(tile, "height")); requested > 0 {
+		if requested := int(toolparams.OptionalInt64(tile, "height")); requested > 0 {
 			height = requested
 		}
 
@@ -553,17 +554,17 @@ func buildTiles(tiles []map[string]any, startRow int) ([]report.DashboardTile, e
 		next := report.DashboardTile{
 			ID:       pulid.MustNew("tile_").String(),
 			Kind:     kind,
-			Title:    common.OptionalString(tile, "title"),
-			ChartID:  common.OptionalString(tile, "chartId"),
-			ColumnID: common.OptionalString(tile, "columnId"),
-			Text:     common.OptionalString(tile, "text"),
+			Title:    toolparams.OptionalString(tile, "title"),
+			ChartID:  toolparams.OptionalString(tile, "chartId"),
+			ColumnID: toolparams.OptionalString(tile, "columnId"),
+			Text:     toolparams.OptionalString(tile, "text"),
 			X:        x,
 			Y:        y,
 			W:        width,
 			H:        height,
 		}
-		next.CannedKey = common.OptionalString(tile, "cannedKey")
-		if raw := common.OptionalString(tile, "definitionId"); raw != "" {
+		next.CannedKey = toolparams.OptionalString(tile, "cannedKey")
+		if raw := toolparams.OptionalString(tile, "definitionId"); raw != "" {
 			definitionID, err := pulid.Parse(raw)
 			if err != nil {
 				return nil, fmt.Errorf("%q is not a report id", raw)
@@ -610,7 +611,7 @@ func checkTileTargets(
 			multiErr.Add(path+".definitionId", errortypes.ErrInvalid, fmt.Sprintf(
 				"%q is not a report id. Find the report with report_list and use its "+
 					"definitionId, or a built-in report's cannedKey",
-				common.OptionalString(tile, "definitionId"),
+				toolparams.OptionalString(tile, "definitionId"),
 			))
 			continue
 		}

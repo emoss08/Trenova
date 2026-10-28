@@ -5,7 +5,9 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
@@ -200,9 +202,9 @@ func TestSubmitInvoiceAdjustment_OneAdjustmentPreviewsItsFigures(t *testing.T) {
 	invoiceID := pulid.MustNew("inv_")
 	params := agenttoolstest.ExecuteParams(map[string]any{
 		paramAdjustments: []any{map[string]any{
-			common.ParamInvoiceID: invoiceID.String(),
-			paramAdjustmentKind:   string(invoiceadjustment.KindCreditOnly),
-			common.ParamReason:    "Detention was billed twice",
+			toolparams.ParamInvoiceID: invoiceID.String(),
+			paramAdjustmentKind:       string(invoiceadjustment.KindCreditOnly),
+			toolparams.ParamReason:    "Detention was billed twice",
 			paramAdjustmentLines: []any{map[string]any{
 				paramInvoiceLineID: pulid.MustNew("invl_").String(),
 				paramCreditAmount:  "125.00",
@@ -228,7 +230,7 @@ func TestSubmitInvoiceAdjustment_OneAdjustmentPreviewsItsFigures(t *testing.T) {
 	require.True(t, ok)
 	assert.Equal(t, invoiceID, target.ID)
 
-	require.ErrorIs(t, tool.Execute(t.Context(), params), common.ErrNeedsAPersonsApproval)
+	require.ErrorIs(t, tool.Execute(t.Context(), params), toolspec.ErrNeedsAPersonsApproval)
 	params.ProposalID = pulid.MustNew("ap_")
 	params.IdempotencyKey = params.ProposalID.String()
 	require.NoError(t, tool.Execute(t.Context(), params))
@@ -254,9 +256,9 @@ func TestSubmitInvoiceAdjustment_ManyGoAsOneBatch(t *testing.T) {
 	items := make([]any, 0, 3)
 	for range 3 {
 		items = append(items, map[string]any{
-			common.ParamInvoiceID: pulid.MustNew("inv_").String(),
-			paramAdjustmentKind:   string(invoiceadjustment.KindWriteOff),
-			common.ParamReason:    "Small balance write-off",
+			toolparams.ParamInvoiceID: pulid.MustNew("inv_").String(),
+			paramAdjustmentKind:       string(invoiceadjustment.KindWriteOff),
+			toolparams.ParamReason:    "Small balance write-off",
 		})
 	}
 	params := agenttoolstest.ExecuteParams(map[string]any{paramAdjustments: items})
@@ -286,9 +288,9 @@ func TestSubmitInvoiceAdjustment_PreviewErrorsRefuseIt(t *testing.T) {
 	tool := NewSubmitInvoiceAdjustmentTool(adjuster)
 	params := agenttoolstest.ExecuteParams(map[string]any{
 		paramAdjustments: []any{map[string]any{
-			common.ParamInvoiceID: pulid.MustNew("inv_").String(),
-			paramAdjustmentKind:   string(invoiceadjustment.KindCreditOnly),
-			common.ParamReason:    "Wrong rate",
+			toolparams.ParamInvoiceID: pulid.MustNew("inv_").String(),
+			paramAdjustmentKind:       string(invoiceadjustment.KindCreditOnly),
+			toolparams.ParamReason:    "Wrong rate",
 		}},
 	})
 
@@ -307,9 +309,9 @@ func TestSubmitInvoiceAdjustment_TakesADraftOrAdjustmentsNotBoth(t *testing.T) {
 	both := agenttoolstest.ExecuteParams(map[string]any{
 		ParamDraftAdjustmentID: pulid.MustNew("iadj_").String(),
 		paramAdjustments: []any{map[string]any{
-			common.ParamInvoiceID: pulid.MustNew("inv_").String(),
-			paramAdjustmentKind:   string(invoiceadjustment.KindCreditOnly),
-			common.ParamReason:    "x",
+			toolparams.ParamInvoiceID: pulid.MustNew("inv_").String(),
+			paramAdjustmentKind:       string(invoiceadjustment.KindCreditOnly),
+			toolparams.ParamReason:    "x",
 		}},
 	})
 	require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(), both))
@@ -369,9 +371,9 @@ func TestSaveInvoiceAdjustmentDraft_AnAgentSavesADraftAndSaysWhere(t *testing.T)
 	}
 	tool := NewSaveInvoiceAdjustmentDraftTool(adjuster)
 	params := agenttoolstest.AgentParamsFor(map[string]any{
-		common.ParamInvoiceID: inv.ID.String(),
-		paramAdjustmentKind:   string(invoiceadjustment.KindCreditOnly),
-		common.ParamReason:    "Customer disputes the lumper fee",
+		toolparams.ParamInvoiceID: inv.ID.String(),
+		paramAdjustmentKind:       string(invoiceadjustment.KindCreditOnly),
+		toolparams.ParamReason:    "Customer disputes the lumper fee",
 	})
 
 	preview := agenttoolstest.PreviewWithoutWrites(
@@ -448,14 +450,14 @@ func TestApproveInvoiceAdjustment_OnlyAPersonApprovesWhatExecutionWouldDo(t *tes
 	change := agenttoolstest.PreviewChange(t, preview, 0)
 	assert.Equal(t, "Executed", agenttoolstest.FieldByPath(t, change, "status").After)
 
-	require.ErrorIs(t, tool.Execute(t.Context(), params), common.ErrNeedsAPersonsApproval)
+	require.ErrorIs(t, tool.Execute(t.Context(), params), toolspec.ErrNeedsAPersonsApproval)
 	params.ProposalID = pulid.MustNew("ap_")
 	require.NoError(t, tool.Execute(t.Context(), params))
 	require.NotNil(t, adjuster.approved)
 
 	agentParams := agenttoolstest.AgentParamsFor(params.Params)
 	_, err := tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), agentParams)
-	require.ErrorIs(t, err, common.ErrAgentCannotApprove)
+	require.ErrorIs(t, err, toolguard.ErrAgentCannotApprove)
 	assert.Equal(t, permission.OpApprove, tool.Policy().Operation)
 }
 
@@ -482,8 +484,8 @@ func TestRejectInvoiceAdjustment_RecordsTheReason(t *testing.T) {
 	adjuster := &fakeAdjuster{decision: pendingDecision(), guard: &agenttoolstest.WriteGuard{}}
 	tool := NewRejectInvoiceAdjustmentTool(adjuster)
 	params := agenttoolstest.ExecuteParams(map[string]any{
-		ParamAdjustmentID:  adjuster.decision.Adjustment.ID.String(),
-		common.ParamReason: "The customer agreed to pay the lumper fee",
+		ParamAdjustmentID:      adjuster.decision.Adjustment.ID.String(),
+		toolparams.ParamReason: "The customer agreed to pay the lumper fee",
 	})
 
 	preview := agenttoolstest.PreviewWithoutWrites(

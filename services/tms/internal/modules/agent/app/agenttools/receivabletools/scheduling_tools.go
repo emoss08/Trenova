@@ -6,7 +6,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -56,7 +58,7 @@ var availabilityPreferences = agenttoolschema.Source(
 var weekdays = agenttoolschema.Source("time.weekday", weekdayNames())
 
 var scheduleUserRefs = map[string]permission.Resource{
-	common.ParamWorkerID:      permission.ResourceWorker,
+	toolparams.ParamWorkerID:  permission.ResourceWorker,
 	paramShiftTemplateID:      permission.ResourceShiftTemplate,
 	"assignedById":            permission.ResourceUser,
 	paramRequestingWorkerID:   permission.ResourceWorker,
@@ -65,12 +67,12 @@ var scheduleUserRefs = map[string]permission.Resource{
 }
 
 var scheduleDays = map[string]assistantartifact.DisplayType{
-	common.FieldEffectiveFrom: assistantartifact.DisplayDate,
-	common.FieldEffectiveTo:   assistantartifact.DisplayDate,
-	paramShiftDate:            assistantartifact.DisplayDate,
-	paramCounterpartyDate:     assistantartifact.DisplayDate,
-	"decidedAt":               assistantartifact.DisplayDateTime,
-	"respondedAt":             assistantartifact.DisplayDateTime,
+	changepreview.FieldEffectiveFrom: assistantartifact.DisplayDate,
+	changepreview.FieldEffectiveTo:   assistantartifact.DisplayDate,
+	paramShiftDate:                   assistantartifact.DisplayDate,
+	paramCounterpartyDate:            assistantartifact.DisplayDate,
+	"decidedAt":                      assistantartifact.DisplayDateTime,
+	"respondedAt":                    assistantartifact.DisplayDateTime,
 }
 
 type scheduleKeeper interface {
@@ -139,7 +141,7 @@ func (s teamScope) require(
 ) error {
 	return s.guard.Require(ctx, &teamscope.Request{
 		Actor:      params.Actor,
-		TenantInfo: common.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(*params),
 		Resource:   permission.ResourceWorkerSchedule,
 		Operation:  operation,
 		WorkerID:   workerID,
@@ -156,7 +158,7 @@ func weekdayNames() []string {
 }
 
 func requireWeekday(params map[string]any, key string) (int16, error) {
-	name, err := common.RequireEnum(params, key, weekdays.Values)
+	name, err := toolparams.RequireEnum(params, key, weekdays.Values)
 	if err != nil {
 		return 0, err
 	}
@@ -174,7 +176,7 @@ func shiftAssignmentRecord(assignment *workerschedule.WorkerShiftAssignment) too
 		Resource: permission.ResourceWorkerSchedule,
 		ID:       assignment.ID,
 		Label:    "Shift assignment",
-		Version:  common.PinnedVersion(assignment.Version),
+		Version:  changepreview.PinnedVersion(assignment.Version),
 	}
 }
 
@@ -182,8 +184,10 @@ func swapRecord(swap *workerschedule.ShiftSwapRequest) toolpreview.Record {
 	return toolpreview.Record{
 		Resource: permission.ResourceShiftSwap,
 		ID:       swap.ID,
-		Label:    "Shift swap for " + time.Unix(swap.ShiftDate, 0).UTC().Format(common.DayLayout),
-		Version:  common.PinnedVersion(swap.Version),
+		Label: "Shift swap for " + time.Unix(swap.ShiftDate, 0).
+			UTC().
+			Format(toolparams.DayLayout),
+		Version: changepreview.PinnedVersion(swap.Version),
 	}
 }
 
@@ -201,11 +205,11 @@ func scheduleSpec(
 	properties map[string]any,
 	required []string,
 	target func(map[string]any) (agenttoolports.ToolTarget, bool),
-) *common.ReceivableSpec {
-	return &common.ReceivableSpec{
+) *toolspec.ReceivableSpec {
+	return &toolspec.ReceivableSpec{
 		Name:        name,
 		Description: description,
-		Artifact:    common.WorkerRecordEntity,
+		Artifact:    changepreview.WorkerRecordEntity,
 		Resource:    permission.ResourceWorkerSchedule,
 		Operation:   operation,
 		Egress:      agent.EgressInternal,
@@ -220,11 +224,11 @@ func scheduleSpec(
 }
 
 func targetScheduledWorker(params map[string]any) (agenttoolports.ToolTarget, bool) {
-	return common.TargetOf(params, common.ParamWorkerID, permission.ResourceWorker)
+	return toolparams.TargetOf(params, toolparams.ParamWorkerID, permission.ResourceWorker)
 }
 
 func NewAssignWorkerShiftTool(schedules scheduleKeeper, scope teamScope) agenttoolports.AgentTool {
-	return common.NewReportingReceivableTool(scheduleSpec(
+	return toolspec.NewReportingReceivableTool(scheduleSpec(
 		"worker_assign_shift",
 		"Put a worker on a shift pattern from a day onward. The pattern they are on "+
 			"now ends the day before; a worker who already has a pattern starting on or "+
@@ -234,21 +238,27 @@ func NewAssignWorkerShiftTool(schedules scheduleKeeper, scope teamScope) agentto
 			"worker_end_shift_assignment or a new assignment changes it back.",
 		permission.OpAssign,
 		map[string]any{
-			common.ParamWorkerID: common.WorkerProperty(),
+			toolparams.ParamWorkerID: toolparams.WorkerProperty(),
 			paramShiftTemplateID: agenttoolschema.RecordIDText(
 				permission.ResourceShiftTemplate,
 				"The shift pattern, from worker_list_shift_templates. "+
 					"Never guess one.",
 			),
-			common.FieldEffectiveFrom: agenttoolschema.Date("The first day the worker works it."),
-			paramCycleOffsetWeeks: common.IntegerProperty("Which week of a rotating pattern the "+
-				"worker starts on, 0 for the first.", 0, maxCycleOffsetWeeks),
-			common.ParamNote: common.StringProperty("Anything the planner should know.",
-				common.MaxOperationNoteChars),
+			changepreview.FieldEffectiveFrom: agenttoolschema.Date(
+				"The first day the worker works it.",
+			),
+			paramCycleOffsetWeeks: toolparams.IntegerProperty(
+				"Which week of a rotating pattern the "+
+					"worker starts on, 0 for the first.",
+				0,
+				maxCycleOffsetWeeks,
+			),
+			toolparams.ParamNote: toolparams.StringProperty("Anything the planner should know.",
+				toolparams.MaxOperationNoteChars),
 		},
-		[]string{common.ParamWorkerID, paramShiftTemplateID, common.FieldEffectiveFrom},
+		[]string{toolparams.ParamWorkerID, paramShiftTemplateID, changepreview.FieldEffectiveFrom},
 		targetScheduledWorker,
-	), common.ReceivablePlan[*schedulingservice.AssignShiftRequest, *schedulingservice.ShiftAssignmentPlan]{
+	), toolspec.ReceivablePlan[*schedulingservice.AssignShiftRequest, *schedulingservice.ShiftAssignmentPlan]{
 		Request: assignShiftRequest,
 		Plan: func(
 			ctx context.Context,
@@ -297,10 +307,10 @@ func NewAssignWorkerShiftTool(schedules scheduleKeeper, scope teamScope) agentto
 				Action: "assigned",
 				Kind:   kindShiftAssignment,
 				IDs: map[string]string{
-					paramShiftAssignmentID: created.ID.String(),
-					common.ParamWorkerID:   created.WorkerID.String(),
+					paramShiftAssignmentID:   created.ID.String(),
+					toolparams.ParamWorkerID: created.WorkerID.String(),
 				},
-				Record: common.RecordOf(common.WorkerRecordEntity, created.WorkerID),
+				Record: changepreview.RecordOf(changepreview.WorkerRecordEntity, created.WorkerID),
 			}, nil
 		},
 	})
@@ -317,8 +327,13 @@ func renderAssignShift(
 			Label:    "New shift assignment",
 		},
 		plan.Created,
-		scheduleOptions(common.ParamWorkerID, paramShiftTemplateID, common.FieldEffectiveFrom,
-			paramCycleOffsetWeeks, common.FieldNotes)...,
+		scheduleOptions(
+			toolparams.ParamWorkerID,
+			paramShiftTemplateID,
+			changepreview.FieldEffectiveFrom,
+			paramCycleOffsetWeeks,
+			changepreview.FieldNotes,
+		)...,
 	)
 	if err != nil {
 		return nil, err
@@ -329,7 +344,7 @@ func renderAssignShift(
 		endAt := plan.EndedAt
 		ended.EffectiveTo = &endAt
 		change, changeErr := toolpreview.Changed(shiftAssignmentRecord(open), open, &ended,
-			scheduleOptions(common.FieldEffectiveTo)...)
+			scheduleOptions(changepreview.FieldEffectiveTo)...)
 		if changeErr != nil {
 			return nil, changeErr
 		}
@@ -337,7 +352,7 @@ func renderAssignShift(
 	}
 
 	summary := fmt.Sprintf("Would put the worker on %s from %s.", plan.Template.Name,
-		time.Unix(plan.Created.EffectiveFrom, 0).UTC().Format(common.DayLayout))
+		time.Unix(plan.Created.EffectiveFrom, 0).UTC().Format(toolparams.DayLayout))
 	if len(plan.Ended) > 0 {
 		summary += " The pattern they are on now ends the day before."
 	}
@@ -366,13 +381,13 @@ func NewEndWorkerShiftAssignmentTool(
 					"Never guess one.",
 				permission.KindShiftAssignment,
 			),
-			common.FieldEffectiveTo: agenttoolschema.Date(
+			changepreview.FieldEffectiveTo: agenttoolschema.Date(
 				"The last day the worker works the pattern.",
 			),
 		},
-		[]string{paramShiftAssignmentID, common.FieldEffectiveTo},
+		[]string{paramShiftAssignmentID, changepreview.FieldEffectiveTo},
 		func(params map[string]any) (agenttoolports.ToolTarget, bool) {
-			return common.TargetOf(
+			return toolparams.TargetOf(
 				params,
 				paramShiftAssignmentID,
 				permission.ResourceWorkerSchedule,
@@ -381,15 +396,15 @@ func NewEndWorkerShiftAssignmentTool(
 	)
 	spec.SearchTerms = []string{"shift pattern", "end shift", "remove from shift pattern"}
 
-	return common.NewReportingReceivableTool(spec, common.ReceivablePlan[
+	return toolspec.NewReportingReceivableTool(spec, toolspec.ReceivablePlan[
 		*assignmentEnd, *schedulingservice.AssignmentChange,
 	]{
 		Request: func(params *agenttoolports.ToolExecuteParams) (*assignmentEnd, error) {
-			id, err := common.RequirePulid(params.Params, paramShiftAssignmentID)
+			id, err := toolparams.RequirePulid(params.Params, paramShiftAssignmentID)
 			if err != nil {
 				return nil, err
 			}
-			to, err := common.RequireScheduleDay(params.Params, common.FieldEffectiveTo)
+			to, err := toolparams.RequireScheduleDay(params.Params, changepreview.FieldEffectiveTo)
 			if err != nil {
 				return nil, err
 			}
@@ -397,7 +412,7 @@ func NewEndWorkerShiftAssignmentTool(
 			return &assignmentEnd{req: &schedulingservice.EndAssignmentRequest{
 				ID:          id,
 				EffectiveTo: to,
-				TenantInfo:  common.TenantFrom(*params),
+				TenantInfo:  toolparams.TenantFrom(*params),
 				UserID:      params.Actor.UserID,
 			}}, nil
 		},
@@ -433,7 +448,7 @@ func NewEndWorkerShiftAssignmentTool(
 				Action: "ended",
 				Kind:   kindShiftAssignment,
 				IDs:    map[string]string{paramShiftAssignmentID: ended.ID.String()},
-				Record: common.RecordOf(common.WorkerRecordEntity, ended.WorkerID),
+				Record: changepreview.RecordOf(changepreview.WorkerRecordEntity, ended.WorkerID),
 			}, nil
 		},
 	})
@@ -444,14 +459,14 @@ func renderShiftAssignmentEnd(
 	plan *schedulingservice.AssignmentChange,
 ) (*agent.ToolPreview, error) {
 	change, err := toolpreview.Changed(shiftAssignmentRecord(plan.Before), plan.Before,
-		plan.After, scheduleOptions(common.FieldEffectiveTo)...)
+		plan.After, scheduleOptions(changepreview.FieldEffectiveTo)...)
 	if err != nil {
 		return nil, err
 	}
 
 	return toolpreview.Build(fmt.Sprintf(
 		"Would end the worker's shift pattern after %s.",
-		time.Unix(*plan.After.EffectiveTo, 0).UTC().Format(common.DayLayout),
+		time.Unix(*plan.After.EffectiveTo, 0).UTC().Format(toolparams.DayLayout),
 	), change), nil
 }
 
@@ -485,21 +500,21 @@ func NewSetWorkerAvailabilityPreferenceTool(
 			"it is set again the same way.",
 		permission.OpUpdate,
 		map[string]any{
-			common.ParamWorkerID: common.WorkerProperty(),
-			paramDayOfWeek:       agenttoolschema.Enum("The weekday it is about.", weekdays),
+			toolparams.ParamWorkerID: toolparams.WorkerProperty(),
+			paramDayOfWeek:           agenttoolschema.Enum("The weekday it is about.", weekdays),
 			paramPreference: agenttoolschema.Enum("What the worker said about that day.",
 				availabilityPreferences),
-			common.ParamNote: common.StringProperty(
+			toolparams.ParamNote: toolparams.StringProperty(
 				"Why, in the worker's words where you have them.",
 				maxScheduleNote,
 			),
 		},
-		[]string{common.ParamWorkerID, paramDayOfWeek, paramPreference},
+		[]string{toolparams.ParamWorkerID, paramDayOfWeek, paramPreference},
 		targetScheduledWorker,
 	)
 	spec.SearchTerms = []string{"availability", "unavailable", "prefers", "weekday preference"}
 
-	return common.NewReportingReceivableTool(spec, common.ReceivablePlan[
+	return toolspec.NewReportingReceivableTool(spec, toolspec.ReceivablePlan[
 		*schedulingservice.SetPreferenceRequest, *schedulingservice.PreferenceChange,
 	]{
 		Request: preferenceRequest,
@@ -550,8 +565,8 @@ func NewSetWorkerAvailabilityPreferenceTool(
 				Action: "recorded " + string(saved.Preference),
 				Kind:   "availability preference",
 				Name:   time.Weekday(saved.DayOfWeek).String(),
-				IDs:    map[string]string{common.ParamWorkerID: saved.WorkerID.String()},
-				Record: common.RecordOf(common.WorkerRecordEntity, saved.WorkerID),
+				IDs:    map[string]string{toolparams.ParamWorkerID: saved.WorkerID.String()},
+				Record: changepreview.RecordOf(changepreview.WorkerRecordEntity, saved.WorkerID),
 			}, nil
 		},
 	})
@@ -593,10 +608,10 @@ func renderPreference(
 }
 
 func NewProposeShiftSwapTool(schedules scheduleKeeper) agenttoolports.AgentTool {
-	return common.NewReportingReceivableTool(&common.ReceivableSpec{
+	return toolspec.NewReportingReceivableTool(&toolspec.ReceivableSpec{
 		Name:        "worker_request_shift_swap",
 		SearchTerms: []string{"trade shifts", "shift trade", "swap shifts"},
-		Artifact:    common.WorkerRecordEntity,
+		Artifact:    changepreview.WorkerRecordEntity,
 		Description: "Raise a shift swap for a worker who asked the office: they give up a " +
 			"day, handed to another worker or traded for one of theirs. It waits for the " +
 			"other worker to accept and the office to approve.",
@@ -624,16 +639,16 @@ func NewProposeShiftSwapTool(schedules scheduleKeeper) agenttoolports.AgentTool 
 				"The day offered back, when it is a trade " +
 					"rather than a hand-off.",
 			),
-			common.FieldReason: common.StringProperty(
+			changepreview.FieldReason: toolparams.StringProperty(
 				"Why, in the worker's words where you have them.",
 				maxScheduleNote,
 			),
 		},
 		Required: []string{paramRequestingWorkerID, paramShiftDate},
 		Target: func(params map[string]any) (agenttoolports.ToolTarget, bool) {
-			return common.TargetOf(params, paramRequestingWorkerID, permission.ResourceWorker)
+			return toolparams.TargetOf(params, paramRequestingWorkerID, permission.ResourceWorker)
 		},
-	}, common.ReceivablePlan[*schedulingservice.ProposeSwapRequest, *workerschedule.ShiftSwapRequest]{
+	}, toolspec.ReceivablePlan[*schedulingservice.ProposeSwapRequest, *workerschedule.ShiftSwapRequest]{
 		Request: proposeSwapRequest,
 		Plan: func(
 			_ context.Context,
@@ -666,7 +681,10 @@ func NewProposeShiftSwapTool(schedules scheduleKeeper) agenttoolports.AgentTool 
 				Action: "proposed",
 				Kind:   kindShiftSwap,
 				IDs:    map[string]string{paramSwapID: created.ID.String()},
-				Record: common.RecordOf(common.WorkerRecordEntity, created.RequestingWorkerID),
+				Record: changepreview.RecordOf(
+					changepreview.WorkerRecordEntity,
+					created.RequestingWorkerID,
+				),
 			}, nil
 		},
 	})
@@ -684,8 +702,8 @@ func renderShiftSwapProposal(
 			paramCounterpartyWorkerID,
 			paramShiftDate,
 			paramCounterpartyDate,
-			common.FieldReason,
-			common.FieldStatus,
+			changepreview.FieldReason,
+			changepreview.FieldStatus,
 		)...,
 	)
 	if err != nil {
@@ -695,31 +713,31 @@ func renderShiftSwapProposal(
 	return toolpreview.Build(fmt.Sprintf(
 		"Would raise a swap of %s for the worker; nobody's schedule changes until "+
 			"the office approves it.",
-		time.Unix(swap.ShiftDate, 0).UTC().Format(common.DayLayout),
+		time.Unix(swap.ShiftDate, 0).UTC().Format(toolparams.DayLayout),
 	), change), nil
 }
 
 func proposeSwapRequest(
 	params *agenttoolports.ToolExecuteParams,
 ) (*schedulingservice.ProposeSwapRequest, error) {
-	requesting, err := common.RequirePulid(params.Params, paramRequestingWorkerID)
+	requesting, err := toolparams.RequirePulid(params.Params, paramRequestingWorkerID)
 	if err != nil {
 		return nil, err
 	}
-	counterparty, _, err := common.OptionalPulid(params.Params, paramCounterpartyWorkerID)
+	counterparty, _, err := toolparams.OptionalPulid(params.Params, paramCounterpartyWorkerID)
 	if err != nil {
 		return nil, fmt.Errorf("parameter %q is not a valid id: %w", paramCounterpartyWorkerID,
 			err)
 	}
-	shiftDate, err := common.RequireScheduleDay(params.Params, paramShiftDate)
+	shiftDate, err := toolparams.RequireScheduleDay(params.Params, paramShiftDate)
 	if err != nil {
 		return nil, err
 	}
-	counterDate, err := common.OptionalScheduleDay(params.Params, paramCounterpartyDate)
+	counterDate, err := toolparams.OptionalScheduleDay(params.Params, paramCounterpartyDate)
 	if err != nil {
 		return nil, err
 	}
-	reason, err := common.BoundedText(params.Params, common.FieldReason, maxScheduleNote)
+	reason, err := toolparams.BoundedText(params.Params, changepreview.FieldReason, maxScheduleNote)
 	if err != nil {
 		return nil, err
 	}
@@ -732,7 +750,7 @@ func proposeSwapRequest(
 			CounterpartyShiftDate: counterDate,
 			Reason:                reason,
 		},
-		TenantInfo: common.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(*params),
 		UserID:     params.Actor.UserID,
 	}, nil
 }
@@ -754,11 +772,11 @@ func newSwapDecisionTool(
 	schedules scheduleKeeper,
 	spec *swapDecisionSpec,
 ) agenttoolports.AgentTool {
-	return common.NewReportingReceivableTool(&common.ReceivableSpec{
+	return toolspec.NewReportingReceivableTool(&toolspec.ReceivableSpec{
 		Name:        spec.name,
 		Description: spec.description,
 		SearchTerms: spec.searchTerms,
-		Artifact:    common.WorkerRecordEntity,
+		Artifact:    changepreview.WorkerRecordEntity,
 		Resource:    permission.ResourceShiftSwap,
 		Operation:   spec.operation,
 		Egress:      spec.egress,
@@ -771,22 +789,26 @@ func newSwapDecisionTool(
 				permission.ResourceShiftSwap,
 				"The swap, from worker_get_schedule. Never guess one.",
 			),
-			common.ParamNote: common.StringProperty("What the workers are told about it.",
+			toolparams.ParamNote: toolparams.StringProperty("What the workers are told about it.",
 				maxScheduleNote),
 		},
 		Required: []string{paramSwapID},
 		Target: func(params map[string]any) (agenttoolports.ToolTarget, bool) {
-			return common.TargetOf(params, paramSwapID, permission.ResourceShiftSwap)
+			return toolparams.TargetOf(params, paramSwapID, permission.ResourceShiftSwap)
 		},
-	}, common.ReceivablePlan[*schedulingservice.TransitionSwapRequest, *schedulingservice.SwapChange]{
+	}, toolspec.ReceivablePlan[*schedulingservice.TransitionSwapRequest, *schedulingservice.SwapChange]{
 		Request: func(
 			params *agenttoolports.ToolExecuteParams,
 		) (*schedulingservice.TransitionSwapRequest, error) {
-			id, err := common.RequirePulid(params.Params, paramSwapID)
+			id, err := toolparams.RequirePulid(params.Params, paramSwapID)
 			if err != nil {
 				return nil, err
 			}
-			note, err := common.BoundedText(params.Params, common.ParamNote, maxScheduleNote)
+			note, err := toolparams.BoundedText(
+				params.Params,
+				toolparams.ParamNote,
+				maxScheduleNote,
+			)
 			if err != nil {
 				return nil, err
 			}
@@ -795,7 +817,7 @@ func newSwapDecisionTool(
 				ID:         id,
 				Status:     spec.status,
 				Note:       note,
-				TenantInfo: common.TenantFrom(*params),
+				TenantInfo: toolparams.TenantFrom(*params),
 				UserID:     params.Actor.UserID,
 			}, nil
 		},
@@ -818,16 +840,26 @@ func newSwapDecisionTool(
 				plan.Before,
 				plan.After,
 				append(
-					scheduleOptions(common.FieldStatus, "responseNote", "decidedAt", "decidedById",
-						"respondedAt"),
+					scheduleOptions(
+						changepreview.FieldStatus,
+						"responseNote",
+						"decidedAt",
+						"decidedById",
+						"respondedAt",
+					),
 					toolpreview.Volatile("decidedAt", "respondedAt"),
 				)...)
 			if err != nil {
 				return nil, err
 			}
 
-			return toolpreview.Build(fmt.Sprintf("Would %s the swap of %s.", spec.verb,
-				time.Unix(plan.Before.ShiftDate, 0).UTC().Format(common.DayLayout)), change), nil
+			return toolpreview.Build(fmt.Sprintf(
+				"Would %s the swap of %s.",
+				spec.verb,
+				time.Unix(plan.Before.ShiftDate, 0).
+					UTC().
+					Format(toolparams.DayLayout),
+			), change), nil
 		},
 		Run: func(
 			ctx context.Context,
@@ -843,7 +875,10 @@ func newSwapDecisionTool(
 				Action: strings.ToLower(string(updated.Status)),
 				Kind:   kindShiftSwap,
 				IDs:    map[string]string{paramSwapID: updated.ID.String()},
-				Record: common.RecordOf(common.WorkerRecordEntity, updated.RequestingWorkerID),
+				Record: changepreview.RecordOf(
+					changepreview.WorkerRecordEntity,
+					updated.RequestingWorkerID,
+				),
 			}, nil
 		},
 	})
@@ -899,26 +934,30 @@ func NewWithdrawShiftSwapTool(schedules scheduleKeeper) agenttoolports.AgentTool
 func assignShiftRequest(
 	params *agenttoolports.ToolExecuteParams,
 ) (*schedulingservice.AssignShiftRequest, error) {
-	workerID, err := common.RequirePulid(params.Params, common.ParamWorkerID)
+	workerID, err := toolparams.RequirePulid(params.Params, toolparams.ParamWorkerID)
 	if err != nil {
 		return nil, err
 	}
-	templateID, err := common.RequirePulid(params.Params, paramShiftTemplateID)
+	templateID, err := toolparams.RequirePulid(params.Params, paramShiftTemplateID)
 	if err != nil {
 		return nil, err
 	}
-	from, err := common.RequireScheduleDay(params.Params, common.FieldEffectiveFrom)
+	from, err := toolparams.RequireScheduleDay(params.Params, changepreview.FieldEffectiveFrom)
 	if err != nil {
 		return nil, err
 	}
 	offset := 0
 	if _, given := params.Params[paramCycleOffsetWeeks]; given {
-		if offset, err = common.RequireIntInRange(params.Params, paramCycleOffsetWeeks, 0,
+		if offset, err = toolparams.RequireIntInRange(params.Params, paramCycleOffsetWeeks, 0,
 			maxCycleOffsetWeeks); err != nil {
 			return nil, err
 		}
 	}
-	notes, err := common.BoundedText(params.Params, common.ParamNote, common.MaxOperationNoteChars)
+	notes, err := toolparams.BoundedText(
+		params.Params,
+		toolparams.ParamNote,
+		toolparams.MaxOperationNoteChars,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -931,7 +970,7 @@ func assignShiftRequest(
 			CycleOffsetWeeks: int16(offset),
 			Notes:            notes,
 		},
-		TenantInfo: common.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(*params),
 		UserID:     params.Actor.UserID,
 	}, nil
 }
@@ -939,7 +978,7 @@ func assignShiftRequest(
 func preferenceRequest(
 	params *agenttoolports.ToolExecuteParams,
 ) (*schedulingservice.SetPreferenceRequest, error) {
-	workerID, err := common.RequirePulid(params.Params, common.ParamWorkerID)
+	workerID, err := toolparams.RequirePulid(params.Params, toolparams.ParamWorkerID)
 	if err != nil {
 		return nil, err
 	}
@@ -947,12 +986,12 @@ func preferenceRequest(
 	if err != nil {
 		return nil, err
 	}
-	preference, err := common.RequireEnum(params.Params, paramPreference,
+	preference, err := toolparams.RequireEnum(params.Params, paramPreference,
 		availabilityPreferences.Values)
 	if err != nil {
 		return nil, err
 	}
-	note, err := common.BoundedText(params.Params, common.ParamNote, maxScheduleNote)
+	note, err := toolparams.BoundedText(params.Params, toolparams.ParamNote, maxScheduleNote)
 	if err != nil {
 		return nil, err
 	}
@@ -964,7 +1003,7 @@ func preferenceRequest(
 			Preference: preference,
 			Note:       note,
 		},
-		TenantInfo: common.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(*params),
 		UserID:     params.Actor.UserID,
 	}, nil
 }

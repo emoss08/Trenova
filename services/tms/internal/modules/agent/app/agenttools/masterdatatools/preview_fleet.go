@@ -4,7 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -77,7 +79,7 @@ func (k equipmentKind[T]) PlanPreview(
 			Resource: k.resource,
 			ID:       k.id(unit),
 			Label:    k.code(unit),
-			Version:  common.PreviewVersion(k.version(unit)),
+			Version:  changepreview.PreviewVersion(k.version(unit)),
 		}, unit, mutate, toolpreview.Only("status"))
 		if err != nil {
 			return nil, err
@@ -86,7 +88,7 @@ func (k equipmentKind[T]) PlanPreview(
 	}
 
 	preview := toolpreview.Build(
-		fmt.Sprintf("Would set %s to %s.", common.CountOf(len(ids), k.noun), status),
+		fmt.Sprintf("Would set %s to %s.", changepreview.CountOf(len(ids), k.noun), status),
 		changes...,
 	)
 	if len(missing) == 0 {
@@ -98,7 +100,7 @@ func (k equipmentKind[T]) PlanPreview(
 		agent.PreviewWarningWouldFail,
 		fmt.Sprintf(
 			"This would be refused as it stands: %s matches nothing in this organization.",
-			common.CountOf(len(missing), k.noun+" id"),
+			changepreview.CountOf(len(missing), k.noun+" id"),
 		),
 		missing...,
 	), nil
@@ -108,7 +110,7 @@ func (t *UpdateTractorStatusTool) Preview(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
-	if err := common.GuardPreview(t, &params); err != nil {
+	if err := toolguard.GuardPreview(t, &params); err != nil {
 		return nil, err
 	}
 
@@ -118,7 +120,7 @@ func (t *UpdateTractorStatusTool) Preview(
 	}
 
 	units, err := t.tractors.GetByIDs(ctx, tractorports.GetTractorsByIDsRequest{
-		TenantInfo: common.TenantFrom(params),
+		TenantInfo: toolparams.TenantFrom(params),
 		TractorIDs: ids,
 	})
 	if err != nil {
@@ -132,7 +134,7 @@ func (t *UpdateTrailerStatusTool) Preview(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
-	if err := common.GuardPreview(t, &params); err != nil {
+	if err := toolguard.GuardPreview(t, &params); err != nil {
 		return nil, err
 	}
 
@@ -142,7 +144,7 @@ func (t *UpdateTrailerStatusTool) Preview(
 	}
 
 	units, err := t.trailers.GetByIDs(ctx, trailerports.GetTrailersByIDsRequest{
-		TenantInfo: common.TenantFrom(params),
+		TenantInfo: toolparams.TenantFrom(params),
 		TrailerIDs: ids,
 	})
 	if err != nil {

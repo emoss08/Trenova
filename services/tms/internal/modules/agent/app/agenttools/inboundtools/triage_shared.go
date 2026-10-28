@@ -6,7 +6,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -129,7 +130,7 @@ func messageIDProperty(description string) map[string]any {
 func triageSelection(
 	params *agenttoolports.ToolExecuteParams,
 ) (inboundmessageservice.Selection, error) {
-	ids, err := common.RequirePulidSlice(params.Params, paramMessageIDs, maxTriageSelection)
+	ids, err := toolparams.RequirePulidSlice(params.Params, paramMessageIDs, maxTriageSelection)
 	if err != nil {
 		return inboundmessageservice.Selection{}, err
 	}
@@ -138,7 +139,7 @@ func triageSelection(
 }
 
 func targetMessage(params map[string]any) (agenttoolports.ToolTarget, bool) {
-	return common.TargetOf(params, paramMessageID, permission.ResourceInboundMessage)
+	return toolparams.TargetOf(params, paramMessageID, permission.ResourceInboundMessage)
 }
 
 func tenantOnly(params *agenttoolports.ToolExecuteParams) pagination.TenantInfo {
@@ -152,7 +153,7 @@ func actorOf(params *agenttoolports.ToolExecuteParams) pulid.ID {
 func messageAction(
 	params *agenttoolports.ToolExecuteParams,
 ) (*inboundmessageservice.MessageActionRequest, error) {
-	messageID, err := common.RequirePulid(params.Params, paramMessageID)
+	messageID, err := toolparams.RequirePulid(params.Params, paramMessageID)
 	if err != nil {
 		return nil, err
 	}
@@ -199,9 +200,9 @@ var queueStateLabels = map[string]string{
 	"snoozeDocumentTypeId": "Waiting for document",
 	"awaitingUntil":        "Waits for a reply until",
 	"dueAt":                "Due",
-	"matchedShipmentId":    common.LabelShipment,
-	"matchedCustomerId":    common.LabelCustomer,
-	"matchedCarrierId":     common.LabelCarrier,
+	"matchedShipmentId":    changepreview.LabelShipment,
+	"matchedCustomerId":    changepreview.LabelCustomer,
+	"matchedCarrierId":     changepreview.LabelCarrier,
 	fieldMatchReason:       "Why",
 	"reviewNote":           "Note",
 }
@@ -307,7 +308,7 @@ func messageResult(
 		Kind:   "inbound message",
 		Name:   describeInboundMessage(message),
 		IDs:    map[string]string{paramMessageID: message.ID.String()},
-		Record: common.RecordOf(inboundMessageEntity, message.ID),
+		Record: changepreview.RecordOf(inboundMessageEntity, message.ID),
 	}
 }
 
@@ -326,7 +327,7 @@ func bulkResult(action string, result *inboundmessageports.BulkResult) *agent.To
 		out.IDs[paramMessageIDs] = strings.Join(ids, ",")
 	}
 	if len(result.Messages) == 1 {
-		out.Record = common.RecordOf(inboundMessageEntity, result.Messages[0].ID)
+		out.Record = changepreview.RecordOf(inboundMessageEntity, result.Messages[0].ID)
 	}
 
 	return out
@@ -340,5 +341,5 @@ func inboundMessageChange(
 }
 
 func refusedPreview(summary string, err error) *agent.ToolPreview {
-	return common.WarnWouldFail(toolpreview.Build(summary), err)
+	return changepreview.WarnWouldFail(toolpreview.Build(summary), err)
 }

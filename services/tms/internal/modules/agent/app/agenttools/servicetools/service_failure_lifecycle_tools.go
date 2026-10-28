@@ -5,9 +5,11 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/editools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/operationstools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -36,9 +38,9 @@ const kindServiceFailure = "service failure"
 const maxX12CodeChars = 3
 
 var serviceFailureUserRefs = map[string]permission.Resource{
-	common.FieldReasonCodeID: permission.ResourceServiceFailureReasonCode,
-	common.FieldReviewedByID: permission.ResourceUser,
-	common.FieldVoidedByID:   permission.ResourceUser,
+	changepreview.FieldReasonCodeID: permission.ResourceServiceFailureReasonCode,
+	changepreview.FieldReviewedByID: permission.ResourceUser,
+	changepreview.FieldVoidedByID:   permission.ResourceUser,
 }
 
 type serviceFailureLifecycle interface {
@@ -87,7 +89,7 @@ func serviceFailureRecord(failure *servicefailure.ServiceFailure) toolpreview.Re
 		Resource: permission.ResourceServiceFailure,
 		ID:       failure.ID,
 		Label:    "Service failure " + failure.Number,
-		Version:  common.PinnedVersion(failure.Version),
+		Version:  changepreview.PinnedVersion(failure.Version),
 	}
 }
 
@@ -100,16 +102,16 @@ func serviceFailureResult(
 		result.Name = failure.Number
 		result.IDs = map[string]string{
 			editools.ParamServiceFailureID: failure.ID.String(),
-			common.ParamShipmentID:         failure.ShipmentID.String(),
+			toolparams.ParamShipmentID:     failure.ShipmentID.String(),
 		}
-		result.Record = common.RecordOf(common.ServiceFailureRecordEntity, failure.ID)
+		result.Record = changepreview.RecordOf(changepreview.ServiceFailureRecordEntity, failure.ID)
 	}
 
 	return result
 }
 
 func targetServiceFailure(params map[string]any) (agenttoolports.ToolTarget, bool) {
-	return common.TargetOf(
+	return toolparams.TargetOf(
 		params,
 		editools.ParamServiceFailureID,
 		permission.ResourceServiceFailure,
@@ -141,61 +143,65 @@ type serviceFailureEdit struct {
 }
 
 func readServiceFailureEdit(params *agenttoolports.ToolExecuteParams) (*serviceFailureEdit, error) {
-	id, err := common.RequirePulid(params.Params, editools.ParamServiceFailureID)
+	id, err := toolparams.RequirePulid(params.Params, editools.ParamServiceFailureID)
 	if err != nil {
 		return nil, err
 	}
 	edit := &serviceFailureEdit{
 		id:          id,
-		tenant:      common.TenantFrom(*params),
-		clearReason: common.OptionalBool(params.Params, paramClearReasonCode),
+		tenant:      toolparams.TenantFrom(*params),
+		clearReason: toolparams.OptionalBool(params.Params, paramClearReasonCode),
 	}
-	if edit.reasonCodeID, _, err = common.OptionalPulid(
+	if edit.reasonCodeID, _, err = toolparams.OptionalPulid(
 		params.Params,
-		common.FieldReasonCodeID,
+		changepreview.FieldReasonCodeID,
 	); err != nil {
-		return nil, fmt.Errorf("parameter %q is not a valid id: %w", common.FieldReasonCodeID, err)
+		return nil, fmt.Errorf(
+			"parameter %q is not a valid id: %w",
+			changepreview.FieldReasonCodeID,
+			err,
+		)
 	}
 	if edit.clearReason && edit.reasonCodeID.IsNotNil() {
 		return nil, fmt.Errorf(
 			"send %s or %s, not both",
-			common.FieldReasonCodeID,
+			changepreview.FieldReasonCodeID,
 			paramClearReasonCode,
 		)
 	}
-	if edit.notes, err = common.OptionalBoundedText(
+	if edit.notes, err = toolparams.OptionalBoundedText(
 		params.Params,
-		common.ParamNote,
-		common.MaxOperationNoteChars,
+		toolparams.ParamNote,
+		toolparams.MaxOperationNoteChars,
 	); err != nil {
 		return nil, err
 	}
-	if edit.internalNotes, err = common.OptionalBoundedText(
-		params.Params, paramInternalNotes, common.MaxOperationNoteChars); err != nil {
+	if edit.internalNotes, err = toolparams.OptionalBoundedText(
+		params.Params, paramInternalNotes, toolparams.MaxOperationNoteChars); err != nil {
 		return nil, err
 	}
-	if edit.x12Status, err = common.OptionalBoundedText(
+	if edit.x12Status, err = toolparams.OptionalBoundedText(
 		params.Params,
 		paramX12Status,
 		maxX12CodeChars,
 	); err != nil {
 		return nil, err
 	}
-	if edit.x12Reason, err = common.OptionalBoundedText(
+	if edit.x12Reason, err = toolparams.OptionalBoundedText(
 		params.Params,
 		paramX12Reason,
 		maxX12CodeChars,
 	); err != nil {
 		return nil, err
 	}
-	if edit.x12Exception, err = common.OptionalBoundedText(
+	if edit.x12Exception, err = toolparams.OptionalBoundedText(
 		params.Params, paramX12Exception, maxX12CodeChars); err != nil {
 		return nil, err
 	}
 	if edit.reasonCodeID.IsNil() && !edit.clearReason && edit.notes == nil &&
 		edit.internalNotes == nil && edit.x12Status == nil && edit.x12Reason == nil &&
 		edit.x12Exception == nil {
-		return nil, common.ErrNothingToChange
+		return nil, toolparams.ErrNothingToChange
 	}
 
 	return edit, nil
@@ -237,10 +243,10 @@ func (e *serviceFailureEdit) request(
 }
 
 func NewUpdateServiceFailureTool(failures serviceFailureLifecycle) agenttoolports.AgentTool {
-	return common.NewReportingReceivableTool(&common.ReceivableSpec{
+	return toolspec.NewReportingReceivableTool(&toolspec.ReceivableSpec{
 		Name:        "exception_update_service_failure",
 		SearchTerms: []string{"change reason code", "edit service failure"},
-		Artifact:    common.ServiceFailureRecordEntity,
+		Artifact:    changepreview.ServiceFailureRecordEntity,
 		Description: "Change the reason code, notes or EDI 214 code overrides on an open " +
 			"or reviewed service failure. Send only what changes; an empty string clears " +
 			"a note or override. It does not move the failure through its lifecycle: use " +
@@ -256,32 +262,32 @@ func NewUpdateServiceFailureTool(failures serviceFailureLifecycle) agenttoolport
 			"overrides shape a later EDI 214, so a person approves each edit.",
 		Properties: map[string]any{
 			editools.ParamServiceFailureID: serviceFailureIDProperty(),
-			common.FieldReasonCodeID: agenttoolschema.RecordIDText(
+			changepreview.FieldReasonCodeID: agenttoolschema.RecordIDText(
 				permission.ResourceServiceFailureReasonCode,
 				"The reason code to set, from exception_list_service_failure_reason_codes.",
 			),
-			paramClearReasonCode: common.BooleanProperty("True to remove the reason code. A " +
+			paramClearReasonCode: toolparams.BooleanProperty("True to remove the reason code. A " +
 				"reviewed failure keeps its reason."),
-			common.ParamNote: toolschema.KeepEmpty(
-				common.StringProperty("What the customer may read "+
-					"about the failure.", common.MaxOperationNoteChars),
+			toolparams.ParamNote: toolschema.KeepEmpty(
+				toolparams.StringProperty("What the customer may read "+
+					"about the failure.", toolparams.MaxOperationNoteChars),
 			),
 			paramInternalNotes: toolschema.KeepEmpty(
-				common.StringProperty("What staff should know.",
-					common.MaxOperationNoteChars),
+				toolparams.StringProperty("What staff should know.",
+					toolparams.MaxOperationNoteChars),
 			),
-			paramX12Status: toolschema.KeepEmpty(common.StringProperty("EDI 214 status code "+
+			paramX12Status: toolschema.KeepEmpty(toolparams.StringProperty("EDI 214 status code "+
 				"override, three characters.", maxX12CodeChars)),
-			paramX12Reason: toolschema.KeepEmpty(common.StringProperty("EDI 214 reason code "+
+			paramX12Reason: toolschema.KeepEmpty(toolparams.StringProperty("EDI 214 reason code "+
 				"override, three characters.", maxX12CodeChars)),
 			paramX12Exception: toolschema.KeepEmpty(
-				common.StringProperty("EDI 214 exception code, "+
+				toolparams.StringProperty("EDI 214 exception code, "+
 					"three characters.", maxX12CodeChars),
 			),
 		},
 		Required: []string{editools.ParamServiceFailureID},
 		Target:   targetServiceFailure,
-	}, common.ReceivablePlan[*serviceFailureEdit, *servicefailureports.ServiceFailureLifecyclePreview]{
+	}, toolspec.ReceivablePlan[*serviceFailureEdit, *servicefailureports.ServiceFailureLifecyclePreview]{
 		Request: readServiceFailureEdit,
 		Plan: func(
 			ctx context.Context,
@@ -306,8 +312,14 @@ func NewUpdateServiceFailureTool(failures serviceFailureLifecycle) agenttoolport
 				serviceFailureRecord(plan.Before),
 				plan.Before,
 				plan.After,
-				toolpreview.Only(common.FieldReasonCodeID, common.FieldNotes, paramInternalNotes,
-					paramX12Status, paramX12Reason, paramX12Exception),
+				toolpreview.Only(
+					changepreview.FieldReasonCodeID,
+					changepreview.FieldNotes,
+					paramInternalNotes,
+					paramX12Status,
+					paramX12Reason,
+					paramX12Exception,
+				),
 				toolpreview.WithRefs(serviceFailureUserRefs),
 			)
 			if err != nil {
@@ -347,28 +359,32 @@ func readServiceFailureTransition(
 	params *agenttoolports.ToolExecuteParams,
 	notesRequired bool,
 ) (*serviceFailureTransition, error) {
-	id, err := common.RequirePulid(params.Params, editools.ParamServiceFailureID)
+	id, err := toolparams.RequirePulid(params.Params, editools.ParamServiceFailureID)
 	if err != nil {
 		return nil, err
 	}
-	transition := &serviceFailureTransition{id: id, tenant: common.TenantFrom(*params)}
-	if transition.reasonCodeID, _, err = common.OptionalPulid(
+	transition := &serviceFailureTransition{id: id, tenant: toolparams.TenantFrom(*params)}
+	if transition.reasonCodeID, _, err = toolparams.OptionalPulid(
 		params.Params,
-		common.FieldReasonCodeID,
+		changepreview.FieldReasonCodeID,
 	); err != nil {
-		return nil, fmt.Errorf("parameter %q is not a valid id: %w", common.FieldReasonCodeID, err)
+		return nil, fmt.Errorf(
+			"parameter %q is not a valid id: %w",
+			changepreview.FieldReasonCodeID,
+			err,
+		)
 	}
 	if notesRequired {
-		transition.notes, err = common.RequireBoundedText(
+		transition.notes, err = toolparams.RequireBoundedText(
 			params.Params,
-			common.ParamNote,
-			common.MaxOperationNoteChars,
+			toolparams.ParamNote,
+			toolparams.MaxOperationNoteChars,
 		)
 	} else {
-		transition.notes, err = common.BoundedText(
+		transition.notes, err = toolparams.BoundedText(
 			params.Params,
-			common.ParamNote,
-			common.MaxOperationNoteChars,
+			toolparams.ParamNote,
+			toolparams.MaxOperationNoteChars,
 		)
 	}
 	if err != nil {
@@ -422,28 +438,28 @@ func newServiceFailureTransitionTool(
 ) agenttoolports.AgentTool {
 	properties := map[string]any{
 		editools.ParamServiceFailureID: serviceFailureIDProperty(),
-		common.ParamNote: common.StringProperty(
+		toolparams.ParamNote: toolparams.StringProperty(
 			"What was found, in a sentence a person reads on the "+
 				"failure later.",
-			common.MaxOperationNoteChars,
+			toolparams.MaxOperationNoteChars,
 		),
 	}
 	required := []string{editools.ParamServiceFailureID}
 	if spec.notesRequired {
-		required = append(required, common.ParamNote)
+		required = append(required, toolparams.ParamNote)
 	} else {
-		properties[common.FieldReasonCodeID] = agenttoolschema.RecordIDText(
+		properties[changepreview.FieldReasonCodeID] = agenttoolschema.RecordIDText(
 			permission.ResourceServiceFailureReasonCode,
 			"The reason code, from exception_list_service_failure_reason_codes. Required when the "+
 				"failure has none; otherwise replaces it.",
 		)
 	}
 
-	return common.NewReportingReceivableTool(&common.ReceivableSpec{
+	return toolspec.NewReportingReceivableTool(&toolspec.ReceivableSpec{
 		Name:        spec.name,
 		Description: spec.description,
 		SearchTerms: spec.searchTerms,
-		Artifact:    common.ServiceFailureRecordEntity,
+		Artifact:    changepreview.ServiceFailureRecordEntity,
 		Resource:    permission.ResourceServiceFailure,
 		Operation:   spec.operation,
 		Egress:      agent.EgressExternalRecipient,
@@ -454,7 +470,7 @@ func newServiceFailureTransitionTool(
 		Properties:  properties,
 		Required:    required,
 		Target:      targetServiceFailure,
-	}, common.ReceivablePlan[*serviceFailureTransition, *servicefailureports.ServiceFailureLifecyclePreview]{
+	}, toolspec.ReceivablePlan[*serviceFailureTransition, *servicefailureports.ServiceFailureLifecyclePreview]{
 		Request: func(params *agenttoolports.ToolExecuteParams) (*serviceFailureTransition, error) {
 			return readServiceFailureTransition(params, spec.notesRequired)
 		},
@@ -530,13 +546,13 @@ func NewReviewServiceFailureTool(failures serviceFailureLifecycle) agenttoolport
 		verb:   "review",
 		action: "reviewed",
 		fields: []string{
-			common.FieldStatus,
-			common.FieldReasonCodeID,
+			changepreview.FieldStatus,
+			changepreview.FieldReasonCodeID,
 			paramInternalNotes,
-			common.FieldReviewedAt,
-			common.FieldReviewedByID,
+			changepreview.FieldReviewedAt,
+			changepreview.FieldReviewedByID,
 		},
-		volatile: common.FieldReviewedAt,
+		volatile: changepreview.FieldReviewedAt,
 		preview:  serviceFailureLifecycle.PreviewReview,
 		run:      serviceFailureLifecycle.Review,
 	})
@@ -556,10 +572,10 @@ func NewVoidServiceFailureTool(failures serviceFailureLifecycle) agenttoolports.
 		action:        "voided",
 		notesRequired: true,
 		fields: []string{
-			common.FieldStatus,
+			changepreview.FieldStatus,
 			"voidReason",
 			"voidedAt",
-			common.FieldVoidedByID,
+			changepreview.FieldVoidedByID,
 		},
 		volatile: "voidedAt",
 		preview:  serviceFailureLifecycle.PreviewVoid,

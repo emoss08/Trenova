@@ -5,7 +5,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -14,12 +15,12 @@ import (
 )
 
 var alertViewLabels = map[string]string{
-	"table":             "Watches",
-	"events":            "On",
-	"watchedColumns":    "Only when these change",
-	"conditions":        "When",
-	"match":             "Conditions that must hold",
-	common.FieldMessage: "Message",
+	"table":                    "Watches",
+	"events":                   "On",
+	"watchedColumns":           "Only when these change",
+	"conditions":               "When",
+	"match":                    "Conditions that must hold",
+	changepreview.FieldMessage: "Message",
 }
 
 type alertView struct {
@@ -61,7 +62,7 @@ func (t *CreateTableChangeAlertTool) Preview(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
-	if err := common.GuardPreview(t, &params); err != nil {
+	if err := toolguard.GuardPreview(t, &params); err != nil {
 		return nil, err
 	}
 
@@ -84,7 +85,7 @@ func (t *CreateTableChangeAlertTool) Preview(
 		err = t.alerts.CheckSubscription(ctx, subscription)
 	}
 
-	return common.WarnRefusal(preview, err)
+	return changepreview.WarnRefusal(preview, err)
 }
 
 func alertEventWords(events []string) string {

@@ -7,7 +7,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
@@ -76,12 +78,12 @@ func (t *RememberTool) ParamSchema() map[string]any {
 					"characters, written so a reader with no other context understands them.",
 					agent.MaxMemoryContentChars),
 			},
-			common.FieldKind: agenttoolschema.Enum(
+			changepreview.FieldKind: agenttoolschema.Enum(
 				"Instruction for a rule a person gave; Procedure for the steps a person gave for a "+
 					"task; Fact for something learned. Defaults to Fact.",
 				rememberedMemoryKinds,
 			),
-			common.FieldSubjectType: agenttoolschema.Enum(
+			changepreview.FieldSubjectType: agenttoolschema.Enum(
 				"The kind of record the memory is about, with subjectId. Omit for organization-wide.",
 				memorySubjectTypes,
 			),
@@ -159,7 +161,7 @@ func classifyRemember(params agenttoolports.ToolExecuteParams) agenttoolports.Ca
 // rememberAudience is who the call keeps the memory for, defaulting to the
 // person when there is one.
 func rememberAudience(params agenttoolports.ToolExecuteParams) string {
-	if audience := common.OptionalString(params.Params, fieldVisibleTo); audience != "" {
+	if audience := toolparams.OptionalString(params.Params, fieldVisibleTo); audience != "" {
 		return audience
 	}
 	if params.Actor.PersonUserID().IsNotNil() {
@@ -174,7 +176,7 @@ func rememberHeldWhenTainted(params agenttoolports.ToolExecuteParams) bool {
 }
 
 func rememberKind(params map[string]any) agent.MemoryKind {
-	kind := agent.MemoryKind(common.OptionalString(params, "kind"))
+	kind := agent.MemoryKind(toolparams.OptionalString(params, "kind"))
 	if kind == "" {
 		return agent.MemoryKindFact
 	}
@@ -206,11 +208,11 @@ func (t *RememberTool) request(
 	ctx context.Context,
 	params *agenttoolports.ToolExecuteParams,
 ) (*agentmemoryports.RememberRequest, error) {
-	if err := common.GuardExecute(t, *params); err != nil {
+	if err := toolguard.GuardExecute(t, *params); err != nil {
 		return nil, err
 	}
 
-	content, err := common.RequireString(params.Params, "content")
+	content, err := toolparams.RequireString(params.Params, "content")
 	if err != nil {
 		return nil, err
 	}
@@ -221,7 +223,7 @@ func (t *RememberTool) request(
 			strings.Join(rememberedMemoryKinds.Names(), ", "), kind)
 	}
 
-	replaces, err := common.OptionalPulidParam(params.Params, fieldReplacesMemoryID)
+	replaces, err := toolparams.OptionalPulidParam(params.Params, fieldReplacesMemoryID)
 	if err != nil {
 		return nil, err
 	}
@@ -231,13 +233,13 @@ func (t *RememberTool) request(
 		return nil, err
 	}
 
-	expiresAt, err := memoryExpiry(common.OptionalString(params.Params, "expiresOn"))
+	expiresAt, err := memoryExpiry(toolparams.OptionalString(params.Params, "expiresOn"))
 	if err != nil {
 		return nil, err
 	}
 
 	request := &agentmemoryports.RememberRequest{
-		TenantInfo:   common.TenantFrom(*params),
+		TenantInfo:   toolparams.TenantFrom(*params),
 		Kind:         kind,
 		Content:      content,
 		SubjectType:  subjectType,
@@ -380,18 +382,18 @@ func (t *ForgetMemoryTool) Execute(
 func (t *ForgetMemoryTool) request(
 	params *agenttoolports.ToolExecuteParams,
 ) (agentmemoryports.SetAgentMemoryStatusRequest, error) {
-	if err := common.GuardExecute(t, *params); err != nil {
+	if err := toolguard.GuardExecute(t, *params); err != nil {
 		return agentmemoryports.SetAgentMemoryStatusRequest{}, err
 	}
 
-	memoryID, err := common.RequirePulid(params.Params, "memoryId")
+	memoryID, err := toolparams.RequirePulid(params.Params, "memoryId")
 	if err != nil {
 		return agentmemoryports.SetAgentMemoryStatusRequest{}, err
 	}
 
 	return agentmemoryports.SetAgentMemoryStatusRequest{
 		ID:         memoryID,
-		TenantInfo: common.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(*params),
 		Status:     agent.MemoryStatusRetired,
 	}, nil
 }
@@ -424,8 +426,8 @@ const fieldReplacesMemoryID = "replacesMemoryId"
 // a type for a memory about no record, and refusing that kept it from ever
 // saving one. An id without a type cannot be looked up and is refused.
 func memorySubject(params map[string]any) (agent.MemorySubjectType, pulid.ID, error) {
-	subjectType := agent.MemorySubjectType(common.OptionalString(params, "subjectType"))
-	rawID := common.OptionalString(params, "subjectId")
+	subjectType := agent.MemorySubjectType(toolparams.OptionalString(params, "subjectType"))
+	rawID := toolparams.OptionalString(params, "subjectId")
 
 	if rawID == "" {
 		return "", pulid.Nil, nil

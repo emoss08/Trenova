@@ -3,8 +3,12 @@ package invoicetools
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/billingqueuepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/billingtools"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/invoicepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/recordbatch"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
@@ -42,7 +46,7 @@ type invoiceNumberReader interface {
 	) ([]*invoice.Invoice, error)
 }
 
-func invoiceNumbers(reader invoiceNumberReader) common.RecordLabels {
+func invoiceNumbers(reader invoiceNumberReader) recordbatch.RecordLabels {
 	return func(
 		ctx context.Context,
 		tenant pagination.TenantInfo,
@@ -60,7 +64,7 @@ func invoiceNumbers(reader invoiceNumberReader) common.RecordLabels {
 		}
 		labels := make(map[pulid.ID]string, len(invoices))
 		for _, entity := range invoices {
-			labels[entity.ID] = common.InvoiceLabel(entity)
+			labels[entity.ID] = invoicepreview.InvoiceLabel(entity)
 		}
 
 		return labels
@@ -69,7 +73,7 @@ func invoiceNumbers(reader invoiceNumberReader) common.RecordLabels {
 
 type PostInvoicesTool struct {
 	single *PostInvoiceTool
-	batch  *common.RecordBatch
+	batch  *recordbatch.RecordBatch
 }
 
 func NewPostInvoicesTool(
@@ -80,14 +84,14 @@ func NewPostInvoicesTool(
 
 	return &PostInvoicesTool{
 		single: single,
-		batch: &common.RecordBatch{
+		batch: &recordbatch.RecordBatch{
 			Param:       paramInvoiceIDs,
-			SingleParam: common.ParamInvoiceID,
+			SingleParam: toolparams.ParamInvoiceID,
 			Resource:    permission.ResourceInvoice,
 			Noun:        nounInvoice,
 			Nouns:       nounInvoices,
 			Verb:        "post",
-			Past:        common.PastPosted,
+			Past:        changepreview.PastPosted,
 			Unchanged:   "is already posted",
 			Single:      single,
 			NeedsPerson: ErrInvoiceNeedsAPerson,
@@ -111,13 +115,13 @@ func (t *PostInvoicesTool) SearchTerms() []string { return []string{nounInvoices
 func (t *PostInvoicesTool) Description() string { return bulkPostDescription }
 
 func (t *PostInvoicesTool) ParamSchema() map[string]any {
-	return common.BulkIDsSchema(t.batch, bulkInvoiceIDsDescription, nil)
+	return recordbatch.BulkIDsSchema(t.batch, bulkInvoiceIDsDescription, nil)
 }
 
 func (t *PostInvoicesTool) Policy() agenttoolports.ToolPolicy {
 	policy := t.single.Policy()
 	policy.Name = t.Name()
-	policy.Artifact = common.InvoiceRecordEntity
+	policy.Artifact = changepreview.InvoiceRecordEntity
 	policy.Rationale = "Books receivables to the ledger and queues each for the accounting " +
 		"system and the customer's EDI; only a person posts, and may untick any of them, " +
 		"and hands-off posting is the billing-control auto-post setting."
@@ -161,7 +165,7 @@ func (t *PostInvoicesTool) ExecuteWithResult(
 
 type SendInvoicesTool struct {
 	single *SendInvoiceTool
-	batch  *common.RecordBatch
+	batch  *recordbatch.RecordBatch
 }
 
 func NewSendInvoicesTool(
@@ -172,9 +176,9 @@ func NewSendInvoicesTool(
 
 	return &SendInvoicesTool{
 		single: single,
-		batch: &common.RecordBatch{
+		batch: &recordbatch.RecordBatch{
 			Param:       paramInvoiceIDs,
-			SingleParam: common.ParamInvoiceID,
+			SingleParam: toolparams.ParamInvoiceID,
 			Resource:    permission.ResourceInvoice,
 			Noun:        nounInvoice,
 			Nouns:       nounInvoices,
@@ -198,13 +202,13 @@ func (t *SendInvoicesTool) SearchTerms() []string { return []string{nounInvoices
 func (t *SendInvoicesTool) Description() string { return bulkSendDescription }
 
 func (t *SendInvoicesTool) ParamSchema() map[string]any {
-	return common.BulkIDsSchema(t.batch, bulkInvoiceIDsDescription, nil)
+	return recordbatch.BulkIDsSchema(t.batch, bulkInvoiceIDsDescription, nil)
 }
 
 func (t *SendInvoicesTool) Policy() agenttoolports.ToolPolicy {
 	policy := t.single.Policy()
 	policy.Name = t.Name()
-	policy.Artifact = common.InvoiceRecordEntity
+	policy.Artifact = changepreview.InvoiceRecordEntity
 	policy.Rationale = "Emails customers their invoices; only a person sends them, is named " +
 		"as who sent each, and sees every recipient before approving."
 
@@ -247,30 +251,30 @@ func (t *SendInvoicesTool) ExecuteWithResult(
 
 type ApproveBillingQueueItemsTool struct {
 	single *billingtools.ApproveBillingQueueItemTool
-	batch  *common.RecordBatch
+	batch  *recordbatch.RecordBatch
 }
 
 func NewApproveBillingQueueItemsTool(
-	billing common.BillingQueueDecider,
-	invoices common.ApprovalInvoicePlanner,
+	billing billingqueuepreview.BillingQueueDecider,
+	invoices billingqueuepreview.ApprovalInvoicePlanner,
 ) agenttoolports.AgentTool {
 	single, _ := billingtools.NewApproveBillingQueueItemTool(billing, invoices).(*billingtools.ApproveBillingQueueItemTool)
 
 	return &ApproveBillingQueueItemsTool{
 		single: single,
-		batch: &common.RecordBatch{
-			Param:       common.ParamBillingQueueItemIDs,
-			SingleParam: common.ParamBillingQueueItemID,
+		batch: &recordbatch.RecordBatch{
+			Param:       billingqueuepreview.ParamBillingQueueItemIDs,
+			SingleParam: billingqueuepreview.ParamBillingQueueItemID,
 			Resource:    permission.ResourceBillingQueue,
 			Kinds:       []permission.RecordKind{permission.KindBillingQueueItem},
-			Noun:        common.NounBillingQueueItem,
-			Nouns:       common.NounBillingQueueItems,
-			Verb:        common.VerbApprove,
-			Past:        common.PastApproved,
-			Shared:      []string{common.ParamReviewNotes},
+			Noun:        billingqueuepreview.NounBillingQueueItem,
+			Nouns:       billingqueuepreview.NounBillingQueueItems,
+			Verb:        changepreview.VerbApprove,
+			Past:        changepreview.PastApproved,
+			Shared:      []string{billingqueuepreview.ParamReviewNotes},
 			Single:      single,
-			NeedsPerson: common.ErrDecisionNeedsAPerson,
-			Labels:      common.QueueItemNumbers(billing),
+			NeedsPerson: billingqueuepreview.ErrDecisionNeedsAPerson,
+			Labels:      billingqueuepreview.QueueItemNumbers(billing),
 		},
 	}
 }
@@ -294,13 +298,13 @@ func (t *ApproveBillingQueueItemsTool) Target(
 func (t *ApproveBillingQueueItemsTool) Description() string { return bulkApprovalDescription }
 
 func (t *ApproveBillingQueueItemsTool) ParamSchema() map[string]any {
-	return common.BulkIDsSchema(t.batch,
+	return recordbatch.BulkIDsSchema(t.batch,
 		"The billing queue items, by id from billing_list_queue_items or "+
 			"billing_get_queue_item. Never guess one.",
 		map[string]any{
-			common.ParamReviewNotes: map[string]any{
+			billingqueuepreview.ParamReviewNotes: map[string]any{
 				toolschema.KeyType:      toolschema.TypeString,
-				toolschema.KeyMaxLength: common.MaxDecisionNoteChars,
+				toolschema.KeyMaxLength: billingqueuepreview.MaxDecisionNoteChars,
 				toolschema.KeyDescription: "What you checked, kept on each item as its " +
 					"review notes.",
 			},

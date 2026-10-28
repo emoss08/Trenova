@@ -4,7 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -56,20 +58,20 @@ var collectionDateTypes = map[string]assistantartifact.DisplayType{
 }
 
 var collectionRefs = map[string]permission.Resource{
-	paramCollectorID:      permission.ResourceUser,
-	common.ParamInvoiceID: permission.ResourceInvoice,
+	paramCollectorID:          permission.ResourceUser,
+	toolparams.ParamInvoiceID: permission.ResourceInvoice,
 }
 
 var collectionLabels = map[string]string{
-	paramCollectionKind:    "Kind",
-	paramCollectionSummary: "What happened",
-	paramCollectionContact: "Spoke to",
-	common.ParamInvoiceID:  "Invoice",
-	paramPromisedAmount:    "Promised amount",
-	paramPromisedOn:        "Promised to pay by",
-	paramFollowUpOn:        "Follow up on",
-	paramCollectorID:       "Collector",
-	"nextFollowUpOn":       "Next follow-up",
+	paramCollectionKind:       "Kind",
+	paramCollectionSummary:    "What happened",
+	paramCollectionContact:    "Spoke to",
+	toolparams.ParamInvoiceID: "Invoice",
+	paramPromisedAmount:       "Promised amount",
+	paramPromisedOn:           "Promised to pay by",
+	paramFollowUpOn:           "Follow up on",
+	paramCollectorID:          "Collector",
+	"nextFollowUpOn":          "Next follow-up",
 }
 
 type collectionEntryView struct {
@@ -137,7 +139,7 @@ func collectionCustomerProperty() map[string]any {
 }
 
 func collectionTarget(params map[string]any) (agenttoolports.ToolTarget, bool) {
-	return common.TargetOf(params, common.ParamCustomerID, permission.ResourceCustomer)
+	return toolparams.TargetOf(params, toolparams.ParamCustomerID, permission.ResourceCustomer)
 }
 
 func collectionCurrency(plan *collectionports.AccountChangePlan) string {
@@ -207,7 +209,7 @@ func collectionResult(
 	result := &agent.ToolExecutionResult{
 		Action: action,
 		Kind:   "collections account",
-		IDs:    map[string]string{common.ParamCustomerID: customerID.String()},
+		IDs:    map[string]string{toolparams.ParamCustomerID: customerID.String()},
 		Record: customerRecord(customerID),
 	}
 	if view != nil && view.Row != nil {
@@ -219,12 +221,12 @@ func collectionResult(
 }
 
 func customerRecord(customerID pulid.ID) *agent.RecordRef {
-	return &agent.RecordRef{EntityType: common.CustomerRecordEntity, ID: customerID.String()}
+	return &agent.RecordRef{EntityType: changepreview.CustomerRecordEntity, ID: customerID.String()}
 }
 
 func NewLogCollectionActivityTool(collections collectionports.Service) agenttoolports.AgentTool {
-	return common.NewReportingReceivableTool(
-		&common.ReceivableSpec{
+	return toolspec.NewReportingReceivableTool(
+		&toolspec.ReceivableSpec{
 			Name: toolLogCollectionActivity,
 			Recipe: []string{
 				toolListCollectionsWorklist,
@@ -247,30 +249,30 @@ func NewLogCollectionActivityTool(collections collectionports.Service) agenttool
 				"promise moves the follow-up and holds back reminders until its date, and " +
 				"nothing is sent.",
 			Target:   collectionTarget,
-			Artifact: common.CustomerRecordEntity,
+			Artifact: changepreview.CustomerRecordEntity,
 			Properties: map[string]any{
-				common.ParamCustomerID: collectionCustomerProperty(),
+				toolparams.ParamCustomerID: collectionCustomerProperty(),
 				paramCollectionKind: agenttoolschema.Enum(
 					"Call or Email for a contact with the customer, Note for anything else "+
 						"worth knowing, PromiseToPay when they said they would pay an amount by "+
 						"a date.",
 					collectionContactKinds,
 				),
-				paramCollectionSummary: common.StringProperty(
+				paramCollectionSummary: toolparams.StringProperty(
 					"What was said, in the customer's words where you have them. Required "+
 						"except for a promise to pay.",
 					collection.MaxSummaryLength,
 				),
-				paramCollectionContact: common.StringProperty(
+				paramCollectionContact: toolparams.StringProperty(
 					"Who you or the customer spoke to, if you know.",
 					maxCollectionContactChars,
 				),
-				common.ParamInvoiceID: agenttoolschema.RecordIDText(
+				toolparams.ParamInvoiceID: agenttoolschema.RecordIDText(
 					permission.ResourceInvoice,
 					"The invoice it is about, when it is about one, from receivable_list_open_items or "+
 						"receivable_get_statement.",
 				),
-				paramPromisedAmount: common.AmountProperty(
+				paramPromisedAmount: toolparams.AmountProperty(
 					"For a promise to pay: the amount promised as a decimal, such as 1250.00.",
 				),
 				paramPromisedOn: agenttoolschema.Date(
@@ -281,10 +283,10 @@ func NewLogCollectionActivityTool(collections collectionports.Service) agenttool
 						"current follow-up, or for a promise, the day after it falls due.",
 				),
 			},
-			Required:    []string{common.ParamCustomerID, paramCollectionKind},
+			Required:    []string{toolparams.ParamCustomerID, paramCollectionKind},
 			SearchTerms: []string{"promise to pay", "log a contact", "dunning"},
 		},
-		common.ReceivablePlan[
+		toolspec.ReceivablePlan[
 			*collectionports.LogActivityRequest,
 			*collectionports.AccountChangePlan,
 		]{
@@ -325,11 +327,11 @@ func NewLogCollectionActivityTool(collections collectionports.Service) agenttool
 func logActivityRequest(
 	params *agenttoolports.ToolExecuteParams,
 ) (*collectionports.LogActivityRequest, error) {
-	customerID, err := common.RequirePulid(params.Params, common.ParamCustomerID)
+	customerID, err := toolparams.RequirePulid(params.Params, toolparams.ParamCustomerID)
 	if err != nil {
 		return nil, err
 	}
-	kind, err := common.RequireEnum(
+	kind, err := toolparams.RequireEnum(
 		params.Params,
 		paramCollectionKind,
 		collectionContactKinds.Values,
@@ -337,7 +339,7 @@ func logActivityRequest(
 	if err != nil {
 		return nil, err
 	}
-	summary, err := common.BoundedText(
+	summary, err := toolparams.BoundedText(
 		params.Params,
 		paramCollectionSummary,
 		collection.MaxSummaryLength,
@@ -345,7 +347,7 @@ func logActivityRequest(
 	if err != nil {
 		return nil, err
 	}
-	contact, err := common.BoundedText(
+	contact, err := toolparams.BoundedText(
 		params.Params,
 		paramCollectionContact,
 		maxCollectionContactChars,
@@ -353,13 +355,13 @@ func logActivityRequest(
 	if err != nil {
 		return nil, err
 	}
-	invoiceID, _, err := common.OptionalPulid(params.Params, common.ParamInvoiceID)
+	invoiceID, _, err := toolparams.OptionalPulid(params.Params, toolparams.ParamInvoiceID)
 	if err != nil {
-		return nil, fmt.Errorf("parameter %q is not a valid id: %w", common.ParamInvoiceID, err)
+		return nil, fmt.Errorf("parameter %q is not a valid id: %w", toolparams.ParamInvoiceID, err)
 	}
 
 	req := &collectionports.LogActivityRequest{
-		TenantInfo:  common.TenantFrom(*params),
+		TenantInfo:  toolparams.TenantFrom(*params),
 		CustomerID:  customerID,
 		Kind:        kind,
 		Summary:     summary,
@@ -367,7 +369,7 @@ func logActivityRequest(
 		InvoiceID:   invoiceID,
 	}
 	if kind == collection.ActivityPromiseToPay {
-		amount, given, amountErr := common.OptionalDecimal(params.Params, paramPromisedAmount)
+		amount, given, amountErr := toolparams.OptionalDecimal(params.Params, paramPromisedAmount)
 		if amountErr != nil {
 			return nil, amountErr
 		}
@@ -386,7 +388,7 @@ func logActivityRequest(
 }
 
 func optionalDayParam(params map[string]any, key string) (*int64, error) {
-	day, given, err := common.OptionalDay(params, key)
+	day, given, err := toolparams.OptionalDay(params, key)
 	if err != nil || !given {
 		return nil, err
 	}
@@ -408,8 +410,8 @@ func activityNoun(kind collection.ActivityKind) string {
 }
 
 func NewAssignCollectorTool(collections collectionports.Service) agenttoolports.AgentTool {
-	return common.NewReportingReceivableTool(
-		&common.ReceivableSpec{
+	return toolspec.NewReportingReceivableTool(
+		&toolspec.ReceivableSpec{
 			Name:   toolAssignCollector,
 			Recipe: []string{toolListCollectionsWorklist, toolAssignCollector},
 			Description: "Give a customer's overdue receivables to a collector, or take them " +
@@ -427,9 +429,9 @@ func NewAssignCollectorTool(collections collectionports.Service) agenttoolports.
 				"collector; nothing is sent to the customer and assigning someone else changes " +
 				"it back.",
 			Target:   collectionTarget,
-			Artifact: common.CustomerRecordEntity,
+			Artifact: changepreview.CustomerRecordEntity,
 			Properties: map[string]any{
-				common.ParamCustomerID: collectionCustomerProperty(),
+				toolparams.ParamCustomerID: collectionCustomerProperty(),
 				paramCollectorID: agenttoolschema.RecordIDText(
 					permission.ResourceUser,
 					"The collector's user id: a collectorId receivable_list_collection_worklist shows, or "+
@@ -437,25 +439,28 @@ func NewAssignCollectorTool(collections collectionports.Service) agenttoolports.
 						"it. Never guess one.",
 				),
 			},
-			Required:    []string{common.ParamCustomerID},
+			Required:    []string{toolparams.ParamCustomerID},
 			SearchTerms: []string{"collector", "assign collections", "who chases"},
 		},
-		common.ReceivablePlan[
+		toolspec.ReceivablePlan[
 			*collectionports.AssignCollectorRequest,
 			*collectionports.AccountChangePlan,
 		]{
 			Request: func(
 				params *agenttoolports.ToolExecuteParams,
 			) (*collectionports.AssignCollectorRequest, error) {
-				customerID, err := common.RequirePulid(params.Params, common.ParamCustomerID)
+				customerID, err := toolparams.RequirePulid(
+					params.Params,
+					toolparams.ParamCustomerID,
+				)
 				if err != nil {
 					return nil, err
 				}
 				req := &collectionports.AssignCollectorRequest{
-					TenantInfo: common.TenantFrom(*params),
+					TenantInfo: toolparams.TenantFrom(*params),
 					CustomerID: customerID,
 				}
-				collector, err := common.OptionalPulidParam(params.Params, paramCollectorID)
+				collector, err := toolparams.OptionalPulidParam(params.Params, paramCollectorID)
 				if err != nil {
 					return nil, err
 				}
@@ -514,8 +519,8 @@ func NewAssignCollectorTool(collections collectionports.Service) agenttoolports.
 func NewScheduleCollectionFollowUpTool(
 	collections collectionports.Service,
 ) agenttoolports.AgentTool {
-	return common.NewReportingReceivableTool(
-		&common.ReceivableSpec{
+	return toolspec.NewReportingReceivableTool(
+		&toolspec.ReceivableSpec{
 			Name:   toolScheduleCollectionFollowUp,
 			Recipe: []string{toolListCollectionsWorklist, toolScheduleCollectionFollowUp},
 			Description: "Set the day a customer's overdue receivables are next chased, or " +
@@ -531,33 +536,36 @@ func NewScheduleCollectionFollowUpTool(
 			Rationale: "Changes when a customer is next chased inside Trenova and notes why; " +
 				"nothing is sent and another follow-up replaces it.",
 			Target:   collectionTarget,
-			Artifact: common.CustomerRecordEntity,
+			Artifact: changepreview.CustomerRecordEntity,
 			Properties: map[string]any{
-				common.ParamCustomerID: collectionCustomerProperty(),
+				toolparams.ParamCustomerID: collectionCustomerProperty(),
 				paramFollowUpOn: agenttoolschema.Date(
 					"The day to chase the account next, today or later. Leave it out to clear " +
 						"the follow-up.",
 				),
-				paramCollectionNote: common.StringProperty(
+				paramCollectionNote: toolparams.StringProperty(
 					"Why then, kept in the account's history.",
 					collection.MaxSummaryLength,
 				),
 			},
-			Required:    []string{common.ParamCustomerID},
+			Required:    []string{toolparams.ParamCustomerID},
 			SearchTerms: []string{"follow up", "chase later", "collections reminder date"},
 		},
-		common.ReceivablePlan[
+		toolspec.ReceivablePlan[
 			*collectionports.ScheduleFollowUpRequest,
 			*collectionports.AccountChangePlan,
 		]{
 			Request: func(
 				params *agenttoolports.ToolExecuteParams,
 			) (*collectionports.ScheduleFollowUpRequest, error) {
-				customerID, err := common.RequirePulid(params.Params, common.ParamCustomerID)
+				customerID, err := toolparams.RequirePulid(
+					params.Params,
+					toolparams.ParamCustomerID,
+				)
 				if err != nil {
 					return nil, err
 				}
-				note, err := common.BoundedText(
+				note, err := toolparams.BoundedText(
 					params.Params,
 					paramCollectionNote,
 					collection.MaxSummaryLength,
@@ -570,7 +578,7 @@ func NewScheduleCollectionFollowUpTool(
 					return nil, err
 				}
 				return &collectionports.ScheduleFollowUpRequest{
-					TenantInfo: common.TenantFrom(*params),
+					TenantInfo: toolparams.TenantFrom(*params),
 					CustomerID: customerID,
 					FollowUpOn: followUpOn,
 					Note:       note,

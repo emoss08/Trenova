@@ -6,7 +6,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/journalpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -69,16 +71,16 @@ func fuelIndexPriceViewOf(price *fuelsurcharge.FuelIndexPrice) *fuelIndexPriceVi
 	}
 }
 
-func fuelPriceMoneySpec(spec *common.ReceivableSpec) *common.ReceivableSpec {
+func fuelPriceMoneySpec(spec *toolspec.ReceivableSpec) *toolspec.ReceivableSpec {
 	spec.Resource = permission.ResourceFuelSurchargeProgram
 	spec.Operation = permission.OpUpdate
 	spec.Rationale = fuelPriceRationale
 
-	return common.LedgerMoneySpec(spec)
+	return journalpreview.LedgerMoneySpec(spec)
 }
 
 func requirePriceDay(params map[string]any) (string, error) {
-	raw, err := common.RequireString(params, paramPriceDate)
+	raw, err := toolparams.RequireString(params, paramPriceDate)
 	if err != nil {
 		return "", err
 	}
@@ -94,7 +96,7 @@ func fuelIndexPriceFrom(
 	params *agenttoolports.ToolExecuteParams,
 	idKey string,
 ) (*fuelsurcharge.FuelIndexPrice, error) {
-	id, err := common.RequirePulid(params.Params, idKey)
+	id, err := toolparams.RequirePulid(params.Params, idKey)
 	if err != nil {
 		return nil, err
 	}
@@ -102,7 +104,7 @@ func fuelIndexPriceFrom(
 	if err != nil {
 		return nil, err
 	}
-	price, present, err := common.OptionalDecimal(params.Params, paramPrice)
+	price, present, err := toolparams.OptionalDecimal(params.Params, paramPrice)
 	if err != nil {
 		return nil, err
 	}
@@ -135,12 +137,15 @@ func fuelPriceProperties(
 			"The day the price applies to, as the index publishes " +
 				"it.",
 		),
-		paramPrice: common.StringProperty("The price per gallon as a decimal such as 3.899.", 0),
+		paramPrice: toolparams.StringProperty(
+			"The price per gallon as a decimal such as 3.899.",
+			0,
+		),
 	}
 }
 
 func NewRecordFuelIndexPriceTool(prices FuelIndexPriceKeeper) agenttoolports.AgentTool {
-	return common.NewReceivableTool(fuelPriceMoneySpec(&common.ReceivableSpec{
+	return toolspec.NewReceivableTool(fuelPriceMoneySpec(&toolspec.ReceivableSpec{
 		Name: "rate_record_fuel_index_price",
 		Description: "Propose recording a published price on a custom fuel index, such as " +
 			"a customer's own index or a rack price the organization tracks. Every fuel " +
@@ -152,7 +157,7 @@ func NewRecordFuelIndexPriceTool(prices FuelIndexPriceKeeper) agenttoolports.Age
 		SearchTerms: []string{
 			"fuel price", "diesel price", "index", "surcharge", "rack", "doe",
 		},
-	}), common.ReceivablePlan[*fuelsurcharge.FuelIndexPrice, *fuelsurcharge.FuelIndexPrice]{
+	}), toolspec.ReceivablePlan[*fuelsurcharge.FuelIndexPrice, *fuelsurcharge.FuelIndexPrice]{
 		Request: func(params *agenttoolports.ToolExecuteParams) (*fuelsurcharge.FuelIndexPrice, error) {
 			return fuelIndexPriceFrom(params, paramFuelIndexID)
 		},
@@ -197,7 +202,7 @@ func NewRecordFuelIndexPriceTool(prices FuelIndexPriceKeeper) agenttoolports.Age
 }
 
 func NewCorrectFuelIndexPriceTool(prices FuelIndexPriceKeeper) agenttoolports.AgentTool {
-	return common.NewReceivableTool(fuelPriceMoneySpec(&common.ReceivableSpec{
+	return toolspec.NewReceivableTool(fuelPriceMoneySpec(&toolspec.ReceivableSpec{
 		Name:   "rate_correct_fuel_index_price",
 		Recipe: []string{"rate_list_fuel_index_prices", "rate_correct_fuel_index_price"},
 		Description: "Propose correcting a manual price on a custom fuel index that was " +
@@ -207,7 +212,7 @@ func NewCorrectFuelIndexPriceTool(prices FuelIndexPriceKeeper) agenttoolports.Ag
 		Properties: fuelPriceProperties(paramFuelIndexPriceID, fuelPriceSupplier,
 			permission.KindFuelIndexPrice),
 		Required: []string{paramFuelIndexPriceID, paramPriceDate, paramPrice},
-	}), common.ReceivablePlan[*fuelsurcharge.FuelIndexPrice, *fuelsurchargeservice.PriceChange]{
+	}), toolspec.ReceivablePlan[*fuelsurcharge.FuelIndexPrice, *fuelsurchargeservice.PriceChange]{
 		Request: func(params *agenttoolports.ToolExecuteParams) (*fuelsurcharge.FuelIndexPrice, error) {
 			return fuelIndexPriceFrom(params, paramFuelIndexPriceID)
 		},

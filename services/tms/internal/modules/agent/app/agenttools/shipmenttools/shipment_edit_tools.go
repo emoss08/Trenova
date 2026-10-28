@@ -6,7 +6,11 @@ import (
 	"slices"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/shipmentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -38,13 +42,13 @@ var stopScheduleLabels = map[string]string{
 }
 
 type rescheduleStopTool struct {
-	shipments common.ShipmentWriter
-	partners  common.ShipmentPartnerNotices
+	shipments shipmentpreview.ShipmentWriter
+	partners  shipmentpreview.ShipmentPartnerNotices
 }
 
 func NewRescheduleStopTool(
-	shipments common.ShipmentWriter,
-	partners common.ShipmentPartnerNotices,
+	shipments shipmentpreview.ShipmentWriter,
+	partners shipmentpreview.ShipmentPartnerNotices,
 ) agenttoolports.AgentTool {
 	return &rescheduleStopTool{shipments: shipments, partners: partners}
 }
@@ -75,7 +79,7 @@ func (t *rescheduleStopTool) ParamSchema() map[string]any {
 	return map[string]any{
 		"type": "object",
 		"properties": map[string]any{
-			common.ParamShipmentID: agenttoolschema.RecordIDText(permission.ResourceShipment,
+			toolparams.ParamShipmentID: agenttoolschema.RecordIDText(permission.ResourceShipment,
 				"The shipment the stop is on, from shipment_list."),
 			"stopId": agenttoolschema.RecordIDText(permission.ResourceShipmentStop,
 				"The stop to reschedule, from the moves' stops in shipment_get."),
@@ -86,7 +90,7 @@ func (t *rescheduleStopTool) ParamSchema() map[string]any {
 				"When it now closes, in the same local time. Leave it out to keep the " +
 					"window's length."),
 		},
-		"required":             []string{common.ParamShipmentID, "stopId", paramWindowStart},
+		"required":             []string{toolparams.ParamShipmentID, "stopId", paramWindowStart},
 		"additionalProperties": false,
 	}
 }
@@ -140,29 +144,29 @@ func (t *rescheduleStopTool) Validate(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
 ) error {
-	return common.PreviewValidates(ctx, t, &params)
+	return toolspec.PreviewValidates(ctx, t, &params)
 }
 
 func (t *rescheduleStopTool) plan(
 	ctx context.Context,
 	params *agenttoolports.ToolExecuteParams,
 ) (*stopSchedulePlan, error) {
-	if err := common.GuardExecute(t, *params); err != nil {
+	if err := toolguard.GuardExecute(t, *params); err != nil {
 		return nil, err
 	}
 
-	shipmentID, err := common.RequirePulid(params.Params, common.ParamShipmentID)
+	shipmentID, err := toolparams.RequirePulid(params.Params, toolparams.ParamShipmentID)
 	if err != nil {
 		return nil, err
 	}
-	stopID, err := common.RequirePulid(params.Params, "stopId")
+	stopID, err := toolparams.RequirePulid(params.Params, "stopId")
 	if err != nil {
 		return nil, err
 	}
 
 	before, err := t.shipments.Get(ctx, &shipmentports.GetShipmentByIDRequest{
 		ID:              shipmentID,
-		TenantInfo:      common.TenantFrom(*params),
+		TenantInfo:      toolparams.TenantFrom(*params),
 		ShipmentOptions: shipmentports.ShipmentOptions{ExpandShipmentDetails: true},
 	})
 	if err != nil {
@@ -195,11 +199,11 @@ func (t *rescheduleStopTool) plan(
 		was:    scheduleViewOf(stop, zone),
 	}
 
-	start, err := common.RequireLocalTime(params.Params, paramWindowStart, zone)
+	start, err := toolparams.RequireLocalTime(params.Params, paramWindowStart, zone)
 	if err != nil {
 		return nil, err
 	}
-	end, err := common.OptionalLocalTime(params.Params, paramWindowEnd, zone)
+	end, err := toolparams.OptionalLocalTime(params.Params, paramWindowEnd, zone)
 	if err != nil {
 		return nil, err
 	}
@@ -223,7 +227,7 @@ func stopOnShipment(entity *shipment.Shipment, stopID pulid.ID) *shipment.Stop {
 		if move == nil {
 			continue
 		}
-		if stop := common.FindStop(move, stopID); stop != nil {
+		if stop := shipmentpreview.FindStop(move, stopID); stop != nil {
 			return stop
 		}
 	}
@@ -248,8 +252,11 @@ func (t *rescheduleStopTool) Preview(
 ) (*agent.ToolPreview, error) {
 	plan, err := t.plan(ctx, &params)
 	if err != nil {
-		if common.IsRefusal(err) {
-			return common.WarnWouldFail(toolpreview.Build("Would reschedule the stop."), err), nil
+		if changepreview.IsRefusal(err) {
+			return changepreview.WarnWouldFail(
+				toolpreview.Build("Would reschedule the stop."),
+				err,
+			), nil
 		}
 
 		return nil, err
@@ -259,14 +266,14 @@ func (t *rescheduleStopTool) Preview(
 	change, err := toolpreview.Changed(toolpreview.Record{
 		Resource: permission.ResourceShipment,
 		ID:       plan.before.ID,
-		Label:    plan.before.ProNumber + " · " + common.StopLabel(plan.stop),
-		Version:  common.PinnedVersion(plan.before.Version),
+		Label:    plan.before.ProNumber + " · " + shipmentpreview.StopLabel(plan.stop),
+		Version:  changepreview.PinnedVersion(plan.before.Version),
 	}, &plan.was, &now, toolpreview.Labels(stopScheduleLabels))
 	if err != nil {
 		return nil, err
 	}
 
-	changes, err := common.TenderChangeNotices(
+	changes, err := shipmentpreview.TenderChangeNotices(
 		ctx,
 		t.partners,
 		plan.before,
@@ -279,22 +286,22 @@ func (t *rescheduleStopTool) Preview(
 
 	_, zoneName := timeutils.ResolveZone(plan.zone.String())
 	summary := fmt.Sprintf("Would move the %s on shipment %s to open %s (%s).",
-		common.StopLabel(plan.stop), plan.before.ProNumber, now.WindowStart, zoneName)
+		shipmentpreview.StopLabel(plan.stop), plan.before.ProNumber, now.WindowStart, zoneName)
 
 	return toolpreview.Build(summary, append([]*agent.RecordChange{change}, changes...)...), nil
 }
 
 func (t *rescheduleStopTool) Target(params map[string]any) (agenttoolports.ToolTarget, bool) {
-	return common.TargetOf(params, common.ParamShipmentID, permission.ResourceShipment)
+	return toolparams.TargetOf(params, toolparams.ParamShipmentID, permission.ResourceShipment)
 }
 
 type addShipmentChargeTool struct {
-	shipments    common.ShipmentWriter
+	shipments    shipmentpreview.ShipmentWriter
 	accessorials accessorialchargeports.AccessorialChargeRepository
 }
 
 func NewAddShipmentChargeTool(
-	shipments common.ShipmentWriter,
+	shipments shipmentpreview.ShipmentWriter,
 	accessorials accessorialchargeports.AccessorialChargeRepository,
 ) agenttoolports.AgentTool {
 	return &addShipmentChargeTool{shipments: shipments, accessorials: accessorials}
@@ -328,7 +335,7 @@ func (t *addShipmentChargeTool) ParamSchema() map[string]any {
 	return map[string]any{
 		"type": "object",
 		"properties": map[string]any{
-			common.ParamShipmentID: agenttoolschema.RecordIDText(permission.ResourceShipment,
+			toolparams.ParamShipmentID: agenttoolschema.RecordIDText(permission.ResourceShipment,
 				"The shipment to charge, from shipment_list."),
 			"accessorialChargeId": agenttoolschema.RecordIDText(
 				permission.ResourceAccessorialCharge,
@@ -341,11 +348,11 @@ func (t *addShipmentChargeTool) ParamSchema() map[string]any {
 				"minimum": 1,
 				"maximum": maxChargeUnits,
 			},
-			common.ParamAmount: common.StringProperty(
+			toolparams.ParamAmount: toolparams.StringProperty(
 				"The rate per unit, or the flat amount, as a decimal such as 150.00, when the "+
 					"person named one; leave it out to use the charge's configured rate.", 0),
 		},
-		"required":             []string{common.ParamShipmentID, "accessorialChargeId"},
+		"required":             []string{toolparams.ParamShipmentID, "accessorialChargeId"},
 		"additionalProperties": false,
 	}
 }
@@ -392,28 +399,28 @@ func (t *addShipmentChargeTool) Validate(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
 ) error {
-	return common.PreviewValidates(ctx, t, &params)
+	return toolspec.PreviewValidates(ctx, t, &params)
 }
 
 func (t *addShipmentChargeTool) plan(
 	ctx context.Context,
 	params *agenttoolports.ToolExecuteParams,
 ) (*shipmentChargePlan, error) {
-	if err := common.GuardExecute(t, *params); err != nil {
+	if err := toolguard.GuardExecute(t, *params); err != nil {
 		return nil, err
 	}
 
-	shipmentID, err := common.RequirePulid(params.Params, common.ParamShipmentID)
+	shipmentID, err := toolparams.RequirePulid(params.Params, toolparams.ParamShipmentID)
 	if err != nil {
 		return nil, err
 	}
-	chargeID, err := common.RequirePulid(params.Params, "accessorialChargeId")
+	chargeID, err := toolparams.RequirePulid(params.Params, "accessorialChargeId")
 	if err != nil {
 		return nil, err
 	}
 
 	units := 1
-	if given, unitErr := common.OptionalIntInRange(
+	if given, unitErr := toolparams.OptionalIntInRange(
 		params.Params,
 		paramUnits,
 		1,
@@ -424,7 +431,7 @@ func (t *addShipmentChargeTool) plan(
 		units = *given
 	}
 
-	tenant := common.TenantFrom(*params)
+	tenant := toolparams.TenantFrom(*params)
 	accessorial, err := t.accessorials.GetByID(
 		ctx,
 		accessorialchargeports.GetAccessorialChargeByIDRequest{
@@ -444,16 +451,16 @@ func (t *addShipmentChargeTool) plan(
 	}
 
 	amount := accessorial.Amount
-	if given, ok, amountErr := common.OptionalDecimal(
+	if given, ok, amountErr := toolparams.OptionalDecimal(
 		params.Params,
-		common.ParamAmount,
+		toolparams.ParamAmount,
 	); amountErr != nil {
 		return nil, amountErr
 	} else if ok {
 		amount = given
 	}
 	if amount.IsNegative() {
-		return nil, errortypes.NewValidationError(common.ParamAmount, errortypes.ErrInvalid,
+		return nil, errortypes.NewValidationError(toolparams.ParamAmount, errortypes.ErrInvalid,
 			"A charge cannot be negative; a credit is made with a credit memo")
 	}
 
@@ -528,8 +535,8 @@ func (t *addShipmentChargeTool) Preview(
 ) (*agent.ToolPreview, error) {
 	plan, err := t.plan(ctx, &params)
 	if err != nil {
-		if common.IsRefusal(err) {
-			return common.WarnWouldFail(
+		if changepreview.IsRefusal(err) {
+			return changepreview.WarnWouldFail(
 				toolpreview.Build("Would add a charge to the shipment."),
 				err,
 			), nil
@@ -543,7 +550,7 @@ func (t *addShipmentChargeTool) Preview(
 		Resource: permission.ResourceShipment,
 		ID:       plan.before.ID,
 		Label:    plan.before.ProNumber + " · " + view.Charge,
-		Version:  common.PinnedVersion(plan.before.Version),
+		Version:  changepreview.PinnedVersion(plan.before.Version),
 	}, view)
 	if err != nil {
 		return nil, err
@@ -558,5 +565,5 @@ func (t *addShipmentChargeTool) Preview(
 }
 
 func (t *addShipmentChargeTool) Target(params map[string]any) (agenttoolports.ToolTarget, bool) {
-	return common.TargetOf(params, common.ParamShipmentID, permission.ResourceShipment)
+	return toolparams.TargetOf(params, toolparams.ParamShipmentID, permission.ResourceShipment)
 }

@@ -6,7 +6,8 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -73,7 +74,7 @@ type homeEditor struct {
 
 func homeRequestFor(params agenttoolports.ToolExecuteParams) *homelayoutservice.Request {
 	return &homelayoutservice.Request{
-		TenantInfo: common.TenantFrom(params),
+		TenantInfo: toolparams.TenantFrom(params),
 		Principal: kernelports.PrincipalInfo{
 			Type:     params.Actor.PrincipalType,
 			ID:       params.Actor.PrincipalID,
@@ -94,7 +95,7 @@ func (e homeEditor) plan(
 	if params.Actor == nil || params.Actor.PrincipalType != permissionports.PrincipalTypeUser {
 		return nil, errortypes.NewAuthorizationError("Only a person has a home page to change")
 	}
-	owner := common.OptionalString(params.Params, agenttoolports.SelfScopeOwnerParam)
+	owner := toolparams.OptionalString(params.Params, agenttoolports.SelfScopeOwnerParam)
 	if owner == "" || owner != params.Actor.UserID.String() {
 		return nil, errortypes.NewAuthorizationError(
 			"This change is to someone else's home page; only they can approve it",
@@ -113,7 +114,7 @@ func (e homeEditor) plan(
 			"The person's administrator manages this home page, so it cannot be changed here")
 		return nil, multiErr
 	}
-	if version := common.OptionalInt64(params.Params, "version"); version != effective.Version {
+	if version := toolparams.OptionalInt64(params.Params, "version"); version != effective.Version {
 		multiErr.Add("version", errortypes.ErrVersionMismatch, fmt.Sprintf(
 			"The home page has changed since version %d was read; call home_get_layout "+
 				"for the current one", version,
@@ -331,7 +332,7 @@ func (t *AddHomeWidgetTool) edit(params agenttoolports.ToolExecuteParams) homeEd
 		catalog *homelayoutservice.WidgetCatalog,
 		multiErr *errortypes.MultiError,
 	) {
-		key := common.OptionalString(params.Params, "key")
+		key := toolparams.OptionalString(params.Params, "key")
 		definition, offered := offeredWidget(catalog, key)
 		if !offered {
 			multiErr.Add("key", errortypes.ErrInvalid, fmt.Sprintf(
@@ -357,22 +358,22 @@ func (t *AddHomeWidgetTool) edit(params agenttoolports.ToolExecuteParams) homeEd
 		widget := homelayout.Widget{
 			ID:     homelayout.NextWidgetID(layout.Widgets),
 			Key:    key,
-			Title:  strings.TrimSpace(common.OptionalString(params.Params, "title")),
+			Title:  strings.TrimSpace(toolparams.OptionalString(params.Params, "title")),
 			W:      definition.DefaultW,
 			H:      definition.DefaultH,
 			Config: config,
 		}
-		if width := int(common.OptionalInt64(params.Params, "width")); width > 0 {
+		if width := int(toolparams.OptionalInt64(params.Params, "width")); width > 0 {
 			widget.W = width
 		}
-		if height := int(common.OptionalInt64(params.Params, "height")); height > 0 {
+		if height := int(toolparams.OptionalInt64(params.Params, "height")); height > 0 {
 			widget.H = height
 		}
 
 		position := len(layout.Widgets)
 		if _, given := params.Params["position"]; given {
 			position = min(
-				max(int(common.OptionalInt64(params.Params, "position")), 0),
+				max(int(toolparams.OptionalInt64(params.Params, "position")), 0),
 				len(layout.Widgets),
 			)
 		}
@@ -392,7 +393,7 @@ func (t *AddHomeWidgetTool) Execute(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams,
 ) error {
-	if err := common.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
 	}
 
@@ -421,14 +422,14 @@ func widgetConfigFrom(
 ) homelayout.WidgetConfig {
 	raw, _ := params["config"].(map[string]any)
 	config := homelayout.WidgetConfig{
-		Metric:     common.OptionalString(raw, "metric"),
-		Metrics:    common.StringSliceParam(raw, "metrics"),
-		CannedKey:  common.OptionalString(raw, "cannedKey"),
-		ChartID:    common.OptionalString(raw, "chartId"),
-		ColumnID:   common.OptionalString(raw, "columnId"),
-		Text:       common.OptionalString(raw, "text"),
-		Limit:      int(common.OptionalInt64(raw, "limit")),
-		WindowDays: int(common.OptionalInt64(raw, "windowDays")),
+		Metric:     toolparams.OptionalString(raw, "metric"),
+		Metrics:    toolparams.StringSliceParam(raw, "metrics"),
+		CannedKey:  toolparams.OptionalString(raw, "cannedKey"),
+		ChartID:    toolparams.OptionalString(raw, "chartId"),
+		ColumnID:   toolparams.OptionalString(raw, "columnId"),
+		Text:       toolparams.OptionalString(raw, "text"),
+		Limit:      int(toolparams.OptionalInt64(raw, "limit")),
+		WindowDays: int(toolparams.OptionalInt64(raw, "windowDays")),
 	}
 	if len(config.Metrics) == 0 {
 		config.Metrics = nil
@@ -437,7 +438,7 @@ func widgetConfigFrom(
 		"definitionId": &config.DefinitionID,
 		"dashboardId":  &config.DashboardID,
 	} {
-		value := common.OptionalString(raw, field)
+		value := toolparams.OptionalString(raw, field)
 		if value == "" {
 			continue
 		}
@@ -505,7 +506,7 @@ func (e homeEditor) checkWidgetTargets(
 	config homelayout.WidgetConfig,
 	multiErr *errortypes.MultiError,
 ) {
-	tenant := common.TenantFrom(params)
+	tenant := toolparams.TenantFrom(params)
 	switch kind {
 	case homelayout.ConfigKindReport:
 		if config.DefinitionID.IsNil() && config.CannedKey == "" {
@@ -603,7 +604,7 @@ func (t *RemoveHomeWidgetTool) edit(params agenttoolports.ToolExecuteParams) hom
 		_ *homelayoutservice.WidgetCatalog,
 		multiErr *errortypes.MultiError,
 	) {
-		id := common.OptionalString(params.Params, "widgetId")
+		id := toolparams.OptionalString(params.Params, "widgetId")
 		index := slices.IndexFunc(layout.Widgets, func(widget homelayout.Widget) bool {
 			return widget.ID == id
 		})
@@ -629,7 +630,7 @@ func (t *RemoveHomeWidgetTool) Execute(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams,
 ) error {
-	if err := common.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
 	}
 
@@ -700,7 +701,7 @@ func (t *ArrangeHomeLayoutTool) edit(params agenttoolports.ToolExecuteParams) ho
 		_ *homelayoutservice.WidgetCatalog,
 		multiErr *errortypes.MultiError,
 	) {
-		order := common.StringSliceParam(params.Params, "widgetIds")
+		order := toolparams.StringSliceParam(params.Params, "widgetIds")
 		byID := make(map[string]homelayout.Widget, len(layout.Widgets))
 		for _, widget := range layout.Widgets {
 			byID[widget.ID] = widget
@@ -748,7 +749,7 @@ func (t *ArrangeHomeLayoutTool) Execute(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams,
 ) error {
-	if err := common.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
 	}
 

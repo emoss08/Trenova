@@ -5,7 +5,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -20,51 +21,51 @@ import (
 )
 
 var enteredShipmentFields = []string{
-	common.FieldCustomerID,
-	common.FieldBillToCustomerID,
-	common.FieldServiceTypeID,
-	common.FieldShipmentTypeID,
-	common.FieldFormulaTemplateID,
-	common.FieldStatus,
-	common.FieldBol,
+	changepreview.FieldCustomerID,
+	changepreview.FieldBillToCustomerID,
+	changepreview.FieldServiceTypeID,
+	changepreview.FieldShipmentTypeID,
+	changepreview.FieldFormulaTemplateID,
+	changepreview.FieldStatus,
+	changepreview.FieldBol,
 	"freightTerms",
-	common.FieldPieces,
-	common.FieldWeight,
-	common.FieldTemperatureMin,
-	common.FieldTemperatureMax,
+	changepreview.FieldPieces,
+	changepreview.FieldWeight,
+	changepreview.FieldTemperatureMin,
+	changepreview.FieldTemperatureMax,
 }
 
 var enteredShipmentRefs = map[string]permission.Resource{
-	common.FieldCustomerID:        permission.ResourceCustomer,
-	common.FieldBillToCustomerID:  permission.ResourceCustomer,
-	common.FieldServiceTypeID:     permission.ResourceServiceType,
-	common.FieldShipmentTypeID:    permission.ResourceShipmentType,
-	common.FieldFormulaTemplateID: permission.ResourceFormulaTemplate,
+	changepreview.FieldCustomerID:        permission.ResourceCustomer,
+	changepreview.FieldBillToCustomerID:  permission.ResourceCustomer,
+	changepreview.FieldServiceTypeID:     permission.ResourceServiceType,
+	changepreview.FieldShipmentTypeID:    permission.ResourceShipmentType,
+	changepreview.FieldFormulaTemplateID: permission.ResourceFormulaTemplate,
 }
 
 var enteredShipmentLabels = map[string]string{
-	common.FieldCustomerID:        common.LabelCustomer,
-	common.FieldBillToCustomerID:  "Bill to",
-	common.FieldServiceTypeID:     "Service type",
-	common.FieldShipmentTypeID:    "Shipment type",
-	common.FieldFormulaTemplateID: "Rating method",
-	common.FieldBol:               "BOL",
+	changepreview.FieldCustomerID:        changepreview.LabelCustomer,
+	changepreview.FieldBillToCustomerID:  "Bill to",
+	changepreview.FieldServiceTypeID:     "Service type",
+	changepreview.FieldShipmentTypeID:    "Shipment type",
+	changepreview.FieldFormulaTemplateID: "Rating method",
+	changepreview.FieldBol:               "BOL",
 }
 
 var enteredStopFields = []string{
-	common.FieldType,
-	common.FieldLocationID,
+	changepreview.FieldType,
+	changepreview.FieldLocationID,
 	"scheduleType",
-	common.FieldScheduledWindowStart,
-	common.FieldScheduledWindowEnd,
-	common.FieldPieces,
-	common.FieldWeight,
+	changepreview.FieldScheduledWindowStart,
+	changepreview.FieldScheduledWindowEnd,
+	changepreview.FieldPieces,
+	changepreview.FieldWeight,
 }
 
 var enteredStopLabels = map[string]string{
-	common.FieldLocationID:           "Location",
-	common.FieldScheduledWindowStart: "Window opens",
-	common.FieldScheduledWindowEnd:   "Window closes",
+	changepreview.FieldLocationID:           "Location",
+	changepreview.FieldScheduledWindowStart: "Window opens",
+	changepreview.FieldScheduledWindowEnd:   "Window closes",
 }
 
 var shipmentChargeFields = []string{"freightChargeAmount", "otherChargeAmount"}
@@ -81,7 +82,7 @@ func EnteredStopOptions() []toolpreview.Option {
 	return []toolpreview.Option{
 		toolpreview.Only(enteredStopFields...),
 		toolpreview.WithRefs(map[string]permission.Resource{
-			common.FieldLocationID: permission.ResourceLocation,
+			changepreview.FieldLocationID: permission.ResourceLocation,
 		}),
 		toolpreview.Labels(enteredStopLabels),
 	}
@@ -91,14 +92,17 @@ func (t *CreateShipmentTool) Preview(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
-	if err := common.GuardPreview(t, &params); err != nil {
+	if err := toolguard.GuardPreview(t, &params); err != nil {
 		return nil, err
 	}
 
 	entity, err := t.Draft(ctx, &params)
 	if err != nil {
-		if common.IsRefusal(err) {
-			return common.WarnWouldFail(toolpreview.Build("Would enter a new shipment."), err), nil
+		if changepreview.IsRefusal(err) {
+			return changepreview.WarnWouldFail(
+				toolpreview.Build("Would enter a new shipment."),
+				err,
+			), nil
 		}
 
 		return nil, err
@@ -106,8 +110,8 @@ func (t *CreateShipmentTool) Preview(
 
 	plan, err := t.shipments.PreviewCreate(ctx, entity, params.Actor)
 	if err != nil {
-		if common.IsRefusal(err) {
-			return common.WarnWouldFail(
+		if changepreview.IsRefusal(err) {
+			return changepreview.WarnWouldFail(
 				toolpreview.Build(enteredShipmentSummary(entity, nil)),
 				err,
 			), nil

@@ -3,7 +3,8 @@ package masterdatatools
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -159,8 +160,8 @@ func carrierViewOf(entity *carrier.Carrier, states map[pulid.ID]string) any {
 var carrierRecord = &masterRecord[carrier.Carrier]{
 	kind:     "carrier",
 	resource: permission.ResourceCarrier,
-	entity:   common.CarrierRecordEntity,
-	idParam:  common.ParamCarrierID,
+	entity:   changepreview.CarrierRecordEntity,
+	idParam:  toolparams.ParamCarrierID,
 	idsParam: "carrierIds",
 	lister:   "carrier_list",
 	label:    func(entity *carrier.Carrier) string { return entity.Name },

@@ -5,7 +5,6 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/alerttools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/carriertools"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/inboundtools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/invoicetools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/masterdatatools"
@@ -14,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/ratetools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/shipmenttools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/tendertools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -25,7 +25,7 @@ func TestTargetOf_NamesTheRecordFromItsArgument(t *testing.T) {
 	t.Parallel()
 
 	id := pulid.MustNew("shp_")
-	target, ok := common.TargetOf(
+	target, ok := toolparams.TargetOf(
 		map[string]any{"shipmentId": id.String()},
 		"shipmentId",
 		permission.ResourceShipment,
@@ -52,7 +52,7 @@ func TestTargetOf_YieldsNothingForABadArgument(t *testing.T) {
 	} {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
-			_, ok := common.TargetOf(params, "shipmentId", permission.ResourceShipment)
+			_, ok := toolparams.TargetOf(params, "shipmentId", permission.ResourceShipment)
 			assert.False(t, ok)
 		})
 	}

@@ -6,7 +6,8 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
@@ -155,7 +156,7 @@ type locationDraft struct {
 func readLocationDraft(params map[string]any) (*locationDraft, error) {
 	multiErr := errortypes.NewMultiError()
 	text := func(key string, limit int, required bool) string {
-		value := strings.TrimSpace(common.OptionalString(params, key))
+		value := strings.TrimSpace(toolparams.OptionalString(params, key))
 		switch {
 		case value == "" && required:
 			multiErr.Add(key, errortypes.ErrRequired, "This is required")
@@ -178,7 +179,7 @@ func readLocationDraft(params map[string]any) (*locationDraft, error) {
 		multiErr.Add("state", errortypes.ErrInvalid, "Use the two-letter state abbreviation")
 	}
 
-	categoryID, err := common.RequirePulid(params, "locationCategoryId")
+	categoryID, err := toolparams.RequirePulid(params, "locationCategoryId")
 	if err != nil {
 		multiErr.Add("locationCategoryId", errortypes.ErrInvalid,
 			"Name a location category from location_list_categories")
@@ -205,7 +206,7 @@ func (t *CreateLocationTool) ExecuteWithResult(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams,
 ) (*agent.ToolExecutionResult, error) {
-	if err := common.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return nil, err
 	}
 
@@ -246,7 +247,7 @@ func (t *CreateLocationTool) plan(
 		return nil, err
 	}
 
-	return t.Build(ctx, draft, common.TenantFrom(*params))
+	return t.Build(ctx, draft, toolparams.TenantFrom(*params))
 }
 
 func (t *CreateLocationTool) Build(
@@ -308,7 +309,7 @@ func (t *CreateLocationTool) Validate(
 	params agenttoolports.ToolExecuteParams,
 ) error {
 	if params.Actor == nil {
-		return common.ErrMissingActor
+		return toolguard.ErrMissingActor
 	}
 
 	_, err := t.plan(ctx, &params)

@@ -6,7 +6,9 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/billingqueuepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
@@ -140,8 +142,8 @@ func issueParams(
 	option string,
 ) agenttoolports.ToolExecuteParams {
 	values := map[string]any{
-		common.ParamBillingQueueItemID: item.ID.String(),
-		paramIssueID:                   issue.ID.String(),
+		billingqueuepreview.ParamBillingQueueItemID: item.ID.String(),
+		paramIssueID: issue.ID.String(),
 	}
 	if option != "" {
 		values[paramOptionKey] = option
@@ -159,7 +161,7 @@ func TestReleaseBillingQueueItem_PreviewsTheStatusTheHoldFoundThenReleases(t *te
 	review := &fakeQueueReview{item: item}
 	tool := newReleaseBillingQueueItemTool(&fakeQueueItems{item: item}, review)
 	params := agenttoolstest.ExecuteParams(map[string]any{
-		common.ParamBillingQueueItemID: item.ID.String(),
+		billingqueuepreview.ParamBillingQueueItemID: item.ID.String(),
 	})
 
 	preview := agenttoolstest.PreviewWithoutWrites(t, &review.guard, func() (
@@ -169,7 +171,7 @@ func TestReleaseBillingQueueItem_PreviewsTheStatusTheHoldFoundThenReleases(t *te
 		return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	change := agenttoolstest.PreviewChange(t, preview, 0)
-	status := agenttoolstest.FieldByPath(t, change, common.FieldStatus)
+	status := agenttoolstest.FieldByPath(t, change, changepreview.FieldStatus)
 	assert.Equal(t, string(billingqueue.StatusOnHold), status.Before)
 	assert.Equal(t, string(billingqueue.StatusReadyForReview), status.After)
 	assert.Contains(t, preview.Summary, "BQ-0042")
@@ -188,7 +190,7 @@ func TestReleaseBillingQueueItem_RefusesAnItemThatIsNotOnHold(t *testing.T) {
 	review := &fakeQueueReview{item: item}
 	tool := newReleaseBillingQueueItemTool(&fakeQueueItems{item: item}, review)
 	params := agenttoolstest.ExecuteParams(map[string]any{
-		common.ParamBillingQueueItemID: item.ID.String(),
+		billingqueuepreview.ParamBillingQueueItemID: item.ID.String(),
 	})
 
 	require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(), params))
@@ -209,7 +211,7 @@ func TestResolveBillingQueueIssue_RunsOnlyFromAPersonsApproval(t *testing.T) {
 
 	err := tool.Execute(t.Context(), params)
 	require.Error(t, err)
-	assert.True(t, errors.Is(err, common.ErrNeedsAPersonsApproval))
+	assert.True(t, errors.Is(err, toolspec.ErrNeedsAPersonsApproval))
 	assert.Empty(t, review.resolved)
 
 	require.NoError(t, tool.Execute(t.Context(), agenttoolstest.Approved(params)))

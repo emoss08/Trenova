@@ -3,7 +3,8 @@ package masterdatatools
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -103,7 +104,7 @@ func (t *AssignMoveTool) Execute(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams,
 ) error {
-	if err := common.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
 	}
 
@@ -120,32 +121,32 @@ func (t *AssignMoveTool) Execute(
 func (t *AssignMoveTool) request(
 	params *agenttoolports.ToolExecuteParams,
 ) (*assignmentports.AssignShipmentMoveRequest, error) {
-	moveID, err := common.RequirePulid(params.Params, "shipmentMoveId")
+	moveID, err := toolparams.RequirePulid(params.Params, "shipmentMoveId")
 	if err != nil {
 		return nil, err
 	}
-	workerID, err := common.RequirePulid(params.Params, "primaryWorkerId")
+	workerID, err := toolparams.RequirePulid(params.Params, "primaryWorkerId")
 	if err != nil {
 		return nil, err
 	}
-	tractorID, err := common.RequirePulid(params.Params, "tractorId")
+	tractorID, err := toolparams.RequirePulid(params.Params, "tractorId")
 	if err != nil {
 		return nil, err
 	}
 
 	req := &assignmentports.AssignShipmentMoveRequest{
-		TenantInfo:      common.TenantFrom(*params),
+		TenantInfo:      toolparams.TenantFrom(*params),
 		ShipmentMoveID:  moveID,
 		PrimaryWorkerID: workerID,
 		TractorID:       tractorID,
 	}
 
-	if trailerID, ok, pErr := common.OptionalPulid(params.Params, "trailerId"); pErr != nil {
+	if trailerID, ok, pErr := toolparams.OptionalPulid(params.Params, "trailerId"); pErr != nil {
 		return nil, pErr
 	} else if ok {
 		req.TrailerID = &trailerID
 	}
-	if secondID, ok, pErr := common.OptionalPulid(params.Params, "secondaryWorkerId"); pErr != nil {
+	if secondID, ok, pErr := toolparams.OptionalPulid(params.Params, "secondaryWorkerId"); pErr != nil {
 		return nil, pErr
 	} else if ok {
 		req.SecondaryWorkerID = &secondID
@@ -157,5 +158,5 @@ func (t *AssignMoveTool) request(
 // Target names the record this call would change, so a proposal to change it
 // can be checked against the record's version before it runs.
 func (t *AssignMoveTool) Target(params map[string]any) (agenttoolports.ToolTarget, bool) {
-	return common.TargetOf(params, "shipmentMoveId", permission.ResourceShipmentMove)
+	return toolparams.TargetOf(params, "shipmentMoveId", permission.ResourceShipmentMove)
 }

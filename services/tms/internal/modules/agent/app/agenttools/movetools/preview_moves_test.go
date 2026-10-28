@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/shipmentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -30,7 +30,7 @@ func (f *savingMoves) arrive(
 	move *shipment.ShipmentMove,
 	req *shipmentmoveports.RecordStopActualRequest,
 ) error {
-	stop := common.FindStop(move, req.StopID)
+	stop := shipmentpreview.FindStop(move, req.StopID)
 	if stop == nil {
 		return errortypes.NewNotFoundError("Stop not found on this load")
 	}

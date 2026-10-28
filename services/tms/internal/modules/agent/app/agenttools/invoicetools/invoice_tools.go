@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -64,12 +66,12 @@ func invoiceSchema(description string) map[string]any {
 	return map[string]any{
 		toolschema.KeyType: toolschema.TypeObject,
 		toolschema.KeyProperties: map[string]any{
-			common.ParamInvoiceID: agenttoolschema.RecordIDText(
+			toolparams.ParamInvoiceID: agenttoolschema.RecordIDText(
 				permission.ResourceInvoice,
 				description,
 			),
 		},
-		toolschema.KeyRequired:             []string{common.ParamInvoiceID},
+		toolschema.KeyRequired:             []string{toolparams.ParamInvoiceID},
 		toolschema.KeyAdditionalProperties: false,
 	}
 }
@@ -78,18 +80,18 @@ func invoiceRequest(
 	tool agenttoolports.AgentTool,
 	params *agenttoolports.ToolExecuteParams,
 ) (*invoiceports.PostInvoiceRequest, error) {
-	if err := common.GuardPreview(tool, params); err != nil {
+	if err := toolguard.GuardPreview(tool, params); err != nil {
 		return nil, err
 	}
 
-	invoiceID, err := common.RequirePulid(params.Params, common.ParamInvoiceID)
+	invoiceID, err := toolparams.RequirePulid(params.Params, toolparams.ParamInvoiceID)
 	if err != nil {
 		return nil, err
 	}
 
 	return &invoiceports.PostInvoiceRequest{
 		InvoiceID:  invoiceID,
-		TenantInfo: common.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(*params),
 	}, nil
 }
 
@@ -134,7 +136,7 @@ func (t *PostInvoiceTool) Policy() agenttoolports.ToolPolicy {
 		Egress:        []agent.EgressClass{agent.EgressMoney},
 		Effect:        agent.ToolEffectChange,
 		ReadsExternal: agent.ExternalReadNever,
-		Artifact:      common.InvoiceRecordEntity,
+		Artifact:      changepreview.InvoiceRecordEntity,
 		Rationale: "Books a receivable to the ledger and queues it for the accounting system " +
 			"and the customer's EDI; only a person posts, and hands-off posting is the " +
 			"billing-control auto-post setting.",
@@ -142,7 +144,7 @@ func (t *PostInvoiceTool) Policy() agenttoolports.ToolPolicy {
 }
 
 func (t *PostInvoiceTool) Target(params map[string]any) (agenttoolports.ToolTarget, bool) {
-	return common.TargetOf(params, common.ParamInvoiceID, permission.ResourceInvoice)
+	return toolparams.TargetOf(params, toolparams.ParamInvoiceID, permission.ResourceInvoice)
 }
 
 func (t *PostInvoiceTool) Validate(
@@ -172,7 +174,7 @@ func (t *PostInvoiceTool) Execute(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
-	if err := common.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
 	}
 	if !params.ApprovedFromProposal() {
@@ -196,7 +198,7 @@ func (t *PostInvoiceTool) ExecuteWithResult(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
 ) (*agent.ToolExecutionResult, error) {
-	if err := common.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return nil, err
 	}
 	if !params.ApprovedFromProposal() {
@@ -217,13 +219,16 @@ func (t *PostInvoiceTool) ExecuteWithResult(
 
 // postedInvoiceResult names a posted invoice and where it stands.
 func postedInvoiceResult(posted *invoice.Invoice) *agent.ToolExecutionResult {
-	result := &agent.ToolExecutionResult{Action: "posted", Kind: common.InvoiceRecordEntity}
+	result := &agent.ToolExecutionResult{Action: "posted", Kind: changepreview.InvoiceRecordEntity}
 	if posted == nil || posted.ID.IsNil() {
 		return result
 	}
 	result.Name = posted.Number
-	result.IDs = map[string]string{common.ParamInvoiceID: posted.ID.String()}
-	result.Record = &agent.RecordRef{EntityType: common.InvoiceRecordEntity, ID: posted.ID.String()}
+	result.IDs = map[string]string{toolparams.ParamInvoiceID: posted.ID.String()}
+	result.Record = &agent.RecordRef{
+		EntityType: changepreview.InvoiceRecordEntity,
+		ID:         posted.ID.String(),
+	}
 
 	state := string(posted.Status) + ", " + posted.TotalAmount.StringFixed(2) + " " +
 		posted.CurrencyCode
@@ -280,7 +285,7 @@ func (t *SendInvoiceTool) Policy() agenttoolports.ToolPolicy {
 }
 
 func (t *SendInvoiceTool) Target(params map[string]any) (agenttoolports.ToolTarget, bool) {
-	return common.TargetOf(params, common.ParamInvoiceID, permission.ResourceInvoice)
+	return toolparams.TargetOf(params, toolparams.ParamInvoiceID, permission.ResourceInvoice)
 }
 
 // sendPlan is the send as PlanSend lays it out, and why it cannot go when it
@@ -339,7 +344,7 @@ func (t *SendInvoiceTool) Execute(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
-	if err := common.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
 	}
 	if !params.ApprovedFromProposal() {
@@ -356,7 +361,7 @@ func (t *SendInvoiceTool) Execute(
 
 	_, err = t.invoices.Send(ctx, &invoiceports.InvoiceSendRequest{
 		InvoiceID:  send.plan.InvoiceID,
-		TenantInfo: common.TenantFrom(params),
+		TenantInfo: toolparams.TenantFrom(params),
 	}, params.Actor)
 
 	return err

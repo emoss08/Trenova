@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -95,8 +97,8 @@ var fuelPurchaseDates = map[string]assistantartifact.DisplayType{
 }
 
 var fuelPurchaseRefs = toolpreview.WithRefs(map[string]permission.Resource{
-	common.ParamTractorID: permission.ResourceTractor,
-	common.ParamWorkerID:  permission.ResourceWorker,
+	toolparams.ParamTractorID: permission.ResourceTractor,
+	toolparams.ParamWorkerID:  permission.ResourceWorker,
 })
 
 type FuelPurchaseKeeper interface {
@@ -183,13 +185,13 @@ type jurisdictionLabeler interface {
 func fuelPurchaseProperties(forCorrection bool) map[string]any {
 	keep := ""
 	if forCorrection {
-		keep = common.KeepWhenLeftOut
+		keep = toolparams.KeepWhenLeftOut
 	}
 
 	properties := map[string]any{
-		common.ParamTractorID: agenttoolschema.RecordIDText(permission.ResourceTractor,
+		toolparams.ParamTractorID: agenttoolschema.RecordIDText(permission.ResourceTractor,
 			"The tractor the fuel went into, from equipment_list_tractors."+keep),
-		common.ParamWorkerID: agenttoolschema.RecordIDText(permission.ResourceWorker,
+		toolparams.ParamWorkerID: agenttoolschema.RecordIDText(permission.ResourceWorker,
 			"The driver who bought it, from worker_list. Leave it out to "+
 				"take the card's driver."+keep),
 		paramJurisdictionID: agenttoolschema.KindID("The state or province the fuel was "+
@@ -198,33 +200,52 @@ func fuelPurchaseProperties(forCorrection bool) map[string]any {
 		paramPurchasedAt: agenttoolschema.LocalDateTime("When it was bought, in the " +
 			"organization's time zone: the receipt's date and time, or noon that day when " +
 			"nobody gave a time, which is what the IFTA quarter needs." + keep),
-		paramVendor:     common.StringProperty("The truck stop or vendor."+keep, maxFuelVendorText),
-		paramVendorCity: common.StringProperty("The vendor's city."+keep, maxFuelVendorText),
-		common.ParamFuelType: agenttoolschema.Enum("The fuel as IFTA classifies it; DEF, Reefer "+
-			"and Other are spend only and never enter the return."+keep, common.FuelTypes),
-		paramQuantity: common.StringProperty("The quantity bought, as a decimal such as 100.5, in "+
-			"quantityUnit."+keep, 0),
+		paramVendor: toolparams.StringProperty(
+			"The truck stop or vendor."+keep,
+			maxFuelVendorText,
+		),
+		paramVendorCity: toolparams.StringProperty("The vendor's city."+keep, maxFuelVendorText),
+		toolparams.ParamFuelType: agenttoolschema.Enum(
+			"The fuel as IFTA classifies it; DEF, Reefer "+
+				"and Other are spend only and never enter the return."+keep,
+			toolparams.FuelTypes,
+		),
+		paramQuantity: toolparams.StringProperty(
+			"The quantity bought, as a decimal such as 100.5, in "+
+				"quantityUnit."+keep,
+			0,
+		),
 		paramQuantityUnit: agenttoolschema.Enum("The unit the quantity is in. Defaults to "+
 			"Gallon."+keep, quantityUnits),
-		paramUnitPrice: common.StringProperty("The price per unit as a decimal such as 3.899."+
+		paramUnitPrice: toolparams.StringProperty("The price per unit as a decimal such as 3.899."+
 			keep, 0),
-		paramTotalAmount: common.StringProperty("The total paid as a decimal such as 389.90, as "+
-			"the receipt says. Leave it out when you have unitPrice and the quantity: it is "+
-			"worked out to the cent from them."+keep, 0),
-		paramCurrencyCode: common.StringProperty("The ISO currency code. Defaults to USD."+keep,
-			common.CurrencyCodeLength),
-		paramOdometer: common.IntegerProperty("The odometer reading at the pump."+keep, 0,
+		paramTotalAmount: toolparams.StringProperty(
+			"The total paid as a decimal such as 389.90, as "+
+				"the receipt says. Leave it out when you have unitPrice and the quantity: it is "+
+				"worked out to the cent from them."+keep,
+			0,
+		),
+		paramCurrencyCode: toolparams.StringProperty("The ISO currency code. Defaults to USD."+keep,
+			toolparams.CurrencyCodeLength),
+		paramOdometer: toolparams.IntegerProperty("The odometer reading at the pump."+keep, 0,
 			maxOdometer),
 		paramFuelCardID: agenttoolschema.RecordIDText(permission.ResourceFuelCard,
 			"The fuel card it was paid with, from fuel_list_cards."+keep),
-		paramCardLastFour: common.StringProperty("The card's last four digits when the card is "+
-			"not on file."+keep, fuelCardLastFourDigits),
-		paramTransactionReference: common.StringProperty("The receipt or transaction number; a "+
-			"purchase with a reference already on file is refused."+keep,
-			maxFuelReferenceText),
-		paramTaxPaid: common.BooleanProperty("Whether fuel tax was paid at the pump. Defaults to " +
-			"true; bulk or untaxed fuel earns no tax-paid credit." + keep),
-		common.ParamNote: common.StringProperty(
+		paramCardLastFour: toolparams.StringProperty(
+			"The card's last four digits when the card is "+
+				"not on file."+keep,
+			fuelCardLastFourDigits,
+		),
+		paramTransactionReference: toolparams.StringProperty(
+			"The receipt or transaction number; a "+
+				"purchase with a reference already on file is refused."+keep,
+			maxFuelReferenceText,
+		),
+		paramTaxPaid: toolparams.BooleanProperty(
+			"Whether fuel tax was paid at the pump. Defaults to " +
+				"true; bulk or untaxed fuel earns no tax-paid credit." + keep,
+		),
+		toolparams.ParamNote: toolparams.StringProperty(
 			"Anything the person reconciling it should know."+keep,
 			maxFuelNotes,
 		),
@@ -251,15 +272,15 @@ func (in fuelPurchaseInput) given(key string) bool {
 
 func (in fuelPurchaseInput) applyIDs(purchase *fuelpurchase.FuelPurchase) error {
 	for key, set := range map[string]func(pulid.ID){
-		common.ParamTractorID: func(id pulid.ID) { purchase.TractorID = id },
-		paramJurisdictionID:   func(id pulid.ID) { purchase.JurisdictionID = id },
-		common.ParamWorkerID:  func(id pulid.ID) { purchase.WorkerID = &id },
-		paramFuelCardID:       func(id pulid.ID) { purchase.FuelCardID = &id },
+		toolparams.ParamTractorID: func(id pulid.ID) { purchase.TractorID = id },
+		paramJurisdictionID:       func(id pulid.ID) { purchase.JurisdictionID = id },
+		toolparams.ParamWorkerID:  func(id pulid.ID) { purchase.WorkerID = &id },
+		paramFuelCardID:           func(id pulid.ID) { purchase.FuelCardID = &id },
 	} {
 		if !in.given(key) {
 			continue
 		}
-		id, err := common.RequirePulid(in.values, key)
+		id, err := toolparams.RequirePulid(in.values, key)
 		if err != nil {
 			return err
 		}
@@ -278,9 +299,9 @@ func (in fuelPurchaseInput) applyTexts(purchase *fuelpurchase.FuelPurchase) erro
 		paramVendorCity:           {&purchase.VendorCity, maxFuelVendorText},
 		paramCardLastFour:         {&purchase.CardLastFour, fuelCardLastFourDigits},
 		paramTransactionReference: {&purchase.TransactionReference, maxFuelReferenceText},
-		common.ParamNote:          {&purchase.Notes, maxFuelNotes},
+		toolparams.ParamNote:      {&purchase.Notes, maxFuelNotes},
 	} {
-		text, err := common.OptionalBoundedText(in.values, key, field.limit)
+		text, err := toolparams.OptionalBoundedText(in.values, key, field.limit)
 		if err != nil {
 			return err
 		}
@@ -294,7 +315,7 @@ func (in fuelPurchaseInput) applyTexts(purchase *fuelpurchase.FuelPurchase) erro
 
 func (in fuelPurchaseInput) applyAmounts(purchase *fuelpurchase.FuelPurchase) error {
 	if in.given(paramQuantity) {
-		quantity, present, err := common.OptionalDecimal(in.values, paramQuantity)
+		quantity, present, err := toolparams.OptionalDecimal(in.values, paramQuantity)
 		if err != nil {
 			return err
 		}
@@ -304,7 +325,7 @@ func (in fuelPurchaseInput) applyAmounts(purchase *fuelpurchase.FuelPurchase) er
 		purchase.Quantity = quantity
 	}
 	if in.given(paramUnitPrice) {
-		price, present, err := common.OptionalDecimal(in.values, paramUnitPrice)
+		price, present, err := toolparams.OptionalDecimal(in.values, paramUnitPrice)
 		if err != nil {
 			return err
 		}
@@ -314,14 +335,14 @@ func (in fuelPurchaseInput) applyAmounts(purchase *fuelpurchase.FuelPurchase) er
 		purchase.UnitPrice = decimal.NullDecimal{Decimal: price, Valid: present}
 	}
 	if in.given(paramTotalAmount) {
-		total, err := common.RequireMoney(in.values, paramTotalAmount)
+		total, err := toolparams.RequireMoney(in.values, paramTotalAmount)
 		if err != nil {
 			return err
 		}
 		purchase.TotalAmountMinor = total
 	}
 	if in.given(paramOdometer) {
-		odometer, err := common.RequireIntInRange(in.values, paramOdometer, 0, maxOdometer)
+		odometer, err := toolparams.RequireIntInRange(in.values, paramOdometer, 0, maxOdometer)
 		if err != nil {
 			return err
 		}
@@ -333,7 +354,11 @@ func (in fuelPurchaseInput) applyAmounts(purchase *fuelpurchase.FuelPurchase) er
 }
 
 func (in fuelPurchaseInput) purchasedAt() (int64, error) {
-	return common.RequireLocalTime(in.values, paramPurchasedAt, timeutils.LoadLocation(in.timezone))
+	return toolparams.RequireLocalTime(
+		in.values,
+		paramPurchasedAt,
+		timeutils.LoadLocation(in.timezone),
+	)
 }
 
 func (in fuelPurchaseInput) applyChoices(purchase *fuelpurchase.FuelPurchase) error {
@@ -344,11 +369,11 @@ func (in fuelPurchaseInput) applyChoices(purchase *fuelpurchase.FuelPurchase) er
 		}
 		purchase.PurchasedAt = purchasedAt
 	}
-	if in.given(common.ParamFuelType) {
-		fuelType, err := common.RequireEnum(
+	if in.given(toolparams.ParamFuelType) {
+		fuelType, err := toolparams.RequireEnum(
 			in.values,
-			common.ParamFuelType,
-			common.FuelTypes.Values,
+			toolparams.ParamFuelType,
+			toolparams.FuelTypes.Values,
 		)
 		if err != nil {
 			return err
@@ -356,7 +381,7 @@ func (in fuelPurchaseInput) applyChoices(purchase *fuelpurchase.FuelPurchase) er
 		purchase.FuelType = fuelType
 	}
 	if in.given(paramQuantityUnit) {
-		unit, err := common.RequireEnum(in.values, paramQuantityUnit, quantityUnits.Values)
+		unit, err := toolparams.RequireEnum(in.values, paramQuantityUnit, quantityUnits.Values)
 		if err != nil {
 			return err
 		}
@@ -364,14 +389,14 @@ func (in fuelPurchaseInput) applyChoices(purchase *fuelpurchase.FuelPurchase) er
 	}
 	if in.given(paramCurrencyCode) {
 		code := strings.ToUpper(
-			strings.TrimSpace(common.OptionalString(in.values, paramCurrencyCode)),
+			strings.TrimSpace(toolparams.OptionalString(in.values, paramCurrencyCode)),
 		)
-		if len(code) != common.CurrencyCodeLength {
+		if len(code) != toolparams.CurrencyCodeLength {
 			return fmt.Errorf("%s must be a three-letter code such as USD", paramCurrencyCode)
 		}
 		purchase.CurrencyCode = code
 	}
-	taxPaid, err := common.OptionalBoolPointer(in.values, paramTaxPaid)
+	taxPaid, err := toolparams.OptionalBoolPointer(in.values, paramTaxPaid)
 	if err != nil {
 		return err
 	}
@@ -424,7 +449,7 @@ func newFuelPurchaseDraft(
 	}
 
 	return &fuelpurchaseservice.CreatePurchaseRequest{
-		TenantInfo: common.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(*params),
 		Purchase:   purchase,
 		UserID:     params.Actor.UserID,
 	}, nil
@@ -511,7 +536,7 @@ func fuelPurchaseRecord(purchase *fuelpurchase.FuelPurchase) toolpreview.Record 
 		Resource: permission.ResourceFuelPurchase,
 		ID:       purchase.ID,
 		Label:    label,
-		Version:  common.PinnedVersion(purchase.Version),
+		Version:  changepreview.PinnedVersion(purchase.Version),
 	}
 }
 
@@ -524,12 +549,12 @@ func fuelPurchaseResult(
 		Kind:   fuelPurchaseKind,
 		Name:   fuelPurchaseRecord(purchase).Label,
 		IDs:    map[string]string{paramFuelPurchaseID: purchase.ID.String()},
-		Record: common.RecordOf(fuelPurchaseRecordEntity, purchase.ID),
+		Record: changepreview.RecordOf(fuelPurchaseRecordEntity, purchase.ID),
 	}
 }
 
 func targetFuelPurchase(params map[string]any) (agenttoolports.ToolTarget, bool) {
-	return common.TargetOf(params, paramFuelPurchaseID, permission.ResourceFuelPurchase)
+	return toolparams.TargetOf(params, paramFuelPurchaseID, permission.ResourceFuelPurchase)
 }
 
 type labelledPurchase struct {
@@ -541,7 +566,7 @@ func NewRecordFuelPurchaseTool(
 	purchases FuelPurchaseKeeper,
 	jurisdictions jurisdictionLabeler,
 ) agenttoolports.AgentTool {
-	return common.NewReportingReceivableTool(common.FuelInternalSpec(&common.ReceivableSpec{
+	return toolspec.NewReportingReceivableTool(toolspec.FuelInternalSpec(&toolspec.ReceivableSpec{
 		Name:   "fuel_record_purchase",
 		Recipe: []string{"fuel_list_purchases", "fuel_record_purchase"},
 		Description: "Record fuel bought for a tractor from a receipt or a statement line: " +
@@ -557,14 +582,14 @@ func NewRecordFuelPurchaseTool(
 			"nothing is sent, and fuel_delete_purchase removes it.",
 		Properties: fuelPurchaseProperties(false),
 		Required: []string{
-			common.ParamTractorID,
+			toolparams.ParamTractorID,
 			paramJurisdictionID,
 			paramPurchasedAt,
-			common.ParamFuelType,
+			toolparams.ParamFuelType,
 			paramQuantity,
 		},
 		SearchTerms: []string{"fuel", "receipt", "diesel", "gallons", searchTermIFTA, "pump"},
-	}), common.ReceivablePlan[*fuelpurchaseservice.CreatePurchaseRequest, *labelledPurchase]{
+	}), toolspec.ReceivablePlan[*fuelpurchaseservice.CreatePurchaseRequest, *labelledPurchase]{
 		Request: newFuelPurchaseDraft,
 		Plan: func(
 			ctx context.Context,
@@ -606,7 +631,7 @@ func NewRecordFuelPurchaseTool(
 				plan.purchase.Gallons.StringFixed(3),
 				plan.purchase.FuelType.Label(),
 				plan.jurisdiction,
-				common.DayLabel(plan.purchase.PurchasedAt),
+				changepreview.DayLabel(plan.purchase.PurchasedAt),
 				money.DecimalFromMinor(plan.purchase.TotalAmountMinor).StringFixed(2),
 				plan.purchase.CurrencyCode,
 			), change), nil
@@ -634,7 +659,7 @@ type fuelPurchaseCorrection struct {
 func fuelPurchaseCorrectionFrom(
 	params *agenttoolports.ToolExecuteParams,
 ) (*fuelPurchaseCorrection, error) {
-	id, err := common.RequirePulid(params.Params, paramFuelPurchaseID)
+	id, err := toolparams.RequirePulid(params.Params, paramFuelPurchaseID)
 	if err != nil {
 		return nil, err
 	}
@@ -656,7 +681,7 @@ func (c *fuelPurchaseCorrection) request(
 	purchases FuelPurchaseKeeper,
 	params *agenttoolports.ToolExecuteParams,
 ) (*fuelpurchaseservice.UpdatePurchaseRequest, error) {
-	stored, err := purchases.GetPurchase(ctx, common.TenantFrom(*params), c.id)
+	stored, err := purchases.GetPurchase(ctx, toolparams.TenantFrom(*params), c.id)
 	if err != nil {
 		return nil, err
 	}
@@ -674,7 +699,7 @@ func (c *fuelPurchaseCorrection) request(
 	}
 
 	return &fuelpurchaseservice.UpdatePurchaseRequest{
-		TenantInfo: common.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(*params),
 		Purchase:   &corrected,
 		UserID:     params.Actor.UserID,
 	}, nil
@@ -691,7 +716,7 @@ func NewCorrectFuelPurchaseTool(
 	purchases FuelPurchaseKeeper,
 	jurisdictions jurisdictionLabeler,
 ) agenttoolports.AgentTool {
-	return common.NewReportingReceivableTool(common.FuelInternalSpec(&common.ReceivableSpec{
+	return toolspec.NewReportingReceivableTool(toolspec.FuelInternalSpec(&toolspec.ReceivableSpec{
 		Name:        "fuel_correct_purchase",
 		SearchTerms: []string{"fix fuel purchase", "keyed wrong", "wrong gallons"},
 		Description: "Correct a recorded fuel purchase: the tractor, jurisdiction, day, " +
@@ -708,7 +733,7 @@ func NewCorrectFuelPurchaseTool(
 		Properties: fuelPurchaseProperties(true),
 		Required:   []string{paramFuelPurchaseID},
 		Target:     targetFuelPurchase,
-	}), common.ReceivablePlan[*fuelPurchaseCorrection, *labelledPurchaseChange]{
+	}), toolspec.ReceivablePlan[*fuelPurchaseCorrection, *labelledPurchaseChange]{
 		Request: fuelPurchaseCorrectionFrom,
 		Plan: func(
 			ctx context.Context,
@@ -753,7 +778,7 @@ func NewCorrectFuelPurchaseTool(
 				"Would correct the fuel purchase %s bought on %s; a finalized IFTA return "+
 					"keeps its figures until it is reopened or amended.",
 				fuelPurchaseRecord(plan.change.Before).Label,
-				common.DayLabel(plan.change.Before.PurchasedAt),
+				changepreview.DayLabel(plan.change.Before.PurchasedAt),
 			), change), nil
 		},
 		Run: func(
@@ -781,13 +806,13 @@ func deleteFuelPurchaseRequest(
 	params *agenttoolports.ToolExecuteParams,
 	id pulid.ID,
 ) (*fuelpurchaseservice.DeletePurchaseRequest, error) {
-	stored, err := purchases.GetPurchase(ctx, common.TenantFrom(*params), id)
+	stored, err := purchases.GetPurchase(ctx, toolparams.TenantFrom(*params), id)
 	if err != nil {
 		return nil, err
 	}
 
 	return &fuelpurchaseservice.DeletePurchaseRequest{
-		TenantInfo: common.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(*params),
 		ID:         stored.ID,
 		Version:    stored.Version,
 		UserID:     params.Actor.UserID,
@@ -798,7 +823,7 @@ func NewDeleteFuelPurchaseTool(
 	purchases FuelPurchaseKeeper,
 	jurisdictions jurisdictionLabeler,
 ) agenttoolports.AgentTool {
-	return common.NewReceivableTool(common.FuelInternalSpec(&common.ReceivableSpec{
+	return toolspec.NewReceivableTool(toolspec.FuelInternalSpec(&toolspec.ReceivableSpec{
 		Name: "fuel_delete_purchase",
 		Description: "Propose deleting a fuel purchase recorded in error, such as a " +
 			"receipt entered twice. It is removed outright; a return already generated for " +
@@ -815,9 +840,9 @@ func NewDeleteFuelPurchaseTool(
 		},
 		Required: []string{paramFuelPurchaseID},
 		Target:   targetFuelPurchase,
-	}), common.ReceivablePlan[pulid.ID, *labelledPurchase]{
+	}), toolspec.ReceivablePlan[pulid.ID, *labelledPurchase]{
 		Request: func(params *agenttoolports.ToolExecuteParams) (pulid.ID, error) {
-			return common.RequirePulid(params.Params, paramFuelPurchaseID)
+			return toolparams.RequirePulid(params.Params, paramFuelPurchaseID)
 		},
 		Plan: func(
 			ctx context.Context,
@@ -856,7 +881,7 @@ func NewDeleteFuelPurchaseTool(
 				"Would delete the fuel purchase %s bought on %s; a return already generated "+
 					"for its quarter keeps its figures until it is recomputed.",
 				fuelPurchaseRecord(plan.purchase).Label,
-				common.DayLabel(plan.purchase.PurchasedAt),
+				changepreview.DayLabel(plan.purchase.PurchasedAt),
 			), change), nil
 		},
 		Run: func(
@@ -881,15 +906,15 @@ type fuelCardAssignment struct {
 }
 
 func fuelCardAssignmentFrom(params *agenttoolports.ToolExecuteParams) (*fuelCardAssignment, error) {
-	id, err := common.RequirePulid(params.Params, paramFuelCardID)
+	id, err := toolparams.RequirePulid(params.Params, paramFuelCardID)
 	if err != nil {
 		return nil, err
 	}
-	tractor, err := common.OptionalPulidParam(params.Params, paramAssignedTractorID)
+	tractor, err := toolparams.OptionalPulidParam(params.Params, paramAssignedTractorID)
 	if err != nil {
 		return nil, err
 	}
-	worker, err := common.OptionalPulidParam(params.Params, paramAssignedWorkerID)
+	worker, err := toolparams.OptionalPulidParam(params.Params, paramAssignedWorkerID)
 	if err != nil {
 		return nil, err
 	}
@@ -905,13 +930,13 @@ func (a *fuelCardAssignment) request(
 	cards FuelCardKeeper,
 	params *agenttoolports.ToolExecuteParams,
 ) (*fuelpurchaseservice.AssignCardRequest, error) {
-	stored, err := cards.GetCard(ctx, common.TenantFrom(*params), a.id)
+	stored, err := cards.GetCard(ctx, toolparams.TenantFrom(*params), a.id)
 	if err != nil {
 		return nil, err
 	}
 
 	return &fuelpurchaseservice.AssignCardRequest{
-		TenantInfo:        common.TenantFrom(*params),
+		TenantInfo:        toolparams.TenantFrom(*params),
 		ID:                stored.ID,
 		Version:           stored.Version,
 		AssignedTractorID: a.tractor,
@@ -940,7 +965,7 @@ func fuelCardViewOf(card *fuelpurchase.FuelCard) *fuelCardView {
 }
 
 func NewAssignFuelCardTool(cards FuelCardKeeper) agenttoolports.AgentTool {
-	return common.NewReceivableTool(common.FuelInternalSpec(&common.ReceivableSpec{
+	return toolspec.NewReceivableTool(toolspec.FuelInternalSpec(&toolspec.ReceivableSpec{
 		Name:        "fuel_assign_card",
 		SearchTerms: []string{"issue new fuel card", "fuel card to tractor", "hand out fuel card"},
 		Description: "Assign a fuel card to the tractor or driver that carries it, most " +
@@ -962,9 +987,9 @@ func NewAssignFuelCardTool(cards FuelCardKeeper) agenttoolports.AgentTool {
 		},
 		Required: []string{paramFuelCardID},
 		Target: func(params map[string]any) (agenttoolports.ToolTarget, bool) {
-			return common.TargetOf(params, paramFuelCardID, permission.ResourceFuelCard)
+			return toolparams.TargetOf(params, paramFuelCardID, permission.ResourceFuelCard)
 		},
-	}), common.ReceivablePlan[*fuelCardAssignment, *fuelpurchaseservice.CardChange]{
+	}), toolspec.ReceivablePlan[*fuelCardAssignment, *fuelpurchaseservice.CardChange]{
 		Request: fuelCardAssignmentFrom,
 		Plan: func(
 			ctx context.Context,
@@ -990,7 +1015,7 @@ func NewAssignFuelCardTool(cards FuelCardKeeper) agenttoolports.AgentTool {
 					Resource: permission.ResourceFuelCard,
 					ID:       plan.Before.ID,
 					Label:    plan.Before.Provider.Label() + " card ending " + plan.Before.LastFour,
-					Version:  common.PinnedVersion(plan.Before.Version),
+					Version:  changepreview.PinnedVersion(plan.Before.Version),
 				},
 				fuelCardViewOf(plan.Before),
 				fuelCardViewOf(plan.After),
@@ -1033,7 +1058,7 @@ func targetFuelImport(
 	resource permission.Resource,
 ) func(map[string]any) (agenttoolports.ToolTarget, bool) {
 	return func(params map[string]any) (agenttoolports.ToolTarget, bool) {
-		return common.TargetOf(params, paramFuelImportID, resource)
+		return toolparams.TargetOf(params, paramFuelImportID, resource)
 	}
 }
 
@@ -1047,7 +1072,7 @@ func fuelImportRecord(batch *fuelpurchase.ImportBatch) toolpreview.Record {
 		Resource: permission.ResourceFuelPurchaseImport,
 		ID:       batch.ID,
 		Label:    label,
-		Version:  common.PinnedVersion(batch.Version),
+		Version:  changepreview.PinnedVersion(batch.Version),
 	}
 }
 
@@ -1078,20 +1103,20 @@ func loadFuelImport(
 	imports FuelImportKeeper,
 	params *agenttoolports.ToolExecuteParams,
 ) (*fuelpurchase.ImportBatch, error) {
-	id, err := common.RequirePulid(params.Params, paramFuelImportID)
+	id, err := toolparams.RequirePulid(params.Params, paramFuelImportID)
 	if err != nil {
 		return nil, err
 	}
 
-	return imports.GetImport(ctx, common.TenantFrom(*params), id)
+	return imports.GetImport(ctx, toolparams.TenantFrom(*params), id)
 }
 
 func fuelImportIDFrom(params *agenttoolports.ToolExecuteParams) (pulid.ID, error) {
-	return common.RequirePulid(params.Params, paramFuelImportID)
+	return toolparams.RequirePulid(params.Params, paramFuelImportID)
 }
 
 func NewCommitFuelPurchaseImportTool(imports FuelImportKeeper) agenttoolports.AgentTool {
-	return common.NewReceivableTool(common.FuelInternalSpec(&common.ReceivableSpec{
+	return toolspec.NewReceivableTool(toolspec.FuelInternalSpec(&toolspec.ReceivableSpec{
 		Name:   "fuel_commit_purchase_import",
 		Recipe: []string{"fuel_list_purchase_imports", "fuel_commit_purchase_import"},
 		Description: "Commit a staged fuel card statement: every row ready to commit becomes " +
@@ -1108,7 +1133,7 @@ func NewCommitFuelPurchaseImportTool(imports FuelImportKeeper) agenttoolports.Ag
 		},
 		Required: []string{paramFuelImportID},
 		Target:   targetFuelImport(permission.ResourceFuelPurchase),
-	}), common.ReceivablePlan[pulid.ID, *fuelpurchaseservice.CommitPlan]{
+	}), toolspec.ReceivablePlan[pulid.ID, *fuelpurchaseservice.CommitPlan]{
 		Request: fuelImportIDFrom,
 		Plan: func(
 			ctx context.Context,
@@ -1121,7 +1146,7 @@ func NewCommitFuelPurchaseImportTool(imports FuelImportKeeper) agenttoolports.Ag
 			}
 
 			return imports.PlanCommit(ctx, &fuelpurchaseservice.CommitRequest{
-				TenantInfo: common.TenantFrom(*params),
+				TenantInfo: toolparams.TenantFrom(*params),
 				BatchID:    batch.ID,
 				Version:    batch.Version,
 				UserID:     params.Actor.UserID,
@@ -1151,7 +1176,7 @@ func NewCommitFuelPurchaseImportTool(imports FuelImportKeeper) agenttoolports.Ag
 
 			return toolpreview.Build(fmt.Sprintf(
 				"Would commit %s from %s: %s gallons for %s %s.",
-				common.CountOf(len(plan.Purchases), fuelPurchaseKind),
+				changepreview.CountOf(len(plan.Purchases), fuelPurchaseKind),
 				fuelImportRecord(plan.Batch).Label,
 				gallons.StringFixed(3),
 				money.DecimalFromMinor(total).StringFixed(2),
@@ -1168,7 +1193,7 @@ func NewCommitFuelPurchaseImportTool(imports FuelImportKeeper) agenttoolports.Ag
 				return nil, err
 			}
 			_, err = imports.Commit(ctx, &fuelpurchaseservice.CommitRequest{
-				TenantInfo: common.TenantFrom(*params),
+				TenantInfo: toolparams.TenantFrom(*params),
 				BatchID:    batch.ID,
 				Version:    batch.Version,
 				UserID:     params.Actor.UserID,
@@ -1180,7 +1205,7 @@ func NewCommitFuelPurchaseImportTool(imports FuelImportKeeper) agenttoolports.Ag
 }
 
 func NewResolveFuelPurchaseImportRowsTool(imports FuelImportKeeper) agenttoolports.AgentTool {
-	return common.NewReceivableTool(common.FuelInternalSpec(&common.ReceivableSpec{
+	return toolspec.NewReceivableTool(toolspec.FuelInternalSpec(&toolspec.ReceivableSpec{
 		Name: "fuel_resolve_purchase_import_rows",
 		Description: "Work out again the rows a fuel import is still holding, against the " +
 			"cards, tractors and jurisdictions on file now, without fetching the statement " +
@@ -1197,7 +1222,7 @@ func NewResolveFuelPurchaseImportRowsTool(imports FuelImportKeeper) agenttoolpor
 		},
 		Required: []string{paramFuelImportID},
 		Target:   targetFuelImport(permission.ResourceFuelPurchaseImport),
-	}), common.ReceivablePlan[pulid.ID, *fuelpurchaseservice.ResolveRowsPlan]{
+	}), toolspec.ReceivablePlan[pulid.ID, *fuelpurchaseservice.ResolveRowsPlan]{
 		Request: fuelImportIDFrom,
 		Plan: func(
 			ctx context.Context,
@@ -1210,7 +1235,7 @@ func NewResolveFuelPurchaseImportRowsTool(imports FuelImportKeeper) agenttoolpor
 			}
 
 			return imports.PlanResolveRows(ctx, &fuelpurchaseservice.ResolveRowsRequest{
-				TenantInfo: common.TenantFrom(*params),
+				TenantInfo: toolparams.TenantFrom(*params),
 				BatchID:    batch.ID,
 				Version:    batch.Version,
 				UserID:     params.Actor.UserID,
@@ -1230,7 +1255,7 @@ func NewResolveFuelPurchaseImportRowsTool(imports FuelImportKeeper) agenttoolpor
 
 			return toolpreview.Build(fmt.Sprintf(
 				"Would work out %s held in %s again: %d now resolve and %d still wait; %s.",
-				common.CountOf(plan.Reviewed, "row"),
+				changepreview.CountOf(plan.Reviewed, "row"),
 				fuelImportRecord(plan.Batch).Label,
 				plan.Resolved,
 				plan.Queued,
@@ -1247,7 +1272,7 @@ func NewResolveFuelPurchaseImportRowsTool(imports FuelImportKeeper) agenttoolpor
 				return nil, err
 			}
 			_, err = imports.ResolveRows(ctx, &fuelpurchaseservice.ResolveRowsRequest{
-				TenantInfo: common.TenantFrom(*params),
+				TenantInfo: toolparams.TenantFrom(*params),
 				BatchID:    batch.ID,
 				Version:    batch.Version,
 				UserID:     params.Actor.UserID,
@@ -1269,13 +1294,13 @@ func NewDiscardFuelPurchaseImportTool(imports FuelImportKeeper) agenttoolports.A
 		discard *fuelImportDiscard,
 		params *agenttoolports.ToolExecuteParams,
 	) (*fuelpurchaseservice.DiscardRequest, error) {
-		batch, err := imports.GetImport(ctx, common.TenantFrom(*params), discard.id)
+		batch, err := imports.GetImport(ctx, toolparams.TenantFrom(*params), discard.id)
 		if err != nil {
 			return nil, err
 		}
 
 		return &fuelpurchaseservice.DiscardRequest{
-			TenantInfo: common.TenantFrom(*params),
+			TenantInfo: toolparams.TenantFrom(*params),
 			BatchID:    batch.ID,
 			Version:    batch.Version,
 			Reason:     discard.reason,
@@ -1283,7 +1308,7 @@ func NewDiscardFuelPurchaseImportTool(imports FuelImportKeeper) agenttoolports.A
 		}, nil
 	}
 
-	return common.NewReceivableTool(common.FuelInternalSpec(&common.ReceivableSpec{
+	return toolspec.NewReceivableTool(toolspec.FuelInternalSpec(&toolspec.ReceivableSpec{
 		Name: "fuel_discard_purchase_import",
 		Description: "Discard a fuel card statement that was staged but should not be " +
 			"committed, such as the wrong month or a file loaded twice. Nothing it holds " +
@@ -1296,7 +1321,7 @@ func NewDiscardFuelPurchaseImportTool(imports FuelImportKeeper) agenttoolports.A
 		Properties: map[string]any{
 			paramFuelImportID: agenttoolschema.RecordIDText(permission.ResourceFuelPurchaseImport,
 				fuelImportSupplier),
-			common.ParamReason: common.StringProperty(
+			toolparams.ParamReason: toolparams.StringProperty(
 				"Why it is being discarded, for whoever finds it "+
 					"later.",
 				fuelDiscardReason,
@@ -1304,13 +1329,17 @@ func NewDiscardFuelPurchaseImportTool(imports FuelImportKeeper) agenttoolports.A
 		},
 		Required: []string{paramFuelImportID},
 		Target:   targetFuelImport(permission.ResourceFuelPurchase),
-	}), common.ReceivablePlan[*fuelImportDiscard, *fuelpurchaseservice.ImportBatchChange]{
+	}), toolspec.ReceivablePlan[*fuelImportDiscard, *fuelpurchaseservice.ImportBatchChange]{
 		Request: func(params *agenttoolports.ToolExecuteParams) (*fuelImportDiscard, error) {
-			id, err := common.RequirePulid(params.Params, paramFuelImportID)
+			id, err := toolparams.RequirePulid(params.Params, paramFuelImportID)
 			if err != nil {
 				return nil, err
 			}
-			reason, err := common.BoundedText(params.Params, common.ParamReason, fuelDiscardReason)
+			reason, err := toolparams.BoundedText(
+				params.Params,
+				toolparams.ParamReason,
+				fuelDiscardReason,
+			)
 			if err != nil {
 				return nil, err
 			}

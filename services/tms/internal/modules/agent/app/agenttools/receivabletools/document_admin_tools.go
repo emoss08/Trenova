@@ -4,7 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -83,27 +85,27 @@ func documentRecord(doc *document.Document) toolpreview.Record {
 		Resource: permission.ResourceDocument,
 		ID:       doc.ID,
 		Label:    doc.OriginalName,
-		Version:  common.PinnedVersion(doc.Version),
+		Version:  changepreview.PinnedVersion(doc.Version),
 	}
 }
 
 func deleteDocumentsRequest(
 	params *agenttoolports.ToolExecuteParams,
 ) (*documentservice.BulkDeleteRequest, error) {
-	ids, err := common.RequirePulidSlice(params.Params, paramDocumentIDs, maxDocumentsPerDelete)
+	ids, err := toolparams.RequirePulidSlice(params.Params, paramDocumentIDs, maxDocumentsPerDelete)
 	if err != nil {
 		return nil, err
 	}
 
 	return &documentservice.BulkDeleteRequest{
 		IDs:        ids,
-		TenantInfo: common.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(*params),
 		UserID:     params.Actor.UserID,
 	}, nil
 }
 
 func NewDeleteDocumentsTool(documents DocumentKeeper) agenttoolports.AgentTool {
-	return common.NewReceivableTool(&common.ReceivableSpec{
+	return toolspec.NewReceivableTool(&toolspec.ReceivableSpec{
 		Name: "document_delete",
 		Description: "Delete documents that should not be on file, such as a duplicate " +
 			"upload or a scan of the wrong paperwork. Every stored version of each goes with " +
@@ -125,7 +127,7 @@ func NewDeleteDocumentsTool(documents DocumentKeeper) agenttoolports.AgentTool {
 		},
 		Required:    []string{paramDocumentIDs},
 		SearchTerms: []string{"delete document", "remove duplicate upload", "wrong file"},
-	}, common.ReceivablePlan[*documentservice.BulkDeleteRequest, *documentservice.DeletePlan]{
+	}, toolspec.ReceivablePlan[*documentservice.BulkDeleteRequest, *documentservice.DeletePlan]{
 		Request: deleteDocumentsRequest,
 		Plan: func(
 			ctx context.Context,
@@ -135,7 +137,10 @@ func NewDeleteDocumentsTool(documents DocumentKeeper) agenttoolports.AgentTool {
 			return documents.PlanDelete(ctx, req)
 		},
 		Refused: func(req *documentservice.BulkDeleteRequest) string {
-			return fmt.Sprintf("Would delete %s.", common.CountOf(len(req.IDs), documentKind))
+			return fmt.Sprintf(
+				"Would delete %s.",
+				changepreview.CountOf(len(req.IDs), documentKind),
+			)
 		},
 		Render: func(
 			_ *documentservice.BulkDeleteRequest,
@@ -152,11 +157,11 @@ func NewDeleteDocumentsTool(documents DocumentKeeper) agenttoolports.AgentTool {
 
 			return toolpreview.Build(fmt.Sprintf(
 				"Would delete %s and %s stored with them; nothing brings them back.",
-				common.CountOf(
+				changepreview.CountOf(
 					len(plan.Documents),
 					documentKind,
 				),
-				common.CountOf(plan.FileCount(), "file"),
+				changepreview.CountOf(plan.FileCount(), "file"),
 			), changes...), nil
 		},
 		Run: func(
@@ -176,9 +181,9 @@ func NewDeleteDocumentsTool(documents DocumentKeeper) agenttoolports.AgentTool {
 				}
 
 				return &agent.ToolExecutionResult{
-					Action: common.ActionDeleted,
+					Action: changepreview.ActionDeleted,
 					Kind:   documentKind,
-					Name:   common.CountOf(1, documentKind),
+					Name:   changepreview.CountOf(1, documentKind),
 				}, nil
 			}
 			result, err := documents.BulkDelete(ctx, req)
@@ -187,9 +192,9 @@ func NewDeleteDocumentsTool(documents DocumentKeeper) agenttoolports.AgentTool {
 			}
 
 			return &agent.ToolExecutionResult{
-				Action: common.ActionDeleted,
+				Action: changepreview.ActionDeleted,
 				Kind:   documentKind,
-				Name:   common.CountOf(result.DeletedCount, "file"),
+				Name:   changepreview.CountOf(result.DeletedCount, "file"),
 			}, nil
 		},
 	})
@@ -205,11 +210,11 @@ type restoreDocumentPlan struct {
 }
 
 func restoreRequest(params *agenttoolports.ToolExecuteParams) (*documentRestore, error) {
-	id, err := common.RequirePulid(params.Params, paramDocumentID)
+	id, err := toolparams.RequirePulid(params.Params, paramDocumentID)
 	if err != nil {
 		return nil, err
 	}
-	version, err := common.RequireIntInRange(
+	version, err := toolparams.RequireIntInRange(
 		params.Params,
 		paramVersionNumber,
 		1,
@@ -243,7 +248,7 @@ func restoreTarget(
 }
 
 func NewRestoreDocumentVersionTool(documents DocumentKeeper) agenttoolports.AgentTool {
-	return common.NewReceivableTool(&common.ReceivableSpec{
+	return toolspec.NewReceivableTool(&toolspec.ReceivableSpec{
 		Name: "document_restore_version",
 		Description: "Make an earlier version of a document the current one again, when " +
 			"the newest upload was the wrong file. Every version is kept, so a later restore " +
@@ -259,22 +264,22 @@ func NewRestoreDocumentVersionTool(documents DocumentKeeper) agenttoolports.Agen
 		Properties: map[string]any{
 			paramDocumentID: agenttoolschema.RecordIDText(permission.ResourceDocument,
 				"Any version of the document, "+documentSupplier+". Never guess one."),
-			paramVersionNumber: common.IntegerProperty("The version number to make current.", 1,
+			paramVersionNumber: toolparams.IntegerProperty("The version number to make current.", 1,
 				maxDocumentVersion),
 		},
 		Required:    []string{paramDocumentID, paramVersionNumber},
 		SearchTerms: []string{"restore document", "previous version", "undo upload"},
 		Target: func(params map[string]any) (agenttoolports.ToolTarget, bool) {
-			return common.TargetOf(params, paramDocumentID, permission.ResourceDocument)
+			return toolparams.TargetOf(params, paramDocumentID, permission.ResourceDocument)
 		},
-	}, common.ReceivablePlan[*documentRestore, *restoreDocumentPlan]{
+	}, toolspec.ReceivablePlan[*documentRestore, *restoreDocumentPlan]{
 		Request: restoreRequest,
 		Plan: func(
 			ctx context.Context,
 			req *documentRestore,
 			params *agenttoolports.ToolExecuteParams,
 		) (*restoreDocumentPlan, error) {
-			tenant := common.TenantFrom(*params)
+			tenant := toolparams.TenantFrom(*params)
 			targetID, err := restoreTarget(ctx, documents, req, tenant)
 			if err != nil {
 				return nil, err
@@ -316,7 +321,7 @@ func NewRestoreDocumentVersionTool(documents DocumentKeeper) agenttoolports.Agen
 			req *documentRestore,
 			params *agenttoolports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
-			tenant := common.TenantFrom(*params)
+			tenant := toolparams.TenantFrom(*params)
 			targetID, err := restoreTarget(ctx, documents, req, tenant)
 			if err != nil {
 				return nil, err

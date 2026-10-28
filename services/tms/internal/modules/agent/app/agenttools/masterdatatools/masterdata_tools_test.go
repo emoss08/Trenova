@@ -5,7 +5,9 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/equipment/app/tractorservice"
@@ -203,7 +205,7 @@ func TestCreateCustomer_StatusEmailRecipientsAreHeldAsLeavingTheOrganization(t *
 	require.NoError(t, err)
 	assert.Equal(t, states.State.ID, customers.created.StateID)
 	assert.Equal(t, customer.StatusUpdateNone, customers.created.StatusUpdatePreference)
-	assert.Equal(t, common.CustomerRecordEntity, result.Record.EntityType)
+	assert.Equal(t, changepreview.CustomerRecordEntity, result.Record.EntityType)
 
 	delete(args, mdState)
 	require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(),
@@ -228,7 +230,7 @@ func TestUpdateCustomer_LeavesTheBillingProfileAlone(t *testing.T) {
 	}
 	tool := NewUpdateCustomerTool(customers, states)
 	params := agenttoolstest.ExecuteParams(
-		map[string]any{common.ParamCustomerID: stored.ID.String(), mdCity: "Plano"},
+		map[string]any{toolparams.ParamCustomerID: stored.ID.String(), mdCity: "Plano"},
 	)
 
 	require.NoError(t, tool.Execute(t.Context(), params))
@@ -238,8 +240,8 @@ func TestUpdateCustomer_LeavesTheBillingProfileAlone(t *testing.T) {
 
 	status := NewUpdateCustomerStatusTool(customers, states)
 	require.NoError(t, status.Execute(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
-		"customerIds":      []any{stored.ID.String()},
-		common.FieldStatus: "Inactive",
+		"customerIds":             []any{stored.ID.String()},
+		changepreview.FieldStatus: "Inactive",
 	})))
 	require.IsType(t, &customerports.BulkUpdateCustomerStatusRequest{}, customers.status)
 }
@@ -348,8 +350,8 @@ func TestCreateCommodity_ReadsDecimalsAndTheFreightClass(t *testing.T) {
 
 	status := NewUpdateCommodityStatusTool(commodities)
 	statusParams := agenttoolstest.ExecuteParams(map[string]any{
-		"commodityIds":     []any{pulid.MustNew("com_").String()},
-		common.FieldStatus: "Inactive",
+		"commodityIds":            []any{pulid.MustNew("com_").String()},
+		changepreview.FieldStatus: "Inactive",
 	})
 	statusPreview, err := status.(agenttoolports.ToolPreviewer).Preview(t.Context(), statusParams)
 	require.NoError(t, err)
@@ -555,8 +557,8 @@ func TestUpdateLocation_ChangesTheAddressAndKeepsTheCode(t *testing.T) {
 
 	status := NewUpdateLocationStatusTool(locations, states)
 	require.NoError(t, status.Execute(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
-		"locationIds":      []any{stored.ID.String()},
-		common.FieldStatus: "Inactive",
+		"locationIds":             []any{stored.ID.String()},
+		changepreview.FieldStatus: "Inactive",
 	})))
 	assert.Equal(t, domaintypes.StatusInactive, locations.bulk.Status)
 }
@@ -682,8 +684,8 @@ func TestLocateTractor_ShowsWhereItWasAndGoes(t *testing.T) {
 	}
 	tool := NewLocateTractorTool(tractors)
 	params := agenttoolstest.ExecuteParams(map[string]any{
-		common.ParamTractorID: unit.ID.String(),
-		paramNewLocationID:    to.ID.String(),
+		toolparams.ParamTractorID: unit.ID.String(),
+		paramNewLocationID:        to.ID.String(),
 	})
 
 	preview := agenttoolstest.PreviewWithoutWrites(
@@ -817,7 +819,7 @@ func TestLocateTrailer_ShowsTheReRatedShipmentAndWaitsForAPerson(t *testing.T) {
 	require.ErrorIs(
 		t,
 		tool.Execute(t.Context(), agenttoolstest.ExecuteParams(args)),
-		common.ErrNeedsAPersonsApproval,
+		toolspec.ErrNeedsAPersonsApproval,
 	)
 	require.NoError(t, tool.Execute(t.Context(), agenttoolstest.ApprovedParams(args)))
 	assert.Equal(t, unit.ID, trailers.located.TrailerID)

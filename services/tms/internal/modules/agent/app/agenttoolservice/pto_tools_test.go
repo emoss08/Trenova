@@ -5,8 +5,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/operationstools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -120,7 +120,7 @@ func TestApproveWorkerPTO_RefusesAnAgentPrincipal(t *testing.T) {
 
 	err := operationstools.NewApproveWorkerPTOTool(pto).Execute(t.Context(), params)
 
-	require.ErrorIs(t, err, common.ErrAgentCannotApprove)
+	require.ErrorIs(t, err, toolguard.ErrAgentCannotApprove)
 	assert.Nil(t, pto.approved)
 }
 

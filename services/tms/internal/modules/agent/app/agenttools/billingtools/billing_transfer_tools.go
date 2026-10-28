@@ -6,7 +6,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -122,7 +123,7 @@ func (t *TransferToBillingTool) ParamSchema() map[string]any {
 			"customerId, deliveredFrom and deliveredTo. Use it instead of shipmentIds, never " +
 			"with them; leave it out when naming shipmentIds, whose filters are then ignored.",
 	}
-	properties[common.ParamShipmentIDs] = toolschema.RecordSubset(
+	properties[toolparams.ParamShipmentIDs] = toolschema.RecordSubset(
 		permission.ResourceShipment.String(),
 		agenttoolschema.OfResource(map[string]any{
 			toolschema.KeyType: toolschema.TypeArray,
@@ -135,7 +136,7 @@ func (t *TransferToBillingTool) ParamSchema() map[string]any {
 			},
 		}, permission.ResourceShipment),
 	)
-	properties[common.ParamBillType] = agenttoolschema.Enum(
+	properties[toolparams.ParamBillType] = agenttoolschema.Enum(
 		"What the queue items bill. Defaults to Invoice.", transferBillTypes,
 	)
 	properties[paramMarkCompletedReady] = map[string]any{
@@ -193,16 +194,16 @@ func (r transferRequest) background() bool {
 func (t *TransferToBillingTool) request(
 	params *agenttoolports.ToolExecuteParams,
 ) (transferRequest, error) {
-	if err := common.GuardPreview(t, params); err != nil {
+	if err := toolguard.GuardPreview(t, params); err != nil {
 		return transferRequest{}, err
 	}
 
 	request := transferRequest{
 		billType:  billingqueue.BillTypeInvoice,
-		markReady: common.OptionalBool(params.Params, paramMarkCompletedReady),
-		all:       common.OptionalBool(params.Params, paramAllTransferable),
+		markReady: toolparams.OptionalBool(params.Params, paramMarkCompletedReady),
+		all:       toolparams.OptionalBool(params.Params, paramAllTransferable),
 	}
-	if raw := common.OptionalString(params.Params, common.ParamBillType); raw != "" {
+	if raw := toolparams.OptionalString(params.Params, toolparams.ParamBillType); raw != "" {
 		request.billType = billingqueue.BillType(raw)
 		if !isBillType(request.billType) {
 			return transferRequest{}, fmt.Errorf(
@@ -211,7 +212,7 @@ func (t *TransferToBillingTool) request(
 		}
 	}
 
-	named := params.Params[common.ParamShipmentIDs] != nil
+	named := params.Params[toolparams.ParamShipmentIDs] != nil
 	switch {
 	case named && request.all:
 		return transferRequest{}, errBothSelections
@@ -234,9 +235,9 @@ func (t *TransferToBillingTool) request(
 		return request, nil
 	}
 
-	ids, err := common.RequirePulidSlice(
+	ids, err := toolparams.RequirePulidSlice(
 		params.Params,
-		common.ParamShipmentIDs,
+		toolparams.ParamShipmentIDs,
 		shipmentbillingports.MaxBillingTransferCandidateIDs,
 	)
 	if err != nil {
@@ -275,7 +276,7 @@ func (t *TransferToBillingTool) ResolveSelection(
 	for _, id := range ids {
 		named = append(named, id.String())
 	}
-	resolved[common.ParamShipmentIDs] = named
+	resolved[toolparams.ParamShipmentIDs] = named
 
 	return resolved, nil
 }
@@ -305,7 +306,7 @@ func (t *TransferToBillingTool) transferable(
 	params *agenttoolports.ToolExecuteParams,
 	request *transferRequest,
 ) ([]pulid.ID, *shipmentbillingports.BillingTransferPlan, error) {
-	tenant := common.TenantFrom(*params)
+	tenant := toolparams.TenantFrom(*params)
 	candidates, err := t.shipments.ListBillingTransferCandidateIDs(
 		ctx,
 		&shipmentbillingports.ListBillingTransferCandidateIDsRequest{
@@ -402,7 +403,7 @@ func (t *TransferToBillingTool) ExecuteWithResult(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
 ) (*agent.ToolExecutionResult, error) {
-	if err := common.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return nil, err
 	}
 	request, err := t.request(&params)
@@ -443,7 +444,7 @@ func (t *TransferToBillingTool) startRun(
 	request transferRequest,
 ) (*agent.ToolExecutionResult, error) {
 	run, err := t.runs.Start(ctx, &billingtransferservice.StartRunRequest{
-		TenantInfo:                  common.TenantFrom(*params),
+		TenantInfo:                  toolparams.TenantFrom(*params),
 		Scope:                       billingtransfer.RunScopeSelected,
 		ShipmentIDs:                 request.shipmentIDs,
 		BillType:                    request.billType,

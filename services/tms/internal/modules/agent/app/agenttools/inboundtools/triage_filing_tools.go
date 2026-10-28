@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -129,10 +131,10 @@ func newFileInboundAttachmentTool(
 	inbox inboundMessageReader,
 	filing triageFiling,
 ) agenttoolports.AgentTool {
-	return common.NewReportingReceivableTool(
-		&common.ReceivableSpec{
+	return toolspec.NewReportingReceivableTool(
+		&toolspec.ReceivableSpec{
 			Name:     "inbox_file_attachment",
-			Artifact: common.ShipmentRecordEntity,
+			Artifact: changepreview.ShipmentRecordEntity,
 			Description: "File an email attachment on a shipment as a typed document, whole " +
 				"or split into page ranges that each become their own document. Whole, it is " +
 				"filed as the type you name, or as the kind it was read as when you name " +
@@ -171,7 +173,7 @@ func newFileInboundAttachmentTool(
 			Recipe:      []string{toolGetInboundMessage, "inbox_file_attachment"},
 			Target:      targetMessage,
 		},
-		common.ReceivablePlan[*fileCall, *triageworkservice.FilePlan]{
+		toolspec.ReceivablePlan[*fileCall, *triageworkservice.FilePlan]{
 			Request: fileRequest,
 			Plan: func(
 				ctx context.Context,
@@ -206,7 +208,10 @@ func newFileInboundAttachmentTool(
 						paramMessageID:  message.ID.String(),
 						paramShipmentID: call.file.ShipmentID.String(),
 					},
-					Record: common.RecordOf(common.ShipmentRecordEntity, call.file.ShipmentID),
+					Record: changepreview.RecordOf(
+						changepreview.ShipmentRecordEntity,
+						call.file.ShipmentID,
+					),
 				}, nil
 			},
 		},
@@ -247,19 +252,19 @@ func filingPagesProperty() map[string]any {
 }
 
 func fileRequest(params *agenttoolports.ToolExecuteParams) (*fileCall, error) {
-	messageID, err := common.RequirePulid(params.Params, paramMessageID)
+	messageID, err := toolparams.RequirePulid(params.Params, paramMessageID)
 	if err != nil {
 		return nil, err
 	}
-	attachmentID, err := common.RequirePulid(params.Params, paramAttachmentID)
+	attachmentID, err := toolparams.RequirePulid(params.Params, paramAttachmentID)
 	if err != nil {
 		return nil, err
 	}
-	shipmentID, err := common.RequirePulid(params.Params, paramShipmentID)
+	shipmentID, err := toolparams.RequirePulid(params.Params, paramShipmentID)
 	if err != nil {
 		return nil, err
 	}
-	documentType, err := common.OptionalID(params.Params, paramDocumentTypeID)
+	documentType, err := toolparams.OptionalID(params.Params, paramDocumentTypeID)
 	if err != nil {
 		return nil, err
 	}
@@ -291,7 +296,7 @@ func pageRanges(params map[string]any) ([]triageworkservice.PageRange, error) {
 		ToPage         int    `json:"toPage"`
 		DocumentTypeID string `json:"documentTypeId"`
 	}
-	if err := common.DecodeParam(params, paramPages, &raw); err != nil {
+	if err := toolparams.DecodeParam(params, paramPages, &raw); err != nil {
 		return nil, err
 	}
 	if len(raw) > maxFilingRanges {
@@ -410,8 +415,8 @@ func newUnfileInboundAttachmentTool(
 	inbox inboundMessageReader,
 	filing triageFiling,
 ) agenttoolports.AgentTool {
-	return common.NewReportingReceivableTool(
-		&common.ReceivableSpec{
+	return toolspec.NewReportingReceivableTool(
+		&toolspec.ReceivableSpec{
 			Name:     "inbox_unfile_attachment",
 			Artifact: inboundMessageEntity,
 			Description: "Take an email attachment off the shipment it was filed on, when " +
@@ -441,13 +446,13 @@ func newUnfileInboundAttachmentTool(
 			Recipe:      []string{toolGetInboundMessage, "inbox_unfile_attachment"},
 			Target:      targetMessage,
 		},
-		common.ReceivablePlan[*unfileCall, *triageworkservice.UnfilePlan]{
+		toolspec.ReceivablePlan[*unfileCall, *triageworkservice.UnfilePlan]{
 			Request: func(params *agenttoolports.ToolExecuteParams) (*unfileCall, error) {
-				messageID, err := common.RequirePulid(params.Params, paramMessageID)
+				messageID, err := toolparams.RequirePulid(params.Params, paramMessageID)
 				if err != nil {
 					return nil, err
 				}
-				attachmentID, err := common.RequirePulid(params.Params, paramAttachmentID)
+				attachmentID, err := toolparams.RequirePulid(params.Params, paramAttachmentID)
 				if err != nil {
 					return nil, err
 				}

@@ -4,7 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -14,7 +15,7 @@ import (
 	"github.com/emoss08/trenova/shared/stringutils"
 )
 
-var dashboardViewLabels = map[string]string{common.FieldTiles: "Tiles, in order"}
+var dashboardViewLabels = map[string]string{changepreview.FieldTiles: "Tiles, in order"}
 
 type dashboardView struct {
 	Name        string   `json:"name"`
@@ -60,7 +61,7 @@ func (t *CreateDashboardTool) Preview(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
-	if err := common.GuardPreview(t, &params); err != nil {
+	if err := toolguard.GuardPreview(t, &params); err != nil {
 		return nil, err
 	}
 
@@ -81,25 +82,25 @@ func (t *CreateDashboardTool) Preview(
 	preview := toolpreview.Build(fmt.Sprintf(
 		"Would create the report dashboard %q with %s, %s.",
 		planned.Name,
-		common.CountOf(len(planned.Layout.Tiles), "tile"),
+		changepreview.CountOf(len(planned.Layout.Tiles), "tile"),
 		dashboardAudience(planned.Visibility),
 	), change)
 
-	return common.WarnRefusal(preview, t.Validate(ctx, params))
+	return changepreview.WarnRefusal(preview, t.Validate(ctx, params))
 }
 
 func (t *AddDashboardTileTool) Preview(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
-	if err := common.GuardPreview(t, &params); err != nil {
+	if err := toolguard.GuardPreview(t, &params); err != nil {
 		return nil, err
 	}
 
 	request, existing, err := t.request(ctx, &params)
 	if err != nil {
-		if common.IsRefusal(err) {
-			return common.WarnWouldFail(
+		if changepreview.IsRefusal(err) {
+			return changepreview.WarnWouldFail(
 				toolpreview.Build("Would add a tile to a dashboard."),
 				err,
 			), nil
@@ -114,7 +115,7 @@ func (t *AddDashboardTileTool) Preview(
 		Resource: permission.ResourceDashboard,
 		ID:       existing.ID,
 		Label:    existing.Name,
-		Version:  common.PreviewVersion(existing.Version),
+		Version:  changepreview.PreviewVersion(existing.Version),
 	}, DashboardViewOf(existing), DashboardViewOf(&updated), toolpreview.Labels(dashboardViewLabels))
 	if err != nil {
 		return nil, err
@@ -126,5 +127,5 @@ func (t *AddDashboardTileTool) Preview(
 		dashboardAudience(existing.Visibility),
 	), change)
 
-	return common.WarnRefusal(preview, t.Validate(ctx, params))
+	return changepreview.WarnRefusal(preview, t.Validate(ctx, params))
 }

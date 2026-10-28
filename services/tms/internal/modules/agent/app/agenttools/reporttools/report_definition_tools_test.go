@@ -7,7 +7,7 @@ import (
 
 	"github.com/emoss08/keel/analytics/ir"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -525,7 +525,7 @@ func TestReportDefinitionTools_RejectAMismatchedActor(t *testing.T) {
 
 	err := NewCreateReportTool(writer).Execute(t.Context(), params)
 
-	require.ErrorIs(t, err, common.ErrTenantMismatch)
+	require.ErrorIs(t, err, toolguard.ErrTenantMismatch)
 	assert.Nil(t, writer.created)
 }
 

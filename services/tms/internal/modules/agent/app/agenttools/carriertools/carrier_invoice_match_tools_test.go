@@ -5,7 +5,9 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/settlementpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -122,14 +124,22 @@ func TestAcceptCarrierInvoiceMatchWithVariance_AccruesTheDifference(t *testing.T
 	assert.Equal(
 		t,
 		"Resolved",
-		agenttoolstest.FieldByPath(t, agenttoolstest.PreviewChange(t, preview, 0), fieldMatchStatus).After,
+		agenttoolstest.FieldByPath(
+			t,
+			agenttoolstest.PreviewChange(t, preview, 0),
+			fieldMatchStatus,
+		).After,
 	)
 	adjustment := agenttoolstest.PreviewChange(t, preview, 1)
 	assert.Equal(t, agent.PreviewOperationCreate, adjustment.Operation)
 	require.NotNil(t, adjustment.Money)
 	assert.True(t, adjustment.Money.TotalAfter.Decimal.Equal(decimal.NewFromInt(150)))
 
-	require.ErrorIs(t, tool.Execute(t.Context(), agenttoolstest.ExecuteParams(raw)), common.ErrSettlementNeedsAPerson)
+	require.ErrorIs(
+		t,
+		tool.Execute(t.Context(), agenttoolstest.ExecuteParams(raw)),
+		settlementpreview.ErrSettlementNeedsAPerson,
+	)
 	require.NoError(t, tool.Execute(t.Context(), agenttoolstest.ApprovedParams(raw)))
 	assert.Equal(t, carriersettlementservice.MatchDecisionAcceptWithVariance,
 		matches.performed.Decision)
@@ -174,7 +184,11 @@ func TestRejectCarrierInvoiceMatch_RunsInsideAndHoldsOnOutsideText(t *testing.T)
 	assert.Equal(
 		t,
 		"Rejected",
-		agenttoolstest.FieldByPath(t, agenttoolstest.PreviewChange(t, preview, 0), fieldMatchStatus).After,
+		agenttoolstest.FieldByPath(
+			t,
+			agenttoolstest.PreviewChange(t, preview, 0),
+			fieldMatchStatus,
+		).After,
 	)
 	assert.NotContains(t, preview.Summary, "reconciled")
 
@@ -218,9 +232,9 @@ func TestCreateCarrierInvoiceMatch_MatchesAnEDIInvoiceOnly(t *testing.T) {
 	tool := &CreateCarrierInvoiceMatchTool{matches: creator}
 	shipmentID := pulid.MustNew("shp_")
 	raw := map[string]any{
-		paramEDIInvoiceID:      match.EDICarrierInvoiceID.String(),
-		common.FieldShipmentID: shipmentID.String(),
-		paramMatchProNumber:    "  PRO-7781  ",
+		paramEDIInvoiceID:             match.EDICarrierInvoiceID.String(),
+		changepreview.FieldShipmentID: shipmentID.String(),
+		paramMatchProNumber:           "  PRO-7781  ",
 	}
 
 	preview, err := tool.Preview(t.Context(), agenttoolstest.ExecuteParams(raw))
@@ -229,7 +243,11 @@ func TestCreateCarrierInvoiceMatch_MatchesAnEDIInvoiceOnly(t *testing.T) {
 	assert.Equal(t, shipmentID, creator.planned.ShipmentID)
 	assert.Equal(t, "PRO-7781", creator.planned.ProNumber)
 	assert.Contains(t, preview.Summary, "against 1500.00 USD expected: Variance.")
-	assert.Equal(t, agent.PreviewOperationCreate, agenttoolstest.PreviewChange(t, preview, 0).Operation)
+	assert.Equal(
+		t,
+		agent.PreviewOperationCreate,
+		agenttoolstest.PreviewChange(t, preview, 0).Operation,
+	)
 
 	require.NoError(t, tool.Execute(t.Context(), agenttoolstest.ExecuteParams(raw)))
 	require.NotNil(t, creator.created)
@@ -282,15 +300,19 @@ func TestLinkEDICarrierInvoice_NamesTheCarrier(t *testing.T) {
 	tool := &LinkEDICarrierInvoiceTool{invoices: linker}
 	carrierID := pulid.MustNew("car_")
 	raw := map[string]any{
-		paramEDIInvoiceID:     pulid.MustNew("edici_").String(),
-		common.ParamCarrierID: carrierID.String(),
+		paramEDIInvoiceID:         pulid.MustNew("edici_").String(),
+		toolparams.ParamCarrierID: carrierID.String(),
 	}
 
 	preview, err := tool.Preview(t.Context(), agenttoolstest.ExecuteParams(raw))
 	require.NoError(t, err)
 	assert.Contains(t, preview.Summary,
 		"Would link EDI carrier invoice INV-8812 to Blue Ridge Haulers so it can be matched.")
-	field := agenttoolstest.FieldByPath(t, agenttoolstest.PreviewChange(t, preview, 0), common.ParamCarrierID)
+	field := agenttoolstest.FieldByPath(
+		t,
+		agenttoolstest.PreviewChange(t, preview, 0),
+		toolparams.ParamCarrierID,
+	)
 	require.NotNil(t, field.AfterRef)
 	assert.Equal(t, permission.ResourceCarrier, field.AfterRef.Resource)
 

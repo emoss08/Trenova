@@ -4,7 +4,10 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/ptopreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -37,10 +40,10 @@ const maxPTOReasonChars = 255
 var ptoFields = []string{
 	wfFieldWorkerID,
 	paramPTOType,
-	common.FieldStatus,
+	changepreview.FieldStatus,
 	paramPTOStart,
 	paramPTOEnd,
-	common.FieldReason,
+	changepreview.FieldReason,
 	"days",
 	"autoApproved",
 	wfFieldApproverID,
@@ -90,7 +93,7 @@ func PtoToolProviders() []any {
 
 func ptoRecord(pto *worker.WorkerPTO) toolpreview.Record {
 	return wfRecord(permission.ResourceWorkerPTO, pto.ID,
-		fmt.Sprintf("%s from %s", pto.Type, common.DayText(pto.StartDate)), pto.Version)
+		fmt.Sprintf("%s from %s", pto.Type, changepreview.DayText(pto.StartDate)), pto.Version)
 }
 
 func ptoDatesProperties() map[string]any {
@@ -99,7 +102,7 @@ func ptoDatesProperties() map[string]any {
 		paramPTOStart: agenttoolschema.Date("The first day off. \"Next Friday\" is the coming " +
 			"Friday, not the one a week later."),
 		paramPTOEnd: agenttoolschema.Date("The last day off."),
-		common.FieldReason: common.StringProperty(
+		changepreview.FieldReason: toolparams.StringProperty(
 			"The reason the worker gave, when one was given; the "+
 				"driver sees it with the request. Omit it rather than ask, and the kind is used.",
 			maxPTOReasonChars,
@@ -108,7 +111,7 @@ func ptoDatesProperties() map[string]any {
 }
 
 func applyPTODates(pto *worker.WorkerPTO, params map[string]any, required bool) error {
-	if kind, given, err := common.OptionalEnum(params, paramPTOType,
+	if kind, given, err := toolparams.OptionalEnum(params, paramPTOType,
 		agenttoolschema.PTOTypes.Values); err != nil {
 		return err
 	} else if given {
@@ -123,7 +126,7 @@ func applyPTODates(pto *worker.WorkerPTO, params map[string]any, required bool) 
 		{paramPTOStart, &pto.StartDate},
 		{paramPTOEnd, &pto.EndDate},
 	} {
-		day, err := common.OptionalScheduleDay(params, field.key)
+		day, err := toolparams.OptionalScheduleDay(params, field.key)
 		switch {
 		case err != nil:
 			return err
@@ -133,7 +136,11 @@ func applyPTODates(pto *worker.WorkerPTO, params map[string]any, required bool) 
 			return fmt.Errorf("missing required parameter %q", field.key)
 		}
 	}
-	reason, err := common.OptionalBoundedText(params, common.FieldReason, maxPTOReasonChars)
+	reason, err := toolparams.OptionalBoundedText(
+		params,
+		changepreview.FieldReason,
+		maxPTOReasonChars,
+	)
 	switch {
 	case err != nil:
 		return err
@@ -147,7 +154,7 @@ func applyPTODates(pto *worker.WorkerPTO, params map[string]any, required bool) 
 
 func newRequestWorkerPTOTool(pto ptoRequester) agenttoolports.AgentTool {
 	properties := ptoDatesProperties()
-	properties[common.ParamWorkerID] = common.WorkerProperty()
+	properties[toolparams.ParamWorkerID] = toolparams.WorkerProperty()
 	spec := withSchema(wfSpec(
 		"worker_request_pto",
 		"File a time-off request for a worker who asked for it, over the days given. It "+
@@ -159,15 +166,15 @@ func newRequestWorkerPTOTool(pto ptoRequester) agenttoolports.AgentTool {
 			"booked and the driver told at once, and worker_cancel_pto withdraws it.",
 		permission.ResourceWorkerPTO,
 		permission.OpCreate,
-	), properties, common.ParamWorkerID, paramPTOType, paramPTOStart, paramPTOEnd)
+	), properties, toolparams.ParamWorkerID, paramPTOType, paramPTOStart, paramPTOEnd)
 	spec.Egress = agent.EgressDriverVisible
 	spec.SearchTerms = []string{"vacation", "time off", "PTO request", "day off"}
 
-	return common.NewReportingReceivableTool(
+	return toolspec.NewReportingReceivableTool(
 		spec,
-		common.ReceivablePlan[*worker.WorkerPTO, *worker.WorkerPTO]{
+		toolspec.ReceivablePlan[*worker.WorkerPTO, *worker.WorkerPTO]{
 			Request: func(params *agenttoolports.ToolExecuteParams) (*worker.WorkerPTO, error) {
-				workerID, err := common.RequirePulid(params.Params, common.ParamWorkerID)
+				workerID, err := toolparams.RequirePulid(params.Params, toolparams.ParamWorkerID)
 				if err != nil {
 					return nil, err
 				}
@@ -196,8 +203,8 @@ func newRequestWorkerPTOTool(pto ptoRequester) agenttoolports.AgentTool {
 					return nil, err
 				}
 				summary := fmt.Sprintf("Would request %s days of %s from %s to %s.",
-					planned.Days.String(), planned.Type, common.DayText(planned.StartDate),
-					common.DayText(planned.EndDate))
+					planned.Days.String(), planned.Type, changepreview.DayText(planned.StartDate),
+					changepreview.DayText(planned.EndDate))
 				if planned.AutoApproved {
 					summary += " The worker's policy needs no approval, so it is booked at once " +
 						"and the driver is told."
@@ -233,7 +240,7 @@ type ptoEdit struct {
 func (e *ptoEdit) entity(ctx context.Context, pto ptoRequester) (*worker.WorkerPTO, error) {
 	current, err := pto.Get(ctx, &workerptoports.GetPTOByIDRequest{
 		ID:         e.id,
-		TenantInfo: common.TenantFrom(*e.params),
+		TenantInfo: toolparams.TenantFrom(*e.params),
 	})
 	if err != nil {
 		return nil, err
@@ -247,7 +254,7 @@ func newUpdateWorkerPTOTool(pto ptoRequester) agenttoolports.AgentTool {
 	properties := ptoDatesProperties()
 	properties["ptoId"] = agenttoolschema.RecordIDText(
 		permission.ResourceWorkerPTO,
-		common.PtoIDNote,
+		ptopreview.PtoIDNote,
 	)
 	spec := targeting(withSchema(wfSpec(
 		"worker_update_pto",
@@ -265,11 +272,11 @@ func newUpdateWorkerPTOTool(pto ptoRequester) agenttoolports.AgentTool {
 	}
 	spec.Egress = agent.EgressDriverVisible
 
-	return common.NewReportingReceivableTool(spec, common.ReceivablePlan[
+	return toolspec.NewReportingReceivableTool(spec, toolspec.ReceivablePlan[
 		*ptoEdit, *kernelports.RecordChange[worker.WorkerPTO],
 	]{
 		Request: func(params *agenttoolports.ToolExecuteParams) (*ptoEdit, error) {
-			id, err := common.RequirePulid(params.Params, "ptoId")
+			id, err := toolparams.RequirePulid(params.Params, "ptoId")
 			if err != nil {
 				return nil, err
 			}
@@ -319,15 +326,19 @@ func newUpdateWorkerPTOTool(pto ptoRequester) agenttoolports.AgentTool {
 func ptoAdjustmentFrom(
 	params *agenttoolports.ToolExecuteParams,
 ) (*ptoledgerservice.AdjustRequest, error) {
-	workerID, err := common.RequirePulid(params.Params, common.ParamWorkerID)
+	workerID, err := toolparams.RequirePulid(params.Params, toolparams.ParamWorkerID)
 	if err != nil {
 		return nil, err
 	}
-	kind, err := common.RequireEnum(params.Params, paramPTOType, agenttoolschema.PTOTypes.Values)
+	kind, err := toolparams.RequireEnum(
+		params.Params,
+		paramPTOType,
+		agenttoolschema.PTOTypes.Values,
+	)
 	if err != nil {
 		return nil, err
 	}
-	amount, present, err := common.OptionalDecimal(params.Params, paramAmountDays)
+	amount, present, err := toolparams.OptionalDecimal(params.Params, paramAmountDays)
 	if err != nil {
 		return nil, err
 	}
@@ -335,16 +346,16 @@ func ptoAdjustmentFrom(
 		return nil, fmt.Errorf("parameter %q must be a number of days other than zero",
 			paramAmountDays)
 	}
-	note, err := common.RequireBoundedText(params.Params, common.FieldNote, wfShortChars)
+	note, err := toolparams.RequireBoundedText(params.Params, changepreview.FieldNote, wfShortChars)
 	if err != nil {
 		return nil, err
 	}
-	effective, err := common.OptionalScheduleDay(params.Params, paramEffectiveOn)
+	effective, err := toolparams.OptionalScheduleDay(params.Params, paramEffectiveOn)
 	if err != nil {
 		return nil, err
 	}
 	req := &ptoledgerservice.AdjustRequest{
-		TenantInfo: common.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(*params),
 		WorkerID:   workerID,
 		PTOType:    kind,
 		AmountDays: amount,
@@ -368,23 +379,28 @@ func newAdjustWorkerPTOBalanceTool(ledger PtoBalanceAdjuster) agenttoolports.Age
 		permission.ResourceWorkerPTO,
 		permission.OpManage,
 	), map[string]any{
-		common.ParamWorkerID: common.WorkerProperty(),
+		toolparams.ParamWorkerID: toolparams.WorkerProperty(),
 		paramPTOType: agenttoolschema.Enum(
 			"The balance to adjust.",
 			agenttoolschema.PTOTypes,
 		),
-		paramAmountDays: common.AmountProperty(
+		paramAmountDays: toolparams.AmountProperty(
 			"Days to add, or a negative number of days to take " +
 				"away, such as 1.5 or -2.",
 		),
-		paramEffectiveOn: agenttoolschema.Date("The day it takes effect. Defaults to today."),
-		common.FieldNote: common.StringProperty("Why, kept on the ledger. Required.", wfShortChars),
-	}, common.ParamWorkerID, paramPTOType, paramAmountDays, common.FieldNote))
+		paramEffectiveOn: agenttoolschema.Date(
+			"The day it takes effect. Defaults to today.",
+		),
+		changepreview.FieldNote: toolparams.StringProperty(
+			"Why, kept on the ledger. Required.",
+			wfShortChars,
+		),
+	}, toolparams.ParamWorkerID, paramPTOType, paramAmountDays, changepreview.FieldNote))
 	spec.SearchTerms = []string{"balance adjustment", "pto balance"}
 	spec.Egress = agent.EgressMoney
 	spec.Reversible = false
 
-	return common.NewReportingReceivableTool(spec, common.ReceivablePlan[
+	return toolspec.NewReportingReceivableTool(spec, toolspec.ReceivablePlan[
 		*ptoledgerservice.AdjustRequest, *ptoledgerservice.AdjustPlan,
 	]{
 		Request: ptoAdjustmentFrom,
@@ -407,7 +423,7 @@ func newAdjustWorkerPTOBalanceTool(ledger PtoBalanceAdjuster) agenttoolports.Age
 				wfRecord(permission.ResourceWorkerPTO, pulid.Nil,
 					fmt.Sprintf("%s balance adjustment", req.PTOType), 0),
 				plan.Entry, append(wfOptions(wfFieldWorkerID, "ptoType", "entryType",
-					paramAmountDays, "balanceAfterDays", "effectiveAt", common.FieldNote),
+					paramAmountDays, "balanceAfterDays", "effectiveAt", changepreview.FieldNote),
 					toolpreview.Volatile("effectiveAt"))...)
 			if err != nil {
 				return nil, err

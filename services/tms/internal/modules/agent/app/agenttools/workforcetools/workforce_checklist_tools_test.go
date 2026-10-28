@@ -6,7 +6,8 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -170,9 +171,9 @@ func TestStartWorkerChecklist_SaysWhenOneIsAlreadyOpen(t *testing.T) {
 	checklists := newFakeChecklists()
 	tool := newStartWorkerChecklistTool(checklists)
 	params := agenttoolstest.ExecuteParams(map[string]any{
-		common.ParamWorkerID:   checklists.checklist.WorkerID.String(),
-		paramChecklistTemplate: pulid.MustNew("wclt_").String(),
-		"startedAt":            "2026-09-21",
+		toolparams.ParamWorkerID: checklists.checklist.WorkerID.String(),
+		paramChecklistTemplate:   pulid.MustNew("wclt_").String(),
+		"startedAt":              "2026-09-21",
 	})
 
 	preview := agenttoolstest.PreviewWithoutWrites(
@@ -206,9 +207,9 @@ func TestUpdateWorkerChecklistItem_RoutesEachMove(t *testing.T) {
 	checklists := newFakeChecklists()
 	tool := newUpdateWorkerChecklistItemTool(checklists)
 	complete := agenttoolstest.ExecuteParams(map[string]any{
-		paramChecklistItemID: checklists.item.ID.String(),
-		paramItemMove:        "Complete",
-		common.FieldNote:     "Passed with the safety manager",
+		paramChecklistItemID:    checklists.item.ID.String(),
+		paramItemMove:           "Complete",
+		changepreview.FieldNote: "Passed with the safety manager",
 	})
 
 	preview := agenttoolstest.PreviewWithoutWrites(
@@ -231,9 +232,9 @@ func TestUpdateWorkerChecklistItem_RoutesEachMove(t *testing.T) {
 		})), "skipping needs a note")
 	require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(),
 		agenttoolstest.ExecuteParams(map[string]any{
-			paramChecklistItemID: checklists.item.ID.String(),
-			paramItemMove:        "Reopen",
-			common.FieldNote:     "x",
+			paramChecklistItemID:    checklists.item.ID.String(),
+			paramItemMove:           "Reopen",
+			changepreview.FieldNote: "x",
 		})), "a reopened item takes no note")
 
 	require.NoError(t, tool.Execute(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
@@ -250,8 +251,8 @@ func TestCancelWorkerChecklist_KeepsTheReason(t *testing.T) {
 	checklists := newFakeChecklists()
 	tool := newCancelWorkerChecklistTool(checklists)
 	params := agenttoolstest.ExecuteParams(map[string]any{
-		paramChecklistID:   checklists.checklist.ID.String(),
-		common.FieldReason: "Hire withdrawn",
+		paramChecklistID:          checklists.checklist.ID.String(),
+		changepreview.FieldReason: "Hire withdrawn",
 	})
 
 	preview := agenttoolstest.PreviewWithoutWrites(

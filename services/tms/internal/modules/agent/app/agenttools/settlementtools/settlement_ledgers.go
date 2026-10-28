@@ -1,7 +1,7 @@
 package settlementtools
 
 import (
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/settlementpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/settlementshared"
@@ -17,11 +17,15 @@ const carrierSettlementEntity = "carrier_settlement"
 
 var carrierPaymentMethods = agenttoolschema.Source(
 	"carrierSettlement.paymentMethod",
-	[]string{common.PaymentMethodCheck, "ACHManual", common.PaymentMethodOther},
+	[]string{
+		settlementpreview.PaymentMethodCheck,
+		"ACHManual",
+		settlementpreview.PaymentMethodOther,
+	},
 )
 
-func carrierSettlementLedger() common.SettlementLedger[carriersettlement.CarrierSettlement] {
-	return common.SettlementLedger[carriersettlement.CarrierSettlement]{
+func carrierSettlementLedger() settlementpreview.SettlementLedger[carriersettlement.CarrierSettlement] {
+	return settlementpreview.SettlementLedger[carriersettlement.CarrierSettlement]{
 		Resource:  permission.ResourceCarrierSettlement,
 		Kind:      permission.RecordKind(permission.ResourceCarrierSettlement),
 		Artifact:  carrierSettlementEntity,
@@ -38,10 +42,10 @@ func carrierSettlementLedger() common.SettlementLedger[carriersettlement.Carrier
 func carrierSettlementLine(
 	entity *carriersettlement.CarrierSettlement,
 	lineID pulid.ID,
-) (common.SettlementLineFacts, bool) {
+) (settlementpreview.SettlementLineFacts, bool) {
 	for _, line := range entity.Lines {
 		if line != nil && line.ID == lineID {
-			return common.SettlementLineFacts{
+			return settlementpreview.SettlementLineFacts{
 				AmountMinor:  line.AmountMinor,
 				Manual:       line.IsManualAdjustment(),
 				AddedByAgent: line.AddedByAgent,
@@ -49,17 +53,19 @@ func carrierSettlementLine(
 		}
 	}
 
-	return common.SettlementLineFacts{}, false
+	return settlementpreview.SettlementLineFacts{}, false
 }
 
-func carrierSettlementFacts(entity *carriersettlement.CarrierSettlement) *common.SettlementFacts {
-	facts := &common.SettlementFacts{
+func carrierSettlementFacts(
+	entity *carriersettlement.CarrierSettlement,
+) *settlementpreview.SettlementFacts {
+	facts := &settlementpreview.SettlementFacts{
 		ID:       entity.ID,
 		Number:   entity.SettlementNumber,
 		Version:  entity.Version,
 		Status:   string(entity.Status),
 		Currency: entity.CurrencyCode,
-		Totals: []common.SettlementTotal{
+		Totals: []settlementpreview.SettlementTotal{
 			{Label: "Freight cost", Minor: entity.GrossCostMinor},
 			{Label: "Adjustments", Minor: entity.AdjustmentsMinor},
 		},

@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -148,7 +150,7 @@ func (t *UnassignMovesTool) Execute(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
-	if err := common.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
 	}
 
@@ -170,7 +172,7 @@ func (t *UnassignMovesTool) Execute(
 	return fmt.Errorf(
 		"unassigned %d of %s: %w",
 		len(requests)-len(failures),
-		common.CountOf(len(requests), "move"),
+		changepreview.CountOf(len(requests), "move"),
 		errors.Join(failures...),
 	)
 }
@@ -178,7 +180,7 @@ func (t *UnassignMovesTool) Execute(
 func (t *UnassignMovesTool) requests(
 	params *agenttoolports.ToolExecuteParams,
 ) ([]*assignmentports.UnassignShipmentMoveRequest, error) {
-	if err := common.GuardPreview(t, params); err != nil {
+	if err := toolguard.GuardPreview(t, params); err != nil {
 		return nil, err
 	}
 
@@ -190,7 +192,7 @@ func (t *UnassignMovesTool) requests(
 	requests := make([]*assignmentports.UnassignShipmentMoveRequest, 0, len(moveIDs))
 	for _, moveID := range moveIDs {
 		requests = append(requests, &assignmentports.UnassignShipmentMoveRequest{
-			TenantInfo:     common.TenantFrom(*params),
+			TenantInfo:     toolparams.TenantFrom(*params),
 			ShipmentMoveID: moveID,
 		})
 	}
@@ -234,12 +236,12 @@ func (t *UpdateMoveStatusTool) ParamSchema() map[string]any {
 			jsonschemautils.String(0),
 			maxMovesPerDispatchChange,
 		), permission.ResourceShipmentMove),
-		common.FieldStatus: agenttoolschema.Enum(
+		changepreview.FieldStatus: agenttoolschema.Enum(
 			"The status to set. Completed releases the move's equipment for the next load; "+
 				"Canceled is final.",
 			agenttoolschema.SettableMoveStatuses,
 		),
-	}, fieldMoveIDs, common.FieldStatus)
+	}, fieldMoveIDs, changepreview.FieldStatus)
 }
 
 func (t *UpdateMoveStatusTool) Policy() agenttoolports.ToolPolicy {
@@ -299,7 +301,7 @@ func (t *UpdateMoveStatusTool) Execute(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
-	if err := common.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
 	}
 
@@ -326,7 +328,7 @@ func (t *UpdateMoveStatusTool) Execute(
 func (t *UpdateMoveStatusTool) request(
 	params *agenttoolports.ToolExecuteParams,
 ) (*shipmentmoveports.BulkUpdateMoveStatusRequest, error) {
-	if err := common.GuardPreview(t, params); err != nil {
+	if err := toolguard.GuardPreview(t, params); err != nil {
 		return nil, err
 	}
 
@@ -340,7 +342,7 @@ func (t *UpdateMoveStatusTool) request(
 	}
 
 	return &shipmentmoveports.BulkUpdateMoveStatusRequest{
-		TenantInfo: common.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(*params),
 		MoveIDs:    moveIDs,
 		Status:     status,
 	}, nil
@@ -350,7 +352,7 @@ func (t *UpdateMoveStatusTool) request(
 // hand. Assigned and New follow from covering and uncovering a move, which
 // have tools of their own.
 func moveStatusArg(params map[string]any) (shipment.MoveStatus, error) {
-	raw := common.OptionalString(params, common.FieldStatus)
+	raw := toolparams.OptionalString(params, changepreview.FieldStatus)
 	//nolint:exhaustive // New and Assigned follow from covering a move, never from this tool
 	switch status := shipment.MoveStatus(raw); status {
 	case shipment.MoveStatusInTransit, shipment.MoveStatusCompleted, shipment.MoveStatusCanceled:
@@ -358,7 +360,7 @@ func moveStatusArg(params map[string]any) (shipment.MoveStatus, error) {
 	default:
 		return "", fmt.Errorf(
 			"parameter %q must be exactly InTransit, Completed or Canceled, not %q",
-			common.FieldStatus, raw,
+			changepreview.FieldStatus, raw,
 		)
 	}
 }
@@ -366,7 +368,7 @@ func moveStatusArg(params map[string]any) (shipment.MoveStatus, error) {
 // uniqueMoveIDs reads the bounded list of moves a dispatch change names and
 // refuses one named twice, which the service would refuse after reading.
 func uniqueMoveIDs(params map[string]any) ([]pulid.ID, error) {
-	moveIDs, err := common.RequirePulidSlice(params, fieldMoveIDs, maxMovesPerDispatchChange)
+	moveIDs, err := toolparams.RequirePulidSlice(params, fieldMoveIDs, maxMovesPerDispatchChange)
 	if err != nil {
 		return nil, err
 	}

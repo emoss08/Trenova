@@ -6,7 +6,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/invoicepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
@@ -72,18 +73,18 @@ func (t *PostCustomerPaymentTool) Preview(
 		},
 		payment,
 		toolpreview.Only(
-			common.PreviewFieldCustomerID,
-			common.PreviewFieldPaymentDate,
+			changepreview.PreviewFieldCustomerID,
+			changepreview.PreviewFieldPaymentDate,
 			"paymentMethod",
 			"referenceNumber",
 			"memo",
 			"currencyCode",
 		),
 		toolpreview.WithRefs(map[string]permission.Resource{
-			common.PreviewFieldCustomerID: permission.ResourceCustomer,
+			changepreview.PreviewFieldCustomerID: permission.ResourceCustomer,
 		}),
 		toolpreview.Types(map[string]assistantartifact.DisplayType{
-			common.PreviewFieldPaymentDate: assistantartifact.DisplayDate,
+			changepreview.PreviewFieldPaymentDate: assistantartifact.DisplayDate,
 		}),
 	)
 	if err != nil {
@@ -93,7 +94,7 @@ func (t *PostCustomerPaymentTool) Preview(
 	changes = append(changes, created)
 
 	for idx, after := range posted.InvoicesAfter {
-		change, iErr := common.InvoicePaymentChange(posted.InvoicesBefore[idx], after)
+		change, iErr := invoicepreview.InvoicePaymentChange(posted.InvoicesBefore[idx], after)
 		if iErr != nil {
 			return nil, iErr
 		}
@@ -106,7 +107,7 @@ func (t *PostCustomerPaymentTool) Preview(
 		money.FormatMinor(payment.AmountMinor, payment.CurrencyCode),
 		payment.PaymentMethod,
 		money.FormatMinor(payment.AppliedAmountMinor, payment.CurrencyCode),
-		common.CountOf(len(posted.InvoicesAfter), "invoice"),
+		changepreview.CountOf(len(posted.InvoicesAfter), "invoice"),
 		money.FormatMinor(payment.UnappliedAmountMinor, payment.CurrencyCode),
 	)
 
@@ -145,7 +146,7 @@ func bankMatchChanges(match *bankreceiptservice.MatchPreview) ([]*agent.RecordCh
 			Resource: permission.ResourceBankReceipt,
 			ID:       match.ReceiptBefore.ID,
 			Label:    bankReceiptLabel(match.ReceiptBefore),
-			Version:  common.PinnedVersion(match.ReceiptBefore.Version),
+			Version:  changepreview.PinnedVersion(match.ReceiptBefore.Version),
 		},
 		match.ReceiptBefore,
 		match.ReceiptAfter,
@@ -162,8 +163,8 @@ func bankMatchChanges(match *bankreceiptservice.MatchPreview) ([]*agent.RecordCh
 	currency := match.Payment.CurrencyCode
 	toolpreview.AttachMoney(receipt, toolpreview.MoneyBlock(currency, agent.MoneyLine{
 		Label:  "Unreconciled cash",
-		Before: common.KnownAmount(money.DecimalFromMinor(match.ReceiptBefore.AmountMinor)),
-		After:  common.KnownAmount(decimal.Zero),
+		Before: changepreview.KnownAmount(money.DecimalFromMinor(match.ReceiptBefore.AmountMinor)),
+		After:  changepreview.KnownAmount(decimal.Zero),
 	}))
 
 	changes := []*agent.RecordChange{receipt}
@@ -176,7 +177,7 @@ func bankMatchChanges(match *bankreceiptservice.MatchPreview) ([]*agent.RecordCh
 			Resource: permission.ResourceBankReceiptWorkItem,
 			ID:       match.WorkItemBefore.ID,
 			Label:    "Reconciliation of " + bankReceiptLabel(match.ReceiptBefore),
-			Version:  common.PinnedVersion(match.WorkItemBefore.Version),
+			Version:  changepreview.PinnedVersion(match.WorkItemBefore.Version),
 		},
 		match.WorkItemBefore,
 		match.WorkItemAfter,
@@ -199,11 +200,11 @@ func paymentMoney(payment *customerpayment.Payment) *agent.MoneyPreview {
 	lines := []agent.MoneyLine{
 		{
 			Label: "Applied to invoices",
-			After: common.KnownAmount(money.DecimalFromMinor(payment.AppliedAmountMinor)),
+			After: changepreview.KnownAmount(money.DecimalFromMinor(payment.AppliedAmountMinor)),
 		},
 		{
 			Label: "Unapplied cash on account",
-			After: common.KnownAmount(money.DecimalFromMinor(payment.UnappliedAmountMinor)),
+			After: changepreview.KnownAmount(money.DecimalFromMinor(payment.UnappliedAmountMinor)),
 		},
 	}
 

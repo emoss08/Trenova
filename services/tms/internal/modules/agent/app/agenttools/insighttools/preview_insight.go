@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/insight"
@@ -14,7 +14,7 @@ import (
 	"github.com/emoss08/trenova/shared/timeutils"
 )
 
-var dismissedInsightFields = []string{common.FieldStatus, "dismissReason", "dismissedAt"}
+var dismissedInsightFields = []string{changepreview.FieldStatus, "dismissReason", "dismissedAt"}
 
 func (t *DismissInsightTool) Preview(
 	ctx context.Context,
@@ -37,11 +37,11 @@ func (t *DismissInsightTool) Preview(
 
 	finding := detail.Insight
 	now := timeutils.NowUnix()
-	plan, err := common.PlanArchive(toolpreview.Record{
+	plan, err := changepreview.PlanArchive(toolpreview.Record{
 		Resource: permission.ResourceInsight,
 		ID:       finding.ID,
 		Label:    finding.Headline,
-		Version:  common.PreviewVersion(finding.Version),
+		Version:  changepreview.PreviewVersion(finding.Version),
 	}, finding, func(dismissed *insight.Insight) error {
 		return dismissed.Dismiss(request.UserID, request.Reason, now)
 	}, toolpreview.Only(dismissedInsightFields...), toolpreview.Volatile("dismissedAt"))

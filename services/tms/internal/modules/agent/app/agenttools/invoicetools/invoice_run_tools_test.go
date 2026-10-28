@@ -6,7 +6,8 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoicerun"
@@ -172,10 +173,10 @@ func TestBuildInvoiceRun_PreviewsTheProposedInvoicesAndBuildsIt(t *testing.T) {
 	tool := NewBuildInvoiceRunTool(runs)
 	customerID := runs.built.Groups[0].CustomerID
 	params := agenttoolstest.AgentParamsFor(map[string]any{
-		common.ParamCustomerIDs: []any{customerID.String()},
-		common.ParamPeriodStart: "2026-09-01",
-		common.ParamPeriodEnd:   "2026-09-30",
-		common.ParamInvoiceDate: "2026-10-01",
+		toolparams.ParamCustomerIDs: []any{customerID.String()},
+		toolparams.ParamPeriodStart: "2026-09-01",
+		toolparams.ParamPeriodEnd:   "2026-09-30",
+		toolparams.ParamInvoiceDate: "2026-10-01",
 	})
 
 	preview := agenttoolstest.PreviewWithoutWrites(
@@ -219,9 +220,9 @@ func TestBuildInvoiceRun_RefusesAPeriodThatEndsBeforeItStarts(t *testing.T) {
 
 	tool := NewBuildInvoiceRunTool(&fakeRunKeeper{built: proposedRun()})
 	params := agenttoolstest.ExecuteParams(map[string]any{
-		common.ParamCustomerIDs: []any{pulid.MustNew("cus_").String()},
-		common.ParamPeriodStart: "2026-09-30",
-		common.ParamPeriodEnd:   "2026-09-01",
+		toolparams.ParamCustomerIDs: []any{pulid.MustNew("cus_").String()},
+		toolparams.ParamPeriodStart: "2026-09-30",
+		toolparams.ParamPeriodEnd:   "2026-09-01",
 	})
 	require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(), params))
 }
@@ -246,8 +247,8 @@ func TestAdjustInvoiceRunMembership_ShowsTheNewTotals(t *testing.T) {
 	params := agenttoolstest.ExecuteParams(map[string]any{
 		ParamInvoiceRunID: before.ID.String(),
 		paramExclude: []any{map[string]any{
-			common.ParamItemID: itemID.String(),
-			common.ParamReason: "POD missing",
+			toolparams.ParamItemID: itemID.String(),
+			toolparams.ParamReason: "POD missing",
 		}},
 	})
 
@@ -320,7 +321,7 @@ func TestCommitInvoiceRun_OnlyAPersonCommitsWhatWouldBill(t *testing.T) {
 	)
 	assert.Contains(t, preview.Summary, "Beta Farms is skipped")
 
-	require.ErrorIs(t, tool.Execute(t.Context(), params), common.ErrNeedsAPersonsApproval)
+	require.ErrorIs(t, tool.Execute(t.Context(), params), toolspec.ErrNeedsAPersonsApproval)
 	params.ProposalID = pulid.MustNew("ap_")
 	require.NoError(t, tool.Execute(t.Context(), params))
 	require.NotNil(t, runs.committed)
@@ -344,8 +345,8 @@ func TestCancelInvoiceRun_CancelsWithAReason(t *testing.T) {
 	}
 	tool := NewCancelInvoiceRunTool(runs)
 	params := agenttoolstest.ExecuteParams(map[string]any{
-		ParamInvoiceRunID:  before.ID.String(),
-		common.ParamReason: "Built for the wrong period",
+		ParamInvoiceRunID:      before.ID.String(),
+		toolparams.ParamReason: "Built for the wrong period",
 	})
 
 	preview := agenttoolstest.PreviewWithoutWrites(
@@ -389,8 +390,8 @@ func TestBillStatementNow_OnlyAPersonBillsEarly(t *testing.T) {
 	}
 	tool := NewBillStatementNowTool(runs)
 	params := agenttoolstest.ExecuteParams(map[string]any{
-		common.ParamCustomerID: run.Groups[0].CustomerID.String(),
-		common.ParamReason:     "Customer asked for an early invoice to close their quarter",
+		toolparams.ParamCustomerID: run.Groups[0].CustomerID.String(),
+		toolparams.ParamReason:     "Customer asked for an early invoice to close their quarter",
 	})
 
 	preview := agenttoolstest.PreviewWithoutWrites(
@@ -402,7 +403,7 @@ func TestBillStatementNow_OnlyAPersonBillsEarly(t *testing.T) {
 	)
 	assert.Contains(t, preview.Summary, "Would bill Acme Foods's open statement now")
 
-	require.ErrorIs(t, tool.Execute(t.Context(), params), common.ErrNeedsAPersonsApproval)
+	require.ErrorIs(t, tool.Execute(t.Context(), params), toolspec.ErrNeedsAPersonsApproval)
 	params.ProposalID = pulid.MustNew("ap_")
 	require.NoError(t, tool.Execute(t.Context(), params))
 	require.NotNil(t, runs.billed)

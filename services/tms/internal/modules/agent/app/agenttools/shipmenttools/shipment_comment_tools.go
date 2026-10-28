@@ -5,7 +5,10 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/shipmentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -46,9 +49,9 @@ const fieldCommentType = "type"
 const FieldCommentVisib = "visibility"
 
 var commentUserRefs = map[string]permission.Resource{
-	FieldPinnedByID:          permission.ResourceUser,
-	common.FieldResolvedByID: permission.ResourceUser,
-	fieldDeletedByID:         permission.ResourceUser,
+	FieldPinnedByID:                 permission.ResourceUser,
+	changepreview.FieldResolvedByID: permission.ResourceUser,
+	fieldDeletedByID:                permission.ResourceUser,
 }
 
 type commentModerator interface {
@@ -132,7 +135,7 @@ func commentRecord(comment *shipment.ShipmentComment) toolpreview.Record {
 		Resource: permission.ResourceShipmentComment,
 		ID:       comment.ID,
 		Label:    "Comment: " + label,
-		Version:  common.PreviewVersion(comment.Version),
+		Version:  changepreview.PreviewVersion(comment.Version),
 	}
 }
 
@@ -140,10 +143,13 @@ func commentResult(action string, comment *shipment.ShipmentComment) *agent.Tool
 	result := &agent.ToolExecutionResult{Action: action, Kind: kindComment}
 	if comment != nil {
 		result.IDs = map[string]string{
-			ParamCommentID:         comment.ID.String(),
-			common.ParamShipmentID: comment.ShipmentID.String(),
+			ParamCommentID:             comment.ID.String(),
+			toolparams.ParamShipmentID: comment.ShipmentID.String(),
 		}
-		result.Record = common.RecordOf(common.ShipmentRecordEntity, comment.ShipmentID)
+		result.Record = changepreview.RecordOf(
+			changepreview.ShipmentRecordEntity,
+			comment.ShipmentID,
+		)
 	}
 
 	return result
@@ -152,17 +158,17 @@ func commentResult(action string, comment *shipment.ShipmentComment) *agent.Tool
 func toggleCommentRequest(
 	params *agenttoolports.ToolExecuteParams,
 ) (*shipmentcommentports.ToggleShipmentCommentRequest, error) {
-	shipmentID, err := common.RequirePulid(params.Params, common.ParamShipmentID)
+	shipmentID, err := toolparams.RequirePulid(params.Params, toolparams.ParamShipmentID)
 	if err != nil {
 		return nil, err
 	}
-	commentID, err := common.RequirePulid(params.Params, ParamCommentID)
+	commentID, err := toolparams.RequirePulid(params.Params, ParamCommentID)
 	if err != nil {
 		return nil, err
 	}
 
 	return &shipmentcommentports.ToggleShipmentCommentRequest{
-		TenantInfo: common.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(*params),
 		ShipmentID: shipmentID,
 		CommentID:  commentID,
 	}, nil
@@ -181,7 +187,7 @@ func renderCommentToggle(
 			plan.Before,
 			plan.After,
 			toolpreview.Only(fields...),
-			toolpreview.Volatile(fieldPinnedAt, common.FieldResolvedAt),
+			toolpreview.Volatile(fieldPinnedAt, changepreview.FieldResolvedAt),
 			toolpreview.WithRefs(commentUserRefs),
 		)
 		if err != nil {
@@ -210,18 +216,22 @@ func newCommentToggleTool(
 	spec *commentToggleSpec,
 ) agenttoolports.AgentTool {
 	properties := map[string]any{
-		common.ParamShipmentID: common.ShipmentIDProperty("The shipment the comment is on"),
-		ParamCommentID:         commentIDProperty(),
+		toolparams.ParamShipmentID: shipmentpreview.ShipmentIDProperty(
+			"The shipment the comment is on",
+		),
+		ParamCommentID: commentIDProperty(),
 	}
 	if spec.resolved != nil {
-		properties[ParamResolved] = common.BooleanProperty("True to mark the comment resolved, " +
-			"false to reopen it. Defaults to true.")
+		properties[ParamResolved] = toolparams.BooleanProperty(
+			"True to mark the comment resolved, " +
+				"false to reopen it. Defaults to true.",
+		)
 	}
 
-	return common.NewReportingReceivableTool(&common.ReceivableSpec{
+	return toolspec.NewReportingReceivableTool(&toolspec.ReceivableSpec{
 		Name:        spec.name,
 		Description: spec.description,
-		Artifact:    common.ShipmentRecordEntity,
+		Artifact:    changepreview.ShipmentRecordEntity,
 		Resource:    permission.ResourceShipmentComment,
 		Operation:   spec.operation,
 		Egress:      agent.EgressInternal,
@@ -230,9 +240,9 @@ func newCommentToggleTool(
 		Reversible:  true,
 		Rationale:   spec.rationale,
 		Properties:  properties,
-		Required:    []string{common.ParamShipmentID, ParamCommentID},
+		Required:    []string{toolparams.ParamShipmentID, ParamCommentID},
 		Target:      targetComment,
-	}, common.ReceivablePlan[*shipmentcommentports.ToggleShipmentCommentRequest, *shipmentcommentports.ShipmentCommentChange]{
+	}, toolspec.ReceivablePlan[*shipmentcommentports.ToggleShipmentCommentRequest, *shipmentcommentports.ShipmentCommentChange]{
 		Request: toggleCommentRequest,
 		Plan: func(
 			ctx context.Context,
@@ -278,7 +288,7 @@ func newCommentToggleTool(
 }
 
 func targetComment(params map[string]any) (agenttoolports.ToolTarget, bool) {
-	return common.TargetOf(params, ParamCommentID, permission.ResourceShipmentComment)
+	return toolparams.TargetOf(params, ParamCommentID, permission.ResourceShipmentComment)
 }
 
 func BoolPointer(value bool) *bool { return &value }
@@ -326,7 +336,7 @@ func NewResolveShipmentCommentTool(comments commentModerator) agenttoolports.Age
 			"undoes it and nothing is sent.",
 		verb:   "resolve",
 		action: "resolved",
-		fields: []string{common.FieldResolvedAt, common.FieldResolvedByID},
+		fields: []string{changepreview.FieldResolvedAt, changepreview.FieldResolvedByID},
 		resolved: func(params map[string]any) bool {
 			if raw, ok := params[ParamResolved]; ok {
 				if value, isBool := raw.(bool); isBool {
@@ -348,11 +358,11 @@ type commentEdit struct {
 }
 
 func readCommentEdit(params *agenttoolports.ToolExecuteParams) (*commentEdit, error) {
-	shipmentID, err := common.RequirePulid(params.Params, common.ParamShipmentID)
+	shipmentID, err := toolparams.RequirePulid(params.Params, toolparams.ParamShipmentID)
 	if err != nil {
 		return nil, err
 	}
-	commentID, err := common.RequirePulid(params.Params, ParamCommentID)
+	commentID, err := toolparams.RequirePulid(params.Params, ParamCommentID)
 	if err != nil {
 		return nil, err
 	}
@@ -360,16 +370,20 @@ func readCommentEdit(params *agenttoolports.ToolExecuteParams) (*commentEdit, er
 	edit := &commentEdit{get: shipmentcommentports.GetShipmentCommentByIDRequest{
 		CommentID:  commentID,
 		ShipmentID: shipmentID,
-		TenantInfo: common.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(*params),
 	}}
 	if _, given := params.Params[ParamCommentText]; given {
-		text, textErr := common.RequireBoundedText(params.Params, ParamCommentText, maxCommentChars)
+		text, textErr := toolparams.RequireBoundedText(
+			params.Params,
+			ParamCommentText,
+			maxCommentChars,
+		)
 		if textErr != nil {
 			return nil, textErr
 		}
 		edit.text = &text
 	}
-	visibility, given, err := common.OptionalEnum(
+	visibility, given, err := toolparams.OptionalEnum(
 		params.Params,
 		FieldCommentVisib,
 		agenttoolschema.CommentVisibilities.Values,
@@ -380,7 +394,7 @@ func readCommentEdit(params *agenttoolports.ToolExecuteParams) (*commentEdit, er
 	if given {
 		edit.visibility = &visibility
 	}
-	priority, given, err := common.OptionalEnum(
+	priority, given, err := toolparams.OptionalEnum(
 		params.Params,
 		FieldPriority,
 		agenttoolschema.CommentPriorities.Values,
@@ -391,7 +405,7 @@ func readCommentEdit(params *agenttoolports.ToolExecuteParams) (*commentEdit, er
 	if given {
 		edit.priority = &priority
 	}
-	if edit.requiresAck, err = common.OptionalBoolPointer(
+	if edit.requiresAck, err = toolparams.OptionalBoolPointer(
 		params.Params,
 		fieldRequiresAck,
 	); err != nil {
@@ -399,7 +413,7 @@ func readCommentEdit(params *agenttoolports.ToolExecuteParams) (*commentEdit, er
 	}
 	if edit.text == nil && edit.visibility == nil && edit.priority == nil &&
 		edit.requiresAck == nil {
-		return nil, common.ErrNothingToChange
+		return nil, toolparams.ErrNothingToChange
 	}
 
 	return edit, nil
@@ -456,7 +470,7 @@ func (e *commentEdit) entity(
 func classifyCommentEditVisibility(
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // ToolPolicy.Classify passes params by value
 ) agenttoolports.CallPolicy {
-	return common.ClassifyCommentVisibility(params)
+	return shipmentpreview.ClassifyCommentVisibility(params)
 }
 
 type commentEditPlan struct {
@@ -491,10 +505,10 @@ func NewEditShipmentCommentTool(
 	comments commentModerator,
 	permissions commentPermissions,
 ) agenttoolports.AgentTool {
-	base := common.NewReportingReceivableTool(&common.ReceivableSpec{
+	base := toolspec.NewReportingReceivableTool(&toolspec.ReceivableSpec{
 		Name:        "shipment_update_comment",
 		SearchTerms: []string{"fix comment", "reword comment", "typo"},
-		Artifact:    common.ShipmentRecordEntity,
+		Artifact:    changepreview.ShipmentRecordEntity,
 		Description: "Change the text, visibility, priority or acknowledgment request " +
 			"of a comment on a shipment. Send only what changes. Your own comments and " +
 			"those the person may moderate can be edited; a note widened past the " +
@@ -509,9 +523,11 @@ func NewEditShipmentCommentTool(
 		Rationale: "Edits a shipment's own comment inside Trenova; one made visible to " +
 			"a customer or a driver is read by them, so its visibility argument decides.",
 		Properties: map[string]any{
-			common.ParamShipmentID: common.ShipmentIDProperty("The shipment the comment is on"),
-			ParamCommentID:         commentIDProperty(),
-			ParamCommentText: common.StringProperty(
+			toolparams.ParamShipmentID: shipmentpreview.ShipmentIDProperty(
+				"The shipment the comment is on",
+			),
+			ParamCommentID: commentIDProperty(),
+			ParamCommentText: toolparams.StringProperty(
 				"The new text, in full.",
 				maxCommentChars,
 			),
@@ -519,12 +535,12 @@ func NewEditShipmentCommentTool(
 				"or a driver when the person asked.", agenttoolschema.CommentVisibilities),
 			FieldPriority: agenttoolschema.Enum("How urgently dispatch should read it.",
 				agenttoolschema.CommentPriorities),
-			fieldRequiresAck: common.BooleanProperty("Whether the people it mentions must " +
+			fieldRequiresAck: toolparams.BooleanProperty("Whether the people it mentions must " +
 				"acknowledge it."),
 		},
-		Required: []string{common.ParamShipmentID, ParamCommentID},
+		Required: []string{toolparams.ParamShipmentID, ParamCommentID},
 		Target:   targetComment,
-	}, common.ReceivablePlan[*commentEdit, *commentEditPlan]{
+	}, toolspec.ReceivablePlan[*commentEdit, *commentEditPlan]{
 		Request: readCommentEdit,
 		Plan: func(
 			ctx context.Context,
@@ -562,7 +578,7 @@ func NewEditShipmentCommentTool(
 		},
 	})
 
-	return common.ClassifiedTool[*commentEdit, *commentEditPlan]{
+	return toolspec.ClassifiedTool[*commentEdit, *commentEditPlan]{
 		ReportingReceivableTool: base,
 		Egress: []agent.EgressClass{
 			agent.EgressInternal,
@@ -624,9 +640,9 @@ func NewDeleteShipmentCommentTool(
 	comments commentModerator,
 	permissions commentPermissions,
 ) agenttoolports.AgentTool {
-	return common.NewReportingReceivableTool(&common.ReceivableSpec{
+	return toolspec.NewReportingReceivableTool(&toolspec.ReceivableSpec{
 		Name:     "shipment_delete_comment",
-		Artifact: common.ShipmentRecordEntity,
+		Artifact: changepreview.ShipmentRecordEntity,
 		Description: "Delete a comment from a shipment's thread: your own, or another " +
 			"person's when the person you act for may moderate comments. One with replies " +
 			"is left as a placeholder so the replies keep their place. Prefer " +
@@ -639,12 +655,14 @@ func NewDeleteShipmentCommentTool(
 		Rationale: "Removes a note from a shipment's own thread inside Trenova; the text " +
 			"is gone, so a person confirms it.",
 		Properties: map[string]any{
-			common.ParamShipmentID: common.ShipmentIDProperty("The shipment the comment is on"),
-			ParamCommentID:         commentIDProperty(),
+			toolparams.ParamShipmentID: shipmentpreview.ShipmentIDProperty(
+				"The shipment the comment is on",
+			),
+			ParamCommentID: commentIDProperty(),
 		},
-		Required: []string{common.ParamShipmentID, ParamCommentID},
+		Required: []string{toolparams.ParamShipmentID, ParamCommentID},
 		Target:   targetComment,
-	}, common.ReceivablePlan[*commentDeletion, *shipmentcommentports.ShipmentCommentDeletion]{
+	}, toolspec.ReceivablePlan[*commentDeletion, *shipmentcommentports.ShipmentCommentDeletion]{
 		Request: func(params *agenttoolports.ToolExecuteParams) (*commentDeletion, error) {
 			toggle, err := toggleCommentRequest(params)
 			if err != nil {
@@ -704,8 +722,8 @@ func NewDeleteShipmentCommentTool(
 				Action: "deleted",
 				Kind:   kindComment,
 				IDs: map[string]string{
-					ParamCommentID:         deletion.get.CommentID.String(),
-					common.ParamShipmentID: deletion.get.ShipmentID.String(),
+					ParamCommentID:             deletion.get.CommentID.String(),
+					toolparams.ParamShipmentID: deletion.get.ShipmentID.String(),
 				},
 			}, nil
 		},

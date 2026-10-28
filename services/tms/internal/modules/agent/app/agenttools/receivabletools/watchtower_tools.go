@@ -4,7 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -52,7 +54,7 @@ func watchtowerItemViewOf(item *watchtower.Item) *watchtowerItemView {
 }
 
 func NewDismissWatchtowerItemTool(items WatchtowerDismisser) agenttoolports.AgentTool {
-	return common.NewReceivableTool(&common.ReceivableSpec{
+	return toolspec.NewReceivableTool(&toolspec.ReceivableSpec{
 		Name:   "exception_dismiss_watchtower_item",
 		Recipe: []string{toolListWatchtowerItems, "exception_dismiss_watchtower_item"},
 		Description: "Take an item off the watchtower feed once it has been dealt with; the " +
@@ -67,17 +69,20 @@ func NewDismissWatchtowerItemTool(items WatchtowerDismisser) agenttoolports.Agen
 		Rationale: "Takes an item off the shared attention feed inside Trenova; nothing is " +
 			"sent and the record behind it is unchanged.",
 		Properties: map[string]any{
-			paramWatchtowerItemID: agenttoolschema.OfKinds(common.StringProperty("The item, from "+
-				"exception_list_watchtower_items. Never guess one.", 0), permission.KindWatchtowerItem),
+			paramWatchtowerItemID: agenttoolschema.OfKinds(
+				toolparams.StringProperty("The item, from "+
+					"exception_list_watchtower_items. Never guess one.", 0),
+				permission.KindWatchtowerItem,
+			),
 		},
 		Required:    []string{paramWatchtowerItemID},
 		SearchTerms: []string{"dismiss watchtower", "clear feed item", "mark handled"},
 		Target: func(params map[string]any) (agenttoolports.ToolTarget, bool) {
-			return common.TargetOf(params, paramWatchtowerItemID, permission.ResourceWatchtower)
+			return toolparams.TargetOf(params, paramWatchtowerItemID, permission.ResourceWatchtower)
 		},
-	}, common.ReceivablePlan[pulid.ID, *kernelports.RecordChange[watchtower.Item]]{
+	}, toolspec.ReceivablePlan[pulid.ID, *kernelports.RecordChange[watchtower.Item]]{
 		Request: func(params *agenttoolports.ToolExecuteParams) (pulid.ID, error) {
-			return common.RequirePulid(params.Params, paramWatchtowerItemID)
+			return toolparams.RequirePulid(params.Params, paramWatchtowerItemID)
 		},
 		Settle: func(ctx context.Context, id pulid.ID, params *agenttoolports.ToolExecuteParams) error {
 			_, err := plannedDismissal(ctx, items, id, params)
@@ -100,7 +105,7 @@ func NewDismissWatchtowerItemTool(items WatchtowerDismisser) agenttoolports.Agen
 				Resource: permission.ResourceWatchtower,
 				ID:       change.Before.ID,
 				Label:    change.Before.Title,
-				Version:  common.PinnedVersion(change.Before.Version),
+				Version:  changepreview.PinnedVersion(change.Before.Version),
 			}, watchtowerItemViewOf(change.Before), watchtowerItemViewOf(change.After),
 				toolpreview.Volatile("resolvedAt"))
 			if err != nil {
@@ -118,7 +123,7 @@ func NewDismissWatchtowerItemTool(items WatchtowerDismisser) agenttoolports.Agen
 			id pulid.ID,
 			params *agenttoolports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
-			dismissed, err := items.Dismiss(ctx, common.TenantFrom(*params), id, params.Actor)
+			dismissed, err := items.Dismiss(ctx, toolparams.TenantFrom(*params), id, params.Actor)
 			if err != nil {
 				return nil, err
 			}
@@ -139,7 +144,7 @@ func plannedDismissal(
 	id pulid.ID,
 	params *agenttoolports.ToolExecuteParams,
 ) (*kernelports.RecordChange[watchtower.Item], error) {
-	change, err := items.PlanDismiss(ctx, common.TenantFrom(*params), id, params.Actor)
+	change, err := items.PlanDismiss(ctx, toolparams.TenantFrom(*params), id, params.Actor)
 	if err != nil {
 		return nil, err
 	}

@@ -9,7 +9,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/manualjournal"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalreversalports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/manualjournalports"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/journalpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
@@ -169,7 +170,7 @@ func manualJournalRecord(entity *manualjournal.Request) toolpreview.Record {
 		Label:    label,
 	}
 	if entity.ID.IsNotNil() {
-		rec.Version = common.PinnedVersion(entity.Version)
+		rec.Version = changepreview.PinnedVersion(entity.Version)
 	}
 
 	return rec
@@ -216,7 +217,7 @@ func BookedEntryChange(
 
 func RenderManualJournalDraft(
 	_ *manualjournalports.CreateManualJournalRequest,
-	plan *common.ManualJournalPlan,
+	plan *journalpreview.ManualJournalPlan,
 ) (*agent.ToolPreview, error) {
 	planned := plan.After
 	change, err := toolpreview.Create(
@@ -229,21 +230,26 @@ func RenderManualJournalDraft(
 	}
 	toolpreview.AttachMoney(
 		change,
-		journalMoney(planned.CurrencyCode, plan.Accounts, nil, common.JournalLinesOf(planned)),
+		journalMoney(
+			planned.CurrencyCode,
+			plan.Accounts,
+			nil,
+			journalpreview.JournalLinesOf(planned),
+		),
 	)
 
 	return toolpreview.Build(fmt.Sprintf(
 		"Would draft the manual journal %q for %s with %s. %s It books nothing until a "+
 			"person submits, approves and posts it.",
 		planned.Description,
-		common.DayLabel(planned.AccountingDate),
-		common.CountOf(len(common.JournalLinesOf(planned)), "line"),
+		changepreview.DayLabel(planned.AccountingDate),
+		changepreview.CountOf(len(journalpreview.JournalLinesOf(planned)), "line"),
 		balanceSentence(planned),
 	), change), nil
 }
 
 func manualJournalChangeOf(
-	plan *common.ManualJournalPlan,
+	plan *journalpreview.ManualJournalPlan,
 	withLines bool,
 ) (*agent.RecordChange, error) {
 	change, err := toolpreview.Changed(
@@ -259,8 +265,8 @@ func manualJournalChangeOf(
 		toolpreview.AttachMoney(change, journalMoney(
 			plan.After.CurrencyCode,
 			plan.Accounts,
-			common.JournalLinesOf(plan.Before),
-			common.JournalLinesOf(plan.After),
+			journalpreview.JournalLinesOf(plan.Before),
+			journalpreview.JournalLinesOf(plan.After),
 		))
 	}
 
@@ -268,8 +274,8 @@ func manualJournalChangeOf(
 }
 
 func RenderManualJournalRevision(
-	_ *common.JournalRevision,
-	plan *common.ManualJournalPlan,
+	_ *journalpreview.JournalRevision,
+	plan *journalpreview.ManualJournalPlan,
 ) (*agent.ToolPreview, error) {
 	change, err := manualJournalChangeOf(plan, true)
 	if err != nil {
@@ -285,7 +291,7 @@ func RenderManualJournalRevision(
 
 func RenderManualJournalSubmit(
 	_ *manualjournalports.GetManualJournalRequest,
-	plan *common.ManualJournalPlan,
+	plan *journalpreview.ManualJournalPlan,
 ) (*agent.ToolPreview, error) {
 	change, err := manualJournalChangeOf(plan, false)
 	if err != nil {
@@ -309,7 +315,7 @@ func RenderManualJournalSubmit(
 
 func RenderManualJournalCancel(
 	_ *manualjournalports.CancelManualJournalRequest,
-	plan *common.ManualJournalPlan,
+	plan *journalpreview.ManualJournalPlan,
 ) (*agent.ToolPreview, error) {
 	change, err := manualJournalChangeOf(plan, false)
 	if err != nil {
@@ -325,7 +331,7 @@ func RenderManualJournalCancel(
 
 func RenderManualJournalPost(
 	_ *manualjournalports.GetManualJournalRequest,
-	plan *common.ManualJournalPlan,
+	plan *journalpreview.ManualJournalPlan,
 ) (*agent.ToolPreview, error) {
 	change, err := manualJournalChangeOf(plan, false)
 	if err != nil {
@@ -344,13 +350,13 @@ func RenderManualJournalPost(
 	sentences := []string{fmt.Sprintf(
 		"Would post manual journal %s to the general ledger on %s.",
 		plan.Before.RequestNumber,
-		common.DayLabel(plan.Journal.AccountingDate),
+		changepreview.DayLabel(plan.Journal.AccountingDate),
 	)}
 	if plan.Journal.AccountingDate != plan.Before.AccountingDate {
 		sentences = append(sentences, fmt.Sprintf(
 			"Its own day, %s, falls in a closed period, so the closed period policy moves it "+
 				"to the next open one.",
-			common.DayLabel(plan.Before.AccountingDate),
+			changepreview.DayLabel(plan.Before.AccountingDate),
 		))
 	}
 	sentences = append(sentences, "Only a reversal undoes it.")
@@ -365,7 +371,7 @@ func reversalRecord(entity *journalreversal.Reversal, label string) toolpreview.
 		Label:    label,
 	}
 	if entity.ID.IsNotNil() {
-		rec.Version = common.PinnedVersion(entity.Version)
+		rec.Version = changepreview.PinnedVersion(entity.Version)
 	}
 
 	return rec
@@ -381,7 +387,7 @@ func originalEntryNumber(change *journalreversalports.JournalReversalChange) str
 
 func RenderReversalRequest(
 	_ *journalreversalports.CreateJournalReversalRequest,
-	plan *common.ReversalPlan,
+	plan *journalpreview.ReversalPlan,
 ) (*agent.ToolPreview, error) {
 	after := plan.Change.After
 	label := "Reversal of " + originalEntryNumber(plan.Change)
@@ -409,14 +415,14 @@ func RenderReversalRequest(
 	return toolpreview.Build(fmt.Sprintf(
 		"Would request a reversal of %s, booked on %s with every debit and credit swapped. %s",
 		originalEntryNumber(plan.Change),
-		common.DayLabel(after.RequestedAccountingDate),
+		changepreview.DayLabel(after.RequestedAccountingDate),
 		next,
 	), change), nil
 }
 
 func RenderReversalCancel(
 	_ *journalreversalports.CancelJournalReversalRequest,
-	plan *common.ReversalPlan,
+	plan *journalpreview.ReversalPlan,
 ) (*agent.ToolPreview, error) {
 	before := plan.Change.Before
 	change, err := toolpreview.Changed(
@@ -437,7 +443,7 @@ func RenderReversalCancel(
 
 func RenderReversalPost(
 	_ *journalreversalports.GetJournalReversalRequest,
-	plan *common.ReversalPlan,
+	plan *journalpreview.ReversalPlan,
 ) (*agent.ToolPreview, error) {
 	before := plan.Change.Before
 	label := "Reversal of " + originalEntryNumber(plan.Change)
@@ -466,7 +472,7 @@ func RenderReversalPost(
 				Resource: permission.ResourceJournalEntry,
 				ID:       original.ID,
 				Label:    "Journal entry " + original.EntryNumber,
-				Version:  common.PinnedVersion(original.Version),
+				Version:  changepreview.PinnedVersion(original.Version),
 			},
 			&reversedEntryView{Status: string(original.Status)},
 			&reversedEntryView{Status: string(journalentry.StatusReversed)},
@@ -481,6 +487,6 @@ func RenderReversalPost(
 		"Would post the reversal of %s on %s, swapping every debit and credit, and mark the "+
 			"original reversed. It cannot be undone.",
 		originalEntryNumber(plan.Change),
-		common.DayLabel(before.RequestedAccountingDate),
+		changepreview.DayLabel(before.RequestedAccountingDate),
 	), changes...), nil
 }

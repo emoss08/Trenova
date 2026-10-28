@@ -4,7 +4,10 @@ import (
 	"context"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/carrierpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -98,12 +101,12 @@ func (t *GenerateRateConfirmationTool) Description() string {
 
 func (t *GenerateRateConfirmationTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
-		common.PreviewFieldShipmentMoveID: agenttoolschema.RecordIDText(
+		changepreview.PreviewFieldShipmentMoveID: agenttoolschema.RecordIDText(
 			permission.ResourceShipmentMove,
 			"The carrier-covered move, from dispatch_get_board (moveId) or shipment_get "+
 				"(its moves).",
 		),
-	}, common.PreviewFieldShipmentMoveID)
+	}, changepreview.PreviewFieldShipmentMoveID)
 }
 
 func (t *GenerateRateConfirmationTool) Policy() agenttoolports.ToolPolicy {
@@ -140,7 +143,12 @@ func (t *GenerateRateConfirmationTool) tierLimit(
 		return agent.TierPropose
 	}
 
-	plan, err := t.rateCons.PreviewGenerate(ctx, common.TenantFrom(params), moveID, params.Actor)
+	plan, err := t.rateCons.PreviewGenerate(
+		ctx,
+		toolparams.TenantFrom(params),
+		moveID,
+		params.Actor,
+	)
 	if err != nil || plan.SupersededBefore != nil {
 		return agent.TierPropose
 	}
@@ -161,7 +169,7 @@ func (t *GenerateRateConfirmationTool) Execute(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
-	if err := common.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
 	}
 
@@ -170,7 +178,7 @@ func (t *GenerateRateConfirmationTool) Execute(
 		return err
 	}
 
-	_, err = t.rateCons.Generate(ctx, common.TenantFrom(params), moveID, params.Actor)
+	_, err = t.rateCons.Generate(ctx, toolparams.TenantFrom(params), moveID, params.Actor)
 
 	return err
 }
@@ -178,19 +186,19 @@ func (t *GenerateRateConfirmationTool) Execute(
 func (t *GenerateRateConfirmationTool) moveID(
 	params *agenttoolports.ToolExecuteParams,
 ) (pulid.ID, error) {
-	if err := common.GuardPreview(t, params); err != nil {
+	if err := toolguard.GuardPreview(t, params); err != nil {
 		return pulid.Nil, err
 	}
 
-	return common.RequirePulid(params.Params, common.PreviewFieldShipmentMoveID)
+	return toolparams.RequirePulid(params.Params, changepreview.PreviewFieldShipmentMoveID)
 }
 
 func (t *GenerateRateConfirmationTool) Target(
 	params map[string]any,
 ) (agenttoolports.ToolTarget, bool) {
-	return common.TargetOf(
+	return toolparams.TargetOf(
 		params,
-		common.PreviewFieldShipmentMoveID,
+		changepreview.PreviewFieldShipmentMoveID,
 		permission.ResourceShipmentMove,
 	)
 }
@@ -261,7 +269,7 @@ func (t *SendRateConfirmationTool) Execute(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
-	if err := common.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
 	}
 
@@ -270,13 +278,13 @@ func (t *SendRateConfirmationTool) Execute(
 		return err
 	}
 
-	_, err = t.rateCons.Send(ctx, common.TenantFrom(params), id)
+	_, err = t.rateCons.Send(ctx, toolparams.TenantFrom(params), id)
 
 	return err
 }
 
 func (t *SendRateConfirmationTool) Target(params map[string]any) (agenttoolports.ToolTarget, bool) {
-	return common.TargetOf(params, fieldRateConfirmationID, permission.ResourceRateConfirmation)
+	return toolparams.TargetOf(params, fieldRateConfirmationID, permission.ResourceRateConfirmation)
 }
 
 // voidRateConfirmationTool withdraws a revision, which is the console's void.
@@ -304,10 +312,10 @@ func (t *VoidRateConfirmationTool) ParamSchema() map[string]any {
 			permission.ResourceRateConfirmation,
 			"The revision to void, from rate_list_confirmations.",
 		),
-		common.FieldReason: jsonschemautils.Text(
+		changepreview.FieldReason: jsonschemautils.Text(
 			"Why the agreement is withdrawn, in a sentence a person can check.",
 		),
-	}, fieldRateConfirmationID, common.FieldReason)
+	}, fieldRateConfirmationID, changepreview.FieldReason)
 }
 
 func (t *VoidRateConfirmationTool) Policy() agenttoolports.ToolPolicy {
@@ -343,7 +351,7 @@ func (t *VoidRateConfirmationTool) tierLimit(
 		return agent.TierPropose
 	}
 
-	plan, err := t.rateCons.PreviewVoid(ctx, common.TenantFrom(params), id, reason)
+	plan, err := t.rateCons.PreviewVoid(ctx, toolparams.TenantFrom(params), id, reason)
 	if err != nil || plan.Before.Status != rateconfirmation.StatusGenerated {
 		return agent.TierPropose
 	}
@@ -364,7 +372,7 @@ func (t *VoidRateConfirmationTool) Execute(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
-	if err := common.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
 	}
 
@@ -373,7 +381,7 @@ func (t *VoidRateConfirmationTool) Execute(
 		return err
 	}
 
-	_, err = t.rateCons.Void(ctx, common.TenantFrom(params), id, reason)
+	_, err = t.rateCons.Void(ctx, toolparams.TenantFrom(params), id, reason)
 
 	return err
 }
@@ -385,7 +393,7 @@ func (t *VoidRateConfirmationTool) arguments(
 	if err != nil {
 		return pulid.Nil, "", err
 	}
-	reason, err := common.RequireString(params.Params, common.FieldReason)
+	reason, err := toolparams.RequireString(params.Params, changepreview.FieldReason)
 	if err != nil {
 		return pulid.Nil, "", err
 	}
@@ -394,7 +402,7 @@ func (t *VoidRateConfirmationTool) arguments(
 }
 
 func (t *VoidRateConfirmationTool) Target(params map[string]any) (agenttoolports.ToolTarget, bool) {
-	return common.TargetOf(params, fieldRateConfirmationID, permission.ResourceRateConfirmation)
+	return toolparams.TargetOf(params, fieldRateConfirmationID, permission.ResourceRateConfirmation)
 }
 
 // recordRateConfirmationConfirmedTool records that the carrier confirmed a
@@ -430,10 +438,10 @@ func (t *RecordRateConfirmationConfirmedTool) ParamSchema() map[string]any {
 			permission.ResourceRateConfirmation,
 			"The revision the carrier confirmed, from rate_list_confirmations.",
 		),
-		common.FieldConfirmedByName: jsonschemautils.Text(
+		carrierpreview.FieldConfirmedByName: jsonschemautils.Text(
 			"The name of the person at the carrier who confirmed it.",
 		),
-	}, fieldRateConfirmationID, common.FieldConfirmedByName)
+	}, fieldRateConfirmationID, carrierpreview.FieldConfirmedByName)
 }
 
 func (t *RecordRateConfirmationConfirmedTool) Policy() agenttoolports.ToolPolicy {
@@ -467,7 +475,7 @@ func (t *RecordRateConfirmationConfirmedTool) Execute(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
-	if err := common.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
 	}
 
@@ -476,7 +484,7 @@ func (t *RecordRateConfirmationConfirmedTool) Execute(
 		return err
 	}
 
-	_, err = t.rateCons.MarkConfirmed(ctx, common.TenantFrom(params), id, name)
+	_, err = t.rateCons.MarkConfirmed(ctx, toolparams.TenantFrom(params), id, name)
 
 	return err
 }
@@ -488,7 +496,7 @@ func (t *RecordRateConfirmationConfirmedTool) arguments(
 	if err != nil {
 		return pulid.Nil, "", err
 	}
-	name, err := common.RequireString(params.Params, common.FieldConfirmedByName)
+	name, err := toolparams.RequireString(params.Params, carrierpreview.FieldConfirmedByName)
 	if err != nil {
 		return pulid.Nil, "", err
 	}
@@ -499,16 +507,16 @@ func (t *RecordRateConfirmationConfirmedTool) arguments(
 func (t *RecordRateConfirmationConfirmedTool) Target(
 	params map[string]any,
 ) (agenttoolports.ToolTarget, bool) {
-	return common.TargetOf(params, fieldRateConfirmationID, permission.ResourceRateConfirmation)
+	return toolparams.TargetOf(params, fieldRateConfirmationID, permission.ResourceRateConfirmation)
 }
 
 func rateConfirmationArg(
 	tool agenttoolports.AgentTool,
 	params *agenttoolports.ToolExecuteParams,
 ) (pulid.ID, error) {
-	if err := common.GuardPreview(tool, params); err != nil {
+	if err := toolguard.GuardPreview(tool, params); err != nil {
 		return pulid.Nil, err
 	}
 
-	return common.RequirePulid(params.Params, fieldRateConfirmationID)
+	return toolparams.RequirePulid(params.Params, fieldRateConfirmationID)
 }

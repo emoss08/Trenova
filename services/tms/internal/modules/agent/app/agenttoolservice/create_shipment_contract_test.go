@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/operationstools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -470,14 +470,18 @@ func TestLocalTimeProperty_NeverAsksForUnixSeconds(t *testing.T) {
 
 	chicago, err := time.LoadLocation("America/Chicago")
 	require.NoError(t, err)
-	seconds, err := common.RequireLocalTime(map[string]any{"at": "2026-10-01T08:00"}, "at", chicago)
+	seconds, err := toolparams.RequireLocalTime(
+		map[string]any{"at": "2026-10-01T08:00"},
+		"at",
+		chicago,
+	)
 	require.NoError(t, err)
 	assert.Equal(t, time.Date(2026, 10, 1, 8, 0, 0, 0, chicago).Unix(), seconds)
 
-	_, err = common.RequireLocalTime(map[string]any{}, "at", chicago)
+	_, err = toolparams.RequireLocalTime(map[string]any{}, "at", chicago)
 	require.Error(t, err)
 
-	absent, err := common.OptionalLocalTime(map[string]any{"at": ""}, "at", chicago)
+	absent, err := toolparams.OptionalLocalTime(map[string]any{"at": ""}, "at", chicago)
 	require.NoError(t, err)
 	assert.Nil(t, absent)
 }

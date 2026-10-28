@@ -4,7 +4,10 @@ import (
 	"context"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/shipmentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -125,7 +128,7 @@ func (t *RecordStopActualTool) Execute(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams,
 ) error {
-	if err := common.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
 	}
 
@@ -155,26 +158,26 @@ func (t *RecordStopActualTool) Validate(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
 ) error {
-	return common.PreviewValidates(ctx, t, &params)
+	return toolspec.PreviewValidates(ctx, t, &params)
 }
 
 func (t *RecordStopActualTool) request(
 	ctx context.Context,
 	params *agenttoolports.ToolExecuteParams,
 ) (*shipmentmoveports.RecordStopActualRequest, error) {
-	moveID, err := common.RequirePulid(params.Params, "moveId")
+	moveID, err := toolparams.RequirePulid(params.Params, "moveId")
 	if err != nil {
 		return nil, err
 	}
 
-	stopID, err := common.RequirePulid(params.Params, "stopId")
+	stopID, err := toolparams.RequirePulid(params.Params, "stopId")
 	if err != nil {
 		return nil, err
 	}
 
 	// "Arrived" is not "Arrive", and coercing it would record an event that
 	// did not happen.
-	action, err := common.RequireEnum(
+	action, err := toolparams.RequireEnum(
 		params.Params,
 		"action",
 		agenttoolschema.StopActualActions.Values,
@@ -184,7 +187,7 @@ func (t *RecordStopActualTool) request(
 	}
 
 	request := &shipmentmoveports.RecordStopActualRequest{
-		TenantInfo: common.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(*params),
 		MoveID:     moveID,
 		StopID:     stopID,
 		Action:     action,
@@ -203,14 +206,14 @@ func (t *RecordStopActualTool) request(
 	if err != nil {
 		return nil, err
 	}
-	if request.OccurredAt, err = common.OptionalLocalTime(
+	if request.OccurredAt, err = toolparams.OptionalLocalTime(
 		params.Params,
 		"occurredAt",
 		zone,
 	); err != nil {
 		return nil, err
 	}
-	if request.DepartedAt, err = common.OptionalLocalTime(
+	if request.DepartedAt, err = toolparams.OptionalLocalTime(
 		params.Params,
 		"departedAt",
 		zone,
@@ -242,7 +245,7 @@ func (t *RecordStopActualTool) stopZone(
 	}
 
 	stopZone := ""
-	if stop := common.FindStop(move, request.StopID); stop != nil && stop.Location != nil {
+	if stop := shipmentpreview.FindStop(move, request.StopID); stop != nil && stop.Location != nil {
 		stopZone = stop.Location.Timezone
 	}
 	zone, _ := timeutils.ResolveZone(stopZone, fallback)
@@ -253,5 +256,5 @@ func (t *RecordStopActualTool) stopZone(
 // Target names the record this call would change, so a proposal to change it
 // can be checked against the record's version before it runs.
 func (t *RecordStopActualTool) Target(params map[string]any) (agenttoolports.ToolTarget, bool) {
-	return common.TargetOf(params, "moveId", permission.ResourceShipmentMove)
+	return toolparams.TargetOf(params, "moveId", permission.ResourceShipmentMove)
 }

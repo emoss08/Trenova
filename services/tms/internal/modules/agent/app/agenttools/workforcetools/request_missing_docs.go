@@ -3,7 +3,7 @@ package workforcetools
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -150,11 +150,11 @@ func (t *RequestMissingDocsTool) agentEmailContext(
 		AgentBody:    body,
 	}
 
-	out.CustomerName = common.OptionalString(raw, "customerName")
-	out.ShipmentProNumber = common.OptionalString(raw, "shipmentProNumber")
+	out.CustomerName = toolparams.OptionalString(raw, "customerName")
+	out.ShipmentProNumber = toolparams.OptionalString(raw, "shipmentProNumber")
 
 	var documents []string
-	if err := common.DecodeParam(raw, "requestedDocuments", &documents); err == nil {
+	if err := toolparams.DecodeParam(raw, "requestedDocuments", &documents); err == nil {
 		out.RequestedDocuments = documents
 	}
 

@@ -4,7 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/shipmentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -157,7 +158,7 @@ func (r draftReader) sequence(field string, given *int64, position int) {
 
 func (d *ShipmentDraft) Build(
 	tenant pagination.TenantInfo,
-	zones common.LocationZones,
+	zones shipmentpreview.LocationZones,
 ) (*shipment.Shipment, error) {
 	multiErr := errortypes.NewMultiError()
 	read := draftReader{multiErr: multiErr}
@@ -210,7 +211,7 @@ func (d *ShipmentDraft) Build(
 func (d *ShipmentDraft) buildMoves(
 	entity *shipment.Shipment,
 	read draftReader,
-	zones common.LocationZones,
+	zones shipmentpreview.LocationZones,
 ) {
 	if len(d.Moves) == 0 {
 		read.multiErr.Add("moves", errortypes.ErrRequired,
@@ -251,7 +252,7 @@ type stopBuild struct {
 	path     string
 	position int
 	read     draftReader
-	zones    common.LocationZones
+	zones    shipmentpreview.LocationZones
 	tenant   *shipment.Shipment
 }
 
@@ -278,7 +279,7 @@ func buildStop(draft *stopDraft, b stopBuild) *shipment.Stop {
 	if strings.TrimSpace(draft.ScheduledWindowStart) == "" {
 		b.read.multiErr.Add(b.path+".scheduledWindowStart", errortypes.ErrRequired,
 			"A local date and time such as 2026-10-01T08:00 is required")
-	} else if start, err := common.ParseLocalTime(
+	} else if start, err := toolparams.ParseLocalTime(
 		b.path+".scheduledWindowStart", draft.ScheduledWindowStart, zone,
 	); err != nil {
 		b.read.multiErr.AddError(err)
@@ -287,7 +288,7 @@ func buildStop(draft *stopDraft, b stopBuild) *shipment.Stop {
 	}
 
 	if strings.TrimSpace(draft.ScheduledWindowEnd) != "" {
-		end, err := common.ParseLocalTime(
+		end, err := toolparams.ParseLocalTime(
 			b.path+".scheduledWindowEnd",
 			draft.ScheduledWindowEnd,
 			zone,

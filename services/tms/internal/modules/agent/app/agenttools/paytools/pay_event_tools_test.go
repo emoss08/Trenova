@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/settlementpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -164,7 +164,9 @@ func TestHoldDriverPayEvent_TellsTheDriverWhyInTheirPortal(t *testing.T) {
 	assert.Equal(t, []agent.EgressClass{agent.EgressDriverVisible}, policy.Egress)
 	assert.Equal(t, agent.TierActWithApproval, policy.MaxTier)
 
-	missing := agenttoolstest.ExecuteParams(map[string]any{paramPayEventID: events.event.ID.String()})
+	missing := agenttoolstest.ExecuteParams(
+		map[string]any{paramPayEventID: events.event.ID.String()},
+	)
 	require.Error(t, tool.Execute(t.Context(), missing))
 
 	params := agenttoolstest.ExecuteParams(map[string]any{
@@ -176,7 +178,15 @@ func TestHoldDriverPayEvent_TellsTheDriverWhyInTheirPortal(t *testing.T) {
 	assert.Contains(t, preview.Summary, "Would hold Ana Ruiz's pay for PRO-7781.")
 	assert.Contains(t, preview.Summary, "driver portal")
 	require.Len(t, preview.Changes, 2)
-	assert.Equal(t, true, agenttoolstest.FieldByPath(t, agenttoolstest.PreviewChange(t, preview, 0), fieldOnHold).After)
+	assert.Equal(
+		t,
+		true,
+		agenttoolstest.FieldByPath(
+			t,
+			agenttoolstest.PreviewChange(t, preview, 0),
+			fieldOnHold,
+		).After,
+	)
 	message := agenttoolstest.PreviewChange(t, preview, 1).Message
 	require.NotNil(t, message)
 	assert.Equal(t, agent.MessageChannelDash, message.Channel)
@@ -210,7 +220,9 @@ func TestReleaseDriverPayEvent_SaysWhenNothingIsHeld(t *testing.T) {
 
 	events := &fakePayEvents{event: accruedPayEvent(), autoAttach: true, locked: true}
 	tool := &PayEventHoldTool{events: events}
-	params := agenttoolstest.ExecuteParams(map[string]any{paramPayEventID: events.event.ID.String()})
+	params := agenttoolstest.ExecuteParams(
+		map[string]any{paramPayEventID: events.event.ID.String()},
+	)
 
 	assert.Equal(t, []agent.EgressClass{agent.EgressInternal}, tool.Policy().Egress)
 
@@ -224,7 +236,15 @@ func TestReleaseDriverPayEvent_SaysWhenNothingIsHeld(t *testing.T) {
 	preview, err = tool.Preview(t.Context(), params)
 	require.NoError(t, err)
 	require.Len(t, preview.Changes, 1)
-	assert.Equal(t, false, agenttoolstest.FieldByPath(t, agenttoolstest.PreviewChange(t, preview, 0), fieldOnHold).After)
+	assert.Equal(
+		t,
+		false,
+		agenttoolstest.FieldByPath(
+			t,
+			agenttoolstest.PreviewChange(t, preview, 0),
+			fieldOnHold,
+		).After,
+	)
 	assert.Contains(t, preview.Summary, "open draft settlement")
 
 	events.locked = false
@@ -241,8 +261,8 @@ func TestAttachPayEvents_PreviewsTheNewNetOnTheDraft(t *testing.T) {
 	tool := &PayEventTransferTool{events: events}
 	first, second := pulid.MustNew("dpe_"), pulid.MustNew("dpe_")
 	params := agenttoolstest.ExecuteParams(map[string]any{
-		common.ParamSettlementID: settlement.ID.String(),
-		ParamPayEventIDs:         []any{first.String(), second.String()},
+		settlementpreview.ParamSettlementID: settlement.ID.String(),
+		ParamPayEventIDs:                    []any{first.String(), second.String()},
 	})
 
 	target, ok := tool.Target(params.Params)
@@ -258,8 +278,8 @@ func TestAttachPayEvents_PreviewsTheNewNetOnTheDraft(t *testing.T) {
 	assert.Equal(t, "420", change.Money.Delta.Decimal.String())
 
 	require.Error(t, tool.Execute(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
-		common.ParamSettlementID: settlement.ID.String(),
-		ParamPayEventIDs:         []any{},
+		settlementpreview.ParamSettlementID: settlement.ID.String(),
+		ParamPayEventIDs:                    []any{},
 	})))
 
 	events.locked = false
@@ -276,8 +296,8 @@ func TestDetachPayEvent_RefusesAnythingButADraft(t *testing.T) {
 	tool := &PayEventTransferTool{events: events, detach: true}
 	eventID := pulid.MustNew("dpe_")
 	params := agenttoolstest.ExecuteParams(map[string]any{
-		common.ParamSettlementID: settlement.ID.String(),
-		paramPayEventID:          eventID.String(),
+		settlementpreview.ParamSettlementID: settlement.ID.String(),
+		paramPayEventID:                     eventID.String(),
 	})
 
 	preview, err := tool.Preview(t.Context(), params)

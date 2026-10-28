@@ -3,7 +3,11 @@ package shipmenttools
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/shipmentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -39,14 +43,14 @@ func (t *AddShipmentCommentTool) ParamSchema() map[string]any {
 	return map[string]any{
 		"type": "object",
 		"properties": map[string]any{
-			common.ParamShipmentID: agenttoolschema.RecordIDText(permission.ResourceShipment,
+			toolparams.ParamShipmentID: agenttoolschema.RecordIDText(permission.ResourceShipment,
 				"The shipment to comment on, from the page or "+
 					"shipment_list."),
 			"comment": map[string]any{
 				"type":        "string",
 				"description": "What to say, in the words a dispatcher would use.",
 			},
-			common.FieldVisibility: agenttoolschema.Enum(
+			changepreview.FieldVisibility: agenttoolschema.Enum(
 				"Who sees it. Defaults to Internal; only widen it when the "+
 					"person asked for the note to reach a customer or a driver.",
 				agenttoolschema.CommentVisibilities,
@@ -58,7 +62,7 @@ func (t *AddShipmentCommentTool) ParamSchema() map[string]any {
 				agenttoolschema.CommentPriorities,
 			),
 		},
-		"required":             []string{common.ParamShipmentID, "comment"},
+		"required":             []string{toolparams.ParamShipmentID, "comment"},
 		"additionalProperties": false,
 	}
 }
@@ -77,7 +81,7 @@ func (t *AddShipmentCommentTool) Policy() agenttoolports.ToolPolicy {
 			agent.EgressCustomerVisible,
 			agent.EgressDriverVisible,
 		},
-		Classify:      common.ClassifyCommentVisibility,
+		Classify:      shipmentpreview.ClassifyCommentVisibility,
 		Effect:        agent.ToolEffectChange,
 		Reversible:    true,
 		ReadsExternal: agent.ExternalReadNever,
@@ -106,16 +110,16 @@ func (t *AddShipmentCommentTool) Execute(
 func (t *AddShipmentCommentTool) comment(
 	params *agenttoolports.ToolExecuteParams,
 ) (*shipment.ShipmentComment, error) {
-	if err := common.GuardExecute(t, *params); err != nil {
+	if err := toolguard.GuardExecute(t, *params); err != nil {
 		return nil, err
 	}
 
-	shipmentID, err := common.RequirePulid(params.Params, common.ParamShipmentID)
+	shipmentID, err := toolparams.RequirePulid(params.Params, toolparams.ParamShipmentID)
 	if err != nil {
 		return nil, err
 	}
 
-	body, err := common.RequireString(params.Params, "comment")
+	body, err := toolparams.RequireString(params.Params, "comment")
 	if err != nil {
 		return nil, err
 	}
@@ -123,7 +127,7 @@ func (t *AddShipmentCommentTool) comment(
 	// Widening a note's audience on a typo is the one mistake here that
 	// reaches a customer: a visibility the domain does not have is refused,
 	// never read as one it does.
-	visibility, given, err := common.OptionalEnum(
+	visibility, given, err := toolparams.OptionalEnum(
 		params.Params, "visibility", agenttoolschema.CommentVisibilities.Values,
 	)
 	if err != nil {
@@ -133,7 +137,7 @@ func (t *AddShipmentCommentTool) comment(
 		visibility = shipment.CommentVisibilityInternal
 	}
 
-	priority, given, err := common.OptionalEnum(
+	priority, given, err := toolparams.OptionalEnum(
 		params.Params, "priority", agenttoolschema.CommentPriorities.Values,
 	)
 	if err != nil {
@@ -165,7 +169,7 @@ func (t *AddShipmentCommentTool) Validate(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
 ) error {
-	return common.PreviewValidates(ctx, t, &params)
+	return toolspec.PreviewValidates(ctx, t, &params)
 }
 
 func commentTaintMetadata(params agenttoolports.ToolExecuteParams) map[string]any {
@@ -222,17 +226,17 @@ func (t *PlaceShipmentHoldTool) ParamSchema() map[string]any {
 	return map[string]any{
 		"type": "object",
 		"properties": map[string]any{
-			common.ParamShipmentID: agenttoolschema.RecordIDText(permission.ResourceShipment,
+			toolparams.ParamShipmentID: agenttoolschema.RecordIDText(permission.ResourceShipment,
 				"The shipment to hold, from the page, shipment_list."),
 			"holdReasonId": agenttoolschema.RecordIDText(permission.ResourceHoldReason,
 				"A hold reason id from masterdata_list_hold_reasons."),
-			common.ParamNote: map[string]any{
+			toolparams.ParamNote: map[string]any{
 				"type": "string",
 				"description": "What prompted the hold, for whoever releases it. " +
 					"Say what would have to be true to clear it.",
 			},
 		},
-		"required":             []string{common.ParamShipmentID, "holdReasonId"},
+		"required":             []string{toolparams.ParamShipmentID, "holdReasonId"},
 		"additionalProperties": false,
 	}
 }
@@ -259,7 +263,7 @@ func (t *PlaceShipmentHoldTool) Execute(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams,
 ) error {
-	if err := common.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
 	}
 
@@ -276,12 +280,12 @@ func (t *PlaceShipmentHoldTool) Execute(
 func (t *PlaceShipmentHoldTool) request(
 	params *agenttoolports.ToolExecuteParams,
 ) (*shipmentholdports.CreateShipmentHoldRequest, error) {
-	shipmentID, err := common.RequirePulid(params.Params, common.ParamShipmentID)
+	shipmentID, err := toolparams.RequirePulid(params.Params, toolparams.ParamShipmentID)
 	if err != nil {
 		return nil, err
 	}
 
-	reasonID, err := common.RequirePulid(params.Params, "holdReasonId")
+	reasonID, err := toolparams.RequirePulid(params.Params, "holdReasonId")
 	if err != nil {
 		return nil, err
 	}
@@ -290,10 +294,10 @@ func (t *PlaceShipmentHoldTool) request(
 	// from the hold reason, which is policy the organization already decided.
 	// An agent choosing them would be quietly overriding that.
 	return &shipmentholdports.CreateShipmentHoldRequest{
-		TenantInfo:   common.TenantFrom(*params),
+		TenantInfo:   toolparams.TenantFrom(*params),
 		ShipmentID:   shipmentID,
 		HoldReasonID: reasonID,
-		Notes:        common.OptionalString(params.Params, common.ParamNote),
+		Notes:        toolparams.OptionalString(params.Params, toolparams.ParamNote),
 	}, nil
 }
 
@@ -319,14 +323,14 @@ func (t *ReleaseShipmentHoldTool) ParamSchema() map[string]any {
 	return map[string]any{
 		"type": "object",
 		"properties": map[string]any{
-			common.ParamShipmentID: agenttoolschema.RecordIDText(permission.ResourceShipment,
+			toolparams.ParamShipmentID: agenttoolschema.RecordIDText(permission.ResourceShipment,
 				"The shipment the hold is on, from the page or "+
 					"shipment_list."),
 			"holdId": agenttoolschema.RecordIDText(permission.ResourceShipmentHold,
 				"The hold to release, from the holds shipment_get lists, the page or the "+
 					"event that started this run. Never guess one."),
 		},
-		"required":             []string{common.ParamShipmentID, "holdId"},
+		"required":             []string{toolparams.ParamShipmentID, "holdId"},
 		"additionalProperties": false,
 	}
 }
@@ -352,7 +356,7 @@ func (t *ReleaseShipmentHoldTool) Execute(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams,
 ) error {
-	if err := common.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
 	}
 
@@ -369,18 +373,18 @@ func (t *ReleaseShipmentHoldTool) Execute(
 func (t *ReleaseShipmentHoldTool) request(
 	params *agenttoolports.ToolExecuteParams,
 ) (*shipmentholdports.ReleaseShipmentHoldRequest, error) {
-	shipmentID, err := common.RequirePulid(params.Params, common.ParamShipmentID)
+	shipmentID, err := toolparams.RequirePulid(params.Params, toolparams.ParamShipmentID)
 	if err != nil {
 		return nil, err
 	}
 
-	holdID, err := common.RequirePulid(params.Params, "holdId")
+	holdID, err := toolparams.RequirePulid(params.Params, "holdId")
 	if err != nil {
 		return nil, err
 	}
 
 	return &shipmentholdports.ReleaseShipmentHoldRequest{
-		TenantInfo: common.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(*params),
 		ShipmentID: shipmentID,
 		HoldID:     holdID,
 	}, nil
@@ -388,13 +392,13 @@ func (t *ReleaseShipmentHoldTool) request(
 
 type CancelShipmentTool struct {
 	shipments shipmentserviceports.ShipmentService
-	partners  common.ShipmentPartnerNotices
+	partners  shipmentpreview.ShipmentPartnerNotices
 	tenders   liveTenderReader
 }
 
 func NewCancelShipmentTool(
 	shipments shipmentserviceports.ShipmentService,
-	partners common.ShipmentPartnerNotices,
+	partners shipmentpreview.ShipmentPartnerNotices,
 	tenders liveTenderReader,
 ) agenttoolports.AgentTool {
 	return &CancelShipmentTool{shipments: shipments, partners: partners, tenders: tenders}
@@ -413,15 +417,15 @@ func (t *CancelShipmentTool) ParamSchema() map[string]any {
 	return map[string]any{
 		"type": "object",
 		"properties": map[string]any{
-			common.ParamShipmentID: agenttoolschema.RecordIDText(permission.ResourceShipment,
+			toolparams.ParamShipmentID: agenttoolschema.RecordIDText(permission.ResourceShipment,
 				"The shipment to cancel, from the page, shipment_list."),
-			common.ParamReason: map[string]any{
+			toolparams.ParamReason: map[string]any{
 				"type": "string",
 				"description": "Why it is being cancelled, in the customer's or " +
 					"dispatcher's own terms. This is kept on the record.",
 			},
 		},
-		"required":             []string{common.ParamShipmentID, common.ParamReason},
+		"required":             []string{toolparams.ParamShipmentID, toolparams.ParamReason},
 		"additionalProperties": false,
 	}
 }
@@ -460,22 +464,22 @@ func (t *CancelShipmentTool) Execute(
 func (t *CancelShipmentTool) request(
 	params *agenttoolports.ToolExecuteParams,
 ) (*shipmentports.CancelShipmentRequest, error) {
-	if err := common.GuardExecute(t, *params); err != nil {
+	if err := toolguard.GuardExecute(t, *params); err != nil {
 		return nil, err
 	}
 
-	shipmentID, err := common.RequirePulid(params.Params, common.ParamShipmentID)
+	shipmentID, err := toolparams.RequirePulid(params.Params, toolparams.ParamShipmentID)
 	if err != nil {
 		return nil, err
 	}
 
-	reason, err := common.RequireString(params.Params, common.ParamReason)
+	reason, err := toolparams.RequireString(params.Params, toolparams.ParamReason)
 	if err != nil {
 		return nil, err
 	}
 
 	return &shipmentports.CancelShipmentRequest{
-		TenantInfo:   common.TenantFrom(*params),
+		TenantInfo:   toolparams.TenantFrom(*params),
 		ShipmentID:   shipmentID,
 		CanceledByID: params.Actor.UserID,
 		CanceledAt:   timeutils.NowUnix(),
@@ -486,23 +490,23 @@ func (t *CancelShipmentTool) request(
 // Target names the record this call would change, so a proposal to change it
 // can be checked against the record's version before it runs.
 func (t *AddShipmentCommentTool) Target(params map[string]any) (agenttoolports.ToolTarget, bool) {
-	return common.TargetOf(params, common.ParamShipmentID, permission.ResourceShipment)
+	return toolparams.TargetOf(params, toolparams.ParamShipmentID, permission.ResourceShipment)
 }
 
 // Target names the record this call would change, so a proposal to change it
 // can be checked against the record's version before it runs.
 func (t *PlaceShipmentHoldTool) Target(params map[string]any) (agenttoolports.ToolTarget, bool) {
-	return common.TargetOf(params, common.ParamShipmentID, permission.ResourceShipment)
+	return toolparams.TargetOf(params, toolparams.ParamShipmentID, permission.ResourceShipment)
 }
 
 // Target names the record this call would change, so a proposal to change it
 // can be checked against the record's version before it runs.
 func (t *ReleaseShipmentHoldTool) Target(params map[string]any) (agenttoolports.ToolTarget, bool) {
-	return common.TargetOf(params, common.ParamShipmentID, permission.ResourceShipment)
+	return toolparams.TargetOf(params, toolparams.ParamShipmentID, permission.ResourceShipment)
 }
 
 // Target names the record this call would change, so a proposal to change it
 // can be checked against the record's version before it runs.
 func (t *CancelShipmentTool) Target(params map[string]any) (agenttoolports.ToolTarget, bool) {
-	return common.TargetOf(params, common.ParamShipmentID, permission.ResourceShipment)
+	return toolparams.TargetOf(params, toolparams.ParamShipmentID, permission.ResourceShipment)
 }

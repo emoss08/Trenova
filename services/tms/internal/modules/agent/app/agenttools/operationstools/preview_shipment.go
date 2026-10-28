@@ -4,7 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/shipmentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -20,38 +21,44 @@ func (t *UpdateShipmentTool) Preview(
 	}
 
 	change, err := toolpreview.Changed(
-		common.ShipmentRecord(before),
+		shipmentpreview.ShipmentRecord(before),
 		before,
 		after,
 		toolpreview.Only(
-			common.PreviewFieldCustomerID,
-			common.PreviewFieldServiceTypeID,
-			common.PreviewFieldShipmentTypeID,
-			common.PreviewFieldTractorTypeID,
-			common.PreviewFieldTrailerTypeID,
+			changepreview.PreviewFieldCustomerID,
+			changepreview.PreviewFieldServiceTypeID,
+			changepreview.PreviewFieldShipmentTypeID,
+			changepreview.PreviewFieldTractorTypeID,
+			changepreview.PreviewFieldTrailerTypeID,
 			"bol",
 			"pieces",
 			"weight",
 			"temperatureMin",
 			"temperatureMax",
 		),
-		toolpreview.WithRefs(common.UpdateShipmentRefs),
+		toolpreview.WithRefs(shipmentpreview.UpdateShipmentRefs),
 	)
 	if err != nil {
 		return nil, err
 	}
 
-	notices, err := common.TenderChangeNotices(ctx, t.partners, before, after, params.Actor)
+	notices, err := shipmentpreview.TenderChangeNotices(
+		ctx,
+		t.partners,
+		before,
+		after,
+		params.Actor,
+	)
 	if err != nil {
 		return nil, err
 	}
 	changes := append([]*agent.RecordChange{change}, notices...)
 
 	summary := fmt.Sprintf("Would change %s on shipment %s.",
-		common.CountOf(len(change.Fields), "field"), before.ProNumber)
+		changepreview.CountOf(len(change.Fields), "field"), before.ProNumber)
 	if partners := len(changes) - 1; partners > 0 {
 		summary += fmt.Sprintf(" %s tendered the load would be sent an EDI 204 change.",
-			common.CountOf(partners, "partner"))
+			changepreview.CountOf(partners, "partner"))
 	}
 
 	return toolpreview.Build(summary, changes...), nil

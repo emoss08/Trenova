@@ -6,7 +6,10 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/journalpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -163,8 +166,8 @@ var laneScopeTypes = agenttoolschema.Source("rateAgreement.laneScopeType", []rat
 })
 
 var rateAgreementDates = map[string]assistantartifact.DisplayType{
-	common.ParamEffectiveFrom: assistantartifact.DisplayDate,
-	common.ParamEffectiveTo:   assistantartifact.DisplayDate,
+	toolparams.ParamEffectiveFrom: assistantartifact.DisplayDate,
+	toolparams.ParamEffectiveTo:   assistantartifact.DisplayDate,
 }
 
 type RateAgreementKeeper interface {
@@ -235,7 +238,7 @@ type stateFinder interface {
 }
 
 func targetRateAgreement(params map[string]any) (agenttoolports.ToolTarget, bool) {
-	return common.TargetOf(params, paramRateAgreementID, permission.ResourceRateAgreement)
+	return toolparams.TargetOf(params, paramRateAgreementID, permission.ResourceRateAgreement)
 }
 
 func rateAgreementIDProperty() map[string]any {
@@ -245,23 +248,26 @@ func rateAgreementIDProperty() map[string]any {
 
 func laneProperty(forRevision bool) map[string]any {
 	properties := map[string]any{
-		paramLaneLabel: common.StringProperty(
+		paramLaneLabel: toolparams.StringProperty(
 			"A short name for the lane, such as Dallas to Atlanta.",
 			maxLaneLabel,
 		),
 		paramOriginScopeType: agenttoolschema.Enum("How the origin is named. Defaults to "+
 			"Any.", laneScopeTypes),
-		paramOriginValue: common.StringProperty("The origin for its scope type: a three-letter "+
-			"country code such as USA, a two-letter state code such as TX (for State and "+
-			"CityState), a postal code (Zip3, Zip5), a location from location_list, or a "+
-			"rate zone a lane of rate_get_agreement names. Leave it out for Any.", maxLaneValue),
-		paramOriginCity: common.StringProperty("The origin city, for a CityState origin.",
+		paramOriginValue: toolparams.StringProperty(
+			"The origin for its scope type: a three-letter "+
+				"country code such as USA, a two-letter state code such as TX (for State and "+
+				"CityState), a postal code (Zip3, Zip5), a location from location_list, or a "+
+				"rate zone a lane of rate_get_agreement names. Leave it out for Any.",
+			maxLaneValue,
+		),
+		paramOriginCity: toolparams.StringProperty("The origin city, for a CityState origin.",
 			maxLaneCity),
 		paramDestinationType: agenttoolschema.Enum("How the destination is named. "+
 			"Defaults to Any.", laneScopeTypes),
-		paramDestinationValue: common.StringProperty("The destination, read as originValue is.",
+		paramDestinationValue: toolparams.StringProperty("The destination, read as originValue is.",
 			maxLaneValue),
-		paramDestinationCity: common.StringProperty("The destination city, for a CityState "+
+		paramDestinationCity: toolparams.StringProperty("The destination city, for a CityState "+
 			"destination.", maxLaneCity),
 		paramDirection: agenttoolschema.Enum("Whether the lane also prices the reverse "+
 			"haul. Defaults to Directional.", laneDirections),
@@ -269,10 +275,10 @@ func laneProperty(forRevision bool) map[string]any {
 			"The tariff that prices the lane, from formula_list_templates. A new lane needs one."),
 		paramInputs: inputsProperty("The lane's values for the inputs its tariff declares, " +
 			"which formula_get_template lists. They override the agreement's inputs."),
-		paramPriority: common.IntegerProperty("Which lane wins when two match equally; higher "+
+		paramPriority: toolparams.IntegerProperty("Which lane wins when two match equally; higher "+
 			"wins.", 0, maxAgreementPriority),
-		paramHazmatOnly: common.BooleanProperty("Only hazardous freight rates on this lane."),
-		paramTempControlOnly: common.BooleanProperty(
+		paramHazmatOnly: toolparams.BooleanProperty("Only hazardous freight rates on this lane."),
+		paramTempControlOnly: toolparams.BooleanProperty(
 			"Only temperature-controlled freight rates on this lane.",
 		),
 	}
@@ -339,7 +345,7 @@ func (r laneReader) end(
 ) (rategeo.Scope, error) {
 	scope := current
 	if _, given := fields[keys[0]]; given {
-		kind, err := common.RequireEnum(fields, keys[0], laneScopeTypes.Values)
+		kind, err := toolparams.RequireEnum(fields, keys[0], laneScopeTypes.Values)
 		if err != nil {
 			return scope, err
 		}
@@ -351,14 +357,14 @@ func (r laneReader) end(
 		scope.Type = rategeo.ScopeTypeAny
 	}
 	if _, given := fields[keys[1]]; given {
-		value, err := r.scopeValue(ctx, scope.Type, common.OptionalString(fields, keys[1]))
+		value, err := r.scopeValue(ctx, scope.Type, toolparams.OptionalString(fields, keys[1]))
 		if err != nil {
 			return scope, fmt.Errorf("%s: %w", keys[1], err)
 		}
 		scope.Value = value
 	}
 	if _, given := fields[keys[2]]; given {
-		scope.City = strings.TrimSpace(common.OptionalString(fields, keys[2]))
+		scope.City = strings.TrimSpace(toolparams.OptionalString(fields, keys[2]))
 	}
 	if scope.Type != rategeo.ScopeTypeAny && scope.Value == "" {
 		return scope, fmt.Errorf("%s needs %s for a %s scope", keys[0], keys[1], scope.Type)
@@ -433,7 +439,7 @@ func (r laneReader) applyPricing(
 	rule *rateagreement.RateAgreementRule,
 	fields map[string]any,
 ) error {
-	id, err := common.OptionalPulidParam(fields, paramFormulaTemplateID)
+	id, err := toolparams.OptionalPulidParam(fields, paramFormulaTemplateID)
 	if err != nil {
 		return err
 	}
@@ -445,7 +451,7 @@ func (r laneReader) applyPricing(
 }
 
 func (r laneReader) applyTerms(rule *rateagreement.RateAgreementRule, fields map[string]any) error {
-	label, err := common.OptionalBoundedText(fields, paramLaneLabel, maxLaneLabel)
+	label, err := toolparams.OptionalBoundedText(fields, paramLaneLabel, maxLaneLabel)
 	if err != nil {
 		return err
 	}
@@ -453,14 +459,14 @@ func (r laneReader) applyTerms(rule *rateagreement.RateAgreementRule, fields map
 		rule.Label = *label
 	}
 	if _, given := fields[paramDirection]; given {
-		direction, enumErr := common.RequireEnum(fields, paramDirection, laneDirections.Values)
+		direction, enumErr := toolparams.RequireEnum(fields, paramDirection, laneDirections.Values)
 		if enumErr != nil {
 			return enumErr
 		}
 		rule.Direction = direction
 	}
 	if _, given := fields[paramPriority]; given {
-		priority, rangeErr := common.RequireIntInRange(
+		priority, rangeErr := toolparams.RequireIntInRange(
 			fields,
 			paramPriority,
 			0,
@@ -475,7 +481,7 @@ func (r laneReader) applyTerms(rule *rateagreement.RateAgreementRule, fields map
 		paramHazmatOnly:      &rule.HazmatOnly,
 		paramTempControlOnly: &rule.TempControlOnly,
 	} {
-		flag, flagErr := common.OptionalBoolPointer(fields, key)
+		flag, flagErr := toolparams.OptionalBoolPointer(fields, key)
 		if flagErr != nil {
 			return flagErr
 		}
@@ -590,7 +596,7 @@ func (r laneReader) revisedLanes(
 	rules := make([]*rateagreement.RateAgreementRule, 0, len(objects))
 	for idx, fields := range objects {
 		var base *rateagreement.RateAgreementRule
-		ruleID, idErr := common.OptionalPulidParam(fields, paramRuleID)
+		ruleID, idErr := toolparams.OptionalPulidParam(fields, paramRuleID)
 		if idErr != nil {
 			return nil, fmt.Errorf("%s[%d]: %w", paramLanes, idx, idErr)
 		}
@@ -614,33 +620,43 @@ func (r laneReader) revisedLanes(
 
 func agreementHeaderProperties() map[string]any {
 	return map[string]any{
-		paramAgreementCode: common.StringProperty("A short code for the agreement, unique in the "+
-			"organization, such as ACME-2027.", maxAgreementCode),
-		paramAgreementName: common.StringProperty("The agreement's name.", maxAgreementName),
-		paramDescription:   common.StringProperty("What the agreement covers.", maxAgreementText),
+		paramAgreementCode: toolparams.StringProperty(
+			"A short code for the agreement, unique in the "+
+				"organization, such as ACME-2027.",
+			maxAgreementCode,
+		),
+		paramAgreementName: toolparams.StringProperty("The agreement's name.", maxAgreementName),
+		paramDescription: toolparams.StringProperty(
+			"What the agreement covers.",
+			maxAgreementText,
+		),
 		paramAgreementType: agenttoolschema.Enum("The commercial arrangement. Defaults to "+
 			"Contract.", agreementTypes),
-		paramContractRef: common.StringProperty("The signed contract's own reference.",
+		paramContractRef: toolparams.StringProperty("The signed contract's own reference.",
 			maxContractRef),
-		paramPriority: common.IntegerProperty("Which agreement wins when two price a shipment; "+
-			"higher wins.", 0, maxAgreementPriority),
-		common.ParamEffectiveFrom: agenttoolschema.Date(
+		paramPriority: toolparams.IntegerProperty(
+			"Which agreement wins when two price a shipment; "+
+				"higher wins.",
+			0,
+			maxAgreementPriority,
+		),
+		toolparams.ParamEffectiveFrom: agenttoolschema.Date(
 			"The first day the agreement prices shipments.",
 		),
-		common.ParamEffectiveTo: agenttoolschema.Date(
+		toolparams.ParamEffectiveTo: agenttoolschema.Date(
 			"The last day it prices shipments. Leave it out for an open-ended agreement.",
 		),
-		paramAutoRenew: common.BooleanProperty("Whether it renews itself at its end."),
-		paramRenewalNoticeDays: common.IntegerProperty(
+		paramAutoRenew: toolparams.BooleanProperty("Whether it renews itself at its end."),
+		paramRenewalNoticeDays: toolparams.IntegerProperty(
 			"How many days before its end to warn about "+
 				"renewal.",
 			0,
 			maxRenewalNotice,
 		),
-		paramAgreementCurrency: common.StringProperty(
+		paramAgreementCurrency: toolparams.StringProperty(
 			"The ISO currency code it prices in. Defaults "+
 				"to USD.",
-			common.CurrencyCodeLength,
+			toolparams.CurrencyCodeLength,
 		),
 		paramInputs: inputsProperty("Values every lane's tariff prices with unless the lane " +
 			"sets its own, such as minimumCharge."),
@@ -667,7 +683,7 @@ func (h agreementHeader) applyTexts(entity *rateagreement.RateAgreement) error {
 		paramDescription:   {&entity.Description, maxAgreementText},
 		paramContractRef:   {&entity.ContractRef, maxContractRef},
 	} {
-		text, err := common.OptionalBoundedText(h.values, key, field.limit)
+		text, err := toolparams.OptionalBoundedText(h.values, key, field.limit)
 		if err != nil {
 			return err
 		}
@@ -677,9 +693,9 @@ func (h agreementHeader) applyTexts(entity *rateagreement.RateAgreement) error {
 	}
 	if h.given(paramAgreementCurrency) {
 		code := strings.ToUpper(
-			strings.TrimSpace(common.OptionalString(h.values, paramAgreementCurrency)),
+			strings.TrimSpace(toolparams.OptionalString(h.values, paramAgreementCurrency)),
 		)
-		if len(code) != common.CurrencyCodeLength {
+		if len(code) != toolparams.CurrencyCodeLength {
 			return fmt.Errorf("%s must be a three-letter code such as USD", paramAgreementCurrency)
 		}
 		entity.Currency = code
@@ -691,14 +707,14 @@ func (h agreementHeader) applyTexts(entity *rateagreement.RateAgreement) error {
 func (h agreementHeader) applyTerms(entity *rateagreement.RateAgreement) error {
 	var err error
 	if h.given(paramAgreementType) {
-		if entity.AgreementType, err = common.RequireEnum(
+		if entity.AgreementType, err = toolparams.RequireEnum(
 			h.values, paramAgreementType, agreementTypes.Values,
 		); err != nil {
 			return err
 		}
 	}
 	if h.given(paramPriority) {
-		priority, rangeErr := common.RequireIntInRange(
+		priority, rangeErr := toolparams.RequireIntInRange(
 			h.values,
 			paramPriority,
 			0,
@@ -710,7 +726,7 @@ func (h agreementHeader) applyTerms(entity *rateagreement.RateAgreement) error {
 		entity.Priority = int16(priority) //nolint:gosec // bounded to maxAgreementPriority above
 	}
 	if h.given(paramRenewalNoticeDays) {
-		days, rangeErr := common.RequireIntInRange(
+		days, rangeErr := toolparams.RequireIntInRange(
 			h.values,
 			paramRenewalNoticeDays,
 			0,
@@ -721,7 +737,7 @@ func (h agreementHeader) applyTerms(entity *rateagreement.RateAgreement) error {
 		}
 		entity.RenewalNoticeDays = int16(days) //nolint:gosec // bounded to maxRenewalNotice above
 	}
-	if autoRenew, flagErr := common.OptionalBoolPointer(h.values, paramAutoRenew); flagErr != nil {
+	if autoRenew, flagErr := toolparams.OptionalBoolPointer(h.values, paramAutoRenew); flagErr != nil {
 		return flagErr
 	} else if autoRenew != nil {
 		entity.AutoRenew = *autoRenew
@@ -730,15 +746,15 @@ func (h agreementHeader) applyTerms(entity *rateagreement.RateAgreement) error {
 }
 
 func (h agreementHeader) applyWindow(entity *rateagreement.RateAgreement) error {
-	if h.given(common.ParamEffectiveFrom) {
-		from, err := common.RequireDay(h.values, common.ParamEffectiveFrom)
+	if h.given(toolparams.ParamEffectiveFrom) {
+		from, err := toolparams.RequireDay(h.values, toolparams.ParamEffectiveFrom)
 		if err != nil {
 			return err
 		}
 		entity.EffectiveFrom = from
 	}
-	if h.given(common.ParamEffectiveTo) {
-		to, given, err := common.OptionalDay(h.values, common.ParamEffectiveTo)
+	if h.given(toolparams.ParamEffectiveTo) {
+		to, given, err := toolparams.OptionalDay(h.values, toolparams.ParamEffectiveTo)
 		if err != nil {
 			return err
 		}
@@ -829,8 +845,8 @@ func agreementViewOf(entity *rateagreement.RateAgreement) *agreementView {
 func agreementOptions() []toolpreview.Option {
 	return []toolpreview.Option{
 		toolpreview.WithRefs(map[string]permission.Resource{
-			common.ParamCustomerID: permission.ResourceCustomer,
-			common.ParamCarrierID:  permission.ResourceCarrier,
+			toolparams.ParamCustomerID: permission.ResourceCustomer,
+			toolparams.ParamCarrierID:  permission.ResourceCarrier,
 		}),
 		toolpreview.Types(rateAgreementDates),
 	}
@@ -841,7 +857,7 @@ func agreementRecord(entity *rateagreement.RateAgreement) toolpreview.Record {
 		Resource: permission.ResourceRateAgreement,
 		ID:       entity.ID,
 		Label:    entity.Code + " " + entity.Name,
-		Version:  common.PinnedVersion(entity.Version),
+		Version:  changepreview.PinnedVersion(entity.Version),
 	}
 }
 
@@ -854,22 +870,22 @@ func agreementResult(
 		Kind:   rateAgreementKind,
 		Name:   entity.Code,
 		IDs:    map[string]string{paramRateAgreementID: entity.ID.String()},
-		Record: common.RecordOf(rateAgreementRecordEntity, entity.ID),
+		Record: changepreview.RecordOf(rateAgreementRecordEntity, entity.ID),
 	}
 }
 
-func rateDraftSpec(spec *common.ReceivableSpec) *common.ReceivableSpec {
+func rateDraftSpec(spec *toolspec.ReceivableSpec) *toolspec.ReceivableSpec {
 	spec.Resource = permission.ResourceRateAgreement
 	spec.Artifact = rateAgreementRecordEntity
 	spec.TaintHold = rateDraftTaintHold
 
-	return common.FuelInternalSpec(spec)
+	return toolspec.FuelInternalSpec(spec)
 }
 
-func rateMoneySpec(spec *common.ReceivableSpec) *common.ReceivableSpec {
+func rateMoneySpec(spec *toolspec.ReceivableSpec) *toolspec.ReceivableSpec {
 	spec.Resource = permission.ResourceRateAgreement
 
-	return common.LedgerMoneySpec(spec)
+	return journalpreview.LedgerMoneySpec(spec)
 }
 
 func loadAgreement(
@@ -894,7 +910,7 @@ func (d agreementDraft) Build(
 	lanes laneReader,
 ) (*rateagreement.RateAgreement, error) {
 	values := d.params.Params
-	party, err := common.RequireEnum(values, paramPartyType, partyTypes.Values)
+	party, err := toolparams.RequireEnum(values, paramPartyType, partyTypes.Values)
 	if err != nil {
 		return nil, err
 	}
@@ -905,11 +921,11 @@ func (d agreementDraft) Build(
 		AgreementType:  rateagreement.AgreementTypeContract,
 		Currency:       "USD",
 	}
-	partyKey := common.ParamCustomerID
+	partyKey := toolparams.ParamCustomerID
 	if party == rateagreement.PartyTypeCarrier {
-		partyKey = common.ParamCarrierID
+		partyKey = toolparams.ParamCarrierID
 	}
-	partyID, err := common.RequirePulid(values, partyKey)
+	partyID, err := toolparams.RequirePulid(values, partyKey)
 	if err != nil {
 		return nil, fmt.Errorf("a %s agreement names its %s: %w", party, partyKey, err)
 	}
@@ -936,14 +952,16 @@ func NewDraftRateAgreementTool(
 	properties := agreementHeaderProperties()
 	properties[paramPartyType] = agenttoolschema.Enum("Whether it prices what a customer is "+
 		"charged or what a carrier is paid.", partyTypes)
-	properties[common.ParamCustomerID] = agenttoolschema.RecordIDText(permission.ResourceCustomer,
-		"The customer, from customer_list, for a Customer agreement.")
-	properties[common.ParamCarrierID] = agenttoolschema.RecordIDText(permission.ResourceCarrier,
+	properties[toolparams.ParamCustomerID] = agenttoolschema.RecordIDText(
+		permission.ResourceCustomer,
+		"The customer, from customer_list, for a Customer agreement.",
+	)
+	properties[toolparams.ParamCarrierID] = agenttoolschema.RecordIDText(permission.ResourceCarrier,
 		"The carrier, from carrier_list, for a Carrier agreement.")
 	properties[paramLanes] = laneProperty(false)
 	lanes := laneReader{states: states}
 
-	return common.NewReportingReceivableTool(rateDraftSpec(&common.ReceivableSpec{
+	return toolspec.NewReportingReceivableTool(rateDraftSpec(&toolspec.ReceivableSpec{
 		Name: "rate_create_agreement",
 		Description: "Draft a rate agreement with a customer or a carrier from a rate sheet " +
 			"or a quote the person agreed: its code, name, dates, currency and lanes. It is " +
@@ -955,10 +973,10 @@ func NewDraftRateAgreementTool(
 			"approves it; rate_archive_agreement retires it.",
 		Properties: properties,
 		Required: []string{
-			paramPartyType, paramAgreementCode, paramAgreementName, common.ParamEffectiveFrom,
+			paramPartyType, paramAgreementCode, paramAgreementName, toolparams.ParamEffectiveFrom,
 		},
 		SearchTerms: []string{"tariff", "rate sheet", "quote", "pricing"},
-	}), common.ReceivablePlan[agreementDraft, *rateagreement.RateAgreement]{
+	}), toolspec.ReceivablePlan[agreementDraft, *rateagreement.RateAgreement]{
 		Request: func(params *agenttoolports.ToolExecuteParams) (agreementDraft, error) {
 			return agreementDraft{params: params}, nil
 		},
@@ -991,8 +1009,13 @@ func NewDraftRateAgreementTool(
 			return toolpreview.Build(fmt.Sprintf(
 				"Would draft the %s rate agreement %s with %s from %s; it prices nothing until "+
 					"it is approved.",
-				strings.ToLower(string(planned.PartyType)), planned.Code,
-				common.CountOf(len(planned.Rules), "lane"), common.DayLabel(planned.EffectiveFrom),
+				strings.ToLower(string(planned.PartyType)),
+				planned.Code,
+				changepreview.CountOf(
+					len(planned.Rules),
+					"lane",
+				),
+				changepreview.DayLabel(planned.EffectiveFrom),
 			), change), nil
 		},
 		Run: func(
@@ -1030,7 +1053,7 @@ func (r agreementRevision) Build(
 	lanes laneReader,
 	params *agenttoolports.ToolExecuteParams,
 ) (*rateagreement.RateAgreement, error) {
-	stored, err := loadAgreement(ctx, agreements, common.TenantFrom(*params), r.id)
+	stored, err := loadAgreement(ctx, agreements, toolparams.TenantFrom(*params), r.id)
 	if err != nil {
 		return nil, err
 	}
@@ -1061,7 +1084,7 @@ func NewReviseRateAgreementDraftTool(
 	properties[paramLanes] = laneProperty(true)
 	lanes := laneReader{states: states}
 
-	return common.NewReportingReceivableTool(rateDraftSpec(&common.ReceivableSpec{
+	return toolspec.NewReportingReceivableTool(rateDraftSpec(&toolspec.ReceivableSpec{
 		Name: "rate_update_agreement_draft",
 		Recipe: []string{
 			"rate_list_agreements",
@@ -1079,9 +1102,9 @@ func NewReviseRateAgreementDraftTool(
 		Properties: properties,
 		Required:   []string{paramRateAgreementID},
 		Target:     targetRateAgreement,
-	}), common.ReceivablePlan[agreementRevision, *rateagreementservice.UpdatePlan]{
+	}), toolspec.ReceivablePlan[agreementRevision, *rateagreementservice.UpdatePlan]{
 		Request: func(params *agenttoolports.ToolExecuteParams) (agreementRevision, error) {
-			id, err := common.RequirePulid(params.Params, paramRateAgreementID)
+			id, err := toolparams.RequirePulid(params.Params, paramRateAgreementID)
 			if err != nil {
 				return agreementRevision{}, err
 			}
@@ -1130,8 +1153,8 @@ func NewReviseRateAgreementDraftTool(
 				"Would revise the draft rate agreement %s: %s replaced or dropped and %s "+
 					"added.",
 				plan.Before.Code,
-				common.CountOf(len(plan.SupersededIDs), "lane"),
-				common.CountOf(len(plan.Inserts), "lane"),
+				changepreview.CountOf(len(plan.SupersededIDs), "lane"),
+				changepreview.CountOf(len(plan.Inserts), "lane"),
 			), change), nil
 		},
 		Run: func(
@@ -1154,7 +1177,7 @@ func NewReviseRateAgreementDraftTool(
 }
 
 func NewDuplicateRateAgreementTool(agreements RateAgreementKeeper) agenttoolports.AgentTool {
-	return common.NewReportingReceivableTool(rateDraftSpec(&common.ReceivableSpec{
+	return toolspec.NewReportingReceivableTool(rateDraftSpec(&toolspec.ReceivableSpec{
 		Name: "rate_duplicate_agreement",
 		Description: "Copy a rate agreement with its lanes, weight breaks, accessorials and " +
 			"fuel terms into a new draft, to start a renewal. The copy has none of the " +
@@ -1165,12 +1188,12 @@ func NewDuplicateRateAgreementTool(agreements RateAgreementKeeper) agenttoolport
 			"until a person approves it.",
 		Properties: map[string]any{
 			paramRateAgreementID: rateAgreementIDProperty(),
-			paramAgreementCode: common.StringProperty(
+			paramAgreementCode: toolparams.StringProperty(
 				"The copy's code. Defaults to the original's "+
 					"with -COPY.",
 				maxAgreementCode,
 			),
-			paramAgreementName: common.StringProperty(
+			paramAgreementName: toolparams.StringProperty(
 				"The copy's name. Defaults to the original's "+
 					"with (Copy).",
 				maxAgreementName,
@@ -1178,25 +1201,25 @@ func NewDuplicateRateAgreementTool(agreements RateAgreementKeeper) agenttoolport
 		},
 		Required: []string{paramRateAgreementID},
 		Target:   targetRateAgreement,
-	}), common.ReceivablePlan[*rateagreementservice.DuplicateRateAgreementRequest, *rateagreementservice.DuplicatePlan]{
+	}), toolspec.ReceivablePlan[*rateagreementservice.DuplicateRateAgreementRequest, *rateagreementservice.DuplicatePlan]{
 		Request: func(
 			params *agenttoolports.ToolExecuteParams,
 		) (*rateagreementservice.DuplicateRateAgreementRequest, error) {
-			id, err := common.RequirePulid(params.Params, paramRateAgreementID)
+			id, err := toolparams.RequirePulid(params.Params, paramRateAgreementID)
 			if err != nil {
 				return nil, err
 			}
-			code, err := common.BoundedText(params.Params, paramAgreementCode, maxAgreementCode)
+			code, err := toolparams.BoundedText(params.Params, paramAgreementCode, maxAgreementCode)
 			if err != nil {
 				return nil, err
 			}
-			name, err := common.BoundedText(params.Params, paramAgreementName, maxAgreementName)
+			name, err := toolparams.BoundedText(params.Params, paramAgreementName, maxAgreementName)
 			if err != nil {
 				return nil, err
 			}
 
 			return &rateagreementservice.DuplicateRateAgreementRequest{
-				TenantInfo:      common.TenantFrom(*params),
+				TenantInfo:      toolparams.TenantFrom(*params),
 				RateAgreementID: id,
 				Code:            code,
 				Name:            name,
@@ -1228,7 +1251,9 @@ func NewDuplicateRateAgreementTool(agreements RateAgreementKeeper) agenttoolport
 
 			return toolpreview.Build(fmt.Sprintf(
 				"Would copy the rate agreement %s into the draft %s with %s.",
-				plan.Original.Code, plan.Copy.Code, common.CountOf(len(plan.Copy.Rules), "lane"),
+				plan.Original.Code,
+				plan.Copy.Code,
+				changepreview.CountOf(len(plan.Copy.Rules), "lane"),
 			), change), nil
 		},
 		Run: func(
@@ -1259,7 +1284,7 @@ type AgreementReviewStep struct {
 	outcome     string
 }
 
-func (s *AgreementReviewStep) spec() *common.ReceivableSpec {
+func (s *AgreementReviewStep) spec() *toolspec.ReceivableSpec {
 	properties := map[string]any{paramRateAgreementID: rateAgreementIDProperty()}
 	required := []string{paramRateAgreementID}
 	comment := "A note on the review for whoever reads the agreement next."
@@ -1267,9 +1292,9 @@ func (s *AgreementReviewStep) spec() *common.ReceivableSpec {
 		comment = "Why, in a sentence the agreement's owner can act on."
 		required = append(required, paramReviewComment)
 	}
-	properties[paramReviewComment] = common.StringProperty(comment, maxReviewComment)
+	properties[paramReviewComment] = toolparams.StringProperty(comment, maxReviewComment)
 
-	spec := &common.ReceivableSpec{
+	spec := &toolspec.ReceivableSpec{
 		Name:        s.name,
 		Recipe:      s.recipe,
 		Description: s.description,
@@ -1286,19 +1311,19 @@ func (s *AgreementReviewStep) spec() *common.ReceivableSpec {
 	spec.Resource = permission.ResourceRateAgreement
 	spec.MaxTier = agent.TierPropose
 
-	return common.FuelInternalSpec(spec)
+	return toolspec.FuelInternalSpec(spec)
 }
 
 func (s *AgreementReviewStep) request(
 	params *agenttoolports.ToolExecuteParams,
 ) (*rateagreementservice.ApprovalActionRequest, error) {
-	id, err := common.RequirePulid(params.Params, paramRateAgreementID)
+	id, err := toolparams.RequirePulid(params.Params, paramRateAgreementID)
 	if err != nil {
 		return nil, err
 	}
-	read := common.BoundedText
+	read := toolparams.BoundedText
 	if s.needsReason {
-		read = common.RequireBoundedText
+		read = toolparams.RequireBoundedText
 	}
 	comment, err := read(params.Params, paramReviewComment, maxReviewComment)
 	if err != nil {
@@ -1306,7 +1331,7 @@ func (s *AgreementReviewStep) request(
 	}
 
 	return &rateagreementservice.ApprovalActionRequest{
-		TenantInfo: common.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(*params),
 		EntityID:   id,
 		Comment:    comment,
 	}, nil
@@ -1316,9 +1341,9 @@ func NewAgreementReviewTool(
 	agreements RateAgreementKeeper,
 	step *AgreementReviewStep,
 ) agenttoolports.AgentTool {
-	return common.NewReceivableTool(
+	return toolspec.NewReceivableTool(
 		step.spec(),
-		common.ReceivablePlan[*rateagreementservice.ApprovalActionRequest, *rateagreementservice.AgreementChange]{
+		toolspec.ReceivablePlan[*rateagreementservice.ApprovalActionRequest, *rateagreementservice.AgreementChange]{
 			Request: step.request,
 			Plan: func(
 				ctx context.Context,
@@ -1341,7 +1366,7 @@ func NewAgreementReviewTool(
 					agreementRecord(plan.Before),
 					agreementViewOf(plan.Before),
 					agreementViewOf(plan.After),
-					toolpreview.Only(common.FieldStatus, "reviewComment"),
+					toolpreview.Only(changepreview.FieldStatus, "reviewComment"),
 				)
 				if err != nil {
 					return nil, err
@@ -1457,7 +1482,7 @@ func (a *ruleAmendment) request(
 	lanes laneReader,
 	params *agenttoolports.ToolExecuteParams,
 ) (*rateagreementports.AmendRateAgreementRulesRequest, error) {
-	agreement, err := loadAgreement(ctx, agreements, common.TenantFrom(*params), a.id)
+	agreement, err := loadAgreement(ctx, agreements, toolparams.TenantFrom(*params), a.id)
 	if err != nil {
 		return nil, err
 	}
@@ -1476,7 +1501,7 @@ func (a *ruleAmendment) request(
 	}
 
 	return &rateagreementports.AmendRateAgreementRulesRequest{
-		TenantInfo:      common.TenantFrom(*params),
+		TenantInfo:      toolparams.TenantFrom(*params),
 		RateAgreementID: agreement.ID,
 		EffectiveFrom:   a.from,
 		SupersededIDs:   a.superseded,
@@ -1490,7 +1515,7 @@ func NewAmendRateAgreementRulesTool(
 ) agenttoolports.AgentTool {
 	lanes := laneReader{states: states}
 
-	return common.NewReceivableTool(rateMoneySpec(&common.ReceivableSpec{
+	return toolspec.NewReceivableTool(rateMoneySpec(&toolspec.ReceivableSpec{
 		Name: "rate_amend_agreement_rules",
 		Description: "Propose changing an active rate agreement's lanes from a day: close out " +
 			"the lanes it replaces and add their successors, keeping the old rates in history. " +
@@ -1501,28 +1526,28 @@ func NewAmendRateAgreementRulesTool(
 			"a live contract.",
 		Properties: map[string]any{
 			paramRateAgreementID: rateAgreementIDProperty(),
-			common.ParamEffectiveFrom: agenttoolschema.Date(
+			toolparams.ParamEffectiveFrom: agenttoolschema.Date(
 				"The first day the new lanes price shipments.",
 			),
 			paramSupersededRuleIDs: agenttoolschema.KindIDs("The lanes this closes out, by ruleId "+
 				"from rate_get_agreement.", maxAgreementLanes, permission.KindRateAgreementLane),
 			paramLanes: laneProperty(false),
 		},
-		Required: []string{paramRateAgreementID, common.ParamEffectiveFrom},
+		Required: []string{paramRateAgreementID, toolparams.ParamEffectiveFrom},
 		Target:   targetRateAgreement,
-	}), common.ReceivablePlan[*ruleAmendment, *rateagreementservice.AmendmentPlan]{
+	}), toolspec.ReceivablePlan[*ruleAmendment, *rateagreementservice.AmendmentPlan]{
 		Request: func(params *agenttoolports.ToolExecuteParams) (*ruleAmendment, error) {
-			id, err := common.RequirePulid(params.Params, paramRateAgreementID)
+			id, err := toolparams.RequirePulid(params.Params, paramRateAgreementID)
 			if err != nil {
 				return nil, err
 			}
-			from, err := common.RequireDay(params.Params, common.ParamEffectiveFrom)
+			from, err := toolparams.RequireDay(params.Params, toolparams.ParamEffectiveFrom)
 			if err != nil {
 				return nil, err
 			}
 			amendment := &ruleAmendment{id: id, from: from, values: params.Params}
 			if _, given := params.Params[paramSupersededRuleIDs]; given {
-				if amendment.superseded, err = common.RequirePulidSlice(
+				if amendment.superseded, err = toolparams.RequirePulidSlice(
 					params.Params, paramSupersededRuleIDs, maxAgreementLanes,
 				); err != nil {
 					return nil, err
@@ -1596,24 +1621,29 @@ func renderRuleAmendment(
 	return toolpreview.Build(fmt.Sprintf(
 		"Would amend the rate agreement %s from %s: close out %s and add %s. Shipments from "+
 			"that day are charged at the new rates.",
-		plan.Agreement.Code, common.DayLabel(plan.EffectiveFrom),
-		common.CountOf(len(plan.Superseded), "lane"), common.CountOf(len(plan.Rules), "lane"),
+		plan.Agreement.Code,
+		changepreview.DayLabel(plan.EffectiveFrom),
+		changepreview.CountOf(
+			len(plan.Superseded),
+			"lane",
+		),
+		changepreview.CountOf(len(plan.Rules), "lane"),
 	), change), nil
 }
 
 func rateIncreaseRequestFrom(
 	params *agenttoolports.ToolExecuteParams,
 ) (*rateagreementservice.RateIncreaseRequest, error) {
-	req := &rateagreementservice.RateIncreaseRequest{TenantInfo: common.TenantFrom(*params)}
+	req := &rateagreementservice.RateIncreaseRequest{TenantInfo: toolparams.TenantFrom(*params)}
 	var err error
-	if req.EffectiveFrom, err = common.RequireDay(
+	if req.EffectiveFrom, err = toolparams.RequireDay(
 		params.Params,
-		common.ParamEffectiveFrom,
+		toolparams.ParamEffectiveFrom,
 	); err != nil {
 		return nil, err
 	}
 	if _, given := params.Params[paramAgreementIDs]; given {
-		if req.AgreementIDs, err = common.RequirePulidSlice(
+		if req.AgreementIDs, err = toolparams.RequirePulidSlice(
 			params.Params, paramAgreementIDs, maxIncreaseScope,
 		); err != nil {
 			return nil, err
@@ -1624,7 +1654,7 @@ func rateIncreaseRequestFrom(
 			return nil, err
 		}
 	}
-	value, present, err := common.OptionalDecimal(params.Params, paramPercentChange)
+	value, present, err := toolparams.OptionalDecimal(params.Params, paramPercentChange)
 	if err != nil {
 		return nil, err
 	}
@@ -1635,7 +1665,11 @@ func rateIncreaseRequestFrom(
 
 // rateIncreaseScopes choose the agreements a rate increase moves when none
 // are named by id.
-var rateIncreaseScopes = []string{common.ParamCustomerID, common.ParamCarrierID, paramPartyType}
+var rateIncreaseScopes = []string{
+	toolparams.ParamCustomerID,
+	toolparams.ParamCarrierID,
+	paramPartyType,
+}
 
 // readRateIncreaseScope reads the customer, carrier and party type that choose
 // the agreements when no agreementIds are named. With agreementIds they are
@@ -1648,13 +1682,13 @@ func readRateIncreaseScope(
 	req *rateagreementservice.RateIncreaseRequest,
 ) error {
 	var err error
-	if req.CustomerID, err = common.OptionalPulidParam(params, common.ParamCustomerID); err != nil {
+	if req.CustomerID, err = toolparams.OptionalPulidParam(params, toolparams.ParamCustomerID); err != nil {
 		return err
 	}
-	if req.CarrierID, err = common.OptionalPulidParam(params, common.ParamCarrierID); err != nil {
+	if req.CarrierID, err = toolparams.OptionalPulidParam(params, toolparams.ParamCarrierID); err != nil {
 		return err
 	}
-	party, given, err := common.OptionalEnum(params, paramPartyType, partyTypes.Values)
+	party, given, err := toolparams.OptionalEnum(params, paramPartyType, partyTypes.Values)
 	if err != nil {
 		return err
 	}
@@ -1669,7 +1703,7 @@ func readRateIncreaseScope(
 // agreements without the scopes it set aside, so the person approving reads
 // only the agreements that move.
 type RateIncreaseTool struct {
-	*common.ReceivableTool[*rateagreementservice.RateIncreaseRequest, *rateagreementservice.RateIncreasePlan]
+	*toolspec.ReceivableTool[*rateagreementservice.RateIncreaseRequest, *rateagreementservice.RateIncreasePlan]
 }
 
 func (t RateIncreaseTool) ResolveSelection(
@@ -1704,26 +1738,26 @@ func renderRateIncrease(
 		samples = append(samples, line.AgreementCode+" "+label)
 	}
 	if more := len(plan.Lines) - len(samples); more > 0 {
-		samples = append(samples, common.CountOf(more, "more lane"))
+		samples = append(samples, changepreview.CountOf(more, "more lane"))
 	}
 	summary := fmt.Sprintf(
 		"Would move the money inputs of %s on %s by %s from %s: %s.",
-		common.CountOf(len(plan.Lines), "lane"),
-		common.CountOf(plan.AgreementCount, rateAgreementKind),
+		changepreview.CountOf(len(plan.Lines), "lane"),
+		changepreview.CountOf(plan.AgreementCount, rateAgreementKind),
 		rateAdjustmentLabel(req.Adjustment),
-		common.DayLabel(plan.EffectiveFrom),
+		changepreview.DayLabel(plan.EffectiveFrom),
 		strings.Join(samples, "; "),
 	)
 	if plan.SkippedNoMoney > 0 {
 		summary += fmt.Sprintf(" %s with no money inputs are left as they are.",
-			common.CountOf(plan.SkippedNoMoney, "lane"))
+			changepreview.CountOf(plan.SkippedNoMoney, "lane"))
 	}
 
 	return toolpreview.Build(summary), nil
 }
 
 func NewApplyRateIncreaseTool(agreements RateAgreementKeeper) agenttoolports.AgentTool {
-	return RateIncreaseTool{common.NewReceivableTool(rateMoneySpec(&common.ReceivableSpec{
+	return RateIncreaseTool{toolspec.NewReceivableTool(rateMoneySpec(&toolspec.ReceivableSpec{
 		Name: "rate_apply_increase",
 		Description: "Propose a general rate increase or decrease on agreements' lanes, by a " +
 			"percent, from a day. It scales every money input of every lane on the named " +
@@ -1734,7 +1768,7 @@ func NewApplyRateIncreaseTool(agreements RateAgreementKeeper) agenttoolports.Age
 		Rationale: "Changes the rates many agreements charge customers or pay carriers; " +
 			"only a person applies a rate increase.",
 		Properties: map[string]any{
-			common.ParamEffectiveFrom: agenttoolschema.Date(
+			toolparams.ParamEffectiveFrom: agenttoolschema.Date(
 				"The first day the new rates price shipments.",
 			),
 			paramAgreementIDs: agenttoolschema.RecordIDs(
@@ -1744,22 +1778,22 @@ func NewApplyRateIncreaseTool(agreements RateAgreementKeeper) agenttoolports.Age
 					"are ignored.",
 				maxIncreaseScope,
 			),
-			common.ParamCustomerID: agenttoolschema.RecordIDText(permission.ResourceCustomer,
+			toolparams.ParamCustomerID: agenttoolschema.RecordIDText(permission.ResourceCustomer,
 				"Every active agreement with this customer, from customer_list. Ignored "+
 					"when agreementIds are named."),
-			common.ParamCarrierID: agenttoolschema.RecordIDText(permission.ResourceCarrier,
+			toolparams.ParamCarrierID: agenttoolschema.RecordIDText(permission.ResourceCarrier,
 				"Every active agreement with this carrier, from carrier_list. Ignored "+
 					"when agreementIds are named."),
 			paramPartyType: agenttoolschema.Enum("Every active agreement of this party type, "+
 				"when no agreements, customer or carrier is named.", partyTypes),
-			paramPercentChange: common.StringProperty(
+			paramPercentChange: toolparams.StringProperty(
 				"The change in percent, such as 3.5 or -2.",
 				0,
 			),
 		},
-		Required:    []string{common.ParamEffectiveFrom, paramPercentChange},
+		Required:    []string{toolparams.ParamEffectiveFrom, paramPercentChange},
 		SearchTerms: []string{"gri", "general rate increase", "raise rates", "price increase"},
-	}), common.ReceivablePlan[*rateagreementservice.RateIncreaseRequest, *rateagreementservice.RateIncreasePlan]{
+	}), toolspec.ReceivablePlan[*rateagreementservice.RateIncreaseRequest, *rateagreementservice.RateIncreasePlan]{
 		Request: rateIncreaseRequestFrom,
 		Plan: func(
 			ctx context.Context,

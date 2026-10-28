@@ -7,8 +7,10 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/detentionpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/operationstools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/outboundpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
@@ -296,7 +298,7 @@ func TestEmailCustomer_IsAProposalThatNeedsAnIdempotencyKey(t *testing.T) {
 		"body":       "Body.",
 	}))
 
-	require.ErrorIs(t, err, common.ErrMissingIdempotencyKey)
+	require.ErrorIs(t, err, toolguard.ErrMissingIdempotencyKey)
 	assert.Nil(t, mailer.Sent)
 }
 
@@ -393,7 +395,7 @@ func TestWaiveDetention_GivesUpRevenueOnlyOnceAPersonApproves(t *testing.T) {
 		"reason":       "CarrierFault",
 		"note":         "Our truck arrived two hours late.",
 	}))
-	require.ErrorIs(t, err, common.ErrApprovalNeedsAPerson)
+	require.ErrorIs(t, err, detentionpreview.ErrApprovalNeedsAPerson)
 	assert.Nil(t, det.Waived)
 
 	policy := tool.Policy()
@@ -418,7 +420,7 @@ func TestMonitoringActionTools_RejectAMismatchedActor(t *testing.T) {
 		require.ErrorIs(
 			t,
 			candidate.Execute(t.Context(), params),
-			common.ErrTenantMismatch,
+			toolguard.ErrTenantMismatch,
 			candidate.Name(),
 		)
 	}
@@ -488,7 +490,7 @@ func TestEmailCustomer_WillNotTellTheSameCustomerTwiceWithinTheHour(t *testing.T
 	params.IdempotencyKey = "idem-2"
 
 	err := tool.Execute(t.Context(), params)
-	require.ErrorIs(t, err, common.ErrCustomerAlreadyTold)
+	require.ErrorIs(t, err, outboundpreview.ErrCustomerAlreadyTold)
 	assert.Nil(t, mailer.Sent, "nothing may go out once the customer has been told")
 	assert.Nil(t, comments.Created)
 }

@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/outboundpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -43,7 +43,11 @@ func TestEmailCustomerPreview_IsTheEmailExecuteSends(t *testing.T) {
 	agenttoolstest.AssertMessageIsTheSend(t, send.Message, mailer.Sent)
 	assert.Equal(t, []string{"ops@acme.example", "ap@acme.example"}, send.Message.To)
 	require.NotNil(t, comments.Created)
-	assert.Equal(t, comments.Created.Comment, agenttoolstest.FindField(t, recorded, "comment").After)
+	assert.Equal(
+		t,
+		comments.Created.Comment,
+		agenttoolstest.FindField(t, recorded, "comment").After,
+	)
 }
 
 func TestEmailCustomerPreview_SaysNothingGoesToACustomerAlreadyTold(t *testing.T) {
@@ -70,7 +74,7 @@ func TestEmailCustomerPreview_SaysNothingGoesToACustomerAlreadyTold(t *testing.T
 	assert.Equal(t, agent.PreviewWarningAlreadyToldCustomer, preview.Warnings[0].Code)
 	assert.Nil(t, renderer.Req, "nothing is rendered for a send that will not happen")
 
-	require.ErrorIs(t, tool.Execute(t.Context(), params), common.ErrCustomerAlreadyTold)
+	require.ErrorIs(t, tool.Execute(t.Context(), params), outboundpreview.ErrCustomerAlreadyTold)
 	assert.Nil(t, mailer.Sent)
 }
 

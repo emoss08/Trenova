@@ -6,7 +6,8 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -269,7 +270,7 @@ func TestAssignRequiredWorkerTraining_CountsTheMissingCourses(t *testing.T) {
 	training := newFakeTraining()
 	tool := newAssignRequiredWorkerTrainingTool(training)
 	params := agenttoolstest.ExecuteParams(
-		map[string]any{common.ParamWorkerID: training.record.WorkerID.String()},
+		map[string]any{toolparams.ParamWorkerID: training.record.WorkerID.String()},
 	)
 
 	preview := agenttoolstest.PreviewWithoutWrites(
@@ -310,8 +311,8 @@ func TestRecordTrainingCompletion_SaysWhetherItPassed(t *testing.T) {
 		training.completed.CompletedAt)
 
 	direct := agenttoolstest.ExecuteParams(map[string]any{
-		common.ParamWorkerID: training.record.WorkerID.String(),
-		paramCourseID:        training.course.ID.String(),
+		toolparams.ParamWorkerID: training.record.WorkerID.String(),
+		paramCourseID:            training.course.ID.String(),
 	})
 	preview = agenttoolstest.PreviewWithoutWrites(
 		t,
@@ -329,7 +330,7 @@ func TestRecordTrainingCompletion_SaysWhetherItPassed(t *testing.T) {
 	require.Error(t, tool.(agenttoolports.ToolValidator).Validate(
 		t.Context(),
 		agenttoolstest.ExecuteParams(
-			map[string]any{common.ParamWorkerID: training.record.WorkerID.String()},
+			map[string]any{toolparams.ParamWorkerID: training.record.WorkerID.String()},
 		),
 	))
 }
@@ -346,9 +347,9 @@ func TestCloseWorkerTraining_WaiveNeedsAReason(t *testing.T) {
 		})))
 
 	require.NoError(t, tool.Execute(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
-		paramTrainingID:    training.record.ID.String(),
-		paramTrainingClose: "Waive",
-		common.FieldReason: "Equivalent certificate on file",
+		paramTrainingID:           training.record.ID.String(),
+		paramTrainingClose:        "Waive",
+		changepreview.FieldReason: "Equivalent certificate on file",
 	})))
 	require.NotNil(t, training.waived)
 	assert.Nil(t, training.cancelled)

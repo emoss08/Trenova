@@ -7,7 +7,9 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/glaccountports"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -39,7 +41,7 @@ func remittanceRecord(rem *factoring.Remittance) toolpreview.Record {
 		Resource: permission.ResourceFactoringRemittance,
 		ID:       rem.ID,
 		Label:    label,
-		Version:  common.PreviewVersion(rem.Version),
+		Version:  changepreview.PreviewVersion(rem.Version),
 	}
 }
 
@@ -65,7 +67,7 @@ func remittanceLineRecord(
 		Resource: permission.ResourceFactoringRemittance,
 		ID:       rem.ID,
 		Label:    "Row " + strconv.Itoa(line.RowNumber) + " of " + remittanceRecord(rem).Label,
-		Version:  common.PreviewVersion(rem.Version),
+		Version:  changepreview.PreviewVersion(rem.Version),
 	}
 }
 
@@ -99,16 +101,16 @@ func remittanceVersionRequest(
 	params *agenttoolports.ToolExecuteParams,
 	key string,
 ) (*factoringremittanceports.RemittanceVersionRequest, error) {
-	id, err := common.RequirePulid(params.Params, key)
+	id, err := toolparams.RequirePulid(params.Params, key)
 	if err != nil {
 		return nil, err
 	}
-	version, err := common.RequireIntInRange(params.Params, paramVersion, 0, maxVersion)
+	version, err := toolparams.RequireIntInRange(params.Params, paramVersion, 0, maxVersion)
 	if err != nil {
 		return nil, err
 	}
 	return &factoringremittanceports.RemittanceVersionRequest{
-		TenantInfo: common.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(*params),
 		ID:         id,
 		Version:    int64(version),
 	}, nil
@@ -163,7 +165,7 @@ func (t *ResolveFactoringRemittanceLineTool) ParamSchema() map[string]any {
 			"What the line records, for SetKind.",
 			agenttoolschema.FactoringRemittanceLineKinds,
 		),
-		paramReason: common.StringProperty(
+		paramReason: toolparams.StringProperty(
 			"Why the line is not booked, for Ignore.",
 			maxRemittanceReason,
 		),
@@ -185,25 +187,25 @@ func (t *ResolveFactoringRemittanceLineTool) Policy() agenttoolports.ToolPolicy 
 func (t *ResolveFactoringRemittanceLineTool) Target(
 	params map[string]any,
 ) (agenttoolports.ToolTarget, bool) {
-	return common.TargetOf(params, paramRemittanceID, permission.ResourceFactoringRemittance)
+	return toolparams.TargetOf(params, paramRemittanceID, permission.ResourceFactoringRemittance)
 }
 
 func (t *ResolveFactoringRemittanceLineTool) request(
 	params *agenttoolports.ToolExecuteParams,
 ) (*factoringremittanceports.UpdateRemittanceLineRequest, error) {
-	if err := common.GuardExecute(t, *params); err != nil {
+	if err := toolguard.GuardExecute(t, *params); err != nil {
 		return nil, err
 	}
 	base, err := remittanceVersionRequest(params, paramRemittanceID)
 	if err != nil {
 		return nil, err
 	}
-	lineID, err := common.RequirePulid(params.Params, paramLineID)
+	lineID, err := toolparams.RequirePulid(params.Params, paramLineID)
 	if err != nil {
 		return nil, err
 	}
 	action := factoringremittanceports.RemittanceLineAction(
-		strings.TrimSpace(common.OptionalString(params.Params, paramLineAction)),
+		strings.TrimSpace(toolparams.OptionalString(params.Params, paramLineAction)),
 	)
 	if !action.IsValid() {
 		return nil, fmt.Errorf(
@@ -218,15 +220,15 @@ func (t *ResolveFactoringRemittanceLineTool) request(
 		LineID:       lineID,
 		Action:       action,
 		Kind: factoring.RemittanceLineKind(
-			strings.TrimSpace(common.OptionalString(params.Params, paramLineKind)),
+			strings.TrimSpace(toolparams.OptionalString(params.Params, paramLineKind)),
 		),
 	}
 	if action == factoringremittanceports.RemittanceLineActionMatch {
-		if req.ItemID, err = common.RequirePulid(params.Params, paramItemID); err != nil {
+		if req.ItemID, err = toolparams.RequirePulid(params.Params, paramItemID); err != nil {
 			return nil, err
 		}
 	}
-	reason, err := common.OptionalBoundedText(params.Params, paramReason, maxRemittanceReason)
+	reason, err := toolparams.OptionalBoundedText(params.Params, paramReason, maxRemittanceReason)
 	if err != nil {
 		return nil, err
 	}
@@ -347,13 +349,13 @@ func (t *RematchFactoringRemittanceTool) Policy() agenttoolports.ToolPolicy {
 func (t *RematchFactoringRemittanceTool) Target(
 	params map[string]any,
 ) (agenttoolports.ToolTarget, bool) {
-	return common.TargetOf(params, paramRemittanceID2, permission.ResourceFactoringRemittance)
+	return toolparams.TargetOf(params, paramRemittanceID2, permission.ResourceFactoringRemittance)
 }
 
 func (t *RematchFactoringRemittanceTool) request(
 	params *agenttoolports.ToolExecuteParams,
 ) (*factoringremittanceports.RemittanceVersionRequest, error) {
-	if err := common.GuardExecute(t, *params); err != nil {
+	if err := toolguard.GuardExecute(t, *params); err != nil {
 		return nil, err
 	}
 	return remittanceVersionRequest(params, paramRemittanceID2)
@@ -456,13 +458,13 @@ func (t *ApplyFactoringRemittanceTool) Policy() agenttoolports.ToolPolicy {
 func (t *ApplyFactoringRemittanceTool) Target(
 	params map[string]any,
 ) (agenttoolports.ToolTarget, bool) {
-	return common.TargetOf(params, paramRemittanceID2, permission.ResourceFactoringRemittance)
+	return toolparams.TargetOf(params, paramRemittanceID2, permission.ResourceFactoringRemittance)
 }
 
 func (t *ApplyFactoringRemittanceTool) request(
 	params *agenttoolports.ToolExecuteParams,
 ) (*factoringremittanceports.RemittanceVersionRequest, error) {
-	if err := common.GuardExecute(t, *params); err != nil {
+	if err := toolguard.GuardExecute(t, *params); err != nil {
 		return nil, err
 	}
 	return remittanceVersionRequest(params, paramRemittanceID2)
@@ -523,18 +525,18 @@ func (t *ApplyFactoringRemittanceTool) Preview(
 		"Would apply remittance %s: %s funded (advance %s, fee %s), %s rejected, %s released "+
 			"(%s) and %s charged back (%s), booking %s.",
 		remittanceRecord(plan.Remittance).Label,
-		common.CountOf(plan.FundedCount, "invoice"),
+		changepreview.CountOf(plan.FundedCount, "invoice"),
 		formatMinor(currency, plan.AdvanceMinor),
 		formatMinor(currency, plan.FeeMinor),
-		common.CountOf(plan.RejectedCount, "invoice"),
-		common.CountOf(plan.ReleasedCount, "reserve"),
+		changepreview.CountOf(plan.RejectedCount, "invoice"),
+		changepreview.CountOf(plan.ReleasedCount, "reserve"),
 		formatMinor(currency, plan.ReleasedMinor),
-		common.CountOf(plan.ChargebackCount, "invoice"),
+		changepreview.CountOf(plan.ChargebackCount, "invoice"),
 		formatMinor(currency, plan.ChargebackMinor),
-		common.CountOf(len(entries), "journal entry"),
+		changepreview.CountOf(len(entries), "journal entry"),
 	)}
 	if plan.LeftOpenCount > 0 {
-		sentences = append(sentences, common.CountOf(plan.LeftOpenCount, "line")+
+		sentences = append(sentences, changepreview.CountOf(plan.LeftOpenCount, "line")+
 			" still to resolve stay open.")
 	}
 	sentences = append(sentences, bookingSentences(movements)...)
@@ -571,7 +573,7 @@ func (t *DiscardFactoringRemittanceTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
 		paramRemittanceID2: remittanceIDParam(),
 		paramVersion:       remittanceVersionParam(),
-		paramReason: common.StringProperty(
+		paramReason: toolparams.StringProperty(
 			"Why the remittance is discarded.",
 			maxRemittanceReason,
 		),
@@ -591,20 +593,20 @@ func (t *DiscardFactoringRemittanceTool) Policy() agenttoolports.ToolPolicy {
 func (t *DiscardFactoringRemittanceTool) Target(
 	params map[string]any,
 ) (agenttoolports.ToolTarget, bool) {
-	return common.TargetOf(params, paramRemittanceID2, permission.ResourceFactoringRemittance)
+	return toolparams.TargetOf(params, paramRemittanceID2, permission.ResourceFactoringRemittance)
 }
 
 func (t *DiscardFactoringRemittanceTool) request(
 	params *agenttoolports.ToolExecuteParams,
 ) (*factoringremittanceports.DiscardRemittanceRequest, error) {
-	if err := common.GuardExecute(t, *params); err != nil {
+	if err := toolguard.GuardExecute(t, *params); err != nil {
 		return nil, err
 	}
 	base, err := remittanceVersionRequest(params, paramRemittanceID2)
 	if err != nil {
 		return nil, err
 	}
-	reason, err := common.RequireBoundedText(params.Params, paramReason, maxRemittanceReason)
+	reason, err := toolparams.RequireBoundedText(params.Params, paramReason, maxRemittanceReason)
 	if err != nil {
 		return nil, err
 	}

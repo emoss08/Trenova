@@ -6,7 +6,9 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/billingqueuepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/invoicepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
@@ -45,10 +47,10 @@ func (t *PostInvoiceTool) Preview(
 	}
 
 	before := post.Before
-	label := common.InvoiceLabel(before)
+	label := invoicepreview.InvoiceLabel(before)
 	total := money.FormatMinor(before.TotalAmountMinor, before.CurrencyCode)
 	if post.Refused() {
-		return common.WarnWouldFail(toolpreview.Build(fmt.Sprintf(
+		return changepreview.WarnWouldFail(toolpreview.Build(fmt.Sprintf(
 			"Would post %s to %s for %s.", label, before.BillToName, total,
 		)), post.Refusal), nil
 	}
@@ -66,8 +68,8 @@ func (t *PostInvoiceTool) Preview(
 			Resource: permission.ResourceShipment,
 			ID:       leg.Before.ID,
 			Label:    leg.Before.ProNumber,
-			Version:  common.PinnedVersion(leg.Before.Version),
-		}, leg.Before, leg.After, toolpreview.Only(common.FieldStatus, "billedAt"),
+			Version:  changepreview.PinnedVersion(leg.Before.Version),
+		}, leg.Before, leg.After, toolpreview.Only(changepreview.FieldStatus, "billedAt"),
 			toolpreview.Volatile("billedAt"))
 		if changeErr != nil {
 			return nil, changeErr
@@ -76,10 +78,10 @@ func (t *PostInvoiceTool) Preview(
 	}
 	if post.QueueAfter != nil {
 		queueChange, changeErr := toolpreview.Changed(
-			common.QueueRecord(post.QueueBefore),
+			billingqueuepreview.QueueRecord(post.QueueBefore),
 			post.QueueBefore,
 			post.QueueAfter,
-			toolpreview.Only(common.FieldStatus),
+			toolpreview.Only(changepreview.FieldStatus),
 		)
 		if changeErr != nil {
 			return nil, changeErr
@@ -90,7 +92,7 @@ func (t *PostInvoiceTool) Preview(
 		journalChange, changeErr := journalEntryChange(
 			post.Journal,
 			post.Before.CurrencyCode,
-			"Journal entry for "+common.InvoiceLabel(post.Before),
+			"Journal entry for "+invoicepreview.InvoiceLabel(post.Before),
 		)
 		if changeErr != nil {
 			return nil, changeErr
@@ -105,9 +107,9 @@ func postedInvoiceChange(post *invoiceservice.PostPreview) (*agent.RecordChange,
 	change, err := toolpreview.Changed(toolpreview.Record{
 		Resource: permission.ResourceInvoice,
 		ID:       post.Before.ID,
-		Label:    common.InvoiceLabel(post.Before),
-		Version:  common.PinnedVersion(post.Before.Version),
-	}, post.Before, post.After, toolpreview.Only(common.FieldStatus, "postedAt"),
+		Label:    invoicepreview.InvoiceLabel(post.Before),
+		Version:  changepreview.PinnedVersion(post.Before.Version),
+	}, post.Before, post.After, toolpreview.Only(changepreview.FieldStatus, "postedAt"),
 		toolpreview.Volatile("postedAt"))
 	if err != nil {
 		return nil, err
@@ -116,12 +118,12 @@ func postedInvoiceChange(post *invoiceservice.PostPreview) (*agent.RecordChange,
 	toolpreview.AttachMoney(change, toolpreview.MoneyBlock(
 		post.Before.CurrencyCode,
 		agent.MoneyLine{
-			Label: common.MoneyLineFreight,
-			After: common.KnownAmount(post.Before.SubtotalAmount),
+			Label: billingqueuepreview.MoneyLineFreight,
+			After: changepreview.KnownAmount(post.Before.SubtotalAmount),
 		},
 		agent.MoneyLine{
-			Label: common.MoneyLineAccessorials,
-			After: common.KnownAmount(post.Before.OtherAmount),
+			Label: billingqueuepreview.MoneyLineAccessorials,
+			After: changepreview.KnownAmount(post.Before.OtherAmount),
 		},
 	), toolpreview.SensitiveAs("totalAmount", "subtotalAmount", "otherAmount"))
 
@@ -149,7 +151,7 @@ func journalEntryChange(
 			}
 			lines = append(lines, agent.MoneyLine{
 				Label: "Debit",
-				After: common.KnownAmount(money.DecimalFromMinor(line.DebitMinor)),
+				After: changepreview.KnownAmount(money.DecimalFromMinor(line.DebitMinor)),
 			})
 		case line.CreditMinor > 0:
 			if view.CreditAccountID.IsNil() {
@@ -194,7 +196,7 @@ func postSummary(post *invoiceservice.PostPreview, label, total string) string {
 		"Would post %s to %s for %s", label, post.Before.BillToName, total,
 	)}
 	if len(post.Legs) > 0 {
-		parts = append(parts, common.CountOf(len(post.Legs), "shipment")+" invoiced")
+		parts = append(parts, changepreview.CountOf(len(post.Legs), "shipment")+" invoiced")
 	}
 	if post.QueueAfter != nil {
 		parts = append(parts, "billing queue item "+post.QueueBefore.Number+" posted")
@@ -208,7 +210,7 @@ func postSummary(post *invoiceservice.PostPreview, label, total string) string {
 	sentences := []string{strings.Join(parts, "; ") + "."}
 	sentences = append(sentences, syncSentence(post.AccountingSync), ediSentence(post.EDI))
 
-	return strings.Join(common.SlicesNonEmpty(sentences), " ")
+	return strings.Join(changepreview.SlicesNonEmpty(sentences), " ")
 }
 
 func syncSentence(destinations []accountingsyncports.AccountingSyncDestination) string {
@@ -283,7 +285,7 @@ func (t *SendInvoiceTool) Preview(
 	summary := fmt.Sprintf(
 		"Would email the invoice to %s with %s.",
 		strings.Join(plan.Recipients.To, ", "),
-		common.CountOf(len(attachments), "attachment"),
+		changepreview.CountOf(len(attachments), "attachment"),
 	)
 	if len(plan.Parts) > 1 {
 		summary += fmt.Sprintf(" It goes as %d emails, since the attachments are over the "+
@@ -294,5 +296,5 @@ func (t *SendInvoiceTool) Preview(
 		summary += " " + strings.Join(plan.Warnings, " ")
 	}
 
-	return common.WarnWouldFail(toolpreview.Build(summary, message), send.refusal), nil
+	return changepreview.WarnWouldFail(toolpreview.Build(summary, message), send.refusal), nil
 }

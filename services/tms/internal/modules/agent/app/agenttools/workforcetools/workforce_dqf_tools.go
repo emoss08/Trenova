@@ -4,7 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -88,7 +90,7 @@ var verificationRequestMoves = agenttoolschema.Source(
 var verificationFields = []string{
 	wfFieldWorkerID, paramEmployerName, paramEmployerDOT, paramEmployerMC, paramContactName,
 	paramContactPhone, paramContactEmail, paramEmployedFrom, paramEmployedTo,
-	paramWasDOTRegulated, common.FieldStatus, paramVerifyMethod, wfFieldRequestedAt,
+	paramWasDOTRegulated, changepreview.FieldStatus, paramVerifyMethod, wfFieldRequestedAt,
 	"responseReceivedAt", "drugAlcoholResponseReceivedAt", "followUpCount",
 	"lastFollowUpAt", paramHadAccidents, paramAccidentCount, paramHadDAViolations,
 	paramFindings, wfFieldNotes, wfFieldDocument,
@@ -172,28 +174,36 @@ func verificationRecord(entity *employment.WorkerEmploymentVerification) toolpre
 
 func verificationEmployerProperties() map[string]any {
 	return map[string]any{
-		paramEmployerName: common.StringProperty("The previous employer's name.",
+		paramEmployerName: toolparams.StringProperty("The previous employer's name.",
 			maxVerificationField),
-		paramEmployerDOT: common.StringProperty("Their USDOT number.", maxRegistrationNumber),
-		paramEmployerMC:  common.StringProperty("Their MC number.", maxRegistrationNumber),
-		paramContactName: common.StringProperty("Who to ask there.", maxVerificationField),
-		paramContactPhone: common.StringProperty("Their phone number, as the application gives "+
-			"it.", maxPhoneChars),
-		paramContactEmail: common.StringProperty("Their email address, as the application gives "+
-			"it.", maxVerificationField),
+		paramEmployerDOT: toolparams.StringProperty("Their USDOT number.", maxRegistrationNumber),
+		paramEmployerMC:  toolparams.StringProperty("Their MC number.", maxRegistrationNumber),
+		paramContactName: toolparams.StringProperty("Who to ask there.", maxVerificationField),
+		paramContactPhone: toolparams.StringProperty(
+			"Their phone number, as the application gives "+
+				"it.",
+			maxPhoneChars,
+		),
+		paramContactEmail: toolparams.StringProperty(
+			"Their email address, as the application gives "+
+				"it.",
+			maxVerificationField,
+		),
 		paramEmployedFrom: agenttoolschema.Date("When the worker started there."),
 		paramEmployedTo:   agenttoolschema.Date("When the worker left."),
-		paramWasDOTRegulated: common.BooleanProperty("Whether the job was DOT-regulated, which " +
-			"brings the drug and alcohol questions in."),
+		paramWasDOTRegulated: toolparams.BooleanProperty(
+			"Whether the job was DOT-regulated, which " +
+				"brings the drug and alcohol questions in.",
+		),
 		paramVerifyMethod: agenttoolschema.Enum("How the request goes out.",
 			verificationMethods),
-		common.ParamNote: wfNoteProperty("Anything the file should say."),
+		toolparams.ParamNote: wfNoteProperty("Anything the file should say."),
 	}
 }
 
 func newRecordEmploymentVerificationTool(dqf VerificationKeeper) agenttoolports.AgentTool {
 	properties := verificationEmployerProperties()
-	properties[common.ParamWorkerID] = common.WorkerProperty()
+	properties[toolparams.ParamWorkerID] = toolparams.WorkerProperty()
 	spec := withSchema(wfSpec(
 		"worker_record_employment_verification",
 		"File a previous employer on a driver's qualification file so their safety "+
@@ -204,17 +214,17 @@ func newRecordEmploymentVerificationTool(dqf VerificationKeeper) agenttoolports.
 			"to the employer, and it is corrected or removed the same way.",
 		permission.ResourceQualification,
 		permission.OpCreate,
-	), properties, common.ParamWorkerID, paramEmployerName)
+	), properties, toolparams.ParamWorkerID, paramEmployerName)
 	spec.SearchTerms = []string{"previous employer", "safety performance history",
 		"qualification file", "DQ file"}
 
-	return common.NewReportingReceivableTool(spec, common.ReceivablePlan[
+	return toolspec.NewReportingReceivableTool(spec, toolspec.ReceivablePlan[
 		*employment.WorkerEmploymentVerification, *employment.WorkerEmploymentVerification,
 	]{
 		Request: func(
 			params *agenttoolports.ToolExecuteParams,
 		) (*employment.WorkerEmploymentVerification, error) {
-			workerID, err := common.RequirePulid(params.Params, common.ParamWorkerID)
+			workerID, err := toolparams.RequirePulid(params.Params, toolparams.ParamWorkerID)
 			if err != nil {
 				return nil, err
 			}
@@ -288,28 +298,28 @@ func applyVerificationEmployer(
 		{paramContactName, &req.ContactName, maxVerificationField},
 		{paramContactPhone, &req.ContactPhone, maxPhoneChars},
 		{paramContactEmail, &req.ContactEmail, maxVerificationField},
-		{common.ParamNote, &req.Notes, wfNoteChars},
+		{toolparams.ParamNote, &req.Notes, wfNoteChars},
 	} {
-		text, err := common.OptionalBoundedText(params, target.key, target.limit)
+		text, err := toolparams.OptionalBoundedText(params, target.key, target.limit)
 		if err != nil {
 			return err
 		}
 		*target.dest = text
 	}
 	var err error
-	if req.EmployedFrom, err = common.OptionalScheduleDay(params, paramEmployedFrom); err != nil {
+	if req.EmployedFrom, err = toolparams.OptionalScheduleDay(params, paramEmployedFrom); err != nil {
 		return err
 	}
-	if req.EmployedTo, err = common.OptionalScheduleDay(params, paramEmployedTo); err != nil {
+	if req.EmployedTo, err = toolparams.OptionalScheduleDay(params, paramEmployedTo); err != nil {
 		return err
 	}
-	if req.WasDOTRegulated, err = common.OptionalBoolPointer(
+	if req.WasDOTRegulated, err = toolparams.OptionalBoolPointer(
 		params,
 		paramWasDOTRegulated,
 	); err != nil {
 		return err
 	}
-	if method, given, methodErr := common.OptionalEnum(params, paramVerifyMethod,
+	if method, given, methodErr := toolparams.OptionalEnum(params, paramVerifyMethod,
 		verificationMethods.Values); methodErr != nil {
 		return methodErr
 	} else if given {
@@ -353,40 +363,40 @@ func applyVerificationResponse(
 	params map[string]any,
 ) error {
 	var err error
-	if status, given, statusErr := common.OptionalEnum(params, paramVerifyStatus,
+	if status, given, statusErr := toolparams.OptionalEnum(params, paramVerifyStatus,
 		verificationStatuses.Values); statusErr != nil {
 		return statusErr
 	} else if given {
 		req.Status = &status
 	}
-	if req.ResponseReceivedAt, err = common.OptionalScheduleDay(
+	if req.ResponseReceivedAt, err = toolparams.OptionalScheduleDay(
 		params,
 		paramResponseAt,
 	); err != nil {
 		return err
 	}
-	if req.DrugAlcoholResponseReceivedAt, err = common.OptionalScheduleDay(params,
+	if req.DrugAlcoholResponseReceivedAt, err = toolparams.OptionalScheduleDay(params,
 		paramDAResponseAt); err != nil {
 		return err
 	}
-	if req.HadAccidents, err = common.OptionalBoolPointer(params, paramHadAccidents); err != nil {
+	if req.HadAccidents, err = toolparams.OptionalBoolPointer(params, paramHadAccidents); err != nil {
 		return err
 	}
-	if req.HadDrugAlcoholViolations, err = common.OptionalBoolPointer(params,
+	if req.HadDrugAlcoholViolations, err = toolparams.OptionalBoolPointer(params,
 		paramHadDAViolations); err != nil {
 		return err
 	}
-	if req.Findings, err = common.OptionalBoundedText(
+	if req.Findings, err = toolparams.OptionalBoundedText(
 		params,
 		paramFindings,
 		wfNoteChars,
 	); err != nil {
 		return err
 	}
-	if req.DocumentID, err = common.OptionalID(params, wfParamDocument); err != nil {
+	if req.DocumentID, err = toolparams.OptionalID(params, wfParamDocument); err != nil {
 		return err
 	}
-	count, err := common.OptionalIntInRange(params, paramAccidentCount, 0, maxAccidents)
+	count, err := toolparams.OptionalIntInRange(params, paramAccidentCount, 0, maxAccidents)
 	if err != nil {
 		return err
 	}
@@ -407,11 +417,16 @@ func newUpdateEmploymentVerificationTool(dqf VerificationKeeper) agenttoolports.
 		"When their drug and alcohol answer came " +
 			"back.",
 	)
-	properties[paramHadAccidents] = common.BooleanProperty("Whether they reported accidents.")
-	properties[paramAccidentCount] = common.IntegerProperty("How many accidents they reported.", 0,
-		maxAccidents)
-	properties[paramHadDAViolations] = common.BooleanProperty("Whether they reported a drug or " +
-		"alcohol violation.")
+	properties[paramHadAccidents] = toolparams.BooleanProperty("Whether they reported accidents.")
+	properties[paramAccidentCount] = toolparams.IntegerProperty(
+		"How many accidents they reported.",
+		0,
+		maxAccidents,
+	)
+	properties[paramHadDAViolations] = toolparams.BooleanProperty(
+		"Whether they reported a drug or " +
+			"alcohol violation.",
+	)
 	properties[paramFindings] = wfNoteProperty("What the employer's answer says, from the " +
 		"document they sent.")
 	properties[wfParamDocument] = wfDocumentProperty()
@@ -428,18 +443,18 @@ func newUpdateEmploymentVerificationTool(dqf VerificationKeeper) agenttoolports.
 	), properties, paramVerificationID), paramVerificationID, permission.ResourceQualification)
 	spec.SearchTerms = []string{"previous employer answered", "employer response", "dq file"}
 
-	return common.NewReportingReceivableTool(spec, common.ReceivablePlan[
+	return toolspec.NewReportingReceivableTool(spec, toolspec.ReceivablePlan[
 		*workerdqfservice.UpdateVerificationRequest, *workerdqfservice.VerificationChange,
 	]{
 		Request: func(
 			params *agenttoolports.ToolExecuteParams,
 		) (*workerdqfservice.UpdateVerificationRequest, error) {
-			id, err := common.RequirePulid(params.Params, paramVerificationID)
+			id, err := toolparams.RequirePulid(params.Params, paramVerificationID)
 			if err != nil {
 				return nil, err
 			}
 			req := &workerdqfservice.UpdateVerificationRequest{
-				TenantInfo:     common.TenantFrom(*params),
+				TenantInfo:     toolparams.TenantFrom(*params),
 				VerificationID: id,
 				UserID:         params.Actor.UserID,
 			}
@@ -513,21 +528,25 @@ func newLogEmploymentVerificationRequestTool(dqf VerificationKeeper) agenttoolpo
 
 	spec.SearchTerms = []string{"followed up", "follow up with employer", "chase previous employer"}
 
-	return common.NewReportingReceivableTool(spec, common.ReceivablePlan[
+	return toolspec.NewReportingReceivableTool(spec, toolspec.ReceivablePlan[
 		*verificationRequestLog, *workerdqfservice.VerificationChange,
 	]{
 		Request: func(params *agenttoolports.ToolExecuteParams) (*verificationRequestLog, error) {
-			id, err := common.RequirePulid(params.Params, paramVerificationID)
+			id, err := toolparams.RequirePulid(params.Params, paramVerificationID)
 			if err != nil {
 				return nil, err
 			}
-			move, err := common.RequireEnum(params.Params, paramRequestMove,
+			move, err := toolparams.RequireEnum(params.Params, paramRequestMove,
 				verificationRequestMoves.Values)
 			if err != nil {
 				return nil, err
 			}
-			return &verificationRequestLog{move: move, id: id, tenant: common.TenantFrom(*params),
-				userID: params.Actor.UserID}, nil
+			return &verificationRequestLog{
+				move:   move,
+				id:     id,
+				tenant: toolparams.TenantFrom(*params),
+				userID: params.Actor.UserID,
+			}, nil
 		},
 		Plan: func(
 			ctx context.Context,
@@ -548,7 +567,7 @@ func newLogEmploymentVerificationRequestTool(dqf VerificationKeeper) agenttoolpo
 		) (*agent.ToolPreview, error) {
 			options := append(
 				wfOptions(
-					common.FieldStatus,
+					changepreview.FieldStatus,
 					wfFieldRequestedAt,
 					"followUpCount",
 					"lastFollowUpAt",
@@ -606,9 +625,9 @@ func newDeleteEmploymentVerificationTool(dqf VerificationKeeper) agenttoolports.
 	spec.MaxTier = agent.TierPropose
 	spec.Reversible = false
 
-	return common.NewReceivableTool(
+	return toolspec.NewReceivableTool(
 		spec,
-		common.ReceivablePlan[*recordDelete, *employment.WorkerEmploymentVerification]{
+		toolspec.ReceivablePlan[*recordDelete, *employment.WorkerEmploymentVerification]{
 			Request: recordDeleteFrom(paramVerificationID),
 			Plan: func(
 				ctx context.Context,

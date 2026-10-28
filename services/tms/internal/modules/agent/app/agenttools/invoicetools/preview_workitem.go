@@ -4,7 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -18,7 +19,7 @@ import (
 )
 
 var closedWorkItemFields = []string{
-	common.FieldStatus,
+	changepreview.FieldStatus,
 	"resolutionType",
 	"resolutionNote",
 	"resolvedAt",
@@ -46,7 +47,7 @@ func (t *ResolveBankReceiptWorkItemTool) Preview(
 		return nil, err
 	}
 
-	tenant := common.TenantFrom(params)
+	tenant := toolparams.TenantFrom(params)
 	item, err := t.items.Get(ctx, &bankreceiptworkitemports.GetBankReceiptWorkItemRequest{
 		WorkItemID: args.id,
 		TenantInfo: tenant,
@@ -56,11 +57,11 @@ func (t *ResolveBankReceiptWorkItemTool) Preview(
 	}
 
 	now := timeutils.NowUnix()
-	plan, err := common.PlanArchive(toolpreview.Record{
+	plan, err := changepreview.PlanArchive(toolpreview.Record{
 		Resource: permission.ResourceBankReceiptWorkItem,
 		ID:       item.ID,
 		Label:    "Bank receipt reconciliation",
-		Version:  common.PreviewVersion(item.Version),
+		Version:  changepreview.PreviewVersion(item.Version),
 	}, item, func(closed *bankreceiptworkitem.WorkItem) error {
 		return args.close(closed, tenant, params.Actor.UserID, now)
 	}, toolpreview.Only(closedWorkItemFields...), toolpreview.Volatile("resolvedAt"))

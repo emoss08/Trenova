@@ -5,7 +5,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/settlementpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -17,7 +18,7 @@ func settlementVerb(action settlementshared.Action) string {
 	case settlementshared.ActionSubmit:
 		return "submit for approval"
 	case settlementshared.ActionApprove:
-		return common.VerbApprove
+		return changepreview.VerbApprove
 	case settlementshared.ActionReject:
 		return "send back to draft"
 	case settlementshared.ActionPost:
@@ -52,18 +53,18 @@ func (t *SettlementDecisionTool[E]) Preview(
 		settlementVerb(t.decision.action),
 		t.ledger.Noun,
 		before.Number,
-		common.PayeeClause(before.Payee),
+		settlementpreview.PayeeClause(before.Payee),
 		before.Status,
 	)
 	if plan.Refused() {
-		return common.WouldFail(toolpreview.Build(summary), plan.Refusal)
+		return changepreview.WouldFail(toolpreview.Build(summary), plan.Refusal)
 	}
 
 	change, err := toolpreview.Changed(toolpreview.Record{
 		Resource: t.ledger.Resource,
 		ID:       before.ID,
 		Label:    before.Number,
-		Version:  common.PinnedVersion(before.Version),
+		Version:  changepreview.PinnedVersion(before.Version),
 	}, plan.Before, plan.After,
 		toolpreview.Only(t.decision.fields...),
 		toolpreview.Volatile(t.decision.volatile...),
@@ -74,19 +75,19 @@ func (t *SettlementDecisionTool[E]) Preview(
 	}
 	toolpreview.AttachMoney(
 		change,
-		common.SettlementMoney(before, t.ledger.Facts(plan.After)),
+		settlementpreview.SettlementMoney(before, t.ledger.Facts(plan.After)),
 		toolpreview.SensitiveAs(t.ledger.Sensitive...),
 	)
 
 	changes := []*agent.RecordChange{change}
 	sentences := []string{summary}
 	if plan.Journal != nil {
-		journal, journalErr := common.SettlementJournalChange(plan.Journal, before)
+		journal, journalErr := settlementpreview.SettlementJournalChange(plan.Journal, before)
 		if journalErr != nil {
 			return nil, journalErr
 		}
 		changes = append(changes, journal)
-		sentences = append(sentences, common.JournalSentence(plan.Journal))
+		sentences = append(sentences, settlementpreview.JournalSentence(plan.Journal))
 	}
 	if plan.AutoPost {
 		sentences = append(sentences, "The settlement control posts it to the general "+
@@ -96,5 +97,7 @@ func (t *SettlementDecisionTool[E]) Preview(
 		sentences = append(sentences, t.ledger.Effects(t.decision.action, plan)...)
 	}
 
-	return toolpreview.Build(strings.Join(common.SlicesNonEmpty(sentences), " "), changes...), nil
+	return toolpreview.Build(
+		strings.Join(changepreview.SlicesNonEmpty(sentences), " "),
+		changes...), nil
 }

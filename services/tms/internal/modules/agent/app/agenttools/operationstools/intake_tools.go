@@ -4,8 +4,12 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/shipmentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/shipmenttools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
@@ -60,7 +64,7 @@ type CreateShipmentTool struct {
 	shipments shipmentCreator
 	contracts contractRatePreviewer
 	imports   importCompleter
-	locations common.LocationZoneReader
+	locations shipmentpreview.LocationZoneReader
 	logger    *zap.Logger
 }
 
@@ -68,7 +72,7 @@ type CreateShipmentDeps struct {
 	Shipments shipmentCreator
 	Contracts contractRatePreviewer
 	Imports   importCompleter
-	Locations common.LocationZoneReader
+	Locations shipmentpreview.LocationZoneReader
 	Logger    *zap.Logger
 }
 
@@ -154,7 +158,7 @@ func shipmentDraftSchema() map[string]any {
 		toolschema.KeyType:        toolschema.TypeObject,
 		toolschema.KeyDescription: "The shipment to enter.",
 		toolschema.KeyProperties: map[string]any{
-			common.ParamCustomerID: agenttoolschema.RecordIDText(
+			toolparams.ParamCustomerID: agenttoolschema.RecordIDText(
 				permission.ResourceCustomer,
 				"The customer, from customer_list.",
 			),
@@ -163,9 +167,11 @@ func shipmentDraftSchema() map[string]any {
 				"Who is billed, when not the customer, from "+
 					"customer_list.",
 			),
-			common.FieldServiceTypeID: agenttoolschema.RecordIDText(permission.ResourceServiceType,
-				"From masterdata_list_service_types."),
-			common.FieldShipmentTypeID: agenttoolschema.RecordIDText(
+			changepreview.FieldServiceTypeID: agenttoolschema.RecordIDText(
+				permission.ResourceServiceType,
+				"From masterdata_list_service_types.",
+			),
+			changepreview.FieldShipmentTypeID: agenttoolschema.RecordIDText(
 				permission.ResourceShipmentType,
 				"From masterdata_list_shipment_types.",
 			),
@@ -179,7 +185,7 @@ func shipmentDraftSchema() map[string]any {
 				"which formula_get_template lists, as the person gave them: $2,450 for a "+
 				"flat load, $2.10/mi for a rate a mile, 12% for a percent. Leave an input "+
 				"out to take the tariff's default.", 4000),
-			common.FieldFreightChargeAmount: common.AmountProperty(
+			changepreview.FieldFreightChargeAmount: toolparams.AmountProperty(
 				"The freight charge the person or the customer's rate confirmation gives, " +
 					"such as 2450. The shipment is then rated by hand at it and no tariff " +
 					"runs; leave formulaTemplateId out.",
@@ -188,37 +194,40 @@ func shipmentDraftSchema() map[string]any {
 				"Who pays the freight. Defaults to Prepaid.",
 				agenttoolschema.FreightTerms,
 			),
-			common.PreviewFieldTractorTypeID: agenttoolschema.RecordIDText(
+			changepreview.PreviewFieldTractorTypeID: agenttoolschema.RecordIDText(
 				permission.ResourceEquipmentType,
 				"A tractor equipment type, from equipment_list_types.",
 			),
-			common.PreviewFieldTrailerTypeID: agenttoolschema.RecordIDText(
+			changepreview.PreviewFieldTrailerTypeID: agenttoolschema.RecordIDText(
 				permission.ResourceEquipmentType,
 				"A trailer equipment type, from equipment_list_types.",
 			),
-			"bol": common.StringProperty(
+			"bol": toolparams.StringProperty(
 				"The bill of lading number. It must be unique among open shipments, so "+
 					"never reuse one from another shipment. Optional unless the customer's "+
 					"billing requires a BOL; leave it out when none is known.",
 				100,
 			),
-			"externalReference": common.StringProperty("The customer's own order or load number, "+
-				"as it appears on their tender, email or rate confirmation. It is checked apart "+
-				"from the BOL, only against this customer's other live shipments, so a second "+
-				"booking of the same order is refused; keep it as written unless that refusal "+
-				"comes back, and leave it out when the customer gave none.", 100),
-			common.FieldPieces: common.IntegerProperty(
+			"externalReference": toolparams.StringProperty(
+				"The customer's own order or load number, "+
+					"as it appears on their tender, email or rate confirmation. It is checked apart "+
+					"from the BOL, only against this customer's other live shipments, so a second "+
+					"booking of the same order is refused; keep it as written unless that refusal "+
+					"comes back, and leave it out when the customer gave none.",
+				100,
+			),
+			changepreview.FieldPieces: toolparams.IntegerProperty(
 				"The total piece or handling-unit count.",
 				0,
 				1_000_000,
 			),
-			common.FieldWeight: common.IntegerProperty("Pounds.", 0, 10_000_000),
-			"temperatureMin": common.IntegerProperty(
+			changepreview.FieldWeight: toolparams.IntegerProperty("Pounds.", 0, 10_000_000),
+			"temperatureMin": toolparams.IntegerProperty(
 				"Fahrenheit, for reefer freight.",
 				-100,
 				200,
 			),
-			"temperatureMax": common.IntegerProperty(
+			"temperatureMax": toolparams.IntegerProperty(
 				"Fahrenheit, for reefer freight.",
 				-100,
 				200,
@@ -242,9 +251,9 @@ func shipmentDraftSchema() map[string]any {
 			},
 		},
 		toolschema.KeyRequired: []string{
-			common.ParamCustomerID,
-			common.FieldServiceTypeID,
-			common.FieldShipmentTypeID,
+			toolparams.ParamCustomerID,
+			changepreview.FieldServiceTypeID,
+			changepreview.FieldShipmentTypeID,
 			"moves",
 		},
 		toolschema.KeyAdditionalProperties: false,
@@ -255,8 +264,8 @@ func moveDraftSchema() map[string]any {
 	return map[string]any{
 		toolschema.KeyType: toolschema.TypeObject,
 		toolschema.KeyProperties: map[string]any{
-			"loaded": common.BooleanProperty("False for a deadhead move. Defaults to true."),
-			"sequence": common.IntegerProperty(
+			"loaded": toolparams.BooleanProperty("False for a deadhead move. Defaults to true."),
+			"sequence": toolparams.IntegerProperty(
 				"The move's place, counting from 0. Leave it out to "+
 					"take the order given.",
 				0,
@@ -278,11 +287,11 @@ func stopDraftSchema() map[string]any {
 	return map[string]any{
 		toolschema.KeyType: toolschema.TypeObject,
 		toolschema.KeyProperties: map[string]any{
-			common.FieldLocationID: agenttoolschema.RecordIDText(
+			changepreview.FieldLocationID: agenttoolschema.RecordIDText(
 				permission.ResourceLocation,
 				"The stop's location, from location_list.",
 			),
-			common.FieldType: agenttoolschema.Enum(
+			changepreview.FieldType: agenttoolschema.Enum(
 				"What happens at the stop.",
 				agenttoolschema.StopTypes,
 			),
@@ -290,8 +299,12 @@ func stopDraftSchema() map[string]any {
 				"Open for a window, Appointment for a fixed time. Defaults to Open.",
 				agenttoolschema.StopScheduleTypes,
 			),
-			"sequence": common.IntegerProperty("The stop's place in the move, counting from 0. "+
-				"Leave it out to take the order given.", 0, 100),
+			"sequence": toolparams.IntegerProperty(
+				"The stop's place in the move, counting from 0. "+
+					"Leave it out to take the order given.",
+				0,
+				100,
+			),
 			"scheduledWindowStart": agenttoolschema.LocalDateTime("When the stop's window " +
 				"opens. A part of the day the person named is a window, not a question: " +
 				"morning 08:00 to 12:00, afternoon 13:00 to 17:00, evening 17:00 to 21:00. " +
@@ -301,18 +314,22 @@ func stopDraftSchema() map[string]any {
 				"When the stop's window closes: the deadline the person gave, or the end of " +
 					"the part of the day they named.",
 			),
-			common.FieldPieces: common.IntegerProperty("Pieces handled at the stop.", 0, 1_000_000),
-			common.FieldWeight: common.IntegerProperty(
+			changepreview.FieldPieces: toolparams.IntegerProperty(
+				"Pieces handled at the stop.",
+				0,
+				1_000_000,
+			),
+			changepreview.FieldWeight: toolparams.IntegerProperty(
 				"Pounds handled at the stop.",
 				0,
 				10_000_000,
 			),
-			"addressLine": common.StringProperty("A dock or suite note for the stop.", 200),
+			"addressLine": toolparams.StringProperty("A dock or suite note for the stop.", 200),
 		},
 		toolschema.KeyRequired: []string{
-			common.FieldLocationID,
-			common.FieldType,
-			common.FieldScheduledWindowStart,
+			changepreview.FieldLocationID,
+			changepreview.FieldType,
+			changepreview.FieldScheduledWindowStart,
 		},
 		toolschema.KeyAdditionalProperties: false,
 	}
@@ -326,12 +343,12 @@ func commodityDraftSchema() map[string]any {
 				permission.ResourceCommodity,
 				"The commodity, from masterdata_list_commodities.",
 			),
-			common.FieldPieces: common.IntegerProperty(
+			changepreview.FieldPieces: toolparams.IntegerProperty(
 				"Pieces of it. Defaults to 1.",
 				0,
 				1_000_000,
 			),
-			common.FieldWeight: common.IntegerProperty("Pounds of it.", 0, 10_000_000),
+			changepreview.FieldWeight: toolparams.IntegerProperty("Pounds of it.", 0, 10_000_000),
 		},
 		toolschema.KeyRequired:             []string{"commodityId"},
 		toolschema.KeyAdditionalProperties: false,
@@ -351,18 +368,18 @@ func chargeLineDraftSchema() map[string]any {
 					"the linehaul.",
 				agenttoolschema.AccessorialMethods,
 			),
-			"unit": common.IntegerProperty(
+			"unit": toolparams.IntegerProperty(
 				"How many units the charge covers; 1 for a flat charge.",
 				1,
 				10_000,
 			),
-			common.ParamAmount: common.AmountProperty(
+			toolparams.ParamAmount: toolparams.AmountProperty(
 				"The charge's amount in major units, as a decimal such " +
 					"as 125.00.",
 			),
 		},
 		toolschema.KeyRequired: []string{
-			"accessorialChargeId", "method", "unit", common.ParamAmount,
+			"accessorialChargeId", "method", "unit", toolparams.ParamAmount,
 		},
 		toolschema.KeyAdditionalProperties: false,
 	}
@@ -381,7 +398,7 @@ func (t *CreateShipmentTool) Policy() agenttoolports.ToolPolicy {
 		Effect:        agent.ToolEffectChange,
 		Idempotent:    true,
 		ReadsExternal: agent.ExternalReadNever,
-		Artifact:      common.ShipmentRecordEntity,
+		Artifact:      changepreview.ShipmentRecordEntity,
 		Rationale: "A new load commits a customer's freight and the money that follows, so " +
 			"no desk books one unattended.",
 	}
@@ -400,7 +417,7 @@ func (t *CreateShipmentTool) ExecuteWithResult(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
 ) (*agent.ToolExecutionResult, error) {
-	if err := common.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return nil, err
 	}
 
@@ -418,7 +435,7 @@ func (t *CreateShipmentTool) ExecuteWithResult(
 		if completeErr := t.imports.CompleteHistory(
 			ctx,
 			entity.SourceDocumentID,
-			common.TenantFrom(params),
+			toolparams.TenantFrom(params),
 		); completeErr != nil {
 			t.logger.Warn("shipment created but the import conversation could not be closed",
 				zap.String("sourceDocumentId", entity.SourceDocumentID),
@@ -428,7 +445,7 @@ func (t *CreateShipmentTool) ExecuteWithResult(
 		}
 	}
 
-	return common.ShipmentResult(common.ResultCreated, created), nil
+	return shipmentpreview.ShipmentResult(changepreview.ResultCreated, created), nil
 }
 
 // Validate runs the create plan the preview runs, so a shipment the service
@@ -438,7 +455,7 @@ func (t *CreateShipmentTool) Validate(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
 ) error {
-	return common.PreviewValidates(ctx, t, &params)
+	return toolspec.PreviewValidates(ctx, t, &params)
 }
 
 func (t *CreateShipmentTool) Draft(
@@ -446,12 +463,12 @@ func (t *CreateShipmentTool) Draft(
 	params *agenttoolports.ToolExecuteParams,
 ) (*shipment.Shipment, error) {
 	draft := new(shipmenttools.ShipmentDraft)
-	if err := common.DecodeParam(params.Params, "shipment", draft); err != nil {
+	if err := toolparams.DecodeParam(params.Params, "shipment", draft); err != nil {
 		return nil, err
 	}
 
-	tenantInfo := common.TenantFrom(*params)
-	zones, err := common.ReadLocationZones(
+	tenantInfo := toolparams.TenantFrom(*params)
+	zones, err := shipmentpreview.ReadLocationZones(
 		ctx, t.locations, tenantInfo, params.Timezone, draft.LocationIDs(),
 	)
 	if err != nil {
@@ -466,7 +483,7 @@ func (t *CreateShipmentTool) Draft(
 		return nil, err
 	}
 
-	if sourceDocumentID := common.OptionalString(
+	if sourceDocumentID := toolparams.OptionalString(
 		params.Params,
 		"sourceDocumentId",
 	); sourceDocumentID != "" {
@@ -541,13 +558,13 @@ func errNoRatingMethod(outcome string) error {
 // own tools and their own rules, and a patch that could reach them would be
 // a way around both.
 type UpdateShipmentTool struct {
-	shipments common.ShipmentWriter
-	partners  common.ShipmentPartnerNotices
+	shipments shipmentpreview.ShipmentWriter
+	partners  shipmentpreview.ShipmentPartnerNotices
 }
 
 func NewUpdateShipmentTool(
-	shipments common.ShipmentWriter,
-	partners common.ShipmentPartnerNotices,
+	shipments shipmentpreview.ShipmentWriter,
+	partners shipmentpreview.ShipmentPartnerNotices,
 ) agenttoolports.AgentTool {
 	return &UpdateShipmentTool{shipments: shipments, partners: partners}
 }
@@ -578,7 +595,7 @@ func (t *UpdateShipmentTool) ParamSchema() map[string]any {
 	return map[string]any{
 		"type": "object",
 		"properties": map[string]any{
-			common.ParamShipmentID: agenttoolschema.RecordIDText(permission.ResourceShipment,
+			toolparams.ParamShipmentID: agenttoolschema.RecordIDText(permission.ResourceShipment,
 				"The shipment to change, from the page, shipment_list."),
 			"customerId": agenttoolschema.RecordIDText(permission.ResourceCustomer,
 				"The new customer, from customer_list."),
@@ -614,7 +631,7 @@ func (t *UpdateShipmentTool) ParamSchema() map[string]any {
 				"description": "Fahrenheit, with temperatureMin.",
 			},
 		},
-		"required":             []string{common.ParamShipmentID},
+		"required":             []string{toolparams.ParamShipmentID},
 		"additionalProperties": false,
 	}
 }
@@ -678,11 +695,11 @@ func (t *UpdateShipmentTool) plan(
 	ctx context.Context,
 	params *agenttoolports.ToolExecuteParams,
 ) (before, after *shipment.Shipment, err error) {
-	if err = common.GuardExecute(t, *params); err != nil {
+	if err = toolguard.GuardExecute(t, *params); err != nil {
 		return nil, nil, err
 	}
 
-	shipmentID, err := common.RequirePulid(params.Params, common.ParamShipmentID)
+	shipmentID, err := toolparams.RequirePulid(params.Params, toolparams.ParamShipmentID)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -693,7 +710,7 @@ func (t *UpdateShipmentTool) plan(
 	}
 	if patch.empty() {
 		return nil, nil, errortypes.NewValidationError(
-			common.ParamShipmentID,
+			toolparams.ParamShipmentID,
 			errortypes.ErrInvalid,
 			"Nothing to change: send at least one field besides the shipment id",
 		)
@@ -701,7 +718,7 @@ func (t *UpdateShipmentTool) plan(
 
 	entity, err := t.shipments.Get(ctx, &shipmentports.GetShipmentByIDRequest{
 		ID:         shipmentID,
-		TenantInfo: common.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(*params),
 		ShipmentOptions: shipmentports.ShipmentOptions{
 			ExpandShipmentDetails: true,
 		},
@@ -782,5 +799,5 @@ func placeholderTemperatures(entity *shipment.Shipment, patch shipmentPatch) err
 }
 
 func (t *UpdateShipmentTool) Target(params map[string]any) (agenttoolports.ToolTarget, bool) {
-	return common.TargetOf(params, common.ParamShipmentID, permission.ResourceShipment)
+	return toolparams.TargetOf(params, toolparams.ParamShipmentID, permission.ResourceShipment)
 }

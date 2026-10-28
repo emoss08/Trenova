@@ -5,8 +5,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/shipmenttools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -198,7 +198,7 @@ func commentParams(
 	extra map[string]any,
 ) agenttoolports.ToolExecuteParams {
 	raw := map[string]any{
-		common.ParamShipmentID:       comments.comment().ShipmentID.String(),
+		toolparams.ParamShipmentID:   comments.comment().ShipmentID.String(),
 		shipmenttools.ParamCommentID: comments.comment().ID.String(),
 	}
 	for key, value := range extra {
@@ -314,7 +314,7 @@ func TestPinShipmentComment_AReplyIsAWouldFail(t *testing.T) {
 
 	err = tool.Execute(
 		t.Context(),
-		agenttoolstest.ExecuteParams(map[string]any{common.ParamShipmentID: "x"}),
+		agenttoolstest.ExecuteParams(map[string]any{toolparams.ParamShipmentID: "x"}),
 	)
 	require.Error(t, err)
 }
@@ -435,10 +435,10 @@ func TestEditShipmentComment_VisibilityDecidesWhoReadsIt(t *testing.T) {
 	)
 
 	err := tool.Execute(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
-		common.ParamShipmentID:       pulid.MustNew("shp_").String(),
+		toolparams.ParamShipmentID:   pulid.MustNew("shp_").String(),
 		shipmenttools.ParamCommentID: pulid.MustNew("sc_").String(),
 	}))
-	require.ErrorIs(t, err, common.ErrNothingToChange)
+	require.ErrorIs(t, err, toolparams.ErrNothingToChange)
 }
 
 func TestDeleteShipmentComment_SaysWhenAPlaceholderStays(t *testing.T) {

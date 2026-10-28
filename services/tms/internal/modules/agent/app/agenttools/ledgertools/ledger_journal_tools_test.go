@@ -12,7 +12,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalreversalports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/manualjournalports"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -270,19 +271,19 @@ func (f *fakeManualJournals) Post(
 
 func draftParams() map[string]any {
 	return map[string]any{
-		paramJournalDescription:    "Accrue September fuel",
-		common.ParamReason:         "Fuel card statement arrives after close",
-		common.ParamAccountingDate: "2026-09-30",
+		paramJournalDescription:        "Accrue September fuel",
+		toolparams.ParamReason:         "Fuel card statement arrives after close",
+		toolparams.ParamAccountingDate: "2026-09-30",
 		paramJournalLines: []any{
 			map[string]any{
-				common.ParamGLAccountID: fuelAccountID.String(),
-				paramJournalDescription: "Fuel",
-				paramJournalLineDebit:   "25.00",
+				toolparams.ParamGLAccountID: fuelAccountID.String(),
+				paramJournalDescription:     "Fuel",
+				paramJournalLineDebit:       "25.00",
 			},
 			map[string]any{
-				common.ParamGLAccountID: accruedAccountID.String(),
-				paramJournalDescription: "Accrual",
-				paramJournalLineCredit:  "25.00",
+				toolparams.ParamGLAccountID: accruedAccountID.String(),
+				paramJournalDescription:     "Accrual",
+				paramJournalLineCredit:      "25.00",
 			},
 		},
 	}
@@ -342,7 +343,7 @@ func TestDraftManualJournal_RefusesLinesItCannotBook(t *testing.T) {
 	negative := draftParams()
 	negative[paramJournalLines].([]any)[0].(map[string]any)[paramJournalLineDebit] = "-5"
 	badDate := draftParams()
-	badDate[common.ParamAccountingDate] = "30 Sept"
+	badDate[toolparams.ParamAccountingDate] = "30 Sept"
 
 	for name, raw := range map[string]map[string]any{
 		"a debit and a credit on one line": both,
@@ -469,8 +470,8 @@ func TestCancelManualJournal_NeedsAReason(t *testing.T) {
 	)
 
 	params := agenttoolstest.ExecuteParams(map[string]any{
-		paramManualJournalID: journals.current.ID.String(),
-		common.ParamReason:   "Entered twice",
+		paramManualJournalID:   journals.current.ID.String(),
+		toolparams.ParamReason: "Entered twice",
 	})
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
@@ -516,7 +517,7 @@ func TestPostManualJournal_OnlyAPersonPostsAndThePreviewShowsTheEntry(t *testing
 	require.NotNil(t, entry.Money)
 	assert.Equal(t, "6100 Fuel expense (debit)", entry.Money.Lines[0].Label)
 
-	require.ErrorIs(t, tool.Execute(t.Context(), params), common.ErrNeedsAPersonsApproval)
+	require.ErrorIs(t, tool.Execute(t.Context(), params), toolspec.ErrNeedsAPersonsApproval)
 	assert.False(t, journals.posted)
 	params.ProposalID = pulid.MustNew("ap_")
 	require.NoError(t, tool.Execute(t.Context(), params))
@@ -672,10 +673,10 @@ func TestRequestJournalReversal_OnlyAPersonRequestsOne(t *testing.T) {
 	}
 	tool := newRequestJournalReversalTool(reversals, fakeLedgerAccounts{})
 	params := agenttoolstest.ExecuteParams(map[string]any{
-		paramJournalEntryID:        reversals.change.OriginalEntry.ID.String(),
-		common.ParamAccountingDate: "2026-09-21",
-		paramReversalReasonCode:    "WrongAccount",
-		paramReversalReasonText:    "Posted to fuel instead of tolls",
+		paramJournalEntryID:            reversals.change.OriginalEntry.ID.String(),
+		toolparams.ParamAccountingDate: "2026-09-21",
+		paramReversalReasonCode:        "WrongAccount",
+		paramReversalReasonText:        "Posted to fuel instead of tolls",
 	})
 
 	preview := agenttoolstest.PreviewWithoutWrites(
@@ -693,7 +694,7 @@ func TestRequestJournalReversal_OnlyAPersonRequestsOne(t *testing.T) {
 	assert.Equal(t, "6100 Fuel expense (credit)", change.Money.Lines[0].Label)
 
 	_, err := tool.(agenttoolports.ToolResultReporter).ExecuteWithResult(t.Context(), params)
-	require.ErrorIs(t, err, common.ErrNeedsAPersonsApproval)
+	require.ErrorIs(t, err, toolspec.ErrNeedsAPersonsApproval)
 	params.ProposalID = pulid.MustNew("ap_")
 	result, err := tool.(agenttoolports.ToolResultReporter).ExecuteWithResult(t.Context(), params)
 	require.NoError(t, err)
@@ -720,7 +721,7 @@ func TestCancelJournalReversal_KeepsTheOriginalEntry(t *testing.T) {
 	tool := newCancelJournalReversalTool(reversals, fakeLedgerAccounts{})
 	params := agenttoolstest.ExecuteParams(map[string]any{
 		paramJournalReversalID: reversals.change.Before.ID.String(),
-		common.ParamReason:     "The entry was right after all",
+		toolparams.ParamReason: "The entry was right after all",
 	})
 
 	preview := agenttoolstest.PreviewWithoutWrites(
@@ -767,7 +768,7 @@ func TestPostJournalReversal_ShowsTheEntryAndTheOriginalReversed(t *testing.T) {
 		agenttoolstest.FieldByPath(t, agenttoolstest.PreviewChange(t, preview, 2), "status").After,
 	)
 
-	require.ErrorIs(t, tool.Execute(t.Context(), params), common.ErrNeedsAPersonsApproval)
+	require.ErrorIs(t, tool.Execute(t.Context(), params), toolspec.ErrNeedsAPersonsApproval)
 	params.ProposalID = pulid.MustNew("ap_")
 	require.NoError(t, tool.Execute(t.Context(), params))
 	assert.True(t, reversals.posted)

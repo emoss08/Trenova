@@ -6,7 +6,8 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/app/orgstructureservice"
@@ -194,12 +195,12 @@ func TestOpenLeaveCase_WaitsForADecision(t *testing.T) {
 	cases := newFakeLeave()
 	tool := newOpenLeaveCaseTool(cases, orgLeaveScope(cases))
 	params := agenttoolstest.ExecuteParams(map[string]any{
-		common.ParamWorkerID:  cases.lcase.WorkerID.String(),
-		paramLeaveType:        "Parental",
-		"startsAt":            "2026-10-05",
-		"endsAt":              "2026-11-13",
-		"requestedAt":         "2026-09-30",
-		paramEligibilityHours: float64(1800),
+		toolparams.ParamWorkerID: cases.lcase.WorkerID.String(),
+		paramLeaveType:           "Parental",
+		"startsAt":               "2026-10-05",
+		"endsAt":                 "2026-11-13",
+		"requestedAt":            "2026-09-30",
+		paramEligibilityHours:    float64(1800),
 	})
 
 	preview := agenttoolstest.PreviewWithoutWrites(
@@ -222,14 +223,14 @@ func TestOpenLeaveCase_WaitsForADecision(t *testing.T) {
 
 	require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(),
 		agenttoolstest.ExecuteParams(map[string]any{
-			common.ParamWorkerID: cases.lcase.WorkerID.String(),
-			"startsAt":           "2026-10-05",
+			toolparams.ParamWorkerID: cases.lcase.WorkerID.String(),
+			"startsAt":               "2026-10-05",
 		})), "validation runs the plan, which needs a leave type")
 	require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(),
 		agenttoolstest.ExecuteParams(map[string]any{
-			common.ParamWorkerID: cases.lcase.WorkerID.String(),
-			paramLeaveType:       "FMLA",
-			"startsAt":           "10/05/2026",
+			toolparams.ParamWorkerID: cases.lcase.WorkerID.String(),
+			paramLeaveType:           "FMLA",
+			"startsAt":               "10/05/2026",
 		})))
 }
 
@@ -261,7 +262,7 @@ func TestCloseLeaveCase_IsAPersonsDecision(t *testing.T) {
 	require.ErrorIs(
 		t,
 		tool.Execute(t.Context(), agenttoolstest.ExecuteParams(raw)),
-		common.ErrNeedsAPersonsApproval,
+		toolspec.ErrNeedsAPersonsApproval,
 	)
 	assert.Empty(t, cases.closed)
 	assert.Equal(t, permission.OpApprove, tool.Policy().Operation)
@@ -385,9 +386,9 @@ func TestLeaveTools_ATeamGrantReachesOnlyTheTeamsCases(t *testing.T) {
 	closeCase := map[string]any{paramLeaveCaseID: cases.lcase.ID.String()}
 	removeDay := map[string]any{paramLeaveEntryID: cases.entry.ID.String()}
 	openCase := map[string]any{
-		common.ParamWorkerID: cases.lcase.WorkerID.String(),
-		paramLeaveType:       "FMLA",
-		"startsAt":           "2026-10-05",
+		toolparams.ParamWorkerID: cases.lcase.WorkerID.String(),
+		paramLeaveType:           "FMLA",
+		"startsAt":               "2026-10-05",
 	}
 
 	require.ErrorIs(t, newCloseLeaveCaseTool(cases, offTeam).Execute(t.Context(),

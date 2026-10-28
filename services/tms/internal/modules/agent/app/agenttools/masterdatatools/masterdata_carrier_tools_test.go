@@ -5,7 +5,9 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -184,7 +186,7 @@ func TestCreateCarrier_PreviewsTheCarrierAndCreatesIt(t *testing.T) {
 	assert.Equal(t, carrier.ComplianceStatusPending, carriers.created.ComplianceStatus)
 	assert.Equal(t, states.State.ID, *carriers.created.StateID)
 	assert.Equal(t, "created", result.Action)
-	assert.Equal(t, common.CarrierRecordEntity, result.Record.EntityType)
+	assert.Equal(t, changepreview.CarrierRecordEntity, result.Record.EntityType)
 
 	policy := tool.Policy()
 	assert.Equal(t, permission.ResourceCarrier, policy.Resource)
@@ -211,7 +213,7 @@ func TestCreateCarrier_PaymentDetailsAreMoneyAndWaitForAPerson(t *testing.T) {
 
 	_, err := tool.(agenttoolports.ToolResultReporter).ExecuteWithResult(t.Context(),
 		idempotentParams(args))
-	require.ErrorIs(t, err, common.ErrNeedsAPersonsApproval)
+	require.ErrorIs(t, err, toolspec.ErrNeedsAPersonsApproval)
 	assert.Nil(t, carriers.created)
 
 	approved := agenttoolstest.ApprovedParams(args)
@@ -254,8 +256,8 @@ func TestUpdateCarrier_KeepsWhatItIsNotGivenAndTheCarriersChildren(t *testing.T)
 	carriers := &fakeCarriers{guard: &agenttoolstest.WriteGuard{}, stored: storedCarrier(states)}
 	tool := NewUpdateCarrierTool(carriers, states)
 	params := agenttoolstest.ExecuteParams(map[string]any{
-		common.ParamCarrierID: carriers.stored.ID.String(),
-		mdPhone:               "555-0100",
+		toolparams.ParamCarrierID: carriers.stored.ID.String(),
+		mdPhone:                   "555-0100",
 	})
 
 	preview := agenttoolstest.PreviewWithoutWrites(
@@ -287,7 +289,7 @@ func TestUpdateCarrier_KeepsWhatItIsNotGivenAndTheCarriersChildren(t *testing.T)
 	require.Error(
 		t,
 		tool.(agenttoolports.ToolValidator).Validate(t.Context(), agenttoolstest.ExecuteParams(
-			map[string]any{common.ParamCarrierID: carriers.stored.ID.String()},
+			map[string]any{toolparams.ParamCarrierID: carriers.stored.ID.String()},
 		)),
 	)
 }
@@ -299,8 +301,8 @@ func TestUpdateCarrierStatus_PreviewsEachCarrierAndMovesThem(t *testing.T) {
 	carriers := &fakeCarriers{guard: &agenttoolstest.WriteGuard{}, stored: storedCarrier(states)}
 	tool := NewUpdateCarrierStatusTool(carriers, states)
 	params := agenttoolstest.ExecuteParams(map[string]any{
-		"carrierIds":       []any{carriers.stored.ID.String()},
-		common.FieldStatus: "DoNotUse",
+		"carrierIds":              []any{carriers.stored.ID.String()},
+		changepreview.FieldStatus: "DoNotUse",
 	})
 
 	preview := agenttoolstest.PreviewWithoutWrites(
@@ -316,7 +318,7 @@ func TestUpdateCarrierStatus_PreviewsEachCarrierAndMovesThem(t *testing.T) {
 		agenttoolstest.FieldByPath(
 			t,
 			agenttoolstest.PreviewChange(t, preview, 0),
-			common.FieldStatus,
+			changepreview.FieldStatus,
 		).After,
 	)
 
@@ -328,8 +330,8 @@ func TestUpdateCarrierStatus_PreviewsEachCarrierAndMovesThem(t *testing.T) {
 		t,
 		tool.(agenttoolports.ToolValidator).Validate(t.Context(), agenttoolstest.ExecuteParams(
 			map[string]any{
-				"carrierIds":       []any{carriers.stored.ID.String()},
-				common.FieldStatus: "Gone",
+				"carrierIds":              []any{carriers.stored.ID.String()},
+				changepreview.FieldStatus: "Gone",
 			},
 		)),
 	)

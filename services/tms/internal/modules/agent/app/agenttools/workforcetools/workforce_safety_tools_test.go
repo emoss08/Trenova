@@ -5,7 +5,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -278,13 +279,13 @@ func TestOpenWorkerSafetyEvent_TakesTheHouseScaleForPoints(t *testing.T) {
 	events := newFakeSafety()
 	tool := newOpenWorkerSafetyEventTool(events)
 	params := agenttoolstest.ExecuteParams(map[string]any{
-		common.ParamWorkerID:    events.event.WorkerID.String(),
-		paramEventKind:          "Accident",
-		paramEventSeverity:      "Major",
-		wfParamOccurred:         "2026-09-20T14:30:00-05:00",
-		common.FieldDescription: "Rear-ended at a light in Joliet",
-		paramPreventable:        true,
-		paramFineAmount:         "250.00",
+		toolparams.ParamWorkerID:       events.event.WorkerID.String(),
+		paramEventKind:                 "Accident",
+		paramEventSeverity:             "Major",
+		wfParamOccurred:                "2026-09-20T14:30:00-05:00",
+		changepreview.FieldDescription: "Rear-ended at a light in Joliet",
+		paramPreventable:               true,
+		paramFineAmount:                "250.00",
 	})
 
 	preview := agenttoolstest.PreviewWithoutWrites(
@@ -321,18 +322,18 @@ func TestOpenWorkerSafetyEvent_TakesTheHouseScaleForPoints(t *testing.T) {
 
 	for name, raw := range map[string]map[string]any{
 		"no description": {
-			common.ParamWorkerID: events.event.WorkerID.String(), paramEventKind: "Accident",
+			toolparams.ParamWorkerID: events.event.WorkerID.String(), paramEventKind: "Accident",
 			paramEventSeverity: "Major", wfParamOccurred: "2026-09-20T14:30:00-05:00",
 		},
 		"unknown kind": {
-			common.ParamWorkerID: events.event.WorkerID.String(), paramEventKind: "Fire",
+			toolparams.ParamWorkerID: events.event.WorkerID.String(), paramEventKind: "Fire",
 			paramEventSeverity: "Major", wfParamOccurred: "2026-09-20T14:30:00-05:00",
-			common.FieldDescription: "x",
+			changepreview.FieldDescription: "x",
 		},
 		"epoch seconds": {
-			common.ParamWorkerID: events.event.WorkerID.String(), paramEventKind: "Accident",
+			toolparams.ParamWorkerID: events.event.WorkerID.String(), paramEventKind: "Accident",
 			paramEventSeverity: "Major", wfParamOccurred: float64(1_790_000_000),
-			common.FieldDescription: "x",
+			changepreview.FieldDescription: "x",
 		},
 	} {
 		require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(),
@@ -406,7 +407,7 @@ func TestChangeWorkerSafetyEventStatus_ClosingNeedsAResolution(t *testing.T) {
 		agenttoolstest.FieldByPath(
 			t,
 			agenttoolstest.PreviewChange(t, preview, 0),
-			common.FieldStatus,
+			changepreview.FieldStatus,
 		).After,
 	)
 	require.NoError(t, tool.Execute(t.Context(), params))
@@ -455,10 +456,10 @@ func TestGiveWorkerRecognition_TellsTheDriver(t *testing.T) {
 	events := newFakeSafety()
 	tool := newGiveWorkerRecognitionTool(events)
 	params := agenttoolstest.ExecuteParams(map[string]any{
-		common.ParamWorkerID: events.event.WorkerID.String(),
-		paramRecognitionKind: "SafetyMilestone",
-		paramTitle:           "A million safe miles",
-		common.FieldMessage:  "Thank you for every one of them.",
+		toolparams.ParamWorkerID:   events.event.WorkerID.String(),
+		paramRecognitionKind:       "SafetyMilestone",
+		paramTitle:                 "A million safe miles",
+		changepreview.FieldMessage: "Thank you for every one of them.",
 	})
 
 	preview := agenttoolstest.PreviewWithoutWrites(
@@ -482,9 +483,9 @@ func TestSafetyViolationTools_KeepWhatIsNotNamed(t *testing.T) {
 	events := newFakeSafety()
 	record := newRecordSafetyViolationTool(events)
 	params := agenttoolstest.ExecuteParams(map[string]any{
-		paramSafetyEventID:      events.event.ID.String(),
-		common.FieldDescription: "Inoperative marker lamp",
-		paramSeverityWeight:     float64(2),
+		paramSafetyEventID:             events.event.ID.String(),
+		changepreview.FieldDescription: "Inoperative marker lamp",
+		paramSeverityWeight:            float64(2),
 	})
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
@@ -510,8 +511,8 @@ func TestSafetyViolationTools_KeepWhatIsNotNamed(t *testing.T) {
 
 	require.Error(t, record.(agenttoolports.ToolValidator).Validate(t.Context(),
 		agenttoolstest.ExecuteParams(map[string]any{
-			paramSafetyEventID:      events.event.ID.String(),
-			common.FieldDescription: "x",
-			paramSeverityWeight:     float64(11),
+			paramSafetyEventID:             events.event.ID.String(),
+			changepreview.FieldDescription: "x",
+			paramSeverityWeight:            float64(11),
 		})), "a severity weight runs 1 to 10")
 }

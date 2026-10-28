@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -121,9 +123,9 @@ var safetyEventMoves = agenttoolschema.Source(
 )
 
 var safetyEventFields = []string{
-	paramEventKind, paramEventSeverity, common.FieldStatus, wfParamOccurred, paramEventLocation,
-	common.FieldDescription, paramPreventable, paramPoints, "pointsExpireAt", paramReferenceNumber,
-	common.FieldShipmentID, paramInspectionLevel, paramInspectionRes, paramOutOfService,
+	paramEventKind, paramEventSeverity, changepreview.FieldStatus, wfParamOccurred, paramEventLocation,
+	changepreview.FieldDescription, paramPreventable, paramPoints, "pointsExpireAt", paramReferenceNumber,
+	changepreview.FieldShipmentID, paramInspectionLevel, paramInspectionRes, paramOutOfService,
 	paramFineAmount, paramCostAmount, wfFieldDocument, paramResolutionText,
 }
 
@@ -271,33 +273,42 @@ func safetyEventProperties() map[string]any {
 		paramEventKind:     agenttoolschema.Enum("What happened.", safetyEventKinds),
 		paramEventSeverity: agenttoolschema.Enum("How serious it was.", safetySeverities),
 		wfParamOccurred:    agenttoolschema.DateTime("When it happened."),
-		common.FieldDescription: common.StringProperty(
+		changepreview.FieldDescription: toolparams.StringProperty(
 			"What happened, in the words of the report or "+
 				"the person who told you.",
 			wfNoteChars,
 		),
-		paramEventLocation: common.StringProperty("Where it happened.", wfShortChars),
-		paramPreventable: common.BooleanProperty("For an accident: whether it was preventable. " +
-			"Leave it out unless the report says so."),
-		paramPoints: common.IntegerProperty("The points it carries on the driver's record. Leave "+
-			"it out on a new event to take the house scale for the kind and severity.", 0,
-			maxSafetyPoints),
-		paramReferenceNumber: common.StringProperty("A citation, report or inspection number.",
+		paramEventLocation: toolparams.StringProperty("Where it happened.", wfShortChars),
+		paramPreventable: toolparams.BooleanProperty(
+			"For an accident: whether it was preventable. " +
+				"Leave it out unless the report says so.",
+		),
+		paramPoints: toolparams.IntegerProperty(
+			"The points it carries on the driver's record. Leave "+
+				"it out on a new event to take the house scale for the kind and severity.",
+			0,
+			maxSafetyPoints,
+		),
+		paramReferenceNumber: toolparams.StringProperty("A citation, report or inspection number.",
 			wfShortChars),
-		common.FieldShipmentID: agenttoolschema.RecordIDText(
+		changepreview.FieldShipmentID: agenttoolschema.RecordIDText(
 			permission.ResourceShipment,
 			"The load it happened on, from shipment_list or "+
 				"shipment_get. Never guess one.",
 		),
-		paramInspectionLevel: common.IntegerProperty("For an inspection: its CVSA level.", 1,
+		paramInspectionLevel: toolparams.IntegerProperty("For an inspection: its CVSA level.", 1,
 			maxInspectionLevel),
 		paramInspectionRes: agenttoolschema.Enum("For an inspection: how it ended.",
 			inspectionResults),
-		paramOutOfService: common.BooleanProperty("Whether the driver or the vehicle was put out " +
-			"of service."),
-		paramFineAmount: common.AmountProperty("A fine, as a decimal such as 250.00."),
-		paramCostAmount: common.AmountProperty("What it cost the company, as a decimal such as " +
-			"1800.00."),
+		paramOutOfService: toolparams.BooleanProperty(
+			"Whether the driver or the vehicle was put out " +
+				"of service.",
+		),
+		paramFineAmount: toolparams.AmountProperty("A fine, as a decimal such as 250.00."),
+		paramCostAmount: toolparams.AmountProperty(
+			"What it cost the company, as a decimal such as " +
+				"1800.00.",
+		),
 		wfParamDocument: wfDocumentProperty(),
 	}
 }
@@ -322,7 +333,11 @@ func applySafetyEventCore(
 	params map[string]any,
 	required safetyEventRequired,
 ) error {
-	kind, kindGiven, kindErr := common.OptionalEnum(params, paramEventKind, safetyEventKinds.Values)
+	kind, kindGiven, kindErr := toolparams.OptionalEnum(
+		params,
+		paramEventKind,
+		safetyEventKinds.Values,
+	)
 	switch {
 	case kindErr != nil:
 		return kindErr
@@ -331,7 +346,7 @@ func applySafetyEventCore(
 	case required.kind:
 		return fmt.Errorf("missing required parameter %q", paramEventKind)
 	}
-	if severity, given, err := common.OptionalEnum(
+	if severity, given, err := toolparams.OptionalEnum(
 		params, paramEventSeverity, safetySeverities.Values,
 	); err != nil {
 		return err
@@ -340,7 +355,7 @@ func applySafetyEventCore(
 	} else if required.severity {
 		return fmt.Errorf("missing required parameter %q", paramEventSeverity)
 	}
-	occurred, err := common.OptionalDateTime(params, wfParamOccurred)
+	occurred, err := toolparams.OptionalDateTime(params, wfParamOccurred)
 	switch {
 	case err != nil:
 		return err
@@ -349,28 +364,32 @@ func applySafetyEventCore(
 	case required.occurred:
 		return fmt.Errorf("missing required parameter %q", wfParamOccurred)
 	}
-	description, err := common.OptionalBoundedText(params, common.FieldDescription, wfNoteChars)
+	description, err := toolparams.OptionalBoundedText(
+		params,
+		changepreview.FieldDescription,
+		wfNoteChars,
+	)
 	switch {
 	case err != nil:
 		return err
 	case description != nil:
 		entity.Description = *description
 	case required.description:
-		return fmt.Errorf("missing required parameter %q", common.FieldDescription)
+		return fmt.Errorf("missing required parameter %q", changepreview.FieldDescription)
 	}
 	return nil
 }
 
 func applySafetyEventDetail(entity *workersafety.WorkerSafetyEvent, params map[string]any) error {
 	var err error
-	location, locErr := common.OptionalBoundedText(params, paramEventLocation, wfShortChars)
+	location, locErr := toolparams.OptionalBoundedText(params, paramEventLocation, wfShortChars)
 	if locErr != nil {
 		return locErr
 	}
 	if location != nil {
 		entity.Location = *location
 	}
-	if reference, refErr := common.OptionalBoundedText(
+	if reference, refErr := toolparams.OptionalBoundedText(
 		params, paramReferenceNumber, wfShortChars,
 	); refErr != nil {
 		return refErr
@@ -385,14 +404,14 @@ func applySafetyEventDetail(entity *workersafety.WorkerSafetyEvent, params map[s
 		entity.OutOfService); err != nil {
 		return err
 	}
-	if result, given, resErr := common.OptionalEnum(
+	if result, given, resErr := toolparams.OptionalEnum(
 		params, paramInspectionRes, inspectionResults.Values,
 	); resErr != nil {
 		return resErr
 	} else if given {
 		entity.InspectionResult = result
 	}
-	level, err := common.OptionalIntInRange(params, paramInspectionLevel, 1, maxInspectionLevel)
+	level, err := toolparams.OptionalIntInRange(params, paramInspectionLevel, 1, maxInspectionLevel)
 	if err != nil {
 		return err
 	}
@@ -404,14 +423,14 @@ func applySafetyEventDetail(entity *workersafety.WorkerSafetyEvent, params map[s
 }
 
 func applySafetyEventRefs(entity *workersafety.WorkerSafetyEvent, params map[string]any) error {
-	shipmentID, err := common.OptionalID(params, common.FieldShipmentID)
+	shipmentID, err := toolparams.OptionalID(params, changepreview.FieldShipmentID)
 	if err != nil {
 		return err
 	}
 	if !shipmentID.IsNil() {
 		entity.ShipmentID = shipmentID
 	}
-	documentID, err := common.OptionalID(params, wfParamDocument)
+	documentID, err := toolparams.OptionalID(params, wfParamDocument)
 	if err != nil {
 		return err
 	}
@@ -436,7 +455,7 @@ func applySafetyPoints(
 	params map[string]any,
 	defaulted bool,
 ) error {
-	points, err := common.OptionalIntInRange(params, paramPoints, 0, maxSafetyPoints)
+	points, err := toolparams.OptionalIntInRange(params, paramPoints, 0, maxSafetyPoints)
 	if err != nil {
 		return err
 	}
@@ -453,7 +472,7 @@ func applySafetyPoints(
 
 func newOpenWorkerSafetyEventTool(events SafetyKeeper) agenttoolports.AgentTool {
 	properties := safetyEventProperties()
-	properties[common.ParamWorkerID] = common.WorkerProperty()
+	properties[toolparams.ParamWorkerID] = toolparams.WorkerProperty()
 	spec := withSchema(wfSpec(
 		"worker_open_safety_event",
 		"Record a safety event on a driver's record: an accident, incident, near miss, "+
@@ -464,14 +483,14 @@ func newOpenWorkerSafetyEventTool(events SafetyKeeper) agenttoolports.AgentTool 
 			"driver, and it is corrected or deleted while it is open.",
 		permission.ResourceWorkerSafetyEvent,
 		permission.OpCreate,
-	), properties, common.ParamWorkerID, paramEventKind, paramEventSeverity, wfParamOccurred,
-		common.FieldDescription)
+	), properties, toolparams.ParamWorkerID, paramEventKind, paramEventSeverity, wfParamOccurred,
+		changepreview.FieldDescription)
 	spec.SearchTerms = []string{"accident", "incident", "inspection", "citation", "near miss"}
 
-	return common.NewReportingReceivableTool(spec,
-		common.ReceivablePlan[*workersafety.WorkerSafetyEvent, *workersafety.WorkerSafetyEvent]{
+	return toolspec.NewReportingReceivableTool(spec,
+		toolspec.ReceivablePlan[*workersafety.WorkerSafetyEvent, *workersafety.WorkerSafetyEvent]{
 			Request: func(params *agenttoolports.ToolExecuteParams) (*workersafety.WorkerSafetyEvent, error) {
-				workerID, err := common.RequirePulid(params.Params, common.ParamWorkerID)
+				workerID, err := toolparams.RequirePulid(params.Params, toolparams.ParamWorkerID)
 				if err != nil {
 					return nil, err
 				}
@@ -541,7 +560,7 @@ func (e *safetyEventEdit) entity(
 	ctx context.Context,
 	events SafetyKeeper,
 ) (*workersafety.WorkerSafetyEvent, error) {
-	current, err := events.GetEvent(ctx, common.TenantFrom(*e.params), e.id)
+	current, err := events.GetEvent(ctx, toolparams.TenantFrom(*e.params), e.id)
 	if err != nil {
 		return nil, err
 	}
@@ -554,7 +573,11 @@ func (e *safetyEventEdit) entity(
 	if err = applySafetyPoints(&entity, e.params.Params, false); err != nil {
 		return nil, err
 	}
-	resolution, err := common.OptionalBoundedText(e.params.Params, paramResolutionText, wfNoteChars)
+	resolution, err := toolparams.OptionalBoundedText(
+		e.params.Params,
+		paramResolutionText,
+		wfNoteChars,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -579,10 +602,10 @@ func newUpdateWorkerSafetyEventTool(events SafetyKeeper) agenttoolports.AgentToo
 		permission.OpUpdate,
 	), properties, paramSafetyEventID), paramSafetyEventID, permission.ResourceWorkerSafetyEvent)
 
-	return common.NewReportingReceivableTool(spec,
-		common.ReceivablePlan[*safetyEventEdit, *workersafetyservice.EventChange]{
+	return toolspec.NewReportingReceivableTool(spec,
+		toolspec.ReceivablePlan[*safetyEventEdit, *workersafetyservice.EventChange]{
 			Request: func(params *agenttoolports.ToolExecuteParams) (*safetyEventEdit, error) {
-				id, err := common.RequirePulid(params.Params, paramSafetyEventID)
+				id, err := toolparams.RequirePulid(params.Params, paramSafetyEventID)
 				if err != nil {
 					return nil, err
 				}
@@ -649,7 +672,7 @@ func (m *safetyEventStatusMove) plan(
 	case safetyEventReopen:
 		return events.PlanReopenEvent(ctx, m.req)
 	}
-	return nil, common.ErrUnknownValue(paramEventMove, string(m.move), safetyEventMoves.Names())
+	return nil, toolparams.ErrUnknownValue(paramEventMove, string(m.move), safetyEventMoves.Names())
 }
 
 func (m *safetyEventStatusMove) run(
@@ -664,7 +687,7 @@ func (m *safetyEventStatusMove) run(
 	case safetyEventReopen:
 		return events.ReopenEvent(ctx, m.req)
 	}
-	return nil, common.ErrUnknownValue(paramEventMove, string(m.move), safetyEventMoves.Names())
+	return nil, toolparams.ErrUnknownValue(paramEventMove, string(m.move), safetyEventMoves.Names())
 }
 
 func newChangeWorkerSafetyEventStatusTool(events SafetyKeeper) agenttoolports.AgentTool {
@@ -686,14 +709,14 @@ func newChangeWorkerSafetyEventStatusTool(events SafetyKeeper) agenttoolports.Ag
 	}, paramSafetyEventID, paramEventMove), paramSafetyEventID,
 		permission.ResourceWorkerSafetyEvent)
 
-	return common.NewReportingReceivableTool(spec,
-		common.ReceivablePlan[*safetyEventStatusMove, *workersafetyservice.EventChange]{
+	return toolspec.NewReportingReceivableTool(spec,
+		toolspec.ReceivablePlan[*safetyEventStatusMove, *workersafetyservice.EventChange]{
 			Request: func(params *agenttoolports.ToolExecuteParams) (*safetyEventStatusMove, error) {
-				id, err := common.RequirePulid(params.Params, paramSafetyEventID)
+				id, err := toolparams.RequirePulid(params.Params, paramSafetyEventID)
 				if err != nil {
 					return nil, err
 				}
-				move, err := common.RequireEnum(
+				move, err := toolparams.RequireEnum(
 					params.Params,
 					paramEventMove,
 					safetyEventMoves.Values,
@@ -701,7 +724,7 @@ func newChangeWorkerSafetyEventStatusTool(events SafetyKeeper) agenttoolports.Ag
 				if err != nil {
 					return nil, err
 				}
-				resolution, err := common.BoundedText(
+				resolution, err := toolparams.BoundedText(
 					params.Params,
 					paramResolutionText,
 					wfNoteChars,
@@ -717,7 +740,7 @@ func newChangeWorkerSafetyEventStatusTool(events SafetyKeeper) agenttoolports.Ag
 					move: move,
 					req: &workersafetyservice.EventStatusRequest{
 						ID:         id,
-						TenantInfo: common.TenantFrom(*params),
+						TenantInfo: toolparams.TenantFrom(*params),
 						Resolution: resolution,
 						UserID:     params.Actor.UserID,
 					},
@@ -759,7 +782,7 @@ func renderSafetyEventStatusMove(
 		change.Before,
 		change.After,
 		wfOptions(
-			common.FieldStatus,
+			changepreview.FieldStatus,
 			wfFieldClosedAt,
 			"closedById",
 			paramResolutionText,
@@ -784,13 +807,13 @@ type recordDelete struct {
 
 func recordDeleteFrom(key string) func(*agenttoolports.ToolExecuteParams) (*recordDelete, error) {
 	return func(params *agenttoolports.ToolExecuteParams) (*recordDelete, error) {
-		id, err := common.RequirePulid(params.Params, key)
+		id, err := toolparams.RequirePulid(params.Params, key)
 		if err != nil {
 			return nil, err
 		}
 		return &recordDelete{
 			id:     id,
-			tenant: common.TenantFrom(*params),
+			tenant: toolparams.TenantFrom(*params),
 			userID: params.Actor.UserID,
 		}, nil
 	}
@@ -811,9 +834,9 @@ func newDeleteWorkerSafetyEventTool(events SafetyKeeper) agenttoolports.AgentToo
 	spec.MaxTier = agent.TierPropose
 	spec.Reversible = false
 
-	return common.NewReceivableTool(
+	return toolspec.NewReceivableTool(
 		spec,
-		common.ReceivablePlan[*recordDelete, *workersafety.WorkerSafetyEvent]{
+		toolspec.ReceivablePlan[*recordDelete, *workersafety.WorkerSafetyEvent]{
 			Request: recordDeleteFrom(paramSafetyEventID),
 			Plan: func(
 				ctx context.Context,
@@ -849,19 +872,23 @@ func newDeleteWorkerSafetyEventTool(events SafetyKeeper) agenttoolports.AgentToo
 func recognitionFrom(
 	params *agenttoolports.ToolExecuteParams,
 ) (*workersafety.WorkerRecognition, error) {
-	workerID, err := common.RequirePulid(params.Params, common.ParamWorkerID)
+	workerID, err := toolparams.RequirePulid(params.Params, toolparams.ParamWorkerID)
 	if err != nil {
 		return nil, err
 	}
-	kind, err := common.RequireEnum(params.Params, paramRecognitionKind, recognitionKinds.Values)
+	kind, err := toolparams.RequireEnum(
+		params.Params,
+		paramRecognitionKind,
+		recognitionKinds.Values,
+	)
 	if err != nil {
 		return nil, err
 	}
-	title, err := common.RequireBoundedText(params.Params, paramTitle, wfShortChars)
+	title, err := toolparams.RequireBoundedText(params.Params, paramTitle, wfShortChars)
 	if err != nil {
 		return nil, err
 	}
-	message, err := common.BoundedText(params.Params, common.FieldMessage, wfNoteChars)
+	message, err := toolparams.BoundedText(params.Params, changepreview.FieldMessage, wfNoteChars)
 	if err != nil {
 		return nil, err
 	}
@@ -878,7 +905,7 @@ func recognitionFrom(
 		Message:         message,
 		VisibleToWorker: visible,
 	}
-	occurred, err := common.OptionalDateTime(params.Params, wfParamOccurred)
+	occurred, err := toolparams.OptionalDateTime(params.Params, wfParamOccurred)
 	if err != nil {
 		return nil, err
 	}
@@ -889,7 +916,7 @@ func recognitionFrom(
 }
 
 var recognitionFields = []string{
-	wfFieldWorkerID, paramRecognitionKind, paramTitle, common.FieldMessage, wfParamOccurred,
+	wfFieldWorkerID, paramRecognitionKind, paramTitle, changepreview.FieldMessage, wfParamOccurred,
 	paramVisibleToWorker,
 }
 
@@ -903,20 +930,27 @@ func newGiveWorkerRecognitionTool(events SafetyKeeper) agenttoolports.AgentTool 
 		permission.ResourceWorkerRecognition,
 		permission.OpCreate,
 	), map[string]any{
-		common.ParamWorkerID: common.WorkerProperty(),
-		paramRecognitionKind: agenttoolschema.Enum("What it is for.", recognitionKinds),
-		paramTitle:           common.StringProperty("A short title the driver sees.", wfShortChars),
-		common.FieldMessage:  wfNoteProperty("What you would say to them."),
-		wfParamOccurred:      agenttoolschema.DateTime("When it was earned. Defaults to now."),
-		paramVisibleToWorker: common.BooleanProperty("Whether the driver sees it and is told. " +
-			"Defaults to true."),
-	}, common.ParamWorkerID, paramRecognitionKind, paramTitle)
+		toolparams.ParamWorkerID: toolparams.WorkerProperty(),
+		paramRecognitionKind:     agenttoolschema.Enum("What it is for.", recognitionKinds),
+		paramTitle: toolparams.StringProperty(
+			"A short title the driver sees.",
+			wfShortChars,
+		),
+		changepreview.FieldMessage: wfNoteProperty("What you would say to them."),
+		wfParamOccurred: agenttoolschema.DateTime(
+			"When it was earned. Defaults to now.",
+		),
+		paramVisibleToWorker: toolparams.BooleanProperty(
+			"Whether the driver sees it and is told. " +
+				"Defaults to true.",
+		),
+	}, toolparams.ParamWorkerID, paramRecognitionKind, paramTitle)
 	spec.Egress = agent.EgressDriverVisible
 
 	spec.SearchTerms = []string{"safe miles award", "recognize driver", "safety award", "praise"}
 
-	return common.NewReportingReceivableTool(spec,
-		common.ReceivablePlan[*workersafety.WorkerRecognition, *workersafety.WorkerRecognition]{
+	return toolspec.NewReportingReceivableTool(spec,
+		toolspec.ReceivablePlan[*workersafety.WorkerRecognition, *workersafety.WorkerRecognition]{
 			Request: recognitionFrom,
 			Plan: func(
 				ctx context.Context,
@@ -978,9 +1012,9 @@ func newDeleteWorkerRecognitionTool(events SafetyKeeper) agenttoolports.AgentToo
 	spec.MaxTier = agent.TierPropose
 	spec.Reversible = false
 
-	return common.NewReceivableTool(
+	return toolspec.NewReceivableTool(
 		spec,
-		common.ReceivablePlan[*recordDelete, *workersafety.WorkerRecognition]{
+		toolspec.ReceivablePlan[*recordDelete, *workersafety.WorkerRecognition]{
 			Request: recordDeleteFrom(paramRecognitionID),
 			Plan: func(
 				ctx context.Context,
@@ -1012,7 +1046,7 @@ func newDeleteWorkerRecognitionTool(events SafetyKeeper) agenttoolports.AgentToo
 }
 
 var violationFields = []string{
-	paramSafetyEventID, wfFieldWorkerID, paramCSABasic, paramViolationCode, common.FieldDescription,
+	paramSafetyEventID, wfFieldWorkerID, paramCSABasic, paramViolationCode, changepreview.FieldDescription,
 	paramSeverityWeight, paramOutOfService,
 }
 
@@ -1029,21 +1063,21 @@ func violationProperties() map[string]any {
 	return map[string]any{
 		paramCSABasic: agenttoolschema.Enum("The BASIC it falls under. Leave it out to "+
 			"take what the event implies.", csaBasics),
-		paramViolationCode: common.StringProperty("The regulation cited, such as 393.47(e).",
+		paramViolationCode: toolparams.StringProperty("The regulation cited, such as 393.47(e).",
 			wfShortChars),
-		common.FieldDescription: common.StringProperty(
+		changepreview.FieldDescription: toolparams.StringProperty(
 			"What was cited, as the inspection report words it.",
 			wfNoteChars,
 		),
-		paramSeverityWeight: common.IntegerProperty("The FMCSA severity weight, 1 to 10.", 1,
+		paramSeverityWeight: toolparams.IntegerProperty("The FMCSA severity weight, 1 to 10.", 1,
 			maxSeverityWeight),
-		paramOutOfService: common.BooleanProperty("Whether this violation put the driver or " +
+		paramOutOfService: toolparams.BooleanProperty("Whether this violation put the driver or " +
 			"vehicle out of service."),
 	}
 }
 
 func violationWeight(params map[string]any) (int16, error) {
-	weight, err := common.OptionalIntInRange(params, paramSeverityWeight, 1, maxSeverityWeight)
+	weight, err := toolparams.OptionalIntInRange(params, paramSeverityWeight, 1, maxSeverityWeight)
 	if err != nil || weight == nil {
 		return 0, err
 	}
@@ -1063,33 +1097,33 @@ func newRecordSafetyViolationTool(events SafetyKeeper) agenttoolports.AgentTool 
 			"corrected or removed the same way.",
 		permission.ResourceWorkerSafetyEvent,
 		permission.OpCreate,
-	), properties, paramSafetyEventID, common.FieldDescription)
+	), properties, paramSafetyEventID, changepreview.FieldDescription)
 
 	spec.SearchTerms = []string{"roadside violation", "inspection violation", "add violation"}
 
-	return common.NewReportingReceivableTool(spec, common.ReceivablePlan[
+	return toolspec.NewReportingReceivableTool(spec, toolspec.ReceivablePlan[
 		*workersafetyservice.RecordViolationRequest, *workersafety.WorkerSafetyViolation,
 	]{
 		Request: func(
 			params *agenttoolports.ToolExecuteParams,
 		) (*workersafetyservice.RecordViolationRequest, error) {
-			eventID, err := common.RequirePulid(params.Params, paramSafetyEventID)
+			eventID, err := toolparams.RequirePulid(params.Params, paramSafetyEventID)
 			if err != nil {
 				return nil, err
 			}
-			description, err := common.RequireBoundedText(
+			description, err := toolparams.RequireBoundedText(
 				params.Params,
-				common.FieldDescription,
+				changepreview.FieldDescription,
 				wfNoteChars,
 			)
 			if err != nil {
 				return nil, err
 			}
-			basic, _, err := common.OptionalEnum(params.Params, paramCSABasic, csaBasics.Values)
+			basic, _, err := toolparams.OptionalEnum(params.Params, paramCSABasic, csaBasics.Values)
 			if err != nil {
 				return nil, err
 			}
-			code, err := common.BoundedText(params.Params, paramViolationCode, wfShortChars)
+			code, err := toolparams.BoundedText(params.Params, paramViolationCode, wfShortChars)
 			if err != nil {
 				return nil, err
 			}
@@ -1102,7 +1136,7 @@ func newRecordSafetyViolationTool(events SafetyKeeper) agenttoolports.AgentTool 
 				return nil, err
 			}
 			return &workersafetyservice.RecordViolationRequest{
-				TenantInfo:     common.TenantFrom(*params),
+				TenantInfo:     toolparams.TenantFrom(*params),
 				SafetyEventID:  eventID,
 				Basic:          basic,
 				Code:           code,
@@ -1160,7 +1194,7 @@ func (e *violationEdit) request(
 	ctx context.Context,
 	events SafetyKeeper,
 ) (*workersafetyservice.UpdateViolationRequest, error) {
-	tenant := common.TenantFrom(*e.params)
+	tenant := toolparams.TenantFrom(*e.params)
 	current, err := events.GetViolation(ctx, tenant, e.id)
 	if err != nil {
 		return nil, err
@@ -1174,17 +1208,17 @@ func (e *violationEdit) request(
 		OutOfService:   current.OutOfService,
 		UserID:         e.params.Actor.UserID,
 	}
-	if req.Basic, _, err = common.OptionalEnum(e.params.Params, paramCSABasic,
+	if req.Basic, _, err = toolparams.OptionalEnum(e.params.Params, paramCSABasic,
 		csaBasics.Values); err != nil {
 		return nil, err
 	}
-	if code, codeErr := common.OptionalBoundedText(e.params.Params, paramViolationCode,
+	if code, codeErr := toolparams.OptionalBoundedText(e.params.Params, paramViolationCode,
 		wfShortChars); codeErr != nil {
 		return nil, codeErr
 	} else if code != nil {
 		req.Code = *code
 	}
-	if text, textErr := common.OptionalBoundedText(e.params.Params, common.FieldDescription,
+	if text, textErr := toolparams.OptionalBoundedText(e.params.Params, changepreview.FieldDescription,
 		wfNoteChars); textErr != nil {
 		return nil, textErr
 	} else if text != nil {
@@ -1223,10 +1257,10 @@ func newUpdateSafetyViolationTool(events SafetyKeeper) agenttoolports.AgentTool 
 	), properties, paramViolationID), paramViolationID, permission.ResourceWorkerSafetyEvent)
 	spec.SearchTerms = []string{"fix violation", "basic", "severity weight"}
 
-	return common.NewReportingReceivableTool(spec,
-		common.ReceivablePlan[*violationEdit, *workersafetyservice.ViolationChange]{
+	return toolspec.NewReportingReceivableTool(spec,
+		toolspec.ReceivablePlan[*violationEdit, *workersafetyservice.ViolationChange]{
 			Request: func(params *agenttoolports.ToolExecuteParams) (*violationEdit, error) {
-				id, err := common.RequirePulid(params.Params, paramViolationID)
+				id, err := toolparams.RequirePulid(params.Params, paramViolationID)
 				if err != nil {
 					return nil, err
 				}
@@ -1289,9 +1323,9 @@ func newDeleteSafetyViolationTool(events SafetyKeeper) agenttoolports.AgentTool 
 	spec.MaxTier = agent.TierPropose
 	spec.Reversible = false
 
-	return common.NewReceivableTool(
+	return toolspec.NewReceivableTool(
 		spec,
-		common.ReceivablePlan[*recordDelete, *workersafety.WorkerSafetyViolation]{
+		toolspec.ReceivablePlan[*recordDelete, *workersafety.WorkerSafetyViolation]{
 			Request: recordDeleteFrom(paramViolationID),
 			Plan: func(
 				ctx context.Context,

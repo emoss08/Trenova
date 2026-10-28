@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
@@ -81,13 +83,16 @@ func evidenceItemsProperty(description string) map[string]any {
 		toolschema.KeyItems: map[string]any{
 			toolschema.KeyType: toolschema.TypeObject,
 			toolschema.KeyProperties: map[string]any{
-				common.FieldType: common.StringProperty(
+				changepreview.FieldType: toolparams.StringProperty(
 					"What kind of record it is: document, charge, rate, shipment.", 0,
 				),
-				evidenceID:       common.StringProperty("The record's id.", 0),
-				common.FieldNote: common.StringProperty("What the record shows, in a sentence.", 0),
+				evidenceID: toolparams.StringProperty("The record's id.", 0),
+				changepreview.FieldNote: toolparams.StringProperty(
+					"What the record shows, in a sentence.",
+					0,
+				),
 			},
-			toolschema.KeyRequired:             []string{common.FieldType, evidenceID},
+			toolschema.KeyRequired:             []string{changepreview.FieldType, evidenceID},
 			toolschema.KeyAdditionalProperties: false,
 		},
 	}
@@ -105,23 +110,23 @@ func (t *RaiseExceptionTool) ParamSchema() map[string]any {
 	return map[string]any{
 		schemaType: "object",
 		"properties": map[string]any{
-			common.FieldSubjectType: agenttoolschema.Enum(
+			changepreview.FieldSubjectType: agenttoolschema.Enum(
 				"The kind of record the case is about; BillingQueueItem on a billing run.",
 				agenttoolschema.SubjectTypes,
 			),
-			common.FieldSubjectID: subjectIDProperty(
+			changepreview.FieldSubjectID: subjectIDProperty(
 				"The id of that record: usually this run's subject, or an id a " +
 					"tool such as shipment_get or shipment_list returned. Its prefix must " +
 					"match subjectType: a report's id starts rd_, a dashboard's rdb_, an " +
 					"insight's inst_.",
 			),
-			common.FieldCategory: agenttoolschema.Enum(
+			changepreview.FieldCategory: agenttoolschema.Enum(
 				"What kind of problem it is. On a billing queue item that is usually "+
 					"MissingDocumentation, IncorrectRates, WeightDiscrepancy, "+
 					"AccessorialDispute, DuplicateCharge or RateNotOnFile.",
 				agenttoolschema.ExceptionCategories,
 			),
-			common.FieldSeverity: agenttoolschema.Enum(
+			changepreview.FieldSeverity: agenttoolschema.Enum(
 				"How urgent it is for the person who takes over. Defaults to Medium.",
 				agenttoolschema.Severities,
 			),
@@ -133,7 +138,7 @@ func (t *RaiseExceptionTool) ParamSchema() map[string]any {
 				schemaType:    "integer",
 				"description": "How many records are affected.",
 			},
-			common.FieldEvidence: evidenceItemsProperty(
+			changepreview.FieldEvidence: evidenceItemsProperty(
 				"Optional: the records that show the problem, each as {type, id, note}: a " +
 					"document, a charge, a rate, the shipment. The run itself is always kept " +
 					"as evidence.",
@@ -141,7 +146,7 @@ func (t *RaiseExceptionTool) ParamSchema() map[string]any {
 		},
 		"required": []string{
 			"subjectType",
-			common.FieldSubjectID,
+			changepreview.FieldSubjectID,
 			"category",
 			"severity",
 			"attemptSummary",
@@ -172,7 +177,7 @@ func (t *RaiseExceptionTool) Execute(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams,
 ) error {
-	if err := common.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
 	}
 
@@ -198,12 +203,12 @@ func (t *RaiseExceptionTool) request(
 	if err != nil {
 		return nil, err
 	}
-	summary, err := common.RequireString(params.Params, "attemptSummary")
+	summary, err := toolparams.RequireString(params.Params, "attemptSummary")
 	if err != nil {
 		return nil, err
 	}
 
-	category, given, err := common.OptionalEnum(
+	category, given, err := toolparams.OptionalEnum(
 		params.Params, "category", agenttoolschema.ExceptionCategories.Values,
 	)
 	if err != nil {
@@ -212,7 +217,7 @@ func (t *RaiseExceptionTool) request(
 	if !given {
 		category = agent.CategoryOther
 	}
-	severity, given, err := common.OptionalEnum(
+	severity, given, err := toolparams.OptionalEnum(
 		params.Params, "severity", agenttoolschema.Severities.Values,
 	)
 	if err != nil {
@@ -241,7 +246,7 @@ func (t *RaiseExceptionTool) request(
 		SubjectID:      subjectID,
 		AttemptSummary: summary,
 		Evidence:       evidence,
-		BlastRadius:    int(common.OptionalInt64(params.Params, "blastRadius")),
+		BlastRadius:    int(toolparams.OptionalInt64(params.Params, "blastRadius")),
 		TenantInfo: pagination.TenantInfo{
 			OrgID: params.OrganizationID,
 			BuID:  params.BusinessUnitID,
@@ -253,7 +258,7 @@ func (t *RaiseExceptionTool) Validate(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams,
 ) error {
-	if err := common.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
 	}
 
@@ -266,12 +271,12 @@ func (t *RaiseExceptionTool) Validate(
 }
 
 func givenEvidence(params map[string]any) ([]agent.EvidenceRef, error) {
-	if raw, ok := params[common.FieldEvidence]; !ok || raw == nil {
+	if raw, ok := params[changepreview.FieldEvidence]; !ok || raw == nil {
 		return nil, nil
 	}
 
 	var evidence []agent.EvidenceRef
-	if err := common.DecodeParam(params, common.FieldEvidence, &evidence); err != nil {
+	if err := toolparams.DecodeParam(params, changepreview.FieldEvidence, &evidence); err != nil {
 		return nil, err
 	}
 	for idx := range evidence {
@@ -282,7 +287,7 @@ func givenEvidence(params map[string]any) ([]agent.EvidenceRef, error) {
 		if ref.Type == "" || ref.ID == "" {
 			return nil, fmt.Errorf(
 				"parameter %q item %d needs both a type and an id",
-				common.FieldEvidence, idx,
+				changepreview.FieldEvidence, idx,
 			)
 		}
 	}
@@ -299,7 +304,7 @@ func (t *RaiseExceptionTool) subject(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams,
 ) (agent.SubjectType, pulid.ID, error) {
-	subjectTypeRaw, err := common.RequireString(params.Params, "subjectType")
+	subjectTypeRaw, err := toolparams.RequireString(params.Params, "subjectType")
 	if err != nil {
 		return "", pulid.Nil, err
 	}
@@ -310,7 +315,7 @@ func (t *RaiseExceptionTool) subject(
 			strings.Join(agenttoolschema.SubjectTypes.Names(), ", "),
 		)
 	}
-	subjectID, err := common.RequirePulid(params.Params, common.FieldSubjectID)
+	subjectID, err := toolparams.RequirePulid(params.Params, changepreview.FieldSubjectID)
 	if err != nil {
 		return "", pulid.Nil, err
 	}
@@ -322,7 +327,7 @@ func (t *RaiseExceptionTool) subject(
 		return "", pulid.Nil, ErrSubjectUncheckable
 	}
 	exists, err := t.subjects.Exists(ctx, agentports.AgentSubjectExistsRequest{
-		TenantInfo:  common.TenantFrom(params),
+		TenantInfo:  toolparams.TenantFrom(params),
 		SubjectType: subjectType,
 		SubjectID:   subjectID,
 	})

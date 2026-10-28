@@ -4,7 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -83,8 +85,8 @@ var claimStatuses = agenttoolschema.Source(
 
 var injuryFields = []string{
 	wfFieldWorkerID, "caseNumber", "caseYear", paramClassification, paramIllnessType,
-	paramTreatment, common.FieldStatus, wfParamOccurred, "reportedAt", "returnedToWorkAt",
-	paramEventLocation, common.FieldDescription, paramBodyPart, paramHarmfulAgent, paramDaysAway,
+	paramTreatment, changepreview.FieldStatus, wfParamOccurred, "reportedAt", "returnedToWorkAt",
+	paramEventLocation, changepreview.FieldDescription, paramBodyPart, paramHarmfulAgent, paramDaysAway,
 	paramDaysRestricted, paramPrivacyCase, paramClaimStatus, paramClaimNumber,
 	paramClaimCarrier, "claimFiledAt", "claimClosedAt", paramSafetyEventID,
 	wfFieldDocument, wfFieldNotes,
@@ -153,35 +155,42 @@ func injuryDetailProperties() map[string]any {
 		paramTreatment:     agenttoolschema.Enum("The most care it took.", injuryTreatments),
 		paramReportedAt:    agenttoolschema.Date("When the worker reported it."),
 		paramReturnedAt:    agenttoolschema.Date("When the worker came back to work."),
-		paramEventLocation: common.StringProperty("Where it happened.", wfShortChars),
-		paramBodyPart: common.StringProperty(
+		paramEventLocation: toolparams.StringProperty("Where it happened.", wfShortChars),
+		paramBodyPart: toolparams.StringProperty(
 			"The part of the body affected.",
 			maxCredentialField,
 		),
-		paramHarmfulAgent: common.StringProperty("What harmed the worker, such as a load strap.",
-			wfShortChars),
-		paramDaysAway: common.IntegerProperty(
+		paramHarmfulAgent: toolparams.StringProperty(
+			"What harmed the worker, such as a load strap.",
+			wfShortChars,
+		),
+		paramDaysAway: toolparams.IntegerProperty(
 			"Days away from work, capped at 180 as the log counts "+
 				"them.",
 			0,
 			maxInjuryDays,
 		),
-		paramDaysRestricted: common.IntegerProperty("Days on restricted duty or job transfer.", 0,
-			maxInjuryDays),
-		paramPrivacyCase: common.BooleanProperty("Whether the worker's name is withheld from the " +
-			"log as a privacy case."),
+		paramDaysRestricted: toolparams.IntegerProperty(
+			"Days on restricted duty or job transfer.",
+			0,
+			maxInjuryDays,
+		),
+		paramPrivacyCase: toolparams.BooleanProperty(
+			"Whether the worker's name is withheld from the " +
+				"log as a privacy case.",
+		),
 		paramClaimStatus: agenttoolschema.Enum(
 			"Where the workers' comp claim stands.",
 			claimStatuses,
 		),
-		paramClaimNumber:  common.StringProperty("The claim number.", maxCredentialField),
-		paramClaimCarrier: common.StringProperty("The workers' comp carrier.", maxClaimField),
+		paramClaimNumber:  toolparams.StringProperty("The claim number.", maxCredentialField),
+		paramClaimCarrier: toolparams.StringProperty("The workers' comp carrier.", maxClaimField),
 		paramClaimFiledAt: agenttoolschema.Date("When the claim was filed."),
 		paramSafetyEventID: agenttoolschema.RecordIDText(permission.ResourceWorkerSafetyEvent,
 			"The accident it came from, from worker_list_safety_events.",
 		),
-		wfParamDocument:  wfDocumentProperty(),
-		common.ParamNote: wfNoteProperty("Anything the case should say."),
+		wfParamDocument:      wfDocumentProperty(),
+		toolparams.ParamNote: wfNoteProperty("Anything the case should say."),
 	}
 }
 
@@ -199,42 +208,42 @@ func injuryUpdateFrom(
 		return err
 	}
 	var err error
-	if req.PrivacyCase, err = common.OptionalBoolPointer(params, paramPrivacyCase); err != nil {
+	if req.PrivacyCase, err = toolparams.OptionalBoolPointer(params, paramPrivacyCase); err != nil {
 		return err
 	}
-	if req.SafetyEventID, err = common.OptionalID(params, paramSafetyEventID); err != nil {
+	if req.SafetyEventID, err = toolparams.OptionalID(params, paramSafetyEventID); err != nil {
 		return err
 	}
-	req.DocumentID, err = common.OptionalID(params, wfParamDocument)
+	req.DocumentID, err = toolparams.OptionalID(params, wfParamDocument)
 	return err
 }
 
 func injuryEnumsFrom(params map[string]any, req *workerinjuryservice.UpdateInjuryRequest) error {
-	if value, given, err := common.OptionalEnum(params, paramClassification,
+	if value, given, err := toolparams.OptionalEnum(params, paramClassification,
 		oshaClassifications.Values); err != nil {
 		return err
 	} else if given {
 		req.Classification = &value
 	}
-	if value, given, err := common.OptionalEnum(params, paramIllnessType,
+	if value, given, err := toolparams.OptionalEnum(params, paramIllnessType,
 		oshaIllnessTypes.Values); err != nil {
 		return err
 	} else if given {
 		req.IllnessType = &value
 	}
-	if value, given, err := common.OptionalEnum(params, paramTreatment,
+	if value, given, err := toolparams.OptionalEnum(params, paramTreatment,
 		injuryTreatments.Values); err != nil {
 		return err
 	} else if given {
 		req.Treatment = &value
 	}
-	if value, given, err := common.OptionalEnum(params, paramInjuryStatus,
+	if value, given, err := toolparams.OptionalEnum(params, paramInjuryStatus,
 		injuryStatuses.Values); err != nil {
 		return err
 	} else if given {
 		req.Status = &value
 	}
-	if value, given, err := common.OptionalEnum(params, paramClaimStatus,
+	if value, given, err := toolparams.OptionalEnum(params, paramClaimStatus,
 		claimStatuses.Values); err != nil {
 		return err
 	} else if given {
@@ -250,14 +259,14 @@ func injuryTextFrom(params map[string]any, req *workerinjuryservice.UpdateInjury
 		limit int
 	}{
 		{paramEventLocation, &req.Location, wfShortChars},
-		{common.FieldDescription, &req.Description, wfNoteChars},
+		{changepreview.FieldDescription, &req.Description, wfNoteChars},
 		{paramBodyPart, &req.BodyPart, maxCredentialField},
 		{paramHarmfulAgent, &req.HarmfulAgent, wfShortChars},
 		{paramClaimNumber, &req.ClaimNumber, maxCredentialField},
 		{paramClaimCarrier, &req.ClaimCarrier, maxClaimField},
-		{common.ParamNote, &req.Notes, wfNoteChars},
+		{toolparams.ParamNote, &req.Notes, wfNoteChars},
 	} {
-		text, err := common.OptionalBoundedText(params, field.key, field.limit)
+		text, err := toolparams.OptionalBoundedText(params, field.key, field.limit)
 		if err != nil {
 			return err
 		}
@@ -277,7 +286,7 @@ func injuryDaysFrom(params map[string]any, req *workerinjuryservice.UpdateInjury
 		{paramClaimFiledAt, &req.ClaimFiledAt},
 		{paramClaimClosedAt, &req.ClaimClosedAt},
 	} {
-		if *field.dest, err = common.OptionalScheduleDay(params, field.key); err != nil {
+		if *field.dest, err = toolparams.OptionalScheduleDay(params, field.key); err != nil {
 			return err
 		}
 	}
@@ -288,7 +297,7 @@ func injuryDaysFrom(params map[string]any, req *workerinjuryservice.UpdateInjury
 		{paramDaysAway, &req.DaysAway},
 		{paramDaysRestricted, &req.DaysRestricted},
 	} {
-		days, dayErr := common.OptionalIntInRange(params, field.key, 0, maxInjuryDays)
+		days, dayErr := toolparams.OptionalIntInRange(params, field.key, 0, maxInjuryDays)
 		if dayErr != nil {
 			return dayErr
 		}
@@ -302,10 +311,13 @@ func injuryDaysFrom(params map[string]any, req *workerinjuryservice.UpdateInjury
 
 func newRecordWorkerInjuryTool(injuries InjuryKeeper) agenttoolports.AgentTool {
 	properties := injuryDetailProperties()
-	properties[common.ParamWorkerID] = common.WorkerProperty()
+	properties[toolparams.ParamWorkerID] = toolparams.WorkerProperty()
 	properties[wfParamOccurred] = agenttoolschema.DateTime("When it happened.")
-	properties[common.FieldDescription] = common.StringProperty("What happened and the injury, as "+
-		"reported.", wfNoteChars)
+	properties[changepreview.FieldDescription] = toolparams.StringProperty(
+		"What happened and the injury, as "+
+			"reported.",
+		wfNoteChars,
+	)
 	spec := withSchema(wfSpec(
 		"worker_record_injury",
 		"Enter a work-related injury or illness on the OSHA injury log as a new case. It "+
@@ -316,18 +328,18 @@ func newRecordWorkerInjuryTool(injuries InjuryKeeper) agenttoolports.AgentTool {
 			"is corrected with worker_update_injury.",
 		permission.ResourceWorkerInjury,
 		permission.OpCreate,
-	), properties, common.ParamWorkerID, wfParamOccurred, common.FieldDescription)
+	), properties, toolparams.ParamWorkerID, wfParamOccurred, changepreview.FieldDescription)
 	spec.SearchTerms = []string{"OSHA", "injury", "workers comp", "300 log"}
 
-	return common.NewReportingReceivableTool(
+	return toolspec.NewReportingReceivableTool(
 		spec,
-		common.ReceivablePlan[*workersafety.WorkerInjury, *workersafety.WorkerInjury]{
+		toolspec.ReceivablePlan[*workersafety.WorkerInjury, *workersafety.WorkerInjury]{
 			Request: func(params *agenttoolports.ToolExecuteParams) (*workersafety.WorkerInjury, error) {
-				workerID, err := common.RequirePulid(params.Params, common.ParamWorkerID)
+				workerID, err := toolparams.RequirePulid(params.Params, toolparams.ParamWorkerID)
 				if err != nil {
 					return nil, err
 				}
-				occurred, err := common.RequireDateTime(params.Params, wfParamOccurred)
+				occurred, err := toolparams.RequireDateTime(params.Params, wfParamOccurred)
 				if err != nil {
 					return nil, err
 				}
@@ -336,7 +348,10 @@ func newRecordWorkerInjuryTool(injuries InjuryKeeper) agenttoolports.AgentTool {
 					return nil, err
 				}
 				if req.Description == nil || *req.Description == "" {
-					return nil, fmt.Errorf("missing required parameter %q", common.FieldDescription)
+					return nil, fmt.Errorf(
+						"missing required parameter %q",
+						changepreview.FieldDescription,
+					)
 				}
 				entity := &workersafety.WorkerInjury{
 					OrganizationID: params.OrganizationID,
@@ -391,7 +406,7 @@ func newUpdateWorkerInjuryTool(injuries InjuryKeeper) agenttoolports.AgentTool {
 	properties[paramInjuryStatus] = agenttoolschema.Enum("Open or Closed.", injuryStatuses)
 	properties[paramClaimClosedAt] = agenttoolschema.Date("When the claim closed.")
 	properties[wfParamOccurred] = agenttoolschema.DateTime("When it happened.")
-	properties[common.FieldDescription] = common.StringProperty(
+	properties[changepreview.FieldDescription] = toolparams.StringProperty(
 		"What happened and the injury.",
 		wfNoteChars,
 	)
@@ -407,22 +422,22 @@ func newUpdateWorkerInjuryTool(injuries InjuryKeeper) agenttoolports.AgentTool {
 		permission.OpUpdate,
 	), properties, paramInjuryID), paramInjuryID, permission.ResourceWorkerInjury)
 
-	return common.NewReportingReceivableTool(spec, common.ReceivablePlan[
+	return toolspec.NewReportingReceivableTool(spec, toolspec.ReceivablePlan[
 		*workerinjuryservice.UpdateInjuryRequest, *workerinjuryservice.InjuryChange,
 	]{
 		Request: func(
 			params *agenttoolports.ToolExecuteParams,
 		) (*workerinjuryservice.UpdateInjuryRequest, error) {
-			id, err := common.RequirePulid(params.Params, paramInjuryID)
+			id, err := toolparams.RequirePulid(params.Params, paramInjuryID)
 			if err != nil {
 				return nil, err
 			}
 			req := &workerinjuryservice.UpdateInjuryRequest{
-				TenantInfo: common.TenantFrom(*params),
+				TenantInfo: toolparams.TenantFrom(*params),
 				InjuryID:   id,
 				UserID:     params.Actor.UserID,
 			}
-			if req.OccurredAt, err = common.OptionalDateTime(
+			if req.OccurredAt, err = toolparams.OptionalDateTime(
 				params.Params,
 				wfParamOccurred,
 			); err != nil {
@@ -482,9 +497,9 @@ func newDeleteWorkerInjuryTool(injuries InjuryKeeper) agenttoolports.AgentTool {
 	spec.MaxTier = agent.TierPropose
 	spec.Reversible = false
 
-	return common.NewReceivableTool(
+	return toolspec.NewReceivableTool(
 		spec,
-		common.ReceivablePlan[*recordDelete, *workersafety.WorkerInjury]{
+		toolspec.ReceivablePlan[*recordDelete, *workersafety.WorkerInjury]{
 			Request: recordDeleteFrom(paramInjuryID),
 			Plan: func(
 				ctx context.Context,

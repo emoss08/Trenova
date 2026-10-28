@@ -5,7 +5,10 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/allocationparams"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -111,7 +114,11 @@ func splitWords(rows []*shipment.ChargeAllocation) string {
 		}
 	}
 
-	return fmt.Sprintf("%s: %s", common.CountOf(len(parts), "payer"), strings.Join(parts, " / "))
+	return fmt.Sprintf(
+		"%s: %s",
+		changepreview.CountOf(len(parts), "payer"),
+		strings.Join(parts, " / "),
+	)
 }
 
 func chargeLabel(ord *order.Order, charge *order.OrderCharge) string {
@@ -128,7 +135,7 @@ func renderChargePlan(verb string) func(any, *orderservice.ChargePlan) (*agent.T
 			Resource: permission.ResourceOrder,
 			ID:       plan.Order.ID,
 			Label:    chargeLabel(plan.Order, shown),
-			Version:  common.PinnedVersion(plan.Order.Version),
+			Version:  changepreview.PinnedVersion(plan.Order.Version),
 		}
 
 		var (
@@ -169,11 +176,11 @@ func chargeAmount(charge *order.OrderCharge) decimal.NullDecimal {
 
 func chargeSpec(name, description, rationale string, properties map[string]any,
 	required ...string,
-) *common.ReceivableSpec {
-	return &common.ReceivableSpec{
+) *toolspec.ReceivableSpec {
+	return &toolspec.ReceivableSpec{
 		Name:        name,
 		Description: description,
-		Artifact:    common.OrderRecordEntity,
+		Artifact:    changepreview.OrderRecordEntity,
 		Resource:    permission.ResourceOrder,
 		Operation:   permission.OpUpdate,
 		Egress:      agent.EgressMoney,
@@ -188,7 +195,7 @@ func chargeSpec(name, description, rationale string, properties map[string]any,
 }
 
 func NewAddOrderChargeTool(charges orderChargeKeeper) agenttoolports.AgentTool {
-	return common.NewReportingReceivableTool(chargeSpec(
+	return toolspec.NewReportingReceivableTool(chargeSpec(
 		"order_add_charge",
 		"Add an order-level charge, one billed once for the whole order rather than on a "+
 			"shipment: a consolidation fee, a quoted flat rate. Give allocations only to "+
@@ -196,37 +203,40 @@ func NewAddOrderChargeTool(charges orderChargeKeeper) agenttoolports.AgentTool {
 		"Adds to what the customer is billed; nothing is invoiced or sent, and "+
 			"order_remove_charge takes it off until it is invoiced.",
 		map[string]any{
-			common.ParamOrderID: orderIDProperty("The order"),
-			common.FieldDescription: common.StringProperty(
+			toolparams.ParamOrderID: orderIDProperty("The order"),
+			changepreview.FieldDescription: toolparams.StringProperty(
 				"What the charge is for, as the invoice "+
 					"line should read.",
 				maxOrderChargeText,
 			),
-			common.ParamAmount: common.AmountProperty(
+			toolparams.ParamAmount: toolparams.AmountProperty(
 				"The amount, as a decimal such as 150.00.",
 			),
-			common.ParamAllocations: common.AllocationsProperty(
+			allocationparams.ParamAllocations: allocationparams.AllocationsProperty(
 				"How the charge is split among payers.",
 			),
 		},
-		common.ParamOrderID, common.FieldDescription, common.ParamAmount,
-	), common.ReceivablePlan[*orderservice.AddChargeRequest, *orderservice.ChargePlan]{
+		toolparams.ParamOrderID, changepreview.FieldDescription, toolparams.ParamAmount,
+	), toolspec.ReceivablePlan[*orderservice.AddChargeRequest, *orderservice.ChargePlan]{
 		Request: func(params *agenttoolports.ToolExecuteParams) (*orderservice.AddChargeRequest, error) {
-			orderID, err := common.RequirePulid(params.Params, common.ParamOrderID)
+			orderID, err := toolparams.RequirePulid(params.Params, toolparams.ParamOrderID)
 			if err != nil {
 				return nil, err
 			}
-			description, err := common.RequireBoundedText(params.Params, common.FieldDescription,
-				maxOrderChargeText)
+			description, err := toolparams.RequireBoundedText(
+				params.Params,
+				changepreview.FieldDescription,
+				maxOrderChargeText,
+			)
 			if err != nil {
 				return nil, err
 			}
-			amount, err := common.DecimalArg(params.Params, common.ParamAmount, true)
+			amount, err := toolparams.DecimalArg(params.Params, toolparams.ParamAmount, true)
 			if err != nil {
 				return nil, err
 			}
-			tenant := common.TenantFrom(*params)
-			allocations, err := common.ReadAllocations(
+			tenant := toolparams.TenantFrom(*params)
+			allocations, err := allocationparams.ReadAllocations(
 				params.Params,
 				tenant,
 				shipment.ChargeAllocationKindOrderCharge,
@@ -280,17 +290,17 @@ type chargeRef struct {
 }
 
 func readChargeRef(params *agenttoolports.ToolExecuteParams) (*chargeRef, error) {
-	orderID, err := common.RequirePulid(params.Params, common.ParamOrderID)
+	orderID, err := toolparams.RequirePulid(params.Params, toolparams.ParamOrderID)
 	if err != nil {
 		return nil, err
 	}
-	chargeID, err := common.RequirePulid(params.Params, paramChargeID)
+	chargeID, err := toolparams.RequirePulid(params.Params, paramChargeID)
 	if err != nil {
 		return nil, err
 	}
 
 	return &chargeRef{
-		tenant:   common.TenantFrom(*params),
+		tenant:   toolparams.TenantFrom(*params),
 		orderID:  orderID,
 		chargeID: chargeID,
 		params:   params.Params,
@@ -330,18 +340,18 @@ func (r *chargeRef) updateRequest(
 		Amount:      current.Amount,
 		Version:     current.Version,
 	}
-	if text, textErr := common.OptionalBoundedText(r.params, common.FieldDescription,
+	if text, textErr := toolparams.OptionalBoundedText(r.params, changepreview.FieldDescription,
 		maxOrderChargeText); textErr != nil {
 		return nil, textErr
 	} else if text != nil {
 		req.Description = *text
 	}
-	if _, given := r.params[common.ParamAmount]; given {
-		if req.Amount, err = common.DecimalArg(r.params, common.ParamAmount, true); err != nil {
+	if _, given := r.params[toolparams.ParamAmount]; given {
+		if req.Amount, err = toolparams.DecimalArg(r.params, toolparams.ParamAmount, true); err != nil {
 			return nil, err
 		}
 	}
-	if req.Allocations, err = common.ReadAllocations(
+	if req.Allocations, err = allocationparams.ReadAllocations(
 		r.params,
 		r.tenant,
 		shipment.ChargeAllocationKindOrderCharge,
@@ -361,7 +371,7 @@ func (r *chargeRef) allocationRequest(
 	if err != nil {
 		return nil, err
 	}
-	allocations, err := common.ReadAllocations(
+	allocations, err := allocationparams.ReadAllocations(
 		r.params,
 		r.tenant,
 		shipment.ChargeAllocationKindOrderCharge,
@@ -390,37 +400,39 @@ func NewUpdateOrderChargeTool(charges orderChargeKeeper) agenttoolports.AgentToo
 		"Changes what the customer is billed; nothing is invoiced or sent, and the old "+
 			"amount is set back the same way until it is invoiced.",
 		map[string]any{
-			common.ParamOrderID: orderIDProperty("The order"),
-			paramChargeID:       chargeIDProperty(),
-			common.FieldDescription: common.StringProperty("The new description, in full.",
-				maxOrderChargeText),
-			common.ParamAmount: common.AmountProperty(
+			toolparams.ParamOrderID: orderIDProperty("The order"),
+			paramChargeID:           chargeIDProperty(),
+			changepreview.FieldDescription: toolparams.StringProperty(
+				"The new description, in full.",
+				maxOrderChargeText,
+			),
+			toolparams.ParamAmount: toolparams.AmountProperty(
 				"The new amount, as a decimal such as 150.00.",
 			),
-			common.ParamAllocations: common.AllocationsProperty(
+			allocationparams.ParamAllocations: allocationparams.AllocationsProperty(
 				"The whole new payer split; an empty " +
 					"list bills it all to the order's customer.",
 			),
 		},
-		common.ParamOrderID, paramChargeID,
+		toolparams.ParamOrderID, paramChargeID,
 	)
 	spec.SearchTerms = []string{"charge amount", "correct charge", "edit accessorial"}
 
-	return common.NewReportingReceivableTool(
+	return toolspec.NewReportingReceivableTool(
 		spec,
-		common.ReceivablePlan[*chargeRef, *orderservice.ChargePlan]{
+		toolspec.ReceivablePlan[*chargeRef, *orderservice.ChargePlan]{
 			Request: func(params *agenttoolports.ToolExecuteParams) (*chargeRef, error) {
 				ref, err := readChargeRef(params)
 				if err != nil {
 					return nil, err
 				}
-				if !common.SendsAny(
+				if !toolparams.SendsAny(
 					params.Params,
-					common.FieldDescription,
-					common.ParamAmount,
-					common.ParamAllocations,
+					changepreview.FieldDescription,
+					toolparams.ParamAmount,
+					allocationparams.ParamAllocations,
 				) {
-					return nil, common.ErrNothingToChange
+					return nil, toolparams.ErrNothingToChange
 				}
 
 				return ref, nil
@@ -470,28 +482,33 @@ func NewSetOrderChargeAllocationsTool(charges orderChargeKeeper) agenttoolports.
 		"Moves who is billed for a charge; nothing is invoiced or sent, and the split is "+
 			"set back the same way until it is invoiced.",
 		map[string]any{
-			common.ParamOrderID:     orderIDProperty("The order"),
+			toolparams.ParamOrderID: orderIDProperty("The order"),
 			paramChargeID:           chargeIDProperty(),
-			common.ParamAllocations: common.AllocationsProperty("The whole new payer split."),
+			allocationparams.ParamAllocations: allocationparams.AllocationsProperty(
+				"The whole new payer split.",
+			),
 		},
-		common.ParamOrderID, paramChargeID, common.ParamAllocations,
+		toolparams.ParamOrderID, paramChargeID, allocationparams.ParamAllocations,
 	)
 	spec.SearchTerms = []string{"split charge", "payer split", "allocate charge"}
 
-	return common.NewReportingReceivableTool(
+	return toolspec.NewReportingReceivableTool(
 		spec,
-		common.ReceivablePlan[*chargeRef, *orderservice.ChargePlan]{
+		toolspec.ReceivablePlan[*chargeRef, *orderservice.ChargePlan]{
 			Request: func(params *agenttoolports.ToolExecuteParams) (*chargeRef, error) {
 				ref, err := readChargeRef(params)
 				if err != nil {
 					return nil, err
 				}
-				if _, err = common.ReadAllocations(params.Params, ref.tenant,
+				if _, err = allocationparams.ReadAllocations(params.Params, ref.tenant,
 					shipment.ChargeAllocationKindOrderCharge, nil); err != nil {
 					return nil, err
 				}
-				if !common.SendsAny(params.Params, common.ParamAllocations) {
-					return nil, fmt.Errorf("missing required parameter %q", common.ParamAllocations)
+				if !toolparams.SendsAny(params.Params, allocationparams.ParamAllocations) {
+					return nil, fmt.Errorf(
+						"missing required parameter %q",
+						allocationparams.ParamAllocations,
+					)
 				}
 
 				return ref, nil
@@ -540,16 +557,16 @@ func NewRemoveOrderChargeTool(charges orderChargeKeeper) agenttoolports.AgentToo
 		"Lowers what the customer is billed; nothing is invoiced or sent, and "+
 			"order_add_charge puts it back.",
 		map[string]any{
-			common.ParamOrderID: orderIDProperty("The order"),
-			paramChargeID:       chargeIDProperty(),
+			toolparams.ParamOrderID: orderIDProperty("The order"),
+			paramChargeID:           chargeIDProperty(),
 		},
-		common.ParamOrderID, paramChargeID,
+		toolparams.ParamOrderID, paramChargeID,
 	)
 	spec.SearchTerms = []string{"drop charge", "delete charge", "remove accessorial"}
 
-	return common.NewReportingReceivableTool(
+	return toolspec.NewReportingReceivableTool(
 		spec,
-		common.ReceivablePlan[*chargeRef, *orderservice.ChargePlan]{
+		toolspec.ReceivablePlan[*chargeRef, *orderservice.ChargePlan]{
 			Request: readChargeRef,
 			Plan: func(
 				ctx context.Context,

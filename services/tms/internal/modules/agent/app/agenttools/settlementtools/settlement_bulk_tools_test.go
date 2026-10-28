@@ -7,7 +7,9 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/recordbatch"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/settlementpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -106,7 +108,7 @@ func driverBulk(
 	bulk *settlementBulk,
 ) *SettlementBulkTool[driversettlement.Settlement] {
 	tool, _ := newSettlementBulkTool(settlementBulkSpec[driversettlement.Settlement]{
-		ledger: common.DriverSettlementLedger(),
+		ledger: settlementpreview.DriverSettlementLedger(),
 		text:   driverLifecycle(),
 		book:   book,
 		get:    book.get,
@@ -161,7 +163,7 @@ func TestSettlementBulkTools_CopyTheirSingleToolsPolicy(t *testing.T) {
 		properties := tool.ParamSchema()[toolschema.KeyProperties].(map[string]any)
 		ids := properties[paramSettlementIDs].(map[string]any)
 		assert.Equal(t, resources[name].String(), toolschema.SubsetResource(ids), name)
-		assert.Equal(t, common.MaxBulkRecords, ids[toolschema.KeyMaxItems], name)
+		assert.Equal(t, recordbatch.MaxBulkRecords, ids[toolschema.KeyMaxItems], name)
 		assert.Equal(t, 1, ids[toolschema.KeyMinItems], name)
 		assert.Equal(t, []string{paramSettlementIDs},
 			tool.ParamSchema()[toolschema.KeyRequired], name)
@@ -212,15 +214,18 @@ func TestApproveDriverSettlements_PreviewsEachWithRefusalsFirst(t *testing.T) {
 	assert.Equal(t, ids[2], first.EntityID, "the refused settlement leads")
 	assert.Contains(
 		t,
-		agenttoolstest.FieldByPath(t, first, common.BulkOutcomeField).After,
+		agenttoolstest.FieldByPath(t, first, recordbatch.BulkOutcomeField).After,
 		"Refused:",
 	)
 	for idx := 1; idx < 4; idx++ {
 		change := agenttoolstest.PreviewChange(t, preview, idx)
 		assert.Equal(t, permission.ResourceDriverSettlement, change.Resource)
 		assert.Equal(t, "Approved", agenttoolstest.FieldByPath(t, change, "status").After)
-		assert.Contains(t, agenttoolstest.FieldByPath(t, change, common.BulkOutcomeField).After,
-			"Would approve driver settlement DS-")
+		assert.Contains(
+			t,
+			agenttoolstest.FieldByPath(t, change, recordbatch.BulkOutcomeField).After,
+			"Would approve driver settlement DS-",
+		)
 		require.NotNil(t, change.Money)
 	}
 	require.NoError(t, tool.Validate(t.Context(), params))
@@ -265,7 +270,7 @@ func TestPostDriverSettlements_AForeignSettlementIsRefusedOnItsOwn(t *testing.T)
 	assert.Equal(t, foreign, preview.Changes[0].EntityID)
 	assert.Contains(
 		t,
-		agenttoolstest.FieldByPath(t, &preview.Changes[0], common.BulkOutcomeField).After,
+		agenttoolstest.FieldByPath(t, &preview.Changes[0], recordbatch.BulkOutcomeField).After,
 		"not found",
 	)
 	assert.Equal(t, "Posted", agenttoolstest.FieldByPath(t, &preview.Changes[1], "status").After)
@@ -295,8 +300,8 @@ func TestSettlementBulk_RefusesMoreThanFiftyAndDropsRepeats(t *testing.T) {
 	book, ids := driverSettlementBatch(1, driversettlement.StatusApproved)
 	tool := driverBulk(book, &postSettlements)
 
-	many := make([]any, 0, common.MaxBulkRecords+1)
-	for range common.MaxBulkRecords + 1 {
+	many := make([]any, 0, recordbatch.MaxBulkRecords+1)
+	for range recordbatch.MaxBulkRecords + 1 {
 		many = append(many, pulid.MustNew("dstl_").String())
 	}
 	err := tool.Validate(
@@ -329,7 +334,7 @@ func TestSettlementBulk_RunsOnlyFromAPersonsApproval(t *testing.T) {
 	_, err := tool.ExecuteWithResult(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
 		paramSettlementIDs: agenttoolstest.IdList(ids),
 	}))
-	require.ErrorIs(t, err, common.ErrSettlementNeedsAPerson)
+	require.ErrorIs(t, err, settlementpreview.ErrSettlementNeedsAPerson)
 	assert.Empty(t, book.performed)
 
 	agentParams := agenttoolstest.ApprovedParams(
@@ -337,9 +342,9 @@ func TestSettlementBulk_RunsOnlyFromAPersonsApproval(t *testing.T) {
 	)
 	agentParams.Actor.PrincipalType = permissionports.PrincipalTypeAgent
 	_, err = tool.ExecuteWithResult(t.Context(), agentParams)
-	require.ErrorIs(t, err, common.ErrAgentCannotApprove)
+	require.ErrorIs(t, err, toolguard.ErrAgentCannotApprove)
 	_, err = tool.Preview(t.Context(), agentParams)
-	require.ErrorIs(t, err, common.ErrAgentCannotApprove)
+	require.ErrorIs(t, err, toolguard.ErrAgentCannotApprove)
 	assert.Empty(t, book.performed)
 
 	foreign := agenttoolstest.ApprovedParams(
@@ -347,7 +352,7 @@ func TestSettlementBulk_RunsOnlyFromAPersonsApproval(t *testing.T) {
 	)
 	foreign.OrganizationID = pulid.MustNew("org_")
 	_, err = tool.ExecuteWithResult(t.Context(), foreign)
-	require.ErrorIs(t, err, common.ErrTenantMismatch)
+	require.ErrorIs(t, err, toolguard.ErrTenantMismatch)
 	assert.Empty(t, book.performed)
 }
 

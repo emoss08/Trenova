@@ -7,7 +7,9 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentextensionservice"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -116,15 +118,15 @@ func (t *ActOnPortalTool) SearchTerms() []string {
 func (t *ActOnPortalTool) request(
 	params *agenttoolports.ToolExecuteParams,
 ) (*agentextensionports.PortalActionRequest, error) {
-	if err := common.GuardPreview(t, params); err != nil {
+	if err := toolguard.GuardPreview(t, params); err != nil {
 		return nil, err
 	}
 
-	siteID, err := common.RequirePulid(params.Params, paramSiteID)
+	siteID, err := toolparams.RequirePulid(params.Params, paramSiteID)
 	if err != nil {
 		return nil, err
 	}
-	instruction, err := common.RequireString(params.Params, paramInstruction)
+	instruction, err := toolparams.RequireString(params.Params, paramInstruction)
 	if err != nil {
 		return nil, err
 	}
@@ -134,7 +136,7 @@ func (t *ActOnPortalTool) request(
 	}
 
 	return &agentextensionports.PortalActionRequest{
-		TenantInfo:     common.TenantFrom(*params),
+		TenantInfo:     toolparams.TenantFrom(*params),
 		SiteID:         siteID,
 		Instruction:    instruction,
 		Details:        details,
@@ -177,9 +179,9 @@ func (t *ActOnPortalTool) Preview(
 
 	plan, err := t.portals.PlanPortalAction(ctx, req)
 	if err != nil {
-		if agentextensionservice.IsToolError(err) || common.IsRefusal(err) ||
+		if agentextensionservice.IsToolError(err) || changepreview.IsRefusal(err) ||
 			errortypes.IsNotFoundError(err) {
-			return common.WarnWouldFail(toolpreview.Build(summary), err), nil
+			return changepreview.WarnWouldFail(toolpreview.Build(summary), err), nil
 		}
 
 		return nil, err
@@ -224,7 +226,7 @@ func (t *ActOnPortalTool) ExecuteWithResult(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
 ) (*agent.ToolExecutionResult, error) {
-	if err := common.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return nil, err
 	}
 	if !params.ApprovedFromProposal() {

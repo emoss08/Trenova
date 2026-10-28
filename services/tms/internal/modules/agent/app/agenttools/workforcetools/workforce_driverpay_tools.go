@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -45,19 +47,19 @@ const maxDisputeResolution = 2000
 const defaultPayCurrency = "USD"
 
 var payDisputeFields = []string{
-	common.FieldStatus,
-	common.FieldCategory,
+	changepreview.FieldStatus,
+	changepreview.FieldCategory,
 	"resolutionNote",
 	wfFieldResolvedByID,
-	common.FieldResolvedAt,
+	changepreview.FieldResolvedAt,
 }
 
 var expenseFields = []string{
-	common.FieldStatus,
-	common.FieldDescription,
+	changepreview.FieldStatus,
+	changepreview.FieldDescription,
 	"reviewNote",
 	"reviewedById",
-	common.FieldReviewedAt,
+	changepreview.FieldReviewedAt,
 }
 
 var disputeDecisions = agenttoolschema.Source("settlementDispute.decision",
@@ -121,7 +123,7 @@ func classifyDriverPayDecision(moneyMoves func(params map[string]any) bool) func
 }
 
 func approves(params map[string]any) bool {
-	return strings.TrimSpace(common.OptionalString(params, paramDecision)) == decisionApprove
+	return strings.TrimSpace(toolparams.OptionalString(params, paramDecision)) == decisionApprove
 }
 
 func disputeMovesMoney(params map[string]any) bool {
@@ -173,7 +175,7 @@ func newStartSettlementDisputeReviewTool(reviewer DriverPayReviewer) agenttoolpo
 			"Dash, and resolving it moves it on.",
 		permission.ResourceSettlementDispute,
 		permission.OpUpdate,
-	), map[string]any{common.ParamDisputeID: payDisputeIDProperty()}, common.ParamDisputeID), common.ParamDisputeID,
+	), map[string]any{toolparams.ParamDisputeID: payDisputeIDProperty()}, toolparams.ParamDisputeID), toolparams.ParamDisputeID,
 		permission.ResourceSettlementDispute)
 	spec.Egress = agent.EgressDriverVisible
 	spec.Reversible = false
@@ -182,15 +184,15 @@ func newStartSettlementDisputeReviewTool(reviewer DriverPayReviewer) agenttoolpo
 		"mark under review", "investigate dispute",
 	}
 
-	return common.NewReportingReceivableTool(spec, common.ReceivablePlan[
+	return toolspec.NewReportingReceivableTool(spec, toolspec.ReceivablePlan[
 		*disputeStart, *driversettlementservice.DisputeChange,
 	]{
 		Request: func(params *agenttoolports.ToolExecuteParams) (*disputeStart, error) {
-			id, err := common.RequirePulid(params.Params, common.ParamDisputeID)
+			id, err := toolparams.RequirePulid(params.Params, toolparams.ParamDisputeID)
 			if err != nil {
 				return nil, err
 			}
-			return &disputeStart{tenant: common.TenantFrom(*params), disputeID: id}, nil
+			return &disputeStart{tenant: toolparams.TenantFrom(*params), disputeID: id}, nil
 		},
 		Plan: func(
 			ctx context.Context,
@@ -205,7 +207,7 @@ func newStartSettlementDisputeReviewTool(reviewer DriverPayReviewer) agenttoolpo
 			change *driversettlementservice.DisputeChange,
 		) (*agent.ToolPreview, error) {
 			recorded, err := toolpreview.Changed(disputeRecord(change.Before), change.Before,
-				change.After, wfOptions(common.FieldStatus)...)
+				change.After, wfOptions(changepreview.FieldStatus)...)
 			if err != nil {
 				return nil, err
 			}
@@ -222,7 +224,7 @@ func newStartSettlementDisputeReviewTool(reviewer DriverPayReviewer) agenttoolpo
 			if err != nil {
 				return nil, err
 			}
-			return wfResult("moved to review", kindSettlementDispute, common.ParamDisputeID,
+			return wfResult("moved to review", kindSettlementDispute, toolparams.ParamDisputeID,
 				updated.ID, updated.WorkerID), nil
 		},
 	})
@@ -231,20 +233,24 @@ func newStartSettlementDisputeReviewTool(reviewer DriverPayReviewer) agenttoolpo
 func resolvePayDisputeRequest(
 	params *agenttoolports.ToolExecuteParams,
 ) (*driversettlementservice.ResolveDisputeRequest, error) {
-	id, err := common.RequirePulid(params.Params, common.ParamDisputeID)
+	id, err := toolparams.RequirePulid(params.Params, toolparams.ParamDisputeID)
 	if err != nil {
 		return nil, err
 	}
-	decision, err := common.RequireEnum(params.Params, paramDecision, disputeDecisions.Values)
+	decision, err := toolparams.RequireEnum(params.Params, paramDecision, disputeDecisions.Values)
 	if err != nil {
 		return nil, err
 	}
-	note, err := common.RequireBoundedText(params.Params, paramResolutionNote, maxDisputeResolution)
+	note, err := toolparams.RequireBoundedText(
+		params.Params,
+		paramResolutionNote,
+		maxDisputeResolution,
+	)
 	if err != nil {
 		return nil, err
 	}
 	req := &driversettlementservice.ResolveDisputeRequest{
-		TenantInfo:     common.TenantFrom(*params),
+		TenantInfo:     toolparams.TenantFrom(*params),
 		DisputeID:      id,
 		Approve:        decision == decisionApprove,
 		ResolutionNote: note,
@@ -252,16 +258,16 @@ func resolvePayDisputeRequest(
 	if raw, given := params.Params[paramAdjustmentAmountMoney]; !given || raw == nil {
 		return req, nil
 	}
-	amount, err := common.RequireSignedMoney(params.Params, paramAdjustmentAmountMoney)
+	amount, err := toolparams.RequireSignedMoney(params.Params, paramAdjustmentAmountMoney)
 	if err != nil {
 		return nil, err
 	}
-	description, err := common.RequireBoundedText(params.Params, paramAdjustmentLabel,
-		common.MaxAdjustmentDescription)
+	description, err := toolparams.RequireBoundedText(params.Params, paramAdjustmentLabel,
+		toolparams.MaxAdjustmentDescription)
 	if err != nil {
 		return nil, err
 	}
-	payCodeID, err := common.OptionalPulidParam(params.Params, common.ParamPayCodeID)
+	payCodeID, err := toolparams.OptionalPulidParam(params.Params, toolparams.ParamPayCodeID)
 	if err != nil {
 		return nil, err
 	}
@@ -287,23 +293,26 @@ func newResolveSettlementDisputeTool(reviewer DriverPayReviewer) agenttoolports.
 		permission.ResourceSettlementDispute,
 		permission.OpApprove,
 	), map[string]any{
-		common.ParamDisputeID: payDisputeIDProperty(),
+		toolparams.ParamDisputeID: payDisputeIDProperty(),
 		paramDecision: agenttoolschema.Enum("Approve to side with the driver, Deny to "+
 			"turn the dispute down.", disputeDecisions),
-		paramResolutionNote: common.StringProperty("The decision in words the driver reads in "+
+		paramResolutionNote: toolparams.StringProperty("The decision in words the driver reads in "+
 			"Dash. Required either way.", maxDisputeResolution),
-		paramAdjustmentAmountMoney: common.AmountProperty(
+		paramAdjustmentAmountMoney: toolparams.AmountProperty(
 			"For an approval, what to pay back as a " +
 				"decimal such as 42.50; negative to take money back. Leave it out for none.",
 		),
-		paramAdjustmentLabel: common.StringProperty("What the adjustment is for, as the driver "+
-			"and payroll read it. Required with an adjustment.", common.MaxAdjustmentDescription),
-		common.ParamPayCodeID: agenttoolschema.RecordIDText(
+		paramAdjustmentLabel: toolparams.StringProperty(
+			"What the adjustment is for, as the driver "+
+				"and payroll read it. Required with an adjustment.",
+			toolparams.MaxAdjustmentDescription,
+		),
+		toolparams.ParamPayCodeID: agenttoolschema.RecordIDText(
 			permission.ResourcePayCode,
 			"The pay code the adjustment posts under, from settlement_list_pay_codes. Leave it out for "+
 				"the default account.",
 		),
-	}, common.ParamDisputeID, paramDecision, paramResolutionNote)), common.ParamDisputeID,
+	}, toolparams.ParamDisputeID, paramDecision, paramResolutionNote)), toolparams.ParamDisputeID,
 		permission.ResourceSettlementDispute)
 	spec.Egress = agent.EgressDriverVisible
 	spec.AlsoEgress = []agent.EgressClass{agent.EgressMoney}
@@ -316,7 +325,7 @@ func newResolveSettlementDisputeTool(reviewer DriverPayReviewer) agenttoolports.
 		"settlement_resolve_dispute",
 	}
 
-	return common.NewReportingReceivableTool(spec, common.ReceivablePlan[
+	return toolspec.NewReportingReceivableTool(spec, toolspec.ReceivablePlan[
 		*driversettlementservice.ResolveDisputeRequest, *driversettlementservice.ResolveDisputePlan,
 	]{
 		Request: resolvePayDisputeRequest,
@@ -340,8 +349,13 @@ func newResolveSettlementDisputeTool(reviewer DriverPayReviewer) agenttoolports.
 			if err != nil {
 				return nil, err
 			}
-			return wfResult(string(updated.Status), kindSettlementDispute, common.ParamDisputeID,
-				updated.ID, updated.WorkerID), nil
+			return wfResult(
+				string(updated.Status),
+				kindSettlementDispute,
+				toolparams.ParamDisputeID,
+				updated.ID,
+				updated.WorkerID,
+			), nil
 		},
 	})
 }
@@ -356,7 +370,7 @@ func renderSettlementDisputeResolution(
 		plan.Dispute.After,
 		append(
 			wfOptions(payDisputeFields...),
-			toolpreview.Volatile(common.FieldResolvedAt),
+			toolpreview.Volatile(changepreview.FieldResolvedAt),
 		)...)
 	if err != nil {
 		return nil, err
@@ -377,7 +391,7 @@ func renderSettlementDisputeResolution(
 				settlementCurrency(plan.AdjustmentTarget),
 				agent.MoneyLine{
 					Label: "Dispute adjustment",
-					After: common.MinorAmount(req.Adjustment.AmountMinor),
+					After: changepreview.MinorAmount(req.Adjustment.AmountMinor),
 				},
 			),
 			toolpreview.SensitiveAs("amountMinor"),
@@ -395,20 +409,24 @@ func renderSettlementDisputeResolution(
 func reviewExpenseFrom(
 	params *agenttoolports.ToolExecuteParams,
 ) (*driversettlementservice.ReviewExpenseRequest, error) {
-	id, err := common.RequirePulid(params.Params, paramExpenseID)
+	id, err := toolparams.RequirePulid(params.Params, paramExpenseID)
 	if err != nil {
 		return nil, err
 	}
-	decision, err := common.RequireEnum(params.Params, paramDecision, expenseDecisions.Values)
+	decision, err := toolparams.RequireEnum(params.Params, paramDecision, expenseDecisions.Values)
 	if err != nil {
 		return nil, err
 	}
-	note, err := common.BoundedText(params.Params, common.FieldNote, maxDisputeResolution)
+	note, err := toolparams.BoundedText(
+		params.Params,
+		changepreview.FieldNote,
+		maxDisputeResolution,
+	)
 	if err != nil {
 		return nil, err
 	}
 	return &driversettlementservice.ReviewExpenseRequest{
-		TenantInfo: common.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(*params),
 		ExpenseID:  id,
 		Approve:    decision == decisionApprove,
 		Note:       note,
@@ -434,7 +452,7 @@ func newReviewDriverExpenseTool(reviewer DriverPayReviewer) agenttoolports.Agent
 		),
 		paramDecision: agenttoolschema.Enum("Approve to reimburse it, Reject to turn it down.",
 			expenseDecisions),
-		common.FieldNote: common.StringProperty(
+		changepreview.FieldNote: toolparams.StringProperty(
 			"What the driver reads with the decision. Required "+
 				"to reject.",
 			maxDisputeResolution,
@@ -446,7 +464,7 @@ func newReviewDriverExpenseTool(reviewer DriverPayReviewer) agenttoolports.Agent
 	spec.Reversible = false
 	spec.SearchTerms = []string{"reimbursement", "expense", "receipt", "lumper"}
 
-	return common.NewReportingReceivableTool(spec, common.ReceivablePlan[
+	return toolspec.NewReportingReceivableTool(spec, toolspec.ReceivablePlan[
 		*driversettlementservice.ReviewExpenseRequest, *driversettlementservice.ReviewExpensePlan,
 	]{
 		Request: reviewExpenseFrom,
@@ -471,7 +489,7 @@ func newReviewDriverExpenseTool(reviewer DriverPayReviewer) agenttoolports.Agent
 				plan.After,
 				append(
 					wfOptions(expenseFields...),
-					toolpreview.Volatile(common.FieldReviewedAt),
+					toolpreview.Volatile(changepreview.FieldReviewedAt),
 				)...)
 			if err != nil {
 				return nil, err
@@ -488,7 +506,7 @@ func newReviewDriverExpenseTool(reviewer DriverPayReviewer) agenttoolports.Agent
 					},
 					toolpreview.MoneyBlock(plan.Before.CurrencyCode, agent.MoneyLine{
 						Label: "Reimbursement",
-						After: common.MinorAmount(plan.Before.AmountMinor),
+						After: changepreview.MinorAmount(plan.Before.AmountMinor),
 					}),
 					toolpreview.SensitiveAs("amountMinor"),
 				)

@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
@@ -277,7 +277,7 @@ func TestApplyFactoringRemittance_PreviewsTheJournalAndRunsOnlyWhenApproved(t *t
 	assert.Contains(t, preview.Summary, "1 invoice funded")
 	assert.Contains(t, preview.Summary, "1 line still to resolve stay open")
 
-	require.ErrorIs(t, tool.Execute(t.Context(), params), common.ErrNeedsAPersonsApproval)
+	require.ErrorIs(t, tool.Execute(t.Context(), params), toolspec.ErrNeedsAPersonsApproval)
 	assert.Nil(t, remittances.applied)
 	require.NoError(t, tool.Execute(t.Context(), agenttoolstest.Approved(params)))
 	require.NotNil(t, remittances.applied)

@@ -4,7 +4,10 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/allocationparams"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -49,7 +52,7 @@ type chargeReassigner interface {
 }
 
 func NewReassignBillingChargeTool(billing chargeReassigner) agenttoolports.AgentTool {
-	return common.NewReportingReceivableTool(&common.ReceivableSpec{
+	return toolspec.NewReportingReceivableTool(&toolspec.ReceivableSpec{
 		Name:     "billing_reassign_charge",
 		Artifact: billingQueueRecordEntity,
 		Description: "Move who pays one charge on a shipment in billing review: its freight " +
@@ -66,7 +69,7 @@ func NewReassignBillingChargeTool(billing chargeReassigner) agenttoolports.Agent
 		Rationale: "Moves what each customer is billed for a shipment and opens or cancels " +
 			"their queue items; only a person reassigns a charge.",
 		Properties: map[string]any{
-			common.ParamItemID: agenttoolschema.KindID(
+			toolparams.ParamItemID: agenttoolschema.KindID(
 				"The billing queue item, from billing_list_queue_items "+
 					"or billing_get_queue_item. Never guess one.",
 				permission.KindBillingQueueItem,
@@ -78,13 +81,23 @@ func NewReassignBillingChargeTool(billing chargeReassigner) agenttoolports.Agent
 			paramAdditionalChargeID: agenttoolschema.KindID("The accessorial charge, from the "+
 				"shipment's charges billing_get_queue_item lists. Needed for Accessorial.",
 				permission.KindAdditionalCharge),
-			common.ParamAllocations: common.AllocationsProperty("The payers and their shares."),
+			allocationparams.ParamAllocations: allocationparams.AllocationsProperty(
+				"The payers and their shares.",
+			),
 		},
-		Required: []string{common.ParamItemID, paramChargeKind, common.ParamAllocations},
+		Required: []string{
+			toolparams.ParamItemID,
+			paramChargeKind,
+			allocationparams.ParamAllocations,
+		},
 		Target: func(params map[string]any) (agenttoolports.ToolTarget, bool) {
-			return common.TargetOf(params, common.ParamItemID, permission.ResourceBillingQueue)
+			return toolparams.TargetOf(
+				params,
+				toolparams.ParamItemID,
+				permission.ResourceBillingQueue,
+			)
 		},
-	}, common.ReceivablePlan[*billingqueueports.ReassignChargeRequest, *billingqueueports.ReassignChargePreview]{
+	}, toolspec.ReceivablePlan[*billingqueueports.ReassignChargeRequest, *billingqueueports.ReassignChargePreview]{
 		Request: reassignRequest,
 		Plan: func(
 			ctx context.Context,
@@ -109,14 +122,14 @@ func NewReassignBillingChargeTool(billing chargeReassigner) agenttoolports.Agent
 			out := &agent.ToolExecutionResult{
 				Action: "charge reassigned",
 				Kind:   "billing queue item",
-				IDs:    map[string]string{common.ParamItemID: req.ItemID.String()},
-				Record: common.RecordOf(billingQueueRecordEntity, req.ItemID),
+				IDs:    map[string]string{toolparams.ParamItemID: req.ItemID.String()},
+				Record: changepreview.RecordOf(billingQueueRecordEntity, req.ItemID),
 			}
 			if result != nil {
 				out.Name = fmt.Sprintf(
 					"%s, %s",
-					common.CountOf(len(result.CreatedItemIDs), "item created"),
-					common.CountOf(len(result.CanceledItemIDs), "item canceled"),
+					changepreview.CountOf(len(result.CreatedItemIDs), "item created"),
+					changepreview.CountOf(len(result.CanceledItemIDs), "item canceled"),
 				)
 			}
 
@@ -128,15 +141,15 @@ func NewReassignBillingChargeTool(billing chargeReassigner) agenttoolports.Agent
 func reassignRequest(
 	params *agenttoolports.ToolExecuteParams,
 ) (*billingqueueports.ReassignChargeRequest, error) {
-	itemID, err := common.RequirePulid(params.Params, common.ParamItemID)
+	itemID, err := toolparams.RequirePulid(params.Params, toolparams.ParamItemID)
 	if err != nil {
 		return nil, err
 	}
-	kind, err := common.RequireEnum(params.Params, paramChargeKind, reassignableKinds.Values)
+	kind, err := toolparams.RequireEnum(params.Params, paramChargeKind, reassignableKinds.Values)
 	if err != nil {
 		return nil, err
 	}
-	chargeID, _, err := common.OptionalPulid(params.Params, paramAdditionalChargeID)
+	chargeID, _, err := toolparams.OptionalPulid(params.Params, paramAdditionalChargeID)
 	if err != nil {
 		return nil, fmt.Errorf("parameter %q is not a valid id: %w", paramAdditionalChargeID, err)
 	}
@@ -144,13 +157,13 @@ func reassignRequest(
 		return nil, fmt.Errorf("parameter %q is required for an accessorial charge",
 			paramAdditionalChargeID)
 	}
-	tenant := common.TenantFrom(*params)
-	allocations, err := common.ReadAllocations(params.Params, tenant, kind, nil)
+	tenant := toolparams.TenantFrom(*params)
+	allocations, err := allocationparams.ReadAllocations(params.Params, tenant, kind, nil)
 	if err != nil {
 		return nil, err
 	}
 	if allocations == nil {
-		return nil, fmt.Errorf("missing required parameter %q", common.ParamAllocations)
+		return nil, fmt.Errorf("missing required parameter %q", allocationparams.ParamAllocations)
 	}
 
 	return &billingqueueports.ReassignChargeRequest{
@@ -179,7 +192,7 @@ func renderReassignment(
 ) (*agent.ToolPreview, error) {
 	changes := make([]*agent.RecordChange, 0, len(plan.ToCreate)+len(plan.ToCancel))
 	refs := toolpreview.WithRefs(map[string]permission.Resource{
-		common.FieldCustomerID: permission.ResourceCustomer,
+		changepreview.FieldCustomerID: permission.ResourceCustomer,
 	})
 	for _, share := range plan.ToCreate {
 		if share == nil {
@@ -213,7 +226,7 @@ func renderReassignment(
 				Resource: permission.ResourceBillingQueue,
 				ID:       item.ID,
 				Label:    "Queue item " + item.Number,
-				Version:  common.PinnedVersion(item.Version),
+				Version:  changepreview.PinnedVersion(item.Version),
 			},
 			&queueItemStatusView{Status: item.Status},
 			&queueItemStatusView{Status: billingqueue.StatusCanceled},
@@ -228,9 +241,9 @@ func renderReassignment(
 		"Would divide %s on shipment %s among %s, opening %s and canceling %s.",
 		plan.Description,
 		plan.Shipment.ProNumber,
-		common.CountOf(len(plan.Shares), "payer"),
-		common.CountOf(len(plan.ToCreate), "queue item"),
-		common.CountOf(len(plan.ToCancel), "queue item"),
+		changepreview.CountOf(len(plan.Shares), "payer"),
+		changepreview.CountOf(len(plan.ToCreate), "queue item"),
+		changepreview.CountOf(len(plan.ToCancel), "queue item"),
 	), changes...), nil
 }
 
@@ -272,7 +285,7 @@ type transferRunCall struct {
 }
 
 func NewManageBillingTransferRunTool(runs transferRunKeeper) agenttoolports.AgentTool {
-	return common.NewReportingReceivableTool(&common.ReceivableSpec{
+	return toolspec.NewReportingReceivableTool(&toolspec.ReceivableSpec{
 		Name:     "billing_manage_transfer_run",
 		Artifact: billingQueueRecordEntity,
 		Description: "Stop a background transfer to billing that is still running, or " +
@@ -299,13 +312,13 @@ func NewManageBillingTransferRunTool(runs transferRunKeeper) agenttoolports.Agen
 			),
 		},
 		Required: []string{resultRunID, paramRunAction},
-	}, common.ReceivablePlan[*transferRunCall, *billingtransferservice.RunPreview]{
+	}, toolspec.ReceivablePlan[*transferRunCall, *billingtransferservice.RunPreview]{
 		Request: func(params *agenttoolports.ToolExecuteParams) (*transferRunCall, error) {
-			runID, err := common.RequirePulid(params.Params, resultRunID)
+			runID, err := toolparams.RequirePulid(params.Params, resultRunID)
 			if err != nil {
 				return nil, err
 			}
-			action, err := common.RequireEnum(
+			action, err := toolparams.RequireEnum(
 				params.Params,
 				paramRunAction,
 				transferRunActions.Values,
@@ -425,6 +438,6 @@ func renderTransferRun(
 
 	return toolpreview.Build(fmt.Sprintf(
 		"Would transfer again the %s the earlier run could not.",
-		common.CountOf(plan.Before.RetryableCount+plan.Before.SkippedCount, "shipment"),
+		changepreview.CountOf(plan.Before.RetryableCount+plan.Before.SkippedCount, "shipment"),
 	), change), nil
 }

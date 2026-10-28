@@ -4,7 +4,10 @@ import (
 	"context"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/outboundpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -35,7 +38,7 @@ func invoiceRecord(inv *invoice.Invoice) toolpreview.Record {
 		Resource: permission.ResourceInvoice,
 		ID:       inv.ID,
 		Label:    "Invoice " + inv.Number,
-		Version:  common.PreviewVersion(inv.Version),
+		Version:  changepreview.PreviewVersion(inv.Version),
 	}
 }
 
@@ -100,28 +103,28 @@ func (t *SetInvoiceFactoringOverrideTool) Policy() agenttoolports.ToolPolicy {
 func (t *SetInvoiceFactoringOverrideTool) Target(
 	params map[string]any,
 ) (agenttoolports.ToolTarget, bool) {
-	return common.TargetOf(params, paramInvoiceID, permission.ResourceInvoice)
+	return toolparams.TargetOf(params, paramInvoiceID, permission.ResourceInvoice)
 }
 
 func (t *SetInvoiceFactoringOverrideTool) request(
 	params *agenttoolports.ToolExecuteParams,
 ) (*factoringports.SetOverrideRequest, error) {
-	if err := common.GuardExecute(t, *params); err != nil {
+	if err := toolguard.GuardExecute(t, *params); err != nil {
 		return nil, err
 	}
-	invoiceID, err := common.RequirePulid(params.Params, paramInvoiceID)
+	invoiceID, err := toolparams.RequirePulid(params.Params, paramInvoiceID)
 	if err != nil {
 		return nil, err
 	}
-	raw, err := common.RequireString(params.Params, paramOverride)
+	raw, err := toolparams.RequireString(params.Params, paramOverride)
 	if err != nil {
 		return nil, err
 	}
 	return &factoringports.SetOverrideRequest{
-		TenantInfo: common.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(*params),
 		InvoiceID:  invoiceID,
 		Override:   invoice.FactoringOverride(raw),
-		Reason:     common.OptionalString(params.Params, paramReason),
+		Reason:     toolparams.OptionalString(params.Params, paramReason),
 	}, nil
 }
 
@@ -269,20 +272,20 @@ func (t *RequestMissingFactoringDocumentTool) Policy() agenttoolports.ToolPolicy
 func (t *RequestMissingFactoringDocumentTool) Target(
 	params map[string]any,
 ) (agenttoolports.ToolTarget, bool) {
-	return common.TargetOf(params, paramInvoiceID, permission.ResourceInvoice)
+	return toolparams.TargetOf(params, paramInvoiceID, permission.ResourceInvoice)
 }
 
 func (t *RequestMissingFactoringDocumentTool) request(
 	params *agenttoolports.ToolExecuteParams,
 ) (*factoringports.RequestMissingDocumentsRequest, error) {
-	if err := common.GuardExecute(t, *params); err != nil {
+	if err := toolguard.GuardExecute(t, *params); err != nil {
 		return nil, err
 	}
-	invoiceID, err := common.RequirePulid(params.Params, paramInvoiceID)
+	invoiceID, err := toolparams.RequirePulid(params.Params, paramInvoiceID)
 	if err != nil {
 		return nil, err
 	}
-	typeIDs, err := common.RequirePulidSlice(
+	typeIDs, err := toolparams.RequirePulidSlice(
 		params.Params,
 		paramDocumentTypeIDs,
 		maxRequestedDocuments,
@@ -294,11 +297,11 @@ func (t *RequestMissingFactoringDocumentTool) request(
 		typeIDs = nil
 	}
 	return &factoringports.RequestMissingDocumentsRequest{
-		TenantInfo:      common.TenantFrom(*params),
+		TenantInfo:      toolparams.TenantFrom(*params),
 		InvoiceID:       invoiceID,
 		DocumentTypeIDs: typeIDs,
-		Recipient:       common.OptionalString(params.Params, paramRecipient),
-		Message:         common.OptionalString(params.Params, paramMessage),
+		Recipient:       toolparams.OptionalString(params.Params, paramRecipient),
+		Message:         toolparams.OptionalString(params.Params, paramMessage),
 	}, nil
 }
 
@@ -340,7 +343,7 @@ func (t *RequestMissingFactoringDocumentTool) Preview(
 		return refused(summary, err)
 	}
 	send := messageRequest(&plan.Message)
-	sender, err := common.ResolveEmailSender(ctx, t.senders, send)
+	sender, err := outboundpreview.ResolveEmailSender(ctx, t.senders, send)
 	if err != nil {
 		return nil, err
 	}
@@ -349,9 +352,9 @@ func (t *RequestMissingFactoringDocumentTool) Preview(
 			Resource: permission.ResourceCustomerCommunication,
 			Label:    strings.Join(plan.Message.To, ", "),
 		},
-		common.EmailMessagePreview(
+		outboundpreview.EmailMessagePreview(
 			sender,
-			common.RenderedEmailPreview(send, plan.Message.VersionID),
+			outboundpreview.RenderedEmailPreview(send, plan.Message.VersionID),
 		),
 	)
 	preview := toolpreview.Build(
@@ -360,6 +363,6 @@ func (t *RequestMissingFactoringDocumentTool) Preview(
 			" can be factored. It cannot be recalled once sent.",
 		change,
 	)
-	common.WarnSuppressedRecipients(preview, sender)
+	outboundpreview.WarnSuppressedRecipients(preview, sender)
 	return preview, nil
 }

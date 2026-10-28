@@ -6,7 +6,8 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -43,15 +44,15 @@ func (t *ApplyConnectionDraftTool) Preview(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
-	if err := common.GuardPreview(t, &params); err != nil {
+	if err := toolguard.GuardPreview(t, &params); err != nil {
 		return nil, err
 	}
 
 	summary := "Would set up an EDI connection from the partner's guide."
 	input, plan, err := t.plan(ctx, &params)
 	if err != nil {
-		if common.IsRefusal(err) || errortypes.IsNotFoundError(err) {
-			return common.WarnWouldFail(toolpreview.Build(summary), err), nil
+		if changepreview.IsRefusal(err) || errortypes.IsNotFoundError(err) {
+			return changepreview.WarnWouldFail(toolpreview.Build(summary), err), nil
 		}
 		return nil, err
 	}
@@ -62,7 +63,7 @@ func (t *ApplyConnectionDraftTool) Preview(
 	}
 	preview := toolpreview.Build(draftSummary(plan.Draft), changes...)
 	if readyErr := readiness(input, plan.Draft); readyErr != nil {
-		return common.WarnWouldFail(preview, readyErr), nil
+		return changepreview.WarnWouldFail(preview, readyErr), nil
 	}
 	return preview, nil
 }
@@ -71,7 +72,7 @@ func pinned(id pulid.ID, version int64) *int64 {
 	if id.IsNil() {
 		return nil
 	}
-	return common.PinnedVersion(version)
+	return changepreview.PinnedVersion(version)
 }
 
 func draftChanges(

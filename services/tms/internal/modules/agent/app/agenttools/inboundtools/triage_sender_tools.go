@@ -4,7 +4,9 @@ import (
 	"context"
 	"errors"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -40,7 +42,7 @@ var errSenderNotBlocked = errors.New(
 )
 
 var settledMessageFields = []toolpreview.Option{
-	toolpreview.Only(common.FieldStatus, "reviewNote", "reviewedBy", "reviewedAt", "dueAt"),
+	toolpreview.Only(changepreview.FieldStatus, "reviewNote", "reviewedBy", "reviewedAt", "dueAt"),
 	toolpreview.WithRefs(map[string]permission.Resource{"reviewedBy": permission.ResourceUser}),
 	toolpreview.Volatile("reviewedAt"),
 }
@@ -55,7 +57,7 @@ func mailboxSendersChange(plan *triageworkservice.SenderPlan) (*agent.RecordChan
 			Resource: permission.ResourceInboundMailbox,
 			ID:       plan.Mailbox.ID,
 			Label:    plan.Mailbox.Address,
-			Version:  common.PreviewVersion(plan.Mailbox.Version),
+			Version:  changepreview.PreviewVersion(plan.Mailbox.Version),
 		},
 		&blockedSendersView{BlockedSenders: plan.Mailbox.BlockedSenders},
 		&blockedSendersView{BlockedSenders: plan.Blocked},
@@ -68,8 +70,8 @@ func NewBlockInboundSenderTool(p triageToolParams) agenttoolports.AgentTool {
 }
 
 func newBlockInboundSenderTool(senders triageSenders) agenttoolports.AgentTool {
-	return common.NewReportingReceivableTool(
-		&common.ReceivableSpec{
+	return toolspec.NewReportingReceivableTool(
+		&toolspec.ReceivableSpec{
 			Name:     "inbox_block_sender",
 			Artifact: inboundMessageEntity,
 			Description: "Send every future message from a message's sender, on the source it " +
@@ -96,11 +98,11 @@ func newBlockInboundSenderTool(senders triageSenders) agenttoolports.AgentTool {
 			Recipe:      []string{toolGetInboundMessage, "inbox_block_sender"},
 			Target:      targetMessage,
 		},
-		common.ReceivablePlan[*triageworkservice.BlockSenderRequest, *triageworkservice.SenderPlan]{
+		toolspec.ReceivablePlan[*triageworkservice.BlockSenderRequest, *triageworkservice.SenderPlan]{
 			Request: func(
 				params *agenttoolports.ToolExecuteParams,
 			) (*triageworkservice.BlockSenderRequest, error) {
-				messageID, err := common.RequirePulid(params.Params, paramMessageID)
+				messageID, err := toolparams.RequirePulid(params.Params, paramMessageID)
 				if err != nil {
 					return nil, err
 				}
@@ -168,8 +170,8 @@ func newUnblockInboundSenderTool(
 	inbox inboundMessageReader,
 	senders triageSenders,
 ) agenttoolports.AgentTool {
-	return common.NewReportingReceivableTool(
-		&common.ReceivableSpec{
+	return toolspec.NewReportingReceivableTool(
+		&toolspec.ReceivableSpec{
 			Name:     "inbox_unblock_sender",
 			Artifact: inboundMessageEntity,
 			Description: "Let a blocked sender's mail reach the Triage queue again on the " +
@@ -197,7 +199,7 @@ func newUnblockInboundSenderTool(
 			Recipe:      []string{"inbox_list_inbound_messages", "inbox_unblock_sender"},
 			Target:      targetMessage,
 		},
-		common.ReceivablePlan[
+		toolspec.ReceivablePlan[
 			*inboundmessageservice.MessageActionRequest,
 			*triageworkservice.SenderPlan,
 		]{

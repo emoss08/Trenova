@@ -5,7 +5,9 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -167,7 +169,7 @@ func TestStartSettlementDisputeReview_OnlyAnOpenDispute(t *testing.T) {
 	reviews := newFakeDriverPayReviews()
 	tool := newStartSettlementDisputeReviewTool(reviews)
 	params := agenttoolstest.ExecuteParams(
-		map[string]any{common.ParamDisputeID: reviews.dispute.ID.String()},
+		map[string]any{toolparams.ParamDisputeID: reviews.dispute.ID.String()},
 	)
 
 	preview := agenttoolstest.PreviewWithoutWrites(
@@ -183,7 +185,7 @@ func TestStartSettlementDisputeReview_OnlyAnOpenDispute(t *testing.T) {
 		agenttoolstest.FieldByPath(
 			t,
 			agenttoolstest.PreviewChange(t, preview, 0),
-			common.FieldStatus,
+			changepreview.FieldStatus,
 		).After,
 	)
 	require.NoError(t, tool.Execute(t.Context(), params))
@@ -201,7 +203,7 @@ func TestResolveSettlementDispute_ClassifiesByWhetherPayMoves(t *testing.T) {
 	reviews := newFakeDriverPayReviews()
 	tool := newResolveSettlementDisputeTool(reviews)
 	approve := map[string]any{
-		common.ParamDisputeID:      reviews.dispute.ID.String(),
+		toolparams.ParamDisputeID:  reviews.dispute.ID.String(),
 		paramDecision:              "Approve",
 		paramResolutionNote:        "Detention confirmed from the gate log",
 		paramAdjustmentAmountMoney: "75.00",
@@ -229,9 +231,9 @@ func TestResolveSettlementDispute_ClassifiesByWhetherPayMoves(t *testing.T) {
 		policy.Classified(agenttoolstest.ExecuteParams(approve)).Egress,
 	)
 	deny := map[string]any{
-		common.ParamDisputeID: reviews.dispute.ID.String(),
-		paramDecision:         "Deny",
-		paramResolutionNote:   "The load was paid on DS-2026-0398",
+		toolparams.ParamDisputeID: reviews.dispute.ID.String(),
+		paramDecision:             "Deny",
+		paramResolutionNote:       "The load was paid on DS-2026-0398",
 	}
 	assert.Equal(
 		t,
@@ -242,7 +244,7 @@ func TestResolveSettlementDispute_ClassifiesByWhetherPayMoves(t *testing.T) {
 	assert.Equal(t, agent.TierPropose, policy.MaxTier)
 
 	require.ErrorIs(t, tool.Execute(t.Context(), agenttoolstest.ExecuteParams(approve)),
-		common.ErrNeedsAPersonsApproval)
+		toolspec.ErrNeedsAPersonsApproval)
 	assert.Nil(t, reviews.resolved)
 	require.NoError(t, tool.Execute(t.Context(), agenttoolstest.ApprovedParams(approve)))
 	require.NotNil(t, reviews.resolved)
@@ -251,7 +253,7 @@ func TestResolveSettlementDispute_ClassifiesByWhetherPayMoves(t *testing.T) {
 	assert.True(t, reviews.resolved.Approve)
 
 	deniedWithPay := map[string]any{
-		common.ParamDisputeID:      reviews.dispute.ID.String(),
+		toolparams.ParamDisputeID:  reviews.dispute.ID.String(),
 		paramDecision:              "Deny",
 		paramResolutionNote:        "x",
 		paramAdjustmentAmountMoney: "10.00",
@@ -261,7 +263,7 @@ func TestResolveSettlementDispute_ClassifiesByWhetherPayMoves(t *testing.T) {
 		agenttoolstest.ExecuteParams(deniedWithPay)), "validation runs the service's plan")
 	require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(),
 		agenttoolstest.ExecuteParams(map[string]any{
-			common.ParamDisputeID:      reviews.dispute.ID.String(),
+			toolparams.ParamDisputeID:  reviews.dispute.ID.String(),
 			paramDecision:              "Approve",
 			paramResolutionNote:        "x",
 			paramAdjustmentAmountMoney: "10.00",
@@ -301,7 +303,7 @@ func TestReviewDriverExpense_ARejectionSaysWhy(t *testing.T) {
 	}
 	require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(),
 		agenttoolstest.ExecuteParams(reject)))
-	reject[common.FieldNote] = "No receipt attached"
+	reject[changepreview.FieldNote] = "No receipt attached"
 	preview = agenttoolstest.PreviewWithoutWrites(
 		t,
 		reviews.guard,

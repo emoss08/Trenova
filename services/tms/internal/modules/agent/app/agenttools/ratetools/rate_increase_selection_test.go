@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -24,12 +24,12 @@ func TestApplyRateIncrease_SetsAsideTheScopesNamedAgreementsWereFoundBy(t *testi
 	tool := NewApplyRateIncreaseTool(agreements)
 	named := pulid.MustNew("rag_")
 	params := map[string]any{
-		common.ParamEffectiveFrom: "2027-01-01",
-		paramAgreementIDs:         []any{named.String()},
-		common.ParamCustomerID:    pulid.MustNew("cus_").String(),
-		common.ParamCarrierID:     "the carrier on the page",
-		paramPartyType:            "Customer",
-		paramPercentChange:        "3.5",
+		toolparams.ParamEffectiveFrom: "2027-01-01",
+		paramAgreementIDs:             []any{named.String()},
+		toolparams.ParamCustomerID:    pulid.MustNew("cus_").String(),
+		toolparams.ParamCarrierID:     "the carrier on the page",
+		paramPartyType:                "Customer",
+		paramPercentChange:            "3.5",
 	}
 
 	resolved, err := tool.(agenttoolports.ToolSelectionResolver).ResolveSelection(
@@ -37,9 +37,9 @@ func TestApplyRateIncrease_SetsAsideTheScopesNamedAgreementsWereFoundBy(t *testi
 	)
 	require.NoError(t, err)
 	assert.Equal(t, map[string]any{
-		common.ParamEffectiveFrom: "2027-01-01",
-		paramAgreementIDs:         []any{named.String()},
-		paramPercentChange:        "3.5",
+		toolparams.ParamEffectiveFrom: "2027-01-01",
+		paramAgreementIDs:             []any{named.String()},
+		paramPercentChange:            "3.5",
 	}, resolved)
 	assert.Len(t, params, 6, "the model's own call is left as it sent it")
 
@@ -67,9 +67,9 @@ func TestApplyRateIncrease_LeavesAScopedCallAsItIs(t *testing.T) {
 
 	tool := NewApplyRateIncreaseTool(&fakeAgreements{guard: &agenttoolstest.WriteGuard{}})
 	params := map[string]any{
-		common.ParamEffectiveFrom: "2027-01-01",
-		common.ParamCustomerID:    pulid.MustNew("cus_").String(),
-		paramPercentChange:        "3.5",
+		toolparams.ParamEffectiveFrom: "2027-01-01",
+		toolparams.ParamCustomerID:    pulid.MustNew("cus_").String(),
+		paramPercentChange:            "3.5",
 	}
 
 	resolved, err := tool.(agenttoolports.ToolSelectionResolver).ResolveSelection(
@@ -78,7 +78,7 @@ func TestApplyRateIncrease_LeavesAScopedCallAsItIs(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, params, resolved)
 
-	params[common.ParamCustomerID] = "acme"
+	params[toolparams.ParamCustomerID] = "acme"
 	require.Error(
 		t,
 		tool.(agenttoolports.ToolValidator).Validate(

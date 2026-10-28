@@ -3,7 +3,9 @@ package settlementtools
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/settlementpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -69,7 +71,7 @@ type settlementDecision struct {
 
 type SettlementDecisionTool[E any] struct {
 	decision settlementDecision
-	ledger   common.SettlementLedger[E]
+	ledger   settlementpreview.SettlementLedger[E]
 	book     SettlementBook[E]
 }
 
@@ -83,7 +85,7 @@ func (t *SettlementDecisionTool[E]) Prerequisites() []string { return t.decision
 
 func (t *SettlementDecisionTool[E]) ParamSchema() map[string]any {
 	properties := map[string]any{
-		common.ParamSettlementID: agenttoolschema.KindID(
+		settlementpreview.ParamSettlementID: agenttoolschema.KindID(
 			"The "+t.ledger.Noun+", from "+t.ledger.Sources+" or this run's subject. "+
 				"Never guess one."+t.ledger.ByName,
 			t.ledger.Kind,
@@ -97,7 +99,7 @@ func (t *SettlementDecisionTool[E]) ParamSchema() map[string]any {
 		toolschema.KeyType:       toolschema.TypeObject,
 		toolschema.KeyProperties: properties,
 		toolschema.KeyRequired: append(
-			[]string{common.ParamSettlementID},
+			[]string{settlementpreview.ParamSettlementID},
 			t.decision.required...),
 		toolschema.KeyAdditionalProperties: false,
 	}
@@ -119,7 +121,7 @@ func (t *SettlementDecisionTool[E]) Policy() agenttoolports.ToolPolicy {
 		Rationale:     t.decision.rationale,
 	}
 	if len(t.decision.egress) > 1 {
-		policy.Classify = common.ClassifyAsMoney
+		policy.Classify = settlementpreview.ClassifyAsMoney
 	}
 	switch t.decision.bound {
 	case addedLineBound:
@@ -148,23 +150,23 @@ func (t *SettlementDecisionTool[E]) Policy() agenttoolports.ToolPolicy {
 func (t *SettlementDecisionTool[E]) Target(
 	params map[string]any,
 ) (agenttoolports.ToolTarget, bool) {
-	return common.TargetOf(params, common.ParamSettlementID, t.ledger.Resource)
+	return toolparams.TargetOf(params, settlementpreview.ParamSettlementID, t.ledger.Resource)
 }
 
 func (t *SettlementDecisionTool[E]) request(
 	params *agenttoolports.ToolExecuteParams,
 ) (*settlementshared.ActionRequest, error) {
-	if err := common.GuardPreview(t, params); err != nil {
+	if err := toolguard.GuardPreview(t, params); err != nil {
 		return nil, err
 	}
 
-	settlementID, err := common.RequirePulid(params.Params, common.ParamSettlementID)
+	settlementID, err := toolparams.RequirePulid(params.Params, settlementpreview.ParamSettlementID)
 	if err != nil {
 		return nil, err
 	}
 
 	req := &settlementshared.ActionRequest{
-		TenantInfo:   common.TenantFrom(*params),
+		TenantInfo:   toolparams.TenantFrom(*params),
 		SettlementID: settlementID,
 		Action:       t.decision.action,
 	}
@@ -258,11 +260,11 @@ func (t *SettlementDecisionTool[E]) Execute(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
-	if err := common.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
 	}
 	if t.decision.personOnly && !params.ApprovedFromProposal() {
-		return common.ErrSettlementNeedsAPerson
+		return settlementpreview.ErrSettlementNeedsAPerson
 	}
 
 	req, err := t.request(&params)
@@ -276,7 +278,12 @@ func (t *SettlementDecisionTool[E]) Execute(
 }
 
 func fillSettlementReason(params map[string]any, req *settlementshared.ActionRequest) error {
-	reason, err := common.BoundedString(params, paramSettlementReason, maxSettlementReason, true)
+	reason, err := toolparams.BoundedString(
+		params,
+		paramSettlementReason,
+		maxSettlementReason,
+		true,
+	)
 	if err != nil {
 		return err
 	}
@@ -286,5 +293,5 @@ func fillSettlementReason(params map[string]any, req *settlementshared.ActionReq
 }
 
 func settlementReasonProperty(description string) map[string]any {
-	return common.StringProperty(description, maxSettlementReason)
+	return toolparams.StringProperty(description, maxSettlementReason)
 }

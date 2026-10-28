@@ -4,7 +4,10 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/settlementpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -66,25 +69,25 @@ func (t *IssuePayAdvanceTool) Description() string {
 }
 
 func (t *IssuePayAdvanceTool) ParamSchema() map[string]any {
-	return common.ObjectParams(map[string]any{
-		common.ParamWorkerID: common.WorkerProperty(),
-		common.ParamDriverPayAmount: common.AmountProperty(
+	return toolparams.ObjectParams(map[string]any{
+		toolparams.ParamWorkerID: toolparams.WorkerProperty(),
+		settlementpreview.ParamDriverPayAmount: toolparams.AmountProperty(
 			"The amount advanced, as a decimal such as 300.00.",
 		),
 		ParamAdvanceSource: agenttoolschema.Enum(
 			"How it was given.",
-			common.AdvanceSources,
+			settlementpreview.AdvanceSources,
 		),
-		ParamAdvanceRef: common.StringProperty("The money code, card transaction or receipt "+
-			"number.", common.MaxPayReferenceChars),
+		ParamAdvanceRef: toolparams.StringProperty("The money code, card transaction or receipt "+
+			"number.", settlementpreview.MaxPayReferenceChars),
 		ParamIssuedDate: agenttoolschema.Date("The day it was given; leave it out for today."),
-		common.ParamNote: common.StringProperty("Why it was given, for payroll.",
-			common.MaxDriverPayNotes),
-	}, common.ParamWorkerID, common.ParamDriverPayAmount, ParamAdvanceSource)
+		toolparams.ParamNote: toolparams.StringProperty("Why it was given, for payroll.",
+			settlementpreview.MaxDriverPayNotes),
+	}, toolparams.ParamWorkerID, settlementpreview.ParamDriverPayAmount, ParamAdvanceSource)
 }
 
 func (t *IssuePayAdvanceTool) Policy() agenttoolports.ToolPolicy {
-	return (&common.PersonOnlyPolicy{
+	return (&settlementpreview.PersonOnlyPolicy{
 		Name:      t.Name(),
 		Resource:  permission.ResourcePayAdvance,
 		Operation: permission.OpCreate,
@@ -96,21 +99,21 @@ func (t *IssuePayAdvanceTool) Policy() agenttoolports.ToolPolicy {
 func (t *IssuePayAdvanceTool) entity(
 	params *agenttoolports.ToolExecuteParams,
 ) (*driverpay.PayAdvance, error) {
-	if err := common.GuardPreview(t, params); err != nil {
+	if err := toolguard.GuardPreview(t, params); err != nil {
 		return nil, err
 	}
-	workerID, err := common.RequirePulid(params.Params, common.ParamWorkerID)
+	workerID, err := toolparams.RequirePulid(params.Params, toolparams.ParamWorkerID)
 	if err != nil {
 		return nil, err
 	}
-	amount, err := common.RequireMoney(params.Params, common.ParamDriverPayAmount)
+	amount, err := toolparams.RequireMoney(params.Params, settlementpreview.ParamDriverPayAmount)
 	if err != nil {
 		return nil, err
 	}
-	source, ok, err := common.OptionalEnum(
+	source, ok, err := toolparams.OptionalEnum(
 		params.Params,
 		ParamAdvanceSource,
-		common.AdvanceSources.Values,
+		settlementpreview.AdvanceSources.Values,
 	)
 	if err != nil {
 		return nil, err
@@ -118,25 +121,25 @@ func (t *IssuePayAdvanceTool) entity(
 	if !ok {
 		return nil, fmt.Errorf("missing required parameter %q", ParamAdvanceSource)
 	}
-	reference, err := common.BoundedString(
+	reference, err := toolparams.BoundedString(
 		params.Params,
 		ParamAdvanceRef,
-		common.MaxPayReferenceChars,
+		settlementpreview.MaxPayReferenceChars,
 		false,
 	)
 	if err != nil {
 		return nil, err
 	}
-	notes, err := common.BoundedString(
+	notes, err := toolparams.BoundedString(
 		params.Params,
-		common.ParamNote,
-		common.MaxDriverPayNotes,
+		toolparams.ParamNote,
+		settlementpreview.MaxDriverPayNotes,
 		false,
 	)
 	if err != nil {
 		return nil, err
 	}
-	issued, hasIssued, err := common.OptionalDay(params.Params, ParamIssuedDate)
+	issued, hasIssued, err := toolparams.OptionalDay(params.Params, ParamIssuedDate)
 	if err != nil {
 		return nil, err
 	}
@@ -173,10 +176,10 @@ func (t *IssuePayAdvanceTool) Execute(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
-	if err := common.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
 	}
-	if err := common.RequirePersonsApproval(&params); err != nil {
+	if err := settlementpreview.RequirePersonsApproval(&params); err != nil {
 		return err
 	}
 	entity, err := t.entity(&params)
@@ -204,31 +207,31 @@ func (t *IssuePayAdvanceTool) Preview(
 		entity.Source,
 	)
 	if refusal := driverpayservice.PlanIssueAdvance(entity, params.Actor.UserID); refusal != nil {
-		return common.WouldFail(toolpreview.Build(summary), refusal)
+		return changepreview.WouldFail(toolpreview.Build(summary), refusal)
 	}
 
 	change, err := toolpreview.Create(
 		toolpreview.Record{Resource: permission.ResourcePayAdvance, Label: "New pay advance"},
 		entity,
 		toolpreview.Only(
-			common.ParamWorkerID,
-			common.FieldStatus,
+			toolparams.ParamWorkerID,
+			changepreview.FieldStatus,
 			ParamAdvanceSource,
 			ParamAdvanceRef,
 			ParamIssuedDate,
-			common.FieldNotes,
+			changepreview.FieldNotes,
 		),
 		toolpreview.Volatile(ParamIssuedDate),
 		toolpreview.WithRefs(map[string]permission.Resource{
-			common.ParamWorkerID: permission.ResourceWorker,
+			toolparams.ParamWorkerID: permission.ResourceWorker,
 		}),
-		toolpreview.Types(common.DriverPayDateTypes),
+		toolpreview.Types(settlementpreview.DriverPayDateTypes),
 	)
 	if err != nil {
 		return nil, err
 	}
 	toolpreview.AttachMoney(change, toolpreview.MoneyBlock(entity.CurrencyCode,
-		agent.MoneyLine{Label: "Advance", After: common.MinorAmount(entity.AmountMinor)},
+		agent.MoneyLine{Label: "Advance", After: changepreview.MinorAmount(entity.AmountMinor)},
 	), toolpreview.SensitiveAs(advanceSensitiveMark))
 
 	return toolpreview.Build(summary, change), nil
@@ -268,10 +271,10 @@ func (t *WriteOffPayAdvanceTool) Description() string {
 }
 
 func (t *WriteOffPayAdvanceTool) ParamSchema() map[string]any {
-	return common.ObjectParams(map[string]any{
+	return toolparams.ObjectParams(map[string]any{
 		ParamAdvanceID: agenttoolschema.RecordIDText(permission.ResourcePayAdvance,
 			"The advance, from "+advanceSourcesTool+". Never guess one."),
-		ParamWriteOffReason: common.StringProperty(
+		ParamWriteOffReason: toolparams.StringProperty(
 			"Why it cannot be recovered.",
 			maxWriteOffReason,
 		),
@@ -279,7 +282,7 @@ func (t *WriteOffPayAdvanceTool) ParamSchema() map[string]any {
 }
 
 func (t *WriteOffPayAdvanceTool) Policy() agenttoolports.ToolPolicy {
-	return (&common.PersonOnlyPolicy{
+	return (&settlementpreview.PersonOnlyPolicy{
 		Name:      t.Name(),
 		Resource:  permission.ResourcePayAdvance,
 		Operation: permission.OpCancel,
@@ -289,7 +292,7 @@ func (t *WriteOffPayAdvanceTool) Policy() agenttoolports.ToolPolicy {
 }
 
 func (t *WriteOffPayAdvanceTool) Target(params map[string]any) (agenttoolports.ToolTarget, bool) {
-	return common.TargetOf(params, ParamAdvanceID, permission.ResourcePayAdvance)
+	return toolparams.TargetOf(params, ParamAdvanceID, permission.ResourcePayAdvance)
 }
 
 type writeOffPlan struct {
@@ -303,20 +306,25 @@ func (t *WriteOffPayAdvanceTool) plan(
 	ctx context.Context,
 	params *agenttoolports.ToolExecuteParams,
 ) (*writeOffPlan, error) {
-	if err := common.GuardPreview(t, params); err != nil {
+	if err := toolguard.GuardPreview(t, params); err != nil {
 		return nil, err
 	}
-	advanceID, err := common.RequirePulid(params.Params, ParamAdvanceID)
+	advanceID, err := toolparams.RequirePulid(params.Params, ParamAdvanceID)
 	if err != nil {
 		return nil, err
 	}
-	reason, err := common.BoundedString(params.Params, ParamWriteOffReason, maxWriteOffReason, true)
+	reason, err := toolparams.BoundedString(
+		params.Params,
+		ParamWriteOffReason,
+		maxWriteOffReason,
+		true,
+	)
 	if err != nil {
 		return nil, err
 	}
 	advance, err := t.Advances.GetAdvance(ctx, driverpayports.GetPayAdvanceByIDRequest{
 		ID:         advanceID,
-		TenantInfo: common.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(*params),
 	})
 	if err != nil {
 		return nil, err
@@ -348,10 +356,10 @@ func (t *WriteOffPayAdvanceTool) Execute(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
-	if err := common.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
 	}
-	if err := common.RequirePersonsApproval(&params); err != nil {
+	if err := settlementpreview.RequirePersonsApproval(&params); err != nil {
 		return err
 	}
 	plan, err := t.plan(ctx, &params)
@@ -360,7 +368,7 @@ func (t *WriteOffPayAdvanceTool) Execute(
 	}
 	_, err = t.Advances.WriteOffAdvance(
 		ctx,
-		common.TenantFrom(params),
+		toolparams.TenantFrom(params),
 		plan.before.ID,
 		plan.reason,
 		params.Actor,
@@ -386,18 +394,18 @@ func (t *WriteOffPayAdvanceTool) Preview(
 		money.FormatMinor(plan.before.AmountMinor, plan.before.CurrencyCode),
 	)
 	if plan.refusal != nil {
-		return common.WouldFail(toolpreview.Build(summary), plan.refusal)
+		return changepreview.WouldFail(toolpreview.Build(summary), plan.refusal)
 	}
 
 	change, err := toolpreview.Changed(toolpreview.Record{
 		Resource: permission.ResourcePayAdvance,
 		ID:       plan.before.ID,
 		Label:    advanceLabel(plan.before),
-		Version:  common.PinnedVersion(plan.before.Version),
+		Version:  changepreview.PinnedVersion(plan.before.Version),
 	}, plan.before, plan.after,
-		toolpreview.Only(common.FieldStatus, fieldWriteOffReason, fieldWrittenOffAt),
+		toolpreview.Only(changepreview.FieldStatus, fieldWriteOffReason, fieldWrittenOffAt),
 		toolpreview.Volatile(fieldWrittenOffAt),
-		toolpreview.Types(common.DriverPayDateTypes),
+		toolpreview.Types(settlementpreview.DriverPayDateTypes),
 	)
 	if err != nil {
 		return nil, err
@@ -405,8 +413,8 @@ func (t *WriteOffPayAdvanceTool) Preview(
 	toolpreview.AttachMoney(change, toolpreview.MoneyBlock(plan.before.CurrencyCode,
 		agent.MoneyLine{
 			Label:  "Still owed",
-			Before: common.MinorAmount(outstanding),
-			After:  common.MinorAmount(plan.after.OutstandingMinor()),
+			Before: changepreview.MinorAmount(outstanding),
+			After:  changepreview.MinorAmount(plan.after.OutstandingMinor()),
 		},
 	), toolpreview.SensitiveAs("writtenOffMinor"))
 

@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/carrierpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -25,10 +27,15 @@ func (t *GenerateRateConfirmationTool) Preview(
 	}
 
 	summary := "Would generate a rate confirmation for this move."
-	plan, err := t.rateCons.PreviewGenerate(ctx, common.TenantFrom(params), moveID, params.Actor)
+	plan, err := t.rateCons.PreviewGenerate(
+		ctx,
+		toolparams.TenantFrom(params),
+		moveID,
+		params.Actor,
+	)
 	if err != nil {
-		if common.IsRefusal(err) || errortypes.IsNotFoundError(err) {
-			return common.WarnWouldFail(toolpreview.Build(summary), err), nil
+		if changepreview.IsRefusal(err) || errortypes.IsNotFoundError(err) {
+			return changepreview.WarnWouldFail(toolpreview.Build(summary), err), nil
 		}
 
 		return nil, err
@@ -38,31 +45,31 @@ func (t *GenerateRateConfirmationTool) Preview(
 	created, err := toolpreview.Create(
 		toolpreview.Record{
 			Resource: permission.ResourceRateConfirmation,
-			Label:    common.RateConfirmationLabel(plan.Created, shipmentLabel),
+			Label:    carrierpreview.RateConfirmationLabel(plan.Created, shipmentLabel),
 		},
 		plan.Created,
 		toolpreview.Only(
 			"revision",
-			common.FieldStatus,
-			common.FieldCarrierID,
-			common.PreviewFieldShipmentMoveID,
+			changepreview.FieldStatus,
+			carrierpreview.FieldCarrierID,
+			changepreview.PreviewFieldShipmentMoveID,
 		),
 		toolpreview.WithRefs(map[string]permission.Resource{
-			common.FieldCarrierID:             permission.ResourceCarrier,
-			common.PreviewFieldShipmentMoveID: permission.ResourceShipmentMove,
+			carrierpreview.FieldCarrierID:            permission.ResourceCarrier,
+			changepreview.PreviewFieldShipmentMoveID: permission.ResourceShipmentMove,
 		}),
-		toolpreview.Labels(common.RateConfirmationLabels),
+		toolpreview.Labels(carrierpreview.RateConfirmationLabels),
 	)
 	if err != nil {
 		return nil, err
 	}
-	common.LabelRefs(
+	changepreview.LabelRefs(
 		created,
-		map[string]string{common.FieldCarrierID: common.CarrierName(plan.Carrier)},
+		map[string]string{carrierpreview.FieldCarrierID: carrierpreview.CarrierName(plan.Carrier)},
 	)
 	toolpreview.AttachMoney(
 		created,
-		common.CarrierPay(plan.Assignment),
+		carrierpreview.CarrierPay(plan.Assignment),
 		toolpreview.SensitiveAs("totalCost"),
 	)
 
@@ -70,11 +77,17 @@ func (t *GenerateRateConfirmationTool) Preview(
 	summary = fmt.Sprintf(
 		"Would generate revision %d of the rate confirmation for %s on shipment %s, "+
 			"rendered as a PDF and filed on the shipment. Nothing is sent to the carrier.",
-		plan.Created.Revision, common.CarrierName(plan.Carrier), shipmentLabel,
+		plan.Created.Revision, carrierpreview.CarrierName(plan.Carrier), shipmentLabel,
 	)
 	if plan.SupersededBefore != nil {
-		voided, vErr := common.RateConfirmationChange(plan.SupersededBefore, plan.SupersededAfter,
-			shipmentLabel, common.FieldStatus, common.FieldVoidReason, common.FieldVoidedAt)
+		voided, vErr := carrierpreview.RateConfirmationChange(
+			plan.SupersededBefore,
+			plan.SupersededAfter,
+			shipmentLabel,
+			changepreview.FieldStatus,
+			changepreview.FieldVoidReason,
+			changepreview.FieldVoidedAt,
+		)
 		if vErr != nil {
 			return nil, vErr
 		}
@@ -98,16 +111,16 @@ func (t *SendRateConfirmationTool) Preview(
 	}
 
 	summary := "Would email this rate confirmation to the carrier."
-	plan, err := t.rateCons.PreviewSend(ctx, common.TenantFrom(params), id)
+	plan, err := t.rateCons.PreviewSend(ctx, toolparams.TenantFrom(params), id)
 	if err != nil {
-		if common.IsRefusal(err) || errortypes.IsNotFoundError(err) {
-			return common.WarnWouldFail(toolpreview.Build(summary), err), nil
+		if changepreview.IsRefusal(err) || errortypes.IsNotFoundError(err) {
+			return changepreview.WarnWouldFail(toolpreview.Build(summary), err), nil
 		}
 
 		return nil, err
 	}
 
-	carrier := common.CarrierName(plan.Before.Carrier)
+	carrier := carrierpreview.CarrierName(plan.Before.Carrier)
 	message := toolpreview.Send(toolpreview.Record{
 		Resource: permission.ResourceCarrier,
 		ID:       plan.Before.CarrierID,
@@ -119,8 +132,8 @@ func (t *SendRateConfirmationTool) Preview(
 		Subject:     plan.Subject,
 		Body:        plan.Body,
 	})
-	record, err := common.RateConfirmationChange(plan.Before, plan.After, "",
-		common.FieldStatus, "sentToEmails", "sentAt")
+	record, err := carrierpreview.RateConfirmationChange(plan.Before, plan.After, "",
+		changepreview.FieldStatus, "sentToEmails", "sentAt")
 	if err != nil {
 		return nil, err
 	}
@@ -148,10 +161,10 @@ func (t *VoidRateConfirmationTool) Preview(
 	}
 
 	summary := "Would void this rate confirmation. Reason: " + reason
-	plan, err := t.rateCons.PreviewVoid(ctx, common.TenantFrom(params), id, reason)
+	plan, err := t.rateCons.PreviewVoid(ctx, toolparams.TenantFrom(params), id, reason)
 	if err != nil {
-		if common.IsRefusal(err) || errortypes.IsNotFoundError(err) {
-			return common.WarnWouldFail(toolpreview.Build(summary), err), nil
+		if changepreview.IsRefusal(err) || errortypes.IsNotFoundError(err) {
+			return changepreview.WarnWouldFail(toolpreview.Build(summary), err), nil
 		}
 
 		return nil, err
@@ -164,9 +177,9 @@ func (t *VoidRateConfirmationTool) Preview(
 
 	changes, err := rateConfirmationChanges(
 		plan,
-		common.FieldStatus,
-		common.FieldVoidReason,
-		common.FieldVoidedAt,
+		changepreview.FieldStatus,
+		changepreview.FieldVoidReason,
+		changepreview.FieldVoidedAt,
 	)
 	if err != nil {
 		return nil, err
@@ -177,7 +190,7 @@ func (t *VoidRateConfirmationTool) Preview(
 		"Would void revision %d of the rate confirmation for %s, which "+
 			"is %s; its sign link would stop working. Reason: %s",
 		plan.Before.Revision,
-		common.CarrierName(
+		carrierpreview.CarrierName(
 			plan.Before.Carrier,
 		),
 		rateConfirmationStanding(plan.Before.Status),
@@ -200,23 +213,28 @@ func (t *RecordRateConfirmationConfirmedTool) Preview(
 	}
 
 	summary := "Would record that " + name + " confirmed this rate confirmation for the carrier."
-	plan, err := t.rateCons.PreviewMarkConfirmed(ctx, common.TenantFrom(params), id, name)
+	plan, err := t.rateCons.PreviewMarkConfirmed(ctx, toolparams.TenantFrom(params), id, name)
 	if err != nil {
-		if common.IsRefusal(err) || errortypes.IsNotFoundError(err) {
-			return common.WarnWouldFail(toolpreview.Build(summary), err), nil
+		if changepreview.IsRefusal(err) || errortypes.IsNotFoundError(err) {
+			return changepreview.WarnWouldFail(toolpreview.Build(summary), err), nil
 		}
 
 		return nil, err
 	}
 
-	changes, err := rateConfirmationChanges(plan,
-		common.FieldStatus, common.FieldConfirmedByName, "confirmedVia", "confirmedAt")
+	changes, err := rateConfirmationChanges(
+		plan,
+		changepreview.FieldStatus,
+		carrierpreview.FieldConfirmedByName,
+		"confirmedVia",
+		"confirmedAt",
+	)
 	if err != nil {
 		return nil, err
 	}
 
 	summary = fmt.Sprintf("Would record that %s confirmed revision %d for %s, making it "+
-		"the executed agreement.", name, plan.Before.Revision, common.CarrierName(plan.Before.Carrier))
+		"the executed agreement.", name, plan.Before.Revision, carrierpreview.CarrierName(plan.Before.Carrier))
 	if plan.AssignmentAfter != nil {
 		summary += " The carrier's assignment would be confirmed."
 	}
@@ -230,7 +248,7 @@ func rateConfirmationChanges(
 	plan *rateconfirmationservice.ChangePreview,
 	fields ...string,
 ) ([]*agent.RecordChange, error) {
-	record, err := common.RateConfirmationChange(plan.Before, plan.After, "", fields...)
+	record, err := carrierpreview.RateConfirmationChange(plan.Before, plan.After, "", fields...)
 	if err != nil {
 		return nil, err
 	}
@@ -241,9 +259,9 @@ func rateConfirmationChanges(
 
 	assignment, err := toolpreview.Changed(toolpreview.Record{
 		Resource: permission.ResourceShipmentMove,
-		Label:    "Carrier assignment for " + common.CarrierName(plan.Before.Carrier),
+		Label:    "Carrier assignment for " + carrierpreview.CarrierName(plan.Before.Carrier),
 	}, plan.AssignmentBefore, plan.AssignmentAfter,
-		toolpreview.Only(common.FieldStatus, "confirmedAt"),
+		toolpreview.Only(changepreview.FieldStatus, "confirmedAt"),
 		toolpreview.Volatile("confirmedAt"),
 	)
 	if err != nil {

@@ -5,7 +5,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingdriftports"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -76,7 +77,7 @@ func driftLabel(finding *accountingsync.AccountingDriftFinding) string {
 }
 
 func driftFindingID(params *agenttoolports.ToolExecuteParams) (pulid.ID, error) {
-	return common.RequirePulid(params.Params, paramDriftFindingID)
+	return toolparams.RequirePulid(params.Params, paramDriftFindingID)
 }
 
 type ResolveAccountingDriftTool struct {
@@ -152,20 +153,20 @@ func (t *ResolveAccountingDriftTool) Policy() agenttoolports.ToolPolicy {
 func (t *ResolveAccountingDriftTool) Target(
 	params map[string]any,
 ) (agenttoolports.ToolTarget, bool) {
-	return common.TargetOf(params, paramDriftFindingID, permission.ResourceAccountingSync)
+	return toolparams.TargetOf(params, paramDriftFindingID, permission.ResourceAccountingSync)
 }
 
 func (t *ResolveAccountingDriftTool) request(
 	params *agenttoolports.ToolExecuteParams,
 ) (*accountingdriftports.ResolveAccountingDriftRequest, error) {
-	if err := common.GuardExecute(t, *params); err != nil {
+	if err := toolguard.GuardExecute(t, *params); err != nil {
 		return nil, err
 	}
 	id, err := driftFindingID(params)
 	if err != nil {
 		return nil, err
 	}
-	raw, err := common.RequireString(params.Params, paramDriftDirection)
+	raw, err := toolparams.RequireString(params.Params, paramDriftDirection)
 	if err != nil {
 		return nil, err
 	}
@@ -178,7 +179,7 @@ func (t *ResolveAccountingDriftTool) request(
 		)
 	}
 	return &accountingdriftports.ResolveAccountingDriftRequest{
-		TenantInfo: common.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(*params),
 		ID:         id,
 		Direction:  direction,
 	}, nil
@@ -277,21 +278,21 @@ func (t *DismissAccountingDriftTool) Policy() agenttoolports.ToolPolicy {
 func (t *DismissAccountingDriftTool) Target(
 	params map[string]any,
 ) (agenttoolports.ToolTarget, bool) {
-	return common.TargetOf(params, paramDriftFindingID, permission.ResourceAccountingSync)
+	return toolparams.TargetOf(params, paramDriftFindingID, permission.ResourceAccountingSync)
 }
 
 func (t *DismissAccountingDriftTool) plan(
 	ctx context.Context,
 	params *agenttoolports.ToolExecuteParams,
 ) (*accountingdriftports.DismissAccountingDriftRequest, *accountingdriftports.AccountingDriftFixPreview, error) {
-	if err := common.GuardExecute(t, *params); err != nil {
+	if err := toolguard.GuardExecute(t, *params); err != nil {
 		return nil, nil, err
 	}
 	id, err := driftFindingID(params)
 	if err != nil {
 		return nil, nil, err
 	}
-	raw, err := common.RequireString(params.Params, paramDriftNote)
+	raw, err := toolparams.RequireString(params.Params, paramDriftNote)
 	if err != nil {
 		return nil, nil, errortypes.NewValidationError(
 			paramDriftNote,
@@ -300,7 +301,7 @@ func (t *DismissAccountingDriftTool) plan(
 		)
 	}
 	req := &accountingdriftports.DismissAccountingDriftRequest{
-		TenantInfo: common.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(*params),
 		ID:         id,
 		Note: stringutils.TruncateRunes(
 			stringutils.OneLine(raw, maxDriftNoteRunes),
@@ -384,7 +385,7 @@ func (t *CheckAccountingDriftTool) setup(
 	ctx context.Context,
 	params *agenttoolports.ToolExecuteParams,
 ) (integration.Type, *accountingdriftports.AccountingDriftOverview, error) {
-	if err := common.GuardExecute(t, *params); err != nil {
+	if err := toolguard.GuardExecute(t, *params); err != nil {
 		return "", nil, err
 	}
 	system, err := accountingSystemFrom(params.Params)
@@ -392,7 +393,7 @@ func (t *CheckAccountingDriftTool) setup(
 		return "", nil, err
 	}
 	overview, err := t.drift.Overview(ctx, &accountingdriftports.AccountingDriftOverviewRequest{
-		TenantInfo:      common.TenantFrom(*params),
+		TenantInfo:      toolparams.TenantFrom(*params),
 		IntegrationType: system,
 	})
 	if err != nil {
@@ -417,6 +418,6 @@ func (t *CheckAccountingDriftTool) Execute(
 	if err != nil {
 		return err
 	}
-	_, err = t.drift.CheckNow(ctx, common.TenantFrom(params), system)
+	_, err = t.drift.CheckNow(ctx, toolparams.TenantFrom(params), system)
 	return err
 }

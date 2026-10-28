@@ -7,7 +7,9 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -179,17 +181,17 @@ func adjustmentLinesProperty() map[string]any {
 			toolschema.KeyProperties: map[string]any{
 				paramInvoiceLineID: agenttoolschema.KindID(
 					"The line's id, from invoice_get's lines.", permission.KindInvoiceLine),
-				paramCreditAmount: common.StringProperty(
+				paramCreditAmount: toolparams.StringProperty(
 					"How much of the line to credit, as a decimal.", 0),
-				paramCreditQuantity: common.StringProperty(
+				paramCreditQuantity: toolparams.StringProperty(
 					"The quantity credited, as a decimal.",
 					0,
 				),
-				paramRebillAmount: common.StringProperty(
+				paramRebillAmount: toolparams.StringProperty(
 					"The line's corrected amount on the reissued invoice, for a Manual rebill.", 0),
-				paramRebillQuantity: common.StringProperty(
+				paramRebillQuantity: toolparams.StringProperty(
 					"The line's corrected quantity on the reissued invoice.", 0),
-				paramLineDescription: common.StringProperty(
+				paramLineDescription: toolparams.StringProperty(
 					"The line's wording on the credit memo, when it should differ.",
 					maxAdjustmentLineTextChars),
 			},
@@ -211,7 +213,7 @@ func adjustmentIDProperty(status string) map[string]any {
 }
 
 func optionalPositiveDecimal(fields map[string]any, key string) (decimal.Decimal, error) {
-	minor, present, err := common.OptionalMoney(fields, key)
+	minor, present, err := toolparams.OptionalMoney(fields, key)
 	if err != nil || !present {
 		return decimal.Zero, err
 	}
@@ -256,7 +258,7 @@ func readAdjustmentLine(
 	if !ok {
 		return nil, errors.New("must be an object with invoiceLineId")
 	}
-	lineID, err := common.RequirePulid(fields, paramInvoiceLineID)
+	lineID, err := toolparams.RequirePulid(fields, paramInvoiceLineID)
 	if err != nil {
 		return nil, err
 	}
@@ -280,7 +282,7 @@ func readAdjustmentLine(
 			return nil, err
 		}
 	}
-	if line.Description, err = common.BoundedText(fields, paramLineDescription,
+	if line.Description, err = toolparams.BoundedText(fields, paramLineDescription,
 		maxAdjustmentLineTextChars); err != nil {
 		return nil, err
 	}
@@ -293,11 +295,15 @@ func readAdjustmentDocuments(fields map[string]any) ([]pulid.ID, error) {
 		return nil, nil
 	}
 
-	return common.RequirePulidSlice(fields, paramSupportingDocumentIDs, maxAdjustmentDocuments)
+	return toolparams.RequirePulidSlice(fields, paramSupportingDocumentIDs, maxAdjustmentDocuments)
 }
 
 func readRebillStrategy(fields map[string]any) (invoiceadjustment.RebillStrategy, error) {
-	strategy, _, err := common.OptionalEnum(fields, paramRebillStrategy, rebillStrategies.Values)
+	strategy, _, err := toolparams.OptionalEnum(
+		fields,
+		paramRebillStrategy,
+		rebillStrategies.Values,
+	)
 	if err != nil {
 		return "", err
 	}
@@ -357,7 +363,7 @@ type submissionPlan struct {
 }
 
 func NewSubmitInvoiceAdjustmentTool(adjustments invoiceAdjuster) agenttoolports.AgentTool {
-	return common.NewReportingReceivableTool(&common.ReceivableSpec{
+	return toolspec.NewReportingReceivableTool(&toolspec.ReceivableSpec{
 		Name:        "invoice_submit_adjustment",
 		Recipe:      []string{toolInvoiceGet, "invoice_submit_adjustment"},
 		SearchTerms: []string{"credit and rebill", "rebill"},
@@ -373,7 +379,7 @@ func NewSubmitInvoiceAdjustmentTool(adjustments invoiceAdjuster) agenttoolports.
 		MaxTier:     agent.TierPropose,
 		PersonOnly:  true,
 		Idempotent:  true,
-		Artifact:    common.InvoiceRecordEntity,
+		Artifact:    changepreview.InvoiceRecordEntity,
 		Rationale: "Credits, rebills or writes off receivables and books the entries that say " +
 			"so; only a person submits an adjustment, and the adjustment policy may still hold " +
 			"it for an approver.",
@@ -388,20 +394,20 @@ func NewSubmitInvoiceAdjustmentTool(adjustments invoiceAdjuster) agenttoolports.
 				toolschema.KeyItems: map[string]any{
 					toolschema.KeyType: toolschema.TypeObject,
 					toolschema.KeyProperties: map[string]any{
-						common.ParamInvoiceID: agenttoolschema.RecordIDText(
+						toolparams.ParamInvoiceID: agenttoolschema.RecordIDText(
 							permission.ResourceInvoice,
 							"The posted invoice, from invoice_list or invoice_get.",
 						),
 						paramAdjustmentKind: adjustmentKindProperty(),
 						paramRebillStrategy: rebillStrategyProperty(),
-						common.ParamReason: common.StringProperty(
+						toolparams.ParamReason: toolparams.StringProperty(
 							"Why, as the customer or the biller would say it.",
 							maxAdjustmentReasonChars),
 						paramAdjustmentLines:       adjustmentLinesProperty(),
 						paramSupportingDocumentIDs: supportingDocumentsProperty(),
 					},
 					toolschema.KeyRequired: []string{
-						common.ParamInvoiceID, paramAdjustmentKind, common.ParamReason,
+						toolparams.ParamInvoiceID, paramAdjustmentKind, toolparams.ParamReason,
 					},
 					toolschema.KeyAdditionalProperties: false,
 				},
@@ -409,7 +415,7 @@ func NewSubmitInvoiceAdjustmentTool(adjustments invoiceAdjuster) agenttoolports.
 		},
 		Required: []string{},
 		Target:   targetSubmittedInvoice,
-	}, common.ReceivablePlan[*adjustmentSubmission, *submissionPlan]{
+	}, toolspec.ReceivablePlan[*adjustmentSubmission, *submissionPlan]{
 		Request: submissionRequest,
 		Plan: func(
 			ctx context.Context,
@@ -424,7 +430,7 @@ func NewSubmitInvoiceAdjustmentTool(adjustments invoiceAdjuster) agenttoolports.
 			}
 			return fmt.Sprintf(
 				"Would submit %s.",
-				common.CountOf(len(req.items), "invoice adjustment"),
+				changepreview.CountOf(len(req.items), "invoice adjustment"),
 			)
 		},
 		Render: renderSubmission,
@@ -439,11 +445,11 @@ func NewSubmitInvoiceAdjustmentTool(adjustments invoiceAdjuster) agenttoolports.
 }
 
 func targetAdjustment(params map[string]any) (agenttoolports.ToolTarget, bool) {
-	return common.TargetOf(params, ParamAdjustmentID, agenttoolports.RecordInvoiceAdjustment)
+	return toolparams.TargetOf(params, ParamAdjustmentID, agenttoolports.RecordInvoiceAdjustment)
 }
 
 func targetSubmittedInvoice(params map[string]any) (agenttoolports.ToolTarget, bool) {
-	if target, ok := common.TargetOf(
+	if target, ok := toolparams.TargetOf(
 		params, ParamDraftAdjustmentID, agenttoolports.RecordInvoiceAdjustment,
 	); ok {
 		return target, true
@@ -457,11 +463,11 @@ func targetSubmittedInvoice(params map[string]any) (agenttoolports.ToolTarget, b
 		return agenttoolports.ToolTarget{}, false
 	}
 
-	return common.TargetOf(fields, common.ParamInvoiceID, permission.ResourceInvoice)
+	return toolparams.TargetOf(fields, toolparams.ParamInvoiceID, permission.ResourceInvoice)
 }
 
 func submissionRequest(params *agenttoolports.ToolExecuteParams) (*adjustmentSubmission, error) {
-	draftID, hasDraft, err := common.OptionalPulid(params.Params, ParamDraftAdjustmentID)
+	draftID, hasDraft, err := toolparams.OptionalPulid(params.Params, ParamDraftAdjustmentID)
 	if err != nil {
 		return nil, fmt.Errorf("parameter %q is not a valid id: %w", ParamDraftAdjustmentID, err)
 	}
@@ -487,7 +493,7 @@ func submissionRequest(params *agenttoolports.ToolExecuteParams) (*adjustmentSub
 			paramAdjustments, len(entries), maxAdjustmentsPerSubmission)
 	}
 
-	tenant := common.TenantFrom(*params)
+	tenant := toolparams.TenantFrom(*params)
 	submission.items = make([]*invoiceadjustmentports.InvoiceAdjustmentRequest, 0, len(entries))
 	for idx, entry := range entries {
 		item, itemErr := readAdjustmentRequest(entry)
@@ -510,11 +516,11 @@ func readAdjustmentRequest(entry any) (*invoiceadjustmentports.InvoiceAdjustment
 	if !ok {
 		return nil, errors.New("must be an object with invoiceId, kind and reason")
 	}
-	invoiceID, err := common.RequirePulid(fields, common.ParamInvoiceID)
+	invoiceID, err := toolparams.RequirePulid(fields, toolparams.ParamInvoiceID)
 	if err != nil {
 		return nil, err
 	}
-	kind, err := common.RequireEnum(fields, paramAdjustmentKind, adjustmentKinds.Values)
+	kind, err := toolparams.RequireEnum(fields, paramAdjustmentKind, adjustmentKinds.Values)
 	if err != nil {
 		return nil, err
 	}
@@ -522,7 +528,11 @@ func readAdjustmentRequest(entry any) (*invoiceadjustmentports.InvoiceAdjustment
 	if err != nil {
 		return nil, err
 	}
-	reason, err := common.RequireBoundedText(fields, common.ParamReason, maxAdjustmentReasonChars)
+	reason, err := toolparams.RequireBoundedText(
+		fields,
+		toolparams.ParamReason,
+		maxAdjustmentReasonChars,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -579,7 +589,7 @@ func planDraftSubmission(
 ) (*submissionPlan, error) {
 	detail := &invoiceadjustmentports.GetInvoiceAdjustmentDetailRequest{
 		AdjustmentID: req.draftID,
-		TenantInfo:   common.TenantFrom(*params),
+		TenantInfo:   toolparams.TenantFrom(*params),
 	}
 	draft, err := adjustments.GetDetail(ctx, detail)
 	if err != nil {
@@ -615,7 +625,7 @@ func planBulkSubmission(
 		&invoiceadjustmentports.InvoiceAdjustmentBulkRequest{
 			IdempotencyKey: req.key,
 			Items:          req.items,
-			TenantInfo:     common.TenantFrom(*params),
+			TenantInfo:     toolparams.TenantFrom(*params),
 		},
 		params.Actor,
 	)
@@ -638,7 +648,7 @@ func runSubmission(
 			ctx,
 			&invoiceadjustmentports.GetInvoiceAdjustmentDetailRequest{
 				AdjustmentID: req.draftID,
-				TenantInfo:   common.TenantFrom(*params),
+				TenantInfo:   toolparams.TenantFrom(*params),
 			},
 			params.Actor,
 		)
@@ -658,7 +668,7 @@ func runSubmission(
 			&invoiceadjustmentports.InvoiceAdjustmentBulkRequest{
 				IdempotencyKey: req.key,
 				Items:          req.items,
-				TenantInfo:     common.TenantFrom(*params),
+				TenantInfo:     toolparams.TenantFrom(*params),
 			},
 			params.Actor,
 		)
@@ -683,14 +693,14 @@ func adjustmentResult(adjustment *invoiceadjustment.InvoiceAdjustment) *agent.To
 		Kind:   "invoice adjustment",
 		IDs:    map[string]string{ParamAdjustmentID: adjustment.ID.String()},
 		Record: &agent.RecordRef{
-			EntityType: common.InvoiceRecordEntity,
+			EntityType: changepreview.InvoiceRecordEntity,
 			ID:         adjustment.OriginalInvoiceID.String(),
 		},
 	}
 }
 
 func NewSaveInvoiceAdjustmentDraftTool(adjustments invoiceAdjuster) agenttoolports.AgentTool {
-	return common.NewReportingReceivableTool(&common.ReceivableSpec{
+	return toolspec.NewReportingReceivableTool(&toolspec.ReceivableSpec{
 		Name: "invoice_save_adjustment_draft",
 		Description: "Save a draft credit, rebill, reversal or write-off on a posted invoice for " +
 			"a biller to review and submit; nothing is credited until it is submitted. Give " +
@@ -702,19 +712,19 @@ func NewSaveInvoiceAdjustmentDraftTool(adjustments invoiceAdjuster) agenttoolpor
 		DefaultTier: agent.TierPropose,
 		MaxTier:     agent.TierAutoExecute,
 		Reversible:  true,
-		Artifact:    common.InvoiceRecordEntity,
+		Artifact:    changepreview.InvoiceRecordEntity,
 		TaintHold: "A draft written from what a customer sent is proposed, since its reason " +
 			"and amounts are what a biller submits.",
 		Rationale: "Saves a draft adjustment inside Trenova; it credits nothing until a " +
 			"person submits it, and a later save rewrites it.",
 		Properties: map[string]any{
 			ParamAdjustmentID: adjustmentIDProperty("draft"),
-			common.ParamInvoiceID: agenttoolschema.RecordIDText(permission.ResourceInvoice,
+			toolparams.ParamInvoiceID: agenttoolschema.RecordIDText(permission.ResourceInvoice,
 				"The posted invoice a new draft adjusts, from invoice_list or invoice_get. "+
 					"Beside adjustmentId it must be that draft's invoice."),
 			paramAdjustmentKind: adjustmentKindProperty(),
 			paramRebillStrategy: rebillStrategyProperty(),
-			common.ParamReason: common.StringProperty(
+			toolparams.ParamReason: toolparams.StringProperty(
 				"Why, as the customer or the biller would say it.",
 				maxAdjustmentReasonChars,
 			),
@@ -722,8 +732,8 @@ func NewSaveInvoiceAdjustmentDraftTool(adjustments invoiceAdjuster) agenttoolpor
 			paramSupportingDocumentIDs: supportingDocumentsProperty(),
 		},
 		Required: []string{paramAdjustmentKind},
-		Target:   common.TargetInvoice,
-	}, common.ReceivablePlan[*invoiceadjustmentports.SaveInvoiceAdjustmentDraftRequest, *invoiceadjustmentports.InvoiceAdjustmentDraftPreview]{
+		Target:   toolparams.TargetInvoice,
+	}, toolspec.ReceivablePlan[*invoiceadjustmentports.SaveInvoiceAdjustmentDraftRequest, *invoiceadjustmentports.InvoiceAdjustmentDraftPreview]{
 		Request: draftRequest,
 		Settle: func(
 			ctx context.Context,
@@ -757,7 +767,7 @@ func NewSaveInvoiceAdjustmentDraftTool(adjustments invoiceAdjuster) agenttoolpor
 				Kind:   "invoice adjustment draft",
 				IDs:    map[string]string{ParamAdjustmentID: saved.ID.String()},
 				Record: &agent.RecordRef{
-					EntityType: common.InvoiceRecordEntity,
+					EntityType: changepreview.InvoiceRecordEntity,
 					ID:         saved.OriginalInvoiceID.String(),
 				},
 			}, nil
@@ -768,18 +778,18 @@ func NewSaveInvoiceAdjustmentDraftTool(adjustments invoiceAdjuster) agenttoolpor
 func draftRequest(
 	params *agenttoolports.ToolExecuteParams,
 ) (*invoiceadjustmentports.SaveInvoiceAdjustmentDraftRequest, error) {
-	adjustmentID, _, err := common.OptionalPulid(params.Params, ParamAdjustmentID)
+	adjustmentID, _, err := toolparams.OptionalPulid(params.Params, ParamAdjustmentID)
 	if err != nil {
 		return nil, fmt.Errorf("parameter %q is not a valid id: %w", ParamAdjustmentID, err)
 	}
-	invoiceID, _, err := common.OptionalPulid(params.Params, common.ParamInvoiceID)
+	invoiceID, _, err := toolparams.OptionalPulid(params.Params, toolparams.ParamInvoiceID)
 	if err != nil {
-		return nil, fmt.Errorf("parameter %q is not a valid id: %w", common.ParamInvoiceID, err)
+		return nil, fmt.Errorf("parameter %q is not a valid id: %w", toolparams.ParamInvoiceID, err)
 	}
 	if adjustmentID.IsNil() && invoiceID.IsNil() {
 		return nil, errNoDraftTarget
 	}
-	kind, err := common.RequireEnum(params.Params, paramAdjustmentKind, adjustmentKinds.Values)
+	kind, err := toolparams.RequireEnum(params.Params, paramAdjustmentKind, adjustmentKinds.Values)
 	if err != nil {
 		return nil, err
 	}
@@ -787,7 +797,11 @@ func draftRequest(
 	if err != nil {
 		return nil, err
 	}
-	reason, err := common.BoundedText(params.Params, common.ParamReason, maxAdjustmentReasonChars)
+	reason, err := toolparams.BoundedText(
+		params.Params,
+		toolparams.ParamReason,
+		maxAdjustmentReasonChars,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -808,7 +822,7 @@ func draftRequest(
 		Reason:                reason,
 		ReferencedDocumentIDs: documents,
 		Lines:                 lines,
-		TenantInfo:            common.TenantFrom(*params),
+		TenantInfo:            toolparams.TenantFrom(*params),
 	}, nil
 }
 
@@ -858,7 +872,7 @@ type adjustmentDecision struct {
 }
 
 func NewApproveInvoiceAdjustmentTool(adjustments invoiceAdjuster) agenttoolports.AgentTool {
-	return newDecisionTool(adjustments, true, &common.ReceivableSpec{
+	return newDecisionTool(adjustments, true, &toolspec.ReceivableSpec{
 		Name: "invoice_approve_adjustment",
 		Description: "Propose approving an invoice adjustment that waits for approval, which " +
 			"executes it: the credit memo and any replacement invoice are made and posted. It is " +
@@ -879,7 +893,7 @@ func NewApproveInvoiceAdjustmentTool(adjustments invoiceAdjuster) agenttoolports
 }
 
 func NewRejectInvoiceAdjustmentTool(adjustments invoiceAdjuster) agenttoolports.AgentTool {
-	return newDecisionTool(adjustments, false, &common.ReceivableSpec{
+	return newDecisionTool(adjustments, false, &toolspec.ReceivableSpec{
 		Name:        "invoice_reject_adjustment",
 		SearchTerms: []string{"deny adjustment", "decline adjustment"},
 		Description: "Propose rejecting an invoice adjustment that waits for approval, with the " +
@@ -895,12 +909,12 @@ func NewRejectInvoiceAdjustmentTool(adjustments invoiceAdjuster) agenttoolports.
 			"decision is a person's.",
 		Properties: map[string]any{
 			ParamAdjustmentID: adjustmentIDProperty("pending"),
-			common.ParamReason: common.StringProperty(
+			toolparams.ParamReason: toolparams.StringProperty(
 				"Why it is rejected, for the person who submitted it.",
 				maxAdjustmentReasonChars,
 			),
 		},
-		Required: []string{ParamAdjustmentID, common.ParamReason},
+		Required: []string{ParamAdjustmentID, toolparams.ParamReason},
 		Target:   targetAdjustment,
 	})
 }
@@ -908,20 +922,20 @@ func NewRejectInvoiceAdjustmentTool(adjustments invoiceAdjuster) agenttoolports.
 func newDecisionTool(
 	adjustments invoiceAdjuster,
 	approve bool,
-	spec *common.ReceivableSpec,
+	spec *toolspec.ReceivableSpec,
 ) agenttoolports.AgentTool {
-	return common.NewReceivableTool(
+	return toolspec.NewReceivableTool(
 		spec,
-		common.ReceivablePlan[*adjustmentDecision, *invoiceadjustmentports.InvoiceAdjustmentDecisionPreview]{
+		toolspec.ReceivablePlan[*adjustmentDecision, *invoiceadjustmentports.InvoiceAdjustmentDecisionPreview]{
 			Request: func(params *agenttoolports.ToolExecuteParams) (*adjustmentDecision, error) {
-				id, err := common.RequirePulid(params.Params, ParamAdjustmentID)
+				id, err := toolparams.RequirePulid(params.Params, ParamAdjustmentID)
 				if err != nil {
 					return nil, err
 				}
 				decision := &adjustmentDecision{adjustmentID: id, approve: approve}
 				if !approve {
-					if decision.reason, err = common.RequireBoundedText(
-						params.Params, common.ParamReason, maxAdjustmentReasonChars,
+					if decision.reason, err = toolparams.RequireBoundedText(
+						params.Params, toolparams.ParamReason, maxAdjustmentReasonChars,
 					); err != nil {
 						return nil, err
 					}
@@ -938,7 +952,7 @@ func newDecisionTool(
 					&invoiceadjustmentports.InvoiceAdjustmentDecisionRequest{
 						AdjustmentID: req.adjustmentID,
 						Approve:      req.approve,
-						TenantInfo:   common.TenantFrom(*params),
+						TenantInfo:   toolparams.TenantFrom(*params),
 					},
 				)
 				if err != nil {
@@ -971,7 +985,7 @@ func newDecisionTool(
 						ctx,
 						&invoiceadjustmentports.ApproveInvoiceAdjustmentRequest{
 							AdjustmentID: req.adjustmentID,
-							TenantInfo:   common.TenantFrom(*params),
+							TenantInfo:   toolparams.TenantFrom(*params),
 						},
 						params.Actor,
 					)
@@ -981,7 +995,7 @@ func newDecisionTool(
 						&invoiceadjustmentports.RejectInvoiceAdjustmentRequest{
 							AdjustmentID: req.adjustmentID,
 							Reason:       req.reason,
-							TenantInfo:   common.TenantFrom(*params),
+							TenantInfo:   toolparams.TenantFrom(*params),
 						},
 						params.Actor,
 					)

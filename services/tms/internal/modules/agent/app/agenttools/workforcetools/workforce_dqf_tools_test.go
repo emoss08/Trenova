@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -170,12 +170,12 @@ func TestRecordEmploymentVerification_StartsPending(t *testing.T) {
 	dqf := newFakeDQF()
 	tool := newRecordEmploymentVerificationTool(dqf)
 	params := agenttoolstest.ExecuteParams(map[string]any{
-		common.ParamWorkerID: dqf.verification.WorkerID.String(),
-		paramEmployerName:    "Lakeshore Carriers",
-		paramEmployerDOT:     "1234567",
-		paramEmployedFrom:    "2021-03-01",
-		paramEmployedTo:      "2025-06-30",
-		paramWasDOTRegulated: true,
+		toolparams.ParamWorkerID: dqf.verification.WorkerID.String(),
+		paramEmployerName:        "Lakeshore Carriers",
+		paramEmployerDOT:         "1234567",
+		paramEmployedFrom:        "2021-03-01",
+		paramEmployedTo:          "2025-06-30",
+		paramWasDOTRegulated:     true,
 	})
 
 	preview := agenttoolstest.PreviewWithoutWrites(
@@ -195,15 +195,15 @@ func TestRecordEmploymentVerification_StartsPending(t *testing.T) {
 
 	require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(),
 		agenttoolstest.ExecuteParams(map[string]any{
-			common.ParamWorkerID: dqf.verification.WorkerID.String(),
-			paramEmployerName:    "Lakeshore Carriers",
-			paramEmployedFrom:    "2025-06-30",
-			paramEmployedTo:      "2021-03-01",
+			toolparams.ParamWorkerID: dqf.verification.WorkerID.String(),
+			paramEmployerName:        "Lakeshore Carriers",
+			paramEmployedFrom:        "2025-06-30",
+			paramEmployedTo:          "2021-03-01",
 		})), "validation runs the service's plan")
 	require.Error(t, tool.(agenttoolports.ToolValidator).Validate(
 		t.Context(),
 		agenttoolstest.ExecuteParams(
-			map[string]any{common.ParamWorkerID: dqf.verification.WorkerID.String()},
+			map[string]any{toolparams.ParamWorkerID: dqf.verification.WorkerID.String()},
 		),
 	))
 }

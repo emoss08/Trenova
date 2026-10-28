@@ -6,8 +6,10 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/paytools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/settlementpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -72,9 +74,9 @@ func TestAssignPayProfile_EndsTheAssignmentInForce(t *testing.T) {
 	assigner := &fakeAssigner{existing: []*driverpay.WorkerPayAssignment{current}}
 	tool := &paytools.AssignPayProfileTool{Assignments: assigner}
 	raw := map[string]any{
-		common.ParamWorkerID:       pulid.MustNew("wrk_").String(),
-		paytools.ParamPayProfileID: pulid.MustNew("dpp_").String(),
-		common.ParamEffectiveFrom:  "2026-10-01",
+		toolparams.ParamWorkerID:      pulid.MustNew("wrk_").String(),
+		paytools.ParamPayProfileID:    pulid.MustNew("dpp_").String(),
+		toolparams.ParamEffectiveFrom: "2026-10-01",
 	}
 
 	preview, err := tool.Preview(t.Context(), agenttoolstest.ExecuteParams(raw))
@@ -83,15 +85,23 @@ func TestAssignPayProfile_EndsTheAssignmentInForce(t *testing.T) {
 		"Would pay the driver under Linehaul OO (OwnerOperator) from Oct 1, 2026 at a 100% share.")
 	assert.Contains(t, preview.Summary, "1 assignment in force ends that day.")
 	require.Len(t, preview.Changes, 2)
-	assert.Equal(t, agent.PreviewOperationCreate, agenttoolstest.PreviewChange(t, preview, 0).Operation)
+	assert.Equal(
+		t,
+		agent.PreviewOperationCreate,
+		agenttoolstest.PreviewChange(t, preview, 0).Operation,
+	)
 	assert.Equal(t, current.ID, agenttoolstest.PreviewChange(t, preview, 1).EntityID)
 	assert.Nil(t, current.EffectiveTo)
 
-	require.ErrorIs(t, tool.Execute(t.Context(), agenttoolstest.ExecuteParams(raw)), common.ErrDriverPayNeedsAPerson)
+	require.ErrorIs(
+		t,
+		tool.Execute(t.Context(), agenttoolstest.ExecuteParams(raw)),
+		settlementpreview.ErrDriverPayNeedsAPerson,
+	)
 	require.NoError(t, tool.Execute(t.Context(), agenttoolstest.ApprovedParams(raw)))
 	assert.True(t, assigner.assigned.SplitPercent.Equal(decimal.NewFromInt(100)))
 
-	raw[common.ParamEffectiveFrom] = "2023-01-01"
+	raw[toolparams.ParamEffectiveFrom] = "2023-01-01"
 	preview, err = tool.Preview(t.Context(), agenttoolstest.ExecuteParams(raw))
 	require.NoError(t, err)
 	agenttoolstest.RequireWarning(t, preview, agent.PreviewWarningWouldFail)
@@ -216,13 +226,13 @@ func TestCreateRecurringDeduction_CanPayIntoEscrow(t *testing.T) {
 	assert.False(t, targeted)
 
 	raw := map[string]any{
-		common.ParamWorkerID:        pulid.MustNew("wrk_").String(),
-		common.ParamPayCodeID:       pulid.MustNew("payc_").String(),
-		paramRecurringDescription:   "Escrow contribution",
-		common.ParamDriverPayAmount: "100.00",
-		paramRecurringStart:         "2026-10-01",
-		paramRecurringCap:           "2500",
-		paramEscrowContribution:     true,
+		toolparams.ParamWorkerID:               pulid.MustNew("wrk_").String(),
+		toolparams.ParamPayCodeID:              pulid.MustNew("payc_").String(),
+		paramRecurringDescription:              "Escrow contribution",
+		settlementpreview.ParamDriverPayAmount: "100.00",
+		paramRecurringStart:                    "2026-10-01",
+		paramRecurringCap:                      "2500",
+		paramEscrowContribution:                true,
 	}
 
 	preview, err := tool.Preview(t.Context(), agenttoolstest.ExecuteParams(raw))
@@ -232,7 +242,11 @@ func TestCreateRecurringDeduction_CanPayIntoEscrow(t *testing.T) {
 		"Would set up a recurring deduction of 100.00 USD for the driver: Escrow contribution.")
 	assert.Contains(t, preview.Summary, "paid into the driver's escrow account")
 
-	require.ErrorIs(t, tool.Execute(t.Context(), agenttoolstest.ExecuteParams(raw)), common.ErrDriverPayNeedsAPerson)
+	require.ErrorIs(
+		t,
+		tool.Execute(t.Context(), agenttoolstest.ExecuteParams(raw)),
+		settlementpreview.ErrDriverPayNeedsAPerson,
+	)
 	require.NoError(t, tool.Execute(t.Context(), agenttoolstest.ApprovedParams(raw)))
 	require.NotNil(t, book.created)
 	assert.Equal(t, int64(10000), book.created.AmountMinor)
@@ -240,17 +254,21 @@ func TestCreateRecurringDeduction_CanPayIntoEscrow(t *testing.T) {
 	assert.Equal(t, int64(250000), *book.created.TotalCapMinor)
 	assert.Equal(t, driverpay.DeductionFrequencyEverySettlement, book.created.Frequency)
 
-	delete(raw, common.ParamDriverPayAmount)
+	delete(raw, settlementpreview.ParamDriverPayAmount)
 	require.Error(t, tool.Validate(t.Context(), agenttoolstest.ExecuteParams(raw)))
 
-	raw[common.ParamDriverPayAmount] = "100.00"
+	raw[settlementpreview.ParamDriverPayAmount] = "100.00"
 	book.refusal = errortypes.NewNotFoundError("Pay code not found")
 	preview, err = tool.Preview(t.Context(), agenttoolstest.ExecuteParams(raw))
 	require.NoError(t, err)
 	agenttoolstest.RequireWarning(t, preview, agent.PreviewWarningWouldFail)
 
 	book.refusal = errPayStoreDown
-	require.ErrorIs(t, tool.Validate(t.Context(), agenttoolstest.ExecuteParams(raw)), errPayStoreDown)
+	require.ErrorIs(
+		t,
+		tool.Validate(t.Context(), agenttoolstest.ExecuteParams(raw)),
+		errPayStoreDown,
+	)
 }
 
 func TestUpdateRecurringDeduction_ChangesOnlyWhatIsGiven(t *testing.T) {
@@ -277,8 +295,12 @@ func TestUpdateRecurringDeduction_ChangesOnlyWhatIsGiven(t *testing.T) {
 	require.True(t, ok)
 	assert.Equal(t, permission.ResourceRecurringDeduction, target.Resource)
 
-	require.ErrorIs(t, tool.Validate(t.Context(),
-		agenttoolstest.ExecuteParams(map[string]any{"deductionId": id})), common.ErrNothingToChange)
+	require.ErrorIs(t, tool.Validate(
+		t.Context(),
+		agenttoolstest.ExecuteParams(
+			map[string]any{"deductionId": id},
+		),
+	), toolparams.ErrNothingToChange)
 	require.Error(t, tool.Validate(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
 		"deductionId":        id,
 		paramRecurringStatus: "Cancelled",
@@ -290,7 +312,11 @@ func TestUpdateRecurringDeduction_ChangesOnlyWhatIsGiven(t *testing.T) {
 	assert.Contains(t, preview.Summary,
 		`Would change the driver's recurring deduction "Occupational accident insurance".`)
 	change := agenttoolstest.PreviewChange(t, preview, 0)
-	assert.Equal(t, "Paused", agenttoolstest.FieldByPath(t, change, common.FieldStatus).After)
+	assert.Equal(
+		t,
+		"Paused",
+		agenttoolstest.FieldByPath(t, change, changepreview.FieldStatus).After,
+	)
 
 	require.NoError(t, tool.Execute(t.Context(), agenttoolstest.ApprovedParams(raw)))
 	assert.Equal(t, driverpay.DeductionStatusPaused, book.updated.Status)

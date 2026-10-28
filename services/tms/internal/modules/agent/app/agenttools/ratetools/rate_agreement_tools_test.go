@@ -5,7 +5,9 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -251,12 +253,12 @@ func rateValue(amount string) rules.RawJSON {
 
 func agreementDraftParams(customerID pulid.ID) map[string]any {
 	return map[string]any{
-		paramPartyType:            "Customer",
-		common.ParamCustomerID:    customerID.String(),
-		paramAgreementCode:        "ACME-2027",
-		paramAgreementName:        "Acme dry van 2027",
-		common.ParamEffectiveFrom: "2027-01-01",
-		paramInputs:               map[string]any{"minimumCharge": "$150"},
+		paramPartyType:                "Customer",
+		toolparams.ParamCustomerID:    customerID.String(),
+		paramAgreementCode:            "ACME-2027",
+		paramAgreementName:            "Acme dry van 2027",
+		toolparams.ParamEffectiveFrom: "2027-01-01",
+		paramInputs:                   map[string]any{"minimumCharge": "$150"},
 		paramLanes: []any{map[string]any{
 			paramLaneLabel:         "Texas out",
 			paramOriginScopeType:   "State",
@@ -322,7 +324,7 @@ func TestDraftRateAgreement_RefusesWhatItCannotRead(t *testing.T) {
 			p[paramPartyType] = "Carrier"
 		},
 		"a day that is not a day": func(p map[string]any) {
-			p[common.ParamEffectiveFrom] = "January 2027"
+			p[toolparams.ParamEffectiveFrom] = "January 2027"
 		},
 		"an input that is not a Tariff value": func(p map[string]any) {
 			p[paramInputs] = map[string]any{"minimumCharge": "a lot"}
@@ -456,14 +458,14 @@ func TestAgreementReviewTools_OnlyAPersonTurnsPricingOnOrOff(t *testing.T) {
 		"Active",
 		agenttoolstest.FieldByPath(t, agenttoolstest.PreviewChange(t, preview, 0), "status").After,
 	)
-	require.ErrorIs(t, approve.Execute(t.Context(), params), common.ErrNeedsAPersonsApproval)
+	require.ErrorIs(t, approve.Execute(t.Context(), params), toolspec.ErrNeedsAPersonsApproval)
 	assert.Empty(t, agreements.reviewed)
 
 	_, err := approve.(agenttoolports.ToolPreviewer).Preview(
 		t.Context(),
 		agenttoolstest.AgentParamsFor(params.Params),
 	)
-	require.ErrorIs(t, err, common.ErrAgentCannotApprove)
+	require.ErrorIs(t, err, toolguard.ErrAgentCannotApprove)
 
 	approved := params
 	approved.ProposalID = pulid.MustNew("ap_")
@@ -507,9 +509,9 @@ func TestAmendRateAgreementRules_ShowsTheRatesBeforeAndAfter(t *testing.T) {
 	}
 	tool := NewAmendRateAgreementRulesTool(agreements, texasStates())
 	params := agenttoolstest.ExecuteParams(map[string]any{
-		paramRateAgreementID:      agreements.stored.ID.String(),
-		common.ParamEffectiveFrom: "2026-11-01",
-		paramSupersededRuleIDs:    []any{agreements.stored.Rules[0].ID.String()},
+		paramRateAgreementID:          agreements.stored.ID.String(),
+		toolparams.ParamEffectiveFrom: "2026-11-01",
+		paramSupersededRuleIDs:        []any{agreements.stored.Rules[0].ID.String()},
 		paramLanes: []any{map[string]any{
 			paramLaneLabel:         "Texas out",
 			paramOriginScopeType:   "State",
@@ -532,7 +534,7 @@ func TestAmendRateAgreementRules_ShowsTheRatesBeforeAndAfter(t *testing.T) {
 	assert.Nil(t, change.Money, "negotiated rates are confidential and never carried")
 	assert.NotContains(t, preview.Summary, "2.49")
 
-	require.ErrorIs(t, tool.Execute(t.Context(), params), common.ErrNeedsAPersonsApproval)
+	require.ErrorIs(t, tool.Execute(t.Context(), params), toolspec.ErrNeedsAPersonsApproval)
 	params.ProposalID = pulid.MustNew("ap_")
 	require.NoError(t, tool.Execute(t.Context(), params))
 	require.Len(t, agreements.amended.Rules, 1)
@@ -548,9 +550,9 @@ func TestApplyRateIncrease_ProposesTheLaneMovesItWouldMake(t *testing.T) {
 	agreements := &fakeAgreements{guard: &agenttoolstest.WriteGuard{}}
 	tool := NewApplyRateIncreaseTool(agreements)
 	params := agenttoolstest.ExecuteParams(map[string]any{
-		common.ParamEffectiveFrom: "2027-01-01",
-		paramPartyType:            "Customer",
-		paramPercentChange:        "3.5",
+		toolparams.ParamEffectiveFrom: "2027-01-01",
+		paramPartyType:                "Customer",
+		paramPercentChange:            "3.5",
 	})
 
 	preview := agenttoolstest.PreviewWithoutWrites(
@@ -566,7 +568,7 @@ func TestApplyRateIncrease_ProposesTheLaneMovesItWouldMake(t *testing.T) {
 	assert.NotContains(t, preview.Summary, "2.43", "negotiated rates are confidential")
 	assert.Contains(t, preview.Summary, "2 lanes with no money inputs are left as they are")
 
-	require.ErrorIs(t, tool.Execute(t.Context(), params), common.ErrNeedsAPersonsApproval)
+	require.ErrorIs(t, tool.Execute(t.Context(), params), toolspec.ErrNeedsAPersonsApproval)
 	params.ProposalID = pulid.MustNew("ap_")
 	require.NoError(t, tool.Execute(t.Context(), params))
 	assert.Equal(t, rateagreement.PartyTypeCustomer, agreements.increased.PartyType)

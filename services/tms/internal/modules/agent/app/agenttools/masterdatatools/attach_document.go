@@ -3,7 +3,8 @@ package masterdatatools
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -97,7 +98,7 @@ func (t *AttachDocumentTool) Policy() agenttoolports.ToolPolicy {
 // document's version and a file somebody moved in the meantime cannot be moved
 // again on stale information.
 func (t *AttachDocumentTool) Target(params map[string]any) (agenttoolports.ToolTarget, bool) {
-	return common.TargetOf(params, "documentId", permission.ResourceDocument)
+	return toolparams.TargetOf(params, "documentId", permission.ResourceDocument)
 }
 
 func (t *AttachDocumentTool) Validate(
@@ -108,10 +109,10 @@ func (t *AttachDocumentTool) Validate(
 }
 
 func (t *AttachDocumentTool) validateArgs(params map[string]any) error {
-	if _, err := common.RequirePulid(params, "documentId"); err != nil {
+	if _, err := toolparams.RequirePulid(params, "documentId"); err != nil {
 		return err
 	}
-	if _, err := common.RequirePulid(params, "shipmentId"); err != nil {
+	if _, err := toolparams.RequirePulid(params, "shipmentId"); err != nil {
 		return err
 	}
 
@@ -122,7 +123,7 @@ func (t *AttachDocumentTool) Execute(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams,
 ) error {
-	if err := common.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
 	}
 
@@ -146,12 +147,12 @@ func (t *AttachDocumentTool) Execute(
 func (t *AttachDocumentTool) request(
 	params *agenttoolports.ToolExecuteParams,
 ) (*documentservice.AttachLineageRequest, error) {
-	documentID, err := common.RequirePulid(params.Params, "documentId")
+	documentID, err := toolparams.RequirePulid(params.Params, "documentId")
 	if err != nil {
 		return nil, err
 	}
 
-	shipmentID, err := common.RequirePulid(params.Params, "shipmentId")
+	shipmentID, err := toolparams.RequirePulid(params.Params, "shipmentId")
 	if err != nil {
 		return nil, err
 	}

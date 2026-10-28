@@ -5,7 +5,10 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/shipmentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -37,8 +40,8 @@ var holdSeverities = agenttoolschema.Source(
 )
 
 var updatedHoldFields = []string{
-	common.FieldSeverity,
-	common.FieldNotes,
+	changepreview.FieldSeverity,
+	changepreview.FieldNotes,
 	paramBlocksDispatch,
 	ParamBlocksDelivery,
 	ParamBlocksBilling,
@@ -116,11 +119,11 @@ func (p *holdPatch) request(
 }
 
 func readHoldPatch(params *agenttoolports.ToolExecuteParams) (*holdPatch, error) {
-	shipmentID, err := common.RequirePulid(params.Params, common.ParamShipmentID)
+	shipmentID, err := toolparams.RequirePulid(params.Params, toolparams.ParamShipmentID)
 	if err != nil {
 		return nil, err
 	}
-	holdID, err := common.RequirePulid(params.Params, ParamHoldID)
+	holdID, err := toolparams.RequirePulid(params.Params, ParamHoldID)
 	if err != nil {
 		return nil, err
 	}
@@ -128,9 +131,9 @@ func readHoldPatch(params *agenttoolports.ToolExecuteParams) (*holdPatch, error)
 	patch := &holdPatch{get: shipmentholdports.GetShipmentHoldByIDRequest{
 		HoldID:     holdID,
 		ShipmentID: shipmentID,
-		TenantInfo: common.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(*params),
 	}}
-	severity, given, err := common.OptionalEnum(
+	severity, given, err := toolparams.OptionalEnum(
 		params.Params,
 		ParamHoldSeverity,
 		holdSeverities.Values,
@@ -141,9 +144,9 @@ func readHoldPatch(params *agenttoolports.ToolExecuteParams) (*holdPatch, error)
 	if given {
 		patch.severity = &severity
 	}
-	if patch.notes, err = common.OptionalBoundedText(
+	if patch.notes, err = toolparams.OptionalBoundedText(
 		params.Params,
-		common.ParamNote,
+		toolparams.ParamNote,
 		maxHoldNoteChars,
 	); err != nil {
 		return nil, err
@@ -158,14 +161,14 @@ func readHoldPatch(params *agenttoolports.ToolExecuteParams) (*holdPatch, error)
 		{ParamVisibleToCustomer, &patch.visibleToCustomer},
 	}
 	for _, flag := range flags {
-		if *flag.out, err = common.OptionalBoolPointer(params.Params, flag.key); err != nil {
+		if *flag.out, err = toolparams.OptionalBoolPointer(params.Params, flag.key); err != nil {
 			return nil, err
 		}
 	}
 	if patch.severity == nil && patch.notes == nil && patch.blocksDispatch == nil &&
 		patch.blocksDelivery == nil && patch.blocksBilling == nil &&
 		patch.visibleToCustomer == nil {
-		return nil, common.ErrNothingToChange
+		return nil, toolparams.ErrNothingToChange
 	}
 
 	return patch, nil
@@ -174,7 +177,7 @@ func readHoldPatch(params *agenttoolports.ToolExecuteParams) (*holdPatch, error)
 func classifyHoldVisibility(
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // ToolPolicy.Classify passes params by value
 ) agenttoolports.CallPolicy {
-	if common.OptionalBool(params.Params, ParamVisibleToCustomer) {
+	if toolparams.OptionalBool(params.Params, ParamVisibleToCustomer) {
 		return agenttoolports.CallPolicy{Egress: agent.EgressCustomerVisible}
 	}
 
@@ -182,9 +185,9 @@ func classifyHoldVisibility(
 }
 
 func NewUpdateShipmentHoldTool(holds holdUpdater) agenttoolports.AgentTool {
-	base := common.NewReportingReceivableTool(&common.ReceivableSpec{
+	base := toolspec.NewReportingReceivableTool(&toolspec.ReceivableSpec{
 		Name:     "shipment_update_hold",
-		Artifact: common.ShipmentRecordEntity,
+		Artifact: changepreview.ShipmentRecordEntity,
 		Description: "Change an active hold on a shipment: its severity, its note, what it " +
 			"blocks (dispatch, delivery, billing) and whether the customer sees it. Send only " +
 			"what changes; everything else stays as it is. Use shipment_release_hold to clear " +
@@ -199,31 +202,35 @@ func NewUpdateShipmentHoldTool(holds holdUpdater) agenttoolports.AgentTool {
 		Rationale: "Changes a hold inside Trenova; one made visible to the customer is shown " +
 			"to them, so that call is held to the customer-visible ceiling.",
 		Properties: map[string]any{
-			common.ParamShipmentID: common.ShipmentIDProperty("The shipment the hold is on"),
+			toolparams.ParamShipmentID: shipmentpreview.ShipmentIDProperty(
+				"The shipment the hold is on",
+			),
 			ParamHoldID: agenttoolschema.RecordIDText(
 				permission.ResourceShipmentHold,
 				"The hold to change, from the holds shipment_get lists or "+
 					"the page you are on. Never guess one.",
 			),
 			ParamHoldSeverity: agenttoolschema.Enum("How strongly it applies.", holdSeverities),
-			common.ParamNote: common.StringProperty(
+			toolparams.ParamNote: toolparams.StringProperty(
 				"What the hold waits on, replacing the note on it.",
 				maxHoldNoteChars,
 			),
-			paramBlocksDispatch: common.BooleanProperty(
+			paramBlocksDispatch: toolparams.BooleanProperty(
 				"Whether it stops the shipment being dispatched.",
 			),
-			ParamBlocksDelivery: common.BooleanProperty(
+			ParamBlocksDelivery: toolparams.BooleanProperty(
 				"Whether it stops the shipment being delivered.",
 			),
-			ParamBlocksBilling: common.BooleanProperty(
+			ParamBlocksBilling: toolparams.BooleanProperty(
 				"Whether it stops the shipment being billed.",
 			),
-			ParamVisibleToCustomer: common.BooleanProperty("Whether the customer sees the hold."),
+			ParamVisibleToCustomer: toolparams.BooleanProperty(
+				"Whether the customer sees the hold.",
+			),
 		},
-		Required: []string{common.ParamShipmentID, ParamHoldID},
+		Required: []string{toolparams.ParamShipmentID, ParamHoldID},
 		Target:   targetShipment,
-	}, common.ReceivablePlan[*holdPatch, *holdUpdatePlan]{
+	}, toolspec.ReceivablePlan[*holdPatch, *holdUpdatePlan]{
 		Request: readHoldPatch,
 		Plan: func(
 			ctx context.Context,
@@ -262,15 +269,18 @@ func NewUpdateShipmentHoldTool(holds holdUpdater) agenttoolports.AgentTool {
 				Kind:   "shipment hold",
 				Name:   holdLabel(saved),
 				IDs: map[string]string{
-					ParamHoldID:            saved.ID.String(),
-					common.ParamShipmentID: saved.ShipmentID.String(),
+					ParamHoldID:                saved.ID.String(),
+					toolparams.ParamShipmentID: saved.ShipmentID.String(),
 				},
-				Record: common.RecordOf(common.ShipmentRecordEntity, saved.ShipmentID),
+				Record: changepreview.RecordOf(
+					changepreview.ShipmentRecordEntity,
+					saved.ShipmentID,
+				),
 			}, nil
 		},
 	})
 
-	return common.ClassifiedTool[*holdPatch, *holdUpdatePlan]{
+	return toolspec.ClassifiedTool[*holdPatch, *holdUpdatePlan]{
 		ReportingReceivableTool: base,
 		Egress: []agent.EgressClass{
 			agent.EgressInternal,
@@ -285,7 +295,7 @@ func renderHoldUpdate(_ *holdPatch, plan *holdUpdatePlan) (*agent.ToolPreview, e
 		Resource: permission.ResourceShipmentHold,
 		ID:       plan.before.ID,
 		Label:    holdLabel(plan.before),
-		Version:  common.PreviewVersion(plan.before.Version),
+		Version:  changepreview.PreviewVersion(plan.before.Version),
 	}, plan.before, plan.after, toolpreview.Only(updatedHoldFields...))
 	if err != nil {
 		return nil, err

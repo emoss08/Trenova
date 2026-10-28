@@ -6,7 +6,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -17,33 +18,33 @@ import (
 )
 
 var inboundLinkRefs = map[string]permission.Resource{
-	common.FieldMatchedShipmentID: permission.ResourceShipment,
-	common.FieldMatchedCustomerID: permission.ResourceCustomer,
-	common.FieldMatchedCarrierID:  permission.ResourceCarrier,
+	changepreview.FieldMatchedShipmentID: permission.ResourceShipment,
+	changepreview.FieldMatchedCustomerID: permission.ResourceCustomer,
+	changepreview.FieldMatchedCarrierID:  permission.ResourceCarrier,
 }
 
 var inboundLinkLabels = map[string]string{
-	common.FieldMatchedShipmentID: common.LabelShipment,
-	common.FieldMatchedCustomerID: common.LabelCustomer,
-	common.FieldMatchedCarrierID:  common.LabelCarrier,
-	fieldMatchReason:              "Why",
+	changepreview.FieldMatchedShipmentID: changepreview.LabelShipment,
+	changepreview.FieldMatchedCustomerID: changepreview.LabelCustomer,
+	changepreview.FieldMatchedCarrierID:  changepreview.LabelCarrier,
+	fieldMatchReason:                     "Why",
 }
 
 var inboundLinkFields = []string{
-	common.FieldMatchedShipmentID,
-	common.FieldMatchedCustomerID,
-	common.FieldMatchedCarrierID,
+	changepreview.FieldMatchedShipmentID,
+	changepreview.FieldMatchedCustomerID,
+	changepreview.FieldMatchedCarrierID,
 	fieldMatchReason,
 }
 
-var inboundReviewFields = []string{common.FieldStatus, "reviewNote", "reviewedAt"}
+var inboundReviewFields = []string{changepreview.FieldStatus, "reviewNote", "reviewedAt"}
 
 func inboundMessageRecord(message *inboundmessage.InboundMessage) toolpreview.Record {
 	return toolpreview.Record{
 		Resource: permission.ResourceInboundMessage,
 		ID:       message.ID,
 		Label:    describeInboundMessage(message),
-		Version:  common.PreviewVersion(message.Version),
+		Version:  changepreview.PreviewVersion(message.Version),
 	}
 }
 
@@ -59,7 +60,7 @@ func (t *LinkInboundMessageTool) Preview(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
-	if err := common.GuardPreview(t, &params); err != nil {
+	if err := toolguard.GuardPreview(t, &params); err != nil {
 		return nil, err
 	}
 
@@ -74,8 +75,8 @@ func (t *LinkInboundMessageTool) Preview(
 
 	summary := "Would link the message " + describeInboundMessage(message)
 	if err = t.inbox.CheckLink(ctx, req); err != nil {
-		if common.IsRefusal(err) {
-			return common.WarnWouldFail(toolpreview.Build(summary), err), nil
+		if changepreview.IsRefusal(err) {
+			return changepreview.WarnWouldFail(toolpreview.Build(summary), err), nil
 		}
 
 		return nil, err
@@ -102,14 +103,14 @@ func (t *MarkInboundMessageTool) Preview(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
-	if err := common.GuardPreview(t, &params); err != nil {
+	if err := toolguard.GuardPreview(t, &params); err != nil {
 		return nil, err
 	}
 
 	message, status, note, err := t.settle(ctx, params)
 	if err != nil {
-		if common.IsRefusal(err) || errors.Is(err, errInboundQuarantined) {
-			return common.WarnWouldFail(
+		if changepreview.IsRefusal(err) || errors.Is(err, errInboundQuarantined) {
+			return changepreview.WarnWouldFail(
 				toolpreview.Build("Would settle an inbound message."),
 				err,
 			), nil
@@ -120,7 +121,7 @@ func (t *MarkInboundMessageTool) Preview(
 
 	review := reviewRequest(&params, message, status, note)
 	now := timeutils.NowUnix()
-	plan, err := common.PlanArchive(
+	plan, err := changepreview.PlanArchive(
 		inboundMessageRecord(message),
 		message,
 		func(settled *inboundmessage.InboundMessage) error {

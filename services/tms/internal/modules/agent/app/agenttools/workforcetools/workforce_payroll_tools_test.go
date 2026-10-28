@@ -5,7 +5,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -105,9 +106,9 @@ func TestGeneratePayrollExport_TakesTheLastDayInclusive(t *testing.T) {
 	payroll := newFakePayroll()
 	tool := newGeneratePayrollExportTool(payroll)
 	raw := map[string]any{
-		paramFirstDay:    "2026-09-14",
-		paramLastDay:     "2026-09-27",
-		common.FieldNote: "Biweekly run",
+		paramFirstDay:           "2026-09-14",
+		paramLastDay:            "2026-09-27",
+		changepreview.FieldNote: "Biweekly run",
 	}
 
 	preview := agenttoolstest.PreviewWithoutWrites(
@@ -125,7 +126,7 @@ func TestGeneratePayrollExport_TakesTheLastDayInclusive(t *testing.T) {
 	require.ErrorIs(
 		t,
 		tool.Execute(t.Context(), agenttoolstest.ExecuteParams(raw)),
-		common.ErrNeedsAPersonsApproval,
+		toolspec.ErrNeedsAPersonsApproval,
 	)
 	require.NoError(t, tool.Execute(t.Context(), agenttoolstest.ApprovedParams(raw)))
 	require.NotNil(t, payroll.generated)
@@ -155,8 +156,8 @@ func TestVoidPayrollExport_KeepsTheReason(t *testing.T) {
 	payroll := newFakePayroll()
 	tool := newVoidPayrollExportTool(payroll)
 	raw := map[string]any{
-		paramPayrollExportID: payroll.export.ID.String(),
-		common.FieldReason:   "Two weeks were approved in error",
+		paramPayrollExportID:      payroll.export.ID.String(),
+		changepreview.FieldReason: "Two weeks were approved in error",
 	}
 
 	preview := agenttoolstest.PreviewWithoutWrites(

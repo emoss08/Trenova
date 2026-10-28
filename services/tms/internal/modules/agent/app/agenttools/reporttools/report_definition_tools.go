@@ -7,7 +7,9 @@ import (
 	"strings"
 
 	"github.com/emoss08/keel/analytics/ir"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -55,7 +57,7 @@ type reportDefinitionWriter interface {
 }
 
 func reportingRequestFrom(params agenttoolports.ToolExecuteParams) reporting.Request {
-	tenant := common.TenantFrom(params)
+	tenant := toolparams.TenantFrom(params)
 	tenant.UserID = params.Actor.PersonUserID()
 
 	return reporting.Request{
@@ -92,10 +94,13 @@ func reportMetadataProperties() map[string]any {
 			"items":       map[string]any{"type": "string"},
 			"description": "Optional short labels, at most ten.",
 		},
-		common.FieldVisibility: agenttoolschema.Enum(reportVisibilityNote, reportVisibilities),
+		changepreview.FieldVisibility: agenttoolschema.Enum(
+			reportVisibilityNote,
+			reportVisibilities,
+		),
 		"defaultFormat": agenttoolschema.Enum(
 			"The file format a run produces unless one is asked for. Default csv.",
-			common.ReportFormats,
+			toolparams.ReportFormats,
 		),
 	}
 }
@@ -124,13 +129,13 @@ func readReportMetadata(params map[string]any) (reportMetadata, error) {
 		}
 	}
 
-	meta.Name = strings.TrimSpace(common.OptionalString(params, paramReportName))
-	meta.Description = strings.TrimSpace(common.OptionalString(params, "description"))
-	meta.Category = strings.TrimSpace(common.OptionalString(params, "category"))
+	meta.Name = strings.TrimSpace(toolparams.OptionalString(params, paramReportName))
+	meta.Description = strings.TrimSpace(toolparams.OptionalString(params, "description"))
+	meta.Category = strings.TrimSpace(toolparams.OptionalString(params, "category"))
 
 	if meta.given["visibility"] {
 		meta.Visibility = report.Visibility(
-			strings.TrimSpace(common.OptionalString(params, "visibility")),
+			strings.TrimSpace(toolparams.OptionalString(params, "visibility")),
 		)
 		if !meta.Visibility.IsValid() {
 			return meta, fmt.Errorf(
@@ -142,7 +147,7 @@ func readReportMetadata(params map[string]any) (reportMetadata, error) {
 
 	if meta.given["defaultFormat"] {
 		meta.DefaultFormat = report.Format(
-			strings.TrimSpace(common.OptionalString(params, "defaultFormat")),
+			strings.TrimSpace(toolparams.OptionalString(params, "defaultFormat")),
 		)
 		if !meta.DefaultFormat.IsValid() {
 			return meta, errors.New(
@@ -365,11 +370,11 @@ func (t *CreateReportTool) Validate(
 func (t *CreateReportTool) prepare(
 	params agenttoolports.ToolExecuteParams,
 ) (*reporting.SaveDefinitionRequest, error) {
-	if err := common.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return nil, err
 	}
 
-	name, err := common.RequireString(params.Params, paramReportName)
+	name, err := toolparams.RequireString(params.Params, paramReportName)
 	if err != nil {
 		return nil, err
 	}
@@ -462,7 +467,7 @@ func (t *UpdateReportTool) Policy() agenttoolports.ToolPolicy {
 }
 
 func (t *UpdateReportTool) Target(params map[string]any) (agenttoolports.ToolTarget, bool) {
-	return common.TargetOf(params, "definitionId", permission.ResourceReport)
+	return toolparams.TargetOf(params, "definitionId", permission.ResourceReport)
 }
 
 func (t *UpdateReportTool) Execute(
@@ -501,11 +506,11 @@ func (t *UpdateReportTool) prepare(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams,
 ) (*reporting.SaveDefinitionRequest, *report.ReportDefinition, error) {
-	if err := common.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return nil, nil, err
 	}
 
-	definitionID, err := common.RequirePulid(params.Params, "definitionId")
+	definitionID, err := toolparams.RequirePulid(params.Params, "definitionId")
 	if err != nil {
 		return nil, nil, err
 	}
@@ -601,7 +606,7 @@ func (t *UpdateReportTool) prepare(
 }
 
 func readDefinitionStatus(params map[string]any) (report.DefinitionStatus, error) {
-	raw := strings.TrimSpace(common.OptionalString(params, "status"))
+	raw := strings.TrimSpace(toolparams.OptionalString(params, "status"))
 	if raw == "" {
 		return "", nil
 	}
@@ -686,7 +691,7 @@ func (t *ForkReportTool) ExecuteWithResult(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams,
 ) (*agent.ToolExecutionResult, error) {
-	if err := common.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return nil, err
 	}
 
@@ -702,7 +707,7 @@ func (t *ForkReportTool) ExecuteWithResult(
 
 	if forked == nil {
 		return &agent.ToolExecutionResult{
-			Action: common.ResultCreated,
+			Action: changepreview.ResultCreated,
 			Kind:   reportRecordEntity,
 		}, nil
 	}

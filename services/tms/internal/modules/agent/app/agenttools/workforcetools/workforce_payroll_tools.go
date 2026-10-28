@@ -4,7 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -26,18 +28,18 @@ const kindPayrollExport = "payroll run"
 const maxPayrollNoteChars = 1000
 
 var payrollExportFields = []string{
-	common.FieldStatus,
-	common.FieldPeriodStart,
-	common.FieldPeriodEnd,
+	changepreview.FieldStatus,
+	changepreview.FieldPeriodStart,
+	changepreview.FieldPeriodEnd,
 	"timesheetCount",
 	"regularMinutes",
 	"overtimeMinutes",
 	"paidLeaveMinutes",
 	"generatedById",
 	"generatedAt",
-	common.FieldVoidedAt,
+	changepreview.FieldVoidedAt,
 	"voidReason",
-	common.FieldNote,
+	changepreview.FieldNote,
 }
 
 type PayrollExporter interface {
@@ -65,8 +67,8 @@ func PayrollToolProviders() []any {
 
 func payrollExportRecord(export *timesheet.PayrollExport) toolpreview.Record {
 	return wfRecord(permission.ResourceTimesheet, export.ID,
-		fmt.Sprintf("Payroll run %s to %s", common.DayText(export.PeriodStart),
-			common.DayText(export.PeriodEnd-common.SecondsPerDay)), export.Version)
+		fmt.Sprintf("Payroll run %s to %s", changepreview.DayText(export.PeriodStart),
+			changepreview.DayText(export.PeriodEnd-toolparams.SecondsPerDay)), export.Version)
 }
 
 func payrollExportResult(
@@ -80,7 +82,7 @@ func payrollExportResult(
 	}
 }
 
-func payrollSpec(name, description, rationale string) *common.ReceivableSpec {
+func payrollSpec(name, description, rationale string) *toolspec.ReceivableSpec {
 	spec := personOnly(wfSpec(name, description, rationale, permission.ResourceTimesheet,
 		permission.OpExport))
 	spec.Egress = agent.EgressMoney
@@ -100,22 +102,25 @@ func newGeneratePayrollExportTool(exporter PayrollExporter) agenttoolports.Agent
 		"Locks approved hours into a payroll run that pays people, so a person approves it "+
 			"and it runs as them; settlement_void_payroll_export takes it back.",
 	), map[string]any{
-		paramFirstDay:    agenttoolschema.Date("The first day of the pay period."),
-		paramLastDay:     agenttoolschema.Date("The last day of the pay period, included."),
-		common.FieldNote: common.StringProperty("A note kept on the run.", maxPayrollNoteChars),
+		paramFirstDay: agenttoolschema.Date("The first day of the pay period."),
+		paramLastDay:  agenttoolschema.Date("The last day of the pay period, included."),
+		changepreview.FieldNote: toolparams.StringProperty(
+			"A note kept on the run.",
+			maxPayrollNoteChars,
+		),
 	}, paramFirstDay, paramLastDay)
 
-	return common.NewReceivableTool(spec, common.ReceivablePlan[
+	return toolspec.NewReceivableTool(spec, toolspec.ReceivablePlan[
 		*timesheetservice.GenerateExportRequest, *timesheetservice.ExportPlan,
 	]{
 		Request: func(
 			params *agenttoolports.ToolExecuteParams,
 		) (*timesheetservice.GenerateExportRequest, error) {
-			first, err := common.RequireScheduleDay(params.Params, paramFirstDay)
+			first, err := toolparams.RequireScheduleDay(params.Params, paramFirstDay)
 			if err != nil {
 				return nil, err
 			}
-			last, err := common.RequireScheduleDay(params.Params, paramLastDay)
+			last, err := toolparams.RequireScheduleDay(params.Params, paramLastDay)
 			if err != nil {
 				return nil, err
 			}
@@ -123,15 +128,19 @@ func newGeneratePayrollExportTool(exporter PayrollExporter) agenttoolports.Agent
 				return nil, fmt.Errorf("parameter %q cannot be before %q", paramLastDay,
 					paramFirstDay)
 			}
-			note, err := common.BoundedText(params.Params, common.FieldNote, maxPayrollNoteChars)
+			note, err := toolparams.BoundedText(
+				params.Params,
+				changepreview.FieldNote,
+				maxPayrollNoteChars,
+			)
 			if err != nil {
 				return nil, err
 			}
 			return &timesheetservice.GenerateExportRequest{
 				PeriodStart: first,
-				PeriodEnd:   last + common.SecondsPerDay,
+				PeriodEnd:   last + toolparams.SecondsPerDay,
 				Note:        note,
-				TenantInfo:  common.TenantFrom(*params),
+				TenantInfo:  toolparams.TenantFrom(*params),
 				UserID:      params.Actor.UserID,
 			}, nil
 		},
@@ -190,26 +199,26 @@ func newVoidPayrollExportTool(exporter PayrollExporter) agenttoolports.AgentTool
 				"Never guess one.",
 			permission.KindPayrollExport,
 		),
-		common.FieldReason: common.StringProperty(
+		changepreview.FieldReason: toolparams.StringProperty(
 			"Why the run is voided, kept on it.",
 			maxPayrollNoteChars,
 		),
-	}, paramPayrollExportID, common.FieldReason), paramPayrollExportID, permission.ResourceTimesheet)
+	}, paramPayrollExportID, changepreview.FieldReason), paramPayrollExportID, permission.ResourceTimesheet)
 	spec.SearchTerms = append(spec.SearchTerms, "undo payroll run", "redo payroll", "rerun payroll")
 
-	return common.NewReceivableTool(spec, common.ReceivablePlan[
+	return toolspec.NewReceivableTool(spec, toolspec.ReceivablePlan[
 		*timesheetservice.VoidExportRequest, *timesheetservice.ExportChange,
 	]{
 		Request: func(
 			params *agenttoolports.ToolExecuteParams,
 		) (*timesheetservice.VoidExportRequest, error) {
-			id, err := common.RequirePulid(params.Params, paramPayrollExportID)
+			id, err := toolparams.RequirePulid(params.Params, paramPayrollExportID)
 			if err != nil {
 				return nil, err
 			}
-			reason, err := common.RequireBoundedText(
+			reason, err := toolparams.RequireBoundedText(
 				params.Params,
-				common.FieldReason,
+				changepreview.FieldReason,
 				maxPayrollNoteChars,
 			)
 			if err != nil {
@@ -218,7 +227,7 @@ func newVoidPayrollExportTool(exporter PayrollExporter) agenttoolports.AgentTool
 			return &timesheetservice.VoidExportRequest{
 				ID:         id,
 				Reason:     reason,
-				TenantInfo: common.TenantFrom(*params),
+				TenantInfo: toolparams.TenantFrom(*params),
 				UserID:     params.Actor.UserID,
 			}, nil
 		},
@@ -242,7 +251,7 @@ func newVoidPayrollExportTool(exporter PayrollExporter) agenttoolports.AgentTool
 				change.After,
 				append(
 					wfOptions(payrollExportFields...),
-					toolpreview.Volatile(common.FieldVoidedAt),
+					toolpreview.Volatile(changepreview.FieldVoidedAt),
 				)...)
 			if err != nil {
 				return nil, err

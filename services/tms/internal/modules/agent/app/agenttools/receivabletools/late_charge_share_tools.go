@@ -6,7 +6,10 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/invoicepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -73,7 +76,7 @@ type invoiceSharer interface {
 }
 
 func NewAssessLateChargesTool(charges lateChargeAssessor) agenttoolports.AgentTool {
-	return common.NewReceivableTool(&common.ReceivableSpec{
+	return toolspec.NewReceivableTool(&toolspec.ReceivableSpec{
 		Name:        "receivable_assess_late_charges",
 		SearchTerms: []string{"late fees", "finance charge"},
 		Description: "Propose assessing late charges on overdue invoices as of a date, as one " +
@@ -92,7 +95,7 @@ func NewAssessLateChargesTool(charges lateChargeAssessor) agenttoolports.AgentTo
 			paramAsOfDate: agenttoolschema.Date(
 				"The day overdue periods are counted to, usually today.",
 			),
-			common.ParamCustomerIDs: toolschema.KeepEmpty(agenttoolschema.RecordIDs(
+			toolparams.ParamCustomerIDs: toolschema.KeepEmpty(agenttoolschema.RecordIDs(
 				permission.ResourceCustomer,
 				"Only these customers, from customer_list or "+
 					"receivable_list_open_items.",
@@ -100,7 +103,7 @@ func NewAssessLateChargesTool(charges lateChargeAssessor) agenttoolports.AgentTo
 			)),
 		},
 		Required: []string{paramAsOfDate},
-	}, common.ReceivablePlan[*latechargeports.LateChargeAssessmentRequest, *latechargeports.LateChargeAssessmentResult]{
+	}, toolspec.ReceivablePlan[*latechargeports.LateChargeAssessmentRequest, *latechargeports.LateChargeAssessmentResult]{
 		Request: lateChargeRequest,
 		Plan: func(
 			ctx context.Context,
@@ -134,17 +137,17 @@ func NewAssessLateChargesTool(charges lateChargeAssessor) agenttoolports.AgentTo
 func lateChargeRequest(
 	params *agenttoolports.ToolExecuteParams,
 ) (*latechargeports.LateChargeAssessmentRequest, error) {
-	asOf, err := common.RequireUTCDay(params.Params, paramAsOfDate)
+	asOf, err := toolparams.RequireUTCDay(params.Params, paramAsOfDate)
 	if err != nil {
 		return nil, err
 	}
 	req := &latechargeports.LateChargeAssessmentRequest{
-		TenantInfo: common.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(*params),
 		AsOfDate:   asOf.Unix(),
 	}
-	if _, ok := params.Params[common.ParamCustomerIDs]; ok {
-		if req.CustomerIDs, err = common.RequirePulidSlice(
-			params.Params, common.ParamCustomerIDs, maxLateCustomers,
+	if _, ok := params.Params[toolparams.ParamCustomerIDs]; ok {
+		if req.CustomerIDs, err = toolparams.RequirePulidSlice(
+			params.Params, toolparams.ParamCustomerIDs, maxLateCustomers,
 		); err != nil {
 			return nil, err
 		}
@@ -191,7 +194,7 @@ func renderLateCharges(
 				Invoices:   strings.Join(invoices, ", "),
 			},
 			toolpreview.WithRefs(map[string]permission.Resource{
-				common.ParamCustomerID: permission.ResourceCustomer,
+				toolparams.ParamCustomerID: permission.ResourceCustomer,
 			}),
 			toolpreview.Labels(map[string]string{lineCountFieldName: "Overdue periods charged"}),
 		)
@@ -201,7 +204,7 @@ func renderLateCharges(
 		toolpreview.AttachMoney(change, toolpreview.MoneyBlock(customer.CurrencyCode,
 			agent.MoneyLine{
 				Label: "Late charge",
-				After: common.KnownAmount(money.DecimalFromMinor(customer.TotalChargeMinor)),
+				After: changepreview.KnownAmount(money.DecimalFromMinor(customer.TotalChargeMinor)),
 			},
 		), toolpreview.SensitiveAs("totalAmount"))
 		changes = append(changes, change)
@@ -212,15 +215,15 @@ func renderLateCharges(
 		posting = "posted as it is raised, as the billing control says"
 	}
 	summary := fmt.Sprintf("Would raise %s for %s in all, each %s.",
-		common.CountOf(len(changes), "late charge debit memo"),
+		changepreview.CountOf(len(changes), "late charge debit memo"),
 		money.DecimalFromMinor(result.TotalChargeMinor).StringFixed(2),
 		posting)
 
-	return toolpreview.Build(common.WithNotes(summary, notes), changes...), nil
+	return toolpreview.Build(changepreview.WithNotes(summary, notes), changes...), nil
 }
 
 func NewShareInvoiceTool(shares invoiceSharer) agenttoolports.AgentTool {
-	return common.NewReceivableTool(&common.ReceivableSpec{
+	return toolspec.NewReceivableTool(&toolspec.ReceivableSpec{
 		Name:        "invoice_share",
 		Recipe:      []string{"invoice_list_share_candidates", "invoice_share"},
 		SearchTerms: []string{"loop in teammate", "teammate", "colleague"},
@@ -237,21 +240,21 @@ func NewShareInvoiceTool(shares invoiceSharer) agenttoolports.AgentTool {
 		Rationale: "Notifies and emails colleagues in the name of the person who shares it, " +
 			"with a note they read as theirs; only that person sends it.",
 		Properties: map[string]any{
-			common.ParamInvoiceID: agenttoolschema.RecordIDText(permission.ResourceInvoice,
+			toolparams.ParamInvoiceID: agenttoolschema.RecordIDText(permission.ResourceInvoice,
 				"The invoice, from invoice_list or invoice_get."),
 			paramUserIDs: agenttoolschema.RecordIDs(
 				permission.ResourceUser,
 				"The teammates, from invoice_list_share_candidates.",
 				invoice.MaxShareRecipients,
 			),
-			paramShareNote: common.StringProperty("A note for them, such as what to look at.",
+			paramShareNote: toolparams.StringProperty("A note for them, such as what to look at.",
 				invoice.MaxShareNoteLength),
 			paramShareTab: agenttoolschema.Enum("The part of the invoice the link opens on. "+
 				"Defaults to overview.", shareTabs),
 		},
-		Required: []string{common.ParamInvoiceID, paramUserIDs},
-		Target:   common.TargetInvoice,
-	}, common.ReceivablePlan[*invoiceports.ShareInvoiceRequest, *invoiceports.InvoiceSharePreview]{
+		Required: []string{toolparams.ParamInvoiceID, paramUserIDs},
+		Target:   toolparams.TargetInvoice,
+	}, toolspec.ReceivablePlan[*invoiceports.ShareInvoiceRequest, *invoiceports.InvoiceSharePreview]{
 		Request: shareRequest,
 		Plan: func(
 			ctx context.Context,
@@ -262,7 +265,7 @@ func NewShareInvoiceTool(shares invoiceSharer) agenttoolports.AgentTool {
 		},
 		Refused: func(req *invoiceports.ShareInvoiceRequest) string {
 			return fmt.Sprintf("Would share the invoice with %s.",
-				common.CountOf(len(req.UserIDs), "teammate"))
+				changepreview.CountOf(len(req.UserIDs), "teammate"))
 		},
 		Render: renderShare,
 		Run: func(
@@ -279,11 +282,11 @@ func NewShareInvoiceTool(shares invoiceSharer) agenttoolports.AgentTool {
 func shareRequest(
 	params *agenttoolports.ToolExecuteParams,
 ) (*invoiceports.ShareInvoiceRequest, error) {
-	invoiceID, err := common.RequirePulid(params.Params, common.ParamInvoiceID)
+	invoiceID, err := toolparams.RequirePulid(params.Params, toolparams.ParamInvoiceID)
 	if err != nil {
 		return nil, err
 	}
-	userIDs, err := common.RequirePulidSlice(
+	userIDs, err := toolparams.RequirePulidSlice(
 		params.Params,
 		paramUserIDs,
 		invoice.MaxShareRecipients,
@@ -291,17 +294,17 @@ func shareRequest(
 	if err != nil {
 		return nil, err
 	}
-	note, err := common.BoundedText(params.Params, paramShareNote, invoice.MaxShareNoteLength)
+	note, err := toolparams.BoundedText(params.Params, paramShareNote, invoice.MaxShareNoteLength)
 	if err != nil {
 		return nil, err
 	}
-	tab, _, err := common.OptionalEnum(params.Params, paramShareTab, shareTabs.Values)
+	tab, _, err := toolparams.OptionalEnum(params.Params, paramShareTab, shareTabs.Values)
 	if err != nil {
 		return nil, err
 	}
 
 	return &invoiceports.ShareInvoiceRequest{
-		TenantInfo: common.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(*params),
 		InvoiceID:  invoiceID,
 		UserIDs:    userIDs,
 		Note:       note,
@@ -319,7 +322,7 @@ func renderShare(
 	_ *invoiceports.ShareInvoiceRequest,
 	plan *invoiceports.InvoiceSharePreview,
 ) (*agent.ToolPreview, error) {
-	label := common.InvoiceLabel(plan.Invoice)
+	label := invoicepreview.InvoiceLabel(plan.Invoice)
 	changes := make([]*agent.RecordChange, 0, len(plan.Recipients))
 	names := make([]string, 0, len(plan.Recipients))
 	for _, recipient := range plan.Recipients {

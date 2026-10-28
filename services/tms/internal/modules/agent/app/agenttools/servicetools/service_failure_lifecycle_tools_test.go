@@ -5,10 +5,13 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/detentionpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/editools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/operationstools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/receivabletools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
@@ -166,7 +169,7 @@ func TestUpdateServiceFailure_ChangesOnlyWhatIsSent(t *testing.T) {
 	params := agenttoolstest.ExecuteParams(map[string]any{
 		editools.ParamServiceFailureID: failures.current.ID.String(),
 		paramX12Status:                 "ax",
-		common.ParamNote:               "Consignee closed early",
+		toolparams.ParamNote:           "Consignee closed early",
 	})
 
 	preview := agenttoolstest.PreviewWithoutWrites(
@@ -197,9 +200,9 @@ func TestUpdateServiceFailure_ChangesOnlyWhatIsSent(t *testing.T) {
 	for name, raw := range map[string]map[string]any{
 		"nothing to change": {editools.ParamServiceFailureID: failures.current.ID.String()},
 		"both reason and clear": {
-			editools.ParamServiceFailureID: failures.current.ID.String(),
-			common.FieldReasonCodeID:       pulid.MustNew("sfrc_").String(),
-			paramClearReasonCode:           true,
+			editools.ParamServiceFailureID:  failures.current.ID.String(),
+			changepreview.FieldReasonCodeID: pulid.MustNew("sfrc_").String(),
+			paramClearReasonCode:            true,
 		},
 		"a long code": {
 			editools.ParamServiceFailureID: failures.current.ID.String(),
@@ -218,8 +221,8 @@ func TestReviewServiceFailure_IsAPersonsAndAWouldFailWhenRefused(t *testing.T) {
 	tool := NewReviewServiceFailureTool(failures)
 	reason := pulid.MustNew("sfrc_")
 	params := agenttoolstest.ExecuteParams(map[string]any{
-		editools.ParamServiceFailureID: failures.current.ID.String(),
-		common.FieldReasonCodeID:       reason.String(),
+		editools.ParamServiceFailureID:  failures.current.ID.String(),
+		changepreview.FieldReasonCodeID: reason.String(),
 	})
 
 	preview := agenttoolstest.PreviewWithoutWrites(
@@ -235,11 +238,11 @@ func TestReviewServiceFailure_IsAPersonsAndAWouldFailWhenRefused(t *testing.T) {
 		agenttoolstest.FieldByPath(
 			t,
 			agenttoolstest.PreviewChange(t, preview, 0),
-			common.FieldStatus,
+			changepreview.FieldStatus,
 		).After,
 	)
 
-	require.ErrorIs(t, tool.Execute(t.Context(), params), common.ErrNeedsAPersonsApproval)
+	require.ErrorIs(t, tool.Execute(t.Context(), params), toolspec.ErrNeedsAPersonsApproval)
 	approved := agenttoolstest.ApprovedParams(params.Params)
 	require.NoError(t, tool.Execute(t.Context(), approved))
 	assert.Equal(t, reason, failures.reviewed.ReasonCodeID)
@@ -260,7 +263,7 @@ func TestVoidServiceFailure_NeedsAReasonAndShowsThe214(t *testing.T) {
 	tool := NewVoidServiceFailureTool(failures)
 	params := agenttoolstest.ApprovedParams(map[string]any{
 		editools.ParamServiceFailureID: failures.current.ID.String(),
-		common.ParamNote:               "The appointment window was keyed wrong",
+		toolparams.ParamNote:           "The appointment window was keyed wrong",
 	})
 
 	preview := agenttoolstest.PreviewWithoutWrites(
@@ -331,7 +334,7 @@ func TestDisputeDetention_HoldsTheChargeFromBilling(t *testing.T) {
 	occurrenceID := pulid.MustNew("dto_")
 	params := agenttoolstest.ExecuteParams(map[string]any{
 		receivabletools.ParamOccurrenceID: occurrenceID.String(),
-		common.ParamNote:                  "Customer says the truck arrived after the appointment",
+		toolparams.ParamNote:              "Customer says the truck arrived after the appointment",
 	})
 
 	preview := agenttoolstest.PreviewWithoutWrites(
@@ -359,5 +362,5 @@ func TestDisputeDetention_HoldsTheChargeFromBilling(t *testing.T) {
 			map[string]any{receivabletools.ParamOccurrenceID: occurrenceID.String()},
 		),
 	))
-	var _ common.DetentionDisputer = (*detentionservice.Service)(nil)
+	var _ detentionpreview.DetentionDisputer = (*detentionservice.Service)(nil)
 }

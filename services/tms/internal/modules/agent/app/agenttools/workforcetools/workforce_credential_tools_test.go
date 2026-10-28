@@ -5,7 +5,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -157,10 +158,10 @@ func TestRecordWorkerCredential_RenewalShowsWhatItSupersedes(t *testing.T) {
 	credentials := newFakeCredentials()
 	tool := newRecordWorkerCredentialTool(credentials)
 	raw := map[string]any{
-		common.ParamWorkerID:  credentials.credential.WorkerID.String(),
-		paramCredentialTypeID: credentials.credential.CredentialTypeID.String(),
-		paramCredentialNumber: "MC-2002",
-		"expiresAt":           "2028-09-30",
+		toolparams.ParamWorkerID: credentials.credential.WorkerID.String(),
+		paramCredentialTypeID:    credentials.credential.CredentialTypeID.String(),
+		paramCredentialNumber:    "MC-2002",
+		"expiresAt":              "2028-09-30",
 	}
 
 	require.Error(
@@ -241,8 +242,8 @@ func TestArchiveWorkerCredential_IsOnlyProposed(t *testing.T) {
 	credentials := newFakeCredentials()
 	tool := newArchiveWorkerCredentialTool(credentials)
 	params := agenttoolstest.ExecuteParams(map[string]any{
-		paramCredentialID:  credentials.credential.ID.String(),
-		common.FieldReason: "Endorsement surrendered",
+		paramCredentialID:         credentials.credential.ID.String(),
+		changepreview.FieldReason: "Endorsement surrendered",
 	})
 
 	preview := agenttoolstest.PreviewWithoutWrites(

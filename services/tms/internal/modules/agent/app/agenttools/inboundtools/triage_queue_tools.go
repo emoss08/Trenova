@@ -5,7 +5,8 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -51,8 +52,8 @@ func NewAssignInboundMessagesTool(p triageToolParams) agenttoolports.AgentTool {
 }
 
 func newAssignInboundMessagesTool(queue triageQueue) agenttoolports.AgentTool {
-	return common.NewReportingReceivableTool(
-		&common.ReceivableSpec{
+	return toolspec.NewReportingReceivableTool(
+		&toolspec.ReceivableSpec{
 			Name:     "inbox_assign_inbound_message",
 			Artifact: inboundMessageEntity,
 			Description: "Give messages waiting in the Triage queue to a person on the Triage " +
@@ -82,7 +83,7 @@ func newAssignInboundMessagesTool(queue triageQueue) agenttoolports.AgentTool {
 			SearchTerms: []string{"give to", "triage owner", "unassign", "take it"},
 			Recipe:      []string{toolListAssignees, "inbox_assign_inbound_message"},
 		},
-		common.ReceivablePlan[
+		toolspec.ReceivablePlan[
 			*inboundmessageservice.AssignRequest,
 			*inboundmessageservice.QueuePlan,
 		]{
@@ -93,7 +94,7 @@ func newAssignInboundMessagesTool(queue triageQueue) agenttoolports.AgentTool {
 				if err != nil {
 					return nil, err
 				}
-				owner, err := common.OptionalID(params.Params, paramOwnerID)
+				owner, err := toolparams.OptionalID(params.Params, paramOwnerID)
 				if err != nil {
 					return nil, err
 				}
@@ -153,8 +154,8 @@ func NewReopenInboundMessagesTool(p triageToolParams) agenttoolports.AgentTool {
 }
 
 func newReopenInboundMessagesTool(queue triageQueue) agenttoolports.AgentTool {
-	return common.NewReportingReceivableTool(
-		&common.ReceivableSpec{
+	return toolspec.NewReportingReceivableTool(
+		&toolspec.ReceivableSpec{
 			Name:     "inbox_reopen_inbound_message",
 			Artifact: inboundMessageEntity,
 			Description: "Return messages that were settled as Actioned or Ignored to the " +
@@ -178,7 +179,7 @@ func newReopenInboundMessagesTool(queue triageQueue) agenttoolports.AgentTool {
 			Required:    []string{paramMessageIDs},
 			SearchTerms: []string{"return to the queue", "unsettle", "undo ignore"},
 		},
-		common.ReceivablePlan[
+		toolspec.ReceivablePlan[
 			*inboundmessageservice.ReopenRequest,
 			*inboundmessageservice.QueuePlan,
 		]{
@@ -236,8 +237,8 @@ func NewSnoozeInboundMessagesTool(p triageToolParams) agenttoolports.AgentTool {
 }
 
 func newSnoozeInboundMessagesTool(queue triageQueue) agenttoolports.AgentTool {
-	return common.NewReportingReceivableTool(
-		&common.ReceivableSpec{
+	return toolspec.NewReportingReceivableTool(
+		&toolspec.ReceivableSpec{
 			Name:     "inbox_snooze_inbound_message",
 			Artifact: inboundMessageEntity,
 			Description: "Take messages waiting on a person out of the Triage queue until a " +
@@ -279,7 +280,7 @@ func newSnoozeInboundMessagesTool(queue triageQueue) agenttoolports.AgentTool {
 			SearchTerms: []string{"snooze", "until delivered", "until the POD"},
 			Recipe:      []string{toolListInboundMessage, "inbox_snooze_inbound_message"},
 		},
-		common.ReceivablePlan[
+		toolspec.ReceivablePlan[
 			*inboundmessageservice.SnoozeRequest,
 			*inboundmessageservice.QueuePlan,
 		]{
@@ -332,12 +333,12 @@ func snoozeRequest(
 	if err != nil {
 		return nil, err
 	}
-	until, err := common.OptionalLocalTime(params.Params, paramSnoozeUntil,
+	until, err := toolparams.OptionalLocalTime(params.Params, paramSnoozeUntil,
 		timeutils.LoadLocation(params.Timezone))
 	if err != nil {
 		return nil, err
 	}
-	event, given, err := common.OptionalEnum(params.Params, paramSnoozeEvent,
+	event, given, err := toolparams.OptionalEnum(params.Params, paramSnoozeEvent,
 		triageSnoozeEvents.Values)
 	if err != nil {
 		return nil, err
@@ -345,7 +346,7 @@ func snoozeRequest(
 	if (until == nil) == !given {
 		return nil, errSnoozeNeedsOne
 	}
-	documentType, err := common.OptionalID(params.Params, paramDocumentTypeID)
+	documentType, err := toolparams.OptionalID(params.Params, paramDocumentTypeID)
 	if err != nil {
 		return nil, err
 	}
@@ -369,8 +370,8 @@ func NewWakeInboundMessageTool(p triageToolParams) agenttoolports.AgentTool {
 }
 
 func newWakeInboundMessageTool(queue triageQueue) agenttoolports.AgentTool {
-	return common.NewReportingReceivableTool(
-		&common.ReceivableSpec{
+	return toolspec.NewReportingReceivableTool(
+		&toolspec.ReceivableSpec{
 			Name:     "inbox_wake_inbound_message",
 			Artifact: inboundMessageEntity,
 			Description: "Return a message to the Triage queue now: one that was snoozed, " +
@@ -394,7 +395,7 @@ func newWakeInboundMessageTool(queue triageQueue) agenttoolports.AgentTool {
 			SearchTerms: []string{"unsnooze", "stop waiting", "return now"},
 			Target:      targetMessage,
 		},
-		common.ReceivablePlan[
+		toolspec.ReceivablePlan[
 			*inboundmessageservice.MessageActionRequest,
 			*inboundmessageservice.QueuePlan,
 		]{
@@ -484,8 +485,8 @@ func NewWaitForInboundReplyTool(p triageToolParams) agenttoolports.AgentTool {
 }
 
 func newWaitForInboundReplyTool(queue triageQueue) agenttoolports.AgentTool {
-	return common.NewReportingReceivableTool(
-		&common.ReceivableSpec{
+	return toolspec.NewReportingReceivableTool(
+		&toolspec.ReceivableSpec{
 			Name:     "inbox_await_reply",
 			Artifact: inboundMessageEntity,
 			Description: "Park a message in Triage until its sender answers on the same " +
@@ -515,7 +516,7 @@ func newWaitForInboundReplyTool(queue triageQueue) agenttoolports.AgentTool {
 			SearchTerms: []string{"waiting on customer", "awaiting reply", "until they answer"},
 			Target:      targetMessage,
 		},
-		common.ReceivablePlan[
+		toolspec.ReceivablePlan[
 			*inboundmessageservice.WaitForReplyRequest,
 			*inboundmessageservice.QueuePlan,
 		]{
@@ -526,7 +527,7 @@ func newWaitForInboundReplyTool(queue triageQueue) agenttoolports.AgentTool {
 				if err != nil {
 					return nil, err
 				}
-				until, err := common.RequireLocalTime(params.Params, paramSnoozeUntil,
+				until, err := toolparams.RequireLocalTime(params.Params, paramSnoozeUntil,
 					timeutils.LoadLocation(params.Timezone))
 				if err != nil {
 					return nil, err
@@ -580,8 +581,8 @@ func NewUnlinkInboundMessageTool(p triageToolParams) agenttoolports.AgentTool {
 }
 
 func newUnlinkInboundMessageTool(queue triageQueue) agenttoolports.AgentTool {
-	return common.NewReportingReceivableTool(
-		&common.ReceivableSpec{
+	return toolspec.NewReportingReceivableTool(
+		&toolspec.ReceivableSpec{
 			Name:     "inbox_unlink_inbound_message",
 			Artifact: inboundMessageEntity,
 			Description: "Remove the shipment, customer or carrier a message is linked to, " +
@@ -611,7 +612,7 @@ func newUnlinkInboundMessageTool(queue triageQueue) agenttoolports.AgentTool {
 			Recipe:      []string{toolGetInboundMessage, "inbox_unlink_inbound_message"},
 			Target:      targetMessage,
 		},
-		common.ReceivablePlan[
+		toolspec.ReceivablePlan[
 			*inboundmessageservice.UnlinkRequest,
 			*inboundmessageservice.QueuePlan,
 		]{
@@ -622,7 +623,7 @@ func newUnlinkInboundMessageTool(queue triageQueue) agenttoolports.AgentTool {
 				if err != nil {
 					return nil, err
 				}
-				record, err := common.RequireEnum(params.Params, paramLinkedRecord,
+				record, err := toolparams.RequireEnum(params.Params, paramLinkedRecord,
 					triageLinkedRecords.Values)
 				if err != nil {
 					return nil, err
@@ -675,8 +676,8 @@ func NewHandOffTriageTool(p triageToolParams) agenttoolports.AgentTool {
 }
 
 func newHandOffTriageTool(queue triageQueue) agenttoolports.AgentTool {
-	return common.NewReportingReceivableTool(
-		&common.ReceivableSpec{
+	return toolspec.NewReportingReceivableTool(
+		&toolspec.ReceivableSpec{
 			Name:     "inbox_assign_queue",
 			Artifact: inboundMessageEntity,
 			Description: "Hand every message still waiting in the Triage queue to one person, " +
@@ -700,14 +701,14 @@ func newHandOffTriageTool(queue triageQueue) agenttoolports.AgentTool {
 			SearchTerms: []string{"end of day", "on call", "hand off the inbox", "night shift"},
 			Recipe:      []string{toolListAssignees, "inbox_assign_queue"},
 		},
-		common.ReceivablePlan[
+		toolspec.ReceivablePlan[
 			*inboundmessageservice.HandOffRequest,
 			*inboundmessageservice.QueuePlan,
 		]{
 			Request: func(
 				params *agenttoolports.ToolExecuteParams,
 			) (*inboundmessageservice.HandOffRequest, error) {
-				to, err := common.RequirePulid(params.Params, paramToUserID)
+				to, err := toolparams.RequirePulid(params.Params, paramToUserID)
 				if err != nil {
 					return nil, err
 				}

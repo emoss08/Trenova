@@ -6,7 +6,9 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -201,11 +203,11 @@ func TestScheduleDOTTest_RecordsAnOrderAndNoResult(t *testing.T) {
 	tests := newFakeDrugAlcohol()
 	tool := newScheduleDOTTestTool(tests)
 	params := agenttoolstest.ExecuteParams(map[string]any{
-		common.ParamWorkerID: tests.test.WorkerID.String(),
-		paramDOTTestType:     "PostAccident",
-		paramSubstance:       "Alcohol",
-		paramScheduledAt:     "2026-09-21T09:00:00-05:00",
-		common.FieldReason:   "Jackknife on I-80 with a tow-away",
+		toolparams.ParamWorkerID:  tests.test.WorkerID.String(),
+		paramDOTTestType:          "PostAccident",
+		paramSubstance:            "Alcohol",
+		paramScheduledAt:          "2026-09-21T09:00:00-05:00",
+		changepreview.FieldReason: "Jackknife on I-80 with a tow-away",
 	})
 
 	preview := agenttoolstest.PreviewWithoutWrites(
@@ -229,17 +231,17 @@ func TestScheduleDOTTest_RecordsAnOrderAndNoResult(t *testing.T) {
 	assert.Equal(t, permission.OpCreate, tool.Policy().Operation)
 
 	missingReason := agenttoolstest.ExecuteParams(map[string]any{
-		common.ParamWorkerID: tests.test.WorkerID.String(),
-		paramDOTTestType:     "PostAccident",
-		paramSubstance:       "Drug",
+		toolparams.ParamWorkerID: tests.test.WorkerID.String(),
+		paramDOTTestType:         "PostAccident",
+		paramSubstance:           "Drug",
 	})
 	require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(), missingReason),
 		"validation runs the service's plan")
 	require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(),
 		agenttoolstest.ExecuteParams(map[string]any{
-			common.ParamWorkerID: tests.test.WorkerID.String(),
-			paramDOTTestType:     "Positive",
-			paramSubstance:       "Drug",
+			toolparams.ParamWorkerID: tests.test.WorkerID.String(),
+			paramDOTTestType:         "Positive",
+			paramSubstance:           "Drug",
 		})))
 }
 
@@ -249,8 +251,8 @@ func TestCancelDOTTest_RefusesATestWithAResult(t *testing.T) {
 	tests := newFakeDrugAlcohol()
 	tool := newCancelDOTTestTool(tests)
 	params := agenttoolstest.ExecuteParams(map[string]any{
-		paramDOTTestID:     tests.test.ID.String(),
-		common.FieldReason: "Driver was on leave",
+		paramDOTTestID:            tests.test.ID.String(),
+		changepreview.FieldReason: "Driver was on leave",
 	})
 
 	preview := agenttoolstest.PreviewWithoutWrites(
@@ -266,7 +268,7 @@ func TestCancelDOTTest_RefusesATestWithAResult(t *testing.T) {
 		agenttoolstest.FieldByPath(
 			t,
 			agenttoolstest.PreviewChange(t, preview, 0),
-			common.FieldStatus,
+			changepreview.FieldStatus,
 		).After,
 	)
 	require.NoError(t, tool.Execute(t.Context(), params))
@@ -311,7 +313,7 @@ func TestFinalizeDOTRandomDraw_RunsOnlyFromAPersonsApproval(t *testing.T) {
 	raw := map[string]any{paramDrawID: draws.draw.ID.String()}
 
 	err := tool.Execute(t.Context(), agenttoolstest.ExecuteParams(raw))
-	require.True(t, errors.Is(err, common.ErrNeedsAPersonsApproval))
+	require.True(t, errors.Is(err, toolspec.ErrNeedsAPersonsApproval))
 	assert.Empty(t, draws.finalized)
 
 	require.NoError(t, tool.Execute(t.Context(), agenttoolstest.ApprovedParams(raw)))

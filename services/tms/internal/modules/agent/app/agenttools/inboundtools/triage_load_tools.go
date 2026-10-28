@@ -5,7 +5,9 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -90,12 +92,12 @@ func loadDraftRecord(message *inboundmessage.InboundMessage) toolpreview.Record 
 		Resource: permission.ResourceInboundMessage,
 		ID:       message.ID,
 		Label:    "Load drafted from " + describeInboundMessage(message),
-		Version:  common.PreviewVersion(message.Version),
+		Version:  changepreview.PreviewVersion(message.Version),
 	}
 }
 
 func loadRequest(params *agenttoolports.ToolExecuteParams) (*triageworkservice.LoadRequest, error) {
-	messageID, err := common.RequirePulid(params.Params, paramMessageID)
+	messageID, err := toolparams.RequirePulid(params.Params, paramMessageID)
 	if err != nil {
 		return nil, err
 	}
@@ -115,8 +117,8 @@ func newDraftInboundLoadTool(
 	inbox inboundMessageReader,
 	loads triageLoads,
 ) agenttoolports.AgentTool {
-	return common.NewReportingReceivableTool(
-		&common.ReceivableSpec{
+	return toolspec.NewReportingReceivableTool(
+		&toolspec.ReceivableSpec{
 			Name:     "inbox_draft_load",
 			Artifact: inboundMessageEntity,
 			Description: "Read the load a tender in Triage describes into a draft on the " +
@@ -143,7 +145,7 @@ func newDraftInboundLoadTool(
 			Recipe:      []string{toolGetInboundMessage, "inbox_draft_load"},
 			Target:      targetMessage,
 		},
-		common.ReceivablePlan[*triageworkservice.LoadRequest, *triageworkservice.LoadDraftPlan]{
+		toolspec.ReceivablePlan[*triageworkservice.LoadRequest, *triageworkservice.LoadDraftPlan]{
 			Request: loadRequest,
 			Plan: func(
 				ctx context.Context,
@@ -206,8 +208,8 @@ func NewCreateInboundLoadTool(p triageToolParams) agenttoolports.AgentTool {
 }
 
 func newCreateInboundLoadTool(loads triageLoads) agenttoolports.AgentTool {
-	return common.NewReportingReceivableTool(
-		&common.ReceivableSpec{
+	return toolspec.NewReportingReceivableTool(
+		&toolspec.ReceivableSpec{
 			Name: "inbox_create_load",
 			Description: "Create the shipment a tender in Triage describes, from the fields " +
 				"you checked. Start from the draft inbox_draft_load wrote, which " +
@@ -221,7 +223,7 @@ func newCreateInboundLoadTool(loads triageLoads) agenttoolports.AgentTool {
 			DefaultTier: agent.TierActWithApproval,
 			MaxTier:     agent.TierActWithApproval,
 			Idempotent:  true,
-			Artifact:    common.ShipmentRecordEntity,
+			Artifact:    changepreview.ShipmentRecordEntity,
 			Rationale: "A new load commits a customer's freight and the money that follows, " +
 				"so no desk books one unattended.",
 			Properties: map[string]any{
@@ -239,7 +241,7 @@ func newCreateInboundLoadTool(loads triageLoads) agenttoolports.AgentTool {
 						toolschema.KeyProperties: map[string]any{
 							paramLoadKey: agenttoolschema.Enum("Which field.",
 								triageLoadFieldKeys),
-							paramLoadValue: common.StringProperty(
+							paramLoadValue: toolparams.StringProperty(
 								"The value as the tender says it: a city with its state, a "+
 									"date with its window, a weight with its unit.",
 								maxLoadFieldValue,
@@ -255,7 +257,7 @@ func newCreateInboundLoadTool(loads triageLoads) agenttoolports.AgentTool {
 			Recipe:      []string{toolGetInboundMessage, "inbox_create_load"},
 			Target:      targetMessage,
 		},
-		common.ReceivablePlan[
+		toolspec.ReceivablePlan[
 			*triageworkservice.CreateLoadRequest,
 			*triageworkservice.CreateLoadPlan,
 		]{
@@ -298,7 +300,7 @@ func newCreateInboundLoadTool(loads triageLoads) agenttoolports.AgentTool {
 						paramShipmentID: idText(shipmentID),
 						paramMessageID:  message.ID.String(),
 					},
-					Record: common.RecordOf(common.ShipmentRecordEntity, shipmentID),
+					Record: changepreview.RecordOf(changepreview.ShipmentRecordEntity, shipmentID),
 				}, nil
 			},
 		},
@@ -315,7 +317,7 @@ func errLoadAlreadyCreated(message *inboundmessage.InboundMessage) error {
 func createLoadRequest(
 	params *agenttoolports.ToolExecuteParams,
 ) (*triageworkservice.CreateLoadRequest, error) {
-	messageID, err := common.RequirePulid(params.Params, paramMessageID)
+	messageID, err := toolparams.RequirePulid(params.Params, paramMessageID)
 	if err != nil {
 		return nil, err
 	}
@@ -324,7 +326,7 @@ func createLoadRequest(
 		Key   string `json:"key"`
 		Value string `json:"value"`
 	}
-	if err = common.DecodeParam(params.Params, paramLoadFields, &raw); err != nil {
+	if err = toolparams.DecodeParam(params.Params, paramLoadFields, &raw); err != nil {
 		return nil, err
 	}
 	if len(raw) == 0 {
@@ -335,7 +337,7 @@ func createLoadRequest(
 	for idx, field := range raw {
 		key := inboundmessage.LoadFieldKey(field.Key)
 		if !key.IsValid() {
-			return nil, common.ErrUnknownValue(
+			return nil, toolparams.ErrUnknownValue(
 				fmt.Sprintf("%s[%d].%s", paramLoadFields, idx, paramLoadKey),
 				field.Key,
 				triageLoadFieldKeys.Names(),
@@ -390,8 +392,8 @@ func newDiscardInboundLoadTool(
 	inbox inboundMessageReader,
 	loads triageLoads,
 ) agenttoolports.AgentTool {
-	return common.NewReportingReceivableTool(
-		&common.ReceivableSpec{
+	return toolspec.NewReportingReceivableTool(
+		&toolspec.ReceivableSpec{
 			Name:     "inbox_discard_load",
 			Artifact: inboundMessageEntity,
 			Description: "Throw away the load drafted from a tender in Triage, when the " +
@@ -416,7 +418,7 @@ func newDiscardInboundLoadTool(
 			Recipe:      []string{toolGetInboundMessage, "inbox_discard_load"},
 			Target:      targetMessage,
 		},
-		common.ReceivablePlan[*triageworkservice.LoadRequest, *triageworkservice.LoadDiscardPlan]{
+		toolspec.ReceivablePlan[*triageworkservice.LoadRequest, *triageworkservice.LoadDiscardPlan]{
 			Request: loadRequest,
 			Plan: func(
 				ctx context.Context,

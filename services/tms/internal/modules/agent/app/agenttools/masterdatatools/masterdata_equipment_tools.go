@@ -4,7 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -178,7 +180,7 @@ var tractorRecord = &masterRecord[tractor.Tractor]{
 	kind:     tractorRecordEntity,
 	resource: permission.ResourceTractor,
 	entity:   tractorRecordEntity,
-	idParam:  common.ParamTractorID,
+	idParam:  toolparams.ParamTractorID,
 	lister:   "equipment_list_tractors",
 	label:    func(entity *tractor.Tractor) string { return entity.Code },
 	id:       func(entity *tractor.Tractor) pulid.ID { return entity.ID },
@@ -268,10 +270,10 @@ func tractorFields() []masterField[tractor.Tractor] {
 		masterState(mdState, "The state it is registered in.", false,
 			func(t *tractor.Tractor) *pulid.ID { return &t.StateID }),
 		masterEnum(
-			common.ParamFuelType,
+			toolparams.ParamFuelType,
 			"The fuel it burns; its miles land on this fuel's lines of "+
 				"an IFTA return. Defaults to Diesel.",
-			common.FuelTypes,
+			toolparams.FuelTypes,
 			func(t *tractor.Tractor) *domaintypes.IFTAFuelType { return &t.FuelType },
 		),
 		masterBool("iftaQualified", "Whether its miles and fuel enter the IFTA return. "+
@@ -514,11 +516,11 @@ func locateRequestFrom(
 	unitKey string,
 ) func(*agenttoolports.ToolExecuteParams) (*locateRequest, error) {
 	return func(params *agenttoolports.ToolExecuteParams) (*locateRequest, error) {
-		unitID, err := common.RequirePulid(params.Params, unitKey)
+		unitID, err := toolparams.RequirePulid(params.Params, unitKey)
 		if err != nil {
 			return nil, err
 		}
-		locationID, err := common.RequirePulid(params.Params, paramNewLocationID)
+		locationID, err := toolparams.RequirePulid(params.Params, paramNewLocationID)
 		if err != nil {
 			return nil, err
 		}
@@ -542,13 +544,13 @@ func locateProperties(
 func NewLocateTractorTool(tractors TractorKeeper) agenttoolports.AgentTool {
 	build := func(req *locateRequest, params *agenttoolports.ToolExecuteParams) *tractorports.LocateTractorRequest {
 		return &tractorports.LocateTractorRequest{
-			TenantInfo:    common.TenantFrom(*params),
+			TenantInfo:    toolparams.TenantFrom(*params),
 			TractorID:     req.unitID,
 			NewLocationID: req.locationID,
 		}
 	}
 
-	return common.NewReportingReceivableTool(&common.ReceivableSpec{
+	return toolspec.NewReportingReceivableTool(&toolspec.ReceivableSpec{
 		Name: "equipment_set_tractor_location",
 		Description: "Record where a tractor actually is when it was moved outside a " +
 			"shipment, so dispatch plans from the right place. A tractor on a move in " +
@@ -563,19 +565,23 @@ func NewLocateTractorTool(tractors TractorKeeper) agenttoolports.AgentTool {
 		Rationale: "Moves where Trenova thinks a tractor is; nothing is sent and locating it " +
 			"again moves it back.",
 		Properties: locateProperties(
-			common.ParamTractorID,
+			toolparams.ParamTractorID,
 			tractorRecordEntity,
 			tractorRecord.lister,
 			permission.ResourceTractor,
 		),
-		Required:      []string{common.ParamTractorID, paramNewLocationID},
+		Required:      []string{toolparams.ParamTractorID, paramNewLocationID},
 		SearchTerms:   []string{"locate tractor", "relocate truck", "move tractor", "yard"},
 		Prerequisites: []string{tractorRecord.lister, locationRecord.lister},
 		Target: func(params map[string]any) (agenttoolports.ToolTarget, bool) {
-			return common.TargetOf(params, common.ParamTractorID, permission.ResourceTractor)
+			return toolparams.TargetOf(
+				params,
+				toolparams.ParamTractorID,
+				permission.ResourceTractor,
+			)
 		},
-	}, common.ReceivablePlan[*locateRequest, *tractorservice.LocatePlan]{
-		Request: locateRequestFrom(common.ParamTractorID),
+	}, toolspec.ReceivablePlan[*locateRequest, *tractorservice.LocatePlan]{
+		Request: locateRequestFrom(toolparams.ParamTractorID),
 		Plan: func(
 			ctx context.Context,
 			req *locateRequest,
@@ -609,8 +615,8 @@ func NewLocateTractorTool(tractors TractorKeeper) agenttoolports.AgentTool {
 			return &agent.ToolExecutionResult{
 				Action: "located",
 				Kind:   tractorRecordEntity,
-				IDs:    map[string]string{common.ParamTractorID: req.unitID.String()},
-				Record: common.RecordOf(tractorRecordEntity, req.unitID),
+				IDs:    map[string]string{toolparams.ParamTractorID: req.unitID.String()},
+				Record: changepreview.RecordOf(tractorRecordEntity, req.unitID),
 			}, nil
 		},
 	})
@@ -619,13 +625,13 @@ func NewLocateTractorTool(tractors TractorKeeper) agenttoolports.AgentTool {
 func NewLocateTrailerTool(trailers TrailerKeeper) agenttoolports.AgentTool {
 	build := func(req *locateRequest, params *agenttoolports.ToolExecuteParams) *trailerports.LocateTrailerRequest {
 		return &trailerports.LocateTrailerRequest{
-			TenantInfo:    common.TenantFrom(*params),
+			TenantInfo:    toolparams.TenantFrom(*params),
 			TrailerID:     req.unitID,
 			NewLocationID: req.locationID,
 		}
 	}
 
-	return common.NewReportingReceivableTool(&common.ReceivableSpec{
+	return toolspec.NewReportingReceivableTool(&toolspec.ReceivableSpec{
 		Name: "equipment_set_trailer_location",
 		Description: "Record where a trailer actually is when it was moved outside a " +
 			"shipment. It adds a completed empty move to the shipment that last used it and " +
@@ -645,9 +651,9 @@ func NewLocateTrailerTool(trailers TrailerKeeper) agenttoolports.AgentTool {
 		SearchTerms:   []string{"locate trailer", "trailer location", "move trailer", "drop yard"},
 		Prerequisites: []string{trailerRecord.lister, locationRecord.lister},
 		Target: func(params map[string]any) (agenttoolports.ToolTarget, bool) {
-			return common.TargetOf(params, paramTrailerID, permission.ResourceTrailer)
+			return toolparams.TargetOf(params, paramTrailerID, permission.ResourceTrailer)
 		},
-	}, common.ReceivablePlan[*locateRequest, *trailerservice.LocatePlan]{
+	}, toolspec.ReceivablePlan[*locateRequest, *trailerservice.LocatePlan]{
 		Request: locateRequestFrom(paramTrailerID),
 		Plan: func(
 			ctx context.Context,
@@ -671,7 +677,7 @@ func NewLocateTrailerTool(trailers TrailerKeeper) agenttoolports.AgentTool {
 				Action: "located",
 				Kind:   trailerRecordEntity,
 				IDs:    map[string]string{paramTrailerID: req.unitID.String()},
-				Record: common.RecordOf(trailerRecordEntity, req.unitID),
+				Record: changepreview.RecordOf(trailerRecordEntity, req.unitID),
 			}, nil
 		},
 	})
@@ -694,7 +700,7 @@ func renderTrailerLocate(
 		Resource: permission.ResourceShipment,
 		ID:       plan.Previous.ID,
 		Label:    plan.Previous.ProNumber,
-		Version:  common.PinnedVersion(plan.Previous.Version),
+		Version:  changepreview.PinnedVersion(plan.Previous.Version),
 	}, toolpreview.MoneyBlock(money.DefaultCurrencyCode, agent.MoneyLine{
 		Label:  "Total charge",
 		Before: plan.Previous.TotalChargeAmount,

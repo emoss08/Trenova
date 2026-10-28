@@ -470,14 +470,19 @@ its backup on exit.
 The action tools live in one package per family under
 `internal/modules/agent/app/agenttools/<family>tools` (`invoicetools`, `workforcetools`,
 `masterdatatools`, ...), named with a `tools` suffix so they never collide with the domain
-package of the same name. Code that several families use is in `agenttools/common`; test
+package of the same name. Code that several families use is in a small package named for what
+it provides: `toolparams` (parameter keys, schema properties and parsing), `toolguard` (the
+preview and execute guards), `toolspec` (the spec-built tool), `changepreview` (preview
+fields, labels and planned changes), `recordbatch` (bulk tools over single-record tools), and a
+preview package per domain (`shipmentpreview`, `invoicepreview`, `settlementpreview`, ...); test
 helpers that several families' tests share are in `agenttools/agenttoolstest`, a test-only
 package. `agenttoolservice` keeps the public API: `Module`, `ToolProviders()` and the registry,
 which collects every tool from the `agent_tools` fx value group. `ToolProviders()` lists the
 providers in their original order, because the order of the group is the order of the
 catalog the model is shown.
 
-A family package may import `common` and other families as long as the graph stays acyclic;
+A family package may import those shared packages and other families as long as the graph
+stays acyclic;
 nothing imports `agenttoolservice` except its callers outside the tools. A test file lives in
 the package it tests unless a package it imports depends on that package, in which case it
 lives in `agenttoolservice`. Fields that had to be exported across packages carry

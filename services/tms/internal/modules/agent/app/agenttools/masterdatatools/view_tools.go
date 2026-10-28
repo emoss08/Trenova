@@ -4,7 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/tablequeryservice"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -122,13 +123,13 @@ func (t *SaveTableViewTool) Validate(
 func (t *SaveTableViewTool) validateArgs(params map[string]any) error {
 	multiErr := errortypes.NewMultiError()
 
-	if common.OptionalString(params, "name") == "" {
+	if toolparams.OptionalString(params, "name") == "" {
 		multiErr.Add("name", errortypes.ErrRequired, "Give the view a name")
 	}
-	if common.OptionalString(params, "description") == "" {
+	if toolparams.OptionalString(params, "description") == "" {
 		multiErr.Add("description", errortypes.ErrRequired, "Say what the view should show")
 	}
-	entity := common.OptionalString(params, "entity")
+	entity := toolparams.OptionalString(params, "entity")
 	if _, ok := t.catalog.ByEntity(entity); entity != "" && !ok {
 		multiErr.Add("entity", errortypes.ErrInvalid,
 			fmt.Sprintf("%q is not a table a view can be saved for", entity))
@@ -145,7 +146,7 @@ func (t *SaveTableViewTool) Execute(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams,
 ) error {
-	if err := common.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
 	}
 
@@ -155,7 +156,7 @@ func (t *SaveTableViewTool) Execute(
 	}
 
 	composed, err := t.composer.Compose(ctx, &tablequeryservice.ComposeRequest{
-		TenantInfo: common.TenantFrom(params),
+		TenantInfo: toolparams.TenantFrom(params),
 		Actor:      params.Actor,
 		Resource:   draft.resource.Resource,
 		Prompt:     draft.prompt,
@@ -189,21 +190,21 @@ type tableViewDraft struct {
 func (t *SaveTableViewTool) Draft(
 	params *agenttoolports.ToolExecuteParams,
 ) (*tableViewDraft, error) {
-	entity := common.OptionalString(params.Params, "entity")
+	entity := toolparams.OptionalString(params.Params, "entity")
 	resource, ok := t.catalog.ByEntity(entity)
 	if !ok {
 		return nil, fmt.Errorf("%q is not a table a view can be saved for", entity)
 	}
 
 	visibility := tableconfiguration.VisibilityPrivate
-	if common.OptionalBool(params.Params, "shared") {
+	if toolparams.OptionalBool(params.Params, "shared") {
 		visibility = tableconfiguration.VisibilityPublic
 	}
 
 	return &tableViewDraft{
 		resource:   resource,
-		name:       common.OptionalString(params.Params, "name"),
-		prompt:     common.OptionalString(params.Params, "description"),
+		name:       toolparams.OptionalString(params.Params, "name"),
+		prompt:     toolparams.OptionalString(params.Params, "description"),
 		visibility: visibility,
 	}, nil
 }

@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -384,8 +384,8 @@ func TestAmendIFTAReturn_IsOnlyEverProposedWithAReason(t *testing.T) {
 	}
 	tool := NewAmendIFTAReturnTool(returns)
 	params := agenttoolstest.ExecuteParams(map[string]any{
-		paramIFTAReturnID:  returns.stored.ID.String(),
-		common.ParamReason: "Texas purchases from the September statement were left out",
+		paramIFTAReturnID:      returns.stored.ID.String(),
+		toolparams.ParamReason: "Texas purchases from the September statement were left out",
 	})
 
 	preview := agenttoolstest.PreviewWithoutWrites(
@@ -433,11 +433,11 @@ func TestIFTAMileageTools_RecordCorrectAndProposeDeletingMiles(t *testing.T) {
 
 	record := NewRecordIFTAMileageEntryTool(entries)
 	params := agenttoolstest.ExecuteParams(map[string]any{
-		common.ParamTractorID: pulid.MustNew("trac_").String(),
-		paramJurisdictionID:   texasID.String(),
-		paramTraveledAt:       "2026-08-03T10:00:00Z",
-		paramMiles:            "212.5",
-		common.ParamNote:      "Trip sheet 4411",
+		toolparams.ParamTractorID: pulid.MustNew("trac_").String(),
+		paramJurisdictionID:       texasID.String(),
+		paramTraveledAt:           "2026-08-03T10:00:00Z",
+		paramMiles:                "212.5",
+		toolparams.ParamNote:      "Trip sheet 4411",
 	})
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
@@ -503,7 +503,7 @@ func TestRecalculateMoveJurisdictionMiles_AsksAgainOnlyOnExecute(t *testing.T) {
 	tool := NewRecalculateMoveJurisdictionMilesTool(router)
 	moveID := pulid.MustNew("smv_")
 	params := agenttoolstest.ExecuteParams(
-		map[string]any{common.ParamShipmentMoveID: moveID.String()},
+		map[string]any{toolparams.ParamShipmentMoveID: moveID.String()},
 	)
 
 	preview := agenttoolstest.PreviewWithoutWrites(

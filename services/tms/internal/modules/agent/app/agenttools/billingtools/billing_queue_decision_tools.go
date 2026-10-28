@@ -5,7 +5,10 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/billingqueuepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -55,7 +58,7 @@ type queueDecision struct {
 
 type BillingQueueDecisionTool struct {
 	decision queueDecision
-	billing  common.BillingQueueDecider
+	billing  billingqueuepreview.BillingQueueDecider
 }
 
 func (t *BillingQueueDecisionTool) Name() string { return t.decision.name }
@@ -66,7 +69,7 @@ func (t *BillingQueueDecisionTool) SearchTerms() []string { return t.decision.se
 
 func (t *BillingQueueDecisionTool) ParamSchema() map[string]any {
 	properties := map[string]any{
-		common.ParamBillingQueueItemID: agenttoolschema.OfKinds(map[string]any{
+		billingqueuepreview.ParamBillingQueueItemID: agenttoolschema.OfKinds(map[string]any{
 			toolschema.KeyType: toolschema.TypeString,
 			toolschema.KeyDescription: "The billing queue item, from billing_list_queue_items, " +
 				"billing_get_queue_item or this run's subject. Never guess one.",
@@ -80,7 +83,7 @@ func (t *BillingQueueDecisionTool) ParamSchema() map[string]any {
 		toolschema.KeyType:       toolschema.TypeObject,
 		toolschema.KeyProperties: properties,
 		toolschema.KeyRequired: append(
-			[]string{common.ParamBillingQueueItemID},
+			[]string{billingqueuepreview.ParamBillingQueueItemID},
 			t.decision.required...),
 		toolschema.KeyAdditionalProperties: false,
 	}
@@ -113,17 +116,24 @@ func (t *BillingQueueDecisionTool) Policy() agenttoolports.ToolPolicy {
 }
 
 func (t *BillingQueueDecisionTool) Target(params map[string]any) (agenttoolports.ToolTarget, bool) {
-	return common.TargetOf(params, common.ParamBillingQueueItemID, permission.ResourceBillingQueue)
+	return toolparams.TargetOf(
+		params,
+		billingqueuepreview.ParamBillingQueueItemID,
+		permission.ResourceBillingQueue,
+	)
 }
 
 func (t *BillingQueueDecisionTool) request(
 	params *agenttoolports.ToolExecuteParams,
 ) (*billingqueueports.UpdateBillingQueueStatusRequest, error) {
-	if err := common.GuardPreview(t, params); err != nil {
+	if err := toolguard.GuardPreview(t, params); err != nil {
 		return nil, err
 	}
 
-	itemID, err := common.RequirePulid(params.Params, common.ParamBillingQueueItemID)
+	itemID, err := toolparams.RequirePulid(
+		params.Params,
+		billingqueuepreview.ParamBillingQueueItemID,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -131,7 +141,7 @@ func (t *BillingQueueDecisionTool) request(
 	req := &billingqueueports.UpdateBillingQueueStatusRequest{
 		ItemID:     itemID,
 		NewStatus:  t.decision.status,
-		TenantInfo: common.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(*params),
 	}
 	if t.decision.fill != nil {
 		if err = t.decision.fill(params.Params, req); err != nil {
@@ -175,7 +185,7 @@ func (t *BillingQueueDecisionTool) requiredFields(item *billingqueue.BillingQueu
 	for _, entry := range multiErr.Errors {
 		// The approver who cancels is who the item records; a proposal is
 		// checked before anyone has.
-		if t.decision.personOnly && entry.Field == common.FieldCanceledByID {
+		if t.decision.personOnly && entry.Field == changepreview.FieldCanceledByID {
 			continue
 		}
 		kept.Add(entry.Field, entry.Code, entry.Message, entry.Args...)
@@ -230,7 +240,7 @@ func approvalBlock(item *billingqueue.BillingQueueItem, status billingqueue.Stat
 			"detentionHolds",
 			errortypes.ErrInvalidOperation,
 			"{0} on this item's shipment still waits on approval; approve or waive it first",
-			common.CountOf(len(item.DetentionHolds), "detention charge"),
+			changepreview.CountOf(len(item.DetentionHolds), "detention charge"),
 		)
 	}
 	if hold := item.RatingReviewHold; hold != nil {
@@ -247,7 +257,7 @@ func approvalBlock(item *billingqueue.BillingQueueItem, status billingqueue.Stat
 			errortypes.ErrInvalidOperation,
 			"{0} on this item still need settling before it can be approved: {1}. "+
 				"A biller settles each in the item's review",
-			common.CountOf(len(open), "flagged check"),
+			changepreview.CountOf(len(open), "flagged check"),
 			issueSummaries(open),
 		)
 	}
@@ -268,11 +278,11 @@ func (t *BillingQueueDecisionTool) Execute(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
-	if err := common.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
 	}
 	if t.decision.personOnly && !params.ApprovedFromProposal() {
-		return common.ErrDecisionNeedsAPerson
+		return billingqueuepreview.ErrDecisionNeedsAPerson
 	}
 
 	req, err := t.request(&params)
@@ -308,7 +318,7 @@ func reasonCodeProperty(description string) map[string]any {
 func notesProperty(description string) map[string]any {
 	return map[string]any{
 		toolschema.KeyType:        toolschema.TypeString,
-		toolschema.KeyMaxLength:   common.MaxDecisionNoteChars,
+		toolschema.KeyMaxLength:   billingqueuepreview.MaxDecisionNoteChars,
 		toolschema.KeyDescription: description,
 	}
 }
@@ -319,7 +329,7 @@ func fillException(
 	params map[string]any,
 	req *billingqueueports.UpdateBillingQueueStatusRequest,
 ) error {
-	raw, err := common.RequireString(params, paramExceptionReasonCode)
+	raw, err := toolparams.RequireString(params, paramExceptionReasonCode)
 	if err != nil {
 		return err
 	}
@@ -333,13 +343,13 @@ func fillException(
 		)
 	}
 	req.ExceptionReasonCode = &code
-	req.ExceptionNotes = strings.TrimSpace(common.OptionalString(params, common.ParamNote))
+	req.ExceptionNotes = strings.TrimSpace(toolparams.OptionalString(params, toolparams.ParamNote))
 
 	return nil
 }
 
 func fillHold(params map[string]any, req *billingqueueports.UpdateBillingQueueStatusRequest) error {
-	notes, err := common.RequireString(params, common.ParamNote)
+	notes, err := toolparams.RequireString(params, toolparams.ParamNote)
 	if err != nil {
 		return err
 	}
@@ -352,7 +362,9 @@ func fillApproval(
 	params map[string]any,
 	req *billingqueueports.UpdateBillingQueueStatusRequest,
 ) error {
-	req.ReviewNotes = strings.TrimSpace(common.OptionalString(params, common.ParamReviewNotes))
+	req.ReviewNotes = strings.TrimSpace(
+		toolparams.OptionalString(params, billingqueuepreview.ParamReviewNotes),
+	)
 
 	return nil
 }
@@ -361,7 +373,7 @@ func fillCancel(
 	params map[string]any,
 	req *billingqueueports.UpdateBillingQueueStatusRequest,
 ) error {
-	reason, err := common.RequireString(params, common.ParamReason)
+	reason, err := toolparams.RequireString(params, toolparams.ParamReason)
 	if err != nil {
 		return err
 	}
@@ -378,7 +390,9 @@ func fillCancel(
 	return nil
 }
 
-func NewSendBackToOpsTool(billing common.BillingQueueDecider) agenttoolports.AgentTool {
+func NewSendBackToOpsTool(
+	billing billingqueuepreview.BillingQueueDecider,
+) agenttoolports.AgentTool {
 	return &BillingQueueDecisionTool{billing: billing, decision: queueDecision{
 		name: "billing_return_to_operations",
 		description: "Send a billing queue item in review back to operations to fix, with a " +
@@ -395,7 +409,7 @@ func NewSendBackToOpsTool(billing common.BillingQueueDecider) agenttoolports.Age
 			"it creates no money and the item comes back when operations fixes it.",
 		properties: map[string]any{
 			paramExceptionReasonCode: reasonCodeProperty("Why it goes back."),
-			common.ParamNote: notesProperty("What operations has to fix, in a sentence " +
+			toolparams.ParamNote: notesProperty("What operations has to fix, in a sentence " +
 				"they can act on. Required when the reason is Other."),
 		},
 		required: []string{paramExceptionReasonCode},
@@ -403,7 +417,9 @@ func NewSendBackToOpsTool(billing common.BillingQueueDecider) agenttoolports.Age
 	}}
 }
 
-func NewMoveToExceptionTool(billing common.BillingQueueDecider) agenttoolports.AgentTool {
+func NewMoveToExceptionTool(
+	billing billingqueuepreview.BillingQueueDecider,
+) agenttoolports.AgentTool {
 	return &BillingQueueDecisionTool{billing: billing, decision: queueDecision{
 		name: "billing_raise_exception",
 		description: "Move a billing queue item in review into exception for a biller to " +
@@ -419,15 +435,17 @@ func NewMoveToExceptionTool(billing common.BillingQueueDecider) agenttoolports.A
 			"and a biller moves it back when it is resolved.",
 		properties: map[string]any{
 			paramExceptionReasonCode: reasonCodeProperty("What is wrong with the bill."),
-			common.ParamNote: notesProperty("What is wrong and what would clear it, with " +
+			toolparams.ParamNote: notesProperty("What is wrong and what would clear it, with " +
 				"the figures you checked."),
 		},
-		required: []string{paramExceptionReasonCode, common.ParamNote},
+		required: []string{paramExceptionReasonCode, toolparams.ParamNote},
 		fill:     fillException,
 	}}
 }
 
-func NewHoldBillingQueueItemTool(billing common.BillingQueueDecider) agenttoolports.AgentTool {
+func NewHoldBillingQueueItemTool(
+	billing billingqueuepreview.BillingQueueDecider,
+) agenttoolports.AgentTool {
 	return &BillingQueueDecisionTool{billing: billing, decision: queueDecision{
 		name:        "billing_hold_queue_item",
 		searchTerms: []string{"park item", "park until"},
@@ -443,15 +461,17 @@ func NewHoldBillingQueueItemTool(billing common.BillingQueueDecider) agenttoolpo
 		rationale: "Parks an item inside Trenova with a note; it creates no money and is " +
 			"undone by moving the item on.",
 		properties: map[string]any{
-			common.ParamNote: notesProperty("What the item waits on, so whoever takes it " +
+			toolparams.ParamNote: notesProperty("What the item waits on, so whoever takes it " +
 				"off hold knows when."),
 		},
-		required: []string{common.ParamNote},
+		required: []string{toolparams.ParamNote},
 		fill:     fillHold,
 	}}
 }
 
-func NewCancelBillingQueueItemTool(billing common.BillingQueueDecider) agenttoolports.AgentTool {
+func NewCancelBillingQueueItemTool(
+	billing billingqueuepreview.BillingQueueDecider,
+) agenttoolports.AgentTool {
 	return &BillingQueueDecisionTool{billing: billing, decision: queueDecision{
 		name: "billing_cancel_queue_item",
 		description: "Propose canceling a billing queue item that should never be billed, " +
@@ -466,13 +486,13 @@ func NewCancelBillingQueueItemTool(billing common.BillingQueueDecider) agenttool
 		rationale: "Drops a charge from billing for good, so only a person decides; the " +
 			"agent proposes it.",
 		properties: map[string]any{
-			common.ParamReason: map[string]any{
+			toolparams.ParamReason: map[string]any{
 				toolschema.KeyType:        toolschema.TypeString,
 				toolschema.KeyMaxLength:   maxCancelReasonChars,
 				toolschema.KeyDescription: "Why it must not bill, in a short phrase.",
 			},
 		},
-		required: []string{common.ParamReason},
+		required: []string{toolparams.ParamReason},
 		fill:     fillCancel,
 	}}
 }
@@ -480,10 +500,10 @@ func NewCancelBillingQueueItemTool(billing common.BillingQueueDecider) agenttool
 // assignBillerTool names the biller who reviews an item. An item waiting for
 // review moves into review with them, as the queue's own assignment does.
 type AssignBillerTool struct {
-	billing common.BillingQueueDecider
+	billing billingqueuepreview.BillingQueueDecider
 }
 
-func NewAssignBillerTool(billing common.BillingQueueDecider) agenttoolports.AgentTool {
+func NewAssignBillerTool(billing billingqueuepreview.BillingQueueDecider) agenttoolports.AgentTool {
 	return &AssignBillerTool{billing: billing}
 }
 
@@ -506,14 +526,14 @@ func (t *AssignBillerTool) ParamSchema() map[string]any {
 	return map[string]any{
 		toolschema.KeyType: toolschema.TypeObject,
 		toolschema.KeyProperties: map[string]any{
-			common.ParamBillingQueueItemID: agenttoolschema.OfKinds(map[string]any{
+			billingqueuepreview.ParamBillingQueueItemID: agenttoolschema.OfKinds(map[string]any{
 				toolschema.KeyType: toolschema.TypeString,
 				toolschema.KeyDescription: "The billing queue item, from " +
 					"billing_list_queue_items or billing_get_queue_item.",
 			}, permission.KindBillingQueueItem),
 			paramBillerID: billerProperty(),
 		},
-		toolschema.KeyRequired:             []string{common.ParamBillingQueueItemID},
+		toolschema.KeyRequired:             []string{billingqueuepreview.ParamBillingQueueItemID},
 		toolschema.KeyAdditionalProperties: false,
 	}
 }
@@ -535,17 +555,17 @@ func billerProperty() map[string]any {
 // failed only once a person had approved it.
 func billerOf(
 	ctx context.Context,
-	billing common.BillingQueueDecider,
+	billing billingqueuepreview.BillingQueueDecider,
 	params *agenttoolports.ToolExecuteParams,
 ) (biller pulid.ID, asker bool, err error) {
-	named, ok, err := common.OptionalPulid(params.Params, paramBillerID)
+	named, ok, err := toolparams.OptionalPulid(params.Params, paramBillerID)
 	if err != nil {
 		return pulid.Nil, false, errortypes.NewValidationError(
 			paramBillerID, errortypes.ErrInvalid, "billerId is not a valid user id",
 		)
 	}
 	if ok {
-		if err = billing.CheckBiller(ctx, common.TenantFrom(*params), named); err != nil {
+		if err = billing.CheckBiller(ctx, toolparams.TenantFrom(*params), named); err != nil {
 			if errortypes.IsError(err) {
 				return pulid.Nil, false, errortypes.NewValidationError(paramBillerID,
 					errortypes.ErrInvalid, "billerId is not a user in this organization. "+
@@ -596,18 +616,25 @@ func (t *AssignBillerTool) Policy() agenttoolports.ToolPolicy {
 }
 
 func (t *AssignBillerTool) Target(params map[string]any) (agenttoolports.ToolTarget, bool) {
-	return common.TargetOf(params, common.ParamBillingQueueItemID, permission.ResourceBillingQueue)
+	return toolparams.TargetOf(
+		params,
+		billingqueuepreview.ParamBillingQueueItemID,
+		permission.ResourceBillingQueue,
+	)
 }
 
 func (t *AssignBillerTool) request(
 	ctx context.Context,
 	params *agenttoolports.ToolExecuteParams,
 ) (req *billingqueueports.AssignBillerRequest, asker bool, err error) {
-	if err = common.GuardPreview(t, params); err != nil {
+	if err = toolguard.GuardPreview(t, params); err != nil {
 		return nil, false, err
 	}
 
-	itemID, err := common.RequirePulid(params.Params, common.ParamBillingQueueItemID)
+	itemID, err := toolparams.RequirePulid(
+		params.Params,
+		billingqueuepreview.ParamBillingQueueItemID,
+	)
 	if err != nil {
 		return nil, false, err
 	}
@@ -619,7 +646,7 @@ func (t *AssignBillerTool) request(
 	return &billingqueueports.AssignBillerRequest{
 		ItemID:     itemID,
 		BillerID:   billerID,
-		TenantInfo: common.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(*params),
 	}, asker, nil
 }
 
@@ -654,7 +681,7 @@ func (t *AssignBillerTool) Execute(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
-	if err := common.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
 	}
 

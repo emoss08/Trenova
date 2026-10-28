@@ -4,7 +4,10 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/settlementpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -88,7 +91,7 @@ func escrowRecord(account *driverpay.EscrowAccount) toolpreview.Record {
 		Resource: permission.ResourceEscrowAccount,
 		ID:       account.ID,
 		Label:    label,
-		Version:  common.PinnedVersion(account.Version),
+		Version:  changepreview.PinnedVersion(account.Version),
 	}
 }
 
@@ -100,12 +103,12 @@ func escrowAccountProperty() map[string]any {
 }
 
 func interestRateProperty() map[string]any {
-	return common.AmountProperty("The annual interest rate paid on the balance, as a percent " +
+	return toolparams.AmountProperty("The annual interest rate paid on the balance, as a percent " +
 		"such as 2.5.")
 }
 
 func readInterestRate(params map[string]any) (decimal.Decimal, bool, error) {
-	rate, ok, err := common.OptionalDecimal(params, paramEscrowInterestRate)
+	rate, ok, err := toolparams.OptionalDecimal(params, paramEscrowInterestRate)
 	if err != nil || !ok {
 		return rate, ok, err
 	}
@@ -121,22 +124,22 @@ func loadEscrow(
 	book escrowBook,
 	params *agenttoolports.ToolExecuteParams,
 ) (*driverpay.EscrowAccount, error) {
-	accountID, err := common.RequirePulid(params.Params, paramEscrowAccountID)
+	accountID, err := toolparams.RequirePulid(params.Params, paramEscrowAccountID)
 	if err != nil {
 		return nil, err
 	}
 
 	return book.GetEscrowAccount(ctx, driverpayports.GetEscrowAccountByIDRequest{
 		ID:         accountID,
-		TenantInfo: common.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(*params),
 	})
 }
 
 func escrowBalanceMoney(before, after *driverpay.EscrowAccount) *agent.MoneyPreview {
 	return toolpreview.MoneyBlock(after.CurrencyCode, agent.MoneyLine{
 		Label:  "Balance",
-		Before: common.MinorAmount(before.BalanceMinor),
-		After:  common.MinorAmount(after.BalanceMinor),
+		Before: changepreview.MinorAmount(before.BalanceMinor),
+		After:  changepreview.MinorAmount(after.BalanceMinor),
 	})
 }
 
@@ -158,17 +161,19 @@ func (t *OpenEscrowAccountTool) Description() string {
 }
 
 func (t *OpenEscrowAccountTool) ParamSchema() map[string]any {
-	return common.ObjectParams(map[string]any{
-		common.ParamWorkerID: common.WorkerProperty(),
-		paramEscrowTarget: common.AmountProperty("The balance the lease requires, as a decimal " +
-			"such as 2500.00."),
+	return toolparams.ObjectParams(map[string]any{
+		toolparams.ParamWorkerID: toolparams.WorkerProperty(),
+		paramEscrowTarget: toolparams.AmountProperty(
+			"The balance the lease requires, as a decimal " +
+				"such as 2500.00.",
+		),
 		paramEscrowInterestRate: interestRateProperty(),
 		paramEscrowOpenedDate:   agenttoolschema.Date("The day it opens; leave it out for today."),
-	}, common.ParamWorkerID, paramEscrowTarget)
+	}, toolparams.ParamWorkerID, paramEscrowTarget)
 }
 
 func (t *OpenEscrowAccountTool) Policy() agenttoolports.ToolPolicy {
-	return (&common.PersonOnlyPolicy{
+	return (&settlementpreview.PersonOnlyPolicy{
 		Name:      t.Name(),
 		Resource:  permission.ResourceEscrowAccount,
 		Operation: permission.OpCreate,
@@ -180,14 +185,14 @@ func (t *OpenEscrowAccountTool) Policy() agenttoolports.ToolPolicy {
 func (t *OpenEscrowAccountTool) entity(
 	params *agenttoolports.ToolExecuteParams,
 ) (*driverpay.EscrowAccount, error) {
-	if err := common.GuardPreview(t, params); err != nil {
+	if err := toolguard.GuardPreview(t, params); err != nil {
 		return nil, err
 	}
-	workerID, err := common.RequirePulid(params.Params, common.ParamWorkerID)
+	workerID, err := toolparams.RequirePulid(params.Params, toolparams.ParamWorkerID)
 	if err != nil {
 		return nil, err
 	}
-	target, err := common.RequireMoney(params.Params, paramEscrowTarget)
+	target, err := toolparams.RequireMoney(params.Params, paramEscrowTarget)
 	if err != nil {
 		return nil, err
 	}
@@ -195,7 +200,7 @@ func (t *OpenEscrowAccountTool) entity(
 	if err != nil {
 		return nil, err
 	}
-	opened, _, err := common.OptionalDay(params.Params, paramEscrowOpenedDate)
+	opened, _, err := toolparams.OptionalDay(params.Params, paramEscrowOpenedDate)
 	if err != nil {
 		return nil, err
 	}
@@ -225,7 +230,7 @@ func (t *OpenEscrowAccountTool) planned(
 		return nil, err
 	}
 
-	refusal, failure := common.RefusalOrFailure(
+	refusal, failure := changepreview.RefusalOrFailure(
 		t.escrow.PlanOpenEscrowAccount(ctx, entity, timeutils.NowUnix()),
 	)
 	if failure != nil {
@@ -251,10 +256,10 @@ func (t *OpenEscrowAccountTool) Execute(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
-	if err := common.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
 	}
-	if err := common.RequirePersonsApproval(&params); err != nil {
+	if err := settlementpreview.RequirePersonsApproval(&params); err != nil {
 		return err
 	}
 	entity, err := t.entity(&params)
@@ -282,25 +287,29 @@ func (t *OpenEscrowAccountTool) Preview(
 		entity.AnnualInterestRate.String(),
 	)
 	if refusal != nil {
-		return common.WouldFail(toolpreview.Build(summary), refusal)
+		return changepreview.WouldFail(toolpreview.Build(summary), refusal)
 	}
 
 	change, err := toolpreview.Create(
 		toolpreview.Record{Resource: permission.ResourceEscrowAccount, Label: "New escrow account"},
 		entity,
-		toolpreview.Only(common.ParamWorkerID, common.FieldStatus, paramEscrowOpenedDate,
+		toolpreview.Only(toolparams.ParamWorkerID, changepreview.FieldStatus, paramEscrowOpenedDate,
 			fieldAnnualInterestRate),
 		toolpreview.Volatile(paramEscrowOpenedDate),
 		toolpreview.WithRefs(map[string]permission.Resource{
-			common.ParamWorkerID: permission.ResourceWorker,
+			toolparams.ParamWorkerID: permission.ResourceWorker,
 		}),
-		toolpreview.Types(common.DriverPayDateTypes),
+		toolpreview.Types(settlementpreview.DriverPayDateTypes),
 	)
 	if err != nil {
 		return nil, err
 	}
-	toolpreview.AttachMoney(change, toolpreview.MoneyBlock(entity.CurrencyCode,
-		agent.MoneyLine{Label: "Target", After: common.MinorAmount(entity.TargetAmountMinor)},
+	toolpreview.AttachMoney(change, toolpreview.MoneyBlock(
+		entity.CurrencyCode,
+		agent.MoneyLine{
+			Label: "Target",
+			After: changepreview.MinorAmount(entity.TargetAmountMinor),
+		},
 	), toolpreview.SensitiveAs(escrowTargetMark))
 
 	return toolpreview.Build(summary+" Its balance starts at zero.", change), nil
@@ -327,15 +336,15 @@ func (t *UpdateEscrowAccountTool) SearchTerms() []string {
 }
 
 func (t *UpdateEscrowAccountTool) ParamSchema() map[string]any {
-	return common.ObjectParams(map[string]any{
+	return toolparams.ObjectParams(map[string]any{
 		paramEscrowAccountID:    escrowAccountProperty(),
-		paramEscrowTarget:       common.AmountProperty("The new target balance, as a decimal."),
+		paramEscrowTarget:       toolparams.AmountProperty("The new target balance, as a decimal."),
 		paramEscrowInterestRate: interestRateProperty(),
 	}, paramEscrowAccountID)
 }
 
 func (t *UpdateEscrowAccountTool) Policy() agenttoolports.ToolPolicy {
-	return (&common.PersonOnlyPolicy{
+	return (&settlementpreview.PersonOnlyPolicy{
 		Name:      t.Name(),
 		Resource:  permission.ResourceEscrowAccount,
 		Operation: permission.OpUpdate,
@@ -345,7 +354,7 @@ func (t *UpdateEscrowAccountTool) Policy() agenttoolports.ToolPolicy {
 }
 
 func (t *UpdateEscrowAccountTool) Target(params map[string]any) (agenttoolports.ToolTarget, bool) {
-	return common.TargetOf(params, paramEscrowAccountID, permission.ResourceEscrowAccount)
+	return toolparams.TargetOf(params, paramEscrowAccountID, permission.ResourceEscrowAccount)
 }
 
 type escrowUpdate struct {
@@ -358,10 +367,10 @@ func (t *UpdateEscrowAccountTool) planned(
 	ctx context.Context,
 	params *agenttoolports.ToolExecuteParams,
 ) (*escrowUpdate, error) {
-	if err := common.GuardPreview(t, params); err != nil {
+	if err := toolguard.GuardPreview(t, params); err != nil {
 		return nil, err
 	}
-	target, hasTarget, err := common.OptionalMoney(params.Params, paramEscrowTarget)
+	target, hasTarget, err := toolparams.OptionalMoney(params.Params, paramEscrowTarget)
 	if err != nil {
 		return nil, err
 	}
@@ -370,7 +379,7 @@ func (t *UpdateEscrowAccountTool) planned(
 		return nil, err
 	}
 	if !hasTarget && !hasRate {
-		return nil, common.ErrNothingToChange
+		return nil, toolparams.ErrNothingToChange
 	}
 	before, err := loadEscrow(ctx, t.escrow, params)
 	if err != nil {
@@ -386,7 +395,7 @@ func (t *UpdateEscrowAccountTool) planned(
 		after.AnnualInterestRate = rate
 	}
 	_, planErr := t.escrow.PlanUpdateEscrowAccount(ctx, &after)
-	refusal, failure := common.RefusalOrFailure(planErr)
+	refusal, failure := changepreview.RefusalOrFailure(planErr)
 	if failure != nil {
 		return nil, failure
 	}
@@ -410,10 +419,10 @@ func (t *UpdateEscrowAccountTool) Execute(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
-	if err := common.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
 	}
-	if err := common.RequirePersonsApproval(&params); err != nil {
+	if err := settlementpreview.RequirePersonsApproval(&params); err != nil {
 		return err
 	}
 	plan, err := t.planned(ctx, &params)
@@ -439,7 +448,7 @@ func (t *UpdateEscrowAccountTool) Preview(
 
 	summary := "Would change the terms of " + escrowRecord(plan.before).Label + "."
 	if plan.refusal != nil {
-		return common.WouldFail(toolpreview.Build(summary), plan.refusal)
+		return changepreview.WouldFail(toolpreview.Build(summary), plan.refusal)
 	}
 	change, err := toolpreview.Changed(escrowRecord(plan.before), plan.before, plan.after,
 		toolpreview.Only(fieldAnnualInterestRate))
@@ -449,8 +458,8 @@ func (t *UpdateEscrowAccountTool) Preview(
 	toolpreview.AttachMoney(change, toolpreview.MoneyBlock(plan.after.CurrencyCode,
 		agent.MoneyLine{
 			Label:  "Target",
-			Before: common.MinorAmount(plan.before.TargetAmountMinor),
-			After:  common.MinorAmount(plan.after.TargetAmountMinor),
+			Before: changepreview.MinorAmount(plan.before.TargetAmountMinor),
+			After:  changepreview.MinorAmount(plan.after.TargetAmountMinor),
 		},
 	), toolpreview.SensitiveAs(escrowTargetMark))
 
@@ -479,13 +488,13 @@ func (t *AdjustEscrowAccountTool) SearchTerms() []string {
 }
 
 func (t *AdjustEscrowAccountTool) ParamSchema() map[string]any {
-	return common.ObjectParams(map[string]any{
+	return toolparams.ObjectParams(map[string]any{
 		paramEscrowAccountID: escrowAccountProperty(),
-		common.ParamDriverPayAmount: common.AmountProperty(
+		settlementpreview.ParamDriverPayAmount: toolparams.AmountProperty(
 			"The amount as a decimal; negative to draw " +
 				"from the balance. Never zero.",
 		),
-		paramEscrowDescription: common.StringProperty(
+		paramEscrowDescription: toolparams.StringProperty(
 			"What the adjustment is for, as it will read "+
 				"on the escrow ledger.",
 			maxEscrowDescription,
@@ -493,11 +502,11 @@ func (t *AdjustEscrowAccountTool) ParamSchema() map[string]any {
 		paramEscrowOccurredDate: agenttoolschema.Date(
 			"The day it happened; leave it out for today.",
 		),
-	}, paramEscrowAccountID, common.ParamDriverPayAmount, paramEscrowDescription)
+	}, paramEscrowAccountID, settlementpreview.ParamDriverPayAmount, paramEscrowDescription)
 }
 
 func (t *AdjustEscrowAccountTool) Policy() agenttoolports.ToolPolicy {
-	return (&common.PersonOnlyPolicy{
+	return (&settlementpreview.PersonOnlyPolicy{
 		Name:      t.Name(),
 		Resource:  permission.ResourceEscrowAccount,
 		Operation: permission.OpUpdate,
@@ -506,24 +515,27 @@ func (t *AdjustEscrowAccountTool) Policy() agenttoolports.ToolPolicy {
 }
 
 func (t *AdjustEscrowAccountTool) Target(params map[string]any) (agenttoolports.ToolTarget, bool) {
-	return common.TargetOf(params, paramEscrowAccountID, permission.ResourceEscrowAccount)
+	return toolparams.TargetOf(params, paramEscrowAccountID, permission.ResourceEscrowAccount)
 }
 
 func (t *AdjustEscrowAccountTool) request(
 	params *agenttoolports.ToolExecuteParams,
 ) (*driverpayservice.EscrowAdjustmentRequest, error) {
-	if err := common.GuardPreview(t, params); err != nil {
+	if err := toolguard.GuardPreview(t, params); err != nil {
 		return nil, err
 	}
-	accountID, err := common.RequirePulid(params.Params, paramEscrowAccountID)
+	accountID, err := toolparams.RequirePulid(params.Params, paramEscrowAccountID)
 	if err != nil {
 		return nil, err
 	}
-	amount, err := common.RequireSignedMoney(params.Params, common.ParamDriverPayAmount)
+	amount, err := toolparams.RequireSignedMoney(
+		params.Params,
+		settlementpreview.ParamDriverPayAmount,
+	)
 	if err != nil {
 		return nil, err
 	}
-	description, err := common.BoundedString(
+	description, err := toolparams.BoundedString(
 		params.Params,
 		paramEscrowDescription,
 		maxEscrowDescription,
@@ -532,7 +544,7 @@ func (t *AdjustEscrowAccountTool) request(
 	if err != nil {
 		return nil, err
 	}
-	occurred, hasOccurred, err := common.OptionalDay(params.Params, paramEscrowOccurredDate)
+	occurred, hasOccurred, err := toolparams.OptionalDay(params.Params, paramEscrowOccurredDate)
 	if err != nil {
 		return nil, err
 	}
@@ -541,7 +553,7 @@ func (t *AdjustEscrowAccountTool) request(
 	}
 
 	return &driverpayservice.EscrowAdjustmentRequest{
-		TenantInfo:   common.TenantFrom(*params),
+		TenantInfo:   toolparams.TenantFrom(*params),
 		AccountID:    accountID,
 		AmountMinor:  amount,
 		Description:  description,
@@ -604,10 +616,10 @@ func (t *AdjustEscrowAccountTool) Execute(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
-	if err := common.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
 	}
-	if err := common.RequirePersonsApproval(&params); err != nil {
+	if err := settlementpreview.RequirePersonsApproval(&params); err != nil {
 		return err
 	}
 	req, err := t.request(&params)
@@ -635,7 +647,7 @@ func (t *AdjustEscrowAccountTool) Preview(
 		req.Description,
 	)
 	if plan.refusal != nil {
-		return common.WouldFail(toolpreview.Build(summary), plan.refusal)
+		return changepreview.WouldFail(toolpreview.Build(summary), plan.refusal)
 	}
 
 	change := toolpreview.Money(
@@ -664,13 +676,13 @@ func (t *CloseEscrowAccountTool) Description() string {
 }
 
 func (t *CloseEscrowAccountTool) ParamSchema() map[string]any {
-	return common.ObjectParams(map[string]any{
+	return toolparams.ObjectParams(map[string]any{
 		paramEscrowAccountID: escrowAccountProperty(),
 	}, paramEscrowAccountID)
 }
 
 func (t *CloseEscrowAccountTool) Policy() agenttoolports.ToolPolicy {
-	return (&common.PersonOnlyPolicy{
+	return (&settlementpreview.PersonOnlyPolicy{
 		Name:      t.Name(),
 		Resource:  permission.ResourceEscrowAccount,
 		Operation: permission.OpClose,
@@ -680,14 +692,14 @@ func (t *CloseEscrowAccountTool) Policy() agenttoolports.ToolPolicy {
 }
 
 func (t *CloseEscrowAccountTool) Target(params map[string]any) (agenttoolports.ToolTarget, bool) {
-	return common.TargetOf(params, paramEscrowAccountID, permission.ResourceEscrowAccount)
+	return toolparams.TargetOf(params, paramEscrowAccountID, permission.ResourceEscrowAccount)
 }
 
 func (t *CloseEscrowAccountTool) planned(
 	ctx context.Context,
 	params *agenttoolports.ToolExecuteParams,
 ) (*escrowMovement, error) {
-	if err := common.GuardPreview(t, params); err != nil {
+	if err := toolguard.GuardPreview(t, params); err != nil {
 		return nil, err
 	}
 	before, err := loadEscrow(ctx, t.escrow, params)
@@ -726,17 +738,22 @@ func (t *CloseEscrowAccountTool) Execute(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
-	if err := common.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
 	}
-	if err := common.RequirePersonsApproval(&params); err != nil {
+	if err := settlementpreview.RequirePersonsApproval(&params); err != nil {
 		return err
 	}
-	accountID, err := common.RequirePulid(params.Params, paramEscrowAccountID)
+	accountID, err := toolparams.RequirePulid(params.Params, paramEscrowAccountID)
 	if err != nil {
 		return err
 	}
-	_, err = t.escrow.CloseEscrowAccount(ctx, common.TenantFrom(params), accountID, params.Actor)
+	_, err = t.escrow.CloseEscrowAccount(
+		ctx,
+		toolparams.TenantFrom(params),
+		accountID,
+		params.Actor,
+	)
 
 	return err
 }
@@ -752,7 +769,7 @@ func (t *CloseEscrowAccountTool) Preview(
 
 	summary := "Would close " + escrowRecord(plan.before).Label + "."
 	if plan.refusal != nil {
-		return common.WouldFail(toolpreview.Build(summary), plan.refusal)
+		return changepreview.WouldFail(toolpreview.Build(summary), plan.refusal)
 	}
 	if plan.moved != nil {
 		summary += fmt.Sprintf(" The remaining %s is refunded to the driver.",
@@ -760,9 +777,9 @@ func (t *CloseEscrowAccountTool) Preview(
 	}
 
 	change, err := toolpreview.Changed(escrowRecord(plan.before), plan.before, plan.after,
-		toolpreview.Only(common.FieldStatus, fieldClosedDate),
+		toolpreview.Only(changepreview.FieldStatus, fieldClosedDate),
 		toolpreview.Volatile(fieldClosedDate),
-		toolpreview.Types(common.DriverPayDateTypes),
+		toolpreview.Types(settlementpreview.DriverPayDateTypes),
 	)
 	if err != nil {
 		return nil, err

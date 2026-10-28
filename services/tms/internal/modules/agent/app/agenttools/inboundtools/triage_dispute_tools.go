@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -113,8 +115,8 @@ func newLogInboundExceptionTool(
 	inbox inboundMessageReader,
 	disputes triageDisputes,
 ) agenttoolports.AgentTool {
-	return common.NewReportingReceivableTool(
-		&common.ReceivableSpec{
+	return toolspec.NewReportingReceivableTool(
+		&toolspec.ReceivableSpec{
 			Name:     "inbox_record_discrepancy",
 			Artifact: inboundMessageEntity,
 			Description: "Log a shortage, overage or damage a delivery email reports on the " +
@@ -145,11 +147,11 @@ func newLogInboundExceptionTool(
 					toolschema.KeyMinimum:     1,
 					toolschema.KeyMaximum:     maxExceptionQuantity,
 				},
-				paramExceptionUnit: common.StringProperty(
+				paramExceptionUnit: toolparams.StringProperty(
 					"What was counted: pallets, cases, pieces.",
 					maxExceptionUnit,
 				),
-				paramExceptionNote: common.StringProperty(
+				paramExceptionNote: toolparams.StringProperty(
 					"Optional: what the sender said about it, for the person who clears the hold.",
 					maxExceptionNote,
 				),
@@ -164,7 +166,7 @@ func newLogInboundExceptionTool(
 			Recipe:      []string{toolGetInboundMessage, "inbox_record_discrepancy"},
 			Target:      targetMessage,
 		},
-		common.ReceivablePlan[
+		toolspec.ReceivablePlan[
 			*triageworkservice.LogExceptionRequest,
 			*triageworkservice.ExceptionPlan,
 		]{
@@ -231,24 +233,28 @@ func renderLoggedException(
 func logExceptionRequest(
 	params *agenttoolports.ToolExecuteParams,
 ) (*triageworkservice.LogExceptionRequest, error) {
-	messageID, err := common.RequirePulid(params.Params, paramMessageID)
+	messageID, err := toolparams.RequirePulid(params.Params, paramMessageID)
 	if err != nil {
 		return nil, err
 	}
-	kind, err := common.RequireEnum(params.Params, paramExceptionKind, triageExceptionKinds.Values)
+	kind, err := toolparams.RequireEnum(
+		params.Params,
+		paramExceptionKind,
+		triageExceptionKinds.Values,
+	)
 	if err != nil {
 		return nil, err
 	}
-	quantity, err := common.RequireIntInRange(params.Params, paramExceptionQuantity, 1,
+	quantity, err := toolparams.RequireIntInRange(params.Params, paramExceptionQuantity, 1,
 		maxExceptionQuantity)
 	if err != nil {
 		return nil, err
 	}
-	unit, err := common.RequireBoundedText(params.Params, paramExceptionUnit, maxExceptionUnit)
+	unit, err := toolparams.RequireBoundedText(params.Params, paramExceptionUnit, maxExceptionUnit)
 	if err != nil {
 		return nil, err
 	}
-	note, err := common.BoundedText(params.Params, paramExceptionNote, maxExceptionNote)
+	note, err := toolparams.BoundedText(params.Params, paramExceptionNote, maxExceptionNote)
 	if err != nil {
 		return nil, err
 	}
@@ -277,8 +283,8 @@ func newSettleDetentionDisputeTool(
 	disputes triageDisputes,
 	stops triageStopTimes,
 ) agenttoolports.AgentTool {
-	return common.NewReportingReceivableTool(
-		&common.ReceivableSpec{
+	return toolspec.NewReportingReceivableTool(
+		&toolspec.ReceivableSpec{
 			Name:     "detention_resolve_dispute",
 			Artifact: inboundMessageEntity,
 			Description: "Waive or stand by a detention charge a customer disputes by email, " +
@@ -313,15 +319,15 @@ func newSettleDetentionDisputeTool(
 			},
 			Target: targetMessage,
 		},
-		common.ReceivablePlan[*triageworkservice.DecideStopsRequest, *stopsDecisionPlan]{
+		toolspec.ReceivablePlan[*triageworkservice.DecideStopsRequest, *stopsDecisionPlan]{
 			Request: func(
 				params *agenttoolports.ToolExecuteParams,
 			) (*triageworkservice.DecideStopsRequest, error) {
-				messageID, err := common.RequirePulid(params.Params, paramMessageID)
+				messageID, err := toolparams.RequirePulid(params.Params, paramMessageID)
 				if err != nil {
 					return nil, err
 				}
-				decision, err := common.RequireEnum(params.Params, paramStopsDecision,
+				decision, err := toolparams.RequireEnum(params.Params, paramStopsDecision,
 					triageStopsDecisions.Values)
 				if err != nil {
 					return nil, err
@@ -457,8 +463,8 @@ func detentionMoney(times *inboundmessageports.StopTimes) (*agent.RecordChange, 
 		change,
 		toolpreview.MoneyBlock(times.Currency, agent.MoneyLine{
 			Label:  label,
-			Before: common.KnownAmount(amount),
-			After:  common.KnownAmount(decimal.Zero),
+			Before: changepreview.KnownAmount(amount),
+			After:  changepreview.KnownAmount(decimal.Zero),
 		}),
 		toolpreview.SensitiveAs("billableAmount"),
 	)

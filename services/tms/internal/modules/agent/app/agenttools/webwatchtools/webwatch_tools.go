@@ -9,7 +9,9 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentextensionservice"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -126,7 +128,7 @@ func (t *WatchWebTool) ParamSchema() map[string]any {
 			"How often to look. Daily unless the person needs to hear sooner or less often.",
 			cadences,
 		),
-		paramDays: common.IntegerProperty(
+		paramDays: toolparams.IntegerProperty(
 			"How many days to keep watching, from 1 to 90. Defaults to 30.",
 			agentextension.MinWebWatchDays, agentextension.MaxWebWatchDays,
 		),
@@ -149,26 +151,28 @@ func (t *WatchWebTool) SearchTerms() []string {
 func (t *WatchWebTool) request(
 	params *agenttoolports.ToolExecuteParams,
 ) (*agentextensionports.WebWatchRequest, error) {
-	purpose, err := common.RequireString(params.Params, paramPurpose)
+	purpose, err := toolparams.RequireString(params.Params, paramPurpose)
 	if err != nil {
 		return nil, err
 	}
-	query, err := common.RequireString(params.Params, paramQuery)
+	query, err := toolparams.RequireString(params.Params, paramQuery)
 	if err != nil {
 		return nil, err
 	}
-	cadence := agentextension.WebWatchCadence(common.OptionalString(params.Params, paramCadence))
+	cadence := agentextension.WebWatchCadence(
+		toolparams.OptionalString(params.Params, paramCadence),
+	)
 	if cadence != "" && !cadence.IsValid() {
-		return nil, common.ErrUnknownValue(paramCadence, string(cadence), cadences.Names())
+		return nil, toolparams.ErrUnknownValue(paramCadence, string(cadence), cadences.Names())
 	}
 
 	return &agentextensionports.WebWatchRequest{
-		TenantInfo: common.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(*params),
 		Query:      query,
 		Purpose:    purpose,
-		Sites:      common.StringSliceParam(params.Params, paramSites),
+		Sites:      toolparams.StringSliceParam(params.Params, paramSites),
 		Cadence:    cadence,
-		Days:       int(common.OptionalInt64(params.Params, paramDays)),
+		Days:       int(toolparams.OptionalInt64(params.Params, paramDays)),
 		Owner: agentextensionports.PortalTaskOwner{
 			Actor:        params.Actor,
 			DefinitionID: params.DefinitionID,
@@ -183,7 +187,7 @@ func (t *WatchWebTool) Validate(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
 ) error {
-	if err := common.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
 	}
 	if params.Delegated {
@@ -205,20 +209,20 @@ func (t *WatchWebTool) Preview(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
-	if err := common.GuardPreview(t, &params); err != nil {
+	if err := toolguard.GuardPreview(t, &params); err != nil {
 		return nil, err
 	}
 	summary := "Would keep watching the web."
 	req, err := t.request(&params)
 	if err != nil {
-		return common.WarnWouldFail(toolpreview.Build(summary), err), nil
+		return changepreview.WarnWouldFail(toolpreview.Build(summary), err), nil
 	}
 
 	plan, err := t.watches.PlanWebWatch(ctx, req)
 	if err != nil {
-		if agentextensionservice.IsToolError(err) || common.IsRefusal(err) ||
+		if agentextensionservice.IsToolError(err) || changepreview.IsRefusal(err) ||
 			errortypes.IsMultiError(err) {
-			return common.WarnWouldFail(toolpreview.Build(summary), err), nil
+			return changepreview.WarnWouldFail(toolpreview.Build(summary), err), nil
 		}
 		return nil, err
 	}
@@ -260,7 +264,7 @@ func (t *WatchWebTool) ExecuteWithResult(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
 ) (*agent.ToolExecutionResult, error) {
-	if err := common.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return nil, err
 	}
 	if params.Delegated {
@@ -363,13 +367,13 @@ func (t *StopWebWatchTool) SearchTerms() []string {
 func (t *StopWebWatchTool) request(
 	params *agenttoolports.ToolExecuteParams,
 ) (*agentextensionports.StopWebWatchRequest, error) {
-	watchID, err := common.RequirePulid(params.Params, paramWatchID)
+	watchID, err := toolparams.RequirePulid(params.Params, paramWatchID)
 	if err != nil {
 		return nil, err
 	}
 
 	return &agentextensionports.StopWebWatchRequest{
-		TenantInfo:   common.TenantFrom(*params),
+		TenantInfo:   toolparams.TenantFrom(*params),
 		WatchID:      watchID,
 		StoppedBy:    params.Actor.PersonUserID(),
 		DefinitionID: params.DefinitionID,
@@ -380,7 +384,7 @@ func (t *StopWebWatchTool) Validate(
 	_ context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
 ) error {
-	if err := common.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
 	}
 	_, err := t.request(&params)
@@ -392,12 +396,12 @@ func (t *StopWebWatchTool) Preview(
 	_ context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
-	if err := common.GuardPreview(t, &params); err != nil {
+	if err := toolguard.GuardPreview(t, &params); err != nil {
 		return nil, err
 	}
 	summary := "Would stop a web watch, so the vendor searches and bills for it no more."
 	if _, err := t.request(&params); err != nil {
-		return common.WarnWouldFail(toolpreview.Build(summary), err), nil
+		return changepreview.WarnWouldFail(toolpreview.Build(summary), err), nil
 	}
 
 	return toolpreview.Build(summary), nil
@@ -416,7 +420,7 @@ func (t *StopWebWatchTool) ExecuteWithResult(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
 ) (*agent.ToolExecutionResult, error) {
-	if err := common.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return nil, err
 	}
 	req, err := t.request(&params)

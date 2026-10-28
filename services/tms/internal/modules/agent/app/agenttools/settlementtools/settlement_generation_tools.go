@@ -5,7 +5,10 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/settlementpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -46,12 +49,12 @@ var errHalfAPeriod = errors.New(
 
 func periodProperties(what string) map[string]any {
 	return map[string]any{
-		common.ParamPeriodStart: map[string]any{
+		toolparams.ParamPeriodStart: map[string]any{
 			toolschema.KeyType: toolschema.TypeString,
 			toolschema.KeyDescription: "The first day " + what + " covers, YYYY-MM-DD. Leave " +
 				"both days out for the current pay period.",
 		},
-		common.ParamPeriodEnd: map[string]any{
+		toolparams.ParamPeriodEnd: map[string]any{
 			toolschema.KeyType: toolschema.TypeString,
 			toolschema.KeyDescription: "The last day " + what + " covers, YYYY-MM-DD, " +
 				"included.",
@@ -66,11 +69,11 @@ type requestedPeriod struct {
 }
 
 func readPeriod(params map[string]any) (requestedPeriod, error) {
-	start, hasStart, err := common.OptionalDay(params, common.ParamPeriodStart)
+	start, hasStart, err := toolparams.OptionalDay(params, toolparams.ParamPeriodStart)
 	if err != nil {
 		return requestedPeriod{}, err
 	}
-	lastDay, hasEnd, err := common.OptionalDay(params, common.ParamPeriodEnd)
+	lastDay, hasEnd, err := toolparams.OptionalDay(params, toolparams.ParamPeriodEnd)
 	if err != nil {
 		return requestedPeriod{}, err
 	}
@@ -84,7 +87,7 @@ func readPeriod(params map[string]any) (requestedPeriod, error) {
 		return requestedPeriod{}, errPeriodBackwards
 	}
 
-	return requestedPeriod{start: start, end: lastDay + common.SecondsPerDay, given: true}, nil
+	return requestedPeriod{start: start, end: lastDay + toolparams.SecondsPerDay, given: true}, nil
 }
 
 type workerSettlementGenerator interface {
@@ -127,7 +130,7 @@ func (t *GenerateDriverSettlementTool) Description() string {
 
 func (t *GenerateDriverSettlementTool) ParamSchema() map[string]any {
 	properties := periodProperties("the settlement")
-	properties[common.ParamWorkerID] = agenttoolschema.RecordIDText(permission.ResourceWorker,
+	properties[toolparams.ParamWorkerID] = agenttoolschema.RecordIDText(permission.ResourceWorker,
 		"The driver, from worker_list or settlement_list_pay_events.")
 	properties[paramPayDate] = agenttoolschema.Date("The day it is paid. Leave it out for " +
 		"the pay period's own pay date.")
@@ -135,7 +138,7 @@ func (t *GenerateDriverSettlementTool) ParamSchema() map[string]any {
 	return map[string]any{
 		toolschema.KeyType:                 toolschema.TypeObject,
 		toolschema.KeyProperties:           properties,
-		toolschema.KeyRequired:             []string{common.ParamWorkerID},
+		toolschema.KeyRequired:             []string{toolparams.ParamWorkerID},
 		toolschema.KeyAdditionalProperties: false,
 	}
 }
@@ -151,7 +154,7 @@ func (t *GenerateDriverSettlementTool) Policy() agenttoolports.ToolPolicy {
 		MaxTier:       agent.TierAutoExecute,
 		Egress:        []agent.EgressClass{agent.EgressInternal},
 		Effect:        agent.ToolEffectChange,
-		Artifact:      common.DriverSettlementEntity,
+		Artifact:      settlementpreview.DriverSettlementEntity,
 		ReadsExternal: agent.ExternalReadNever,
 		Rationale: "Drafts a settlement from pay already accrued inside Trenova; nothing is " +
 			"paid until a person approves it, and hands-off approval is only the settlement " +
@@ -163,10 +166,10 @@ func (t *GenerateDriverSettlementTool) request(
 	ctx context.Context,
 	params *agenttoolports.ToolExecuteParams,
 ) (*driversettlementservice.GenerateForWorkerRequest, error) {
-	if err := common.GuardPreview(t, params); err != nil {
+	if err := toolguard.GuardPreview(t, params); err != nil {
 		return nil, err
 	}
-	workerID, err := common.RequirePulid(params.Params, common.ParamWorkerID)
+	workerID, err := toolparams.RequirePulid(params.Params, toolparams.ParamWorkerID)
 	if err != nil {
 		return nil, err
 	}
@@ -174,12 +177,12 @@ func (t *GenerateDriverSettlementTool) request(
 	if err != nil {
 		return nil, err
 	}
-	payDate, hasPayDate, err := common.OptionalDay(params.Params, paramPayDate)
+	payDate, hasPayDate, err := toolparams.OptionalDay(params.Params, paramPayDate)
 	if err != nil {
 		return nil, err
 	}
 
-	tenant := common.TenantFrom(*params)
+	tenant := toolparams.TenantFrom(*params)
 	req := &driversettlementservice.GenerateForWorkerRequest{
 		TenantInfo:  tenant,
 		WorkerID:    workerID,
@@ -254,7 +257,7 @@ func (t *GenerateDriverSettlementTool) ExecuteWithResult(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
 ) (*agent.ToolExecutionResult, error) {
-	if err := common.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return nil, err
 	}
 	req, err := t.request(ctx, &params)
@@ -269,7 +272,7 @@ func (t *GenerateDriverSettlementTool) ExecuteWithResult(
 		return nil, ErrNothingToSettle
 	}
 
-	return common.SettlementResult(created), nil
+	return settlementpreview.SettlementResult(created), nil
 }
 
 func (t *GenerateDriverSettlementTool) Execute(
@@ -292,21 +295,21 @@ func (t *GenerateDriverSettlementTool) Preview(
 
 	summary := fmt.Sprintf(
 		"Would generate a draft driver settlement for %s through %s, paid %s.",
-		common.DayText(req.PeriodStart),
-		common.DayText(req.PeriodEnd-common.SecondsPerDay),
-		common.DayText(req.PayDate),
+		changepreview.DayText(req.PeriodStart),
+		changepreview.DayText(req.PeriodEnd-toolparams.SecondsPerDay),
+		changepreview.DayText(req.PayDate),
 	)
 	if refusal := generationRefusal(plan); refusal != nil {
-		return common.WouldFail(toolpreview.Build(summary), refusal)
+		return changepreview.WouldFail(toolpreview.Build(summary), refusal)
 	}
 
-	change, err := common.NewSettlementChange(plan.Settlement, "New driver settlement")
+	change, err := settlementpreview.NewSettlementChange(plan.Settlement, "New driver settlement")
 	if err != nil {
 		return nil, err
 	}
 	if plan.Settlement.HasExceptions {
 		summary += fmt.Sprintf(" It raises %s for review.",
-			common.CountOf(len(plan.Settlement.Exceptions), "exception"))
+			changepreview.CountOf(len(plan.Settlement.Exceptions), "exception"))
 	}
 	if plan.AutoApprove {
 		summary += " The settlement control approves a clean settlement as soon as it is " +
@@ -325,10 +328,15 @@ type batchText struct {
 
 func batchSchema() map[string]any {
 	properties := periodProperties("the batch")
-	properties[paramBatchName] = common.StringProperty("A name for the batch; leave it out for "+
-		"\"Pay period ending\" and the period's last day.", maxBatchNameChars)
-	properties[common.ParamNote] = common.StringProperty("Notes kept on the batch for payroll.",
-		maxBatchNotesChars)
+	properties[paramBatchName] = toolparams.StringProperty(
+		"A name for the batch; leave it out for "+
+			"\"Pay period ending\" and the period's last day.",
+		maxBatchNameChars,
+	)
+	properties[toolparams.ParamNote] = toolparams.StringProperty(
+		"Notes kept on the batch for payroll.",
+		maxBatchNotesChars,
+	)
 
 	return map[string]any{
 		toolschema.KeyType:                 toolschema.TypeObject,
@@ -364,11 +372,11 @@ func readBatchInput(params map[string]any) (batchInput, error) {
 	if err != nil {
 		return batchInput{}, err
 	}
-	name, err := common.BoundedString(params, paramBatchName, maxBatchNameChars, false)
+	name, err := toolparams.BoundedString(params, paramBatchName, maxBatchNameChars, false)
 	if err != nil {
 		return batchInput{}, err
 	}
-	notes, err := common.BoundedString(params, common.ParamNote, maxBatchNotesChars, false)
+	notes, err := toolparams.BoundedString(params, toolparams.ParamNote, maxBatchNotesChars, false)
 	if err != nil {
 		return batchInput{}, err
 	}
@@ -435,7 +443,7 @@ func (t *GenerateDriverBatchTool) Policy() agenttoolports.ToolPolicy {
 func (t *GenerateDriverBatchTool) request(
 	params *agenttoolports.ToolExecuteParams,
 ) (*driversettlementservice.GenerateBatchRequest, error) {
-	if err := common.GuardPreview(t, params); err != nil {
+	if err := toolguard.GuardPreview(t, params); err != nil {
 		return nil, err
 	}
 	input, err := readBatchInput(params.Params)
@@ -444,7 +452,7 @@ func (t *GenerateDriverBatchTool) request(
 	}
 
 	return &driversettlementservice.GenerateBatchRequest{
-		TenantInfo:  common.TenantFrom(*params),
+		TenantInfo:  toolparams.TenantFrom(*params),
 		PeriodStart: input.period.start,
 		PeriodEnd:   input.period.end,
 		Name:        input.name,
@@ -472,7 +480,7 @@ func (t *GenerateDriverBatchTool) Execute(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
-	if err := common.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
 	}
 	req, err := t.request(&params)
@@ -508,12 +516,12 @@ func (t *GenerateDriverBatchTool) Preview(
 
 	summary := fmt.Sprintf(
 		"Would generate the driver settlement batch for %s through %s, paid %s.",
-		common.DayText(plan.Bounds.PeriodStart),
-		common.DayText(plan.Bounds.PeriodEnd-common.SecondsPerDay),
-		common.DayText(plan.Bounds.PayDate),
+		changepreview.DayText(plan.Bounds.PeriodStart),
+		changepreview.DayText(plan.Bounds.PeriodEnd-toolparams.SecondsPerDay),
+		changepreview.DayText(plan.Bounds.PayDate),
 	)
 	if plan.Refusal != nil {
-		return common.WouldFail(toolpreview.Build(summary), plan.Refusal)
+		return changepreview.WouldFail(toolpreview.Build(summary), plan.Refusal)
 	}
 
 	changes := make([]*agent.RecordChange, 0, len(plan.Workers))
@@ -530,7 +538,7 @@ func (t *GenerateDriverBatchTool) Preview(
 
 	summary += fmt.Sprintf(
 		" %s would get a draft settlement.",
-		common.CountOf(len(changes), "driver"),
+		changepreview.CountOf(len(changes), "driver"),
 	)
 	if plan.ExistingBatch != nil {
 		summary += " They join the open batch " + plan.ExistingBatch.Name + "."
@@ -567,9 +575,9 @@ func plannedWorkerChange(
 			HeldCount:     worker.HeldCount,
 		},
 		toolpreview.WithRefs(map[string]permission.Resource{
-			common.ParamWorkerID: permission.ResourceWorker,
+			toolparams.ParamWorkerID: permission.ResourceWorker,
 		}),
-		toolpreview.Types(common.SettlementDateTypes),
+		toolpreview.Types(settlementpreview.SettlementDateTypes),
 	)
 	if err != nil {
 		return nil, err
@@ -578,7 +586,7 @@ func plannedWorkerChange(
 		money.DefaultCurrencyCode,
 		agent.MoneyLine{
 			Label: "Accrued earnings",
-			After: common.MinorAmount(worker.GrossAmountMinor),
+			After: changepreview.MinorAmount(worker.GrossAmountMinor),
 		},
 	), toolpreview.SensitiveAs("grossAmountMinor"))
 
@@ -635,7 +643,7 @@ func (t *GenerateCarrierBatchTool) Policy() agenttoolports.ToolPolicy {
 func (t *GenerateCarrierBatchTool) request(
 	params *agenttoolports.ToolExecuteParams,
 ) (*carriersettlementservice.GenerateBatchRequest, error) {
-	if err := common.GuardPreview(t, params); err != nil {
+	if err := toolguard.GuardPreview(t, params); err != nil {
 		return nil, err
 	}
 	input, err := readBatchInput(params.Params)
@@ -644,7 +652,7 @@ func (t *GenerateCarrierBatchTool) request(
 	}
 
 	return &carriersettlementservice.GenerateBatchRequest{
-		TenantInfo:  common.TenantFrom(*params),
+		TenantInfo:  toolparams.TenantFrom(*params),
 		PeriodStart: input.period.start,
 		PeriodEnd:   input.period.end,
 		Name:        input.name,
@@ -683,7 +691,7 @@ func (t *GenerateCarrierBatchTool) Execute(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
-	if err := common.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
 	}
 	req, err := t.request(&params)
@@ -706,12 +714,12 @@ func (t *GenerateCarrierBatchTool) Preview(
 
 	summary := fmt.Sprintf(
 		"Would generate the carrier settlement batch for %s through %s, paid %s.",
-		common.DayText(plan.Bounds.PeriodStart),
-		common.DayText(plan.Bounds.PeriodEnd-common.SecondsPerDay),
-		common.DayText(plan.Bounds.PayDate),
+		changepreview.DayText(plan.Bounds.PeriodStart),
+		changepreview.DayText(plan.Bounds.PeriodEnd-toolparams.SecondsPerDay),
+		changepreview.DayText(plan.Bounds.PayDate),
 	)
 	if plan.Refusal != nil {
-		return common.WouldFail(toolpreview.Build(summary), plan.Refusal)
+		return changepreview.WouldFail(toolpreview.Build(summary), plan.Refusal)
 	}
 
 	changes := make([]*agent.RecordChange, 0, len(plan.Settlements))
@@ -723,24 +731,27 @@ func (t *GenerateCarrierBatchTool) Preview(
 			},
 			settlement,
 			toolpreview.Only(
-				common.ParamCarrierID,
-				common.FieldStatus,
-				common.FieldPeriodStart,
-				common.FieldPeriodEnd,
-				common.FieldPayDate,
+				toolparams.ParamCarrierID,
+				changepreview.FieldStatus,
+				changepreview.FieldPeriodStart,
+				changepreview.FieldPeriodEnd,
+				settlementpreview.FieldPayDate,
 				"shipmentCount",
 			),
 			toolpreview.WithRefs(map[string]permission.Resource{
-				common.ParamCarrierID: permission.ResourceCarrier,
+				toolparams.ParamCarrierID: permission.ResourceCarrier,
 			}),
-			toolpreview.Types(common.SettlementDateTypes),
+			toolpreview.Types(settlementpreview.SettlementDateTypes),
 		)
 		if changeErr != nil {
 			return nil, changeErr
 		}
 		toolpreview.AttachMoney(
 			change,
-			common.SettlementMoney(&common.SettlementFacts{}, carrierSettlementFacts(settlement)),
+			settlementpreview.SettlementMoney(
+				&settlementpreview.SettlementFacts{},
+				carrierSettlementFacts(settlement),
+			),
 			toolpreview.SensitiveAs(carrierSettlementLedger().Sensitive...),
 		)
 		changes = append(changes, change)
@@ -750,7 +761,7 @@ func (t *GenerateCarrierBatchTool) Preview(
 	summary += fmt.Sprintf(
 		" Pending cost for the period covers %s; each without a settlement for it would get "+
 			"a draft.",
-		common.CountOf(plan.CarrierCount, "carrier"),
+		changepreview.CountOf(plan.CarrierCount, "carrier"),
 	)
 	if plan.ExistingBatch != nil {
 		summary += " They join the batch " + plan.ExistingBatch.Name + "."

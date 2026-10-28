@@ -7,7 +7,9 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -84,14 +86,14 @@ func loadInboundMessage(
 	desk inboundMessageReader,
 	params agenttoolports.ToolExecuteParams,
 ) (*inboundmessage.InboundMessage, error) {
-	messageID, err := common.RequirePulid(params.Params, paramMessageID)
+	messageID, err := toolparams.RequirePulid(params.Params, paramMessageID)
 	if err != nil {
 		return nil, err
 	}
 
 	return desk.GetByID(ctx, inboundmessageports.GetInboundMessageByIDRequest{
 		ID:         messageID,
-		TenantInfo: common.TenantFrom(params),
+		TenantInfo: toolparams.TenantFrom(params),
 	})
 }
 
@@ -205,32 +207,32 @@ func (t *LinkInboundMessageTool) Policy() agenttoolports.ToolPolicy {
 }
 
 func (t *LinkInboundMessageTool) Target(params map[string]any) (agenttoolports.ToolTarget, bool) {
-	return common.TargetOf(params, paramMessageID, permission.ResourceInboundMessage)
+	return toolparams.TargetOf(params, paramMessageID, permission.ResourceInboundMessage)
 }
 
 func (t *LinkInboundMessageTool) request(
 	params agenttoolports.ToolExecuteParams,
 ) (inboundmessageservice.LinkRequest, error) {
-	messageID, err := common.RequirePulid(params.Params, paramMessageID)
+	messageID, err := toolparams.RequirePulid(params.Params, paramMessageID)
 	if err != nil {
 		return inboundmessageservice.LinkRequest{}, err
 	}
 
 	req := inboundmessageservice.LinkRequest{
 		MessageID:  messageID,
-		TenantInfo: common.TenantFrom(params),
+		TenantInfo: toolparams.TenantFrom(params),
 		ReviewerID: params.Actor.UserID,
-		Reason:     common.OptionalString(params.Params, "reason"),
+		Reason:     toolparams.OptionalString(params.Params, "reason"),
 	}
 	for key, target := range map[string]*pulid.ID{
 		"shipmentId": &req.ShipmentID,
 		"customerId": &req.CustomerID,
 		"carrierId":  &req.CarrierID,
 	} {
-		if common.OptionalString(params.Params, key) == "" {
+		if toolparams.OptionalString(params.Params, key) == "" {
 			continue
 		}
-		if *target, err = common.RequirePulid(params.Params, key); err != nil {
+		if *target, err = toolparams.RequirePulid(params.Params, key); err != nil {
 			return inboundmessageservice.LinkRequest{}, err
 		}
 	}
@@ -257,7 +259,7 @@ func (t *LinkInboundMessageTool) Execute(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams,
 ) error {
-	if err := common.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
 	}
 
@@ -304,7 +306,7 @@ func (t *MarkInboundMessageTool) ParamSchema() map[string]any {
 		"properties": map[string]any{
 			paramMessageID: agenttoolschema.RecordIDText(permission.ResourceInboundMessage,
 				"The message, from the run's subject or inbox_list_inbound_messages."),
-			common.FieldStatus: agenttoolschema.Enum(
+			changepreview.FieldStatus: agenttoolschema.Enum(
 				"Actioned when it was dealt with, Ignored when there was nothing to do.",
 				inboundReviewStatuses,
 			),
@@ -338,18 +340,18 @@ func (t *MarkInboundMessageTool) Policy() agenttoolports.ToolPolicy {
 }
 
 func (t *MarkInboundMessageTool) Target(params map[string]any) (agenttoolports.ToolTarget, bool) {
-	return common.TargetOf(params, paramMessageID, permission.ResourceInboundMessage)
+	return toolparams.TargetOf(params, paramMessageID, permission.ResourceInboundMessage)
 }
 
 func (t *MarkInboundMessageTool) arguments(
 	params agenttoolports.ToolExecuteParams,
 ) (inboundmessage.Status, string, error) {
-	status := inboundmessage.Status(common.OptionalString(params.Params, "status"))
+	status := inboundmessage.Status(toolparams.OptionalString(params.Params, "status"))
 	if status != inboundmessage.StatusActioned && status != inboundmessage.StatusIgnored {
 		return "", "", errors.New(`parameter "status" must be Actioned or Ignored`)
 	}
 
-	note, err := common.RequireString(params.Params, "note")
+	note, err := toolparams.RequireString(params.Params, "note")
 	if err != nil {
 		return "", "", err
 	}
@@ -396,7 +398,7 @@ func (t *MarkInboundMessageTool) Execute(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams,
 ) error {
-	if err := common.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
 	}
 
@@ -418,7 +420,7 @@ func reviewRequest(
 ) inboundmessageservice.ReviewRequest {
 	return inboundmessageservice.ReviewRequest{
 		MessageID:  message.ID,
-		TenantInfo: common.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(*params),
 		ReviewerID: params.Actor.UserID,
 		Status:     status,
 		Note:       note,
@@ -538,7 +540,7 @@ func (t *ReplyToInboundMessageTool) Policy() agenttoolports.ToolPolicy {
 func (t *ReplyToInboundMessageTool) Target(
 	params map[string]any,
 ) (agenttoolports.ToolTarget, bool) {
-	return common.TargetOf(params, paramMessageID, permission.ResourceInboundMessage)
+	return toolparams.TargetOf(params, paramMessageID, permission.ResourceInboundMessage)
 }
 
 type inboundReply struct {
@@ -552,11 +554,11 @@ func (t *ReplyToInboundMessageTool) prepare(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams,
 ) (*inboundReply, error) {
-	profileID, err := common.OptionalID(params.Params, "profileId")
+	profileID, err := toolparams.OptionalID(params.Params, "profileId")
 	if err != nil {
 		return nil, err
 	}
-	body, err := common.RequireString(params.Params, "body")
+	body, err := toolparams.RequireString(params.Params, "body")
 	if err != nil {
 		return nil, err
 	}

@@ -60,7 +60,7 @@ one read with the union of their parameters (`shipment_list` was `list_shipments
 `search_shipments`). Tools are not merged across permission operations: a tool's policy names
 one resource and one operation, so pin and unpin stay two tools.
 
-A write over one record or many is a `common.RecordBatch` around the single-record tool, which
+A write over one record or many is a `recordbatch.RecordBatch` around the single-record tool, which
 is no longer registered. A call naming one record is the single tool's call, with its preview,
 its validation, its target (so the proposal is pinned to that record's version) and its
 result; a call naming several previews each through the single tool and runs each through it

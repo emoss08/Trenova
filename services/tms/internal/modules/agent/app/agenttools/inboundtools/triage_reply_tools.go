@@ -4,7 +4,9 @@ import (
 	"context"
 	"errors"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -103,8 +105,8 @@ func newDraftInboundReplyTool(
 	inbox inboundMessageReader,
 	replies triageReplies,
 ) agenttoolports.AgentTool {
-	return common.NewReportingReceivableTool(
-		&common.ReceivableSpec{
+	return toolspec.NewReportingReceivableTool(
+		&toolspec.ReceivableSpec{
 			Name:     "inbox_draft_reply",
 			Artifact: inboundMessageEntity,
 			Description: "Save a reply to a message as its draft in Triage, for a person to " +
@@ -125,12 +127,12 @@ func newDraftInboundReplyTool(
 				paramMessageID: messageIDProperty(
 					"The message to answer, from inbox_list_inbound_messages, newest first or by query.",
 				),
-				paramReplyBody: common.StringProperty(
+				paramReplyBody: toolparams.StringProperty(
 					"The reply in plain prose, as the person should send it. Leave it out to "+
 						"have Triage's drafter write it.",
 					maxInboundReplyBody,
 				),
-				paramReplySubject: common.StringProperty(
+				paramReplySubject: toolparams.StringProperty(
 					"Optional, with a body only: the subject. Defaults to Re: and the "+
 						"message's own subject.",
 					maxReplySubject,
@@ -141,7 +143,7 @@ func newDraftInboundReplyTool(
 			Recipe:      []string{toolGetInboundMessage, "inbox_draft_reply"},
 			Target:      targetMessage,
 		},
-		common.ReceivablePlan[*draftReplyCall, *inboundreplyservice.DraftPlan]{
+		toolspec.ReceivablePlan[*draftReplyCall, *inboundreplyservice.DraftPlan]{
 			Request: draftReplyRequest,
 			Plan: func(
 				ctx context.Context,
@@ -181,7 +183,7 @@ func newDraftInboundReplyTool(
 					Kind:   "reply draft",
 					Name:   reply.Subject,
 					IDs:    map[string]string{paramMessageID: reply.MessageID.String()},
-					Record: common.RecordOf(inboundMessageEntity, reply.MessageID),
+					Record: changepreview.RecordOf(inboundMessageEntity, reply.MessageID),
 				}, nil
 			},
 		},
@@ -189,15 +191,15 @@ func newDraftInboundReplyTool(
 }
 
 func draftReplyRequest(params *agenttoolports.ToolExecuteParams) (*draftReplyCall, error) {
-	messageID, err := common.RequirePulid(params.Params, paramMessageID)
+	messageID, err := toolparams.RequirePulid(params.Params, paramMessageID)
 	if err != nil {
 		return nil, err
 	}
-	body, err := common.BoundedText(params.Params, paramReplyBody, maxInboundReplyBody)
+	body, err := toolparams.BoundedText(params.Params, paramReplyBody, maxInboundReplyBody)
 	if err != nil {
 		return nil, err
 	}
-	subject, err := common.BoundedText(params.Params, paramReplySubject, maxReplySubject)
+	subject, err := toolparams.BoundedText(params.Params, paramReplySubject, maxReplySubject)
 	if err != nil {
 		return nil, err
 	}
@@ -265,8 +267,8 @@ func NewDiscardInboundReplyDraftTool(p triageToolParams) agenttoolports.AgentToo
 }
 
 func newDiscardInboundReplyDraftTool(replies triageReplies) agenttoolports.AgentTool {
-	return common.NewReportingReceivableTool(
-		&common.ReceivableSpec{
+	return toolspec.NewReportingReceivableTool(
+		&toolspec.ReceivableSpec{
 			Name:     "inbox_discard_reply_draft",
 			Artifact: inboundMessageEntity,
 			Description: "Throw away the reply draft waiting on a message in Triage, when it " +
@@ -290,7 +292,7 @@ func newDiscardInboundReplyDraftTool(replies triageReplies) agenttoolports.Agent
 			Recipe:      []string{toolGetInboundMessage, "inbox_discard_reply_draft"},
 			Target:      targetMessage,
 		},
-		common.ReceivablePlan[
+		toolspec.ReceivablePlan[
 			*inboundmessageservice.MessageActionRequest,
 			*inboundreplyservice.DraftPlan,
 		]{

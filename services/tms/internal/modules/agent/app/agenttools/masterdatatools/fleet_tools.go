@@ -4,7 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -112,7 +114,7 @@ func (t *UpdateTractorStatusTool) Execute(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams,
 ) error {
-	if err := common.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
 	}
 
@@ -122,7 +124,7 @@ func (t *UpdateTractorStatusTool) Execute(
 	}
 
 	_, err = t.tractors.BulkUpdateStatus(ctx, &tractorports.BulkUpdateTractorStatusRequest{
-		TenantInfo: common.TenantFrom(params),
+		TenantInfo: toolparams.TenantFrom(params),
 		TractorIDs: ids,
 		Status:     status,
 	})
@@ -183,7 +185,7 @@ func (t *UpdateTrailerStatusTool) Execute(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams,
 ) error {
-	if err := common.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
 	}
 
@@ -193,7 +195,7 @@ func (t *UpdateTrailerStatusTool) Execute(
 	}
 
 	_, err = t.trailers.BulkUpdateStatus(ctx, &trailerports.BulkUpdateTrailerStatusRequest{
-		TenantInfo: common.TenantFrom(params),
+		TenantInfo: toolparams.TenantFrom(params),
 		TrailerIDs: ids,
 		Status:     status,
 	})
@@ -215,7 +217,7 @@ func equipmentStatusSchema(
 				"maxItems":    maxEquipmentPerStatusChange,
 				"description": idsDescription,
 			}, resource),
-			common.FieldStatus: agenttoolschema.Enum(
+			changepreview.FieldStatus: agenttoolschema.Enum(
 				"The status to set. "+equipmentStatusNote, equipmentStatuses,
 			),
 		},
@@ -228,12 +230,12 @@ func equipmentStatusArgs(
 	params map[string]any,
 	idsKey string,
 ) ([]pulid.ID, domaintypes.EquipmentStatus, error) {
-	ids, err := common.RequirePulidSlice(params, idsKey, maxEquipmentPerStatusChange)
+	ids, err := toolparams.RequirePulidSlice(params, idsKey, maxEquipmentPerStatusChange)
 	if err != nil {
 		return nil, "", err
 	}
 
-	raw := common.OptionalString(params, "status")
+	raw := toolparams.OptionalString(params, "status")
 	status, err := domaintypes.EquipmentStatusFromString(raw)
 	if err != nil {
 		return nil, "", fmt.Errorf(

@@ -5,7 +5,10 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/carrierpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -94,11 +97,11 @@ func (t *AssignMoveToCarrierTool) Description() string {
 
 func (t *AssignMoveToCarrierTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
-		common.PreviewFieldShipmentMoveID: agenttoolschema.RecordIDText(
+		changepreview.PreviewFieldShipmentMoveID: agenttoolschema.RecordIDText(
 			permission.ResourceShipmentMove,
 			"The move to cover, from dispatch_get_board (moveId) or shipment_get (its moves).",
 		),
-		common.FieldCarrierID: agenttoolschema.RecordIDText(
+		carrierpreview.FieldCarrierID: agenttoolschema.RecordIDText(
 			permission.ResourceCarrier,
 			"The carrier, from carrier_shop or carrier_list.",
 		),
@@ -116,7 +119,7 @@ func (t *AssignMoveToCarrierTool) ParamSchema() map[string]any {
 		fieldAccessorials: jsonschemautils.DescribedArray(
 			"Extra charges the carrier is paid on this move, each agreed with them.",
 			jsonschemautils.Object(map[string]any{
-				common.FieldDescription: jsonschemautils.Text(
+				changepreview.FieldDescription: jsonschemautils.Text(
 					"What the charge is for, as the carrier will read it.",
 				),
 				fieldAmount: jsonschemautils.Text("The amount as a decimal string."),
@@ -124,7 +127,7 @@ func (t *AssignMoveToCarrierTool) ParamSchema() map[string]any {
 					permission.ResourceAccessorialCharge,
 					"The accessorial charge it is, from masterdata_list_accessorial_charges.",
 				),
-			}, common.FieldDescription, fieldAmount),
+			}, changepreview.FieldDescription, fieldAmount),
 			maxCarrierAccessorials,
 		),
 		fieldProNumber: jsonschemautils.Text(
@@ -150,7 +153,7 @@ func (t *AssignMoveToCarrierTool) ParamSchema() map[string]any {
 			"Cover the move although the carrier's insurance expires soon. A carrier that is " +
 				"blocked can never be used. Off by default.",
 		),
-	}, common.PreviewFieldShipmentMoveID, common.FieldCarrierID, fieldRateMethod, fieldBaseRate)
+	}, changepreview.PreviewFieldShipmentMoveID, carrierpreview.FieldCarrierID, fieldRateMethod, fieldBaseRate)
 }
 
 func (t *AssignMoveToCarrierTool) Policy() agenttoolports.ToolPolicy {
@@ -182,8 +185,8 @@ func carrierAssignmentTierLimit(
 	_ context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // a TierCondition passes params by value
 ) agent.AutonomyTier {
-	if common.OptionalBool(params.Params, fieldReplace) ||
-		common.OptionalBool(params.Params, fieldOverrideInsuranceWarning) {
+	if toolparams.OptionalBool(params.Params, fieldReplace) ||
+		toolparams.OptionalBool(params.Params, fieldOverrideInsuranceWarning) {
 		return agent.TierPropose
 	}
 
@@ -209,7 +212,7 @@ func (t *AssignMoveToCarrierTool) Execute(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
-	if err := common.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
 	}
 
@@ -235,15 +238,15 @@ type carrierAccessorialParam struct {
 func (t *AssignMoveToCarrierTool) request(
 	params *agenttoolports.ToolExecuteParams,
 ) (*carrierassignmentports.AssignMoveToCarrierRequest, error) {
-	if err := common.GuardPreview(t, params); err != nil {
+	if err := toolguard.GuardPreview(t, params); err != nil {
 		return nil, err
 	}
 
-	moveID, err := common.RequirePulid(params.Params, common.PreviewFieldShipmentMoveID)
+	moveID, err := toolparams.RequirePulid(params.Params, changepreview.PreviewFieldShipmentMoveID)
 	if err != nil {
 		return nil, err
 	}
-	carrierID, err := common.RequirePulid(params.Params, common.FieldCarrierID)
+	carrierID, err := toolparams.RequirePulid(params.Params, carrierpreview.FieldCarrierID)
 	if err != nil {
 		return nil, err
 	}
@@ -251,7 +254,7 @@ func (t *AssignMoveToCarrierTool) request(
 	if err != nil {
 		return nil, err
 	}
-	baseRate, err := common.DecimalArg(params.Params, fieldBaseRate, true)
+	baseRate, err := toolparams.DecimalArg(params.Params, fieldBaseRate, true)
 	if err != nil {
 		return nil, err
 	}
@@ -259,7 +262,7 @@ func (t *AssignMoveToCarrierTool) request(
 		return nil, errortypes.NewValidationError(fieldBaseRate, errortypes.ErrInvalid,
 			"The base rate must be greater than zero; a carrier is never covered for nothing")
 	}
-	fuelSurcharge, err := common.DecimalArg(params.Params, fieldFuelSurcharge, false)
+	fuelSurcharge, err := toolparams.DecimalArg(params.Params, fieldFuelSurcharge, false)
 	if err != nil {
 		return nil, err
 	}
@@ -269,35 +272,38 @@ func (t *AssignMoveToCarrierTool) request(
 	}
 
 	return &carrierassignmentports.AssignMoveToCarrierRequest{
-		TenantInfo:     common.TenantFrom(*params),
+		TenantInfo:     toolparams.TenantFrom(*params),
 		ShipmentMoveID: moveID,
 		CarrierID:      carrierID,
 		RateMethod:     rateMethod,
 		BaseRate:       baseRate,
 		FuelSurcharge:  fuelSurcharge,
 		Accessorials:   accessorials,
-		ProNumber:      strings.TrimSpace(common.OptionalString(params.Params, fieldProNumber)),
+		ProNumber:      strings.TrimSpace(toolparams.OptionalString(params.Params, fieldProNumber)),
 		ExternalDriverName: strings.TrimSpace(
-			common.OptionalString(params.Params, fieldExternalDriverName),
+			toolparams.OptionalString(params.Params, fieldExternalDriverName),
 		),
 		ExternalDriverPhone: strings.TrimSpace(
-			common.OptionalString(params.Params, fieldExternalDriverPhone),
+			toolparams.OptionalString(params.Params, fieldExternalDriverPhone),
 		),
 		ExternalTractorNumber: strings.TrimSpace(
-			common.OptionalString(params.Params, fieldExternalTractorNumber),
+			toolparams.OptionalString(params.Params, fieldExternalTractorNumber),
 		),
 		ExternalTrailerNumber: strings.TrimSpace(
-			common.OptionalString(params.Params, fieldExternalTrailerNumber),
+			toolparams.OptionalString(params.Params, fieldExternalTrailerNumber),
 		),
-		Replace:                  common.OptionalBool(params.Params, fieldReplace),
-		OverrideInsuranceWarning: common.OptionalBool(params.Params, fieldOverrideInsuranceWarning),
+		Replace: toolparams.OptionalBool(params.Params, fieldReplace),
+		OverrideInsuranceWarning: toolparams.OptionalBool(
+			params.Params,
+			fieldOverrideInsuranceWarning,
+		),
 	}, nil
 }
 
 func (t *AssignMoveToCarrierTool) Target(params map[string]any) (agenttoolports.ToolTarget, bool) {
-	return common.TargetOf(
+	return toolparams.TargetOf(
 		params,
-		common.PreviewFieldShipmentMoveID,
+		changepreview.PreviewFieldShipmentMoveID,
 		permission.ResourceShipmentMove,
 	)
 }
@@ -327,15 +333,15 @@ func (t *CancelCarrierAssignmentTool) Description() string {
 
 func (t *CancelCarrierAssignmentTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
-		common.PreviewFieldShipmentMoveID: agenttoolschema.RecordIDText(
+		changepreview.PreviewFieldShipmentMoveID: agenttoolschema.RecordIDText(
 			permission.ResourceShipmentMove,
 			"The move whose carrier comes off, from dispatch_get_board (moveId) or "+
 				"shipment_get (its moves).",
 		),
-		common.FieldReason: jsonschemautils.Text(
+		changepreview.FieldReason: jsonschemautils.Text(
 			"Why the carrier is coming off, in a sentence a person can check.",
 		),
-	}, common.PreviewFieldShipmentMoveID, common.FieldReason)
+	}, changepreview.PreviewFieldShipmentMoveID, changepreview.FieldReason)
 }
 
 func (t *CancelCarrierAssignmentTool) Policy() agenttoolports.ToolPolicy {
@@ -400,7 +406,7 @@ func (t *CancelCarrierAssignmentTool) Execute(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
-	if err := common.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
 	}
 
@@ -415,21 +421,21 @@ func (t *CancelCarrierAssignmentTool) Execute(
 func (t *CancelCarrierAssignmentTool) request(
 	params *agenttoolports.ToolExecuteParams,
 ) (*carrierassignmentports.CancelCarrierAssignmentRequest, error) {
-	if err := common.GuardPreview(t, params); err != nil {
+	if err := toolguard.GuardPreview(t, params); err != nil {
 		return nil, err
 	}
 
-	moveID, err := common.RequirePulid(params.Params, common.PreviewFieldShipmentMoveID)
+	moveID, err := toolparams.RequirePulid(params.Params, changepreview.PreviewFieldShipmentMoveID)
 	if err != nil {
 		return nil, err
 	}
-	reason, err := common.RequireString(params.Params, common.FieldReason)
+	reason, err := toolparams.RequireString(params.Params, changepreview.FieldReason)
 	if err != nil {
 		return nil, err
 	}
 
 	return &carrierassignmentports.CancelCarrierAssignmentRequest{
-		TenantInfo:     common.TenantFrom(*params),
+		TenantInfo:     toolparams.TenantFrom(*params),
 		ShipmentMoveID: moveID,
 		Reason:         strings.TrimSpace(reason),
 	}, nil
@@ -438,16 +444,16 @@ func (t *CancelCarrierAssignmentTool) request(
 func (t *CancelCarrierAssignmentTool) Target(
 	params map[string]any,
 ) (agenttoolports.ToolTarget, bool) {
-	return common.TargetOf(
+	return toolparams.TargetOf(
 		params,
-		common.PreviewFieldShipmentMoveID,
+		changepreview.PreviewFieldShipmentMoveID,
 		permission.ResourceShipmentMove,
 	)
 }
 
 // carrierRateMethodArg refuses anything but the two ways a carrier is paid.
 func carrierRateMethodArg(params map[string]any) (shipment.CarrierRateMethod, error) {
-	raw := common.OptionalString(params, fieldRateMethod)
+	raw := toolparams.OptionalString(params, fieldRateMethod)
 	method := shipment.CarrierRateMethod(raw)
 	if method != shipment.CarrierRateMethodFlat && method != shipment.CarrierRateMethodPerMile {
 		return "", fmt.Errorf(
@@ -466,7 +472,7 @@ func carrierAccessorialsArg(
 	}
 
 	var lines []carrierAccessorialParam
-	if err := common.DecodeParam(params, fieldAccessorials, &lines); err != nil {
+	if err := toolparams.DecodeParam(params, fieldAccessorials, &lines); err != nil {
 		return nil, err
 	}
 	if len(lines) > maxCarrierAccessorials {
@@ -478,7 +484,7 @@ func carrierAccessorialsArg(
 
 	out := make([]carrierassignmentports.CarrierAccessorialInput, 0, len(lines))
 	for idx, line := range lines {
-		amount, err := common.DecimalArg(
+		amount, err := toolparams.DecimalArg(
 			map[string]any{fieldAmount: line.Amount},
 			fieldAmount,
 			true,

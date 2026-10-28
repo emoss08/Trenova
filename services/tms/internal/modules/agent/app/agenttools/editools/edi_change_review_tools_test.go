@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
@@ -317,9 +317,9 @@ func TestReviewEDITransferChange_PreviewsTheShipmentStatusItWouldSet(t *testing.
 	assert.Equal(t, "Completed", agenttoolstest.FieldByPath(t, moved, "status").After)
 
 	rejected := agenttoolstest.AgentParamsFor(map[string]any{
-		paramEDIChangeID:       changes.change.ID.String(),
-		paramEDIReviewDecision: reviewReject,
-		common.FieldReason:     "The partner's 214 contradicts the driver's arrival",
+		paramEDIChangeID:          changes.change.ID.String(),
+		paramEDIReviewDecision:    reviewReject,
+		changepreview.FieldReason: "The partner's 214 contradicts the driver's arrival",
 	})
 	rejectPreview := agenttoolstest.PreviewWithoutWrites(
 		t,

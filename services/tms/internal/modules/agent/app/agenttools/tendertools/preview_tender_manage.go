@@ -4,7 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/carrierpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/shipmenttools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -39,15 +40,15 @@ func (t *CancelTenderTool) Preview(
 	summary := "Would withdraw this tender. Reason: " + request.Reason
 	plan, err := t.tenders.PreviewCancel(ctx, request)
 	if err != nil {
-		if common.IsRefusal(err) || errortypes.IsNotFoundError(err) {
-			return common.WarnWouldFail(toolpreview.Build(summary), err), nil
+		if changepreview.IsRefusal(err) || errortypes.IsNotFoundError(err) {
+			return changepreview.WarnWouldFail(toolpreview.Build(summary), err), nil
 		}
 
 		return nil, err
 	}
 
 	tenderChange, err := tenderStateChange(plan.Before, plan.After,
-		common.FieldStatus, "cancellationReason", "canceledAt")
+		changepreview.FieldStatus, "cancellationReason", "canceledAt")
 	if err != nil {
 		return nil, err
 	}
@@ -76,8 +77,8 @@ func (t *CancelTenderTool) Preview(
 		"Would withdraw the %s tender: %s carriers hold would be withdrawn and their answer "+
 			"links stop working, and %s not yet asked would be skipped. Reason: %s",
 		plan.Before.Mode,
-		common.CountOf(withdrawn, "offer"),
-		common.CountOf(skipped, "carrier"),
+		changepreview.CountOf(withdrawn, "offer"),
+		changepreview.CountOf(skipped, "carrier"),
 		request.Reason,
 	)
 	if plan.Before.Status == tender.StatusNeedsReview {
@@ -108,8 +109,8 @@ func (t *RecordTenderResponseTool) Preview(
 	summary := fmt.Sprintf("Would record the carrier's %s.", responseWord(request.Action))
 	plan, err := t.tenders.PreviewResponse(ctx, request)
 	if err != nil {
-		if common.IsRefusal(err) || errortypes.IsNotFoundError(err) {
-			return common.WarnWouldFail(toolpreview.Build(summary), err), nil
+		if changepreview.IsRefusal(err) || errortypes.IsNotFoundError(err) {
+			return changepreview.WarnWouldFail(toolpreview.Build(summary), err), nil
 		}
 
 		return nil, err
@@ -118,7 +119,7 @@ func (t *RecordTenderResponseTool) Preview(
 	changes := make([]*agent.RecordChange, 0, len(plan.Tender.Offers)+2)
 	if plan.Tender.Status != plan.TenderAfter.Status {
 		tenderChange, tErr := tenderStateChange(plan.Tender, plan.TenderAfter,
-			common.FieldStatus, "acceptedOfferId", "acceptedAt", "exhaustedAt")
+			changepreview.FieldStatus, "acceptedOfferId", "acceptedAt", "exhaustedAt")
 		if tErr != nil {
 			return nil, tErr
 		}
@@ -197,15 +198,15 @@ func (t *RecordTenderResponseTool) previewBounce(
 		request.Reason
 	plan, err := t.tenders.PreviewBounce(ctx, request)
 	if err != nil {
-		if common.IsRefusal(err) || errortypes.IsNotFoundError(err) {
-			return common.WarnWouldFail(toolpreview.Build(summary), err), nil
+		if changepreview.IsRefusal(err) || errortypes.IsNotFoundError(err) {
+			return changepreview.WarnWouldFail(toolpreview.Build(summary), err), nil
 		}
 
 		return nil, err
 	}
 
 	tenderChange, err := tenderStateChange(plan.Before, plan.After,
-		common.FieldStatus, "acceptedOfferId", "bounceCount")
+		changepreview.FieldStatus, "acceptedOfferId", "bounceCount")
 	if err != nil {
 		return nil, err
 	}
@@ -227,14 +228,14 @@ func (t *RecordTenderResponseTool) previewBounce(
 	case plan.Before.Mode.IsSequential():
 		changes = append(changes, tenderOfferSendChange(plan.Reoffers[0]))
 		summary += fmt.Sprintf(" The tender goes on to the %s it had not reached, starting "+
-			"with %s.", common.CountOf(len(plan.Reoffers), "carrier"),
+			"with %s.", changepreview.CountOf(len(plan.Reoffers), "carrier"),
 			shipmenttools.CarrierNameOfOffer(plan.Reoffers[0]))
 	default:
 		for _, offer := range plan.Reoffers {
 			changes = append(changes, tenderOfferSendChange(offer))
 		}
 		summary += fmt.Sprintf(" The load is offered again to the %s whose offers the "+
-			"acceptance cut short.", common.CountOf(len(plan.Reoffers), "carrier"))
+			"acceptance cut short.", changepreview.CountOf(len(plan.Reoffers), "carrier"))
 	}
 	summary += " Reason: " + request.Reason
 
@@ -246,7 +247,7 @@ func (t *RecordTenderResponseTool) previewBounce(
 
 func rateWords(method shipment.CarrierRateMethod, rate decimal.Decimal) string {
 	return money.FormatMinor(money.MinorUnits(rate), money.DefaultCurrencyCode) + " " +
-		common.RateMethodWords(method)
+		carrierpreview.RateMethodWords(method)
 }
 
 // tenderStateChange is the tender before and after, limited to the fields
@@ -259,7 +260,7 @@ func tenderStateChange(
 		Resource: permission.ResourceTender,
 		ID:       before.ID,
 		Label:    string(before.Mode) + " tender",
-		Version:  common.PreviewVersion(before.Version),
+		Version:  changepreview.PreviewVersion(before.Version),
 	}, before, after,
 		toolpreview.Only(fields...),
 		toolpreview.Volatile("canceledAt", "acceptedAt", "exhaustedAt"),
@@ -294,12 +295,12 @@ func tenderOfferChanges(before, after *tender.Tender) ([]*agent.RecordChange, er
 					offer.Rank,
 					shipmenttools.CarrierNameOfOffer(prior),
 				),
-				Version: common.PreviewVersion(prior.Version),
+				Version: changepreview.PreviewVersion(prior.Version),
 			},
 			prior,
 			offer,
 			toolpreview.Only(
-				common.FieldStatus,
+				changepreview.FieldStatus,
 				"responseSource",
 				fieldDeclineReason,
 				fieldCounterRate,
@@ -327,7 +328,7 @@ func tenderOfferSendChange(offer *tender.TenderOffer) *agent.RecordChange {
 		To:      []string{offer.RecipientEmail},
 		Subject: "Load tender offer",
 		Body: money.FormatMinor(money.MinorUnits(offer.Rate), money.DefaultCurrencyCode) +
-			" " + common.RateMethodWords(offer.RateMethod) + " offered.",
+			" " + carrierpreview.RateMethodWords(offer.RateMethod) + " offered.",
 	}
 	if offer.Channel == tender.ChannelEDI {
 		message.Channel = agent.MessageChannelEDI
@@ -356,7 +357,7 @@ func attachOfferPay(changes []*agent.RecordChange, offer *tender.TenderOffer, ca
 			money.DefaultCurrencyCode,
 			agent.MoneyLine{
 				Label: "Carrier pay to " + carrier,
-				After: common.KnownAmount(offer.AgreedRate()),
+				After: changepreview.KnownAmount(offer.AgreedRate()),
 			},
 		), toolpreview.SensitiveAs("rate"))
 

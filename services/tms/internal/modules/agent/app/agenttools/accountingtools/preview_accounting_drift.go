@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingdriftports"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -55,7 +55,7 @@ func driftFindingRecord(finding *accountingsync.AccountingDriftFinding) toolprev
 		Resource: permission.ResourceAccountingSync,
 		ID:       finding.ID,
 		Label:    driftLabel(finding),
-		Version:  common.PreviewVersion(finding.Version),
+		Version:  changepreview.PreviewVersion(finding.Version),
 	}
 }
 
@@ -88,7 +88,7 @@ func (t *ResolveAccountingDriftTool) Preview(
 	}
 
 	now := timeutils.NowUnix()
-	plan, err := common.PlanUpdate(
+	plan, err := changepreview.PlanUpdate(
 		driftFindingRecord(fix.Finding),
 		fix.Finding,
 		func(fixed *accountingsync.AccountingDriftFinding) error {
@@ -117,7 +117,7 @@ func (t *DismissAccountingDriftTool) Preview(
 	}
 
 	now := timeutils.NowUnix()
-	plan, err := common.PlanUpdate(
+	plan, err := changepreview.PlanUpdate(
 		driftFindingRecord(fix.Finding),
 		fix.Finding,
 		func(dismissed *accountingsync.AccountingDriftFinding) error {

@@ -4,7 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -59,13 +61,13 @@ type RateSimulationKeeper interface {
 func rateImportRequestFrom(
 	params *agenttoolports.ToolExecuteParams,
 ) (*rateimportservice.CommitRequest, error) {
-	id, err := common.RequirePulid(params.Params, paramRateImportID)
+	id, err := toolparams.RequirePulid(params.Params, paramRateImportID)
 	if err != nil {
 		return nil, err
 	}
 
 	return &rateimportservice.CommitRequest{
-		TenantInfo:        common.TenantFrom(*params),
+		TenantInfo:        toolparams.TenantFrom(*params),
 		RateImportBatchID: id,
 	}, nil
 }
@@ -75,16 +77,16 @@ func rateImportRecord(batch *rateimport.RateImportBatch) toolpreview.Record {
 		Resource: permission.ResourceRateAgreement,
 		ID:       batch.ID,
 		Label:    batch.FileName,
-		Version:  common.PinnedVersion(batch.Version),
+		Version:  changepreview.PinnedVersion(batch.Version),
 	}
 }
 
 func targetRateImport(params map[string]any) (agenttoolports.ToolTarget, bool) {
-	return common.TargetOf(params, paramRateImportID, permission.ResourceRateAgreement)
+	return toolparams.TargetOf(params, paramRateImportID, permission.ResourceRateAgreement)
 }
 
 func NewCommitRateImportTool(imports RateImportKeeper) agenttoolports.AgentTool {
-	return common.NewReceivableTool(rateMoneySpec(&common.ReceivableSpec{
+	return toolspec.NewReceivableTool(rateMoneySpec(&toolspec.ReceivableSpec{
 		Name:   "rate_commit_import",
 		Recipe: []string{"rate_list_imports", "rate_commit_import"},
 		Description: "Propose applying a reviewed rate sheet to its agreement from the " +
@@ -103,7 +105,7 @@ func NewCommitRateImportTool(imports RateImportKeeper) agenttoolports.AgentTool 
 		Required:    []string{paramRateImportID},
 		Target:      targetRateImport,
 		SearchTerms: []string{"rate sheet", "apply", "uploaded", "import"},
-	}), common.ReceivablePlan[*rateimportservice.CommitRequest, *rateimportservice.CommitPlan]{
+	}), toolspec.ReceivablePlan[*rateimportservice.CommitRequest, *rateimportservice.CommitPlan]{
 		Request: rateImportRequestFrom,
 		Plan: func(
 			ctx context.Context,
@@ -135,12 +137,12 @@ func NewCommitRateImportTool(imports RateImportKeeper) agenttoolports.AgentTool 
 				"Would apply the rate sheet %s from %s: close out %s and add %s. Shipments "+
 					"from that day are charged at the new rates.",
 				plan.Batch.FileName,
-				common.DayLabel(plan.Batch.EffectiveFrom),
-				common.CountOf(
+				changepreview.DayLabel(plan.Batch.EffectiveFrom),
+				changepreview.CountOf(
 					len(plan.SupersededIDs),
 					"lane",
 				),
-				common.CountOf(len(plan.Rules), "lane"),
+				changepreview.CountOf(len(plan.Rules), "lane"),
 			), change), nil
 		},
 		Run: func(
@@ -160,7 +162,7 @@ type rateImportView struct {
 }
 
 func NewDiscardRateImportTool(imports RateImportKeeper) agenttoolports.AgentTool {
-	return common.NewReceivableTool(common.FuelInternalSpec(&common.ReceivableSpec{
+	return toolspec.NewReceivableTool(toolspec.FuelInternalSpec(&toolspec.ReceivableSpec{
 		Name: "rate_discard_import",
 		Description: "Discard a rate sheet that was read and should not be applied, such as " +
 			"last month's file uploaded again. Its agreement is not changed.",
@@ -177,7 +179,7 @@ func NewDiscardRateImportTool(imports RateImportKeeper) agenttoolports.AgentTool
 		},
 		Required: []string{paramRateImportID},
 		Target:   targetRateImport,
-	}), common.ReceivablePlan[*rateimportservice.CommitRequest, *rateimportservice.BatchChange]{
+	}), toolspec.ReceivablePlan[*rateimportservice.CommitRequest, *rateimportservice.BatchChange]{
 		Request: rateImportRequestFrom,
 		Plan: func(
 			ctx context.Context,
@@ -227,23 +229,27 @@ var simulationParties = agenttoolschema.Source(
 func rateSimulationFrom(
 	params *agenttoolports.ToolExecuteParams,
 ) (*ratesimulation.RateSimulation, error) {
-	agreementID, err := common.RequirePulid(params.Params, paramRateAgreementID)
+	agreementID, err := toolparams.RequirePulid(params.Params, paramRateAgreementID)
 	if err != nil {
 		return nil, err
 	}
-	name, err := common.RequireBoundedText(params.Params, paramSimulationName, maxSimulationName)
+	name, err := toolparams.RequireBoundedText(
+		params.Params,
+		paramSimulationName,
+		maxSimulationName,
+	)
 	if err != nil {
 		return nil, err
 	}
-	description, err := common.BoundedText(params.Params, paramDescription, maxSimulationText)
+	description, err := toolparams.BoundedText(params.Params, paramDescription, maxSimulationText)
 	if err != nil {
 		return nil, err
 	}
-	from, err := common.RequireDay(params.Params, paramSampleFrom)
+	from, err := toolparams.RequireDay(params.Params, paramSampleFrom)
 	if err != nil {
 		return nil, err
 	}
-	through, err := common.RequireDay(params.Params, paramSampleTo)
+	through, err := toolparams.RequireDay(params.Params, paramSampleTo)
 	if err != nil {
 		return nil, err
 	}
@@ -255,9 +261,9 @@ func rateSimulationFrom(
 		Description:     description,
 		PartyType:       rateagreement.PartyTypeCustomer,
 		SampleFrom:      from,
-		SampleTo:        through + common.SecondsPerDay,
+		SampleTo:        through + toolparams.SecondsPerDay,
 	}
-	if party, given, partyErr := common.OptionalEnum(
+	if party, given, partyErr := toolparams.OptionalEnum(
 		params.Params, paramPartyType, simulationParties.Values,
 	); partyErr != nil {
 		return nil, partyErr
@@ -265,7 +271,7 @@ func rateSimulationFrom(
 		simulation.PartyType = party
 	}
 	if _, given := params.Params[paramSampleLimit]; given {
-		limit, limitErr := common.RequireIntInRange(
+		limit, limitErr := toolparams.RequireIntInRange(
 			params.Params,
 			paramSampleLimit,
 			1,
@@ -281,7 +287,7 @@ func rateSimulationFrom(
 }
 
 func NewRunRateSimulationTool(simulations RateSimulationKeeper) agenttoolports.AgentTool {
-	return common.NewReportingReceivableTool(common.FuelInternalSpec(&common.ReceivableSpec{
+	return toolspec.NewReportingReceivableTool(toolspec.FuelInternalSpec(&toolspec.ReceivableSpec{
 		Name: "rate_run_simulation",
 		Description: "Replay past shipments against a rate agreement, usually a draft, to see " +
 			"what it would have charged or paid next to what they actually were. It runs in " +
@@ -296,9 +302,12 @@ func NewRunRateSimulationTool(simulations RateSimulationKeeper) agenttoolports.A
 			"background; no shipment, rate or invoice changes.",
 		Properties: map[string]any{
 			paramRateAgreementID: rateAgreementIDProperty(),
-			paramSimulationName: common.StringProperty("What the simulation is called, such as "+
-				"Acme renewal against Q3.", maxSimulationName),
-			paramDescription: common.StringProperty(
+			paramSimulationName: toolparams.StringProperty(
+				"What the simulation is called, such as "+
+					"Acme renewal against Q3.",
+				maxSimulationName,
+			),
+			paramDescription: toolparams.StringProperty(
 				"What it is meant to answer.",
 				maxSimulationText,
 			),
@@ -306,15 +315,17 @@ func NewRunRateSimulationTool(simulations RateSimulationKeeper) agenttoolports.A
 				"charged or what carriers are paid. Defaults to Customer.", simulationParties),
 			paramSampleFrom: agenttoolschema.Date("The first ship day to replay."),
 			paramSampleTo:   agenttoolschema.Date("The last ship day to replay."),
-			paramSampleLimit: toolschema.KeepEmpty(common.IntegerProperty("The most shipments to "+
-				"replay. Leave it out for every shipment in the window.", 1, maxSampleShipments)),
+			paramSampleLimit: toolschema.KeepEmpty(
+				toolparams.IntegerProperty("The most shipments to "+
+					"replay. Leave it out for every shipment in the window.", 1, maxSampleShipments),
+			),
 		},
 		Required: []string{
 			paramRateAgreementID, paramSimulationName, paramSampleFrom, paramSampleTo,
 		},
 		Target:      targetRateAgreement,
 		SearchTerms: []string{"simulate", "what if", "replay", "backtest", "renewal"},
-	}), common.ReceivablePlan[*ratesimulation.RateSimulation, *ratesimulationservice.CreatePlan]{
+	}), toolspec.ReceivablePlan[*ratesimulation.RateSimulation, *ratesimulationservice.CreatePlan]{
 		Request: rateSimulationFrom,
 		Plan: func(
 			ctx context.Context,
@@ -334,8 +345,8 @@ func NewRunRateSimulationTool(simulations RateSimulationKeeper) agenttoolports.A
 				"Would replay %s shipments shipped %s to %s against the %s rate agreement %s, "+
 					"in the background; nothing is re-rated.",
 				string(plan.Simulation.PartyType),
-				common.DayLabel(plan.Simulation.SampleFrom),
-				common.DayLabel(plan.Simulation.SampleTo-common.SecondsPerDay),
+				changepreview.DayLabel(plan.Simulation.SampleFrom),
+				changepreview.DayLabel(plan.Simulation.SampleTo-toolparams.SecondsPerDay),
 				plan.Agreement.Status,
 				plan.Agreement.Code,
 			)), nil
@@ -358,7 +369,7 @@ func NewRunRateSimulationTool(simulations RateSimulationKeeper) agenttoolports.A
 					paramRateSimulationID: created.ID.String(),
 					paramRateAgreementID:  created.RateAgreementID.String(),
 				},
-				Record: common.RecordOf(rateAgreementRecordEntity, created.RateAgreementID),
+				Record: changepreview.RecordOf(rateAgreementRecordEntity, created.RateAgreementID),
 			}, nil
 		},
 	})

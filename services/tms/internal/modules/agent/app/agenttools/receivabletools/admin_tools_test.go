@@ -6,7 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/alerttools"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/insighttools"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/insight"
@@ -273,7 +273,7 @@ func TestRestoreInsight_OnlyADismissedFindingTheReaderMaySee(t *testing.T) {
 		agenttoolstest.FieldByPath(
 			t,
 			agenttoolstest.PreviewChange(t, preview, 0),
-			common.FieldStatus,
+			changepreview.FieldStatus,
 		).After,
 	)
 	require.NoError(t, tool.Execute(t.Context(), params))
@@ -435,13 +435,13 @@ func TestTableChangeAlertTools_ActOnlyOnTheCallersOwnAlert(t *testing.T) {
 
 	status := alerttools.NewSetTableChangeAlertStatusTool(alerts)
 	require.NoError(t, status.Execute(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
-		alerttools.ParamAlertID: alerts.stored.ID.String(),
-		common.FieldStatus:      "Paused",
+		alerttools.ParamAlertID:   alerts.stored.ID.String(),
+		changepreview.FieldStatus: "Paused",
 	})))
 	assert.True(t, alerts.paused)
 	require.NoError(t, status.Execute(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
-		alerttools.ParamAlertID: alerts.stored.ID.String(),
-		common.FieldStatus:      "Active",
+		alerttools.ParamAlertID:   alerts.stored.ID.String(),
+		changepreview.FieldStatus: "Active",
 	})))
 	assert.True(t, alerts.resumed)
 

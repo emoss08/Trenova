@@ -3,7 +3,10 @@ package inboundtools
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/outboundpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -33,7 +36,7 @@ func (t *ReplyToInboundMessageTool) compose(
 	ctx context.Context,
 	params *agenttoolports.ToolExecuteParams,
 ) (*composedReply, error) {
-	if err := common.GuardExecute(t, *params); err != nil {
+	if err := toolguard.GuardExecute(t, *params); err != nil {
 		return nil, err
 	}
 
@@ -42,7 +45,7 @@ func (t *ReplyToInboundMessageTool) compose(
 		return nil, err
 	}
 
-	tenant := common.TenantFrom(*params)
+	tenant := toolparams.TenantFrom(*params)
 	data := documenttemplate.AgentEmailContext{
 		AgentSubject: reply.subject,
 		AgentBody:    reply.body,
@@ -99,7 +102,7 @@ func (t *ReplyToInboundMessageTool) Preview(
 	}
 	message := composed.reply.message
 
-	sender, err := common.ResolveEmailSender(ctx, t.deps.senders, composed.send)
+	sender, err := outboundpreview.ResolveEmailSender(ctx, t.deps.senders, composed.send)
 	if err != nil {
 		return nil, err
 	}
@@ -110,9 +113,9 @@ func (t *ReplyToInboundMessageTool) Preview(
 			ID:       message.ID,
 			Label:    message.FromAddress,
 		},
-		common.EmailMessagePreview(
+		outboundpreview.EmailMessagePreview(
 			sender,
-			common.RenderedEmailPreview(composed.send, composed.versionID),
+			outboundpreview.RenderedEmailPreview(composed.send, composed.versionID),
 		),
 	)
 
@@ -121,7 +124,7 @@ func (t *ReplyToInboundMessageTool) Preview(
 			Resource: permission.ResourceInboundMessage,
 			ID:       message.ID,
 			Label:    describeInboundMessage(message),
-			Version:  common.PinnedVersion(message.Version),
+			Version:  changepreview.PinnedVersion(message.Version),
 		},
 		message,
 		func(after *inboundmessage.InboundMessage) error {
@@ -148,8 +151,8 @@ func (t *ReplyToInboundMessageTool) Preview(
 		send,
 		settled,
 	)
-	common.WarnSuppressedRecipients(preview, sender)
-	common.WarnSensitiveContent(preview, composed.reply.body)
+	outboundpreview.WarnSuppressedRecipients(preview, sender)
+	outboundpreview.WarnSensitiveContent(preview, composed.reply.body)
 
 	return preview, nil
 }

@@ -6,7 +6,8 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -88,7 +89,7 @@ func (t *TransferToBillingTool) previewPlan(
 	}
 
 	return t.shipments.PlanBillingTransfers(ctx, &shipmentbillingports.PlanBillingTransfersRequest{
-		TenantInfo:                  common.TenantFrom(*params),
+		TenantInfo:                  toolparams.TenantFrom(*params),
 		ShipmentIDs:                 checked,
 		MarkCompletedReadyToInvoice: request.markReady,
 	})
@@ -153,7 +154,7 @@ func transferChange(
 		Label:    label,
 	}
 	if decision.Version > 0 {
-		record.Version = common.PinnedVersion(decision.Version)
+		record.Version = changepreview.PinnedVersion(decision.Version)
 	}
 
 	return toolpreview.Changed(record, before, &after, toolpreview.Labels(transferLabels))
@@ -216,7 +217,7 @@ func transferSummary(
 		return fmt.Sprintf(
 			"Would start a background transfer of %s to billing as %s. Of the %d "+
 				"checked, %s.",
-			common.CountOf(len(request.shipmentIDs), "shipment"),
+			changepreview.CountOf(len(request.shipmentIDs), "shipment"),
 			request.billType,
 			len(plan.Decisions),
 			counts,
@@ -225,7 +226,7 @@ func transferSummary(
 
 	return fmt.Sprintf(
 		"Would transfer %s to billing as %s: %s.",
-		common.CountOf(len(request.shipmentIDs), "shipment"),
+		changepreview.CountOf(len(request.shipmentIDs), "shipment"),
 		request.billType,
 		counts,
 	)

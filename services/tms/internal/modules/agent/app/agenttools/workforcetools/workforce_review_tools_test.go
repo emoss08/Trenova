@@ -5,7 +5,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -140,10 +141,10 @@ func TestStartPerformanceReview_OpensADraft(t *testing.T) {
 	reviews := newFakeReviews()
 	tool := newStartPerformanceReviewTool(reviews)
 	params := agenttoolstest.ExecuteParams(map[string]any{
-		common.ParamWorkerID:    reviews.review.WorkerID.String(),
-		paramReviewTemplate:     pulid.MustNew("prt_").String(),
-		common.FieldPeriodStart: "2026-01-01",
-		common.FieldPeriodEnd:   "2026-12-31",
+		toolparams.ParamWorkerID:       reviews.review.WorkerID.String(),
+		paramReviewTemplate:            pulid.MustNew("prt_").String(),
+		changepreview.FieldPeriodStart: "2026-01-01",
+		changepreview.FieldPeriodEnd:   "2026-12-31",
 	})
 
 	preview := agenttoolstest.PreviewWithoutWrites(

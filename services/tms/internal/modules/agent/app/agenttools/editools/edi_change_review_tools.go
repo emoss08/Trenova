@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -124,7 +126,7 @@ func (t *EdiChangeReviewTool) ParamSchema() map[string]any {
 				"as it is.",
 			ediReviewDecisions,
 		),
-		common.FieldReason: map[string]any{
+		changepreview.FieldReason: map[string]any{
 			toolschema.KeyType:      toolschema.TypeString,
 			toolschema.KeyMaxLength: maxChangeReviewReasonChars,
 			toolschema.KeyDescription: "Why, in a sentence the other side reads with the " +
@@ -150,33 +152,33 @@ func (t *EdiChangeReviewTool) Policy() agenttoolports.ToolPolicy {
 }
 
 func (t *EdiChangeReviewTool) Target(params map[string]any) (agenttoolports.ToolTarget, bool) {
-	return common.TargetOf(params, paramEDIChangeID, permission.ResourceEDI)
+	return toolparams.TargetOf(params, paramEDIChangeID, permission.ResourceEDI)
 }
 
 func (t *EdiChangeReviewTool) call(
 	params *agenttoolports.ToolExecuteParams,
 ) (*changeReviewCall, error) {
-	if err := common.GuardPreview(t, params); err != nil {
+	if err := toolguard.GuardPreview(t, params); err != nil {
 		return nil, err
 	}
 
-	changeID, err := common.RequirePulid(params.Params, paramEDIChangeID)
+	changeID, err := toolparams.RequirePulid(params.Params, paramEDIChangeID)
 	if err != nil {
 		return nil, err
 	}
 
-	decision := common.OptionalString(params.Params, paramEDIReviewDecision)
+	decision := toolparams.OptionalString(params.Params, paramEDIReviewDecision)
 	if decision != reviewApply && decision != reviewReject {
 		return nil, fmt.Errorf(
 			"parameter %q must be Apply or Reject, not %q", paramEDIReviewDecision, decision,
 		)
 	}
 
-	reason := strings.TrimSpace(common.OptionalString(params.Params, common.FieldReason))
+	reason := strings.TrimSpace(toolparams.OptionalString(params.Params, changepreview.FieldReason))
 	if len(reason) > maxChangeReviewReasonChars {
 		return nil, fmt.Errorf(
 			"parameter %q is %d characters; a review keeps at most %d",
-			common.FieldReason, len(reason), maxChangeReviewReasonChars,
+			changepreview.FieldReason, len(reason), maxChangeReviewReasonChars,
 		)
 	}
 
@@ -184,7 +186,7 @@ func (t *EdiChangeReviewTool) call(
 		changeID: changeID,
 		apply:    decision == reviewApply,
 		reason:   reason,
-		tenant:   common.TenantFrom(*params),
+		tenant:   toolparams.TenantFrom(*params),
 		actor:    params.Actor,
 	}, nil
 }
@@ -217,7 +219,7 @@ func (t *EdiChangeReviewTool) Execute(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
-	if err := common.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
 	}
 	if !params.ApprovedFromProposal() {
@@ -246,7 +248,7 @@ func (c *changeReviewCall) verb() string {
 		return "apply"
 	}
 
-	return common.VerbReject
+	return changepreview.VerbReject
 }
 
 func NewReviewEDITenderChangeTool(reviewer tenderChangeReviewer) agenttoolports.AgentTool {

@@ -4,7 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -32,16 +34,19 @@ type InsightRestorer interface {
 func restoreInsightRequest(
 	params *agenttoolports.ToolExecuteParams,
 ) (*insightports.RestoreInsightRequest, error) {
-	id, err := common.RequirePulid(params.Params, ParamInsightID)
+	id, err := toolparams.RequirePulid(params.Params, ParamInsightID)
 	if err != nil {
 		return nil, err
 	}
 
-	return &insightports.RestoreInsightRequest{ID: id, TenantInfo: common.TenantFrom(*params)}, nil
+	return &insightports.RestoreInsightRequest{
+		ID:         id,
+		TenantInfo: toolparams.TenantFrom(*params),
+	}, nil
 }
 
 func NewRestoreInsightTool(insights InsightRestorer) agenttoolports.AgentTool {
-	return common.NewReceivableTool(&common.ReceivableSpec{
+	return toolspec.NewReceivableTool(&toolspec.ReceivableSpec{
 		Name: "insight_restore",
 		Description: "Put a dismissed insight back on the list of findings to act on, when " +
 			"the reason it was dismissed no longer holds. Find it with insight_list and " +
@@ -61,9 +66,9 @@ func NewRestoreInsightTool(insights InsightRestorer) agenttoolports.AgentTool {
 		Required:    []string{ParamInsightID},
 		SearchTerms: []string{"restore insight", "undismiss", "reopen finding"},
 		Target: func(params map[string]any) (agenttoolports.ToolTarget, bool) {
-			return common.TargetOf(params, ParamInsightID, permission.ResourceInsight)
+			return toolparams.TargetOf(params, ParamInsightID, permission.ResourceInsight)
 		},
-	}, common.ReceivablePlan[*insightports.RestoreInsightRequest, *kernelports.RecordChange[insight.Insight]]{
+	}, toolspec.ReceivablePlan[*insightports.RestoreInsightRequest, *kernelports.RecordChange[insight.Insight]]{
 		Request: restoreInsightRequest,
 		Settle: func(
 			ctx context.Context,
@@ -97,7 +102,7 @@ func NewRestoreInsightTool(insights InsightRestorer) agenttoolports.AgentTool {
 				Resource: permission.ResourceInsight,
 				ID:       change.Before.ID,
 				Label:    change.Before.Headline,
-				Version:  common.PinnedVersion(change.Before.Version),
+				Version:  changepreview.PinnedVersion(change.Before.Version),
 			}, change.Before, change.After, toolpreview.Only(dismissedInsightFields...))
 			if err != nil {
 				return nil, err

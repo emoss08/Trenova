@@ -5,8 +5,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/masterdatatools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/shipmentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -35,7 +36,7 @@ func (t *UnassignMovesTool) Preview(
 	for _, request := range requests {
 		plan, pErr := t.assignments.PreviewUnassign(ctx, request)
 		if pErr != nil {
-			if !common.IsRefusal(pErr) && !errortypes.IsNotFoundError(pErr) {
+			if !changepreview.IsRefusal(pErr) && !errortypes.IsNotFoundError(pErr) {
 				return nil, pErr
 			}
 			refusals = append(refusals,
@@ -50,7 +51,7 @@ func (t *UnassignMovesTool) Preview(
 		if rErr != nil {
 			return nil, rErr
 		}
-		coverage, cErr := common.CoverageChanges(
+		coverage, cErr := shipmentpreview.CoverageChanges(
 			plan.ShipmentBefore,
 			plan.ShipmentAfter,
 			request.ShipmentMoveID,
@@ -68,7 +69,7 @@ func (t *UnassignMovesTool) Preview(
 		summary = fmt.Sprintf(
 			"Would take the driver and equipment off %s (%s), leaving each uncovered. "+
 				"The drivers are told the load was taken off them.",
-			common.CountOf(len(shipments), "move"),
+			changepreview.CountOf(len(shipments), "move"),
 			strings.Join(shipments, ", "),
 		)
 	}
@@ -92,11 +93,11 @@ func (t *UpdateMoveStatusTool) Preview(
 	}
 
 	summary := fmt.Sprintf("Would set %s to %s.",
-		common.CountOf(len(request.MoveIDs), "move"), request.Status)
+		changepreview.CountOf(len(request.MoveIDs), "move"), request.Status)
 	plan, err := t.moves.PreviewUpdateStatus(ctx, request)
 	if err != nil {
-		if common.IsRefusal(err) || errortypes.IsNotFoundError(err) {
-			return common.WarnWouldFail(toolpreview.Build(summary), err), nil
+		if changepreview.IsRefusal(err) || errortypes.IsNotFoundError(err) {
+			return changepreview.WarnWouldFail(toolpreview.Build(summary), err), nil
 		}
 
 		return nil, err
@@ -113,7 +114,7 @@ func (t *UpdateMoveStatusTool) Preview(
 			Resource: permission.ResourceShipmentMove,
 			ID:       before.ID,
 			Label:    "Move on " + pros[before.ShipmentID],
-			Version:  common.PreviewVersion(before.Version),
+			Version:  changepreview.PreviewVersion(before.Version),
 		}, &moveStatusView{Status: string(before.Status)},
 			&moveStatusView{Status: string(plan.MovesAfter[idx].Status)},
 		)
@@ -125,7 +126,7 @@ func (t *UpdateMoveStatusTool) Preview(
 
 	moved := make([]string, 0, len(plan.ShipmentsBefore))
 	for idx, before := range plan.ShipmentsBefore {
-		change, sErr := common.ShipmentStatusChange(before, plan.ShipmentsAfter[idx])
+		change, sErr := shipmentpreview.ShipmentStatusChange(before, plan.ShipmentsAfter[idx])
 		if sErr != nil {
 			return nil, sErr
 		}

@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/shipmentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -17,23 +19,23 @@ import (
 )
 
 var detectedFailureFields = []string{
-	common.FieldType,
-	common.FieldStatus,
+	changepreview.FieldType,
+	changepreview.FieldStatus,
 	"stopType",
 	"scheduledCutoff",
-	common.FieldActualArrival,
+	changepreview.FieldActualArrival,
 	"gracePeriodMinutes",
 	"lateMinutes",
-	common.FieldReasonCodeID,
-	common.FieldNotes,
+	changepreview.FieldReasonCodeID,
+	changepreview.FieldNotes,
 }
 
 var detectedFailureLabels = map[string]string{
-	"scheduledCutoff":         "Window closed",
-	common.FieldActualArrival: "Arrived",
-	"gracePeriodMinutes":      "Grace period (minutes)",
-	"lateMinutes":             "Minutes late",
-	common.FieldReasonCodeID:  "Reason code",
+	"scheduledCutoff":                "Window closed",
+	changepreview.FieldActualArrival: "Arrived",
+	"gracePeriodMinutes":             "Grace period (minutes)",
+	"lateMinutes":                    "Minutes late",
+	changepreview.FieldReasonCodeID:  "Reason code",
 }
 
 func DetectedFailureOptions() []toolpreview.Option {
@@ -41,7 +43,7 @@ func DetectedFailureOptions() []toolpreview.Option {
 		toolpreview.Only(detectedFailureFields...),
 		toolpreview.Labels(detectedFailureLabels),
 		toolpreview.WithRefs(map[string]permission.Resource{
-			common.FieldReasonCodeID: permission.ResourceServiceFailureReasonCode,
+			changepreview.FieldReasonCodeID: permission.ResourceServiceFailureReasonCode,
 		}),
 	}
 }
@@ -52,8 +54,8 @@ func (t *EvaluateServiceFailuresTool) Preview(
 ) (*agent.ToolPreview, error) {
 	plans, err := t.plans(ctx, &params)
 	if err != nil {
-		if common.IsRefusal(err) {
-			return common.WarnWouldFail(
+		if changepreview.IsRefusal(err) {
+			return changepreview.WarnWouldFail(
 				toolpreview.Build("Would check the shipment's stops for service failures."),
 				err,
 			), nil
@@ -89,7 +91,7 @@ func (t *EvaluateServiceFailuresTool) plans(
 	ctx context.Context,
 	params *agenttoolports.ToolExecuteParams,
 ) ([]*servicefailureports.ServiceFailureDetectionPlan, error) {
-	if err := common.GuardPreview(t, params); err != nil {
+	if err := toolguard.GuardPreview(t, params); err != nil {
 		return nil, err
 	}
 
@@ -160,9 +162,9 @@ func detectedFailureChanges(
 			Resource: permission.ResourceShipment,
 			ID:       plan.Shipment.ID,
 			Label:    plan.Shipment.ProNumber,
-			Version:  common.PreviewVersion(plan.Shipment.Version),
-		}, &common.ShipmentStatusView{Status: string(plan.Shipment.Status)},
-			&common.ShipmentStatusView{Status: string(shipment.StatusDelayed)},
+			Version:  changepreview.PreviewVersion(plan.Shipment.Version),
+		}, &shipmentpreview.ShipmentStatusView{Status: string(plan.Shipment.Status)},
+			&shipmentpreview.ShipmentStatusView{Status: string(shipment.StatusDelayed)},
 		)
 		if err != nil {
 			return nil, err
@@ -180,7 +182,7 @@ func detectedFailureChange(
 	label := fmt.Sprintf(
 		"%s, %s",
 		stringutils.HumanizeCamelCaseSentence(string(detected.Failure.Type)),
-		common.StopLabel(shipmentStop(source, detected.Failure.StopID)),
+		shipmentpreview.StopLabel(shipmentStop(source, detected.Failure.StopID)),
 	)
 	if detected.Existing == nil {
 		return toolpreview.Create(toolpreview.Record{
@@ -193,7 +195,7 @@ func detectedFailureChange(
 		Resource: permission.ResourceServiceFailure,
 		ID:       detected.Existing.ID,
 		Label:    stringutils.FirstNonEmpty(detected.Existing.Number, label),
-		Version:  common.PreviewVersion(detected.Existing.Version),
+		Version:  changepreview.PreviewVersion(detected.Existing.Version),
 	}, detected.Existing, detected.Failure, DetectedFailureOptions()...)
 }
 
@@ -205,7 +207,7 @@ func shipmentStop(source *shipment.Shipment, stopID pulid.ID) *shipment.Stop {
 		if move == nil {
 			continue
 		}
-		if stop := common.FindStop(move, stopID); stop != nil {
+		if stop := shipmentpreview.FindStop(move, stopID); stop != nil {
 			return stop
 		}
 	}

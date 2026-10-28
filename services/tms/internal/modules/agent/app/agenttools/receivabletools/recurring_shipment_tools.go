@@ -6,7 +6,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/shipmentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -65,27 +68,27 @@ var seriesExceptionPolicies = agenttoolschema.Source(
 )
 
 var seriesFields = []string{
-	paramSeriesName, common.FieldDescription, paramSourceShipmentID, common.FieldCustomerID,
-	ParamCronExpression, ParamTimezone, common.FieldRecurringStart, common.FieldRecurringEnd,
+	paramSeriesName, changepreview.FieldDescription, paramSourceShipmentID, changepreview.FieldCustomerID,
+	ParamCronExpression, ParamTimezone, changepreview.FieldRecurringStart, changepreview.FieldRecurringEnd,
 	paramMaxOccurrences, paramLeadTimeDays, paramSkipWeekends, paramExceptionPolicy,
-	paramBlackoutDates, paramAutoGenerate, common.FieldStatus, "nextOccurrenceAt",
+	paramBlackoutDates, paramAutoGenerate, changepreview.FieldStatus, "nextOccurrenceAt",
 }
 
 var seriesEditable = []string{
-	paramSeriesName, common.FieldDescription, ParamCronExpression, ParamTimezone,
-	common.FieldRecurringStart, common.FieldRecurringEnd, paramMaxOccurrences, paramLeadTimeDays,
+	paramSeriesName, changepreview.FieldDescription, ParamCronExpression, ParamTimezone,
+	changepreview.FieldRecurringStart, changepreview.FieldRecurringEnd, paramMaxOccurrences, paramLeadTimeDays,
 	paramSkipWeekends, paramExceptionPolicy, paramBlackoutDates, paramAutoGenerate,
 }
 
 var seriesRefs = map[string]permission.Resource{
-	paramSourceShipmentID:  permission.ResourceShipment,
-	common.FieldCustomerID: permission.ResourceCustomer,
+	paramSourceShipmentID:         permission.ResourceShipment,
+	changepreview.FieldCustomerID: permission.ResourceCustomer,
 }
 
 var seriesTypes = map[string]assistantartifact.DisplayType{
-	common.FieldRecurringStart: assistantartifact.DisplayDate,
-	common.FieldRecurringEnd:   assistantartifact.DisplayDate,
-	"nextOccurrenceAt":         assistantartifact.DisplayDateTime,
+	changepreview.FieldRecurringStart: assistantartifact.DisplayDate,
+	changepreview.FieldRecurringEnd:   assistantartifact.DisplayDate,
+	"nextOccurrenceAt":                assistantartifact.DisplayDateTime,
 }
 
 type recurringShipmentKeeper interface {
@@ -137,7 +140,11 @@ func recurringShipmentIDProperty(what string) map[string]any {
 }
 
 func targetRecurringShipment(params map[string]any) (agenttoolports.ToolTarget, bool) {
-	return common.TargetOf(params, paramRecurringShipmentID, permission.ResourceRecurringShipment)
+	return toolparams.TargetOf(
+		params,
+		paramRecurringShipmentID,
+		permission.ResourceRecurringShipment,
+	)
 }
 
 func seriesRecord(series *recurringshipment.RecurringShipment) toolpreview.Record {
@@ -145,7 +152,7 @@ func seriesRecord(series *recurringshipment.RecurringShipment) toolpreview.Recor
 		Resource: permission.ResourceRecurringShipment,
 		ID:       series.ID,
 		Label:    "Recurring shipment " + series.Name,
-		Version:  common.PinnedVersion(series.Version),
+		Version:  changepreview.PinnedVersion(series.Version),
 	}
 }
 
@@ -164,33 +171,46 @@ func seriesResult(
 
 func seriesProperties() map[string]any {
 	return map[string]any{
-		paramSeriesName: common.StringProperty("What dispatch calls the series, such as "+
+		paramSeriesName: toolparams.StringProperty("What dispatch calls the series, such as "+
 			"\"Acme weekday Dallas run\".", maxSeriesName),
-		common.FieldDescription: common.StringProperty("Anything a planner should know about it.",
-			common.MaxOperationNoteChars),
-		ParamCronExpression: common.StringProperty("When shipments repeat, as a five-field cron "+
-			"expression read in the series' timezone: \"0 8 * * 1-5\" is 08:00 every "+
-			"weekday. Take it from what the person or customer asked for.",
-			maxCronExpression),
-		ParamTimezone: common.StringProperty("The IANA timezone the schedule is read in, such as "+
-			"America/Chicago.", maxTimezoneName),
-		common.FieldRecurringStart: agenttoolschema.Date(
+		changepreview.FieldDescription: toolparams.StringProperty(
+			"Anything a planner should know about it.",
+			toolparams.MaxOperationNoteChars,
+		),
+		ParamCronExpression: toolparams.StringProperty(
+			"When shipments repeat, as a five-field cron "+
+				"expression read in the series' timezone: \"0 8 * * 1-5\" is 08:00 every "+
+				"weekday. Take it from what the person or customer asked for.",
+			maxCronExpression,
+		),
+		ParamTimezone: toolparams.StringProperty(
+			"The IANA timezone the schedule is read in, such as "+
+				"America/Chicago.",
+			maxTimezoneName,
+		),
+		changepreview.FieldRecurringStart: agenttoolschema.Date(
 			"The first day shipments may be generated, in the " +
 				"series' timezone.",
 		),
-		common.FieldRecurringEnd: agenttoolschema.Date(
+		changepreview.FieldRecurringEnd: agenttoolschema.Date(
 			"The last day shipments may be generated, in the " +
 				"series' timezone. Leave out for no end.",
 		),
-		paramMaxOccurrences: common.IntegerProperty(
+		paramMaxOccurrences: toolparams.IntegerProperty(
 			"Stop after this many shipments. Leave out for "+
 				"no limit.",
 			1,
 			maxSeriesOccurrences,
 		),
-		paramLeadTimeDays: common.IntegerProperty("How many days before each pickup its shipment "+
-			"is created.", 0, recurringshipment.MaxLeadTimeDays),
-		paramSkipWeekends: common.BooleanProperty("Treat Saturday and Sunday like blackout days."),
+		paramLeadTimeDays: toolparams.IntegerProperty(
+			"How many days before each pickup its shipment "+
+				"is created.",
+			0,
+			recurringshipment.MaxLeadTimeDays,
+		),
+		paramSkipWeekends: toolparams.BooleanProperty(
+			"Treat Saturday and Sunday like blackout days.",
+		),
 		paramExceptionPolicy: agenttoolschema.Enum("What a shipment that falls on a blackout "+
 			"day or weekend does: Skip it, or move it to the business day before or after.",
 			seriesExceptionPolicies),
@@ -200,7 +220,7 @@ func seriesProperties() map[string]any {
 			toolschema.KeyMaxItems:    recurringshipment.MaxBlackoutDates,
 			toolschema.KeyItems:       agenttoolschema.Date("A blackout day."),
 		}),
-		paramAutoGenerate: common.BooleanProperty(
+		paramAutoGenerate: toolparams.BooleanProperty(
 			"Create each shipment on schedule without anyone " +
 				"asking. Off, a person generates each one.",
 		),
@@ -223,7 +243,7 @@ func applySeriesArgs(series *recurringshipment.RecurringShipment, params map[str
 		case ParamTimezone:
 			limit = maxTimezoneName
 		}
-		value, err := common.OptionalBoundedText(params, key, limit)
+		value, err := toolparams.OptionalBoundedText(params, key, limit)
 		if err != nil {
 			return err
 		}
@@ -231,10 +251,10 @@ func applySeriesArgs(series *recurringshipment.RecurringShipment, params map[str
 			*target = *value
 		}
 	}
-	description, err := common.OptionalBoundedText(
+	description, err := toolparams.OptionalBoundedText(
 		params,
-		common.FieldDescription,
-		common.MaxOperationNoteChars,
+		changepreview.FieldDescription,
+		toolparams.MaxOperationNoteChars,
 	)
 	if err != nil {
 		return err
@@ -251,7 +271,12 @@ func applySeriesArgs(series *recurringshipment.RecurringShipment, params map[str
 
 func applySeriesFlags(series *recurringshipment.RecurringShipment, params map[string]any) error {
 	if _, given := params[paramMaxOccurrences]; given {
-		limit, err := common.RequireIntInRange(params, paramMaxOccurrences, 1, maxSeriesOccurrences)
+		limit, err := toolparams.RequireIntInRange(
+			params,
+			paramMaxOccurrences,
+			1,
+			maxSeriesOccurrences,
+		)
 		if err != nil {
 			return err
 		}
@@ -259,7 +284,7 @@ func applySeriesFlags(series *recurringshipment.RecurringShipment, params map[st
 		series.MaxOccurrences = &occurrences
 	}
 	if _, given := params[paramLeadTimeDays]; given {
-		days, err := common.RequireIntInRange(params, paramLeadTimeDays, 0,
+		days, err := toolparams.RequireIntInRange(params, paramLeadTimeDays, 0,
 			recurringshipment.MaxLeadTimeDays)
 		if err != nil {
 			return err
@@ -270,7 +295,7 @@ func applySeriesFlags(series *recurringshipment.RecurringShipment, params map[st
 		paramSkipWeekends: &series.SkipWeekends,
 		paramAutoGenerate: &series.AutoGenerate,
 	} {
-		value, err := common.OptionalBoolPointer(params, key)
+		value, err := toolparams.OptionalBoolPointer(params, key)
 		if err != nil {
 			return err
 		}
@@ -278,7 +303,7 @@ func applySeriesFlags(series *recurringshipment.RecurringShipment, params map[st
 			*target = *value
 		}
 	}
-	policy, given, err := common.OptionalEnum(
+	policy, given, err := toolparams.OptionalEnum(
 		params,
 		paramExceptionPolicy,
 		seriesExceptionPolicies.Values,
@@ -294,10 +319,10 @@ func applySeriesFlags(series *recurringshipment.RecurringShipment, params map[st
 }
 
 func applySeriesDays(series *recurringshipment.RecurringShipment, params map[string]any) error {
-	if !common.SendsAny(
+	if !toolparams.SendsAny(
 		params,
-		common.FieldRecurringStart,
-		common.FieldRecurringEnd,
+		changepreview.FieldRecurringStart,
+		changepreview.FieldRecurringEnd,
 		paramBlackoutDates,
 	) {
 		return nil
@@ -308,14 +333,14 @@ func applySeriesDays(series *recurringshipment.RecurringShipment, params map[str
 			"before days can be read", ParamTimezone)
 	}
 
-	start, given, err := optionalLocalDay(params, common.FieldRecurringStart, location)
+	start, given, err := optionalLocalDay(params, changepreview.FieldRecurringStart, location)
 	if err != nil {
 		return err
 	}
 	if given && start != nil {
 		series.StartDate = start.Unix()
 	}
-	end, given, err := optionalLocalDay(params, common.FieldRecurringEnd, location)
+	end, given, err := optionalLocalDay(params, changepreview.FieldRecurringEnd, location)
 	if err != nil {
 		return err
 	}
@@ -328,7 +353,7 @@ func applySeriesDays(series *recurringshipment.RecurringShipment, params map[str
 	}
 	if _, listed := params[paramBlackoutDates]; listed {
 		var days []string
-		if err = common.DecodeParam(params, paramBlackoutDates, &days); err != nil {
+		if err = toolparams.DecodeParam(params, paramBlackoutDates, &days); err != nil {
 			return err
 		}
 		if len(days) > recurringshipment.MaxBlackoutDates {
@@ -336,7 +361,7 @@ func applySeriesDays(series *recurringshipment.RecurringShipment, params map[str
 				paramBlackoutDates, len(days), recurringshipment.MaxBlackoutDates)
 		}
 		for index, day := range days {
-			if _, dayErr := time.Parse(common.DayLayout, strings.TrimSpace(day)); dayErr != nil {
+			if _, dayErr := time.Parse(toolparams.DayLayout, strings.TrimSpace(day)); dayErr != nil {
 				return fmt.Errorf("%s[%d] must be YYYY-MM-DD, got %q", paramBlackoutDates, index,
 					day)
 			}
@@ -366,7 +391,7 @@ func optionalLocalDay(
 	if strings.TrimSpace(text) == "" {
 		return nil, true, nil
 	}
-	day, err := time.ParseInLocation(common.DayLayout, strings.TrimSpace(text), location)
+	day, err := time.ParseInLocation(toolparams.DayLayout, strings.TrimSpace(text), location)
 	if err != nil {
 		return nil, true, fmt.Errorf("parameter %q must be YYYY-MM-DD, got %q", key, text)
 	}
@@ -405,10 +430,12 @@ func renderSeriesChange(
 
 func NewCreateRecurringShipmentTool(series recurringShipmentKeeper) agenttoolports.AgentTool {
 	properties := seriesProperties()
-	properties[paramSourceShipmentID] = common.ShipmentIDProperty("The shipment every one copies " +
-		"(customer, stops, commodities and charges)")
+	properties[paramSourceShipmentID] = shipmentpreview.ShipmentIDProperty(
+		"The shipment every one copies " +
+			"(customer, stops, commodities and charges)",
+	)
 
-	return common.NewReceivableTool(&common.ReceivableSpec{
+	return toolspec.NewReceivableTool(&toolspec.ReceivableSpec{
 		Name:        "shipment_create_recurring",
 		SearchTerms: []string{"every weekday", "repeat every week", "standing lane"},
 		Description: "Start a recurring shipment: a series that copies one saved shipment " +
@@ -427,16 +454,16 @@ func NewCreateRecurringShipmentTool(series recurringShipmentKeeper) agenttoolpor
 		Required: []string{
 			paramSourceShipmentID, paramSeriesName, ParamCronExpression, ParamTimezone,
 		},
-	}, common.ReceivablePlan[*recurringshipment.RecurringShipment, *recurringshipmentservice.SeriesChange]{
+	}, toolspec.ReceivablePlan[*recurringshipment.RecurringShipment, *recurringshipmentservice.SeriesChange]{
 		Request: func(
 			params *agenttoolports.ToolExecuteParams,
 		) (*recurringshipment.RecurringShipment, error) {
-			sourceID, err := common.RequirePulid(params.Params, paramSourceShipmentID)
+			sourceID, err := toolparams.RequirePulid(params.Params, paramSourceShipmentID)
 			if err != nil {
 				return nil, err
 			}
 			for _, key := range []string{paramSeriesName, ParamCronExpression, ParamTimezone} {
-				if _, err = common.RequireString(params.Params, key); err != nil {
+				if _, err = toolparams.RequireString(params.Params, key); err != nil {
 					return nil, err
 				}
 			}
@@ -511,7 +538,7 @@ func NewUpdateRecurringShipmentTool(series recurringShipmentKeeper) agenttoolpor
 	properties := seriesProperties()
 	properties[paramRecurringShipmentID] = recurringShipmentIDProperty("The series to change")
 
-	return common.NewReceivableTool(&common.ReceivableSpec{
+	return toolspec.NewReceivableTool(&toolspec.ReceivableSpec{
 		Name: "shipment_update_recurring",
 		Description: "Change a recurring shipment's name, schedule, timezone, dates, " +
 			"limits, blackout days or whether it generates on its own. Send only what " +
@@ -528,14 +555,14 @@ func NewUpdateRecurringShipmentTool(series recurringShipmentKeeper) agenttoolpor
 		Properties: properties,
 		Required:   []string{paramRecurringShipmentID},
 		Target:     targetRecurringShipment,
-	}, common.ReceivablePlan[*seriesEdit, *recurringshipmentservice.SeriesChange]{
+	}, toolspec.ReceivablePlan[*seriesEdit, *recurringshipmentservice.SeriesChange]{
 		Request: func(params *agenttoolports.ToolExecuteParams) (*seriesEdit, error) {
-			id, err := common.RequirePulid(params.Params, paramRecurringShipmentID)
+			id, err := toolparams.RequirePulid(params.Params, paramRecurringShipmentID)
 			if err != nil {
 				return nil, err
 			}
-			if !common.SendsAny(params.Params, seriesEditable...) {
-				return nil, common.ErrNothingToChange
+			if !toolparams.SendsAny(params.Params, seriesEditable...) {
+				return nil, toolparams.ErrNothingToChange
 			}
 			probe := &recurringshipment.RecurringShipment{Timezone: "UTC"}
 			if err = applySeriesArgs(probe, params.Params); err != nil {
@@ -545,7 +572,7 @@ func NewUpdateRecurringShipmentTool(series recurringShipmentKeeper) agenttoolpor
 			return &seriesEdit{
 				get: recurringshipmentports.GetRecurringShipmentByIDRequest{
 					ID:         id,
-					TenantInfo: common.TenantFrom(*params),
+					TenantInfo: toolparams.TenantFrom(*params),
 				},
 				params: params.Params,
 			}, nil
@@ -611,7 +638,7 @@ func (c *seriesStatusChange) request(
 }
 
 func NewSetRecurringShipmentStatusTool(series recurringShipmentKeeper) agenttoolports.AgentTool {
-	return common.NewReceivableTool(&common.ReceivableSpec{
+	return toolspec.NewReceivableTool(&toolspec.ReceivableSpec{
 		Name: "shipment_set_recurring_status",
 		Description: "Pause a recurring shipment so it creates nothing, resume it (Active) " +
 			"from its next future slot without back-filling what it missed, or end it " +
@@ -625,20 +652,20 @@ func NewSetRecurringShipmentStatusTool(series recurringShipmentKeeper) agenttool
 		Rationale: "Starts or stops a schedule inside Trenova; nothing is sent, and the " +
 			"status is set back the same way.",
 		Properties: map[string]any{
-			paramRecurringShipmentID: recurringShipmentIDProperty("The series"),
-			common.FieldStatus:       agenttoolschema.Enum("The status to set.", seriesStatuses),
+			paramRecurringShipmentID:  recurringShipmentIDProperty("The series"),
+			changepreview.FieldStatus: agenttoolschema.Enum("The status to set.", seriesStatuses),
 		},
-		Required: []string{paramRecurringShipmentID, common.FieldStatus},
+		Required: []string{paramRecurringShipmentID, changepreview.FieldStatus},
 		Target:   targetRecurringShipment,
-	}, common.ReceivablePlan[*seriesStatusChange, *recurringshipmentservice.SeriesChange]{
+	}, toolspec.ReceivablePlan[*seriesStatusChange, *recurringshipmentservice.SeriesChange]{
 		Request: func(params *agenttoolports.ToolExecuteParams) (*seriesStatusChange, error) {
-			id, err := common.RequirePulid(params.Params, paramRecurringShipmentID)
+			id, err := toolparams.RequirePulid(params.Params, paramRecurringShipmentID)
 			if err != nil {
 				return nil, err
 			}
-			status, err := common.RequireEnum(
+			status, err := toolparams.RequireEnum(
 				params.Params,
-				common.FieldStatus,
+				changepreview.FieldStatus,
 				seriesStatuses.Values,
 			)
 			if err != nil {
@@ -648,7 +675,7 @@ func NewSetRecurringShipmentStatusTool(series recurringShipmentKeeper) agenttool
 			return &seriesStatusChange{
 				get: recurringshipmentports.GetRecurringShipmentByIDRequest{
 					ID:         id,
-					TenantInfo: common.TenantFrom(*params),
+					TenantInfo: toolparams.TenantFrom(*params),
 				},
 				status: status,
 			}, nil
@@ -694,10 +721,10 @@ func NewSetRecurringShipmentStatusTool(series recurringShipmentKeeper) agenttool
 }
 
 func NewGenerateRecurringShipmentTool(series recurringShipmentKeeper) agenttoolports.AgentTool {
-	return common.NewReportingReceivableTool(&common.ReceivableSpec{
+	return toolspec.NewReportingReceivableTool(&toolspec.ReceivableSpec{
 		Name:        "shipment_generate_recurring",
 		SearchTerms: []string{"next occurrence", "generate early", "next slot", "spin up"},
-		Artifact:    common.ShipmentRecordEntity,
+		Artifact:    changepreview.ShipmentRecordEntity,
 		Description: "Create the shipment for a recurring shipment's next slot now, or for " +
 			"the slot at occurrenceAt, instead of waiting for the schedule. A slot that " +
 			"already has its shipment is not made twice.",
@@ -716,21 +743,21 @@ func NewGenerateRecurringShipmentTool(series recurringShipmentKeeper) agenttoolp
 		},
 		Required: []string{paramRecurringShipmentID},
 		Target:   targetRecurringShipment,
-	}, common.ReceivablePlan[*recurringshipmentports.GenerateRecurringShipmentRequest, *recurringshipmentports.RecurringShipmentGenerationPlan]{
+	}, toolspec.ReceivablePlan[*recurringshipmentports.GenerateRecurringShipmentRequest, *recurringshipmentports.RecurringShipmentGenerationPlan]{
 		Request: func(
 			params *agenttoolports.ToolExecuteParams,
 		) (*recurringshipmentports.GenerateRecurringShipmentRequest, error) {
-			id, err := common.RequirePulid(params.Params, paramRecurringShipmentID)
+			id, err := toolparams.RequirePulid(params.Params, paramRecurringShipmentID)
 			if err != nil {
 				return nil, err
 			}
-			occurrence, err := common.OptionalDateTime(params.Params, paramOccurrenceAt)
+			occurrence, err := toolparams.OptionalDateTime(params.Params, paramOccurrenceAt)
 			if err != nil {
 				return nil, err
 			}
 
 			return &recurringshipmentports.GenerateRecurringShipmentRequest{
-				TenantInfo:          common.TenantFrom(*params),
+				TenantInfo:          toolparams.TenantFrom(*params),
 				RecurringShipmentID: id,
 				OccurrenceAt:        occurrence,
 				Trigger:             recurringshipment.RunTriggerManual,
@@ -764,9 +791,12 @@ func NewGenerateRecurringShipmentTool(series recurringShipmentKeeper) agenttoolp
 				if result.IDs == nil {
 					result.IDs = map[string]string{}
 				}
-				result.IDs[common.ParamShipmentID] = generated.Shipment.ID.String()
+				result.IDs[toolparams.ParamShipmentID] = generated.Shipment.ID.String()
 				result.Name = generated.Shipment.ProNumber
-				result.Record = common.RecordOf(common.ShipmentRecordEntity, generated.Shipment.ID)
+				result.Record = changepreview.RecordOf(
+					changepreview.ShipmentRecordEntity,
+					generated.Shipment.ID,
+				)
 			}
 
 			return result, nil
@@ -786,7 +816,7 @@ func renderGenerate(
 		)), nil
 	}
 
-	change, err := common.ShipmentCopyChange(
+	change, err := shipmentpreview.ShipmentCopyChange(
 		fmt.Sprintf("%s, %s slot", plan.Series.Name, slot),
 		plan.Series.Name,
 		plan.Shipment,

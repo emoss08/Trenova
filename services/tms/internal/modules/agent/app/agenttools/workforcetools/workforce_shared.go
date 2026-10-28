@@ -3,7 +3,9 @@ package workforcetools
 import (
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -54,8 +56,8 @@ func wfSpec(
 	name, description, rationale string,
 	resource permission.Resource,
 	operation permission.Operation,
-) *common.ReceivableSpec {
-	return &common.ReceivableSpec{
+) *toolspec.ReceivableSpec {
+	return &toolspec.ReceivableSpec{
 		Name:        name,
 		Description: description,
 		Rationale:   rationale,
@@ -65,11 +67,11 @@ func wfSpec(
 		DefaultTier: agent.TierPropose,
 		MaxTier:     agent.TierActWithApproval,
 		Reversible:  true,
-		Artifact:    common.WorkerRecordEntity,
+		Artifact:    changepreview.WorkerRecordEntity,
 	}
 }
 
-func personOnly(spec *common.ReceivableSpec) *common.ReceivableSpec {
+func personOnly(spec *toolspec.ReceivableSpec) *toolspec.ReceivableSpec {
 	spec.DefaultTier = agent.TierPropose
 	spec.MaxTier = agent.TierPropose
 	spec.PersonOnly = true
@@ -78,10 +80,10 @@ func personOnly(spec *common.ReceivableSpec) *common.ReceivableSpec {
 }
 
 func withSchema(
-	spec *common.ReceivableSpec,
+	spec *toolspec.ReceivableSpec,
 	properties map[string]any,
 	required ...string,
-) *common.ReceivableSpec {
+) *toolspec.ReceivableSpec {
 	spec.Properties = properties
 	spec.Required = required
 
@@ -89,12 +91,12 @@ func withSchema(
 }
 
 func targeting(
-	spec *common.ReceivableSpec,
+	spec *toolspec.ReceivableSpec,
 	key string,
 	resource permission.Resource,
-) *common.ReceivableSpec {
+) *toolspec.ReceivableSpec {
 	spec.Target = func(params map[string]any) (agenttoolports.ToolTarget, bool) {
-		return common.TargetOf(params, key, resource)
+		return toolparams.TargetOf(params, key, resource)
 	}
 
 	return spec
@@ -109,11 +111,11 @@ func wfDocumentProperty() map[string]any {
 }
 
 func wfNoteProperty(description string) map[string]any {
-	return common.StringProperty(description, wfNoteChars)
+	return toolparams.StringProperty(description, wfNoteChars)
 }
 
 func optionalNullDecimal(params map[string]any, key string) (decimal.NullDecimal, error) {
-	value, present, err := common.OptionalDecimal(params, key)
+	value, present, err := toolparams.OptionalDecimal(params, key)
 	if err != nil || !present {
 		return decimal.NullDecimal{}, err
 	}
@@ -125,7 +127,7 @@ func optionalNullDecimal(params map[string]any, key string) (decimal.NullDecimal
 }
 
 func optionalBoolParam(params map[string]any, key string, fallback bool) (bool, error) {
-	value, err := common.OptionalBoolPointer(params, key)
+	value, err := toolparams.OptionalBoolPointer(params, key)
 	if err != nil || value == nil {
 		return fallback, err
 	}
@@ -141,76 +143,76 @@ func wfRecord(
 ) toolpreview.Record {
 	record := toolpreview.Record{Resource: resource, ID: id, Label: label}
 	if !id.IsNil() {
-		record.Version = common.PinnedVersion(version)
+		record.Version = changepreview.PinnedVersion(version)
 	}
 
 	return record
 }
 
 var wfRefs = map[string]permission.Resource{
-	wfFieldWorkerID:        permission.ResourceWorker,
-	common.ParamShipmentID: permission.ResourceShipment,
-	wfFieldDocument:        permission.ResourceDocument,
-	"recordedById":         permission.ResourceUser,
-	"closedById":           permission.ResourceUser,
-	"awardedById":          permission.ResourceUser,
-	"orderedById":          permission.ResourceUser,
-	"assignedById":         permission.ResourceUser,
-	"reviewerId":           permission.ResourceUser,
-	"requestedById":        permission.ResourceUser,
-	"completedById":        permission.ResourceUser,
-	"archivedById":         permission.ResourceUser,
-	"verifiedById":         permission.ResourceUser,
-	wfFieldResolvedByID:    permission.ResourceUser,
-	"reviewedById":         permission.ResourceUser,
-	"generatedById":        permission.ResourceUser,
-	wfFieldApproverID:      permission.ResourceUser,
-	"drawnById":            permission.ResourceUser,
-	"safetyEventId":        permission.ResourceWorkerSafetyEvent,
-	"courseId":             permission.ResourceTrainingCourse,
-	"templateId":           permission.ResourceWorkerChecklistTemplate,
-	"credentialTypeId":     permission.ResourceWorkerCredentialType,
+	wfFieldWorkerID:            permission.ResourceWorker,
+	toolparams.ParamShipmentID: permission.ResourceShipment,
+	wfFieldDocument:            permission.ResourceDocument,
+	"recordedById":             permission.ResourceUser,
+	"closedById":               permission.ResourceUser,
+	"awardedById":              permission.ResourceUser,
+	"orderedById":              permission.ResourceUser,
+	"assignedById":             permission.ResourceUser,
+	"reviewerId":               permission.ResourceUser,
+	"requestedById":            permission.ResourceUser,
+	"completedById":            permission.ResourceUser,
+	"archivedById":             permission.ResourceUser,
+	"verifiedById":             permission.ResourceUser,
+	wfFieldResolvedByID:        permission.ResourceUser,
+	"reviewedById":             permission.ResourceUser,
+	"generatedById":            permission.ResourceUser,
+	wfFieldApproverID:          permission.ResourceUser,
+	"drawnById":                permission.ResourceUser,
+	"safetyEventId":            permission.ResourceWorkerSafetyEvent,
+	"courseId":                 permission.ResourceTrainingCourse,
+	"templateId":               permission.ResourceWorkerChecklistTemplate,
+	"credentialTypeId":         permission.ResourceWorkerCredentialType,
 }
 
 var wfTimes = map[string]assistantartifact.DisplayType{
-	wfParamOccurred:         assistantartifact.DisplayDateTime,
-	wfFieldClosedAt:         assistantartifact.DisplayDateTime,
-	"scheduledAt":           assistantartifact.DisplayDateTime,
-	"collectedAt":           assistantartifact.DisplayDateTime,
-	"finalizedAt":           assistantartifact.DisplayDateTime,
-	"notifiedAt":            assistantartifact.DisplayDateTime,
-	"drawnAt":               assistantartifact.DisplayDateTime,
-	"reportedAt":            assistantartifact.DisplayDateTime,
-	wfFieldCompletedAt:      assistantartifact.DisplayDate,
-	"assignedAt":            assistantartifact.DisplayDateTime,
-	"archivedAt":            assistantartifact.DisplayDateTime,
-	"verifiedAt":            assistantartifact.DisplayDateTime,
-	wfFieldRequestedAt:      assistantartifact.DisplayDate,
-	"responseReceivedAt":    assistantartifact.DisplayDate,
-	"lastFollowUpAt":        assistantartifact.DisplayDateTime,
-	wfFieldCertRequestedAt:  assistantartifact.DisplayDateTime,
-	"certificationDueAt":    assistantartifact.DisplayDate,
-	"pointsExpireAt":        assistantartifact.DisplayDate,
-	"dueAt":                 assistantartifact.DisplayDate,
-	wfFieldExpiresAt:        assistantartifact.DisplayDate,
-	"issuedAt":              assistantartifact.DisplayDate,
-	"startsAt":              assistantartifact.DisplayDate,
-	"endsAt":                assistantartifact.DisplayDate,
-	"usedOn":                assistantartifact.DisplayDate,
-	wfFieldStartedAt:        assistantartifact.DisplayDate,
-	"employedFrom":          assistantartifact.DisplayDate,
-	"employedTo":            assistantartifact.DisplayDate,
-	"returnedToWorkAt":      assistantartifact.DisplayDate,
-	"claimFiledAt":          assistantartifact.DisplayDate,
-	common.FieldResolvedAt:  assistantartifact.DisplayDateTime,
-	common.FieldReviewedAt:  assistantartifact.DisplayDateTime,
-	common.FieldVoidedAt:    assistantartifact.DisplayDateTime,
-	"generatedAt":           assistantartifact.DisplayDateTime,
-	"effectiveAt":           assistantartifact.DisplayDate,
-	common.FieldPeriodStart: assistantartifact.DisplayDate,
-	common.FieldPeriodEnd:   assistantartifact.DisplayDate,
-	wfFieldStartDate:        assistantartifact.DisplayDate,
-	wfFieldEndDate:          assistantartifact.DisplayDate,
+	wfParamOccurred:                assistantartifact.DisplayDateTime,
+	wfFieldClosedAt:                assistantartifact.DisplayDateTime,
+	"scheduledAt":                  assistantartifact.DisplayDateTime,
+	"collectedAt":                  assistantartifact.DisplayDateTime,
+	"finalizedAt":                  assistantartifact.DisplayDateTime,
+	"notifiedAt":                   assistantartifact.DisplayDateTime,
+	"drawnAt":                      assistantartifact.DisplayDateTime,
+	"reportedAt":                   assistantartifact.DisplayDateTime,
+	wfFieldCompletedAt:             assistantartifact.DisplayDate,
+	"assignedAt":                   assistantartifact.DisplayDateTime,
+	"archivedAt":                   assistantartifact.DisplayDateTime,
+	"verifiedAt":                   assistantartifact.DisplayDateTime,
+	wfFieldRequestedAt:             assistantartifact.DisplayDate,
+	"responseReceivedAt":           assistantartifact.DisplayDate,
+	"lastFollowUpAt":               assistantartifact.DisplayDateTime,
+	wfFieldCertRequestedAt:         assistantartifact.DisplayDateTime,
+	"certificationDueAt":           assistantartifact.DisplayDate,
+	"pointsExpireAt":               assistantartifact.DisplayDate,
+	"dueAt":                        assistantartifact.DisplayDate,
+	wfFieldExpiresAt:               assistantartifact.DisplayDate,
+	"issuedAt":                     assistantartifact.DisplayDate,
+	"startsAt":                     assistantartifact.DisplayDate,
+	"endsAt":                       assistantartifact.DisplayDate,
+	"usedOn":                       assistantartifact.DisplayDate,
+	wfFieldStartedAt:               assistantartifact.DisplayDate,
+	"employedFrom":                 assistantartifact.DisplayDate,
+	"employedTo":                   assistantartifact.DisplayDate,
+	"returnedToWorkAt":             assistantartifact.DisplayDate,
+	"claimFiledAt":                 assistantartifact.DisplayDate,
+	changepreview.FieldResolvedAt:  assistantartifact.DisplayDateTime,
+	changepreview.FieldReviewedAt:  assistantartifact.DisplayDateTime,
+	changepreview.FieldVoidedAt:    assistantartifact.DisplayDateTime,
+	"generatedAt":                  assistantartifact.DisplayDateTime,
+	"effectiveAt":                  assistantartifact.DisplayDate,
+	changepreview.FieldPeriodStart: assistantartifact.DisplayDate,
+	changepreview.FieldPeriodEnd:   assistantartifact.DisplayDate,
+	wfFieldStartDate:               assistantartifact.DisplayDate,
+	wfFieldEndDate:                 assistantartifact.DisplayDate,
 }
 
 func wfOptions(fields ...string) []toolpreview.Option {
@@ -229,10 +231,10 @@ func wfResult(
 		Action: action,
 		Kind:   kind,
 		IDs:    map[string]string{idParam: id.String()},
-		Record: common.RecordOf(common.WorkerRecordEntity, workerID),
+		Record: changepreview.RecordOf(changepreview.WorkerRecordEntity, workerID),
 	}
 	if !workerID.IsNil() {
-		result.IDs[common.ParamWorkerID] = workerID.String()
+		result.IDs[toolparams.ParamWorkerID] = workerID.String()
 	}
 
 	return result

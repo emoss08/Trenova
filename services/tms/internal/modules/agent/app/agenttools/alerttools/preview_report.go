@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -37,14 +37,14 @@ func (t *ScheduleReportTool) Preview(
 		},
 		schedule,
 		toolpreview.Only(
-			common.PreviewFieldDefinitionID,
+			changepreview.PreviewFieldDefinitionID,
 			"cronExpression",
 			"timezone",
 			"formats",
 			"enabled",
 		),
 		toolpreview.WithRefs(map[string]permission.Resource{
-			common.PreviewFieldDefinitionID: permission.ResourceReport,
+			changepreview.PreviewFieldDefinitionID: permission.ResourceReport,
 		}),
 	)
 	if err != nil {

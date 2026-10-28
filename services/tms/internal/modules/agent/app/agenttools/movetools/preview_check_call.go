@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/shipmentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
@@ -55,7 +57,7 @@ func checkCallViewOf(preview *checkcallports.CheckCallPreview) *checkCallView {
 		ContactName:      entity.ContactName,
 	}
 	if entity.StopID.IsNotNil() {
-		view.Stop = common.StopLabel(common.FindStop(preview.Move, entity.StopID))
+		view.Stop = shipmentpreview.StopLabel(shipmentpreview.FindStop(preview.Move, entity.StopID))
 	}
 
 	return view
@@ -96,7 +98,7 @@ func (t *LogCheckCallTool) Preview(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
-	if err := common.GuardPreview(t, &params); err != nil {
+	if err := toolguard.GuardPreview(t, &params); err != nil {
 		return nil, err
 	}
 
@@ -108,8 +110,8 @@ func (t *LogCheckCallTool) Preview(
 	summary := checkCallSummary(request.Details.Kind)
 	planned, err := t.checkCalls.PreviewLog(ctx, request)
 	if err != nil {
-		if common.IsRefusal(err) {
-			return common.WarnWouldFail(toolpreview.Build(summary+"."), err), nil
+		if changepreview.IsRefusal(err) {
+			return changepreview.WarnWouldFail(toolpreview.Build(summary+"."), err), nil
 		}
 
 		return nil, err
@@ -155,14 +157,14 @@ func (t *LogCheckCallTool) previewStopVisit(
 	}
 	plan, err := t.moves.PreviewStopActual(ctx, stopRequest)
 	if err != nil {
-		if common.IsRefusal(err) {
-			return common.WarnWouldFail(toolpreview.Build(summary+".", created), err), nil
+		if changepreview.IsRefusal(err) {
+			return changepreview.WarnWouldFail(toolpreview.Build(summary+".", created), err), nil
 		}
 
 		return nil, err
 	}
 
-	stop := common.FindStop(plan.Before, request.Details.StopID)
+	stop := shipmentpreview.FindStop(plan.Before, request.Details.StopID)
 	opts := []toolpreview.Option{toolpreview.Labels(stopActualLabels)}
 	if request.Details.ReportedAt == nil {
 		opts = append(opts, toolpreview.Volatile(stopActualTimes...))
@@ -170,8 +172,8 @@ func (t *LogCheckCallTool) previewStopVisit(
 	changed, err := toolpreview.Changed(toolpreview.Record{
 		Resource: permission.ResourceShipmentMove,
 		ID:       plan.Before.ID,
-		Label:    common.StopLabel(stop),
-		Version:  common.PreviewVersion(plan.Before.Version),
+		Label:    shipmentpreview.StopLabel(stop),
+		Version:  changepreview.PreviewVersion(plan.Before.Version),
 	}, stopActualViewOf(plan.Before, request.Details.StopID),
 		stopActualViewOf(plan.After, request.Details.StopID),
 		opts...,
@@ -180,7 +182,7 @@ func (t *LogCheckCallTool) previewStopVisit(
 		return nil, err
 	}
 
-	summary += fmt.Sprintf(" and record it on %s", common.StopLabel(stop))
+	summary += fmt.Sprintf(" and record it on %s", shipmentpreview.StopLabel(stop))
 	if plan.After.Status != plan.Before.Status {
 		summary += fmt.Sprintf(
 			", which moves the move from %s to %s",

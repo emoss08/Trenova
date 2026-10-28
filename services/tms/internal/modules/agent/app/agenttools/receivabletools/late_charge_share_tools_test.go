@@ -6,7 +6,8 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
@@ -103,7 +104,7 @@ func TestAssessLateCharges_PreviewsEachMemoAndOnlyAPersonAssesses(t *testing.T) 
 	assert.Equal(t, agent.PreviewOperationCreate, memo.Operation)
 	require.NotNil(t, memo.Money)
 
-	require.ErrorIs(t, tool.Execute(t.Context(), params), common.ErrNeedsAPersonsApproval)
+	require.ErrorIs(t, tool.Execute(t.Context(), params), toolspec.ErrNeedsAPersonsApproval)
 	params.ProposalID = pulid.MustNew("ap_")
 	require.NoError(t, tool.Execute(t.Context(), params))
 	require.NotNil(t, charges.assessed)
@@ -191,10 +192,10 @@ func TestShareInvoice_PreviewsWhatEachTeammateReceives(t *testing.T) {
 	}
 	tool := NewShareInvoiceTool(sharer)
 	params := agenttoolstest.ExecuteParams(map[string]any{
-		common.ParamInvoiceID: inv.ID.String(),
-		paramUserIDs:          []any{dana.String()},
-		paramShareNote:        "Check the detention line",
-		paramShareTab:         string(invoice.ShareTabCharges),
+		toolparams.ParamInvoiceID: inv.ID.String(),
+		paramUserIDs:              []any{dana.String()},
+		paramShareNote:            "Check the detention line",
+		paramShareTab:             string(invoice.ShareTabCharges),
 	})
 
 	preview := agenttoolstest.PreviewWithoutWrites(
@@ -210,7 +211,7 @@ func TestShareInvoice_PreviewsWhatEachTeammateReceives(t *testing.T) {
 	assert.Equal(t, []string{"dana@example.com"}, change.Message.To)
 	assert.Equal(t, "Marcus shared an invoice", change.Message.Subject)
 
-	require.ErrorIs(t, tool.Execute(t.Context(), params), common.ErrNeedsAPersonsApproval)
+	require.ErrorIs(t, tool.Execute(t.Context(), params), toolspec.ErrNeedsAPersonsApproval)
 	params.ProposalID = pulid.MustNew("ap_")
 	require.NoError(t, tool.Execute(t.Context(), params))
 	require.NotNil(t, sharer.shared)

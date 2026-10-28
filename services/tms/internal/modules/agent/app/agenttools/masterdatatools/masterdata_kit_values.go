@@ -3,7 +3,7 @@ package masterdatatools
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -54,7 +54,7 @@ func masterDateTime[T any](key, description string, at func(*T) *int64) masterFi
 				return errortypes.NewValidationError(key, errortypes.ErrRequired,
 					"Send a date and time")
 			}
-			value, err := common.ParseDateTime(key, text)
+			value, err := toolparams.ParseDateTime(key, text)
 			if err != nil {
 				return errortypes.NewValidationError(key, errortypes.ErrInvalid, err.Error())
 			}
@@ -75,12 +75,12 @@ func masterNullDecimal[T any](
 			return clearable(
 				update,
 				true,
-				common.StringProperty(description+" A decimal such as 2.35."+
+				toolparams.StringProperty(description+" A decimal such as 2.35."+
 					keepSuffix(update, true), 0),
 			)
 		},
 		apply: func(_ context.Context, in *masterInput, entity *T) error {
-			value, present, err := common.OptionalDecimal(in.values, key)
+			value, present, err := toolparams.OptionalDecimal(in.values, key)
 			if err != nil || (present && value.IsNegative()) {
 				return errortypes.NewValidationError(key, errortypes.ErrInvalid,
 					"Send a decimal that is zero or more, such as 2.35")

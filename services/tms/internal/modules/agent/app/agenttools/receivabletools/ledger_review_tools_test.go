@@ -11,7 +11,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/accountingtools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceiptworkitem"
@@ -107,8 +108,8 @@ func TestFiscalPeriodTools_EachIsAPersonsDecisionUnderItsOwnPermission(t *testin
 			}
 			tool := newFiscalPeriodTool(periods, tc.move)
 			params := agenttoolstest.ExecuteParams(map[string]any{
-				paramFiscalPeriodID: periods.period.ID.String(),
-				common.ParamReason:  "A late fuel invoice belongs in September",
+				paramFiscalPeriodID:    periods.period.ID.String(),
+				toolparams.ParamReason: "A late fuel invoice belongs in September",
 			})
 
 			preview := agenttoolstest.PreviewWithoutWrites(
@@ -129,7 +130,7 @@ func TestFiscalPeriodTools_EachIsAPersonsDecisionUnderItsOwnPermission(t *testin
 				).After,
 			)
 
-			require.ErrorIs(t, tool.Execute(t.Context(), params), common.ErrNeedsAPersonsApproval)
+			require.ErrorIs(t, tool.Execute(t.Context(), params), toolspec.ErrNeedsAPersonsApproval)
 			params.ProposalID = pulid.MustNew("ap_")
 			require.NoError(t, tool.Execute(t.Context(), params))
 			require.NotNil(t, periods.requested)
@@ -159,7 +160,7 @@ func TestReopenFiscalPeriod_NeedsAReason(t *testing.T) {
 			map[string]any{paramFiscalPeriodID: periods.period.ID.String()},
 		)),
 	)
-	assert.Contains(t, tool.ParamSchema()[toolschema.KeyRequired], common.ParamReason)
+	assert.Contains(t, tool.ParamSchema()[toolschema.KeyRequired], toolparams.ParamReason)
 }
 
 func TestCloseFiscalPeriod_ABlockedCloseIsAWouldFail(t *testing.T) {
@@ -468,7 +469,7 @@ func TestReleaseAccountingSync_OnlyAPersonReleasesHeldDocuments(t *testing.T) {
 		agenttoolstest.FieldByPath(t, agenttoolstest.PreviewChange(t, preview, 0), "status").After,
 	)
 
-	require.ErrorIs(t, tool.Execute(t.Context(), params), common.ErrNeedsAPersonsApproval)
+	require.ErrorIs(t, tool.Execute(t.Context(), params), toolspec.ErrNeedsAPersonsApproval)
 	params.ProposalID = pulid.MustNew("ap_")
 	require.NoError(t, tool.Execute(t.Context(), params))
 	require.NotNil(t, sync.released)

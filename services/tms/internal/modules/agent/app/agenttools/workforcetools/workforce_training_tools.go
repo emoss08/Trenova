@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -51,7 +53,7 @@ var trainingCloses = agenttoolschema.Source(
 )
 
 var trainingFields = []string{
-	wfFieldWorkerID, paramCourseID, common.FieldStatus, "assignedAt", "dueAt", wfFieldCompletedAt,
+	wfFieldWorkerID, paramCourseID, changepreview.FieldStatus, "assignedAt", "dueAt", wfFieldCompletedAt,
 	wfFieldExpiresAt, paramScore, "passed", wfFieldDocument, wfFieldNotes, "waivedReason",
 }
 
@@ -150,7 +152,7 @@ type trainingAssignment struct {
 }
 
 func trainingAssignmentFrom(params *agenttoolports.ToolExecuteParams) (*trainingAssignment, error) {
-	workers, err := common.RequirePulidSlice(
+	workers, err := toolparams.RequirePulidSlice(
 		params.Params,
 		paramTrainingWorkers,
 		maxTrainingWorkers,
@@ -158,21 +160,21 @@ func trainingAssignmentFrom(params *agenttoolports.ToolExecuteParams) (*training
 	if err != nil {
 		return nil, err
 	}
-	courses, err := common.RequirePulidSlice(params.Params, paramCourseIDs, maxTrainingCourses)
+	courses, err := toolparams.RequirePulidSlice(params.Params, paramCourseIDs, maxTrainingCourses)
 	if err != nil {
 		return nil, err
 	}
-	due, err := common.OptionalScheduleDay(params.Params, wfParamDueDate)
+	due, err := toolparams.OptionalScheduleDay(params.Params, wfParamDueDate)
 	if err != nil {
 		return nil, err
 	}
-	notes, err := common.BoundedText(params.Params, common.ParamNote, wfNoteChars)
+	notes, err := toolparams.BoundedText(params.Params, toolparams.ParamNote, wfNoteChars)
 	if err != nil {
 		return nil, err
 	}
 	if len(workers) == 1 && len(courses) == 1 {
 		return &trainingAssignment{single: &workertrainingservice.AssignRequest{
-			TenantInfo: common.TenantFrom(*params),
+			TenantInfo: toolparams.TenantFrom(*params),
 			WorkerID:   workers[0],
 			CourseID:   courses[0],
 			DueAt:      due,
@@ -181,7 +183,7 @@ func trainingAssignmentFrom(params *agenttoolports.ToolExecuteParams) (*training
 		}}, nil
 	}
 	return &trainingAssignment{bulk: &workertrainingservice.BulkAssignRequest{
-		TenantInfo: common.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(*params),
 		WorkerIDs:  workers,
 		CourseIDs:  courses,
 		DueAt:      due,
@@ -214,7 +216,8 @@ func renderTrainingAssignment(
 	for _, record := range plan.Records {
 		change, err := toolpreview.Create(
 			wfRecord(permission.ResourceWorkerTraining, pulid.Nil, trainingRecord(record).Label, 0),
-			record, trainingOptions(wfFieldWorkerID, paramCourseID, common.FieldStatus, "dueAt",
+			record,
+			trainingOptions(wfFieldWorkerID, paramCourseID, changepreview.FieldStatus, "dueAt",
 				wfFieldNotes)...)
 		if err != nil {
 			return nil, err
@@ -246,13 +249,13 @@ func newAssignWorkerTrainingTool(training TrainingKeeper) agenttoolports.AgentTo
 		wfParamDueDate: agenttoolschema.Date(
 			"When it is due, when not the course's own schedule.",
 		),
-		common.ParamNote: wfNoteProperty("Anything the assignment should say."),
+		toolparams.ParamNote: wfNoteProperty("Anything the assignment should say."),
 	}, paramTrainingWorkers, paramCourseIDs)
 	spec.Egress = agent.EgressDriverVisible
 	spec.Artifact = ""
 	spec.SearchTerms = []string{"assign course", "training", "orientation"}
 
-	return common.NewReceivableTool(spec, common.ReceivablePlan[
+	return toolspec.NewReceivableTool(spec, toolspec.ReceivablePlan[
 		*trainingAssignment, *workertrainingservice.BulkAssignPlan,
 	]{
 		Request: trainingAssignmentFrom,
@@ -304,18 +307,18 @@ func newAssignRequiredWorkerTrainingTool(training TrainingKeeper) agenttoolports
 			"and cancel_worker_training withdraws one.",
 		permission.ResourceWorkerTraining,
 		permission.OpAssign,
-	), map[string]any{common.ParamWorkerID: common.WorkerProperty()}, common.ParamWorkerID)
+	), map[string]any{toolparams.ParamWorkerID: toolparams.WorkerProperty()}, toolparams.ParamWorkerID)
 	spec.Egress = agent.EgressDriverVisible
 
-	return common.NewReportingReceivableTool(
+	return toolspec.NewReportingReceivableTool(
 		spec,
-		common.ReceivablePlan[*requiredTraining, []*workertraining.TrainingCourse]{
+		toolspec.ReceivablePlan[*requiredTraining, []*workertraining.TrainingCourse]{
 			Request: func(params *agenttoolports.ToolExecuteParams) (*requiredTraining, error) {
-				workerID, err := common.RequirePulid(params.Params, common.ParamWorkerID)
+				workerID, err := toolparams.RequirePulid(params.Params, toolparams.ParamWorkerID)
 				if err != nil {
 					return nil, err
 				}
-				return &requiredTraining{workerID: workerID, tenant: common.TenantFrom(*params),
+				return &requiredTraining{workerID: workerID, tenant: toolparams.TenantFrom(*params),
 					userID: params.Actor.UserID}, nil
 			},
 			Plan: func(
@@ -337,7 +340,7 @@ func newAssignRequiredWorkerTrainingTool(training TrainingKeeper) agenttoolports
 							WorkerID: req.workerID,
 							CourseID: course.ID,
 							Status:   workertraining.TrainingStatusAssigned,
-						}, wfOptions(wfFieldWorkerID, paramCourseID, common.FieldStatus)...)
+						}, wfOptions(wfFieldWorkerID, paramCourseID, changepreview.FieldStatus)...)
 					if err != nil {
 						return nil, err
 					}
@@ -363,8 +366,8 @@ func newAssignRequiredWorkerTrainingTool(training TrainingKeeper) agenttoolports
 				return &agent.ToolExecutionResult{
 					Action: "assigned required training to",
 					Kind:   "worker",
-					IDs:    map[string]string{common.ParamWorkerID: req.workerID.String()},
-					Record: common.RecordOf(common.WorkerRecordEntity, req.workerID),
+					IDs:    map[string]string{toolparams.ParamWorkerID: req.workerID.String()},
+					Record: changepreview.RecordOf(changepreview.WorkerRecordEntity, req.workerID),
 				}, nil
 			},
 		},
@@ -375,43 +378,43 @@ func completionFrom(
 	params *agenttoolports.ToolExecuteParams,
 ) (*workertrainingservice.CompleteRequest, error) {
 	req := &workertrainingservice.CompleteRequest{
-		TenantInfo: common.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(*params),
 		UserID:     params.Actor.UserID,
 	}
 	var err error
-	if req.ID, err = common.OptionalID(params.Params, paramTrainingID); err != nil {
+	if req.ID, err = toolparams.OptionalID(params.Params, paramTrainingID); err != nil {
 		return nil, err
 	}
-	if req.WorkerID, err = common.OptionalID(params.Params, common.ParamWorkerID); err != nil {
+	if req.WorkerID, err = toolparams.OptionalID(params.Params, toolparams.ParamWorkerID); err != nil {
 		return nil, err
 	}
-	if req.CourseID, err = common.OptionalID(params.Params, paramCourseID); err != nil {
+	if req.CourseID, err = toolparams.OptionalID(params.Params, paramCourseID); err != nil {
 		return nil, err
 	}
 	if req.ID.IsNil() && (req.WorkerID.IsNil() || req.CourseID.IsNil()) {
 		return nil, fmt.Errorf("name either %q, or %q with %q", paramTrainingID,
-			common.ParamWorkerID, paramCourseID)
+			toolparams.ParamWorkerID, paramCourseID)
 	}
-	completed, err := common.OptionalScheduleDay(params.Params, paramCompletedAt)
+	completed, err := toolparams.OptionalScheduleDay(params.Params, paramCompletedAt)
 	if err != nil {
 		return nil, err
 	}
 	if completed != nil {
 		req.CompletedAt = *completed
 	}
-	score, present, err := common.OptionalDecimal(params.Params, paramScore)
+	score, present, err := toolparams.OptionalDecimal(params.Params, paramScore)
 	if err != nil {
 		return nil, err
 	}
 	if present {
 		req.Score = decimal.NewNullDecimal(score)
 	}
-	if req.DocumentID, err = common.OptionalID(params.Params, wfParamDocument); err != nil {
+	if req.DocumentID, err = toolparams.OptionalID(params.Params, wfParamDocument); err != nil {
 		return nil, err
 	}
-	if req.Notes, err = common.BoundedText(
+	if req.Notes, err = toolparams.BoundedText(
 		params.Params,
-		common.ParamNote,
+		toolparams.ParamNote,
 		wfNoteChars,
 	); err != nil {
 		return nil, err
@@ -465,8 +468,8 @@ func newRecordTrainingCompletionTool(training TrainingKeeper) agenttoolports.Age
 		permission.ResourceWorkerTraining,
 		permission.OpUpdate,
 	), map[string]any{
-		paramTrainingID:      trainingIDProperty(),
-		common.ParamWorkerID: common.WorkerProperty(),
+		paramTrainingID:          trainingIDProperty(),
+		toolparams.ParamWorkerID: toolparams.WorkerProperty(),
 		paramCourseID: agenttoolschema.RecordIDText(permission.ResourceTrainingCourse,
 			"The course, from worker_list_training_courses, with workerId when there is no "+
 				"trainingId. Beside trainingId it must be that assignment's course."),
@@ -474,12 +477,14 @@ func newRecordTrainingCompletionTool(training TrainingKeeper) agenttoolports.Age
 			"The day it was finished. Defaults to today; never a " +
 				"day to come.",
 		),
-		paramScore:       common.AmountProperty("The score, such as 92, for a scored course."),
-		wfParamDocument:  wfDocumentProperty(),
-		common.ParamNote: wfNoteProperty("Anything the record should say."),
+		paramScore: toolparams.AmountProperty(
+			"The score, such as 92, for a scored course.",
+		),
+		wfParamDocument:      wfDocumentProperty(),
+		toolparams.ParamNote: wfNoteProperty("Anything the record should say."),
 	})
 	spec.Target = func(params map[string]any) (agenttoolports.ToolTarget, bool) {
-		return common.TargetOf(params, paramTrainingID, permission.ResourceWorkerTraining)
+		return toolparams.TargetOf(params, paramTrainingID, permission.ResourceWorkerTraining)
 	}
 	spec.Reversible = false
 
@@ -487,7 +492,7 @@ func newRecordTrainingCompletionTool(training TrainingKeeper) agenttoolports.Age
 		"completed training", "course completed", "driver finished training",
 	}
 
-	return common.NewReportingReceivableTool(spec, common.ReceivablePlan[
+	return toolspec.NewReportingReceivableTool(spec, toolspec.ReceivablePlan[
 		*workertrainingservice.CompleteRequest, *workertrainingservice.RecordChange,
 	]{
 		Request: completionFrom,
@@ -562,24 +567,24 @@ func newAttachWorkerTrainingDocumentTool(training TrainingKeeper) agenttoolports
 		wfParamDocument: wfDocumentProperty(),
 	}, paramTrainingID, wfParamDocument), paramTrainingID, permission.ResourceWorkerTraining)
 
-	return common.NewReportingReceivableTool(spec, common.ReceivablePlan[
+	return toolspec.NewReportingReceivableTool(spec, toolspec.ReceivablePlan[
 		*workertrainingservice.AttachDocumentRequest, *workertrainingservice.RecordChange,
 	]{
 		Request: func(
 			params *agenttoolports.ToolExecuteParams,
 		) (*workertrainingservice.AttachDocumentRequest, error) {
-			id, err := common.RequirePulid(params.Params, paramTrainingID)
+			id, err := toolparams.RequirePulid(params.Params, paramTrainingID)
 			if err != nil {
 				return nil, err
 			}
-			documentID, err := common.RequirePulid(params.Params, wfParamDocument)
+			documentID, err := toolparams.RequirePulid(params.Params, wfParamDocument)
 			if err != nil {
 				return nil, err
 			}
 			return &workertrainingservice.AttachDocumentRequest{
 				ID:         id,
 				DocumentID: documentID,
-				TenantInfo: common.TenantFrom(*params),
+				TenantInfo: toolparams.TenantFrom(*params),
 				UserID:     params.Actor.UserID,
 			}, nil
 		},
@@ -638,21 +643,24 @@ func newCloseWorkerTrainingTool(training TrainingKeeper) agenttoolports.AgentToo
 	), map[string]any{
 		paramTrainingID:    trainingIDProperty(),
 		paramTrainingClose: agenttoolschema.Enum("Waive or Cancel.", trainingCloses),
-		common.FieldReason: common.StringProperty("Why. Required to waive; what the record will "+
-			"say.", wfShortChars),
+		changepreview.FieldReason: toolparams.StringProperty(
+			"Why. Required to waive; what the record will "+
+				"say.",
+			wfShortChars,
+		),
 	}, paramTrainingID, paramTrainingClose), paramTrainingID, permission.ResourceWorkerTraining)
 	spec.SearchTerms = []string{"retired course", "close without completion"}
 	spec.MaxTier = agent.TierPropose
 
-	return common.NewReportingReceivableTool(spec, common.ReceivablePlan[
+	return toolspec.NewReportingReceivableTool(spec, toolspec.ReceivablePlan[
 		*trainingClosing, *workertrainingservice.RecordChange,
 	]{
 		Request: func(params *agenttoolports.ToolExecuteParams) (*trainingClosing, error) {
-			id, err := common.RequirePulid(params.Params, paramTrainingID)
+			id, err := toolparams.RequirePulid(params.Params, paramTrainingID)
 			if err != nil {
 				return nil, err
 			}
-			action, err := common.RequireEnum(
+			action, err := toolparams.RequireEnum(
 				params.Params,
 				paramTrainingClose,
 				trainingCloses.Values,
@@ -660,13 +668,17 @@ func newCloseWorkerTrainingTool(training TrainingKeeper) agenttoolports.AgentToo
 			if err != nil {
 				return nil, err
 			}
-			reason, err := common.BoundedText(params.Params, common.FieldReason, wfShortChars)
+			reason, err := toolparams.BoundedText(
+				params.Params,
+				changepreview.FieldReason,
+				wfShortChars,
+			)
 			if err != nil {
 				return nil, err
 			}
 			return &trainingClosing{close: action, req: &workertrainingservice.StatusRequest{
 				ID:         id,
-				TenantInfo: common.TenantFrom(*params),
+				TenantInfo: toolparams.TenantFrom(*params),
 				Reason:     reason,
 				UserID:     params.Actor.UserID,
 			}}, nil
@@ -690,7 +702,7 @@ func newCloseWorkerTrainingTool(training TrainingKeeper) agenttoolports.AgentToo
 			change *workertrainingservice.RecordChange,
 		) (*agent.ToolPreview, error) {
 			recorded, err := toolpreview.Changed(trainingRecord(change.Before), change.Before,
-				change.After, wfOptions(common.FieldStatus, "waivedReason", wfFieldNotes)...)
+				change.After, wfOptions(changepreview.FieldStatus, "waivedReason", wfFieldNotes)...)
 			if err != nil {
 				return nil, err
 			}

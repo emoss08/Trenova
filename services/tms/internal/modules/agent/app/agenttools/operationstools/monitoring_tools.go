@@ -6,7 +6,11 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/detentionpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/outboundpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -137,13 +141,13 @@ func (t *EvaluateServiceFailuresTool) ParamSchema() map[string]any {
 	return map[string]any{
 		"type": "object",
 		"properties": map[string]any{
-			common.ParamShipmentID: agenttoolschema.RecordIDText(
+			toolparams.ParamShipmentID: agenttoolschema.RecordIDText(
 				permission.ResourceShipment,
 				"The shipment to check, from shipment_get_tracking, "+
 					"shipment_list or this run's subject. For several shipments send "+
 					"shipmentIds instead.",
 			),
-			common.ParamStopID: agenttoolschema.RecordIDText(
+			toolparams.ParamStopID: agenttoolschema.RecordIDText(
 				permission.ResourceShipmentStop,
 				"One stop of that shipment to check on its own, from "+
 					"shipment_get_tracking or shipment_get. Needs shipmentId.",
@@ -186,14 +190,14 @@ func (t *EvaluateServiceFailuresTool) Policy() agenttoolports.ToolPolicy {
 func (t *EvaluateServiceFailuresTool) Target(
 	params map[string]any,
 ) (agenttoolports.ToolTarget, bool) {
-	return common.TargetOf(params, common.ParamShipmentID, permission.ResourceShipment)
+	return toolparams.TargetOf(params, toolparams.ParamShipmentID, permission.ResourceShipment)
 }
 
 func (t *EvaluateServiceFailuresTool) Execute(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams,
 ) error {
-	if err := common.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
 	}
 
@@ -256,22 +260,22 @@ func (t *EvaluateServiceFailuresTool) request(
 	params *agenttoolports.ToolExecuteParams,
 ) (*evaluationScope, error) {
 	scope := &evaluationScope{
-		tenant: common.TenantFrom(*params),
-		force:  common.OptionalBool(params.Params, "force"),
+		tenant: toolparams.TenantFrom(*params),
+		force:  toolparams.OptionalBool(params.Params, "force"),
 	}
 
 	var err error
-	if scope.shipmentID, _, err = common.OptionalPulid(
+	if scope.shipmentID, _, err = toolparams.OptionalPulid(
 		params.Params,
-		common.ParamShipmentID,
+		toolparams.ParamShipmentID,
 	); err != nil {
 		return nil, fmt.Errorf("parameter \"shipmentId\" is not a valid id: %w", err)
 	}
-	if scope.stopID, _, err = common.OptionalPulid(params.Params, common.ParamStopID); err != nil {
-		return nil, fmt.Errorf("parameter %q is not a valid id: %w", common.ParamStopID, err)
+	if scope.stopID, _, err = toolparams.OptionalPulid(params.Params, toolparams.ParamStopID); err != nil {
+		return nil, fmt.Errorf("parameter %q is not a valid id: %w", toolparams.ParamStopID, err)
 	}
 	if _, given := params.Params["shipmentIds"]; given {
-		ids, idsErr := common.RequirePulidSlice(
+		ids, idsErr := toolparams.RequirePulidSlice(
 			params.Params, "shipmentIds", MaxBulkEvaluationShipments)
 		if idsErr != nil {
 			return nil, idsErr
@@ -329,7 +333,7 @@ func (t *EvaluateServiceFailuresTool) ResolveSelection(
 	}
 
 	resolved := maputils.WithoutKeys(params.Params, "shipmentIds")
-	resolved[common.ParamShipmentID] = scope.shipmentID.String()
+	resolved[toolparams.ParamShipmentID] = scope.shipmentID.String()
 
 	return resolved, nil
 }
@@ -379,12 +383,12 @@ func (t *ResolveServiceFailureTool) ParamSchema() map[string]any {
 				"The reason code, from exception_list_service_failure_reason_codes. "+
 					"Required when the failure has none; otherwise replaces it.",
 			),
-			common.ParamNote: map[string]any{
+			toolparams.ParamNote: map[string]any{
 				"type":        "string",
 				"description": "What was found and done. Required.",
 			},
 		},
-		toolschema.KeyRequired: []string{"serviceFailureId", common.ParamNote},
+		toolschema.KeyRequired: []string{"serviceFailureId", toolparams.ParamNote},
 		"additionalProperties": false,
 	}
 }
@@ -409,7 +413,7 @@ func (t *ResolveServiceFailureTool) Policy() agenttoolports.ToolPolicy {
 func (t *ResolveServiceFailureTool) Target(
 	params map[string]any,
 ) (agenttoolports.ToolTarget, bool) {
-	return common.TargetOf(params, "serviceFailureId", permission.ResourceServiceFailure)
+	return toolparams.TargetOf(params, "serviceFailureId", permission.ResourceServiceFailure)
 }
 
 func (t *ResolveServiceFailureTool) Execute(
@@ -433,20 +437,20 @@ func (t *ResolveServiceFailureTool) request(
 	ctx context.Context,
 	params *agenttoolports.ToolExecuteParams,
 ) (*servicefailureports.ServiceFailureLifecycleRequest, *servicefailure.ServiceFailure, error) {
-	if err := common.GuardExecute(t, *params); err != nil {
+	if err := toolguard.GuardExecute(t, *params); err != nil {
 		return nil, nil, err
 	}
 
-	failureID, err := common.RequirePulid(params.Params, "serviceFailureId")
+	failureID, err := toolparams.RequirePulid(params.Params, "serviceFailureId")
 	if err != nil {
 		return nil, nil, err
 	}
-	notes, err := common.RequireString(params.Params, common.ParamNote)
+	notes, err := toolparams.RequireString(params.Params, toolparams.ParamNote)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	tenant := common.TenantFrom(*params)
+	tenant := toolparams.TenantFrom(*params)
 	existing, err := t.failures.GetByID(ctx, &servicefailureports.GetServiceFailureByIDRequest{
 		ID:         failureID,
 		TenantInfo: tenant,
@@ -468,7 +472,7 @@ func (t *ResolveServiceFailureTool) request(
 		Notes:      strings.TrimSpace(notes),
 		Version:    existing.Version,
 	}
-	if raw := common.OptionalString(params.Params, "reasonCodeId"); raw != "" {
+	if raw := toolparams.OptionalString(params.Params, "reasonCodeId"); raw != "" {
 		reasonID, parseErr := pulid.Parse(raw)
 		if parseErr != nil {
 			return nil, nil, fmt.Errorf(
@@ -548,7 +552,7 @@ func (t *NotifyDriverTool) ParamSchema() map[string]any {
 				"How urgently the phone should show it. Default medium.",
 				driverMessagePriorities,
 			),
-			common.ParamShipmentID: agenttoolschema.RecordIDText(
+			toolparams.ParamShipmentID: agenttoolschema.RecordIDText(
 				permission.ResourceShipment,
 				"Optional: the shipment the message is about, so Dash can open "+
 					"it; from dispatch_get_board, shipment_get_tracking or shipment_list.",
@@ -594,19 +598,19 @@ func (t *NotifyDriverTool) Execute(
 func (t *NotifyDriverTool) request(
 	params *agenttoolports.ToolExecuteParams,
 ) (*drivernotificationservice.DriverNotification, error) {
-	if err := common.GuardExecute(t, *params); err != nil {
+	if err := toolguard.GuardExecute(t, *params); err != nil {
 		return nil, err
 	}
 
-	workerID, err := common.RequirePulid(params.Params, "workerId")
+	workerID, err := toolparams.RequirePulid(params.Params, "workerId")
 	if err != nil {
 		return nil, err
 	}
-	title, err := common.RequireString(params.Params, "title")
+	title, err := toolparams.RequireString(params.Params, "title")
 	if err != nil {
 		return nil, err
 	}
-	message, err := common.RequireString(params.Params, "message")
+	message, err := toolparams.RequireString(params.Params, "message")
 	if err != nil {
 		return nil, err
 	}
@@ -617,7 +621,7 @@ func (t *NotifyDriverTool) request(
 		)
 	}
 
-	priority := notification.Priority(common.OptionalString(params.Params, "priority"))
+	priority := notification.Priority(toolparams.OptionalString(params.Params, "priority"))
 	switch priority {
 	case notification.PriorityLow, notification.PriorityMedium,
 		notification.PriorityHigh, notification.PriorityCritical:
@@ -628,7 +632,7 @@ func (t *NotifyDriverTool) request(
 	}
 
 	request := &drivernotificationservice.DriverNotification{
-		TenantInfo: common.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(*params),
 		WorkerID:   workerID,
 		EventType:  DispatchMessageEvent,
 		Priority:   priority,
@@ -637,12 +641,12 @@ func (t *NotifyDriverTool) request(
 			AlertMessage: strings.TrimSpace(message),
 		},
 	}
-	if raw := common.OptionalString(params.Params, common.ParamShipmentID); raw != "" {
+	if raw := toolparams.OptionalString(params.Params, toolparams.ParamShipmentID); raw != "" {
 		shipmentID, parseErr := pulid.Parse(raw)
 		if parseErr != nil {
 			return nil, fmt.Errorf("parameter \"shipmentId\" is not a valid id: %w", parseErr)
 		}
-		request.RelatedEntities = map[string]any{common.ParamShipmentID: shipmentID.String()}
+		request.RelatedEntities = map[string]any{toolparams.ParamShipmentID: shipmentID.String()}
 		request.Link = "/loads/" + shipmentID.String()
 	}
 
@@ -719,7 +723,7 @@ func (t *EmailCustomerTool) ParamSchema() map[string]any {
 	return map[string]any{
 		"type": "object",
 		"properties": map[string]any{
-			common.ParamShipmentID: agenttoolschema.RecordIDText(
+			toolparams.ParamShipmentID: agenttoolschema.RecordIDText(
 				permission.ResourceShipment,
 				"The shipment the update is about, from "+
 					"shipment_list or this run's subject. Its customer is who receives it.",
@@ -737,7 +741,7 @@ func (t *EmailCustomerTool) ParamSchema() map[string]any {
 					"shipment reference and the sign-off, so leave those out.",
 			},
 		},
-		"required":             []string{common.ParamShipmentID, "subject", "body"},
+		"required":             []string{toolparams.ParamShipmentID, "subject", "body"},
 		"additionalProperties": false,
 	}
 }
@@ -760,7 +764,7 @@ func (t *EmailCustomerTool) Policy() agenttoolports.ToolPolicy {
 }
 
 func (t *EmailCustomerTool) Target(params map[string]any) (agenttoolports.ToolTarget, bool) {
-	return common.TargetOf(params, common.ParamShipmentID, permission.ResourceShipment)
+	return toolparams.TargetOf(params, toolparams.ParamShipmentID, permission.ResourceShipment)
 }
 
 func (t *EmailCustomerTool) Execute(
@@ -772,7 +776,7 @@ func (t *EmailCustomerTool) Execute(
 		return err
 	}
 	if composed.AlreadyTold {
-		return common.ErrCustomerAlreadyTold
+		return outboundpreview.ErrCustomerAlreadyTold
 	}
 
 	if _, err = t.Deps.Email.Send(ctx, composed.Send); err != nil {
@@ -785,14 +789,17 @@ func (t *EmailCustomerTool) Execute(
 // record leaves the email on the shipment's thread so the desk sees what the
 // customer was told. A failure to record never undoes a send that already
 // happened; it is reported so the run shows it.
-func (t *EmailCustomerTool) record(ctx context.Context, composed *common.CustomerEmail) error {
+func (t *EmailCustomerTool) record(
+	ctx context.Context,
+	composed *outboundpreview.CustomerEmail,
+) error {
 	if t.Deps.Comments == nil {
 		return nil
 	}
 
 	if _, err := t.Deps.Comments.CreateSystem(
 		ctx,
-		common.CustomerUpdateComment(composed),
+		outboundpreview.CustomerUpdateComment(composed),
 	); err != nil {
 		return fmt.Errorf("the email was sent but could not be recorded on the shipment: %w", err)
 	}
@@ -819,7 +826,7 @@ type detentionActor interface {
 		ctx context.Context,
 		params *detentionservice.WaiveParams,
 	) (*detentionservice.OccurrenceChange, error)
-	common.DetentionDisputer
+	detentionpreview.DetentionDisputer
 }
 
 type SendDetentionNoticeTool struct {
@@ -896,18 +903,18 @@ func (t *SendDetentionNoticeTool) Execute(
 func (t *SendDetentionNoticeTool) request(
 	params *agenttoolports.ToolExecuteParams,
 ) (detentionservice.SendOccurrenceNoticeParams, error) {
-	if err := common.GuardExecute(t, *params); err != nil {
+	if err := toolguard.GuardExecute(t, *params); err != nil {
 		return detentionservice.SendOccurrenceNoticeParams{}, err
 	}
 
-	occurrenceID, err := common.RequirePulid(params.Params, "occurrenceId")
+	occurrenceID, err := toolparams.RequirePulid(params.Params, "occurrenceId")
 	if err != nil {
 		return detentionservice.SendOccurrenceNoticeParams{}, err
 	}
 
 	return detentionservice.SendOccurrenceNoticeParams{
 		OccurrenceID: occurrenceID,
-		TenantInfo:   common.TenantFrom(*params),
+		TenantInfo:   toolparams.TenantFrom(*params),
 		UserID:       params.Actor.UserID,
 	}, nil
 }
@@ -941,7 +948,7 @@ func (t *WaiveDetentionTool) ParamSchema() map[string]any {
 				"The occurrence id from detention_list_occurrences.",
 				permission.KindDetentionOccurrence,
 			),
-			common.FieldReason: agenttoolschema.Enum(
+			changepreview.FieldReason: agenttoolschema.Enum(
 				"The coded reason for the waiver.",
 				waiverReasons,
 			),
@@ -950,7 +957,7 @@ func (t *WaiveDetentionTool) ParamSchema() map[string]any {
 				"description": "Why, in a sentence a person can read on the occurrence later.",
 			},
 		},
-		"required":             []string{"occurrenceId", common.FieldReason, "note"},
+		"required":             []string{"occurrenceId", changepreview.FieldReason, "note"},
 		"additionalProperties": false,
 	}
 }
@@ -976,11 +983,11 @@ func (t *WaiveDetentionTool) Execute(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams,
 ) error {
-	if err := common.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
 	}
 	if !params.ApprovedFromProposal() {
-		return common.ErrApprovalNeedsAPerson
+		return detentionpreview.ErrApprovalNeedsAPerson
 	}
 
 	request, err := t.request(&params)
@@ -996,15 +1003,15 @@ func (t *WaiveDetentionTool) Execute(
 func (t *WaiveDetentionTool) request(
 	params *agenttoolports.ToolExecuteParams,
 ) (detentionservice.WaiveParams, error) {
-	if err := common.GuardExecute(t, *params); err != nil {
+	if err := toolguard.GuardExecute(t, *params); err != nil {
 		return detentionservice.WaiveParams{}, err
 	}
 
-	occurrenceID, err := common.RequirePulid(params.Params, "occurrenceId")
+	occurrenceID, err := toolparams.RequirePulid(params.Params, "occurrenceId")
 	if err != nil {
 		return detentionservice.WaiveParams{}, err
 	}
-	rawReason, err := common.RequireString(params.Params, common.FieldReason)
+	rawReason, err := toolparams.RequireString(params.Params, changepreview.FieldReason)
 	if err != nil {
 		return detentionservice.WaiveParams{}, err
 	}
@@ -1014,14 +1021,14 @@ func (t *WaiveDetentionTool) request(
 			"parameter \"reason\" is not a waiver reason: %w", err,
 		)
 	}
-	note, err := common.RequireString(params.Params, "note")
+	note, err := toolparams.RequireString(params.Params, "note")
 	if err != nil {
 		return detentionservice.WaiveParams{}, err
 	}
 
 	return detentionservice.WaiveParams{
 		OccurrenceID: occurrenceID,
-		TenantInfo:   common.TenantFrom(*params),
+		TenantInfo:   toolparams.TenantFrom(*params),
 		Reason:       reason,
 		Note:         strings.TrimSpace(note),
 		UserID:       params.Actor.UserID,

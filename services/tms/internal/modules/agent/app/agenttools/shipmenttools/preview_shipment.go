@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/outboundpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/shipmentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -39,14 +41,14 @@ func (t *AddShipmentCommentTool) Preview(
 		toolpreview.Record{Resource: permission.ResourceShipmentComment, Label: "Shipment comment"},
 		entity,
 		toolpreview.Only(
-			common.PreviewFieldShipmentID,
+			changepreview.PreviewFieldShipmentID,
 			"comment",
 			"type",
 			"visibility",
 			"priority",
 		),
 		toolpreview.WithRefs(map[string]permission.Resource{
-			common.PreviewFieldShipmentID: permission.ResourceShipment,
+			changepreview.PreviewFieldShipmentID: permission.ResourceShipment,
 		}),
 	)
 	if err != nil {
@@ -76,7 +78,7 @@ func (t *AddShipmentCommentTool) Preview(
 	)
 	if entity.Visibility == shipment.CommentVisibilityCustomer ||
 		entity.Visibility == shipment.CommentVisibilityDriver {
-		common.WarnSensitiveContent(preview, entity.Comment)
+		outboundpreview.WarnSensitiveContent(preview, entity.Comment)
 	}
 
 	return preview, nil
@@ -114,7 +116,7 @@ func (t *CancelShipmentTool) Preview(
 	}
 
 	change, err := toolpreview.Changed(
-		common.ShipmentRecord(cancelled.Before),
+		shipmentpreview.ShipmentRecord(cancelled.Before),
 		cancelled.Before,
 		cancelled.After,
 		toolpreview.Only("status", "cancelReason", "canceledById", "canceledAt"),
@@ -138,7 +140,10 @@ func (t *CancelShipmentTool) Preview(
 			return nil, nErr
 		}
 		for _, notice := range notices {
-			changes = append(changes, common.PartnerNoticeSend(notice, request.CancelReason))
+			changes = append(
+				changes,
+				shipmentpreview.PartnerNoticeSend(notice, request.CancelReason),
+			)
 		}
 	}
 
@@ -165,7 +170,7 @@ func (t *CancelShipmentTool) Preview(
 	)
 	if withdrawn > 0 {
 		summary += fmt.Sprintf(" %s would be withdrawn from carriers.",
-			common.CountOf(withdrawn, "live tender"))
+			changepreview.CountOf(withdrawn, "live tender"))
 	}
 
 	return toolpreview.Build(summary, changes...), nil
@@ -230,5 +235,5 @@ func CarrierNameOfOffer(offer *tender.TenderOffer) string {
 		return offer.Carrier.Name
 	}
 
-	return common.LabelCarrier
+	return changepreview.LabelCarrier
 }

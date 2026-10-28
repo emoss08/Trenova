@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/billing/app/billingtransfercriteria"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentbillingports"
@@ -74,7 +74,7 @@ func TestTransferToBilling_ResolvesEveryTransferableShipmentToIDs(t *testing.T) 
 		agenttoolstest.ExecuteParams(map[string]any{
 			paramAllTransferable:                       true,
 			paramMarkCompletedReady:                    true,
-			common.ParamBillType:                       "Invoice",
+			toolparams.ParamBillType:                   "Invoice",
 			billingtransfercriteria.ParamStatus:        "Completed",
 			billingtransfercriteria.ParamCustomerID:    customerID.String(),
 			billingtransfercriteria.ParamQuery:         "acme",
@@ -98,9 +98,9 @@ func TestTransferToBilling_ResolvesEveryTransferableShipmentToIDs(t *testing.T) 
 	assert.True(t, sel.planner.planned.MarkCompletedReadyToInvoice)
 
 	assert.Equal(t, map[string]any{
-		common.ParamShipmentIDs: []any{sel.ready.String(), sel.marked.String()},
-		paramMarkCompletedReady: true,
-		common.ParamBillType:    "Invoice",
+		toolparams.ParamShipmentIDs: []any{sel.ready.String(), sel.marked.String()},
+		paramMarkCompletedReady:     true,
+		toolparams.ParamBillType:    "Invoice",
 	}, resolved, "only what would transfer is proposed, and the criteria are spent")
 	require.NoError(t, sel.tool.Validate(t.Context(), agenttoolstest.ExecuteParams(resolved)))
 }
@@ -109,7 +109,7 @@ func TestTransferToBilling_LeavesAnExplicitSelectionAsItIs(t *testing.T) {
 	t.Parallel()
 
 	sel := newTransferSelection()
-	params := map[string]any{common.ParamShipmentIDs: []any{sel.ready.String()}}
+	params := map[string]any{toolparams.ParamShipmentIDs: []any{sel.ready.String()}}
 
 	resolved, err := sel.tool.ResolveSelection(t.Context(), agenttoolstest.ExecuteParams(params))
 	require.NoError(t, err)
@@ -198,9 +198,9 @@ func TestTransferToBilling_RefusesNeitherOrBothSelections(t *testing.T) {
 	tool := NewTransferToBillingTool(&fakeTransferPlanner{}, &fakeRunStarter{}).(*TransferToBillingTool)
 
 	for name, params := range map[string]map[string]any{
-		"neither":        {common.ParamBillType: "Invoice"},
+		"neither":        {toolparams.ParamBillType: "Invoice"},
 		"all turned off": {paramAllTransferable: false},
-		"both":           {common.ParamShipmentIDs: shipmentIDs(1), paramAllTransferable: true},
+		"both":           {toolparams.ParamShipmentIDs: shipmentIDs(1), paramAllTransferable: true},
 		"bad status":     {paramAllTransferable: true, billingtransfercriteria.ParamStatus: "InTransit"},
 		"bad day":        {paramAllTransferable: true, billingtransfercriteria.ParamDeliveredFrom: "soon"},
 		"bad customer":   {paramAllTransferable: true, billingtransfercriteria.ParamCustomerID: "acme"},
@@ -215,9 +215,9 @@ func TestTransferToBilling_RefusesNeitherOrBothSelections(t *testing.T) {
 	for name, params := range map[string]map[string]any{
 		"all":              {paramAllTransferable: true},
 		"all with filters": {paramAllTransferable: true, billingtransfercriteria.ParamStatus: "Completed"},
-		"ids":              {common.ParamShipmentIDs: shipmentIDs(2)},
+		"ids":              {toolparams.ParamShipmentIDs: shipmentIDs(2)},
 		"ids with the filters they were found by": {
-			common.ParamShipmentIDs:             shipmentIDs(1),
+			toolparams.ParamShipmentIDs:         shipmentIDs(1),
 			billingtransfercriteria.ParamQuery:  "SEED-PAY-001",
 			billingtransfercriteria.ParamStatus: "Completed",
 		},
@@ -262,7 +262,7 @@ func TestTransferToBilling_SetsAsideTheFiltersANamedSelectionWasFoundBy(t *testi
 	resolved, err := sel.tool.ResolveSelection(
 		t.Context(),
 		agenttoolstest.ExecuteParams(map[string]any{
-			common.ParamShipmentIDs:             []any{named},
+			toolparams.ParamShipmentIDs:         []any{named},
 			paramMarkCompletedReady:             true,
 			billingtransfercriteria.ParamQuery:  "SEED-PAY-001",
 			billingtransfercriteria.ParamStatus: "Completed",
@@ -271,8 +271,8 @@ func TestTransferToBilling_SetsAsideTheFiltersANamedSelectionWasFoundBy(t *testi
 	require.NoError(t, err)
 
 	assert.Equal(t, map[string]any{
-		common.ParamShipmentIDs: []any{named},
-		paramMarkCompletedReady: true,
+		toolparams.ParamShipmentIDs: []any{named},
+		paramMarkCompletedReady:     true,
 	}, resolved)
 	assert.Nil(t, sel.planner.listed, "a named selection is never widened by its filters")
 }
@@ -283,8 +283,8 @@ func TestTransferToBilling_ARefusalForBothSelectionsShowsBothCalls(t *testing.T)
 	sel := newTransferSelection()
 
 	_, err := sel.tool.ResolveSelection(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
-		common.ParamShipmentIDs: []any{sel.ready.String()},
-		paramAllTransferable:    true,
+		toolparams.ParamShipmentIDs: []any{sel.ready.String()},
+		paramAllTransferable:        true,
 	}))
 
 	require.ErrorIs(t, err, errBothSelections)

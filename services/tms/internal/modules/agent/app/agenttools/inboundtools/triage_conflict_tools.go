@@ -4,7 +4,9 @@ import (
 	"context"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -78,7 +80,7 @@ func renderConflictPlan(
 			ID:       plan.Message.ID,
 			Label: conflictLabel(plan.Before.Kind) + " on " +
 				describeInboundMessage(plan.Message),
-			Version: common.PreviewVersion(plan.Message.Version),
+			Version: changepreview.PreviewVersion(plan.Message.Version),
 		},
 		conflictViewOf(&plan.Before),
 		conflictViewOf(&plan.After),
@@ -103,8 +105,8 @@ func NewResolveInboundConflictTool(p triageToolParams) agenttoolports.AgentTool 
 }
 
 func newResolveInboundConflictTool(conflicts triageConflicts) agenttoolports.AgentTool {
-	return common.NewReportingReceivableTool(
-		&common.ReceivableSpec{
+	return toolspec.NewReportingReceivableTool(
+		&toolspec.ReceivableSpec{
 			Name:     "inbox_resolve_conflict",
 			Artifact: inboundMessageEntity,
 			Description: "Settle a conflict Triage found on a message. A duplicate document: " +
@@ -139,23 +141,23 @@ func newResolveInboundConflictTool(conflicts triageConflicts) agenttoolports.Age
 			Recipe:      []string{toolGetInboundMessage, "inbox_resolve_conflict"},
 			Target:      targetMessage,
 		},
-		common.ReceivablePlan[
+		toolspec.ReceivablePlan[
 			*triageconflictservice.ResolveRequest,
 			*triageconflictservice.ConflictPlan,
 		]{
 			Request: func(
 				params *agenttoolports.ToolExecuteParams,
 			) (*triageconflictservice.ResolveRequest, error) {
-				messageID, err := common.RequirePulid(params.Params, paramMessageID)
+				messageID, err := toolparams.RequirePulid(params.Params, paramMessageID)
 				if err != nil {
 					return nil, err
 				}
-				conflictID, err := common.RequireBoundedText(params.Params, paramConflictID,
+				conflictID, err := toolparams.RequireBoundedText(params.Params, paramConflictID,
 					maxConflictID)
 				if err != nil {
 					return nil, err
 				}
-				resolution, err := common.RequireEnum(params.Params, paramConflictResolution,
+				resolution, err := toolparams.RequireEnum(params.Params, paramConflictResolution,
 					triageConflictResolutions.Values)
 				if err != nil {
 					return nil, err
@@ -213,8 +215,8 @@ func newReopenInboundConflictTool(
 	inbox inboundMessageReader,
 	conflicts triageConflicts,
 ) agenttoolports.AgentTool {
-	return common.NewReportingReceivableTool(
-		&common.ReceivableSpec{
+	return toolspec.NewReportingReceivableTool(
+		&toolspec.ReceivableSpec{
 			Name:     "inbox_reopen_conflict",
 			Artifact: inboundMessageEntity,
 			Description: "Reopen a conflict on a message that was settled the wrong way, so " +
@@ -244,18 +246,18 @@ func newReopenInboundConflictTool(
 			Recipe:      []string{toolGetInboundMessage, "inbox_reopen_conflict"},
 			Target:      targetMessage,
 		},
-		common.ReceivablePlan[
+		toolspec.ReceivablePlan[
 			*triageconflictservice.ReopenRequest,
 			*triageconflictservice.ConflictPlan,
 		]{
 			Request: func(
 				params *agenttoolports.ToolExecuteParams,
 			) (*triageconflictservice.ReopenRequest, error) {
-				messageID, err := common.RequirePulid(params.Params, paramMessageID)
+				messageID, err := toolparams.RequirePulid(params.Params, paramMessageID)
 				if err != nil {
 					return nil, err
 				}
-				conflictID, err := common.RequireBoundedText(params.Params, paramConflictID,
+				conflictID, err := toolparams.RequireBoundedText(params.Params, paramConflictID,
 					maxConflictID)
 				if err != nil {
 					return nil, err

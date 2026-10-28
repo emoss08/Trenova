@@ -6,8 +6,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/shipmenttools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -155,7 +155,7 @@ func TestAddShipmentComment_RejectsAMismatchedActor(t *testing.T) {
 	})
 	params.Actor.OrganizationID = pulid.MustNew("org_")
 
-	require.ErrorIs(t, tool.Execute(t.Context(), params), common.ErrTenantMismatch)
+	require.ErrorIs(t, tool.Execute(t.Context(), params), toolguard.ErrTenantMismatch)
 	assert.Nil(t, comments.created)
 }
 

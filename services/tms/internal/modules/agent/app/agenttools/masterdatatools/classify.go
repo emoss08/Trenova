@@ -1,7 +1,7 @@
 package masterdatatools
 
 import (
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -9,7 +9,7 @@ import (
 
 func classifyTableView(params agenttoolports.ToolExecuteParams) agenttoolports.CallPolicy {
 	actor := params.Actor
-	if common.OptionalBool(params.Params, "shared") || actor == nil ||
+	if toolparams.OptionalBool(params.Params, "shared") || actor == nil ||
 		actor.PrincipalType != permissionports.PrincipalTypeUser || actor.UserID.IsNil() {
 		return agenttoolports.CallPolicy{Egress: agent.EgressInternal}
 	}

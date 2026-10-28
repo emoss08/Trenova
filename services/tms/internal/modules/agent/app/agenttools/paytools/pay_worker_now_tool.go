@@ -4,7 +4,10 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/settlementpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -49,8 +52,10 @@ func (t *PayWorkerNowTool) Description() string {
 }
 
 func (t *PayWorkerNowTool) ParamSchema() map[string]any {
-	properties := common.SettlementPaymentProperties(common.DriverPaymentMethods)
-	properties[common.ParamWorkerID] = agenttoolschema.RecordIDText(permission.ResourceWorker,
+	properties := settlementpreview.SettlementPaymentProperties(
+		settlementpreview.DriverPaymentMethods,
+	)
+	properties[toolparams.ParamWorkerID] = agenttoolschema.RecordIDText(permission.ResourceWorker,
 		"The driver, from worker_list or settlement_list_pay_events.")
 	properties[ParamPayEventIDs] = toolschema.KeepEmpty(agenttoolschema.OfKinds(map[string]any{
 		toolschema.KeyType:     toolschema.TypeArray,
@@ -69,8 +74,8 @@ func (t *PayWorkerNowTool) ParamSchema() map[string]any {
 		toolschema.KeyType:       toolschema.TypeObject,
 		toolschema.KeyProperties: properties,
 		toolschema.KeyRequired: []string{
-			common.ParamWorkerID,
-			common.ParamPaymentMethod,
+			toolparams.ParamWorkerID,
+			settlementpreview.ParamPaymentMethod,
 		},
 		toolschema.KeyAdditionalProperties: false,
 	}
@@ -86,9 +91,9 @@ func (t *PayWorkerNowTool) Policy() agenttoolports.ToolPolicy {
 		DefaultTier:   agent.TierPropose,
 		MaxTier:       agent.TierPropose,
 		Egress:        []agent.EgressClass{agent.EgressDriverVisible, agent.EgressMoney},
-		Classify:      common.ClassifyAsMoney,
+		Classify:      settlementpreview.ClassifyAsMoney,
 		Effect:        agent.ToolEffectChange,
-		Artifact:      common.DriverSettlementEntity,
+		Artifact:      settlementpreview.DriverSettlementEntity,
 		ReadsExternal: agent.ExternalReadNever,
 		Rationale: "Approves, posts and records a payment to a driver in one step; only a " +
 			"person pays someone.",
@@ -98,16 +103,16 @@ func (t *PayWorkerNowTool) Policy() agenttoolports.ToolPolicy {
 func (t *PayWorkerNowTool) request(
 	params *agenttoolports.ToolExecuteParams,
 ) (*driversettlementservice.PayWorkerNowRequest, error) {
-	if err := common.GuardPreview(t, params); err != nil {
+	if err := toolguard.GuardPreview(t, params); err != nil {
 		return nil, err
 	}
-	workerID, err := common.RequirePulid(params.Params, common.ParamWorkerID)
+	workerID, err := toolparams.RequirePulid(params.Params, toolparams.ParamWorkerID)
 	if err != nil {
 		return nil, err
 	}
 	payment := &settlementshared.ActionRequest{}
-	if err = common.FillSettlementPayment(
-		common.DriverPaymentMethods,
+	if err = settlementpreview.FillSettlementPayment(
+		settlementpreview.DriverPaymentMethods,
 	)(
 		params.Params,
 		payment,
@@ -115,14 +120,14 @@ func (t *PayWorkerNowTool) request(
 		return nil, err
 	}
 	req := &driversettlementservice.PayWorkerNowRequest{
-		TenantInfo:       common.TenantFrom(*params),
+		TenantInfo:       toolparams.TenantFrom(*params),
 		WorkerID:         workerID,
-		ApplyRecurring:   common.OptionalBool(params.Params, ParamApplyRecurring),
+		ApplyRecurring:   toolparams.OptionalBool(params.Params, ParamApplyRecurring),
 		PaymentMethod:    payment.PaymentMethod,
 		PaymentReference: payment.PaymentReference,
 	}
 	if _, listed := params.Params[ParamPayEventIDs]; listed {
-		if req.PayEventIDs, err = common.RequirePulidSlice(
+		if req.PayEventIDs, err = toolparams.RequirePulidSlice(
 			params.Params,
 			ParamPayEventIDs,
 			maxPayEventsPerAttach,
@@ -162,11 +167,11 @@ func (t *PayWorkerNowTool) ExecuteWithResult(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
 ) (*agent.ToolExecutionResult, error) {
-	if err := common.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return nil, err
 	}
 	if !params.ApprovedFromProposal() {
-		return nil, common.ErrSettlementNeedsAPerson
+		return nil, settlementpreview.ErrSettlementNeedsAPerson
 	}
 	req, err := t.request(&params)
 	if err != nil {
@@ -177,7 +182,7 @@ func (t *PayWorkerNowTool) ExecuteWithResult(
 		return nil, err
 	}
 
-	return common.SettlementResult(paid), nil
+	return settlementpreview.SettlementResult(paid), nil
 }
 
 func (t *PayWorkerNowTool) Execute(
@@ -200,31 +205,31 @@ func (t *PayWorkerNowTool) Preview(
 
 	summary := "Would pay the driver now, off cycle."
 	if plan.Refusal != nil {
-		return common.WouldFail(toolpreview.Build(summary), plan.Refusal)
+		return changepreview.WouldFail(toolpreview.Build(summary), plan.Refusal)
 	}
 
 	settlement := plan.Settlement
 	summary = fmt.Sprintf(
 		"Would pay the driver now for %s: a settlement is generated, approved, posted and "+
 			"marked paid by %s in one step, and the driver is told in the driver portal.",
-		common.CountOf(settlement.ShipmentCount, "load"),
+		changepreview.CountOf(settlement.ShipmentCount, "load"),
 		settlement.PaymentMethod,
 	)
-	change, err := common.NewSettlementChange(settlement, "Off-cycle driver settlement")
+	change, err := settlementpreview.NewSettlementChange(settlement, "Off-cycle driver settlement")
 	if err != nil {
 		return nil, err
 	}
 	changes := []*agent.RecordChange{change}
 	if plan.Journal != nil {
-		journal, journalErr := common.SettlementJournalChange(
+		journal, journalErr := settlementpreview.SettlementJournalChange(
 			plan.Journal,
-			common.DriverSettlementFacts(settlement),
+			settlementpreview.DriverSettlementFacts(settlement),
 		)
 		if journalErr != nil {
 			return nil, journalErr
 		}
 		changes = append(changes, journal)
-		summary += " " + common.JournalSentence(plan.Journal)
+		summary += " " + settlementpreview.JournalSentence(plan.Journal)
 	}
 
 	return toolpreview.Build(summary, changes...), nil

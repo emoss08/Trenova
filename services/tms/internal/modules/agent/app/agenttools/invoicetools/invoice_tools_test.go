@@ -7,7 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoiceservice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
@@ -120,7 +120,9 @@ func TestPostInvoice_PreviewShowsEverythingThePostWrites(t *testing.T) {
 
 	poster := &fakeInvoicePoster{preview: postPreviewFixture(), locked: true}
 	tool := NewPostInvoiceTool(poster).(*PostInvoiceTool)
-	params := agenttoolstest.ExecuteParams(map[string]any{common.ParamInvoiceID: poster.preview.Before.ID.String()})
+	params := agenttoolstest.ExecuteParams(
+		map[string]any{toolparams.ParamInvoiceID: poster.preview.Before.ID.String()},
+	)
 
 	preview, err := tool.Preview(t.Context(), params)
 	require.NoError(t, err)
@@ -162,7 +164,9 @@ func TestPostInvoice_ARefusedPostIsAWouldFail(t *testing.T) {
 		"Invoice posting is blocked because the accounting period is locked",
 	)
 	tool := NewPostInvoiceTool(&fakeInvoicePoster{preview: refused, locked: true}).(*PostInvoiceTool)
-	params := agenttoolstest.ExecuteParams(map[string]any{common.ParamInvoiceID: refused.Before.ID.String()})
+	params := agenttoolstest.ExecuteParams(
+		map[string]any{toolparams.ParamInvoiceID: refused.Before.ID.String()},
+	)
 
 	preview, err := tool.Preview(t.Context(), params)
 	require.NoError(t, err)
@@ -181,7 +185,9 @@ func TestPostInvoice_PostsOnlyFromAPersonsApproval(t *testing.T) {
 
 	poster := &fakeInvoicePoster{preview: postPreviewFixture()}
 	tool := NewPostInvoiceTool(poster)
-	params := agenttoolstest.ExecuteParams(map[string]any{common.ParamInvoiceID: poster.preview.Before.ID.String()})
+	params := agenttoolstest.ExecuteParams(
+		map[string]any{toolparams.ParamInvoiceID: poster.preview.Before.ID.String()},
+	)
 
 	require.ErrorIs(t, tool.Execute(t.Context(), params), ErrInvoiceNeedsAPerson)
 	assert.Nil(t, poster.posted)
@@ -248,7 +254,9 @@ func TestSendInvoice_PreviewIsTheEmailPlanSendLaysOut(t *testing.T) {
 
 	sender := &fakeInvoiceSender{plan: sendPlanFixture()}
 	tool := NewSendInvoiceTool(sender).(*SendInvoiceTool)
-	params := agenttoolstest.ExecuteParams(map[string]any{common.ParamInvoiceID: sender.plan.InvoiceID.String()})
+	params := agenttoolstest.ExecuteParams(
+		map[string]any{toolparams.ParamInvoiceID: sender.plan.InvoiceID.String()},
+	)
 
 	preview, err := tool.Preview(t.Context(), params)
 	require.NoError(t, err)
@@ -283,7 +291,9 @@ func TestSendInvoice_RefusesASendThatCannotGo(t *testing.T) {
 
 			sender := &fakeInvoiceSender{plan: plan}
 			tool := NewSendInvoiceTool(sender).(*SendInvoiceTool)
-			params := agenttoolstest.ExecuteParams(map[string]any{common.ParamInvoiceID: plan.InvoiceID.String()})
+			params := agenttoolstest.ExecuteParams(
+				map[string]any{toolparams.ParamInvoiceID: plan.InvoiceID.String()},
+			)
 			params.ProposalID = pulid.MustNew("ap_")
 
 			require.Error(t, tool.Validate(t.Context(), params))
@@ -301,7 +311,9 @@ func TestSendInvoice_SendsOnlyFromAPersonsApproval(t *testing.T) {
 
 	sender := &fakeInvoiceSender{plan: sendPlanFixture()}
 	tool := NewSendInvoiceTool(sender)
-	params := agenttoolstest.ExecuteParams(map[string]any{common.ParamInvoiceID: sender.plan.InvoiceID.String()})
+	params := agenttoolstest.ExecuteParams(
+		map[string]any{toolparams.ParamInvoiceID: sender.plan.InvoiceID.String()},
+	)
 
 	require.ErrorIs(t, tool.Execute(t.Context(), params), ErrInvoiceNeedsAPerson)
 

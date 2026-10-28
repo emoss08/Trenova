@@ -5,8 +5,9 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/paytools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/settlementpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -25,9 +26,9 @@ import (
 
 const periodStartUnix = int64(1_788_220_800)
 
-const periodEndUnix = periodStartUnix + 7*common.SecondsPerDay
+const periodEndUnix = periodStartUnix + 7*toolparams.SecondsPerDay
 
-const payDateUnix = periodEndUnix + 3*common.SecondsPerDay
+const payDateUnix = periodEndUnix + 3*toolparams.SecondsPerDay
 
 func currentBounds() driversettlementservice.PeriodBounds {
 	return driversettlementservice.PeriodBounds{
@@ -83,7 +84,9 @@ func TestGenerateDriverSettlement_DefaultsToTheCurrentPeriod(t *testing.T) {
 		created: draft,
 	}
 	tool := &GenerateDriverSettlementTool{settlements: generator}
-	params := agenttoolstest.ExecuteParams(map[string]any{common.ParamWorkerID: draft.WorkerID.String()})
+	params := agenttoolstest.ExecuteParams(
+		map[string]any{toolparams.ParamWorkerID: draft.WorkerID.String()},
+	)
 
 	preview, err := tool.Preview(t.Context(), params)
 	require.NoError(t, err)
@@ -98,7 +101,7 @@ func TestGenerateDriverSettlement_DefaultsToTheCurrentPeriod(t *testing.T) {
 
 	result, err := tool.ExecuteWithResult(t.Context(), params)
 	require.NoError(t, err)
-	assert.Equal(t, draft.ID.String(), result.IDs[common.ParamSettlementID])
+	assert.Equal(t, draft.ID.String(), result.IDs[settlementpreview.ParamSettlementID])
 	require.NotNil(t, result.Record)
 	assert.Equal(t, tool.Policy().Artifact, result.Record.EntityType)
 
@@ -116,26 +119,39 @@ func TestGenerateDriverSettlement_ReadsAPeriodAsWholeDays(t *testing.T) {
 	tool := &GenerateDriverSettlementTool{settlements: generator}
 	workerID := pulid.MustNew("wrk_").String()
 
-	half := agenttoolstest.ExecuteParams(map[string]any{common.ParamWorkerID: workerID, common.ParamPeriodStart: "2026-09-01"})
+	half := agenttoolstest.ExecuteParams(
+		map[string]any{
+			toolparams.ParamWorkerID:    workerID,
+			toolparams.ParamPeriodStart: "2026-09-01",
+		},
+	)
 	require.ErrorIs(t, tool.Validate(t.Context(), half), errHalfAPeriod)
 
 	backwards := agenttoolstest.ExecuteParams(map[string]any{
-		common.ParamWorkerID:    workerID,
-		common.ParamPeriodStart: "2026-09-07",
-		common.ParamPeriodEnd:   "2026-09-01",
+		toolparams.ParamWorkerID:    workerID,
+		toolparams.ParamPeriodStart: "2026-09-07",
+		toolparams.ParamPeriodEnd:   "2026-09-01",
 	})
 	require.Error(t, tool.Validate(t.Context(), backwards))
 
 	params := agenttoolstest.ExecuteParams(map[string]any{
-		common.ParamWorkerID:    workerID,
-		common.ParamPeriodStart: "2026-09-01",
-		common.ParamPeriodEnd:   "2026-09-07",
+		toolparams.ParamWorkerID:    workerID,
+		toolparams.ParamPeriodStart: "2026-09-01",
+		toolparams.ParamPeriodEnd:   "2026-09-07",
 	})
 	err := tool.Validate(t.Context(), params)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "already has a settlement for this period")
-	assert.Equal(t, generator.planned.PeriodStart+7*common.SecondsPerDay, generator.planned.PeriodEnd)
-	assert.Equal(t, generator.planned.PeriodEnd+3*common.SecondsPerDay, generator.planned.PayDate)
+	assert.Equal(
+		t,
+		generator.planned.PeriodStart+7*toolparams.SecondsPerDay,
+		generator.planned.PeriodEnd,
+	)
+	assert.Equal(
+		t,
+		generator.planned.PeriodEnd+3*toolparams.SecondsPerDay,
+		generator.planned.PayDate,
+	)
 
 	preview, err := tool.Preview(t.Context(), params)
 	require.NoError(t, err)
@@ -182,7 +198,9 @@ func TestGenerateDriverSettlementBatch_PreviewsEachDriverStillToSettle(t *testin
 		},
 	}}
 	tool := &GenerateDriverBatchTool{settlements: batch}
-	params := agenttoolstest.ExecuteParams(map[string]any{common.ParamNote: "  Labor Day week  "})
+	params := agenttoolstest.ExecuteParams(
+		map[string]any{toolparams.ParamNote: "  Labor Day week  "},
+	)
 
 	preview, err := tool.Preview(t.Context(), params)
 	require.NoError(t, err)
@@ -251,8 +269,15 @@ func TestGenerateCarrierSettlementBatch_CountsWhatThePreviewLeavesOut(t *testing
 	assert.Equal(t, 3, preview.OmittedRecords)
 	assert.Contains(t, preview.Summary, "Pending cost for the period covers 5 carriers")
 	require.Len(t, preview.Changes, 1)
-	assert.Equal(t, permission.ResourceCarrier,
-		agenttoolstest.FieldByPath(t, agenttoolstest.PreviewChange(t, preview, 0), "carrierId").AfterRef.Resource)
+	assert.Equal(
+		t,
+		permission.ResourceCarrier,
+		agenttoolstest.FieldByPath(
+			t,
+			agenttoolstest.PreviewChange(t, preview, 0),
+			"carrierId",
+		).AfterRef.Resource,
+	)
 }
 
 type fakeInstantPayer struct {
@@ -301,10 +326,10 @@ func TestPayWorkerNow_OnlyAPersonPaysSomeone(t *testing.T) {
 
 	event := pulid.MustNew("dpe_")
 	params := agenttoolstest.ExecuteParams(map[string]any{
-		common.ParamWorkerID:         pulid.MustNew("wrk_").String(),
-		common.ParamPaymentMethod:    "InstantPay",
-		paytools.ParamPayEventIDs:    []any{event.String()},
-		paytools.ParamApplyRecurring: true,
+		toolparams.ParamWorkerID:             pulid.MustNew("wrk_").String(),
+		settlementpreview.ParamPaymentMethod: "InstantPay",
+		paytools.ParamPayEventIDs:            []any{event.String()},
+		paytools.ParamApplyRecurring:         true,
 	})
 
 	preview, err := tool.Preview(t.Context(), params)
@@ -312,16 +337,20 @@ func TestPayWorkerNow_OnlyAPersonPaysSomeone(t *testing.T) {
 	assert.Contains(t, preview.Summary, "Would pay the driver now for 2 loads")
 	assert.Contains(t, preview.Summary, "by InstantPay")
 	require.Len(t, preview.Changes, 2)
-	assert.Equal(t, permission.ResourceJournalEntry, agenttoolstest.PreviewChange(t, preview, 1).Resource)
+	assert.Equal(
+		t,
+		permission.ResourceJournalEntry,
+		agenttoolstest.PreviewChange(t, preview, 1).Resource,
+	)
 
 	_, err = tool.ExecuteWithResult(t.Context(), params)
-	require.ErrorIs(t, err, common.ErrSettlementNeedsAPerson)
+	require.ErrorIs(t, err, settlementpreview.ErrSettlementNeedsAPerson)
 	assert.Nil(t, payer.paid)
 
 	params.ProposalID = pulid.MustNew("ap_")
 	result, err := tool.ExecuteWithResult(t.Context(), params)
 	require.NoError(t, err)
-	assert.Equal(t, settlement.ID.String(), result.IDs[common.ParamSettlementID])
+	assert.Equal(t, settlement.ID.String(), result.IDs[settlementpreview.ParamSettlementID])
 	assert.Equal(t, []pulid.ID{event}, payer.paid.PayEventIDs)
 	assert.True(t, payer.paid.ApplyRecurring)
 

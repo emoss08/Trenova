@@ -5,7 +5,9 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -72,15 +74,15 @@ type workItemRoute struct {
 }
 
 func workItemRouteFrom(params *agenttoolports.ToolExecuteParams) (*workItemRoute, error) {
-	id, err := common.RequirePulid(params.Params, paramWorkItemID)
+	id, err := toolparams.RequirePulid(params.Params, paramWorkItemID)
 	if err != nil {
 		return nil, err
 	}
-	move, err := common.RequireEnum(params.Params, paramWorkItemMove, workItemMoves.Values)
+	move, err := toolparams.RequireEnum(params.Params, paramWorkItemMove, workItemMoves.Values)
 	if err != nil {
 		return nil, err
 	}
-	assignee, err := common.OptionalPulidParam(params.Params, paramAssigneeID)
+	assignee, err := toolparams.OptionalPulidParam(params.Params, paramAssigneeID)
 	if err != nil {
 		return nil, err
 	}
@@ -102,7 +104,7 @@ func (r *workItemRoute) plan(
 	ctx context.Context,
 	items WorkItemRouter,
 ) (*bankreceiptworkitemports.BankReceiptWorkItemChange, error) {
-	tenant := common.TenantFrom(*r.params)
+	tenant := toolparams.TenantFrom(*r.params)
 	if r.move == workItemAssign {
 		return items.PlanAssign(ctx, &bankreceiptworkitemports.AssignBankReceiptWorkItemRequest{
 			WorkItemID:       r.id,
@@ -118,7 +120,7 @@ func (r *workItemRoute) plan(
 }
 
 func (r *workItemRoute) run(ctx context.Context, items WorkItemRouter) error {
-	tenant := common.TenantFrom(*r.params)
+	tenant := toolparams.TenantFrom(*r.params)
 	if r.move == workItemAssign {
 		_, err := items.Assign(ctx, &bankreceiptworkitemports.AssignBankReceiptWorkItemRequest{
 			WorkItemID:       r.id,
@@ -138,7 +140,7 @@ func (r *workItemRoute) run(ctx context.Context, items WorkItemRouter) error {
 }
 
 func newTriageBankReceiptWorkItemTool(items WorkItemRouter) agenttoolports.AgentTool {
-	return common.NewReceivableTool(&common.ReceivableSpec{
+	return toolspec.NewReceivableTool(&toolspec.ReceivableSpec{
 		Name:   "receivable_triage_bank_receipt_work_item",
 		Recipe: []string{"receivable_get_bank_receipt", "receivable_triage_bank_receipt_work_item"},
 		Description: "Assign a bank receipt's reconciliation work item to a person who will " +
@@ -169,9 +171,13 @@ func newTriageBankReceiptWorkItemTool(items WorkItemRouter) agenttoolports.Agent
 		},
 		Required: []string{paramWorkItemID, paramWorkItemMove},
 		Target: func(params map[string]any) (agenttoolports.ToolTarget, bool) {
-			return common.TargetOf(params, paramWorkItemID, permission.ResourceBankReceiptWorkItem)
+			return toolparams.TargetOf(
+				params,
+				paramWorkItemID,
+				permission.ResourceBankReceiptWorkItem,
+			)
 		},
-	}, common.ReceivablePlan[*workItemRoute, *bankreceiptworkitemports.BankReceiptWorkItemChange]{
+	}, toolspec.ReceivablePlan[*workItemRoute, *bankreceiptworkitemports.BankReceiptWorkItemChange]{
 		Request: workItemRouteFrom,
 		Plan: func(
 			ctx context.Context,
@@ -207,11 +213,11 @@ func renderWorkItemRoute(
 			Resource: permission.ResourceBankReceiptWorkItem,
 			ID:       change.Before.ID,
 			Label:    "Reconciliation item",
-			Version:  common.PinnedVersion(change.Before.Version),
+			Version:  changepreview.PinnedVersion(change.Before.Version),
 		},
 		change.Before,
 		change.After,
-		toolpreview.Only(common.FieldStatus, "assignedToUserId", "assignedAt"),
+		toolpreview.Only(changepreview.FieldStatus, "assignedToUserId", "assignedAt"),
 		toolpreview.Volatile("assignedAt"),
 		toolpreview.WithRefs(map[string]permission.Resource{
 			"assignedToUserId": permission.ResourceUser,

@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
@@ -46,10 +46,10 @@ func TestSaveInvoiceAdjustmentDraft_TakesTheDraftsOwnInvoiceBesideIt(t *testing.
 	adjuster, detail := savedDraftAdjuster()
 	tool := NewSaveInvoiceAdjustmentDraftTool(adjuster)
 	params := agenttoolstest.AgentParamsFor(map[string]any{
-		ParamAdjustmentID:     detail.ID.String(),
-		common.ParamInvoiceID: detail.OriginalInvoiceID.String(),
-		paramAdjustmentKind:   string(invoiceadjustment.KindCreditOnly),
-		common.ParamReason:    "Customer disputes the lumper fee",
+		ParamAdjustmentID:         detail.ID.String(),
+		toolparams.ParamInvoiceID: detail.OriginalInvoiceID.String(),
+		paramAdjustmentKind:       string(invoiceadjustment.KindCreditOnly),
+		toolparams.ParamReason:    "Customer disputes the lumper fee",
 	})
 
 	require.NoError(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(), params))
@@ -67,10 +67,10 @@ func TestSaveInvoiceAdjustmentDraft_ARefusalForADraftOnAnotherInvoiceShowsBothCa
 	tool := NewSaveInvoiceAdjustmentDraftTool(adjuster)
 	other := pulid.MustNew("inv_")
 	params := agenttoolstest.AgentParamsFor(map[string]any{
-		ParamAdjustmentID:     detail.ID.String(),
-		common.ParamInvoiceID: other.String(),
-		paramAdjustmentKind:   string(invoiceadjustment.KindCreditOnly),
-		common.ParamReason:    "Customer disputes the lumper fee",
+		ParamAdjustmentID:         detail.ID.String(),
+		toolparams.ParamInvoiceID: other.String(),
+		paramAdjustmentKind:       string(invoiceadjustment.KindCreditOnly),
+		toolparams.ParamReason:    "Customer disputes the lumper fee",
 	})
 
 	err := tool.(agenttoolports.ToolValidator).Validate(t.Context(), params)
@@ -105,9 +105,9 @@ func TestSubmitInvoiceAdjustment_ARefusalForBothSelectionsShowsBothCalls(t *test
 		agenttoolstest.ExecuteParams(map[string]any{
 			ParamDraftAdjustmentID: pulid.MustNew("iadj_").String(),
 			paramAdjustments: []any{map[string]any{
-				common.ParamInvoiceID: pulid.MustNew("inv_").String(),
-				paramAdjustmentKind:   string(invoiceadjustment.KindCreditOnly),
-				common.ParamReason:    "x",
+				toolparams.ParamInvoiceID: pulid.MustNew("inv_").String(),
+				paramAdjustmentKind:       string(invoiceadjustment.KindCreditOnly),
+				toolparams.ParamReason:    "x",
 			}},
 		}),
 	)

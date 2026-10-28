@@ -4,8 +4,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/operationstools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -47,15 +47,15 @@ func TestEvaluateServiceFailures_ReadsAListOfOneWithAStopAsThatShipment(t *testi
 	tool := operationstools.NewEvaluateServiceFailuresTool(failures).(*operationstools.EvaluateServiceFailuresTool)
 	shipmentID, stopID := pulid.MustNew("shp_"), pulid.MustNew("stp_")
 	params := map[string]any{
-		"shipmentIds":      []any{shipmentID.String()},
-		common.ParamStopID: stopID.String(),
+		"shipmentIds":          []any{shipmentID.String()},
+		toolparams.ParamStopID: stopID.String(),
 	}
 
 	resolved, err := tool.ResolveSelection(t.Context(), agenttoolstest.ExecuteParams(params))
 	require.NoError(t, err)
 	assert.Equal(t, map[string]any{
-		"shipmentId":       shipmentID.String(),
-		common.ParamStopID: stopID.String(),
+		"shipmentId":           shipmentID.String(),
+		toolparams.ParamStopID: stopID.String(),
 	}, resolved)
 
 	require.NoError(t, tool.Execute(t.Context(), agenttoolstest.ExecuteParams(params)))

@@ -4,7 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/insight"
@@ -88,7 +89,7 @@ func (t *DismissInsightTool) Policy() agenttoolports.ToolPolicy {
 }
 
 func (t *DismissInsightTool) Target(params map[string]any) (agenttoolports.ToolTarget, bool) {
-	id, err := common.RequirePulid(params, "insightId")
+	id, err := toolparams.RequirePulid(params, "insightId")
 	if err != nil {
 		return agenttoolports.ToolTarget{}, false
 	}
@@ -122,23 +123,23 @@ func (t *DismissInsightTool) request(
 		ID:         id,
 		UserID:     params.Actor.UserID,
 		Reason:     reason,
-		TenantInfo: common.TenantFrom(params),
+		TenantInfo: toolparams.TenantFrom(params),
 	}, nil
 }
 
 func (t *DismissInsightTool) arguments(
 	params agenttoolports.ToolExecuteParams,
 ) (pulid.ID, string, error) {
-	if err := common.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return "", "", err
 	}
 
-	id, err := common.RequirePulid(params.Params, "insightId")
+	id, err := toolparams.RequirePulid(params.Params, "insightId")
 	if err != nil {
 		return "", "", err
 	}
 
-	reason, err := common.RequireString(params.Params, "reason")
+	reason, err := toolparams.RequireString(params.Params, "reason")
 	if err != nil {
 		return "", "", err
 	}

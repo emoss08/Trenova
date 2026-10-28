@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -30,8 +30,8 @@ func (t *SendEDILoadTenderTool) Preview(
 	summary := "Would tender this shipment to another organization over EDI."
 	plan, err := t.tenders.PlanLoadTender(ctx, req)
 	if err != nil {
-		if common.IsRefusal(err) || errortypes.IsNotFoundError(err) {
-			return common.WarnWouldFail(toolpreview.Build(summary), err), nil
+		if changepreview.IsRefusal(err) || errortypes.IsNotFoundError(err) {
+			return changepreview.WarnWouldFail(toolpreview.Build(summary), err), nil
 		}
 
 		return nil, err
@@ -56,7 +56,7 @@ func (t *SendEDILoadTenderTool) Preview(
 		Resource: permission.ResourceShipment,
 		ID:       plan.SourceShipment.ID,
 		Label:    plan.SourceShipment.ProNumber,
-		Version:  common.PinnedVersion(plan.SourceShipment.Version),
+		Version:  changepreview.PinnedVersion(plan.SourceShipment.Version),
 	}, plan.SourceShipment, &tendered, toolpreview.Only(shipmentFieldTenderStatus))
 	if err != nil {
 		return nil, err
@@ -112,8 +112,8 @@ func (t *SendEDIStatusUpdateTool) Preview(
 	summary := "Would send the trading partner an EDI 214 shipment status."
 	document, err := t.documents.PlanGenerateDocument(ctx, req)
 	if err != nil {
-		if common.IsRefusal(err) || errortypes.IsNotFoundError(err) {
-			return common.WarnWouldFail(toolpreview.Build(summary), err), nil
+		if changepreview.IsRefusal(err) || errortypes.IsNotFoundError(err) {
+			return changepreview.WarnWouldFail(toolpreview.Build(summary), err), nil
 		}
 
 		return nil, err

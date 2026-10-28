@@ -720,7 +720,7 @@ attributes and the registry entries.
   **intent** (tool, arguments, and the record and version it read) instead of dispatching it,
   and the index gains action tools under the same filter.
 - **One batch proposal.** When the script ends, the outbox becomes one proposal of
-  `common.RecordBatch` items, each previewed through its own tool's `Preview` at filing, as a
+  `recordbatch.RecordBatch` items, each previewed through its own tool's `Preview` at filing, as a
   batch tool is ([proposal-previews.md](proposal-previews.md)).
 - **Re-previewed at commit.** When the person decides, every item is previewed again, and the
   stale-version refusal applies. An item whose world moved is refused, not committed on stale

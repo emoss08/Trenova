@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -239,12 +239,16 @@ func TestUnassignMoves_PreviewShowsTheAssignmentComingOffAndWhatIsRefused(t *tes
 	assert.Equal(t, "Assignment on S-1001", removed.Label)
 	move := agenttoolstest.PreviewChange(t, preview, 1)
 	assert.Equal(t, covered.Moves[0].ID, move.EntityID)
-	assert.Equal(t, "New", agenttoolstest.FieldByPath(t, move, common.FieldStatus).After)
+	assert.Equal(t, "New", agenttoolstest.FieldByPath(t, move, changepreview.FieldStatus).After)
 	require.NotNil(t, move.Version)
 	assert.Equal(t, int64(3), *move.Version)
 	shipmentChange := agenttoolstest.PreviewChange(t, preview, 2)
 	assert.Equal(t, permission.ResourceShipment, shipmentChange.Resource)
-	assert.Equal(t, "New", agenttoolstest.FieldByPath(t, shipmentChange, common.FieldStatus).After)
+	assert.Equal(
+		t,
+		"New",
+		agenttoolstest.FieldByPath(t, shipmentChange, changepreview.FieldStatus).After,
+	)
 	assert.Contains(t, preview.Summary, "S-1001")
 	agenttoolstest.RequireWarning(t, preview, agent.PreviewWarningWouldFail)
 	assert.Contains(t, preview.Warnings[0].Message, underway.String())
@@ -352,8 +356,8 @@ func TestUpdateMoveStatus_UsesTheSingleOrTheBulkPathAsTheConsoleDoes(t *testing.
 
 	one := newFakeMoveStatuses(shipment.MoveStatusInTransit, 1)
 	params := agenttoolstest.ExecuteParams(map[string]any{
-		fieldMoveIDs:       moveIDsParam(one.ids()...),
-		common.FieldStatus: "Completed",
+		fieldMoveIDs:              moveIDsParam(one.ids()...),
+		changepreview.FieldStatus: "Completed",
 	})
 	require.NoError(t, (&UpdateMoveStatusTool{moves: one}).Execute(t.Context(), params))
 	require.NotNil(t, one.single)
@@ -367,8 +371,8 @@ func TestUpdateMoveStatus_UsesTheSingleOrTheBulkPathAsTheConsoleDoes(t *testing.
 		t,
 		(&UpdateMoveStatusTool{moves: two}).Execute(t.Context(), agenttoolstest.ExecuteParams(
 			map[string]any{
-				fieldMoveIDs:       moveIDsParam(two.ids()...),
-				common.FieldStatus: "Completed",
+				fieldMoveIDs:              moveIDsParam(two.ids()...),
+				changepreview.FieldStatus: "Completed",
 			},
 		)),
 	)
@@ -388,8 +392,8 @@ func TestUpdateMoveStatus_RefusesTheStatusesCoverageDecides(t *testing.T) {
 			t.Context(),
 			agenttoolstest.ExecuteParams(
 				map[string]any{
-					fieldMoveIDs:       moveIDsParam(moves.ids()...),
-					common.FieldStatus: status,
+					fieldMoveIDs:              moveIDsParam(moves.ids()...),
+					changepreview.FieldStatus: status,
 				},
 			),
 		)
@@ -409,8 +413,8 @@ func TestUpdateMoveStatus_ACancellationIsAlwaysAProposal(t *testing.T) {
 
 	limit := func(status string) agent.AutonomyTier {
 		return policy.Condition.Limit(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
-			fieldMoveIDs:       moveIDsParam(pulid.MustNew("smv_")),
-			common.FieldStatus: status,
+			fieldMoveIDs:              moveIDsParam(pulid.MustNew("smv_")),
+			changepreview.FieldStatus: status,
 		}))
 	}
 	assert.Equal(t, agent.TierPropose, limit("Canceled"))
@@ -424,8 +428,8 @@ func TestUpdateMoveStatus_PreviewShowsEachMoveAndTheShipmentItMoves(t *testing.T
 	moves := newFakeMoveStatuses(shipment.MoveStatusInTransit, 2)
 	tool := &UpdateMoveStatusTool{moves: moves}
 	params := agenttoolstest.ExecuteParams(map[string]any{
-		fieldMoveIDs:       moveIDsParam(moves.ids()...),
-		common.FieldStatus: "Completed",
+		fieldMoveIDs:              moveIDsParam(moves.ids()...),
+		changepreview.FieldStatus: "Completed",
 	})
 
 	preview := agenttoolstest.PreviewWithoutWrites(
@@ -439,14 +443,22 @@ func TestUpdateMoveStatus_PreviewShowsEachMoveAndTheShipmentItMoves(t *testing.T
 	require.Len(t, preview.Changes, 3)
 	first := agenttoolstest.PreviewChange(t, preview, 0)
 	assert.Equal(t, "Move on S-2001", first.Label)
-	assert.Equal(t, "InTransit", agenttoolstest.FieldByPath(t, first, common.FieldStatus).Before)
-	assert.Equal(t, "Completed", agenttoolstest.FieldByPath(t, first, common.FieldStatus).After)
+	assert.Equal(
+		t,
+		"InTransit",
+		agenttoolstest.FieldByPath(t, first, changepreview.FieldStatus).Before,
+	)
+	assert.Equal(
+		t,
+		"Completed",
+		agenttoolstest.FieldByPath(t, first, changepreview.FieldStatus).After,
+	)
 	shipmentChange := agenttoolstest.PreviewChange(t, preview, 2)
 	assert.Equal(t, permission.ResourceShipment, shipmentChange.Resource)
 	assert.Equal(
 		t,
 		"Completed",
-		agenttoolstest.FieldByPath(t, shipmentChange, common.FieldStatus).After,
+		agenttoolstest.FieldByPath(t, shipmentChange, changepreview.FieldStatus).After,
 	)
 	assert.Contains(t, preview.Summary, "shipment S-2001 from InTransit to Completed")
 	assert.Contains(t, preview.Summary, "releases its tractor and trailer")
@@ -464,8 +476,8 @@ func TestUpdateMoveStatus_PreviewWarnsOfATransitionTheServiceRefuses(t *testing.
 		&moves.guard,
 		func() (*agent.ToolPreview, error) {
 			return tool.Preview(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
-				fieldMoveIDs:       moveIDsParam(moves.ids()...),
-				common.FieldStatus: "InTransit",
+				fieldMoveIDs:              moveIDsParam(moves.ids()...),
+				changepreview.FieldStatus: "InTransit",
 			}))
 		},
 	)

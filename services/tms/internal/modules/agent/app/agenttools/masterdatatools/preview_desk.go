@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -21,14 +21,14 @@ import (
 
 var detentionEscalationFields = []string{"requiresApproval", "notificationStatus"}
 
-var detentionEvidenceFields = []string{common.FieldKind, "source", "summary"}
+var detentionEvidenceFields = []string{changepreview.FieldKind, "source", "summary"}
 
 func detentionOccurrenceRecord(occurrence *detention.DetentionOccurrence) toolpreview.Record {
 	return toolpreview.Record{
 		Resource: permission.ResourceDetention,
 		ID:       occurrence.ID,
 		Label:    fmt.Sprintf("Detention, %d billable minutes", occurrence.BillableMinutes),
-		Version:  common.PreviewVersion(occurrence.Version),
+		Version:  changepreview.PreviewVersion(occurrence.Version),
 	}
 }
 
@@ -47,7 +47,7 @@ func (t *EscalateDetentionTool) Preview(
 	}
 
 	now := timeutils.NowUnix()
-	plan, err := common.PlanUpdate(
+	plan, err := changepreview.PlanUpdate(
 		detentionOccurrenceRecord(occurrence),
 		occurrence,
 		func(escalated *detention.DetentionOccurrence) error {
@@ -94,11 +94,11 @@ func (t *PlaceWorkerDispatchHoldTool) Preview(
 		return nil, err
 	}
 
-	plan, err := common.PlanUpdate(toolpreview.Record{
+	plan, err := changepreview.PlanUpdate(toolpreview.Record{
 		Resource: permission.ResourceWorker,
 		ID:       driver.ID,
 		Label:    driver.FullName(),
-		Version:  common.PreviewVersion(driver.Version),
+		Version:  changepreview.PreviewVersion(driver.Version),
 	}, driver, func(held *worker.Worker) error {
 		return workerservice.ApplyDispatchHold(held, &request)
 	}, toolpreview.Only("canBeAssigned"))
@@ -120,7 +120,7 @@ func carrierIntelRecord(event *carrierintel.CarrierIntelEvent) toolpreview.Recor
 		Resource: permission.ResourceCarrierIntelligence,
 		ID:       event.ID,
 		Label:    event.Summary,
-		Version:  common.PreviewVersion(event.Version),
+		Version:  changepreview.PreviewVersion(event.Version),
 	}
 }
 
@@ -144,7 +144,7 @@ func (t *carrierIntelEventTool) Preview(
 		return t.previewAcknowledge(event, request, now, opts)
 	}
 
-	plan, err := common.PlanUpdate(
+	plan, err := changepreview.PlanUpdate(
 		carrierIntelRecord(event),
 		event,
 		func(closed *carrierintel.CarrierIntelEvent) error {
@@ -178,14 +178,14 @@ func (t *carrierIntelEventTool) previewAcknowledge(
 		request.Note,
 	)
 	if event.Status.IsClosed() {
-		return common.WarnWouldFail(
+		return changepreview.WarnWouldFail(
 			toolpreview.Build(summary),
 			fmt.Errorf("carrier finding %s is already %s", event.ID, event.Status),
 		), nil
 	}
 
 	acknowledged := true
-	plan, err := common.PlanUpdate(
+	plan, err := changepreview.PlanUpdate(
 		carrierIntelRecord(event),
 		event,
 		func(seen *carrierintel.CarrierIntelEvent) error {

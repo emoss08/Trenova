@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/shipmentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -24,25 +26,25 @@ type assignmentChecker interface {
 }
 
 var assignmentFields = []string{
-	common.FieldPrimaryWorkerID,
-	common.FieldSecondaryWorkerID,
-	common.FieldTractorID,
-	common.FieldTrailerID,
-	common.FieldStatus,
+	changepreview.FieldPrimaryWorkerID,
+	changepreview.FieldSecondaryWorkerID,
+	changepreview.FieldTractorID,
+	changepreview.FieldTrailerID,
+	changepreview.FieldStatus,
 }
 
 var assignmentRefs = map[string]permission.Resource{
-	common.FieldPrimaryWorkerID:   permission.ResourceWorker,
-	common.FieldSecondaryWorkerID: permission.ResourceWorker,
-	common.FieldTractorID:         permission.ResourceTractor,
-	common.FieldTrailerID:         permission.ResourceTrailer,
+	changepreview.FieldPrimaryWorkerID:   permission.ResourceWorker,
+	changepreview.FieldSecondaryWorkerID: permission.ResourceWorker,
+	changepreview.FieldTractorID:         permission.ResourceTractor,
+	changepreview.FieldTrailerID:         permission.ResourceTrailer,
 }
 
 var assignmentLabels = map[string]string{
-	common.FieldPrimaryWorkerID:   "Driver",
-	common.FieldSecondaryWorkerID: "Second driver",
-	common.FieldTractorID:         "Tractor",
-	common.FieldTrailerID:         "Trailer",
+	changepreview.FieldPrimaryWorkerID:   "Driver",
+	changepreview.FieldSecondaryWorkerID: "Second driver",
+	changepreview.FieldTractorID:         "Tractor",
+	changepreview.FieldTrailerID:         "Trailer",
 }
 
 func AssignmentOptions() []toolpreview.Option {
@@ -57,7 +59,7 @@ func (t *AssignMoveTool) Preview(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
-	if err := common.GuardPreview(t, &params); err != nil {
+	if err := toolguard.GuardPreview(t, &params); err != nil {
 		return nil, err
 	}
 
@@ -69,8 +71,8 @@ func (t *AssignMoveTool) Preview(
 	summary := "Would put a driver and a tractor on this move."
 	plan, err := t.assignments.PreviewAssignToMove(ctx, request)
 	if err != nil {
-		if common.IsRefusal(err) {
-			return common.WarnWouldFail(toolpreview.Build(summary), err), nil
+		if changepreview.IsRefusal(err) {
+			return changepreview.WarnWouldFail(toolpreview.Build(summary), err), nil
 		}
 
 		return nil, err
@@ -94,9 +96,9 @@ func (t *AssignMoveTool) Preview(
 			check.Score.WorkerName,
 			shipmentLabel,
 		)
-		common.LabelRefs(
+		changepreview.LabelRefs(
 			changes[0],
-			map[string]string{common.FieldPrimaryWorkerID: check.Score.WorkerName},
+			map[string]string{changepreview.FieldPrimaryWorkerID: check.Score.WorkerName},
 		)
 	}
 	summary += ". The driver sees the assignment." + findingsSentence(check) + note
@@ -135,7 +137,7 @@ func (t *AssignMoveTool) assignmentChanges(
 		return nil, err
 	}
 
-	coverage, err := common.CoverageChanges(
+	coverage, err := shipmentpreview.CoverageChanges(
 		plan.ShipmentBefore,
 		plan.ShipmentAfter,
 		request.ShipmentMoveID,
@@ -167,7 +169,7 @@ func (t *AssignMoveTool) check(
 
 	check, err := t.console.PreviewAssignment(ctx, checkRequest)
 	if err != nil {
-		if common.IsRefusal(err) || errortypes.IsNotFoundError(err) {
+		if changepreview.IsRefusal(err) || errortypes.IsNotFoundError(err) {
 			return &dispatchconsoleservice.AssignmentPreview{},
 				" The dispatch check could not rate this driver: " + err.Error() + ".", nil
 		}

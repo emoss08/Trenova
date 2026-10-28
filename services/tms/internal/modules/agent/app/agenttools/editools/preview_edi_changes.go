@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -17,8 +17,8 @@ import (
 const changeFieldReason = "failureReason"
 
 var changeReviewLabels = map[string]string{
-	common.FieldStatus: "Change status",
-	changeFieldReason:  "Reason recorded",
+	changepreview.FieldStatus: "Change status",
+	changeFieldReason:         "Reason recorded",
 }
 
 var tenderPayloadIgnored = []string{
@@ -33,8 +33,8 @@ func (t *EdiChangeReviewTool) Preview(
 ) (*agent.ToolPreview, error) {
 	plan, err := t.plan(ctx, &params)
 	if err != nil {
-		if common.IsRefusal(err) || errortypes.IsNotFoundError(err) {
-			return common.WarnWouldFail(toolpreview.Build(t.kind.description), err), nil
+		if changepreview.IsRefusal(err) || errortypes.IsNotFoundError(err) {
+			return changepreview.WarnWouldFail(toolpreview.Build(t.kind.description), err), nil
 		}
 
 		return nil, err
@@ -45,7 +45,7 @@ func (t *EdiChangeReviewTool) Preview(
 		preview.Partial = preview.Partial || plan.partial
 	}
 
-	return common.WarnWouldFail(preview, plan.refusal), nil
+	return changepreview.WarnWouldFail(preview, plan.refusal), nil
 }
 
 func planTenderChangeReview(
@@ -77,7 +77,7 @@ func describeTenderChangeReview(
 		Resource: permission.ResourceEDI,
 		ID:       change.ID,
 		Label:    "Tender change to BOL " + change.NewTenderPayload.BOL,
-		Version:  common.PinnedVersion(change.Version),
+		Version:  changepreview.PinnedVersion(change.Version),
 	}, change, &after)
 	if err != nil {
 		return err
@@ -143,7 +143,7 @@ func (r transferChangeReview) describe(ctx context.Context, plan *changeReviewPl
 		Resource: permission.ResourceEDI,
 		ID:       change.ID,
 		Label:    "Linked load " + transferChangeWords(change.ChangeType),
-		Version:  common.PinnedVersion(change.Version),
+		Version:  changepreview.PinnedVersion(change.Version),
 	}, change, &after)
 	if err != nil {
 		return err
@@ -156,7 +156,7 @@ func (r transferChangeReview) describe(ctx context.Context, plan *changeReviewPl
 
 	effect, err := r.reviewer.PlanTransferChangeEffect(ctx, call.tenant, change)
 	if err != nil {
-		if common.IsRefusal(err) || errortypes.IsNotFoundError(err) {
+		if changepreview.IsRefusal(err) || errortypes.IsNotFoundError(err) {
 			plan.refusal = err
 			return nil
 		}
@@ -179,8 +179,8 @@ func (r transferChangeReview) describe(ctx context.Context, plan *changeReviewPl
 		Resource: permission.ResourceShipment,
 		ID:       effect.Shipment.ID,
 		Label:    effect.Shipment.ProNumber,
-		Version:  common.PinnedVersion(effect.Shipment.Version),
-	}, effect.Shipment, &moved, toolpreview.Only(common.FieldStatus))
+		Version:  changepreview.PinnedVersion(effect.Shipment.Version),
+	}, effect.Shipment, &moved, toolpreview.Only(changepreview.FieldStatus))
 	if err != nil {
 		return err
 	}
@@ -196,7 +196,7 @@ func changeStatusRecord[T any](
 	before, after *T,
 ) (*agent.RecordChange, error) {
 	return toolpreview.Changed(record, before, after,
-		toolpreview.Only(common.FieldStatus, changeFieldReason),
+		toolpreview.Only(changepreview.FieldStatus, changeFieldReason),
 		toolpreview.Labels(changeReviewLabels),
 	)
 }

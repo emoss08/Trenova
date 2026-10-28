@@ -6,7 +6,8 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -269,12 +270,12 @@ func texasPurchase() *fuelpurchase.FuelPurchase {
 
 func purchaseParams() map[string]any {
 	return map[string]any{
-		common.ParamTractorID: pulid.MustNew("trac_").String(),
-		paramJurisdictionID:   texasID.String(),
-		paramPurchasedAt:      "2026-09-14T08:30",
-		common.ParamFuelType:  "Diesel",
-		paramQuantity:         "100.5",
-		paramTotalAmount:      "391.85",
+		toolparams.ParamTractorID: pulid.MustNew("trac_").String(),
+		paramJurisdictionID:       texasID.String(),
+		paramPurchasedAt:          "2026-09-14T08:30",
+		toolparams.ParamFuelType:  "Diesel",
+		paramQuantity:             "100.5",
+		paramTotalAmount:          "391.85",
 	}
 }
 
@@ -319,7 +320,7 @@ func TestRecordFuelPurchase_RefusesWhatItCannotRecord(t *testing.T) {
 	tool := NewRecordFuelPurchaseTool(&fakeFuel{}, fakeJurisdictions{})
 	for name, change := range map[string]func(map[string]any){
 		"a time with an offset":       func(p map[string]any) { p[paramPurchasedAt] = "2026-09-14T08:30:00-05:00" },
-		"a fuel IFTA does not know":   func(p map[string]any) { p[common.ParamFuelType] = "Kerosene" },
+		"a fuel IFTA does not know":   func(p map[string]any) { p[toolparams.ParamFuelType] = "Kerosene" },
 		"a zero quantity":             func(p map[string]any) { p[paramQuantity] = "0" },
 		"an amount that is not money": func(p map[string]any) { p[paramTotalAmount] = "a lot" },
 		"a bad currency":              func(p map[string]any) { p[paramCurrencyCode] = "DOLLARS" },
@@ -474,8 +475,8 @@ func TestFuelImportTools_PlanWithTheVersionTheyReadAndWriteOnlyOnExecute(t *test
 
 	fuel := &fakeFuel{guard: &agenttoolstest.WriteGuard{}, batch: fuelBatch()}
 	params := agenttoolstest.ExecuteParams(map[string]any{
-		paramFuelImportID:  fuel.batch.ID.String(),
-		common.ParamReason: "Loaded twice",
+		paramFuelImportID:      fuel.batch.ID.String(),
+		toolparams.ParamReason: "Loaded twice",
 	})
 
 	commit := NewCommitFuelPurchaseImportTool(fuel)
@@ -618,7 +619,7 @@ func TestFuelIndexPriceTools_OnlyAPersonMovesAPrice(t *testing.T) {
 		},
 	)
 	assert.Contains(t, preview.Summary, "Would record 3.899 USD a gallon for 2026-09-28")
-	require.ErrorIs(t, record.Execute(t.Context(), params), common.ErrNeedsAPersonsApproval)
+	require.ErrorIs(t, record.Execute(t.Context(), params), toolspec.ErrNeedsAPersonsApproval)
 	assert.Nil(t, prices.added)
 	params.ProposalID = pulid.MustNew("ap_")
 	require.NoError(t, record.Execute(t.Context(), params))

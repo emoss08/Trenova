@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/detentionpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -144,7 +144,7 @@ func TestApproveDetention_NeverRunsWithoutAProposalAPersonApproved(t *testing.T)
 	params := approveParams(stub.occurrence.ID)
 	params.ProposalID = pulid.Nil
 
-	require.ErrorIs(t, tool.Execute(t.Context(), params), common.ErrApprovalNeedsAPerson)
+	require.ErrorIs(t, tool.Execute(t.Context(), params), detentionpreview.ErrApprovalNeedsAPerson)
 	assert.Nil(t, stub.approved)
 }
 

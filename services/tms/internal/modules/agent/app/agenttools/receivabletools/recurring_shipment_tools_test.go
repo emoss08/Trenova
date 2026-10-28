@@ -6,7 +6,8 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -162,15 +163,15 @@ func TestCreateRecurringShipment_ReadsDaysInTheSeriesTimezone(t *testing.T) {
 	tool := NewCreateRecurringShipmentTool(series)
 	source := pulid.MustNew("shp_")
 	params := agenttoolstest.ExecuteParams(map[string]any{
-		paramSourceShipmentID:      source.String(),
-		paramSeriesName:            "Acme Dallas run",
-		ParamCronExpression:        "0 8 * * 1-5",
-		ParamTimezone:              "America/Chicago",
-		common.FieldRecurringStart: "2026-10-05",
-		common.FieldRecurringEnd:   "2026-12-31",
-		paramBlackoutDates:         []any{"2026-11-26"},
-		paramExceptionPolicy:       "NextBusinessDay",
-		paramAutoGenerate:          true,
+		paramSourceShipmentID:             source.String(),
+		paramSeriesName:                   "Acme Dallas run",
+		ParamCronExpression:               "0 8 * * 1-5",
+		ParamTimezone:                     "America/Chicago",
+		changepreview.FieldRecurringStart: "2026-10-05",
+		changepreview.FieldRecurringEnd:   "2026-12-31",
+		paramBlackoutDates:                []any{"2026-11-26"},
+		paramExceptionPolicy:              "NextBusinessDay",
+		paramAutoGenerate:                 true,
 	})
 
 	preview := agenttoolstest.PreviewWithoutWrites(
@@ -222,8 +223,8 @@ func TestCreateRecurringShipment_RefusesBadArguments(t *testing.T) {
 	}
 	for name, raw := range map[string]map[string]any{
 		"no schedule":        {paramSourceShipmentID: pulid.MustNew("shp_").String(), paramSeriesName: "Run", ParamTimezone: "UTC"},
-		"a bad timezone":     valid(map[string]any{ParamTimezone: "Mars/Olympus", common.FieldRecurringStart: "2026-10-05"}),
-		"a unix start":       valid(map[string]any{common.FieldRecurringStart: float64(1_900_000_000)}),
+		"a bad timezone":     valid(map[string]any{ParamTimezone: "Mars/Olympus", changepreview.FieldRecurringStart: "2026-10-05"}),
+		"a unix start":       valid(map[string]any{changepreview.FieldRecurringStart: float64(1_900_000_000)}),
 		"a bad blackout":     valid(map[string]any{paramBlackoutDates: []any{"Nov 26"}}),
 		"an unknown policy":  valid(map[string]any{paramExceptionPolicy: "Whenever"}),
 		"too much lead time": valid(map[string]any{paramLeadTimeDays: float64(90)}),
@@ -277,7 +278,7 @@ func TestUpdateRecurringShipment_ChangesOnlyWhatIsSent(t *testing.T) {
 			map[string]any{paramRecurringShipmentID: series.current.ID.String()},
 		),
 	),
-		common.ErrNothingToChange)
+		toolparams.ErrNothingToChange)
 }
 
 func TestSetRecurringShipmentStatus_PausesAtTheCurrentVersion(t *testing.T) {
@@ -286,8 +287,8 @@ func TestSetRecurringShipmentStatus_PausesAtTheCurrentVersion(t *testing.T) {
 	series := newFakeSeries()
 	tool := NewSetRecurringShipmentStatusTool(series)
 	params := agenttoolstest.ExecuteParams(map[string]any{
-		paramRecurringShipmentID: series.current.ID.String(),
-		common.FieldStatus:       "Paused",
+		paramRecurringShipmentID:  series.current.ID.String(),
+		changepreview.FieldStatus: "Paused",
 	})
 
 	preview := agenttoolstest.PreviewWithoutWrites(
@@ -303,7 +304,7 @@ func TestSetRecurringShipmentStatus_PausesAtTheCurrentVersion(t *testing.T) {
 		agenttoolstest.FieldByPath(
 			t,
 			agenttoolstest.PreviewChange(t, preview, 0),
-			common.FieldStatus,
+			changepreview.FieldStatus,
 		).After,
 	)
 
@@ -314,8 +315,8 @@ func TestSetRecurringShipmentStatus_PausesAtTheCurrentVersion(t *testing.T) {
 
 	require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(),
 		agenttoolstest.ExecuteParams(map[string]any{
-			paramRecurringShipmentID: series.current.ID.String(),
-			common.FieldStatus:       "Stopped",
+			paramRecurringShipmentID:  series.current.ID.String(),
+			changepreview.FieldStatus: "Stopped",
 		})))
 }
 
@@ -338,7 +339,11 @@ func TestGenerateRecurringShipment_ShowsTheCopyAndSkipsAFilledSlot(t *testing.T)
 	)
 	created := agenttoolstest.PreviewChange(t, preview, 0)
 	assert.Equal(t, agent.PreviewOperationCreate, created.Operation)
-	assert.Equal(t, "BOL-2030", agenttoolstest.FieldByPath(t, created, common.FieldBol).After)
+	assert.Equal(
+		t,
+		"BOL-2030",
+		agenttoolstest.FieldByPath(t, created, changepreview.FieldBol).After,
+	)
 
 	result, err := tool.(agenttoolports.ToolResultReporter).ExecuteWithResult(t.Context(), params)
 	require.NoError(t, err)

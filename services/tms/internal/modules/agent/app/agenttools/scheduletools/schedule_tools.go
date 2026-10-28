@@ -10,7 +10,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -158,15 +160,15 @@ func (t *CreateScheduleTool) request(
 		return conversationscheduleports.PlanConversationScheduleRequest{}, errNeedsConversation
 	}
 
-	request, err := common.RequireString(params.Params, paramRequest)
+	request, err := toolparams.RequireString(params.Params, paramRequest)
 	if err != nil {
 		return conversationscheduleports.PlanConversationScheduleRequest{}, err
 	}
-	repeat, err := common.RequireString(params.Params, paramRepeat)
+	repeat, err := toolparams.RequireString(params.Params, paramRepeat)
 	if err != nil {
 		return conversationscheduleports.PlanConversationScheduleRequest{}, err
 	}
-	at, err := common.RequireString(params.Params, paramTime)
+	at, err := toolparams.RequireString(params.Params, paramTime)
 	if err != nil {
 		return conversationscheduleports.PlanConversationScheduleRequest{}, err
 	}
@@ -181,7 +183,7 @@ func (t *CreateScheduleTool) request(
 			Repeat: repeat,
 			Time:   at,
 		},
-		Timezone:   common.OptionalString(params.Params, paramTimezone),
+		Timezone:   toolparams.OptionalString(params.Params, paramTimezone),
 		ProposalID: params.ProposalID,
 		Actor:      actor,
 	}, nil
@@ -214,7 +216,7 @@ func (t *CreateScheduleTool) Validate(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
 ) error {
-	if err := common.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
 	}
 	planned, err := t.plan(ctx, &params)
@@ -234,22 +236,22 @@ func (t *CreateScheduleTool) Preview(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
-	if err := common.GuardPreview(t, &params); err != nil {
+	if err := toolguard.GuardPreview(t, &params); err != nil {
 		return nil, err
 	}
 	fallback := toolpreview.Build("Would repeat a request in this conversation on a schedule.")
 
 	planned, err := t.plan(ctx, &params)
 	if err != nil {
-		if common.IsRefusal(err) || errors.Is(err, errNeedsPerson) ||
+		if changepreview.IsRefusal(err) || errors.Is(err, errNeedsPerson) ||
 			errors.Is(err, errNeedsConversation) {
-			return common.WarnWouldFail(fallback, err), nil
+			return changepreview.WarnWouldFail(fallback, err), nil
 		}
 
 		return nil, err
 	}
 	if planned.Existing != nil {
-		return common.WarnWouldFail(fallback, alreadyKept(planned.Existing)), nil
+		return changepreview.WarnWouldFail(fallback, alreadyKept(planned.Existing)), nil
 	}
 
 	schedule := planned.Schedule
@@ -282,7 +284,7 @@ func (t *CreateScheduleTool) ExecuteWithResult(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
 ) (*agent.ToolExecutionResult, error) {
-	if err := common.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return nil, err
 	}
 	if t.planner == nil {

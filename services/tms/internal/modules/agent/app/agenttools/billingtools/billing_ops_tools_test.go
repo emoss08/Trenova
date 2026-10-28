@@ -5,7 +5,10 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/allocationparams"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/billing/app/billingtransferservice"
@@ -81,11 +84,11 @@ func TestReassignBillingCharge_ShowsTheItemsItOpensAndCancels(t *testing.T) {
 	tool := NewReassignBillingChargeTool(billing)
 	payer := pulid.MustNew("cus_")
 	params := agenttoolstest.ApprovedParams(map[string]any{
-		common.ParamItemID: pulid.MustNew("bqi_").String(),
-		paramChargeKind:    "Freight",
-		common.ParamAllocations: []any{map[string]any{
-			common.ParamBillToCustomer: payer.String(), common.ParamAllocMethod: "Percent",
-			common.ParamAllocPercent: "100",
+		toolparams.ParamItemID: pulid.MustNew("bqi_").String(),
+		paramChargeKind:        "Freight",
+		allocationparams.ParamAllocations: []any{map[string]any{
+			allocationparams.ParamBillToCustomer: payer.String(), allocationparams.ParamAllocMethod: "Percent",
+			allocationparams.ParamAllocPercent: "100",
 		}},
 	})
 
@@ -108,7 +111,7 @@ func TestReassignBillingCharge_ShowsTheItemsItOpensAndCancels(t *testing.T) {
 		agenttoolstest.FieldByPath(
 			t,
 			agenttoolstest.PreviewChange(t, preview, 1),
-			common.FieldStatus,
+			changepreview.FieldStatus,
 		).After,
 	)
 	assert.Contains(t, preview.Summary, "PRO-4040")
@@ -120,7 +123,7 @@ func TestReassignBillingCharge_ShowsTheItemsItOpensAndCancels(t *testing.T) {
 		billing.reassigned.Allocations[0].ChargeKind)
 
 	require.ErrorIs(t, tool.Execute(t.Context(), agenttoolstest.ExecuteParams(params.Params)),
-		common.ErrNeedsAPersonsApproval)
+		toolspec.ErrNeedsAPersonsApproval)
 	policy := tool.Policy()
 	assert.Equal(t, permission.ResourceBillingQueue, policy.Resource)
 	assert.Equal(t, agent.TierPropose, policy.MaxTier)
@@ -128,15 +131,15 @@ func TestReassignBillingCharge_ShowsTheItemsItOpensAndCancels(t *testing.T) {
 
 	for name, raw := range map[string]map[string]any{
 		"an accessorial without its charge": {
-			common.ParamItemID: pulid.MustNew("bqi_").String(), paramChargeKind: "Accessorial",
-			common.ParamAllocations: []any{},
+			toolparams.ParamItemID: pulid.MustNew("bqi_").String(), paramChargeKind: "Accessorial",
+			allocationparams.ParamAllocations: []any{},
 		},
 		"no allocations": {
-			common.ParamItemID: pulid.MustNew("bqi_").String(), paramChargeKind: "Freight",
+			toolparams.ParamItemID: pulid.MustNew("bqi_").String(), paramChargeKind: "Freight",
 		},
 		"an order charge": {
-			common.ParamItemID: pulid.MustNew("bqi_").String(), paramChargeKind: "OrderCharge",
-			common.ParamAllocations: []any{},
+			toolparams.ParamItemID: pulid.MustNew("bqi_").String(), paramChargeKind: "OrderCharge",
+			allocationparams.ParamAllocations: []any{},
 		},
 	} {
 		require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(),

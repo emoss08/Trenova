@@ -4,7 +4,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/billingqueuepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/invoicepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
@@ -53,8 +55,8 @@ func invoiceRecord(entity *invoice.Invoice) toolpreview.Record {
 	return toolpreview.Record{
 		Resource: permission.ResourceInvoice,
 		ID:       entity.ID,
-		Label:    common.InvoiceLabel(entity),
-		Version:  common.PinnedVersion(entity.Version),
+		Label:    invoicepreview.InvoiceLabel(entity),
+		Version:  changepreview.PinnedVersion(entity.Version),
 	}
 }
 
@@ -78,7 +80,7 @@ func renderDraftUpdate(
 			named = append(named, strings.ToLower(label))
 		}
 	}
-	summary := "Would update draft " + common.InvoiceLabel(plan.Before)
+	summary := "Would update draft " + invoicepreview.InvoiceLabel(plan.Before)
 	if len(named) == 0 {
 		summary += ", which already reads that way"
 	} else {
@@ -86,7 +88,7 @@ func renderDraftUpdate(
 	}
 	if req.AttachmentIDs != nil {
 		summary += fmt.Sprintf("; it will carry %s",
-			common.CountOf(len(plan.AttachmentsAfter), "attachment"))
+			changepreview.CountOf(len(plan.AttachmentsAfter), "attachment"))
 	}
 
 	return toolpreview.Build(summary+".", change), nil
@@ -97,7 +99,7 @@ func renderPDFGeneration(
 	plan *invoiceports.InvoicePDFGenerationPlan,
 ) (*agent.ToolPreview, error) {
 	summary := fmt.Sprintf("Would render the PDF of %s from what it says now and file it on "+
-		"the invoice", common.InvoiceLabel(plan.Invoice))
+		"the invoice", invoicepreview.InvoiceLabel(plan.Invoice))
 	if plan.Invoice.PDFDocumentID.IsNotNil() {
 		summary += ", replacing the one there"
 	}
@@ -114,7 +116,7 @@ func renderCreateInvoices(
 	changes := make([]*agent.RecordChange, 0, len(plan.Drafts))
 	payers := make([]string, 0, len(plan.Drafts))
 	for _, draft := range plan.Drafts {
-		change, err := common.DraftInvoiceChange(draft)
+		change, err := billingqueuepreview.DraftInvoiceChange(draft)
 		if err != nil {
 			return nil, err
 		}
@@ -129,7 +131,7 @@ func renderCreateInvoices(
 	}
 
 	summary := fmt.Sprintf("Would create %s: %s. They stay drafts until invoice_post posts "+
-		"them.", common.CountOf(len(plan.Drafts), "draft invoice"), strings.Join(payers, "; "))
+		"them.", changepreview.CountOf(len(plan.Drafts), "draft invoice"), strings.Join(payers, "; "))
 	preview := toolpreview.Build(summary, changes...)
 	preview.Partial = true
 
@@ -140,7 +142,7 @@ func renderMemo(
 	req *invoiceports.CreateMemoRequest,
 	memo *invoice.Invoice,
 ) (*agent.ToolPreview, error) {
-	change, err := common.DraftInvoiceChange(memo)
+	change, err := billingqueuepreview.DraftInvoiceChange(memo)
 	if err != nil {
 		return nil, err
 	}
@@ -149,9 +151,9 @@ func renderMemo(
 	summary := fmt.Sprintf("Would raise a draft %s to %s for %s with %s",
 		memo.BillType, memo.BillToName,
 		money.FormatMinor(memo.TotalAmountMinor, memo.CurrencyCode),
-		common.CountOf(len(req.Lines), "line"))
+		changepreview.CountOf(len(req.Lines), "line"))
 	if memo.ReferenceInvoice != nil {
-		summary += ", against " + common.InvoiceLabel(memo.ReferenceInvoice)
+		summary += ", against " + invoicepreview.InvoiceLabel(memo.ReferenceInvoice)
 	}
 
 	return toolpreview.Build(summary+"; it stays a draft until invoice_post posts it.", change), nil
@@ -169,10 +171,10 @@ func renderVoid(
 	_ *invoiceports.VoidInvoiceRequest,
 	plan *invoiceports.InvoiceVoidPreview,
 ) (*agent.ToolPreview, error) {
-	label := common.InvoiceLabel(plan.Before)
-	fields := []string{common.FieldVoidReason, "voidDisposition"}
+	label := invoicepreview.InvoiceLabel(plan.Before)
+	fields := []string{changepreview.FieldVoidReason, "voidDisposition"}
 	if !plan.Posted {
-		fields = append(fields, common.FieldStatus, "voidedAt", "voidedById")
+		fields = append(fields, changepreview.FieldStatus, "voidedAt", "voidedById")
 	}
 	invoiceChange, err := toolpreview.Changed(invoiceRecord(plan.Before), plan.Before, plan.After,
 		toolpreview.Only(fields...),
@@ -218,7 +220,7 @@ func renderVoid(
 	if refusal := figuresRefusal(
 		[]*invoiceadjustmentports.InvoiceAdjustmentPreview{figures},
 	); refusal != nil {
-		return common.WarnWouldFail(preview, refusal), nil
+		return changepreview.WarnWouldFail(preview, refusal), nil
 	}
 
 	return preview, nil
@@ -228,7 +230,7 @@ func renderEDISend(
 	req *invoiceports.SendInvoiceEDIRequest,
 	plan *invoiceports.InvoiceEDISendPreview,
 ) (*agent.ToolPreview, error) {
-	label := common.InvoiceLabel(plan.Invoice)
+	label := invoicepreview.InvoiceLabel(plan.Invoice)
 	partner := plan.Plan.PartnerName
 	summary := fmt.Sprintf("Would send %s to %s as an EDI 210", label, partner)
 	if method := strings.TrimSpace(plan.Plan.CommunicationMethod); method != "" {

@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/detentionpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 )
@@ -28,12 +28,12 @@ func (t *ApproveDetentionTool) Preview(
 			"customer's invoice (collectability %d, %s; %d evidence records): %s",
 		change.Before.BillableAmount.StringFixed(2),
 		change.Before.Currency,
-		common.DetentionPlace(change.Before),
+		detentionpreview.DetentionPlace(change.Before),
 		detail.Collectability.Score,
 		detail.Collectability.Band,
 		len(detail.Evidence),
 		request.Note,
 	)
 
-	return common.DetentionDecisionPreview(summary, change, "approvedAt")
+	return detentionpreview.DetentionDecisionPreview(summary, change, "approvedAt")
 }

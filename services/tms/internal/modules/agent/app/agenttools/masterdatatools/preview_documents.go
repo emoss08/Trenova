@@ -4,7 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -14,8 +15,8 @@ import (
 )
 
 var documentHomeLabels = map[string]string{
-	"resourceType":         "Filed under",
-	common.FieldShipmentID: common.LabelShipment,
+	"resourceType":                "Filed under",
+	changepreview.FieldShipmentID: changepreview.LabelShipment,
 }
 
 type documentHome struct {
@@ -35,7 +36,7 @@ func documentHomeOf(entity *document.Document) *documentHome {
 func documentHomeOptions() []toolpreview.Option {
 	return []toolpreview.Option{
 		toolpreview.WithRefs(map[string]permission.Resource{
-			common.FieldShipmentID: permission.ResourceShipment,
+			changepreview.FieldShipmentID: permission.ResourceShipment,
 		}),
 		toolpreview.Labels(documentHomeLabels),
 	}
@@ -45,7 +46,7 @@ func (t *AttachDocumentTool) Preview(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
-	if err := common.GuardPreview(t, &params); err != nil {
+	if err := toolguard.GuardPreview(t, &params); err != nil {
 		return nil, err
 	}
 
@@ -56,8 +57,8 @@ func (t *AttachDocumentTool) Preview(
 
 	plan, err := t.documents.PreviewAttachLineage(ctx, request)
 	if err != nil {
-		if common.IsRefusal(err) {
-			return common.WarnWouldFail(
+		if changepreview.IsRefusal(err) {
+			return changepreview.WarnWouldFail(
 				toolpreview.Build("Would attach a document to a shipment."),
 				err,
 			), nil
@@ -78,7 +79,7 @@ func (t *AttachDocumentTool) Preview(
 		Resource: permission.ResourceDocument,
 		ID:       plan.Current.ID,
 		Label:    name,
-		Version:  common.PreviewVersion(plan.Current.Version),
+		Version:  changepreview.PreviewVersion(plan.Current.Version),
 	}, documentHomeOf(plan.Current), documentHomeOf(plan.Attached), documentHomeOptions()...)
 	if err != nil {
 		return nil, err

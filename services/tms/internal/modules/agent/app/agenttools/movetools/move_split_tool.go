@@ -4,7 +4,10 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/shipmentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -40,9 +43,9 @@ type moveSplitter interface {
 }
 
 func NewSplitMoveTool(moves moveSplitter) agenttoolports.AgentTool {
-	return common.NewReportingReceivableTool(&common.ReceivableSpec{
+	return toolspec.NewReportingReceivableTool(&toolspec.ReceivableSpec{
 		Name:     "dispatch_split_move",
-		Artifact: common.ShipmentRecordEntity,
+		Artifact: changepreview.ShipmentRecordEntity,
 		Description: "Split a two-stop move at its delivery stop so the freight is dropped " +
 			"there as a relay and a new move carries it on to a new delivery location. The " +
 			"relay pickup window and the new delivery window come from the person who asked " +
@@ -76,12 +79,12 @@ func NewSplitMoveTool(moves moveSplitter) agenttoolports.AgentTool {
 					"the relay pickup window.",
 			),
 			paramNewDeliveryEnd: agenttoolschema.DateTime("When the final delivery window closes."),
-			common.FieldPieces: common.IntegerProperty(
+			changepreview.FieldPieces: toolparams.IntegerProperty(
 				"Pieces going on from the relay.",
 				1,
 				1000000,
 			),
-			common.FieldWeight: common.IntegerProperty(
+			changepreview.FieldWeight: toolparams.IntegerProperty(
 				"Weight going on from the relay.",
 				1,
 				1000000,
@@ -91,9 +94,9 @@ func NewSplitMoveTool(moves moveSplitter) agenttoolports.AgentTool {
 			ParamMoveID, ParamNewDeliveryLocationID, ParamRelayPickupStart, ParamNewDeliveryStart,
 		},
 		Target: func(params map[string]any) (agenttoolports.ToolTarget, bool) {
-			return common.TargetOf(params, ParamMoveID, permission.ResourceShipmentMove)
+			return toolparams.TargetOf(params, ParamMoveID, permission.ResourceShipmentMove)
 		},
-	}, common.ReceivablePlan[*shipmentmoveports.SplitMoveRequest, *shipmentmoveports.MoveSplitPlan]{
+	}, toolspec.ReceivablePlan[*shipmentmoveports.SplitMoveRequest, *shipmentmoveports.MoveSplitPlan]{
 		Request: splitMoveRequest,
 		Plan: func(
 			ctx context.Context,
@@ -131,33 +134,33 @@ func NewSplitMoveTool(moves moveSplitter) agenttoolports.AgentTool {
 func splitMoveRequest(
 	params *agenttoolports.ToolExecuteParams,
 ) (*shipmentmoveports.SplitMoveRequest, error) {
-	moveID, err := common.RequirePulid(params.Params, ParamMoveID)
+	moveID, err := toolparams.RequirePulid(params.Params, ParamMoveID)
 	if err != nil {
 		return nil, err
 	}
-	locationID, err := common.RequirePulid(params.Params, ParamNewDeliveryLocationID)
+	locationID, err := toolparams.RequirePulid(params.Params, ParamNewDeliveryLocationID)
 	if err != nil {
 		return nil, err
 	}
-	relayStart, err := common.RequireDateTime(params.Params, ParamRelayPickupStart)
+	relayStart, err := toolparams.RequireDateTime(params.Params, ParamRelayPickupStart)
 	if err != nil {
 		return nil, err
 	}
-	relayEnd, err := common.OptionalDateTime(params.Params, paramRelayPickupEnd)
+	relayEnd, err := toolparams.OptionalDateTime(params.Params, paramRelayPickupEnd)
 	if err != nil {
 		return nil, err
 	}
-	deliveryStart, err := common.RequireDateTime(params.Params, ParamNewDeliveryStart)
+	deliveryStart, err := toolparams.RequireDateTime(params.Params, ParamNewDeliveryStart)
 	if err != nil {
 		return nil, err
 	}
-	deliveryEnd, err := common.OptionalDateTime(params.Params, paramNewDeliveryEnd)
+	deliveryEnd, err := toolparams.OptionalDateTime(params.Params, paramNewDeliveryEnd)
 	if err != nil {
 		return nil, err
 	}
 
 	req := &shipmentmoveports.SplitMoveRequest{
-		TenantInfo:            common.TenantFrom(*params),
+		TenantInfo:            toolparams.TenantFrom(*params),
 		MoveID:                moveID,
 		NewDeliveryLocationID: locationID,
 		SplitPickupTimes: shipmentmoveports.SplitStopTimes{
@@ -169,10 +172,10 @@ func splitMoveRequest(
 			ScheduledWindowEnd:   deliveryEnd,
 		},
 	}
-	if pieces := common.OptionalInt64(params.Params, common.FieldPieces); pieces > 0 {
+	if pieces := toolparams.OptionalInt64(params.Params, changepreview.FieldPieces); pieces > 0 {
 		req.Pieces = &pieces
 	}
-	if weight := common.OptionalInt64(params.Params, common.FieldWeight); weight > 0 {
+	if weight := toolparams.OptionalInt64(params.Params, changepreview.FieldWeight); weight > 0 {
 		req.Weight = &weight
 	}
 
@@ -228,8 +231,12 @@ func renderMoveSplit(
 		toolpreview.Record{
 			Resource: permission.ResourceShipmentMove,
 			ID:       plan.Move.ID,
-			Label:    fmt.Sprintf("Move %d, %s", plan.Move.Sequence+1, common.StopLabel(original)),
-			Version:  common.MoveVersion(plan.Move),
+			Label: fmt.Sprintf(
+				"Move %d, %s",
+				plan.Move.Sequence+1,
+				shipmentpreview.StopLabel(original),
+			),
+			Version: shipmentpreview.MoveVersion(plan.Move),
 		},
 		&relayStopView{Type: string(original.Type), Status: string(original.Status)},
 		&relayStopView{
@@ -260,6 +267,6 @@ func renderMoveSplit(
 	return toolpreview.Build(fmt.Sprintf(
 		"Would make %s a relay drop and add a move carrying the freight on to a new "+
 			"delivery. Moves after it move one place down.",
-		common.StopLabel(original),
+		shipmentpreview.StopLabel(original),
 	), relay, created), nil
 }

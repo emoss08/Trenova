@@ -4,7 +4,10 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/shipmentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -36,7 +39,7 @@ const maxPermitNumber = 100
 var permitStatuses = agenttoolschema.Source("permit.status", permit.StatusValues())
 
 var permitFields = []string{
-	paramStateID, paramPermitNumber, common.FieldStatus, paramPermitIssued, paramPermitExpiry,
+	paramStateID, paramPermitNumber, changepreview.FieldStatus, paramPermitIssued, paramPermitExpiry,
 	paramPermitCost, wfFieldNotes,
 }
 
@@ -57,36 +60,43 @@ func permitFactProperties() map[string]any {
 		paramStateID: agenttoolschema.KindID("The state that issued it, as the stateId of the "+
 			"requirement it satisfies in shipment_list_permits. Never guess one.",
 			permission.KindUSState),
-		paramPermitNumber: common.StringProperty(
+		paramPermitNumber: toolparams.StringProperty(
 			"The permit number exactly as the state printed it.",
 			maxPermitNumber,
 		),
-		common.FieldStatus: agenttoolschema.Enum("Where the permit stands. An active permit "+
-			"records when it expires.", permitStatuses),
+		changepreview.FieldStatus: agenttoolschema.Enum(
+			"Where the permit stands. An active permit "+
+				"records when it expires.",
+			permitStatuses,
+		),
 		paramPermitIssued: agenttoolschema.DateTime("When the permit takes effect."),
 		paramPermitExpiry: agenttoolschema.DateTime("When the permit stops covering the move."),
-		paramPermitCost: common.AmountProperty("What the state charged, as a decimal string such " +
-			"as 85.00."),
-		common.ParamNote: wfNoteProperty("Route conditions, escort or travel-time restrictions " +
-			"the permit carries."),
+		paramPermitCost: toolparams.AmountProperty(
+			"What the state charged, as a decimal string such " +
+				"as 85.00.",
+		),
+		toolparams.ParamNote: wfNoteProperty(
+			"Route conditions, escort or travel-time restrictions " +
+				"the permit carries.",
+		),
 	}
 }
 
 func applyPermitFacts(entity *permit.Permit, params map[string]any) error {
-	stateID, err := common.OptionalID(params, paramStateID)
+	stateID, err := toolparams.OptionalID(params, paramStateID)
 	if err != nil {
 		return err
 	}
 	if !stateID.IsNil() {
 		entity.StateID = stateID
 	}
-	if number, numErr := common.OptionalBoundedText(params, paramPermitNumber,
+	if number, numErr := toolparams.OptionalBoundedText(params, paramPermitNumber,
 		maxPermitNumber); numErr != nil {
 		return numErr
 	} else if number != nil {
 		entity.PermitNumber = *number
 	}
-	if status, given, enumErr := common.OptionalEnum(params, common.FieldStatus,
+	if status, given, enumErr := toolparams.OptionalEnum(params, changepreview.FieldStatus,
 		permitStatuses.Values); enumErr != nil {
 		return enumErr
 	} else if given {
@@ -99,7 +109,7 @@ func applyPermitFacts(entity *permit.Permit, params map[string]any) error {
 		{paramPermitIssued, &entity.IssuedAt},
 		{paramPermitExpiry, &entity.ExpiresAt},
 	} {
-		value, timeErr := common.OptionalDateTime(params, field.key)
+		value, timeErr := toolparams.OptionalDateTime(params, field.key)
 		if timeErr != nil {
 			return timeErr
 		}
@@ -112,9 +122,9 @@ func applyPermitFacts(entity *permit.Permit, params map[string]any) error {
 	} else if cost.Valid {
 		entity.Cost = cost
 	}
-	if notes, notesErr := common.OptionalBoundedText(
+	if notes, notesErr := toolparams.OptionalBoundedText(
 		params,
-		common.ParamNote,
+		toolparams.ParamNote,
 		wfNoteChars,
 	); notesErr != nil {
 		return notesErr
@@ -130,26 +140,28 @@ func permitResult(action string, entity *permit.Permit) *agent.ToolExecutionResu
 		Kind:   kindPermit,
 		Name:   entity.PermitNumber,
 		IDs: map[string]string{
-			paramPermitID:          entity.ID.String(),
-			common.ParamShipmentID: entity.ShipmentID.String(),
+			paramPermitID:              entity.ID.String(),
+			toolparams.ParamShipmentID: entity.ShipmentID.String(),
 		},
-		Record: common.RecordOf(common.ShipmentRecordEntity, entity.ShipmentID),
+		Record: changepreview.RecordOf(changepreview.ShipmentRecordEntity, entity.ShipmentID),
 	}
 }
 
 func permitSpec(
 	name, description, rationale string,
 	operation permission.Operation,
-) *common.ReceivableSpec {
+) *toolspec.ReceivableSpec {
 	spec := wfSpec(name, description, rationale, permission.ResourcePermit, operation)
-	spec.Artifact = common.ShipmentRecordEntity
+	spec.Artifact = changepreview.ShipmentRecordEntity
 	spec.SearchTerms = []string{"oversize", "overweight", "OS/OW", "state permit"}
 	return spec
 }
 
 func newRecordShipmentPermitTool(permits permitports.PermitService) agenttoolports.AgentTool {
 	properties := permitFactProperties()
-	properties[common.ParamShipmentID] = common.ShipmentIDProperty("The shipment the permit covers")
+	properties[toolparams.ParamShipmentID] = shipmentpreview.ShipmentIDProperty(
+		"The shipment the permit covers",
+	)
 	spec := targeting(withSchema(permitSpec(
 		"shipment_record_permit",
 		"Record an oversize or overweight permit a state issued for a shipment, from the "+
@@ -159,15 +171,18 @@ func newRecordShipmentPermitTool(permits permitports.PermitService) agenttoolpor
 		"Records a permit on the shipment inside Trenova, which can release a dispatch "+
 			"hold; nothing is sent to the state, and shipment_update_permit voids it.",
 		permission.OpCreate,
-	), properties, common.ParamShipmentID, paramStateID, paramPermitNumber), common.ParamShipmentID,
+	), properties, toolparams.ParamShipmentID, paramStateID, paramPermitNumber), toolparams.ParamShipmentID,
 		permission.ResourceShipment)
 	spec.Recipe = []string{"shipment_list_permits", "shipment_record_permit"}
 
-	return common.NewReportingReceivableTool(
+	return toolspec.NewReportingReceivableTool(
 		spec,
-		common.ReceivablePlan[*permit.Permit, *permit.Permit]{
+		toolspec.ReceivablePlan[*permit.Permit, *permit.Permit]{
 			Request: func(params *agenttoolports.ToolExecuteParams) (*permit.Permit, error) {
-				shipmentID, err := common.RequirePulid(params.Params, common.ParamShipmentID)
+				shipmentID, err := toolparams.RequirePulid(
+					params.Params,
+					toolparams.ParamShipmentID,
+				)
 				if err != nil {
 					return nil, err
 				}
@@ -222,7 +237,7 @@ func (e *permitEdit) entity(
 	ctx context.Context,
 	permits permitports.PermitService,
 ) (*permit.Permit, error) {
-	recorded, err := permits.ListPermits(ctx, e.shipmentID, common.TenantFrom(*e.params))
+	recorded, err := permits.ListPermits(ctx, e.shipmentID, toolparams.TenantFrom(*e.params))
 	if err != nil {
 		return nil, err
 	}
@@ -242,7 +257,9 @@ func (e *permitEdit) entity(
 
 func newUpdateShipmentPermitTool(permits permitports.PermitService) agenttoolports.AgentTool {
 	properties := permitFactProperties()
-	properties[common.ParamShipmentID] = common.ShipmentIDProperty("The shipment the permit covers")
+	properties[toolparams.ParamShipmentID] = shipmentpreview.ShipmentIDProperty(
+		"The shipment the permit covers",
+	)
 	properties[paramPermitID] = agenttoolschema.RecordIDText(permission.ResourcePermit,
 		"The permit, from shipment_list_permits. Never guess one.")
 	spec := targeting(withSchema(permitSpec(
@@ -253,17 +270,17 @@ func newUpdateShipmentPermitTool(permits permitports.PermitService) agenttoolpor
 		"Changes a permit on the shipment inside Trenova, which can place or lift a "+
 			"dispatch hold; nothing is sent to the state, and it is changed again the same way.",
 		permission.OpUpdate,
-	), properties, common.ParamShipmentID, paramPermitID), paramPermitID, permission.ResourcePermit)
+	), properties, toolparams.ParamShipmentID, paramPermitID), paramPermitID, permission.ResourcePermit)
 
-	return common.NewReportingReceivableTool(spec, common.ReceivablePlan[
+	return toolspec.NewReportingReceivableTool(spec, toolspec.ReceivablePlan[
 		*permitEdit, *kernelports.RecordChange[permit.Permit],
 	]{
 		Request: func(params *agenttoolports.ToolExecuteParams) (*permitEdit, error) {
-			shipmentID, err := common.RequirePulid(params.Params, common.ParamShipmentID)
+			shipmentID, err := toolparams.RequirePulid(params.Params, toolparams.ParamShipmentID)
 			if err != nil {
 				return nil, err
 			}
-			permitID, err := common.RequirePulid(params.Params, paramPermitID)
+			permitID, err := toolparams.RequirePulid(params.Params, paramPermitID)
 			if err != nil {
 				return nil, err
 			}

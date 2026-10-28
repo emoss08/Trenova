@@ -5,8 +5,11 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/invoicepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/masterdatatools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -90,7 +93,7 @@ type invoiceRunKeeper interface {
 }
 
 func targetInvoiceRun(params map[string]any) (agenttoolports.ToolTarget, bool) {
-	return common.TargetOf(params, ParamInvoiceRunID, permission.ResourceInvoiceRun)
+	return toolparams.TargetOf(params, ParamInvoiceRunID, permission.ResourceInvoiceRun)
 }
 
 func invoiceRunIDProperty() map[string]any {
@@ -99,7 +102,7 @@ func invoiceRunIDProperty() map[string]any {
 }
 
 func NewBuildInvoiceRunTool(runs invoiceRunKeeper) agenttoolports.AgentTool {
-	return common.NewReceivableTool(&common.ReceivableSpec{
+	return toolspec.NewReceivableTool(&toolspec.ReceivableSpec{
 		Name: "invoice_build_run",
 		Description: "Build an invoice run: a reviewable proposal of the consolidated invoices " +
 			"for customers' approved, uninvoiced freight over a period. Nothing is invoiced " +
@@ -114,22 +117,24 @@ func NewBuildInvoiceRunTool(runs invoiceRunKeeper) agenttoolports.AgentTool {
 		Rationale: "Builds a proposal of invoices inside Trenova for a biller to review; it " +
 			"invoices nothing and is discarded with invoice_cancel_run.",
 		Properties: map[string]any{
-			common.ParamCustomerIDs: agenttoolschema.RecordIDs(
+			toolparams.ParamCustomerIDs: agenttoolschema.RecordIDs(
 				permission.ResourceCustomer,
 				"The customers to bill, from customer_list or "+
 					"invoice_list_open_statements.",
 				maxRunCustomers,
 			),
-			common.ParamPeriodStart: agenttoolschema.Date("The first day of the period."),
-			common.ParamPeriodEnd:   agenttoolschema.Date("The last day of the period, included."),
-			common.ParamInvoiceDate: agenttoolschema.Date(
+			toolparams.ParamPeriodStart: agenttoolschema.Date("The first day of the period."),
+			toolparams.ParamPeriodEnd: agenttoolschema.Date(
+				"The last day of the period, included.",
+			),
+			toolparams.ParamInvoiceDate: agenttoolschema.Date(
 				"The date the invoices carry, defaulting to today.",
 			),
 		},
 		Required: []string{
-			common.ParamCustomerIDs,
-			common.ParamPeriodStart,
-			common.ParamPeriodEnd,
+			toolparams.ParamCustomerIDs,
+			toolparams.ParamPeriodStart,
+			toolparams.ParamPeriodEnd,
 		},
 		SearchTerms:   []string{"statement billing", "consolidated billing", "bill the period"},
 		Prerequisites: []string{"invoice_list_open_statements", "customer_list"},
@@ -139,7 +144,7 @@ func NewBuildInvoiceRunTool(runs invoiceRunKeeper) agenttoolports.AgentTool {
 			"invoice_get_run",
 			"invoice_commit_run",
 		},
-	}, common.ReceivablePlan[*invoicerunports.PreviewInvoiceRunRequest, *invoicerun.InvoiceRun]{
+	}, toolspec.ReceivablePlan[*invoicerunports.PreviewInvoiceRunRequest, *invoicerun.InvoiceRun]{
 		Request: buildRunRequest,
 		Plan: func(
 			ctx context.Context,
@@ -150,7 +155,7 @@ func NewBuildInvoiceRunTool(runs invoiceRunKeeper) agenttoolports.AgentTool {
 		},
 		Refused: func(req *invoicerunports.PreviewInvoiceRunRequest) string {
 			return fmt.Sprintf("Would build an invoice run for %s.",
-				common.CountOf(len(req.CustomerIDs), "customer"))
+				changepreview.CountOf(len(req.CustomerIDs), "customer"))
 		},
 		Render: masterdatatools.RenderBuiltRun,
 		Run: func(
@@ -167,41 +172,41 @@ func NewBuildInvoiceRunTool(runs invoiceRunKeeper) agenttoolports.AgentTool {
 func buildRunRequest(
 	params *agenttoolports.ToolExecuteParams,
 ) (*invoicerunports.PreviewInvoiceRunRequest, error) {
-	customerIDs, err := common.RequirePulidSlice(
+	customerIDs, err := toolparams.RequirePulidSlice(
 		params.Params,
-		common.ParamCustomerIDs,
+		toolparams.ParamCustomerIDs,
 		maxRunCustomers,
 	)
 	if err != nil {
 		return nil, err
 	}
-	start, err := common.RequireUTCDay(params.Params, common.ParamPeriodStart)
+	start, err := toolparams.RequireUTCDay(params.Params, toolparams.ParamPeriodStart)
 	if err != nil {
 		return nil, err
 	}
-	end, err := common.RequireUTCDay(params.Params, common.ParamPeriodEnd)
+	end, err := toolparams.RequireUTCDay(params.Params, toolparams.ParamPeriodEnd)
 	if err != nil {
 		return nil, err
 	}
 	if end.Before(start) {
 		return nil, fmt.Errorf(
 			"%s %s is before %s %s",
-			common.ParamPeriodEnd,
-			end.Format(common.DayLayout),
-			common.ParamPeriodStart,
-			start.Format(common.DayLayout),
+			toolparams.ParamPeriodEnd,
+			end.Format(toolparams.DayLayout),
+			toolparams.ParamPeriodStart,
+			start.Format(toolparams.DayLayout),
 		)
 	}
 
 	req := &invoicerunports.PreviewInvoiceRunRequest{
-		TenantInfo:  common.TenantFrom(*params),
+		TenantInfo:  toolparams.TenantFrom(*params),
 		CustomerIDs: customerIDs,
 		PeriodStart: start.Unix(),
 		PeriodEnd:   end.AddDate(0, 0, 1).Unix(),
 		Source:      invoicerun.SourceManual,
 	}
-	if common.OptionalString(params.Params, common.ParamInvoiceDate) != "" {
-		invoiceDate, dateErr := common.RequireUTCDay(params.Params, common.ParamInvoiceDate)
+	if toolparams.OptionalString(params.Params, toolparams.ParamInvoiceDate) != "" {
+		invoiceDate, dateErr := toolparams.RequireUTCDay(params.Params, toolparams.ParamInvoiceDate)
 		if dateErr != nil {
 			return nil, dateErr
 		}
@@ -215,7 +220,7 @@ func NewAdjustInvoiceRunMembershipTool(runs invoiceRunKeeper) agenttoolports.Age
 	itemProperty := agenttoolschema.KindID("A shipment on the run, by the item id "+
 		"invoice_get_run lists under each group.", permission.KindInvoiceRunItem)
 
-	return common.NewReceivableTool(&common.ReceivableSpec{
+	return toolspec.NewReceivableTool(&toolspec.ReceivableSpec{
 		Name: "invoice_adjust_run",
 		SearchTerms: []string{
 			"exclude shipment",
@@ -245,15 +250,15 @@ func NewAdjustInvoiceRunMembershipTool(runs invoiceRunKeeper) agenttoolports.Age
 				toolschema.KeyItems: map[string]any{
 					toolschema.KeyType: toolschema.TypeObject,
 					toolschema.KeyProperties: map[string]any{
-						common.ParamItemID: itemProperty,
-						common.ParamReason: common.StringProperty(
+						toolparams.ParamItemID: itemProperty,
+						toolparams.ParamReason: toolparams.StringProperty(
 							"Why it is held back.",
 							maxRunReasonChars,
 						),
 					},
 					toolschema.KeyRequired: []string{
-						common.ParamItemID,
-						common.ParamReason,
+						toolparams.ParamItemID,
+						toolparams.ParamReason,
 					},
 					toolschema.KeyAdditionalProperties: false,
 				},
@@ -267,13 +272,13 @@ func NewAdjustInvoiceRunMembershipTool(runs invoiceRunKeeper) agenttoolports.Age
 				toolschema.KeyItems: map[string]any{
 					toolschema.KeyType: toolschema.TypeObject,
 					toolschema.KeyProperties: map[string]any{
-						common.ParamItemID: itemProperty,
+						toolparams.ParamItemID: itemProperty,
 						paramTargetGroupID: agenttoolschema.KindID(
 							"The invoice it moves to, by the group id invoice_get_run lists.",
 							permission.KindInvoiceRunGroup),
 					},
 					toolschema.KeyRequired: []string{
-						common.ParamItemID,
+						toolparams.ParamItemID,
 						paramTargetGroupID,
 					},
 					toolschema.KeyAdditionalProperties: false,
@@ -282,7 +287,7 @@ func NewAdjustInvoiceRunMembershipTool(runs invoiceRunKeeper) agenttoolports.Age
 		},
 		Required: []string{ParamInvoiceRunID},
 		Target:   targetInvoiceRun,
-	}, common.ReceivablePlan[*invoicerunports.AdjustInvoiceRunMembershipRequest, *invoicerunports.InvoiceRunChangePreview]{
+	}, toolspec.ReceivablePlan[*invoicerunports.AdjustInvoiceRunMembershipRequest, *invoicerunports.InvoiceRunChangePreview]{
 		Request: membershipRequest,
 		Plan: func(
 			ctx context.Context,
@@ -309,12 +314,12 @@ func NewAdjustInvoiceRunMembershipTool(runs invoiceRunKeeper) agenttoolports.Age
 func membershipRequest(
 	params *agenttoolports.ToolExecuteParams,
 ) (*invoicerunports.AdjustInvoiceRunMembershipRequest, error) {
-	runID, err := common.RequirePulid(params.Params, ParamInvoiceRunID)
+	runID, err := toolparams.RequirePulid(params.Params, ParamInvoiceRunID)
 	if err != nil {
 		return nil, err
 	}
 	req := &invoicerunports.AdjustInvoiceRunMembershipRequest{
-		TenantInfo: common.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(*params),
 		RunID:      runID,
 	}
 
@@ -322,7 +327,7 @@ func membershipRequest(
 		return nil, err
 	}
 	if _, ok := params.Params[paramInclude]; ok {
-		if req.Include, err = common.RequirePulidSlice(
+		if req.Include, err = toolparams.RequirePulidSlice(
 			params.Params,
 			paramInclude,
 			maxRunEdits,
@@ -373,13 +378,13 @@ func readRunExclusions(params map[string]any) ([]invoicerunports.ItemExclusion, 
 
 	exclusions := make([]invoicerunports.ItemExclusion, 0, len(entries))
 	for idx, fields := range entries {
-		itemID, idErr := common.RequirePulid(fields, common.ParamItemID)
+		itemID, idErr := toolparams.RequirePulid(fields, toolparams.ParamItemID)
 		if idErr != nil {
 			return nil, fmt.Errorf("%s[%d]: %w", paramExclude, idx, idErr)
 		}
-		reason, reasonErr := common.RequireBoundedText(
+		reason, reasonErr := toolparams.RequireBoundedText(
 			fields,
-			common.ParamReason,
+			toolparams.ParamReason,
 			maxRunReasonChars,
 		)
 		if reasonErr != nil {
@@ -402,11 +407,11 @@ func readRunMoves(params map[string]any) ([]invoicerunports.ItemMove, error) {
 
 	moves := make([]invoicerunports.ItemMove, 0, len(entries))
 	for idx, fields := range entries {
-		itemID, idErr := common.RequirePulid(fields, common.ParamItemID)
+		itemID, idErr := toolparams.RequirePulid(fields, toolparams.ParamItemID)
 		if idErr != nil {
 			return nil, fmt.Errorf("%s[%d]: %w", paramMoves, idx, idErr)
 		}
-		groupID, groupErr := common.RequirePulid(fields, paramTargetGroupID)
+		groupID, groupErr := toolparams.RequirePulid(fields, paramTargetGroupID)
 		if groupErr != nil {
 			return nil, fmt.Errorf("%s[%d]: %w", paramMoves, idx, groupErr)
 		}
@@ -419,19 +424,19 @@ func readRunMoves(params map[string]any) ([]invoicerunports.ItemMove, error) {
 func commitRunRequest(
 	params *agenttoolports.ToolExecuteParams,
 ) (*invoicerunports.CommitInvoiceRunRequest, error) {
-	runID, err := common.RequirePulid(params.Params, ParamInvoiceRunID)
+	runID, err := toolparams.RequirePulid(params.Params, ParamInvoiceRunID)
 	if err != nil {
 		return nil, err
 	}
 
 	return &invoicerunports.CommitInvoiceRunRequest{
-		TenantInfo: common.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(*params),
 		RunID:      runID,
 	}, nil
 }
 
 func NewCommitInvoiceRunTool(runs invoiceRunKeeper) agenttoolports.AgentTool {
-	return common.NewReceivableTool(&common.ReceivableSpec{
+	return toolspec.NewReceivableTool(&toolspec.ReceivableSpec{
 		Name: "invoice_commit_run",
 		Description: "Propose committing an invoice run, which turns each of its proposed " +
 			"invoices into a draft invoice for the customer. A group below the customer's " +
@@ -448,7 +453,7 @@ func NewCommitInvoiceRunTool(runs invoiceRunKeeper) agenttoolports.AgentTool {
 		Properties: map[string]any{ParamInvoiceRunID: invoiceRunIDProperty()},
 		Required:   []string{ParamInvoiceRunID},
 		Target:     targetInvoiceRun,
-	}, common.ReceivablePlan[*invoicerunports.CommitInvoiceRunRequest, *invoicerunports.InvoiceRunCommitPlan]{
+	}, toolspec.ReceivablePlan[*invoicerunports.CommitInvoiceRunRequest, *invoicerunports.InvoiceRunCommitPlan]{
 		Request: commitRunRequest,
 		Plan: func(
 			ctx context.Context,
@@ -473,7 +478,7 @@ func NewCommitInvoiceRunTool(runs invoiceRunKeeper) agenttoolports.AgentTool {
 }
 
 func NewCancelInvoiceRunTool(runs invoiceRunKeeper) agenttoolports.AgentTool {
-	return common.NewReceivableTool(&common.ReceivableSpec{
+	return toolspec.NewReceivableTool(&toolspec.ReceivableSpec{
 		Name: "invoice_cancel_run",
 		Description: "Cancel an invoice run that will never be committed, such as one built " +
 			"for the wrong period or customers. Its shipments stay approved for the next run. " +
@@ -486,27 +491,30 @@ func NewCancelInvoiceRunTool(runs invoiceRunKeeper) agenttoolports.AgentTool {
 		Rationale: "Discards a proposal of invoices; nothing was invoiced, and a new run is " +
 			"built with invoice_build_run.",
 		Properties: map[string]any{
-			ParamInvoiceRunID:  invoiceRunIDProperty(),
-			common.ParamReason: common.StringProperty("Why it is canceled.", maxRunReasonChars),
+			ParamInvoiceRunID: invoiceRunIDProperty(),
+			toolparams.ParamReason: toolparams.StringProperty(
+				"Why it is canceled.",
+				maxRunReasonChars,
+			),
 		},
-		Required: []string{ParamInvoiceRunID, common.ParamReason},
+		Required: []string{ParamInvoiceRunID, toolparams.ParamReason},
 		Target:   targetInvoiceRun,
-	}, common.ReceivablePlan[*invoicerunports.CancelInvoiceRunRequest, *invoicerunports.InvoiceRunChangePreview]{
+	}, toolspec.ReceivablePlan[*invoicerunports.CancelInvoiceRunRequest, *invoicerunports.InvoiceRunChangePreview]{
 		Request: func(params *agenttoolports.ToolExecuteParams) (*invoicerunports.CancelInvoiceRunRequest, error) {
-			runID, err := common.RequirePulid(params.Params, ParamInvoiceRunID)
+			runID, err := toolparams.RequirePulid(params.Params, ParamInvoiceRunID)
 			if err != nil {
 				return nil, err
 			}
-			reason, err := common.RequireBoundedText(
+			reason, err := toolparams.RequireBoundedText(
 				params.Params,
-				common.ParamReason,
+				toolparams.ParamReason,
 				maxRunReasonChars,
 			)
 			if err != nil {
 				return nil, err
 			}
 			return &invoicerunports.CancelInvoiceRunRequest{
-				TenantInfo: common.TenantFrom(*params),
+				TenantInfo: toolparams.TenantFrom(*params),
 				RunID:      runID,
 				Reason:     reason,
 			}, nil
@@ -521,7 +529,7 @@ func NewCancelInvoiceRunTool(runs invoiceRunKeeper) agenttoolports.AgentTool {
 		Refused: func(*invoicerunports.CancelInvoiceRunRequest) string {
 			return "Would cancel the invoice run."
 		},
-		Render: common.RenderCancel,
+		Render: invoicepreview.RenderCancel,
 		Run: func(
 			ctx context.Context,
 			req *invoicerunports.CancelInvoiceRunRequest,
@@ -534,7 +542,7 @@ func NewCancelInvoiceRunTool(runs invoiceRunKeeper) agenttoolports.AgentTool {
 }
 
 func NewBillStatementNowTool(runs invoiceRunKeeper) agenttoolports.AgentTool {
-	return common.NewReceivableTool(&common.ReceivableSpec{
+	return toolspec.NewReceivableTool(&toolspec.ReceivableSpec{
 		Name: "invoice_bill_statement",
 		Description: "Propose billing a statement customer's open period now, before its cycle " +
 			"closes, with the reason recorded on the run. Shipments you name in exclude stay on " +
@@ -549,12 +557,14 @@ func NewBillStatementNowTool(runs invoiceRunKeeper) agenttoolports.AgentTool {
 		Rationale: "Invoices a customer off their agreed cycle; only a person decides to bill " +
 			"early, and the reason stays on the run.",
 		Properties: map[string]any{
-			common.ParamCustomerID: agenttoolschema.RecordIDText(
+			toolparams.ParamCustomerID: agenttoolschema.RecordIDText(
 				permission.ResourceCustomer,
 				"The statement customer, from invoice_list_open_statements.",
 			),
-			common.ParamReason: common.StringProperty("Why it is billed before the cycle closes.",
-				maxRunReasonChars),
+			toolparams.ParamReason: toolparams.StringProperty(
+				"Why it is billed before the cycle closes.",
+				maxRunReasonChars,
+			),
 			paramExclude: map[string]any{
 				toolschema.KeyType:        toolschema.TypeArray,
 				toolschema.KeyDescription: "Shipments to leave on the statement for now.",
@@ -565,21 +575,21 @@ func NewBillStatementNowTool(runs invoiceRunKeeper) agenttoolports.AgentTool {
 						paramBillingQueueItems: agenttoolschema.KindID(
 							"The shipment's billing queue item, from invoice_list_open_statements.",
 							permission.KindBillingQueueItem),
-						common.ParamReason: common.StringProperty(
+						toolparams.ParamReason: toolparams.StringProperty(
 							"Why it is held back.",
 							maxRunReasonChars,
 						),
 					},
 					toolschema.KeyRequired: []string{
 						paramBillingQueueItems,
-						common.ParamReason,
+						toolparams.ParamReason,
 					},
 					toolschema.KeyAdditionalProperties: false,
 				},
 			},
 		},
-		Required: []string{common.ParamCustomerID, common.ParamReason},
-	}, common.ReceivablePlan[*invoicerunports.BillStatementNowRequest, *invoicerunports.StatementBillPlan]{
+		Required: []string{toolparams.ParamCustomerID, toolparams.ParamReason},
+	}, toolspec.ReceivablePlan[*invoicerunports.BillStatementNowRequest, *invoicerunports.StatementBillPlan]{
 		Request: billStatementRequest,
 		Plan: func(
 			ctx context.Context,
@@ -606,11 +616,15 @@ func NewBillStatementNowTool(runs invoiceRunKeeper) agenttoolports.AgentTool {
 func billStatementRequest(
 	params *agenttoolports.ToolExecuteParams,
 ) (*invoicerunports.BillStatementNowRequest, error) {
-	customerID, err := common.RequirePulid(params.Params, common.ParamCustomerID)
+	customerID, err := toolparams.RequirePulid(params.Params, toolparams.ParamCustomerID)
 	if err != nil {
 		return nil, err
 	}
-	reason, err := common.RequireBoundedText(params.Params, common.ParamReason, maxRunReasonChars)
+	reason, err := toolparams.RequireBoundedText(
+		params.Params,
+		toolparams.ParamReason,
+		maxRunReasonChars,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -622,7 +636,7 @@ func billStatementRequest(
 	exclusions := make([]invoicerunports.StatementExclusion, 0, len(entries))
 	seen := make(map[pulid.ID]struct{}, len(entries))
 	for idx, fields := range entries {
-		itemID, idErr := common.RequirePulid(fields, paramBillingQueueItems)
+		itemID, idErr := toolparams.RequirePulid(fields, paramBillingQueueItems)
 		if idErr != nil {
 			return nil, fmt.Errorf("%s[%d]: %w", paramExclude, idx, idErr)
 		}
@@ -630,7 +644,11 @@ func billStatementRequest(
 			return nil, fmt.Errorf("%s[%d] repeats %s", paramExclude, idx, itemID)
 		}
 		seen[itemID] = struct{}{}
-		why, reasonErr := common.RequireBoundedText(fields, common.ParamReason, maxRunReasonChars)
+		why, reasonErr := toolparams.RequireBoundedText(
+			fields,
+			toolparams.ParamReason,
+			maxRunReasonChars,
+		)
 		if reasonErr != nil {
 			return nil, fmt.Errorf("%s[%d]: %w", paramExclude, idx, reasonErr)
 		}
@@ -641,7 +659,7 @@ func billStatementRequest(
 	}
 
 	return &invoicerunports.BillStatementNowRequest{
-		TenantInfo: common.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(*params),
 		CustomerID: customerID,
 		Reason:     reason,
 		Exclude:    exclusions,

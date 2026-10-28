@@ -4,7 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/billingqueuepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -12,7 +13,7 @@ import (
 )
 
 var inReviewFields = []string{
-	common.FieldStatus,
+	changepreview.FieldStatus,
 	"assignedBillerId",
 	"reviewStartedAt",
 	"reviewCompletedAt",
@@ -29,8 +30,8 @@ func (t *TransitionToInReviewTool) Preview(
 		return nil, err
 	}
 
-	plan, err := common.PlanUpdate(
-		common.QueueRecord(move.item),
+	plan, err := changepreview.PlanUpdate(
+		billingqueuepreview.QueueRecord(move.item),
 		move.item,
 		move.plan(params.Actor, timeutils.NowUnix()),
 		toolpreview.Only(inReviewFields...),

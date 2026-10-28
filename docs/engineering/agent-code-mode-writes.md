@@ -104,7 +104,7 @@ flag and interface, not by name, a new runtime-control tool is excluded by const
 broker builds the turn's write index from the tools the agent holds that pass it and that the
 person is permitted to use (`scriptWriteIndex`).
 
-A `common.RecordBatch` tool may be called with one id or many. `scriptoutbox.Expand` turns a call
+A `recordbatch.RecordBatch` tool may be called with one id or many. `scriptoutbox.Expand` turns a call
 naming N ids into N calls of the single tool, each with the single tool's preview, validation and
 target pin (proposal-previews.md, "Tools that take one record or many");
 `TestEveryRecordSplitterSplitsIntoSingleRecordCalls` holds every splitter to that.

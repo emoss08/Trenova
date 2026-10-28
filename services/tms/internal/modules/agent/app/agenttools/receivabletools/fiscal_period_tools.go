@@ -6,7 +6,10 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/accounting/app/fiscalperiodservice"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/journalpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -25,7 +28,7 @@ const fiscalPeriodSupplier = "The fiscal period, from ledger_list_fiscal_periods
 const fiscalPeriodRecordKind = "fiscal period"
 
 var fiscalPeriodFields = []string{
-	common.FieldStatus,
+	changepreview.FieldStatus,
 	"lockedAt",
 	"closedAt",
 	"reopenedAt",
@@ -148,7 +151,7 @@ func (m *fiscalPeriodMove) properties() map[string]any {
 			fiscalPeriodSupplier),
 	}
 	if m.needsReason {
-		properties[common.ParamReason] = common.StringProperty(
+		properties[toolparams.ParamReason] = toolparams.StringProperty(
 			"Why the period must take postings again: "+
 				"the correction and the evidence for it.",
 			maxFiscalReopenReason,
@@ -160,7 +163,7 @@ func (m *fiscalPeriodMove) properties() map[string]any {
 
 func (m *fiscalPeriodMove) required() []string {
 	if m.needsReason {
-		return []string{paramFiscalPeriodID, common.ParamReason}
+		return []string{paramFiscalPeriodID, toolparams.ParamReason}
 	}
 
 	return []string{paramFiscalPeriodID}
@@ -169,19 +172,19 @@ func (m *fiscalPeriodMove) required() []string {
 func (m *fiscalPeriodMove) request(
 	params *agenttoolports.ToolExecuteParams,
 ) (*fiscalperiodservice.TransitionRequest, error) {
-	id, err := common.RequirePulid(params.Params, paramFiscalPeriodID)
+	id, err := toolparams.RequirePulid(params.Params, paramFiscalPeriodID)
 	if err != nil {
 		return nil, err
 	}
 	req := &fiscalperiodservice.TransitionRequest{
 		Transition: m.transition,
 		ID:         id,
-		TenantInfo: common.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(*params),
 	}
 	if m.needsReason {
-		if req.Reason, err = common.RequireBoundedText(
+		if req.Reason, err = toolparams.RequireBoundedText(
 			params.Params,
-			common.ParamReason,
+			toolparams.ParamReason,
 			maxFiscalReopenReason,
 		); err != nil {
 			return nil, err
@@ -201,7 +204,7 @@ func (m *fiscalPeriodMove) render(
 			Resource: permission.ResourceFiscalPeriod,
 			ID:       before.ID,
 			Label:    before.Name,
-			Version:  common.PinnedVersion(before.Version),
+			Version:  changepreview.PinnedVersion(before.Version),
 		},
 		before,
 		plan.After,
@@ -218,8 +221,8 @@ func (m *fiscalPeriodMove) render(
 		fiscalMoveVerb(m.transition),
 		fiscalPeriodRecordKind,
 		before.Name,
-		common.DayLabel(before.StartDate),
-		common.DayLabel(before.EndDate),
+		changepreview.DayLabel(before.StartDate),
+		changepreview.DayLabel(before.EndDate),
 		before.Status,
 		m.outcome,
 	), change), nil
@@ -246,7 +249,7 @@ func newFiscalPeriodTool(
 	periods FiscalPeriodKeeper,
 	move *fiscalPeriodMove,
 ) agenttoolports.AgentTool {
-	return common.NewReceivableTool(common.LedgerMoneySpec(&common.ReceivableSpec{
+	return toolspec.NewReceivableTool(journalpreview.LedgerMoneySpec(&toolspec.ReceivableSpec{
 		Name:        move.name,
 		Recipe:      move.recipe,
 		Description: move.description,
@@ -256,9 +259,9 @@ func newFiscalPeriodTool(
 		Properties:  move.properties(),
 		Required:    move.required(),
 		Target: func(params map[string]any) (agenttoolports.ToolTarget, bool) {
-			return common.TargetOf(params, paramFiscalPeriodID, permission.ResourceFiscalPeriod)
+			return toolparams.TargetOf(params, paramFiscalPeriodID, permission.ResourceFiscalPeriod)
 		},
-	}), common.ReceivablePlan[*fiscalperiodservice.TransitionRequest, *fiscalperiodservice.TransitionPlan]{
+	}), toolspec.ReceivablePlan[*fiscalperiodservice.TransitionRequest, *fiscalperiodservice.TransitionPlan]{
 		Request: move.request,
 		Plan: func(
 			ctx context.Context,

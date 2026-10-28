@@ -5,7 +5,8 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -16,9 +17,9 @@ func (t *ApproveWorkerPTOTool) Preview(
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	summary := "Would approve a time-off request."
-	if err := common.GuardPreview(t, &params); err != nil {
-		if errors.Is(err, common.ErrAgentCannotApprove) {
-			return common.WarnWouldFail(toolpreview.Build(summary), err), nil
+	if err := toolguard.GuardPreview(t, &params); err != nil {
+		if errors.Is(err, toolguard.ErrAgentCannotApprove) {
+			return changepreview.WarnWouldFail(toolpreview.Build(summary), err), nil
 		}
 
 		return nil, err
@@ -31,8 +32,8 @@ func (t *ApproveWorkerPTOTool) Preview(
 
 	decision, err := t.pto.PreviewApprove(ctx, request)
 	if err != nil {
-		if common.IsRefusal(err) {
-			return common.WarnWouldFail(toolpreview.Build(summary), err), nil
+		if changepreview.IsRefusal(err) {
+			return changepreview.WarnWouldFail(toolpreview.Build(summary), err), nil
 		}
 
 		return nil, err

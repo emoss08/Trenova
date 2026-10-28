@@ -5,7 +5,10 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/shipmentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -41,13 +44,13 @@ const maxOrderChargeText = 255
 const maxOrderAttachments = 50
 
 var orderFields = []string{
-	common.FieldCustomerID, common.ParamOwnerID, paramPONumber, common.FieldBol, paramCurrencyCode,
-	paramQuotedAmount, paramBaseAmount, common.FieldStatus,
+	changepreview.FieldCustomerID, toolparams.ParamOwnerID, paramPONumber, changepreview.FieldBol, paramCurrencyCode,
+	paramQuotedAmount, paramBaseAmount, changepreview.FieldStatus,
 }
 
 var orderRefs = map[string]permission.Resource{
-	common.FieldCustomerID: permission.ResourceCustomer,
-	common.ParamOwnerID:    permission.ResourceUser,
+	changepreview.FieldCustomerID: permission.ResourceCustomer,
+	toolparams.ParamOwnerID:       permission.ResourceUser,
 }
 
 type orderKeeper interface {
@@ -121,7 +124,7 @@ func orderIDProperty(what string) map[string]any {
 }
 
 func targetOrder(params map[string]any) (agenttoolports.ToolTarget, bool) {
-	return common.TargetOf(params, common.ParamOrderID, permission.ResourceOrder)
+	return toolparams.TargetOf(params, toolparams.ParamOrderID, permission.ResourceOrder)
 }
 
 func orderRecord(entity *order.Order) toolpreview.Record {
@@ -134,7 +137,7 @@ func orderRecord(entity *order.Order) toolpreview.Record {
 		Resource: permission.ResourceOrder,
 		ID:       entity.ID,
 		Label:    label,
-		Version:  common.PinnedVersion(entity.Version),
+		Version:  changepreview.PinnedVersion(entity.Version),
 	}
 }
 
@@ -142,8 +145,8 @@ func orderResult(action string, entity *order.Order) *agent.ToolExecutionResult 
 	result := &agent.ToolExecutionResult{Action: action, Kind: kindOrder}
 	if entity != nil {
 		result.Name = entity.OrderNumber
-		result.IDs = map[string]string{common.ParamOrderID: entity.ID.String()}
-		result.Record = common.RecordOf(common.OrderRecordEntity, entity.ID)
+		result.IDs = map[string]string{toolparams.ParamOrderID: entity.ID.String()}
+		result.Record = changepreview.RecordOf(changepreview.OrderRecordEntity, entity.ID)
 	}
 
 	return result
@@ -151,7 +154,9 @@ func orderResult(action string, entity *order.Order) *agent.ToolExecutionResult 
 
 func orderMoneyProperty(what string) map[string]any {
 	return toolschema.KeepEmpty(
-		common.AmountProperty(what + ", as a decimal such as 1250.00. An empty string clears it."),
+		toolparams.AmountProperty(
+			what + ", as a decimal such as 1250.00. An empty string clears it.",
+		),
 	)
 }
 
@@ -162,18 +167,24 @@ func orderProperties(customerRequired bool) map[string]any {
 	}
 
 	return map[string]any{
-		common.FieldCustomerID: agenttoolschema.RecordIDText(
+		changepreview.FieldCustomerID: agenttoolschema.RecordIDText(
 			permission.ResourceCustomer,
 			customer+" Never guess one.",
 		),
-		common.ParamOwnerID: agenttoolschema.RecordIDText(permission.ResourceUser,
+		toolparams.ParamOwnerID: agenttoolschema.RecordIDText(permission.ResourceUser,
 			"The user who owns the order: the person who asked, "+
 				"or an ownerId order_get shows. Never guess one."),
-		paramPONumber: common.StringProperty("The customer's purchase order number.",
+		paramPONumber: toolparams.StringProperty("The customer's purchase order number.",
 			maxOrderReference),
-		common.FieldBol: common.StringProperty("The bill of lading number.", maxOrderReference),
-		paramCurrencyCode: common.StringProperty("The ISO 4217 currency, such as USD. Defaults to "+
-			"USD.", common.CurrencyCodeLength),
+		changepreview.FieldBol: toolparams.StringProperty(
+			"The bill of lading number.",
+			maxOrderReference,
+		),
+		paramCurrencyCode: toolparams.StringProperty(
+			"The ISO 4217 currency, such as USD. Defaults to "+
+				"USD.",
+			toolparams.CurrencyCodeLength,
+		),
 		paramQuotedAmount: orderMoneyProperty("What the customer was quoted"),
 		paramBaseAmount:   orderMoneyProperty("The base amount before accessorials"),
 	}
@@ -182,25 +193,25 @@ func orderProperties(customerRequired bool) map[string]any {
 // applyOrderArgs lays what the call sends over an order, the way the order
 // form does: an absent argument leaves the value alone.
 func applyOrderArgs(entity *order.Order, params map[string]any) error {
-	if _, given := params[common.FieldCustomerID]; given {
-		customerID, err := common.RequirePulid(params, common.FieldCustomerID)
+	if _, given := params[changepreview.FieldCustomerID]; given {
+		customerID, err := toolparams.RequirePulid(params, changepreview.FieldCustomerID)
 		if err != nil {
 			return err
 		}
 		entity.CustomerID = customerID
 	}
-	if _, given := params[common.ParamOwnerID]; given {
-		ownerID, err := common.RequirePulid(params, common.ParamOwnerID)
+	if _, given := params[toolparams.ParamOwnerID]; given {
+		ownerID, err := toolparams.RequirePulid(params, toolparams.ParamOwnerID)
 		if err != nil {
 			return err
 		}
 		entity.OwnerID = ownerID
 	}
 	for key, target := range map[string]*string{
-		paramPONumber:   &entity.PONumber,
-		common.FieldBol: &entity.BOL,
+		paramPONumber:          &entity.PONumber,
+		changepreview.FieldBol: &entity.BOL,
 	} {
-		value, err := common.OptionalBoundedText(params, key, maxOrderReference)
+		value, err := toolparams.OptionalBoundedText(params, key, maxOrderReference)
 		if err != nil {
 			return err
 		}
@@ -208,10 +219,10 @@ func applyOrderArgs(entity *order.Order, params map[string]any) error {
 			*target = *value
 		}
 	}
-	currency, err := common.OptionalBoundedText(
+	currency, err := toolparams.OptionalBoundedText(
 		params,
 		paramCurrencyCode,
-		common.CurrencyCodeLength,
+		toolparams.CurrencyCodeLength,
 	)
 	if err != nil {
 		return err
@@ -241,7 +252,7 @@ func applyOptionalAmount(params map[string]any, key string, target *decimal.Null
 
 		return nil
 	}
-	value, present, err := common.OptionalDecimal(params, key)
+	value, present, err := toolparams.OptionalDecimal(params, key)
 	if err != nil {
 		return err
 	}
@@ -292,9 +303,9 @@ func renderOrderChange(verb string) func(
 }
 
 func NewCreateOrderTool(orders orderKeeper) agenttoolports.AgentTool {
-	return common.NewReportingReceivableTool(&common.ReceivableSpec{
+	return toolspec.NewReportingReceivableTool(&toolspec.ReceivableSpec{
 		Name:     "order_create",
-		Artifact: common.OrderRecordEntity,
+		Artifact: changepreview.OrderRecordEntity,
 		Description: "Open a customer order: the commercial record that groups a " +
 			"customer's shipments and order-level charges under their PO or BOL. It starts " +
 			"as a Draft with its own number; attach shipments with order_attach_shipments " +
@@ -314,10 +325,10 @@ func NewCreateOrderTool(orders orderKeeper) agenttoolports.AgentTool {
 		Rationale: "Opens an empty order inside Trenova; nothing is billed or sent, and an " +
 			"order opened in error is canceled.",
 		Properties: orderProperties(true),
-		Required:   []string{common.FieldCustomerID},
-	}, common.ReceivablePlan[*order.Order, *orderservice.OrderChange]{
+		Required:   []string{changepreview.FieldCustomerID},
+	}, toolspec.ReceivablePlan[*order.Order, *orderservice.OrderChange]{
 		Request: func(params *agenttoolports.ToolExecuteParams) (*order.Order, error) {
-			if _, err := common.RequirePulid(params.Params, common.FieldCustomerID); err != nil {
+			if _, err := toolparams.RequirePulid(params.Params, changepreview.FieldCustomerID); err != nil {
 				return nil, err
 			}
 			entity := &order.Order{
@@ -377,10 +388,10 @@ func (e *orderEdit) entity(ctx context.Context, orders orderKeeper) (*order.Orde
 }
 
 func NewUpdateOrderTool(orders orderKeeper) agenttoolports.AgentTool {
-	base := common.NewReportingReceivableTool(&common.ReceivableSpec{
+	base := toolspec.NewReportingReceivableTool(&toolspec.ReceivableSpec{
 		Name:        "order_update",
 		SearchTerms: []string{"purchase order", "po", "fix bol", "edit order"},
-		Artifact:    common.OrderRecordEntity,
+		Artifact:    changepreview.OrderRecordEntity,
 		Description: "Change an order's customer, owner, PO number, BOL, currency, quoted " +
 			"amount or base amount. Send only what changes. Its status and total follow its " +
 			"shipments and charges and cannot be set here.",
@@ -393,16 +404,16 @@ func NewUpdateOrderTool(orders orderKeeper) agenttoolports.AgentTool {
 		Rationale: "Edits an order's own fields inside Trenova; nothing is sent, and the old " +
 			"values are set back the same way. A changed amount is a money change.",
 		Properties: withOrderID(orderProperties(false), "The order to change"),
-		Required:   []string{common.ParamOrderID},
+		Required:   []string{toolparams.ParamOrderID},
 		Target:     targetOrder,
-	}, common.ReceivablePlan[*orderEdit, *orderservice.OrderChange]{
+	}, toolspec.ReceivablePlan[*orderEdit, *orderservice.OrderChange]{
 		Request: func(params *agenttoolports.ToolExecuteParams) (*orderEdit, error) {
-			orderID, err := common.RequirePulid(params.Params, common.ParamOrderID)
+			orderID, err := toolparams.RequirePulid(params.Params, toolparams.ParamOrderID)
 			if err != nil {
 				return nil, err
 			}
-			if !common.SendsAny(params.Params, orderFields...) {
-				return nil, common.ErrNothingToChange
+			if !toolparams.SendsAny(params.Params, orderFields...) {
+				return nil, toolparams.ErrNothingToChange
 			}
 			probe := &order.Order{}
 			if err = applyOrderArgs(probe, params.Params); err != nil {
@@ -412,7 +423,7 @@ func NewUpdateOrderTool(orders orderKeeper) agenttoolports.AgentTool {
 			return &orderEdit{
 				get: orderports.GetOrderByIDRequest{
 					ID:         orderID,
-					TenantInfo: common.TenantFrom(*params),
+					TenantInfo: toolparams.TenantFrom(*params),
 				},
 				params: params.Params,
 			}, nil
@@ -451,7 +462,7 @@ func NewUpdateOrderTool(orders orderKeeper) agenttoolports.AgentTool {
 		},
 	})
 
-	return common.ClassifiedTool[*orderEdit, *orderservice.OrderChange]{
+	return toolspec.ClassifiedTool[*orderEdit, *orderservice.OrderChange]{
 		ReportingReceivableTool: base,
 		Egress:                  []agent.EgressClass{agent.EgressInternal, agent.EgressMoney},
 		Classify:                classifyOrderAmounts,
@@ -461,7 +472,7 @@ func NewUpdateOrderTool(orders orderKeeper) agenttoolports.AgentTool {
 func classifyOrderAmounts(
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // ToolPolicy.Classify passes params by value
 ) agenttoolports.CallPolicy {
-	if common.SendsAny(params.Params, paramQuotedAmount, paramBaseAmount) {
+	if toolparams.SendsAny(params.Params, paramQuotedAmount, paramBaseAmount) {
 		return agenttoolports.CallPolicy{Egress: agent.EgressMoney}
 	}
 
@@ -469,7 +480,7 @@ func classifyOrderAmounts(
 }
 
 func withOrderID(properties map[string]any, what string) map[string]any {
-	properties[common.ParamOrderID] = orderIDProperty(what)
+	properties[toolparams.ParamOrderID] = orderIDProperty(what)
 
 	return properties
 }
@@ -481,9 +492,9 @@ type orderMembership struct {
 }
 
 func NewAttachOrderShipmentsTool(orders orderKeeper) agenttoolports.AgentTool {
-	return common.NewReportingReceivableTool(&common.ReceivableSpec{
+	return toolspec.NewReportingReceivableTool(&toolspec.ReceivableSpec{
 		Name:     "order_attach_shipments",
-		Artifact: common.OrderRecordEntity,
+		Artifact: changepreview.OrderRecordEntity,
 		Description: "Put shipments on an order so they are billed and tracked together. " +
 			"Each must be the order's customer's and neither canceled nor invoiced; a " +
 			"shipment on another open order moves off it, and an order it leaves empty is " +
@@ -497,31 +508,36 @@ func NewAttachOrderShipmentsTool(orders orderKeeper) agenttoolports.AgentTool {
 		Rationale: "Regroups shipments under an order inside Trenova; nothing is sent, and " +
 			"order_detach_shipment moves one back out.",
 		Properties: map[string]any{
-			common.ParamOrderID: orderIDProperty("The order to add them to"),
-			common.ParamShipmentIDs: toolschema.RecordSubset(permission.ResourceShipment.String(),
+			toolparams.ParamOrderID: orderIDProperty("The order to add them to"),
+			toolparams.ParamShipmentIDs: toolschema.RecordSubset(
+				permission.ResourceShipment.String(),
 				agenttoolschema.RecordIDs(
 					permission.ResourceShipment,
 					"The shipments to attach, from shipment_list or "+
 						"shipment_get.",
 					maxOrderAttachments,
-				)),
+				),
+			),
 		},
-		Required: []string{common.ParamOrderID, common.ParamShipmentIDs},
+		Required: []string{toolparams.ParamOrderID, toolparams.ParamShipmentIDs},
 		Target:   targetOrder,
-	}, common.ReceivablePlan[*orderMembership, *orderservice.MembershipPlan]{
+	}, toolspec.ReceivablePlan[*orderMembership, *orderservice.MembershipPlan]{
 		Request: func(params *agenttoolports.ToolExecuteParams) (*orderMembership, error) {
-			orderID, err := common.RequirePulid(params.Params, common.ParamOrderID)
+			orderID, err := toolparams.RequirePulid(params.Params, toolparams.ParamOrderID)
 			if err != nil {
 				return nil, err
 			}
-			shipmentIDs, err := common.RequirePulidSlice(params.Params, common.ParamShipmentIDs,
-				maxOrderAttachments)
+			shipmentIDs, err := toolparams.RequirePulidSlice(
+				params.Params,
+				toolparams.ParamShipmentIDs,
+				maxOrderAttachments,
+			)
 			if err != nil {
 				return nil, err
 			}
 
 			return &orderMembership{
-				tenant:      common.TenantFrom(*params),
+				tenant:      toolparams.TenantFrom(*params),
 				orderID:     orderID,
 				shipmentIDs: shipmentIDs,
 			}, nil
@@ -575,7 +591,7 @@ func renderAttachShipments(
 			&shipmentOrderView{},
 			&shipmentOrderView{OrderID: plan.Order.ID},
 			toolpreview.WithRefs(map[string]permission.Resource{
-				common.ParamOrderID: permission.ResourceOrder,
+				toolparams.ParamOrderID: permission.ResourceOrder,
 			}),
 		)
 		if err != nil {
@@ -585,13 +601,13 @@ func renderAttachShipments(
 	}
 
 	summary := fmt.Sprintf("Would attach %s to order %s.",
-		common.CountOf(len(plan.ShipmentIDs), "shipment"), plan.Order.OrderNumber)
+		changepreview.CountOf(len(plan.ShipmentIDs), "shipment"), plan.Order.OrderNumber)
 	if skipped := len(req.shipmentIDs) - len(plan.ShipmentIDs); skipped > 0 {
 		summary += fmt.Sprintf(" %d named are already on it.", skipped)
 	}
 	if len(plan.SourceOrderIDs) > 0 {
 		summary += fmt.Sprintf(" They leave %s, which is removed if left empty.",
-			common.CountOf(len(plan.SourceOrderIDs), "other order"))
+			changepreview.CountOf(len(plan.SourceOrderIDs), "other order"))
 	}
 
 	return toolpreview.Build(summary, changes...), nil
@@ -604,9 +620,9 @@ type orderLeg struct {
 }
 
 func NewDetachOrderShipmentTool(orders orderKeeper) agenttoolports.AgentTool {
-	return common.NewReportingReceivableTool(&common.ReceivableSpec{
+	return toolspec.NewReportingReceivableTool(&toolspec.ReceivableSpec{
 		Name:     "order_detach_shipment",
-		Artifact: common.OrderRecordEntity,
+		Artifact: changepreview.OrderRecordEntity,
 		Description: "Take one shipment off an order onto an order of its own, so it is " +
 			"billed on its own. The order's only shipment and an invoiced one stay where " +
 			"they are.",
@@ -619,23 +635,25 @@ func NewDetachOrderShipmentTool(orders orderKeeper) agenttoolports.AgentTool {
 		Rationale: "Moves a shipment onto a new order inside Trenova; nothing is sent, and " +
 			"order_attach_shipments puts it back.",
 		Properties: map[string]any{
-			common.ParamOrderID:    orderIDProperty("The order the shipment is on"),
-			common.ParamShipmentID: common.ShipmentIDProperty("The shipment to take off it"),
+			toolparams.ParamOrderID: orderIDProperty("The order the shipment is on"),
+			toolparams.ParamShipmentID: shipmentpreview.ShipmentIDProperty(
+				"The shipment to take off it",
+			),
 		},
-		Required: []string{common.ParamOrderID, common.ParamShipmentID},
+		Required: []string{toolparams.ParamOrderID, toolparams.ParamShipmentID},
 		Target:   targetOrder,
-	}, common.ReceivablePlan[*orderLeg, *orderservice.DetachPlan]{
+	}, toolspec.ReceivablePlan[*orderLeg, *orderservice.DetachPlan]{
 		Request: func(params *agenttoolports.ToolExecuteParams) (*orderLeg, error) {
-			orderID, err := common.RequirePulid(params.Params, common.ParamOrderID)
+			orderID, err := toolparams.RequirePulid(params.Params, toolparams.ParamOrderID)
 			if err != nil {
 				return nil, err
 			}
-			shipmentID, err := common.RequirePulid(params.Params, common.ParamShipmentID)
+			shipmentID, err := toolparams.RequirePulid(params.Params, toolparams.ParamShipmentID)
 			if err != nil {
 				return nil, err
 			}
 
-			return &orderLeg{tenant: common.TenantFrom(*params), orderID: orderID,
+			return &orderLeg{tenant: toolparams.TenantFrom(*params), orderID: orderID,
 				shipmentID: shipmentID}, nil
 		},
 		Plan: func(
@@ -651,8 +669,8 @@ func NewDetachOrderShipmentTool(orders orderKeeper) agenttoolports.AgentTool {
 				orderRecord(plan.Replacement),
 				plan.Replacement,
 				toolpreview.Only(
-					common.FieldCustomerID,
-					common.FieldStatus,
+					changepreview.FieldCustomerID,
+					changepreview.FieldStatus,
 					paramCurrencyCode,
 					"totalAmount",
 				),
@@ -693,14 +711,14 @@ func readOrderOnly(
 	params *agenttoolports.ToolExecuteParams,
 	reasonRequired bool,
 ) (*orderOnly, error) {
-	orderID, err := common.RequirePulid(params.Params, common.ParamOrderID)
+	orderID, err := toolparams.RequirePulid(params.Params, toolparams.ParamOrderID)
 	if err != nil {
 		return nil, err
 	}
-	req := &orderOnly{tenant: common.TenantFrom(*params), orderID: orderID}
+	req := &orderOnly{tenant: toolparams.TenantFrom(*params), orderID: orderID}
 	if reasonRequired {
-		if req.reason, err = common.RequireBoundedText(params.Params, common.ParamReason,
-			common.MaxOperationNoteChars); err != nil {
+		if req.reason, err = toolparams.RequireBoundedText(params.Params, toolparams.ParamReason,
+			toolparams.MaxOperationNoteChars); err != nil {
 			return nil, err
 		}
 	}
@@ -709,9 +727,9 @@ func readOrderOnly(
 }
 
 func NewCloseOrderTool(orders orderKeeper) agenttoolports.AgentTool {
-	return common.NewReportingReceivableTool(&common.ReceivableSpec{
+	return toolspec.NewReportingReceivableTool(&toolspec.ReceivableSpec{
 		Name:     "order_close",
-		Artifact: common.OrderRecordEntity,
+		Artifact: changepreview.OrderRecordEntity,
 		Description: "Close a Billed order once nothing more will be billed on it. Closing " +
 			"is final: a Closed order takes no more shipments or charges.",
 		Resource:    permission.ResourceOrder,
@@ -722,10 +740,10 @@ func NewCloseOrderTool(orders orderKeeper) agenttoolports.AgentTool {
 		PersonOnly:  true,
 		Rationale: "Settles an order for good; nothing reopens it, so only a person " +
 			"closes one.",
-		Properties: map[string]any{common.ParamOrderID: orderIDProperty("The Billed order")},
-		Required:   []string{common.ParamOrderID},
+		Properties: map[string]any{toolparams.ParamOrderID: orderIDProperty("The Billed order")},
+		Required:   []string{toolparams.ParamOrderID},
 		Target:     targetOrder,
-	}, common.ReceivablePlan[*orderOnly, *orderservice.OrderChange]{
+	}, toolspec.ReceivablePlan[*orderOnly, *orderservice.OrderChange]{
 		Request: func(params *agenttoolports.ToolExecuteParams) (*orderOnly, error) {
 			return readOrderOnly(params, false)
 		},
@@ -756,9 +774,9 @@ func NewCloseOrderTool(orders orderKeeper) agenttoolports.AgentTool {
 }
 
 func NewCancelOrderTool(orders orderKeeper) agenttoolports.AgentTool {
-	return common.NewReportingReceivableTool(&common.ReceivableSpec{
+	return toolspec.NewReportingReceivableTool(&toolspec.ReceivableSpec{
 		Name:     "order_cancel",
-		Artifact: common.OrderRecordEntity,
+		Artifact: changepreview.OrderRecordEntity,
 		Description: "Cancel an order and every shipment on it that is not already " +
 			"canceled, with the reason the customer gave. An order with an invoiced " +
 			"shipment cannot be canceled; credit the invoice first. Canceling a shipment " +
@@ -772,13 +790,13 @@ func NewCancelOrderTool(orders orderKeeper) agenttoolports.AgentTool {
 		Rationale: "Cancels every live shipment on the order, which reaches carriers and " +
 			"trading partners; only a person cancels an order.",
 		Properties: map[string]any{
-			common.ParamOrderID: orderIDProperty("The order to cancel"),
-			common.ParamReason: common.StringProperty("Why, as the customer said it.",
-				common.MaxOperationNoteChars),
+			toolparams.ParamOrderID: orderIDProperty("The order to cancel"),
+			toolparams.ParamReason: toolparams.StringProperty("Why, as the customer said it.",
+				toolparams.MaxOperationNoteChars),
 		},
-		Required: []string{common.ParamOrderID, common.ParamReason},
+		Required: []string{toolparams.ParamOrderID, toolparams.ParamReason},
 		Target:   targetOrder,
-	}, common.ReceivablePlan[*orderOnly, *orderservice.CancelPlan]{
+	}, toolspec.ReceivablePlan[*orderOnly, *orderservice.CancelPlan]{
 		Request: func(params *agenttoolports.ToolExecuteParams) (*orderOnly, error) {
 			return readOrderOnly(params, true)
 		},
@@ -814,7 +832,7 @@ func renderCancelOrder(req *orderOnly, plan *orderservice.CancelPlan) (*agent.To
 	changes := make([]*agent.RecordChange, 0, len(plan.Legs))
 	for _, leg := range plan.Legs {
 		change, err := toolpreview.Changed(
-			common.ShipmentRecord(leg),
+			shipmentpreview.ShipmentRecord(leg),
 			&legStatusView{Status: leg.Status},
 			&legStatusView{Status: shipment.StatusCanceled},
 		)
@@ -827,7 +845,7 @@ func renderCancelOrder(req *orderOnly, plan *orderservice.CancelPlan) (*agent.To
 	return toolpreview.Build(fmt.Sprintf(
 		"Would cancel order %s and %s on it: %s",
 		plan.Order.OrderNumber,
-		common.CountOf(len(plan.Legs), "live shipment"),
+		changepreview.CountOf(len(plan.Legs), "live shipment"),
 		req.reason,
 	), changes...), nil
 }

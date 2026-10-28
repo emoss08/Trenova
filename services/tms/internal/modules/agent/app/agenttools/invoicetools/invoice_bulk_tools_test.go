@@ -7,7 +7,10 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/billingqueuepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/recordbatch"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoiceservice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
@@ -109,7 +112,7 @@ func TestPostInvoices_ParamsAreARecordSubsetOfInvoices(t *testing.T) {
 	properties := tool.ParamSchema()[toolschema.KeyProperties].(map[string]any)
 	ids := properties[paramInvoiceIDs].(map[string]any)
 	assert.Equal(t, permission.ResourceInvoice.String(), toolschema.SubsetResource(ids))
-	assert.Equal(t, common.MaxBulkRecords, ids[toolschema.KeyMaxItems])
+	assert.Equal(t, recordbatch.MaxBulkRecords, ids[toolschema.KeyMaxItems])
 
 	policy := tool.Policy()
 	assert.Equal(t, agent.TierPropose, policy.MaxTier)
@@ -124,7 +127,9 @@ func TestPostInvoices_PreviewsEachInvoiceWithRefusalsFirst(t *testing.T) {
 	poster.locked = true
 	poster.previews[ids[2]].Refusal = errors.New("the fiscal period is closed")
 	tool := NewPostInvoicesTool(poster, numbers).(*PostInvoicesTool)
-	params := agenttoolstest.ExecuteParams(map[string]any{paramInvoiceIDs: agenttoolstest.IdList(ids)})
+	params := agenttoolstest.ExecuteParams(
+		map[string]any{paramInvoiceIDs: agenttoolstest.IdList(ids)},
+	)
 
 	preview, err := tool.Preview(t.Context(), params)
 	require.NoError(t, err)
@@ -136,7 +141,11 @@ func TestPostInvoices_PreviewsEachInvoiceWithRefusalsFirst(t *testing.T) {
 	require.Len(t, preview.Changes, 4)
 	first := agenttoolstest.PreviewChange(t, preview, 0)
 	assert.Equal(t, ids[2], first.EntityID, "the refused invoice leads")
-	assert.Contains(t, agenttoolstest.FieldByPath(t, first, common.BulkOutcomeField).After, "fiscal period is closed")
+	assert.Contains(
+		t,
+		agenttoolstest.FieldByPath(t, first, recordbatch.BulkOutcomeField).After,
+		"fiscal period is closed",
+	)
 	for idx := 1; idx < 4; idx++ {
 		change := agenttoolstest.PreviewChange(t, preview, idx)
 		assert.Equal(t, permission.ResourceInvoice, change.Resource)
@@ -154,7 +163,9 @@ func TestPostInvoices_ABatchNothingOfWhichWouldPostIsRefused(t *testing.T) {
 		poster.previews[id].Refusal = errors.New("the fiscal period is closed")
 	}
 	tool := NewPostInvoicesTool(poster, numbers).(*PostInvoicesTool)
-	params := agenttoolstest.ExecuteParams(map[string]any{paramInvoiceIDs: agenttoolstest.IdList(ids)})
+	params := agenttoolstest.ExecuteParams(
+		map[string]any{paramInvoiceIDs: agenttoolstest.IdList(ids)},
+	)
 
 	preview, err := tool.Preview(t.Context(), params)
 	require.NoError(t, err)
@@ -172,7 +183,9 @@ func TestPostInvoices_AnAlreadyPostedOrForeignInvoiceIsRefusedOnItsOwn(t *testin
 	poster.previews[ids[0]].AlreadyPosted = true
 	foreign := pulid.MustNew("inv_")
 	tool := NewPostInvoicesTool(poster, numbers).(*PostInvoicesTool)
-	params := agenttoolstest.ExecuteParams(map[string]any{paramInvoiceIDs: agenttoolstest.IdList(append(ids, foreign))})
+	params := agenttoolstest.ExecuteParams(
+		map[string]any{paramInvoiceIDs: agenttoolstest.IdList(append(ids, foreign))},
+	)
 
 	preview, err := tool.Preview(t.Context(), params)
 	require.NoError(t, err)
@@ -181,7 +194,11 @@ func TestPostInvoices_AnAlreadyPostedOrForeignInvoiceIsRefusedOnItsOwn(t *testin
 	outcomes := map[pulid.ID]any{}
 	for idx := range preview.Changes {
 		change := preview.Changes[idx]
-		outcomes[change.EntityID] = agenttoolstest.FieldByPath(t, &change, common.BulkOutcomeField).After
+		outcomes[change.EntityID] = agenttoolstest.FieldByPath(
+			t,
+			&change,
+			recordbatch.BulkOutcomeField,
+		).After
 	}
 	assert.Contains(t, outcomes[ids[0]], "already posted")
 	assert.Contains(t, outcomes[foreign], "not found")
@@ -208,14 +225,19 @@ func TestPostInvoices_RefusesMoreThanFiftyAndDropsRepeats(t *testing.T) {
 	poster, ids, numbers := batchOfDrafts(1)
 	tool := NewPostInvoicesTool(poster, numbers).(*PostInvoicesTool)
 
-	many := make([]any, 0, common.MaxBulkRecords+1)
-	for range common.MaxBulkRecords + 1 {
+	many := make([]any, 0, recordbatch.MaxBulkRecords+1)
+	for range recordbatch.MaxBulkRecords + 1 {
 		many = append(many, pulid.MustNew("inv_").String())
 	}
-	err := tool.Validate(t.Context(), agenttoolstest.ExecuteParams(map[string]any{paramInvoiceIDs: many}))
+	err := tool.Validate(
+		t.Context(),
+		agenttoolstest.ExecuteParams(map[string]any{paramInvoiceIDs: many}),
+	)
 	require.ErrorContains(t, err, "more than the 50")
 
-	params := agenttoolstest.ApprovedParams(map[string]any{paramInvoiceIDs: agenttoolstest.IdList(append(ids, ids[0]))})
+	params := agenttoolstest.ApprovedParams(
+		map[string]any{paramInvoiceIDs: agenttoolstest.IdList(append(ids, ids[0]))},
+	)
 	result, err := tool.ExecuteWithResult(t.Context(), params)
 	require.NoError(t, err)
 	assert.Equal(t, "INV-8000", result.Name, "one invoice reports as posting one invoice does")
@@ -244,7 +266,9 @@ func TestPostInvoices_PostsEveryApprovedInvoiceAndReportsTheRefusals(t *testing.
 	poster.failPost[ids[3]] = errors.New("the fiscal period is closed")
 	tool := NewPostInvoicesTool(poster, numbers).(*PostInvoicesTool)
 
-	approved := agenttoolstest.ApprovedParams(map[string]any{paramInvoiceIDs: agenttoolstest.IdList(ids[:4])})
+	approved := agenttoolstest.ApprovedParams(
+		map[string]any{paramInvoiceIDs: agenttoolstest.IdList(ids[:4])},
+	)
 	result, err := tool.ExecuteWithResult(t.Context(), approved)
 	require.NoError(t, err)
 
@@ -317,7 +341,9 @@ func TestSendInvoices_ShowsEveryEmailAndStaysAPersonsSend(t *testing.T) {
 	assert.Equal(t, []agent.EgressClass{agent.EgressExternalRecipient}, policy.Egress)
 	assert.Equal(t, agent.TierPropose, policy.MaxTier)
 
-	params := agenttoolstest.ExecuteParams(map[string]any{paramInvoiceIDs: agenttoolstest.IdList(ids)})
+	params := agenttoolstest.ExecuteParams(
+		map[string]any{paramInvoiceIDs: agenttoolstest.IdList(ids)},
+	)
 	preview, err := tool.Preview(t.Context(), params)
 	require.NoError(t, err)
 	require.Len(t, preview.Changes, 3)
@@ -394,31 +420,40 @@ func TestApproveBillingQueueItems_ApprovesEachAsTheSingleToolWould(t *testing.T)
 	).(*ApproveBillingQueueItemsTool)
 
 	properties := tool.ParamSchema()[toolschema.KeyProperties].(map[string]any)
-	assert.Equal(t, permission.ResourceBillingQueue.String(),
-		toolschema.SubsetResource(properties[common.ParamBillingQueueItemIDs].(map[string]any)))
-	assert.Contains(t, properties, common.ParamReviewNotes)
+	assert.Equal(
+		t,
+		permission.ResourceBillingQueue.String(),
+		toolschema.SubsetResource(
+			properties[billingqueuepreview.ParamBillingQueueItemIDs].(map[string]any),
+		),
+	)
+	assert.Contains(t, properties, billingqueuepreview.ParamReviewNotes)
 	assert.Equal(t, agent.TierPropose, tool.Policy().MaxTier)
 
 	params := agenttoolstest.ExecuteParams(map[string]any{
-		common.ParamBillingQueueItemIDs: agenttoolstest.IdList(ids),
-		common.ParamReviewNotes:         "Charges match the agreement",
+		billingqueuepreview.ParamBillingQueueItemIDs: agenttoolstest.IdList(ids),
+		billingqueuepreview.ParamReviewNotes:         "Charges match the agreement",
 	})
 	preview, err := tool.Preview(t.Context(), params)
 	require.NoError(t, err)
 	require.Len(t, preview.Changes, 3)
 	assert.Equal(t, ids[0], preview.Changes[0].EntityID, "the held item leads")
-	assert.Contains(t, agenttoolstest.FieldByPath(t, &preview.Changes[0], common.BulkOutcomeField).After, "detention")
+	assert.Contains(
+		t,
+		agenttoolstest.FieldByPath(t, &preview.Changes[0], recordbatch.BulkOutcomeField).After,
+		"detention",
+	)
 	assert.Equal(t, "Approved", agenttoolstest.FieldByPath(t, &preview.Changes[1], "status").After)
 	assert.Equal(t, "Charges match the agreement",
 		agenttoolstest.FieldByPath(t, &preview.Changes[1], "reviewNotes").After)
 
 	_, err = tool.ExecuteWithResult(t.Context(), params)
-	require.ErrorIs(t, err, common.ErrDecisionNeedsAPerson)
+	require.ErrorIs(t, err, billingqueuepreview.ErrDecisionNeedsAPerson)
 	assert.Empty(t, queue.updated)
 
 	result, err := tool.ExecuteWithResult(t.Context(), agenttoolstest.ApprovedParams(map[string]any{
-		common.ParamBillingQueueItemIDs: agenttoolstest.IdList(ids[1:]),
-		common.ParamReviewNotes:         "Charges match the agreement",
+		billingqueuepreview.ParamBillingQueueItemIDs: agenttoolstest.IdList(ids[1:]),
+		billingqueuepreview.ParamReviewNotes:         "Charges match the agreement",
 	}))
 	require.NoError(t, err)
 	assert.Equal(t, ids[1:], queue.updated)
@@ -430,13 +465,15 @@ func TestBulkTools_RefuseAnotherTenantsActor(t *testing.T) {
 
 	poster, ids, numbers := batchOfDrafts(1)
 	tool := NewPostInvoicesTool(poster, numbers).(*PostInvoicesTool)
-	params := agenttoolstest.ApprovedParams(map[string]any{paramInvoiceIDs: agenttoolstest.IdList(ids)})
+	params := agenttoolstest.ApprovedParams(
+		map[string]any{paramInvoiceIDs: agenttoolstest.IdList(ids)},
+	)
 	params.OrganizationID = pulid.MustNew("org_")
 
 	_, err := tool.Preview(t.Context(), params)
-	require.ErrorIs(t, err, common.ErrTenantMismatch)
+	require.ErrorIs(t, err, toolguard.ErrTenantMismatch)
 	_, err = tool.ExecuteWithResult(t.Context(), params)
-	require.ErrorIs(t, err, common.ErrTenantMismatch)
+	require.ErrorIs(t, err, toolguard.ErrTenantMismatch)
 	assert.Empty(t, poster.posted)
 }
 
@@ -454,7 +491,7 @@ func TestPostInvoices_OneInvoiceIsPreviewedAndPinnedAsPostingOneIs(t *testing.T)
 	preview, err := tool.Preview(t.Context(), agenttoolstest.ExecuteParams(one))
 	require.NoError(t, err)
 	want, err := single.Preview(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
-		common.ParamInvoiceID: ids[0].String(),
+		toolparams.ParamInvoiceID: ids[0].String(),
 	}))
 	require.NoError(t, err)
 	assert.Equal(t, want, preview)

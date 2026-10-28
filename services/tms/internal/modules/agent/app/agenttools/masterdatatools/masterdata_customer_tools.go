@@ -3,7 +3,8 @@ package masterdatatools
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -96,8 +97,8 @@ func customerViewOf(entity *customer.Customer, states map[pulid.ID]string) any {
 var customerRecord = &masterRecord[customer.Customer]{
 	kind:     "customer",
 	resource: permission.ResourceCustomer,
-	entity:   common.CustomerRecordEntity,
-	idParam:  common.ParamCustomerID,
+	entity:   changepreview.CustomerRecordEntity,
+	idParam:  toolparams.ParamCustomerID,
 	idsParam: "customerIds",
 	lister:   "customer_list",
 	label:    func(entity *customer.Customer) string { return entity.Name },

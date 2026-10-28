@@ -4,7 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/billingqueuepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
@@ -20,12 +22,12 @@ import (
 type ApproveBillingQueueItemTool struct {
 	*BillingQueueDecisionTool
 
-	invoices common.ApprovalInvoicePlanner
+	invoices billingqueuepreview.ApprovalInvoicePlanner
 }
 
 func NewApproveBillingQueueItemTool(
-	billing common.BillingQueueDecider,
-	invoices common.ApprovalInvoicePlanner,
+	billing billingqueuepreview.BillingQueueDecider,
+	invoices billingqueuepreview.ApprovalInvoicePlanner,
 ) agenttoolports.AgentTool {
 	return &ApproveBillingQueueItemTool{
 		invoices: invoices,
@@ -51,9 +53,9 @@ func NewApproveBillingQueueItemTool(
 				rationale: "Approving creates the invoice a customer is billed on, so only a person " +
 					"approves; the agent proposes it with what it checked.",
 				properties: map[string]any{
-					common.ParamReviewNotes: map[string]any{
+					billingqueuepreview.ParamReviewNotes: map[string]any{
 						toolschema.KeyType:        toolschema.TypeString,
-						toolschema.KeyMaxLength:   common.MaxDecisionNoteChars,
+						toolschema.KeyMaxLength:   billingqueuepreview.MaxDecisionNoteChars,
 						toolschema.KeyDescription: "What you checked, kept on the item as its review notes.",
 					},
 				},
@@ -65,7 +67,7 @@ func NewApproveBillingQueueItemTool(
 
 func (t *ApproveBillingQueueItemTool) Policy() agenttoolports.ToolPolicy {
 	policy := t.BillingQueueDecisionTool.Policy()
-	policy.Artifact = common.InvoiceRecordEntity
+	policy.Artifact = changepreview.InvoiceRecordEntity
 
 	return policy
 }
@@ -105,7 +107,7 @@ func (t *ApproveBillingQueueItemTool) Preview(
 	}
 	draft, err := t.invoices.PreviewApprovalInvoice(ctx, draftReq)
 	if err != nil {
-		return common.WarnRefusal(plan.PlanPreview(summary+"."), err)
+		return changepreview.WarnRefusal(plan.PlanPreview(summary+"."), err)
 	}
 
 	switch {
@@ -124,7 +126,7 @@ func (t *ApproveBillingQueueItemTool) Preview(
 		)), nil
 	}
 
-	invoiceChange, err := common.DraftInvoiceChange(draft.Invoice)
+	invoiceChange, err := billingqueuepreview.DraftInvoiceChange(draft.Invoice)
 	if err != nil {
 		return nil, err
 	}
@@ -158,18 +160,18 @@ func (t *ApproveBillingQueueItemTool) ExecuteWithResult(
 	if err != nil || made == nil || made.Invoice == nil || made.Invoice.ID.IsNil() {
 		//nolint:nilerr // the approval is made; not finding its invoice only costs the pointer
 		return &agent.ToolExecutionResult{
-			Action: common.PastApproved,
+			Action: changepreview.PastApproved,
 			Kind:   "billing queue item",
 		}, nil
 	}
 
 	return &agent.ToolExecutionResult{
-		Action: common.ResultCreated,
-		Kind:   common.InvoiceRecordEntity,
+		Action: changepreview.ResultCreated,
+		Kind:   changepreview.InvoiceRecordEntity,
 		Name:   made.Invoice.Number,
-		IDs:    map[string]string{common.ParamInvoiceID: made.Invoice.ID.String()},
+		IDs:    map[string]string{toolparams.ParamInvoiceID: made.Invoice.ID.String()},
 		Record: &agent.RecordRef{
-			EntityType: common.InvoiceRecordEntity,
+			EntityType: changepreview.InvoiceRecordEntity,
 			ID:         made.Invoice.ID.String(),
 		},
 	}, nil

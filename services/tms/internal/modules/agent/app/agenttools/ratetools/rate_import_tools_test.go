@@ -5,7 +5,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -103,7 +104,7 @@ func TestRateImportTools_ApplyingASheetIsAPersonsCallAndDiscardingIsNot(t *testi
 	assert.Contains(t, preview.Summary, "close out 1 lane and add 2 lanes")
 	assert.NotContains(t, preview.Summary, "2.49", "negotiated rates are confidential")
 	assert.Nil(t, agenttoolstest.PreviewChange(t, preview, 0).Money)
-	require.ErrorIs(t, commit.Execute(t.Context(), params), common.ErrNeedsAPersonsApproval)
+	require.ErrorIs(t, commit.Execute(t.Context(), params), toolspec.ErrNeedsAPersonsApproval)
 	assert.Nil(t, imports.committed)
 
 	approved := params
@@ -189,7 +190,7 @@ func TestRunRateSimulation_ReplaysTheWholeLastDayAndChangesNothing(t *testing.T)
 	assert.Equal(t, agreementID.String(), result.IDs[paramRateAgreementID])
 	assert.Equal(
 		t,
-		simulations.created.SampleFrom+92*common.SecondsPerDay,
+		simulations.created.SampleFrom+92*toolparams.SecondsPerDay,
 		simulations.created.SampleTo,
 	)
 	assert.Equal(t, rateagreement.PartyTypeCustomer, simulations.created.PartyType)

@@ -4,7 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -12,7 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/tableconfiguration"
 )
 
-var savedViewFields = []string{common.FieldName, "resource", common.FieldVisibility}
+var savedViewFields = []string{changepreview.FieldName, "resource", changepreview.FieldVisibility}
 
 var savedViewLabels = map[string]string{"resource": "Table"}
 
@@ -35,13 +36,13 @@ func (t *SaveTableViewTool) Preview(
 	_ context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
-	if err := common.GuardPreview(t, &params); err != nil {
+	if err := toolguard.GuardPreview(t, &params); err != nil {
 		return nil, err
 	}
 
 	draft, err := t.Draft(&params)
 	if err != nil {
-		return common.WarnWouldFail(toolpreview.Build("Would save a table view."), err), nil
+		return changepreview.WarnWouldFail(toolpreview.Build("Would save a table view."), err), nil
 	}
 
 	change, err := toolpreview.Create(toolpreview.Record{
@@ -62,5 +63,5 @@ func (t *SaveTableViewTool) Preview(
 	), change)
 	preview.Partial = true
 
-	return common.WarnRefusal(preview, t.validateArgs(params.Params))
+	return changepreview.WarnRefusal(preview, t.validateArgs(params.Params))
 }

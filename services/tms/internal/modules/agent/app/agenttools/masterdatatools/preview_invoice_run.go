@@ -3,7 +3,9 @@ package masterdatatools
 import (
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/invoicepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
@@ -37,13 +39,13 @@ type proposedInvoiceView struct {
 }
 
 var runDateTypes = map[string]assistantartifact.DisplayType{
-	common.ParamPeriodStart: assistantartifact.DisplayDate,
-	common.ParamPeriodEnd:   assistantartifact.DisplayDate,
-	common.ParamInvoiceDate: assistantartifact.DisplayDate,
+	toolparams.ParamPeriodStart: assistantartifact.DisplayDate,
+	toolparams.ParamPeriodEnd:   assistantartifact.DisplayDate,
+	toolparams.ParamInvoiceDate: assistantartifact.DisplayDate,
 }
 
 var proposedInvoiceRefs = map[string]permission.Resource{
-	common.ParamCustomerID: permission.ResourceCustomer,
+	toolparams.ParamCustomerID: permission.ResourceCustomer,
 }
 
 func viewOfRun(run *invoicerun.InvoiceRun) *runView {
@@ -61,9 +63,12 @@ func viewOfRun(run *invoicerun.InvoiceRun) *runView {
 }
 
 func runTotalMoney(change *agent.RecordChange, before, after *invoicerun.InvoiceRun) {
-	line := agent.MoneyLine{Label: moneyLineRunTotal, After: common.KnownAmount(after.TotalAmount)}
+	line := agent.MoneyLine{
+		Label: moneyLineRunTotal,
+		After: changepreview.KnownAmount(after.TotalAmount),
+	}
 	if before != nil {
-		line.Before = common.KnownAmount(before.TotalAmount)
+		line.Before = changepreview.KnownAmount(before.TotalAmount)
 	}
 	toolpreview.AttachMoney(change, toolpreview.MoneyBlock(after.CurrencyCode, line),
 		toolpreview.SensitiveAs("totalAmount"))
@@ -100,7 +105,7 @@ func proposedInvoiceChange(
 	toolpreview.AttachMoney(change, toolpreview.MoneyBlock(plan.CurrencyCode, agent.MoneyLine{
 		Label:  moneyLineRunTotal,
 		Before: before,
-		After:  common.KnownAmount(plan.Total),
+		After:  changepreview.KnownAmount(plan.Total),
 	}), toolpreview.SensitiveAs("totalAmount"))
 
 	return change, nil
@@ -130,7 +135,7 @@ func RenderBuiltRun(
 	_ *invoicerunports.PreviewInvoiceRunRequest,
 	run *invoicerun.InvoiceRun,
 ) (*agent.ToolPreview, error) {
-	header, err := toolpreview.Create(common.RunRecord(run), viewOfRun(run),
+	header, err := toolpreview.Create(invoicepreview.RunRecord(run), viewOfRun(run),
 		toolpreview.Types(runDateTypes))
 	if err != nil {
 		return nil, err
@@ -154,8 +159,8 @@ func RenderBuiltRun(
 	return toolpreview.Build(fmt.Sprintf(
 		"Would build an invoice run proposing %s for %s, %s in all; nothing is invoiced until "+
 			"it is committed.",
-		common.CountOf(run.GroupCount, "invoice"),
-		common.CountOf(run.ItemCount, "shipment"),
+		changepreview.CountOf(run.GroupCount, "invoice"),
+		changepreview.CountOf(run.ItemCount, "shipment"),
 		run.TotalAmount.StringFixed(2),
 	), changes...), nil
 }
@@ -164,8 +169,12 @@ func RenderMembership(
 	_ *invoicerunports.AdjustInvoiceRunMembershipRequest,
 	plan *invoicerunports.InvoiceRunChangePreview,
 ) (*agent.ToolPreview, error) {
-	header, err := toolpreview.Changed(common.RunRecord(plan.Before), viewOfRun(plan.Before),
-		viewOfRun(plan.After), toolpreview.Types(runDateTypes))
+	header, err := toolpreview.Changed(
+		invoicepreview.RunRecord(plan.Before),
+		viewOfRun(plan.Before),
+		viewOfRun(plan.After),
+		toolpreview.Types(runDateTypes),
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -182,7 +191,7 @@ func RenderMembership(
 		}
 		previous := decimal.NullDecimal{}
 		if idx < len(before) {
-			previous = common.KnownAmount(before[idx].Total)
+			previous = changepreview.KnownAmount(before[idx].Total)
 		}
 		change, changeErr := proposedInvoiceChange(after, agent.PreviewOperationUpdate, previous)
 		if changeErr != nil {
@@ -193,11 +202,11 @@ func RenderMembership(
 
 	return toolpreview.Build(fmt.Sprintf(
 		"Would change %s from %s to %s: %s billed, %s held back.",
-		common.RunLabel(plan.Before),
+		invoicepreview.RunLabel(plan.Before),
 		plan.Before.TotalAmount.StringFixed(2),
 		plan.After.TotalAmount.StringFixed(2),
-		common.CountOf(plan.After.ItemCount, "shipment"),
-		common.CountOf(plan.After.ExcludedCount, "shipment"),
+		changepreview.CountOf(plan.After.ItemCount, "shipment"),
+		changepreview.CountOf(plan.After.ExcludedCount, "shipment"),
 	), changes...), nil
 }
 
@@ -246,14 +255,14 @@ func RenderCommit(
 ) (*agent.ToolPreview, error) {
 	if plan.AlreadyCommitted {
 		return toolpreview.Build(
-			common.RunLabel(plan.Run) + " is already committed; committing it " +
+			invoicepreview.RunLabel(plan.Run) + " is already committed; committing it " +
 				"again changes nothing.",
 		), nil
 	}
 
 	after := *plan.Run
 	after.Status = invoicerun.StatusCommitted
-	header, err := toolpreview.Changed(common.RunRecord(plan.Run), viewOfRun(plan.Run),
+	header, err := toolpreview.Changed(invoicepreview.RunRecord(plan.Run), viewOfRun(plan.Run),
 		viewOfRun(&after), toolpreview.Types(runDateTypes))
 	if err != nil {
 		return nil, err
@@ -264,10 +273,16 @@ func RenderCommit(
 	}
 
 	billed, total, notes := outcomeSummary(plan.Groups)
-	summary := fmt.Sprintf("Would commit %s, making %s for %s as drafts.",
-		common.RunLabel(plan.Run), common.CountOf(billed, "invoice"), total.StringFixed(2))
+	summary := fmt.Sprintf(
+		"Would commit %s, making %s for %s as drafts.",
+		invoicepreview.RunLabel(
+			plan.Run,
+		),
+		changepreview.CountOf(billed, "invoice"),
+		total.StringFixed(2),
+	)
 
-	return toolpreview.Build(common.WithNotes(summary, notes),
+	return toolpreview.Build(changepreview.WithNotes(summary, notes),
 		append([]*agent.RecordChange{header}, groups...)...), nil
 }
 
@@ -275,7 +290,7 @@ func RenderStatementBill(
 	req *invoicerunports.BillStatementNowRequest,
 	plan *invoicerunports.StatementBillPlan,
 ) (*agent.ToolPreview, error) {
-	header, err := toolpreview.Create(common.RunRecord(plan.Run), viewOfRun(plan.Run),
+	header, err := toolpreview.Create(invoicepreview.RunRecord(plan.Run), viewOfRun(plan.Run),
 		toolpreview.Types(runDateTypes))
 	if err != nil {
 		return nil, err
@@ -288,13 +303,13 @@ func RenderStatementBill(
 	billed, total, notes := outcomeSummary(plan.Groups)
 	summary := fmt.Sprintf("Would bill %s's open statement now, off cycle, making %s for %s "+
 		"as drafts; %s stay on the statement.",
-		plan.Statement.CustomerName, common.CountOf(billed, "invoice"), total.StringFixed(2),
-		common.CountOf(len(req.Exclude)-len(plan.UnmatchedExclusions), "held-back shipment"))
+		plan.Statement.CustomerName, changepreview.CountOf(billed, "invoice"), total.StringFixed(2),
+		changepreview.CountOf(len(req.Exclude)-len(plan.UnmatchedExclusions), "held-back shipment"))
 	if len(plan.UnmatchedExclusions) > 0 {
 		notes = append(notes, fmt.Sprintf("%s to hold back are no longer on the statement",
-			common.CountOf(len(plan.UnmatchedExclusions), "shipment")))
+			changepreview.CountOf(len(plan.UnmatchedExclusions), "shipment")))
 	}
 
-	return toolpreview.Build(common.WithNotes(summary, notes),
+	return toolpreview.Build(changepreview.WithNotes(summary, notes),
 		append([]*agent.RecordChange{header}, groups...)...), nil
 }

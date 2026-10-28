@@ -6,8 +6,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/billingtools"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/masterdatatools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -54,7 +54,7 @@ func TestGuardExecute_AgentCannotApprove(t *testing.T) {
 	orgID := pulid.MustNew("org_")
 	buID := pulid.MustNew("bu_")
 
-	err := common.GuardExecute(approveOnlyTool{}, agenttoolports.ToolExecuteParams{
+	err := toolguard.GuardExecute(approveOnlyTool{}, agenttoolports.ToolExecuteParams{
 		OrganizationID: orgID,
 		BusinessUnitID: buID,
 		Actor: &permissionports.RequestActor{
@@ -65,7 +65,7 @@ func TestGuardExecute_AgentCannotApprove(t *testing.T) {
 		},
 	})
 
-	require.ErrorIs(t, err, common.ErrAgentCannotApprove)
+	require.ErrorIs(t, err, toolguard.ErrAgentCannotApprove)
 }
 
 func TestExecute_TenantMismatch_DoesNotCallPort(t *testing.T) {
@@ -88,7 +88,7 @@ func TestExecute_TenantMismatch_DoesNotCallPort(t *testing.T) {
 		Params: map[string]any{"billingQueueItemId": pulid.MustNew("bqi_").String()},
 	})
 
-	require.ErrorIs(t, err, common.ErrTenantMismatch)
+	require.ErrorIs(t, err, toolguard.ErrTenantMismatch)
 }
 
 type fakeExceptionService struct {
@@ -165,7 +165,7 @@ func TestAssignMove_TenantMismatch_DoesNotCallPort(t *testing.T) {
 		},
 	})
 
-	require.ErrorIs(t, err, common.ErrTenantMismatch)
+	require.ErrorIs(t, err, toolguard.ErrTenantMismatch)
 }
 
 // The run an exception belongs to is the one executing the tool, never one

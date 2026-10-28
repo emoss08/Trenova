@@ -532,7 +532,7 @@ findings:
       TestEveryToolSchemaCompiles (agentevalgate) compiles every query and action tool's schema,
       so a schema the validator cannot read fails CI instead of every call. To verify in a run.
     files:
-      - services/tms/internal/modules/agent/app/agenttools/common/receivable_tool.go
+      - services/tms/internal/modules/agent/app/agenttools/toolspec/receivable_tool.go
       - services/tms/pkg/toolschema/validate.go
       - services/tms/internal/modules/agent/app/agentevalgate/catalog_schema_test.go
     fixedIn: .deskbench/runs/20261009-175153-run

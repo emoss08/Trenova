@@ -8,7 +8,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingmappingports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -112,7 +114,7 @@ func mappingProposalsProperty() map[string]any {
 				ParamMappingID: agenttoolschema.KindID("The mapping's id, from "+
 					"accounting_list_mapping_gaps or accounting_get_mapping.",
 					permission.KindAccountingMapping),
-				ParamExternalID: common.StringProperty("The proposed record's externalId, as "+
+				ParamExternalID: toolparams.StringProperty("The proposed record's externalId, as "+
 					"accounting_list_mapping_gaps shows it under mappedTo.", 0),
 			},
 			toolschema.KeyRequired:             []string{ParamMappingID, ParamExternalID},
@@ -145,7 +147,7 @@ func confirmMappingsRequest(
 		if !isObject {
 			return nil, fmt.Errorf("%s[%d] must be an object", ParamMappingProposals, idx)
 		}
-		id, err := common.RequirePulid(fields, ParamMappingID)
+		id, err := toolparams.RequirePulid(fields, ParamMappingID)
 		if err != nil {
 			return nil, fmt.Errorf("%s[%d]: %w", ParamMappingProposals, idx, err)
 		}
@@ -153,7 +155,7 @@ func confirmMappingsRequest(
 			return nil, fmt.Errorf("%s[%d] repeats mapping %s", ParamMappingProposals, idx, id)
 		}
 		seen[id] = struct{}{}
-		externalID, err := common.RequireString(fields, ParamExternalID)
+		externalID, err := toolparams.RequireString(fields, ParamExternalID)
 		if err != nil {
 			return nil, fmt.Errorf("%s[%d]: %w", ParamMappingProposals, idx, err)
 		}
@@ -164,14 +166,14 @@ func confirmMappingsRequest(
 	}
 
 	return &accountingmappingports.ConfirmAccountingMappingsRequest{
-		TenantInfo: common.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(*params),
 		UserID:     params.Actor.UserID,
 		Items:      items,
 		Source:     accountingsync.MappingSourceAgent,
 	}, nil
 }
 
-func mappingReviewSpec(spec *common.ReceivableSpec) *common.ReceivableSpec {
+func mappingReviewSpec(spec *toolspec.ReceivableSpec) *toolspec.ReceivableSpec {
 	spec.Resource = permission.ResourceAccountingIntegration
 	spec.Operation = permission.OpUpdate
 	spec.Egress = agent.EgressInternal
@@ -185,7 +187,7 @@ func mappingReviewSpec(spec *common.ReceivableSpec) *common.ReceivableSpec {
 func NewConfirmAccountingMappingProposalsTool(
 	mappings accountingMappingReviewer,
 ) agenttoolports.AgentTool {
-	return common.NewReceivableTool(mappingReviewSpec(&common.ReceivableSpec{
+	return toolspec.NewReceivableTool(mappingReviewSpec(&toolspec.ReceivableSpec{
 		Name:   "accounting_confirm_mapping",
 		Recipe: []string{toolAccountingListMappingGaps, "accounting_confirm_mapping"},
 		Description: "Confirm Trenova's proposed accounting system matches exactly as " +
@@ -196,7 +198,7 @@ func NewConfirmAccountingMappingProposalsTool(
 			"books, so a person approves it; clearing or changing a mapping undoes it.",
 		Properties: map[string]any{ParamMappingProposals: mappingProposalsProperty()},
 		Required:   []string{ParamMappingProposals},
-	}), common.ReceivablePlan[*accountingmappingports.ConfirmAccountingMappingsRequest, *accountingmappingports.AccountingMappingConfirmPlan]{
+	}), toolspec.ReceivablePlan[*accountingmappingports.ConfirmAccountingMappingsRequest, *accountingmappingports.AccountingMappingConfirmPlan]{
 		Request: confirmMappingsRequest,
 		Plan: func(
 			ctx context.Context,
@@ -207,7 +209,7 @@ func NewConfirmAccountingMappingProposalsTool(
 		},
 		Refused: func(req *accountingmappingports.ConfirmAccountingMappingsRequest) string {
 			return fmt.Sprintf("Would confirm %s.",
-				common.CountOf(len(req.Items), "proposed accounting mapping"))
+				changepreview.CountOf(len(req.Items), "proposed accounting mapping"))
 		},
 		Render: renderMappingConfirmations,
 		Run: func(
@@ -225,7 +227,7 @@ func NewConfirmAccountingMappingProposalsTool(
 func NewRejectAccountingMappingProposalTool(
 	mappings accountingMappingReviewer,
 ) agenttoolports.AgentTool {
-	return common.NewReceivableTool(mappingReviewSpec(&common.ReceivableSpec{
+	return toolspec.NewReceivableTool(mappingReviewSpec(&toolspec.ReceivableSpec{
 		Name: "accounting_reject_mapping",
 		Description: "Turn down the wrong record Trenova proposed for an accounting mapping, " +
 			"leaving it unmatched. That record is never proposed for it again. Use " +
@@ -238,17 +240,17 @@ func NewRejectAccountingMappingProposalTool(
 				permission.KindAccountingMapping),
 		},
 		Required: []string{ParamMappingID},
-	}), common.ReceivablePlan[*accountingmappingports.AccountingMappingActionRequest, *accountingmappingports.AccountingMappingChange]{
+	}), toolspec.ReceivablePlan[*accountingmappingports.AccountingMappingActionRequest, *accountingmappingports.AccountingMappingChange]{
 		Request: func(
 			params *agenttoolports.ToolExecuteParams,
 		) (*accountingmappingports.AccountingMappingActionRequest, error) {
-			id, err := common.RequirePulid(params.Params, ParamMappingID)
+			id, err := toolparams.RequirePulid(params.Params, ParamMappingID)
 			if err != nil {
 				return nil, err
 			}
 
 			return &accountingmappingports.AccountingMappingActionRequest{
-				TenantInfo: common.TenantFrom(*params),
+				TenantInfo: toolparams.TenantFrom(*params),
 				UserID:     params.Actor.UserID,
 				ID:         id,
 				Source:     accountingsync.MappingSourceAgent,
@@ -284,13 +286,13 @@ func releaseRequest(
 	if err != nil {
 		return nil, err
 	}
-	ids, err := common.RequirePulidSlice(params.Params, ParamSyncRecordIDs, maxSyncReleaseIDs)
+	ids, err := toolparams.RequirePulidSlice(params.Params, ParamSyncRecordIDs, maxSyncReleaseIDs)
 	if err != nil {
 		return nil, err
 	}
 
 	return &accountingsyncports.ReleaseAccountingSyncRequest{
-		TenantInfo:      common.TenantFrom(*params),
+		TenantInfo:      toolparams.TenantFrom(*params),
 		UserID:          params.Actor.UserID,
 		IntegrationType: system,
 		IDs:             sliceutils.Dedupe(ids),
@@ -327,7 +329,7 @@ func planRelease(
 }
 
 func NewReleaseAccountingSyncTool(sync accountingSyncReleaser) agenttoolports.AgentTool {
-	return common.NewReceivableTool(&common.ReceivableSpec{
+	return toolspec.NewReceivableTool(&toolspec.ReceivableSpec{
 		Name: "accounting_release_sync_record",
 		Recipe: []string{
 			"accounting_list_sync_records",
@@ -358,7 +360,7 @@ func NewReleaseAccountingSyncTool(sync accountingSyncReleaser) agenttoolports.Ag
 			),
 		},
 		Required: []string{ParamAccountingSystem, ParamSyncRecordIDs},
-	}, common.ReceivablePlan[*accountingsyncports.ReleaseAccountingSyncRequest, *releasePlan]{
+	}, toolspec.ReceivablePlan[*accountingsyncports.ReleaseAccountingSyncRequest, *releasePlan]{
 		Request: releaseRequest,
 		Plan: func(
 			ctx context.Context,
@@ -369,7 +371,7 @@ func NewReleaseAccountingSyncTool(sync accountingSyncReleaser) agenttoolports.Ag
 		},
 		Refused: func(req *accountingsyncports.ReleaseAccountingSyncRequest) string {
 			return fmt.Sprintf("Would release %s to the accounting system.",
-				common.CountOf(len(req.IDs), "held document"))
+				changepreview.CountOf(len(req.IDs), "held document"))
 		},
 		Render: renderRelease,
 		Run: func(
@@ -393,13 +395,17 @@ func backfillChangeRequest(
 	if _, err := accountingSystemFrom(params.Params); err != nil {
 		return nil, err
 	}
-	action, err := common.RequireEnum(params.Params, ParamBackfillAction, backfillActions.Values)
+	action, err := toolparams.RequireEnum(
+		params.Params,
+		ParamBackfillAction,
+		backfillActions.Values,
+	)
 	if err != nil {
 		return nil, err
 	}
 
 	return &accountingsyncports.ChangeAccountingBackfillRequest{
-		TenantInfo: common.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(*params),
 		UserID:     params.Actor.UserID,
 		Action:     action,
 	}, nil
@@ -460,7 +466,7 @@ func planBackfillChange(
 }
 
 func NewChangeAccountingBackfillTool(sync accountingBackfillChanger) agenttoolports.AgentTool {
-	return common.NewReceivableTool(&common.ReceivableSpec{
+	return toolspec.NewReceivableTool(&toolspec.ReceivableSpec{
 		Name: "accounting_update_backfill",
 		Description: "Pause, resume or cancel the accounting backfill in progress when a " +
 			"person asks, such as pausing it while the books are closed. Documents already " +
@@ -480,7 +486,7 @@ func NewChangeAccountingBackfillTool(sync accountingBackfillChanger) agenttoolpo
 				"carries on from where it stopped, Cancel ends it for good.", backfillActions),
 		},
 		Required: []string{ParamAccountingSystem, ParamBackfillAction},
-	}, common.ReceivablePlan[*accountingsyncports.ChangeAccountingBackfillRequest, *backfillChange]{
+	}, toolspec.ReceivablePlan[*accountingsyncports.ChangeAccountingBackfillRequest, *backfillChange]{
 		Request: backfillChangeRequest,
 		Plan: func(
 			ctx context.Context,
@@ -530,10 +536,10 @@ func renderMappingConfirmations(
 
 	summary := fmt.Sprintf(
 		"Would confirm %s as proposed, so sync sends documents with them.",
-		common.CountOf(len(plan.Changes), "accounting mapping"),
+		changepreview.CountOf(len(plan.Changes), "accounting mapping"),
 	)
 	if already := len(req.Items) - len(plan.Changes); already > 0 {
-		summary += fmt.Sprintf(" %s already confirmed.", common.CountOf(already, "was"))
+		summary += fmt.Sprintf(" %s already confirmed.", changepreview.CountOf(already, "was"))
 	}
 
 	return toolpreview.Build(summary, changes...), nil
@@ -586,7 +592,7 @@ func renderRelease(
 	return toolpreview.Build(fmt.Sprintf(
 		"Would release %s held for approval to %s, which sends them to the books; what is "+
 			"sent cannot be called back.",
-		common.CountOf(len(plan.records), "document"),
+		changepreview.CountOf(len(plan.records), "document"),
 		plan.provider,
 	), changes...), nil
 }

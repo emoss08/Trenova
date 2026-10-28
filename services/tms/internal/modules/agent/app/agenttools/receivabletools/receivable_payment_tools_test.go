@@ -6,7 +6,9 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/invoicepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
@@ -171,10 +173,10 @@ func applyChangePlan() *customerpaymentports.CustomerPaymentChangePreview {
 
 func applyPaymentParams(paymentID, invoiceID pulid.ID) agenttoolports.ToolExecuteParams {
 	return agenttoolstest.ExecuteParams(map[string]any{
-		ParamCustomerPaymentID:     paymentID.String(),
-		common.ParamAccountingDate: "2026-09-20",
-		common.ParamApplications: []any{
-			map[string]any{common.ParamInvoiceID: invoiceID.String(), "amount": "50.00"},
+		ParamCustomerPaymentID:         paymentID.String(),
+		toolparams.ParamAccountingDate: "2026-09-20",
+		invoicepreview.ParamApplications: []any{
+			map[string]any{toolparams.ParamInvoiceID: invoiceID.String(), "amount": "50.00"},
 		},
 	})
 }
@@ -220,7 +222,7 @@ func TestApplyCustomerPayment_OnlyAPersonApplies(t *testing.T) {
 		receivables.change.InvoicesBefore[0].ID,
 	)
 
-	require.ErrorIs(t, tool.Execute(t.Context(), params), common.ErrNeedsAPersonsApproval)
+	require.ErrorIs(t, tool.Execute(t.Context(), params), toolspec.ErrNeedsAPersonsApproval)
 	assert.Nil(t, receivables.applied)
 
 	params.ProposalID = pulid.MustNew("ap_")
@@ -249,19 +251,19 @@ func TestApplyCustomerPayment_RefusesBadApplications(t *testing.T) {
 	invoiceID := pulid.MustNew("inv_").String()
 	cases := map[string]map[string]any{
 		"no applications": {
-			ParamCustomerPaymentID: paymentID, common.ParamAccountingDate: "2026-09-20",
+			ParamCustomerPaymentID: paymentID, toolparams.ParamAccountingDate: "2026-09-20",
 		},
 		"a repeated invoice": {
-			ParamCustomerPaymentID: paymentID, common.ParamAccountingDate: "2026-09-20",
-			common.ParamApplications: []any{
-				map[string]any{common.ParamInvoiceID: invoiceID, "amount": "10"},
-				map[string]any{common.ParamInvoiceID: invoiceID, "amount": "10"},
+			ParamCustomerPaymentID: paymentID, toolparams.ParamAccountingDate: "2026-09-20",
+			invoicepreview.ParamApplications: []any{
+				map[string]any{toolparams.ParamInvoiceID: invoiceID, "amount": "10"},
+				map[string]any{toolparams.ParamInvoiceID: invoiceID, "amount": "10"},
 			},
 		},
 		"a bad date": {
-			ParamCustomerPaymentID: paymentID, common.ParamAccountingDate: "20 Sept",
-			common.ParamApplications: []any{
-				map[string]any{common.ParamInvoiceID: invoiceID, "amount": "10"},
+			ParamCustomerPaymentID: paymentID, toolparams.ParamAccountingDate: "20 Sept",
+			invoicepreview.ParamApplications: []any{
+				map[string]any{toolparams.ParamInvoiceID: invoiceID, "amount": "10"},
 			},
 		},
 	}
@@ -319,9 +321,9 @@ func TestReverseCustomerPayment_PreviewAndPersonOnly(t *testing.T) {
 	}
 	tool := NewReverseCustomerPaymentTool(receivables)
 	params := agenttoolstest.ExecuteParams(map[string]any{
-		ParamCustomerPaymentID:     receivables.change.PaymentBefore.ID.String(),
-		common.ParamAccountingDate: "2026-09-21",
-		common.ParamReason:         "Chargeback",
+		ParamCustomerPaymentID:         receivables.change.PaymentBefore.ID.String(),
+		toolparams.ParamAccountingDate: "2026-09-21",
+		toolparams.ParamReason:         "Chargeback",
 	})
 
 	preview := agenttoolstest.PreviewWithoutWrites(
@@ -338,7 +340,7 @@ func TestReverseCustomerPayment_PreviewAndPersonOnly(t *testing.T) {
 		agenttoolstest.FieldByPath(t, agenttoolstest.PreviewChange(t, preview, 0), "status").After,
 	)
 
-	require.ErrorIs(t, tool.Execute(t.Context(), params), common.ErrNeedsAPersonsApproval)
+	require.ErrorIs(t, tool.Execute(t.Context(), params), toolspec.ErrNeedsAPersonsApproval)
 	params.ProposalID = pulid.MustNew("ap_")
 	require.NoError(t, tool.Execute(t.Context(), params))
 	require.NotNil(t, receivables.reversed)
@@ -380,11 +382,11 @@ func TestApplyCreditMemo_PreviewAndPersonOnly(t *testing.T) {
 	}
 	tool := NewApplyCreditMemoTool(receivables)
 	params := agenttoolstest.ExecuteParams(map[string]any{
-		paramCreditMemoID:          receivables.credit.CreditMemoBefore.ID.String(),
-		common.ParamAccountingDate: "2026-09-21",
-		common.ParamApplications: []any{map[string]any{
-			common.ParamInvoiceID: receivables.credit.InvoicesBefore[0].ID.String(),
-			"amount":              "30.00",
+		paramCreditMemoID:              receivables.credit.CreditMemoBefore.ID.String(),
+		toolparams.ParamAccountingDate: "2026-09-21",
+		invoicepreview.ParamApplications: []any{map[string]any{
+			toolparams.ParamInvoiceID: receivables.credit.InvoicesBefore[0].ID.String(),
+			"amount":                  "30.00",
 		}},
 	})
 
@@ -412,7 +414,7 @@ func TestApplyCreditMemo_PreviewAndPersonOnly(t *testing.T) {
 		agenttoolstest.PreviewChange(t, preview, 2).Operation,
 	)
 
-	require.ErrorIs(t, tool.Execute(t.Context(), params), common.ErrNeedsAPersonsApproval)
+	require.ErrorIs(t, tool.Execute(t.Context(), params), toolspec.ErrNeedsAPersonsApproval)
 	params.ProposalID = pulid.MustNew("ap_")
 	require.NoError(t, tool.Execute(t.Context(), params))
 	require.NotNil(t, receivables.creditApply)
@@ -443,7 +445,7 @@ func TestUnapplyCreditMemo_PreviewAndPersonOnly(t *testing.T) {
 	tool := NewUnapplyCreditMemoTool(receivables)
 	params := agenttoolstest.ExecuteParams(map[string]any{
 		ParamCreditMemoApplicationID: applied.ID.String(),
-		common.ParamReason:           "Wrong invoice",
+		toolparams.ParamReason:       "Wrong invoice",
 	})
 
 	preview := agenttoolstest.PreviewWithoutWrites(
@@ -457,7 +459,7 @@ func TestUnapplyCreditMemo_PreviewAndPersonOnly(t *testing.T) {
 	application := agenttoolstest.PreviewChange(t, preview, 2)
 	assert.Equal(t, "Unapplied", agenttoolstest.FieldByPath(t, application, "status").After)
 
-	require.ErrorIs(t, tool.Execute(t.Context(), params), common.ErrNeedsAPersonsApproval)
+	require.ErrorIs(t, tool.Execute(t.Context(), params), toolspec.ErrNeedsAPersonsApproval)
 	params.ProposalID = pulid.MustNew("ap_")
 	require.NoError(t, tool.Execute(t.Context(), params))
 	require.NotNil(t, receivables.unapplied)

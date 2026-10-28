@@ -6,8 +6,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/edispec"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediconnectiondraftports"
@@ -114,7 +115,7 @@ func (t *ApplyConnectionDraftTool) input(
 	ctx context.Context,
 	params *agenttoolports.ToolExecuteParams,
 ) (*edispec.Input, error) {
-	input, err := edispec.Parse(params.Params, common.TenantFrom(*params))
+	input, err := edispec.Parse(params.Params, toolparams.TenantFrom(*params))
 	if err != nil {
 		return nil, err
 	}
@@ -122,7 +123,7 @@ func (t *ApplyConnectionDraftTool) input(
 		return nil, fmt.Errorf("parameter %q is required", edispec.ParamDocumentDigest)
 	}
 	document, err := t.documents.Read(ctx, &edispec.ReadRequest{
-		Tenant:     common.TenantFrom(*params),
+		Tenant:     toolparams.TenantFrom(*params),
 		DocumentID: input.DocumentID,
 		ThreadID:   params.ThreadID,
 	})
@@ -169,7 +170,7 @@ func (t *ApplyConnectionDraftTool) Validate(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
 ) error {
-	if err := common.GuardPreview(t, &params); err != nil {
+	if err := toolguard.GuardPreview(t, &params); err != nil {
 		return err
 	}
 	input, plan, err := t.plan(ctx, &params)
@@ -191,7 +192,7 @@ func (t *ApplyConnectionDraftTool) ExecuteWithResult(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
 ) (*agent.ToolExecutionResult, error) {
-	if err := common.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return nil, err
 	}
 	if !params.ApprovedFromProposal() {

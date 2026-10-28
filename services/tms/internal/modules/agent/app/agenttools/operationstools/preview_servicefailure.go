@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -50,7 +50,7 @@ func (t *ResolveServiceFailureTool) Preview(
 			Resource: permission.ResourceServiceFailure,
 			ID:       existing.ID,
 			Label:    "Service failure " + existing.Number,
-			Version:  common.PinnedVersion(existing.Version),
+			Version:  changepreview.PinnedVersion(existing.Version),
 		},
 		resolved.Before,
 		resolved.After,

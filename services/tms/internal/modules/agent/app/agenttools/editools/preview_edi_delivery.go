@@ -6,7 +6,8 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -27,9 +28,9 @@ type ediRecordView struct {
 }
 
 var ediRecordLabels = map[string]string{
-	"deliveryStatus":   "Delivery",
-	common.FieldStatus: "File status",
-	"outcome":          "What happens",
+	"deliveryStatus":          "Delivery",
+	changepreview.FieldStatus: "File status",
+	"outcome":                 "What happens",
 }
 
 type plannedEDIRecord struct {
@@ -96,7 +97,7 @@ func deliveryChange(plan *ediservice.DeliveryPlan) (*agent.RecordChange, error) 
 		Resource: permission.ResourceEDI,
 		ID:       message.ID,
 		Label:    messageLabel(message),
-		Version:  common.PinnedVersion(message.Version),
+		Version:  changepreview.PinnedVersion(message.Version),
 	}, &ediRecordView{DeliveryStatus: string(message.DeliveryStatus)}, &ediRecordView{
 		DeliveryStatus: string(edi.MessageDeliveryStatusQueued),
 		Outcome:        "Sent again " + route,
@@ -158,11 +159,11 @@ func (t *RetryEDIMessageDeliveryTool) Preview(
 			ctx,
 			&ediservice.RetryMessageDeliveryRequest{
 				MessageID:  id,
-				TenantInfo: common.TenantFrom(params),
+				TenantInfo: toolparams.TenantFrom(params),
 			},
 		)
 		if planErr != nil {
-			if !common.IsRefusal(planErr) && !errortypes.IsNotFoundError(planErr) {
+			if !changepreview.IsRefusal(planErr) && !errortypes.IsNotFoundError(planErr) {
 				return nil, planErr
 			}
 			change, cErr := refusedRecord(id, "EDI message "+id.String(), &ediRecordView{}, planErr)
@@ -201,8 +202,8 @@ func (t *ReplayEDIMessageTool) Preview(
 	summary := "Would send this EDI document to its trading partner again."
 	plan, err := t.deliveries.PlanReplayMessageDelivery(ctx, req)
 	if err != nil {
-		if common.IsRefusal(err) || errortypes.IsNotFoundError(err) {
-			return common.WarnWouldFail(toolpreview.Build(summary), err), nil
+		if changepreview.IsRefusal(err) || errortypes.IsNotFoundError(err) {
+			return changepreview.WarnWouldFail(toolpreview.Build(summary), err), nil
 		}
 
 		return nil, err
@@ -258,7 +259,7 @@ func (t *ReprocessEDIInboundFilesTool) planFile(
 ) (plannedEDIRecord, error) {
 	file, err := t.files.GetInboundFile(ctx, edimessageports.GetEDIInboundFileByIDRequest{
 		ID:         id,
-		TenantInfo: common.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(*params),
 	})
 	if err != nil {
 		if !errortypes.IsNotFoundError(err) {
@@ -288,7 +289,7 @@ func (t *ReprocessEDIInboundFilesTool) planFile(
 		Resource: permission.ResourceEDI,
 		ID:       file.ID,
 		Label:    label,
-		Version:  common.PinnedVersion(file.Version),
+		Version:  changepreview.PinnedVersion(file.Version),
 	}, before, &ediRecordView{Status: string(file.Status), Outcome: outcome},
 		toolpreview.Labels(ediRecordLabels))
 

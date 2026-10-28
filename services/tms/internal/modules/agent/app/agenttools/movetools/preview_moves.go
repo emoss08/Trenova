@@ -4,7 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/shipmentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -19,7 +21,7 @@ var stopActualLabels = map[string]string{
 	"stopStatus": "Stop status",
 }
 
-var stopActualTimes = []string{common.FieldActualArrival, "actualDeparture"}
+var stopActualTimes = []string{changepreview.FieldActualArrival, "actualDeparture"}
 
 type stopActualView struct {
 	MoveStatus      string `json:"moveStatus"`
@@ -30,7 +32,7 @@ type stopActualView struct {
 
 func stopActualViewOf(move *shipment.ShipmentMove, stopID pulid.ID) *stopActualView {
 	view := &stopActualView{MoveStatus: string(move.Status)}
-	if stop := common.FindStop(move, stopID); stop != nil {
+	if stop := shipmentpreview.FindStop(move, stopID); stop != nil {
 		view.StopStatus = string(stop.Status)
 		view.ActualArrival = stop.ActualArrival
 		view.ActualDeparture = stop.ActualDeparture
@@ -52,7 +54,7 @@ func (t *RecordStopActualTool) Preview(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
-	if err := common.GuardPreview(t, &params); err != nil {
+	if err := toolguard.GuardPreview(t, &params); err != nil {
 		return nil, err
 	}
 
@@ -72,19 +74,19 @@ func (t *RecordStopActualTool) Preview(
 
 	plan, err := t.moves.PreviewStopActual(ctx, request)
 	if err != nil {
-		if common.IsRefusal(err) {
-			return common.WarnWouldFail(toolpreview.Build(summary+"."), err), nil
+		if changepreview.IsRefusal(err) {
+			return changepreview.WarnWouldFail(toolpreview.Build(summary+"."), err), nil
 		}
 
 		return nil, err
 	}
 
-	stop := common.FindStop(plan.Before, request.StopID)
+	stop := shipmentpreview.FindStop(plan.Before, request.StopID)
 	change, err := toolpreview.Changed(toolpreview.Record{
 		Resource: permission.ResourceShipmentMove,
 		ID:       plan.Before.ID,
-		Label:    common.StopLabel(stop),
-		Version:  common.PreviewVersion(plan.Before.Version),
+		Label:    shipmentpreview.StopLabel(stop),
+		Version:  changepreview.PreviewVersion(plan.Before.Version),
 	}, stopActualViewOf(plan.Before, request.StopID), stopActualViewOf(plan.After, request.StopID),
 		stopActualOptions(request)...,
 	)
@@ -92,7 +94,7 @@ func (t *RecordStopActualTool) Preview(
 		return nil, err
 	}
 
-	summary = fmt.Sprintf("Would record the %s %s", verb, common.StopLabel(stop))
+	summary = fmt.Sprintf("Would record the %s %s", verb, shipmentpreview.StopLabel(stop))
 	if request.OccurredAt == nil {
 		summary += " as happening now"
 	}

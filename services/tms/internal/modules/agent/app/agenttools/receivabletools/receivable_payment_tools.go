@@ -5,8 +5,11 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/invoicepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/invoicetools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -72,7 +75,7 @@ type receivablesKeeper interface {
 }
 
 func targetCustomerPayment(params map[string]any) (agenttoolports.ToolTarget, bool) {
-	return common.TargetOf(params, ParamCustomerPaymentID, permission.ResourceCustomerPayment)
+	return toolparams.TargetOf(params, ParamCustomerPaymentID, permission.ResourceCustomerPayment)
 }
 
 func accountingDateProperty() map[string]any {
@@ -87,16 +90,16 @@ func customerPaymentIDProperty() map[string]any {
 
 func applicationsProperty(description string, withShortPay bool) map[string]any {
 	properties := map[string]any{
-		common.ParamInvoiceID: agenttoolschema.RecordIDText(permission.ResourceInvoice,
+		toolparams.ParamInvoiceID: agenttoolschema.RecordIDText(permission.ResourceInvoice,
 			"An open posted invoice or debit memo of the same customer, from invoice_list "+
 				"or receivable_list_open_items."),
-		common.ParamAmount: common.StringProperty(
+		toolparams.ParamAmount: toolparams.StringProperty(
 			"Applied to this invoice, as a decimal such as 250.00.",
 			0,
 		),
 	}
 	if withShortPay {
-		properties[common.ParamShortPayAmount] = common.StringProperty(
+		properties[invoicepreview.ParamShortPayAmount] = toolparams.StringProperty(
 			"Written off on this invoice as a short pay, if the customer will not pay it.", 0)
 	}
 
@@ -104,17 +107,20 @@ func applicationsProperty(description string, withShortPay bool) map[string]any 
 		toolschema.KeyType:        toolschema.TypeArray,
 		toolschema.KeyDescription: description,
 		toolschema.KeyMinItems:    1,
-		toolschema.KeyMaxItems:    common.MaxPaymentApplications,
+		toolschema.KeyMaxItems:    invoicepreview.MaxPaymentApplications,
 		toolschema.KeyItems: map[string]any{
-			toolschema.KeyType:                 toolschema.TypeObject,
-			toolschema.KeyProperties:           properties,
-			toolschema.KeyRequired:             []string{common.ParamInvoiceID, common.ParamAmount},
+			toolschema.KeyType:       toolschema.TypeObject,
+			toolschema.KeyProperties: properties,
+			toolschema.KeyRequired: []string{
+				toolparams.ParamInvoiceID,
+				toolparams.ParamAmount,
+			},
 			toolschema.KeyAdditionalProperties: false,
 		},
 	}
 }
 
-func receivableMoneySpec(spec *common.ReceivableSpec) *common.ReceivableSpec {
+func receivableMoneySpec(spec *toolspec.ReceivableSpec) *toolspec.ReceivableSpec {
 	spec.Egress = agent.EgressMoney
 	spec.DefaultTier = agent.TierPropose
 	spec.MaxTier = agent.TierPropose
@@ -124,7 +130,7 @@ func receivableMoneySpec(spec *common.ReceivableSpec) *common.ReceivableSpec {
 }
 
 func NewApplyCustomerPaymentTool(payments receivablesKeeper) agenttoolports.AgentTool {
-	return common.NewReceivableTool(receivableMoneySpec(&common.ReceivableSpec{
+	return toolspec.NewReceivableTool(receivableMoneySpec(&toolspec.ReceivableSpec{
 		Name: "receivable_apply_customer_payment",
 		Recipe: []string{
 			"receivable_list_customer_payments",
@@ -142,18 +148,18 @@ func NewApplyCustomerPaymentTool(payments receivablesKeeper) agenttoolports.Agen
 		Rationale: "Moves a customer's cash onto their invoices and books the entry that says " +
 			"so; only a person applies cash.",
 		Properties: map[string]any{
-			ParamCustomerPaymentID:     customerPaymentIDProperty(),
-			common.ParamAccountingDate: accountingDateProperty(),
-			common.ParamApplications: applicationsProperty(
+			ParamCustomerPaymentID:         customerPaymentIDProperty(),
+			toolparams.ParamAccountingDate: accountingDateProperty(),
+			invoicepreview.ParamApplications: applicationsProperty(
 				"The invoices the unapplied cash pays and how much goes to each.", true),
 		},
 		Required: []string{
 			ParamCustomerPaymentID,
-			common.ParamAccountingDate,
-			common.ParamApplications,
+			toolparams.ParamAccountingDate,
+			invoicepreview.ParamApplications,
 		},
 		Target: targetCustomerPayment,
-	}), common.ReceivablePlan[*customerpaymentports.ApplyCustomerPaymentRequest, *customerpaymentports.CustomerPaymentChangePreview]{
+	}), toolspec.ReceivablePlan[*customerpaymentports.ApplyCustomerPaymentRequest, *customerpaymentports.CustomerPaymentChangePreview]{
 		Request: applyPaymentRequest,
 		Plan: func(
 			ctx context.Context,
@@ -164,7 +170,7 @@ func NewApplyCustomerPaymentTool(payments receivablesKeeper) agenttoolports.Agen
 		},
 		Refused: func(req *customerpaymentports.ApplyCustomerPaymentRequest) string {
 			return fmt.Sprintf("Would apply the payment's unapplied cash to %s.",
-				common.CountOf(len(req.Applications), "invoice"))
+				changepreview.CountOf(len(req.Applications), "invoice"))
 		},
 		Render: invoicetools.RenderApplyPayment,
 		Run: func(
@@ -181,15 +187,18 @@ func NewApplyCustomerPaymentTool(payments receivablesKeeper) agenttoolports.Agen
 func applyPaymentRequest(
 	params *agenttoolports.ToolExecuteParams,
 ) (*customerpaymentports.ApplyCustomerPaymentRequest, error) {
-	paymentID, err := common.RequirePulid(params.Params, ParamCustomerPaymentID)
+	paymentID, err := toolparams.RequirePulid(params.Params, ParamCustomerPaymentID)
 	if err != nil {
 		return nil, err
 	}
-	accountingDate, err := common.RequireDay(params.Params, common.ParamAccountingDate)
+	accountingDate, err := toolparams.RequireDay(params.Params, toolparams.ParamAccountingDate)
 	if err != nil {
 		return nil, err
 	}
-	applications, _, err := common.ReadPaymentApplications(params.Params, common.ParamApplications)
+	applications, _, err := invoicepreview.ReadPaymentApplications(
+		params.Params,
+		invoicepreview.ParamApplications,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -201,12 +210,12 @@ func applyPaymentRequest(
 		PaymentID:      paymentID,
 		AccountingDate: accountingDate,
 		Applications:   applications,
-		TenantInfo:     common.TenantFrom(*params),
+		TenantInfo:     toolparams.TenantFrom(*params),
 	}, nil
 }
 
 func NewReverseCustomerPaymentTool(payments receivablesKeeper) agenttoolports.AgentTool {
-	return common.NewReceivableTool(receivableMoneySpec(&common.ReceivableSpec{
+	return toolspec.NewReceivableTool(receivableMoneySpec(&toolspec.ReceivableSpec{
 		Name: "receivable_reverse_customer_payment",
 		Description: "Propose reversing a posted customer payment that bounced, was charged back " +
 			"or was recorded in error. Every invoice it paid is reopened by what it applied and a " +
@@ -217,14 +226,18 @@ func NewReverseCustomerPaymentTool(payments receivablesKeeper) agenttoolports.Ag
 		Rationale: "Takes cash back off the books and reopens the invoices it paid; only a " +
 			"person reverses a payment.",
 		Properties: map[string]any{
-			ParamCustomerPaymentID:     customerPaymentIDProperty(),
-			common.ParamAccountingDate: accountingDateProperty(),
-			common.ParamReason: common.StringProperty(
+			ParamCustomerPaymentID:         customerPaymentIDProperty(),
+			toolparams.ParamAccountingDate: accountingDateProperty(),
+			toolparams.ParamReason: toolparams.StringProperty(
 				"Why it is reversed, such as the bank's return reason.", maxReceivableReasonChars),
 		},
-		Required: []string{ParamCustomerPaymentID, common.ParamAccountingDate, common.ParamReason},
-		Target:   targetCustomerPayment,
-	}), common.ReceivablePlan[*customerpaymentports.ReverseCustomerPaymentRequest, *customerpaymentports.CustomerPaymentChangePreview]{
+		Required: []string{
+			ParamCustomerPaymentID,
+			toolparams.ParamAccountingDate,
+			toolparams.ParamReason,
+		},
+		Target: targetCustomerPayment,
+	}), toolspec.ReceivablePlan[*customerpaymentports.ReverseCustomerPaymentRequest, *customerpaymentports.CustomerPaymentChangePreview]{
 		Request: reversePaymentRequest,
 		Plan: func(
 			ctx context.Context,
@@ -251,17 +264,17 @@ func NewReverseCustomerPaymentTool(payments receivablesKeeper) agenttoolports.Ag
 func reversePaymentRequest(
 	params *agenttoolports.ToolExecuteParams,
 ) (*customerpaymentports.ReverseCustomerPaymentRequest, error) {
-	paymentID, err := common.RequirePulid(params.Params, ParamCustomerPaymentID)
+	paymentID, err := toolparams.RequirePulid(params.Params, ParamCustomerPaymentID)
 	if err != nil {
 		return nil, err
 	}
-	accountingDate, err := common.RequireDay(params.Params, common.ParamAccountingDate)
+	accountingDate, err := toolparams.RequireDay(params.Params, toolparams.ParamAccountingDate)
 	if err != nil {
 		return nil, err
 	}
-	reason, err := common.RequireBoundedText(
+	reason, err := toolparams.RequireBoundedText(
 		params.Params,
-		common.ParamReason,
+		toolparams.ParamReason,
 		maxReceivableReasonChars,
 	)
 	if err != nil {
@@ -272,12 +285,12 @@ func reversePaymentRequest(
 		PaymentID:      paymentID,
 		AccountingDate: accountingDate,
 		Reason:         reason,
-		TenantInfo:     common.TenantFrom(*params),
+		TenantInfo:     toolparams.TenantFrom(*params),
 	}, nil
 }
 
 func NewApplyCreditMemoTool(payments receivablesKeeper) agenttoolports.AgentTool {
-	return common.NewReceivableTool(receivableMoneySpec(&common.ReceivableSpec{
+	return toolspec.NewReceivableTool(receivableMoneySpec(&toolspec.ReceivableSpec{
 		Name:   "receivable_apply_credit_memo",
 		Recipe: []string{"receivable_list_open_items", "receivable_apply_credit_memo"},
 		Description: "Propose settling a customer's open invoices with a posted credit memo of " +
@@ -291,15 +304,19 @@ func NewApplyCreditMemoTool(payments receivablesKeeper) agenttoolports.AgentTool
 		Properties: map[string]any{
 			paramCreditMemoID: agenttoolschema.RecordIDText(permission.ResourceInvoice,
 				"The posted credit memo, from invoice_list or invoice_get."),
-			common.ParamAccountingDate: accountingDateProperty(),
-			common.ParamApplications: applicationsProperty(
+			toolparams.ParamAccountingDate: accountingDateProperty(),
+			invoicepreview.ParamApplications: applicationsProperty(
 				"The invoices the credit settles and how much goes to each.", false),
 		},
-		Required: []string{paramCreditMemoID, common.ParamAccountingDate, common.ParamApplications},
-		Target: func(params map[string]any) (agenttoolports.ToolTarget, bool) {
-			return common.TargetOf(params, paramCreditMemoID, permission.ResourceInvoice)
+		Required: []string{
+			paramCreditMemoID,
+			toolparams.ParamAccountingDate,
+			invoicepreview.ParamApplications,
 		},
-	}), common.ReceivablePlan[*customerpaymentports.ApplyCreditMemoRequest, *customerpaymentports.CreditMemoApplicationPreview]{
+		Target: func(params map[string]any) (agenttoolports.ToolTarget, bool) {
+			return toolparams.TargetOf(params, paramCreditMemoID, permission.ResourceInvoice)
+		},
+	}), toolspec.ReceivablePlan[*customerpaymentports.ApplyCreditMemoRequest, *customerpaymentports.CreditMemoApplicationPreview]{
 		Request: applyCreditRequest,
 		Plan: func(
 			ctx context.Context,
@@ -310,9 +327,9 @@ func NewApplyCreditMemoTool(payments receivablesKeeper) agenttoolports.AgentTool
 		},
 		Refused: func(req *customerpaymentports.ApplyCreditMemoRequest) string {
 			return fmt.Sprintf("Would apply the credit memo to %s.",
-				common.CountOf(len(req.Applications), "invoice"))
+				changepreview.CountOf(len(req.Applications), "invoice"))
 		},
-		Render: common.RenderApplyCredit,
+		Render: invoicepreview.RenderApplyCredit,
 		Run: func(
 			ctx context.Context,
 			req *customerpaymentports.ApplyCreditMemoRequest,
@@ -327,15 +344,18 @@ func NewApplyCreditMemoTool(payments receivablesKeeper) agenttoolports.AgentTool
 func applyCreditRequest(
 	params *agenttoolports.ToolExecuteParams,
 ) (*customerpaymentports.ApplyCreditMemoRequest, error) {
-	memoID, err := common.RequirePulid(params.Params, paramCreditMemoID)
+	memoID, err := toolparams.RequirePulid(params.Params, paramCreditMemoID)
 	if err != nil {
 		return nil, err
 	}
-	accountingDate, err := common.RequireDay(params.Params, common.ParamAccountingDate)
+	accountingDate, err := toolparams.RequireDay(params.Params, toolparams.ParamAccountingDate)
 	if err != nil {
 		return nil, err
 	}
-	read, _, err := common.ReadPaymentApplications(params.Params, common.ParamApplications)
+	read, _, err := invoicepreview.ReadPaymentApplications(
+		params.Params,
+		invoicepreview.ParamApplications,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -346,7 +366,7 @@ func applyCreditRequest(
 	for idx, application := range read {
 		if application.ShortPayAmountMinor > 0 {
 			return nil, fmt.Errorf("%s[%d]: a credit memo writes nothing off; leave out %s",
-				common.ParamApplications, idx, common.ParamShortPayAmount)
+				invoicepreview.ParamApplications, idx, invoicepreview.ParamShortPayAmount)
 		}
 		applications = append(applications, &customerpaymentports.CreditMemoApplicationInput{
 			InvoiceID:          application.InvoiceID,
@@ -358,12 +378,12 @@ func applyCreditRequest(
 		CreditMemoID:   memoID,
 		AccountingDate: accountingDate,
 		Applications:   applications,
-		TenantInfo:     common.TenantFrom(*params),
+		TenantInfo:     toolparams.TenantFrom(*params),
 	}, nil
 }
 
 func NewUnapplyCreditMemoTool(payments receivablesKeeper) agenttoolports.AgentTool {
-	return common.NewReceivableTool(receivableMoneySpec(&common.ReceivableSpec{
+	return toolspec.NewReceivableTool(receivableMoneySpec(&toolspec.ReceivableSpec{
 		Name: "receivable_unapply_credit_memo",
 		Description: "Propose taking back one credit memo application: the invoice it settled " +
 			"is reopened by that amount and the credit is available again. Use it when credit " +
@@ -376,18 +396,18 @@ func NewUnapplyCreditMemoTool(payments receivablesKeeper) agenttoolports.AgentTo
 			ParamCreditMemoApplicationID: agenttoolschema.KindID(
 				"The application, from receivable_list_credit_memo_applications. Never guess one.",
 				permission.KindCreditMemoApplication),
-			common.ParamReason: common.StringProperty(
+			toolparams.ParamReason: toolparams.StringProperty(
 				"Why it is taken back.",
 				maxReceivableReasonChars,
 			),
 		},
-		Required: []string{ParamCreditMemoApplicationID, common.ParamReason},
+		Required: []string{ParamCreditMemoApplicationID, toolparams.ParamReason},
 		Target: func(params map[string]any) (agenttoolports.ToolTarget, bool) {
-			return common.TargetOf(
+			return toolparams.TargetOf(
 				params, ParamCreditMemoApplicationID, agenttoolports.RecordCreditMemoApplication,
 			)
 		},
-	}), common.ReceivablePlan[*customerpaymentports.UnapplyCreditMemoApplicationRequest, *customerpaymentports.CreditMemoApplicationPreview]{
+	}), toolspec.ReceivablePlan[*customerpaymentports.UnapplyCreditMemoApplicationRequest, *customerpaymentports.CreditMemoApplicationPreview]{
 		Request: unapplyCreditRequest,
 		Plan: func(
 			ctx context.Context,
@@ -399,7 +419,7 @@ func NewUnapplyCreditMemoTool(payments receivablesKeeper) agenttoolports.AgentTo
 		Refused: func(*customerpaymentports.UnapplyCreditMemoApplicationRequest) string {
 			return "Would take back the credit memo application."
 		},
-		Render: common.RenderUnapplyCredit,
+		Render: invoicepreview.RenderUnapplyCredit,
 		Run: func(
 			ctx context.Context,
 			req *customerpaymentports.UnapplyCreditMemoApplicationRequest,
@@ -414,13 +434,13 @@ func NewUnapplyCreditMemoTool(payments receivablesKeeper) agenttoolports.AgentTo
 func unapplyCreditRequest(
 	params *agenttoolports.ToolExecuteParams,
 ) (*customerpaymentports.UnapplyCreditMemoApplicationRequest, error) {
-	applicationID, err := common.RequirePulid(params.Params, ParamCreditMemoApplicationID)
+	applicationID, err := toolparams.RequirePulid(params.Params, ParamCreditMemoApplicationID)
 	if err != nil {
 		return nil, err
 	}
-	reason, err := common.RequireBoundedText(
+	reason, err := toolparams.RequireBoundedText(
 		params.Params,
-		common.ParamReason,
+		toolparams.ParamReason,
 		maxReceivableReasonChars,
 	)
 	if err != nil {
@@ -430,6 +450,6 @@ func unapplyCreditRequest(
 	return &customerpaymentports.UnapplyCreditMemoApplicationRequest{
 		ApplicationID: applicationID,
 		Reason:        reason,
-		TenantInfo:    common.TenantFrom(*params),
+		TenantInfo:    toolparams.TenantFrom(*params),
 	}, nil
 }

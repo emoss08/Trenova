@@ -5,7 +5,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/carrierpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -227,7 +228,9 @@ func TestGenerateRateConfirmation_GeneratesForTheMoveAsTheActor(t *testing.T) {
 
 	rateCons := newFakeRateCons(rateconfirmation.StatusGenerated)
 	moveID := pulid.MustNew("smv_")
-	params := agenttoolstest.ExecuteParams(map[string]any{common.PreviewFieldShipmentMoveID: moveID.String()})
+	params := agenttoolstest.ExecuteParams(
+		map[string]any{changepreview.PreviewFieldShipmentMoveID: moveID.String()},
+	)
 
 	require.NoError(t, NewGenerateRateConfirmationTool(rateCons).Execute(t.Context(), params))
 
@@ -243,7 +246,7 @@ func TestGenerateRateConfirmation_SupersedingARevisionIsAProposal(t *testing.T) 
 	t.Parallel()
 
 	params := agenttoolstest.ExecuteParams(map[string]any{
-		common.PreviewFieldShipmentMoveID: pulid.MustNew("smv_").String(),
+		changepreview.PreviewFieldShipmentMoveID: pulid.MustNew("smv_").String(),
 	})
 
 	first := newFakeRateCons(rateconfirmation.StatusGenerated)
@@ -277,11 +280,15 @@ func TestGenerateRateConfirmation_PreviewShowsTheRevisionAndWhatItVoids(t *testi
 	}
 	tool := NewGenerateRateConfirmationTool(rateCons).(*GenerateRateConfirmationTool)
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, &rateCons.guard, func() (*agent.ToolPreview, error) {
-		return tool.Preview(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
-			common.PreviewFieldShipmentMoveID: pulid.MustNew("smv_").String(),
-		}))
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		&rateCons.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.Preview(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
+				changepreview.PreviewFieldShipmentMoveID: pulid.MustNew("smv_").String(),
+			}))
+		},
+	)
 
 	created := agenttoolstest.PreviewChange(t, preview, 0)
 	assert.Equal(t, agent.PreviewOperationCreate, created.Operation)
@@ -290,7 +297,11 @@ func TestGenerateRateConfirmation_PreviewShowsTheRevisionAndWhatItVoids(t *testi
 	assert.True(t, decimal.NewFromInt(2000).Equal(created.Money.TotalAfter.Decimal))
 	voided := agenttoolstest.PreviewChange(t, preview, 1)
 	assert.Equal(t, rateCons.standing.ID, voided.EntityID)
-	assert.Equal(t, "Voided", agenttoolstest.FieldByPath(t, voided, common.FieldStatus).After)
+	assert.Equal(
+		t,
+		"Voided",
+		agenttoolstest.FieldByPath(t, voided, changepreview.FieldStatus).After,
+	)
 	assert.Contains(t, preview.Summary, "Nothing is sent to the carrier")
 	assert.Contains(t, preview.Summary, "Revision 1, which is with the carrier to sign")
 }
@@ -318,9 +329,12 @@ func TestSendRateConfirmation_SendsTheRevisionNamed(t *testing.T) {
 
 	rateCons := newFakeRateCons(rateconfirmation.StatusGenerated)
 
-	require.NoError(t, NewSendRateConfirmationTool(rateCons).Execute(t.Context(), agenttoolstest.ExecuteParams(
-		map[string]any{fieldRateConfirmationID: rateCons.entity.ID.String()},
-	)))
+	require.NoError(
+		t,
+		NewSendRateConfirmationTool(rateCons).Execute(t.Context(), agenttoolstest.ExecuteParams(
+			map[string]any{fieldRateConfirmationID: rateCons.entity.ID.String()},
+		)),
+	)
 
 	assert.Equal(t, rateCons.entity.ID, rateCons.sent)
 }
@@ -331,11 +345,15 @@ func TestSendRateConfirmation_PreviewIsTheMessageWithItsRecipientsAndAttachment(
 	rateCons := newFakeRateCons(rateconfirmation.StatusGenerated)
 	tool := NewSendRateConfirmationTool(rateCons).(*SendRateConfirmationTool)
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, &rateCons.guard, func() (*agent.ToolPreview, error) {
-		return tool.Preview(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
-			fieldRateConfirmationID: rateCons.entity.ID.String(),
-		}))
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		&rateCons.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.Preview(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
+				fieldRateConfirmationID: rateCons.entity.ID.String(),
+			}))
+		},
+	)
 
 	sent := agenttoolstest.PreviewChange(t, preview, 0)
 	assert.Equal(t, agent.PreviewOperationSend, sent.Operation)
@@ -346,7 +364,7 @@ func TestSendRateConfirmation_PreviewIsTheMessageWithItsRecipientsAndAttachment(
 	assert.Equal(t, []string{"rate-confirmation-rev1.pdf"}, sent.Message.Attachments)
 	record := agenttoolstest.PreviewChange(t, preview, 1)
 	assert.Equal(t, rateCons.entity.ID, record.EntityID)
-	assert.Equal(t, "Sent", agenttoolstest.FieldByPath(t, record, common.FieldStatus).After)
+	assert.Equal(t, "Sent", agenttoolstest.FieldByPath(t, record, changepreview.FieldStatus).After)
 	assert.Contains(t, preview.Summary, "Eastline Transport at dispatch@eastline.test")
 	assert.Contains(t, preview.Summary, "link to sign it")
 }
@@ -358,11 +376,15 @@ func TestSendRateConfirmation_PreviewWarnsOfARevisionItCannotSend(t *testing.T) 
 	rateCons.refusal = errortypes.NewBusinessError("A Voided rate confirmation cannot be sent")
 	tool := NewSendRateConfirmationTool(rateCons).(*SendRateConfirmationTool)
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, &rateCons.guard, func() (*agent.ToolPreview, error) {
-		return tool.Preview(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
-			fieldRateConfirmationID: rateCons.entity.ID.String(),
-		}))
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		&rateCons.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.Preview(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
+				fieldRateConfirmationID: rateCons.entity.ID.String(),
+			}))
+		},
+	)
 
 	assert.Empty(t, preview.Changes)
 	agenttoolstest.RequireWarning(t, preview, agent.PreviewWarningWouldFail)
@@ -374,12 +396,16 @@ func TestVoidRateConfirmation_VoidsWithTheReason(t *testing.T) {
 	rateCons := newFakeRateCons(rateconfirmation.StatusSent)
 	tool := NewVoidRateConfirmationTool(rateCons)
 
-	require.Error(t, tool.(*VoidRateConfirmationTool).Validate(t.Context(), agenttoolstest.ExecuteParams(
-		map[string]any{fieldRateConfirmationID: rateCons.entity.ID.String()},
-	)), "a void needs a reason")
+	require.Error(
+		t,
+		tool.(*VoidRateConfirmationTool).Validate(t.Context(), agenttoolstest.ExecuteParams(
+			map[string]any{fieldRateConfirmationID: rateCons.entity.ID.String()},
+		)),
+		"a void needs a reason",
+	)
 	require.NoError(t, tool.Execute(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
-		fieldRateConfirmationID: rateCons.entity.ID.String(),
-		common.FieldReason:      " Rate renegotiated ",
+		fieldRateConfirmationID:   rateCons.entity.ID.String(),
+		changepreview.FieldReason: " Rate renegotiated ",
 	})))
 
 	assert.Equal(t, "Rate renegotiated", rateCons.voided)
@@ -396,8 +422,8 @@ func TestVoidRateConfirmation_AnAgreementTheCarrierHoldsIsAProposal(t *testing.T
 		return NewVoidRateConfirmationTool(rateCons).Policy().Condition.Limit(
 			t.Context(),
 			agenttoolstest.ExecuteParams(map[string]any{
-				fieldRateConfirmationID: rateCons.entity.ID.String(),
-				common.FieldReason:      "Wrong rate",
+				fieldRateConfirmationID:   rateCons.entity.ID.String(),
+				changepreview.FieldReason: "Wrong rate",
 			}),
 		)
 	}
@@ -413,19 +439,31 @@ func TestVoidRateConfirmation_PreviewShowsTheAssignmentGoingBackToPending(t *tes
 	rateCons := newFakeRateCons(rateconfirmation.StatusConfirmed)
 	tool := NewVoidRateConfirmationTool(rateCons).(*VoidRateConfirmationTool)
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, &rateCons.guard, func() (*agent.ToolPreview, error) {
-		return tool.Preview(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
-			fieldRateConfirmationID: rateCons.entity.ID.String(),
-			common.FieldReason:      "Wrong rate",
-		}))
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		&rateCons.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.Preview(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
+				fieldRateConfirmationID:   rateCons.entity.ID.String(),
+				changepreview.FieldReason: "Wrong rate",
+			}))
+		},
+	)
 
 	record := agenttoolstest.PreviewChange(t, preview, 0)
 	assert.Equal(t, agent.PreviewOperationArchive, record.Operation)
-	assert.Equal(t, "Voided", agenttoolstest.FieldByPath(t, record, common.FieldStatus).After)
+	assert.Equal(
+		t,
+		"Voided",
+		agenttoolstest.FieldByPath(t, record, changepreview.FieldStatus).After,
+	)
 	assert.Equal(t, "Wrong rate", agenttoolstest.FieldByPath(t, record, "voidReason").After)
 	assignment := agenttoolstest.PreviewChange(t, preview, 1)
-	assert.Equal(t, "Pending", agenttoolstest.FieldByPath(t, assignment, common.FieldStatus).After)
+	assert.Equal(
+		t,
+		"Pending",
+		agenttoolstest.FieldByPath(t, assignment, changepreview.FieldStatus).After,
+	)
 	assert.Contains(t, preview.Summary, "signed by the carrier")
 	assert.Contains(t, preview.Summary, "back to awaiting confirmation")
 }
@@ -436,12 +474,15 @@ func TestRecordRateConfirmationConfirmed_RecordsWhoConfirmed(t *testing.T) {
 	rateCons := newFakeRateCons(rateconfirmation.StatusSent)
 	tool := NewRecordRateConfirmationConfirmedTool(rateCons)
 
-	require.Error(t, tool.(*RecordRateConfirmationConfirmedTool).Validate(t.Context(),
-		agenttoolstest.ExecuteParams(map[string]any{fieldRateConfirmationID: rateCons.entity.ID.String()}),
+	require.Error(t, tool.(*RecordRateConfirmationConfirmedTool).Validate(
+		t.Context(),
+		agenttoolstest.ExecuteParams(
+			map[string]any{fieldRateConfirmationID: rateCons.entity.ID.String()},
+		),
 	), "a confirmation names who gave it")
 	require.NoError(t, tool.Execute(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
-		fieldRateConfirmationID:     rateCons.entity.ID.String(),
-		common.FieldConfirmedByName: " Dana Ruiz ",
+		fieldRateConfirmationID:             rateCons.entity.ID.String(),
+		carrierpreview.FieldConfirmedByName: " Dana Ruiz ",
 	})))
 
 	assert.Equal(t, "Dana Ruiz", rateCons.confirmed)
@@ -458,18 +499,38 @@ func TestRecordRateConfirmationConfirmed_PreviewShowsTheAgreementExecuted(t *tes
 	rateCons := newFakeRateCons(rateconfirmation.StatusSent)
 	tool := NewRecordRateConfirmationConfirmedTool(rateCons).(*RecordRateConfirmationConfirmedTool)
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, &rateCons.guard, func() (*agent.ToolPreview, error) {
-		return tool.Preview(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
-			fieldRateConfirmationID:     rateCons.entity.ID.String(),
-			common.FieldConfirmedByName: "Dana Ruiz",
-		}))
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		&rateCons.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.Preview(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
+				fieldRateConfirmationID:             rateCons.entity.ID.String(),
+				carrierpreview.FieldConfirmedByName: "Dana Ruiz",
+			}))
+		},
+	)
 
 	record := agenttoolstest.PreviewChange(t, preview, 0)
-	assert.Equal(t, "Confirmed", agenttoolstest.FieldByPath(t, record, common.FieldStatus).After)
-	assert.Equal(t, "Dana Ruiz", agenttoolstest.FieldByPath(t, record, common.FieldConfirmedByName).After)
-	assert.Equal(t, "Confirmed by", agenttoolstest.FieldByPath(t, record, common.FieldConfirmedByName).Label)
+	assert.Equal(
+		t,
+		"Confirmed",
+		agenttoolstest.FieldByPath(t, record, changepreview.FieldStatus).After,
+	)
+	assert.Equal(
+		t,
+		"Dana Ruiz",
+		agenttoolstest.FieldByPath(t, record, carrierpreview.FieldConfirmedByName).After,
+	)
+	assert.Equal(
+		t,
+		"Confirmed by",
+		agenttoolstest.FieldByPath(t, record, carrierpreview.FieldConfirmedByName).Label,
+	)
 	assignment := agenttoolstest.PreviewChange(t, preview, 1)
-	assert.Equal(t, "Confirmed", agenttoolstest.FieldByPath(t, assignment, common.FieldStatus).After)
+	assert.Equal(
+		t,
+		"Confirmed",
+		agenttoolstest.FieldByPath(t, assignment, changepreview.FieldStatus).After,
+	)
 	assert.Contains(t, preview.Summary, "Dana Ruiz confirmed revision 1 for Eastline Transport")
 }

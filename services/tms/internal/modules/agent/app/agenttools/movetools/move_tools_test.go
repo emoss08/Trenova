@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -248,7 +248,7 @@ func TestRecordStopActual_RejectsAMismatchedActor(t *testing.T) {
 	})
 	params.Actor.OrganizationID = pulid.MustNew("org_")
 
-	require.ErrorIs(t, tool.Execute(t.Context(), params), common.ErrTenantMismatch)
+	require.ErrorIs(t, tool.Execute(t.Context(), params), toolguard.ErrTenantMismatch)
 	assert.Nil(t, moves.recorded)
 }
 

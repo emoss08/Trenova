@@ -3,7 +3,8 @@ package invoicetools
 import (
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/invoicepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
@@ -25,7 +26,7 @@ func paymentRecord(payment *customerpayment.Payment) toolpreview.Record {
 		Resource: permission.ResourceCustomerPayment,
 		ID:       payment.ID,
 		Label:    paymentLabel(payment),
-		Version:  common.PinnedVersion(payment.Version),
+		Version:  changepreview.PinnedVersion(payment.Version),
 	}
 }
 
@@ -37,7 +38,7 @@ func paymentChange(
 		paymentRecord(before),
 		before,
 		after,
-		toolpreview.Only(common.FieldStatus, "reversalReason", "reversedById", "reversedAt"),
+		toolpreview.Only(changepreview.FieldStatus, "reversalReason", "reversedById", "reversedAt"),
 		toolpreview.WithRefs(map[string]permission.Resource{
 			"reversedById": permission.ResourceUser,
 		}),
@@ -51,13 +52,13 @@ func paymentChange(
 		before.CurrencyCode,
 		agent.MoneyLine{
 			Label:  moneyLineApplied,
-			Before: common.KnownAmount(money.DecimalFromMinor(before.AppliedAmountMinor)),
-			After:  common.KnownAmount(money.DecimalFromMinor(after.AppliedAmountMinor)),
+			Before: changepreview.KnownAmount(money.DecimalFromMinor(before.AppliedAmountMinor)),
+			After:  changepreview.KnownAmount(money.DecimalFromMinor(after.AppliedAmountMinor)),
 		},
 		agent.MoneyLine{
 			Label:  moneyLineUnapplied,
-			Before: common.KnownAmount(money.DecimalFromMinor(before.UnappliedAmountMinor)),
-			After:  common.KnownAmount(money.DecimalFromMinor(after.UnappliedAmountMinor)),
+			Before: changepreview.KnownAmount(money.DecimalFromMinor(before.UnappliedAmountMinor)),
+			After:  changepreview.KnownAmount(money.DecimalFromMinor(after.UnappliedAmountMinor)),
 		},
 	))
 
@@ -72,7 +73,7 @@ func paymentPreview(
 	if err != nil {
 		return nil, err
 	}
-	invoices, err := common.InvoiceBalanceChanges(plan.InvoicesBefore, plan.InvoicesAfter)
+	invoices, err := invoicepreview.InvoiceBalanceChanges(plan.InvoicesBefore, plan.InvoicesAfter)
 	if err != nil {
 		return nil, err
 	}
@@ -107,7 +108,7 @@ func RenderApplyPayment(
 			currency,
 		),
 		plan.PaymentBefore.DocumentLabel(),
-		common.CountOf(len(req.Applications), "invoice"),
+		changepreview.CountOf(len(req.Applications), "invoice"),
 		money.FormatMinor(plan.PaymentAfter.UnappliedAmountMinor, currency),
 	))
 }
@@ -121,6 +122,6 @@ func RenderReversePayment(
 			"reversing entry.",
 		plan.PaymentBefore.DocumentLabel(),
 		money.FormatMinor(plan.PaymentBefore.AmountMinor, plan.PaymentBefore.CurrencyCode),
-		common.CountOf(len(plan.InvoicesAfter), "invoice"),
+		changepreview.CountOf(len(plan.InvoicesAfter), "invoice"),
 	))
 }

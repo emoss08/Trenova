@@ -5,7 +5,10 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/billingqueuepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -77,12 +80,16 @@ func queueItemProperty() map[string]any {
 }
 
 func issueProperty() map[string]any {
-	return common.StringProperty("The check, by the id billing_get_queue_item lists under the "+
+	return toolparams.StringProperty("The check, by the id billing_get_queue_item lists under the "+
 		"item's issues. Never guess one.", 0)
 }
 
 func queueTarget(params map[string]any) (agenttoolports.ToolTarget, bool) {
-	return common.TargetOf(params, common.ParamBillingQueueItemID, permission.ResourceBillingQueue)
+	return toolparams.TargetOf(
+		params,
+		billingqueuepreview.ParamBillingQueueItemID,
+		permission.ResourceBillingQueue,
+	)
 }
 
 type releasePlan struct {
@@ -91,7 +98,7 @@ type releasePlan struct {
 }
 
 func NewReleaseBillingQueueItemTool(
-	items common.BillingQueueDecider,
+	items billingqueuepreview.BillingQueueDecider,
 	review billingqueueports.BillingQueueReviewService,
 ) agenttoolports.AgentTool {
 	return newReleaseBillingQueueItemTool(items, review)
@@ -101,8 +108,8 @@ func newReleaseBillingQueueItemTool(
 	items queueItemReader,
 	review queueReviewer,
 ) agenttoolports.AgentTool {
-	return common.NewReportingReceivableTool(
-		&common.ReceivableSpec{
+	return toolspec.NewReportingReceivableTool(
+		&toolspec.ReceivableSpec{
 			Name: toolReleaseBillingQueueItem,
 			Recipe: []string{
 				toolListBillingQueueItems,
@@ -127,22 +134,25 @@ func newReleaseBillingQueueItemTool(
 			Target:   queueTarget,
 			Artifact: billingQueueRecordEntity,
 			Properties: map[string]any{
-				common.ParamBillingQueueItemID: queueItemProperty(),
+				billingqueuepreview.ParamBillingQueueItemID: queueItemProperty(),
 			},
-			Required:    []string{common.ParamBillingQueueItemID},
+			Required:    []string{billingqueuepreview.ParamBillingQueueItemID},
 			SearchTerms: []string{"release hold", "take off hold", "unhold billing"},
 		},
-		common.ReceivablePlan[*billingqueueports.BillingQueueItemRequest, *releasePlan]{
+		toolspec.ReceivablePlan[*billingqueueports.BillingQueueItemRequest, *releasePlan]{
 			Request: func(
 				params *agenttoolports.ToolExecuteParams,
 			) (*billingqueueports.BillingQueueItemRequest, error) {
-				itemID, err := common.RequirePulid(params.Params, common.ParamBillingQueueItemID)
+				itemID, err := toolparams.RequirePulid(
+					params.Params,
+					billingqueuepreview.ParamBillingQueueItemID,
+				)
 				if err != nil {
 					return nil, err
 				}
 				return &billingqueueports.BillingQueueItemRequest{
 					ItemID:     itemID,
-					TenantInfo: common.TenantFrom(*params),
+					TenantInfo: toolparams.TenantFrom(*params),
 				}, nil
 			},
 			Plan: func(
@@ -160,10 +170,14 @@ func newReleaseBillingQueueItemTool(
 				plan *releasePlan,
 			) (*agent.ToolPreview, error) {
 				changed, err := toolpreview.Changed(
-					common.QueueRecord(plan.before),
+					billingqueuepreview.QueueRecord(plan.before),
 					plan.before,
 					plan.after,
-					toolpreview.Only(common.FieldStatus, "holdReasonCode", fieldReviewStartedAt),
+					toolpreview.Only(
+						changepreview.FieldStatus,
+						"holdReasonCode",
+						fieldReviewStartedAt,
+					),
 					toolpreview.Volatile(decisionVolatile...),
 					toolpreview.WithRefs(decisionRefs),
 				)
@@ -239,7 +253,7 @@ func queueItemResult(
 		Action: action,
 		Kind:   "billing queue item",
 		Name:   item.Number,
-		IDs:    map[string]string{common.ParamBillingQueueItemID: item.ID.String()},
+		IDs:    map[string]string{billingqueuepreview.ParamBillingQueueItemID: item.ID.String()},
 		Record: &agent.RecordRef{EntityType: billingQueueRecordEntity, ID: item.ID.String()},
 		State:  string(item.Status),
 	}
@@ -297,7 +311,7 @@ func chargeLabel(item *billingqueue.BillingQueueItem, chargeID pulid.ID) string 
 }
 
 func checkRecord(plan *billingqueueports.IssueSettlementPlan) toolpreview.Record {
-	record := common.QueueRecord(plan.Item)
+	record := billingqueuepreview.QueueRecord(plan.Item)
 	record.Label = plan.Item.Number + " · " + plan.Issue.Summary
 
 	return record
@@ -316,7 +330,12 @@ func chargeChange(plan *billingqueueports.IssueSettlementPlan) (*agent.RecordCha
 	record := toolpreview.Record{
 		Resource: permission.ResourceShipment,
 		ID:       plan.Item.ShipmentID,
-		Label:    chargeLabel(plan.Item, chargeID) + " on " + common.ShipmentLabel(plan.Item),
+		Label: chargeLabel(
+			plan.Item,
+			chargeID,
+		) + " on " + billingqueuepreview.ShipmentLabel(
+			plan.Item,
+		),
 	}
 	opts := []toolpreview.Option{toolpreview.Labels(queueCheckLabels)}
 	switch {
@@ -351,7 +370,7 @@ func chargeClause(plan *billingqueueports.IssueSettlementPlan) string {
 func classifyIssueOption(
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // Classify passes params by value
 ) agenttoolports.CallPolicy {
-	if strings.TrimSpace(common.OptionalString(params.Params, paramOptionKey)) ==
+	if strings.TrimSpace(toolparams.OptionalString(params.Params, paramOptionKey)) ==
 		billingqueue.OptionKeyRequest {
 		return agenttoolports.CallPolicy{Egress: agent.EgressDriverVisible}
 	}
@@ -366,8 +385,8 @@ func NewResolveBillingQueueIssueTool(
 }
 
 func newResolveBillingQueueIssueTool(review queueReviewer) agenttoolports.AgentTool {
-	return common.NewReportingReceivableTool(
-		&common.ReceivableSpec{
+	return toolspec.NewReportingReceivableTool(
+		&toolspec.ReceivableSpec{
 			Name:          toolResolveBillingQueueIssue,
 			Recipe:        []string{toolGetBillingQueueItem, toolResolveBillingQueueIssue},
 			Prerequisites: []string{toolGetBillingQueueItem},
@@ -394,16 +413,16 @@ func newResolveBillingQueueIssueTool(review queueReviewer) agenttoolports.AgentT
 			Target:   queueTarget,
 			Artifact: billingQueueRecordEntity,
 			Properties: map[string]any{
-				common.ParamBillingQueueItemID: queueItemProperty(),
-				paramIssueID:                   issueProperty(),
-				paramOptionKey: common.StringProperty(
+				billingqueuepreview.ParamBillingQueueItemID: queueItemProperty(),
+				paramIssueID: issueProperty(),
+				paramOptionKey: toolparams.StringProperty(
 					"The optionKey of the choice, exactly as billing_get_queue_item lists it "+
 						"under the check.",
 					maxOptionKeyChars,
 				),
 			},
 			Required: []string{
-				common.ParamBillingQueueItemID,
+				billingqueuepreview.ParamBillingQueueItemID,
 				paramIssueID,
 				paramOptionKey,
 			},
@@ -414,7 +433,7 @@ func newResolveBillingQueueIssueTool(review queueReviewer) agenttoolports.AgentT
 				"resolve issue",
 			},
 		},
-		common.ReceivablePlan[
+		toolspec.ReceivablePlan[
 			*billingqueueports.ResolveBillingQueueIssueRequest,
 			*billingqueueports.IssueSettlementPlan,
 		]{
@@ -425,7 +444,7 @@ func newResolveBillingQueueIssueTool(review queueReviewer) agenttoolports.AgentT
 				if err != nil {
 					return nil, err
 				}
-				optionKey, err := common.RequireBoundedText(
+				optionKey, err := toolparams.RequireBoundedText(
 					params.Params,
 					paramOptionKey,
 					maxOptionKeyChars,
@@ -437,7 +456,7 @@ func newResolveBillingQueueIssueTool(review queueReviewer) agenttoolports.AgentT
 					ItemID:     itemID,
 					IssueID:    issueID,
 					OptionKey:  optionKey,
-					TenantInfo: common.TenantFrom(*params),
+					TenantInfo: toolparams.TenantFrom(*params),
 				}, nil
 			},
 			Plan: func(
@@ -467,11 +486,14 @@ func newResolveBillingQueueIssueTool(review queueReviewer) agenttoolports.AgentT
 }
 
 func queueIssueIDs(params *agenttoolports.ToolExecuteParams) (itemID, issueID pulid.ID, err error) {
-	itemID, err = common.RequirePulid(params.Params, common.ParamBillingQueueItemID)
+	itemID, err = toolparams.RequirePulid(
+		params.Params,
+		billingqueuepreview.ParamBillingQueueItemID,
+	)
 	if err != nil {
 		return pulid.Nil, pulid.Nil, err
 	}
-	if issueID, err = common.RequirePulid(params.Params, paramIssueID); err != nil {
+	if issueID, err = toolparams.RequirePulid(params.Params, paramIssueID); err != nil {
 		return pulid.Nil, pulid.Nil, err
 	}
 
@@ -544,8 +566,8 @@ func NewUndoBillingQueueIssueTool(
 }
 
 func newUndoBillingQueueIssueTool(review queueReviewer) agenttoolports.AgentTool {
-	return common.NewReportingReceivableTool(
-		&common.ReceivableSpec{
+	return toolspec.NewReportingReceivableTool(
+		&toolspec.ReceivableSpec{
 			Name:          toolUndoBillingQueueIssue,
 			Recipe:        []string{toolGetBillingQueueItem, toolUndoBillingQueueIssue},
 			Prerequisites: []string{toolGetBillingQueueItem},
@@ -567,13 +589,13 @@ func newUndoBillingQueueIssueTool(review queueReviewer) agenttoolports.AgentTool
 			Target:   queueTarget,
 			Artifact: billingQueueRecordEntity,
 			Properties: map[string]any{
-				common.ParamBillingQueueItemID: queueItemProperty(),
-				paramIssueID:                   issueProperty(),
+				billingqueuepreview.ParamBillingQueueItemID: queueItemProperty(),
+				paramIssueID: issueProperty(),
 			},
-			Required:    []string{common.ParamBillingQueueItemID, paramIssueID},
+			Required:    []string{billingqueuepreview.ParamBillingQueueItemID, paramIssueID},
 			SearchTerms: []string{"undo settlement", "reopen check", "undo billing issue"},
 		},
-		common.ReceivablePlan[
+		toolspec.ReceivablePlan[
 			*billingqueueports.UndoBillingQueueIssueRequest,
 			*billingqueueports.IssueSettlementPlan,
 		]{
@@ -587,7 +609,7 @@ func newUndoBillingQueueIssueTool(review queueReviewer) agenttoolports.AgentTool
 				return &billingqueueports.UndoBillingQueueIssueRequest{
 					ItemID:     itemID,
 					IssueID:    issueID,
-					TenantInfo: common.TenantFrom(*params),
+					TenantInfo: toolparams.TenantFrom(*params),
 				}, nil
 			},
 			Plan: func(

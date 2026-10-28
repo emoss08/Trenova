@@ -4,7 +4,10 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/settlementpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -87,10 +90,10 @@ func (t *CarrierInvoiceMatchTool) ParamSchema() map[string]any {
 		required = append(required, paramMatchNote)
 	}
 
-	return common.ObjectParams(map[string]any{
+	return toolparams.ObjectParams(map[string]any{
 		paramMatchID: agenttoolschema.RecordIDText(permission.ResourceCarrierInvoiceMatch,
 			"The carrier invoice match, from "+matchSourcesTool+". Never guess one."),
-		paramMatchNote: common.StringProperty(t.decision.noteText, maxMatchNoteChars),
+		paramMatchNote: toolparams.StringProperty(t.decision.noteText, maxMatchNoteChars),
 	}, required...)
 }
 
@@ -123,20 +126,20 @@ func (t *CarrierInvoiceMatchTool) Policy() agenttoolports.ToolPolicy {
 }
 
 func (t *CarrierInvoiceMatchTool) Target(params map[string]any) (agenttoolports.ToolTarget, bool) {
-	return common.TargetOf(params, paramMatchID, permission.ResourceCarrierInvoiceMatch)
+	return toolparams.TargetOf(params, paramMatchID, permission.ResourceCarrierInvoiceMatch)
 }
 
 func (t *CarrierInvoiceMatchTool) request(
 	params *agenttoolports.ToolExecuteParams,
 ) (*carriersettlementservice.MatchDecisionRequest, error) {
-	if err := common.GuardPreview(t, params); err != nil {
+	if err := toolguard.GuardPreview(t, params); err != nil {
 		return nil, err
 	}
-	matchID, err := common.RequirePulid(params.Params, paramMatchID)
+	matchID, err := toolparams.RequirePulid(params.Params, paramMatchID)
 	if err != nil {
 		return nil, err
 	}
-	note, err := common.BoundedString(
+	note, err := toolparams.BoundedString(
 		params.Params,
 		paramMatchNote,
 		maxMatchNoteChars,
@@ -147,7 +150,7 @@ func (t *CarrierInvoiceMatchTool) request(
 	}
 
 	return &carriersettlementservice.MatchDecisionRequest{
-		TenantInfo: common.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(*params),
 		MatchID:    matchID,
 		Decision:   t.decision.decision,
 		Note:       note,
@@ -182,11 +185,11 @@ func (t *CarrierInvoiceMatchTool) Execute(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
-	if err := common.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
 	}
 	if t.decision.personOnly && !params.ApprovedFromProposal() {
-		return common.ErrSettlementNeedsAPerson
+		return settlementpreview.ErrSettlementNeedsAPerson
 	}
 	req, err := t.request(&params)
 	if err != nil {
@@ -207,14 +210,18 @@ func matchRecord(match *carriersettlement.InvoiceMatch) toolpreview.Record {
 		Resource: permission.ResourceCarrierInvoiceMatch,
 		ID:       match.ID,
 		Label:    label,
-		Version:  common.PinnedVersion(match.Version),
+		Version:  changepreview.PinnedVersion(match.Version),
 	}
 }
 
 func matchMoney(match *carriersettlement.InvoiceMatch) *agent.MoneyPreview {
-	return toolpreview.MoneyBlock(match.CurrencyCode,
-		agent.MoneyLine{Label: "Expected", After: common.MinorAmount(match.ExpectedTotalMinor)},
-		agent.MoneyLine{Label: "Variance", After: common.MinorAmount(match.VarianceMinor)},
+	return toolpreview.MoneyBlock(
+		match.CurrencyCode,
+		agent.MoneyLine{
+			Label: "Expected",
+			After: changepreview.MinorAmount(match.ExpectedTotalMinor),
+		},
+		agent.MoneyLine{Label: "Variance", After: changepreview.MinorAmount(match.VarianceMinor)},
 	)
 }
 
@@ -237,12 +244,12 @@ func (t *CarrierInvoiceMatchTool) Preview(
 		plan.Before.Status,
 	)
 	if plan.Refusal != nil {
-		return common.WouldFail(toolpreview.Build(summary), plan.Refusal)
+		return changepreview.WouldFail(toolpreview.Build(summary), plan.Refusal)
 	}
 
 	change, err := toolpreview.Changed(record, plan.Before, plan.After,
-		toolpreview.Only(fieldMatchStatus, fieldResolutionNote, common.FieldResolvedAt),
-		toolpreview.Volatile(common.FieldResolvedAt),
+		toolpreview.Only(fieldMatchStatus, fieldResolutionNote, changepreview.FieldResolvedAt),
+		toolpreview.Volatile(changepreview.FieldResolvedAt),
 	)
 	if err != nil {
 		return nil, err
@@ -259,7 +266,7 @@ func (t *CarrierInvoiceMatchTool) Preview(
 			},
 			toolpreview.MoneyBlock(plan.Adjustment.CurrencyCode, agent.MoneyLine{
 				Label: "Variance adjustment",
-				After: common.MinorAmount(plan.Adjustment.AmountMinor),
+				After: changepreview.MinorAmount(plan.Adjustment.AmountMinor),
 			}),
 			toolpreview.SensitiveAs("amountMinor"),
 		)
@@ -284,7 +291,7 @@ func matchVerb(decision carriersettlementservice.MatchDecision) string {
 	case carriersettlementservice.MatchDecisionAcceptWithVariance:
 		return "accept with its variance"
 	case carriersettlementservice.MatchDecisionReject:
-		return common.VerbReject
+		return changepreview.VerbReject
 	default:
 		return string(decision)
 	}
@@ -382,15 +389,15 @@ func (t *CreateCarrierInvoiceMatchTool) Description() string {
 }
 
 func (t *CreateCarrierInvoiceMatchTool) ParamSchema() map[string]any {
-	return common.ObjectParams(map[string]any{
+	return toolparams.ObjectParams(map[string]any{
 		paramEDIInvoiceID: agenttoolschema.KindID("The EDI carrier invoice, from "+
 			ediInvoiceSourcesTool+". Never guess one.", permission.KindEDICarrierInvoice),
-		common.FieldShipmentID: agenttoolschema.RecordIDText(
+		changepreview.FieldShipmentID: agenttoolschema.RecordIDText(
 			permission.ResourceShipment,
 			"The shipment it bills, from shipment_list, when the "+
 				"invoice's own references do not find it.",
 		),
-		paramMatchProNumber: common.StringProperty("The pro number it bills, when the invoice "+
+		paramMatchProNumber: toolparams.StringProperty("The pro number it bills, when the invoice "+
 			"carries none.", maxMatchProNumberChars),
 	}, paramEDIInvoiceID)
 }
@@ -415,18 +422,18 @@ func (t *CreateCarrierInvoiceMatchTool) Policy() agenttoolports.ToolPolicy {
 func (t *CreateCarrierInvoiceMatchTool) request(
 	params *agenttoolports.ToolExecuteParams,
 ) (*carriersettlementservice.CreateMatchRequest, error) {
-	if err := common.GuardPreview(t, params); err != nil {
+	if err := toolguard.GuardPreview(t, params); err != nil {
 		return nil, err
 	}
-	invoiceID, err := common.RequirePulid(params.Params, paramEDIInvoiceID)
+	invoiceID, err := toolparams.RequirePulid(params.Params, paramEDIInvoiceID)
 	if err != nil {
 		return nil, err
 	}
-	shipmentID, err := common.OptionalPulidParam(params.Params, common.FieldShipmentID)
+	shipmentID, err := toolparams.OptionalPulidParam(params.Params, changepreview.FieldShipmentID)
 	if err != nil {
 		return nil, err
 	}
-	proNumber, err := common.BoundedString(
+	proNumber, err := toolparams.BoundedString(
 		params.Params,
 		paramMatchProNumber,
 		maxMatchProNumberChars,
@@ -436,7 +443,7 @@ func (t *CreateCarrierInvoiceMatchTool) request(
 		return nil, err
 	}
 	req := &carriersettlementservice.CreateMatchRequest{
-		TenantInfo:          common.TenantFrom(*params),
+		TenantInfo:          toolparams.TenantFrom(*params),
 		EDICarrierInvoiceID: &invoiceID,
 		ProNumber:           proNumber,
 	}
@@ -475,7 +482,7 @@ func (t *CreateCarrierInvoiceMatchTool) Execute(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
-	if err := common.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
 	}
 	req, err := t.request(&params)
@@ -498,7 +505,7 @@ func (t *CreateCarrierInvoiceMatchTool) Preview(
 
 	summary := "Would match the carrier's EDI invoice to the load it bills."
 	if plan.Refusal != nil {
-		return common.WouldFail(toolpreview.Build(summary), plan.Refusal)
+		return changepreview.WouldFail(toolpreview.Build(summary), plan.Refusal)
 	}
 
 	match := plan.Match
@@ -513,9 +520,9 @@ func (t *CreateCarrierInvoiceMatchTool) Preview(
 		matchRecord(match),
 		match,
 		toolpreview.Only(fieldMatchStatus, fieldMatchInvoiceNumber, fieldMatchedVia,
-			common.ParamCarrierID),
+			toolparams.ParamCarrierID),
 		toolpreview.WithRefs(map[string]permission.Resource{
-			common.ParamCarrierID: permission.ResourceCarrier,
+			toolparams.ParamCarrierID: permission.ResourceCarrier,
 		}),
 	)
 	if err != nil {
@@ -565,15 +572,15 @@ func (t *LinkEDICarrierInvoiceTool) Description() string {
 }
 
 func (t *LinkEDICarrierInvoiceTool) ParamSchema() map[string]any {
-	return common.ObjectParams(map[string]any{
+	return toolparams.ObjectParams(map[string]any{
 		paramEDIInvoiceID: agenttoolschema.KindID("The EDI carrier invoice, from "+
 			ediInvoiceSourcesTool+". Never guess one.", permission.KindEDICarrierInvoice),
-		common.ParamCarrierID: agenttoolschema.RecordIDText(
+		toolparams.ParamCarrierID: agenttoolschema.RecordIDText(
 			permission.ResourceCarrier,
 			"The carrier it came from, from carrier_list or "+
 				ediInvoiceSourcesTool+"'s suggested carrier.",
 		),
-	}, paramEDIInvoiceID, common.ParamCarrierID)
+	}, paramEDIInvoiceID, toolparams.ParamCarrierID)
 }
 
 func (t *LinkEDICarrierInvoiceTool) Policy() agenttoolports.ToolPolicy {
@@ -603,20 +610,20 @@ type linkRequest struct {
 func (t *LinkEDICarrierInvoiceTool) request(
 	params *agenttoolports.ToolExecuteParams,
 ) (*linkRequest, error) {
-	if err := common.GuardPreview(t, params); err != nil {
+	if err := toolguard.GuardPreview(t, params); err != nil {
 		return nil, err
 	}
-	invoiceID, err := common.RequirePulid(params.Params, paramEDIInvoiceID)
+	invoiceID, err := toolparams.RequirePulid(params.Params, paramEDIInvoiceID)
 	if err != nil {
 		return nil, err
 	}
-	carrierID, err := common.RequirePulid(params.Params, common.ParamCarrierID)
+	carrierID, err := toolparams.RequirePulid(params.Params, toolparams.ParamCarrierID)
 	if err != nil {
 		return nil, err
 	}
 
 	return &linkRequest{
-			tenant:    common.TenantFrom(*params),
+			tenant:    toolparams.TenantFrom(*params),
 			invoiceID: invoiceID,
 			carrierID: carrierID,
 		},
@@ -640,7 +647,7 @@ func (t *LinkEDICarrierInvoiceTool) Execute(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
-	if err := common.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
 	}
 	req, err := t.request(&params)
@@ -668,12 +675,12 @@ func (t *LinkEDICarrierInvoiceTool) Preview(
 	}
 	plan, err := t.invoices.PlanLinkInvoice(ctx, req.tenant, req.invoiceID, req.carrierID)
 	if err != nil {
-		refusal, failure := common.RefusalOrFailure(err)
+		refusal, failure := changepreview.RefusalOrFailure(err)
 		if failure != nil {
 			return nil, failure
 		}
 
-		return common.WouldFail(
+		return changepreview.WouldFail(
 			toolpreview.Build("Would link the EDI carrier invoice to the carrier."),
 			refusal,
 		)
@@ -683,11 +690,11 @@ func (t *LinkEDICarrierInvoiceTool) Preview(
 		Resource: permission.ResourceCarrierInvoiceMatch,
 		ID:       plan.Before.ID,
 		Label:    "EDI carrier invoice " + plan.Before.InvoiceNumber,
-		Version:  common.PinnedVersion(plan.Before.Version),
+		Version:  changepreview.PinnedVersion(plan.Before.Version),
 	}, plan.Before, plan.After,
-		toolpreview.Only(common.ParamCarrierID),
+		toolpreview.Only(toolparams.ParamCarrierID),
 		toolpreview.WithRefs(map[string]permission.Resource{
-			common.ParamCarrierID: permission.ResourceCarrier,
+			toolparams.ParamCarrierID: permission.ResourceCarrier,
 		}),
 	)
 	if err != nil {

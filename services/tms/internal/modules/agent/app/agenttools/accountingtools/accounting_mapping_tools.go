@@ -6,7 +6,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingmappingports"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -111,7 +112,7 @@ func mappingTargetProperties() map[string]any {
 }
 
 func accountingSystemFrom(params map[string]any) (integration.Type, error) {
-	system, err := common.RequireString(params, ParamAccountingSystem)
+	system, err := toolparams.RequireString(params, ParamAccountingSystem)
 	if err != nil {
 		return "", err
 	}
@@ -129,24 +130,24 @@ func mappingRequestFrom(
 	if err != nil {
 		return nil, err
 	}
-	mappingID, _, err := common.OptionalPulid(params.Params, ParamMappingID)
+	mappingID, _, err := toolparams.OptionalPulid(params.Params, ParamMappingID)
 	if err != nil {
 		return nil, err
 	}
-	recordID, _, err := common.OptionalPulid(params.Params, paramRecordID)
+	recordID, _, err := toolparams.OptionalPulid(params.Params, paramRecordID)
 	if err != nil {
 		return nil, err
 	}
 	req := &accountingmappingports.SetAccountingMappingRequest{
-		TenantInfo:      common.TenantFrom(*params),
+		TenantInfo:      toolparams.TenantFrom(*params),
 		UserID:          params.Actor.UserID,
 		IntegrationType: system,
 		MappingID:       mappingID,
 		TargetType: accountingsync.MappingTargetType(
-			common.OptionalString(params.Params, paramTargetType),
+			toolparams.OptionalString(params.Params, paramTargetType),
 		),
 		TrenovaObjectID: recordID,
-		TrenovaKey:      common.OptionalString(params.Params, paramMappingKey),
+		TrenovaKey:      toolparams.OptionalString(params.Params, paramMappingKey),
 		Source:          accountingsync.MappingSourceAgent,
 	}
 	if err = req.ValidateTarget(); err != nil {
@@ -161,7 +162,7 @@ func findMapping(
 	mappings accountingMappingWriter,
 	params *agenttoolports.ToolExecuteParams,
 ) (*accountingmappingports.SetAccountingMappingRequest, *accountingsync.AccountingMapping, error) {
-	if err := common.GuardExecute(tool, *params); err != nil {
+	if err := toolguard.GuardExecute(tool, *params); err != nil {
 		return nil, nil, err
 	}
 	req, err := mappingRequestFrom(params)
@@ -269,11 +270,11 @@ func (t *SetAccountingMappingTool) request(
 	if err != nil {
 		return nil, nil, nil, err
 	}
-	externalID, err := common.RequireString(params.Params, "externalId")
+	externalID, err := toolparams.RequireString(params.Params, "externalId")
 	if err != nil {
 		return nil, nil, nil, err
 	}
-	reason, err := common.RequireString(params.Params, "reason")
+	reason, err := toolparams.RequireString(params.Params, "reason")
 	if err != nil {
 		return nil, nil, nil, err
 	}
@@ -397,7 +398,7 @@ func (t *ClearAccountingMappingTool) Execute(
 		return err
 	}
 	_, err = t.mappings.Clear(ctx, &accountingmappingports.AccountingMappingActionRequest{
-		TenantInfo: common.TenantFrom(params),
+		TenantInfo: toolparams.TenantFrom(params),
 		UserID:     params.Actor.UserID,
 		ID:         row.ID,
 		Source:     accountingsync.MappingSourceAgent,
@@ -502,10 +503,10 @@ func (t *CreateAccountingReferenceRecordTool) Execute(
 	_, err = t.mappings.CreateReferenceRecord(
 		ctx,
 		&accountingmappingports.CreateAccountingReferenceRecordRequest{
-			TenantInfo: common.TenantFrom(params),
+			TenantInfo: toolparams.TenantFrom(params),
 			UserID:     params.Actor.UserID,
 			MappingID:  row.ID,
-			Name:       strings.TrimSpace(common.OptionalString(params.Params, "name")),
+			Name:       strings.TrimSpace(toolparams.OptionalString(params.Params, "name")),
 			Source:     accountingsync.MappingSourceAgent,
 		},
 	)
@@ -577,7 +578,7 @@ func (t *RefreshAccountingReferenceDataTool) setup(
 	ctx context.Context,
 	params *agenttoolports.ToolExecuteParams,
 ) (*accountingmappingports.AccountingSetupRequest, *accountingmappingports.AccountingMappingSummary, error) {
-	if err := common.GuardExecute(t, *params); err != nil {
+	if err := toolguard.GuardExecute(t, *params); err != nil {
 		return nil, nil, err
 	}
 	system, err := accountingSystemFrom(params.Params)
@@ -585,7 +586,7 @@ func (t *RefreshAccountingReferenceDataTool) setup(
 		return nil, nil, err
 	}
 	req := &accountingmappingports.AccountingSetupRequest{
-		TenantInfo:      common.TenantFrom(*params),
+		TenantInfo:      toolparams.TenantFrom(*params),
 		UserID:          params.Actor.UserID,
 		IntegrationType: system,
 	}

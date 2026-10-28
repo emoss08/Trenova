@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -62,16 +64,16 @@ var randomSelectionMoves = agenttoolschema.Source(
 )
 
 var dotTestFields = []string{
-	wfFieldWorkerID, paramDOTTestType, paramSubstance, common.FieldStatus, "result", paramIsDOT,
-	common.FieldReason, paramScheduledAt, paramCollection, paramSafetyEventID, paramDrawEntryID,
+	wfFieldWorkerID, paramDOTTestType, paramSubstance, changepreview.FieldStatus, "result", paramIsDOT,
+	changepreview.FieldReason, paramScheduledAt, paramCollection, paramSafetyEventID, paramDrawEntryID,
 	wfFieldNotes, "orderedById",
 }
 
 var drawFields = []string{
 	"periodKey",
-	common.FieldPeriodStart,
-	common.FieldPeriodEnd,
-	common.FieldStatus,
+	changepreview.FieldPeriodStart,
+	changepreview.FieldPeriodEnd,
+	changepreview.FieldStatus,
 	"poolSize",
 	"drugTarget",
 	"alcoholTarget",
@@ -171,31 +173,35 @@ func drawRecord(draw *workerdot.DOTRandomDraw) toolpreview.Record {
 }
 
 func scheduledTestFrom(params *agenttoolports.ToolExecuteParams) (*workerdot.WorkerDOTTest, error) {
-	workerID, err := common.RequirePulid(params.Params, common.ParamWorkerID)
+	workerID, err := toolparams.RequirePulid(params.Params, toolparams.ParamWorkerID)
 	if err != nil {
 		return nil, err
 	}
-	testType, err := common.RequireEnum(params.Params, paramDOTTestType, dotTestTypes.Values)
+	testType, err := toolparams.RequireEnum(params.Params, paramDOTTestType, dotTestTypes.Values)
 	if err != nil {
 		return nil, err
 	}
-	substance, err := common.RequireEnum(params.Params, paramSubstance, dotTestSubstances.Values)
+	substance, err := toolparams.RequireEnum(
+		params.Params,
+		paramSubstance,
+		dotTestSubstances.Values,
+	)
 	if err != nil {
 		return nil, err
 	}
-	scheduledAt, err := common.OptionalDateTime(params.Params, paramScheduledAt)
+	scheduledAt, err := toolparams.OptionalDateTime(params.Params, paramScheduledAt)
 	if err != nil {
 		return nil, err
 	}
-	reason, err := common.BoundedText(params.Params, common.FieldReason, wfNoteChars)
+	reason, err := toolparams.BoundedText(params.Params, changepreview.FieldReason, wfNoteChars)
 	if err != nil {
 		return nil, err
 	}
-	site, err := common.BoundedText(params.Params, paramCollection, wfShortChars)
+	site, err := toolparams.BoundedText(params.Params, paramCollection, wfShortChars)
 	if err != nil {
 		return nil, err
 	}
-	notes, err := common.BoundedText(params.Params, common.ParamNote, wfNoteChars)
+	notes, err := toolparams.BoundedText(params.Params, toolparams.ParamNote, wfNoteChars)
 	if err != nil {
 		return nil, err
 	}
@@ -217,10 +223,10 @@ func scheduledTestFrom(params *agenttoolports.ToolExecuteParams) (*workerdot.Wor
 		CollectionSite: site,
 		Notes:          notes,
 	}
-	if test.SafetyEventID, err = common.OptionalID(params.Params, paramSafetyEventID); err != nil {
+	if test.SafetyEventID, err = toolparams.OptionalID(params.Params, paramSafetyEventID); err != nil {
 		return nil, err
 	}
-	if test.DrawEntryID, err = common.OptionalID(params.Params, paramDrawEntryID); err != nil {
+	if test.DrawEntryID, err = toolparams.OptionalID(params.Params, paramDrawEntryID); err != nil {
 		return nil, err
 	}
 	return test, nil
@@ -239,13 +245,15 @@ func newScheduleDOTTestTool(tests DrugAlcoholKeeper) agenttoolports.AgentTool {
 		permission.ResourceWorkerDOTTest,
 		permission.OpCreate,
 	), map[string]any{
-		common.ParamWorkerID: common.WorkerProperty(),
-		paramDOTTestType:     agenttoolschema.Enum("Why the driver is tested.", dotTestTypes),
-		paramSubstance:       agenttoolschema.Enum("What is tested.", dotTestSubstances),
-		paramScheduledAt:     agenttoolschema.DateTime("When the collection is booked."),
-		common.FieldReason: wfNoteProperty("What prompted it. Required for a post-accident or " +
-			"reasonable-suspicion test; write what was observed or what happened."),
-		paramCollection: common.StringProperty("The collection site.", wfShortChars),
+		toolparams.ParamWorkerID: toolparams.WorkerProperty(),
+		paramDOTTestType:         agenttoolschema.Enum("Why the driver is tested.", dotTestTypes),
+		paramSubstance:           agenttoolschema.Enum("What is tested.", dotTestSubstances),
+		paramScheduledAt:         agenttoolschema.DateTime("When the collection is booked."),
+		changepreview.FieldReason: wfNoteProperty(
+			"What prompted it. Required for a post-accident or " +
+				"reasonable-suspicion test; write what was observed or what happened.",
+		),
+		paramCollection: toolparams.StringProperty("The collection site.", wfShortChars),
 		paramSafetyEventID: agenttoolschema.RecordIDText(
 			permission.ResourceWorkerSafetyEvent,
 			"For a post-accident test: the accident, from "+
@@ -256,16 +264,16 @@ func newScheduleDOTTestTool(tests DrugAlcoholKeeper) agenttoolports.AgentTool {
 				"worker_get_dot_random_draw.",
 			permission.KindDOTRandomSelection,
 		),
-		paramIsDOT: common.BooleanProperty(
+		paramIsDOT: toolparams.BooleanProperty(
 			"Whether it is a DOT-regulated test. Defaults to true; " +
 				"a company-policy test is false.",
 		),
-		common.ParamNote: wfNoteProperty("Anything the collector should know."),
-	}, common.ParamWorkerID, paramDOTTestType, paramSubstance)
+		toolparams.ParamNote: wfNoteProperty("Anything the collector should know."),
+	}, toolparams.ParamWorkerID, paramDOTTestType, paramSubstance)
 	spec.SearchTerms = []string{"drug test", "alcohol test", "random test", "collection"}
 
-	return common.NewReportingReceivableTool(spec,
-		common.ReceivablePlan[*workerdot.WorkerDOTTest, *workerdot.WorkerDOTTest]{
+	return toolspec.NewReportingReceivableTool(spec,
+		toolspec.ReceivablePlan[*workerdot.WorkerDOTTest, *workerdot.WorkerDOTTest]{
 			Request: scheduledTestFrom,
 			Plan: func(
 				ctx context.Context,
@@ -319,18 +327,18 @@ func reasonedRecordFrom(
 	idKey, reasonKey string,
 ) func(*agenttoolports.ToolExecuteParams) (*reasonedRecord, error) {
 	return func(params *agenttoolports.ToolExecuteParams) (*reasonedRecord, error) {
-		id, err := common.RequirePulid(params.Params, idKey)
+		id, err := toolparams.RequirePulid(params.Params, idKey)
 		if err != nil {
 			return nil, err
 		}
-		reason, err := common.RequireBoundedText(params.Params, reasonKey, wfNoteChars)
+		reason, err := toolparams.RequireBoundedText(params.Params, reasonKey, wfNoteChars)
 		if err != nil {
 			return nil, err
 		}
 		return &reasonedRecord{
 			id:     id,
 			reason: reason,
-			tenant: common.TenantFrom(*params),
+			tenant: toolparams.TenantFrom(*params),
 			userID: params.Actor.UserID,
 		}, nil
 	}
@@ -348,14 +356,14 @@ func newCancelDOTTestTool(tests DrugAlcoholKeeper) agenttoolports.AgentTool {
 	), map[string]any{
 		paramDOTTestID: agenttoolschema.RecordIDText(permission.ResourceWorkerDOTTest,
 			"The test, from worker_list_dot_tests. Never guess one."),
-		common.FieldReason: wfNoteProperty("Why the collection did not happen."),
-	}, paramDOTTestID, common.FieldReason), paramDOTTestID, permission.ResourceWorkerDOTTest)
+		changepreview.FieldReason: wfNoteProperty("Why the collection did not happen."),
+	}, paramDOTTestID, changepreview.FieldReason), paramDOTTestID, permission.ResourceWorkerDOTTest)
 	spec.MaxTier = agent.TierPropose
 	spec.Reversible = false
 
-	return common.NewReportingReceivableTool(spec,
-		common.ReceivablePlan[*reasonedRecord, *workerdrugalcoholservice.TestChange]{
-			Request: reasonedRecordFrom(paramDOTTestID, common.FieldReason),
+	return toolspec.NewReportingReceivableTool(spec,
+		toolspec.ReceivablePlan[*reasonedRecord, *workerdrugalcoholservice.TestChange]{
+			Request: reasonedRecordFrom(paramDOTTestID, changepreview.FieldReason),
 			Plan: func(
 				ctx context.Context,
 				req *reasonedRecord,
@@ -369,7 +377,7 @@ func newCancelDOTTestTool(tests DrugAlcoholKeeper) agenttoolports.AgentTool {
 				change *workerdrugalcoholservice.TestChange,
 			) (*agent.ToolPreview, error) {
 				recorded, err := toolpreview.Changed(dotTestRecord(change.Before), change.Before,
-					change.After, wfOptions(common.FieldStatus, "result", wfFieldNotes)...)
+					change.After, wfOptions(changepreview.FieldStatus, "result", wfFieldNotes)...)
 				if err != nil {
 					return nil, err
 				}
@@ -394,20 +402,20 @@ func newCancelDOTTestTool(tests DrugAlcoholKeeper) agenttoolports.AgentTool {
 func drawRequestFrom(
 	params *agenttoolports.ToolExecuteParams,
 ) (*workerdrugalcoholservice.RunDrawRequest, error) {
-	poolID, err := common.OptionalID(params.Params, paramPoolID)
+	poolID, err := toolparams.OptionalID(params.Params, paramPoolID)
 	if err != nil {
 		return nil, err
 	}
-	day, err := common.OptionalScheduleDay(params.Params, paramDrawDay)
+	day, err := toolparams.OptionalScheduleDay(params.Params, paramDrawDay)
 	if err != nil {
 		return nil, err
 	}
-	notes, err := common.BoundedText(params.Params, common.ParamNote, wfNoteChars)
+	notes, err := toolparams.BoundedText(params.Params, toolparams.ParamNote, wfNoteChars)
 	if err != nil {
 		return nil, err
 	}
 	req := &workerdrugalcoholservice.RunDrawRequest{
-		TenantInfo: common.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(*params),
 		PoolID:     poolID,
 		Notes:      notes,
 		UserID:     params.Actor.UserID,
@@ -440,12 +448,12 @@ func newRunDOTRandomDrawTool(draws DrugAlcoholKeeper) agenttoolports.AgentTool {
 			"A day inside the period to draw for, for a period that was " +
 				"missed. Defaults to today.",
 		),
-		common.ParamNote: wfNoteProperty("Anything the round's record should say."),
+		toolparams.ParamNote: wfNoteProperty("Anything the round's record should say."),
 	})
 	spec.Artifact = ""
 	spec.SearchTerms = []string{"random drug test", "random selection", "testing pool"}
 
-	return common.NewReceivableTool(spec, common.ReceivablePlan[
+	return toolspec.NewReceivableTool(spec, toolspec.ReceivablePlan[
 		*workerdrugalcoholservice.RunDrawRequest, *workerdot.DOTRandomDraw,
 	]{
 		Request: drawRequestFrom,
@@ -510,7 +518,7 @@ func renderDrawChange(summary string) func(
 ) (*agent.ToolPreview, error) {
 	return func(_ any, change *workerdrugalcoholservice.DrawChange) (*agent.ToolPreview, error) {
 		recorded, err := toolpreview.Changed(drawRecord(change.Before), change.Before,
-			change.After, wfOptions(common.FieldStatus, "finalizedAt", wfFieldNotes)...)
+			change.After, wfOptions(changepreview.FieldStatus, "finalizedAt", wfFieldNotes)...)
 		if err != nil {
 			return nil, err
 		}
@@ -539,15 +547,15 @@ func newFinalizeDOTRandomDrawTool(draws DrugAlcoholKeeper) agenttoolports.AgentT
 	}
 	render := renderDrawChange("Would finalize round %s; its selections become the record.")
 
-	return common.NewReceivableTool(
+	return toolspec.NewReceivableTool(
 		spec,
-		common.ReceivablePlan[*drawDecision, *workerdrugalcoholservice.DrawChange]{
+		toolspec.ReceivablePlan[*drawDecision, *workerdrugalcoholservice.DrawChange]{
 			Request: func(params *agenttoolports.ToolExecuteParams) (*drawDecision, error) {
-				id, err := common.RequirePulid(params.Params, paramDrawID)
+				id, err := toolparams.RequirePulid(params.Params, paramDrawID)
 				if err != nil {
 					return nil, err
 				}
-				return &drawDecision{id: id, tenant: common.TenantFrom(*params),
+				return &drawDecision{id: id, tenant: toolparams.TenantFrom(*params),
 					userID: params.Actor.UserID}, nil
 			},
 			Plan: func(
@@ -586,19 +594,19 @@ func newCancelDOTRandomDrawTool(draws DrugAlcoholKeeper) agenttoolports.AgentToo
 		permission.ResourceDOTRandomPool,
 		permission.OpManage,
 	), map[string]any{
-		paramDrawID:        drawIDProperty(),
-		common.FieldReason: wfNoteProperty("Why the round is cancelled."),
-	}, paramDrawID, common.FieldReason), paramDrawID, permission.ResourceDOTRandomPool)
+		paramDrawID:               drawIDProperty(),
+		changepreview.FieldReason: wfNoteProperty("Why the round is cancelled."),
+	}, paramDrawID, changepreview.FieldReason), paramDrawID, permission.ResourceDOTRandomPool)
 	spec.SearchTerms = []string{"draw again", "redo draw", "cancel selection"}
 	spec.MaxTier = agent.TierPropose
 	spec.Reversible = false
 	spec.Artifact = ""
 	render := renderDrawChange("Would cancel round %s so the period can be drawn again.")
 
-	return common.NewReceivableTool(spec, common.ReceivablePlan[
+	return toolspec.NewReceivableTool(spec, toolspec.ReceivablePlan[
 		*reasonedRecord, *workerdrugalcoholservice.DrawChange,
 	]{
-		Request: reasonedRecordFrom(paramDrawID, common.FieldReason),
+		Request: reasonedRecordFrom(paramDrawID, changepreview.FieldReason),
 		Plan: func(
 			ctx context.Context,
 			req *reasonedRecord,
@@ -642,31 +650,31 @@ func newUpdateDOTRandomSelectionTool(draws DrugAlcoholKeeper) agenttoolports.Age
 		),
 		paramSelectionMove: agenttoolschema.Enum("Notified, Excused or Missed.",
 			randomSelectionMoves),
-		paramExcuseReason: common.StringProperty("For Excused: why, such as extended leave.",
+		paramExcuseReason: toolparams.StringProperty("For Excused: why, such as extended leave.",
 			wfShortChars),
 	}, paramDrawEntryID, paramSelectionMove), paramDrawEntryID, permission.ResourceDOTRandomPool)
 
-	return common.NewReportingReceivableTool(spec, common.ReceivablePlan[
+	return toolspec.NewReportingReceivableTool(spec, toolspec.ReceivablePlan[
 		*workerdrugalcoholservice.UpdateEntryRequest, *workerdrugalcoholservice.EntryChange,
 	]{
 		Request: func(
 			params *agenttoolports.ToolExecuteParams,
 		) (*workerdrugalcoholservice.UpdateEntryRequest, error) {
-			id, err := common.RequirePulid(params.Params, paramDrawEntryID)
+			id, err := toolparams.RequirePulid(params.Params, paramDrawEntryID)
 			if err != nil {
 				return nil, err
 			}
-			status, err := common.RequireEnum(params.Params, paramSelectionMove,
+			status, err := toolparams.RequireEnum(params.Params, paramSelectionMove,
 				randomSelectionMoves.Values)
 			if err != nil {
 				return nil, err
 			}
-			excuse, err := common.BoundedText(params.Params, paramExcuseReason, wfShortChars)
+			excuse, err := toolparams.BoundedText(params.Params, paramExcuseReason, wfShortChars)
 			if err != nil {
 				return nil, err
 			}
 			return &workerdrugalcoholservice.UpdateEntryRequest{
-				TenantInfo:   common.TenantFrom(*params),
+				TenantInfo:   toolparams.TenantFrom(*params),
 				EntryID:      id,
 				Status:       status,
 				ExcuseReason: excuse,
@@ -692,7 +700,7 @@ func newUpdateDOTRandomSelectionTool(draws DrugAlcoholKeeper) agenttoolports.Age
 					fmt.Sprintf("%s selection #%d", change.Before.Substance, change.Before.Rank),
 					change.Before.Version),
 				change.Before, change.After,
-				append(wfOptions(common.FieldStatus, "notifiedAt", paramExcuseReason),
+				append(wfOptions(changepreview.FieldStatus, "notifiedAt", paramExcuseReason),
 					toolpreview.Volatile("notifiedAt"))...)
 			if err != nil {
 				return nil, err

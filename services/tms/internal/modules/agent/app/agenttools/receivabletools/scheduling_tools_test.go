@@ -6,7 +6,9 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/app/orgstructureservice"
@@ -215,10 +217,10 @@ func TestAssignWorkerShift_PreviewsTheNewPatternAndTheOneItEnds(t *testing.T) {
 	tool := NewAssignWorkerShiftTool(schedules, NewTeamScope(permissions, nil))
 	workerID, templateID := pulid.MustNew("wrk_"), pulid.MustNew("shft_")
 	params := agenttoolstest.ExecuteParams(map[string]any{
-		common.ParamWorkerID:      workerID.String(),
-		paramShiftTemplateID:      templateID.String(),
-		common.FieldEffectiveFrom: "2026-10-12",
-		paramCycleOffsetWeeks:     float64(1),
+		toolparams.ParamWorkerID:         workerID.String(),
+		paramShiftTemplateID:             templateID.String(),
+		changepreview.FieldEffectiveFrom: "2026-10-12",
+		paramCycleOffsetWeeks:            float64(1),
 	})
 
 	preview := agenttoolstest.PreviewWithoutWrites(
@@ -264,9 +266,9 @@ func TestAssignWorkerShift_ATeamGrantReachesOnlyTheTeam(t *testing.T) {
 	tool := NewAssignWorkerShiftTool(schedules, scope)
 	paramsFor := func(workerID pulid.ID) agenttoolports.ToolExecuteParams {
 		return agenttoolstest.ExecuteParams(map[string]any{
-			common.ParamWorkerID:      workerID.String(),
-			paramShiftTemplateID:      pulid.MustNew("shft_").String(),
-			common.FieldEffectiveFrom: "2026-10-12",
+			toolparams.ParamWorkerID:         workerID.String(),
+			paramShiftTemplateID:             pulid.MustNew("shft_").String(),
+			changepreview.FieldEffectiveFrom: "2026-10-12",
 		})
 	}
 
@@ -298,8 +300,8 @@ func TestEndWorkerShiftAssignment_ChecksTheTeamOfTheAssignmentsWorker(t *testing
 		teams,
 	))
 	params := agenttoolstest.ExecuteParams(map[string]any{
-		paramShiftAssignmentID:  schedules.assignment.ID.String(),
-		common.FieldEffectiveTo: "2026-11-01",
+		paramShiftAssignmentID:         schedules.assignment.ID.String(),
+		changepreview.FieldEffectiveTo: "2026-11-01",
 	})
 
 	preview := agenttoolstest.PreviewWithoutWrites(
@@ -319,8 +321,8 @@ func TestEndWorkerShiftAssignment_ChecksTheTeamOfTheAssignmentsWorker(t *testing
 
 	require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(),
 		agenttoolstest.ExecuteParams(map[string]any{
-			paramShiftAssignmentID:  schedules.assignment.ID.String(),
-			common.FieldEffectiveTo: float64(1_900_000_000),
+			paramShiftAssignmentID:         schedules.assignment.ID.String(),
+			changepreview.FieldEffectiveTo: float64(1_900_000_000),
 		})))
 }
 
@@ -332,10 +334,10 @@ func TestSetWorkerAvailabilityPreference_ReadsTheWeekdayByName(t *testing.T) {
 		&scopedPermissions{allowed: true}, nil))
 	workerID := pulid.MustNew("wrk_")
 	params := agenttoolstest.ExecuteParams(map[string]any{
-		common.ParamWorkerID: workerID.String(),
-		paramDayOfWeek:       "Saturday",
-		paramPreference:      "Unavailable",
-		common.ParamNote:     "Coaches his son's team",
+		toolparams.ParamWorkerID: workerID.String(),
+		paramDayOfWeek:           "Saturday",
+		paramPreference:          "Unavailable",
+		toolparams.ParamNote:     "Coaches his son's team",
 	})
 
 	preview := agenttoolstest.PreviewWithoutWrites(
@@ -354,9 +356,9 @@ func TestSetWorkerAvailabilityPreference_ReadsTheWeekdayByName(t *testing.T) {
 	assert.Equal(t, permission.OpUpdate, tool.Policy().Operation)
 
 	for name, raw := range map[string]map[string]any{
-		"a numbered day":     {common.ParamWorkerID: workerID.String(), paramDayOfWeek: float64(6), paramPreference: "Available"},
-		"an unknown day":     {common.ParamWorkerID: workerID.String(), paramDayOfWeek: "Funday", paramPreference: "Available"},
-		"a wrong preference": {common.ParamWorkerID: workerID.String(), paramDayOfWeek: "Monday", paramPreference: "Maybe"},
+		"a numbered day":     {toolparams.ParamWorkerID: workerID.String(), paramDayOfWeek: float64(6), paramPreference: "Available"},
+		"an unknown day":     {toolparams.ParamWorkerID: workerID.String(), paramDayOfWeek: "Funday", paramPreference: "Available"},
+		"a wrong preference": {toolparams.ParamWorkerID: workerID.String(), paramDayOfWeek: "Monday", paramPreference: "Maybe"},
 	} {
 		require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(),
 			agenttoolstest.ExecuteParams(raw)), name)
@@ -374,7 +376,7 @@ func TestProposeShiftSwap_RaisesATradeWithBothDays(t *testing.T) {
 		paramCounterpartyWorkerID: counterparty.String(),
 		paramShiftDate:            "2030-03-18",
 		paramCounterpartyDate:     "2030-03-20",
-		common.FieldReason:        "Wedding",
+		changepreview.FieldReason: "Wedding",
 	})
 
 	preview := agenttoolstest.PreviewWithoutWrites(
@@ -420,8 +422,8 @@ func TestShiftSwapDecisions_EachNamesItsOwnPermission(t *testing.T) {
 		assert.Equal(t, []agent.EgressClass{agent.EgressDriverVisible}, policy.Egress, policy.Name)
 
 		params := agenttoolstest.ApprovedParams(map[string]any{
-			paramSwapID:      schedules.swap.ID.String(),
-			common.ParamNote: "Covered",
+			paramSwapID:          schedules.swap.ID.String(),
+			toolparams.ParamNote: "Covered",
 		})
 		preview := agenttoolstest.PreviewWithoutWrites(
 			t,
@@ -436,7 +438,7 @@ func TestShiftSwapDecisions_EachNamesItsOwnPermission(t *testing.T) {
 			agenttoolstest.FieldByPath(
 				t,
 				agenttoolstest.PreviewChange(t, preview, 0),
-				common.FieldStatus,
+				changepreview.FieldStatus,
 			).After,
 			policy.Name,
 		)
@@ -447,5 +449,5 @@ func TestShiftSwapDecisions_EachNamesItsOwnPermission(t *testing.T) {
 	approve := NewApproveShiftSwapTool(schedules)
 	require.ErrorIs(t, approve.Execute(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
 		paramSwapID: schedules.swap.ID.String(),
-	})), common.ErrNeedsAPersonsApproval)
+	})), toolspec.ErrNeedsAPersonsApproval)
 }

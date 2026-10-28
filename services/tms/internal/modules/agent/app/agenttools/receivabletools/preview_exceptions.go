@@ -6,7 +6,8 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentexceptionservice"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
@@ -15,19 +16,19 @@ import (
 )
 
 var raisedExceptionFields = []string{
-	common.FieldCategory,
-	common.FieldSeverity,
-	common.FieldSubjectType,
-	common.FieldSubjectID,
-	common.FieldAttemptSummary,
-	common.FieldBlastRadius,
+	changepreview.FieldCategory,
+	changepreview.FieldSeverity,
+	changepreview.FieldSubjectType,
+	changepreview.FieldSubjectID,
+	changepreview.FieldAttemptSummary,
+	changepreview.FieldBlastRadius,
 	"resolutionState",
 }
 
 var raisedExceptionLabels = map[string]string{
-	common.FieldSubjectID:      "About",
-	common.FieldAttemptSummary: "What was tried",
-	common.FieldBlastRadius:    "Records affected",
+	changepreview.FieldSubjectID:      "About",
+	changepreview.FieldAttemptSummary: "What was tried",
+	changepreview.FieldBlastRadius:    "Records affected",
 }
 
 func raisedExceptionOptions(subjectType agent.SubjectType) []toolpreview.Option {
@@ -37,7 +38,7 @@ func raisedExceptionOptions(subjectType agent.SubjectType) []toolpreview.Option 
 	}
 	if resource, ok := subjectType.Resource(); ok {
 		opts = append(opts, toolpreview.WithRefs(map[string]permission.Resource{
-			common.FieldSubjectID: resource,
+			changepreview.FieldSubjectID: resource,
 		}))
 	}
 
@@ -55,7 +56,7 @@ func previewRaisedException(
 	)
 	entity, err := agentexceptionservice.PlanException(request)
 	if err != nil {
-		return common.WarnWouldFail(toolpreview.Build(summary), err), nil
+		return changepreview.WarnWouldFail(toolpreview.Build(summary), err), nil
 	}
 
 	change, err := toolpreview.Create(toolpreview.Record{
@@ -73,14 +74,17 @@ func (t *RaiseExceptionTool) Preview(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
-	if err := common.GuardPreview(t, &params); err != nil {
+	if err := toolguard.GuardPreview(t, &params); err != nil {
 		return nil, err
 	}
 
 	request, err := t.request(ctx, &params)
 	if err != nil {
 		if errors.Is(err, ErrMissingRun) || errors.Is(err, ErrSubjectUncheckable) {
-			return common.WarnWouldFail(toolpreview.Build("Would raise an exception."), err), nil
+			return changepreview.WarnWouldFail(
+				toolpreview.Build("Would raise an exception."),
+				err,
+			), nil
 		}
 
 		return nil, err

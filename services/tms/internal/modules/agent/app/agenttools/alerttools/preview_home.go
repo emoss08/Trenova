@@ -4,7 +4,7 @@ import (
 	"context"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -44,7 +44,7 @@ func (p *homePlan) change() (*agent.RecordChange, error) {
 	return toolpreview.Changed(toolpreview.Record{
 		Resource: permission.ResourceHomeLayoutPreset,
 		Label:    homePageLabel,
-		Version:  common.PreviewVersion(p.current.Version),
+		Version:  changepreview.PreviewVersion(p.current.Version),
 	}, homePageOf(p.current.Layout), homePageOf(p.update.Document.Layout),
 		toolpreview.Labels(homePageLabels),
 	)
@@ -67,8 +67,11 @@ func (e homeEditor) PlanPreview(
 ) (*agent.ToolPreview, error) {
 	plan, err := e.plan(ctx, *params, edit)
 	if err != nil {
-		if common.IsRefusal(err) {
-			return common.WarnWouldFail(toolpreview.Build("Would change your home page."), err), nil
+		if changepreview.IsRefusal(err) {
+			return changepreview.WarnWouldFail(
+				toolpreview.Build("Would change your home page."),
+				err,
+			), nil
 		}
 
 		return nil, err

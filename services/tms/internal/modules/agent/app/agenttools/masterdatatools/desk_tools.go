@@ -5,7 +5,10 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/detentionpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -94,13 +97,13 @@ func (t *EscalateDetentionTool) ParamSchema() map[string]any {
 					"detention_get_occurrence.",
 				permission.KindDetentionOccurrence,
 			),
-			common.ParamReason: map[string]any{
+			toolparams.ParamReason: map[string]any{
 				"type": "string",
 				"description": "Why this needs a person, in a sentence they can act on: " +
 					"what is blocking the notice, and what the charge stands at.",
 			},
 		},
-		"required":             []string{"occurrenceId", common.ParamReason},
+		"required":             []string{"occurrenceId", toolparams.ParamReason},
 		"additionalProperties": false,
 	}
 }
@@ -125,15 +128,15 @@ func (t *EscalateDetentionTool) Policy() agenttoolports.ToolPolicy {
 func (t *EscalateDetentionTool) arguments(
 	params agenttoolports.ToolExecuteParams,
 ) (pulid.ID, string, error) {
-	if err := common.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return "", "", err
 	}
 
-	occurrenceID, err := common.RequirePulid(params.Params, "occurrenceId")
+	occurrenceID, err := toolparams.RequirePulid(params.Params, "occurrenceId")
 	if err != nil {
 		return "", "", err
 	}
-	reason, err := common.RequireString(params.Params, common.ParamReason)
+	reason, err := toolparams.RequireString(params.Params, toolparams.ParamReason)
 	if err != nil {
 		return "", "", err
 	}
@@ -167,7 +170,7 @@ func (t *EscalateDetentionTool) occurrence(
 		ctx,
 		&detentionports.GetDetentionOccurrenceByIDRequest{
 			OccurrenceID: occurrenceID,
-			TenantInfo:   common.TenantFrom(params),
+			TenantInfo:   toolparams.TenantFrom(params),
 		},
 	)
 	if err != nil {
@@ -188,7 +191,7 @@ func (t *EscalateDetentionTool) Execute(
 
 	_, err = t.detention.Escalate(ctx, detentionservice.EscalateParams{
 		OccurrenceID: occurrenceID,
-		TenantInfo:   common.TenantFrom(params),
+		TenantInfo:   toolparams.TenantFrom(params),
 		Reason:       reason,
 		UserID:       params.Actor.UserID,
 	})
@@ -197,7 +200,7 @@ func (t *EscalateDetentionTool) Execute(
 }
 
 func (t *EscalateDetentionTool) Target(params map[string]any) (agenttoolports.ToolTarget, bool) {
-	return common.TargetOf(params, "occurrenceId", permission.ResourceDetention)
+	return toolparams.TargetOf(params, "occurrenceId", permission.ResourceDetention)
 }
 
 type detentionApprover interface {
@@ -285,15 +288,15 @@ func (t *ApproveDetentionTool) Policy() agenttoolports.ToolPolicy {
 func (t *ApproveDetentionTool) arguments(
 	params agenttoolports.ToolExecuteParams,
 ) (pulid.ID, string, error) {
-	if err := common.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return "", "", err
 	}
 
-	occurrenceID, err := common.RequirePulid(params.Params, "occurrenceId")
+	occurrenceID, err := toolparams.RequirePulid(params.Params, "occurrenceId")
 	if err != nil {
 		return "", "", err
 	}
-	evidence, err := common.RequireString(params.Params, "evidence")
+	evidence, err := toolparams.RequireString(params.Params, "evidence")
 	if err != nil {
 		return "", "", err
 	}
@@ -310,7 +313,7 @@ func (t *ApproveDetentionTool) pending(
 		ctx,
 		&detentionports.GetDetentionOccurrenceByIDRequest{
 			OccurrenceID: occurrenceID,
-			TenantInfo:   common.TenantFrom(params),
+			TenantInfo:   toolparams.TenantFrom(params),
 		},
 	)
 	if err != nil {
@@ -360,7 +363,7 @@ func (t *ApproveDetentionTool) request(
 
 	return detentionservice.ApproveParams{
 		OccurrenceID: occurrenceID,
-		TenantInfo:   common.TenantFrom(params),
+		TenantInfo:   toolparams.TenantFrom(params),
 		UserID:       params.Actor.UserID,
 		Note:         evidence,
 	}, detail, nil
@@ -374,7 +377,7 @@ func (t *ApproveDetentionTool) Execute(
 		return err
 	}
 	if !params.ApprovedFromProposal() {
-		return common.ErrApprovalNeedsAPerson
+		return detentionpreview.ErrApprovalNeedsAPerson
 	}
 
 	request, _, err := t.request(ctx, params)
@@ -388,7 +391,7 @@ func (t *ApproveDetentionTool) Execute(
 }
 
 func (t *ApproveDetentionTool) Target(params map[string]any) (agenttoolports.ToolTarget, bool) {
-	return common.TargetOf(params, "occurrenceId", permission.ResourceDetention)
+	return toolparams.TargetOf(params, "occurrenceId", permission.ResourceDetention)
 }
 
 type credentialActor interface {
@@ -431,7 +434,7 @@ func (t *RequestCredentialRenewalTool) ParamSchema() map[string]any {
 	return map[string]any{
 		"type": "object",
 		"properties": map[string]any{
-			common.ParamWorkerID: agenttoolschema.RecordIDText(
+			toolparams.ParamWorkerID: agenttoolschema.RecordIDText(
 				permission.ResourceWorker,
 				"The driver whose papers are due, from worker_get.",
 			),
@@ -443,13 +446,17 @@ func (t *RequestCredentialRenewalTool) ParamSchema() map[string]any {
 				schemaItems: map[string]any{"type": "string"},
 				"minItems":  1,
 			}, permission.ResourceWorkerCredential),
-			common.ParamNote: map[string]any{
+			toolparams.ParamNote: map[string]any{
 				"type": "string",
 				"description": "What the driver is being asked for, in their words: " +
 					"which papers, by when, and where to send them.",
 			},
 		},
-		"required":             []string{common.ParamWorkerID, "credentialIds", common.ParamNote},
+		"required": []string{
+			toolparams.ParamWorkerID,
+			"credentialIds",
+			toolparams.ParamNote,
+		},
 		"additionalProperties": false,
 	}
 }
@@ -475,17 +482,17 @@ func (t *RequestCredentialRenewalTool) arguments(
 	params agenttoolports.ToolExecuteParams,
 ) (workercredentialservice.RenewalRequest, error) {
 	var out workercredentialservice.RenewalRequest
-	if err := common.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return out, err
 	}
 
-	workerID, err := common.RequirePulid(params.Params, common.ParamWorkerID)
+	workerID, err := toolparams.RequirePulid(params.Params, toolparams.ParamWorkerID)
 	if err != nil {
 		return out, err
 	}
 
 	var rawIDs []string
-	if err = common.DecodeParam(params.Params, "credentialIds", &rawIDs); err != nil {
+	if err = toolparams.DecodeParam(params.Params, "credentialIds", &rawIDs); err != nil {
 		return out, err
 	}
 	if len(rawIDs) == 0 {
@@ -500,14 +507,14 @@ func (t *RequestCredentialRenewalTool) arguments(
 		credentialIDs = append(credentialIDs, id)
 	}
 
-	note, err := common.RequireString(params.Params, common.ParamNote)
+	note, err := toolparams.RequireString(params.Params, toolparams.ParamNote)
 	if err != nil {
 		return out, err
 	}
 	if len(note) > maxRenewalNoteChars {
 		return out, fmt.Errorf(
 			"parameter %q is %d characters, and the ask is capped at %d",
-			common.ParamNote, len(note), maxRenewalNoteChars,
+			toolparams.ParamNote, len(note), maxRenewalNoteChars,
 		)
 	}
 
@@ -515,7 +522,7 @@ func (t *RequestCredentialRenewalTool) arguments(
 		WorkerID:      workerID,
 		CredentialIDs: credentialIDs,
 		Note:          strings.TrimSpace(note),
-		TenantInfo:    common.TenantFrom(params),
+		TenantInfo:    toolparams.TenantFrom(params),
 		RequestedByID: params.Actor.UserID,
 		CorrelationID: params.IdempotencyKey,
 	}, nil
@@ -545,7 +552,7 @@ func (t *RequestCredentialRenewalTool) Execute(
 func (t *RequestCredentialRenewalTool) Target(
 	params map[string]any,
 ) (agenttoolports.ToolTarget, bool) {
-	return common.TargetOf(params, common.ParamWorkerID, permission.ResourceWorker)
+	return toolparams.TargetOf(params, toolparams.ParamWorkerID, permission.ResourceWorker)
 }
 
 type workerHolder interface {
@@ -585,17 +592,17 @@ func (t *PlaceWorkerDispatchHoldTool) ParamSchema() map[string]any {
 	return map[string]any{
 		"type": "object",
 		"properties": map[string]any{
-			common.ParamWorkerID: agenttoolschema.RecordIDText(
+			toolparams.ParamWorkerID: agenttoolschema.RecordIDText(
 				permission.ResourceWorker,
 				"The driver to hold, from worker_get.",
 			),
-			common.ParamReason: map[string]any{
+			toolparams.ParamReason: map[string]any{
 				"type": "string",
 				"description": "Which paper lapsed and when, in a sentence a dispatcher " +
 					"can read on the board.",
 			},
 		},
-		"required":             []string{common.ParamWorkerID, common.ParamReason},
+		"required":             []string{toolparams.ParamWorkerID, toolparams.ParamReason},
 		"additionalProperties": false,
 	}
 }
@@ -621,15 +628,15 @@ func (t *PlaceWorkerDispatchHoldTool) arguments(
 	params agenttoolports.ToolExecuteParams,
 ) (workerservice.DispatchHoldRequest, error) {
 	var out workerservice.DispatchHoldRequest
-	if err := common.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return out, err
 	}
 
-	workerID, err := common.RequirePulid(params.Params, common.ParamWorkerID)
+	workerID, err := toolparams.RequirePulid(params.Params, toolparams.ParamWorkerID)
 	if err != nil {
 		return out, err
 	}
-	reason, err := common.RequireString(params.Params, common.ParamReason)
+	reason, err := toolparams.RequireString(params.Params, toolparams.ParamReason)
 	if err != nil {
 		return out, err
 	}
@@ -638,7 +645,7 @@ func (t *PlaceWorkerDispatchHoldTool) arguments(
 		WorkerID:   workerID,
 		Held:       true,
 		Reason:     strings.TrimSpace(reason),
-		TenantInfo: common.TenantFrom(params),
+		TenantInfo: toolparams.TenantFrom(params),
 		Actor:      params.Actor,
 	}, nil
 }
@@ -683,7 +690,7 @@ func (t *PlaceWorkerDispatchHoldTool) Execute(
 func (t *PlaceWorkerDispatchHoldTool) Target(
 	params map[string]any,
 ) (agenttoolports.ToolTarget, bool) {
-	return common.TargetOf(params, common.ParamWorkerID, permission.ResourceWorker)
+	return toolparams.TargetOf(params, toolparams.ParamWorkerID, permission.ResourceWorker)
 }
 
 type carrierIntelActor interface {
@@ -808,11 +815,11 @@ func (t *carrierIntelEventTool) ParamSchema() map[string]any {
 					"or this run's subject. Never guess one.",
 				permission.KindCarrierIntelligenceEvent,
 			),
-			common.ParamNote: map[string]any{
+			toolparams.ParamNote: map[string]any{
 				"type":        "string",
 				"description": "Why you are " + verb + " it, for the carrier's record.",
 			},
-			common.FieldResolution: agenttoolschema.Enum(
+			changepreview.FieldResolution: agenttoolschema.Enum(
 				"What came of the finding. Only used when closing one.",
 				carrierFindingResolutions,
 			),
@@ -826,38 +833,38 @@ func (t *carrierIntelEventTool) ParamSchema() map[string]any {
 // finding has to say what came of it, acknowledging one does not.
 func (t *carrierIntelEventTool) required() []string {
 	if t.resolves {
-		return []string{"eventId", "resolution", common.ParamNote}
+		return []string{"eventId", "resolution", toolparams.ParamNote}
 	}
 
-	return []string{"eventId", common.ParamNote}
+	return []string{"eventId", toolparams.ParamNote}
 }
 
 func (t *carrierIntelEventTool) arguments(
 	params agenttoolports.ToolExecuteParams,
 ) (*carrierintelservice.ResolveEventRequest, error) {
-	if err := common.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return nil, err
 	}
 
-	eventID, err := common.RequirePulid(params.Params, "eventId")
+	eventID, err := toolparams.RequirePulid(params.Params, "eventId")
 	if err != nil {
 		return nil, err
 	}
-	note, err := common.RequireString(params.Params, common.ParamNote)
+	note, err := toolparams.RequireString(params.Params, toolparams.ParamNote)
 	if err != nil {
 		return nil, err
 	}
 
 	request := &carrierintelservice.ResolveEventRequest{
 		EventID:    eventID,
-		TenantInfo: common.TenantFrom(params),
+		TenantInfo: toolparams.TenantFrom(params),
 		Note:       strings.TrimSpace(note),
 	}
 	if !t.resolves {
 		return request, nil
 	}
 
-	rawResolution, err := common.RequireString(params.Params, "resolution")
+	rawResolution, err := toolparams.RequireString(params.Params, "resolution")
 	if err != nil {
 		return nil, err
 	}
@@ -911,5 +918,5 @@ func (t *carrierIntelEventTool) Execute(
 }
 
 func (t *carrierIntelEventTool) Target(params map[string]any) (agenttoolports.ToolTarget, bool) {
-	return common.TargetOf(params, "eventId", permission.ResourceCarrierIntelligence)
+	return toolparams.TargetOf(params, "eventId", permission.ResourceCarrierIntelligence)
 }

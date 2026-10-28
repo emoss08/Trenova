@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/operationstools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -26,8 +26,8 @@ const transferFieldReason = "rejectionReason"
 const tradingPartnerFallback = "The trading partner"
 
 var transferPreviewLabels = map[string]string{
-	common.FieldStatus:  "Tender status",
-	transferFieldReason: "Reason given to the partner",
+	changepreview.FieldStatus: "Tender status",
+	transferFieldReason:       "Reason given to the partner",
 }
 
 func (t *EdiTransferDecisionTool) Preview(
@@ -36,8 +36,8 @@ func (t *EdiTransferDecisionTool) Preview(
 ) (*agent.ToolPreview, error) {
 	call, outcome, err := t.outcome(ctx, &params)
 	if err != nil {
-		if common.IsRefusal(err) || errortypes.IsNotFoundError(err) {
-			return common.WarnWouldFail(toolpreview.Build(t.decision.description), err), nil
+		if changepreview.IsRefusal(err) || errortypes.IsNotFoundError(err) {
+			return changepreview.WarnWouldFail(toolpreview.Build(t.decision.description), err), nil
 		}
 
 		return nil, err
@@ -53,7 +53,7 @@ func (t *EdiTransferDecisionTool) Preview(
 		preview = toolpreview.Build(summary, changes...)
 	}
 
-	return common.WarnWouldFail(preview, outcome.refusal), nil
+	return changepreview.WarnWouldFail(preview, outcome.refusal), nil
 }
 
 func tenderDecisionChanges(outcome *tenderOutcome, orgID pulid.ID) ([]*agent.RecordChange, error) {
@@ -61,10 +61,10 @@ func tenderDecisionChanges(outcome *tenderOutcome, orgID pulid.ID) ([]*agent.Rec
 		Resource: permission.ResourceEDI,
 		ID:       outcome.before.ID,
 		Label:    transferLabel(outcome.before, orgID),
-		Version:  common.PinnedVersion(outcome.before.Version),
+		Version:  changepreview.PinnedVersion(outcome.before.Version),
 	}
 	status, err := toolpreview.Changed(record, outcome.before, outcome.after,
-		toolpreview.Only(common.FieldStatus, transferFieldReason),
+		toolpreview.Only(changepreview.FieldStatus, transferFieldReason),
 		toolpreview.Labels(transferPreviewLabels),
 	)
 	if err != nil {

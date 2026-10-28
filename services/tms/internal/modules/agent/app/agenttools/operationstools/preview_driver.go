@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/outboundpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/ptopreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -29,7 +31,7 @@ type ptoTransitionPreviewer interface {
 }
 
 type ptoRejecter interface {
-	common.PtoDecider
+	ptopreview.PtoDecider
 	ptoTransitionPreviewer
 }
 
@@ -49,11 +51,11 @@ func (t *NotifyDriverTool) Preview(
 
 	preview := toolpreview.Build(
 		fmt.Sprintf("Would send %s a %s-priority Dash message: %s",
-			common.DriverName(notice), notice.Priority, notice.Title),
-		common.DriverMessageSend(notice),
+			outboundpreview.DriverName(notice), notice.Priority, notice.Title),
+		outboundpreview.DriverMessageSend(notice),
 	)
-	common.WarnDriverUnreachable(preview, notice)
-	common.WarnSensitiveContent(preview, notice.Title, notice.Message)
+	outboundpreview.WarnDriverUnreachable(preview, notice)
+	outboundpreview.WarnSensitiveContent(preview, notice.Title, notice.Message)
 
 	return preview, nil
 }
@@ -124,7 +126,7 @@ func ptoDecisionPreview(
 			Resource: permission.ResourceWorkerPTO,
 			ID:       decision.Before.ID,
 			Label:    PtoLabel(decision.Before, decision.Location),
-			Version:  common.PinnedVersion(decision.Before.Version),
+			Version:  changepreview.PinnedVersion(decision.Before.Version),
 		},
 		decision.Before,
 		decision.After,
@@ -136,14 +138,14 @@ func ptoDecisionPreview(
 
 	changes := []*agent.RecordChange{status}
 	if decision.Driver != nil {
-		changes = append(changes, common.DriverMessageSend(decision.Driver))
+		changes = append(changes, outboundpreview.DriverMessageSend(decision.Driver))
 	}
 	if decision.SMS != nil {
 		changes = append(changes, toolpreview.Send(
 			toolpreview.Record{
 				Resource: permission.ResourceWorker,
 				ID:       decision.Before.WorkerID,
-				Label:    common.DriverName(decision.Driver),
+				Label:    outboundpreview.DriverName(decision.Driver),
 			},
 			&agent.MessagePreview{
 				Channel: agent.MessageChannelSMS,
@@ -155,7 +157,7 @@ func ptoDecisionPreview(
 
 	preview := toolpreview.Build(summary, changes...)
 	if decision.Driver != nil {
-		common.WarnDriverUnreachable(preview, decision.Driver)
+		outboundpreview.WarnDriverUnreachable(preview, decision.Driver)
 	}
 
 	return preview, nil

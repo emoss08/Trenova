@@ -3,7 +3,7 @@ package reporttools
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -56,7 +56,7 @@ func (t *CreateReportTool) ExecuteWithResult(
 
 	if created == nil {
 		return &agent.ToolExecutionResult{
-			Action: common.ResultCreated,
+			Action: changepreview.ResultCreated,
 			Kind:   reportRecordEntity,
 		}, nil
 	}
@@ -68,7 +68,7 @@ func (t *CreateReportTool) ExecuteWithResult(
 // report tools take and as the record it opens as.
 func reportResult(id, name string) *agent.ToolExecutionResult {
 	return &agent.ToolExecutionResult{
-		Action: common.ResultCreated,
+		Action: changepreview.ResultCreated,
 		Kind:   reportRecordEntity,
 		Name:   name,
 		IDs:    map[string]string{"definitionId": id},

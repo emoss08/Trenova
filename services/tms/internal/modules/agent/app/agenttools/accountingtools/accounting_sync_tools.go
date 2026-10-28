@@ -11,7 +11,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingsyncservice"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -129,7 +131,7 @@ func syncDocumentLabel(record *accountingsync.AccountingSyncRecord) string {
 }
 
 func syncReasonFrom(params map[string]any, why string) (string, error) {
-	raw, err := common.RequireString(params, paramSyncReason)
+	raw, err := toolparams.RequireString(params, paramSyncReason)
 	if err != nil {
 		return "", errortypes.NewValidationError(paramSyncReason, errortypes.ErrRequired, why)
 	}
@@ -300,7 +302,7 @@ func (t *RetryAccountingSyncTool) plan(
 	ctx context.Context,
 	params *agenttoolports.ToolExecuteParams,
 ) (*retryPlan, error) {
-	if err := common.GuardPreview(t, params); err != nil {
+	if err := toolguard.GuardPreview(t, params); err != nil {
 		return nil, err
 	}
 	system, err := accountingSystemFrom(params.Params)
@@ -317,7 +319,7 @@ func (t *RetryAccountingSyncTool) plan(
 	}
 	var ids []pulid.ID
 	if _, named := params.Params[ParamSyncRecordIDs]; named {
-		if ids, err = common.RequirePulidSlice(
+		if ids, err = toolparams.RequirePulidSlice(
 			params.Params,
 			ParamSyncRecordIDs,
 			maxSyncRetryIDs,
@@ -337,7 +339,7 @@ func (t *RetryAccountingSyncTool) plan(
 		return nil, errUnpinnedRetry
 	}
 
-	tenant := common.TenantFrom(*params)
+	tenant := toolparams.TenantFrom(*params)
 	summary, err := syncingConnectionFor(ctx, t.sync, tenant, system)
 	if err != nil {
 		return nil, err
@@ -390,7 +392,7 @@ func (t *RetryAccountingSyncTool) ResolveProposalSelection(
 	if _, named := params.Params[ParamSyncRecordIDs]; named {
 		return params.Params, nil
 	}
-	if err := common.GuardPreview(t, &params); err != nil {
+	if err := toolguard.GuardPreview(t, &params); err != nil {
 		return nil, err
 	}
 	system, err := accountingSystemFrom(params.Params)
@@ -409,7 +411,7 @@ func (t *RetryAccountingSyncTool) ResolveProposalSelection(
 		return params.Params, nil
 	}
 
-	candidates := retryCandidatesRequest(common.TenantFrom(params), system, categories)
+	candidates := retryCandidatesRequest(toolparams.TenantFrom(params), system, categories)
 	candidates.Cursor.Limit = maxSyncRetryIDs
 	page, err := t.sync.ListRecords(ctx, candidates)
 	if err != nil {
@@ -475,7 +477,7 @@ func (t *RetryAccountingSyncTool) Execute(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
-	if err := common.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
 	}
 	plan, err := t.plan(ctx, &params)
@@ -545,17 +547,17 @@ func (t *SkipAccountingSyncTool) Policy() agenttoolports.ToolPolicy {
 // Target names the record this call would change, so a proposal to skip it is
 // refused if the record moved on, such as being sent, before it is approved.
 func (t *SkipAccountingSyncTool) Target(params map[string]any) (agenttoolports.ToolTarget, bool) {
-	return common.TargetOf(params, paramSyncRecordID, permission.ResourceAccountingSync)
+	return toolparams.TargetOf(params, paramSyncRecordID, permission.ResourceAccountingSync)
 }
 
 func (t *SkipAccountingSyncTool) request(
 	ctx context.Context,
 	params *agenttoolports.ToolExecuteParams,
 ) (*accountingsyncports.SkipAccountingSyncRequest, *accountingsync.AccountingSyncRecord, error) {
-	if err := common.GuardExecute(t, *params); err != nil {
+	if err := toolguard.GuardExecute(t, *params); err != nil {
 		return nil, nil, err
 	}
-	id, err := common.RequirePulid(params.Params, paramSyncRecordID)
+	id, err := toolparams.RequirePulid(params.Params, paramSyncRecordID)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -564,7 +566,7 @@ func (t *SkipAccountingSyncTool) request(
 		return nil, nil, err
 	}
 
-	tenant := common.TenantFrom(*params)
+	tenant := toolparams.TenantFrom(*params)
 	record, err := t.sync.GetRecord(ctx, tenant, id)
 	if err != nil {
 		return nil, nil, err
@@ -659,22 +661,22 @@ func (t *redateAccountingSyncTool) Policy() agenttoolports.ToolPolicy {
 }
 
 func (t *redateAccountingSyncTool) Target(params map[string]any) (agenttoolports.ToolTarget, bool) {
-	return common.TargetOf(params, paramSyncRecordID, permission.ResourceAccountingSync)
+	return toolparams.TargetOf(params, paramSyncRecordID, permission.ResourceAccountingSync)
 }
 
 func (t *redateAccountingSyncTool) request(
 	ctx context.Context,
 	params *agenttoolports.ToolExecuteParams,
 ) (*accountingsyncports.RedateAccountingSyncRequest, *accountingsyncports.AccountingSyncRedatePlan, error) {
-	if err := common.GuardExecute(t, *params); err != nil {
+	if err := toolguard.GuardExecute(t, *params); err != nil {
 		return nil, nil, err
 	}
-	id, err := common.RequirePulid(params.Params, paramSyncRecordID)
+	id, err := toolparams.RequirePulid(params.Params, paramSyncRecordID)
 	if err != nil {
 		return nil, nil, err
 	}
 	req := &accountingsyncports.RedateAccountingSyncRequest{
-		TenantInfo: common.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(*params),
 		UserID:     params.Actor.UserID,
 		ID:         id,
 	}
@@ -761,7 +763,7 @@ func (t *PauseAccountingSyncTool) request(
 	ctx context.Context,
 	params *agenttoolports.ToolExecuteParams,
 ) (*accountingsyncports.PauseAccountingSyncRequest, *accountingsyncports.AccountingSyncSummary, error) {
-	if err := common.GuardExecute(t, *params); err != nil {
+	if err := toolguard.GuardExecute(t, *params); err != nil {
 		return nil, nil, err
 	}
 	system, err := accountingSystemFrom(params.Params)
@@ -776,7 +778,7 @@ func (t *PauseAccountingSyncTool) request(
 		return nil, nil, err
 	}
 
-	tenant := common.TenantFrom(*params)
+	tenant := toolparams.TenantFrom(*params)
 	summary, err := syncingConnectionFor(ctx, t.sync, tenant, system)
 	if err != nil {
 		return nil, nil, err
@@ -874,7 +876,7 @@ func (t *ResumeAccountingSyncTool) request(
 	ctx context.Context,
 	params *agenttoolports.ToolExecuteParams,
 ) (*accountingsyncports.PauseAccountingSyncRequest, *accountingsyncports.AccountingSyncSummary, error) {
-	if err := common.GuardExecute(t, *params); err != nil {
+	if err := toolguard.GuardExecute(t, *params); err != nil {
 		return nil, nil, err
 	}
 	system, err := accountingSystemFrom(params.Params)
@@ -882,7 +884,7 @@ func (t *ResumeAccountingSyncTool) request(
 		return nil, nil, err
 	}
 
-	tenant := common.TenantFrom(*params)
+	tenant := toolparams.TenantFrom(*params)
 	summary, err := syncingConnectionFor(ctx, t.sync, tenant, system)
 	if err != nil {
 		return nil, nil, err
@@ -986,11 +988,11 @@ func optionalBackfillDay(
 	params map[string]any,
 	key string,
 ) (seconds int64, present bool, err error) {
-	raw := strings.TrimSpace(common.OptionalString(params, key))
+	raw := strings.TrimSpace(toolparams.OptionalString(params, key))
 	if raw == "" {
 		return 0, false, nil
 	}
-	day, parseErr := time.Parse(common.BackfillDayLayout, raw)
+	day, parseErr := time.Parse(changepreview.BackfillDayLayout, raw)
 	if parseErr != nil {
 		return 0, false, errortypes.NewValidationError(
 			key,
@@ -1015,7 +1017,7 @@ func (t *RequestAccountingBackfillTool) plan(
 	ctx context.Context,
 	params *agenttoolports.ToolExecuteParams,
 ) (*backfillPlan, error) {
-	if err := common.GuardExecute(t, *params); err != nil {
+	if err := toolguard.GuardExecute(t, *params); err != nil {
 		return nil, err
 	}
 	if !params.Actor.IsUser() || params.Actor.UserID.IsNil() {
@@ -1046,7 +1048,7 @@ func (t *RequestAccountingBackfillTool) plan(
 		return nil, err
 	}
 
-	tenant := common.TenantFrom(*params)
+	tenant := toolparams.TenantFrom(*params)
 	summary, err := syncingConnectionFor(ctx, t.sync, tenant, system)
 	if err != nil {
 		return nil, err
@@ -1076,7 +1078,7 @@ func (t *RequestAccountingBackfillTool) plan(
 			paramBackfillFrom,
 			errortypes.ErrInvalid,
 			"A backfill cannot reach before the start date, {0}",
-			common.DayLabel(start),
+			changepreview.DayLabel(start),
 		)
 	}
 	if rangeStart > rangeEnd {
@@ -1084,8 +1086,8 @@ func (t *RequestAccountingBackfillTool) plan(
 			paramBackfillTo,
 			errortypes.ErrInvalid,
 			"A backfill covers documents dated from {0} to {1}, the day sending began",
-			common.DayLabel(start),
-			common.DayLabel(began),
+			changepreview.DayLabel(start),
+			changepreview.DayLabel(began),
 		)
 	}
 
