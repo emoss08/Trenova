@@ -789,7 +789,9 @@ func settlementControlFromUpdateInput(
 	}, nil
 }
 
-func bulkSettlementOperations(action driversettlementservice.BulkActionType) []permission.Operation {
+func bulkSettlementOperations(
+	action driversettlementservice.BulkActionType,
+) []permission.Operation {
 	switch action {
 	case driversettlementservice.BulkActionSubmit:
 		return []permission.Operation{permission.OpSubmit}

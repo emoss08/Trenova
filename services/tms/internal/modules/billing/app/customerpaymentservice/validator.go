@@ -509,7 +509,9 @@ func refuseUnpostablePeriod(
 			control.LockedPeriodPostingPolicy != tenant.LockedPeriodPostingPolicyBlockSubledgerAllowManualJe {
 			return false
 		}
-	case fiscalperiod.StatusInactive, fiscalperiod.StatusClosed, fiscalperiod.StatusPermanentlyClosed:
+	case fiscalperiod.StatusInactive,
+		fiscalperiod.StatusClosed,
+		fiscalperiod.StatusPermanentlyClosed:
 	}
 	me.Add(
 		"accountingDate",
