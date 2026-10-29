@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/reportdashboardservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -30,28 +31,28 @@ var dashboardTileKinds = agenttoolschema.Source("report.tileKind", []report.Tile
 type dashboardWriter interface {
 	CreateDashboard(
 		ctx context.Context,
-		req *reporting.SaveDashboardRequest,
+		req *reportdashboardservice.SaveDashboardRequest,
 	) (*report.Dashboard, error)
 	UpdateDashboard(
 		ctx context.Context,
-		req *reporting.SaveDashboardRequest,
+		req *reportdashboardservice.SaveDashboardRequest,
 	) (*report.Dashboard, error)
 	GetDashboard(
 		ctx context.Context,
-		req *reporting.GetDashboardRequest,
+		req *reportdashboardservice.GetDashboardRequest,
 	) (*report.Dashboard, error)
 	UnavailableTileTargets(
 		ctx context.Context,
 		tenant pagination.TenantInfo,
 		tiles []report.DashboardTile,
-	) []reporting.UnavailableTile
+	) []reportdashboardservice.UnavailableTile
 }
 
 type CreateDashboardTool struct {
 	dashboards dashboardWriter
 }
 
-func NewCreateDashboardTool(dashboards *reporting.Service) agenttoolports.AgentTool {
+func NewCreateDashboardTool(dashboards *reportdashboardservice.Service) agenttoolports.AgentTool {
 	return &CreateDashboardTool{dashboards: dashboards}
 }
 
@@ -279,7 +280,7 @@ func (t *CreateDashboardTool) Execute(
 
 func (t *CreateDashboardTool) request(
 	params *agenttoolports.ToolExecuteParams,
-) (*reporting.SaveDashboardRequest, error) {
+) (*reportdashboardservice.SaveDashboardRequest, error) {
 	visibility := report.VisibilityPrivate
 	if toolparams.OptionalBool(params.Params, "shared") {
 		visibility = report.VisibilityShared
@@ -290,7 +291,7 @@ func (t *CreateDashboardTool) request(
 		return nil, err
 	}
 
-	return &reporting.SaveDashboardRequest{
+	return &reportdashboardservice.SaveDashboardRequest{
 		Request:     reporting.Request{TenantInfo: toolparams.TenantFrom(*params)},
 		Name:        toolparams.OptionalString(params.Params, "name"),
 		Description: toolparams.OptionalString(params.Params, "description"),
@@ -304,7 +305,7 @@ type AddDashboardTileTool struct {
 	dashboards dashboardWriter
 }
 
-func NewAddDashboardTileTool(dashboards *reporting.Service) agenttoolports.AgentTool {
+func NewAddDashboardTileTool(dashboards *reportdashboardservice.Service) agenttoolports.AgentTool {
 	return &AddDashboardTileTool{dashboards: dashboards}
 }
 
@@ -380,7 +381,7 @@ func (t *AddDashboardTileTool) Validate(
 	tenant := toolparams.TenantFrom(params)
 	dashboardID, err := pulid.Parse(toolparams.OptionalString(params.Params, "dashboardId"))
 	if err == nil {
-		_, err = t.dashboards.GetDashboard(ctx, &reporting.GetDashboardRequest{
+		_, err = t.dashboards.GetDashboard(ctx, &reportdashboardservice.GetDashboardRequest{
 			Request:     reporting.Request{TenantInfo: tenant},
 			DashboardID: dashboardID,
 		})
@@ -440,14 +441,14 @@ func (t *AddDashboardTileTool) Execute(
 func (t *AddDashboardTileTool) request(
 	ctx context.Context,
 	params *agenttoolports.ToolExecuteParams,
-) (*reporting.SaveDashboardRequest, *report.Dashboard, error) {
+) (*reportdashboardservice.SaveDashboardRequest, *report.Dashboard, error) {
 	dashboardID, err := toolparams.RequirePulid(params.Params, "dashboardId")
 	if err != nil {
 		return nil, nil, err
 	}
 
 	tenant := toolparams.TenantFrom(*params)
-	existing, err := t.dashboards.GetDashboard(ctx, &reporting.GetDashboardRequest{
+	existing, err := t.dashboards.GetDashboard(ctx, &reportdashboardservice.GetDashboardRequest{
 		Request:     reporting.Request{TenantInfo: tenant},
 		DashboardID: dashboardID,
 	})
@@ -478,7 +479,7 @@ func (t *AddDashboardTileTool) request(
 	tiles = append(tiles, added...)
 	layout.Tiles = tiles
 
-	return &reporting.SaveDashboardRequest{
+	return &reportdashboardservice.SaveDashboardRequest{
 		Request:     reporting.Request{TenantInfo: tenant},
 		DashboardID: dashboardID,
 		Name:        existing.Name,

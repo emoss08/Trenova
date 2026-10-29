@@ -6,10 +6,10 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting/canned"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/reportingtest"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -48,21 +48,6 @@ func (r *planDefinitions) Delete(
 	return errPlanWrote
 }
 
-type planDashboards struct {
-	reportports.ReportDashboardRepository
-
-	dashboard *report.Dashboard
-}
-
-func (r *planDashboards) GetByID(
-	context.Context,
-	*reportports.GetReportDashboardRequest,
-) (*report.Dashboard, error) {
-	copied := *r.dashboard
-
-	return &copied, nil
-}
-
 type planRuns struct {
 	reportports.ReportRunRepository
 
@@ -81,34 +66,8 @@ func (r *planRuns) GetByID(
 	return &copied, nil
 }
 
-type planSchedules struct {
-	reportports.ReportScheduleRepository
-
-	schedule *report.ReportSchedule
-}
-
-func (r *planSchedules) GetByID(
-	context.Context,
-	*reportports.GetReportScheduleRequest,
-) (*report.ReportSchedule, error) {
-	copied := *r.schedule
-
-	return &copied, nil
-}
-
-func (r *planSchedules) Update(
-	context.Context,
-	*report.ReportSchedule,
-) (*report.ReportSchedule, error) {
-	return nil, errPlanWrote
-}
-
 func planRequest(userID pulid.ID) Request {
-	return Request{TenantInfo: pagination.TenantInfo{
-		OrgID:  pulid.MustNew("org_"),
-		BuID:   pulid.MustNew("bu_"),
-		UserID: userID,
-	}}
+	return Request{TenantInfo: reportingtest.Tenant(userID)}
 }
 
 func TestPlanDeleteDefinition_OnlyTheOwner(t *testing.T) {
@@ -169,26 +128,6 @@ func TestPlanResetCannedFork_PutsBackTheBuiltInDefinition(t *testing.T) {
 	require.ErrorAs(t, err, &business)
 }
 
-func TestPlanDeleteDashboard_OnlyTheOwner(t *testing.T) {
-	t.Parallel()
-
-	owner := pulid.MustNew("usr_")
-	dashboard := &report.Dashboard{ID: pulid.MustNew("rdb_"), Name: "Ops", OwnerID: owner}
-	svc := &Service{l: zap.NewNop(), dashboardRepo: &planDashboards{dashboard: dashboard}}
-
-	planned, err := svc.PlanDeleteDashboard(t.Context(), &GetDashboardRequest{
-		Request: planRequest(owner), DashboardID: dashboard.ID,
-	})
-	require.NoError(t, err)
-	assert.Equal(t, dashboard.ID, planned.ID)
-
-	_, err = svc.PlanDeleteDashboard(t.Context(), &GetDashboardRequest{
-		Request: planRequest(pulid.MustNew("usr_")), DashboardID: dashboard.ID,
-	})
-	var denied *errortypes.AuthorizationError
-	require.ErrorAs(t, err, &denied)
-}
-
 func TestPlanCancelRun_OnlyAnUnfinishedRunOfTheRequester(t *testing.T) {
 	t.Parallel()
 
@@ -219,69 +158,4 @@ func TestPlanCancelRun_OnlyAnUnfinishedRunOfTheRequester(t *testing.T) {
 	})
 	var business *errortypes.BusinessError
 	require.ErrorAs(t, err, &business)
-}
-
-func TestPlanUpdateAndDeleteSchedule_OnlyTheOwnerAndNothingSaved(t *testing.T) {
-	t.Parallel()
-
-	owner := pulid.MustNew("usr_")
-	definition := &report.ReportDefinition{ID: pulid.MustNew("rd_"), Name: "Aging", OwnerID: owner}
-	schedule := &report.ReportSchedule{
-		ID:             pulid.MustNew("rsch_"),
-		DefinitionID:   definition.ID,
-		CronExpression: "0 7 * * 1",
-		Timezone:       "America/Chicago",
-		Formats:        []string{"xlsx"},
-		Delivery:       &report.ScheduleDelivery{EmailRecipients: []string{"ops@example.com"}},
-		Enabled:        true,
-		RunAsID:        owner,
-		Version:        4,
-	}
-	svc := &Service{
-		l:            zap.NewNop(),
-		defRepo:      &planDefinitions{definition: definition},
-		scheduleRepo: &planSchedules{schedule: schedule},
-		orgRepo:      previewOrganizations{},
-	}
-
-	change, err := svc.PlanUpdateSchedule(t.Context(), &SaveScheduleRequest{
-		Request:         planRequest(owner),
-		ScheduleID:      schedule.ID,
-		DefinitionID:    definition.ID,
-		CronExpression:  "0 6 * * 1-5",
-		Timezone:        "America/Chicago",
-		Formats:         []string{"csv"},
-		EmailRecipients: []string{"ops@example.com"},
-		Enabled:         true,
-		Version:         schedule.Version,
-	})
-	require.NoError(t, err)
-	assert.Equal(t, "0 7 * * 1", change.Before.CronExpression)
-	assert.Equal(t, "0 6 * * 1-5", change.After.CronExpression)
-	assert.Equal(t, []string{"csv"}, change.After.Formats)
-	assert.Equal(t, definition.ID, change.Definition.ID)
-
-	_, err = svc.PlanUpdateSchedule(t.Context(), &SaveScheduleRequest{
-		Request:        planRequest(owner),
-		ScheduleID:     schedule.ID,
-		DefinitionID:   definition.ID,
-		CronExpression: "every monday",
-		Timezone:       "America/Chicago",
-		Formats:        []string{"csv"},
-		Enabled:        true,
-		Version:        schedule.Version,
-	})
-	require.Error(t, err)
-
-	planned, err := svc.PlanDeleteSchedule(t.Context(), &GetScheduleRequest{
-		Request: planRequest(owner), ScheduleID: schedule.ID,
-	})
-	require.NoError(t, err)
-	assert.Equal(t, schedule.ID, planned.ID)
-
-	_, err = svc.PlanDeleteSchedule(t.Context(), &GetScheduleRequest{
-		Request: planRequest(pulid.MustNew("usr_")), ScheduleID: schedule.ID,
-	})
-	var denied *errortypes.AuthorizationError
-	require.ErrorAs(t, err, &denied)
 }

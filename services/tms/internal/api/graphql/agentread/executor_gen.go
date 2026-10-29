@@ -282,7 +282,10 @@ import (
 	emailservice "github.com/emoss08/trenova/internal/modules/workspace/app/emailservice"
 	homelayoutservice "github.com/emoss08/trenova/internal/modules/workspace/app/homelayoutservice"
 	notificationservice "github.com/emoss08/trenova/internal/modules/workspace/app/notificationservice"
+	reportdashboardservice "github.com/emoss08/trenova/internal/modules/workspace/app/reportdashboardservice"
 	reportingservice "github.com/emoss08/trenova/internal/modules/workspace/app/reporting"
+	reportscheduleservice "github.com/emoss08/trenova/internal/modules/workspace/app/reportscheduleservice"
+	reportviewservice "github.com/emoss08/trenova/internal/modules/workspace/app/reportviewservice"
 	tablechangealertservice "github.com/emoss08/trenova/internal/modules/workspace/app/tablechangealertservice"
 	tableexportservice "github.com/emoss08/trenova/internal/modules/workspace/app/tableexportservice"
 	"go.uber.org/fx"
@@ -418,6 +421,9 @@ type ResolverParams struct {
 	RecurringDeductionRepo            driverpayports.RecurringDeductionRepository
 	RecurringEarningRepo              driverpayports.RecurringEarningRepository
 	RecurringShipmentService          *recurringshipmentservice.Service
+	ReportDashboardService            *reportdashboardservice.Service
+	ReportScheduleService             *reportscheduleservice.Service
+	ReportViewService                 *reportviewservice.Service
 	ReportingService                  *reportingservice.Service
 	RoutingGuideService               *routingguideservice.Service
 	SchedulingService                 *schedulingservice.Service
@@ -1551,9 +1557,12 @@ func NewSchema(p ResolverParams) Schema {
 		RecurringShipmentService: p.RecurringShipmentService,
 	}
 	reportDeps := &reportresolver.Deps{
-		Core:               core,
-		TableExportService: p.TableExportService,
-		ReportingService:   p.ReportingService,
+		Core:                   core,
+		TableExportService:     p.TableExportService,
+		ReportingService:       p.ReportingService,
+		ReportViewService:      p.ReportViewService,
+		ReportScheduleService:  p.ReportScheduleService,
+		ReportDashboardService: p.ReportDashboardService,
 	}
 	schedulingDeps := &schedulingresolver.Deps{
 		Core:              core,

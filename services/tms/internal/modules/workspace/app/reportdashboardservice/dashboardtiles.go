@@ -1,16 +1,17 @@
-package reporting
+package reportdashboardservice
 
 import (
 	"context"
 
 	"github.com/emoss08/keel/analytics/ir"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
 type ResolveDashboardTilesRequest struct {
-	Request
+	reporting.Request
 
 	DashboardID  pulid.ID
 	FilterValues map[string]any
@@ -80,11 +81,11 @@ func (s *Service) ResolveDashboardTiles(
 
 func (s *Service) tileDefinition(
 	ctx context.Context,
-	base *Request,
+	base *reporting.Request,
 	tile *report.DashboardTile,
 ) (*ir.Definition, string, error) {
 	if tile.CannedKey != "" {
-		entry, ok := s.canned.Get(tile.CannedKey)
+		entry, ok := s.reporting.LookupCanned(tile.CannedKey)
 		if !ok {
 			return nil, "", errortypes.NewNotFoundError(
 				"Unknown canned report \"{0}\"", tile.CannedKey,
@@ -93,7 +94,7 @@ func (s *Service) tileDefinition(
 		return entry.Definition, entry.Name, nil
 	}
 
-	definition, err := s.GetDefinition(ctx, &GetDefinitionRequest{
+	definition, err := s.reporting.GetDefinition(ctx, &reporting.GetDefinitionRequest{
 		Request:      *base,
 		DefinitionID: tile.DefinitionID,
 	})

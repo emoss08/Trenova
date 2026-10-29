@@ -1,13 +1,14 @@
-package reporting
+package reportscheduleservice
 
 import (
 	"context"
 	"errors"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/infrastructure/config/reportingconfig"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/reportingtest"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -48,15 +49,20 @@ func (r *previewSchedules) Create(
 	return entity, nil
 }
 
-type previewOrganizations struct {
-	tenantports.OrganizationRepository
-}
-
-func (previewOrganizations) GetByID(
-	context.Context,
-	tenantports.GetOrganizationByIDRequest,
-) (*tenant.Organization, error) {
-	return &tenant.Organization{Timezone: "America/Chicago"}, nil
+func scheduleCore(
+	t *testing.T,
+	definitions reportports.ReportDefinitionRepository,
+) *reporting.Service {
+	t.Helper()
+	core, err := reporting.New(reporting.Params{
+		Logger:           zap.NewNop(),
+		DefinitionRepo:   definitions,
+		OrganizationRepo: reportingtest.Organizations{},
+		Engine:           reportingtest.NewEngine(reportingtest.ReportCatalog(t), nil),
+		ReportingConfig:  &reportingconfig.Config{},
+	})
+	require.NoError(t, err)
+	return core
 }
 
 func TestPreviewSchedule_IsTheScheduleCreateScheduleSaves(t *testing.T) {
@@ -72,13 +78,12 @@ func TestPreviewSchedule_IsTheScheduleCreateScheduleSaves(t *testing.T) {
 	schedules := &previewSchedules{}
 	svc := &Service{
 		l:            zap.NewNop(),
-		defRepo:      &previewDefinitions{definition: definition},
+		reporting:    scheduleCore(t, &previewDefinitions{definition: definition}),
 		scheduleRepo: schedules,
-		orgRepo:      previewOrganizations{},
 	}
 	request := func() *SaveScheduleRequest {
 		return &SaveScheduleRequest{
-			Request: Request{TenantInfo: pagination.TenantInfo{
+			Request: reporting.Request{TenantInfo: pagination.TenantInfo{
 				OrgID:  pulid.MustNew("org_"),
 				BuID:   pulid.MustNew("bu_"),
 				UserID: userID,

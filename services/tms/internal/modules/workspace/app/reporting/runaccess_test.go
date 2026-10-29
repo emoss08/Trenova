@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting/canned"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting/reportaccess"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/reportingtest"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -66,7 +67,7 @@ func TestReadRunRows_RechecksTheReportAgainstTheRequestersCurrentGrants(t *testi
 	definition.Parameters = []ir.Parameter{{Name: "windowDays", Type: "int"}}
 	revisions := &stubRevisions{definition: definition}
 	svc.defRepo = revisions
-	engine, ok := svc.engine.(*fakeEngine)
+	engine, ok := svc.engine.(*reportingtest.Engine)
 	require.True(t, ok)
 	req := rowsRequest()
 
@@ -74,7 +75,7 @@ func TestReadRunRows_RechecksTheReportAgainstTheRequestersCurrentGrants(t *testi
 	require.NoError(t, err)
 
 	assert.Equal(t, run.RevisionID, revisions.asked, "the run's own revision is checked")
-	compiles := engine.recorded("compile")
+	compiles := engine.Recorded("compile")
 	require.Len(t, compiles, 1, "a stored run is checked as the export it was")
 	access, ok := compiles[0].Request.Policy.(*reportaccess.Access)
 	require.True(t, ok)
@@ -136,12 +137,12 @@ func TestDownloadRun_RechecksACannedRunAgainstItsReport(t *testing.T) {
 	svc := rowsService(t, run, &store.stubRowsStorage)
 	svc.storage = store
 	svc.canned = registry
-	engine, ok := svc.engine.(*fakeEngine)
+	engine, ok := svc.engine.(*reportingtest.Engine)
 	require.True(t, ok)
 
 	_, err = svc.DownloadRun(t.Context(), rowsRequest())
 	require.NoError(t, err)
-	compiles := engine.recorded("compile")
+	compiles := engine.Recorded("compile")
 	require.Len(t, compiles, 1)
 	assert.Equal(t, entries[0].Definition, compiles[0].Request.Definition)
 }
@@ -164,31 +165,4 @@ func TestDownloadRun_RefusesARunWhoseReportNoLongerCompiles(t *testing.T) {
 	var businessErr *errortypes.BusinessError
 	require.ErrorAs(t, err, &businessErr)
 	assert.Empty(t, store.presigned)
-}
-
-func TestExportDashboard_NeedsTheExportOperationOnEveryTile(t *testing.T) {
-	t.Parallel()
-
-	dashboard := dashboardWith([]report.DashboardTile{{
-		ID:           "t1",
-		Kind:         report.TileKindTable,
-		DefinitionID: tileDefID,
-	}}, nil)
-	svc := tileTestService(t, dashboard, map[pulid.ID]*report.ReportDefinition{
-		tileDefID: sharedDefinition("shipment", nil),
-	})
-	engine, ok := svc.engine.(*fakeEngine)
-	require.True(t, ok)
-
-	_, err := svc.ExportDashboard(t.Context(), &ExportDashboardRequest{
-		Request:     tileRequest(),
-		DashboardID: pulid.MustNew("rdash_"),
-	})
-	require.Error(t, err)
-
-	previews := engine.recorded("preview")
-	require.Len(t, previews, 1, "each tile runs once")
-	access, ok := previews[0].Request.Policy.(*reportaccess.Access)
-	require.True(t, ok)
-	assert.Equal(t, reportaccess.ModeExport, access.Mode(), "an export decides access as an export")
 }

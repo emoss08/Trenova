@@ -13,8 +13,12 @@ func (s *Service) ListCanned() []*canned.Entry {
 	return s.canned.All()
 }
 
+func (s *Service) LookupCanned(key string) (*canned.Entry, bool) {
+	return s.canned.Get(key)
+}
+
 func (s *Service) GetCanned(key string) (*canned.Entry, error) {
-	entry, ok := s.canned.Get(key)
+	entry, ok := s.LookupCanned(key)
 	if !ok {
 		return nil, errortypes.NewNotFoundError(
 			"Canned report \"{0}\" not found", key,

@@ -13,7 +13,10 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/reportdashboardservice"
 	reportingservice "github.com/emoss08/trenova/internal/modules/workspace/app/reporting"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/reportscheduleservice"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/reportviewservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/tableexportservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
@@ -176,7 +179,7 @@ func (r *MutationResolver) RunReport(ctx context.Context, input gqlmodel.RunRepo
 	// Stamped only once the run is actually queued, so a rejected run never
 	// inflates a view's usage.
 	if viewRequest != nil {
-		r.ReportingService.RecordViewRun(ctx, viewRequest)
+		r.ReportViewService.RecordViewRun(ctx, viewRequest)
 	}
 
 	return reportRunToModel(run), nil
@@ -215,7 +218,7 @@ func (r *MutationResolver) CreateReportSchedule(ctx context.Context, input gqlmo
 		return nil, err
 	}
 
-	created, err := r.ReportingService.CreateSchedule(ctx, req)
+	created, err := r.ReportScheduleService.CreateSchedule(ctx, req)
 	if err != nil {
 		return nil, err
 	}
@@ -234,7 +237,7 @@ func (r *MutationResolver) UpdateReportSchedule(ctx context.Context, input gqlmo
 		return nil, err
 	}
 
-	updated, err := r.ReportingService.UpdateSchedule(ctx, req)
+	updated, err := r.ReportScheduleService.UpdateSchedule(ctx, req)
 	if err != nil {
 		return nil, err
 	}
@@ -253,7 +256,7 @@ func (r *MutationResolver) DeleteReportSchedule(ctx context.Context, id string) 
 		return false, err
 	}
 
-	if err = r.ReportingService.DeleteSchedule(ctx, &reportingservice.GetScheduleRequest{
+	if err = r.ReportScheduleService.DeleteSchedule(ctx, &reportscheduleservice.GetScheduleRequest{
 		Request:    reportingRequest(authCtx),
 		ScheduleID: scheduleID,
 	}); err != nil {
@@ -274,7 +277,7 @@ func (r *MutationResolver) CreateReportView(ctx context.Context, input gqlmodel.
 		return nil, err
 	}
 
-	created, err := r.ReportingService.CreateView(ctx, req)
+	created, err := r.ReportViewService.CreateView(ctx, req)
 	if err != nil {
 		return nil, err
 	}
@@ -300,7 +303,7 @@ func (r *MutationResolver) UpdateReportView(ctx context.Context, input gqlmodel.
 		return nil, err
 	}
 
-	updated, err := r.ReportingService.UpdateView(ctx, req)
+	updated, err := r.ReportViewService.UpdateView(ctx, req)
 	if err != nil {
 		return nil, err
 	}
@@ -319,7 +322,7 @@ func (r *MutationResolver) DeleteReportView(ctx context.Context, id string) (boo
 		return false, err
 	}
 
-	if err = r.ReportingService.DeleteView(ctx, &reportingservice.GetViewRequest{
+	if err = r.ReportViewService.DeleteView(ctx, &reportviewservice.GetViewRequest{
 		Request: reportingRequest(authCtx),
 		ViewID:  viewID,
 	}); err != nil {
@@ -340,7 +343,7 @@ func (r *MutationResolver) CreateReportDashboard(ctx context.Context, input gqlm
 		return nil, err
 	}
 
-	created, err := r.ReportingService.CreateDashboard(ctx, req)
+	created, err := r.ReportDashboardService.CreateDashboard(ctx, req)
 	if err != nil {
 		return nil, err
 	}
@@ -373,7 +376,7 @@ func (r *MutationResolver) UpdateReportDashboard(ctx context.Context, input gqlm
 	req.DashboardID = dashboardID
 	req.Version = int64(input.Version)
 
-	updated, err := r.ReportingService.UpdateDashboard(ctx, req)
+	updated, err := r.ReportDashboardService.UpdateDashboard(ctx, req)
 	if err != nil {
 		return nil, err
 	}
@@ -392,7 +395,7 @@ func (r *MutationResolver) DeleteReportDashboard(ctx context.Context, id string)
 		return false, err
 	}
 
-	if err = r.ReportingService.DeleteDashboard(ctx, &reportingservice.GetDashboardRequest{
+	if err = r.ReportDashboardService.DeleteDashboard(ctx, &reportdashboardservice.GetDashboardRequest{
 		Request:     reportingRequest(authCtx),
 		DashboardID: dashboardID,
 	}); err != nil {
@@ -666,7 +669,7 @@ func (r *QueryResolver) ReportSchedules(ctx context.Context, definitionID *strin
 		return nil, err
 	}
 
-	req := &reportingservice.ListSchedulesRequest{
+	req := &reportscheduleservice.ListSchedulesRequest{
 		Request:     reportingRequest(authCtx),
 		EnabledOnly: gqlscalar.BoolValue(enabledOnly),
 		Limit:       gqlconnection.RecordListLimit(limit, definitionID != nil),
@@ -679,7 +682,7 @@ func (r *QueryResolver) ReportSchedules(ctx context.Context, definitionID *strin
 		req.DefinitionID = parsedID
 	}
 
-	schedules, err := r.ReportingService.ListSchedules(ctx, req)
+	schedules, err := r.ReportScheduleService.ListSchedules(ctx, req)
 	if err != nil {
 		return nil, err
 	}
@@ -698,7 +701,7 @@ func (r *QueryResolver) ReportViews(ctx context.Context, definitionID *string) (
 		return nil, err
 	}
 
-	req := &reportingservice.ListViewsRequest{Request: reportingRequest(authCtx)}
+	req := &reportviewservice.ListViewsRequest{Request: reportingRequest(authCtx)}
 	if definitionID != nil {
 		parsedID, parseErr := pulid.MustParse(*definitionID)
 		if parseErr != nil {
@@ -707,7 +710,7 @@ func (r *QueryResolver) ReportViews(ctx context.Context, definitionID *string) (
 		req.DefinitionID = parsedID
 	}
 
-	views, err := r.ReportingService.ListViews(ctx, req)
+	views, err := r.ReportViewService.ListViews(ctx, req)
 	if err != nil {
 		return nil, err
 	}
@@ -731,7 +734,7 @@ func (r *QueryResolver) ReportView(ctx context.Context, id string) (*gqlmodel.Re
 		return nil, err
 	}
 
-	view, err := r.ReportingService.GetView(ctx, &reportingservice.GetViewRequest{
+	view, err := r.ReportViewService.GetView(ctx, &reportviewservice.GetViewRequest{
 		Request: reportingRequest(authCtx),
 		ViewID:  viewID,
 	})
@@ -748,7 +751,7 @@ func (r *QueryResolver) ReportDashboards(ctx context.Context) ([]*gqlmodel.Repor
 		return nil, err
 	}
 
-	entities, err := r.ReportingService.ListDashboards(ctx, &reportingservice.ListDashboardsRequest{
+	entities, err := r.ReportDashboardService.ListDashboards(ctx, &reportdashboardservice.ListDashboardsRequest{
 		Request: reportingRequest(authCtx),
 	})
 	if err != nil {
@@ -778,7 +781,7 @@ func (r *QueryResolver) ReportDashboard(ctx context.Context, id string) (*gqlmod
 		return nil, err
 	}
 
-	entity, err := r.ReportingService.GetDashboard(ctx, &reportingservice.GetDashboardRequest{
+	entity, err := r.ReportDashboardService.GetDashboard(ctx, &reportdashboardservice.GetDashboardRequest{
 		Request:     reportingRequest(authCtx),
 		DashboardID: dashboardID,
 	})

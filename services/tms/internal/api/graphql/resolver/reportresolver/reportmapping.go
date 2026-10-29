@@ -16,9 +16,12 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/reportdashboardservice"
 	reportingservice "github.com/emoss08/trenova/internal/modules/workspace/app/reporting"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting/canned"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting/reportaccess"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/reportscheduleservice"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/reportviewservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/dbtype"
@@ -201,7 +204,7 @@ func reportScheduleAlertFromGraphQL(
 func saveReportScheduleRequest(
 	authCtx *authctx.AuthContext,
 	input *gqlmodel.CreateReportScheduleInput,
-) (*reportingservice.SaveScheduleRequest, error) {
+) (*reportscheduleservice.SaveScheduleRequest, error) {
 	definitionID, err := pulid.MustParse(input.DefinitionID)
 	if err != nil {
 		return nil, err
@@ -212,7 +215,7 @@ func saveReportScheduleRequest(
 		return nil, err
 	}
 
-	req := &reportingservice.SaveScheduleRequest{
+	req := &reportscheduleservice.SaveScheduleRequest{
 		Request:         reportingRequest(authCtx),
 		DefinitionID:    definitionID,
 		CronExpression:  input.CronExpression,
@@ -255,7 +258,7 @@ func createReportScheduleInputOf(
 func updateReportScheduleRequest(
 	authCtx *authctx.AuthContext,
 	input *gqlmodel.UpdateReportScheduleInput,
-) (*reportingservice.SaveScheduleRequest, error) {
+) (*reportscheduleservice.SaveScheduleRequest, error) {
 	req, err := saveReportScheduleRequest(authCtx, createReportScheduleInputOf(input))
 	if err != nil {
 		return nil, err
@@ -385,13 +388,13 @@ func reportDashboardTileFromGraphQL(
 func saveReportDashboardRequest(
 	authCtx *authctx.AuthContext,
 	input *gqlmodel.SaveReportDashboardInput,
-) (*reportingservice.SaveDashboardRequest, error) {
+) (*reportdashboardservice.SaveDashboardRequest, error) {
 	layout, err := reportDashboardLayoutFromGraphQL(input.Layout)
 	if err != nil {
 		return nil, err
 	}
 
-	req := &reportingservice.SaveDashboardRequest{
+	req := &reportdashboardservice.SaveDashboardRequest{
 		Request:     reportingRequest(authCtx),
 		Name:        input.Name,
 		Description: gqlscalar.DerefString(input.Description),
@@ -781,8 +784,8 @@ func saveReportViewRequest(
 	authCtx *authctx.AuthContext,
 	input *gqlmodel.CreateReportViewInput,
 	update *gqlmodel.UpdateReportViewInput,
-) (*reportingservice.SaveViewRequest, error) {
-	req := &reportingservice.SaveViewRequest{
+) (*reportviewservice.SaveViewRequest, error) {
+	req := &reportviewservice.SaveViewRequest{
 		Request:     reportingRequest(authCtx),
 		Name:        input.Name,
 		Description: gqlscalar.DerefString(input.Description),
@@ -840,7 +843,7 @@ func (r *MutationResolver) applyReportView(
 	authCtx *authctx.AuthContext,
 	viewID *string,
 	req *reportingservice.RunReportRequest,
-) (*reportingservice.GetViewRequest, error) {
+) (*reportviewservice.GetViewRequest, error) {
 	if viewID == nil {
 		return nil, nil //nolint:nilnil // no view is a valid, unremarkable case
 	}
@@ -850,11 +853,11 @@ func (r *MutationResolver) applyReportView(
 		return nil, err
 	}
 
-	viewRequest := &reportingservice.GetViewRequest{
+	viewRequest := &reportviewservice.GetViewRequest{
 		Request: reportingRequest(authCtx),
 		ViewID:  parsedID,
 	}
-	view, err := r.ReportingService.GetView(ctx, viewRequest)
+	view, err := r.ReportViewService.GetView(ctx, viewRequest)
 	if err != nil {
 		return nil, err
 	}

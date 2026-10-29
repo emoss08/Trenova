@@ -6,7 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/querytool"
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/querytooltest"
-	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/reportdashboardservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -19,7 +19,7 @@ type fakeDashboardLister struct {
 
 func (f *fakeDashboardLister) ListDashboards(
 	_ context.Context,
-	_ *reporting.ListDashboardsRequest,
+	_ *reportdashboardservice.ListDashboardsRequest,
 ) ([]*report.Dashboard, error) {
 	return f.dashboards, nil
 }

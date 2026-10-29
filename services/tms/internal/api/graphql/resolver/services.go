@@ -205,7 +205,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/app/emailservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/homelayoutservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/notificationservice"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/reportdashboardservice"
 	reportingservice "github.com/emoss08/trenova/internal/modules/workspace/app/reporting"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/reportscheduleservice"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/reportviewservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/sidebarpreferenceservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/tablechangealertservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/tableconfigurationservice"
@@ -453,6 +456,9 @@ type Params struct {
 	HomeLayoutService                 *homelayoutservice.Service
 	BillingTransferService            *billingtransferservice.Service
 	ReportingService                  *reportingservice.Service
+	ReportViewService                 *reportviewservice.Service
+	ReportScheduleService             *reportscheduleservice.Service
+	ReportDashboardService            *reportdashboardservice.Service
 	NotificationService               *notificationservice.Service
 	PermissionEngine                  permissionports.PermissionEngine
 	DriverPayService                  *driverpayservice.Service
@@ -748,6 +754,9 @@ type Services struct {
 	DistanceCalculationService        shipmentdistanceports.DistanceCalculationService
 	BillingTransferService            *billingtransferservice.Service
 	ReportingService                  *reportingservice.Service
+	ReportViewService                 *reportviewservice.Service
+	ReportScheduleService             *reportscheduleservice.Service
+	ReportDashboardService            *reportdashboardservice.Service
 }
 
 //nolint:funlen // one assignment per service; splitting it would only scatter the wiring
@@ -992,6 +1001,9 @@ func newServices(p *Params) *Services {
 		NotificationService:               p.NotificationService,
 		BillingTransferService:            p.BillingTransferService,
 		ReportingService:                  p.ReportingService,
+		ReportViewService:                 p.ReportViewService,
+		ReportScheduleService:             p.ReportScheduleService,
+		ReportDashboardService:            p.ReportDashboardService,
 		DriverPayService:                  p.DriverPayService,
 		DriverSettlementService:           p.DriverSettlementService,
 		DriverSettlementReviewService:     p.DriverSettlementReviewService,

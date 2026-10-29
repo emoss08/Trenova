@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
-	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/reportdashboardservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -25,16 +25,19 @@ func (f *fakeDashboards) UnavailableTileTargets(
 	_ context.Context,
 	_ pagination.TenantInfo,
 	tiles []report.DashboardTile,
-) []reporting.UnavailableTile {
-	var missing []reporting.UnavailableTile
+) []reportdashboardservice.UnavailableTile {
+	var missing []reportdashboardservice.UnavailableTile
 	for i := range tiles {
 		switch {
 		case tiles[i].CannedKey != "":
 			if !f.canned[tiles[i].CannedKey] {
-				missing = append(missing, reporting.UnavailableTile{Index: i, Canned: true})
+				missing = append(
+					missing,
+					reportdashboardservice.UnavailableTile{Index: i, Canned: true},
+				)
 			}
 		case !f.reports[tiles[i].DefinitionID]:
-			missing = append(missing, reporting.UnavailableTile{Index: i})
+			missing = append(missing, reportdashboardservice.UnavailableTile{Index: i})
 		}
 	}
 
@@ -43,7 +46,7 @@ func (f *fakeDashboards) UnavailableTileTargets(
 
 func (f *fakeDashboards) GetDashboard(
 	_ context.Context,
-	req *reporting.GetDashboardRequest,
+	req *reportdashboardservice.GetDashboardRequest,
 ) (*report.Dashboard, error) {
 	if f.dashboard == nil || f.dashboard.ID != req.DashboardID {
 		return nil, errortypes.NewNotFoundError("Dashboard not found")

@@ -1,10 +1,11 @@
-package reporting
+package reportscheduleservice
 
 import (
 	"context"
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -16,7 +17,7 @@ import (
 )
 
 type SaveScheduleRequest struct {
-	Request
+	reporting.Request
 
 	ScheduleID      pulid.ID
 	DefinitionID    pulid.ID
@@ -45,7 +46,7 @@ func (s *Service) validateScheduleRequest(
 	ctx context.Context,
 	req *SaveScheduleRequest,
 ) (*report.ReportDefinition, error) {
-	definition, err := s.GetDefinition(ctx, &GetDefinitionRequest{
+	definition, err := s.reporting.GetDefinition(ctx, &reporting.GetDefinitionRequest{
 		Request:      req.Request,
 		DefinitionID: req.DefinitionID,
 	})
@@ -55,7 +56,7 @@ func (s *Service) validateScheduleRequest(
 
 	timezone := req.Timezone
 	if timezone == "" {
-		timezone = s.orgTimezone(ctx, req.TenantInfo)
+		timezone = s.reporting.OrgTimezone(ctx, req.TenantInfo)
 		req.Timezone = timezone
 	}
 
@@ -142,7 +143,7 @@ func (s *Service) UpdateSchedule(
 }
 
 type GetScheduleRequest struct {
-	Request
+	reporting.Request
 
 	ScheduleID pulid.ID
 }
@@ -158,7 +159,7 @@ func (s *Service) GetSchedule(
 }
 
 type ListSchedulesRequest struct {
-	Request
+	reporting.Request
 
 	DefinitionID pulid.ID
 	EnabledOnly  bool

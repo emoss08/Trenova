@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/reportscheduleservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -159,7 +160,7 @@ type fakeScheduleReports struct {
 
 func (f *fakeScheduleReports) ListSchedules(
 	_ context.Context,
-	req *reporting.ListSchedulesRequest,
+	req *reportscheduleservice.ListSchedulesRequest,
 ) ([]*report.ReportSchedule, error) {
 	matched := make([]*report.ReportSchedule, 0, len(f.existing))
 	for _, schedule := range f.existing {
@@ -188,9 +189,8 @@ func TestScheduleReport_RefusesAReportThatDoesNotExistBeforeProposing(t *testing
 	t.Parallel()
 
 	known := pulid.MustNew("rdef_")
-	tool := &ScheduleReportTool{
-		schedules: &fakeScheduleReports{known: map[pulid.ID]bool{known: true}},
-	}
+	reports := &fakeScheduleReports{known: map[pulid.ID]bool{known: true}}
+	tool := &ScheduleReportTool{schedules: reports, reports: reports}
 	args := func(id string) map[string]any {
 		return map[string]any{
 			"definitionId":    id,
@@ -199,12 +199,18 @@ func TestScheduleReport_RefusesAReportThatDoesNotExistBeforeProposing(t *testing
 		}
 	}
 
-	require.NoError(t, tool.Validate(t.Context(), agenttoolstest.ExecuteParams(args(known.String()))))
+	require.NoError(
+		t,
+		tool.Validate(t.Context(), agenttoolstest.ExecuteParams(args(known.String()))),
+	)
 
 	err := tool.Validate(t.Context(), agenttoolstest.ExecuteParams(args("unbilled_aging")))
 	assert.Contains(t, agenttoolstest.FieldErrors(t, err)["definitionId"], "report_list")
 
-	err = tool.Validate(t.Context(), agenttoolstest.ExecuteParams(args(pulid.MustNew("rdef_").String())))
+	err = tool.Validate(
+		t.Context(),
+		agenttoolstest.ExecuteParams(args(pulid.MustNew("rdef_").String())),
+	)
 	assert.Contains(t, agenttoolstest.FieldErrors(t, err)["definitionId"], "report_list")
 }
 
@@ -222,10 +228,11 @@ func TestScheduleReport_RefusesAScheduleTheReportAlreadyHas(t *testing.T) {
 		Timezone:       "America/Los_Angeles",
 		Delivery:       &report.ScheduleDelivery{EmailRecipients: []string{"Admin@Trenova.app"}},
 	}
-	tool := &ScheduleReportTool{schedules: &fakeScheduleReports{
+	reports := &fakeScheduleReports{
 		known:    map[pulid.ID]bool{definition: true},
 		existing: []*report.ReportSchedule{standing},
-	}}
+	}
+	tool := &ScheduleReportTool{schedules: reports, reports: reports}
 	args := func(cron, recipient string) map[string]any {
 		return map[string]any{
 			"definitionId":    definition.String(),
@@ -235,10 +242,25 @@ func TestScheduleReport_RefusesAScheduleTheReportAlreadyHas(t *testing.T) {
 		}
 	}
 
-	err := tool.Validate(t.Context(), agenttoolstest.ExecuteParams(args("0 7 * * 1", "admin@trenova.app")))
+	err := tool.Validate(
+		t.Context(),
+		agenttoolstest.ExecuteParams(args("0 7 * * 1", "admin@trenova.app")),
+	)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), standing.ID.String())
 
-	require.NoError(t, tool.Validate(t.Context(), agenttoolstest.ExecuteParams(args("0 7 * * 2", "admin@trenova.app"))))
-	require.NoError(t, tool.Validate(t.Context(), agenttoolstest.ExecuteParams(args("0 7 * * 1", "ops@trenova.app"))))
+	require.NoError(
+		t,
+		tool.Validate(
+			t.Context(),
+			agenttoolstest.ExecuteParams(args("0 7 * * 2", "admin@trenova.app")),
+		),
+	)
+	require.NoError(
+		t,
+		tool.Validate(
+			t.Context(),
+			agenttoolstest.ExecuteParams(args("0 7 * * 1", "ops@trenova.app")),
+		),
+	)
 }

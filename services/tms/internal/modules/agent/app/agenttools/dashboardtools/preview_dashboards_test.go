@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/reportdashboardservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -24,12 +24,12 @@ type savingDashboards struct {
 
 func (f *savingDashboards) CreateDashboard(
 	_ context.Context,
-	req *reporting.SaveDashboardRequest,
+	req *reportdashboardservice.SaveDashboardRequest,
 ) (*report.Dashboard, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
 	}
-	f.saved = reporting.NewDashboard(req)
+	f.saved = reportdashboardservice.NewDashboard(req)
 	f.saved.ID = pulid.MustNew("rdb_")
 
 	return f.saved, nil
@@ -37,13 +37,13 @@ func (f *savingDashboards) CreateDashboard(
 
 func (f *savingDashboards) UpdateDashboard(
 	_ context.Context,
-	req *reporting.SaveDashboardRequest,
+	req *reportdashboardservice.SaveDashboardRequest,
 ) (*report.Dashboard, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
 	}
 	updated := *f.dashboard
-	reporting.ApplyDashboardSave(&updated, req)
+	reportdashboardservice.ApplyDashboardSave(&updated, req)
 	f.saved = &updated
 
 	return f.saved, nil

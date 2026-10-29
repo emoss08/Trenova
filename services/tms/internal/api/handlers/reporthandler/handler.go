@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/reportdashboardservice"
 	reportingservice "github.com/emoss08/trenova/internal/modules/workspace/app/reporting"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -22,21 +23,24 @@ type Params struct {
 	fx.In
 
 	Service              *reportingservice.Service
+	DashboardService     *reportdashboardservice.Service
 	ErrorHandler         *helpers.ErrorHandler
 	PermissionMiddleware *middleware.PermissionMiddleware
 }
 
 type Handler struct {
-	service *reportingservice.Service
-	eh      *helpers.ErrorHandler
-	pm      *middleware.PermissionMiddleware
+	service    *reportingservice.Service
+	dashboards *reportdashboardservice.Service
+	eh         *helpers.ErrorHandler
+	pm         *middleware.PermissionMiddleware
 }
 
 func New(p Params) *Handler {
 	return &Handler{
-		service: p.Service,
-		eh:      p.ErrorHandler,
-		pm:      p.PermissionMiddleware,
+		service:    p.Service,
+		dashboards: p.DashboardService,
+		eh:         p.ErrorHandler,
+		pm:         p.PermissionMiddleware,
 	}
 }
 
@@ -80,9 +84,9 @@ func (h *Handler) exportDashboard(c *gin.Context) {
 		return
 	}
 
-	export, err := h.service.ExportDashboard(
+	export, err := h.dashboards.ExportDashboard(
 		c.Request.Context(),
-		&reportingservice.ExportDashboardRequest{
+		&reportdashboardservice.ExportDashboardRequest{
 			Request: reportingservice.Request{
 				TenantInfo: pagination.FromAuthAsUser(authCtx),
 			},
@@ -103,13 +107,13 @@ func (h *Handler) exportDashboard(c *gin.Context) {
 
 func exportTileFilters(
 	body map[string]exportTileFilterBody,
-) map[string]reportingservice.TileFilterOverride {
+) map[string]reportdashboardservice.TileFilterOverride {
 	if len(body) == 0 {
 		return nil
 	}
-	overrides := make(map[string]reportingservice.TileFilterOverride, len(body))
+	overrides := make(map[string]reportdashboardservice.TileFilterOverride, len(body))
 	for tileID, override := range body {
-		overrides[tileID] = reportingservice.TileFilterOverride{
+		overrides[tileID] = reportdashboardservice.TileFilterOverride{
 			Filters: override.Filters,
 			Values:  override.Values,
 		}

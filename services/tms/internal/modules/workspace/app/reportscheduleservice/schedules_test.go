@@ -1,9 +1,11 @@
-package reporting
+package reportscheduleservice
 
 import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/reportingtest"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -37,7 +39,7 @@ func TestListSchedules_ScopesTheListToTheCaller(t *testing.T) {
 	definitionID := pulid.MustNew("rdef_")
 
 	_, err := svc.ListSchedules(t.Context(), &ListSchedulesRequest{
-		Request:      planRequest(userID),
+		Request:      reporting.Request{TenantInfo: reportingtest.Tenant(userID)},
 		DefinitionID: definitionID,
 		EnabledOnly:  true,
 		Limit:        25,
@@ -59,45 +61,10 @@ func TestListSchedules_RefusesARequestWithNoPerson(t *testing.T) {
 	svc := &Service{l: zap.NewNop(), scheduleRepo: repo}
 
 	_, err := svc.ListSchedules(t.Context(), &ListSchedulesRequest{
-		Request: planRequest(pulid.Nil),
+		Request: reporting.Request{TenantInfo: reportingtest.Tenant(pulid.Nil)},
 	})
 
 	var authzErr *errortypes.AuthorizationError
 	require.ErrorAs(t, err, &authzErr)
 	assert.Empty(t, repo.requests)
-}
-
-type listedDefinitions struct {
-	reportports.ReportDefinitionRepository
-
-	requests []*reportports.ListReportDefinitionsRequest
-}
-
-func (r *listedDefinitions) List(
-	_ context.Context,
-	req *reportports.ListReportDefinitionsRequest,
-) ([]*report.ReportDefinition, error) {
-	r.requests = append(r.requests, req)
-
-	return []*report.ReportDefinition{}, nil
-}
-
-func TestListDefinitions_FiltersVisibilityInTheQuery(t *testing.T) {
-	t.Parallel()
-
-	repo := &listedDefinitions{}
-	svc := &Service{l: zap.NewNop(), defRepo: repo}
-	userID := pulid.MustNew("usr_")
-
-	_, err := svc.ListDefinitions(t.Context(), &ListDefinitionsRequest{
-		Request: planRequest(userID),
-		Limit:   10,
-		Offset:  20,
-	})
-	require.NoError(t, err)
-
-	require.Len(t, repo.requests, 1)
-	assert.Equal(t, userID, repo.requests[0].ViewerID)
-	assert.Equal(t, 10, repo.requests[0].Limit)
-	assert.Equal(t, 20, repo.requests[0].Offset)
 }

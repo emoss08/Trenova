@@ -34,7 +34,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/app/notificationpreferenceservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/notificationservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/pagefavoriteservice"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/reportdashboardservice"
 	reportingservice "github.com/emoss08/trenova/internal/modules/workspace/app/reporting"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/reportscheduleservice"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/reportviewservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/sidebarpreferenceservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/tablechangealertservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/tableconfigurationservice"
@@ -90,6 +93,9 @@ func SharedOptions() fx.Option {
 			bulkeditservice.NewShipmentEditor,
 			homelayoutservice.New,
 			reportingservice.New,
+			reportviewservice.New,
+			reportscheduleservice.New,
+			reportdashboardservice.New,
 			auditservice.New,
 			auditservice.NewSecurityAuditor,
 			customfieldservice.New,

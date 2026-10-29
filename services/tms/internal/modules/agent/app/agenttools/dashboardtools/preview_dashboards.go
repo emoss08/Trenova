@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/reportdashboardservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
@@ -70,7 +70,7 @@ func (t *CreateDashboardTool) Preview(
 		return nil, err
 	}
 
-	planned := reporting.NewDashboard(request)
+	planned := reportdashboardservice.NewDashboard(request)
 	change, err := toolpreview.Create(toolpreview.Record{
 		Resource: permission.ResourceDashboard,
 		Label:    planned.Name,
@@ -110,7 +110,7 @@ func (t *AddDashboardTileTool) Preview(
 	}
 
 	updated := *existing
-	reporting.ApplyDashboardSave(&updated, request)
+	reportdashboardservice.ApplyDashboardSave(&updated, request)
 	change, err := toolpreview.Changed(toolpreview.Record{
 		Resource: permission.ResourceDashboard,
 		ID:       existing.ID,

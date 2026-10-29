@@ -1,4 +1,4 @@
-package reporting
+package reportdashboardservice
 
 import (
 	"context"
@@ -7,7 +7,7 @@ import (
 
 	"github.com/emoss08/keel/analytics"
 	"github.com/emoss08/keel/analytics/ir"
-
+	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -17,7 +17,7 @@ import (
 )
 
 type SaveDashboardRequest struct {
-	Request
+	reporting.Request
 
 	DashboardID pulid.ID
 	Name        string
@@ -30,13 +30,13 @@ type SaveDashboardRequest struct {
 }
 
 type GetDashboardRequest struct {
-	Request
+	reporting.Request
 
 	DashboardID pulid.ID
 }
 
 type ListDashboardsRequest struct {
-	Request
+	reporting.Request
 
 	Limit  int
 	Offset int
@@ -170,7 +170,7 @@ func (s *Service) UnavailableTileTargets(
 		}
 
 		if tile.CannedKey != "" {
-			if _, ok := s.canned.Get(tile.CannedKey); !ok {
+			if _, ok := s.reporting.LookupCanned(tile.CannedKey); !ok {
 				missing = append(missing, UnavailableTile{Index: i, Canned: true})
 			}
 			continue

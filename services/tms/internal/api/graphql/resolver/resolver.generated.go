@@ -966,9 +966,12 @@ func FromServices(s *Services) *Resolver {
 		RecurringShipmentService: s.RecurringShipmentService,
 	}
 	reportDeps := &reportresolver.Deps{
-		Core:               s.Core,
-		TableExportService: s.TableExportService,
-		ReportingService:   s.ReportingService,
+		Core:                   s.Core,
+		TableExportService:     s.TableExportService,
+		ReportingService:       s.ReportingService,
+		ReportViewService:      s.ReportViewService,
+		ReportScheduleService:  s.ReportScheduleService,
+		ReportDashboardService: s.ReportDashboardService,
 	}
 	roleDeps := &roleresolver.Deps{
 		Core:        s.Core,

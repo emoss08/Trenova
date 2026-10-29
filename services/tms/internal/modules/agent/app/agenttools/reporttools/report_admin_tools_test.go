@@ -9,7 +9,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/reportdashboardservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/reportscheduleservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -25,7 +27,7 @@ type fakeReportAdmin struct {
 	canceled   *reporting.GetRunRequest
 	deleted    []pulid.ID
 	reset      *reporting.GetDefinitionRequest
-	saved      *reporting.SaveScheduleRequest
+	saved      *reportscheduleservice.SaveScheduleRequest
 }
 
 func (f *fakeReportAdmin) PlanCancelRun(
@@ -93,14 +95,14 @@ func (f *fakeReportAdmin) ResetCannedFork(
 
 func (f *fakeReportAdmin) PlanDeleteDashboard(
 	context.Context,
-	*reporting.GetDashboardRequest,
+	*reportdashboardservice.GetDashboardRequest,
 ) (*report.Dashboard, error) {
 	return f.dashboard, nil
 }
 
 func (f *fakeReportAdmin) DeleteDashboard(
 	_ context.Context,
-	req *reporting.GetDashboardRequest,
+	req *reportdashboardservice.GetDashboardRequest,
 ) error {
 	if err := f.guard.Write(); err != nil {
 		return err
@@ -112,14 +114,14 @@ func (f *fakeReportAdmin) DeleteDashboard(
 
 func (f *fakeReportAdmin) GetSchedule(
 	context.Context,
-	*reporting.GetScheduleRequest,
+	*reportscheduleservice.GetScheduleRequest,
 ) (*report.ReportSchedule, error) {
 	copied := *f.schedule
 
 	return &copied, nil
 }
 
-func scheduleFrom(req *reporting.SaveScheduleRequest) *report.ReportSchedule {
+func scheduleFrom(req *reportscheduleservice.SaveScheduleRequest) *report.ReportSchedule {
 	return &report.ReportSchedule{
 		ID:             req.ScheduleID,
 		DefinitionID:   req.DefinitionID,
@@ -138,9 +140,9 @@ func scheduleFrom(req *reporting.SaveScheduleRequest) *report.ReportSchedule {
 
 func (f *fakeReportAdmin) PlanUpdateSchedule(
 	_ context.Context,
-	req *reporting.SaveScheduleRequest,
-) (*reporting.ScheduleChange, error) {
-	return &reporting.ScheduleChange{
+	req *reportscheduleservice.SaveScheduleRequest,
+) (*reportscheduleservice.ScheduleChange, error) {
+	return &reportscheduleservice.ScheduleChange{
 		Before:     f.schedule,
 		After:      scheduleFrom(req),
 		Definition: f.definition,
@@ -149,7 +151,7 @@ func (f *fakeReportAdmin) PlanUpdateSchedule(
 
 func (f *fakeReportAdmin) UpdateSchedule(
 	_ context.Context,
-	req *reporting.SaveScheduleRequest,
+	req *reportscheduleservice.SaveScheduleRequest,
 ) (*report.ReportSchedule, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
@@ -161,14 +163,14 @@ func (f *fakeReportAdmin) UpdateSchedule(
 
 func (f *fakeReportAdmin) PlanDeleteSchedule(
 	context.Context,
-	*reporting.GetScheduleRequest,
+	*reportscheduleservice.GetScheduleRequest,
 ) (*report.ReportSchedule, error) {
 	return f.schedule, nil
 }
 
 func (f *fakeReportAdmin) DeleteSchedule(
 	_ context.Context,
-	req *reporting.GetScheduleRequest,
+	req *reportscheduleservice.GetScheduleRequest,
 ) error {
 	if err := f.guard.Write(); err != nil {
 		return err

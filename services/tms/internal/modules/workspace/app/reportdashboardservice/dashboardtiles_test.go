@@ -1,11 +1,15 @@
-package reporting
+package reportdashboardservice
 
 import (
 	"context"
 	"testing"
 
 	"github.com/emoss08/keel/analytics/ir"
-	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting/canned"
+	"github.com/emoss08/trenova/internal/infrastructure/config/reportingconfig"
+	"github.com/emoss08/trenova/internal/modules/identity/app/refview"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/reportingtest"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -13,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/zap"
 )
 
 type stubDashboardRepo struct {
@@ -131,13 +136,28 @@ func tileTestService(
 	definitions map[pulid.ID]*report.ReportDefinition,
 ) *Service {
 	t.Helper()
-	library, err := canned.Default()
+	engine := reportingtest.NewEngine(reportingtest.ReportCatalog(t), nil)
+	reader := reportingtest.NewPermissionReader(nil)
+	registry := permissioncatalog.NewRegistry()
+	stored := &stubDefinitionRepo{definitions: definitions}
+	core, err := reporting.New(reporting.Params{
+		Logger:           zap.NewNop(),
+		DefinitionRepo:   stored,
+		OrganizationRepo: reportingtest.Organizations{},
+		Engine:           engine,
+		PermissionEngine: reader,
+		FieldAccess:      reportingtest.FieldGroups{},
+		ReferenceViews:   refview.NewPort(refview.New(registry), reader),
+		ReportingConfig:  &reportingconfig.Config{PreviewRowLimit: 40},
+	})
 	require.NoError(t, err)
-	svc, _ := engineService(t, engineOptions{})
-	svc.dashboardRepo = &stubDashboardRepo{dashboard: dashboard}
-	svc.defRepo = &stubDefinitionRepo{definitions: definitions}
-	svc.canned = library
-	return svc
+	return &Service{
+		l:             zap.NewNop(),
+		reporting:     core,
+		dashboardRepo: &stubDashboardRepo{dashboard: dashboard},
+		defRepo:       stored,
+		engine:        engine,
+	}
 }
 
 func filterValue(filter *ir.Filter, field string) (any, bool) {
@@ -160,8 +180,8 @@ func filterValue(filter *ir.Filter, field string) (any, bool) {
 	return nil, false
 }
 
-func tileRequest() Request {
-	return Request{
+func tileRequest() reporting.Request {
+	return reporting.Request{
 		TenantInfo: pagination.TenantInfo{UserID: tileViewerID},
 	}
 }

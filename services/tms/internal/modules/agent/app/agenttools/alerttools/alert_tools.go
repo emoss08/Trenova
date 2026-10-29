@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/reportscheduleservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/tablechangealertservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/tablechangealert"
@@ -31,28 +32,35 @@ const schemaItems = "items"
 type scheduleWriter interface {
 	CreateSchedule(
 		ctx context.Context,
-		req *reporting.SaveScheduleRequest,
+		req *reportscheduleservice.SaveScheduleRequest,
 	) (*report.ReportSchedule, error)
+	PreviewSchedule(
+		ctx context.Context,
+		req *reportscheduleservice.SaveScheduleRequest,
+	) (*reportscheduleservice.SchedulePreview, error)
+	ListSchedules(
+		ctx context.Context,
+		req *reportscheduleservice.ListSchedulesRequest,
+	) ([]*report.ReportSchedule, error)
+}
+
+type scheduledReportReader interface {
 	GetDefinition(
 		ctx context.Context,
 		req *reporting.GetDefinitionRequest,
 	) (*report.ReportDefinition, error)
-	PreviewSchedule(
-		ctx context.Context,
-		req *reporting.SaveScheduleRequest,
-	) (*reporting.SchedulePreview, error)
-	ListSchedules(
-		ctx context.Context,
-		req *reporting.ListSchedulesRequest,
-	) ([]*report.ReportSchedule, error)
 }
 
 type ScheduleReportTool struct {
 	schedules scheduleWriter
+	reports   scheduledReportReader
 }
 
-func NewScheduleReportTool(schedules *reporting.Service) agenttoolports.AgentTool {
-	return &ScheduleReportTool{schedules: schedules}
+func NewScheduleReportTool(
+	schedules *reportscheduleservice.Service,
+	reports *reporting.Service,
+) agenttoolports.AgentTool {
+	return &ScheduleReportTool{schedules: schedules, reports: reports}
 }
 
 func (t *ScheduleReportTool) Name() string { return "report_create_schedule" }
@@ -145,7 +153,7 @@ func (t *ScheduleReportTool) Validate(
 	raw := toolparams.OptionalString(params.Params, "definitionId")
 	definitionID, err := pulid.Parse(raw)
 	if err == nil {
-		_, err = t.schedules.GetDefinition(ctx, &reporting.GetDefinitionRequest{
+		_, err = t.reports.GetDefinition(ctx, &reporting.GetDefinitionRequest{
 			Request:      reporting.Request{TenantInfo: toolparams.TenantFrom(params)},
 			DefinitionID: definitionID,
 		})
@@ -170,7 +178,7 @@ func (t *ScheduleReportTool) refuseRepeat(
 	params *agenttoolports.ToolExecuteParams,
 	definitionID pulid.ID,
 ) error {
-	existing, err := t.schedules.ListSchedules(ctx, &reporting.ListSchedulesRequest{
+	existing, err := t.schedules.ListSchedules(ctx, &reportscheduleservice.ListSchedulesRequest{
 		Request:      reporting.Request{TenantInfo: toolparams.TenantFrom(*params)},
 		DefinitionID: definitionID,
 		EnabledOnly:  true,
@@ -270,7 +278,7 @@ func (t *ScheduleReportTool) Execute(
 // request is the schedule the preview shows and the write creates.
 func (t *ScheduleReportTool) request(
 	params *agenttoolports.ToolExecuteParams,
-) (*reporting.SaveScheduleRequest, error) {
+) (*reportscheduleservice.SaveScheduleRequest, error) {
 	if err := toolguard.GuardExecute(t, *params); err != nil {
 		return nil, err
 	}
@@ -285,7 +293,7 @@ func (t *ScheduleReportTool) request(
 		attach = raw
 	}
 
-	return &reporting.SaveScheduleRequest{
+	return &reportscheduleservice.SaveScheduleRequest{
 		Request:         reporting.Request{TenantInfo: toolparams.TenantFrom(*params)},
 		DefinitionID:    definitionID,
 		CronExpression:  toolparams.OptionalString(params.Params, "cronExpression"),

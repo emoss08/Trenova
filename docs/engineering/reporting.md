@@ -36,7 +36,9 @@ GraphQL / REST / agent tool ──▶ reporting.Service.Prepare ──▶ report
 | Engine and renderer ports | `internal/modules/workspace/ports/reportports/reporting.go` |
 | Repository ports | `reportports/report.go` |
 | Access policy: entity kinds, decisions, refusals | `internal/modules/workspace/app/reporting/reportaccess/` |
-| Reporting service: prepare, preview, drill, runs, downloads, rows, schedules, views, dashboards, canned reports | `internal/modules/workspace/app/reporting/` |
+| Reporting service: definitions, prepare, preview, drill, runs, downloads, rows, canned reports | `internal/modules/workspace/app/reporting/` |
+| Saved views, schedules and dashboards (tiles, export), each built on the reporting service | `app/reportviewservice/`, `app/reportscheduleservice/`, `app/reportdashboardservice/` |
+| Test kit: an engine that compiles and never executes, permission and organization fakes | `app/reportingtest/` |
 | Canned reports (embedded JSON) | `app/reporting/canned/reports/*.json` |
 | Table export as a report | `internal/modules/workspace/app/tableexportservice/` |
 | Models: definitions, revisions, runs, schedules, views, dashboards | `internal/modules/workspace/domain/report/` |
@@ -464,7 +466,8 @@ is in `writecoverage.yml` ([agent-write-coverage.md](agent-write-coverage.md)).
 
 ## Agent tools
 
-The tools are a schema over `reporting.Service`; none of them builds a query or decides access.
+The tools are a schema over `reporting.Service` and the view, schedule and dashboard services;
+none of them builds a query or decides access.
 
 | Tools | Where |
 |---|---|
@@ -519,7 +522,8 @@ From `services/tms/`:
 task keel-gen                                          # <domain>db packages, internal/keeltables, pkg/keelkinds
 go generate ./internal/infrastructure/reportengine/... # analytics.messages.json, client/.../generated/keel-analytics.ts
 GOFLAGS=-tags=nomsgpack go test ./internal/infrastructure/reportengine/... \
-  ./internal/modules/workspace/app/reporting/... ./internal/modules/workspace/jobs/reportjobs/... \
+  ./internal/modules/workspace/app/reporting/... ./internal/modules/workspace/app/report{view,schedule,dashboard}service/... \
+  ./internal/modules/workspace/jobs/reportjobs/... \
   ./internal/infrastructure/reporting/render/... ./internal/api/graphql/resolver/reportresolver/...
 ```
 

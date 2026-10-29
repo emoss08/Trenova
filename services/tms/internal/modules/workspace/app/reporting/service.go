@@ -29,12 +29,9 @@ type Params struct {
 
 	Logger           *zap.Logger
 	DefinitionRepo   reportports.ReportDefinitionRepository
-	DashboardRepo    reportports.ReportDashboardRepository
 	RunRepo          reportports.ReportRunRepository
 	ScheduleRepo     reportports.ReportScheduleRepository
-	ViewRepo         reportports.ReportViewRepository
 	OrganizationRepo tenantports.OrganizationRepository
-	UserRepo         tenantports.UserRepository
 	Engine           reportports.ReportEngine
 	PermissionEngine permissionports.PermissionEngine
 	FieldAccess      permissionports.FieldAccess
@@ -47,23 +44,20 @@ type Params struct {
 }
 
 type Service struct {
-	l             *zap.Logger
-	defRepo       reportports.ReportDefinitionRepository
-	dashboardRepo reportports.ReportDashboardRepository
-	runRepo       reportports.ReportRunRepository
-	scheduleRepo  reportports.ReportScheduleRepository
-	viewRepo      reportports.ReportViewRepository
-	orgRepo       tenantports.OrganizationRepository
-	userRepo      tenantports.UserRepository
-	engine        reportports.ReportEngine
-	perms         permissionports.PermissionEngine
-	access        *reportaccess.Resolver
-	workflows     kernelports.WorkflowStarter
-	storage       kernelports.Client
-	audit         auditports.AuditService
-	metrics       *documentmetrics.Report
-	cfg           *reportingconfig.Config
-	canned        *canned.Registry
+	l            *zap.Logger
+	defRepo      reportports.ReportDefinitionRepository
+	runRepo      reportports.ReportRunRepository
+	scheduleRepo reportports.ReportScheduleRepository
+	orgRepo      tenantports.OrganizationRepository
+	engine       reportports.ReportEngine
+	perms        permissionports.PermissionEngine
+	access       *reportaccess.Resolver
+	workflows    kernelports.WorkflowStarter
+	storage      kernelports.Client
+	audit        auditports.AuditService
+	metrics      *documentmetrics.Report
+	cfg          *reportingconfig.Config
+	canned       *canned.Registry
 }
 
 //nolint:gocritic // fx.In parameter structs must be passed by value
@@ -90,23 +84,20 @@ func New(p Params) (*Service, error) {
 	}
 
 	return &Service{
-		l:             p.Logger.Named("service.reporting"),
-		defRepo:       p.DefinitionRepo,
-		dashboardRepo: p.DashboardRepo,
-		runRepo:       p.RunRepo,
-		scheduleRepo:  p.ScheduleRepo,
-		viewRepo:      p.ViewRepo,
-		orgRepo:       p.OrganizationRepo,
-		userRepo:      p.UserRepo,
-		engine:        p.Engine,
-		perms:         p.PermissionEngine,
-		access:        access,
-		workflows:     p.WorkflowStarter,
-		storage:       p.Storage,
-		audit:         p.AuditService,
-		metrics:       reportMetrics,
-		cfg:           p.ReportingConfig,
-		canned:        library,
+		l:            p.Logger.Named("service.reporting"),
+		defRepo:      p.DefinitionRepo,
+		runRepo:      p.RunRepo,
+		scheduleRepo: p.ScheduleRepo,
+		orgRepo:      p.OrganizationRepo,
+		engine:       p.Engine,
+		perms:        p.PermissionEngine,
+		access:       access,
+		workflows:    p.WorkflowStarter,
+		storage:      p.Storage,
+		audit:        p.AuditService,
+		metrics:      reportMetrics,
+		cfg:          p.ReportingConfig,
+		canned:       library,
 	}, nil
 }
 
@@ -130,7 +121,7 @@ type SaveDefinitionRequest struct {
 	Version       int64
 }
 
-func (s *Service) orgTimezone(ctx context.Context, tenant pagination.TenantInfo) string {
+func (s *Service) OrgTimezone(ctx context.Context, tenant pagination.TenantInfo) string {
 	org, err := s.orgRepo.GetByID(ctx, tenantports.GetOrganizationByIDRequest{
 		TenantInfo: tenant,
 	})
@@ -349,7 +340,7 @@ func (s *Service) headRevision(
 	return revisions[0], nil
 }
 
-func defaultVisibility(v report.Visibility) report.Visibility {
+func DefaultVisibility(v report.Visibility) report.Visibility {
 	if !v.IsValid() {
 		return report.VisibilityPrivate
 	}

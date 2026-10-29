@@ -1,13 +1,16 @@
-package reporting
+package reportdashboardservice
 
 import (
 	"bytes"
 	"context"
 	"fmt"
+	"maps"
+	"slices"
 	"time"
 
 	"github.com/emoss08/keel/analytics/ir"
 	"github.com/emoss08/trenova/internal/infrastructure/reporting/render"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting/reportaccess"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -24,7 +27,7 @@ type TileFilterOverride struct {
 }
 
 type ExportDashboardRequest struct {
-	Request
+	reporting.Request
 
 	DashboardID  pulid.ID
 	FilterValues map[string]any
@@ -74,7 +77,7 @@ func (s *Service) ExportDashboard(
 		tile := &tiles[i]
 		definition := applyTileFilterOverride(tile.Definition, req.TileFilters[tile.TileID])
 
-		prepared, prepErr := s.Prepare(ctx, &PrepareParams{
+		prepared, prepErr := s.reporting.Prepare(ctx, &reporting.PrepareParams{
 			Tenant:     req.TenantInfo,
 			Definition: definition,
 			Params:     tile.Params,
@@ -91,7 +94,7 @@ func (s *Service) ExportDashboard(
 				zap.String("dashboardId", req.DashboardID.String()),
 				zap.String("tileId", tile.TileID),
 				zap.Error(previewErr))
-			return nil, EngineError(prepared.Context, prepared.Access, previewErr)
+			return nil, reporting.EngineError(prepared.Context, prepared.Access, previewErr)
 		}
 
 		sheets = append(sheets, render.DashboardSheet{Title: tile.Title, Result: result.Reader()})
@@ -161,7 +164,7 @@ func dashboardValues(
 
 func paramValues(values map[string]any) []render.DashboardValue {
 	out := make([]render.DashboardValue, 0, len(values))
-	for _, name := range sortedNames(values) {
+	for _, name := range slices.Sorted(maps.Keys(values)) {
 		out = append(out, render.DashboardValue{Name: name, Value: values[name]})
 	}
 	return out
@@ -171,7 +174,11 @@ func dashboardExportFileName(dashboard *report.Dashboard) string {
 	stamp := time.Unix(timeutils.NowUnix(), 0).UTC().Format("2006-01-02")
 	return fmt.Sprintf(
 		"%s %s.xlsx",
-		fileutils.SanitizeDisplayFilename(dashboard.Name, "dashboard", maxDownloadNameLen),
+		fileutils.SanitizeDisplayFilename(
+			dashboard.Name,
+			"dashboard",
+			reporting.MaxDownloadNameLen,
+		),
 		stamp,
 	)
 }

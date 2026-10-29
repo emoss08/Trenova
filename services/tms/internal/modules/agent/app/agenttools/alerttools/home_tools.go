@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/homelayoutservice"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/reportdashboardservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/homelayout"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
@@ -52,10 +53,10 @@ type homeTargetChecker interface {
 		ctx context.Context,
 		tenant pagination.TenantInfo,
 		tiles []report.DashboardTile,
-	) []reporting.UnavailableTile
+	) []reportdashboardservice.UnavailableTile
 	GetDashboard(
 		ctx context.Context,
-		req *reporting.GetDashboardRequest,
+		req *reportdashboardservice.GetDashboardRequest,
 	) (*report.Dashboard, error)
 }
 
@@ -201,9 +202,11 @@ type AddHomeWidgetTool struct {
 
 func NewAddHomeWidgetTool(
 	layouts *homelayoutservice.Service,
-	reports *reporting.Service,
+	dashboards *reportdashboardservice.Service,
 ) agenttoolports.AgentTool {
-	return &AddHomeWidgetTool{homeToolBase{editor: homeEditor{layouts: layouts, targets: reports}}}
+	return &AddHomeWidgetTool{
+		homeToolBase{editor: homeEditor{layouts: layouts, targets: dashboards}},
+	}
 }
 
 func (t *AddHomeWidgetTool) Name() string { return "home_add_widget" }
@@ -535,7 +538,7 @@ func (e homeEditor) checkWidgetTargets(
 		if config.DashboardID.IsNil() {
 			return
 		}
-		if _, err := e.targets.GetDashboard(ctx, &reporting.GetDashboardRequest{
+		if _, err := e.targets.GetDashboard(ctx, &reportdashboardservice.GetDashboardRequest{
 			Request:     reporting.Request{TenantInfo: tenant},
 			DashboardID: config.DashboardID,
 		}); err != nil {

@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/reportscheduleservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -19,15 +20,21 @@ type Params struct {
 
 	Logger    *zap.Logger
 	Reporting *reporting.Service
+	Schedules *reportscheduleservice.Service
 }
 
 type Service struct {
 	l         *zap.Logger
 	reporting *reporting.Service
+	schedules *reportscheduleservice.Service
 }
 
 func New(p Params) *Service {
-	return &Service{l: p.Logger.Named("service.tableexport"), reporting: p.Reporting}
+	return &Service{
+		l:         p.Logger.Named("service.tableexport"),
+		reporting: p.Reporting,
+		schedules: p.Schedules,
+	}
 }
 
 type ExportRequest struct {
@@ -105,7 +112,7 @@ func (s *Service) Schedule(ctx context.Context, req *ScheduleRequest) (*Result, 
 		return nil, err
 	}
 
-	schedule, err := s.reporting.CreateSchedule(ctx, &reporting.SaveScheduleRequest{
+	schedule, err := s.schedules.CreateSchedule(ctx, &reportscheduleservice.SaveScheduleRequest{
 		Request:         req.Request,
 		DefinitionID:    definition.ID,
 		CronExpression:  req.CronExpression,

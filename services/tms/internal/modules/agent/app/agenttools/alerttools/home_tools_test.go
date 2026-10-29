@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/homelayoutservice"
-	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/reportdashboardservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/homelayout"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -58,11 +58,11 @@ func (f *fakeHomeTargets) UnavailableTileTargets(
 	_ context.Context,
 	_ pagination.TenantInfo,
 	tiles []report.DashboardTile,
-) []reporting.UnavailableTile {
-	var missing []reporting.UnavailableTile
+) []reportdashboardservice.UnavailableTile {
+	var missing []reportdashboardservice.UnavailableTile
 	for idx := range tiles {
 		if !f.reports[tiles[idx].DefinitionID] {
-			missing = append(missing, reporting.UnavailableTile{Index: idx})
+			missing = append(missing, reportdashboardservice.UnavailableTile{Index: idx})
 		}
 	}
 	return missing
@@ -70,7 +70,7 @@ func (f *fakeHomeTargets) UnavailableTileTargets(
 
 func (f *fakeHomeTargets) GetDashboard(
 	context.Context,
-	*reporting.GetDashboardRequest,
+	*reportdashboardservice.GetDashboardRequest,
 ) (*report.Dashboard, error) {
 	return nil, errortypes.NewNotFoundError("Dashboard not found")
 }

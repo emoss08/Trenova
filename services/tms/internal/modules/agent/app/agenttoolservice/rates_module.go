@@ -14,7 +14,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/rating/app/ratesimulationservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/fuelpurchaseservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/iftaservice"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/reportdashboardservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/reportscheduleservice"
 )
 
 func ratesToolProviders() []any {
@@ -223,14 +225,20 @@ func provideResetReportForkTool(reports *reporting.Service) agenttoolports.Agent
 	return reporttools.NewResetReportForkTool(reports)
 }
 
-func provideDeleteDashboardTool(reports *reporting.Service) agenttoolports.AgentTool {
-	return reporttools.NewDeleteDashboardTool(reports)
+func provideDeleteDashboardTool(
+	dashboards *reportdashboardservice.Service,
+) agenttoolports.AgentTool {
+	return reporttools.NewDeleteDashboardTool(dashboards)
 }
 
-func provideUpdateReportScheduleTool(reports *reporting.Service) agenttoolports.AgentTool {
-	return reporttools.NewUpdateReportScheduleTool(reports)
+func provideUpdateReportScheduleTool(
+	schedules *reportscheduleservice.Service,
+) agenttoolports.AgentTool {
+	return reporttools.NewUpdateReportScheduleTool(schedules)
 }
 
-func provideDeleteReportScheduleTool(reports *reporting.Service) agenttoolports.AgentTool {
-	return reporttools.NewDeleteReportScheduleTool(reports)
+func provideDeleteReportScheduleTool(
+	schedules *reportscheduleservice.Service,
+) agenttoolports.AgentTool {
+	return reporttools.NewDeleteReportScheduleTool(schedules)
 }

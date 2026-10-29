@@ -18,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workspace/adapters/postgres/reportrepository"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/reportscheduleservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report/reportdb"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
@@ -181,12 +182,13 @@ func TestConvertedLists_ReportReadsUnderRowLevelSecurity(t *testing.T) {
 	engine := &mocks.DenyResourcesPermissionEngine{}
 	catalog, err := reportengine.NewCatalog()
 	require.NoError(t, err)
+	scheduleRepo := reportrepository.NewScheduleRepository(
+		reportrepository.ScheduleParams{DB: conn, Logger: logger})
 	reportingService, err := reporting.New(reporting.Params{
 		Logger: logger,
 		RunRepo: reportrepository.NewRunRepository(
 			reportrepository.RunParams{DB: conn, Logger: logger}),
-		ScheduleRepo: reportrepository.NewScheduleRepository(
-			reportrepository.ScheduleParams{DB: conn, Logger: logger}),
+		ScheduleRepo: scheduleRepo,
 		Engine: reportengine.New(reportengine.Params{
 			LC:              fxtest.NewLifecycle(t),
 			Catalog:         catalog,
@@ -197,7 +199,14 @@ func TestConvertedLists_ReportReadsUnderRowLevelSecurity(t *testing.T) {
 		ReportingConfig:  &reportingconfig.Config{},
 	})
 	require.NoError(t, err)
-	resolvers := agentread.ResolverParams{ReportingService: reportingService}
+	resolvers := agentread.ResolverParams{
+		ReportingService: reportingService,
+		ReportScheduleService: reportscheduleservice.New(reportscheduleservice.Params{
+			Logger:       logger,
+			Reporting:    reportingService,
+			ScheduleRepo: scheduleRepo,
+		}),
+	}
 	reader := agentreadtest.NewReader(
 		t,
 		agentreadtest.Options{Engine: engine, Resolvers: resolvers},

@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/reportdashboardservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
@@ -284,11 +285,13 @@ type listDashboardsTool struct {
 type dashboardLister interface {
 	ListDashboards(
 		ctx context.Context,
-		req *reporting.ListDashboardsRequest,
+		req *reportdashboardservice.ListDashboardsRequest,
 	) ([]*report.Dashboard, error)
 }
 
-func NewListDashboardsTool(dashboards *reporting.Service) agenttoolports.AgentQueryTool {
+func NewListDashboardsTool(
+	dashboards *reportdashboardservice.Service,
+) agenttoolports.AgentQueryTool {
 	return &listDashboardsTool{dashboards: dashboards}
 }
 
@@ -363,16 +366,19 @@ func (t *listDashboardsTool) Query(
 	criteria := filtercatalog.NewCriteria("dashboards").At(querytool.ClockFor(params))
 	criteria.Text(query)
 
-	dashboards, err := t.dashboards.ListDashboards(ctx, &reporting.ListDashboardsRequest{
-		Request: reporting.Request{
-			TenantInfo: pagination.TenantInfo{
-				OrgID:  params.OrganizationID,
-				BuID:   params.BusinessUnitID,
-				UserID: params.Actor.UserID,
+	dashboards, err := t.dashboards.ListDashboards(
+		ctx,
+		&reportdashboardservice.ListDashboardsRequest{
+			Request: reporting.Request{
+				TenantInfo: pagination.TenantInfo{
+					OrgID:  params.OrganizationID,
+					BuID:   params.BusinessUnitID,
+					UserID: params.Actor.UserID,
+				},
 			},
+			Limit: maxDashboardsScanned,
 		},
-		Limit: maxDashboardsScanned,
-	})
+	)
 	if err != nil {
 		return nil, err
 	}

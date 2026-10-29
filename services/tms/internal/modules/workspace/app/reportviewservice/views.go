@@ -1,8 +1,9 @@
-package reporting
+package reportviewservice
 
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -12,7 +13,7 @@ import (
 )
 
 type SaveViewRequest struct {
-	Request
+	reporting.Request
 
 	ViewID       pulid.ID
 	DefinitionID pulid.ID
@@ -26,13 +27,13 @@ type SaveViewRequest struct {
 }
 
 type GetViewRequest struct {
-	Request
+	reporting.Request
 
 	ViewID pulid.ID
 }
 
 type ListViewsRequest struct {
-	Request
+	reporting.Request
 
 	DefinitionID pulid.ID
 	Limit        int
@@ -44,7 +45,7 @@ type ListViewsRequest struct {
 // preset left behind by a definition edit or an attempt to smuggle a value the
 // compiler never validated — neither should be stored.
 func (s *Service) validateViewParams(ctx context.Context, req *SaveViewRequest) error {
-	definition, err := s.GetDefinition(ctx, &GetDefinitionRequest{
+	definition, err := s.reporting.GetDefinition(ctx, &reporting.GetDefinitionRequest{
 		Request:      req.Request,
 		DefinitionID: req.DefinitionID,
 	})
@@ -164,7 +165,7 @@ func (s *Service) GetView(
 	if !view.Shared && view.OwnerID != req.TenantInfo.UserID {
 		return nil, errortypes.NewAuthorizationError("You do not have access to this view")
 	}
-	if _, err = s.GetDefinition(ctx, &GetDefinitionRequest{
+	if _, err = s.reporting.GetDefinition(ctx, &reporting.GetDefinitionRequest{
 		Request:      req.Request,
 		DefinitionID: view.DefinitionID,
 	}); err != nil {
@@ -179,7 +180,7 @@ func (s *Service) ListViews(
 	req *ListViewsRequest,
 ) ([]*report.ReportView, error) {
 	if !req.DefinitionID.IsNil() {
-		if _, err := s.GetDefinition(ctx, &GetDefinitionRequest{
+		if _, err := s.reporting.GetDefinition(ctx, &reporting.GetDefinitionRequest{
 			Request:      req.Request,
 			DefinitionID: req.DefinitionID,
 		}); err != nil {
