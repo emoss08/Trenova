@@ -5,27 +5,28 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/shared/quickbooks"
+	"github.com/emoss08/trenova/shared/quickbookstxn"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func invoiceJournal() *quickbooks.JournalTxn {
-	return &quickbooks.JournalTxn{
+func invoiceJournal() *quickbookstxn.JournalTxn {
+	return &quickbookstxn.JournalTxn{
 		DocNumber:   "JE-1042",
 		TxnDate:     "2026-04-10",
 		PrivateNote: "Trenova journal entry JE-1042",
-		Lines: []quickbooks.JournalLine{
+		Lines: []quickbookstxn.JournalLine{
 			{
-				PostingType: quickbooks.PostingDebit,
+				PostingType: quickbookstxn.PostingDebit,
 				AccountID:   "84",
 				Amount:      decimal.RequireFromString("1500.00"),
 				Description: "Invoice INV-1001",
-				EntityType:  quickbooks.JournalEntityCustomer,
+				EntityType:  quickbookstxn.JournalEntityCustomer,
 				EntityID:    "58",
 			},
 			{
-				PostingType: quickbooks.PostingCredit,
+				PostingType: quickbookstxn.PostingCredit,
 				AccountID:   "79",
 				Amount:      decimal.RequireFromString("1500.00"),
 				Description: "Freight revenue",
@@ -46,9 +47,14 @@ func TestCreateJournalEntrySendsBalancedLinesWithTheirNames(t *testing.T) {
 		_, _ = w.Write(fixture(t, "create_journal_entry.json"))
 	})
 
-	result, err := client.CreateJournalEntry(t.Context(), testRequestID, invoiceJournal())
+	result, err := quickbookstxn.CreateJournalEntry(
+		t.Context(),
+		client,
+		testRequestID,
+		invoiceJournal(),
+	)
 	require.NoError(t, err)
-	assert.Equal(t, quickbooks.TxnJournalEntry, result.Kind)
+	assert.Equal(t, quickbookstxn.TxnJournalEntry, result.Kind)
 	assert.Equal(t, "310", result.ID)
 	assert.Equal(t, "JE-1042", result.DocNumber)
 
@@ -93,7 +99,7 @@ func TestJournalEntryCarriesItsCurrencyAndRate(t *testing.T) {
 	txn.CurrencyCode = "cad"
 	txn.ExchangeRate = decimal.RequireFromString("0.7312")
 
-	_, err := client.CreateJournalEntry(t.Context(), testRequestID, txn)
+	_, err := quickbookstxn.CreateJournalEntry(t.Context(), client, testRequestID, txn)
 	require.NoError(t, err)
 	assert.Equal(t, map[string]any{"value": "CAD"}, body["CurrencyRef"])
 	assert.InDelta(t, 0.7312, body["ExchangeRate"], 1e-9)
@@ -114,7 +120,13 @@ func TestUpdateJournalEntryReadsTheSyncTokenFirst(t *testing.T) {
 		_, _ = w.Write(fixture(t, "create_journal_entry.json"))
 	})
 
-	_, err := client.UpdateJournalEntry(t.Context(), testRequestID, "310", invoiceJournal())
+	_, err := quickbookstxn.UpdateJournalEntry(
+		t.Context(),
+		client,
+		testRequestID,
+		"310",
+		invoiceJournal(),
+	)
 	require.NoError(t, err)
 	assert.Equal(t, []string{
 		"GET /v3/company/" + testRealm + "/journalentry/310",
@@ -148,31 +160,31 @@ func TestJournalEntryRefusesWhatQuickBooksWould(t *testing.T) {
 	wrongName.Lines[0].EntityType = "Employee"
 
 	cases := map[string]struct {
-		txn  *quickbooks.JournalTxn
+		txn  *quickbookstxn.JournalTxn
 		want error
 	}{
-		"unbalanced":        {unbalanced, quickbooks.ErrJournalUnbalanced},
-		"one line":          {oneLine, quickbooks.ErrJournalLinesTooFew},
-		"no lines":          {&quickbooks.JournalTxn{}, quickbooks.ErrJournalLinesTooFew},
-		"missing account":   {noAccount, quickbooks.ErrJournalAccount},
-		"negative amount":   {negative, quickbooks.ErrNegativeAmount},
-		"unknown posting":   {badPosting, quickbooks.ErrJournalPostingType},
-		"name without id":   {halfName, quickbooks.ErrJournalEntityTarget},
-		"unsupported names": {wrongName, quickbooks.ErrJournalEntityTarget},
+		"unbalanced":        {unbalanced, quickbookstxn.ErrJournalUnbalanced},
+		"one line":          {oneLine, quickbookstxn.ErrJournalLinesTooFew},
+		"no lines":          {&quickbookstxn.JournalTxn{}, quickbookstxn.ErrJournalLinesTooFew},
+		"missing account":   {noAccount, quickbookstxn.ErrJournalAccount},
+		"negative amount":   {negative, quickbookstxn.ErrNegativeAmount},
+		"unknown posting":   {badPosting, quickbookstxn.ErrJournalPostingType},
+		"name without id":   {halfName, quickbookstxn.ErrJournalEntityTarget},
+		"unsupported names": {wrongName, quickbookstxn.ErrJournalEntityTarget},
 	}
 	for name, tc := range cases {
-		_, err := client.CreateJournalEntry(t.Context(), testRequestID, tc.txn)
+		_, err := quickbookstxn.CreateJournalEntry(t.Context(), client, testRequestID, tc.txn)
 		require.ErrorIs(t, err, tc.want, name)
 	}
-	_, err := client.CreateJournalEntry(t.Context(), testRequestID, nil)
-	require.ErrorIs(t, err, quickbooks.ErrJournalLinesTooFew)
+	_, err := quickbookstxn.CreateJournalEntry(t.Context(), client, testRequestID, nil)
+	require.ErrorIs(t, err, quickbookstxn.ErrJournalLinesTooFew)
 }
 
 func TestJournalEntryLinksToTheJournalPage(t *testing.T) {
 	t.Parallel()
 
-	assert.True(t, quickbooks.TxnJournalEntry.IsValid())
-	assert.Equal(t, "/app/journal?txnId=", quickbooks.TxnJournalEntry.AppPath())
+	assert.True(t, quickbookstxn.TxnJournalEntry.IsValid())
+	assert.Equal(t, "/app/journal?txnId=", quickbookstxn.TxnJournalEntry.AppPath())
 }
 
 func TestTrialBalanceReadsEveryAccountRowAcrossSections(t *testing.T) {
@@ -193,7 +205,11 @@ func TestTrialBalanceReadsEveryAccountRowAcrossSections(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, rows, 3, "the grand total row names no account")
 	assert.Equal(t, "35", rows[0].AccountID)
-	assert.True(t, decimal.RequireFromString("12480.50").Equal(rows[0].Debit), "thousands separators are read")
+	assert.True(
+		t,
+		decimal.RequireFromString("12480.50").Equal(rows[0].Debit),
+		"thousands separators are read",
+	)
 	assert.True(t, rows[0].Credit.IsZero())
 	assert.Equal(t, "79", rows[2].AccountID, "rows nested in a section are read")
 	assert.Equal(t, "Freight revenue", rows[2].AccountName)
@@ -206,7 +222,10 @@ func TestTrialBalanceNeedsAnEndDate(t *testing.T) {
 	client := newAPIClient(t, func(http.ResponseWriter, *http.Request) {
 		t.Fatal("no request without an end date")
 	})
-	_, err := client.TrialBalance(t.Context(), &quickbooks.TrialBalanceRequest{StartDate: "2026-04-01"})
+	_, err := client.TrialBalance(
+		t.Context(),
+		&quickbooks.TrialBalanceRequest{StartDate: "2026-04-01"},
+	)
 	require.ErrorIs(t, err, quickbooks.ErrReportDateRequired)
 	_, err = client.TrialBalance(t.Context(), nil)
 	require.ErrorIs(t, err, quickbooks.ErrReportDateRequired)
@@ -220,25 +239,25 @@ func TestJournalLineNamesAVendorOnPayables(t *testing.T) {
 		body = readJSON(t, r)
 		_, _ = w.Write(fixture(t, "create_journal_entry.json"))
 	})
-	txn := &quickbooks.JournalTxn{
+	txn := &quickbookstxn.JournalTxn{
 		TxnDate: "2026-04-10",
-		Lines: []quickbooks.JournalLine{
+		Lines: []quickbookstxn.JournalLine{
 			{
-				PostingType: quickbooks.PostingDebit,
+				PostingType: quickbookstxn.PostingDebit,
 				AccountID:   "50",
 				Amount:      decimal.RequireFromString("1650"),
 			},
 			{
-				PostingType: quickbooks.PostingCredit,
+				PostingType: quickbookstxn.PostingCredit,
 				AccountID:   "33",
 				Amount:      decimal.RequireFromString("1650"),
-				EntityType:  quickbooks.JournalEntityVendor,
+				EntityType:  quickbookstxn.JournalEntityVendor,
 				EntityID:    "91",
 			},
 		},
 	}
 
-	_, err := client.CreateJournalEntry(t.Context(), testRequestID, txn)
+	_, err := quickbookstxn.CreateJournalEntry(t.Context(), client, testRequestID, txn)
 	require.NoError(t, err)
 	lines := body["Line"].([]any)
 	detail := lines[1].(map[string]any)["JournalEntryLineDetail"].(map[string]any)
@@ -265,7 +284,7 @@ func TestDeleteJournalEntryReadsItThenDeletesIt(t *testing.T) {
 		_, _ = w.Write(fixture(t, "delete_journal_entry.json"))
 	})
 
-	result, err := client.DeleteJournalEntry(t.Context(), testRequestID, "310")
+	result, err := quickbookstxn.DeleteJournalEntry(t.Context(), client, testRequestID, "310")
 	require.NoError(t, err)
 	assert.Equal(t, "delete", operation)
 	assert.Equal(t, "/v3/company/"+testRealm+"/journalentry", path)

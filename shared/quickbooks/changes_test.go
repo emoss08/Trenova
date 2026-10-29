@@ -8,7 +8,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/shared/quickbooks"
+	"github.com/emoss08/trenova/shared/quickbooksref"
+	"github.com/emoss08/trenova/shared/quickbookssync"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -28,10 +29,10 @@ func TestChangesSinceAsksForEntitiesSinceTheCursor(t *testing.T) {
 		_, _ = w.Write(fixture(t, "cdc_changes.json"))
 	})
 
-	set, err := client.ChangesSince(t.Context(), []quickbooks.ChangeEntity{
-		quickbooks.ChangePayment,
-		quickbooks.ChangeBillPayment,
-		quickbooks.ReferenceChangeEntity(quickbooks.KindCustomer),
+	set, err := quickbookssync.ChangesSince(t.Context(), client, []quickbookssync.ChangeEntity{
+		quickbookssync.ChangePayment,
+		quickbookssync.ChangeBillPayment,
+		quickbookssync.ReferenceChangeEntity(quickbooksref.KindCustomer),
 	}, since, now)
 	require.NoError(t, err)
 
@@ -78,10 +79,10 @@ func TestChangesSinceAsksForEntitiesSinceTheCursor(t *testing.T) {
 	assert.Equal(t, "390", bill.Lines[0].TxnID)
 
 	require.Len(t, set.References, 2)
-	assert.Equal(t, quickbooks.KindCustomer, set.References[0].Kind)
+	assert.Equal(t, quickbooksref.KindCustomer, set.References[0].Kind)
 	assert.Equal(t, "Acme Foods Inc", set.References[0].Name)
 	assert.False(t, set.References[0].Deleted)
-	assert.Equal(t, quickbooks.KindVendor, set.References[1].Kind)
+	assert.Equal(t, quickbooksref.KindVendor, set.References[1].Kind)
 	assert.True(t, set.References[1].Deleted)
 	assert.Empty(t, set.Full)
 }
@@ -95,13 +96,14 @@ func TestChangesSinceRefusesACursorOlderThanThirtyDays(t *testing.T) {
 	})
 
 	now := time.Date(2026, 9, 25, 16, 0, 0, 0, time.UTC)
-	_, err := client.ChangesSince(
+	_, err := quickbookssync.ChangesSince(
 		t.Context(),
-		[]quickbooks.ChangeEntity{quickbooks.ChangePayment},
-		now.Add(-quickbooks.MaxChangeLookback-time.Second),
+		client,
+		[]quickbookssync.ChangeEntity{quickbookssync.ChangePayment},
+		now.Add(-quickbookssync.MaxChangeLookback-time.Second),
 		now,
 	)
-	require.ErrorIs(t, err, quickbooks.ErrChangeWindow)
+	require.ErrorIs(t, err, quickbookssync.ErrChangeWindow)
 	assert.Zero(t, calls.Load())
 }
 
@@ -113,16 +115,17 @@ func TestChangesSinceRejectsUnknownEntities(t *testing.T) {
 	})
 	now := time.Now()
 
-	_, err := client.ChangesSince(t.Context(), nil, now, now)
-	require.ErrorIs(t, err, quickbooks.ErrNoChangeEntities)
+	_, err := quickbookssync.ChangesSince(t.Context(), client, nil, now, now)
+	require.ErrorIs(t, err, quickbookssync.ErrNoChangeEntities)
 
-	_, err = client.ChangesSince(
+	_, err = quickbookssync.ChangesSince(
 		t.Context(),
-		[]quickbooks.ChangeEntity{"Estimate"},
+		client,
+		[]quickbookssync.ChangeEntity{"Estimate"},
 		now,
 		now,
 	)
-	require.ErrorIs(t, err, quickbooks.ErrUnknownChangeEntity)
+	require.ErrorIs(t, err, quickbookssync.ErrUnknownChangeEntity)
 }
 
 func TestChangesSinceFlagsAnEntityThatHitTheCap(t *testing.T) {
@@ -130,7 +133,7 @@ func TestChangesSinceFlagsAnEntityThatHitTheCap(t *testing.T) {
 
 	var body strings.Builder
 	body.WriteString(`{"CDCResponse":[{"QueryResponse":[{"Payment":[`)
-	for idx := range quickbooks.MaxChangesPerCall {
+	for idx := range quickbookssync.MaxChangesPerCall {
 		if idx > 0 {
 			body.WriteString(",")
 		}
@@ -143,15 +146,16 @@ func TestChangesSinceFlagsAnEntityThatHitTheCap(t *testing.T) {
 	})
 
 	now := time.Now()
-	set, err := client.ChangesSince(
+	set, err := quickbookssync.ChangesSince(
 		t.Context(),
-		[]quickbooks.ChangeEntity{quickbooks.ChangePayment},
+		client,
+		[]quickbookssync.ChangeEntity{quickbookssync.ChangePayment},
 		now.Add(-time.Hour),
 		now,
 	)
 	require.NoError(t, err)
-	assert.Len(t, set.Payments, quickbooks.MaxChangesPerCall)
-	assert.Equal(t, []quickbooks.ChangeEntity{quickbooks.ChangePayment}, set.Full)
+	assert.Len(t, set.Payments, quickbookssync.MaxChangesPerCall)
+	assert.Equal(t, []quickbookssync.ChangeEntity{quickbookssync.ChangePayment}, set.Full)
 }
 
 func TestQueryChangedSincePagesByLastUpdatedTime(t *testing.T) {
@@ -168,7 +172,14 @@ func TestQueryChangedSincePagesByLastUpdatedTime(t *testing.T) {
 		_, _ = w.Write(fixture(t, "query_payment_changed.json"))
 	})
 
-	set, next, err := client.QueryChangedSince(t.Context(), quickbooks.ChangePayment, since, 1, 2)
+	set, next, err := quickbookssync.QueryChangedSince(
+		t.Context(),
+		client,
+		quickbookssync.ChangePayment,
+		since,
+		1,
+		2,
+	)
 	require.NoError(t, err)
 	require.Len(t, set.Payments, 2)
 	assert.Equal(t, "288", set.Payments[0].ID)
@@ -190,12 +201,13 @@ func TestQueryChangedSinceIncludesInactiveReferences(t *testing.T) {
 		_, _ = w.Write(fixture(t, "query_empty.json"))
 	})
 
-	set, next, err := client.QueryChangedSince(
+	set, next, err := quickbookssync.QueryChangedSince(
 		t.Context(),
-		quickbooks.ReferenceChangeEntity(quickbooks.KindVendor),
+		client,
+		quickbookssync.ReferenceChangeEntity(quickbooksref.KindVendor),
 		since,
 		1,
-		quickbooks.MaxQueryResults,
+		quickbooksref.MaxQueryResults,
 	)
 	require.NoError(t, err)
 	assert.Empty(t, set.References)

@@ -109,8 +109,8 @@ func (c *Client) CompanyInfo(ctx context.Context) (*CompanyInfo, error) {
 	if _, err := c.transport.Do(ctx, &restx.Request{
 		Endpoint: "company-info",
 		Method:   http.MethodGet,
-		Path:     c.companyPath("companyinfo", c.realmID),
-		Query:    c.query(),
+		Path:     c.CompanyPath("companyinfo", c.realmID),
+		Query:    c.Query(),
 		Out:      &out,
 	}); err != nil {
 		return nil, err
@@ -132,8 +132,8 @@ func (c *Client) Preferences(ctx context.Context) (*Preferences, error) {
 	if _, err := c.transport.Do(ctx, &restx.Request{
 		Endpoint: "preferences",
 		Method:   http.MethodGet,
-		Path:     c.companyPath("preferences"),
-		Query:    c.query(),
+		Path:     c.CompanyPath("preferences"),
+		Query:    c.Query(),
 		Out:      &out,
 	}); err != nil {
 		return nil, err
@@ -157,7 +157,11 @@ func (c *Client) Preferences(ctx context.Context) (*Preferences, error) {
 	return prefs, nil
 }
 
-func (c *Client) companyPath(parts ...string) string {
+func (c *Client) Do(ctx context.Context, req *restx.Request) (*restx.Response, error) {
+	return c.transport.Do(ctx, req)
+}
+
+func (c *Client) CompanyPath(parts ...string) string {
 	segments := make([]string, 0, len(parts)+3)
 	segments = append(segments, "v3", "company", url.PathEscape(c.realmID))
 	for _, part := range parts {
@@ -166,7 +170,7 @@ func (c *Client) companyPath(parts ...string) string {
 	return "/" + strings.Join(segments, "/")
 }
 
-func (c *Client) query() url.Values {
+func (c *Client) Query() url.Values {
 	return url.Values{"minorversion": {minorVersion}}
 }
 

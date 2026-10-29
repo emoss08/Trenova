@@ -1,4 +1,4 @@
-package quickbooks
+package quickbookssync
 
 import (
 	"context"
@@ -8,6 +8,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/emoss08/trenova/shared/quickbooks"
+	"github.com/emoss08/trenova/shared/quickbooksref"
+	"github.com/emoss08/trenova/shared/quickbookstxn"
 	"github.com/emoss08/trenova/shared/restx"
 	"github.com/shopspring/decimal"
 )
@@ -30,7 +33,6 @@ const (
 	statusVoided       = "Voided"
 	voidedNotePrefix   = "Voided"
 	changedSinceLayout = time.RFC3339
-	queryResource      = "query"
 )
 
 var (
@@ -41,11 +43,11 @@ var (
 	)
 )
 
-func ReferenceChangeEntity(kind ReferenceKind) ChangeEntity {
+func ReferenceChangeEntity(kind quickbooksref.ReferenceKind) ChangeEntity {
 	return ChangeEntity(kind)
 }
 
-func DocumentChangeEntity(kind TxnKind) ChangeEntity {
+func DocumentChangeEntity(kind quickbookstxn.TxnKind) ChangeEntity {
 	return ChangeEntity(kind)
 }
 
@@ -59,14 +61,14 @@ func (e ChangeEntity) IsValid() bool {
 		ChangeVendorCredit:
 		return true
 	default:
-		return ReferenceKind(e).IsValid()
+		return quickbooksref.ReferenceKind(e).IsValid()
 	}
 }
 
-func (e ChangeEntity) Document() (TxnKind, bool) {
+func (e ChangeEntity) Document() (quickbookstxn.TxnKind, bool) {
 	switch e {
 	case ChangeInvoice, ChangeCreditMemo, ChangeBill, ChangeVendorCredit:
-		return TxnKind(e), true
+		return quickbookstxn.TxnKind(e), true
 	case ChangePayment, ChangeBillPayment:
 		return "", false
 	default:
@@ -74,8 +76,8 @@ func (e ChangeEntity) Document() (TxnKind, bool) {
 	}
 }
 
-func (e ChangeEntity) Reference() (ReferenceKind, bool) {
-	kind := ReferenceKind(e)
+func (e ChangeEntity) Reference() (quickbooksref.ReferenceKind, bool) {
+	kind := quickbooksref.ReferenceKind(e)
 	return kind, kind.IsValid()
 }
 
@@ -124,13 +126,13 @@ type ChangedBillPayment struct {
 }
 
 type ChangedReference struct {
-	ReferenceObject
+	quickbooksref.ReferenceObject
 	Deleted bool
 }
 
 type ChangedDocument struct {
 	ChangeMeta
-	Kind        TxnKind
+	Kind        quickbookstxn.TxnKind
 	DocNumber   string
 	TotalAmount decimal.Decimal
 }
@@ -176,8 +178,8 @@ type changeMetaData struct {
 }
 
 type wireChangeLine struct {
-	Amount    decimal.Decimal `json:"Amount"`
-	LinkedTxn []linkedTxn     `json:"LinkedTxn"`
+	Amount    decimal.Decimal           `json:"Amount"`
+	LinkedTxn []quickbookstxn.LinkedTxn `json:"LinkedTxn"`
 }
 
 type wireChangeTxn struct {
@@ -210,7 +212,7 @@ type wireCardPayment struct {
 }
 
 type wireChangeEntity struct {
-	wireEntity
+	quickbooksref.WireEntity
 	Status string `json:"status"`
 }
 
@@ -239,8 +241,9 @@ type changeQueryEnvelope struct {
 	QueryResponse changeQueryResponse `json:"QueryResponse"`
 }
 
-func (c *Client) ChangesSince(
+func ChangesSince(
 	ctx context.Context,
+	c *quickbooks.Client,
 	entities []ChangeEntity,
 	since time.Time,
 	now time.Time,
@@ -259,15 +262,15 @@ func (c *Client) ChangesSince(
 		return nil, ErrChangeWindow
 	}
 
-	query := c.query()
+	query := c.Query()
 	query.Set("entities", strings.Join(names, ","))
 	query.Set("changedSince", since.UTC().Format(changedSinceLayout))
 
 	var out cdcEnvelope
-	if _, err := c.transport.Do(ctx, &restx.Request{
+	if _, err := c.Do(ctx, &restx.Request{
 		Endpoint: "cdc",
 		Method:   http.MethodGet,
-		Path:     c.companyPath("cdc"),
+		Path:     c.CompanyPath("cdc"),
 		Query:    query,
 		Out:      &out,
 	}); err != nil {
@@ -283,8 +286,9 @@ func (c *Client) ChangesSince(
 	return set, nil
 }
 
-func (c *Client) QueryChangedSince(
+func QueryChangedSince(
 	ctx context.Context,
+	c *quickbooks.Client,
 	entity ChangeEntity,
 	since time.Time,
 	startPosition, pageSize int,
@@ -292,8 +296,8 @@ func (c *Client) QueryChangedSince(
 	if !entity.IsValid() {
 		return nil, 0, ErrUnknownChangeEntity
 	}
-	if startPosition < 1 || pageSize < 1 || pageSize > MaxQueryResults {
-		return nil, 0, ErrInvalidPaging
+	if startPosition < 1 || pageSize < 1 || pageSize > quickbooksref.MaxQueryResults {
+		return nil, 0, quickbooksref.ErrInvalidPaging
 	}
 
 	statement := "select * from " + string(entity) +
@@ -304,14 +308,14 @@ func (c *Client) QueryChangedSince(
 	statement += " orderby MetaData.LastUpdatedTime startposition " +
 		strconv.Itoa(startPosition) + " maxresults " + strconv.Itoa(pageSize)
 
-	query := c.query()
-	query.Set(queryResource, statement)
+	query := c.Query()
+	query.Set(quickbooks.QueryResource, statement)
 
 	var out changeQueryEnvelope
-	if _, err := c.transport.Do(ctx, &restx.Request{
-		Endpoint: queryResource,
+	if _, err := c.Do(ctx, &restx.Request{
+		Endpoint: quickbooks.QueryResource,
 		Method:   http.MethodGet,
-		Path:     c.companyPath(queryResource),
+		Path:     c.CompanyPath(quickbooks.QueryResource),
 		Query:    query,
 		Out:      &out,
 	}); err != nil {
@@ -351,7 +355,7 @@ func decodeChanges(resp *changeQueryResponse) *ChangeSet {
 			set.Full = append(set.Full, DocumentChangeEntity(kind))
 		}
 	}
-	for _, kind := range AllReferenceKinds() {
+	for _, kind := range quickbooksref.AllReferenceKinds() {
 		wire := resp.references(kind)
 		for idx := range wire {
 			set.References = append(set.References, wire[idx].reference(kind))
@@ -363,7 +367,7 @@ func decodeChanges(resp *changeQueryResponse) *ChangeSet {
 	if len(resp.BillPayment) >= MaxChangesPerCall {
 		set.Full = append(set.Full, ChangeBillPayment)
 	}
-	for _, kind := range AllReferenceKinds() {
+	for _, kind := range quickbooksref.AllReferenceKinds() {
 		if len(resp.references(kind)) >= MaxChangesPerCall {
 			set.Full = append(set.Full, ReferenceChangeEntity(kind))
 		}
@@ -371,28 +375,33 @@ func decodeChanges(resp *changeQueryResponse) *ChangeSet {
 	return set
 }
 
-func documentChangeKinds() []TxnKind {
-	return []TxnKind{TxnInvoice, TxnCreditMemo, TxnBill, TxnVendorCredit}
+func documentChangeKinds() []quickbookstxn.TxnKind {
+	return []quickbookstxn.TxnKind{
+		quickbookstxn.TxnInvoice,
+		quickbookstxn.TxnCreditMemo,
+		quickbookstxn.TxnBill,
+		quickbookstxn.TxnVendorCredit,
+	}
 }
 
-func (r *changeQueryResponse) documents(kind TxnKind) []wireChangeTxn {
+func (r *changeQueryResponse) documents(kind quickbookstxn.TxnKind) []wireChangeTxn {
 	switch kind {
-	case TxnInvoice:
+	case quickbookstxn.TxnInvoice:
 		return r.Invoice
-	case TxnCreditMemo:
+	case quickbookstxn.TxnCreditMemo:
 		return r.CreditMemo
-	case TxnBill:
+	case quickbookstxn.TxnBill:
 		return r.Bill
-	case TxnVendorCredit:
+	case quickbookstxn.TxnVendorCredit:
 		return r.VendorCredit
-	case TxnPayment, TxnBillPayment, TxnJournalEntry:
+	case quickbookstxn.TxnPayment, quickbookstxn.TxnBillPayment, quickbookstxn.TxnJournalEntry:
 		return nil
 	default:
 		return nil
 	}
 }
 
-func (w *wireChangeTxn) document(kind TxnKind) ChangedDocument {
+func (w *wireChangeTxn) document(kind quickbookstxn.TxnKind) ChangedDocument {
 	return ChangedDocument{
 		ChangeMeta:  w.MetaData.meta(w.ID, w.Status, w.PrivateNote, w.TotalAmt),
 		Kind:        kind,
@@ -401,19 +410,19 @@ func (w *wireChangeTxn) document(kind TxnKind) ChangedDocument {
 	}
 }
 
-func (r *changeQueryResponse) references(kind ReferenceKind) []wireChangeEntity {
+func (r *changeQueryResponse) references(kind quickbooksref.ReferenceKind) []wireChangeEntity {
 	switch kind {
-	case KindAccount:
+	case quickbooksref.KindAccount:
 		return r.Account
-	case KindItem:
+	case quickbooksref.KindItem:
 		return r.Item
-	case KindCustomer:
+	case quickbooksref.KindCustomer:
 		return r.Customer
-	case KindVendor:
+	case quickbooksref.KindVendor:
 		return r.Vendor
-	case KindTerm:
+	case quickbooksref.KindTerm:
 		return r.Term
-	case KindPaymentMethod:
+	case quickbooksref.KindPaymentMethod:
 		return r.PaymentMethod
 	default:
 		return nil
@@ -494,9 +503,9 @@ func (w *wireChangeTxn) billPayment() ChangedBillPayment {
 	return out
 }
 
-func (w *wireChangeEntity) reference(kind ReferenceKind) ChangedReference {
+func (w *wireChangeEntity) reference(kind quickbooksref.ReferenceKind) ChangedReference {
 	return ChangedReference{
-		ReferenceObject: w.toReference(kind),
+		ReferenceObject: w.ToReference(kind),
 		Deleted:         strings.EqualFold(w.Status, statusDeleted),
 	}
 }

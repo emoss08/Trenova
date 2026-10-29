@@ -1,4 +1,4 @@
-package quickbooks
+package quickbookstxn
 
 import (
 	"context"
@@ -7,6 +7,8 @@ import (
 	"strings"
 	"unicode/utf8"
 
+	"github.com/emoss08/trenova/shared/quickbooks"
+	"github.com/emoss08/trenova/shared/quickbooksref"
 	"github.com/emoss08/trenova/shared/restx"
 	"github.com/shopspring/decimal"
 )
@@ -188,10 +190,10 @@ type memoValue struct {
 }
 
 type salesItemDetail struct {
-	ItemRef     refValue  `json:"ItemRef"`
-	Qty         *quantity `json:"Qty,omitempty"`
-	UnitPrice   *quantity `json:"UnitPrice,omitempty"`
-	ServiceDate string    `json:"ServiceDate,omitempty"`
+	ItemRef     quickbooks.Ref `json:"ItemRef"`
+	Qty         *quantity      `json:"Qty,omitempty"`
+	UnitPrice   *quantity      `json:"UnitPrice,omitempty"`
+	ServiceDate string         `json:"ServiceDate,omitempty"`
 }
 
 type wireSalesLine struct {
@@ -204,38 +206,38 @@ type wireSalesLine struct {
 type salesBody struct {
 	ID           string          `json:"Id,omitempty"`
 	SyncToken    string          `json:"SyncToken,omitempty"`
-	CustomerRef  refValue        `json:"CustomerRef"`
+	CustomerRef  quickbooks.Ref  `json:"CustomerRef"`
 	DocNumber    string          `json:"DocNumber,omitempty"`
 	TxnDate      string          `json:"TxnDate,omitempty"`
 	DueDate      string          `json:"DueDate,omitempty"`
-	SalesTermRef *refValue       `json:"SalesTermRef,omitempty"`
-	CurrencyRef  *refValue       `json:"CurrencyRef,omitempty"`
+	SalesTermRef *quickbooks.Ref `json:"SalesTermRef,omitempty"`
+	CurrencyRef  *quickbooks.Ref `json:"CurrencyRef,omitempty"`
 	ExchangeRate *exchangeRate   `json:"ExchangeRate,omitempty"`
 	PrivateNote  string          `json:"PrivateNote,omitempty"`
 	CustomerMemo *memoValue      `json:"CustomerMemo,omitempty"`
 	Line         []wireSalesLine `json:"Line"`
 }
 
-type linkedTxn struct {
+type LinkedTxn struct {
 	TxnID   string `json:"TxnId"`
 	TxnType string `json:"TxnType"`
 }
 
 type wirePaymentLine struct {
 	Amount    money       `json:"Amount"`
-	LinkedTxn []linkedTxn `json:"LinkedTxn"`
+	LinkedTxn []LinkedTxn `json:"LinkedTxn"`
 }
 
 type paymentBody struct {
 	ID                  string            `json:"Id,omitempty"`
 	SyncToken           string            `json:"SyncToken,omitempty"`
-	CustomerRef         refValue          `json:"CustomerRef"`
+	CustomerRef         quickbooks.Ref    `json:"CustomerRef"`
 	TotalAmt            money             `json:"TotalAmt"`
 	TxnDate             string            `json:"TxnDate,omitempty"`
-	CurrencyRef         *refValue         `json:"CurrencyRef,omitempty"`
+	CurrencyRef         *quickbooks.Ref   `json:"CurrencyRef,omitempty"`
 	ExchangeRate        *exchangeRate     `json:"ExchangeRate,omitempty"`
-	PaymentMethodRef    *refValue         `json:"PaymentMethodRef,omitempty"`
-	DepositToAccountRef *refValue         `json:"DepositToAccountRef,omitempty"`
+	PaymentMethodRef    *quickbooks.Ref   `json:"PaymentMethodRef,omitempty"`
+	DepositToAccountRef *quickbooks.Ref   `json:"DepositToAccountRef,omitempty"`
 	PaymentRefNum       string            `json:"PaymentRefNum,omitempty"`
 	PrivateNote         string            `json:"PrivateNote,omitempty"`
 	Line                []wirePaymentLine `json:"Line"`
@@ -249,7 +251,7 @@ type entityRef struct {
 
 type sparsePartyBody struct {
 	entityRef
-	partyBody
+	quickbooksref.PartyBody
 }
 
 type wireTxn struct {
@@ -261,15 +263,15 @@ type wireTxn struct {
 }
 
 type txnEnvelope struct {
-	Invoice      *wireTxn    `json:"Invoice"`
-	CreditMemo   *wireTxn    `json:"CreditMemo"`
-	Payment      *wireTxn    `json:"Payment"`
-	Bill         *wireTxn    `json:"Bill"`
-	VendorCredit *wireTxn    `json:"VendorCredit"`
-	BillPayment  *wireTxn    `json:"BillPayment"`
-	JournalEntry *wireTxn    `json:"JournalEntry"`
-	Customer     *wireEntity `json:"Customer"`
-	Vendor       *wireEntity `json:"Vendor"`
+	Invoice      *wireTxn                  `json:"Invoice"`
+	CreditMemo   *wireTxn                  `json:"CreditMemo"`
+	Payment      *wireTxn                  `json:"Payment"`
+	Bill         *wireTxn                  `json:"Bill"`
+	VendorCredit *wireTxn                  `json:"VendorCredit"`
+	BillPayment  *wireTxn                  `json:"BillPayment"`
+	JournalEntry *wireTxn                  `json:"JournalEntry"`
+	Customer     *quickbooksref.WireEntity `json:"Customer"`
+	Vendor       *quickbooksref.WireEntity `json:"Vendor"`
 }
 
 type txnQueryEnvelope struct {
@@ -303,13 +305,16 @@ func (e *txnEnvelope) txn(kind TxnKind) *wireTxn {
 	}
 }
 
-func (e *txnEnvelope) party(kind ReferenceKind) *wireEntity {
+func (e *txnEnvelope) party(kind quickbooksref.ReferenceKind) *quickbooksref.WireEntity {
 	switch kind {
-	case KindCustomer:
+	case quickbooksref.KindCustomer:
 		return e.Customer
-	case KindVendor:
+	case quickbooksref.KindVendor:
 		return e.Vendor
-	case KindAccount, KindItem, KindTerm, KindPaymentMethod:
+	case quickbooksref.KindAccount,
+		quickbooksref.KindItem,
+		quickbooksref.KindTerm,
+		quickbooksref.KindPaymentMethod:
 		return nil
 	default:
 		return nil
@@ -346,24 +351,27 @@ func (w *wireTxn) result(kind TxnKind) *TxnResult {
 	}
 }
 
-func (c *Client) CreateInvoice(
+func CreateInvoice(
 	ctx context.Context,
+	c *quickbooks.Client,
 	requestID string,
 	txn *SalesTxn,
 ) (*TxnResult, error) {
-	return c.createSales(ctx, requestID, TxnInvoice, txn)
+	return createSales(ctx, c, requestID, TxnInvoice, txn)
 }
 
-func (c *Client) CreateCreditMemo(
+func CreateCreditMemo(
 	ctx context.Context,
+	c *quickbooks.Client,
 	requestID string,
 	txn *SalesTxn,
 ) (*TxnResult, error) {
-	return c.createSales(ctx, requestID, TxnCreditMemo, txn)
+	return createSales(ctx, c, requestID, TxnCreditMemo, txn)
 }
 
-func (c *Client) createSales(
+func createSales(
 	ctx context.Context,
+	c *quickbooks.Client,
 	requestID string,
 	kind TxnKind,
 	txn *SalesTxn,
@@ -372,11 +380,11 @@ func (c *Client) createSales(
 	if err != nil {
 		return nil, err
 	}
-	return c.writeTxn(ctx, &txnWrite{requestID: requestID, kind: kind, body: body})
+	return writeTxn(ctx, c, &txnWrite{requestID: requestID, kind: kind, body: body})
 }
 
 func salesBodyOf(requestID string, txn *SalesTxn) (*salesBody, error) {
-	if err := validateRequestID(requestID); err != nil {
+	if err := quickbooks.ValidateRequestID(requestID); err != nil {
 		return nil, err
 	}
 	if txn == nil || strings.TrimSpace(txn.CustomerID) == "" {
@@ -391,7 +399,7 @@ func salesBodyOf(requestID string, txn *SalesTxn) (*salesBody, error) {
 	}
 
 	body := &salesBody{
-		CustomerRef: refValue{Value: strings.TrimSpace(txn.CustomerID)},
+		CustomerRef: quickbooks.Ref{Value: strings.TrimSpace(txn.CustomerID)},
 		DocNumber:   docNumber,
 		TxnDate:     txn.TxnDate,
 		DueDate:     txn.DueDate,
@@ -399,10 +407,10 @@ func salesBodyOf(requestID string, txn *SalesTxn) (*salesBody, error) {
 		Line:        make([]wireSalesLine, 0, len(txn.Lines)),
 	}
 	if term := strings.TrimSpace(txn.TermID); term != "" {
-		body.SalesTermRef = &refValue{Value: term}
+		body.SalesTermRef = &quickbooks.Ref{Value: term}
 	}
 	if currency := strings.TrimSpace(txn.CurrencyCode); currency != "" {
-		body.CurrencyRef = &refValue{Value: strings.ToUpper(currency)}
+		body.CurrencyRef = &quickbooks.Ref{Value: strings.ToUpper(currency)}
 		body.ExchangeRate = exchangeRateOf(txn.ExchangeRate)
 	}
 	if memo := truncate(txn.CustomerMemo, MaxCustomerMemoLength); memo != "" {
@@ -419,7 +427,7 @@ func salesBodyOf(requestID string, txn *SalesTxn) (*salesBody, error) {
 			Amount:      money(line.Amount),
 			Description: truncate(line.Description, MaxLineDescription),
 			SalesItemLineDetail: salesItemDetail{
-				ItemRef:     refValue{Value: strings.TrimSpace(line.ItemID)},
+				ItemRef:     quickbooks.Ref{Value: strings.TrimSpace(line.ItemID)},
 				ServiceDate: line.ServiceDate,
 			},
 		}
@@ -442,8 +450,9 @@ func priced(line *SalesLine) bool {
 	return line.Quantity.Mul(line.UnitPrice).Round(2).Equal(line.Amount.Round(2))
 }
 
-func (c *Client) CreatePayment(
+func CreatePayment(
 	ctx context.Context,
+	c *quickbooks.Client,
 	requestID string,
 	txn *PaymentTxn,
 ) (*TxnResult, error) {
@@ -451,11 +460,12 @@ func (c *Client) CreatePayment(
 	if err != nil {
 		return nil, err
 	}
-	return c.writeTxn(ctx, &txnWrite{requestID: requestID, kind: TxnPayment, body: body})
+	return writeTxn(ctx, c, &txnWrite{requestID: requestID, kind: TxnPayment, body: body})
 }
 
-func (c *Client) UpdatePayment(
+func UpdatePayment(
 	ctx context.Context,
+	c *quickbooks.Client,
 	requestID, id string,
 	txn *PaymentTxn,
 ) (*TxnResult, error) {
@@ -463,17 +473,17 @@ func (c *Client) UpdatePayment(
 	if err != nil {
 		return nil, err
 	}
-	current, err := c.ReadTransaction(ctx, TxnPayment, id)
+	current, err := ReadTransaction(ctx, c, TxnPayment, id)
 	if err != nil {
 		return nil, err
 	}
 	body.ID = current.ID
 	body.SyncToken = current.SyncToken
-	return c.writeTxn(ctx, &txnWrite{requestID: requestID, kind: TxnPayment, body: body})
+	return writeTxn(ctx, c, &txnWrite{requestID: requestID, kind: TxnPayment, body: body})
 }
 
 func paymentBodyOf(requestID string, txn *PaymentTxn) (*paymentBody, error) {
-	if err := validateRequestID(requestID); err != nil {
+	if err := quickbooks.ValidateRequestID(requestID); err != nil {
 		return nil, err
 	}
 	if txn == nil || strings.TrimSpace(txn.CustomerID) == "" {
@@ -484,7 +494,7 @@ func paymentBodyOf(requestID string, txn *PaymentTxn) (*paymentBody, error) {
 	}
 
 	body := &paymentBody{
-		CustomerRef:   refValue{Value: strings.TrimSpace(txn.CustomerID)},
+		CustomerRef:   quickbooks.Ref{Value: strings.TrimSpace(txn.CustomerID)},
 		TotalAmt:      money(txn.TotalAmount),
 		TxnDate:       txn.TxnDate,
 		PaymentRefNum: truncate(txn.PaymentRefNum, MaxDocNumberLength),
@@ -492,14 +502,14 @@ func paymentBodyOf(requestID string, txn *PaymentTxn) (*paymentBody, error) {
 		Line:          make([]wirePaymentLine, 0, len(txn.Links)),
 	}
 	if currency := strings.TrimSpace(txn.CurrencyCode); currency != "" {
-		body.CurrencyRef = &refValue{Value: strings.ToUpper(currency)}
+		body.CurrencyRef = &quickbooks.Ref{Value: strings.ToUpper(currency)}
 		body.ExchangeRate = exchangeRateOf(txn.ExchangeRate)
 	}
 	if method := strings.TrimSpace(txn.PaymentMethodID); method != "" {
-		body.PaymentMethodRef = &refValue{Value: method}
+		body.PaymentMethodRef = &quickbooks.Ref{Value: method}
 	}
 	if deposit := strings.TrimSpace(txn.DepositAccountID); deposit != "" {
-		body.DepositToAccountRef = &refValue{Value: deposit}
+		body.DepositToAccountRef = &quickbooks.Ref{Value: deposit}
 	}
 	for idx := range txn.Links {
 		link := &txn.Links[idx]
@@ -514,7 +524,7 @@ func paymentBodyOf(requestID string, txn *PaymentTxn) (*paymentBody, error) {
 		}
 		body.Line = append(body.Line, wirePaymentLine{
 			Amount: money(link.Amount),
-			LinkedTxn: []linkedTxn{{
+			LinkedTxn: []LinkedTxn{{
 				TxnID:   strings.TrimSpace(link.TxnID),
 				TxnType: string(link.TxnKind),
 			}},
@@ -524,28 +534,41 @@ func paymentBodyOf(requestID string, txn *PaymentTxn) (*paymentBody, error) {
 	return body, nil
 }
 
-func (c *Client) VoidInvoice(ctx context.Context, requestID, id string) (*TxnResult, error) {
-	return c.retire(ctx, requestID, TxnInvoice, id, "void", "")
-}
-
-func (c *Client) VoidPayment(ctx context.Context, requestID, id string) (*TxnResult, error) {
-	return c.retire(ctx, requestID, TxnPayment, id, "update", "void")
-}
-
-func (c *Client) DeleteCreditMemo(ctx context.Context, requestID, id string) (*TxnResult, error) {
-	return c.retire(ctx, requestID, TxnCreditMemo, id, "delete", "")
-}
-
-func (c *Client) retire(
+func VoidInvoice(
 	ctx context.Context,
+	c *quickbooks.Client,
+	requestID, id string,
+) (*TxnResult, error) {
+	return retire(ctx, c, requestID, TxnInvoice, id, "void", "")
+}
+
+func VoidPayment(
+	ctx context.Context,
+	c *quickbooks.Client,
+	requestID, id string,
+) (*TxnResult, error) {
+	return retire(ctx, c, requestID, TxnPayment, id, "update", "void")
+}
+
+func DeleteCreditMemo(
+	ctx context.Context,
+	c *quickbooks.Client,
+	requestID, id string,
+) (*TxnResult, error) {
+	return retire(ctx, c, requestID, TxnCreditMemo, id, "delete", "")
+}
+
+func retire(
+	ctx context.Context,
+	c *quickbooks.Client,
 	requestID string,
 	kind TxnKind,
 	id, operation, include string,
 ) (*TxnResult, error) {
-	if err := validateRequestID(requestID); err != nil {
+	if err := quickbooks.ValidateRequestID(requestID); err != nil {
 		return nil, err
 	}
-	current, err := c.ReadTransaction(ctx, kind, id)
+	current, err := ReadTransaction(ctx, c, kind, id)
 	if err != nil {
 		return nil, err
 	}
@@ -554,7 +577,7 @@ func (c *Client) retire(
 		sparse := true
 		ref.Sparse = &sparse
 	}
-	return c.writeTxn(ctx, &txnWrite{
+	return writeTxn(ctx, c, &txnWrite{
 		requestID: requestID,
 		kind:      kind,
 		body:      ref,
@@ -563,7 +586,12 @@ func (c *Client) retire(
 	})
 }
 
-func (c *Client) ReadTransaction(ctx context.Context, kind TxnKind, id string) (*TxnResult, error) {
+func ReadTransaction(
+	ctx context.Context,
+	c *quickbooks.Client,
+	kind TxnKind,
+	id string,
+) (*TxnResult, error) {
 	if !kind.IsValid() {
 		return nil, ErrUnknownTxnKind
 	}
@@ -573,24 +601,25 @@ func (c *Client) ReadTransaction(ctx context.Context, kind TxnKind, id string) (
 	}
 
 	var out txnEnvelope
-	if _, err := c.transport.Do(ctx, &restx.Request{
+	if _, err := c.Do(ctx, &restx.Request{
 		Endpoint: "read-" + kind.resource(),
 		Method:   http.MethodGet,
-		Path:     c.companyPath(kind.resource(), trimmed),
-		Query:    c.query(),
+		Path:     c.CompanyPath(kind.resource(), trimmed),
+		Query:    c.Query(),
 		Out:      &out,
 	}); err != nil {
 		return nil, err
 	}
 	wire := out.txn(kind)
 	if wire == nil {
-		return nil, ErrUnexpectedPayload
+		return nil, quickbooks.ErrUnexpectedPayload
 	}
 	return wire.result(kind), nil
 }
 
-func (c *Client) FindTransactionByDocNumber(
+func FindTransactionByDocNumber(
 	ctx context.Context,
+	c *quickbooks.Client,
 	kind TxnKind,
 	docNumber string,
 ) (*TxnResult, bool, error) {
@@ -605,15 +634,15 @@ func (c *Client) FindTransactionByDocNumber(
 		return nil, false, nil
 	}
 
-	query := c.query()
-	query.Set(queryResource, "select * from "+string(kind)+" where DocNumber = '"+
+	query := c.Query()
+	query.Set(quickbooks.QueryResource, "select * from "+string(kind)+" where DocNumber = '"+
 		strings.ReplaceAll(number, "'", `\'`)+"'")
 
 	var out txnQueryEnvelope
-	if _, err := c.transport.Do(ctx, &restx.Request{
-		Endpoint: queryResource,
+	if _, err := c.Do(ctx, &restx.Request{
+		Endpoint: quickbooks.QueryResource,
 		Method:   http.MethodGet,
-		Path:     c.companyPath(queryResource),
+		Path:     c.CompanyPath(quickbooks.QueryResource),
 		Query:    query,
 		Out:      &out,
 	}); err != nil {
@@ -627,29 +656,31 @@ func (c *Client) FindTransactionByDocNumber(
 	return matches[0].result(kind), true, nil
 }
 
-func (c *Client) UpdateCustomer(
+func UpdateCustomer(
 	ctx context.Context,
+	c *quickbooks.Client,
 	requestID, id string,
-	draft *PartyDraft,
-) (*ReferenceObject, error) {
-	return c.updateParty(ctx, &partyUpdate{
+	draft *quickbooksref.PartyDraft,
+) (*quickbooksref.ReferenceObject, error) {
+	return updateParty(ctx, c, &partyUpdate{
 		requestID: requestID,
 		id:        id,
-		kind:      KindCustomer,
+		kind:      quickbooksref.KindCustomer,
 		resource:  "customer",
 		draft:     draft,
 	})
 }
 
-func (c *Client) UpdateVendor(
+func UpdateVendor(
 	ctx context.Context,
+	c *quickbooks.Client,
 	requestID, id string,
-	draft *PartyDraft,
-) (*ReferenceObject, error) {
-	return c.updateParty(ctx, &partyUpdate{
+	draft *quickbooksref.PartyDraft,
+) (*quickbooksref.ReferenceObject, error) {
+	return updateParty(ctx, c, &partyUpdate{
 		requestID: requestID,
 		id:        id,
-		kind:      KindVendor,
+		kind:      quickbooksref.KindVendor,
 		resource:  "vendor",
 		draft:     draft,
 	})
@@ -658,13 +689,21 @@ func (c *Client) UpdateVendor(
 type partyUpdate struct {
 	requestID string
 	id        string
-	kind      ReferenceKind
+	kind      quickbooksref.ReferenceKind
 	resource  string
-	draft     *PartyDraft
+	draft     *quickbooksref.PartyDraft
 }
 
-func (c *Client) updateParty(ctx context.Context, update *partyUpdate) (*ReferenceObject, error) {
-	body, err := partyBodyOf(update.requestID, update.draft, update.kind == KindVendor)
+func updateParty(
+	ctx context.Context,
+	c *quickbooks.Client,
+	update *partyUpdate,
+) (*quickbooksref.ReferenceObject, error) {
+	body, err := quickbooksref.PartyBodyOf(
+		update.requestID,
+		update.draft,
+		update.kind == quickbooksref.KindVendor,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -674,28 +713,28 @@ func (c *Client) updateParty(ctx context.Context, update *partyUpdate) (*Referen
 	}
 
 	var current txnEnvelope
-	if _, err = c.transport.Do(ctx, &restx.Request{
+	if _, err = c.Do(ctx, &restx.Request{
 		Endpoint: "read-" + update.resource,
 		Method:   http.MethodGet,
-		Path:     c.companyPath(update.resource, trimmed),
-		Query:    c.query(),
+		Path:     c.CompanyPath(update.resource, trimmed),
+		Query:    c.Query(),
 		Out:      &current,
 	}); err != nil {
 		return nil, err
 	}
 	existing := current.party(update.kind)
 	if existing == nil {
-		return nil, ErrUnexpectedPayload
+		return nil, quickbooks.ErrUnexpectedPayload
 	}
 
 	sparse := true
-	query := c.query()
+	query := c.Query()
 	query.Set("requestid", update.requestID)
 	var out txnEnvelope
-	if _, err = c.transport.Do(ctx, &restx.Request{
+	if _, err = c.Do(ctx, &restx.Request{
 		Endpoint: "update-" + update.resource,
 		Method:   http.MethodPost,
-		Path:     c.companyPath(update.resource),
+		Path:     c.CompanyPath(update.resource),
 		Query:    query,
 		Body: sparsePartyBody{
 			entityRef: entityRef{
@@ -703,7 +742,7 @@ func (c *Client) updateParty(ctx context.Context, update *partyUpdate) (*Referen
 				SyncToken: existing.SyncToken,
 				Sparse:    &sparse,
 			},
-			partyBody: body,
+			PartyBody: body,
 		},
 		Out: &out,
 	}); err != nil {
@@ -711,9 +750,9 @@ func (c *Client) updateParty(ctx context.Context, update *partyUpdate) (*Referen
 	}
 	saved := out.party(update.kind)
 	if saved == nil {
-		return nil, ErrUnexpectedPayload
+		return nil, quickbooks.ErrUnexpectedPayload
 	}
-	updated := saved.toReference(update.kind)
+	updated := saved.ToReference(update.kind)
 	return &updated, nil
 }
 
@@ -725,8 +764,8 @@ type txnWrite struct {
 	include   string
 }
 
-func (c *Client) writeTxn(ctx context.Context, write *txnWrite) (*TxnResult, error) {
-	query := c.query()
+func writeTxn(ctx context.Context, c *quickbooks.Client, write *txnWrite) (*TxnResult, error) {
+	query := c.Query()
 	query.Set("requestid", write.requestID)
 	if write.operation != "" {
 		query.Set("operation", write.operation)
@@ -741,10 +780,10 @@ func (c *Client) writeTxn(ctx context.Context, write *txnWrite) (*TxnResult, err
 	}
 
 	var out txnEnvelope
-	if _, err := c.transport.Do(ctx, &restx.Request{
+	if _, err := c.Do(ctx, &restx.Request{
 		Endpoint: endpoint,
 		Method:   http.MethodPost,
-		Path:     c.companyPath(write.kind.resource()),
+		Path:     c.CompanyPath(write.kind.resource()),
 		Query:    query,
 		Body:     write.body,
 		Out:      &out,
@@ -753,7 +792,7 @@ func (c *Client) writeTxn(ctx context.Context, write *txnWrite) (*TxnResult, err
 	}
 	wire := out.txn(write.kind)
 	if wire == nil {
-		return nil, ErrUnexpectedPayload
+		return nil, quickbooks.ErrUnexpectedPayload
 	}
 	return wire.result(write.kind), nil
 }
@@ -767,7 +806,7 @@ func truncate(value string, maxLength int) string {
 }
 
 func FaultCodes(err error) []string {
-	var fault *FaultError
+	var fault *quickbooks.FaultError
 	if !errors.As(err, &fault) {
 		return nil
 	}
@@ -798,7 +837,7 @@ func IsClosedPeriod(err error) bool { return hasFaultCode(err, faultClosedPeriod
 func IsInvalidReference(err error) bool { return hasFaultCode(err, faultInvalidReference) }
 
 func IsValidationFault(err error) bool {
-	var fault *FaultError
+	var fault *quickbooks.FaultError
 	if !errors.As(err, &fault) {
 		return false
 	}

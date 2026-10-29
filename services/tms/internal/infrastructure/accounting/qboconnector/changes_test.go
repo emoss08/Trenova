@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/shared/quickbooks"
+	"github.com/emoss08/trenova/shared/quickbookssync"
 	"github.com/emoss08/trenova/shared/restx"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
@@ -114,7 +115,7 @@ func TestChangeCursorRoundTrips(t *testing.T) {
 		since:   now.Add(-40 * 24 * time.Hour),
 		paging:  true,
 		started: now,
-		targets: []quickbooks.ChangeEntity{quickbooks.ChangePayment, "Vendor"},
+		targets: []quickbookssync.ChangeEntity{quickbookssync.ChangePayment, "Vendor"},
 		index:   1,
 		start:   1001,
 	}
@@ -236,7 +237,7 @@ func TestReadChangesPagesAnEntityThatFilledTheChangeFeed(t *testing.T) {
 
 	var cdc strings.Builder
 	cdc.WriteString(`{"CDCResponse":[{"QueryResponse":[{"Payment":[`)
-	for idx := range quickbooks.MaxChangesPerCall {
+	for idx := range quickbookssync.MaxChangesPerCall {
 		if idx > 0 {
 			cdc.WriteString(",")
 		}

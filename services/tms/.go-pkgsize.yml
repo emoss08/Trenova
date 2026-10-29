@@ -71,5 +71,4 @@ debt:
   services/tms/internal/seeds/fixtures: 23241
   services/tms/internal/seeds/volume: 20065
   shared/businesscentral: 3584
-  shared/quickbooks: 3433
   shared/xero: 3868

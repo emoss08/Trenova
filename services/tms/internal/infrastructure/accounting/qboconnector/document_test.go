@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/shared/quickbooks"
+	"github.com/emoss08/trenova/shared/quickbookstxn"
 	"github.com/emoss08/trenova/shared/restx"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
@@ -361,7 +362,7 @@ func TestClassifyDocumentErrorNamesTheCategory(t *testing.T) {
 		{err: fault(http.StatusBadRequest, "610"), category: accountingsync.SyncErrorNotFound},
 		{err: fault(http.StatusBadRequest, "2500"), category: accountingsync.SyncErrorMapping},
 		{err: fault(http.StatusBadRequest, "6000"), category: accountingsync.SyncErrorValidation},
-		{err: quickbooks.ErrDocNumberTooLong, category: accountingsync.SyncErrorValidation},
+		{err: quickbookstxn.ErrDocNumberTooLong, category: accountingsync.SyncErrorValidation},
 		{
 			err:      fault(http.StatusInternalServerError, "10000"),
 			category: accountingsync.SyncErrorTransient,
@@ -438,5 +439,5 @@ func TestDocumentURLPointsAtTheRightScreen(t *testing.T) {
 			},
 		),
 	)
-	assert.Equal(t, quickbooks.MaxDocNumberLength, conn.DocumentLimits().MaxDocNumberLength)
+	assert.Equal(t, quickbookstxn.MaxDocNumberLength, conn.DocumentLimits().MaxDocNumberLength)
 }

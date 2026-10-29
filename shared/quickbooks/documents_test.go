@@ -6,7 +6,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/shared/quickbooks"
+	"github.com/emoss08/trenova/shared/quickbookssync"
+	"github.com/emoss08/trenova/shared/quickbookstxn"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -23,14 +24,19 @@ func TestQueryByIDsReadsEachDocumentsState(t *testing.T) {
 		_, _ = w.Write(fixture(t, "query_invoices_by_id.json"))
 	})
 
-	states, err := client.QueryByIDs(t.Context(), quickbooks.TxnInvoice, []string{"145", " 146 ", "145"})
+	states, err := quickbookssync.QueryByIDs(
+		t.Context(),
+		client,
+		quickbookstxn.TxnInvoice,
+		[]string{"145", " 146 ", "145"},
+	)
 	require.NoError(t, err)
 	assert.Equal(t, "select * from Invoice where Id in ('145', '146') maxresults 2", statement,
 		"ids are trimmed and asked for once")
 
 	require.Len(t, states, 2)
 	open := states[0]
-	assert.Equal(t, quickbooks.TxnInvoice, open.Kind)
+	assert.Equal(t, quickbookstxn.TxnInvoice, open.Kind)
 	assert.Equal(t, "145", open.ID)
 	assert.Equal(t, "INV-1001", open.DocNumber)
 	assert.True(t, decimal.RequireFromString("1450.25").Equal(open.TotalAmount))
@@ -55,11 +61,16 @@ func TestQueryByIDsReadsPaymentsWithoutABalance(t *testing.T) {
 		_, _ = w.Write(fixture(t, "query_bill_payments_by_id.json"))
 	})
 
-	states, err := client.QueryByIDs(t.Context(), quickbooks.TxnBillPayment, []string{"501"})
+	states, err := quickbookssync.QueryByIDs(
+		t.Context(),
+		client,
+		quickbookstxn.TxnBillPayment,
+		[]string{"501"},
+	)
 	require.NoError(t, err)
 	assert.Equal(t, "select * from BillPayment where Id in ('501') maxresults 1", statement)
 	require.Len(t, states, 1)
-	assert.Equal(t, quickbooks.TxnBillPayment, states[0].Kind)
+	assert.Equal(t, quickbookstxn.TxnBillPayment, states[0].Kind)
 	assert.True(t, decimal.NewFromInt(1500).Equal(states[0].TotalAmount))
 	assert.Nil(t, states[0].Balance, "a payment has no balance to compare")
 }
@@ -73,23 +84,33 @@ func TestQueryByIDsRefusesWhatCannotBeAnID(t *testing.T) {
 		_, _ = w.Write(fixture(t, "query_empty.json"))
 	})
 
-	states, err := client.QueryByIDs(t.Context(), quickbooks.TxnInvoice, nil)
+	states, err := quickbookssync.QueryByIDs(t.Context(), client, quickbookstxn.TxnInvoice, nil)
 	require.NoError(t, err)
 	assert.Empty(t, states)
 
-	_, err = client.QueryByIDs(t.Context(), quickbooks.TxnInvoice, []string{"145", "1') or ('1"})
-	require.ErrorIs(t, err, quickbooks.ErrInvalidTxnID)
-	_, err = client.QueryByIDs(t.Context(), quickbooks.TxnInvoice, []string{""})
-	require.ErrorIs(t, err, quickbooks.ErrInvalidTxnID)
-	_, err = client.QueryByIDs(t.Context(), quickbooks.TxnKind("Estimate"), []string{"1"})
-	require.ErrorIs(t, err, quickbooks.ErrUnknownTxnKind)
+	_, err = quickbookssync.QueryByIDs(
+		t.Context(),
+		client,
+		quickbookstxn.TxnInvoice,
+		[]string{"145", "1') or ('1"},
+	)
+	require.ErrorIs(t, err, quickbookssync.ErrInvalidTxnID)
+	_, err = quickbookssync.QueryByIDs(t.Context(), client, quickbookstxn.TxnInvoice, []string{""})
+	require.ErrorIs(t, err, quickbookssync.ErrInvalidTxnID)
+	_, err = quickbookssync.QueryByIDs(
+		t.Context(),
+		client,
+		quickbookstxn.TxnKind("Estimate"),
+		[]string{"1"},
+	)
+	require.ErrorIs(t, err, quickbookstxn.ErrUnknownTxnKind)
 
-	many := make([]string, 0, quickbooks.MaxQueryIDs+1)
-	for i := range quickbooks.MaxQueryIDs + 1 {
+	many := make([]string, 0, quickbookssync.MaxQueryIDs+1)
+	for i := range quickbookssync.MaxQueryIDs + 1 {
 		many = append(many, strconv.Itoa(i+1))
 	}
-	_, err = client.QueryByIDs(t.Context(), quickbooks.TxnInvoice, many)
-	require.ErrorIs(t, err, quickbooks.ErrTooManyIDs)
+	_, err = quickbookssync.QueryByIDs(t.Context(), client, quickbookstxn.TxnInvoice, many)
+	require.ErrorIs(t, err, quickbookssync.ErrTooManyIDs)
 	assert.Zero(t, calls, "nothing reaches QuickBooks")
 }
 
@@ -126,22 +147,40 @@ func TestUpdateSalesAndPurchasesReadTheSyncTokenAndSendAFullUpdate(t *testing.T)
 		}
 	})
 
-	invoice, err := client.UpdateInvoice(t.Context(), testRequestID, "145", freightInvoice())
+	invoice, err := quickbookstxn.UpdateInvoice(
+		t.Context(),
+		client,
+		testRequestID,
+		"145",
+		freightInvoice(),
+	)
 	require.NoError(t, err)
 	assert.Equal(t, "145", invoice.ID)
-	_, err = client.UpdateBill(t.Context(), testRequestID+"-2", "401", &quickbooks.PurchaseTxn{
-		VendorID: "77",
-		Lines: []quickbooks.PurchaseLine{
-			{AccountID: "60", Amount: decimal.NewFromInt(1500)},
+	_, err = quickbookstxn.UpdateBill(
+		t.Context(),
+		client,
+		testRequestID+"-2",
+		"401",
+		&quickbookstxn.PurchaseTxn{
+			VendorID: "77",
+			Lines: []quickbookstxn.PurchaseLine{
+				{AccountID: "60", Amount: decimal.NewFromInt(1500)},
+			},
 		},
-	})
+	)
 	require.NoError(t, err)
-	_, err = client.UpdateBillPayment(t.Context(), testRequestID+"-3", "501", &quickbooks.BillPaymentTxn{
-		VendorID:      "77",
-		BankAccountID: "35",
-		BillID:        "401",
-		Amount:        decimal.NewFromInt(1500),
-	})
+	_, err = quickbookstxn.UpdateBillPayment(
+		t.Context(),
+		client,
+		testRequestID+"-3",
+		"501",
+		&quickbookstxn.BillPaymentTxn{
+			VendorID:      "77",
+			BankAccountID: "35",
+			BillID:        "401",
+			Amount:        decimal.NewFromInt(1500),
+		},
+	)
 	require.NoError(t, err)
 
 	require.Len(t, writes, 3)
@@ -166,12 +205,30 @@ func TestUpdatesValidateBeforeReadingAnything(t *testing.T) {
 	calls := 0
 	client := newAPIClient(t, func(_ http.ResponseWriter, _ *http.Request) { calls++ })
 
-	_, err := client.UpdateInvoice(t.Context(), testRequestID, "145", &quickbooks.SalesTxn{})
-	require.ErrorIs(t, err, quickbooks.ErrCustomerRequired)
-	_, err = client.UpdateCreditMemo(t.Context(), testRequestID, "  ", freightInvoice())
-	require.ErrorIs(t, err, quickbooks.ErrTxnIDRequired)
-	_, err = client.UpdateVendorCredit(t.Context(), testRequestID, "402", &quickbooks.PurchaseTxn{VendorID: "77"})
-	require.ErrorIs(t, err, quickbooks.ErrLinesRequired)
+	_, err := quickbookstxn.UpdateInvoice(
+		t.Context(),
+		client,
+		testRequestID,
+		"145",
+		&quickbookstxn.SalesTxn{},
+	)
+	require.ErrorIs(t, err, quickbookstxn.ErrCustomerRequired)
+	_, err = quickbookstxn.UpdateCreditMemo(
+		t.Context(),
+		client,
+		testRequestID,
+		"  ",
+		freightInvoice(),
+	)
+	require.ErrorIs(t, err, quickbookstxn.ErrTxnIDRequired)
+	_, err = quickbookstxn.UpdateVendorCredit(
+		t.Context(),
+		client,
+		testRequestID,
+		"402",
+		&quickbookstxn.PurchaseTxn{VendorID: "77"},
+	)
+	require.ErrorIs(t, err, quickbookstxn.ErrLinesRequired)
 	assert.Zero(t, calls)
 }
 
@@ -184,18 +241,18 @@ func TestChangesSinceReportsChangedDocuments(t *testing.T) {
 		_, _ = w.Write(fixture(t, "cdc_documents.json"))
 	})
 
-	set, err := client.ChangesSince(t.Context(), []quickbooks.ChangeEntity{
-		quickbooks.DocumentChangeEntity(quickbooks.TxnInvoice),
-		quickbooks.DocumentChangeEntity(quickbooks.TxnBill),
+	set, err := quickbookssync.ChangesSince(t.Context(), client, []quickbookssync.ChangeEntity{
+		quickbookssync.DocumentChangeEntity(quickbookstxn.TxnInvoice),
+		quickbookssync.DocumentChangeEntity(quickbookstxn.TxnBill),
 	}, now.Add(-time.Hour), now)
 	require.NoError(t, err)
 
 	require.Len(t, set.Documents, 3)
-	assert.Equal(t, quickbooks.TxnInvoice, set.Documents[0].Kind)
+	assert.Equal(t, quickbookstxn.TxnInvoice, set.Documents[0].Kind)
 	assert.Equal(t, "145", set.Documents[0].ID)
 	assert.Equal(t, "J Doe", set.Documents[0].LastModifiedBy)
 	assert.True(t, set.Documents[1].Deleted)
-	assert.Equal(t, quickbooks.TxnBill, set.Documents[2].Kind)
+	assert.Equal(t, quickbookstxn.TxnBill, set.Documents[2].Kind)
 	assert.Equal(t, "401", set.Documents[2].ID)
 	assert.Empty(t, set.Payments)
 }
@@ -203,19 +260,19 @@ func TestChangesSinceReportsChangedDocuments(t *testing.T) {
 func TestDocumentChangeEntitiesAreValid(t *testing.T) {
 	t.Parallel()
 
-	for _, kind := range []quickbooks.TxnKind{
-		quickbooks.TxnInvoice,
-		quickbooks.TxnCreditMemo,
-		quickbooks.TxnBill,
-		quickbooks.TxnVendorCredit,
+	for _, kind := range []quickbookstxn.TxnKind{
+		quickbookstxn.TxnInvoice,
+		quickbookstxn.TxnCreditMemo,
+		quickbookstxn.TxnBill,
+		quickbookstxn.TxnVendorCredit,
 	} {
-		entity := quickbooks.DocumentChangeEntity(kind)
+		entity := quickbookssync.DocumentChangeEntity(kind)
 		assert.True(t, entity.IsValid(), kind)
 		got, ok := entity.Document()
 		assert.True(t, ok)
 		assert.Equal(t, kind, got)
 	}
-	_, ok := quickbooks.ChangePayment.Document()
+	_, ok := quickbookssync.ChangePayment.Document()
 	assert.False(t, ok, "payments stay payments")
 }
 
@@ -232,9 +289,10 @@ func TestQueryChangedSincePagesDocumentsToo(t *testing.T) {
 		_, _ = w.Write(fixture(t, "query_invoices_by_id.json"))
 	})
 
-	set, next, err := client.QueryChangedSince(
+	set, next, err := quickbookssync.QueryChangedSince(
 		t.Context(),
-		quickbooks.DocumentChangeEntity(quickbooks.TxnInvoice),
+		client,
+		quickbookssync.DocumentChangeEntity(quickbookstxn.TxnInvoice),
 		since,
 		1,
 		2,
@@ -256,11 +314,16 @@ func TestQueryByIDsReadsJournalEntries(t *testing.T) {
 		_, _ = w.Write(fixture(t, "query_journal_entries_by_id.json"))
 	})
 
-	states, err := client.QueryByIDs(t.Context(), quickbooks.TxnJournalEntry, []string{"310"})
+	states, err := quickbookssync.QueryByIDs(
+		t.Context(),
+		client,
+		quickbookstxn.TxnJournalEntry,
+		[]string{"310"},
+	)
 	require.NoError(t, err)
 	assert.Equal(t, "select * from JournalEntry where Id in ('310') maxresults 1", statement)
 	require.Len(t, states, 1)
-	assert.Equal(t, quickbooks.TxnJournalEntry, states[0].Kind)
+	assert.Equal(t, quickbookstxn.TxnJournalEntry, states[0].Kind)
 	assert.Equal(t, "310", states[0].ID)
 	assert.True(t, decimal.RequireFromString("1500").Equal(states[0].TotalAmount))
 	assert.Nil(t, states[0].Balance, "a journal entry has no open balance")

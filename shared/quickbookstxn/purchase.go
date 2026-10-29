@@ -1,4 +1,4 @@
-package quickbooks
+package quickbookstxn
 
 import (
 	"context"
@@ -6,6 +6,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
+	"github.com/emoss08/trenova/shared/quickbooks"
 	"github.com/shopspring/decimal"
 )
 
@@ -55,7 +56,7 @@ type BillPaymentTxn struct {
 }
 
 type accountExpenseDetail struct {
-	AccountRef refValue `json:"AccountRef"`
+	AccountRef quickbooks.Ref `json:"AccountRef"`
 }
 
 type wirePurchaseLine struct {
@@ -68,69 +69,81 @@ type wirePurchaseLine struct {
 type purchaseBody struct {
 	ID           string             `json:"Id,omitempty"`
 	SyncToken    string             `json:"SyncToken,omitempty"`
-	VendorRef    refValue           `json:"VendorRef"`
-	APAccountRef *refValue          `json:"APAccountRef,omitempty"`
+	VendorRef    quickbooks.Ref     `json:"VendorRef"`
+	APAccountRef *quickbooks.Ref    `json:"APAccountRef,omitempty"`
 	DocNumber    string             `json:"DocNumber,omitempty"`
 	TxnDate      string             `json:"TxnDate,omitempty"`
 	DueDate      string             `json:"DueDate,omitempty"`
-	CurrencyRef  *refValue          `json:"CurrencyRef,omitempty"`
+	CurrencyRef  *quickbooks.Ref    `json:"CurrencyRef,omitempty"`
 	ExchangeRate *exchangeRate      `json:"ExchangeRate,omitempty"`
 	PrivateNote  string             `json:"PrivateNote,omitempty"`
 	Line         []wirePurchaseLine `json:"Line"`
 }
 
 type checkPayment struct {
-	BankAccountRef refValue `json:"BankAccountRef"`
+	BankAccountRef quickbooks.Ref `json:"BankAccountRef"`
 }
 
 type billPaymentBody struct {
 	ID           string            `json:"Id,omitempty"`
 	SyncToken    string            `json:"SyncToken,omitempty"`
-	VendorRef    refValue          `json:"VendorRef"`
+	VendorRef    quickbooks.Ref    `json:"VendorRef"`
 	PayType      string            `json:"PayType"`
 	CheckPayment checkPayment      `json:"CheckPayment"`
 	TotalAmt     money             `json:"TotalAmt"`
 	TxnDate      string            `json:"TxnDate,omitempty"`
 	DocNumber    string            `json:"DocNumber,omitempty"`
 	PrivateNote  string            `json:"PrivateNote,omitempty"`
-	CurrencyRef  *refValue         `json:"CurrencyRef,omitempty"`
+	CurrencyRef  *quickbooks.Ref   `json:"CurrencyRef,omitempty"`
 	ExchangeRate *exchangeRate     `json:"ExchangeRate,omitempty"`
 	Line         []wirePaymentLine `json:"Line"`
 }
 
-func (c *Client) CreateBill(
+func CreateBill(
 	ctx context.Context,
+	c *quickbooks.Client,
 	requestID string,
 	txn *PurchaseTxn,
 ) (*TxnResult, error) {
-	return c.createPurchase(ctx, requestID, TxnBill, txn)
+	return createPurchase(ctx, c, requestID, TxnBill, txn)
 }
 
-func (c *Client) CreateVendorCredit(
+func CreateVendorCredit(
 	ctx context.Context,
+	c *quickbooks.Client,
 	requestID string,
 	txn *PurchaseTxn,
 ) (*TxnResult, error) {
-	return c.createPurchase(ctx, requestID, TxnVendorCredit, txn)
+	return createPurchase(ctx, c, requestID, TxnVendorCredit, txn)
 }
 
-func (c *Client) DeleteBill(ctx context.Context, requestID, id string) (*TxnResult, error) {
-	return c.retire(ctx, requestID, TxnBill, id, "delete", "")
-}
-
-func (c *Client) DeleteVendorCredit(
+func DeleteBill(
 	ctx context.Context,
+	c *quickbooks.Client,
 	requestID, id string,
 ) (*TxnResult, error) {
-	return c.retire(ctx, requestID, TxnVendorCredit, id, "delete", "")
+	return retire(ctx, c, requestID, TxnBill, id, "delete", "")
 }
 
-func (c *Client) VoidBillPayment(ctx context.Context, requestID, id string) (*TxnResult, error) {
-	return c.retire(ctx, requestID, TxnBillPayment, id, "update", "void")
-}
-
-func (c *Client) createPurchase(
+func DeleteVendorCredit(
 	ctx context.Context,
+	c *quickbooks.Client,
+	requestID, id string,
+) (*TxnResult, error) {
+	return retire(ctx, c, requestID, TxnVendorCredit, id, "delete", "")
+}
+
+func VoidBillPayment(
+	ctx context.Context,
+	c *quickbooks.Client,
+	requestID, id string,
+) (*TxnResult, error) {
+	return retire(ctx, c, requestID, TxnBillPayment, id, "update", "void")
+}
+
+func createPurchase(
+	ctx context.Context,
+	c *quickbooks.Client,
 	requestID string,
 	kind TxnKind,
 	txn *PurchaseTxn,
@@ -139,11 +152,11 @@ func (c *Client) createPurchase(
 	if err != nil {
 		return nil, err
 	}
-	return c.writeTxn(ctx, &txnWrite{requestID: requestID, kind: kind, body: body})
+	return writeTxn(ctx, c, &txnWrite{requestID: requestID, kind: kind, body: body})
 }
 
 func purchaseBodyOf(requestID string, kind TxnKind, txn *PurchaseTxn) (*purchaseBody, error) {
-	if err := validateRequestID(requestID); err != nil {
+	if err := quickbooks.ValidateRequestID(requestID); err != nil {
 		return nil, err
 	}
 	if txn == nil || strings.TrimSpace(txn.VendorID) == "" {
@@ -158,7 +171,7 @@ func purchaseBodyOf(requestID string, kind TxnKind, txn *PurchaseTxn) (*purchase
 	}
 
 	body := &purchaseBody{
-		VendorRef:   refValue{Value: strings.TrimSpace(txn.VendorID)},
+		VendorRef:   quickbooks.Ref{Value: strings.TrimSpace(txn.VendorID)},
 		DocNumber:   docNumber,
 		TxnDate:     txn.TxnDate,
 		PrivateNote: truncate(txn.PrivateNote, MaxPrivateNoteLength),
@@ -168,10 +181,10 @@ func purchaseBodyOf(requestID string, kind TxnKind, txn *PurchaseTxn) (*purchase
 		body.DueDate = txn.DueDate
 	}
 	if account := strings.TrimSpace(txn.APAccountID); account != "" {
-		body.APAccountRef = &refValue{Value: account}
+		body.APAccountRef = &quickbooks.Ref{Value: account}
 	}
 	if currency := strings.TrimSpace(txn.CurrencyCode); currency != "" {
-		body.CurrencyRef = &refValue{Value: strings.ToUpper(currency)}
+		body.CurrencyRef = &quickbooks.Ref{Value: strings.ToUpper(currency)}
 		body.ExchangeRate = exchangeRateOf(txn.ExchangeRate)
 	}
 
@@ -188,7 +201,7 @@ func purchaseBodyOf(requestID string, kind TxnKind, txn *PurchaseTxn) (*purchase
 			Amount:      money(line.Amount),
 			Description: truncate(line.Description, MaxLineDescription),
 			AccountBasedExpenseLineDetail: accountExpenseDetail{
-				AccountRef: refValue{Value: account},
+				AccountRef: quickbooks.Ref{Value: account},
 			},
 		})
 	}
@@ -199,8 +212,9 @@ func purchaseBodyOf(requestID string, kind TxnKind, txn *PurchaseTxn) (*purchase
 	return body, nil
 }
 
-func (c *Client) CreateBillPayment(
+func CreateBillPayment(
 	ctx context.Context,
+	c *quickbooks.Client,
 	requestID string,
 	txn *BillPaymentTxn,
 ) (*TxnResult, error) {
@@ -208,11 +222,11 @@ func (c *Client) CreateBillPayment(
 	if err != nil {
 		return nil, err
 	}
-	return c.writeTxn(ctx, &txnWrite{requestID: requestID, kind: TxnBillPayment, body: body})
+	return writeTxn(ctx, c, &txnWrite{requestID: requestID, kind: TxnBillPayment, body: body})
 }
 
 func billPaymentBodyOf(requestID string, txn *BillPaymentTxn) (*billPaymentBody, error) {
-	if err := validateRequestID(requestID); err != nil {
+	if err := quickbooks.ValidateRequestID(requestID); err != nil {
 		return nil, err
 	}
 	if txn == nil || strings.TrimSpace(txn.VendorID) == "" {
@@ -231,20 +245,20 @@ func billPaymentBodyOf(requestID string, txn *BillPaymentTxn) (*billPaymentBody,
 	}
 
 	body := &billPaymentBody{
-		VendorRef:    refValue{Value: strings.TrimSpace(txn.VendorID)},
+		VendorRef:    quickbooks.Ref{Value: strings.TrimSpace(txn.VendorID)},
 		PayType:      payTypeCheck,
-		CheckPayment: checkPayment{BankAccountRef: refValue{Value: bank}},
+		CheckPayment: checkPayment{BankAccountRef: quickbooks.Ref{Value: bank}},
 		TotalAmt:     money(txn.Amount),
 		TxnDate:      txn.TxnDate,
 		DocNumber:    truncate(txn.DocNumber, MaxDocNumberLength),
 		PrivateNote:  truncate(txn.PrivateNote, MaxPrivateNoteLength),
 		Line: []wirePaymentLine{{
 			Amount:    money(txn.Amount),
-			LinkedTxn: []linkedTxn{{TxnID: bill, TxnType: string(TxnBill)}},
+			LinkedTxn: []LinkedTxn{{TxnID: bill, TxnType: string(TxnBill)}},
 		}},
 	}
 	if currency := strings.TrimSpace(txn.CurrencyCode); currency != "" {
-		body.CurrencyRef = &refValue{Value: strings.ToUpper(currency)}
+		body.CurrencyRef = &quickbooks.Ref{Value: strings.ToUpper(currency)}
 		body.ExchangeRate = exchangeRateOf(txn.ExchangeRate)
 	}
 

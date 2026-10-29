@@ -10,7 +10,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
-	"github.com/emoss08/trenova/shared/quickbooks"
+	"github.com/emoss08/trenova/shared/quickbookssync"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -149,9 +149,9 @@ func TestReadDocumentsSplitsLargeReads(t *testing.T) {
 	targets := make(
 		[]accountingconnectorports.AccountingDocumentTarget,
 		0,
-		quickbooks.MaxQueryIDs+5,
+		quickbookssync.MaxQueryIDs+5,
 	)
-	for i := range quickbooks.MaxQueryIDs + 5 {
+	for i := range quickbookssync.MaxQueryIDs + 5 {
 		targets = append(
 			targets,
 			accountingconnectorports.AccountingDocumentTarget{ExternalID: strconv.Itoa(i + 1)},
@@ -167,12 +167,12 @@ func TestReadDocumentsSplitsLargeReads(t *testing.T) {
 		},
 	)
 	require.NoError(t, err)
-	assert.Equal(t, []int{quickbooks.MaxQueryIDs, 5}, sizes)
+	assert.Equal(t, []int{quickbookssync.MaxQueryIDs, 5}, sizes)
 	require.Len(t, states, len(targets))
 	for _, state := range states {
 		assert.True(t, state.Found)
 	}
-	assert.Equal(t, quickbooks.MaxQueryIDs, conn.DocumentReadLimits().MaxPerRead)
+	assert.Equal(t, quickbookssync.MaxQueryIDs, conn.DocumentReadLimits().MaxPerRead)
 }
 
 func readFixture(kind string, id string) string {
@@ -381,7 +381,7 @@ func TestReadChangesPagesDocumentsThatFilledTheChangeFeed(t *testing.T) {
 
 	var cdc strings.Builder
 	cdc.WriteString(`{"CDCResponse":[{"QueryResponse":[{"Invoice":[`)
-	for idx := range quickbooks.MaxChangesPerCall {
+	for idx := range quickbookssync.MaxChangesPerCall {
 		if idx > 0 {
 			cdc.WriteString(",")
 		}

@@ -1,4 +1,4 @@
-package quickbooks
+package quickbooksref
 
 import (
 	"context"
@@ -9,6 +9,7 @@ import (
 	"time"
 	"unicode/utf8"
 
+	"github.com/emoss08/trenova/shared/quickbooks"
 	"github.com/emoss08/trenova/shared/restx"
 )
 
@@ -25,7 +26,6 @@ const (
 
 const (
 	MaxQueryResults    = 1000
-	MaxRequestIDLength = 50
 	MaxItemNameLength  = 100
 	MaxPartyNameLength = 500
 	itemTypeService    = "Service"
@@ -36,9 +36,6 @@ var (
 	ErrUnknownReferenceKind = errors.New("quickbooks: unknown reference kind")
 	ErrInvalidPaging        = errors.New(
 		"quickbooks: start position must be at least 1 and page size between 1 and 1000",
-	)
-	ErrRequestIDRequired = errors.New(
-		"quickbooks: a request id of at most 50 characters is required",
 	)
 	ErrInvalidName = errors.New(
 		"quickbooks: the name is empty, too long, or contains a colon, tab or line break",
@@ -119,10 +116,6 @@ type PartyDraft struct {
 	Is1099       bool
 }
 
-type refValue struct {
-	Value string `json:"value"`
-}
-
 type metaData struct {
 	LastUpdatedTime string `json:"LastUpdatedTime"`
 }
@@ -139,38 +132,38 @@ type physicalAddr struct {
 	Country                string `json:"Country,omitempty"`
 }
 
-type wireEntity struct {
-	ID                 string        `json:"Id"`
-	Name               string        `json:"Name"`
-	DisplayName        string        `json:"DisplayName"`
-	CompanyName        string        `json:"CompanyName"`
-	FullyQualifiedName string        `json:"FullyQualifiedName"`
-	AcctNum            string        `json:"AcctNum"`
-	Sku                string        `json:"Sku"`
-	Description        string        `json:"Description"`
-	Classification     string        `json:"Classification"`
-	AccountType        string        `json:"AccountType"`
-	AccountSubType     string        `json:"AccountSubType"`
-	Type               string        `json:"Type"`
-	Active             bool          `json:"Active"`
-	ParentRef          *refValue     `json:"ParentRef"`
-	CurrencyRef        *refValue     `json:"CurrencyRef"`
-	IncomeAccountRef   *refValue     `json:"IncomeAccountRef"`
-	PrimaryEmailAddr   *emailAddr    `json:"PrimaryEmailAddr"`
-	BillAddr           *physicalAddr `json:"BillAddr"`
-	DueDays            *int          `json:"DueDays"`
-	Vendor1099         bool          `json:"Vendor1099"`
-	SyncToken          string        `json:"SyncToken"`
-	MetaData           *metaData     `json:"MetaData"`
+type WireEntity struct {
+	ID                 string          `json:"Id"`
+	Name               string          `json:"Name"`
+	DisplayName        string          `json:"DisplayName"`
+	CompanyName        string          `json:"CompanyName"`
+	FullyQualifiedName string          `json:"FullyQualifiedName"`
+	AcctNum            string          `json:"AcctNum"`
+	Sku                string          `json:"Sku"`
+	Description        string          `json:"Description"`
+	Classification     string          `json:"Classification"`
+	AccountType        string          `json:"AccountType"`
+	AccountSubType     string          `json:"AccountSubType"`
+	Type               string          `json:"Type"`
+	Active             bool            `json:"Active"`
+	ParentRef          *quickbooks.Ref `json:"ParentRef"`
+	CurrencyRef        *quickbooks.Ref `json:"CurrencyRef"`
+	IncomeAccountRef   *quickbooks.Ref `json:"IncomeAccountRef"`
+	PrimaryEmailAddr   *emailAddr      `json:"PrimaryEmailAddr"`
+	BillAddr           *physicalAddr   `json:"BillAddr"`
+	DueDays            *int            `json:"DueDays"`
+	Vendor1099         bool            `json:"Vendor1099"`
+	SyncToken          string          `json:"SyncToken"`
+	MetaData           *metaData       `json:"MetaData"`
 }
 
 type queryResponse struct {
-	Account       []wireEntity `json:"Account"`
-	Item          []wireEntity `json:"Item"`
-	Customer      []wireEntity `json:"Customer"`
-	Vendor        []wireEntity `json:"Vendor"`
-	Term          []wireEntity `json:"Term"`
-	PaymentMethod []wireEntity `json:"PaymentMethod"`
+	Account       []WireEntity `json:"Account"`
+	Item          []WireEntity `json:"Item"`
+	Customer      []WireEntity `json:"Customer"`
+	Vendor        []WireEntity `json:"Vendor"`
+	Term          []WireEntity `json:"Term"`
+	PaymentMethod []WireEntity `json:"PaymentMethod"`
 }
 
 type queryEnvelope struct {
@@ -178,20 +171,20 @@ type queryEnvelope struct {
 }
 
 type createEnvelope struct {
-	Item     *wireEntity `json:"Item"`
-	Customer *wireEntity `json:"Customer"`
-	Vendor   *wireEntity `json:"Vendor"`
+	Item     *WireEntity `json:"Item"`
+	Customer *WireEntity `json:"Customer"`
+	Vendor   *WireEntity `json:"Vendor"`
 }
 
 type itemBody struct {
-	Name             string    `json:"Name"`
-	Type             string    `json:"Type"`
-	Description      string    `json:"Description,omitempty"`
-	Sku              string    `json:"Sku,omitempty"`
-	IncomeAccountRef *refValue `json:"IncomeAccountRef"`
+	Name             string          `json:"Name"`
+	Type             string          `json:"Type"`
+	Description      string          `json:"Description,omitempty"`
+	Sku              string          `json:"Sku,omitempty"`
+	IncomeAccountRef *quickbooks.Ref `json:"IncomeAccountRef"`
 }
 
-type partyBody struct {
+type PartyBody struct {
 	DisplayName      string        `json:"DisplayName"`
 	CompanyName      string        `json:"CompanyName,omitempty"`
 	PrimaryEmailAddr *emailAddr    `json:"PrimaryEmailAddr,omitempty"`
@@ -199,8 +192,9 @@ type partyBody struct {
 	Vendor1099       *bool         `json:"Vendor1099,omitempty"`
 }
 
-func (c *Client) ListReference(
+func ListReference(
 	ctx context.Context,
+	c *quickbooks.Client,
 	kind ReferenceKind,
 	startPosition, pageSize int,
 ) (*ReferencePage, error) {
@@ -211,16 +205,16 @@ func (c *Client) ListReference(
 		return nil, ErrInvalidPaging
 	}
 
-	query := c.query()
-	query.Set(queryResource, "select * from "+string(kind)+
+	query := c.Query()
+	query.Set(quickbooks.QueryResource, "select * from "+string(kind)+
 		" where Active in (true, false) startposition "+strconv.Itoa(startPosition)+
 		" maxresults "+strconv.Itoa(pageSize))
 
 	var out queryEnvelope
-	if _, err := c.transport.Do(ctx, &restx.Request{
-		Endpoint: queryResource,
+	if _, err := c.Do(ctx, &restx.Request{
+		Endpoint: quickbooks.QueryResource,
 		Method:   http.MethodGet,
-		Path:     c.companyPath(queryResource),
+		Path:     c.CompanyPath(quickbooks.QueryResource),
 		Query:    query,
 		Out:      &out,
 	}); err != nil {
@@ -230,7 +224,7 @@ func (c *Client) ListReference(
 	wire := out.QueryResponse.entities(kind)
 	page := &ReferencePage{Objects: make([]ReferenceObject, 0, len(wire))}
 	for idx := range wire {
-		page.Objects = append(page.Objects, wire[idx].toReference(kind))
+		page.Objects = append(page.Objects, wire[idx].ToReference(kind))
 	}
 	if len(wire) == pageSize {
 		page.NextStart = startPosition + pageSize
@@ -239,12 +233,13 @@ func (c *Client) ListReference(
 	return page, nil
 }
 
-func (c *Client) CreateItem(
+func CreateItem(
 	ctx context.Context,
+	c *quickbooks.Client,
 	requestID string,
 	draft ItemDraft,
 ) (*ReferenceObject, error) {
-	if err := validateRequestID(requestID); err != nil {
+	if err := quickbooks.ValidateRequestID(requestID); err != nil {
 		return nil, err
 	}
 	if !validName(draft.Name, MaxItemNameLength) {
@@ -254,54 +249,57 @@ func (c *Client) CreateItem(
 		return nil, ErrIncomeAccountRequired
 	}
 
-	return c.create(ctx, requestID, KindItem, "item", itemBody{
+	return create(ctx, c, requestID, KindItem, "item", itemBody{
 		Name:             strings.TrimSpace(draft.Name),
 		Type:             itemTypeService,
 		Description:      strings.TrimSpace(draft.Description),
 		Sku:              strings.TrimSpace(draft.Sku),
-		IncomeAccountRef: &refValue{Value: strings.TrimSpace(draft.IncomeAccountID)},
+		IncomeAccountRef: &quickbooks.Ref{Value: strings.TrimSpace(draft.IncomeAccountID)},
 	})
 }
 
-func (c *Client) CreateCustomer(
+func CreateCustomer(
 	ctx context.Context,
+	c *quickbooks.Client,
 	requestID string,
 	draft *PartyDraft,
 ) (*ReferenceObject, error) {
-	body, err := partyBodyOf(requestID, draft, false)
+	body, err := PartyBodyOf(requestID, draft, false)
 	if err != nil {
 		return nil, err
 	}
-	return c.create(ctx, requestID, KindCustomer, "customer", body)
+	return create(ctx, c, requestID, KindCustomer, "customer", body)
 }
 
-func (c *Client) CreateVendor(
+func CreateVendor(
 	ctx context.Context,
+	c *quickbooks.Client,
 	requestID string,
 	draft *PartyDraft,
 ) (*ReferenceObject, error) {
-	body, err := partyBodyOf(requestID, draft, true)
+	body, err := PartyBodyOf(requestID, draft, true)
 	if err != nil {
 		return nil, err
 	}
-	return c.create(ctx, requestID, KindVendor, "vendor", body)
+	return create(ctx, c, requestID, KindVendor, "vendor", body)
 }
 
-func (c *Client) create(
+func create(
 	ctx context.Context,
+	c *quickbooks.Client,
 	requestID string,
 	kind ReferenceKind,
 	resource string,
 	body any,
 ) (*ReferenceObject, error) {
-	query := c.query()
+	query := c.Query()
 	query.Set("requestid", requestID)
 
 	var out createEnvelope
-	if _, err := c.transport.Do(ctx, &restx.Request{
+	if _, err := c.Do(ctx, &restx.Request{
 		Endpoint: "create-" + resource,
 		Method:   http.MethodPost,
-		Path:     c.companyPath(resource),
+		Path:     c.CompanyPath(resource),
 		Query:    query,
 		Body:     body,
 		Out:      &out,
@@ -311,24 +309,24 @@ func (c *Client) create(
 
 	entity := out.entity(kind)
 	if entity == nil {
-		return nil, ErrUnexpectedPayload
+		return nil, quickbooks.ErrUnexpectedPayload
 	}
-	created := entity.toReference(kind)
+	created := entity.ToReference(kind)
 	return &created, nil
 }
 
-func partyBodyOf(requestID string, draft *PartyDraft, vendor bool) (partyBody, error) {
+func PartyBodyOf(requestID string, draft *PartyDraft, vendor bool) (PartyBody, error) {
 	if draft == nil {
-		return partyBody{}, ErrInvalidName
+		return PartyBody{}, ErrInvalidName
 	}
-	if err := validateRequestID(requestID); err != nil {
-		return partyBody{}, err
+	if err := quickbooks.ValidateRequestID(requestID); err != nil {
+		return PartyBody{}, err
 	}
 	if !validName(draft.DisplayName, MaxPartyNameLength) {
-		return partyBody{}, ErrInvalidName
+		return PartyBody{}, ErrInvalidName
 	}
 
-	body := partyBody{
+	body := PartyBody{
 		DisplayName: strings.TrimSpace(draft.DisplayName),
 		CompanyName: strings.TrimSpace(draft.CompanyName),
 	}
@@ -353,14 +351,6 @@ func partyBodyOf(requestID string, draft *PartyDraft, vendor bool) (partyBody, e
 	return body, nil
 }
 
-func validateRequestID(requestID string) error {
-	trimmed := strings.TrimSpace(requestID)
-	if trimmed == "" || len(trimmed) > MaxRequestIDLength || trimmed != requestID {
-		return ErrRequestIDRequired
-	}
-	return nil
-}
-
 func validName(name string, maxLength int) bool {
 	trimmed := strings.TrimSpace(name)
 	return trimmed != "" &&
@@ -379,7 +369,7 @@ func SanitizeName(value string, maxLength int) string {
 }
 
 func IsDuplicateName(err error) bool {
-	var fault *FaultError
+	var fault *quickbooks.FaultError
 	if !errors.As(err, &fault) {
 		return false
 	}
@@ -391,7 +381,7 @@ func IsDuplicateName(err error) bool {
 	return false
 }
 
-func (q *queryResponse) entities(kind ReferenceKind) []wireEntity {
+func (q *queryResponse) entities(kind ReferenceKind) []WireEntity {
 	switch kind {
 	case KindAccount:
 		return q.Account
@@ -410,7 +400,7 @@ func (q *queryResponse) entities(kind ReferenceKind) []wireEntity {
 	}
 }
 
-func (e *createEnvelope) entity(kind ReferenceKind) *wireEntity {
+func (e *createEnvelope) entity(kind ReferenceKind) *WireEntity {
 	switch kind {
 	case KindItem:
 		return e.Item
@@ -425,7 +415,7 @@ func (e *createEnvelope) entity(kind ReferenceKind) *wireEntity {
 	}
 }
 
-func (w *wireEntity) toReference(kind ReferenceKind) ReferenceObject {
+func (w *WireEntity) ToReference(kind ReferenceKind) ReferenceObject {
 	obj := ReferenceObject{
 		Kind:               kind,
 		ID:                 w.ID,

@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/config/accountingconfig"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
-	"github.com/emoss08/trenova/shared/quickbooks"
+	"github.com/emoss08/trenova/shared/quickbookstxn"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -203,7 +203,7 @@ func TestCreatePurchaseDocumentRejectsInvalidInput(t *testing.T) {
 	negative := settlementBill()
 	negative.Lines[1].Amount = decimal.NewFromInt(-2000)
 	_, err = conn.CreatePurchaseDocument(t.Context(), negative)
-	require.ErrorIs(t, err, quickbooks.ErrNegativeAmount)
+	require.ErrorIs(t, err, quickbookstxn.ErrNegativeAmount)
 	assert.Equal(t, accountingsync.SyncErrorValidation, conn.ClassifyDocumentError(err).Category)
 }
 
@@ -407,7 +407,7 @@ func TestCreateBillPaymentRejectsInvalidInput(t *testing.T) {
 		Amount:                decimal.Zero,
 	}
 	_, err := conn.CreateBillPayment(t.Context(), doc)
-	require.ErrorIs(t, err, quickbooks.ErrNonPositiveAmount)
+	require.ErrorIs(t, err, quickbookstxn.ErrNonPositiveAmount)
 
 	doc.Kind = accountingsync.SyncObjectDriverBill
 	_, err = conn.CreateBillPayment(t.Context(), doc)
@@ -419,12 +419,12 @@ func TestPayablesValidationErrorsClassifyAsValidation(t *testing.T) {
 
 	conn := newConnector(t, accountingconfig.QuickBooksConfig{})
 	for _, err := range []error{
-		quickbooks.ErrVendorRequired,
-		quickbooks.ErrAccountRequired,
-		quickbooks.ErrBankAccountRequired,
-		quickbooks.ErrBillRequired,
-		quickbooks.ErrNonPositiveAmount,
-		quickbooks.ErrLinesRequired,
+		quickbookstxn.ErrVendorRequired,
+		quickbookstxn.ErrAccountRequired,
+		quickbookstxn.ErrBankAccountRequired,
+		quickbookstxn.ErrBillRequired,
+		quickbookstxn.ErrNonPositiveAmount,
+		quickbookstxn.ErrLinesRequired,
 		errPurchaseDocumentType,
 	} {
 		classified := conn.ClassifyDocumentError(err)

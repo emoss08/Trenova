@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/shared/quickbooks"
+	"github.com/emoss08/trenova/shared/quickbooksref"
 	"github.com/emoss08/trenova/shared/restx"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -190,7 +191,7 @@ func TestSanitizeNameUsesEachKindsLimit(t *testing.T) {
 	assert.Len(
 		t,
 		conn.SanitizeName(accountingprovider.ReferenceKindItem, string(long)),
-		quickbooks.MaxItemNameLength,
+		quickbooksref.MaxItemNameLength,
 	)
 	assert.Len(t, conn.SanitizeName(accountingprovider.ReferenceKindCustomer, string(long)), 300)
 	assert.Equal(

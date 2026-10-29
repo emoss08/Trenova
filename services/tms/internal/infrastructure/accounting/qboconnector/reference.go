@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/shared/quickbooks"
+	"github.com/emoss08/trenova/shared/quickbooksref"
 )
 
 var (
@@ -17,7 +18,7 @@ var (
 )
 
 func (c *Connector) MaxReferencePageSize() int {
-	return quickbooks.MaxQueryResults
+	return quickbooksref.MaxQueryResults
 }
 
 func (c *Connector) ListReference(
@@ -33,7 +34,7 @@ func (c *Connector) ListReference(
 		return nil, err
 	}
 
-	page, err := client.ListReference(ctx, kind, req.StartPosition, req.PageSize)
+	page, err := quickbooksref.ListReference(ctx, client, kind, req.StartPosition, req.PageSize)
 	if err != nil {
 		return nil, err
 	}
@@ -57,22 +58,32 @@ func (c *Connector) CreateReference(
 		return nil, err
 	}
 
-	var created *quickbooks.ReferenceObject
+	var created *quickbooksref.ReferenceObject
 	switch req.Kind {
 	case accountingprovider.ReferenceKindItem:
 		if req.Item == nil {
 			return nil, errors.New("quickbooks: an item draft is required")
 		}
-		created, err = client.CreateItem(ctx, req.RequestID, quickbooks.ItemDraft{
+		created, err = quickbooksref.CreateItem(ctx, client, req.RequestID, quickbooksref.ItemDraft{
 			Name:            req.Item.Name,
 			Description:     req.Item.Description,
 			Sku:             req.Item.Sku,
 			IncomeAccountID: req.Item.IncomeAccountID,
 		})
 	case accountingprovider.ReferenceKindCustomer:
-		created, err = client.CreateCustomer(ctx, req.RequestID, partyDraftOf(req.Party))
+		created, err = quickbooksref.CreateCustomer(
+			ctx,
+			client,
+			req.RequestID,
+			partyDraftOf(req.Party),
+		)
 	case accountingprovider.ReferenceKindVendor:
-		created, err = client.CreateVendor(ctx, req.RequestID, partyDraftOf(req.Party))
+		created, err = quickbooksref.CreateVendor(
+			ctx,
+			client,
+			req.RequestID,
+			partyDraftOf(req.Party),
+		)
 	case accountingprovider.ReferenceKindAccount,
 		accountingprovider.ReferenceKindTerm,
 		accountingprovider.ReferenceKindPaymentMethod:
@@ -88,21 +99,21 @@ func (c *Connector) CreateReference(
 }
 
 func (c *Connector) IsDuplicateName(err error) bool {
-	return quickbooks.IsDuplicateName(err)
+	return quickbooksref.IsDuplicateName(err)
 }
 
 func (c *Connector) SanitizeName(kind accountingprovider.ReferenceKind, name string) string {
 	if kind == accountingprovider.ReferenceKindItem {
-		return quickbooks.SanitizeName(name, quickbooks.MaxItemNameLength)
+		return quickbooksref.SanitizeName(name, quickbooksref.MaxItemNameLength)
 	}
-	return quickbooks.SanitizeName(name, quickbooks.MaxPartyNameLength)
+	return quickbooksref.SanitizeName(name, quickbooksref.MaxPartyNameLength)
 }
 
-func partyDraftOf(draft *accountingconnectorports.AccountingPartyDraft) *quickbooks.PartyDraft {
+func partyDraftOf(draft *accountingconnectorports.AccountingPartyDraft) *quickbooksref.PartyDraft {
 	if draft == nil {
 		return nil
 	}
-	return &quickbooks.PartyDraft{
+	return &quickbooksref.PartyDraft{
 		DisplayName:  draft.DisplayName,
 		CompanyName:  draft.CompanyName,
 		Email:        draft.Email,
@@ -115,20 +126,20 @@ func partyDraftOf(draft *accountingconnectorports.AccountingPartyDraft) *quickbo
 	}
 }
 
-func providerKind(kind accountingprovider.ReferenceKind) (quickbooks.ReferenceKind, error) {
+func providerKind(kind accountingprovider.ReferenceKind) (quickbooksref.ReferenceKind, error) {
 	switch kind {
 	case accountingprovider.ReferenceKindAccount:
-		return quickbooks.KindAccount, nil
+		return quickbooksref.KindAccount, nil
 	case accountingprovider.ReferenceKindItem:
-		return quickbooks.KindItem, nil
+		return quickbooksref.KindItem, nil
 	case accountingprovider.ReferenceKindCustomer:
-		return quickbooks.KindCustomer, nil
+		return quickbooksref.KindCustomer, nil
 	case accountingprovider.ReferenceKindVendor:
-		return quickbooks.KindVendor, nil
+		return quickbooksref.KindVendor, nil
 	case accountingprovider.ReferenceKindTerm:
-		return quickbooks.KindTerm, nil
+		return quickbooksref.KindTerm, nil
 	case accountingprovider.ReferenceKindPaymentMethod:
-		return quickbooks.KindPaymentMethod, nil
+		return quickbooksref.KindPaymentMethod, nil
 	default:
 		return "", fmt.Errorf("quickbooks: unknown reference kind %q", kind)
 	}
@@ -136,7 +147,7 @@ func providerKind(kind accountingprovider.ReferenceKind) (quickbooks.ReferenceKi
 
 func referenceObjectOf(
 	kind accountingprovider.ReferenceKind,
-	obj *quickbooks.ReferenceObject,
+	obj *quickbooksref.ReferenceObject,
 ) *accountingmapping.AccountingReferenceObject {
 	out := &accountingmapping.AccountingReferenceObject{
 		Kind:                    kind,
