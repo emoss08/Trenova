@@ -300,9 +300,9 @@ the service select), the submit dialog's coverage warning, and the shipment's ch
 
 The Lading studio (`/edi/lading/edip_lading_acme`, and `/edi/lading/edip_lading_northwind` for a
 partner with no project yet) reads its routes from `handlers/lading.mjs`, which serves what
-`edihandler`'s Lading routes serve: the context, the catalog, projects, versions, drafts, settings,
+`ediladinghandler`'s routes serve: the context, the catalog, projects, versions, drafts, settings,
 runs, tests, certify, activate, archive, shadow, shadow results and replays, and the partner the
-page header reads. Every check, test, run, replay and shadow comparison is the answer of the
+page header reads from `edisetuphandler`. Every check, test, run, replay and shadow comparison is the answer of the
 client's own `edi.wasm`, loaded in Node by `edi.mjs`, so the studio and the mock agree the way the
 studio and the TMS do.
 

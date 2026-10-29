@@ -1,4 +1,4 @@
-package edihandler
+package edisetuphandler
 
 import (
 	"net/http"

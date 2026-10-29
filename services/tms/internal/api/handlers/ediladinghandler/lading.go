@@ -1,4 +1,4 @@
-package edihandler
+package ediladinghandler
 
 import (
 	"context"

@@ -52,6 +52,9 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/dothazmatreferencehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/driverportalhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/edihandler"
+	"github.com/emoss08/trenova/internal/api/handlers/ediladinghandler"
+	"github.com/emoss08/trenova/internal/api/handlers/edisetuphandler"
+	"github.com/emoss08/trenova/internal/api/handlers/editransferhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/emailhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/equipmentmanufacturerhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/equipmenttypehandler"
@@ -206,6 +209,9 @@ var HandlersModule = fx.Module("api-handlers", fx.Provide(
 	hazmatsegregationrulehandler.New,
 	dothazmatreferencehandler.New,
 	edihandler.New,
+	edisetuphandler.New,
+	editransferhandler.New,
+	ediladinghandler.New,
 	inboundhandler.New,
 	capturehandler.New,
 	emailhandler.New,

@@ -123,7 +123,7 @@ The writes no tool performs yet, and what the tool would do.
 
 | Domain | Write | What the tool would do |
 | --- | --- | --- |
-| edi | `POST /api/v1/edi/flows/instances/:instanceID/release/` | Release a held or escalated EDI flow once the planner has dealt with what held it |
+| edilading | `POST /api/v1/edi/flows/instances/:instanceID/release/` | Release a held or escalated EDI flow once the planner has dealt with what held it |
 
 ## By domain
 
@@ -194,7 +194,10 @@ The writes no tool performs yet, and what the tool would do.
 | documenttype | 3 | 0 | 3 | 0 |
 | driverportal | 31 | 3 | 28 | 0 |
 | driversettlement | 34 | 29 | 5 | 0 |
-| edi | 51 | 21 | 29 | 1 |
+| edi | 9 | 6 | 3 | 0 |
+| edilading | 13 | 1 | 11 | 1 |
+| edisetup | 17 | 5 | 12 | 0 |
+| editransfer | 12 | 9 | 3 | 0 |
 | email | 9 | 0 | 9 | 0 |
 | equipmentmanufacturer | 4 | 0 | 4 | 0 |
 | equipmenttype | 4 | 0 | 4 | 0 |
@@ -1082,57 +1085,72 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `DELETE /api/v1/edi/lading/versions/:versionID/shadow/`<br>edihandler.stopLadingShadow | Exempt, configuration: Stops comparing a certified Lading version with the active one; the person who started the shadow decides when it has run long enough. |
-| `DELETE /api/v1/edi/mapping-profiles/:profileID/items/:mappingItemID/`<br>edihandler.deleteMappingProfileItem | Exempt, configuration: Trading partner setup: partners, connections, mappings and communication profiles an EDI administrator maintains. |
-| `DELETE /api/v1/edi/partners/:partnerID/mapping-profile/items/:mappingItemID/`<br>edihandler.deleteMappingItem | Exempt, configuration: Trading partner setup: partners, connections, mappings and communication profiles an EDI administrator maintains. |
 | `POST /api/v1/edi/as2/inbound/`<br>edihandler.receiveAS2Message | Exempt, infrastructure: Receives AS2 messages a trading partner sends; no person makes this call. |
-| `POST /api/v1/edi/communication-profiles/`<br>edihandler.createCommunicationProfile | Tool: `edi_apply_connection_draft` |
-| `POST /api/v1/edi/communication-profiles/:profileID/poll/`<br>edihandler.pollCommunicationProfile | Exempt, infrastructure: Polls a partner mailbox now; the scheduler polls on its own. |
-| `POST /api/v1/edi/communication-profiles/:profileID/test-connection/`<br>edihandler.testCommunicationProfileConnection | Exempt, read-only: Validates, inspects, previews or tests EDI setup and saves nothing. |
-| `POST /api/v1/edi/communication-profiles/inspect-certificate/`<br>edihandler.inspectCertificate | Exempt, read-only: Validates, inspects, previews or tests EDI setup and saves nothing. |
-| `POST /api/v1/edi/connections/`<br>edihandler.createConnection | Exempt, configuration: Trading partner setup: partners, connections, mappings and communication profiles an EDI administrator maintains. |
-| `POST /api/v1/edi/connections/:connectionID/accept/`<br>edihandler.acceptConnection | Exempt, configuration: Trading partner setup: partners, connections, mappings and communication profiles an EDI administrator maintains. |
-| `POST /api/v1/edi/connections/:connectionID/reject/`<br>edihandler.rejectConnection | Exempt, configuration: Trading partner setup: partners, connections, mappings and communication profiles an EDI administrator maintains. |
-| `POST /api/v1/edi/connections/:connectionID/revoke/`<br>edihandler.revokeConnection | Exempt, configuration: Trading partner setup: partners, connections, mappings and communication profiles an EDI administrator maintains. |
-| `POST /api/v1/edi/connections/:connectionID/suspend/`<br>edihandler.suspendConnection | Exempt, configuration: Trading partner setup: partners, connections, mappings and communication profiles an EDI administrator maintains. |
-| `POST /api/v1/edi/control-numbers/reset/`<br>edihandler.resetControlNumber | Exempt, configuration: Trading partner setup: partners, connections, mappings and communication profiles an EDI administrator maintains. |
 | `POST /api/v1/edi/documents/generate/`<br>edihandler.generateDocument | Tool: `edi_send_status_update` |
 | `POST /api/v1/edi/documents/preview/`<br>edihandler.previewDocument | Exempt, read-only: Validates, inspects, previews or tests EDI setup and saves nothing. |
-| `POST /api/v1/edi/flows/instances/:instanceID/release/`<br>edihandler.releaseFlowInstance | Pending: Release a held or escalated EDI flow once the planner has dealt with what held it |
 | `POST /api/v1/edi/inbound-files/:fileID/reprocess/`<br>edihandler.reprocessInboundFile | Tool: `edi_reprocess_inbound_file` |
 | `POST /api/v1/edi/inbound-files/bulk-reprocess/`<br>edihandler.bulkReprocessInboundFiles | Tool: `edi_reprocess_inbound_file` |
-| `POST /api/v1/edi/lading/projects/`<br>edihandler.createLadingProject | Tool: `edi_apply_connection_draft` |
-| `POST /api/v1/edi/lading/projects/:projectID/drafts/`<br>edihandler.newLadingDraft | Exempt, configuration: Lading project files an EDI developer writes, tests and certifies in the Lading studio; an agent drafts them through edi_apply_connection_draft. |
-| `POST /api/v1/edi/lading/versions/:versionID/activate/`<br>edihandler.activateLadingVersion | Exempt, attestation: Putting a certified Lading version live for a trading partner is the decision of the person accountable for that partner's EDI. |
-| `POST /api/v1/edi/lading/versions/:versionID/archive/`<br>edihandler.archiveLadingVersion | Exempt, configuration: Lading project files an EDI developer writes, tests and certifies in the Lading studio; an agent drafts them through edi_apply_connection_draft. |
-| `POST /api/v1/edi/lading/versions/:versionID/certify/`<br>edihandler.certifyLadingVersion | Exempt, attestation: Certifying a Lading version attests that its tests, coverage and replay were reviewed by a person. |
-| `POST /api/v1/edi/lading/versions/:versionID/replays/`<br>edihandler.startLadingReplay | Exempt, read-only: Replays a Lading version on the partner's past messages and records the differences; nothing is sent or changed. |
-| `POST /api/v1/edi/lading/versions/:versionID/run/`<br>edihandler.runLadingVersion | Exempt, read-only: Runs a map of a Lading version on an input and saves nothing. |
-| `POST /api/v1/edi/lading/versions/:versionID/shadow/`<br>edihandler.startLadingShadow | Exempt, configuration: Compares a certified Lading version with the active one on live traffic, sending nothing; part of putting a version live. |
-| `POST /api/v1/edi/lading/versions/:versionID/test/`<br>edihandler.testLadingVersion | Exempt, read-only: Runs a Lading version's tests and records their result; nothing a partner sees changes. |
-| `POST /api/v1/edi/load-tenders/`<br>edihandler.submitLoadTender | Tool: `edi_send_tender` |
 | `POST /api/v1/edi/messages/:messageID/replay/`<br>edihandler.replayMessageDelivery | Tool: `edi_replay_message` |
 | `POST /api/v1/edi/messages/:messageID/retry-delivery/`<br>edihandler.retryMessageDelivery | Tool: `edi_retry_message` |
 | `POST /api/v1/edi/messages/bulk-retry-delivery/`<br>edihandler.bulkRetryMessageDelivery | Tool: `edi_retry_message` |
-| `POST /api/v1/edi/partners/`<br>edihandler.createPartner | Tool: `edi_apply_connection_draft` |
-| `POST /api/v1/edi/partners/internal-pairs/`<br>edihandler.createInternalPartnerPair | Exempt, configuration: Trading partner setup: partners, connections, mappings and communication profiles an EDI administrator maintains. |
-| `POST /api/v1/edi/tender-changes/:changeID/apply/`<br>edihandler.applyTenderChange | Tool: `edi_review_tender_change` |
-| `POST /api/v1/edi/tender-changes/:changeID/reject/`<br>edihandler.rejectTenderChange | Tool: `edi_review_tender_change` |
-| `POST /api/v1/edi/transfer-changes/:changeID/apply/`<br>edihandler.applyTransferChange | Tool: `edi_review_transfer_change` |
-| `POST /api/v1/edi/transfer-changes/:changeID/reject/`<br>edihandler.rejectTransferChange | Tool: `edi_review_transfer_change` |
-| `POST /api/v1/edi/transfers/:transferID/approve/`<br>edihandler.approveTransfer | Tool: `edi_accept_tender` |
-| `POST /api/v1/edi/transfers/:transferID/cancel/`<br>edihandler.cancelTransfer | Tool: `edi_cancel_tender` |
-| `POST /api/v1/edi/transfers/:transferID/expire/`<br>edihandler.expireTransfer | Tool: `edi_expire_tender` |
-| `POST /api/v1/edi/transfers/:transferID/reject/`<br>edihandler.rejectTransfer | Tool: `edi_decline_tender` |
-| `POST /api/v1/edi/transfers/bulk-approve/`<br>edihandler.bulkApproveTransfers | Exempt, duplicate: Runs POST /api/v1/edi/transfers/:transferID/approve/ once per selected tender; edi_accept_tender answers one tender per proposal so each is previewed and pinned to its own version. |
-| `POST /api/v1/edi/transfers/bulk-reject/`<br>edihandler.bulkRejectTransfers | Exempt, duplicate: Runs POST /api/v1/edi/transfers/:transferID/reject/ once per selected tender; edi_decline_tender answers one tender per proposal so each is previewed and pinned to its own version. |
 | `POST /api/v1/edi/x12/inspect/`<br>edihandler.inspectX12 | Exempt, read-only: Validates, inspects, previews or tests EDI setup and saves nothing. |
-| `PUT /api/v1/edi/communication-profiles/:profileID/`<br>edihandler.updateCommunicationProfile | Tool: `edi_apply_connection_draft` |
-| `PUT /api/v1/edi/lading/projects/:projectID/settings/`<br>edihandler.updateLadingSettings | Exempt, configuration: A partner's Lading settings, such as automatic acceptance, are policy an EDI administrator sets for the partner. |
-| `PUT /api/v1/edi/lading/versions/:versionID/`<br>edihandler.saveLadingDraft | Exempt, configuration: Lading project files an EDI developer writes, tests and certifies in the Lading studio; an agent drafts them through edi_apply_connection_draft. |
-| `PUT /api/v1/edi/mapping-profiles/:profileID/items/`<br>edihandler.updateMappingProfileItems | Exempt, configuration: Trading partner setup: partners, connections, mappings and communication profiles an EDI administrator maintains. |
-| `PUT /api/v1/edi/partners/:partnerID/`<br>edihandler.updatePartner | Tool: `edi_apply_connection_draft` |
-| `PUT /api/v1/edi/partners/:partnerID/mapping-profile/`<br>edihandler.updateMappingProfile | Tool: `edi_apply_connection_draft` |
+
+### edilading
+
+| Write | Decision |
+| --- | --- |
+| `DELETE /api/v1/edi/lading/versions/:versionID/shadow/`<br>ediladinghandler.stopLadingShadow | Exempt, configuration: Stops comparing a certified Lading version with the active one; the person who started the shadow decides when it has run long enough. |
+| `POST /api/v1/edi/flows/instances/:instanceID/release/`<br>ediladinghandler.releaseFlowInstance | Pending: Release a held or escalated EDI flow once the planner has dealt with what held it |
+| `POST /api/v1/edi/lading/projects/`<br>ediladinghandler.createLadingProject | Tool: `edi_apply_connection_draft` |
+| `POST /api/v1/edi/lading/projects/:projectID/drafts/`<br>ediladinghandler.newLadingDraft | Exempt, configuration: Lading project files an EDI developer writes, tests and certifies in the Lading studio; an agent drafts them through edi_apply_connection_draft. |
+| `POST /api/v1/edi/lading/versions/:versionID/activate/`<br>ediladinghandler.activateLadingVersion | Exempt, attestation: Putting a certified Lading version live for a trading partner is the decision of the person accountable for that partner's EDI. |
+| `POST /api/v1/edi/lading/versions/:versionID/archive/`<br>ediladinghandler.archiveLadingVersion | Exempt, configuration: Lading project files an EDI developer writes, tests and certifies in the Lading studio; an agent drafts them through edi_apply_connection_draft. |
+| `POST /api/v1/edi/lading/versions/:versionID/certify/`<br>ediladinghandler.certifyLadingVersion | Exempt, attestation: Certifying a Lading version attests that its tests, coverage and replay were reviewed by a person. |
+| `POST /api/v1/edi/lading/versions/:versionID/replays/`<br>ediladinghandler.startLadingReplay | Exempt, read-only: Replays a Lading version on the partner's past messages and records the differences; nothing is sent or changed. |
+| `POST /api/v1/edi/lading/versions/:versionID/run/`<br>ediladinghandler.runLadingVersion | Exempt, read-only: Runs a map of a Lading version on an input and saves nothing. |
+| `POST /api/v1/edi/lading/versions/:versionID/shadow/`<br>ediladinghandler.startLadingShadow | Exempt, configuration: Compares a certified Lading version with the active one on live traffic, sending nothing; part of putting a version live. |
+| `POST /api/v1/edi/lading/versions/:versionID/test/`<br>ediladinghandler.testLadingVersion | Exempt, read-only: Runs a Lading version's tests and records their result; nothing a partner sees changes. |
+| `PUT /api/v1/edi/lading/projects/:projectID/settings/`<br>ediladinghandler.updateLadingSettings | Exempt, configuration: A partner's Lading settings, such as automatic acceptance, are policy an EDI administrator sets for the partner. |
+| `PUT /api/v1/edi/lading/versions/:versionID/`<br>ediladinghandler.saveLadingDraft | Exempt, configuration: Lading project files an EDI developer writes, tests and certifies in the Lading studio; an agent drafts them through edi_apply_connection_draft. |
+
+### edisetup
+
+| Write | Decision |
+| --- | --- |
+| `DELETE /api/v1/edi/mapping-profiles/:profileID/items/:mappingItemID/`<br>edisetuphandler.deleteMappingProfileItem | Exempt, configuration: Trading partner setup: partners, connections, mappings and communication profiles an EDI administrator maintains. |
+| `DELETE /api/v1/edi/partners/:partnerID/mapping-profile/items/:mappingItemID/`<br>edisetuphandler.deleteMappingItem | Exempt, configuration: Trading partner setup: partners, connections, mappings and communication profiles an EDI administrator maintains. |
+| `POST /api/v1/edi/communication-profiles/`<br>edisetuphandler.createCommunicationProfile | Tool: `edi_apply_connection_draft` |
+| `POST /api/v1/edi/communication-profiles/:profileID/poll/`<br>edisetuphandler.pollCommunicationProfile | Exempt, infrastructure: Polls a partner mailbox now; the scheduler polls on its own. |
+| `POST /api/v1/edi/communication-profiles/:profileID/test-connection/`<br>edisetuphandler.testCommunicationProfileConnection | Exempt, read-only: Validates, inspects, previews or tests EDI setup and saves nothing. |
+| `POST /api/v1/edi/communication-profiles/inspect-certificate/`<br>edisetuphandler.inspectCertificate | Exempt, read-only: Validates, inspects, previews or tests EDI setup and saves nothing. |
+| `POST /api/v1/edi/connections/`<br>edisetuphandler.createConnection | Exempt, configuration: Trading partner setup: partners, connections, mappings and communication profiles an EDI administrator maintains. |
+| `POST /api/v1/edi/connections/:connectionID/accept/`<br>edisetuphandler.acceptConnection | Exempt, configuration: Trading partner setup: partners, connections, mappings and communication profiles an EDI administrator maintains. |
+| `POST /api/v1/edi/connections/:connectionID/reject/`<br>edisetuphandler.rejectConnection | Exempt, configuration: Trading partner setup: partners, connections, mappings and communication profiles an EDI administrator maintains. |
+| `POST /api/v1/edi/connections/:connectionID/revoke/`<br>edisetuphandler.revokeConnection | Exempt, configuration: Trading partner setup: partners, connections, mappings and communication profiles an EDI administrator maintains. |
+| `POST /api/v1/edi/connections/:connectionID/suspend/`<br>edisetuphandler.suspendConnection | Exempt, configuration: Trading partner setup: partners, connections, mappings and communication profiles an EDI administrator maintains. |
+| `POST /api/v1/edi/partners/`<br>edisetuphandler.createPartner | Tool: `edi_apply_connection_draft` |
+| `POST /api/v1/edi/partners/internal-pairs/`<br>edisetuphandler.createInternalPartnerPair | Exempt, configuration: Trading partner setup: partners, connections, mappings and communication profiles an EDI administrator maintains. |
+| `PUT /api/v1/edi/communication-profiles/:profileID/`<br>edisetuphandler.updateCommunicationProfile | Tool: `edi_apply_connection_draft` |
+| `PUT /api/v1/edi/mapping-profiles/:profileID/items/`<br>edisetuphandler.updateMappingProfileItems | Exempt, configuration: Trading partner setup: partners, connections, mappings and communication profiles an EDI administrator maintains. |
+| `PUT /api/v1/edi/partners/:partnerID/`<br>edisetuphandler.updatePartner | Tool: `edi_apply_connection_draft` |
+| `PUT /api/v1/edi/partners/:partnerID/mapping-profile/`<br>edisetuphandler.updateMappingProfile | Tool: `edi_apply_connection_draft` |
+
+### editransfer
+
+| Write | Decision |
+| --- | --- |
+| `POST /api/v1/edi/control-numbers/reset/`<br>editransferhandler.resetControlNumber | Exempt, configuration: Trading partner setup: partners, connections, mappings and communication profiles an EDI administrator maintains. |
+| `POST /api/v1/edi/load-tenders/`<br>editransferhandler.submitLoadTender | Tool: `edi_send_tender` |
+| `POST /api/v1/edi/tender-changes/:changeID/apply/`<br>editransferhandler.applyTenderChange | Tool: `edi_review_tender_change` |
+| `POST /api/v1/edi/tender-changes/:changeID/reject/`<br>editransferhandler.rejectTenderChange | Tool: `edi_review_tender_change` |
+| `POST /api/v1/edi/transfer-changes/:changeID/apply/`<br>editransferhandler.applyTransferChange | Tool: `edi_review_transfer_change` |
+| `POST /api/v1/edi/transfer-changes/:changeID/reject/`<br>editransferhandler.rejectTransferChange | Tool: `edi_review_transfer_change` |
+| `POST /api/v1/edi/transfers/:transferID/approve/`<br>editransferhandler.approveTransfer | Tool: `edi_accept_tender` |
+| `POST /api/v1/edi/transfers/:transferID/cancel/`<br>editransferhandler.cancelTransfer | Tool: `edi_cancel_tender` |
+| `POST /api/v1/edi/transfers/:transferID/expire/`<br>editransferhandler.expireTransfer | Tool: `edi_expire_tender` |
+| `POST /api/v1/edi/transfers/:transferID/reject/`<br>editransferhandler.rejectTransfer | Tool: `edi_decline_tender` |
+| `POST /api/v1/edi/transfers/bulk-approve/`<br>editransferhandler.bulkApproveTransfers | Exempt, duplicate: Runs POST /api/v1/edi/transfers/:transferID/approve/ once per selected tender; edi_accept_tender answers one tender per proposal so each is previewed and pinned to its own version. |
+| `POST /api/v1/edi/transfers/bulk-reject/`<br>editransferhandler.bulkRejectTransfers | Exempt, duplicate: Runs POST /api/v1/edi/transfers/:transferID/reject/ once per selected tender; edi_decline_tender answers one tender per proposal so each is previewed and pinned to its own version. |
 
 ### email
 

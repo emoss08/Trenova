@@ -1,28 +1,21 @@
-package edihandler_test
+package edisetuphandler_test
 
 import (
 	"context"
 	"net/http"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/api/handlers/edihandler"
-	"github.com/emoss08/trenova/internal/api/helpers"
-	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
+	"github.com/emoss08/trenova/internal/api/handlers/edisetuphandler"
 	"github.com/emoss08/trenova/internal/modules/edi/app/edivalidation"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
-	"github.com/emoss08/trenova/internal/modules/edi/domain/editransfer"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/editenderports"
+	"github.com/emoss08/trenova/internal/testutil/edihandlertest"
 	"github.com/emoss08/trenova/internal/testutil/ediservicetest"
-	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/mocks/edimessageportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/edipartnerportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/editenderportsmock"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -32,18 +25,10 @@ import (
 func setupEDIHandler(
 	t *testing.T,
 	applyParams ...func(*ediservicetest.Deps),
-) *edihandler.Handler {
+) *edisetuphandler.Handler {
 	t.Helper()
 
 	logger := zap.NewNop()
-	errorHandler := helpers.NewErrorHandler(helpers.ErrorHandlerParams{
-		Logger:    logger,
-		AppConfig: &appconfig.Config{Debug: true},
-	})
-	pm := middleware.NewPermissionMiddleware(middleware.PermissionMiddlewareParams{
-		PermissionEngine: &mocks.AllowAllPermissionEngine{},
-		ErrorHandler:     errorHandler,
-	})
 	params := ediservicetest.Deps{
 		Logger:             logger,
 		DocumentTypeRepo:   edipartnerportsmock.NewMockEDIDocumentTypeRepository(t),
@@ -55,25 +40,15 @@ func setupEDIHandler(
 	for _, apply := range applyParams {
 		apply(&params)
 	}
-	handlerParams := serviceParams(ediservicetest.New(params))
-	handlerParams.ErrorHandler = errorHandler
-	handlerParams.PermissionMiddleware = pm
+	edis := ediservicetest.New(params)
+	mw := edihandlertest.NewMiddleware(logger)
 
-	return edihandler.New(handlerParams)
-}
-
-func serviceParams(edis *ediservicetest.Services) edihandler.Params {
-	return edihandler.Params{
-		Setup:           edis.Setup,
-		Transfers:       edis.Transfers,
-		TenderChanges:   edis.TenderChanges,
-		TransferChanges: edis.TransferChanges,
-		Delivery:        edis.Delivery,
-		Outbound:        edis.Outbound,
-		Messages:        edis.Messages,
-		Overview:        edis.Overview,
-		Tenders:         edis.Tenders,
-	}
+	return edisetuphandler.New(edisetuphandler.Params{
+		Setup:                edis.Setup,
+		Overview:             edis.Overview,
+		ErrorHandler:         mw.ErrorHandler,
+		PermissionMiddleware: mw.PermissionMiddleware,
+	})
 }
 
 func TestEDIHandler_DocumentTypeSelectOptionsRoute(t *testing.T) {
@@ -106,7 +81,7 @@ func TestEDIHandler_DocumentTypeSelectOptionsRoute(t *testing.T) {
 		params.DocumentTypeRepo = repo
 	})
 
-	runEDIRequest(
+	edihandlertest.Run(
 		t,
 		handler,
 		http.MethodGet,
@@ -170,7 +145,7 @@ func TestEDIHandler_TransactionSetCatalogRoutes(t *testing.T) {
 		params.TransactionSetRepo = repo
 	})
 
-	listRecorder := runEDIRequest(
+	listRecorder := edihandlertest.Run(
 		t,
 		handler,
 		http.MethodGet,
@@ -186,7 +161,7 @@ func TestEDIHandler_TransactionSetCatalogRoutes(t *testing.T) {
 	assert.Equal(t, tender.ID, listResp.Results[0].ID)
 	assert.Equal(t, edidocument.TransactionSet204, listResp.Results[0].Code)
 
-	oneRecorder := runEDIRequest(
+	oneRecorder := edihandlertest.Run(
 		t,
 		handler,
 		http.MethodGet,
@@ -200,7 +175,7 @@ func TestEDIHandler_TransactionSetCatalogRoutes(t *testing.T) {
 	assert.Equal(t, tender.ID, oneResp.ID)
 	assert.Equal(t, "Motor Carrier Load Tender", oneResp.Name)
 
-	runEDIRequest(
+	edihandlertest.Run(
 		t,
 		handler,
 		http.MethodGet,
@@ -233,7 +208,7 @@ func TestEDIHandler_DocumentTypeOptionAcceptsCatalogID(t *testing.T) {
 		params.DocumentTypeRepo = repo
 	})
 
-	recorder := runEDIRequest(
+	recorder := edihandlertest.Run(
 		t,
 		handler,
 		http.MethodGet,
@@ -299,7 +274,7 @@ func TestEDIHandler_ProfileSelectOptionsRoutes(t *testing.T) {
 		params.MappingProfileRepo = mappingProfileRepo
 	})
 
-	runEDIRequest(
+	edihandlertest.Run(
 		t,
 		handler,
 		http.MethodGet,
@@ -313,7 +288,7 @@ func TestEDIHandler_ProfileSelectOptionsRoutes(t *testing.T) {
 		nil,
 		http.StatusOK,
 	)
-	runEDIRequest(
+	edihandlertest.Run(
 		t,
 		handler,
 		http.MethodGet,
@@ -321,66 +296,6 @@ func TestEDIHandler_ProfileSelectOptionsRoutes(t *testing.T) {
 		map[string]string{"query": "carrier", "partnerId": partnerID.String()},
 		nil,
 		http.StatusOK,
-	)
-}
-
-func TestEDIHandler_TransferListDirectionRoutes(t *testing.T) {
-	t.Parallel()
-
-	repo := edipartnerportsmock.NewMockEDIDocumentTypeRepository(t)
-	transferRepo := editenderportsmock.NewMockEDILoadTenderTransferRepository(t)
-	transferRepo.EXPECT().
-		ListInbound(mock.Anything, mock.MatchedBy(func(req *editenderports.ListEDITransfersRequest) bool {
-			return req.Filter != nil
-		})).
-		Return(&pagination.ListResult[*editransfer.EDITransfer]{
-			Items:      []*editransfer.EDITransfer{},
-			Total:      0,
-			TotalExact: true,
-		}, nil).
-		Once()
-	transferRepo.EXPECT().
-		ListOutbound(mock.Anything, mock.MatchedBy(func(req *editenderports.ListEDITransfersRequest) bool {
-			return req.Filter != nil
-		})).
-		Return(&pagination.ListResult[*editransfer.EDITransfer]{
-			Items:      []*editransfer.EDITransfer{},
-			Total:      0,
-			TotalExact: true,
-		}, nil).
-		Once()
-
-	handler := setupEDIHandler(t, func(params *ediservicetest.Deps) {
-		params.DocumentTypeRepo = repo
-		params.TransferRepo = transferRepo
-	})
-
-	runEDIRequest(
-		t,
-		handler,
-		http.MethodGet,
-		"/api/v1/edi/transfers/",
-		map[string]string{"direction": "inbound"},
-		nil,
-		http.StatusOK,
-	)
-	runEDIRequest(
-		t,
-		handler,
-		http.MethodGet,
-		"/api/v1/edi/transfers/",
-		map[string]string{"direction": "outbound"},
-		nil,
-		http.StatusOK,
-	)
-	runEDIRequest(
-		t,
-		handler,
-		http.MethodGet,
-		"/api/v1/edi/transfers/",
-		map[string]string{"direction": "sideways"},
-		nil,
-		http.StatusBadRequest,
 	)
 }
 
@@ -419,7 +334,7 @@ func TestEDIHandler_CreatePartnerDefaultsAndExplicitFalseFlags(t *testing.T) {
 		params.PartnerRepo = partnerRepo
 	})
 
-	runEDIRequest(
+	edihandlertest.Run(
 		t,
 		handler,
 		http.MethodPost,
@@ -428,7 +343,7 @@ func TestEDIHandler_CreatePartnerDefaultsAndExplicitFalseFlags(t *testing.T) {
 		map[string]any{"code": "EXT", "name": "External Partner"},
 		http.StatusCreated,
 	)
-	runEDIRequest(
+	edihandlertest.Run(
 		t,
 		handler,
 		http.MethodPost,
@@ -514,7 +429,7 @@ func TestEDIHandler_SelectedValueRoutesReturnAutocompleteFields(t *testing.T) {
 		params.ProfileRepo = profileRepo
 	})
 
-	partnerRecorder := runEDIRequest(
+	partnerRecorder := edihandlertest.Run(
 		t,
 		handler,
 		http.MethodGet,
@@ -530,7 +445,7 @@ func TestEDIHandler_SelectedValueRoutesReturnAutocompleteFields(t *testing.T) {
 	assert.Equal(t, "Carrier Partner", partnerResp.Name)
 	assert.Equal(t, edi.PartnerKindExternal, partnerResp.Kind)
 
-	documentTypeRecorder := runEDIRequest(
+	documentTypeRecorder := edihandlertest.Run(
 		t,
 		handler,
 		http.MethodGet,
@@ -548,7 +463,7 @@ func TestEDIHandler_SelectedValueRoutesReturnAutocompleteFields(t *testing.T) {
 	assert.Equal(t, edidocument.DocumentDirectionOutbound, documentTypeResp.Direction)
 	assert.Equal(t, edidocument.DefaultX12204Version, documentTypeResp.DefaultVersion)
 
-	communicationProfileRecorder := runEDIRequest(
+	communicationProfileRecorder := edihandlertest.Run(
 		t,
 		handler,
 		http.MethodGet,
@@ -562,7 +477,7 @@ func TestEDIHandler_SelectedValueRoutesReturnAutocompleteFields(t *testing.T) {
 	assert.Equal(t, communicationProfileID, communicationProfileResp.ID)
 	assert.Equal(t, "Carrier SFTP", communicationProfileResp.Name)
 
-	mappingProfileRecorder := runEDIRequest(
+	mappingProfileRecorder := edihandlertest.Run(
 		t,
 		handler,
 		http.MethodGet,
@@ -575,32 +490,4 @@ func TestEDIHandler_SelectedValueRoutesReturnAutocompleteFields(t *testing.T) {
 	require.NoError(t, mappingProfileRecorder.ResponseJSON(&mappingProfileResp))
 	assert.Equal(t, mappingProfileID, mappingProfileResp.ID)
 	assert.Equal(t, "Carrier Mapping", mappingProfileResp.Name)
-}
-
-func runEDIRequest(
-	t *testing.T,
-	handler *edihandler.Handler,
-	method string,
-	path string,
-	query map[string]string,
-	body any,
-	wantStatus int,
-) *testutil.GinTestContext {
-	t.Helper()
-
-	ginCtx := testutil.NewGinTestContext().
-		WithMethod(method).
-		WithPath(path).
-		WithDefaultAuthContext()
-	if len(query) > 0 {
-		ginCtx.WithQuery(query)
-	}
-	if body != nil {
-		ginCtx.WithJSONBody(body)
-	}
-	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
-	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
-
-	assert.Equal(t, wantStatus, ginCtx.ResponseCode())
-	return ginCtx
 }

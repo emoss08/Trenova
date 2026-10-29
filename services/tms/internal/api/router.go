@@ -55,6 +55,9 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/dothazmatreferencehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/driverportalhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/edihandler"
+	"github.com/emoss08/trenova/internal/api/handlers/ediladinghandler"
+	"github.com/emoss08/trenova/internal/api/handlers/edisetuphandler"
+	"github.com/emoss08/trenova/internal/api/handlers/editransferhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/emailhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/equipmentmanufacturerhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/equipmenttypehandler"
@@ -235,6 +238,9 @@ type RouterParams struct {
 	HazmatSegregationRuleHandler    *hazmatsegregationrulehandler.Handler
 	DotHazmatReferenceHandler       *dothazmatreferencehandler.Handler
 	EDIHandler                      *edihandler.Handler
+	EDISetupHandler                 *edisetuphandler.Handler
+	EDITransferHandler              *editransferhandler.Handler
+	EDILadingHandler                *ediladinghandler.Handler
 	InboundHandler                  *inboundhandler.Handler
 	CaptureHandler                  *capturehandler.Handler
 	EmailHandler                    *emailhandler.Handler
@@ -385,6 +391,9 @@ type Router struct {
 	hazmatSegregationRuleHandler    *hazmatsegregationrulehandler.Handler
 	dotHazmatReferenceHandler       *dothazmatreferencehandler.Handler
 	ediHandler                      *edihandler.Handler
+	ediSetupHandler                 *edisetuphandler.Handler
+	ediTransferHandler              *editransferhandler.Handler
+	ediLadingHandler                *ediladinghandler.Handler
 	inboundHandler                  *inboundhandler.Handler
 	captureHandler                  *capturehandler.Handler
 	emailHandler                    *emailhandler.Handler
@@ -537,6 +546,9 @@ func NewRouter(p RouterParams) *Router {
 		hazmatSegregationRuleHandler:    p.HazmatSegregationRuleHandler,
 		dotHazmatReferenceHandler:       p.DotHazmatReferenceHandler,
 		ediHandler:                      p.EDIHandler,
+		ediSetupHandler:                 p.EDISetupHandler,
+		ediTransferHandler:              p.EDITransferHandler,
+		ediLadingHandler:                p.EDILadingHandler,
 		inboundHandler:                  p.InboundHandler,
 		captureHandler:                  p.CaptureHandler,
 		emailHandler:                    p.EmailHandler,
@@ -756,6 +768,9 @@ func (r *Router) setupProtectedRoutes(rg *gin.RouterGroup) {
 	r.hazmatSegregationRuleHandler.RegisterRoutes(protected)
 	r.dotHazmatReferenceHandler.RegisterRoutes(protected)
 	r.ediHandler.RegisterRoutes(protected)
+	r.ediSetupHandler.RegisterRoutes(protected)
+	r.ediTransferHandler.RegisterRoutes(protected)
+	r.ediLadingHandler.RegisterRoutes(protected)
 	r.emailHandler.RegisterRoutes(protected)
 	r.commodityHandler.RegisterRoutes(protected)
 	r.carrierAssignmentHandler.RegisterRoutes(protected)

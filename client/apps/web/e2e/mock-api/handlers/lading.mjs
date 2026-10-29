@@ -1,5 +1,6 @@
 // The Lading studio's REST routes under /edi/lading/, and the partner read the studio's header
-// uses, as edihandler serves them (docs/engineering/lading.md, "Versions, replay and shadow").
+// uses, as ediladinghandler and edisetuphandler serve them (docs/engineering/lading.md,
+// "Versions, replay and shadow").
 // Checks, tests, runs, replays and the shadow's comparisons are the EDI module's answers; a
 // replay or a shadow reads the fixture's month of Acme tenders, its lookups answered from the
 // organisation's mappings in the fixture.

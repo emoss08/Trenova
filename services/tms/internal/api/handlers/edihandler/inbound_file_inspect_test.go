@@ -5,15 +5,12 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/api/handlers/edihandler"
-	"github.com/emoss08/trenova/internal/api/helpers"
-	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediinboundservice"
 	"github.com/emoss08/trenova/internal/modules/edi/app/edix12inspect"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/ediinboundfile"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/edimessageports"
+	"github.com/emoss08/trenova/internal/testutil/edihandlertest"
 	"github.com/emoss08/trenova/internal/testutil/ediservicetest"
-	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/mocks/edimessageportsmock"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -33,22 +30,19 @@ func setupInboundFileHandler(
 	t.Helper()
 
 	logger := zap.NewNop()
-	errorHandler := helpers.NewErrorHandler(helpers.ErrorHandlerParams{
-		Logger:    logger,
-		AppConfig: &appconfig.Config{Debug: true},
+	edis := ediservicetest.New(ediservicetest.Deps{Logger: logger})
+	mw := edihandlertest.NewMiddleware(logger)
+
+	return edihandler.New(edihandler.Params{
+		Delivery: edis.Delivery,
+		Outbound: edis.Outbound,
+		Messages: edis.Messages,
+		InboundService: ediinboundservice.New(
+			ediinboundservice.Params{Logger: logger, InboundFileRepo: files},
+		),
+		ErrorHandler:         mw.ErrorHandler,
+		PermissionMiddleware: mw.PermissionMiddleware,
 	})
-	params := serviceParams(ediservicetest.New(ediservicetest.Deps{Logger: logger}))
-	params.InboundService = ediinboundservice.New(
-		ediinboundservice.Params{Logger: logger, InboundFileRepo: files},
-	)
-	params.ErrorHandler = errorHandler
-	params.PermissionMiddleware = middleware.NewPermissionMiddleware(
-		middleware.PermissionMiddlewareParams{
-			PermissionEngine: &mocks.AllowAllPermissionEngine{},
-			ErrorHandler:     errorHandler,
-		},
-	)
-	return edihandler.New(params)
 }
 
 func TestEDIHandler_InspectInboundFileLaysOutTheFileItHolds(t *testing.T) {
@@ -63,7 +57,7 @@ func TestEDIHandler_InspectInboundFileLaysOutTheFileItHolds(t *testing.T) {
 		Return(&ediinboundfile.EDIInboundFile{ID: fileID, RawContent: inspectedInterchange}, nil).
 		Once()
 
-	ctx := runEDIRequest(
+	ctx := edihandlertest.Run(
 		t,
 		setupInboundFileHandler(t, files),
 		http.MethodGet,
@@ -103,7 +97,7 @@ func TestEDIHandler_InspectInboundFileRefusesAPurgedFile(t *testing.T) {
 		Return(&ediinboundfile.EDIInboundFile{ID: fileID, RawPurgedAt: &purgedAt}, nil).
 		Once()
 
-	runEDIRequest(
+	edihandlertest.Run(
 		t,
 		setupInboundFileHandler(t, files),
 		http.MethodGet,
@@ -117,7 +111,7 @@ func TestEDIHandler_InspectInboundFileRefusesAPurgedFile(t *testing.T) {
 func TestEDIHandler_InspectInboundFileRefusesAnIDThatIsNotOne(t *testing.T) {
 	t.Parallel()
 
-	runEDIRequest(
+	edihandlertest.Run(
 		t,
 		setupInboundFileHandler(t, edimessageportsmock.NewMockEDIInboundFileRepository(t)),
 		http.MethodGet,
