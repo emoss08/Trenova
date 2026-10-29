@@ -44,8 +44,8 @@ func policy(
 	return p
 }
 
-func matchInput() detentionpolicy.MatchInput {
-	return detentionpolicy.MatchInput{
+func matchInput() *detentionpolicy.MatchInput {
+	return &detentionpolicy.MatchInput{
 		CustomerID:     resolveCustomerID,
 		LocationID:     resolveLocationID,
 		ShipmentTypeID: pulid.MustNew("spt_"),

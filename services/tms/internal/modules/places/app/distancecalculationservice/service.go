@@ -604,7 +604,7 @@ func (s *Service) BackfillJurisdictionMiles(
 	}
 	page, err := s.jurisdictionMileRepo.ListUnattributedMoves(
 		ctx,
-		shipmentdistanceports.UnattributedMovesRequest{
+		&shipmentdistanceports.UnattributedMovesRequest{
 			TenantInfo: req.TenantInfo,
 			Start:      req.Start,
 			End:        req.End,

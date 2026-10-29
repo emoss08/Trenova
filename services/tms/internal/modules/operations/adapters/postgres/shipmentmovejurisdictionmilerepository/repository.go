@@ -123,7 +123,7 @@ type unattributedTotals struct {
 
 func (r *repository) ListUnattributedMoves(
 	ctx context.Context,
-	req shipmentdistanceports.UnattributedMovesRequest,
+	req *shipmentdistanceports.UnattributedMovesRequest,
 ) (*shipmentdistanceports.UnattributedMovesPage, error) {
 	return dbtx.Read(
 		ctx,

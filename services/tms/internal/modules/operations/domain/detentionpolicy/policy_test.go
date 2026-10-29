@@ -125,62 +125,62 @@ func TestPolicy_Matches(t *testing.T) {
 
 	t.Run("wildcard policy matches everything", func(t *testing.T) {
 		t.Parallel()
-		assert.True(t, validPolicy().Matches(base))
+		assert.True(t, validPolicy().Matches(&base))
 	})
 
 	t.Run("customer scope matches its customer", func(t *testing.T) {
 		t.Parallel()
 		p := validPolicy()
 		p.CustomerID = &customerID
-		assert.True(t, p.Matches(base))
+		assert.True(t, p.Matches(&base))
 	})
 
 	t.Run("customer scope rejects a different customer", func(t *testing.T) {
 		t.Parallel()
 		p := validPolicy()
 		p.CustomerID = &otherCustomerID
-		assert.False(t, p.Matches(base))
+		assert.False(t, p.Matches(&base))
 	})
 
 	t.Run("inactive policy never matches", func(t *testing.T) {
 		t.Parallel()
 		p := validPolicy()
 		p.Status = detentionpolicy.PolicyStatusInactive
-		assert.False(t, p.Matches(base))
+		assert.False(t, p.Matches(&base))
 	})
 
 	t.Run("draft policy never matches", func(t *testing.T) {
 		t.Parallel()
 		p := validPolicy()
 		p.Status = detentionpolicy.PolicyStatusDraft
-		assert.False(t, p.Matches(base))
+		assert.False(t, p.Matches(&base))
 	})
 
 	t.Run("commodity scope matches on any overlap", func(t *testing.T) {
 		t.Parallel()
 		p := validPolicy()
 		p.CommodityIDs = []pulid.ID{pulid.MustNew("cmd_"), commodityID}
-		assert.True(t, p.Matches(base))
+		assert.True(t, p.Matches(&base))
 	})
 
 	t.Run("commodity scope rejects a disjoint set", func(t *testing.T) {
 		t.Parallel()
 		p := validPolicy()
 		p.CommodityIDs = []pulid.ID{pulid.MustNew("cmd_")}
-		assert.False(t, p.Matches(base))
+		assert.False(t, p.Matches(&base))
 	})
 
 	t.Run("stop type scope filters by leg", func(t *testing.T) {
 		t.Parallel()
 		p := validPolicy()
 		p.StopTypes = []shipmentvocab.StopType{shipmentvocab.StopTypePickup}
-		assert.False(t, p.Matches(base))
+		assert.False(t, p.Matches(&base))
 
 		p.StopTypes = []shipmentvocab.StopType{
 			shipmentvocab.StopTypePickup,
 			shipmentvocab.StopTypeDelivery,
 		}
-		assert.True(t, p.Matches(base))
+		assert.True(t, p.Matches(&base))
 	})
 
 	t.Run("appointment-only policy skips open stops", func(t *testing.T) {
@@ -191,8 +191,8 @@ func TestPolicy_Matches(t *testing.T) {
 		open := base
 		open.ScheduleType = shipmentvocab.StopScheduleTypeOpen
 
-		assert.False(t, p.Matches(open))
-		assert.True(t, p.Matches(base))
+		assert.False(t, p.Matches(&open))
+		assert.True(t, p.Matches(&base))
 	})
 }
 

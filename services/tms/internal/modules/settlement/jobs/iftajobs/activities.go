@@ -41,7 +41,7 @@ func (a *Activities) ListMovesMissingBreakdownActivity(
 ) (*ListMovesMissingBreakdownResult, error) {
 	page, err := a.jurisdictionMileRepo.ListUnattributedMoves(
 		ctx,
-		shipmentdistanceports.UnattributedMovesRequest{
+		&shipmentdistanceports.UnattributedMovesRequest{
 			TenantInfo: input.TenantInfo,
 			Start:      input.Start,
 			End:        input.End,

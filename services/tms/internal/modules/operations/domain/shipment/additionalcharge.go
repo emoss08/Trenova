@@ -16,23 +16,23 @@ import (
 type AdditionalCharge struct {
 	keel.Table `keel:"additional_charges"`
 
-	ID                     pulid.ID                 `json:"id"                         keel:"id,pk,autoid:ac_"`
-	BusinessUnitID         pulid.ID                 `json:"businessUnitId"             keel:"business_unit_id,pk,tenant"`
-	OrganizationID         pulid.ID                 `json:"organizationId"             keel:"organization_id,pk,tenant"`
-	ShipmentID             pulid.ID                 `json:"shipmentId"                 keel:"shipment_id,pk"`
-	AccessorialChargeID    pulid.ID                 `json:"accessorialChargeId"        keel:"accessorial_charge_id,pk"`
-	IsSystemGenerated      bool                     `json:"isSystemGenerated"          keel:"is_system_generated"`
-	Method                 accessorialcharge.Method `json:"method"                     keel:"method"`
-	Amount                 decimal.Decimal          `json:"amount"                     keel:"amount"`
-	Unit                   int16                    `json:"unit"                       keel:"unit"`
-	FuelSurchargeProgramID *pulid.ID                `json:"fuelSurchargeProgramId"     keel:"fuel_surcharge_program_id"`
-	FuelSurchargeDetail    *FuelSurchargeDetail     `json:"fuelSurchargeDetail"        keel:"fuel_surcharge_detail,jsonb"`
-	IsDetention            bool                     `json:"isDetention"                keel:"is_detention"`
-	IsTariff               bool                     `json:"isTariff"                   keel:"is_tariff"`
-	Label                  string                   `json:"label"                      keel:"label,nullzero"`
-	Quantity               decimal.NullDecimal      `json:"quantity"                   keel:"quantity"`
-	Rate                   decimal.NullDecimal      `json:"rate"                       keel:"rate"`
-	RateUnit               string                   `json:"rateUnit"                   keel:"rate_unit,nullzero"`
+	ID                     pulid.ID                 `json:"id"                     keel:"id,pk,autoid:ac_"`
+	BusinessUnitID         pulid.ID                 `json:"businessUnitId"         keel:"business_unit_id,pk,tenant"`
+	OrganizationID         pulid.ID                 `json:"organizationId"         keel:"organization_id,pk,tenant"`
+	ShipmentID             pulid.ID                 `json:"shipmentId"             keel:"shipment_id,pk"`
+	AccessorialChargeID    pulid.ID                 `json:"accessorialChargeId"    keel:"accessorial_charge_id,pk"`
+	IsSystemGenerated      bool                     `json:"isSystemGenerated"      keel:"is_system_generated"`
+	Method                 accessorialcharge.Method `json:"method"                 keel:"method"`
+	Amount                 decimal.Decimal          `json:"amount"                 keel:"amount"`
+	Unit                   int16                    `json:"unit"                   keel:"unit"`
+	FuelSurchargeProgramID *pulid.ID                `json:"fuelSurchargeProgramId" keel:"fuel_surcharge_program_id"`
+	FuelSurchargeDetail    *FuelSurchargeDetail     `json:"fuelSurchargeDetail"    keel:"fuel_surcharge_detail,jsonb"`
+	IsDetention            bool                     `json:"isDetention"            keel:"is_detention"`
+	IsTariff               bool                     `json:"isTariff"               keel:"is_tariff"`
+	Label                  string                   `json:"label"                  keel:"label,nullzero"`
+	Quantity               decimal.NullDecimal      `json:"quantity"               keel:"quantity"`
+	Rate                   decimal.NullDecimal      `json:"rate"                   keel:"rate"`
+	RateUnit               string                   `json:"rateUnit"               keel:"rate_unit,nullzero"`
 	// RateAgreementAccessorialID marks a charge the contract's own accessorial
 	// schedule produced, and is what its reconciliation pass matches on.
 	RateAgreementAccessorialID *pulid.ID `json:"rateAgreementAccessorialId" keel:"rate_agreement_accessorial_id"`

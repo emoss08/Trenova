@@ -108,7 +108,7 @@ func (_c *MockShipmentMoveJurisdictionMileRepository_ListByMoveIDs_Call) RunAndR
 }
 
 // ListUnattributedMoves provides a mock function for the type MockShipmentMoveJurisdictionMileRepository
-func (_mock *MockShipmentMoveJurisdictionMileRepository) ListUnattributedMoves(ctx context.Context, req shipmentdistanceports.UnattributedMovesRequest) (*shipmentdistanceports.UnattributedMovesPage, error) {
+func (_mock *MockShipmentMoveJurisdictionMileRepository) ListUnattributedMoves(ctx context.Context, req *shipmentdistanceports.UnattributedMovesRequest) (*shipmentdistanceports.UnattributedMovesPage, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
@@ -117,17 +117,17 @@ func (_mock *MockShipmentMoveJurisdictionMileRepository) ListUnattributedMoves(c
 
 	var r0 *shipmentdistanceports.UnattributedMovesPage
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, shipmentdistanceports.UnattributedMovesRequest) (*shipmentdistanceports.UnattributedMovesPage, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *shipmentdistanceports.UnattributedMovesRequest) (*shipmentdistanceports.UnattributedMovesPage, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, shipmentdistanceports.UnattributedMovesRequest) *shipmentdistanceports.UnattributedMovesPage); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *shipmentdistanceports.UnattributedMovesRequest) *shipmentdistanceports.UnattributedMovesPage); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*shipmentdistanceports.UnattributedMovesPage)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, shipmentdistanceports.UnattributedMovesRequest) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *shipmentdistanceports.UnattributedMovesRequest) error); ok {
 		r1 = returnFunc(ctx, req)
 	} else {
 		r1 = ret.Error(1)
@@ -142,20 +142,20 @@ type MockShipmentMoveJurisdictionMileRepository_ListUnattributedMoves_Call struc
 
 // ListUnattributedMoves is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req repositories.UnattributedMovesRequest
+//   - req *shipmentdistanceports.UnattributedMovesRequest
 func (_e *MockShipmentMoveJurisdictionMileRepository_Expecter) ListUnattributedMoves(ctx any, req any) *MockShipmentMoveJurisdictionMileRepository_ListUnattributedMoves_Call {
 	return &MockShipmentMoveJurisdictionMileRepository_ListUnattributedMoves_Call{Call: _e.mock.On("ListUnattributedMoves", ctx, req)}
 }
 
-func (_c *MockShipmentMoveJurisdictionMileRepository_ListUnattributedMoves_Call) Run(run func(ctx context.Context, req shipmentdistanceports.UnattributedMovesRequest)) *MockShipmentMoveJurisdictionMileRepository_ListUnattributedMoves_Call {
+func (_c *MockShipmentMoveJurisdictionMileRepository_ListUnattributedMoves_Call) Run(run func(ctx context.Context, req *shipmentdistanceports.UnattributedMovesRequest)) *MockShipmentMoveJurisdictionMileRepository_ListUnattributedMoves_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 shipmentdistanceports.UnattributedMovesRequest
+		var arg1 *shipmentdistanceports.UnattributedMovesRequest
 		if args[1] != nil {
-			arg1 = args[1].(shipmentdistanceports.UnattributedMovesRequest)
+			arg1 = args[1].(*shipmentdistanceports.UnattributedMovesRequest)
 		}
 		run(
 			arg0,
@@ -170,7 +170,7 @@ func (_c *MockShipmentMoveJurisdictionMileRepository_ListUnattributedMoves_Call)
 	return _c
 }
 
-func (_c *MockShipmentMoveJurisdictionMileRepository_ListUnattributedMoves_Call) RunAndReturn(run func(ctx context.Context, req shipmentdistanceports.UnattributedMovesRequest) (*shipmentdistanceports.UnattributedMovesPage, error)) *MockShipmentMoveJurisdictionMileRepository_ListUnattributedMoves_Call {
+func (_c *MockShipmentMoveJurisdictionMileRepository_ListUnattributedMoves_Call) RunAndReturn(run func(ctx context.Context, req *shipmentdistanceports.UnattributedMovesRequest) (*shipmentdistanceports.UnattributedMovesPage, error)) *MockShipmentMoveJurisdictionMileRepository_ListUnattributedMoves_Call {
 	_c.Call.Return(run)
 	return _c
 }

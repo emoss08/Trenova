@@ -118,7 +118,7 @@ func (s *Service) Backtest(
 		stopType := shipmentvocab.StopType(fact.StopType)
 		scheduleType := shipmentvocab.StopScheduleType(fact.ScheduleType)
 
-		if !req.Policy.Matches(detentionpolicy.MatchInput{
+		if !req.Policy.Matches(&detentionpolicy.MatchInput{
 			CustomerID:     fact.CustomerID,
 			LocationID:     fact.LocationID,
 			ShipmentTypeID: fact.ShipmentTypeID,
@@ -132,7 +132,7 @@ func (s *Service) Backtest(
 
 		result.StopsMatched++
 
-		snapshot := detentionpolicy.NewPolicySnapshot(detentionpolicy.SnapshotInput{
+		snapshot := detentionpolicy.NewPolicySnapshot(&detentionpolicy.SnapshotInput{
 			Policy:          req.Policy,
 			StopType:        fact.StopType,
 			FreeMinutes:     req.Policy.FreeMinutesForStopType(stopType),
@@ -398,7 +398,7 @@ func (s *Service) PreviewPolicy(
 		now = *scenario.DepartedAt
 	}
 
-	snapshot := detentionpolicy.NewPolicySnapshot(detentionpolicy.SnapshotInput{
+	snapshot := detentionpolicy.NewPolicySnapshot(&detentionpolicy.SnapshotInput{
 		Policy:          policy,
 		StopType:        string(scenario.StopType),
 		FreeMinutes:     policy.FreeMinutesForStopType(scenario.StopType),

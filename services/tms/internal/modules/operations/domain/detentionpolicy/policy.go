@@ -212,7 +212,7 @@ type MatchInput struct {
 
 // Matches reports whether every populated scope dimension on the policy is
 // satisfied. An empty dimension is a wildcard.
-func (p *DetentionPolicy) Matches(in MatchInput) bool {
+func (p *DetentionPolicy) Matches(in *MatchInput) bool {
 	if p.Status != PolicyStatusActive {
 		return false
 	}

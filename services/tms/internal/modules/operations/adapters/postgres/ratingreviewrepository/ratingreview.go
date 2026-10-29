@@ -25,7 +25,6 @@ type ratingReviewRepository struct {
 	db *postgres.Connection
 }
 
-//nolint:gocritic // fx param structs are passed by value
 func NewRatingReviewRepository(p RatingReviewParams) ratingreviewports.RatingReviewRepository {
 	return &ratingReviewRepository{db: p.DB}
 }

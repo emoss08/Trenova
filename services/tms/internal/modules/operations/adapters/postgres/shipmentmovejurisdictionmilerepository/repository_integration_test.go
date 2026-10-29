@@ -254,7 +254,7 @@ func TestListUnattributedMovesCountsCompletedMovesInPeriod(t *testing.T) {
 	f := setup(t)
 	move := f.insertCompletedMove(t, 120, completedAt)
 
-	page, err := f.repo.ListUnattributedMoves(f.ctx, shipmentdistanceports.UnattributedMovesRequest{
+	page, err := f.repo.ListUnattributedMoves(f.ctx, &shipmentdistanceports.UnattributedMovesRequest{
 		TenantInfo: f.tenantInfo,
 		Start:      completedAt - 100,
 		End:        completedAt + 100,
@@ -266,7 +266,7 @@ func TestListUnattributedMovesCountsCompletedMovesInPeriod(t *testing.T) {
 
 	before, err := f.repo.ListUnattributedMoves(
 		f.ctx,
-		shipmentdistanceports.UnattributedMovesRequest{
+		&shipmentdistanceports.UnattributedMovesRequest{
 			TenantInfo: f.tenantInfo,
 			Start:      completedAt - 100,
 			End:        completedAt,
@@ -277,7 +277,7 @@ func TestListUnattributedMovesCountsCompletedMovesInPeriod(t *testing.T) {
 
 	after, err := f.repo.ListUnattributedMoves(
 		f.ctx,
-		shipmentdistanceports.UnattributedMovesRequest{
+		&shipmentdistanceports.UnattributedMovesRequest{
 			TenantInfo: f.tenantInfo,
 			Start:      completedAt + 1,
 			End:        completedAt + 100,
@@ -290,7 +290,7 @@ func TestListUnattributedMovesCountsCompletedMovesInPeriod(t *testing.T) {
 	otherCtx := dbscope.WithTenant(f.ctx, other.DBTenant())
 	otherTenant, err := f.repo.ListUnattributedMoves(
 		otherCtx,
-		shipmentdistanceports.UnattributedMovesRequest{
+		&shipmentdistanceports.UnattributedMovesRequest{
 			TenantInfo: other,
 			Start:      completedAt - 100,
 			End:        completedAt + 100,
@@ -305,7 +305,7 @@ func TestListUnattributedMovesCountsCompletedMovesInPeriod(t *testing.T) {
 
 	attributed, err := f.repo.ListUnattributedMoves(
 		f.ctx,
-		shipmentdistanceports.UnattributedMovesRequest{
+		&shipmentdistanceports.UnattributedMovesRequest{
 			TenantInfo: f.tenantInfo,
 			Start:      completedAt - 100,
 			End:        completedAt + 100,
@@ -315,7 +315,7 @@ func TestListUnattributedMovesCountsCompletedMovesInPeriod(t *testing.T) {
 	assert.NotContains(t, attributed.MoveIDs, move.ID)
 	assert.Equal(t, page.TotalMoves-1, attributed.TotalMoves)
 
-	_, err = f.repo.ListUnattributedMoves(f.ctx, shipmentdistanceports.UnattributedMovesRequest{
+	_, err = f.repo.ListUnattributedMoves(f.ctx, &shipmentdistanceports.UnattributedMovesRequest{
 		TenantInfo: f.tenantInfo,
 		Start:      completedAt,
 		End:        completedAt,
@@ -327,7 +327,7 @@ func TestListUnattributedMovesSkipsMovesWithoutDistance(t *testing.T) {
 	f := setup(t)
 	move := f.insertCompletedMove(t, 0, completedAt)
 
-	page, err := f.repo.ListUnattributedMoves(f.ctx, shipmentdistanceports.UnattributedMovesRequest{
+	page, err := f.repo.ListUnattributedMoves(f.ctx, &shipmentdistanceports.UnattributedMovesRequest{
 		TenantInfo: f.tenantInfo,
 		Start:      completedAt - 100,
 		End:        completedAt + 100,

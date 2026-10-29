@@ -1427,7 +1427,7 @@ func (s *DetentionSeed) createOccurrences(
 			Timestamp:      *stop.ActualArrival,
 		}
 
-		resolution := detentionengine.ResolvePolicy(p.candidates, match)
+		resolution := detentionengine.ResolvePolicy(p.candidates, &match)
 		if !resolution.Found() {
 			continue
 		}
@@ -1439,7 +1439,7 @@ func (s *DetentionSeed) createOccurrences(
 				"policy %s references an accessorial the seed did not load", policy.Code)
 		}
 
-		snapshot := detentionpolicy.NewPolicySnapshot(detentionpolicy.SnapshotInput{
+		snapshot := detentionpolicy.NewPolicySnapshot(&detentionpolicy.SnapshotInput{
 			Policy:          policy,
 			StopType:        string(stop.Type),
 			FreeMinutes:     policy.FreeMinutesForStopType(stop.Type),

@@ -304,7 +304,10 @@ func (s *Service) planDuplicate(
 		return nil, err
 	}
 
-	if err = (shipmentvalidator.RateCoverage{Billing: s.billingRepo}).RefuseUnratedCopies(ctx, plan); err != nil {
+	if err = (shipmentvalidator.RateCoverage{Billing: s.billingRepo}).RefuseUnratedCopies(
+		ctx,
+		plan,
+	); err != nil {
 		return nil, err
 	}
 	if err = s.effects.RefuseCreditHold(ctx, plan.Source, nil); err != nil {
@@ -436,7 +439,11 @@ func (s *Service) DelayShipments(
 		return delayedShipments, nil
 	}
 
-	if err = s.effects.RecomputeOrdersForShipments(ctx, req.TenantInfo, delayedShipments); err != nil {
+	if err = s.effects.RecomputeOrdersForShipments(
+		ctx,
+		req.TenantInfo,
+		delayedShipments,
+	); err != nil {
 		return nil, err
 	}
 
@@ -522,7 +529,11 @@ func (s *Service) AutoCancelShipments(
 		return canceledShipments, nil
 	}
 
-	if err = s.effects.RecomputeOrdersForShipments(ctx, req.TenantInfo, canceledShipments); err != nil {
+	if err = s.effects.RecomputeOrdersForShipments(
+		ctx,
+		req.TenantInfo,
+		canceledShipments,
+	); err != nil {
 		return nil, err
 	}
 

@@ -59,13 +59,13 @@ type CarrierAssignment struct {
 	// RateQuoteID names the buy side quote that decided what this carrier is
 	// paid. Absent when somebody typed the rate, which stays the ordinary case
 	// until an organization writes carrier contracts.
-	RateQuoteID        *pulid.ID `json:"rateQuoteId"           keel:"rate_quote_id"`
-	ConfirmedAt        *int64    `json:"confirmedAt"           keel:"confirmed_at"`
-	CanceledAt         *int64    `json:"canceledAt"            keel:"canceled_at"`
-	CancellationReason string    `json:"cancellationReason"    keel:"cancellation_reason,nullzero"`
-	Version            int64     `json:"version"               keel:"version,version"`
-	CreatedAt          int64     `json:"createdAt"             keel:"created_at,autocreate"`
-	UpdatedAt          int64     `json:"updatedAt"             keel:"updated_at,autoupdate"`
+	RateQuoteID        *pulid.ID `json:"rateQuoteId"        keel:"rate_quote_id"`
+	ConfirmedAt        *int64    `json:"confirmedAt"        keel:"confirmed_at"`
+	CanceledAt         *int64    `json:"canceledAt"         keel:"canceled_at"`
+	CancellationReason string    `json:"cancellationReason" keel:"cancellation_reason,nullzero"`
+	Version            int64     `json:"version"            keel:"version,version"`
+	CreatedAt          int64     `json:"createdAt"          keel:"created_at,autocreate"`
+	UpdatedAt          int64     `json:"updatedAt"          keel:"updated_at,autoupdate"`
 
 	ShipmentMove *ShipmentMove                   `json:"shipmentMove,omitempty" keel:"belongs:shipment_move_id"`
 	Carrier      *carrier.Carrier                `json:"carrier,omitempty"      keel:"belongs:carrier_id"`

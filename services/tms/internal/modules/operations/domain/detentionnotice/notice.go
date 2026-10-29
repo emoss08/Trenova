@@ -41,12 +41,12 @@ type DetentionNotice struct {
 	// <pre> with no escaping, which turned any angle bracket in a facility or
 	// customer name into markup. Storing what was actually rendered means the
 	// sender interpolates nothing.
-	BodyHTML string `json:"bodyHtml"              keel:"body_html,nullzero"`
+	BodyHTML string `json:"bodyHtml" keel:"body_html,nullzero"`
 	// TemplateVersionID names the template that produced this notice, so a
 	// disputed charge can be traced back to the exact wording that was sent.
-	TemplateVersionID *pulid.ID `json:"templateVersionId"     keel:"template_version_id"`
+	TemplateVersionID *pulid.ID `json:"templateVersionId" keel:"template_version_id"`
 	// PDFDocumentID is the stored notice PDF, when the policy attaches one.
-	PDFDocumentID *pulid.ID `json:"pdfDocumentId"         keel:"pdf_document_id"`
+	PDFDocumentID *pulid.ID `json:"pdfDocumentId" keel:"pdf_document_id"`
 
 	ScheduledFor         int64               `json:"scheduledFor"         keel:"scheduled_for"`
 	SentAt               *int64              `json:"sentAt"               keel:"sent_at"`

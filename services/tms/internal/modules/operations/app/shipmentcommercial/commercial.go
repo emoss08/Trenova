@@ -207,7 +207,9 @@ func (c *Calculator) calculateCommercialTotals(
 			return nil, err
 		}
 	} else if len(entity.FreightLines) == 0 {
-		entity.SetFreightLines(shipmentrating.ManualFreightLines(entity, i18n.T(ctx, "Freight charge")))
+		entity.SetFreightLines(
+			shipmentrating.ManualFreightLines(entity, i18n.T(ctx, "Freight charge")),
+		)
 	}
 
 	contract := sync.contract

@@ -42,7 +42,7 @@ func (r Resolution) Found() bool { return r.Policy != nil }
 // ordering by hand.
 func ResolvePolicy(
 	candidates []*detentionpolicy.DetentionPolicy,
-	in detentionpolicy.MatchInput,
+	in *detentionpolicy.MatchInput,
 ) Resolution {
 	verdicts := make([]CandidateVerdict, 0, len(candidates))
 	matched := make([]*detentionpolicy.DetentionPolicy, 0, len(candidates))
@@ -194,7 +194,7 @@ func describeScope(policy *detentionpolicy.DetentionPolicy) string {
 
 func rejectionReason(
 	policy *detentionpolicy.DetentionPolicy,
-	in detentionpolicy.MatchInput,
+	in *detentionpolicy.MatchInput,
 ) string {
 	if policy.Status != detentionpolicy.PolicyStatusActive {
 		return fmt.Sprintf("Policy status is %s", policy.Status)

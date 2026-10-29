@@ -121,7 +121,7 @@ func TestListMovesMissingBreakdownActivityMapsPage(t *testing.T) {
 	ids := moveIDs(2)
 	repo := shipmentdistanceportsmock.NewMockShipmentMoveJurisdictionMileRepository(t)
 	repo.EXPECT().
-		ListUnattributedMoves(mock.Anything, shipmentdistanceports.UnattributedMovesRequest{
+		ListUnattributedMoves(mock.Anything, &shipmentdistanceports.UnattributedMovesRequest{
 			TenantInfo: tenantInfo,
 			Start:      100,
 			End:        200,

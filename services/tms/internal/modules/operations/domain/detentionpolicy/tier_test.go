@@ -199,7 +199,7 @@ func TestTier_SnapshotRoundTripsLadder(t *testing.T) {
 	)
 	p.ID = pulid.MustNew("dtp_")
 
-	snapshot := detentionpolicy.NewPolicySnapshot(detentionpolicy.SnapshotInput{
+	snapshot := detentionpolicy.NewPolicySnapshot(&detentionpolicy.SnapshotInput{
 		Policy:      p,
 		FreeMinutes: 120,
 		CapturedAt:  1000,
@@ -220,7 +220,7 @@ func TestSnapshot_OmitsTiersForFlatRatePolicies(t *testing.T) {
 	p.RateSource = detentionpolicy.RateSourceAccessorial
 	p.Tiers = []*detentionpolicy.DetentionPolicyTier{tier(0, nil, "75")}
 
-	snapshot := detentionpolicy.NewPolicySnapshot(detentionpolicy.SnapshotInput{
+	snapshot := detentionpolicy.NewPolicySnapshot(&detentionpolicy.SnapshotInput{
 		Policy:      p,
 		FreeMinutes: 120,
 		CapturedAt:  1000,
@@ -233,7 +233,7 @@ func TestSnapshot_OmitsTiersForFlatRatePolicies(t *testing.T) {
 func TestSnapshot_NilPolicyIsSafe(t *testing.T) {
 	t.Parallel()
 
-	snapshot := detentionpolicy.NewPolicySnapshot(detentionpolicy.SnapshotInput{CapturedAt: 42})
+	snapshot := detentionpolicy.NewPolicySnapshot(&detentionpolicy.SnapshotInput{CapturedAt: 42})
 
 	assert.Equal(t, int64(42), snapshot.CapturedAt)
 	assert.True(t, snapshot.PolicyID.IsNil())

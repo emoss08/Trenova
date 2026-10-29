@@ -319,7 +319,7 @@ func (s *Service) computeStop(
 		return nil, err
 	}
 
-	resolution := detentionengine.ResolvePolicy(candidates, matchInput)
+	resolution := detentionengine.ResolvePolicy(candidates, &matchInput)
 	if !resolution.Found() {
 		return nil, nil
 	}
@@ -347,7 +347,7 @@ func (s *Service) computeStop(
 		rateUnit = contractUnit
 	}
 
-	snapshot := detentionpolicy.NewPolicySnapshot(detentionpolicy.SnapshotInput{
+	snapshot := detentionpolicy.NewPolicySnapshot(&detentionpolicy.SnapshotInput{
 		Policy:          policy,
 		StopType:        string(p.stop.Type),
 		FreeMinutes:     policy.FreeMinutesForStopType(p.stop.Type),

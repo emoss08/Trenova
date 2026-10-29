@@ -41,7 +41,11 @@ func (r *noticeRepository) Create(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*detentionnotice.DetentionNotice, error) {
-			if err := detentionnoticedb.DetentionNotices.Create(ctx, r.db.Keel(ctx), entity); err != nil {
+			if err := detentionnoticedb.DetentionNotices.Create(
+				ctx,
+				r.db.Keel(ctx),
+				entity,
+			); err != nil {
 				r.l.Error("failed to create detention notice", zap.Error(err))
 				return nil, noticeErrors.Map(err, entity.ID.String())
 			}
@@ -59,7 +63,11 @@ func (r *noticeRepository) Update(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*detentionnotice.DetentionNotice, error) {
-			if err := detentionnoticedb.DetentionNotices.Save(ctx, r.db.Keel(ctx), entity); err != nil {
+			if err := detentionnoticedb.DetentionNotices.Save(
+				ctx,
+				r.db.Keel(ctx),
+				entity,
+			); err != nil {
 				r.l.Error("failed to update detention notice", zap.Error(err))
 				return nil, noticeErrors.Map(err, entity.ID.String())
 			}

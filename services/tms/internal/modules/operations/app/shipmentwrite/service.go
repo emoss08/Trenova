@@ -539,7 +539,10 @@ func (s *Service) Update( //nolint:cyclop // legacy workflow
 	if multiErr := s.validateChargeAllocations(ctx, entity); multiErr != nil {
 		return nil, multiErr
 	}
-	if multiErr := s.readiness.ValidateBillingReadinessForStatusChange(ctx, entity); multiErr != nil {
+	if multiErr := s.readiness.ValidateBillingReadinessForStatusChange(
+		ctx,
+		entity,
+	); multiErr != nil {
 		return nil, multiErr
 	}
 	if err = s.ensureEquipmentAvailableForShipmentUpdate(ctx, original, entity); err != nil {

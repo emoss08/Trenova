@@ -70,7 +70,7 @@ type SnapshotInput struct {
 }
 
 // NewPolicySnapshot freezes a policy into an immutable record.
-func NewPolicySnapshot(in SnapshotInput) PolicySnapshot {
+func NewPolicySnapshot(in *SnapshotInput) PolicySnapshot {
 	p := in.Policy
 	if p == nil {
 		return PolicySnapshot{CapturedAt: in.CapturedAt}

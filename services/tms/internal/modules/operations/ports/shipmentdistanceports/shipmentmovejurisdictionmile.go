@@ -50,6 +50,6 @@ type ShipmentMoveJurisdictionMileRepository interface {
 	) ([]*shipment.ShipmentMoveJurisdictionMile, error)
 	ListUnattributedMoves(
 		ctx context.Context,
-		req UnattributedMovesRequest,
+		req *UnattributedMovesRequest,
 	) (*UnattributedMovesPage, error)
 }
