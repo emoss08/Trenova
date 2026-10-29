@@ -1,8 +1,9 @@
-package rateagreement
+package rateagreementcompare
 
 import (
 	"slices"
 
+	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 )
@@ -19,18 +20,18 @@ import (
 // This is what decides whether a save amends a lane: an edit that changes no
 // term leaves the rule untouched, keeping its history free of amendments that
 // amended nothing.
-func (rar *RateAgreementRule) SameTerms(other *RateAgreementRule) bool {
+func SameTerms(rar, other *rateagreement.RateAgreementRule) bool {
 	if rar == nil || other == nil {
 		return rar == other
 	}
 
-	return rar.sameLane(other) &&
-		rar.sameApplicability(other) &&
-		rar.samePricing(other) &&
-		rar.sameWindow(other)
+	return sameLane(rar, other) &&
+		sameApplicability(rar, other) &&
+		samePricing(rar, other) &&
+		sameWindow(rar, other)
 }
 
-func (rar *RateAgreementRule) sameLane(other *RateAgreementRule) bool {
+func sameLane(rar, other *rateagreement.RateAgreementRule) bool {
 	return rar.Label == other.Label &&
 		rar.Status == other.Status &&
 		rar.Direction == other.Direction &&
@@ -48,7 +49,7 @@ func (rar *RateAgreementRule) sameLane(other *RateAgreementRule) bool {
 		sameFloatPtr(rar.DestinationLongitude, other.DestinationLongitude)
 }
 
-func (rar *RateAgreementRule) sameApplicability(other *RateAgreementRule) bool {
+func sameApplicability(rar, other *rateagreement.RateAgreementRule) bool {
 	return sameIDSet(rar.ServiceTypeIDs, other.ServiceTypeIDs) &&
 		sameIDSet(rar.ShipmentTypeIDs, other.ShipmentTypeIDs) &&
 		sameIDSet(rar.TractorTypeIDs, other.TractorTypeIDs) &&
@@ -68,13 +69,13 @@ func (rar *RateAgreementRule) sameApplicability(other *RateAgreementRule) bool {
 		rar.TempControlOnly == other.TempControlOnly
 }
 
-func (rar *RateAgreementRule) samePricing(other *RateAgreementRule) bool {
+func samePricing(rar, other *rateagreement.RateAgreementRule) bool {
 	return rar.FormulaTemplateID == other.FormulaTemplateID &&
 		rar.Inputs.Equal(other.Inputs) &&
 		rar.Currency == other.Currency
 }
 
-func (rar *RateAgreementRule) sameWindow(other *RateAgreementRule) bool {
+func sameWindow(rar, other *rateagreement.RateAgreementRule) bool {
 	return rar.Priority == other.Priority &&
 		rar.EffectiveFrom == other.EffectiveFrom &&
 		sameInt64Ptr(rar.EffectiveTo, other.EffectiveTo)

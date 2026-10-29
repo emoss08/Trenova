@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentrating"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/carrierassignmentports"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreementmatch"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratequote"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/fuelsurchargeports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/rateagreementports"
@@ -235,11 +236,15 @@ func contractAccessorials(
 	if parts.agreement == nil {
 		return nil, nil
 	}
-	scoped := parts.agreement.AutoApplyAccessorials(rateagreement.AccessorialFacts{
-		At:             parts.at,
-		ServiceTypeID:  parts.entity.ServiceTypeID,
-		ShipmentTypeID: parts.entity.ShipmentTypeID,
-	})
+	scoped := rateagreementmatch.AutoApplyAccessorials(
+		parts.agreement,
+		rateagreementmatch.AccessorialFacts{
+			At:             parts.at,
+			ServiceTypeID:  parts.entity.ServiceTypeID,
+			ShipmentTypeID: parts.entity.ShipmentTypeID,
+		},
+	)
+
 	applicable := make([]*rateagreement.RateAgreementAccessorial, 0, len(scoped))
 	for _, row := range scoped {
 		if strings.TrimSpace(row.Condition) != "" && !parts.rated.Conditions[row.ID] {

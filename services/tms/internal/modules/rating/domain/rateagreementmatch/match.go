@@ -1,8 +1,9 @@
-package rateagreement
+package rateagreementmatch
 
 import (
 	"slices"
 
+	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/commodity"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/modeprofile"
 	"github.com/emoss08/trenova/pkg/ratetypes"
@@ -49,8 +50,11 @@ type MatchFacts struct {
 // which is the convention detention policies and fuel surcharge programs
 // already follow. Checks run cheapest first so a rule that is out of date or
 // out of service costs almost nothing to reject.
-func (rar *RateAgreementRule) Matches(facts *MatchFacts) (bool, ratetypes.RejectReason) {
-	if rar.Status != RuleStatusActive {
+func Matches(
+	rar *rateagreement.RateAgreementRule,
+	facts *MatchFacts,
+) (bool, ratetypes.RejectReason) {
+	if rar.Status != rateagreement.RuleStatusActive {
 		return false, ratetypes.RejectReasonRuleInactive
 	}
 
@@ -78,7 +82,7 @@ func (rar *RateAgreementRule) Matches(facts *MatchFacts) (bool, ratetypes.Reject
 		return false, ratetypes.RejectReasonShipmentTypeMismatch
 	}
 
-	if !rar.matchesEquipment(facts) {
+	if !matchesEquipment(rar, facts) {
 		return false, ratetypes.RejectReasonEquipmentMismatch
 	}
 
@@ -112,7 +116,7 @@ func (rar *RateAgreementRule) Matches(facts *MatchFacts) (bool, ratetypes.Reject
 // matchesEquipment treats the tractor, trailer and equipment class filters as
 // one dimension. A rule may narrow by any of them, and the shipment has to
 // satisfy every one the rule actually names.
-func (rar *RateAgreementRule) matchesEquipment(facts *MatchFacts) bool {
+func matchesEquipment(rar *rateagreement.RateAgreementRule, facts *MatchFacts) bool {
 	if !matchesID(rar.TractorTypeIDs, facts.TractorTypeID) {
 		return false
 	}

@@ -2,6 +2,7 @@ package rateagreementservice
 
 import (
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreementcompare"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -59,7 +60,7 @@ func planRuleAmendment(
 
 		kept[rule.ID] = struct{}{}
 
-		if prior.SameTerms(rule) {
+		if rateagreementcompare.SameTerms(prior, rule) {
 			continue
 		}
 

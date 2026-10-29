@@ -7,7 +7,14 @@ foundation:
   - '^services/tms/internal/modules/[^/]+/domain/'
   - '^services/tms/internal/modules/[^/]+/ports/'
   - '^services/tms/internal/modules/[^/]+/jobs/[^/]+/[^/]+contract$'
-exceptions: {}
+exceptions:
+  services/tms/internal/modules/rating/domain/rateagreement:
+    ceiling: 1908
+    reason: >-
+      Mutual references: RateAgreement holds its rules, accessorials, versions and fuel
+      binding, and each of those belongs to the agreement, so the five keel models share a
+      package; lanes.go stays because RateAgreementRule carries its unexported lane state.
+      Matching and term comparison live in rateagreementmatch and rateagreementcompare.
 debt:
   services/tms/internal/api/graphql/loaders: 7636
   services/tms/internal/api/graphql/resolver/selectoptionsresolver: 4725
@@ -68,7 +75,6 @@ debt:
   services/tms/internal/modules/parties/app/carrierintelservice: 6726
   services/tms/internal/modules/rating/app/formulatemplateservice: 5231
   services/tms/internal/modules/rating/app/tariff: 3048
-  services/tms/internal/modules/rating/domain/rateagreement: 2322
   services/tms/internal/modules/rating/domain/ratematrix: 1508
   services/tms/internal/modules/settlement/app/carriersettlementservice: 4631
   services/tms/internal/modules/settlement/app/driversettlementservice: 6407

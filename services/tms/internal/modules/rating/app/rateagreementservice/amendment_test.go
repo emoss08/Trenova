@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreementcompare"
 	"github.com/emoss08/trenova/pkg/rules"
 	"github.com/emoss08/trenova/pkg/tarifftypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -154,7 +155,7 @@ func TestPlanRefusesToSucceedALaneWhoseWindowAlreadyClosed(t *testing.T) {
 func TestSameTermsSeesThroughDecimalRepresentation(t *testing.T) {
 	stored := storedLane("Dallas to Chicago", "2.55")
 
-	assert.True(t, stored.SameTerms(resubmitted(stored)),
+	assert.True(t, rateagreementcompare.SameTerms(stored, resubmitted(stored)),
 		"NUMERIC trailing zeroes must not read as a term change")
 }
 
@@ -163,13 +164,13 @@ func TestSameTermsNoticesTheTariffAndItsInputs(t *testing.T) {
 
 	retemplated := resubmitted(stored)
 	retemplated.FormulaTemplateID = pulid.MustNew("ft_")
-	assert.False(t, stored.SameTerms(retemplated))
+	assert.False(t, rateagreementcompare.SameTerms(stored, retemplated))
 
 	repriced := resubmitted(stored)
 	repriced.Inputs = rateInput("2.60")
-	assert.False(t, stored.SameTerms(repriced))
+	assert.False(t, rateagreementcompare.SameTerms(stored, repriced))
 
 	extended := resubmitted(stored)
 	extended.Inputs["minimumCharge"] = rules.MoneyValue(decimal.NewFromInt(450))
-	assert.False(t, stored.SameTerms(extended))
+	assert.False(t, rateagreementcompare.SameTerms(stored, extended))
 }

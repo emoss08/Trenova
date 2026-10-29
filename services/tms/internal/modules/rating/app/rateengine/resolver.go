@@ -5,6 +5,7 @@ import (
 	"strconv"
 
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreementmatch"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/rateagreementports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratezoneports"
 	"github.com/emoss08/trenova/pkg/ratetypes"
@@ -88,7 +89,7 @@ func (s *Service) resolve(
 	rank := int16(0)
 
 	for _, rule := range fetched.Rules {
-		matched, reason := rule.Matches(facts)
+		matched, reason := rateagreementmatch.Matches(rule, facts)
 
 		candidate := describeCandidate(rule, reason)
 
@@ -251,7 +252,7 @@ func tieBreak(winner, runnerUp *rateagreement.RateAgreementRule) string {
 // margin is described against.
 func runnerUp(
 	rules []*rateagreement.RateAgreementRule,
-	facts *rateagreement.MatchFacts,
+	facts *rateagreementmatch.MatchFacts,
 	winner *rateagreement.RateAgreementRule,
 ) *rateagreement.RateAgreementRule {
 	seenWinner := false
@@ -264,7 +265,7 @@ func runnerUp(
 		if !seenWinner {
 			continue
 		}
-		if matched, _ := rule.Matches(facts); matched {
+		if matched, _ := rateagreementmatch.Matches(rule, facts); matched {
 			return rule
 		}
 	}

@@ -1,8 +1,9 @@
-package rateagreement
+package rateagreementmatch
 
 import (
 	"slices"
 
+	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -30,14 +31,15 @@ type AccessorialFacts struct {
 // tariff call answers one, and answering "no" here would silently disable
 // every conditional accessorial in the product. A caller holding no answer for
 // a row should treat its condition as unmet rather than as absent.
-func (ra *RateAgreement) AutoApplyAccessorials(
+func AutoApplyAccessorials(
+	ra *rateagreement.RateAgreement,
 	facts AccessorialFacts,
-) []*RateAgreementAccessorial {
+) []*rateagreement.RateAgreementAccessorial {
 	if ra == nil {
 		return nil
 	}
 
-	applicable := make([]*RateAgreementAccessorial, 0, len(ra.Accessorials))
+	applicable := make([]*rateagreement.RateAgreementAccessorial, 0, len(ra.Accessorials))
 
 	for _, accessorial := range ra.Accessorials {
 		if accessorial == nil || !accessorial.AutoApply || accessorial.Waived {

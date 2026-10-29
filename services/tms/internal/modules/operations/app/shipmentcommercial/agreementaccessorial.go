@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentrating"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreementmatch"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/fuelsurchargeports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/rateagreementports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratequoteports"
@@ -94,11 +95,14 @@ func applicableAccessorials(
 	ratedAt int64,
 	pass *ratingPass,
 ) []*rateagreement.RateAgreementAccessorial {
-	scoped := contract.Agreement.AutoApplyAccessorials(rateagreement.AccessorialFacts{
-		At:             ratedAt,
-		ServiceTypeID:  entity.ServiceTypeID,
-		ShipmentTypeID: entity.ShipmentTypeID,
-	})
+	scoped := rateagreementmatch.AutoApplyAccessorials(
+		contract.Agreement,
+		rateagreementmatch.AccessorialFacts{
+			At:             ratedAt,
+			ServiceTypeID:  entity.ServiceTypeID,
+			ShipmentTypeID: entity.ShipmentTypeID,
+		},
+	)
 
 	applicable := make([]*rateagreement.RateAgreementAccessorial, 0, len(scoped))
 	for _, accessorial := range scoped {

@@ -500,6 +500,8 @@ modules:
       - formulatemplate
       - fuelsurcharge
       - rateagreement
+      - rateagreementcompare
+      - rateagreementmatch
       - rateconfirmation
       - rateimport
       - ratematrix

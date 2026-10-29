@@ -1,9 +1,10 @@
-package rateagreement_test
+package rateagreementmatch_test
 
 import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreementmatch"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
@@ -21,8 +22,8 @@ func autoRow(id pulid.ID) *rateagreement.RateAgreementAccessorial {
 	}
 }
 
-func selectFacts() rateagreement.AccessorialFacts {
-	return rateagreement.AccessorialFacts{
+func selectFacts() rateagreementmatch.AccessorialFacts {
+	return rateagreementmatch.AccessorialFacts{
 		At:             selectAt,
 		ServiceTypeID:  pulid.MustNew("st_"),
 		ShipmentTypeID: pulid.MustNew("sht_"),
@@ -43,7 +44,7 @@ func TestAutoApplyAccessorials_TakesTheRowsMarkedAutomatic(t *testing.T) {
 		Accessorials: []*rateagreement.RateAgreementAccessorial{automatic, manual},
 	}
 
-	got := agreement.AutoApplyAccessorials(selectFacts())
+	got := rateagreementmatch.AutoApplyAccessorials(agreement, selectFacts())
 
 	require.Len(t, got, 1)
 	assert.Equal(t, automatic.ID, got[0].ID)
@@ -62,7 +63,7 @@ func TestAutoApplyAccessorials_SkipsWaivedRows(t *testing.T) {
 		Accessorials: []*rateagreement.RateAgreementAccessorial{waived},
 	}
 
-	assert.Empty(t, agreement.AutoApplyAccessorials(selectFacts()))
+	assert.Empty(t, rateagreementmatch.AutoApplyAccessorials(agreement, selectFacts()))
 }
 
 func TestAutoApplyAccessorials_SkipsRowsNotYetInEffect(t *testing.T) {
@@ -76,7 +77,7 @@ func TestAutoApplyAccessorials_SkipsRowsNotYetInEffect(t *testing.T) {
 		Accessorials: []*rateagreement.RateAgreementAccessorial{future},
 	}
 
-	assert.Empty(t, agreement.AutoApplyAccessorials(selectFacts()))
+	assert.Empty(t, rateagreementmatch.AutoApplyAccessorials(agreement, selectFacts()))
 }
 
 // An empty set means the row does not care, which is the convention every other
@@ -91,7 +92,7 @@ func TestAutoApplyAccessorials_EmptyServiceTypeSetMeansAnyServiceType(t *testing
 		Accessorials: []*rateagreement.RateAgreementAccessorial{row},
 	}
 
-	assert.Len(t, agreement.AutoApplyAccessorials(selectFacts()), 1)
+	assert.Len(t, rateagreementmatch.AutoApplyAccessorials(agreement, selectFacts()), 1)
 }
 
 func TestAutoApplyAccessorials_SkipsRowsScopedToAnotherServiceType(t *testing.T) {
@@ -106,7 +107,7 @@ func TestAutoApplyAccessorials_SkipsRowsScopedToAnotherServiceType(t *testing.T)
 		Accessorials: []*rateagreement.RateAgreementAccessorial{row},
 	}
 
-	assert.Empty(t, agreement.AutoApplyAccessorials(facts))
+	assert.Empty(t, rateagreementmatch.AutoApplyAccessorials(agreement, facts))
 }
 
 func TestAutoApplyAccessorials_KeepsRowsScopedToThisShipmentType(t *testing.T) {
@@ -121,7 +122,7 @@ func TestAutoApplyAccessorials_KeepsRowsScopedToThisShipmentType(t *testing.T) {
 		Accessorials: []*rateagreement.RateAgreementAccessorial{row},
 	}
 
-	assert.Len(t, agreement.AutoApplyAccessorials(facts), 1)
+	assert.Len(t, rateagreementmatch.AutoApplyAccessorials(agreement, facts), 1)
 }
 
 // A row carrying a condition is returned rather than dropped, because the
@@ -137,7 +138,7 @@ func TestAutoApplyAccessorials_ReturnsConditionalRowsForTheCallerToTest(t *testi
 		Accessorials: []*rateagreement.RateAgreementAccessorial{row},
 	}
 
-	got := agreement.AutoApplyAccessorials(selectFacts())
+	got := rateagreementmatch.AutoApplyAccessorials(agreement, selectFacts())
 
 	require.Len(t, got, 1)
 	assert.Equal(t, row.Condition, got[0].Condition)
@@ -148,7 +149,7 @@ func TestAutoApplyAccessorials_NilAgreementHasNothingToApply(t *testing.T) {
 
 	var agreement *rateagreement.RateAgreement
 
-	assert.Empty(t, agreement.AutoApplyAccessorials(selectFacts()))
+	assert.Empty(t, rateagreementmatch.AutoApplyAccessorials(agreement, selectFacts()))
 }
 
 func TestAutoApplyAccessorials_SkipsNilRows(t *testing.T) {
@@ -161,5 +162,5 @@ func TestAutoApplyAccessorials_SkipsNilRows(t *testing.T) {
 		},
 	}
 
-	assert.Len(t, agreement.AutoApplyAccessorials(selectFacts()), 1)
+	assert.Len(t, rateagreementmatch.AutoApplyAccessorials(agreement, selectFacts()), 1)
 }

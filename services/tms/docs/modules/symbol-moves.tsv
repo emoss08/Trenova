@@ -17249,3 +17249,8 @@ github.com/emoss08/trenova/pkg/toolschema.Coerce	github.com/emoss08/trenova/pkg/
 github.com/emoss08/trenova/pkg/toolschema.Coercion	github.com/emoss08/trenova/pkg/toolcoerce.Coercion
 github.com/emoss08/trenova/pkg/toolschema.CoerceOption	github.com/emoss08/trenova/pkg/toolcoerce.Option
 github.com/emoss08/trenova/pkg/toolschema.WithToday	github.com/emoss08/trenova/pkg/toolcoerce.WithToday
+github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement.AccessorialFacts	github.com/emoss08/trenova/internal/modules/rating/domain/rateagreementmatch.AccessorialFacts
+github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement.AutoApplyAccessorials	github.com/emoss08/trenova/internal/modules/rating/domain/rateagreementmatch.AutoApplyAccessorials
+github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement.MatchFacts	github.com/emoss08/trenova/internal/modules/rating/domain/rateagreementmatch.MatchFacts
+github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement.Matches	github.com/emoss08/trenova/internal/modules/rating/domain/rateagreementmatch.Matches
+github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement.SameTerms	github.com/emoss08/trenova/internal/modules/rating/domain/rateagreementcompare.SameTerms
