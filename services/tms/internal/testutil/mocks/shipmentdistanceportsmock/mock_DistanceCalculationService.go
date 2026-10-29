@@ -252,7 +252,7 @@ func (_c *MockDistanceCalculationService_RecalculateMoveJurisdictionMiles_Call) 
 }
 
 // BackfillJurisdictionMiles provides a mock function for the type MockDistanceCalculationService
-func (_mock *MockDistanceCalculationService) BackfillJurisdictionMiles(ctx context.Context, req shipmentdistanceports.BackfillJurisdictionMilesRequest) (*shipmentdistanceports.BackfillJurisdictionMilesResult, error) {
+func (_mock *MockDistanceCalculationService) BackfillJurisdictionMiles(ctx context.Context, req *shipmentdistanceports.BackfillJurisdictionMilesRequest) (*shipmentdistanceports.BackfillJurisdictionMilesResult, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
@@ -261,17 +261,17 @@ func (_mock *MockDistanceCalculationService) BackfillJurisdictionMiles(ctx conte
 
 	var r0 *shipmentdistanceports.BackfillJurisdictionMilesResult
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, shipmentdistanceports.BackfillJurisdictionMilesRequest) (*shipmentdistanceports.BackfillJurisdictionMilesResult, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *shipmentdistanceports.BackfillJurisdictionMilesRequest) (*shipmentdistanceports.BackfillJurisdictionMilesResult, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, shipmentdistanceports.BackfillJurisdictionMilesRequest) *shipmentdistanceports.BackfillJurisdictionMilesResult); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *shipmentdistanceports.BackfillJurisdictionMilesRequest) *shipmentdistanceports.BackfillJurisdictionMilesResult); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*shipmentdistanceports.BackfillJurisdictionMilesResult)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, shipmentdistanceports.BackfillJurisdictionMilesRequest) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *shipmentdistanceports.BackfillJurisdictionMilesRequest) error); ok {
 		r1 = returnFunc(ctx, req)
 	} else {
 		r1 = ret.Error(1)
@@ -291,15 +291,15 @@ func (_e *MockDistanceCalculationService_Expecter) BackfillJurisdictionMiles(ctx
 	return &MockDistanceCalculationService_BackfillJurisdictionMiles_Call{Call: _e.mock.On("BackfillJurisdictionMiles", ctx, req)}
 }
 
-func (_c *MockDistanceCalculationService_BackfillJurisdictionMiles_Call) Run(run func(ctx context.Context, req shipmentdistanceports.BackfillJurisdictionMilesRequest)) *MockDistanceCalculationService_BackfillJurisdictionMiles_Call {
+func (_c *MockDistanceCalculationService_BackfillJurisdictionMiles_Call) Run(run func(ctx context.Context, req *shipmentdistanceports.BackfillJurisdictionMilesRequest)) *MockDistanceCalculationService_BackfillJurisdictionMiles_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 shipmentdistanceports.BackfillJurisdictionMilesRequest
+		var arg1 *shipmentdistanceports.BackfillJurisdictionMilesRequest
 		if args[1] != nil {
-			arg1 = args[1].(shipmentdistanceports.BackfillJurisdictionMilesRequest)
+			arg1 = args[1].(*shipmentdistanceports.BackfillJurisdictionMilesRequest)
 		}
 		run(
 			arg0,
@@ -314,7 +314,7 @@ func (_c *MockDistanceCalculationService_BackfillJurisdictionMiles_Call) Return(
 	return _c
 }
 
-func (_c *MockDistanceCalculationService_BackfillJurisdictionMiles_Call) RunAndReturn(run func(ctx context.Context, req shipmentdistanceports.BackfillJurisdictionMilesRequest) (*shipmentdistanceports.BackfillJurisdictionMilesResult, error)) *MockDistanceCalculationService_BackfillJurisdictionMiles_Call {
+func (_c *MockDistanceCalculationService_BackfillJurisdictionMiles_Call) RunAndReturn(run func(ctx context.Context, req *shipmentdistanceports.BackfillJurisdictionMilesRequest) (*shipmentdistanceports.BackfillJurisdictionMilesResult, error)) *MockDistanceCalculationService_BackfillJurisdictionMiles_Call {
 	_c.Call.Return(run)
 	return _c
 }

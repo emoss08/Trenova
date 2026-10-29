@@ -104,6 +104,7 @@ type Service struct {
 	integrationService   *integrationservice.Service
 }
 
+//nolint:gocritic // fx requires an fx.In parameter struct to be passed by value.
 func New(p Params) shipmentdistanceports.DistanceCalculationService {
 	return &Service{
 		l:                    p.Logger.Named("service.distance-calculation"),
@@ -596,7 +597,7 @@ func (s *Service) RecalculateMoveJurisdictionMiles(
 
 func (s *Service) BackfillJurisdictionMiles(
 	ctx context.Context,
-	req shipmentdistanceports.BackfillJurisdictionMilesRequest,
+	req *shipmentdistanceports.BackfillJurisdictionMilesRequest,
 ) (*shipmentdistanceports.BackfillJurisdictionMilesResult, error) {
 	if req.Start <= 0 || req.End <= req.Start {
 		return nil, errortypes.NewBusinessError("Period start must be before period end")

@@ -134,7 +134,7 @@ type JurisdictionMileRouter interface {
 	) ([]*shipment.ShipmentMoveJurisdictionMile, error)
 	BackfillJurisdictionMiles(
 		ctx context.Context,
-		req shipmentdistanceports.BackfillJurisdictionMilesRequest,
+		req *shipmentdistanceports.BackfillJurisdictionMilesRequest,
 	) (*shipmentdistanceports.BackfillJurisdictionMilesResult, error)
 }
 
@@ -1152,7 +1152,7 @@ func NewBackfillJurisdictionMilesTool(
 				return nil, err
 			}
 
-			return router.BackfillJurisdictionMiles(ctx, dry)
+			return router.BackfillJurisdictionMiles(ctx, &dry)
 		},
 		Refused: func(req *backfillRequest) string {
 			return fmt.Sprintf("Would backfill jurisdiction miles for %s.", req.period.Label())
@@ -1185,7 +1185,7 @@ func NewBackfillJurisdictionMilesTool(
 			if err != nil {
 				return nil, err
 			}
-			_, err = router.BackfillJurisdictionMiles(ctx, started)
+			_, err = router.BackfillJurisdictionMiles(ctx, &started)
 
 			return nil, err
 		},

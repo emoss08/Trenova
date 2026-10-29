@@ -91,7 +91,7 @@ type DistanceCalculationService interface {
 	) ([]*shipment.ShipmentMoveJurisdictionMile, error)
 	BackfillJurisdictionMiles(
 		ctx context.Context,
-		req BackfillJurisdictionMilesRequest,
+		req *BackfillJurisdictionMilesRequest,
 	) (*BackfillJurisdictionMilesResult, error)
 }
 

@@ -266,14 +266,14 @@ func (f *fakeMileRouter) RecalculateMoveJurisdictionMiles(
 
 func (f *fakeMileRouter) BackfillJurisdictionMiles(
 	_ context.Context,
-	req shipmentdistanceports.BackfillJurisdictionMilesRequest,
+	req *shipmentdistanceports.BackfillJurisdictionMilesRequest,
 ) (*shipmentdistanceports.BackfillJurisdictionMilesResult, error) {
 	if !req.DryRun {
 		if err := f.guard.Write(); err != nil {
 			return nil, err
 		}
 	}
-	f.backfills = append(f.backfills, req)
+	f.backfills = append(f.backfills, *req)
 
 	return &shipmentdistanceports.BackfillJurisdictionMilesResult{
 		DryRun:            req.DryRun,

@@ -597,7 +597,7 @@ func (r *MutationResolver) BackfillJurisdictionMiles(ctx context.Context, input 
 
 	result, err := r.DistanceCalculationService.BackfillJurisdictionMiles(
 		ctx,
-		shipmentdistanceports.BackfillJurisdictionMilesRequest{
+		&shipmentdistanceports.BackfillJurisdictionMilesRequest{
 			TenantInfo: resolvercore.TenantInfo(authCtx),
 			Start:      int64(input.PeriodStart),
 			End:        int64(input.PeriodEnd),
