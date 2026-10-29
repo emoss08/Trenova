@@ -1217,6 +1217,24 @@ storage:
 	})
 }
 
+func TestTestConfigFileLoads(t *testing.T) {
+	configDir := t.TempDir()
+	copyTrackedConfig(t, "config.test.yaml", filepath.Join(configDir, "config.test.yaml"))
+
+	l := NewLoader(WithConfigPath(configDir), WithEnvironment(appconfig.EnvTest))
+
+	cfg, err := l.Load()
+
+	require.NoError(t, err)
+	require.NotNil(t, cfg)
+	assert.Equal(t, appconfig.EnvTest, cfg.App.Env)
+	assert.Equal(t, "trenova", cfg.App.Name)
+	assert.Equal(t, "test-system-password", cfg.System.SystemUserPassword)
+	assert.False(t, cfg.Temporal.Security.EnableEncryption)
+	assert.Empty(t, cfg.Temporal.Security.EncryptionKeyID)
+	assert.Equal(t, 500, cfg.Audit.GetBatchSize())
+}
+
 func TestProductionConfigFileLoads(t *testing.T) {
 	// The point of this test is that config.prod.example.yaml, staged where an
 	// operator puts it, applies its security hardening on top of a base file.
@@ -1283,23 +1301,9 @@ func stageProductionBase(t *testing.T, path string) {
 	require.NoError(t, yaml.Unmarshal(contents, &staged))
 
 	mergeInto(staged, map[string]any{
-		"app": map[string]any{"name": "trenova"},
-		"temporal": map[string]any{
-			"hostPort": "temporal:7233",
-			"security": map[string]any{"encryptionKeyId": "primary"},
-		},
-		"storage": map[string]any{
-			"accessKey": "storage-access-key",
-			"secretKey": "storage-secret-key",
-		},
-		"system": map[string]any{"systemUserPassword": "system-user-password"},
+		"temporal": map[string]any{"hostPort": "temporal:7233"},
 		"security": map[string]any{
 			"mfa": map[string]any{"recoveryCodePepper": stagedRecoveryCodePepper},
-		},
-		"audit": map[string]any{
-			"batchSize":          100,
-			"maxEntriesPerFlush": 1000,
-			"dlqMaxRetries":      3,
 		},
 	})
 
