@@ -125,7 +125,8 @@ var agentAllowedPermissions = map[permission.Resource]map[permission.Operation]s
 		permission.OpCreate: {},
 	},
 	permission.ResourceCarrier: {
-		permission.OpRead: {},
+		permission.OpRead:   {},
+		permission.OpUpdate: {},
 	},
 	permission.ResourceCarrierCapacityPosting: {
 		permission.OpRead:   {},
@@ -141,7 +142,8 @@ var agentAllowedPermissions = map[permission.Resource]map[permission.Operation]s
 		permission.OpRead: {},
 	},
 	permission.ResourceCommodity: {
-		permission.OpRead: {},
+		permission.OpRead:   {},
+		permission.OpCreate: {},
 	},
 	permission.ResourceDocumentType: {
 		permission.OpRead: {},
