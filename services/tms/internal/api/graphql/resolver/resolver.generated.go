@@ -467,7 +467,10 @@ func FromServices(s *Services) *Resolver {
 		AccountingMappingReader:    s.AccountingMappingReader,
 		AccountingMappingDecisions: s.AccountingMappingDecisions,
 		AccountingReferenceCreator: s.AccountingReferenceCreator,
-		AccountingSync:             s.AccountingSync,
+		AccountingSyncReader:       s.AccountingSyncReader,
+		AccountingSyncSetup:        s.AccountingSyncSetup,
+		AccountingSyncActions:      s.AccountingSyncActions,
+		AccountingBackfillService:  s.AccountingBackfillService,
 		AccountingInbound:          s.AccountingInbound,
 		AccountingDrift:            s.AccountingDrift,
 	}

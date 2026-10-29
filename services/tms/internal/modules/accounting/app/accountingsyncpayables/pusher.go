@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/shopspring/decimal"
+	"go.uber.org/fx"
 )
 
 func purchaseTotal(lines []accountingconnectorports.AccountingPurchaseLine) decimal.Decimal {
@@ -365,7 +366,9 @@ func writeBill(
 	return sess.Writer.UpdatePurchaseDocument(ctx, doc)
 }
 
-type Deps struct {
+type Params struct {
+	fx.In
+
 	Kit      *accountingsyncpush.Kit
 	Payables accountingpayablesports.AccountingPayablesSource
 }
@@ -375,8 +378,8 @@ type Pusher struct {
 	payables accountingpayablesports.AccountingPayablesSource
 }
 
-func New(d Deps) *Pusher {
-	return &Pusher{kit: d.Kit, payables: d.Payables}
+func New(p Params) *Pusher {
+	return &Pusher{kit: p.Kit, payables: p.Payables}
 }
 
 func (p *Pusher) stampPayable(

@@ -35,7 +35,7 @@ func (a *Activities) DrainAccountingOutboxActivity(
 	ctx context.Context,
 	payload *accountingsynccontract.DrainPayload,
 ) (*DrainBatchResult, error) {
-	result, err := a.sync.Drain(ctx, &accountingsyncports.DrainAccountingSyncRequest{
+	result, err := a.drainer.Drain(ctx, &accountingsyncports.DrainAccountingSyncRequest{
 		TenantInfo:   payload.TenantInfo(),
 		ConnectionID: payload.ConnectionID,
 		Limit:        drainBatchLimit,
@@ -49,7 +49,7 @@ func (a *Activities) DrainAccountingOutboxActivity(
 }
 
 func (a *Activities) KickDueAccountingSyncActivity(ctx context.Context) (*KickDueResult, error) {
-	due, err := a.sync.ListDueConnections(ctx, dueConnectionsPerKick)
+	due, err := a.sweeper.ListDueConnections(ctx, dueConnectionsPerKick)
 	if err != nil {
 		return nil, err
 	}
@@ -93,7 +93,7 @@ func (a *Activities) AccountingSafetyNetActivity(
 			}
 			result.Connections++
 			tenant := pagination.TenantInfo{OrgID: conn.OrganizationID, BuID: conn.BusinessUnitID}
-			found, netErr := a.sync.SafetyNet(
+			found, netErr := a.sweeper.SafetyNet(
 				dbscope.WithTenant(ctx, tenant.DBTenant()),
 				accountingsyncports.AccountingSyncConnectionRef{
 					TenantInfo:   tenant,
@@ -122,7 +122,7 @@ func (a *Activities) AccountingSafetyNetActivity(
 }
 
 func (a *Activities) PurgeAccountingSyncHistoryActivity(ctx context.Context) (*PurgeResult, error) {
-	purged, err := a.sync.PurgeHistory(ctx)
+	purged, err := a.sweeper.PurgeHistory(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -136,7 +136,7 @@ func (a *Activities) AccountingBackfillStepActivity(
 	ctx context.Context,
 	payload *accountingsynccontract.BackfillPayload,
 ) (*BackfillStepResult, error) {
-	result, err := a.sync.BackfillStep(ctx, payload.TenantInfo(), payload.BackfillID)
+	result, err := a.backfills.BackfillStep(ctx, payload.TenantInfo(), payload.BackfillID)
 	if err != nil {
 		return nil, syncError(err)
 	}

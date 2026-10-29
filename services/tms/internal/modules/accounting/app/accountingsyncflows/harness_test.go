@@ -1,4 +1,4 @@
-package accountingsyncservice
+package accountingsyncflows
 
 import (
 	"testing"
@@ -35,7 +35,7 @@ var (
 )
 
 type harness struct {
-	svc         *Service
+	svc         services
 	enqueuer    *accountingsyncenqueue.Enqueuer
 	connections *fakeConnections
 	records     *fakeRecords
@@ -126,7 +126,7 @@ func newHarness(t *testing.T, opts ...harnessOption) *harness {
 		Ledger:      h.ledger,
 		Dispatcher:  dispatcher,
 	})
-	h.svc = New(Params{
+	h.svc = wire(&wiring{
 		Logger:        zap.NewNop(),
 		DB:            dbtest.NopConnection{},
 		Connections:   h.connections,
@@ -341,7 +341,7 @@ func (h *harness) only(
 
 func (h *harness) drain(t *testing.T) *accountingsyncports.AccountingSyncDrainResult {
 	t.Helper()
-	result, err := h.svc.Drain(t.Context(), &accountingsyncports.DrainAccountingSyncRequest{
+	result, err := h.svc.drain.Drain(t.Context(), &accountingsyncports.DrainAccountingSyncRequest{
 		TenantInfo:   h.tenant,
 		ConnectionID: h.conn.ID,
 		Lease:        time.Minute,

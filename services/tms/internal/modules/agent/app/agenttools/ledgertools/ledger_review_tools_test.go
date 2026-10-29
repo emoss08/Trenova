@@ -455,7 +455,7 @@ func TestReleaseAccountingSync_OnlyAPersonReleasesHeldDocuments(t *testing.T) {
 		records: map[pulid.ID]*accountingsync.AccountingSyncRecord{held.ID: held},
 		guard:   &agenttoolstest.WriteGuard{},
 	}
-	tool := accountingreviewtools.NewReleaseAccountingSyncTool(sync)
+	tool := accountingreviewtools.NewReleaseAccountingSyncTool(sync, sync)
 	params := agenttoolstest.ExecuteParams(map[string]any{
 		accountingtools.ParamAccountingSystem:  string(integration.TypeQuickBooksOnline),
 		accountingsynctools.ParamSyncRecordIDs: []any{held.ID.String()},
@@ -494,9 +494,10 @@ func TestReleaseAccountingSync_RefusesADocumentThatIsNotHeld(t *testing.T) {
 	t.Parallel()
 
 	failed := heldRecord(accountingsync.SyncStatusDeadLettered)
-	tool := accountingreviewtools.NewReleaseAccountingSyncTool(&fakeSyncReleaser{
+	sync := &fakeSyncReleaser{
 		records: map[pulid.ID]*accountingsync.AccountingSyncRecord{failed.ID: failed},
-	})
+	}
+	tool := accountingreviewtools.NewReleaseAccountingSyncTool(sync, sync)
 
 	err := tool.(agenttoolports.ToolValidator).Validate(
 		t.Context(),
@@ -517,7 +518,7 @@ func TestChangeAccountingBackfill_ActsOnTheBackfillInProgress(t *testing.T) {
 		Status: accountingbackfill.BackfillStatusRunning,
 	}
 	sync := &fakeSyncReleaser{backfill: backfill, guard: &agenttoolstest.WriteGuard{}}
-	tool := accountingreviewtools.NewChangeAccountingBackfillTool(sync)
+	tool := accountingreviewtools.NewChangeAccountingBackfillTool(sync, sync)
 	params := agenttoolstest.PersonParams(map[string]any{
 		accountingtools.ParamAccountingSystem: string(integration.TypeQuickBooksOnline),
 		accountingreviewtools.ParamBackfillAction: string(
@@ -552,7 +553,7 @@ func TestChangeAccountingBackfill_RefusesAMoveTheBackfillCannotMake(t *testing.T
 		ID:     pulid.MustNew("acctbf_"),
 		Status: accountingbackfill.BackfillStatusRunning,
 	}}
-	tool := accountingreviewtools.NewChangeAccountingBackfillTool(sync)
+	tool := accountingreviewtools.NewChangeAccountingBackfillTool(sync, sync)
 
 	resume := agenttoolstest.PersonParams(map[string]any{
 		accountingtools.ParamAccountingSystem: string(integration.TypeQuickBooksOnline),

@@ -27,7 +27,9 @@ type ActivitiesParams struct {
 	Subscriptions         accountingconnectionports.AccountingWebhookSubscriptionSyncer
 	ConnectionsRepository accountingconnectionports.AccountingConnectionRepository
 	Mappings              accountingmappingports.AccountingMappingScorer
-	Sync                  accountingsyncports.AccountingSyncService
+	Drainer               accountingsyncports.AccountingSyncDrainer
+	Sweeper               accountingsyncports.AccountingSyncSweeper
+	Backfills             accountingsyncports.AccountingBackfillService
 	Dispatcher            accountingsyncports.AccountingSyncDispatcher
 	Inbound               accountinginboundports.AccountingInboundService
 	Poller                accountinginboundports.AccountingChangePoller
@@ -42,7 +44,9 @@ type Activities struct {
 	subs         accountingconnectionports.AccountingWebhookSubscriptionSyncer
 	connRepo     accountingconnectionports.AccountingConnectionRepository
 	mappings     accountingmappingports.AccountingMappingScorer
-	sync         accountingsyncports.AccountingSyncService
+	drainer      accountingsyncports.AccountingSyncDrainer
+	sweeper      accountingsyncports.AccountingSyncSweeper
+	backfills    accountingsyncports.AccountingBackfillService
 	dispatcher   accountingsyncports.AccountingSyncDispatcher
 	inbound      accountinginboundports.AccountingInboundService
 	poller       accountinginboundports.AccountingChangePoller
@@ -58,7 +62,9 @@ func NewActivities(p ActivitiesParams) *Activities {
 		subs:         p.Subscriptions,
 		connRepo:     p.ConnectionsRepository,
 		mappings:     p.Mappings,
-		sync:         p.Sync,
+		drainer:      p.Drainer,
+		sweeper:      p.Sweeper,
+		backfills:    p.Backfills,
 		dispatcher:   p.Dispatcher,
 		inbound:      p.Inbound,
 		poller:       p.Poller,

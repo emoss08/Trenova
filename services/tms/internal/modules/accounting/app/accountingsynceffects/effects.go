@@ -8,22 +8,25 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
+	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
 
 const AttentionGroups = 20
 
-type Deps struct {
+type Params struct {
+	fx.In
+
 	Logger        *zap.Logger
 	Records       accountingsyncports.AccountingSyncRecordRepository
 	Connections   accountingconnectionports.AccountingConnectionRepository
 	Organizations tenantports.OrganizationRepository
 	Controls      tenantports.AccountingControlRepository
 	Audit         auditports.AuditService
-	Dispatcher    accountingsyncports.AccountingSyncDispatcher
-	Publisher     agenteventports.AgentEventPublisher
-	Watchtower    watchtowerports.WatchtowerProjector
-	Realtime      realtimeports.RealtimeService
+	Dispatcher    accountingsyncports.AccountingSyncDispatcher `optional:"true"`
+	Publisher     agenteventports.AgentEventPublisher          `optional:"true"`
+	Watchtower    watchtowerports.WatchtowerProjector          `optional:"true"`
+	Realtime      realtimeports.RealtimeService                `optional:"true"`
 }
 
 type Effects struct {
@@ -40,17 +43,17 @@ type Effects struct {
 }
 
 //nolint:gocritic // dependency injection
-func New(d Deps) *Effects {
+func New(p Params) *Effects {
 	return &Effects{
-		l:             d.Logger,
-		records:       d.Records,
-		connections:   d.Connections,
-		organizations: d.Organizations,
-		controls:      d.Controls,
-		audit:         d.Audit,
-		dispatcher:    d.Dispatcher,
-		publisher:     d.Publisher,
-		watchtower:    d.Watchtower,
-		realtime:      d.Realtime,
+		l:             p.Logger.Named("service.accounting-sync"),
+		records:       p.Records,
+		connections:   p.Connections,
+		organizations: p.Organizations,
+		controls:      p.Controls,
+		audit:         p.Audit,
+		dispatcher:    p.Dispatcher,
+		publisher:     p.Publisher,
+		watchtower:    p.Watchtower,
+		realtime:      p.Realtime,
 	}
 }

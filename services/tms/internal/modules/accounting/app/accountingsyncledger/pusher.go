@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/timeutils"
+	"go.uber.org/fx"
 )
 
 const (
@@ -340,7 +341,9 @@ func sentLater(a, b *accountingsync.AccountingSyncRecord) bool {
 	return a.Revision > b.Revision
 }
 
-type Deps struct {
+type Params struct {
+	fx.In
+
 	Kit        *accountingsyncpush.Kit
 	Ledger     journalentryports.AccountingLedgerSource
 	References accountingmappingports.AccountingReferenceObjectRepository
@@ -352,6 +355,6 @@ type Pusher struct {
 	references accountingmappingports.AccountingReferenceObjectRepository
 }
 
-func New(d Deps) *Pusher {
-	return &Pusher{kit: d.Kit, ledger: d.Ledger, references: d.References}
+func New(p Params) *Pusher {
+	return &Pusher{kit: p.Kit, ledger: p.Ledger, references: p.References}
 }

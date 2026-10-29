@@ -33,8 +33,19 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingmappingreads"
 	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingmappingscoring"
 	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingmappingtargets"
+	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingsyncactions"
+	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingsyncbackfill"
+	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingsyncdrain"
+	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingsynceffects"
 	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingsyncenqueue"
-	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingsyncservice"
+	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingsyncledger"
+	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingsyncparty"
+	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingsyncpayables"
+	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingsyncpush"
+	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingsyncreads"
+	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingsyncsales"
+	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingsyncsetup"
+	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingsyncsweep"
 	"github.com/emoss08/trenova/internal/modules/accounting/app/accounttypeservice"
 	"github.com/emoss08/trenova/internal/modules/accounting/app/fiscalcloseservice"
 	"github.com/emoss08/trenova/internal/modules/accounting/app/fiscalperiodservice"
@@ -161,8 +172,42 @@ func SharedOptions() fx.Option {
 			accountingsyncenqueue.New,
 			func(e *accountingsyncenqueue.Enqueuer) accountingsyncports.AccountingSyncEnqueuer { return e },
 			func(e *accountingsyncenqueue.Enqueuer) accountingsyncports.AccountingLedgerEnqueuer { return e },
-			accountingsyncservice.New,
-			func(s *accountingsyncservice.Service) accountingsyncports.AccountingSyncService { return s },
+			accountingsynceffects.New,
+			accountingsyncpush.New,
+			accountingsyncparty.New,
+			accountingsyncsales.New,
+			accountingsyncpayables.New,
+			accountingsyncledger.New,
+			fx.Annotate(
+				accountingsyncreads.New,
+				fx.As(fx.Self()),
+				fx.As(new(accountingsyncports.AccountingSyncReader)),
+			),
+			fx.Annotate(
+				accountingsyncsetup.New,
+				fx.As(fx.Self()),
+				fx.As(new(accountingsyncports.AccountingSyncSetupService)),
+			),
+			fx.Annotate(
+				accountingsyncactions.New,
+				fx.As(fx.Self()),
+				fx.As(new(accountingsyncports.AccountingSyncActionService)),
+			),
+			fx.Annotate(
+				accountingsyncbackfill.New,
+				fx.As(fx.Self()),
+				fx.As(new(accountingsyncports.AccountingBackfillService)),
+			),
+			fx.Annotate(
+				accountingsyncdrain.New,
+				fx.As(fx.Self()),
+				fx.As(new(accountingsyncports.AccountingSyncDrainer)),
+			),
+			fx.Annotate(
+				accountingsyncsweep.New,
+				fx.As(fx.Self()),
+				fx.As(new(accountingsyncports.AccountingSyncSweeper)),
+			),
 			journalentryservice.New,
 			journalcardservice.New,
 			journalreversalservice.New,

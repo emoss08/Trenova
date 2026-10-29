@@ -19,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
+	"go.uber.org/fx"
 )
 
 func (s *Service) RequestBackfill(
@@ -211,11 +212,13 @@ func (s *Service) ChangeBackfill(
 	return updated, nil
 }
 
-type Deps struct {
+type Params struct {
+	fx.In
+
 	Records    accountingsyncports.AccountingSyncRecordRepository
 	Backfills  accountingsyncports.AccountingBackfillRepository
 	Enqueuer   *accountingsyncenqueue.Enqueuer
-	Dispatcher accountingsyncports.AccountingSyncDispatcher
+	Dispatcher accountingsyncports.AccountingSyncDispatcher `optional:"true"`
 	Effects    *accountingsynceffects.Effects
 }
 
@@ -227,13 +230,13 @@ type Service struct {
 	effects    *accountingsynceffects.Effects
 }
 
-func New(d Deps) *Service {
+func New(p Params) *Service {
 	return &Service{
-		records:    d.Records,
-		backfills:  d.Backfills,
-		enqueuer:   d.Enqueuer,
-		dispatcher: d.Dispatcher,
-		effects:    d.Effects,
+		records:    p.Records,
+		backfills:  p.Backfills,
+		enqueuer:   p.Enqueuer,
+		dispatcher: p.Dispatcher,
+		effects:    p.Effects,
 	}
 }
 
@@ -360,3 +363,5 @@ func (s *Service) skipBackfillType(
 	}
 	return result, nil
 }
+
+var _ accountingsyncports.AccountingBackfillService = (*Service)(nil)

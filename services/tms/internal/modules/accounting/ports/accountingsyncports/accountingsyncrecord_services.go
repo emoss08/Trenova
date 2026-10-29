@@ -374,7 +374,7 @@ type AccountingSyncObjectState struct {
 	Record       *accountingsync.AccountingSyncRecord
 }
 
-type AccountingSyncService interface {
+type AccountingSyncReader interface {
 	Summary(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
@@ -403,6 +403,9 @@ type AccountingSyncService interface {
 		tenantInfo pagination.TenantInfo,
 		integrationType integration.Type,
 	) ([]*accountingbackfill.AccountingBackfill, error)
+}
+
+type AccountingSyncSetupService interface {
 	EnableSync(
 		ctx context.Context,
 		req *EnableAccountingSyncRequest,
@@ -423,6 +426,9 @@ type AccountingSyncService interface {
 		ctx context.Context,
 		req *PauseAccountingSyncRequest,
 	) (*accountingconnection.AccountingConnection, error)
+}
+
+type AccountingSyncActionService interface {
 	Retry(ctx context.Context, req *RetryAccountingSyncRequest) (int64, error)
 	Release(ctx context.Context, req *ReleaseAccountingSyncRequest) (int64, error)
 	Skip(
@@ -437,6 +443,9 @@ type AccountingSyncService interface {
 		ctx context.Context,
 		req *RedateAccountingSyncRequest,
 	) (*accountingsync.AccountingSyncRecord, error)
+}
+
+type AccountingBackfillService interface {
 	RequestBackfill(
 		ctx context.Context,
 		req *RequestAccountingBackfillRequest,
@@ -445,10 +454,21 @@ type AccountingSyncService interface {
 		ctx context.Context,
 		req *ChangeAccountingBackfillRequest,
 	) (*accountingbackfill.AccountingBackfill, error)
+	BackfillStep(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+		backfillID pulid.ID,
+	) (*AccountingBackfillStepResult, error)
+}
+
+type AccountingSyncDrainer interface {
 	Drain(
 		ctx context.Context,
 		req *DrainAccountingSyncRequest,
 	) (*AccountingSyncDrainResult, error)
+}
+
+type AccountingSyncSweeper interface {
 	ListDueConnections(
 		ctx context.Context,
 		limit int,
@@ -457,11 +477,6 @@ type AccountingSyncService interface {
 		ctx context.Context,
 		ref AccountingSyncConnectionRef,
 	) (*AccountingSafetyNetResult, error)
-	BackfillStep(
-		ctx context.Context,
-		tenantInfo pagination.TenantInfo,
-		backfillID pulid.ID,
-	) (*AccountingBackfillStepResult, error)
 	PurgeHistory(ctx context.Context) (*PurgeAccountingSyncHistoryResult, error)
 }
 

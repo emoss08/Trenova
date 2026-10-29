@@ -74,7 +74,7 @@ func TestRetryAccountingSync_PinsTheRecordsItsCategoriesNameWhenProposed(t *test
 	mapping := failedSyncRecord(accountingsync.SyncStatusBlocked, accountingsync.SyncErrorMapping)
 	synced := failedSyncRecord(accountingsync.SyncStatusSynced, accountingsync.SyncErrorTransient)
 	operator := newSyncOperator(dead, limited, retrying, mapping, synced)
-	tool := newRetryAccountingSyncTool(operator)
+	tool := newRetryAccountingSyncTool(operator, operator)
 	params := agenttoolstest.PersonCallParams(map[string]any{
 		"system":          "QuickBooksOnline",
 		"errorCategories": []any{"Transient", "RateLimited"},
@@ -118,7 +118,7 @@ func TestRetryAccountingSync_PreviewShowsThePinnedRecordsAndRunsOnlyThose(t *tes
 	)
 	blocked := failedSyncRecord(accountingsync.SyncStatusBlocked, accountingsync.SyncErrorTransient)
 	operator := newSyncOperator(dead, blocked)
-	tool := newRetryAccountingSyncTool(operator)
+	tool := newRetryAccountingSyncTool(operator, operator)
 
 	pinned, err := retryPinner(t, tool).ResolveProposalSelection(
 		t.Context(),
@@ -171,7 +171,7 @@ func TestRetryAccountingSync_CapsAPinnedSelectionAndSaysWhatIsLeft(t *testing.T)
 		)
 	}
 	operator := newSyncOperator(records...)
-	tool := newRetryAccountingSyncTool(operator)
+	tool := newRetryAccountingSyncTool(operator, operator)
 
 	pinned, err := retryPinner(t, tool).ResolveProposalSelection(
 		t.Context(),
@@ -213,7 +213,7 @@ func TestRetryAccountingSync_RefusesToPinASelectionOfNothing(t *testing.T) {
 	operator := newSyncOperator(
 		failedSyncRecord(accountingsync.SyncStatusBlocked, accountingsync.SyncErrorMapping),
 	)
-	tool := newRetryAccountingSyncTool(operator)
+	tool := newRetryAccountingSyncTool(operator, operator)
 
 	_, err := retryPinner(t, tool).ResolveProposalSelection(
 		t.Context(),
@@ -231,7 +231,7 @@ func TestRetryAccountingSync_LeavesNamedRecordsAndUnpinnableCallsAsTheyAre(t *te
 
 	blocked := failedSyncRecord(accountingsync.SyncStatusBlocked, accountingsync.SyncErrorTransient)
 	operator := newSyncOperator(blocked)
-	tool := newRetryAccountingSyncTool(operator)
+	tool := newRetryAccountingSyncTool(operator, operator)
 	pinner := retryPinner(t, tool)
 	validator := tool.(agenttoolports.ToolValidator)
 
@@ -279,7 +279,7 @@ func TestRetryAccountingSync_AnApprovalRunsOnlyOnRecordsItNames(t *testing.T) {
 		accountingsync.SyncErrorTransient,
 	)
 	operator := newSyncOperator(dead)
-	tool := newRetryAccountingSyncTool(operator)
+	tool := newRetryAccountingSyncTool(operator, operator)
 	unpinned := approvedFrom(agenttoolstest.PersonCallParams(map[string]any{
 		"system":          "QuickBooksOnline",
 		"errorCategories": []any{"Transient"},
@@ -305,7 +305,7 @@ func TestRetryAccountingSync_ANamedRecordThatNoLongerFailedThatWayIsNotShown(t *
 	)
 	moved := failedSyncRecord(accountingsync.SyncStatusBlocked, accountingsync.SyncErrorMapping)
 	operator := newSyncOperator(transient, moved)
-	tool := newRetryAccountingSyncTool(operator)
+	tool := newRetryAccountingSyncTool(operator, operator)
 	params := agenttoolstest.PersonCallParams(map[string]any{
 		"system":          "QuickBooksOnline",
 		"syncRecordIds":   []any{transient.ID.String(), moved.ID.String()},
@@ -330,7 +330,8 @@ func TestRetryAccountingSync_ANamedRecordThatNoLongerFailedThatWayIsNotShown(t *
 func TestRetryAccountingSync_DeclaresItsRecordsASubsetAPersonMayNarrow(t *testing.T) {
 	t.Parallel()
 
-	tool := newRetryAccountingSyncTool(newSyncOperator())
+	operator := newSyncOperator()
+	tool := newRetryAccountingSyncTool(operator, operator)
 	proposed := []any{pulid.MustNew("acctsr_").String(), pulid.MustNew("acctsr_").String()}
 
 	fields := agenttoolports.ProposalFields(tool, map[string]any{

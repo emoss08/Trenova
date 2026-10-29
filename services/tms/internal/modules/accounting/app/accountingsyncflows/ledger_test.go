@@ -1,4 +1,4 @@
-package accountingsyncservice
+package accountingsyncflows
 
 import (
 	"testing"
@@ -728,14 +728,17 @@ func TestEnableSyncQueuesOpeningBalancesForTheLedgerOnce(t *testing.T) {
 	h.ledgerMode(accountingconnection.LedgerDetailed)
 	start := time.Date(2026, time.April, 1, 0, 0, 0, 0, time.UTC).Unix()
 
-	conn, err := h.svc.EnableSync(t.Context(), &accountingsyncports.EnableAccountingSyncRequest{
-		TenantInfo:      h.tenant,
-		UserID:          h.userID,
-		IntegrationType: integration.TypeQuickBooksOnline,
-		StartDate:       start,
-		AutoSync:        true,
-		OpeningBalances: true,
-	})
+	conn, err := h.svc.setup.EnableSync(
+		t.Context(),
+		&accountingsyncports.EnableAccountingSyncRequest{
+			TenantInfo:      h.tenant,
+			UserID:          h.userID,
+			IntegrationType: integration.TypeQuickBooksOnline,
+			StartDate:       start,
+			AutoSync:        true,
+			OpeningBalances: true,
+		},
+	)
 	require.NoError(t, err)
 	assert.True(t, conn.SentOpeningBalances())
 
@@ -756,7 +759,7 @@ func TestEnableSyncQueuesOpeningBalancesForTheLedgerOnce(t *testing.T) {
 	)
 	assert.Equal(t, "Started sending journal entries to QuickBooks Online", h.audit.lastComment())
 
-	_, err = h.svc.EnableSync(t.Context(), &accountingsyncports.EnableAccountingSyncRequest{
+	_, err = h.svc.setup.EnableSync(t.Context(), &accountingsyncports.EnableAccountingSyncRequest{
 		TenantInfo:      h.tenant,
 		UserID:          h.userID,
 		IntegrationType: integration.TypeQuickBooksOnline,
@@ -773,7 +776,7 @@ func TestEnableSyncRefusesOpeningBalancesAndAnUnchosenMode(t *testing.T) {
 
 	h := newHarness(t)
 	h.atStartDateStep()
-	_, err := h.svc.EnableSync(t.Context(), &accountingsyncports.EnableAccountingSyncRequest{
+	_, err := h.svc.setup.EnableSync(t.Context(), &accountingsyncports.EnableAccountingSyncRequest{
 		TenantInfo:      h.tenant,
 		UserID:          h.userID,
 		IntegrationType: integration.TypeQuickBooksOnline,
@@ -931,13 +934,16 @@ func TestChooseModeRecordsTheChoice(t *testing.T) {
 		conn.SyncStartDate = nil
 	})
 
-	conn, err := h.svc.ChooseMode(t.Context(), &accountingsyncports.ChooseAccountingSyncModeRequest{
-		TenantInfo:      h.tenant,
-		UserID:          h.userID,
-		IntegrationType: integration.TypeQuickBooksOnline,
-		Mode:            accountingprovider.SyncModeLedger,
-		Granularity:     accountingconnection.LedgerDailySummary,
-	})
+	conn, err := h.svc.setup.ChooseMode(
+		t.Context(),
+		&accountingsyncports.ChooseAccountingSyncModeRequest{
+			TenantInfo:      h.tenant,
+			UserID:          h.userID,
+			IntegrationType: integration.TypeQuickBooksOnline,
+			Mode:            accountingprovider.SyncModeLedger,
+			Granularity:     accountingconnection.LedgerDailySummary,
+		},
+	)
 	require.NoError(t, err)
 	assert.Equal(t, accountingprovider.SyncModeLedger, conn.SyncMode)
 	assert.Equal(t, accountingconnection.LedgerDailySummary, conn.LedgerGranularity)
@@ -949,20 +955,26 @@ func TestChooseModeRecordsTheChoice(t *testing.T) {
 	assert.Equal(t, "Chose to send journal entries to QuickBooks Online, summed by day",
 		h.audit.lastComment())
 
-	_, err = h.svc.ChooseMode(t.Context(), &accountingsyncports.ChooseAccountingSyncModeRequest{
-		TenantInfo:      h.tenant,
-		UserID:          h.userID,
-		IntegrationType: integration.TypeQuickBooksOnline,
-		Mode:            accountingprovider.SyncModeLedger,
-	})
+	_, err = h.svc.setup.ChooseMode(
+		t.Context(),
+		&accountingsyncports.ChooseAccountingSyncModeRequest{
+			TenantInfo:      h.tenant,
+			UserID:          h.userID,
+			IntegrationType: integration.TypeQuickBooksOnline,
+			Mode:            accountingprovider.SyncModeLedger,
+		},
+	)
 	requireValidationField(t, err, "granularity")
 
-	_, err = h.svc.ChooseMode(t.Context(), &accountingsyncports.ChooseAccountingSyncModeRequest{
-		TenantInfo:      h.tenant,
-		UserID:          h.userID,
-		IntegrationType: integration.TypeQuickBooksOnline,
-		Mode:            accountingprovider.SyncMode("Hybrid"),
-	})
+	_, err = h.svc.setup.ChooseMode(
+		t.Context(),
+		&accountingsyncports.ChooseAccountingSyncModeRequest{
+			TenantInfo:      h.tenant,
+			UserID:          h.userID,
+			IntegrationType: integration.TypeQuickBooksOnline,
+			Mode:            accountingprovider.SyncMode("Hybrid"),
+		},
+	)
 	requireValidationField(t, err, "mode")
 }
 
@@ -971,13 +983,16 @@ func TestChooseModeIsRefusedOnceSyncIsEnabled(t *testing.T) {
 
 	h := newHarness(t)
 
-	_, err := h.svc.ChooseMode(t.Context(), &accountingsyncports.ChooseAccountingSyncModeRequest{
-		TenantInfo:      h.tenant,
-		UserID:          h.userID,
-		IntegrationType: integration.TypeQuickBooksOnline,
-		Mode:            accountingprovider.SyncModeLedger,
-		Granularity:     accountingconnection.LedgerDetailed,
-	})
+	_, err := h.svc.setup.ChooseMode(
+		t.Context(),
+		&accountingsyncports.ChooseAccountingSyncModeRequest{
+			TenantInfo:      h.tenant,
+			UserID:          h.userID,
+			IntegrationType: integration.TypeQuickBooksOnline,
+			Mode:            accountingprovider.SyncModeLedger,
+			Granularity:     accountingconnection.LedgerDetailed,
+		},
+	)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "fixed for this connection once sending starts")
 	assert.Equal(t, accountingprovider.SyncModeDocument, h.connections.get(h.conn.ID).Mode())
@@ -1199,7 +1214,7 @@ func TestEnableSyncKeepsTheStartDateOnceOpeningBalancesAreSent(t *testing.T) {
 	h.atStartDateStep()
 	h.ledgerMode(accountingconnection.LedgerDetailed)
 	start := time.Date(2026, time.April, 1, 0, 0, 0, 0, time.UTC).Unix()
-	_, err := h.svc.EnableSync(t.Context(), &accountingsyncports.EnableAccountingSyncRequest{
+	_, err := h.svc.setup.EnableSync(t.Context(), &accountingsyncports.EnableAccountingSyncRequest{
 		TenantInfo:      h.tenant,
 		UserID:          h.userID,
 		IntegrationType: integration.TypeQuickBooksOnline,

@@ -21,7 +21,10 @@ type Deps struct {
 	AccountingMappingReader    accountingmappingports.AccountingMappingReader
 	AccountingMappingDecisions accountingmappingports.AccountingMappingDecisionService
 	AccountingReferenceCreator accountingmappingports.AccountingReferenceCreator
-	AccountingSync             accountingsyncports.AccountingSyncService
+	AccountingSyncReader       accountingsyncports.AccountingSyncReader
+	AccountingSyncSetup        accountingsyncports.AccountingSyncSetupService
+	AccountingSyncActions      accountingsyncports.AccountingSyncActionService
+	AccountingBackfillService  accountingsyncports.AccountingBackfillService
 	AccountingInbound          accountinginboundports.AccountingInboundService
 	AccountingDrift            accountingdriftports.AccountingDriftService
 }

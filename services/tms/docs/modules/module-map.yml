@@ -855,13 +855,13 @@ modules:
       - accountingsyncdrain
       - accountingsynceffects
       - accountingsyncenqueue
+      - accountingsyncflows
       - accountingsyncledger
       - accountingsyncparty
       - accountingsyncpayables
       - accountingsyncpush
       - accountingsyncreads
       - accountingsyncsales
-      - accountingsyncservice
       - accountingsyncsetup
       - accountingsyncsweep
       - accounttypeservice

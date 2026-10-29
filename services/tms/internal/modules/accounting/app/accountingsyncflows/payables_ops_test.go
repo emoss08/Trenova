@@ -1,4 +1,4 @@
-package accountingsyncservice
+package accountingsyncflows
 
 import (
 	"testing"
@@ -557,7 +557,7 @@ func (h *harness) updateSettings(
 	autoSync, drivers bool,
 ) (*accountingconnection.AccountingConnection, error) {
 	t.Helper()
-	return h.svc.UpdateSettings(
+	return h.svc.setup.UpdateSettings(
 		t.Context(),
 		&accountingsyncports.UpdateAccountingSyncSettingsRequest{
 			TenantInfo:        h.tenant,
@@ -670,7 +670,7 @@ func TestUpdateSettingsChangesTheInboundPaymentPolicy(t *testing.T) {
 
 	h := newHarness(t)
 	update := func(policy accountingconnection.InboundPaymentPolicy) (*accountingconnection.AccountingConnection, error) {
-		return h.svc.UpdateSettings(
+		return h.svc.setup.UpdateSettings(
 			t.Context(),
 			&accountingsyncports.UpdateAccountingSyncSettingsRequest{
 				TenantInfo:      h.tenant,
@@ -717,15 +717,18 @@ func TestEnableSyncWithDriverSettlementsStampsBothTimesAndBackfillsThem(t *testi
 	h := newHarness(t)
 	h.atStartDateStep()
 
-	conn, err := h.svc.EnableSync(t.Context(), &accountingsyncports.EnableAccountingSyncRequest{
-		TenantInfo:        h.tenant,
-		UserID:            h.userID,
-		IntegrationType:   integration.TypeQuickBooksOnline,
-		StartDate:         syncStartDate,
-		AutoSync:          true,
-		DriverSettlements: true,
-		Backfill:          true,
-	})
+	conn, err := h.svc.setup.EnableSync(
+		t.Context(),
+		&accountingsyncports.EnableAccountingSyncRequest{
+			TenantInfo:        h.tenant,
+			UserID:            h.userID,
+			IntegrationType:   integration.TypeQuickBooksOnline,
+			StartDate:         syncStartDate,
+			AutoSync:          true,
+			DriverSettlements: true,
+			Backfill:          true,
+		},
+	)
 	require.NoError(t, err)
 
 	require.NotNil(t, conn.DriverSettlementsEnabledAt)

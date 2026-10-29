@@ -11,9 +11,12 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
+	"go.uber.org/fx"
 )
 
-type Deps struct {
+type Params struct {
+	fx.In
+
 	Records  accountingsyncports.AccountingSyncRecordRepository
 	Enqueuer *accountingsyncenqueue.Enqueuer
 	Effects  *accountingsynceffects.Effects
@@ -25,8 +28,8 @@ type Service struct {
 	effects  *accountingsynceffects.Effects
 }
 
-func New(d Deps) *Service {
-	return &Service{records: d.Records, enqueuer: d.Enqueuer, effects: d.Effects}
+func New(p Params) *Service {
+	return &Service{records: p.Records, enqueuer: p.Enqueuer, effects: p.Effects}
 }
 
 const SafetyNetPage = 200
@@ -238,3 +241,5 @@ func (s *Service) ListDueConnections(
 		},
 	)
 }
+
+var _ accountingsyncports.AccountingSyncSweeper = (*Service)(nil)

@@ -33,6 +33,10 @@ const syncStartDay = int64(1_767_225_600)
 const syncEnabledDay = int64(1_772_323_200)
 
 type fakeSyncOperator struct {
+	accountingsyncports.AccountingSyncReader
+	accountingsyncports.AccountingSyncActionService
+	accountingsyncports.AccountingSyncSetupService
+	accountingsyncports.AccountingBackfillService
 	summary *accountingsyncports.AccountingSyncSummary
 	records map[pulid.ID]*accountingsync.AccountingSyncRecord
 
@@ -290,7 +294,7 @@ func TestRetryAccountingSync_RetriesNamedRecordsAsTheActor(t *testing.T) {
 	blocked := syncRecord(accountingsync.SyncStatusBlocked)
 	dead := syncRecord(accountingsync.SyncStatusDeadLettered)
 	operator := newSyncOperator(blocked, dead)
-	tool := newRetryAccountingSyncTool(operator)
+	tool := newRetryAccountingSyncTool(operator, operator)
 	params := agenttoolstest.PersonCallParams(map[string]any{
 		"system":        "QuickBooksOnline",
 		"syncRecordIds": []any{blocked.ID.String(), dead.ID.String(), blocked.ID.String()},
@@ -337,7 +341,7 @@ func TestRetryAccountingSync_RetriesByErrorCategory(t *testing.T) {
 	t.Parallel()
 
 	operator := newSyncOperator()
-	tool := newRetryAccountingSyncTool(operator)
+	tool := newRetryAccountingSyncTool(operator, operator)
 	params := agenttoolstest.PersonCallParams(map[string]any{
 		"system":          "QuickBooksOnline",
 		"errorCategories": []any{"Transient", "RateLimited"},
@@ -370,7 +374,7 @@ func TestRetryAccountingSync_RefusesWhatItCannotRetry(t *testing.T) {
 	synced := syncRecord(accountingsync.SyncStatusSynced)
 	held := syncRecord(accountingsync.SyncStatusAwaitingApproval)
 	operator := newSyncOperator(synced, held)
-	tool := newRetryAccountingSyncTool(operator)
+	tool := newRetryAccountingSyncTool(operator, operator)
 
 	tooMany := make([]any, 0, maxSyncRetryIDs+1)
 	for range maxSyncRetryIDs + 1 {
@@ -415,7 +419,7 @@ func TestSkipAccountingSync_SkipsWithTheReasonAndNamesItsTarget(t *testing.T) {
 
 	blocked := syncRecord(accountingsync.SyncStatusBlocked)
 	operator := newSyncOperator(blocked)
-	tool := newSkipAccountingSyncTool(operator)
+	tool := newSkipAccountingSyncTool(operator, operator)
 	params := agenttoolstest.PersonCallParams(map[string]any{
 		"syncRecordId": blocked.ID.String(),
 		"reason":       "  Entered by hand in QuickBooks\n on the 3rd.  ",
@@ -466,7 +470,7 @@ func TestSkipAccountingSync_NeedsAReasonAndAnUnsentRecord(t *testing.T) {
 	sending := syncRecord(accountingsync.SyncStatusInFlight)
 	blocked := syncRecord(accountingsync.SyncStatusBlocked)
 	operator := newSyncOperator(synced, sending, blocked)
-	tool := newSkipAccountingSyncTool(operator)
+	tool := newSkipAccountingSyncTool(operator, operator)
 
 	for _, params := range []map[string]any{
 		{"syncRecordId": blocked.ID.String()},
@@ -558,7 +562,7 @@ func TestPauseAccountingSync_PausesWithAReason(t *testing.T) {
 	t.Parallel()
 
 	operator := newSyncOperator()
-	tool := newPauseAccountingSyncTool(operator)
+	tool := newPauseAccountingSyncTool(operator, operator)
 
 	require.Error(
 		t,
@@ -612,7 +616,7 @@ func TestResumeAccountingSync_OnlyResumesWhatIsPaused(t *testing.T) {
 	t.Parallel()
 
 	operator := newSyncOperator()
-	tool := newResumeAccountingSyncTool(operator)
+	tool := newResumeAccountingSyncTool(operator, operator)
 	params := agenttoolstest.PersonCallParams(map[string]any{"system": "QuickBooksOnline"})
 
 	require.Error(t, tool.Execute(t.Context(), params))
@@ -647,7 +651,7 @@ func TestRequestAccountingBackfill_SendsTheRangeAPersonAskedFor(t *testing.T) {
 	t.Parallel()
 
 	operator := newSyncOperator()
-	tool := newRequestAccountingBackfillTool(operator)
+	tool := newRequestAccountingBackfillTool(operator, operator)
 	params := agenttoolstest.PersonCallParams(map[string]any{
 		"system":        "QuickBooksOnline",
 		"from":          "2026-01-15",
@@ -685,7 +689,7 @@ func TestRequestAccountingBackfill_DefaultsToTheWholeGap(t *testing.T) {
 	t.Parallel()
 
 	operator := newSyncOperator()
-	tool := newRequestAccountingBackfillTool(operator)
+	tool := newRequestAccountingBackfillTool(operator, operator)
 
 	require.NoError(
 		t,
@@ -768,7 +772,7 @@ func TestRequestAccountingBackfill_RefusesWhatCannotBeBackfilled(t *testing.T) {
 	t.Parallel()
 
 	operator := newSyncOperator()
-	tool := newRequestAccountingBackfillTool(operator)
+	tool := newRequestAccountingBackfillTool(operator, operator)
 
 	for _, params := range []map[string]any{
 		{"system": "QuickBooksOnline", "from": "2025-12-01"},
@@ -813,23 +817,23 @@ func TestAccountingSyncTools_CarryTheirSafetyTiers(t *testing.T) {
 		reversible bool
 	}{
 		{
-			newRetryAccountingSyncTool(operator),
+			newRetryAccountingSyncTool(operator, operator),
 			permission.ResourceAccountingSync, permission.OpUpdate, agent.TierAutoExecute, false,
 		},
 		{
-			newSkipAccountingSyncTool(operator),
+			newSkipAccountingSyncTool(operator, operator),
 			permission.ResourceAccountingSync, permission.OpUpdate, agent.TierActWithApproval, false,
 		},
 		{
-			newPauseAccountingSyncTool(operator),
+			newPauseAccountingSyncTool(operator, operator),
 			permission.ResourceAccountingSync, permission.OpUpdate, agent.TierAutoExecute, true,
 		},
 		{
-			newResumeAccountingSyncTool(operator),
+			newResumeAccountingSyncTool(operator, operator),
 			permission.ResourceAccountingSync, permission.OpUpdate, agent.TierActWithApproval, false,
 		},
 		{
-			newRequestAccountingBackfillTool(operator),
+			newRequestAccountingBackfillTool(operator, operator),
 			permission.ResourceAccountingIntegration, permission.OpManage, agent.TierActWithApproval, false,
 		},
 	}
@@ -843,7 +847,7 @@ func TestAccountingSyncTools_CarryTheirSafetyTiers(t *testing.T) {
 		assert.Equal(t, tc.reversible, policy.Reversible, tc.tool.Name())
 		assert.Equal(t, []agent.EgressClass{agent.EgressInternal}, policy.Egress, tc.tool.Name())
 	}
-	assert.True(t, newRetryAccountingSyncTool(operator).Policy().Idempotent)
+	assert.True(t, newRetryAccountingSyncTool(operator, operator).Policy().Idempotent)
 	assert.True(
 		t,
 		agentceiling.Allows(permission.ResourceAccountingSync, permission.OpUpdate),

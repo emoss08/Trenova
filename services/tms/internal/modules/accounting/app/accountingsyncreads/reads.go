@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
+	"go.uber.org/fx"
 )
 
 const MaxStateObjects = 500
@@ -227,7 +228,9 @@ func (s *Service) ListBackfills(
 	})
 }
 
-type Deps struct {
+type Params struct {
+	fx.In
+
 	Connections accountingconnectionports.AccountingConnectionRepository
 	Records     accountingsyncports.AccountingSyncRecordRepository
 	Backfills   accountingsyncports.AccountingBackfillRepository
@@ -239,6 +242,8 @@ type Service struct {
 	backfills   accountingsyncports.AccountingBackfillRepository
 }
 
-func New(d Deps) *Service {
-	return &Service{connections: d.Connections, records: d.Records, backfills: d.Backfills}
+func New(p Params) *Service {
+	return &Service{connections: p.Connections, records: p.Records, backfills: p.Backfills}
 }
+
+var _ accountingsyncports.AccountingSyncReader = (*Service)(nil)

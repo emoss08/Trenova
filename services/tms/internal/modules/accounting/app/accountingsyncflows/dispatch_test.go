@@ -1,4 +1,4 @@
-package accountingsyncservice
+package accountingsyncflows
 
 import (
 	"errors"
@@ -80,7 +80,7 @@ func TestDrainMarksASuccessfulPushSyncedAndRecordsTheAttempt(t *testing.T) {
 	record := h.readyInvoice(t)
 	heartbeats := 0
 
-	result, err := h.svc.Drain(t.Context(), &accountingsyncports.DrainAccountingSyncRequest{
+	result, err := h.svc.drain.Drain(t.Context(), &accountingsyncports.DrainAccountingSyncRequest{
 		TenantInfo:   h.tenant,
 		ConnectionID: h.conn.ID,
 		Heartbeat:    func() { heartbeats++ },
@@ -394,7 +394,7 @@ func TestDrainStopsOnAnUnexpectedFinishError(t *testing.T) {
 	record := h.readyInvoice(t)
 	h.records.finishErr[record.ID] = errors.New("database unavailable")
 
-	_, err := h.svc.Drain(t.Context(), &accountingsyncports.DrainAccountingSyncRequest{
+	_, err := h.svc.drain.Drain(t.Context(), &accountingsyncports.DrainAccountingSyncRequest{
 		TenantInfo:   h.tenant,
 		ConnectionID: h.conn.ID,
 	})
@@ -427,7 +427,7 @@ func TestListDueConnectionsAsksForRecordsDueNow(t *testing.T) {
 
 	h := newHarness(t)
 
-	_, err := h.svc.ListDueConnections(t.Context(), 25)
+	_, err := h.svc.sweep.ListDueConnections(t.Context(), 25)
 	require.NoError(t, err)
 
 	require.Len(t, h.records.dueCalls, 1)

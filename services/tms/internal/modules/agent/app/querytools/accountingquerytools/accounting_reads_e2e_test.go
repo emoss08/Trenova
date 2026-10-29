@@ -77,7 +77,7 @@ func (f *fakeAccountingDrift) Overview(
 }
 
 type fakeAccountingSync struct {
-	accountingsyncports.AccountingSyncService
+	accountingsyncports.AccountingSyncReader
 
 	mu     sync.Mutex
 	list   *accountingsyncports.ListAccountingSyncRecordsRequest
@@ -283,7 +283,7 @@ func accountingReaderWith(t *testing.T, drift *fakeAccountingDrift,
 		Engine: engine,
 		Resolvers: agentread.ResolverParams{
 			AccountingDriftService:     drift,
-			AccountingSyncService:      ledger,
+			AccountingSyncReader:       ledger,
 			AccountingMappingReader:    mappings,
 			AccountingConnectionStatus: fakeAccountingConnections{},
 		},

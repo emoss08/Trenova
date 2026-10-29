@@ -1,8 +1,8 @@
 package agenttoolservice
 
 import (
-	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingsyncservice"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingmappingports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/accountingreviewtools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/ledgertools"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -44,13 +44,15 @@ func provideRejectAccountingMappingProposalTool(
 }
 
 func provideReleaseAccountingSyncTool(
-	sync *accountingsyncservice.Service,
+	reads accountingsyncports.AccountingSyncReader,
+	actions accountingsyncports.AccountingSyncActionService,
 ) agenttoolports.AgentTool {
-	return accountingreviewtools.NewReleaseAccountingSyncTool(sync)
+	return accountingreviewtools.NewReleaseAccountingSyncTool(reads, actions)
 }
 
 func provideChangeAccountingBackfillTool(
-	sync *accountingsyncservice.Service,
+	reads accountingsyncports.AccountingSyncReader,
+	backfills accountingsyncports.AccountingBackfillService,
 ) agenttoolports.AgentTool {
-	return accountingreviewtools.NewChangeAccountingBackfillTool(sync)
+	return accountingreviewtools.NewChangeAccountingBackfillTool(reads, backfills)
 }

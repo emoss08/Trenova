@@ -9,12 +9,15 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/modules/identity/app/accountingcontrolpolicyservice"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/exchangerateports"
+	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
 
 const dependencyWait = time.Minute
 
-type Deps struct {
+type Params struct {
+	fx.In
+
 	Logger    *zap.Logger
 	Records   accountingsyncports.AccountingSyncRecordRepository
 	Decisions accountingmappingports.AccountingMappingDecisionService
@@ -33,14 +36,14 @@ type Kit struct {
 }
 
 //nolint:gocritic // dependency injection
-func New(d Deps) *Kit {
+func New(p Params) *Kit {
 	return &Kit{
-		l:         d.Logger,
-		records:   d.Records,
-		decisions: d.Decisions,
-		rates:     d.Rates,
-		policy:    d.Policy,
-		effects:   d.Effects,
+		l:         p.Logger.Named("service.accounting-sync"),
+		records:   p.Records,
+		decisions: p.Decisions,
+		rates:     p.Rates,
+		policy:    p.Policy,
+		effects:   p.Effects,
 	}
 }
 

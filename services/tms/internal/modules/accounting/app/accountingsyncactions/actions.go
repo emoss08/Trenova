@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
+	"go.uber.org/fx"
 )
 
 const MaxRetryIDs = 500
@@ -272,7 +273,9 @@ func (s *Service) Skip(
 	return updated, nil
 }
 
-type Deps struct {
+type Params struct {
+	fx.In
+
 	Records accountingsyncports.AccountingSyncRecordRepository
 	Effects *accountingsynceffects.Effects
 }
@@ -282,8 +285,8 @@ type Service struct {
 	effects *accountingsynceffects.Effects
 }
 
-func New(d Deps) *Service {
-	return &Service{records: d.Records, effects: d.Effects}
+func New(p Params) *Service {
+	return &Service{records: p.Records, effects: p.Effects}
 }
 
 func (s *Service) record(
@@ -296,3 +299,5 @@ func (s *Service) record(
 		ID:         id,
 	})
 }
+
+var _ accountingsyncports.AccountingSyncActionService = (*Service)(nil)

@@ -1,4 +1,4 @@
-package accountingsyncservice
+package accountingsyncflows
 
 import (
 	"cmp"

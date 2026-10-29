@@ -1,4 +1,4 @@
-package accountingsyncservice
+package accountingsyncflows
 
 import (
 	"errors"
@@ -36,7 +36,7 @@ func (h *harness) enableSync(
 	backfill bool,
 ) (*accountingconnection.AccountingConnection, error) {
 	t.Helper()
-	return h.svc.EnableSync(t.Context(), &accountingsyncports.EnableAccountingSyncRequest{
+	return h.svc.setup.EnableSync(t.Context(), &accountingsyncports.EnableAccountingSyncRequest{
 		TenantInfo:      h.tenant,
 		UserID:          h.userID,
 		IntegrationType: integration.TypeQuickBooksOnline,
@@ -175,14 +175,17 @@ func TestEnableSyncRejectsBadInput(t *testing.T) {
 		t.Parallel()
 		h := newHarness(t)
 
-		_, err := h.svc.EnableSync(t.Context(), &accountingsyncports.EnableAccountingSyncRequest{
-			TenantInfo: pagination.TenantInfo{
-				OrgID: pulid.MustNew("org_"),
-				BuID:  pulid.MustNew("bu_"),
+		_, err := h.svc.setup.EnableSync(
+			t.Context(),
+			&accountingsyncports.EnableAccountingSyncRequest{
+				TenantInfo: pagination.TenantInfo{
+					OrgID: pulid.MustNew("org_"),
+					BuID:  pulid.MustNew("bu_"),
+				},
+				IntegrationType: integration.TypeQuickBooksOnline,
+				StartDate:       syncStartDate,
 			},
-			IntegrationType: integration.TypeQuickBooksOnline,
-			StartDate:       syncStartDate,
-		})
+		)
 
 		assert.True(t, errortypes.IsNotFoundError(err))
 	})
@@ -219,7 +222,7 @@ func TestEnableSyncToleratesABackfillAlreadyRunning(t *testing.T) {
 	t.Parallel()
 
 	h := newHarness(t)
-	_, err := h.svc.RequestBackfill(
+	_, err := h.svc.backfills.RequestBackfill(
 		t.Context(),
 		&accountingsyncports.RequestAccountingBackfillRequest{
 			TenantInfo:      h.tenant,
@@ -246,12 +249,12 @@ func TestPauseRequiresAReasonAndHoldsTheDispatcher(t *testing.T) {
 		Reason:          "   ",
 	}
 
-	_, err := h.svc.Pause(t.Context(), req)
+	_, err := h.svc.setup.Pause(t.Context(), req)
 	requireValidationField(t, err, "reason")
 	assert.False(t, h.connections.get(h.conn.ID).IsPaused())
 
 	req.Reason = "Month-end\nclose"
-	conn, err := h.svc.Pause(t.Context(), req)
+	conn, err := h.svc.setup.Pause(t.Context(), req)
 	require.NoError(t, err)
 
 	assert.True(t, conn.IsPaused())
@@ -261,7 +264,7 @@ func TestPauseRequiresAReasonAndHoldsTheDispatcher(t *testing.T) {
 	assert.Equal(t, 1, h.audit.count())
 
 	req.Reason = "Another reason"
-	again, err := h.svc.Pause(t.Context(), req)
+	again, err := h.svc.setup.Pause(t.Context(), req)
 	require.NoError(t, err)
 	assert.Equal(
 		t,
@@ -276,7 +279,7 @@ func TestPauseKeepsEnqueueing(t *testing.T) {
 	t.Parallel()
 
 	h := newHarness(t)
-	_, err := h.svc.Pause(t.Context(), &accountingsyncports.PauseAccountingSyncRequest{
+	_, err := h.svc.setup.Pause(t.Context(), &accountingsyncports.PauseAccountingSyncRequest{
 		TenantInfo:      h.tenant,
 		UserID:          h.userID,
 		IntegrationType: integration.TypeQuickBooksOnline,
@@ -300,7 +303,7 @@ func TestResumeClearsThePauseAndWakesTheDispatcher(t *testing.T) {
 		conn.PausedReason = "Audit"
 	})
 
-	conn, err := h.svc.Resume(t.Context(), &accountingsyncports.PauseAccountingSyncRequest{
+	conn, err := h.svc.setup.Resume(t.Context(), &accountingsyncports.PauseAccountingSyncRequest{
 		TenantInfo:      h.tenant,
 		UserID:          h.userID,
 		IntegrationType: integration.TypeQuickBooksOnline,
@@ -326,9 +329,9 @@ func TestPauseAndResumeNeedASyncingConnection(t *testing.T) {
 		Reason:          "Audit",
 	}
 
-	_, err := h.svc.Pause(t.Context(), req)
+	_, err := h.svc.setup.Pause(t.Context(), req)
 	assert.True(t, errortypes.IsBusinessError(err))
-	_, err = h.svc.Resume(t.Context(), req)
+	_, err = h.svc.setup.Resume(t.Context(), req)
 	assert.True(t, errortypes.IsBusinessError(err))
 }
 
@@ -338,7 +341,7 @@ func (h *harness) retry(
 	categories ...accountingsync.SyncErrorCategory,
 ) (int64, error) {
 	t.Helper()
-	return h.svc.Retry(t.Context(), &accountingsyncports.RetryAccountingSyncRequest{
+	return h.svc.actions.Retry(t.Context(), &accountingsyncports.RetryAccountingSyncRequest{
 		TenantInfo:      h.tenant,
 		UserID:          h.userID,
 		IntegrationType: integration.TypeQuickBooksOnline,
@@ -428,11 +431,14 @@ func TestReleaseQueuesHeldRecords(t *testing.T) {
 	second := h.seedRecord(accountingsync.SyncStatusAwaitingApproval, "")
 	blocked := h.seedRecord(accountingsync.SyncStatusBlocked, accountingsync.SyncErrorMapping)
 
-	released, err := h.svc.Release(t.Context(), &accountingsyncports.ReleaseAccountingSyncRequest{
-		TenantInfo:      h.tenant,
-		UserID:          h.userID,
-		IntegrationType: integration.TypeQuickBooksOnline,
-	})
+	released, err := h.svc.actions.Release(
+		t.Context(),
+		&accountingsyncports.ReleaseAccountingSyncRequest{
+			TenantInfo:      h.tenant,
+			UserID:          h.userID,
+			IntegrationType: integration.TypeQuickBooksOnline,
+		},
+	)
 	require.NoError(t, err)
 
 	assert.Equal(t, int64(2), released)
@@ -456,12 +462,12 @@ func TestSkipNeedsAReasonAndMarksTheRecordSkipped(t *testing.T) {
 		ID:         record.ID,
 	}
 
-	_, err := h.svc.Skip(t.Context(), req)
+	_, err := h.svc.actions.Skip(t.Context(), req)
 	requireValidationField(t, err, "reason")
 	assert.Equal(t, accountingsync.SyncStatusBlocked, h.records.get(record.ID).Status)
 
 	req.Reason = "Entered by hand in QuickBooks"
-	skipped, err := h.svc.Skip(t.Context(), req)
+	skipped, err := h.svc.actions.Skip(t.Context(), req)
 	require.NoError(t, err)
 
 	assert.Equal(t, accountingsync.SyncStatusSkipped, skipped.Status)
@@ -481,7 +487,7 @@ func TestSkipRefusesASentRecord(t *testing.T) {
 	} {
 		record := h.seedRecord(status, "")
 
-		_, err := h.svc.Skip(t.Context(), &accountingsyncports.SkipAccountingSyncRequest{
+		_, err := h.svc.actions.Skip(t.Context(), &accountingsyncports.SkipAccountingSyncRequest{
 			TenantInfo: h.tenant,
 			UserID:     h.userID,
 			ID:         record.ID,
@@ -499,7 +505,7 @@ func TestSkipIsScopedToTheTenant(t *testing.T) {
 	h := newHarness(t)
 	record := h.seedRecord(accountingsync.SyncStatusBlocked, accountingsync.SyncErrorMapping)
 
-	_, err := h.svc.Skip(t.Context(), &accountingsyncports.SkipAccountingSyncRequest{
+	_, err := h.svc.actions.Skip(t.Context(), &accountingsyncports.SkipAccountingSyncRequest{
 		TenantInfo: pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: h.tenant.BuID},
 		UserID:     h.userID,
 		ID:         record.ID,
@@ -523,7 +529,7 @@ func (h *harness) requestBackfill(
 	if mutate != nil {
 		mutate(req)
 	}
-	return h.svc.RequestBackfill(t.Context(), req)
+	return h.svc.backfills.RequestBackfill(t.Context(), req)
 }
 
 func TestRequestBackfillAllowsOneActivePerConnection(t *testing.T) {
@@ -635,12 +641,15 @@ func (h *harness) changeBackfill(
 	action accountingsyncports.AccountingBackfillAction,
 ) (*accountingbackfill.AccountingBackfill, error) {
 	t.Helper()
-	return h.svc.ChangeBackfill(t.Context(), &accountingsyncports.ChangeAccountingBackfillRequest{
-		TenantInfo: h.tenant,
-		UserID:     h.userID,
-		ID:         id,
-		Action:     action,
-	})
+	return h.svc.backfills.ChangeBackfill(
+		t.Context(),
+		&accountingsyncports.ChangeAccountingBackfillRequest{
+			TenantInfo: h.tenant,
+			UserID:     h.userID,
+			ID:         id,
+			Action:     action,
+		},
+	)
 }
 
 func TestChangeBackfillPausesResumesAndCancels(t *testing.T) {
@@ -680,7 +689,7 @@ func TestSummaryWithoutAConnectionIsEmpty(t *testing.T) {
 
 	h := newHarness(t)
 
-	summary, err := h.svc.Summary(
+	summary, err := h.svc.reads.Summary(
 		t.Context(),
 		pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")},
 		integration.TypeQuickBooksOnline,
@@ -699,7 +708,7 @@ func TestSummaryRejectsANonAccountingIntegration(t *testing.T) {
 
 	h := newHarness(t)
 
-	_, err := h.svc.Summary(t.Context(), h.tenant, integration.Type("Samsara"))
+	_, err := h.svc.reads.Summary(t.Context(), h.tenant, integration.Type("Samsara"))
 
 	requireValidationField(t, err, "integrationType")
 }
@@ -717,7 +726,7 @@ func TestSummaryCountsByStatusWithAttentionAndBackfill(t *testing.T) {
 	backfill, err := h.requestBackfill(t, nil)
 	require.NoError(t, err)
 
-	summary, err := h.svc.Summary(t.Context(), h.tenant, integration.TypeQuickBooksOnline)
+	summary, err := h.svc.reads.Summary(t.Context(), h.tenant, integration.TypeQuickBooksOnline)
 	require.NoError(t, err)
 
 	assert.Equal(t, h.conn.ID, summary.Connection.ID)
@@ -737,7 +746,7 @@ func TestListRecordsScopesToTheConnectionAndTheCallersTenant(t *testing.T) {
 	h.seedRecord(accountingsync.SyncStatusBlocked, accountingsync.SyncErrorMapping)
 	objectID := pulid.MustNew("inv_")
 
-	result, err := h.svc.ListRecords(
+	result, err := h.svc.reads.ListRecords(
 		t.Context(),
 		&accountingsyncports.ListAccountingSyncRecordsRequest{
 			TenantInfo: h.tenant,
@@ -771,10 +780,13 @@ func TestListRecordsScopesToTheConnectionAndTheCallersTenant(t *testing.T) {
 	assert.Equal(t, objectID, call.ObjectID)
 	assert.Equal(t, "INV", call.Search)
 
-	_, err = h.svc.ListRecords(t.Context(), &accountingsyncports.ListAccountingSyncRecordsRequest{
-		TenantInfo:      h.tenant,
-		IntegrationType: integration.TypeQuickBooksOnline,
-	})
+	_, err = h.svc.reads.ListRecords(
+		t.Context(),
+		&accountingsyncports.ListAccountingSyncRecordsRequest{
+			TenantInfo:      h.tenant,
+			IntegrationType: integration.TypeQuickBooksOnline,
+		},
+	)
 	require.NoError(t, err)
 }
 
@@ -785,11 +797,11 @@ func TestListAttemptsIsScopedToTheTenant(t *testing.T) {
 	record := h.readyInvoice(t)
 	h.drain(t)
 
-	attempts, err := h.svc.ListAttempts(t.Context(), h.tenant, record.ID)
+	attempts, err := h.svc.reads.ListAttempts(t.Context(), h.tenant, record.ID)
 	require.NoError(t, err)
 	assert.Len(t, attempts, 1)
 
-	_, err = h.svc.ListAttempts(
+	_, err = h.svc.reads.ListAttempts(
 		t.Context(),
 		pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: h.tenant.BuID},
 		record.ID,
@@ -804,7 +816,11 @@ func TestListBackfillsForTheConnection(t *testing.T) {
 	backfill, err := h.requestBackfill(t, nil)
 	require.NoError(t, err)
 
-	backfills, err := h.svc.ListBackfills(t.Context(), h.tenant, integration.TypeQuickBooksOnline)
+	backfills, err := h.svc.reads.ListBackfills(
+		t.Context(),
+		h.tenant,
+		integration.TypeQuickBooksOnline,
+	)
 	require.NoError(t, err)
 
 	require.Len(t, backfills, 1)
@@ -883,7 +899,7 @@ func TestObjectStatesPicksTheMostRelevantRecord(t *testing.T) {
 	)
 	put(idle, idleObject, accountingsync.SyncOperationCreate, 1, accountingsync.SyncStatusBlocked)
 
-	states, err := h.svc.ObjectStates(t.Context(), h.objectStates(
+	states, err := h.svc.reads.ObjectStates(t.Context(), h.objectStates(
 		blockedObject, syncedObject, supersededObject, idleObject))
 	require.NoError(t, err)
 
@@ -934,7 +950,7 @@ func TestObjectStatesNarrowsToOneSystemWhenAsked(t *testing.T) {
 	synced := put(h.conn, accountingsync.SyncStatusSynced)
 	blocked := put(xero, accountingsync.SyncStatusBlocked)
 
-	states, err := h.svc.ObjectStates(t.Context(), h.objectStates(invoiceID))
+	states, err := h.svc.reads.ObjectStates(t.Context(), h.objectStates(invoiceID))
 	require.NoError(t, err)
 	assert.Equal(t, blocked.ID, states[invoiceID].Record.ID,
 		"across systems, the one that needs attention is the state")
@@ -942,7 +958,7 @@ func TestObjectStatesNarrowsToOneSystemWhenAsked(t *testing.T) {
 
 	narrowed := h.objectStates(invoiceID)
 	narrowed.IntegrationType = integration.TypeQuickBooksOnline
-	states, err = h.svc.ObjectStates(t.Context(), narrowed)
+	states, err = h.svc.reads.ObjectStates(t.Context(), narrowed)
 	require.NoError(t, err)
 	assert.Equal(t, synced.ID, states[invoiceID].Record.ID, "one system reads only its records")
 	assert.Equal(t, "QuickBooks Online", states[invoiceID].ProviderName)
@@ -974,7 +990,7 @@ func TestObjectStatesShowsTheLatestStepOfASettlement(t *testing.T) {
 	payment := put(accountingsync.SyncObjectCarrierBillPay, now+60)
 	put(accountingsync.SyncObjectCarrierBill, now)
 
-	states, err := h.svc.ObjectStates(t.Context(), h.objectStates(settlementID))
+	states, err := h.svc.reads.ObjectStates(t.Context(), h.objectStates(settlementID))
 	require.NoError(t, err)
 
 	assert.Equal(t, payment.ID, states[settlementID].Record.ID,
@@ -990,7 +1006,7 @@ func TestObjectStatesIsBounded(t *testing.T) {
 		ids[idx] = pulid.MustNew("inv_")
 	}
 
-	_, err := h.svc.ObjectStates(t.Context(), h.objectStates(ids...))
+	_, err := h.svc.reads.ObjectStates(t.Context(), h.objectStates(ids...))
 	require.NoError(t, err)
 
 	require.Len(t, h.records.byObjectsCalls, 1)
@@ -1004,12 +1020,12 @@ func TestObjectStatesWithNothingSyncingReadsNothing(t *testing.T) {
 	h := newHarness(t)
 	h.atStartDateStep()
 
-	states, err := h.svc.ObjectStates(t.Context(), h.objectStates(pulid.MustNew("inv_")))
+	states, err := h.svc.reads.ObjectStates(t.Context(), h.objectStates(pulid.MustNew("inv_")))
 	require.NoError(t, err)
 	assert.Empty(t, states)
 	assert.Empty(t, h.records.byObjectsCalls)
 
-	states, err = h.svc.ObjectStates(t.Context(), h.objectStates())
+	states, err = h.svc.reads.ObjectStates(t.Context(), h.objectStates())
 	require.NoError(t, err)
 	assert.Empty(t, states)
 }

@@ -1,4 +1,4 @@
-package accountingsyncservice
+package accountingsyncflows
 
 import (
 	"testing"
@@ -216,7 +216,7 @@ func TestUnmappedCustomerQueuesACustomerCreateAndTheDocumentWaits(t *testing.T) 
 	h.confirm(freightTarget(), "qb-item-freight")
 	inv := h.postedInvoice(customerID, invoiceSpec{})
 	record := h.enqueueInvoice(t, inv)
-	_, err := h.svc.Release(t.Context(), &accountingsyncports.ReleaseAccountingSyncRequest{
+	_, err := h.svc.actions.Release(t.Context(), &accountingsyncports.ReleaseAccountingSyncRequest{
 		TenantInfo:      h.tenant,
 		UserID:          h.userID,
 		IntegrationType: h.conn.IntegrationType,
@@ -307,12 +307,15 @@ func TestDuplicateCustomerNameBlocksAsMappingAndRequeuesOnceMapped(t *testing.T)
 	assert.Empty(t, h.writer.callsTo("CreateSalesDocument"))
 
 	h.confirm(customerTarget(customerID, "Acme Freight"), "qb-cust-58")
-	requeued, err := h.svc.Retry(t.Context(), &accountingsyncports.RetryAccountingSyncRequest{
-		TenantInfo:      h.tenant,
-		UserID:          h.userID,
-		IntegrationType: h.conn.IntegrationType,
-		ErrorCategories: []accountingsync.SyncErrorCategory{accountingsync.SyncErrorMapping},
-	})
+	requeued, err := h.svc.actions.Retry(
+		t.Context(),
+		&accountingsyncports.RetryAccountingSyncRequest{
+			TenantInfo:      h.tenant,
+			UserID:          h.userID,
+			IntegrationType: h.conn.IntegrationType,
+			ErrorCategories: []accountingsync.SyncErrorCategory{accountingsync.SyncErrorMapping},
+		},
+	)
 	require.NoError(t, err)
 	assert.Equal(
 		t,
@@ -742,7 +745,7 @@ func TestShortPayNeedsTheWriteOffItem(t *testing.T) {
 		TargetType: accountingsync.TargetItemRole,
 		Key:        accountingsync.ItemRoleShortPayWriteOff,
 	}, "qb-item-shortpay")
-	_, err := h.svc.Retry(t.Context(), &accountingsyncports.RetryAccountingSyncRequest{
+	_, err := h.svc.actions.Retry(t.Context(), &accountingsyncports.RetryAccountingSyncRequest{
 		TenantInfo:      h.tenant,
 		UserID:          h.userID,
 		IntegrationType: h.conn.IntegrationType,

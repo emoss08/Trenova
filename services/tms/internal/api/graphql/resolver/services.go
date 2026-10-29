@@ -346,7 +346,10 @@ type Params struct {
 	AccountingMappingReader           accountingmappingports.AccountingMappingReader
 	AccountingMappingDecisions        accountingmappingports.AccountingMappingDecisionService
 	AccountingReferenceCreator        accountingmappingports.AccountingReferenceCreator
-	AccountingSyncService             accountingsyncports.AccountingSyncService
+	AccountingSyncReader              accountingsyncports.AccountingSyncReader
+	AccountingSyncSetup               accountingsyncports.AccountingSyncSetupService
+	AccountingSyncActions             accountingsyncports.AccountingSyncActionService
+	AccountingBackfillService         accountingsyncports.AccountingBackfillService
 	AccountingInboundService          accountinginboundports.AccountingInboundService
 	AccountingDriftService            accountingdriftports.AccountingDriftService
 	DetentionPolicyService            *detentionpolicyservice.Service
@@ -621,7 +624,10 @@ type Services struct {
 	AccountingMappingReader           accountingmappingports.AccountingMappingReader
 	AccountingMappingDecisions        accountingmappingports.AccountingMappingDecisionService
 	AccountingReferenceCreator        accountingmappingports.AccountingReferenceCreator
-	AccountingSync                    accountingsyncports.AccountingSyncService
+	AccountingSyncReader              accountingsyncports.AccountingSyncReader
+	AccountingSyncSetup               accountingsyncports.AccountingSyncSetupService
+	AccountingSyncActions             accountingsyncports.AccountingSyncActionService
+	AccountingBackfillService         accountingsyncports.AccountingBackfillService
 	AccountingInbound                 accountinginboundports.AccountingInboundService
 	AccountingDrift                   accountingdriftports.AccountingDriftService
 	DetentionPolicyService            *detentionpolicyservice.Service
@@ -902,7 +908,10 @@ func newServices(p *Params) *Services {
 		AccountingMappingReader:           p.AccountingMappingReader,
 		AccountingMappingDecisions:        p.AccountingMappingDecisions,
 		AccountingReferenceCreator:        p.AccountingReferenceCreator,
-		AccountingSync:                    p.AccountingSyncService,
+		AccountingSyncReader:              p.AccountingSyncReader,
+		AccountingSyncSetup:               p.AccountingSyncSetup,
+		AccountingSyncActions:             p.AccountingSyncActions,
+		AccountingBackfillService:         p.AccountingBackfillService,
 		AccountingInbound:                 p.AccountingInboundService,
 		AccountingDrift:                   p.AccountingDriftService,
 		DetentionPolicyService:            p.DetentionPolicyService,

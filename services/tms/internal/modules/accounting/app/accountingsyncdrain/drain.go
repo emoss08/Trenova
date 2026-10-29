@@ -22,6 +22,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
+	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
 
@@ -277,7 +278,9 @@ func (s *Service) pushOne(
 	}
 }
 
-type Deps struct {
+type Params struct {
+	fx.In
+
 	Logger   *zap.Logger
 	Records  accountingsyncports.AccountingSyncRecordRepository
 	Sessions accountingconnectionports.AccountingSessionProvider
@@ -302,16 +305,18 @@ type Service struct {
 }
 
 //nolint:gocritic // dependency injection
-func New(d Deps) *Service {
+func New(p Params) *Service {
 	return &Service{
-		l:        d.Logger,
-		records:  d.Records,
-		sessions: d.Sessions,
-		controls: d.Controls,
-		effects:  d.Effects,
-		parties:  d.Parties,
-		sales:    d.Sales,
-		payables: d.Payables,
-		ledger:   d.Ledger,
+		l:        p.Logger.Named("service.accounting-sync"),
+		records:  p.Records,
+		sessions: p.Sessions,
+		controls: p.Controls,
+		effects:  p.Effects,
+		parties:  p.Parties,
+		sales:    p.Sales,
+		payables: p.Payables,
+		ledger:   p.Ledger,
 	}
 }
+
+var _ accountingsyncports.AccountingSyncDrainer = (*Service)(nil)

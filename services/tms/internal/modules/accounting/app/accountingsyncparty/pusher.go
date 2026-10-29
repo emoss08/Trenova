@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingmappingports"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"go.uber.org/fx"
 )
 
 func (p *Pusher) Push(
@@ -155,7 +156,9 @@ func partyCreateError(
 	return err
 }
 
-type Deps struct {
+type Params struct {
+	fx.In
+
 	Kit     *accountingsyncpush.Kit
 	Creator accountingmappingports.AccountingReferenceCreator
 }
@@ -165,6 +168,6 @@ type Pusher struct {
 	creator accountingmappingports.AccountingReferenceCreator
 }
 
-func New(d Deps) *Pusher {
-	return &Pusher{kit: d.Kit, creator: d.Creator}
+func New(p Params) *Pusher {
+	return &Pusher{kit: p.Kit, creator: p.Creator}
 }

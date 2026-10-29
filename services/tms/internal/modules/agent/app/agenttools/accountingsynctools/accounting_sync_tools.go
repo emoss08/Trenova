@@ -58,48 +58,6 @@ const toolGetSyncStatus = "accounting_get_connection"
 
 const secondsInOneDay = int64(24 * time.Hour / time.Second)
 
-type accountingSyncOperator interface {
-	Summary(
-		ctx context.Context,
-		tenantInfo pagination.TenantInfo,
-		integrationType integration.Type,
-	) (*accountingsyncports.AccountingSyncSummary, error)
-	GetRecord(
-		ctx context.Context,
-		tenantInfo pagination.TenantInfo,
-		id pulid.ID,
-	) (*accountingsync.AccountingSyncRecord, error)
-	ListRecords(
-		ctx context.Context,
-		req *accountingsyncports.ListAccountingSyncRecordsRequest,
-	) (*pagination.CursorListResult[*accountingsync.AccountingSyncRecord], error)
-	Retry(ctx context.Context, req *accountingsyncports.RetryAccountingSyncRequest) (int64, error)
-	Skip(
-		ctx context.Context,
-		req *accountingsyncports.SkipAccountingSyncRequest,
-	) (*accountingsync.AccountingSyncRecord, error)
-	PlanRedate(
-		ctx context.Context,
-		req *accountingsyncports.RedateAccountingSyncRequest,
-	) (*accountingsyncports.AccountingSyncRedatePlan, error)
-	Redate(
-		ctx context.Context,
-		req *accountingsyncports.RedateAccountingSyncRequest,
-	) (*accountingsync.AccountingSyncRecord, error)
-	Pause(
-		ctx context.Context,
-		req *accountingsyncports.PauseAccountingSyncRequest,
-	) (*accountingconnection.AccountingConnection, error)
-	Resume(
-		ctx context.Context,
-		req *accountingsyncports.PauseAccountingSyncRequest,
-	) (*accountingconnection.AccountingConnection, error)
-	RequestBackfill(
-		ctx context.Context,
-		req *accountingsyncports.RequestAccountingBackfillRequest,
-	) (*accountingbackfill.AccountingBackfill, error)
-}
-
 func SyncDocumentLabel(record *accountingsync.AccountingSyncRecord) string {
 	if record.ObjectNumber == "" {
 		return string(record.ObjectType) + " " + record.ObjectID.String()
@@ -190,17 +148,22 @@ var errUnpinnedRetry = errortypes.NewBusinessError(
 )
 
 type RetryAccountingSyncTool struct {
-	sync accountingSyncOperator
+	reads   accountingsyncports.AccountingSyncReader
+	actions accountingsyncports.AccountingSyncActionService
 }
 
-func newRetryAccountingSyncTool(sync accountingSyncOperator) agenttoolports.AgentTool {
-	return &RetryAccountingSyncTool{sync: sync}
+func newRetryAccountingSyncTool(
+	reads accountingsyncports.AccountingSyncReader,
+	actions accountingsyncports.AccountingSyncActionService,
+) agenttoolports.AgentTool {
+	return &RetryAccountingSyncTool{reads: reads, actions: actions}
 }
 
 func ProvideRetryAccountingSyncTool(
-	sync accountingsyncports.AccountingSyncService,
+	reads accountingsyncports.AccountingSyncReader,
+	actions accountingsyncports.AccountingSyncActionService,
 ) agenttoolports.AgentTool {
-	return newRetryAccountingSyncTool(sync)
+	return newRetryAccountingSyncTool(reads, actions)
 }
 
 func (t *RetryAccountingSyncTool) Name() string { return "accounting_retry_sync_record" }
@@ -317,14 +280,14 @@ func (t *RetryAccountingSyncTool) plan(
 	}
 
 	tenant := toolparams.TenantFrom(*params)
-	summary, err := SyncingConnectionFor(ctx, t.sync, tenant, system)
+	summary, err := SyncingConnectionFor(ctx, t.reads, tenant, system)
 	if err != nil {
 		return nil, err
 	}
 
 	records := make([]*accountingsync.AccountingSyncRecord, 0, len(ids))
 	for _, id := range ids {
-		record, getErr := t.sync.GetRecord(ctx, tenant, id)
+		record, getErr := t.reads.GetRecord(ctx, tenant, id)
 		if getErr != nil {
 			return nil, getErr
 		}
@@ -390,7 +353,7 @@ func (t *RetryAccountingSyncTool) ResolveProposalSelection(
 
 	candidates := retryCandidatesRequest(toolparams.TenantFrom(params), system, categories)
 	candidates.Cursor.Limit = maxSyncRetryIDs
-	page, err := t.sync.ListRecords(ctx, candidates)
+	page, err := t.reads.ListRecords(ctx, candidates)
 	if err != nil {
 		return nil, err
 	}
@@ -422,7 +385,7 @@ func (t *RetryAccountingSyncTool) waitingCount(
 	candidates := retryCandidatesRequest(req.TenantInfo, req.IntegrationType, req.ErrorCategories)
 	candidates.Cursor.Limit = 1
 	candidates.Cursor.IncludeTotalCount = true
-	page, err := t.sync.ListRecords(ctx, candidates)
+	page, err := t.reads.ListRecords(ctx, candidates)
 	if err != nil {
 		return 0, false, err
 	}
@@ -461,22 +424,27 @@ func (t *RetryAccountingSyncTool) Execute(
 	if err != nil {
 		return err
 	}
-	_, err = t.sync.Retry(ctx, plan.req)
+	_, err = t.actions.Retry(ctx, plan.req)
 	return err
 }
 
 type SkipAccountingSyncTool struct {
-	sync accountingSyncOperator
+	reads   accountingsyncports.AccountingSyncReader
+	actions accountingsyncports.AccountingSyncActionService
 }
 
-func newSkipAccountingSyncTool(sync accountingSyncOperator) agenttoolports.AgentTool {
-	return &SkipAccountingSyncTool{sync: sync}
+func newSkipAccountingSyncTool(
+	reads accountingsyncports.AccountingSyncReader,
+	actions accountingsyncports.AccountingSyncActionService,
+) agenttoolports.AgentTool {
+	return &SkipAccountingSyncTool{reads: reads, actions: actions}
 }
 
 func ProvideSkipAccountingSyncTool(
-	sync accountingsyncports.AccountingSyncService,
+	reads accountingsyncports.AccountingSyncReader,
+	actions accountingsyncports.AccountingSyncActionService,
 ) agenttoolports.AgentTool {
-	return newSkipAccountingSyncTool(sync)
+	return newSkipAccountingSyncTool(reads, actions)
 }
 
 func (t *SkipAccountingSyncTool) Name() string { return "accounting_skip_sync_record" }
@@ -544,7 +512,7 @@ func (t *SkipAccountingSyncTool) request(
 	}
 
 	tenant := toolparams.TenantFrom(*params)
-	record, err := t.sync.GetRecord(ctx, tenant, id)
+	record, err := t.reads.GetRecord(ctx, tenant, id)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -580,22 +548,24 @@ func (t *SkipAccountingSyncTool) Execute(
 	if err != nil {
 		return err
 	}
-	_, err = t.sync.Skip(ctx, req)
+	_, err = t.actions.Skip(ctx, req)
 	return err
 }
 
 type redateAccountingSyncTool struct {
-	sync accountingSyncOperator
+	actions accountingsyncports.AccountingSyncActionService
 }
 
-func newRedateAccountingSyncTool(sync accountingSyncOperator) agenttoolports.AgentTool {
-	return &redateAccountingSyncTool{sync: sync}
+func newRedateAccountingSyncTool(
+	actions accountingsyncports.AccountingSyncActionService,
+) agenttoolports.AgentTool {
+	return &redateAccountingSyncTool{actions: actions}
 }
 
 func ProvideRedateAccountingSyncTool(
-	sync accountingsyncports.AccountingSyncService,
+	actions accountingsyncports.AccountingSyncActionService,
 ) agenttoolports.AgentTool {
-	return newRedateAccountingSyncTool(sync)
+	return newRedateAccountingSyncTool(actions)
 }
 
 func (t *redateAccountingSyncTool) Name() string { return "accounting_redate_sync_record" }
@@ -657,7 +627,7 @@ func (t *redateAccountingSyncTool) request(
 		UserID:     params.Actor.UserID,
 		ID:         id,
 	}
-	plan, err := t.sync.PlanRedate(ctx, req)
+	plan, err := t.actions.PlanRedate(ctx, req)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -680,22 +650,27 @@ func (t *redateAccountingSyncTool) Execute(
 	if err != nil {
 		return err
 	}
-	_, err = t.sync.Redate(ctx, req)
+	_, err = t.actions.Redate(ctx, req)
 	return err
 }
 
 type PauseAccountingSyncTool struct {
-	sync accountingSyncOperator
+	reads accountingsyncports.AccountingSyncReader
+	setup accountingsyncports.AccountingSyncSetupService
 }
 
-func newPauseAccountingSyncTool(sync accountingSyncOperator) agenttoolports.AgentTool {
-	return &PauseAccountingSyncTool{sync: sync}
+func newPauseAccountingSyncTool(
+	reads accountingsyncports.AccountingSyncReader,
+	setup accountingsyncports.AccountingSyncSetupService,
+) agenttoolports.AgentTool {
+	return &PauseAccountingSyncTool{reads: reads, setup: setup}
 }
 
 func ProvidePauseAccountingSyncTool(
-	sync accountingsyncports.AccountingSyncService,
+	reads accountingsyncports.AccountingSyncReader,
+	setup accountingsyncports.AccountingSyncSetupService,
 ) agenttoolports.AgentTool {
-	return newPauseAccountingSyncTool(sync)
+	return newPauseAccountingSyncTool(reads, setup)
 }
 
 func (t *PauseAccountingSyncTool) Name() string { return "accounting_pause_sync" }
@@ -756,7 +731,7 @@ func (t *PauseAccountingSyncTool) request(
 	}
 
 	tenant := toolparams.TenantFrom(*params)
-	summary, err := SyncingConnectionFor(ctx, t.sync, tenant, system)
+	summary, err := SyncingConnectionFor(ctx, t.reads, tenant, system)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -792,22 +767,27 @@ func (t *PauseAccountingSyncTool) Execute(
 	if err != nil {
 		return err
 	}
-	_, err = t.sync.Pause(ctx, req)
+	_, err = t.setup.Pause(ctx, req)
 	return err
 }
 
 type ResumeAccountingSyncTool struct {
-	sync accountingSyncOperator
+	reads accountingsyncports.AccountingSyncReader
+	setup accountingsyncports.AccountingSyncSetupService
 }
 
-func newResumeAccountingSyncTool(sync accountingSyncOperator) agenttoolports.AgentTool {
-	return &ResumeAccountingSyncTool{sync: sync}
+func newResumeAccountingSyncTool(
+	reads accountingsyncports.AccountingSyncReader,
+	setup accountingsyncports.AccountingSyncSetupService,
+) agenttoolports.AgentTool {
+	return &ResumeAccountingSyncTool{reads: reads, setup: setup}
 }
 
 func ProvideResumeAccountingSyncTool(
-	sync accountingsyncports.AccountingSyncService,
+	reads accountingsyncports.AccountingSyncReader,
+	setup accountingsyncports.AccountingSyncSetupService,
 ) agenttoolports.AgentTool {
-	return newResumeAccountingSyncTool(sync)
+	return newResumeAccountingSyncTool(reads, setup)
 }
 
 func (t *ResumeAccountingSyncTool) Name() string { return "accounting_resume_sync" }
@@ -862,7 +842,7 @@ func (t *ResumeAccountingSyncTool) request(
 	}
 
 	tenant := toolparams.TenantFrom(*params)
-	summary, err := SyncingConnectionFor(ctx, t.sync, tenant, system)
+	summary, err := SyncingConnectionFor(ctx, t.reads, tenant, system)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -896,22 +876,27 @@ func (t *ResumeAccountingSyncTool) Execute(
 	if err != nil {
 		return err
 	}
-	_, err = t.sync.Resume(ctx, req)
+	_, err = t.setup.Resume(ctx, req)
 	return err
 }
 
 type RequestAccountingBackfillTool struct {
-	sync accountingSyncOperator
+	reads     accountingsyncports.AccountingSyncReader
+	backfills accountingsyncports.AccountingBackfillService
 }
 
-func newRequestAccountingBackfillTool(sync accountingSyncOperator) agenttoolports.AgentTool {
-	return &RequestAccountingBackfillTool{sync: sync}
+func newRequestAccountingBackfillTool(
+	reads accountingsyncports.AccountingSyncReader,
+	backfills accountingsyncports.AccountingBackfillService,
+) agenttoolports.AgentTool {
+	return &RequestAccountingBackfillTool{reads: reads, backfills: backfills}
 }
 
 func ProvideRequestAccountingBackfillTool(
-	sync accountingsyncports.AccountingSyncService,
+	reads accountingsyncports.AccountingSyncReader,
+	backfills accountingsyncports.AccountingBackfillService,
 ) agenttoolports.AgentTool {
-	return newRequestAccountingBackfillTool(sync)
+	return newRequestAccountingBackfillTool(reads, backfills)
 }
 
 func (t *RequestAccountingBackfillTool) Name() string { return "accounting_request_backfill" }
@@ -1026,7 +1011,7 @@ func (t *RequestAccountingBackfillTool) plan(
 	}
 
 	tenant := toolparams.TenantFrom(*params)
-	summary, err := SyncingConnectionFor(ctx, t.sync, tenant, system)
+	summary, err := SyncingConnectionFor(ctx, t.reads, tenant, system)
 	if err != nil {
 		return nil, err
 	}
@@ -1101,6 +1086,6 @@ func (t *RequestAccountingBackfillTool) Execute(
 	if err != nil {
 		return err
 	}
-	_, err = t.sync.RequestBackfill(ctx, plan.req)
+	_, err = t.backfills.RequestBackfill(ctx, plan.req)
 	return err
 }

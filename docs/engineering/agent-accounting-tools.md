@@ -14,8 +14,8 @@ page explains them.
 
 Every write calls the service its page calls — `manualjournalservice`,
 `journalreversalservice`, `fiscalperiodservice`, `accountingmappingdecisions`,
-`accountingsyncservice`, `bankreceiptworkitemservice` — and never writes around it. Each
-service exposes the plan its write runs on (`PlanCreateDraft`, `PlanUpdateDraft`,
+`accountingsyncactions`, `accountingsyncbackfill`, `bankreceiptworkitemservice` — and never
+writes around it. Each service exposes the plan its write runs on (`PlanCreateDraft`, `PlanUpdateDraft`,
 `PlanSubmit`, `PlanCancel` and `PlanPost` on manual journals; `PlanCreate`, `PlanCancel` and
 `PlanPost` on reversals; `PlanTransition` on fiscal periods; `PlanConfirm` and `PlanReject`
 on mappings; `PlanAssign` and `PlanStartReview` on work items). A tool's preview renders that

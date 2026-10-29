@@ -66,7 +66,7 @@ type accountingMappingReviewer interface {
 	) (*accountingmapping.AccountingMapping, error)
 }
 
-type accountingSyncReleaser interface {
+type accountingSyncRecordReader interface {
 	Summary(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
@@ -77,18 +77,24 @@ type accountingSyncReleaser interface {
 		tenantInfo pagination.TenantInfo,
 		id pulid.ID,
 	) (*accountingsync.AccountingSyncRecord, error)
+}
+
+type accountingSyncReleaser interface {
 	Release(
 		ctx context.Context,
 		req *accountingsyncports.ReleaseAccountingSyncRequest,
 	) (int64, error)
 }
 
-type accountingBackfillChanger interface {
+type accountingSyncSummarizer interface {
 	Summary(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 		integrationType integration.Type,
 	) (*accountingsyncports.AccountingSyncSummary, error)
+}
+
+type accountingBackfillChanger interface {
 	ChangeBackfill(
 		ctx context.Context,
 		req *accountingsyncports.ChangeAccountingBackfillRequest,
@@ -315,12 +321,12 @@ func releaseRequest(
 
 func planRelease(
 	ctx context.Context,
-	sync accountingSyncReleaser,
+	reads accountingSyncRecordReader,
 	req *accountingsyncports.ReleaseAccountingSyncRequest,
 ) (*releasePlan, error) {
 	summary, err := accountingsynctools.SyncingConnectionFor(
 		ctx,
-		sync,
+		reads,
 		req.TenantInfo,
 		req.IntegrationType,
 	)
@@ -330,7 +336,7 @@ func planRelease(
 
 	records := make([]*accountingsync.AccountingSyncRecord, 0, len(req.IDs))
 	for _, id := range req.IDs {
-		record, getErr := sync.GetRecord(ctx, req.TenantInfo, id)
+		record, getErr := reads.GetRecord(ctx, req.TenantInfo, id)
 		if getErr != nil {
 			return nil, getErr
 		}
@@ -347,7 +353,10 @@ func planRelease(
 	return &releasePlan{req: req, provider: summary.ProviderName, records: records}, nil
 }
 
-func NewReleaseAccountingSyncTool(sync accountingSyncReleaser) agenttoolports.AgentTool {
+func NewReleaseAccountingSyncTool(
+	reads accountingSyncRecordReader,
+	releaser accountingSyncReleaser,
+) agenttoolports.AgentTool {
 	return toolspec.NewReceivableTool(&toolspec.ReceivableSpec{
 		Name: "accounting_release_sync_record",
 		Recipe: []string{
@@ -389,7 +398,7 @@ func NewReleaseAccountingSyncTool(sync accountingSyncReleaser) agenttoolports.Ag
 			req *accountingsyncports.ReleaseAccountingSyncRequest,
 			_ *agenttoolports.ToolExecuteParams,
 		) (*releasePlan, error) {
-			return planRelease(ctx, sync, req)
+			return planRelease(ctx, reads, req)
 		},
 		Refused: func(req *accountingsyncports.ReleaseAccountingSyncRequest) string {
 			return fmt.Sprintf("Would release %s to the accounting system.",
@@ -401,10 +410,10 @@ func NewReleaseAccountingSyncTool(sync accountingSyncReleaser) agenttoolports.Ag
 			req *accountingsyncports.ReleaseAccountingSyncRequest,
 			_ *agenttoolports.ToolExecuteParams,
 		) (*agentrecord.ToolExecutionResult, error) {
-			if _, err := planRelease(ctx, sync, req); err != nil {
+			if _, err := planRelease(ctx, reads, req); err != nil {
 				return nil, err
 			}
-			_, err := sync.Release(ctx, req)
+			_, err := releaser.Release(ctx, req)
 
 			return nil, err
 		},
@@ -435,7 +444,7 @@ func backfillChangeRequest(
 
 func planBackfillChange(
 	ctx context.Context,
-	sync accountingBackfillChanger,
+	reads accountingSyncSummarizer,
 	req *accountingsyncports.ChangeAccountingBackfillRequest,
 	params *agenttoolports.ToolExecuteParams,
 ) (*backfillChange, error) {
@@ -448,7 +457,7 @@ func planBackfillChange(
 	if err != nil {
 		return nil, err
 	}
-	summary, err := sync.Summary(ctx, req.TenantInfo, system)
+	summary, err := reads.Summary(ctx, req.TenantInfo, system)
 	if err != nil {
 		return nil, err
 	}
@@ -487,7 +496,10 @@ func planBackfillChange(
 	}, nil
 }
 
-func NewChangeAccountingBackfillTool(sync accountingBackfillChanger) agenttoolports.AgentTool {
+func NewChangeAccountingBackfillTool(
+	reads accountingSyncSummarizer,
+	backfills accountingBackfillChanger,
+) agenttoolports.AgentTool {
 	return toolspec.NewReceivableTool(&toolspec.ReceivableSpec{
 		Name: "accounting_update_backfill",
 		Description: "Pause, resume or cancel the accounting backfill in progress when a " +
@@ -515,7 +527,7 @@ func NewChangeAccountingBackfillTool(sync accountingBackfillChanger) agenttoolpo
 			req *accountingsyncports.ChangeAccountingBackfillRequest,
 			params *agenttoolports.ToolExecuteParams,
 		) (*backfillChange, error) {
-			return planBackfillChange(ctx, sync, req, params)
+			return planBackfillChange(ctx, reads, req, params)
 		},
 		Refused: func(req *accountingsyncports.ChangeAccountingBackfillRequest) string {
 			return fmt.Sprintf("Would %s the accounting backfill.",
@@ -527,11 +539,11 @@ func NewChangeAccountingBackfillTool(sync accountingBackfillChanger) agenttoolpo
 			req *accountingsyncports.ChangeAccountingBackfillRequest,
 			params *agenttoolports.ToolExecuteParams,
 		) (*agentrecord.ToolExecutionResult, error) {
-			change, err := planBackfillChange(ctx, sync, req, params)
+			change, err := planBackfillChange(ctx, reads, req, params)
 			if err != nil {
 				return nil, err
 			}
-			_, err = sync.ChangeBackfill(ctx, change.req)
+			_, err = backfills.ChangeBackfill(ctx, change.req)
 
 			return nil, err
 		},

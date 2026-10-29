@@ -1,4 +1,4 @@
-package accountingsyncservice
+package accountingsyncflows
 
 import (
 	"testing"
@@ -40,10 +40,13 @@ func (h *harness) addCandidates(
 
 func (h *harness) safetyNet(t *testing.T) *accountingsyncports.AccountingSafetyNetResult {
 	t.Helper()
-	result, err := h.svc.SafetyNet(t.Context(), accountingsyncports.AccountingSyncConnectionRef{
-		TenantInfo:   h.tenant,
-		ConnectionID: h.conn.ID,
-	})
+	result, err := h.svc.sweep.SafetyNet(
+		t.Context(),
+		accountingsyncports.AccountingSyncConnectionRef{
+			TenantInfo:   h.tenant,
+			ConnectionID: h.conn.ID,
+		},
+	)
 	require.NoError(t, err)
 	return result
 }
@@ -200,7 +203,7 @@ func (h *harness) newBackfill(
 	types ...accountingsync.SyncObjectType,
 ) *accountingbackfill.AccountingBackfill {
 	t.Helper()
-	backfill, err := h.svc.RequestBackfill(
+	backfill, err := h.svc.backfills.RequestBackfill(
 		t.Context(),
 		&accountingsyncports.RequestAccountingBackfillRequest{
 			TenantInfo:      h.tenant,
@@ -218,7 +221,7 @@ func (h *harness) backfillStep(
 	id pulid.ID,
 ) *accountingsyncports.AccountingBackfillStepResult {
 	t.Helper()
-	result, err := h.svc.BackfillStep(t.Context(), h.tenant, id)
+	result, err := h.svc.backfills.BackfillStep(t.Context(), h.tenant, id)
 	require.NoError(t, err)
 	return result
 }
@@ -417,7 +420,7 @@ func TestPurgeHistoryUsesTheRetentionWindowAndDrainsInBatches(t *testing.T) {
 		{PayloadsCleared: 99, AttemptsDeleted: 99},
 	}
 
-	total, err := h.svc.PurgeHistory(t.Context())
+	total, err := h.svc.sweep.PurgeHistory(t.Context())
 	require.NoError(t, err)
 
 	assert.Equal(t, int64(accountingsyncsweep.PurgeBatch+6), total.PayloadsCleared)

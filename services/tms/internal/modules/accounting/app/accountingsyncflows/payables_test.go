@@ -1,4 +1,4 @@
-package accountingsyncservice
+package accountingsyncflows
 
 import (
 	"testing"
@@ -1508,7 +1508,7 @@ func TestBillPaymentFromANonDefaultBankAccountNeedsItsOwnMapping(t *testing.T) {
 	assert.Empty(t, h.writer.callsTo("CreateBillPayment"))
 
 	h.confirm(glTarget(operating, "GL account 1010 Operating checking"), "qb-operating")
-	_, err := h.svc.Retry(t.Context(), &accountingsyncports.RetryAccountingSyncRequest{
+	_, err := h.svc.actions.Retry(t.Context(), &accountingsyncports.RetryAccountingSyncRequest{
 		TenantInfo:      h.tenant,
 		UserID:          h.userID,
 		IntegrationType: h.conn.IntegrationType,
@@ -1577,7 +1577,7 @@ func TestBillPaymentWithoutABillRecordQueuesTheBill(t *testing.T) {
 		accountingsync.SyncOperationCreate,
 		settlement,
 	)
-	_, err := h.svc.Release(t.Context(), &accountingsyncports.ReleaseAccountingSyncRequest{
+	_, err := h.svc.actions.Release(t.Context(), &accountingsyncports.ReleaseAccountingSyncRequest{
 		TenantInfo:      h.tenant,
 		UserID:          h.userID,
 		IntegrationType: h.conn.IntegrationType,

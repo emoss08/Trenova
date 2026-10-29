@@ -20,6 +20,7 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/timeutils"
+	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
 
@@ -415,7 +416,9 @@ func (s *Service) enqueueOpeningBalances(
 	return err
 }
 
-type Deps struct {
+type Params struct {
+	fx.In
+
 	Logger      *zap.Logger
 	DB          kernelports.Transactor
 	Connections accountingconnectionports.AccountingConnectionRepository
@@ -436,14 +439,16 @@ type Service struct {
 }
 
 //nolint:gocritic // dependency injection
-func New(d Deps) *Service {
+func New(p Params) *Service {
 	return &Service{
-		l:           d.Logger,
-		db:          d.DB,
-		connections: d.Connections,
-		scorer:      d.Scorer,
-		enqueuer:    d.Enqueuer,
-		effects:     d.Effects,
-		backfills:   d.Backfills,
+		l:           p.Logger.Named("service.accounting-sync"),
+		db:          p.DB,
+		connections: p.Connections,
+		scorer:      p.Scorer,
+		enqueuer:    p.Enqueuer,
+		effects:     p.Effects,
+		backfills:   p.Backfills,
 	}
 }
+
+var _ accountingsyncports.AccountingSyncSetupService = (*Service)(nil)

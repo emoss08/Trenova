@@ -1,4 +1,4 @@
-package accountingsyncservice
+package accountingsyncflows
 
 import (
 	"testing"
@@ -26,11 +26,14 @@ func TestRedateSendsTheDocumentOnTheFirstOpenDay(t *testing.T) {
 	loc, err := time.LoadLocation("America/New_York")
 	require.NoError(t, err)
 
-	updated, err := h.svc.Redate(t.Context(), &accountingsyncports.RedateAccountingSyncRequest{
-		TenantInfo: h.tenant,
-		UserID:     h.userID,
-		ID:         record.ID,
-	})
+	updated, err := h.svc.actions.Redate(
+		t.Context(),
+		&accountingsyncports.RedateAccountingSyncRequest{
+			TenantInfo: h.tenant,
+			UserID:     h.userID,
+			ID:         record.ID,
+		},
+	)
 	require.NoError(t, err)
 
 	assert.Equal(t, accountingsync.SyncStatusQueued, updated.Status)
@@ -58,7 +61,7 @@ func TestRedateFollowsTrenovasClosedPeriodPolicy(t *testing.T) {
 	})
 	record := h.seedRecord(accountingsync.SyncStatusBlocked, accountingsync.SyncErrorClosedPeriod)
 
-	_, err := h.svc.Redate(t.Context(), &accountingsyncports.RedateAccountingSyncRequest{
+	_, err := h.svc.actions.Redate(t.Context(), &accountingsyncports.RedateAccountingSyncRequest{
 		TenantInfo: h.tenant,
 		UserID:     h.userID,
 		ID:         record.ID,
@@ -84,11 +87,14 @@ func TestRedateRefusesARecordNotHeldByAClosedPeriod(t *testing.T) {
 		h.seedRecord(accountingsync.SyncStatusBlocked, accountingsync.SyncErrorMapping),
 		h.seedRecord(accountingsync.SyncStatusSynced, ""),
 	} {
-		_, err := h.svc.Redate(t.Context(), &accountingsyncports.RedateAccountingSyncRequest{
-			TenantInfo: h.tenant,
-			UserID:     h.userID,
-			ID:         record.ID,
-		})
+		_, err := h.svc.actions.Redate(
+			t.Context(),
+			&accountingsyncports.RedateAccountingSyncRequest{
+				TenantInfo: h.tenant,
+				UserID:     h.userID,
+				ID:         record.ID,
+			},
+		)
 
 		assert.True(t, errortypes.IsBusinessError(err), string(record.Status))
 		assert.Nil(t, h.records.get(record.ID).RedatedTo)
@@ -101,7 +107,7 @@ func TestRedateNeedsClosedBooksToMoveAwayFrom(t *testing.T) {
 	h := newHarness(t)
 	record := h.seedRecord(accountingsync.SyncStatusBlocked, accountingsync.SyncErrorClosedPeriod)
 
-	_, err := h.svc.Redate(t.Context(), &accountingsyncports.RedateAccountingSyncRequest{
+	_, err := h.svc.actions.Redate(t.Context(), &accountingsyncports.RedateAccountingSyncRequest{
 		TenantInfo: h.tenant,
 		UserID:     h.userID,
 		ID:         record.ID,
@@ -129,7 +135,7 @@ func TestARedatedDocumentIsSentOnItsNewDateWithItsOwnDateInTheNote(t *testing.T)
 	require.Equal(t, accountingsync.SyncStatusBlocked, held.Status)
 	assert.Contains(t, held.Resolution, "send it dated on the first open day")
 
-	_, err := h.svc.Redate(t.Context(), &accountingsyncports.RedateAccountingSyncRequest{
+	_, err := h.svc.actions.Redate(t.Context(), &accountingsyncports.RedateAccountingSyncRequest{
 		TenantInfo: h.tenant,
 		UserID:     h.userID,
 		ID:         record.ID,

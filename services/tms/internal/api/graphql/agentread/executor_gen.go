@@ -301,6 +301,7 @@ type ResolverParams struct {
 	AccessorialChargeService          *accessorialchargeservice.Service
 	AccountingApps                    accountingconnectionports.AccountingAppService
 	AccountingAuthorization           accountingconnectionports.AccountingAuthorizationService
+	AccountingBackfillService         accountingsyncports.AccountingBackfillService
 	AccountingCertificates            accountingconnectionports.AccountingCertificateService
 	AccountingConnectionStatus        accountingconnectionports.AccountingConnectionStatusReader
 	AccountingDriftService            accountingdriftports.AccountingDriftService
@@ -309,7 +310,9 @@ type ResolverParams struct {
 	AccountingMappingDecisions        accountingmappingports.AccountingMappingDecisionService
 	AccountingMappingReader           accountingmappingports.AccountingMappingReader
 	AccountingReferenceCreator        accountingmappingports.AccountingReferenceCreator
-	AccountingSyncService             accountingsyncports.AccountingSyncService
+	AccountingSyncActions             accountingsyncports.AccountingSyncActionService
+	AccountingSyncReader              accountingsyncports.AccountingSyncReader
+	AccountingSyncSetup               accountingsyncports.AccountingSyncSetupService
 	AnalyticsService                  kernelports.AnalyticsService
 	AssignmentService                 assignmentports.AssignmentService
 	BriefingService                   briefingports.BriefingService
@@ -1307,7 +1310,10 @@ func NewSchema(p ResolverParams) Schema {
 		AccountingMappingReader:    p.AccountingMappingReader,
 		AccountingMappingDecisions: p.AccountingMappingDecisions,
 		AccountingReferenceCreator: p.AccountingReferenceCreator,
-		AccountingSync:             p.AccountingSyncService,
+		AccountingSyncReader:       p.AccountingSyncReader,
+		AccountingSyncSetup:        p.AccountingSyncSetup,
+		AccountingSyncActions:      p.AccountingSyncActions,
+		AccountingBackfillService:  p.AccountingBackfillService,
 		AccountingInbound:          p.AccountingInboundService,
 		AccountingDrift:            p.AccountingDriftService,
 	}

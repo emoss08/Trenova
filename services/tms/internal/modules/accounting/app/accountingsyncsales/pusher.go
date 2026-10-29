@@ -10,9 +10,12 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
+	"go.uber.org/fx"
 )
 
-type Deps struct {
+type Params struct {
+	fx.In
+
 	Kit         *accountingsyncpush.Kit
 	Invoices    invoiceports.InvoiceRepository
 	Adjustments invoiceadjustmentports.InvoiceAdjustmentRepository
@@ -26,12 +29,12 @@ type Pusher struct {
 	payments    customerpaymentports.CustomerPaymentRepository
 }
 
-func New(d Deps) *Pusher {
+func New(p Params) *Pusher {
 	return &Pusher{
-		kit:         d.Kit,
-		invoices:    d.Invoices,
-		adjustments: d.Adjustments,
-		payments:    d.Payments,
+		kit:         p.Kit,
+		invoices:    p.Invoices,
+		adjustments: p.Adjustments,
+		payments:    p.Payments,
 	}
 }
 
