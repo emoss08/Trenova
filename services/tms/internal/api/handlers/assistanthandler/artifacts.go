@@ -62,7 +62,7 @@ func (h *Handler) listThreadArtifacts(c *gin.Context) {
 
 	page, err := h.artifacts.ListThreadArtifacts(
 		c.Request.Context(),
-		req,
+		&req,
 		assistantartifactports.ListArtifactsOptions{
 			Limit:      query.Limit,
 			Cursor:     query.Cursor,
@@ -96,7 +96,7 @@ func (h *Handler) artifactLineage(c *gin.Context) {
 		return
 	}
 
-	versions, err := h.artifacts.ArtifactLineage(c.Request.Context(), req, artifactID)
+	versions, err := h.artifacts.ArtifactLineage(c.Request.Context(), &req, artifactID)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -112,7 +112,7 @@ func (h *Handler) artifactBySlug(c *gin.Context) {
 		return
 	}
 
-	versions, err := h.artifacts.ArtifactBySlug(c.Request.Context(), req, c.Param("slug"))
+	versions, err := h.artifacts.ArtifactBySlug(c.Request.Context(), &req, c.Param("slug"))
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -151,7 +151,7 @@ func (h *Handler) artifactRows(c *gin.Context) {
 
 	rows, err := h.artifacts.ArtifactRows(
 		c.Request.Context(),
-		req,
+		&req,
 		artifactID,
 		&assistantartifactports.ArtifactRowsQuery{
 			After:         query.After,
@@ -187,7 +187,7 @@ func (h *Handler) exportArtifactCSV(c *gin.Context) {
 		return
 	}
 
-	name, err := h.artifacts.ArtifactCSVName(c.Request.Context(), req, artifactID)
+	name, err := h.artifacts.ArtifactCSVName(c.Request.Context(), &req, artifactID)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -199,7 +199,7 @@ func (h *Handler) exportArtifactCSV(c *gin.Context) {
 	c.Status(http.StatusOK)
 	if err = h.artifacts.ExportArtifactCSV(
 		c.Request.Context(),
-		req,
+		&req,
 		artifactID,
 		c.Writer,
 	); err != nil {
@@ -222,7 +222,12 @@ func (h *Handler) exportDocument(c *gin.Context) {
 		return
 	}
 
-	file, err := h.artifacts.ExportDocument(c.Request.Context(), req, artifactID, c.Query("format"))
+	file, err := h.artifacts.ExportDocument(
+		c.Request.Context(),
+		&req,
+		artifactID,
+		c.Query("format"),
+	)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -251,7 +256,7 @@ func (h *Handler) saveDocumentVersion(c *gin.Context) {
 		return
 	}
 
-	saved, err := h.artifacts.SaveDocumentVersion(c.Request.Context(), req, artifactID, body)
+	saved, err := h.artifacts.SaveDocumentVersion(c.Request.Context(), &req, artifactID, body)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -272,7 +277,7 @@ func (h *Handler) restoreDocumentVersion(c *gin.Context) {
 		return
 	}
 
-	saved, err := h.artifacts.RestoreDocumentVersion(c.Request.Context(), req, artifactID)
+	saved, err := h.artifacts.RestoreDocumentVersion(c.Request.Context(), &req, artifactID)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -293,7 +298,7 @@ func (h *Handler) runArtifactReport(c *gin.Context) {
 		return
 	}
 
-	saved, err := h.artifacts.RunArtifactReport(c.Request.Context(), req, artifactID)
+	saved, err := h.artifacts.RunArtifactReport(c.Request.Context(), &req, artifactID)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -320,7 +325,7 @@ func (h *Handler) rewriteDocument(c *gin.Context) {
 		return
 	}
 
-	suggestion, err := h.artifacts.RewriteDocument(c.Request.Context(), req, artifactID, body)
+	suggestion, err := h.artifacts.RewriteDocument(c.Request.Context(), &req, artifactID, body)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return

@@ -98,7 +98,7 @@ func (s *reachedService) DeleteThread(context.Context, *conversationports.GetThr
 
 func (s *reachedService) PinArtifact(
 	context.Context,
-	conversationports.GetThreadRequest,
+	*conversationports.GetThreadRequest,
 	pulid.ID,
 	bool,
 ) (*assistantartifactports.AssistantArtifact, error) {

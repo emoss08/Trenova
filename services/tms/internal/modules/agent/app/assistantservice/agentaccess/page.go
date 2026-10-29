@@ -110,7 +110,7 @@ func (p *pageSurface) nouns() string {
 	return strings.Join(nouns, " or ")
 }
 
-var PageSurfaces = map[conversation.ThreadOrigin]pageSurface{
+var PageSurfaces = map[conversation.ThreadOrigin]pageSurface{ //nolint:exhaustive // only page origins have a surface
 	conversation.ThreadOriginImport: {
 		SystemKey:       agentdefinition.SystemKeyImportAssistant,
 		subjectRequired: true,

@@ -70,47 +70,76 @@ func writeTableCSV(
 		)
 		if columns == nil {
 			columns = projection.Columns
-			header := make([]string, 0, len(columns))
-			for _, column := range columns {
-				header = append(header, column.Label)
-			}
-			if err = writer.Write(header); err != nil {
+			if err = writer.Write(csvHeader(columns)); err != nil {
 				return err
 			}
 		}
-		for _, row := range projection.Rows {
-			record, _ := row.(map[string]any)
-			cells := make([]string, 0, len(columns))
-			for _, column := range columns {
-				cells = append(cells, csvCell(record[column.Key]))
-			}
-			if err = writer.Write(cells); err != nil {
-				return err
-			}
-			written++
-			if written == maxExportRows {
-				break
-			}
+		if written, err = writeCSVRows(writer, columns, projection.Rows, written); err != nil {
+			return err
 		}
 		if !typeutils.BoolOf(page["hasMore"]) {
 			break
 		}
-		if cursor := typeutils.StringOfTrimmed(page["nextCursor"]); cursor != "" {
-			if cursor == at.after {
-				return errors.New("the list returned the same page cursor twice")
-			}
-			at = tablePosition{after: cursor}
-			continue
+		if at, err = nextTablePosition(page, at, len(rows)); err != nil {
+			return err
 		}
-		next := int(recordviews.NumberOf(page, "nextOffset"))
-		if next <= at.offset {
-			next = at.offset + len(rows)
-		}
-		at = tablePosition{offset: next}
 	}
 	writer.Flush()
 
 	return writer.Error()
+}
+
+func csvHeader(columns []assistantartifact.DisplayColumn) []string {
+	header := make([]string, 0, len(columns))
+	for _, column := range columns {
+		header = append(header, column.Label)
+	}
+
+	return header
+}
+
+func writeCSVRows(
+	writer *csv.Writer,
+	columns []assistantartifact.DisplayColumn,
+	rows []any,
+	written int,
+) (int, error) {
+	for _, row := range rows {
+		record, _ := row.(map[string]any)
+		cells := make([]string, 0, len(columns))
+		for _, column := range columns {
+			cells = append(cells, csvCell(record[column.Key]))
+		}
+		if err := writer.Write(cells); err != nil {
+			return written, err
+		}
+		written++
+		if written == maxExportRows {
+			break
+		}
+	}
+
+	return written, nil
+}
+
+func nextTablePosition(
+	page map[string]any,
+	at tablePosition,
+	read int,
+) (tablePosition, error) {
+	if cursor := typeutils.StringOfTrimmed(page["nextCursor"]); cursor != "" {
+		if cursor == at.after {
+			return tablePosition{}, errors.New("the list returned the same page cursor twice")
+		}
+
+		return tablePosition{after: cursor}, nil
+	}
+	next := int(recordviews.NumberOf(page, "nextOffset"))
+	if next <= at.offset {
+		next = at.offset + read
+	}
+
+	return tablePosition{offset: next}, nil
 }
 
 // csvCell is a projected value as a spreadsheet reads it: text as itself, a

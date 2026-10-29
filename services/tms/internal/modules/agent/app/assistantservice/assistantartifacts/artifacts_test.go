@@ -54,7 +54,7 @@ func TestListThreadArtifacts_DraftStatusFollowsTheProposal(t *testing.T) {
 
 	page, err := svc.ListThreadArtifacts(
 		t.Context(),
-		conversationports.GetThreadRequest{ID: thread.ID},
+		&conversationports.GetThreadRequest{ID: thread.ID},
 		assistantartifactports.ListArtifactsOptions{},
 	)
 	require.NoError(t, err)

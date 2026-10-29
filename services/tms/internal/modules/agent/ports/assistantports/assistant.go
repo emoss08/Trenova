@@ -259,40 +259,40 @@ type AssistantService interface {
 type AssistantArtifactService interface {
 	ListThreadArtifacts(
 		ctx context.Context,
-		req conversationports.GetThreadRequest,
+		req *conversationports.GetThreadRequest,
 		opts assistantartifactports.ListArtifactsOptions,
 	) (*assistantartifactports.AssistantArtifactPage, error)
 	// ArtifactLineage reads every version of the lineage an artifact belongs
 	// to, oldest first, and ArtifactBySlug the lineage a link names.
 	ArtifactLineage(
 		ctx context.Context,
-		req conversationports.GetThreadRequest,
+		req *conversationports.GetThreadRequest,
 		artifactID pulid.ID,
 	) ([]assistantartifactports.AssistantArtifact, error)
 	ArtifactBySlug(
 		ctx context.Context,
-		req conversationports.GetThreadRequest,
+		req *conversationports.GetThreadRequest,
 		slug string,
 	) ([]assistantartifactports.AssistantArtifact, error)
 	SaveDocumentVersion(
 		ctx context.Context,
-		req conversationports.GetThreadRequest,
+		req *conversationports.GetThreadRequest,
 		artifactID pulid.ID,
 		version assistantartifactports.SaveDocumentVersionRequest,
 	) (*assistantartifactports.AssistantArtifact, error)
 	RestoreDocumentVersion(
 		ctx context.Context,
-		req conversationports.GetThreadRequest,
+		req *conversationports.GetThreadRequest,
 		artifactID pulid.ID,
 	) (*assistantartifactports.AssistantArtifact, error)
 	RunArtifactReport(
 		ctx context.Context,
-		req conversationports.GetThreadRequest,
+		req *conversationports.GetThreadRequest,
 		artifactID pulid.ID,
 	) (*assistantartifactports.AssistantArtifact, error)
 	RewriteDocument(
 		ctx context.Context,
-		req conversationports.GetThreadRequest,
+		req *conversationports.GetThreadRequest,
 		artifactID pulid.ID,
 		rewrite assistantartifactports.DocumentRewriteRequest,
 	) (*assistantartifactports.DocumentRewriteSuggestion, error)
@@ -300,31 +300,31 @@ type AssistantArtifactService interface {
 	// from its source rather than from the rows the pane holds.
 	ExportArtifactCSV(
 		ctx context.Context,
-		req conversationports.GetThreadRequest,
+		req *conversationports.GetThreadRequest,
 		artifactID pulid.ID,
 		sink io.Writer,
 	) error
 	ArtifactCSVName(
 		ctx context.Context,
-		req conversationports.GetThreadRequest,
+		req *conversationports.GetThreadRequest,
 		artifactID pulid.ID,
 	) (string, error)
 	ArtifactRows(
 		ctx context.Context,
-		req conversationports.GetThreadRequest,
+		req *conversationports.GetThreadRequest,
 		artifactID pulid.ID,
 		query *assistantartifactports.ArtifactRowsQuery,
 	) (*assistantartifactports.ArtifactRows, error)
 	// ExportDocument renders a document as a PDF or a Word file.
 	ExportDocument(
 		ctx context.Context,
-		req conversationports.GetThreadRequest,
+		req *conversationports.GetThreadRequest,
 		artifactID pulid.ID,
 		format string,
 	) (*assistantartifactports.ArtifactFile, error)
 	PinArtifact(
 		ctx context.Context,
-		req conversationports.GetThreadRequest,
+		req *conversationports.GetThreadRequest,
 		artifactID pulid.ID,
 		pinned bool,
 	) (*assistantartifactports.AssistantArtifact, error)

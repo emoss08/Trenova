@@ -52,7 +52,7 @@ func TestExportDocument_PrintsABoardAsItReadsNow(t *testing.T) {
 		},
 		boards: boards,
 	}
-	req := conversationports.GetThreadRequest{
+	req := &conversationports.GetThreadRequest{
 		ID:         thread.ID,
 		UserID:     pulid.MustNew("usr_"),
 		TenantInfo: pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")},

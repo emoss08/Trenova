@@ -139,10 +139,10 @@ func newRowsFixture(t *testing.T, engine permissionports.PermissionEngine) *rows
 	}
 }
 
-func (f *rowsFixture) request() conversationports.GetThreadRequest {
+func (f *rowsFixture) request() *conversationports.GetThreadRequest {
 	user := pulid.MustNew("usr_")
 
-	return conversationports.GetThreadRequest{
+	return &conversationports.GetThreadRequest{
 		ID:     f.thread.ID,
 		UserID: user,
 		TenantInfo: pagination.TenantInfo{

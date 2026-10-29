@@ -24,7 +24,7 @@ type workspaceFixture struct {
 	svc    *Service
 	repo   *assistanttest.StubArtifactRepo
 	thread *conversation.Thread
-	req    conversationports.GetThreadRequest
+	req    *conversationports.GetThreadRequest
 }
 
 func newWorkspaceFixture(t *testing.T) *workspaceFixture {
@@ -44,7 +44,7 @@ func newWorkspaceFixture(t *testing.T) *workspaceFixture {
 		},
 		repo:   repo,
 		thread: thread,
-		req: conversationports.GetThreadRequest{
+		req: &conversationports.GetThreadRequest{
 			ID:         thread.ID,
 			UserID:     tenant.UserID,
 			TenantInfo: tenant,

@@ -554,7 +554,7 @@ func (h *Handler) pinArtifact(c *gin.Context) {
 		return
 	}
 
-	artifact, err := h.artifacts.PinArtifact(c.Request.Context(), req, artifactID, body.Pinned)
+	artifact, err := h.artifacts.PinArtifact(c.Request.Context(), &req, artifactID, body.Pinned)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return

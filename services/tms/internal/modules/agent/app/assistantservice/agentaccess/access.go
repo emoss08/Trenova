@@ -19,6 +19,12 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
+type Access struct {
+	Permissions permissionports.PermissionEngine
+	Definitions agentdefinitionports.AgentDefinitionRepository
+	Queries     agenttoolports.AgentQueryToolRegistry
+}
+
 // AssertMayUseAgent refuses a conversation, or a turn in one, with an agent
 // the person may not use. A check that cannot be made is a refusal.
 func (s *Access) AssertMayUseAgent(
@@ -202,12 +208,6 @@ func (s *Access) UsableAgent(
 	}
 
 	return definition, nil
-}
-
-type Access struct {
-	Permissions permissionports.PermissionEngine
-	Definitions agentdefinitionports.AgentDefinitionRepository
-	Queries     agenttoolports.AgentQueryToolRegistry
 }
 
 func (s *Access) MayReadSubject(

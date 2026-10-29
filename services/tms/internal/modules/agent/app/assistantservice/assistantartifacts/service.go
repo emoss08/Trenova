@@ -49,12 +49,31 @@ import (
 	"go.uber.org/zap"
 )
 
+type Service struct {
+	logger        *zap.Logger
+	conversations conversationports.ConversationRepository
+	definitions   agentdefinitionports.AgentDefinitionRepository
+	artifacts     assistantartifactports.AssistantArtifactRepository
+	permissions   permissionports.PermissionEngine
+	activity      agentactivityports.AgentActivityPublisher
+	proposals     proposalstores.ProposalStore
+	plans         proposalstores.PlanStore
+	queries       agenttoolports.AgentQueryToolRegistry
+	reports       *reporting.Service
+	reportRuns    reportRerunner
+	boards        assistantports.BoardFiller
+	pdfs          documenttemplateports.PDFRenderer
+	completion    llmports.StructuredCompleter
+	runs          agentruntimeports.AgentRunRepository
+	users         tenantports.UserRepository
+}
+
 func (s *Service) exportSourceOf(
 	ctx context.Context,
-	req conversationports.GetThreadRequest,
+	req *conversationports.GetThreadRequest,
 	artifactID pulid.ID,
 ) (*exportSource, error) {
-	if _, err := s.conversations.GetThread(ctx, &req); err != nil {
+	if _, err := s.conversations.GetThread(ctx, req); err != nil {
 		return nil, err
 	}
 	if s.artifacts == nil {
@@ -84,7 +103,7 @@ func (s *Service) exportSourceOf(
 // ArtifactCSVName is the file a table downloads as, named for its title.
 func (s *Service) ArtifactCSVName(
 	ctx context.Context,
-	req conversationports.GetThreadRequest,
+	req *conversationports.GetThreadRequest,
 	artifactID pulid.ID,
 ) (string, error) {
 	source, err := s.exportSourceOf(ctx, req, artifactID)
@@ -100,7 +119,7 @@ func (s *Service) ArtifactCSVName(
 // from the source, so it holds every row the person may see.
 func (s *Service) ExportArtifactCSV(
 	ctx context.Context,
-	req conversationports.GetThreadRequest,
+	req *conversationports.GetThreadRequest,
 	artifactID pulid.ID,
 	sink io.Writer,
 ) error {
@@ -145,12 +164,12 @@ func (s *Service) exportReport(
 // the arguments it was asked with and the person's own access.
 func (s *Service) exportTable(
 	ctx context.Context,
-	req conversationports.GetThreadRequest,
+	req *conversationports.GetThreadRequest,
 	actor *permissionports.RequestActor,
 	source *exportSource,
 	sink io.Writer,
 ) error {
-	list, err := s.listOf(ctx, &req, actor, source)
+	list, err := s.listOf(ctx, req, actor, source)
 	if err != nil {
 		return err
 	}
@@ -173,7 +192,7 @@ func (s *Service) exportTable(
 func (s *Service) mayRead(
 	ctx context.Context,
 	actor *permissionports.RequestActor,
-	policy agenttoolports.ToolPolicy,
+	policy *agenttoolports.ToolPolicy,
 ) error {
 	if policy.Resource == "" {
 		return nil
@@ -208,7 +227,10 @@ func (s *Service) mayRead(
 
 // timezoneOf is the person's own timezone, which is what "today" in the
 // arguments the agent passed was read in.
-func (s *Service) timezoneOf(ctx context.Context, req conversationports.GetThreadRequest) string {
+func (s *Service) timezoneOf(
+	ctx context.Context,
+	req *conversationports.GetThreadRequest,
+) string {
 	if s.users == nil {
 		return ""
 	}
@@ -227,7 +249,7 @@ func (s *Service) timezoneOf(ctx context.Context, req conversationports.GetThrea
 // bounds what its table showed and so what its download may hold.
 func (s *Service) ceilingOf(
 	ctx context.Context,
-	req conversationports.GetThreadRequest,
+	req *conversationports.GetThreadRequest,
 ) permission.FieldSensitivity {
 	definition := s.threadDefinition(ctx, req)
 	if definition == nil {
@@ -240,12 +262,12 @@ func (s *Service) ceilingOf(
 // threadDefinition is the agent the conversation is with, or nil.
 func (s *Service) threadDefinition(
 	ctx context.Context,
-	req conversationports.GetThreadRequest,
+	req *conversationports.GetThreadRequest,
 ) *agentdefinition.Definition {
 	if s.definitions == nil {
 		return nil
 	}
-	thread, err := s.conversations.GetThread(ctx, &req)
+	thread, err := s.conversations.GetThread(ctx, req)
 	if err != nil || thread.AgentDefinitionID.IsNil() {
 		return nil
 	}
@@ -268,10 +290,10 @@ func (s *Service) threadDefinition(
 // the pane shows a draft as sent the moment the decision ran.
 func (s *Service) ListThreadArtifacts(
 	ctx context.Context,
-	req conversationports.GetThreadRequest,
+	req *conversationports.GetThreadRequest,
 	opts assistantartifactports.ListArtifactsOptions,
 ) (*assistantartifactports.AssistantArtifactPage, error) {
-	if _, err := s.conversations.GetThread(ctx, &req); err != nil {
+	if _, err := s.conversations.GetThread(ctx, req); err != nil {
 		return nil, err
 	}
 	if opts.Family != "" && !opts.Family.IsValid() {
@@ -313,10 +335,10 @@ func (s *Service) ListThreadArtifacts(
 
 func (s *Service) ArtifactLineage(
 	ctx context.Context,
-	req conversationports.GetThreadRequest,
+	req *conversationports.GetThreadRequest,
 	artifactID pulid.ID,
 ) ([]assistantartifactports.AssistantArtifact, error) {
-	if _, err := s.conversations.GetThread(ctx, &req); err != nil {
+	if _, err := s.conversations.GetThread(ctx, req); err != nil {
 		return nil, err
 	}
 	if s.artifacts == nil {
@@ -337,10 +359,10 @@ func (s *Service) ArtifactLineage(
 
 func (s *Service) ArtifactBySlug(
 	ctx context.Context,
-	req conversationports.GetThreadRequest,
+	req *conversationports.GetThreadRequest,
 	slug string,
 ) ([]assistantartifactports.AssistantArtifact, error) {
-	if _, err := s.conversations.GetThread(ctx, &req); err != nil {
+	if _, err := s.conversations.GetThread(ctx, req); err != nil {
 		return nil, err
 	}
 	if s.artifacts == nil {
@@ -370,7 +392,7 @@ func (s *Service) ArtifactBySlug(
 // decisions, and the question of the turn each artifact came from.
 func (s *Service) presentArtifacts(
 	ctx context.Context,
-	req conversationports.GetThreadRequest,
+	req *conversationports.GetThreadRequest,
 	artifacts []*assistantartifact.Artifact,
 ) []assistantartifactports.AssistantArtifact {
 	s.followDecisions(ctx, req, artifacts)
@@ -398,13 +420,12 @@ func (s *Service) presentArtifacts(
 	return out
 }
 
-//nolint:gocritic // AssistantService methods take the thread request by value
 func (s *Service) RunArtifactReport(
 	ctx context.Context,
-	req conversationports.GetThreadRequest,
+	req *conversationports.GetThreadRequest,
 	artifactID pulid.ID,
 ) (*assistantartifactports.AssistantArtifact, error) {
-	if _, err := s.conversations.GetThread(ctx, &req); err != nil {
+	if _, err := s.conversations.GetThread(ctx, req); err != nil {
 		return nil, err
 	}
 	if s.artifacts == nil {
@@ -444,7 +465,7 @@ func (s *Service) RunArtifactReport(
 		return nil, err
 	}
 
-	return s.appendRunVersion(ctx, &req, latestOf(versions), run, name)
+	return s.appendRunVersion(ctx, req, latestOf(versions), run, name)
 }
 
 func (s *Service) rerunOf(
@@ -585,7 +606,8 @@ func (s *Service) listOf(
 			"The list this table came from is no longer available",
 		)
 	}
-	if err := s.mayRead(ctx, actor, tool.Policy()); err != nil {
+	policy := tool.Policy()
+	if err := s.mayRead(ctx, actor, &policy); err != nil {
 		return nil, err
 	}
 
@@ -600,8 +622,8 @@ func (s *Service) listOf(
 			OrganizationID:    req.TenantInfo.OrgID,
 			BusinessUnitID:    req.TenantInfo.BuID,
 			Actor:             actor,
-			Timezone:          s.timezoneOf(ctx, *req),
-			DataAccessCeiling: s.ceilingOf(ctx, *req),
+			Timezone:          s.timezoneOf(ctx, req),
+			DataAccessCeiling: s.ceilingOf(ctx, req),
 		},
 		arguments: arguments,
 		entity: typeutils.StringOfTrimmed(
@@ -610,10 +632,9 @@ func (s *Service) listOf(
 	}, nil
 }
 
-//nolint:gocritic // hugeParam: GetThreadRequest is passed by value across AssistantService.
 func (s *Service) ArtifactRows(
 	ctx context.Context,
-	req conversationports.GetThreadRequest,
+	req *conversationports.GetThreadRequest,
 	artifactID pulid.ID,
 	query *assistantartifactports.ArtifactRowsQuery,
 ) (*assistantartifactports.ArtifactRows, error) {
@@ -625,7 +646,7 @@ func (s *Service) ArtifactRows(
 		return nil, errNotPageable
 	}
 	actor := permissionports.UserActor(req.TenantInfo)
-	list, err := s.listOf(ctx, &req, actor, source)
+	list, err := s.listOf(ctx, req, actor, source)
 	if err != nil {
 		return nil, err
 	}
@@ -671,7 +692,7 @@ func (s *Service) ArtifactRows(
 // which is what the pane showed last time.
 func (s *Service) followDecisions(
 	ctx context.Context,
-	req conversationports.GetThreadRequest,
+	req *conversationports.GetThreadRequest,
 	artifacts []*assistantartifact.Artifact,
 ) {
 	var wantProposals, wantPlans bool
@@ -733,11 +754,11 @@ func (s *Service) followDecisions(
 
 func (s *Service) PinArtifact(
 	ctx context.Context,
-	req conversationports.GetThreadRequest,
+	req *conversationports.GetThreadRequest,
 	artifactID pulid.ID,
 	pinned bool,
 ) (*assistantartifactports.AssistantArtifact, error) {
-	if _, err := s.conversations.GetThread(ctx, &req); err != nil {
+	if _, err := s.conversations.GetThread(ctx, req); err != nil {
 		return nil, err
 	}
 	if s.artifacts == nil {
@@ -812,11 +833,11 @@ func (s *Service) boardDocument(
 // PDF, printed by the same renderer as invoices, or as a Word file.
 func (s *Service) ExportDocument(
 	ctx context.Context,
-	req conversationports.GetThreadRequest,
+	req *conversationports.GetThreadRequest,
 	artifactID pulid.ID,
 	format string,
 ) (*assistantartifactports.ArtifactFile, error) {
-	if doc, isBoard, err := s.boardDocument(ctx, &req, artifactID); isBoard {
+	if doc, isBoard, err := s.boardDocument(ctx, req, artifactID); isBoard {
 		if err != nil {
 			return nil, err
 		}
@@ -881,10 +902,10 @@ func (s *Service) renderDocument(
 // the conversation is the person's and the artifact a document in it.
 func (s *Service) documentLineage(
 	ctx context.Context,
-	req conversationports.GetThreadRequest,
+	req *conversationports.GetThreadRequest,
 	artifactID pulid.ID,
 ) ([]*assistantartifact.Artifact, error) {
-	if _, err := s.conversations.GetThread(ctx, &req); err != nil {
+	if _, err := s.conversations.GetThread(ctx, req); err != nil {
 		return nil, err
 	}
 	if s.artifacts == nil {
@@ -912,7 +933,7 @@ func (s *Service) documentLineage(
 // changed. Earlier versions stay as they were.
 func (s *Service) appendDocumentVersion(
 	ctx context.Context,
-	req conversationports.GetThreadRequest,
+	req *conversationports.GetThreadRequest,
 	versions []*assistantartifact.Artifact,
 	body, note string,
 ) (*assistantartifactports.AssistantArtifact, error) {
@@ -976,7 +997,7 @@ func (s *Service) appendDocumentVersion(
 // SaveDocumentVersion keeps a person's edit of a document as its next version.
 func (s *Service) SaveDocumentVersion(
 	ctx context.Context,
-	req conversationports.GetThreadRequest,
+	req *conversationports.GetThreadRequest,
 	artifactID pulid.ID,
 	version assistantartifactports.SaveDocumentVersionRequest,
 ) (*assistantartifactports.AssistantArtifact, error) {
@@ -996,7 +1017,7 @@ func (s *Service) SaveDocumentVersion(
 // version, so nothing written since is lost.
 func (s *Service) RestoreDocumentVersion(
 	ctx context.Context,
-	req conversationports.GetThreadRequest,
+	req *conversationports.GetThreadRequest,
 	artifactID pulid.ID,
 ) (*assistantartifactports.AssistantArtifact, error) {
 	versions, err := s.documentLineage(ctx, req, artifactID)
@@ -1025,7 +1046,7 @@ func (s *Service) RestoreDocumentVersion(
 // it as a new version or keeps what was there.
 func (s *Service) RewriteDocument(
 	ctx context.Context,
-	req conversationports.GetThreadRequest,
+	req *conversationports.GetThreadRequest,
 	artifactID pulid.ID,
 	rewrite assistantartifactports.DocumentRewriteRequest,
 ) (*assistantartifactports.DocumentRewriteSuggestion, error) {
@@ -1049,21 +1070,21 @@ func (s *Service) RewriteDocument(
 		return nil, errortypes.NewBusinessError("Rewriting is not available here")
 	}
 
-	thread, err := s.conversations.GetThread(ctx, &req)
+	thread, err := s.conversations.GetThread(ctx, req)
 	if err != nil {
 		return nil, err
 	}
 	definition := s.threadDefinition(ctx, req)
-	attribution := aiusageports.AIUsageAttribution{
+	usageAttribution := aiusageports.AIUsageAttribution{
 		UserID:   req.UserID,
 		ThreadID: req.ID,
 		Feature:  aiusage.FeatureAgentTurn,
 	}
 	preferred := thread.PreferredProviderID
 	if definition != nil {
-		attribution.AgentDefinitionID = definition.ID
+		usageAttribution.AgentDefinitionID = definition.ID
 		version := definition.Version
-		attribution.DefinitionVersion = &version
+		usageAttribution.DefinitionVersion = &version
 		if preferred.IsNil() {
 			preferred = definition.PreferredProviderID
 		}
@@ -1093,7 +1114,7 @@ func (s *Service) RewriteDocument(
 		SchemaName:          "document_rewrite",
 		MaxTokens:           rewriteMaxTokens,
 		PreferredProviderID: preferred,
-		Attribution:         attribution,
+		Attribution:         usageAttribution,
 	})
 	if err != nil {
 		s.logger.Warn("document rewrite failed", zap.Error(err))
@@ -1108,25 +1129,6 @@ func (s *Service) RewriteDocument(
 	out.Text = strings.TrimSpace(out.Text)
 
 	return &out, nil
-}
-
-type Service struct {
-	logger        *zap.Logger
-	conversations conversationports.ConversationRepository
-	definitions   agentdefinitionports.AgentDefinitionRepository
-	artifacts     assistantartifactports.AssistantArtifactRepository
-	permissions   permissionports.PermissionEngine
-	activity      agentactivityports.AgentActivityPublisher
-	proposals     proposalstores.ProposalStore
-	plans         proposalstores.PlanStore
-	queries       agenttoolports.AgentQueryToolRegistry
-	reports       *reporting.Service
-	reportRuns    reportRerunner
-	boards        assistantports.BoardFiller
-	pdfs          documenttemplateports.PDFRenderer
-	completion    llmports.StructuredCompleter
-	runs          agentruntimeports.AgentRunRepository
-	users         tenantports.UserRepository
 }
 
 func (s *Service) attribution() *attribution.Attributor {
