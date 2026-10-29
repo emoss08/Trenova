@@ -402,7 +402,9 @@ locally. A finding is fixed with the index the query needs, a constant that reac
 or an enum column's value), or a query whose order an index gives. A count or report over a
 tenant's rows gets an index bounded by its `WHERE` (tenant, status, time range) and a sargable
 range: a bucketed or computed timestamp (`created_at / 86400 * 86400 >= $1`, `$now - arrival > $2`)
-is rewritten as a range on the column itself.
+is rewritten as a range on the column itself. A finding on a table the volume set leaves near-empty
+(the planner scans and sorts a handful of rows, which production never would) is fixed in the
+volume generator, not the query: give the table the rows and status mix production holds.
 
 - **Write a partial index's predicate as the query writes it.** keel renders `IsTrue()` and
   `IsFalse()` as `IS TRUE` and `IS FALSE`, which Postgres does not prove from `= true` or
@@ -635,8 +637,16 @@ back-dated row's `updated_at` assigns `volumegen.KeepUpdated(h)`. `volumegen` ho
 every phase shares (its options, faker, numberer, tenant references, records and stores);
 `ledgervolume` posts journals and writes the AR rows several phases produce; each phase
 (`masterdatavolume`, `shipmentvolume`, `billingvolume`, …) is a package with one `Seed`
-function, and `volume.Run` calls them in order. When an entity gains a required relation
-or a derived row the application always writes (as every shipment gets an auto-order), generate it
+function, and `volume.Run` calls them in order. The operational phases derive their rows from
+the generated shipments (each move's `StopRecord`s carry its windows and actuals) as the
+application would: service failures where a stop arrived past its window and the tenant's grace
+(`servicefailurevolume`), tenders, offers and state-lane routing guides for most carrier-covered
+moves and a share of open ones (`tendervolume`), a position and HOS state per crewed tractor and a
+geofence event per driver stop visit (`telematicsvolume`), ETAs for the open stops of tracked
+shipments (`stopetavolume`), and capture batches for the paperwork of shipments delivered inside
+the tenant's capture retention (`capturevolume`). A new phase is appended after its dependencies,
+so the faker stream, and with it every earlier table, stays the same for a seed. When an entity
+gains a required relation or a derived row the application always writes (as every shipment gets an auto-order), generate it
 there too; write an optional relation only in the states where the application would have written
 it (a billing queue item only once a shipment is ready to invoice, a draft invoice only once the
 item is approved, an email only for a customer with an email profile).
