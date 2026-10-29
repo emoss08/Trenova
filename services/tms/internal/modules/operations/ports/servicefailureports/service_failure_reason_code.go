@@ -40,6 +40,20 @@ func (r *GetServiceFailureReasonCodeByIDRequest) Validate() *errortypes.MultiErr
 	return nil
 }
 
+type GetServiceFailureReasonCodesByIDsRequest struct {
+	TenantInfo    pagination.TenantInfo `json:"-"`
+	ReasonCodeIDs []pulid.ID            `json:"reasonCodeIds"`
+}
+
+func (r *GetServiceFailureReasonCodesByIDsRequest) Validate() *errortypes.MultiError {
+	multiErr := errortypes.NewMultiError()
+	validateTenantInfo(multiErr, r.TenantInfo)
+	if multiErr.HasErrors() {
+		return multiErr
+	}
+	return nil
+}
+
 type ServiceFailureReasonCodeSelectOptionsRequest struct {
 	SelectQueryRequest *pagination.SelectQueryRequest     `json:"-"`
 	AppliesTo          servicefailure.ReasonCodeAppliesTo `json:"appliesTo"`
@@ -91,6 +105,10 @@ type ServiceFailureReasonCodeRepository interface {
 		ctx context.Context,
 		req GetServiceFailureReasonCodeByIDRequest,
 	) (*servicefailure.ReasonCode, error)
+	GetByIDs(
+		ctx context.Context,
+		req GetServiceFailureReasonCodesByIDsRequest,
+	) ([]*servicefailure.ReasonCode, error)
 	FindDefault(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,

@@ -226,6 +226,13 @@ func (s *Service) GetByID(
 	return s.repo.GetByID(ctx, req)
 }
 
+func (s *Service) GetByIDs(
+	ctx context.Context,
+	req tenantports.GetUsersByIDsRequest,
+) ([]*tenant.User, error) {
+	return s.repo.GetByIDs(ctx, req)
+}
+
 func (s *Service) GetOrganizations(
 	ctx context.Context,
 	userID pulid.ID,

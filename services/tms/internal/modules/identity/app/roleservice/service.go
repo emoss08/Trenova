@@ -431,6 +431,13 @@ func (s *Service) GetRoleByID(
 	return s.roleRepo.GetByID(ctx, req)
 }
 
+func (s *Service) GetRolesByIDs(
+	ctx context.Context,
+	req permissionports.GetRolesByIDsRequest,
+) ([]*rbac.Role, error) {
+	return s.roleRepo.GetByIDs(ctx, req)
+}
+
 func (s *Service) GetImpactedUsers(
 	ctx context.Context,
 	roleID pulid.ID,

@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/testutil/keeltest"
 	"github.com/emoss08/trenova/pkg/dbscope"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -46,6 +47,38 @@ func TestGetRolesWithInheritanceSkipsTheQueryForAnEmptyRoleSet(t *testing.T) {
 	repo := &repository{db: postgres.NewTestConnection(keeltest.RenderDB(t)), l: zap.NewNop()}
 
 	roles, err := repo.GetRolesWithInheritance(keeltest.TenantContext(t), nil)
+	require.NoError(t, err)
+	assert.Empty(t, roles)
+}
+
+func TestRolesByIDsIsOneBoundedStatementInsideTheOrganization(t *testing.T) {
+	t.Parallel()
+
+	ids := []pulid.ID{"rol_1", "rol_2", "rol_3"}
+	sql, args := keeltest.Render(t, rolesByIDs(
+		keeltest.TenantContext(t),
+		permissionports.GetRolesByIDsRequest{
+			TenantInfo: pagination.TenantInfo{OrgID: keeltest.TestOrganizationID},
+			RoleIDs:    ids,
+		},
+	))
+
+	assert.Contains(t, sql, "= ANY(")
+	assert.Contains(t, sql, "LIMIT 3")
+	assert.Contains(t, sql, `"organization_id" = `)
+	assert.NotContains(t, sql, "resource_permissions", "a select-option read needs no permissions")
+	assert.Contains(t, args, string(keeltest.TestOrganizationID))
+}
+
+func TestGetByIDsSkipsTheQueryForAnEmptyRoleSet(t *testing.T) {
+	t.Parallel()
+
+	repo := &repository{db: postgres.NewTestConnection(keeltest.RenderDB(t)), l: zap.NewNop()}
+
+	roles, err := repo.GetByIDs(
+		keeltest.TenantContext(t),
+		permissionports.GetRolesByIDsRequest{},
+	)
 	require.NoError(t, err)
 	assert.Empty(t, roles)
 }

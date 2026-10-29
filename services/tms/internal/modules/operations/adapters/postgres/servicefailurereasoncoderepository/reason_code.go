@@ -111,6 +111,31 @@ func (r *repository) GetByID(
 	})
 }
 
+func (r *repository) GetByIDs(
+	ctx context.Context,
+	req servicefailureports.GetServiceFailureReasonCodesByIDsRequest,
+) ([]*servicefailure.ReasonCode, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*servicefailure.ReasonCode, error) {
+		if len(req.ReasonCodeIDs) == 0 {
+			return []*servicefailure.ReasonCode{}, nil
+		}
+
+		entities, err := reasonCodesByIDs(req.ReasonCodeIDs).List(ctx, r.db.Keel(ctx))
+		if err != nil {
+			r.l.Error("failed to get service failure reason codes", zap.Error(err))
+			return nil, err
+		}
+
+		return entities, nil
+	})
+}
+
+func reasonCodesByIDs(ids []pulid.ID) *keel.Query[*servicefailure.ReasonCode] {
+	rc := servicefailuredb.ReasonCodes
+
+	return rc.Where(rc.ID.In(ids...)).Limit(len(ids))
+}
+
 func (r *repository) get(ctx context.Context, id pulid.ID) (*servicefailure.ReasonCode, error) {
 	rc := servicefailuredb.ReasonCodes
 	entity, err := rc.Where(rc.ID.Eq(id)).

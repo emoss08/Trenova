@@ -70,21 +70,27 @@ func (r *Sources) User(
 	req *selectoption.Request,
 ) (*gqlmodel.SelectOptionConnection, error) {
 	if len(req.IDs) > 0 {
-		items := make([]selectoption.Item, 0, len(req.IDs))
-		for _, id := range req.IDs {
-			entity, err := r.UserService.GetByID(
-				ctx,
-				tenantports.GetUserByIDRequest{
-					TenantInfo:   req.TenantInfo,
-					LookupUserID: id,
-				},
-			)
-			if err != nil {
-				return nil, err
-			}
-			items = append(items, userSelectOptionItem(entity))
+		entities, err := r.UserService.GetByIDs(
+			ctx,
+			tenantports.GetUsersByIDsRequest{
+				TenantInfo: req.TenantInfo,
+				UserIDs:    req.IDs,
+			},
+		)
+		if err != nil {
+			return nil, err
 		}
 
+		items, err := selectoption.RequiredItems(
+			req.IDs,
+			entities,
+			(*tenant.User).GetID,
+			userSelectOptionItem,
+			"User",
+		)
+		if err != nil {
+			return nil, err
+		}
 		return selectoption.Connection(items, len(items), 0)
 	}
 
@@ -105,21 +111,27 @@ func (r *Sources) Role(
 	req *selectoption.Request,
 ) (*gqlmodel.SelectOptionConnection, error) {
 	if len(req.IDs) > 0 {
-		items := make([]selectoption.Item, 0, len(req.IDs))
-		for _, id := range req.IDs {
-			entity, err := r.RoleService.GetRoleByID(
-				ctx,
-				permissionports.GetRoleByIDRequest{
-					ID:         id,
-					TenantInfo: req.TenantInfo,
-				},
-			)
-			if err != nil {
-				return nil, err
-			}
-			items = append(items, roleSelectOptionItem(entity))
+		entities, err := r.RoleService.GetRolesByIDs(
+			ctx,
+			permissionports.GetRolesByIDsRequest{
+				TenantInfo: req.TenantInfo,
+				RoleIDs:    req.IDs,
+			},
+		)
+		if err != nil {
+			return nil, err
 		}
 
+		items, err := selectoption.RequiredItems(
+			req.IDs,
+			entities,
+			(*rbac.Role).GetID,
+			roleSelectOptionItem,
+			"Role",
+		)
+		if err != nil {
+			return nil, err
+		}
 		return selectoption.Connection(items, len(items), 0)
 	}
 

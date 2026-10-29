@@ -433,6 +433,10 @@ type ServiceFailureReasonCodeService interface {
 		ctx context.Context,
 		req GetServiceFailureReasonCodeByIDRequest,
 	) (*servicefailure.ReasonCode, error)
+	GetByIDs(
+		ctx context.Context,
+		req GetServiceFailureReasonCodesByIDsRequest,
+	) ([]*servicefailure.ReasonCode, error)
 	SelectOptions(
 		ctx context.Context,
 		req *ServiceFailureReasonCodeSelectOptionsRequest,

@@ -610,6 +610,74 @@ func (_c *MockRoleRepository_GetByID_Call) RunAndReturn(run func(ctx context.Con
 	return _c
 }
 
+// GetByIDs provides a mock function for the type MockRoleRepository
+func (_mock *MockRoleRepository) GetByIDs(ctx context.Context, req permissionports.GetRolesByIDsRequest) ([]*rbac.Role, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetByIDs")
+	}
+
+	var r0 []*rbac.Role
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, permissionports.GetRolesByIDsRequest) ([]*rbac.Role, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, permissionports.GetRolesByIDsRequest) []*rbac.Role); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*rbac.Role)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, permissionports.GetRolesByIDsRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockRoleRepository_GetByIDs_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetByIDs'
+type MockRoleRepository_GetByIDs_Call struct {
+	*mock.Call
+}
+
+// GetByIDs is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req permissionports.GetRolesByIDsRequest
+func (_e *MockRoleRepository_Expecter) GetByIDs(ctx any, req any) *MockRoleRepository_GetByIDs_Call {
+	return &MockRoleRepository_GetByIDs_Call{Call: _e.mock.On("GetByIDs", ctx, req)}
+}
+
+func (_c *MockRoleRepository_GetByIDs_Call) Run(run func(ctx context.Context, req permissionports.GetRolesByIDsRequest)) *MockRoleRepository_GetByIDs_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 permissionports.GetRolesByIDsRequest
+		if args[1] != nil {
+			arg1 = args[1].(permissionports.GetRolesByIDsRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockRoleRepository_GetByIDs_Call) Return(roles []*rbac.Role, err error) *MockRoleRepository_GetByIDs_Call {
+	_c.Call.Return(roles, err)
+	return _c
+}
+
+func (_c *MockRoleRepository_GetByIDs_Call) RunAndReturn(run func(ctx context.Context, req permissionports.GetRolesByIDsRequest) ([]*rbac.Role, error)) *MockRoleRepository_GetByIDs_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetResourcePermissionsByRoleID provides a mock function for the type MockRoleRepository
 func (_mock *MockRoleRepository) GetResourcePermissionsByRoleID(ctx context.Context, roleID pulid.ID) ([]*rbac.ResourcePermission, error) {
 	ret := _mock.Called(ctx, roleID)

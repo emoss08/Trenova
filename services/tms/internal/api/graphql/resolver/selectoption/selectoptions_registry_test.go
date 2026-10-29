@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -120,4 +121,60 @@ func TestSelectOptionInt16Filter(t *testing.T) {
 	)
 	assert.Equal(t, int16(0), Int16Filter(map[string]any{"planYear": true}, "planYear"))
 	assert.Equal(t, int16(0), Int16Filter(map[string]any{}, "planYear"))
+}
+
+type requiredItemsEntity struct {
+	id    pulid.ID
+	label string
+}
+
+func requiredItemsEntityID(entity *requiredItemsEntity) pulid.ID {
+	return entity.id
+}
+
+func requiredItemsEntityItem(entity *requiredItemsEntity) Item {
+	return ItemFor(
+		&gqlmodel.SelectOption{ID: entity.id.String(), Label: entity.label},
+		0,
+		entity.id,
+	)
+}
+
+func TestRequiredItems_KeepsTheRequestedOrder(t *testing.T) {
+	t.Parallel()
+
+	first := &requiredItemsEntity{id: pulid.MustNew("st_"), label: "first"}
+	second := &requiredItemsEntity{id: pulid.MustNew("st_"), label: "second"}
+
+	items, err := RequiredItems(
+		[]pulid.ID{second.id, first.id, second.id},
+		[]*requiredItemsEntity{first, second},
+		requiredItemsEntityID,
+		requiredItemsEntityItem,
+		"ShipmentType",
+	)
+	require.NoError(t, err)
+
+	labels := make([]string, 0, len(items))
+	for _, item := range items {
+		labels = append(labels, item.Option.Label)
+	}
+	assert.Equal(t, []string{"second", "first", "second"}, labels)
+}
+
+func TestRequiredItems_AMissingIDIsNotFound(t *testing.T) {
+	t.Parallel()
+
+	found := &requiredItemsEntity{id: pulid.MustNew("st_"), label: "found"}
+
+	items, err := RequiredItems(
+		[]pulid.ID{found.id, pulid.MustNew("st_")},
+		[]*requiredItemsEntity{found},
+		requiredItemsEntityID,
+		requiredItemsEntityItem,
+		"ShipmentType",
+	)
+	require.Error(t, err)
+	assert.Nil(t, items)
+	assert.True(t, errortypes.IsNotFoundError(err))
 }

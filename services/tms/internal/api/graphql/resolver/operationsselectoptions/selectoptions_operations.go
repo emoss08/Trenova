@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/selectoption"
 	"github.com/emoss08/trenova/internal/modules/operations/app/orderservice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/order"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/orderports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
@@ -43,21 +44,27 @@ func (r *Sources) ShipmentType(
 	req *selectoption.Request,
 ) (*gqlmodel.SelectOptionConnection, error) {
 	if len(req.IDs) > 0 {
-		items := make([]selectoption.Item, 0, len(req.IDs))
-		for _, id := range req.IDs {
-			entity, err := r.ShipmentTypeService.Get(
-				ctx,
-				shipmenttypeports.GetShipmentTypeByIDRequest{
-					ID:         id,
-					TenantInfo: req.TenantInfo,
-				},
-			)
-			if err != nil {
-				return nil, err
-			}
-			items = append(items, shipmentTypeSelectOptionItem(entity))
+		entities, err := r.ShipmentTypeService.GetByIDs(
+			ctx,
+			shipmenttypeports.GetShipmentTypesByIDsRequest{
+				TenantInfo:      req.TenantInfo,
+				ShipmentTypeIDs: req.IDs,
+			},
+		)
+		if err != nil {
+			return nil, err
 		}
 
+		items, err := selectoption.RequiredItems(
+			req.IDs,
+			entities,
+			(*shipmenttype.ShipmentType).GetID,
+			shipmentTypeSelectOptionItem,
+			"ShipmentType",
+		)
+		if err != nil {
+			return nil, err
+		}
 		return selectoption.Connection(items, len(items), 0)
 	}
 
@@ -83,21 +90,27 @@ func (r *Sources) ServiceType(
 	req *selectoption.Request,
 ) (*gqlmodel.SelectOptionConnection, error) {
 	if len(req.IDs) > 0 {
-		items := make([]selectoption.Item, 0, len(req.IDs))
-		for _, id := range req.IDs {
-			entity, err := r.ServiceTypeService.Get(
-				ctx,
-				servicetypeports.GetServiceTypeByIDRequest{
-					ID:         id,
-					TenantInfo: req.TenantInfo,
-				},
-			)
-			if err != nil {
-				return nil, err
-			}
-			items = append(items, serviceTypeSelectOptionItem(entity))
+		entities, err := r.ServiceTypeService.GetByIDs(
+			ctx,
+			servicetypeports.GetServiceTypesByIDsRequest{
+				TenantInfo:     req.TenantInfo,
+				ServiceTypeIDs: req.IDs,
+			},
+		)
+		if err != nil {
+			return nil, err
 		}
 
+		items, err := selectoption.RequiredItems(
+			req.IDs,
+			entities,
+			(*servicetype.ServiceType).GetID,
+			serviceTypeSelectOptionItem,
+			"ServiceType",
+		)
+		if err != nil {
+			return nil, err
+		}
 		return selectoption.Connection(items, len(items), 0)
 	}
 
@@ -123,21 +136,27 @@ func (r *Sources) Commodity(
 	req *selectoption.Request,
 ) (*gqlmodel.SelectOptionConnection, error) {
 	if len(req.IDs) > 0 {
-		items := make([]selectoption.Item, 0, len(req.IDs))
-		for _, id := range req.IDs {
-			entity, err := r.CommodityService.Get(
-				ctx,
-				commodityports.GetCommodityByIDRequest{
-					ID:         id,
-					TenantInfo: req.TenantInfo,
-				},
-			)
-			if err != nil {
-				return nil, err
-			}
-			items = append(items, commoditySelectOptionItem(entity))
+		entities, err := r.CommodityService.GetByIDs(
+			ctx,
+			commodityports.GetCommoditiesByIDsRequest{
+				TenantInfo:   req.TenantInfo,
+				CommodityIDs: req.IDs,
+			},
+		)
+		if err != nil {
+			return nil, err
 		}
 
+		items, err := selectoption.RequiredItems(
+			req.IDs,
+			entities,
+			(*commodity.Commodity).GetID,
+			commoditySelectOptionItem,
+			"Commodity",
+		)
+		if err != nil {
+			return nil, err
+		}
 		return selectoption.Connection(items, len(items), 0)
 	}
 
@@ -163,21 +182,27 @@ func (r *Sources) HazardousMaterial(
 	req *selectoption.Request,
 ) (*gqlmodel.SelectOptionConnection, error) {
 	if len(req.IDs) > 0 {
-		items := make([]selectoption.Item, 0, len(req.IDs))
-		for _, id := range req.IDs {
-			entity, err := r.HazardousMaterialService.Get(
-				ctx,
-				hazardousmaterialports.GetHazardousMaterialByIDRequest{
-					ID:         id,
-					TenantInfo: req.TenantInfo,
-				},
-			)
-			if err != nil {
-				return nil, err
-			}
-			items = append(items, hazardousMaterialSelectOptionItem(entity))
+		entities, err := r.HazardousMaterialService.GetByIDs(
+			ctx,
+			hazardousmaterialports.GetHazardousMaterialsByIDsRequest{
+				TenantInfo:           req.TenantInfo,
+				HazardousMaterialIDs: req.IDs,
+			},
+		)
+		if err != nil {
+			return nil, err
 		}
 
+		items, err := selectoption.RequiredItems(
+			req.IDs,
+			entities,
+			(*hazardousmaterial.HazardousMaterial).GetID,
+			hazardousMaterialSelectOptionItem,
+			"HazardousMaterial",
+		)
+		if err != nil {
+			return nil, err
+		}
 		return selectoption.Connection(items, len(items), 0)
 	}
 
@@ -410,21 +435,27 @@ func (r *Sources) ServiceFailureReasonCode(
 	req *selectoption.Request,
 ) (*gqlmodel.SelectOptionConnection, error) {
 	if len(req.IDs) > 0 {
-		items := make([]selectoption.Item, 0, len(req.IDs))
-		for _, id := range req.IDs {
-			entity, err := r.ServiceFailureReasonCodeSvc.Get(
-				ctx,
-				servicefailureports.GetServiceFailureReasonCodeByIDRequest{
-					ID:         id,
-					TenantInfo: req.TenantInfo,
-				},
-			)
-			if err != nil {
-				return nil, err
-			}
-			items = append(items, serviceFailureReasonCodeSelectOptionItem(entity))
+		entities, err := r.ServiceFailureReasonCodeSvc.GetByIDs(
+			ctx,
+			servicefailureports.GetServiceFailureReasonCodesByIDsRequest{
+				TenantInfo:    req.TenantInfo,
+				ReasonCodeIDs: req.IDs,
+			},
+		)
+		if err != nil {
+			return nil, err
 		}
 
+		items, err := selectoption.RequiredItems(
+			req.IDs,
+			entities,
+			(*servicefailure.ReasonCode).GetID,
+			serviceFailureReasonCodeSelectOptionItem,
+			"Service failure reason code",
+		)
+		if err != nil {
+			return nil, err
+		}
 		return selectoption.Connection(items, len(items), 0)
 	}
 

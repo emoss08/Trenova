@@ -62,6 +62,11 @@ type GetRoleByIDRequest struct {
 	TenantInfo pagination.TenantInfo `json:"-"`
 }
 
+type GetRolesByIDsRequest struct {
+	TenantInfo pagination.TenantInfo `json:"-"`
+	RoleIDs    []pulid.ID            `json:"roleIds"`
+}
+
 type GetUserRoleAssignmentsByIDRequest struct {
 	TenantInfo       pagination.TenantInfo `json:"-"`
 	RoleAssignmentID pulid.ID              `json:"roleAssignmentID"`
@@ -97,6 +102,7 @@ type RoleRepository interface {
 	Update(ctx context.Context, role *rbac.Role) error
 	Delete(ctx context.Context, req DeleteRoleRequest) error
 	GetByID(ctx context.Context, req GetRoleByIDRequest) (*rbac.Role, error)
+	GetByIDs(ctx context.Context, req GetRolesByIDsRequest) ([]*rbac.Role, error)
 	GetRolesWithInheritance(ctx context.Context, roleIDs []pulid.ID) ([]*rbac.Role, error)
 	GetUsersWithRole(ctx context.Context, roleID pulid.ID) ([]ImpactedUser, error)
 	ListUsersWithPermission(

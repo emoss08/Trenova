@@ -177,6 +177,39 @@ func (r *repository) GetByID(
 	})
 }
 
+func rolesByIDs(
+	ctx context.Context,
+	req permissionports.GetRolesByIDsRequest,
+) *keel.Query[*rbac.Role] {
+	ro := rbacdb.Roles
+
+	return forTenant(
+		ctx,
+		ro.Query(),
+		ro.ID.In(req.RoleIDs...),
+		ro.OrganizationID.Eq(req.TenantInfo.OrgID),
+	).Limit(len(req.RoleIDs))
+}
+
+func (r *repository) GetByIDs(
+	ctx context.Context,
+	req permissionports.GetRolesByIDsRequest,
+) ([]*rbac.Role, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*rbac.Role, error) {
+		if len(req.RoleIDs) == 0 {
+			return []*rbac.Role{}, nil
+		}
+
+		roles, err := rolesByIDs(ctx, req).List(ctx, r.db.Keel(ctx))
+		if err != nil {
+			r.l.Error("failed to get roles", zap.Int("roleCount", len(req.RoleIDs)), zap.Error(err))
+			return nil, err
+		}
+
+		return roles, nil
+	})
+}
+
 func rolesWithInheritance(ctx context.Context, roleIDs []pulid.ID) *keel.Query[*rbac.Role] {
 	ro := rbacdb.Roles
 	parent := ro.As(parentRoleAlias)

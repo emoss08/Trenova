@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -118,6 +119,17 @@ func TestRoleRepository_DeletesAndUpdatesStayInsideTheTenant(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, fixtureB.role.ID, stored.RoleID)
 		assert.Equal(t, []permission.Operation{permission.OpRead}, stored.Operations)
+	})
+
+	t.Run("a batch read returns only the organization's roles", func(t *testing.T) {
+		roles, err := repo.GetByIDs(ctx, permissionports.GetRolesByIDsRequest{
+			TenantInfo: tenantA.Info(),
+			RoleIDs:    []pulid.ID{fixtureB.role.ID, fixtureA.role.ID, pulid.MustNew("rol_")},
+		})
+		require.NoError(t, err)
+		require.Len(t, roles, 1)
+		assert.Equal(t, fixtureA.role.ID, roles[0].ID)
+		assert.Equal(t, fixtureA.role.Name, roles[0].Name)
 	})
 
 	t.Run("the owning organization can still delete its own rows", func(t *testing.T) {
