@@ -307,7 +307,8 @@ func CreateServiceFailureReasonCodes(
 	}
 
 	entities := make([]*servicefailure.ReasonCode, 0, len(defaultServiceFailureReasonCodes))
-	for _, def := range defaultServiceFailureReasonCodes {
+	for idx := range defaultServiceFailureReasonCodes {
+		def := &defaultServiceFailureReasonCodes[idx]
 		if existingCodes[strings.ToUpper(def.code)] {
 			continue
 		}
@@ -343,8 +344,8 @@ func existingReasonCodes(
 	scope tenantscope.Scope,
 ) (map[string]bool, error) {
 	codes := make([]string, 0, len(defaultServiceFailureReasonCodes))
-	for _, def := range defaultServiceFailureReasonCodes {
-		codes = append(codes, def.code)
+	for idx := range defaultServiceFailureReasonCodes {
+		codes = append(codes, defaultServiceFailureReasonCodes[idx].code)
 	}
 
 	r := servicefailuredb.ReasonCodes

@@ -325,7 +325,7 @@ func inboundDocumentKind(txnType string) accountinginbound.InboundDocumentKind {
 		return accountinginbound.InboundDocBill
 	case quickbookstxn.TxnVendorCredit:
 		return accountinginbound.InboundDocVendorCredit
-	case quickbookstxn.TxnPayment, quickbookstxn.TxnBillPayment:
+	case quickbookstxn.TxnPayment, quickbookstxn.TxnBillPayment, quickbookstxn.TxnJournalEntry:
 		return accountinginbound.InboundDocOther
 	default:
 		return accountinginbound.InboundDocOther

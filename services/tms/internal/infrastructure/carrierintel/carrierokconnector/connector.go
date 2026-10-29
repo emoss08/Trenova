@@ -112,6 +112,7 @@ func (c *Connector) PriceBook() carrierintelusage.PriceBook {
 			carrierintelusage.BillingModelPerDOTMonth,
 			"3.00",
 		),
+		carrierintelusage.EndpointComposite: price(carrierintelusage.BillingModelFree, "0"),
 	}
 }
 

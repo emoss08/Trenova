@@ -150,7 +150,8 @@ func purchaseKindOf(refs map[string]string) (quickbookstxn.TxnKind, error) {
 	case quickbookstxn.TxnInvoice,
 		quickbookstxn.TxnCreditMemo,
 		quickbookstxn.TxnPayment,
-		quickbookstxn.TxnBillPayment:
+		quickbookstxn.TxnBillPayment,
+		quickbookstxn.TxnJournalEntry:
 		return "", errPurchaseDocumentType
 	default:
 		return "", errPurchaseDocumentType

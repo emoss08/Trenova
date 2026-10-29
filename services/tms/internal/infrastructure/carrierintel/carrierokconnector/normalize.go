@@ -24,6 +24,7 @@ var basicCategories = map[carrierokpayload.BasicCategory]fleetsafety.CSABasic{
 	carrierokpayload.BasicCrashIndicator:      fleetsafety.BasicCrashIndicator,
 }
 
+//nolint:exhaustive // a DUNS number has no carrierintel network kind, so its links are not drawn
 var networkKinds = map[carrierokpayload.NetworkLinkKind]carrierintel.NetworkKind{
 	carrierokpayload.NetworkLinkPhysicalAddress: carrierintel.NetworkKindAddress,
 	carrierokpayload.NetworkLinkMailingAddress:  carrierintel.NetworkKindAddress,
