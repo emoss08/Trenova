@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/shared/carrierok"
+	"github.com/emoss08/trenova/shared/carrierokpayload"
 )
 
 const (
@@ -63,7 +64,7 @@ func (c *Client) Lookup(
 
 	var (
 		endpoint carrierintelusage.Endpoint
-		fetch    func(ctx context.Context) (*carrierok.Profile, error)
+		fetch    func(ctx context.Context) (*carrierokpayload.Profile, error)
 	)
 	switch depth {
 	case carrierintel.LookupDepthFMCSA:
@@ -72,19 +73,19 @@ func (c *Client) Lookup(
 			return nil, errorMapper.InvalidRequest(messageFMCSAIdentifier)
 		}
 		endpoint = carrierintelusage.EndpointProfileFMCSA
-		fetch = func(ctx context.Context) (*carrierok.Profile, error) {
+		fetch = func(ctx context.Context) (*carrierokpayload.Profile, error) {
 			return c.sdk.ProfileFMCSA(ctx, query)
 		}
 	case carrierintel.LookupDepthLite:
 		query := profileQuery(id)
 		endpoint = carrierintelusage.EndpointProfileLite
-		fetch = func(ctx context.Context) (*carrierok.Profile, error) {
+		fetch = func(ctx context.Context) (*carrierokpayload.Profile, error) {
 			return c.sdk.ProfileLite(ctx, query)
 		}
 	default:
 		query := profileQuery(id)
 		endpoint = carrierintelusage.EndpointProfileFull
-		fetch = func(ctx context.Context) (*carrierok.Profile, error) {
+		fetch = func(ctx context.Context) (*carrierokpayload.Profile, error) {
 			return c.sdk.Profile(ctx, query)
 		}
 	}
@@ -249,7 +250,7 @@ func fmcsaQuery(id carrierintelports.CarrierIntelIdentifier) (carrierok.FMCSAQue
 	}
 }
 
-func providerRef(sdkProfile *carrierok.Profile, profile *carrierintel.Profile) string {
+func providerRef(sdkProfile *carrierokpayload.Profile, profile *carrierintel.Profile) string {
 	if docID := intelkit.Text(sdkProfile.Identity.DocID); docID != "" {
 		return docID
 	}

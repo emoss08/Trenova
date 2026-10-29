@@ -1,4 +1,4 @@
-package carrierok
+package carrierokpayload
 
 import (
 	"cmp"
@@ -72,7 +72,7 @@ func SplitProfileID(profileID string) (dot, docket string) {
 	return dot, docket
 }
 
-func decodeMonitoringWrite(status int, body []byte) (*MonitoringWriteResult, error) {
+func DecodeMonitoringWrite(status int, body []byte) (*MonitoringWriteResult, error) {
 	result := &MonitoringWriteResult{
 		StatusCode: status,
 		Raw:        body,
@@ -127,7 +127,7 @@ func decodeMonitoringFailure(raw []byte) (MonitoringFailure, bool) {
 	}
 }
 
-func decodeMonitoringList(body []byte) (*MonitoringListResult, error) {
+func DecodeMonitoringList(body []byte) (*MonitoringListResult, error) {
 	result := &MonitoringListResult{Raw: body}
 	if len(body) == 0 || jsonflex.IsAbsent(body) {
 		return result, nil

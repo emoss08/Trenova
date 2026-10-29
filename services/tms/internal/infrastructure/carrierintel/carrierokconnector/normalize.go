@@ -8,35 +8,35 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/carrierintel/intelkit"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/fleetsafety"
-	"github.com/emoss08/trenova/shared/carrierok"
+	"github.com/emoss08/trenova/shared/carrierokpayload"
 	"github.com/emoss08/trenova/shared/jsonflex"
 )
 
 const riskFactorBOC3OnFile = "boc3_on_file"
 
-var basicCategories = map[carrierok.BasicCategory]fleetsafety.CSABasic{
-	carrierok.BasicUnsafeDriving:       fleetsafety.BasicUnsafeDriving,
-	carrierok.BasicHoursOfService:      fleetsafety.BasicHOSCompliance,
-	carrierok.BasicVehicleMaintenance:  fleetsafety.BasicVehicleMaintenance,
-	carrierok.BasicControlledSubstance: fleetsafety.BasicControlledSubstances,
-	carrierok.BasicDriverFitness:       fleetsafety.BasicDriverFitness,
-	carrierok.BasicHazardousMaterials:  fleetsafety.BasicHazmatCompliance,
-	carrierok.BasicCrashIndicator:      fleetsafety.BasicCrashIndicator,
+var basicCategories = map[carrierokpayload.BasicCategory]fleetsafety.CSABasic{
+	carrierokpayload.BasicUnsafeDriving:       fleetsafety.BasicUnsafeDriving,
+	carrierokpayload.BasicHoursOfService:      fleetsafety.BasicHOSCompliance,
+	carrierokpayload.BasicVehicleMaintenance:  fleetsafety.BasicVehicleMaintenance,
+	carrierokpayload.BasicControlledSubstance: fleetsafety.BasicControlledSubstances,
+	carrierokpayload.BasicDriverFitness:       fleetsafety.BasicDriverFitness,
+	carrierokpayload.BasicHazardousMaterials:  fleetsafety.BasicHazmatCompliance,
+	carrierokpayload.BasicCrashIndicator:      fleetsafety.BasicCrashIndicator,
 }
 
-var networkKinds = map[carrierok.NetworkLinkKind]carrierintel.NetworkKind{
-	carrierok.NetworkLinkPhysicalAddress: carrierintel.NetworkKindAddress,
-	carrierok.NetworkLinkMailingAddress:  carrierintel.NetworkKindAddress,
-	carrierok.NetworkLinkTelephone:       carrierintel.NetworkKindPhone,
-	carrierok.NetworkLinkCellphone:       carrierintel.NetworkKindPhone,
-	carrierok.NetworkLinkFax:             carrierintel.NetworkKindPhone,
-	carrierok.NetworkLinkEmail:           carrierintel.NetworkKindEmail,
-	carrierok.NetworkLinkEIN:             carrierintel.NetworkKindEIN,
-	carrierok.NetworkLinkEquipment:       carrierintel.NetworkKindEquipment,
-	carrierok.NetworkLinkEquipmentExt:    carrierintel.NetworkKindEquipment,
+var networkKinds = map[carrierokpayload.NetworkLinkKind]carrierintel.NetworkKind{
+	carrierokpayload.NetworkLinkPhysicalAddress: carrierintel.NetworkKindAddress,
+	carrierokpayload.NetworkLinkMailingAddress:  carrierintel.NetworkKindAddress,
+	carrierokpayload.NetworkLinkTelephone:       carrierintel.NetworkKindPhone,
+	carrierokpayload.NetworkLinkCellphone:       carrierintel.NetworkKindPhone,
+	carrierokpayload.NetworkLinkFax:             carrierintel.NetworkKindPhone,
+	carrierokpayload.NetworkLinkEmail:           carrierintel.NetworkKindEmail,
+	carrierokpayload.NetworkLinkEIN:             carrierintel.NetworkKindEIN,
+	carrierokpayload.NetworkLinkEquipment:       carrierintel.NetworkKindEquipment,
+	carrierokpayload.NetworkLinkEquipmentExt:    carrierintel.NetworkKindEquipment,
 }
 
-func normalizeProfile(p *carrierok.Profile) *carrierintel.Profile {
+func normalizeProfile(p *carrierokpayload.Profile) *carrierintel.Profile {
 	if p == nil {
 		return &carrierintel.Profile{Coverage: []carrierintel.Section{}}
 	}
@@ -62,7 +62,7 @@ func normalizeProfile(p *carrierok.Profile) *carrierintel.Profile {
 	return profile
 }
 
-func normalizeIdentity(p *carrierok.Profile) *carrierintel.Identity {
+func normalizeIdentity(p *carrierokpayload.Profile) *carrierintel.Identity {
 	src := &p.Identity
 	prefix := strings.ToUpper(intelkit.Text(src.DocketPrefix))
 	number := intelkit.Text(src.DocketNumber)
@@ -104,7 +104,7 @@ func normalizeIdentity(p *carrierok.Profile) *carrierintel.Identity {
 	return identity
 }
 
-func normalizeAddress(src *carrierok.Address) *carrierintel.Address {
+func normalizeAddress(src *carrierokpayload.Address) *carrierintel.Address {
 	return intelkit.Address(intelkit.AddressParts{
 		Full:        intelkit.Text(src.Full),
 		Street:      intelkit.Text(src.Street),
@@ -125,7 +125,7 @@ type grantSource struct {
 	start      *jsonflex.Time
 }
 
-func normalizeAuthority(src *carrierok.Authority) *carrierintel.Authority {
+func normalizeAuthority(src *carrierokpayload.Authority) *carrierintel.Authority {
 	authority := &carrierintel.Authority{
 		Common: normalizeGrant(grantSource{
 			status:     src.Common,
@@ -190,7 +190,7 @@ func normalizeGrant(src grantSource) *carrierintel.AuthorityGrant {
 }
 
 func normalizeAuthorityHistory(
-	events []carrierok.AuthorityEvent,
+	events []carrierokpayload.AuthorityEvent,
 ) []carrierintel.AuthorityHistoryEntry {
 	if len(events) == 0 {
 		return nil
@@ -251,7 +251,7 @@ func compareServedDesc(a, b *int64) int {
 	}
 }
 
-func normalizeInsurance(src *carrierok.Insurance) *carrierintel.Insurance {
+func normalizeInsurance(src *carrierokpayload.Insurance) *carrierintel.Insurance {
 	insurance := &carrierintel.Insurance{
 		BIPDOnFile:      intelkit.Decimal(src.BIPDOnFile),
 		BIPDRequired:    intelkit.Decimal(src.BIPDRequired),
@@ -274,7 +274,7 @@ func normalizeInsurance(src *carrierok.Insurance) *carrierintel.Insurance {
 	return insurance
 }
 
-func normalizeFilings(policies []carrierok.InsurancePolicy) []carrierintel.InsuranceFiling {
+func normalizeFilings(policies []carrierokpayload.InsurancePolicy) []carrierintel.InsuranceFiling {
 	if len(policies) == 0 {
 		return nil
 	}
@@ -311,7 +311,7 @@ func filingType(value string) carrierintel.InsuranceFilingType {
 	}
 }
 
-func normalizeSafety(p *carrierok.Profile) *carrierintel.Safety {
+func normalizeSafety(p *carrierokpayload.Profile) *carrierintel.Safety {
 	src := &p.Safety
 	safety := &carrierintel.Safety{
 		RatingDate:        intelkit.Unix(src.SafetyRatingDate),
@@ -353,12 +353,12 @@ func riskLevel(value string) carrierintel.RiskLevel {
 }
 
 func normalizeBasics(
-	src map[carrierok.BasicCategory]carrierok.BasicScore,
+	src map[carrierokpayload.BasicCategory]carrierokpayload.BasicScore,
 ) []carrierintel.BasicMeasure {
 	if len(src) == 0 {
 		return nil
 	}
-	categories := carrierok.BasicCategories()
+	categories := carrierokpayload.BasicCategories()
 	basics := make([]carrierintel.BasicMeasure, 0, len(categories))
 	for _, category := range categories {
 		score, ok := src[category]
@@ -385,7 +385,7 @@ func normalizeBasics(
 	return basics
 }
 
-func normalizeInspections(src *carrierok.Inspections) *carrierintel.Inspections {
+func normalizeInspections(src *carrierokpayload.Inspections) *carrierintel.Inspections {
 	inspections := &carrierintel.Inspections{
 		Total:                 intelkit.Int(src.Total),
 		Driver:                intelkit.Int(src.Driver),
@@ -407,7 +407,7 @@ func normalizeInspections(src *carrierok.Inspections) *carrierintel.Inspections 
 	return inspections
 }
 
-func normalizeCrashes(src *carrierok.Crashes) *carrierintel.Crashes {
+func normalizeCrashes(src *carrierokpayload.Crashes) *carrierintel.Crashes {
 	crashes := &carrierintel.Crashes{
 		Total:       intelkit.Int(src.Total),
 		Fatal:       intelkit.Int(src.Fatalities),
@@ -421,7 +421,7 @@ func normalizeCrashes(src *carrierok.Crashes) *carrierintel.Crashes {
 	return crashes
 }
 
-func normalizeFleet(src *carrierok.Fleet) *carrierintel.Fleet {
+func normalizeFleet(src *carrierokpayload.Fleet) *carrierintel.Fleet {
 	fleet := &carrierintel.Fleet{
 		PowerUnits:         intelkit.Int(src.TotalPowerUnits),
 		Drivers:            intelkit.Int(src.TotalDrivers),
@@ -439,7 +439,7 @@ func normalizeFleet(src *carrierok.Fleet) *carrierintel.Fleet {
 	return fleet
 }
 
-func normalizeEquipment(src []carrierok.Equipment) []carrierintel.Equipment {
+func normalizeEquipment(src []carrierokpayload.Equipment) []carrierintel.Equipment {
 	if len(src) == 0 {
 		return nil
 	}
@@ -482,7 +482,7 @@ func unitType(category string) carrierintel.UnitType {
 	}
 }
 
-func normalizeContacts(src *carrierok.Contacts) *carrierintel.Contacts {
+func normalizeContacts(src *carrierokpayload.Contacts) *carrierintel.Contacts {
 	contacts := &carrierintel.Contacts{
 		Phone:            intelkit.Text(src.Telephone),
 		Cellphone:        intelkit.Text(src.Cellphone),
@@ -497,7 +497,7 @@ func normalizeContacts(src *carrierok.Contacts) *carrierintel.Contacts {
 	return contacts
 }
 
-func normalizeOperations(p *carrierok.Profile) *carrierintel.Operations {
+func normalizeOperations(p *carrierokpayload.Profile) *carrierintel.Operations {
 	src := &p.Operations
 	operations := &carrierintel.Operations{
 		Classification: intelkit.SplitList(src.OperationClassification),
@@ -524,7 +524,7 @@ func normalizeOperations(p *carrierok.Profile) *carrierintel.Operations {
 	return operations
 }
 
-func normalizeChangeHistory(src *carrierok.ChangeHistory) *carrierintel.ChangeHistory {
+func normalizeChangeHistory(src *carrierokpayload.ChangeHistory) *carrierintel.ChangeHistory {
 	history := &carrierintel.ChangeHistory{
 		NameChanges:         intelkit.Int(src.NameChangeCount),
 		NameLastChangedAt:   intelkit.Unix(src.NameLastChanged),
@@ -543,7 +543,7 @@ func normalizeChangeHistory(src *carrierok.ChangeHistory) *carrierintel.ChangeHi
 	return history
 }
 
-func normalizeNetwork(src *carrierok.Network, ownDOT string) *carrierintel.Network {
+func normalizeNetwork(src *carrierokpayload.Network, ownDOT string) *carrierintel.Network {
 	links := normalizeNetworkLinks(src.Links, ownDOT)
 	network := &carrierintel.Network{
 		SharedAddresses: sharedCount(
@@ -577,7 +577,10 @@ func normalizeNetwork(src *carrierok.Network, ownDOT string) *carrierintel.Netwo
 	return network
 }
 
-func normalizeNetworkLinks(src []carrierok.NetworkLink, ownDOT string) []carrierintel.NetworkLink {
+func normalizeNetworkLinks(
+	src []carrierokpayload.NetworkLink,
+	ownDOT string,
+) []carrierintel.NetworkLink {
 	if len(src) == 0 {
 		return nil
 	}
@@ -617,7 +620,7 @@ func sharedCount(
 	return intelkit.SumInts(vendorCounts...)
 }
 
-func normalizeLanes(src *carrierok.Lanes) *carrierintel.Lanes {
+func normalizeLanes(src *carrierokpayload.Lanes) *carrierintel.Lanes {
 	if len(src.PreferredStates) == 0 {
 		return nil
 	}
@@ -634,7 +637,7 @@ func normalizeLanes(src *carrierok.Lanes) *carrierintel.Lanes {
 	return &carrierintel.Lanes{PreferredStates: states}
 }
 
-func normalizeBenchmarks(src *carrierok.Benchmarks) *carrierintel.Benchmarks {
+func normalizeBenchmarks(src *carrierokpayload.Benchmarks) *carrierintel.Benchmarks {
 	benchmarks := &carrierintel.Benchmarks{
 		AnyAnomaly:               intelkit.Bool(src.IndicatorIndustry),
 		InspectionMileageAnomaly: intelkit.Bool(src.InspectionMileageRatio),

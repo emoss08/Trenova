@@ -8,10 +8,9 @@ import (
 )
 
 var (
-	ErrNotFound          = errors.New("carrierok: no matching carrier profile")
-	ErrAPIKeyRequired    = errors.New("carrierok: API key is required")
-	ErrInvalidQuery      = errors.New("carrierok: invalid query")
-	ErrUnexpectedPayload = errors.New("carrierok: unexpected response payload")
+	ErrNotFound       = errors.New("carrierok: no matching carrier profile")
+	ErrAPIKeyRequired = errors.New("carrierok: API key is required")
+	ErrInvalidQuery   = errors.New("carrierok: invalid query")
 )
 
 func IsNotFound(err error) bool {

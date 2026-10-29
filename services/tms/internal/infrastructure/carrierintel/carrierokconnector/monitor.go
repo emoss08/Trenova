@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelusage"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
 	"github.com/emoss08/trenova/shared/carrierok"
+	"github.com/emoss08/trenova/shared/carrierokpayload"
 	"github.com/emoss08/trenova/shared/jsonflex"
 	"github.com/emoss08/trenova/shared/sliceutils"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -51,7 +52,7 @@ func (c *Client) MonitoringRef(
 	if number == "" {
 		return dot
 	}
-	return carrierok.ProfileID(dot, intelkit.DocketPrefixOrDefault(prefix), number)
+	return carrierokpayload.ProfileID(dot, intelkit.DocketPrefixOrDefault(prefix), number)
 }
 
 func (c *Client) Enroll(
@@ -63,7 +64,7 @@ func (c *Client) Enroll(
 		endpoint: carrierintelusage.EndpointMonitorAdd,
 		call:     c.sdk.AddToMonitoring,
 		rejected: messageEnrollRejected,
-		applied:  func(result *carrierok.MonitoringWriteResult) int64 { return result.Added },
+		applied:  func(result *carrierokpayload.MonitoringWriteResult) int64 { return result.Added },
 	})
 }
 
@@ -76,16 +77,16 @@ func (c *Client) Unenroll(
 		endpoint: carrierintelusage.EndpointMonitorRemove,
 		call:     c.sdk.RemoveFromMonitoring,
 		rejected: messageUnenrollRejected,
-		applied:  func(result *carrierok.MonitoringWriteResult) int64 { return result.Removed },
+		applied:  func(result *carrierokpayload.MonitoringWriteResult) int64 { return result.Removed },
 	})
 }
 
 type monitoringWrite struct {
 	refs     []string
 	endpoint carrierintelusage.Endpoint
-	call     func(context.Context, []string) (*carrierok.MonitoringWriteResult, error)
+	call     func(context.Context, []string) (*carrierokpayload.MonitoringWriteResult, error)
 	rejected string
-	applied  func(*carrierok.MonitoringWriteResult) int64
+	applied  func(*carrierokpayload.MonitoringWriteResult) int64
 }
 
 func (c *Client) writeMonitoring(
@@ -120,7 +121,7 @@ func (c *Client) writeMonitoring(
 
 func splitWriteResult(
 	refs []string,
-	result *carrierok.MonitoringWriteResult,
+	result *carrierokpayload.MonitoringWriteResult,
 	write *monitoringWrite,
 ) *carrierintelports.CarrierIntelEnrollResult {
 	failedMessages := make(map[string]string, len(result.Failed))
@@ -238,7 +239,7 @@ func (c *Client) ListWatchlist(
 func (c *Client) listMonitoring(
 	ctx context.Context,
 	params *carrierok.MonitoringListParams,
-) (*carrierok.MonitoringListResult, error) {
+) (*carrierokpayload.MonitoringListResult, error) {
 	outcome := &intelkit.CallOutcome{
 		Endpoint: carrierintelusage.EndpointMonitorList,
 		Started:  time.Now(),
@@ -266,7 +267,7 @@ func normalizePage(page, pageSize int) (normalizedPage, normalizedSize int) {
 }
 
 func changedProfile(
-	monitored *carrierok.MonitoredProfile,
+	monitored *carrierokpayload.MonitoredProfile,
 ) carrierintelports.CarrierIntelChangedProfile {
 	changes := make([]carrierintelports.CarrierIntelVendorChange, 0, len(monitored.Changes))
 	for idx := range monitored.Changes {

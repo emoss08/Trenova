@@ -3,7 +3,7 @@ package carrierokconnector
 import (
 	"strings"
 
-	"github.com/emoss08/trenova/shared/carrierok"
+	"github.com/emoss08/trenova/shared/carrierokpayload"
 )
 
 var vendorFieldPaths = map[string]string{
@@ -189,7 +189,7 @@ func vendorFieldPath(field string) string {
 		if !found {
 			continue
 		}
-		category, known := carrierok.BasicCategoryForVendorKey(suffix)
+		category, known := carrierokpayload.BasicCategoryForVendorKey(suffix)
 		if !known {
 			return ""
 		}

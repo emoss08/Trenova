@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/bytedance/sonic"
+	"github.com/emoss08/trenova/shared/carrierokpayload"
 	"github.com/emoss08/trenova/shared/jsonflex"
 	"github.com/emoss08/trenova/shared/restx"
 	"github.com/emoss08/trenova/shared/sliceutils"
@@ -41,7 +42,7 @@ type Suggestion struct {
 }
 
 type SearchResult struct {
-	Items      []Profile
+	Items      []carrierokpayload.Profile
 	TotalCount int64
 	Raw        []byte
 }
@@ -111,22 +112,34 @@ func bucketResolver(keyPrefix string) func(endpoint string) (restx.Bucket, bool)
 	}
 }
 
-func (c *Client) Profile(ctx context.Context, query ProfileQuery) (*Profile, error) {
+func (c *Client) Profile(
+	ctx context.Context,
+	query ProfileQuery,
+) (*carrierokpayload.Profile, error) {
 	return c.firstProfile(ctx, EndpointProfile, pathProfile, &query)
 }
 
-func (c *Client) Profiles(ctx context.Context, query ProfileQuery) ([]Profile, error) {
+func (c *Client) Profiles(
+	ctx context.Context,
+	query ProfileQuery,
+) ([]carrierokpayload.Profile, error) {
 	if err := query.Validate(); err != nil {
 		return nil, err
 	}
 	return c.profiles(ctx, EndpointProfile, pathProfile, query.values())
 }
 
-func (c *Client) ProfileLite(ctx context.Context, query ProfileQuery) (*Profile, error) {
+func (c *Client) ProfileLite(
+	ctx context.Context,
+	query ProfileQuery,
+) (*carrierokpayload.Profile, error) {
 	return c.firstProfile(ctx, EndpointProfileLite, pathProfileLite, &query)
 }
 
-func (c *Client) ProfileFMCSA(ctx context.Context, query FMCSAQuery) (*Profile, error) {
+func (c *Client) ProfileFMCSA(
+	ctx context.Context,
+	query FMCSAQuery,
+) (*carrierokpayload.Profile, error) {
 	if err := query.Validate(); err != nil {
 		return nil, err
 	}
@@ -212,21 +225,21 @@ func (c *Client) Autocomplete(ctx context.Context, q string, limit int) ([]Sugge
 func (c *Client) AddToMonitoring(
 	ctx context.Context,
 	profileIDs []string,
-) (*MonitoringWriteResult, error) {
+) (*carrierokpayload.MonitoringWriteResult, error) {
 	return c.writeMonitoring(ctx, EndpointMonitoringAdd, pathMonitoringAdd, profileIDs)
 }
 
 func (c *Client) RemoveFromMonitoring(
 	ctx context.Context,
 	profileIDs []string,
-) (*MonitoringWriteResult, error) {
+) (*carrierokpayload.MonitoringWriteResult, error) {
 	return c.writeMonitoring(ctx, EndpointMonitoringRemove, pathMonitoringRemove, profileIDs)
 }
 
 func (c *Client) ListMonitoring(
 	ctx context.Context,
 	params MonitoringListParams,
-) (*MonitoringListResult, error) {
+) (*carrierokpayload.MonitoringListResult, error) {
 	if err := params.Validate(); err != nil {
 		return nil, err
 	}
@@ -241,7 +254,7 @@ func (c *Client) ListMonitoring(
 		return nil, err
 	}
 
-	result, err := decodeMonitoringList(resp.Body)
+	result, err := carrierokpayload.DecodeMonitoringList(resp.Body)
 	if err != nil {
 		return nil, fmt.Errorf("carrierok %s: %w", EndpointMonitoringList, err)
 	}
@@ -253,7 +266,7 @@ func (c *Client) writeMonitoring(
 	endpoint Endpoint,
 	path string,
 	profileIDs []string,
-) (*MonitoringWriteResult, error) {
+) (*carrierokpayload.MonitoringWriteResult, error) {
 	ids := sliceutils.DedupeStrings(profileIDs)
 	if len(ids) == 0 {
 		return nil, fmt.Errorf("%w: at least one profile id is required", ErrInvalidQuery)
@@ -270,7 +283,7 @@ func (c *Client) writeMonitoring(
 		return nil, err
 	}
 
-	result, err := decodeMonitoringWrite(resp.StatusCode, resp.Body)
+	result, err := carrierokpayload.DecodeMonitoringWrite(resp.StatusCode, resp.Body)
 	if err != nil {
 		return nil, fmt.Errorf("carrierok %s: %w", endpoint, err)
 	}
@@ -282,7 +295,7 @@ func (c *Client) firstProfile(
 	endpoint Endpoint,
 	path string,
 	query *ProfileQuery,
-) (*Profile, error) {
+) (*carrierokpayload.Profile, error) {
 	if err := query.Validate(); err != nil {
 		return nil, err
 	}
@@ -298,7 +311,7 @@ func (c *Client) profiles(
 	endpoint Endpoint,
 	path string,
 	query url.Values,
-) ([]Profile, error) {
+) ([]carrierokpayload.Profile, error) {
 	resp, err := c.transport.Do(ctx, &restx.Request{
 		Endpoint: string(endpoint),
 		Method:   http.MethodGet,
@@ -320,20 +333,23 @@ func (c *Client) profiles(
 	return profiles, nil
 }
 
-func firstOrNotFound(endpoint Endpoint, profiles []Profile) (*Profile, error) {
+func firstOrNotFound(
+	endpoint Endpoint,
+	profiles []carrierokpayload.Profile,
+) (*carrierokpayload.Profile, error) {
 	if len(profiles) == 0 {
 		return nil, fmt.Errorf("carrierok %s: %w", endpoint, ErrNotFound)
 	}
 	return &profiles[0], nil
 }
 
-func decodeProfiles(items []sonic.NoCopyRawMessage) ([]Profile, error) {
-	profiles := make([]Profile, 0, len(items))
+func decodeProfiles(items []sonic.NoCopyRawMessage) ([]carrierokpayload.Profile, error) {
+	profiles := make([]carrierokpayload.Profile, 0, len(items))
 	for idx, item := range items {
 		if jsonflex.KindOf(item) != jsonflex.KindObject {
 			continue
 		}
-		var profile Profile
+		var profile carrierokpayload.Profile
 		if err := profile.UnmarshalJSON(item); err != nil {
 			return nil, fmt.Errorf("decode item %d: %w", idx, err)
 		}
@@ -350,24 +366,24 @@ func parseEnvelope(body []byte) ([]sonic.NoCopyRawMessage, *int64, error) {
 		if len(bytes.TrimSpace(body)) == 0 {
 			return nil, nil, nil
 		}
-		return nil, nil, ErrUnexpectedPayload
+		return nil, nil, carrierokpayload.ErrUnexpectedPayload
 	case jsonflex.KindArray:
 		items, err := jsonflex.DecodeArray(body)
 		if err != nil {
-			return nil, nil, fmt.Errorf("%w: %w", ErrUnexpectedPayload, err)
+			return nil, nil, fmt.Errorf("%w: %w", carrierokpayload.ErrUnexpectedPayload, err)
 		}
 		return items, nil, nil
 	case jsonflex.KindObject:
 		obj, err := jsonflex.DecodeObject(body)
 		if err != nil {
-			return nil, nil, fmt.Errorf("%w: %w", ErrUnexpectedPayload, err)
+			return nil, nil, fmt.Errorf("%w: %w", carrierokpayload.ErrUnexpectedPayload, err)
 		}
 		total := obj.Int("total_count", "totalCount", "total").Ptr()
 		if !obj.Has("items") {
 			if obj.Has("dot_number") || obj.Has("legal_name") || obj.Has("docket_number") {
 				return []sonic.NoCopyRawMessage{sonic.NoCopyRawMessage(body)}, total, nil
 			}
-			return nil, nil, fmt.Errorf("%w: missing items", ErrUnexpectedPayload)
+			return nil, nil, fmt.Errorf("%w: missing items", carrierokpayload.ErrUnexpectedPayload)
 		}
 		switch jsonflex.KindOf(obj["items"]) {
 		case jsonflex.KindArray:
@@ -378,9 +394,12 @@ func parseEnvelope(body []byte) ([]sonic.NoCopyRawMessage, *int64, error) {
 		case jsonflex.KindNull:
 			return nil, total, nil
 		default:
-			return nil, nil, fmt.Errorf("%w: items is not a list", ErrUnexpectedPayload)
+			return nil, nil, fmt.Errorf(
+				"%w: items is not a list",
+				carrierokpayload.ErrUnexpectedPayload,
+			)
 		}
 	default:
-		return nil, nil, ErrUnexpectedPayload
+		return nil, nil, carrierokpayload.ErrUnexpectedPayload
 	}
 }

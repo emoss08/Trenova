@@ -14,6 +14,7 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/shared/carrierok"
+	"github.com/emoss08/trenova/shared/carrierokpayload"
 	"github.com/emoss08/trenova/shared/restx"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -476,7 +477,7 @@ func TestAddToMonitoringPartial(t *testing.T) {
 	assert.Equal(t, int64(1), result.Added)
 	assert.Equal(t, "partial", result.Status)
 	require.Len(t, result.Failed, 1)
-	assert.Equal(t, carrierok.MonitoringFailure{
+	assert.Equal(t, carrierokpayload.MonitoringFailure{
 		ProfileID: "999999-MC000000",
 		Error:     "Profile not found",
 	}, result.Failed[0])

@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierinteldiff"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelrule"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/fleetsafety"
-	"github.com/emoss08/trenova/shared/carrierok"
+	"github.com/emoss08/trenova/shared/carrierokpayload"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -27,9 +27,9 @@ func fixture(t *testing.T, name string) []byte {
 	return data
 }
 
-func fixtureProfile(t *testing.T, name string) *carrierok.Profile {
+func fixtureProfile(t *testing.T, name string) *carrierokpayload.Profile {
 	t.Helper()
-	profile, err := carrierok.DecodeProfile(fixture(t, name))
+	profile, err := carrierokpayload.DecodeProfile(fixture(t, name))
 	require.NoError(t, err)
 	return profile
 }
@@ -229,7 +229,7 @@ func TestNormalizeProfile_SafetyAndBasics(t *testing.T) {
 func TestNormalizeProfile_BasicAlerts(t *testing.T) {
 	t.Parallel()
 
-	sdk, err := carrierok.DecodeProfile([]byte(`{
+	sdk, err := carrierokpayload.DecodeProfile([]byte(`{
 		"dot_number": "42",
 		"basic_alert_hours_of_service": true,
 		"violations_hours_of_service": "9",
@@ -359,7 +359,7 @@ func TestNormalizeProfile_NetworkLinksCarryOtherCarriersDOTs(t *testing.T) {
 func TestNormalizeProfile_NetworkExcludesOwnDOTAndFallsBackToCounts(t *testing.T) {
 	t.Parallel()
 
-	sdk, err := carrierok.DecodeProfile([]byte(`{
+	sdk, err := carrierokpayload.DecodeProfile([]byte(`{
 		"dot_number": "100",
 		"network_graph_physical_address": ["100", "200"],
 		"network_graph_equipment_ext": ["300"],
@@ -383,7 +383,7 @@ func TestNormalizeProfile_NetworkExcludesOwnDOTAndFallsBackToCounts(t *testing.T
 func TestNormalizeProfile_PreferredStates(t *testing.T) {
 	t.Parallel()
 
-	sdk, err := carrierok.DecodeProfile([]byte(`{
+	sdk, err := carrierokpayload.DecodeProfile([]byte(`{
 		"dot_number": "42",
 		"preferred_lanes": [{"state": "tx"}, {"state": ""}],
 		"preferred_states": "IL, TX"
@@ -444,7 +444,7 @@ func TestNormalizeProfile_CoverageIsHonest(t *testing.T) {
 	require.NotNil(t, lite.Operations.BOC3OnFile)
 	assert.True(t, *lite.Operations.BOC3OnFile)
 
-	minimal, err := carrierok.DecodeProfile(
+	minimal, err := carrierokpayload.DecodeProfile(
 		[]byte(`{"dot_number": 42, "legal_name": "LITE CO", "authority_common": "A"}`),
 	)
 	require.NoError(t, err)
@@ -474,7 +474,7 @@ func TestNormalizeProfile_AuthorityVocabulary(t *testing.T) {
 		"docket": "FF123456",
 		"risk_score": "Very High"
 	}`)
-	sdk, err := carrierok.DecodeProfile(raw)
+	sdk, err := carrierokpayload.DecodeProfile(raw)
 	require.NoError(t, err)
 	profile := normalizeProfile(sdk)
 
