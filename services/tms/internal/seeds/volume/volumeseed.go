@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/seeds/volume/servicefailurevolume"
 	"github.com/emoss08/trenova/internal/seeds/volume/settlementvolume"
 	"github.com/emoss08/trenova/internal/seeds/volume/shipmentvolume"
+	"github.com/emoss08/trenova/internal/seeds/volume/stopetavolume"
 	"github.com/emoss08/trenova/internal/seeds/volume/telematicsvolume"
 	"github.com/emoss08/trenova/internal/seeds/volume/tendervolume"
 	"github.com/emoss08/trenova/internal/seeds/volume/volumegen"
@@ -80,6 +81,7 @@ func Run(ctx context.Context, db *keel.DB, opts volumegen.Options) (*volumegen.R
 		{name: "service failures", run: servicefailurevolume.Seed},
 		{name: "carrier tenders", run: tendervolume.Seed},
 		{name: "telematics", run: telematicsvolume.Seed},
+		{name: "stop ETAs", run: stopetavolume.Seed},
 	}
 	for _, phase := range phases {
 		phaseStart := time.Now()
