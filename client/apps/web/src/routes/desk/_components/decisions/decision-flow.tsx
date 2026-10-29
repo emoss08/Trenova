@@ -25,6 +25,7 @@ import {
 } from "@/routes/agent-control/_components/activity/reason-dialog";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@trenova/shared/components/ui/button";
+import { useLatestCallback } from "@trenova/shared/hooks/use-latest-callback";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { Operation, Resource } from "@trenova/shared/types/permission";
@@ -436,36 +437,40 @@ export function DecisionFlow() {
     setBatch((value) => (value ? null : like.length > 1 ? like.map((item) => item.id) : null));
   }, [like]);
 
+  // The listener stays attached while the queue is open and reads the latest
+  // handlers, so a key pressed in the same frame the Approve button enables
+  // acts on the state the button shows rather than the previous render's.
+  const onKey = useLatestCallback((event: KeyboardEvent) => {
+    const target = event.target as HTMLElement | null;
+    if (target?.closest("input,textarea,select,[contenteditable=true],[role=dialog]")) return;
+    if (event.metaKey || event.ctrlKey || event.altKey) return;
+    const key = event.key.toLowerCase();
+    if (key === "j" || event.key === "ArrowDown") {
+      event.preventDefault();
+      go(1);
+    } else if (key === "k" || event.key === "ArrowUp") {
+      event.preventDefault();
+      go(-1);
+    } else if (key === "a") {
+      event.preventDefault();
+      void approve();
+    } else if (key === "d" || key === "r") {
+      event.preventDefault();
+      decline();
+    } else if (key === "m") {
+      event.preventDefault();
+      modify();
+    } else if (key === "x") {
+      event.preventDefault();
+      toggleBatch();
+    }
+  });
+
   useEffect(() => {
     if (dialog || editor) return;
-    const onKey = (event: KeyboardEvent) => {
-      const target = event.target as HTMLElement | null;
-      if (target?.closest("input,textarea,select,[contenteditable=true],[role=dialog]")) return;
-      if (event.metaKey || event.ctrlKey || event.altKey) return;
-      const key = event.key.toLowerCase();
-      if (key === "j" || event.key === "ArrowDown") {
-        event.preventDefault();
-        go(1);
-      } else if (key === "k" || event.key === "ArrowUp") {
-        event.preventDefault();
-        go(-1);
-      } else if (key === "a") {
-        event.preventDefault();
-        void approve();
-      } else if (key === "d" || key === "r") {
-        event.preventDefault();
-        decline();
-      } else if (key === "m") {
-        event.preventDefault();
-        modify();
-      } else if (key === "x") {
-        event.preventDefault();
-        toggleBatch();
-      }
-    };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [approve, decline, dialog, editor, go, modify, toggleBatch]);
+  }, [dialog, editor, onKey]);
 
   const decided = recent.data ?? [];
   const total = decided.length + items.length + (queue.hasNextPage ? 1 : 0);
