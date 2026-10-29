@@ -1,11 +1,12 @@
-package tenantbootstrap
+package referenceseed
 
 import (
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/tenantscope"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
 )
 
 func DocumentTypeCodes() []string {
-	docTypes := systemDocumentTypes(Scope{})
+	docTypes := systemDocumentTypes(tenantscope.Scope{})
 	codes := make([]string, 0, len(docTypes))
 	for _, docType := range docTypes {
 		codes = append(codes, docType.Code)

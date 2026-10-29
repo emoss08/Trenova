@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/keel/seed"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/tenantbootstrap"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/tenantscope"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
@@ -94,7 +95,7 @@ func runAdminAccount(ctx context.Context, r *seed.Run) error {
 			return fmt.Errorf("create organization %s: %w", def.name, err)
 		}
 
-		scope := tenantbootstrap.Scope{OrganizationID: org.ID, BusinessUnitID: bu.ID, Now: now}
+		scope := tenantscope.Scope{OrganizationID: org.ID, BusinessUnitID: bu.ID, Now: now}
 		if err = tenantbootstrap.CreateControls(ctx, r.DB, scope); err != nil {
 			return fmt.Errorf("create control files for %s: %w", def.name, err)
 		}
@@ -142,7 +143,7 @@ func runAdminAccount(ctx context.Context, r *seed.Run) error {
 			return fmt.Errorf("add admin to %s: %w", org.Name, err)
 		}
 
-		scope := tenantbootstrap.Scope{OrganizationID: org.ID, BusinessUnitID: bu.ID, Now: now}
+		scope := tenantscope.Scope{OrganizationID: org.ID, BusinessUnitID: bu.ID, Now: now}
 		role, roleErr := tenantbootstrap.CreateAdminRole(ctx, r.DB, tenantbootstrap.AdminRoleParams{
 			Scope:     scope,
 			CreatedBy: admin.ID,
@@ -173,7 +174,7 @@ func runSystemAccount(ctx context.Context, r *seed.Run) error {
 	}
 
 	_, created, err := tenantbootstrap.EnsureSystemUser(ctx, r.DB, tenantbootstrap.SystemUserParams{
-		Scope:    tenantbootstrap.Scope{OrganizationID: org.ID, BusinessUnitID: org.BusinessUnitID},
+		Scope:    tenantscope.Scope{OrganizationID: org.ID, BusinessUnitID: org.BusinessUnitID},
 		Password: seedenv.Config(ctx).System.SystemUserPassword,
 	})
 	if created {

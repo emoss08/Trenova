@@ -6,7 +6,7 @@ import (
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/keel/seed"
-	"github.com/emoss08/trenova/internal/infrastructure/postgres/tenantbootstrap"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/referenceseed"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition/agentdefinitiondb"
@@ -669,7 +669,7 @@ func (s *AgentDefinitionSeed) enableSystemAgents(
 ) error {
 	d := agentdefinitiondb.Definitions
 	now := timeutils.NowUnix()
-	for _, definition := range tenantbootstrap.SystemAgentDefinitions(orgID, buID) {
+	for _, definition := range referenceseed.SystemAgentDefinitions(orgID, buID) {
 		sets := []keel.Assignment{d.Enabled.To(true), d.ShadowMode.To(true)}
 		if definition.TriggerMode == agentdefinition.TriggerScheduled {
 			next, err := definition.ComputeNextRun(now)

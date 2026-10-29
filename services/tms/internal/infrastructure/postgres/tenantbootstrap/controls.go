@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/tenantscope"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/costingcontrol"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/costingcontrol/costingcontroldb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
@@ -21,8 +22,8 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
-func CreateControls(ctx context.Context, db *keel.DB, scope Scope) error {
-	now := scope.now()
+func CreateControls(ctx context.Context, db *keel.DB, scope tenantscope.Scope) error {
+	now := scope.NowUnix()
 
 	org, bu := scope.OrganizationID, scope.BusinessUnitID
 
@@ -92,7 +93,12 @@ func CreateControls(ctx context.Context, db *keel.DB, scope Scope) error {
 	return nil
 }
 
-func createCostingControl(ctx context.Context, db *keel.DB, scope Scope, now int64) error {
+func createCostingControl(
+	ctx context.Context,
+	db *keel.DB,
+	scope tenantscope.Scope,
+	now int64,
+) error {
 	costingControl := &costingcontrol.CostingControl{
 		ID:                   pulid.MustNew("cstc_"),
 		OrganizationID:       scope.OrganizationID,
@@ -140,8 +146,8 @@ func DefaultSequenceTypes() []sequenceconfig.SequenceType {
 	return types
 }
 
-func CreateSequences(ctx context.Context, db *keel.DB, scope Scope) error {
-	now := scope.now()
+func CreateSequences(ctx context.Context, db *keel.DB, scope tenantscope.Scope) error {
+	now := scope.NowUnix()
 	year, month := sequencePeriod(now)
 
 	sequences := make([]*sequenceconfig.Sequence, 0, len(defaultSequenceTypes))

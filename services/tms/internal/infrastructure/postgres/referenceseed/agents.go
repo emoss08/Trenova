@@ -1,10 +1,11 @@
-package tenantbootstrap
+package referenceseed
 
 import (
 	"context"
 	"fmt"
 
 	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/tenantscope"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition/agentdefinitiondb"
@@ -20,10 +21,14 @@ const (
 	SystemAgentKeyDispatchAssignment = "dispatch_assignment"
 )
 
-func CreateSystemAgentDefinitions(ctx context.Context, db *keel.DB, scope Scope) (int, error) {
+func CreateSystemAgentDefinitions(
+	ctx context.Context,
+	db *keel.DB,
+	scope tenantscope.Scope,
+) (int, error) {
 	orgID, buID := scope.OrganizationID, scope.BusinessUnitID
 	d := agentdefinitiondb.Definitions
-	existing, err := scoped(ctx, d.Pick(d.SystemKey).Where(
+	existing, err := tenantscope.Scoped(ctx, d.Pick(d.SystemKey).Where(
 		d.OrganizationID.Eq(orgID),
 		d.BusinessUnitID.Eq(buID),
 		d.SystemKey.IsNotNull(),
@@ -38,7 +43,7 @@ func CreateSystemAgentDefinitions(ctx context.Context, db *keel.DB, scope Scope)
 	}
 
 	created := 0
-	now := scope.now()
+	now := scope.NowUnix()
 	for _, definition := range SystemAgentDefinitions(orgID, buID) {
 		if _, ok := present[definition.SystemKey]; ok {
 			continue

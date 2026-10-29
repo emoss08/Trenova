@@ -1,4 +1,4 @@
-package tenantbootstrap
+package tenantscope
 
 import (
 	"context"
@@ -15,7 +15,7 @@ type Scope struct {
 	Now            int64
 }
 
-func (s Scope) now() int64 {
+func (s Scope) NowUnix() int64 {
 	if s.Now > 0 {
 		return s.Now
 	}
@@ -23,7 +23,7 @@ func (s Scope) now() int64 {
 	return timeutils.NowUnix()
 }
 
-func scoped[T any](ctx context.Context, q *keel.Query[*T]) *keel.Query[*T] {
+func Scoped[T any](ctx context.Context, q *keel.Query[*T]) *keel.Query[*T] {
 	if dbscope.IsSystem(ctx) {
 		return q.AllTenants()
 	}

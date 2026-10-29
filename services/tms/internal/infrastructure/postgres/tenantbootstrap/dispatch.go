@@ -1,6 +1,7 @@
 package tenantbootstrap
 
 import (
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/tenantscope"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -8,7 +9,7 @@ import (
 
 const autoAssignConfidenceThreshold = "0.85"
 
-func newDispatchControl(scope Scope) *dispatchcontrol.DispatchControl {
+func newDispatchControl(scope tenantscope.Scope) *dispatchcontrol.DispatchControl {
 	tender := dispatchcontrol.DefaultTenderPolicy()
 	grace := dispatchcontrol.DefaultServiceFailureGracePeriod
 

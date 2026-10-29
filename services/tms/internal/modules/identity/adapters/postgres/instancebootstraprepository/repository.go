@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/tenantbootstrap"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/tenantscope"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/instancebootstrap"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/instancebootstrap/instancebootstrapdb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
@@ -86,7 +87,7 @@ func (r *repository) Finalize(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*instancebootstrapports.FinalizeInstanceBootstrapResult, error) {
-			scope := tenantbootstrap.Scope{
+			scope := tenantscope.Scope{
 				OrganizationID: req.OrganizationID,
 				BusinessUnitID: req.BusinessUnitID,
 				Now:            req.Now,

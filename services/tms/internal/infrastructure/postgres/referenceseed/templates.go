@@ -1,4 +1,4 @@
-package tenantbootstrap
+package referenceseed
 
 import (
 	"context"
@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/tenantscope"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate/documenttemplatedb"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate/starters"
@@ -15,7 +16,11 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
-func CreateDocumentTemplateStarters(ctx context.Context, db *keel.DB, scope Scope) (int, error) {
+func CreateDocumentTemplateStarters(
+	ctx context.Context,
+	db *keel.DB,
+	scope tenantscope.Scope,
+) (int, error) {
 	registry := templateregistry.NewRegistry()
 	existing, err := existingTemplateKinds(ctx, db, scope)
 	if err != nil {
@@ -40,7 +45,7 @@ func CreateDocumentTemplateStarters(ctx context.Context, db *keel.DB, scope Scop
 func createTemplateStarter(
 	ctx context.Context,
 	db *keel.DB,
-	scope Scope,
+	scope tenantscope.Scope,
 	registry *templatecatalog.Registry,
 	kind documenttemplate.Kind,
 ) error {
@@ -116,10 +121,10 @@ func createTemplateStarter(
 func existingTemplateKinds(
 	ctx context.Context,
 	db *keel.DB,
-	scope Scope,
+	scope tenantscope.Scope,
 ) (map[documenttemplate.Kind]bool, error) {
 	t := documenttemplatedb.DocumentTemplates
-	rows, err := scoped(ctx, t.Pick(t.Kind).Where(
+	rows, err := tenantscope.Scoped(ctx, t.Pick(t.Kind).Where(
 		t.OrganizationID.Eq(scope.OrganizationID),
 		t.BusinessUnitID.Eq(scope.BusinessUnitID),
 	)).All(ctx, db)

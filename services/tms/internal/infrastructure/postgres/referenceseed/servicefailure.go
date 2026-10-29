@@ -1,4 +1,4 @@
-package tenantbootstrap
+package referenceseed
 
 import (
 	"context"
@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/tenantscope"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure/servicefailuredb"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -295,7 +296,11 @@ var defaultServiceFailureReasonCodes = []serviceFailureReasonCodeSeedDefinition{
 	},
 }
 
-func CreateServiceFailureReasonCodes(ctx context.Context, db *keel.DB, scope Scope) (int, error) {
+func CreateServiceFailureReasonCodes(
+	ctx context.Context,
+	db *keel.DB,
+	scope tenantscope.Scope,
+) (int, error) {
 	existingCodes, err := existingReasonCodes(ctx, db, scope)
 	if err != nil {
 		return 0, err
@@ -332,14 +337,18 @@ func CreateServiceFailureReasonCodes(ctx context.Context, db *keel.DB, scope Sco
 	return len(entities), nil
 }
 
-func existingReasonCodes(ctx context.Context, db *keel.DB, scope Scope) (map[string]bool, error) {
+func existingReasonCodes(
+	ctx context.Context,
+	db *keel.DB,
+	scope tenantscope.Scope,
+) (map[string]bool, error) {
 	codes := make([]string, 0, len(defaultServiceFailureReasonCodes))
 	for _, def := range defaultServiceFailureReasonCodes {
 		codes = append(codes, def.code)
 	}
 
 	r := servicefailuredb.ReasonCodes
-	rows, err := scoped(ctx, r.Pick(r.Code).Where(
+	rows, err := tenantscope.Scoped(ctx, r.Pick(r.Code).Where(
 		r.OrganizationID.Eq(scope.OrganizationID),
 		r.BusinessUnitID.Eq(scope.BusinessUnitID),
 		r.Code.In(codes...),

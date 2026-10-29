@@ -6,6 +6,7 @@ import (
 	"slices"
 
 	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/tenantscope"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission/permissiondb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
@@ -27,7 +28,7 @@ type adminGrantPlan struct {
 func ReconcileAdminRole(
 	ctx context.Context,
 	db *keel.DB,
-	scope Scope,
+	scope tenantscope.Scope,
 	registry *permissioncatalog.Registry,
 ) (AdminReconcileResult, error) {
 	if registry == nil {
@@ -35,7 +36,7 @@ func ReconcileAdminRole(
 	}
 
 	r := permissiondb.Roles
-	roles, err := scoped(ctx, r.Pick(r.ID).Where(
+	roles, err := tenantscope.Scoped(ctx, r.Pick(r.ID).Where(
 		r.OrganizationID.Eq(scope.OrganizationID),
 		r.BusinessUnitID.Eq(scope.BusinessUnitID),
 		r.IsSystem.IsTrue(),
@@ -66,7 +67,7 @@ func ReconcileAdminRole(
 		byRole[held.RoleID] = append(byRole[held.RoleID], held)
 	}
 
-	now := scope.now()
+	now := scope.NowUnix()
 	for _, roleID := range roleIDs {
 		plan := planAdminGrants(registry, roleID, byRole[roleID], now)
 		if err = rp.CreateMany(ctx, db, plan.add); err != nil {

@@ -1,4 +1,4 @@
-package tenantbootstrap
+package referenceseed
 
 import (
 	"context"
@@ -6,14 +6,15 @@ import (
 	"strings"
 
 	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/tenantscope"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype/documenttypedb"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
-func CreateDocumentTypes(ctx context.Context, db *keel.DB, scope Scope) (int, error) {
+func CreateDocumentTypes(ctx context.Context, db *keel.DB, scope tenantscope.Scope) (int, error) {
 	d := documenttypedb.DocumentTypes
-	held, err := scoped(ctx, d.Pick(d.Code).Where(
+	held, err := tenantscope.Scoped(ctx, d.Pick(d.Code).Where(
 		d.OrganizationID.Eq(scope.OrganizationID),
 		d.BusinessUnitID.Eq(scope.BusinessUnitID),
 	)).All(ctx, db)
@@ -40,7 +41,7 @@ func CreateDocumentTypes(ctx context.Context, db *keel.DB, scope Scope) (int, er
 	return len(missing), nil
 }
 
-func systemDocumentTypes(scope Scope) []*documenttype.DocumentType {
+func systemDocumentTypes(scope tenantscope.Scope) []*documenttype.DocumentType {
 	orgID, buID := scope.OrganizationID, scope.BusinessUnitID
 	return []*documenttype.DocumentType{
 		{

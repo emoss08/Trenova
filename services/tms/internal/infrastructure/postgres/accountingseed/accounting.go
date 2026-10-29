@@ -1,4 +1,4 @@
-package tenantbootstrap
+package accountingseed
 
 import (
 	"context"
@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/tenantscope"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accounttype"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accounttype/accounttypedb"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/glaccount"
@@ -17,9 +18,9 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
-func EnsureChartOfAccounts(ctx context.Context, db *keel.DB, scope Scope) (int, error) {
+func EnsureChartOfAccounts(ctx context.Context, db *keel.DB, scope tenantscope.Scope) (int, error) {
 	a := accounttypedb.AccountTypes
-	exists, err := scoped(ctx, a.Where(
+	exists, err := tenantscope.Scoped(ctx, a.Where(
 		a.OrganizationID.Eq(scope.OrganizationID),
 		a.BusinessUnitID.Eq(scope.BusinessUnitID),
 	)).Exists(ctx, db)
@@ -54,18 +55,18 @@ func EnsureChartOfAccounts(ctx context.Context, db *keel.DB, scope Scope) (int, 
 func accountsByCode(
 	ctx context.Context,
 	db *keel.DB,
-	scope Scope,
+	scope tenantscope.Scope,
 	codes []string,
 ) ([]*glaccount.GLAccount, error) {
 	g := glaccountdb.GLAccounts
-	return scoped(ctx, g.Pick(g.ID, g.AccountCode).Where(
+	return tenantscope.Scoped(ctx, g.Pick(g.ID, g.AccountCode).Where(
 		g.OrganizationID.Eq(scope.OrganizationID),
 		g.BusinessUnitID.Eq(scope.BusinessUnitID),
 		g.AccountCode.In(codes...),
 	)).All(ctx, db)
 }
 
-func applyAccountingDefaults(ctx context.Context, db *keel.DB, scope Scope) error {
+func applyAccountingDefaults(ctx context.Context, db *keel.DB, scope tenantscope.Scope) error {
 	rows, err := accountsByCode(ctx, db, scope, []string{"1110", "4010", "6940", "3030"})
 	if err != nil {
 		return err
@@ -108,7 +109,7 @@ func applyAccountingDefaults(ctx context.Context, db *keel.DB, scope Scope) erro
 	}
 
 	c := tenantdb.AccountingControls
-	_, err = scoped(ctx, c.Where(
+	_, err = tenantscope.Scoped(ctx, c.Where(
 		c.OrganizationID.Eq(scope.OrganizationID),
 		c.BusinessUnitID.Eq(scope.BusinessUnitID),
 	)).Update(
@@ -135,10 +136,10 @@ var costCategoryGLAccountCodes = map[costingcontrol.CategoryType][]string{
 	costingcontrol.CategoryTypeOverhead:          {"6010", "6020", "6030", "6040", "6110", "6130"},
 }
 
-func applyCostCategoryGLAccounts(ctx context.Context, db *keel.DB, scope Scope) error {
+func applyCostCategoryGLAccounts(ctx context.Context, db *keel.DB, scope tenantscope.Scope) error {
 	orgID, buID := scope.OrganizationID, scope.BusinessUnitID
 	cc := costingcontroldb.CostCategories
-	categories, err := scoped(ctx, cc.Pick(cc.ID, cc.Category).Where(
+	categories, err := tenantscope.Scoped(ctx, cc.Pick(cc.ID, cc.Category).Where(
 		cc.OrganizationID.Eq(orgID),
 		cc.BusinessUnitID.Eq(buID),
 	)).All(ctx, db)
@@ -165,7 +166,7 @@ func applyCostCategoryGLAccounts(ctx context.Context, db *keel.DB, scope Scope) 
 		accountIDs[rows[i].AccountCode] = rows[i].ID
 	}
 
-	now := scope.now()
+	now := scope.NowUnix()
 	links := make([]*costingcontrol.CostCategoryGLAccount, 0, len(allCodes))
 	for _, category := range categories {
 		codes, ok := costCategoryGLAccountCodes[category.Category]
@@ -196,7 +197,7 @@ func applyCostCategoryGLAccounts(ctx context.Context, db *keel.DB, scope Scope) 
 func createDefaultAccountTypes(
 	ctx context.Context,
 	db *keel.DB,
-	scope Scope,
+	scope tenantscope.Scope,
 ) (map[accounttype.Category]pulid.ID, error) {
 	orgID, buID := scope.OrganizationID, scope.BusinessUnitID
 	accountTypes := []*accounttype.AccountType{
@@ -1358,7 +1359,7 @@ func getDefaultTruckingCOA() []glAccountSeedData {
 func createDefaultCOA(
 	ctx context.Context,
 	db *keel.DB,
-	scope Scope,
+	scope tenantscope.Scope,
 	accountTypeIDs map[accounttype.Category]pulid.ID,
 ) (int, error) {
 	orgID, buID := scope.OrganizationID, scope.BusinessUnitID

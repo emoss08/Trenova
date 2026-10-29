@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/tenantscope"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission/permissiondb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
@@ -17,7 +18,7 @@ const (
 )
 
 type AdminRoleParams struct {
-	Scope     Scope
+	Scope     tenantscope.Scope
 	CreatedBy pulid.ID
 	Registry  *permissioncatalog.Registry
 }
@@ -27,7 +28,7 @@ func CreateAdminRole(
 	db *keel.DB,
 	params AdminRoleParams,
 ) (*permission.Role, error) {
-	now := params.Scope.now()
+	now := params.Scope.NowUnix()
 	role := &permission.Role{
 		ID:             pulid.MustNew("rol_"),
 		BusinessUnitID: params.Scope.BusinessUnitID,

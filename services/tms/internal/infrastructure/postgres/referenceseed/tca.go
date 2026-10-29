@@ -1,10 +1,11 @@
-package tenantbootstrap
+package referenceseed
 
 import (
 	"context"
 	"fmt"
 
 	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/tenantscope"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/tablechangealert"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/tablechangealert/tablechangealertdb"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -35,9 +36,9 @@ var defaultTCAAllowlist = []tcaAllowlistEntry{
 	{"trailers", "Trailers"},
 }
 
-func CreateTCAAllowlist(ctx context.Context, db *keel.DB, scope Scope) (int, error) {
+func CreateTCAAllowlist(ctx context.Context, db *keel.DB, scope tenantscope.Scope) (int, error) {
 	t := tablechangealertdb.TCAAllowlistedTables
-	exists, err := scoped(ctx, t.Where(
+	exists, err := tenantscope.Scoped(ctx, t.Where(
 		t.OrganizationID.Eq(scope.OrganizationID),
 		t.BusinessUnitID.Eq(scope.BusinessUnitID),
 	)).Exists(ctx, db)
@@ -48,7 +49,7 @@ func CreateTCAAllowlist(ctx context.Context, db *keel.DB, scope Scope) (int, err
 		return 0, nil
 	}
 
-	now := scope.now()
+	now := scope.NowUnix()
 	entities := make([]*tablechangealert.TCAAllowlistedTable, 0, len(defaultTCAAllowlist))
 	for _, entry := range defaultTCAAllowlist {
 		entities = append(entities, &tablechangealert.TCAAllowlistedTable{
