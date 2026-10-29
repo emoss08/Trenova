@@ -44,7 +44,7 @@ func TestApplyAccountingInboundChange_PreviewShowsWhatItPosts(t *testing.T) {
 		}},
 	})
 	tool := newApplyAccountingInboundChangeTool(operator)
-	params := agenttoolstest.AccountingSyncParams(
+	params := agenttoolstest.PersonCallParams(
 		map[string]any{"inboundChangeId": change.ID.String()},
 	)
 
@@ -73,7 +73,7 @@ func TestApplyAccountingInboundChange_PreviewWarnsWhenItNoLongerMatches(t *testi
 		Blocker: "INV-1001 was paid in Trenova after the payment was read.",
 	})
 	tool := newApplyAccountingInboundChangeTool(operator)
-	params := agenttoolstest.AccountingSyncParams(
+	params := agenttoolstest.PersonCallParams(
 		map[string]any{"inboundChangeId": change.ID.String()},
 	)
 
@@ -90,7 +90,7 @@ func TestIgnoreAccountingInboundChange_PreviewShowsTheNote(t *testing.T) {
 	change := proposedPayment(accountinginbound.InboundStatusProposed)
 	operator := newInboundOperator(change, &accountinginboundports.AccountingInboundApplyPreview{})
 	tool := newIgnoreAccountingInboundChangeTool(operator)
-	params := agenttoolstest.AccountingSyncParams(map[string]any{
+	params := agenttoolstest.PersonCallParams(map[string]any{
 		"inboundChangeId": change.ID.String(),
 		"note":            "Keyed in Trenova by the AR team.",
 	})
@@ -113,7 +113,7 @@ func TestIgnoreAccountingInboundChange_PreviewWarnsOnAClosedPayment(t *testing.T
 	change := proposedPayment(accountinginbound.InboundStatusApplied)
 	operator := newInboundOperator(change, &accountinginboundports.AccountingInboundApplyPreview{})
 	tool := newIgnoreAccountingInboundChangeTool(operator)
-	params := agenttoolstest.AccountingSyncParams(map[string]any{
+	params := agenttoolstest.PersonCallParams(map[string]any{
 		"inboundChangeId": change.ID.String(),
 		"note":            "duplicate",
 	})

@@ -115,7 +115,7 @@ func TestApplyAccountingInboundChange_AppliesAsTheApprover(t *testing.T) {
 		}},
 	})
 	tool := newApplyAccountingInboundChangeTool(operator)
-	params := agenttoolstest.AccountingSyncParams(
+	params := agenttoolstest.PersonCallParams(
 		map[string]any{"inboundChangeId": change.ID.String()},
 	)
 
@@ -144,7 +144,7 @@ func TestApplyAccountingInboundChange_RefusesWhatNoLongerMatches(t *testing.T) {
 		Blocker: "Pays 1500.25 USD on INV-1001, which has 0.00 USD open in Trenova.",
 	})
 	tool := newApplyAccountingInboundChangeTool(operator)
-	params := agenttoolstest.AccountingSyncParams(
+	params := agenttoolstest.PersonCallParams(
 		map[string]any{"inboundChangeId": change.ID.String()},
 	)
 
@@ -161,7 +161,7 @@ func TestIgnoreAccountingInboundChange_IgnoresWithTheNote(t *testing.T) {
 	change := proposedPayment(accountinginbound.InboundStatusProposed)
 	operator := newInboundOperator(change, &accountinginboundports.AccountingInboundApplyPreview{})
 	tool := newIgnoreAccountingInboundChangeTool(operator)
-	params := agenttoolstest.AccountingSyncParams(map[string]any{
+	params := agenttoolstest.PersonCallParams(map[string]any{
 		"inboundChangeId": change.ID.String(),
 		"note":            "  Keyed in Trenova\n by the AR team.  ",
 	})
@@ -188,7 +188,7 @@ func TestIgnoreAccountingInboundChange_NeedsANoteAndAnOpenPayment(t *testing.T) 
 	} {
 		require.Error(
 			t,
-			tool.Execute(t.Context(), agenttoolstest.AccountingSyncParams(params)),
+			tool.Execute(t.Context(), agenttoolstest.PersonCallParams(params)),
 			params,
 		)
 	}

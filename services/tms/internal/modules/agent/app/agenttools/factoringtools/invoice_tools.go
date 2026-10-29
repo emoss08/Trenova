@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/factoringkit"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/outboundpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
@@ -30,7 +31,6 @@ const (
 	maxRequestedDocuments  = 20
 	fieldFactoringOverride = "factoringOverride"
 	fieldOverrideReason    = "factoringOverrideReason"
-	fieldFactoringCompany  = "factoringCompanyId"
 	fieldFactoringAgree    = "factoringAgreementId"
 )
 
@@ -82,21 +82,21 @@ func (t *SetInvoiceFactoringOverrideTool) ParamSchema() map[string]any {
 			"Exclude keeps it out of factoring; Default follows the customer's factoring.",
 			agenttoolschema.FactoringOverrides,
 		),
-		paramReason: jsonschemautils.Text(
+		factoringkit.ParamReason: jsonschemautils.Text(
 			"Why the invoice stays out of factoring. Required for Exclude.",
 		),
 	}, paramInvoiceID, paramOverride)
 }
 
 func (t *SetInvoiceFactoringOverrideTool) Policy() agenttoolports.ToolPolicy {
-	return policy(t.Name(), &policySpec{
-		resource:    permission.ResourceInvoice,
-		operation:   permission.OpUpdate,
-		defaultTier: agent.TierActWithApproval,
-		maxTier:     agent.TierActWithApproval,
-		reversible:  true,
-		idempotent:  true,
-		rationale: "Moves one invoice between the organization's receivables and the " +
+	return factoringkit.Policy(t.Name(), &factoringkit.PolicySpec{
+		Resource:    permission.ResourceInvoice,
+		Operation:   permission.OpUpdate,
+		DefaultTier: agent.TierActWithApproval,
+		MaxTier:     agent.TierActWithApproval,
+		Reversible:  true,
+		Idempotent:  true,
+		Rationale: "Moves one invoice between the organization's receivables and the " +
 			"factor's; reversible until the invoice is submitted.",
 	})
 }
@@ -125,7 +125,7 @@ func (t *SetInvoiceFactoringOverrideTool) request(
 		TenantInfo: toolparams.TenantFrom(*params),
 		InvoiceID:  invoiceID,
 		Override:   invoice.FactoringOverride(raw),
-		Reason:     toolparams.OptionalString(params.Params, paramReason),
+		Reason:     toolparams.OptionalString(params.Params, factoringkit.ParamReason),
 	}, nil
 }
 
@@ -160,28 +160,28 @@ func (t *SetInvoiceFactoringOverrideTool) Preview(
 	const summary = "Would change whether the invoice is factored."
 	req, err := t.request(&params)
 	if err != nil {
-		return refused(summary, err)
+		return factoringkit.Refused(summary, err)
 	}
 	plan, err := t.readiness.PlanOverride(ctx, req)
 	if err != nil {
-		return refused(summary, err)
+		return factoringkit.Refused(summary, err)
 	}
 	change, err := toolpreview.Changed(invoiceRecord(plan.Before), plan.Before, plan.After,
 		toolpreview.Only(
 			fieldFactoringOverride,
 			fieldOverrideReason,
-			fieldFactoringCompany,
+			factoringkit.FieldFactoringCompany,
 			fieldFactoringAgree,
 		),
 		toolpreview.WithRefs(map[string]permission.Resource{
-			fieldFactoringCompany: permission.ResourceFactoringCompany,
-			fieldFactoringAgree:   permission.ResourceFactoringAgreement,
+			factoringkit.FieldFactoringCompany: permission.ResourceFactoringCompany,
+			fieldFactoringAgree:                permission.ResourceFactoringAgreement,
 		}),
 		toolpreview.Labels(map[string]string{
-			fieldFactoringOverride: "Factoring",
-			fieldOverrideReason:    "Why it stays out",
-			fieldFactoringCompany:  "Assigned to",
-			fieldFactoringAgree:    "Agreement",
+			fieldFactoringOverride:             "Factoring",
+			fieldOverrideReason:                "Why it stays out",
+			factoringkit.FieldFactoringCompany: "Assigned to",
+			fieldFactoringAgree:                "Agreement",
 		}),
 	)
 	if err != nil {
@@ -259,14 +259,14 @@ func (t *RequestMissingFactoringDocumentTool) ParamSchema() map[string]any {
 }
 
 func (t *RequestMissingFactoringDocumentTool) Policy() agenttoolports.ToolPolicy {
-	return policy(t.Name(), &policySpec{
-		resource:    permission.ResourceCustomerCommunication,
-		operation:   permission.OpCreate,
-		defaultTier: agent.TierPropose,
-		maxTier:     agent.TierPropose,
-		egress:      agent.EgressExternalRecipient,
-		idempotent:  true,
-		rationale:   "Emails a driver, carrier or customer outside the organization.",
+	return factoringkit.Policy(t.Name(), &factoringkit.PolicySpec{
+		Resource:    permission.ResourceCustomerCommunication,
+		Operation:   permission.OpCreate,
+		DefaultTier: agent.TierPropose,
+		MaxTier:     agent.TierPropose,
+		Egress:      agent.EgressExternalRecipient,
+		Idempotent:  true,
+		Rationale:   "Emails a driver, carrier or customer outside the organization.",
 	})
 }
 
@@ -337,11 +337,11 @@ func (t *RequestMissingFactoringDocumentTool) Preview(
 	const summary = "Would email a request for the invoice's missing documents."
 	req, err := t.request(&params)
 	if err != nil {
-		return refused(summary, err)
+		return factoringkit.Refused(summary, err)
 	}
 	plan, err := t.readiness.PlanDocumentRequest(ctx, req, params.Actor.UserID)
 	if err != nil {
-		return refused(summary, err)
+		return factoringkit.Refused(summary, err)
 	}
 	send := messageRequest(&plan.Message)
 	sender, err := outboundpreview.ResolveEmailSender(ctx, t.senders, send)

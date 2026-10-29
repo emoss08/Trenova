@@ -1,4 +1,4 @@
-package factoringtools
+package factoringledgertools
 
 import (
 	"context"
@@ -8,6 +8,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/glaccountports"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/factoringkit"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
@@ -106,7 +107,12 @@ func remittanceVersionRequest(
 	if err != nil {
 		return nil, err
 	}
-	version, err := toolparams.RequireIntInRange(params.Params, paramVersion, 0, maxVersion)
+	version, err := toolparams.RequireIntInRange(
+		params.Params,
+		factoringkit.ParamVersion,
+		0,
+		factoringkit.MaxVersion,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -149,8 +155,8 @@ func (t *ResolveFactoringRemittanceLineTool) Prerequisites() []string {
 
 func (t *ResolveFactoringRemittanceLineTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
-		paramRemittanceID: remittanceIDParam(),
-		paramVersion:      remittanceVersionParam(),
+		paramRemittanceID:         remittanceIDParam(),
+		factoringkit.ParamVersion: remittanceVersionParam(),
 		paramLineID: jsonschemautils.Text(
 			"The line's lineId, from factoring_get_remittance.",
 		),
@@ -166,21 +172,21 @@ func (t *ResolveFactoringRemittanceLineTool) ParamSchema() map[string]any {
 			"What the line records, for SetKind.",
 			agenttoolschema.FactoringRemittanceLineKinds,
 		),
-		paramReason: toolparams.StringProperty(
+		factoringkit.ParamReason: toolparams.StringProperty(
 			"Why the line is not booked, for Ignore.",
 			maxRemittanceReason,
 		),
-	}, paramRemittanceID, paramVersion, paramLineID, paramLineAction)
+	}, paramRemittanceID, factoringkit.ParamVersion, paramLineID, paramLineAction)
 }
 
 func (t *ResolveFactoringRemittanceLineTool) Policy() agenttoolports.ToolPolicy {
-	return policy(t.Name(), &policySpec{
-		resource:    permission.ResourceFactoringRemittance,
-		operation:   permission.OpUpdate,
-		defaultTier: agent.TierPropose,
-		maxTier:     agent.TierActWithApproval,
-		reversible:  true,
-		rationale: "Changes which schedule item a remittance line pays before anything is " +
+	return factoringkit.Policy(t.Name(), &factoringkit.PolicySpec{
+		Resource:    permission.ResourceFactoringRemittance,
+		Operation:   permission.OpUpdate,
+		DefaultTier: agent.TierPropose,
+		MaxTier:     agent.TierActWithApproval,
+		Reversible:  true,
+		Rationale: "Changes which schedule item a remittance line pays before anything is " +
 			"booked; it can be undone until the remittance is applied.",
 	})
 }
@@ -229,7 +235,11 @@ func (t *ResolveFactoringRemittanceLineTool) request(
 			return nil, err
 		}
 	}
-	reason, err := toolparams.OptionalBoundedText(params.Params, paramReason, maxRemittanceReason)
+	reason, err := toolparams.OptionalBoundedText(
+		params.Params,
+		factoringkit.ParamReason,
+		maxRemittanceReason,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -270,11 +280,11 @@ func (t *ResolveFactoringRemittanceLineTool) Preview(
 	const summary = "Would change how a remittance line is matched."
 	req, err := t.request(&params)
 	if err != nil {
-		return refused(summary, err)
+		return factoringkit.Refused(summary, err)
 	}
 	plan, err := t.remittances.PlanUpdateLine(ctx, req, params.Actor)
 	if err != nil {
-		return refused(summary, err)
+		return factoringkit.Refused(summary, err)
 	}
 	lineChange, err := toolpreview.Changed(
 		remittanceLineRecord(plan.Before, plan.LineBefore),
@@ -329,20 +339,20 @@ func (t *RematchFactoringRemittanceTool) Prerequisites() []string {
 
 func (t *RematchFactoringRemittanceTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
-		paramRemittanceID2: remittanceIDParam(),
-		paramVersion:       remittanceVersionParam(),
-	}, paramRemittanceID2, paramVersion)
+		paramRemittanceID2:        remittanceIDParam(),
+		factoringkit.ParamVersion: remittanceVersionParam(),
+	}, paramRemittanceID2, factoringkit.ParamVersion)
 }
 
 func (t *RematchFactoringRemittanceTool) Policy() agenttoolports.ToolPolicy {
-	return policy(t.Name(), &policySpec{
-		resource:    permission.ResourceFactoringRemittance,
-		operation:   permission.OpUpdate,
-		defaultTier: agent.TierPropose,
-		maxTier:     agent.TierActWithApproval,
-		idempotent:  true,
-		reversible:  true,
-		rationale: "Recomputes suggestions and automatic matches before anything is booked; " +
+	return factoringkit.Policy(t.Name(), &factoringkit.PolicySpec{
+		Resource:    permission.ResourceFactoringRemittance,
+		Operation:   permission.OpUpdate,
+		DefaultTier: agent.TierPropose,
+		MaxTier:     agent.TierActWithApproval,
+		Idempotent:  true,
+		Reversible:  true,
+		Rationale: "Recomputes suggestions and automatic matches before anything is booked; " +
 			"a person's own matches are kept.",
 	})
 }
@@ -398,7 +408,7 @@ func (t *RematchFactoringRemittanceTool) Preview(
 ) (*agentpreview.ToolPreview, error) {
 	const summary = "Would match the remittance's open lines again."
 	if err := t.Validate(ctx, params); err != nil {
-		return refused(summary, err)
+		return factoringkit.Refused(summary, err)
 	}
 	return toolpreview.Build(summary + " Lines a person matched or ignored stay as they are."), nil
 }
@@ -438,20 +448,20 @@ func (t *ApplyFactoringRemittanceTool) Prerequisites() []string {
 
 func (t *ApplyFactoringRemittanceTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
-		paramRemittanceID2: remittanceIDParam(),
-		paramVersion:       remittanceVersionParam(),
-	}, paramRemittanceID2, paramVersion)
+		paramRemittanceID2:        remittanceIDParam(),
+		factoringkit.ParamVersion: remittanceVersionParam(),
+	}, paramRemittanceID2, factoringkit.ParamVersion)
 }
 
 func (t *ApplyFactoringRemittanceTool) Policy() agenttoolports.ToolPolicy {
-	return policy(t.Name(), &policySpec{
-		resource:    permission.ResourceFactoringRemittance,
-		operation:   permission.OpImport,
-		defaultTier: agent.TierPropose,
-		maxTier:     agent.TierPropose,
-		egress:      agent.EgressMoney,
-		idempotent:  true,
-		rationale: "Books the factor's advances, fees, reserve releases and chargebacks to the " +
+	return factoringkit.Policy(t.Name(), &factoringkit.PolicySpec{
+		Resource:    permission.ResourceFactoringRemittance,
+		Operation:   permission.OpImport,
+		DefaultTier: agent.TierPropose,
+		MaxTier:     agent.TierPropose,
+		Egress:      agent.EgressMoney,
+		Idempotent:  true,
+		Rationale: "Books the factor's advances, fees, reserve releases and chargebacks to the " +
 			"general ledger; only a person's approval runs it.",
 	})
 }
@@ -505,11 +515,11 @@ func (t *ApplyFactoringRemittanceTool) Preview(
 	const summary = "Would book the remittance's matched lines to the ledger."
 	req, err := t.request(&params)
 	if err != nil {
-		return refused(summary, err)
+		return factoringkit.Refused(summary, err)
 	}
 	plan, err := t.remittances.PlanApply(ctx, req, params.Actor)
 	if err != nil {
-		return refused(summary, err)
+		return factoringkit.Refused(summary, err)
 	}
 	movements := make([]*factoringledgerports.PlannedMovement, 0, len(plan.Lines))
 	for _, line := range plan.Lines {
@@ -572,22 +582,22 @@ func (t *DiscardFactoringRemittanceTool) Prerequisites() []string {
 
 func (t *DiscardFactoringRemittanceTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
-		paramRemittanceID2: remittanceIDParam(),
-		paramVersion:       remittanceVersionParam(),
-		paramReason: toolparams.StringProperty(
+		paramRemittanceID2:        remittanceIDParam(),
+		factoringkit.ParamVersion: remittanceVersionParam(),
+		factoringkit.ParamReason: toolparams.StringProperty(
 			"Why the remittance is discarded.",
 			maxRemittanceReason,
 		),
-	}, paramRemittanceID2, paramVersion, paramReason)
+	}, paramRemittanceID2, factoringkit.ParamVersion, factoringkit.ParamReason)
 }
 
 func (t *DiscardFactoringRemittanceTool) Policy() agenttoolports.ToolPolicy {
-	return policy(t.Name(), &policySpec{
-		resource:    permission.ResourceFactoringRemittance,
-		operation:   permission.OpCancel,
-		defaultTier: agent.TierPropose,
-		maxTier:     agent.TierActWithApproval,
-		rationale:   "Sets a remittance aside for good before anything on it is booked.",
+	return factoringkit.Policy(t.Name(), &factoringkit.PolicySpec{
+		Resource:    permission.ResourceFactoringRemittance,
+		Operation:   permission.OpCancel,
+		DefaultTier: agent.TierPropose,
+		MaxTier:     agent.TierActWithApproval,
+		Rationale:   "Sets a remittance aside for good before anything on it is booked.",
 	})
 }
 
@@ -607,7 +617,11 @@ func (t *DiscardFactoringRemittanceTool) request(
 	if err != nil {
 		return nil, err
 	}
-	reason, err := toolparams.RequireBoundedText(params.Params, paramReason, maxRemittanceReason)
+	reason, err := toolparams.RequireBoundedText(
+		params.Params,
+		factoringkit.ParamReason,
+		maxRemittanceReason,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -650,11 +664,11 @@ func (t *DiscardFactoringRemittanceTool) Preview(
 	const summary = "Would discard the remittance."
 	req, err := t.request(&params)
 	if err != nil {
-		return refused(summary, err)
+		return factoringkit.Refused(summary, err)
 	}
 	plan, err := t.remittances.PlanDiscard(ctx, req, params.Actor)
 	if err != nil {
-		return refused(summary, err)
+		return factoringkit.Refused(summary, err)
 	}
 	change, err := toolpreview.Changed(
 		remittanceRecord(plan.Before),

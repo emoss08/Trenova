@@ -1,5 +1,9 @@
 package factoringtools
 
+import (
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/factoringledgertools"
+)
+
 func Providers() []any {
 	return []any{
 		NewDraftFactoringNoaTool,
@@ -8,16 +12,16 @@ func Providers() []any {
 		NewReleaseFactoringNoaTool,
 		NewSetInvoiceFactoringOverrideTool,
 		NewRequestMissingFactoringDocumentTool,
-		NewSubmitInvoicesToFactorTool,
-		NewRetryFactoringSubmissionTool,
-		NewCancelFactoringSubmissionTool,
-		NewRecordFactoringFundingTool,
-		NewReleaseFactoringReserveTool,
-		NewRecordFactoringChargebackTool,
-		NewReverseFactoringChargebackTool,
-		NewResolveFactoringRemittanceLineTool,
-		NewRematchFactoringRemittanceTool,
-		NewApplyFactoringRemittanceTool,
-		NewDiscardFactoringRemittanceTool,
+		factoringledgertools.NewSubmitInvoicesToFactorTool,
+		factoringledgertools.NewRetryFactoringSubmissionTool,
+		factoringledgertools.NewCancelFactoringSubmissionTool,
+		factoringledgertools.NewRecordFactoringFundingTool,
+		factoringledgertools.NewReleaseFactoringReserveTool,
+		factoringledgertools.NewRecordFactoringChargebackTool,
+		factoringledgertools.NewReverseFactoringChargebackTool,
+		factoringledgertools.NewResolveFactoringRemittanceLineTool,
+		factoringledgertools.NewRematchFactoringRemittanceTool,
+		factoringledgertools.NewApplyFactoringRemittanceTool,
+		factoringledgertools.NewDiscardFactoringRemittanceTool,
 	}
 }

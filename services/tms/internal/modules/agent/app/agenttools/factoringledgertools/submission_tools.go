@@ -1,4 +1,4 @@
-package factoringtools
+package factoringledgertools
 
 import (
 	"context"
@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/factoringkit"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
@@ -43,20 +44,20 @@ func submissionRecord(sub *factoringsubmission.Submission) toolpreview.Record {
 func submissionPreviewOptions() []toolpreview.Option {
 	return []toolpreview.Option{
 		toolpreview.Only(
-			"status", fieldFactoringCompany, "transportMethod", "transportTarget",
+			"status", factoringkit.FieldFactoringCompany, "transportMethod", "transportTarget",
 			"invoiceCount", "sendAttemptGroup", "lastError", "cancelReason",
 		),
 		toolpreview.WithRefs(map[string]permission.Resource{
-			fieldFactoringCompany: permission.ResourceFactoringCompany,
+			factoringkit.FieldFactoringCompany: permission.ResourceFactoringCompany,
 		}),
 		toolpreview.Labels(map[string]string{
-			fieldFactoringCompany: "Factor",
-			"transportMethod":     "Sent by",
-			"transportTarget":     "Sent to",
-			"invoiceCount":        "Invoices",
-			"sendAttemptGroup":    "Send",
-			"lastError":           "Last error",
-			"cancelReason":        "Why it was cancelled",
+			factoringkit.FieldFactoringCompany: "Factor",
+			"transportMethod":                  "Sent by",
+			"transportTarget":                  "Sent to",
+			"invoiceCount":                     "Invoices",
+			"sendAttemptGroup":                 "Send",
+			"lastError":                        "Last error",
+			"cancelReason":                     "Why it was cancelled",
 		}),
 	}
 }
@@ -79,7 +80,12 @@ func submissionActionRequest(
 	if err != nil {
 		return nil, err
 	}
-	version, err := toolparams.RequireIntInRange(params.Params, paramVersion, 0, maxVersion)
+	version, err := toolparams.RequireIntInRange(
+		params.Params,
+		factoringkit.ParamVersion,
+		0,
+		factoringkit.MaxVersion,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -119,7 +125,7 @@ func (t *SubmitInvoicesToFactorTool) Prerequisites() []string { return []string{
 
 func (t *SubmitInvoicesToFactorTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
-		paramFactorID: agenttoolschema.RecordIDText(
+		factoringkit.ParamFactorID: agenttoolschema.RecordIDText(
 			permission.ResourceFactoringCompany,
 			"The factor every invoice is assigned to, from factoring_list_readiness.",
 		),
@@ -128,18 +134,18 @@ func (t *SubmitInvoicesToFactorTool) ParamSchema() map[string]any {
 			"The Ready invoices to sell, from factoring_list_readiness.",
 			factoringsubmission.MaxSubmissionInvoices,
 		),
-	}, paramFactorID, paramInvoiceIDs)
+	}, factoringkit.ParamFactorID, paramInvoiceIDs)
 }
 
 func (t *SubmitInvoicesToFactorTool) Policy() agenttoolports.ToolPolicy {
-	return policy(t.Name(), &policySpec{
-		resource:    permission.ResourceFactoringSubmission,
-		operation:   permission.OpSubmit,
-		defaultTier: agent.TierPropose,
-		maxTier:     agent.TierPropose,
-		egress:      agent.EgressExternalRecipient,
-		idempotent:  true,
-		rationale: "Sells receivables to a factor and sends them out of the organization; " +
+	return factoringkit.Policy(t.Name(), &factoringkit.PolicySpec{
+		Resource:    permission.ResourceFactoringSubmission,
+		Operation:   permission.OpSubmit,
+		DefaultTier: agent.TierPropose,
+		MaxTier:     agent.TierPropose,
+		Egress:      agent.EgressExternalRecipient,
+		Idempotent:  true,
+		Rationale: "Sells receivables to a factor and sends them out of the organization; " +
 			"a person approves every schedule.",
 	})
 }
@@ -147,7 +153,11 @@ func (t *SubmitInvoicesToFactorTool) Policy() agenttoolports.ToolPolicy {
 func (t *SubmitInvoicesToFactorTool) Target(
 	params map[string]any,
 ) (agenttoolports.ToolTarget, bool) {
-	return toolparams.TargetOf(params, paramFactorID, permission.ResourceFactoringCompany)
+	return toolparams.TargetOf(
+		params,
+		factoringkit.ParamFactorID,
+		permission.ResourceFactoringCompany,
+	)
 }
 
 func (t *SubmitInvoicesToFactorTool) request(
@@ -156,7 +166,7 @@ func (t *SubmitInvoicesToFactorTool) request(
 	if err := toolguard.GuardExecute(t, *params); err != nil {
 		return nil, err
 	}
-	factorID, err := toolparams.RequirePulid(params.Params, paramFactorID)
+	factorID, err := toolparams.RequirePulid(params.Params, factoringkit.ParamFactorID)
 	if err != nil {
 		return nil, err
 	}
@@ -207,11 +217,11 @@ func (t *SubmitInvoicesToFactorTool) Preview(
 	const summary = "Would send a schedule of accounts to the factor."
 	req, err := t.request(&params)
 	if err != nil {
-		return refused(summary, err)
+		return factoringkit.Refused(summary, err)
 	}
 	plan, err := t.submissions.Plan(ctx, req)
 	if err != nil {
-		return refused(summary, err)
+		return factoringkit.Refused(summary, err)
 	}
 
 	draft := &factoringsubmission.Submission{
@@ -331,19 +341,19 @@ func (t *RetryFactoringSubmissionTool) ParamSchema() map[string]any {
 		paramSubmissionID: submissionIDParam(
 			"The failed schedule, from factoring_list_submissions.",
 		),
-		paramVersion: submissionVersionParam(),
-	}, paramSubmissionID, paramVersion)
+		factoringkit.ParamVersion: submissionVersionParam(),
+	}, paramSubmissionID, factoringkit.ParamVersion)
 }
 
 func (t *RetryFactoringSubmissionTool) Policy() agenttoolports.ToolPolicy {
-	return policy(t.Name(), &policySpec{
-		resource:    permission.ResourceFactoringSubmission,
-		operation:   permission.OpUpdate,
-		defaultTier: agent.TierActWithApproval,
-		maxTier:     agent.TierActWithApproval,
-		egress:      agent.EgressExternalRecipient,
-		idempotent:  true,
-		rationale:   "Sends receivables out of the organization again; a person approves it.",
+	return factoringkit.Policy(t.Name(), &factoringkit.PolicySpec{
+		Resource:    permission.ResourceFactoringSubmission,
+		Operation:   permission.OpUpdate,
+		DefaultTier: agent.TierActWithApproval,
+		MaxTier:     agent.TierActWithApproval,
+		Egress:      agent.EgressExternalRecipient,
+		Idempotent:  true,
+		Rationale:   "Sends receivables out of the organization again; a person approves it.",
 	})
 }
 
@@ -393,11 +403,11 @@ func (t *RetryFactoringSubmissionTool) Preview(
 	const summary = "Would send the failed schedule to the factor again."
 	req, err := t.request(&params)
 	if err != nil {
-		return refused(summary, err)
+		return factoringkit.Refused(summary, err)
 	}
 	plan, err := t.submissions.PlanRetry(ctx, req)
 	if err != nil {
-		return refused(summary, err)
+		return factoringkit.Refused(summary, err)
 	}
 	change, err := toolpreview.Changed(
 		submissionRecord(plan.Before),
@@ -447,18 +457,18 @@ func (t *CancelFactoringSubmissionTool) ParamSchema() map[string]any {
 		paramSubmissionID: submissionIDParam(
 			"The failed schedule, from factoring_list_submissions.",
 		),
-		paramVersion: submissionVersionParam(),
-		paramReason:  jsonschemautils.Text("Why the schedule is cancelled."),
-	}, paramSubmissionID, paramVersion, paramReason)
+		factoringkit.ParamVersion: submissionVersionParam(),
+		factoringkit.ParamReason:  jsonschemautils.Text("Why the schedule is cancelled."),
+	}, paramSubmissionID, factoringkit.ParamVersion, factoringkit.ParamReason)
 }
 
 func (t *CancelFactoringSubmissionTool) Policy() agenttoolports.ToolPolicy {
-	return policy(t.Name(), &policySpec{
-		resource:    permission.ResourceFactoringSubmission,
-		operation:   permission.OpCancel,
-		defaultTier: agent.TierActWithApproval,
-		maxTier:     agent.TierActWithApproval,
-		rationale:   "Releases invoices from a schedule; a person approves it.",
+	return factoringkit.Policy(t.Name(), &factoringkit.PolicySpec{
+		Resource:    permission.ResourceFactoringSubmission,
+		Operation:   permission.OpCancel,
+		DefaultTier: agent.TierActWithApproval,
+		MaxTier:     agent.TierActWithApproval,
+		Rationale:   "Releases invoices from a schedule; a person approves it.",
 	})
 }
 
@@ -478,7 +488,11 @@ func (t *CancelFactoringSubmissionTool) request(
 	if err != nil {
 		return nil, err
 	}
-	reason, err := toolparams.RequireBoundedText(params.Params, paramReason, maxCancelReason)
+	reason, err := toolparams.RequireBoundedText(
+		params.Params,
+		factoringkit.ParamReason,
+		maxCancelReason,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -517,11 +531,11 @@ func (t *CancelFactoringSubmissionTool) Preview(
 	const summary = "Would cancel the failed schedule and release its invoices."
 	req, err := t.request(&params)
 	if err != nil {
-		return refused(summary, err)
+		return factoringkit.Refused(summary, err)
 	}
 	plan, err := t.submissions.PlanCancel(ctx, req)
 	if err != nil {
-		return refused(summary, err)
+		return factoringkit.Refused(summary, err)
 	}
 	change, err := toolpreview.Changed(
 		submissionRecord(plan.Before),
