@@ -7,13 +7,8 @@ import (
 	"sync"
 	"testing"
 
-<<<<<<< HEAD
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
-=======
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
->>>>>>> 9b8ebef2 (refactor: split domain/aiprovider into the provider and its vocabularies and use cases)
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
