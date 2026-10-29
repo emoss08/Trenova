@@ -198,7 +198,7 @@ ceiling travels beside it, in the context (below).
 ## Mapping tools to operations
 
 The mapping is derived, not hand-kept. `go run ./internal/api/graphql/agentread/gen` runs as
-the last step of `task gqlgen` and in `Codegen Checks`. It reads four sources:
+the last step of `task gqlgen` and in the `Lint` job of `test-tms.yml`. It reads four sources:
 
 - **`agentread/reads.yml`**: the tools that read through GraphQL. This is the state of the
   migration: one line per converted tool, and nothing else unless an operation is overridden.

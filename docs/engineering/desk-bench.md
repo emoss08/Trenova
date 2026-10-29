@@ -613,7 +613,7 @@ precision and recall, and argument validity are given for held-out scenarios apa
 rest. The eval gate logs `find_tools` recall@5 and top-1 on held-out cases apart, and gates them
 on their own floors (`heldOut` in `toolselection.floors.json`) beside the floors over every case.
 It prints the misses of development cases only; a held-out miss is printed only when the held-out
-floor fails. The Agent Evals workflow writes both to the run's summary.
+floor fails. Test Go's Unit Tests job writes both to the run's summary.
 
 `expectedTools` names the tools a correct run calls (`a|b` for either one); `forbiddenTools`
 names ones it must not call. Left out, expected tools are taken from the scenario's `tools` and

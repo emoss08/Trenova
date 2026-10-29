@@ -285,6 +285,7 @@ generated Go contracts, the committed `rules.wasm` copies, the toolchain pins an
 Dockerfile: the toolchain-pin check, `cargo fmt --check`, clippy with `-D warnings`,
 `cargo test --workspace` with PDFium and libheif installed, the three WebAssembly modules (clippy
 for `wasm32-unknown-unknown` and `wasm32-wasip1`, and each `build-wasm.sh check`), `cargo deny check`, buf lint and
-breaking, the generated-Go check, bounded fuzzing, and the imaging image (its test stage, the runtime image, and a start-up check that it refuses
+breaking, the generated-Go check, bounded fuzzing (after each merge to master and weekly, not on
+pull requests), and the imaging image (its test stage, the runtime image, and a start-up check that it refuses
 to run in production without TLS and reports ready in development). `native-capture.yml` also
 runs when `services/crates/imaging-core`, the workspace manifest or the toolchain pin changes.

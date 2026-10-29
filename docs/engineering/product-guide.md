@@ -54,7 +54,7 @@ pnpm guide:generate   # write the catalog
 pnpm guide:check      # fail if it is stale or a guide is wrong (CI runs this)
 ```
 
-The **GraphQL Codegen** job in `.github/workflows/test-client.yml` runs
+The **Checks** job in `.github/workflows/test-client.yml` runs
 `guide:check`. It also runs when only a guide, the catalog or the English i18n
 catalog changes, since each of those can make the other stale.
 
