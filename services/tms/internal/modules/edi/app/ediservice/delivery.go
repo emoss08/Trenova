@@ -8,6 +8,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/observability"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoicerealtime"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/edi/app/editransport"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
@@ -735,8 +736,8 @@ func (s *Service) publishInvoiceEDIStatus(ctx context.Context, message *edimessa
 	realtimeinvalidation.PublishAfterCommit(ctx, s.realtime, s.l, realtimeinvalidation.ChangeOf(
 		permission.ResourceInvoice.String(),
 		entity,
-		invoice.RealtimeActionEDIUpdated,
+		invoicerealtime.RealtimeActionEDIUpdated,
 		permissionports.SystemAuditActor(),
-		invoice.NewRealtimeSnapshot(entity),
+		invoicerealtime.NewRealtimeSnapshot(entity),
 	))
 }

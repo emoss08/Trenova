@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringsubmission"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice/invoicedb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoicedispute"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerledgerports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer/customerdb"
@@ -676,7 +677,7 @@ func worklistQuery(
 	items := keel.CTE("items", worklistColumns, inv.
 		LeftJoinLateral(od.
 			Pick(od.ID, od.ReasonCode, od.DisputedAmountMinor, od.OpenedAt).
-			Where(od.InvoiceID.EqCol(inv.ID), od.Status.Eq(invoice.DisputeCaseStatusOpen)).
+			Where(od.InvoiceID.EqCol(inv.ID), od.Status.Eq(invoicedispute.DisputeCaseStatusOpen)).
 			Order(od.OpenedAt.Desc()).
 			Limit(1)).
 		Pick(

@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/receivablesql"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice/invoicedb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoicedispute"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/latecharge"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/latecharge/latechargedb"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/latechargeports"
@@ -81,7 +82,7 @@ func candidatesQuery(asOf int64, customerIDs []pulid.ID) *keel.Query[*invoice.In
 			inv.MemoKind.Ne(invoice.MemoKindLateCharge),
 			keel.NotExists(dispute.Where(
 				dispute.InvoiceID.EqCol(inv.ID),
-				dispute.Status.Eq(invoice.DisputeCaseStatusOpen),
+				dispute.Status.Eq(invoicedispute.DisputeCaseStatusOpen),
 			)),
 			keel.When(len(customerIDs) > 0, inv.CustomerID.In(customerIDs...)),
 		)

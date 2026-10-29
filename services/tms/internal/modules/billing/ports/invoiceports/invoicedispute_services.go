@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoicedispute"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -12,21 +13,21 @@ import (
 
 // OpenInvoiceDisputeRequest raises a dispute case on a posted invoice.
 type OpenInvoiceDisputeRequest struct {
-	InvoiceID      pulid.ID                  `json:"invoiceId"`
-	TenantInfo     pagination.TenantInfo     `json:"-"`
-	ReasonCode     invoice.DisputeReasonCode `json:"reasonCode"`
-	DisputedAmount decimal.Decimal           `json:"disputedAmount"`
-	Notes          string                    `json:"notes"`
+	InvoiceID      pulid.ID                         `json:"invoiceId"`
+	TenantInfo     pagination.TenantInfo            `json:"-"`
+	ReasonCode     invoicedispute.DisputeReasonCode `json:"reasonCode"`
+	DisputedAmount decimal.Decimal                  `json:"disputedAmount"`
+	Notes          string                           `json:"notes"`
 }
 
 // ResolveInvoiceDisputeRequest closes an open case with an outcome. A credit
 // or write-off must name the executed adjustment that settled it.
 type ResolveInvoiceDisputeRequest struct {
-	DisputeID              pulid.ID                  `json:"disputeId"`
-	TenantInfo             pagination.TenantInfo     `json:"-"`
-	Resolution             invoice.DisputeResolution `json:"resolution"`
-	ResolutionAdjustmentID pulid.ID                  `json:"resolutionAdjustmentId"`
-	ResolutionNotes        string                    `json:"resolutionNotes"`
+	DisputeID              pulid.ID                         `json:"disputeId"`
+	TenantInfo             pagination.TenantInfo            `json:"-"`
+	Resolution             invoicedispute.DisputeResolution `json:"resolution"`
+	ResolutionAdjustmentID pulid.ID                         `json:"resolutionAdjustmentId"`
+	ResolutionNotes        string                           `json:"resolutionNotes"`
 }
 
 // WithdrawInvoiceDisputeRequest drops an open case the customer no longer
@@ -38,8 +39,8 @@ type WithdrawInvoiceDisputeRequest struct {
 }
 
 type InvoiceDisputePreview struct {
-	Before        *invoice.InvoiceDispute
-	After         *invoice.InvoiceDispute
+	Before        *invoicedispute.InvoiceDispute
+	After         *invoicedispute.InvoiceDispute
 	InvoiceBefore *invoice.Invoice
 	InvoiceAfter  *invoice.Invoice
 }
@@ -49,17 +50,17 @@ type InvoiceDisputeService interface {
 		ctx context.Context,
 		req *OpenInvoiceDisputeRequest,
 		actor *permissionports.RequestActor,
-	) (*invoice.InvoiceDispute, error)
+	) (*invoicedispute.InvoiceDispute, error)
 	Resolve(
 		ctx context.Context,
 		req *ResolveInvoiceDisputeRequest,
 		actor *permissionports.RequestActor,
-	) (*invoice.InvoiceDispute, error)
+	) (*invoicedispute.InvoiceDispute, error)
 	Withdraw(
 		ctx context.Context,
 		req *WithdrawInvoiceDisputeRequest,
 		actor *permissionports.RequestActor,
-	) (*invoice.InvoiceDispute, error)
+	) (*invoicedispute.InvoiceDispute, error)
 	PreviewOpen(
 		ctx context.Context,
 		req *OpenInvoiceDisputeRequest,

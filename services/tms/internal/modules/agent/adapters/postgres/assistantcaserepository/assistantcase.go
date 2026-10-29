@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue/billingqueuedb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice/invoicedb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoicedispute"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document/documentdb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -220,8 +221,8 @@ func (r *repository) invoiceRecords(
 
 type disputeRecordRow struct {
 	ID            pulid.ID
-	Status        invoice.DisputeCaseStatus
-	Resolution    invoice.DisputeResolution
+	Status        invoicedispute.DisputeCaseStatus
+	Resolution    invoicedispute.DisputeResolution
 	CustomerID    pulid.ID
 	InvoiceID     pulid.ID
 	InvoiceNumber string
@@ -249,13 +250,13 @@ func (r *repository) disputeRecords(
 			InvoiceID:  row.InvoiceID,
 		}
 		switch row.Status {
-		case invoice.DisputeCaseStatusResolved, invoice.DisputeCaseStatusWithdrawn:
+		case invoicedispute.DisputeCaseStatusResolved, invoicedispute.DisputeCaseStatusWithdrawn:
 			record.Closed = true
 			record.ClosedAs = string(row.Status)
 			if row.Resolution != "" {
 				record.ClosedAs = string(row.Resolution)
 			}
-		case invoice.DisputeCaseStatusOpen:
+		case invoicedispute.DisputeCaseStatusOpen:
 		}
 		out[row.ID] = record
 	}
@@ -483,7 +484,7 @@ func invoiceRecordsQuery(ids []pulid.ID) *keel.Query[*invoice.Invoice] {
 		Where(inv.ID.In(ids...))
 }
 
-func disputeRecordsQuery(ids []pulid.ID) *keel.Query[*invoice.InvoiceDispute] {
+func disputeRecordsQuery(ids []pulid.ID) *keel.Query[*invoicedispute.InvoiceDispute] {
 	d := invoicedb.InvoiceDisputes
 
 	return d.Pick(

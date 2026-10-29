@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoicedispute"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -36,7 +37,7 @@ func TestPreviewOpenPlansTheCaseAndTheFlagWithoutWriting(t *testing.T) {
 
 	assert.Nil(t, preview.Before)
 	require.NotNil(t, preview.After)
-	assert.Equal(t, invoice.DisputeCaseStatusOpen, preview.After.Status)
+	assert.Equal(t, invoicedispute.DisputeCaseStatusOpen, preview.After.Status)
 	assert.Equal(t, int64(4050), preview.After.DisputedAmountMinor)
 	assert.Equal(t, "Rate on lane differs from contract", preview.After.Notes)
 	assert.Equal(t, f.userID, preview.After.OpenedByID)
@@ -89,15 +90,15 @@ func TestPreviewResolveClosesTheCaseAndClearsTheFlag(t *testing.T) {
 	preview, err := f.svc.PreviewResolve(t.Context(), &invoiceports.ResolveInvoiceDisputeRequest{
 		DisputeID:              existing.ID,
 		TenantInfo:             f.tenantInfo,
-		Resolution:             invoice.DisputeResolutionCreditIssued,
+		Resolution:             invoicedispute.DisputeResolutionCreditIssued,
 		ResolutionAdjustmentID: adjustmentID,
 		ResolutionNotes:        " Credited the fuel line ",
 	}, f.actor)
 	require.NoError(t, err)
 
-	assert.Equal(t, invoice.DisputeCaseStatusOpen, preview.Before.Status)
-	assert.Equal(t, invoice.DisputeCaseStatusResolved, preview.After.Status)
-	assert.Equal(t, invoice.DisputeResolutionCreditIssued, preview.After.Resolution)
+	assert.Equal(t, invoicedispute.DisputeCaseStatusOpen, preview.Before.Status)
+	assert.Equal(t, invoicedispute.DisputeCaseStatusResolved, preview.After.Status)
+	assert.Equal(t, invoicedispute.DisputeResolutionCreditIssued, preview.After.Resolution)
 	assert.Equal(t, "Credited the fuel line", preview.After.ResolutionNotes)
 	assert.Equal(t, invoice.DisputeStatusNone, preview.InvoiceAfter.DisputeStatus)
 	assert.Equal(t, invoice.DisputeStatusDisputed, preview.InvoiceBefore.DisputeStatus)
@@ -117,7 +118,7 @@ func TestPreviewResolveRefusesACreditWithoutItsAdjustment(t *testing.T) {
 	_, err := f.svc.PreviewResolve(t.Context(), &invoiceports.ResolveInvoiceDisputeRequest{
 		DisputeID:  existing.ID,
 		TenantInfo: f.tenantInfo,
-		Resolution: invoice.DisputeResolutionWrittenOff,
+		Resolution: invoicedispute.DisputeResolutionWrittenOff,
 	}, f.actor)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "executed adjustment")
@@ -128,7 +129,7 @@ func TestPreviewWithdrawRefusesAClosedCaseBeforeReadingTheInvoice(t *testing.T) 
 
 	f := newDisputeFixture(t)
 	closed := f.openCase()
-	closed.Status = invoice.DisputeCaseStatusWithdrawn
+	closed.Status = invoicedispute.DisputeCaseStatusWithdrawn
 	f.repo.EXPECT().
 		GetByID(mock.Anything, invoiceports.GetInvoiceDisputeByIDRequest{ID: closed.ID, TenantInfo: f.tenantInfo}).
 		Return(closed, nil).
@@ -159,7 +160,7 @@ func TestPreviewWithdrawKeepsTheNotes(t *testing.T) {
 		Notes:      "Customer paid in full",
 	}, f.actor)
 	require.NoError(t, err)
-	assert.Equal(t, invoice.DisputeCaseStatusWithdrawn, preview.After.Status)
+	assert.Equal(t, invoicedispute.DisputeCaseStatusWithdrawn, preview.After.Status)
 	assert.Equal(t, "Customer paid in full", preview.After.ResolutionNotes)
 	assert.Equal(t, f.userID, preview.After.ResolvedByID)
 }

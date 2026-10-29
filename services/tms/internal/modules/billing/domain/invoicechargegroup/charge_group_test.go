@@ -1,9 +1,10 @@
-package invoice_test
+package invoicechargegroup_test
 
 import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoicechargegroup"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -74,7 +75,7 @@ func TestChargeGroupsSumEveryLineBilledTheSameWay(t *testing.T) {
 		},
 	}
 
-	groups := invoice.ChargeGroups(lines)
+	groups := invoicechargegroup.ChargeGroups(lines)
 	require.Len(t, groups, 4)
 
 	mile := groups[0]
@@ -140,7 +141,7 @@ func TestChargeGroupsKeepFreightBeforeAccessorialsBeforeMemos(t *testing.T) {
 		},
 	}
 
-	groups := invoice.ChargeGroups(lines)
+	groups := invoicechargegroup.ChargeGroups(lines)
 	require.Len(t, groups, 4)
 
 	assert.Equal(t, invoice.InvoiceLineTypeFreight, groups[0].Type)
@@ -179,7 +180,7 @@ func TestChargeGroupsTellLegacyAccessorialsApartByTheirDescription(t *testing.T)
 		},
 	}
 
-	groups := invoice.ChargeGroups(lines)
+	groups := invoicechargegroup.ChargeGroups(lines)
 	require.Len(t, groups, 2)
 
 	assert.Equal(t, "Lumper", groups[0].Description)
@@ -191,8 +192,8 @@ func TestChargeGroupsTellLegacyAccessorialsApartByTheirDescription(t *testing.T)
 func TestChargeGroupsOfNoLinesIsEmpty(t *testing.T) {
 	t.Parallel()
 
-	assert.Empty(t, invoice.ChargeGroups(nil))
-	assert.Empty(t, invoice.ChargeGroups([]*invoice.InvoiceLine{nil}))
+	assert.Empty(t, invoicechargegroup.ChargeGroups(nil))
+	assert.Empty(t, invoicechargegroup.ChargeGroups([]*invoice.InvoiceLine{nil}))
 }
 
 func TestBilledShipmentIDsNameEachShipmentOnceHeaderFirst(t *testing.T) {
@@ -208,6 +209,10 @@ func TestBilledShipmentIDsNameEachShipmentOnceHeaderFirst(t *testing.T) {
 		{Lines: []*invoice.InvoiceLine{nil, {ShipmentID: third}, {ShipmentID: other}, {}}},
 	}
 
-	assert.Equal(t, []pulid.ID{header, other, third}, invoice.BilledShipmentIDs(invoices...))
-	assert.Empty(t, invoice.BilledShipmentIDs())
+	assert.Equal(
+		t,
+		[]pulid.ID{header, other, third},
+		invoicechargegroup.BilledShipmentIDs(invoices...),
+	)
+	assert.Empty(t, invoicechargegroup.BilledShipmentIDs())
 }

@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoicerealtime"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/jobs/billingjobs/billingcontract"
@@ -258,7 +259,12 @@ func (s *Service) Send(
 		updated,
 		"Invoice email delivery queued",
 	)
-	s.publishInvoiceChange(ctx, updated, actor.AuditActor(), invoice.RealtimeActionSendUpdated)
+	s.publishInvoiceChange(
+		ctx,
+		updated,
+		actor.AuditActor(),
+		invoicerealtime.RealtimeActionSendUpdated,
+	)
 	return &invoiceports.InvoiceSendResult{Invoice: updated, Plan: plan}, nil
 }
 
@@ -443,7 +449,12 @@ func (s *Service) SendFromWorkflow(
 		updated,
 		"Invoice email delivery attempted",
 	)
-	s.publishInvoiceChange(ctx, updated, actor.AuditActor(), invoice.RealtimeActionSendUpdated)
+	s.publishInvoiceChange(
+		ctx,
+		updated,
+		actor.AuditActor(),
+		invoicerealtime.RealtimeActionSendUpdated,
+	)
 	return &invoiceports.InvoiceSendResult{Invoice: updated, Plan: plan, Attempts: attempts}, nil
 }
 
@@ -522,7 +533,12 @@ func (s *Service) markInvoiceSendFailed(
 		updated,
 		"Invoice email delivery failed",
 	)
-	s.publishInvoiceChange(ctx, updated, actor.AuditActor(), invoice.RealtimeActionSendUpdated)
+	s.publishInvoiceChange(
+		ctx,
+		updated,
+		actor.AuditActor(),
+		invoicerealtime.RealtimeActionSendUpdated,
+	)
 }
 
 // applySendSnapshot freezes what was sent onto the invoice.

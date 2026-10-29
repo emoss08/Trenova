@@ -19,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoicechargegroup"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
@@ -400,11 +401,11 @@ func (r *QueryResolver) Invoice(ctx context.Context, id string) (*invoice.Invoic
 	})
 }
 
-func (r *InvoiceChargeGroupResolver) ChargeCode(ctx context.Context, obj *invoice.ChargeGroup) (*string, error) {
+func (r *InvoiceChargeGroupResolver) ChargeCode(ctx context.Context, obj *invoicechargegroup.ChargeGroup) (*string, error) {
 	return gqlscalar.StringPtrFromValue(obj.ChargeCode), nil
 }
 
-func (r *InvoiceChargeGroupResolver) ChargeMethod(ctx context.Context, obj *invoice.ChargeGroup) (*accessorialcharge.Method, error) {
+func (r *InvoiceChargeGroupResolver) ChargeMethod(ctx context.Context, obj *invoicechargegroup.ChargeGroup) (*accessorialcharge.Method, error) {
 	if obj.ChargeMethod == "" {
 		return nil, nil
 	}
@@ -413,7 +414,7 @@ func (r *InvoiceChargeGroupResolver) ChargeMethod(ctx context.Context, obj *invo
 	return &method, nil
 }
 
-func (r *InvoiceChargeGroupResolver) RateUnit(ctx context.Context, obj *invoice.ChargeGroup) (*string, error) {
+func (r *InvoiceChargeGroupResolver) RateUnit(ctx context.Context, obj *invoicechargegroup.ChargeGroup) (*string, error) {
 	if obj.RateUnit == "" {
 		return nil, nil
 	}
@@ -422,33 +423,33 @@ func (r *InvoiceChargeGroupResolver) RateUnit(ctx context.Context, obj *invoice.
 	return &unit, nil
 }
 
-func (r *InvoiceChargeGroupResolver) Rate(ctx context.Context, obj *invoice.ChargeGroup) (*string, error) {
+func (r *InvoiceChargeGroupResolver) Rate(ctx context.Context, obj *invoicechargegroup.ChargeGroup) (*string, error) {
 	return gqldecimal.NullDecimalStringPtr(obj.Rate), nil
 }
 
-func (r *InvoiceChargeGroupResolver) RateBasisAmount(ctx context.Context, obj *invoice.ChargeGroup) (*string, error) {
+func (r *InvoiceChargeGroupResolver) RateBasisAmount(ctx context.Context, obj *invoicechargegroup.ChargeGroup) (*string, error) {
 	return gqldecimal.NullDecimalStringPtr(obj.RateBasisAmount), nil
 }
 
-func (r *InvoiceChargeGroupResolver) Quantity(ctx context.Context, obj *invoice.ChargeGroup) (string, error) {
+func (r *InvoiceChargeGroupResolver) Quantity(ctx context.Context, obj *invoicechargegroup.ChargeGroup) (string, error) {
 	return obj.Quantity.String(), nil
 }
 
-func (r *InvoiceChargeGroupResolver) FormulaTemplateID(ctx context.Context, obj *invoice.ChargeGroup) (*string, error) {
+func (r *InvoiceChargeGroupResolver) FormulaTemplateID(ctx context.Context, obj *invoicechargegroup.ChargeGroup) (*string, error) {
 	return gqlscalar.StringPtrFromValue(obj.FormulaTemplateID.String()), nil
 }
 
-func (r *InvoiceChargeGroupResolver) FormulaTemplateName(ctx context.Context, obj *invoice.ChargeGroup) (*string, error) {
+func (r *InvoiceChargeGroupResolver) FormulaTemplateName(ctx context.Context, obj *invoicechargegroup.ChargeGroup) (*string, error) {
 	return gqlscalar.StringPtrFromValue(obj.FormulaTemplateName), nil
 }
 
-func (r *InvoiceChargeGroupResolver) Amount(ctx context.Context, obj *invoice.ChargeGroup) (string, error) {
+func (r *InvoiceChargeGroupResolver) Amount(ctx context.Context, obj *invoicechargegroup.ChargeGroup) (string, error) {
 	return obj.Amount.String(), nil
 }
 
-func (r *InvoiceResolver) ChargeSummary(ctx context.Context, obj *invoice.Invoice) ([]*invoice.ChargeGroup, error) {
+func (r *InvoiceResolver) ChargeSummary(ctx context.Context, obj *invoice.Invoice) ([]*invoicechargegroup.ChargeGroup, error) {
 	if obj.Lines != nil || !loaders.Available(ctx) {
-		return invoice.ChargeGroups(obj.Lines), nil
+		return invoicechargegroup.ChargeGroups(obj.Lines), nil
 	}
 
 	loaded, err := loaders.InvoiceByID(ctx, obj.ID.String())
@@ -456,10 +457,10 @@ func (r *InvoiceResolver) ChargeSummary(ctx context.Context, obj *invoice.Invoic
 		return nil, err
 	}
 	if loaded == nil {
-		return []*invoice.ChargeGroup{}, nil
+		return []*invoicechargegroup.ChargeGroup{}, nil
 	}
 
-	return invoice.ChargeGroups(loaded.Lines), nil
+	return invoicechargegroup.ChargeGroups(loaded.Lines), nil
 }
 
 func (r *InvoiceResolver) VoidedBy(ctx context.Context, obj *invoice.Invoice) (*tenant.User, error) {

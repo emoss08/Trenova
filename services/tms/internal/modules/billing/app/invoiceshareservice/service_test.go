@@ -3,19 +3,13 @@ package invoiceshareservice
 import (
 	"context"
 	"errors"
-	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/documenttemplateportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/emailportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/invoiceportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/notificationportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/permissionportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"strings"
 	"sync"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceshare"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
@@ -28,6 +22,13 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
+	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/documenttemplateportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/emailportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/invoiceportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/notificationportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/permissionportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -41,12 +42,12 @@ import (
 
 type fakeShareRepo struct {
 	mu        sync.Mutex
-	upserted  []*invoice.InvoiceShare
+	upserted  []*invoiceshare.InvoiceShare
 	upsertErr error
-	listed    []*invoice.InvoiceShare
+	listed    []*invoiceshare.InvoiceShare
 }
 
-func (f *fakeShareRepo) Upsert(_ context.Context, shares []*invoice.InvoiceShare) error {
+func (f *fakeShareRepo) Upsert(_ context.Context, shares []*invoiceshare.InvoiceShare) error {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	if f.upsertErr != nil {
@@ -59,7 +60,7 @@ func (f *fakeShareRepo) Upsert(_ context.Context, shares []*invoice.InvoiceShare
 func (f *fakeShareRepo) ListByInvoiceID(
 	_ context.Context,
 	_ *invoiceports.ListInvoiceSharesRequest,
-) ([]*invoice.InvoiceShare, error) {
+) ([]*invoiceshare.InvoiceShare, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	if f.listed != nil {
@@ -262,7 +263,7 @@ func (h *harness) expectAudit() {
 func (h *harness) request(
 	userIDs []pulid.ID,
 	note string,
-	tab invoice.ShareTab,
+	tab invoiceshare.ShareTab,
 ) *invoiceports.ShareInvoiceRequest {
 	return &invoiceports.ShareInvoiceRequest{
 		TenantInfo: h.tenant,
@@ -307,7 +308,7 @@ func TestShareStoresNotifiesAndEmailsEveryRecipient(t *testing.T) {
 		h.request(
 			[]pulid.ID{dana.ID, priya.ID, dana.ID},
 			"  Check the detention line  ",
-			invoice.ShareTabCharges,
+			invoiceshare.ShareTabCharges,
 		),
 		h.actor,
 	)
@@ -323,7 +324,7 @@ func TestShareStoresNotifiesAndEmailsEveryRecipient(t *testing.T) {
 		assert.Equal(t, h.invoice.ID, share.InvoiceID)
 		assert.Equal(t, h.sharer.ID, share.SharedByID)
 		assert.Equal(t, "Check the detention line", share.Note)
-		assert.Equal(t, invoice.ShareTabCharges, share.Tab)
+		assert.Equal(t, invoiceshare.ShareTabCharges, share.Tab)
 		assert.Equal(t, 1, share.ShareCount)
 	}
 
@@ -480,8 +481,8 @@ func TestShareRejectsRecipientsOutsideTheOrganizationOrInactive(t *testing.T) {
 func TestShareValidatesTheRequestBeforeReadingAnything(t *testing.T) {
 	t.Parallel()
 
-	tooMany := make([]pulid.ID, 0, invoice.MaxShareRecipients+1)
-	for range invoice.MaxShareRecipients + 1 {
+	tooMany := make([]pulid.ID, 0, invoiceshare.MaxShareRecipients+1)
+	for range invoiceshare.MaxShareRecipients + 1 {
 		tooMany = append(tooMany, pulid.MustNew("usr_"))
 	}
 
@@ -513,7 +514,7 @@ func TestShareValidatesTheRequestBeforeReadingAnything(t *testing.T) {
 				return h.request(
 					[]pulid.ID{pulid.MustNew("usr_")},
 					"",
-					invoice.ShareTab("payments"),
+					invoiceshare.ShareTab("payments"),
 				)
 			},
 			field: "tab",
@@ -523,7 +524,7 @@ func TestShareValidatesTheRequestBeforeReadingAnything(t *testing.T) {
 			build: func(h *harness) *invoiceports.ShareInvoiceRequest {
 				return h.request(
 					[]pulid.ID{pulid.MustNew("usr_")},
-					strings.Repeat("é", invoice.MaxShareNoteLength+1),
+					strings.Repeat("é", invoiceshare.MaxShareNoteLength+1),
 					"",
 				)
 			},
@@ -557,7 +558,7 @@ func TestShareAcceptsANoteAtTheLimitCountedInCharacters(t *testing.T) {
 
 	_, err := h.svc.Share(
 		t.Context(),
-		h.request([]pulid.ID{dana.ID}, strings.Repeat("é", invoice.MaxShareNoteLength), ""),
+		h.request([]pulid.ID{dana.ID}, strings.Repeat("é", invoiceshare.MaxShareNoteLength), ""),
 		h.actor,
 	)
 
@@ -627,12 +628,12 @@ func TestInvoiceSharePathOmitsTheDefaultTab(t *testing.T) {
 	assert.Equal(
 		t,
 		"/billing/invoices?item=inv_1",
-		invoiceSharePath("inv_1", invoice.ShareTabOverview),
+		invoiceSharePath("inv_1", invoiceshare.ShareTabOverview),
 	)
 	assert.Equal(t, "/billing/invoices?item=inv_1", invoiceSharePath("inv_1", ""))
 	assert.Equal(t,
 		"/billing/invoices?item=inv_1&tab=documents",
-		invoiceSharePath("inv_1", invoice.ShareTabDocuments))
+		invoiceSharePath("inv_1", invoiceshare.ShareTabDocuments))
 }
 
 func (h *harness) expectInvoice() {

@@ -2030,16 +2030,16 @@ models:
         resolver: true
   InvoiceDisputeCaseStatus:
     model:
-      - github.com/emoss08/trenova/internal/modules/billing/domain/invoice.DisputeCaseStatus
+      - github.com/emoss08/trenova/internal/modules/billing/domain/invoicedispute.DisputeCaseStatus
   InvoiceDisputeReasonCode:
     model:
-      - github.com/emoss08/trenova/internal/modules/billing/domain/invoice.DisputeReasonCode
+      - github.com/emoss08/trenova/internal/modules/billing/domain/invoicedispute.DisputeReasonCode
   InvoiceDisputeResolution:
     model:
-      - github.com/emoss08/trenova/internal/modules/billing/domain/invoice.DisputeResolution
+      - github.com/emoss08/trenova/internal/modules/billing/domain/invoicedispute.DisputeResolution
   InvoiceDispute:
     model:
-      - github.com/emoss08/trenova/internal/modules/billing/domain/invoice.InvoiceDispute
+      - github.com/emoss08/trenova/internal/modules/billing/domain/invoicedispute.InvoiceDispute
     fields:
       disputedAmount:
         resolver: true
@@ -2202,7 +2202,7 @@ models:
         resolver: true
   InvoiceChargeGroup:
     model:
-      - github.com/emoss08/trenova/internal/modules/billing/domain/invoice.ChargeGroup
+      - github.com/emoss08/trenova/internal/modules/billing/domain/invoicechargegroup.ChargeGroup
     fields:
       chargeCode:
         resolver: true

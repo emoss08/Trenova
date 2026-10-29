@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoicerealtime"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerledgerports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
@@ -193,9 +194,9 @@ func (s *Service) publishAdjustedInvoices(
 		realtimeinvalidation.PublishAfterCommit(ctx, s.realtime, s.l, realtimeinvalidation.ChangeOf(
 			permission.ResourceInvoice.String(),
 			entity,
-			invoice.RealtimeActionUpdated,
+			invoicerealtime.RealtimeActionUpdated,
 			auditActor,
-			invoice.NewRealtimeSnapshot(entity),
+			invoicerealtime.NewRealtimeSnapshot(entity),
 		))
 	}
 }

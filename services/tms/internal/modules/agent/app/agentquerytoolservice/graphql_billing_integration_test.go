@@ -27,6 +27,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice/invoicedb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment/invoiceadjustmentdb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoicedispute"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/documents/adapters/postgres/documentrepository"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -196,15 +197,15 @@ func (b *billingSeed) adjustment(
 func (b *billingSeed) dispute(
 	tenant *agentreadtest.Tenant,
 	disputed *invoice.Invoice,
-	status invoice.DisputeCaseStatus,
+	status invoicedispute.DisputeCaseStatus,
 ) pulid.ID {
 	b.t.Helper()
 
 	info := tenantInfoOf(tenant)
-	row := &invoice.InvoiceDispute{
+	row := &invoicedispute.InvoiceDispute{
 		OrganizationID: info.OrgID, BusinessUnitID: info.BuID, InvoiceID: disputed.ID,
 		CustomerID: disputed.CustomerID, Status: status,
-		ReasonCode:     invoice.DisputeReasonRateDiscrepancy,
+		ReasonCode:     invoicedispute.DisputeReasonRateDiscrepancy,
 		DisputedAmount: decimal.NewFromInt(40), DisputedAmountMinor: 4_000,
 		Notes: "Customer says the rate was 110", OpenedByID: info.UserID,
 		OpenedAt: timeutils.NowUnix(),
@@ -448,12 +449,12 @@ func TestConvertedLists_InvoiceDisputesReadTheNamedInvoicesUnderRowLevelSecurity
 		require.NoError(t, err)
 		named = append(named, row.ID.String())
 		ours = append(ours,
-			seed.dispute(mine, row, invoice.DisputeCaseStatusOpen).String(),
-			seed.dispute(mine, row, invoice.DisputeCaseStatusWithdrawn).String())
+			seed.dispute(mine, row, invoicedispute.DisputeCaseStatusOpen).String(),
+			seed.dispute(mine, row, invoicedispute.DisputeCaseStatusWithdrawn).String())
 	}
 	other, err := seed.invoice(theirsCtx, theirs, "X1", invoice.SettlementStatusUnpaid, pulid.Nil)
 	require.NoError(t, err)
-	seed.dispute(theirs, other, invoice.DisputeCaseStatusOpen)
+	seed.dispute(theirs, other, invoicedispute.DisputeCaseStatusOpen)
 	call := map[string]any{"invoiceIds": []any{named[0], named[1], other.ID.String()}}
 
 	tool, err := agentquerytoolservice.ConvertedListTool("invoice_list_disputes", reader, engine)

@@ -19,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringreadiness"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringsubmission"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoicedispute"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/latecharge"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringsubmissionports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
@@ -314,7 +315,7 @@ type set struct {
 	chargeAllocationsByOrderChargeID          *dataloadgen.Loader[string, []*shipment.ChargeAllocation]
 	customerPaymentApplicationsByInvoiceID    *dataloadgen.Loader[string, []*customerpayment.Application]
 	creditMemoApplicationsByInvoiceID         *dataloadgen.Loader[string, []*customerpayment.CreditMemoApplication]
-	invoiceDisputesByInvoiceID                *dataloadgen.Loader[string, []*invoice.InvoiceDispute]
+	invoiceDisputesByInvoiceID                *dataloadgen.Loader[string, []*invoicedispute.InvoiceDispute]
 	payAdvanceByID                            *dataloadgen.Loader[string, *driverpay.PayAdvance]
 	escrowAccountByID                         *dataloadgen.Loader[string, *driverpay.EscrowAccount]
 	settlementDisputesBySettlementID          *dataloadgen.Loader[string, []*driversettlement.Dispute]

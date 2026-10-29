@@ -3,6 +3,8 @@
 package generated
 
 import (
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoicechargegroup"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoicedispute"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentevaluation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentexception"
@@ -1868,12 +1870,12 @@ type InvoiceResolver interface {
 	PaymentApplications(ctx context.Context, obj *invoice.Invoice) ([]*customerpayment.Application, error)
 	CreditApplications(ctx context.Context, obj *invoice.Invoice) ([]*customerpayment.CreditMemoApplication, error)
 	EDISendPlan(ctx context.Context, obj *invoice.Invoice) (*invoiceports.InvoiceEDISendPlan, error)
-	ChargeSummary(ctx context.Context, obj *invoice.Invoice) ([]*invoice.ChargeGroup, error)
+	ChargeSummary(ctx context.Context, obj *invoice.Invoice) ([]*invoicechargegroup.ChargeGroup, error)
 	VoidedBy(ctx context.Context, obj *invoice.Invoice) (*tenant.User, error)
 	FactoringCompany(ctx context.Context, obj *invoice.Invoice) (*factoringcompany.FactoringCompany, error)
 	FactoringState(ctx context.Context, obj *invoice.Invoice) (*factoringreadiness.InvoiceState, error)
-	Disputes(ctx context.Context, obj *invoice.Invoice) ([]*invoice.InvoiceDispute, error)
-	OpenDispute(ctx context.Context, obj *invoice.Invoice) (*invoice.InvoiceDispute, error)
+	Disputes(ctx context.Context, obj *invoice.Invoice) ([]*invoicedispute.InvoiceDispute, error)
+	OpenDispute(ctx context.Context, obj *invoice.Invoice) (*invoicedispute.InvoiceDispute, error)
 	LateChargeAssessments(ctx context.Context, obj *invoice.Invoice) ([]*latecharge.LateChargeAssessment, error)
 }
 
@@ -1903,22 +1905,22 @@ type InvoiceAdjustmentLineResolver interface {
 }
 
 type InvoiceChargeGroupResolver interface {
-	ChargeCode(ctx context.Context, obj *invoice.ChargeGroup) (*string, error)
-	ChargeMethod(ctx context.Context, obj *invoice.ChargeGroup) (*accessorialcharge.Method, error)
-	RateUnit(ctx context.Context, obj *invoice.ChargeGroup) (*string, error)
-	Rate(ctx context.Context, obj *invoice.ChargeGroup) (*string, error)
-	RateBasisAmount(ctx context.Context, obj *invoice.ChargeGroup) (*string, error)
-	Quantity(ctx context.Context, obj *invoice.ChargeGroup) (string, error)
-	FormulaTemplateID(ctx context.Context, obj *invoice.ChargeGroup) (*string, error)
-	FormulaTemplateName(ctx context.Context, obj *invoice.ChargeGroup) (*string, error)
-	Amount(ctx context.Context, obj *invoice.ChargeGroup) (string, error)
+	ChargeCode(ctx context.Context, obj *invoicechargegroup.ChargeGroup) (*string, error)
+	ChargeMethod(ctx context.Context, obj *invoicechargegroup.ChargeGroup) (*accessorialcharge.Method, error)
+	RateUnit(ctx context.Context, obj *invoicechargegroup.ChargeGroup) (*string, error)
+	Rate(ctx context.Context, obj *invoicechargegroup.ChargeGroup) (*string, error)
+	RateBasisAmount(ctx context.Context, obj *invoicechargegroup.ChargeGroup) (*string, error)
+	Quantity(ctx context.Context, obj *invoicechargegroup.ChargeGroup) (string, error)
+	FormulaTemplateID(ctx context.Context, obj *invoicechargegroup.ChargeGroup) (*string, error)
+	FormulaTemplateName(ctx context.Context, obj *invoicechargegroup.ChargeGroup) (*string, error)
+	Amount(ctx context.Context, obj *invoicechargegroup.ChargeGroup) (string, error)
 }
 
 type InvoiceDisputeResolver interface {
-	DisputedAmount(ctx context.Context, obj *invoice.InvoiceDispute) (*string, error)
-	Resolution(ctx context.Context, obj *invoice.InvoiceDispute) (*invoice.DisputeResolution, error)
-	OpenedBy(ctx context.Context, obj *invoice.InvoiceDispute) (*tenant.User, error)
-	ResolvedBy(ctx context.Context, obj *invoice.InvoiceDispute) (*tenant.User, error)
+	DisputedAmount(ctx context.Context, obj *invoicedispute.InvoiceDispute) (*string, error)
+	Resolution(ctx context.Context, obj *invoicedispute.InvoiceDispute) (*invoicedispute.DisputeResolution, error)
+	OpenedBy(ctx context.Context, obj *invoicedispute.InvoiceDispute) (*tenant.User, error)
+	ResolvedBy(ctx context.Context, obj *invoicedispute.InvoiceDispute) (*tenant.User, error)
 }
 
 type InvoiceLineResolver interface {
@@ -2398,9 +2400,9 @@ type MutationResolver interface {
 	SendInvoiceEDI(ctx context.Context, invoiceID string, force *bool) (*invoiceports.InvoiceEDISendResult, error)
 	ApproveInvoiceAdjustment(ctx context.Context, adjustmentID string) (*invoiceadjustment.InvoiceAdjustment, error)
 	RejectInvoiceAdjustment(ctx context.Context, input gqlmodel.RejectInvoiceAdjustmentInput) (*invoiceadjustment.InvoiceAdjustment, error)
-	OpenInvoiceDispute(ctx context.Context, input gqlmodel.OpenInvoiceDisputeInput) (*invoice.InvoiceDispute, error)
-	ResolveInvoiceDispute(ctx context.Context, input gqlmodel.ResolveInvoiceDisputeInput) (*invoice.InvoiceDispute, error)
-	WithdrawInvoiceDispute(ctx context.Context, input gqlmodel.WithdrawInvoiceDisputeInput) (*invoice.InvoiceDispute, error)
+	OpenInvoiceDispute(ctx context.Context, input gqlmodel.OpenInvoiceDisputeInput) (*invoicedispute.InvoiceDispute, error)
+	ResolveInvoiceDispute(ctx context.Context, input gqlmodel.ResolveInvoiceDisputeInput) (*invoicedispute.InvoiceDispute, error)
+	WithdrawInvoiceDispute(ctx context.Context, input gqlmodel.WithdrawInvoiceDisputeInput) (*invoicedispute.InvoiceDispute, error)
 	ApproveJournalEntries(ctx context.Context, input gqlmodel.JournalReviewInput) (*journalentryports.JournalReviewResult, error)
 	PostJournalEntries(ctx context.Context, input gqlmodel.JournalReviewInput) (*journalentryports.JournalReviewResult, error)
 	AssessLateCharges(ctx context.Context, input *gqlmodel.LateChargeAssessmentInput) (*latechargeports.LateChargeAssessmentResult, error)
@@ -3221,7 +3223,7 @@ type QueryResolver interface {
 	InvoiceAdjustment(ctx context.Context, id string) (*invoiceadjustment.InvoiceAdjustment, error)
 	InvoiceAdjustmentApprovals(ctx context.Context, input gqlmodel.InvoiceAdjustmentApprovalsInput) (*gqlmodel.InvoiceAdjustmentApprovalQueueConnection, error)
 	InvoiceAdjustmentOperationsSummary(ctx context.Context) (*invoiceadjustmentports.InvoiceAdjustmentOperationsSummary, error)
-	InvoiceDisputes(ctx context.Context, invoiceID *string, invoiceIds []string) ([]*invoice.InvoiceDispute, error)
+	InvoiceDisputes(ctx context.Context, invoiceID *string, invoiceIds []string) ([]*invoicedispute.InvoiceDispute, error)
 	JournalEntry(ctx context.Context, id string) (*journalentry.JournalEntry, error)
 	JournalEntries(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.JournalEntryConnection, error)
 	JournalEntriesBySource(ctx context.Context, sourceType string, sourceID string) ([]*journalentry.JournalEntry, error)

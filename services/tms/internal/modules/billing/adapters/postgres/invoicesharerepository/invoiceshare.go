@@ -6,8 +6,8 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice/invoicedb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceshare"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
@@ -37,7 +37,7 @@ func New(p Params) invoiceports.InvoiceShareRepository {
 	}
 }
 
-func (r *repository) Upsert(ctx context.Context, shares []*invoice.InvoiceShare) error {
+func (r *repository) Upsert(ctx context.Context, shares []*invoiceshare.InvoiceShare) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		if len(shares) == 0 {
 			return nil
@@ -61,8 +61,8 @@ func (r *repository) Upsert(ctx context.Context, shares []*invoice.InvoiceShare)
 func (r *repository) ListByInvoiceID(
 	ctx context.Context,
 	req *invoiceports.ListInvoiceSharesRequest,
-) ([]*invoice.InvoiceShare, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*invoice.InvoiceShare, error) {
+) ([]*invoiceshare.InvoiceShare, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*invoiceshare.InvoiceShare, error) {
 		s := invoicedb.InvoiceShares
 		shares, err := s.Where(s.InvoiceID.Eq(req.InvoiceID)).
 			Load(userSummary(s.SharedWith()), userSummary(s.SharedBy())).
@@ -73,7 +73,7 @@ func (r *repository) ListByInvoiceID(
 			return nil, err
 		}
 		if shares == nil {
-			return []*invoice.InvoiceShare{}, nil
+			return []*invoiceshare.InvoiceShare{}, nil
 		}
 
 		return shares, nil

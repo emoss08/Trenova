@@ -3,6 +3,7 @@
 package gqlmodel
 
 import (
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoicedispute"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentevaluation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentexception"
@@ -6816,7 +6817,7 @@ type OpenEscrowAccountInput struct {
 
 type OpenInvoiceDisputeInput struct {
 	InvoiceID  string                    `json:"invoiceId"`
-	ReasonCode invoice.DisputeReasonCode `json:"reasonCode"`
+	ReasonCode invoicedispute.DisputeReasonCode `json:"reasonCode"`
 	// At most the invoice's open balance.
 	DisputedAmount string  `json:"disputedAmount"`
 	Notes          *string `json:"notes,omitempty"`
@@ -8436,7 +8437,7 @@ type ResolveCarrierIntelEventInput struct {
 
 type ResolveInvoiceDisputeInput struct {
 	DisputeID  string                    `json:"disputeId"`
-	Resolution invoice.DisputeResolution `json:"resolution"`
+	Resolution invoicedispute.DisputeResolution `json:"resolution"`
 	// Required for CreditIssued and WrittenOff: the executed adjustment on this invoice.
 	ResolutionAdjustmentID *string `json:"resolutionAdjustmentId,omitempty"`
 	ResolutionNotes        *string `json:"resolutionNotes,omitempty"`

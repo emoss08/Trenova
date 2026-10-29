@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoicedispute"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -43,7 +44,7 @@ func (f *fakeDisputer) Open(
 	_ context.Context,
 	req *invoiceports.OpenInvoiceDisputeRequest,
 	_ *permissionports.RequestActor,
-) (*invoice.InvoiceDispute, error) {
+) (*invoicedispute.InvoiceDispute, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
 	}
@@ -56,7 +57,7 @@ func (f *fakeDisputer) Resolve(
 	_ context.Context,
 	req *invoiceports.ResolveInvoiceDisputeRequest,
 	_ *permissionports.RequestActor,
-) (*invoice.InvoiceDispute, error) {
+) (*invoicedispute.InvoiceDispute, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
 	}
@@ -69,7 +70,7 @@ func (f *fakeDisputer) Withdraw(
 	_ context.Context,
 	req *invoiceports.WithdrawInvoiceDisputeRequest,
 	_ *permissionports.RequestActor,
-) (*invoice.InvoiceDispute, error) {
+) (*invoicedispute.InvoiceDispute, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
 	}
@@ -119,10 +120,10 @@ func openDisputePlan() *invoiceports.InvoiceDisputePreview {
 	after.DisputeStatus = invoice.DisputeStatusDisputed
 
 	return &invoiceports.InvoiceDisputePreview{
-		After: &invoice.InvoiceDispute{
+		After: &invoicedispute.InvoiceDispute{
 			InvoiceID:           inv.ID,
-			Status:              invoice.DisputeCaseStatusOpen,
-			ReasonCode:          invoice.DisputeReasonAccessorialDisputed,
+			Status:              invoicedispute.DisputeCaseStatusOpen,
+			ReasonCode:          invoicedispute.DisputeReasonAccessorialDisputed,
 			DisputedAmount:      decimal.RequireFromString("150.00"),
 			DisputedAmountMinor: 15000,
 			Notes:               "Customer disputes the detention line",
@@ -135,7 +136,7 @@ func openDisputePlan() *invoiceports.InvoiceDisputePreview {
 func openDisputeParams(invoiceID pulid.ID) agenttoolports.ToolExecuteParams {
 	return agenttoolstest.ExecuteParams(map[string]any{
 		toolparams.ParamInvoiceID: invoiceID.String(),
-		paramDisputeReasonCode:    string(invoice.DisputeReasonAccessorialDisputed),
+		paramDisputeReasonCode:    string(invoicedispute.DisputeReasonAccessorialDisputed),
 		paramDisputedAmount:       "150.00",
 		toolparams.ParamNote:      " Customer disputes the detention line ",
 	})
@@ -252,8 +253,8 @@ func resolvedDisputePlan() *invoiceports.InvoiceDisputePreview {
 	before.ID = pulid.MustNew("idsp_")
 	before.Version = 1
 	after := before
-	after.Status = invoice.DisputeCaseStatusResolved
-	after.Resolution = invoice.DisputeResolutionInvoiceUpheld
+	after.Status = invoicedispute.DisputeCaseStatusResolved
+	after.Resolution = invoicedispute.DisputeResolutionInvoiceUpheld
 	after.ResolutionNotes = "Detention was on the rate confirmation"
 	plan.Before = &before
 	plan.After = &after
@@ -268,7 +269,7 @@ func TestResolveInvoiceDispute_OnlyAPersonResolves(t *testing.T) {
 	tool := NewResolveInvoiceDisputeTool(disputer)
 	params := agenttoolstest.ExecuteParams(map[string]any{
 		toolparams.ParamDisputeID: disputer.preview.Before.ID.String(),
-		paramDisputeResolution:    string(invoice.DisputeResolutionInvoiceUpheld),
+		paramDisputeResolution:    string(invoicedispute.DisputeResolutionInvoiceUpheld),
 		paramResolutionNotes:      "Detention was on the rate confirmation",
 	})
 
@@ -302,7 +303,7 @@ func TestResolveInvoiceDispute_OnlyAPersonResolves(t *testing.T) {
 	params.ProposalID = pulid.MustNew("ap_")
 	require.NoError(t, tool.Execute(t.Context(), params))
 	require.NotNil(t, disputer.resolved)
-	assert.Equal(t, invoice.DisputeResolutionInvoiceUpheld, disputer.resolved.Resolution)
+	assert.Equal(t, invoicedispute.DisputeResolutionInvoiceUpheld, disputer.resolved.Resolution)
 
 	policy := tool.Policy()
 	assert.Equal(t, permission.OpApprove, policy.Operation)
@@ -319,7 +320,7 @@ func TestResolveInvoiceDispute_AnAgentPrincipalCannotEvenPreviewIt(t *testing.T)
 	tool := NewResolveInvoiceDisputeTool(disputer).(agenttoolports.ToolPreviewer)
 	params := agenttoolstest.AgentParamsFor(map[string]any{
 		toolparams.ParamDisputeID: disputer.preview.Before.ID.String(),
-		paramDisputeResolution:    string(invoice.DisputeResolutionInvoiceUpheld),
+		paramDisputeResolution:    string(invoicedispute.DisputeResolutionInvoiceUpheld),
 	})
 
 	_, err := tool.Preview(t.Context(), params)
@@ -330,7 +331,7 @@ func TestWithdrawInvoiceDispute_WithdrawsWithItsNotes(t *testing.T) {
 	t.Parallel()
 
 	plan := resolvedDisputePlan()
-	plan.After.Status = invoice.DisputeCaseStatusWithdrawn
+	plan.After.Status = invoicedispute.DisputeCaseStatusWithdrawn
 	plan.After.Resolution = ""
 	disputer := &fakeDisputer{preview: plan, guard: &agenttoolstest.WriteGuard{}}
 	tool := NewWithdrawInvoiceDisputeTool(disputer)

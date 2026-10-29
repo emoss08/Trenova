@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceshare"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
@@ -34,13 +35,13 @@ type deliveryParams struct {
 	sharer     *tenant.User
 	recipients []*tenant.User
 	note       string
-	tab        invoice.ShareTab
+	tab        invoiceshare.ShareTab
 }
 
-func invoiceSharePath(invoiceID string, tab invoice.ShareTab) string {
+func invoiceSharePath(invoiceID string, tab invoiceshare.ShareTab) string {
 	query := url.Values{}
 	query.Set("item", invoiceID)
-	if tab != "" && tab != invoice.ShareTabOverview {
+	if tab != "" && tab != invoiceshare.ShareTabOverview {
 		query.Set("tab", string(tab))
 	}
 	return invoicesPath + "?" + query.Encode()

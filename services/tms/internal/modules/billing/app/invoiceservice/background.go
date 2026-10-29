@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoicerealtime"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
@@ -49,7 +50,7 @@ func (s *Service) AttachGeneratedPDF(
 		updated,
 		"Invoice PDF generated",
 	)
-	s.publishInvoiceChange(ctx, updated, req.Actor, invoice.RealtimeActionPDFGenerated)
+	s.publishInvoiceChange(ctx, updated, req.Actor, invoicerealtime.RealtimeActionPDFGenerated)
 
 	return updated, nil
 }
@@ -81,7 +82,7 @@ func (s *Service) ReportAutoPostFailure(
 	}
 
 	reason := strings.TrimSpace(req.Reason)
-	snapshot := invoice.NewRealtimeSnapshot(current)
+	snapshot := invoicerealtime.NewRealtimeSnapshot(current)
 	snapshot.PostError = reason
 	if s.notifyAutoPostFailed(ctx, req, current, reason) {
 		snapshot.NotifiedUserID = req.Actor.UserID
@@ -90,7 +91,7 @@ func (s *Service) ReportAutoPostFailure(
 	realtimeinvalidation.PublishAfterCommit(ctx, s.realtime, s.l, realtimeinvalidation.ChangeOf(
 		permission.ResourceInvoice.String(),
 		current,
-		invoice.RealtimeActionPostFailed,
+		invoicerealtime.RealtimeActionPostFailed,
 		req.Actor,
 		snapshot,
 	))

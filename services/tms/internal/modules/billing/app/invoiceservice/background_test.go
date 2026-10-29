@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoicerealtime"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/testutil/mocks/billingqueueportsmock"
@@ -79,7 +80,7 @@ func TestAttachGeneratedPDFRecordsTheDocumentAndAnnouncesIt(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, documentID, updated.PDFDocumentID)
 	require.Len(t, *published, 1)
-	assert.Equal(t, invoice.RealtimeActionPDFGenerated, (*published)[0].Action)
+	assert.Equal(t, invoicerealtime.RealtimeActionPDFGenerated, (*published)[0].Action)
 }
 
 func TestReportAutoPostFailureAnnouncesTheReasonOnADraft(t *testing.T) {
@@ -103,8 +104,8 @@ func TestReportAutoPostFailureAnnouncesTheReasonOnADraft(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, *published, 1)
 	event := (*published)[0]
-	assert.Equal(t, invoice.RealtimeActionPostFailed, event.Action)
-	snapshot, ok := event.Entity.(*invoice.RealtimeSnapshot)
+	assert.Equal(t, invoicerealtime.RealtimeActionPostFailed, event.Action)
+	snapshot, ok := event.Entity.(*invoicerealtime.RealtimeSnapshot)
 	require.True(t, ok)
 	assert.Equal(t, "The fiscal period is closed", snapshot.PostError)
 	assert.True(

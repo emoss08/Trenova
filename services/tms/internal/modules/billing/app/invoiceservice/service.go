@@ -17,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoicelines"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoicerealtime"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerledgerports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
@@ -1730,7 +1731,7 @@ func (s *Service) publishInvoiceChange(
 		entity,
 		action,
 		actor,
-		invoice.NewRealtimeSnapshot(entity),
+		invoicerealtime.NewRealtimeSnapshot(entity),
 	))
 }
 

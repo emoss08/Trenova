@@ -16,7 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceshare"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/latechargeports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -43,12 +43,12 @@ var errNothingToCharge = errors.New(
 		"what is due is under the organization's minimum",
 )
 
-var shareTabs = agenttoolschema.Source("invoice.shareTab", []invoice.ShareTab{
-	invoice.ShareTabOverview,
-	invoice.ShareTabDelivery,
-	invoice.ShareTabCharges,
-	invoice.ShareTabDocuments,
-	invoice.ShareTabActivity,
+var shareTabs = agenttoolschema.Source("invoice.shareTab", []invoiceshare.ShareTab{
+	invoiceshare.ShareTabOverview,
+	invoiceshare.ShareTabDelivery,
+	invoiceshare.ShareTabCharges,
+	invoiceshare.ShareTabDocuments,
+	invoiceshare.ShareTabActivity,
 })
 
 type lateChargeAssessor interface {
@@ -247,10 +247,10 @@ func NewShareInvoiceTool(shares invoiceSharer) agenttoolports.AgentTool {
 			paramUserIDs: agenttoolschema.RecordIDs(
 				permission.ResourceUser,
 				"The teammates, from invoice_list_share_candidates.",
-				invoice.MaxShareRecipients,
+				invoiceshare.MaxShareRecipients,
 			),
 			paramShareNote: toolparams.StringProperty("A note for them, such as what to look at.",
-				invoice.MaxShareNoteLength),
+				invoiceshare.MaxShareNoteLength),
 			paramShareTab: agenttoolschema.Enum("The part of the invoice the link opens on. "+
 				"Defaults to overview.", shareTabs),
 		},
@@ -291,12 +291,16 @@ func shareRequest(
 	userIDs, err := toolparams.RequirePulidSlice(
 		params.Params,
 		paramUserIDs,
-		invoice.MaxShareRecipients,
+		invoiceshare.MaxShareRecipients,
 	)
 	if err != nil {
 		return nil, err
 	}
-	note, err := toolparams.BoundedText(params.Params, paramShareNote, invoice.MaxShareNoteLength)
+	note, err := toolparams.BoundedText(
+		params.Params,
+		paramShareNote,
+		invoiceshare.MaxShareNoteLength,
+	)
 	if err != nil {
 		return nil, err
 	}

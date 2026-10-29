@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoicedispute"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -19,7 +20,7 @@ func (s *Service) planOpen(
 	inv *invoice.Invoice,
 	actor *permissionports.RequestActor,
 	now int64,
-) (*invoice.InvoiceDispute, error) {
+) (*invoicedispute.InvoiceDispute, error) {
 	if multiErr := validateDisputableInvoice(inv, req.DisputedAmount); multiErr != nil {
 		return nil, multiErr
 	}
@@ -37,12 +38,12 @@ func (s *Service) planOpen(
 		return nil, err
 	}
 
-	entity := &invoice.InvoiceDispute{
+	entity := &invoicedispute.InvoiceDispute{
 		OrganizationID: req.TenantInfo.OrgID,
 		BusinessUnitID: req.TenantInfo.BuID,
 		InvoiceID:      inv.ID,
 		CustomerID:     inv.CustomerID,
-		Status:         invoice.DisputeCaseStatusOpen,
+		Status:         invoicedispute.DisputeCaseStatusOpen,
 		ReasonCode:     req.ReasonCode,
 		DisputedAmount: req.DisputedAmount,
 		Notes:          strings.TrimSpace(req.Notes),
@@ -60,7 +61,7 @@ func (s *Service) planOpen(
 func (s *Service) planResolve(
 	ctx context.Context,
 	req *invoiceports.ResolveInvoiceDisputeRequest,
-	entity *invoice.InvoiceDispute,
+	entity *invoicedispute.InvoiceDispute,
 	inv *invoice.Invoice,
 	actor *permissionports.RequestActor,
 	now int64,
@@ -72,7 +73,7 @@ func (s *Service) planResolve(
 		return err
 	}
 
-	entity.Status = invoice.DisputeCaseStatusResolved
+	entity.Status = invoicedispute.DisputeCaseStatusResolved
 	entity.Resolution = req.Resolution
 	entity.ResolutionAdjustmentID = req.ResolutionAdjustmentID
 	entity.ResolutionNotes = strings.TrimSpace(req.ResolutionNotes)
@@ -87,7 +88,7 @@ func (s *Service) planResolve(
 
 func planWithdraw(
 	req *invoiceports.WithdrawInvoiceDisputeRequest,
-	entity *invoice.InvoiceDispute,
+	entity *invoicedispute.InvoiceDispute,
 	actor *permissionports.RequestActor,
 	now int64,
 ) error {
@@ -95,7 +96,7 @@ func planWithdraw(
 		return err
 	}
 
-	entity.Status = invoice.DisputeCaseStatusWithdrawn
+	entity.Status = invoicedispute.DisputeCaseStatusWithdrawn
 	entity.ResolvedByID = actor.UserID
 	entity.ResolvedAt = &now
 	if notes := strings.TrimSpace(req.Notes); notes != "" {
@@ -132,7 +133,7 @@ const (
 	verbWithdrawn = "withdrawn"
 )
 
-func refuseClosedCase(entity *invoice.InvoiceDispute, verb string) error {
+func refuseClosedCase(entity *invoicedispute.InvoiceDispute, verb string) error {
 	if entity.IsOpen() {
 		return nil
 	}
@@ -150,7 +151,7 @@ func (s *Service) loadCase(
 	tenantInfo pagination.TenantInfo,
 	lock bool,
 	verb string,
-) (*invoice.InvoiceDispute, *invoice.Invoice, error) {
+) (*invoicedispute.InvoiceDispute, *invoice.Invoice, error) {
 	entity, err := s.repo.GetByID(ctx, invoiceports.GetInvoiceDisputeByIDRequest{
 		ID:         disputeID,
 		TenantInfo: tenantInfo,
@@ -269,7 +270,7 @@ func requireRequestAndUser(missing bool, actor *permissionports.RequestActor) er
 }
 
 func disputePreview(
-	before, after *invoice.InvoiceDispute,
+	before, after *invoicedispute.InvoiceDispute,
 	inv *invoice.Invoice,
 	flag invoice.DisputeStatus,
 ) *invoiceports.InvoiceDisputePreview {

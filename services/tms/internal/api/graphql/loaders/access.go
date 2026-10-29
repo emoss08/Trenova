@@ -22,6 +22,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringreadiness"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringsubmission"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoicedispute"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/latecharge"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringsubmissionports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
@@ -1157,10 +1158,14 @@ func (f *CreditMemoApplicationsByInvoiceIDLoaderFactory) Attach(
 func InvoiceDisputesByInvoiceID(
 	ctx context.Context,
 	key string,
-) ([]*invoice.InvoiceDispute, error) {
-	return load(ctx, key, func(s *set) *dataloadgen.Loader[string, []*invoice.InvoiceDispute] {
-		return s.invoiceDisputesByInvoiceID
-	})
+) ([]*invoicedispute.InvoiceDispute, error) {
+	return load(
+		ctx,
+		key,
+		func(s *set) *dataloadgen.Loader[string, []*invoicedispute.InvoiceDispute] {
+			return s.invoiceDisputesByInvoiceID
+		},
+	)
 }
 
 func (f *InvoiceDisputesByInvoiceIDLoaderFactory) Attach(

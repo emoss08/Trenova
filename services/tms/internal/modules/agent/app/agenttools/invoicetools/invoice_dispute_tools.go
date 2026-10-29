@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoicedispute"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -32,25 +32,25 @@ const maxDisputeNoteChars = 2000
 
 var disputeReasonCodes = agenttoolschema.Source(
 	"invoice.disputeReasonCode",
-	[]invoice.DisputeReasonCode{
-		invoice.DisputeReasonRateDiscrepancy,
-		invoice.DisputeReasonAccessorialDisputed,
-		invoice.DisputeReasonServiceFailure,
-		invoice.DisputeReasonDuplicateBilling,
-		invoice.DisputeReasonWrongBillTo,
-		invoice.DisputeReasonMissingDocumentation,
-		invoice.DisputeReasonOther,
+	[]invoicedispute.DisputeReasonCode{
+		invoicedispute.DisputeReasonRateDiscrepancy,
+		invoicedispute.DisputeReasonAccessorialDisputed,
+		invoicedispute.DisputeReasonServiceFailure,
+		invoicedispute.DisputeReasonDuplicateBilling,
+		invoicedispute.DisputeReasonWrongBillTo,
+		invoicedispute.DisputeReasonMissingDocumentation,
+		invoicedispute.DisputeReasonOther,
 	},
 )
 
 var disputeResolutions = agenttoolschema.Source(
 	"invoice.disputeResolution",
-	[]invoice.DisputeResolution{
-		invoice.DisputeResolutionCreditIssued,
-		invoice.DisputeResolutionInvoiceUpheld,
-		invoice.DisputeResolutionRebilled,
-		invoice.DisputeResolutionWrittenOff,
-		invoice.DisputeResolutionCustomerWithdrew,
+	[]invoicedispute.DisputeResolution{
+		invoicedispute.DisputeResolutionCreditIssued,
+		invoicedispute.DisputeResolutionInvoiceUpheld,
+		invoicedispute.DisputeResolutionRebilled,
+		invoicedispute.DisputeResolutionWrittenOff,
+		invoicedispute.DisputeResolutionCustomerWithdrew,
 	},
 )
 
@@ -59,17 +59,17 @@ type invoiceDisputer interface {
 		ctx context.Context,
 		req *invoiceports.OpenInvoiceDisputeRequest,
 		actor *permissionports.RequestActor,
-	) (*invoice.InvoiceDispute, error)
+	) (*invoicedispute.InvoiceDispute, error)
 	Resolve(
 		ctx context.Context,
 		req *invoiceports.ResolveInvoiceDisputeRequest,
 		actor *permissionports.RequestActor,
-	) (*invoice.InvoiceDispute, error)
+	) (*invoicedispute.InvoiceDispute, error)
 	Withdraw(
 		ctx context.Context,
 		req *invoiceports.WithdrawInvoiceDisputeRequest,
 		actor *permissionports.RequestActor,
-	) (*invoice.InvoiceDispute, error)
+	) (*invoicedispute.InvoiceDispute, error)
 	PreviewOpen(
 		ctx context.Context,
 		req *invoiceports.OpenInvoiceDisputeRequest,

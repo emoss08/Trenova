@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoicechargegroup"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement"
@@ -47,7 +47,7 @@ func (r *QueryResolver) shipmentsInvoicesBill(
 		return nil, err
 	}
 
-	return invoice.BilledShipmentIDs(invoices...), nil
+	return invoicechargegroup.BilledShipmentIDs(invoices...), nil
 }
 
 func (r *QueryResolver) shipmentsScope(

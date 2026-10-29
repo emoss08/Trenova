@@ -14,7 +14,7 @@ import (
 	"sync/atomic"
 
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoicerealtime"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/identity/app/planservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -1194,9 +1194,9 @@ func (s *Service) syncInvoiceAttempts(ctx context.Context, msg *email.Message) {
 		realtimeinvalidation.PublishAfterCommit(ctx, s.realtime, s.l, realtimeinvalidation.ChangeOf(
 			permission.ResourceInvoice.String(),
 			entity,
-			invoice.RealtimeActionSendUpdated,
+			invoicerealtime.RealtimeActionSendUpdated,
 			permissionports.SystemAuditActor(),
-			invoice.NewRealtimeSnapshot(entity),
+			invoicerealtime.NewRealtimeSnapshot(entity),
 		))
 	}
 }

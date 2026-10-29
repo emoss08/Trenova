@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringreadiness"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoicerun"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceshare"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
@@ -63,7 +64,7 @@ func RegisterEntities() []any {
 		&invoice.EmailAttempt{},
 		&invoice.EmailAttemptAttachment{},
 		&invoice.DocumentShareToken{},
-		&invoice.InvoiceShare{},
+		&invoiceshare.InvoiceShare{},
 		&invoicerun.InvoiceRun{},
 		&invoicerun.InvoiceRunGroup{},
 		&invoicerun.InvoiceRunGroupItem{},

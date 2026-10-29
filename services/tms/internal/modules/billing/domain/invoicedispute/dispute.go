@@ -1,9 +1,10 @@
-package invoice
+package invoicedispute
 
 import (
 	"context"
 
 	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -113,7 +114,7 @@ type InvoiceDispute struct {
 	CreatedAt              int64             `json:"createdAt"              keel:"created_at,autocreate"`
 	UpdatedAt              int64             `json:"updatedAt"              keel:"updated_at,autoupdate"`
 
-	Invoice  *Invoice           `json:"invoice,omitempty"  keel:"belongs:invoice_id"`
+	Invoice  *invoice.Invoice   `json:"invoice,omitempty"  keel:"belongs:invoice_id"`
 	Customer *customer.Customer `json:"customer,omitempty" keel:"belongs:customer_id"`
 }
 

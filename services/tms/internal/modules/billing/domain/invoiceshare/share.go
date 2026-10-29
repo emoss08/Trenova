@@ -1,4 +1,4 @@
-package invoice
+package invoiceshare
 
 import (
 	"unicode/utf8"

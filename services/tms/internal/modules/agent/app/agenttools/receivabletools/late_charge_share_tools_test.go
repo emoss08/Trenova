@@ -11,7 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceshare"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/latechargeports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol"
@@ -183,7 +183,7 @@ func TestShareInvoice_PreviewsWhatEachTeammateReceives(t *testing.T) {
 			Invoice:         inv,
 			SharedByName:    "Marcus Bell",
 			Note:            "Check the detention line",
-			Tab:             invoice.ShareTabCharges,
+			Tab:             invoiceshare.ShareTabCharges,
 			EmailConfigured: true,
 			Recipients: []invoiceports.InvoiceShareRecipientPreview{{
 				UserID: dana, Name: "Dana Whitfield", EmailAddress: "dana@example.com",
@@ -196,7 +196,7 @@ func TestShareInvoice_PreviewsWhatEachTeammateReceives(t *testing.T) {
 		toolparams.ParamInvoiceID: inv.ID.String(),
 		paramUserIDs:              []any{dana.String()},
 		paramShareNote:            "Check the detention line",
-		paramShareTab:             string(invoice.ShareTabCharges),
+		paramShareTab:             string(invoiceshare.ShareTabCharges),
 	})
 
 	preview := agenttoolstest.PreviewWithoutWrites(
@@ -217,7 +217,7 @@ func TestShareInvoice_PreviewsWhatEachTeammateReceives(t *testing.T) {
 	require.NoError(t, tool.Execute(t.Context(), params))
 	require.NotNil(t, sharer.shared)
 	assert.Equal(t, []pulid.ID{dana}, sharer.shared.UserIDs)
-	assert.Equal(t, invoice.ShareTabCharges, sharer.shared.Tab)
+	assert.Equal(t, invoiceshare.ShareTabCharges, sharer.shared.Tab)
 
 	policy := tool.Policy()
 	assert.Equal(t, permission.ResourceInvoice, policy.Resource)

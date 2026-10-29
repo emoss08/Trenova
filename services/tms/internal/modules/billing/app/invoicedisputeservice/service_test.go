@@ -4,18 +4,18 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/mocks/invoiceadjustmentportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/invoiceportsmock"
-
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoicedispute"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
+	"github.com/emoss08/trenova/internal/testutil/mocks/invoiceadjustmentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/invoiceportsmock"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -106,21 +106,21 @@ func (f *disputeFixture) openRequest(amount string) *invoiceports.OpenInvoiceDis
 	return &invoiceports.OpenInvoiceDisputeRequest{
 		InvoiceID:      f.inv.ID,
 		TenantInfo:     f.tenantInfo,
-		ReasonCode:     invoice.DisputeReasonRateDiscrepancy,
+		ReasonCode:     invoicedispute.DisputeReasonRateDiscrepancy,
 		DisputedAmount: decimal.RequireFromString(amount),
 		Notes:          " Rate on lane differs from contract ",
 	}
 }
 
-func (f *disputeFixture) openCase() *invoice.InvoiceDispute {
-	return &invoice.InvoiceDispute{
+func (f *disputeFixture) openCase() *invoicedispute.InvoiceDispute {
+	return &invoicedispute.InvoiceDispute{
 		ID:                  pulid.MustNew("idsp_"),
 		OrganizationID:      f.orgID,
 		BusinessUnitID:      f.buID,
 		InvoiceID:           f.inv.ID,
 		CustomerID:          f.inv.CustomerID,
-		Status:              invoice.DisputeCaseStatusOpen,
-		ReasonCode:          invoice.DisputeReasonRateDiscrepancy,
+		Status:              invoicedispute.DisputeCaseStatusOpen,
+		ReasonCode:          invoicedispute.DisputeReasonRateDiscrepancy,
 		DisputedAmount:      decimal.NewFromInt(40),
 		DisputedAmountMinor: 4000,
 		OpenedByID:          f.userID,
@@ -138,15 +138,15 @@ func TestOpenDisputeFlagsTheInvoice(t *testing.T) {
 		Return(nil, errortypes.NewNotFoundError("none")).
 		Once()
 	f.repo.EXPECT().
-		Create(mock.Anything, mock.MatchedBy(func(entity *invoice.InvoiceDispute) bool {
+		Create(mock.Anything, mock.MatchedBy(func(entity *invoicedispute.InvoiceDispute) bool {
 			return entity.InvoiceID == f.inv.ID &&
 				entity.CustomerID == f.inv.CustomerID &&
-				entity.Status == invoice.DisputeCaseStatusOpen &&
+				entity.Status == invoicedispute.DisputeCaseStatusOpen &&
 				entity.DisputedAmountMinor == 4050 &&
 				entity.Notes == "Rate on lane differs from contract" &&
 				entity.OpenedByID == f.userID
 		})).
-		RunAndReturn(func(_ context.Context, entity *invoice.InvoiceDispute) (*invoice.InvoiceDispute, error) {
+		RunAndReturn(func(_ context.Context, entity *invoicedispute.InvoiceDispute) (*invoicedispute.InvoiceDispute, error) {
 			entity.ID = pulid.MustNew("idsp_")
 			return entity, nil
 		}).
@@ -166,7 +166,7 @@ func TestOpenDisputeRejectsBadRequests(t *testing.T) {
 	f := newDisputeFixture(t)
 
 	req := f.openRequest("10")
-	req.ReasonCode = invoice.DisputeReasonCode("Vibes")
+	req.ReasonCode = invoicedispute.DisputeReasonCode("Vibes")
 	_, err := f.svc.Open(t.Context(), req, f.actor)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "Choose a dispute reason")
@@ -263,14 +263,14 @@ func TestResolveDisputeClearsTheFlag(t *testing.T) {
 		Once()
 	f.lockInvoice()
 	f.repo.EXPECT().
-		Update(mock.Anything, mock.MatchedBy(func(entity *invoice.InvoiceDispute) bool {
-			return entity.Status == invoice.DisputeCaseStatusResolved &&
-				entity.Resolution == invoice.DisputeResolutionInvoiceUpheld &&
+		Update(mock.Anything, mock.MatchedBy(func(entity *invoicedispute.InvoiceDispute) bool {
+			return entity.Status == invoicedispute.DisputeCaseStatusResolved &&
+				entity.Resolution == invoicedispute.DisputeResolutionInvoiceUpheld &&
 				entity.ResolvedByID == f.userID &&
 				entity.ResolvedAt != nil &&
 				entity.ResolutionNotes == "Contract rate confirmed"
 		})).
-		RunAndReturn(func(_ context.Context, entity *invoice.InvoiceDispute) (*invoice.InvoiceDispute, error) {
+		RunAndReturn(func(_ context.Context, entity *invoicedispute.InvoiceDispute) (*invoicedispute.InvoiceDispute, error) {
 			return entity, nil
 		}).
 		Once()
@@ -279,12 +279,12 @@ func TestResolveDisputeClearsTheFlag(t *testing.T) {
 	resolved, err := f.svc.Resolve(t.Context(), &invoiceports.ResolveInvoiceDisputeRequest{
 		DisputeID:       dispute.ID,
 		TenantInfo:      f.tenantInfo,
-		Resolution:      invoice.DisputeResolutionInvoiceUpheld,
+		Resolution:      invoicedispute.DisputeResolutionInvoiceUpheld,
 		ResolutionNotes: " Contract rate confirmed ",
 	}, f.actor)
 
 	require.NoError(t, err)
-	assert.Equal(t, invoice.DisputeCaseStatusResolved, resolved.Status)
+	assert.Equal(t, invoicedispute.DisputeCaseStatusResolved, resolved.Status)
 	assert.Equal(t, invoice.DisputeStatusNone, f.inv.DisputeStatus)
 	f.adjustmentRepo.AssertNotCalled(t, "GetByID", mock.Anything, mock.Anything)
 }
@@ -337,7 +337,7 @@ func TestResolveDisputeCreditIssuedNeedsAnExecutedAdjustmentOnTheInvoice(t *test
 			req := &invoiceports.ResolveInvoiceDisputeRequest{
 				DisputeID:  dispute.ID,
 				TenantInfo: f.tenantInfo,
-				Resolution: invoice.DisputeResolutionCreditIssued,
+				Resolution: invoicedispute.DisputeResolutionCreditIssued,
 			}
 			if tt.withID {
 				req.ResolutionAdjustmentID = adjustmentID
@@ -364,7 +364,7 @@ func TestResolveDisputeWrittenOffWithExecutedAdjustmentSucceeds(t *testing.T) {
 		Return(&invoiceadjustment.InvoiceAdjustment{ID: adjustmentID, OriginalInvoiceID: f.inv.ID, Status: invoiceadjustment.StatusExecuted}, nil).
 		Once()
 	f.repo.EXPECT().Update(mock.Anything, mock.Anything).
-		RunAndReturn(func(_ context.Context, entity *invoice.InvoiceDispute) (*invoice.InvoiceDispute, error) {
+		RunAndReturn(func(_ context.Context, entity *invoicedispute.InvoiceDispute) (*invoicedispute.InvoiceDispute, error) {
 			return entity, nil
 		}).
 		Once()
@@ -373,7 +373,7 @@ func TestResolveDisputeWrittenOffWithExecutedAdjustmentSucceeds(t *testing.T) {
 	resolved, err := f.svc.Resolve(t.Context(), &invoiceports.ResolveInvoiceDisputeRequest{
 		DisputeID:              dispute.ID,
 		TenantInfo:             f.tenantInfo,
-		Resolution:             invoice.DisputeResolutionWrittenOff,
+		Resolution:             invoicedispute.DisputeResolutionWrittenOff,
 		ResolutionAdjustmentID: adjustmentID,
 	}, f.actor)
 
@@ -386,13 +386,13 @@ func TestResolveAndWithdrawRefuseAClosedCase(t *testing.T) {
 
 	f := newDisputeFixture(t)
 	closed := f.openCase()
-	closed.Status = invoice.DisputeCaseStatusWithdrawn
+	closed.Status = invoicedispute.DisputeCaseStatusWithdrawn
 	f.repo.EXPECT().GetByID(mock.Anything, mock.Anything).Return(closed, nil).Twice()
 
 	_, err := f.svc.Resolve(t.Context(), &invoiceports.ResolveInvoiceDisputeRequest{
 		DisputeID:  closed.ID,
 		TenantInfo: f.tenantInfo,
-		Resolution: invoice.DisputeResolutionInvoiceUpheld,
+		Resolution: invoicedispute.DisputeResolutionInvoiceUpheld,
 	}, f.actor)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "Only an open dispute can be resolved")
@@ -414,12 +414,12 @@ func TestWithdrawDisputeClearsTheFlag(t *testing.T) {
 	f.repo.EXPECT().GetByID(mock.Anything, mock.Anything).Return(dispute, nil).Once()
 	f.lockInvoice()
 	f.repo.EXPECT().
-		Update(mock.Anything, mock.MatchedBy(func(entity *invoice.InvoiceDispute) bool {
-			return entity.Status == invoice.DisputeCaseStatusWithdrawn &&
+		Update(mock.Anything, mock.MatchedBy(func(entity *invoicedispute.InvoiceDispute) bool {
+			return entity.Status == invoicedispute.DisputeCaseStatusWithdrawn &&
 				entity.ResolvedByID == f.userID &&
 				entity.ResolutionNotes == "Customer paid in full"
 		})).
-		RunAndReturn(func(_ context.Context, entity *invoice.InvoiceDispute) (*invoice.InvoiceDispute, error) {
+		RunAndReturn(func(_ context.Context, entity *invoicedispute.InvoiceDispute) (*invoicedispute.InvoiceDispute, error) {
 			return entity, nil
 		}).
 		Once()
@@ -432,6 +432,6 @@ func TestWithdrawDisputeClearsTheFlag(t *testing.T) {
 	}, f.actor)
 
 	require.NoError(t, err)
-	assert.Equal(t, invoice.DisputeCaseStatusWithdrawn, withdrawn.Status)
+	assert.Equal(t, invoicedispute.DisputeCaseStatusWithdrawn, withdrawn.Status)
 	assert.Equal(t, invoice.DisputeStatusNone, f.inv.DisputeStatus)
 }

@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/loaderfields"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoicedispute"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
@@ -24,22 +25,22 @@ import (
 	"github.com/shopspring/decimal"
 )
 
-func (r *InvoiceResolver) Disputes(ctx context.Context, obj *invoice.Invoice) ([]*invoice.InvoiceDispute, error) {
+func (r *InvoiceResolver) Disputes(ctx context.Context, obj *invoice.Invoice) ([]*invoicedispute.InvoiceDispute, error) {
 	if obj == nil {
-		return []*invoice.InvoiceDispute{}, nil
+		return []*invoicedispute.InvoiceDispute{}, nil
 	}
 	if _, err := r.RequireAuth(ctx); err != nil {
 		return nil, err
 	}
 
 	if !loaders.Available(ctx) {
-		return []*invoice.InvoiceDispute{}, nil
+		return []*invoicedispute.InvoiceDispute{}, nil
 	}
 
 	return loaders.InvoiceDisputesByInvoiceID(ctx, obj.ID.String())
 }
 
-func (r *InvoiceResolver) OpenDispute(ctx context.Context, obj *invoice.Invoice) (*invoice.InvoiceDispute, error) {
+func (r *InvoiceResolver) OpenDispute(ctx context.Context, obj *invoice.Invoice) (*invoicedispute.InvoiceDispute, error) {
 	disputes, err := r.Disputes(ctx, obj)
 	if err != nil {
 		return nil, err
@@ -53,7 +54,7 @@ func (r *InvoiceResolver) OpenDispute(ctx context.Context, obj *invoice.Invoice)
 	return nil, nil
 }
 
-func (r *InvoiceDisputeResolver) DisputedAmount(ctx context.Context, obj *invoice.InvoiceDispute) (*string, error) {
+func (r *InvoiceDisputeResolver) DisputedAmount(ctx context.Context, obj *invoicedispute.InvoiceDispute) (*string, error) {
 	if obj == nil {
 		return stringutils.Ptr(decimal.Zero.String()), nil
 	}
@@ -61,7 +62,7 @@ func (r *InvoiceDisputeResolver) DisputedAmount(ctx context.Context, obj *invoic
 	return stringutils.Ptr(obj.DisputedAmount.String()), nil
 }
 
-func (r *InvoiceDisputeResolver) Resolution(ctx context.Context, obj *invoice.InvoiceDispute) (*invoice.DisputeResolution, error) {
+func (r *InvoiceDisputeResolver) Resolution(ctx context.Context, obj *invoicedispute.InvoiceDispute) (*invoicedispute.DisputeResolution, error) {
 	if obj == nil || !obj.Resolution.IsValid() {
 		return nil, nil
 	}
@@ -69,7 +70,7 @@ func (r *InvoiceDisputeResolver) Resolution(ctx context.Context, obj *invoice.In
 	return &obj.Resolution, nil
 }
 
-func (r *MutationResolver) OpenInvoiceDispute(ctx context.Context, input gqlmodel.OpenInvoiceDisputeInput) (*invoice.InvoiceDispute, error) {
+func (r *MutationResolver) OpenInvoiceDispute(ctx context.Context, input gqlmodel.OpenInvoiceDisputeInput) (*invoicedispute.InvoiceDispute, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceInvoiceDispute, permission.OpCreate)
 	if err != nil {
 		return nil, err
@@ -97,7 +98,7 @@ func (r *MutationResolver) OpenInvoiceDispute(ctx context.Context, input gqlmode
 	)
 }
 
-func (r *MutationResolver) ResolveInvoiceDispute(ctx context.Context, input gqlmodel.ResolveInvoiceDisputeInput) (*invoice.InvoiceDispute, error) {
+func (r *MutationResolver) ResolveInvoiceDispute(ctx context.Context, input gqlmodel.ResolveInvoiceDisputeInput) (*invoicedispute.InvoiceDispute, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceInvoiceDispute, permission.OpApprove)
 	if err != nil {
 		return nil, err
@@ -132,7 +133,7 @@ func (r *MutationResolver) ResolveInvoiceDispute(ctx context.Context, input gqlm
 	)
 }
 
-func (r *MutationResolver) WithdrawInvoiceDispute(ctx context.Context, input gqlmodel.WithdrawInvoiceDisputeInput) (*invoice.InvoiceDispute, error) {
+func (r *MutationResolver) WithdrawInvoiceDispute(ctx context.Context, input gqlmodel.WithdrawInvoiceDisputeInput) (*invoicedispute.InvoiceDispute, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceInvoiceDispute, permission.OpCancel)
 	if err != nil {
 		return nil, err
@@ -154,7 +155,7 @@ func (r *MutationResolver) WithdrawInvoiceDispute(ctx context.Context, input gql
 	)
 }
 
-func (r *QueryResolver) InvoiceDisputes(ctx context.Context, invoiceID *string, invoiceIds []string) ([]*invoice.InvoiceDispute, error) {
+func (r *QueryResolver) InvoiceDisputes(ctx context.Context, invoiceID *string, invoiceIds []string) ([]*invoicedispute.InvoiceDispute, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceInvoiceDispute, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -172,7 +173,7 @@ func (r *QueryResolver) InvoiceDisputes(ctx context.Context, invoiceID *string, 
 	if err != nil {
 		return nil, err
 	}
-	disputes := make([]*invoice.InvoiceDispute, 0, len(ids))
+	disputes := make([]*invoicedispute.InvoiceDispute, 0, len(ids))
 	for _, id := range ids {
 		disputes = append(disputes, grouped[id]...)
 	}
@@ -180,10 +181,10 @@ func (r *QueryResolver) InvoiceDisputes(ctx context.Context, invoiceID *string, 
 	return disputes, nil
 }
 
-func (r *InvoiceDisputeResolver) OpenedBy(ctx context.Context, obj *invoice.InvoiceDispute) (*tenant.User, error) {
+func (r *InvoiceDisputeResolver) OpenedBy(ctx context.Context, obj *invoicedispute.InvoiceDispute) (*tenant.User, error) {
 	return loaderfields.LoadUser(ctx, obj.OpenedByID)
 }
 
-func (r *InvoiceDisputeResolver) ResolvedBy(ctx context.Context, obj *invoice.InvoiceDispute) (*tenant.User, error) {
+func (r *InvoiceDisputeResolver) ResolvedBy(ctx context.Context, obj *invoicedispute.InvoiceDispute) (*tenant.User, error) {
 	return loaderfields.LoadUser(ctx, obj.ResolvedByID)
 }

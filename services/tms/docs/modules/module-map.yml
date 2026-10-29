@@ -751,7 +751,11 @@ modules:
       - factoringsubmission
       - invoice
       - invoiceadjustment
+      - invoicechargegroup
+      - invoicedispute
+      - invoicerealtime
       - invoicerun
+      - invoiceshare
       - latecharge
       - paymentreminder
     service:

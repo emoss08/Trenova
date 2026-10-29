@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoicedispute"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -68,7 +69,7 @@ func (s *Service) Open(
 	ctx context.Context,
 	req *invoiceports.OpenInvoiceDisputeRequest,
 	actor *permissionports.RequestActor,
-) (*invoice.InvoiceDispute, error) {
+) (*invoicedispute.InvoiceDispute, error) {
 	if req == nil {
 		return nil, errortypes.NewValidationError(
 			"request",
@@ -85,7 +86,7 @@ func (s *Service) Open(
 		return nil, multiErr
 	}
 
-	var created *invoice.InvoiceDispute
+	var created *invoicedispute.InvoiceDispute
 	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		inv, txErr := s.invoiceRepo.LockForUpdate(txCtx, invoiceports.GetInvoiceByIDRequest{
 			ID:         req.InvoiceID,
@@ -119,7 +120,7 @@ func (s *Service) Resolve(
 	ctx context.Context,
 	req *invoiceports.ResolveInvoiceDisputeRequest,
 	actor *permissionports.RequestActor,
-) (*invoice.InvoiceDispute, error) {
+) (*invoicedispute.InvoiceDispute, error) {
 	if req == nil {
 		return nil, errortypes.NewValidationError(
 			"request",
@@ -136,7 +137,7 @@ func (s *Service) Resolve(
 		return nil, multiErr
 	}
 
-	var previous, updated *invoice.InvoiceDispute
+	var previous, updated *invoicedispute.InvoiceDispute
 	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		entity, inv, txErr := s.loadCase(txCtx, req.DisputeID, req.TenantInfo, true, verbResolved)
 		if txErr != nil {
@@ -176,7 +177,7 @@ func (s *Service) Withdraw(
 	ctx context.Context,
 	req *invoiceports.WithdrawInvoiceDisputeRequest,
 	actor *permissionports.RequestActor,
-) (*invoice.InvoiceDispute, error) {
+) (*invoicedispute.InvoiceDispute, error) {
 	if req == nil {
 		return nil, errortypes.NewValidationError(
 			"request",
@@ -193,7 +194,7 @@ func (s *Service) Withdraw(
 		return nil, multiErr
 	}
 
-	var previous, updated *invoice.InvoiceDispute
+	var previous, updated *invoicedispute.InvoiceDispute
 	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		entity, inv, txErr := s.loadCase(txCtx, req.DisputeID, req.TenantInfo, true, verbWithdrawn)
 		if txErr != nil {
@@ -326,10 +327,10 @@ func (s *Service) setInvoiceDisputeFlag(
 }
 
 func (s *Service) logAudit(
-	entity *invoice.InvoiceDispute,
+	entity *invoicedispute.InvoiceDispute,
 	actor *permissionports.RequestActor,
 	op permission.Operation,
-	previous *invoice.InvoiceDispute,
+	previous *invoicedispute.InvoiceDispute,
 	comment string,
 ) {
 	if entity == nil {
@@ -359,7 +360,7 @@ func (s *Service) logAudit(
 
 func (s *Service) publish(
 	ctx context.Context,
-	entity *invoice.InvoiceDispute,
+	entity *invoicedispute.InvoiceDispute,
 	actor *permissionports.RequestActor,
 	action string,
 ) {
@@ -483,7 +484,7 @@ func validateDisputableInvoice(
 	return nil
 }
 
-func validateEntity(entity *invoice.InvoiceDispute) *errortypes.MultiError {
+func validateEntity(entity *invoicedispute.InvoiceDispute) *errortypes.MultiError {
 	multiErr := errortypes.NewMultiError()
 	entity.Validate(multiErr)
 	if multiErr.HasErrors() {

@@ -5,9 +5,9 @@
 package invoiceportsmock
 
 import (
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoicedispute"
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	mock "github.com/stretchr/testify/mock"
@@ -41,23 +41,23 @@ func (_m *MockInvoiceDisputeService) EXPECT() *MockInvoiceDisputeService_Expecte
 }
 
 // Open provides a mock function for the type MockInvoiceDisputeService
-func (_mock *MockInvoiceDisputeService) Open(ctx context.Context, req *invoiceports.OpenInvoiceDisputeRequest, actor *permissionports.RequestActor) (*invoice.InvoiceDispute, error) {
+func (_mock *MockInvoiceDisputeService) Open(ctx context.Context, req *invoiceports.OpenInvoiceDisputeRequest, actor *permissionports.RequestActor) (*invoicedispute.InvoiceDispute, error) {
 	ret := _mock.Called(ctx, req, actor)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Open")
 	}
 
-	var r0 *invoice.InvoiceDispute
+	var r0 *invoicedispute.InvoiceDispute
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *invoiceports.OpenInvoiceDisputeRequest, *permissionports.RequestActor) (*invoice.InvoiceDispute, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *invoiceports.OpenInvoiceDisputeRequest, *permissionports.RequestActor) (*invoicedispute.InvoiceDispute, error)); ok {
 		return returnFunc(ctx, req, actor)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *invoiceports.OpenInvoiceDisputeRequest, *permissionports.RequestActor) *invoice.InvoiceDispute); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *invoiceports.OpenInvoiceDisputeRequest, *permissionports.RequestActor) *invoicedispute.InvoiceDispute); ok {
 		r0 = returnFunc(ctx, req, actor)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*invoice.InvoiceDispute)
+			r0 = ret.Get(0).(*invoicedispute.InvoiceDispute)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, *invoiceports.OpenInvoiceDisputeRequest, *permissionports.RequestActor) error); ok {
@@ -104,34 +104,34 @@ func (_c *MockInvoiceDisputeService_Open_Call) Run(run func(ctx context.Context,
 	return _c
 }
 
-func (_c *MockInvoiceDisputeService_Open_Call) Return(v0 *invoice.InvoiceDispute, err error) *MockInvoiceDisputeService_Open_Call {
+func (_c *MockInvoiceDisputeService_Open_Call) Return(v0 *invoicedispute.InvoiceDispute, err error) *MockInvoiceDisputeService_Open_Call {
 	_c.Call.Return(v0, err)
 	return _c
 }
 
-func (_c *MockInvoiceDisputeService_Open_Call) RunAndReturn(run func(ctx context.Context, req *invoiceports.OpenInvoiceDisputeRequest, actor *permissionports.RequestActor) (*invoice.InvoiceDispute, error)) *MockInvoiceDisputeService_Open_Call {
+func (_c *MockInvoiceDisputeService_Open_Call) RunAndReturn(run func(ctx context.Context, req *invoiceports.OpenInvoiceDisputeRequest, actor *permissionports.RequestActor) (*invoicedispute.InvoiceDispute, error)) *MockInvoiceDisputeService_Open_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // Resolve provides a mock function for the type MockInvoiceDisputeService
-func (_mock *MockInvoiceDisputeService) Resolve(ctx context.Context, req *invoiceports.ResolveInvoiceDisputeRequest, actor *permissionports.RequestActor) (*invoice.InvoiceDispute, error) {
+func (_mock *MockInvoiceDisputeService) Resolve(ctx context.Context, req *invoiceports.ResolveInvoiceDisputeRequest, actor *permissionports.RequestActor) (*invoicedispute.InvoiceDispute, error) {
 	ret := _mock.Called(ctx, req, actor)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Resolve")
 	}
 
-	var r0 *invoice.InvoiceDispute
+	var r0 *invoicedispute.InvoiceDispute
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *invoiceports.ResolveInvoiceDisputeRequest, *permissionports.RequestActor) (*invoice.InvoiceDispute, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *invoiceports.ResolveInvoiceDisputeRequest, *permissionports.RequestActor) (*invoicedispute.InvoiceDispute, error)); ok {
 		return returnFunc(ctx, req, actor)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *invoiceports.ResolveInvoiceDisputeRequest, *permissionports.RequestActor) *invoice.InvoiceDispute); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *invoiceports.ResolveInvoiceDisputeRequest, *permissionports.RequestActor) *invoicedispute.InvoiceDispute); ok {
 		r0 = returnFunc(ctx, req, actor)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*invoice.InvoiceDispute)
+			r0 = ret.Get(0).(*invoicedispute.InvoiceDispute)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, *invoiceports.ResolveInvoiceDisputeRequest, *permissionports.RequestActor) error); ok {
@@ -178,34 +178,34 @@ func (_c *MockInvoiceDisputeService_Resolve_Call) Run(run func(ctx context.Conte
 	return _c
 }
 
-func (_c *MockInvoiceDisputeService_Resolve_Call) Return(v0 *invoice.InvoiceDispute, err error) *MockInvoiceDisputeService_Resolve_Call {
+func (_c *MockInvoiceDisputeService_Resolve_Call) Return(v0 *invoicedispute.InvoiceDispute, err error) *MockInvoiceDisputeService_Resolve_Call {
 	_c.Call.Return(v0, err)
 	return _c
 }
 
-func (_c *MockInvoiceDisputeService_Resolve_Call) RunAndReturn(run func(ctx context.Context, req *invoiceports.ResolveInvoiceDisputeRequest, actor *permissionports.RequestActor) (*invoice.InvoiceDispute, error)) *MockInvoiceDisputeService_Resolve_Call {
+func (_c *MockInvoiceDisputeService_Resolve_Call) RunAndReturn(run func(ctx context.Context, req *invoiceports.ResolveInvoiceDisputeRequest, actor *permissionports.RequestActor) (*invoicedispute.InvoiceDispute, error)) *MockInvoiceDisputeService_Resolve_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // Withdraw provides a mock function for the type MockInvoiceDisputeService
-func (_mock *MockInvoiceDisputeService) Withdraw(ctx context.Context, req *invoiceports.WithdrawInvoiceDisputeRequest, actor *permissionports.RequestActor) (*invoice.InvoiceDispute, error) {
+func (_mock *MockInvoiceDisputeService) Withdraw(ctx context.Context, req *invoiceports.WithdrawInvoiceDisputeRequest, actor *permissionports.RequestActor) (*invoicedispute.InvoiceDispute, error) {
 	ret := _mock.Called(ctx, req, actor)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Withdraw")
 	}
 
-	var r0 *invoice.InvoiceDispute
+	var r0 *invoicedispute.InvoiceDispute
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *invoiceports.WithdrawInvoiceDisputeRequest, *permissionports.RequestActor) (*invoice.InvoiceDispute, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *invoiceports.WithdrawInvoiceDisputeRequest, *permissionports.RequestActor) (*invoicedispute.InvoiceDispute, error)); ok {
 		return returnFunc(ctx, req, actor)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *invoiceports.WithdrawInvoiceDisputeRequest, *permissionports.RequestActor) *invoice.InvoiceDispute); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *invoiceports.WithdrawInvoiceDisputeRequest, *permissionports.RequestActor) *invoicedispute.InvoiceDispute); ok {
 		r0 = returnFunc(ctx, req, actor)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*invoice.InvoiceDispute)
+			r0 = ret.Get(0).(*invoicedispute.InvoiceDispute)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, *invoiceports.WithdrawInvoiceDisputeRequest, *permissionports.RequestActor) error); ok {
@@ -252,12 +252,12 @@ func (_c *MockInvoiceDisputeService_Withdraw_Call) Run(run func(ctx context.Cont
 	return _c
 }
 
-func (_c *MockInvoiceDisputeService_Withdraw_Call) Return(v0 *invoice.InvoiceDispute, err error) *MockInvoiceDisputeService_Withdraw_Call {
+func (_c *MockInvoiceDisputeService_Withdraw_Call) Return(v0 *invoicedispute.InvoiceDispute, err error) *MockInvoiceDisputeService_Withdraw_Call {
 	_c.Call.Return(v0, err)
 	return _c
 }
 
-func (_c *MockInvoiceDisputeService_Withdraw_Call) RunAndReturn(run func(ctx context.Context, req *invoiceports.WithdrawInvoiceDisputeRequest, actor *permissionports.RequestActor) (*invoice.InvoiceDispute, error)) *MockInvoiceDisputeService_Withdraw_Call {
+func (_c *MockInvoiceDisputeService_Withdraw_Call) RunAndReturn(run func(ctx context.Context, req *invoiceports.WithdrawInvoiceDisputeRequest, actor *permissionports.RequestActor) (*invoicedispute.InvoiceDispute, error)) *MockInvoiceDisputeService_Withdraw_Call {
 	_c.Call.Return(run)
 	return _c
 }

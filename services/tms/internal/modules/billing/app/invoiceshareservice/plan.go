@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceshare"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -19,7 +20,7 @@ type sharePlan struct {
 	invoice    *invoice.Invoice
 	sharer     *tenant.User
 	recipients []*tenant.User
-	shares     []*invoice.InvoiceShare
+	shares     []*invoiceshare.InvoiceShare
 	input      shareInput
 }
 
@@ -49,7 +50,7 @@ func (s *Service) planShare(
 		tab:     req.Tab,
 	}}
 	if plan.input.tab == "" {
-		plan.input.tab = invoice.ShareTabOverview
+		plan.input.tab = invoiceshare.ShareTabOverview
 	}
 	if multiErr := validateShareInput(&plan.input, actor.UserID); multiErr != nil {
 		return nil, multiErr

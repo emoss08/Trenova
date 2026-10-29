@@ -3,6 +3,8 @@
 package invoicedb
 
 import (
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoicedispute"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceshare"
 	"context"
 	"unsafe"
 
@@ -2017,16 +2019,16 @@ func beforeUpdateInvoice(ctx context.Context, p unsafe.Pointer) error {
 	return (*invoice.Invoice)(p).BeforeUpdate(ctx)
 }
 
-// invoiceDisputesTable is the schema of invoice.InvoiceDispute.
+// invoiceDisputesTable is the schema of invoicedispute.InvoiceDispute.
 var invoiceDisputesTable = schema.Table{
 	Name:        "invoice_disputes",
 	Quoted:      `"invoice_disputes"`,
 	Alias:       "id",
-	Model:       "invoice.InvoiceDispute",
+	Model:       "invoicedispute.InvoiceDispute",
 	Label:       `Invoice Dispute`,
 	Plural:      `Invoice Disputes`,
 	Doc:         `InvoiceDispute is one dispute case raised against a posted invoice. An invoice has at most one open case; resolving or withdrawing it clears the invoice's Disputed flag.`,
-	Constraints: (&invoice.InvoiceDispute{}).Constraints(),
+	Constraints: (&invoicedispute.InvoiceDispute{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`, JSON: `organizationId`},
@@ -2066,7 +2068,7 @@ var invoiceDisputesTable = schema.Table{
 	IDPrefix:     "idsp_",
 	New:          newInvoiceDispute,
 	NewN:         newNInvoiceDispute,
-	Size:         unsafe.Sizeof(invoice.InvoiceDispute{}),
+	Size:         unsafe.Sizeof(invoicedispute.InvoiceDispute{}),
 	Ptr:          ptrInvoiceDispute,
 	Value:        valueInvoiceDispute,
 	Attach:       attachInvoiceDispute,
@@ -2075,9 +2077,9 @@ var invoiceDisputesTable = schema.Table{
 
 var invoiceDisputesRef = keel.Ref{Table: &invoiceDisputesTable}
 
-// InvoiceDisputesTable is the table of invoice.InvoiceDispute.
+// InvoiceDisputesTable is the table of invoicedispute.InvoiceDispute.
 type InvoiceDisputesTable struct {
-	keel.Handle[*invoice.InvoiceDispute]
+	keel.Handle[*invoicedispute.InvoiceDispute]
 	ID                     keelkinds.PulidIDCol
 	OrganizationID         keelkinds.PulidIDCol
 	BusinessUnitID         keelkinds.PulidIDCol
@@ -2102,7 +2104,7 @@ type InvoiceDisputesTable struct {
 
 // InvoiceDisputes references the invoice_disputes table.
 var InvoiceDisputes = &InvoiceDisputesTable{
-	Handle:                 keel.Handle[*invoice.InvoiceDispute]{Ref: &invoiceDisputesRef},
+	Handle:                 keel.Handle[*invoicedispute.InvoiceDispute]{Ref: &invoiceDisputesRef},
 	ID:                     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceDisputesRef, Index: 0}}},
 	OrganizationID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceDisputesRef, Index: 1}}},
 	BusinessUnitID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceDisputesRef, Index: 2}}},
@@ -2128,7 +2130,7 @@ var InvoiceDisputes = &InvoiceDisputesTable{
 // BuildInvoiceDisputes builds the handle of invoice_disputes for ref. Generated relation and alias methods call it.
 func BuildInvoiceDisputes(r *keel.Ref) *InvoiceDisputesTable {
 	return &InvoiceDisputesTable{
-		Handle:                 keel.Handle[*invoice.InvoiceDispute]{Ref: r},
+		Handle:                 keel.Handle[*invoicedispute.InvoiceDispute]{Ref: r},
 		ID:                     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -2169,18 +2171,18 @@ func (t *InvoiceDisputesTable) Customer() *customerdb.CustomersTable {
 }
 
 // Get returns the invoice_disputes row with the given key, or keel.ErrNotFound.
-func (t *InvoiceDisputesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*invoice.InvoiceDispute, error) {
+func (t *InvoiceDisputesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*invoicedispute.InvoiceDispute, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
 }
 
-func newInvoiceDispute() unsafe.Pointer { return unsafe.Pointer(new(invoice.InvoiceDispute)) }
+func newInvoiceDispute() unsafe.Pointer { return unsafe.Pointer(new(invoicedispute.InvoiceDispute)) }
 
 func newNInvoiceDispute(n int) unsafe.Pointer {
-	return unsafe.Pointer(unsafe.SliceData(make([]invoice.InvoiceDispute, n)))
+	return unsafe.Pointer(unsafe.SliceData(make([]invoicedispute.InvoiceDispute, n)))
 }
 
 func ptrInvoiceDispute(p unsafe.Pointer, c int32) any {
-	r := (*invoice.InvoiceDispute)(p)
+	r := (*invoicedispute.InvoiceDispute)(p)
 	switch c {
 	case 0:
 		return (*string)(unsafe.Pointer(&r.ID))
@@ -2227,7 +2229,7 @@ func ptrInvoiceDispute(p unsafe.Pointer, c int32) any {
 }
 
 func valueInvoiceDispute(p unsafe.Pointer, c int32) any {
-	r := (*invoice.InvoiceDispute)(p)
+	r := (*invoicedispute.InvoiceDispute)(p)
 	switch c {
 	case 0:
 		return string(r.ID)
@@ -2292,7 +2294,7 @@ func valueInvoiceDispute(p unsafe.Pointer, c int32) any {
 }
 
 func attachInvoiceDispute(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
-	r := (*invoice.InvoiceDispute)(p)
+	r := (*invoicedispute.InvoiceDispute)(p)
 	switch rel {
 	case 0:
 		r.Invoice = (*invoice.Invoice)(child)
@@ -2302,7 +2304,7 @@ func attachInvoiceDispute(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 }
 
 func beforeCreateInvoiceDispute(ctx context.Context, p unsafe.Pointer) error {
-	return (*invoice.InvoiceDispute)(p).BeforeCreate(ctx)
+	return (*invoicedispute.InvoiceDispute)(p).BeforeCreate(ctx)
 }
 
 // invoiceLinesTable is the schema of invoice.InvoiceLine.
@@ -2660,12 +2662,12 @@ func attachInvoiceLine(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	}
 }
 
-// invoiceSharesTable is the schema of invoice.InvoiceShare.
+// invoiceSharesTable is the schema of invoiceshare.InvoiceShare.
 var invoiceSharesTable = schema.Table{
 	Name:   "invoice_shares",
 	Quoted: `"invoice_shares"`,
 	Alias:  "is_",
-	Model:  "invoice.InvoiceShare",
+	Model:  "invoiceshare.InvoiceShare",
 	Label:  `Invoice Share`,
 	Plural: `Invoice Shares`,
 	Columns: []schema.Column{
@@ -2700,7 +2702,7 @@ var invoiceSharesTable = schema.Table{
 	IDPrefix:   "invsh_",
 	New:        newInvoiceShare,
 	NewN:       newNInvoiceShare,
-	Size:       unsafe.Sizeof(invoice.InvoiceShare{}),
+	Size:       unsafe.Sizeof(invoiceshare.InvoiceShare{}),
 	Ptr:        ptrInvoiceShare,
 	Value:      valueInvoiceShare,
 	Attach:     attachInvoiceShare,
@@ -2708,9 +2710,9 @@ var invoiceSharesTable = schema.Table{
 
 var invoiceSharesRef = keel.Ref{Table: &invoiceSharesTable}
 
-// InvoiceSharesTable is the table of invoice.InvoiceShare.
+// InvoiceSharesTable is the table of invoiceshare.InvoiceShare.
 type InvoiceSharesTable struct {
-	keel.Handle[*invoice.InvoiceShare]
+	keel.Handle[*invoiceshare.InvoiceShare]
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -2728,7 +2730,7 @@ type InvoiceSharesTable struct {
 
 // InvoiceShares references the invoice_shares table.
 var InvoiceShares = &InvoiceSharesTable{
-	Handle:         keel.Handle[*invoice.InvoiceShare]{Ref: &invoiceSharesRef},
+	Handle:         keel.Handle[*invoiceshare.InvoiceShare]{Ref: &invoiceSharesRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceSharesRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceSharesRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceSharesRef, Index: 2}}},
@@ -2747,7 +2749,7 @@ var InvoiceShares = &InvoiceSharesTable{
 // BuildInvoiceShares builds the handle of invoice_shares for ref. Generated relation and alias methods call it.
 func BuildInvoiceShares(r *keel.Ref) *InvoiceSharesTable {
 	return &InvoiceSharesTable{
-		Handle:         keel.Handle[*invoice.InvoiceShare]{Ref: r},
+		Handle:         keel.Handle[*invoiceshare.InvoiceShare]{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -2783,18 +2785,18 @@ func (t *InvoiceSharesTable) SharedBy() *tenantdb.UsersTable {
 }
 
 // Get returns the invoice_shares row with the given key, or keel.ErrNotFound.
-func (t *InvoiceSharesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*invoice.InvoiceShare, error) {
+func (t *InvoiceSharesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*invoiceshare.InvoiceShare, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
 }
 
-func newInvoiceShare() unsafe.Pointer { return unsafe.Pointer(new(invoice.InvoiceShare)) }
+func newInvoiceShare() unsafe.Pointer { return unsafe.Pointer(new(invoiceshare.InvoiceShare)) }
 
 func newNInvoiceShare(n int) unsafe.Pointer {
-	return unsafe.Pointer(unsafe.SliceData(make([]invoice.InvoiceShare, n)))
+	return unsafe.Pointer(unsafe.SliceData(make([]invoiceshare.InvoiceShare, n)))
 }
 
 func ptrInvoiceShare(p unsafe.Pointer, c int32) any {
-	r := (*invoice.InvoiceShare)(p)
+	r := (*invoiceshare.InvoiceShare)(p)
 	switch c {
 	case 0:
 		return (*string)(unsafe.Pointer(&r.ID))
@@ -2827,7 +2829,7 @@ func ptrInvoiceShare(p unsafe.Pointer, c int32) any {
 }
 
 func valueInvoiceShare(p unsafe.Pointer, c int32) any {
-	r := (*invoice.InvoiceShare)(p)
+	r := (*invoiceshare.InvoiceShare)(p)
 	switch c {
 	case 0:
 		return string(r.ID)
@@ -2863,7 +2865,7 @@ func valueInvoiceShare(p unsafe.Pointer, c int32) any {
 }
 
 func attachInvoiceShare(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
-	r := (*invoice.InvoiceShare)(p)
+	r := (*invoiceshare.InvoiceShare)(p)
 	switch rel {
 	case 0:
 		r.SharedWith = (*tenant.User)(child)
@@ -3106,114 +3108,114 @@ func (c AttachmentDeliveryMethodCol) NotIn(vs ...invoice.AttachmentDeliveryMetho
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 
-// DisputeCaseStatusCol is a column of invoice.DisputeCaseStatus values.
+// DisputeCaseStatusCol is a column of invoicedispute.DisputeCaseStatus values.
 type DisputeCaseStatusCol struct{ keel.StringCol }
 
-func (c DisputeCaseStatusCol) Eq(v invoice.DisputeCaseStatus) keel.Pred {
+func (c DisputeCaseStatusCol) Eq(v invoicedispute.DisputeCaseStatus) keel.Pred {
 	return c.StringCol.Eq(string(v))
 }
-func (c DisputeCaseStatusCol) Ne(v invoice.DisputeCaseStatus) keel.Pred {
+func (c DisputeCaseStatusCol) Ne(v invoicedispute.DisputeCaseStatus) keel.Pred {
 	return c.StringCol.Ne(string(v))
 }
-func (c DisputeCaseStatusCol) Gt(v invoice.DisputeCaseStatus) keel.Pred {
+func (c DisputeCaseStatusCol) Gt(v invoicedispute.DisputeCaseStatus) keel.Pred {
 	return c.StringCol.Gt(string(v))
 }
-func (c DisputeCaseStatusCol) Gte(v invoice.DisputeCaseStatus) keel.Pred {
+func (c DisputeCaseStatusCol) Gte(v invoicedispute.DisputeCaseStatus) keel.Pred {
 	return c.StringCol.Gte(string(v))
 }
-func (c DisputeCaseStatusCol) Lt(v invoice.DisputeCaseStatus) keel.Pred {
+func (c DisputeCaseStatusCol) Lt(v invoicedispute.DisputeCaseStatus) keel.Pred {
 	return c.StringCol.Lt(string(v))
 }
-func (c DisputeCaseStatusCol) Lte(v invoice.DisputeCaseStatus) keel.Pred {
+func (c DisputeCaseStatusCol) Lte(v invoicedispute.DisputeCaseStatus) keel.Pred {
 	return c.StringCol.Lte(string(v))
 }
-func (c DisputeCaseStatusCol) IsDistinctFrom(v invoice.DisputeCaseStatus) keel.Pred {
+func (c DisputeCaseStatusCol) IsDistinctFrom(v invoicedispute.DisputeCaseStatus) keel.Pred {
 	return c.StringCol.IsDistinctFrom(string(v))
 }
-func (c DisputeCaseStatusCol) Between(lo, hi invoice.DisputeCaseStatus) keel.Pred {
+func (c DisputeCaseStatusCol) Between(lo, hi invoicedispute.DisputeCaseStatus) keel.Pred {
 	return c.StringCol.Between(string(lo), string(hi))
 }
-func (c DisputeCaseStatusCol) To(v invoice.DisputeCaseStatus) keel.Assignment {
+func (c DisputeCaseStatusCol) To(v invoicedispute.DisputeCaseStatus) keel.Assignment {
 	return c.StringCol.To(string(v))
 }
-func (c DisputeCaseStatusCol) In(vs ...invoice.DisputeCaseStatus) keel.Pred {
+func (c DisputeCaseStatusCol) In(vs ...invoicedispute.DisputeCaseStatus) keel.Pred {
 	return c.StringCol.In(keel.Strings(vs)...)
 }
-func (c DisputeCaseStatusCol) NotIn(vs ...invoice.DisputeCaseStatus) keel.Pred {
+func (c DisputeCaseStatusCol) NotIn(vs ...invoicedispute.DisputeCaseStatus) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 
-// DisputeReasonCodeCol is a column of invoice.DisputeReasonCode values.
+// DisputeReasonCodeCol is a column of invoicedispute.DisputeReasonCode values.
 type DisputeReasonCodeCol struct{ keel.StringCol }
 
-func (c DisputeReasonCodeCol) Eq(v invoice.DisputeReasonCode) keel.Pred {
+func (c DisputeReasonCodeCol) Eq(v invoicedispute.DisputeReasonCode) keel.Pred {
 	return c.StringCol.Eq(string(v))
 }
-func (c DisputeReasonCodeCol) Ne(v invoice.DisputeReasonCode) keel.Pred {
+func (c DisputeReasonCodeCol) Ne(v invoicedispute.DisputeReasonCode) keel.Pred {
 	return c.StringCol.Ne(string(v))
 }
-func (c DisputeReasonCodeCol) Gt(v invoice.DisputeReasonCode) keel.Pred {
+func (c DisputeReasonCodeCol) Gt(v invoicedispute.DisputeReasonCode) keel.Pred {
 	return c.StringCol.Gt(string(v))
 }
-func (c DisputeReasonCodeCol) Gte(v invoice.DisputeReasonCode) keel.Pred {
+func (c DisputeReasonCodeCol) Gte(v invoicedispute.DisputeReasonCode) keel.Pred {
 	return c.StringCol.Gte(string(v))
 }
-func (c DisputeReasonCodeCol) Lt(v invoice.DisputeReasonCode) keel.Pred {
+func (c DisputeReasonCodeCol) Lt(v invoicedispute.DisputeReasonCode) keel.Pred {
 	return c.StringCol.Lt(string(v))
 }
-func (c DisputeReasonCodeCol) Lte(v invoice.DisputeReasonCode) keel.Pred {
+func (c DisputeReasonCodeCol) Lte(v invoicedispute.DisputeReasonCode) keel.Pred {
 	return c.StringCol.Lte(string(v))
 }
-func (c DisputeReasonCodeCol) IsDistinctFrom(v invoice.DisputeReasonCode) keel.Pred {
+func (c DisputeReasonCodeCol) IsDistinctFrom(v invoicedispute.DisputeReasonCode) keel.Pred {
 	return c.StringCol.IsDistinctFrom(string(v))
 }
-func (c DisputeReasonCodeCol) Between(lo, hi invoice.DisputeReasonCode) keel.Pred {
+func (c DisputeReasonCodeCol) Between(lo, hi invoicedispute.DisputeReasonCode) keel.Pred {
 	return c.StringCol.Between(string(lo), string(hi))
 }
-func (c DisputeReasonCodeCol) To(v invoice.DisputeReasonCode) keel.Assignment {
+func (c DisputeReasonCodeCol) To(v invoicedispute.DisputeReasonCode) keel.Assignment {
 	return c.StringCol.To(string(v))
 }
-func (c DisputeReasonCodeCol) In(vs ...invoice.DisputeReasonCode) keel.Pred {
+func (c DisputeReasonCodeCol) In(vs ...invoicedispute.DisputeReasonCode) keel.Pred {
 	return c.StringCol.In(keel.Strings(vs)...)
 }
-func (c DisputeReasonCodeCol) NotIn(vs ...invoice.DisputeReasonCode) keel.Pred {
+func (c DisputeReasonCodeCol) NotIn(vs ...invoicedispute.DisputeReasonCode) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 
-// DisputeResolutionCol is a column of invoice.DisputeResolution values.
+// DisputeResolutionCol is a column of invoicedispute.DisputeResolution values.
 type DisputeResolutionCol struct{ keel.StringCol }
 
-func (c DisputeResolutionCol) Eq(v invoice.DisputeResolution) keel.Pred {
+func (c DisputeResolutionCol) Eq(v invoicedispute.DisputeResolution) keel.Pred {
 	return c.StringCol.Eq(string(v))
 }
-func (c DisputeResolutionCol) Ne(v invoice.DisputeResolution) keel.Pred {
+func (c DisputeResolutionCol) Ne(v invoicedispute.DisputeResolution) keel.Pred {
 	return c.StringCol.Ne(string(v))
 }
-func (c DisputeResolutionCol) Gt(v invoice.DisputeResolution) keel.Pred {
+func (c DisputeResolutionCol) Gt(v invoicedispute.DisputeResolution) keel.Pred {
 	return c.StringCol.Gt(string(v))
 }
-func (c DisputeResolutionCol) Gte(v invoice.DisputeResolution) keel.Pred {
+func (c DisputeResolutionCol) Gte(v invoicedispute.DisputeResolution) keel.Pred {
 	return c.StringCol.Gte(string(v))
 }
-func (c DisputeResolutionCol) Lt(v invoice.DisputeResolution) keel.Pred {
+func (c DisputeResolutionCol) Lt(v invoicedispute.DisputeResolution) keel.Pred {
 	return c.StringCol.Lt(string(v))
 }
-func (c DisputeResolutionCol) Lte(v invoice.DisputeResolution) keel.Pred {
+func (c DisputeResolutionCol) Lte(v invoicedispute.DisputeResolution) keel.Pred {
 	return c.StringCol.Lte(string(v))
 }
-func (c DisputeResolutionCol) IsDistinctFrom(v invoice.DisputeResolution) keel.Pred {
+func (c DisputeResolutionCol) IsDistinctFrom(v invoicedispute.DisputeResolution) keel.Pred {
 	return c.StringCol.IsDistinctFrom(string(v))
 }
-func (c DisputeResolutionCol) Between(lo, hi invoice.DisputeResolution) keel.Pred {
+func (c DisputeResolutionCol) Between(lo, hi invoicedispute.DisputeResolution) keel.Pred {
 	return c.StringCol.Between(string(lo), string(hi))
 }
-func (c DisputeResolutionCol) To(v invoice.DisputeResolution) keel.Assignment {
+func (c DisputeResolutionCol) To(v invoicedispute.DisputeResolution) keel.Assignment {
 	return c.StringCol.To(string(v))
 }
-func (c DisputeResolutionCol) In(vs ...invoice.DisputeResolution) keel.Pred {
+func (c DisputeResolutionCol) In(vs ...invoicedispute.DisputeResolution) keel.Pred {
 	return c.StringCol.In(keel.Strings(vs)...)
 }
-func (c DisputeResolutionCol) NotIn(vs ...invoice.DisputeResolution) keel.Pred {
+func (c DisputeResolutionCol) NotIn(vs ...invoicedispute.DisputeResolution) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 
@@ -3456,24 +3458,24 @@ func (c SettlementStatusCol) NotIn(vs ...invoice.SettlementStatus) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 
-// ShareTabCol is a column of invoice.ShareTab values.
+// ShareTabCol is a column of invoiceshare.ShareTab values.
 type ShareTabCol struct{ keel.StringCol }
 
-func (c ShareTabCol) Eq(v invoice.ShareTab) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c ShareTabCol) Ne(v invoice.ShareTab) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c ShareTabCol) Gt(v invoice.ShareTab) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c ShareTabCol) Gte(v invoice.ShareTab) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c ShareTabCol) Lt(v invoice.ShareTab) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c ShareTabCol) Lte(v invoice.ShareTab) keel.Pred { return c.StringCol.Lte(string(v)) }
-func (c ShareTabCol) IsDistinctFrom(v invoice.ShareTab) keel.Pred {
+func (c ShareTabCol) Eq(v invoiceshare.ShareTab) keel.Pred  { return c.StringCol.Eq(string(v)) }
+func (c ShareTabCol) Ne(v invoiceshare.ShareTab) keel.Pred  { return c.StringCol.Ne(string(v)) }
+func (c ShareTabCol) Gt(v invoiceshare.ShareTab) keel.Pred  { return c.StringCol.Gt(string(v)) }
+func (c ShareTabCol) Gte(v invoiceshare.ShareTab) keel.Pred { return c.StringCol.Gte(string(v)) }
+func (c ShareTabCol) Lt(v invoiceshare.ShareTab) keel.Pred  { return c.StringCol.Lt(string(v)) }
+func (c ShareTabCol) Lte(v invoiceshare.ShareTab) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c ShareTabCol) IsDistinctFrom(v invoiceshare.ShareTab) keel.Pred {
 	return c.StringCol.IsDistinctFrom(string(v))
 }
-func (c ShareTabCol) Between(lo, hi invoice.ShareTab) keel.Pred {
+func (c ShareTabCol) Between(lo, hi invoiceshare.ShareTab) keel.Pred {
 	return c.StringCol.Between(string(lo), string(hi))
 }
-func (c ShareTabCol) To(v invoice.ShareTab) keel.Assignment { return c.StringCol.To(string(v)) }
-func (c ShareTabCol) In(vs ...invoice.ShareTab) keel.Pred   { return c.StringCol.In(keel.Strings(vs)...) }
-func (c ShareTabCol) NotIn(vs ...invoice.ShareTab) keel.Pred {
+func (c ShareTabCol) To(v invoiceshare.ShareTab) keel.Assignment { return c.StringCol.To(string(v)) }
+func (c ShareTabCol) In(vs ...invoiceshare.ShareTab) keel.Pred   { return c.StringCol.In(keel.Strings(vs)...) }
+func (c ShareTabCol) NotIn(vs ...invoiceshare.ShareTab) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 

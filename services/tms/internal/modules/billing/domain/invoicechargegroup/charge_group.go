@@ -1,15 +1,16 @@
-package invoice
+package invoicechargegroup
 
 import (
 	"slices"
 
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 )
 
 type ChargeGroup struct {
-	Type                InvoiceLineType
+	Type                invoice.InvoiceLineType
 	Description         string
 	ChargeCode          string
 	ChargeMethod        accessorialcharge.Method
@@ -25,7 +26,7 @@ type ChargeGroup struct {
 }
 
 type chargeGroupKey struct {
-	lineType            InvoiceLineType
+	lineType            invoice.InvoiceLineType
 	accessorialChargeID pulid.ID
 	chargeCode          string
 	chargeMethod        accessorialcharge.Method
@@ -40,7 +41,7 @@ type chargeGroupTally struct {
 	shipments map[pulid.ID]struct{}
 }
 
-func ChargeGroups(lines []*InvoiceLine) []*ChargeGroup {
+func ChargeGroups(lines []*invoice.InvoiceLine) []*ChargeGroup {
 	tallies := make(map[chargeGroupKey]*chargeGroupTally, len(lines))
 	order := make([]*chargeGroupTally, 0, len(lines))
 
@@ -93,14 +94,14 @@ func ChargeGroups(lines []*InvoiceLine) []*ChargeGroup {
 	return groups
 }
 
-func (t *chargeGroupTally) add(line *InvoiceLine) {
+func (t *chargeGroupTally) add(line *invoice.InvoiceLine) {
 	if !sameDecimal(t.group.Rate, line.Rate) {
 		t.group.Rate = decimal.NullDecimal{}
 	}
 	t.group.RateBasisAmount = decimal.NullDecimal{}
 }
 
-func chargeGroupKeyOf(line *InvoiceLine) chargeGroupKey {
+func chargeGroupKeyOf(line *invoice.InvoiceLine) chargeGroupKey {
 	key := chargeGroupKey{
 		lineType:            line.Type,
 		accessorialChargeID: line.AccessorialChargeID,
@@ -110,7 +111,7 @@ func chargeGroupKeyOf(line *InvoiceLine) chargeGroupKey {
 		formulaTemplateID:   line.FormulaTemplateID,
 		formulaTemplateName: line.FormulaTemplateName,
 	}
-	if line.Type == InvoiceLineTypeFreight || line.AccessorialChargeID.IsNil() {
+	if line.Type == invoice.InvoiceLineTypeFreight || line.AccessorialChargeID.IsNil() {
 		key.description = line.Description
 	}
 
@@ -125,20 +126,20 @@ func sameDecimal(a, b decimal.NullDecimal) bool {
 	return a.Decimal.Equal(b.Decimal)
 }
 
-func lineTypeRank(lineType InvoiceLineType) int {
+func lineTypeRank(lineType invoice.InvoiceLineType) int {
 	switch lineType {
-	case InvoiceLineTypeFreight:
+	case invoice.InvoiceLineTypeFreight:
 		return 0
-	case InvoiceLineTypeAccessorial:
+	case invoice.InvoiceLineTypeAccessorial:
 		return 1
-	case InvoiceLineTypeMemo:
+	case invoice.InvoiceLineTypeMemo:
 		return 2
 	default:
 		return 3
 	}
 }
 
-func BilledShipmentIDs(invoices ...*Invoice) []pulid.ID {
+func BilledShipmentIDs(invoices ...*invoice.Invoice) []pulid.ID {
 	seen := make(map[pulid.ID]struct{}, len(invoices))
 	ids := make([]pulid.ID, 0, len(invoices))
 	keep := func(id pulid.ID) {
