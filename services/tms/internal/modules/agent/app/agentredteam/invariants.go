@@ -201,7 +201,7 @@ func (c *checker) decide(
 ) agenttoolpolicy.Decision {
 	return agenttoolpolicy.Decide(c.ctx, agenttoolpolicy.DecideInput{
 		Policy: *policy,
-		Params: agenttoolports.ToolExecuteParams{
+		Params: &agenttoolports.ToolExecuteParams{
 			OrganizationID: c.outcome.Actor.OrganizationID,
 			BusinessUnitID: c.outcome.Actor.BusinessUnitID,
 			Actor:          c.outcome.Actor,

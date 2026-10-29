@@ -223,11 +223,11 @@ func (a *recordingAction) Companions() []string { return companionsOf(a.inner) }
 //nolint:gocritic // agenttoolports tools take their execute params by value
 func (a *recordingAction) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) error {
 	a.rec.executed(&ExecutionRecord{
 		Tool:   a.Name(),
-		Params: params,
+		Params: *params,
 		Egress: a.inner.Policy().Classified(params).Egress,
 	})
 
@@ -290,7 +290,7 @@ func (a *recordingPreparable) Target(params map[string]any) (agenttoolports.Tool
 
 func (a *recordingPreparable) Preview(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) (*agentpreview.ToolPreview, error) {
 	previewer, _ := a.inner.(agenttoolports.ToolPreviewer)
 

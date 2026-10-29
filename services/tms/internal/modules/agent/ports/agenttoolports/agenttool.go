@@ -61,7 +61,7 @@ type TenantTimezoneReader interface {
 // does. The preview service runs it inside a read-only snapshot, so a write
 // it attempted would fail, and filters what it returns for each reader.
 type ToolPreviewer interface {
-	Preview(ctx context.Context, params ToolExecuteParams) (*agentpreview.ToolPreview, error)
+	Preview(ctx context.Context, params *ToolExecuteParams) (*agentpreview.ToolPreview, error)
 }
 
 // ToolValidator is a tool that can check its arguments before anything is
@@ -69,7 +69,7 @@ type ToolPreviewer interface {
 // would fail on execution is refused to the model now, while it can still
 // fix the call, rather than after a person has approved it.
 type ToolValidator interface {
-	Validate(ctx context.Context, params ToolExecuteParams) error
+	Validate(ctx context.Context, params *ToolExecuteParams) error
 }
 
 // ToolRecordSplitter is a tool over a set of records that says, for a call
@@ -80,11 +80,11 @@ type ToolRecordSplitter interface {
 }
 
 type ToolSelectionResolver interface {
-	ResolveSelection(ctx context.Context, params ToolExecuteParams) (map[string]any, error)
+	ResolveSelection(ctx context.Context, params *ToolExecuteParams) (map[string]any, error)
 }
 
 type ToolProposalSelectionResolver interface {
-	ResolveProposalSelection(ctx context.Context, params ToolExecuteParams) (map[string]any, error)
+	ResolveProposalSelection(ctx context.Context, params *ToolExecuteParams) (map[string]any, error)
 }
 
 // ToolResultReporter is a write whose caller needs to know what it made. A
@@ -95,7 +95,7 @@ type ToolProposalSelectionResolver interface {
 type ToolResultReporter interface {
 	ExecuteWithResult(
 		ctx context.Context,
-		params ToolExecuteParams,
+		params *ToolExecuteParams,
 	) (*agentrecord.ToolExecutionResult, error)
 }
 
@@ -105,7 +105,7 @@ type ToolResultReporter interface {
 func ExecuteTool(
 	ctx context.Context,
 	tool AgentTool,
-	params ToolExecuteParams,
+	params *ToolExecuteParams,
 ) (*agentrecord.ToolExecutionResult, error) {
 	reporter, reports := tool.(ToolResultReporter)
 	if !reports {
@@ -125,7 +125,7 @@ type AgentTool interface {
 	Description() string
 	ParamSchema() map[string]any
 	Policy() ToolPolicy
-	Execute(ctx context.Context, params ToolExecuteParams) error
+	Execute(ctx context.Context, params *ToolExecuteParams) error
 }
 
 type AgentToolDescriptor struct {

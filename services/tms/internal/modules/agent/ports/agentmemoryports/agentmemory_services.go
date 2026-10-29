@@ -215,7 +215,7 @@ type MemoryRecall interface {
 type MemoryRecordingTool interface {
 	Record(
 		ctx context.Context,
-		params agenttoolports.ToolExecuteParams,
+		params *agenttoolports.ToolExecuteParams,
 	) (*agentmemory.Memory, error)
 }
 

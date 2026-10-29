@@ -21,7 +21,7 @@ type ToolPolicy struct {
 	DefaultTier         agent.AutonomyTier
 	MaxTier             agent.AutonomyTier
 	Egress              []agent.EgressClass
-	Classify            func(ToolExecuteParams) CallPolicy
+	Classify            func(*ToolExecuteParams) CallPolicy
 	Condition           *TierCondition
 	TaintHold           *TaintHold
 	PersonalRunsUnasked bool
@@ -80,7 +80,7 @@ func (p ToolPolicy) HeldWhenTainted() bool {
 	return p.TaintHold != nil || slices.ContainsFunc(p.Egress, agent.EgressClass.Leaves)
 }
 
-func (p ToolPolicy) Classified(params ToolExecuteParams) CallPolicy {
+func (p ToolPolicy) Classified(params *ToolExecuteParams) CallPolicy {
 	if p.Classify != nil {
 		return p.Classify(params)
 	}
@@ -159,7 +159,7 @@ func (p ToolPolicy) Bounded() bool {
 	return p.Condition != nil && p.Condition.Bounds != nil
 }
 
-func (p ToolPolicy) TaintHolds(params ToolExecuteParams, call CallPolicy) bool {
+func (p ToolPolicy) TaintHolds(params *ToolExecuteParams, call CallPolicy) bool {
 	if call.Egress.Leaves() {
 		return true
 	}
@@ -174,8 +174,8 @@ type CallPolicy struct {
 
 type TierCondition struct {
 	Description string
-	Limit       func(context.Context, ToolExecuteParams) agent.AutonomyTier
-	Bounds      func(context.Context, ToolExecuteParams) MoneyBound
+	Limit       func(context.Context, *ToolExecuteParams) agent.AutonomyTier
+	Bounds      func(context.Context, *ToolExecuteParams) MoneyBound
 	Vouches     []agent.TaintSource
 }
 
@@ -244,7 +244,7 @@ func OutsideMoneyBound(held string) MoneyBound {
 
 type TaintHold struct {
 	Description string
-	Applies     func(ToolExecuteParams) bool
+	Applies     func(*ToolExecuteParams) bool
 }
 
 type ToolPolicyDeclarer interface {

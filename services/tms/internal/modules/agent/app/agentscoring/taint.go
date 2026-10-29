@@ -81,7 +81,7 @@ func readsOutside(policy *agenttoolports.ToolPolicy) bool {
 }
 
 func leaves(policy *agenttoolports.ToolPolicy, arguments map[string]any) bool {
-	call := policy.Classified(agenttoolports.ToolExecuteParams{Params: arguments})
+	call := policy.Classified(&agenttoolports.ToolExecuteParams{Params: arguments})
 
 	return call.Egress.Leaves()
 }

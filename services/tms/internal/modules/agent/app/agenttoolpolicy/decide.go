@@ -33,7 +33,7 @@ type MoneyAllowanceReader func(context.Context) (agenttooltrust.MoneyAllowance, 
 
 type DecideInput struct {
 	Policy          agenttoolports.ToolPolicy
-	Params          agenttoolports.ToolExecuteParams
+	Params          *agenttoolports.ToolExecuteParams
 	Definition      *agentdefinition.Definition
 	HolderCeiling   agent.AutonomyTier
 	Unattended      bool
@@ -95,7 +95,7 @@ func Decide(ctx context.Context, in DecideInput) Decision {
 	}
 
 	if policy.Condition != nil && policy.Condition.Limit != nil {
-		decision.lower(conditionLimit(ctx, policy.Condition, &in.Params), HeldByCondition)
+		decision.lower(conditionLimit(ctx, policy.Condition, in.Params), HeldByCondition)
 	}
 
 	if runsUnasked(&in, call) {
@@ -368,7 +368,7 @@ func conditionLimit(
 	condition *agenttoolports.TierCondition,
 	params *agenttoolports.ToolExecuteParams,
 ) agent.AutonomyTier {
-	limit := condition.Limit(ctx, *params)
+	limit := condition.Limit(ctx, params)
 	if !limit.IsValid() {
 		return agent.TierPropose
 	}

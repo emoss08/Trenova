@@ -84,7 +84,7 @@ func Simulate(
 		return Describe(tool.Name(), params.Params)
 	}
 
-	preview, err := previewer.Preview(kernelports.WithReadOnly(ctx), *params)
+	preview, err := previewer.Preview(kernelports.WithReadOnly(ctx), params)
 	if err != nil {
 		return failedPreview(tool.Name(), params.Params, err)
 	}

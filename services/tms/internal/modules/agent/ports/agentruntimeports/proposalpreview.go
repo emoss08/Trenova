@@ -64,7 +64,7 @@ type PlanPreviewRequest struct {
 type ProposalBaselineRequest struct {
 	ProposalID  pulid.ID
 	Tool        agenttoolports.AgentTool
-	Params      agenttoolports.ToolExecuteParams
+	Params      *agenttoolports.ToolExecuteParams
 	Persist     bool
 	FileRefused bool
 }

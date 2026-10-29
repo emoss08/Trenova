@@ -57,7 +57,7 @@ and warned.
 A write tool implements `ToolPreviewer` (`ports/services/agenttool.go`):
 
 ```go
-Preview(ctx context.Context, params ToolExecuteParams) (*agentpreview.ToolPreview, error)
+Preview(ctx context.Context, params *ToolExecuteParams) (*agentpreview.ToolPreview, error)
 ```
 
 The contract: read-only, deterministic given the database and the parameters, and it decides

@@ -480,8 +480,8 @@ func RunToolParams(
 	req *agentruntimeports.RunRequest,
 	idempotencyKey string,
 	arguments map[string]any,
-) agenttoolports.ToolExecuteParams {
-	return agenttoolports.ToolExecuteParams{
+) *agenttoolports.ToolExecuteParams {
+	return &agenttoolports.ToolExecuteParams{
 		OrganizationID: req.Actor.OrganizationID,
 		BusinessUnitID: req.Actor.BusinessUnitID,
 		Actor:          req.Actor,
@@ -606,7 +606,7 @@ type actionParams struct {
 
 // executeParams is what the tool is handed, built once so the simulated and
 // the executed path cannot drift apart in what they pass.
-func (a *actionParams) executeParams() agenttoolports.ToolExecuteParams {
+func (a *actionParams) executeParams() *agenttoolports.ToolExecuteParams {
 	params := RunToolParams(a.req, a.idempotencyKey, a.call.Arguments)
 	if a.tool.Policy().CarriesTaint {
 		params.Taint = a.taint.Clone()
@@ -632,7 +632,7 @@ func (s *Dispatcher) simulateAction(ctx context.Context, a *actionParams) toolca
 		action.Simulation = toolsimulation.FromBaseline(call.Name, call.Arguments, baseline)
 	} else {
 		params := a.executeParams()
-		action.Simulation = toolsimulation.Simulate(writeCtx, a.tool, &params)
+		action.Simulation = toolsimulation.Simulate(writeCtx, a.tool, params)
 	}
 	write.End()
 

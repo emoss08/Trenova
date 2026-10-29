@@ -170,25 +170,25 @@ func approvalsToNext(in *AssessInput, definition *agentdefinition.Definition) *i
 	return &remaining
 }
 
-type classifier = func(agenttoolports.ToolExecuteParams) agenttoolports.CallPolicy
+type classifier = func(*agenttoolports.ToolExecuteParams) agenttoolports.CallPolicy
 
 func fixedCall(class agent.EgressClass) classifier {
-	return func(agenttoolports.ToolExecuteParams) agenttoolports.CallPolicy {
+	return func(*agenttoolports.ToolExecuteParams) agenttoolports.CallPolicy {
 		return agenttoolports.CallPolicy{Egress: class}
 	}
 }
 
-func heldToProposal(context.Context, agenttoolports.ToolExecuteParams) agent.AutonomyTier {
+func heldToProposal(context.Context, *agenttoolports.ToolExecuteParams) agent.AutonomyTier {
 	return agent.TierPropose
 }
 
 const representativeCurrency = "USD"
 
-func withinBounds(context.Context, agenttoolports.ToolExecuteParams) agenttoolports.MoneyBound {
+func withinBounds(context.Context, *agenttoolports.ToolExecuteParams) agenttoolports.MoneyBound {
 	return agenttoolports.WithinMoneyBound(0, representativeCurrency)
 }
 
-func outsideBounds(context.Context, agenttoolports.ToolExecuteParams) agenttoolports.MoneyBound {
+func outsideBounds(context.Context, *agenttoolports.ToolExecuteParams) agenttoolports.MoneyBound {
 	return agenttoolports.OutsideMoneyBound(agenttooltrust.HeldByMoneyUnproven)
 }
 
@@ -205,16 +205,16 @@ func unspentAllowance(context.Context) (agenttooltrust.MoneyAllowance, error) {
 	}, nil
 }
 
-func alwaysHeld(agenttoolports.ToolExecuteParams) bool {
+func alwaysHeld(*agenttoolports.ToolExecuteParams) bool {
 	return true
 }
 
-func representativeParams(attended bool) agenttoolports.ToolExecuteParams {
+func representativeParams(attended bool) *agenttoolports.ToolExecuteParams {
 	if !attended {
-		return agenttoolports.ToolExecuteParams{}
+		return &agenttoolports.ToolExecuteParams{}
 	}
 
-	return agenttoolports.ToolExecuteParams{
+	return &agenttoolports.ToolExecuteParams{
 		Actor: &permissionports.RequestActor{PrincipalType: permissionports.PrincipalTypeUser},
 	}
 }

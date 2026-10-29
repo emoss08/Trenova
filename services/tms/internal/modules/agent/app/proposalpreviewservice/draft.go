@@ -172,7 +172,7 @@ func (s *Service) executionParams(
 	policy *agenttoolports.ToolPolicy,
 	params map[string]any,
 	actor *permissionports.RequestActor,
-) (agenttoolports.ToolExecuteParams, error) {
+) (*agenttoolports.ToolExecuteParams, error) {
 	execParams, err := proposalexecutor.WithTimezone(
 		ctx, s.zones, proposalexecutor.ExecutionParams(proposal, policy, params, actor),
 	)
@@ -235,7 +235,7 @@ func targetOf(
 
 type snapshotInput struct {
 	tool     agenttoolports.AgentTool
-	params   agenttoolports.ToolExecuteParams
+	params   *agenttoolports.ToolExecuteParams
 	pin      *pin
 	timeout  time.Duration
 	labelled bool
@@ -290,7 +290,7 @@ func (s *Service) snapshot(ctx context.Context, in *snapshotInput) (*snapshotRes
 
 		if previewer, ok := in.tool.(agenttoolports.ToolPreviewer); ok {
 			previewCtx, cancel := context.WithTimeout(txCtx, in.timeout)
-			result.preview, result.previewErr = runPreview(previewCtx, previewer, &in.params)
+			result.preview, result.previewErr = runPreview(previewCtx, previewer, in.params)
 			cancel()
 			if result.preview != nil {
 				toolpreview.LocateReasons(result.preview.Warnings, in.tool.ParamSchema())
@@ -298,7 +298,7 @@ func (s *Service) snapshot(ctx context.Context, in *snapshotInput) (*snapshotRes
 		}
 
 		if in.labelled && result.previewErr == nil && result.preview != nil {
-			result.labels = s.labels(txCtx, tenantOfParams(&in.params), result.preview.Changes)
+			result.labels = s.labels(txCtx, tenantOfParams(in.params), result.preview.Changes)
 		}
 		result.done = true
 
@@ -319,7 +319,7 @@ func (s *Service) readPin(ctx context.Context, in *snapshotInput, result *snapsh
 		return nil
 	}
 
-	version, err := s.versions.Version(ctx, tenantOfParams(&in.params), in.pin.target)
+	version, err := s.versions.Version(ctx, tenantOfParams(in.params), in.pin.target)
 	switch {
 	case err == nil:
 		result.version = &version
@@ -349,7 +349,7 @@ func runPreview(
 		}
 	}()
 
-	preview, err = previewer.Preview(ctx, *params)
+	preview, err = previewer.Preview(ctx, params)
 	if err == nil && preview == nil {
 		err = errors.New("the tool returned no preview")
 	}
@@ -432,7 +432,7 @@ func (s *Service) pinOutside(ctx context.Context, d *draft) error {
 	result := &snapshotResult{}
 	if err := s.readPin(ctx, &snapshotInput{
 		pin: p,
-		params: agenttoolports.ToolExecuteParams{
+		params: &agenttoolports.ToolExecuteParams{
 			OrganizationID: d.proposal.OrganizationID,
 			BusinessUnitID: d.proposal.BusinessUnitID,
 		},
