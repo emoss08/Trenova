@@ -1,4 +1,4 @@
-package agentmemoryservice
+package agentmemoryrank
 
 import (
 	"strings"
@@ -133,11 +133,11 @@ func queryWords(text string) []queryWord {
 	return words
 }
 
-// recallTerms are the words of a recall query a memory can be found by when
+// RecallTerms are the words of a recall query a memory can be found by when
 // it does not match every word: the meaningful ones, as typed, because the
 // search matches them as prefixes of what a memory spells ("policies" finds
 // "policies"; "policy" would not).
-func recallTerms(query string) []string {
+func RecallTerms(query string) []string {
 	words := queryWords(query)
 	terms := make([]string, 0, len(words))
 	for _, word := range words {

@@ -770,13 +770,13 @@ a person reads the record. The links are batched reads
 (`agentmemorysubjectrepository.ListRecordLinks`, one query per kind per hop). Up
 to 500 active, unexpired candidates are then read, subject rows first, and
 ordered by `agentmemoryports.MemoryRanker`: `retrievalservice.MemoryRanker` fuses
-recency and use count (`agentmemoryservice.RankByRecencyAndUse`) with the
+recency and use count (`agentmemoryrank.RankByRecencyAndUse`) with the
 memories nearest the turn's query vector, and falls back to recency and use
 alone when the organization is not indexed or the search fails. The ranker
 also returns the candidates at or above the embedding model's similarity floor
 (`RankedMemories.Similar`; `SimilarMemories.Floor`, from `SearchTuning.FloorFor`).
 
-**What bears on the turn.** `agentmemoryservice.Relevance` marks a candidate as
+**What bears on the turn.** `agentmemoryrank.Relevance` marks a candidate as
 bearing on the turn (`agentmemory.MemoryRelevance`, carried on
 `RuntimeContext.MemoryRelevance`) when it is at or above the similarity floor, or
 when its content, subject label or tool name shares enough of the turn's words.

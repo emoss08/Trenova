@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentmemorysubjects"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory"
@@ -238,6 +239,28 @@ func tenant() pagination.TenantInfo {
 	return pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
 }
 
+type fakeLinks struct {
+	links map[agentmemory.MemoryRecordKind][]agentmemoryports.MemoryRecordLink
+}
+
+func (f *fakeLinks) ListRecordLinks(
+	_ context.Context,
+	req *agentmemoryports.ListMemoryRecordLinksRequest,
+) ([]agentmemoryports.MemoryRecordLink, error) {
+	wanted := make(map[pulid.ID]struct{}, len(req.IDs))
+	for _, id := range req.IDs {
+		wanted[id] = struct{}{}
+	}
+	out := make([]agentmemoryports.MemoryRecordLink, 0)
+	for _, link := range f.links[req.Kind] {
+		if _, ok := wanted[link.From]; ok {
+			out = append(out, link)
+		}
+	}
+
+	return out, nil
+}
+
 func userActor() *permissionports.RequestActor {
 	return &permissionports.RequestActor{
 		PrincipalType: permissionports.PrincipalTypeUser,
@@ -403,7 +426,7 @@ func TestForContext_ReadsTheMemoriesOfTheRecordsTheTurnIsAbout(t *testing.T) {
 			{From: shipmentID, Kind: agentmemory.MemoryRecordLocation, ID: locationID},
 		},
 	}
-	svc.subjects = NewSubjectResolver(&fakeLinks{links: links})
+	svc.subjects = agentmemorysubjects.NewSubjectResolver(&fakeLinks{links: links})
 
 	got, err := svc.ForContext(t.Context(), agentmemoryports.MemoryContextRequest{
 		TenantInfo: tenant(),

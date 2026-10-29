@@ -6,7 +6,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agentmemoryservice"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentmemoryrank"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
@@ -160,7 +160,7 @@ func (r *MemoryRanker) RankMemories(
 		return agentmemoryports.RankedMemories{Memories: []*agentmemory.Memory{}}, nil
 	}
 
-	recency := agentmemoryservice.RankByRecencyAndUse(req.Memories, req.Now)
+	recency := agentmemoryrank.RankByRecencyAndUse(req.Memories, req.Now)
 	ranked := agentmemoryports.RankedMemories{Memories: recency}
 	if !req.Query.Usable() || len(recency) == 0 {
 		return ranked, nil

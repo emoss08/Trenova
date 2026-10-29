@@ -1,4 +1,4 @@
-package agentmemoryservice
+package agentmemorysubjects
 
 import (
 	"context"
@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpagecontext"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -41,6 +42,10 @@ func (f *fakeLinks) ListRecordLinks(
 	}
 
 	return out, nil
+}
+
+func tenant() pagination.TenantInfo {
+	return pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
 }
 
 func ref(kind, id string) agentpagecontext.EntityRef {

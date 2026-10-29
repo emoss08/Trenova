@@ -1,4 +1,4 @@
-package agentmemoryservice
+package agentmemorysubjects
 
 import (
 	"context"
@@ -151,7 +151,7 @@ func (s *subjectSet) add(
 
 func (s *subjectSet) list() []agentmemory.MemorySubject { return s.subjects }
 
-func subjectRefs(subjects []agentmemory.MemorySubject) []agentmemoryports.MemorySubjectRef {
+func SubjectRefs(subjects []agentmemory.MemorySubject) []agentmemoryports.MemorySubjectRef {
 	refs := make([]agentmemoryports.MemorySubjectRef, 0, len(subjects))
 	for _, subject := range subjects {
 		refs = append(refs, agentmemoryports.MemorySubjectRef{Type: subject.Type, ID: subject.ID})

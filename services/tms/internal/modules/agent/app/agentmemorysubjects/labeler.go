@@ -1,4 +1,4 @@
-package agentmemoryservice
+package agentmemorysubjects
 
 import (
 	"context"

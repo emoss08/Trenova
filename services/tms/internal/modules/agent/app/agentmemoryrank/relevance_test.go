@@ -1,4 +1,4 @@
-package agentmemoryservice
+package agentmemoryrank
 
 import (
 	"testing"
@@ -191,7 +191,7 @@ func TestRecallTerms_AreTheWordsAsTyped(t *testing.T) {
 	t.Parallel()
 
 	assert.Equal(t, []string{"detention", "policies", "acme"},
-		recallTerms("the detention policies for acme"),
+		RecallTerms("the detention policies for acme"),
 		"a prefix search finds \"policies\" by \"policies\", not by \"policy\"")
 }
 

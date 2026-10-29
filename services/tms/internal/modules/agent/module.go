@@ -73,6 +73,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentextensionservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentguard"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentmemoryservice"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentmemorysubjects"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentplanservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentprofileservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentproposalnotifier"
@@ -369,7 +370,7 @@ func SharedOptions() fx.Option {
 			agentproposalnotifier.New,
 			agentdecisionservice.New,
 			agentplanservice.New,
-			agentmemoryservice.NewLabeler,
+			agentmemorysubjects.NewLabeler,
 			agentmemoryservice.New,
 			agentreflectionservice.New,
 			aicorrectionservice.New,

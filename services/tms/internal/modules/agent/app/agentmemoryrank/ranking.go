@@ -1,4 +1,4 @@
-package agentmemoryservice
+package agentmemoryrank
 
 import (
 	"cmp"

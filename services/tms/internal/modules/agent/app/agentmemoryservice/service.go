@@ -21,6 +21,8 @@ import (
 	"strings"
 
 	"github.com/bytedance/sonic"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentmemoryrank"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentmemorysubjects"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory"
@@ -51,16 +53,6 @@ const (
 	recallCandidateFactor = 4
 )
 
-// SubjectLabeler names the record a memory is about, so the prompt can say
-// "Acme Freight (customer)" rather than an id.
-type SubjectLabeler interface {
-	Label(
-		ctx context.Context,
-		tenant pagination.TenantInfo,
-		ref agentmemoryports.MemorySubjectRef,
-	) (string, error)
-}
-
 type runReader interface {
 	GetByID(
 		ctx context.Context,
@@ -78,7 +70,7 @@ type Params struct {
 	Logger       *zap.Logger
 	Repo         agentmemoryports.AgentMemoryRepository
 	Runs         agentruntimeports.AgentRunRepository
-	Labeler      SubjectLabeler
+	Labeler      agentmemorysubjects.SubjectLabeler
 	AuditService auditports.AuditService
 	// Subjects reads which records a shipment, a document or a message
 	// names. Without it a turn reads the memories of the records it is
@@ -105,9 +97,9 @@ type Service struct {
 	l           *zap.Logger
 	repo        agentmemoryports.AgentMemoryRepository
 	runs        runReader
-	labeler     SubjectLabeler
+	labeler     agentmemorysubjects.SubjectLabeler
 	audit       actionLogger
-	subjects    SubjectResolver
+	subjects    agentmemorysubjects.SubjectResolver
 	ranker      agentmemoryports.MemoryRanker
 	indexer     retrievalports.RetrievalIndexer
 	vectors     retrievalports.MemoryVectorSearcher
@@ -119,7 +111,7 @@ type Service struct {
 func New(p Params) agentmemoryports.AgentMemoryService {
 	ranker := p.Ranker
 	if ranker == nil {
-		ranker = NewRecencyRanker()
+		ranker = agentmemoryrank.NewRecencyRanker()
 	}
 
 	return &Service{
@@ -128,7 +120,7 @@ func New(p Params) agentmemoryports.AgentMemoryService {
 		runs:        p.Runs,
 		labeler:     p.Labeler,
 		audit:       p.AuditService,
-		subjects:    NewSubjectResolver(p.Subjects),
+		subjects:    agentmemorysubjects.NewSubjectResolver(p.Subjects),
 		ranker:      ranker,
 		indexer:     p.Indexer,
 		vectors:     p.Vectors,
@@ -888,7 +880,7 @@ func (s *Service) Recall(
 		Reader:            reader,
 		Now:               timeutils.NowUnix(),
 		Query:             strings.TrimSpace(req.Query),
-		Terms:             recallTerms(req.Query),
+		Terms:             agentmemoryrank.RecallTerms(req.Query),
 		IDs:               req.IDs,
 		Kind:              req.Kind,
 		ToolName:          req.ToolName,
@@ -1067,7 +1059,7 @@ func (s *Service) ForContext(
 		Reader:            reader,
 		Now:               now,
 		OrganizationWide:  true,
-		Subjects:          subjectRefs(subjects),
+		Subjects:          agentmemorysubjects.SubjectRefs(subjects),
 		ToolNames:         req.ToolNames,
 		Limit:             agentmemory.MaxMemoryCandidates,
 	})
@@ -1077,7 +1069,7 @@ func (s *Service) ForContext(
 
 	ranker := s.ranker
 	if ranker == nil {
-		ranker = NewRecencyRanker()
+		ranker = agentmemoryrank.NewRecencyRanker()
 	}
 	ranked, err := ranker.RankMemories(ctx, &agentmemoryports.RankMemoriesRequest{
 		TenantInfo: req.TenantInfo,
@@ -1090,13 +1082,15 @@ func (s *Service) ForContext(
 			zap.String("organization", req.TenantInfo.OrgID.String()),
 			zap.Error(err),
 		)
-		ranked = agentmemoryports.RankedMemories{Memories: RankByRecencyAndUse(memories, now)}
+		ranked = agentmemoryports.RankedMemories{
+			Memories: agentmemoryrank.RankByRecencyAndUse(memories, now),
+		}
 	}
 
 	return &agentmemoryports.MemoryContext{
 		Memories:  ranked.Memories,
 		Subjects:  subjects,
-		Relevance: Relevance(req.Focus, req.Text, ranked),
+		Relevance: agentmemoryrank.Relevance(req.Focus, req.Text, ranked),
 	}, nil
 }
 

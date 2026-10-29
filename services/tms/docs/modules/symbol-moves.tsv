@@ -19402,3 +19402,12 @@ github.com/emoss08/trenova/internal/modules/agent/app/agentqualityservice.Submit
 github.com/emoss08/trenova/internal/modules/agent/app/agentqualityservice.SuiteCase	github.com/emoss08/trenova/internal/modules/agent/app/agentqualityengine.SuiteCase
 github.com/emoss08/trenova/internal/modules/agent/app/agentqualityservice.SweepPlan	github.com/emoss08/trenova/internal/modules/agent/app/agentqualityengine.SweepPlan
 github.com/emoss08/trenova/internal/modules/agent/app/agentqualityservice.SweepRequest	github.com/emoss08/trenova/internal/modules/agent/app/agentqualityengine.SweepRequest
+github.com/emoss08/trenova/internal/modules/agent/app/agentmemoryservice.NewRecencyRanker	github.com/emoss08/trenova/internal/modules/agent/app/agentmemoryrank.NewRecencyRanker
+github.com/emoss08/trenova/internal/modules/agent/app/agentmemoryservice.RankByRecencyAndUse	github.com/emoss08/trenova/internal/modules/agent/app/agentmemoryrank.RankByRecencyAndUse
+github.com/emoss08/trenova/internal/modules/agent/app/agentmemoryservice.RecencyRanker	github.com/emoss08/trenova/internal/modules/agent/app/agentmemoryrank.RecencyRanker
+github.com/emoss08/trenova/internal/modules/agent/app/agentmemoryservice.Relevance	github.com/emoss08/trenova/internal/modules/agent/app/agentmemoryrank.Relevance
+github.com/emoss08/trenova/internal/modules/agent/app/agentmemoryservice.LabelerParams	github.com/emoss08/trenova/internal/modules/agent/app/agentmemorysubjects.LabelerParams
+github.com/emoss08/trenova/internal/modules/agent/app/agentmemoryservice.NewLabeler	github.com/emoss08/trenova/internal/modules/agent/app/agentmemorysubjects.NewLabeler
+github.com/emoss08/trenova/internal/modules/agent/app/agentmemoryservice.NewSubjectResolver	github.com/emoss08/trenova/internal/modules/agent/app/agentmemorysubjects.NewSubjectResolver
+github.com/emoss08/trenova/internal/modules/agent/app/agentmemoryservice.SubjectLabeler	github.com/emoss08/trenova/internal/modules/agent/app/agentmemorysubjects.SubjectLabeler
+github.com/emoss08/trenova/internal/modules/agent/app/agentmemoryservice.SubjectResolver	github.com/emoss08/trenova/internal/modules/agent/app/agentmemorysubjects.SubjectResolver
