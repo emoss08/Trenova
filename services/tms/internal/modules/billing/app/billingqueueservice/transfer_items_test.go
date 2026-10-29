@@ -110,7 +110,7 @@ func wired(s *Service) *Service {
 		UserRepo:   s.userRepo,
 		Realtime:   s.realtime,
 	})
-	s.readiness = billingqueuereadiness.New(billingqueuereadiness.Params{
+	s.readiness = billingqueuereadiness.New(&billingqueuereadiness.Params{
 		Logger:      s.l,
 		Activity:    s.activity,
 		ReviewRepo:  s.reviewRepo,

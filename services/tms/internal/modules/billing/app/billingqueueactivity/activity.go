@@ -195,9 +195,14 @@ func statusWords(status billingqueue.Status) string {
 		return "in review"
 	case billingqueue.StatusSentBackToOps:
 		return "sent back to operations"
-	default:
-		return strings.ToLower(string(status))
+	case billingqueue.StatusApproved,
+		billingqueue.StatusPosted,
+		billingqueue.StatusOnHold,
+		billingqueue.StatusException,
+		billingqueue.StatusCanceled:
 	}
+
+	return strings.ToLower(string(status))
 }
 
 func (s *Recorder) PublishInvalidation(

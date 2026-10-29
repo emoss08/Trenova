@@ -86,7 +86,7 @@ func New(p Params) billingqueueports.BillingQueueReviewService {
 		drivers:         notifierOrNil(p.DriverNotifier),
 		documentContent: p.DocumentContent,
 		activity:        activity,
-		readiness: billingqueuereadiness.New(billingqueuereadiness.Params{
+		readiness: billingqueuereadiness.New(&billingqueuereadiness.Params{
 			Logger:         l,
 			Activity:       activity,
 			ReviewRepo:     p.ReviewRepo,

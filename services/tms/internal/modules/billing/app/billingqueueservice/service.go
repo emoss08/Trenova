@@ -163,7 +163,7 @@ func NewService(p Params) *Service {
 		watchtower:           p.Watchtower,
 		reviewRepo:           p.ReviewRepo,
 		activity:             activity,
-		readiness: billingqueuereadiness.New(billingqueuereadiness.Params{
+		readiness: billingqueuereadiness.New(&billingqueuereadiness.Params{
 			Logger:         l,
 			Activity:       activity,
 			ReviewRepo:     p.ReviewRepo,
@@ -416,58 +416,13 @@ func (s *Service) TransferToBillingItems(
 		return nil, err
 	}
 
-	for _, share := range resolution.Shares {
-		if len(share.Charges) == 0 {
-			continue
-		}
-		exists, existsErr := s.repo.ExistsByShipmentPayerAndType(
-			ctx,
-			req.TenantInfo,
-			req.ShipmentID,
-			share.PayerID,
-			req.BillType,
-		)
-		if existsErr != nil {
-			return nil, existsErr
-		}
-		if exists {
-			return nil, errortypes.NewConflictError(
-				"A billing queue item already exists for this shipment, payer and bill type",
-			)
-		}
+	if err = s.guardNoQueuedShares(ctx, req, resolution.Shares); err != nil {
+		return nil, err
 	}
 
-	entities := make([]*billingqueue.BillingQueueItem, 0, len(resolution.Shares))
-	for _, share := range resolution.Shares {
-		if len(share.Charges) == 0 {
-			continue
-		}
-		number, numberErr := s.generateBillingNumber(
-			ctx,
-			req.BillType,
-			req.TenantInfo,
-			share.PayerID,
-		)
-		if numberErr != nil {
-			return nil, numberErr
-		}
-
-		entity := &billingqueue.BillingQueueItem{
-			OrganizationID:       req.TenantInfo.OrgID,
-			BusinessUnitID:       req.TenantInfo.BuID,
-			ShipmentID:           req.ShipmentID,
-			OrderID:              shp.OrderID,
-			BillToCustomerID:     share.PayerID,
-			AllocatedTotalAmount: share.TotalAmount,
-			Status:               billingqueue.StatusReadyForReview,
-			BillType:             req.BillType,
-			Number:               number,
-		}
-		entity.SyncAllocatedMinor()
-		if multiErr := s.validator.ValidateCreate(ctx, entity); multiErr != nil {
-			return nil, multiErr
-		}
-		entities = append(entities, entity)
+	entities, err := s.transferItems(ctx, req, shp, resolution.Shares)
+	if err != nil {
+		return nil, err
 	}
 
 	created := make([]*billingqueue.BillingQueueItem, 0, len(entities))
@@ -528,6 +483,77 @@ func (s *Service) TransferToBillingItems(
 	}
 
 	return result, nil
+}
+
+func (s *Service) guardNoQueuedShares(
+	ctx context.Context,
+	req *billingqueueports.TransferToBillingRequest,
+	shares []*chargeallocation.PayerShare,
+) error {
+	for _, share := range shares {
+		if len(share.Charges) == 0 {
+			continue
+		}
+		exists, err := s.repo.ExistsByShipmentPayerAndType(
+			ctx,
+			req.TenantInfo,
+			req.ShipmentID,
+			share.PayerID,
+			req.BillType,
+		)
+		if err != nil {
+			return err
+		}
+		if exists {
+			return errortypes.NewConflictError(
+				"A billing queue item already exists for this shipment, payer and bill type",
+			)
+		}
+	}
+
+	return nil
+}
+
+func (s *Service) transferItems(
+	ctx context.Context,
+	req *billingqueueports.TransferToBillingRequest,
+	shp *shipment.Shipment,
+	shares []*chargeallocation.PayerShare,
+) ([]*billingqueue.BillingQueueItem, error) {
+	entities := make([]*billingqueue.BillingQueueItem, 0, len(shares))
+	for _, share := range shares {
+		if len(share.Charges) == 0 {
+			continue
+		}
+		number, err := s.generateBillingNumber(
+			ctx,
+			req.BillType,
+			req.TenantInfo,
+			share.PayerID,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		entity := &billingqueue.BillingQueueItem{
+			OrganizationID:       req.TenantInfo.OrgID,
+			BusinessUnitID:       req.TenantInfo.BuID,
+			ShipmentID:           req.ShipmentID,
+			OrderID:              shp.OrderID,
+			BillToCustomerID:     share.PayerID,
+			AllocatedTotalAmount: share.TotalAmount,
+			Status:               billingqueue.StatusReadyForReview,
+			BillType:             req.BillType,
+			Number:               number,
+		}
+		entity.SyncAllocatedMinor()
+		if multiErr := s.validator.ValidateCreate(ctx, entity); multiErr != nil {
+			return nil, multiErr
+		}
+		entities = append(entities, entity)
+	}
+
+	return entities, nil
 }
 
 func (s *Service) shipmentForTransfer(
@@ -814,20 +840,8 @@ func (s *Service) UpdateStatus(
 			return getErr
 		}
 
-		if req.NewStatus == billingqueue.StatusApproved {
-			if holdErr := s.guardDetentionHolds(txCtx, entity, req.TenantInfo); holdErr != nil {
-				return holdErr
-			}
-			if holdErr := s.guardRatingReview(txCtx, entity, req.TenantInfo); holdErr != nil {
-				return holdErr
-			}
-			if issueErr := s.readiness.GuardOpenIssues(
-				txCtx,
-				entity,
-				req.TenantInfo,
-			); issueErr != nil {
-				return issueErr
-			}
+		if guardErr := s.guardApproval(txCtx, entity, req); guardErr != nil {
+			return guardErr
 		}
 		if planErr := PlanStatusChange(entity, req, actor, timeutils.NowUnix()); planErr != nil {
 			return planErr
@@ -871,35 +885,77 @@ func (s *Service) UpdateStatus(
 		return nil, err
 	}
 
-	if req.NewStatus == billingqueue.StatusSentBackToOps {
-		s.createOpsComment(ctx, updated, actor)
+	s.announceStatusChange(ctx, &statusChange{
+		req:          req,
+		actor:        actor,
+		previous:     previous,
+		updated:      updated,
+		createResult: createResult,
+	})
+
+	return updated, nil
+}
+
+type statusChange struct {
+	req          *billingqueueports.UpdateBillingQueueStatusRequest
+	actor        *permissionports.RequestActor
+	previous     *billingqueue.BillingQueueItem
+	updated      *billingqueue.BillingQueueItem
+	createResult *invoiceports.CreateInvoiceFromBillingQueueResult
+}
+
+func (s *Service) guardApproval(
+	ctx context.Context,
+	entity *billingqueue.BillingQueueItem,
+	req *billingqueueports.UpdateBillingQueueStatusRequest,
+) error {
+	if req.NewStatus != billingqueue.StatusApproved {
+		return nil
+	}
+	if err := s.guardDetentionHolds(ctx, entity, req.TenantInfo); err != nil {
+		return err
+	}
+	if err := s.guardRatingReview(ctx, entity, req.TenantInfo); err != nil {
+		return err
 	}
 
-	if createResult != nil && createResult.AutoPost && createResult.Invoice != nil {
-		if err = s.invoicePosting.EnqueueAutoPost(ctx, createResult.Invoice, actor); err != nil {
-			s.l.Warn("failed to enqueue invoice auto-post workflow",
-				zap.String("billingQueueItemId", updated.ID.String()),
-				zap.String("invoiceId", createResult.Invoice.ID.String()),
-				zap.Error(err),
-			)
-		}
-	}
+	return s.readiness.GuardOpenIssues(ctx, entity, req.TenantInfo)
+}
 
-	auditActor := actor.AuditActor()
+func (s *Service) announceStatusChange(ctx context.Context, change *statusChange) {
+	updated := change.updated
+	if change.req.NewStatus == billingqueue.StatusSentBackToOps {
+		s.createOpsComment(ctx, updated, change.actor)
+	}
+	s.enqueueAutoPost(ctx, change)
+
+	auditActor := change.actor.AuditActor()
 	s.logAction(
 		updated,
 		auditActor,
 		permission.OpUpdate,
-		previous,
+		change.previous,
 		updated,
-		"Billing queue item status updated to "+string(req.NewStatus),
+		"Billing queue item status updated to "+string(change.req.NewStatus),
 	)
-	s.activity.RecordStatusEvent(ctx, previous, updated, createResult, actor)
+	s.activity.RecordStatusEvent(ctx, change.previous, updated, change.createResult, change.actor)
 	s.activity.PublishInvalidation(ctx, updated, auditActor, "updated", updated)
 	s.publishStatusAgentEvent(ctx, updated)
 	s.projectToWatchtower(ctx, updated)
+}
 
-	return updated, nil
+func (s *Service) enqueueAutoPost(ctx context.Context, change *statusChange) {
+	result := change.createResult
+	if result == nil || !result.AutoPost || result.Invoice == nil {
+		return
+	}
+	if err := s.invoicePosting.EnqueueAutoPost(ctx, result.Invoice, change.actor); err != nil {
+		s.l.Warn("failed to enqueue invoice auto-post workflow",
+			zap.String("billingQueueItemId", change.updated.ID.String()),
+			zap.String("invoiceId", result.Invoice.ID.String()),
+			zap.Error(err),
+		)
+	}
 }
 
 // discardStaleDraft voids the draft an approved item produced when the item

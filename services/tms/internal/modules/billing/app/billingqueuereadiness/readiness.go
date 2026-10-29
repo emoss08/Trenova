@@ -26,6 +26,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/intutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/shopspring/decimal"
@@ -55,7 +56,7 @@ type Reviewer struct {
 	invoiceRepo    invoiceports.InvoiceRepository
 }
 
-func New(p Params) *Reviewer {
+func New(p *Params) *Reviewer {
 	return &Reviewer{
 		l:              p.Logger,
 		activity:       p.Activity,
@@ -316,6 +317,36 @@ func (s *Reviewer) chargeReview(
 		return review
 	}
 	shp := item.Shipment
+	contracted, err := agreementPrices(ctx, s.ratingAgreement(ctx, shp, tenantInfo), shp)
+	if err != nil {
+		s.l.Warn(
+			"failed to price the contract's accessorials for billing review",
+			zap.String("billingQueueItemId", item.ID.String()),
+			zap.Error(err),
+		)
+		contracted = nil
+	}
+	sources := newChargeSources(shp, occurrences, contracted)
+	for idx, share := range item.PayerShare.Lines {
+		review.Lines = append(review.Lines, sources.line(idx, share))
+	}
+	review.Totals()
+
+	return review
+}
+
+type chargeSources struct {
+	shp        *shipment.Shipment
+	charges    map[pulid.ID]*shipment.AdditionalCharge
+	byCharge   map[pulid.ID]*detention.DetentionOccurrence
+	contracted map[pulid.ID]decimal.Decimal
+}
+
+func newChargeSources(
+	shp *shipment.Shipment,
+	occurrences []*detention.DetentionOccurrence,
+	contracted map[pulid.ID]decimal.Decimal,
+) *chargeSources {
 	charges := make(map[pulid.ID]*shipment.AdditionalCharge, len(shp.AdditionalCharges))
 	for _, charge := range shp.AdditionalCharges {
 		if charge != nil {
@@ -328,81 +359,92 @@ func (s *Reviewer) chargeReview(
 			byCharge[*occurrence.AdditionalChargeID] = occurrence
 		}
 	}
-	agreement := s.ratingAgreement(ctx, shp, tenantInfo)
-	contracted, err := agreementPrices(ctx, agreement, shp)
-	if err != nil {
-		s.l.Warn(
-			"failed to price the contract's accessorials for billing review",
-			zap.String("billingQueueItemId", item.ID.String()),
-			zap.Error(err),
-		)
-		contracted = nil
+
+	return &chargeSources{
+		shp:        shp,
+		charges:    charges,
+		byCharge:   byCharge,
+		contracted: contracted,
+	}
+}
+
+func (c *chargeSources) line(idx int, share *billingqueue.PayerShareLine) *billingqueue.ChargeLine {
+	line := &billingqueue.ChargeLine{
+		Label:  share.Description,
+		Billed: share.Amount,
+		Source: billingqueue.ChargeSourceNone,
+	}
+	if share.AdditionalChargeID.IsNil() {
+		line.Key = fmt.Sprintf("freight-%d", idx)
+		if detail := c.shp.RatingDetail; detail != nil && detail.Bill != nil {
+			line.Source = billingqueue.ChargeSourceRating
+			line.Expected = scaleToShare(share, detail.Bill.FreightTotal.Round(2))
+		}
+		line.Basis = freightBasis(c.shp)
+		return line
 	}
 
-	for idx, share := range item.PayerShare.Lines {
-		line := &billingqueue.ChargeLine{
-			Label:  share.Description,
-			Billed: share.Amount,
-			Source: billingqueue.ChargeSourceNone,
-		}
-		scale := func(expected decimal.Decimal) decimal.NullDecimal {
-			if share.Partial && share.ChargeTotal.IsPositive() {
-				expected = expected.Mul(share.Amount).Div(share.ChargeTotal).Round(2)
-			}
-			return decimal.NewNullDecimal(expected)
-		}
-
-		if share.AdditionalChargeID.IsNil() {
-			line.Key = fmt.Sprintf("freight-%d", idx)
-			if detail := shp.RatingDetail; detail != nil && detail.Bill != nil {
-				line.Source = billingqueue.ChargeSourceRating
-				line.Expected = scale(detail.Bill.FreightTotal.Round(2))
-			}
-			line.Basis = freightBasis(shp)
-			review.Lines = append(review.Lines, line)
-			continue
-		}
-
-		line.Key = share.AdditionalChargeID.String()
-		line.AdditionalChargeID = share.AdditionalChargeID
-		charge := charges[share.AdditionalChargeID]
-		if charge == nil {
-			review.Lines = append(review.Lines, line)
-			continue
-		}
-
-		switch {
-		case charge.IsDetention || byCharge[charge.ID] != nil:
-			line.Source = billingqueue.ChargeSourceDetention
-			occurrence := byCharge[charge.ID]
-			if occurrence != nil {
-				line.Expected = scale(occurrence.BillableAmount)
-				line.Basis = detentionBasis(occurrence)
-			} else {
-				line.Expected = scale(share.ChargeTotal)
-			}
-		case charge.FuelSurchargeProgramID != nil || charge.FuelSurchargeDetail != nil:
-			line.Source = billingqueue.ChargeSourceFuel
-			line.Expected = scale(share.ChargeTotal)
-			line.Basis = fuelBasis(charge.FuelSurchargeDetail)
-		default:
-			if priced, ok := contracted[charge.ID]; ok {
-				line.Source = billingqueue.ChargeSourceAgreement
-				line.Expected = scale(priced)
-				line.Basis = "Per rate con"
-			} else if charge.RateQuoteID != nil {
-				line.Source = billingqueue.ChargeSourceQuote
-				line.Expected = scale(share.ChargeTotal)
-				line.Basis = "Per quote"
-			} else {
-				line.Basis = manualBasis(charge)
-			}
-		}
-		review.Lines = append(review.Lines, line)
+	line.Key = share.AdditionalChargeID.String()
+	line.AdditionalChargeID = share.AdditionalChargeID
+	if charge := c.charges[share.AdditionalChargeID]; charge != nil {
+		c.priceCharge(line, share, charge)
 	}
-	review.Totals()
 
-	return review
+	return line
+}
+
+func (c *chargeSources) priceCharge(
+	line *billingqueue.ChargeLine,
+	share *billingqueue.PayerShareLine,
+	charge *shipment.AdditionalCharge,
+) {
+	occurrence := c.byCharge[charge.ID]
+	switch {
+	case charge.IsDetention || occurrence != nil:
+		line.Source = billingqueue.ChargeSourceDetention
+		if occurrence != nil {
+			line.Expected = scaleToShare(share, occurrence.BillableAmount)
+			line.Basis = detentionBasis(occurrence)
+		} else {
+			line.Expected = scaleToShare(share, share.ChargeTotal)
+		}
+	case charge.FuelSurchargeProgramID != nil || charge.FuelSurchargeDetail != nil:
+		line.Source = billingqueue.ChargeSourceFuel
+		line.Expected = scaleToShare(share, share.ChargeTotal)
+		line.Basis = fuelBasis(charge.FuelSurchargeDetail)
+	default:
+		c.priceAccessorial(line, share, charge)
+	}
+}
+
+func (c *chargeSources) priceAccessorial(
+	line *billingqueue.ChargeLine,
+	share *billingqueue.PayerShareLine,
+	charge *shipment.AdditionalCharge,
+) {
+	if priced, ok := c.contracted[charge.ID]; ok {
+		line.Source = billingqueue.ChargeSourceAgreement
+		line.Expected = scaleToShare(share, priced)
+		line.Basis = "Per rate con"
+		return
+	}
+	if charge.RateQuoteID != nil {
+		line.Source = billingqueue.ChargeSourceQuote
+		line.Expected = scaleToShare(share, share.ChargeTotal)
+		line.Basis = "Per quote"
+		return
+	}
+	line.Basis = manualBasis(charge)
+}
+
+func scaleToShare(
+	share *billingqueue.PayerShareLine,
+	expected decimal.Decimal,
+) decimal.NullDecimal {
+	if share.Partial && share.ChargeTotal.IsPositive() {
+		expected = expected.Mul(share.Amount).Div(share.ChargeTotal).Round(2)
+	}
+	return decimal.NewNullDecimal(expected)
 }
 
 func (s *Reviewer) ratingAgreement(
@@ -629,7 +671,7 @@ func detentionDwells(
 		if arrived == 0 || departed <= arrived {
 			continue
 		}
-		eldMinutes := int32((departed - arrived) / 60)
+		eldMinutes := intutils.SafeToInt32((departed - arrived) / 60)
 		rate := hourlyRate(occurrence)
 		eldBillable := max(eldMinutes-occurrence.FreeMinutesGranted, 0)
 		if occurrence.PolicySnapshot != nil &&
@@ -745,7 +787,7 @@ func TermsFor(cus *customer.Customer, inv *billingqueue.InvoiceRef) *billingqueu
 	return terms
 }
 
-func creditHoldOf(cus *customer.Customer) (bool, string) {
+func creditHoldOf(cus *customer.Customer) (held bool, reason string) {
 	if cus == nil || cus.BillingProfile == nil {
 		return false, ""
 	}
@@ -951,40 +993,59 @@ func markLedger(review *billingqueue.ChargeReview, issues []*billingqueue.Issue)
 		}
 		switch option.Effect.Kind { //nolint:exhaustive // only charge edits show in the ledger
 		case billingqueue.EffectSet:
-			if line == nil && issue.EffectSnapshot != nil &&
-				issue.EffectSnapshot.RestoredChargeID.IsNotNil() {
-				line = byCharge[issue.EffectSnapshot.RestoredChargeID]
-			}
-			if line != nil {
-				line.Adjusted = true
-				line.IssueID = issue.ID
-				if option.Effect.Basis != "" {
-					line.Basis = option.Effect.Basis
-				}
-			}
+			markAdjusted(byCharge, line, issue, option)
 		case billingqueue.EffectDrop:
-			if line != nil || issue.EffectSnapshot == nil || issue.EffectSnapshot.Charge == nil {
-				continue
-			}
-			snap := issue.EffectSnapshot.Charge
-			removed := &billingqueue.ChargeLine{
-				Key:                snap.AdditionalChargeID.String(),
-				AdditionalChargeID: snap.AdditionalChargeID,
-				Label:              snap.Label,
-				Basis:              snap.Basis,
-				Billed:             snap.Billed,
-				Source:             billingqueue.ChargeSourceNone,
-				Removed:            true,
-				IssueID:            issue.ID,
-			}
-			if snap.Expected != nil {
-				if expected, err := decimal.NewFromString(*snap.Expected); err == nil {
-					removed.Expected = decimal.NewNullDecimal(expected)
+			if line == nil {
+				if removed := removedLine(issue); removed != nil {
+					review.Lines = append(review.Lines, removed)
 				}
 			}
-			review.Lines = append(review.Lines, removed)
 		}
 	}
+}
+
+func markAdjusted(
+	byCharge map[pulid.ID]*billingqueue.ChargeLine,
+	line *billingqueue.ChargeLine,
+	issue *billingqueue.Issue,
+	option *billingqueue.IssueOption,
+) {
+	if line == nil && issue.EffectSnapshot != nil &&
+		issue.EffectSnapshot.RestoredChargeID.IsNotNil() {
+		line = byCharge[issue.EffectSnapshot.RestoredChargeID]
+	}
+	if line == nil {
+		return
+	}
+	line.Adjusted = true
+	line.IssueID = issue.ID
+	if option.Effect.Basis != "" {
+		line.Basis = option.Effect.Basis
+	}
+}
+
+func removedLine(issue *billingqueue.Issue) *billingqueue.ChargeLine {
+	if issue.EffectSnapshot == nil || issue.EffectSnapshot.Charge == nil {
+		return nil
+	}
+	snap := issue.EffectSnapshot.Charge
+	removed := &billingqueue.ChargeLine{
+		Key:                snap.AdditionalChargeID.String(),
+		AdditionalChargeID: snap.AdditionalChargeID,
+		Label:              snap.Label,
+		Basis:              snap.Basis,
+		Billed:             snap.Billed,
+		Source:             billingqueue.ChargeSourceNone,
+		Removed:            true,
+		IssueID:            issue.ID,
+	}
+	if snap.Expected != nil {
+		if expected, err := decimal.NewFromString(*snap.Expected); err == nil {
+			removed.Expected = decimal.NewNullDecimal(expected)
+		}
+	}
+
+	return removed
 }
 
 func issueEffectKind(issue *billingqueue.Issue) billingqueue.EffectKind {
