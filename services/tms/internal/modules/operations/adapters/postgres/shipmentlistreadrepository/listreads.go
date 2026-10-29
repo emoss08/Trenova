@@ -1,6 +1,7 @@
 package shipmentlistreadrepository
 
 import (
+	"cmp"
 	"context"
 	"slices"
 	"strings"
@@ -24,6 +25,7 @@ import (
 const (
 	defaultOrderReferenceMatches = 10
 	maxOrderReferenceMatches     = 25
+	maxOrderReferenceCandidates  = 500
 	maxActiveHoldShipments       = 100
 	maxActiveHoldsPerShipment    = 25
 )
@@ -42,6 +44,13 @@ func NewOrderReferenceMatcher(p ListReadParams) shipmentports.OrderReferenceMatc
 	return &orderReferenceMatcher{db: p.DB}
 }
 
+type orderReferenceCandidate struct {
+	OrderID     pulid.ID
+	OrderNumber string
+	PONumber    string
+	CreatedAt   int64
+}
+
 func (r *orderReferenceMatcher) MatchOrderReferences(
 	ctx context.Context,
 	req *shipmentports.MatchOrderReferencesRequest,
@@ -50,18 +59,61 @@ func (r *orderReferenceMatcher) MatchOrderReferences(
 	if query == "" {
 		return nil, nil
 	}
+	limit := orderReferenceLimit(req.Limit)
 
 	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]shipmentports.OrderReferenceMatch, error) {
+			candidates, err := keel.Into[orderReferenceCandidate](
+				ctx,
+				r.db.Keel(ctx),
+				orderReferenceCandidatesQuery(query),
+			)
+			if err != nil {
+				return nil, err
+			}
+			if len(candidates) <= maxOrderReferenceCandidates {
+				return newestOrderReferences(candidates, limit), nil
+			}
 			return keel.Into[shipmentports.OrderReferenceMatch](
 				ctx,
 				r.db.Keel(ctx),
-				orderReferenceQuery(query, orderReferenceLimit(req.Limit)),
+				orderReferenceQuery(query, limit),
 			)
 		},
 	)
+}
+
+func orderReferenceCandidatesQuery(query string) *keel.Query[*order.Order] {
+	o := orderdb.Orders
+
+	return o.Pick(o.ID, o.OrderNumber, o.PONumber.Coalesce(""), o.CreatedAt).
+		Where(listquery.MatchVector(o.SearchVector, query)).
+		Limit(maxOrderReferenceCandidates + 1)
+}
+
+func newestOrderReferences(
+	candidates []orderReferenceCandidate,
+	limit int,
+) []shipmentports.OrderReferenceMatch {
+	slices.SortFunc(candidates, func(a, b orderReferenceCandidate) int {
+		if c := cmp.Compare(b.CreatedAt, a.CreatedAt); c != 0 {
+			return c
+		}
+		return cmp.Compare(b.OrderID, a.OrderID)
+	})
+
+	newest := candidates[:min(limit, len(candidates))]
+	matches := make([]shipmentports.OrderReferenceMatch, 0, len(newest))
+	for _, candidate := range newest {
+		matches = append(matches, shipmentports.OrderReferenceMatch{
+			OrderID:     candidate.OrderID,
+			OrderNumber: candidate.OrderNumber,
+			PONumber:    candidate.PONumber,
+		})
+	}
+	return matches
 }
 
 func orderReferenceQuery(query string, limit int) *keel.Query[*order.Order] {
@@ -70,7 +122,8 @@ func orderReferenceQuery(query string, limit int) *keel.Query[*order.Order] {
 	return o.Pick(o.ID, o.OrderNumber, o.PONumber.Coalesce("")).
 		Where(listquery.MatchVector(o.SearchVector, query)).
 		Order(o.CreatedAt.Desc(), o.ID.Desc()).
-		Limit(limit)
+		Limit(limit).
+		CustomPlan()
 }
 
 func orderReferenceLimit(limit int) int {

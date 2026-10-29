@@ -315,11 +315,92 @@ func TestNotificationsAreOwedOnceAndSettledOnce(t *testing.T) {
 	assert.Empty(t, due)
 }
 
+func (h *harness) touch(t *testing.T, id pulid.ID, sets ...keel.Assignment) {
+	t.Helper()
+	sp := shipmentdb.Shipments
+	_, err := sp.Where(sp.ID.Eq(id)).Update(h.ctx, h.db, sets...)
+	require.NoError(t, err)
+}
+
+func (h *harness) podType(t *testing.T) pulid.ID {
+	t.Helper()
+	docType := &documenttype.DocumentType{
+		ID:             pulid.MustNew("dt_"),
+		OrganizationID: h.tenant.OrgID,
+		BusinessUnitID: h.tenant.BuID,
+		Code:           documenttype.CodePOD,
+		Name:           "Proof of delivery",
+	}
+	require.NoError(t, documenttypedb.DocumentTypes.Create(h.ctx, h.db, docType))
+	return docType.ID
+}
+
+func (h *harness) attach(
+	t *testing.T,
+	typeID, shipmentID pulid.ID,
+	name string,
+	createdAt int64,
+	status document.Status,
+) pulid.ID {
+	t.Helper()
+	entity := &document.Document{
+		ID:               pulid.MustNew("doc_"),
+		OrganizationID:   h.tenant.OrgID,
+		BusinessUnitID:   h.tenant.BuID,
+		LineageID:        pulid.MustNew("dln_"),
+		IsCurrentVersion: true,
+		FileName:         name,
+		OriginalName:     name,
+		FileSize:         128,
+		FileType:         "application/pdf",
+		StoragePath:      "test/" + name,
+		Status:           status,
+		ResourceID:       shipmentID.String(),
+		ResourceType:     "shipment",
+		UploadedByID:     h.data.User.ID,
+		DocumentTypeID:   &typeID,
+	}
+	if status == document.StatusRejected {
+		entity.RejectedByID = h.data.User.ID
+		entity.RejectedAt = &createdAt
+		entity.RejectionReason = "Illegible"
+	}
+	docs := documentdb.Documents
+	require.NoError(t, docs.Create(h.ctx, h.db, entity))
+	_, err := docs.Where(docs.ID.Eq(entity.ID)).
+		Update(h.ctx, h.db, docs.CreatedAt.To(createdAt))
+	require.NoError(t, err)
+	return entity.ID
+}
+
 func TestCandidatesAreLiveShipmentsOfNotifyingCustomers(t *testing.T) {
 	h := newHarness(t)
-	moving := h.shipment(t, "CD-1", shipmentvocab.StatusInTransit)
-	canceled := h.shipment(t, "CD-2", shipmentvocab.StatusCanceled)
-	h.profile(t, moving.Shipment.CustomerID, true)
+	since := h.now - 3600
+	old := since - 86400
+	sp := shipmentdb.Shipments
+
+	recent := h.shipment(t, "CD-1", shipmentvocab.StatusCompleted)
+	moving := h.shipment(t, "CD-2", shipmentvocab.StatusInTransit)
+	delivered := h.shipment(t, "CD-3", shipmentvocab.StatusCompleted)
+	podded := h.shipment(t, "CD-4", shipmentvocab.StatusCompleted)
+	stale := h.shipment(t, "CD-5", shipmentvocab.StatusCompleted)
+	canceled := h.shipment(t, "CD-6", shipmentvocab.StatusCanceled)
+	for _, graph := range []*testutil.ShipmentGraph{moving, delivered, podded, stale, canceled} {
+		require.Equal(t, recent.Shipment.CustomerID, graph.Shipment.CustomerID)
+	}
+	h.profile(t, recent.Shipment.CustomerID, true)
+
+	h.touch(t, recent.Shipment.ID, sp.UpdatedAt.To(h.now-60))
+	h.touch(t, moving.Shipment.ID, sp.UpdatedAt.To(old-1))
+	h.touch(t, delivered.Shipment.ID,
+		sp.UpdatedAt.To(old-2), sp.ActualDeliveryDate.To(h.now-600))
+	h.touch(t, podded.Shipment.ID, sp.UpdatedAt.To(old-3), sp.ActualDeliveryDate.To(old))
+	h.touch(t, stale.Shipment.ID, sp.UpdatedAt.To(old-4), sp.ActualDeliveryDate.To(old))
+	h.touch(t, canceled.Shipment.ID, sp.UpdatedAt.To(h.now-30))
+	podType := h.podType(t)
+	h.attach(t, podType, podded.Shipment.ID, "pod.pdf", h.now-300, document.StatusActive)
+	h.attach(t, podType, stale.Shipment.ID, "old.pdf", old, document.StatusActive)
+	h.attach(t, podType, stale.Shipment.ID, "rejected.pdf", h.now-300, document.StatusRejected)
 
 	tenants, err := h.facts.ListNotifyingTenants(context.Background())
 	require.NoError(t, err)
@@ -329,55 +410,39 @@ func TestCandidatesAreLiveShipmentsOfNotifyingCustomers(t *testing.T) {
 		h.ctx,
 		&customertrackingports.CandidateShipmentsRequest{
 			TenantInfo: h.tenant,
-			Since:      h.now - 3600,
+			Since:      since,
 		},
 	)
 	require.NoError(t, err)
-	assert.Contains(t, ids, moving.Shipment.ID)
+	assert.NotContains(t, ids, stale.Shipment.ID, "nothing happened to it since the window opened")
 	assert.NotContains(t, ids, canceled.Shipment.ID)
+
+	mine := map[pulid.ID]bool{
+		recent.Shipment.ID:    true,
+		moving.Shipment.ID:    true,
+		delivered.Shipment.ID: true,
+		podded.Shipment.ID:    true,
+	}
+	ordered := make([]pulid.ID, 0, len(mine))
+	for _, id := range ids {
+		if mine[id] {
+			ordered = append(ordered, id)
+		}
+	}
+	assert.Equal(t, []pulid.ID{
+		recent.Shipment.ID,
+		moving.Shipment.ID,
+		delivered.Shipment.ID,
+		podded.Shipment.ID,
+	}, ordered, "every way to owe an email, most recently touched first, each once")
 }
 
 func TestLatestPodsIsTheFirstCurrentPodOnFile(t *testing.T) {
 	h := newHarness(t)
 	graph := h.shipment(t, "PD-1", shipmentvocab.StatusCompleted)
-	docType := &documenttype.DocumentType{
-		ID:             pulid.MustNew("dt_"),
-		OrganizationID: h.tenant.OrgID,
-		BusinessUnitID: h.tenant.BuID,
-		Code:           documenttype.CodePOD,
-		Name:           "Proof of delivery",
-	}
-	require.NoError(t, documenttypedb.DocumentTypes.Create(h.ctx, h.db, docType))
+	podType := h.podType(t)
 	attach := func(name string, createdAt int64, status document.Status) pulid.ID {
-		typeID := docType.ID
-		entity := &document.Document{
-			ID:               pulid.MustNew("doc_"),
-			OrganizationID:   h.tenant.OrgID,
-			BusinessUnitID:   h.tenant.BuID,
-			LineageID:        pulid.MustNew("dln_"),
-			IsCurrentVersion: true,
-			FileName:         name,
-			OriginalName:     name,
-			FileSize:         128,
-			FileType:         "application/pdf",
-			StoragePath:      "test/" + name,
-			Status:           status,
-			ResourceID:       graph.Shipment.ID.String(),
-			ResourceType:     "shipment",
-			UploadedByID:     h.data.User.ID,
-			DocumentTypeID:   &typeID,
-		}
-		if status == document.StatusRejected {
-			entity.RejectedByID = h.data.User.ID
-			entity.RejectedAt = &createdAt
-			entity.RejectionReason = "Illegible"
-		}
-		docs := documentdb.Documents
-		require.NoError(t, docs.Create(h.ctx, h.db, entity))
-		_, err := docs.Where(docs.ID.Eq(entity.ID)).
-			Update(h.ctx, h.db, docs.CreatedAt.To(createdAt))
-		require.NoError(t, err)
-		return entity.ID
+		return h.attach(t, podType, graph.Shipment.ID, name, createdAt, status)
 	}
 	attach("rejected.pdf", h.now-900, document.StatusRejected)
 	first := attach("first.pdf", h.now-600, document.StatusActive)

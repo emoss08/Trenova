@@ -25,8 +25,11 @@ fails it, fix it in the same change if it is small, or name it in your report.
 - **History in one pass.** A balance or state "as of" a series of dates is never a correlated
   subquery per row per date. Read the changes once, fold them into segments with a window
   function, expand each segment onto the dates it covers, and read only rows open now or
-  touched inside the window (`accountsreceivablerepository/openasof.go`). Every source that
-  moves the stored value must be an event, or the series disagrees with today's figure.
+  touched inside the window (`accountsreceivablerepository/openasof.go`). Walk back from the
+  stored value rather than summing every change ever made: read only the changes after the
+  window start, by an index on (tenant, creation time), and take them off today's figure, so
+  the read grows with the window, not with the history. Every source that moves the stored
+  value must be an event, or the series disagrees with today's figure.
 - **No third party in the request.** Calls to PC*MILER, FMCSA, model providers, accounting
   systems, email or the imaging worker run in activities, or behind a cache, unless the person is
   waiting for exactly that answer; then they carry a timeout and a fallback.

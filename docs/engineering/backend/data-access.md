@@ -411,12 +411,29 @@ is rewritten as a range on the column itself.
   judges it by the rows the `Aggregate` returns, not the tables it reads, since no index can order
   an aggregate. A grouping wide enough to cross the threshold still fails, and is fixed by
   narrowing the groups (a window, a filter) or keeping a rollup.
+- **A cap over an OR of conditions** no one index serves (open, or changed, delivered or
+  documented since a time) finds its candidates with a `UNION` of branches, one index range per
+  condition, then sorts the union under the `LIMIT`. The guard judges that sort by the rows the
+  union's dedup step (`Unique`, `HashAggregate`, `SetOp`) returns, which the ranges bound
+  (`customertrackingrepository.candidateShipmentsQuery`).
+- **A window open above** (`updated_at >= $1`) reads as a third of the table to a generic plan,
+  which then scans the heap rather than the index. Close it at `math.MaxInt64` (`<= $2`): a
+  generic plan reads a range closed on both sides as 0.5% of the table, and a custom plan reads
+  the real bound, so the rows are the same.
+- **A full-text match ordered by another column** (newest first) has no index that gives both.
+  Read the match through the GIN index with a cap and no `ORDER BY`, order it in Go when it fits
+  under the cap, and read newest first only when the match is broader, with `CustomPlan` so the
+  planner weighs that term: a common one walks the recency index, a rare one sorts its matches
+  (`shipmentlistreadrepository.MatchOrderReferences`).
 - **A read scoped to explicit ids** is bounded by them: drop the `LIMIT` when the ids fit in the
   page (`dispatchconsolerepository.boundedByMoveIDs`), or truncate in Go when a row per id is not
   guaranteed, rather than sorting a handful of rows under a `LIMIT` over a large table.
 - **A computed time** (a move's completion: its last stop time, else its last change) is found
   through index ranges on its inputs first (`movecompletion.Candidates`), then computed exactly
   for those candidates.
+- **A balance as of a past date** walks back from the stored balance through the changes after
+  the window start, read by an index on (tenant, creation time), instead of summing every change
+  ever made ("History in one pass" in [scale.md](scale.md)).
 - **More than eight joined relations** split a pipelined load's semi-join from its joins
   (`join_collapse_limit`), so the joins are planned without the parent filter: such a level loads
   with `keel.LoadPerLevel` (`shipmentrepository.movesWithDetails`).
