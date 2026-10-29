@@ -10,25 +10,17 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 )
 
-func (s *Service) invoiceLedger() (*invoiceledger.Poster, bool) {
-	if s.accountingRepo == nil || s.journalRepo == nil || s.sequenceGenerator == nil ||
-		s.fiscalPeriodRepo == nil {
-		return nil, false
-	}
-
-	poster := &invoiceledger.Poster{
+func (s *Service) invoiceLedger() *invoiceledger.Poster {
+	return &invoiceledger.Poster{
 		Controls: s.accountingRepo,
 		Policy:   s.accountingPolicyService(),
+		Ledger:   s.customerLedgerRepo,
 		Writer: journalposting.Writer{
 			Periods:  s.fiscalPeriodRepo,
 			Numbers:  s.sequenceGenerator,
 			Journals: s.journalRepo,
 		},
 	}
-	if s.customerLedgerRepo != nil {
-		poster.Ledger = s.customerLedgerRepo
-	}
-	return poster, true
 }
 
 func invoiceLedgerRequest(
@@ -47,11 +39,10 @@ func (s *Service) planInvoiceJournal(
 	entity *invoice.Invoice,
 	actor *permissionports.RequestActor,
 ) (*invoiceledger.Plan, error) {
-	poster, ok := s.invoiceLedger()
-	if !ok || entity == nil || entity.PostedAt == nil {
+	if entity == nil || entity.PostedAt == nil {
 		return nil, invoiceledger.ErrNoLedgerEntry
 	}
-	return poster.Plan(ctx, invoiceLedgerRequest(entity, actor))
+	return s.invoiceLedger().Plan(ctx, invoiceLedgerRequest(entity, actor))
 }
 
 func (s *Service) createInvoiceJournalPosting(
@@ -59,11 +50,10 @@ func (s *Service) createInvoiceJournalPosting(
 	entity *invoice.Invoice,
 	actor *permissionports.RequestActor,
 ) error {
-	poster, ok := s.invoiceLedger()
-	if !ok || entity == nil || entity.PostedAt == nil {
+	if entity == nil || entity.PostedAt == nil {
 		return nil
 	}
-	_, err := poster.Post(ctx, invoiceLedgerRequest(entity, actor))
+	_, err := s.invoiceLedger().Post(ctx, invoiceLedgerRequest(entity, actor))
 	if errors.Is(err, invoiceledger.ErrNoLedgerEntry) {
 		return nil
 	}

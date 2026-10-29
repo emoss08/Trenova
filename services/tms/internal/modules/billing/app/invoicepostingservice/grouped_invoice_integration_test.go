@@ -7,6 +7,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/billing/app/invoiceediservice"
+
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/fiscalperiodrepository"
@@ -246,6 +248,7 @@ func TestGroupedInvoiceFromOrderEndToEnd(t *testing.T) {
 		AccountingRepo:    accountingRepo,
 		JournalRepo:       journalRepo,
 		FiscalPeriodRepo:  fiscalPeriodRepo,
+		EDI:               invoiceediservice.New(invoiceediservice.Params{Logger: logger}),
 		Validator:         validator,
 		AuditService:      &mocks.NoopAuditService{},
 		Realtime:          &mocks.NoopRealtimeService{},

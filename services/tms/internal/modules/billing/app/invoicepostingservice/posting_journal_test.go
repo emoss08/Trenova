@@ -138,11 +138,9 @@ func TestCreateInvoiceJournalPostingBuildsCreditMemoPolarity(t *testing.T) {
 		accountingRepo:    accountingRepo,
 		journalRepo:       journalRepo,
 		sequenceGenerator: testutil.TestSequenceGenerator{SingleValue: "SEQ-1"},
+		fiscalPeriodRepo:  fiscalPeriodRepo,
 		validator: invoicevalidation.NewValidator(
-			invoicevalidation.ValidatorParams{
-				Logger:           zap.NewNop(),
-				FiscalPeriodRepo: fiscalPeriodRepo,
-			},
+			invoicevalidation.ValidatorParams{Logger: zap.NewNop()},
 		),
 		rec: invoiceaction.NewRecorder(
 			invoiceaction.RecorderParams{Logger: zap.NewNop()},
@@ -200,11 +198,9 @@ func TestCreateInvoiceJournalPostingSkipsWhenRecognitionPolicyDoesNotAllowInvoic
 		accountingRepo:    accountingRepo,
 		journalRepo:       journalRepo,
 		sequenceGenerator: testutil.TestSequenceGenerator{SingleValue: "SEQ-1"},
+		fiscalPeriodRepo:  fiscalperiodportsmock.NewMockFiscalPeriodRepository(t),
 		validator: invoicevalidation.NewValidator(
-			invoicevalidation.ValidatorParams{
-				Logger:           zap.NewNop(),
-				FiscalPeriodRepo: fiscalperiodportsmock.NewMockFiscalPeriodRepository(t),
-			},
+			invoicevalidation.ValidatorParams{Logger: zap.NewNop()},
 		),
 		rec: invoiceaction.NewRecorder(
 			invoiceaction.RecorderParams{Logger: zap.NewNop()},
@@ -248,11 +244,9 @@ func TestCreateInvoiceJournalPostingSkipsWhenAutoPostDisabled(t *testing.T) {
 		accountingRepo:    accountingRepo,
 		journalRepo:       journalRepo,
 		sequenceGenerator: testutil.TestSequenceGenerator{SingleValue: "SEQ-1"},
+		fiscalPeriodRepo:  fiscalperiodportsmock.NewMockFiscalPeriodRepository(t),
 		validator: invoicevalidation.NewValidator(
-			invoicevalidation.ValidatorParams{
-				Logger:           zap.NewNop(),
-				FiscalPeriodRepo: fiscalperiodportsmock.NewMockFiscalPeriodRepository(t),
-			},
+			invoicevalidation.ValidatorParams{Logger: zap.NewNop()},
 		),
 		rec: invoiceaction.NewRecorder(
 			invoiceaction.RecorderParams{Logger: zap.NewNop()},
@@ -304,39 +298,4 @@ func TestResolveInvoicePostingPeriodUsesNextOpenPeriod(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, resolved.Period)
 	assert.Equal(t, int64(1_700_001_000), resolved.AccountingDate)
-}
-
-func TestCreateInvoiceJournalPostingSkipsWithoutAFiscalPeriodRepository(t *testing.T) {
-	t.Parallel()
-
-	now := int64(1_700_000_000)
-	svc := &Service{
-		l:                 zap.NewNop(),
-		accountingRepo:    tenantportsmock.NewMockAccountingControlRepository(t),
-		journalRepo:       journalentryportsmock.NewMockJournalPostingRepository(t),
-		sequenceGenerator: testutil.TestSequenceGenerator{SingleValue: "SEQ-1"},
-		validator: invoicevalidation.NewValidator(
-			invoicevalidation.ValidatorParams{Logger: zap.NewNop()},
-		),
-		rec: invoiceaction.NewRecorder(
-			invoiceaction.RecorderParams{Logger: zap.NewNop()},
-		),
-	}
-
-	orgID, buID := pulid.MustNew("org_"), pulid.MustNew("bu_")
-	require.NotPanics(t, func() {
-		err := svc.createInvoiceJournalPosting(
-			t.Context(),
-			&invoice.Invoice{
-				ID:               pulid.MustNew("inv_"),
-				OrganizationID:   orgID,
-				BusinessUnitID:   buID,
-				BillType:         billingqueue.BillTypeInvoice,
-				TotalAmountMinor: 10000,
-				PostedAt:         &now,
-			},
-			testutil.NewSessionActor(pulid.MustNew("usr_"), orgID, buID),
-		)
-		require.NoError(t, err)
-	})
 }

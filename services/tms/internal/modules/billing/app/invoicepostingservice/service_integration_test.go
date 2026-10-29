@@ -7,6 +7,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/billing/app/invoiceediservice"
+
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/fiscalperiodrepository"
@@ -189,6 +191,8 @@ func TestPostCreatesInvoiceJournalSourceAndBalances(t *testing.T) {
 		shipmentRepo:     shipmentRepo,
 		accountingRepo:   accountingRepo,
 		journalRepo:      journalRepo,
+		fiscalPeriodRepo: fiscalPeriodRepo,
+		edi:              invoiceediservice.New(invoiceediservice.Params{Logger: zap.NewNop()}),
 		validator: invoicevalidation.NewValidator(
 			invoicevalidation.ValidatorParams{
 				DB:               conn,
@@ -408,6 +412,8 @@ func TestPostSkipsInvoiceLedgerWhenRevenueRecognitionIsCashReceipt(t *testing.T)
 		shipmentRepo:     shipmentRepo,
 		accountingRepo:   accountingRepo,
 		journalRepo:      journalRepo,
+		fiscalPeriodRepo: fiscalPeriodRepo,
+		edi:              invoiceediservice.New(invoiceediservice.Params{Logger: zap.NewNop()}),
 		validator: invoicevalidation.NewValidator(
 			invoicevalidation.ValidatorParams{
 				DB:               conn,

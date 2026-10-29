@@ -704,8 +704,8 @@ func TestSetDefaults(t *testing.T) {
 		l.configureViper()
 
 		assert.Equal(t, true, l.viper.GetBool("security.rateLimit.enabled"))
-		assert.Equal(t, 60, l.viper.GetInt("security.rateLimit.requestsPerMinute"))
-		assert.Equal(t, 10, l.viper.GetInt("security.rateLimit.burstSize"))
+		assert.Equal(t, "redis", l.viper.GetString("security.rateLimit.store"))
+		assert.Equal(t, "local", l.viper.GetString("security.rateLimit.failureMode"))
 		assert.Equal(t, "1m", l.viper.GetString("security.rateLimit.cleanupInterval"))
 	})
 
@@ -1111,8 +1111,7 @@ security:
     tokenName: "csrf_token"
     headerName: "X-CSRF-Token"
   rateLimit:
-    requestsPerMinute: 60
-    burstSize: 10
+    enabled: true
   encryption:
     key: "short"
 logging:

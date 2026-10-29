@@ -6,6 +6,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/billing/app/invoiceediservice"
+
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoiceaction"
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoicedocument"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
@@ -293,6 +295,7 @@ func TestPlanSendRendersTemplatesAndOrganizationAlias(t *testing.T) {
 		organizationRepo: organizationRepo,
 		emailRepo:        emailRepo,
 		billingRepo:      billingRepo,
+		edi:              invoiceediservice.New(invoiceediservice.Params{Logger: zap.NewNop()}),
 		rec: invoiceaction.NewRecorder(
 			invoiceaction.RecorderParams{Logger: zap.NewNop()},
 		),

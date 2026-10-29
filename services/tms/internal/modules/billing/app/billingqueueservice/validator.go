@@ -23,18 +23,15 @@ type Validator struct {
 	validator tenantedvalidation.EntityValidator[*billingqueue.BillingQueueItem]
 }
 
-// NewValidator checks billing queue items. Without a connection it skips
-// the uniqueness checks, which is how the review's tests build it.
 func NewValidator(p ValidatorParams) *Validator {
-	builder := tenantedvalidation.NewBuilder[*billingqueue.BillingQueueItem]().
-		WithModelName("Billing Queue Item")
-	if p.DB != nil {
-		builder = builder.WithUniquenessChecker(
-			keelcheck.NewChecker(p.DB, billingqueuedb.BillingQueueItemsSchema()),
-		)
-	}
 	return &Validator{
-		validator: builder.WithCustomRule(createStatusConstraintsRule()).Build(),
+		validator: tenantedvalidation.NewBuilder[*billingqueue.BillingQueueItem]().
+			WithModelName("Billing Queue Item").
+			WithUniquenessChecker(
+				keelcheck.NewChecker(p.DB, billingqueuedb.BillingQueueItemsSchema()),
+			).
+			WithCustomRule(createStatusConstraintsRule()).
+			Build(),
 	}
 }
 

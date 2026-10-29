@@ -94,6 +94,7 @@ var dynamicChecks = map[string]string{
 	"graphql/resolver/reportresolver/report.resolvers.go:ScheduleTableView":                            "the table being scheduled; an unknown resource has no grant",
 	"handlers/assistanthandler/artifacts.go:registerArtifactRoutes":                                    "the assistant resource, passed by RegisterRoutes",
 	"handlers/assistanthandler/cases.go:registerCaseRoutes":                                            "the assistant resource, passed by RegisterRoutes",
+	"handlers/assistanthandler/chapters.go:registerChapterRoutes":                                      "the assistant resource, passed by RegisterRoutes",
 	"handlers/assistanthandler/queue.go:registerQueueRoutes":                                           "the assistant resource, passed by RegisterRoutes",
 	"handlers/assistanthandler/schedules.go:registerScheduleRoutes":                                    "the assistant resource, passed by RegisterRoutes",
 	"handlers/assistanthandler/waits.go:registerWaitRoutes":                                            "the assistant resource, passed by RegisterRoutes",

@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/costingcontrol"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/costingcontrolports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/dispatchconsolerepository"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/testutil"
@@ -60,11 +61,16 @@ func newProviderFixture(t *testing.T) *providerFixture {
 		actuals:  costingcontrolportsmock.NewMockCostingActualsRepository(t),
 	}
 
+	conn := dbtest.NewRLSConnection(t, admin, dsn)
+
 	return &providerFixture{
 		provider: &Provider{
 			l:            zap.NewNop(),
-			db:           dbtest.NewRLSConnection(t, admin, dsn),
+			db:           conn,
 			dispatchRepo: deps.dispatch,
+			dispatchConsole: dispatchconsolerepository.New(
+				dispatchconsolerepository.Params{DB: conn, Logger: zap.NewNop()},
+			),
 			costingService: costingservice.NewTestService(costingservice.TestServiceParams{
 				Repo:        deps.costing,
 				ActualsRepo: deps.actuals,

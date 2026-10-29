@@ -1144,14 +1144,15 @@ func newIntegrationHarness(
 		),
 		WorkflowStarter: starter,
 		Engine: invoiceadjustmentengine.New(invoiceadjustmentengine.Params{
-			Logger:           logger,
-			Repo:             adjustmentRepo,
-			InvoiceRepo:      invoiceRepo,
-			CustomerRepo:     customerRepo,
-			BillingQueueRepo: billingQueueRepo,
-			ShipmentRepo:     shipmentRepo,
-			ShipmentCtrlRepo: shipmentCtrlRepo,
-			AccountingRepo:   accountingRepo,
+			Logger:             logger,
+			Repo:               adjustmentRepo,
+			InvoiceRepo:        invoiceRepo,
+			CustomerRepo:       customerRepo,
+			BillingQueueRepo:   billingQueueRepo,
+			ShipmentRepo:       shipmentRepo,
+			ShipmentCtrlRepo:   shipmentCtrlRepo,
+			AdjustmentCtrlRepo: adjustmentCtrlRepo,
+			AccountingRepo:     accountingRepo,
 			JournalRepo: journalpostingrepository.New(
 				journalpostingrepository.Params{DB: conn, Logger: logger},
 			),
@@ -1210,7 +1211,8 @@ func (h *integrationHarness) buildService(
 			ShipmentCtrlRepo: shipmentcontrolrepository.New(
 				shipmentcontrolrepository.Params{DB: h.conn, Logger: zap.NewNop()},
 			),
-			AccountingRepo: h.accountingRepo,
+			AdjustmentCtrlRepo: h.adjustmentCtrlRepo,
+			AccountingRepo:     h.accountingRepo,
 			JournalRepo: journalpostingrepository.New(
 				journalpostingrepository.Params{DB: h.conn, Logger: zap.NewNop()},
 			),

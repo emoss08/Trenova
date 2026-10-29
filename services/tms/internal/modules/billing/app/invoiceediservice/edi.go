@@ -47,7 +47,7 @@ func (s *Service) ResolveEDISendPlans(
 	if len(req.Invoices) == 0 {
 		return plans, nil
 	}
-	if s == nil || s.ediPartnerRepo == nil {
+	if s.ediPartnerRepo == nil {
 		// EDI is not wired into this process: every plan is unconfigured, and no
 		// customer lookup is needed to say so.
 		for _, inv := range req.Invoices {
@@ -306,7 +306,7 @@ func (s *Service) EnqueueAfterPost(
 	tenantInfo pagination.TenantInfo,
 	actor *permissionports.RequestActor,
 ) {
-	if entity == nil || s == nil || s.ediPartnerRepo == nil {
+	if entity == nil || s.ediPartnerRepo == nil {
 		return
 	}
 	plans, err := s.ResolveEDISendPlans(ctx, &invoiceports.ResolveInvoiceEDISendPlansRequest{

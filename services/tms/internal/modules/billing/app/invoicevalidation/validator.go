@@ -43,18 +43,13 @@ type Validator struct {
 	accountingPolicy *accountingcontrolpolicyservice.Service
 }
 
-// NewValidator checks invoices. Without a connection it skips the uniqueness
-// checks, which is how the services' tests build it.
 func NewValidator(p ValidatorParams) *Validator {
-	builder := tenantedvalidation.NewBuilder[*invoice.Invoice]().WithModelName("Invoice")
-	if p.DB != nil {
-		builder = builder.WithUniquenessChecker(
-			keelcheck.NewChecker(p.DB, invoicedb.InvoicesSchema()),
-		)
-	}
 	return &Validator{
-		l:                p.Logger.Named("validator.invoice"),
-		validator:        builder.Build(),
+		l: p.Logger.Named("validator.invoice"),
+		validator: tenantedvalidation.NewBuilder[*invoice.Invoice]().
+			WithModelName("Invoice").
+			WithUniquenessChecker(keelcheck.NewChecker(p.DB, invoicedb.InvoicesSchema())).
+			Build(),
 		accountingRepo:   p.AccountingRepo,
 		fiscalPeriodRepo: p.FiscalPeriodRepo,
 		shipmentRepo:     p.ShipmentRepo,

@@ -4,6 +4,8 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/billing/app/invoiceediservice"
+
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoiceaction"
@@ -172,9 +174,11 @@ func newPostFixture(t *testing.T) *postFixture {
 		billingQueueRepo:  f.queue,
 		accountingRepo:    f.accounting,
 		journalRepo:       f.journal,
+		fiscalPeriodRepo:  periods,
 		sequenceGenerator: testutil.TestSequenceGenerator{SingleValue: "SEQ-1"},
 		auditService:      &mocks.NoopAuditService{},
 		realtime:          &mocks.NoopRealtimeService{},
+		edi:               invoiceediservice.New(invoiceediservice.Params{Logger: zap.NewNop()}),
 		validator: invoicevalidation.NewValidator(
 			invoicevalidation.ValidatorParams{
 				Logger:           zap.NewNop(),

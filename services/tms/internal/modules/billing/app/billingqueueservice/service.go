@@ -865,8 +865,7 @@ func (s *Service) UpdateStatus(
 		s.createOpsComment(ctx, updated, actor)
 	}
 
-	if createResult != nil && createResult.AutoPost && createResult.Invoice != nil &&
-		s.invoicePosting != nil {
+	if createResult != nil && createResult.AutoPost && createResult.Invoice != nil {
 		if err = s.invoicePosting.EnqueueAutoPost(ctx, createResult.Invoice, actor); err != nil {
 			s.l.Warn("failed to enqueue invoice auto-post workflow",
 				zap.String("billingQueueItemId", updated.ID.String()),
