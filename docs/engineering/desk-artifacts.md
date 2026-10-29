@@ -107,7 +107,7 @@ is not a lookup: it is kept whether or not the reply names it, and the reply mus
 `portal_task` is a portal task an agent ran in a cloud browser (see
 [agent-portal-automation.md](agent-portal-automation.md)): a `web_read_portal` call,
 titled by its question, or an approved `web_use_portal`, titled "Portal action on"
-its site (`assistantservice/portal_task_artifact.go`). The payload is only what the
+its site (`assistantservice/toolartifacts/portal_task_artifact.go`). The payload is only what the
 agent was told; `kinds/portal/` reads the run itself (`agentExtension.portalRun`)
 and reads it again every few seconds while its browser is open, so the card is
 the task as it stands: running, with a way to watch the live browser; waiting on
@@ -135,7 +135,7 @@ are listed for the person to enter and never shown with a value. Saving is the
 reviewed; the card asks for it (`proposeQuestion`) only once the draft is ready. The recorder
 drops the note meant for the model, cuts each sample's parse to its version and counts, and
 trims mappings, samples and gaps to the payload limit with the full mapping count kept
-(`assistantservice/edi_connection_draft.go`). A redraft of the same guide is a new version,
+(`assistantservice/toolartifacts/edi_connection_draft.go`). A redraft of the same guide is a new version,
 and the reply must always link it (`ShownArtifact.MustBeLinked`).
 
 ## The plan
@@ -221,7 +221,7 @@ it (or the image itself) for search and print. While page 1 is drawn the upload'
 stands in for it, blurred, with the boxes already on it; any other page stands as its skeleton in
 the page's own shape, from the payload's `pages` sizes.
 
-**The boxes.** A box is a fraction of the page. `assistantservice/extraction.go` finds each value
+**The boxes.** A box is a fraction of the page. `assistantservice/extractionartifact/extraction.go` finds each value
 in the page's layout lines (`documentcontent.LayoutLine`): first on the line the reading quoted
 as its evidence (read from the stored draft, not from the tool result the model sees), then on a
 line that carries the field's label before the value (so "Bill to" is not boxed on a letterhead
@@ -546,7 +546,7 @@ has none of its own, and bills from the ones filed on its shipment.
 A list is read a page at a time, and the table it makes is the whole list paged, not the page
 the agent read. `tableArtifact` keeps the agent's rows with where the list goes on from them
 (`hasMore`, `nextCursor` or `nextOffset`, `pages`, and `total` when the read counted), in
-`assistantservice/artifact_paging.go`.
+`assistantservice/artifactpayload/artifact_paging.go`.
 
 - **The agent's later pages join the table.** A list call that starts after a cursor or at an
   offset the conversation's newest table of that lineage handed out (`continueTable`) adds its
@@ -700,21 +700,21 @@ scenario: live, moved, reading) serves three boards, and
 
 1. The record kind has an entry in `client/apps/web/src/config/record-links.ts`
    (regenerate the product guide). The server then keeps each row's id in a list
-   tool's table (`recordEntity`, `assistantservice/artifact_display.go`), and the
+   tool's table (`recordEntity`, `assistantservice/artifactpayload/artifact_display.go`), and the
    ↗ link on a row opens the record's page.
 2. The kind has an entry in `cards/registry.tsx`. `DeskTableBody` then opens a
    clicked row as the card in place of the table, steps through the rows in the
    order the table shows them, and goes back to the table as it was left.
 3. A table whose rows open in place has to be kept beside the conversation even
    when it is short, or the reply answers it inline and there is nothing to open.
-   `opensRecords` in `assistantservice/artifacts.go` marks it (`ShownArtifact.OpensRecords`)
+   `opensRecords` in `assistantservice/toolartifacts/artifacts.go` marks it (`ShownArtifact.OpensRecords`)
    for every kind with a card: the product guide generator reads the registry's keys
    into the catalog (`deskCard`), so the server needs no change. `shownNote` tells the
    model to point to it however few rows it has.
 
 A list or search that found exactly one record of a kind with a card is drawn as
 that card, not as a table of one row (`soleRecordCard` in
-`assistantservice/artifacts.go`). Asked to show a template by name, the agent finds
+`assistantservice/toolartifacts/artifacts.go`). Asked to show a template by name, the agent finds
 it with `formula_list_templates`, and the person sees the template rather than a row
 to open; a search that found one shipment is the shipment's card the same way. A page of one with more behind it (`hasMore`, or a larger `count`) stays a
 table.

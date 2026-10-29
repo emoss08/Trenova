@@ -2011,7 +2011,7 @@ findings:
       changes winning, leaving out ids.
     fixedIn: uncommitted; TestRanWith_NamesTheApprovedValuesOfAWriteWithNoResult
     files:
-      - services/tms/internal/modules/agent/app/assistantservice/followup.go
+      - services/tms/internal/modules/agent/app/assistantservice/decisionnotes/followup.go
 
   - id: DB-089
     title: Records in play did not carry the load's freight, so "make it 39,250" was read as a rate
@@ -3484,7 +3484,7 @@ findings:
       find_tools. The palette searches records for the question's search words, lists them under
       Nova, and sends the ones the question names as mentions.
     files:
-      - services/tms/internal/modules/agent/app/assistantservice/ask.go
+      - services/tms/internal/modules/agent/app/assistantservice/assistantthreads/ask.go
       - services/tms/internal/modules/agent/app/assistantservice/checks.go
       - services/tms/internal/modules/agent/domain/agentdefinition/core.go
       - client/apps/web/src/components/command-palette/command-palette.tsx
@@ -4220,7 +4220,7 @@ findings:
       code parameter says every call returns each dataset's columns and types, so the first call
       can do the work, and that print() is for the agent.
     files:
-      - services/tms/internal/modules/agent/app/assistantservice/analysis_artifact.go
+      - services/tms/internal/modules/agent/app/assistantservice/toolartifacts/analysis_artifact.go
       - services/tms/internal/modules/agent/app/agentquerytoolservice/analysis_tool.go
     fixedIn: uncommitted; verified by .deskbench/runs/20261018-002226-run (3 of 3, no relink)
 
@@ -4956,12 +4956,12 @@ findings:
       transcript of approve-two-settlements-in-one-go #2, model call #8 to the reply; event
       artifact_removed art_01M5AHE0XPY8E7ZMT3DZXACHMS.
     cause: >
-      A second get of one tool in a turn folds the earlier card into a table and retires the card (assistantservice/artifact_bunch.go). When the two calls run in parallel, the first call's result has already told the model to link the card, so the reply linked an artifact that was gone and the reply pass dropped the link.
+      A second get of one tool in a turn folds the earlier card into a table and retires the card (assistantservice/toolartifacts/artifact_bunch.go). When the two calls run in parallel, the first call's result has already told the model to link the card, so the reply linked an artifact that was gone and the reply pass dropped the link.
     fix: >
       A bunched table names the cards it replaced (ShownArtifact.Replaces). When a replaced card's result is still in the batch the model has not read, the runtime rewrites that result's note to point to the table instead (Turn.foldReplaced, foldedNote) and drops the card from what the turn keeps; a result the model has already read is never rewritten, so the cached prefix and replayed thinking stay intact.
     files:
       - services/tms/internal/modules/agent/ports/agentports/agentruntime.go
-      - services/tms/internal/modules/agent/app/assistantservice/artifact_bunch.go
+      - services/tms/internal/modules/agent/app/assistantservice/toolartifacts/artifact_bunch.go
       - services/tms/internal/modules/agent/app/agentruntime/replypass.go
       - services/tms/internal/modules/agent/app/agentruntime/runtimetools/publish.go
       - services/tms/internal/modules/agent/app/agentruntime/runner.go

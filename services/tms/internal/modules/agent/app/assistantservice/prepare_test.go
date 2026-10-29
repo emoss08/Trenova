@@ -7,6 +7,8 @@ import (
 	"sync/atomic"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice/assistanttest"
+	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice/turnlimits"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
@@ -21,7 +23,7 @@ import (
 // for the other to start, so a prepare that runs them one after the other
 // finds the other never began.
 type meetingConversations struct {
-	*stubConversations
+	*assistanttest.StubConversations
 
 	listing  chan struct{}
 	counting chan struct{}
@@ -37,7 +39,7 @@ func (m *meetingConversations) ListMessages(
 	close(m.listing)
 	m.listSawCount.Store(waitFor(ctx, m.counting))
 
-	return m.stubConversations.ListMessages(ctx, req)
+	return m.StubConversations.ListMessages(ctx, req)
 }
 
 func (m *meetingConversations) CountMessages(
@@ -47,7 +49,7 @@ func (m *meetingConversations) CountMessages(
 	close(m.counting)
 	m.countSawList.Store(waitFor(ctx, m.listing))
 
-	return m.stubConversations.CountMessages(ctx, req)
+	return m.StubConversations.CountMessages(ctx, req)
 }
 
 /*
@@ -60,17 +62,20 @@ anything.
 func TestPrepareTurn_ReadsTheHistoryWhileTheRoomIsCounted(t *testing.T) {
 	t.Parallel()
 
-	svc, conversations := newConversationService(&scriptedCompletion{}, testDefinition())
+	svc, conversations := newConversationService(
+		&assistanttest.ScriptedCompletion{},
+		assistanttest.Definition(),
+	)
 	meeting := &meetingConversations{
-		stubConversations: conversations,
+		StubConversations: conversations,
 		listing:           make(chan struct{}),
 		counting:          make(chan struct{}),
 	}
 	svc.conversations = meeting
-	actor := testActor()
+	actor := assistanttest.Actor()
 
 	plan, err := svc.PrepareTurn(t.Context(), &assistantports.SendMessageRequest{
-		ThreadID:   conversations.thread.ID,
+		ThreadID:   conversations.Thread.ID,
 		Content:    "Where is S1?",
 		TenantInfo: actor.TenantInfo(),
 	}, actor)
@@ -86,14 +91,14 @@ func TestPrepareTurn_ReadsTheHistoryWhileTheRoomIsCounted(t *testing.T) {
 func TestPrepareTurn_ReportsTheFirstFailingCheckInItsOldOrder(t *testing.T) {
 	t.Parallel()
 
-	definition := testDefinition()
+	definition := assistanttest.Definition()
 	definition.Enabled = false
-	svc, conversations := newConversationService(&scriptedCompletion{}, definition)
-	conversations.count = maxThreadMessages
-	actor := testActor()
+	svc, conversations := newConversationService(&assistanttest.ScriptedCompletion{}, definition)
+	conversations.Count = turnlimits.MaxThreadMessages
+	actor := assistanttest.Actor()
 
 	_, err := svc.PrepareTurn(t.Context(), &assistantports.SendMessageRequest{
-		ThreadID:   conversations.thread.ID,
+		ThreadID:   conversations.Thread.ID,
 		Content:    "Where is S1?",
 		TenantInfo: actor.TenantInfo(),
 	}, actor)
@@ -146,11 +151,14 @@ func (m *meetingDocuments) GetByID(
 func TestPrepareTurn_ReadsAttachedFilesTogether(t *testing.T) {
 	t.Parallel()
 
-	svc, conversations := newConversationService(&scriptedCompletion{}, testDefinition())
-	actor := testActor()
-	first := ownDocument(conversations.thread, actor)
+	svc, conversations := newConversationService(
+		&assistanttest.ScriptedCompletion{},
+		assistanttest.Definition(),
+	)
+	actor := assistanttest.Actor()
+	first := ownDocument(conversations.Thread, actor)
 	first.OriginalName = "rate-con.pdf"
-	second := ownDocument(conversations.thread, actor)
+	second := ownDocument(conversations.Thread, actor)
 	second.OriginalName = "bol.pdf"
 	documents := newMeetingDocuments(map[pulid.ID]*document.Document{
 		first.ID:  first,
@@ -159,7 +167,7 @@ func TestPrepareTurn_ReadsAttachedFilesTogether(t *testing.T) {
 	svc.documents = documents
 
 	plan, err := svc.PrepareTurn(t.Context(), &assistantports.SendMessageRequest{
-		ThreadID:              conversations.thread.ID,
+		ThreadID:              conversations.Thread.ID,
 		Content:               "Compare these",
 		TenantInfo:            actor.TenantInfo(),
 		AttachmentDocumentIDs: []pulid.ID{first.ID, second.ID},
@@ -186,12 +194,15 @@ func TestPrepareTurn_AnswersAPaletteQuestionInline(t *testing.T) {
 		{origin: conversation.ThreadOriginDesk, inline: false},
 		{origin: conversation.ThreadOriginPanel, inline: false},
 	} {
-		svc, conversations := newConversationService(&scriptedCompletion{}, testDefinition())
-		conversations.thread.Origin = tc.origin
-		actor := testActor()
+		svc, conversations := newConversationService(
+			&assistanttest.ScriptedCompletion{},
+			assistanttest.Definition(),
+		)
+		conversations.Thread.Origin = tc.origin
+		actor := assistanttest.Actor()
 
 		plan, runReq, err := svc.prepareTurn(t.Context(), &assistantports.SendMessageRequest{
-			ThreadID:   conversations.thread.ID,
+			ThreadID:   conversations.Thread.ID,
 			Content:    "What shipment types do we have?",
 			TenantInfo: actor.TenantInfo(),
 		}, actor)

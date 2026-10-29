@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentguard"
+	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice/proposaloutcomes"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpagecontext"
@@ -113,7 +114,7 @@ func (s *Service) admit(
 	}
 
 	runtimeContext.Frame = agenttaskframe.ChatFrame(decision.Goal, decision.Need)
-	runtimeContext.PendingProposals = pendingProposals(req.Proposals)
+	runtimeContext.PendingProposals = proposaloutcomes.Pending(req.Proposals)
 	runtimeContext.Anchors = req.Anchors
 
 	return decision, &agentruntimeports.RunRequest{
@@ -262,7 +263,7 @@ func (s *Service) describeSubject(
 	if s.subjects == nil {
 		return bare
 	}
-	allowed, err := s.mayReadSubject(ctx, actor, thread.SubjectType)
+	allowed, err := s.access().MayReadSubject(ctx, actor, thread.SubjectType)
 	if err != nil || !allowed {
 		s.logger.Info("thread subject withheld from the turn",
 			zap.String("thread", thread.ID.String()),
@@ -527,25 +528,6 @@ func recentTurns(history []conversation.Message) []agentguard.Turn {
 	}
 
 	return turns
-}
-
-// pendingProposals names the undecided proposals for the prompt.
-func pendingProposals(
-	outcomes []agentruntimeports.ProposalOutcome,
-) []agentturn.PendingProposal {
-	pending := make([]agentturn.PendingProposal, 0, len(outcomes))
-	for _, outcome := range outcomes {
-		if outcome.Pending() {
-			pending = append(pending, agentturn.PendingProposal{
-				ProposalID: outcome.ProposalID,
-				PlanID:     outcome.PlanID,
-				ToolName:   outcome.ToolName,
-				Rationale:  outcome.Rationale,
-			})
-		}
-	}
-
-	return pending
 }
 
 func definitionID(definition *agentdefinition.Definition) pulid.ID {

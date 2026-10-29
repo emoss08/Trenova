@@ -23,7 +23,7 @@ const t = (message: string | null | undefined) => message ?? "";
 afterEach(() => setUserDatePreferences({}));
 
 /*
- * These are the server's rules (assistantservice/artifact_display.go), held
+ * These are the server's rules (assistantservice/artifactpayload/artifact_display.go), held
  * here for artifacts stored before the server applied them and for the step
  * details, which read the model's own copy. The cases below are the server's
  * cases, so a rule that drifts on one side fails here.

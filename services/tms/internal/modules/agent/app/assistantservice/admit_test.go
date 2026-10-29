@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentguard"
+	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice/assistanttest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
@@ -99,8 +100,8 @@ func admitService(
 
 func admitRequest() *TurnRequest {
 	return &TurnRequest{
-		Definition: testDefinition(),
-		Actor:      testActor(),
+		Definition: assistanttest.Definition(),
+		Actor:      assistanttest.Actor(),
 		Input:      "how many shipments are in transit",
 	}
 }

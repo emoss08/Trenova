@@ -86,7 +86,7 @@ Paths: design = `design_handoff_desk_v2/design/`, ours = `client/apps/web/src/ro
 
 ### Backend gaps (hand-off)
 Exists (patterns to follow):
-- Thread creation path: `POST /assistant/threads/` → `startThread` (assistanthandler/handler.go:67, 272-302) → `assistantservice.StartThread` (conversation.go:41-104) → `CreateThread`. It takes only agent, title, origin and subject.
+- Thread creation path: `POST /assistant/threads/` → `startThread` (assistanthandler/handler.go:67, 272-302) → `assistantthreads.Service.StartThread` (assistantthreads/conversation.go:41-104) → `CreateThread`. It takes only agent, title, origin and subject.
 - `ThreadOrigin` enum (domain/conversation/enums.go:82-92) and `MessageKind` Message/DecisionNote/Delegated (enums.go:27-38).
 - Artifact pin: `assistantartifact.Artifact.Pinned` (artifact.go:53) and `POST /threads/:id/artifacts/:artifactID/pin/` (handler.go:182).
 - Hand-off routes: `AgentDefinition.DelegateIDs` (agentdefinition/definition.go:115-119), exposed as GraphQL `MyAgent.delegates` (schema/agentdefinition.graphqls:218).
@@ -101,7 +101,7 @@ Missing:
 - Permission check that the target is in `DelegateIDs` or `myAgents`.
 
 ### Backend: sidebar counts and status dots
-- [MATCHES] The thread list API supplies the dots. `ListThreads` → `markAttention` (assistantservice/conversation.go:135-205) sets `attention {pendingDecisions, lastTurnFailed, unread}` (domain/conversation/attention.go) from `ListThreadAttention` (conversationrepository/attention.go:76). "Working" comes from `GET /assistant/turns/active/` via `useLiveThreadIds` (desk-thread-state.ts). Read marks go through `POST /threads/:id/read/`. **No backend gap.**
+- [MATCHES] The thread list API supplies the dots. `ListThreads` → `markAttention` (assistantservice/assistantthreads/conversation.go:135-205) sets `attention {pendingDecisions, lastTurnFailed, unread}` (domain/conversation/attention.go) from `ListThreadAttention` (conversationrepository/attention.go:76). "Working" comes from `GET /assistant/turns/active/` via `useLiveThreadIds` (desk-thread-state.ts). Read marks go through `POST /threads/:id/read/`. **No backend gap.**
 - [MATCHES] Decisions count: GraphQL `attentionSummary.agentDecisions` (schema/attention.graphqls).
 - [MATCHES] Watchtower count: `watchtowerCounts.unresolved` (schema/watchtower.graphqls:99-130).
 
@@ -555,7 +555,7 @@ Domain: internal/modules/agent/domain/agentdefinition/definition.go:52-134. Admi
 - [PARTIAL] Locks + reason — derivable from `ToolPolicy.MaxTier` (< AutoExecute ⇒ "Allowed" disabled), `Reversible=false`, `TierCondition.Description`, `TaintHold.Description`, `Rationale`. No explicit `locked`/`lockReason` field; add a computed `lock {reason, maxMode}` to the tool catalog served by `GET /agent-definitions/tools/`. Design's lock forces "Ask first" entirely (Off also disabled); current model only caps the top.
 - [PARTIAL] Hand-offs — `DelegateIDs` (definition.go:115-119) is an ordered agent list; no topic label. `MyAgent.delegates` (agentdefinition.graphqls:213-218) already exposes them to Desk users. Add `delegateTopics map[id]string` (or `[]{agentId, topic}`) to render "Pay rates, people records → Workforce Coordinator".
 - [MATCHES] Daily request limit + enforcement — `DailyRunLimit` (definition.go:96) enforced in agentbudgetservice/service.go:100-117 via `CheckRun` (called assistantservice/conversation.go:114, agentrunservice/service.go:216). Counts runs (not requests per person).
-- [MATCHES] Monthly budget + enforcement — `MonthlyBudgetUSD` (definition.go:95), `CheckRun` monthly branch (agentbudgetservice:81-98). Usage readout: `Status` (agentbudgetservice:160-215) and Desk-reachable `GET /assistant/threads/:threadID/budget/` (assistanthandler/handler.go:72-76; assistantservice/budget.go:21-66: spentUsd, limitUsd, share, runsToday, dailyRunLimit, resetsAt, dayResetsAt). Note `budgetNearShare = 0.9` (budget.go:16) vs design's 85% amber threshold.
+- [MATCHES] Monthly budget + enforcement — `MonthlyBudgetUSD` (definition.go:95), `CheckRun` monthly branch (agentbudgetservice:81-98). Usage readout: `Status` (agentbudgetservice:160-215) and Desk-reachable `GET /assistant/threads/:threadID/budget/` (assistanthandler/handler.go:72-76; assistantservice/assistantthreads/budget.go:21-66: spentUsd, limitUsd, share, runsToday, dailyRunLimit, resetsAt, dayResetsAt). Note `budgetNearShare = 0.9` (budget.go:16) vs design's 85% amber threshold.
 - [PARTIAL] Per-tool daily limits — `ToolDailyLimits` enforced (`CheckTool`, proposalexecutor/executor.go:585, agentruntime/dispatch.go:336); not in design.
 - [MISSING] Largest single change (N items, split batches) — no definition field. Only hard-coded caps: `maxBulkRecords = 50` (agenttools/recordbatch/bulk_records.go), `MaxBatch = 50` (agentdecisionqueueservice/service.go:27). Add `MaxChangeItems int` to Definition + migration; enforce in bulk tools (`toolschema.KeyMaxItems` sites) and split in proposal creation.
 - [MISSING] Business-hours rule — nothing in domain/agentdefinition or services (no business-hours symbols). Add `WritesBusinessHoursOnly bool` + window/timezone (reuse `CronTimezone` or org zone from agentbudgetservice `organizationZones`); enforce in agentruntime/dispatch.go before executing write tools (hold as proposal outside hours).

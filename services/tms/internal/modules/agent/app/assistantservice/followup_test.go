@@ -4,10 +4,10 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice/assistanttest"
+	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice/decisionnotes"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
@@ -22,15 +22,15 @@ func followUpService(
 	t *testing.T,
 	proposal *agent.AgentProposal,
 	history ...conversation.Message,
-) (*Service, *stubConversations, *scriptedCompletion) {
+) (*Service, *assistanttest.StubConversations, *assistanttest.ScriptedCompletion) {
 	t.Helper()
 
-	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
-		textTurn("The Operations dashboard is ready under Reports."),
+	completion := &assistanttest.ScriptedCompletion{Turns: []*llmports.ChatCompletionResult{
+		assistanttest.TextTurn("The Operations dashboard is ready under Reports."),
 	}}
-	svc, conversations := newConversationService(completion, testDefinition())
-	svc.proposals = &stubProposalRepo{byThread: []*agent.AgentProposal{proposal}}
-	conversations.messages = history
+	svc, conversations := newConversationService(completion, assistanttest.Definition())
+	svc.proposals = &assistanttest.StubProposalRepo{ByThread: []*agent.AgentProposal{proposal}}
+	conversations.Messages = history
 
 	return svc, conversations, completion
 }
@@ -52,17 +52,17 @@ func TestSendMessageStream_AnswersADecision(t *testing.T) {
 		Status:   agent.ProposalStatusExecuted,
 	}
 	svc, conversations, completion := followUpService(t, proposal)
-	actor := testActor()
+	actor := assistanttest.Actor()
 
 	result, err := svc.sendMessage(t.Context(), &assistantports.SendMessageRequest{
-		ThreadID:           conversations.thread.ID,
+		ThreadID:           conversations.Thread.ID,
 		FollowUpProposalID: proposal.ID,
 		TenantInfo:         actor.TenantInfo(),
 	}, actor, nil)
 	require.NoError(t, err)
 
 	assert.Equal(t, "The Operations dashboard is ready under Reports.", result.Reply)
-	note := conversations.appended[0]
+	note := conversations.Appended[0]
 	assert.Equal(t, conversation.MessageKindDecisionNote, note.Kind,
 		"the thread shows a note, not words the person typed")
 	assert.Contains(t, note.Content, "Approved report_create_dashboard, and it ran.")
@@ -70,7 +70,7 @@ func TestSendMessageStream_AnswersADecision(t *testing.T) {
 
 	last := completion.LastReq.Messages[len(completion.LastReq.Messages)-1]
 	assert.Contains(t, last.Content, "what happened")
-	assert.Equal(t, "Dispatch", conversations.thread.Title, "a note does not retitle the thread")
+	assert.Equal(t, "Dispatch", conversations.Thread.Title, "a note does not retitle the thread")
 }
 
 func TestSendMessageStream_SaysWhyAnApprovedChangeFailed(t *testing.T) {
@@ -88,65 +88,22 @@ func TestSendMessageStream_SaysWhyAnApprovedChangeFailed(t *testing.T) {
 		ExecutionError: refused.Error(),
 	}
 	svc, conversations, _ := followUpService(t, proposal)
-	actor := testActor()
+	actor := assistanttest.Actor()
 
 	_, err := svc.sendMessage(t.Context(), &assistantports.SendMessageRequest{
-		ThreadID:           conversations.thread.ID,
+		ThreadID:           conversations.Thread.ID,
 		FollowUpProposalID: proposal.ID,
 		TenantInfo:         actor.TenantInfo(),
 	}, actor, nil)
 	require.NoError(t, err)
 
-	headline := decisionHeadline(conversations.appended[0].Content)
+	headline := decisionnotes.DecisionHeadline(conversations.Appended[0].Content)
 	assert.Equal(t,
 		"Approved shipment_create, but it failed when it ran: validation failed: "+
 			"bol: BOL is already in use by shipment(s) with Pro Number(s): SEED-DET-009; "+
 			"formulaTemplateId: Choose a rating method: no rate agreement covers this lane",
 		headline,
 		"the person reads why, not a bare \"validation failed:\"")
-}
-
-func TestExecutionFailureReason_KeepsTheListedProblems(t *testing.T) {
-	t.Parallel()
-
-	tests := []struct {
-		name string
-		text string
-		want string
-	}{
-		{
-			name: "one line with wrapped causes after it",
-			text: "tiles[0].definitionId: This report is not available.\nwrapped: cause",
-			want: "tiles[0].definitionId: This report is not available.",
-		},
-		{
-			name: "a header and its problems",
-			text: "validation failed:\n- bol: taken\n- weight: too heavy",
-			want: "validation failed: bol: taken; weight: too heavy",
-		},
-		{
-			name: "no more than five problems",
-			text: "validation failed:\n- a: 1\n- b: 2\n- c: 3\n- d: 4\n- e: 5\n- f: 6\n- g: 7",
-			want: "validation failed: a: 1; b: 2; c: 3; d: 4; e: 5; and 2 more",
-		},
-		{
-			name: "problems end at the first line that is not one",
-			text: "validation failed:\n- a: 1\ncaused by: x\n- b: 2",
-			want: "validation failed: a: 1",
-		},
-		{
-			name: "nothing",
-			text: "  ",
-			want: "",
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-
-			assert.Equal(t, tt.want, executionFailureReason(tt.text))
-		})
-	}
 }
 
 func TestSendMessageStream_RefusesAFollowUpThatCannotBeAnswered(t *testing.T) {
@@ -162,7 +119,7 @@ func TestSendMessageStream_RefusesAFollowUpThatCannotBeAnswered(t *testing.T) {
 		ToolName: "report_create_dashboard",
 		Status:   agent.ProposalStatusPending,
 	}
-	actor := testActor()
+	actor := assistanttest.Actor()
 	send := func(svc *Service, threadID, proposalID pulid.ID, content string) error {
 		_, err := svc.sendMessage(t.Context(), &assistantports.SendMessageRequest{
 			ThreadID:           threadID,
@@ -175,13 +132,13 @@ func TestSendMessageStream_RefusesAFollowUpThatCannotBeAnswered(t *testing.T) {
 
 	svc, conversations, _ := followUpService(t, pending)
 	var multiErr *errortypes.MultiError
-	require.ErrorAs(t, send(svc, conversations.thread.ID, pending.ID, ""), &multiErr,
+	require.ErrorAs(t, send(svc, conversations.Thread.ID, pending.ID, ""), &multiErr,
 		"a proposal nobody has decided has no outcome to report")
 
 	svc, conversations, _ = followUpService(t, decided)
-	require.Error(t, send(svc, conversations.thread.ID, pulid.MustNew("ap_"), ""),
+	require.Error(t, send(svc, conversations.Thread.ID, pulid.MustNew("ap_"), ""),
 		"a proposal from another thread is not this thread's to answer")
-	require.Error(t, send(svc, conversations.thread.ID, decided.ID, "and also this"),
+	require.Error(t, send(svc, conversations.Thread.ID, decided.ID, "and also this"),
 		"a follow-up carries no words of its own")
 
 	svc, conversations, completion := followUpService(t, decided, conversation.Message{
@@ -189,7 +146,7 @@ func TestSendMessageStream_RefusesAFollowUpThatCannotBeAnswered(t *testing.T) {
 		Kind:    conversation.MessageKindDecisionNote,
 		Content: "Rejected report_create_dashboard.\nDecision on proposal " + decided.ID.String(),
 	})
-	require.ErrorAs(t, send(svc, conversations.thread.ID, decided.ID, ""), &multiErr,
+	require.ErrorAs(t, send(svc, conversations.Thread.ID, decided.ID, ""), &multiErr,
 		"a decision is answered once, however many times the client asks")
 	assert.Nil(t, completion.LastReq)
 }
@@ -227,16 +184,16 @@ func TestSendMessageStream_AnswersAPlanDecision(t *testing.T) {
 	}
 	svc, conversations, _ := followUpService(t, &agent.AgentProposal{ID: pulid.MustNew("ap_")})
 	svc.plans = &stubPlanStore{plans: []*agentplan.AgentPlan{plan}}
-	actor := testActor()
+	actor := assistanttest.Actor()
 
 	_, err := svc.sendMessage(t.Context(), &assistantports.SendMessageRequest{
-		ThreadID:       conversations.thread.ID,
+		ThreadID:       conversations.Thread.ID,
 		FollowUpPlanID: plan.ID,
 		TenantInfo:     actor.TenantInfo(),
 	}, actor, nil)
 	require.NoError(t, err)
 
-	note := conversations.appended[0]
+	note := conversations.Appended[0]
 	assert.Equal(t, conversation.MessageKindDecisionNote, note.Kind)
 	assert.Contains(t, note.Content,
 		`Approved the plan "Recover load 4471", but step 2 failed (the driver is out of hours)`)
@@ -254,10 +211,10 @@ func TestSendMessageStream_RefusesAPlanFollowUpThatCannotBeAnswered(t *testing.T
 		Status: agent.ProposalStatusExecuted,
 	})
 	svc.plans = &stubPlanStore{plans: []*agentplan.AgentPlan{pending}}
-	actor := testActor()
+	actor := assistanttest.Actor()
 
 	_, err := svc.sendMessage(t.Context(), &assistantports.SendMessageRequest{
-		ThreadID:       conversations.thread.ID,
+		ThreadID:       conversations.Thread.ID,
 		FollowUpPlanID: pending.ID,
 		TenantInfo:     actor.TenantInfo(),
 	}, actor, nil)
@@ -265,7 +222,7 @@ func TestSendMessageStream_RefusesAPlanFollowUpThatCannotBeAnswered(t *testing.T
 	require.ErrorAs(t, err, &multiErr)
 
 	_, err = svc.sendMessage(t.Context(), &assistantports.SendMessageRequest{
-		ThreadID:           conversations.thread.ID,
+		ThreadID:           conversations.Thread.ID,
 		FollowUpPlanID:     pending.ID,
 		FollowUpProposalID: pulid.MustNew("ap_"),
 		TenantInfo:         actor.TenantInfo(),
@@ -274,60 +231,9 @@ func TestSendMessageStream_RefusesAPlanFollowUpThatCannotBeAnswered(t *testing.T
 	assert.Nil(t, completion.LastReq)
 }
 
-func TestFollowUpInstruction_KeepsTheReplyToWhatTheNoteAndTheCardHold(t *testing.T) {
-	t.Parallel()
-
-	assert.Contains(t, followUpInstruction,
-		"Report only what this note and the proposal's card hold")
-	assert.Contains(t, followUpInstruction, "Do not propose the same change again.")
-	assert.Contains(t, followUpInstruction, continueTheWork,
-		"an approved step toward the person's request is followed by the next one")
-	assert.Contains(t, notedInstruction, continueTheWork)
-}
-
 func (s *stubPlanStore) ExpirePendingByThread(
 	context.Context,
 	agentports.ExpireAgentPlansByThreadRequest,
 ) (int, error) {
 	return 0, nil
-}
-
-// "Approved shipment_update, and it ran" left the agent nothing to say, and
-// gpt-6-luna reported the weight change without the weight. A write that
-// reports no result says what it ran with, the approver's changes winning.
-func TestRanWith_NamesTheApprovedValuesOfAWriteWithNoResult(t *testing.T) {
-	t.Parallel()
-
-	proposal := &agent.AgentProposal{
-		ID:       pulid.MustNew("ap_"),
-		Status:   agent.ProposalStatusExecuted,
-		ToolName: "shipment_update",
-		ToolParams: map[string]any{
-			"shipmentId": "shp_1",
-			"weight":     float64(38500),
-			"pieces":     float64(10),
-		},
-	}
-	changed := []*agentdecision.AgentDecision{{
-		ProposalID:    &proposal.ID,
-		Modifications: map[string]any{"pieces": float64(12)},
-	}}
-
-	got := ranWith(proposal, changed)
-	assert.Equal(t, " It ran with pieces: 12; weight: 38500.", got)
-
-	proposal.ExecutionResult = &agentrecord.ToolExecutionResult{
-		Action: "created",
-		Kind:   "report",
-		Name:   "On-time",
-	}
-	assert.Empty(
-		t,
-		ranWith(proposal, nil),
-		"a write that describes its own result says that instead",
-	)
-
-	proposal.ExecutionResult = nil
-	proposal.Status = agent.ProposalStatusRejected
-	assert.Empty(t, ranWith(proposal, nil))
 }

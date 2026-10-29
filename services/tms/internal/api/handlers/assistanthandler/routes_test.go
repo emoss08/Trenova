@@ -50,6 +50,8 @@ func (e *readOnlyEngine) Check(
 // reachedService records that a request got past the permission middleware.
 type reachedService struct {
 	assistantports.AssistantService
+	assistantports.AssistantArtifactService
+	assistantports.AssistantProposalService
 
 	reached       bool
 	listed        *conversationports.ListThreadsRequest
@@ -140,7 +142,9 @@ func call(t *testing.T, method, path, body string) (*reachedService, int) {
 		AppConfig: &appconfig.Config{Debug: true},
 	})
 	handler := New(Params{
-		Service: service,
+		Service:   service,
+		Artifacts: service,
+		Proposals: service,
 		PermissionMiddleware: middleware.NewPermissionMiddleware(
 			middleware.PermissionMiddlewareParams{
 				PermissionEngine: &readOnlyEngine{},

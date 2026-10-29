@@ -36,6 +36,9 @@ type Params struct {
 	fx.In
 
 	Service              assistantports.AssistantService
+	Artifacts            assistantports.AssistantArtifactService
+	Proposals            assistantports.AssistantProposalService
+	Transcripts          assistantports.AssistantTranscriptService
 	Turns                *assistantturnservice.Service
 	Workflows            kernelports.WorkflowStarter
 	Schedules            *conversationscheduleservice.Service
@@ -50,33 +53,39 @@ type Params struct {
 }
 
 type Handler struct {
-	service   assistantports.AssistantService
-	turns     *assistantturnservice.Service
-	workflows kernelports.WorkflowStarter
-	schedules scheduleService
-	handoffs  assistantports.AssistantHandoffService
-	queue     *assistantqueueservice.Service
-	waits     *agentwaitservice.Service
-	cases     deskcaseports.AssistantCaseService
-	chapters  assistantchapterports.AssistantChapterService
-	eh        *helpers.ErrorHandler
-	pm        *middleware.PermissionMiddleware
-	logger    *zap.Logger
+	service     assistantports.AssistantService
+	artifacts   assistantports.AssistantArtifactService
+	proposals   assistantports.AssistantProposalService
+	transcripts assistantports.AssistantTranscriptService
+	turns       *assistantturnservice.Service
+	workflows   kernelports.WorkflowStarter
+	schedules   scheduleService
+	handoffs    assistantports.AssistantHandoffService
+	queue       *assistantqueueservice.Service
+	waits       *agentwaitservice.Service
+	cases       deskcaseports.AssistantCaseService
+	chapters    assistantchapterports.AssistantChapterService
+	eh          *helpers.ErrorHandler
+	pm          *middleware.PermissionMiddleware
+	logger      *zap.Logger
 }
 
 func New(p Params) *Handler {
 	h := &Handler{
-		service:   p.Service,
-		turns:     p.Turns,
-		workflows: p.Workflows,
-		handoffs:  p.Handoffs,
-		queue:     p.Queue,
-		waits:     p.Waits,
-		cases:     p.Cases,
-		chapters:  p.Chapters,
-		eh:        p.ErrorHandler,
-		pm:        p.PermissionMiddleware,
-		logger:    p.Logger.Named("assistanthandler"),
+		service:     p.Service,
+		artifacts:   p.Artifacts,
+		proposals:   p.Proposals,
+		transcripts: p.Transcripts,
+		turns:       p.Turns,
+		workflows:   p.Workflows,
+		handoffs:    p.Handoffs,
+		queue:       p.Queue,
+		waits:       p.Waits,
+		cases:       p.Cases,
+		chapters:    p.Chapters,
+		eh:          p.ErrorHandler,
+		pm:          p.PermissionMiddleware,
+		logger:      p.Logger.Named("assistanthandler"),
 	}
 	// A nil service put in the interface would no longer compare equal to
 	// nil, and the schedule routes would call through it.
@@ -545,7 +554,7 @@ func (h *Handler) pinArtifact(c *gin.Context) {
 		return
 	}
 
-	artifact, err := h.service.PinArtifact(c.Request.Context(), req, artifactID, body.Pinned)
+	artifact, err := h.artifacts.PinArtifact(c.Request.Context(), req, artifactID, body.Pinned)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -576,7 +585,7 @@ func (h *Handler) listThreadPlans(c *gin.Context) {
 		return
 	}
 
-	plans, err := h.service.ListThreadPlans(c.Request.Context(), req)
+	plans, err := h.proposals.ListThreadPlans(c.Request.Context(), req)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -592,7 +601,7 @@ func (h *Handler) listThreadProposals(c *gin.Context) {
 		return
 	}
 
-	proposals, err := h.service.ListThreadProposals(c.Request.Context(), req)
+	proposals, err := h.proposals.ListThreadProposals(c.Request.Context(), req)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -626,7 +635,7 @@ func (h *Handler) saveProposalEdits(c *gin.Context) {
 		return
 	}
 
-	edits, err := h.service.SaveProposalEdits(
+	edits, err := h.proposals.SaveProposalEdits(
 		c.Request.Context(),
 		req,
 		proposalID,
@@ -685,7 +694,7 @@ func (h *Handler) downloadTranscript(c *gin.Context) {
 		return
 	}
 
-	transcript, err := h.service.Transcript(c.Request.Context(), req)
+	transcript, err := h.transcripts.Transcript(c.Request.Context(), req)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return

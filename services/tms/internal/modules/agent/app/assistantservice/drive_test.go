@@ -97,7 +97,7 @@ func (s *Service) ask(
 		emit = func(kernelports.StreamEvent) {}
 	}
 
-	thread, err := s.StartAsk(ctx, req, actor)
+	thread, err := threadsOf(s).StartAsk(ctx, req, actor)
 	if err != nil {
 		return nil, err
 	}

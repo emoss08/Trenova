@@ -1,129 +1,37 @@
 package assistantservice
 
 import (
-	"context"
-	"errors"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice/assistanttest"
+	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice/turnlimits"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpagecontext"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationschedule"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationscheduleports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"go.uber.org/zap"
 )
 
-type stubConversations struct {
-	conversationports.ConversationRepository
-
-	thread   *conversation.Thread
-	appended []conversation.Message
-	// appendCtxErr is the state of the context AppendTurn was given, so a test
-	// can prove the save survives the request being cancelled.
-	appendCtxErr error
-	appendCalls  int
-	// messages is what ListMessages serves; lastList is what it was asked.
-	messages []conversation.Message
-	lastList conversationports.ListMessagesRequest
-	// count is the thread's length as CountMessages reports it.
-	count int
-	// tainted is every time the thread's taint was written.
-	tainted []conversationports.MarkThreadTaintedRequest
-	// contexts is every time the thread's context use was written.
-	contexts []conversationports.UpdateThreadContextRequest
-}
-
-func (s *stubConversations) UpdateThreadContext(
-	_ context.Context,
-	req conversationports.UpdateThreadContextRequest,
-) error {
-	s.contexts = append(s.contexts, req)
-
-	return nil
-}
-
-func (s *stubConversations) MarkThreadTainted(
-	_ context.Context,
-	req conversationports.MarkThreadTaintedRequest,
-) error {
-	s.tainted = append(s.tainted, req)
-
-	return nil
-}
-
-func (s *stubConversations) CountMessages(
-	context.Context,
-	conversationports.CountMessagesRequest,
-) (int, error) {
-	return s.count, nil
-}
-
-func (s *stubConversations) GetThread(
-	context.Context,
-	conversationports.GetThreadRequest,
-) (*conversation.Thread, error) {
-	return s.thread, nil
-}
-
-func (s *stubConversations) ListMessages(
-	_ context.Context,
-	req conversationports.ListMessagesRequest,
-) ([]conversation.Message, error) {
-	s.lastList = req
-
-	return s.messages, nil
-}
-
-func (s *stubConversations) AppendTurn(
-	ctx context.Context,
-	req conversationports.AppendTurnRequest,
-) ([]conversation.Message, error) {
-	s.appended = req.Messages
-	s.appendCtxErr = ctx.Err()
-	s.appendCalls++
-	return req.Messages, nil
-}
-
-func (s *stubConversations) UpdateThread(
-	_ context.Context,
-	thread *conversation.Thread,
-) (*conversation.Thread, error) {
-	return thread, nil
-}
-
-type stubDefinitions struct {
-	agentdefinitionports.AgentDefinitionRepository
-
-	definition *agentdefinition.Definition
-}
-
-func (s *stubDefinitions) GetByID(
-	context.Context,
-	agentdefinitionports.GetAgentDefinitionByIDRequest,
-) (*agentdefinition.Definition, error) {
-	return s.definition, nil
-}
-
 func newConversationService(
-	completion *scriptedCompletion,
+	completion *assistanttest.ScriptedCompletion,
 	definition *agentdefinition.Definition,
-) (*Service, *stubConversations) {
-	svc := newService(completion, &stubQueryRegistry{}, &stubActionRegistry{})
-	conversations := &stubConversations{thread: &conversation.Thread{
+) (*Service, *assistanttest.StubConversations) {
+	svc := newService(
+		completion,
+		&assistanttest.StubQueryRegistry{},
+		&assistanttest.StubActionRegistry{},
+	)
+	conversations := &assistanttest.StubConversations{Thread: &conversation.Thread{
 		ID:                pulid.MustNew("athr_"),
 		AgentDefinitionID: pulid.MustNew("agdef_"),
 		Title:             "Dispatch",
 	}}
 	svc.conversations = conversations
-	svc.definitions = &stubDefinitions{definition: definition}
+	svc.definitions = &assistanttest.StubDefinitions{Definition: definition}
 
 	return svc, conversations
 }
@@ -131,14 +39,14 @@ func newConversationService(
 func TestSendMessageStream_StoresThePageContextOnTheUserTurn(t *testing.T) {
 	t.Parallel()
 
-	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
-		textTurn("It is at the Los Angeles terminal."),
+	completion := &assistanttest.ScriptedCompletion{Turns: []*llmports.ChatCompletionResult{
+		assistanttest.TextTurn("It is at the Los Angeles terminal."),
 	}}
-	svc, conversations := newConversationService(completion, testDefinition())
-	actor := testActor()
+	svc, conversations := newConversationService(completion, assistanttest.Definition())
+	actor := assistanttest.Actor()
 
 	result, err := svc.sendMessage(t.Context(), &assistantports.SendMessageRequest{
-		ThreadID: conversations.thread.ID,
+		ThreadID: conversations.Thread.ID,
 		Content:  "Where is this shipment?",
 		Page: &agentpagecontext.PageContext{
 			Path:       " /shipments?panelEntityId=shp_1 ",
@@ -151,15 +59,15 @@ func TestSendMessageStream_StoresThePageContextOnTheUserTurn(t *testing.T) {
 	require.NoError(t, err)
 	assert.False(t, result.Refused)
 
-	require.NotEmpty(t, conversations.appended)
-	user := conversations.appended[0]
+	require.NotEmpty(t, conversations.Appended)
+	user := conversations.Appended[0]
 	assert.Equal(t, conversation.RoleUser, user.Role)
 	require.NotNil(t, user.PageContext, "the user turn carries the page it was asked from")
 	assert.Equal(t, "/shipments?panelEntityId=shp_1", user.PageContext.Path)
 	assert.Equal(t, "shipment", user.PageContext.EntityType)
 	assert.Equal(t, "shp_1", user.PageContext.EntityID)
 
-	for _, message := range conversations.appended[1:] {
+	for _, message := range conversations.Appended[1:] {
 		assert.Nil(t, message.PageContext, "only the user turn records the page")
 	}
 
@@ -175,14 +83,14 @@ func TestSendMessageStream_StoresThePageContextOnTheUserTurn(t *testing.T) {
 func TestSendMessageStream_RejectsAPageContextItCouldNotTrust(t *testing.T) {
 	t.Parallel()
 
-	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
-		textTurn("never reached"),
+	completion := &assistanttest.ScriptedCompletion{Turns: []*llmports.ChatCompletionResult{
+		assistanttest.TextTurn("never reached"),
 	}}
-	svc, conversations := newConversationService(completion, testDefinition())
-	actor := testActor()
+	svc, conversations := newConversationService(completion, assistanttest.Definition())
+	actor := assistanttest.Actor()
 
 	_, err := svc.sendMessage(t.Context(), &assistantports.SendMessageRequest{
-		ThreadID: conversations.thread.ID,
+		ThreadID: conversations.Thread.ID,
 		Content:  "Where is this?",
 		Page: &agentpagecontext.PageContext{
 			Path:       "https://evil.example/steal",
@@ -203,86 +111,7 @@ func TestSendMessageStream_RejectsAPageContextItCouldNotTrust(t *testing.T) {
 	assert.True(t, fields["context.path"])
 	assert.True(t, fields["context.entityType"])
 	assert.Zero(t, completion.CallCount, "a rejected request never reaches the model")
-	assert.Empty(t, conversations.appended, "nothing is saved for a rejected request")
-}
-
-func numberedMessages(from, count int) []conversation.Message {
-	messages := make([]conversation.Message, 0, count)
-	for i := range count {
-		messages = append(messages, conversation.Message{
-			ID:       pulid.MustNew("amsg_"),
-			Sequence: from + i,
-			Role:     conversation.RoleUser,
-			Content:  "m",
-		})
-	}
-
-	return messages
-}
-
-// A page is the newest N of what lies below the cursor, and one row past it
-// says whether there is a page above without counting what is left.
-func TestListMessages_PagesFromTheEndAndSaysWhetherMoreExist(t *testing.T) {
-	t.Parallel()
-
-	svc, conversations := newConversationService(&scriptedCompletion{}, testDefinition())
-	conversations.messages = numberedMessages(10, 3)
-	conversations.count = 13
-	before := 13
-
-	page, err := svc.ListMessages(t.Context(), assistantports.ListThreadMessagesRequest{
-		Thread:         conversationports.GetThreadRequest{ID: conversations.thread.ID},
-		Limit:          2,
-		BeforeSequence: &before,
-	})
-	require.NoError(t, err)
-
-	assert.Equal(t, 3, conversations.lastList.Limit, "one more than the page")
-	require.NotNil(t, conversations.lastList.BeforeSequence)
-	assert.Equal(t, 13, *conversations.lastList.BeforeSequence)
-	assert.True(t, page.HasMore)
-	require.Len(t, page.Results, 2)
-	assert.Equal(t, 11, page.Results[0].Sequence, "the extra row is the oldest, and is dropped")
-	assert.Equal(t, 12, page.Results[1].Sequence)
-	assert.Equal(t, 13, page.Total)
-	assert.Equal(t, maxThreadMessages, page.Limit)
-}
-
-func TestListMessages_ReportsTheLastPageAsSuch(t *testing.T) {
-	t.Parallel()
-
-	svc, conversations := newConversationService(&scriptedCompletion{}, testDefinition())
-	conversations.messages = numberedMessages(0, 2)
-	conversations.count = 2
-
-	page, err := svc.ListMessages(t.Context(), assistantports.ListThreadMessagesRequest{
-		Thread: conversationports.GetThreadRequest{ID: conversations.thread.ID},
-		Limit:  2,
-	})
-	require.NoError(t, err)
-
-	assert.False(t, page.HasMore)
-	assert.Len(t, page.Results, 2)
-	assert.Nil(t, conversations.lastList.BeforeSequence)
-}
-
-func TestListMessages_ClampsThePageSize(t *testing.T) {
-	t.Parallel()
-
-	svc, conversations := newConversationService(&scriptedCompletion{}, testDefinition())
-
-	_, err := svc.ListMessages(t.Context(), assistantports.ListThreadMessagesRequest{
-		Thread: conversationports.GetThreadRequest{ID: conversations.thread.ID},
-	})
-	require.NoError(t, err)
-	assert.Equal(t, defaultPageLimit+1, conversations.lastList.Limit)
-
-	_, err = svc.ListMessages(t.Context(), assistantports.ListThreadMessagesRequest{
-		Thread: conversationports.GetThreadRequest{ID: conversations.thread.ID},
-		Limit:  100000,
-	})
-	require.NoError(t, err)
-	assert.Equal(t, maxPageLimit+1, conversations.lastList.Limit)
+	assert.Empty(t, conversations.Appended, "nothing is saved for a rejected request")
 }
 
 // A conversation that has reached its length is continued in a new one. The
@@ -290,15 +119,15 @@ func TestListMessages_ClampsThePageSize(t *testing.T) {
 func TestSendMessageStream_RefusesATurnOnAFullThread(t *testing.T) {
 	t.Parallel()
 
-	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
-		textTurn("It is in Los Angeles."),
+	completion := &assistanttest.ScriptedCompletion{Turns: []*llmports.ChatCompletionResult{
+		assistanttest.TextTurn("It is in Los Angeles."),
 	}}
-	svc, conversations := newConversationService(completion, testDefinition())
-	conversations.count = maxThreadMessages
-	actor := testActor()
+	svc, conversations := newConversationService(completion, assistanttest.Definition())
+	conversations.Count = turnlimits.MaxThreadMessages
+	actor := assistanttest.Actor()
 
 	_, err := svc.sendMessage(t.Context(), &assistantports.SendMessageRequest{
-		ThreadID:   conversations.thread.ID,
+		ThreadID:   conversations.Thread.ID,
 		Content:    "Where is it?",
 		TenantInfo: actor.TenantInfo(),
 	}, actor, nil)
@@ -306,7 +135,7 @@ func TestSendMessageStream_RefusesATurnOnAFullThread(t *testing.T) {
 	require.Error(t, err)
 	assert.True(t, errortypes.IsBusinessError(err))
 	assert.Contains(t, err.Error(), "new conversation")
-	assert.Zero(t, conversations.appendCalls, "nothing ran and nothing was saved")
+	assert.Zero(t, conversations.AppendCalls, "nothing ran and nothing was saved")
 }
 
 // The picker's choice is saved on the thread. A later send that says nothing
@@ -317,13 +146,15 @@ func TestSendMessageStream_KeepsTheSavedModelUnlessTheSendChoosesOne(t *testing.
 	t.Parallel()
 
 	chosen := pulid.MustNew("aiprv_")
-	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{textTurn("ok")}}
-	svc, conversations := newConversationService(completion, testDefinition())
-	conversations.thread.PreferredProviderID = chosen
-	actor := testActor()
+	completion := &assistanttest.ScriptedCompletion{
+		Turns: []*llmports.ChatCompletionResult{assistanttest.TextTurn("ok")},
+	}
+	svc, conversations := newConversationService(completion, assistanttest.Definition())
+	conversations.Thread.PreferredProviderID = chosen
+	actor := assistanttest.Actor()
 
 	_, err := svc.sendMessage(t.Context(), &assistantports.SendMessageRequest{
-		ThreadID:   conversations.thread.ID,
+		ThreadID:   conversations.Thread.ID,
 		Content:    "hello",
 		TenantInfo: actor.TenantInfo(),
 	}, actor, nil)
@@ -332,7 +163,7 @@ func TestSendMessageStream_KeepsTheSavedModelUnlessTheSendChoosesOne(t *testing.
 	assert.Equal(
 		t,
 		chosen,
-		conversations.thread.PreferredProviderID,
+		conversations.Thread.PreferredProviderID,
 		"a send with no choice keeps the saved one",
 	)
 	require.NotNil(t, completion.LastReq)
@@ -340,7 +171,7 @@ func TestSendMessageStream_KeepsTheSavedModelUnlessTheSendChoosesOne(t *testing.
 	assert.True(t, completion.LastReq.PinPreferred, "the person's own choice is the model they get")
 
 	_, err = svc.sendMessage(t.Context(), &assistantports.SendMessageRequest{
-		ThreadID:       conversations.thread.ID,
+		ThreadID:       conversations.Thread.ID,
 		Content:        "hello again",
 		TenantInfo:     actor.TenantInfo(),
 		ProviderChosen: true,
@@ -348,149 +179,8 @@ func TestSendMessageStream_KeepsTheSavedModelUnlessTheSendChoosesOne(t *testing.
 	require.NoError(t, err)
 	assert.True(
 		t,
-		conversations.thread.PreferredProviderID.IsNil(),
+		conversations.Thread.PreferredProviderID.IsNil(),
 		"choosing automatic clears the saved model",
 	)
 	assert.False(t, completion.LastReq.PinPreferred)
-}
-
-type deletingConversations struct {
-	conversationports.ConversationRepository
-
-	err error
-}
-
-func (d *deletingConversations) DeleteThread(
-	context.Context,
-	conversationports.GetThreadRequest,
-) error {
-	return d.err
-}
-
-// A deleted conversation's undecided proposals stayed in the decisions inbox,
-// and approving one followed up into a thread that no longer existed. They are
-// withdrawn with it, and only once the delete has gone through.
-func TestDeleteThread_WithdrawsWhatItLeftWaiting(t *testing.T) {
-	t.Parallel()
-
-	threadID := pulid.MustNew("athr_")
-	proposals := &stubProposalRepo{}
-	svc := &Service{
-		logger:        zap.NewNop(),
-		conversations: &deletingConversations{},
-		proposals:     proposals,
-	}
-
-	require.NoError(
-		t,
-		svc.DeleteThread(t.Context(), conversationports.GetThreadRequest{ID: threadID}),
-	)
-	assert.Equal(t, []pulid.ID{threadID}, proposals.expiredThreads)
-
-	refused := &stubProposalRepo{}
-	svc = &Service{
-		logger:        zap.NewNop(),
-		conversations: &deletingConversations{err: errors.New("not yours")},
-		proposals:     refused,
-	}
-	require.Error(
-		t,
-		svc.DeleteThread(t.Context(), conversationports.GetThreadRequest{ID: threadID}),
-	)
-	assert.Empty(t, refused.expiredThreads, "a delete that did not happen withdraws nothing")
-}
-
-// heldSchedules stands in for the schedule service: the schedules a
-// conversation keeps, whether they were read before it was deleted, and what
-// was forgotten.
-type heldSchedules struct {
-	held       []*conversationschedule.Schedule
-	readErr    error
-	asked      []conversationscheduleports.ThreadSchedulesRequest
-	readBefore bool
-	forgot     []*conversationschedule.Schedule
-	deleted    *bool
-}
-
-func (h *heldSchedules) OfThread(
-	_ context.Context,
-	req conversationscheduleports.ThreadSchedulesRequest,
-) ([]*conversationschedule.Schedule, error) {
-	h.asked = append(h.asked, req)
-	h.readBefore = !*h.deleted
-
-	return h.held, h.readErr
-}
-
-func (h *heldSchedules) Forget(_ context.Context, schedules []*conversationschedule.Schedule) {
-	h.forgot = append(h.forgot, schedules...)
-}
-
-type recordingDelete struct {
-	conversationports.ConversationRepository
-
-	err     error
-	deleted bool
-}
-
-func (d *recordingDelete) DeleteThread(context.Context, conversationports.GetThreadRequest) error {
-	if d.err != nil {
-		return d.err
-	}
-	d.deleted = true
-
-	return nil
-}
-
-/*
-The requests scheduled in a conversation are deleted with it, by cascade, so
-they are read while there is still something to read, and once the
-conversation is gone their Temporal schedules are removed and their owner's
-tabs told. A delete that did not happen forgets nothing, and one whose
-schedules could not be read still goes through: the reconcile removes what
-is left.
-*/
-func TestDeleteThread_ForgetsTheSchedulesItKept(t *testing.T) {
-	t.Parallel()
-
-	req := conversationports.GetThreadRequest{
-		ID:     pulid.MustNew("athr_"),
-		UserID: pulid.MustNew("usr_"),
-	}
-	held := []*conversationschedule.Schedule{
-		{ID: pulid.MustNew("csch_")},
-		{ID: pulid.MustNew("csch_")},
-	}
-
-	conversations := &recordingDelete{}
-	schedules := &heldSchedules{held: held, deleted: &conversations.deleted}
-	svc := &Service{logger: zap.NewNop(), conversations: conversations, schedules: schedules}
-	require.NoError(t, svc.DeleteThread(t.Context(), req))
-	assert.True(t, schedules.readBefore, "the schedules are read before the cascade takes them")
-	require.Len(t, schedules.asked, 1)
-	assert.Equal(t, req.ID, schedules.asked[0].ThreadID)
-	assert.Equal(t, req.UserID, schedules.asked[0].UserID)
-	assert.Equal(t, held, schedules.forgot)
-
-	refused := &recordingDelete{err: errors.New("not yours")}
-	kept := &heldSchedules{held: held, deleted: &refused.deleted}
-	svc = &Service{logger: zap.NewNop(), conversations: refused, schedules: kept}
-	require.Error(t, svc.DeleteThread(t.Context(), req))
-	assert.Empty(t, kept.forgot, "a delete that did not happen forgets no schedule")
-
-	unread := &recordingDelete{}
-	failing := &heldSchedules{readErr: errors.New("unavailable"), deleted: &unread.deleted}
-	svc = &Service{logger: zap.NewNop(), conversations: unread, schedules: failing}
-	require.NoError(t, svc.DeleteThread(t.Context(), req))
-	assert.True(t, unread.deleted, "a failed read does not stop the delete")
-	assert.Empty(t, failing.forgot)
-
-	plain := &recordingDelete{}
-	svc = &Service{logger: zap.NewNop(), conversations: plain}
-	require.NoError(
-		t,
-		svc.DeleteThread(t.Context(), req),
-		"without the schedule service it deletes",
-	)
-	assert.True(t, plain.deleted)
 }

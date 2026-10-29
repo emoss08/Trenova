@@ -19,7 +19,7 @@ to it by the typecheck, a generator, or a test.
 | Where a record opens | `client/apps/web/src/config/record-links.ts` | product guide → `services/tms/pkg/productguide/catalog_gen.json` |
 | Which kinds the Desk draws as a card | `client/apps/web/src/routes/desk/_components/artifacts/cards/registry.tsx` | product guide (`deskCard` on the record link) |
 | The kind of record each agent subject is | `agent/subjectrecord.go` (`subjectRecordKinds`) | `AgentSubjectRecordKind` |
-| The kinds the @ search offers and their tabs | `assistantservice/mentions.go` (`mentionKinds`) | `MentionKindTab`, `MentionKindsAskedFor` |
+| The kinds the @ search offers and their tabs | `assistantservice/assistantthreads/mentions.go` (`mentionKinds`) | `MentionKindTab`, `MentionKindsAskedFor` |
 
 Read from those, never copied:
 

@@ -20673,3 +20673,13 @@ github.com/emoss08/trenova/internal/deskbench.Bench.Run	github.com/emoss08/treno
 github.com/emoss08/trenova/internal/deskbench.Bench.Route	github.com/emoss08/trenova/internal/deskbench/benchrouting.Match
 github.com/emoss08/trenova/internal/deskbench.Bench.ProfileData	github.com/emoss08/trenova/internal/deskbench/benchsql.Database.ProfileData
 github.com/emoss08/trenova/internal/deskbench.Bench.FactValues	github.com/emoss08/trenova/internal/deskbench/benchsql.Database.FactValues
+github.com/emoss08/trenova/internal/modules/agent/app/assistantservice.AttachmentResourceType	github.com/emoss08/trenova/internal/modules/agent/app/assistantservice/turnattachments.AttachmentResourceType
+github.com/emoss08/trenova/internal/modules/agent/app/assistantservice.CompactRequest	github.com/emoss08/trenova/internal/modules/agent/app/assistantservice/assistantcompaction.CompactRequest
+github.com/emoss08/trenova/internal/modules/agent/app/assistantservice.CompactionPlan	github.com/emoss08/trenova/internal/modules/agent/app/assistantservice/assistantcompaction.CompactionPlan
+github.com/emoss08/trenova/internal/modules/agent/app/assistantservice.CompactionReply	github.com/emoss08/trenova/internal/modules/agent/app/assistantservice/assistantcompaction.CompactionReply
+github.com/emoss08/trenova/internal/modules/agent/app/assistantservice.CompactionResult	github.com/emoss08/trenova/internal/modules/agent/app/assistantservice/assistantcompaction.CompactionResult
+github.com/emoss08/trenova/internal/modules/agent/app/assistantservice.DecisionReported	github.com/emoss08/trenova/internal/modules/agent/app/assistantservice/decisionnotes.DecisionReported
+github.com/emoss08/trenova/internal/modules/agent/app/assistantservice.DocumentExportDOCX	github.com/emoss08/trenova/internal/modules/agent/app/assistantservice/assistantartifacts.DocumentExportDOCX
+github.com/emoss08/trenova/internal/modules/agent/app/assistantservice.DocumentExportPDF	github.com/emoss08/trenova/internal/modules/agent/app/assistantservice/assistantartifacts.DocumentExportPDF
+github.com/emoss08/trenova/internal/modules/agent/app/assistantservice.EventAssistantRaiseRequested	github.com/emoss08/trenova/internal/modules/agent/app/assistantservice/assistantthreads.EventAssistantRaiseRequested
+github.com/emoss08/trenova/internal/modules/agent/app/assistantservice.MaxAttachments	github.com/emoss08/trenova/internal/modules/agent/app/assistantservice/turnattachments.MaxAttachments

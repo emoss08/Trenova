@@ -344,7 +344,7 @@ told to fix and send again rather than to put the text in its reply. The
 
 The tool answers with the analysis id and what was shown, tables cut to their first 25 rows.
 A kept analysis that ran to the end becomes the Desk's `analysis` artifact
-(`assistantservice/analysis_artifact.go`), titled by the script's title, so running it again
+(`assistantservice/toolartifacts/analysis_artifact.go`), titled by the script's title, so running it again
 under the same title is the next version of one card. The card draws the figures as a strip,
 then each chart and table in the order shown, and folds what it printed and the code beneath; a
 table longer than the agent was shown is read whole from `GET /agent-analysis/runs/:runID/`.
@@ -704,7 +704,7 @@ decides from its own use whether to keep it.
 | Datasets (resolving, typing) | `querytools/scriptquerytools/script_datasets.go` |
 | Paging datasets in, what a script shows | `scriptrunner/display.go`; `domain/analysis` (`run.go`, `display.go`) |
 | Kept analyses and who reads them | `analysisrunservice`, `analysisrunrepository`, `api/handlers/agentanalysishandler`; table `agent_analysis_runs` |
-| The Desk card and the history | `assistantservice/analysis_artifact.go`; client `routes/desk/_components/artifacts/kinds/analysis/`, `components/assistant/analysis-result.tsx` and `analysis-chart.tsx`, `routes/agent-control/_components/activity/analysis-runs.tsx` |
+| The Desk card and the history | `assistantservice/toolartifacts/analysis_artifact.go`; client `routes/desk/_components/artifacts/kinds/analysis/`, `components/assistant/analysis-result.tsx` and `analysis-chart.tsx`, `routes/agent-control/_components/activity/analysis-runs.tsx` |
 | Red-team cases and harness | `agentredteam/testdata/cases/16_*`–`27_*`, `scripts.go` (`providerScripts`) |
 | Scenarios | `deskbench/scenarios/codemode.yaml`; `mode` and `pair` in `internal/deskbench/benchscenario` |
 

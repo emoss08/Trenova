@@ -28,6 +28,26 @@ interface the `Turn` satisfies (`replycheck.Turn`, `runtimetools.Turn`,
 `delegation.HandingTurn`, `turnmemory.Turn`) rather than living on `Turn`.
 Test fixtures shared by these packages are in `runtimetest`.
 
+`assistantservice` is the assistant's turn: `Service` prepares a turn
+(`PrepareTurn`, `PrepareDryRun`, `OpenDelegate`), finishes it (`FinishTurn`,
+`ObserveTool`) and observes attachments. What a person reads the assistant
+through is one service per port, each in its own package with its own module:
+`assistantthreads` (`AssistantService` and `PageAssistant`: threads, messages,
+search, budget, commands, models), `assistantartifacts`
+(`AssistantArtifactService`), `assistantproposals` (`AssistantProposalService`),
+`assistanttranscripts` (`AssistantTranscriptService` and the agent run
+transcript) and `assistantcompaction` (the compaction workflow's service). The
+pieces they share are packages named for what they provide: `agentaccess` (who
+may use which agent and read which subject), `turnlimits`, `attribution`,
+`memorynotes`, `proposaloutcomes`, `proposalstores`, `chaptertitles`,
+`contextusage`, `decisionnotes` (the note a decision leaves for the next turn),
+`assistantproviders`, `turnattachments`, `workingset`, and for artifacts
+`artifactrecorder` (the recorder a turn writes through), `toolartifacts` (an
+artifact from each tool's result), `extractionartifact`, `recordviews` and
+`artifactpayload`. A service holds its dependencies as fields and builds the
+small component it needs from them per call, so a test sets the fields it uses.
+Test fixtures shared by these packages are in `assistanttest`.
+
 ## Everything is a workflow
 
 Every AI feature runs on Temporal. The API authenticates the request, records
@@ -1219,7 +1239,7 @@ anywhere in Trenova, and treats the page under the palette as where the person w
 its table only for a question that points at those rows.
 
 Only the organization's general assistant (`TemplateGeneralAssistant`) answers one
-(`assistantservice.askAgent`). When it is off, or not open to the person, the palette says so;
+(`assistantthreads.Service.askAgent`). When it is off, or not open to the person, the palette says so;
 no other chat agent stands in, because each is built for its own desk and answered every
 question from that desk's records (the Agent Activity Desk, first by name, answered every
 question from agent runs). On a quick question's conversation (`ThreadOrigin.ReadsEverything`)
@@ -2961,10 +2981,10 @@ the conversation's own tool rows.
 The disclosure's **Download** saves it as a file:
 `GET /api/v1/agent-runs/:runID/transcript/`, gated on reading an agent run and
 read under the caller's tenant (another organization's run is not found). It is
-served by `assistantservice.Service.RunTranscript` through the narrow
+served by `assistanttranscripts.Service.RunTranscript` through the narrow
 `AgentRunTranscriptService` port, as `text/markdown` with a server-chosen file
 name and `no-store`, exactly as a conversation's download is. Both documents
-come from one renderer in `assistantservice/transcript.go`
+come from one renderer in `assistantservice/assistanttranscripts/transcript.go`
 (`renderTranscriptDocument`), which takes a message list, a heading and the
 proposals: a conversation passes its thread's messages, a run converts its
 stored entries back with `conversationtranscript.MessageOfTranscript` and passes the

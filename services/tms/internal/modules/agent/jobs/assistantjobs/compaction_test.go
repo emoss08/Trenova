@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/modelstream"
-	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice"
+	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice/assistantcompaction"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/assistantjobs/assistantcontract"
@@ -70,7 +70,7 @@ func (s *CompactionWorkflowTestSuite) AfterTest(_, _ string) {
 
 func (s *CompactionWorkflowTestSuite) prepares(err error) {
 	var a *Activities
-	plan := &assistantservice.CompactionPlan{
+	plan := &assistantcompaction.CompactionPlan{
 		ThreadID: s.payload.ThreadID,
 		Auto:     true,
 		Through:  39,

@@ -5,17 +5,15 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice/workingset"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpagecontext"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/shared/pulid"
 )
 
 // turnChecks is everything a question is checked against and read with
@@ -85,112 +83,61 @@ func (s *Service) checkTurn(
 	var wg sync.WaitGroup
 
 	wg.Go(func() {
-		checks.attachments, checks.runtimeAttachments, checks.attachmentsErr = s.resolveAttachments(
-			ctx, thread, req.AttachmentDocumentIDs, actor, req.TenantInfo,
-		)
+		checks.attachments, checks.runtimeAttachments, checks.attachmentsErr = s.attachmentReads().
+			ResolveAttachments(
+				ctx, thread, req.AttachmentDocumentIDs, actor, req.TenantInfo,
+			)
 	})
 	wg.Go(func() {
-		checks.definition, checks.definitionErr = s.usableDefinition(ctx, thread, actor, req)
+		checks.definition, checks.definitionErr = s.access().
+			UsableDefinition(ctx, thread, actor, req)
 		if checks.definitionErr == nil {
-			checks.budgetErr = s.assertWithinBudget(ctx, checks.definition)
+			checks.budgetErr = s.limits().AssertWithinBudget(ctx, checks.definition)
 		}
 	})
 	wg.Go(func() {
 		checks.directed, checks.directedErr = s.directedTask(ctx, thread, actor, req)
 	})
 	wg.Go(func() {
-		checks.pageErr = s.assertPageTurn(ctx, thread, page, actor)
+		checks.pageErr = s.access().AssertPageTurn(ctx, thread, page, actor)
 	})
 	wg.Go(func() {
-		checks.roomErr = s.assertRoom(ctx, thread, req.TenantInfo)
+		checks.roomErr = s.limits().AssertRoom(ctx, thread, req.TenantInfo)
 	})
 	wg.Go(func() {
-		checks.allowanceErr = s.assertWithinAllowance(ctx, thread.UserID, req.TenantInfo)
+		checks.allowanceErr = s.limits().AssertWithinAllowance(ctx, thread.UserID, req.TenantInfo)
 	})
 	wg.Go(func() {
-		checks.planErr = s.assertWithinPlan(ctx, req.TenantInfo)
+		checks.planErr = s.limits().AssertWithinPlan(ctx, req.TenantInfo)
 	})
 	// Another agent's steps on a task this one handed it are the thread's to
 	// show, not the model's to read again: it only ever saw its own call and
 	// the answer that came back. A compacted stretch is read as its summary.
 	wg.Go(func() {
-		checks.history, checks.historyErr = s.modelHistory(ctx, thread.ID, req.TenantInfo)
+		checks.history, checks.historyErr = s.usage().ModelHistory(ctx, thread.ID, req.TenantInfo)
 		if checks.historyErr == nil {
-			checks.earlierFiles = s.earlierFileTexts(ctx, checks.history, req.TenantInfo)
+			checks.earlierFiles = s.attachmentReads().
+				EarlierFileTexts(ctx, checks.history, req.TenantInfo)
 		}
 	})
 	wg.Go(func() {
-		checks.proposals = s.proposalOutcomes(ctx, thread, req.TenantInfo)
+		checks.proposals = s.outcomes().Outcomes(ctx, thread, req.TenantInfo)
 	})
 	wg.Go(func() {
 		checks.subject = s.describeSubject(ctx, thread, actor, req.TenantInfo)
 	})
 	wg.Go(func() {
-		checks.anchors = s.anchorRecords(ctx, &anchorScope{
-			thread:   thread,
-			page:     page,
-			mentions: req.Mentions,
-			actor:    actor,
-			tenant:   req.TenantInfo,
+		checks.anchors = s.anchorRecords(ctx, &workingset.AnchorScope{
+			Thread:   thread,
+			Page:     page,
+			Mentions: req.Mentions,
+			Actor:    actor,
+			Tenant:   req.TenantInfo,
 		})
 	})
 	wg.Wait()
 
 	return checks
-}
-
-// usableDefinition is the thread's agent, refused when it is switched off,
-// is not a chat agent, or is not one the person may use. On a quick question's
-// conversation it also holds every read, narrowed to the person's as any
-// tool is.
-func (s *Service) usableDefinition(
-	ctx context.Context,
-	thread *conversation.Thread,
-	actor *permissionports.RequestActor,
-	req *assistantports.SendMessageRequest,
-) (*agentdefinition.Definition, error) {
-	definition, err := s.usableAgent(ctx, thread.AgentDefinitionID, actor, req.TenantInfo)
-	if err != nil {
-		return nil, err
-	}
-	if thread.Origin.ReadsEverything() {
-		return definition.HoldingReads(s.everyRead()), nil
-	}
-
-	return definition, nil
-}
-
-// usableAgent is an agent the person may talk to: enabled, a chat agent,
-// and one their roles give them.
-func (s *Service) usableAgent(
-	ctx context.Context,
-	id pulid.ID,
-	actor *permissionports.RequestActor,
-	tenant pagination.TenantInfo,
-) (*agentdefinition.Definition, error) {
-	definition, err := s.definitions.GetByID(
-		ctx,
-		agentdefinitionports.GetAgentDefinitionByIDRequest{
-			ID:         id,
-			TenantInfo: tenant,
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
-	if !definition.Enabled {
-		return nil, errortypes.NewBusinessError(
-			"Agent {0} is disabled and cannot be used", definition.Name,
-		)
-	}
-	if err = assertChatAgent(definition); err != nil {
-		return nil, err
-	}
-	if err = s.assertMayUseAgent(ctx, actor, definition); err != nil {
-		return nil, err
-	}
-
-	return definition, nil
 }
 
 // directedTask is the agent the person handed the message to, checked as
@@ -211,11 +158,11 @@ func (s *Service) directedTask(
 			"This conversation's agent takes the message itself; send it without naming one")
 	}
 
-	definition, err := s.usableAgent(ctx, req.DirectedAgentID, actor, req.TenantInfo)
+	definition, err := s.access().UsableAgent(ctx, req.DirectedAgentID, actor, req.TenantInfo)
 	if err != nil {
 		return nil, err
 	}
-	if err = s.assertWithinBudget(ctx, definition); err != nil {
+	if err = s.limits().AssertWithinBudget(ctx, definition); err != nil {
 		return nil, err
 	}
 

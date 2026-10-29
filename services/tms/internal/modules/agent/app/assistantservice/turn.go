@@ -8,6 +8,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentguard"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/delegation"
+	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice/decisionnotes"
+	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice/memorynotes"
+	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice/toolartifacts"
+	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice/workingset"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
@@ -219,20 +223,20 @@ func (s *Service) prepareTurn(
 		content += s.showReading(ctx, thread, actor, req.TenantInfo, resumed.document)
 	}
 	if followUp {
-		followed, noteErr := s.decisionNote(ctx, &decisionNoteParams{
-			thread:     thread,
-			proposalID: req.FollowUpProposalID,
-			planID:     req.FollowUpPlanID,
-			history:    history,
-			tenant:     req.TenantInfo,
+		followed, noteErr := s.notes().DecisionNote(ctx, &decisionnotes.DecisionNoteParams{
+			Thread:     thread,
+			ProposalID: req.FollowUpProposalID,
+			PlanID:     req.FollowUpPlanID,
+			History:    history,
+			Tenant:     req.TenantInfo,
 		})
 		if noteErr != nil {
 			return nil, nil, noteErr
 		}
-		content = followed.note +
-			s.showWritten(ctx, thread, actor, req.TenantInfo, followed.decided)
-		checks.anchors = s.anchorChanged(
-			ctx, checks.anchors, followed.changed, actor, req.TenantInfo,
+		content = followed.Note +
+			s.showWritten(ctx, thread, actor, req.TenantInfo, followed.Decided)
+		checks.anchors = s.notes().AnchorChanged(
+			ctx, checks.anchors, followed.Changed, actor, req.TenantInfo,
 		)
 	}
 
@@ -309,7 +313,7 @@ func (s *Service) keepProviderChoice(
 		return
 	}
 
-	chosen := s.resolvePreference(ctx, req.PreferredProviderID, *actor)
+	chosen := s.providerChoice().ResolvePreference(ctx, req.PreferredProviderID, *actor)
 	if chosen == thread.PreferredProviderID {
 		return
 	}
@@ -365,19 +369,19 @@ func (s *Service) FinishTurn(
 	}
 
 	artifacts := s.newArtifactRecorder(ctx, thread, req.TenantInfo, req.Actor, emit)
-	artifacts.adopt(req.Artifacts)
+	artifacts.Adopt(req.Artifacts)
 
 	turn := turnResultOf(plan.Input, plan.Decision, req.Run, req.Failure)
 	attachTurnContext(turn.Messages, plan.turnContext())
-	keepTurnMemories(turn.Messages, req.Run)
+	memorynotes.KeepTurnMemories(turn.Messages, req.Run)
 	switch {
 	case plan.FollowUp:
-		markDecisionNote(turn.Messages)
+		decisionnotes.MarkDecisionNote(turn.Messages)
 	case plan.WaitNote:
-		markInput(turn.Messages, conversation.MessageKindWaitNote)
+		decisionnotes.MarkInput(turn.Messages, conversation.MessageKindWaitNote)
 	}
 
-	artifacts.nameLinks(turn.Messages, &turn.Reply)
+	artifacts.NameLinks(turn.Messages, &turn.Reply)
 
 	saved, err := s.conversations.AppendTurn(ctx, conversationports.AppendTurnRequest{
 		ThreadID:   thread.ID,
@@ -388,15 +392,15 @@ func (s *Service) FinishTurn(
 	if err != nil {
 		return nil, err
 	}
-	artifacts.attachMessages(sourceMessageIndex(saved))
+	artifacts.AttachMessages(sourceMessageIndex(saved))
 	if req.Failure == nil {
-		artifacts.keepLinked(linkedArtifacts(saved))
+		artifacts.KeepLinked(toolartifacts.LinkedArtifacts(saved))
 	}
 	s.showFinishedAttachments(ctx, thread, plan, req.Actor, req.TenantInfo, emit)
 	s.runtime.MarkToolEffects(saved)
-	s.nameDelegatedSteps(ctx, req.TenantInfo, saved)
+	s.attribution().NameDelegatedSteps(ctx, req.TenantInfo, saved)
 	s.measureAfterTurn(ctx, thread, plan, saved, runWindow(req.Run), req.TenantInfo, emit)
-	s.describeMemories(ctx, req.TenantInfo, req.Actor.UserID, saved)
+	s.memoryNotes().Describe(ctx, req.TenantInfo, req.Actor.UserID, saved)
 
 	if req.Failure == nil && !plan.FollowUp && !plan.WaitNote {
 		s.titleIfUnnamed(ctx, thread, plan.Input)
@@ -404,12 +408,14 @@ func (s *Service) FinishTurn(
 
 	taint := turnTaint(plan, req.Run)
 	s.keepThreadTaint(ctx, thread, taint, req.TenantInfo)
-	s.keepWorkingSet(ctx, &workingTurn{
-		thread:  thread,
-		plan:    plan,
-		saved:   saved,
-		actions: turn.Actions,
-		at:      timeutils.NowUnix(),
+	s.keepWorkingSet(ctx, &workingset.Turn{
+		Thread:    thread,
+		Page:      plan.Page,
+		Mentions:  plan.Mentions,
+		Proposals: plan.Proposals,
+		Saved:     saved,
+		Actions:   turn.Actions,
+		At:        timeutils.NowUnix(),
 	}, req.TenantInfo)
 
 	thread.MarkContinuable()
@@ -448,7 +454,7 @@ func (s *Service) FinishTurn(
 
 	result.Proposals = proposals
 	result.ProposalsUnrecorded = err != nil
-	result.Artifacts = artifacts.artifacts()
+	result.Artifacts = artifacts.Artifacts()
 
 	return result, nil
 }
@@ -532,7 +538,7 @@ func (s *Service) ObserveTool(
 		return nil, nil, nil
 	}
 
-	shown, err := recorder.observe(observation)
+	shown, err := recorder.Observe(observation)
 
-	return shown, recorder.recorded, err
+	return shown, recorder.Recorded, err
 }

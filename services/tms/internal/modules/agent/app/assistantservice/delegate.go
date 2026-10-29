@@ -118,7 +118,7 @@ func (s *Service) OpenDelegate(
 			"be asked. Do the task with your own tools, or tell them an administrator can " +
 			"give one of their roles access to it.")
 	}
-	if err = s.assertWithinBudget(ctx, delegate); err != nil {
+	if err = s.limits().AssertWithinBudget(ctx, delegate); err != nil {
 		if errortypes.IsBusinessError(err) {
 			return nil, declined(err.Error())
 		}
@@ -149,7 +149,8 @@ func (s *Service) OpenDelegate(
 		Taint: req.Call.Taint.Clone(),
 	}
 	if !readOnly {
-		runReq.Proposals = s.proposalOutcomes(ctx, &conversation.Thread{ID: req.ThreadID}, tenant)
+		runReq.Proposals = s.outcomes().
+			Outcomes(ctx, &conversation.Thread{ID: req.ThreadID}, tenant)
 	}
 
 	return &DelegateOpening{

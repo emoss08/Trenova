@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/tooldispatch"
 	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice"
+	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice/assistantcompaction"
 	"github.com/emoss08/trenova/internal/modules/agent/app/assistantturnservice"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
@@ -79,6 +80,8 @@ type ActivitiesParams struct {
 
 	Logger        *zap.Logger
 	Assistant     *assistantservice.Service
+	Compaction    *assistantcompaction.Service
+	Threads       assistantports.AssistantService `optional:"true"`
 	Turns         *assistantturnservice.Service
 	TurnRepo      assistantturnports.AssistantTurnRepository
 	Steps         agentruntimeports.RunStepLedger
@@ -99,6 +102,7 @@ type ActivitiesParams struct {
 type Activities struct {
 	logger        *zap.Logger
 	assistant     *assistantservice.Service
+	compaction    *assistantcompaction.Service
 	turns         *assistantturnservice.Service
 	turnRepo      assistantturnports.AssistantTurnRepository
 	steps         agentruntimeports.RunStepLedger
@@ -117,6 +121,8 @@ func NewActivities(p ActivitiesParams) *Activities {
 	a := &Activities{
 		logger:      p.Logger.Named("job.assistant-turn"),
 		assistant:   p.Assistant,
+		compaction:  p.Compaction,
+		threads:     p.Threads,
 		turns:       p.Turns,
 		turnRepo:    p.TurnRepo,
 		steps:       p.Steps,
@@ -130,9 +136,6 @@ func NewActivities(p ActivitiesParams) *Activities {
 	}
 	// Assigned only when present: a nil pointer held by an interface is not
 	// a nil interface, and the notice would dereference it.
-	if p.Assistant != nil {
-		a.threads = p.Assistant
-	}
 	if p.Notifications != nil {
 		a.notifications = p.Notifications
 	}

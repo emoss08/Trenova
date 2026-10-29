@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/modelstream"
-	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice"
+	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice/assistantcompaction"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow/agentflowcontract"
@@ -93,7 +93,7 @@ type StartedCompaction struct {
 // SummarizedInput is a compaction's plan and what the model wrote for it.
 type SummarizedInput struct {
 	Payload *assistantcontract.CompactionPayload `json:"payload"`
-	Plan    *assistantservice.CompactionPlan     `json:"plan"`
+	Plan    *assistantcompaction.CompactionPlan  `json:"plan"`
 	Reply   *modelstream.Reply                   `json:"reply"`
 }
 
@@ -143,7 +143,7 @@ func (w *Workflows) compact(
 	payload *assistantcontract.CompactionPayload,
 ) CompactionEnding {
 	var a *Activities
-	var plan assistantservice.CompactionPlan
+	var plan assistantcompaction.CompactionPlan
 	err := workflow.ExecuteActivity(
 		workflow.WithActivityOptions(ctx, prepareCompactionOptions),
 		a.PrepareCompactionActivity, payload,
@@ -279,14 +279,14 @@ func compactionEndingFor(in *CompactionEndInput, autoOff bool) CompactionEnding 
 func (a *Activities) PrepareCompactionActivity(
 	ctx context.Context,
 	payload *assistantcontract.CompactionPayload,
-) (*assistantservice.CompactionPlan, error) {
+) (*assistantcompaction.CompactionPlan, error) {
 	if payload.Actor.UserID.IsNil() {
 		return nil, temporal.NewNonRetryableApplicationError(
 			"this compaction arrived without the person who asked for it", errTypeNoActor, nil,
 		)
 	}
 
-	plan, err := a.assistant.PrepareCompaction(ctx, &assistantservice.CompactRequest{
+	plan, err := a.compaction.PrepareCompaction(ctx, &assistantcompaction.CompactRequest{
 		ThreadID:   payload.ThreadID,
 		TurnID:     payload.TurnID,
 		TenantInfo: payload.TenantInfo(),
@@ -314,7 +314,7 @@ func (a *Activities) FinishCompactionActivity(
 	payload := in.Payload
 	reply := compactionReply(in.Reply)
 
-	result, err := a.assistant.FinishCompaction(ctx, in.Plan, reply, &payload.Actor)
+	result, err := a.compaction.FinishCompaction(ctx, in.Plan, reply, &payload.Actor)
 	if err != nil {
 		if errortypes.IsBusinessError(err) {
 			return nil, temporal.NewNonRetryableApplicationError(
@@ -356,7 +356,7 @@ func (a *Activities) EndCompactionActivity(
 	payload := in.Payload
 	autoOff := false
 	if in.Status == conversation.AssistantTurnStatusStopped && payload.Auto {
-		if err := a.assistant.StopCompactingItself(
+		if err := a.compaction.StopCompactingItself(
 			ctx,
 			payload.ThreadID,
 			payload.TenantInfo(),
@@ -444,8 +444,8 @@ func (a *Activities) StartAutoCompactionActivity(
 }
 
 // compactionReply is what the model wrote, as the conversation keeps it.
-func compactionReply(reply *modelstream.Reply) *assistantservice.CompactionReply {
-	out := &assistantservice.CompactionReply{}
+func compactionReply(reply *modelstream.Reply) *assistantcompaction.CompactionReply {
+	out := &assistantcompaction.CompactionReply{}
 	if reply == nil || reply.Completion == nil {
 		return out
 	}

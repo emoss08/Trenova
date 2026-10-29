@@ -5,6 +5,7 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice/assistanttest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantartifactports"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -13,7 +14,7 @@ import (
 )
 
 type titlingArtifactRepo struct {
-	*stubArtifactRepo
+	*assistanttest.StubArtifactRepo
 
 	titles map[pulid.ID]string
 	err    error
@@ -46,11 +47,11 @@ func TestArtifactRecorder_NamesEveryLinkByItsArtifactsTitle(t *testing.T) {
 
 	earlier := pulid.MustNew("art_")
 	repo := &titlingArtifactRepo{
-		stubArtifactRepo: &stubArtifactRepo{},
+		StubArtifactRepo: &assistanttest.StubArtifactRepo{},
 		titles:           map[pulid.ID]string{earlier: "Shipments"},
 	}
 	recorder := keepRecorder(t, repo)
-	card, _ := recorder.observe(observation("shipment_get", map[string]any{
+	card, _ := recorder.Observe(assistanttest.Observation("shipment_get", map[string]any{
 		"id": "shp_1", "proNumber": "S26100090038417",
 	}))
 	require.NotNil(t, card)
@@ -64,7 +65,7 @@ func TestArtifactRecorder_NamesEveryLinkByItsArtifactsTitle(t *testing.T) {
 	}
 	final := reply
 
-	recorder.nameLinks(messages, &final)
+	recorder.NameLinks(messages, &final)
 
 	want := "Its [Shipment S26100090038417](artifact:" + card.ID.String() + ") has the " +
 		"details, from the [Shipments](artifact:" + earlier.String() + "); the brief has more."
@@ -81,9 +82,9 @@ func TestArtifactRecorder_NamesEveryLinkByItsArtifactsTitle(t *testing.T) {
 func TestArtifactRecorder_NamesTheTurnsOwnArtifactsWithoutAQuery(t *testing.T) {
 	t.Parallel()
 
-	repo := &titlingArtifactRepo{stubArtifactRepo: &stubArtifactRepo{}}
+	repo := &titlingArtifactRepo{StubArtifactRepo: &assistanttest.StubArtifactRepo{}}
 	recorder := keepRecorder(t, repo)
-	card, _ := recorder.observe(observation("customer_get", map[string]any{
+	card, _ := recorder.Observe(assistanttest.Observation("customer_get", map[string]any{
 		"id": "cus_1", "name": "Acme",
 	}))
 	require.NotNil(t, card)
@@ -92,7 +93,7 @@ func TestArtifactRecorder_NamesTheTurnsOwnArtifactsWithoutAQuery(t *testing.T) {
 		Content: "See [the card](artifact:" + card.ID.String() + ").",
 	}}
 
-	recorder.nameLinks(messages, nil)
+	recorder.NameLinks(messages, nil)
 
 	assert.Equal(t, "See [Customer Acme](artifact:"+card.ID.String()+").", messages[0].Content)
 	assert.Empty(t, repo.asked)
@@ -105,14 +106,14 @@ func TestArtifactRecorder_KeepsEarlierLinksWhenTheirTitlesCannotBeRead(t *testin
 
 	earlier := pulid.MustNew("art_")
 	repo := &titlingArtifactRepo{
-		stubArtifactRepo: &stubArtifactRepo{},
+		StubArtifactRepo: &assistanttest.StubArtifactRepo{},
 		err:              errors.New("connection reset"),
 	}
 	recorder := keepRecorder(t, repo)
 	content := "See [the loads](artifact:" + earlier.String() + ")."
 	messages := []conversation.Message{{Role: conversation.RoleAssistant, Content: content}}
 
-	recorder.nameLinks(messages, nil)
+	recorder.NameLinks(messages, nil)
 
 	assert.Equal(t, content, messages[0].Content)
 }

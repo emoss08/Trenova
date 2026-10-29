@@ -6,7 +6,7 @@ import (
 	"slices"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice"
+	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice/decisionnotes"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
@@ -146,7 +146,7 @@ func (s *Service) oldestUnreported(
 	}
 
 	candidates = slices.DeleteFunc(candidates, func(candidate unreported) bool {
-		return assistantservice.DecisionReported(notes, candidate.proposalID, candidate.planID)
+		return decisionnotes.DecisionReported(notes, candidate.proposalID, candidate.planID)
 	})
 	if len(candidates) == 0 {
 		return nil, nil

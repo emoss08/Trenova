@@ -19,7 +19,7 @@ import { translateLabel } from "@trenova/shared/i18n/labels";
  * 1790187600.
  *
  * The server projects a new artifact before it stores it
- * (assistantservice/artifact_display.go). These are the same rules, for what was
+ * (assistantservice/artifactpayload/artifact_display.go). These are the same rules, for what was
  * stored before that and for the conversation's step details, which read the
  * model's own copy. Change one side and change the other.
  */

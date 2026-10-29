@@ -120,6 +120,11 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/assistanthandoffservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/assistantqueueservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice"
+	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice/assistantartifacts"
+	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice/assistantcompaction"
+	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice/assistantproposals"
+	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice/assistantthreads"
+	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice/assistanttranscripts"
 	"github.com/emoss08/trenova/internal/modules/agent/app/assistantturnservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/boardcardservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/briefingservice"
@@ -423,6 +428,11 @@ func SharedOptions() fx.Option {
 		watchtowersources.Module,
 		proposalrecorder.Module,
 		assistantservice.Module,
+		assistantthreads.Module,
+		assistantartifacts.Module,
+		assistantproposals.Module,
+		assistanttranscripts.Module,
+		assistantcompaction.Module,
 		assistantturnservice.Module,
 		assistantfollowupservice.Module,
 		assistantqueueservice.Module,

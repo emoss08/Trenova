@@ -3,6 +3,9 @@ package assistantservice
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice/artifactrecorder"
+	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice/assistanttest"
+	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice/toolartifacts"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
@@ -17,9 +20,9 @@ import (
 )
 
 type decisionFixture struct {
-	recorder  *artifactRecorder
-	artifacts *stubArtifactRepo
-	proposals *stubProposalRepo
+	recorder  *artifactrecorder.Recorder
+	artifacts *assistanttest.StubArtifactRepo
+	proposals *assistanttest.StubProposalRepo
 	thread    *conversation.Thread
 	tenant    pagination.TenantInfo
 }
@@ -27,14 +30,14 @@ type decisionFixture struct {
 func newDecisionFixture(t *testing.T, stored ...*agent.AgentProposal) decisionFixture {
 	t.Helper()
 
-	artifacts := &stubArtifactRepo{}
-	proposals := &stubProposalRepo{byThread: stored}
+	artifacts := &assistanttest.StubArtifactRepo{}
+	proposals := &assistanttest.StubProposalRepo{ByThread: stored}
 	svc := &Service{logger: zap.NewNop(), artifacts: artifacts, proposals: proposals}
 	thread := &conversation.Thread{ID: pulid.MustNew("athr_")}
 	tenant := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
 
 	return decisionFixture{
-		recorder:  svc.newArtifactRecorder(t.Context(), thread, tenant, testActor(), nil),
+		recorder:  svc.newArtifactRecorder(t.Context(), thread, tenant, assistanttest.Actor(), nil),
 		artifacts: artifacts,
 		proposals: proposals,
 		thread:    thread,
@@ -65,17 +68,17 @@ func TestRequestDecision_PutsTheWaitingCardBackAsAnArtifact(t *testing.T) {
 	proposal := waitingProposal(agent.ProposalStatusPending)
 	fixture := newDecisionFixture(t, proposal)
 
-	shown, err := fixture.recorder.observe(requested(proposal.ID))
+	shown, err := fixture.recorder.Observe(requested(proposal.ID))
 	require.NoError(t, err)
 	require.NotNil(t, shown)
 
 	assert.Equal(t, agentports.ListAgentProposalsByThreadRequest{
 		ThreadID:   fixture.thread.ID,
 		TenantInfo: fixture.tenant,
-	}, fixture.proposals.lastList, "only this conversation's proposals, in this tenant")
+	}, fixture.proposals.LastList, "only this conversation's proposals, in this tenant")
 
-	require.Len(t, fixture.artifacts.upserts, 1)
-	kept := fixture.artifacts.upserts[0]
+	require.Len(t, fixture.artifacts.Upserts, 1)
+	kept := fixture.artifacts.Upserts[0]
 	assert.Equal(t, assistantartifact.KindDecisionRequest, kept.Kind)
 	assert.Equal(t, assistantartifact.StatusPending, kept.Status)
 	assert.Equal(t, proposal.ID, kept.ProposalID)
@@ -94,11 +97,11 @@ func TestRequestDecision_CarriesThePlanAStepBelongsTo(t *testing.T) {
 	proposal.PlanID = &planID
 	fixture := newDecisionFixture(t, proposal)
 
-	_, err := fixture.recorder.observe(requested(proposal.ID))
+	_, err := fixture.recorder.Observe(requested(proposal.ID))
 	require.NoError(t, err)
 
-	require.Len(t, fixture.artifacts.upserts, 1)
-	assert.Equal(t, planID, fixture.artifacts.upserts[0].PlanID)
+	require.Len(t, fixture.artifacts.Upserts, 1)
+	assert.Equal(t, planID, fixture.artifacts.Upserts[0].PlanID)
 }
 
 func TestRequestDecision_RefusesAProposalFromAnotherConversation(t *testing.T) {
@@ -106,10 +109,10 @@ func TestRequestDecision_RefusesAProposalFromAnotherConversation(t *testing.T) {
 
 	fixture := newDecisionFixture(t, waitingProposal(agent.ProposalStatusPending))
 
-	shown, err := fixture.recorder.observe(requested(pulid.MustNew("aprop_")))
-	require.ErrorIs(t, err, errUnknownProposal)
+	shown, err := fixture.recorder.Observe(requested(pulid.MustNew("aprop_")))
+	require.ErrorIs(t, err, toolartifacts.ErrUnknownProposal)
 	assert.Nil(t, shown)
-	assert.Empty(t, fixture.artifacts.upserts)
+	assert.Empty(t, fixture.artifacts.Upserts)
 }
 
 func TestRequestDecision_RefusesAProposalAlreadyDecided(t *testing.T) {
@@ -118,10 +121,10 @@ func TestRequestDecision_RefusesAProposalAlreadyDecided(t *testing.T) {
 	proposal := waitingProposal(agent.ProposalStatusRejected)
 	fixture := newDecisionFixture(t, proposal)
 
-	_, err := fixture.recorder.observe(requested(proposal.ID))
-	require.ErrorIs(t, err, errProposalDecided)
+	_, err := fixture.recorder.Observe(requested(proposal.ID))
+	require.ErrorIs(t, err, toolartifacts.ErrProposalDecided)
 	assert.Contains(t, err.Error(), "rejected")
-	assert.Empty(t, fixture.artifacts.upserts)
+	assert.Empty(t, fixture.artifacts.Upserts)
 }
 
 func TestRequestDecision_SaysWhenTheProposalsCannotBeRead(t *testing.T) {
@@ -129,19 +132,11 @@ func TestRequestDecision_SaysWhenTheProposalsCannotBeRead(t *testing.T) {
 
 	proposal := waitingProposal(agent.ProposalStatusPending)
 	fixture := newDecisionFixture(t, proposal)
-	fixture.proposals.listErr = assert.AnError
+	fixture.proposals.ListErr = assert.AnError
 
-	_, err := fixture.recorder.observe(requested(proposal.ID))
-	require.ErrorIs(t, err, errDecisionUnavailable)
-	assert.Empty(t, fixture.artifacts.upserts)
-}
-
-func TestDecisionStatus_FollowsTheProposal(t *testing.T) {
-	t.Parallel()
-
-	assert.Equal(t, assistantartifact.StatusPending, decisionStatus(agent.ProposalStatusPending))
-	assert.Equal(t, assistantartifact.StatusReady, decisionStatus(agent.ProposalStatusExecuted))
-	assert.Equal(t, assistantartifact.StatusFailed, decisionStatus(agent.ProposalStatusRejected))
+	_, err := fixture.recorder.Observe(requested(proposal.ID))
+	require.ErrorIs(t, err, toolartifacts.ErrDecisionUnavailable)
+	assert.Empty(t, fixture.artifacts.Upserts)
 }
 
 func requestedMany(request agentruntimeports.DecisionRequest) agentruntimeports.ToolObservation {
@@ -161,14 +156,14 @@ func TestRequestDecision_KeepsOneCardForAWaitingPlan(t *testing.T) {
 	first.PlanStep, second.PlanStep = 2, 1
 	fixture := newDecisionFixture(t, first, second)
 
-	shown, err := fixture.recorder.observe(requestedMany(agentruntimeports.DecisionRequest{
+	shown, err := fixture.recorder.Observe(requestedMany(agentruntimeports.DecisionRequest{
 		PlanID: planID,
 	}))
 	require.NoError(t, err)
 	require.NotNil(t, shown)
 
-	require.Len(t, fixture.artifacts.upserts, 1)
-	kept := fixture.artifacts.upserts[0]
+	require.Len(t, fixture.artifacts.Upserts, 1)
+	kept := fixture.artifacts.Upserts[0]
 	assert.Equal(t, assistantartifact.KindDecisionRequest, kept.Kind)
 	assert.Equal(t, planID, kept.PlanID)
 	assert.Equal(t, second.ID, kept.ProposalID, "the card is anchored on the plan's first step")
@@ -184,14 +179,14 @@ func TestRequestDecision_KeepsOneCardForSeveralProposalsOfOneTool(t *testing.T) 
 		waitingProposal(agent.ProposalStatusPending)
 	fixture := newDecisionFixture(t, first, second)
 
-	_, err := fixture.recorder.observe(requestedMany(agentruntimeports.DecisionRequest{
+	_, err := fixture.recorder.Observe(requestedMany(agentruntimeports.DecisionRequest{
 		ProposalID:  first.ID,
 		ProposalIDs: []pulid.ID{first.ID, second.ID},
 	}))
 	require.NoError(t, err)
 
-	require.Len(t, fixture.artifacts.upserts, 1)
-	kept := fixture.artifacts.upserts[0]
+	require.Len(t, fixture.artifacts.Upserts, 1)
+	kept := fixture.artifacts.Upserts[0]
 	assert.Equal(t, first.ID, kept.ProposalID)
 	assert.Equal(t, []string{first.ID.String(), second.ID.String()}, kept.Payload["proposalIds"])
 	assert.Equal(t, "Create shipment (2)", kept.Title)
@@ -206,19 +201,19 @@ func TestRequestDecision_RefusesABunchThatCannotShareACard(t *testing.T) {
 	decided := waitingProposal(agent.ProposalStatusExecuted)
 	fixture := newDecisionFixture(t, first, other, decided)
 
-	_, err := fixture.recorder.observe(requestedMany(agentruntimeports.DecisionRequest{
+	_, err := fixture.recorder.Observe(requestedMany(agentruntimeports.DecisionRequest{
 		ProposalID: first.ID, ProposalIDs: []pulid.ID{first.ID, other.ID},
 	}))
-	require.ErrorIs(t, err, errMixedTools)
+	require.ErrorIs(t, err, toolartifacts.ErrMixedTools)
 
-	_, err = fixture.recorder.observe(requestedMany(agentruntimeports.DecisionRequest{
+	_, err = fixture.recorder.Observe(requestedMany(agentruntimeports.DecisionRequest{
 		ProposalID: first.ID, ProposalIDs: []pulid.ID{first.ID, decided.ID},
 	}))
-	require.ErrorIs(t, err, errProposalDecided)
+	require.ErrorIs(t, err, toolartifacts.ErrProposalDecided)
 
-	_, err = fixture.recorder.observe(requestedMany(agentruntimeports.DecisionRequest{
+	_, err = fixture.recorder.Observe(requestedMany(agentruntimeports.DecisionRequest{
 		PlanID: pulid.MustNew("apl_"),
 	}))
-	require.ErrorIs(t, err, errUnknownPlan)
-	assert.Empty(t, fixture.artifacts.upserts)
+	require.ErrorIs(t, err, toolartifacts.ErrUnknownPlan)
+	assert.Empty(t, fixture.artifacts.Upserts)
 }

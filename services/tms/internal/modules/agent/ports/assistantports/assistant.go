@@ -230,23 +230,33 @@ type AssistantService interface {
 		actor *permissionports.RequestActor,
 	) (*CommandAvailability, error)
 	RequestMore(ctx context.Context, req RequestMoreRequest) (*RequestMoreResult, error)
-	ListThreadProposals(
+	UpdateThread(
 		ctx context.Context,
-		req conversationports.GetThreadRequest,
-	) ([]assistantproposalports.AssistantProposal, error)
-	// SaveProposalEdits keeps the values a person changed on one of the
-	// conversation's pending proposals, for the approval to go with; an empty
-	// set clears them.
-	SaveProposalEdits(
+		req *UpdateThreadRequest,
+		actor *permissionports.RequestActor,
+	) (*conversation.Thread, error)
+	// SelectableProviders lists the models a person may pick for the assistant,
+	// projected so no credential leaves the provider record.
+	SelectableProviders(
 		ctx context.Context,
-		req conversationports.GetThreadRequest,
-		proposalID pulid.ID,
-		modifications map[string]any,
-	) (*assistantproposalports.ProposalEdits, error)
-	ListThreadPlans(
+		actor permissionports.RequestActor,
+	) ([]AssistantProviderOption, error)
+	ListMessages(
 		ctx context.Context,
-		req conversationports.GetThreadRequest,
-	) ([]assistantproposalports.AssistantPlan, error)
+		req ListThreadMessagesRequest,
+	) (*ThreadMessagesPage, error)
+	DeleteThread(ctx context.Context, req conversationports.GetThreadRequest) error
+	// StartAsk opens the hidden thread a quick question is answered on. The
+	// answer is a turn like any other; the thread is listed only when the
+	// person keeps it.
+	StartAsk(
+		ctx context.Context,
+		req *AskRequest,
+		actor *permissionports.RequestActor,
+	) (*conversation.Thread, error)
+}
+
+type AssistantArtifactService interface {
 	ListThreadArtifacts(
 		ctx context.Context,
 		req conversationports.GetThreadRequest,
@@ -318,36 +328,35 @@ type AssistantService interface {
 		artifactID pulid.ID,
 		pinned bool,
 	) (*assistantartifactports.AssistantArtifact, error)
-	UpdateThread(
+}
+
+type AssistantProposalService interface {
+	ListThreadProposals(
 		ctx context.Context,
-		req *UpdateThreadRequest,
-		actor *permissionports.RequestActor,
-	) (*conversation.Thread, error)
-	// SelectableProviders lists the models a person may pick for the assistant,
-	// projected so no credential leaves the provider record.
-	SelectableProviders(
+		req conversationports.GetThreadRequest,
+	) ([]assistantproposalports.AssistantProposal, error)
+	// SaveProposalEdits keeps the values a person changed on one of the
+	// conversation's pending proposals, for the approval to go with; an empty
+	// set clears them.
+	SaveProposalEdits(
 		ctx context.Context,
-		actor permissionports.RequestActor,
-	) ([]AssistantProviderOption, error)
-	ListMessages(
+		req conversationports.GetThreadRequest,
+		proposalID pulid.ID,
+		modifications map[string]any,
+	) (*assistantproposalports.ProposalEdits, error)
+	ListThreadPlans(
 		ctx context.Context,
-		req ListThreadMessagesRequest,
-	) (*ThreadMessagesPage, error)
+		req conversationports.GetThreadRequest,
+	) ([]assistantproposalports.AssistantPlan, error)
+}
+
+type AssistantTranscriptService interface {
 	// Transcript renders the whole conversation as a document a person can
 	// read away from the panel and hand to someone else.
 	Transcript(
 		ctx context.Context,
 		req conversationports.GetThreadRequest,
 	) (*kernelports.TranscriptFile, error)
-	DeleteThread(ctx context.Context, req conversationports.GetThreadRequest) error
-	// StartAsk opens the hidden thread a quick question is answered on. The
-	// answer is a turn like any other; the thread is listed only when the
-	// person keeps it.
-	StartAsk(
-		ctx context.Context,
-		req *AskRequest,
-		actor *permissionports.RequestActor,
-	) (*conversation.Thread, error)
 }
 
 // AssistantProviderOption is one entry in the model picker: enough to render a

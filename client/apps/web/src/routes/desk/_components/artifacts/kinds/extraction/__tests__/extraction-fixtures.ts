@@ -4,7 +4,7 @@ export const THREAD = "athr_ex";
 export const DOCUMENT = "doc_01JRATECON";
 
 /**
- * The payload `assistantservice/extraction.go` stores for a two-page rate confirmation: the
+ * The payload `assistantservice/extractionartifact/extraction.go` stores for a two-page rate confirmation: the
  * fields in reading order with their reason and box, each stop as its parts, the pages' sizes,
  * and the missing fields with their keys.
  */

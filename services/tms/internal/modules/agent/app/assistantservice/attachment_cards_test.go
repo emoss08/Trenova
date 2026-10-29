@@ -6,6 +6,10 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
+	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice/artifactpayload"
+	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice/artifactrecorder"
+	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice/assistanttest"
+	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice/extractionartifact"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
@@ -36,18 +40,18 @@ type draftReader struct {
 	asked []map[string]any
 }
 
-func (r *draftReader) Name() string        { return toolGetShipmentDraft }
+func (r *draftReader) Name() string        { return artifactpayload.ToolGetShipmentDraft }
 func (r *draftReader) Description() string { return "Read a document's shipment draft." }
 func (r *draftReader) ParamSchema() map[string]any {
 	return map[string]any{
 		toolschema.KeyType:     toolschema.TypeObject,
-		toolschema.KeyRequired: []string{draftDocumentIDParam},
+		toolschema.KeyRequired: []string{extractionartifact.DraftDocumentIDParam},
 	}
 }
 
 func (r *draftReader) Policy() agenttoolports.ToolPolicy {
 	return agenttoolports.ToolPolicy{
-		Name: toolGetShipmentDraft, Kind: agenttooltrust.ToolKindQuery,
+		Name: artifactpayload.ToolGetShipmentDraft, Kind: agenttooltrust.ToolKindQuery,
 		Resource: permission.ResourceDocument, Operation: permission.OpRead,
 	}
 }
@@ -66,10 +70,10 @@ func (r *draftReader) Query(
 
 func readDraft(documentID pulid.ID) map[string]any {
 	return map[string]any{
-		draftDocumentIDParam: documentID.String(),
-		"status":             "Ready",
-		"documentKind":       "RateConfirmation",
-		"confidence":         0.96,
+		extractionartifact.DraftDocumentIDParam: documentID.String(),
+		"status":                                "Ready",
+		"documentKind":                          "RateConfirmation",
+		"confidence":                            0.96,
 		"fields": map[string]any{
 			"bol": map[string]any{
 				"label": "BOL", "value": "123456789", "confidence": 0.94, "pageNumber": 1,
@@ -78,16 +82,18 @@ func readDraft(documentID pulid.ID) map[string]any {
 	}
 }
 
-func cardService(reader *draftReader) (*Service, *stubArtifactRepo) {
-	repo := &stubArtifactRepo{}
+func cardService(reader *draftReader) (*Service, *assistanttest.StubArtifactRepo) {
+	repo := &assistanttest.StubArtifactRepo{}
 
 	return &Service{
 		logger:    zap.NewNop(),
 		artifacts: repo,
 		runtime: agentruntime.New(agentruntime.Params{
-			Logger:      zap.NewNop(),
-			QueryTools:  &stubQueryRegistry{Tools: []agenttoolports.AgentQueryTool{reader}},
-			ActionTools: &stubActionRegistry{},
+			Logger: zap.NewNop(),
+			QueryTools: &assistanttest.StubQueryRegistry{
+				Tools: []agenttoolports.AgentQueryTool{reader},
+			},
+			ActionTools: &assistanttest.StubActionRegistry{},
 			Permissions: &agenttest.StubPermissions{},
 		}),
 	}, repo
@@ -115,18 +121,22 @@ func TestShowAttachments_ShowsWhatWasReadOffAnAttachedFile(t *testing.T) {
 	svc.showAttachments(
 		t.Context(),
 		deskThread(),
-		testActor(),
-		testActor().TenantInfo(),
+		assistanttest.Actor(),
+		assistanttest.Actor().TenantInfo(),
 		attachments,
 	)
 
-	require.Len(t, repo.upserts, 1)
-	card := repo.upserts[0]
+	require.Len(t, repo.Upserts, 1)
+	card := repo.Upserts[0]
 	assert.Equal(t, assistantartifact.KindExtraction, card.Kind)
-	assert.Equal(t, attachmentCallID+documentID.String(), card.SourceToolCallID)
-	assert.Equal(t, extractionLineageKey(documentID.String()), card.LineageKey)
-	assert.Equal(t, documentID.String(), card.Payload[draftDocumentIDParam])
-	assert.Equal(t, []map[string]any{{draftDocumentIDParam: documentID.String()}}, reader.asked)
+	assert.Equal(t, artifactrecorder.AttachmentCallID+documentID.String(), card.SourceToolCallID)
+	assert.Equal(t, extractionartifact.ExtractionLineageKey(documentID.String()), card.LineageKey)
+	assert.Equal(t, documentID.String(), card.Payload[extractionartifact.DraftDocumentIDParam])
+	assert.Equal(
+		t,
+		[]map[string]any{{extractionartifact.DraftDocumentIDParam: documentID.String()}},
+		reader.asked,
+	)
 	assert.Equal(t, "[Rate confirmation](artifact:"+card.ID.String()+")", attachments[0].Shown)
 }
 
@@ -142,12 +152,12 @@ func TestShowAttachments_ShowsNothingUntilSomethingIsRead(t *testing.T) {
 	svc.showAttachments(
 		t.Context(),
 		deskThread(),
-		testActor(),
-		testActor().TenantInfo(),
+		assistanttest.Actor(),
+		assistanttest.Actor().TenantInfo(),
 		attachments,
 	)
 
-	assert.Empty(t, repo.upserts)
+	assert.Empty(t, repo.Upserts)
 	assert.Empty(t, attachments[0].Shown)
 }
 
@@ -160,12 +170,12 @@ func TestShowAttachments_AFileWithNoDraftShowsNoCard(t *testing.T) {
 	svc.showAttachments(
 		t.Context(),
 		deskThread(),
-		testActor(),
-		testActor().TenantInfo(),
+		assistanttest.Actor(),
+		assistanttest.Actor().TenantInfo(),
 		attachments,
 	)
 
-	assert.Empty(t, repo.upserts)
+	assert.Empty(t, repo.Upserts)
 }
 
 // The palette answers with nothing beside it, so it keeps no card.
@@ -177,10 +187,15 @@ func TestShowAttachments_KeepsNoCardWhereTheAnswerIsReadAlone(t *testing.T) {
 	thread := deskThread()
 	thread.Origin = conversation.ThreadOriginAsk
 
-	svc.showAttachments(t.Context(), thread, testActor(), testActor().TenantInfo(),
-		[]agentturn.RuntimeAttachment{{DocumentID: documentID.String()}})
+	svc.showAttachments(
+		t.Context(),
+		thread,
+		assistanttest.Actor(),
+		assistanttest.Actor().TenantInfo(),
+		[]agentturn.RuntimeAttachment{{DocumentID: documentID.String()}},
+	)
 
-	assert.Empty(t, repo.upserts)
+	assert.Empty(t, repo.Upserts)
 }
 
 /*
@@ -198,17 +213,17 @@ func TestObserve_ReadingTheDraftAgainPointsAtTheAttachmentsCard(t *testing.T) {
 	recorder := svc.newArtifactRecorder(
 		t.Context(),
 		thread,
-		testActor().TenantInfo(),
-		testActor(),
+		assistanttest.Actor().TenantInfo(),
+		assistanttest.Actor(),
 		nil,
 	)
-	shown := recorder.attachedExtraction(documentID)
+	shown := recorder.AttachedExtraction(documentID)
 	require.NotNil(t, shown)
 
-	again, err := recorder.observe(agentruntimeports.ToolObservation{
+	again, err := recorder.Observe(agentruntimeports.ToolObservation{
 		Call: llmports.ToolCall{
-			ID: "call_draft", Name: toolGetShipmentDraft,
-			Arguments: map[string]any{draftDocumentIDParam: documentID.String()},
+			ID: "call_draft", Name: artifactpayload.ToolGetShipmentDraft,
+			Arguments: map[string]any{extractionartifact.DraftDocumentIDParam: documentID.String()},
 		},
 		Data: readDraft(documentID),
 	})
@@ -216,7 +231,7 @@ func TestObserve_ReadingTheDraftAgainPointsAtTheAttachmentsCard(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, again)
 	assert.Equal(t, shown.ID, again.ID)
-	assert.Len(t, repo.upserts, 1)
+	assert.Len(t, repo.Upserts, 1)
 }
 
 func TestShowReading_TellsTheAgentWhereTheCardIs(t *testing.T) {
@@ -228,21 +243,21 @@ func TestShowReading_TellsTheAgentWhereTheCardIs(t *testing.T) {
 	note := svc.showReading(
 		t.Context(),
 		deskThread(),
-		testActor(),
-		testActor().TenantInfo(),
+		assistanttest.Actor(),
+		assistanttest.Actor().TenantInfo(),
 		documentID,
 	)
 
-	require.Len(t, repo.upserts, 1)
-	assert.Contains(t, note, "(artifact:"+repo.upserts[0].ID.String()+")")
+	require.Len(t, repo.Upserts, 1)
+	assert.Contains(t, note, "(artifact:"+repo.Upserts[0].ID.String()+")")
 	assert.Contains(t, note, "do not publish the reading as a document")
 	assert.Empty(
 		t,
 		svc.showReading(
 			t.Context(),
 			deskThread(),
-			testActor(),
-			testActor().TenantInfo(),
+			assistanttest.Actor(),
+			assistanttest.Actor().TenantInfo(),
 			pulid.Nil,
 		),
 	)
@@ -273,9 +288,9 @@ func (r *recordingReadWaits) StopWaitingForDocumentRead(
 
 func readAttachmentResult(documentID pulid.ID, reading string) *agentruntimeports.ToolObservation {
 	data := map[string]any{
-		draftDocumentIDParam: documentID.String(),
-		"fileName":           "rate-con.pdf",
-		"reading":            reading,
+		extractionartifact.DraftDocumentIDParam: documentID.String(),
+		"fileName":                              "rate-con.pdf",
+		"reading":                               reading,
 	}
 	if reading != "Indexed" {
 		data["stillBeingRead"] = true
@@ -297,7 +312,9 @@ func TestWaitOnUnreadFile_ParksTheConversationOnAFileStillBeingRead(t *testing.T
 	waits := &recordingReadWaits{}
 	svc := &Service{logger: zap.NewNop(), readWaits: waits}
 	run := &UnreadFileRun{
-		ThreadID: pulid.MustNew("athr_"), DefinitionID: pulid.MustNew("adef_"), Actor: testActor(),
+		ThreadID: pulid.MustNew(
+			"athr_",
+		), DefinitionID: pulid.MustNew("adef_"), Actor: assistanttest.Actor(),
 	}
 	documentID := pulid.MustNew("doc_")
 
@@ -322,7 +339,7 @@ func TestWaitOnUnreadFile_WaitsWhileTheModelIsReading(t *testing.T) {
 
 	svc.WaitOnUnreadFile(
 		t.Context(),
-		&UnreadFileRun{ThreadID: pulid.MustNew("athr_"), Actor: testActor()},
+		&UnreadFileRun{ThreadID: pulid.MustNew("athr_"), Actor: assistanttest.Actor()},
 		observation,
 	)
 
@@ -335,7 +352,7 @@ func TestWaitOnUnreadFile_AFileReadInFullEndsTheWaitOnIt(t *testing.T) {
 
 	waits := &recordingReadWaits{}
 	svc := &Service{logger: zap.NewNop(), readWaits: waits}
-	run := &UnreadFileRun{ThreadID: pulid.MustNew("athr_"), Actor: testActor()}
+	run := &UnreadFileRun{ThreadID: pulid.MustNew("athr_"), Actor: assistanttest.Actor()}
 
 	svc.WaitOnUnreadFile(t.Context(), run, readAttachmentResult(pulid.MustNew("doc_"), "Indexed"))
 
@@ -349,7 +366,7 @@ func TestWaitOnUnreadFile_LeavesOtherWorkAlone(t *testing.T) {
 	documentID := pulid.MustNew("doc_")
 	thread := pulid.MustNew("athr_")
 	otherTool := readAttachmentResult(documentID, "Extracting")
-	otherTool.Call.Name = toolGetShipmentDraft
+	otherTool.Call.Name = artifactpayload.ToolGetShipmentDraft
 	failed := readAttachmentResult(documentID, "Extracting")
 	failed.Failed = true
 
@@ -358,19 +375,23 @@ func TestWaitOnUnreadFile_LeavesOtherWorkAlone(t *testing.T) {
 		observation *agentruntimeports.ToolObservation
 	}{
 		"a delegated task": {
-			run:         &UnreadFileRun{ThreadID: thread, Actor: testActor(), Delegated: true},
+			run: &UnreadFileRun{
+				ThreadID:  thread,
+				Actor:     assistanttest.Actor(),
+				Delegated: true,
+			},
 			observation: readAttachmentResult(documentID, "Extracting"),
 		},
 		"no conversation": {
-			run:         &UnreadFileRun{Actor: testActor()},
+			run:         &UnreadFileRun{Actor: assistanttest.Actor()},
 			observation: readAttachmentResult(documentID, "Extracting"),
 		},
 		"another tool": {
-			run:         &UnreadFileRun{ThreadID: thread, Actor: testActor()},
+			run:         &UnreadFileRun{ThreadID: thread, Actor: assistanttest.Actor()},
 			observation: otherTool,
 		},
 		"a failed call": {
-			run:         &UnreadFileRun{ThreadID: thread, Actor: testActor()},
+			run:         &UnreadFileRun{ThreadID: thread, Actor: assistanttest.Actor()},
 			observation: failed,
 		},
 	}
@@ -471,9 +492,13 @@ func TestAttachmentExtracted_ShowsTheCardInTheConversationTheFileWasSentIn(t *te
 	require.Len(t, conversations.asked, 1)
 	assert.Equal(t, thread.ID, conversations.asked[0].ThreadID)
 	assert.Equal(t, doc.ID, conversations.asked[0].DocumentID)
-	require.Len(t, repo.upserts, 1)
-	assert.Equal(t, thread.ID, repo.upserts[0].ThreadID)
-	assert.Equal(t, attachmentCallID+doc.ID.String(), repo.upserts[0].SourceToolCallID)
+	require.Len(t, repo.Upserts, 1)
+	assert.Equal(t, thread.ID, repo.Upserts[0].ThreadID)
+	assert.Equal(
+		t,
+		artifactrecorder.AttachmentCallID+doc.ID.String(),
+		repo.Upserts[0].SourceToolCallID,
+	)
 }
 
 func TestAttachmentExtracted_AFileUploadedButNeverSentGetsNoCard(t *testing.T) {
@@ -488,7 +513,7 @@ func TestAttachmentExtracted_AFileUploadedButNeverSentGetsNoCard(t *testing.T) {
 
 	svc.AttachmentExtracted(t.Context(), extractedEvent(doc))
 
-	assert.Empty(t, repo.upserts)
+	assert.Empty(t, repo.Upserts)
 }
 
 func TestAttachmentExtracted_LeavesAShipmentsDocumentAlone(t *testing.T) {
@@ -506,5 +531,5 @@ func TestAttachmentExtracted_LeavesAShipmentsDocumentAlone(t *testing.T) {
 	svc.AttachmentExtracted(t.Context(), extractedEvent(doc))
 
 	assert.Empty(t, conversations.asked)
-	assert.Empty(t, repo.upserts)
+	assert.Empty(t, repo.Upserts)
 }

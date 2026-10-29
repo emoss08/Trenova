@@ -13,7 +13,7 @@
 //   permission/recordid.go       the resources whose records are one kind, and their id prefixes
 //   permission/recordkind.go     the kinds a resource's name cannot stand for, and their prefixes
 //   agent/enums.go, agent/subjectrecord.go   the kind of record each agent subject is
-//   assistantservice/mentions.go the kinds the @ search offers, and the tab each is under
+//   assistantservice/assistantthreads/mentions.go the kinds the @ search offers, and the tab each is under
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -29,7 +29,7 @@ const SOURCES = {
   recordKinds: `${PERMISSION}/recordkind.go`,
   subjectTypes: `${AGENT}/enums.go`,
   subjectKinds: `${AGENT}/subjectrecord.go`,
-  mentions: "services/tms/internal/modules/agent/app/assistantservice/mentions.go",
+  mentions: "services/tms/internal/modules/agent/app/assistantservice/assistantthreads/mentions.go",
 };
 const OUTPUT = "client/packages/shared/src/types/generated/record-kinds.ts";
 

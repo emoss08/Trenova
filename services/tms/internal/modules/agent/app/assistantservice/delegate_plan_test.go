@@ -10,13 +10,12 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/toolaccess"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/toolcall"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/worldwatch"
+	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice/assistanttest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -164,9 +163,9 @@ func callNamed(t *testing.T, saved []conversation.Message, tool string) string {
 func TestPersistProposals_AReadOnlyHandOffLeavesItsRun(t *testing.T) {
 	t.Parallel()
 
-	runs := &stubRunRepo{}
-	proposals := &stubProposalRepo{}
-	svc := newProposalService(runs, proposals, &stubConversationRepo{})
+	runs := &assistanttest.StubRunRepo{}
+	proposals := &assistanttest.StubProposalRepo{}
+	svc := newProposalService(runs, proposals, &assistanttest.StubConversationRepo{})
 	params := proposalTestParams(nil, nil)
 	params.TurnID = pulid.MustNew("atrn_")
 	params.Delegations = []agentruntimeports.DelegatedRun{{
@@ -183,76 +182,13 @@ func TestPersistProposals_AReadOnlyHandOffLeavesItsRun(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Empty(t, persisted)
-	assert.Empty(t, proposals.created)
-	require.Len(t, runs.created, 1, "the parent filed nothing and opens no run")
-	run := runs.created[0]
+	assert.Empty(t, proposals.Created)
+	require.Len(t, runs.Created, 1, "the parent filed nothing and opens no run")
+	run := runs.Created[0]
 	assert.Equal(t, params.Delegations[0].Definition.ID, run.AgentDefinitionID)
 	assert.Equal(t, agent.RunStatusCompleted, run.Status)
 	assert.Equal(t, agent.RunOwnerAssistantTurn, run.ParentOwnerKind)
 	assert.Equal(t, params.TurnID, run.ParentOwnerID)
 	assert.Equal(t, "call_look", run.DelegateCallID)
 	assert.Equal(t, "delegate-model", run.ModelIdentifier)
-}
-
-type threadPlans struct {
-	plans []*agentplan.AgentPlan
-}
-
-func (s *threadPlans) ListByThread(
-	context.Context,
-	agentports.ListAgentPlansByThreadRequest,
-) ([]*agentplan.AgentPlan, error) {
-	return s.plans, nil
-}
-
-// A plan that carries a step of a delegate in shadow mode arrives on hold,
-// though the run it hangs on is live: approving it would run the write the
-// switch withholds.
-func TestListThreadPlans_HoldsAPlanWithAStepFromAnAgentInShadowMode(t *testing.T) {
-	t.Parallel()
-
-	delegate := &agentdefinition.Definition{
-		ID:         pulid.MustNew("agdef_"),
-		Name:       "Shipment Desk",
-		ShadowMode: true,
-	}
-	parentRun := &agent.AgentRun{ID: pulid.MustNew("arun_")}
-	delegateRun := &agent.AgentRun{ID: pulid.MustNew("arun_"), AgentDefinitionID: delegate.ID}
-	runs := &stubRunRepo{byID: map[pulid.ID]*agent.AgentRun{
-		parentRun.ID:   parentRun,
-		delegateRun.ID: delegateRun,
-	}}
-	plan := &agentplan.AgentPlan{
-		ID:        pulid.MustNew("apl_"),
-		RunID:     parentRun.ID,
-		Title:     "Dispatch: 2 changes",
-		Status:    agentplan.PlanStatusPending,
-		StepCount: 2,
-	}
-	planID := plan.ID
-	proposals := &stubProposalRepo{byThread: []*agent.AgentProposal{
-		{ID: pulid.MustNew("ap_"), RunID: parentRun.ID, PlanID: &planID, PlanStep: 1},
-		{ID: pulid.MustNew("ap_"), RunID: delegateRun.ID, PlanID: &planID, PlanStep: 2},
-	}}
-	thread := &conversation.Thread{ID: pulid.MustNew("athr_")}
-	svc := newProposalServiceBehind(runs, proposals,
-		&stubConversationRepo{thread: thread}, shadowSwitches{definition: delegate})
-	svc.plans = &threadPlans{plans: []*agentplan.AgentPlan{plan}}
-
-	listed, err := svc.ListThreadPlans(
-		t.Context(),
-		conversationports.GetThreadRequest{ID: thread.ID},
-	)
-	require.NoError(t, err)
-
-	require.Len(t, listed, 1)
-	require.NotNil(t, listed[0].Hold, "the delegate's switch holds the whole plan")
-	assert.Equal(t, "Shipment Desk", listed[0].Hold.AgentName)
-}
-
-func (s *threadPlans) ExpirePendingByThread(
-	context.Context,
-	agentports.ExpireAgentPlansByThreadRequest,
-) (int, error) {
-	return 0, nil
 }
