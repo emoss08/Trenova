@@ -6,11 +6,21 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+func toAdapterMessages(
+	history []conversation.Message,
+	outcomes []agentruntimeports.ProposalOutcome,
+) []llmports.Message {
+	messages, _ := replayHistory(history, outcomes)
+
+	return messages
+}
 
 func TestProposalRationale_UsesTheModelsOwnWordsWhenItGaveAny(t *testing.T) {
 	t.Parallel()

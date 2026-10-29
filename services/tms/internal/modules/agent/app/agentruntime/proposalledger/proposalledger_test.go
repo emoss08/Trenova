@@ -36,11 +36,11 @@ func TestPendingDuplicate_NeverMatchesArgumentsThatCannotBeEncoded(t *testing.T)
 	}}
 
 	require.Empty(t, argumentsKey(call.Arguments), "the arguments must fail to encode")
-	assert.False(t, PendingDuplicate(call, nil, thisTurn),
+	assert.False(t, PendingDuplicate(&call, nil, thisTurn),
 		"a different proposal earlier in this turn is not this one")
-	assert.False(t, PendingDuplicate(call, earlier, nil),
+	assert.False(t, PendingDuplicate(&call, earlier, nil),
 		"a different proposal from an earlier turn is not this one")
-	assert.False(t, PendingDuplicate(call, earlier, thisTurn))
+	assert.False(t, PendingDuplicate(&call, earlier, thisTurn))
 }
 
 // A change the approver made before approving is part of what ran, and the
@@ -49,7 +49,7 @@ func TestPendingDuplicate_NeverMatchesArgumentsThatCannotBeEncoded(t *testing.T)
 func TestProposalOutcomeText_SaysWhatTheApproverChanged(t *testing.T) {
 	t.Parallel()
 
-	text := proposalOutcomeText("worker_send_message", agentruntimeports.ProposalOutcome{
+	text := proposalOutcomeText("worker_send_message", &agentruntimeports.ProposalOutcome{
 		Status:        agent.ProposalStatusExecuted,
 		Modifications: map[string]any{"priority": "high", "message": "Call dispatch now"},
 	})
@@ -59,7 +59,7 @@ func TestProposalOutcomeText_SaysWhatTheApproverChanged(t *testing.T) {
 
 	plain := proposalOutcomeText(
 		"worker_send_message",
-		agentruntimeports.ProposalOutcome{Status: agent.ProposalStatusExecuted},
+		&agentruntimeports.ProposalOutcome{Status: agent.ProposalStatusExecuted},
 	)
 	assert.NotContains(t, plain, "after changing")
 }

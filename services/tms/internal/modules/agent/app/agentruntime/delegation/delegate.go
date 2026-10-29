@@ -188,7 +188,7 @@ func UsedCallIDsOf(messages []conversation.Message) []string {
 // refusal names what is wrong so the model can fix the call.
 func For(t Turn,
 	arguments map[string]any,
-) (agentturn.RuntimeDelegate, string, string) {
+) (chosen agentturn.RuntimeDelegate, asked, refusal string) {
 	raw := strings.TrimSpace(argcheck.String(arguments, runtimetools.DelegateAgentParam))
 	task := strings.TrimSpace(argcheck.String(arguments, runtimetools.DelegateTaskParam))
 
@@ -369,9 +369,9 @@ func TagDelegated(
 // shown it as delegate_finished and the delegating model reads it as the
 // call's result, so both are told the same thing.
 func Report(
-	delegate agentturn.RuntimeDelegate,
+	delegate *agentturn.RuntimeDelegate,
 	callID string,
-	run Run,
+	run *Run,
 ) assistantstreamports.AssistantDelegateFinishedEvent {
 	report := assistantstreamports.AssistantDelegateFinishedEvent{
 		DelegateCallID: callID,
@@ -514,14 +514,17 @@ func Note(report *assistantstreamports.AssistantDelegateFinishedEvent, lookup bo
 		return "[" + name + "'s answer was withheld. Everything under made happened and " +
 			"everything under awaiting is waiting on the person; tell them so, without the " +
 			"withheld answer.]"
-	default:
-		return "[" + name + " did this as the same person. Tell the person what it did, " +
-			"naming what it made. Everything under awaiting is a proposal waiting for their " +
-			"approval in this conversation and has not run; say what each would do, by the " +
-			"names of the records it touches: the person approves it from its card here, so " +
-			"never show them a proposalId or any other id. Use the ids under made for your " +
-			"next step; never invent one." + delegateArtifactNote(report.Reply) + "]"
+	case assistantstreamports.DelegateStatusCompleted,
+		assistantstreamports.DelegateStatusExhausted,
+		assistantstreamports.DelegateStatusDeclined:
 	}
+
+	return "[" + name + " did this as the same person. Tell the person what it did, " +
+		"naming what it made. Everything under awaiting is a proposal waiting for their " +
+		"approval in this conversation and has not run; say what each would do, by the " +
+		"names of the records it touches: the person approves it from its card here, so " +
+		"never show them a proposalId or any other id. Use the ids under made for your " +
+		"next step; never invent one." + delegateArtifactNote(report.Reply) + "]"
 }
 
 func lookupNote(report *assistantstreamports.AssistantDelegateFinishedEvent) string {

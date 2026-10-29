@@ -113,7 +113,7 @@ func PolicyNamed(name string) (agenttoolports.ToolPolicy, bool) {
 	return agenttoolports.ToolPolicy{}, false
 }
 
-func (s runtimePolicySpec) policy() agenttoolports.ToolPolicy {
+func (s *runtimePolicySpec) policy() agenttoolports.ToolPolicy {
 	return agenttoolports.ToolPolicy{
 		Name:          s.name,
 		Kind:          agenttooltrust.ToolKindRuntime,

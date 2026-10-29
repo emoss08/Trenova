@@ -62,7 +62,7 @@ func NewLedger(outcomes []agentruntimeports.ProposalOutcome) *Ledger {
 
 // NoteCalls remembers which message each replayed call came from, and how
 // many calls of the same tool preceded it there.
-func (l *Ledger) NoteCalls(msg conversation.Message) {
+func (l *Ledger) NoteCalls(msg *conversation.Message) {
 	if len(l.bySource) == 0 || msg.ID.IsNil() {
 		return
 	}
@@ -79,7 +79,7 @@ func (l *Ledger) NoteCalls(msg conversation.Message) {
 
 // CurrentContent is the tool result as it stands now: the proposal's
 // present state when the result recorded one, the stored text otherwise.
-func (l *Ledger) CurrentContent(msg conversation.Message) (string, bool) {
+func (l *Ledger) CurrentContent(msg *conversation.Message) (string, bool) {
 	call, ok := l.calls[msg.ToolCallID]
 	if !ok {
 		return msg.Content, false
@@ -89,7 +89,7 @@ func (l *Ledger) CurrentContent(msg conversation.Message) (string, bool) {
 		return msg.Content, false
 	}
 
-	return proposalOutcomeText(msg.ToolName, outcomes[call.ordinal]), true
+	return proposalOutcomeText(msg.ToolName, &outcomes[call.ordinal]), true
 }
 
 // proposalOutcomeText says what became of a proposal, in words the model
@@ -97,7 +97,7 @@ func (l *Ledger) CurrentContent(msg conversation.Message) (string, bool) {
 // modifiedHow says what the person changed before approving, so the model
 // speaks of what ran rather than of what it asked for. Keys are listed in
 // order so the text is the same for the same change.
-func modifiedHow(outcome agentruntimeports.ProposalOutcome) string {
+func modifiedHow(outcome *agentruntimeports.ProposalOutcome) string {
 	if len(outcome.Modifications) == 0 {
 		return ""
 	}
@@ -120,7 +120,7 @@ func modifiedHow(outcome agentruntimeports.ProposalOutcome) string {
 	return " after changing " + strings.Join(parts, ", ")
 }
 
-func proposalOutcomeText(toolName string, outcome agentruntimeports.ProposalOutcome) string {
+func proposalOutcomeText(toolName string, outcome *agentruntimeports.ProposalOutcome) string {
 	switch outcome.Status {
 	case agent.ProposalStatusPending:
 		return fmt.Sprintf(
@@ -210,7 +210,7 @@ func proposalOutcomeText(toolName string, outcome agentruntimeports.ProposalOutc
 // executedResult says what the write made and which ids it produced, each
 // sentence led by a space, so a later turn refers to the record rather than
 // to the proposal that made it.
-func executedResult(outcome agentruntimeports.ProposalOutcome) string {
+func executedResult(outcome *agentruntimeports.ProposalOutcome) string {
 	var b strings.Builder
 	for _, sentence := range []string{
 		outcome.ExecutionResult.Describe(),
@@ -225,7 +225,7 @@ func executedResult(outcome agentruntimeports.ProposalOutcome) string {
 	return b.String()
 }
 
-func executedWhen(outcome agentruntimeports.ProposalOutcome) string {
+func executedWhen(outcome *agentruntimeports.ProposalOutcome) string {
 	if outcome.ExecutedAt == nil || *outcome.ExecutedAt == 0 {
 		return ""
 	}
@@ -240,7 +240,7 @@ func executedWhen(outcome agentruntimeports.ProposalOutcome) string {
 // such sets both encode to nothing, and comparing those nothings dropped a
 // second, different proposal as a copy of the first.
 func PendingDuplicate(
-	call llmports.ToolCall,
+	call *llmports.ToolCall,
 	earlier []agentruntimeports.ProposalOutcome,
 	thisTurn []agentruntimeports.PendingAction,
 ) bool {
@@ -248,13 +248,15 @@ func PendingDuplicate(
 	if key == "" {
 		return false
 	}
-	for _, outcome := range earlier {
+	for idx := range earlier {
+		outcome := &earlier[idx]
 		if outcome.Pending() && outcome.ToolName == call.Name &&
 			argumentsKey(outcome.ToolParams) == key {
 			return true
 		}
 	}
-	for _, action := range thisTurn {
+	for idx := range thisTurn {
+		action := &thisTurn[idx]
 		if action.Waiting() && action.ToolName == call.Name &&
 			argumentsKey(action.Arguments) == key {
 			return true

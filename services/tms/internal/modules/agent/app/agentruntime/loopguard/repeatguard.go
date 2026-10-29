@@ -74,7 +74,7 @@ func isRead(name string) bool {
 
 // ReadBefore reports whether this exact read already succeeded since the last
 // call that could have changed anything.
-func (g *RepeatGuard) ReadBefore(call llmports.ToolCall) bool {
+func (g *RepeatGuard) ReadBefore(call *llmports.ToolCall) bool {
 	if !isRead(call.Name) {
 		return false
 	}
@@ -85,7 +85,7 @@ func (g *RepeatGuard) ReadBefore(call llmports.ToolCall) bool {
 
 // Ran notes a call that succeeded: a read is remembered, and anything else
 // forgets every read, since it may have changed what they returned.
-func (g *RepeatGuard) Ran(call llmports.ToolCall) {
+func (g *RepeatGuard) Ran(call *llmports.ToolCall) {
 	if !isRead(call.Name) {
 		clear(g.Reads)
 		return
@@ -106,7 +106,7 @@ func RepeatedRead(name string) string {
 }
 
 // Seen reports the earlier failure for this exact call, if there was one.
-func (g *RepeatGuard) Seen(call llmports.ToolCall) (string, bool) {
+func (g *RepeatGuard) Seen(call *llmports.ToolCall) (string, bool) {
 	key, ok := CallKey(call)
 	if !ok {
 		return "", false
@@ -118,7 +118,7 @@ func (g *RepeatGuard) Seen(call llmports.ToolCall) (string, bool) {
 }
 
 // Record remembers a failure so the identical call is not run again.
-func (g *RepeatGuard) Record(call llmports.ToolCall, message string) {
+func (g *RepeatGuard) Record(call *llmports.ToolCall, message string) {
 	key, ok := CallKey(call)
 	if !ok {
 		return
@@ -175,7 +175,7 @@ const StuckReply = "I could not finish this: the tool kept refusing the request 
 // at all. A call whose arguments cannot be marshalled is never matched, which
 // fails open — running a tool twice is a smaller fault than refusing a call
 // that was never made.
-func CallKey(call llmports.ToolCall) (string, bool) {
+func CallKey(call *llmports.ToolCall) (string, bool) {
 	encoded, err := sonic.ConfigStd.Marshal(call.Arguments)
 	if err != nil {
 		return "", false

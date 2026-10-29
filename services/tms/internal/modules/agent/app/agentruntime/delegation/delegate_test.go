@@ -44,7 +44,7 @@ func TestDelegateReport_HandsBackWhatTheLookupsReadWordForWord(t *testing.T) {
 		},
 	}
 
-	report := Report(delegate, "call_1", run)
+	report := Report(&delegate, "call_1", &run)
 
 	require.Len(t, report.Findings, 1)
 	assert.Equal(t, "invoice_list", report.Findings[0].ToolName)
@@ -102,7 +102,7 @@ func TestDelegateReport_CountsFindingsPastWhatOneAnswerCarries(t *testing.T) {
 	}
 	run := Run{Result: &agentruntimeports.RunResult{Messages: messages}}
 
-	report := Report(delegate, "call_1", run)
+	report := Report(&delegate, "call_1", &run)
 
 	assert.Len(t, report.Findings, 3)
 	assert.Equal(t, 5, report.MoreFindings)

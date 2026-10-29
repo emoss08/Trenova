@@ -39,7 +39,7 @@ func OutOfViewDecisions(
 
 	lines := make([]string, 0, maxOutOfViewDecisions)
 	for idx := len(outcomes) - 1; idx >= 0 && len(lines) < maxOutOfViewDecisions; idx-- {
-		outcome := outcomes[idx]
+		outcome := &outcomes[idx]
 		if outcome.SourceMessageID.IsNil() || outcome.Pending() ||
 			outcome.AutonomyTier == agent.TierAutoExecute {
 			continue

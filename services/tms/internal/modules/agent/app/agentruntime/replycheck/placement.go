@@ -487,9 +487,9 @@ func artifactLinkSpansIn(text string, start, end int) []strayLink {
 
 // linkLine is the line the link stands on, and whether it is a prose line
 // outside a fence.
-func linkLine(text string, link strayLink) (int, int, bool) {
-	lineStart := strings.LastIndexByte(text[:link.start], '\n') + 1
-	lineEnd := strings.IndexByte(text[link.end:], '\n')
+func linkLine(text string, link strayLink) (lineStart, lineEnd int, prose bool) {
+	lineStart = strings.LastIndexByte(text[:link.start], '\n') + 1
+	lineEnd = strings.IndexByte(text[link.end:], '\n')
 	if lineEnd < 0 {
 		lineEnd = len(text)
 	} else {

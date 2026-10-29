@@ -20,7 +20,7 @@ turn now reads the report's name and the id to use.
 func TestProposalOutcomeText_NamesWhatAnExecutedWriteMade(t *testing.T) {
 	t.Parallel()
 
-	text := proposalOutcomeText("report_create", agentruntimeports.ProposalOutcome{
+	text := proposalOutcomeText("report_create", &agentruntimeports.ProposalOutcome{
 		Status: agent.ProposalStatusExecuted,
 		ExecutionResult: &agentrecord.ToolExecutionResult{
 			Action: "created",
@@ -42,7 +42,7 @@ func TestProposalOutcomeText_NamesWhatAnExecutedWriteMade(t *testing.T) {
 func TestProposalOutcomeText_ReadsAsBeforeWithoutAResult(t *testing.T) {
 	t.Parallel()
 
-	text := proposalOutcomeText("report_create_dashboard", agentruntimeports.ProposalOutcome{
+	text := proposalOutcomeText("report_create_dashboard", &agentruntimeports.ProposalOutcome{
 		Status: agent.ProposalStatusExecuted,
 	})
 
@@ -60,7 +60,7 @@ func TestProposalOutcomeText_ReadsAsBeforeWithoutAResult(t *testing.T) {
 func TestProposalOutcomeText_DoesNotCallAnAutomaticWriteApproved(t *testing.T) {
 	t.Parallel()
 
-	text := proposalOutcomeText("report_create", agentruntimeports.ProposalOutcome{
+	text := proposalOutcomeText("report_create", &agentruntimeports.ProposalOutcome{
 		Status:       agent.ProposalStatusExecuted,
 		AutonomyTier: agent.TierAutoExecute,
 		ExecutionResult: &agentrecord.ToolExecutionResult{
@@ -79,7 +79,7 @@ func TestProposalOutcomeText_DoesNotCallAnAutomaticWriteApproved(t *testing.T) {
 		text,
 	)
 
-	failed := proposalOutcomeText("report_create", agentruntimeports.ProposalOutcome{
+	failed := proposalOutcomeText("report_create", &agentruntimeports.ProposalOutcome{
 		Status:         agent.ProposalStatusExecutionFailed,
 		AutonomyTier:   agent.TierAutoExecute,
 		ExecutionError: "name taken",

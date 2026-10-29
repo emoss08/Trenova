@@ -45,7 +45,7 @@ type StepKeyParams struct {
 // An empty key means the arguments could not be encoded. The caller must treat
 // that as a step it cannot guard rather than as a key.
 func StepKey(p StepKeyParams) string {
-	base, ok := loopguard.CallKey(llmports.ToolCall{Name: p.ToolName, Arguments: p.Args})
+	base, ok := loopguard.CallKey(&llmports.ToolCall{Name: p.ToolName, Arguments: p.Args})
 	if !ok {
 		return ""
 	}

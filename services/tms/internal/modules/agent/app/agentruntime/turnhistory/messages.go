@@ -76,15 +76,6 @@ const compactedToolResultChars = 320
 // otherwise resent in full on every call after them.
 const wholeToolResultBudget = 48_000
 
-func toAdapterMessages(
-	history []conversation.Message,
-	outcomes []agentruntimeports.ProposalOutcome,
-) []llmports.Message {
-	messages, _ := replayHistory(history, outcomes)
-
-	return messages
-}
-
 // replayHistory is the conversation as the model is sent it, and the results
 // it shortened as they were stored, which the grounding guard still counts as
 // read: a figure quoted from one is not invented because the replay left it
@@ -128,61 +119,87 @@ func ReplayHistoryWithFiles(
 	answered := answeredCalls(history)
 	open := make(map[string]struct{})
 
-	for idx, msg := range history {
+	for idx := range history {
+		msg := &history[idx]
 		switch msg.Role {
 		case conversation.RoleAssistant:
-			if msg.Refused {
-				continue
+			if replayed, ok := replayAssistantMessage(msg, answered, open, ledger); ok {
+				messages = append(messages, replayed)
 			}
-			calls := make([]conversation.ToolCallRecord, 0, len(msg.ToolCalls))
-			for _, call := range msg.ToolCalls {
-				if _, ok := answered[call.ID]; !ok {
-					continue
-				}
-				open[call.ID] = struct{}{}
-				calls = append(calls, call)
-			}
-			if len(calls) == 0 && strings.TrimSpace(msg.Content) == "" {
-				continue
-			}
-			// The ledger counts the calls as they were made, so a proposal's
-			// ordinal is not shifted by a call that was left out.
-			ledger.NoteCalls(msg)
-			messages = append(messages, llmports.Message{
-				Role:          llmports.RoleAssistant,
-				Content:       msg.Content,
-				ToolCalls:     fromToolCallRecords(calls),
-				Reasoning:     msg.Reasoning,
-				ReplyID:       msg.ProviderMessageID,
-				ReplyProvider: msg.ProviderID,
-			})
 		case conversation.RoleTool:
 			if _, answers := open[msg.ToolCallID]; !answers {
 				continue
 			}
 			delete(open, msg.ToolCallID)
 			_, keep := whole[idx]
-			replayed, original := replayToolResult(&history[idx], ledger, keep)
+			replayed, original := replayToolResult(msg, ledger, keep)
 			if original != "" {
 				shortened = append(shortened, original)
 			}
 			messages = append(messages, replayed)
+		case conversation.RoleUser:
+			messages = append(messages, replayPersonMessage(msg, files, idx >= recent)...)
 		default:
-			if msg.Refused {
-				continue
-			}
-			if msg.Kind == conversation.MessageKindWorldChange {
-				messages = append(messages, llmports.NoticeMessage(msg.Content))
-				continue
-			}
-			messages = append(messages, replayUserMessage(&history[idx], files, idx >= recent))
-			if msg.Kind == conversation.MessageKindSteer {
-				messages = append(messages, llmports.NoticeMessage(worldwatch.SteerNotice))
-			}
+			messages = append(messages, replayPersonMessage(msg, files, idx >= recent)...)
 		}
 	}
 
 	return messages, shortened
+}
+
+func replayAssistantMessage(
+	msg *conversation.Message,
+	answered, open map[string]struct{},
+	ledger *proposalledger.Ledger,
+) (llmports.Message, bool) {
+	if msg.Refused {
+		return llmports.Message{}, false
+	}
+	calls := make([]conversation.ToolCallRecord, 0, len(msg.ToolCalls))
+	for _, call := range msg.ToolCalls {
+		if _, ok := answered[call.ID]; !ok {
+			continue
+		}
+		open[call.ID] = struct{}{}
+		calls = append(calls, call)
+	}
+	if len(calls) == 0 && strings.TrimSpace(msg.Content) == "" {
+		return llmports.Message{}, false
+	}
+	// The ledger counts the calls as they were made, so a proposal's
+	// ordinal is not shifted by a call that was left out.
+	ledger.NoteCalls(msg)
+
+	return llmports.Message{
+		Role:          llmports.RoleAssistant,
+		Content:       msg.Content,
+		ToolCalls:     fromToolCallRecords(calls),
+		Reasoning:     msg.Reasoning,
+		ReplyID:       msg.ProviderMessageID,
+		ReplyProvider: msg.ProviderID,
+	}, true
+}
+
+// replayPersonMessage is what the model is sent for a message from the person
+// or the world: nothing for a refused one, and a notice for a change made
+// elsewhere or a steer.
+func replayPersonMessage(
+	msg *conversation.Message,
+	files map[string]string,
+	recent bool,
+) []llmports.Message {
+	if msg.Refused {
+		return nil
+	}
+	if msg.Kind == conversation.MessageKindWorldChange {
+		return []llmports.Message{llmports.NoticeMessage(msg.Content)}
+	}
+	replayed := []llmports.Message{replayUserMessage(msg, files, recent)}
+	if msg.Kind == conversation.MessageKindSteer {
+		replayed = append(replayed, llmports.NoticeMessage(worldwatch.SteerNotice))
+	}
+
+	return replayed
 }
 
 func replayUserMessage(
@@ -259,7 +276,7 @@ func replayToolResult(
 	ledger *proposalledger.Ledger,
 	keep bool,
 ) (replayed llmports.Message, original string) {
-	content, current := ledger.CurrentContent(*msg)
+	content, current := ledger.CurrentContent(msg)
 	if !current && !keep {
 		content = compactToolResult(content)
 	}
@@ -302,9 +319,9 @@ func wholeResults(history []conversation.Message, recentFrom int) map[int]struct
 // answeredCalls is the set of tool call ids a recorded result answers.
 func answeredCalls(history []conversation.Message) map[string]struct{} {
 	answered := make(map[string]struct{})
-	for _, msg := range history {
-		if msg.Role == conversation.RoleTool && msg.ToolCallID != "" {
-			answered[msg.ToolCallID] = struct{}{}
+	for idx := range history {
+		if history[idx].Role == conversation.RoleTool && history[idx].ToolCallID != "" {
+			answered[history[idx].ToolCallID] = struct{}{}
 		}
 	}
 

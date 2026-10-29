@@ -61,6 +61,7 @@ type Builder struct {
 	profiles      agentprofileports.Reader
 }
 
+//nolint:gocritic // fx requires an fx.In parameter struct to be passed by value.
 func NewBuilder(p BuilderParams) agentruntimeports.RuntimeContextBuilder {
 	return &Builder{
 		logger:        p.Logger.Named("service.agentruntime.context"),

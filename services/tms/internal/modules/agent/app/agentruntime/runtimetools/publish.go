@@ -6,6 +6,8 @@ import (
 	"strings"
 	"unicode/utf8"
 
+	"github.com/emoss08/trenova/pkg/toolschema"
+
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/argcheck"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/replycheck"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/toolcall"
@@ -52,78 +54,78 @@ func PublishArtifactSpec() kernelports.ToolSpec {
 		Name:        PublishArtifactName,
 		Description: publishArtifactDescription,
 		Parameters: map[string]any{
-			"type": "object",
-			"properties": map[string]any{
+			toolschema.KeyType: toolschema.TypeObject,
+			toolschema.KeyProperties: map[string]any{
 				"title": map[string]any{
-					"type": "string",
-					"description": "What the document is, in a few words and in sentence " +
+					toolschema.KeyType: toolschema.TypeString,
+					toolschema.KeyDescription: "What the document is, in a few words and in sentence " +
 						"case: only the first word, names and record numbers take capitals, " +
 						"and no markdown or quotes. It is how the document is named wherever " +
 						"it is shown. \"Shipment SEED-SHP-007 brief\", \"Late loads for " +
 						"Peak Distributing\".",
 				},
 				"body": map[string]any{
-					"type": "string",
-					"description": "The whole document in markdown: headings, lists and " +
+					toolschema.KeyType: toolschema.TypeString,
+					toolschema.KeyDescription: "The whole document in markdown: headings, lists and " +
 						"tables. Only facts your tools returned.",
 				},
 				"docType": map[string]any{
-					"type": "string",
-					"description": "What kind of write-up it is, in a word or two: " +
+					toolschema.KeyType: toolschema.TypeString,
+					toolschema.KeyDescription: "What kind of write-up it is, in a word or two: " +
 						"\"Brief\", \"Summary\", \"Handover\".",
 				},
 				"basis": map[string]any{
-					"type": "string",
-					"description": "What it was written from, in a few words: " +
+					toolschema.KeyType: toolschema.TypeString,
+					toolschema.KeyDescription: "What it was written from, in a few words: " +
 						"\"from 42 loads and 3 weather alerts\".",
 				},
 				"sources": map[string]any{
-					"type": "array",
-					"description": "What the body's [^N] marks point to, one entry per " +
+					toolschema.KeyType: toolschema.TypeArray,
+					toolschema.KeyDescription: "What the body's [^N] marks point to, one entry per " +
 						"number. Only tools you called in this conversation.",
-					"items": map[string]any{
-						"type": "object",
-						"properties": map[string]any{
-							"n": map[string]any{"type": "integer"},
+					toolschema.KeyItems: map[string]any{
+						toolschema.KeyType: toolschema.TypeObject,
+						toolschema.KeyProperties: map[string]any{
+							"n": map[string]any{toolschema.KeyType: toolschema.TypeInteger},
 							"tool": map[string]any{
-								"type":        "string",
-								"description": "The tool that found it.",
+								toolschema.KeyType:        toolschema.TypeString,
+								toolschema.KeyDescription: "The tool that found it.",
 							},
 							"label": map[string]any{
-								"type":        "string",
-								"description": "What it is, in a few words.",
+								toolschema.KeyType:        toolschema.TypeString,
+								toolschema.KeyDescription: "What it is, in a few words.",
 							},
 							"detail": map[string]any{
-								"type":        "string",
-								"description": "One more line: a time, a scope.",
+								toolschema.KeyType:        toolschema.TypeString,
+								toolschema.KeyDescription: "One more line: a time, a scope.",
 							},
 							"artifactId": map[string]any{
-								"type": "string",
-								"description": "The artifact that shows it, when its result " +
+								toolschema.KeyType: toolschema.TypeString,
+								toolschema.KeyDescription: "The artifact that shows it, when its result " +
 									"named one.",
 							},
 						},
-						"required":             []string{"n", "tool", "label"},
-						"additionalProperties": false,
+						toolschema.KeyRequired:             []string{"n", "tool", "label"},
+						toolschema.KeyAdditionalProperties: false,
 					},
 				},
 				"artifactId": map[string]any{
-					"type": "string",
-					"description": "The id of a document you published earlier in this " +
+					toolschema.KeyType: toolschema.TypeString,
+					toolschema.KeyDescription: "The id of a document you published earlier in this " +
 						"conversation, from its publish_artifact result, to replace its text. " +
 						"Leave it out to publish a new document.",
 				},
 				"analyses": map[string]any{
-					"type": "array",
-					"description": "The analyses the document includes, each by the " +
+					toolschema.KeyType: toolschema.TypeArray,
+					toolschema.KeyDescription: "The analyses the document includes, each by the " +
 						"artifactId of the analysis an analysis_run result kept in this " +
 						"conversation. Each is added after the text under its title.",
-					"items":    map[string]any{"type": "string"},
-					"maxItems": maxDocumentAnalyses,
+					toolschema.KeyItems: map[string]any{toolschema.KeyType: toolschema.TypeString},
+					"maxItems":          maxDocumentAnalyses,
 				},
 			},
-			"required":             []string{"title", "body"},
-			"additionalProperties": false,
+			toolschema.KeyRequired:             []string{"title", "body"},
+			toolschema.KeyAdditionalProperties: false,
 		},
 	}
 }
@@ -195,7 +197,7 @@ func PublishOutcome(arguments map[string]any) toolcall.Result {
 
 // publishedSources reads the sources a document cites. A source without a
 // number or a label cannot be shown, and is a problem the model can fix.
-func publishedSources(raw any) ([]agentruntimeports.PublishedSource, []string) {
+func publishedSources(raw any) (sources []agentruntimeports.PublishedSource, problems []string) {
 	entries, ok := raw.([]any)
 	if !ok || len(entries) == 0 {
 		return nil, nil
@@ -204,7 +206,7 @@ func publishedSources(raw any) ([]agentruntimeports.PublishedSource, []string) {
 		return nil, []string{fmt.Sprintf("at most %d sources", maxDocumentSources)}
 	}
 
-	sources := make([]agentruntimeports.PublishedSource, 0, len(entries))
+	sources = make([]agentruntimeports.PublishedSource, 0, len(entries))
 	seen := map[int]bool{}
 	for _, entry := range entries {
 		fields, isObject := entry.(map[string]any)
@@ -231,7 +233,8 @@ func publishedSources(raw any) ([]agentruntimeports.PublishedSource, []string) {
 			Label:  label,
 			Detail: clipRunes(argcheck.String(fields, "detail"), maxSourceTextRunes),
 		}
-		if id, err := pulid.Parse(strings.TrimSpace(argcheck.String(fields, "artifactId"))); err == nil {
+		artifactID := strings.TrimSpace(argcheck.String(fields, "artifactId"))
+		if id, err := pulid.Parse(artifactID); err == nil {
 			source.ArtifactID = id
 		}
 		sources = append(sources, source)

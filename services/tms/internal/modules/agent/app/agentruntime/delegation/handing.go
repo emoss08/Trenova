@@ -24,7 +24,7 @@ type HandingTurn interface {
 	CountDelegation()
 	// NextOrdinal numbers this exact call within the run, so the step key of
 	// a legitimately repeated call differs from the first one's.
-	NextOrdinal(call llmports.ToolCall) int
+	NextOrdinal(call *llmports.ToolCall) int
 	// CallIDs are the tool call ids the conversation holds, sorted, and
 	// ReserveCallIDs marks more as taken.
 	CallIDs() []string
@@ -52,8 +52,8 @@ type Effects interface {
 // Delegate hands one task to another agent and answers the call with what
 // it did. The delegate's steps are folded into the turn's own record, tagged,
 // and its writes are kept apart so they are recorded as its own.
-func Delegate(t HandingTurn, fx Effects, call llmports.ToolCall) toolcall.Result {
-	task, refusal := Prepare(t, &call)
+func Delegate(t HandingTurn, fx Effects, call *llmports.ToolCall) toolcall.Result {
+	task, refusal := Prepare(t, call)
 	if task == nil {
 		return refusal
 	}
@@ -157,7 +157,7 @@ func Hand(
 	t HandingTurn,
 	fx Effects,
 	h *HandedTask,
-) (toolcall.Result, assistantstreamports.AssistantDelegateFinishedEvent) {
+) (outcome toolcall.Result, report assistantstreamports.AssistantDelegateFinishedEvent) {
 	call := start(t, fx, h)
 	runs := fx.Delegate([]Call{call})
 
@@ -191,7 +191,7 @@ func start(t HandingTurn, fx Effects, h *HandedTask) Call {
 		OwnerID:  t.Request().StepOwner.ID,
 		ToolName: runtimetools.DelegateTaskName,
 		Args:     call.Arguments,
-		Ordinal:  t.NextOrdinal(call),
+		Ordinal:  t.NextOrdinal(&call),
 	})
 	if scope == "" {
 		scope = "call:" + call.ID
@@ -232,7 +232,7 @@ func settle(
 	run *Run,
 ) (outcome toolcall.Result, report assistantstreamports.AssistantDelegateFinishedEvent) {
 	call, delegate := h.Call, h.Delegate
-	report = Report(delegate, call.ID, *run)
+	report = Report(&delegate, call.ID, run)
 	if run.ExternalContent {
 		t.CarryExternalContent(true)
 	}

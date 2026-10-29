@@ -61,23 +61,25 @@ func contextTaint(rc *agentturn.RuntimeContext, now int64) []agent.TaintMark {
 }
 
 func Call(
-	policy agenttoolports.ToolPolicy,
-	call llmports.ToolCall,
+	policy *agenttoolports.ToolPolicy,
+	call *llmports.ToolCall,
 	data any,
 	now int64,
 ) []agent.TaintMark {
 	var refs []agent.SourcedRef
 	switch policy.ReadsExternal {
 	case agenttooltrust.ExternalReadAlways:
-		refs = carriedRefs(&policy, data)
+		refs = carriedRefs(policy, data)
 		if len(refs) == 0 {
 			return []agent.TaintMark{callMark(call, policy.Source, nil, now)}
 		}
 	case agenttooltrust.ExternalReadMarked:
-		refs = carriedRefs(&policy, data)
+		refs = carriedRefs(policy, data)
 		if len(refs) == 0 {
 			return nil
 		}
+	case agenttooltrust.ExternalReadNever:
+		return nil
 	default:
 		return nil
 	}
@@ -118,7 +120,7 @@ func carriedRefs(policy *agenttoolports.ToolPolicy, data any) []agent.SourcedRef
 }
 
 func callMark(
-	call llmports.ToolCall,
+	call *llmports.ToolCall,
 	source agent.TaintSource,
 	ref *agentrecord.RecordRef,
 	now int64,

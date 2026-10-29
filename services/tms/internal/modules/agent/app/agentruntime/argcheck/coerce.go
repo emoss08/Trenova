@@ -29,7 +29,7 @@ const maxCoercionsNoted = 5
 func coerceArguments(
 	schema, args map[string]any,
 	opts ...toolcoerce.Option,
-) (map[string]any, []argumentCoercion) {
+) (coerced map[string]any, coercions []argumentCoercion) {
 	return toolcoerce.Apply(schema, args, opts...)
 }
 
@@ -154,11 +154,7 @@ func walkIDs(properties, args map[string]any, path string, problems *[]argumentP
 		at := toolschema.JoinPath(path, key)
 		switch toolschema.DeclaredType(property) {
 		case "object":
-			if object, isObject := value.(map[string]any); isObject {
-				if nested, has := property["properties"].(map[string]any); has {
-					walkIDs(nested, object, at, problems)
-				}
-			}
+			walkObjectIDs(property, value, at, problems)
 		case "array":
 			items, _ := property["items"].(map[string]any)
 			list, isList := value.([]any)
@@ -166,34 +162,59 @@ func walkIDs(properties, args map[string]any, path string, problems *[]argumentP
 				continue
 			}
 			check, checked := listIDCheck(key, property, items)
-			for idx, element := range list {
-				elementPath := at + "[" + strconv.Itoa(idx) + "]"
-				switch toolschema.DeclaredType(items) {
-				case "object":
-					if object, isObject := element.(map[string]any); isObject {
-						if nested, has := items["properties"].(map[string]any); has {
-							walkIDs(nested, object, elementPath, problems)
-						}
-					}
-				case "string":
-					if text, isText := element.(string); isText && checked {
-						if problem, bad := idProblem(elementPath, text, check); bad {
-							*problems = append(*problems, problem)
-						}
-					}
-				}
-			}
+			walkListIDs(
+				&idList{items: items, check: check, checked: checked, path: at},
+				list,
+				problems,
+			)
 		case "string":
 			text, isText := value.(string)
 			if !isText {
 				continue
 			}
 			if check, checked := singleIDCheck(key, property); checked {
-				if problem, bad := idProblem(at, text, check); bad {
-					*problems = append(*problems, problem)
-				}
+				appendIDProblem(problems, at, text, check)
 			}
 		}
+	}
+}
+
+func walkObjectIDs(schema map[string]any, value any, path string, problems *[]argumentProblem) {
+	object, isObject := value.(map[string]any)
+	if !isObject {
+		return
+	}
+	if nested, has := schema["properties"].(map[string]any); has {
+		walkIDs(nested, object, path, problems)
+	}
+}
+
+// idList is an array parameter whose elements are checked: the schema of its
+// items, the id check each string element is held to, and where it sits.
+type idList struct {
+	items   map[string]any
+	check   idCheck
+	checked bool
+	path    string
+}
+
+func walkListIDs(list *idList, elements []any, problems *[]argumentProblem) {
+	for idx, element := range elements {
+		elementPath := list.path + "[" + strconv.Itoa(idx) + "]"
+		switch toolschema.DeclaredType(list.items) {
+		case "object":
+			walkObjectIDs(list.items, element, elementPath, problems)
+		case "string":
+			if text, isText := element.(string); isText && list.checked {
+				appendIDProblem(problems, elementPath, text, list.check)
+			}
+		}
+	}
+}
+
+func appendIDProblem(problems *[]argumentProblem, path, text string, check idCheck) {
+	if problem, bad := idProblem(path, text, check); bad {
+		*problems = append(*problems, problem)
 	}
 }
 

@@ -90,7 +90,7 @@ type GroundingFinding struct {
 	analyze bool
 }
 
-func (f GroundingFinding) empty() bool {
+func (f *GroundingFinding) empty() bool {
 	return len(f.figures) == 0 && len(f.fields) == 0
 }
 
@@ -300,7 +300,7 @@ func isGroundingCorrection(content string) bool {
 		strings.HasPrefix(content, AmountsCorrectionLead)
 }
 
-func (f GroundingFinding) RetryReason() string {
+func (f *GroundingFinding) RetryReason() string {
 	if f.read {
 		return amountsRetryReason
 	}
@@ -308,7 +308,7 @@ func (f GroundingFinding) RetryReason() string {
 	return groundingRetryReason
 }
 
-func (f GroundingFinding) NoteReason() string {
+func (f *GroundingFinding) NoteReason() string {
 	if f.read {
 		return amountsNoteReason
 	}
@@ -316,7 +316,7 @@ func (f GroundingFinding) NoteReason() string {
 	return groundingNoteReason
 }
 
-func (f GroundingFinding) Note() string {
+func (f *GroundingFinding) Note() string {
 	if !f.read {
 		return GroundingNote
 	}
@@ -328,7 +328,7 @@ func (f GroundingFinding) Note() string {
 
 func RegroundedEvent(
 	action assistantstreamports.RegroundAction,
-	finding GroundingFinding,
+	finding *GroundingFinding,
 	reason string,
 ) kernelports.StreamEvent {
 	return kernelports.StreamEvent{
@@ -342,7 +342,7 @@ func RegroundedEvent(
 	}
 }
 
-func (f GroundingFinding) Correction() string {
+func (f *GroundingFinding) Correction() string {
 	if f.read {
 		return f.amountsCorrection()
 	}
@@ -368,7 +368,7 @@ func (f GroundingFinding) Correction() string {
 	return b.String()
 }
 
-func (f GroundingFinding) amountsCorrection() string {
+func (f *GroundingFinding) amountsCorrection() string {
 	var b strings.Builder
 	b.WriteString(AmountsCorrectionLead)
 	b.WriteString(" ")

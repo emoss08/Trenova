@@ -21,7 +21,7 @@ var (
 	collectionPrefixes = []string{"list_", "search_", "get_"}
 )
 
-func Outcome(call llmports.ToolCall, outcome toolcall.Result) string {
+func Outcome(call *llmports.ToolCall, outcome *toolcall.Result) string {
 	if outcome.Failed {
 		return ""
 	}
@@ -48,7 +48,8 @@ func Result(toolName string, document any) string {
 		}
 		if items, ok := typed["items"].([]any); ok {
 			count := len(items)
-			if declared, counted := toolresult.WholeNumber(typed["count"]); counted && declared >= 0 {
+			declared, counted := toolresult.WholeNumber(typed["count"])
+			if counted && declared >= 0 {
 				count = int(declared)
 			}
 			more, _ := typed["hasMore"].(bool)

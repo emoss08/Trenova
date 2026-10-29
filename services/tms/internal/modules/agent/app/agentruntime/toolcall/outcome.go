@@ -86,7 +86,7 @@ type Outcome struct {
 	RanWith map[string]any `json:"-"`
 }
 
-func (o Outcome) Result() Result {
+func (o *Outcome) Result() Result {
 	return Result{
 		Content:        o.Content,
 		Failed:         o.Failed,

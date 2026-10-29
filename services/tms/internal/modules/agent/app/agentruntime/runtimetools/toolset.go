@@ -2,6 +2,7 @@ package runtimetools
 
 import (
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/pkg/toolschema"
 )
 
 const (
@@ -30,15 +31,15 @@ func FindToolsSpec() kernelports.ToolSpec {
 		Description: findToolsDescription,
 		Searches:    true,
 		Parameters: map[string]any{
-			"type": "object",
-			"properties": map[string]any{
+			toolschema.KeyType: toolschema.TypeObject,
+			toolschema.KeyProperties: map[string]any{
 				"need": map[string]any{
-					"type":        "string",
-					"description": "What you are trying to do, in the operator's words.",
+					toolschema.KeyType:        toolschema.TypeString,
+					toolschema.KeyDescription: "What you are trying to do, in the operator's words.",
 				},
 			},
-			"required":             []string{"need"},
-			"additionalProperties": false,
+			toolschema.KeyRequired:             []string{"need"},
+			toolschema.KeyAdditionalProperties: false,
 		},
 	}
 }

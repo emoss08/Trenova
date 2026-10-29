@@ -49,10 +49,11 @@ type Matcher struct {
 
 var _ agentrecommendationports.AgentRecommender = (*Matcher)(nil)
 
+//nolint:gocritic // fx requires an fx.In parameter struct to be passed by value.
 func NewMatcher(p MatcherParams) *Matcher {
 	return &Matcher{
 		logger: p.Logger.Named("service.agentruntime"),
-		access: toolaccess.NewAccess(toolaccess.AccessParams{
+		access: toolaccess.NewAccess(&toolaccess.AccessParams{
 			Logger:         p.Logger,
 			QueryTools:     p.QueryTools,
 			ActionTools:    p.ActionTools,

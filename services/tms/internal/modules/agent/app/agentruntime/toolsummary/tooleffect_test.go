@@ -117,11 +117,11 @@ func TestSummarizeOutcome_FailedCallsHaveNone(t *testing.T) {
 		Arguments: map[string]any{"name": "Late loads"},
 	}
 
-	assert.Empty(t, Outcome(call, toolcall.Result{Failed: true, Summary: "Late loads"}))
-	assert.Equal(t, "Late loads", Outcome(call, toolcall.Result{
+	assert.Empty(t, Outcome(&call, &toolcall.Result{Failed: true, Summary: "Late loads"}))
+	assert.Equal(t, "Late loads", Outcome(&call, &toolcall.Result{
 		Action: &agentruntimeports.PendingAction{ToolName: "report_create"},
 	}))
-	assert.Empty(t, Outcome(call, toolcall.Result{Content: "done"}))
+	assert.Empty(t, Outcome(&call, &toolcall.Result{Content: "done"}))
 }
 
 func TestSummaryLine_KeepsOneShortLine(t *testing.T) {

@@ -43,17 +43,17 @@ func DelegateTaskSpec(delegates []agentturn.RuntimeDelegate) kernelports.ToolSpe
 		Name:        DelegateTaskName,
 		Description: delegateTaskDescription,
 		Parameters: map[string]any{
-			"type": "object",
-			"properties": map[string]any{
+			toolschema.KeyType: toolschema.TypeObject,
+			toolschema.KeyProperties: map[string]any{
 				DelegateAgentParam: map[string]any{
-					"type": "string",
-					"enum": ids,
-					"description": "The agentId of the agent to ask, from the agents you " +
+					toolschema.KeyType: toolschema.TypeString,
+					toolschema.KeyEnum: ids,
+					toolschema.KeyDescription: "The agentId of the agent to ask, from the agents you " +
 						"can ask.",
 				},
 				DelegateTaskParam: map[string]any{
-					"type": "string",
-					"description": "What the agent should look up and what it should hand " +
+					toolschema.KeyType: toolschema.TypeString,
+					toolschema.KeyDescription: "What the agent should look up and what it should hand " +
 						"back, with every name, id, date and figure it needs. \"List this " +
 						"month's late deliveries for Acme Foods and hand back each load's PRO " +
 						"number and how late it was.\"",
@@ -89,8 +89,8 @@ func DelegateTaskSpec(delegates []agentturn.RuntimeDelegate) kernelports.ToolSpe
 					toolschema.KeyItems: map[string]any{toolschema.KeyType: toolschema.TypeString},
 				},
 			},
-			toolschema.KeyRequired: []string{DelegateAgentParam, DelegateTaskParam},
-			"additionalProperties": false,
+			toolschema.KeyRequired:             []string{DelegateAgentParam, DelegateTaskParam},
+			toolschema.KeyAdditionalProperties: false,
 		},
 	}
 }

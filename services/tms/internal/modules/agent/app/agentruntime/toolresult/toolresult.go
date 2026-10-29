@@ -273,13 +273,12 @@ func EncodeModelDocument(
 	now int64,
 	timezone string,
 	fields []string,
-) (string, any, error) {
+) (content string, document any, err error) {
 	encoded, err := sonic.Marshal(data)
 	if err != nil {
 		return "", nil, err
 	}
 
-	var document any
 	if err = sonic.Unmarshal(encoded, &document); err != nil {
 		return "", nil, err
 	}

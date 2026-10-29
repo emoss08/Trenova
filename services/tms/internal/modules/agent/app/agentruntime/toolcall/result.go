@@ -72,7 +72,7 @@ func (o *Result) VerdictOrDerived() string {
 	return derivedVerdict(o.Failed, o.Action)
 }
 
-func (o Result) Outcome() Outcome {
+func (o *Result) Outcome() Outcome {
 	return Outcome{
 		Content:        o.Content,
 		Failed:         o.Failed,

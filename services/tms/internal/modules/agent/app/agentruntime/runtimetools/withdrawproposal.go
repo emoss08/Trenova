@@ -118,9 +118,7 @@ func withdrawProposal(t Turn, arguments map[string]any) toolcall.Result {
 	}
 
 	action.Withdrawn = true
-	if _, requested := t.Decisions()[id]; requested {
-		delete(t.Decisions(), id)
-	}
+	delete(t.Decisions(), id)
 
 	content := fmt.Sprintf("Withdrew proposal %s (%s). It will not be offered to the person "+
 		"and nothing has changed. Do not ask them to reject it.", id, action.ToolName)

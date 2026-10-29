@@ -13,7 +13,7 @@ import (
 func Answer(
 	t Turn,
 	offers func(name string) bool,
-	call llmports.ToolCall,
+	call *llmports.ToolCall,
 ) (outcome toolcall.Result, handled bool) {
 	switch call.Name {
 	case RequestDecisionName:
