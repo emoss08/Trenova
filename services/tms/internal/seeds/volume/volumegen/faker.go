@@ -63,6 +63,10 @@ func (f *Faker) Weighted(weights []int) int {
 	return len(weights) - 1
 }
 
+func (f *Faker) Shuffle(n int, swap func(i, j int)) {
+	f.r.Shuffle(n, swap)
+}
+
 func Pick[T any](f *Faker, items []T) T {
 	return items[f.Intn(len(items))]
 }

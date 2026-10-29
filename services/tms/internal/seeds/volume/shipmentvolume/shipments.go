@@ -1304,8 +1304,27 @@ func shpMoveRecords(
 		if move.Assignment != nil {
 			rec.AssignmentID = move.Assignment.ID
 		}
-		for _, ts := range timeline[m] {
+		for s, ts := range timeline[m] {
 			rec.Cities = append(rec.Cities, ts.plan.loc.City)
+			stop := move.Stops[s]
+			sr := &volumegen.StopRecord{
+				ID:          stop.ID,
+				Sequence:    stop.Sequence,
+				Type:        stop.Type,
+				Status:      stop.Status,
+				Location:    ts.plan.loc,
+				Appointment: ts.appointment,
+				WindowStart: ts.windowStart,
+				WindowEnd:   ts.windowEnd,
+				Miles:       ts.miles,
+			}
+			if stop.ActualArrival != nil {
+				sr.ActualArrival = *stop.ActualArrival
+			}
+			if stop.ActualDeparture != nil {
+				sr.ActualDeparture = *stop.ActualDeparture
+			}
+			rec.Stops = append(rec.Stops, sr)
 		}
 		first, last := move.Stops[0], move.Stops[len(move.Stops)-1]
 		if first.ActualArrival != nil {

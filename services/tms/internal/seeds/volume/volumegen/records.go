@@ -96,12 +96,35 @@ type DriverRecord struct {
 	TractorID   pulid.ID
 }
 
+type StopRecord struct {
+	ID              pulid.ID
+	Sequence        int64
+	Type            shipmentvocab.StopType
+	Status          shipmentvocab.StopStatus
+	Location        *LocationRecord
+	Appointment     bool
+	WindowStart     int64
+	WindowEnd       int64
+	ActualArrival   int64
+	ActualDeparture int64
+	Miles           float64
+}
+
+func (s *StopRecord) IsOrigin() bool {
+	return s.Type == shipmentvocab.StopTypePickup || s.Type == shipmentvocab.StopTypeSplitPickup
+}
+
+func (s *StopRecord) Arrived() bool {
+	return s.ActualArrival > 0
+}
+
 type MoveRecord struct {
 	ID                pulid.ID
 	Sequence          int64
 	Status            shipmentvocab.MoveStatus
 	Miles             float64
 	Cities            []*CityRecord
+	Stops             []*StopRecord
 	StartedAt         int64
 	CompletedAt       int64
 	Crew              *Crew
