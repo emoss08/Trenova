@@ -19188,7 +19188,6 @@ github.com/emoss08/trenova/internal/modules/agent/app/agenttools/ratetools.Recor
 github.com/emoss08/trenova/internal/modules/agent/app/agenttools/ratetools.SendRateConfirmationTool	github.com/emoss08/trenova/internal/modules/agent/app/agenttools/rateconfirmationtools.SendRateConfirmationTool
 github.com/emoss08/trenova/internal/modules/agent/app/agenttools/ratetools.VoidRateConfirmationTool	github.com/emoss08/trenova/internal/modules/agent/app/agenttools/rateconfirmationtools.VoidRateConfirmationTool
 github.com/emoss08/trenova/internal/infrastructure/postgres/tenantbootstrap.Scope	github.com/emoss08/trenova/internal/infrastructure/postgres/tenantscope.Scope
-github.com/emoss08/trenova/internal/infrastructure/postgres/tenantbootstrap.Scoped	github.com/emoss08/trenova/internal/infrastructure/postgres/tenantscope.Scoped
 github.com/emoss08/trenova/internal/infrastructure/postgres/tenantbootstrap.EnsureChartOfAccounts	github.com/emoss08/trenova/internal/infrastructure/postgres/accountingseed.EnsureChartOfAccounts
 github.com/emoss08/trenova/internal/infrastructure/postgres/tenantbootstrap.CreateDocumentTemplateStarters	github.com/emoss08/trenova/internal/infrastructure/postgres/referenceseed.CreateDocumentTemplateStarters
 github.com/emoss08/trenova/internal/infrastructure/postgres/tenantbootstrap.CreateDocumentTypes	github.com/emoss08/trenova/internal/infrastructure/postgres/referenceseed.CreateDocumentTypes
