@@ -13,7 +13,11 @@ import (
 	"github.com/emoss08/trenova/internal/modules/settlement/adapters/postgres/iftarepository"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/carriersettlementservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/driverpayservice"
+	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementaccrualservice"
+	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementreviewservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementservice"
+	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementtransferservice"
+	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementworkspaceservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/fueldeskcardservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/fuelpurchaseservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/iftaservice"
@@ -48,6 +52,10 @@ func SharedOptions() fx.Option {
 			fuelpurchaseservice.NewValidator,
 			driverpayservice.New,
 			driversettlementservice.New,
+			driversettlementaccrualservice.New,
+			driversettlementreviewservice.New,
+			driversettlementtransferservice.New,
+			driversettlementworkspaceservice.New,
 			carriersettlementservice.New,
 			func(s *carriersettlementservice.Service) carrierports.CarrierCostAccrual { return s },
 			func(s *carriersettlementservice.Service) carrierports.CarrierInvoiceAutoMatcher { return s },

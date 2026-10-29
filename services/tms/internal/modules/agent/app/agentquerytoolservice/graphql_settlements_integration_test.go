@@ -35,7 +35,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/settlement/adapters/postgres/driversettlementrepository"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/carriersettlementservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/driverpayservice"
+	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementreviewservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementservice"
+	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementworkspaceservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement/carriersettlementdb"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
@@ -211,11 +213,23 @@ func settlementServices(conn *postgres.Connection, services *agentread.ResolverP
 	services.CarrierSettlementRepo = carrierSettlements
 	services.DriverPayService = payService
 	services.DriverSettlementService = driversettlementservice.New(driversettlementservice.Params{
-		Logger: logger, DB: conn, SettlementRepo: settlements, DisputeRepo: disputes,
-		ExpenseRepo: expenses, BatchRepo: batches, PayEventRepo: events,
-		AssignmentRepo: assignments, DeductionRepo: deductions, EarningRepo: earnings,
-		PayCodeRepo: codes, AdvanceRepo: advances, EscrowRepo: escrow, PayService: payService,
+		Logger: logger, DB: conn, SettlementRepo: settlements, BatchRepo: batches,
+		PayEventRepo: events, AssignmentRepo: assignments, DeductionRepo: deductions,
+		EarningRepo: earnings, PayCodeRepo: codes, AdvanceRepo: advances, EscrowRepo: escrow,
 	})
+	services.DriverSettlementReviewService = driversettlementreviewservice.New(
+		driversettlementreviewservice.Params{
+			Logger: logger, Settlements: services.DriverSettlementService,
+			SettlementRepo: settlements, DisputeRepo: disputes, ExpenseRepo: expenses,
+			PayCodeRepo: codes,
+		},
+	)
+	services.DriverSettlementWorkspaceService = driversettlementworkspaceservice.New(
+		driversettlementworkspaceservice.Params{
+			Settlements: services.DriverSettlementService, SettlementRepo: settlements,
+			BatchRepo: batches, PayEventRepo: events,
+		},
+	)
 	services.CarrierSettlementService = carriersettlementservice.New(
 		carriersettlementservice.Params{
 			Logger: logger, DB: conn, SettlementRepo: carrierSettlements,

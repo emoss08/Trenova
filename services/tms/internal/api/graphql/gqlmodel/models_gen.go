@@ -3,6 +3,7 @@
 package gqlmodel
 
 import (
+	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementworkspaceservice"
 	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelsourcingservice"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentqualitysuite"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detentioncollectability"
@@ -165,7 +166,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/reference/domain/holdreason"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/servicetype"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/shipmenttype"
-	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
@@ -1974,7 +1974,7 @@ type BulkReviewInboundMessagesInput struct {
 
 type BulkSettlementActionInput struct {
 	SettlementIds []string                               `json:"settlementIds"`
-	Action        driversettlementservice.BulkActionType `json:"action"`
+	Action        driversettlementworkspaceservice.BulkActionType `json:"action"`
 	// Required when action is MarkPaid.
 	PaymentMethod    *string `json:"paymentMethod,omitempty"`
 	PaymentReference *string `json:"paymentReference,omitempty"`

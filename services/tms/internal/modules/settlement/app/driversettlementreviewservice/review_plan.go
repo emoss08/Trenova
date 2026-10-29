@@ -1,4 +1,4 @@
-package driversettlementservice
+package driversettlementreviewservice
 
 import (
 	"context"
@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/settlement/app/settlementshared"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/payexpense"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
@@ -38,7 +39,7 @@ func (s *Service) PlanStartDisputeReview(
 	disputeID pulid.ID,
 	actor *permissionports.RequestActor,
 ) (*DisputeChange, error) {
-	if err := requireActor(actor, "Dispute review"); err != nil {
+	if err := settlementshared.RequireActor(actor, "Dispute review"); err != nil {
 		return nil, err
 	}
 	original, err := s.disputeRepo.GetByID(
@@ -69,7 +70,7 @@ func (s *Service) PlanResolveDispute(
 	req *ResolveDisputeRequest,
 	actor *permissionports.RequestActor,
 ) (*ResolveDisputePlan, error) {
-	if err := requireActor(actor, "Dispute resolution"); err != nil {
+	if err := settlementshared.RequireActor(actor, "Dispute resolution"); err != nil {
 		return nil, err
 	}
 	if req.ResolutionNote == "" {
@@ -155,7 +156,7 @@ func (s *Service) PlanReviewExpense(
 	req *ReviewExpenseRequest,
 	actor *permissionports.RequestActor,
 ) (*ReviewExpensePlan, error) {
-	if err := requireActor(actor, "Expense review"); err != nil {
+	if err := settlementshared.RequireActor(actor, "Expense review"); err != nil {
 		return nil, err
 	}
 	if !req.Approve && strings.TrimSpace(req.Note) == "" {

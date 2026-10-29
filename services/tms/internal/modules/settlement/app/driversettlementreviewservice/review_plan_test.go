@@ -1,4 +1,4 @@
-package driversettlementservice
+package driversettlementreviewservice
 
 import (
 	"context"
@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/dashcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/payexpense"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
@@ -71,6 +72,29 @@ func (c *receiptControl) GetOrCreate(
 	return &dashcontrol.DashControl{RequireExpenseReceipt: c.required}, nil
 }
 
+func draftFixture(status driversettlement.Status) *driversettlement.Settlement {
+	return &driversettlement.Settlement{
+		ID:               pulid.MustNew("dstl_"),
+		SettlementNumber: "DS-100",
+		Status:           status,
+		CurrencyCode:     "USD",
+		Lines: []*driversettlement.SettlementLine{
+			{
+				ID:          pulid.MustNew("dstll_"),
+				Category:    driversettlement.LineCategoryEarning,
+				Description: "Linehaul",
+				AmountMinor: 150000,
+			},
+			{
+				ID:          pulid.MustNew("dstll_"),
+				Category:    driversettlement.LineCategoryDeduction,
+				Description: "Insurance",
+				AmountMinor: -5000,
+			},
+		},
+	}
+}
+
 func reviewer() *permissionports.RequestActor {
 	return &permissionports.RequestActor{
 		UserID:        pulid.MustNew("usr_"),
@@ -86,7 +110,7 @@ func TestPlanDisputeDecisions(t *testing.T) {
 		WorkerID: pulid.MustNew("wrk_"),
 		Status:   driversettlement.DisputeStatusOpen,
 	}
-	draft := planFixture(driversettlement.StatusDraft)
+	draft := draftFixture(driversettlement.StatusDraft)
 	svc := &Service{
 		disputeRepo:    &disputeReader{dispute: dispute},
 		settlementRepo: &draftReader{draft: draft},
@@ -105,7 +129,10 @@ func TestPlanDisputeDecisions(t *testing.T) {
 		DisputeID:      dispute.ID,
 		Approve:        true,
 		ResolutionNote: "Short-paid the detention",
-		Adjustment:     &AdjustmentLineInput{Description: "Detention", AmountMinor: 7500},
+		Adjustment: &driversettlementservice.AdjustmentLineInput{
+			Description: "Detention",
+			AmountMinor: 7500,
+		},
 	}, reviewer())
 	require.NoError(t, err)
 	assert.Equal(t, driversettlement.DisputeStatusResolved, plan.Dispute.After.Status)
@@ -115,7 +142,10 @@ func TestPlanDisputeDecisions(t *testing.T) {
 	_, err = svc.PlanResolveDispute(t.Context(), &ResolveDisputeRequest{
 		DisputeID:      dispute.ID,
 		ResolutionNote: "Paid as agreed",
-		Adjustment:     &AdjustmentLineInput{Description: "x", AmountMinor: 1},
+		Adjustment: &driversettlementservice.AdjustmentLineInput{
+			Description: "x",
+			AmountMinor: 1,
+		},
 	}, reviewer())
 	require.Error(t, err, "a denial carries no adjustment")
 }

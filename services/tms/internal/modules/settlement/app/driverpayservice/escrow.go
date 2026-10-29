@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/settlement/app/settlementshared"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/payescrow"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
@@ -45,7 +46,7 @@ func (s *Service) OpenEscrowAccount(
 	entity *payescrow.EscrowAccount,
 	actor *permissionports.RequestActor,
 ) (*payescrow.EscrowAccount, error) {
-	if err := requireActor(actor, "Escrow account opening"); err != nil {
+	if err := settlementshared.RequireActor(actor, "Escrow account opening"); err != nil {
 		return nil, err
 	}
 	if err := s.PlanOpenEscrowAccount(ctx, entity, timeutils.NowUnix()); err != nil {
@@ -65,7 +66,7 @@ func (s *Service) UpdateEscrowAccount(
 	entity *payescrow.EscrowAccount,
 	actor *permissionports.RequestActor,
 ) (*payescrow.EscrowAccount, error) {
-	if err := requireActor(actor, "Escrow account update"); err != nil {
+	if err := settlementshared.RequireActor(actor, "Escrow account update"); err != nil {
 		return nil, err
 	}
 	previous, err := s.PlanUpdateEscrowAccount(ctx, entity)
@@ -95,7 +96,7 @@ func (s *Service) AdjustEscrowAccount(
 	req *EscrowAdjustmentRequest,
 	actor *permissionports.RequestActor,
 ) (*payescrow.EscrowAccount, error) {
-	if err := requireActor(actor, "Escrow adjustment"); err != nil {
+	if err := settlementshared.RequireActor(actor, "Escrow adjustment"); err != nil {
 		return nil, err
 	}
 	if err := CheckEscrowAdjustment(req); err != nil {
@@ -135,7 +136,7 @@ func (s *Service) CloseEscrowAccount(
 	accountID pulid.ID,
 	actor *permissionports.RequestActor,
 ) (*payescrow.EscrowAccount, error) {
-	if err := requireActor(actor, "Escrow account closure"); err != nil {
+	if err := settlementshared.RequireActor(actor, "Escrow account closure"); err != nil {
 		return nil, err
 	}
 	var updated *payescrow.EscrowAccount

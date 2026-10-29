@@ -1,4 +1,4 @@
-package driversettlementservice
+package driversettlementreviewservice
 
 import (
 	"context"
@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/notificationtemplate"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/paycode"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/payexpense"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
@@ -117,8 +118,7 @@ func (s *Service) SubmitExpense(
 	if err != nil {
 		return nil, err
 	}
-
-	s.publishRealtimeInvalidation(
+	s.settlements.PublishRealtimeInvalidation(
 		ctx,
 		driverExpenseResource,
 		permission.OpCreate,
@@ -185,7 +185,7 @@ func (s *Service) CancelExpense(
 	if err != nil {
 		return nil, err
 	}
-	s.publishRealtimeInvalidation(
+	s.settlements.PublishRealtimeInvalidation(
 		ctx,
 		driverExpenseResource,
 		permission.OpCancel,
@@ -257,8 +257,7 @@ func (s *Service) ReviewExpense(
 	if err != nil {
 		return nil, err
 	}
-
-	s.publishRealtimeInvalidation(
+	s.settlements.PublishRealtimeInvalidation(
 		ctx,
 		driverExpenseResource,
 		permission.OpApprove,
@@ -295,11 +294,17 @@ func (s *Service) applyExpenseReimbursement(
 	}
 
 	description := "Expense reimbursement: " + expense.Description
-	updated, err := s.AddAdjustmentLine(ctx, tenantInfo, target.ID, &AdjustmentLineInput{
-		Description: description,
-		AmountMinor: expense.AmountMinor,
-		PayCodeID:   expense.PayCodeID,
-	}, actor)
+	updated, err := s.settlements.AddAdjustmentLine(
+		ctx,
+		tenantInfo,
+		target.ID,
+		&driversettlementservice.AdjustmentLineInput{
+			Description: description,
+			AmountMinor: expense.AmountMinor,
+			PayCodeID:   expense.PayCodeID,
+		},
+		actor,
+	)
 	if err != nil {
 		return err
 	}

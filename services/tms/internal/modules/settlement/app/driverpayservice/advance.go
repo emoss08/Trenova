@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/settlement/app/settlementshared"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/payadvance"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
@@ -43,7 +44,7 @@ func (s *Service) IssueAdvance(
 	entity *payadvance.PayAdvance,
 	actor *permissionports.RequestActor,
 ) (*payadvance.PayAdvance, error) {
-	if err := requireActor(actor, "Pay advance issuance"); err != nil {
+	if err := settlementshared.RequireActor(actor, "Pay advance issuance"); err != nil {
 		return nil, err
 	}
 	if err := PlanIssueAdvance(entity, actor.UserID); err != nil {
@@ -63,7 +64,7 @@ func (s *Service) UpdateAdvance(
 	entity *payadvance.PayAdvance,
 	actor *permissionports.RequestActor,
 ) (*payadvance.PayAdvance, error) {
-	if err := requireActor(actor, "Pay advance update"); err != nil {
+	if err := settlementshared.RequireActor(actor, "Pay advance update"); err != nil {
 		return nil, err
 	}
 	previous, err := s.advanceRepo.GetByID(ctx, driverpayports.GetPayAdvanceByIDRequest{
@@ -109,7 +110,7 @@ func (s *Service) WriteOffAdvance(
 	reason string,
 	actor *permissionports.RequestActor,
 ) (*payadvance.PayAdvance, error) {
-	if err := requireActor(actor, "Pay advance write-off"); err != nil {
+	if err := settlementshared.RequireActor(actor, "Pay advance write-off"); err != nil {
 		return nil, err
 	}
 	if reason == "" {

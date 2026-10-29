@@ -13,7 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
-	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementservice"
+	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementreviewservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/payexpense"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -32,8 +32,8 @@ type fakeDriverPayReviews struct {
 	draft   *driversettlement.Settlement
 
 	startedReview []pulid.ID
-	resolved      *driversettlementservice.ResolveDisputeRequest
-	reviewed      *driversettlementservice.ReviewExpenseRequest
+	resolved      *driversettlementreviewservice.ResolveDisputeRequest
+	reviewed      *driversettlementreviewservice.ReviewExpenseRequest
 }
 
 func newFakeDriverPayReviews() *fakeDriverPayReviews {
@@ -70,14 +70,14 @@ func (f *fakeDriverPayReviews) PlanStartDisputeReview(
 	pagination.TenantInfo,
 	pulid.ID,
 	*permissionports.RequestActor,
-) (*driversettlementservice.DisputeChange, error) {
+) (*driversettlementreviewservice.DisputeChange, error) {
 	if f.dispute.Status != driversettlement.DisputeStatusOpen {
 		return nil, errortypes.NewValidationError("id", errortypes.ErrInvalidOperation,
 			"Only open disputes can be moved to review")
 	}
 	after := *f.dispute
 	after.Status = driversettlement.DisputeStatusInReview
-	return &driversettlementservice.DisputeChange{Before: f.dispute, After: &after}, nil
+	return &driversettlementreviewservice.DisputeChange{Before: f.dispute, After: &after}, nil
 }
 
 func (f *fakeDriverPayReviews) StartDisputeReview(
@@ -95,9 +95,9 @@ func (f *fakeDriverPayReviews) StartDisputeReview(
 
 func (f *fakeDriverPayReviews) PlanResolveDispute(
 	_ context.Context,
-	req *driversettlementservice.ResolveDisputeRequest,
+	req *driversettlementreviewservice.ResolveDisputeRequest,
 	actor *permissionports.RequestActor,
-) (*driversettlementservice.ResolveDisputePlan, error) {
+) (*driversettlementreviewservice.ResolveDisputePlan, error) {
 	if !req.Approve && req.Adjustment != nil {
 		return nil, errortypes.NewValidationError("adjustment", errortypes.ErrInvalid,
 			"A denied dispute cannot include an adjustment")
@@ -109,8 +109,8 @@ func (f *fakeDriverPayReviews) PlanResolveDispute(
 	}
 	after.ResolutionNote = req.ResolutionNote
 	after.ResolvedByID = &actor.UserID
-	plan := &driversettlementservice.ResolveDisputePlan{
-		Dispute: driversettlementservice.DisputeChange{Before: f.dispute, After: &after},
+	plan := &driversettlementreviewservice.ResolveDisputePlan{
+		Dispute: driversettlementreviewservice.DisputeChange{Before: f.dispute, After: &after},
 	}
 	if req.Adjustment != nil {
 		plan.AdjustmentTarget = f.draft
@@ -120,7 +120,7 @@ func (f *fakeDriverPayReviews) PlanResolveDispute(
 
 func (f *fakeDriverPayReviews) ResolveDispute(
 	_ context.Context,
-	req *driversettlementservice.ResolveDisputeRequest,
+	req *driversettlementreviewservice.ResolveDisputeRequest,
 	_ *permissionports.RequestActor,
 ) (*driversettlement.Dispute, error) {
 	if err := f.guard.Write(); err != nil {
@@ -134,17 +134,20 @@ func (f *fakeDriverPayReviews) ResolveDispute(
 
 func (f *fakeDriverPayReviews) PlanReviewExpense(
 	_ context.Context,
-	req *driversettlementservice.ReviewExpenseRequest,
+	req *driversettlementreviewservice.ReviewExpenseRequest,
 	_ *permissionports.RequestActor,
-) (*driversettlementservice.ReviewExpensePlan, error) {
+) (*driversettlementreviewservice.ReviewExpensePlan, error) {
 	if !req.Approve && req.Note == "" {
 		return nil, errortypes.NewValidationError("note", errortypes.ErrRequired,
 			"A note is required when rejecting an expense so the driver knows why")
 	}
 	after := *f.expense
 	after.Status = payexpense.ExpenseStatusRejected
-	plan := &driversettlementservice.ReviewExpensePlan{
-		ExpenseChange: driversettlementservice.ExpenseChange{Before: f.expense, After: &after},
+	plan := &driversettlementreviewservice.ReviewExpensePlan{
+		ExpenseChange: driversettlementreviewservice.ExpenseChange{
+			Before: f.expense,
+			After:  &after,
+		},
 	}
 	if req.Approve {
 		after.Status = payexpense.ExpenseStatusReimbursed
@@ -154,7 +157,7 @@ func (f *fakeDriverPayReviews) PlanReviewExpense(
 
 func (f *fakeDriverPayReviews) ReviewExpense(
 	_ context.Context,
-	req *driversettlementservice.ReviewExpenseRequest,
+	req *driversettlementreviewservice.ReviewExpenseRequest,
 	_ *permissionports.RequestActor,
 ) (*payexpense.Expense, error) {
 	if err := f.guard.Write(); err != nil {

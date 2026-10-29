@@ -9,7 +9,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentcommentports"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/documenttypeports"
-	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementservice"
+	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementaccrualservice"
+	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementreviewservice"
+	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementworkspaceservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driversettlementports"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/performancereviewservice"
@@ -65,7 +67,9 @@ type Params struct {
 	Leave               LeaveReader
 	Scheduling          *schedulingservice.Service
 	SelfService         *selfserviceservice.Service
-	SettlementService   *driversettlementservice.Service
+	ExpenseService      *driversettlementreviewservice.Service
+	PayEstimator        *driversettlementaccrualservice.Service
+	PayHistory          *driversettlementworkspaceservice.Service
 	NotificationService *notificationservice.Service
 	AuditService        auditports.AuditService
 	Sessions            sessionports.SessionRepository
@@ -99,7 +103,9 @@ type Service struct {
 	leave               LeaveReader
 	scheduling          *schedulingservice.Service
 	selfService         *selfserviceservice.Service
-	settlementService   *driversettlementservice.Service
+	expenseService      *driversettlementreviewservice.Service
+	payEstimator        *driversettlementaccrualservice.Service
+	payHistory          *driversettlementworkspaceservice.Service
 	notificationService *notificationservice.Service
 	auditService        auditports.AuditService
 	sessions            sessionports.SessionRepository
@@ -134,7 +140,9 @@ func New(p Params) *Service { //nolint:gocritic // stable API shape
 		leave:               p.Leave,
 		scheduling:          p.Scheduling,
 		selfService:         p.SelfService,
-		settlementService:   p.SettlementService,
+		expenseService:      p.ExpenseService,
+		payEstimator:        p.PayEstimator,
+		payHistory:          p.PayHistory,
 		notificationService: p.NotificationService,
 		auditService:        p.AuditService,
 		sessions:            p.Sessions,

@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/ports/carrierassignmentports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
+	"github.com/emoss08/trenova/internal/modules/settlement/app/settlementshared"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/carriersettlementports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
@@ -107,7 +108,7 @@ func (s *Service) LinkInvoiceToCarrier(
 	invoiceID, carrierID pulid.ID,
 	actor *permissionports.RequestActor,
 ) (*edicarrierinvoice.CarrierInvoice, error) {
-	if err := requireActor(actor, "Carrier invoice linking"); err != nil {
+	if err := settlementshared.RequireActor(actor, "Carrier invoice linking"); err != nil {
 		return nil, err
 	}
 	plan, err := s.PlanLinkInvoice(ctx, tenantInfo, invoiceID, carrierID)
@@ -147,7 +148,7 @@ func (s *Service) CreateMatch(
 	req *CreateMatchRequest,
 	actor *permissionports.RequestActor,
 ) (*carriersettlement.InvoiceMatch, error) {
-	if err := requireActor(actor, "Carrier invoice match creation"); err != nil {
+	if err := settlementshared.RequireActor(actor, "Carrier invoice match creation"); err != nil {
 		return nil, err
 	}
 	draft, err := s.draftMatch(ctx, req)
@@ -252,7 +253,7 @@ func (s *Service) AcceptMatch(
 	note string,
 	actor *permissionports.RequestActor,
 ) (*carriersettlement.InvoiceMatch, error) {
-	if err := requireActor(actor, "Carrier invoice match acceptance"); err != nil {
+	if err := settlementshared.RequireActor(actor, "Carrier invoice match acceptance"); err != nil {
 		return nil, err
 	}
 	match, err := s.invoiceMatchRepo.GetByID(
@@ -293,7 +294,7 @@ func (s *Service) AcceptWithVariance(
 	note string,
 	actor *permissionports.RequestActor,
 ) (*carriersettlement.InvoiceMatch, error) {
-	if err := requireActor(actor, "Carrier invoice match acceptance"); err != nil {
+	if err := settlementshared.RequireActor(actor, "Carrier invoice match acceptance"); err != nil {
 		return nil, err
 	}
 	match, err := s.invoiceMatchRepo.GetByID(
@@ -374,7 +375,7 @@ func (s *Service) RejectMatch(
 	note string,
 	actor *permissionports.RequestActor,
 ) (*carriersettlement.InvoiceMatch, error) {
-	if err := requireActor(actor, "Carrier invoice match rejection"); err != nil {
+	if err := settlementshared.RequireActor(actor, "Carrier invoice match rejection"); err != nil {
 		return nil, err
 	}
 	if note == "" {

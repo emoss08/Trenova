@@ -3,27 +3,28 @@
 package driverportalexec
 
 import (
+	"context"
+	"errors"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/dashcontrol"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentmoveports"
+	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementaccrualservice"
+	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementworkspaceservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/payadvance"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/paycode"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/payescrow"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/payexpense"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/dashcontrol"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentmoveports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/portalinvitation"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/profilechange"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerleave"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerpolicy"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerschedule"
-	"context"
-	"errors"
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/modules/identity/app/ptoledgerservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/driverportalservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
@@ -2180,7 +2181,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driversettlementservice.MovePayEstimate)
+					obj := o.(*driversettlementaccrualservice.MovePayEstimate)
 					return obj.GrossMinor, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -2190,7 +2191,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driversettlementservice.MovePayEstimate)
+					obj := o.(*driversettlementaccrualservice.MovePayEstimate)
 					return obj.CurrencyCode, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -3221,7 +3222,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").MyLoadPayEstimate(ctx, fc.Args["shipmentId"].(string), fc.Args["moveId"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalNPortalPayEstimate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋappᚋdriversettlementserviceᚐMovePayEstimate),
+				Marshal: gqlexec.Marshal(marshalNPortalPayEstimate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋappᚋdriversettlementaccrualserviceᚐMovePayEstimate),
 			},
 			{
 				Name:       "myYtdPay",
@@ -3235,7 +3236,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").MyYtdPay(ctx, fc.Args["year"].(int))
 				},
-				Marshal: gqlexec.Marshal(marshalNWorkerYTDPaySummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋappᚋdriversettlementserviceᚐWorkerYTDPaySummary),
+				Marshal: gqlexec.Marshal(marshalNWorkerYTDPaySummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋappᚋdriversettlementworkspaceserviceᚐWorkerYTDPaySummary),
 			},
 			{
 				Name:       "myHosState",
@@ -3767,8 +3768,8 @@ type resolverQuery interface {
 	MyPTOBalances(ctx context.Context) ([]*ptoledgerservice.BalanceView, error)
 	MyLeave(ctx context.Context) (*driverportalservice.PortalLeave, error)
 	MyExpenses(ctx context.Context) ([]*payexpense.Expense, error)
-	MyLoadPayEstimate(ctx context.Context, shipmentID string, moveID string) (*driversettlementservice.MovePayEstimate, error)
-	MyYtdPay(ctx context.Context, year int) (*driversettlementservice.WorkerYTDPaySummary, error)
+	MyLoadPayEstimate(ctx context.Context, shipmentID string, moveID string) (*driversettlementaccrualservice.MovePayEstimate, error)
+	MyYtdPay(ctx context.Context, year int) (*driversettlementworkspaceservice.WorkerYTDPaySummary, error)
 	MyHosState(ctx context.Context) (*gqlmodel.WorkerHosState, error)
 	MyHosDailyLogs(ctx context.Context, startDate string, endDate string) ([]*gqlmodel.WorkerHosDailyLog, error)
 	MyHosViolations(ctx context.Context, since *int) ([]*gqlmodel.WorkerHosViolation, error)
@@ -5885,7 +5886,7 @@ func marshalNPortalLoad2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodules
 	return ec.MarshalType(ctx, sel, "PortalLoad", v)
 }
 
-func marshalNPortalPayEstimate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋappᚋdriversettlementserviceᚐMovePayEstimate(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *driversettlementservice.MovePayEstimate) graphql.Marshaler {
+func marshalNPortalPayEstimate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋappᚋdriversettlementaccrualserviceᚐMovePayEstimate(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *driversettlementaccrualservice.MovePayEstimate) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -6213,7 +6214,7 @@ func marshalNWorkerProfileChangeRequest2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋin
 	return ec.MarshalType(ctx, sel, "WorkerProfileChangeRequest", v)
 }
 
-func marshalNWorkerYTDPaySummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋappᚋdriversettlementserviceᚐWorkerYTDPaySummary(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *driversettlementservice.WorkerYTDPaySummary) graphql.Marshaler {
+func marshalNWorkerYTDPaySummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋappᚋdriversettlementworkspaceserviceᚐWorkerYTDPaySummary(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *driversettlementworkspaceservice.WorkerYTDPaySummary) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null

@@ -24,6 +24,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/driverpayservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementservice"
+	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementworkspaceservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/settlementshared"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
@@ -543,7 +544,7 @@ func (r *MutationResolver) HoldDriverPayEvent(ctx context.Context, input gqlmode
 	if err != nil {
 		return nil, errortypes.NewValidationError("payEventId", errortypes.ErrInvalid, "Invalid pay event")
 	}
-	return r.DriverSettlementService.HoldPayEvent(
+	return r.DriverSettlementTransferService.HoldPayEvent(
 		ctx,
 		resolvercore.TenantInfo(authCtx),
 		eventID,
@@ -561,7 +562,7 @@ func (r *MutationResolver) ReleaseDriverPayEvent(ctx context.Context, payEventID
 	if err != nil {
 		return nil, errortypes.NewValidationError("payEventId", errortypes.ErrInvalid, "Invalid pay event")
 	}
-	return r.DriverSettlementService.ReleasePayEvent(
+	return r.DriverSettlementTransferService.ReleasePayEvent(
 		ctx,
 		resolvercore.TenantInfo(authCtx),
 		eventID,
@@ -578,7 +579,7 @@ func (r *MutationResolver) AttachPayEventsToSettlement(ctx context.Context, inpu
 	if err != nil {
 		return nil, err
 	}
-	return r.DriverSettlementService.AttachPayEvents(
+	return r.DriverSettlementTransferService.AttachPayEvents(
 		ctx,
 		resolvercore.TenantInfo(authCtx),
 		settlementID,
@@ -596,7 +597,7 @@ func (r *MutationResolver) DetachPayEventFromSettlement(ctx context.Context, inp
 	if err != nil {
 		return nil, errortypes.NewValidationError("payEventId", errortypes.ErrInvalid, "Invalid pay event")
 	}
-	return r.DriverSettlementService.DetachPayEvent(
+	return r.DriverSettlementTransferService.DetachPayEvent(
 		ctx,
 		resolvercore.TenantInfo(authCtx),
 		settlementID,
@@ -605,9 +606,9 @@ func (r *MutationResolver) DetachPayEventFromSettlement(ctx context.Context, inp
 	)
 }
 
-func (r *MutationResolver) BulkDriverSettlementAction(ctx context.Context, input gqlmodel.BulkSettlementActionInput) (*driversettlementservice.BulkActionPayload, error) {
+func (r *MutationResolver) BulkDriverSettlementAction(ctx context.Context, input gqlmodel.BulkSettlementActionInput) (*driversettlementworkspaceservice.BulkActionPayload, error) {
 	operation := permission.OpUpdate
-	if input.Action == driversettlementservice.BulkActionApprove {
+	if input.Action == driversettlementworkspaceservice.BulkActionApprove {
 		operation = permission.OpApprove
 	}
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceDriverSettlement, operation)
@@ -626,9 +627,9 @@ func (r *MutationResolver) BulkDriverSettlementAction(ctx context.Context, input
 		}
 		settlementIDs = append(settlementIDs, settlementID)
 	}
-	return r.DriverSettlementService.BulkAction(
+	return r.DriverSettlementWorkspaceService.BulkAction(
 		ctx,
-		&driversettlementservice.BulkActionRequest{
+		&driversettlementworkspaceservice.BulkActionRequest{
 			TenantInfo:       resolvercore.TenantInfo(authCtx),
 			SettlementIDs:    settlementIDs,
 			Action:           input.Action,
@@ -1054,7 +1055,7 @@ func (r *QueryResolver) WorkerEarningsSummary(ctx context.Context, workerID stri
 	return r.DriverSettlementService.GetWorkerEarningsSummary(ctx, resolvercore.TenantInfo(authCtx), id)
 }
 
-func (r *QueryResolver) WorkerYtdPaySummaries(ctx context.Context, year int, classification *driverpay.PayeeClassification) ([]*driversettlementservice.WorkerYTDPaySummary, error) {
+func (r *QueryResolver) WorkerYtdPaySummaries(ctx context.Context, year int, classification *driverpay.PayeeClassification) ([]*driversettlementworkspaceservice.WorkerYTDPaySummary, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceDriverSettlement, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -1063,7 +1064,7 @@ func (r *QueryResolver) WorkerYtdPaySummaries(ctx context.Context, year int, cla
 	if classification != nil {
 		payeeClassification = *classification
 	}
-	return r.DriverSettlementService.GetYTDPaySummaries(
+	return r.DriverSettlementWorkspaceService.GetYTDPaySummaries(
 		ctx,
 		resolvercore.TenantInfo(authCtx),
 		year,
@@ -1092,12 +1093,12 @@ func (r *QueryResolver) CurrentSettlementPeriod(ctx context.Context) (*settlemen
 	return &bounds, nil
 }
 
-func (r *QueryResolver) SettlementWorkspaceSummary(ctx context.Context, periodStart *int, periodEnd *int) (*driversettlementservice.WorkspaceSummary, error) {
+func (r *QueryResolver) SettlementWorkspaceSummary(ctx context.Context, periodStart *int, periodEnd *int) (*driversettlementworkspaceservice.WorkspaceSummary, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceDriverSettlement, permission.OpRead)
 	if err != nil {
 		return nil, err
 	}
-	return r.DriverSettlementService.GetWorkspaceSummary(
+	return r.DriverSettlementWorkspaceService.GetWorkspaceSummary(
 		ctx,
 		resolvercore.TenantInfo(authCtx),
 		gqlscalar.Int64Value(periodStart),
@@ -1110,7 +1111,7 @@ func (r *QueryResolver) UnsettledWorkerSummaries(ctx context.Context, periodStar
 	if err != nil {
 		return nil, err
 	}
-	return r.DriverSettlementService.ListUnsettledWorkers(
+	return r.DriverSettlementWorkspaceService.ListUnsettledWorkers(
 		ctx,
 		resolvercore.TenantInfo(authCtx),
 		gqlscalar.Int64Value(periodStart),
@@ -1144,7 +1145,7 @@ func (r *QueryResolver) ExportSettlementBatchCSV(ctx context.Context, batchID st
 	if err != nil {
 		return "", errortypes.NewValidationError("batchId", errortypes.ErrInvalid, "Invalid batch")
 	}
-	return r.DriverSettlementService.ExportBatchPayrollCSV(ctx, resolvercore.TenantInfo(authCtx), id)
+	return r.DriverSettlementWorkspaceService.ExportBatchPayrollCSV(ctx, resolvercore.TenantInfo(authCtx), id)
 }
 
 func (r *SettlementControlResolver) VarianceThresholdPct(ctx context.Context, obj *settlementcontrol.SettlementControl) (string, error) {

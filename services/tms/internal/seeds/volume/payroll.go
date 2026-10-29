@@ -993,7 +993,7 @@ func payRevenueBasis(r *shipmentRecord, basis driverpay.RevenueBasis) decimal.De
 	return r.Freight
 }
 
-// payComputeMove mirrors driversettlementservice.computeMovePay for the facts
+// payComputeMove mirrors driversettlementaccrualservice.computeMovePay for the facts
 // a generated move carries. Fuel surcharge pass-through pays nothing because
 // generated fuel charges carry no fuel surcharge program, and layover per-day
 // components accrue nothing at delivery, exactly as in the application.
@@ -2308,7 +2308,7 @@ func (g *generator) payJournals(setup *paySetup, rows *payRows, journals *bilRow
 	return nil
 }
 
-// payPostingLegs mirrors driversettlementservice.BuildSettlementPostingLegs:
+// payPostingLegs mirrors driversettlementjournal.BuildSettlementPostingLegs:
 // earnings and top-ups debit expense (or the pay code's GL account), the net
 // credits settlements payable, and recoveries, escrow and deductions credit
 // their own accounts.

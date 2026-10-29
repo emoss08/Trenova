@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/carriersettlementcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/settlement/app/settlementshared"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -26,7 +27,7 @@ func (s *Service) UpdateControl(
 	entity *carriersettlementcontrol.CarrierSettlementControl,
 	actor *permissionports.RequestActor,
 ) (*carriersettlementcontrol.CarrierSettlementControl, error) {
-	if err := requireActor(actor, "Carrier settlement control update"); err != nil {
+	if err := settlementshared.RequireActor(actor, "Carrier settlement control update"); err != nil {
 		return nil, err
 	}
 

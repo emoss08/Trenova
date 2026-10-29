@@ -54,7 +54,7 @@ func (s *Service) PayWorkerNow(
 	req *PayWorkerNowRequest,
 	actor *permissionports.RequestActor,
 ) (*driversettlement.Settlement, error) {
-	if err := requireActor(actor, "Instant settlement"); err != nil {
+	if err := settlementshared.RequireActor(actor, "Instant settlement"); err != nil {
 		return nil, err
 	}
 	generation, err := s.instantGeneration(ctx, req)
@@ -182,7 +182,7 @@ func (s *Service) PlanPayWorkerNow(
 	now := timeutils.NowUnix()
 	userID := req.TenantInfo.UserID
 	settlement.Status = driversettlement.StatusApproved
-	draft, err := s.planSettlementJournal(ctx, settlement, userID, false)
+	draft, err := s.journals.PlanSettlement(ctx, settlement, userID, false)
 	if err != nil {
 		if settlementshared.IsRefusal(err) {
 			plan.Refusal = err
@@ -191,7 +191,7 @@ func (s *Service) PlanPayWorkerNow(
 		return nil, err
 	}
 	if draft != nil {
-		plan.Journal = draft.plan
+		plan.Journal = draft.JournalPlan
 	}
 	if err = PlanPost(settlement, userID, now); err != nil {
 		return nil, err

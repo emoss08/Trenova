@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/settlement/app/settlementshared"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/payassignment"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
@@ -67,13 +68,6 @@ func New(p Params) *Service { //nolint:gocritic // stable API shape
 	}
 }
 
-func requireActor(actor *permissionports.RequestActor, operation string) error {
-	if actor == nil || actor.UserID.IsNil() {
-		return errortypes.NewAuthorizationError("{0} requires an authenticated user", operation)
-	}
-	return nil
-}
-
 func (s *Service) ListProfiles(
 	ctx context.Context,
 	req *driverpayports.ListPayProfilesRequest,
@@ -107,7 +101,7 @@ func (s *Service) CreateProfile(
 	entity *driverpay.PayProfile,
 	actor *permissionports.RequestActor,
 ) (*driverpay.PayProfile, error) {
-	if err := requireActor(actor, "Pay profile creation"); err != nil {
+	if err := settlementshared.RequireActor(actor, "Pay profile creation"); err != nil {
 		return nil, err
 	}
 	multiErr := errortypes.NewMultiError()
@@ -129,7 +123,7 @@ func (s *Service) UpdateProfile(
 	entity *driverpay.PayProfile,
 	actor *permissionports.RequestActor,
 ) (*driverpay.PayProfile, error) {
-	if err := requireActor(actor, "Pay profile update"); err != nil {
+	if err := settlementshared.RequireActor(actor, "Pay profile update"); err != nil {
 		return nil, err
 	}
 	multiErr := errortypes.NewMultiError()
@@ -188,7 +182,7 @@ func (s *Service) AssignProfileToWorker(
 	entity *payassignment.WorkerPayAssignment,
 	actor *permissionports.RequestActor,
 ) (*payassignment.WorkerPayAssignment, error) {
-	if err := requireActor(actor, "Pay profile assignment"); err != nil {
+	if err := settlementshared.RequireActor(actor, "Pay profile assignment"); err != nil {
 		return nil, err
 	}
 	plan, err := s.PlanAssignment(ctx, entity)
@@ -271,7 +265,7 @@ func (s *Service) EndAssignment(
 	endDate int64,
 	actor *permissionports.RequestActor,
 ) (*payassignment.WorkerPayAssignment, error) {
-	if err := requireActor(actor, "Pay assignment termination"); err != nil {
+	if err := settlementshared.RequireActor(actor, "Pay assignment termination"); err != nil {
 		return nil, err
 	}
 	entity, err := s.assignmentRepo.GetByID(ctx, tenantInfo, assignmentID)

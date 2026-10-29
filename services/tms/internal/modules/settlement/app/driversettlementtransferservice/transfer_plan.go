@@ -1,8 +1,9 @@
-package driversettlementservice
+package driversettlementtransferservice
 
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/settlementshared"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driversettlementports"
@@ -195,12 +196,15 @@ type EventTransferRequest struct {
 func (s *Service) PlanEventTransfer(
 	ctx context.Context,
 	req *EventTransferRequest,
-) (*ActionPlan, error) {
-	entity, err := s.getForUpdate(ctx, req.TenantInfo, req.SettlementID)
+) (*driversettlementservice.ActionPlan, error) {
+	entity, err := s.settlements.GetForUpdate(ctx, req.TenantInfo, req.SettlementID)
 	if err != nil {
 		return nil, err
 	}
-	plan := &ActionPlan{Before: entity, After: CloneSettlement(entity)}
+	plan := &driversettlementservice.ActionPlan{
+		Before: entity,
+		After:  driversettlementservice.CloneSettlement(entity),
+	}
 	if len(req.EventIDs) == 0 {
 		plan.Refusal = errNoPayEventsSelected()
 		return plan, nil

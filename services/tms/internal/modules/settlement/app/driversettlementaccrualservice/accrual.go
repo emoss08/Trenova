@@ -1,4 +1,4 @@
-package driversettlementservice
+package driversettlementaccrualservice
 
 import (
 	"context"
@@ -9,7 +9,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/settlementshared"
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -142,7 +141,7 @@ func (s *Service) voidMovePayEvents(
 		if _, err = s.payEventRepo.Update(ctx, event); err != nil {
 			return err
 		}
-		s.publishPayEventInvalidation(ctx, event, permission.OpCancel, pulid.Nil)
+		s.settlements.PublishPayEventInvalidation(ctx, event, permission.OpCancel, pulid.Nil)
 	}
 	return nil
 }
@@ -248,7 +247,7 @@ func (s *Service) autoAttachForWorkers(
 		return
 	}
 	for workerID := range workers {
-		if err = s.refreshOpenDraftForWorker(ctx, tenantInfo, workerID); err != nil {
+		if err = s.settlements.RefreshOpenDraftForWorker(ctx, tenantInfo, workerID); err != nil {
 			s.l.Error("failed to auto-attach accruals to open draft settlement",
 				zap.Error(err), zap.String("workerId", workerID.String()))
 		}
@@ -321,7 +320,12 @@ func (s *Service) accrueWorkerMove(
 			if updateErr != nil {
 				return updateErr
 			}
-			s.publishPayEventInvalidation(ctx, refreshed, permission.OpUpdate, pulid.Nil)
+			s.settlements.PublishPayEventInvalidation(
+				ctx,
+				refreshed,
+				permission.OpUpdate,
+				pulid.Nil,
+			)
 			return nil
 		}
 		return nil
@@ -358,7 +362,7 @@ func (s *Service) accrueWorkerMove(
 	if err != nil {
 		return err
 	}
-	s.publishPayEventInvalidation(ctx, created, permission.OpCreate, pulid.Nil)
+	s.settlements.PublishPayEventInvalidation(ctx, created, permission.OpCreate, pulid.Nil)
 	return nil
 }
 
@@ -383,14 +387,7 @@ func (s *Service) VoidShipmentPayEvents(
 		if _, err = s.payEventRepo.Update(ctx, event); err != nil {
 			return err
 		}
-		s.publishPayEventInvalidation(ctx, event, permission.OpCancel, pulid.Nil)
+		s.settlements.PublishPayEventInvalidation(ctx, event, permission.OpCancel, pulid.Nil)
 	}
 	return nil
-}
-
-func classificationForWorker(profile *driverpay.PayProfile) driverpay.PayeeClassification {
-	if profile != nil {
-		return profile.Classification
-	}
-	return driverpay.PayeeClassificationCompanyDriver
 }

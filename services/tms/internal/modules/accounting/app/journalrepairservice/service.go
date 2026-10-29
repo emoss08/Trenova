@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoiceledger"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
-	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementservice"
+	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementjournal"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driversettlementports"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -250,7 +250,7 @@ func (s *Service) repairDriverPayment(
 	if err != nil {
 		return err
 	}
-	journal, err := driversettlementservice.PaymentJournal(
+	journal, err := driversettlementjournal.PaymentJournal(
 		settlement,
 		control,
 		req.ActorID,

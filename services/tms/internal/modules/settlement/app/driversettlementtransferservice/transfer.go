@@ -1,4 +1,4 @@
-package driversettlementservice
+package driversettlementtransferservice
 
 import (
 	"context"
@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/settlement/app/settlementshared"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driversettlementports"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/drivernotificationservice"
@@ -24,7 +25,7 @@ func (s *Service) HoldPayEvent(
 	reason string,
 	actor *permissionports.RequestActor,
 ) (*driversettlement.PayEvent, error) {
-	if err := requireActor(actor, "Pay event hold"); err != nil {
+	if err := settlementshared.RequireActor(actor, "Pay event hold"); err != nil {
 		return nil, err
 	}
 	if reason == "" {
@@ -50,7 +51,7 @@ func (s *Service) HoldPayEvent(
 	if err != nil {
 		return nil, err
 	}
-	s.publishPayEventInvalidation(ctx, updated, permission.OpUpdate, actor.UserID)
+	s.settlements.PublishPayEventInvalidation(ctx, updated, permission.OpUpdate, actor.UserID)
 	if s.driverNotify != nil {
 		s.driverNotify.Notify(ctx, &drivernotificationservice.DriverNotification{
 			TenantInfo: tenantInfo,
@@ -75,7 +76,7 @@ func (s *Service) ReleasePayEvent(
 	eventID pulid.ID,
 	actor *permissionports.RequestActor,
 ) (*driversettlement.PayEvent, error) {
-	if err := requireActor(actor, "Pay event release"); err != nil {
+	if err := settlementshared.RequireActor(actor, "Pay event release"); err != nil {
 		return nil, err
 	}
 	event, err := s.payEventRepo.GetByID(ctx, driversettlementports.GetPayEventByIDRequest{
@@ -96,7 +97,7 @@ func (s *Service) ReleasePayEvent(
 
 	control, controlErr := s.settlementControl.GetOrCreate(ctx, tenantInfo)
 	if controlErr == nil && control.AutoAttachAccruals {
-		if refreshErr := s.refreshOpenDraftForWorker(
+		if refreshErr := s.settlements.RefreshOpenDraftForWorker(
 			ctx,
 			tenantInfo,
 			event.WorkerID,
@@ -105,7 +106,7 @@ func (s *Service) ReleasePayEvent(
 				zap.Error(refreshErr))
 		}
 	}
-	s.publishPayEventInvalidation(ctx, updated, permission.OpUpdate, actor.UserID)
+	s.settlements.PublishPayEventInvalidation(ctx, updated, permission.OpUpdate, actor.UserID)
 	return updated, nil
 }
 
@@ -116,7 +117,7 @@ func (s *Service) AttachPayEvents(
 	eventIDs []pulid.ID,
 	actor *permissionports.RequestActor,
 ) (*driversettlement.Settlement, error) {
-	if err := requireActor(actor, "Pay event attachment"); err != nil {
+	if err := settlementshared.RequireActor(actor, "Pay event attachment"); err != nil {
 		return nil, err
 	}
 	eventIDs = sliceutils.Dedupe(eventIDs)
@@ -127,7 +128,7 @@ func (s *Service) AttachPayEvents(
 	var updated *driversettlement.Settlement
 	var previous driversettlement.Settlement
 	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
-		entity, txErr := s.getForUpdate(txCtx, tenantInfo, settlementID)
+		entity, txErr := s.settlements.GetForUpdate(txCtx, tenantInfo, settlementID)
 		if txErr != nil {
 			return txErr
 		}
@@ -162,7 +163,7 @@ func (s *Service) AttachPayEvents(
 	if err != nil {
 		return nil, err
 	}
-	s.logSettlementAudit(ctx, updated, &previous, actor.UserID, permission.OpUpdate,
+	s.settlements.LogSettlementAudit(ctx, updated, &previous, actor.UserID, permission.OpUpdate,
 		"Pay events added to settlement")
 	return updated, nil
 }
@@ -200,14 +201,14 @@ func (s *Service) DetachPayEvent(
 	settlementID, eventID pulid.ID,
 	actor *permissionports.RequestActor,
 ) (*driversettlement.Settlement, error) {
-	if err := requireActor(actor, "Pay event removal"); err != nil {
+	if err := settlementshared.RequireActor(actor, "Pay event removal"); err != nil {
 		return nil, err
 	}
 
 	var updated *driversettlement.Settlement
 	var previous driversettlement.Settlement
 	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
-		entity, txErr := s.getForUpdate(txCtx, tenantInfo, settlementID)
+		entity, txErr := s.settlements.GetForUpdate(txCtx, tenantInfo, settlementID)
 		if txErr != nil {
 			return txErr
 		}
@@ -243,7 +244,7 @@ func (s *Service) DetachPayEvent(
 	if err != nil {
 		return nil, err
 	}
-	s.logSettlementAudit(ctx, updated, &previous, actor.UserID, permission.OpUpdate,
+	s.settlements.LogSettlementAudit(ctx, updated, &previous, actor.UserID, permission.OpUpdate,
 		"Pay event removed from settlement")
 	return updated, nil
 }

@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/settlement/app/settlementshared"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/recurringpay"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
@@ -41,7 +42,7 @@ func (s *Service) CreateEarning(
 	entity *recurringpay.RecurringEarning,
 	actor *permissionports.RequestActor,
 ) (*recurringpay.RecurringEarning, error) {
-	if err := requireActor(actor, "Recurring earning creation"); err != nil {
+	if err := settlementshared.RequireActor(actor, "Recurring earning creation"); err != nil {
 		return nil, err
 	}
 	if err := s.CheckEarning(ctx, entity); err != nil {
@@ -63,7 +64,7 @@ func (s *Service) UpdateEarning(
 	entity *recurringpay.RecurringEarning,
 	actor *permissionports.RequestActor,
 ) (*recurringpay.RecurringEarning, error) {
-	if err := requireActor(actor, "Recurring earning update"); err != nil {
+	if err := settlementshared.RequireActor(actor, "Recurring earning update"); err != nil {
 		return nil, err
 	}
 	if err := s.CheckEarning(ctx, entity); err != nil {

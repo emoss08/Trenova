@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/settlement/app/settlementshared"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/carriersettlementports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -44,7 +45,7 @@ func (s *Service) SubmitForApproval(
 	settlementID pulid.ID,
 	actor *permissionports.RequestActor,
 ) (*carriersettlement.CarrierSettlement, error) {
-	if err := requireActor(actor, "Carrier settlement submission"); err != nil {
+	if err := settlementshared.RequireActor(actor, "Carrier settlement submission"); err != nil {
 		return nil, err
 	}
 	entity, err := s.getForUpdate(ctx, tenantInfo, settlementID)
@@ -81,7 +82,7 @@ func (s *Service) approveInternal(
 	actor *permissionports.RequestActor,
 	fromDraft bool,
 ) (*carriersettlement.CarrierSettlement, error) {
-	if err := requireActor(actor, "Carrier settlement approval"); err != nil {
+	if err := settlementshared.RequireActor(actor, "Carrier settlement approval"); err != nil {
 		return nil, err
 	}
 
@@ -142,7 +143,7 @@ func (s *Service) Reject(
 	reason string,
 	actor *permissionports.RequestActor,
 ) (*carriersettlement.CarrierSettlement, error) {
-	if err := requireActor(actor, "Carrier settlement rejection"); err != nil {
+	if err := settlementshared.RequireActor(actor, "Carrier settlement rejection"); err != nil {
 		return nil, err
 	}
 	if reason == "" {
@@ -179,7 +180,7 @@ func (s *Service) MarkPaid(
 	req *carriersettlementports.MarkSettlementPaidRequest,
 	actor *permissionports.RequestActor,
 ) (*carriersettlement.CarrierSettlement, error) {
-	if err := requireActor(actor, "Carrier settlement payment"); err != nil {
+	if err := settlementshared.RequireActor(actor, "Carrier settlement payment"); err != nil {
 		return nil, err
 	}
 	paymentMethod := req.PaymentMethod
@@ -269,7 +270,7 @@ func (s *Service) Void(
 	reason string,
 	actor *permissionports.RequestActor,
 ) (*carriersettlement.CarrierSettlement, error) {
-	if err := requireActor(actor, "Carrier settlement void"); err != nil {
+	if err := settlementshared.RequireActor(actor, "Carrier settlement void"); err != nil {
 		return nil, err
 	}
 	if reason == "" {
@@ -334,7 +335,7 @@ func (s *Service) Recalculate(
 	settlementID pulid.ID,
 	actor *permissionports.RequestActor,
 ) (*carriersettlement.CarrierSettlement, error) {
-	if err := requireActor(actor, "Carrier settlement recalculation"); err != nil {
+	if err := settlementshared.RequireActor(actor, "Carrier settlement recalculation"); err != nil {
 		return nil, err
 	}
 
@@ -413,7 +414,7 @@ func (s *Service) AddAdjustmentLine(
 	input *AdjustmentLineInput,
 	actor *permissionports.RequestActor,
 ) (*carriersettlement.CarrierSettlement, error) {
-	if err := requireActor(actor, "Carrier settlement adjustment"); err != nil {
+	if err := settlementshared.RequireActor(actor, "Carrier settlement adjustment"); err != nil {
 		return nil, err
 	}
 	if err := checkAdjustmentInput(input); err != nil {
@@ -453,7 +454,7 @@ func (s *Service) RemoveAdjustmentLine(
 	settlementID, lineID pulid.ID,
 	actor *permissionports.RequestActor,
 ) (*carriersettlement.CarrierSettlement, error) {
-	if err := requireActor(actor, "Carrier settlement adjustment removal"); err != nil {
+	if err := settlementshared.RequireActor(actor, "Carrier settlement adjustment removal"); err != nil {
 		return nil, err
 	}
 	entity, err := s.getForUpdate(ctx, tenantInfo, settlementID)

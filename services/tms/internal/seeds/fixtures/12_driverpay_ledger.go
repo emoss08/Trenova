@@ -11,7 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/costingcontrol/costingcontroldb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
-	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementservice"
+	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementjournal"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay/driverpaydb"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
@@ -407,9 +407,9 @@ func (s *DriverPayLedgerSeed) postSeededSettlementJournals(
 		if settlement.Classification == driverpay.PayeeClassificationOwnerOperator {
 			expenseAccountID = accounts[ledgerAccountPurchasedTrans]
 		}
-		legs := driversettlementservice.BuildSettlementPostingLegs(
+		legs := driversettlementjournal.BuildSettlementPostingLegs(
 			settlement,
-			&driversettlementservice.PostingAccounts{
+			&driversettlementjournal.PostingAccounts{
 				Expense:       expenseAccountID,
 				Reimbursement: accounts[ledgerAccountDriverBenefits],
 				Payable:       accounts[ledgerAccountSettlementPayable],

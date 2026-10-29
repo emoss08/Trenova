@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementservice"
+	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementtransferservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/settlementshared"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
@@ -41,13 +42,16 @@ func (f *fakePayEvents) PlanPayEventHold(
 	_ pulid.ID,
 	reason string,
 	hold bool,
-) (*driversettlementservice.PayEventPlan, error) {
+) (*driversettlementtransferservice.PayEventPlan, error) {
 	after := *f.event
-	plan := &driversettlementservice.PayEventPlan{Before: f.event, After: &after}
+	plan := &driversettlementtransferservice.PayEventPlan{Before: f.event, After: &after}
 	if hold {
-		plan.Changed, plan.Refusal = driversettlementservice.PlanHoldPayEvent(&after, reason)
+		plan.Changed, plan.Refusal = driversettlementtransferservice.PlanHoldPayEvent(
+			&after,
+			reason,
+		)
 	} else {
-		plan.Changed = driversettlementservice.PlanReleasePayEvent(&after)
+		plan.Changed = driversettlementtransferservice.PlanReleasePayEvent(&after)
 		plan.AutoAttach = plan.Changed && f.autoAttach
 	}
 
@@ -85,7 +89,7 @@ func (f *fakePayEvents) ReleasePayEvent(
 
 func (f *fakePayEvents) PlanEventTransfer(
 	_ context.Context,
-	req *driversettlementservice.EventTransferRequest,
+	req *driversettlementtransferservice.EventTransferRequest,
 ) (*driversettlementservice.ActionPlan, error) {
 	after := driversettlementservice.CloneSettlement(f.settlement)
 	plan := &settlementshared.ActionPlan[*driversettlement.Settlement]{

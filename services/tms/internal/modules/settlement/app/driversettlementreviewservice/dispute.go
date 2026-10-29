@@ -1,4 +1,4 @@
-package driversettlementservice
+package driversettlementreviewservice
 
 import (
 	"context"
@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/notificationtemplate"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driversettlementports"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/drivernotificationservice"
@@ -35,7 +36,7 @@ type ResolveDisputeRequest struct {
 	DisputeID      pulid.ID
 	Approve        bool
 	ResolutionNote string
-	Adjustment     *AdjustmentLineInput
+	Adjustment     *driversettlementservice.AdjustmentLineInput
 }
 
 func (s *Service) ListDisputesConnection(
@@ -314,7 +315,13 @@ func (s *Service) applyDisputeAdjustment(
 		}
 	}
 
-	updated, err := s.AddAdjustmentLine(ctx, req.TenantInfo, target.ID, req.Adjustment, actor)
+	updated, err := s.settlements.AddAdjustmentLine(
+		ctx,
+		req.TenantInfo,
+		target.ID,
+		req.Adjustment,
+		actor,
+	)
 	if err != nil {
 		return pulid.Nil, err
 	}
@@ -356,14 +363,18 @@ func (s *Service) generateDisputeSettlement(
 	if err != nil {
 		return nil, err
 	}
-	bounds := ResolveCurrentPeriod(control, timeutils.NowUnix())
-	settlement, err := s.GenerateOffCycle(ctx, &GenerateForWorkerRequest{
-		TenantInfo:  tenantInfo,
-		WorkerID:    workerID,
-		PeriodStart: bounds.PeriodStart,
-		PeriodEnd:   bounds.PeriodEnd,
-		PayDate:     bounds.PayDate,
-	}, actor)
+	bounds := driversettlementservice.ResolveCurrentPeriod(control, timeutils.NowUnix())
+	settlement, err := s.settlements.GenerateOffCycle(
+		ctx,
+		&driversettlementservice.GenerateForWorkerRequest{
+			TenantInfo:  tenantInfo,
+			WorkerID:    workerID,
+			PeriodStart: bounds.PeriodStart,
+			PeriodEnd:   bounds.PeriodEnd,
+			PayDate:     bounds.PayDate,
+		},
+		actor,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -397,7 +408,7 @@ func (s *Service) logDisputeAudit(
 	operation permission.Operation,
 	comment string,
 ) {
-	s.publishRealtimeInvalidation(
+	s.settlements.PublishRealtimeInvalidation(
 		ctx,
 		permission.ResourceSettlementDispute.String(),
 		operation,

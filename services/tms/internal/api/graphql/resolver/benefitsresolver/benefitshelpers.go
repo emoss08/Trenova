@@ -35,7 +35,12 @@ func (r *Deps) TotalCompensationFor(
 	// failure to read it is not a reason to refuse the whole statement — the
 	// benefits half is still true — so it is left at zero.
 	if r.DriverSettlementService != nil {
-		summaries, err := r.DriverSettlementService.GetYTDPaySummaries(ctx, tenantInfo, year, "")
+		summaries, err := r.DriverSettlementWorkspaceService.GetYTDPaySummaries(
+			ctx,
+			tenantInfo,
+			year,
+			"",
+		)
 		if err == nil {
 			for _, summary := range summaries {
 				if summary != nil && summary.WorkerID == workerID {

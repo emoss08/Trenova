@@ -3,6 +3,8 @@
 package generated
 
 import (
+	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementaccrualservice"
+	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementworkspaceservice"
 	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelsourcingservice"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentqualitycontrol"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentqualitysuite"
@@ -2284,7 +2286,7 @@ type MutationResolver interface {
 	ReleaseDriverPayEvent(ctx context.Context, payEventID string) (*driversettlement.PayEvent, error)
 	AttachPayEventsToSettlement(ctx context.Context, input gqlmodel.AttachPayEventsInput) (*driversettlement.Settlement, error)
 	DetachPayEventFromSettlement(ctx context.Context, input gqlmodel.DetachPayEventInput) (*driversettlement.Settlement, error)
-	BulkDriverSettlementAction(ctx context.Context, input gqlmodel.BulkSettlementActionInput) (*driversettlementservice.BulkActionPayload, error)
+	BulkDriverSettlementAction(ctx context.Context, input gqlmodel.BulkSettlementActionInput) (*driversettlementworkspaceservice.BulkActionPayload, error)
 	CreateEquipmentManufacturer(ctx context.Context, input gqlmodel.EquipmentManufacturerInput) (*equipmentmanufacturer.EquipmentManufacturer, error)
 	UpdateEquipmentManufacturer(ctx context.Context, id string, input gqlmodel.EquipmentManufacturerInput) (*equipmentmanufacturer.EquipmentManufacturer, error)
 	PatchEquipmentManufacturer(ctx context.Context, id string, input gqlmodel.EquipmentManufacturerPatchInput) (*equipmentmanufacturer.EquipmentManufacturer, error)
@@ -3068,8 +3070,8 @@ type QueryResolver interface {
 	MyPTOBalances(ctx context.Context) ([]*ptoledgerservice.BalanceView, error)
 	MyLeave(ctx context.Context) (*driverportalservice.PortalLeave, error)
 	MyExpenses(ctx context.Context) ([]*payexpense.Expense, error)
-	MyLoadPayEstimate(ctx context.Context, shipmentID string, moveID string) (*driversettlementservice.MovePayEstimate, error)
-	MyYtdPay(ctx context.Context, year int) (*driversettlementservice.WorkerYTDPaySummary, error)
+	MyLoadPayEstimate(ctx context.Context, shipmentID string, moveID string) (*driversettlementaccrualservice.MovePayEstimate, error)
+	MyYtdPay(ctx context.Context, year int) (*driversettlementworkspaceservice.WorkerYTDPaySummary, error)
 	MyHosState(ctx context.Context) (*gqlmodel.WorkerHosState, error)
 	MyHosDailyLogs(ctx context.Context, startDate string, endDate string) ([]*gqlmodel.WorkerHosDailyLog, error)
 	MyHosViolations(ctx context.Context, since *int) ([]*gqlmodel.WorkerHosViolation, error)
@@ -3102,10 +3104,10 @@ type QueryResolver interface {
 	DriverPayEvents(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.DriverPayEventConnection, error)
 	UnsettledPayEvents(ctx context.Context, workerID string) ([]*driversettlement.PayEvent, error)
 	WorkerEarningsSummary(ctx context.Context, workerID string) (*driversettlementservice.WorkerEarningsSummary, error)
-	WorkerYtdPaySummaries(ctx context.Context, year int, classification *driverpay.PayeeClassification) ([]*driversettlementservice.WorkerYTDPaySummary, error)
+	WorkerYtdPaySummaries(ctx context.Context, year int, classification *driverpay.PayeeClassification) ([]*driversettlementworkspaceservice.WorkerYTDPaySummary, error)
 	SettlementControl(ctx context.Context) (*settlementcontrol.SettlementControl, error)
 	CurrentSettlementPeriod(ctx context.Context) (*settlementshared.PeriodBounds, error)
-	SettlementWorkspaceSummary(ctx context.Context, periodStart *int, periodEnd *int) (*driversettlementservice.WorkspaceSummary, error)
+	SettlementWorkspaceSummary(ctx context.Context, periodStart *int, periodEnd *int) (*driversettlementworkspaceservice.WorkspaceSummary, error)
 	UnsettledWorkerSummaries(ctx context.Context, periodStart *int, periodEnd *int) ([]*driversettlementports.UnsettledWorkerSummary, error)
 	PreviewDriverSettlement(ctx context.Context, workerID string, periodStart *int, periodEnd *int) (*driversettlement.Settlement, error)
 	ExportSettlementBatchCSV(ctx context.Context, batchID string) (string, error)

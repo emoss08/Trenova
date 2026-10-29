@@ -10,7 +10,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/dashcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementservice"
+	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementaccrualservice"
+	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementreviewservice"
+	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementworkspaceservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/payexpense"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
@@ -169,7 +171,7 @@ func (s *Service) MyExpenses(
 	if err != nil {
 		return nil, err
 	}
-	return s.settlementService.ListExpensesForWorker(
+	return s.expenseService.ListExpensesForWorker(
 		ctx,
 		&driverpayports.ListDriverExpensesForWorkerRequest{
 			TenantInfo: tenantInfo,
@@ -208,7 +210,7 @@ func (s *Service) SubmitMyExpense(
 		}
 	}
 
-	return s.settlementService.SubmitExpense(ctx, &driversettlementservice.SubmitExpenseRequest{
+	return s.expenseService.SubmitExpense(ctx, &driversettlementreviewservice.SubmitExpenseRequest{
 		TenantInfo:        tenantInfo,
 		WorkerID:          wrk.ID,
 		SubmittedByUserID: tenantInfo.UserID,
@@ -229,7 +231,7 @@ func (s *Service) CancelMyExpense(
 	if err != nil {
 		return nil, err
 	}
-	return s.settlementService.CancelExpense(ctx, tenantInfo, expenseID, wrk.ID)
+	return s.expenseService.CancelExpense(ctx, tenantInfo, expenseID, wrk.ID)
 }
 
 // UploadMyExpenseReceipt stores a receipt image against the driver's own
@@ -251,7 +253,7 @@ func (s *Service) UploadMyExpenseReceipt(
 		)
 	}
 
-	expense, err := s.settlementService.GetExpense(
+	expense, err := s.expenseService.GetExpense(
 		ctx,
 		driverpayports.GetDriverExpenseByIDRequest{ID: expenseID, TenantInfo: tenantInfo},
 	)
@@ -272,7 +274,7 @@ func (s *Service) UploadMyExpenseReceipt(
 	if err != nil {
 		return nil, err
 	}
-	return s.settlementService.SetExpenseReceipt(
+	return s.expenseService.SetExpenseReceipt(
 		ctx,
 		tenantInfo,
 		expenseID,
@@ -362,7 +364,7 @@ func (s *Service) MyLoadPayEstimate(
 	tenantInfo pagination.TenantInfo,
 	shipmentID pulid.ID,
 	moveID pulid.ID,
-) (*driversettlementservice.MovePayEstimate, error) {
+) (*driversettlementaccrualservice.MovePayEstimate, error) {
 	wrk, err := s.ResolveWorker(ctx, tenantInfo)
 	if err != nil {
 		return nil, err
@@ -382,19 +384,19 @@ func (s *Service) MyLoadPayEstimate(
 	if !assigned {
 		return nil, errortypes.NewNotFoundError("Load not found")
 	}
-	return s.settlementService.EstimateWorkerMovePay(ctx, tenantInfo, wrk.ID, shipmentID, moveID)
+	return s.payEstimator.EstimateWorkerMovePay(ctx, tenantInfo, wrk.ID, shipmentID, moveID)
 }
 
 func (s *Service) MyYtdPay(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	year int,
-) (*driversettlementservice.WorkerYTDPaySummary, error) {
+) (*driversettlementworkspaceservice.WorkerYTDPaySummary, error) {
 	wrk, err := s.ResolveWorker(ctx, tenantInfo)
 	if err != nil {
 		return nil, err
 	}
-	summaries, err := s.settlementService.GetYTDPaySummaries(ctx, tenantInfo, year, "")
+	summaries, err := s.payHistory.GetYTDPaySummaries(ctx, tenantInfo, year, "")
 	if err != nil {
 		return nil, err
 	}

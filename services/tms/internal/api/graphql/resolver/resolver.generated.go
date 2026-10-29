@@ -587,10 +587,11 @@ func FromServices(s *Services) *Resolver {
 		AuditService: s.AuditService,
 	}
 	benefitsDeps := &benefitsresolver.Deps{
-		Core:                    s.Core,
-		BenefitsService:         s.BenefitsService,
-		DriverSettlementService: s.DriverSettlementService,
-		DriverPortalService:     s.DriverPortalService,
+		Core:                             s.Core,
+		BenefitsService:                  s.BenefitsService,
+		DriverSettlementService:          s.DriverSettlementService,
+		DriverSettlementWorkspaceService: s.DriverSettlementWorkspaceService,
+		DriverPortalService:              s.DriverPortalService,
 	}
 	billingqueueDeps := &billingqueueresolver.Deps{
 		Core:                      s.Core,
@@ -720,26 +721,28 @@ func FromServices(s *Services) *Resolver {
 		DocumentTypeService: s.DocumentTypeService,
 	}
 	driverportalDeps := &driverportalresolver.Deps{
-		Core:                    s.Core,
-		TelematicsService:       s.TelematicsService,
-		NotificationService:     s.NotificationService,
-		DriverSettlementService: s.DriverSettlementService,
-		DriverPortalService:     s.DriverPortalService,
-		DashControlService:      s.DashControlService,
+		Core:                          s.Core,
+		TelematicsService:             s.TelematicsService,
+		NotificationService:           s.NotificationService,
+		DriverSettlementReviewService: s.DriverSettlementReviewService,
+		DriverPortalService:           s.DriverPortalService,
+		DashControlService:            s.DashControlService,
 	}
 	driversettlementDeps := &driversettlementresolver.Deps{
-		Core:                     s.Core,
-		DriverPayService:         s.DriverPayService,
-		DriverSettlementService:  s.DriverSettlementService,
-		SettlementControlService: s.SettlementControlService,
-		PayProfileRepo:           s.PayProfileRepo,
-		RecurringDeductionRepo:   s.RecurringDeductionRepo,
-		RecurringEarningRepo:     s.RecurringEarningRepo,
-		PayAdvanceRepo:           s.PayAdvanceRepo,
-		EscrowAccountRepo:        s.EscrowAccountRepo,
-		DriverSettlementRepo:     s.DriverSettlementRepo,
-		SettlementBatchRepo:      s.SettlementBatchRepo,
-		PayEventRepo:             s.PayEventRepo,
+		Core:                             s.Core,
+		DriverPayService:                 s.DriverPayService,
+		DriverSettlementService:          s.DriverSettlementService,
+		DriverSettlementTransferService:  s.DriverSettlementTransferService,
+		DriverSettlementWorkspaceService: s.DriverSettlementWorkspaceService,
+		SettlementControlService:         s.SettlementControlService,
+		PayProfileRepo:                   s.PayProfileRepo,
+		RecurringDeductionRepo:           s.RecurringDeductionRepo,
+		RecurringEarningRepo:             s.RecurringEarningRepo,
+		PayAdvanceRepo:                   s.PayAdvanceRepo,
+		EscrowAccountRepo:                s.EscrowAccountRepo,
+		DriverSettlementRepo:             s.DriverSettlementRepo,
+		SettlementBatchRepo:              s.SettlementBatchRepo,
+		PayEventRepo:                     s.PayEventRepo,
 	}
 	ediDeps := &ediresolver.Deps{
 		Core:              s.Core,

@@ -7,23 +7,27 @@ import (
 	settlementcontrolservice "github.com/emoss08/trenova/internal/modules/identity/app/settlementcontrolservice"
 	driverpayservice "github.com/emoss08/trenova/internal/modules/settlement/app/driverpayservice"
 	driversettlementservice "github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementservice"
+	driversettlementtransferservice "github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementtransferservice"
+	driversettlementworkspaceservice "github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementworkspaceservice"
 	driverpayports "github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
 	driversettlementports "github.com/emoss08/trenova/internal/modules/settlement/ports/driversettlementports"
 )
 
 type Deps struct {
 	*resolvercore.Core
-	DriverPayService         *driverpayservice.Service
-	DriverSettlementService  *driversettlementservice.Service
-	SettlementControlService *settlementcontrolservice.Service
-	PayProfileRepo           driverpayports.PayProfileRepository
-	RecurringDeductionRepo   driverpayports.RecurringDeductionRepository
-	RecurringEarningRepo     driverpayports.RecurringEarningRepository
-	PayAdvanceRepo           driverpayports.PayAdvanceRepository
-	EscrowAccountRepo        driverpayports.EscrowAccountRepository
-	DriverSettlementRepo     driversettlementports.DriverSettlementRepository
-	SettlementBatchRepo      driversettlementports.SettlementBatchRepository
-	PayEventRepo             driversettlementports.PayEventRepository
+	DriverPayService                 *driverpayservice.Service
+	DriverSettlementService          *driversettlementservice.Service
+	DriverSettlementTransferService  *driversettlementtransferservice.Service
+	DriverSettlementWorkspaceService *driversettlementworkspaceservice.Service
+	SettlementControlService         *settlementcontrolservice.Service
+	PayProfileRepo                   driverpayports.PayProfileRepository
+	RecurringDeductionRepo           driverpayports.RecurringDeductionRepository
+	RecurringEarningRepo             driverpayports.RecurringEarningRepository
+	PayAdvanceRepo                   driverpayports.PayAdvanceRepository
+	EscrowAccountRepo                driverpayports.EscrowAccountRepository
+	DriverSettlementRepo             driversettlementports.DriverSettlementRepository
+	SettlementBatchRepo              driversettlementports.SettlementBatchRepository
+	PayEventRepo                     driversettlementports.PayEventRepository
 }
 
 type DriverPayEventComponentResolver struct{ *Deps }

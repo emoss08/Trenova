@@ -1,9 +1,11 @@
-package driversettlementservice
+package driversettlementworkspaceservice
 
 import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementservice"
+	"github.com/emoss08/trenova/internal/modules/settlement/app/settlementshared"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/carriersettlementports"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driversettlementports"
@@ -43,9 +45,9 @@ func (s *Service) GetWorkspaceSummary(
 		return nil, err
 	}
 
-	bounds := PeriodBounds{PeriodStart: periodStart, PeriodEnd: periodEnd}
+	bounds := driversettlementservice.PeriodBounds{PeriodStart: periodStart, PeriodEnd: periodEnd}
 	if bounds.PeriodStart == 0 || bounds.PeriodEnd == 0 {
-		bounds = ResolveCurrentPeriod(control, timeutils.NowUnix())
+		bounds = driversettlementservice.ResolveCurrentPeriod(control, timeutils.NowUnix())
 	}
 
 	counts, err := s.settlementRepo.GetWorkspaceCounts(
@@ -109,9 +111,9 @@ func (s *Service) ListUnsettledWorkers(
 		return nil, err
 	}
 
-	bounds := PeriodBounds{PeriodStart: periodStart, PeriodEnd: periodEnd}
+	bounds := driversettlementservice.PeriodBounds{PeriodStart: periodStart, PeriodEnd: periodEnd}
 	if bounds.PeriodStart == 0 || bounds.PeriodEnd == 0 {
-		bounds = ResolveCurrentPeriod(control, timeutils.NowUnix())
+		bounds = driversettlementservice.ResolveCurrentPeriod(control, timeutils.NowUnix())
 	}
 
 	return s.payEventRepo.ListUnsettledWorkerSummaries(
@@ -167,7 +169,7 @@ func (s *Service) BulkAction(
 	req *BulkActionRequest,
 	actor *permissionports.RequestActor,
 ) (*BulkActionPayload, error) {
-	if err := requireActor(actor, "Bulk settlement action"); err != nil {
+	if err := settlementshared.RequireActor(actor, "Bulk settlement action"); err != nil {
 		return nil, err
 	}
 	if len(req.SettlementIDs) == 0 {
@@ -199,13 +201,13 @@ func (s *Service) BulkAction(
 		var err error
 		switch req.Action {
 		case BulkActionSubmit:
-			_, err = s.SubmitForApproval(ctx, req.TenantInfo, settlementID, actor)
+			_, err = s.settlements.SubmitForApproval(ctx, req.TenantInfo, settlementID, actor)
 		case BulkActionApprove:
-			_, err = s.approveInternal(ctx, req.TenantInfo, settlementID, actor, true)
+			_, err = s.settlements.SubmitAndApprove(ctx, req.TenantInfo, settlementID, actor)
 		case BulkActionPost:
-			_, err = s.Post(ctx, req.TenantInfo, settlementID, actor)
+			_, err = s.settlements.Post(ctx, req.TenantInfo, settlementID, actor)
 		case BulkActionMarkPaid:
-			_, err = s.MarkPaid(ctx, &carriersettlementports.MarkSettlementPaidRequest{
+			_, err = s.settlements.MarkPaid(ctx, &carriersettlementports.MarkSettlementPaidRequest{
 				TenantInfo:       req.TenantInfo,
 				SettlementID:     settlementID,
 				PaymentMethod:    req.PaymentMethod,

@@ -22,7 +22,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/app/ptoledgerservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/dashcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementaccrualservice"
+	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementreviewservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementservice"
+	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementworkspaceservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/payadvance"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/payexpense"
@@ -189,7 +192,7 @@ func (r *MutationResolver) CreateSettlementDispute(ctx context.Context, input gq
 	if !lineID.IsNil() {
 		linePtr = &lineID
 	}
-	return r.DriverSettlementService.CreateDispute(ctx, &driversettlementservice.CreateDisputeRequest{
+	return r.DriverSettlementReviewService.CreateDispute(ctx, &driversettlementreviewservice.CreateDisputeRequest{
 		TenantInfo:        ti,
 		WorkerID:          wrk.ID,
 		SubmittedByUserID: authCtx.UserID,
@@ -214,7 +217,7 @@ func (r *MutationResolver) WithdrawSettlementDispute(ctx context.Context, id str
 	if err != nil {
 		return nil, errortypes.NewValidationError("id", errortypes.ErrInvalid, "Invalid dispute")
 	}
-	return r.DriverSettlementService.WithdrawDispute(ctx, ti, disputeID, wrk.ID)
+	return r.DriverSettlementReviewService.WithdrawDispute(ctx, ti, disputeID, wrk.ID)
 }
 
 func (r *MutationResolver) StartSettlementDisputeReview(ctx context.Context, id string) (*driversettlement.Dispute, error) {
@@ -226,7 +229,7 @@ func (r *MutationResolver) StartSettlementDisputeReview(ctx context.Context, id 
 	if err != nil {
 		return nil, errortypes.NewValidationError("id", errortypes.ErrInvalid, "Invalid dispute")
 	}
-	return r.DriverSettlementService.StartDisputeReview(
+	return r.DriverSettlementReviewService.StartDisputeReview(
 		ctx,
 		resolvercore.TenantInfo(authCtx),
 		disputeID,
@@ -247,7 +250,7 @@ func (r *MutationResolver) ResolveSettlementDispute(ctx context.Context, input g
 			"Invalid dispute",
 		)
 	}
-	req := &driversettlementservice.ResolveDisputeRequest{
+	req := &driversettlementreviewservice.ResolveDisputeRequest{
 		TenantInfo:     resolvercore.TenantInfo(authCtx),
 		DisputeID:      disputeID,
 		Approve:        input.Approve,
@@ -268,7 +271,7 @@ func (r *MutationResolver) ResolveSettlementDispute(ctx context.Context, input g
 			PayCodeID:   payCodePtr,
 		}
 	}
-	return r.DriverSettlementService.ResolveDispute(ctx, req, actorutil.FromAuthContext(authCtx))
+	return r.DriverSettlementReviewService.ResolveDispute(ctx, req, actorutil.FromAuthContext(authCtx))
 }
 
 func (r *MutationResolver) MarkAllMyNotificationsRead(ctx context.Context) (bool, error) {
@@ -484,7 +487,7 @@ func (r *MutationResolver) ReviewDriverExpense(ctx context.Context, input gqlmod
 			"Invalid expense",
 		)
 	}
-	req := &driversettlementservice.ReviewExpenseRequest{
+	req := &driversettlementreviewservice.ReviewExpenseRequest{
 		TenantInfo: resolvercore.TenantInfo(authCtx),
 		ExpenseID:  expenseID,
 		Approve:    input.Approve,
@@ -492,7 +495,7 @@ func (r *MutationResolver) ReviewDriverExpense(ctx context.Context, input gqlmod
 	if input.Note != nil {
 		req.Note = *input.Note
 	}
-	return r.DriverSettlementService.ReviewExpense(ctx, req, actorutil.FromAuthContext(authCtx))
+	return r.DriverSettlementReviewService.ReviewExpense(ctx, req, actorutil.FromAuthContext(authCtx))
 }
 
 func (r *MutationResolver) RespondToMyAssignment(ctx context.Context, input gqlmodel.RespondToMyAssignmentInput) (bool, error) {
@@ -614,7 +617,7 @@ func (r *QueryResolver) SettlementDisputes(ctx context.Context, input gqlmodel.D
 	if err != nil {
 		return nil, err
 	}
-	result, err := r.DriverSettlementService.ListDisputesConnection(
+	result, err := r.DriverSettlementReviewService.ListDisputesConnection(
 		ctx,
 		&driversettlementports.ListSettlementDisputeConnectionRequest{
 			Filter: tableInput.Filter,
@@ -636,7 +639,7 @@ func (r *QueryResolver) SettlementDispute(ctx context.Context, id string) (*driv
 	if err != nil {
 		return nil, errortypes.NewValidationError("id", errortypes.ErrInvalid, "Invalid dispute")
 	}
-	return r.DriverSettlementService.GetDispute(ctx, driversettlementports.GetSettlementDisputeByIDRequest{
+	return r.DriverSettlementReviewService.GetDispute(ctx, driversettlementports.GetSettlementDisputeByIDRequest{
 		ID:               disputeID,
 		TenantInfo:       resolvercore.TenantInfo(authCtx),
 		IncludeRelations: true,
@@ -648,7 +651,7 @@ func (r *QueryResolver) OpenSettlementDisputeCount(ctx context.Context) (int, er
 	if err != nil {
 		return 0, err
 	}
-	return r.DriverSettlementService.CountOpenDisputes(ctx, resolvercore.TenantInfo(authCtx))
+	return r.DriverSettlementReviewService.CountOpenDisputes(ctx, resolvercore.TenantInfo(authCtx))
 }
 
 func (r *QueryResolver) MyPortalProfile(ctx context.Context) (*driverportalservice.PortalProfile, error) {
@@ -785,7 +788,7 @@ func (r *QueryResolver) MyDisputes(ctx context.Context) ([]*driversettlement.Dis
 	if err != nil {
 		return nil, err
 	}
-	return r.DriverSettlementService.ListDisputesForWorker(
+	return r.DriverSettlementReviewService.ListDisputesForWorker(
 		ctx,
 		&driversettlementports.ListSettlementDisputesForWorkerRequest{
 			TenantInfo: ti,
@@ -894,7 +897,7 @@ func (r *QueryResolver) MyExpenses(ctx context.Context) ([]*payexpense.Expense, 
 	return r.DriverPortalService.MyExpenses(ctx, resolvercore.TenantInfo(authCtx))
 }
 
-func (r *QueryResolver) MyLoadPayEstimate(ctx context.Context, shipmentID string, moveID string) (*driversettlementservice.MovePayEstimate, error) {
+func (r *QueryResolver) MyLoadPayEstimate(ctx context.Context, shipmentID string, moveID string) (*driversettlementaccrualservice.MovePayEstimate, error) {
 	authCtx, err := r.RequireAuth(ctx)
 	if err != nil {
 		return nil, err
@@ -910,7 +913,7 @@ func (r *QueryResolver) MyLoadPayEstimate(ctx context.Context, shipmentID string
 	return r.DriverPortalService.MyLoadPayEstimate(ctx, resolvercore.TenantInfo(authCtx), shipID, mvID)
 }
 
-func (r *QueryResolver) MyYtdPay(ctx context.Context, year int) (*driversettlementservice.WorkerYTDPaySummary, error) {
+func (r *QueryResolver) MyYtdPay(ctx context.Context, year int) (*driversettlementworkspaceservice.WorkerYTDPaySummary, error) {
 	authCtx, err := r.RequireAuth(ctx)
 	if err != nil {
 		return nil, err
@@ -1053,7 +1056,7 @@ func (r *QueryResolver) DriverExpenses(ctx context.Context, input gqlmodel.DataT
 	if err != nil {
 		return nil, err
 	}
-	result, err := r.DriverSettlementService.ListExpensesConnection(
+	result, err := r.DriverSettlementReviewService.ListExpensesConnection(
 		ctx,
 		&driverpayports.ListDriverExpenseConnectionRequest{
 			Filter: tableInput.Filter,
@@ -1075,7 +1078,7 @@ func (r *QueryResolver) DriverExpense(ctx context.Context, id string) (*payexpen
 	if err != nil {
 		return nil, errortypes.NewValidationError("id", errortypes.ErrInvalid, "Invalid expense")
 	}
-	return r.DriverSettlementService.GetExpense(ctx, driverpayports.GetDriverExpenseByIDRequest{
+	return r.DriverSettlementReviewService.GetExpense(ctx, driverpayports.GetDriverExpenseByIDRequest{
 		ID:         expenseID,
 		TenantInfo: resolvercore.TenantInfo(authCtx),
 	})
@@ -1086,7 +1089,7 @@ func (r *QueryResolver) PendingDriverExpenseCount(ctx context.Context) (int, err
 	if err != nil {
 		return 0, err
 	}
-	return r.DriverSettlementService.CountPendingExpenses(ctx, resolvercore.TenantInfo(authCtx))
+	return r.DriverSettlementReviewService.CountPendingExpenses(ctx, resolvercore.TenantInfo(authCtx))
 }
 
 func (r *QueryResolver) DashControl(ctx context.Context) (*dashcontrol.DashControl, error) {

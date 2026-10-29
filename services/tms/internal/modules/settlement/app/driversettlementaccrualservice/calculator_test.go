@@ -1,4 +1,4 @@
-package driversettlementservice
+package driversettlementaccrualservice
 
 import (
 	"testing"

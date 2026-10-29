@@ -5190,7 +5190,7 @@ models:
       - github.com/emoss08/trenova/internal/modules/settlement/domain/payexpense.Expense
   PortalPayEstimate:
     model:
-      - github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementservice.MovePayEstimate
+      - github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementaccrualservice.MovePayEstimate
   DashControl:
     model:
       - github.com/emoss08/trenova/internal/modules/identity/domain/dashcontrol.DashControl
@@ -5294,25 +5294,25 @@ models:
       - github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementservice.WorkerEarningsSummary
   WorkerYTDPaySummary:
     model:
-      - github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementservice.WorkerYTDPaySummary
+      - github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementworkspaceservice.WorkerYTDPaySummary
   SettlementPeriodBounds:
     model:
       - github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementservice.PeriodBounds
   SettlementWorkspaceSummary:
     model:
-      - github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementservice.WorkspaceSummary
+      - github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementworkspaceservice.WorkspaceSummary
   UnsettledWorkerSummary:
     model:
       - github.com/emoss08/trenova/internal/modules/settlement/ports/driversettlementports.UnsettledWorkerSummary
   BulkSettlementActionType:
     model:
-      - github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementservice.BulkActionType
+      - github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementworkspaceservice.BulkActionType
   BulkSettlementActionResult:
     model:
-      - github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementservice.BulkActionResult
+      - github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementworkspaceservice.BulkActionResult
   BulkSettlementActionPayload:
     model:
-      - github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementservice.BulkActionPayload
+      - github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementworkspaceservice.BulkActionPayload
   CarrierSettlementStatus:
     model:
       - github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement.Status

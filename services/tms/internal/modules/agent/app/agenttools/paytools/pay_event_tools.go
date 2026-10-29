@@ -18,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementservice"
+	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementtransferservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/toolschema"
@@ -47,7 +48,7 @@ type payEventHolder interface {
 		eventID pulid.ID,
 		reason string,
 		hold bool,
-	) (*driversettlementservice.PayEventPlan, error)
+	) (*driversettlementtransferservice.PayEventPlan, error)
 	HoldPayEvent(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
@@ -68,11 +69,15 @@ type PayEventHoldTool struct {
 	hold   bool
 }
 
-func ProvideHoldDriverPayEventTool(s *driversettlementservice.Service) agenttoolports.AgentTool {
+func ProvideHoldDriverPayEventTool(
+	s *driversettlementtransferservice.Service,
+) agenttoolports.AgentTool {
 	return &PayEventHoldTool{events: s, hold: true}
 }
 
-func ProvideReleaseDriverPayEventTool(s *driversettlementservice.Service) agenttoolports.AgentTool {
+func ProvideReleaseDriverPayEventTool(
+	s *driversettlementtransferservice.Service,
+) agenttoolports.AgentTool {
 	return &PayEventHoldTool{events: s}
 }
 
@@ -183,7 +188,7 @@ func (t *PayEventHoldTool) request(
 func (t *PayEventHoldTool) plan(
 	ctx context.Context,
 	params *agenttoolports.ToolExecuteParams,
-) (*driversettlementservice.PayEventPlan, error) {
+) (*driversettlementtransferservice.PayEventPlan, error) {
 	req, err := t.request(params)
 	if err != nil {
 		return nil, err
@@ -308,7 +313,7 @@ func (t *PayEventHoldTool) Preview(
 type payEventTransferrer interface {
 	PlanEventTransfer(
 		ctx context.Context,
-		req *driversettlementservice.EventTransferRequest,
+		req *driversettlementtransferservice.EventTransferRequest,
 	) (*driversettlementservice.ActionPlan, error)
 	AttachPayEvents(
 		ctx context.Context,
@@ -330,11 +335,15 @@ type PayEventTransferTool struct {
 	detach bool
 }
 
-func ProvideAttachPayEventsTool(s *driversettlementservice.Service) agenttoolports.AgentTool {
+func ProvideAttachPayEventsTool(
+	s *driversettlementtransferservice.Service,
+) agenttoolports.AgentTool {
 	return &PayEventTransferTool{events: s}
 }
 
-func ProvideDetachPayEventTool(s *driversettlementservice.Service) agenttoolports.AgentTool {
+func ProvideDetachPayEventTool(
+	s *driversettlementtransferservice.Service,
+) agenttoolports.AgentTool {
 	return &PayEventTransferTool{events: s, detach: true}
 }
 
@@ -420,7 +429,7 @@ func (t *PayEventTransferTool) Target(params map[string]any) (agenttoolports.Too
 
 func (t *PayEventTransferTool) request(
 	params *agenttoolports.ToolExecuteParams,
-) (*driversettlementservice.EventTransferRequest, error) {
+) (*driversettlementtransferservice.EventTransferRequest, error) {
 	if err := toolguard.GuardPreview(t, params); err != nil {
 		return nil, err
 	}
@@ -428,7 +437,7 @@ func (t *PayEventTransferTool) request(
 	if err != nil {
 		return nil, err
 	}
-	req := &driversettlementservice.EventTransferRequest{
+	req := &driversettlementtransferservice.EventTransferRequest{
 		TenantInfo:   toolparams.TenantFrom(*params),
 		SettlementID: settlementID,
 		Detach:       t.detach,

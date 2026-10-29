@@ -110,7 +110,7 @@ func (s *Service) Post(
 	settlementID pulid.ID,
 	actor *permissionports.RequestActor,
 ) (*carriersettlement.CarrierSettlement, error) {
-	if err := requireActor(actor, "Carrier settlement posting"); err != nil {
+	if err := settlementshared.RequireActor(actor, "Carrier settlement posting"); err != nil {
 		return nil, err
 	}
 

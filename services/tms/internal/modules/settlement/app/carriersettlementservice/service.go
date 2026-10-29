@@ -21,7 +21,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/carriersettlementports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
-	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
 	"github.com/emoss08/trenova/pkg/seqgen"
@@ -127,13 +126,6 @@ func (s *Service) queueSync(
 			PostedAt:    entity.PostedAt,
 		}),
 	)
-}
-
-func requireActor(actor *permissionports.RequestActor, operation string) error {
-	if actor == nil || actor.UserID.IsNil() {
-		return errortypes.NewAuthorizationError("{0} requires an authenticated user", operation)
-	}
-	return nil
 }
 
 func (s *Service) List(

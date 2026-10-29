@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/settlement/app/settlementshared"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/paycode"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
@@ -71,7 +72,7 @@ func (s *Service) CreatePayCode(
 	entity *paycode.PayCode,
 	actor *permissionports.RequestActor,
 ) (*paycode.PayCode, error) {
-	if err := requireActor(actor, "Pay code creation"); err != nil {
+	if err := settlementshared.RequireActor(actor, "Pay code creation"); err != nil {
 		return nil, err
 	}
 	multiErr := errortypes.NewMultiError()
@@ -93,7 +94,7 @@ func (s *Service) UpdatePayCode(
 	entity *paycode.PayCode,
 	actor *permissionports.RequestActor,
 ) (*paycode.PayCode, error) {
-	if err := requireActor(actor, "Pay code update"); err != nil {
+	if err := settlementshared.RequireActor(actor, "Pay code update"); err != nil {
 		return nil, err
 	}
 	multiErr := errortypes.NewMultiError()

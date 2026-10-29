@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/settlement/app/settlementshared"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/recurringpay"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
@@ -42,7 +43,7 @@ func (s *Service) CreateDeduction(
 	autoLinkEscrow bool,
 	actor *permissionports.RequestActor,
 ) (*recurringpay.RecurringDeduction, error) {
-	if err := requireActor(actor, "Recurring deduction creation"); err != nil {
+	if err := settlementshared.RequireActor(actor, "Recurring deduction creation"); err != nil {
 		return nil, err
 	}
 	if err := s.CheckDeduction(ctx, entity, autoLinkEscrow); err != nil {
@@ -64,7 +65,7 @@ func (s *Service) UpdateDeduction(
 	entity *recurringpay.RecurringDeduction,
 	actor *permissionports.RequestActor,
 ) (*recurringpay.RecurringDeduction, error) {
-	if err := requireActor(actor, "Recurring deduction update"); err != nil {
+	if err := settlementshared.RequireActor(actor, "Recurring deduction update"); err != nil {
 		return nil, err
 	}
 	if err := s.CheckDeduction(ctx, entity, false); err != nil {
