@@ -383,7 +383,7 @@ func (fx *workflowEffects) delegate(
 		Call: *call,
 	}).Get(openCtx, &opened)
 	if err != nil {
-		return declinedDelegate(*call, err), Outcome{}
+		return declinedDelegate(call, err), Outcome{}
 	}
 
 	sub := &workflowEffects{
@@ -417,7 +417,7 @@ func (fx *workflowEffects) delegate(
 // declinedDelegate is a task whose agent's turn could not be opened. A
 // refusal is passed on as it was written; anything else never reached the
 // agent, so nothing it could have written happened.
-func declinedDelegate(call delegation.Call, err error) delegation.Run {
+func declinedDelegate(call *delegation.Call, err error) delegation.Run {
 	if temporal.IsCanceledError(err) {
 		return delegation.Run{Stopped: true}
 	}

@@ -275,16 +275,16 @@ func TestDeclinedDelegate_AStopIsNotARefusal(t *testing.T) {
 		Delegate: agentturn.RuntimeDelegate{Name: "Shipment Desk"},
 	}
 
-	stopped := declinedDelegate(call, temporal.NewCanceledError())
+	stopped := declinedDelegate(&call, temporal.NewCanceledError())
 	assert.True(t, stopped.Stopped)
 	assert.Empty(t, stopped.Declined)
 
-	refused := declinedDelegate(call, temporal.NewNonRetryableApplicationError(
+	refused := declinedDelegate(&call, temporal.NewNonRetryableApplicationError(
 		"Shipment Desk is disabled.", ErrTypeDelegateDeclined, nil,
 	))
 	assert.Equal(t, "Shipment Desk is disabled.", refused.Declined)
 
-	lost := declinedDelegate(call, temporal.NewApplicationError("worker lost", "Lost"))
+	lost := declinedDelegate(&call, temporal.NewApplicationError("worker lost", "Lost"))
 	assert.Contains(t, lost.Declined, "could not be started")
 
 	assert.Contains(t,

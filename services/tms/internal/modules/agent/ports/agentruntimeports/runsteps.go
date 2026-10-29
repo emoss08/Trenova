@@ -137,11 +137,11 @@ func (v *StepVerdict) Replayed() bool {
 type RunStepLedger interface {
 	// Claim reserves a key before the work happens and reports what is already
 	// known about it.
-	Claim(ctx context.Context, tenant pagination.TenantInfo, step RunStep) (StepVerdict, error)
+	Claim(ctx context.Context, tenant pagination.TenantInfo, step *RunStep) (StepVerdict, error)
 	// Settle records how a claimed step turned out.
-	Settle(ctx context.Context, tenant pagination.TenantInfo, step RunStep) error
+	Settle(ctx context.Context, tenant pagination.TenantInfo, step *RunStep) error
 	// Record files a step that needs no claim, such as a model reply.
-	Record(ctx context.Context, tenant pagination.TenantInfo, step RunStep) error
+	Record(ctx context.Context, tenant pagination.TenantInfo, step *RunStep) error
 	// Loaded is every step already on record for this run, read once when the
 	// run starts. The repeat guard is seeded from it, so a resumed attempt
 	// does not re-learn a failure the first attempt already had.

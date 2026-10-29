@@ -68,7 +68,7 @@ func New(p Params) agentruntimeports.RunStepLedger {
 func (s *Service) Claim(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
-	step agentruntimeports.RunStep,
+	step *agentruntimeports.RunStep,
 ) (agentruntimeports.StepVerdict, error) {
 	held, err := s.repo.Claim(ctx, toEntity(tenant, step, agentruntimeports.RunStepStarted))
 	if err == nil {
@@ -101,17 +101,26 @@ func (s *Service) Claim(
 			State:   agentruntimeports.StepFailed,
 			Outcome: decodeOutcome(s.l, held),
 		}, nil
+	case agentruntimeports.RunStepStarted:
+		return s.unfinished(step, held), nil
 	default:
-		s.l.Warn("an earlier attempt began this step and never finished it",
-			zap.String("owner", held.OwnerID.String()),
-			zap.String("tool", held.ToolName),
-			zap.Int("claimedOnAttempt", held.Attempt),
-		)
-
-		s.countReplayed(step, agentruntimeports.StepUnknown)
-
-		return agentruntimeports.StepVerdict{State: agentruntimeports.StepUnknown}, nil
+		return s.unfinished(step, held), nil
 	}
+}
+
+func (s *Service) unfinished(
+	step *agentruntimeports.RunStep,
+	held *agentrunstep.AgentRunStep,
+) agentruntimeports.StepVerdict {
+	s.l.Warn("an earlier attempt began this step and never finished it",
+		zap.String("owner", held.OwnerID.String()),
+		zap.String("tool", held.ToolName),
+		zap.Int("claimedOnAttempt", held.Attempt),
+	)
+
+	s.countReplayed(step, agentruntimeports.StepUnknown)
+
+	return agentruntimeports.StepVerdict{State: agentruntimeports.StepUnknown}
 }
 
 // countReplayed files an operation a later attempt declined to repeat.
@@ -119,25 +128,28 @@ func (s *Service) Claim(
 // This is the reliability figure worth having: each one is a write that a
 // retry would otherwise have made twice, so the count is a direct measure of
 // what the ledger is preventing rather than a proxy for it.
-func (s *Service) countReplayed(step agentruntimeports.RunStep, state agentruntimeports.StepState) {
+func (s *Service) countReplayed(
+	step *agentruntimeports.RunStep,
+	state agentruntimeports.StepState,
+) {
 	s.metrics.RecordStepReplayed(string(step.OwnerKind), string(state))
 }
 
 func (s *Service) Settle(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
-	step agentruntimeports.RunStep,
+	step *agentruntimeports.RunStep,
 ) error {
-	step.Outcome = withCause(step.Kind, step.Outcome)
-	if len(step.Outcome.Content) > maxStoredOutcomeChars {
+	outcome := withCause(step.Kind, &step.Outcome)
+	if len(outcome.Content) > maxStoredOutcomeChars {
 		s.l.Debug("a step's answer was too large to keep",
 			zap.String("tool", step.ToolName),
-			zap.Int("chars", len(step.Outcome.Content)),
+			zap.Int("chars", len(outcome.Content)),
 		)
-		step.Outcome.Content = ""
+		outcome.Content = ""
 	}
 
-	encoded, err := encodeOutcome(step.Outcome)
+	encoded, err := encodeOutcome(&outcome)
 	if err != nil {
 		// A settled step whose outcome cannot be encoded would come back as
 		// Unknown on the next attempt, which is wrong — it finished, and we
@@ -162,9 +174,8 @@ func (s *Service) Settle(
 func (s *Service) Record(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
-	step agentruntimeports.RunStep,
+	step *agentruntimeports.RunStep,
 ) error {
-	step.Outcome = withCause(step.Kind, step.Outcome)
 	return s.repo.Record(ctx, toEntity(tenant, step, step.Status))
 }
 
@@ -208,7 +219,7 @@ func (s *Service) Loaded(
 
 func toEntity(
 	tenant pagination.TenantInfo,
-	step agentruntimeports.RunStep,
+	step *agentruntimeports.RunStep,
 	status agentruntimeports.RunStepStatus,
 ) *agentrunstep.AgentRunStep {
 	args := step.Args
@@ -247,21 +258,22 @@ func toEntity(
 // can see what a tool answered without decoding anything.
 func withCause(
 	kind agentruntimeports.RunStepKind,
-	outcome agentruntimeports.RunStepOutcome,
+	outcome *agentruntimeports.RunStepOutcome,
 ) agentruntimeports.RunStepOutcome {
-	if kind != agentruntimeports.RunStepTool || !outcome.Failed || outcome.Cause != "" {
-		return outcome
+	caused := *outcome
+	if kind != agentruntimeports.RunStepTool || !caused.Failed || caused.Cause != "" {
+		return caused
 	}
-	outcome.Cause = aianalytics.ClassifyToolFailure(
-		outcome.Verdict,
-		outcome.Reason,
-		outcome.Content,
+	caused.Cause = aianalytics.ClassifyToolFailure(
+		caused.Verdict,
+		caused.Reason,
+		caused.Content,
 	)
 
-	return outcome
+	return caused
 }
 
-func encodeOutcome(outcome agentruntimeports.RunStepOutcome) (map[string]any, error) {
+func encodeOutcome(outcome *agentruntimeports.RunStepOutcome) (map[string]any, error) {
 	encoded, err := sonic.Marshal(outcome)
 	if err != nil {
 		return nil, fmt.Errorf("encode outcome: %w", err)

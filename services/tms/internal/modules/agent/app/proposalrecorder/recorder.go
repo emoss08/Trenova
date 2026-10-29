@@ -524,8 +524,8 @@ func (s *Service) proposalFor(
 		proposal.TargetID = action.Target.ID
 		proposal.TargetVersion = action.Target.Version
 	}
-	applyTaint(proposal, *action, group.taint)
-	applyExecution(proposal, *action, now)
+	applyTaint(proposal, action, group.taint)
+	applyExecution(proposal, action, now)
 	applyExecutor(proposal, action, req.Actor)
 
 	return proposal
@@ -719,7 +719,7 @@ func (s *Service) openRun(
 // the run read any is clean, though the run it belongs to is not.
 func applyTaint(
 	proposal *agent.AgentProposal,
-	action agentruntimeports.PendingAction,
+	action *agentruntimeports.PendingAction,
 	taint *agent.RunTaint,
 ) {
 	proposal.EgressClass = action.Egress
@@ -740,7 +740,7 @@ func applyTaint(
 
 func applyExecution(
 	proposal *agent.AgentProposal,
-	action agentruntimeports.PendingAction,
+	action *agentruntimeports.PendingAction,
 	now int64,
 ) {
 	if action.Withdrawn {

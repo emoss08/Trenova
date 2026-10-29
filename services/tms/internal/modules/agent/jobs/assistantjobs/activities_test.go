@@ -97,7 +97,7 @@ func newLedger(steps ...agentruntimeports.RunStep) *ledger {
 func (l *ledger) Claim(
 	_ context.Context,
 	_ pagination.TenantInfo,
-	step agentruntimeports.RunStep,
+	step *agentruntimeports.RunStep,
 ) (agentruntimeports.StepVerdict, error) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
@@ -109,8 +109,9 @@ func (l *ledger) Claim(
 
 		return agentruntimeports.StepVerdict{State: agentruntimeports.StepUnknown}, nil
 	}
-	step.Status = agentruntimeports.RunStepStarted
-	l.steps[step.Key] = step
+	claimed := *step
+	claimed.Status = agentruntimeports.RunStepStarted
+	l.steps[step.Key] = claimed
 
 	return agentruntimeports.StepVerdict{State: agentruntimeports.StepFresh}, nil
 }
@@ -118,17 +119,17 @@ func (l *ledger) Claim(
 func (l *ledger) Settle(
 	_ context.Context,
 	_ pagination.TenantInfo,
-	step agentruntimeports.RunStep,
+	step *agentruntimeports.RunStep,
 ) error {
 	l.mu.Lock()
 	defer l.mu.Unlock()
 
-	l.steps[step.Key] = step
+	l.steps[step.Key] = *step
 
 	return nil
 }
 
-func (l *ledger) Record(context.Context, pagination.TenantInfo, agentruntimeports.RunStep) error {
+func (l *ledger) Record(context.Context, pagination.TenantInfo, *agentruntimeports.RunStep) error {
 	return nil
 }
 

@@ -70,7 +70,7 @@ func TestClaim_WritesWhereAndAsWhomTheStepRan(t *testing.T) {
 	definitionID := pulid.MustNew("agdef_")
 	tenant := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
 
-	verdict, err := ledger.Claim(t.Context(), tenant, agentruntimeports.RunStep{
+	verdict, err := ledger.Claim(t.Context(), tenant, &agentruntimeports.RunStep{
 		OwnerKind:         agentruntimeports.RunStepOwnerAssistantTurn,
 		OwnerID:           pulid.MustNew("atrn_"),
 		Kind:              agentruntimeports.RunStepTool,
@@ -105,7 +105,7 @@ func TestSettle_KeepsTheVerdictAndWhyACallWasRefused(t *testing.T) {
 
 	require.NoError(
 		t,
-		ledger.Settle(t.Context(), pagination.TenantInfo{}, agentruntimeports.RunStep{
+		ledger.Settle(t.Context(), pagination.TenantInfo{}, &agentruntimeports.RunStep{
 			OwnerID: pulid.MustNew("ar_"),
 			Key:     "step-2",
 			Status:  agentruntimeports.RunStepFailed,

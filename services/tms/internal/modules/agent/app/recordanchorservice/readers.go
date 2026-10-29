@@ -23,7 +23,10 @@ import (
 	"github.com/emoss08/trenova/shared/timeutils"
 )
 
-const msPerMinute = 60_000
+const (
+	msPerMinute = 60_000
+	factStatus  = "status"
+)
 
 func shipmentReader(tracking shipmenttrackingports.ShipmentTrackingReader) kindReader {
 	return func(ctx context.Context, read *kindRead) (map[pulid.ID]*agentturn.RuntimeAnchor, error) {
@@ -91,7 +94,7 @@ func invoiceFacts(entity *invoice.Invoice, read *kindRead) []agentturn.AnchorFac
 	if entity.DisputeStatus != "" && entity.DisputeStatus != invoice.DisputeStatusNone {
 		status += ", dispute " + string(entity.DisputeStatus)
 	}
-	facts := []agentturn.AnchorFact{{Name: "status", Value: status}}
+	facts := []agentturn.AnchorFact{{Name: factStatus, Value: status}}
 	if entity.BillToName != "" {
 		facts = append(facts, agentturn.AnchorFact{Name: "bill to", Value: entity.BillToName})
 	}
@@ -150,7 +153,7 @@ func tractorReader(
 			}
 			anchor := &agentturn.RuntimeAnchor{
 				Label: entity.Code,
-				Facts: []agentturn.AnchorFact{{Name: "status", Value: string(entity.Status)}},
+				Facts: []agentturn.AnchorFact{{Name: factStatus, Value: string(entity.Status)}},
 			}
 			if position, ok := positions[entity.ID]; ok {
 				anchor.Facts = append(anchor.Facts, positionFact(position, read.now))
@@ -196,7 +199,7 @@ func trailerReader(trailers trailerports.TrailerRepository) kindReader {
 			}
 			out[entity.ID] = &agentturn.RuntimeAnchor{
 				Label: entity.Code,
-				Facts: []agentturn.AnchorFact{{Name: "status", Value: string(entity.Status)}},
+				Facts: []agentturn.AnchorFact{{Name: factStatus, Value: string(entity.Status)}},
 			}
 		}
 
@@ -308,7 +311,7 @@ func detentionAnchor(
 		label = strings.TrimSpace(label + " at " + occurrence.LocationName)
 	}
 	facts := []agentturn.AnchorFact{{
-		Name:  "status",
+		Name:  factStatus,
 		Value: fmt.Sprintf("%s, notice %s", occurrence.Status, occurrence.NotificationStatus),
 	}}
 	if occurrence.ArrivedAt != nil && *occurrence.ArrivedAt > 0 {

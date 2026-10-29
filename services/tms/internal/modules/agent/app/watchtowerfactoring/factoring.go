@@ -110,10 +110,13 @@ func (s *FactoringSource) read(
 			invoiceIDs = append(invoiceIDs, state.InvoiceID)
 		}
 	}
-	if snap.labels, err = s.reader.ListInvoiceLabels(ctx, &factoringwatchtowerports.ListInvoiceLabelsRequest{
-		TenantInfo: tenant,
-		InvoiceIDs: invoiceIDs,
-	}); err != nil {
+	if snap.labels, err = s.reader.ListInvoiceLabels(
+		ctx,
+		&factoringwatchtowerports.ListInvoiceLabelsRequest{
+			TenantInfo: tenant,
+			InvoiceIDs: invoiceIDs,
+		},
+	); err != nil {
 		return nil, err
 	}
 	if snap.missing, err = s.reader.ListCustomersMissingNoa(
@@ -139,7 +142,10 @@ func (s *FactoringSource) read(
 	}
 	if snap.failed, err = s.reader.ListFailedSubmissions(
 		ctx,
-		&factoringwatchtowerports.ListFailedSubmissionsRequest{TenantInfo: tenant, Limit: watchtoweritem.SnapshotLimit},
+		&factoringwatchtowerports.ListFailedSubmissionsRequest{
+			TenantInfo: tenant,
+			Limit:      watchtoweritem.SnapshotLimit,
+		},
 	); err != nil {
 		return nil, err
 	}
@@ -165,7 +171,10 @@ func (s *FactoringSource) read(
 	}
 	if snap.remittances, err = s.remittances.ListOpen(
 		ctx,
-		&factoringremittanceports.ListOpenRemittancesRequest{TenantInfo: tenant, Limit: watchtoweritem.SnapshotLimit},
+		&factoringremittanceports.ListOpenRemittancesRequest{
+			TenantInfo: tenant,
+			Limit:      watchtoweritem.SnapshotLimit,
+		},
 	); err != nil {
 		return nil, err
 	}

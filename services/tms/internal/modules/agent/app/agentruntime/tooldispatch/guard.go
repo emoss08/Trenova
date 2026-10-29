@@ -164,7 +164,7 @@ func (s *Dispatcher) claimAndDispatch(
 	key := step.Key
 	span := trace.SpanFromContext(ctx)
 
-	verdict, err := req.Steps.Claim(ctx, req.Actor.TenantInfo(), *step)
+	verdict, err := req.Steps.Claim(ctx, req.Actor.TenantInfo(), step)
 	if err != nil {
 		// A ledger that cannot be written cannot protect a write, so the call
 		// is refused rather than run unguarded. The alternative — running it
@@ -234,7 +234,7 @@ func (s *Dispatcher) claimAndDispatch(
 	if err = req.Steps.Settle(
 		context.WithoutCancel(ctx),
 		req.Actor.TenantInfo(),
-		*step,
+		step,
 	); err != nil {
 		s.logger.Error("a tool call ran and its outcome could not be recorded",
 			zap.String("tool", p.Call.Name),

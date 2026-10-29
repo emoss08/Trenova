@@ -22,12 +22,12 @@ func NewKeyedLedger() *KeyedLedger {
 func (l *KeyedLedger) Claim(
 	_ context.Context,
 	_ pagination.TenantInfo,
-	step agentruntimeports.RunStep,
+	step *agentruntimeports.RunStep,
 ) (agentruntimeports.StepVerdict, error) {
 	recorded, seen := l.Steps[step.Key]
 	switch {
 	case !seen:
-		l.Steps[step.Key] = step
+		l.Steps[step.Key] = *step
 		return agentruntimeports.StepVerdict{State: agentruntimeports.StepFresh}, nil
 	case recorded.Status == agentruntimeports.RunStepCompleted:
 		return agentruntimeports.StepVerdict{
@@ -47,9 +47,9 @@ func (l *KeyedLedger) Claim(
 func (l *KeyedLedger) Settle(
 	_ context.Context,
 	_ pagination.TenantInfo,
-	step agentruntimeports.RunStep,
+	step *agentruntimeports.RunStep,
 ) error {
-	l.Steps[step.Key] = step
+	l.Steps[step.Key] = *step
 
 	return nil
 }
@@ -57,7 +57,7 @@ func (l *KeyedLedger) Settle(
 func (l *KeyedLedger) Record(
 	context.Context,
 	pagination.TenantInfo,
-	agentruntimeports.RunStep,
+	*agentruntimeports.RunStep,
 ) error {
 	return nil
 }

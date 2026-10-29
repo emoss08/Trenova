@@ -31,9 +31,9 @@ type stubLedger struct {
 func (l *stubLedger) Claim(
 	_ context.Context,
 	_ pagination.TenantInfo,
-	step agentruntimeports.RunStep,
+	step *agentruntimeports.RunStep,
 ) (agentruntimeports.StepVerdict, error) {
-	l.Claimed = append(l.Claimed, step)
+	l.Claimed = append(l.Claimed, *step)
 	if l.Err != nil {
 		return agentruntimeports.StepVerdict{}, l.Err
 	}
@@ -44,9 +44,9 @@ func (l *stubLedger) Claim(
 func (l *stubLedger) Settle(
 	_ context.Context,
 	_ pagination.TenantInfo,
-	step agentruntimeports.RunStep,
+	step *agentruntimeports.RunStep,
 ) error {
-	l.Settled = append(l.Settled, step)
+	l.Settled = append(l.Settled, *step)
 
 	return nil
 }
@@ -54,7 +54,7 @@ func (l *stubLedger) Settle(
 func (l *stubLedger) Record(
 	_ context.Context,
 	_ pagination.TenantInfo,
-	_ agentruntimeports.RunStep,
+	_ *agentruntimeports.RunStep,
 ) error {
 	return nil
 }

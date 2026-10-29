@@ -93,7 +93,7 @@ func newSyncLedger() *syncLedger {
 func (l *syncLedger) Claim(
 	_ context.Context,
 	_ pagination.TenantInfo,
-	step agentruntimeports.RunStep,
+	step *agentruntimeports.RunStep,
 ) (agentruntimeports.StepVerdict, error) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
@@ -105,7 +105,7 @@ func (l *syncLedger) Claim(
 			Outcome: recorded.Outcome,
 		}, nil
 	}
-	l.steps[step.Key] = step
+	l.steps[step.Key] = *step
 
 	return agentruntimeports.StepVerdict{State: agentruntimeports.StepFresh}, nil
 }
@@ -113,12 +113,12 @@ func (l *syncLedger) Claim(
 func (l *syncLedger) Settle(
 	_ context.Context,
 	_ pagination.TenantInfo,
-	step agentruntimeports.RunStep,
+	step *agentruntimeports.RunStep,
 ) error {
 	l.mu.Lock()
 	defer l.mu.Unlock()
 
-	l.steps[step.Key] = step
+	l.steps[step.Key] = *step
 
 	return nil
 }
@@ -126,7 +126,7 @@ func (l *syncLedger) Settle(
 func (l *syncLedger) Record(
 	context.Context,
 	pagination.TenantInfo,
-	agentruntimeports.RunStep,
+	*agentruntimeports.RunStep,
 ) error {
 	return nil
 }

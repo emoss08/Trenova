@@ -16,7 +16,7 @@ type Facts struct {
 	OperationType tenant.OperationType
 }
 
-func (f Facts) Counts() []int {
+func (f *Facts) Counts() []int {
 	return []int{
 		f.DeliveringToday,
 		f.Moving,
@@ -28,7 +28,7 @@ func (f Facts) Counts() []int {
 	}
 }
 
-func (f Facts) Filters() []quickfilter.QuickFilter {
+func (f *Facts) Filters() []quickfilter.QuickFilter {
 	candidates := []struct {
 		count  int
 		filter quickfilter.QuickFilter

@@ -56,7 +56,7 @@ func RecordLoopRefusals(ctx context.Context, req *RecordLoopRefusalsRequest) int
 			CallID:       refusal.CallID,
 			DefinitionID: req.DefinitionID,
 		}
-		verdict, err := req.Ledger.Claim(ctx, req.Tenant, step)
+		verdict, err := req.Ledger.Claim(ctx, req.Tenant, &step)
 		if err != nil {
 			failed++
 
@@ -72,7 +72,7 @@ func RecordLoopRefusals(ctx context.Context, req *RecordLoopRefusalsRequest) int
 			Reason:  refusal.Reason,
 			Verdict: refusal.Verdict,
 		}
-		if err = req.Ledger.Settle(ctx, req.Tenant, step); err != nil {
+		if err = req.Ledger.Settle(ctx, req.Tenant, &step); err != nil {
 			failed++
 		}
 	}

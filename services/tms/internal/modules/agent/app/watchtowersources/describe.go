@@ -281,7 +281,7 @@ func DescribeServiceFailure(
 		),
 		Facts: []watchtower.Fact{
 			watchtoweritem.Fact("Failure", textcase.HumanizeSnakeCase(string(entity.Type))),
-			watchtoweritem.Fact("Late by", watchtoweritem.MinutesPhrase(int64(entity.LateMinutes))),
+			watchtoweritem.Fact("Late by", watchtoweritem.MinutesPhrase(entity.LateMinutes)),
 			watchtoweritem.FactAt("Detected", entity.DetectedAt),
 		},
 		OccurredAt: entity.DetectedAt,

@@ -68,6 +68,10 @@ func driftAttentionText(
 			customersLabel(count) + " differ between Trenova and " + provider,
 			"The documents both sides hold add up to different open balances. Open each " +
 				"one to see which documents differ."
+	case accountingdrift.DriftTrialBalanceMismatch:
+		return watchtower.SeverityWarning,
+			documents + " differ between Trenova and " + provider,
+			"Open each one to see both values."
 	default:
 		return watchtower.SeverityWarning,
 			documents + " differ between Trenova and " + provider,

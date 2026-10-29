@@ -817,10 +817,10 @@ func (a *Activities) claimSave(
 func saveStep(
 	ctx context.Context,
 	payload *assistantcontract.AssistantTurnPayload,
-) agentruntimeports.RunStep {
+) *agentruntimeports.RunStep {
 	attempt := int(activity.GetInfo(ctx).Attempt)
 
-	return agentruntimeports.RunStep{
+	return &agentruntimeports.RunStep{
 		OwnerKind: agentruntimeports.RunStepOwnerAssistantTurn,
 		OwnerID:   payload.TurnID,
 		Attempt:   attempt,

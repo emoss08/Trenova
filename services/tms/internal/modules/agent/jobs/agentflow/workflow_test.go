@@ -387,7 +387,7 @@ type memoryLedger struct {
 func (l *memoryLedger) Claim(
 	_ context.Context,
 	_ pagination.TenantInfo,
-	step agentruntimeports.RunStep,
+	step *agentruntimeports.RunStep,
 ) (agentruntimeports.StepVerdict, error) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
@@ -406,7 +406,7 @@ func (l *memoryLedger) Claim(
 func (l *memoryLedger) Settle(
 	_ context.Context,
 	_ pagination.TenantInfo,
-	step agentruntimeports.RunStep,
+	step *agentruntimeports.RunStep,
 ) error {
 	l.mu.Lock()
 	defer l.mu.Unlock()
@@ -419,7 +419,7 @@ func (l *memoryLedger) Settle(
 func (*memoryLedger) Record(
 	context.Context,
 	pagination.TenantInfo,
-	agentruntimeports.RunStep,
+	*agentruntimeports.RunStep,
 ) error {
 	return nil
 }
