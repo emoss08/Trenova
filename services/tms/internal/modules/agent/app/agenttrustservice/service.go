@@ -171,7 +171,7 @@ func (s *Service) record(
 	}
 
 	now := timeutils.NowUnix()
-	row, err := s.trust.Record(ctx, agenttoolports.RecordToolTrustRequest{
+	row, err := s.trust.Record(ctx, &agenttoolports.RecordToolTrustRequest{
 		TenantInfo:        tenantInfo,
 		AgentDefinitionID: run.AgentDefinitionID,
 		ToolName:          proposal.ToolName,
@@ -338,7 +338,7 @@ func (s *Service) moveTier(
 	to agent.AutonomyTier,
 	promoted bool,
 ) (bool, error) {
-	mark := agenttoolports.MarkToolTierChangeRequest{
+	mark := &agenttoolports.MarkToolTierChangeRequest{
 		ID:         change.row.ID,
 		TenantInfo: change.tenant,
 		Version:    change.row.Version,

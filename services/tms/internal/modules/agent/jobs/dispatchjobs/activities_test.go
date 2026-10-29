@@ -100,7 +100,7 @@ func (m *stubProposalRepo) Create(
 
 func (m *stubProposalRepo) RecordExecution(
 	context.Context,
-	agentproposalports.RecordAgentProposalExecutionRequest,
+	*agentproposalports.RecordAgentProposalExecutionRequest,
 ) (*agent.AgentProposal, error) {
 	return nil, nil
 }
@@ -114,7 +114,7 @@ func (m *stubProposalRepo) ListByThread(
 
 func (m *stubProposalRepo) UpdateStatus(
 	context.Context,
-	agentproposalports.UpdateAgentProposalStatusRequest,
+	*agentproposalports.UpdateAgentProposalStatusRequest,
 ) (*agent.AgentProposal, error) {
 	return nil, nil
 }
@@ -388,7 +388,7 @@ func TestHorizonPlanSweepActivity_PropagatesTenantLookupFailure(t *testing.T) {
 
 func (s *stubProposalRepo) RecordSimulation(
 	context.Context,
-	agentproposalports.RecordAgentProposalSimulationRequest,
+	*agentproposalports.RecordAgentProposalSimulationRequest,
 ) (*agent.AgentProposal, error) {
 	return nil, nil
 }
@@ -402,7 +402,7 @@ func (s *stubProposalRepo) SetPendingModifications(
 
 func (s *stubProposalRepo) CountExecutedTool(
 	context.Context,
-	agentproposalports.CountExecutedToolRequest,
+	*agentproposalports.CountExecutedToolRequest,
 ) (int, error) {
 	return 0, nil
 }

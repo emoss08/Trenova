@@ -362,7 +362,7 @@ func (r *Runner) loadTranscript(
 ) (*agent.RunTranscript, error) {
 	runs, err := r.runRecords.ListTranscriptsByIDs(
 		session.Context(ctx),
-		agentruntimeports.ListAgentRunsByIDsRequest{
+		&agentruntimeports.ListAgentRunsByIDsRequest{
 			IDs:        []pulid.ID{runID},
 			TenantInfo: session.Tenant,
 		},

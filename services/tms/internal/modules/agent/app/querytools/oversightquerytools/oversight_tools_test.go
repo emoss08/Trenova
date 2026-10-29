@@ -51,9 +51,9 @@ type fakeRunsByID struct {
 
 func (f *fakeRunsByID) ListByIDs(
 	_ context.Context,
-	req agentruntimeports.ListAgentRunsByIDsRequest,
+	req *agentruntimeports.ListAgentRunsByIDsRequest,
 ) ([]*agent.AgentRun, error) {
-	f.requests = append(f.requests, req)
+	f.requests = append(f.requests, *req)
 	out := make([]*agent.AgentRun, 0, len(req.IDs))
 	for _, id := range req.IDs {
 		if run, ok := f.runs[id]; ok {

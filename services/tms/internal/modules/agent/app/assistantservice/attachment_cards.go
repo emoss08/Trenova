@@ -125,7 +125,7 @@ func (s *Service) AttachmentExtracted(ctx context.Context, event *agenteventport
 		return
 	}
 
-	thread, err := s.conversations.GetThread(ctx, conversationports.GetThreadRequest{
+	thread, err := s.conversations.GetThread(ctx, &conversationports.GetThreadRequest{
 		ID:         threads[0],
 		UserID:     doc.UploadedByID,
 		TenantInfo: tenant,

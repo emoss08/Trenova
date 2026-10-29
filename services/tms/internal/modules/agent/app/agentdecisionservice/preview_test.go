@@ -64,7 +64,7 @@ type statusRecorder struct {
 
 func (p *statusRecorder) UpdateStatus(
 	ctx context.Context,
-	req agentproposalports.UpdateAgentProposalStatusRequest,
+	req *agentproposalports.UpdateAgentProposalStatusRequest,
 ) (*agent.AgentProposal, error) {
 	p.updated++
 

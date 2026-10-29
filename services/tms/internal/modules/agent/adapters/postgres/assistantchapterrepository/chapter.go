@@ -76,7 +76,7 @@ func (r *repository) List(
 
 func (r *repository) Get(
 	ctx context.Context,
-	req assistantchapterports.GetChapterRequest,
+	req *assistantchapterports.GetChapterRequest,
 ) (*conversationchapter.Chapter, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*conversationchapter.Chapter, error) {
 		c := conversationchapterdb.Chapters
@@ -91,7 +91,7 @@ func (r *repository) Get(
 
 func (r *repository) ForTurn(
 	ctx context.Context,
-	req assistantchapterports.ChapterForTurnRequest,
+	req *assistantchapterports.ChapterForTurnRequest,
 ) (*conversationchapter.Chapter, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*conversationchapter.Chapter, error) {
 		c := conversationchapterdb.Chapters
@@ -146,7 +146,7 @@ func (r *repository) Create(
 
 func (r *repository) Retitle(
 	ctx context.Context,
-	req assistantchapterports.RetitleChapterRequest,
+	req *assistantchapterports.RetitleChapterRequest,
 ) (*conversationchapter.Chapter, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*conversationchapter.Chapter, error) {
 		db := r.db.Keel(ctx)
@@ -186,7 +186,7 @@ func (r *repository) Retitle(
 
 func (r *repository) Delete(
 	ctx context.Context,
-	req assistantchapterports.DeleteChapterRequest,
+	req *assistantchapterports.DeleteChapterRequest,
 ) (bool, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (bool, error) {
 		c := conversationchapterdb.Chapters
@@ -205,7 +205,7 @@ func (r *repository) Delete(
 
 func (r *repository) TurnOfMessage(
 	ctx context.Context,
-	req assistantchapterports.TurnOfMessageRequest,
+	req *assistantchapterports.TurnOfMessageRequest,
 ) (pulid.ID, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (pulid.ID, error) {
 		m := conversationdb.Messages

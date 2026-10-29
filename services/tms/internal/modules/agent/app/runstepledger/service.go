@@ -150,7 +150,7 @@ func (s *Service) Settle(
 		encoded = map[string]any{}
 	}
 
-	return s.repo.Settle(ctx, agentruntimeports.SettleAgentRunStepRequest{
+	return s.repo.Settle(ctx, &agentruntimeports.SettleAgentRunStepRequest{
 		TenantInfo: tenant,
 		OwnerID:    step.OwnerID,
 		StepKey:    step.Key,
@@ -173,7 +173,7 @@ func (s *Service) Loaded(
 	tenant pagination.TenantInfo,
 	owner agentruntimeports.RunStepOwner,
 ) ([]agentruntimeports.RunStep, error) {
-	rows, err := s.repo.List(ctx, agentruntimeports.ListAgentRunStepsRequest{
+	rows, err := s.repo.List(ctx, &agentruntimeports.ListAgentRunStepsRequest{
 		TenantInfo: tenant,
 		OwnerKind:  string(owner.Kind),
 		OwnerID:    owner.ID,

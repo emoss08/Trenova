@@ -341,7 +341,7 @@ func (s *Service) ListDesk(
 		RoleID:     req.RoleID,
 		Query:      req.Query,
 	}
-	rows, err := s.repo.ListDesk(ctx, agentmemoryports.ListDeskMemoriesQuery{
+	rows, err := s.repo.ListDesk(ctx, &agentmemoryports.ListDeskMemoriesQuery{
 		Filter: filter,
 		After:  after,
 		Limit:  limit + 1,
@@ -369,7 +369,7 @@ func (s *Service) ListDesk(
 	// chips say how many each would show.
 	filter.Scope = ""
 	filter.RoleID = pulid.Nil
-	counts, err := s.repo.CountDesk(ctx, filter)
+	counts, err := s.repo.CountDesk(ctx, &filter)
 	if err != nil {
 		return nil, err
 	}
@@ -670,7 +670,7 @@ func (s *Service) ReviseDesk(
 	}
 
 	previous := jsonutils.MustToJSON(current)
-	revised, err := s.repo.Revise(ctx, agentmemoryports.ReviseAgentMemoryRequest{
+	revised, err := s.repo.Revise(ctx, &agentmemoryports.ReviseAgentMemoryRequest{
 		ID:          current.ID,
 		TenantInfo:  person.tenant,
 		Content:     content,
@@ -829,7 +829,7 @@ func (s *Service) ConfirmDesk(
 
 	confirmed, err := s.repo.ResolveSuggestion(
 		ctx,
-		agentmemoryports.ResolveAgentMemorySuggestionRequest{
+		&agentmemoryports.ResolveAgentMemorySuggestionRequest{
 			ID:           current.ID,
 			TenantInfo:   person.tenant,
 			Status:       agentmemory.MemoryStatusActive,
@@ -906,7 +906,7 @@ func (s *Service) DismissDesk(
 
 	dismissed, err := s.repo.ResolveSuggestion(
 		ctx,
-		agentmemoryports.ResolveAgentMemorySuggestionRequest{
+		&agentmemoryports.ResolveAgentMemorySuggestionRequest{
 			ID:         current.ID,
 			TenantInfo: person.tenant,
 			Status:     agentmemory.MemoryStatusDismissed,

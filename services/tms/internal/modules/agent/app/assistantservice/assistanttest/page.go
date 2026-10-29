@@ -54,10 +54,11 @@ func keyOf(thread *conversation.Thread) conversationports.PageThreadKey {
 
 func (p *PageThreads) GetPageThread(
 	_ context.Context,
-	key conversationports.PageThreadKey,
+	key *conversationports.PageThreadKey,
 ) (*conversation.Thread, error) {
-	key.TenantInfo.UserID = pulid.Nil
-	if thread, ok := p.Live[key]; ok {
+	lookup := *key
+	lookup.TenantInfo.UserID = pulid.Nil
+	if thread, ok := p.Live[lookup]; ok {
 		return thread, nil
 	}
 
@@ -81,9 +82,9 @@ func (p *PageThreads) ClaimPageThread(
 
 func (p *PageThreads) ArchiveSubjectThreads(
 	_ context.Context,
-	req conversationports.ArchiveSubjectThreadsRequest,
+	req *conversationports.ArchiveSubjectThreadsRequest,
 ) (int, error) {
-	p.archived = append(p.archived, req)
+	p.archived = append(p.archived, *req)
 	closed := 0
 	for key, thread := range p.Live {
 		if key.Origin == req.Origin && key.SubjectID == req.SubjectID {

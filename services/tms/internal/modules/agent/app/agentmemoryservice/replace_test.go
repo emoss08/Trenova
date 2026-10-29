@@ -34,7 +34,7 @@ func (f *replacingRepo) GetByID(
 
 func (f *replacingRepo) SetStatus(
 	_ context.Context,
-	req agentmemoryports.SetAgentMemoryStatusQuery,
+	req *agentmemoryports.SetAgentMemoryStatusQuery,
 ) (*agentmemory.Memory, error) {
 	f.retired = append(f.retired, req.ID)
 	memory := *f.stored[req.ID]

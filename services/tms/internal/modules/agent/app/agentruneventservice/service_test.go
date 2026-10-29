@@ -60,7 +60,7 @@ func (f *fakeRepo) NextSequence(
 
 func (f *fakeRepo) List(
 	_ context.Context,
-	_ agentruntimeports.ListAgentRunEventsRequest,
+	_ *agentruntimeports.ListAgentRunEventsRequest,
 ) ([]*agentrunevent.AgentRunEvent, error) {
 	return nil, nil
 }

@@ -69,7 +69,7 @@ type artifactReader interface {
 type threadReader interface {
 	GetThread(
 		ctx context.Context,
-		req conversationports.GetThreadRequest,
+		req *conversationports.GetThreadRequest,
 	) (*conversation.Thread, error)
 }
 
@@ -128,7 +128,7 @@ func (s *Service) Card(
 	ctx context.Context,
 	req *assistantports.BoardCardRequest,
 ) (*assistantports.BoardCard, error) {
-	if _, err := s.threads.GetThread(ctx, req.Thread); err != nil {
+	if _, err := s.threads.GetThread(ctx, &req.Thread); err != nil {
 		return nil, err
 	}
 	artifact, err := s.artifacts.GetByID(ctx, assistantartifactports.GetArtifactRequest{

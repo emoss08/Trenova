@@ -70,7 +70,7 @@ func TestMemoryReaders_NeverReturnASuggestion(t *testing.T) {
 	_, err = repo.Create(ctx, dismissed)
 	require.NoError(t, err)
 
-	listed, err := repo.ListActive(ctx, agentmemoryports.ListActiveAgentMemoriesRequest{
+	listed, err := repo.ListActive(ctx, &agentmemoryports.ListActiveAgentMemoriesRequest{
 		TenantInfo:       tenant,
 		Now:              now,
 		OrganizationWide: true,
@@ -79,7 +79,7 @@ func TestMemoryReaders_NeverReturnASuggestion(t *testing.T) {
 	require.Len(t, listed, 1)
 	assert.Equal(t, active.ID, listed[0].ID)
 
-	found, err := repo.Search(ctx, agentmemoryports.SearchAgentMemoriesRequest{
+	found, err := repo.Search(ctx, &agentmemoryports.SearchAgentMemoriesRequest{
 		TenantInfo: tenant,
 		Now:        now,
 		Query:      "lane",
@@ -88,14 +88,14 @@ func TestMemoryReaders_NeverReturnASuggestion(t *testing.T) {
 	require.Len(t, found, 1)
 	assert.Equal(t, active.ID, found[0].ID)
 
-	same, err := repo.FindActive(ctx, agentmemoryports.FindActiveAgentMemoryRequest{
+	same, err := repo.FindActive(ctx, &agentmemoryports.FindActiveAgentMemoryRequest{
 		TenantInfo: tenant,
 		Content:    suggested.Content,
 	})
 	require.NoError(t, err)
 	assert.Nil(t, same, "a pending suggestion is not an active memory")
 
-	_, err = repo.SetStatus(ctx, agentmemoryports.SetAgentMemoryStatusQuery{
+	_, err = repo.SetStatus(ctx, &agentmemoryports.SetAgentMemoryStatusQuery{
 		ID:         suggested.ID,
 		TenantInfo: tenant,
 		Status:     agentmemory.MemoryStatusActive,
@@ -105,7 +105,7 @@ func TestMemoryReaders_NeverReturnASuggestion(t *testing.T) {
 
 	surrounding, err := repo.ListSuggestionContext(
 		ctx,
-		agentmemoryports.ListAgentMemorySuggestionContextRequest{
+		&agentmemoryports.ListAgentMemorySuggestionContextRequest{
 			TenantInfo:        tenant,
 			AgentDefinitionID: agentID,
 			Now:               now,
@@ -117,7 +117,7 @@ func TestMemoryReaders_NeverReturnASuggestion(t *testing.T) {
 
 	approved, err := repo.ResolveSuggestion(
 		ctx,
-		agentmemoryports.ResolveAgentMemorySuggestionRequest{
+		&agentmemoryports.ResolveAgentMemorySuggestionRequest{
 			ID:         suggested.ID,
 			TenantInfo: tenant,
 			Status:     agentmemory.MemoryStatusActive,
@@ -132,7 +132,7 @@ func TestMemoryReaders_NeverReturnASuggestion(t *testing.T) {
 	assert.Equal(t, agentmemory.MemoryStatusActive, approved.Status)
 	assert.Equal(t, "Confirm the lane before quoting a rate.", approved.Content)
 
-	_, err = repo.ResolveSuggestion(ctx, agentmemoryports.ResolveAgentMemorySuggestionRequest{
+	_, err = repo.ResolveSuggestion(ctx, &agentmemoryports.ResolveAgentMemorySuggestionRequest{
 		ID:         suggested.ID,
 		TenantInfo: tenant,
 		Status:     agentmemory.MemoryStatusDismissed,

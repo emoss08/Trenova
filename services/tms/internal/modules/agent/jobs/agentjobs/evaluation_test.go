@@ -127,7 +127,7 @@ func (s *conversationStore) GetThreadOwned(
 
 func (s *conversationStore) ListMessages(
 	context.Context,
-	conversationports.ListMessagesRequest,
+	*conversationports.ListMessagesRequest,
 ) ([]conversation.Message, error) {
 	return s.messages, nil
 }

@@ -125,7 +125,7 @@ func TestRunReads_KeepAConversationsRunsToItsOwner(t *testing.T) {
 		assert.Equal(t, len(tc.sees), *connection.TotalCount,
 			"%s: the count leaves out what the page leaves out", name)
 
-		byIDs, idsErr := repo.ListByIDs(ctx, agentruntimeports.ListAgentRunsByIDsRequest{
+		byIDs, idsErr := repo.ListByIDs(ctx, &agentruntimeports.ListAgentRunsByIDsRequest{
 			IDs:        all,
 			TenantInfo: tenant,
 			Reader:     tc.reader,
@@ -135,7 +135,7 @@ func TestRunReads_KeepAConversationsRunsToItsOwner(t *testing.T) {
 
 		transcripts, trErr := repo.ListTranscriptsByIDs(
 			ctx,
-			agentruntimeports.ListAgentRunsByIDsRequest{
+			&agentruntimeports.ListAgentRunsByIDsRequest{
 				IDs:        all,
 				TenantInfo: tenant,
 				Reader:     tc.reader,

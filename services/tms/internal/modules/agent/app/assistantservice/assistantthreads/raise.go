@@ -51,7 +51,7 @@ func (s *Service) RequestMore(
 	if s.notifier == nil {
 		return nil, errortypes.NewBusinessError("Requests cannot be sent from here yet")
 	}
-	thread, err := s.conversations.GetThread(ctx, req.Thread)
+	thread, err := s.conversations.GetThread(ctx, &req.Thread)
 	if err != nil {
 		return nil, err
 	}

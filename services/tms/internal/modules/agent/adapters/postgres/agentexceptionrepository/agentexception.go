@@ -156,7 +156,7 @@ func (r *repository) Create(
 
 func (r *repository) UpdateResolution(
 	ctx context.Context,
-	req agentexceptionports.UpdateAgentExceptionResolutionRequest,
+	req *agentexceptionports.UpdateAgentExceptionResolutionRequest,
 ) (*agentexception.AgentException, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agentexception.AgentException, error) {
 		e := agentexceptiondb.AgentExceptions

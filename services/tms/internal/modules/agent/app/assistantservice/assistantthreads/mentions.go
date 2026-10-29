@@ -178,7 +178,7 @@ func (s *Service) searchKinds(
 		return []assistantports.MentionCandidate{}, nil
 	}
 
-	rows, err := s.conversations.SearchMentions(ctx, conversationports.SearchMentionsRequest{
+	rows, err := s.conversations.SearchMentions(ctx, &conversationports.SearchMentionsRequest{
 		TenantInfo:   actor.TenantInfo(),
 		Query:        query,
 		Kinds:        kinds,

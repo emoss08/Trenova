@@ -132,7 +132,7 @@ type deletingConversations struct {
 
 func (d *deletingConversations) DeleteThread(
 	context.Context,
-	conversationports.GetThreadRequest,
+	*conversationports.GetThreadRequest,
 ) error {
 	return d.err
 }
@@ -153,7 +153,7 @@ func TestDeleteThread_WithdrawsWhatItLeftWaiting(t *testing.T) {
 
 	require.NoError(
 		t,
-		svc.DeleteThread(t.Context(), conversationports.GetThreadRequest{ID: threadID}),
+		svc.DeleteThread(t.Context(), &conversationports.GetThreadRequest{ID: threadID}),
 	)
 	assert.Equal(t, []pulid.ID{threadID}, proposals.ExpiredThreads)
 
@@ -165,7 +165,7 @@ func TestDeleteThread_WithdrawsWhatItLeftWaiting(t *testing.T) {
 	}
 	require.Error(
 		t,
-		svc.DeleteThread(t.Context(), conversationports.GetThreadRequest{ID: threadID}),
+		svc.DeleteThread(t.Context(), &conversationports.GetThreadRequest{ID: threadID}),
 	)
 	assert.Empty(t, refused.ExpiredThreads, "a delete that did not happen withdraws nothing")
 }
@@ -203,7 +203,7 @@ type recordingDelete struct {
 	deleted bool
 }
 
-func (d *recordingDelete) DeleteThread(context.Context, conversationports.GetThreadRequest) error {
+func (d *recordingDelete) DeleteThread(context.Context, *conversationports.GetThreadRequest) error {
 	if d.err != nil {
 		return d.err
 	}
@@ -223,7 +223,7 @@ is left.
 func TestDeleteThread_ForgetsTheSchedulesItKept(t *testing.T) {
 	t.Parallel()
 
-	req := conversationports.GetThreadRequest{
+	req := &conversationports.GetThreadRequest{
 		ID:     pulid.MustNew("athr_"),
 		UserID: pulid.MustNew("usr_"),
 	}

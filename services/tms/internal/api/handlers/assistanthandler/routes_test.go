@@ -62,10 +62,10 @@ type reachedService struct {
 
 func (s *reachedService) ListThreads(
 	_ context.Context,
-	req conversationports.ListThreadsRequest,
+	req *conversationports.ListThreadsRequest,
 ) (*conversationports.ThreadPage, error) {
 	s.reached = true
-	s.listed = &req
+	s.listed = req
 
 	return &conversationports.ThreadPage{}, nil
 }
@@ -90,7 +90,7 @@ func (s *reachedService) UpdateThread(
 	return &conversation.Thread{}, nil
 }
 
-func (s *reachedService) DeleteThread(context.Context, conversationports.GetThreadRequest) error {
+func (s *reachedService) DeleteThread(context.Context, *conversationports.GetThreadRequest) error {
 	s.reached = true
 
 	return nil

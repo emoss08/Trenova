@@ -348,7 +348,7 @@ func (s *Service) attach(
 		return
 	}
 
-	if err := s.conversations.AddSavedMemories(ctx, conversationports.AddSavedMemoriesRequest{
+	if err := s.conversations.AddSavedMemories(ctx, &conversationports.AddSavedMemoriesRequest{
 		MessageID:  plan.ReplyMessageID,
 		ThreadID:   plan.ThreadID,
 		TenantInfo: plan.TenantInfo,

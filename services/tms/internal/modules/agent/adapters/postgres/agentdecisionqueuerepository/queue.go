@@ -149,14 +149,14 @@ func clampLimit(limit int) int {
 
 func (r *repository) ListPending(
 	ctx context.Context,
-	req agentdecisionqueueports.ListPendingDecisionsQuery,
+	req *agentdecisionqueueports.ListPendingDecisionsQuery,
 ) (*agentdecisionqueueports.PendingDecisionsPageRow, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*agentdecisionqueueports.PendingDecisionsPageRow, error) {
 			limit := clampLimit(req.Limit)
-			q := pendingQueue(&req)
+			q := pendingQueue(req)
 			createdAt, id := q.Col("created_at"), q.Col("id")
 
 			var after keel.Pred
@@ -198,10 +198,10 @@ func (r *repository) ListPending(
 
 func (r *repository) CountPending(
 	ctx context.Context,
-	req agentdecisionqueueports.ListPendingDecisionsQuery,
+	req *agentdecisionqueueports.ListPendingDecisionsQuery,
 ) (keel.RowCount, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (keel.RowCount, error) {
-		q := pendingQueue(&req)
+		q := pendingQueue(req)
 		count, err := q.Query().With(q).
 			Where(keel.When(req.ActionableOnly, keel.Not(keel.BoolOf(q.Col("shadow"))))).
 			CountEstimate(ctx, r.db.Keel(ctx), pagination.ExactTotalUpTo)

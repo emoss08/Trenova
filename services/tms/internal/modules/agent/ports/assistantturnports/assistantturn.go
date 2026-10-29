@@ -73,19 +73,19 @@ type AssistantTurnRepository interface {
 	) (*conversationturn.AssistantTurn, error)
 	GetByID(
 		ctx context.Context,
-		req GetAssistantTurnRequest,
+		req *GetAssistantTurnRequest,
 	) (*conversationturn.AssistantTurn, error)
 	// Active is the turn a conversation is still producing, nil when it is
 	// not producing one. This is what lets a reopened tab rejoin a reply.
 	Active(
 		ctx context.Context,
-		req ActiveAssistantTurnRequest,
+		req *ActiveAssistantTurnRequest,
 	) (*conversationturn.AssistantTurn, error)
 	// ListLive is every turn one person still has in progress, oldest first.
 	// It is how a reply started in one tab is found from another, and what
 	// signing out stops.
-	ListLive(ctx context.Context, req ListLiveAssistantTurnsRequest) ([]*LiveAssistantTurn, error)
-	Complete(ctx context.Context, req CompleteAssistantTurnRequest) error
+	ListLive(ctx context.Context, req *ListLiveAssistantTurnsRequest) ([]*LiveAssistantTurn, error)
+	Complete(ctx context.Context, req *CompleteAssistantTurnRequest) error
 	// MarkWorkflow records the durable execution carrying the turn, so it can
 	// be cancelled when somebody presses stop.
 	MarkWorkflow(

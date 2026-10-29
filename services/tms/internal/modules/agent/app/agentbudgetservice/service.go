@@ -90,7 +90,7 @@ type runCounter interface {
 type toolCounter interface {
 	CountExecutedTool(
 		ctx context.Context,
-		req agentproposalports.CountExecutedToolRequest,
+		req *agentproposalports.CountExecutedToolRequest,
 	) (int, error)
 }
 
@@ -181,7 +181,7 @@ func (s *Service) CheckTool(
 
 	tenant := tenantOf(definition)
 	windows := s.windows(ctx, tenant)
-	used, err := s.proposals.CountExecutedTool(ctx, agentproposalports.CountExecutedToolRequest{
+	used, err := s.proposals.CountExecutedTool(ctx, &agentproposalports.CountExecutedToolRequest{
 		TenantInfo:   tenant,
 		DefinitionID: definition.ID,
 		ToolName:     toolName,
@@ -354,7 +354,7 @@ func (s *Service) Status(
 		}
 		used, cErr := s.proposals.CountExecutedTool(
 			ctx,
-			agentproposalports.CountExecutedToolRequest{
+			&agentproposalports.CountExecutedToolRequest{
 				TenantInfo:   tenant,
 				DefinitionID: definition.ID,
 				ToolName:     tool,

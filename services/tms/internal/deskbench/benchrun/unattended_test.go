@@ -53,7 +53,7 @@ func (f *runRecordsFake) GetByID(
 
 func (f *runRecordsFake) ListTranscriptsByIDs(
 	_ context.Context,
-	req agentruntimeports.ListAgentRunsByIDsRequest,
+	req *agentruntimeports.ListAgentRunsByIDsRequest,
 ) ([]*agent.AgentRun, error) {
 	runs := make([]*agent.AgentRun, 0, len(req.IDs))
 	for _, id := range req.IDs {

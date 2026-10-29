@@ -63,7 +63,7 @@ func (s *Service) Relay(
 	attached := time.Now()
 	spoke := false
 	sawTerminal := false
-	err := s.reader.Read(ctx, assistantstreamports.ReadTurnStreamRequest{
+	err := s.reader.Read(ctx, &assistantstreamports.ReadTurnStreamRequest{
 		Ref:    streamRef(turn),
 		Cursor: req.Cursor,
 		OnFrame: func(frame assistantstreamports.TurnStreamFrame) error {
@@ -112,7 +112,7 @@ func (s *Service) current(
 	ctx context.Context,
 	turn *conversationturn.AssistantTurn,
 ) *conversationturn.AssistantTurn {
-	current, err := s.turns.GetByID(ctx, assistantturnports.GetAssistantTurnRequest{
+	current, err := s.turns.GetByID(ctx, &assistantturnports.GetAssistantTurnRequest{
 		ID:         turn.ID,
 		TenantInfo: tenantOf(turn),
 	})

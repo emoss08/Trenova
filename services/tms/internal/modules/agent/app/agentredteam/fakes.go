@@ -117,7 +117,7 @@ func (r *memoryRepository) Create(
 //nolint:gocritic // agentmemoryports.AgentMemoryRepository takes the request by value
 func (r *memoryRepository) FindActive(
 	_ context.Context,
-	req agentmemoryports.FindActiveAgentMemoryRequest,
+	req *agentmemoryports.FindActiveAgentMemoryRequest,
 ) (*agentmemory.Memory, error) {
 	r.rec.read(ReadMemoryRepo, "FindActive", req.TenantInfo)
 
@@ -144,7 +144,7 @@ func (r *memoryRepository) FindActive(
 //nolint:gocritic // agentmemoryports.AgentMemoryRepository takes the request by value
 func (r *memoryRepository) MarkUsed(
 	_ context.Context,
-	req agentmemoryports.MarkAgentMemoriesUsedRequest,
+	req *agentmemoryports.MarkAgentMemoriesUsedRequest,
 ) error {
 	r.rec.read(ReadMemoryRepo, "MarkUsed", req.TenantInfo)
 
@@ -184,7 +184,7 @@ func (r *memoryRepository) GetByID(
 //nolint:gocritic // agentmemoryports.AgentMemoryRepository takes the request by value
 func (r *memoryRepository) Search(
 	_ context.Context,
-	req agentmemoryports.SearchAgentMemoriesRequest,
+	req *agentmemoryports.SearchAgentMemoriesRequest,
 ) ([]*agentmemory.Memory, error) {
 	r.rec.read(ReadMemoryRepo, "Search", req.TenantInfo)
 
@@ -194,7 +194,7 @@ func (r *memoryRepository) Search(
 //nolint:gocritic // agentmemoryports.AgentMemoryRepository takes the request by value
 func (r *memoryRepository) ListActive(
 	_ context.Context,
-	req agentmemoryports.ListActiveAgentMemoriesRequest,
+	req *agentmemoryports.ListActiveAgentMemoriesRequest,
 ) ([]*agentmemory.Memory, error) {
 	r.rec.read(ReadMemoryRepo, "ListActive", req.TenantInfo)
 

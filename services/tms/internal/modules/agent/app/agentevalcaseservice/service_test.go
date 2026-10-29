@@ -201,7 +201,7 @@ func (f fakeConversations) GetThreadOwned(
 
 func (f fakeConversations) ListMessages(
 	context.Context,
-	conversationports.ListMessagesRequest,
+	*conversationports.ListMessagesRequest,
 ) ([]conversation.Message, error) {
 	return f.messages, nil
 }

@@ -149,7 +149,7 @@ func (s *DecisionSource) Snapshot(
 	pending := make([]agentdecisionqueueports.PendingDecision, 0, decisionPageSize)
 	after := ""
 	for range decisionPages {
-		page, err := s.queue.ListPending(ctx, agentdecisionqueueports.ListPendingDecisionsRequest{
+		page, err := s.queue.ListPending(ctx, &agentdecisionqueueports.ListPendingDecisionsRequest{
 			TenantInfo: tenant,
 			First:      decisionPageSize,
 			After:      after,
@@ -204,7 +204,7 @@ func (s *DecisionSource) agentNames(
 		return names
 	}
 
-	runs, err := s.runs.ListByIDs(ctx, agentruntimeports.ListAgentRunsByIDsRequest{
+	runs, err := s.runs.ListByIDs(ctx, &agentruntimeports.ListAgentRunsByIDsRequest{
 		IDs:        unique(runIDs),
 		TenantInfo: tenant,
 	})

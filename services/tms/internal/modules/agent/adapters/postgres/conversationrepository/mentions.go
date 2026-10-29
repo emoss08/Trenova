@@ -220,7 +220,7 @@ func likeEscape(value string) string {
 
 func (r *repository) SearchMentions(
 	ctx context.Context,
-	req conversationports.SearchMentionsRequest,
+	req *conversationports.SearchMentionsRequest,
 ) ([]conversationports.MentionRow, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]conversationports.MentionRow, error) {
 		if req.LimitPerKind <= 0 {

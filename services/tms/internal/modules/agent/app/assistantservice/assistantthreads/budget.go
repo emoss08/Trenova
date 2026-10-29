@@ -22,7 +22,7 @@ func (s *Service) ThreadBudget(
 	ctx context.Context,
 	req conversationports.GetThreadRequest,
 ) (*assistantports.ThreadBudget, error) {
-	thread, err := s.conversations.GetThread(ctx, req)
+	thread, err := s.conversations.GetThread(ctx, &req)
 	if err != nil {
 		return nil, err
 	}

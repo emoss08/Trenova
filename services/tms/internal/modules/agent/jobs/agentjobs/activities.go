@@ -701,7 +701,7 @@ func (a *Activities) StartScheduledRunActivity(
 		return &StartScheduledRunResult{Skipped: "ended"}, nil
 	}
 
-	open, err := a.runRepo.CountOpen(ctx, agentruntimeports.CountOpenAgentRunsRequest{
+	open, err := a.runRepo.CountOpen(ctx, &agentruntimeports.CountOpenAgentRunsRequest{
 		TenantInfo:   tenant,
 		DefinitionID: definition.ID,
 	})

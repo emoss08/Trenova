@@ -45,7 +45,7 @@ func (s *Service) PrepareCompaction(
 	req *CompactRequest,
 	actor *permissionports.RequestActor,
 ) (*CompactionPlan, error) {
-	thread, err := s.conversations.GetThread(ctx, conversationports.GetThreadRequest{
+	thread, err := s.conversations.GetThread(ctx, &conversationports.GetThreadRequest{
 		ID:         req.ThreadID,
 		UserID:     actor.UserID,
 		TenantInfo: req.TenantInfo,
@@ -131,7 +131,7 @@ func (s *Service) FinishCompaction(
 	summary = stringutils.Ellipsize(summary, maxSummaryChars)
 
 	tenant := actor.TenantInfo()
-	thread, err := s.conversations.GetThread(ctx, conversationports.GetThreadRequest{
+	thread, err := s.conversations.GetThread(ctx, &conversationports.GetThreadRequest{
 		ID:         plan.ThreadID,
 		UserID:     actor.UserID,
 		TenantInfo: tenant,
@@ -183,7 +183,7 @@ func (s *Service) FinishCompaction(
 	})
 	message.Compaction.After = usage.Total()
 
-	saved, err := s.conversations.AppendTurn(ctx, conversationports.AppendTurnRequest{
+	saved, err := s.conversations.AppendTurn(ctx, &conversationports.AppendTurnRequest{
 		ThreadID:   thread.ID,
 		TenantInfo: tenant,
 		Messages:   []conversation.Message{message},
@@ -210,7 +210,7 @@ func (s *Service) StopCompactingItself(
 ) error {
 	off := true
 
-	return s.conversations.UpdateThreadContext(ctx, conversationports.UpdateThreadContextRequest{
+	return s.conversations.UpdateThreadContext(ctx, &conversationports.UpdateThreadContextRequest{
 		ThreadID:       threadID,
 		TenantInfo:     tenant,
 		AutoCompactOff: &off,

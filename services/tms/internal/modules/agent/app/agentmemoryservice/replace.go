@@ -146,7 +146,7 @@ func (s *Service) retireReplaced(
 	}
 
 	tenant := pagination.TenantInfo{OrgID: replaced.OrganizationID, BuID: replaced.BusinessUnitID}
-	retired, err := s.repo.SetStatus(ctx, agentmemoryports.SetAgentMemoryStatusQuery{
+	retired, err := s.repo.SetStatus(ctx, &agentmemoryports.SetAgentMemoryStatusQuery{
 		ID:         replaced.ID,
 		TenantInfo: tenant,
 		Status:     agentmemory.MemoryStatusRetired,

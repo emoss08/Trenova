@@ -32,7 +32,7 @@ type fakeConversations struct {
 
 func (f *fakeConversations) GetThread(
 	_ context.Context,
-	req conversationports.GetThreadRequest,
+	req *conversationports.GetThreadRequest,
 ) (*conversation.Thread, error) {
 	if f.thread == nil || req.ID != f.thread.ID || req.UserID != f.thread.UserID {
 		return nil, errortypes.NewNotFoundError("Thread not found")
@@ -111,7 +111,7 @@ type fakeSubjects struct {
 
 func (f *fakeSubjects) Exists(
 	context.Context,
-	agentsubjectports.AgentSubjectExistsRequest,
+	*agentsubjectports.AgentSubjectExistsRequest,
 ) (bool, error) {
 	return f.exists, nil
 }

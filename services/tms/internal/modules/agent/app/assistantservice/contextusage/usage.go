@@ -18,11 +18,14 @@ func (s *Usage) KeepContextUsage(
 	tenant pagination.TenantInfo,
 ) {
 	thread.ContextUsage = usage
-	if err := s.Conversations.UpdateThreadContext(ctx, conversationports.UpdateThreadContextRequest{
-		ThreadID:   thread.ID,
-		TenantInfo: tenant,
-		Usage:      usage,
-	}); err != nil {
+	if err := s.Conversations.UpdateThreadContext(
+		ctx,
+		&conversationports.UpdateThreadContextRequest{
+			ThreadID:   thread.ID,
+			TenantInfo: tenant,
+			Usage:      usage,
+		},
+	); err != nil {
 		s.Logger.Warn("could not keep how full a conversation's context is",
 			zap.String("thread", thread.ID.String()),
 			zap.Error(err),
@@ -37,7 +40,7 @@ func (s *Usage) ModelHistory(
 	threadID pulid.ID,
 	tenant pagination.TenantInfo,
 ) ([]conversation.Message, error) {
-	return s.Conversations.ListMessages(ctx, conversationports.ListMessagesRequest{
+	return s.Conversations.ListMessages(ctx, &conversationports.ListMessagesRequest{
 		ThreadID:        threadID,
 		TenantInfo:      tenant,
 		Limit:           historyLimit,

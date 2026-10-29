@@ -21,7 +21,7 @@ var deskColumns = []string{
 }
 
 type deskTerms struct {
-	req      conversationports.SearchDeskRequest
+	req      *conversationports.SearchDeskRequest
 	term     string
 	contains string
 }
@@ -183,7 +183,7 @@ var deskSearchQueries = map[string]deskQuery{
 
 func (r *repository) SearchDesk(
 	ctx context.Context,
-	req conversationports.SearchDeskRequest,
+	req *conversationports.SearchDeskRequest,
 ) ([]conversationports.DeskSearchRow, error) {
 	return dbtx.Read(
 		ctx,

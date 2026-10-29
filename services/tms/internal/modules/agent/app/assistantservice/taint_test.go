@@ -31,9 +31,9 @@ type taintingConversations struct {
 
 func (r *taintingConversations) MarkThreadTainted(
 	_ context.Context,
-	req conversationports.MarkThreadTaintedRequest,
+	req *conversationports.MarkThreadTaintedRequest,
 ) error {
-	r.marked = append(r.marked, req)
+	r.marked = append(r.marked, *req)
 
 	return nil
 }

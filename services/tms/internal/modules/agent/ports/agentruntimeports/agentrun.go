@@ -49,10 +49,10 @@ type ListAgentRunsByIDsRequest struct {
 }
 
 type AgentRunRepository interface {
-	ListByIDs(ctx context.Context, req ListAgentRunsByIDsRequest) ([]*agent.AgentRun, error)
+	ListByIDs(ctx context.Context, req *ListAgentRunsByIDsRequest) ([]*agent.AgentRun, error)
 	ListTranscriptsByIDs(
 		ctx context.Context,
-		req ListAgentRunsByIDsRequest,
+		req *ListAgentRunsByIDsRequest,
 	) ([]*agent.AgentRun, error)
 	List(
 		ctx context.Context,
@@ -65,6 +65,6 @@ type AgentRunRepository interface {
 	GetByID(ctx context.Context, req GetAgentRunByIDRequest) (*agent.AgentRun, error)
 	Create(ctx context.Context, entity *agent.AgentRun) (*agent.AgentRun, error)
 	Update(ctx context.Context, entity *agent.AgentRun) (*agent.AgentRun, error)
-	CountOpen(ctx context.Context, req CountOpenAgentRunsRequest) (int, error)
+	CountOpen(ctx context.Context, req *CountOpenAgentRunsRequest) (int, error)
 	CountSince(ctx context.Context, req CountAgentRunsSinceRequest) (int, error)
 }

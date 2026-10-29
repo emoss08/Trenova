@@ -43,7 +43,7 @@ type holdRuns struct {
 
 func (r *holdRuns) ListByIDs(
 	_ context.Context,
-	req agentruntimeports.ListAgentRunsByIDsRequest,
+	req *agentruntimeports.ListAgentRunsByIDsRequest,
 ) ([]*agent.AgentRun, error) {
 	out := make([]*agent.AgentRun, 0, len(req.IDs))
 	for _, id := range req.IDs {

@@ -89,7 +89,7 @@ type watchtowerFeedReader interface {
 type agentRunsByIDs interface {
 	ListByIDs(
 		ctx context.Context,
-		req agentruntimeports.ListAgentRunsByIDsRequest,
+		req *agentruntimeports.ListAgentRunsByIDsRequest,
 	) ([]*agent.AgentRun, error)
 }
 
@@ -705,7 +705,7 @@ func (l watchtowerRunLinks) taintedRuns(
 		ids = append(ids, runID)
 	}
 
-	runs, err := l.runs.ListByIDs(ctx, agentruntimeports.ListAgentRunsByIDsRequest{
+	runs, err := l.runs.ListByIDs(ctx, &agentruntimeports.ListAgentRunsByIDsRequest{
 		IDs:        ids,
 		TenantInfo: tenant,
 	})

@@ -34,7 +34,7 @@ type meetingConversations struct {
 
 func (m *meetingConversations) ListMessages(
 	ctx context.Context,
-	req conversationports.ListMessagesRequest,
+	req *conversationports.ListMessagesRequest,
 ) ([]conversation.Message, error) {
 	close(m.listing)
 	m.listSawCount.Store(waitFor(ctx, m.counting))

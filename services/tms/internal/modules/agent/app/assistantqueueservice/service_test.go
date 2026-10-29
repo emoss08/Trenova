@@ -194,7 +194,7 @@ type fakeTurns struct {
 
 func (f *fakeTurns) Active(
 	context.Context,
-	assistantturnports.ActiveAssistantTurnRequest,
+	*assistantturnports.ActiveAssistantTurnRequest,
 ) (*conversationturn.AssistantTurn, error) {
 	return f.active, nil
 }
@@ -279,7 +279,7 @@ type ownedThreads struct{}
 
 func (ownedThreads) GetThread(
 	_ context.Context,
-	req conversationports.GetThreadRequest,
+	req *conversationports.GetThreadRequest,
 ) (*conversation.Thread, error) {
 	return &conversation.Thread{ID: req.ID, UserID: req.UserID}, nil
 }

@@ -28,7 +28,7 @@ func TestPublishSkipsOrganizationsWithoutAutomatedAgents(t *testing.T) {
 		Plans:       plantest.Restricting(t, platformplan.CapabilityAgentAutomation),
 	})
 
-	publisher.Publish(t.Context(), agenteventports.AgentEvent{
+	publisher.Publish(t.Context(), &agenteventports.AgentEvent{
 		Kind:       agenttrigger.EventShipmentCreated,
 		SubjectID:  pulid.MustNew("shp_"),
 		TenantInfo: plantest.Tenant(),

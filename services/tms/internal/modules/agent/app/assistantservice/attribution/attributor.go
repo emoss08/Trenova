@@ -93,7 +93,7 @@ func (s *Attributor) ProposersOf(
 		return proposers
 	}
 
-	runs, err := s.Runs.ListByIDs(ctx, agentruntimeports.ListAgentRunsByIDsRequest{
+	runs, err := s.Runs.ListByIDs(ctx, &agentruntimeports.ListAgentRunsByIDsRequest{
 		IDs:        sliceutils.Dedupe(runIDs),
 		TenantInfo: tenant,
 	})

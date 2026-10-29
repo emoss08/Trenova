@@ -57,7 +57,7 @@ func (r *deskRepo) Create(
 
 func (r *deskRepo) FindActive(
 	context.Context,
-	agentmemoryports.FindActiveAgentMemoryRequest,
+	*agentmemoryports.FindActiveAgentMemoryRequest,
 ) (*agentmemory.Memory, error) {
 	return nil, nil
 }
@@ -142,7 +142,7 @@ func (r *deskRepo) visible(filter *agentmemoryports.DeskMemoryFilter) []*agentme
 
 func (r *deskRepo) ListDesk(
 	_ context.Context,
-	req agentmemoryports.ListDeskMemoriesQuery,
+	req *agentmemoryports.ListDeskMemoriesQuery,
 ) ([]*agentmemoryports.DeskMemoryRow, error) {
 	rows := make([]*agentmemoryports.DeskMemoryRow, 0)
 	for _, memory := range r.visible(&req.Filter) {
@@ -164,11 +164,11 @@ func (r *deskRepo) ListDesk(
 
 func (r *deskRepo) CountDesk(
 	_ context.Context,
-	filter agentmemoryports.DeskMemoryFilter,
+	filter *agentmemoryports.DeskMemoryFilter,
 ) ([]agentmemoryports.DeskMemoryCountRow, error) {
 	counts := map[string]*agentmemoryports.DeskMemoryCountRow{}
 	order := make([]string, 0)
-	for _, memory := range r.visible(&filter) {
+	for _, memory := range r.visible(filter) {
 		roleID := pulid.Nil
 		if memory.RoleID != nil {
 			roleID = *memory.RoleID
@@ -191,7 +191,7 @@ func (r *deskRepo) CountDesk(
 
 func (r *deskRepo) SetStatus(
 	_ context.Context,
-	req agentmemoryports.SetAgentMemoryStatusQuery,
+	req *agentmemoryports.SetAgentMemoryStatusQuery,
 ) (*agentmemory.Memory, error) {
 	memory := r.memories[req.ID]
 	memory.Status = req.Status
@@ -203,7 +203,7 @@ func (r *deskRepo) SetStatus(
 
 func (r *deskRepo) Revise(
 	_ context.Context,
-	req agentmemoryports.ReviseAgentMemoryRequest,
+	req *agentmemoryports.ReviseAgentMemoryRequest,
 ) (*agentmemory.Memory, error) {
 	memory := r.memories[req.ID]
 	memory.Content = req.Content
@@ -216,7 +216,7 @@ func (r *deskRepo) Revise(
 
 func (r *deskRepo) ResolveSuggestion(
 	_ context.Context,
-	req agentmemoryports.ResolveAgentMemorySuggestionRequest,
+	req *agentmemoryports.ResolveAgentMemorySuggestionRequest,
 ) (*agentmemory.Memory, error) {
 	memory := r.memories[req.ID]
 	memory.Status = req.Status

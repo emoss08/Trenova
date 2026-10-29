@@ -98,7 +98,7 @@ type Params struct {
 type turnStarter interface {
 	Active(
 		ctx context.Context,
-		req assistantturnports.ActiveAssistantTurnRequest,
+		req *assistantturnports.ActiveAssistantTurnRequest,
 	) (*conversationturn.AssistantTurn, error)
 	StartTurn(
 		ctx context.Context,
@@ -385,7 +385,7 @@ func (s *Service) List(
 	ctx context.Context,
 	req *agentwaitports.ListThreadWaitsRequest,
 ) ([]*agentwait.Wait, error) {
-	if _, err := s.conversations.GetThread(ctx, conversationports.GetThreadRequest{
+	if _, err := s.conversations.GetThread(ctx, &conversationports.GetThreadRequest{
 		ID:         req.ThreadID,
 		UserID:     req.UserID,
 		TenantInfo: req.TenantInfo,
@@ -754,7 +754,7 @@ func (s *Service) resumeConversation(ctx context.Context, wait *agentwait.Wait) 
 		return err
 	}
 
-	active, err := s.turns.Active(ctx, assistantturnports.ActiveAssistantTurnRequest{
+	active, err := s.turns.Active(ctx, &assistantturnports.ActiveAssistantTurnRequest{
 		ThreadID:   thread.ID,
 		UserID:     thread.UserID,
 		TenantInfo: tenant,

@@ -52,7 +52,11 @@ func (r *repository) Append(
 			return nil
 		}
 
-		if err := agentruneventdb.AgentRunEvents.CreateMany(ctx, r.db.Keel(ctx), req.Events); err != nil {
+		if err := agentruneventdb.AgentRunEvents.CreateMany(
+			ctx,
+			r.db.Keel(ctx),
+			req.Events,
+		); err != nil {
 			r.l.Error("failed to append agent run events",
 				zap.Int("events", len(req.Events)),
 				zap.Error(err),
@@ -109,10 +113,10 @@ func listQuery(
 
 func (r *repository) List(
 	ctx context.Context,
-	req agentruntimeports.ListAgentRunEventsRequest,
+	req *agentruntimeports.ListAgentRunEventsRequest,
 ) ([]*agentrunevent.AgentRunEvent, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agentrunevent.AgentRunEvent, error) {
-		q := listQuery(&req)
+		q := listQuery(req)
 
 		var (
 			events []*agentrunevent.AgentRunEvent

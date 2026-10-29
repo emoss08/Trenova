@@ -25,7 +25,7 @@ type ArchiveSubjectThreadsRequest struct {
 }
 
 type PageThreadRepository interface {
-	GetPageThread(ctx context.Context, key PageThreadKey) (*conversation.Thread, error)
+	GetPageThread(ctx context.Context, key *PageThreadKey) (*conversation.Thread, error)
 	ClaimPageThread(ctx context.Context, thread *conversation.Thread) (*conversation.Thread, error)
-	ArchiveSubjectThreads(ctx context.Context, req ArchiveSubjectThreadsRequest) (int, error)
+	ArchiveSubjectThreads(ctx context.Context, req *ArchiveSubjectThreadsRequest) (int, error)
 }

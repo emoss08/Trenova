@@ -105,7 +105,7 @@ func (s *Service) Resolve(
 
 	updated, err := s.repo.UpdateResolution(
 		ctx,
-		agentexceptionports.UpdateAgentExceptionResolutionRequest{
+		&agentexceptionports.UpdateAgentExceptionResolutionRequest{
 			ID:              req.ID,
 			ResolutionState: req.ResolutionState,
 			ResolutionNotes: req.ResolutionNotes,

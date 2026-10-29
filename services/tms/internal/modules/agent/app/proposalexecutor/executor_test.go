@@ -90,7 +90,7 @@ type fakeProposalRepo struct {
 
 func (r *fakeProposalRepo) RecordExecution(
 	_ context.Context,
-	req agentproposalports.RecordAgentProposalExecutionRequest,
+	req *agentproposalports.RecordAgentProposalExecutionRequest,
 ) (*agent.AgentProposal, error) {
 	r.recorded = append(r.recorded, recordedExecution{
 		status:     req.Status,
@@ -362,9 +362,9 @@ func TestExecute_RecordsFailureWhenTheToolNoLongerExists(t *testing.T) {
 
 func (r *fakeProposalRepo) RecordSimulation(
 	_ context.Context,
-	req agentproposalports.RecordAgentProposalSimulationRequest,
+	req *agentproposalports.RecordAgentProposalSimulationRequest,
 ) (*agent.AgentProposal, error) {
-	r.simulated = append(r.simulated, req)
+	r.simulated = append(r.simulated, *req)
 
 	return &agent.AgentProposal{ID: req.ID, Status: agent.ProposalStatusSimulated}, nil
 }

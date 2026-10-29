@@ -88,7 +88,7 @@ type runReader interface {
 type threadReader interface {
 	GetThread(
 		ctx context.Context,
-		req conversationports.GetThreadRequest,
+		req *conversationports.GetThreadRequest,
 	) (*conversation.Thread, error)
 }
 
@@ -330,7 +330,7 @@ func (s *Service) claimAndRun(
 	if req.Decision == agentdecision.DecisionRejected {
 		claimed = agentplan.PlanStatusRejected
 	}
-	plan, err := s.plans.UpdateStatus(ctx, agentplanports.UpdateAgentPlanStatusRequest{
+	plan, err := s.plans.UpdateStatus(ctx, &agentplanports.UpdateAgentPlanStatusRequest{
 		ID:              prepared.plan.ID,
 		TenantInfo:      req.TenantInfo,
 		Status:          claimed,
@@ -446,7 +446,7 @@ func (s *Service) AssertOwnPlan(
 		return notYours
 	}
 
-	if _, err = s.threads.GetThread(ctx, conversationports.GetThreadRequest{
+	if _, err = s.threads.GetThread(ctx, &conversationports.GetThreadRequest{
 		ID:         run.SubjectID,
 		UserID:     actor.UserID,
 		TenantInfo: tenant,
@@ -925,7 +925,7 @@ func (s *Service) complete(
 	last *agentdecision.AgentDecision,
 	lastReq *agentdecisionports.DecideAgentProposalRequest,
 ) *agentplan.AgentPlan {
-	progressed, err := s.plans.RecordProgress(ctx, agentplanports.RecordAgentPlanProgressRequest{
+	progressed, err := s.plans.RecordProgress(ctx, &agentplanports.RecordAgentPlanProgressRequest{
 		ID:             r.plan.ID,
 		TenantInfo:     r.req.TenantInfo,
 		Status:         agentplan.PlanStatusCompleted,
@@ -982,7 +982,7 @@ func (s *Service) failAt(
 	}
 
 	failedStep := step
-	progressed, err := s.plans.RecordProgress(ctx, agentplanports.RecordAgentPlanProgressRequest{
+	progressed, err := s.plans.RecordProgress(ctx, &agentplanports.RecordAgentPlanProgressRequest{
 		ID:             plan.ID,
 		TenantInfo:     req.TenantInfo,
 		Status:         agentplan.PlanStatusFailed,

@@ -225,30 +225,30 @@ type AgentMemoryRepository interface {
 	) (*pagination.CursorListResult[*agentmemory.Memory], error)
 	ListActive(
 		ctx context.Context,
-		req ListActiveAgentMemoriesRequest,
+		req *ListActiveAgentMemoriesRequest,
 	) ([]*agentmemory.Memory, error)
-	Search(ctx context.Context, req SearchAgentMemoriesRequest) ([]*agentmemory.Memory, error)
-	FindActive(ctx context.Context, req FindActiveAgentMemoryRequest) (*agentmemory.Memory, error)
+	Search(ctx context.Context, req *SearchAgentMemoriesRequest) ([]*agentmemory.Memory, error)
+	FindActive(ctx context.Context, req *FindActiveAgentMemoryRequest) (*agentmemory.Memory, error)
 	CountActive(ctx context.Context, req CountActiveAgentMemoriesRequest) (int, error)
-	SetStatus(ctx context.Context, req SetAgentMemoryStatusQuery) (*agentmemory.Memory, error)
+	SetStatus(ctx context.Context, req *SetAgentMemoryStatusQuery) (*agentmemory.Memory, error)
 	// Review clears an Active or Paused memory's taint for the person who
 	// read it; a memory that does not taint, or that changed, is refused.
-	Review(ctx context.Context, req ReviewAgentMemoryQuery) (*agentmemory.Memory, error)
-	MarkUsed(ctx context.Context, req MarkAgentMemoriesUsedRequest) error
+	Review(ctx context.Context, req *ReviewAgentMemoryQuery) (*agentmemory.Memory, error)
+	MarkUsed(ctx context.Context, req *MarkAgentMemoriesUsedRequest) error
 	ListSuggestionContext(
 		ctx context.Context,
-		req ListAgentMemorySuggestionContextRequest,
+		req *ListAgentMemorySuggestionContextRequest,
 	) ([]*agentmemory.Memory, error)
 	ResolveSuggestion(
 		ctx context.Context,
-		req ResolveAgentMemorySuggestionRequest,
+		req *ResolveAgentMemorySuggestionRequest,
 	) (*agentmemory.Memory, error)
-	Revise(ctx context.Context, req ReviseAgentMemoryRequest) (*agentmemory.Memory, error)
+	Revise(ctx context.Context, req *ReviseAgentMemoryRequest) (*agentmemory.Memory, error)
 	// ListDesk reads one page of the memories a person keeps, newest first.
-	ListDesk(ctx context.Context, req ListDeskMemoriesQuery) ([]*DeskMemoryRow, error)
+	ListDesk(ctx context.Context, req *ListDeskMemoriesQuery) ([]*DeskMemoryRow, error)
 	// CountDesk counts what ListDesk would list with no scope chosen, per
 	// scope and per role, in one read.
-	CountDesk(ctx context.Context, filter DeskMemoryFilter) ([]DeskMemoryCountRow, error)
+	CountDesk(ctx context.Context, filter *DeskMemoryFilter) ([]DeskMemoryCountRow, error)
 	// GetDesk reads memories by id as the Desk shows them, whatever their
 	// status; the caller decides which of them the person may see.
 	GetDesk(ctx context.Context, req GetDeskMemoriesRequest) ([]*DeskMemoryRow, error)

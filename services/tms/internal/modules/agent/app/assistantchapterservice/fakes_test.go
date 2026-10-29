@@ -37,7 +37,7 @@ func (f *fakeChapters) List(
 
 func (f *fakeChapters) Get(
 	_ context.Context,
-	req assistantchapterports.GetChapterRequest,
+	req *assistantchapterports.GetChapterRequest,
 ) (*conversationchapter.Chapter, error) {
 	for _, chapter := range f.chapters {
 		if chapter.ID == req.ID {
@@ -50,7 +50,7 @@ func (f *fakeChapters) Get(
 
 func (f *fakeChapters) ForTurn(
 	_ context.Context,
-	req assistantchapterports.ChapterForTurnRequest,
+	req *assistantchapterports.ChapterForTurnRequest,
 ) (*conversationchapter.Chapter, error) {
 	for _, chapter := range f.chapters {
 		if chapter.TurnID == req.TurnID {
@@ -83,9 +83,9 @@ func (f *fakeChapters) Create(
 
 func (f *fakeChapters) Retitle(
 	_ context.Context,
-	req assistantchapterports.RetitleChapterRequest,
+	req *assistantchapterports.RetitleChapterRequest,
 ) (*conversationchapter.Chapter, error) {
-	f.retitled = append(f.retitled, req)
+	f.retitled = append(f.retitled, *req)
 	for _, chapter := range f.chapters {
 		if chapter.ID == req.ID {
 			chapter.Title = req.Title
@@ -100,9 +100,9 @@ func (f *fakeChapters) Retitle(
 
 func (f *fakeChapters) Delete(
 	_ context.Context,
-	req assistantchapterports.DeleteChapterRequest,
+	req *assistantchapterports.DeleteChapterRequest,
 ) (bool, error) {
-	f.deleted = append(f.deleted, req)
+	f.deleted = append(f.deleted, *req)
 	idx := slices.IndexFunc(f.chapters, func(c *conversationchapter.Chapter) bool {
 		return c.ID == req.ID &&
 			(!req.KeepPerson || c.TitleSource != conversationchapter.ChapterTitlePerson)
@@ -117,7 +117,7 @@ func (f *fakeChapters) Delete(
 
 func (f *fakeChapters) TurnOfMessage(
 	_ context.Context,
-	req assistantchapterports.TurnOfMessageRequest,
+	req *assistantchapterports.TurnOfMessageRequest,
 ) (pulid.ID, error) {
 	turnID, ok := f.turnOf[req.MessageID]
 	if !ok {
@@ -138,7 +138,7 @@ type fakeConversations struct {
 
 func (f *fakeConversations) GetThread(
 	_ context.Context,
-	req conversationports.GetThreadRequest,
+	req *conversationports.GetThreadRequest,
 ) (*conversation.Thread, error) {
 	if req.ID != f.thread.ID || req.UserID != f.thread.UserID {
 		return nil, errortypes.NewNotFoundError("Conversation not found")
@@ -149,9 +149,9 @@ func (f *fakeConversations) GetThread(
 
 func (f *fakeConversations) ListMessages(
 	_ context.Context,
-	req conversationports.ListMessagesRequest,
+	req *conversationports.ListMessagesRequest,
 ) ([]conversation.Message, error) {
-	f.listed = append(f.listed, req)
+	f.listed = append(f.listed, *req)
 	if req.TurnID.IsNotNil() {
 		return f.byTurn[req.TurnID], nil
 	}
@@ -167,7 +167,7 @@ type fakeTurns struct {
 
 func (f *fakeTurns) GetByID(
 	_ context.Context,
-	req assistantturnports.GetAssistantTurnRequest,
+	req *assistantturnports.GetAssistantTurnRequest,
 ) (*conversationturn.AssistantTurn, error) {
 	turn, ok := f.turns[req.ID]
 	if !ok {

@@ -67,7 +67,7 @@ func (p *windowProposals) GetByID(
 
 func (p *windowProposals) UpdateStatus(
 	_ context.Context,
-	req agentproposalports.UpdateAgentProposalStatusRequest,
+	req *agentproposalports.UpdateAgentProposalStatusRequest,
 ) (*agent.AgentProposal, error) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
@@ -84,7 +84,7 @@ func (p *windowProposals) UpdateStatus(
 
 func (p *windowProposals) RecordExecution(
 	_ context.Context,
-	req agentproposalports.RecordAgentProposalExecutionRequest,
+	req *agentproposalports.RecordAgentProposalExecutionRequest,
 ) (*agent.AgentProposal, error) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
@@ -170,7 +170,7 @@ func (d *windowDecisionRows) ListByCommitWorkflow(
 }
 
 func (d *windowDecisionRows) settle(
-	req agentdecisionports.SettleAgentDecisionsRequest,
+	req *agentdecisionports.SettleAgentDecisionsRequest,
 	undo bool,
 ) []pulid.ID {
 	d.mu.Lock()
@@ -200,14 +200,14 @@ func (d *windowDecisionRows) settle(
 
 func (d *windowDecisionRows) MarkCommitted(
 	_ context.Context,
-	req agentdecisionports.SettleAgentDecisionsRequest,
+	req *agentdecisionports.SettleAgentDecisionsRequest,
 ) ([]pulid.ID, error) {
 	return d.settle(req, false), nil
 }
 
 func (d *windowDecisionRows) MarkUndone(
 	_ context.Context,
-	req agentdecisionports.SettleAgentDecisionsRequest,
+	req *agentdecisionports.SettleAgentDecisionsRequest,
 ) ([]pulid.ID, error) {
 	return d.settle(req, true), nil
 }
@@ -279,7 +279,7 @@ type windowThreads struct {
 
 func (windowThreads) GetThread(
 	_ context.Context,
-	req conversationports.GetThreadRequest,
+	req *conversationports.GetThreadRequest,
 ) (*conversation.Thread, error) {
 	return &conversation.Thread{ID: req.ID, UserID: req.UserID}, nil
 }
@@ -690,7 +690,7 @@ func TestApproval_FinishedAfterAPauseByALaterAttemptNeverRuns(t *testing.T) {
 	h.approve(t)
 	id := h.ids[0]
 	decision := h.decisionOf(t, id)
-	_, err := h.decisions.MarkCommitted(t.Context(), agentdecisionports.SettleAgentDecisionsRequest{
+	_, err := h.decisions.MarkCommitted(t.Context(), &agentdecisionports.SettleAgentDecisionsRequest{
 		IDs:        []pulid.ID{decision.ID},
 		TenantInfo: h.tenant,
 		At:         timeutils.NowUnix(),

@@ -121,7 +121,7 @@ func (s *Service) claimPageThread(
 	}
 
 	if req.SubjectID.IsNotNil() {
-		existing, err := s.pageThreads.GetPageThread(ctx, conversationports.PageThreadKey{
+		existing, err := s.pageThreads.GetPageThread(ctx, &conversationports.PageThreadKey{
 			TenantInfo:  req.TenantInfo,
 			UserID:      actor.UserID,
 			Origin:      req.Origin,
@@ -134,7 +134,7 @@ func (s *Service) claimPageThread(
 				return existing, nil
 			}
 			if _, archiveErr := s.pageThreads.ArchiveSubjectThreads(ctx,
-				conversationports.ArchiveSubjectThreadsRequest{
+				&conversationports.ArchiveSubjectThreadsRequest{
 					TenantInfo:  req.TenantInfo,
 					Origin:      req.Origin,
 					SubjectType: subjectType,

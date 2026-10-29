@@ -118,14 +118,14 @@ func (r *repository) ListByCommitWorkflow(
 
 func (r *repository) MarkCommitted(
 	ctx context.Context,
-	req agentdecisionports.SettleAgentDecisionsRequest,
+	req *agentdecisionports.SettleAgentDecisionsRequest,
 ) ([]pulid.ID, error) {
 	return r.settle(ctx, req, false)
 }
 
 func (r *repository) MarkUndone(
 	ctx context.Context,
-	req agentdecisionports.SettleAgentDecisionsRequest,
+	req *agentdecisionports.SettleAgentDecisionsRequest,
 ) ([]pulid.ID, error) {
 	return r.settle(ctx, req, true)
 }
@@ -134,7 +134,7 @@ func (r *repository) MarkUndone(
 // a commit and an undo racing each other each take all of a batch or none.
 func (r *repository) settle(
 	ctx context.Context,
-	req agentdecisionports.SettleAgentDecisionsRequest,
+	req *agentdecisionports.SettleAgentDecisionsRequest,
 	undo bool,
 ) ([]pulid.ID, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]pulid.ID, error) {

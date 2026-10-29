@@ -188,7 +188,7 @@ type AgentProposalRepository interface {
 	) ([]*agent.AgentProposal, error)
 	UpdateStatus(
 		ctx context.Context,
-		req UpdateAgentProposalStatusRequest,
+		req *UpdateAgentProposalStatusRequest,
 	) (*agent.AgentProposal, error)
 	ExpirePendingByRun(ctx context.Context, req ExpireAgentProposalsByRunRequest) (int, error)
 	ExpirePending(ctx context.Context, req ExpireAgentProposalsRequest) (int, error)
@@ -217,17 +217,17 @@ type AgentProposalRepository interface {
 	SkipPendingByPlan(ctx context.Context, req SkipPendingByPlanRequest) (int, error)
 	RecordExecution(
 		ctx context.Context,
-		req RecordAgentProposalExecutionRequest,
+		req *RecordAgentProposalExecutionRequest,
 	) (*agent.AgentProposal, error)
 	RecordSimulation(
 		ctx context.Context,
-		req RecordAgentProposalSimulationRequest,
+		req *RecordAgentProposalSimulationRequest,
 	) (*agent.AgentProposal, error)
 	SetPendingModifications(
 		ctx context.Context,
 		req SetPendingModificationsRequest,
 	) (*agent.AgentProposal, error)
-	CountExecutedTool(ctx context.Context, req CountExecutedToolRequest) (int, error)
+	CountExecutedTool(ctx context.Context, req *CountExecutedToolRequest) (int, error)
 	SumAutomaticMoney(
 		ctx context.Context,
 		req *SumAutomaticMoneyRequest,

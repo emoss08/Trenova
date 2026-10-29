@@ -61,7 +61,7 @@ func (r *repository) CreateThread(
 
 func (r *repository) GetThread(
 	ctx context.Context,
-	req conversationports.GetThreadRequest,
+	req *conversationports.GetThreadRequest,
 ) (*conversation.Thread, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*conversation.Thread, error) {
 		th := conversationdb.Threads
@@ -112,15 +112,15 @@ func (r *repository) ListThreadAgentsByIDs(
 
 func (r *repository) ListThreads(
 	ctx context.Context,
-	req conversationports.ListThreadsRequest,
+	req *conversationports.ListThreadsRequest,
 ) (*conversationports.ThreadPage, error) {
-	window, err := threadWindowOf(&req)
+	window, err := threadWindowOf(req)
 	if err != nil {
 		return nil, err
 	}
 
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*conversationports.ThreadPage, error) {
-		entities, listErr := threadPageQuery(&req, window).List(ctx, r.db.Keel(ctx))
+		entities, listErr := threadPageQuery(req, window).List(ctx, r.db.Keel(ctx))
 		if listErr != nil {
 			r.l.Error("failed to list threads", zap.Error(listErr))
 			return nil, listErr
@@ -335,7 +335,7 @@ func (r *repository) UpdateThread(
 
 func (r *repository) MarkThreadTainted(
 	ctx context.Context,
-	req conversationports.MarkThreadTaintedRequest,
+	req *conversationports.MarkThreadTaintedRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		if !req.Taint.Tainted() {
@@ -359,7 +359,7 @@ func (r *repository) MarkThreadTainted(
 
 func (r *repository) UpdateThreadContext(
 	ctx context.Context,
-	req conversationports.UpdateThreadContextRequest,
+	req *conversationports.UpdateThreadContextRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		if req.Usage == nil && req.AutoCompactOff == nil && req.WorkingSet == nil {
@@ -389,7 +389,7 @@ func (r *repository) UpdateThreadContext(
 
 func (r *repository) AddSavedMemories(
 	ctx context.Context,
-	req conversationports.AddSavedMemoriesRequest,
+	req *conversationports.AddSavedMemoriesRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		if len(req.Memories) == 0 {
@@ -422,7 +422,7 @@ func (r *repository) AddSavedMemories(
 
 func (r *repository) DeleteThread(
 	ctx context.Context,
-	req conversationports.GetThreadRequest,
+	req *conversationports.GetThreadRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		db := r.db.Keel(ctx)
@@ -479,11 +479,11 @@ func afterLatestCompaction(threadID pulid.ID) keel.Pred {
 
 func (r *repository) ListMessages(
 	ctx context.Context,
-	req conversationports.ListMessagesRequest,
+	req *conversationports.ListMessagesRequest,
 ) ([]conversation.Message, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]conversation.Message, error) {
 		m := conversationdb.Messages
-		query := messagesQuery(&req)
+		query := messagesQuery(req)
 
 		if req.Limit > 0 {
 			rows, err := query.Order(m.Sequence.Desc()).Limit(req.Limit).List(ctx, r.db.Keel(ctx))
@@ -575,7 +575,7 @@ func nextSequence(ctx context.Context, db *keel.DB, threadID pulid.ID) (int, err
 
 func (r *repository) AppendTurn(
 	ctx context.Context,
-	req conversationports.AppendTurnRequest,
+	req *conversationports.AppendTurnRequest,
 ) ([]conversation.Message, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]conversation.Message, error) {
 		if len(req.Messages) == 0 {

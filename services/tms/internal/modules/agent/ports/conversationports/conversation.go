@@ -256,21 +256,21 @@ type DeskSearchRow struct {
 }
 
 type ConversationRepository interface {
-	SearchMentions(ctx context.Context, req SearchMentionsRequest) ([]MentionRow, error)
-	SearchDesk(ctx context.Context, req SearchDeskRequest) ([]DeskSearchRow, error)
+	SearchMentions(ctx context.Context, req *SearchMentionsRequest) ([]MentionRow, error)
+	SearchDesk(ctx context.Context, req *SearchDeskRequest) ([]DeskSearchRow, error)
 	// CountQuestionsSince counts what one person asked the agents from since
 	// on, across all their conversations.
 	CountQuestionsSince(ctx context.Context, req CountQuestionsSinceRequest) (int, error)
 	ListThreadAttention(
 		ctx context.Context,
-		req ListThreadAttentionRequest,
+		req *ListThreadAttentionRequest,
 	) (map[pulid.ID]ThreadAttentionRow, error)
-	MarkThreadRead(ctx context.Context, req MarkThreadReadRequest) error
+	MarkThreadRead(ctx context.Context, req *MarkThreadReadRequest) error
 	// WakeThread ends a snooze the conversation is under, reporting whether
 	// there was one.
 	WakeThread(ctx context.Context, req *WakeThreadRequest) (bool, error)
 	CreateThread(ctx context.Context, thread *conversation.Thread) (*conversation.Thread, error)
-	GetThread(ctx context.Context, req GetThreadRequest) (*conversation.Thread, error)
+	GetThread(ctx context.Context, req *GetThreadRequest) (*conversation.Thread, error)
 	// GetThreadOwned reads a thread within a tenant whoever owns it, so the
 	// application can act in a conversation on its owner's behalf. It is
 	// never reached from a request: a person reads threads through GetThread,
@@ -280,30 +280,30 @@ type ConversationRepository interface {
 		ctx context.Context,
 		req ListThreadAgentsByIDsRequest,
 	) ([]*conversation.Thread, error)
-	ListThreads(ctx context.Context, req ListThreadsRequest) (*ThreadPage, error)
+	ListThreads(ctx context.Context, req *ListThreadsRequest) (*ThreadPage, error)
 	CountThreadShelves(
 		ctx context.Context,
 		req *CountThreadShelvesRequest,
 	) (*ThreadShelfCounts, error)
 	UpdateThread(ctx context.Context, thread *conversation.Thread) (*conversation.Thread, error)
-	DeleteThread(ctx context.Context, req GetThreadRequest) error
+	DeleteThread(ctx context.Context, req *GetThreadRequest) error
 	// DeleteStaleThreads removes unkept conversations of an origin, with their
 	// messages, across every tenant. It reports how many threads went.
 	DeleteStaleThreads(ctx context.Context, req DeleteStaleThreadsRequest) (int, error)
-	ListMessages(ctx context.Context, req ListMessagesRequest) ([]conversation.Message, error)
+	ListMessages(ctx context.Context, req *ListMessagesRequest) ([]conversation.Message, error)
 	CountMessages(ctx context.Context, req CountMessagesRequest) (int, error)
 	// CarriesAttachment says whether a saved message of the thread was sent
 	// with the document, as opposed to a file uploaded and never sent.
 	CarriesAttachment(ctx context.Context, req *CarriesAttachmentRequest) (bool, error)
 	// AppendTurn allocates sequence numbers and writes the messages atomically,
 	// returning them with their assigned identifiers.
-	AppendTurn(ctx context.Context, req AppendTurnRequest) ([]conversation.Message, error)
+	AppendTurn(ctx context.Context, req *AppendTurnRequest) ([]conversation.Message, error)
 	// MarkThreadTainted writes the thread's taint and, the first time, when it
 	// became tainted. It leaves the thread's version alone.
-	MarkThreadTainted(ctx context.Context, req MarkThreadTaintedRequest) error
+	MarkThreadTainted(ctx context.Context, req *MarkThreadTaintedRequest) error
 	// UpdateThreadContext writes how full the conversation's context is and
 	// whether it compacts itself. It leaves the thread's version alone: it
 	// is the system's bookkeeping, not an edit a person could conflict with.
-	UpdateThreadContext(ctx context.Context, req UpdateThreadContextRequest) error
-	AddSavedMemories(ctx context.Context, req AddSavedMemoriesRequest) error
+	UpdateThreadContext(ctx context.Context, req *UpdateThreadContextRequest) error
+	AddSavedMemories(ctx context.Context, req *AddSavedMemoriesRequest) error
 }

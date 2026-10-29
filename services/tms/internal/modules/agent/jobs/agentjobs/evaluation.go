@@ -751,7 +751,7 @@ func (a *Activities) chatReplayInput(
 		)
 	}
 
-	messages, err := a.conversations.ListMessages(ctx, conversationports.ListMessagesRequest{
+	messages, err := a.conversations.ListMessages(ctx, &conversationports.ListMessagesRequest{
 		ThreadID:     source.SubjectID,
 		TenantInfo:   tenant,
 		ExcludeKinds: conversation.ModelHiddenKinds(),

@@ -42,9 +42,9 @@ func (r *recordingTurns) Start(
 }
 
 func (r *recordingTurns) Complete(
-	_ context.Context, req assistantturnports.CompleteAssistantTurnRequest,
+	_ context.Context, req *assistantturnports.CompleteAssistantTurnRequest,
 ) error {
-	r.completed = append(r.completed, req)
+	r.completed = append(r.completed, *req)
 
 	return nil
 }

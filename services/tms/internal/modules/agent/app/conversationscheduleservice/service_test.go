@@ -171,7 +171,7 @@ type fakeThreads struct {
 
 func (f *fakeThreads) GetThread(
 	_ context.Context,
-	req conversationports.GetThreadRequest,
+	req *conversationports.GetThreadRequest,
 ) (*conversation.Thread, error) {
 	if req.ID != f.thread.ID || req.UserID != f.thread.UserID {
 		return nil, errortypes.NewNotFoundError("Thread not found within your organization")
@@ -246,7 +246,7 @@ func (f *fakeTurns) StartTurn(
 
 func (f *fakeTurns) Active(
 	_ context.Context,
-	_ assistantturnports.ActiveAssistantTurnRequest,
+	_ *assistantturnports.ActiveAssistantTurnRequest,
 ) (*conversationturn.AssistantTurn, error) {
 	return f.active, nil
 }

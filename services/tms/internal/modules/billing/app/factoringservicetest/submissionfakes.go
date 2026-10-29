@@ -471,10 +471,10 @@ type FakeEvents struct {
 	Events []agenteventports.AgentEvent
 }
 
-func (f *FakeEvents) Publish(_ context.Context, event agenteventports.AgentEvent) {
+func (f *FakeEvents) Publish(_ context.Context, event *agenteventports.AgentEvent) {
 	f.Mu.Lock()
 	defer f.Mu.Unlock()
-	f.Events = append(f.Events, event)
+	f.Events = append(f.Events, *event)
 }
 
 func (f *FakeEvents) Kinds() []string {

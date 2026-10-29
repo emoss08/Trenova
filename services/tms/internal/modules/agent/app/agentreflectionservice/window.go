@@ -205,7 +205,7 @@ func (s *Service) runMessages(
 	tenant pagination.TenantInfo,
 	runID pulid.ID,
 ) ([]conversation.Message, error) {
-	runs, err := s.runs.ListTranscriptsByIDs(ctx, agentruntimeports.ListAgentRunsByIDsRequest{
+	runs, err := s.runs.ListTranscriptsByIDs(ctx, &agentruntimeports.ListAgentRunsByIDsRequest{
 		IDs:        []pulid.ID{runID},
 		TenantInfo: tenant,
 	})

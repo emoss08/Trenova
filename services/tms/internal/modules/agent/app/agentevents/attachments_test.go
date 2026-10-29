@@ -44,12 +44,12 @@ func TestPublish_TellsAttachmentObserversOfEachExtraction(t *testing.T) {
 	})
 	extracted := pulid.MustNew("doc_")
 
-	publisher.Publish(t.Context(), agenteventports.AgentEvent{
+	publisher.Publish(t.Context(), &agenteventports.AgentEvent{
 		Kind:       agenttrigger.EventDocumentExtracted,
 		SubjectID:  extracted,
 		TenantInfo: tenantInfo,
 	})
-	publisher.Publish(t.Context(), agenteventports.AgentEvent{
+	publisher.Publish(t.Context(), &agenteventports.AgentEvent{
 		Kind:       agenttrigger.EventBillingQueueItemException,
 		SubjectID:  pulid.MustNew("bqi_"),
 		TenantInfo: tenantInfo,
@@ -70,7 +70,7 @@ func TestPublish_WithNoAttachmentObserversStillPublishes(t *testing.T) {
 	})
 
 	assert.NotPanics(t, func() {
-		publisher.Publish(t.Context(), agenteventports.AgentEvent{
+		publisher.Publish(t.Context(), &agenteventports.AgentEvent{
 			Kind:       agenttrigger.EventDocumentExtracted,
 			SubjectID:  pulid.MustNew("doc_"),
 			TenantInfo: tenantInfo,

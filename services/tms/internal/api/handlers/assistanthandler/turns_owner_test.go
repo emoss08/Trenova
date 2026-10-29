@@ -25,9 +25,9 @@ type strangerThreads struct {
 
 func (s *strangerThreads) GetThread(
 	_ context.Context,
-	req conversationports.GetThreadRequest,
+	req *conversationports.GetThreadRequest,
 ) (*conversation.Thread, error) {
-	s.asked = req
+	s.asked = *req
 
 	return nil, errortypes.NewNotFoundError("Thread not found")
 }

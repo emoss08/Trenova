@@ -72,11 +72,14 @@ func (s *Service) withdrawHeld(
 		return open, nil
 	}
 
-	withdrawn, err := s.decisionRepo.MarkUndone(ctx, agentdecisionports.SettleAgentDecisionsRequest{
-		IDs:        held,
-		TenantInfo: tenant,
-		At:         timeutils.NowUnix(),
-	})
+	withdrawn, err := s.decisionRepo.MarkUndone(
+		ctx,
+		&agentdecisionports.SettleAgentDecisionsRequest{
+			IDs:        held,
+			TenantInfo: tenant,
+			At:         timeutils.NowUnix(),
+		},
+	)
 	if err != nil {
 		return nil, err
 	}

@@ -50,7 +50,7 @@ type TurnStreamReader interface {
 	// It returns nil having yielded no terminal frame when the workflow closed
 	// before the reader caught up. The caller then has to say how the turn
 	// ended from the turn's record.
-	Read(ctx context.Context, req ReadTurnStreamRequest) error
+	Read(ctx context.Context, req *ReadTurnStreamRequest) error
 }
 
 // TurnFrameFunc receives frames in order.

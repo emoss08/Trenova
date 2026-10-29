@@ -74,7 +74,7 @@ func pendingProposalRunsQuery(threadIDs []pulid.ID) *keel.Query[*agent.AgentProp
 
 func (r *repository) ListThreadAttention(
 	ctx context.Context,
-	req conversationports.ListThreadAttentionRequest,
+	req *conversationports.ListThreadAttentionRequest,
 ) (map[pulid.ID]conversationports.ThreadAttentionRow, error) {
 	return dbtx.Read(
 		ctx,
@@ -86,7 +86,7 @@ func (r *repository) ListThreadAttention(
 			}
 
 			db := r.db.Keel(ctx)
-			rows, err := keel.Into[threadAttentionRow](ctx, db, threadAttentionQuery(&req))
+			rows, err := keel.Into[threadAttentionRow](ctx, db, threadAttentionQuery(req))
 			if err != nil {
 				return nil, fmt.Errorf("list thread attention: %w", err)
 			}
@@ -121,7 +121,7 @@ func (r *repository) ListThreadAttention(
 
 func (r *repository) MarkThreadRead(
 	ctx context.Context,
-	req conversationports.MarkThreadReadRequest,
+	req *conversationports.MarkThreadReadRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		th := conversationdb.Threads

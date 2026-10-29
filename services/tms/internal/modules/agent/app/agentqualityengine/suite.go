@@ -70,7 +70,7 @@ func (s *Engine) ListSuiteCases(
 ) ([]SuiteCase, error) {
 	evaluations, err := s.evaluations.ListBySuiteRun(
 		ctx,
-		agentevaluationports.ListSuiteEvaluationsRequest{
+		&agentevaluationports.ListSuiteEvaluationsRequest{
 			TenantInfo:   req.TenantInfo,
 			SuiteRunID:   req.SuiteRunID,
 			AfterOrdinal: req.AfterOrdinal,
@@ -182,7 +182,7 @@ func (s *Engine) suiteEvaluationsOf(
 	for {
 		page, err := s.evaluations.ListBySuiteRun(
 			ctx,
-			agentevaluationports.ListSuiteEvaluationsRequest{
+			&agentevaluationports.ListSuiteEvaluationsRequest{
 				TenantInfo:   tenant,
 				SuiteRunID:   suiteRunID,
 				AfterOrdinal: after,
@@ -530,7 +530,7 @@ func (s *Engine) FinalizeSuite(
 	if req.StopReason != "" {
 		if _, err = s.evaluations.SkipPendingBySuiteRun(
 			ctx,
-			agentevaluationports.SkipPendingSuiteEvaluationsRequest{
+			&agentevaluationports.SkipPendingSuiteEvaluationsRequest{
 				TenantInfo: req.TenantInfo,
 				SuiteRunID: run.ID,
 				Reason:     budgetStoppedCaseNote,
@@ -838,7 +838,7 @@ func (s *Engine) fail(ctx context.Context, run *agentqualitysuite.SuiteRun, reas
 	tenant := pagination.TenantInfo{OrgID: run.OrganizationID, BuID: run.BusinessUnitID}
 	if _, err := s.evaluations.SkipPendingBySuiteRun(
 		ctx,
-		agentevaluationports.SkipPendingSuiteEvaluationsRequest{
+		&agentevaluationports.SkipPendingSuiteEvaluationsRequest{
 			TenantInfo: tenant,
 			SuiteRunID: run.ID,
 			Reason:     failedSuiteCaseNote,

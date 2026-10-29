@@ -274,7 +274,7 @@ type fakeTurns struct {
 
 func (f *fakeTurns) Active(
 	context.Context,
-	assistantturnports.ActiveAssistantTurnRequest,
+	*assistantturnports.ActiveAssistantTurnRequest,
 ) (*conversationturn.AssistantTurn, error) {
 	return f.active, nil
 }

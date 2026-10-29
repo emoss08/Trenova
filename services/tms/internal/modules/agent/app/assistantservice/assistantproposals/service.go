@@ -45,7 +45,7 @@ func (s *Service) SaveProposalEdits(
 	proposalID pulid.ID,
 	modifications map[string]any,
 ) (*assistantproposalports.ProposalEdits, error) {
-	if _, err := s.conversations.GetThread(ctx, req); err != nil {
+	if _, err := s.conversations.GetThread(ctx, &req); err != nil {
 		return nil, err
 	}
 	if s.proposals == nil || s.proposalEdits == nil {
@@ -142,7 +142,7 @@ func (s *Service) ListThreadProposals(
 	ctx context.Context,
 	req conversationports.GetThreadRequest,
 ) ([]assistantproposalports.AssistantProposal, error) {
-	if _, err := s.conversations.GetThread(ctx, req); err != nil {
+	if _, err := s.conversations.GetThread(ctx, &req); err != nil {
 		return nil, err
 	}
 
@@ -266,7 +266,7 @@ func (s *Service) ListThreadPlans(
 	ctx context.Context,
 	req conversationports.GetThreadRequest,
 ) ([]assistantproposalports.AssistantPlan, error) {
-	if _, err := s.conversations.GetThread(ctx, req); err != nil {
+	if _, err := s.conversations.GetThread(ctx, &req); err != nil {
 		return nil, err
 	}
 	if s.plans == nil {

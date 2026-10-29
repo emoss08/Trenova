@@ -60,7 +60,7 @@ type frame struct {
 	Data  sonic.NoCopyRawMessage `json:"data"`
 }
 
-func (s *Service) Read(ctx context.Context, req assistantstreamports.ReadTurnStreamRequest) error {
+func (s *Service) Read(ctx context.Context, req *assistantstreamports.ReadTurnStreamRequest) error {
 	stream := workflowstreams.NewClient(s.client, req.Ref.WorkflowID, workflowstreams.Options{})
 
 	for item, err := range stream.Subscribe(ctx, subscription(req.Cursor)) {

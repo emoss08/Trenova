@@ -29,8 +29,8 @@ type recordingEvents struct {
 	published []agenteventports.AgentEvent
 }
 
-func (r *recordingEvents) Publish(_ context.Context, event agenteventports.AgentEvent) {
-	r.published = append(r.published, event)
+func (r *recordingEvents) Publish(_ context.Context, event *agenteventports.AgentEvent) {
+	r.published = append(r.published, *event)
 }
 
 // An import that ends in an exception tells the agents, with the receipt as

@@ -146,7 +146,7 @@ func (r *repository) ListConnection(
 
 func (r *repository) ListByIDs(
 	ctx context.Context,
-	req agentruntimeports.ListAgentRunsByIDsRequest,
+	req *agentruntimeports.ListAgentRunsByIDsRequest,
 ) ([]*agent.AgentRun, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agent.AgentRun, error) {
 		if len(req.IDs) == 0 {
@@ -170,7 +170,7 @@ func (r *repository) ListByIDs(
 
 func (r *repository) ListTranscriptsByIDs(
 	ctx context.Context,
-	req agentruntimeports.ListAgentRunsByIDsRequest,
+	req *agentruntimeports.ListAgentRunsByIDsRequest,
 ) ([]*agent.AgentRun, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agent.AgentRun, error) {
 		if len(req.IDs) == 0 {
@@ -253,7 +253,7 @@ func closedRunStatuses() []agent.RunStatus {
 
 func (r *repository) CountOpen(
 	ctx context.Context,
-	req agentruntimeports.CountOpenAgentRunsRequest,
+	req *agentruntimeports.CountOpenAgentRunsRequest,
 ) (int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
 		run := agentdb.AgentRuns

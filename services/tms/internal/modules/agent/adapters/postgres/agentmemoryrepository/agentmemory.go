@@ -220,7 +220,7 @@ func (r *repository) ListConnection(
 // reads nothing, which is what a caller with no scope means.
 func (r *repository) ListActive(
 	ctx context.Context,
-	req agentmemoryports.ListActiveAgentMemoriesRequest,
+	req *agentmemoryports.ListActiveAgentMemoriesRequest,
 ) ([]*agentmemory.Memory, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agentmemory.Memory, error) {
 		if !req.OrganizationWide && len(req.Subjects) == 0 && len(req.ToolNames) == 0 {
@@ -267,17 +267,17 @@ func (r *repository) ListActive(
 // memories that share most of its words.
 func (r *repository) Search(
 	ctx context.Context,
-	req agentmemoryports.SearchAgentMemoriesRequest,
+	req *agentmemoryports.SearchAgentMemoriesRequest,
 ) ([]*agentmemory.Memory, error) {
 	text := newTextQuery(req.Query, req.Terms)
 	if text.empty() {
-		return r.search(ctx, &req, nil)
+		return r.search(ctx, req, nil)
 	}
 	if text.unmatchable() {
 		return []*agentmemory.Memory{}, nil
 	}
 
-	rows, err := r.search(ctx, &req, text.primary())
+	rows, err := r.search(ctx, req, text.primary())
 	if err != nil || len(rows) > 0 {
 		return rows, err
 	}
@@ -287,7 +287,7 @@ func (r *repository) Search(
 		return rows, nil
 	}
 
-	return r.search(ctx, &req, fallback)
+	return r.search(ctx, req, fallback)
 }
 
 func searchQuery(
@@ -342,7 +342,7 @@ func (r *repository) search(
 // database's own idea of a letter decides, never a Go copy of it.
 func (r *repository) FindActive(
 	ctx context.Context,
-	req agentmemoryports.FindActiveAgentMemoryRequest,
+	req *agentmemoryports.FindActiveAgentMemoryRequest,
 ) (*agentmemory.Memory, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*agentmemory.Memory, error) {
 		m := agentmemorydb.Memories
@@ -358,7 +358,7 @@ func (r *repository) FindActive(
 		entity, err := m.Where(
 			keptOnly(req.Now, req.IncludeSuggested),
 			foldedContent(m.Content).EqExpr(foldedContent(keel.Text(req.Content))),
-			sameReaders(&req),
+			sameReaders(req),
 			keel.When(!req.Tainted, keel.Or(m.Tainted.IsFalse(), m.ReviewedAt.IsNotNull())),
 			subject,
 			tool,
@@ -394,7 +394,7 @@ func (r *repository) CountActive(
 
 func (r *repository) SetStatus(
 	ctx context.Context,
-	req agentmemoryports.SetAgentMemoryStatusQuery,
+	req *agentmemoryports.SetAgentMemoryStatusQuery,
 ) (*agentmemory.Memory, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agentmemory.Memory, error) {
 		m := agentmemorydb.Memories
@@ -426,7 +426,7 @@ func (r *repository) SetStatus(
 
 func (r *repository) Review(
 	ctx context.Context,
-	req agentmemoryports.ReviewAgentMemoryQuery,
+	req *agentmemoryports.ReviewAgentMemoryQuery,
 ) (*agentmemory.Memory, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agentmemory.Memory, error) {
 		m := agentmemorydb.Memories
@@ -459,7 +459,7 @@ func (r *repository) Review(
 
 func (r *repository) MarkUsed(
 	ctx context.Context,
-	req agentmemoryports.MarkAgentMemoriesUsedRequest,
+	req *agentmemoryports.MarkAgentMemoriesUsedRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		if len(req.IDs) == 0 {
@@ -484,7 +484,7 @@ func (r *repository) MarkUsed(
 
 func (r *repository) ListSuggestionContext(
 	ctx context.Context,
-	req agentmemoryports.ListAgentMemorySuggestionContextRequest,
+	req *agentmemoryports.ListAgentMemorySuggestionContextRequest,
 ) ([]*agentmemory.Memory, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agentmemory.Memory, error) {
 		limit := req.Limit
@@ -527,7 +527,7 @@ func (r *repository) ListSuggestionContext(
 
 func (r *repository) ResolveSuggestion(
 	ctx context.Context,
-	req agentmemoryports.ResolveAgentMemorySuggestionRequest,
+	req *agentmemoryports.ResolveAgentMemorySuggestionRequest,
 ) (*agentmemory.Memory, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agentmemory.Memory, error) {
 		m := agentmemorydb.Memories
@@ -539,7 +539,7 @@ func (r *repository) ResolveSuggestion(
 		sets := []keel.Assignment{m.Status.To(req.Status), m.UpdatedAt.To(req.At)}
 		switch req.Status {
 		case agentmemory.MemoryStatusActive:
-			sets = append(sets, activation(&req)...)
+			sets = append(sets, activation(req)...)
 		case agentmemory.MemoryStatusDismissed:
 			sets = append(sets, m.RetiredAt.To(req.At), setID(m.RetiredByUserID, req.ByUserID))
 		default:

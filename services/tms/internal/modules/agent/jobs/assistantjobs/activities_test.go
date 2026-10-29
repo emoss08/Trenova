@@ -39,7 +39,7 @@ func (r *turnRecords) Start(
 
 func (r *turnRecords) GetByID(
 	context.Context,
-	assistantturnports.GetAssistantTurnRequest,
+	*assistantturnports.GetAssistantTurnRequest,
 ) (*conversationturn.AssistantTurn, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -49,26 +49,26 @@ func (r *turnRecords) GetByID(
 
 func (r *turnRecords) Active(
 	context.Context,
-	assistantturnports.ActiveAssistantTurnRequest,
+	*assistantturnports.ActiveAssistantTurnRequest,
 ) (*conversationturn.AssistantTurn, error) {
 	return nil, nil
 }
 
 func (r *turnRecords) ListLive(
 	context.Context,
-	assistantturnports.ListLiveAssistantTurnsRequest,
+	*assistantturnports.ListLiveAssistantTurnsRequest,
 ) ([]*assistantturnports.LiveAssistantTurn, error) {
 	return nil, nil
 }
 
 func (r *turnRecords) Complete(
 	_ context.Context,
-	req assistantturnports.CompleteAssistantTurnRequest,
+	req *assistantturnports.CompleteAssistantTurnRequest,
 ) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	r.completed = append(r.completed, req)
+	r.completed = append(r.completed, *req)
 	r.turn.Status = req.Status
 
 	return nil

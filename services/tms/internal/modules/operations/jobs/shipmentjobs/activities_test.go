@@ -108,8 +108,8 @@ type recordingAgentEvents struct {
 	events []agenteventports.AgentEvent
 }
 
-func (r *recordingAgentEvents) Publish(_ context.Context, event agenteventports.AgentEvent) {
-	r.events = append(r.events, event)
+func (r *recordingAgentEvents) Publish(_ context.Context, event *agenteventports.AgentEvent) {
+	r.events = append(r.events, *event)
 }
 
 func TestActivitiesAutoDelayShipmentsActivity(t *testing.T) {

@@ -89,7 +89,7 @@ func (s *Service) Handoff(
 
 	// Read under the person's own id: someone else's conversation is not
 	// found, which is the authorization.
-	origin, err := s.conversations.GetThread(ctx, conversationports.GetThreadRequest{
+	origin, err := s.conversations.GetThread(ctx, &conversationports.GetThreadRequest{
 		ID:         req.ThreadID,
 		UserID:     actor.UserID,
 		TenantInfo: tenant,
@@ -113,7 +113,7 @@ func (s *Service) Handoff(
 		return nil, err
 	}
 
-	history, err := s.conversations.ListMessages(ctx, historyRequest(origin, tenant, span))
+	history, err := s.conversations.ListMessages(ctx, new(historyRequest(origin, tenant, span)))
 	if err != nil {
 		return nil, err
 	}
@@ -164,7 +164,7 @@ func (s *Service) Handoff(
 	}
 	handoff.Artifacts = s.copyArtifacts(ctx, tenant, thread, pinned)
 
-	if _, err = s.conversations.AppendTurn(ctx, conversationports.AppendTurnRequest{
+	if _, err = s.conversations.AppendTurn(ctx, &conversationports.AppendTurnRequest{
 		ThreadID:   thread.ID,
 		TenantInfo: tenant,
 		Messages: []conversation.Message{{
@@ -177,7 +177,7 @@ func (s *Service) Handoff(
 		return nil, err
 	}
 
-	saved, err := s.conversations.AppendTurn(ctx, conversationports.AppendTurnRequest{
+	saved, err := s.conversations.AppendTurn(ctx, &conversationports.AppendTurnRequest{
 		ThreadID:   origin.ID,
 		TenantInfo: tenant,
 		Messages: []conversation.Message{{

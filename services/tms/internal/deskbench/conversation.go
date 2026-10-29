@@ -122,8 +122,12 @@ func (s *Session) Open(ctx context.Context, req OpenConversation) (*Conversation
 	}, nil
 }
 
-func (s *Session) threadRequest(threadID pulid.ID) conversationports.GetThreadRequest {
-	return conversationports.GetThreadRequest{ID: threadID, UserID: s.User.ID, TenantInfo: s.Tenant}
+func (s *Session) threadRequest(threadID pulid.ID) *conversationports.GetThreadRequest {
+	return &conversationports.GetThreadRequest{
+		ID:         threadID,
+		UserID:     s.User.ID,
+		TenantInfo: s.Tenant,
+	}
 }
 
 func (c *Conversation) Turns() []*benchrecord.TurnRecord {

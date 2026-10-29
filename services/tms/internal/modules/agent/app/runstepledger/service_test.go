@@ -31,9 +31,9 @@ func (f *fakeStepRepo) Claim(
 
 func (f *fakeStepRepo) Settle(
 	_ context.Context,
-	req agentruntimeports.SettleAgentRunStepRequest,
+	req *agentruntimeports.SettleAgentRunStepRequest,
 ) error {
-	f.settled = append(f.settled, req)
+	f.settled = append(f.settled, *req)
 
 	return nil
 }
@@ -42,7 +42,7 @@ func (f *fakeStepRepo) Record(context.Context, *agentrunstep.AgentRunStep) error
 
 func (f *fakeStepRepo) List(
 	context.Context,
-	agentruntimeports.ListAgentRunStepsRequest,
+	*agentruntimeports.ListAgentRunStepsRequest,
 ) ([]*agentrunstep.AgentRunStep, error) {
 	return f.rows, nil
 }

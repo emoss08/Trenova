@@ -21,8 +21,8 @@ type recordingEvents struct {
 	published []agenteventports.AgentEvent
 }
 
-func (r *recordingEvents) Publish(_ context.Context, event agenteventports.AgentEvent) {
-	r.published = append(r.published, event)
+func (r *recordingEvents) Publish(_ context.Context, event *agenteventports.AgentEvent) {
+	r.published = append(r.published, *event)
 }
 
 // detectingRepo stores what it is given and reports a chosen subset as new,

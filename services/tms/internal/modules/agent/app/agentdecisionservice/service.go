@@ -193,7 +193,7 @@ func (s *Service) AssertOwnProposal(
 		return notYours
 	}
 
-	if _, err = s.threads.GetThread(ctx, conversationports.GetThreadRequest{
+	if _, err = s.threads.GetThread(ctx, &conversationports.GetThreadRequest{
 		ID:         run.SubjectID,
 		UserID:     actor.UserID,
 		TenantInfo: tenant,
@@ -355,12 +355,15 @@ func (s *Service) record(
 	// snapshot; two decisions racing each other both pass it, and without this
 	// guard both would execute the tool. The loser now fails on the update
 	// instead, with a conflict rather than a second write.
-	if _, err = s.proposalRepo.UpdateStatus(ctx, agentproposalports.UpdateAgentProposalStatusRequest{
-		ID:         proposal.ID,
-		Status:     status,
-		FromStatus: agent.ProposalStatusPending,
-		TenantInfo: req.TenantInfo,
-	}); err != nil {
+	if _, err = s.proposalRepo.UpdateStatus(
+		ctx,
+		&agentproposalports.UpdateAgentProposalStatusRequest{
+			ID:         proposal.ID,
+			Status:     status,
+			FromStatus: agent.ProposalStatusPending,
+			TenantInfo: req.TenantInfo,
+		},
+	); err != nil {
 		aitrace.MarkFailed(span, aitrace.OutcomeFailed)
 
 		return ctx, nil, span, err
@@ -595,12 +598,15 @@ func (s *Service) recordRefusal(
 	tenant pagination.TenantInfo,
 	refusal error,
 ) {
-	if _, err := s.proposalRepo.RecordExecution(ctx, agentproposalports.RecordAgentProposalExecutionRequest{
-		ID:             proposal.ID,
-		Status:         agent.ProposalStatusExecutionFailed,
-		ExecutionError: refusal.Error(),
-		TenantInfo:     tenant,
-	}); err != nil {
+	if _, err := s.proposalRepo.RecordExecution(
+		ctx,
+		&agentproposalports.RecordAgentProposalExecutionRequest{
+			ID:             proposal.ID,
+			Status:         agent.ProposalStatusExecutionFailed,
+			ExecutionError: refusal.Error(),
+			TenantInfo:     tenant,
+		},
+	); err != nil {
 		s.l.Error("an approval refused over a changed record could not be recorded",
 			zap.String("proposal", proposal.ID.String()),
 			zap.Error(err),

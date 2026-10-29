@@ -73,7 +73,7 @@ type fakeEvaluations struct {
 
 func (f *fakeEvaluations) ListBySuiteRun(
 	_ context.Context,
-	req agentevaluationports.ListSuiteEvaluationsRequest,
+	req *agentevaluationports.ListSuiteEvaluationsRequest,
 ) ([]*agentevaluation.Evaluation, error) {
 	out := make([]*agentevaluation.Evaluation, 0)
 	for _, evaluation := range f.bySuite[req.SuiteRunID] {
@@ -87,7 +87,7 @@ func (f *fakeEvaluations) ListBySuiteRun(
 
 func (f *fakeEvaluations) SkipPendingBySuiteRun(
 	context.Context,
-	agentevaluationports.SkipPendingSuiteEvaluationsRequest,
+	*agentevaluationports.SkipPendingSuiteEvaluationsRequest,
 ) (int, error) {
 	return 0, nil
 }

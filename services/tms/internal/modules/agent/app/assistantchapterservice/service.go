@@ -77,7 +77,7 @@ func (s *Service) Open(
 		return nil, err
 	}
 
-	turnID, err := s.chapters.TurnOfMessage(ctx, assistantchapterports.TurnOfMessageRequest{
+	turnID, err := s.chapters.TurnOfMessage(ctx, &assistantchapterports.TurnOfMessageRequest{
 		ThreadID:   req.ThreadID,
 		MessageID:  req.MessageID,
 		TenantInfo: req.TenantInfo,
@@ -91,7 +91,7 @@ func (s *Service) Open(
 		)
 	}
 
-	if existing, fErr := s.chapters.ForTurn(ctx, assistantchapterports.ChapterForTurnRequest{
+	if existing, fErr := s.chapters.ForTurn(ctx, &assistantchapterports.ChapterForTurnRequest{
 		ThreadID:   req.ThreadID,
 		TurnID:     turnID,
 		TenantInfo: req.TenantInfo,
@@ -198,7 +198,7 @@ func (s *Service) Rename(
 		return nil, me
 	}
 
-	chapter, err := s.chapters.Retitle(ctx, assistantchapterports.RetitleChapterRequest{
+	chapter, err := s.chapters.Retitle(ctx, &assistantchapterports.RetitleChapterRequest{
 		ID:          req.ID,
 		ThreadID:    req.ThreadID,
 		TenantInfo:  req.TenantInfo,
@@ -222,7 +222,7 @@ func (s *Service) Remove(
 		return err
 	}
 
-	removed, err := s.chapters.Delete(ctx, assistantchapterports.DeleteChapterRequest{
+	removed, err := s.chapters.Delete(ctx, &assistantchapterports.DeleteChapterRequest{
 		ID:         req.ID,
 		ThreadID:   req.ThreadID,
 		TenantInfo: req.TenantInfo,
@@ -290,7 +290,7 @@ func (s *Service) owned(
 	threadID, userID pulid.ID,
 	tenant pagination.TenantInfo,
 ) error {
-	if _, err := s.conversations.GetThread(ctx, conversationports.GetThreadRequest{
+	if _, err := s.conversations.GetThread(ctx, &conversationports.GetThreadRequest{
 		ID:         threadID,
 		UserID:     userID,
 		TenantInfo: tenant,
@@ -324,7 +324,7 @@ func (s *Service) turnText(
 	threadID, turnID pulid.ID,
 	tenant pagination.TenantInfo,
 ) (question, reply string, err error) {
-	messages, err := s.conversations.ListMessages(ctx, conversationports.ListMessagesRequest{
+	messages, err := s.conversations.ListMessages(ctx, &conversationports.ListMessagesRequest{
 		ThreadID:     threadID,
 		TenantInfo:   tenant,
 		TurnID:       turnID,

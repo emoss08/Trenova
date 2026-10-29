@@ -32,9 +32,9 @@ type StubRunRepo struct {
 
 func (r *StubRunRepo) ListTranscriptsByIDs(
 	_ context.Context,
-	req agentruntimeports.ListAgentRunsByIDsRequest,
+	req *agentruntimeports.ListAgentRunsByIDsRequest,
 ) ([]*agent.AgentRun, error) {
-	r.TranscriptReads = append(r.TranscriptReads, req)
+	r.TranscriptReads = append(r.TranscriptReads, *req)
 	runs := make([]*agent.AgentRun, 0, len(req.IDs))
 	for _, id := range req.IDs {
 		if transcript, ok := r.Transcripts[id]; ok {
@@ -175,7 +175,7 @@ type StubConversationRepo struct {
 
 func (r *StubConversationRepo) GetThread(
 	_ context.Context,
-	_ conversationports.GetThreadRequest,
+	_ *conversationports.GetThreadRequest,
 ) (*conversation.Thread, error) {
 	if r.GetErr != nil {
 		return nil, r.GetErr

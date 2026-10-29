@@ -32,9 +32,9 @@ func (f *reviewRepo) GetByID(
 
 func (f *reviewRepo) Review(
 	_ context.Context,
-	req agentmemoryports.ReviewAgentMemoryQuery,
+	req *agentmemoryports.ReviewAgentMemoryQuery,
 ) (*agentmemory.Memory, error) {
-	f.reviewed = append(f.reviewed, req)
+	f.reviewed = append(f.reviewed, *req)
 	reviewed := *f.memory
 	by, at := req.ByUserID, req.At
 	reviewed.ReviewedByUserID = &by

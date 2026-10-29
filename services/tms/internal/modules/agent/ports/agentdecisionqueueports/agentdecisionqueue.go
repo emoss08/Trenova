@@ -89,11 +89,11 @@ type PendingDecisionSummaryRequest struct {
 type AgentDecisionQueueRepository interface {
 	ListPending(
 		ctx context.Context,
-		req ListPendingDecisionsQuery,
+		req *ListPendingDecisionsQuery,
 	) (*PendingDecisionsPageRow, error)
 	// CountPending is the size of the queue under the same filters as
 	// ListPending, for a connection that asks for its total.
-	CountPending(ctx context.Context, req ListPendingDecisionsQuery) (keel.RowCount, error)
+	CountPending(ctx context.Context, req *ListPendingDecisionsQuery) (keel.RowCount, error)
 	Summary(ctx context.Context, req PendingDecisionSummaryRequest) (*PendingDecisionSummary, error)
 	// ListRecent is what was decided lately, newest first: proposals that
 	// stood on their own, each with who decided it.

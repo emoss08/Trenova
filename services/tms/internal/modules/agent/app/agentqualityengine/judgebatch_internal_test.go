@@ -41,7 +41,7 @@ func (f *judgedEvaluations) clone(id pulid.ID) *agentevaluation.Evaluation {
 
 func (f *judgedEvaluations) ListBySuiteRun(
 	_ context.Context,
-	req agentevaluationports.ListSuiteEvaluationsRequest,
+	req *agentevaluationports.ListSuiteEvaluationsRequest,
 ) ([]*agentevaluation.Evaluation, error) {
 	out := make([]*agentevaluation.Evaluation, 0, len(f.order))
 	for _, id := range f.order {

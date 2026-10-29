@@ -385,7 +385,7 @@ func (a *Activities) closeCompaction(
 	status conversation.AssistantTurnStatus,
 	message string,
 ) {
-	turn, err := a.turnRepo.GetByID(ctx, assistantturnports.GetAssistantTurnRequest{
+	turn, err := a.turnRepo.GetByID(ctx, &assistantturnports.GetAssistantTurnRequest{
 		ID:         payload.TurnID,
 		TenantInfo: payload.TenantInfo(),
 	})

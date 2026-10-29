@@ -341,7 +341,7 @@ func (s *Service) row(
 	if !held {
 		row.Mode = agentcapabilityports.AgentCapabilityOff
 	}
-	row.AllowedModes, row.LockReason = WriteModes(definition, policy)
+	row.AllowedModes, row.LockReason = WriteModes(definition, &policy)
 
 	return row, true
 }
@@ -350,7 +350,7 @@ func (s *Service) row(
 // Allowed is not among them when it is not.
 func WriteModes(
 	definition *agentdefinition.Definition,
-	policy agenttoolports.ToolPolicy,
+	policy *agenttoolports.ToolPolicy,
 ) ([]agentcapabilityports.AgentCapabilityMode, string) {
 	all := []agentcapabilityports.AgentCapabilityMode{
 		agentcapabilityports.AgentCapabilityAllowed,
@@ -367,7 +367,7 @@ func WriteModes(
 		return asks, "Always asks · this can't be undone"
 	case policy.EgressCeiling() != agent.TierAutoExecute:
 		return asks, "Always asks · it reaches outside the organization"
-	case agenttoolpolicy.Promotable(policy) != agent.TierAutoExecute:
+	case agenttoolpolicy.Promotable(*policy) != agent.TierAutoExecute:
 		return asks, "Always asks · this change always needs a person"
 	case definition.AutonomyCeiling != agent.TierAutoExecute:
 		return asks, "Always asks · this agent asks before every change"

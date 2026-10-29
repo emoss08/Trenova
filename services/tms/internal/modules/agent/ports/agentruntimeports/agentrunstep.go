@@ -50,10 +50,10 @@ type AgentRunStepRepository interface {
 	// ErrRunStepClaimed together with the row that holds it, so the caller can
 	// tell a finished step from one that was only begun.
 	Claim(ctx context.Context, step *agentrunstep.AgentRunStep) (*agentrunstep.AgentRunStep, error)
-	Settle(ctx context.Context, req SettleAgentRunStepRequest) error
+	Settle(ctx context.Context, req *SettleAgentRunStepRequest) error
 	// Record files a step that needs no claim, such as a model reply.
 	Record(ctx context.Context, step *agentrunstep.AgentRunStep) error
-	List(ctx context.Context, req ListAgentRunStepsRequest) ([]*agentrunstep.AgentRunStep, error)
+	List(ctx context.Context, req *ListAgentRunStepsRequest) ([]*agentrunstep.AgentRunStep, error)
 	Get(ctx context.Context, req *GetAgentRunStepRequest) (*agentrunstep.AgentRunStep, error)
 	Prune(ctx context.Context, req PruneAgentRunStepsRequest) (int, error)
 }

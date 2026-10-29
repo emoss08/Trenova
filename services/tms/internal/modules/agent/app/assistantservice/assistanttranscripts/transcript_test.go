@@ -236,16 +236,16 @@ type pagingConversations struct {
 
 func (p *pagingConversations) GetThread(
 	context.Context,
-	conversationports.GetThreadRequest,
+	*conversationports.GetThreadRequest,
 ) (*conversation.Thread, error) {
 	return p.thread, nil
 }
 
 func (p *pagingConversations) ListMessages(
 	_ context.Context,
-	req conversationports.ListMessagesRequest,
+	req *conversationports.ListMessagesRequest,
 ) ([]conversation.Message, error) {
-	p.calls = append(p.calls, req)
+	p.calls = append(p.calls, *req)
 
 	end := len(p.messages)
 	if req.BeforeSequence != nil {

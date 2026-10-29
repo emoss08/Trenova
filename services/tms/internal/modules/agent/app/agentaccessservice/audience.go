@@ -186,10 +186,10 @@ func (s *Service) heldTool(name string) (HeldTool, bool) {
 		return HeldTool{}, false
 	}
 
-	return HeldToolOf(policy), true
+	return HeldToolOf(&policy), true
 }
 
-func HeldToolOf(policy agenttoolports.ToolPolicy) HeldTool {
+func HeldToolOf(policy *agenttoolports.ToolPolicy) HeldTool {
 	held := HeldTool{Name: policy.Name, Egress: policy.Egress}
 	if policy.Scope == agenttooltrust.ToolScopeSelf || policy.Resource == "" {
 		return held

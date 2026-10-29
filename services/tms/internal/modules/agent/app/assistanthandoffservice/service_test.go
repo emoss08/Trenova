@@ -34,7 +34,7 @@ type fakeConversations struct {
 
 func (f *fakeConversations) GetThread(
 	_ context.Context,
-	req conversationports.GetThreadRequest,
+	req *conversationports.GetThreadRequest,
 ) (*conversation.Thread, error) {
 	thread, ok := f.threads[req.ID]
 	if !ok || thread.UserID != req.UserID {
@@ -46,16 +46,16 @@ func (f *fakeConversations) GetThread(
 
 func (f *fakeConversations) ListMessages(
 	_ context.Context,
-	req conversationports.ListMessagesRequest,
+	req *conversationports.ListMessagesRequest,
 ) ([]conversation.Message, error) {
-	f.listed = append(f.listed, req)
+	f.listed = append(f.listed, *req)
 
 	return f.history, nil
 }
 
 func (f *fakeConversations) AppendTurn(
 	_ context.Context,
-	req conversationports.AppendTurnRequest,
+	req *conversationports.AppendTurnRequest,
 ) ([]conversation.Message, error) {
 	f.appended[req.ThreadID] = append(f.appended[req.ThreadID], req.Messages...)
 

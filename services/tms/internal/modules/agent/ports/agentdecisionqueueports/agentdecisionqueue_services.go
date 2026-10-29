@@ -78,7 +78,10 @@ type DecideAgentProposalsRequest struct {
 }
 
 type AgentDecisionQueueService interface {
-	ListPending(ctx context.Context, req ListPendingDecisionsRequest) (*PendingDecisionsPage, error)
+	ListPending(
+		ctx context.Context,
+		req *ListPendingDecisionsRequest,
+	) (*PendingDecisionsPage, error)
 	// Count is the size of the queue, for a badge. Usable narrows it to what
 	// the reader's agents raised; nil counts everything.
 	Count(

@@ -69,7 +69,7 @@ func recordConflict() keel.Conflict {
 // arithmetic the ledger needs and nothing a read-then-write would do better.
 func (r *repository) Record(
 	ctx context.Context,
-	req agenttoolports.RecordToolTrustRequest,
+	req *agenttoolports.RecordToolTrustRequest,
 ) (*agenttooltrust.ToolTrust, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agenttooltrust.ToolTrust, error) {
 		if !req.Outcome.IsValid() {
@@ -200,7 +200,7 @@ func (r *repository) ListByDefinitionIDs(
 // and the stale one is told the row moved on.
 func (r *repository) MarkTierChange(
 	ctx context.Context,
-	req agenttoolports.MarkToolTierChangeRequest,
+	req *agenttoolports.MarkToolTierChangeRequest,
 ) (*agenttooltrust.ToolTrust, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agenttooltrust.ToolTrust, error) {
 		t := agenttooltrustdb.ToolTrusts

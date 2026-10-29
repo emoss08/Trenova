@@ -57,6 +57,6 @@ type AgentDecisionRepository interface {
 		req ListAgentDecisionsByCommitWorkflowRequest,
 	) ([]*agentdecision.AgentDecision, error)
 	// MarkCommitted and MarkUndone return the decisions they settled.
-	MarkCommitted(ctx context.Context, req SettleAgentDecisionsRequest) ([]pulid.ID, error)
-	MarkUndone(ctx context.Context, req SettleAgentDecisionsRequest) ([]pulid.ID, error)
+	MarkCommitted(ctx context.Context, req *SettleAgentDecisionsRequest) ([]pulid.ID, error)
+	MarkUndone(ctx context.Context, req *SettleAgentDecisionsRequest) ([]pulid.ID, error)
 }

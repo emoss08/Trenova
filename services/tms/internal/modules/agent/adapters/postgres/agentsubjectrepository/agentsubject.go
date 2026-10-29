@@ -166,7 +166,7 @@ var subjectTables = map[agent.SubjectType]subjectExists{
 
 func (r *repository) Exists(
 	ctx context.Context,
-	req agentsubjectports.AgentSubjectExistsRequest,
+	req *agentsubjectports.AgentSubjectExistsRequest,
 ) (bool, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (bool, error) {
 		if req.SubjectID.IsNil() {

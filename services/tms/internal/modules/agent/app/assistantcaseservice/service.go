@@ -394,7 +394,7 @@ func (s *Service) Bind(
 		return nil, err
 	}
 
-	exists, err := s.subjects.Exists(ctx, agentsubjectports.AgentSubjectExistsRequest{
+	exists, err := s.subjects.Exists(ctx, &agentsubjectports.AgentSubjectExistsRequest{
 		TenantInfo:  req.TenantInfo,
 		SubjectType: req.SubjectType,
 		SubjectID:   req.SubjectID,
@@ -696,7 +696,7 @@ func (s *Service) ownThread(
 		return nil, errortypes.NewAuthorizationError("A case belongs to a person")
 	}
 
-	return s.conversations.GetThread(ctx, conversationports.GetThreadRequest{
+	return s.conversations.GetThread(ctx, &conversationports.GetThreadRequest{
 		ID:         req.ThreadID,
 		UserID:     req.Actor.UserID,
 		TenantInfo: req.TenantInfo,

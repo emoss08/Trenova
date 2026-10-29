@@ -48,7 +48,7 @@ func (s *Service) SearchDesk(
 	}
 
 	search := func(kinds []string, limit int) ([]conversationports.DeskSearchRow, error) {
-		return s.conversations.SearchDesk(ctx, conversationports.SearchDeskRequest{
+		return s.conversations.SearchDesk(ctx, &conversationports.SearchDeskRequest{
 			TenantInfo:   actor.TenantInfo(),
 			UserID:       actor.UserID,
 			Query:        query,

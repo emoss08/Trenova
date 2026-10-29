@@ -61,7 +61,10 @@ type AgentRunEventRepository interface {
 		ownerKind string,
 		ownerID pulid.ID,
 	) (int, error)
-	List(ctx context.Context, req ListAgentRunEventsRequest) ([]*agentrunevent.AgentRunEvent, error)
+	List(
+		ctx context.Context,
+		req *ListAgentRunEventsRequest,
+	) ([]*agentrunevent.AgentRunEvent, error)
 	ListConnection(
 		ctx context.Context,
 		req *ListAgentRunEventConnectionRequest,

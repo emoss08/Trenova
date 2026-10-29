@@ -41,7 +41,7 @@ type fakeTrustRepo struct {
 
 func (f *fakeTrustRepo) Record(
 	_ context.Context,
-	req agenttoolports.RecordToolTrustRequest,
+	req *agenttoolports.RecordToolTrustRequest,
 ) (*agenttooltrust.ToolTrust, error) {
 	f.recorded = append(f.recorded, req.Outcome)
 	f.row.ToolName = req.ToolName
@@ -69,7 +69,7 @@ func (f *fakeTrustRepo) Record(
 
 func (f *fakeTrustRepo) MarkTierChange(
 	_ context.Context,
-	req agenttoolports.MarkToolTierChangeRequest,
+	req *agenttoolports.MarkToolTierChangeRequest,
 ) (*agenttooltrust.ToolTrust, error) {
 	if hook := f.beforeMark; hook != nil {
 		f.beforeMark = nil
@@ -79,7 +79,7 @@ func (f *fakeTrustRepo) MarkTierChange(
 		return nil, dberror.CreateVersionMismatchError("AgentToolTrust", req.ID.String())
 	}
 
-	f.marks = append(f.marks, req)
+	f.marks = append(f.marks, *req)
 	f.row.Streak = 0
 	f.row.Version++
 	if req.Promoted {

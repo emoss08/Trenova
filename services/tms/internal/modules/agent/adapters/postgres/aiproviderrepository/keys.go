@@ -28,7 +28,7 @@ func NewKeyRepository(p KeyParams) aiproviderports.AIProviderKeyRepository {
 
 func (r *keyRepository) RecordFingerprint(
 	ctx context.Context,
-	req aiproviderports.RecordAIProviderKeyFingerprintRequest,
+	req *aiproviderports.RecordAIProviderKeyFingerprintRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		p := aiproviderdb.Providers

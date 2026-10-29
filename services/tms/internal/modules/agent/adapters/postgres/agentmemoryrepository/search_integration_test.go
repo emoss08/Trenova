@@ -75,7 +75,7 @@ func (f searchFixture) search(
 			terms = append(terms, word)
 		}
 	}
-	found, err := f.repo.Search(ctx, agentmemoryports.SearchAgentMemoriesRequest{
+	found, err := f.repo.Search(ctx, &agentmemoryports.SearchAgentMemoriesRequest{
 		TenantInfo: f.tenant,
 		Now:        f.now,
 		Query:      query,
@@ -150,7 +150,7 @@ func TestSearch_ReadsOneMemoryByIDAndBoundsTheRows(t *testing.T) {
 		)
 	}
 
-	byID, err := f.repo.Search(ctx, agentmemoryports.SearchAgentMemoriesRequest{
+	byID, err := f.repo.Search(ctx, &agentmemoryports.SearchAgentMemoriesRequest{
 		TenantInfo: f.tenant,
 		Now:        f.now,
 		IDs:        []pulid.ID{last.ID},
@@ -160,7 +160,7 @@ func TestSearch_ReadsOneMemoryByIDAndBoundsTheRows(t *testing.T) {
 	assert.Equal(t, last.ID, byID[0].ID)
 	assert.Empty(t, byID[0].SearchVector, "the search column is never read back")
 
-	defaulted, err := f.repo.Search(ctx, agentmemoryports.SearchAgentMemoriesRequest{
+	defaulted, err := f.repo.Search(ctx, &agentmemoryports.SearchAgentMemoriesRequest{
 		TenantInfo: f.tenant,
 		Now:        f.now,
 		Query:      "lane",
@@ -168,7 +168,7 @@ func TestSearch_ReadsOneMemoryByIDAndBoundsTheRows(t *testing.T) {
 	require.NoError(t, err)
 	assert.Len(t, defaulted, agentmemory.DefaultMemoryRecallLimit)
 
-	capped, err := f.repo.Search(ctx, agentmemoryports.SearchAgentMemoriesRequest{
+	capped, err := f.repo.Search(ctx, &agentmemoryports.SearchAgentMemoriesRequest{
 		TenantInfo: f.tenant,
 		Now:        f.now,
 		Query:      "lane",
@@ -185,7 +185,7 @@ func TestCountActive_CountsOnlyWhatAgentsMayRead(t *testing.T) {
 	past := f.now - 60
 	f.record(ctx, t, &agentmemory.Memory{Content: "Expired.", ExpiresAt: &past})
 	retired := f.record(ctx, t, &agentmemory.Memory{Content: "Retired."})
-	_, err := f.repo.SetStatus(ctx, agentmemoryports.SetAgentMemoryStatusQuery{
+	_, err := f.repo.SetStatus(ctx, &agentmemoryports.SetAgentMemoryStatusQuery{
 		ID:         retired.ID,
 		TenantInfo: f.tenant,
 		Status:     agentmemory.MemoryStatusRetired,

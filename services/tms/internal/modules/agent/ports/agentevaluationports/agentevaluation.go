@@ -54,7 +54,7 @@ type AgentEvaluationRepository interface {
 	CreateMany(ctx context.Context, entities []*agentevaluation.Evaluation) error
 	ListBySuiteRun(
 		ctx context.Context,
-		req ListSuiteEvaluationsRequest,
+		req *ListSuiteEvaluationsRequest,
 	) ([]*agentevaluation.Evaluation, error)
-	SkipPendingBySuiteRun(ctx context.Context, req SkipPendingSuiteEvaluationsRequest) (int, error)
+	SkipPendingBySuiteRun(ctx context.Context, req *SkipPendingSuiteEvaluationsRequest) (int, error)
 }

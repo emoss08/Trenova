@@ -239,7 +239,7 @@ func (a *Activities) FinishTurnActivity(
 	payload := in.Payload
 	tenant := payload.TenantInfo()
 
-	turn, err := a.turnRepo.GetByID(ctx, assistantturnports.GetAssistantTurnRequest{
+	turn, err := a.turnRepo.GetByID(ctx, &assistantturnports.GetAssistantTurnRequest{
 		ID:         payload.TurnID,
 		TenantInfo: tenant,
 	})
@@ -700,7 +700,7 @@ func (a *Activities) alreadySaved(
 	ctx context.Context,
 	turn *conversationturn.AssistantTurn,
 ) *TurnEnding {
-	current, err := a.turnRepo.GetByID(ctx, assistantturnports.GetAssistantTurnRequest{
+	current, err := a.turnRepo.GetByID(ctx, &assistantturnports.GetAssistantTurnRequest{
 		ID:         turn.ID,
 		TenantInfo: pagination.TenantInfo{OrgID: turn.OrganizationID, BuID: turn.BusinessUnitID},
 	})
@@ -732,7 +732,7 @@ func (a *Activities) CloseTurnActivity(
 	payload *assistantcontract.AssistantTurnPayload,
 	message string,
 ) error {
-	turn, err := a.turnRepo.GetByID(ctx, assistantturnports.GetAssistantTurnRequest{
+	turn, err := a.turnRepo.GetByID(ctx, &assistantturnports.GetAssistantTurnRequest{
 		ID:         payload.TurnID,
 		TenantInfo: payload.TenantInfo(),
 	})

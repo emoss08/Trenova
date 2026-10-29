@@ -45,9 +45,9 @@ type fakeThreads struct {
 
 func (f *fakeThreads) GetThread(
 	_ context.Context,
-	req conversationports.GetThreadRequest,
+	req *conversationports.GetThreadRequest,
 ) (*conversation.Thread, error) {
-	f.asked = append(f.asked, req)
+	f.asked = append(f.asked, *req)
 	if req.ID != f.thread || req.UserID != f.owner {
 		return nil, errortypes.NewNotFoundError("Thread not found")
 	}

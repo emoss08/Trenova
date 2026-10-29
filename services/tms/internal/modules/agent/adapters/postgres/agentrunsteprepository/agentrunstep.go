@@ -109,7 +109,7 @@ func (r *repository) Get(
 
 func (r *repository) Settle(
 	ctx context.Context,
-	req agentruntimeports.SettleAgentRunStepRequest,
+	req *agentruntimeports.SettleAgentRunStepRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		s := agentrunstepdb.AgentRunSteps
@@ -158,7 +158,7 @@ func (r *repository) Record(ctx context.Context, step *agentrunstep.AgentRunStep
 
 func (r *repository) List(
 	ctx context.Context,
-	req agentruntimeports.ListAgentRunStepsRequest,
+	req *agentruntimeports.ListAgentRunStepsRequest,
 ) ([]*agentrunstep.AgentRunStep, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agentrunstep.AgentRunStep, error) {
 		s := agentrunstepdb.AgentRunSteps

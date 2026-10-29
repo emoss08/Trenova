@@ -194,14 +194,14 @@ func statusAssignments(req *agentplanports.UpdateAgentPlanStatusRequest) []keel.
 
 func (r *repository) UpdateStatus(
 	ctx context.Context,
-	req agentplanports.UpdateAgentPlanStatusRequest,
+	req *agentplanports.UpdateAgentPlanStatusRequest,
 ) (*agentplan.AgentPlan, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agentplan.AgentPlan, error) {
 		p := agentplandb.AgentPlans
 		rows, err := p.Where(
 			p.ID.Eq(req.ID),
 			keel.When(req.FromStatus != "", p.Status.Eq(req.FromStatus)),
-		).UpdateReturning(ctx, r.db.Keel(ctx), statusAssignments(&req)...)
+		).UpdateReturning(ctx, r.db.Keel(ctx), statusAssignments(req)...)
 		if err != nil {
 			return nil, fmt.Errorf("update agent plan status: %w", err)
 		}
@@ -215,7 +215,7 @@ func (r *repository) UpdateStatus(
 
 func (r *repository) RecordProgress(
 	ctx context.Context,
-	req agentplanports.RecordAgentPlanProgressRequest,
+	req *agentplanports.RecordAgentPlanProgressRequest,
 ) (*agentplan.AgentPlan, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agentplan.AgentPlan, error) {
 		p := agentplandb.AgentPlans

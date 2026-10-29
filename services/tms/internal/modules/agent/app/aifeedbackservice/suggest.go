@@ -108,7 +108,7 @@ func (s *Service) suggestForAgent(ctx context.Context, p suggestForAgentParams) 
 
 	existing, err := s.memories.ListSuggestionContext(
 		ctx,
-		agentmemoryports.ListAgentMemorySuggestionContextRequest{
+		&agentmemoryports.ListAgentMemorySuggestionContextRequest{
 			TenantInfo:        p.tenant,
 			AgentDefinitionID: p.agentID,
 			Now:               p.now,

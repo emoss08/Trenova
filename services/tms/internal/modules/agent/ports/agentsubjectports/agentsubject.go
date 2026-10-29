@@ -17,5 +17,5 @@ type AgentSubjectExistsRequest struct {
 // AgentSubjectRepository answers whether the record an agent names is one
 // the tenant holds, before anything is filed against it.
 type AgentSubjectRepository interface {
-	Exists(ctx context.Context, req AgentSubjectExistsRequest) (bool, error)
+	Exists(ctx context.Context, req *AgentSubjectExistsRequest) (bool, error)
 }

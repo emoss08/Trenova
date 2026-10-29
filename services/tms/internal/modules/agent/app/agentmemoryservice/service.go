@@ -247,7 +247,7 @@ func (s *Service) refresh(
 	}
 
 	now := timeutils.NowUnix()
-	if err := s.repo.MarkUsed(ctx, agentmemoryports.MarkAgentMemoriesUsedRequest{
+	if err := s.repo.MarkUsed(ctx, &agentmemoryports.MarkAgentMemoriesUsedRequest{
 		TenantInfo: tenant,
 		IDs:        []pulid.ID{existing.ID},
 		At:         now,
@@ -576,7 +576,7 @@ func (s *Service) setStatus(
 		return nil, err
 	}
 
-	updated, err := s.repo.SetStatus(ctx, agentmemoryports.SetAgentMemoryStatusQuery{
+	updated, err := s.repo.SetStatus(ctx, &agentmemoryports.SetAgentMemoryStatusQuery{
 		ID:         req.ID,
 		TenantInfo: req.TenantInfo,
 		Status:     change.Status,
@@ -618,7 +618,7 @@ func (s *Service) Review(
 		return nil, err
 	}
 
-	reviewed, err := s.repo.Review(ctx, agentmemoryports.ReviewAgentMemoryQuery{
+	reviewed, err := s.repo.Review(ctx, &agentmemoryports.ReviewAgentMemoryQuery{
 		ID:         req.ID,
 		TenantInfo: req.TenantInfo,
 		ByUserID:   actor.UserID,
@@ -724,7 +724,7 @@ func (s *Service) ApproveSuggestion(
 
 	approved, err := s.repo.ResolveSuggestion(
 		ctx,
-		agentmemoryports.ResolveAgentMemorySuggestionRequest{
+		&agentmemoryports.ResolveAgentMemorySuggestionRequest{
 			ID:          req.ID,
 			TenantInfo:  req.TenantInfo,
 			Status:      agentmemory.MemoryStatusActive,
@@ -802,7 +802,7 @@ func (s *Service) DismissSuggestion(
 
 	dismissed, err := s.repo.ResolveSuggestion(
 		ctx,
-		agentmemoryports.ResolveAgentMemorySuggestionRequest{
+		&agentmemoryports.ResolveAgentMemorySuggestionRequest{
 			ID:         req.ID,
 			TenantInfo: req.TenantInfo,
 			Status:     agentmemory.MemoryStatusDismissed,
@@ -875,7 +875,7 @@ func (s *Service) Recall(
 
 	reader := s.promptReader(ctx, req.TenantInfo, req.ReaderUserID)
 
-	search := agentmemoryports.SearchAgentMemoriesRequest{
+	search := &agentmemoryports.SearchAgentMemoriesRequest{
 		TenantInfo:        req.TenantInfo,
 		AgentDefinitionID: req.AgentDefinitionID,
 		Reader:            reader,
@@ -902,12 +902,12 @@ func (s *Service) Recall(
 		return recalledAs(found, ""), nil
 	}
 
-	similar, ok := s.similar(ctx, req, &search)
+	similar, ok := s.similar(ctx, req, search)
 	if !ok {
 		return recalledAs(found, agentmemory.MemoryMatchWords), nil
 	}
 
-	return s.fuseRecall(ctx, &search, found, similar)
+	return s.fuseRecall(ctx, search, found, similar)
 }
 
 func recalledAs(
@@ -972,7 +972,7 @@ func (s *Service) fuseRecall(
 		narrowed.Query = ""
 		narrowed.IDs = missing
 		narrowed.Limit = len(missing)
-		loaded, err := s.repo.Search(ctx, narrowed)
+		loaded, err := s.repo.Search(ctx, &narrowed)
 		if err != nil {
 			return nil, err
 		}
@@ -1054,7 +1054,7 @@ func (s *Service) ForContext(
 
 	reader := s.promptReader(ctx, req.TenantInfo, req.ReaderUserID)
 
-	memories, err := s.repo.ListActive(ctx, agentmemoryports.ListActiveAgentMemoriesRequest{
+	memories, err := s.repo.ListActive(ctx, &agentmemoryports.ListActiveAgentMemoriesRequest{
 		TenantInfo:        req.TenantInfo,
 		AgentDefinitionID: req.AgentDefinitionID,
 		Reader:            reader,
@@ -1103,7 +1103,7 @@ func (s *Service) RecordUse(
 		return nil
 	}
 
-	return s.repo.MarkUsed(ctx, agentmemoryports.MarkAgentMemoriesUsedRequest{
+	return s.repo.MarkUsed(ctx, &agentmemoryports.MarkAgentMemoriesUsedRequest{
 		TenantInfo: req.TenantInfo,
 		IDs:        req.IDs,
 		At:         timeutils.NowUnix(),
@@ -1262,7 +1262,7 @@ func (s *Service) logChange(
 func sameMemoryRequest(
 	tenant pagination.TenantInfo,
 	entity *agentmemory.Memory,
-) agentmemoryports.FindActiveAgentMemoryRequest {
+) *agentmemoryports.FindActiveAgentMemoryRequest {
 	scope := entity.Scope
 	if scope == "" {
 		scope = agentmemory.MemoryScopeOrganization
@@ -1279,7 +1279,7 @@ func sameMemoryRequest(
 		role = *entity.RoleID
 	}
 
-	return agentmemoryports.FindActiveAgentMemoryRequest{
+	return &agentmemoryports.FindActiveAgentMemoryRequest{
 		OwnerUserID:       owner,
 		RoleID:            role,
 		TenantInfo:        tenant,

@@ -144,7 +144,7 @@ func (s *Service) assertPlanAllows(ctx context.Context, req StartRequest) error 
 //nolint:gocritic // AssistantTurnRepository and the services that read turns take the request by value
 func (s *Service) Active(
 	ctx context.Context,
-	req assistantturnports.ActiveAssistantTurnRequest,
+	req *assistantturnports.ActiveAssistantTurnRequest,
 ) (*conversationturn.AssistantTurn, error) {
 	return s.turns.Active(ctx, req)
 }
@@ -156,7 +156,7 @@ func (s *Service) Active(
 //nolint:gocritic // AssistantTurnRepository and the services that read turns take the request by value
 func (s *Service) ListLive(
 	ctx context.Context,
-	req assistantturnports.ListLiveAssistantTurnsRequest,
+	req *assistantturnports.ListLiveAssistantTurnsRequest,
 ) ([]*assistantturnports.LiveAssistantTurn, error) {
 	return s.turns.ListLive(ctx, req)
 }
@@ -168,7 +168,7 @@ func (s *Service) Get(
 	ctx context.Context,
 	req assistantturnports.GetAssistantTurnRequest,
 ) (*conversationturn.AssistantTurn, error) {
-	return s.turns.GetByID(ctx, req)
+	return s.turns.GetByID(ctx, &req)
 }
 
 // Close closes the turn's record and tells the person's other tabs the reply
@@ -179,7 +179,7 @@ func (s *Service) Close(
 	status conversation.AssistantTurnStatus,
 	message string,
 ) error {
-	err := s.turns.Complete(ctx, assistantturnports.CompleteAssistantTurnRequest{
+	err := s.turns.Complete(ctx, &assistantturnports.CompleteAssistantTurnRequest{
 		ID:         turn.ID,
 		TenantInfo: tenantOf(turn),
 		Status:     status,
@@ -362,7 +362,7 @@ func (s *Service) StopAllForUser(
 	ctx context.Context,
 	req assistantturnports.StopUserTurnsRequest,
 ) error {
-	live, err := s.turns.ListLive(ctx, assistantturnports.ListLiveAssistantTurnsRequest{
+	live, err := s.turns.ListLive(ctx, &assistantturnports.ListLiveAssistantTurnsRequest{
 		UserID:     req.UserID,
 		TenantInfo: req.TenantInfo,
 	})

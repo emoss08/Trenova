@@ -146,7 +146,7 @@ func (r *QueryResolver) PendingDecisions(ctx context.Context, input gqlmodel.Pen
 		req.AgentDefinitionID = definitionID
 	}
 
-	page, err := r.AgentDecisionQueueService.ListPending(ctx, req)
+	page, err := r.AgentDecisionQueueService.ListPending(ctx, &req)
 	if err != nil {
 		return nil, err
 	}

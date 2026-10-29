@@ -85,7 +85,7 @@ type turns interface {
 	) (*conversationturn.AssistantTurn, error)
 	Active(
 		ctx context.Context,
-		req assistantturnports.ActiveAssistantTurnRequest,
+		req *assistantturnports.ActiveAssistantTurnRequest,
 	) (*conversationturn.AssistantTurn, error)
 }
 
@@ -93,7 +93,7 @@ type turns interface {
 type threads interface {
 	GetThread(
 		ctx context.Context,
-		req conversationports.GetThreadRequest,
+		req *conversationports.GetThreadRequest,
 	) (*conversation.Thread, error)
 	GetThreadOwned(
 		ctx context.Context,
@@ -217,7 +217,7 @@ func (s *Service) Create(ctx context.Context, req CreateRequest) (*CreateResult,
 		return nil, err
 	}
 
-	thread, err := s.threads.GetThread(ctx, conversationports.GetThreadRequest{
+	thread, err := s.threads.GetThread(ctx, &conversationports.GetThreadRequest{
 		ID:         req.ThreadID,
 		UserID:     req.Actor.UserID,
 		TenantInfo: tenant,
@@ -306,7 +306,7 @@ func (s *Service) Plan(
 		return nil, err
 	}
 
-	thread, err := s.threads.GetThread(ctx, conversationports.GetThreadRequest{
+	thread, err := s.threads.GetThread(ctx, &conversationports.GetThreadRequest{
 		ID:         req.ThreadID,
 		UserID:     req.Actor.UserID,
 		TenantInfo: tenant,
@@ -508,7 +508,7 @@ func (s *Service) List(
 	tenant := tenantOf(req.Actor)
 	if req.ThreadID.IsNotNil() {
 		// Reading a conversation's schedules is reading the conversation.
-		if _, err := s.threads.GetThread(ctx, conversationports.GetThreadRequest{
+		if _, err := s.threads.GetThread(ctx, &conversationports.GetThreadRequest{
 			ID:         req.ThreadID,
 			UserID:     req.Actor.UserID,
 			TenantInfo: tenant,
@@ -790,7 +790,7 @@ func (s *Service) run(
 		return nil, SkipNoAccess, nil
 	}
 
-	active, err := s.turns.Active(ctx, assistantturnports.ActiveAssistantTurnRequest{
+	active, err := s.turns.Active(ctx, &assistantturnports.ActiveAssistantTurnRequest{
 		ThreadID:   thread.ID,
 		UserID:     thread.UserID,
 		TenantInfo: tenant,

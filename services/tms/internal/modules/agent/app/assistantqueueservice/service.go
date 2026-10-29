@@ -52,7 +52,7 @@ type Params struct {
 type turnStarter interface {
 	Active(
 		ctx context.Context,
-		req assistantturnports.ActiveAssistantTurnRequest,
+		req *assistantturnports.ActiveAssistantTurnRequest,
 	) (*conversationturn.AssistantTurn, error)
 	StartTurn(
 		ctx context.Context,
@@ -64,7 +64,7 @@ type turnStarter interface {
 type threadReader interface {
 	GetThread(
 		ctx context.Context,
-		req conversationports.GetThreadRequest,
+		req *conversationports.GetThreadRequest,
 	) (*conversation.Thread, error)
 }
 
@@ -580,7 +580,7 @@ func (s *Service) editable(
 }
 
 func (s *Service) ownThread(ctx context.Context, scope *Scope) error {
-	_, err := s.conversations.GetThread(ctx, conversationports.GetThreadRequest{
+	_, err := s.conversations.GetThread(ctx, &conversationports.GetThreadRequest{
 		ID:         scope.ThreadID,
 		UserID:     scope.Actor.UserID,
 		TenantInfo: scope.tenant(),
@@ -593,7 +593,7 @@ func (s *Service) active(
 	ctx context.Context,
 	scope *Scope,
 ) (*conversationturn.AssistantTurn, error) {
-	return s.turns.Active(ctx, assistantturnports.ActiveAssistantTurnRequest{
+	return s.turns.Active(ctx, &assistantturnports.ActiveAssistantTurnRequest{
 		ThreadID:   scope.ThreadID,
 		UserID:     scope.Actor.UserID,
 		TenantInfo: scope.tenant(),

@@ -138,7 +138,7 @@ func (s *Service) oldestUnreported(
 		return nil, nil
 	}
 
-	notes, err := s.conversations.ListMessages(ctx, conversationports.ListMessagesRequest{
+	notes, err := s.conversations.ListMessages(ctx, &conversationports.ListMessagesRequest{
 		ThreadID:   threadID,
 		TenantInfo: tenant,
 		Kinds:      []conversation.MessageKind{conversation.MessageKindDecisionNote},

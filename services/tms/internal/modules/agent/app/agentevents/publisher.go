@@ -91,7 +91,7 @@ func (p *Publisher) ObserveAttachments(observers ...agenteventports.AttachmentEx
 	p.attachments.Store(&next)
 }
 
-func (p *Publisher) Publish(ctx context.Context, event agenteventports.AgentEvent) {
+func (p *Publisher) Publish(ctx context.Context, event *agenteventports.AgentEvent) {
 	log := p.l.With(
 		zap.String("kind", string(event.Kind)),
 		zap.String("subjectId", event.SubjectID.String()),
@@ -112,14 +112,14 @@ func (p *Publisher) Publish(ctx context.Context, event agenteventports.AgentEven
 	// happened. It is told before the plan is consulted: an organization
 	// without automated agents still has conversations that wait.
 	if p.waits != nil {
-		p.waits.NotifyEvent(ctx, &event)
+		p.waits.NotifyEvent(ctx, event)
 	}
 	// A file read for a conversation is shown there whatever the plan says
 	// of automated agents: the person asked for it by attaching it.
 	if event.Kind == agenttrigger.EventDocumentExtracted {
 		if observers := p.attachments.Load(); observers != nil {
 			for _, observer := range *observers {
-				observer.AttachmentExtracted(ctx, &event)
+				observer.AttachmentExtracted(ctx, event)
 			}
 		}
 	}
@@ -161,7 +161,7 @@ func (p *Publisher) startFor(
 	ctx context.Context,
 	log *zap.Logger,
 	definition *agentdefinition.Definition,
-	event agenteventports.AgentEvent,
+	event *agenteventports.AgentEvent,
 ) {
 	log = log.With(zap.String("definitionId", definition.ID.String()))
 

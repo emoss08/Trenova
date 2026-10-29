@@ -107,7 +107,7 @@ type conversationReader interface {
 	) (*conversation.Thread, error)
 	ListMessages(
 		ctx context.Context,
-		req conversationports.ListMessagesRequest,
+		req *conversationports.ListMessagesRequest,
 	) ([]conversation.Message, error)
 }
 

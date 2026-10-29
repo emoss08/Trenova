@@ -210,9 +210,9 @@ type recordingKeys struct {
 
 func (f *recordingKeys) RecordFingerprint(
 	_ context.Context,
-	req aiproviderports.RecordAIProviderKeyFingerprintRequest,
+	req *aiproviderports.RecordAIProviderKeyFingerprintRequest,
 ) error {
-	f.fingerprints = append(f.fingerprints, req)
+	f.fingerprints = append(f.fingerprints, *req)
 	return nil
 }
 

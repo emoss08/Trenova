@@ -359,7 +359,7 @@ type agentRunEventReader interface {
 	) (int, error)
 	List(
 		ctx context.Context,
-		req agentruntimeports.ListAgentRunEventsRequest,
+		req *agentruntimeports.ListAgentRunEventsRequest,
 	) ([]*agentrunevent.AgentRunEvent, error)
 }
 
@@ -619,7 +619,7 @@ func (t *getAgentRunTool) addEvents(
 		return fmt.Errorf("find the run's last step: %w", err)
 	}
 
-	events, err := t.events.List(ctx, agentruntimeports.ListAgentRunEventsRequest{
+	events, err := t.events.List(ctx, &agentruntimeports.ListAgentRunEventsRequest{
 		TenantInfo: tenant,
 		OwnerKind:  owner,
 		OwnerID:    runID,

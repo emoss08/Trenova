@@ -110,16 +110,16 @@ type TurnOfMessageRequest struct {
 
 type ChapterRepository interface {
 	List(ctx context.Context, req ListChaptersRequest) ([]*conversationchapter.Chapter, error)
-	Get(ctx context.Context, req GetChapterRequest) (*conversationchapter.Chapter, error)
-	ForTurn(ctx context.Context, req ChapterForTurnRequest) (*conversationchapter.Chapter, error)
+	Get(ctx context.Context, req *GetChapterRequest) (*conversationchapter.Chapter, error)
+	ForTurn(ctx context.Context, req *ChapterForTurnRequest) (*conversationchapter.Chapter, error)
 	Count(ctx context.Context, req ListChaptersRequest) (int, error)
 	Create(
 		ctx context.Context,
 		chapter *conversationchapter.Chapter,
 	) (*conversationchapter.Chapter, error)
-	Retitle(ctx context.Context, req RetitleChapterRequest) (*conversationchapter.Chapter, error)
-	Delete(ctx context.Context, req DeleteChapterRequest) (bool, error)
-	TurnOfMessage(ctx context.Context, req TurnOfMessageRequest) (pulid.ID, error)
+	Retitle(ctx context.Context, req *RetitleChapterRequest) (*conversationchapter.Chapter, error)
+	Delete(ctx context.Context, req *DeleteChapterRequest) (bool, error)
+	TurnOfMessage(ctx context.Context, req *TurnOfMessageRequest) (pulid.ID, error)
 }
 
 type ThreadChaptersRequest struct {

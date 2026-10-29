@@ -103,7 +103,7 @@ type fakeThreads struct{ refuse bool }
 
 func (f *fakeThreads) GetThread(
 	context.Context,
-	conversationports.GetThreadRequest,
+	*conversationports.GetThreadRequest,
 ) (*conversation.Thread, error) {
 	if f.refuse {
 		return nil, errortypes.NewNotFoundError("Thread not found")

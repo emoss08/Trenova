@@ -33,9 +33,9 @@ type liveRecords struct {
 
 func (r *liveRecords) ListLive(
 	_ context.Context,
-	req assistantturnports.ListLiveAssistantTurnsRequest,
+	req *assistantturnports.ListLiveAssistantTurnsRequest,
 ) ([]*assistantturnports.LiveAssistantTurn, error) {
-	r.asked = &req
+	r.asked = req
 
 	return r.live, nil
 }

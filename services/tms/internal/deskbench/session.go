@@ -162,7 +162,7 @@ func (s *Session) CleanBenchThreads(ctx context.Context) (int, error) {
 
 	doomed := make([]pulid.ID, 0, cleanPageSize)
 	for cursor := ""; ; {
-		page, err := s.bench.Assistant.ListThreads(ctx, conversationports.ListThreadsRequest{
+		page, err := s.bench.Assistant.ListThreads(ctx, &conversationports.ListThreadsRequest{
 			UserID:          s.User.ID,
 			TenantInfo:      s.Tenant,
 			Limit:           cleanPageSize,

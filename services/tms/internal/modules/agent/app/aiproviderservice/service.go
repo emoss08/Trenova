@@ -369,7 +369,7 @@ func (s *Service) tidyKey(
 		fingerprint := secretutils.FingerprintOf(provider.CredentialFingerprintSubject(apiKey))
 		if err := s.keys.RecordFingerprint(
 			ctx,
-			aiproviderports.RecordAIProviderKeyFingerprintRequest{
+			&aiproviderports.RecordAIProviderKeyFingerprintRequest{
 				ID:         provider.ID,
 				TenantInfo: tenantInfo,
 				Prefix:     fingerprint.Prefix,

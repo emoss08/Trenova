@@ -22,7 +22,7 @@ type AgentEvent struct {
 }
 
 type AgentEventPublisher interface {
-	Publish(ctx context.Context, event AgentEvent)
+	Publish(ctx context.Context, event *AgentEvent)
 }
 
 // AttachmentExtractionObserver is told when a document's extraction is saved,
@@ -37,6 +37,6 @@ func PublishAgentEvent(ctx context.Context, publisher AgentEventPublisher, event
 	}
 
 	kernelports.AfterCommit(ctx, func(committedCtx context.Context) {
-		publisher.Publish(committedCtx, event)
+		publisher.Publish(committedCtx, &event)
 	})
 }

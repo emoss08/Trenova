@@ -44,9 +44,9 @@ func (f *suggestionRepo) Update(
 
 func (f *suggestionRepo) ResolveSuggestion(
 	_ context.Context,
-	req agentmemoryports.ResolveAgentMemorySuggestionRequest,
+	req *agentmemoryports.ResolveAgentMemorySuggestionRequest,
 ) (*agentmemory.Memory, error) {
-	f.resolved = append(f.resolved, req)
+	f.resolved = append(f.resolved, *req)
 	resolved := *f.memory
 	resolved.Status = req.Status
 	if req.Status == agentmemory.MemoryStatusActive {
@@ -60,9 +60,9 @@ func (f *suggestionRepo) ResolveSuggestion(
 
 func (f *suggestionRepo) SetStatus(
 	_ context.Context,
-	req agentmemoryports.SetAgentMemoryStatusQuery,
+	req *agentmemoryports.SetAgentMemoryStatusQuery,
 ) (*agentmemory.Memory, error) {
-	f.statuses = append(f.statuses, req)
+	f.statuses = append(f.statuses, *req)
 	updated := *f.memory
 	updated.Status = req.Status
 

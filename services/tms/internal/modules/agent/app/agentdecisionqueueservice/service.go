@@ -75,7 +75,7 @@ func New(p Params) agentdecisionqueueports.AgentDecisionQueueService {
 
 func (s *Service) ListPending(
 	ctx context.Context,
-	req agentdecisionqueueports.ListPendingDecisionsRequest,
+	req *agentdecisionqueueports.ListPendingDecisionsRequest,
 ) (*agentdecisionqueueports.PendingDecisionsPage, error) {
 	if withheld(req.Usable) {
 		return &agentdecisionqueueports.PendingDecisionsPage{
@@ -91,7 +91,7 @@ func (s *Service) ListPending(
 		limit = maxPageSize
 	}
 
-	listReq := agentdecisionqueueports.ListPendingDecisionsQuery{
+	listReq := &agentdecisionqueueports.ListPendingDecisionsQuery{
 		TenantInfo:        req.TenantInfo,
 		Limit:             limit,
 		AgentDefinitionID: req.AgentDefinitionID,
@@ -229,7 +229,7 @@ func (s *Service) Count(
 		return 0, err
 	}
 
-	count, err := s.queue.CountPending(ctx, agentdecisionqueueports.ListPendingDecisionsQuery{
+	count, err := s.queue.CountPending(ctx, &agentdecisionqueueports.ListPendingDecisionsQuery{
 		TenantInfo:     tenant,
 		Audience:       audienceOf(usable),
 		Now:            timeutils.NowUnix(),

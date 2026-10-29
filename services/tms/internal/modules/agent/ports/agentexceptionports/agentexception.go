@@ -58,6 +58,6 @@ type AgentExceptionRepository interface {
 	) (*agentexception.AgentException, error)
 	UpdateResolution(
 		ctx context.Context,
-		req UpdateAgentExceptionResolutionRequest,
+		req *UpdateAgentExceptionResolutionRequest,
 	) (*agentexception.AgentException, error)
 }

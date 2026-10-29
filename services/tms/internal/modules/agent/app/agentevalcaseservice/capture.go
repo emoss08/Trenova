@@ -410,7 +410,7 @@ func (s *Service) freezeChat(
 	tenantInfo pagination.TenantInfo,
 	anchor turnAnchor,
 ) (*frozenTurn, *redaction, error) {
-	messages, err := s.conversations.ListMessages(ctx, conversationports.ListMessagesRequest{
+	messages, err := s.conversations.ListMessages(ctx, &conversationports.ListMessagesRequest{
 		ThreadID:     anchor.threadID,
 		TenantInfo:   tenantInfo,
 		ExcludeKinds: conversation.ModelHiddenKinds(),

@@ -327,9 +327,9 @@ func (f *fakeRunEvents) NextSequence(
 
 func (f *fakeRunEvents) List(
 	_ context.Context,
-	req agentruntimeports.ListAgentRunEventsRequest,
+	req *agentruntimeports.ListAgentRunEventsRequest,
 ) ([]*agentrunevent.AgentRunEvent, error) {
-	f.requests = append(f.requests, req)
+	f.requests = append(f.requests, *req)
 
 	return f.events, nil
 }

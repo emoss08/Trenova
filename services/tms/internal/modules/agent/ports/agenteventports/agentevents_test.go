@@ -15,8 +15,8 @@ type recordingAgentEventPublisher struct {
 	events []AgentEvent
 }
 
-func (p *recordingAgentEventPublisher) Publish(_ context.Context, event AgentEvent) {
-	p.events = append(p.events, event)
+func (p *recordingAgentEventPublisher) Publish(_ context.Context, event *AgentEvent) {
+	p.events = append(p.events, *event)
 }
 
 func TestPublishAgentEventPublishesAtOnceOutsideATransaction(t *testing.T) {

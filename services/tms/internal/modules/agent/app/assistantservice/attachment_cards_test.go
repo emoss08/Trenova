@@ -442,7 +442,7 @@ func (c *attachmentConversations) CarriesAttachment(
 
 func (c *attachmentConversations) GetThread(
 	_ context.Context,
-	req conversationports.GetThreadRequest,
+	req *conversationports.GetThreadRequest,
 ) (*conversation.Thread, error) {
 	if c.thread == nil || c.thread.ID != req.ID || c.thread.UserID != req.UserID {
 		return nil, errortypes.NewNotFoundError("Thread not found")

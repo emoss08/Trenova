@@ -157,7 +157,7 @@ func (s *Service) takeBack(
 	proposals []*agent.AgentProposal,
 	actor *permissionports.RequestActor,
 ) {
-	if _, err := s.decisionRepo.MarkUndone(ctx, agentdecisionports.SettleAgentDecisionsRequest{
+	if _, err := s.decisionRepo.MarkUndone(ctx, &agentdecisionports.SettleAgentDecisionsRequest{
 		IDs:            decisions,
 		TenantInfo:     tenant,
 		At:             timeutils.NowUnix(),
@@ -172,12 +172,15 @@ func (s *Service) takeBack(
 
 // reopen moves a proposal from Approving back to Pending.
 func (s *Service) reopen(ctx context.Context, tenant pagination.TenantInfo, proposalID pulid.ID) {
-	if _, err := s.proposalRepo.UpdateStatus(ctx, agentproposalports.UpdateAgentProposalStatusRequest{
-		ID:         proposalID,
-		Status:     agent.ProposalStatusPending,
-		FromStatus: agent.ProposalStatusApproving,
-		TenantInfo: tenant,
-	}); err != nil {
+	if _, err := s.proposalRepo.UpdateStatus(
+		ctx,
+		&agentproposalports.UpdateAgentProposalStatusRequest{
+			ID:         proposalID,
+			Status:     agent.ProposalStatusPending,
+			FromStatus: agent.ProposalStatusApproving,
+			TenantInfo: tenant,
+		},
+	); err != nil {
 		s.l.Error("an undone approval's proposal could not be reopened",
 			zap.String("proposal", proposalID.String()), zap.Error(err))
 	}
@@ -216,7 +219,7 @@ func (s *Service) CommitApproval(
 	}
 	claimed, err := s.decisionRepo.MarkCommitted(
 		ctx,
-		agentdecisionports.SettleAgentDecisionsRequest{
+		&agentdecisionports.SettleAgentDecisionsRequest{
 			IDs:        open,
 			TenantInfo: tenant,
 			At:         timeutils.NowUnix(),
@@ -310,12 +313,15 @@ func (s *Service) commitOne(
 		return
 	}
 
-	if _, err = s.proposalRepo.UpdateStatus(ctx, agentproposalports.UpdateAgentProposalStatusRequest{
-		ID:         *decision.ProposalID,
-		Status:     proposalStatusFor(decision.Decision),
-		FromStatus: agent.ProposalStatusApproving,
-		TenantInfo: tenant,
-	}); err != nil {
+	if _, err = s.proposalRepo.UpdateStatus(
+		ctx,
+		&agentproposalports.UpdateAgentProposalStatusRequest{
+			ID:         *decision.ProposalID,
+			Status:     proposalStatusFor(decision.Decision),
+			FromStatus: agent.ProposalStatusApproving,
+			TenantInfo: tenant,
+		},
+	); err != nil {
 		if errortypes.IsVersionMismatchError(err) {
 			// Already carried out, by an attempt that got this far.
 			return
@@ -374,7 +380,7 @@ func (s *Service) UndoOwnApproval(
 			open = append(open, decision.ID)
 		}
 	}
-	undone, err := s.decisionRepo.MarkUndone(ctx, agentdecisionports.SettleAgentDecisionsRequest{
+	undone, err := s.decisionRepo.MarkUndone(ctx, &agentdecisionports.SettleAgentDecisionsRequest{
 		IDs:            open,
 		TenantInfo:     req.TenantInfo,
 		At:             timeutils.NowUnix(),
@@ -408,10 +414,13 @@ func (s *Service) UndoOwnApproval(
 		}
 		s.reopen(ctx, req.TenantInfo, *decision.ProposalID)
 		s.logUndo(decision, auditActor)
-		if proposal, getErr := s.proposalRepo.GetByID(ctx, agentproposalports.GetAgentProposalByIDRequest{
-			ID:         *decision.ProposalID,
-			TenantInfo: &req.TenantInfo,
-		}); getErr == nil {
+		if proposal, getErr := s.proposalRepo.GetByID(
+			ctx,
+			agentproposalports.GetAgentProposalByIDRequest{
+				ID:         *decision.ProposalID,
+				TenantInfo: &req.TenantInfo,
+			},
+		); getErr == nil {
 			s.announce(ctx, proposal, req.TenantInfo, auditActor, agentactivityports.ActivityUndone)
 		}
 	}

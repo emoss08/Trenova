@@ -21,9 +21,9 @@ type deskSearchConversations struct {
 
 func (c *deskSearchConversations) SearchDesk(
 	_ context.Context,
-	req conversationports.SearchDeskRequest,
+	req *conversationports.SearchDeskRequest,
 ) ([]conversationports.DeskSearchRow, error) {
-	c.calls = append(c.calls, req)
+	c.calls = append(c.calls, *req)
 	out := []conversationports.DeskSearchRow{}
 	for _, kind := range req.Kinds {
 		out = append(out, c.rows[kind]...)

@@ -20,16 +20,16 @@ type stubRunsByIDs struct {
 
 func (s *stubRunsByIDs) ListByIDs(
 	_ context.Context,
-	req agentruntimeports.ListAgentRunsByIDsRequest,
+	req *agentruntimeports.ListAgentRunsByIDsRequest,
 ) ([]*agent.AgentRun, error) {
-	s.requests = append(s.requests, req)
+	s.requests = append(s.requests, *req)
 
 	return s.visible, nil
 }
 
 func (s *stubRunsByIDs) ListTranscriptsByIDs(
 	ctx context.Context,
-	req agentruntimeports.ListAgentRunsByIDsRequest,
+	req *agentruntimeports.ListAgentRunsByIDsRequest,
 ) ([]*agent.AgentRun, error) {
 	return s.ListByIDs(ctx, req)
 }

@@ -40,9 +40,9 @@ func (f *fakePlans) GetByID(
 
 func (f *fakePlans) UpdateStatus(
 	_ context.Context,
-	req agentplanports.UpdateAgentPlanStatusRequest,
+	req *agentplanports.UpdateAgentPlanStatusRequest,
 ) (*agentplan.AgentPlan, error) {
-	f.statuses = append(f.statuses, req)
+	f.statuses = append(f.statuses, *req)
 	f.plan.Status = req.Status
 	if req.CommitsAt != 0 {
 		commitsAt := req.CommitsAt
@@ -61,9 +61,9 @@ func (f *fakePlans) UpdateStatus(
 
 func (f *fakePlans) RecordProgress(
 	_ context.Context,
-	req agentplanports.RecordAgentPlanProgressRequest,
+	req *agentplanports.RecordAgentPlanProgressRequest,
 ) (*agentplan.AgentPlan, error) {
-	f.progress = append(f.progress, req)
+	f.progress = append(f.progress, *req)
 	f.plan.Status = req.Status
 	f.plan.CompletedSteps = req.CompletedSteps
 	f.plan.FailedStep = req.FailedStep

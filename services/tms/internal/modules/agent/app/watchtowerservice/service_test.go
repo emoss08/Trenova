@@ -308,8 +308,8 @@ type stubEvents struct {
 	published []agenteventports.AgentEvent
 }
 
-func (e *stubEvents) Publish(_ context.Context, event agenteventports.AgentEvent) {
-	e.published = append(e.published, event)
+func (e *stubEvents) Publish(_ context.Context, event *agenteventports.AgentEvent) {
+	e.published = append(e.published, *event)
 }
 
 type stubRuns struct {

@@ -67,7 +67,7 @@ func TestMemoryReaders_ScopeAMemoryKeptForOneAgentToThatAgent(t *testing.T) {
 	require.NoError(t, err)
 
 	read := func(agentID pulid.ID) []pulid.ID {
-		listed, listErr := repo.ListActive(ctx, agentmemoryports.ListActiveAgentMemoriesRequest{
+		listed, listErr := repo.ListActive(ctx, &agentmemoryports.ListActiveAgentMemoriesRequest{
 			TenantInfo:        tenant,
 			AgentDefinitionID: agentID,
 			Now:               now,
@@ -86,7 +86,7 @@ func TestMemoryReaders_ScopeAMemoryKeptForOneAgentToThatAgent(t *testing.T) {
 	assert.ElementsMatch(t, []pulid.ID{organization.ID, written.ID}, read(pulid.Nil),
 		"a prompt for no agent in particular reads only the organization's")
 
-	recalled, err := repo.Search(ctx, agentmemoryports.SearchAgentMemoriesRequest{
+	recalled, err := repo.Search(ctx, &agentmemoryports.SearchAgentMemoriesRequest{
 		TenantInfo:        tenant,
 		AgentDefinitionID: dispatch,
 		Now:               now,
@@ -122,7 +122,7 @@ func TestResolveSuggestion_ApprovesForTheScopeAsked(t *testing.T) {
 		require.NoError(t, err)
 
 		resolved, err := repo.ResolveSuggestion(ctx,
-			agentmemoryports.ResolveAgentMemorySuggestionRequest{
+			&agentmemoryports.ResolveAgentMemorySuggestionRequest{
 				ID:         created.ID,
 				TenantInfo: tenant,
 				Status:     agentmemory.MemoryStatusActive,
@@ -161,7 +161,7 @@ func TestResolveSuggestion_RecordsAReviewOnlyWhenAPersonApproves(t *testing.T) {
 		require.NoError(t, err)
 
 		resolved, err := repo.ResolveSuggestion(ctx,
-			agentmemoryports.ResolveAgentMemorySuggestionRequest{
+			&agentmemoryports.ResolveAgentMemorySuggestionRequest{
 				ID:         created.ID,
 				TenantInfo: tenant,
 				Status:     agentmemory.MemoryStatusActive,

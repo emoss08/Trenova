@@ -134,7 +134,7 @@ type memoryStore interface {
 	Create(ctx context.Context, entity *agentmemory.Memory) (*agentmemory.Memory, error)
 	ListSuggestionContext(
 		ctx context.Context,
-		req agentmemoryports.ListAgentMemorySuggestionContextRequest,
+		req *agentmemoryports.ListAgentMemorySuggestionContextRequest,
 	) ([]*agentmemory.Memory, error)
 }
 

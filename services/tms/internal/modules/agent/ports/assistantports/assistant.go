@@ -197,7 +197,7 @@ type AssistantService interface {
 	) (*conversation.Thread, error)
 	ListThreads(
 		ctx context.Context,
-		req conversationports.ListThreadsRequest,
+		req *conversationports.ListThreadsRequest,
 	) (*conversationports.ThreadPage, error)
 	CountThreadShelves(
 		ctx context.Context,
@@ -205,7 +205,7 @@ type AssistantService interface {
 	) (*conversationports.ThreadShelfCounts, error)
 	GetThread(
 		ctx context.Context,
-		req conversationports.GetThreadRequest,
+		req *conversationports.GetThreadRequest,
 	) (*conversation.Thread, error)
 	MarkThreadRead(ctx context.Context, req conversationports.GetThreadRequest) error
 	SearchMentions(
@@ -245,7 +245,7 @@ type AssistantService interface {
 		ctx context.Context,
 		req ListThreadMessagesRequest,
 	) (*ThreadMessagesPage, error)
-	DeleteThread(ctx context.Context, req conversationports.GetThreadRequest) error
+	DeleteThread(ctx context.Context, req *conversationports.GetThreadRequest) error
 	// StartAsk opens the hidden thread a quick question is answered on. The
 	// answer is a turn like any other; the thread is listed only when the
 	// person keeps it.

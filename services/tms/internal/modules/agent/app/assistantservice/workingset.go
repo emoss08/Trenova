@@ -23,11 +23,14 @@ func (s *Service) keepWorkingSet(
 	}
 
 	next := conversationworkingset.Touch(turn.Thread.WorkingSet, touched...)
-	if err := s.conversations.UpdateThreadContext(ctx, conversationports.UpdateThreadContextRequest{
-		ThreadID:   turn.Thread.ID,
-		TenantInfo: tenant,
-		WorkingSet: &next,
-	}); err != nil {
+	if err := s.conversations.UpdateThreadContext(
+		ctx,
+		&conversationports.UpdateThreadContextRequest{
+			ThreadID:   turn.Thread.ID,
+			TenantInfo: tenant,
+			WorkingSet: &next,
+		},
+	); err != nil {
 		s.logger.Warn("could not keep the records a conversation is about",
 			zap.String("thread", turn.Thread.ID.String()),
 			zap.Error(err),

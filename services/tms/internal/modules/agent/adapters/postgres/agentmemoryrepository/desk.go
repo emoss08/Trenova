@@ -121,13 +121,13 @@ func listDeskQuery(req *agentmemoryports.ListDeskMemoriesQuery) *keel.Query[*age
 
 func (r *repository) ListDesk(
 	ctx context.Context,
-	req agentmemoryports.ListDeskMemoriesQuery,
+	req *agentmemoryports.ListDeskMemoriesQuery,
 ) ([]*agentmemoryports.DeskMemoryRow, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*agentmemoryports.DeskMemoryRow, error) {
-			memories, err := listDeskQuery(&req).List(ctx, r.db.Keel(ctx))
+			memories, err := listDeskQuery(req).List(ctx, r.db.Keel(ctx))
 			if err != nil {
 				return nil, fmt.Errorf("list desk memories: %w", err)
 			}
@@ -139,7 +139,7 @@ func (r *repository) ListDesk(
 
 func (r *repository) CountDesk(
 	ctx context.Context,
-	filter agentmemoryports.DeskMemoryFilter,
+	filter *agentmemoryports.DeskMemoryFilter,
 ) ([]agentmemoryports.DeskMemoryCountRow, error) {
 	return dbtx.Read(
 		ctx,
@@ -149,7 +149,7 @@ func (r *repository) CountDesk(
 			rows, err := keel.Into[deskCount](ctx, r.db.Keel(ctx), m.
 				Group(m.Scope, m.RoleID).
 				Pick(m.Scope, m.RoleID, keel.Count()).
-				Where(deskVisible(&filter)))
+				Where(deskVisible(filter)))
 			if err != nil {
 				return nil, fmt.Errorf("count desk memories: %w", err)
 			}
@@ -202,7 +202,7 @@ func (r *repository) GetDesk(
 // Like Update it leaves where the memory came from alone.
 func (r *repository) Revise(
 	ctx context.Context,
-	req agentmemoryports.ReviseAgentMemoryRequest,
+	req *agentmemoryports.ReviseAgentMemoryRequest,
 ) (*agentmemory.Memory, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agentmemory.Memory, error) {
 		owner, role := pulid.Nil, pulid.Nil

@@ -102,9 +102,9 @@ type fakeConversations struct {
 
 func (f *fakeConversations) AddSavedMemories(
 	_ context.Context,
-	req conversationports.AddSavedMemoriesRequest,
+	req *conversationports.AddSavedMemoriesRequest,
 ) error {
-	f.added = append(f.added, req)
+	f.added = append(f.added, *req)
 
 	return nil
 }

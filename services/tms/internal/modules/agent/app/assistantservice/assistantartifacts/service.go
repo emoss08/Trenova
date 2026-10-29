@@ -54,7 +54,7 @@ func (s *Service) exportSourceOf(
 	req conversationports.GetThreadRequest,
 	artifactID pulid.ID,
 ) (*exportSource, error) {
-	if _, err := s.conversations.GetThread(ctx, req); err != nil {
+	if _, err := s.conversations.GetThread(ctx, &req); err != nil {
 		return nil, err
 	}
 	if s.artifacts == nil {
@@ -245,7 +245,7 @@ func (s *Service) threadDefinition(
 	if s.definitions == nil {
 		return nil
 	}
-	thread, err := s.conversations.GetThread(ctx, req)
+	thread, err := s.conversations.GetThread(ctx, &req)
 	if err != nil || thread.AgentDefinitionID.IsNil() {
 		return nil
 	}
@@ -271,7 +271,7 @@ func (s *Service) ListThreadArtifacts(
 	req conversationports.GetThreadRequest,
 	opts assistantartifactports.ListArtifactsOptions,
 ) (*assistantartifactports.AssistantArtifactPage, error) {
-	if _, err := s.conversations.GetThread(ctx, req); err != nil {
+	if _, err := s.conversations.GetThread(ctx, &req); err != nil {
 		return nil, err
 	}
 	if opts.Family != "" && !opts.Family.IsValid() {
@@ -316,7 +316,7 @@ func (s *Service) ArtifactLineage(
 	req conversationports.GetThreadRequest,
 	artifactID pulid.ID,
 ) ([]assistantartifactports.AssistantArtifact, error) {
-	if _, err := s.conversations.GetThread(ctx, req); err != nil {
+	if _, err := s.conversations.GetThread(ctx, &req); err != nil {
 		return nil, err
 	}
 	if s.artifacts == nil {
@@ -340,7 +340,7 @@ func (s *Service) ArtifactBySlug(
 	req conversationports.GetThreadRequest,
 	slug string,
 ) ([]assistantartifactports.AssistantArtifact, error) {
-	if _, err := s.conversations.GetThread(ctx, req); err != nil {
+	if _, err := s.conversations.GetThread(ctx, &req); err != nil {
 		return nil, err
 	}
 	if s.artifacts == nil {
@@ -404,7 +404,7 @@ func (s *Service) RunArtifactReport(
 	req conversationports.GetThreadRequest,
 	artifactID pulid.ID,
 ) (*assistantartifactports.AssistantArtifact, error) {
-	if _, err := s.conversations.GetThread(ctx, req); err != nil {
+	if _, err := s.conversations.GetThread(ctx, &req); err != nil {
 		return nil, err
 	}
 	if s.artifacts == nil {
@@ -737,7 +737,7 @@ func (s *Service) PinArtifact(
 	artifactID pulid.ID,
 	pinned bool,
 ) (*assistantartifactports.AssistantArtifact, error) {
-	if _, err := s.conversations.GetThread(ctx, req); err != nil {
+	if _, err := s.conversations.GetThread(ctx, &req); err != nil {
 		return nil, err
 	}
 	if s.artifacts == nil {
@@ -884,7 +884,7 @@ func (s *Service) documentLineage(
 	req conversationports.GetThreadRequest,
 	artifactID pulid.ID,
 ) ([]*assistantartifact.Artifact, error) {
-	if _, err := s.conversations.GetThread(ctx, req); err != nil {
+	if _, err := s.conversations.GetThread(ctx, &req); err != nil {
 		return nil, err
 	}
 	if s.artifacts == nil {
@@ -1049,7 +1049,7 @@ func (s *Service) RewriteDocument(
 		return nil, errortypes.NewBusinessError("Rewriting is not available here")
 	}
 
-	thread, err := s.conversations.GetThread(ctx, req)
+	thread, err := s.conversations.GetThread(ctx, &req)
 	if err != nil {
 		return nil, err
 	}

@@ -235,7 +235,7 @@ func (f *facts) assessParty(
 ) error {
 	switch {
 	case c.ShipmentID.IsNotNil():
-		found, err := f.subjects.Exists(ctx, agentsubjectports.AgentSubjectExistsRequest{
+		found, err := f.subjects.Exists(ctx, &agentsubjectports.AgentSubjectExistsRequest{
 			TenantInfo:  tenant,
 			SubjectType: agent.SubjectShipment,
 			SubjectID:   c.ShipmentID,

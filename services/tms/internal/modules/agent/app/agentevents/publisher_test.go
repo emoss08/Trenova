@@ -86,7 +86,7 @@ func TestPublish_StartsEachSubscribedDefinition(t *testing.T) {
 	f := newFixture(first, second)
 	subject := pulid.MustNew("bqi_")
 
-	f.publisher.Publish(t.Context(), agenteventports.AgentEvent{
+	f.publisher.Publish(t.Context(), &agenteventports.AgentEvent{
 		Kind:       agenttrigger.EventBillingQueueItemException,
 		SubjectID:  subject,
 		TenantInfo: tenantInfo,
@@ -115,7 +115,7 @@ func TestPublish_SkipsDefinitionWithOpenRunForSubject(t *testing.T) {
 	f := newFixture(busy, idle)
 	f.runService.open[busy.ID] = true
 
-	f.publisher.Publish(t.Context(), agenteventports.AgentEvent{
+	f.publisher.Publish(t.Context(), &agenteventports.AgentEvent{
 		Kind:       agenttrigger.EventShipmentMoveUnassigned,
 		SubjectID:  pulid.MustNew("smv_"),
 		TenantInfo: tenantInfo,
@@ -129,7 +129,7 @@ func TestPublish_IgnoresUnknownKind(t *testing.T) {
 
 	f := newFixture(&agentdefinition.Definition{ID: pulid.MustNew("agd_")})
 
-	f.publisher.Publish(t.Context(), agenteventports.AgentEvent{
+	f.publisher.Publish(t.Context(), &agenteventports.AgentEvent{
 		Kind:       agenttrigger.EventKind("not.a.kind"),
 		SubjectID:  pulid.MustNew("shp_"),
 		TenantInfo: tenantInfo,
@@ -143,11 +143,11 @@ func TestPublish_IgnoresMissingSubjectOrTenant(t *testing.T) {
 
 	f := newFixture(&agentdefinition.Definition{ID: pulid.MustNew("agd_")})
 
-	f.publisher.Publish(t.Context(), agenteventports.AgentEvent{
+	f.publisher.Publish(t.Context(), &agenteventports.AgentEvent{
 		Kind:       agenttrigger.EventShipmentCreated,
 		TenantInfo: tenantInfo,
 	})
-	f.publisher.Publish(t.Context(), agenteventports.AgentEvent{
+	f.publisher.Publish(t.Context(), &agenteventports.AgentEvent{
 		Kind:      agenttrigger.EventShipmentCreated,
 		SubjectID: pulid.MustNew("shp_"),
 	})
@@ -164,7 +164,7 @@ func TestPublish_StartFailureDoesNotPanicOrStopOthers(t *testing.T) {
 	)
 	f.runService.err = errors.New("temporal down")
 
-	f.publisher.Publish(t.Context(), agenteventports.AgentEvent{
+	f.publisher.Publish(t.Context(), &agenteventports.AgentEvent{
 		Kind:       agenttrigger.EventDocumentExtracted,
 		SubjectID:  pulid.MustNew("doc_"),
 		TenantInfo: tenantInfo,

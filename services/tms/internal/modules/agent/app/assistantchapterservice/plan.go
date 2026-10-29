@@ -38,7 +38,7 @@ func (s *Service) Plan(
 ) (*assistantchapterports.ChapterPlan, error) {
 	plan := &assistantchapterports.ChapterPlan{Turn: *req}
 
-	turn, err := s.turns.GetByID(ctx, assistantturnports.GetAssistantTurnRequest{
+	turn, err := s.turns.GetByID(ctx, &assistantturnports.GetAssistantTurnRequest{
 		ID:         req.TurnID,
 		TenantInfo: req.TenantInfo,
 		UserID:     req.UserID,
@@ -59,7 +59,7 @@ func (s *Service) Plan(
 	}
 	auto := !control.AutoChaptersOff
 
-	existing, err := s.chapters.ForTurn(ctx, assistantchapterports.ChapterForTurnRequest{
+	existing, err := s.chapters.ForTurn(ctx, &assistantchapterports.ChapterForTurnRequest{
 		ThreadID:   req.ThreadID,
 		TurnID:     req.TurnID,
 		TenantInfo: req.TenantInfo,
@@ -142,7 +142,7 @@ func (s *Service) planOpened(
 		return plan, nil
 	}
 
-	recent, err := s.conversations.ListMessages(ctx, conversationports.ListMessagesRequest{
+	recent, err := s.conversations.ListMessages(ctx, &conversationports.ListMessagesRequest{
 		ThreadID:        plan.Turn.ThreadID,
 		TenantInfo:      plan.Turn.TenantInfo,
 		Limit:           recentMessages,
@@ -270,7 +270,7 @@ func (s *Service) Apply(
 	turn := &plan.Turn
 
 	if plan.Remove {
-		removed, err := s.chapters.Delete(ctx, assistantchapterports.DeleteChapterRequest{
+		removed, err := s.chapters.Delete(ctx, &assistantchapterports.DeleteChapterRequest{
 			ID:         plan.ChapterID,
 			ThreadID:   turn.ThreadID,
 			TenantInfo: turn.TenantInfo,
@@ -305,7 +305,7 @@ func (s *Service) Apply(
 
 		return s.open(ctx, plan, answer.Title, plan.ModelSource, outcome)
 	case answer.Title != "":
-		if _, err := s.chapters.Retitle(ctx, assistantchapterports.RetitleChapterRequest{
+		if _, err := s.chapters.Retitle(ctx, &assistantchapterports.RetitleChapterRequest{
 			ID:          plan.ChapterID,
 			ThreadID:    turn.ThreadID,
 			TenantInfo:  turn.TenantInfo,

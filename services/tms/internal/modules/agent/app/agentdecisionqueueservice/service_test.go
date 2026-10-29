@@ -44,9 +44,9 @@ func (q *stubQueue) Summary(
 
 func (q *stubQueue) ListPending(
 	_ context.Context,
-	req agentdecisionqueueports.ListPendingDecisionsQuery,
+	req *agentdecisionqueueports.ListPendingDecisionsQuery,
 ) (*agentdecisionqueueports.PendingDecisionsPageRow, error) {
-	q.last = req
+	q.last = *req
 
 	return q.page, nil
 }
@@ -62,9 +62,9 @@ func (q *stubQueue) ListRecent(
 
 func (q *stubQueue) CountPending(
 	_ context.Context,
-	req agentdecisionqueueports.ListPendingDecisionsQuery,
+	req *agentdecisionqueueports.ListPendingDecisionsQuery,
 ) (keel.RowCount, error) {
-	q.lastCount = req
+	q.lastCount = *req
 
 	return keel.RowCount{N: int64(q.count), Exact: q.count <= 10_000}, nil
 }
@@ -455,7 +455,7 @@ func TestListPending_LoadsRecordsInQueueOrderAndDropsTheGone(t *testing.T) {
 		shadow:    stubShadow{},
 	}
 
-	page, err := svc.ListPending(t.Context(), agentdecisionqueueports.ListPendingDecisionsRequest{
+	page, err := svc.ListPending(t.Context(), &agentdecisionqueueports.ListPendingDecisionsRequest{
 		First:             2,
 		ToolName:          " dispatch_assign_move ",
 		IncludeTotalCount: true,
@@ -477,7 +477,7 @@ func TestListPending_LoadsRecordsInQueueOrderAndDropsTheGone(t *testing.T) {
 
 	_, err = svc.ListPending(
 		t.Context(),
-		agentdecisionqueueports.ListPendingDecisionsRequest{After: "not-a-cursor"},
+		&agentdecisionqueueports.ListPendingDecisionsRequest{After: "not-a-cursor"},
 	)
 	require.Error(t, err)
 }
@@ -514,7 +514,7 @@ func TestListPending_ListsWhatThePauseHoldsAndTheBadgeLeavesItOut(t *testing.T) 
 		shadow:    stubShadow{shadow: true},
 	}
 
-	page, err := svc.ListPending(t.Context(), agentdecisionqueueports.ListPendingDecisionsRequest{})
+	page, err := svc.ListPending(t.Context(), &agentdecisionqueueports.ListPendingDecisionsRequest{})
 	require.NoError(t, err)
 	require.Len(t, page.Items, 1)
 	assert.Equal(t, waiting, page.Items[0].Proposal)

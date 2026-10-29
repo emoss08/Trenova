@@ -51,25 +51,25 @@ func (f *fakeMemoryRepo) Create(
 
 func (f *fakeMemoryRepo) FindActive(
 	_ context.Context,
-	req agentmemoryports.FindActiveAgentMemoryRequest,
+	req *agentmemoryports.FindActiveAgentMemoryRequest,
 ) (*agentmemory.Memory, error) {
-	f.sought = &req
+	f.sought = req
 
 	return f.found, nil
 }
 
 func (f *fakeMemoryRepo) ListActive(
 	_ context.Context,
-	req agentmemoryports.ListActiveAgentMemoriesRequest,
+	req *agentmemoryports.ListActiveAgentMemoriesRequest,
 ) ([]*agentmemory.Memory, error) {
-	f.listed = &req
+	f.listed = req
 
 	return f.active, nil
 }
 
 func (f *fakeMemoryRepo) MarkUsed(
 	_ context.Context,
-	req agentmemoryports.MarkAgentMemoriesUsedRequest,
+	req *agentmemoryports.MarkAgentMemoriesUsedRequest,
 ) error {
 	f.used = append(f.used, req.IDs...)
 

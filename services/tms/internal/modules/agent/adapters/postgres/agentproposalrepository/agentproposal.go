@@ -165,7 +165,7 @@ func (r *repository) updateOne(
 
 func (r *repository) UpdateStatus(
 	ctx context.Context,
-	req agentproposalports.UpdateAgentProposalStatusRequest,
+	req *agentproposalports.UpdateAgentProposalStatusRequest,
 ) (*agent.AgentProposal, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agent.AgentProposal, error) {
 		p := agentdb.AgentProposals

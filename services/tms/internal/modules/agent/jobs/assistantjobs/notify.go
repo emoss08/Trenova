@@ -48,7 +48,7 @@ type replyNotifications interface {
 type replyThreads interface {
 	GetThread(
 		ctx context.Context,
-		req conversationports.GetThreadRequest,
+		req *conversationports.GetThreadRequest,
 	) (*conversation.Thread, error)
 }
 
@@ -106,7 +106,7 @@ func (a *Activities) NotifyUnseenTurnActivity(
 		return nil
 	}
 
-	thread, err := a.threads.GetThread(ctx, conversationports.GetThreadRequest{
+	thread, err := a.threads.GetThread(ctx, &conversationports.GetThreadRequest{
 		ID:         payload.ThreadID,
 		UserID:     payload.Actor.UserID,
 		TenantInfo: tenant,

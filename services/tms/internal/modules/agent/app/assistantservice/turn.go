@@ -189,7 +189,7 @@ func (s *Service) prepareTurn(
 		return nil, nil, multiErr
 	}
 
-	thread, err := s.conversations.GetThread(ctx, conversationports.GetThreadRequest{
+	thread, err := s.conversations.GetThread(ctx, &conversationports.GetThreadRequest{
 		ID:         req.ThreadID,
 		UserID:     actor.UserID,
 		TenantInfo: req.TenantInfo,
@@ -359,7 +359,7 @@ func (s *Service) FinishTurn(
 ) (*assistantports.SendMessageResult, error) {
 	plan := req.Plan
 
-	thread, err := s.conversations.GetThread(ctx, conversationports.GetThreadRequest{
+	thread, err := s.conversations.GetThread(ctx, &conversationports.GetThreadRequest{
 		ID:         plan.ThreadID,
 		UserID:     req.Actor.UserID,
 		TenantInfo: req.TenantInfo,
@@ -383,7 +383,7 @@ func (s *Service) FinishTurn(
 
 	artifacts.NameLinks(turn.Messages, &turn.Reply)
 
-	saved, err := s.conversations.AppendTurn(ctx, conversationports.AppendTurnRequest{
+	saved, err := s.conversations.AppendTurn(ctx, &conversationports.AppendTurnRequest{
 		ThreadID:   thread.ID,
 		TurnID:     req.TurnID,
 		TenantInfo: req.TenantInfo,
@@ -507,7 +507,7 @@ func (s *Service) keepThreadTaint(
 		return
 	}
 
-	if err := s.conversations.MarkThreadTainted(ctx, conversationports.MarkThreadTaintedRequest{
+	if err := s.conversations.MarkThreadTainted(ctx, &conversationports.MarkThreadTaintedRequest{
 		ThreadID:   thread.ID,
 		TenantInfo: tenant,
 		Taint:      thread.Taint,

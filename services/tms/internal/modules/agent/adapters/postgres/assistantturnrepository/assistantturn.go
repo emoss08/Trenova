@@ -121,7 +121,11 @@ func (r *repository) Start(
 		r.db,
 		func(ctx context.Context) (*conversationturn.AssistantTurn, error) {
 			prepareTurn(turn)
-			if err := conversationturndb.AssistantTurns.Create(ctx, r.db.Keel(ctx), turn); err != nil {
+			if err := conversationturndb.AssistantTurns.Create(
+				ctx,
+				r.db.Keel(ctx),
+				turn,
+			); err != nil {
 				if dberror.IsUniqueConstraintViolation(err) {
 					return nil, assistantturnports.ErrTurnAlreadyRunning
 				}
@@ -141,10 +145,10 @@ func (r *repository) Start(
 
 func (r *repository) GetByID(
 	ctx context.Context,
-	req assistantturnports.GetAssistantTurnRequest,
+	req *assistantturnports.GetAssistantTurnRequest,
 ) (*conversationturn.AssistantTurn, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*conversationturn.AssistantTurn, error) {
-		turn, err := getByIDQuery(&req).One(ctx, r.db.Keel(ctx))
+		turn, err := getByIDQuery(req).One(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return nil, turnErrors.Map(err, req.ID.String())
 		}
@@ -155,10 +159,10 @@ func (r *repository) GetByID(
 
 func (r *repository) Active(
 	ctx context.Context,
-	req assistantturnports.ActiveAssistantTurnRequest,
+	req *assistantturnports.ActiveAssistantTurnRequest,
 ) (*conversationturn.AssistantTurn, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*conversationturn.AssistantTurn, error) {
-		turn, err := activeQuery(&req).First(ctx, r.db.Keel(ctx))
+		turn, err := activeQuery(req).First(ctx, r.db.Keel(ctx))
 		if err != nil {
 			if errors.Is(err, keel.ErrNotFound) {
 				return nil, nil
@@ -173,7 +177,7 @@ func (r *repository) Active(
 
 func (r *repository) ListLive(
 	ctx context.Context,
-	req assistantturnports.ListLiveAssistantTurnsRequest,
+	req *assistantturnports.ListLiveAssistantTurnsRequest,
 ) ([]*assistantturnports.LiveAssistantTurn, error) {
 	return dbtx.Read(
 		ctx,
@@ -187,8 +191,8 @@ func (r *repository) ListLive(
 			err := keel.Batch(
 				ctx,
 				r.db.Keel(ctx),
-				keel.AllInto(liveTurnsQuery(&req).Order(at.StartedAt.Asc()), &turns),
-				keel.IntoSlice(liveThreadTitlesQuery(&req), &titles),
+				keel.AllInto(liveTurnsQuery(req).Order(at.StartedAt.Asc()), &turns),
+				keel.IntoSlice(liveThreadTitlesQuery(req), &titles),
 			)
 			if err != nil {
 				r.l.Error("failed to list live assistant turns",
@@ -237,7 +241,7 @@ func (r *repository) RecordFingerprint(
 
 func (r *repository) Complete(
 	ctx context.Context,
-	req assistantturnports.CompleteAssistantTurnRequest,
+	req *assistantturnports.CompleteAssistantTurnRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		at := conversationturndb.AssistantTurns

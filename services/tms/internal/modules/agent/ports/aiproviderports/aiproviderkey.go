@@ -36,7 +36,7 @@ type RebindAIProviderKeyRequest struct {
 
 type AIProviderKeyRepository interface {
 	RebindSealedKey(ctx context.Context, req *RebindAIProviderKeyRequest) error
-	RecordFingerprint(ctx context.Context, req RecordAIProviderKeyFingerprintRequest) error
+	RecordFingerprint(ctx context.Context, req *RecordAIProviderKeyFingerprintRequest) error
 	TouchUsed(ctx context.Context, req TouchAIProviderKeyRequest) error
 	ClearExpiredPrevious(ctx context.Context, req ClearExpiredAIProviderKeysRequest) (int, error)
 }

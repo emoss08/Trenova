@@ -119,7 +119,7 @@ func (s *Service) PrepareThread(
 		after = through
 	}
 
-	messages, err := s.conversations.ListMessages(ctx, conversationports.ListMessagesRequest{
+	messages, err := s.conversations.ListMessages(ctx, &conversationports.ListMessagesRequest{
 		ThreadID:      thread.ID,
 		TenantInfo:    tenant,
 		AfterSequence: &after,

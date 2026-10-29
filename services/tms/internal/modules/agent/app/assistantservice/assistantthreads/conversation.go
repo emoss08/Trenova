@@ -101,7 +101,7 @@ func (s *Service) StartThread(
 
 func (s *Service) ListThreads(
 	ctx context.Context,
-	req conversationports.ListThreadsRequest,
+	req *conversationports.ListThreadsRequest,
 ) (*conversationports.ThreadPage, error) {
 	multiErr := errortypes.NewMultiError()
 	req.Validate(multiErr)
@@ -160,7 +160,7 @@ func (s *Service) markAttention(
 
 	rows, err := s.conversations.ListThreadAttention(
 		ctx,
-		conversationports.ListThreadAttentionRequest{
+		&conversationports.ListThreadAttentionRequest{
 			ThreadIDs:  ids,
 			UserID:     userID,
 			TenantInfo: tenant,
@@ -200,7 +200,7 @@ func (s *Service) MarkThreadRead(
 	ctx context.Context,
 	req conversationports.GetThreadRequest,
 ) error {
-	return s.conversations.MarkThreadRead(ctx, conversationports.MarkThreadReadRequest{
+	return s.conversations.MarkThreadRead(ctx, &conversationports.MarkThreadReadRequest{
 		ThreadID:   req.ID,
 		UserID:     req.UserID,
 		TenantInfo: req.TenantInfo,
@@ -210,7 +210,7 @@ func (s *Service) MarkThreadRead(
 
 func (s *Service) GetThread(
 	ctx context.Context,
-	req conversationports.GetThreadRequest,
+	req *conversationports.GetThreadRequest,
 ) (*conversation.Thread, error) {
 	thread, err := s.conversations.GetThread(ctx, req)
 	if err != nil {
@@ -250,7 +250,7 @@ func (s *Service) ListMessages(
 ) (*assistantports.ThreadMessagesPage, error) {
 	// Reading the thread first is the authorization check: it is scoped by user,
 	// so a thread belonging to someone else is not found rather than returned.
-	if _, err := s.conversations.GetThread(ctx, req.Thread); err != nil {
+	if _, err := s.conversations.GetThread(ctx, &req.Thread); err != nil {
 		return nil, err
 	}
 
@@ -258,7 +258,7 @@ func (s *Service) ListMessages(
 
 	// One more than the page says whether there is a page above it without
 	// a second query for the count of what is left.
-	messages, err := s.conversations.ListMessages(ctx, conversationports.ListMessagesRequest{
+	messages, err := s.conversations.ListMessages(ctx, &conversationports.ListMessagesRequest{
 		ThreadID:       req.Thread.ID,
 		TenantInfo:     req.Thread.TenantInfo,
 		Limit:          limit + 1,
@@ -312,7 +312,7 @@ func (s *Service) UpdateThread(
 	req *assistantports.UpdateThreadRequest,
 	actor *permissionports.RequestActor,
 ) (*conversation.Thread, error) {
-	thread, err := s.conversations.GetThread(ctx, conversationports.GetThreadRequest{
+	thread, err := s.conversations.GetThread(ctx, &conversationports.GetThreadRequest{
 		ID:         req.ThreadID,
 		UserID:     actor.UserID,
 		TenantInfo: req.TenantInfo,
@@ -364,7 +364,7 @@ func (s *Service) UpdateThread(
 // a slot or the hourly reconcile to find them missing.
 func (s *Service) DeleteThread(
 	ctx context.Context,
-	req conversationports.GetThreadRequest,
+	req *conversationports.GetThreadRequest,
 ) error {
 	schedules := s.threadSchedules(ctx, req)
 	if err := s.conversations.DeleteThread(ctx, req); err != nil {
@@ -383,7 +383,7 @@ func (s *Service) DeleteThread(
 // with the conversation, and a slot or the reconcile removes what is left.
 func (s *Service) threadSchedules(
 	ctx context.Context,
-	req conversationports.GetThreadRequest,
+	req *conversationports.GetThreadRequest,
 ) []*conversationschedule.Schedule {
 	if s.schedules == nil {
 		return nil

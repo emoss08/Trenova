@@ -60,7 +60,7 @@ type AgentToolTrustRepository interface {
 		ctx context.Context,
 		req ListReadyToolTrustRequest,
 	) ([]*agenttooltrust.ToolTrust, error)
-	Record(ctx context.Context, req RecordToolTrustRequest) (*agenttooltrust.ToolTrust, error)
+	Record(ctx context.Context, req *RecordToolTrustRequest) (*agenttooltrust.ToolTrust, error)
 	ListByDefinition(
 		ctx context.Context,
 		req ListToolTrustRequest,
@@ -71,6 +71,6 @@ type AgentToolTrustRepository interface {
 	) (map[pulid.ID][]*agenttooltrust.ToolTrust, error)
 	MarkTierChange(
 		ctx context.Context,
-		req MarkToolTierChangeRequest,
+		req *MarkToolTierChangeRequest,
 	) (*agenttooltrust.ToolTrust, error)
 }

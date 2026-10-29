@@ -149,7 +149,11 @@ func (r *repository) CreateMany(ctx context.Context, entities []*agentevaluation
 			return nil
 		}
 
-		if err := agentevaluationdb.Evaluations.CreateMany(ctx, r.db.Keel(ctx), entities); err != nil {
+		if err := agentevaluationdb.Evaluations.CreateMany(
+			ctx,
+			r.db.Keel(ctx),
+			entities,
+		); err != nil {
 			r.l.Error("failed to create suite evaluations", zap.Error(err))
 
 			return fmt.Errorf("create suite evaluations: %w", err)
@@ -161,7 +165,7 @@ func (r *repository) CreateMany(ctx context.Context, entities []*agentevaluation
 
 func (r *repository) ListBySuiteRun(
 	ctx context.Context,
-	req agentevaluationports.ListSuiteEvaluationsRequest,
+	req *agentevaluationports.ListSuiteEvaluationsRequest,
 ) ([]*agentevaluation.Evaluation, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agentevaluation.Evaluation, error) {
 		limit := req.Limit
@@ -184,7 +188,7 @@ func (r *repository) ListBySuiteRun(
 
 func (r *repository) SkipPendingBySuiteRun(
 	ctx context.Context,
-	req agentevaluationports.SkipPendingSuiteEvaluationsRequest,
+	req *agentevaluationports.SkipPendingSuiteEvaluationsRequest,
 ) (int, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
 		e := agentevaluationdb.Evaluations

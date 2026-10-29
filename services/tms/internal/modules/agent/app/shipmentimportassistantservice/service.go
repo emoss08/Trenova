@@ -299,7 +299,7 @@ func (s *Service) closeConversations(
 
 	closed, err := s.pageThreads.ArchiveSubjectThreads(
 		ctx,
-		conversationports.ArchiveSubjectThreadsRequest{
+		&conversationports.ArchiveSubjectThreadsRequest{
 			TenantInfo:  tenantInfo,
 			Origin:      conversation.ThreadOriginImport,
 			SubjectType: agent.SubjectDocument,

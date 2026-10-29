@@ -331,8 +331,8 @@ func (t *RaiseExceptionTool) subject(
 	if t.subjects == nil {
 		return "", pulid.Nil, ErrSubjectUncheckable
 	}
-	exists, err := t.subjects.Exists(ctx, agentsubjectports.AgentSubjectExistsRequest{
-		TenantInfo:  toolparams.TenantFrom(&params),
+	exists, err := t.subjects.Exists(ctx, &agentsubjectports.AgentSubjectExistsRequest{
+		TenantInfo:  toolparams.TenantFrom(params),
 		SubjectType: subjectType,
 		SubjectID:   subjectID,
 	})

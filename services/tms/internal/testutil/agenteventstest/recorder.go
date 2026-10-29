@@ -12,10 +12,10 @@ type Recorder struct {
 	Events []agenteventports.AgentEvent
 }
 
-func (r *Recorder) Publish(_ context.Context, event agenteventports.AgentEvent) {
+func (r *Recorder) Publish(_ context.Context, event *agenteventports.AgentEvent) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	r.Events = append(r.Events, event)
+	r.Events = append(r.Events, *event)
 }
 
 func (r *Recorder) Published() []agenteventports.AgentEvent {

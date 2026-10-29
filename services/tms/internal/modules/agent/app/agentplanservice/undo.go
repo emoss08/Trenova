@@ -52,7 +52,7 @@ func (s *Service) approveDeferred(
 
 	now := time.Now()
 	commitsAt := decisioncommitcontract.CommitsAt(now)
-	plan, err := s.plans.UpdateStatus(ctx, agentplanports.UpdateAgentPlanStatusRequest{
+	plan, err := s.plans.UpdateStatus(ctx, &agentplanports.UpdateAgentPlanStatusRequest{
 		ID:              prepared.plan.ID,
 		TenantInfo:      req.TenantInfo,
 		Status:          agentplan.PlanStatusApproving,
@@ -307,7 +307,7 @@ func (s *Service) reopenPlan(
 		update.UndoneAt = timeutils.NowUnix()
 	}
 
-	reopened, err := s.plans.UpdateStatus(ctx, update)
+	reopened, err := s.plans.UpdateStatus(ctx, &update)
 	if err != nil {
 		if !errortypes.IsVersionMismatchError(err) {
 			s.l.Error("a plan could not be returned to waiting",

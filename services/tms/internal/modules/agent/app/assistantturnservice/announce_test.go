@@ -164,7 +164,7 @@ type failingTurns struct {
 
 func (f *failingTurns) Complete(
 	context.Context,
-	assistantturnports.CompleteAssistantTurnRequest,
+	*assistantturnports.CompleteAssistantTurnRequest,
 ) error {
 	return errors.New("database is down")
 }
@@ -223,9 +223,9 @@ type liveTurns struct {
 
 func (l *liveTurns) ListLive(
 	_ context.Context,
-	req assistantturnports.ListLiveAssistantTurnsRequest,
+	req *assistantturnports.ListLiveAssistantTurnsRequest,
 ) ([]*assistantturnports.LiveAssistantTurn, error) {
-	l.asked = req
+	l.asked = *req
 
 	return l.live, nil
 }

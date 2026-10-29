@@ -28,9 +28,9 @@ type notedConversations struct {
 
 func (f *notedConversations) ListMessages(
 	_ context.Context,
-	req conversationports.ListMessagesRequest,
+	req *conversationports.ListMessagesRequest,
 ) ([]conversation.Message, error) {
-	f.asked = append(f.asked, req)
+	f.asked = append(f.asked, *req)
 
 	return f.notes, nil
 }

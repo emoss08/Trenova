@@ -117,7 +117,7 @@ func (h *harness) say(
 		}
 		messages = append(messages, conversation.Message{Role: role, Content: content})
 	}
-	saved, err := h.conversations.AppendTurn(h.ctx, conversationports.AppendTurnRequest{
+	saved, err := h.conversations.AppendTurn(h.ctx, &conversationports.AppendTurnRequest{
 		ThreadID:   thread.ID,
 		TurnID:     turnID,
 		TenantInfo: h.tenant,
@@ -234,7 +234,7 @@ func TestList_OrdersChaptersByTheirTurnsAndSaysWhereEachStarts(t *testing.T) {
 	assert.Equal(t, "Late loads", chapters[0].Title)
 	assert.Equal(t, conversationchapter.ChapterTitlePerson, chapters[0].TitleSource)
 
-	got, err := h.repo.Get(h.ctx, assistantchapterports.GetChapterRequest{
+	got, err := h.repo.Get(h.ctx, &assistantchapterports.GetChapterRequest{
 		ID:         second.ID,
 		ThreadID:   thread.ID,
 		TenantInfo: h.tenant,
@@ -243,7 +243,7 @@ func TestList_OrdersChaptersByTheirTurnsAndSaysWhereEachStarts(t *testing.T) {
 	require.NotNil(t, got.StartSequence)
 	assert.Equal(t, int64(3), *got.StartSequence)
 
-	forTurn, err := h.repo.ForTurn(h.ctx, assistantchapterports.ChapterForTurnRequest{
+	forTurn, err := h.repo.ForTurn(h.ctx, &assistantchapterports.ChapterForTurnRequest{
 		ThreadID:   thread.ID,
 		TurnID:     secondTurn.ID,
 		TenantInfo: h.tenant,
@@ -252,7 +252,7 @@ func TestList_OrdersChaptersByTheirTurnsAndSaysWhereEachStarts(t *testing.T) {
 	require.NotNil(t, forTurn)
 	assert.Equal(t, second.ID, forTurn.ID)
 
-	none, err := h.repo.ForTurn(h.ctx, assistantchapterports.ChapterForTurnRequest{
+	none, err := h.repo.ForTurn(h.ctx, &assistantchapterports.ChapterForTurnRequest{
 		ThreadID:   thread.ID,
 		TurnID:     h.turn(t, thread, 4_000).ID,
 		TenantInfo: h.tenant,
@@ -290,7 +290,7 @@ func TestRetitle_AModelNeverReplacesAPersonsTitle(t *testing.T) {
 		conversationchapter.ChapterTitleQuestion,
 	)
 
-	kept, err := h.repo.Retitle(h.ctx, assistantchapterports.RetitleChapterRequest{
+	kept, err := h.repo.Retitle(h.ctx, &assistantchapterports.RetitleChapterRequest{
 		ID:          named.ID,
 		ThreadID:    thread.ID,
 		TenantInfo:  h.tenant,
@@ -302,7 +302,7 @@ func TestRetitle_AModelNeverReplacesAPersonsTitle(t *testing.T) {
 	assert.Equal(t, conversationchapter.ChapterTitlePerson, kept.TitleSource)
 	assert.Equal(t, named.Version, kept.Version)
 
-	renamed, err := h.repo.Retitle(h.ctx, assistantchapterports.RetitleChapterRequest{
+	renamed, err := h.repo.Retitle(h.ctx, &assistantchapterports.RetitleChapterRequest{
 		ID:          asked.ID,
 		ThreadID:    thread.ID,
 		TenantInfo:  h.tenant,
@@ -331,7 +331,7 @@ func TestRetitle_APersonRenamesTheVersionTheyRead(t *testing.T) {
 	)
 
 	read := chapter.Version
-	renamed, err := h.repo.Retitle(h.ctx, assistantchapterports.RetitleChapterRequest{
+	renamed, err := h.repo.Retitle(h.ctx, &assistantchapterports.RetitleChapterRequest{
 		ID:          chapter.ID,
 		ThreadID:    thread.ID,
 		TenantInfo:  h.tenant,
@@ -343,7 +343,7 @@ func TestRetitle_APersonRenamesTheVersionTheyRead(t *testing.T) {
 	assert.Equal(t, "Dallas lane", renamed.Title)
 	assert.Equal(t, conversationchapter.ChapterTitlePerson, renamed.TitleSource)
 
-	_, err = h.repo.Retitle(h.ctx, assistantchapterports.RetitleChapterRequest{
+	_, err = h.repo.Retitle(h.ctx, &assistantchapterports.RetitleChapterRequest{
 		ID:          chapter.ID,
 		ThreadID:    thread.ID,
 		TenantInfo:  h.tenant,
@@ -366,7 +366,7 @@ func TestRetitle_AMissingChapterIsNotFound(t *testing.T) {
 	h := newHarness(t)
 	thread := h.thread(t)
 
-	_, err := h.repo.Retitle(h.ctx, assistantchapterports.RetitleChapterRequest{
+	_, err := h.repo.Retitle(h.ctx, &assistantchapterports.RetitleChapterRequest{
 		ID:          pulid.MustNew("achp_"),
 		ThreadID:    thread.ID,
 		TenantInfo:  h.tenant,
@@ -393,7 +393,7 @@ func TestDelete_KeepPersonLeavesAChapterThePersonNamed(t *testing.T) {
 		conversationchapter.ChapterTitleQuestion,
 	)
 
-	removed, err := h.repo.Delete(h.ctx, assistantchapterports.DeleteChapterRequest{
+	removed, err := h.repo.Delete(h.ctx, &assistantchapterports.DeleteChapterRequest{
 		ID:         named.ID,
 		ThreadID:   thread.ID,
 		TenantInfo: h.tenant,
@@ -402,7 +402,7 @@ func TestDelete_KeepPersonLeavesAChapterThePersonNamed(t *testing.T) {
 	require.NoError(t, err)
 	assert.False(t, removed)
 
-	removed, err = h.repo.Delete(h.ctx, assistantchapterports.DeleteChapterRequest{
+	removed, err = h.repo.Delete(h.ctx, &assistantchapterports.DeleteChapterRequest{
 		ID:         asked.ID,
 		ThreadID:   thread.ID,
 		TenantInfo: h.tenant,
@@ -412,7 +412,7 @@ func TestDelete_KeepPersonLeavesAChapterThePersonNamed(t *testing.T) {
 	assert.True(t, removed)
 	assert.Equal(t, []pulid.ID{named.ID}, chapterIDs(h.list(t, h.ctx, thread.ID)))
 
-	removed, err = h.repo.Delete(h.ctx, assistantchapterports.DeleteChapterRequest{
+	removed, err = h.repo.Delete(h.ctx, &assistantchapterports.DeleteChapterRequest{
 		ID:         named.ID,
 		ThreadID:   thread.ID,
 		TenantInfo: h.tenant,
@@ -421,7 +421,7 @@ func TestDelete_KeepPersonLeavesAChapterThePersonNamed(t *testing.T) {
 	assert.True(t, removed, "the person may remove a chapter they named")
 	assert.Empty(t, h.list(t, h.ctx, thread.ID))
 
-	removed, err = h.repo.Delete(h.ctx, assistantchapterports.DeleteChapterRequest{
+	removed, err = h.repo.Delete(h.ctx, &assistantchapterports.DeleteChapterRequest{
 		ID:         named.ID,
 		ThreadID:   thread.ID,
 		TenantInfo: h.tenant,
@@ -438,7 +438,7 @@ func TestTurnOfMessage_NamesTheTurnThatSavedIt(t *testing.T) {
 	card := h.say(t, thread, "", "A card written outside any turn")
 
 	for _, message := range asked {
-		turnID, err := h.repo.TurnOfMessage(h.ctx, assistantchapterports.TurnOfMessageRequest{
+		turnID, err := h.repo.TurnOfMessage(h.ctx, &assistantchapterports.TurnOfMessageRequest{
 			ThreadID:   thread.ID,
 			MessageID:  message.ID,
 			TenantInfo: h.tenant,
@@ -447,7 +447,7 @@ func TestTurnOfMessage_NamesTheTurnThatSavedIt(t *testing.T) {
 		assert.Equal(t, turn.ID, turnID)
 	}
 
-	turnID, err := h.repo.TurnOfMessage(h.ctx, assistantchapterports.TurnOfMessageRequest{
+	turnID, err := h.repo.TurnOfMessage(h.ctx, &assistantchapterports.TurnOfMessageRequest{
 		ThreadID:   thread.ID,
 		MessageID:  card[0].ID,
 		TenantInfo: h.tenant,
@@ -455,7 +455,7 @@ func TestTurnOfMessage_NamesTheTurnThatSavedIt(t *testing.T) {
 	require.NoError(t, err)
 	assert.True(t, turnID.IsNil(), "a card outside a turn has none")
 
-	_, err = h.repo.TurnOfMessage(h.ctx, assistantchapterports.TurnOfMessageRequest{
+	_, err = h.repo.TurnOfMessage(h.ctx, &assistantchapterports.TurnOfMessageRequest{
 		ThreadID:   h.thread(t).ID,
 		MessageID:  asked[0].ID,
 		TenantInfo: h.tenant,
@@ -488,21 +488,21 @@ func TestChapters_AnotherTenantSeesNone(t *testing.T) {
 	require.NoError(t, err)
 	assert.Zero(t, count)
 
-	_, err = h.repo.Get(h.other, assistantchapterports.GetChapterRequest{
+	_, err = h.repo.Get(h.other, &assistantchapterports.GetChapterRequest{
 		ID:         chapter.ID,
 		ThreadID:   thread.ID,
 		TenantInfo: h.otherTenant,
 	})
 	assert.True(t, errortypes.IsNotFoundError(err))
 
-	_, err = h.repo.TurnOfMessage(h.other, assistantchapterports.TurnOfMessageRequest{
+	_, err = h.repo.TurnOfMessage(h.other, &assistantchapterports.TurnOfMessageRequest{
 		ThreadID:   thread.ID,
 		MessageID:  asked[0].ID,
 		TenantInfo: h.otherTenant,
 	})
 	assert.True(t, errortypes.IsNotFoundError(err))
 
-	removed, err := h.repo.Delete(h.other, assistantchapterports.DeleteChapterRequest{
+	removed, err := h.repo.Delete(h.other, &assistantchapterports.DeleteChapterRequest{
 		ID:         chapter.ID,
 		ThreadID:   thread.ID,
 		TenantInfo: h.otherTenant,
@@ -510,7 +510,7 @@ func TestChapters_AnotherTenantSeesNone(t *testing.T) {
 	require.NoError(t, err)
 	assert.False(t, removed)
 
-	_, err = h.repo.Retitle(h.other, assistantchapterports.RetitleChapterRequest{
+	_, err = h.repo.Retitle(h.other, &assistantchapterports.RetitleChapterRequest{
 		ID:          chapter.ID,
 		ThreadID:    thread.ID,
 		TenantInfo:  h.otherTenant,

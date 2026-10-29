@@ -135,9 +135,9 @@ type searchingMemoryRepo struct {
 
 func (f *searchingMemoryRepo) Search(
 	_ context.Context,
-	req agentmemoryports.SearchAgentMemoriesRequest,
+	req *agentmemoryports.SearchAgentMemoriesRequest,
 ) ([]*agentmemory.Memory, error) {
-	f.searches = append(f.searches, req)
+	f.searches = append(f.searches, *req)
 	if req.Query != "" {
 		return f.byWords, nil
 	}

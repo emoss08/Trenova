@@ -245,9 +245,9 @@ func (f *fakeMemories) Create(
 
 func (f *fakeMemories) ListSuggestionContext(
 	_ context.Context,
-	req agentmemoryports.ListAgentMemorySuggestionContextRequest,
+	req *agentmemoryports.ListAgentMemorySuggestionContextRequest,
 ) ([]*agentmemory.Memory, error) {
-	f.asked = append(f.asked, req)
+	f.asked = append(f.asked, *req)
 
 	return f.existing, nil
 }

@@ -101,7 +101,7 @@ func TestUpdateStatus_KeepsTheApprovalWithTheWindowAndClearsItOnReopen(t *testin
 	h := newPlanHarness(t)
 	plan := h.plan(t, h.run(t, ""))
 
-	approving, err := h.repo.UpdateStatus(h.ctx, agentplanports.UpdateAgentPlanStatusRequest{
+	approving, err := h.repo.UpdateStatus(h.ctx, &agentplanports.UpdateAgentPlanStatusRequest{
 		ID:         plan.ID,
 		TenantInfo: h.tenant,
 		Status:     agentplan.PlanStatusApproving,
@@ -118,7 +118,7 @@ func TestUpdateStatus_KeepsTheApprovalWithTheWindowAndClearsItOnReopen(t *testin
 	assert.Nil(t, approving.UndoneAt)
 	assert.Greater(t, approving.Version, plan.Version)
 
-	reopened, err := h.repo.UpdateStatus(h.ctx, agentplanports.UpdateAgentPlanStatusRequest{
+	reopened, err := h.repo.UpdateStatus(h.ctx, &agentplanports.UpdateAgentPlanStatusRequest{
 		ID:         plan.ID,
 		TenantInfo: h.tenant,
 		Status:     agentplan.PlanStatusPending,
@@ -138,7 +138,7 @@ func TestUpdateStatus_ADecisionWithoutAWindowKeepsItsNoteAndDigest(t *testing.T)
 	h := newPlanHarness(t)
 	plan := h.plan(t, h.run(t, ""))
 
-	rejected, err := h.repo.UpdateStatus(h.ctx, agentplanports.UpdateAgentPlanStatusRequest{
+	rejected, err := h.repo.UpdateStatus(h.ctx, &agentplanports.UpdateAgentPlanStatusRequest{
 		ID:              plan.ID,
 		TenantInfo:      h.tenant,
 		Status:          agentplan.PlanStatusRejected,
@@ -161,7 +161,7 @@ func TestUpdateStatus_AStaleFromStatusIsNotFound(t *testing.T) {
 	h := newPlanHarness(t)
 	plan := h.plan(t, h.run(t, ""))
 
-	_, err := h.repo.UpdateStatus(h.ctx, agentplanports.UpdateAgentPlanStatusRequest{
+	_, err := h.repo.UpdateStatus(h.ctx, &agentplanports.UpdateAgentPlanStatusRequest{
 		ID:         plan.ID,
 		TenantInfo: h.tenant,
 		Status:     agentplan.PlanStatusApproved,
@@ -183,7 +183,7 @@ func TestExpirePendingByDefinitionExpiresOnlyThePendingPlansOfTheAgentsRuns(t *t
 
 	pending := h.plan(t, h.run(t, definition.ID))
 	decided := h.plan(t, h.run(t, definition.ID))
-	_, err := h.repo.UpdateStatus(h.ctx, agentplanports.UpdateAgentPlanStatusRequest{
+	_, err := h.repo.UpdateStatus(h.ctx, &agentplanports.UpdateAgentPlanStatusRequest{
 		ID:              decided.ID,
 		TenantInfo:      h.tenant,
 		Status:          agentplan.PlanStatusRejected,

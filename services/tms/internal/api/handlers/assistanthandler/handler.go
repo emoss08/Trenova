@@ -316,7 +316,7 @@ func (h *Handler) listThreads(c *gin.Context) {
 		return
 	}
 
-	result, err := h.service.ListThreads(c.Request.Context(), conversationports.ListThreadsRequest{
+	result, err := h.service.ListThreads(c.Request.Context(), &conversationports.ListThreadsRequest{
 		UserID:        authCtx.UserID,
 		TenantInfo:    tenantFromAuthContext(authCtx),
 		Limit:         query.Limit,
@@ -421,7 +421,7 @@ func (h *Handler) getThread(c *gin.Context) {
 		return
 	}
 
-	thread, err := h.service.GetThread(c.Request.Context(), req)
+	thread, err := h.service.GetThread(c.Request.Context(), &req)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -570,7 +570,7 @@ func (h *Handler) deleteThread(c *gin.Context) {
 		return
 	}
 
-	if err = h.service.DeleteThread(c.Request.Context(), req); err != nil {
+	if err = h.service.DeleteThread(c.Request.Context(), &req); err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}

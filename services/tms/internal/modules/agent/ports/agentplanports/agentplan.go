@@ -95,11 +95,11 @@ type AgentPlanRepository interface {
 	) (*pagination.CursorListResult[*agentplan.AgentPlan], error)
 	UpdateStatus(
 		ctx context.Context,
-		req UpdateAgentPlanStatusRequest,
+		req *UpdateAgentPlanStatusRequest,
 	) (*agentplan.AgentPlan, error)
 	RecordProgress(
 		ctx context.Context,
-		req RecordAgentPlanProgressRequest,
+		req *RecordAgentPlanProgressRequest,
 	) (*agentplan.AgentPlan, error)
 	ExpirePending(ctx context.Context, req ExpireAgentPlansRequest) (int, error)
 	ExpirePendingByDefinition(

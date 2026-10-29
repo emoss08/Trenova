@@ -35,7 +35,7 @@ func (h *Handler) activeTurn(c *gin.Context) {
 		return
 	}
 
-	turn, err := h.turns.Active(c.Request.Context(), assistantturnports.ActiveAssistantTurnRequest{
+	turn, err := h.turns.Active(c.Request.Context(), &assistantturnports.ActiveAssistantTurnRequest{
 		ThreadID:   req.ID,
 		UserID:     req.UserID,
 		TenantInfo: req.TenantInfo,
@@ -88,7 +88,7 @@ func (h *Handler) activeTurns(c *gin.Context) {
 
 	turns, err := h.turns.ListLive(
 		c.Request.Context(),
-		assistantturnports.ListLiveAssistantTurnsRequest{
+		&assistantturnports.ListLiveAssistantTurnsRequest{
 			UserID:         authCtx.UserID,
 			TenantInfo:     tenantFromAuthContext(authCtx),
 			ExcludeOrigins: conversation.AnsweredInPlaceOrigins(),
@@ -313,7 +313,7 @@ func (h *Handler) askWorker(
 	// slot is taken. Recording the turn first let anyone who knew a thread's
 	// id hold it, and the owner saw "already working on a reply" until the
 	// stranger's workflow failed.
-	if _, err := h.service.GetThread(c.Request.Context(), conversationports.GetThreadRequest{
+	if _, err := h.service.GetThread(c.Request.Context(), &conversationports.GetThreadRequest{
 		ID:         threadID,
 		UserID:     authCtx.UserID,
 		TenantInfo: tenantFromAuthContext(authCtx),
@@ -392,7 +392,7 @@ func (h *Handler) compactThread(c *gin.Context) {
 		return
 	}
 
-	thread, err := h.service.GetThread(c.Request.Context(), req)
+	thread, err := h.service.GetThread(c.Request.Context(), &req)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return

@@ -123,7 +123,7 @@ func TestGetThread_StaysReadableAndSaysWhetherItCanContinue(t *testing.T) {
 
 	f := newContinuableFixture()
 	actor := assistanttest.Actor()
-	req := conversationports.GetThreadRequest{
+	req := &conversationports.GetThreadRequest{
 		ID:         f.thread.ID,
 		UserID:     actor.UserID,
 		TenantInfo: actor.TenantInfo(),
@@ -157,7 +157,7 @@ func TestGetThread_SaysWhyItCannotContinue(t *testing.T) {
 
 	f := newContinuableFixture()
 	actor := assistanttest.Actor()
-	req := conversationports.GetThreadRequest{
+	req := &conversationports.GetThreadRequest{
 		ID:         f.thread.ID,
 		UserID:     actor.UserID,
 		TenantInfo: actor.TenantInfo(),
@@ -209,7 +209,7 @@ func TestGetThread_CannotContinueWithoutTheAssistant(t *testing.T) {
 	f.permissions.Allowed = map[string]bool{}
 	actor := assistanttest.Actor()
 
-	thread, err := f.svc.GetThread(t.Context(), conversationports.GetThreadRequest{
+	thread, err := f.svc.GetThread(t.Context(), &conversationports.GetThreadRequest{
 		ID:         f.thread.ID,
 		UserID:     actor.UserID,
 		TenantInfo: actor.TenantInfo(),

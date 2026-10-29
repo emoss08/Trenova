@@ -17,7 +17,7 @@ import (
 type agentRunsByIDsLister interface {
 	ListByIDs(
 		ctx context.Context,
-		req agentruntimeports.ListAgentRunsByIDsRequest,
+		req *agentruntimeports.ListAgentRunsByIDsRequest,
 	) ([]*agent.AgentRun, error)
 }
 
@@ -43,7 +43,7 @@ func newAgentRunByIDLoader(f *AgentRunByIDLoaderFactory,
 ) *dataloadgen.Loader[string, *agent.AgentRun] {
 	return loadercore.NewLoader(loadercore.BatchByIDFunc(
 		func(ctx context.Context, ids []pulid.ID) ([]*agent.AgentRun, error) {
-			return f.runs.ListByIDs(ctx, agentruntimeports.ListAgentRunsByIDsRequest{
+			return f.runs.ListByIDs(ctx, &agentruntimeports.ListAgentRunsByIDsRequest{
 				IDs:        ids,
 				TenantInfo: tenantInfo,
 				Reader:     agentruntimeports.PersonRunRead(tenantInfo.UserID),
@@ -56,7 +56,7 @@ func newAgentRunByIDLoader(f *AgentRunByIDLoaderFactory,
 type agentRunTranscriptsByIDsLister interface {
 	ListTranscriptsByIDs(
 		ctx context.Context,
-		req agentruntimeports.ListAgentRunsByIDsRequest,
+		req *agentruntimeports.ListAgentRunsByIDsRequest,
 	) ([]*agent.AgentRun, error)
 }
 
@@ -81,7 +81,7 @@ func newAgentRunTranscriptByIDLoader(f *AgentRunTranscriptByIDLoaderFactory,
 ) *dataloadgen.Loader[string, *agent.AgentRun] {
 	return loadercore.NewLoader(loadercore.BatchByIDFunc(
 		func(ctx context.Context, ids []pulid.ID) ([]*agent.AgentRun, error) {
-			return f.runs.ListTranscriptsByIDs(ctx, agentruntimeports.ListAgentRunsByIDsRequest{
+			return f.runs.ListTranscriptsByIDs(ctx, &agentruntimeports.ListAgentRunsByIDsRequest{
 				IDs:        ids,
 				TenantInfo: tenantInfo,
 				Reader:     agentruntimeports.PersonRunRead(tenantInfo.UserID),

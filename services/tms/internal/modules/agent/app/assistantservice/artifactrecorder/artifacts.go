@@ -479,7 +479,7 @@ func (r *Recorder) agentThread() *conversation.Thread {
 		return r.thread
 	}
 	r.agentRead = true
-	thread, err := r.reads.Conversations.GetThread(r.ctx, conversationports.GetThreadRequest{
+	thread, err := r.reads.Conversations.GetThread(r.ctx, &conversationports.GetThreadRequest{
 		ID:         r.thread.ID,
 		UserID:     r.reader.UserID,
 		TenantInfo: r.tenant,

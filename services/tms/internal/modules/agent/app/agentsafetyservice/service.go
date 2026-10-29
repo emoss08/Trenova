@@ -126,7 +126,7 @@ func PolicyView(policy *agenttoolports.ToolPolicy) agenttoolports.AgentToolPolic
 		Explanation: agenttoolpolicy.ExplainTier(*policy),
 	}
 
-	held := agentaccessservice.HeldToolOf(*policy)
+	held := agentaccessservice.HeldToolOf(policy)
 	if held.Resource != "" {
 		view.Needs = &agenttoolports.ToolGrant{Resource: held.Resource, Operation: held.Operation}
 	}
@@ -287,7 +287,7 @@ func (s *Service) ReachWarnings(
 func (s *Service) sensitiveTools(policies []agenttoolports.ToolPolicy) []string {
 	held := make([]agentaccessservice.HeldTool, 0, len(policies))
 	for idx := range policies {
-		held = append(held, agentaccessservice.HeldToolOf(policies[idx]))
+		held = append(held, agentaccessservice.HeldToolOf(&policies[idx]))
 	}
 
 	return agentaccessservice.SensitiveTools(held, s.sensitive)

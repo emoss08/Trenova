@@ -31,18 +31,18 @@ type StubConversations struct {
 
 func (s *StubConversations) UpdateThreadContext(
 	_ context.Context,
-	req conversationports.UpdateThreadContextRequest,
+	req *conversationports.UpdateThreadContextRequest,
 ) error {
-	s.Contexts = append(s.Contexts, req)
+	s.Contexts = append(s.Contexts, *req)
 
 	return nil
 }
 
 func (s *StubConversations) MarkThreadTainted(
 	_ context.Context,
-	req conversationports.MarkThreadTaintedRequest,
+	req *conversationports.MarkThreadTaintedRequest,
 ) error {
-	s.Tainted = append(s.Tainted, req)
+	s.Tainted = append(s.Tainted, *req)
 
 	return nil
 }
@@ -56,23 +56,23 @@ func (s *StubConversations) CountMessages(
 
 func (s *StubConversations) GetThread(
 	context.Context,
-	conversationports.GetThreadRequest,
+	*conversationports.GetThreadRequest,
 ) (*conversation.Thread, error) {
 	return s.Thread, nil
 }
 
 func (s *StubConversations) ListMessages(
 	_ context.Context,
-	req conversationports.ListMessagesRequest,
+	req *conversationports.ListMessagesRequest,
 ) ([]conversation.Message, error) {
-	s.LastList = req
+	s.LastList = *req
 
 	return s.Messages, nil
 }
 
 func (s *StubConversations) AppendTurn(
 	ctx context.Context,
-	req conversationports.AppendTurnRequest,
+	req *conversationports.AppendTurnRequest,
 ) ([]conversation.Message, error) {
 	s.Appended = req.Messages
 	s.AppendCtxErr = ctx.Err()

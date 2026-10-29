@@ -69,16 +69,16 @@ func (p *traceProposals) GetByID(
 
 func (p *traceProposals) UpdateStatus(
 	context.Context,
-	agentproposalports.UpdateAgentProposalStatusRequest,
+	*agentproposalports.UpdateAgentProposalStatusRequest,
 ) (*agent.AgentProposal, error) {
 	return p.proposal, nil
 }
 
 func (p *traceProposals) RecordExecution(
 	_ context.Context,
-	req agentproposalports.RecordAgentProposalExecutionRequest,
+	req *agentproposalports.RecordAgentProposalExecutionRequest,
 ) (*agent.AgentProposal, error) {
-	p.executed = append(p.executed, req)
+	p.executed = append(p.executed, *req)
 
 	return p.proposal, nil
 }

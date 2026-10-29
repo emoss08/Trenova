@@ -60,11 +60,11 @@ type actionLogger interface {
 type proposalOutcomeRecorder interface {
 	RecordExecution(
 		ctx context.Context,
-		req agentproposalports.RecordAgentProposalExecutionRequest,
+		req *agentproposalports.RecordAgentProposalExecutionRequest,
 	) (*agent.AgentProposal, error)
 	RecordSimulation(
 		ctx context.Context,
-		req agentproposalports.RecordAgentProposalSimulationRequest,
+		req *agentproposalports.RecordAgentProposalSimulationRequest,
 	) (*agent.AgentProposal, error)
 }
 
@@ -700,7 +700,7 @@ func (s *Service) simulate(ctx context.Context, r *approvedRun) error {
 
 	if _, err := s.proposalRepo.RecordSimulation(
 		ctx,
-		agentproposalports.RecordAgentProposalSimulationRequest{
+		&agentproposalports.RecordAgentProposalSimulationRequest{
 			ID:               proposal.ID,
 			TenantInfo:       tenantOf(proposal),
 			SimulatedAt:      now,
@@ -977,7 +977,7 @@ func (s *Service) recordSuccess(ctx context.Context, success executionSuccess) {
 	now := timeutils.NowUnix()
 	if _, err := s.proposalRepo.RecordExecution(
 		ctx,
-		agentproposalports.RecordAgentProposalExecutionRequest{
+		&agentproposalports.RecordAgentProposalExecutionRequest{
 			ID:                    proposal.ID,
 			Status:                agent.ProposalStatusExecuted,
 			ExecutedAt:            &now,
@@ -1039,7 +1039,7 @@ func (s *Service) recordFailureAs(
 ) {
 	if _, err := s.proposalRepo.RecordExecution(
 		ctx,
-		agentproposalports.RecordAgentProposalExecutionRequest{
+		&agentproposalports.RecordAgentProposalExecutionRequest{
 			ID:               proposal.ID,
 			Status:           agent.ProposalStatusExecutionFailed,
 			ExecutionError:   cause.Error(),

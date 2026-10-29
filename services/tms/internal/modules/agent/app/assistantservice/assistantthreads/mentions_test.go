@@ -45,9 +45,9 @@ type mentionConversations struct {
 
 func (c *mentionConversations) SearchMentions(
 	_ context.Context,
-	req conversationports.SearchMentionsRequest,
+	req *conversationports.SearchMentionsRequest,
 ) ([]conversationports.MentionRow, error) {
-	c.captured = req
+	c.captured = *req
 
 	return c.rows, nil
 }

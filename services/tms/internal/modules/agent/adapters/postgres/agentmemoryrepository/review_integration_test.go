@@ -56,7 +56,7 @@ func TestReview_ClearsTheTaintOnceAtTheVersionRead(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	before, err := repo.FindActive(ctx, agentmemoryports.FindActiveAgentMemoryRequest{
+	before, err := repo.FindActive(ctx, &agentmemoryports.FindActiveAgentMemoryRequest{
 		TenantInfo: tenant,
 		Now:        now,
 		Content:    tainted.Content,
@@ -65,13 +65,13 @@ func TestReview_ClearsTheTaintOnceAtTheVersionRead(t *testing.T) {
 	require.NoError(t, err)
 	assert.Nil(t, before, "a clean save is never folded into an unreviewed tainted memory")
 
-	_, err = repo.Review(ctx, agentmemoryports.ReviewAgentMemoryQuery{
+	_, err = repo.Review(ctx, &agentmemoryports.ReviewAgentMemoryQuery{
 		ID: tainted.ID, TenantInfo: tenant, ByUserID: reviewer, At: now,
 		Version: tainted.Version + 1,
 	})
 	require.Error(t, err, "a memory changed since it was read is not cleared")
 
-	reviewed, err := repo.Review(ctx, agentmemoryports.ReviewAgentMemoryQuery{
+	reviewed, err := repo.Review(ctx, &agentmemoryports.ReviewAgentMemoryQuery{
 		ID: tainted.ID, TenantInfo: tenant, ByUserID: reviewer, At: now,
 		Version: tainted.Version,
 	})
@@ -83,18 +83,18 @@ func TestReview_ClearsTheTaintOnceAtTheVersionRead(t *testing.T) {
 	assert.Equal(t, reviewer, *reviewed.ReviewedByUserID)
 	assert.Equal(t, tainted.Version+1, reviewed.Version)
 
-	_, err = repo.Review(ctx, agentmemoryports.ReviewAgentMemoryQuery{
+	_, err = repo.Review(ctx, &agentmemoryports.ReviewAgentMemoryQuery{
 		ID: tainted.ID, TenantInfo: tenant, ByUserID: reviewer, At: now,
 		Version: reviewed.Version,
 	})
 	require.Error(t, err, "a review is made once")
 
-	_, err = repo.Review(ctx, agentmemoryports.ReviewAgentMemoryQuery{
+	_, err = repo.Review(ctx, &agentmemoryports.ReviewAgentMemoryQuery{
 		ID: clean.ID, TenantInfo: tenant, ByUserID: reviewer, At: now, Version: clean.Version,
 	})
 	require.Error(t, err, "a memory that never tainted has nothing to review")
 
-	after, err := repo.FindActive(ctx, agentmemoryports.FindActiveAgentMemoryRequest{
+	after, err := repo.FindActive(ctx, &agentmemoryports.FindActiveAgentMemoryRequest{
 		TenantInfo: tenant,
 		Now:        now,
 		Content:    tainted.Content,

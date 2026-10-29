@@ -53,7 +53,7 @@ type fakeTools struct {
 
 func (f *fakeTools) CountExecutedTool(
 	_ context.Context,
-	req agentproposalports.CountExecutedToolRequest,
+	req *agentproposalports.CountExecutedToolRequest,
 ) (int, error) {
 	return f.used[req.ToolName], nil
 }

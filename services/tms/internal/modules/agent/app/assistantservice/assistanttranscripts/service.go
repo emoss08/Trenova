@@ -83,7 +83,7 @@ func (s *Service) runTranscriptOf(
 	runID pulid.ID,
 	tenant pagination.TenantInfo,
 ) (*agent.RunTranscript, error) {
-	rows, err := s.runs.ListTranscriptsByIDs(ctx, agentruntimeports.ListAgentRunsByIDsRequest{
+	rows, err := s.runs.ListTranscriptsByIDs(ctx, &agentruntimeports.ListAgentRunsByIDsRequest{
 		IDs:        []pulid.ID{runID},
 		TenantInfo: tenant,
 	})
@@ -127,7 +127,7 @@ func (s *Service) Transcript(
 	ctx context.Context,
 	req conversationports.GetThreadRequest,
 ) (*kernelports.TranscriptFile, error) {
-	thread, err := s.conversations.GetThread(ctx, req)
+	thread, err := s.conversations.GetThread(ctx, &req)
 	if err != nil {
 		return nil, err
 	}
@@ -173,7 +173,7 @@ func (s *Service) allMessages(
 	var before *int
 
 	for page := 0; page < transcriptMaxPages; page++ {
-		messages, err := s.conversations.ListMessages(ctx, conversationports.ListMessagesRequest{
+		messages, err := s.conversations.ListMessages(ctx, &conversationports.ListMessagesRequest{
 			ThreadID:       req.ID,
 			TenantInfo:     req.TenantInfo,
 			Limit:          transcriptPageSize,

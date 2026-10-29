@@ -64,9 +64,9 @@ type conversations struct {
 
 func (c *conversations) GetThread(
 	_ context.Context,
-	req conversationports.GetThreadRequest,
+	req *conversationports.GetThreadRequest,
 ) (*conversation.Thread, error) {
-	c.read = req
+	c.read = *req
 	if c.err != nil {
 		return nil, c.err
 	}

@@ -79,7 +79,7 @@ func (h *Handler) dryRun(c *gin.Context) {
 	defer stream.Close()
 
 	sawTerminal := false
-	err = h.streams.Read(ctx, assistantstreamports.ReadTurnStreamRequest{
+	err = h.streams.Read(ctx, &assistantstreamports.ReadTurnStreamRequest{
 		Ref: assistantstreamports.TurnStreamRef{
 			TenantInfo: tenant,
 			TurnID:     runID,

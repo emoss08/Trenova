@@ -134,7 +134,7 @@ func TestRunEventReads_KeepAConversationRunsEventsToItsOwner(t *testing.T) {
 			"%s: the count leaves out what the page leaves out", name)
 
 		for _, run := range []*agent.AgentRun{conversationRun, shipmentRun} {
-			byRun, runErr := repo.List(ctx, agentruntimeports.ListAgentRunEventsRequest{
+			byRun, runErr := repo.List(ctx, &agentruntimeports.ListAgentRunEventsRequest{
 				TenantInfo: tenant,
 				OwnerKind:  runOwner,
 				OwnerID:    run.ID,

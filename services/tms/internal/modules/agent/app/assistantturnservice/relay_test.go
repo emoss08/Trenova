@@ -31,7 +31,7 @@ func (s *stubTurns) Start(
 }
 
 func (s *stubTurns) GetByID(
-	context.Context, assistantturnports.GetAssistantTurnRequest,
+	context.Context, *assistantturnports.GetAssistantTurnRequest,
 ) (*conversationturn.AssistantTurn, error) {
 	s.gets++
 	if s.err != nil {
@@ -42,20 +42,20 @@ func (s *stubTurns) GetByID(
 }
 
 func (s *stubTurns) Active(
-	context.Context, assistantturnports.ActiveAssistantTurnRequest,
+	context.Context, *assistantturnports.ActiveAssistantTurnRequest,
 ) (*conversationturn.AssistantTurn, error) {
 	return nil, nil
 }
 
 func (s *stubTurns) ListLive(
-	context.Context, assistantturnports.ListLiveAssistantTurnsRequest,
+	context.Context, *assistantturnports.ListLiveAssistantTurnsRequest,
 ) ([]*assistantturnports.LiveAssistantTurn, error) {
 	return nil, nil
 }
 
 func (s *stubTurns) Complete(
 	context.Context,
-	assistantturnports.CompleteAssistantTurnRequest,
+	*assistantturnports.CompleteAssistantTurnRequest,
 ) error {
 	return nil
 }
@@ -78,7 +78,7 @@ type stubReader struct {
 
 func (s *stubReader) Read(
 	_ context.Context,
-	req assistantstreamports.ReadTurnStreamRequest,
+	req *assistantstreamports.ReadTurnStreamRequest,
 ) error {
 	s.reads++
 	s.ref = req.Ref

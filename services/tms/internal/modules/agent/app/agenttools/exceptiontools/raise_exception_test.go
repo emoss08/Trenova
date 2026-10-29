@@ -23,9 +23,9 @@ type fakeSubjectRepository struct {
 
 func (f *fakeSubjectRepository) Exists(
 	_ context.Context,
-	req agentsubjectports.AgentSubjectExistsRequest,
+	req *agentsubjectports.AgentSubjectExistsRequest,
 ) (bool, error) {
-	f.asked = append(f.asked, req)
+	f.asked = append(f.asked, *req)
 
 	return f.exists, f.err
 }

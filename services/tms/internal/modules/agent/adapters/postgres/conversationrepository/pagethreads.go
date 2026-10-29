@@ -25,14 +25,14 @@ func NewPageThreads(p Params) conversationports.PageThreadRepository {
 	}
 }
 
-func pageKeyValid(key conversationports.PageThreadKey) bool {
+func pageKeyValid(key *conversationports.PageThreadKey) bool {
 	return key.Origin.PageBound() && key.SubjectType != "" && key.SubjectID.IsNotNil() &&
 		key.UserID.IsNotNil() && key.TenantInfo.OrgID.IsNotNil() && key.TenantInfo.BuID.IsNotNil()
 }
 
 func (r *repository) GetPageThread(
 	ctx context.Context,
-	key conversationports.PageThreadKey,
+	key *conversationports.PageThreadKey,
 ) (*conversation.Thread, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*conversation.Thread, error) {
 		if !pageKeyValid(key) {
@@ -60,7 +60,7 @@ func (r *repository) ClaimPageThread(
 	thread *conversation.Thread,
 ) (*conversation.Thread, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*conversation.Thread, error) {
-		key := conversationports.PageThreadKey{
+		key := &conversationports.PageThreadKey{
 			TenantInfo: pagination.TenantInfo{
 				OrgID: thread.OrganizationID,
 				BuID:  thread.BusinessUnitID,
@@ -95,7 +95,7 @@ func (r *repository) ClaimPageThread(
 
 func (r *repository) ArchiveSubjectThreads(
 	ctx context.Context,
-	req conversationports.ArchiveSubjectThreadsRequest,
+	req *conversationports.ArchiveSubjectThreadsRequest,
 ) (int, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
 		if !req.Origin.PageBound() || req.SubjectType == "" || req.SubjectID.IsNil() {
