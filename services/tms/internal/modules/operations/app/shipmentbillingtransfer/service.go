@@ -31,6 +31,18 @@ import (
 	"go.uber.org/zap"
 )
 
+type Service struct {
+	l                   *zap.Logger
+	repo                shipmentports.ShipmentRepository
+	customerRepo        customerports.CustomerRepository
+	documentRepo        documentports.DocumentRepository
+	billingRepo         tenantports.BillingControlRepository
+	billingQueueService billingqueueports.BillingQueueService
+	invalidator         shipmentinvalidationports.ShipmentInvalidator
+	effects             *shipmenteffects.Effects
+	readiness           *shipmentbillingreadiness.Service
+}
+
 // ListAutoTransferCandidateIDs finds the shipments an automatic transfer may
 // move into billing now: ready to invoice already, or completed and eligible to
 // be marked ready without a person, where the payer's transfer mode is
@@ -115,7 +127,6 @@ func (s *Service) autoTransferEligible(
 	return readinessAllowsAutoTransfer(entity.Status, readiness), nil
 }
 
-//nolint:funlen // existing workflow or route registration is intentionally kept together
 func (s *Service) AutoMarkReadyToInvoiceIfEligible(
 	ctx context.Context,
 	shipmentID pulid.ID,
@@ -711,8 +722,8 @@ func (s *Service) attemptBillingTransfer(
 		s.notifyBillingExceptions(ctx, entity, readiness)
 	}
 
-	if code, policyErr := billingTransferPolicyViolation(readiness); policyErr != nil {
-		return attempt.fail(code, policyErr)
+	if policyCode, policyErr := billingTransferPolicyViolation(readiness); policyErr != nil {
+		return attempt.fail(policyCode, policyErr)
 	}
 
 	if markReady {
@@ -769,18 +780,6 @@ func (s *Service) attemptBillingTransfer(
 	return attempt
 }
 
-type Service struct {
-	l                   *zap.Logger
-	repo                shipmentports.ShipmentRepository
-	customerRepo        customerports.CustomerRepository
-	documentRepo        documentports.DocumentRepository
-	billingRepo         tenantports.BillingControlRepository
-	billingQueueService billingqueueports.BillingQueueService
-	invalidator         shipmentinvalidationports.ShipmentInvalidator
-	effects             *shipmenteffects.Effects
-	readiness           *shipmentbillingreadiness.Service
-}
-
 type Params struct {
 	fx.In
 
@@ -795,6 +794,7 @@ type Params struct {
 	Readiness           *shipmentbillingreadiness.Service
 }
 
+//nolint:gocritic // fx requires an fx.In parameter struct to be passed by value.
 func New(p Params) *Service {
 	return &Service{
 		l:                   p.Logger.Named("service.shipment"),

@@ -25,6 +25,15 @@ import (
 	"go.uber.org/zap"
 )
 
+type Service struct {
+	l                  *zap.Logger
+	repo               shipmentports.ShipmentRepository
+	customerRepo       customerports.CustomerRepository
+	documentRepo       documentports.DocumentRepository
+	billingRepo        tenantports.BillingControlRepository
+	serviceFailureRepo servicefailureports.ServiceFailureRepository
+}
+
 func (s *Service) GetBillingReadiness(
 	ctx context.Context,
 	shipmentID pulid.ID,
@@ -436,15 +445,6 @@ func (s *Service) readServiceFailures(
 	}
 }
 
-type Service struct {
-	l                  *zap.Logger
-	repo               shipmentports.ShipmentRepository
-	customerRepo       customerports.CustomerRepository
-	documentRepo       documentports.DocumentRepository
-	billingRepo        tenantports.BillingControlRepository
-	serviceFailureRepo servicefailureports.ServiceFailureRepository
-}
-
 type Params struct {
 	fx.In
 
@@ -456,6 +456,7 @@ type Params struct {
 	ServiceFailureRepo servicefailureports.ServiceFailureRepository `optional:"true"`
 }
 
+//nolint:gocritic // fx requires an fx.In parameter struct to be passed by value.
 func New(p Params) *Service {
 	return &Service{
 		l:                  p.Logger.Named("service.shipment"),

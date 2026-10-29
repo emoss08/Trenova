@@ -30,6 +30,19 @@ import (
 	"go.uber.org/zap"
 )
 
+type Effects struct {
+	l                   *zap.Logger
+	repo                shipmentports.ShipmentRepository
+	controlRepo         tenantports.ShipmentControlRepository
+	commodityRepo       commodityports.CommodityRepository
+	equipmentTypeRepo   equipmenttypeports.EquipmentTypeRepository
+	customerRepo        customerports.CustomerRepository
+	notificationService *notificationservice.Service
+	auditService        auditports.AuditService
+	eventService        shipmenteventports.ShipmentEventService
+	orderDerivation     orderports.OrderDerivationService
+}
+
 // RefuseCreditHold stops new business for a customer whose credit is held:
 // a new or duplicated shipment, or an existing one moved onto that payer.
 // A shipment already billed to a held payer can still be worked, since the
@@ -117,19 +130,6 @@ func (s *Effects) ApplyShipmentEnvelope(
 	shipmentenvelope.Apply(entity, shipmentenvelope.Compute(entity.Commodities, deckHeightFeet))
 }
 
-type Effects struct {
-	l                   *zap.Logger
-	repo                shipmentports.ShipmentRepository
-	controlRepo         tenantports.ShipmentControlRepository
-	commodityRepo       commodityports.CommodityRepository
-	equipmentTypeRepo   equipmenttypeports.EquipmentTypeRepository
-	customerRepo        customerports.CustomerRepository
-	notificationService *notificationservice.Service
-	auditService        auditports.AuditService
-	eventService        shipmenteventports.ShipmentEventService
-	orderDerivation     orderports.OrderDerivationService
-}
-
 type Params struct {
 	fx.In
 
@@ -145,6 +145,7 @@ type Params struct {
 	OrderDerivation     orderports.OrderDerivationService
 }
 
+//nolint:gocritic // fx requires an fx.In parameter struct to be passed by value.
 func New(p Params) *Effects {
 	return &Effects{
 		l:                   p.Logger.Named("service.shipment"),

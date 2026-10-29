@@ -20,6 +20,15 @@ import (
 	"go.uber.org/zap"
 )
 
+type Service struct {
+	l                   *zap.Logger
+	repo                shipmentports.ShipmentRepository
+	invalidator         shipmentinvalidationports.ShipmentInvalidator
+	commercial          *shipmentcommercial.Calculator
+	distanceCalculation shipmentdistanceports.DistanceCalculationService
+	effects             *shipmenteffects.Effects
+}
+
 // PreviewContractRate answers what the rate agreements would charge for a
 // shipment, without writing anything.
 //
@@ -277,15 +286,6 @@ func (s *Service) describeContractRate(
 	application.TotalChargeAmount = application.FreightAmount.Add(other)
 
 	return application, nil
-}
-
-type Service struct {
-	l                   *zap.Logger
-	repo                shipmentports.ShipmentRepository
-	invalidator         shipmentinvalidationports.ShipmentInvalidator
-	commercial          *shipmentcommercial.Calculator
-	distanceCalculation shipmentdistanceports.DistanceCalculationService
-	effects             *shipmenteffects.Effects
 }
 
 type Params struct {

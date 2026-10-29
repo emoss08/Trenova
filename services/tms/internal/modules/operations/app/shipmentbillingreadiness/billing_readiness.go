@@ -106,57 +106,16 @@ func applyPayerReadiness(
 		len(resolution.Shares),
 	)
 
-	requirementIssues := HasShipmentRequirementIssues(readiness)
-	rateIssues := HasRateIssues(readiness)
-	autoApprove := true
 	known := make(map[string]struct{}, len(readiness.Requirements))
 	for _, requirement := range readiness.Requirements {
 		known[requirement.DocumentTypeID] = struct{}{}
 	}
 
 	for _, share := range resolution.Shares {
-		payer := payersByID[share.PayerID]
-		var profile *customer.CustomerBillingProfile
-		entry := shipmentbillingports.ShipmentBillingPayerReadiness{
-			PayerID:     share.PayerID,
-			IsPrimary:   share.PayerID == resolution.DefaultPayerID,
-			ShareAmount: share.TotalAmount,
-		}
-		if payer != nil {
-			entry.PayerName = payer.Name
-			entry.PayerCode = payer.Code
-			profile = payer.BillingProfile
-		}
-		if profile != nil {
-			entry.CreditStatus = profile.CreditStatus
-			entry.CreditHold = profile.BlocksBilling()
-		}
+		entry, profile := payerReadinessEntry(share, resolution, payersByID)
 
 		if !entry.IsPrimary && profile != nil {
-			for _, requirement := range buildDocumentRequirements(profile.DocumentTypes, docs) {
-				if _, ok := known[requirement.DocumentTypeID]; ok {
-					continue
-				}
-				known[requirement.DocumentTypeID] = struct{}{}
-				readiness.Requirements = append(readiness.Requirements, requirement)
-				if !requirement.Satisfied {
-					readiness.MissingRequirements = append(
-						readiness.MissingRequirements,
-						requirement,
-					)
-				}
-			}
-			if readiness.Policy.ShipmentBillingRequirementEnforcement == tenant.EnforcementLevelBlock &&
-				profile.RequireBOLNumber &&
-				entity.BOL == "" &&
-				!hasValidationCode(readiness.ValidationFailures, "missing_bol") {
-				readiness.ValidationFailures = append(readiness.ValidationFailures,
-					shipmentbillingports.ShipmentBillingValidation{
-						Field:   "bol",
-						Code:    "missing_bol",
-						Message: "BOL is required before the shipment can be invoiced",
-					})
-			}
+			mergePayerRequirements(readiness, entity, profile, docs, known)
 		}
 
 		if entry.CreditHold {
@@ -171,8 +130,76 @@ func applyPayerReadiness(
 		readiness.Payers = append(readiness.Payers, entry)
 	}
 
-	requirementIssues = HasShipmentRequirementIssues(readiness)
-	rateIssues = HasRateIssues(readiness)
+	settlePayerReadiness(readiness, entity, payersByID)
+}
+
+func payerReadinessEntry(
+	share *chargeallocation.PayerShare,
+	resolution *chargeallocation.ShareResolution,
+	payersByID map[pulid.ID]*customer.Customer,
+) (shipmentbillingports.ShipmentBillingPayerReadiness, *customer.CustomerBillingProfile) {
+	payer := payersByID[share.PayerID]
+	var profile *customer.CustomerBillingProfile
+	entry := shipmentbillingports.ShipmentBillingPayerReadiness{
+		PayerID:     share.PayerID,
+		IsPrimary:   share.PayerID == resolution.DefaultPayerID,
+		ShareAmount: share.TotalAmount,
+	}
+	if payer != nil {
+		entry.PayerName = payer.Name
+		entry.PayerCode = payer.Code
+		profile = payer.BillingProfile
+	}
+	if profile != nil {
+		entry.CreditStatus = profile.CreditStatus
+		entry.CreditHold = profile.BlocksBilling()
+	}
+
+	return entry, profile
+}
+
+func mergePayerRequirements(
+	readiness *shipmentbillingports.ShipmentBillingReadiness,
+	entity *shipment.Shipment,
+	profile *customer.CustomerBillingProfile,
+	docs []*document.Document,
+	known map[string]struct{},
+) {
+	for _, requirement := range buildDocumentRequirements(profile.DocumentTypes, docs) {
+		if _, ok := known[requirement.DocumentTypeID]; ok {
+			continue
+		}
+		known[requirement.DocumentTypeID] = struct{}{}
+		readiness.Requirements = append(readiness.Requirements, requirement)
+		if !requirement.Satisfied {
+			readiness.MissingRequirements = append(
+				readiness.MissingRequirements,
+				requirement,
+			)
+		}
+	}
+
+	if readiness.Policy.ShipmentBillingRequirementEnforcement == tenant.EnforcementLevelBlock &&
+		profile.RequireBOLNumber &&
+		entity.BOL == "" &&
+		!hasValidationCode(readiness.ValidationFailures, "missing_bol") {
+		readiness.ValidationFailures = append(readiness.ValidationFailures,
+			shipmentbillingports.ShipmentBillingValidation{
+				Field:   "bol",
+				Code:    "missing_bol",
+				Message: "BOL is required before the shipment can be invoiced",
+			})
+	}
+}
+
+func settlePayerReadiness(
+	readiness *shipmentbillingports.ShipmentBillingReadiness,
+	entity *shipment.Shipment,
+	payersByID map[pulid.ID]*customer.Customer,
+) {
+	requirementIssues := HasShipmentRequirementIssues(readiness)
+	rateIssues := HasRateIssues(readiness)
+	autoApprove := true
 	for i := range readiness.Payers {
 		payer := payersByID[readiness.Payers[i].PayerID]
 		var profile *customer.CustomerBillingProfile

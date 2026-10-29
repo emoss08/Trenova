@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/equipmentcontinuityports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/shipmentcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -49,6 +50,33 @@ import (
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
+
+type Service struct {
+	l                    *zap.Logger
+	db                   kernelports.Transactor
+	repo                 shipmentports.ShipmentRepository
+	orderRepo            orderports.OrderRepository
+	assignmentRepo       assignmentports.AssignmentRepository
+	modeProfileService   modeprofileports.ModeProfileService
+	permitService        permitports.PermitService
+	continuityRepo       equipmentcontinuityports.EquipmentContinuityRepository
+	customerRepo         customerports.CustomerRepository
+	chargeAllocationRepo chargeallocationports.ChargeAllocationRepository
+	documentRepo         documentports.DocumentRepository
+	billingRepo          tenantports.BillingControlRepository
+	serviceFailures      servicefailureports.ServiceFailureEvaluator
+	validator            *shipmentvalidator.Validator
+	eventService         shipmenteventports.ShipmentEventService
+	coordinator          *shipmentstate.Coordinator
+	invalidator          shipmentinvalidationports.ShipmentInvalidator
+	commercial           *shipmentcommercial.Calculator
+	distanceCalculation  shipmentdistanceports.DistanceCalculationService
+	agentEvents          agenteventports.AgentEventPublisher
+	mutationObservers    []shipmentserviceports.ShipmentMutationObserver
+	effects              *shipmenteffects.Effects
+	readiness            *shipmentbillingreadiness.Service
+	transfer             *shipmentbillingtransfer.Service
+}
 
 func (s *Service) recordCapabilityDeviations(
 	ctx context.Context,
@@ -212,33 +240,6 @@ func (s *Service) prepareCreate(
 	return &createPreparation{rating: rating, advisories: advisories}, nil
 }
 
-type Service struct {
-	l                    *zap.Logger
-	db                   kernelports.Transactor
-	repo                 shipmentports.ShipmentRepository
-	orderRepo            orderports.OrderRepository
-	assignmentRepo       assignmentports.AssignmentRepository
-	modeProfileService   modeprofileports.ModeProfileService
-	permitService        permitports.PermitService
-	continuityRepo       equipmentcontinuityports.EquipmentContinuityRepository
-	customerRepo         customerports.CustomerRepository
-	chargeAllocationRepo chargeallocationports.ChargeAllocationRepository
-	documentRepo         documentports.DocumentRepository
-	billingRepo          tenantports.BillingControlRepository
-	serviceFailures      servicefailureports.ServiceFailureEvaluator
-	validator            *shipmentvalidator.Validator
-	eventService         shipmenteventports.ShipmentEventService
-	coordinator          *shipmentstate.Coordinator
-	invalidator          shipmentinvalidationports.ShipmentInvalidator
-	commercial           *shipmentcommercial.Calculator
-	distanceCalculation  shipmentdistanceports.DistanceCalculationService
-	agentEvents          agenteventports.AgentEventPublisher
-	mutationObservers    []shipmentserviceports.ShipmentMutationObserver
-	effects              *shipmenteffects.Effects
-	readiness            *shipmentbillingreadiness.Service
-	transfer             *shipmentbillingtransfer.Service
-}
-
 type Params struct {
 	fx.In
 
@@ -267,6 +268,7 @@ type Params struct {
 	Transfer             *shipmentbillingtransfer.Service
 }
 
+//nolint:gocritic // fx requires an fx.In parameter struct to be passed by value.
 func New(p Params) *Service {
 	return &Service{
 		l:                    p.Logger.Named("service.shipment"),
@@ -435,7 +437,7 @@ func (s *Service) announceCreated(
 	})
 }
 
-func (s *Service) Update( //nolint:cyclop // legacy workflow
+func (s *Service) Update(
 	ctx context.Context,
 	entity *shipment.Shipment,
 	actor *permissionports.RequestActor,
@@ -530,30 +532,8 @@ func (s *Service) Update( //nolint:cyclop // legacy workflow
 		return nil, err
 	}
 
-	multiErr, advisories := s.validator.ValidateUpdateWithOriginalAndAdvisories(
-		ctx, original, entity,
-	)
-	if multiErr != nil {
-		return nil, multiErr
-	}
-	if multiErr := s.validateChargeAllocations(ctx, entity); multiErr != nil {
-		return nil, multiErr
-	}
-	if multiErr := s.readiness.ValidateBillingReadinessForStatusChange(
-		ctx,
-		entity,
-	); multiErr != nil {
-		return nil, multiErr
-	}
-	if err = s.ensureEquipmentAvailableForShipmentUpdate(ctx, original, entity); err != nil {
-		return nil, err
-	}
-
-	req := duplicateBOLCheckRequest(entity)
-	if err = s.effects.CheckDuplicateBOLsWithControl(ctx, control, req); err != nil {
-		return nil, err
-	}
-	if err = s.checkExternalReference(ctx, entity); err != nil {
+	advisories, err := s.validateShipmentUpdate(ctx, original, entity, control)
+	if err != nil {
 		return nil, err
 	}
 
@@ -566,21 +546,80 @@ func (s *Service) Update( //nolint:cyclop // legacy workflow
 		return nil, err
 	}
 
-	if err = s.recordCapabilityDeviations(ctx, updatedEntity, advisories); err != nil {
+	return s.finishShipmentUpdate(ctx, &shipmentUpdate{
+		original:   original,
+		updated:    updatedEntity,
+		actor:      actor,
+		advisories: advisories,
+		log:        log,
+	})
+}
+
+func (s *Service) validateShipmentUpdate(
+	ctx context.Context,
+	original, entity *shipment.Shipment,
+	control *shipmentcontrol.ShipmentControl,
+) ([]*errortypes.AdvisoryError, error) {
+	multiErr, advisories := s.validator.ValidateUpdateWithOriginalAndAdvisories(
+		ctx, original, entity,
+	)
+	if multiErr != nil {
+		return nil, multiErr
+	}
+	if allocationErr := s.validateChargeAllocations(ctx, entity); allocationErr != nil {
+		return nil, allocationErr
+	}
+	if readinessErr := s.readiness.ValidateBillingReadinessForStatusChange(
+		ctx,
+		entity,
+	); readinessErr != nil {
+		return nil, readinessErr
+	}
+	if err := s.ensureEquipmentAvailableForShipmentUpdate(ctx, original, entity); err != nil {
+		return nil, err
+	}
+
+	req := duplicateBOLCheckRequest(entity)
+	if err := s.effects.CheckDuplicateBOLsWithControl(ctx, control, req); err != nil {
+		return nil, err
+	}
+	if err := s.checkExternalReference(ctx, entity); err != nil {
+		return nil, err
+	}
+
+	return advisories, nil
+}
+
+type shipmentUpdate struct {
+	original   *shipment.Shipment
+	updated    *shipment.Shipment
+	actor      *permissionports.RequestActor
+	advisories []*errortypes.AdvisoryError
+	log        *zap.Logger
+}
+
+func (s *Service) finishShipmentUpdate(
+	ctx context.Context,
+	p *shipmentUpdate,
+) (*shipment.Shipment, error) {
+	original, updatedEntity, actor, log := p.original, p.updated, p.actor, p.log
+	auditActor := actor.AuditActor()
+
+	if err := s.recordCapabilityDeviations(ctx, updatedEntity, p.advisories); err != nil {
 		log.Error("failed to record capability deviations", zap.Error(err))
 	}
-	if err = s.syncPermits(ctx, updatedEntity, actor); err != nil {
+	if err := s.syncPermits(ctx, updatedEntity, actor); err != nil {
 		log.Error("failed to sync permit requirements; dispatch may not be blocked",
 			zap.String("shipmentId", updatedEntity.ID.String()),
 			zap.Error(err),
 		)
 	}
 
-	if err = s.advanceContinuityForCompletedMoves(ctx, original, updatedEntity); err != nil {
+	if err := s.advanceContinuityForCompletedMoves(ctx, original, updatedEntity); err != nil {
 		return nil, err
 	}
 
-	if err = s.effects.LogShipmentAction(
+	if err := s.effects.LogShipmentAction(
 		updatedEntity,
 		auditActor,
 		permission.OpUpdate,
@@ -604,7 +643,7 @@ func (s *Service) Update( //nolint:cyclop // legacy workflow
 	)
 
 	s.effects.EmitStatusChangeEvent(ctx, original, updatedEntity, auditActor)
-	if err = s.effects.RecomputeOrdersForShipments(
+	if err := s.effects.RecomputeOrdersForShipments(
 		ctx,
 		pagination.TenantInfo{
 			OrgID: updatedEntity.OrganizationID,
@@ -616,32 +655,47 @@ func (s *Service) Update( //nolint:cyclop // legacy workflow
 	}
 	s.evaluateServiceFailuresAfterShipmentUpdate(ctx, updatedEntity, actor)
 
-	if updatedEntity.Status == shipmentvocab.StatusCompleted &&
-		s.customerRepo != nil &&
-		s.documentRepo != nil &&
-		s.billingRepo != nil {
-		autoMarkedEntity, autoMarkErr := s.transfer.AutoMarkReadyToInvoiceIfEligible(
-			ctx,
-			updatedEntity.ID,
-			pagination.TenantInfo{
-				OrgID: updatedEntity.OrganizationID,
-				BuID:  updatedEntity.BusinessUnitID,
-			},
-			auditActor.UserID,
-		)
-		if autoMarkErr != nil {
-			log.Warn(
-				"failed to auto-mark shipment ready to invoice after completion",
-				zap.Error(autoMarkErr),
-			)
-		} else if autoMarkedEntity != nil {
-			updatedEntity = autoMarkedEntity
-		}
-	}
+	updatedEntity = s.autoMarkCompletedShipment(ctx, updatedEntity, auditActor.UserID, log)
 
 	s.notifyShipmentMutationObservers(ctx, original, updatedEntity, actor)
 
 	return updatedEntity, nil
+}
+
+func (s *Service) autoMarkCompletedShipment(
+	ctx context.Context,
+	updatedEntity *shipment.Shipment,
+	userID pulid.ID,
+	log *zap.Logger,
+) *shipment.Shipment {
+	if updatedEntity.Status != shipmentvocab.StatusCompleted ||
+		s.customerRepo == nil ||
+		s.documentRepo == nil ||
+		s.billingRepo == nil {
+		return updatedEntity
+	}
+
+	autoMarkedEntity, autoMarkErr := s.transfer.AutoMarkReadyToInvoiceIfEligible(
+		ctx,
+		updatedEntity.ID,
+		pagination.TenantInfo{
+			OrgID: updatedEntity.OrganizationID,
+			BuID:  updatedEntity.BusinessUnitID,
+		},
+		userID,
+	)
+	if autoMarkErr != nil {
+		log.Warn(
+			"failed to auto-mark shipment ready to invoice after completion",
+			zap.Error(autoMarkErr),
+		)
+		return updatedEntity
+	}
+	if autoMarkedEntity != nil {
+		return autoMarkedEntity
+	}
+
+	return updatedEntity
 }
 
 func (s *Service) notifyShipmentMutationObservers(

@@ -274,7 +274,7 @@ func (o *Observer) buildSyncContext(
 			result.changeType = edisync.TransferChangeTypeShipmentLifecycle214
 			result.next = plan.OppositePrepared.Status
 			result.transfer = buildTransferChange(event, result)
-			prepareTransferChange(result.transfer, result)
+			prepareTransferChange(result.transfer, &result)
 			return result, nil
 		}
 		if event.Type != shipmentevent.TypeStatusChanged {
@@ -289,7 +289,7 @@ func (o *Observer) buildSyncContext(
 	result.next = next
 	result.changeType = changeTypeForEvent(event)
 	result.transfer = buildTransferChange(event, result)
-	prepareTransferChange(result.transfer, result)
+	prepareTransferChange(result.transfer, &result)
 	return result, nil
 }
 
@@ -479,7 +479,7 @@ func buildTransferChange(
 	}
 }
 
-func prepareTransferChange(change *edisync.TransferChange, result syncContext) {
+func prepareTransferChange(change *edisync.TransferChange, result *syncContext) {
 	change.Status = edisync.TransferChangeStatusApplied
 	change.ConflictStatus = edisync.TransferChangeConflictNone
 	now := timeutils.NowUnix()
@@ -503,7 +503,7 @@ func prepareTransferChange(change *edisync.TransferChange, result syncContext) {
 		result.changeType != edisync.TransferChangeTypeShipmentLifecycle214:
 		change.Status = edisync.TransferChangeStatusIgnored
 		change.AppliedAt = nil
-		change.Payload["ignoredReason"] = ignoredSameStatusReason(result)
+		change.Payload["ignoredReason"] = ignoredSameStatusReason(*result)
 	case result.changeType == edisync.TransferChangeTypeShipmentLifecycle214 &&
 		result.lifecyclePlan != nil &&
 		result.lifecyclePlan.ConflictReason != "":
