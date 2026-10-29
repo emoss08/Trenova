@@ -6,7 +6,9 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/api/helpers"
-	"github.com/emoss08/trenova/internal/modules/documents/app/captureservice"
+	"github.com/emoss08/trenova/internal/modules/documents/app/capturedevices"
+	"github.com/emoss08/trenova/internal/modules/documents/app/captureintake"
+	"github.com/emoss08/trenova/internal/modules/documents/app/capturerequests"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/capture"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -40,7 +42,7 @@ func (h *Handler) RequireDevice() gin.HandlerFunc {
 			return
 		}
 
-		principal, err := h.service.Authenticate(
+		principal, err := h.devices.Authenticate(
 			c.Request.Context(),
 			strings.TrimSpace(header[len(bearerPrefix):]),
 			c.ClientIP(),
@@ -65,9 +67,9 @@ func (h *Handler) RequireDevice() gin.HandlerFunc {
 	}
 }
 
-func devicePrincipal(c *gin.Context) *captureservice.DevicePrincipal {
+func devicePrincipal(c *gin.Context) *capturedevices.DevicePrincipal {
 	value, _ := c.Get(principalKey)
-	principal, _ := value.(*captureservice.DevicePrincipal)
+	principal, _ := value.(*capturedevices.DevicePrincipal)
 
 	return principal
 }
@@ -78,12 +80,12 @@ func devicePrincipal(c *gin.Context) *captureservice.DevicePrincipal {
 // @ID getCaptureDevice
 // @Tags Capture
 // @Produce json
-// @Success 200 {object} captureservice.DeviceIdentity
+// @Success 200 {object} capturedevices.DeviceIdentity
 // @Failure 401 {object} helpers.ProblemDetail
 // @Security BearerAuth
 // @Router /capture/device/ [get]
 func (h *Handler) me(c *gin.Context) {
-	identity, err := h.service.DescribeDevice(c.Request.Context(), devicePrincipal(c))
+	identity, err := h.devices.DescribeDevice(c.Request.Context(), devicePrincipal(c))
 	if err != nil {
 		h.fail(c, err)
 
@@ -108,7 +110,7 @@ const signedOutReason = "Signed out on the computer"
 // @Router /capture/device/ [delete]
 func (h *Handler) signOut(c *gin.Context) {
 	principal := devicePrincipal(c)
-	if _, err := h.service.RevokeDevice(c.Request.Context(), &captureservice.RevokeDeviceRequest{
+	if _, err := h.devices.RevokeDevice(c.Request.Context(), &capturedevices.RevokeDeviceRequest{
 		TenantInfo: principal.TenantInfo(),
 		DeviceID:   principal.Device.ID,
 		Reason:     signedOutReason,
@@ -133,7 +135,7 @@ func (h *Handler) signOut(c *gin.Context) {
 // @Security BearerAuth
 // @Router /capture/device/profiles/ [get]
 func (h *Handler) profiles(c *gin.Context) {
-	profiles, err := h.service.DeviceProfiles(c.Request.Context(), devicePrincipal(c))
+	profiles, err := h.devices.DeviceProfiles(c.Request.Context(), devicePrincipal(c))
 	if err != nil {
 		h.fail(c, err)
 
@@ -166,7 +168,7 @@ func (h *Handler) reportSources(c *gin.Context) {
 		return
 	}
 
-	device, err := h.service.ReportSources(c.Request.Context(), devicePrincipal(c), req.Sources)
+	device, err := h.devices.ReportSources(c.Request.Context(), devicePrincipal(c), req.Sources)
 	if err != nil {
 		h.fail(c, err)
 
@@ -187,7 +189,7 @@ func (h *Handler) reportSources(c *gin.Context) {
 // @Security BearerAuth
 // @Router /capture/device/requests/ [get]
 func (h *Handler) openRequests(c *gin.Context) {
-	requests, err := h.service.OpenRequests(c.Request.Context(), devicePrincipal(c))
+	requests, err := h.requests.OpenRequests(c.Request.Context(), devicePrincipal(c))
 	if err != nil {
 		h.fail(c, err)
 
@@ -203,7 +205,7 @@ func (h *Handler) openRequests(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param requestID path string true "Capture request ID"
-// @Param request body captureservice.RequestStatusReport true "The new status"
+// @Param request body capturerequests.RequestStatusReport true "The new status"
 // @Success 200 {object} capturerequest.CaptureRequest
 // @Failure 401 {object} helpers.ProblemDetail
 // @Failure 404 {object} helpers.ProblemDetail
@@ -218,7 +220,7 @@ func (h *Handler) reportRequestStatus(c *gin.Context) {
 		return
 	}
 
-	report := new(captureservice.RequestStatusReport)
+	report := new(capturerequests.RequestStatusReport)
 	if err = bindJSON(c, report); err != nil {
 		h.eh.HandleError(c, err)
 
@@ -226,7 +228,7 @@ func (h *Handler) reportRequestStatus(c *gin.Context) {
 	}
 	report.RequestID = requestID
 
-	updated, err := h.service.ReportRequestStatus(c.Request.Context(), devicePrincipal(c), report)
+	updated, err := h.requests.ReportRequestStatus(c.Request.Context(), devicePrincipal(c), report)
 	if err != nil {
 		h.fail(c, err)
 
@@ -243,7 +245,7 @@ func (h *Handler) reportRequestStatus(c *gin.Context) {
 // @Tags Capture
 // @Accept json
 // @Produce json
-// @Param request body captureservice.OpenBatchInput true "The batch to open"
+// @Param request body captureintake.OpenBatchInput true "The batch to open"
 // @Success 200 {object} capture.CaptureBatch
 // @Failure 401 {object} helpers.ProblemDetail
 // @Failure 409 {object} helpers.ProblemDetail
@@ -252,14 +254,14 @@ func (h *Handler) reportRequestStatus(c *gin.Context) {
 // @Security BearerAuth
 // @Router /capture/device/batches/ [post]
 func (h *Handler) openBatch(c *gin.Context) {
-	in := new(captureservice.OpenBatchInput)
+	in := new(captureintake.OpenBatchInput)
 	if err := bindJSON(c, in); err != nil {
 		h.eh.HandleError(c, err)
 
 		return
 	}
 
-	batch, err := h.service.OpenBatch(c.Request.Context(), devicePrincipal(c), in)
+	batch, err := h.intake.OpenBatch(c.Request.Context(), devicePrincipal(c), in)
 	if err != nil {
 		h.fail(c, err)
 
@@ -327,10 +329,10 @@ func (h *Handler) putPage(c *gin.Context) {
 	}
 
 	c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, capture.MaxPageBytes+1)
-	page, err := h.service.PutPage(
+	page, err := h.intake.PutPage(
 		c.Request.Context(),
 		devicePrincipal(c),
-		&captureservice.PutPageInput{
+		&captureintake.PutPageInput{
 			BatchID:        batchID,
 			Sequence:       sequence,
 			Body:           c.Request.Body,
@@ -371,10 +373,10 @@ func (h *Handler) putPrintJob(c *gin.Context) {
 	}
 
 	c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, maxPrintJobBytes+1)
-	batch, err := h.service.PutPrintJob(
+	batch, err := h.intake.PutPrintJob(
 		c.Request.Context(),
 		devicePrincipal(c),
-		&captureservice.PutPrintJobInput{
+		&captureintake.PutPrintJobInput{
 			BatchID: batchID,
 			Body:    c.Request.Body,
 		},
@@ -396,7 +398,7 @@ func (h *Handler) putPrintJob(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param batchID path string true "Capture batch ID"
-// @Param request body captureservice.SealBatchInput true "Page count and manifest digest"
+// @Param request body captureintake.SealBatchInput true "Page count and manifest digest"
 // @Success 200 {object} capture.CaptureBatch
 // @Failure 401 {object} helpers.ProblemDetail
 // @Failure 409 {object} helpers.ProblemDetail
@@ -410,7 +412,7 @@ func (h *Handler) sealBatch(c *gin.Context) {
 		return
 	}
 
-	in := new(captureservice.SealBatchInput)
+	in := new(captureintake.SealBatchInput)
 	if err = bindJSON(c, in); err != nil {
 		h.eh.HandleError(c, err)
 
@@ -418,7 +420,7 @@ func (h *Handler) sealBatch(c *gin.Context) {
 	}
 	in.BatchID = batchID
 
-	batch, err := h.service.SealBatch(c.Request.Context(), devicePrincipal(c), in)
+	batch, err := h.intake.SealBatch(c.Request.Context(), devicePrincipal(c), in)
 	if err != nil {
 		h.fail(c, err)
 

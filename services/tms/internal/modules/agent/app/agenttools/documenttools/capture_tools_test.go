@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
-	"github.com/emoss08/trenova/internal/modules/documents/app/captureservice"
+	"github.com/emoss08/trenova/internal/modules/documents/app/capturefiling"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/capture"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -22,9 +22,9 @@ type fakeCaptures struct {
 	guard      *agenttoolstest.WriteGuard
 	item       *capture.CaptureItem
 	batch      *capture.CaptureBatch
-	filed      []captureservice.FileItemInput
-	discarded  *captureservice.DiscardItemInput
-	discardAll *captureservice.DiscardBatchInput
+	filed      []capturefiling.FileItemInput
+	discarded  *capturefiling.DiscardItemInput
+	discardAll *capturefiling.DiscardBatchInput
 }
 
 func (f *fakeCaptures) GetItem(
@@ -48,15 +48,15 @@ func (f *fakeCaptures) GetBatch(
 
 func (f *fakeCaptures) PlanFileItem(
 	_ context.Context,
-	in *captureservice.FileItemInput,
-) (*captureservice.FilePlan, error) {
+	in *capturefiling.FileItemInput,
+) (*capturefiling.FilePlan, error) {
 	if in.Version != f.item.Version {
 		return nil, errortypes.NewConflictError("Somebody else changed this document")
 	}
 	item := *f.item
 	item.ID = in.ItemID
 
-	return &captureservice.FilePlan{Item: &item, Batch: f.batch, Target: capture.Target{
+	return &capturefiling.FilePlan{Item: &item, Batch: f.batch, Target: capture.Target{
 		ResourceType:   in.TargetType,
 		ResourceID:     &in.TargetID,
 		DocumentTypeID: in.DocumentTypeID,
@@ -65,7 +65,7 @@ func (f *fakeCaptures) PlanFileItem(
 
 func (f *fakeCaptures) FileItem(
 	_ context.Context,
-	in *captureservice.FileItemInput,
+	in *capturefiling.FileItemInput,
 ) (*capture.CaptureItem, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
@@ -77,16 +77,16 @@ func (f *fakeCaptures) FileItem(
 
 func (f *fakeCaptures) FileItems(
 	_ context.Context,
-	in *captureservice.FileItemsInput,
-) (*captureservice.FileItemsResult, error) {
+	in *capturefiling.FileItemsInput,
+) (*capturefiling.FileItemsResult, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
 	}
 	f.filed = append(f.filed, in.Items...)
 
-	return &captureservice.FileItemsResult{
+	return &capturefiling.FileItemsResult{
 		Filed: []*capture.CaptureItem{f.item},
-		Failures: []captureservice.FileItemFailure{
+		Failures: []capturefiling.FileItemFailure{
 			{ItemID: in.Items[1].ItemID, Message: "Record not found"},
 		},
 	}, nil
@@ -94,14 +94,14 @@ func (f *fakeCaptures) FileItems(
 
 func (f *fakeCaptures) PlanDiscardItem(
 	_ context.Context,
-	in *captureservice.DiscardItemInput,
-) (*captureservice.DiscardItemPlan, error) {
-	return &captureservice.DiscardItemPlan{Item: f.item, Batch: f.batch}, nil
+	in *capturefiling.DiscardItemInput,
+) (*capturefiling.DiscardItemPlan, error) {
+	return &capturefiling.DiscardItemPlan{Item: f.item, Batch: f.batch}, nil
 }
 
 func (f *fakeCaptures) DiscardItem(
 	_ context.Context,
-	in *captureservice.DiscardItemInput,
+	in *capturefiling.DiscardItemInput,
 ) (*capture.CaptureBatch, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
@@ -113,9 +113,9 @@ func (f *fakeCaptures) DiscardItem(
 
 func (f *fakeCaptures) PlanDiscardBatch(
 	context.Context,
-	*captureservice.DiscardBatchInput,
-) (*captureservice.DiscardBatchPlan, error) {
-	return &captureservice.DiscardBatchPlan{
+	*capturefiling.DiscardBatchInput,
+) (*capturefiling.DiscardBatchPlan, error) {
+	return &capturefiling.DiscardBatchPlan{
 		Batch:     f.batch,
 		Open:      []*capture.CaptureItem{f.item},
 		Unchanged: f.batch.Status.Terminal(),
@@ -124,7 +124,7 @@ func (f *fakeCaptures) PlanDiscardBatch(
 
 func (f *fakeCaptures) DiscardBatch(
 	_ context.Context,
-	in *captureservice.DiscardBatchInput,
+	in *capturefiling.DiscardBatchInput,
 ) (*capture.CaptureBatch, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err

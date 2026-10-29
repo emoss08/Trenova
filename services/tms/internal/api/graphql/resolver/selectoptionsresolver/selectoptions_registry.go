@@ -117,9 +117,10 @@ func (r *Deps) SelectOptionRegistry() map[gqlmodel.SelectOptionResource]SelectOp
 		FactoringCompanyRepo: r.FactoringCompanyRepo,
 	}
 	documents := &documentsselectoptions.Sources{
-		CaptureService:      r.CaptureService,
-		DocumentTypeService: r.DocumentTypeService,
-		EmailService:        r.EmailService,
+		CaptureProfileService: r.CaptureProfileService,
+		CaptureDeviceService:  r.CaptureDeviceService,
+		DocumentTypeService:   r.DocumentTypeService,
+		EmailService:          r.EmailService,
 	}
 	agent := &agentselectoptions.Sources{Core: r.Core, AiProviderService: r.AiProviderService}
 

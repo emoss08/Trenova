@@ -8,7 +8,7 @@ import (
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
-	"github.com/emoss08/trenova/internal/modules/documents/app/captureservice"
+	"github.com/emoss08/trenova/internal/modules/documents/app/capturedevices"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -38,7 +38,7 @@ var captureResources = [][]byte{
 type streamedInvalidation struct {
 	Resource string                       `json:"resource"`
 	Action   string                       `json:"action"`
-	Entity   *captureservice.DeviceSignal `json:"entity"`
+	Entity   *capturedevices.DeviceSignal `json:"entity"`
 }
 
 // @Summary Open the device's live stream
@@ -102,7 +102,7 @@ func (h *Handler) stream(c *gin.Context) {
 func (h *Handler) pump(
 	ctx context.Context,
 	clientIP string,
-	principal *captureservice.DevicePrincipal,
+	principal *capturedevices.DevicePrincipal,
 	rt realtimeports.RealtimeStream,
 	stream *helpers.EventStream,
 ) {
@@ -128,7 +128,7 @@ func (h *Handler) pump(
 
 			switch frame.Event {
 			case realtimeports.RealtimeEventHeartbeat:
-				h.service.Heartbeat(ctx, principal, clientIP)
+				h.devices.Heartbeat(ctx, principal, clientIP)
 				stream.EmitRaw(frame.ID, frame.Event, frame.Data)
 			case realtimeports.RealtimeEventReset,
 				realtimeports.RealtimeEventClose,

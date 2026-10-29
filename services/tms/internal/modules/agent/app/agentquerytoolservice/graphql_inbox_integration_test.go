@@ -20,7 +20,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/adapters/postgres/capturerepository"
 	"github.com/emoss08/trenova/internal/modules/documents/adapters/postgres/inboundmessagerepository"
 	"github.com/emoss08/trenova/internal/modules/documents/adapters/postgres/inboundreplyrepository"
-	"github.com/emoss08/trenova/internal/modules/documents/app/captureservice"
+	"github.com/emoss08/trenova/internal/modules/documents/app/capturedevices"
+	"github.com/emoss08/trenova/internal/modules/documents/app/capturefiling"
+	"github.com/emoss08/trenova/internal/modules/documents/app/capturesupport"
 	"github.com/emoss08/trenova/internal/modules/documents/app/inboundqueue"
 	"github.com/emoss08/trenova/internal/modules/documents/app/inboundreads"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/capture"
@@ -110,6 +112,7 @@ func newInboxEnv(t *testing.T) *inboxEnv {
 	directory := &inboxDirectory{people: map[pulid.ID][]permissionports.PermittedUser{}}
 	engine := &mocks.DenyResourcesPermissionEngine{}
 	captures := capturerepository.Params{DB: conn, Logger: logger}
+	captureSupport := capturesupport.New(capturesupport.Params{Logger: logger, Permissions: engine})
 
 	resolvers := agentread.ResolverParams{
 		InboundQueueService: inboundqueue.New(inboundqueue.Params{
@@ -129,14 +132,20 @@ func newInboxEnv(t *testing.T) *inboxEnv {
 			MessageRepo: messages,
 			QueueRepo:   queue,
 		}),
-		CaptureService: captureservice.New(captureservice.Params{
-			Logger:      logger,
-			DB:          conn,
-			Batches:     capturerepository.NewBatchRepository(captures),
-			Items:       capturerepository.NewItemRepository(captures),
-			Pages:       capturerepository.NewPageRepository(captures),
-			Devices:     capturerepository.NewDeviceRepository(captures),
-			Permissions: engine,
+		CaptureSupportService: captureSupport,
+		CaptureFilingService: capturefiling.New(capturefiling.Params{
+			Logger:  logger,
+			DB:      conn,
+			Batches: capturerepository.NewBatchRepository(captures),
+			Items:   capturerepository.NewItemRepository(captures),
+			Pages:   capturerepository.NewPageRepository(captures),
+			Support: captureSupport,
+		}),
+		CaptureDeviceService: capturedevices.New(capturedevices.Params{
+			Logger:     logger,
+			DB:         conn,
+			DeviceRepo: capturerepository.NewDeviceRepository(captures),
+			Support:    captureSupport,
 		}),
 		EmailService: emailservice.New(emailservice.Params{
 			Logger: logger,

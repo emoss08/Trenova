@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/aiproviderservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/extensionsecrets"
 	"github.com/emoss08/trenova/internal/modules/billing/app/factoringtransportservice"
-	"github.com/emoss08/trenova/internal/modules/documents/app/captureservice"
+	"github.com/emoss08/trenova/internal/modules/documents/app/capturesupport"
 	"github.com/emoss08/trenova/internal/modules/documents/app/inboundmailbox"
 	"github.com/emoss08/trenova/internal/modules/documents/app/storedobject"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediprofilesecret"
@@ -34,7 +34,7 @@ func envelopeSources(includeObjects bool) *kernelports.EnvelopeSources {
 	if includeObjects {
 		sources.Objects = slices.Concat(
 			storedobject.EnvelopeObjects(),
-			captureservice.EnvelopeObjects(),
+			capturesupport.EnvelopeObjects(),
 		)
 	}
 	return sources

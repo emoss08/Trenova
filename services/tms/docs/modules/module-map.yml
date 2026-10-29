@@ -448,8 +448,15 @@ modules:
       - trackingtemplate
       - triage
     service:
+      - capturedevices
+      - capturefiling
+      - captureintake
+      - capturemaintenance
+      - captureprocessing
+      - captureprofiles
       - capturereleaseservice
-      - captureservice
+      - capturerequests
+      - capturesupport
       - documentextractionservice
       - documentmailservice
       - documentpacketruleservice

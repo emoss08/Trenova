@@ -5,7 +5,7 @@ import (
 	"strconv"
 
 	"github.com/emoss08/trenova/internal/api/helpers"
-	"github.com/emoss08/trenova/internal/modules/documents/app/captureservice"
+	"github.com/emoss08/trenova/internal/modules/documents/app/capturedevices"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/gin-gonic/gin"
 )
@@ -18,13 +18,13 @@ import (
 // @Tags Capture
 // @Accept json
 // @Produce json
-// @Param request body captureservice.StartPairingRequest true "The machine asking to be paired"
-// @Success 200 {object} captureservice.PairingGrant
+// @Param request body capturedevices.StartPairingRequest true "The machine asking to be paired"
+// @Success 200 {object} capturedevices.PairingGrant
 // @Failure 400 {object} helpers.ProblemDetail
 // @Failure 429 {object} helpers.ProblemDetail
 // @Router /capture/pair/ [post]
 func (h *Handler) startPairing(c *gin.Context) {
-	req := new(captureservice.StartPairingRequest)
+	req := new(capturedevices.StartPairingRequest)
 	if err := bindJSON(c, req); err != nil {
 		h.eh.HandleError(c, err)
 
@@ -32,7 +32,7 @@ func (h *Handler) startPairing(c *gin.Context) {
 	}
 	req.ClientIP = c.ClientIP()
 
-	grant, err := h.service.StartPairing(c.Request.Context(), req)
+	grant, err := h.devices.StartPairing(c.Request.Context(), req)
 	if err != nil {
 		h.fail(c, err)
 
@@ -55,7 +55,7 @@ type exchangePairingRequest struct {
 // @Accept json
 // @Produce json
 // @Param request body exchangePairingRequest true "The device code"
-// @Success 200 {object} captureservice.TokenPair
+// @Success 200 {object} capturedevices.TokenPair
 // @Failure 400 {object} map[string]string
 // @Router /capture/pair/token/ [post]
 func (h *Handler) exchangePairing(c *gin.Context) {
@@ -66,7 +66,7 @@ func (h *Handler) exchangePairing(c *gin.Context) {
 		return
 	}
 
-	pair, err := h.service.ExchangePairing(c.Request.Context(), req.DeviceCode)
+	pair, err := h.devices.ExchangePairing(c.Request.Context(), req.DeviceCode)
 	if err != nil {
 		h.fail(c, err)
 
@@ -84,14 +84,14 @@ func (h *Handler) exchangePairing(c *gin.Context) {
 // @Tags Capture
 // @Accept json
 // @Produce json
-// @Param request body captureservice.RefreshRequest true "The refresh token"
-// @Success 200 {object} captureservice.TokenPair
+// @Param request body capturedevices.RefreshRequest true "The refresh token"
+// @Success 200 {object} capturedevices.TokenPair
 // @Failure 400 {object} map[string]string
 // @Failure 422 {object} helpers.ProblemDetail
 // @Failure 426 {object} map[string]string
 // @Router /capture/token/refresh/ [post]
 func (h *Handler) refreshToken(c *gin.Context) {
-	req := new(captureservice.RefreshRequest)
+	req := new(capturedevices.RefreshRequest)
 	if err := bindJSON(c, req); err != nil {
 		h.eh.HandleError(c, err)
 
@@ -99,7 +99,7 @@ func (h *Handler) refreshToken(c *gin.Context) {
 	}
 	req.ClientIP = c.ClientIP()
 
-	pair, err := h.service.Refresh(c.Request.Context(), req)
+	pair, err := h.devices.Refresh(c.Request.Context(), req)
 	if err != nil {
 		h.fail(c, err)
 

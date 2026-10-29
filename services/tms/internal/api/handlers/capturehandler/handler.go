@@ -23,8 +23,11 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/realtimeconfig"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
+	"github.com/emoss08/trenova/internal/modules/documents/app/capturedevices"
+	"github.com/emoss08/trenova/internal/modules/documents/app/capturefiling"
+	"github.com/emoss08/trenova/internal/modules/documents/app/captureintake"
 	"github.com/emoss08/trenova/internal/modules/documents/app/capturereleaseservice"
-	"github.com/emoss08/trenova/internal/modules/documents/app/captureservice"
+	"github.com/emoss08/trenova/internal/modules/documents/app/capturerequests"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -45,7 +48,10 @@ const (
 type Params struct {
 	fx.In
 
-	Service        *captureservice.Service
+	Devices        *capturedevices.Service
+	Requests       *capturerequests.Service
+	Intake         *captureintake.Service
+	Filing         *capturefiling.Service
 	Releases       *capturereleaseservice.Service
 	Gateway        realtimeports.RealtimeGateway `optional:"true"`
 	Edition        ediports.EditionInfo
@@ -56,7 +62,10 @@ type Params struct {
 }
 
 type Handler struct {
-	service     *captureservice.Service
+	devices     *capturedevices.Service
+	requests    *capturerequests.Service
+	intake      *captureintake.Service
+	filing      *capturefiling.Service
 	releases    *capturereleaseservice.Service
 	gateway     realtimeports.RealtimeGateway
 	edition     ediports.EditionInfo
@@ -69,7 +78,10 @@ type Handler struct {
 
 func New(p Params) *Handler {
 	return &Handler{
-		service:     p.Service,
+		devices:     p.Devices,
+		requests:    p.Requests,
+		intake:      p.Intake,
+		filing:      p.Filing,
 		releases:    p.Releases,
 		gateway:     p.Gateway,
 		edition:     p.Edition,
@@ -89,9 +101,9 @@ const (
 
 // PageContentPath is where a signed-in person fetches a page to show it.
 // Pages are encrypted at rest, so there is no link to storage to hand out.
-func PageContentPath(pageID pulid.ID, kind captureservice.PageContentKind) string {
+func PageContentPath(pageID pulid.ID, kind capturefiling.PageContentKind) string {
 	path := apiPrefix + captureRoot + "pages/" + url.PathEscape(pageID.String()) + "/content/"
-	if kind == captureservice.PageContentPDF {
+	if kind == capturefiling.PageContentPDF {
 		return path
 	}
 
@@ -140,14 +152,14 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 // their own status: an RFC 8628 error body it understands without parsing
 // problem details, and 426 when it has to update before it can go on.
 func (h *Handler) fail(c *gin.Context, err error) {
-	var pairingErr *captureservice.PairingError
+	var pairingErr *capturedevices.PairingError
 	if errors.As(err, &pairingErr) {
 		helpers.JSON(c, http.StatusBadRequest, gin.H{"error": string(pairingErr.Code)})
 
 		return
 	}
 
-	var outdated *captureservice.OutdatedAgentError
+	var outdated *capturedevices.OutdatedAgentError
 	if errors.As(err, &outdated) {
 		helpers.JSON(c, http.StatusUpgradeRequired, gin.H{
 			"error":          "agent_outdated",

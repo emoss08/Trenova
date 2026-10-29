@@ -3203,7 +3203,7 @@ models:
       - github.com/emoss08/trenova/internal/modules/documents/domain/capture.SourceInfo
   CapturePairingPreview:
     model:
-      - github.com/emoss08/trenova/internal/modules/documents/app/captureservice.PairingPreview
+      - github.com/emoss08/trenova/internal/modules/documents/app/capturedevices.PairingPreview
     fields:
       osVersion:
         fieldName: OSVersion
@@ -3281,7 +3281,7 @@ models:
         resolver: true
   CaptureAccess:
     model:
-      - github.com/emoss08/trenova/internal/modules/documents/app/captureservice.Access
+      - github.com/emoss08/trenova/internal/modules/documents/app/capturesupport.Access
   CaptureAgentRelease:
     model:
       - github.com/emoss08/trenova/internal/modules/documents/app/capturereleaseservice.Release
@@ -3298,10 +3298,10 @@ models:
       - github.com/emoss08/trenova/internal/modules/documents/ports/captureports.CaptureQRCode
   CaptureItemFailure:
     model:
-      - github.com/emoss08/trenova/internal/modules/documents/app/captureservice.FileItemFailure
+      - github.com/emoss08/trenova/internal/modules/documents/app/capturefiling.FileItemFailure
   FileCaptureItemsResult:
     model:
-      - github.com/emoss08/trenova/internal/modules/documents/app/captureservice.FileItemsResult
+      - github.com/emoss08/trenova/internal/modules/documents/app/capturefiling.FileItemsResult
   CaptureCoverSheet:
     fields:
       target:

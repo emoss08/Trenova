@@ -131,7 +131,7 @@ encryption envelope stays in Go, so plaintext crosses a local socket.
 upload sends only the PDF and a few headers (`crates/capture-client/src/api.rs:418-437`). The server
 then reads each page back from storage, renders it through PDFium, rebuilds an almost identical
 thumbnail (quality 72 instead of 70), measures ink coverage for blank detection and decodes QR codes
-(`modules/documents/app/captureservice/processing.go:263-299`, four workers).
+(`modules/documents/app/captureprocessing/processing.go:263-299`, four workers).
 
 Luma and thresholding are written twice, with the same coefficients and different thresholds
 (`capture-imaging/src/raster.rs:125-170` against `captureimaging/inspector.go:116` and
@@ -146,7 +146,7 @@ carries little risk.
 type mirrors a Go type, and constants such as `MAX_PAGE_BYTES` and the header names are copied
 (`api.rs:13-34`, `api/handlers/capturehandler/device.go:17-20`). The seal digest has golden vectors on
 the Rust side only (`capture-protocol/src/manifest.rs:60-72`); the Go tests compute expected values with
-Go's own function (`captureservice/service_test.go:296,406`). And `native-capture.yml:36-48` runs only
+Go's own function (`captureflow/service_test.go:296,406`). And `native-capture.yml:36-48` runs only
 on changes under `desktop/capture/**`, so a Go-side protocol change never runs the Rust tests. Check in
 shared JSON fixtures and golden digests that both test suites read, and widen the CI path filter to
 `modules/documents/domain/capture/**` and `capturehandler/**`.
@@ -417,7 +417,7 @@ output. Trimming the spec to the endpoints used would cut compile time more than
 | --- | --- |
 | Cost of `claims()` per statement | `track_functions = 'pl'`, then `pg_stat_user_functions` under a realistic load |
 | Index use under row-level security | `SET ROLE trenova_tenant; EXPLAIN ANALYZE` on trigram, full-text and `ST_DWithin` searches |
-| Where capture processing spends time | CPU profile of `captureservice/processing.go` over a 100-page batch |
+| Where capture processing spends time | CPU profile of `captureprocessing/processing.go` over a 100-page batch |
 | Peak heap per document | Heap profile of upload → decrypt → thumbnail for 5, 20 and 50 MB files |
 | Page-viewer latency | p50/p95 of `GetPageImage` under concurrent Desk use |
 | wazero against native for pixel work | Benchmark the same resize, threshold and QR code natively, under wazero, and in Go |

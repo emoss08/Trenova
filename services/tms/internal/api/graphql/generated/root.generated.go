@@ -5,6 +5,9 @@ package generated
 import (
 	"github.com/emoss08/trenova/internal/modules/workforce/app/driverportalinvitationservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/driverportalrecordsservice"
+	"github.com/emoss08/trenova/internal/modules/documents/app/capturedevices"
+	"github.com/emoss08/trenova/internal/modules/documents/app/capturefiling"
+	"github.com/emoss08/trenova/internal/modules/documents/app/capturesupport"
 	"context"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingdriftports"
@@ -290,7 +293,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/latechargeports"
 	"github.com/emoss08/trenova/internal/modules/documents/app/capturereleaseservice"
-	"github.com/emoss08/trenova/internal/modules/documents/app/captureservice"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/capture"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentpacketrule"
@@ -2138,7 +2140,7 @@ type MutationResolver interface {
 	UndoMyBulkEdit(ctx context.Context, id string) (*gqlmodel.BulkEditJob, error)
 	EditCaptureItems(ctx context.Context, batchID string, input gqlmodel.EditCaptureItemsInput) (*capture.CaptureBatch, error)
 	FileCaptureItem(ctx context.Context, id string, input gqlmodel.FileCaptureItemInput) (*capture.CaptureItem, error)
-	FileCaptureItems(ctx context.Context, items []*gqlmodel.FileCaptureItemsEntryInput) (*captureservice.FileItemsResult, error)
+	FileCaptureItems(ctx context.Context, items []*gqlmodel.FileCaptureItemsEntryInput) (*capturefiling.FileItemsResult, error)
 	DiscardCaptureItem(ctx context.Context, id string, version int) (*capture.CaptureBatch, error)
 	DiscardCaptureBatch(ctx context.Context, id string, version int) (*capture.CaptureBatch, error)
 	CreateCaptureRequest(ctx context.Context, input gqlmodel.CreateCaptureRequestInput) (*capturerequest.CaptureRequest, error)
@@ -2940,7 +2942,7 @@ type QueryResolver interface {
 	PreviewBulkEdit(ctx context.Context, input gqlmodel.BulkEditInput) (*gqlmodel.BulkEditPreview, error)
 	MyBulkEdit(ctx context.Context, id string) (*gqlmodel.BulkEditJob, error)
 	MyBulkEdits(ctx context.Context, resource *string, limit *int) ([]*gqlmodel.BulkEditJob, error)
-	MyCaptureAccess(ctx context.Context) (*captureservice.Access, error)
+	MyCaptureAccess(ctx context.Context) (*capturesupport.Access, error)
 	CaptureAgentRelease(ctx context.Context) (*capturereleaseservice.Release, error)
 	CaptureBatches(ctx context.Context, input gqlmodel.CaptureBatchesInput) (*gqlmodel.CaptureBatchConnection, error)
 	CaptureBatch(ctx context.Context, id string) (*capture.CaptureBatch, error)
@@ -2950,7 +2952,7 @@ type QueryResolver interface {
 	CaptureProfiles(ctx context.Context, status *captureprofile.ProfileStatus, query *string) ([]*captureprofile.CaptureProfile, error)
 	CaptureProfile(ctx context.Context, id string) (*captureprofile.CaptureProfile, error)
 	CaptureRequestsForTarget(ctx context.Context, targetType string, targetID string, limit *int) ([]*capturerequest.CaptureRequest, error)
-	CaptureDevicePairing(ctx context.Context, userCode string) (*captureservice.PairingPreview, error)
+	CaptureDevicePairing(ctx context.Context, userCode string) (*capturedevices.PairingPreview, error)
 	Carriers(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.CarrierConnection, error)
 	Carrier(ctx context.Context, id string) (*carrier.Carrier, error)
 	CarrierCapacityPostings(ctx context.Context, input gqlmodel.DataTableConnectionInput, carrierID *string, openOnly *bool) (*gqlmodel.CarrierCapacityPostingConnection, error)

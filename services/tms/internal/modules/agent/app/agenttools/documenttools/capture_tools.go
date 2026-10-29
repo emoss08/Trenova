@@ -15,7 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
-	"github.com/emoss08/trenova/internal/modules/documents/app/captureservice"
+	"github.com/emoss08/trenova/internal/modules/documents/app/capturefiling"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/capture"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -60,28 +60,28 @@ type CaptureKeeper interface {
 	) (*capture.CaptureBatch, error)
 	PlanFileItem(
 		ctx context.Context,
-		in *captureservice.FileItemInput,
-	) (*captureservice.FilePlan, error)
-	FileItem(ctx context.Context, in *captureservice.FileItemInput) (*capture.CaptureItem, error)
+		in *capturefiling.FileItemInput,
+	) (*capturefiling.FilePlan, error)
+	FileItem(ctx context.Context, in *capturefiling.FileItemInput) (*capture.CaptureItem, error)
 	FileItems(
 		ctx context.Context,
-		in *captureservice.FileItemsInput,
-	) (*captureservice.FileItemsResult, error)
+		in *capturefiling.FileItemsInput,
+	) (*capturefiling.FileItemsResult, error)
 	PlanDiscardItem(
 		ctx context.Context,
-		in *captureservice.DiscardItemInput,
-	) (*captureservice.DiscardItemPlan, error)
+		in *capturefiling.DiscardItemInput,
+	) (*capturefiling.DiscardItemPlan, error)
 	DiscardItem(
 		ctx context.Context,
-		in *captureservice.DiscardItemInput,
+		in *capturefiling.DiscardItemInput,
 	) (*capture.CaptureBatch, error)
 	PlanDiscardBatch(
 		ctx context.Context,
-		in *captureservice.DiscardBatchInput,
-	) (*captureservice.DiscardBatchPlan, error)
+		in *capturefiling.DiscardBatchInput,
+	) (*capturefiling.DiscardBatchPlan, error)
 	DiscardBatch(
 		ctx context.Context,
-		in *captureservice.DiscardBatchInput,
+		in *capturefiling.DiscardBatchInput,
 	) (*capture.CaptureBatch, error)
 }
 
@@ -115,7 +115,7 @@ func pulidPointerText(id *pulid.ID) string {
 }
 
 type captureFiling struct {
-	entries []captureservice.FileItemInput
+	entries []capturefiling.FileItemInput
 }
 
 func captureFilingFrom(params *agenttoolports.ToolExecuteParams) (*captureFiling, error) {
@@ -128,7 +128,7 @@ func captureFilingFrom(params *agenttoolports.ToolExecuteParams) (*captureFiling
 			paramCaptureItems, len(raw), maxCaptureFilings)
 	}
 
-	filing := &captureFiling{entries: make([]captureservice.FileItemInput, 0, len(raw))}
+	filing := &captureFiling{entries: make([]capturefiling.FileItemInput, 0, len(raw))}
 	seen := make(map[pulid.ID]bool, len(raw))
 	for idx, entry := range raw {
 		values, isObject := entry.(map[string]any)
@@ -151,7 +151,7 @@ func captureFilingFrom(params *agenttoolports.ToolExecuteParams) (*captureFiling
 	return filing, nil
 }
 
-func captureFilingEntry(values map[string]any, idx int) (*captureservice.FileItemInput, error) {
+func captureFilingEntry(values map[string]any, idx int) (*capturefiling.FileItemInput, error) {
 	prefix := fmt.Sprintf("%s[%d].", paramCaptureItems, idx)
 	itemID, err := toolparams.RequirePulid(values, paramCaptureItemID)
 	if err != nil {
@@ -170,7 +170,7 @@ func captureFilingEntry(values map[string]any, idx int) (*captureservice.FileIte
 		return nil, fmt.Errorf("%s%w", prefix, err)
 	}
 
-	return &captureservice.FileItemInput{
+	return &capturefiling.FileItemInput{
 		ItemID:         itemID,
 		TargetType:     string(targetType),
 		TargetID:       targetID,
@@ -181,8 +181,8 @@ func captureFilingEntry(values map[string]any, idx int) (*captureservice.FileIte
 func (f *captureFiling) versioned(
 	ctx context.Context,
 	captures CaptureKeeper,
-) ([]captureservice.FileItemInput, error) {
-	entries := make([]captureservice.FileItemInput, 0, len(f.entries))
+) ([]capturefiling.FileItemInput, error) {
+	entries := make([]capturefiling.FileItemInput, 0, len(f.entries))
 	for idx := range f.entries {
 		entry := f.entries[idx]
 		item, err := captures.GetItem(ctx, entry.TenantInfo, entry.ItemID)
@@ -217,18 +217,18 @@ func NewFileCaptureItemsTool(captures CaptureKeeper) agenttoolports.AgentTool {
 		Properties:  captureFilingProperties(),
 		Required:    []string{paramCaptureItems},
 		SearchTerms: []string{"file scan", "scanned paperwork", "capture intake", "file pod"},
-	}, toolspec.ReceivablePlan[*captureFiling, []*captureservice.FilePlan]{
+	}, toolspec.ReceivablePlan[*captureFiling, []*capturefiling.FilePlan]{
 		Request: captureFilingFrom,
 		Plan: func(
 			ctx context.Context,
 			filing *captureFiling,
 			_ *agenttoolports.ToolExecuteParams,
-		) ([]*captureservice.FilePlan, error) {
+		) ([]*capturefiling.FilePlan, error) {
 			entries, err := filing.versioned(ctx, captures)
 			if err != nil {
 				return nil, err
 			}
-			plans := make([]*captureservice.FilePlan, 0, len(entries))
+			plans := make([]*capturefiling.FilePlan, 0, len(entries))
 			for idx := range entries {
 				plan, planErr := captures.PlanFileItem(ctx, &entries[idx])
 				if planErr != nil {
@@ -271,7 +271,7 @@ func NewFileCaptureItemsTool(captures CaptureKeeper) agenttoolports.AgentTool {
 					Name:   changepreview.CountOf(1, changepreview.ScannedDocument),
 				}, nil
 			}
-			result, err := captures.FileItems(ctx, &captureservice.FileItemsInput{
+			result, err := captures.FileItems(ctx, &capturefiling.FileItemsInput{
 				TenantInfo: toolparams.TenantFrom(*params),
 				Items:      entries,
 			})
@@ -338,7 +338,7 @@ func captureFilingProperties() map[string]any {
 
 func renderCaptureFiling(
 	_ *captureFiling,
-	plans []*captureservice.FilePlan,
+	plans []*capturefiling.FilePlan,
 ) (*agentpreview.ToolPreview, error) {
 	changes := make([]*agentpreview.RecordChange, 0, len(plans))
 	for _, plan := range plans {
@@ -363,7 +363,7 @@ func renderCaptureFiling(
 		changepreview.CountOf(len(plans), changepreview.ScannedDocument)), changes...), nil
 }
 
-func capturedOutcome(result *captureservice.FileItemsResult) string {
+func capturedOutcome(result *capturefiling.FileItemsResult) string {
 	summary := changepreview.CountOf(len(result.Filed), changepreview.ScannedDocument) + " filed"
 	if len(result.Failures) == 0 {
 		return summary
@@ -381,13 +381,13 @@ func NewDiscardCaptureItemTool(captures CaptureKeeper) agenttoolports.AgentTool 
 		ctx context.Context,
 		params *agenttoolports.ToolExecuteParams,
 		id pulid.ID,
-	) (*captureservice.DiscardItemInput, error) {
+	) (*capturefiling.DiscardItemInput, error) {
 		item, err := captures.GetItem(ctx, toolparams.TenantFrom(*params), id)
 		if err != nil {
 			return nil, err
 		}
 
-		return &captureservice.DiscardItemInput{
+		return &capturefiling.DiscardItemInput{
 			TenantInfo: toolparams.TenantFrom(*params),
 			ItemID:     id,
 			Version:    item.Version,
@@ -413,7 +413,7 @@ func NewDiscardCaptureItemTool(captures CaptureKeeper) agenttoolports.AgentTool 
 		},
 		Required:    []string{paramCaptureItemIDOne},
 		SearchTerms: []string{"discard scan", "blank page", "throw away scan"},
-	}, toolspec.ReceivablePlan[pulid.ID, *captureservice.DiscardItemPlan]{
+	}, toolspec.ReceivablePlan[pulid.ID, *capturefiling.DiscardItemPlan]{
 		Request: func(params *agenttoolports.ToolExecuteParams) (pulid.ID, error) {
 			return toolparams.RequirePulid(params.Params, paramCaptureItemIDOne)
 		},
@@ -421,7 +421,7 @@ func NewDiscardCaptureItemTool(captures CaptureKeeper) agenttoolports.AgentTool 
 			ctx context.Context,
 			id pulid.ID,
 			params *agenttoolports.ToolExecuteParams,
-		) (*captureservice.DiscardItemPlan, error) {
+		) (*capturefiling.DiscardItemPlan, error) {
 			in, err := build(ctx, params, id)
 			if err != nil {
 				return nil, err
@@ -430,7 +430,7 @@ func NewDiscardCaptureItemTool(captures CaptureKeeper) agenttoolports.AgentTool 
 			return captures.PlanDiscardItem(ctx, in)
 		},
 		Refused: func(pulid.ID) string { return "Would discard a scanned document." },
-		Render: func(_ pulid.ID, plan *captureservice.DiscardItemPlan) (*agentpreview.ToolPreview, error) {
+		Render: func(_ pulid.ID, plan *capturefiling.DiscardItemPlan) (*agentpreview.ToolPreview, error) {
 			after := captureItemBefore(plan.Item)
 			after.Status = string(capture.ItemDiscarded)
 			change, err := toolpreview.Changed(captureItemRecord(plan.Item),
@@ -482,13 +482,13 @@ func NewDiscardCaptureBatchTool(captures CaptureKeeper) agenttoolports.AgentTool
 		ctx context.Context,
 		params *agenttoolports.ToolExecuteParams,
 		id pulid.ID,
-	) (*captureservice.DiscardBatchInput, error) {
+	) (*capturefiling.DiscardBatchInput, error) {
 		batch, err := captures.GetBatch(ctx, toolparams.TenantFrom(*params), id)
 		if err != nil {
 			return nil, err
 		}
 
-		return &captureservice.DiscardBatchInput{
+		return &capturefiling.DiscardBatchInput{
 			TenantInfo: toolparams.TenantFrom(*params),
 			BatchID:    id,
 			Version:    batch.Version,
@@ -513,7 +513,7 @@ func NewDiscardCaptureBatchTool(captures CaptureKeeper) agenttoolports.AgentTool
 		},
 		Required:    []string{paramCaptureBatchID},
 		SearchTerms: []string{"discard stack", "clear capture intake", "throw away scans"},
-	}, toolspec.ReceivablePlan[pulid.ID, *captureservice.DiscardBatchPlan]{
+	}, toolspec.ReceivablePlan[pulid.ID, *capturefiling.DiscardBatchPlan]{
 		Request: func(params *agenttoolports.ToolExecuteParams) (pulid.ID, error) {
 			return toolparams.RequirePulid(params.Params, paramCaptureBatchID)
 		},
@@ -521,7 +521,7 @@ func NewDiscardCaptureBatchTool(captures CaptureKeeper) agenttoolports.AgentTool
 			ctx context.Context,
 			id pulid.ID,
 			params *agenttoolports.ToolExecuteParams,
-		) (*captureservice.DiscardBatchPlan, error) {
+		) (*capturefiling.DiscardBatchPlan, error) {
 			in, err := build(ctx, params, id)
 			if err != nil {
 				return nil, err
@@ -560,7 +560,7 @@ func NewDiscardCaptureBatchTool(captures CaptureKeeper) agenttoolports.AgentTool
 
 func renderCaptureDiscard(
 	_ pulid.ID,
-	plan *captureservice.DiscardBatchPlan,
+	plan *capturefiling.DiscardBatchPlan,
 ) (*agentpreview.ToolPreview, error) {
 	status := capture.BatchDiscarded
 	if plan.Batch.FiledItemCount > 0 {

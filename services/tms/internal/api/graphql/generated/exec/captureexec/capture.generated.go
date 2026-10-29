@@ -3,6 +3,9 @@
 package captureexec
 
 import (
+	"github.com/emoss08/trenova/internal/modules/documents/app/capturedevices"
+	"github.com/emoss08/trenova/internal/modules/documents/app/capturefiling"
+	"github.com/emoss08/trenova/internal/modules/documents/app/capturesupport"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/captureprofile"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/capturerequest"
 	"context"
@@ -12,7 +15,6 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/modules/documents/app/capturereleaseservice"
-	"github.com/emoss08/trenova/internal/modules/documents/app/captureservice"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/capture"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/captureports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
@@ -50,7 +52,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*captureservice.Access)
+					obj := o.(*capturesupport.Access)
 					return obj.Enabled, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -60,7 +62,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*captureservice.Access)
+					obj := o.(*capturesupport.Access)
 					return obj.CanCapture, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -1155,7 +1157,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*captureservice.FileItemFailure)
+					obj := o.(*capturefiling.FileItemFailure)
 					return obj.ItemID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -1165,7 +1167,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*captureservice.FileItemFailure)
+					obj := o.(*capturefiling.FileItemFailure)
 					return obj.Message, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -1379,7 +1381,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*captureservice.PairingPreview)
+					obj := o.(*capturedevices.PairingPreview)
 					return obj.UserCode, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -1389,7 +1391,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*captureservice.PairingPreview)
+					obj := o.(*capturedevices.PairingPreview)
 					return obj.MachineName, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -1399,7 +1401,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*captureservice.PairingPreview)
+					obj := o.(*capturedevices.PairingPreview)
 					return obj.WindowsUser, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -1409,7 +1411,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*captureservice.PairingPreview)
+					obj := o.(*capturedevices.PairingPreview)
 					return obj.AgentVersion, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -1419,7 +1421,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*captureservice.PairingPreview)
+					obj := o.(*capturedevices.PairingPreview)
 					return obj.Architecture, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNCaptureArchitecture2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋcaptureᚐArchitecture),
@@ -1429,7 +1431,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*captureservice.PairingPreview)
+					obj := o.(*capturedevices.PairingPreview)
 					return obj.OSVersion, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -1439,7 +1441,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*captureservice.PairingPreview)
+					obj := o.(*capturedevices.PairingPreview)
 					return obj.ClientIP, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -1449,7 +1451,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*captureservice.PairingPreview)
+					obj := o.(*capturedevices.PairingPreview)
 					return obj.ExpiresAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -2136,7 +2138,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "CaptureItem",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*captureservice.FileItemsResult)
+					obj := o.(*capturefiling.FileItemsResult)
 					return obj.Filed, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNCaptureItem2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋcaptureᚐCaptureItemᚄ),
@@ -2147,10 +2149,10 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "CaptureItemFailure",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*captureservice.FileItemsResult)
+					obj := o.(*capturefiling.FileItemsResult)
 					return obj.Failures, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNCaptureItemFailure2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋappᚋcaptureserviceᚐFileItemFailureᚄ),
+				Marshal: gqlexec.Marshal(marshalNCaptureItemFailure2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋappᚋcapturefilingᚐFileItemFailureᚄ),
 			},
 		}},
 		{Object: "Mutation", Fields: []*gqlexec.Field{
@@ -2191,7 +2193,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").FileCaptureItems(ctx, fc.Args["items"].([]*gqlmodel.FileCaptureItemsEntryInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNFileCaptureItemsResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋappᚋcaptureserviceᚐFileItemsResult),
+				Marshal: gqlexec.Marshal(marshalNFileCaptureItemsResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋappᚋcapturefilingᚐFileItemsResult),
 			},
 			{
 				Name:       "discardCaptureItem",
@@ -2358,7 +2360,7 @@ var Shard = &gqlexec.Shard{
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					return gqlexec.Resolver[resolverQuery](ec, "Query").MyCaptureAccess(ctx)
 				},
-				Marshal: gqlexec.Marshal(marshalNCaptureAccess2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋappᚋcaptureserviceᚐAccess),
+				Marshal: gqlexec.Marshal(marshalNCaptureAccess2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋappᚋcapturesupportᚐAccess),
 			},
 			{
 				Name:       "captureAgentRelease",
@@ -2493,7 +2495,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").CaptureDevicePairing(ctx, fc.Args["userCode"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalNCapturePairingPreview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋappᚋcaptureserviceᚐPairingPreview),
+				Marshal: gqlexec.Marshal(marshalNCapturePairingPreview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋappᚋcapturedevicesᚐPairingPreview),
 			},
 		}},
 	},
@@ -2570,7 +2572,7 @@ type resolverCaptureSettings interface {
 type resolverMutation interface {
 	EditCaptureItems(ctx context.Context, batchID string, input gqlmodel.EditCaptureItemsInput) (*capture.CaptureBatch, error)
 	FileCaptureItem(ctx context.Context, id string, input gqlmodel.FileCaptureItemInput) (*capture.CaptureItem, error)
-	FileCaptureItems(ctx context.Context, items []*gqlmodel.FileCaptureItemsEntryInput) (*captureservice.FileItemsResult, error)
+	FileCaptureItems(ctx context.Context, items []*gqlmodel.FileCaptureItemsEntryInput) (*capturefiling.FileItemsResult, error)
 	DiscardCaptureItem(ctx context.Context, id string, version int) (*capture.CaptureBatch, error)
 	DiscardCaptureBatch(ctx context.Context, id string, version int) (*capture.CaptureBatch, error)
 	CreateCaptureRequest(ctx context.Context, input gqlmodel.CreateCaptureRequestInput) (*capturerequest.CaptureRequest, error)
@@ -2586,7 +2588,7 @@ type resolverMutation interface {
 }
 
 type resolverQuery interface {
-	MyCaptureAccess(ctx context.Context) (*captureservice.Access, error)
+	MyCaptureAccess(ctx context.Context) (*capturesupport.Access, error)
 	CaptureAgentRelease(ctx context.Context) (*capturereleaseservice.Release, error)
 	CaptureBatches(ctx context.Context, input gqlmodel.CaptureBatchesInput) (*gqlmodel.CaptureBatchConnection, error)
 	CaptureBatch(ctx context.Context, id string) (*capture.CaptureBatch, error)
@@ -2596,7 +2598,7 @@ type resolverQuery interface {
 	CaptureProfiles(ctx context.Context, status *captureprofile.ProfileStatus, query *string) ([]*captureprofile.CaptureProfile, error)
 	CaptureProfile(ctx context.Context, id string) (*captureprofile.CaptureProfile, error)
 	CaptureRequestsForTarget(ctx context.Context, targetType string, targetID string, limit *int) ([]*capturerequest.CaptureRequest, error)
-	CaptureDevicePairing(ctx context.Context, userCode string) (*captureservice.PairingPreview, error)
+	CaptureDevicePairing(ctx context.Context, userCode string) (*capturedevices.PairingPreview, error)
 }
 
 var (
@@ -3794,7 +3796,7 @@ func marshalNBoolean2bool(ctx context.Context, ec *gqlexec.Exec, sel ast.Selecti
 	return res
 }
 
-func marshalNCaptureAccess2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋappᚋcaptureserviceᚐAccess(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *captureservice.Access) graphql.Marshaler {
+func marshalNCaptureAccess2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋappᚋcapturesupportᚐAccess(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *capturesupport.Access) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -3910,13 +3912,13 @@ func marshalNCaptureItem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodule
 	return ec.MarshalType(ctx, sel, "CaptureItem", v)
 }
 
-func marshalNCaptureItemFailure2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋappᚋcaptureserviceᚐFileItemFailure(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v captureservice.FileItemFailure) graphql.Marshaler {
+func marshalNCaptureItemFailure2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋappᚋcapturefilingᚐFileItemFailure(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v capturefiling.FileItemFailure) graphql.Marshaler {
 	return ec.MarshalType(ctx, sel, "CaptureItemFailure", &v)
 }
 
-func marshalNCaptureItemFailure2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋappᚋcaptureserviceᚐFileItemFailureᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []captureservice.FileItemFailure) graphql.Marshaler {
-	return gqlexec.List[captureservice.FileItemFailure]{
-		Elem:        marshalNCaptureItemFailure2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋappᚋcaptureserviceᚐFileItemFailure,
+func marshalNCaptureItemFailure2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋappᚋcapturefilingᚐFileItemFailureᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []capturefiling.FileItemFailure) graphql.Marshaler {
+	return gqlexec.List[capturefiling.FileItemFailure]{
+		Elem:        marshalNCaptureItemFailure2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋappᚋcapturefilingᚐFileItemFailure,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
@@ -3954,7 +3956,7 @@ func marshalNCapturePageStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmod
 	return res
 }
 
-func marshalNCapturePairingPreview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋappᚋcaptureserviceᚐPairingPreview(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *captureservice.PairingPreview) graphql.Marshaler {
+func marshalNCapturePairingPreview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋappᚋcapturedevicesᚐPairingPreview(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *capturedevices.PairingPreview) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -4082,7 +4084,7 @@ func marshalNCaptureSourceProtocol2githubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return res
 }
 
-func marshalNFileCaptureItemsResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋappᚋcaptureserviceᚐFileItemsResult(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *captureservice.FileItemsResult) graphql.Marshaler {
+func marshalNFileCaptureItemsResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋappᚋcapturefilingᚐFileItemsResult(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *capturefiling.FileItemsResult) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null

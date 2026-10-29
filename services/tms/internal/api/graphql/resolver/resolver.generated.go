@@ -612,7 +612,11 @@ func FromServices(s *Services) *Resolver {
 	}
 	captureDeps := &captureresolver.Deps{
 		Core:                  s.Core,
-		CaptureService:        s.CaptureService,
+		CaptureSupportService: s.CaptureSupportService,
+		CaptureProfileService: s.CaptureProfileService,
+		CaptureDeviceService:  s.CaptureDeviceService,
+		CaptureRequestService: s.CaptureRequestService,
+		CaptureFilingService:  s.CaptureFilingService,
 		CaptureReleaseService: s.CaptureReleaseService,
 	}
 	carrierDeps := &carrierresolver.Deps{
@@ -1034,7 +1038,8 @@ func FromServices(s *Services) *Resolver {
 		JournalEntryService:          s.JournalEntryService,
 		ServiceFailureReasonCodeSvc:  s.ServiceFailureReasonCodeSvc,
 		AiProviderService:            s.AiProviderService,
-		CaptureService:               s.CaptureService,
+		CaptureProfileService:        s.CaptureProfileService,
+		CaptureDeviceService:         s.CaptureDeviceService,
 		RoleService:                  s.RoleService,
 		UserService:                  s.UserService,
 		DriverPayService:             s.DriverPayService,

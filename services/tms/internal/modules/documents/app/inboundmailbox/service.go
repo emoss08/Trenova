@@ -60,3 +60,7 @@ type SecretKeeper interface {
 		aad encryptionservice.AAD,
 	) (plaintext string, legacy bool, err error)
 }
+
+func AsSecretKeeper(s *encryptionservice.Service) SecretKeeper {
+	return s
+}

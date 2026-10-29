@@ -170,8 +170,12 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringsubmissionports"
 	invoiceadjustmentports "github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
 	invoiceports "github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	capturedevices "github.com/emoss08/trenova/internal/modules/documents/app/capturedevices"
+	capturefiling "github.com/emoss08/trenova/internal/modules/documents/app/capturefiling"
+	captureprofiles "github.com/emoss08/trenova/internal/modules/documents/app/captureprofiles"
 	capturereleaseservice "github.com/emoss08/trenova/internal/modules/documents/app/capturereleaseservice"
-	captureservice "github.com/emoss08/trenova/internal/modules/documents/app/captureservice"
+	capturerequests "github.com/emoss08/trenova/internal/modules/documents/app/capturerequests"
+	capturesupport "github.com/emoss08/trenova/internal/modules/documents/app/capturesupport"
 	inboundintake "github.com/emoss08/trenova/internal/modules/documents/app/inboundintake"
 	inboundmailbox "github.com/emoss08/trenova/internal/modules/documents/app/inboundmailbox"
 	inboundqueue "github.com/emoss08/trenova/internal/modules/documents/app/inboundqueue"
@@ -300,8 +304,12 @@ type ResolverParams struct {
 	AnalyticsService                  kernelports.AnalyticsService
 	AssignmentService                 assignmentports.AssignmentService
 	BriefingService                   briefingports.BriefingService
+	CaptureDeviceService              *capturedevices.Service
+	CaptureFilingService              *capturefiling.Service
+	CaptureProfileService             *captureprofiles.Service
 	CaptureReleaseService             *capturereleaseservice.Service
-	CaptureService                    *captureservice.Service
+	CaptureRequestService             *capturerequests.Service
+	CaptureSupportService             *capturesupport.Service
 	CarrierAssignmentService          *carrierassignmentservice.Service
 	CarrierCapacityService            *carriercapacityservice.Service
 	CarrierCostEventRepo              carriersettlementports.CarrierCostEventRepository
@@ -1291,7 +1299,11 @@ func NewSchema(p ResolverParams) Schema {
 	}
 	captureDeps := &captureresolver.Deps{
 		Core:                  core,
-		CaptureService:        p.CaptureService,
+		CaptureSupportService: p.CaptureSupportService,
+		CaptureProfileService: p.CaptureProfileService,
+		CaptureDeviceService:  p.CaptureDeviceService,
+		CaptureRequestService: p.CaptureRequestService,
+		CaptureFilingService:  p.CaptureFilingService,
 		CaptureReleaseService: p.CaptureReleaseService,
 	}
 	carrierDeps := &carrierresolver.Deps{

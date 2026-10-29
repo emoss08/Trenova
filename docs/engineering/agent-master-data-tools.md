@@ -16,7 +16,7 @@ page explains them.
 Every write calls the service its page calls — `carrierservice`, `customerservice`,
 `commodityservice`, `hazardousmaterialservice`, `locationservice`, `tractorservice`,
 `trailerservice`, `documentservice`, `insightservice`, `tablechangealertservice`,
-`watchtowerservice`, `captureservice` — and never writes around it. Each service exposes the
+`watchtowerservice`, `capturefiling` — and never writes around it. Each service exposes the
 plan its write runs on, and the write is the plan followed by a save:
 
 | Service | Plans |
@@ -29,7 +29,7 @@ plan its write runs on, and the write is the plan followed by a save:
 | `insightservice` | `PlanRestore` |
 | `tablechangealertservice` | `PlanUpdateSubscription`, `PlanSetSubscriptionStatus`, `PlanDeleteSubscription` |
 | `watchtowerservice` | `PlanDismiss` |
-| `captureservice` | `PlanFileItem`, `PlanDiscardItem`, `PlanDiscardBatch` |
+| `capturefiling` | `PlanFileItem`, `PlanDiscardItem`, `PlanDiscardBatch` |
 
 A tool's preview renders that plan and its `Validate` runs the same plan, so a proposal shows
 what the write decides and is refused for the reasons the write would refuse it. A create or

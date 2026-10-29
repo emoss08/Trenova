@@ -21,8 +21,15 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/adapters/postgres/triagetemplaterepository"
 	"github.com/emoss08/trenova/internal/modules/documents/adapters/postgres/triageworkrepository"
 	"github.com/emoss08/trenova/internal/modules/documents/adapters/redis/triagecache"
+	"github.com/emoss08/trenova/internal/modules/documents/app/capturedevices"
+	"github.com/emoss08/trenova/internal/modules/documents/app/capturefiling"
+	"github.com/emoss08/trenova/internal/modules/documents/app/captureintake"
+	"github.com/emoss08/trenova/internal/modules/documents/app/capturemaintenance"
+	"github.com/emoss08/trenova/internal/modules/documents/app/captureprocessing"
+	"github.com/emoss08/trenova/internal/modules/documents/app/captureprofiles"
 	"github.com/emoss08/trenova/internal/modules/documents/app/capturereleaseservice"
-	"github.com/emoss08/trenova/internal/modules/documents/app/captureservice"
+	"github.com/emoss08/trenova/internal/modules/documents/app/capturerequests"
+	"github.com/emoss08/trenova/internal/modules/documents/app/capturesupport"
 	"github.com/emoss08/trenova/internal/modules/documents/app/contentscanservice"
 	"github.com/emoss08/trenova/internal/modules/documents/app/conversationfileservice"
 	"github.com/emoss08/trenova/internal/modules/documents/app/documentextractionservice"
@@ -60,7 +67,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionevalports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/triageports"
-	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerdqfservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
 	"go.uber.org/fx"
@@ -167,7 +173,7 @@ func SharedOptions() fx.Option {
 			inboundviews.New,
 			inboundreads.New,
 			inboundmailbox.New,
-			func(s *encryptionservice.Service) inboundmailbox.SecretKeeper { return s },
+			inboundmailbox.AsSecretKeeper,
 			inboundprocessing.New,
 			inboundintake.New,
 			inboundupkeep.New,
@@ -213,7 +219,17 @@ func SharedOptions() fx.Option {
 			func(i *triagebriefingservice.Invalidator) inboundmessageports.TriageBriefingInvalidator {
 				return i
 			},
-			captureservice.New,
+			capturesupport.New,
+			captureprofiles.New,
+			capturedevices.New,
+			capturerequests.New,
+			captureprocessing.New,
+			captureintake.NewArrivalReaders,
+			captureintake.NewReceivedAnnouncer,
+			captureintake.New,
+			capturefiling.New,
+			capturemaintenance.AsNotifier,
+			capturemaintenance.New,
 			documentpacketruleservice.New,
 			documenttemplateservice.New,
 			func(s *documenttemplateservice.Service) documenttemplateports.DocumentTemplateResolver { return s },

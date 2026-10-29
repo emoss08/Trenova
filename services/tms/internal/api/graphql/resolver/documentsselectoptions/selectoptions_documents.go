@@ -6,7 +6,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/selectoption"
-	"github.com/emoss08/trenova/internal/modules/documents/app/captureservice"
+	"github.com/emoss08/trenova/internal/modules/documents/app/capturedevices"
+	"github.com/emoss08/trenova/internal/modules/documents/app/captureprofiles"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/capture"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/captureprofile"
 	"github.com/emoss08/trenova/internal/modules/reference/app/documenttypeservice"
@@ -149,7 +150,7 @@ func (r *Sources) CaptureDevice(
 		query = ""
 	}
 
-	result, err := r.CaptureService.ListDevices(ctx, &captureservice.ListDevicesRequest{
+	result, err := r.CaptureDeviceService.ListDevices(ctx, &capturedevices.ListDevicesRequest{
 		TenantInfo: req.TenantInfo,
 		Filter: &pagination.QueryOptions{
 			TenantInfo: req.TenantInfo,
@@ -178,7 +179,7 @@ func (r *Sources) CaptureProfile(
 	ctx context.Context,
 	req *selectoption.Request,
 ) (*gqlmodel.SelectOptionConnection, error) {
-	profiles, err := r.CaptureService.AvailableProfiles(ctx, req.TenantInfo)
+	profiles, err := r.CaptureProfileService.AvailableProfiles(ctx, req.TenantInfo)
 	if err != nil {
 		return nil, err
 	}
@@ -201,7 +202,8 @@ func (r *Sources) CaptureProfile(
 }
 
 type Sources struct {
-	CaptureService      *captureservice.Service
-	DocumentTypeService *documenttypeservice.Service
-	EmailService        *emailservice.Service
+	CaptureProfileService *captureprofiles.Service
+	CaptureDeviceService  *capturedevices.Service
+	DocumentTypeService   *documenttypeservice.Service
+	EmailService          *emailservice.Service
 }

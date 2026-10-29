@@ -41,7 +41,7 @@ vi.mock("@/components/elements/pdf-frame", () => ({
 }));
 
 // Pages as CapturePageFields sends them. `sequence` is the page's place in
-// the stack as scanned, 1-based (captureservice numbers from 1). The fixture
+// the stack as scanned, 1-based (captureintake numbers from 1). The fixture
 // deliberately lists them out of order and splits them across documents, so a
 // number taken from an array index or a document position would disagree.
 function page(id: string, sequence: number): CapturePage {

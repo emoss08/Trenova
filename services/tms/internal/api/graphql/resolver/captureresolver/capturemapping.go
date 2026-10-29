@@ -7,7 +7,9 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
-	"github.com/emoss08/trenova/internal/modules/documents/app/captureservice"
+	"github.com/emoss08/trenova/internal/modules/documents/app/capturefiling"
+	"github.com/emoss08/trenova/internal/modules/documents/app/captureprofiles"
+	"github.com/emoss08/trenova/internal/modules/documents/app/capturerequests"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/capture"
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -84,8 +86,8 @@ func optionalIDRef(value *string) (*pulid.ID, error) {
 	return &id, nil
 }
 
-func captureProfileSettings(input *gqlmodel.CaptureProfileInput) captureservice.ProfileSettings {
-	return captureservice.ProfileSettings{
+func captureProfileSettings(input *gqlmodel.CaptureProfileInput) captureprofiles.ProfileSettings {
+	return captureprofiles.ProfileSettings{
 		Name:                input.Name,
 		Description:         stringutils.FromPtr(input.Description),
 		Status:              input.Status,
@@ -104,8 +106,8 @@ func captureProfileSettings(input *gqlmodel.CaptureProfileInput) captureservice.
 
 func captureItemLayouts(
 	input *gqlmodel.EditCaptureItemsInput,
-) ([]captureservice.ItemLayout, error) {
-	layouts := make([]captureservice.ItemLayout, 0, len(input.Items))
+) ([]capturefiling.ItemLayout, error) {
+	layouts := make([]capturefiling.ItemLayout, 0, len(input.Items))
 	for _, item := range input.Items {
 		if item == nil {
 			return nil, errortypes.NewValidationError("items", errortypes.ErrInvalid,
@@ -115,7 +117,7 @@ func captureItemLayouts(
 		if err != nil {
 			return nil, err
 		}
-		layouts = append(layouts, captureservice.ItemLayout{PageIDs: pageIDs})
+		layouts = append(layouts, capturefiling.ItemLayout{PageIDs: pageIDs})
 	}
 
 	return layouts, nil
@@ -143,13 +145,13 @@ func capturePageRotations(input []*gqlmodel.CapturePageRotationInput) (map[pulid
 
 func captureCoverSheetSpecs(
 	input []*gqlmodel.CaptureCoverSheetInput,
-) ([]captureservice.CoverSheetSpec, error) {
-	specs := make([]captureservice.CoverSheetSpec, 0, len(input))
+) ([]capturerequests.CoverSheetSpec, error) {
+	specs := make([]capturerequests.CoverSheetSpec, 0, len(input))
 	for _, sheet := range input {
 		if sheet == nil {
 			continue
 		}
-		spec := captureservice.CoverSheetSpec{TargetType: stringutils.FromPtr(sheet.TargetType)}
+		spec := capturerequests.CoverSheetSpec{TargetType: stringutils.FromPtr(sheet.TargetType)}
 
 		var err error
 		if spec.TargetID, err = optionalIDRef(sheet.TargetID); err != nil {
@@ -164,7 +166,7 @@ func captureCoverSheetSpecs(
 	return specs, nil
 }
 
-func issuedCoverSheet(issued *captureservice.IssuedCoverSheet) *gqlmodel.CaptureCoverSheet {
+func issuedCoverSheet(issued *capturerequests.IssuedCoverSheet) *gqlmodel.CaptureCoverSheet {
 	sheet := issued.Sheet
 
 	return &gqlmodel.CaptureCoverSheet{
@@ -185,8 +187,8 @@ func captureFiling(
 	itemID, targetType, targetID string,
 	documentTypeID *string,
 	version int,
-) (captureservice.FileItemInput, error) {
-	var in captureservice.FileItemInput
+) (capturefiling.FileItemInput, error) {
+	var in capturefiling.FileItemInput
 
 	var err error
 	if in.ItemID, err = pulid.MustParse(itemID); err != nil {

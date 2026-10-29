@@ -4,13 +4,21 @@ package captureresolver
 
 import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
+	capturedevices "github.com/emoss08/trenova/internal/modules/documents/app/capturedevices"
+	capturefiling "github.com/emoss08/trenova/internal/modules/documents/app/capturefiling"
+	captureprofiles "github.com/emoss08/trenova/internal/modules/documents/app/captureprofiles"
 	capturereleaseservice "github.com/emoss08/trenova/internal/modules/documents/app/capturereleaseservice"
-	captureservice "github.com/emoss08/trenova/internal/modules/documents/app/captureservice"
+	capturerequests "github.com/emoss08/trenova/internal/modules/documents/app/capturerequests"
+	capturesupport "github.com/emoss08/trenova/internal/modules/documents/app/capturesupport"
 )
 
 type Deps struct {
 	*resolvercore.Core
-	CaptureService        *captureservice.Service
+	CaptureSupportService *capturesupport.Service
+	CaptureProfileService *captureprofiles.Service
+	CaptureDeviceService  *capturedevices.Service
+	CaptureRequestService *capturerequests.Service
+	CaptureFilingService  *capturefiling.Service
 	CaptureReleaseService *capturereleaseservice.Service
 }
 

@@ -7,20 +7,23 @@
 package capturejobs
 
 import (
-	"github.com/emoss08/trenova/internal/modules/documents/app/captureservice"
+	"github.com/emoss08/trenova/internal/modules/documents/app/capturefiling"
+	"github.com/emoss08/trenova/internal/modules/documents/app/captureintake"
+	"github.com/emoss08/trenova/internal/modules/documents/app/capturemaintenance"
+	"github.com/emoss08/trenova/internal/modules/documents/app/captureprocessing"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
 // The payloads are the service's own, re-exported so the workflows read
 // naturally without the two packages importing each other.
 
-type ProcessBatchPayload = captureservice.ProcessBatchPayload
+type ProcessBatchPayload = captureintake.ProcessBatchPayload
 
-type ProcessResult = captureservice.ProcessResult
+type ProcessResult = captureprocessing.ProcessResult
 
-type FileItemPayload = captureservice.FileItemPayload
+type FileItemPayload = capturefiling.FileItemPayload
 
-type MaintenanceResult = captureservice.MaintenanceResult
+type MaintenanceResult = capturemaintenance.MaintenanceResult
 
 // AutoFilePayload files one item the processing run found needs no person.
 type AutoFilePayload struct {

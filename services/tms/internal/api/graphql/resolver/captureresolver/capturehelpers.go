@@ -6,7 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/loaders/documentloaders"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/loaderfields"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
-	"github.com/emoss08/trenova/internal/modules/documents/app/captureservice"
+	"github.com/emoss08/trenova/internal/modules/documents/app/capturedevices"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/capture"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/captureports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -61,7 +61,7 @@ func (r *Deps) ListCaptureDevices(
 	query *string,
 ) ([]*capture.CaptureDevice, error) {
 	tenant := resolvercore.TenantInfo(authCtx)
-	req := &captureservice.ListDevicesRequest{
+	req := &capturedevices.ListDevicesRequest{
 		TenantInfo: tenant,
 		Filter: &pagination.QueryOptions{
 			TenantInfo: tenant,
@@ -74,7 +74,7 @@ func (r *Deps) ListCaptureDevices(
 		req.Status = *status
 	}
 
-	result, err := r.CaptureService.ListDevices(ctx, req)
+	result, err := r.CaptureDeviceService.ListDevices(ctx, req)
 	if err != nil {
 		return nil, err
 	}

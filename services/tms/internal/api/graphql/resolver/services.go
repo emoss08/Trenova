@@ -56,8 +56,12 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/latechargeports"
+	"github.com/emoss08/trenova/internal/modules/documents/app/capturedevices"
+	"github.com/emoss08/trenova/internal/modules/documents/app/capturefiling"
+	"github.com/emoss08/trenova/internal/modules/documents/app/captureprofiles"
 	"github.com/emoss08/trenova/internal/modules/documents/app/capturereleaseservice"
-	"github.com/emoss08/trenova/internal/modules/documents/app/captureservice"
+	"github.com/emoss08/trenova/internal/modules/documents/app/capturerequests"
+	"github.com/emoss08/trenova/internal/modules/documents/app/capturesupport"
 	"github.com/emoss08/trenova/internal/modules/documents/app/documentpacketruleservice"
 	"github.com/emoss08/trenova/internal/modules/documents/app/documenttemplateservice"
 	"github.com/emoss08/trenova/internal/modules/documents/app/inboundintake"
@@ -420,7 +424,11 @@ type Params struct {
 	TriageBriefingService             *triagebriefingservice.Service
 	TriageCorrectionService           *triagecorrectionservice.Service
 	TriageConflictService             *triageconflictservice.Service
-	CaptureService                    *captureservice.Service
+	CaptureSupportService             *capturesupport.Service
+	CaptureProfileService             *captureprofiles.Service
+	CaptureDeviceService              *capturedevices.Service
+	CaptureRequestService             *capturerequests.Service
+	CaptureFilingService              *capturefiling.Service
 	CaptureReleaseService             *capturereleaseservice.Service
 	AgentScorecardService             agentports.AgentScorecardService
 	AgentRunEventRepo                 agentruntimeports.AgentRunEventRepository
@@ -682,7 +690,11 @@ type Services struct {
 	TriageBriefingService             *triagebriefingservice.Service
 	TriageCorrectionService           *triagecorrectionservice.Service
 	TriageConflictService             *triageconflictservice.Service
-	CaptureService                    *captureservice.Service
+	CaptureSupportService             *capturesupport.Service
+	CaptureProfileService             *captureprofiles.Service
+	CaptureDeviceService              *capturedevices.Service
+	CaptureRequestService             *capturerequests.Service
+	CaptureFilingService              *capturefiling.Service
 	CaptureReleaseService             *capturereleaseservice.Service
 	AgentScorecardService             agentports.AgentScorecardService
 	AgentRunEventRepo                 agentruntimeports.AgentRunEventRepository
@@ -950,7 +962,11 @@ func newServices(p *Params) *Services {
 		TriageBriefingService:             p.TriageBriefingService,
 		TriageCorrectionService:           p.TriageCorrectionService,
 		TriageConflictService:             p.TriageConflictService,
-		CaptureService:                    p.CaptureService,
+		CaptureSupportService:             p.CaptureSupportService,
+		CaptureProfileService:             p.CaptureProfileService,
+		CaptureDeviceService:              p.CaptureDeviceService,
+		CaptureRequestService:             p.CaptureRequestService,
+		CaptureFilingService:              p.CaptureFilingService,
 		CaptureReleaseService:             p.CaptureReleaseService,
 		AgentScorecardService:             p.AgentScorecardService,
 		AgentRunEventRepo:                 p.AgentRunEventRepo,

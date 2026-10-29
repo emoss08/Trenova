@@ -16,7 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
-	"github.com/emoss08/trenova/internal/modules/documents/app/captureservice"
+	"github.com/emoss08/trenova/internal/modules/documents/app/capturefiling"
 	"github.com/emoss08/trenova/internal/modules/documents/app/documentservice"
 	"github.com/emoss08/trenova/internal/modules/equipment/app/tractorservice"
 	"github.com/emoss08/trenova/internal/modules/equipment/app/trailerservice"
@@ -54,7 +54,7 @@ var _ alerttools.AlertKeeper = (*tablechangealertservice.Service)(nil)
 
 var _ exceptiontools.WatchtowerDismisser = (*watchtowerservice.Dismisser)(nil)
 
-var _ documenttools.CaptureKeeper = (*captureservice.Service)(nil)
+var _ documenttools.CaptureKeeper = (*capturefiling.Service)(nil)
 
 var _ masterdatakit.StateLookup = usstateports.UsStateRepository(nil)
 
@@ -307,15 +307,15 @@ func provideDismissWatchtowerItemTool(
 	return exceptiontools.NewDismissWatchtowerItemTool(items)
 }
 
-func provideFileCaptureItemsTool(captures *captureservice.Service) agenttoolports.AgentTool {
+func provideFileCaptureItemsTool(captures *capturefiling.Service) agenttoolports.AgentTool {
 	return documenttools.NewFileCaptureItemsTool(captures)
 }
 
-func provideDiscardCaptureItemTool(captures *captureservice.Service) agenttoolports.AgentTool {
+func provideDiscardCaptureItemTool(captures *capturefiling.Service) agenttoolports.AgentTool {
 	return documenttools.NewDiscardCaptureItemTool(captures)
 }
 
-func provideDiscardCaptureBatchTool(captures *captureservice.Service) agenttoolports.AgentTool {
+func provideDiscardCaptureBatchTool(captures *capturefiling.Service) agenttoolports.AgentTool {
 	return documenttools.NewDiscardCaptureBatchTool(captures)
 }
 

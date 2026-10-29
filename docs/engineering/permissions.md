@@ -198,7 +198,7 @@ definition's `Scopes`:
 | `shipment`, `order` | own: records whose `owner_id` is the person | database |
 | `invoice` | own: invoices on a shipment or order the person owns (the header's or a line's) | database |
 | `worker` | team: workers the person manages, directly or through a fleet code, or who were delegated to them | database |
-| `capture_batch`, `report` | own | application (`captureservice`, `reportaccess`; see [reporting](reporting.md#access)) |
+| `capture_batch`, `report` | own | application (`capturefiling`, `reportaccess`; see [reporting](reporting.md#access)) |
 | `worker_schedule`, `timesheet`, `profile_change_request`, `worker_leave`, `driver_portal` | team | application (`RequireTeamScope`, `RequireListTeamScope`, `teamscope.Guard`, `teamscope.ListGuard`) |
 
 **Application enforcement.** A team is the workers a person manages directly
