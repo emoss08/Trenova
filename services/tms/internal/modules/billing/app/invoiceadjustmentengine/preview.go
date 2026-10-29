@@ -2,7 +2,6 @@ package invoiceadjustmentengine
 
 import (
 	"context"
-	"fmt"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoicelines"
@@ -12,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/invoiceadjustmentcontrol"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/shipmentcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/chargeallocation"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
@@ -19,7 +19,6 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/ratetablecache"
-	"github.com/emoss08/trenova/shared/decimalutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 )
@@ -75,7 +74,7 @@ func PreviewErrorsToMultiError(errors map[string][]string) *errortypes.MultiErro
 	return multiErr
 }
 
-func (s *Engine) ComputePreview( //nolint:cyclop,funlen // legacy workflow
+func (s *Engine) ComputePreview(
 	ctx context.Context,
 	req *invoiceadjustmentports.InvoiceAdjustmentRequest,
 	excludeAdjustmentID pulid.ID,
@@ -98,32 +97,8 @@ func (s *Engine) ComputePreview( //nolint:cyclop,funlen // legacy workflow
 		return nil, err
 	}
 
-	preview := &invoiceadjustmentports.InvoiceAdjustmentPreview{
-		InvoiceID:      entity.ID,
-		InvoiceNumber:  entity.Number,
-		CurrencyCode:   entity.CurrencyCode,
-		Kind:           req.Kind,
-		RebillStrategy: req.RebillStrategy,
-		Warnings:       make([]string, 0),
-		Errors:         make(map[string][]string),
-		Lines: make(
-			[]*invoiceadjustmentports.InvoiceAdjustmentPreviewLine,
-			0,
-			len(entity.Lines),
-		),
-	}
-
-	if entity.Status != invoice.StatusPosted {
-		appendPreviewError(preview, "invoiceId", "Only posted invoices may be adjusted")
-	}
-	if req.Kind == invoiceadjustment.KindFullReversal && entity.AppliedAmountMinor > 0 {
-		appendPreviewError(
-			preview,
-			"invoiceId",
-			"Unapply the customer payments and credit memos on this invoice before reversing it in full",
-		)
-	}
-
+	preview := newPreview(entity, req)
+	validateAdjustableInvoice(preview, entity, req)
 	preview.AccountingDate = s.resolveAccountingDate(ctx, entity, control, preview)
 	s.validateSettlementPolicy(entity, control, preview)
 	if strings.TrimSpace(req.Reason) == "" &&
@@ -131,24 +106,7 @@ func (s *Engine) ComputePreview( //nolint:cyclop,funlen // legacy workflow
 		appendPreviewError(preview, "reason", "Adjustment reason is required by policy")
 	}
 	s.validateAttachments(ctx, req, preview)
-
-	switch {
-	case entity.CorrectionGroupID.IsNotNil():
-		preview.CorrectionGroupID = entity.CorrectionGroupID
-	case true:
-		if group, groupErr := s.repo.GetCorrectionGroupByRootInvoice(
-			ctx,
-			invoiceadjustmentports.GetCorrectionGroupByRootInvoiceRequest{
-				RootInvoiceID: entity.ID,
-				TenantInfo:    req.TenantInfo,
-			},
-		); groupErr == nil &&
-			group != nil {
-			preview.CorrectionGroupID = group.ID
-		} else {
-			preview.CorrectionGroupID = pulid.MustNew("icg_")
-		}
-	}
+	preview.CorrectionGroupID = s.previewCorrectionGroupID(ctx, entity, req.TenantInfo)
 
 	usageByLine, err := s.repo.GetInvoiceLineCreditUsage(
 		ctx,
@@ -162,6 +120,90 @@ func (s *Engine) ComputePreview( //nolint:cyclop,funlen // legacy workflow
 		return nil, err
 	}
 
+	acc := collectPreviewLines(preview, entity, req, usageByLine)
+	s.applyRerate(ctx, preview, entity, req, acc)
+	if req.Kind == invoiceadjustment.KindCreditRebill {
+		if err = s.guardDetentionRebill(ctx, preview, req.TenantInfo, entity); err != nil {
+			return nil, err
+		}
+	}
+
+	s.finishPreview(preview, entity, control)
+
+	return &PreviewComputation{
+		Invoice:           entity,
+		correctionGroupID: preview.CorrectionGroupID,
+		control:           control,
+		accountingControl: accountingControl,
+		Preview:           preview,
+		Lines:             acc.lines,
+		creditLineItems:   acc.creditLines,
+		replacementLines:  acc.replacementLines,
+	}, nil
+}
+
+func newPreview(
+	entity *invoice.Invoice,
+	req *invoiceadjustmentports.InvoiceAdjustmentRequest,
+) *invoiceadjustmentports.InvoiceAdjustmentPreview {
+	return &invoiceadjustmentports.InvoiceAdjustmentPreview{
+		InvoiceID:      entity.ID,
+		InvoiceNumber:  entity.Number,
+		CurrencyCode:   entity.CurrencyCode,
+		Kind:           req.Kind,
+		RebillStrategy: req.RebillStrategy,
+		Warnings:       make([]string, 0),
+		Errors:         make(map[string][]string),
+		Lines: make(
+			[]*invoiceadjustmentports.InvoiceAdjustmentPreviewLine,
+			0,
+			len(entity.Lines),
+		),
+	}
+}
+
+func validateAdjustableInvoice(
+	preview *invoiceadjustmentports.InvoiceAdjustmentPreview,
+	entity *invoice.Invoice,
+	req *invoiceadjustmentports.InvoiceAdjustmentRequest,
+) {
+	if entity.Status != invoice.StatusPosted {
+		appendPreviewError(preview, "invoiceId", "Only posted invoices may be adjusted")
+	}
+	if req.Kind == invoiceadjustment.KindFullReversal && entity.AppliedAmountMinor > 0 {
+		appendPreviewError(
+			preview,
+			"invoiceId",
+			"Unapply the customer payments and credit memos on this invoice before reversing it in full",
+		)
+	}
+}
+
+func (s *Engine) previewCorrectionGroupID(
+	ctx context.Context,
+	entity *invoice.Invoice,
+	tenantInfo pagination.TenantInfo,
+) pulid.ID {
+	if entity.CorrectionGroupID.IsNotNil() {
+		return entity.CorrectionGroupID
+	}
+	group, err := s.repo.GetCorrectionGroupByRootInvoice(
+		ctx,
+		invoiceadjustmentports.GetCorrectionGroupByRootInvoiceRequest{
+			RootInvoiceID: entity.ID,
+			TenantInfo:    tenantInfo,
+		},
+	)
+	if err == nil && group != nil {
+		return group.ID
+	}
+
+	return pulid.MustNew("icg_")
+}
+
+func requestedLinesByID(
+	req *invoiceadjustmentports.InvoiceAdjustmentRequest,
+) map[string]*invoiceadjustmentports.InvoiceAdjustmentLineInput {
 	requestedByLine := make(
 		map[string]*invoiceadjustmentports.InvoiceAdjustmentLineInput,
 		len(req.Lines),
@@ -173,151 +215,40 @@ func (s *Engine) ComputePreview( //nolint:cyclop,funlen // legacy workflow
 		requestedByLine[line.OriginalLineID.String()] = line
 	}
 
-	lines := make([]*invoiceadjustment.InvoiceAdjustmentLine, 0, len(entity.Lines))
-	creditLines := make([]*invoice.InvoiceLine, 0, len(entity.Lines))
-	replacementLines := make([]*invoice.InvoiceLine, 0, len(entity.Lines))
-	fullScope := len(req.Lines) == 0 || req.Kind == invoiceadjustment.KindFullReversal
+	return requestedByLine
+}
 
-	for _, sourceLine := range entity.Lines {
-		if sourceLine == nil {
-			continue
-		}
-		input, hasInput := requestedByLine[sourceLine.ID.String()]
-		if !fullScope && !hasInput {
-			continue
-		}
-
-		used := usageByLine[sourceLine.ID.String()]
-		eligible := sourceLine.Amount.Abs().Sub(used)
-		if eligible.IsNegative() {
-			eligible = decimal.Zero
-		}
-
-		lineValues := resolvePreviewLineValues(previewLineValuesRequest{
-			sourceLine: sourceLine,
-			input:      input,
-			kind:       req.Kind,
-			eligible:   eligible,
-		})
-		creditAmount := lineValues.creditAmount
-		creditQuantity := lineValues.creditQuantity
-		rebillAmount := lineValues.rebillAmount
-		rebillQuantity := lineValues.rebillQuantity
-		description := lineValues.description
-		payload := lineValues.payload
-
-		if req.Kind == invoiceadjustment.KindCreditRebill && fullScope &&
-			req.RebillStrategy != invoiceadjustment.RebillStrategyRerate {
-			rebillAmount = sourceLine.Amount.Abs()
-			rebillQuantity = sourceLine.Quantity
-		}
-
-		remainingEligibleAmount := eligible.Sub(creditAmount)
-		hasEligibilityError := creditAmount.GreaterThan(eligible)
-		eligibilityOverageAmount := decimal.Zero
-		eligibilityMessage := ""
-		if hasEligibilityError {
-			eligibilityOverageAmount = creditAmount.Sub(eligible)
-			eligibilityMessage = fmt.Sprintf(
-				"Line %d exceeds the remaining eligible amount by %s",
-				sourceLine.LineNumber,
-				eligibilityOverageAmount.StringFixed(4),
-			)
-			appendPreviewError(preview, "lines", eligibilityMessage)
-		}
-
-		linePreview := &invoiceadjustmentports.InvoiceAdjustmentPreviewLine{
-			LineNumber:               sourceLine.LineNumber,
-			OriginalLineID:           sourceLine.ID,
-			Description:              sourceLine.Description,
-			EligibleAmount:           eligible,
-			AlreadyCreditedAmount:    used,
-			RequestedCreditAmount:    creditAmount,
-			RequestedRebillAmount:    rebillAmount,
-			RemainingEligibleAmount:  remainingEligibleAmount,
-			HasEligibilityError:      hasEligibilityError,
-			EligibilityOverageAmount: eligibilityOverageAmount,
-			EligibilityMessage:       eligibilityMessage,
-		}
-		preview.Lines = append(preview.Lines, linePreview)
-
-		preview.CreditTotalAmount = preview.CreditTotalAmount.Add(creditAmount)
-		preview.RebillTotalAmount = preview.RebillTotalAmount.Add(rebillAmount)
-
-		lines = append(lines, &invoiceadjustment.InvoiceAdjustmentLine{
-			OriginalInvoiceID:       entity.ID,
-			OriginalLineID:          sourceLine.ID,
-			LineNumber:              sourceLine.LineNumber,
-			Description:             description,
-			CreditQuantity:          creditQuantity,
-			CreditAmount:            creditAmount,
-			RemainingEligibleAmount: linePreview.RemainingEligibleAmount,
-			RebillQuantity:          rebillQuantity,
-			RebillAmount:            rebillAmount,
-			ReplacementPayload:      payload,
-		})
-
-		if creditAmount.GreaterThan(decimal.Zero) {
-			unitPrice := creditAmount
-			if creditQuantity.GreaterThan(decimal.Zero) {
-				unitPrice = creditAmount.Div(creditQuantity)
-			}
-			creditLine := &invoice.InvoiceLine{
-				LineNumber:  sourceLine.LineNumber,
-				Type:        sourceLine.Type,
-				Description: description,
-				Quantity:    creditQuantity,
-				UnitPrice:   unitPrice.Neg(),
-				Amount:      creditAmount.Neg(),
-			}
-			creditLine.CopyChargeDetail(sourceLine)
-			creditLines = append(creditLines, creditLine)
-		}
-
-		if rebillAmount.GreaterThan(decimal.Zero) {
-			unitPrice := rebillAmount
-			if rebillQuantity.GreaterThan(decimal.Zero) {
-				unitPrice = rebillAmount.Div(rebillQuantity)
-			}
-			replacementLine := &invoice.InvoiceLine{
-				LineNumber:  len(replacementLines) + 1,
-				Type:        sourceLine.Type,
-				Description: description,
-				Quantity:    decimalutils.Max(rebillQuantity, decimal.NewFromInt(1)),
-				UnitPrice:   unitPrice,
-				Amount:      rebillAmount,
-			}
-			replacementLine.CopyChargeDetail(sourceLine)
-			replacementLines = append(replacementLines, replacementLine)
-		}
+func (s *Engine) applyRerate(
+	ctx context.Context,
+	preview *invoiceadjustmentports.InvoiceAdjustmentPreview,
+	entity *invoice.Invoice,
+	req *invoiceadjustmentports.InvoiceAdjustmentRequest,
+	acc *previewAccumulator,
+) {
+	if req.Kind != invoiceadjustment.KindCreditRebill ||
+		req.RebillStrategy != invoiceadjustment.RebillStrategyRerate {
+		return
 	}
-
-	if req.Kind == invoiceadjustment.KindCreditRebill &&
-		req.RebillStrategy == invoiceadjustment.RebillStrategyRerate {
-		rerateLines, rerateTotal, rerateVariance, rerateErr := s.computeRerate(
-			ctx,
-			entity,
-			req.TenantInfo,
-		)
-		if rerateErr != nil {
-			appendPreviewError(preview, "rebillStrategy", rerateErr.Error())
-		} else {
-			replacementLines = rerateLines
-			preview.RebillTotalAmount = rerateTotal
-			preview.RerateVariancePercent = rerateVariance
-		}
+	rerate, err := s.computeRerate(ctx, entity, req.TenantInfo)
+	if err != nil {
+		appendPreviewError(preview, "rebillStrategy", err.Error())
+		return
 	}
-	if req.Kind == invoiceadjustment.KindCreditRebill {
-		if err = s.guardDetentionRebill(ctx, preview, req.TenantInfo, entity); err != nil {
-			return nil, err
-		}
-	}
+	acc.replacementLines = rerate.lines
+	preview.RebillTotalAmount = rerate.total
+	preview.RerateVariancePercent = rerate.variance
+}
 
+func (s *Engine) finishPreview(
+	preview *invoiceadjustmentports.InvoiceAdjustmentPreview,
+	entity *invoice.Invoice,
+	control *invoiceadjustmentcontrol.InvoiceAdjustmentControl,
+) {
 	preview.NetDeltaAmount = preview.RebillTotalAmount.Sub(preview.CreditTotalAmount)
 	preview.WouldCreateUnappliedCredit = preview.CreditTotalAmount.GreaterThan(
 		entity.OpenBalanceAmount(),
 	)
-	if req.Kind == invoiceadjustment.KindWriteOff &&
+	if preview.Kind == invoiceadjustment.KindWriteOff &&
 		preview.CreditTotalAmount.GreaterThan(entity.OpenBalanceAmount()) {
 		appendPreviewError(
 			preview,
@@ -331,7 +262,7 @@ func (s *Engine) ComputePreview( //nolint:cyclop,funlen // legacy workflow
 	if preview.CreditTotalAmount.IsZero() {
 		appendPreviewError(preview, "lines", "Adjustment must produce a non-zero credit amount")
 	}
-	if req.Kind == invoiceadjustment.KindWriteOff && entity.OpenBalanceAmount().IsZero() {
+	if preview.Kind == invoiceadjustment.KindWriteOff && entity.OpenBalanceAmount().IsZero() {
 		appendPreviewError(preview, "invoiceId", "Write-offs require a remaining invoice balance")
 	}
 	if preview.RequiresReconciliationException {
@@ -340,17 +271,6 @@ func (s *Engine) ComputePreview( //nolint:cyclop,funlen // legacy workflow
 			"Execution will create a reconciliation exception for finance follow-up",
 		)
 	}
-
-	return &PreviewComputation{
-		Invoice:           entity,
-		correctionGroupID: preview.CorrectionGroupID,
-		control:           control,
-		accountingControl: accountingControl,
-		Preview:           preview,
-		Lines:             lines,
-		creditLineItems:   creditLines,
-		replacementLines:  replacementLines,
-	}, nil
 }
 
 func (s *Engine) applyCreditBalancePolicy(
@@ -457,14 +377,20 @@ func (s *Engine) applyReplacementReviewPolicy(
 // by the invoice — one leg for a single-shipment invoice, the line-attributed set for a
 // grouped (order) invoice. Order-level lines (no leg attribution) are carried forward
 // at their billed amount; rerating only re-prices legs.
-func (s *Engine) computeRerate( //nolint:gocritic // stable API shape
+type rerateResult struct {
+	lines    []*invoice.InvoiceLine
+	total    decimal.Decimal
+	variance decimal.Decimal
+}
+
+func (s *Engine) computeRerate(
 	ctx context.Context,
 	entity *invoice.Invoice,
 	tenantInfo pagination.TenantInfo,
-) ([]*invoice.InvoiceLine, decimal.Decimal, decimal.Decimal, error) {
+) (*rerateResult, error) {
 	legIDs := entity.LegShipmentIDs()
 	if len(legIDs) == 0 {
-		return nil, decimal.Zero, decimal.Zero, errortypes.NewValidationError(
+		return nil, errortypes.NewValidationError(
 			"invoiceId",
 			errortypes.ErrInvalidOperation,
 			"Invoice has no shipment legs to rerate",
@@ -475,7 +401,7 @@ func (s *Engine) computeRerate( //nolint:gocritic // stable API shape
 		TenantInfo: tenantInfo,
 	})
 	if err != nil {
-		return nil, decimal.Zero, decimal.Zero, err
+		return nil, err
 	}
 
 	// Every leg of a multi-leg order re-rates against the same tenant's rate
@@ -483,86 +409,113 @@ func (s *Engine) computeRerate( //nolint:gocritic // stable API shape
 	ctx = ratetablecache.With(ctx)
 	ctx = effectiveversioncache.With(ctx)
 
-	lines := make([]*invoice.InvoiceLine, 0, len(entity.Lines))
-	total := decimal.Zero
-	nextLineNumber := 1
+	result := &rerateResult{
+		lines:    make([]*invoice.InvoiceLine, 0, len(entity.Lines)),
+		total:    decimal.Zero,
+		variance: decimal.Zero,
+	}
 	for _, legID := range legIDs {
-		shp, legErr := s.shipmentRepo.GetByID(ctx, &shipmentports.GetShipmentByIDRequest{
-			ID:         legID,
-			TenantInfo: tenantInfo,
-			ShipmentOptions: shipmentports.ShipmentOptions{
-				ExpandShipmentDetails: true,
-			},
-		})
-		if legErr != nil {
-			return nil, decimal.Zero, decimal.Zero, legErr
+		if err = s.rerateLeg(ctx, &rerateLegRequest{
+			entity:     entity,
+			legID:      legID,
+			control:    control,
+			tenantInfo: tenantInfo,
+		}, result); err != nil {
+			return nil, err
 		}
-		if legErr = s.commercial.Recalculate(ctx, shp, control, tenantInfo.UserID); legErr != nil {
-			return nil, decimal.Zero, decimal.Zero, legErr
-		}
-		if legErr = invoicelines.HydrateAccessorials(
-			ctx,
-			s.accessorialRepo,
-			tenantInfo,
-			shp,
-		); legErr != nil {
-			return nil, decimal.Zero, decimal.Zero, legErr
-		}
-
-		resolution, legErr := chargeallocation.ResolveShares(ctx, shp, shp.ChargeAllocations)
-		if legErr != nil {
-			return nil, decimal.Zero, decimal.Zero, legErr
-		}
-		share := resolution.ShareFor(entity.CustomerID)
-		if share == nil {
-			return nil, decimal.Zero, decimal.Zero, errortypes.NewValidationError(
-				"invoiceId",
-				errortypes.ErrInvalidOperation,
-				"This payer no longer has a share of shipment {0}",
-				shp.ProNumber,
-			)
-		}
-
-		legLines := invoicelines.ForShipmentShare(
-			billingqueue.BillTypeInvoice,
-			shp,
-			share,
-			nextLineNumber,
-		)
-		lines = append(lines, legLines...)
-		nextLineNumber += len(legLines)
-		total = total.Add(share.TotalAmount)
 	}
 
 	// Anything wider than one shipment can carry unattributed lines, and dropping
 	// them here would under-bill the rebill. Keying this off a nil order id lost
 	// them for every consolidated invoice.
 	if entity.Scope != invoice.ScopeShipment {
-		for _, line := range entity.Lines {
-			if line == nil || !line.ShipmentID.IsNil() {
-				continue
-			}
-			carried := &invoice.InvoiceLine{
-				LineNumber:  nextLineNumber,
-				Type:        line.Type,
-				Description: line.Description,
-				Quantity:    line.Quantity,
-				UnitPrice:   line.UnitPrice,
-				Amount:      line.Amount,
-			}
-			carried.CopyChargeDetail(line)
-			lines = append(lines, carried)
-			nextLineNumber++
-			total = total.Add(line.Amount)
-		}
+		carryUnattributedLines(entity, result)
 	}
 
-	variance := decimal.Zero
-	if entity.TotalAmount.GreaterThan(decimal.Zero) && !total.Equal(entity.TotalAmount) {
-		variance = total.Sub(entity.TotalAmount).
+	if entity.TotalAmount.GreaterThan(decimal.Zero) && !result.total.Equal(entity.TotalAmount) {
+		result.variance = result.total.Sub(entity.TotalAmount).
 			Abs().
 			Div(entity.TotalAmount).
 			Mul(decimal.NewFromInt(100))
 	}
-	return lines, total, variance, nil
+	return result, nil
+}
+
+type rerateLegRequest struct {
+	entity     *invoice.Invoice
+	legID      pulid.ID
+	control    *shipmentcontrol.ShipmentControl
+	tenantInfo pagination.TenantInfo
+}
+
+func (s *Engine) rerateLeg(
+	ctx context.Context,
+	req *rerateLegRequest,
+	result *rerateResult,
+) error {
+	shp, err := s.shipmentRepo.GetByID(ctx, &shipmentports.GetShipmentByIDRequest{
+		ID:         req.legID,
+		TenantInfo: req.tenantInfo,
+		ShipmentOptions: shipmentports.ShipmentOptions{
+			ExpandShipmentDetails: true,
+		},
+	})
+	if err != nil {
+		return err
+	}
+	if err = s.commercial.Recalculate(ctx, shp, req.control, req.tenantInfo.UserID); err != nil {
+		return err
+	}
+	if err = invoicelines.HydrateAccessorials(
+		ctx,
+		s.accessorialRepo,
+		req.tenantInfo,
+		shp,
+	); err != nil {
+		return err
+	}
+
+	resolution, err := chargeallocation.ResolveShares(ctx, shp, shp.ChargeAllocations)
+	if err != nil {
+		return err
+	}
+	share := resolution.ShareFor(req.entity.CustomerID)
+	if share == nil {
+		return errortypes.NewValidationError(
+			"invoiceId",
+			errortypes.ErrInvalidOperation,
+			"This payer no longer has a share of shipment {0}",
+			shp.ProNumber,
+		)
+	}
+
+	legLines := invoicelines.ForShipmentShare(
+		billingqueue.BillTypeInvoice,
+		shp,
+		share,
+		len(result.lines)+1,
+	)
+	result.lines = append(result.lines, legLines...)
+	result.total = result.total.Add(share.TotalAmount)
+
+	return nil
+}
+
+func carryUnattributedLines(entity *invoice.Invoice, result *rerateResult) {
+	for _, line := range entity.Lines {
+		if line == nil || !line.ShipmentID.IsNil() {
+			continue
+		}
+		carried := &invoice.InvoiceLine{
+			LineNumber:  len(result.lines) + 1,
+			Type:        line.Type,
+			Description: line.Description,
+			Quantity:    line.Quantity,
+			UnitPrice:   line.UnitPrice,
+			Amount:      line.Amount,
+		}
+		carried.CopyChargeDetail(line)
+		result.lines = append(result.lines, carried)
+		result.total = result.total.Add(line.Amount)
+	}
 }

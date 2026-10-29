@@ -2,17 +2,13 @@ package invoiceadjustmentengine
 
 import (
 	"context"
-	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/modules/billing/app/billingnumber"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
 	"github.com/emoss08/trenova/internal/modules/identity/app/exchangeratestamp"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -20,8 +16,6 @@ import (
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/emoss08/trenova/shared/typeutils"
 	"github.com/shopspring/decimal"
 	"go.uber.org/zap"
 )
@@ -88,7 +82,7 @@ func (s *Engine) EnsureCorrectionGroup(
 	})
 }
 
-func (s *Engine) ExecuteApprovedAdjustment( //nolint:cyclop,funlen // legacy workflow
+func (s *Engine) ExecuteApprovedAdjustment(
 	ctx context.Context,
 	adjustmentID pulid.ID,
 	req *invoiceadjustmentports.InvoiceAdjustmentRequest,
@@ -150,20 +144,11 @@ func (s *Engine) ExecuteApprovedAdjustment( //nolint:cyclop,funlen // legacy wor
 		return nil, err
 	}
 
-	if req == nil || req.InvoiceID.IsNil() {
-		req = &invoiceadjustmentports.InvoiceAdjustmentRequest{
-			InvoiceID:      adjustment.OriginalInvoiceID,
-			Kind:           adjustment.Kind,
-			RebillStrategy: adjustment.RebillStrategy,
-			Reason:         adjustment.Reason,
-			IdempotencyKey: adjustment.IdempotencyKey,
-			TenantInfo:     tenantInfo,
-			Lines:          s.RequestLinesFromAdjustment(adjustment),
-		}
-	}
-	req.TenantInfo = tenantInfo
-
-	computation, err := s.ComputePreview(ctx, req, adjustment.ID)
+	computation, err := s.ComputePreview(
+		ctx,
+		s.executionRequest(adjustment, req, tenantInfo),
+		adjustment.ID,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -179,220 +164,34 @@ func (s *Engine) ExecuteApprovedAdjustment( //nolint:cyclop,funlen // legacy wor
 		return s.repo.UpdateAdjustment(ctx, adjustment)
 	}
 
-	group, err := s.EnsureCorrectionGroup(ctx, lockedInvoice)
-	if err != nil {
-		return nil, err
-	}
-	if lockedInvoice.CorrectionGroupID.IsNil() {
-		lockedInvoice.CorrectionGroupID = group.ID
-		if _, err = s.invoiceRepo.Update(ctx, lockedInvoice); err != nil {
-			return nil, err
+	return s.execute(ctx, &adjustmentRun{
+		adjustment:  adjustment,
+		source:      lockedInvoice,
+		computation: computation,
+		waivers:     waivers,
+		actor:       actor,
+	})
+}
+
+func (s *Engine) executionRequest(
+	adjustment *invoiceadjustment.InvoiceAdjustment,
+	req *invoiceadjustmentports.InvoiceAdjustmentRequest,
+	tenantInfo pagination.TenantInfo,
+) *invoiceadjustmentports.InvoiceAdjustmentRequest {
+	if req == nil || req.InvoiceID.IsNil() {
+		req = &invoiceadjustmentports.InvoiceAdjustmentRequest{
+			InvoiceID:      adjustment.OriginalInvoiceID,
+			Kind:           adjustment.Kind,
+			RebillStrategy: adjustment.RebillStrategy,
+			Reason:         adjustment.Reason,
+			IdempotencyKey: adjustment.IdempotencyKey,
+			TenantInfo:     tenantInfo,
+			Lines:          s.RequestLinesFromAdjustment(adjustment),
 		}
 	}
+	req.TenantInfo = tenantInfo
 
-	now := timeutils.NowUnix()
-	if adjustment.ApprovalRequired {
-		adjustment.ApprovedByID = actor.UserID
-		adjustment.ApprovedAt = &now
-		adjustment.ApprovalStatus = invoiceadjustment.ApprovalStatusApproved
-	}
-	adjustment.Status = invoiceadjustment.StatusExecuting
-	adjustment.CorrectionGroupID = group.ID
-	adjustment, err = s.repo.UpdateAdjustment(ctx, adjustment)
-	if err != nil {
-		return nil, err
-	}
-
-	creditMemoItem, err := s.createCreditMemoQueueItem(
-		ctx,
-		adjustment,
-		lockedInvoice,
-		computation.Preview,
-	)
-	if err != nil {
-		return nil, err
-	}
-	creditMemoInvoice, err := s.createCreditMemoInvoice(
-		ctx,
-		creditMemoItem,
-		adjustment,
-		lockedInvoice,
-		computation.creditLineItems,
-		computation.Preview,
-		now,
-	)
-	if err != nil {
-		return nil, err
-	}
-	adjustment.CreditMemoInvoiceID = creditMemoInvoice.ID
-	if err = s.postCreditMemoLedger(
-		ctx,
-		adjustment,
-		creditMemoInvoice,
-		lockedInvoice,
-		actor,
-	); err != nil {
-		return nil, err
-	}
-	if err = accountingsyncports.EnqueueAccountingSync(
-		ctx,
-		s.accountingSync,
-		accountingsyncports.InvoiceSyncRequest(
-			creditMemoInvoice,
-			accountingsync.SyncSourceAdjustmentCreditMemo,
-		),
-	); err != nil {
-		return nil, err
-	}
-	if lockedInvoice, err = s.applyCreditToSource(
-		ctx,
-		adjustment,
-		creditMemoInvoice,
-		lockedInvoice,
-		actor,
-	); err != nil {
-		return nil, err
-	}
-
-	var rebillQueueItem *billingqueue.BillingQueueItem
-	var replacementInvoice *invoice.Invoice
-	if adjustment.Kind == invoiceadjustment.KindCreditRebill {
-		rebillQueueItem, err = s.createReplacementQueueItem(
-			ctx,
-			adjustment,
-			lockedInvoice,
-			group,
-			computation.replacementLines,
-			computation.Preview,
-		)
-		if err != nil {
-			return nil, err
-		}
-		replacementInvoice, err = s.createReplacementDraftInvoice(
-			ctx,
-			rebillQueueItem,
-			adjustment,
-			lockedInvoice,
-			computation.replacementLines,
-			computation.Preview,
-		)
-		if err != nil {
-			return nil, err
-		}
-		adjustment.ReplacementInvoiceID = replacementInvoice.ID
-		adjustment.RebillQueueItemID = rebillQueueItem.ID
-	}
-
-	var writeOffJournalEntryID pulid.ID
-	if adjustment.Kind == invoiceadjustment.KindWriteOff {
-		writeOffJournalEntryID, err = s.createWriteOffJournalEntry(
-			ctx,
-			adjustment,
-			lockedInvoice,
-			computation.Preview,
-			actor,
-		)
-		if err != nil {
-			return nil, err
-		}
-		if adjustment.Metadata == nil {
-			adjustment.Metadata = make(map[string]any, 1)
-		}
-		adjustment.Metadata["writeOffJournalEntryId"] = writeOffJournalEntryID.String()
-	}
-
-	if computation.Preview.RequiresReconciliationException {
-		if err = s.repo.CreateAdjustmentArtifacts(
-			ctx,
-			invoiceadjustmentports.CreateAdjustmentArtifactsParams{
-				ReconciliationExceptions: []*invoiceadjustment.InvoiceAdjustmentReconciliationException{
-					{
-						OrganizationID:      adjustment.OrganizationID,
-						BusinessUnitID:      adjustment.BusinessUnitID,
-						AdjustmentID:        adjustment.ID,
-						InvoiceID:           lockedInvoice.ID,
-						CreditMemoInvoiceID: creditMemoInvoice.ID,
-						Status:              invoiceadjustment.ExceptionStatusOpen,
-						Reason:              "Adjustment executed against settled or finance-sensitive invoice state",
-						Amount:              computation.Preview.CreditTotalAmount,
-						Metadata: map[string]any{
-							"settlementStatus": lockedInvoice.SettlementStatus,
-							"disputeStatus":    lockedInvoice.DisputeStatus,
-						},
-					},
-				},
-			},
-		); err != nil {
-			return nil, fmt.Errorf("create reconciliation exception: %w", err)
-		}
-	}
-
-	var rebillQueueItemID, replacementInvoiceID *string
-	if rebillQueueItem != nil {
-		rebillQueueItemID = typeutils.IDString(rebillQueueItem.ID)
-	}
-	if replacementInvoice != nil {
-		replacementInvoiceID = typeutils.IDString(replacementInvoice.ID)
-	}
-
-	if err = s.repo.CreateAdjustmentArtifacts(
-		ctx,
-		invoiceadjustmentports.CreateAdjustmentArtifactsParams{
-			Snapshots: []*invoiceadjustment.InvoiceAdjustmentSnapshot{{
-				OrganizationID: adjustment.OrganizationID,
-				BusinessUnitID: adjustment.BusinessUnitID,
-				AdjustmentID:   adjustment.ID,
-				InvoiceID:      lockedInvoice.ID,
-				Kind:           invoiceadjustment.SnapshotKindExecution,
-				CreatedByID:    actor.UserID,
-				Payload: map[string]any{
-					"sourceInvoice":          s.SnapshotPayload(lockedInvoice),
-					"creditMemoId":           creditMemoInvoice.ID.String(),
-					"rebillQueueItemId":      rebillQueueItemID,
-					"replacementInvoiceId":   replacementInvoiceID,
-					"writeOffJournalEntryId": typeutils.IDString(writeOffJournalEntryID),
-				},
-			}},
-		},
-	); err != nil {
-		return nil, fmt.Errorf("create execution snapshot: %w", err)
-	}
-
-	if adjustment.Kind == invoiceadjustment.KindFullReversal {
-		if err = s.voidReversedInvoice(ctx, adjustment, lockedInvoice, actor, now); err != nil {
-			return nil, err
-		}
-	} else if err = s.syncDetentionBilling(ctx, &detentionSync{
-		source:    lockedInvoice,
-		actor:     actor,
-		waivers:   waivers,
-		documents: []*invoice.Invoice{creditMemoInvoice, replacementInvoice},
-	}); err != nil {
-		return nil, err
-	}
-
-	adjustment.Status = invoiceadjustment.StatusExecuted
-	adjustment.ExecutionError = ""
-	adjustment.ReplacementReviewStatus = ReplacementReviewStatus(
-		computation.Preview.RequiresReplacementInvoiceReview,
-	)
-	updated, err := s.repo.UpdateAdjustment(ctx, adjustment)
-	if err != nil {
-		return nil, err
-	}
-
-	group.CurrentInvoiceID = lockedInvoice.ID
-	if replacementInvoice != nil {
-		group.CurrentInvoiceID = replacementInvoice.ID
-	}
-	if _, err = s.repo.UpdateCorrectionGroup(ctx, group); err != nil {
-		return nil, err
-	}
-
-	s.LogAudit(updated, actor, permission.OpUpdate, "Invoice adjustment executed")
-	s.PublishAdjustedInvoices(ctx, actor, lockedInvoice, creditMemoInvoice, replacementInvoice)
-	s.LogAdjustmentEvent("invoice adjustment executed", updated, zap.InfoLevel)
-	return updated, nil
+	return req
 }
 
 func (s *Engine) createCreditMemoQueueItem(
