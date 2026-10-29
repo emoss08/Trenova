@@ -17,6 +17,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/factoringtemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/templatecatalog"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
@@ -276,20 +278,20 @@ func (s *SubmissionService) renderSchedule(
 func scheduleContext(
 	sub *factoringsubmission.Submission,
 	sources *scheduleSources,
-) *documenttemplate.FactoringScheduleContext {
+) *factoringtemplate.FactoringScheduleContext {
 	tz := sources.org.Timezone
 	format := func(minor int64) string {
 		return money.FormatDecimal(sub.CurrencyCode, money.DecimalFromMinor(minor))
 	}
-	out := &documenttemplate.FactoringScheduleContext{
+	out := &factoringtemplate.FactoringScheduleContext{
 		Number:       sub.Number,
 		ScheduleDate: formatDate(sub.CreatedAt, tz),
 		CurrencyCode: sub.CurrencyCode,
-		Organization: documenttemplate.AddressBlock{
+		Organization: templatecatalog.AddressBlock{
 			Name:  sources.org.Name,
 			Lines: sources.org.MailingAddress().Lines(),
 		},
-		Factor: documenttemplate.AddressBlock{
+		Factor: templatecatalog.AddressBlock{
 			Name:  sources.factor.Name,
 			Lines: sources.factor.MailingAddress().Lines(),
 		},
@@ -297,7 +299,7 @@ func scheduleContext(
 		AdvanceRate:     basisPointsPercent(sources.agreement.AdvanceRateBP),
 		ReserveRate:     basisPointsPercent(sources.agreement.ReserveRateBP),
 		Recourse:        recourseLabel(sources.agreement.Recourse),
-		Items:           make([]documenttemplate.FactoringScheduleItem, 0, len(sub.Items)),
+		Items:           make([]factoringtemplate.FactoringScheduleItem, 0, len(sub.Items)),
 		InvoiceCount:    sub.InvoiceCount,
 		TotalFace:       format(sub.FaceMinor),
 		TotalAdvance:    format(sub.ExpectedAdvanceMinor),
@@ -307,7 +309,7 @@ func scheduleContext(
 	}
 	for _, item := range sub.Items {
 		row := scheduleRowFor(item, sources)
-		out.Items = append(out.Items, documenttemplate.FactoringScheduleItem{
+		out.Items = append(out.Items, factoringtemplate.FactoringScheduleItem{
 			InvoiceNumber: item.InvoiceNumber,
 			InvoiceDate:   formatDate(row.invoiceDate, tz),
 			DueDate:       formatOptionalDate(row.dueDate, tz),

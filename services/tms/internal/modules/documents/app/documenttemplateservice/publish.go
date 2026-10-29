@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/templatecatalog"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
@@ -97,7 +98,7 @@ func (s *Service) PublishVersion(
 // same verdict on the Publish button that the mutation would return.
 func (s *Service) VerifyForPublish(
 	ctx context.Context,
-	def *documenttemplate.KindDefinition,
+	def *templatecatalog.KindDefinition,
 	version *documenttemplate.DocumentTemplateVersion,
 ) *errortypes.MultiError {
 	if version.Status != documenttemplate.VersionStatusDraft {
@@ -139,7 +140,7 @@ func (s *Service) VerifyForPublish(
 // report, which a clean sample render cannot detect.
 func (s *Service) verifyAgainstContexts(
 	ctx context.Context,
-	def *documenttemplate.KindDefinition,
+	def *templatecatalog.KindDefinition,
 	compiled *compiledVersion,
 ) templateengine.Diagnostics {
 	sample, err := s.registry.SampleContext(def.Kind)
@@ -191,7 +192,7 @@ func (s *Service) verifyAgainstContexts(
 
 // invalidate drops the compilations cached while a version was a draft.
 func (s *Service) invalidate(
-	def *documenttemplate.KindDefinition,
+	def *templatecatalog.KindDefinition,
 	version *documenttemplate.DocumentTemplateVersion,
 ) {
 	content := contentFromVersion(version)

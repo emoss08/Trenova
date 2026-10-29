@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/trackingtemplate"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/customertracking"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/stopeta"
@@ -60,10 +60,13 @@ func TestEvaluate_TheEmailCarriesItsOwnTrackingLink(t *testing.T) {
 	require.Len(t, h.links.rows, 1)
 	link := h.links.rows[0]
 	assert.Equal(t, customertracking.LinkPurposeNotification, link.Purpose)
-	assert.Equal(t, testNow+int64(customertracking.DefaultLinkTTLDays)*customertracking.SecondsPerDay,
-		link.ExpiresAt)
+	assert.Equal(
+		t,
+		testNow+int64(customertracking.DefaultLinkTTLDays)*customertracking.SecondsPerDay,
+		link.ExpiresAt,
+	)
 	require.Len(t, h.templates.calls, 1)
-	data, ok := h.templates.calls[0].data.(documenttemplate.CustomerStatusEmailContext)
+	data, ok := h.templates.calls[0].data.(trackingtemplate.CustomerStatusEmailContext)
 	require.True(t, ok)
 	assert.True(t, data.IsPickedUp)
 	assert.True(t, strings.HasPrefix(string(data.TrackingURL),
@@ -85,7 +88,7 @@ func TestEvaluate_NoLinkWhenTheCustomerTurnedLinksOff(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Empty(t, h.links.rows)
-	data := h.templates.calls[0].data.(documenttemplate.CustomerStatusEmailContext)
+	data := h.templates.calls[0].data.(trackingtemplate.CustomerStatusEmailContext)
 	assert.Empty(t, data.TrackingURL)
 	require.Len(t, h.email.sent, 1)
 }
@@ -225,7 +228,7 @@ func TestEvaluate_DelayedNamesTheStopAndItsNewArrival(t *testing.T) {
 	row := h.notifications.byEvent(customertracking.EventDelayed)
 	require.NotNil(t, row)
 	assert.Equal(t, delivery.ID.String(), row.SubjectKey)
-	data := h.templates.calls[0].data.(documenttemplate.CustomerStatusEmailContext)
+	data := h.templates.calls[0].data.(trackingtemplate.CustomerStatusEmailContext)
 	assert.True(t, data.IsDelayed)
 	assert.Equal(t, "Memphis, TN", data.StopSummary)
 	assert.Equal(t, "Fri 15 Jan 2027 07:00 CST", data.EstimatedArrival)

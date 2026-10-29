@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/projection"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/templatecatalog"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/templateengine"
@@ -92,7 +93,7 @@ func documentTemplateAssignmentConnectionToModel(
 // editor's reference panel and autocomplete, preserving the nesting so a
 // collection's element shape stays discoverable.
 func documentTemplateVariableToModel(
-	variable *documenttemplate.VariableDefinition,
+	variable *templatecatalog.VariableDefinition,
 ) *gqlmodel.DocumentTemplateVariable {
 	out := &gqlmodel.DocumentTemplateVariable{
 		Path:        variable.Path,
@@ -114,7 +115,7 @@ func documentTemplateVariableToModel(
 }
 
 func documentTemplateKindToModel(
-	def *documenttemplate.KindDefinition,
+	def *templatecatalog.KindDefinition,
 	requiredPaths []string,
 ) *gqlmodel.DocumentTemplateKind {
 	variables := make([]*gqlmodel.DocumentTemplateVariable, 0, len(def.Variables))

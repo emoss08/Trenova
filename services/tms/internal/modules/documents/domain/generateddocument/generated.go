@@ -1,4 +1,4 @@
-package documenttemplate
+package generateddocument
 
 import (
 	"context"
@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
@@ -114,7 +115,7 @@ type GeneratedDocument struct {
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
 
-	Kind Kind `json:"kind" keel:"kind"`
+	Kind documenttemplate.Kind `json:"kind" keel:"kind"`
 
 	// TemplateID and TemplateVersionID are nil when the built-in rendered, since a
 	// built-in has no database row. ContentHash still identifies the exact content.
@@ -158,10 +159,10 @@ type GeneratedDocument struct {
 	SearchVector string `json:"-" keel:"search_vector,tsvector,readonly,noselect"`
 	Rank         string `json:"-" keel:"rank,computed"`
 
-	BusinessUnit    *tenant.BusinessUnit     `json:"-"`
-	Organization    *tenant.Organization     `json:"-"`
-	Template        *DocumentTemplate        `json:"template,omitempty"        keel:"belongs:template_id"`
-	TemplateVersion *DocumentTemplateVersion `json:"templateVersion,omitempty" keel:"belongs:template_version_id"`
+	BusinessUnit    *tenant.BusinessUnit                      `json:"-"`
+	Organization    *tenant.Organization                      `json:"-"`
+	Template        *documenttemplate.DocumentTemplate        `json:"template,omitempty"        keel:"belongs:template_id"`
+	TemplateVersion *documenttemplate.DocumentTemplateVersion `json:"templateVersion,omitempty" keel:"belongs:template_version_id"`
 }
 
 func (g *GeneratedDocument) BeforeUpdate(_ context.Context) error {
@@ -269,7 +270,7 @@ func (g *GeneratedDocument) Validate(multiErr *errortypes.MultiError) {
 		),
 		validation.Field(&g.Kind,
 			validation.Required.Error("Template kind is required"),
-			validation.Length(1, MaxKindLength).
+			validation.Length(1, documenttemplate.MaxKindLength).
 				Error("Template kind cannot be longer than 100 characters"),
 		),
 		validation.Field(&g.ReferenceType,
@@ -301,11 +302,11 @@ func (g *GeneratedDocument) Validate(multiErr *errortypes.MultiError) {
 				Error("Mime type cannot be longer than 100 characters"),
 		),
 		validation.Field(&g.Checksum,
-			validation.Length(0, MaxHashLength).
+			validation.Length(0, documenttemplate.MaxHashLength).
 				Error("Checksum cannot be longer than 64 characters"),
 		),
 		validation.Field(&g.ContentHash,
-			validation.Length(0, MaxHashLength).
+			validation.Length(0, documenttemplate.MaxHashLength).
 				Error("Content hash cannot be longer than 64 characters"),
 		),
 		validation.Field(&g.Status,
@@ -388,3 +389,11 @@ func (GeneratedDocument) Constraints() []keel.Constraint {
 		},
 	}
 }
+
+const (
+	MaxReferenceTypeLength = 50
+	MaxFileNameLength      = 255
+	MaxFilePathLength      = 500
+	MaxMimeTypeLength      = 100
+	MaxDeliveredToLength   = 255
+)

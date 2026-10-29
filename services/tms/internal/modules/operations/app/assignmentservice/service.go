@@ -6,7 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
-	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/notificationtemplate"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmentcontinuity"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/trailer"
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/equipmentcontinuityports"
@@ -147,7 +147,7 @@ func (s *service) notifyAssignedWorkers(
 			WorkerID:   workerID,
 			EventType:  "dash.load_assigned",
 			Priority:   notification.PriorityHigh,
-			Context:    documenttemplate.DriverNotificationContext{},
+			Context:    notificationtemplate.DriverNotificationContext{},
 			Link:       link,
 			RelatedEntities: map[string]any{
 				"assignmentId": assignment.ID.String(),
@@ -174,7 +174,7 @@ func (s *service) notifyUnassignedWorkers(
 			WorkerID:   workerID,
 			EventType:  "dash.load_unassigned",
 			Priority:   notification.PriorityMedium,
-			Context:    documenttemplate.DriverNotificationContext{},
+			Context:    notificationtemplate.DriverNotificationContext{},
 			Link:       "/dash/loads",
 		})
 	}

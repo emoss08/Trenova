@@ -6,6 +6,8 @@ import (
 	"html/template"
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/notificationtemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/reporttemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
@@ -39,7 +41,7 @@ type deliveryEmailContent struct {
 func (a *Activities) deliveryEmailContext(
 	ctx context.Context,
 	content *deliveryEmailContent,
-) (documenttemplate.ReportDeliveryEmailContext, error) {
+) (reporttemplate.ReportDeliveryEmailContext, error) {
 	run, schedule := content.run, content.schedule
 	loc := timezoneOrUTC(schedule.Timezone)
 
@@ -51,10 +53,10 @@ func (a *Activities) deliveryEmailContext(
 		run.RowCount,
 	)
 	if err != nil {
-		return documenttemplate.ReportDeliveryEmailContext{}, err
+		return reporttemplate.ReportDeliveryEmailContext{}, err
 	}
 
-	out := documenttemplate.ReportDeliveryEmailContext{
+	out := reporttemplate.ReportDeliveryEmailContext{
 		Title:        content.title,
 		Format:       string(run.Format),
 		CompletedAt:  formatInTimezone(run.CompletedAt, schedule.Timezone),
@@ -125,7 +127,7 @@ func (a *Activities) renderNotification(
 	tenantInfo pagination.TenantInfo,
 	kind documenttemplate.Kind,
 	referenceID pulid.ID,
-	data *documenttemplate.ReportNotificationContext,
+	data *notificationtemplate.ReportNotificationContext,
 ) (notificationWording, bool) {
 	if a.templates == nil {
 		a.l.Warn("template rendering is not configured; skipping report notification",
@@ -153,8 +155,8 @@ func (a *Activities) renderNotification(
 func runNotificationContext(
 	run *report.ReportRun,
 	name string,
-) *documenttemplate.ReportNotificationContext {
-	out := &documenttemplate.ReportNotificationContext{
+) *notificationtemplate.ReportNotificationContext {
+	out := &notificationtemplate.ReportNotificationContext{
 		ReportName: name,
 		Format:     string(run.Format),
 		RowCount:   run.RowCount,
@@ -175,8 +177,8 @@ func runNotificationContext(
 func deliveredNotificationContext(
 	run *report.ReportRun,
 	title string,
-) *documenttemplate.ReportNotificationContext {
-	out := &documenttemplate.ReportNotificationContext{
+) *notificationtemplate.ReportNotificationContext {
+	out := &notificationtemplate.ReportNotificationContext{
 		ReportName: title,
 		Format:     string(run.Format),
 		RowCount:   run.RowCount,

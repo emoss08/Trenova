@@ -1,8 +1,11 @@
-package documenttemplate
+package trackingtemplate
 
 import (
 	"html/template"
 	"slices"
+
+	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/templatecatalog"
 )
 
 // CustomerTrackingLinkEmailContext is the email that hands a customer the link
@@ -61,14 +64,14 @@ const (
 //nolint:gosec // G101: a rendering fixture of fake values, not a credential
 func newCustomerTrackingLinkEmailSampleContext() any {
 	return CustomerTrackingLinkEmailContext{
-		CustomerName:       sampleCustomerName,
-		CompanyName:        sampleCompanyName,
-		ShipmentProNumber:  sampleProNumber,
+		CustomerName:       templatecatalog.SampleCustomerName,
+		CompanyName:        templatecatalog.SampleCompanyName,
+		ShipmentProNumber:  templatecatalog.SampleProNumber,
 		BOL:                sampleCustomerBOL,
-		OriginSummary:      sampleOriginSummary,
-		DestinationSummary: sampleDestinationSummary,
-		PickupWindow:       samplePickupWindow,
-		DeliveryWindow:     sampleDeliveryWindow,
+		OriginSummary:      templatecatalog.SampleOriginSummary,
+		DestinationSummary: templatecatalog.SampleDestinationSummary,
+		PickupWindow:       templatecatalog.SamplePickupWindow,
+		DeliveryWindow:     templatecatalog.SampleDeliveryWindow,
 		TrackingURL:        template.URL(sampleTrackingURL),
 		ExpiresAt:          sampleLinkExpiry,
 	}
@@ -77,16 +80,16 @@ func newCustomerTrackingLinkEmailSampleContext() any {
 //nolint:gosec // G101: a rendering fixture of fake values, not a credential
 func newCustomerStatusEmailSampleContext() any {
 	return CustomerStatusEmailContext{
-		CustomerName:       sampleCustomerName,
-		CompanyName:        sampleCompanyName,
+		CustomerName:       templatecatalog.SampleCustomerName,
+		CompanyName:        templatecatalog.SampleCompanyName,
 		Event:              "Delayed",
 		IsDelayed:          true,
-		ShipmentProNumber:  sampleProNumber,
+		ShipmentProNumber:  templatecatalog.SampleProNumber,
 		BOL:                sampleCustomerBOL,
-		OriginSummary:      sampleOriginSummary,
-		DestinationSummary: sampleDestinationSummary,
-		StopSummary:        sampleDestinationSummary,
-		StopWindow:         sampleDeliveryWindow,
+		OriginSummary:      templatecatalog.SampleOriginSummary,
+		DestinationSummary: templatecatalog.SampleDestinationSummary,
+		StopSummary:        templatecatalog.SampleDestinationSummary,
+		StopWindow:         templatecatalog.SampleDeliveryWindow,
 		OccurredAt:         "2026-07-19 07:42 CDT",
 		EstimatedArrival:   "2026-07-19 16:30 CDT",
 		TrackingURL:        template.URL(sampleTrackingURL),
@@ -94,49 +97,53 @@ func newCustomerStatusEmailSampleContext() any {
 	}
 }
 
-func bolVariable() VariableDefinition {
-	return VariableDefinition{
+func bolVariable() templatecatalog.VariableDefinition {
+	return templatecatalog.VariableDefinition{
 		Path:        bolPath,
-		Type:        VariableString,
+		Type:        templatecatalog.VariableString,
 		Description: "The bill of lading number, when the shipment has one.",
 	}
 }
 
-func linkExpiryVariable(description string) VariableDefinition {
-	return VariableDefinition{
-		Path:        expiresAtPath,
-		Type:        VariableDateTime,
+func linkExpiryVariable(description string) templatecatalog.VariableDefinition {
+	return templatecatalog.VariableDefinition{
+		Path:        templatecatalog.ExpiresAtPath,
+		Type:        templatecatalog.VariableDateTime,
 		Description: description,
 	}
 }
 
-func (r *Registry) registerCustomerTrackingKinds() {
-	r.registerCustomerTrackingLinkKind()
-	r.registerCustomerStatusKind()
+func RegisterCustomerTrackingKinds(r *templatecatalog.Registry) {
+	registerCustomerTrackingLinkKind(r)
+	registerCustomerStatusKind(r)
 }
 
-func (r *Registry) registerCustomerTrackingLinkKind() {
-	_ = r.Register(&KindDefinition{
-		Kind:        KindCustomerTrackingLinkEmail,
+func registerCustomerTrackingLinkKind(r *templatecatalog.Registry) {
+	_ = r.Register(&templatecatalog.KindDefinition{
+		Kind:        documenttemplate.KindCustomerTrackingLinkEmail,
 		DisplayName: "Customer Tracking Link",
 		Description: "Sends a customer the link to a shipment's tracking page. " +
 			"What the page shows is set on the customer.",
-		Category:       trackingCategory,
-		Channels:       []Channel{ChannelSubject, ChannelEmailHTML, ChannelEmailText},
+		Category: trackingCategory,
+		Channels: []documenttemplate.Channel{
+			documenttemplate.ChannelSubject,
+			documenttemplate.ChannelEmailHTML,
+			documenttemplate.ChannelEmailText,
+		},
 		CustomerScoped: true,
-		sampleFactory:  newCustomerTrackingLinkEmailSampleContext,
+		SampleFactory:  newCustomerTrackingLinkEmailSampleContext,
 		Variables: slices.Concat(
-			[]VariableDefinition{
-				customerNameVariable(false, "The customer the shipment is for."),
-				companyNameVariable(),
-				proNumberVariable(false, "The shipment the link tracks."),
+			[]templatecatalog.VariableDefinition{
+				templatecatalog.CustomerNameVariable(false, "The customer the shipment is for."),
+				templatecatalog.CompanyNameVariable(),
+				templatecatalog.ProNumberVariable(false, "The shipment the link tracks."),
 				bolVariable(),
 			},
-			routeScheduleVariables(),
-			[]VariableDefinition{
+			templatecatalog.RouteScheduleVariables(),
+			[]templatecatalog.VariableDefinition{
 				{
 					Path:        trackingURLPath,
-					Type:        VariableString,
+					Type:        templatecatalog.VariableString,
 					Required:    true,
 					Description: "The tracking page link. Required: it is the point of the email.",
 				},
@@ -146,77 +153,81 @@ func (r *Registry) registerCustomerTrackingLinkKind() {
 	})
 }
 
-func (r *Registry) registerCustomerStatusKind() {
-	_ = r.Register(&KindDefinition{
-		Kind:        KindCustomerStatusEmail,
+func registerCustomerStatusKind(r *templatecatalog.Registry) {
+	_ = r.Register(&templatecatalog.KindDefinition{
+		Kind:        documenttemplate.KindCustomerStatusEmail,
 		DisplayName: "Customer Status Update",
 		Description: "Tells a customer its load was picked up, is running late, " +
 			"was delivered, or has its proof of delivery on file, as the " +
 			"customer's rules ask. Each event is sent once.",
-		Category:       trackingCategory,
-		Channels:       []Channel{ChannelSubject, ChannelEmailHTML, ChannelEmailText},
+		Category: trackingCategory,
+		Channels: []documenttemplate.Channel{
+			documenttemplate.ChannelSubject,
+			documenttemplate.ChannelEmailHTML,
+			documenttemplate.ChannelEmailText,
+		},
 		CustomerScoped: true,
-		sampleFactory:  newCustomerStatusEmailSampleContext,
+		SampleFactory:  newCustomerStatusEmailSampleContext,
 		Variables: slices.Concat(
-			[]VariableDefinition{
-				customerNameVariable(false, "The customer the shipment is for."),
-				companyNameVariable(),
+			[]templatecatalog.VariableDefinition{
+				templatecatalog.CustomerNameVariable(false, "The customer the shipment is for."),
+				templatecatalog.CompanyNameVariable(),
 				{
 					Path:        "Event",
-					Type:        VariableString,
+					Type:        templatecatalog.VariableString,
 					Description: "What happened: PickedUp, Delayed, Delivered or PodReady.",
 				},
 				{
 					Path:        "IsPickedUp",
-					Type:        VariableBool,
+					Type:        templatecatalog.VariableBool,
 					Description: "True when the load has been picked up.",
 				},
 				{
 					Path:        "IsDelayed",
-					Type:        VariableBool,
+					Type:        templatecatalog.VariableBool,
 					Description: "True when the load is projected to reach a stop late.",
 				},
 				{
 					Path:        "IsDelivered",
-					Type:        VariableBool,
+					Type:        templatecatalog.VariableBool,
 					Description: "True when the load has been delivered.",
 				},
 				{
 					Path:        "IsPodReady",
-					Type:        VariableBool,
+					Type:        templatecatalog.VariableBool,
 					Description: "True when the proof of delivery is on file.",
 				},
-				proNumberVariable(
+				templatecatalog.ProNumberVariable(
 					true,
 					"The shipment the email is about. Required: it is how the customer knows which load.",
 				),
 				bolVariable(),
 			},
-			routeVariables(),
-			[]VariableDefinition{
+			templatecatalog.RouteVariables(),
+			[]templatecatalog.VariableDefinition{
 				{
 					Path:        "StopSummary",
-					Type:        VariableString,
+					Type:        templatecatalog.VariableString,
 					Description: "The stop a delay is about, as city and state.",
 				},
 				{
 					Path:        "StopWindow",
-					Type:        VariableString,
+					Type:        templatecatalog.VariableString,
 					Description: "The appointment window at the delayed stop.",
 				},
 				{
 					Path:        "OccurredAt",
-					Type:        VariableDateTime,
+					Type:        templatecatalog.VariableDateTime,
 					Description: "When it happened: the departure, the projection, or the filing.",
 				},
 				{
 					Path:        "EstimatedArrival",
-					Type:        VariableDateTime,
+					Type:        templatecatalog.VariableDateTime,
 					Description: "The projected arrival at the delayed stop.",
 				},
 				{
 					Path:        trackingURLPath,
-					Type:        VariableString,
+					Type:        templatecatalog.VariableString,
 					Description: "The tracking page link, when the customer's rules include it.",
 				},
 				linkExpiryVariable("When the tracking link stops working."),
@@ -224,3 +235,7 @@ func (r *Registry) registerCustomerStatusKind() {
 		),
 	})
 }
+
+const (
+	trackingCategory = "Tracking"
+)

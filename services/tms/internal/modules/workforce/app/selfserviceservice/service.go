@@ -15,7 +15,7 @@ import (
 	"context"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/notificationtemplate"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/drivernotificationservice"
@@ -526,7 +526,7 @@ func (s *Service) notifyDriver(
 	tenantInfo pagination.TenantInfo,
 	workerID pulid.ID,
 	eventType string,
-	context documenttemplate.DriverNotificationContext,
+	context notificationtemplate.DriverNotificationContext,
 	related map[string]any,
 ) {
 	if s.driverNotify == nil {

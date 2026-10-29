@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/trackingtemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -348,7 +349,7 @@ func (s *Service) renderLinkEmail(
 	ctx context.Context,
 	msg *linkEmail,
 ) (*documenttemplateports.RenderedMessage, error) {
-	data := documenttemplate.CarrierTrackingLinkEmailContext{
+	data := trackingtemplate.CarrierTrackingLinkEmailContext{
 		CarrierName:       s.carrierName(ctx, msg.tenant, msg.carrierID),
 		CompanyName:       s.companyName(ctx, msg.tenant),
 		ShipmentProNumber: msg.proNumber,

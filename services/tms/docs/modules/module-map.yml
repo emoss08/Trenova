@@ -421,12 +421,26 @@ modules:
       - documentcontent
       - documentpacketrule
       - documentsearchprojection
+      - accounttemplate
+      - detentiontemplate
       - documenttemplate
       - documentupload
       - extractioneval
       - extractionrollout
       - extractionshadow
+      - factoringtemplate
+      - generateddocument
       - inboundmessage
+      - invoicetemplate
+      - notificationtemplate
+      - portaltemplate
+      - rateconfirmationtemplate
+      - reporttemplate
+      - statementtemplate
+      - templatecatalog
+      - templateregistry
+      - tendertemplate
+      - trackingtemplate
       - triage
     service:
       - capturereleaseservice

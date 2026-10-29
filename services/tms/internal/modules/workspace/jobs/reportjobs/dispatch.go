@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/notificationtemplate"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/internal/modules/workspace/jobs/reportjobs/reportcontract"
@@ -67,7 +68,7 @@ func (a *Activities) dispatchSchedule(
 	if err != nil {
 		schedule.Enabled = false
 		result.Disabled++
-		a.notifyScheduleOwner(ctx, schedule, &documenttemplate.ReportNotificationContext{
+		a.notifyScheduleOwner(ctx, schedule, &notificationtemplate.ReportNotificationContext{
 			Reason:   "The schedule's cron expression is invalid.",
 			Disabled: true,
 		})
@@ -196,14 +197,14 @@ func (a *Activities) recordScheduleFailure(
 ) {
 	schedule.ConsecutiveFailures++
 	if schedule.ConsecutiveFailures < maxConsecutiveFailures {
-		a.notifyScheduleOwner(ctx, schedule, &documenttemplate.ReportNotificationContext{
+		a.notifyScheduleOwner(ctx, schedule, &notificationtemplate.ReportNotificationContext{
 			Reason: reason,
 		})
 		return
 	}
 
 	schedule.Enabled = false
-	a.notifyScheduleOwner(ctx, schedule, &documenttemplate.ReportNotificationContext{
+	a.notifyScheduleOwner(ctx, schedule, &notificationtemplate.ReportNotificationContext{
 		Reason:              reason,
 		Disabled:            true,
 		ConsecutiveFailures: schedule.ConsecutiveFailures,
@@ -213,7 +214,7 @@ func (a *Activities) recordScheduleFailure(
 func (a *Activities) notifyScheduleOwner(
 	ctx context.Context,
 	schedule *report.ReportSchedule,
-	data *documenttemplate.ReportNotificationContext,
+	data *notificationtemplate.ReportNotificationContext,
 ) {
 	tenantInfo := pagination.TenantInfo{
 		OrgID:  schedule.OrganizationID,

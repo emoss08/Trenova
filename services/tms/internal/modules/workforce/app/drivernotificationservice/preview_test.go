@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/notificationtemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/notificationservice"
@@ -58,7 +58,7 @@ func dispatchNotice(workerID pulid.ID) *DriverNotification {
 		WorkerID:   workerID,
 		EventType:  "dash.dispatch_message",
 		Priority:   notification.PriorityHigh,
-		Context: documenttemplate.DriverNotificationContext{
+		Context: notificationtemplate.DriverNotificationContext{
 			AlertTitle:   "Delivery moved to 3 PM",
 			AlertMessage: "The receiver moved your delivery to 3 PM.",
 		},

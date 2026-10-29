@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/portaltemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/app/customerupdateservice"
@@ -83,7 +84,7 @@ func (t *EmailCustomerTool) compose(
 	}
 	composed.Recipients = recipients
 
-	composed.Data = documenttemplate.AgentEmailContext{
+	composed.Data = portaltemplate.AgentEmailContext{
 		AgentSubject:      strings.TrimSpace(subject),
 		AgentBody:         strings.TrimSpace(body),
 		CustomerName:      customerName,

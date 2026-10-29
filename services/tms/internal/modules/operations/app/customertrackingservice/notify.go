@@ -7,6 +7,7 @@ import (
 	"html/template"
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/trackingtemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/customertracking"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -350,10 +351,10 @@ func (s *Service) statusEmailContext(
 	ctx context.Context,
 	sc *shipmentContext,
 	row *customertracking.Notification,
-) documenttemplate.CustomerStatusEmailContext {
+) trackingtemplate.CustomerStatusEmailContext {
 	sh := sc.shipment
 	origin, destination := originAndDestination(sc.stops)
-	data := documenttemplate.CustomerStatusEmailContext{
+	data := trackingtemplate.CustomerStatusEmailContext{
 		CompanyName:       s.companyName(ctx, sc.tenant),
 		Event:             string(row.Event),
 		IsPickedUp:        row.Event == customertracking.EventPickedUp,

@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/app/inboundmessageservice"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/portaltemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -229,7 +230,7 @@ func TestReplyToInboundMessage_AnswersTheSenderInTheThread(t *testing.T) {
 
 	require.NotNil(t, renderer.Req)
 	assert.Equal(t, documenttemplate.KindAgentInboundReplyEmail, renderer.Req.Kind)
-	data := renderer.Req.Data.(documenttemplate.AgentEmailContext)
+	data := renderer.Req.Data.(portaltemplate.AgentEmailContext)
 	assert.Equal(t, "Re: Where is 88213?", data.AgentSubject)
 
 	require.NotNil(t, desk.reviewed, "a reply settles the message")

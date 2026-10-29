@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate/starters"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/templateregistry"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
@@ -178,7 +179,7 @@ func TestTheBuiltInInvoiceTemplateRendersTheBuilderOutput(t *testing.T) {
 	engine, err := templateengine.New(templateengine.Config{})
 	require.NoError(t, err)
 
-	registry := documenttemplate.NewRegistry()
+	registry := templateregistry.NewRegistry()
 	starter := builtInInvoiceStarter(t)
 
 	compiled, diags := engine.Parse(&templateengine.ParseRequest{

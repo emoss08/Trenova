@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/documents/app/documentservice"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/notificationtemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -588,7 +589,7 @@ func (s *service) notifyMentions(
 		tenantInfo,
 		documenttemplate.KindNotificationCommentMention,
 		comment.ID,
-		&documenttemplate.CommentNotificationContext{
+		&notificationtemplate.CommentNotificationContext{
 			AuthorName:        authorName,
 			ShipmentProNumber: shp.ProNumber,
 			Excerpt:           stringutils.Ellipsize(comment.Comment, mentionExcerptLength),
@@ -672,7 +673,7 @@ func (s *service) notifyReply(
 		},
 		documenttemplate.KindNotificationCommentReply,
 		reply.ID,
-		&documenttemplate.CommentNotificationContext{
+		&notificationtemplate.CommentNotificationContext{
 			AuthorName:        authorName,
 			ShipmentProNumber: shp.ProNumber,
 			Excerpt:           stringutils.Ellipsize(reply.Comment, mentionExcerptLength),
@@ -958,7 +959,7 @@ func (s *service) renderCommentNotification(
 	tenantInfo pagination.TenantInfo,
 	kind documenttemplate.Kind,
 	referenceID pulid.ID,
-	data *documenttemplate.CommentNotificationContext,
+	data *notificationtemplate.CommentNotificationContext,
 ) (commentNotificationWording, bool) {
 	if s.templates == nil {
 		s.l.Warn("template rendering is not configured; skipping comment notification",

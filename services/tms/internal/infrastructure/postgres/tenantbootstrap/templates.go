@@ -9,12 +9,14 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate/documenttemplatedb"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate/starters"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/templatecatalog"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/templateregistry"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
 func CreateDocumentTemplateStarters(ctx context.Context, db *keel.DB, scope Scope) (int, error) {
-	registry := documenttemplate.NewRegistry()
+	registry := templateregistry.NewRegistry()
 	existing, err := existingTemplateKinds(ctx, db, scope)
 	if err != nil {
 		return 0, err
@@ -39,7 +41,7 @@ func createTemplateStarter(
 	ctx context.Context,
 	db *keel.DB,
 	scope Scope,
-	registry *documenttemplate.Registry,
+	registry *templatecatalog.Registry,
 	kind documenttemplate.Kind,
 ) error {
 	def, ok := registry.Get(kind)

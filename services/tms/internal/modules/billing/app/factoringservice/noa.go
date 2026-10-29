@@ -10,6 +10,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/factoringtemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/templatecatalog"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -628,29 +630,29 @@ func customerLabel(cus *customer.Customer) string {
 	return cus.DisplayName()
 }
 
-func letterContext(p *preparedLetter, now int64) *documenttemplate.FactoringNoaContext {
+func letterContext(p *preparedLetter, now int64) *factoringtemplate.FactoringNoaContext {
 	tz := p.org.Timezone
 	effective := now
 	if p.noa.SentAt != nil {
 		effective = *p.noa.SentAt
 	}
-	return &documenttemplate.FactoringNoaContext{
+	return &factoringtemplate.FactoringNoaContext{
 		LetterDate:    timeutils.FormatUnixDateIn(now, tz),
 		EffectiveDate: timeutils.FormatUnixDateIn(effective, tz),
 		Reference:     p.noa.ID.String(),
-		Organization: documenttemplate.AddressBlock{
+		Organization: templatecatalog.AddressBlock{
 			Name:  p.org.Name,
 			Lines: p.org.MailingAddress().Lines(),
 		},
-		Customer: documenttemplate.AddressBlock{
+		Customer: templatecatalog.AddressBlock{
 			Name:  p.customer.DisplayName(),
 			Lines: p.customer.MailingAddress().Lines(),
 		},
-		Factor: documenttemplate.AddressBlock{
+		Factor: templatecatalog.AddressBlock{
 			Name:  p.factor.Name,
 			Lines: p.factor.MailingAddress().Lines(),
 		},
-		RemitTo: documenttemplate.AddressBlock{
+		RemitTo: templatecatalog.AddressBlock{
 			Name:  p.factor.Name,
 			Lines: p.factor.RemitLines(),
 		},
@@ -659,16 +661,16 @@ func letterContext(p *preparedLetter, now int64) *documenttemplate.FactoringNoaC
 	}
 }
 
-func letterEmailContext(p *preparedLetter, now int64) *documenttemplate.FactoringNoaEmailContext {
+func letterEmailContext(p *preparedLetter, now int64) *factoringtemplate.FactoringNoaEmailContext {
 	effective := now
 	if p.noa.SentAt != nil {
 		effective = *p.noa.SentAt
 	}
-	return &documenttemplate.FactoringNoaEmailContext{
+	return &factoringtemplate.FactoringNoaEmailContext{
 		CustomerName: p.customer.DisplayName(),
 		CompanyName:  p.org.Name,
 		FactorName:   p.factor.Name,
-		RemitTo: documenttemplate.AddressBlock{
+		RemitTo: templatecatalog.AddressBlock{
 			Name:  p.factor.Name,
 			Lines: p.factor.RemitLines(),
 		},

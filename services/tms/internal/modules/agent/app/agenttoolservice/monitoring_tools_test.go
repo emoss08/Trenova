@@ -14,6 +14,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/notificationtemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/portaltemplate"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
@@ -181,7 +183,7 @@ func TestNotifyDriver_SendsThroughTheDispatchMessageTemplate(t *testing.T) {
 	assert.Equal(t, params.OrganizationID, drivers.sent.TenantInfo.OrgID)
 	assert.Equal(t, "/loads/"+shipmentID.String(), drivers.sent.Link)
 
-	context, ok := drivers.sent.Context.(documenttemplate.DriverNotificationContext)
+	context, ok := drivers.sent.Context.(notificationtemplate.DriverNotificationContext)
 	require.True(t, ok)
 	assert.Equal(t, "Delivery moved to 3 PM", context.AlertTitle)
 	assert.Equal(
@@ -251,7 +253,7 @@ func TestEmailCustomer_WritesToTheCustomersContactsAndRecordsIt(t *testing.T) {
 
 	require.NotNil(t, renderer.Req)
 	assert.Equal(t, documenttemplate.KindAgentCustomerUpdateEmail, renderer.Req.Kind)
-	context, ok := renderer.Req.Data.(documenttemplate.AgentEmailContext)
+	context, ok := renderer.Req.Data.(portaltemplate.AgentEmailContext)
 	require.True(t, ok)
 	assert.Equal(t, "Acme Freight", context.CustomerName)
 	assert.Equal(t, "S12345", context.ShipmentProNumber)

@@ -7,7 +7,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/portaltemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -117,7 +117,7 @@ func Brand(
 	orgRepo tenantports.OrganizationRepository,
 	inliner documenttemplateports.AssetInliner,
 	tenantInfo pagination.TenantInfo,
-	out *documenttemplate.AgentEmailContext,
+	out *portaltemplate.AgentEmailContext,
 ) {
 	if orgRepo == nil {
 		return

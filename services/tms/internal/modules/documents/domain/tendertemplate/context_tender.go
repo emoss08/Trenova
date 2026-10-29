@@ -1,8 +1,11 @@
-package documenttemplate
+package tendertemplate
 
 import (
 	"html/template"
 	"slices"
+
+	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/templatecatalog"
 )
 
 // TenderOfferEmailContext is the data a carrier tender offer email renders against.
@@ -38,12 +41,12 @@ type TenderOfferEmailContext struct {
 func newTenderOfferEmailSampleContext() any {
 	return TenderOfferEmailContext{
 		CarrierName:        "Redline Freight LLC",
-		CompanyName:        sampleCompanyName,
-		ShipmentProNumber:  sampleProNumber,
-		OriginSummary:      sampleOriginSummary,
-		DestinationSummary: sampleDestinationSummary,
-		PickupWindow:       samplePickupWindow,
-		DeliveryWindow:     sampleDeliveryWindow,
+		CompanyName:        templatecatalog.SampleCompanyName,
+		ShipmentProNumber:  templatecatalog.SampleProNumber,
+		OriginSummary:      templatecatalog.SampleOriginSummary,
+		DestinationSummary: templatecatalog.SampleDestinationSummary,
+		PickupWindow:       templatecatalog.SamplePickupWindow,
+		DeliveryWindow:     templatecatalog.SampleDeliveryWindow,
 		EquipmentSummary:   "53' Dry Van",
 		WeightSummary:      "42,000 lbs",
 		RateAmount:         "$1,850.00",
@@ -59,68 +62,72 @@ func newTenderOfferEmailSampleContext() any {
 	}
 }
 
-func (r *Registry) registerTenderKinds() {
-	_ = r.Register(&KindDefinition{
-		Kind:        KindTenderOfferEmail,
+func RegisterTenderKinds(r *templatecatalog.Registry) {
+	_ = r.Register(&templatecatalog.KindDefinition{
+		Kind:        documenttemplate.KindTenderOfferEmail,
 		DisplayName: "Carrier Tender Offer",
 		Description: "Offers a brokered load to a carrier with accept and decline " +
 			"links. Not customer-scoped: the recipient is a carrier, so a " +
 			"per-customer assignment would never fire.",
-		Category:      "Tendering",
-		Channels:      []Channel{ChannelSubject, ChannelEmailHTML, ChannelEmailText},
-		sampleFactory: newTenderOfferEmailSampleContext,
+		Category: "Tendering",
+		Channels: []documenttemplate.Channel{
+			documenttemplate.ChannelSubject,
+			documenttemplate.ChannelEmailHTML,
+			documenttemplate.ChannelEmailText,
+		},
+		SampleFactory: newTenderOfferEmailSampleContext,
 		Variables: slices.Concat(
-			[]VariableDefinition{
+			[]templatecatalog.VariableDefinition{
 				{
 					Path:        "CarrierName",
-					Type:        VariableString,
+					Type:        templatecatalog.VariableString,
 					Description: "The carrier the load is being offered to.",
 				},
-				companyNameVariable(),
-				proNumberVariable(false, "The shipment the offer covers."),
+				templatecatalog.CompanyNameVariable(),
+				templatecatalog.ProNumberVariable(false, "The shipment the offer covers."),
 			},
-			routeScheduleVariables(),
-			[]VariableDefinition{
+			templatecatalog.RouteScheduleVariables(),
+			[]templatecatalog.VariableDefinition{
 				{
 					Path:        "EquipmentSummary",
-					Type:        VariableString,
+					Type:        templatecatalog.VariableString,
 					Description: "The equipment the load requires.",
 				},
 				{
 					Path:        "WeightSummary",
-					Type:        VariableString,
+					Type:        templatecatalog.VariableString,
 					Description: "The load's weight, formatted for display.",
 				},
 				{
 					Path:        "RateAmount",
-					Type:        VariableString,
+					Type:        templatecatalog.VariableString,
 					Description: "The offered rate, formatted with currency.",
 				},
 				{
 					Path:        "RateMethodLabel",
-					Type:        VariableString,
+					Type:        templatecatalog.VariableString,
 					Description: "How the rate is calculated, e.g. Flat or Per Mile.",
 				},
 				{
 					Path:        "AcceptURL",
-					Type:        VariableString,
+					Type:        templatecatalog.VariableString,
 					Required:    true,
 					Description: "The single-use accept link. Required: without it the carrier cannot take the load.",
 				},
 				{
 					Path:        "DeclineURL",
-					Type:        VariableString,
+					Type:        templatecatalog.VariableString,
 					Required:    true,
 					Description: "The single-use decline link. Required: without it the carrier cannot pass, and the offer sits until it expires.",
 				},
 				{
-					Path:        expiresAtPath,
-					Type:        VariableDateTime,
+					Path:        templatecatalog.ExpiresAtPath,
+					Type:        templatecatalog.VariableDateTime,
 					Description: "The exact moment the offer stops being available.",
 				},
 				{
 					Path:        "ExpiresInHours",
-					Type:        VariableInt,
+					Type:        templatecatalog.VariableInt,
 					Description: "How many hours the offer is good for. Use this rather than writing a number into the copy, or the wording will drift from the real expiry.",
 				},
 			},

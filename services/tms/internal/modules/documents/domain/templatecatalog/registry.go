@@ -1,4 +1,4 @@
-package documenttemplate
+package templatecatalog
 
 import (
 	"errors"
@@ -9,46 +9,8 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/emoss08/trenova/pkg/templateengine"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
 )
-
-// Channel names one output slot of a template version.
-type Channel string
-
-const (
-	ChannelPDF               = Channel("PDF")
-	ChannelEmailHTML         = Channel("EmailHTML")
-	ChannelEmailText         = Channel("EmailText")
-	ChannelSubject           = Channel("Subject")
-	ChannelNotificationTitle = Channel("NotificationTitle")
-	ChannelNotificationBody  = Channel("NotificationBody")
-)
-
-func (c Channel) String() string { return string(c) }
-
-// Engine maps a domain channel to the engine's, so the engine stays free of
-// domain imports and the domain owns the enum the database and GraphQL see.
-func (c Channel) Engine() templateengine.Channel {
-	return templateengine.Channel(c)
-}
-
-// Field names the editor pane and the database column a channel is stored in.
-func (c Channel) Field() string {
-	switch c {
-	case ChannelPDF, ChannelEmailHTML:
-		return "bodyHtml"
-	case ChannelEmailText:
-		return "bodyText"
-	case ChannelSubject:
-		return "subject"
-	case ChannelNotificationTitle:
-		return "notificationTitle"
-	case ChannelNotificationBody:
-		return "notificationMessage"
-	default:
-		return string(c)
-	}
-}
 
 // VariableType is what a variable holds, so the editor can describe it and the
 // catalog can be checked against the sample struct.
@@ -94,7 +56,7 @@ type VariableDefinition struct {
 
 // KindDefinition is everything the system knows about one authorable template.
 type KindDefinition struct {
-	Kind        Kind
+	Kind        documenttemplate.Kind
 	DisplayName string
 	Description string
 
@@ -102,7 +64,7 @@ type KindDefinition struct {
 	Category string
 
 	// Channels are the output slots this kind produces.
-	Channels []Channel
+	Channels []documenttemplate.Channel
 
 	// Paged means page size, orientation, and margins apply. False for messages.
 	Paged bool
@@ -117,41 +79,25 @@ type KindDefinition struct {
 	// Variables is the catalog, and the sample context must match it exactly.
 	Variables []VariableDefinition
 
-	// sampleFactory builds the context used to verify a version at publish time
+	// SampleFactory builds the context used to verify a version at publish time
 	// and to render a preview before real data is chosen.
-	sampleFactory func() any
+	SampleFactory func() any
 }
 
 // Registry holds every kind.
 type Registry struct {
 	mu    sync.RWMutex
-	kinds map[Kind]*KindDefinition
+	kinds map[documenttemplate.Kind]*KindDefinition
 }
 
-// NewRegistry builds the populated registry.
-func NewRegistry() *Registry {
-	r := &Registry{kinds: make(map[Kind]*KindDefinition, len(AllKinds()))}
-	r.registerAll()
+func New(registrars ...func(*Registry)) *Registry {
+	r := &Registry{
+		kinds: make(map[documenttemplate.Kind]*KindDefinition, len(documenttemplate.AllKinds())),
+	}
+	for _, register := range registrars {
+		register(r)
+	}
 	return r
-}
-
-func (r *Registry) registerAll() {
-	r.registerBillingKinds()
-	r.registerInvoiceShareKinds()
-	r.registerPaymentReminderKinds()
-	r.registerCustomerStatementKinds()
-	r.registerFactoringNoaKinds()
-	r.registerFactoringScheduleKinds()
-	r.registerDetentionKinds()
-	r.registerRateConfirmationKinds()
-	r.registerReportingKinds()
-	r.registerTenderKinds()
-	r.registerCarrierTrackingKinds()
-	r.registerCustomerTrackingKinds()
-	r.registerPortalKinds()
-	r.registerAccountKinds()
-	r.registerAgentKinds()
-	r.registerNotificationKinds()
 }
 
 // Register adds a kind, refusing a duplicate or an incoherent definition.
@@ -165,7 +111,7 @@ func (r *Registry) Register(def *KindDefinition) error {
 	if len(def.Channels) == 0 {
 		return fmt.Errorf("kind %q declares no channels", def.Kind)
 	}
-	if def.sampleFactory == nil {
+	if def.SampleFactory == nil {
 		return fmt.Errorf("kind %q has no sample context", def.Kind)
 	}
 
@@ -181,7 +127,7 @@ func (r *Registry) Register(def *KindDefinition) error {
 }
 
 // Get returns one kind.
-func (r *Registry) Get(kind Kind) (*KindDefinition, bool) {
+func (r *Registry) Get(kind documenttemplate.Kind) (*KindDefinition, bool) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
@@ -226,7 +172,7 @@ func (r *Registry) ByCategory(category string) []*KindDefinition {
 //
 // This is what the engine checks a template against and what the editor's
 // autocomplete offers, so the two can never disagree.
-func (r *Registry) Paths(kind Kind) []string {
+func (r *Registry) Paths(kind documenttemplate.Kind) []string {
 	def, ok := r.Get(kind)
 	if !ok {
 		return nil
@@ -240,7 +186,7 @@ func (r *Registry) Paths(kind Kind) []string {
 }
 
 // RequiredPaths returns the paths a published version must still reference.
-func (r *Registry) RequiredPaths(kind Kind) []string {
+func (r *Registry) RequiredPaths(kind documenttemplate.Kind) []string {
 	def, ok := r.Get(kind)
 	if !ok {
 		return nil
@@ -281,12 +227,12 @@ func collectRequiredPaths(prefix string, vars []VariableDefinition, out *[]strin
 //
 // Publishing renders against this, which is what stops a template that only
 // breaks on real data from going live.
-func (r *Registry) SampleContext(kind Kind) (any, error) {
+func (r *Registry) SampleContext(kind documenttemplate.Kind) (any, error) {
 	def, ok := r.Get(kind)
 	if !ok {
 		return nil, fmt.Errorf("unknown template kind %q", kind)
 	}
-	return def.sampleFactory(), nil
+	return def.SampleFactory(), nil
 }
 
 // hostileProbeValue is chosen to trip every escaper html/template has: a quote and
@@ -301,7 +247,7 @@ const hostileProbeValue = `x";}</style><a:1 'y`
 // template put a text field somewhere its value will be neutralized? If so the
 // template is structurally wrong and will silently break the first time a customer
 // name contains an apostrophe. Publishing checks both contexts.
-func (r *Registry) HostileProbeContext(kind Kind) (any, error) {
+func (r *Registry) HostileProbeContext(kind documenttemplate.Kind) (any, error) {
 	sample, err := r.SampleContext(kind)
 	if err != nil {
 		return nil, err
@@ -383,7 +329,7 @@ func (r *Registry) Categories() []string {
 }
 
 // HasChannel reports whether a kind produces a given channel.
-func (d *KindDefinition) HasChannel(channel Channel) bool {
+func (d *KindDefinition) HasChannel(channel documenttemplate.Channel) bool {
 	for _, c := range d.Channels {
 		if c == channel {
 			return true

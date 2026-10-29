@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/paymentreminder"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/collectionports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/paymentreminderports"
-	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/invoicetemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
@@ -112,7 +112,7 @@ type fixture struct {
 	repo        *fakeRepo
 	collections *fakeCollections
 	email       *fakeEmail
-	contexts    []*documenttemplate.PaymentReminderEmailContext
+	contexts    []*invoicetemplate.PaymentReminderEmailContext
 	control     *billingcontrol.BillingControl
 	customers   map[pulid.ID]*customer.Customer
 }
@@ -161,7 +161,7 @@ func newFixture(t *testing.T) *fixture {
 			_ context.Context,
 			req *documenttemplateports.RenderMessageRequest,
 		) (*documenttemplateports.RenderedMessage, error) {
-			data := req.Data.(*documenttemplate.PaymentReminderEmailContext)
+			data := req.Data.(*invoicetemplate.PaymentReminderEmailContext)
 			f.contexts = append(f.contexts, data)
 			return &documenttemplateports.RenderedMessage{
 				Subject: "Reminder",

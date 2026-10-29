@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/notificationtemplate"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/dashcontrol"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
 	"github.com/stretchr/testify/assert"
@@ -98,12 +98,15 @@ func TestDigestPeriodKey(t *testing.T) {
 func TestDigestPriority(t *testing.T) {
 	t.Parallel()
 
-	upcoming := []documenttemplate.DriverObligation{{DueInDays: 5}, {DueInDays: 9}}
+	upcoming := []notificationtemplate.DriverObligation{{DueInDays: 5}, {DueInDays: 9}}
 	assert.Equal(t, notification.PriorityMedium, digestPriority(upcoming))
 
 	// A round-up of things due next week is not the same message as one saying
 	// a licence expired on Tuesday.
-	lapsed := []documenttemplate.DriverObligation{{DueInDays: 5}, {DueInDays: -2, Overdue: true}}
+	lapsed := []notificationtemplate.DriverObligation{
+		{DueInDays: 5},
+		{DueInDays: -2, Overdue: true},
+	}
 	assert.Equal(t, notification.PriorityHigh, digestPriority(lapsed))
 }
 

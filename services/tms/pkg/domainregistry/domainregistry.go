@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoicerun"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceshare"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/generateddocument"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/ediinboundfile"
@@ -55,7 +56,7 @@ func RegisterEntities() []any {
 		&documenttemplate.DocumentTemplate{},
 		&documenttemplate.DocumentTemplateVersion{},
 		&documenttemplate.DocumentTemplateAssignment{},
-		&documenttemplate.GeneratedDocument{},
+		&generateddocument.GeneratedDocument{},
 		&dispatchcontrol.DispatchControl{},
 		&billingcontrol.BillingControl{},
 		&invoice.Invoice{},

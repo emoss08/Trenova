@@ -12,6 +12,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceshare"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/invoicetemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/notificationtemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
@@ -373,10 +375,10 @@ func TestShareRendersTheNoteOnlyIntoTheEmailInTheRecipientsLanguage(t *testing.T
 		assert.True(t, render.FallbackToBuiltIn)
 
 		switch data := render.Data.(type) {
-		case *documenttemplate.InvoiceShareNotificationContext:
+		case *notificationtemplate.InvoiceShareNotificationContext:
 			assert.Equal(t, documenttemplate.KindNotificationInvoiceShared, render.Kind)
 			assert.Equal(t, "Marcus Bell", data.SharedByName)
-		case *documenttemplate.InvoiceShareEmailContext:
+		case *invoicetemplate.InvoiceShareEmailContext:
 			assert.Equal(t, documenttemplate.KindInvoiceShareEmail, render.Kind)
 			assert.Equal(t, "Look at line 3", data.Note)
 			assert.Equal(t, "Dana", data.RecipientFirstName)

@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/documents/domain/accounttemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/iam"
@@ -126,7 +127,7 @@ func TestSendInviteRendersTheInviteTemplateWithASetupLink(t *testing.T) {
 	assert.Equal(t, 1, h.sent)
 	req := h.rendered[0]
 	assert.Equal(t, documenttemplate.KindAccountInviteEmail, req.Kind)
-	data, ok := req.Data.(documenttemplate.AccountInviteContext)
+	data, ok := req.Data.(accounttemplate.AccountInviteContext)
 	require.True(t, ok)
 	assert.Equal(t, "Dana", data.FirstName)
 	assert.Equal(t, "dwhitfield", data.Username)

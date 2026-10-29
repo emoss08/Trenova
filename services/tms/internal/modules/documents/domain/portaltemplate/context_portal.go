@@ -1,6 +1,11 @@
-package documenttemplate
+package portaltemplate
 
-import "html/template"
+import (
+	"html/template"
+
+	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/templatecatalog"
+)
 
 // DriverPortalInvitationContext is the data a portal invitation renders against.
 type DriverPortalInvitationContext struct {
@@ -52,7 +57,7 @@ func newDriverPortalInvitationSampleContext() any {
 		FirstName:     "Marcus",
 		LastName:      "Dell",
 		FullName:      "Marcus Dell",
-		CompanyName:   sampleCompanyName,
+		CompanyName:   templatecatalog.SampleCompanyName,
 		InviteURL:     template.URL("https://dash.example.com/invite/8f2c41a9b7e34d05"),
 		ExpiresInDays: 7,
 		ExpiresAt:     "2026-07-22 11:00 CDT",
@@ -61,29 +66,29 @@ func newDriverPortalInvitationSampleContext() any {
 
 func newAgentEmailSampleContext() any {
 	return AgentEmailContext{
-		AgentSubject:      "Missing paperwork for " + sampleProNumber,
+		AgentSubject:      "Missing paperwork for " + templatecatalog.SampleProNumber,
 		AgentBody:         "We are missing the signed bill of lading and the lumper receipt for this load. Could you send them over so we can invoice?",
-		CompanyName:       sampleCompanyName,
-		CustomerName:      sampleCustomerName,
-		ShipmentProNumber: sampleProNumber,
+		CompanyName:       templatecatalog.SampleCompanyName,
+		CustomerName:      templatecatalog.SampleCustomerName,
+		ShipmentProNumber: templatecatalog.SampleProNumber,
 		RequestedDocuments: []string{
 			"Signed bill of lading",
 			"Lumper receipt",
 		},
 		//nolint:gosec // A compile-time constant data: URI; see the field's doc comment.
-		LogoDataURI: template.URL(sampleLogoDataURI),
+		LogoDataURI: template.URL(templatecatalog.SampleLogoDataURI),
 	}
 }
 
 func newAgentInboundReplySampleContext() any {
 	return AgentEmailContext{
-		AgentSubject:      "Re: Where is " + sampleProNumber + "?",
+		AgentSubject:      "Re: Where is " + templatecatalog.SampleProNumber + "?",
 		AgentBody:         "The load is on schedule and due at the consignee tomorrow before noon. We will write again if that changes.",
-		CompanyName:       sampleCompanyName,
-		CustomerName:      sampleCustomerName,
-		ShipmentProNumber: sampleProNumber,
+		CompanyName:       templatecatalog.SampleCompanyName,
+		CustomerName:      templatecatalog.SampleCustomerName,
+		ShipmentProNumber: templatecatalog.SampleProNumber,
 		//nolint:gosec // A compile-time constant data: URI; see the field's doc comment.
-		LogoDataURI: template.URL(sampleLogoDataURI),
+		LogoDataURI: template.URL(templatecatalog.SampleLogoDataURI),
 	}
 }
 
@@ -126,208 +131,244 @@ func newAgentProposalReminderSampleContext() any {
 		ReviewURL: template.URL(
 			"https://app.example.com/admin/agent-control?tab=activity&activity=proposals",
 		),
-		CompanyName: sampleCompanyName,
+		CompanyName: templatecatalog.SampleCompanyName,
 		//nolint:gosec // A compile-time constant data: URI; see the field's doc comment.
-		LogoDataURI: template.URL(sampleLogoDataURI),
+		LogoDataURI: template.URL(templatecatalog.SampleLogoDataURI),
 	}
 }
 
-func agentProposalReminderVariables() []VariableDefinition {
-	return []VariableDefinition{
+func agentProposalReminderVariables() []templatecatalog.VariableDefinition {
+	return []templatecatalog.VariableDefinition{
 		{
 			Path:        "RecipientFirstName",
-			Type:        VariableString,
+			Type:        templatecatalog.VariableString,
 			Description: "The first name of the person who can decide.",
 		},
 		{
 			Path:        "AgentName",
-			Type:        VariableString,
+			Type:        templatecatalog.VariableString,
 			Required:    true,
 			Description: "The agent whose changes are waiting.",
 		},
 		{
 			Path:        "PendingCount",
-			Type:        VariableInt,
+			Type:        templatecatalog.VariableInt,
 			Description: "How many of its changes are waiting on a decision.",
 		},
 		{
 			Path:        "WaitingHours",
-			Type:        VariableInt,
+			Type:        templatecatalog.VariableInt,
 			Description: "How many hours the oldest of them has waited.",
 		},
 		{
 			Path:        "Proposals",
-			Type:        VariableCollection,
+			Type:        templatecatalog.VariableCollection,
 			Description: "Each waiting change. Range over it: Tool is what the agent asked to do and Rationale is why.",
-			Fields: []VariableDefinition{
+			Fields: []templatecatalog.VariableDefinition{
 				{
 					Path:        "Tool",
-					Type:        VariableString,
+					Type:        templatecatalog.VariableString,
 					Description: "What the agent asked to do, in words.",
 				},
-				{Path: "Rationale", Type: VariableString, Description: "The agent's reason."},
+				{
+					Path:        "Rationale",
+					Type:        templatecatalog.VariableString,
+					Description: "The agent's reason.",
+				},
 			},
 		},
 		{
 			Path:        "ReviewURL",
-			Type:        VariableString,
+			Type:        templatecatalog.VariableString,
 			Required:    true,
 			Description: "Where to decide: the proposals list in AI Control, already filtered to this run.",
 		},
-		companyNameVariable(),
-		logoVariable(),
+		templatecatalog.CompanyNameVariable(),
+		templatecatalog.LogoVariable(),
 	}
 }
 
-func (r *Registry) registerPortalKinds() {
-	_ = r.Register(&KindDefinition{
-		Kind:        KindDriverPortalInvitationEmail,
+func RegisterPortalKinds(r *templatecatalog.Registry) {
+	_ = r.Register(&templatecatalog.KindDefinition{
+		Kind:        documenttemplate.KindDriverPortalInvitationEmail,
 		DisplayName: "Driver Portal Invitation",
 		Description: "Invites a driver to the portal. Not customer-scoped: the recipient " +
 			"is a worker, so a per-customer assignment would never fire.",
-		Category:      "Portal",
-		Channels:      []Channel{ChannelSubject, ChannelEmailHTML, ChannelEmailText},
-		sampleFactory: newDriverPortalInvitationSampleContext,
-		Variables: []VariableDefinition{
-			{Path: "FirstName", Type: VariableString, Description: "The driver's first name."},
-			{Path: "LastName", Type: VariableString, Description: "The driver's last name."},
-			{Path: "FullName", Type: VariableString, Description: "The driver's full name."},
-			companyNameVariable(),
+		Category: "Portal",
+		Channels: []documenttemplate.Channel{
+			documenttemplate.ChannelSubject,
+			documenttemplate.ChannelEmailHTML,
+			documenttemplate.ChannelEmailText,
+		},
+		SampleFactory: newDriverPortalInvitationSampleContext,
+		Variables: []templatecatalog.VariableDefinition{
+			{
+				Path:        "FirstName",
+				Type:        templatecatalog.VariableString,
+				Description: "The driver's first name.",
+			},
+			{
+				Path:        "LastName",
+				Type:        templatecatalog.VariableString,
+				Description: "The driver's last name.",
+			},
+			{
+				Path:        "FullName",
+				Type:        templatecatalog.VariableString,
+				Description: "The driver's full name.",
+			},
+			templatecatalog.CompanyNameVariable(),
 			{
 				Path:        "InviteURL",
-				Type:        VariableString,
+				Type:        templatecatalog.VariableString,
 				Required:    true,
 				Description: "The single-use invitation link. Required: without it the message has no purpose.",
 			},
 			{
-				Path:        expiresInDaysPath,
-				Type:        VariableInt,
+				Path:        templatecatalog.ExpiresInDaysPath,
+				Type:        templatecatalog.VariableInt,
 				Description: "How many days the link is good for. Use this rather than writing a number into the copy, or the wording will drift from the real expiry.",
 			},
 			{
 				Path:        "ExpiresAt",
-				Type:        VariableDateTime,
+				Type:        templatecatalog.VariableDateTime,
 				Description: "The exact moment the link stops working.",
 			},
 		},
 	})
 }
 
-func (r *Registry) registerAgentKinds() {
-	_ = r.Register(&KindDefinition{
-		Kind:        KindAgentCustomerUpdateEmail,
+func RegisterAgentKinds(r *templatecatalog.Registry) {
+	_ = r.Register(&templatecatalog.KindDefinition{
+		Kind:        documenttemplate.KindAgentCustomerUpdateEmail,
 		DisplayName: "Customer Update",
 		Description: "Wraps a status update an agent composed for a customer — a delay, a " +
 			"revised arrival, a delivery confirmation — in your own letterhead and signature.",
-		Category:       "Agent",
-		Channels:       []Channel{ChannelSubject, ChannelEmailHTML, ChannelEmailText},
+		Category: "Agent",
+		Channels: []documenttemplate.Channel{
+			documenttemplate.ChannelSubject,
+			documenttemplate.ChannelEmailHTML,
+			documenttemplate.ChannelEmailText,
+		},
 		CustomerScoped: true,
-		sampleFactory:  newAgentEmailSampleContext,
-		Variables: []VariableDefinition{
+		SampleFactory:  newAgentEmailSampleContext,
+		Variables: []templatecatalog.VariableDefinition{
 			{
 				Path:        "AgentSubject",
-				Type:        VariableString,
+				Type:        templatecatalog.VariableString,
 				Required:    true,
 				Description: "The subject the agent composed. Required on the subject channel.",
 			},
 			{
 				Path:        "AgentBody",
-				Type:        VariableString,
+				Type:        templatecatalog.VariableString,
 				Required:    true,
 				Description: "The update the agent composed. Required: this is the substance of the message.",
 			},
-			companyNameVariable(),
-			customerNameVariable(false, "Who the update is for."),
-			proNumberVariable(false, "The shipment the update is about."),
+			templatecatalog.CompanyNameVariable(),
+			templatecatalog.CustomerNameVariable(false, "Who the update is for."),
+			templatecatalog.ProNumberVariable(false, "The shipment the update is about."),
 			{
 				Path:        "RequestedDocuments",
-				Type:        VariableStringList,
+				Type:        templatecatalog.VariableStringList,
 				Description: "Optional points to list under the update, such as documents still needed. Usually empty.",
 			},
-			logoVariable(),
+			templatecatalog.LogoVariable(),
 		},
 	})
-	_ = r.Register(&KindDefinition{
-		Kind:        KindAgentInboundReplyEmail,
+	_ = r.Register(&templatecatalog.KindDefinition{
+		Kind:        documenttemplate.KindAgentInboundReplyEmail,
 		DisplayName: "Inbox Reply",
 		Description: "Wraps an answer an agent composed to a message that arrived on one of " +
 			"your monitored addresses — a status question, a missing detail — in your own " +
 			"letterhead, sent back to whoever wrote in the same thread.",
-		Category:       "Agent",
-		Channels:       []Channel{ChannelSubject, ChannelEmailHTML, ChannelEmailText},
+		Category: "Agent",
+		Channels: []documenttemplate.Channel{
+			documenttemplate.ChannelSubject,
+			documenttemplate.ChannelEmailHTML,
+			documenttemplate.ChannelEmailText,
+		},
 		CustomerScoped: true,
-		sampleFactory:  newAgentInboundReplySampleContext,
-		Variables: []VariableDefinition{
+		SampleFactory:  newAgentInboundReplySampleContext,
+		Variables: []templatecatalog.VariableDefinition{
 			{
 				Path:        "AgentSubject",
-				Type:        VariableString,
+				Type:        templatecatalog.VariableString,
 				Required:    true,
 				Description: "The reply's subject, the original's with Re: in front. Required on the subject channel: a changed subject starts a new thread in the sender's mail.",
 			},
 			{
 				Path:        "AgentBody",
-				Type:        VariableString,
+				Type:        templatecatalog.VariableString,
 				Required:    true,
 				Description: "The answer the agent composed. Required: this is the substance of the message.",
 			},
-			companyNameVariable(),
-			customerNameVariable(
+			templatecatalog.CompanyNameVariable(),
+			templatecatalog.CustomerNameVariable(
 				false,
 				"The customer the sender belongs to, when the message was matched to one.",
 			),
-			proNumberVariable(
+			templatecatalog.ProNumberVariable(
 				false,
 				"The shipment the message is about, when it was matched to one.",
 			),
 			{
 				Path:        "RequestedDocuments",
-				Type:        VariableStringList,
+				Type:        templatecatalog.VariableStringList,
 				Description: "Optional points to list under the answer. The inbox reply leaves it empty; it is there for a template shared with the other agent emails.",
 			},
-			logoVariable(),
+			templatecatalog.LogoVariable(),
 		},
 	})
-	_ = r.Register(&KindDefinition{
-		Kind:        KindAgentProposalReminderEmail,
+	_ = r.Register(&templatecatalog.KindDefinition{
+		Kind:        documenttemplate.KindAgentProposalReminderEmail,
 		DisplayName: "Proposal Reminder",
 		Description: "Reminds the people who can decide an agent's proposals that some have been " +
 			"waiting for hours, and takes them to the list to decide.",
-		Category:      "Agent",
-		Channels:      []Channel{ChannelSubject, ChannelEmailHTML, ChannelEmailText},
-		sampleFactory: newAgentProposalReminderSampleContext,
+		Category: "Agent",
+		Channels: []documenttemplate.Channel{
+			documenttemplate.ChannelSubject,
+			documenttemplate.ChannelEmailHTML,
+			documenttemplate.ChannelEmailText,
+		},
+		SampleFactory: newAgentProposalReminderSampleContext,
 		Variables:     agentProposalReminderVariables(),
 	})
-	_ = r.Register(&KindDefinition{
-		Kind:        KindAgentRequestMissingDocsEmail,
+	_ = r.Register(&templatecatalog.KindDefinition{
+		Kind:        documenttemplate.KindAgentRequestMissingDocsEmail,
 		DisplayName: "Missing Documents Request",
 		Description: "Wraps an agent-composed request in your own letterhead and signature, " +
 			"so prose written automatically still goes out looking like your organization.",
-		Category:       "Agent",
-		Channels:       []Channel{ChannelSubject, ChannelEmailHTML, ChannelEmailText},
+		Category: "Agent",
+		Channels: []documenttemplate.Channel{
+			documenttemplate.ChannelSubject,
+			documenttemplate.ChannelEmailHTML,
+			documenttemplate.ChannelEmailText,
+		},
 		CustomerScoped: true,
-		sampleFactory:  newAgentEmailSampleContext,
-		Variables: []VariableDefinition{
+		SampleFactory:  newAgentEmailSampleContext,
+		Variables: []templatecatalog.VariableDefinition{
 			{
 				Path:        "AgentSubject",
-				Type:        VariableString,
+				Type:        templatecatalog.VariableString,
 				Required:    true,
 				Description: "The subject the agent composed. Required on the subject channel: replacing it entirely defeats the point of letting the agent describe what it needs.",
 			},
 			{
 				Path:        "AgentBody",
-				Type:        VariableString,
+				Type:        templatecatalog.VariableString,
 				Required:    true,
 				Description: "The request the agent composed. Required: this is the substance of the message.",
 			},
-			companyNameVariable(),
-			customerNameVariable(false, "Who is being asked for the documents."),
-			proNumberVariable(false, "The shipment the documents belong to."),
+			templatecatalog.CompanyNameVariable(),
+			templatecatalog.CustomerNameVariable(false, "Who is being asked for the documents."),
+			templatecatalog.ProNumberVariable(false, "The shipment the documents belong to."),
 			{
 				Path:        "RequestedDocuments",
-				Type:        VariableStringList,
+				Type:        templatecatalog.VariableStringList,
 				Description: "What is being asked for, as a list, so it can be rendered as bullets instead of buried in a paragraph.",
 			},
-			logoVariable(),
+			templatecatalog.LogoVariable(),
 		},
 	})
 }

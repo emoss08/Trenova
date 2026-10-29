@@ -4,7 +4,7 @@ import (
 	"context"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/notificationtemplate"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
@@ -326,7 +326,7 @@ func (s *Service) notifyExpenseReviewed(
 		WorkerID:   expense.WorkerID,
 		EventType:  "dash.expense_reviewed",
 		Priority:   notification.PriorityHigh,
-		Context: documenttemplate.SettlementNotificationContext{
+		Context: notificationtemplate.SettlementNotificationContext{
 			Approved: approved,
 			Reason:   expense.ReviewNote,
 			Amount:   money.FormatMinor(expense.AmountMinor, expense.CurrencyCode),

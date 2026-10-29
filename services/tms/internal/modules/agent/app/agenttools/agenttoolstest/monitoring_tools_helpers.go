@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/operationstools"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
-	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/portaltemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/detentionservice"
@@ -167,7 +167,7 @@ func (f *FakeRenderer) RenderMessage(
 	f.Req = req
 
 	return &documenttemplateports.RenderedMessage{
-		Subject: "[Acme] " + req.Data.(documenttemplate.AgentEmailContext).AgentSubject,
+		Subject: "[Acme] " + req.Data.(portaltemplate.AgentEmailContext).AgentSubject,
 		HTML:    "<p>html</p>",
 		Text:    "text",
 	}, nil

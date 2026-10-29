@@ -1,6 +1,11 @@
-package documenttemplate
+package detentiontemplate
 
-import "html/template"
+import (
+	"html/template"
+
+	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/templatecatalog"
+)
 
 // DetentionNoticeContext is the data a detention notice renders against.
 //
@@ -48,10 +53,10 @@ type DetentionTierRow struct {
 func newDetentionNoticeSampleContext() any {
 	return DetentionNoticeContext{
 		Kind:              "Final",
-		ShipmentProNumber: sampleProNumber,
-		FacilityName:      sampleFacilityName,
-		CustomerName:      sampleCustomerName,
-		CompanyName:       sampleCompanyName,
+		ShipmentProNumber: templatecatalog.SampleProNumber,
+		FacilityName:      templatecatalog.SampleFacilityName,
+		CustomerName:      templatecatalog.SampleCustomerName,
+		CompanyName:       templatecatalog.SampleCompanyName,
 		ArrivedAt:         "Sat 11 Jul 2026 09:14 CDT",
 		ArrivalSource:     "Telematics geofence",
 		DepartedAt:        "Sat 11 Jul 2026 14:42 CDT",
@@ -61,122 +66,138 @@ func newDetentionNoticeSampleContext() any {
 		TotalTimeOnSite:   "5h 28m",
 		BillableTime:      "3h 30m",
 		BillableAmount:    "227.50",
-		Currency:          sampleCurrency,
+		Currency:          templatecatalog.SampleCurrency,
 		Tiers: []DetentionTierRow{
 			{Band: "2h–4h", Rate: "65.00/hr", Label: "Standard"},
 			{Band: "4h and beyond", Rate: "95.00/hr", Label: "Extended"},
 		},
 		//nolint:gosec // A compile-time constant data: URI; see the field's doc comment.
-		LogoDataURI: template.URL(sampleLogoDataURI),
+		LogoDataURI: template.URL(templatecatalog.SampleLogoDataURI),
 	}
 }
 
-func (r *Registry) registerDetentionKinds() {
+func RegisterDetentionKinds(r *templatecatalog.Registry) {
 	variables := detentionNoticeVariables()
 
-	_ = r.Register(&KindDefinition{
-		Kind:        KindDetentionNoticeEmail,
+	_ = r.Register(&templatecatalog.KindDefinition{
+		Kind:        documenttemplate.KindDetentionNoticeEmail,
 		DisplayName: "Detention Notice Email",
 		Description: "Sent to a customer while a driver is detained, and again once the " +
 			"charge is final. Branch on Kind to vary the wording per stage.",
-		Category:       "Detention",
-		Channels:       []Channel{ChannelSubject, ChannelEmailHTML, ChannelEmailText},
+		Category: "Detention",
+		Channels: []documenttemplate.Channel{
+			documenttemplate.ChannelSubject,
+			documenttemplate.ChannelEmailHTML,
+			documenttemplate.ChannelEmailText,
+		},
 		CustomerScoped: true,
-		sampleFactory:  newDetentionNoticeSampleContext,
+		SampleFactory:  newDetentionNoticeSampleContext,
 		Variables:      variables,
 	})
 
-	_ = r.Register(&KindDefinition{
-		Kind:        KindDetentionNoticePDF,
+	_ = r.Register(&templatecatalog.KindDefinition{
+		Kind:        documenttemplate.KindDetentionNoticePDF,
 		DisplayName: "Detention Notice Document",
 		Description: "The printable notice attached to the email, which is the artifact " +
 			"a customer is shown when a detention charge is disputed.",
 		Category:       "Detention",
-		Channels:       []Channel{ChannelPDF},
+		Channels:       []documenttemplate.Channel{documenttemplate.ChannelPDF},
 		Paged:          true,
 		CustomerScoped: true,
-		sampleFactory:  newDetentionNoticeSampleContext,
+		SampleFactory:  newDetentionNoticeSampleContext,
 		Variables:      variables,
 	})
 }
 
-func detentionNoticeVariables() []VariableDefinition {
-	return []VariableDefinition{
+func detentionNoticeVariables() []templatecatalog.VariableDefinition {
+	return []templatecatalog.VariableDefinition{
 		{
 			Path:        "Kind",
-			Type:        VariableString,
+			Type:        templatecatalog.VariableString,
 			Required:    true,
 			Description: "Which stage this notice is: Warning, Started, Update, or Final. Required, because one template covers all four and the recipient must be able to tell them apart.",
 		},
-		proNumberVariable(
+		templatecatalog.ProNumberVariable(
 			true,
 			"The shipment being detained. A notice that does not identify the load cannot be acted on.",
 		),
 		{
 			Path:        "FacilityName",
-			Type:        VariableString,
+			Type:        templatecatalog.VariableString,
 			Required:    true,
 			Description: "Where the driver is waiting. Required: the customer needs to know which of their docks to expedite.",
 		},
-		customerNameVariable(false, "The customer responsible for the detention."),
-		companyNameVariable(),
+		templatecatalog.CustomerNameVariable(false, "The customer responsible for the detention."),
+		templatecatalog.CompanyNameVariable(),
 		{
 			Path:        "ArrivedAt",
-			Type:        VariableDateTime,
+			Type:        templatecatalog.VariableDateTime,
 			Description: "When the driver arrived, with weekday and timezone. This is the figure most often disputed, so it is stated in full.",
 		},
 		{
 			Path:        "ArrivalSource",
-			Type:        VariableString,
+			Type:        templatecatalog.VariableString,
 			Description: "How arrival was determined, such as a telematics geofence or a manual entry. Naming the source is what makes the timestamp hard to argue with.",
 		},
 		{
 			Path:        "DepartedAt",
-			Type:        VariableDateTime,
+			Type:        templatecatalog.VariableDateTime,
 			Description: "When the driver left. Blank while the clock is still running.",
 		},
-		{Path: "FreeTime", Type: VariableString, Description: "Contracted free time, such as 2h."},
+		{
+			Path:        "FreeTime",
+			Type:        templatecatalog.VariableString,
+			Description: "Contracted free time, such as 2h.",
+		},
 		{
 			Path:        "FreeTimeExpiresAt",
-			Type:        VariableDateTime,
+			Type:        templatecatalog.VariableDateTime,
 			Description: "The moment free time runs out.",
 		},
 		{
 			Path:        "RateLabel",
-			Type:        VariableString,
+			Type:        templatecatalog.VariableString,
 			Description: "The rate that applies after free time, in words.",
 		},
 		{
 			Path:        "TotalTimeOnSite",
-			Type:        VariableString,
+			Type:        templatecatalog.VariableString,
 			Description: "Raw dwell time, before rounding.",
 		},
 		{
 			Path:        "BillableTime",
-			Type:        VariableString,
+			Type:        templatecatalog.VariableString,
 			Description: "Dwell time after free time and rounding are applied.",
 		},
 		{
 			Path:        "BillableAmount",
-			Type:        VariableString,
+			Type:        templatecatalog.VariableString,
 			Description: "The detention charge, unformatted. Combine with Currency, or use the money function.",
 		},
-		{Path: "Currency", Type: VariableString, Description: "Currency of the charge."},
-		logoVariable(),
+		{
+			Path:        "Currency",
+			Type:        templatecatalog.VariableString,
+			Description: "Currency of the charge.",
+		},
+		templatecatalog.LogoVariable(),
 		{
 			Path:        "Tiers",
-			Type:        VariableCollection,
+			Type:        templatecatalog.VariableCollection,
 			Description: "The rate bands, when the policy bills in tiers rather than at a flat rate. Empty for a flat rate.",
-			Fields: []VariableDefinition{
+			Fields: []templatecatalog.VariableDefinition{
 				{
 					Path:        "Band",
-					Type:        VariableString,
+					Type:        templatecatalog.VariableString,
 					Description: "The time range this tier covers.",
 				},
-				{Path: "Rate", Type: VariableString, Description: "The rate charged in this band."},
+				{
+					Path:        "Rate",
+					Type:        templatecatalog.VariableString,
+					Description: "The rate charged in this band.",
+				},
 				{
 					Path:        "Label",
-					Type:        VariableString,
+					Type:        templatecatalog.VariableString,
 					Description: "The tier's name, if the policy gave it one.",
 				},
 			},

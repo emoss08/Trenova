@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/portaltemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/email"
@@ -25,7 +26,7 @@ import (
 // addresses the call names, in the organization's letterhead, with no
 // fallback when the template fails.
 type docsRequest struct {
-	data      documenttemplate.AgentEmailContext
+	data      portaltemplate.AgentEmailContext
 	send      *emailports.SendEmailRequest
 	versionID *pulid.ID
 }

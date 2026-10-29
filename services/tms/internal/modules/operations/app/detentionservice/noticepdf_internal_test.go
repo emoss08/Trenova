@@ -6,12 +6,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/testutil/mocks/documenttemplateportsmock"
-
+	"github.com/emoss08/trenova/internal/modules/documents/domain/detentiontemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/generateddocument"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
+	"github.com/emoss08/trenova/internal/testutil/mocks/documenttemplateportsmock"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -105,7 +106,7 @@ func TestRenderNoticePDFKeepsTheBytesOutOfTheProvenance(t *testing.T) {
 		pagination.TenantInfo{OrgID: occurrence.OrganizationID, BuID: occurrence.BusinessUnitID},
 		occurrence,
 		nil,
-		&documenttemplate.DetentionNoticeContext{},
+		&detentiontemplate.DetentionNoticeContext{},
 	)
 	require.NoError(t, err)
 
@@ -203,7 +204,7 @@ func TestAttachNoticePDFDocumentFilesTheDocumentAndRecordsTheRender(t *testing.T
 		RunAndReturn(func(
 			_ context.Context,
 			req *documenttemplateports.RecordGeneratedDocumentRequest,
-		) (*documenttemplate.GeneratedDocument, error) {
+		) (*generateddocument.GeneratedDocument, error) {
 			assert.Equal(t, documenttemplate.KindDetentionNoticePDF, req.Kind)
 			assert.Equal(t, noticePDFReferenceType, req.ReferenceType)
 			assert.Equal(t, occurrenceID, req.ReferenceID)
@@ -211,7 +212,7 @@ func TestAttachNoticePDFDocumentFilesTheDocumentAndRecordsTheRender(t *testing.T
 			assert.Equal(t, documentID, *req.DocumentID)
 			require.NotNil(t, req.Rendered)
 			assert.Equal(t, &versionID, req.Rendered.VersionID)
-			return &documenttemplate.GeneratedDocument{}, nil
+			return &generateddocument.GeneratedDocument{}, nil
 		}).
 		Once()
 

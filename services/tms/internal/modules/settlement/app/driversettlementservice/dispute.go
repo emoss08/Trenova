@@ -3,7 +3,7 @@ package driversettlementservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/notificationtemplate"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
@@ -278,7 +278,7 @@ func (s *Service) ResolveDispute(
 			WorkerID:   updated.WorkerID,
 			EventType:  "dash.dispute_resolved",
 			Priority:   notification.PriorityHigh,
-			Context: documenttemplate.SettlementNotificationContext{
+			Context: notificationtemplate.SettlementNotificationContext{
 				Approved: req.Approve,
 				Reason:   updated.ResolutionNote,
 			},

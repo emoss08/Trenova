@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/rateconfirmationtemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -67,7 +68,7 @@ type generatePlan struct {
 // sendPlan is everything Send decides before it mints a link or sends.
 type sendPlan struct {
 	entity          *rateconfirmation.RateConfirmation
-	templateContext *documenttemplate.RateConfirmationContext
+	templateContext *rateconfirmationtemplate.RateConfirmationContext
 	recipients      []string
 }
 

@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate/documenttemplatedb"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/templatecatalog"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
@@ -24,11 +25,11 @@ type ValidatorParams struct {
 	fx.In
 
 	DB       *postgres.Connection `optional:"true"`
-	Registry *documenttemplate.Registry
+	Registry *templatecatalog.Registry
 }
 
 type Validator struct {
-	registry   *documenttemplate.Registry
+	registry   *templatecatalog.Registry
 	template   validationframework.TenantedEntityValidator[*documenttemplate.DocumentTemplate]
 	version    validationframework.TenantedEntityValidator[*documenttemplate.DocumentTemplateVersion]
 	assignment validationframework.TenantedEntityValidator[*documenttemplate.DocumentTemplateAssignment]
@@ -172,7 +173,7 @@ func buildAssignmentValidator(
 // kind has no variable catalog, no sample context, and no starter — it would be
 // unrenderable from the moment it was saved.
 func newKindRegisteredRule(
-	registry *documenttemplate.Registry,
+	registry *templatecatalog.Registry,
 ) validationframework.TenantedRule[*documenttemplate.DocumentTemplate] {
 	return validationframework.
 		NewTenantedRule[*documenttemplate.DocumentTemplate]("kind_registered").
@@ -314,7 +315,7 @@ func (v *Validator) ValidateVersion(
 // saved, and never understand why it is not in the output.
 func (v *Validator) checkChannelsBelong(
 	entity *documenttemplate.DocumentTemplateVersion,
-	def *documenttemplate.KindDefinition,
+	def *templatecatalog.KindDefinition,
 	multiErr *errortypes.MultiError,
 ) {
 	if entity.Subject != "" &&

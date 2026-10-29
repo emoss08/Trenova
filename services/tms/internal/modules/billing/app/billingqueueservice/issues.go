@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueuereview"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
-	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/notificationtemplate"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
@@ -526,7 +526,7 @@ func (s *service) requestPaperwork(
 			WorkerID:   pod.DriverID,
 			EventType:  driverMessageEvent,
 			Priority:   notification.PriorityHigh,
-			Context: documenttemplate.DriverNotificationContext{
+			Context: notificationtemplate.DriverNotificationContext{
 				AlertTitle:   title,
 				AlertMessage: message,
 			},

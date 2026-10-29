@@ -7,7 +7,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
-	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/notificationtemplate"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
@@ -149,7 +149,7 @@ func (s *Service) notifyDriver(
 		WorkerID:   review.WorkerID,
 		EventType:  eventReviewSubmitted,
 		Priority:   notification.PriorityMedium,
-		Context: documenttemplate.DriverNotificationContext{
+		Context: notificationtemplate.DriverNotificationContext{
 			ReviewTitle:  review.Title,
 			ReviewerName: reviewerName,
 		},

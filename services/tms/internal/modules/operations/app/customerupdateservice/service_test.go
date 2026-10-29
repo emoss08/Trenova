@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/portaltemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -51,14 +51,14 @@ func (f *customerReader) GetByID(
 
 type renderer struct {
 	documenttemplateports.DocumentTemplateResolver
-	data documenttemplate.AgentEmailContext
+	data portaltemplate.AgentEmailContext
 }
 
 func (f *renderer) RenderMessage(
 	_ context.Context,
 	req *documenttemplateports.RenderMessageRequest,
 ) (*documenttemplateports.RenderedMessage, error) {
-	f.data = req.Data.(documenttemplate.AgentEmailContext)
+	f.data = req.Data.(portaltemplate.AgentEmailContext)
 
 	return &documenttemplateports.RenderedMessage{
 		Subject: f.data.AgentSubject,

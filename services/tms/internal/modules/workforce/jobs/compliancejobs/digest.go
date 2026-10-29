@@ -6,7 +6,7 @@ import (
 	"sort"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/notificationtemplate"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/dashcontrol"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/drivernotificationservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential"
@@ -56,7 +56,7 @@ type digestState struct {
 type digestBucket struct {
 	tenantInfo pagination.TenantInfo
 	cadence    dashcontrol.DriverDigestCadence
-	items      []documenttemplate.DriverObligation
+	items      []notificationtemplate.DriverObligation
 }
 
 // DriverDigestActivity bundles everything a driver owes into one notice, for
@@ -177,7 +177,7 @@ func (a *Activities) collectCredentialObligations(
 			if daysLeft > digestHorizon(control.DriverDigestCadence) {
 				continue
 			}
-			state.add(tenantInfo, control, cred.WorkerID, documenttemplate.DriverObligation{
+			state.add(tenantInfo, control, cred.WorkerID, notificationtemplate.DriverObligation{
 				What:      cred.CredentialType.Name,
 				Kind:      "credential",
 				DueAt:     credentialExpiryDate(cred),
@@ -248,7 +248,7 @@ func (a *Activities) collectTrainingList(
 			if daysLeft > digestHorizon(control.DriverDigestCadence) {
 				continue
 			}
-			state.add(tenantInfo, control, record.WorkerID, documenttemplate.DriverObligation{
+			state.add(tenantInfo, control, record.WorkerID, notificationtemplate.DriverObligation{
 				What:      record.Course.Name,
 				Kind:      "training",
 				DueAt:     trainingDate(at),
@@ -268,7 +268,7 @@ func (s *digestState) add(
 	tenantInfo pagination.TenantInfo,
 	control *dashcontrol.DashControl,
 	workerID pulid.ID,
-	item documenttemplate.DriverObligation,
+	item notificationtemplate.DriverObligation,
 ) {
 	bucket, ok := s.items[workerID]
 	if !ok {
@@ -339,7 +339,7 @@ func (a *Activities) sendDigest(
 		WorkerID:   workerID,
 		EventType:  eventDriverDigest,
 		Priority:   digestPriority(items),
-		Context: documenttemplate.DriverNotificationContext{
+		Context: notificationtemplate.DriverNotificationContext{
 			Digest:       items,
 			DigestPeriod: digestPeriodLabel(bucket.cadence),
 		},
@@ -351,7 +351,7 @@ func (a *Activities) sendDigest(
 // digestPriority lifts the notice when something has already lapsed. A
 // round-up of things due next week is not the same message as one saying a
 // licence expired on Tuesday.
-func digestPriority(items []documenttemplate.DriverObligation) notification.Priority {
+func digestPriority(items []notificationtemplate.DriverObligation) notification.Priority {
 	for _, item := range items {
 		if item.Overdue {
 			return notification.PriorityHigh

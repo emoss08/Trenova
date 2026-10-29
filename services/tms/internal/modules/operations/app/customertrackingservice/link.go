@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/trackingtemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/customertracking"
@@ -290,7 +291,7 @@ func (s *Service) sendLinkEmail(
 ) error {
 	stops := route(sh)
 	origin, destination := originAndDestination(stops)
-	data := documenttemplate.CustomerTrackingLinkEmailContext{
+	data := trackingtemplate.CustomerTrackingLinkEmailContext{
 		CompanyName:       s.companyName(ctx, tenantInfo),
 		ShipmentProNumber: sh.ProNumber,
 		BOL:               sh.BOL,

@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/notificationtemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/drivernotificationservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workercredentialservice"
@@ -39,7 +39,7 @@ func TestPreviewRenewal_IsTheAskRequestRenewalSends(t *testing.T) {
 	resolver.EXPECT().
 		RenderMessage(mock.Anything, mock.Anything).
 		RunAndReturn(func(_ context.Context, req *documenttemplateports.RenderMessageRequest) (*documenttemplateports.RenderedMessage, error) {
-			data, ok := req.Data.(documenttemplate.DriverNotificationContext)
+			data, ok := req.Data.(notificationtemplate.DriverNotificationContext)
 			require.True(t, ok)
 			return &documenttemplateports.RenderedMessage{
 				Subject: "Renew your " + data.CredentialName,

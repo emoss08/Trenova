@@ -8,6 +8,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate/starters"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/generateddocument"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/templatecatalog"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
@@ -27,7 +29,7 @@ type Params struct {
 	VersionRepo    documenttemplateports.DocumentTemplateVersionRepository
 	AssignmentRepo documenttemplateports.DocumentTemplateAssignmentRepository
 	GeneratedRepo  documenttemplateports.GeneratedDocumentRepository
-	Registry       *documenttemplate.Registry
+	Registry       *templatecatalog.Registry
 	Engine         *templateengine.Engine
 	Inliner        documenttemplateports.AssetInliner
 	PDFRenderer    documenttemplateports.PDFRenderer
@@ -44,7 +46,7 @@ type Service struct {
 	versionRepo    documenttemplateports.DocumentTemplateVersionRepository
 	assignmentRepo documenttemplateports.DocumentTemplateAssignmentRepository
 	generatedRepo  documenttemplateports.GeneratedDocumentRepository
-	registry       *documenttemplate.Registry
+	registry       *templatecatalog.Registry
 	engine         *templateengine.Engine
 	inliner        documenttemplateports.AssetInliner
 	pdf            documenttemplateports.PDFRenderer
@@ -88,7 +90,7 @@ func New(p Params) *Service {
 
 // Registry exposes the kind catalog, which the admin variable picker reads and
 // the GraphQL layer publishes.
-func (s *Service) Registry() *documenttemplate.Registry { return s.registry }
+func (s *Service) Registry() *templatecatalog.Registry { return s.registry }
 
 // Resolve walks assigned → organization default → built-in.
 //
@@ -278,7 +280,7 @@ type compileOptions struct {
 
 // compile parses every channel a kind declares and collects the union of paths.
 func (s *Service) compile(
-	def *documenttemplate.KindDefinition,
+	def *templatecatalog.KindDefinition,
 	content *documenttemplateports.TemplateContent,
 	opts compileOptions,
 ) *compiledVersion {
@@ -376,15 +378,15 @@ func diagnosticsToMultiError(diags templateengine.Diagnostics) *errortypes.Multi
 
 // warningsFrom converts advisory diagnostics into the record a generated
 // document carries, so an author can see later what a render quietly dropped.
-func warningsFrom(diags templateengine.Diagnostics) []documenttemplate.GeneratedDocumentWarning {
+func warningsFrom(diags templateengine.Diagnostics) []generateddocument.GeneratedDocumentWarning {
 	warnings := diags.Warnings()
 	if len(warnings) == 0 {
 		return nil
 	}
 
-	out := make([]documenttemplate.GeneratedDocumentWarning, 0, len(warnings))
+	out := make([]generateddocument.GeneratedDocumentWarning, 0, len(warnings))
 	for _, diag := range warnings {
-		out = append(out, documenttemplate.GeneratedDocumentWarning{
+		out = append(out, generateddocument.GeneratedDocumentWarning{
 			Code:    diag.Code,
 			Field:   diag.Field,
 			Message: diag.Message,

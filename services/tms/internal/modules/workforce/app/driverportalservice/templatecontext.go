@@ -4,7 +4,7 @@ import (
 	"html/template"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/portaltemplate"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/shared/timeutils"
 )
@@ -29,7 +29,7 @@ func invitationContext(
 	wrk *worker.Worker,
 	inviteURL string,
 	expiresAt, now int64,
-) documenttemplate.DriverPortalInvitationContext {
+) portaltemplate.DriverPortalInvitationContext {
 	companyName := defaultInviterName
 	timezone := ""
 	if wrk.Organization != nil {
@@ -39,7 +39,7 @@ func invitationContext(
 		timezone = wrk.Organization.Timezone
 	}
 
-	return documenttemplate.DriverPortalInvitationContext{
+	return portaltemplate.DriverPortalInvitationContext{
 		FirstName:   wrk.FirstName,
 		LastName:    wrk.LastName,
 		FullName:    strings.TrimSpace(wrk.FirstName + " " + wrk.LastName),

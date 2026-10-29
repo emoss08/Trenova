@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/notificationtemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
@@ -311,7 +312,7 @@ func (a *Activities) recordEmailFailure(
 		},
 		documenttemplate.KindNotificationReportDeliveryFailed,
 		run.ID,
-		&documenttemplate.ReportNotificationContext{
+		&notificationtemplate.ReportNotificationContext{
 			ReportName: title,
 			Format:     string(run.Format),
 			Reason:     strings.TrimSuffix(strings.TrimSpace(reason), "."),

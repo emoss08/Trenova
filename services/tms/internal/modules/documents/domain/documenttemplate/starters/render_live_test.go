@@ -8,10 +8,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
-	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate/starters"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/pdfrender/gotenberg"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate/starters"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/invoicetemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/templateregistry"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/testutil/pdftest"
 	"github.com/emoss08/trenova/pkg/templateengine"
@@ -55,7 +57,7 @@ func renderStarterPDF(t *testing.T, kind documenttemplate.Kind) []byte {
 	t.Helper()
 
 	renderer := liveRenderer(t)
-	registry := documenttemplate.NewRegistry()
+	registry := templateregistry.NewRegistry()
 	engine, err := templateengine.New(templateengine.Config{})
 	require.NoError(t, err)
 
@@ -159,7 +161,7 @@ func TestLiveReportStarterRendersLandscape(t *testing.T) {
 // table header must repeat and no row may be split across the boundary.
 func TestLiveInvoicePaginatesCleanly(t *testing.T) {
 	renderer := liveRenderer(t)
-	registry := documenttemplate.NewRegistry()
+	registry := templateregistry.NewRegistry()
 	engine, err := templateengine.New(templateengine.Config{})
 	require.NoError(t, err)
 
@@ -178,13 +180,13 @@ func TestLiveInvoicePaginatesCleanly(t *testing.T) {
 	sample, err := registry.SampleContext(documenttemplate.KindInvoicePDF)
 	require.NoError(t, err)
 
-	invoice, ok := sample.(documenttemplate.InvoiceContext)
+	invoice, ok := sample.(invoicetemplate.InvoiceContext)
 	require.True(t, ok)
 
 	// Enough lines to guarantee a spill.
-	rows := make([]documenttemplate.ChargeRow, 0, 90)
+	rows := make([]invoicetemplate.ChargeRow, 0, 90)
 	for i := range 90 {
-		rows = append(rows, documenttemplate.ChargeRow{
+		rows = append(rows, invoicetemplate.ChargeRow{
 			Line:        string(rune('0' + i%10)),
 			Description: "Accessorial charge with a reasonably long description",
 			Quantity:    "1",

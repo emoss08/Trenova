@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/portaltemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -275,7 +276,7 @@ func (s *ReadinessService) renderDocumentRequest(
 			" we need the documents listed below. Please reply with them attached " +
 			"or upload them to the shipment."
 	}
-	data := &documenttemplate.AgentEmailContext{
+	data := &portaltemplate.AgentEmailContext{
 		AgentSubject:       "Documents needed for invoice " + plan.inv.Number,
 		AgentBody:          body,
 		CompanyName:        org.Name,

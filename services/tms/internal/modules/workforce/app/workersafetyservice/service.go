@@ -9,7 +9,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
-	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/notificationtemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -187,7 +187,7 @@ func (s *Service) notifyDriver(
 	workerID pulid.ID,
 	eventType string,
 	priority notification.Priority,
-	context documenttemplate.DriverNotificationContext,
+	context notificationtemplate.DriverNotificationContext,
 	correlation string,
 ) {
 	if s.driverNotify == nil {

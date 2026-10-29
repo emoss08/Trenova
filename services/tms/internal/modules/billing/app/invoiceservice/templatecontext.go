@@ -7,6 +7,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/invoicetemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/templatecatalog"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
@@ -107,7 +109,7 @@ func (b *ContextBuilder) BuildFrom(
 	ctx context.Context,
 	entity *invoice.Invoice,
 	deliveryProfile *invoiceDeliveryProfile,
-) (*documenttemplate.InvoiceContext, error) {
+) (*invoicetemplate.InvoiceContext, error) {
 	data := buildInvoicePDFData(entity, deliveryProfile)
 
 	logoDataURI, err := b.resolveLogo(ctx, deliveryProfile)
@@ -148,8 +150,8 @@ func (b *ContextBuilder) resolveLogo(
 func invoiceContextFromPDFData(
 	data *invoicePDFData,
 	logoDataURI template.URL,
-) *documenttemplate.InvoiceContext {
-	return &documenttemplate.InvoiceContext{
+) *invoicetemplate.InvoiceContext {
+	return &invoicetemplate.InvoiceContext{
 		InvoiceNumber: data.InvoiceNumber,
 		InvoiceDate:   data.InvoiceDate,
 		DueDate:       data.DueDate,
@@ -186,35 +188,35 @@ func invoiceContextFromPDFData(
 	}
 }
 
-func invoiceAddressBlock(block invoicePDFAddressBlock) documenttemplate.AddressBlock {
-	return documenttemplate.AddressBlock{
+func invoiceAddressBlock(block invoicePDFAddressBlock) templatecatalog.AddressBlock {
+	return templatecatalog.AddressBlock{
 		Name:    block.Name,
 		Lines:   block.Lines,
 		Details: invoiceKeyValues(block.Details),
 	}
 }
 
-func invoiceKeyValues(rows []invoicePDFKeyValue) []documenttemplate.KeyValue {
+func invoiceKeyValues(rows []invoicePDFKeyValue) []templatecatalog.KeyValue {
 	if len(rows) == 0 {
 		return nil
 	}
 
-	out := make([]documenttemplate.KeyValue, 0, len(rows))
+	out := make([]templatecatalog.KeyValue, 0, len(rows))
 	for _, row := range rows {
-		out = append(out, documenttemplate.KeyValue{Label: row.Label, Value: row.Value})
+		out = append(out, templatecatalog.KeyValue{Label: row.Label, Value: row.Value})
 	}
 
 	return out
 }
 
-func invoiceChargeRows(rows []invoicePDFChargeRow) []documenttemplate.ChargeRow {
+func invoiceChargeRows(rows []invoicePDFChargeRow) []invoicetemplate.ChargeRow {
 	if len(rows) == 0 {
 		return nil
 	}
 
-	out := make([]documenttemplate.ChargeRow, 0, len(rows))
+	out := make([]invoicetemplate.ChargeRow, 0, len(rows))
 	for _, row := range rows {
-		out = append(out, documenttemplate.ChargeRow{
+		out = append(out, invoicetemplate.ChargeRow{
 			Line:        row.Line,
 			Description: row.Description,
 			Quantity:    row.Quantity,
@@ -227,14 +229,14 @@ func invoiceChargeRows(rows []invoicePDFChargeRow) []documenttemplate.ChargeRow 
 	return out
 }
 
-func invoiceShipmentRows(rows []invoicePDFShipmentRow) []documenttemplate.ShipmentRow {
+func invoiceShipmentRows(rows []invoicePDFShipmentRow) []invoicetemplate.ShipmentRow {
 	if len(rows) == 0 {
 		return nil
 	}
 
-	out := make([]documenttemplate.ShipmentRow, 0, len(rows))
+	out := make([]invoicetemplate.ShipmentRow, 0, len(rows))
 	for _, row := range rows {
-		out = append(out, documenttemplate.ShipmentRow{
+		out = append(out, invoicetemplate.ShipmentRow{
 			ProNumber:   row.ProNumber,
 			BOL:         row.BOL,
 			PONumber:    row.PONumber,
@@ -253,14 +255,14 @@ func invoiceShipmentRows(rows []invoicePDFShipmentRow) []documenttemplate.Shipme
 // Those existed so the old renderer could sum a totals row at fixed
 // coordinates. A template sums with its own markup, and exposing the raw
 // integers would put two representations of the same number in the catalog.
-func invoiceCommodityRows(rows []invoicePDFCommodityRow) []documenttemplate.CommodityRow {
+func invoiceCommodityRows(rows []invoicePDFCommodityRow) []invoicetemplate.CommodityRow {
 	if len(rows) == 0 {
 		return nil
 	}
 
-	out := make([]documenttemplate.CommodityRow, 0, len(rows))
+	out := make([]invoicetemplate.CommodityRow, 0, len(rows))
 	for _, row := range rows {
-		out = append(out, documenttemplate.CommodityRow{
+		out = append(out, invoicetemplate.CommodityRow{
 			Quantity:         row.Quantity,
 			Type:             row.Type,
 			DescriptionLines: row.DescriptionLines,
@@ -295,10 +297,10 @@ type EmailContextParams struct {
 // an organization moving from a customer email profile to a template gets the
 // same values under documented names. Where the two disagree the delivery profile
 // wins, exactly as it does for the ad-hoc engine.
-func emailContext(p *EmailContextParams) documenttemplate.InvoiceEmailContext {
+func emailContext(p *EmailContextParams) invoicetemplate.InvoiceEmailContext {
 	entity := p.Entity
 
-	out := documenttemplate.InvoiceEmailContext{
+	out := invoicetemplate.InvoiceEmailContext{
 		InvoiceNumber: entity.Number,
 		InvoiceDate:   unixDate(entity.InvoiceDate),
 		DueDate:       unixDatePtr(entity.DueDate),

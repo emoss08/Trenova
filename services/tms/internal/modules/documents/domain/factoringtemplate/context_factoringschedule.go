@@ -1,6 +1,11 @@
-package documenttemplate
+package factoringtemplate
 
-import "html/template"
+import (
+	"html/template"
+
+	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/templatecatalog"
+)
 
 // FactoringScheduleContext is a schedule of accounts: the list of invoices an
 // organization sells to its factor in one delivery, with what each should bring
@@ -9,8 +14,8 @@ type FactoringScheduleContext struct {
 	Number       string
 	ScheduleDate string
 	CurrencyCode string
-	Organization AddressBlock
-	Factor       AddressBlock
+	Organization templatecatalog.AddressBlock
+	Factor       templatecatalog.AddressBlock
 	// LogoDataURI is typed as trusted for the reason InvoiceContext gives: it
 	// is produced by the asset inliner from bytes it has already decoded.
 	LogoDataURI template.URL
@@ -60,24 +65,23 @@ type FactoringScheduleEmailContext struct {
 }
 
 const (
-	scheduleNumberPath       = "Number"
-	sampleScheduleNo         = "FS26100004"
-	sampleScheduleDate       = "2026-10-14"
-	sampleScheduleAdvance    = "$3,267.00"
-	invoiceIssuedDescription = "When the invoice was issued."
+	scheduleNumberPath    = "Number"
+	sampleScheduleNo      = "FS26100004"
+	sampleScheduleDate    = "2026-10-14"
+	sampleScheduleAdvance = "$3,267.00"
 )
 
 func newFactoringScheduleSampleContext() any {
 	return FactoringScheduleContext{
 		Number:       sampleScheduleNo,
 		ScheduleDate: sampleScheduleDate,
-		CurrencyCode: sampleCurrency,
+		CurrencyCode: templatecatalog.SampleCurrency,
 		Organization: sampleCarrierOrganization(),
-		Factor: AddressBlock{
+		Factor: templatecatalog.AddressBlock{
 			Name:  sampleFactorName,
 			Lines: []string{"1700 Pacific Ave, Suite 2100", sampleDallasCityLine, sampleCountry},
 		},
-		LogoDataURI: sampleLogoDataURI,
+		LogoDataURI: templatecatalog.SampleLogoDataURI,
 		AdvanceRate: "90%",
 		ReserveRate: "10%",
 		Recourse:    "With recourse",
@@ -86,7 +90,7 @@ func newFactoringScheduleSampleContext() any {
 				InvoiceNumber: "INV-104221",
 				InvoiceDate:   "2026-10-10",
 				DueDate:       "2026-11-09",
-				Debtor:        sampleCustomerName,
+				Debtor:        templatecatalog.SampleCustomerName,
 				DebtorCode:    "HALSTEAD",
 				DebtorAddress: "410 Market Ave, Fort Worth, TX 76102",
 				Reference:     "PRO 5501829",
@@ -121,7 +125,7 @@ func newFactoringScheduleSampleContext() any {
 func newFactoringScheduleEmailSampleContext() any {
 	return FactoringScheduleEmailContext{
 		FactorName:      sampleFactorName,
-		CompanyName:     sampleCompanyName,
+		CompanyName:     templatecatalog.SampleCompanyName,
 		Number:          sampleScheduleNo,
 		ScheduleDate:    sampleScheduleDate,
 		InvoiceCount:    2,
@@ -139,98 +143,106 @@ func newFactoringScheduleEmailSampleContext() any {
 	}
 }
 
-func scheduleMoney(path, description string) VariableDefinition {
-	return VariableDefinition{Path: path, Type: VariableMoney, Description: description}
+func scheduleMoney(path, description string) templatecatalog.VariableDefinition {
+	return templatecatalog.VariableDefinition{
+		Path:        path,
+		Type:        templatecatalog.VariableMoney,
+		Description: description,
+	}
 }
 
 //nolint:funlen // A variable catalog is one declaration; splitting it only hides it.
-func (r *Registry) registerFactoringScheduleKinds() {
-	_ = r.Register(&KindDefinition{
-		Kind:          KindFactoringSchedulePDF,
+func RegisterFactoringScheduleKinds(r *templatecatalog.Registry) {
+	_ = r.Register(&templatecatalog.KindDefinition{
+		Kind:          documenttemplate.KindFactoringSchedulePDF,
 		DisplayName:   "Factoring Schedule of Accounts",
 		Description:   "The schedule sent to your factoring company with each batch of invoices you sell to it: every invoice, its debtor and amount, and what the agreement in force says each should bring in.",
-		Category:      billingCategory,
-		Channels:      []Channel{ChannelPDF},
+		Category:      templatecatalog.BillingCategory,
+		Channels:      []documenttemplate.Channel{documenttemplate.ChannelPDF},
 		Paged:         true,
-		sampleFactory: newFactoringScheduleSampleContext,
-		Variables: []VariableDefinition{
+		SampleFactory: newFactoringScheduleSampleContext,
+		Variables: []templatecatalog.VariableDefinition{
 			{
 				Path:        scheduleNumberPath,
-				Type:        VariableString,
+				Type:        templatecatalog.VariableString,
 				Required:    true,
 				Description: "The schedule's number. Required: the factor files funding against it.",
 			},
 			{
 				Path:        "ScheduleDate",
-				Type:        VariableDate,
+				Type:        templatecatalog.VariableDate,
 				Required:    true,
 				Description: "The day the schedule is submitted, in the organization timezone. Required: the factor's fees run from it.",
 			},
 			{
 				Path:        "CurrencyCode",
-				Type:        VariableString,
+				Type:        templatecatalog.VariableString,
 				Description: "The currency every amount on the schedule is in.",
 			},
 			{
 				Path:        organizationPath,
-				Type:        VariableObject,
+				Type:        templatecatalog.VariableObject,
 				Required:    true,
 				Description: "Your organization, as the seller of the invoices. Required: the factor needs to know whose invoices these are.",
-				Fields:      addressBlockFields(),
+				Fields:      templatecatalog.AddressBlockFields(),
 			},
 			{
 				Path:        "Factor",
-				Type:        VariableObject,
+				Type:        templatecatalog.VariableObject,
 				Description: "The factoring company buying the invoices.",
-				Fields:      addressBlockFields(),
+				Fields:      templatecatalog.AddressBlockFields(),
 			},
-			logoVariable(),
+			templatecatalog.LogoVariable(),
 			{
 				Path:        "AdvanceRate",
-				Type:        VariableString,
+				Type:        templatecatalog.VariableString,
 				Description: "The share of each invoice the factor advances, as a percentage.",
 			},
 			{
 				Path:        "ReserveRate",
-				Type:        VariableString,
+				Type:        templatecatalog.VariableString,
 				Description: "The share of each invoice the factor holds back until the customer pays, as a percentage.",
 			},
 			{
 				Path:        "Recourse",
-				Type:        VariableString,
+				Type:        templatecatalog.VariableString,
 				Description: "Whether the agreement is with or without recourse.",
 			},
 			{
 				Path:        "Items",
-				Type:        VariableCollection,
+				Type:        templatecatalog.VariableCollection,
 				Required:    true,
 				Description: "Every invoice on the schedule, in submission order. Required: a schedule that lists no invoices assigns nothing.",
-				Fields: []VariableDefinition{
-					invoiceNumberVariable(false, "The invoice number."),
+				Fields: []templatecatalog.VariableDefinition{
+					templatecatalog.InvoiceNumberVariable(false, "The invoice number."),
 					{
-						Path:        invoiceDatePath,
-						Type:        VariableDate,
-						Description: invoiceIssuedDescription,
+						Path:        templatecatalog.InvoiceDatePath,
+						Type:        templatecatalog.VariableDate,
+						Description: templatecatalog.InvoiceIssuedDescription,
 					},
 					{
-						Path:        dueDatePath,
-						Type:        VariableDate,
+						Path:        templatecatalog.DueDatePath,
+						Type:        templatecatalog.VariableDate,
 						Description: "When the customer must pay.",
 					},
 					{
 						Path:        "Debtor",
-						Type:        VariableString,
+						Type:        templatecatalog.VariableString,
 						Description: "The customer who owes the invoice.",
 					},
-					{Path: "DebtorCode", Type: VariableString, Description: "The customer's code."},
+					{
+						Path:        "DebtorCode",
+						Type:        templatecatalog.VariableString,
+						Description: "The customer's code.",
+					},
 					{
 						Path:        "DebtorAddress",
-						Type:        VariableString,
+						Type:        templatecatalog.VariableString,
 						Description: "The customer's billing address on one line.",
 					},
 					{
 						Path:        "Reference",
-						Type:        VariableString,
+						Type:        templatecatalog.VariableString,
 						Description: "The load reference: PRO and BOL numbers.",
 					},
 					scheduleMoney("Amount", "The invoice amount being sold."),
@@ -241,12 +253,12 @@ func (r *Registry) registerFactoringScheduleKinds() {
 			},
 			{
 				Path:        "InvoiceCount",
-				Type:        VariableInt,
+				Type:        templatecatalog.VariableInt,
 				Description: "How many invoices are on the schedule.",
 			},
 			{
 				Path:        "TotalFace",
-				Type:        VariableMoney,
+				Type:        templatecatalog.VariableMoney,
 				Required:    true,
 				Description: "The total of every invoice on the schedule. Required: the factor checks the batch against it.",
 			},
@@ -263,57 +275,61 @@ func (r *Registry) registerFactoringScheduleKinds() {
 		},
 	})
 
-	_ = r.Register(&KindDefinition{
-		Kind:          KindFactoringScheduleEmail,
-		DisplayName:   "Factoring Schedule Email",
-		Description:   "The message a schedule of accounts and its invoice packets are sent to your factoring company in.",
-		Category:      billingCategory,
-		Channels:      []Channel{ChannelSubject, ChannelEmailHTML, ChannelEmailText},
-		sampleFactory: newFactoringScheduleEmailSampleContext,
-		Variables: []VariableDefinition{
+	_ = r.Register(&templatecatalog.KindDefinition{
+		Kind:        documenttemplate.KindFactoringScheduleEmail,
+		DisplayName: "Factoring Schedule Email",
+		Description: "The message a schedule of accounts and its invoice packets are sent to your factoring company in.",
+		Category:    templatecatalog.BillingCategory,
+		Channels: []documenttemplate.Channel{
+			documenttemplate.ChannelSubject,
+			documenttemplate.ChannelEmailHTML,
+			documenttemplate.ChannelEmailText,
+		},
+		SampleFactory: newFactoringScheduleEmailSampleContext,
+		Variables: []templatecatalog.VariableDefinition{
 			{
 				Path:        "FactorName",
-				Type:        VariableString,
+				Type:        templatecatalog.VariableString,
 				Description: "The factoring company the schedule is sent to.",
 			},
-			companyNameVariable(),
+			templatecatalog.CompanyNameVariable(),
 			{
 				Path:        scheduleNumberPath,
-				Type:        VariableString,
+				Type:        templatecatalog.VariableString,
 				Required:    true,
 				Description: "The schedule's number. Required: the factor files the message against it.",
 			},
 			{
 				Path:        "ScheduleDate",
-				Type:        VariableDate,
+				Type:        templatecatalog.VariableDate,
 				Description: "The day the schedule is submitted.",
 			},
 			{
 				Path:        "InvoiceCount",
-				Type:        VariableInt,
+				Type:        templatecatalog.VariableInt,
 				Description: "How many invoices are on the schedule.",
 			},
 			scheduleMoney("TotalFace", "The total of every invoice on the schedule."),
 			scheduleMoney("ExpectedPayment", "What you expect the factor to pay for the schedule."),
 			{
 				Path:        "Attachments",
-				Type:        VariableStringList,
+				Type:        templatecatalog.VariableStringList,
 				Description: "The files attached to this message.",
 			},
 			{
 				Path:        "Part",
-				Type:        VariableInt,
+				Type:        templatecatalog.VariableInt,
 				Description: "Which message this is when the packets are too large for one, starting at 1.",
 			},
 			{
 				Path:        "Parts",
-				Type:        VariableInt,
+				Type:        templatecatalog.VariableInt,
 				Required:    true,
 				Description: "How many messages the schedule is sent in. Required: the factor must know when it has every packet.",
 			},
 			{
 				Path:        "ReplyTo",
-				Type:        VariableString,
+				Type:        templatecatalog.VariableString,
 				Description: "The address the factor's questions go to.",
 			},
 		},

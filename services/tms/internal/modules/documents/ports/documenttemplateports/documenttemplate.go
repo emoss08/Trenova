@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/generateddocument"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -245,20 +246,20 @@ type GeneratedDocumentRepository interface {
 	List(
 		ctx context.Context,
 		req *ListGeneratedDocumentsRequest,
-	) (*pagination.ListResult[*documenttemplate.GeneratedDocument], error)
+	) (*pagination.ListResult[*generateddocument.GeneratedDocument], error)
 
 	GetByID(
 		ctx context.Context,
 		req *GetGeneratedDocumentByIDRequest,
-	) (*documenttemplate.GeneratedDocument, error)
+	) (*generateddocument.GeneratedDocument, error)
 
 	Create(
 		ctx context.Context,
-		entity *documenttemplate.GeneratedDocument,
-	) (*documenttemplate.GeneratedDocument, error)
+		entity *generateddocument.GeneratedDocument,
+	) (*generateddocument.GeneratedDocument, error)
 
 	Update(
 		ctx context.Context,
-		entity *documenttemplate.GeneratedDocument,
-	) (*documenttemplate.GeneratedDocument, error)
+		entity *generateddocument.GeneratedDocument,
+	) (*generateddocument.GeneratedDocument, error)
 }

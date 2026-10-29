@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/notificationtemplate"
 	"github.com/emoss08/trenova/internal/modules/identity/app/exchangeratestamp"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -252,7 +252,7 @@ func (s *Service) MarkPaid(
 			WorkerID:   updated.WorkerID,
 			EventType:  "dash.settlement_paid",
 			Priority:   notification.PriorityHigh,
-			Context: documenttemplate.SettlementNotificationContext{
+			Context: notificationtemplate.SettlementNotificationContext{
 				SettlementNumber: updated.SettlementNumber,
 				PaymentMethod:    paymentMethod,
 				Amount: money.FormatMinor(

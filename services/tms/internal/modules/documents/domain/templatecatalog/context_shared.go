@@ -1,4 +1,4 @@
-package documenttemplate
+package templatecatalog
 
 // Several kinds publish the same variable. Sharing the definition rather than
 // repeating it keeps the description identical everywhere, which matters because the
@@ -8,15 +8,13 @@ package documenttemplate
 // sampleReportTitle is the report every reporting sample names, so an
 // administrator comparing a report PDF, its delivery email, and its notification
 // sees one report rather than three.
-const sampleReportTitle = "Revenue by Customer"
+const SampleReportTitle = "Revenue by Customer"
 
 const (
-	sampleUserFirstName = "Dana"
-	sampleUserFullName  = "Dana Whitfield"
-	expiresInDaysPath   = "ExpiresInDays"
+	ExpiresInDaysPath = "ExpiresInDays"
 )
 
-func logoVariable() VariableDefinition {
+func LogoVariable() VariableDefinition {
 	return VariableDefinition{
 		Path:        "LogoDataURI",
 		Type:        VariableString,
@@ -24,7 +22,7 @@ func logoVariable() VariableDefinition {
 	}
 }
 
-func companyNameVariable() VariableDefinition {
+func CompanyNameVariable() VariableDefinition {
 	return VariableDefinition{
 		Path:        "CompanyName",
 		Type:        VariableString,
@@ -32,7 +30,7 @@ func companyNameVariable() VariableDefinition {
 	}
 }
 
-func customerNameVariable(required bool, description string) VariableDefinition {
+func CustomerNameVariable(required bool, description string) VariableDefinition {
 	return VariableDefinition{
 		Path:        "CustomerName",
 		Type:        VariableString,
@@ -41,7 +39,7 @@ func customerNameVariable(required bool, description string) VariableDefinition 
 	}
 }
 
-func proNumberVariable(required bool, description string) VariableDefinition {
+func ProNumberVariable(required bool, description string) VariableDefinition {
 	return VariableDefinition{
 		Path:        "ShipmentProNumber",
 		Type:        VariableString,
@@ -50,32 +48,7 @@ func proNumberVariable(required bool, description string) VariableDefinition {
 	}
 }
 
-func titleVariable(description string) VariableDefinition {
-	return VariableDefinition{
-		Path:        "Title",
-		Type:        VariableString,
-		Required:    true,
-		Description: description,
-	}
-}
-
-func descriptionVariable() VariableDefinition {
-	return VariableDefinition{
-		Path:        "Description",
-		Type:        VariableString,
-		Description: "What the report shows.",
-	}
-}
-
-func requestedByVariable() VariableDefinition {
-	return VariableDefinition{
-		Path:        "RequestedBy",
-		Type:        VariableString,
-		Description: "Who ran the report or owns the schedule.",
-	}
-}
-
-func rowCountVariable() VariableDefinition {
+func RowCountVariable() VariableDefinition {
 	return VariableDefinition{
 		Path:        "RowCount",
 		Type:        VariableInt,
@@ -83,7 +56,7 @@ func rowCountVariable() VariableDefinition {
 	}
 }
 
-func truncatedVariable() VariableDefinition {
+func TruncatedVariable() VariableDefinition {
 	return VariableDefinition{
 		Path:        "Truncated",
 		Type:        VariableBool,
@@ -91,7 +64,7 @@ func truncatedVariable() VariableDefinition {
 	}
 }
 
-func invoiceNumberVariable(required bool, description string) VariableDefinition {
+func InvoiceNumberVariable(required bool, description string) VariableDefinition {
 	return VariableDefinition{
 		Path:        "InvoiceNumber",
 		Type:        VariableString,
@@ -100,39 +73,7 @@ func invoiceNumberVariable(required bool, description string) VariableDefinition
 	}
 }
 
-func invoiceDateVariable() VariableDefinition {
-	return VariableDefinition{
-		Path:        "InvoiceDate",
-		Type:        VariableDate,
-		Description: "The date the invoice was issued, in the organization timezone.",
-	}
-}
-
-func dueDateVariable() VariableDefinition {
-	return VariableDefinition{
-		Path:        "DueDate",
-		Type:        VariableDate,
-		Description: "When payment is due. Blank when the billing settings hide it.",
-	}
-}
-
-func paymentTermVariable() VariableDefinition {
-	return VariableDefinition{
-		Path:        "PaymentTerm",
-		Type:        VariableString,
-		Description: "The payment term code, such as Net30.",
-	}
-}
-
-func currencyCodeVariable() VariableDefinition {
-	return VariableDefinition{
-		Path:        "CurrencyCode",
-		Type:        VariableString,
-		Description: "The invoice currency.",
-	}
-}
-
-func addressBlockFields() []VariableDefinition {
+func AddressBlockFields() []VariableDefinition {
 	return []VariableDefinition{
 		{Path: "Name", Type: VariableString, Description: "Party name."},
 		{
@@ -144,31 +85,19 @@ func addressBlockFields() []VariableDefinition {
 			Path:        "Details",
 			Type:        VariableCollection,
 			Description: "Extra labelled detail for this party.",
-			Fields:      keyValueFields(),
+			Fields:      KeyValueFields(),
 		},
 	}
 }
 
-func keyValueFields() []VariableDefinition {
+func KeyValueFields() []VariableDefinition {
 	return []VariableDefinition{
 		{Path: "Label", Type: VariableString, Description: "The label."},
 		{Path: "Value", Type: VariableString, Description: "The value."},
 	}
 }
 
-func reportCellFields() []VariableDefinition {
-	return []VariableDefinition{
-		{Path: "Text", Type: VariableString, Description: "The formatted cell value."},
-		{
-			Path: "Tone",
-			Type: VariableString,
-			Description: "Emphasis the report asked for: positive, warning, negative, " +
-				"neutral, or blank. Use it to colour exceptions.",
-		},
-	}
-}
-
-func noticeOfAssignmentVariable() VariableDefinition {
+func NoticeOfAssignmentVariable() VariableDefinition {
 	return VariableDefinition{
 		Path:        "NoticeOfAssignment",
 		Type:        VariableString,
@@ -178,15 +107,14 @@ func noticeOfAssignmentVariable() VariableDefinition {
 
 //nolint:gosec // G101: rendering fixtures of fake values, not credentials
 const (
-	trackingCategory         = "Tracking"
-	sampleOriginSummary      = "Dallas, TX"
-	sampleDestinationSummary = "Memphis, TN"
-	samplePickupWindow       = "2026-07-18 08:00 – 12:00 CDT"
-	sampleDeliveryWindow     = "2026-07-19 09:00 – 15:00 CDT"
+	SampleOriginSummary      = "Dallas, TX"
+	SampleDestinationSummary = "Memphis, TN"
+	SamplePickupWindow       = "2026-07-18 08:00 – 12:00 CDT"
+	SampleDeliveryWindow     = "2026-07-19 09:00 – 15:00 CDT"
 )
 
 // routeVariables are where a load picks up and delivers, as city and state.
-func routeVariables() []VariableDefinition {
+func RouteVariables() []VariableDefinition {
 	return []VariableDefinition{
 		{
 			Path:        "OriginSummary",
@@ -203,8 +131,8 @@ func routeVariables() []VariableDefinition {
 
 // routeScheduleVariables are the route plus its planned pickup and delivery
 // windows.
-func routeScheduleVariables() []VariableDefinition {
-	return append(routeVariables(),
+func RouteScheduleVariables() []VariableDefinition {
+	return append(RouteVariables(),
 		VariableDefinition{
 			Path:        "PickupWindow",
 			Type:        VariableString,
@@ -216,4 +144,60 @@ func routeScheduleVariables() []VariableDefinition {
 			Description: "The planned delivery window.",
 		},
 	)
+}
+
+const (
+	InvoiceIssuedDescription   = "When the invoice was issued."
+	SampleCompanyName          = "Trenova Logistics, Inc."
+	SampleCustomerName         = "Halstead Grocery Group"
+	SampleProNumber            = "TRV-884120"
+	SampleFacilityName         = "Halstead DC 14"
+	SampleCurrency             = "USD"
+	SampleInvoiceNo            = "INV-2026-1042"
+	SampleShipperName          = "Rio Grande Produce"
+	SampleTotalAmount          = "USD 2,338.74"
+	SampleTotalsLabel          = "Total"
+	ExpiresAtPath              = "ExpiresAt"
+	BillingCategory            = "Billing"
+	customerCodePath           = "CustomerCode"
+	NotePath                   = "Note"
+	CurrencyCodePath           = "CurrencyCode"
+	CustomerPath               = "Customer"
+	InvoiceDatePath            = "InvoiceDate"
+	DueDatePath                = "DueDate"
+	RemittanceInstructionsPath = "RemittanceInstructions"
+	SampleCustomerCode         = "HALSTEAD"
+	SampleRemittanceText       = "Remit by ACH to routing 111000614, account 8842091."
+	SampleAmountPartial        = "USD 1,763.62"
+	SampleAmountOverdue        = "USD 4,102.36"
+	SampleDateJul15            = "2026-07-15"
+	SampleDateAug14            = "2026-08-14"
+)
+
+// AddressBlock is a named party with its address lines and any extra detail.
+type AddressBlock struct {
+	Name    string
+	Lines   []string
+	Details []KeyValue
+}
+
+// KeyValue is a labelled detail line.
+type KeyValue struct {
+	Label string
+	Value string
+}
+
+// sampleLogoDataURI is a 2x2 grey PNG. It exists so a preview shows an image in
+// the logo slot without reaching storage, and so a template that sizes its logo can
+// be verified at publish time.
+const SampleLogoDataURI = "data:image/png;base64," +
+	"iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAEUlEQVR4nGJiYmJgYGBgYAAAAAsAAyQ" +
+	"YbFAAAAAASUVORK5CYII="
+
+func StatementCustomerCodeVariable() VariableDefinition {
+	return VariableDefinition{
+		Path:        customerCodePath,
+		Type:        VariableString,
+		Description: "The customer's code.",
+	}
 }

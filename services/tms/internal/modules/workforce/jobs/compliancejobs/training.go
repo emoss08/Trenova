@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/notificationtemplate"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/drivernotificationservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workertraining"
@@ -293,7 +293,7 @@ func (a *Activities) notifyDriverTraining(
 		WorkerID:   record.WorkerID,
 		EventType:  eventDriverTrainingDue,
 		Priority:   notification.PriorityHigh,
-		Context: documenttemplate.DriverNotificationContext{
+		Context: notificationtemplate.DriverNotificationContext{
 			CourseName: record.Course.Name,
 			DueInDays:  int(daysLeft),
 			DueAt:      trainingDate(dueAt),

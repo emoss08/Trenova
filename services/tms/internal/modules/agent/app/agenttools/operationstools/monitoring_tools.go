@@ -15,7 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
-	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/notificationtemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -637,7 +637,7 @@ func (t *NotifyDriverTool) request(
 		WorkerID:   workerID,
 		EventType:  DispatchMessageEvent,
 		Priority:   priority,
-		Context: documenttemplate.DriverNotificationContext{
+		Context: notificationtemplate.DriverNotificationContext{
 			AlertTitle:   strings.TrimSpace(title),
 			AlertMessage: strings.TrimSpace(message),
 		},

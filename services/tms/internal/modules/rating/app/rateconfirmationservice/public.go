@@ -5,7 +5,7 @@ import (
 	"html/template"
 	"net/url"
 
-	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/rateconfirmationtemplate"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateconfirmation"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/rateconfirmationports"
@@ -227,7 +227,7 @@ func (s *Service) applySignLink(
 	tenantInfo pagination.TenantInfo,
 	entity *rateconfirmation.RateConfirmation,
 	recipientEmail string,
-	templateContext *documenttemplate.RateConfirmationContext,
+	templateContext *rateconfirmationtemplate.RateConfirmationContext,
 ) error {
 	if !s.signLinkConfigured() {
 		s.l.Warn(

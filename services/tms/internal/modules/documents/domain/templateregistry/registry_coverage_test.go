@@ -1,4 +1,4 @@
-package documenttemplate
+package templateregistry
 
 import (
 	"go/ast"
@@ -11,6 +11,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/templatecatalog"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -20,7 +22,7 @@ import (
 // in step. Forgetting a Register call would otherwise ship a kind that exists in the
 // enum, appears in nothing, and fails at render time with "unknown template kind".
 
-const kindDeclarationFile = "kind_gen.go"
+const kindDeclarationFile = "../documenttemplate/kind_gen.go"
 
 // parseKindConstants reads the Kind constants straight out of the source.
 func parseKindConstants(t *testing.T) []string {
@@ -71,12 +73,12 @@ func TestEveryDeclaredKindIsRegistered(t *testing.T) {
 	registry := NewRegistry()
 
 	for _, value := range declared {
-		def, ok := registry.Get(Kind(value))
+		def, ok := registry.Get(documenttemplate.Kind(value))
 		assert.True(t, ok,
 			"kind %q is declared in %s but never registered; add a Register call in "+
-				"the matching register*Kinds method", value, kindDeclarationFile)
+				"the matching Register*Kinds function", value, kindDeclarationFile)
 		if ok {
-			assert.Equal(t, Kind(value), def.Kind)
+			assert.Equal(t, documenttemplate.Kind(value), def.Kind)
 		}
 	}
 }
@@ -98,8 +100,8 @@ func TestNoUnregisteredKindsInRegistry(t *testing.T) {
 func TestAllKindsMatchesDeclaredConstants(t *testing.T) {
 	declared := parseKindConstants(t)
 
-	listed := make([]string, 0, len(AllKinds()))
-	for _, kind := range AllKinds() {
+	listed := make([]string, 0, len(documenttemplate.AllKinds()))
+	for _, kind := range documenttemplate.AllKinds() {
 		listed = append(listed, string(kind))
 	}
 
@@ -122,10 +124,10 @@ func TestKindDefinitionsAreCoherent(t *testing.T) {
 
 			// Page setup only means something for a document.
 			if def.Paged {
-				assert.True(t, def.HasChannel(ChannelPDF),
+				assert.True(t, def.HasChannel(documenttemplate.ChannelPDF),
 					"only a PDF kind can be paged")
 			}
-			if def.HasChannel(ChannelPDF) {
+			if def.HasChannel(documenttemplate.ChannelPDF) {
 				assert.True(t, def.Paged,
 					"a PDF kind must be paged, or its page size and margins are ignored")
 			}
@@ -133,10 +135,10 @@ func TestKindDefinitionsAreCoherent(t *testing.T) {
 			// An email kind needs all three slots: a subject, a rendered body, and a
 			// plain-text fallback. Shipping without the fallback is how a message
 			// ends up filtered as spam.
-			if def.HasChannel(ChannelEmailHTML) {
-				assert.True(t, def.HasChannel(ChannelSubject),
+			if def.HasChannel(documenttemplate.ChannelEmailHTML) {
+				assert.True(t, def.HasChannel(documenttemplate.ChannelSubject),
 					"an email kind needs a subject channel")
-				assert.True(t, def.HasChannel(ChannelEmailText),
+				assert.True(t, def.HasChannel(documenttemplate.ChannelEmailText),
 					"an email kind needs a plain-text channel")
 			}
 		})
@@ -176,7 +178,7 @@ func TestNotCustomerScopedKinds(t *testing.T) {
 
 	// A driver invitation goes to a worker and a scheduled report to a subscriber.
 	// Neither has a customer, so neither may be customer-scoped.
-	for _, kind := range []Kind{KindDriverPortalInvitationEmail, KindReportDeliveryEmail, KindReportPDF} {
+	for _, kind := range []documenttemplate.Kind{documenttemplate.KindDriverPortalInvitationEmail, documenttemplate.KindReportDeliveryEmail, documenttemplate.KindReportPDF} {
 		def, ok := registry.Get(kind)
 		require.True(t, ok)
 		assert.False(t, def.CustomerScoped,
@@ -187,31 +189,40 @@ func TestNotCustomerScopedKinds(t *testing.T) {
 func TestRegisterRejectsIncoherentDefinitions(t *testing.T) {
 	tests := []struct {
 		name string
-		def  *KindDefinition
+		def  *templatecatalog.KindDefinition
 	}{
 		{"nil", nil},
-		{"no key", &KindDefinition{DisplayName: "x"}},
+		{"no key", &templatecatalog.KindDefinition{DisplayName: "x"}},
 		{
 			"no channels",
-			&KindDefinition{Kind: Kind("test.x"), sampleFactory: func() any { return struct{}{} }},
+			&templatecatalog.KindDefinition{
+				Kind:          documenttemplate.Kind("test.x"),
+				SampleFactory: func() any { return struct{}{} },
+			},
 		},
-		{"no sample", &KindDefinition{Kind: Kind("test.x"), Channels: []Channel{ChannelPDF}}},
+		{
+			"no sample",
+			&templatecatalog.KindDefinition{
+				Kind:     documenttemplate.Kind("test.x"),
+				Channels: []documenttemplate.Channel{documenttemplate.ChannelPDF},
+			},
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			registry := &Registry{kinds: map[Kind]*KindDefinition{}}
+			registry := templatecatalog.New()
 			assert.Error(t, registry.Register(tt.def))
 		})
 	}
 }
 
 func TestRegisterRejectsDuplicates(t *testing.T) {
-	registry := &Registry{kinds: map[Kind]*KindDefinition{}}
-	def := &KindDefinition{
-		Kind:          Kind("test.dup"),
-		Channels:      []Channel{ChannelPDF},
-		sampleFactory: func() any { return struct{}{} },
+	registry := templatecatalog.New()
+	def := &templatecatalog.KindDefinition{
+		Kind:          documenttemplate.Kind("test.dup"),
+		Channels:      []documenttemplate.Channel{documenttemplate.ChannelPDF},
+		SampleFactory: func() any { return struct{}{} },
 	}
 
 	require.NoError(t, registry.Register(def))
@@ -253,29 +264,29 @@ func TestKindDeclarationFileExists(t *testing.T) {
 func TestUnknownKindLookups(t *testing.T) {
 	registry := NewRegistry()
 
-	_, ok := registry.Get(Kind("nope.nope"))
+	_, ok := registry.Get(documenttemplate.Kind("nope.nope"))
 	assert.False(t, ok)
-	assert.Nil(t, registry.Paths(Kind("nope.nope")))
-	assert.Nil(t, registry.RequiredPaths(Kind("nope.nope")))
+	assert.Nil(t, registry.Paths(documenttemplate.Kind("nope.nope")))
+	assert.Nil(t, registry.RequiredPaths(documenttemplate.Kind("nope.nope")))
 
-	_, err := registry.SampleContext(Kind("nope.nope"))
+	_, err := registry.SampleContext(documenttemplate.Kind("nope.nope"))
 	assert.Error(t, err)
 
-	_, err = registry.HostileProbeContext(Kind("nope.nope"))
+	_, err = registry.HostileProbeContext(documenttemplate.Kind("nope.nope"))
 	assert.Error(t, err)
 }
 
 func TestChannelFieldMapping(t *testing.T) {
 	tests := []struct {
-		channel Channel
+		channel documenttemplate.Channel
 		want    string
 	}{
-		{ChannelPDF, "bodyHtml"},
-		{ChannelEmailHTML, "bodyHtml"},
-		{ChannelEmailText, "bodyText"},
-		{ChannelSubject, "subject"},
-		{ChannelNotificationTitle, "notificationTitle"},
-		{ChannelNotificationBody, "notificationMessage"},
+		{documenttemplate.ChannelPDF, "bodyHtml"},
+		{documenttemplate.ChannelEmailHTML, "bodyHtml"},
+		{documenttemplate.ChannelEmailText, "bodyText"},
+		{documenttemplate.ChannelSubject, "subject"},
+		{documenttemplate.ChannelNotificationTitle, "notificationTitle"},
+		{documenttemplate.ChannelNotificationBody, "notificationMessage"},
 	}
 
 	for _, tt := range tests {
@@ -288,9 +299,9 @@ func TestChannelFieldMapping(t *testing.T) {
 func TestChannelMapsToEngineChannel(t *testing.T) {
 	// The domain owns the enum the database and GraphQL see; the engine has its own
 	// copy so it can stay dependency-free. They must agree.
-	for _, channel := range []Channel{
-		ChannelPDF, ChannelEmailHTML, ChannelEmailText,
-		ChannelSubject, ChannelNotificationTitle, ChannelNotificationBody,
+	for _, channel := range []documenttemplate.Channel{
+		documenttemplate.ChannelPDF, documenttemplate.ChannelEmailHTML, documenttemplate.ChannelEmailText,
+		documenttemplate.ChannelSubject, documenttemplate.ChannelNotificationTitle, documenttemplate.ChannelNotificationBody,
 	} {
 		assert.Equal(t, string(channel), string(channel.Engine()))
 	}

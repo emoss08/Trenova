@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringsubmission"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringsubmissionports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/factoringtemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
@@ -234,7 +235,7 @@ func (s *SubmissionService) messageRenderer(
 			&documenttemplateports.RenderMessageRequest{
 				TenantInfo: tenantInfo,
 				Kind:       documenttemplate.KindFactoringScheduleEmail,
-				Data: &documenttemplate.FactoringScheduleEmailContext{
+				Data: &factoringtemplate.FactoringScheduleEmailContext{
 					FactorName:      factor.Name,
 					CompanyName:     org.Name,
 					Number:          sub.Number,

@@ -3,6 +3,7 @@
 package documenttemplateexec
 
 import (
+	"github.com/emoss08/trenova/internal/modules/documents/domain/templatecatalog"
 	"context"
 	"errors"
 
@@ -2311,7 +2312,7 @@ func marshalNDocumentTemplateVariable2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinte
 	return ec.MarshalType(ctx, sel, "DocumentTemplateVariable", v)
 }
 
-func marshalNDocumentTemplateVariableType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋdocumenttemplateᚐVariableType(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v documenttemplate.VariableType) graphql.Marshaler {
+func marshalNDocumentTemplateVariableType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋdocumenttemplateᚐVariableType(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v templatecatalog.VariableType) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)

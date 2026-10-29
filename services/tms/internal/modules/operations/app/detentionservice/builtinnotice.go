@@ -7,6 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate/starters"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/templateregistry"
 	"github.com/emoss08/trenova/pkg/templateengine"
 )
 
@@ -52,7 +53,7 @@ func RenderBuiltInNotice(
 	}
 
 	engine := builtInNoticeEngine()
-	allowed := documenttemplate.NewRegistry().Paths(documenttemplate.KindDetentionNoticeEmail)
+	allowed := templateregistry.NewRegistry().Paths(documenttemplate.KindDetentionNoticeEmail)
 
 	var content NoticeContent
 	for _, channel := range []struct {

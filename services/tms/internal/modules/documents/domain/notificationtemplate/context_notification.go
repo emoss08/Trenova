@@ -1,4 +1,9 @@
-package documenttemplate
+package notificationtemplate
+
+import (
+	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/templatecatalog"
+)
 
 // In-app notifications are a title and a message. They are the highest-volume
 // thing this system renders and the lowest-stakes individually, which shapes two
@@ -149,7 +154,7 @@ func newDriverNotificationSampleContext() any {
 		Reason:                "Covered by another driver.",
 		PolicyTitle:           "Driver Handbook",
 		PolicyVersion:         "2026.1",
-		ShipmentProNumber:     sampleProNumber,
+		ShipmentProNumber:     templatecatalog.SampleProNumber,
 		StopCount:             4,
 		CredentialName:        "Commercial Driver's License",
 		ExpiresInDays:         21,
@@ -203,25 +208,24 @@ func newSettlementNotificationSampleContext() any {
 // These paths are named once because the catalog, the struct, and the starter all
 // have to agree on them.
 const (
-	expiresAtPath = "ExpiresAt"
-	reasonPath    = "Reason"
+	reasonPath = "Reason"
 )
 
-func recipientVariables() []VariableDefinition {
-	return []VariableDefinition{
+func recipientVariables() []templatecatalog.VariableDefinition {
+	return []templatecatalog.VariableDefinition{
 		{
 			Path:        "FirstName",
-			Type:        VariableString,
+			Type:        templatecatalog.VariableString,
 			Description: "The driver's first name. Filled in for you from their worker record.",
 		},
 		{
 			Path:        "LastName",
-			Type:        VariableString,
+			Type:        templatecatalog.VariableString,
 			Description: "The driver's last name.",
 		},
 		{
 			Path:        "FullName",
-			Type:        VariableString,
+			Type:        templatecatalog.VariableString,
 			Description: "The driver's full name, for a greeting that reads naturally.",
 		},
 	}
@@ -234,180 +238,184 @@ func recipientVariables() []VariableDefinition {
 // registry_context_test.go asserts the catalog and the struct match in both
 // directions for every kind: copies would have to be corrected in ten places
 // whenever a field is added, and the test would only tell you about the first one.
-func driverNotificationVariables() []VariableDefinition {
-	return append(recipientVariables(),
-		VariableDefinition{
+func driverNotificationVariables() []templatecatalog.VariableDefinition {
+	return append(
+		recipientVariables(),
+		templatecatalog.VariableDefinition{
 			Path:        "Approved",
-			Type:        VariableBool,
+			Type:        templatecatalog.VariableBool,
 			Description: "Whether the request was approved. Branch on this or a denial will read as an approval.",
 		},
-		VariableDefinition{
+		templatecatalog.VariableDefinition{
 			Path:        reasonPath,
-			Type:        VariableString,
+			Type:        templatecatalog.VariableString,
 			Description: "The reviewer's note. Usually present on a denial and absent on an approval.",
 		},
-		proNumberVariable(false, "The load this is about, when it is about a load."),
-		VariableDefinition{
+		templatecatalog.ProNumberVariable(
+			false,
+			"The load this is about, when it is about a load.",
+		),
+		templatecatalog.VariableDefinition{
 			Path:        "StopCount",
-			Type:        VariableInt,
+			Type:        templatecatalog.VariableInt,
 			Description: "How many stops the load has, so a driver can size the day before opening it.",
 		},
-		VariableDefinition{
+		templatecatalog.VariableDefinition{
 			Path:        "PolicyTitle",
-			Type:        VariableString,
+			Type:        templatecatalog.VariableString,
 			Description: "The policy or handbook a driver is being asked to read and sign.",
 		},
-		VariableDefinition{
+		templatecatalog.VariableDefinition{
 			Path:        "PolicyVersion",
-			Type:        VariableString,
+			Type:        templatecatalog.VariableString,
 			Description: "Which version of it, so a driver who signed an earlier one knows this is new.",
 		},
-		VariableDefinition{
+		templatecatalog.VariableDefinition{
 			Path:        "CredentialName",
-			Type:        VariableString,
+			Type:        templatecatalog.VariableString,
 			Description: "The licence or certificate this is about — a CDL, a medical card.",
 		},
-		VariableDefinition{
+		templatecatalog.VariableDefinition{
 			Path:        "ExpiresInDays",
-			Type:        VariableInt,
+			Type:        templatecatalog.VariableInt,
 			Description: "Days until it lapses. Zero or negative means it already has.",
 		},
-		VariableDefinition{
-			Path:        expiresAtPath,
-			Type:        VariableDate,
+		templatecatalog.VariableDefinition{
+			Path:        templatecatalog.ExpiresAtPath,
+			Type:        templatecatalog.VariableDate,
 			Description: "The expiry date, in the organization's timezone.",
 		},
-		VariableDefinition{
+		templatecatalog.VariableDefinition{
 			Path:        "CourseName",
-			Type:        VariableString,
+			Type:        templatecatalog.VariableString,
 			Description: "The training course this is about.",
 		},
-		VariableDefinition{
+		templatecatalog.VariableDefinition{
 			Path:        "DueInDays",
-			Type:        VariableInt,
+			Type:        templatecatalog.VariableInt,
 			Description: "Days until the course is due, or until the certification lapses. Zero is today; negative is already past.",
 		},
-		VariableDefinition{
+		templatecatalog.VariableDefinition{
 			Path:        "DueAt",
-			Type:        VariableDate,
+			Type:        templatecatalog.VariableDate,
 			Description: "The due or expiry date.",
 		},
-		VariableDefinition{
+		templatecatalog.VariableDefinition{
 			Path:        "Renewal",
-			Type:        VariableBool,
+			Type:        templatecatalog.VariableBool,
 			Description: "True when a completed certification is lapsing and needs renewing, false for a course not yet taken.",
 		},
-		VariableDefinition{
+		templatecatalog.VariableDefinition{
 			Path:        "ReviewTitle",
-			Type:        VariableString,
+			Type:        templatecatalog.VariableString,
 			Description: "The performance review waiting for the driver's sign-off.",
 		},
-		VariableDefinition{
+		templatecatalog.VariableDefinition{
 			Path:        "ReviewerName",
-			Type:        VariableString,
+			Type:        templatecatalog.VariableString,
 			Description: "Who wrote the review.",
 		},
-		VariableDefinition{
+		templatecatalog.VariableDefinition{
 			Path:        "RecognitionTitle",
-			Type:        VariableString,
+			Type:        templatecatalog.VariableString,
 			Description: "The headline of the praise being shared.",
 		},
-		VariableDefinition{
+		templatecatalog.VariableDefinition{
 			Path:        "RecognitionMessage",
-			Type:        VariableString,
+			Type:        templatecatalog.VariableString,
 			Description: "The note that goes with it, when there is one.",
 		},
-		VariableDefinition{
+		templatecatalog.VariableDefinition{
 			Path:        "DisciplineLevel",
-			Type:        VariableString,
+			Type:        templatecatalog.VariableString,
 			Description: "The rung of the ladder that was issued: Coaching, VerbalWarning, WrittenWarning, FinalWarning, Suspension, Termination.",
 		},
-		VariableDefinition{
+		templatecatalog.VariableDefinition{
 			Path:        "DisciplineReason",
-			Type:        VariableString,
+			Type:        templatecatalog.VariableString,
 			Description: "Why the action was taken.",
 		},
-		VariableDefinition{
+		templatecatalog.VariableDefinition{
 			Path:        "AlertTitle",
-			Type:        VariableString,
+			Type:        templatecatalog.VariableString,
 			Description: "The headline an hours-of-service rule produced. Wrap it rather than replacing it: the rule knows what it measured.",
 		},
-		VariableDefinition{
+		templatecatalog.VariableDefinition{
 			Path:        "AlertMessage",
-			Type:        VariableString,
+			Type:        templatecatalog.VariableString,
 			Description: "The detail behind the alert, including the time remaining.",
 		},
-		VariableDefinition{
+		templatecatalog.VariableDefinition{
 			Path:        "Digest",
-			Type:        VariableCollection,
+			Type:        templatecatalog.VariableCollection,
 			Description: "Everything the driver owes, bundled into one notice. Range over it; empty on every kind but the digest.",
-			Fields: []VariableDefinition{
+			Fields: []templatecatalog.VariableDefinition{
 				{
 					Path:        "What",
-					Type:        VariableString,
+					Type:        templatecatalog.VariableString,
 					Description: "The credential or course by name, as the driver knows it.",
 				},
 				{
 					Path:        "Kind",
-					Type:        VariableString,
+					Type:        templatecatalog.VariableString,
 					Description: "Either \"credential\" or \"training\", for grouping or an icon.",
 				},
 				{
 					Path:        "DueAt",
-					Type:        VariableDate,
+					Type:        templatecatalog.VariableDate,
 					Description: "The date it falls due.",
 				},
 				{
 					Path:        "DueInDays",
-					Type:        VariableInt,
+					Type:        templatecatalog.VariableInt,
 					Description: "Days until it falls due; negative once the date has passed.",
 				},
 				{
 					Path:        "Overdue",
-					Type:        VariableBool,
+					Type:        templatecatalog.VariableBool,
 					Description: "True once the date has passed. Set rather than inferred, so a template that does no arithmetic still gets it right.",
 				},
 			},
 		},
-		VariableDefinition{
+		templatecatalog.VariableDefinition{
 			Path:        "DigestPeriod",
-			Type:        VariableString,
+			Type:        templatecatalog.VariableString,
 			Description: "Which round-up this is — \"today\" or \"this week\" — so the wording can say so without guessing.",
 		},
 	)
 }
 
 // settlementNotificationVariables is the settlement family's shared catalog.
-func settlementNotificationVariables() []VariableDefinition {
+func settlementNotificationVariables() []templatecatalog.VariableDefinition {
 	return append(recipientVariables(),
-		VariableDefinition{
+		templatecatalog.VariableDefinition{
 			Path:        "Approved",
-			Type:        VariableBool,
+			Type:        templatecatalog.VariableBool,
 			Description: "Whether the expense or dispute was approved. Branch on this or a denial will read as an approval.",
 		},
-		VariableDefinition{
+		templatecatalog.VariableDefinition{
 			Path:        reasonPath,
-			Type:        VariableString,
+			Type:        templatecatalog.VariableString,
 			Description: "The review note, hold reason, or resolution note — the sentence the driver acts on.",
 		},
-		VariableDefinition{
+		templatecatalog.VariableDefinition{
 			Path:        "SettlementNumber",
-			Type:        VariableString,
+			Type:        templatecatalog.VariableString,
 			Description: "The settlement this concerns, so a driver can find it in their history.",
 		},
-		VariableDefinition{
+		templatecatalog.VariableDefinition{
 			Path:        "PaymentMethod",
-			Type:        VariableString,
+			Type:        templatecatalog.VariableString,
 			Description: "How the money moved — ACH, cheque, fuel card.",
 		},
-		VariableDefinition{
+		templatecatalog.VariableDefinition{
 			Path:        "Amount",
-			Type:        VariableMoney,
+			Type:        templatecatalog.VariableMoney,
 			Description: "The amount, already formatted with its currency, so it reads the same here as on the statement.",
 		},
-		VariableDefinition{
+		templatecatalog.VariableDefinition{
 			Path:        "Currency",
-			Type:        VariableString,
+			Type:        templatecatalog.VariableString,
 			Description: "The currency code behind the amount.",
 		},
 	)
@@ -464,7 +472,7 @@ type ReportNotificationContext struct {
 
 func newReportNotificationSampleContext() any {
 	return ReportNotificationContext{
-		ReportName:          sampleReportTitle,
+		ReportName:          templatecatalog.SampleReportTitle,
 		Format:              "xlsx",
 		RowCount:            67,
 		FileSize:            "184 KB",
@@ -479,53 +487,53 @@ func newReportNotificationSampleContext() any {
 }
 
 // reportNotificationVariables is the report family's shared catalog.
-func reportNotificationVariables() []VariableDefinition {
-	return []VariableDefinition{
+func reportNotificationVariables() []templatecatalog.VariableDefinition {
+	return []templatecatalog.VariableDefinition{
 		{
 			Path:        "ReportName",
-			Type:        VariableString,
+			Type:        templatecatalog.VariableString,
 			Description: "The report this is about. A notification that does not name it is one nobody can act on.",
 		},
 		{
 			Path:        "Format",
-			Type:        VariableString,
+			Type:        templatecatalog.VariableString,
 			Description: "The export format — xlsx, csv, pdf. Pipe it through upper if you want it shouted.",
 		},
-		rowCountVariable(),
+		templatecatalog.RowCountVariable(),
 		{
 			Path:        "FileSize",
-			Type:        VariableString,
+			Type:        templatecatalog.VariableString,
 			Description: "The artifact's size, already humanized.",
 		},
-		truncatedVariable(),
+		templatecatalog.TruncatedVariable(),
 		{
 			Path:        reasonPath,
-			Type:        VariableString,
+			Type:        templatecatalog.VariableString,
 			Description: "Why it failed, when it failed. Print it: a failure with no cause becomes a support ticket.",
 		},
 		{
 			Path:        "Disabled",
-			Type:        VariableBool,
+			Type:        templatecatalog.VariableBool,
 			Description: "Whether the schedule was turned off rather than merely skipped this once.",
 		},
 		{
 			Path:        "ConsecutiveFailures",
-			Type:        VariableInt,
+			Type:        templatecatalog.VariableInt,
 			Description: "How many runs in a row failed, which is what justified disabling the schedule.",
 		},
 		{
-			Path:        expiresAtPath,
-			Type:        VariableDate,
+			Path:        templatecatalog.ExpiresAtPath,
+			Type:        templatecatalog.VariableDate,
 			Description: "When the download stops being available.",
 		},
 		{
 			Path:        "ReportCount",
-			Type:        VariableInt,
+			Type:        templatecatalog.VariableInt,
 			Description: "How many reports the notice is about, ReportName among them.",
 		},
 		{
 			Path:        "OtherReports",
-			Type:        VariableInt,
+			Type:        templatecatalog.VariableInt,
 			Description: "How many reports besides ReportName the notice is about.",
 		},
 	}
@@ -547,23 +555,23 @@ type CommentNotificationContext struct {
 func newCommentNotificationSampleContext() any {
 	return CommentNotificationContext{
 		AuthorName:        "Dana Whitfield",
-		ShipmentProNumber: sampleProNumber,
+		ShipmentProNumber: templatecatalog.SampleProNumber,
 		Excerpt:           "Receiver moved the appointment to 14:00 — can we still make it?",
 	}
 }
 
 // commentNotificationVariables is the comment family's shared catalog.
-func commentNotificationVariables() []VariableDefinition {
-	return []VariableDefinition{
+func commentNotificationVariables() []templatecatalog.VariableDefinition {
+	return []templatecatalog.VariableDefinition{
 		{
 			Path:        "AuthorName",
-			Type:        VariableString,
+			Type:        templatecatalog.VariableString,
 			Description: "Who wrote it. A notification from nobody is one the reader cannot judge the urgency of.",
 		},
-		proNumberVariable(false, "The shipment the comment is on."),
+		templatecatalog.ProNumberVariable(false, "The shipment the comment is on."),
 		{
 			Path:        "Excerpt",
-			Type:        VariableString,
+			Type:        templatecatalog.VariableString,
 			Description: "The comment itself, already shortened. Print it: without it the reader has to open the shipment to find out whether it mattered.",
 		},
 	}
@@ -578,26 +586,26 @@ type InvoiceShareNotificationContext struct {
 func newInvoiceShareNotificationSampleContext() any {
 	return InvoiceShareNotificationContext{
 		SharedByName:  "Marcus Bell",
-		InvoiceNumber: sampleInvoiceNo,
-		CustomerName:  sampleCustomerName,
+		InvoiceNumber: templatecatalog.SampleInvoiceNo,
+		CustomerName:  templatecatalog.SampleCustomerName,
 	}
 }
 
-func invoiceShareNotificationVariables() []VariableDefinition {
-	return []VariableDefinition{
+func invoiceShareNotificationVariables() []templatecatalog.VariableDefinition {
+	return []templatecatalog.VariableDefinition{
 		{
 			Path:        "SharedByName",
-			Type:        VariableString,
+			Type:        templatecatalog.VariableString,
 			Description: "Who shared the invoice.",
 		},
-		invoiceNumberVariable(false, "The invoice that was shared."),
-		customerNameVariable(false, "The billed customer's name."),
+		templatecatalog.InvoiceNumberVariable(false, "The invoice that was shared."),
+		templatecatalog.CustomerNameVariable(false, "The billed customer's name."),
 	}
 }
 
 var invoiceNotificationKinds = []notificationKind{
 	{
-		kind:        KindNotificationInvoiceShared,
+		kind:        documenttemplate.KindNotificationInvoiceShared,
 		displayName: "Invoice Shared With You",
 		description: "Tells someone a teammate shared an invoice with them. The sharer's note is not available here: in-app notifications are broadcast to the organization's live clients, so it is only sent by email.",
 	},
@@ -605,79 +613,79 @@ var invoiceNotificationKinds = []notificationKind{
 
 // notificationKind is one registered event, sharing its family's context.
 type notificationKind struct {
-	kind        Kind
+	kind        documenttemplate.Kind
 	displayName string
 	description string
 }
 
 var driverNotificationKinds = []notificationKind{
 	{
-		kind:        KindNotificationLoadAssigned,
+		kind:        documenttemplate.KindNotificationLoadAssigned,
 		displayName: "Load Assigned",
 		description: "Tells a driver a load is now on their schedule.",
 	},
 	{
-		kind:        KindNotificationLoadUnassigned,
+		kind:        documenttemplate.KindNotificationLoadUnassigned,
 		displayName: "Load Removed",
 		description: "Tells a driver a load has been taken off their schedule, so they do not drive to a stop that is no longer theirs.",
 	},
 	{
-		kind:        KindNotificationPTOReviewed,
+		kind:        documenttemplate.KindNotificationPTOReviewed,
 		displayName: "Time Off Reviewed",
 		description: "The answer to a time-off request. Branch on Approved: this kind carries both outcomes.",
 	},
 	{
-		kind:        KindNotificationPTOCancelled,
+		kind:        documenttemplate.KindNotificationPTOCancelled,
 		displayName: "Time Off Cancelled",
 		description: "Tells a driver that a pending or approved time-off request was cancelled by the office, with the reason when one was given.",
 	},
 	{
-		kind:        KindNotificationProfileChangeReviewed,
+		kind:        documenttemplate.KindNotificationProfileChangeReviewed,
 		displayName: "Profile Change Reviewed",
 		description: "The answer to a driver's request to change their own record. Branch on Approved: this kind carries both outcomes.",
 	},
 	{
-		kind:        KindNotificationPolicyPublished,
+		kind:        documenttemplate.KindNotificationPolicyPublished,
 		displayName: "Policy Published",
 		description: "Asks a driver to read and sign a policy the carrier has published or revised.",
 	},
 	{
-		kind:        KindNotificationCredentialExpiring,
+		kind:        documenttemplate.KindNotificationCredentialExpiring,
 		displayName: "Credential Expiring",
 		description: "Warns a driver that a licence or certificate is about to lapse, while there is still time to renew it.",
 	},
 	{
-		kind:        KindNotificationTrainingDue,
+		kind:        documenttemplate.KindNotificationTrainingDue,
 		displayName: "Training Due",
 		description: "Nudges a driver about a course that is due, or a certification that is about to lapse. Branch on Renewal: this kind carries both.",
 	},
 	{
-		kind:        KindNotificationReviewSubmitted,
+		kind:        documenttemplate.KindNotificationReviewSubmitted,
 		displayName: "Review Ready to Sign",
 		description: "Asks a driver to read a performance review and sign off on it in Dash.",
 	},
 	{
-		kind:        KindNotificationRecognition,
+		kind:        documenttemplate.KindNotificationRecognition,
 		displayName: "Recognition",
 		description: "Shares praise the office recorded for the driver.",
 	},
 	{
-		kind:        KindNotificationDisciplinaryIssued,
+		kind:        documenttemplate.KindNotificationDisciplinaryIssued,
 		displayName: "Disciplinary Action Issued",
 		description: "Tells a driver a disciplinary action was issued and asks them to acknowledge it.",
 	},
 	{
-		kind:        KindNotificationHOSAlert,
+		kind:        documenttemplate.KindNotificationHOSAlert,
 		displayName: "Hours of Service Alert",
 		description: "Wraps an hours-of-service warning. The rule composes the text; this decides how it is presented.",
 	},
 	{
-		kind:        KindNotificationDispatchMessage,
+		kind:        documenttemplate.KindNotificationDispatchMessage,
 		displayName: "Dispatch Message",
 		description: "A message from the office about a load in progress. AlertTitle is the subject and AlertMessage the text; this decides how they are presented.",
 	},
 	{
-		kind:        KindNotificationObligationsDigest,
+		kind:        documenttemplate.KindNotificationObligationsDigest,
 		displayName: "Obligations Digest",
 		description: "Everything a driver owes, in one notice. Range over Digest: each entry carries What, DueAt and DueInDays, and Overdue is set on the ones already past. DigestPeriod says whether this is the daily or the weekly round-up.",
 	},
@@ -685,27 +693,27 @@ var driverNotificationKinds = []notificationKind{
 
 var settlementNotificationKinds = []notificationKind{
 	{
-		kind:        KindNotificationSettlementPosted,
+		kind:        documenttemplate.KindNotificationSettlementPosted,
 		displayName: "Settlement Statement Ready",
 		description: "Tells a driver their settlement statement has been issued and can be reviewed.",
 	},
 	{
-		kind:        KindNotificationSettlementPaid,
+		kind:        documenttemplate.KindNotificationSettlementPaid,
 		displayName: "Settlement Paid",
 		description: "Tells a driver their settlement has been paid, and how.",
 	},
 	{
-		kind:        KindNotificationPayHeld,
+		kind:        documenttemplate.KindNotificationPayHeld,
 		displayName: "Pay Held",
 		description: "Tells a driver pay for a load was held, and why. Reason carries the explanation they will ask for.",
 	},
 	{
-		kind:        KindNotificationExpenseReviewed,
+		kind:        documenttemplate.KindNotificationExpenseReviewed,
 		displayName: "Expense Reviewed",
 		description: "The answer to a submitted expense. Branch on Approved: this kind carries both outcomes.",
 	},
 	{
-		kind:        KindNotificationDisputeResolved,
+		kind:        documenttemplate.KindNotificationDisputeResolved,
 		displayName: "Pay Dispute Resolved",
 		description: "The outcome of a pay dispute. Branch on Approved: a driver reads this one closely either way.",
 	},
@@ -713,37 +721,37 @@ var settlementNotificationKinds = []notificationKind{
 
 var reportNotificationKinds = []notificationKind{
 	{
-		kind:        KindNotificationReportRunCompleted,
+		kind:        documenttemplate.KindNotificationReportRunCompleted,
 		displayName: "Report Ready",
 		description: "Tells whoever asked for a report that it finished and can be downloaded.",
 	},
 	{
-		kind:        KindNotificationReportRunFailed,
+		kind:        documenttemplate.KindNotificationReportRunFailed,
 		displayName: "Report Failed",
 		description: "Tells whoever asked for a report that it could not be generated, and why.",
 	},
 	{
-		kind:        KindNotificationReportRunCanceled,
+		kind:        documenttemplate.KindNotificationReportRunCanceled,
 		displayName: "Report Canceled",
 		description: "Tells whoever asked for a report that the run was canceled.",
 	},
 	{
-		kind:        KindNotificationReportDelivered,
+		kind:        documenttemplate.KindNotificationReportDelivered,
 		displayName: "Scheduled Report Ready",
 		description: "Tells a recipient that a scheduled report has been produced for them.",
 	},
 	{
-		kind:        KindNotificationReportDeliveryFailed,
+		kind:        documenttemplate.KindNotificationReportDeliveryFailed,
 		displayName: "Scheduled Report Email Failed",
 		description: "Tells a schedule owner the report was produced but could not be emailed. Reason carries the cause.",
 	},
 	{
-		kind:        KindNotificationReportScheduleSkipped,
+		kind:        documenttemplate.KindNotificationReportScheduleSkipped,
 		displayName: "Report Schedule Skipped",
 		description: "Tells a schedule owner a run was skipped. Branch on Disabled: the same event covers a schedule that has now been turned off after repeated failures.",
 	},
 	{
-		kind:        KindNotificationReportNeedsAttention,
+		kind:        documenttemplate.KindNotificationReportNeedsAttention,
 		displayName: "Report Needs Attention",
 		description: "Tells a report owner that a deploy removed or renamed fields their saved reports use, so they cannot run until repaired. One notice covers every report of theirs the check found; ReportCount says how many.",
 	},
@@ -751,39 +759,44 @@ var reportNotificationKinds = []notificationKind{
 
 var commentNotificationKinds = []notificationKind{
 	{
-		kind:        KindNotificationCommentMention,
+		kind:        documenttemplate.KindNotificationCommentMention,
 		displayName: "Mentioned in a Comment",
 		description: "Tells someone a teammate named them in a shipment comment.",
 	},
 	{
-		kind:        KindNotificationCommentReply,
+		kind:        documenttemplate.KindNotificationCommentReply,
 		displayName: "Reply to Your Comment",
 		description: "Tells someone a teammate replied to their shipment comment.",
 	},
 }
 
-func (r *Registry) registerNotificationKinds() {
-	r.registerNotificationFamily(
+func RegisterNotificationKinds(r *templatecatalog.Registry) {
+	registerNotificationFamily(
+		r,
 		driverNotificationKinds,
 		driverNotificationVariables(),
 		newDriverNotificationSampleContext,
 	)
-	r.registerNotificationFamily(
+	registerNotificationFamily(
+		r,
 		settlementNotificationKinds,
 		settlementNotificationVariables(),
 		newSettlementNotificationSampleContext,
 	)
-	r.registerNotificationFamily(
+	registerNotificationFamily(
+		r,
 		reportNotificationKinds,
 		reportNotificationVariables(),
 		newReportNotificationSampleContext,
 	)
-	r.registerNotificationFamily(
+	registerNotificationFamily(
+		r,
 		commentNotificationKinds,
 		commentNotificationVariables(),
 		newCommentNotificationSampleContext,
 	)
-	r.registerNotificationFamily(
+	registerNotificationFamily(
+		r,
 		invoiceNotificationKinds,
 		invoiceShareNotificationVariables(),
 		newInvoiceShareNotificationSampleContext,
@@ -792,13 +805,14 @@ func (r *Registry) registerNotificationKinds() {
 
 // registerNotificationFamily registers every event in a family against one
 // catalog and one sample context.
-func (r *Registry) registerNotificationFamily(
+func registerNotificationFamily(
+	r *templatecatalog.Registry,
 	kinds []notificationKind,
-	variables []VariableDefinition,
+	variables []templatecatalog.VariableDefinition,
 	sample func() any,
 ) {
 	for _, entry := range kinds {
-		_ = r.Register(&KindDefinition{
+		_ = r.Register(&templatecatalog.KindDefinition{
 			Kind:        entry.kind,
 			DisplayName: entry.displayName,
 			Description: entry.description,
@@ -806,8 +820,11 @@ func (r *Registry) registerNotificationFamily(
 			// An in-app notification is a title and a body. There is no HTML
 			// channel: the client renders both as text into its own layout, and a
 			// template that emitted markup would show it as characters.
-			Channels:      []Channel{ChannelNotificationTitle, ChannelNotificationBody},
-			sampleFactory: sample,
+			Channels: []documenttemplate.Channel{
+				documenttemplate.ChannelNotificationTitle,
+				documenttemplate.ChannelNotificationBody,
+			},
+			SampleFactory: sample,
 			Variables:     variables,
 		})
 	}

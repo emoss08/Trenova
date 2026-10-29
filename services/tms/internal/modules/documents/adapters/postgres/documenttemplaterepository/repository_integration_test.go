@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/adapters/postgres/documenttemplaterepository"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate/documenttemplatedb"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/generateddocument"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer/customerdb"
@@ -333,7 +334,7 @@ func TestAVersionThatProducedADocumentCannotBeDeleted(t *testing.T) {
 	template := f.seededTemplate(t, documenttemplate.KindDetentionNoticePDF)
 	version := template.Versions[0]
 
-	generated := &documenttemplate.GeneratedDocument{
+	generated := &generateddocument.GeneratedDocument{
 		OrganizationID:    f.tenantInfo.OrgID,
 		BusinessUnitID:    f.tenantInfo.BuID,
 		Kind:              documenttemplate.KindDetentionNoticePDF,
@@ -342,7 +343,7 @@ func TestAVersionThatProducedADocumentCannotBeDeleted(t *testing.T) {
 		ReferenceType:     "detention_occurrence",
 		ReferenceID:       pulid.MustNew("dto_"),
 		FileName:          "notice.pdf",
-		Status:            documenttemplate.GenerationStatusPending,
+		Status:            generateddocument.GenerationStatusPending,
 	}
 	err := documenttemplatedb.GeneratedDocuments.Create(f.ctx, f.db, generated)
 	require.NoError(t, err)
@@ -360,14 +361,14 @@ func TestAVersionThatProducedADocumentCannotBeDeleted(t *testing.T) {
 func TestACompletedGeneratedDocumentMustRecordWhereItLanded(t *testing.T) {
 	f := setup(t)
 
-	generated := &documenttemplate.GeneratedDocument{
+	generated := &generateddocument.GeneratedDocument{
 		OrganizationID: f.tenantInfo.OrgID,
 		BusinessUnitID: f.tenantInfo.BuID,
 		Kind:           documenttemplate.KindInvoicePDF,
 		ReferenceType:  "invoice",
 		ReferenceID:    pulid.MustNew("inv_"),
 		FileName:       "invoice.pdf",
-		Status:         documenttemplate.GenerationStatusCompleted,
+		Status:         generateddocument.GenerationStatusCompleted,
 	}
 
 	err := documenttemplatedb.GeneratedDocuments.Create(f.ctx, f.db, generated)

@@ -27,6 +27,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/portaltemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -449,7 +450,7 @@ func (s *Service) mail(
 	}
 
 	runID := group.runID.String()
-	data := &documenttemplate.AgentProposalReminderContext{
+	data := &portaltemplate.AgentProposalReminderContext{
 		RecipientFirstName: stringutils.FirstName(decider.Name),
 		AgentName:          agentNameOf(group.definition),
 		PendingCount:       len(group.proposals),
@@ -500,7 +501,7 @@ func (s *Service) mail(
 func (s *Service) brand(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	out *documenttemplate.AgentProposalReminderContext,
+	out *portaltemplate.AgentProposalReminderContext,
 ) {
 	if s.orgs == nil {
 		return
@@ -592,10 +593,10 @@ func idStrings(proposals []*agent.AgentProposal) []string {
 	return out
 }
 
-func reminderLines(proposals []*agent.AgentProposal) []documenttemplate.ProposalReminderLine {
-	lines := make([]documenttemplate.ProposalReminderLine, 0, len(proposals))
+func reminderLines(proposals []*agent.AgentProposal) []portaltemplate.ProposalReminderLine {
+	lines := make([]portaltemplate.ProposalReminderLine, 0, len(proposals))
 	for _, proposal := range proposals {
-		lines = append(lines, documenttemplate.ProposalReminderLine{
+		lines = append(lines, portaltemplate.ProposalReminderLine{
 			Tool: stringutils.HumanizeSnakeCase(
 				agenttoolports.ReadingOrder(proposal.ToolName),
 			),

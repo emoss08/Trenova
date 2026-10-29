@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/documents/domain/detentiontemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
@@ -108,7 +109,7 @@ type buildNoticeContextParams struct {
 func (b *ContextBuilder) BuildFrom(
 	ctx context.Context,
 	p *buildNoticeContextParams,
-) (*documenttemplate.DetentionNoticeContext, error) {
+) (*detentiontemplate.DetentionNoticeContext, error) {
 	occ := p.Occurrence
 	loc := p.Location
 	if loc == nil {
@@ -125,7 +126,7 @@ func (b *ContextBuilder) BuildFrom(
 		ref = occ.ShipmentID.String()
 	}
 
-	out := &documenttemplate.DetentionNoticeContext{
+	out := &detentiontemplate.DetentionNoticeContext{
 		Kind:              string(p.Kind),
 		ShipmentProNumber: ref,
 		FacilityName:      facility,
@@ -169,7 +170,7 @@ func (b *ContextBuilder) BuildFrom(
 func (b *ContextBuilder) applyBranding(
 	ctx context.Context,
 	orgID, buID pulid.ID,
-	out *documenttemplate.DetentionNoticeContext,
+	out *detentiontemplate.DetentionNoticeContext,
 ) error {
 	if b.orgRepo == nil {
 		return nil
@@ -199,14 +200,14 @@ func (b *ContextBuilder) applyBranding(
 //
 // A customer disputing a tiered charge asks which band applied; showing the
 // whole schedule answers that without a phone call.
-func noticeTierRows(snap *detention.PolicySnapshot) []documenttemplate.DetentionTierRow {
+func noticeTierRows(snap *detention.PolicySnapshot) []detentiontemplate.DetentionTierRow {
 	if snap.RateSource != detention.RateSourceTiers || len(snap.Tiers) == 0 {
 		return nil
 	}
 
-	rows := make([]documenttemplate.DetentionTierRow, 0, len(snap.Tiers))
+	rows := make([]detentiontemplate.DetentionTierRow, 0, len(snap.Tiers))
 	for _, tier := range snap.Tiers {
-		rows = append(rows, documenttemplate.DetentionTierRow{
+		rows = append(rows, detentiontemplate.DetentionTierRow{
 			Band:  tierBandTerm(tier),
 			Rate:  rateLabel(tier.Rate, tier.RateUnit),
 			Label: fmt.Sprintf("%s at %s", tierBandTerm(tier), rateLabel(tier.Rate, tier.RateUnit)),

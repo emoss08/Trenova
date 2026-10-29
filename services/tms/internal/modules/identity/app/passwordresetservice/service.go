@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/accounttemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/iam"
@@ -536,7 +537,7 @@ func (s *Service) sendResetEmail(
 		&documenttemplateports.RenderMessageRequest{
 			TenantInfo: tenantInfo,
 			Kind:       documenttemplate.KindPasswordResetEmail,
-			Data: documenttemplate.PasswordResetContext{
+			Data: accounttemplate.PasswordResetContext{
 				FirstName:   stringutils.FirstName(user.Name),
 				FullName:    user.Name,
 				CompanyName: s.companyName(ctx, user),
@@ -665,7 +666,7 @@ func (s *Service) sendInviteEmail(
 		&documenttemplateports.RenderMessageRequest{
 			TenantInfo: tenantInfo,
 			Kind:       documenttemplate.KindAccountInviteEmail,
-			Data: documenttemplate.AccountInviteContext{
+			Data: accounttemplate.AccountInviteContext{
 				FirstName:     stringutils.FirstName(user.Name),
 				FullName:      user.Name,
 				Username:      user.Username,

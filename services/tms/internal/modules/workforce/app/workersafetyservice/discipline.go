@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/notificationtemplate"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workeremploymentservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/employment"
@@ -200,7 +200,7 @@ func (s *Service) IssueAction(
 			req.WorkerID,
 			eventDisciplinary,
 			notification.PriorityHigh,
-			documenttemplate.DriverNotificationContext{
+			notificationtemplate.DriverNotificationContext{
 				DisciplineLevel:  created.Level.String(),
 				DisciplineReason: created.Reason,
 			},

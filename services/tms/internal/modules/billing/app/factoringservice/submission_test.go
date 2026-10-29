@@ -11,7 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringsubmission"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringsubmissionports"
-	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/factoringtemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
@@ -289,7 +289,7 @@ func TestPrepareAndDeliverSendsTheScheduleAndPackets(t *testing.T) {
 	}
 	assert.Equal(t, []string{"FS1.pdf", "FS1.csv", "INV-1.pdf"}, names)
 	require.Len(t, h.templates.messages, 1)
-	message := h.templates.messages[0].(*documenttemplate.FactoringScheduleEmailContext)
+	message := h.templates.messages[0].(*factoringtemplate.FactoringScheduleEmailContext)
 	assert.Equal(t, "Lone Star Funding", message.FactorName)
 
 	stored, err := h.svc.Get(

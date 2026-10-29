@@ -3,6 +3,7 @@
 package documenttemplatedb
 
 import (
+	"github.com/emoss08/trenova/internal/modules/documents/domain/generateddocument"
 	"context"
 	"unsafe"
 
@@ -891,16 +892,16 @@ func beforeCreateDocumentTemplateVersion(ctx context.Context, p unsafe.Pointer) 
 	return (*documenttemplate.DocumentTemplateVersion)(p).BeforeCreate(ctx)
 }
 
-// generatedDocumentsTable is the schema of documenttemplate.GeneratedDocument.
+// generatedDocumentsTable is the schema of generateddocument.GeneratedDocument.
 var generatedDocumentsTable = schema.Table{
 	Name:        "generated_documents",
 	Quoted:      `"generated_documents"`,
 	Alias:       "gd",
-	Model:       "documenttemplate.GeneratedDocument",
+	Model:       "generateddocument.GeneratedDocument",
 	Label:       `Generated Document`,
 	Plural:      `Generated Documents`,
 	Doc:         "GeneratedDocument is one rendered artifact and the template version that produced it.\n\nTemplateVersionID is the point of this table. Without it, \"what did we actually send that customer in March\" is unanswerable once a template has been edited — and a detention charge or an invoice dispute is exactly when that question gets asked. The foreign key is RESTRICT so a version with output attributed to it cannot be deleted out from under the record.",
-	Constraints: (&documenttemplate.GeneratedDocument{}).Constraints(),
+	Constraints: (&generateddocument.GeneratedDocument{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
@@ -948,7 +949,7 @@ var generatedDocumentsTable = schema.Table{
 	IDPrefix:     "gd_",
 	New:          newGeneratedDocument,
 	NewN:         newNGeneratedDocument,
-	Size:         unsafe.Sizeof(documenttemplate.GeneratedDocument{}),
+	Size:         unsafe.Sizeof(generateddocument.GeneratedDocument{}),
 	Ptr:          ptrGeneratedDocument,
 	Value:        valueGeneratedDocument,
 	Attach:       attachGeneratedDocument,
@@ -959,9 +960,9 @@ var generatedDocumentsTable = schema.Table{
 
 var generatedDocumentsRef = keel.Ref{Table: &generatedDocumentsTable}
 
-// GeneratedDocumentsTable is the table of documenttemplate.GeneratedDocument.
+// GeneratedDocumentsTable is the table of generateddocument.GeneratedDocument.
 type GeneratedDocumentsTable struct {
-	keel.Handle[*documenttemplate.GeneratedDocument]
+	keel.Handle[*generateddocument.GeneratedDocument]
 	ID                keelkinds.PulidIDCol
 	BusinessUnitID    keelkinds.PulidIDCol
 	OrganizationID    keelkinds.PulidIDCol
@@ -994,7 +995,7 @@ type GeneratedDocumentsTable struct {
 
 // GeneratedDocuments references the generated_documents table.
 var GeneratedDocuments = &GeneratedDocumentsTable{
-	Handle:            keel.Handle[*documenttemplate.GeneratedDocument]{Ref: &generatedDocumentsRef},
+	Handle:            keel.Handle[*generateddocument.GeneratedDocument]{Ref: &generatedDocumentsRef},
 	ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &generatedDocumentsRef, Index: 0}}},
 	BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &generatedDocumentsRef, Index: 1}}},
 	OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &generatedDocumentsRef, Index: 2}}},
@@ -1028,7 +1029,7 @@ var GeneratedDocuments = &GeneratedDocumentsTable{
 // BuildGeneratedDocuments builds the handle of generated_documents for ref. Generated relation and alias methods call it.
 func BuildGeneratedDocuments(r *keel.Ref) *GeneratedDocumentsTable {
 	return &GeneratedDocumentsTable{
-		Handle:            keel.Handle[*documenttemplate.GeneratedDocument]{Ref: r},
+		Handle:            keel.Handle[*generateddocument.GeneratedDocument]{Ref: r},
 		ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -1079,20 +1080,20 @@ func (t *GeneratedDocumentsTable) TemplateVersion() *DocumentTemplateVersionsTab
 }
 
 // Get returns the generated_documents row with the given key, or keel.ErrNotFound.
-func (t *GeneratedDocumentsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*documenttemplate.GeneratedDocument, error) {
+func (t *GeneratedDocumentsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*generateddocument.GeneratedDocument, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
 }
 
 func newGeneratedDocument() unsafe.Pointer {
-	return unsafe.Pointer(new(documenttemplate.GeneratedDocument))
+	return unsafe.Pointer(new(generateddocument.GeneratedDocument))
 }
 
 func newNGeneratedDocument(n int) unsafe.Pointer {
-	return unsafe.Pointer(unsafe.SliceData(make([]documenttemplate.GeneratedDocument, n)))
+	return unsafe.Pointer(unsafe.SliceData(make([]generateddocument.GeneratedDocument, n)))
 }
 
 func ptrGeneratedDocument(p unsafe.Pointer, c int32) any {
-	r := (*documenttemplate.GeneratedDocument)(p)
+	r := (*generateddocument.GeneratedDocument)(p)
 	switch c {
 	case 0:
 		return (*string)(unsafe.Pointer(&r.ID))
@@ -1155,7 +1156,7 @@ func ptrGeneratedDocument(p unsafe.Pointer, c int32) any {
 }
 
 func valueGeneratedDocument(p unsafe.Pointer, c int32) any {
-	r := (*documenttemplate.GeneratedDocument)(p)
+	r := (*generateddocument.GeneratedDocument)(p)
 	switch c {
 	case 0:
 		return string(r.ID)
@@ -1254,7 +1255,7 @@ func valueGeneratedDocument(p unsafe.Pointer, c int32) any {
 }
 
 func attachGeneratedDocument(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
-	r := (*documenttemplate.GeneratedDocument)(p)
+	r := (*generateddocument.GeneratedDocument)(p)
 	switch rel {
 	case 0:
 		r.Template = (*documenttemplate.DocumentTemplate)(child)
@@ -1264,15 +1265,15 @@ func attachGeneratedDocument(p unsafe.Pointer, rel int32, child unsafe.Pointer) 
 }
 
 func beforeCreateGeneratedDocument(ctx context.Context, p unsafe.Pointer) error {
-	return (*documenttemplate.GeneratedDocument)(p).BeforeCreate(ctx)
+	return (*generateddocument.GeneratedDocument)(p).BeforeCreate(ctx)
 }
 
 func beforeUpdateGeneratedDocument(ctx context.Context, p unsafe.Pointer) error {
-	return (*documenttemplate.GeneratedDocument)(p).BeforeUpdate(ctx)
+	return (*generateddocument.GeneratedDocument)(p).BeforeUpdate(ctx)
 }
 
 func beforeSaveGeneratedDocument(ctx context.Context, p unsafe.Pointer) error {
-	return (*documenttemplate.GeneratedDocument)(p).BeforeSave(ctx)
+	return (*generateddocument.GeneratedDocument)(p).BeforeSave(ctx)
 }
 
 func init() {
@@ -1376,77 +1377,77 @@ var enumVersionStatus = [...]schema.EnumValue{
 	{Value: `Archived`, Label: `Archived`, Doc: `VersionStatusArchived was live once. It is kept rather than deleted because a generated document points at the version that produced it.`},
 }
 
-// DeliveryMethodCol is a column of documenttemplate.DeliveryMethod values.
+// DeliveryMethodCol is a column of generateddocument.DeliveryMethod values.
 type DeliveryMethodCol struct{ keel.StringCol }
 
-func (c DeliveryMethodCol) Eq(v documenttemplate.DeliveryMethod) keel.Pred {
+func (c DeliveryMethodCol) Eq(v generateddocument.DeliveryMethod) keel.Pred {
 	return c.StringCol.Eq(string(v))
 }
-func (c DeliveryMethodCol) Ne(v documenttemplate.DeliveryMethod) keel.Pred {
+func (c DeliveryMethodCol) Ne(v generateddocument.DeliveryMethod) keel.Pred {
 	return c.StringCol.Ne(string(v))
 }
-func (c DeliveryMethodCol) Gt(v documenttemplate.DeliveryMethod) keel.Pred {
+func (c DeliveryMethodCol) Gt(v generateddocument.DeliveryMethod) keel.Pred {
 	return c.StringCol.Gt(string(v))
 }
-func (c DeliveryMethodCol) Gte(v documenttemplate.DeliveryMethod) keel.Pred {
+func (c DeliveryMethodCol) Gte(v generateddocument.DeliveryMethod) keel.Pred {
 	return c.StringCol.Gte(string(v))
 }
-func (c DeliveryMethodCol) Lt(v documenttemplate.DeliveryMethod) keel.Pred {
+func (c DeliveryMethodCol) Lt(v generateddocument.DeliveryMethod) keel.Pred {
 	return c.StringCol.Lt(string(v))
 }
-func (c DeliveryMethodCol) Lte(v documenttemplate.DeliveryMethod) keel.Pred {
+func (c DeliveryMethodCol) Lte(v generateddocument.DeliveryMethod) keel.Pred {
 	return c.StringCol.Lte(string(v))
 }
-func (c DeliveryMethodCol) IsDistinctFrom(v documenttemplate.DeliveryMethod) keel.Pred {
+func (c DeliveryMethodCol) IsDistinctFrom(v generateddocument.DeliveryMethod) keel.Pred {
 	return c.StringCol.IsDistinctFrom(string(v))
 }
-func (c DeliveryMethodCol) Between(lo, hi documenttemplate.DeliveryMethod) keel.Pred {
+func (c DeliveryMethodCol) Between(lo, hi generateddocument.DeliveryMethod) keel.Pred {
 	return c.StringCol.Between(string(lo), string(hi))
 }
-func (c DeliveryMethodCol) To(v documenttemplate.DeliveryMethod) keel.Assignment {
+func (c DeliveryMethodCol) To(v generateddocument.DeliveryMethod) keel.Assignment {
 	return c.StringCol.To(string(v))
 }
-func (c DeliveryMethodCol) In(vs ...documenttemplate.DeliveryMethod) keel.Pred {
+func (c DeliveryMethodCol) In(vs ...generateddocument.DeliveryMethod) keel.Pred {
 	return c.StringCol.In(keel.Strings(vs)...)
 }
-func (c DeliveryMethodCol) NotIn(vs ...documenttemplate.DeliveryMethod) keel.Pred {
+func (c DeliveryMethodCol) NotIn(vs ...generateddocument.DeliveryMethod) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 
-// GenerationStatusCol is a column of documenttemplate.GenerationStatus values.
+// GenerationStatusCol is a column of generateddocument.GenerationStatus values.
 type GenerationStatusCol struct{ keel.StringCol }
 
-func (c GenerationStatusCol) Eq(v documenttemplate.GenerationStatus) keel.Pred {
+func (c GenerationStatusCol) Eq(v generateddocument.GenerationStatus) keel.Pred {
 	return c.StringCol.Eq(string(v))
 }
-func (c GenerationStatusCol) Ne(v documenttemplate.GenerationStatus) keel.Pred {
+func (c GenerationStatusCol) Ne(v generateddocument.GenerationStatus) keel.Pred {
 	return c.StringCol.Ne(string(v))
 }
-func (c GenerationStatusCol) Gt(v documenttemplate.GenerationStatus) keel.Pred {
+func (c GenerationStatusCol) Gt(v generateddocument.GenerationStatus) keel.Pred {
 	return c.StringCol.Gt(string(v))
 }
-func (c GenerationStatusCol) Gte(v documenttemplate.GenerationStatus) keel.Pred {
+func (c GenerationStatusCol) Gte(v generateddocument.GenerationStatus) keel.Pred {
 	return c.StringCol.Gte(string(v))
 }
-func (c GenerationStatusCol) Lt(v documenttemplate.GenerationStatus) keel.Pred {
+func (c GenerationStatusCol) Lt(v generateddocument.GenerationStatus) keel.Pred {
 	return c.StringCol.Lt(string(v))
 }
-func (c GenerationStatusCol) Lte(v documenttemplate.GenerationStatus) keel.Pred {
+func (c GenerationStatusCol) Lte(v generateddocument.GenerationStatus) keel.Pred {
 	return c.StringCol.Lte(string(v))
 }
-func (c GenerationStatusCol) IsDistinctFrom(v documenttemplate.GenerationStatus) keel.Pred {
+func (c GenerationStatusCol) IsDistinctFrom(v generateddocument.GenerationStatus) keel.Pred {
 	return c.StringCol.IsDistinctFrom(string(v))
 }
-func (c GenerationStatusCol) Between(lo, hi documenttemplate.GenerationStatus) keel.Pred {
+func (c GenerationStatusCol) Between(lo, hi generateddocument.GenerationStatus) keel.Pred {
 	return c.StringCol.Between(string(lo), string(hi))
 }
-func (c GenerationStatusCol) To(v documenttemplate.GenerationStatus) keel.Assignment {
+func (c GenerationStatusCol) To(v generateddocument.GenerationStatus) keel.Assignment {
 	return c.StringCol.To(string(v))
 }
-func (c GenerationStatusCol) In(vs ...documenttemplate.GenerationStatus) keel.Pred {
+func (c GenerationStatusCol) In(vs ...generateddocument.GenerationStatus) keel.Pred {
 	return c.StringCol.In(keel.Strings(vs)...)
 }
-func (c GenerationStatusCol) NotIn(vs ...documenttemplate.GenerationStatus) keel.Pred {
+func (c GenerationStatusCol) NotIn(vs ...generateddocument.GenerationStatus) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 

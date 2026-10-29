@@ -3,7 +3,7 @@ package selfserviceservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/notificationtemplate"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/profilechange"
@@ -235,7 +235,7 @@ func (s *Service) DecideChange(
 		req.TenantInfo,
 		updated.WorkerID,
 		eventProfileChangeReviewed,
-		documenttemplate.DriverNotificationContext{Approved: req.Approve, Reason: req.Note},
+		notificationtemplate.DriverNotificationContext{Approved: req.Approve, Reason: req.Note},
 		map[string]any{"changeRequestId": updated.ID.String()},
 	)
 

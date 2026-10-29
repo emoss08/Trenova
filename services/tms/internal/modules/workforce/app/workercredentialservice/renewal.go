@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/notificationtemplate"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/drivernotificationservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential"
@@ -162,7 +162,7 @@ func renewalNotification(
 		WorkerID:   req.WorkerID,
 		EventType:  eventCredentialRenewal,
 		Priority:   notification.PriorityHigh,
-		Context: documenttemplate.DriverNotificationContext{
+		Context: notificationtemplate.DriverNotificationContext{
 			CredentialName: renewalSubject(named),
 			ExpiresInDays:  daysLeft,
 			ExpiresAt:      expires,

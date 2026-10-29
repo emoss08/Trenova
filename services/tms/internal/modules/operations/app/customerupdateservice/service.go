@@ -7,6 +7,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/portaltemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
@@ -127,7 +128,7 @@ func (s *Service) NotifyDelay(
 	}
 
 	body := strings.TrimSpace(req.Message)
-	data := documenttemplate.AgentEmailContext{
+	data := portaltemplate.AgentEmailContext{
 		AgentSubject:      "Delivery update for shipment " + sp.ProNumber,
 		AgentBody:         body,
 		CustomerName:      customerName,

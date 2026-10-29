@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
-	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/notificationtemplate"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/drivernotificationservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workercredentialservice"
@@ -380,7 +380,7 @@ func (a *Activities) notifyDriver(
 		WorkerID:   cred.WorkerID,
 		EventType:  eventDriverExpiring,
 		Priority:   notification.PriorityHigh,
-		Context: documenttemplate.DriverNotificationContext{
+		Context: notificationtemplate.DriverNotificationContext{
 			CredentialName: cred.CredentialType.Name,
 			ExpiresInDays:  int(daysLeft),
 			ExpiresAt:      credentialExpiryDate(cred),

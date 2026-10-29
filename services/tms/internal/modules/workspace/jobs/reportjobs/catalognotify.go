@@ -5,6 +5,7 @@ import (
 	"sort"
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/notificationtemplate"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -109,7 +110,7 @@ func (a *Activities) notifyOwnerNeedsAttention(
 		tenantInfo,
 		documenttemplate.KindNotificationReportNeedsAttention,
 		notice.DefinitionIDs[0],
-		&documenttemplate.ReportNotificationContext{
+		&notificationtemplate.ReportNotificationContext{
 			ReportName:   notice.FirstReport,
 			ReportCount:  notice.Count,
 			OtherReports: notice.Count - 1,

@@ -2,7 +2,7 @@ package outboundpreview
 
 import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
-	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/portaltemplate"
 	"github.com/emoss08/trenova/internal/modules/operations/app/customerupdateservice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentcommentports"
@@ -16,13 +16,13 @@ import (
 // organization's letterhead, and the comment that records it. A customer
 // already told within the hour is sent nothing, and nothing is rendered.
 type CustomerEmail struct {
-	Shipment    *shipment.Shipment                 `json:"-"`
-	Tenant      pagination.TenantInfo              `json:"-"`
-	AlreadyTold bool                               `json:"-"`
-	Recipients  []string                           `json:"-"`
-	Data        documenttemplate.AgentEmailContext `json:"-"`
-	Send        *emailports.SendEmailRequest       `json:"-"`
-	VersionID   *pulid.ID                          `json:"-"`
+	Shipment    *shipment.Shipment               `json:"-"`
+	Tenant      pagination.TenantInfo            `json:"-"`
+	AlreadyTold bool                             `json:"-"`
+	Recipients  []string                         `json:"-"`
+	Data        portaltemplate.AgentEmailContext `json:"-"`
+	Send        *emailports.SendEmailRequest     `json:"-"`
+	VersionID   *pulid.ID                        `json:"-"`
 }
 
 // customerUpdateComment is what the shipment's thread records of an email to

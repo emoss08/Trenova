@@ -9,6 +9,7 @@ import (
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/rateconfirmationtemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentuploadports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -674,7 +675,7 @@ func (s *Service) companyName(
 func (s *Service) applyLogo(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	out *documenttemplate.RateConfirmationContext,
+	out *rateconfirmationtemplate.RateConfirmationContext,
 ) {
 	if s.orgRepo == nil {
 		return
@@ -815,7 +816,7 @@ func filingActor(
 }
 
 func contextSnapshot(
-	templateContext *documenttemplate.RateConfirmationContext,
+	templateContext *rateconfirmationtemplate.RateConfirmationContext,
 ) (map[string]any, error) {
 	raw, err := sonic.Marshal(templateContext)
 	if err != nil {
@@ -831,13 +832,13 @@ func contextSnapshot(
 
 func contextFromSnapshot(
 	snapshot map[string]any,
-) (*documenttemplate.RateConfirmationContext, error) {
+) (*rateconfirmationtemplate.RateConfirmationContext, error) {
 	raw, err := sonic.Marshal(snapshot)
 	if err != nil {
 		return nil, fmt.Errorf("decode rate confirmation snapshot: %w", err)
 	}
 
-	out := new(documenttemplate.RateConfirmationContext)
+	out := new(rateconfirmationtemplate.RateConfirmationContext)
 	if err = sonic.Unmarshal(raw, out); err != nil {
 		return nil, fmt.Errorf("decode rate confirmation snapshot: %w", err)
 	}

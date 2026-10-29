@@ -12,6 +12,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerledgerports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerstatementports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/generateddocument"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/statementtemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
@@ -134,8 +136,8 @@ type fixture struct {
 	statements  *fakeStatements
 	collections *fakeCollections
 	email       *fakeEmail
-	pdfs        []*documenttemplate.CustomerStatementContext
-	messages    []*documenttemplate.CustomerStatementEmailContext
+	pdfs        []*statementtemplate.CustomerStatementContext
+	messages    []*statementtemplate.CustomerStatementEmailContext
 	recorded    []*documenttemplateports.RecordGeneratedDocumentRequest
 	control     *billingcontrol.BillingControl
 	customers   map[pulid.ID]*customer.Customer
@@ -245,7 +247,7 @@ func newFixture(t *testing.T) *fixture {
 			_ context.Context,
 			req *documenttemplateports.RenderDocumentRequest,
 		) (*documenttemplateports.RenderedDocument, error) {
-			f.pdfs = append(f.pdfs, req.Data.(*documenttemplate.CustomerStatementContext))
+			f.pdfs = append(f.pdfs, req.Data.(*statementtemplate.CustomerStatementContext))
 			return &documenttemplateports.RenderedDocument{PDF: pdfBytes}, nil
 		}).Maybe()
 	templates.EXPECT().RenderMessage(mock.Anything, mock.Anything).RunAndReturn(
@@ -255,7 +257,7 @@ func newFixture(t *testing.T) *fixture {
 		) (*documenttemplateports.RenderedMessage, error) {
 			f.messages = append(
 				f.messages,
-				req.Data.(*documenttemplate.CustomerStatementEmailContext),
+				req.Data.(*statementtemplate.CustomerStatementEmailContext),
 			)
 			return &documenttemplateports.RenderedMessage{
 				Subject: "Statement",
@@ -267,9 +269,9 @@ func newFixture(t *testing.T) *fixture {
 		func(
 			_ context.Context,
 			req *documenttemplateports.RecordGeneratedDocumentRequest,
-		) (*documenttemplate.GeneratedDocument, error) {
+		) (*generateddocument.GeneratedDocument, error) {
 			f.recorded = append(f.recorded, req)
-			return &documenttemplate.GeneratedDocument{}, nil
+			return &generateddocument.GeneratedDocument{}, nil
 		}).Maybe()
 
 	f.svc = &Service{

@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/notificationtemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
@@ -173,7 +174,7 @@ func fillRecipient(data any, wrk *worker.Worker) any {
 
 	full := strings.TrimSpace(wrk.FirstName + " " + wrk.LastName)
 
-	if aware, ok := data.(documenttemplate.RecipientAware); ok {
+	if aware, ok := data.(notificationtemplate.RecipientAware); ok {
 		aware.SetRecipient(wrk.FirstName, wrk.LastName, full)
 		return data
 	}
@@ -186,7 +187,7 @@ func fillRecipient(data any, wrk *worker.Worker) any {
 	clone := reflect.New(value.Type())
 	clone.Elem().Set(value)
 
-	aware, ok := clone.Interface().(documenttemplate.RecipientAware)
+	aware, ok := clone.Interface().(notificationtemplate.RecipientAware)
 	if !ok {
 		return data
 	}

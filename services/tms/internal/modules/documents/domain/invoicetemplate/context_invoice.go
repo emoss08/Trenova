@@ -1,6 +1,11 @@
-package documenttemplate
+package invoicetemplate
 
-import "html/template"
+import (
+	"html/template"
+
+	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/templatecatalog"
+)
 
 // The context types live in the domain rather than inside the service that builds
 // them because a template context is a published contract: it is the variable list
@@ -21,11 +26,11 @@ type InvoiceContext struct {
 	PaymentTerm   string
 	CurrencyCode  string
 
-	Organization AddressBlock
-	BillTo       AddressBlock
-	RemitTo      AddressBlock
-	Shipper      AddressBlock
-	Consignee    AddressBlock
+	Organization templatecatalog.AddressBlock
+	BillTo       templatecatalog.AddressBlock
+	RemitTo      templatecatalog.AddressBlock
+	Shipper      templatecatalog.AddressBlock
+	Consignee    templatecatalog.AddressBlock
 
 	// LogoDataURI is the organization logo, already inlined as a data: URI.
 	//
@@ -38,7 +43,7 @@ type InvoiceContext struct {
 	// base64 and cannot contain a quote or an angle bracket. It is never user text.
 	LogoDataURI template.URL
 
-	HeaderRows    []KeyValue
+	HeaderRows    []templatecatalog.KeyValue
 	CommodityRows []CommodityRow
 	ChargeRows    []ChargeRow
 
@@ -67,19 +72,6 @@ type InvoiceContext struct {
 	// NoticeOfAssignment is set when the invoice is assigned to a factor:
 	// RemitTo is then the factor, and the notice must be printed.
 	NoticeOfAssignment string
-}
-
-// AddressBlock is a named party with its address lines and any extra detail.
-type AddressBlock struct {
-	Name    string
-	Lines   []string
-	Details []KeyValue
-}
-
-// KeyValue is a labelled detail line.
-type KeyValue struct {
-	Label string
-	Value string
 }
 
 // ChargeRow is one billed line on an invoice.
@@ -155,52 +147,52 @@ type InvoiceEmailContext struct {
 //nolint:funlen // Sample fixture data; splitting it would only scatter one document.
 func newInvoiceSampleContext() any {
 	return InvoiceContext{
-		InvoiceNumber: sampleInvoiceNo,
+		InvoiceNumber: templatecatalog.SampleInvoiceNo,
 		InvoiceDate:   "2026-07-15",
 		DueDate:       "2026-08-14",
 		PaymentTerm:   "Net30",
 		CurrencyCode:  "USD",
-		Organization: AddressBlock{
-			Name:  sampleCompanyName,
+		Organization: templatecatalog.AddressBlock{
+			Name:  templatecatalog.SampleCompanyName,
 			Lines: []string{"4400 Commerce Way", "Suite 220", "Austin, TX 78744"},
-			Details: []KeyValue{
+			Details: []templatecatalog.KeyValue{
 				{Label: "Phone", Value: "(512) 555-0142"},
 				{Label: "MC", Value: "MC-884120"},
 			},
 		},
-		BillTo: AddressBlock{
-			Name:  sampleCustomerName,
+		BillTo: templatecatalog.AddressBlock{
+			Name:  templatecatalog.SampleCustomerName,
 			Lines: []string{"Accounts Payable", "900 Distribution Pkwy", "Fort Worth, TX 76106"},
-			Details: []KeyValue{
+			Details: []templatecatalog.KeyValue{
 				{Label: "Account", Value: "HALSTEAD-4471"},
 				{Label: "AP Contact", Value: "ap@halstead.example"},
 			},
 		},
-		RemitTo: AddressBlock{
-			Name:  sampleCompanyName,
+		RemitTo: templatecatalog.AddressBlock{
+			Name:  templatecatalog.SampleCompanyName,
 			Lines: []string{"PO Box 41220", "Austin, TX 78704"},
-			Details: []KeyValue{
+			Details: []templatecatalog.KeyValue{
 				{Label: "ACH", Value: "Routing 111000614 / Account 8842091"},
 			},
 		},
-		Shipper: AddressBlock{
-			Name:  sampleShipperName,
+		Shipper: templatecatalog.AddressBlock{
+			Name:  templatecatalog.SampleShipperName,
 			Lines: []string{"1200 Airport Rd", "Pharr, TX 78577"},
-			Details: []KeyValue{
+			Details: []templatecatalog.KeyValue{
 				{Label: "Loaded", Value: "2026-07-11 06:40 CDT"},
 			},
 		},
-		Consignee: AddressBlock{
+		Consignee: templatecatalog.AddressBlock{
 			Name:  "Halstead DC 14",
 			Lines: []string{"900 Distribution Pkwy", "Fort Worth, TX 76106"},
-			Details: []KeyValue{
+			Details: []templatecatalog.KeyValue{
 				{Label: "Delivered", Value: "2026-07-12 14:05 CDT"},
 			},
 		},
 		//nolint:gosec // A compile-time constant data: URI; see the field's doc comment.
-		LogoDataURI: template.URL(sampleLogoDataURI),
-		HeaderRows: []KeyValue{
-			{Label: "Pro Number", Value: sampleProNumber},
+		LogoDataURI: template.URL(templatecatalog.SampleLogoDataURI),
+		HeaderRows: []templatecatalog.KeyValue{
+			{Label: "Pro Number", Value: templatecatalog.SampleProNumber},
 			{Label: "BOL", Value: sampleBOL},
 			{Label: "Customer PO", Value: "PO-5591004"},
 		},
@@ -259,7 +251,7 @@ func newInvoiceSampleContext() any {
 		// collection would render nothing and hide a typo inside the range.
 		ShipmentRows: []ShipmentRow{
 			{
-				ProNumber:   sampleProNumber,
+				ProNumber:   templatecatalog.SampleProNumber,
 				BOL:         sampleBOL,
 				PONumber:    "PO-5591004",
 				ServiceDate: "2026-07-12",
@@ -281,8 +273,8 @@ func newInvoiceSampleContext() any {
 		Period:        "2026-07-01 - 2026-08-01",
 		Subtotal:      "USD 2,001.24",
 		Other:         "USD 337.50",
-		Total:         sampleTotalAmount,
-		BalanceDue:    sampleTotalAmount,
+		Total:         templatecatalog.SampleTotalAmount,
+		BalanceDue:    templatecatalog.SampleTotalAmount,
 		Terms: []string{
 			"Payment due within 30 days of the invoice date.",
 			"Claims must be filed within 9 months of delivery.",
@@ -298,17 +290,17 @@ func newInvoiceSampleContext() any {
 
 func newInvoiceEmailSampleContext() any {
 	return InvoiceEmailContext{
-		InvoiceNumber:          sampleInvoiceNo,
+		InvoiceNumber:          templatecatalog.SampleInvoiceNo,
 		InvoiceDate:            "2026-07-15",
 		DueDate:                "2026-08-14",
 		PaymentTerm:            "Net30",
-		Total:                  sampleTotalAmount,
-		CurrencyCode:           sampleCurrency,
+		Total:                  templatecatalog.SampleTotalAmount,
+		CurrencyCode:           templatecatalog.SampleCurrency,
 		Memo:                   "Reefer set to 36F continuous per customer instruction.",
-		CustomerName:           sampleCustomerName,
+		CustomerName:           templatecatalog.SampleCustomerName,
 		CustomerCode:           "HALSTEAD",
-		CompanyName:            sampleCompanyName,
-		ShipmentProNumber:      sampleProNumber,
+		CompanyName:            templatecatalog.SampleCompanyName,
+		ShipmentProNumber:      templatecatalog.SampleProNumber,
 		ShipmentBOL:            sampleBOL,
 		ShipmentOrigin:         "Pharr, TX",
 		ShipmentDestination:    "Fort Worth, TX",
@@ -320,18 +312,18 @@ func newInvoiceEmailSampleContext() any {
 }
 
 //nolint:funlen // A variable catalog is one declaration; splitting it only hides it.
-func (r *Registry) registerBillingKinds() {
-	_ = r.Register(&KindDefinition{
-		Kind:           KindInvoicePDF,
+func RegisterBillingKinds(r *templatecatalog.Registry) {
+	_ = r.Register(&templatecatalog.KindDefinition{
+		Kind:           documenttemplate.KindInvoicePDF,
 		DisplayName:    "Customer Invoice",
 		Description:    "The invoice document sent to a customer and attached to the delivery email.",
 		Category:       "Billing",
-		Channels:       []Channel{ChannelPDF},
+		Channels:       []documenttemplate.Channel{documenttemplate.ChannelPDF},
 		Paged:          true,
 		CustomerScoped: true,
-		sampleFactory:  newInvoiceSampleContext,
-		Variables: []VariableDefinition{
-			invoiceNumberVariable(
+		SampleFactory:  newInvoiceSampleContext,
+		Variables: []templatecatalog.VariableDefinition{
+			templatecatalog.InvoiceNumberVariable(
 				true,
 				"The invoice number. Customers reference it on payment, so an invoice without it cannot be matched to a remittance.",
 			),
@@ -339,247 +331,295 @@ func (r *Registry) registerBillingKinds() {
 			dueDateVariable(),
 			paymentTermVariable(),
 			currencyCodeVariable(),
-			logoVariable(),
+			templatecatalog.LogoVariable(),
 			{
 				Path:        "Subtotal",
-				Type:        VariableMoney,
+				Type:        templatecatalog.VariableMoney,
 				Description: "Charges before other amounts, with currency.",
 			},
 			{
 				Path:        "Other",
-				Type:        VariableMoney,
+				Type:        templatecatalog.VariableMoney,
 				Description: "Accessorial and adjustment amounts, with currency.",
 			},
 			{
-				Path:        sampleTotalsLabel,
-				Type:        VariableMoney,
+				Path:        templatecatalog.SampleTotalsLabel,
+				Type:        templatecatalog.VariableMoney,
 				Required:    true,
 				Description: "The invoice total, with currency. An invoice that does not state its total is one a customer can refuse to pay.",
 			},
 			{
 				Path:        "BalanceDue",
-				Type:        VariableMoney,
+				Type:        templatecatalog.VariableMoney,
 				Description: "Amount still owed. Blank when the billing settings hide it.",
 			},
 			{
 				Path:        "InvoiceFooter",
-				Type:        VariableString,
+				Type:        templatecatalog.VariableString,
 				Description: "The footer text from the organization's billing settings.",
 			},
 			{
 				Path:        "Organization",
-				Type:        VariableObject,
+				Type:        templatecatalog.VariableObject,
 				Description: "The carrier issuing the invoice.",
-				Fields:      addressBlockFields(),
+				Fields:      templatecatalog.AddressBlockFields(),
 			},
 			{
 				Path:        "BillTo",
-				Type:        VariableObject,
+				Type:        templatecatalog.VariableObject,
 				Required:    true,
 				Description: "The party being billed. Required: an invoice with no addressee cannot be collected on.",
-				Fields:      addressBlockFields(),
+				Fields:      templatecatalog.AddressBlockFields(),
 			},
 			{
 				Path:        "RemitTo",
-				Type:        VariableObject,
+				Type:        templatecatalog.VariableObject,
 				Required:    true,
 				Description: "Where payment should be sent. Required: without it a customer has nowhere to pay.",
-				Fields:      addressBlockFields(),
+				Fields:      templatecatalog.AddressBlockFields(),
 			},
 			{
 				Path:        "Shipper",
-				Type:        VariableObject,
+				Type:        templatecatalog.VariableObject,
 				Description: "Origin party and pickup detail.",
-				Fields:      addressBlockFields(),
+				Fields:      templatecatalog.AddressBlockFields(),
 			},
 			{
 				Path:        "Consignee",
-				Type:        VariableObject,
+				Type:        templatecatalog.VariableObject,
 				Description: "Destination party and delivery detail.",
-				Fields:      addressBlockFields(),
+				Fields:      templatecatalog.AddressBlockFields(),
 			},
 			{
 				Path:        "HeaderRows",
-				Type:        VariableCollection,
+				Type:        templatecatalog.VariableCollection,
 				Description: "Reference numbers for the shipment: pro number, BOL, customer PO.",
-				Fields:      keyValueFields(),
+				Fields:      templatecatalog.KeyValueFields(),
 			},
 			{
 				Path:        "CommodityRows",
-				Type:        VariableCollection,
+				Type:        templatecatalog.VariableCollection,
 				Description: "The freight billed, one row per commodity.",
-				Fields: []VariableDefinition{
-					{Path: "Quantity", Type: VariableString, Description: "Piece count."},
+				Fields: []templatecatalog.VariableDefinition{
+					{
+						Path:        "Quantity",
+						Type:        templatecatalog.VariableString,
+						Description: "Piece count.",
+					},
 					{
 						Path:        "Type",
-						Type:        VariableString,
+						Type:        templatecatalog.VariableString,
 						Description: "Packaging, such as Pallets.",
 					},
 					{
 						Path:        "DescriptionLines",
-						Type:        VariableStringList,
+						Type:        templatecatalog.VariableStringList,
 						Description: "Commodity description, one entry per line.",
 					},
-					{Path: "Weight", Type: VariableString, Description: "Billed weight."},
+					{
+						Path:        "Weight",
+						Type:        templatecatalog.VariableString,
+						Description: "Billed weight.",
+					},
 					{
 						Path:        "NMFC",
-						Type:        VariableString,
+						Type:        templatecatalog.VariableString,
 						Description: "NMFC freight classification code.",
 					},
-					{Path: "Class", Type: VariableString, Description: "Freight class."},
+					{
+						Path:        "Class",
+						Type:        templatecatalog.VariableString,
+						Description: "Freight class.",
+					},
 				},
 			},
 			{
 				Path:        "ChargeRows",
-				Type:        VariableCollection,
+				Type:        templatecatalog.VariableCollection,
 				Required:    true,
 				Description: "The billed lines. Required: a customer cannot verify a total with no lines behind it.",
-				Fields: []VariableDefinition{
-					{Path: "Line", Type: VariableString, Description: "Line number."},
+				Fields: []templatecatalog.VariableDefinition{
+					{
+						Path:        "Line",
+						Type:        templatecatalog.VariableString,
+						Description: "Line number.",
+					},
 					{
 						Path:        "Description",
-						Type:        VariableString,
+						Type:        templatecatalog.VariableString,
 						Description: "What is being charged.",
 					},
 					{
 						Path:        "Quantity",
-						Type:        VariableString,
+						Type:        templatecatalog.VariableString,
 						Description: "Billed quantity and unit.",
 					},
-					{Path: "UnitPrice", Type: VariableString, Description: "Rate per unit."},
+					{
+						Path:        "UnitPrice",
+						Type:        templatecatalog.VariableString,
+						Description: "Rate per unit.",
+					},
 					{
 						Path:        "Amount",
-						Type:        VariableString,
+						Type:        templatecatalog.VariableString,
 						Description: "Extended amount for the line.",
 					},
 					{
 						Path:        "ProNumber",
-						Type:        VariableString,
+						Type:        templatecatalog.VariableString,
 						Description: "Pro number of the shipment this charge belongs to. Blank when the invoice bills only one shipment.",
 					},
 				},
 			},
 			{
 				Path:        "ShipmentRows",
-				Type:        VariableCollection,
+				Type:        templatecatalog.VariableCollection,
 				Description: "The shipments on a consolidated invoice, one row each. Empty when the invoice bills a single shipment, where Shipper, Consignee and CommodityRows describe the freight instead.",
-				Fields: []VariableDefinition{
-					{Path: "ProNumber", Type: VariableString, Description: "Pro number."},
-					{Path: "BOL", Type: VariableString, Description: "Bill of lading number."},
+				Fields: []templatecatalog.VariableDefinition{
+					{
+						Path:        "ProNumber",
+						Type:        templatecatalog.VariableString,
+						Description: "Pro number.",
+					},
+					{
+						Path:        "BOL",
+						Type:        templatecatalog.VariableString,
+						Description: "Bill of lading number.",
+					},
 					{
 						Path:        "PONumber",
-						Type:        VariableString,
+						Type:        templatecatalog.VariableString,
 						Description: "Customer purchase order number.",
 					},
 					{
 						Path:        "ServiceDate",
-						Type:        VariableString,
+						Type:        templatecatalog.VariableString,
 						Description: "Delivery date.",
 					},
 					{
 						Path:        "Origin",
-						Type:        VariableString,
+						Type:        templatecatalog.VariableString,
 						Description: "City and state the freight was picked up in.",
 					},
 					{
 						Path:        "Destination",
-						Type:        VariableString,
+						Type:        templatecatalog.VariableString,
 						Description: "City and state the freight was delivered to.",
 					},
 					{
 						Path:        "Amount",
-						Type:        VariableString,
+						Type:        templatecatalog.VariableString,
 						Description: "What this shipment contributes to the invoice total.",
 					},
 				},
 			},
 			{
 				Path:        "ShipmentCount",
-				Type:        VariableString,
+				Type:        templatecatalog.VariableString,
 				Description: "How many shipments this invoice bills. Blank unless there is more than one.",
 			},
 			{
 				Path:        "Period",
-				Type:        VariableString,
+				Type:        templatecatalog.VariableString,
 				Description: "The billing period a consolidated invoice covers. Blank on an invoice that is not billed on a cycle.",
 			},
 			{
 				Path:        "Terms",
-				Type:        VariableStringList,
+				Type:        templatecatalog.VariableStringList,
 				Description: "Terms and conditions, one entry per paragraph.",
 			},
 			{
 				Path:        "InvoiceTerms",
-				Type:        VariableStringList,
+				Type:        templatecatalog.VariableStringList,
 				Description: "Additional terms from the organization's billing settings.",
 			},
 			{
 				Path:        "Notes",
-				Type:        VariableStringList,
+				Type:        templatecatalog.VariableStringList,
 				Description: "The invoice memo, one entry per paragraph.",
 			},
 			{
 				Path:        "Attachments",
-				Type:        VariableStringList,
+				Type:        templatecatalog.VariableStringList,
 				Description: "Filenames of the documents accompanying this invoice.",
 			},
-			noticeOfAssignmentVariable(),
+			templatecatalog.NoticeOfAssignmentVariable(),
 		},
 	})
 
-	_ = r.Register(&KindDefinition{
-		Kind:           KindInvoiceEmail,
-		DisplayName:    "Invoice Delivery Email",
-		Description:    "The message a customer receives with their invoice attached.",
-		Category:       "Billing",
-		Channels:       []Channel{ChannelSubject, ChannelEmailHTML, ChannelEmailText},
+	_ = r.Register(&templatecatalog.KindDefinition{
+		Kind:        documenttemplate.KindInvoiceEmail,
+		DisplayName: "Invoice Delivery Email",
+		Description: "The message a customer receives with their invoice attached.",
+		Category:    "Billing",
+		Channels: []documenttemplate.Channel{
+			documenttemplate.ChannelSubject,
+			documenttemplate.ChannelEmailHTML,
+			documenttemplate.ChannelEmailText,
+		},
 		CustomerScoped: true,
-		sampleFactory:  newInvoiceEmailSampleContext,
-		Variables: []VariableDefinition{
-			invoiceNumberVariable(
+		SampleFactory:  newInvoiceEmailSampleContext,
+		Variables: []templatecatalog.VariableDefinition{
+			templatecatalog.InvoiceNumberVariable(
 				true,
 				"The invoice number. A delivery email that does not name the invoice forces the recipient to open the attachment to find out what arrived.",
 			),
 			invoiceDateVariable(),
 			dueDateVariable(),
 			paymentTermVariable(),
-			{Path: "Total", Type: VariableMoney, Description: "The invoice total, with currency."},
+			{
+				Path:        "Total",
+				Type:        templatecatalog.VariableMoney,
+				Description: "The invoice total, with currency.",
+			},
 			currencyCodeVariable(),
 			{
 				Path:        "Memo",
-				Type:        VariableString,
+				Type:        templatecatalog.VariableString,
 				Description: "The invoice memo, if one was entered.",
 			},
-			customerNameVariable(false, "The billed customer's name."),
+			templatecatalog.CustomerNameVariable(false, "The billed customer's name."),
 			{
 				Path:        "CustomerCode",
-				Type:        VariableString,
+				Type:        templatecatalog.VariableString,
 				Description: "The billed customer's code.",
 			},
-			companyNameVariable(),
-			proNumberVariable(false, "Pro number of the shipment billed."),
-			{Path: "ShipmentBOL", Type: VariableString, Description: "Bill of lading number."},
-			{Path: "ShipmentOrigin", Type: VariableString, Description: "Origin city and state."},
+			templatecatalog.CompanyNameVariable(),
+			templatecatalog.ProNumberVariable(false, "Pro number of the shipment billed."),
+			{
+				Path:        "ShipmentBOL",
+				Type:        templatecatalog.VariableString,
+				Description: "Bill of lading number.",
+			},
+			{
+				Path:        "ShipmentOrigin",
+				Type:        templatecatalog.VariableString,
+				Description: "Origin city and state.",
+			},
 			{
 				Path:        "ShipmentDestination",
-				Type:        VariableString,
+				Type:        templatecatalog.VariableString,
 				Description: "Destination city and state.",
 			},
-			{Path: "ShipmentServiceDate", Type: VariableDate, Description: "Delivery date."},
+			{
+				Path:        "ShipmentServiceDate",
+				Type:        templatecatalog.VariableDate,
+				Description: "Delivery date.",
+			},
 			{
 				Path:        "RemittanceInstructions",
-				Type:        VariableString,
+				Type:        templatecatalog.VariableString,
 				Description: "How to pay, from the invoice. For an invoice assigned to a factor, the factor's name, address and payment details.",
 			},
-			noticeOfAssignmentVariable(),
+			templatecatalog.NoticeOfAssignmentVariable(),
 			{
 				Path:        "PartLabel",
-				Type:        VariableString,
+				Type:        templatecatalog.VariableString,
 				Description: "Set to \"2 of 3\" when an invoice is too large for one message and had to be split. Blank otherwise.",
 			},
 			{
 				Path:        "AttachmentName",
-				Type:        VariableString,
+				Type:        templatecatalog.VariableString,
 				Description: "Filename of the attached invoice PDF.",
 			},
 		},
@@ -600,49 +640,53 @@ func newInvoiceShareEmailSampleContext() any {
 	return InvoiceShareEmailContext{
 		RecipientFirstName: "Dana",
 		SharedByName:       "Marcus Bell",
-		InvoiceNumber:      sampleInvoiceNo,
-		CustomerName:       sampleCustomerName,
+		InvoiceNumber:      templatecatalog.SampleInvoiceNo,
+		CustomerName:       templatecatalog.SampleCustomerName,
 		Note:               "Halstead disputed the detention line on this one. Can you check it against the gate times before we send?",
 		InvoiceURL: template.URL(
 			"https://app.example.com/billing/invoices?item=inv_01J2Y8Z3Q4R5S6T7V8W9X0Y1Z2&tab=charges",
 		),
-		CompanyName: sampleCompanyName,
+		CompanyName: templatecatalog.SampleCompanyName,
 	}
 }
 
-func (r *Registry) registerInvoiceShareKinds() {
-	_ = r.Register(&KindDefinition{
-		Kind:          KindInvoiceShareEmail,
-		DisplayName:   "Invoice Shared With a Teammate",
-		Description:   "Tells a teammate someone shared an invoice with them, with the sharer's note and a link that opens it. Not customer-scoped: the recipient is a user who can already view invoices.",
-		Category:      "Billing",
-		Channels:      []Channel{ChannelSubject, ChannelEmailHTML, ChannelEmailText},
-		sampleFactory: newInvoiceShareEmailSampleContext,
-		Variables: []VariableDefinition{
+func RegisterInvoiceShareKinds(r *templatecatalog.Registry) {
+	_ = r.Register(&templatecatalog.KindDefinition{
+		Kind:        documenttemplate.KindInvoiceShareEmail,
+		DisplayName: "Invoice Shared With a Teammate",
+		Description: "Tells a teammate someone shared an invoice with them, with the sharer's note and a link that opens it. Not customer-scoped: the recipient is a user who can already view invoices.",
+		Category:    "Billing",
+		Channels: []documenttemplate.Channel{
+			documenttemplate.ChannelSubject,
+			documenttemplate.ChannelEmailHTML,
+			documenttemplate.ChannelEmailText,
+		},
+		SampleFactory: newInvoiceShareEmailSampleContext,
+		Variables: []templatecatalog.VariableDefinition{
 			{
 				Path:        "RecipientFirstName",
-				Type:        VariableString,
+				Type:        templatecatalog.VariableString,
 				Description: "The teammate's first name.",
 			},
 			{
 				Path:        "SharedByName",
-				Type:        VariableString,
+				Type:        templatecatalog.VariableString,
 				Description: "Who shared the invoice. Name them: a share from nobody gives the reader no reason to open it.",
 			},
-			invoiceNumberVariable(true, "The invoice that was shared."),
-			customerNameVariable(false, "The billed customer's name."),
+			templatecatalog.InvoiceNumberVariable(true, "The invoice that was shared."),
+			templatecatalog.CustomerNameVariable(false, "The billed customer's name."),
 			{
 				Path:        "Note",
-				Type:        VariableString,
+				Type:        templatecatalog.VariableString,
 				Description: "What the sharer wrote, if anything. Print it: it is the reason the invoice was shared.",
 			},
 			{
 				Path:        "InvoiceURL",
-				Type:        VariableString,
+				Type:        templatecatalog.VariableString,
 				Required:    true,
 				Description: "The link that opens the invoice, on the tab the sharer was looking at. Required: without it the message has no purpose.",
 			},
-			companyNameVariable(),
+			templatecatalog.CompanyNameVariable(),
 		},
 	})
 }
@@ -652,21 +696,37 @@ func (r *Registry) registerInvoiceShareKinds() {
 // detention notice that preceded it sees the same load rather than three unrelated
 // inventions.
 const (
-	sampleCompanyName  = "Trenova Logistics, Inc."
-	sampleCustomerName = "Halstead Grocery Group"
-	sampleProNumber    = "TRV-884120"
-	sampleBOL          = "BOL-77401"
-	sampleFacilityName = "Halstead DC 14"
-	sampleCurrency     = "USD"
-	sampleInvoiceNo    = "INV-2026-1042"
-	sampleShipperName  = "Rio Grande Produce"
-	sampleTotalAmount  = "USD 2,338.74"
-	sampleTotalsLabel  = "Total"
+	sampleBOL = "BOL-77401"
 )
 
-// sampleLogoDataURI is a 2x2 grey PNG. It exists so a preview shows an image in
-// the logo slot without reaching storage, and so a template that sizes its logo can
-// be verified at publish time.
-const sampleLogoDataURI = "data:image/png;base64," +
-	"iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAEUlEQVR4nGJiYmJgYGBgYAAAAAsAAyQ" +
-	"YbFAAAAAASUVORK5CYII="
+func invoiceDateVariable() templatecatalog.VariableDefinition {
+	return templatecatalog.VariableDefinition{
+		Path:        "InvoiceDate",
+		Type:        templatecatalog.VariableDate,
+		Description: "The date the invoice was issued, in the organization timezone.",
+	}
+}
+
+func dueDateVariable() templatecatalog.VariableDefinition {
+	return templatecatalog.VariableDefinition{
+		Path:        "DueDate",
+		Type:        templatecatalog.VariableDate,
+		Description: "When payment is due. Blank when the billing settings hide it.",
+	}
+}
+
+func paymentTermVariable() templatecatalog.VariableDefinition {
+	return templatecatalog.VariableDefinition{
+		Path:        "PaymentTerm",
+		Type:        templatecatalog.VariableString,
+		Description: "The payment term code, such as Net30.",
+	}
+}
+
+func currencyCodeVariable() templatecatalog.VariableDefinition {
+	return templatecatalog.VariableDefinition{
+		Path:        "CurrencyCode",
+		Type:        templatecatalog.VariableString,
+		Description: "The invoice currency.",
+	}
+}

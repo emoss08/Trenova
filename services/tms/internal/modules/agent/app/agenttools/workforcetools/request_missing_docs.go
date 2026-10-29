@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
-	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/portaltemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
@@ -145,8 +145,8 @@ func (t *RequestMissingDocsTool) agentEmailContext(
 	tenantInfo pagination.TenantInfo,
 	subject, body string,
 	raw map[string]any,
-) documenttemplate.AgentEmailContext {
-	out := documenttemplate.AgentEmailContext{
+) portaltemplate.AgentEmailContext {
+	out := portaltemplate.AgentEmailContext{
 		AgentSubject: subject,
 		AgentBody:    body,
 	}
@@ -168,7 +168,7 @@ func (t *RequestMissingDocsTool) agentEmailContext(
 func (t *RequestMissingDocsTool) applyBranding(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	out *documenttemplate.AgentEmailContext,
+	out *portaltemplate.AgentEmailContext,
 ) {
 	customerupdateservice.Brand(ctx, t.orgRepo, t.inliner, tenantInfo, out)
 }

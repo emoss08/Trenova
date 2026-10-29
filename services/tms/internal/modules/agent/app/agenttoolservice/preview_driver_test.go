@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/operationstools"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
-	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/notificationtemplate"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/drivernotificationservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
@@ -33,7 +33,7 @@ func renderedDriverNotice(
 	req *drivernotificationservice.DriverNotification,
 	reachable bool,
 ) *notificationports.DriverNotificationPreview {
-	data, _ := req.Context.(documenttemplate.DriverNotificationContext)
+	data, _ := req.Context.(notificationtemplate.DriverNotificationContext)
 
 	return &notificationports.DriverNotificationPreview{
 		WorkerID:   req.WorkerID,

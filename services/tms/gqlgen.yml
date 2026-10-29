@@ -4491,7 +4491,7 @@ models:
       - github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate.Channel
   DocumentTemplateVariableType:
     model:
-      - github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate.VariableType
+      - github.com/emoss08/trenova/internal/modules/documents/domain/templatecatalog.VariableType
   DocumentTemplateSource:
     model:
       - github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate.TemplateSource

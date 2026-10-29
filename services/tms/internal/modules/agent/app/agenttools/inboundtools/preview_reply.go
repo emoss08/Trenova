@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/portaltemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/app/customerupdateservice"
@@ -27,7 +28,7 @@ import (
 // letterhead.
 type composedReply struct {
 	reply     *inboundReply
-	data      documenttemplate.AgentEmailContext
+	data      portaltemplate.AgentEmailContext
 	send      *emailports.SendEmailRequest
 	versionID *pulid.ID
 }
@@ -46,7 +47,7 @@ func (t *ReplyToInboundMessageTool) compose(
 	}
 
 	tenant := toolparams.TenantFrom(*params)
-	data := documenttemplate.AgentEmailContext{
+	data := portaltemplate.AgentEmailContext{
 		AgentSubject: reply.subject,
 		AgentBody:    reply.body,
 	}

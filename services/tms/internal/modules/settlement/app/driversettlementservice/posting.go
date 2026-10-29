@@ -7,7 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/accounting/app/journalposting"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/notificationtemplate"
 	"github.com/emoss08/trenova/internal/modules/identity/app/exchangeratestamp"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -83,7 +83,7 @@ func (s *Service) Post(
 			WorkerID:   updated.WorkerID,
 			EventType:  "dash.settlement_posted",
 			Priority:   notification.PriorityHigh,
-			Context: documenttemplate.SettlementNotificationContext{
+			Context: notificationtemplate.SettlementNotificationContext{
 				SettlementNumber: updated.SettlementNumber,
 				Amount: money.FormatMinor(
 					updated.NetPayMinor, updated.CurrencyCode,

@@ -7,6 +7,7 @@ import (
 	"net/url"
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/tendertemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmenteventservice"
@@ -316,8 +317,8 @@ func (s *Service) buildOfferEmailContext(
 	offer *tender.TenderOffer,
 	token string,
 	expiresAt int64,
-) (documenttemplate.TenderOfferEmailContext, error) {
-	data := documenttemplate.TenderOfferEmailContext{
+) (tendertemplate.TenderOfferEmailContext, error) {
+	data := tendertemplate.TenderOfferEmailContext{
 		CarrierName:     carrierNameOf(offer),
 		CompanyName:     s.companyName(ctx, tenantInfo),
 		RateAmount:      "$" + offer.Rate.StringFixed(2),

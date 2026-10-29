@@ -11,6 +11,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceshare"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/invoicetemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/notificationtemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
@@ -112,7 +114,7 @@ func (s *Service) notify(
 	rendered, err := s.templates.RenderMessage(ctx, &documenttemplateports.RenderMessageRequest{
 		TenantInfo: tenantInfo,
 		Kind:       documenttemplate.KindNotificationInvoiceShared,
-		Data: &documenttemplate.InvoiceShareNotificationContext{
+		Data: &notificationtemplate.InvoiceShareNotificationContext{
 			SharedByName:  p.sharer.Name,
 			InvoiceNumber: p.invoice.Number,
 			CustomerName:  p.invoice.BillToName,
@@ -211,7 +213,7 @@ func (s *Service) renderShareEmail(
 	return s.templates.RenderMessage(ctx, &documenttemplateports.RenderMessageRequest{
 		TenantInfo: p.tenantInfo,
 		Kind:       documenttemplate.KindInvoiceShareEmail,
-		Data: &documenttemplate.InvoiceShareEmailContext{
+		Data: &invoicetemplate.InvoiceShareEmailContext{
 			RecipientFirstName: stringutils.FirstName(p.recipient.Name),
 			SharedByName:       p.delivery.sharer.Name,
 			InvoiceNumber:      p.delivery.invoice.Number,

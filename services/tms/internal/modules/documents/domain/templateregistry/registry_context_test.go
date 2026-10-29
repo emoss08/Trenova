@@ -1,4 +1,4 @@
-package documenttemplate
+package templateregistry
 
 import (
 	"fmt"
@@ -8,6 +8,9 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/invoicetemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/templatecatalog"
 	"github.com/emoss08/trenova/pkg/templateengine"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -116,7 +119,7 @@ func TestCatalogMatchesSampleStruct(t *testing.T) {
 // is meaningless at the root — so each collection ancestor contributes a range and
 // each object ancestor a with. Rendering the result exercises the whole catalog in
 // one pass.
-func probeSource(vars []VariableDefinition) string {
+func probeSource(vars []templatecatalog.VariableDefinition) string {
 	var b strings.Builder
 
 	for i := range vars {
@@ -124,13 +127,13 @@ func probeSource(vars []VariableDefinition) string {
 		ref := "." + v.Path
 
 		switch {
-		case v.Type == VariableStringList:
+		case v.Type == templatecatalog.VariableStringList:
 			fmt.Fprintf(&b, "{{ range %s }}{{ . }}{{ end }}", ref)
 
-		case v.Type == VariableCollection:
+		case v.Type == templatecatalog.VariableCollection:
 			fmt.Fprintf(&b, "{{ range %s }}%s{{ end }}", ref, probeSource(v.Fields))
 
-		case v.Type == VariableObject:
+		case v.Type == templatecatalog.VariableObject:
 			fmt.Fprintf(&b, "{{ with %s }}%s{{ end }}", ref, probeSource(v.Fields))
 
 		default:
@@ -214,7 +217,7 @@ func TestRequiredPathsAreDeclared(t *testing.T) {
 			// protects against for a document — publishing something empty — is
 			// covered for a notification by the version gate, which refuses a
 			// version with no content in any channel.
-			if def.Category != notificationCategory {
+			if def.Category != "Notifications" {
 				assert.NotEmpty(t, required,
 					"%s declares no required paths; a customer-facing template with no "+
 						"mandatory field can be published empty", def.Kind)
@@ -239,7 +242,11 @@ func TestEveryVariableHasADescription(t *testing.T) {
 	}
 }
 
-func assertDescriptions(t *testing.T, kind, prefix string, vars []VariableDefinition) {
+func assertDescriptions(
+	t *testing.T,
+	kind, prefix string,
+	vars []templatecatalog.VariableDefinition,
+) {
 	t.Helper()
 
 	for i := range vars {
@@ -261,12 +268,14 @@ func assertDescriptions(t *testing.T, kind, prefix string, vars []VariableDefini
 // nested structs and slice elements, since a probe that only replaced top-level
 // strings would pass templates that interpolate a nested field into a URL.
 func TestHostileProbeContextPoisonsEveryString(t *testing.T) {
+	const hostileProbeValue = `x";}</style><a:1 'y`
+
 	registry := NewRegistry()
 
-	probe, err := registry.HostileProbeContext(KindInvoicePDF)
+	probe, err := registry.HostileProbeContext(documenttemplate.KindInvoicePDF)
 	require.NoError(t, err)
 
-	invoice, ok := probe.(InvoiceContext)
+	invoice, ok := probe.(invoicetemplate.InvoiceContext)
 	require.True(t, ok)
 
 	assert.Equal(t, hostileProbeValue, invoice.InvoiceNumber, "top-level string")
@@ -287,13 +296,13 @@ func TestHostileProbeContextPoisonsEveryString(t *testing.T) {
 func TestHostileProbeLeavesSampleUntouched(t *testing.T) {
 	registry := NewRegistry()
 
-	_, err := registry.HostileProbeContext(KindInvoicePDF)
+	_, err := registry.HostileProbeContext(documenttemplate.KindInvoicePDF)
 	require.NoError(t, err)
 
-	sample, err := registry.SampleContext(KindInvoicePDF)
+	sample, err := registry.SampleContext(documenttemplate.KindInvoicePDF)
 	require.NoError(t, err)
 
-	invoice, ok := sample.(InvoiceContext)
+	invoice, ok := sample.(invoicetemplate.InvoiceContext)
 	require.True(t, ok)
 	assert.Equal(t, "INV-2026-1042", invoice.InvoiceNumber,
 		"the probe must not mutate the shared sample")

@@ -15,8 +15,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/documents/app/inboundmessageservice"
-	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/portaltemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -662,7 +662,7 @@ func (t *ReplyToInboundMessageTool) describeMatch(
 	ctx context.Context,
 	message *inboundmessage.InboundMessage,
 	tenant pagination.TenantInfo,
-	out *documenttemplate.AgentEmailContext,
+	out *portaltemplate.AgentEmailContext,
 ) {
 	if !message.MatchedCustomerID.IsNil() && t.deps.customers != nil {
 		customer, err := t.deps.customers.GetByID(ctx, customerports.GetCustomerByIDRequest{

@@ -4,8 +4,10 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/documents/domain/detentiontemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/generateddocument"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
@@ -85,16 +87,20 @@ func newDisputeRig(t *testing.T) *disputeRig {
 
 	organizations := tenantportsmock.NewMockOrganizationRepository(t)
 	organizations.EXPECT().GetByID(mock.Anything, mock.Anything).
-		Return(&tenant.Organization{Name: "Trenova Freight", Timezone: "America/Chicago"}, nil).Maybe()
+		Return(&tenant.Organization{Name: "Trenova Freight", Timezone: "America/Chicago"}, nil).
+		Maybe()
 
 	rig := &disputeRig{
 		occurrence: occurrence,
-		tenant:     pagination.TenantInfo{OrgID: occurrence.OrganizationID, BuID: occurrence.BusinessUnitID},
-		notices:    &listedNotices{},
-		documents:  documentportsmock.NewMockDocumentRepository(t),
-		store:      &storeSpy{},
-		templates:  documenttemplateportsmock.NewMockDocumentTemplateResolver(t),
-		types:      documenttypeportsmock.NewMockDocumentTypeRepository(t),
+		tenant: pagination.TenantInfo{
+			OrgID: occurrence.OrganizationID,
+			BuID:  occurrence.BusinessUnitID,
+		},
+		notices:   &listedNotices{},
+		documents: documentportsmock.NewMockDocumentRepository(t),
+		store:     &storeSpy{},
+		templates: documenttemplateportsmock.NewMockDocumentTemplateResolver(t),
+		types:     documenttypeportsmock.NewMockDocumentTypeRepository(t),
 	}
 	rig.svc = &Service{
 		l:                zap.NewNop(),
@@ -181,7 +187,7 @@ func TestDisputeRecordRendersTheFinalNoticeAndStoresItOnTheShipment(t *testing.T
 		Return([]*document.Document{}, nil).Once()
 	rig.templates.EXPECT().RenderDocument(mock.Anything, mock.MatchedBy(
 		func(req *documenttemplateports.RenderDocumentRequest) bool {
-			data, ok := req.Data.(*documenttemplate.DetentionNoticeContext)
+			data, ok := req.Data.(*detentiontemplate.DetentionNoticeContext)
 
 			return ok && req.Kind == documenttemplate.KindDetentionNoticePDF &&
 				data.Kind == string(detention.NoticeKindFinal) &&
@@ -200,7 +206,7 @@ func TestDisputeRecordRendersTheFinalNoticeAndStoresItOnTheShipment(t *testing.T
 		func(req *documenttemplateports.RecordGeneratedDocumentRequest) bool {
 			return req.ReferenceID == rig.occurrence.ID && req.DocumentID != nil
 		},
-	)).Return(&documenttemplate.GeneratedDocument{}, nil).Once()
+	)).Return(&generateddocument.GeneratedDocument{}, nil).Once()
 
 	record := rig.record(t)
 

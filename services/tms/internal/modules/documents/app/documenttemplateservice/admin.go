@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate/starters"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/generateddocument"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
@@ -569,7 +570,7 @@ func (s *Service) logAudit(
 func (s *Service) RecordGeneratedDocument(
 	ctx context.Context,
 	req *documenttemplateports.RecordGeneratedDocumentRequest,
-) (*documenttemplate.GeneratedDocument, error) {
+) (*generateddocument.GeneratedDocument, error) {
 	if req.Rendered == nil {
 		return nil, errortypes.NewValidationError(
 			"rendered", errortypes.ErrRequired,
@@ -577,7 +578,7 @@ func (s *Service) RecordGeneratedDocument(
 		)
 	}
 
-	entity := &documenttemplate.GeneratedDocument{
+	entity := &generateddocument.GeneratedDocument{
 		OrganizationID: req.TenantInfo.OrgID,
 		BusinessUnitID: req.TenantInfo.BuID,
 		Kind:           req.Kind,
@@ -599,7 +600,7 @@ func (s *Service) RecordGeneratedDocument(
 		// insert, which is after the validation below, so an unset value would
 		// fail a check the insert would have satisfied. Delivery is recorded
 		// separately when the document actually reaches someone.
-		DeliveryMethod: documenttemplate.DeliveryMethodNone,
+		DeliveryMethod: generateddocument.DeliveryMethodNone,
 	}
 
 	if req.UserID.IsNotNil() {

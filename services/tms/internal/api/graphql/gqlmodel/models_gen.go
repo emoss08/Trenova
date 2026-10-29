@@ -3,6 +3,7 @@
 package gqlmodel
 
 import (
+	"github.com/emoss08/trenova/internal/modules/documents/domain/templatecatalog"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelcontrol"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelenrollment"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelevent"
@@ -4365,7 +4366,7 @@ type DocumentTemplatePreviewInput struct {
 // panel present it.
 type DocumentTemplateVariable struct {
 	Path string                        `json:"path"`
-	Type documenttemplate.VariableType `json:"type"`
+	Type templatecatalog.VariableType `json:"type"`
 	// What the value means in business terms. The editor shows it verbatim, which is
 	// why the catalog carries prose rather than a type name.
 	Description string `json:"description"`

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/notificationtemplate"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerdiscipline"
@@ -76,7 +76,7 @@ func (s *Service) GiveRecognition(
 			created.WorkerID,
 			eventRecognition,
 			notification.PriorityMedium,
-			documenttemplate.DriverNotificationContext{
+			notificationtemplate.DriverNotificationContext{
 				RecognitionTitle:   created.Title,
 				RecognitionMessage: created.Message,
 			},
