@@ -45,29 +45,31 @@ import (
 type Params struct {
 	fx.In
 
-	Logger         *zap.Logger
-	DB             kernelports.Transactor
-	Connections    accountingconnectionports.AccountingConnectionRepository
-	Records        accountingsyncports.AccountingSyncRecordRepository
-	Backfills      accountingsyncports.AccountingBackfillRepository
-	MappingService accountingmappingports.AccountingMappingService
-	Sessions       accountingconnectionports.AccountingSessionProvider
-	Invoices       invoiceports.InvoiceRepository
-	Adjustments    invoiceadjustmentports.InvoiceAdjustmentRepository
-	Payments       customerpaymentports.CustomerPaymentRepository
-	Organizations  tenantports.OrganizationRepository
-	Controls       tenantports.AccountingControlRepository
-	Payables       accountingpayablesports.AccountingPayablesSource
-	Ledger         journalentryports.AccountingLedgerSource
-	References     accountingmappingports.AccountingReferenceObjectRepository
-	Rates          exchangerateports.ExchangeRateService
-	Policy         *accountingcontrolpolicyservice.Service
-	AuditService   auditports.AuditService
-	Enqueuer       *accountingsyncenqueue.Enqueuer
-	Dispatcher     accountingsyncports.AccountingSyncDispatcher `optional:"true"`
-	Publisher      agenteventports.AgentEventPublisher          `optional:"true"`
-	Watchtower     watchtowerports.WatchtowerProjector          `optional:"true"`
-	Realtime       realtimeports.RealtimeService                `optional:"true"`
+	Logger        *zap.Logger
+	DB            kernelports.Transactor
+	Connections   accountingconnectionports.AccountingConnectionRepository
+	Records       accountingsyncports.AccountingSyncRecordRepository
+	Backfills     accountingsyncports.AccountingBackfillRepository
+	Decisions     accountingmappingports.AccountingMappingDecisionService
+	Creator       accountingmappingports.AccountingReferenceCreator
+	Scorer        accountingmappingports.AccountingMappingScorer
+	Sessions      accountingconnectionports.AccountingSessionProvider
+	Invoices      invoiceports.InvoiceRepository
+	Adjustments   invoiceadjustmentports.InvoiceAdjustmentRepository
+	Payments      customerpaymentports.CustomerPaymentRepository
+	Organizations tenantports.OrganizationRepository
+	Controls      tenantports.AccountingControlRepository
+	Payables      accountingpayablesports.AccountingPayablesSource
+	Ledger        journalentryports.AccountingLedgerSource
+	References    accountingmappingports.AccountingReferenceObjectRepository
+	Rates         exchangerateports.ExchangeRateService
+	Policy        *accountingcontrolpolicyservice.Service
+	AuditService  auditports.AuditService
+	Enqueuer      *accountingsyncenqueue.Enqueuer
+	Dispatcher    accountingsyncports.AccountingSyncDispatcher `optional:"true"`
+	Publisher     agenteventports.AgentEventPublisher          `optional:"true"`
+	Watchtower    watchtowerports.WatchtowerProjector          `optional:"true"`
+	Realtime      realtimeports.RealtimeService                `optional:"true"`
 }
 
 type Service struct {
@@ -97,12 +99,12 @@ func New(p Params) *Service {
 		Realtime:      p.Realtime,
 	})
 	kit := accountingsyncpush.New(accountingsyncpush.Deps{
-		Logger:         l,
-		Records:        p.Records,
-		MappingService: p.MappingService,
-		Rates:          p.Rates,
-		Policy:         p.Policy,
-		Effects:        effects,
+		Logger:    l,
+		Records:   p.Records,
+		Decisions: p.Decisions,
+		Rates:     p.Rates,
+		Policy:    p.Policy,
+		Effects:   effects,
 	})
 	backfills := accountingsyncbackfill.New(accountingsyncbackfill.Deps{
 		Records:    p.Records,
@@ -119,7 +121,7 @@ func New(p Params) *Service {
 			Controls: p.Controls,
 			Effects:  effects,
 			Parties: accountingsyncparty.New(
-				accountingsyncparty.Deps{Kit: kit, MappingService: p.MappingService},
+				accountingsyncparty.Deps{Kit: kit, Creator: p.Creator},
 			),
 			Sales: accountingsyncsales.New(accountingsyncsales.Deps{
 				Kit:         kit,
@@ -142,13 +144,13 @@ func New(p Params) *Service {
 			Backfills:   p.Backfills,
 		}),
 		setup: accountingsyncsetup.New(accountingsyncsetup.Deps{
-			Logger:         l,
-			DB:             p.DB,
-			Connections:    p.Connections,
-			MappingService: p.MappingService,
-			Enqueuer:       p.Enqueuer,
-			Effects:        effects,
-			Backfills:      backfills,
+			Logger:      l,
+			DB:          p.DB,
+			Connections: p.Connections,
+			Scorer:      p.Scorer,
+			Enqueuer:    p.Enqueuer,
+			Effects:     effects,
+			Backfills:   backfills,
 		}),
 		actions: accountingsyncactions.New(
 			accountingsyncactions.Deps{Records: p.Records, Effects: effects},

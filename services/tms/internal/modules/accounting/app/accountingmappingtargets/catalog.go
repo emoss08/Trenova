@@ -21,6 +21,7 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
+	"go.uber.org/fx"
 )
 
 func (c *Catalog) WorkerWithState(
@@ -460,17 +461,19 @@ func (c *Catalog) payablesAccountIDs(
 	return ids, nil
 }
 
-type Deps struct {
+type Params struct {
+	fx.In
+
 	Mappings           accountingmappingports.AccountingMappingRepository
 	AccountingControls tenantports.AccountingControlRepository
 	GLAccounts         glaccountports.GLAccountRepository
-	Ledger             journalentryports.AccountingLedgerSource
+	Ledger             journalentryports.AccountingLedgerSource `optional:"true"`
 	Customers          customerports.CustomerRepository
 	Carriers           carrierports.CarrierRepository
 	Accessorials       accessorialchargeports.AccessorialChargeRepository
-	Workers            workerports.WorkerRepository
-	SettlementControls tenantports.CarrierSettlementControlRepository
-	PayCodes           driverpayports.PayCodeRepository
+	Workers            workerports.WorkerRepository                   `optional:"true"`
+	SettlementControls tenantports.CarrierSettlementControlRepository `optional:"true"`
+	PayCodes           driverpayports.PayCodeRepository               `optional:"true"`
 }
 
 type Catalog struct {
@@ -487,17 +490,17 @@ type Catalog struct {
 }
 
 //nolint:gocritic // dependency injection
-func New(d Deps) *Catalog {
+func New(p Params) *Catalog {
 	return &Catalog{
-		mappings:           d.Mappings,
-		accountingControls: d.AccountingControls,
-		glAccounts:         d.GLAccounts,
-		ledger:             d.Ledger,
-		customers:          d.Customers,
-		carriers:           d.Carriers,
-		accessorials:       d.Accessorials,
-		workers:            d.Workers,
-		settlementControls: d.SettlementControls,
-		payCodes:           d.PayCodes,
+		mappings:           p.Mappings,
+		accountingControls: p.AccountingControls,
+		glAccounts:         p.GLAccounts,
+		ledger:             p.Ledger,
+		customers:          p.Customers,
+		carriers:           p.Carriers,
+		accessorials:       p.Accessorials,
+		workers:            p.Workers,
+		settlementControls: p.SettlementControls,
+		payCodes:           p.PayCodes,
 	}
 }

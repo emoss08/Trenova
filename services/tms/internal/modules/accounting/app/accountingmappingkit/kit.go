@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingmapping"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingmappingports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -18,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
+	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
 
@@ -177,12 +179,14 @@ func (k *Kit) RequeueMappingBlocked(
 	}
 }
 
-type Deps struct {
+type Params struct {
+	fx.In
+
 	Logger      *zap.Logger
 	Audit       auditports.AuditService
-	Realtime    realtimeports.RealtimeService
-	SyncRecords accountingsyncports.AccountingSyncRecordRepository
-	Dispatcher  accountingsyncports.AccountingSyncDispatcher
+	Realtime    realtimeports.RealtimeService                      `optional:"true"`
+	SyncRecords accountingsyncports.AccountingSyncRecordRepository `optional:"true"`
+	Dispatcher  accountingsyncports.AccountingSyncDispatcher       `optional:"true"`
 }
 
 type Kit struct {
@@ -193,12 +197,14 @@ type Kit struct {
 	dispatcher  accountingsyncports.AccountingSyncDispatcher
 }
 
-func New(d Deps) *Kit {
+func New(p Params) *Kit {
 	return &Kit{
-		l:           d.Logger,
-		audit:       d.Audit,
-		realtime:    d.Realtime,
-		syncRecords: d.SyncRecords,
-		dispatcher:  d.Dispatcher,
+		l:           p.Logger.Named("service.accounting-mapping"),
+		audit:       p.Audit,
+		realtime:    p.Realtime,
+		syncRecords: p.SyncRecords,
+		dispatcher:  p.Dispatcher,
 	}
 }
+
+var _ accountingmappingports.AccountingMappingHistoryGuard = (*Kit)(nil)

@@ -26,7 +26,7 @@ func (t MappingTarget) Identity() string {
 }
 
 type Resolver struct {
-	mappings accountingmappingports.AccountingMappingService
+	mappings accountingmappingports.AccountingMappingDecisionService
 	sess     *Session
 	cache    map[string]*accountingmapping.AccountingMapping
 	used     map[pulid.ID]struct{}
@@ -34,7 +34,7 @@ type Resolver struct {
 
 func (k *Kit) NewResolver(sess *Session) *Resolver {
 	return &Resolver{
-		mappings: k.mappingService,
+		mappings: k.decisions,
 		sess:     sess,
 		cache:    make(map[string]*accountingmapping.AccountingMapping, 8),
 		used:     make(map[pulid.ID]struct{}, 8),

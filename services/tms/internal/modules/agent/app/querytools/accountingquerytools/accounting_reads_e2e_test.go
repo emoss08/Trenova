@@ -161,7 +161,7 @@ func (f *fakeAccountingSync) ListAttempts(
 }
 
 type fakeAccountingMappings struct {
-	accountingmappingports.AccountingMappingService
+	accountingmappingports.AccountingMappingReader
 
 	mu     sync.Mutex
 	list   *accountingmappingports.ListAccountingMappingsRequest
@@ -284,7 +284,7 @@ func accountingReaderWith(t *testing.T, drift *fakeAccountingDrift,
 		Resolvers: agentread.ResolverParams{
 			AccountingDriftService:     drift,
 			AccountingSyncService:      ledger,
-			AccountingMappingService:   mappings,
+			AccountingMappingReader:    mappings,
 			AccountingConnectionStatus: fakeAccountingConnections{},
 		},
 	})

@@ -1,4 +1,4 @@
-package accountingmappingservice
+package accountingmappingflows
 
 import (
 	"errors"
@@ -36,8 +36,8 @@ import (
 )
 
 type harness struct {
-	svc         *Service
-	params      Params
+	svc         services
+	params      wiring
 	tenant      pagination.TenantInfo
 	conn        *accountingconnection.AccountingConnection
 	connections *fakeConnections
@@ -175,7 +175,7 @@ func newHarness(t *testing.T) *harness {
 	carriers.EXPECT().GetByIDs(mock.Anything, mock.Anything).
 		Return([]*carrier.Carrier{carr}, nil).Maybe()
 
-	h.params = Params{
+	h.params = wiring{
 		Logger:             zap.NewNop(),
 		DB:                 dbtest.NopConnection{},
 		Connections:        h.connections,
@@ -191,18 +191,18 @@ func newHarness(t *testing.T) *harness {
 		Completion:         h.completion,
 		Refresher:          h.refresher,
 	}
-	h.svc = New(h.params)
+	h.svc = wire(&h.params)
 	return h
 }
 
-func (h *harness) with(edit func(*Params)) {
+func (h *harness) with(edit func(*wiring)) {
 	edit(&h.params)
-	h.svc = New(h.params)
+	h.svc = wire(&h.params)
 }
 
 func (h *harness) rescore(t *testing.T) *accountingmappingports.AccountingRescoreResult {
 	t.Helper()
-	result, err := h.svc.Rescore(t.Context(), h.tenant, h.conn.ID)
+	result, err := h.svc.scoring.Rescore(t.Context(), h.tenant, h.conn.ID)
 	require.NoError(t, err)
 	return result
 }
@@ -252,12 +252,15 @@ func TestConfirmRefusesAProposalThatChangedSinceItWasShown(t *testing.T) {
 
 	cus := h.object(t, accountingsync.TargetCustomer, h.customerID)
 	require.Equal(t, "50", cus.ExternalID)
-	_, err := h.svc.Confirm(t.Context(), &accountingmappingports.ConfirmAccountingMappingsRequest{
-		TenantInfo: h.tenant,
-		Items: []accountingmappingports.AccountingMappingConfirmation{
-			{ID: cus.ID, ExternalID: "49"},
+	_, err := h.svc.decisions.Confirm(
+		t.Context(),
+		&accountingmappingports.ConfirmAccountingMappingsRequest{
+			TenantInfo: h.tenant,
+			Items: []accountingmappingports.AccountingMappingConfirmation{
+				{ID: cus.ID, ExternalID: "49"},
+			},
 		},
-	})
+	)
 	require.Error(t, err)
 	assert.True(t, errortypes.IsBusinessError(err))
 	assert.Equal(
@@ -315,7 +318,7 @@ func TestRescoreIsIdempotentAndNeverTouchesConfirmedRows(t *testing.T) {
 	h.rescore(t)
 
 	ar := h.keyed(t, accountingsync.TargetAccountRole, accountingsync.AccountRoleAR)
-	confirmed, err := h.svc.Confirm(
+	confirmed, err := h.svc.decisions.Confirm(
 		t.Context(),
 		&accountingmappingports.ConfirmAccountingMappingsRequest{
 			TenantInfo: h.tenant,
@@ -348,7 +351,7 @@ func TestRejectedCandidateIsNotProposedAgain(t *testing.T) {
 	h.rescore(t)
 
 	cus := h.object(t, accountingsync.TargetCustomer, h.customerID)
-	rejected, err := h.svc.Reject(
+	rejected, err := h.svc.decisions.Reject(
 		t.Context(),
 		&accountingmappingports.AccountingMappingActionRequest{
 			TenantInfo: h.tenant,
@@ -374,10 +377,13 @@ func TestConfirmRejectsRowsWithoutAProposal(t *testing.T) {
 	ap := h.keyed(t, accountingsync.TargetAccountRole, accountingsync.AccountRoleAP)
 	require.Equal(t, accountingmapping.MappingStateUnmatched, ap.State)
 
-	_, err := h.svc.Confirm(t.Context(), &accountingmappingports.ConfirmAccountingMappingsRequest{
-		TenantInfo: h.tenant,
-		Items:      shown(ap),
-	})
+	_, err := h.svc.decisions.Confirm(
+		t.Context(),
+		&accountingmappingports.ConfirmAccountingMappingsRequest{
+			TenantInfo: h.tenant,
+			Items:      shown(ap),
+		},
+	)
 	require.Error(t, err)
 	assert.True(t, errortypes.IsBusinessError(err))
 }
@@ -394,10 +400,13 @@ func TestConfirmRefusesAReferenceThatWentInactive(t *testing.T) {
 		}
 	}
 
-	_, err := h.svc.Confirm(t.Context(), &accountingmappingports.ConfirmAccountingMappingsRequest{
-		TenantInfo: h.tenant,
-		Items:      shown(cus),
-	})
+	_, err := h.svc.decisions.Confirm(
+		t.Context(),
+		&accountingmappingports.ConfirmAccountingMappingsRequest{
+			TenantInfo: h.tenant,
+			Items:      shown(cus),
+		},
+	)
 	require.Error(t, err)
 	assert.True(t, errortypes.IsError(err))
 	assert.Equal(
@@ -420,10 +429,13 @@ func TestConfirmLimitsTheBatch(t *testing.T) {
 			ID: pulid.MustNew("acctm_"),
 		}
 	}
-	_, err := h.svc.Confirm(t.Context(), &accountingmappingports.ConfirmAccountingMappingsRequest{
-		TenantInfo: h.tenant,
-		Items:      items,
-	})
+	_, err := h.svc.decisions.Confirm(
+		t.Context(),
+		&accountingmappingports.ConfirmAccountingMappingsRequest{
+			TenantInfo: h.tenant,
+			Items:      items,
+		},
+	)
 	require.Error(t, err)
 	assert.True(t, errortypes.IsError(err))
 }
@@ -434,12 +446,15 @@ func TestConfirmRecordsTheActorAndAudits(t *testing.T) {
 	h.rescore(t)
 
 	ar := h.keyed(t, accountingsync.TargetAccountRole, accountingsync.AccountRoleAR)
-	_, err := h.svc.Confirm(t.Context(), &accountingmappingports.ConfirmAccountingMappingsRequest{
-		TenantInfo: h.tenant,
-		UserID:     h.tenant.UserID,
-		Items:      shown(ar),
-		Source:     accountingmapping.MappingSourceAgent,
-	})
+	_, err := h.svc.decisions.Confirm(
+		t.Context(),
+		&accountingmappingports.ConfirmAccountingMappingsRequest{
+			TenantInfo: h.tenant,
+			UserID:     h.tenant.UserID,
+			Items:      shown(ar),
+			Source:     accountingmapping.MappingSourceAgent,
+		},
+	)
 	require.NoError(t, err)
 
 	after := h.keyed(t, accountingsync.TargetAccountRole, accountingsync.AccountRoleAR)
@@ -454,7 +469,7 @@ func TestSetRefusesAnIneligibleAccount(t *testing.T) {
 	h := newHarness(t)
 	h.rescore(t)
 
-	_, err := h.svc.Set(t.Context(), &accountingmappingports.SetAccountingMappingRequest{
+	_, err := h.svc.decisions.Set(t.Context(), &accountingmappingports.SetAccountingMappingRequest{
 		TenantInfo:      h.tenant,
 		IntegrationType: integration.TypeQuickBooksOnline,
 		TargetType:      accountingsync.TargetAccountRole,
@@ -464,7 +479,7 @@ func TestSetRefusesAnIneligibleAccount(t *testing.T) {
 	require.Error(t, err)
 	assert.True(t, errortypes.IsError(err))
 
-	_, err = h.svc.Set(t.Context(), &accountingmappingports.SetAccountingMappingRequest{
+	_, err = h.svc.decisions.Set(t.Context(), &accountingmappingports.SetAccountingMappingRequest{
 		TenantInfo:      h.tenant,
 		IntegrationType: integration.TypeQuickBooksOnline,
 		TargetType:      accountingsync.TargetAccountRole,
@@ -480,16 +495,19 @@ func TestSetConfirmsAManualChoice(t *testing.T) {
 	h := newHarness(t)
 	h.rescore(t)
 
-	updated, err := h.svc.Set(t.Context(), &accountingmappingports.SetAccountingMappingRequest{
-		TenantInfo:      h.tenant,
-		UserID:          h.tenant.UserID,
-		IntegrationType: integration.TypeQuickBooksOnline,
-		TargetType:      accountingsync.TargetAccountRole,
-		TrenovaKey:      accountingsync.AccountRoleWriteOff,
-		ExternalID:      "4",
-		Source:          accountingmapping.MappingSourceModel,
-		Reason:          "The bookkeeper posts short pays here",
-	})
+	updated, err := h.svc.decisions.Set(
+		t.Context(),
+		&accountingmappingports.SetAccountingMappingRequest{
+			TenantInfo:      h.tenant,
+			UserID:          h.tenant.UserID,
+			IntegrationType: integration.TypeQuickBooksOnline,
+			TargetType:      accountingsync.TargetAccountRole,
+			TrenovaKey:      accountingsync.AccountRoleWriteOff,
+			ExternalID:      "4",
+			Source:          accountingmapping.MappingSourceModel,
+			Reason:          "The bookkeeper posts short pays here",
+		},
+	)
 	require.NoError(t, err)
 	assert.Equal(t, accountingmapping.MappingStateConfirmed, updated.State)
 	assert.Equal(
@@ -507,18 +525,24 @@ func TestClearReturnsARowToUnmatched(t *testing.T) {
 	h.rescore(t)
 
 	ap := h.keyed(t, accountingsync.TargetAccountRole, accountingsync.AccountRoleAP)
-	_, err := h.svc.Clear(t.Context(), &accountingmappingports.AccountingMappingActionRequest{
-		TenantInfo: h.tenant,
-		ID:         ap.ID,
-	})
+	_, err := h.svc.decisions.Clear(
+		t.Context(),
+		&accountingmappingports.AccountingMappingActionRequest{
+			TenantInfo: h.tenant,
+			ID:         ap.ID,
+		},
+	)
 	require.Error(t, err)
 	assert.True(t, errortypes.IsBusinessError(err))
 
 	ar := h.keyed(t, accountingsync.TargetAccountRole, accountingsync.AccountRoleAR)
-	cleared, err := h.svc.Clear(t.Context(), &accountingmappingports.AccountingMappingActionRequest{
-		TenantInfo: h.tenant,
-		ID:         ar.ID,
-	})
+	cleared, err := h.svc.decisions.Clear(
+		t.Context(),
+		&accountingmappingports.AccountingMappingActionRequest{
+			TenantInfo: h.tenant,
+			ID:         ar.ID,
+		},
+	)
 	require.NoError(t, err)
 	assert.Equal(t, accountingmapping.MappingStateUnmatched, cleared.State)
 	assert.Empty(t, cleared.ExternalID)
@@ -535,11 +559,14 @@ func confirmRequired(t *testing.T, h *harness) {
 		rows = append(rows, h.keyed(t, accountingsync.TargetAccountRole, role))
 	}
 	rows = append(rows, h.keyed(t, accountingsync.TargetLineType, "Freight"))
-	_, err := h.svc.Confirm(t.Context(), &accountingmappingports.ConfirmAccountingMappingsRequest{
-		TenantInfo: h.tenant,
-		UserID:     h.tenant.UserID,
-		Items:      shown(rows...),
-	})
+	_, err := h.svc.decisions.Confirm(
+		t.Context(),
+		&accountingmappingports.ConfirmAccountingMappingsRequest{
+			TenantInfo: h.tenant,
+			UserID:     h.tenant.UserID,
+			Items:      shown(rows...),
+		},
+	)
 	require.NoError(t, err)
 }
 
@@ -553,19 +580,19 @@ func TestCompleteSetupWaitsForTheRequiredMappings(t *testing.T) {
 		IntegrationType: integration.TypeQuickBooksOnline,
 	}
 
-	summary, err := h.svc.Summary(t.Context(), h.tenant, integration.TypeQuickBooksOnline)
+	summary, err := h.svc.reads.Summary(t.Context(), h.tenant, integration.TypeQuickBooksOnline)
 	require.NoError(t, err)
 	assert.Equal(t, 4, summary.RequiredTotal)
 	assert.Zero(t, summary.RequiredConfirmed)
 	assert.False(t, summary.CanCompleteSetup)
 
-	_, err = h.svc.CompleteSetup(t.Context(), req)
+	_, err = h.svc.decisions.CompleteSetup(t.Context(), req)
 	require.Error(t, err)
 	assert.True(t, errortypes.IsBusinessError(err))
 
 	confirmRequired(t, h)
 
-	conn, err := h.svc.CompleteSetup(t.Context(), req)
+	conn, err := h.svc.decisions.CompleteSetup(t.Context(), req)
 	require.NoError(t, err)
 	assert.Equal(t, accountingconnection.SetupStepStartDate, conn.SetupStep)
 	assert.Equal(
@@ -574,7 +601,7 @@ func TestCompleteSetupWaitsForTheRequiredMappings(t *testing.T) {
 		h.connections.rows[h.conn.ID].SetupStep,
 	)
 
-	again, err := h.svc.CompleteSetup(t.Context(), req)
+	again, err := h.svc.decisions.CompleteSetup(t.Context(), req)
 	require.NoError(t, err)
 	assert.Equal(t, conn.Version, again.Version, "finishing twice writes nothing")
 }
@@ -584,12 +611,12 @@ func TestSummaryWithoutAConnection(t *testing.T) {
 	h := newHarness(t)
 	delete(h.connections.rows, h.conn.ID)
 
-	summary, err := h.svc.Summary(t.Context(), h.tenant, integration.TypeQuickBooksOnline)
+	summary, err := h.svc.reads.Summary(t.Context(), h.tenant, integration.TypeQuickBooksOnline)
 	require.NoError(t, err)
 	assert.Nil(t, summary.Connection)
 	assert.False(t, summary.CanCompleteSetup)
 
-	_, err = h.svc.Summary(t.Context(), h.tenant, integration.Type("Samsara"))
+	_, err = h.svc.reads.Summary(t.Context(), h.tenant, integration.Type("Samsara"))
 	require.Error(t, err)
 	assert.True(t, errortypes.IsError(err))
 }
@@ -598,18 +625,24 @@ func TestRequestRefreshStartsTheWorkflow(t *testing.T) {
 	t.Parallel()
 	h := newHarness(t)
 
-	_, err := h.svc.RequestRefresh(t.Context(), &accountingmappingports.AccountingSetupRequest{
-		TenantInfo:      h.tenant,
-		IntegrationType: integration.TypeQuickBooksOnline,
-	})
+	_, err := h.svc.decisions.RequestRefresh(
+		t.Context(),
+		&accountingmappingports.AccountingSetupRequest{
+			TenantInfo:      h.tenant,
+			IntegrationType: integration.TypeQuickBooksOnline,
+		},
+	)
 	require.NoError(t, err)
 	assert.Equal(t, []pulid.ID{h.conn.ID}, h.refresher.requested)
 
 	h.connections.rows[h.conn.ID].Status = accountingconnection.ConnectionStatusDisconnected
-	_, err = h.svc.RequestRefresh(t.Context(), &accountingmappingports.AccountingSetupRequest{
-		TenantInfo:      h.tenant,
-		IntegrationType: integration.TypeQuickBooksOnline,
-	})
+	_, err = h.svc.decisions.RequestRefresh(
+		t.Context(),
+		&accountingmappingports.AccountingSetupRequest{
+			TenantInfo:      h.tenant,
+			IntegrationType: integration.TypeQuickBooksOnline,
+		},
+	)
 	require.Error(t, err)
 	assert.Len(t, h.refresher.requested, 1)
 }
@@ -627,7 +660,7 @@ func TestPullReferencePagesAndMarksUnseenRecordsRemoved(t *testing.T) {
 		},
 	}
 
-	pull, err := h.svc.PullReference(
+	pull, err := h.svc.scoring.PullReference(
 		t.Context(),
 		h.tenant,
 		h.conn.ID,
@@ -648,7 +681,7 @@ func TestPullReferenceReportsProviderFailures(t *testing.T) {
 	h := newHarness(t)
 	h.connector.listErr = errors.New("401 unauthorized")
 
-	_, err := h.svc.PullReference(
+	_, err := h.svc.scoring.PullReference(
 		t.Context(),
 		h.tenant,
 		h.conn.ID,
@@ -658,7 +691,7 @@ func TestPullReferenceReportsProviderFailures(t *testing.T) {
 	require.Len(t, h.connService.failures, 1)
 	assert.Empty(t, h.references.removed, "nothing is marked removed after a failed pull")
 
-	_, err = h.svc.PullReference(
+	_, err = h.svc.scoring.PullReference(
 		t.Context(),
 		h.tenant,
 		h.conn.ID,
@@ -671,11 +704,16 @@ func TestMarkRefreshFinishedRecordsTheOutcome(t *testing.T) {
 	t.Parallel()
 	h := newHarness(t)
 
-	require.NoError(t, h.svc.MarkRefreshStarted(t.Context(), h.tenant, h.conn.ID))
-	require.NoError(t, h.svc.MarkRefreshFinished(t.Context(), h.tenant, h.conn.ID, ""))
+	require.NoError(t, h.svc.scoring.MarkRefreshStarted(t.Context(), h.tenant, h.conn.ID))
+	require.NoError(t, h.svc.scoring.MarkRefreshFinished(t.Context(), h.tenant, h.conn.ID, ""))
 	require.NoError(
 		t,
-		h.svc.MarkRefreshFinished(t.Context(), h.tenant, h.conn.ID, strings.Repeat("x", 5000)),
+		h.svc.scoring.MarkRefreshFinished(
+			t.Context(),
+			h.tenant,
+			h.conn.ID,
+			strings.Repeat("x", 5000),
+		),
 	)
 
 	require.Len(t, h.connections.refresh, 3)
@@ -696,7 +734,7 @@ func TestCreateReferenceRecordNeedsTheRevenueAccount(t *testing.T) {
 	h.rescore(t)
 
 	charge := h.object(t, accountingsync.TargetAccessorialCharge, h.chargeID)
-	_, err := h.svc.CreateReferenceRecord(
+	_, err := h.svc.creator.CreateReferenceRecord(
 		t.Context(),
 		&accountingmappingports.CreateAccountingReferenceRecordRequest{
 			TenantInfo: h.tenant,
@@ -722,7 +760,7 @@ func TestCreateReferenceRecordCreatesAndConfirms(t *testing.T) {
 	}
 
 	charge := h.object(t, accountingsync.TargetAccessorialCharge, h.chargeID)
-	updated, err := h.svc.CreateReferenceRecord(
+	updated, err := h.svc.creator.CreateReferenceRecord(
 		t.Context(),
 		&accountingmappingports.CreateAccountingReferenceRecordRequest{
 			TenantInfo: h.tenant,
@@ -754,7 +792,7 @@ func TestCreateReferenceRecordCreatesAndConfirms(t *testing.T) {
 	require.NoError(t, err)
 	assert.Len(t, refs, 1)
 
-	_, err = h.svc.CreateReferenceRecord(
+	_, err = h.svc.creator.CreateReferenceRecord(
 		t.Context(),
 		&accountingmappingports.CreateAccountingReferenceRecordRequest{
 			TenantInfo: h.tenant,
@@ -788,7 +826,7 @@ func TestCreateReferenceRecordSuggestsAnExistingDuplicate(t *testing.T) {
 	h.connector.duplicate = true
 
 	cus := h.object(t, accountingsync.TargetCustomer, h.customerID)
-	_, err := h.svc.CreateReferenceRecord(
+	_, err := h.svc.creator.CreateReferenceRecord(
 		t.Context(),
 		&accountingmappingports.CreateAccountingReferenceRecordRequest{
 			TenantInfo: h.tenant,
@@ -812,7 +850,7 @@ func TestCreateReferenceRecordRefusesAccounts(t *testing.T) {
 	h.rescore(t)
 
 	ap := h.keyed(t, accountingsync.TargetAccountRole, accountingsync.AccountRoleAP)
-	_, err := h.svc.CreateReferenceRecord(
+	_, err := h.svc.creator.CreateReferenceRecord(
 		t.Context(),
 		&accountingmappingports.CreateAccountingReferenceRecordRequest{
 			TenantInfo: h.tenant,
@@ -845,7 +883,7 @@ func TestModelPassAcceptsOnlyListedCandidates(t *testing.T) {
 		{"target":"T7","candidate":"C1","confidence":0.99,"reason":"no such target"}
 	]}`
 
-	applied, err := h.svc.ModelPass(t.Context(), h.tenant, h.conn.ID, []pulid.ID{row.ID})
+	applied, err := h.svc.scoring.ModelPass(t.Context(), h.tenant, h.conn.ID, []pulid.ID{row.ID})
 	require.NoError(t, err)
 	assert.Zero(t, applied)
 	assert.Equal(t, accountingmapping.MappingStateUnmatched, h.mappings.get(row.ID).State)
@@ -867,7 +905,7 @@ func TestModelPassCapsConfidence(t *testing.T) {
 	h, row := modelHarness(t)
 	h.completion.reply = `{"answers":[{"target":"T1","candidate":"C2","confidence":1,"reason":"Payables is the AP account"}]}`
 
-	applied, err := h.svc.ModelPass(t.Context(), h.tenant, h.conn.ID, []pulid.ID{row.ID})
+	applied, err := h.svc.scoring.ModelPass(t.Context(), h.tenant, h.conn.ID, []pulid.ID{row.ID})
 	require.NoError(t, err)
 	assert.Equal(t, 1, applied)
 
@@ -885,12 +923,12 @@ func TestModelPassWithoutAProvider(t *testing.T) {
 	h, row := modelHarness(t)
 	h.completion.err = llmports.ErrNoProviderConfigured
 
-	applied, err := h.svc.ModelPass(t.Context(), h.tenant, h.conn.ID, []pulid.ID{row.ID})
+	applied, err := h.svc.scoring.ModelPass(t.Context(), h.tenant, h.conn.ID, []pulid.ID{row.ID})
 	require.NoError(t, err)
 	assert.Zero(t, applied)
 
 	h.completion.err = errors.New("model overloaded")
-	_, err = h.svc.ModelPass(t.Context(), h.tenant, h.conn.ID, []pulid.ID{row.ID})
+	_, err = h.svc.scoring.ModelPass(t.Context(), h.tenant, h.conn.ID, []pulid.ID{row.ID})
 	require.Error(t, err)
 }
 
@@ -899,7 +937,7 @@ func TestModelPassIgnoresAnUnreadableReply(t *testing.T) {
 	h, row := modelHarness(t)
 	h.completion.reply = "not json"
 
-	applied, err := h.svc.ModelPass(t.Context(), h.tenant, h.conn.ID, []pulid.ID{row.ID})
+	applied, err := h.svc.scoring.ModelPass(t.Context(), h.tenant, h.conn.ID, []pulid.ID{row.ID})
 	require.NoError(t, err)
 	assert.Zero(t, applied)
 }
@@ -910,10 +948,13 @@ func TestRescoreRelabelsAConfirmedMappingWithoutTouchingIt(t *testing.T) {
 	h.rescore(t)
 
 	cus := h.object(t, accountingsync.TargetCustomer, h.customerID)
-	_, err := h.svc.Confirm(t.Context(), &accountingmappingports.ConfirmAccountingMappingsRequest{
-		TenantInfo: h.tenant,
-		Items:      shown(cus),
-	})
+	_, err := h.svc.decisions.Confirm(
+		t.Context(),
+		&accountingmappingports.ConfirmAccountingMappingsRequest{
+			TenantInfo: h.tenant,
+			Items:      shown(cus),
+		},
+	)
 	require.NoError(t, err)
 	confirmed := h.object(t, accountingsync.TargetCustomer, h.customerID)
 
@@ -947,7 +988,7 @@ func TestAModelPickSurvivesTheNextRefreshAndIsNotAskedForAgain(t *testing.T) {
 
 	pick := ap.Signals.Candidates[0].ExternalID
 	h.completion.reply = `{"answers":[{"target":"T1","candidate":"C1","confidence":0.8,"reason":"Carrier bills are payables"}]}`
-	applied, err := h.svc.ModelPass(t.Context(), h.tenant, h.conn.ID, []pulid.ID{ap.ID})
+	applied, err := h.svc.scoring.ModelPass(t.Context(), h.tenant, h.conn.ID, []pulid.ID{ap.ID})
 	require.NoError(t, err)
 	require.Equal(t, 1, applied)
 
@@ -964,9 +1005,9 @@ func TestTheModelIsNotAskedAgainAboutCandidatesItDeclined(t *testing.T) {
 	h, row := modelHarness(t)
 	h.completion.reply = `{"answers":[]}`
 
-	_, err := h.svc.ModelPass(t.Context(), h.tenant, h.conn.ID, []pulid.ID{row.ID})
+	_, err := h.svc.scoring.ModelPass(t.Context(), h.tenant, h.conn.ID, []pulid.ID{row.ID})
 	require.NoError(t, err)
-	_, err = h.svc.ModelPass(t.Context(), h.tenant, h.conn.ID, []pulid.ID{row.ID})
+	_, err = h.svc.scoring.ModelPass(t.Context(), h.tenant, h.conn.ID, []pulid.ID{row.ID})
 	require.NoError(t, err)
 
 	assert.Len(t, h.completion.requests, 1)
@@ -990,7 +1031,7 @@ func TestCreateReferenceRecordStillMapsWhenARescoreRacedIt(t *testing.T) {
 		_, _ = h.mappings.ApplyScoring(t.Context(), []*accountingmapping.AccountingMapping{raced})
 	}
 
-	updated, err := h.svc.CreateReferenceRecord(
+	updated, err := h.svc.creator.CreateReferenceRecord(
 		t.Context(),
 		&accountingmappingports.CreateAccountingReferenceRecordRequest{
 			TenantInfo: h.tenant,

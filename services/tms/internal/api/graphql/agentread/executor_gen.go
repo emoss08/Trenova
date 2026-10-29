@@ -306,7 +306,9 @@ type ResolverParams struct {
 	AccountingDriftService            accountingdriftports.AccountingDriftService
 	AccountingHealth                  accountingconnectionports.AccountingHealthChecker
 	AccountingInboundService          accountinginboundports.AccountingInboundService
-	AccountingMappingService          accountingmappingports.AccountingMappingService
+	AccountingMappingDecisions        accountingmappingports.AccountingMappingDecisionService
+	AccountingMappingReader           accountingmappingports.AccountingMappingReader
+	AccountingReferenceCreator        accountingmappingports.AccountingReferenceCreator
 	AccountingSyncService             accountingsyncports.AccountingSyncService
 	AnalyticsService                  kernelports.AnalyticsService
 	AssignmentService                 assignmentports.AssignmentService
@@ -1302,7 +1304,9 @@ func NewSchema(p ResolverParams) Schema {
 		AccountingCertificates:     p.AccountingCertificates,
 		AccountingHealth:           p.AccountingHealth,
 		AccountingApps:             p.AccountingApps,
-		AccountingMappingService:   p.AccountingMappingService,
+		AccountingMappingReader:    p.AccountingMappingReader,
+		AccountingMappingDecisions: p.AccountingMappingDecisions,
+		AccountingReferenceCreator: p.AccountingReferenceCreator,
 		AccountingSync:             p.AccountingSyncService,
 		AccountingInbound:          p.AccountingInboundService,
 		AccountingDrift:            p.AccountingDriftService,

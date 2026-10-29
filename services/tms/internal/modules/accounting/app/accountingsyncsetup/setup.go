@@ -339,7 +339,7 @@ func (s *Service) ChooseMode(
 	if err != nil {
 		return nil, err
 	}
-	if _, rescoreErr := s.mappingService.Rescore(
+	if _, rescoreErr := s.scorer.Rescore(
 		ctx,
 		req.TenantInfo,
 		updated.ID,
@@ -416,34 +416,34 @@ func (s *Service) enqueueOpeningBalances(
 }
 
 type Deps struct {
-	Logger         *zap.Logger
-	DB             kernelports.Transactor
-	Connections    accountingconnectionports.AccountingConnectionRepository
-	MappingService accountingmappingports.AccountingMappingService
-	Enqueuer       *accountingsyncenqueue.Enqueuer
-	Effects        *accountingsynceffects.Effects
-	Backfills      *accountingsyncbackfill.Service
+	Logger      *zap.Logger
+	DB          kernelports.Transactor
+	Connections accountingconnectionports.AccountingConnectionRepository
+	Scorer      accountingmappingports.AccountingMappingScorer
+	Enqueuer    *accountingsyncenqueue.Enqueuer
+	Effects     *accountingsynceffects.Effects
+	Backfills   *accountingsyncbackfill.Service
 }
 
 type Service struct {
-	l              *zap.Logger
-	db             kernelports.Transactor
-	connections    accountingconnectionports.AccountingConnectionRepository
-	mappingService accountingmappingports.AccountingMappingService
-	enqueuer       *accountingsyncenqueue.Enqueuer
-	effects        *accountingsynceffects.Effects
-	backfills      *accountingsyncbackfill.Service
+	l           *zap.Logger
+	db          kernelports.Transactor
+	connections accountingconnectionports.AccountingConnectionRepository
+	scorer      accountingmappingports.AccountingMappingScorer
+	enqueuer    *accountingsyncenqueue.Enqueuer
+	effects     *accountingsynceffects.Effects
+	backfills   *accountingsyncbackfill.Service
 }
 
 //nolint:gocritic // dependency injection
 func New(d Deps) *Service {
 	return &Service{
-		l:              d.Logger,
-		db:             d.DB,
-		connections:    d.Connections,
-		mappingService: d.MappingService,
-		enqueuer:       d.Enqueuer,
-		effects:        d.Effects,
-		backfills:      d.Backfills,
+		l:           d.Logger,
+		db:          d.DB,
+		connections: d.Connections,
+		scorer:      d.Scorer,
+		enqueuer:    d.Enqueuer,
+		effects:     d.Effects,
+		backfills:   d.Backfills,
 	}
 }

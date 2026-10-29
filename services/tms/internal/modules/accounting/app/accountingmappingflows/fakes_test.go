@@ -1,4 +1,4 @@
-package accountingmappingservice
+package accountingmappingflows
 
 import (
 	"context"

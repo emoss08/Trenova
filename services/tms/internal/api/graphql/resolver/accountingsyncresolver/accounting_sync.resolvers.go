@@ -433,7 +433,7 @@ func (r *MutationResolver) ConfirmAccountingMappings(ctx context.Context, input 
 		return nil, err
 	}
 
-	return r.AccountingMappingService.Confirm(ctx, &accountingmappingports.ConfirmAccountingMappingsRequest{
+	return r.AccountingMappingDecisions.Confirm(ctx, &accountingmappingports.ConfirmAccountingMappingsRequest{
 		TenantInfo: resolvercore.TenantInfo(authCtx),
 		UserID:     authCtx.UserID,
 		Items:      items,
@@ -441,7 +441,7 @@ func (r *MutationResolver) ConfirmAccountingMappings(ctx context.Context, input 
 }
 
 func (r *MutationResolver) RejectAccountingMapping(ctx context.Context, id string) (*accountingmapping.AccountingMapping, error) {
-	return r.accountingMappingAction(ctx, id, r.AccountingMappingService.Reject)
+	return r.accountingMappingAction(ctx, id, r.AccountingMappingDecisions.Reject)
 }
 
 func (r *MutationResolver) SetAccountingMapping(ctx context.Context, input gqlmodel.SetAccountingMappingInput) (*accountingmapping.AccountingMapping, error) {
@@ -454,7 +454,7 @@ func (r *MutationResolver) SetAccountingMapping(ctx context.Context, input gqlmo
 		return nil, err
 	}
 
-	return r.AccountingMappingService.Set(ctx, &accountingmappingports.SetAccountingMappingRequest{
+	return r.AccountingMappingDecisions.Set(ctx, &accountingmappingports.SetAccountingMappingRequest{
 		TenantInfo: resolvercore.TenantInfo(authCtx),
 		UserID:     authCtx.UserID,
 		MappingID:  mappingID,
@@ -465,7 +465,7 @@ func (r *MutationResolver) SetAccountingMapping(ctx context.Context, input gqlmo
 }
 
 func (r *MutationResolver) ClearAccountingMapping(ctx context.Context, id string) (*accountingmapping.AccountingMapping, error) {
-	return r.accountingMappingAction(ctx, id, r.AccountingMappingService.Clear)
+	return r.accountingMappingAction(ctx, id, r.AccountingMappingDecisions.Clear)
 }
 
 func (r *MutationResolver) CreateAccountingReferenceRecord(ctx context.Context, input gqlmodel.CreateAccountingReferenceRecordInput) (*accountingmapping.AccountingMapping, error) {
@@ -478,7 +478,7 @@ func (r *MutationResolver) CreateAccountingReferenceRecord(ctx context.Context, 
 		return nil, err
 	}
 
-	return r.AccountingMappingService.CreateReferenceRecord(ctx, &accountingmappingports.CreateAccountingReferenceRecordRequest{
+	return r.AccountingReferenceCreator.CreateReferenceRecord(ctx, &accountingmappingports.CreateAccountingReferenceRecordRequest{
 		TenantInfo: resolvercore.TenantInfo(authCtx),
 		UserID:     authCtx.UserID,
 		MappingID:  mappingID,
@@ -492,7 +492,7 @@ func (r *MutationResolver) RefreshAccountingReferenceData(ctx context.Context, i
 		return nil, err
 	}
 
-	return r.AccountingMappingService.RequestRefresh(ctx, &accountingmappingports.AccountingSetupRequest{
+	return r.AccountingMappingDecisions.RequestRefresh(ctx, &accountingmappingports.AccountingSetupRequest{
 		TenantInfo:      resolvercore.TenantInfo(authCtx),
 		UserID:          authCtx.UserID,
 		IntegrationType: integrationType,
@@ -505,7 +505,7 @@ func (r *MutationResolver) CompleteAccountingSetup(ctx context.Context, integrat
 		return nil, err
 	}
 
-	return r.AccountingMappingService.CompleteSetup(ctx, &accountingmappingports.AccountingSetupRequest{
+	return r.AccountingMappingDecisions.CompleteSetup(ctx, &accountingmappingports.AccountingSetupRequest{
 		TenantInfo:      resolvercore.TenantInfo(authCtx),
 		UserID:          authCtx.UserID,
 		IntegrationType: integrationType,
@@ -823,7 +823,7 @@ func (r *QueryResolver) AccountingMappingSummary(ctx context.Context, integratio
 		return nil, err
 	}
 
-	return r.AccountingMappingService.Summary(ctx, resolvercore.TenantInfo(authCtx), integrationType)
+	return r.AccountingMappingReader.Summary(ctx, resolvercore.TenantInfo(authCtx), integrationType)
 }
 
 func (r *QueryResolver) AccountingMappings(ctx context.Context, integrationType integration.Type, first *int, after *string, filter *gqlmodel.AccountingMappingFilterInput) (*gqlmodel.AccountingMappingConnection, error) {
@@ -848,7 +848,7 @@ func (r *QueryResolver) AccountingMappings(ctx context.Context, integrationType 
 		req.Search = strings.TrimSpace(gqlscalar.StringValue(filter.Search))
 	}
 
-	result, err := r.AccountingMappingService.ListMappings(ctx, req)
+	result, err := r.AccountingMappingReader.ListMappings(ctx, req)
 	if err != nil {
 		return nil, err
 	}
@@ -1124,7 +1124,7 @@ func (r *QueryResolver) AccountingReferenceObjects(ctx context.Context, integrat
 		return nil, err
 	}
 
-	return r.AccountingMappingService.SearchReference(ctx, &accountingmappingports.SearchAccountingReferenceRequest{
+	return r.AccountingMappingReader.SearchReference(ctx, &accountingmappingports.SearchAccountingReferenceRequest{
 		TenantInfo:      resolvercore.TenantInfo(authCtx),
 		IntegrationType: integrationType,
 		Kind:            kind,

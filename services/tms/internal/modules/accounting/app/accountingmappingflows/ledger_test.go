@@ -1,4 +1,4 @@
-package accountingmappingservice
+package accountingmappingflows
 
 import (
 	"context"
@@ -77,7 +77,7 @@ func TestRescoreOffersEveryActiveGLAccountInLedgerMode(t *testing.T) {
 			Total:      2,
 			TotalExact: true,
 		}, nil).Once()
-	h.with(func(p *Params) { p.GLAccounts = accounts })
+	h.with(func(p *wiring) { p.GLAccounts = accounts })
 
 	h.rescore(t)
 
@@ -108,12 +108,12 @@ func TestRescoreOffersAnInactiveAccountThatCarriesEntries(t *testing.T) {
 			Total:      1,
 			TotalExact: true,
 		}, nil).Once()
-	h.with(func(p *Params) { p.GLAccounts = accounts })
+	h.with(func(p *wiring) { p.GLAccounts = accounts })
 	ledger := &fakeLedgerAccounts{accounts: []journalentryports.LedgerAccount{
 		{ID: cash.ID, Code: "1000", Name: "Operating cash"},
 		retired,
 	}}
-	h.with(func(p *Params) { p.Ledger = ledger })
+	h.with(func(p *wiring) { p.Ledger = ledger })
 
 	h.rescore(t)
 
@@ -156,11 +156,11 @@ func TestLedgerModeRequiresEveryAccountWithActivity(t *testing.T) {
 	ledger := &fakeLedgerAccounts{accounts: []journalentryports.LedgerAccount{
 		{ID: ar, Code: "1100"}, {ID: revenue, Code: "4000"}, {ID: cash, Code: "1000"},
 	}}
-	h.with(func(p *Params) { p.Ledger = ledger })
+	h.with(func(p *wiring) { p.Ledger = ledger })
 	controls := tenantportsmock.NewMockAccountingControlRepository(t)
 	controls.EXPECT().GetByOrgID(mock.Anything, h.tenant.OrgID).
 		Return(&accountingcontrol.AccountingControl{DefaultRevenueAccountID: revenue}, nil)
-	h.with(func(p *Params) { p.AccountingControls = controls })
+	h.with(func(p *wiring) { p.AccountingControls = controls })
 	h.seedMapping(&accountingmapping.AccountingMapping{
 		TargetType:      accountingsync.TargetGLAccount,
 		TrenovaObjectID: ar,
@@ -180,7 +180,7 @@ func TestLedgerModeRequiresEveryAccountWithActivity(t *testing.T) {
 		State:      accountingmapping.MappingStateConfirmed,
 	})
 
-	summary, err := h.svc.Summary(t.Context(), h.tenant, integration.TypeQuickBooksOnline)
+	summary, err := h.svc.reads.Summary(t.Context(), h.tenant, integration.TypeQuickBooksOnline)
 	require.NoError(t, err)
 
 	assert.Equal(t, 3, summary.RequiredTotal)
@@ -205,9 +205,9 @@ func TestLedgerRequirementCountsFromTheStartDateUnlessOpeningBalancesWereSent(t 
 	h.connections.rows[h.conn.ID].SyncStartDate = &start
 	h.connections.mu.Unlock()
 	ledger := &fakeLedgerAccounts{}
-	h.with(func(p *Params) { p.Ledger = ledger })
+	h.with(func(p *wiring) { p.Ledger = ledger })
 
-	summary, err := h.svc.Summary(t.Context(), h.tenant, integration.TypeQuickBooksOnline)
+	summary, err := h.svc.reads.Summary(t.Context(), h.tenant, integration.TypeQuickBooksOnline)
 	require.NoError(t, err)
 	assert.Equal(t, 0, summary.RequiredTotal)
 	assert.True(t, summary.CanCompleteSetup)
@@ -218,7 +218,7 @@ func TestLedgerRequirementCountsFromTheStartDateUnlessOpeningBalancesWereSent(t 
 	h.connections.mu.Lock()
 	h.connections.rows[h.conn.ID].LedgerOpeningBalancesSentAt = &start
 	h.connections.mu.Unlock()
-	_, err = h.svc.Summary(t.Context(), h.tenant, integration.TypeQuickBooksOnline)
+	_, err = h.svc.reads.Summary(t.Context(), h.tenant, integration.TypeQuickBooksOnline)
 	require.NoError(t, err)
 	require.Len(t, ledger.asked, 2)
 	assert.Nil(t, ledger.asked[1].Since, "opening balances carry every earlier account")

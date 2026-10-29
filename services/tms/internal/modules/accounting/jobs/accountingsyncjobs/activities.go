@@ -26,7 +26,7 @@ type ActivitiesParams struct {
 	Health                accountingconnectionports.AccountingHealthChecker
 	Subscriptions         accountingconnectionports.AccountingWebhookSubscriptionSyncer
 	ConnectionsRepository accountingconnectionports.AccountingConnectionRepository
-	Mappings              accountingmappingports.AccountingMappingService
+	Mappings              accountingmappingports.AccountingMappingScorer
 	Sync                  accountingsyncports.AccountingSyncService
 	Dispatcher            accountingsyncports.AccountingSyncDispatcher
 	Inbound               accountinginboundports.AccountingInboundService
@@ -41,7 +41,7 @@ type Activities struct {
 	health       accountingconnectionports.AccountingHealthChecker
 	subs         accountingconnectionports.AccountingWebhookSubscriptionSyncer
 	connRepo     accountingconnectionports.AccountingConnectionRepository
-	mappings     accountingmappingports.AccountingMappingService
+	mappings     accountingmappingports.AccountingMappingScorer
 	sync         accountingsyncports.AccountingSyncService
 	dispatcher   accountingsyncports.AccountingSyncDispatcher
 	inbound      accountinginboundports.AccountingInboundService

@@ -343,7 +343,9 @@ type Params struct {
 	AccountingCertificates            accountingconnectionports.AccountingCertificateService
 	AccountingHealth                  accountingconnectionports.AccountingHealthChecker
 	AccountingApps                    accountingconnectionports.AccountingAppService
-	AccountingMappingService          accountingmappingports.AccountingMappingService
+	AccountingMappingReader           accountingmappingports.AccountingMappingReader
+	AccountingMappingDecisions        accountingmappingports.AccountingMappingDecisionService
+	AccountingReferenceCreator        accountingmappingports.AccountingReferenceCreator
 	AccountingSyncService             accountingsyncports.AccountingSyncService
 	AccountingInboundService          accountinginboundports.AccountingInboundService
 	AccountingDriftService            accountingdriftports.AccountingDriftService
@@ -616,7 +618,9 @@ type Services struct {
 	AccountingCertificates            accountingconnectionports.AccountingCertificateService
 	AccountingHealth                  accountingconnectionports.AccountingHealthChecker
 	AccountingApps                    accountingconnectionports.AccountingAppService
-	AccountingMappingService          accountingmappingports.AccountingMappingService
+	AccountingMappingReader           accountingmappingports.AccountingMappingReader
+	AccountingMappingDecisions        accountingmappingports.AccountingMappingDecisionService
+	AccountingReferenceCreator        accountingmappingports.AccountingReferenceCreator
 	AccountingSync                    accountingsyncports.AccountingSyncService
 	AccountingInbound                 accountinginboundports.AccountingInboundService
 	AccountingDrift                   accountingdriftports.AccountingDriftService
@@ -895,7 +899,9 @@ func newServices(p *Params) *Services {
 		AccountingCertificates:            p.AccountingCertificates,
 		AccountingHealth:                  p.AccountingHealth,
 		AccountingApps:                    p.AccountingApps,
-		AccountingMappingService:          p.AccountingMappingService,
+		AccountingMappingReader:           p.AccountingMappingReader,
+		AccountingMappingDecisions:        p.AccountingMappingDecisions,
+		AccountingReferenceCreator:        p.AccountingReferenceCreator,
 		AccountingSync:                    p.AccountingSyncService,
 		AccountingInbound:                 p.AccountingInboundService,
 		AccountingDrift:                   p.AccountingDriftService,

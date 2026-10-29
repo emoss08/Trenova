@@ -27,7 +27,12 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingconnectionsubscriptions"
 	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingconnectionwebhook"
 	"github.com/emoss08/trenova/internal/modules/accounting/app/accountinginboundservice"
-	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingmappingservice"
+	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingmappingcreate"
+	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingmappingdecisions"
+	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingmappingkit"
+	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingmappingreads"
+	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingmappingscoring"
+	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingmappingtargets"
 	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingsyncenqueue"
 	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingsyncservice"
 	"github.com/emoss08/trenova/internal/modules/accounting/app/accounttypeservice"
@@ -89,8 +94,32 @@ func SharedOptions() fx.Option {
 				fx.As(fx.Self()),
 				fx.As(new(accountingconnectionports.AccountingWebhookReceiver)),
 			),
-			accountingmappingservice.New,
-			func(s *accountingmappingservice.Service) accountingmappingports.AccountingMappingService { return s },
+			accountingmappingtargets.New,
+			fx.Annotate(
+				accountingmappingkit.New,
+				fx.As(fx.Self()),
+				fx.As(new(accountingmappingports.AccountingMappingHistoryGuard)),
+			),
+			fx.Annotate(
+				accountingmappingreads.New,
+				fx.As(fx.Self()),
+				fx.As(new(accountingmappingports.AccountingMappingReader)),
+			),
+			fx.Annotate(
+				accountingmappingscoring.New,
+				fx.As(fx.Self()),
+				fx.As(new(accountingmappingports.AccountingMappingScorer)),
+			),
+			fx.Annotate(
+				accountingmappingcreate.New,
+				fx.As(fx.Self()),
+				fx.As(new(accountingmappingports.AccountingReferenceCreator)),
+			),
+			fx.Annotate(
+				accountingmappingdecisions.New,
+				fx.As(fx.Self()),
+				fx.As(new(accountingmappingports.AccountingMappingDecisionService)),
+			),
 			accountinginboundservice.New,
 			func(s *accountinginboundservice.Service) accountinginboundports.AccountingInboundService { return s },
 			glbalancerepository.New,

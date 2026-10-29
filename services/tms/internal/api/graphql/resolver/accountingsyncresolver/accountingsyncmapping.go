@@ -63,7 +63,7 @@ func (r *QueryResolver) accountingMappingDetail(
 	find *accountingmappingports.SetAccountingMappingRequest,
 	optionsQuery string,
 ) (*gqlmodel.AccountingMappingDetail, error) {
-	mapping, err := r.AccountingMappingService.FindMapping(ctx, find)
+	mapping, err := r.AccountingMappingReader.FindMapping(ctx, find)
 	if err != nil {
 		return nil, err
 	}
@@ -74,7 +74,7 @@ func (r *QueryResolver) accountingMappingDetail(
 	if optionsQuery == "" {
 		return detail, nil
 	}
-	detail.Options, err = r.AccountingMappingService.SearchReference(
+	detail.Options, err = r.AccountingMappingReader.SearchReference(
 		ctx,
 		&accountingmappingports.SearchAccountingReferenceRequest{
 			TenantInfo:      find.TenantInfo,

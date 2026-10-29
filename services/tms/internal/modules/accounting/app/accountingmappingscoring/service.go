@@ -22,6 +22,7 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/timeutils"
+	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
 
@@ -361,13 +362,15 @@ func (s *Service) MarkRefreshFinished(
 	return nil
 }
 
-type Deps struct {
+type Params struct {
+	fx.In
+
 	Logger      *zap.Logger
 	Connections accountingconnectionports.AccountingConnectionRepository
 	References  accountingmappingports.AccountingReferenceObjectRepository
 	Mappings    accountingmappingports.AccountingMappingRepository
 	Sessions    accountingconnectionports.AccountingSessionProvider
-	Completion  llmports.CompletionService
+	Completion  llmports.CompletionService `optional:"true"`
 	Kit         *accountingmappingkit.Kit
 	Catalog     *accountingmappingtargets.Catalog
 }
@@ -384,15 +387,17 @@ type Service struct {
 }
 
 //nolint:gocritic // dependency injection
-func New(d Deps) *Service {
+func New(p Params) *Service {
 	return &Service{
-		l:           d.Logger,
-		connections: d.Connections,
-		references:  d.References,
-		mappings:    d.Mappings,
-		sessions:    d.Sessions,
-		completion:  d.Completion,
-		kit:         d.Kit,
-		catalog:     d.Catalog,
+		l:           p.Logger.Named("service.accounting-mapping"),
+		connections: p.Connections,
+		references:  p.References,
+		mappings:    p.Mappings,
+		sessions:    p.Sessions,
+		completion:  p.Completion,
+		kit:         p.Kit,
+		catalog:     p.Catalog,
 	}
 }
+
+var _ accountingmappingports.AccountingMappingScorer = (*Service)(nil)

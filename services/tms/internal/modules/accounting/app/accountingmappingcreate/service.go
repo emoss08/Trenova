@@ -24,6 +24,7 @@ import (
 	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/textsim"
 	"github.com/emoss08/trenova/shared/timeutils"
+	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
 
@@ -421,7 +422,9 @@ func (s *Service) duplicateNameError(
 	).WithInternal(cause)
 }
 
-type Deps struct {
+type Params struct {
+	fx.In
+
 	Logger       *zap.Logger
 	References   accountingmappingports.AccountingReferenceObjectRepository
 	Mappings     accountingmappingports.AccountingMappingRepository
@@ -448,17 +451,19 @@ type Service struct {
 }
 
 //nolint:gocritic // dependency injection
-func New(d Deps) *Service {
+func New(p Params) *Service {
 	return &Service{
-		l:            d.Logger,
-		references:   d.References,
-		mappings:     d.Mappings,
-		sessions:     d.Sessions,
-		accessorials: d.Accessorials,
-		customers:    d.Customers,
-		carriers:     d.Carriers,
-		kit:          d.Kit,
-		catalog:      d.Catalog,
-		reads:        d.Reads,
+		l:            p.Logger.Named("service.accounting-mapping"),
+		references:   p.References,
+		mappings:     p.Mappings,
+		sessions:     p.Sessions,
+		accessorials: p.Accessorials,
+		customers:    p.Customers,
+		carriers:     p.Carriers,
+		kit:          p.Kit,
+		catalog:      p.Catalog,
+		reads:        p.Reads,
 	}
 }
+
+var _ accountingmappingports.AccountingReferenceCreator = (*Service)(nil)

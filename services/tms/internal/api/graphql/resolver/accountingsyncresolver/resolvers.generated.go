@@ -18,7 +18,9 @@ type Deps struct {
 	AccountingCertificates     accountingconnectionports.AccountingCertificateService
 	AccountingHealth           accountingconnectionports.AccountingHealthChecker
 	AccountingApps             accountingconnectionports.AccountingAppService
-	AccountingMappingService   accountingmappingports.AccountingMappingService
+	AccountingMappingReader    accountingmappingports.AccountingMappingReader
+	AccountingMappingDecisions accountingmappingports.AccountingMappingDecisionService
+	AccountingReferenceCreator accountingmappingports.AccountingReferenceCreator
 	AccountingSync             accountingsyncports.AccountingSyncService
 	AccountingInbound          accountinginboundports.AccountingInboundService
 	AccountingDrift            accountingdriftports.AccountingDriftService

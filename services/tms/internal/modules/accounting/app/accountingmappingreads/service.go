@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
+	"go.uber.org/fx"
 )
 
 func (s *Service) ledgerRequirement(
@@ -290,11 +291,13 @@ func (s *Service) GetReferenceObjects(
 	)
 }
 
-type Deps struct {
+type Params struct {
+	fx.In
+
 	Connections        accountingconnectionports.AccountingConnectionRepository
 	References         accountingmappingports.AccountingReferenceObjectRepository
 	Mappings           accountingmappingports.AccountingMappingRepository
-	Ledger             journalentryports.AccountingLedgerSource
+	Ledger             journalentryports.AccountingLedgerSource `optional:"true"`
 	AccountingControls tenantports.AccountingControlRepository
 }
 
@@ -306,12 +309,14 @@ type Service struct {
 	accountingControls tenantports.AccountingControlRepository
 }
 
-func New(d Deps) *Service {
+func New(p Params) *Service {
 	return &Service{
-		connections:        d.Connections,
-		references:         d.References,
-		mappings:           d.Mappings,
-		ledger:             d.Ledger,
-		accountingControls: d.AccountingControls,
+		connections:        p.Connections,
+		references:         p.References,
+		mappings:           p.Mappings,
+		ledger:             p.Ledger,
+		accountingControls: p.AccountingControls,
 	}
 }
+
+var _ accountingmappingports.AccountingMappingReader = (*Service)(nil)

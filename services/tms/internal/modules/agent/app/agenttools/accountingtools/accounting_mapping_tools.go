@@ -4,7 +4,6 @@ import (
 	"context"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingmapping"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
@@ -19,7 +18,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonschemautils"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
@@ -41,44 +39,6 @@ const ParamMappingID = "mappingId"
 const paramTargetType = "targetType"
 
 const toolGetAccountingMapping = "accounting_get_mapping"
-
-type accountingMappingWriter interface {
-	FindMapping(
-		ctx context.Context,
-		req *accountingmappingports.SetAccountingMappingRequest,
-	) (*accountingmapping.AccountingMapping, error)
-	GetReferenceObjects(
-		ctx context.Context,
-		req *accountingmappingports.GetAccountingReferenceObjectsRequest,
-	) ([]*accountingmapping.AccountingReferenceObject, error)
-	Set(
-		ctx context.Context,
-		req *accountingmappingports.SetAccountingMappingRequest,
-	) (*accountingmapping.AccountingMapping, error)
-	Clear(
-		ctx context.Context,
-		req *accountingmappingports.AccountingMappingActionRequest,
-	) (*accountingmapping.AccountingMapping, error)
-	CreateReferenceRecord(
-		ctx context.Context,
-		req *accountingmappingports.CreateAccountingReferenceRecordRequest,
-	) (*accountingmapping.AccountingMapping, error)
-	RequestRefresh(
-		ctx context.Context,
-		req *accountingmappingports.AccountingSetupRequest,
-	) (*accountingconnection.AccountingConnection, error)
-	Summary(
-		ctx context.Context,
-		tenantInfo pagination.TenantInfo,
-		integrationType integration.Type,
-	) (*accountingmappingports.AccountingMappingSummary, error)
-	GuardHistory(
-		ctx context.Context,
-		tenantInfo pagination.TenantInfo,
-		row *accountingmapping.AccountingMapping,
-		acknowledged bool,
-	) (int, error)
-}
 
 func SystemSchema() map[string]any {
 	return agenttoolschema.Enum(
@@ -164,7 +124,7 @@ func mappingRequestFrom(
 func findMapping(
 	ctx context.Context,
 	tool agenttoolports.AgentTool,
-	mappings accountingMappingWriter,
+	reads accountingmappingports.AccountingMappingReader,
 	params *agenttoolports.ToolExecuteParams,
 ) (*accountingmappingports.SetAccountingMappingRequest, *accountingmapping.AccountingMapping, error) {
 	if err := toolguard.GuardExecute(tool, *params); err != nil {
@@ -174,7 +134,7 @@ func findMapping(
 	if err != nil {
 		return nil, nil, err
 	}
-	row, err := mappings.FindMapping(ctx, req)
+	row, err := reads.FindMapping(ctx, req)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -210,17 +170,25 @@ func accountingMappingPolicy(
 }
 
 type SetAccountingMappingTool struct {
-	mappings accountingMappingWriter
+	reads     accountingmappingports.AccountingMappingReader
+	decisions accountingmappingports.AccountingMappingDecisionService
+	history   accountingmappingports.AccountingMappingHistoryGuard
 }
 
-func newSetAccountingMappingTool(mappings accountingMappingWriter) agenttoolports.AgentTool {
-	return &SetAccountingMappingTool{mappings: mappings}
+func newSetAccountingMappingTool(
+	reads accountingmappingports.AccountingMappingReader,
+	decisions accountingmappingports.AccountingMappingDecisionService,
+	history accountingmappingports.AccountingMappingHistoryGuard,
+) agenttoolports.AgentTool {
+	return &SetAccountingMappingTool{reads: reads, decisions: decisions, history: history}
 }
 
 func ProvideSetAccountingMappingTool(
-	mappings accountingmappingports.AccountingMappingService,
+	reads accountingmappingports.AccountingMappingReader,
+	decisions accountingmappingports.AccountingMappingDecisionService,
+	history accountingmappingports.AccountingMappingHistoryGuard,
 ) agenttoolports.AgentTool {
-	return newSetAccountingMappingTool(mappings)
+	return newSetAccountingMappingTool(reads, decisions, history)
 }
 
 func (t *SetAccountingMappingTool) Name() string { return "accounting_set_mapping" }
@@ -271,7 +239,7 @@ func (t *SetAccountingMappingTool) request(
 	ctx context.Context,
 	params *agenttoolports.ToolExecuteParams,
 ) (*accountingmappingports.SetAccountingMappingRequest, *accountingmapping.AccountingMapping, *accountingmapping.AccountingReferenceObject, error) {
-	req, row, err := findMapping(ctx, t, t.mappings, params)
+	req, row, err := findMapping(ctx, t, t.reads, params)
 	if err != nil {
 		return nil, nil, nil, err
 	}
@@ -283,7 +251,7 @@ func (t *SetAccountingMappingTool) request(
 	if err != nil {
 		return nil, nil, nil, err
 	}
-	refs, err := t.mappings.GetReferenceObjects(
+	refs, err := t.reads.GetReferenceObjects(
 		ctx,
 		&accountingmappingports.GetAccountingReferenceObjectsRequest{
 			TenantInfo:   req.TenantInfo,
@@ -327,22 +295,30 @@ func (t *SetAccountingMappingTool) Execute(
 	if err != nil {
 		return err
 	}
-	_, err = t.mappings.Set(ctx, req)
+	_, err = t.decisions.Set(ctx, req)
 	return err
 }
 
 type ClearAccountingMappingTool struct {
-	mappings accountingMappingWriter
+	reads     accountingmappingports.AccountingMappingReader
+	decisions accountingmappingports.AccountingMappingDecisionService
+	history   accountingmappingports.AccountingMappingHistoryGuard
 }
 
-func newClearAccountingMappingTool(mappings accountingMappingWriter) agenttoolports.AgentTool {
-	return &ClearAccountingMappingTool{mappings: mappings}
+func newClearAccountingMappingTool(
+	reads accountingmappingports.AccountingMappingReader,
+	decisions accountingmappingports.AccountingMappingDecisionService,
+	history accountingmappingports.AccountingMappingHistoryGuard,
+) agenttoolports.AgentTool {
+	return &ClearAccountingMappingTool{reads: reads, decisions: decisions, history: history}
 }
 
 func ProvideClearAccountingMappingTool(
-	mappings accountingmappingports.AccountingMappingService,
+	reads accountingmappingports.AccountingMappingReader,
+	decisions accountingmappingports.AccountingMappingDecisionService,
+	history accountingmappingports.AccountingMappingHistoryGuard,
 ) agenttoolports.AgentTool {
-	return newClearAccountingMappingTool(mappings)
+	return newClearAccountingMappingTool(reads, decisions, history)
 }
 
 func (t *ClearAccountingMappingTool) Name() string { return "accounting_clear_mapping" }
@@ -376,7 +352,7 @@ func (t *ClearAccountingMappingTool) mapping(
 	ctx context.Context,
 	params *agenttoolports.ToolExecuteParams,
 ) (*accountingmapping.AccountingMapping, error) {
-	_, row, err := findMapping(ctx, t, t.mappings, params)
+	_, row, err := findMapping(ctx, t, t.reads, params)
 	if err != nil {
 		return nil, err
 	}
@@ -402,7 +378,7 @@ func (t *ClearAccountingMappingTool) Execute(
 	if err != nil {
 		return err
 	}
-	_, err = t.mappings.Clear(ctx, &accountingmappingports.AccountingMappingActionRequest{
+	_, err = t.decisions.Clear(ctx, &accountingmappingports.AccountingMappingActionRequest{
 		TenantInfo: toolparams.TenantFrom(params),
 		UserID:     params.Actor.UserID,
 		ID:         row.ID,
@@ -412,19 +388,22 @@ func (t *ClearAccountingMappingTool) Execute(
 }
 
 type CreateAccountingReferenceRecordTool struct {
-	mappings accountingMappingWriter
+	reads   accountingmappingports.AccountingMappingReader
+	creator accountingmappingports.AccountingReferenceCreator
 }
 
 func newCreateAccountingReferenceRecordTool(
-	mappings accountingMappingWriter,
+	reads accountingmappingports.AccountingMappingReader,
+	creator accountingmappingports.AccountingReferenceCreator,
 ) agenttoolports.AgentTool {
-	return &CreateAccountingReferenceRecordTool{mappings: mappings}
+	return &CreateAccountingReferenceRecordTool{reads: reads, creator: creator}
 }
 
 func ProvideCreateAccountingReferenceRecordTool(
-	mappings accountingmappingports.AccountingMappingService,
+	reads accountingmappingports.AccountingMappingReader,
+	creator accountingmappingports.AccountingReferenceCreator,
 ) agenttoolports.AgentTool {
-	return newCreateAccountingReferenceRecordTool(mappings)
+	return newCreateAccountingReferenceRecordTool(reads, creator)
 }
 
 func (t *CreateAccountingReferenceRecordTool) Name() string {
@@ -469,7 +448,7 @@ func (t *CreateAccountingReferenceRecordTool) mapping(
 	ctx context.Context,
 	params *agenttoolports.ToolExecuteParams,
 ) (*accountingmapping.AccountingMapping, error) {
-	_, row, err := findMapping(ctx, t, t.mappings, params)
+	_, row, err := findMapping(ctx, t, t.reads, params)
 	if err != nil {
 		return nil, err
 	}
@@ -505,7 +484,7 @@ func (t *CreateAccountingReferenceRecordTool) Execute(
 	if err != nil {
 		return err
 	}
-	_, err = t.mappings.CreateReferenceRecord(
+	_, err = t.creator.CreateReferenceRecord(
 		ctx,
 		&accountingmappingports.CreateAccountingReferenceRecordRequest{
 			TenantInfo: toolparams.TenantFrom(params),
@@ -519,19 +498,22 @@ func (t *CreateAccountingReferenceRecordTool) Execute(
 }
 
 type RefreshAccountingReferenceDataTool struct {
-	mappings accountingMappingWriter
+	reads     accountingmappingports.AccountingMappingReader
+	decisions accountingmappingports.AccountingMappingDecisionService
 }
 
 func newRefreshAccountingReferenceDataTool(
-	mappings accountingMappingWriter,
+	reads accountingmappingports.AccountingMappingReader,
+	decisions accountingmappingports.AccountingMappingDecisionService,
 ) agenttoolports.AgentTool {
-	return &RefreshAccountingReferenceDataTool{mappings: mappings}
+	return &RefreshAccountingReferenceDataTool{reads: reads, decisions: decisions}
 }
 
 func ProvideRefreshAccountingReferenceDataTool(
-	mappings accountingmappingports.AccountingMappingService,
+	reads accountingmappingports.AccountingMappingReader,
+	decisions accountingmappingports.AccountingMappingDecisionService,
 ) agenttoolports.AgentTool {
-	return newRefreshAccountingReferenceDataTool(mappings)
+	return newRefreshAccountingReferenceDataTool(reads, decisions)
 }
 
 func (t *RefreshAccountingReferenceDataTool) Name() string {
@@ -595,7 +577,7 @@ func (t *RefreshAccountingReferenceDataTool) setup(
 		UserID:          params.Actor.UserID,
 		IntegrationType: system,
 	}
-	summary, err := t.mappings.Summary(ctx, req.TenantInfo, system)
+	summary, err := t.reads.Summary(ctx, req.TenantInfo, system)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -624,6 +606,6 @@ func (t *RefreshAccountingReferenceDataTool) Execute(
 	if err != nil {
 		return err
 	}
-	_, err = t.mappings.RequestRefresh(ctx, req)
+	_, err = t.decisions.RequestRefresh(ctx, req)
 	return err
 }

@@ -138,7 +138,7 @@ func (t *SetAccountingMappingTool) Preview(
 		ref.Label(),
 	)
 	if row.ExternalID != ref.ExternalID {
-		if _, err = t.mappings.GuardHistory(
+		if _, err = t.history.GuardHistory(
 			ctx,
 			req.TenantInfo,
 			row,
@@ -192,7 +192,7 @@ func (t *ClearAccountingMappingTool) Preview(
 		MappedLabel(row),
 		MappedLabel(row),
 	)
-	if _, err = t.mappings.GuardHistory(ctx, toolparams.TenantFrom(params), row, false); err != nil {
+	if _, err = t.history.GuardHistory(ctx, toolparams.TenantFrom(params), row, false); err != nil {
 		if changepreview.IsRefusal(err) {
 			return changepreview.WarnWouldFail(toolpreview.Build(summary), err), nil
 		}

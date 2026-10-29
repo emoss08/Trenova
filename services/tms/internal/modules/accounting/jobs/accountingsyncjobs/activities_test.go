@@ -16,7 +16,7 @@ import (
 )
 
 type fakeMappingService struct {
-	accountingmappingports.AccountingMappingService
+	accountingmappingports.AccountingMappingScorer
 	modelErr error
 	applied  int
 }

@@ -1,4 +1,4 @@
-package accountingmappingservice
+package accountingmappingflows
 
 import (
 	"testing"
@@ -16,7 +16,7 @@ func TestPlanConfirmShowsTheConfirmationWithoutSavingIt(t *testing.T) {
 	h.rescore(t)
 
 	ar := h.keyed(t, accountingsync.TargetAccountRole, accountingsync.AccountRoleAR)
-	plan, err := h.svc.PlanConfirm(
+	plan, err := h.svc.decisions.PlanConfirm(
 		t.Context(),
 		&accountingmappingports.ConfirmAccountingMappingsRequest{
 			TenantInfo: h.tenant,
@@ -42,7 +42,7 @@ func TestPlanRejectShowsTheRejectionWithoutSavingIt(t *testing.T) {
 	h.rescore(t)
 
 	cus := h.object(t, accountingsync.TargetCustomer, h.customerID)
-	change, err := h.svc.PlanReject(
+	change, err := h.svc.decisions.PlanReject(
 		t.Context(),
 		&accountingmappingports.AccountingMappingActionRequest{
 			TenantInfo: h.tenant,

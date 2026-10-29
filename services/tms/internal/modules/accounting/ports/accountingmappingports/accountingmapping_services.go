@@ -166,7 +166,7 @@ type AccountingRescoreResult struct {
 	NeedsModel []pulid.ID
 }
 
-type AccountingMappingService interface {
+type AccountingMappingReader interface {
 	Summary(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
@@ -198,10 +198,21 @@ type AccountingMappingService interface {
 		ctx context.Context,
 		req *GetAccountingReferenceObjectsRequest,
 	) ([]*accountingmapping.AccountingReferenceObject, error)
+}
+
+type AccountingMappingDecisionService interface {
+	PlanConfirm(
+		ctx context.Context,
+		req *ConfirmAccountingMappingsRequest,
+	) (*AccountingMappingConfirmPlan, error)
 	Confirm(
 		ctx context.Context,
 		req *ConfirmAccountingMappingsRequest,
 	) ([]*accountingmapping.AccountingMapping, error)
+	PlanReject(
+		ctx context.Context,
+		req *AccountingMappingActionRequest,
+	) (*AccountingMappingChange, error)
 	Reject(
 		ctx context.Context,
 		req *AccountingMappingActionRequest,
@@ -214,16 +225,6 @@ type AccountingMappingService interface {
 		ctx context.Context,
 		req *AccountingMappingActionRequest,
 	) (*accountingmapping.AccountingMapping, error)
-	GuardHistory(
-		ctx context.Context,
-		tenantInfo pagination.TenantInfo,
-		row *accountingmapping.AccountingMapping,
-		acknowledged bool,
-	) (int, error)
-	CreateReferenceRecord(
-		ctx context.Context,
-		req *CreateAccountingReferenceRecordRequest,
-	) (*accountingmapping.AccountingMapping, error)
 	RequestRefresh(
 		ctx context.Context,
 		req *AccountingSetupRequest,
@@ -232,6 +233,13 @@ type AccountingMappingService interface {
 		ctx context.Context,
 		req *AccountingSetupRequest,
 	) (*accountingconnection.AccountingConnection, error)
+	EnsureMapping(
+		ctx context.Context,
+		req *EnsureAccountingMappingRequest,
+	) (*accountingmapping.AccountingMapping, error)
+}
+
+type AccountingMappingScorer interface {
 	PullReference(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
@@ -260,9 +268,12 @@ type AccountingMappingService interface {
 		connectionID pulid.ID,
 		failure string,
 	) error
-	EnsureMapping(
+}
+
+type AccountingReferenceCreator interface {
+	CreateReferenceRecord(
 		ctx context.Context,
-		req *EnsureAccountingMappingRequest,
+		req *CreateAccountingReferenceRecordRequest,
 	) (*accountingmapping.AccountingMapping, error)
 	CustomerParty(
 		ctx context.Context,
@@ -275,4 +286,13 @@ type AccountingMappingService interface {
 		targetType accountingsync.MappingTargetType,
 		objectID pulid.ID,
 	) (*accountingconnectorports.AccountingPartyDraft, error)
+}
+
+type AccountingMappingHistoryGuard interface {
+	GuardHistory(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+		row *accountingmapping.AccountingMapping,
+		acknowledged bool,
+	) (int, error)
 }

@@ -22,6 +22,7 @@ import (
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
+	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
 
@@ -452,13 +453,15 @@ func (s *Service) EnsureMapping(
 	return s.mappings.GetByTarget(ctx, lookup)
 }
 
-type Deps struct {
+type Params struct {
+	fx.In
+
 	Logger      *zap.Logger
 	DB          kernelports.Transactor
 	Connections accountingconnectionports.AccountingConnectionRepository
 	References  accountingmappingports.AccountingReferenceObjectRepository
 	Mappings    accountingmappingports.AccountingMappingRepository
-	Refresher   accountingconnectionports.AccountingReferenceRefresher
+	Refresher   accountingconnectionports.AccountingReferenceRefresher `optional:"true"`
 	Audit       auditports.AuditService
 	Kit         *accountingmappingkit.Kit
 	Catalog     *accountingmappingtargets.Catalog
@@ -479,17 +482,19 @@ type Service struct {
 }
 
 //nolint:gocritic // dependency injection
-func New(d Deps) *Service {
+func New(p Params) *Service {
 	return &Service{
-		l:           d.Logger,
-		db:          d.DB,
-		connections: d.Connections,
-		references:  d.References,
-		mappings:    d.Mappings,
-		refresher:   d.Refresher,
-		audit:       d.Audit,
-		kit:         d.Kit,
-		catalog:     d.Catalog,
-		reads:       d.Reads,
+		l:           p.Logger.Named("service.accounting-mapping"),
+		db:          p.DB,
+		connections: p.Connections,
+		references:  p.References,
+		mappings:    p.Mappings,
+		refresher:   p.Refresher,
+		audit:       p.Audit,
+		kit:         p.Kit,
+		catalog:     p.Catalog,
+		reads:       p.Reads,
 	}
 }
+
+var _ accountingmappingports.AccountingMappingDecisionService = (*Service)(nil)

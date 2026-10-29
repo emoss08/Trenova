@@ -12,7 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/accountingdriftrepository"
 	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/accountingmappingrepository"
 	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/accountingsyncrepository"
-	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingmappingservice"
+	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingmappingreads"
 	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingsyncservice"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingdrift"
@@ -199,9 +199,8 @@ func TestConvertedLists_AccountingReadsUnderRowLevelSecurity(t *testing.T) {
 		AccountingSyncService: accountingsyncservice.New(accountingsyncservice.Params{
 			Logger: logger, Connections: repos.connections, Records: repos.records,
 		}),
-		AccountingMappingService: accountingmappingservice.New(accountingmappingservice.Params{
-			Logger: logger, Connections: repos.connections, Mappings: repos.mappings,
-			References: references,
+		AccountingMappingReader: accountingmappingreads.New(accountingmappingreads.Params{
+			Connections: repos.connections, Mappings: repos.mappings, References: references,
 		}),
 	}
 	engine := &mocks.DenyResourcesPermissionEngine{}

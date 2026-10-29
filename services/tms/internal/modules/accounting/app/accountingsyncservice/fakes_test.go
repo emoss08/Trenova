@@ -946,7 +946,9 @@ func (f fakeMappingRepo) GetByTarget(
 }
 
 type fakeMappingService struct {
-	accountingmappingports.AccountingMappingService
+	accountingmappingports.AccountingMappingDecisionService
+	accountingmappingports.AccountingReferenceCreator
+	accountingmappingports.AccountingMappingScorer
 	store *fakeMappingStore
 }
 

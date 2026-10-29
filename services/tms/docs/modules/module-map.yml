@@ -843,11 +843,11 @@ modules:
       - accountinginboundservice
       - accountingmappingcreate
       - accountingmappingdecisions
+      - accountingmappingflows
       - accountingmappingkit
       - accountingmappingreads
       - accountingmappingscore
       - accountingmappingscoring
-      - accountingmappingservice
       - accountingmappingtargets
       - accountingmappingtest
       - accountingsyncactions

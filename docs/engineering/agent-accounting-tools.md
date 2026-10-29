@@ -13,7 +13,7 @@ page explains them.
 ## The rule
 
 Every write calls the service its page calls — `manualjournalservice`,
-`journalreversalservice`, `fiscalperiodservice`, `accountingmappingservice`,
+`journalreversalservice`, `fiscalperiodservice`, `accountingmappingdecisions`,
 `accountingsyncservice`, `bankreceiptworkitemservice` — and never writes around it. Each
 service exposes the plan its write runs on (`PlanCreateDraft`, `PlanUpdateDraft`,
 `PlanSubmit`, `PlanCancel` and `PlanPost` on manual journals; `PlanCreate`, `PlanCancel` and

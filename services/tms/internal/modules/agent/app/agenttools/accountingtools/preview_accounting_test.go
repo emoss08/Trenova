@@ -79,7 +79,7 @@ func TestSetAccountingMapping_PreviewMatchesWhatIsSaved(t *testing.T) {
 	writer := &fakeMappingWriter{row: row, refs: []*accountingmapping.AccountingReferenceObject{
 		customerRef("51", "Acme Logistics LLC", true),
 	}}
-	tool := newSetAccountingMappingTool(writer).(*SetAccountingMappingTool)
+	tool := newSetAccountingMappingTool(writer, writer, writer).(*SetAccountingMappingTool)
 	params := agenttoolstest.ExecuteParams(map[string]any{
 		"system":     "QuickBooksOnline",
 		"mappingId":  row.ID.String(),
@@ -115,7 +115,7 @@ func TestClearAccountingMapping_PreviewMatchesWhatIsSaved(t *testing.T) {
 	row.State = accountingmapping.MappingStateConfirmed
 	before := *row
 	writer := &fakeMappingWriter{row: row}
-	tool := newClearAccountingMappingTool(writer).(*ClearAccountingMappingTool)
+	tool := newClearAccountingMappingTool(writer, writer, writer).(*ClearAccountingMappingTool)
 	params := agenttoolstest.ExecuteParams(map[string]any{
 		"system":    "QuickBooksOnline",
 		"mappingId": row.ID.String(),
@@ -153,8 +153,8 @@ func TestAccountingMapping_PreviewWarnsWhenDocumentsWereAlreadySent(t *testing.T
 			customerRef("51", "Acme Logistics LLC", true),
 		},
 	}
-	setTool := newSetAccountingMappingTool(writer).(*SetAccountingMappingTool)
-	clearTool := newClearAccountingMappingTool(writer).(*ClearAccountingMappingTool)
+	setTool := newSetAccountingMappingTool(writer, writer, writer).(*SetAccountingMappingTool)
+	clearTool := newClearAccountingMappingTool(writer, writer, writer).(*ClearAccountingMappingTool)
 
 	for _, preview := range []*agentpreview.ToolPreview{
 		agenttoolstest.PreviewWithoutWrites(t, &writer.guard, func() (*agentpreview.ToolPreview, error) {
@@ -187,7 +187,7 @@ func TestCreateAccountingReferenceRecord_PreviewShowsTheRecordAndTheMapping(t *t
 	row.ExternalID = ""
 	before := *row
 	writer := &fakeMappingWriter{row: row}
-	tool := newCreateAccountingReferenceRecordTool(writer).(*CreateAccountingReferenceRecordTool)
+	tool := newCreateAccountingReferenceRecordTool(writer, writer).(*CreateAccountingReferenceRecordTool)
 	params := agenttoolstest.ExecuteParams(map[string]any{
 		"system":    "QuickBooksOnline",
 		"mappingId": row.ID.String(),
@@ -226,7 +226,7 @@ func TestRefreshAccountingReferenceData_PreviewNamesTheConnection(t *testing.T) 
 			ExternalCompanyName: "Acme Freight",
 		},
 	}}
-	tool := newRefreshAccountingReferenceDataTool(writer).(*RefreshAccountingReferenceDataTool)
+	tool := newRefreshAccountingReferenceDataTool(writer, writer).(*RefreshAccountingReferenceDataTool)
 
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,

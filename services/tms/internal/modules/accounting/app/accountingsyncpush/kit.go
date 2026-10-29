@@ -15,32 +15,32 @@ import (
 const dependencyWait = time.Minute
 
 type Deps struct {
-	Logger         *zap.Logger
-	Records        accountingsyncports.AccountingSyncRecordRepository
-	MappingService accountingmappingports.AccountingMappingService
-	Rates          exchangerateports.ExchangeRateService
-	Policy         *accountingcontrolpolicyservice.Service
-	Effects        *accountingsynceffects.Effects
+	Logger    *zap.Logger
+	Records   accountingsyncports.AccountingSyncRecordRepository
+	Decisions accountingmappingports.AccountingMappingDecisionService
+	Rates     exchangerateports.ExchangeRateService
+	Policy    *accountingcontrolpolicyservice.Service
+	Effects   *accountingsynceffects.Effects
 }
 
 type Kit struct {
-	l              *zap.Logger
-	records        accountingsyncports.AccountingSyncRecordRepository
-	mappingService accountingmappingports.AccountingMappingService
-	rates          exchangerateports.ExchangeRateService
-	policy         *accountingcontrolpolicyservice.Service
-	effects        *accountingsynceffects.Effects
+	l         *zap.Logger
+	records   accountingsyncports.AccountingSyncRecordRepository
+	decisions accountingmappingports.AccountingMappingDecisionService
+	rates     exchangerateports.ExchangeRateService
+	policy    *accountingcontrolpolicyservice.Service
+	effects   *accountingsynceffects.Effects
 }
 
 //nolint:gocritic // dependency injection
 func New(d Deps) *Kit {
 	return &Kit{
-		l:              d.Logger,
-		records:        d.Records,
-		mappingService: d.MappingService,
-		rates:          d.Rates,
-		policy:         d.Policy,
-		effects:        d.Effects,
+		l:         d.Logger,
+		records:   d.Records,
+		decisions: d.Decisions,
+		rates:     d.Rates,
+		policy:    d.Policy,
+		effects:   d.Effects,
 	}
 }
 

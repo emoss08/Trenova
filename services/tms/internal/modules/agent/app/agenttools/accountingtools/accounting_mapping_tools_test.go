@@ -23,6 +23,10 @@ import (
 )
 
 type fakeMappingWriter struct {
+	accountingmappingports.AccountingMappingReader
+	accountingmappingports.AccountingMappingDecisionService
+	accountingmappingports.AccountingReferenceCreator
+	accountingmappingports.AccountingMappingHistoryGuard
 	row       *accountingmapping.AccountingMapping
 	refs      []*accountingmapping.AccountingReferenceObject
 	summary   *accountingmappingports.AccountingMappingSummary
@@ -187,7 +191,7 @@ func TestSetAccountingMapping_SetsAnExistingRecordAsTheAgent(t *testing.T) {
 	writer := &fakeMappingWriter{row: row, refs: []*accountingmapping.AccountingReferenceObject{
 		customerRef("51", "Acme Logistics LLC", true),
 	}}
-	tool := newSetAccountingMappingTool(writer)
+	tool := newSetAccountingMappingTool(writer, writer, writer)
 	params := agenttoolstest.ExecuteParams(map[string]any{
 		"system":     "QuickBooksOnline",
 		"mappingId":  row.ID.String(),
@@ -211,7 +215,7 @@ func TestSetAccountingMapping_RefusesAnInventedOrInactiveRecord(t *testing.T) {
 	writer := &fakeMappingWriter{row: row, refs: []*accountingmapping.AccountingReferenceObject{
 		customerRef("52", "Acme (old)", false),
 	}}
-	tool := newSetAccountingMappingTool(writer)
+	tool := newSetAccountingMappingTool(writer, writer, writer)
 
 	for _, externalID := range []string{"999", "52"} {
 		err := tool.(agenttoolports.ToolValidator).Validate(
@@ -232,7 +236,7 @@ func TestSetAccountingMapping_NamesATargetByKey(t *testing.T) {
 	t.Parallel()
 
 	writer := &fakeMappingWriter{}
-	tool := newSetAccountingMappingTool(writer)
+	tool := newSetAccountingMappingTool(writer, writer, writer)
 
 	err := tool.Execute(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
 		"system":     "QuickBooksOnline",
@@ -261,7 +265,7 @@ func TestClearAccountingMapping_RefusesAnUnmatchedMapping(t *testing.T) {
 
 	row := proposedCustomerMapping()
 	writer := &fakeMappingWriter{row: row}
-	tool := newClearAccountingMappingTool(writer)
+	tool := newClearAccountingMappingTool(writer, writer, writer)
 	params := agenttoolstest.ExecuteParams(
 		map[string]any{"system": "QuickBooksOnline", "mappingId": row.ID.String()},
 	)
@@ -282,7 +286,7 @@ func TestCreateAccountingReferenceRecord_OnlyCreatesWhatTrenovaMayCreate(t *test
 
 	row := proposedCustomerMapping()
 	writer := &fakeMappingWriter{row: row}
-	tool := newCreateAccountingReferenceRecordTool(writer)
+	tool := newCreateAccountingReferenceRecordTool(writer, writer)
 	params := agenttoolstest.ExecuteParams(map[string]any{
 		"system":    "QuickBooksOnline",
 		"mappingId": row.ID.String(),
@@ -311,7 +315,7 @@ func TestRefreshAccountingReferenceData_NeedsAConnection(t *testing.T) {
 	writer := &fakeMappingWriter{summary: &accountingmappingports.AccountingMappingSummary{
 		ProviderName: "QuickBooks Online",
 	}}
-	tool := newRefreshAccountingReferenceDataTool(writer)
+	tool := newRefreshAccountingReferenceDataTool(writer, writer)
 	params := agenttoolstest.ExecuteParams(map[string]any{"system": "QuickBooksOnline"})
 
 	require.Error(t, tool.Execute(t.Context(), params))
@@ -332,13 +336,13 @@ func TestAccountingMappingTools_AskAPersonBeforeChangingWhatPosts(t *testing.T) 
 
 	writer := &fakeMappingWriter{}
 	for _, tool := range []agenttoolports.AgentTool{
-		newSetAccountingMappingTool(writer),
-		newClearAccountingMappingTool(writer),
-		newCreateAccountingReferenceRecordTool(writer),
+		newSetAccountingMappingTool(writer, writer, writer),
+		newClearAccountingMappingTool(writer, writer, writer),
+		newCreateAccountingReferenceRecordTool(writer, writer),
 	} {
 		policy := tool.Policy()
 		assert.Equal(t, agent.TierPropose, policy.DefaultTier, tool.Name())
 		assert.Equal(t, agent.TierActWithApproval, policy.MaxTier, tool.Name())
 	}
-	assert.False(t, newCreateAccountingReferenceRecordTool(writer).Policy().Reversible)
+	assert.False(t, newCreateAccountingReferenceRecordTool(writer, writer).Policy().Reversible)
 }

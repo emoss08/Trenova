@@ -41,7 +41,7 @@ func (p *Pusher) Push(
 				res.MappingIDs(),
 			)
 		}
-		created, createErr := p.mappingService.CreateReferenceRecord(
+		created, createErr := p.creator.CreateReferenceRecord(
 			ctx,
 			&accountingmappingports.CreateAccountingReferenceRecordRequest{
 				TenantInfo: sess.Tenant,
@@ -87,7 +87,7 @@ func (p *Pusher) upsertParty(
 	externalID string,
 ) (*accountingconnectorports.AccountingDocumentResult, any, error) {
 	if record.ObjectType == accountingsync.SyncObjectCustomer {
-		party, err := p.mappingService.CustomerParty(ctx, sess.Tenant, record.ObjectID)
+		party, err := p.creator.CustomerParty(ctx, sess.Tenant, record.ObjectID)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -101,7 +101,7 @@ func (p *Pusher) upsertParty(
 		return written, doc, err
 	}
 
-	party, err := p.mappingService.VendorParty(ctx, sess.Tenant, targetType, record.ObjectID)
+	party, err := p.creator.VendorParty(ctx, sess.Tenant, targetType, record.ObjectID)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -156,15 +156,15 @@ func partyCreateError(
 }
 
 type Deps struct {
-	Kit            *accountingsyncpush.Kit
-	MappingService accountingmappingports.AccountingMappingService
+	Kit     *accountingsyncpush.Kit
+	Creator accountingmappingports.AccountingReferenceCreator
 }
 
 type Pusher struct {
-	kit            *accountingsyncpush.Kit
-	mappingService accountingmappingports.AccountingMappingService
+	kit     *accountingsyncpush.Kit
+	creator accountingmappingports.AccountingReferenceCreator
 }
 
 func New(d Deps) *Pusher {
-	return &Pusher{kit: d.Kit, mappingService: d.MappingService}
+	return &Pusher{kit: d.Kit, creator: d.Creator}
 }
