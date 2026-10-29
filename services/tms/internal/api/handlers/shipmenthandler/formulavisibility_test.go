@@ -41,7 +41,7 @@ func ratedShipment(id pulid.ID) *shipment.Shipment {
 		FormulaTemplate: &formulatemplate.FormulaTemplate{Source: "tariff \"Per pound\"\n"},
 		RatingDetail: &shipment.RatingDetail{
 			FormulaTemplateName: "Per pound",
-			Trace:               rules.RawJSON(`{"statements":["weight * 2"]}`),
+			Trace:               &shipment.RatingTrace{Statements: rules.RawJSON(`["weight * 2"]`)},
 			Bill: &tarifftypes.Bill{
 				Currency:     "USD",
 				FreightTotal: decimal.NewFromInt(42),
