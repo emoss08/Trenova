@@ -60,14 +60,14 @@ func (s *Service) SaveMappingProfileItems(
 
 func (s *Service) DeleteMappingItem(
 	ctx context.Context,
-	req edipartnerports.DeleteMappingItemRequest,
+	req *edipartnerports.DeleteMappingItemRequest,
 ) error {
-	return s.mappingProfileRepo.DeleteMappingItem(ctx, req)
+	return s.mappingProfileRepo.DeleteMappingItem(ctx, *req)
 }
 
 func (s *Service) DeleteMappingProfileItem(
 	ctx context.Context,
-	req edipartnerports.DeleteMappingProfileItemRequest,
+	req *edipartnerports.DeleteMappingProfileItemRequest,
 ) error {
-	return s.mappingProfileRepo.DeleteMappingProfileItem(ctx, req)
+	return s.mappingProfileRepo.DeleteMappingProfileItem(ctx, *req)
 }

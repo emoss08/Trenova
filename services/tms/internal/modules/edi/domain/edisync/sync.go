@@ -245,21 +245,26 @@ func (c *TransferChange) GetPostgresSearchConfig() domaintypes.PostgresSearchCon
 	}
 }
 
+const (
+	fieldOwnerSource = "source"
+	fieldOwnerTarget = "target"
+)
+
 func DefaultShipmentFieldOwnership() map[string]string {
 	return map[string]string{
-		"customer":                   "source",
-		"billing":                    "source",
-		"rating":                     "source",
-		"charges":                    "source",
-		"originalTenderRequirements": "source",
-		"commodities":                "source",
-		"tenderReferences":           "source",
-		"stopActuals":                "target",
-		"dispatchExecution":          "target",
-		"equipmentAssignment":        "target",
-		"driverAssignment":           "target",
-		"operationalNotes":           "target",
-		"arrivalsDepartures":         "target",
+		"customer":                   fieldOwnerSource,
+		"billing":                    fieldOwnerSource,
+		"rating":                     fieldOwnerSource,
+		"charges":                    fieldOwnerSource,
+		"originalTenderRequirements": fieldOwnerSource,
+		"commodities":                fieldOwnerSource,
+		"tenderReferences":           fieldOwnerSource,
+		"stopActuals":                fieldOwnerTarget,
+		"dispatchExecution":          fieldOwnerTarget,
+		"equipmentAssignment":        fieldOwnerTarget,
+		"driverAssignment":           fieldOwnerTarget,
+		"operationalNotes":           fieldOwnerTarget,
+		"arrivalsDepartures":         fieldOwnerTarget,
 	}
 }
 

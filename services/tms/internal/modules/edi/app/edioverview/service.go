@@ -33,6 +33,7 @@ type Service struct {
 	transferRepo       editenderports.EDILoadTenderTransferRepository
 }
 
+//nolint:gocritic // fx requires an fx.In parameter struct to be passed by value.
 func New(p Params) *Service {
 	return &Service{
 		carrierRepo:        p.CarrierRepo,

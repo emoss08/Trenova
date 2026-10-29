@@ -452,7 +452,7 @@ func (r *QueryResolver) EDITransfer(ctx context.Context, id string) (*gqlmodel.E
 	}
 
 	req := editenderports.GetEDITransferByIDRequest{ID: transferID, TenantInfo: resolvercore.TenantInfo(authCtx)}
-	transfer, err := r.EdiTransferService.GetTransfer(ctx, req)
+	transfer, err := r.EdiTransferService.GetTransfer(ctx, &req)
 	if err != nil {
 		return nil, err
 	}

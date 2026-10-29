@@ -24,9 +24,9 @@ func (s *Service) ListOutboundTransfers(
 
 func (s *Service) GetTransfer(
 	ctx context.Context,
-	req editenderports.GetEDITransferByIDRequest,
+	req *editenderports.GetEDITransferByIDRequest,
 ) (*editransfer.EDITransfer, error) {
-	return s.transferRepo.GetTransferByID(ctx, req)
+	return s.transferRepo.GetTransferByID(ctx, *req)
 }
 
 func (s *Service) GetTransfersByIDs(

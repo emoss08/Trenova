@@ -218,21 +218,31 @@ func (p *DocumentPayload) Normalize() {
 		p.Shipment = p.LoadTender
 	}
 	if p.TransactionSet == "" {
-		switch {
-		case p.LoadTender != nil || p.Shipment != nil:
-			p.TransactionSet = edidocument.TransactionSet204
-		case p.FreightInvoice != nil:
-			p.TransactionSet = edidocument.TransactionSet210
-		case p.ShipmentStatus != nil:
-			p.TransactionSet = edidocument.TransactionSet214
-		case p.TenderResponse != nil:
-			p.TransactionSet = edidocument.TransactionSet990
-		case p.FunctionalAcknowledgment != nil:
-			p.TransactionSet = edidocument.TransactionSet997
-		case p.ImplementationAcknowledgment != nil:
-			p.TransactionSet = edidocument.TransactionSet999
-		}
+		p.TransactionSet = p.inferredTransactionSet()
 	}
+	p.normalizePurposeCode()
+}
+
+func (p *DocumentPayload) inferredTransactionSet() edidocument.TransactionSet {
+	switch {
+	case p.LoadTender != nil || p.Shipment != nil:
+		return edidocument.TransactionSet204
+	case p.FreightInvoice != nil:
+		return edidocument.TransactionSet210
+	case p.ShipmentStatus != nil:
+		return edidocument.TransactionSet214
+	case p.TenderResponse != nil:
+		return edidocument.TransactionSet990
+	case p.FunctionalAcknowledgment != nil:
+		return edidocument.TransactionSet997
+	case p.ImplementationAcknowledgment != nil:
+		return edidocument.TransactionSet999
+	default:
+		return ""
+	}
+}
+
+func (p *DocumentPayload) normalizePurposeCode() {
 	if p.PurposeCode == "" {
 		if p.LoadTender != nil && p.LoadTender.PurposeCode != "" {
 			p.PurposeCode = p.LoadTender.PurposeCode

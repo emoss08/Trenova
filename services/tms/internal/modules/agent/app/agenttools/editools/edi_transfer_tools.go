@@ -46,7 +46,7 @@ var ErrEDIDecisionNeedsAPerson = errors.New(
 type ediTransferDecider interface {
 	GetTransfer(
 		ctx context.Context,
-		req editenderports.GetEDITransferByIDRequest,
+		req *editenderports.GetEDITransferByIDRequest,
 	) (*editransfer.EDITransfer, error)
 	PlanApproveTransfer(
 		ctx context.Context,
@@ -249,7 +249,7 @@ func (s tenderSettlement) settle(
 	decider ediTransferDecider,
 	call *tenderCall,
 ) (*tenderOutcome, error) {
-	transfer, err := decider.GetTransfer(ctx, editenderports.GetEDITransferByIDRequest{
+	transfer, err := decider.GetTransfer(ctx, &editenderports.GetEDITransferByIDRequest{
 		ID:         call.transferID,
 		TenantInfo: call.tenant,
 		Direction:  s.direction,

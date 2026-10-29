@@ -303,21 +303,6 @@ func requireConfigString(
 	multiErr.Add("config."+key, errortypes.ErrRequired, message)
 }
 
-func requireAnySecret(
-	multiErr *errortypes.MultiError,
-	secrets map[string]string,
-	keys []string,
-	message string,
-) {
-	for _, key := range keys {
-		if secrets[key] != "" {
-			return
-		}
-	}
-
-	multiErr.Add("secrets", errortypes.ErrRequired, message)
-}
-
 func (v *Validator) ValidateMappingItems(
 	items []*edi.EDIMappingProfileItem,
 ) *errortypes.MultiError {

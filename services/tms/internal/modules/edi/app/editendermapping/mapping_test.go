@@ -79,7 +79,7 @@ func TestBuildMappingPreviewUsesTenderSourceLabelsForUnresolvedRows(t *testing.T
 			OrganizationID: orgID,
 			BusinessUnitID: buID,
 		},
-		editransfer.LoadTenderPayload{
+		&editransfer.LoadTenderPayload{
 			CustomerID:    customerID,
 			CustomerLabel: "ACME - Acme Logistics",
 			Moves: []editransfer.LoadTenderMove{
@@ -135,7 +135,7 @@ func TestBuildMappingPreviewKeepsSavedTargetLabelForResolvedRows(t *testing.T) {
 			OrganizationID: orgID,
 			BusinessUnitID: buID,
 		},
-		editransfer.LoadTenderPayload{
+		&editransfer.LoadTenderPayload{
 			CustomerID:    sourceID,
 			CustomerLabel: "Tender source label",
 			RequiredMappingEntityIDs: map[edi.MappingEntityType][]pulid.ID{

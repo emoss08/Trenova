@@ -41,7 +41,7 @@ type fakeTransfers struct {
 
 func (f *fakeTransfers) GetTransfer(
 	_ context.Context,
-	req editenderports.GetEDITransferByIDRequest,
+	req *editenderports.GetEDITransferByIDRequest,
 ) (*editransfer.EDITransfer, error) {
 	f.directions = append(f.directions, req.Direction)
 	if req.ID != f.transfer.ID {
@@ -57,7 +57,7 @@ func (f *fakeTransfers) PlanApproveTransfer(
 	req *editransferservice.ApproveTransferRequest,
 	actor *permissionports.RequestActor,
 ) (*editransferservice.TransferApprovalPlan, error) {
-	transfer, err := f.GetTransfer(ctx, editenderports.GetEDITransferByIDRequest{
+	transfer, err := f.GetTransfer(ctx, &editenderports.GetEDITransferByIDRequest{
 		ID:        req.TransferID,
 		Direction: editransferservice.TransferDirectionInbound,
 	})

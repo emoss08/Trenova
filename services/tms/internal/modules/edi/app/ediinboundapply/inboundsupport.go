@@ -24,7 +24,7 @@ func (s *Service) BuildInboundMappingPreview(
 	partner *edi.EDIPartner,
 	payload *editransfer.LoadTenderPayload,
 ) (*editendermapping.MappingPreview, error) {
-	return s.tenderMapping.BuildMappingPreview(ctx, partner, *payload)
+	return s.tenderMapping.BuildMappingPreview(ctx, partner, payload)
 }
 
 type ApplyExternalTenderResponseRequest struct {

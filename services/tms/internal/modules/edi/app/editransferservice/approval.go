@@ -12,7 +12,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/domain/editransfer"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/editenderports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -31,9 +30,9 @@ import (
 
 func (s *Service) MappingPreview(
 	ctx context.Context,
-	req editenderports.GetEDITransferByIDRequest,
+	req *editenderports.GetEDITransferByIDRequest,
 ) (*editendermapping.MappingPreview, error) {
-	transfer, err := s.transferRepo.GetTransferByID(ctx, req)
+	transfer, err := s.transferRepo.GetTransferByID(ctx, *req)
 	if err != nil {
 		return nil, err
 	}
@@ -59,7 +58,7 @@ func (s *Service) MappingPreviewOf(
 		return nil, err
 	}
 
-	return s.tenderMapping.BuildMappingPreview(ctx, targetPartner, transfer.TenderPayload)
+	return s.tenderMapping.BuildMappingPreview(ctx, targetPartner, &transfer.TenderPayload)
 }
 
 //nolint:funlen // Approval coordinates validation, mapping, shipment creation, and transfer updates atomically.
@@ -88,25 +87,31 @@ func (s *Service) ApproveTransfer(
 				editenderports.GetEDITransferForUpdateRequest{
 					ID:         req.TransferID,
 					TenantInfo: req.TenantInfo,
-					Direction:  "inbound",
+					Direction:  TransferDirectionInbound,
 				},
 			)
 			if err != nil {
 				return err
 			}
-			if err = edidecision.RequireActionableTransfer(transfer, edidecision.TransferVerbApproved); err != nil {
+			if err = edidecision.RequireActionableTransfer(
+				transfer,
+				edidecision.TransferVerbApproved,
+			); err != nil {
 				return err
 			}
 			originalCopy := *transfer
 			original = &originalCopy
 
 			if len(req.Mappings) > 0 {
-				if _, err = s.setup.SaveMappingProfile(txCtx, &edipartnerports.SaveMappingItemsRequest{
-					PartnerID:  transfer.TargetPartnerID,
-					TenantInfo: req.TenantInfo,
-					ActorID:    actor.UserID,
-					Items:      req.Mappings,
-				}); err != nil {
+				if _, err = s.setup.SaveMappingProfile(
+					txCtx,
+					&edipartnerports.SaveMappingItemsRequest{
+						PartnerID:  transfer.TargetPartnerID,
+						TenantInfo: req.TenantInfo,
+						ActorID:    actor.UserID,
+						Items:      req.Mappings,
+					},
+				); err != nil {
 					return err
 				}
 			}
@@ -125,7 +130,7 @@ func (s *Service) ApproveTransfer(
 			preview, err = s.tenderMapping.BuildMappingPreview(
 				txCtx,
 				targetPartner,
-				transfer.TenderPayload,
+				&transfer.TenderPayload,
 			)
 			if err != nil {
 				return err
@@ -168,10 +173,9 @@ func (s *Service) ApproveTransfer(
 		return nil, updateErr
 	}
 
-	s.logAction(
+	s.logUpdate(
 		updated,
 		actor,
-		permission.OpUpdate,
 		original,
 		updated,
 		"EDI load tender approval started",
@@ -265,7 +269,7 @@ func (s *Service) ProcessLoadTenderApproval(
 			editenderports.GetEDITransferForUpdateRequest{
 				ID:         payload.TransferID,
 				TenantInfo: payload.TenantInfo,
-				Direction:  "inbound",
+				Direction:  TransferDirectionInbound,
 			},
 		)
 		if err != nil {
@@ -323,7 +327,7 @@ func (s *Service) ProcessLoadTenderApproval(
 		preview, err := s.tenderMapping.BuildMappingPreview(
 			txCtx,
 			targetPartner,
-			transfer.TenderPayload,
+			&transfer.TenderPayload,
 		)
 		if err != nil {
 			return err
@@ -389,7 +393,7 @@ func (s *Service) ProcessLoadTenderApproval(
 					BuID:  transfer.TargetBusinessUnitID,
 				},
 				"Shipment created from accepted external EDI load tender.",
-				map[string]any{"transferId": transfer.ID},
+				map[string]any{fieldTransferID: transfer.ID},
 			); commentErr != nil {
 				return commentErr
 			}
@@ -435,7 +439,7 @@ func (s *Service) ProcessLoadTenderApproval(
 				BuID:  transfer.TargetBusinessUnitID,
 			},
 			"Shipment created from accepted EDI load tender.",
-			map[string]any{"transferId": transfer.ID, "shipmentLinkId": link.ID},
+			map[string]any{fieldTransferID: transfer.ID, "shipmentLinkId": link.ID},
 		); err != nil {
 			return err
 		}
@@ -507,7 +511,7 @@ func (s *Service) acceptSourceTender(ctx context.Context, transfer *editransfer.
 			if err != nil {
 				return err
 			}
-			metadata := map[string]any{"transferId": transfer.ID}
+			metadata := map[string]any{fieldTransferID: transfer.ID}
 			for _, link := range links {
 				if link.TenderTransferID == transfer.ID {
 					metadata["shipmentLinkId"] = link.ID
@@ -545,31 +549,39 @@ func (s *Service) RejectTransfer(
 	req *RejectTransferRequest,
 	actor *permissionports.RequestActor,
 ) (*editransfer.EDITransfer, error) {
-	reason, err := edidecision.TransferRejectionReason(req.Reason)
-	if err != nil {
-		return nil, err
+	reason, reasonErr := edidecision.TransferRejectionReason(req.Reason)
+	if reasonErr != nil {
+		return nil, reasonErr
 	}
 
-	sourceCtx, err := s.transferSourceContext(ctx, req.TransferID, req.TenantInfo, "inbound")
-	if err != nil {
-		return nil, err
+	sourceCtx, ctxErr := s.transferSourceContext(
+		ctx,
+		req.TransferID,
+		req.TenantInfo,
+		TransferDirectionInbound,
+	)
+	if ctxErr != nil {
+		return nil, ctxErr
 	}
 
 	var original editransfer.EDITransfer
 	var updated *editransfer.EDITransfer
-	err = s.db.Transact(sourceCtx, kernelports.TxOptions{}, func(txCtx context.Context) error {
+	err := s.db.Transact(sourceCtx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		transfer, err := s.transferRepo.GetTransferForUpdate(
 			txCtx,
 			editenderports.GetEDITransferForUpdateRequest{
 				ID:         req.TransferID,
 				TenantInfo: req.TenantInfo,
-				Direction:  "inbound",
+				Direction:  TransferDirectionInbound,
 			},
 		)
 		if err != nil {
 			return err
 		}
-		if err = edidecision.RequireActionableTransfer(transfer, edidecision.TransferVerbRejected); err != nil {
+		if err = edidecision.RequireActionableTransfer(
+			transfer,
+			edidecision.TransferVerbRejected,
+		); err != nil {
 			return err
 		}
 
@@ -605,7 +617,7 @@ func (s *Service) RejectTransfer(
 				BuID:  transfer.SourceBusinessUnitID,
 			},
 			"EDI load tender rejected: "+reason,
-			map[string]any{"transferId": transfer.ID},
+			map[string]any{fieldTransferID: transfer.ID},
 		)
 	})
 	if err != nil {
@@ -615,7 +627,7 @@ func (s *Service) RejectTransfer(
 	if updated.InboundMessageID.IsNotNil() {
 		s.generateExternalTenderResponse(ctx, updated, actor.UserID)
 	}
-	s.logAction(updated, actor, permission.OpUpdate, &original, updated, "EDI load tender rejected")
+	s.logUpdate(updated, actor, &original, updated, "EDI load tender rejected")
 	return updated, nil
 }
 
@@ -638,7 +650,10 @@ func (s *Service) CancelTransfer(
 		if err != nil {
 			return err
 		}
-		if err = edidecision.RequireActionableTransfer(transfer, edidecision.TransferVerbCanceled); err != nil {
+		if err = edidecision.RequireActionableTransfer(
+			transfer,
+			edidecision.TransferVerbCanceled,
+		); err != nil {
 			return err
 		}
 
@@ -670,14 +685,14 @@ func (s *Service) CancelTransfer(
 				BuID:  transfer.SourceBusinessUnitID,
 			},
 			"EDI load tender canceled.",
-			map[string]any{"transferId": transfer.ID},
+			map[string]any{fieldTransferID: transfer.ID},
 		)
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	s.logAction(updated, actor, permission.OpUpdate, &original, updated, "EDI load tender canceled")
+	s.logUpdate(updated, actor, &original, updated, "EDI load tender canceled")
 	return updated, nil
 }
 
@@ -686,14 +701,14 @@ func (s *Service) ExpireTransfer(
 	req *ExpireTransferRequest,
 	actor *permissionports.RequestActor,
 ) (*editransfer.EDITransfer, error) {
-	sourceCtx, err := s.transferSourceContext(ctx, req.TransferID, req.TenantInfo, "")
-	if err != nil {
-		return nil, err
+	sourceCtx, ctxErr := s.transferSourceContext(ctx, req.TransferID, req.TenantInfo, "")
+	if ctxErr != nil {
+		return nil, ctxErr
 	}
 
 	var original editransfer.EDITransfer
 	var updated *editransfer.EDITransfer
-	err = s.db.Transact(sourceCtx, kernelports.TxOptions{}, func(txCtx context.Context) error {
+	err := s.db.Transact(sourceCtx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		transfer, err := s.transferRepo.GetTransferForUpdate(
 			txCtx,
 			editenderports.GetEDITransferForUpdateRequest{
@@ -705,7 +720,10 @@ func (s *Service) ExpireTransfer(
 		if err != nil {
 			return err
 		}
-		if err = edidecision.RequireActionableTransfer(transfer, edidecision.TransferVerbExpired); err != nil {
+		if err = edidecision.RequireActionableTransfer(
+			transfer,
+			edidecision.TransferVerbExpired,
+		); err != nil {
 			return err
 		}
 
@@ -739,14 +757,14 @@ func (s *Service) ExpireTransfer(
 			transfer.SourceShipmentID,
 			sourceTenant,
 			"EDI load tender expired.",
-			map[string]any{"transferId": transfer.ID},
+			map[string]any{fieldTransferID: transfer.ID},
 		)
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	s.logAction(updated, actor, permission.OpUpdate, &original, updated, "EDI load tender expired")
+	s.logUpdate(updated, actor, &original, updated, "EDI load tender expired")
 	return updated, nil
 }
 

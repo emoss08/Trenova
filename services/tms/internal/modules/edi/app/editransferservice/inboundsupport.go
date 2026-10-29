@@ -36,7 +36,7 @@ func (s *Service) generateExternalTenderResponse(
 	if err != nil {
 		s.l.Warn(
 			"the partner's flow failed to answer the EDI tender",
-			zap.String("transferId", transfer.ID.String()),
+			zap.String(fieldTransferID, transfer.ID.String()),
 			zap.Error(err),
 		)
 	}
@@ -49,7 +49,7 @@ func (s *Service) generateExternalTenderResponse(
 	); err != nil {
 		s.l.Warn(
 			"failed to generate outbound 990 EDI tender response",
-			zap.String("transferId", transfer.ID.String()),
+			zap.String(fieldTransferID, transfer.ID.String()),
 			zap.Error(err),
 		)
 	}

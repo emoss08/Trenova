@@ -137,7 +137,10 @@ func (s *Service) GetPartnerCard(
 	}
 	if card.Mappings, err = s.mappingProfileRepo.GetMappingSummary(
 		ctx,
-		edipartnerports.GetEDIMappingSummaryRequest{TenantInfo: req.TenantInfo, PartnerID: req.PartnerID},
+		edipartnerports.GetEDIMappingSummaryRequest{
+			TenantInfo: req.TenantInfo,
+			PartnerID:  req.PartnerID,
+		},
 	); err != nil {
 		return nil, err
 	}

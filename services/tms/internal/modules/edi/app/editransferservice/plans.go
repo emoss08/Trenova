@@ -26,6 +26,8 @@ const (
 	TransferDirectionAny      = ""
 )
 
+const fieldTransferID = "transferId"
+
 type TransferApprovalPlan struct {
 	Transfer      *editransfer.EDITransfer
 	After         *editransfer.EDITransfer
@@ -83,7 +85,7 @@ func (s *Service) planApproval(
 	plan.Mapping, err = s.tenderMapping.BuildMappingPreview(
 		ctx,
 		targetPartner,
-		transfer.TenderPayload,
+		&transfer.TenderPayload,
 	)
 	if err != nil {
 		return err
@@ -195,7 +197,7 @@ func tenderResponseToPreview(
 ) (*editransfer.EDITransfer, error) {
 	if transfer.InboundMessageID.IsNil() {
 		return nil, errortypes.NewValidationError(
-			"transferId",
+			fieldTransferID,
 			errortypes.ErrInvalidOperation,
 			"This tender came from another Trenova organization and is answered inside Trenova, so no 990 is sent for it",
 		)
@@ -236,7 +238,7 @@ func tenderResponseToPreview(
 		}
 	default:
 		return nil, errortypes.NewValidationError(
-			"transferId",
+			fieldTransferID,
 			errortypes.ErrInvalidOperation,
 			"This tender is {0} and will not be answered with a 990",
 			string(transfer.Status),

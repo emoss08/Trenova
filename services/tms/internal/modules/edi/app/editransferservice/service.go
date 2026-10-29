@@ -57,6 +57,7 @@ type Service struct {
 	tenderMapping    *editendermapping.Service
 }
 
+//nolint:gocritic // fx requires an fx.In parameter struct to be passed by value.
 func New(p Params) *Service {
 	return &Service{
 		auditService:     p.AuditService,
@@ -77,10 +78,9 @@ func New(p Params) *Service {
 	}
 }
 
-func (s *Service) logAction(
+func (s *Service) logUpdate(
 	entity edilading.Audited,
 	actor *permissionports.RequestActor,
-	operation permission.Operation,
 	previous any,
 	current any,
 	comment string,
@@ -88,7 +88,7 @@ func (s *Service) logAction(
 	edilading.LogAction(s.auditService, s.l, &edilading.AuditEntry{
 		Entity:    entity,
 		Actor:     actor,
-		Operation: operation,
+		Operation: permission.OpUpdate,
 		Previous:  previous,
 		Current:   current,
 		Comment:   comment,

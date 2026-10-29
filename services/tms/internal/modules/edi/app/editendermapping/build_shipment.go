@@ -21,7 +21,7 @@ import (
 func (s *Service) BuildMappingPreview(
 	ctx context.Context,
 	partner *edi.EDIPartner,
-	payload editransfer.LoadTenderPayload,
+	payload *editransfer.LoadTenderPayload,
 ) (*MappingPreview, error) {
 	required := payload.RequiredMappingEntityIDs
 	sourceIDs := flattenRequiredIDs(required)
@@ -39,7 +39,7 @@ func (s *Service) BuildMappingPreview(
 	}
 
 	index := MappingIndex(items)
-	sourceLabels := edipayloadbuild.SourceLabelIndex(&payload)
+	sourceLabels := edipayloadbuild.SourceLabelIndex(payload)
 
 	all := make([]editransfer.MappingResolution, 0, len(sourceIDs))
 	for _, entityType := range requiredEntityTypes(required) {

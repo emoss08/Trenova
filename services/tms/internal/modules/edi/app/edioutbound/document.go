@@ -156,7 +156,7 @@ func (s *Service) resolveOutbound(
 		set:        set,
 		payload:    payload,
 		event:      flowEventFor(req, &payload),
-		shipmentID: documentShipmentID(payload),
+		shipmentID: documentShipmentID(&payload),
 	}
 	if err = o.chooseMap(req.Map); err != nil {
 		return nil, err
@@ -736,16 +736,7 @@ func (s *Service) write(
 		},
 	)
 	if err != nil {
-		if req.IdempotencyKey != "" && dberror.IsUniqueConstraintViolation(err) {
-			existing, found, lookupErr := s.generatedDocument(ctx, req)
-			if lookupErr != nil {
-				return nil, lookupErr
-			}
-			if found {
-				return existing, nil
-			}
-		}
-		return nil, err
+		return s.replayedDocument(ctx, req, err)
 	}
 	s.shadowOutbound(ctx, req.TenantInfo, o, created)
 	if !req.SuppressTenderRecipientUpsert {
@@ -763,6 +754,24 @@ func (s *Service) write(
 		}
 	}
 	return created, nil
+}
+
+func (s *Service) replayedDocument(
+	ctx context.Context,
+	req *GenerateEDIDocumentRequest,
+	createErr error,
+) (*edimessage.EDIMessage, error) {
+	if req.IdempotencyKey == "" || !dberror.IsUniqueConstraintViolation(createErr) {
+		return nil, createErr
+	}
+	existing, found, err := s.generatedDocument(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	if !found {
+		return nil, createErr
+	}
+	return existing, nil
 }
 
 func (s *Service) allocateControl(
@@ -793,7 +802,10 @@ func (s *Service) allocateControl(
 	); err != nil {
 		return lading.Control{}, err
 	}
-	if control.Group, err = controlNumberOf(allocated, edidocument.ControlNumberKindGroup); err != nil {
+	if control.Group, err = controlNumberOf(
+		allocated,
+		edidocument.ControlNumberKindGroup,
+	); err != nil {
 		return lading.Control{}, err
 	}
 	if control.Transaction, err = controlNumberOf(
@@ -1065,7 +1077,6 @@ func (s *Service) resolvePayload(
 		return edipayloadbuild.BuildShipmentStatusPayload(source), nil
 	}
 	return edipayload.NewLoadTenderDocumentPayload(edipayloadbuild.BuildTenderPayload(source)), nil
-
 }
 
 func sourceTransactionSetError(
@@ -1124,21 +1135,21 @@ func missingSourceError(transactionSet edidocument.TransactionSet) error {
 	}
 }
 
-func documentShipmentID(payload edipayload.DocumentPayload) pulid.ID {
-	payload.Normalize()
-	if payload.Shipment != nil {
+func documentShipmentID(payload *edipayload.DocumentPayload) pulid.ID {
+	switch {
+	case payload.Shipment != nil:
 		return payload.Shipment.ShipmentID
-	}
-	if payload.ShipmentStatus != nil {
+	case payload.LoadTender != nil:
+		return payload.LoadTender.ShipmentID
+	case payload.ShipmentStatus != nil:
 		return payload.ShipmentStatus.ShipmentID
-	}
-	if payload.TenderResponse != nil {
+	case payload.TenderResponse != nil:
 		return payload.TenderResponse.ShipmentID
-	}
-	if payload.FreightInvoice != nil {
+	case payload.FreightInvoice != nil:
 		return payload.FreightInvoice.ShipmentID
+	default:
+		return pulid.Nil
 	}
-	return pulid.Nil
 }
 
 func diagnosticsToValidationError(diagnostics []edidocument.Diagnostic) error {

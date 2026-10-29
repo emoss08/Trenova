@@ -25,6 +25,12 @@ import (
 	"github.com/shopspring/decimal"
 )
 
+const (
+	referenceBOL        = "bol"
+	referencePRO        = "pro"
+	referenceShipmentID = "shipmentId"
+)
+
 func BuildTenderPayload(source *shipment.Shipment) editransfer.LoadTenderPayload {
 	payload := editransfer.LoadTenderPayload{
 		PurposeCode:          editransfer.LoadTenderPurposeOriginal,
@@ -204,15 +210,15 @@ func BuildFreightInvoicePayload(source *invoice.Invoice) edipayload.DocumentPayl
 		LineCharges: make([]edipayload.FreightInvoiceCharge, 0, len(source.Lines)),
 		ReferenceNumbers: map[string]string{
 			"qualifier": "BM",
-			"bol": stringutils.FirstNonEmpty(
+			referenceBOL: stringutils.FirstNonEmpty(
 				source.ShipmentBOL,
 				shipmentBOL(source.Shipment),
 			),
-			"pro": stringutils.FirstNonEmpty(
+			referencePRO: stringutils.FirstNonEmpty(
 				source.ShipmentProNumber,
 				shipmentProNumber(source.Shipment),
 			),
-			"shipmentId": source.ShipmentID.String(),
+			referenceShipmentID: source.ShipmentID.String(),
 		},
 	}
 
@@ -305,9 +311,9 @@ func BuildShipmentStatusPayload(source *shipment.Shipment) edipayload.DocumentPa
 		ShipmentID: source.ID,
 		StatusCode: "X3",
 		References: map[string]string{
-			"shipmentId": source.ID.String(),
-			"bol":        source.BOL,
-			"pro":        source.ProNumber,
+			referenceShipmentID: source.ID.String(),
+			referenceBOL:        source.BOL,
+			referencePRO:        source.ProNumber,
 		},
 	}
 	applyShipmentStatusShipment(&payload, source)
@@ -336,11 +342,11 @@ func BuildShipmentEventStatusPayload(
 		EventDate:  event.OccurredAt,
 		EventTime:  event.OccurredAt,
 		References: map[string]string{
-			"shipmentId": event.ShipmentID.String(),
-			"eventId":    event.ID.String(),
-			"eventType":  string(event.Type),
-			"bol":        shipmentBOL(source),
-			"pro":        shipmentProNumber(source),
+			referenceShipmentID: event.ShipmentID.String(),
+			"eventId":           event.ID.String(),
+			"eventType":         string(event.Type),
+			referenceBOL:        shipmentBOL(source),
+			referencePRO:        shipmentProNumber(source),
 		},
 	}
 	applyShipmentStatusShipment(&payload, source)
@@ -429,13 +435,13 @@ func BuildServiceFailureShipmentStatusPayload(
 		ServiceFailureID:     &failure.ID,
 		ServiceFailureNumber: failure.Number,
 		References: map[string]string{
-			"shipmentId":       failure.ShipmentID.String(),
-			"serviceFailureId": failure.ID.String(),
-			"serviceFailure":   failure.Number,
-			"bol":              shipmentBOL(source),
-			"pro":              shipmentProNumber(source),
-			"type":             string(failure.Type),
-			"status":           string(failure.Status),
+			referenceShipmentID: failure.ShipmentID.String(),
+			"serviceFailureId":  failure.ID.String(),
+			"serviceFailure":    failure.Number,
+			referenceBOL:        shipmentBOL(source),
+			referencePRO:        shipmentProNumber(source),
+			"type":              string(failure.Type),
+			"status":            string(failure.Status),
 		},
 	}
 	applyShipmentStatusShipment(&status, source)

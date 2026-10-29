@@ -206,7 +206,7 @@ func (h *Handler) withTransfer(
 
 	transfer, err := h.transfers.GetTransfer(
 		c.Request.Context(),
-		editenderports.GetEDITransferByIDRequest{
+		&editenderports.GetEDITransferByIDRequest{
 			ID:         transferID,
 			TenantInfo: pagination.FromAuth(authCtx),
 			Direction:  direction,

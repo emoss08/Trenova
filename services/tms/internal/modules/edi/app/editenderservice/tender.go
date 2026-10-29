@@ -146,7 +146,7 @@ func (s *Service) PlanLoadTender(
 	}
 
 	payload := edipayloadbuild.BuildTenderPayload(sourceShipment)
-	preview, err := s.tenderMapping.BuildMappingPreview(ctx, targetPartner, payload)
+	preview, err := s.tenderMapping.BuildMappingPreview(ctx, targetPartner, &payload)
 	if err != nil {
 		return nil, err
 	}

@@ -119,7 +119,7 @@ func (h *Handler) deleteMappingItem(c *gin.Context) {
 
 	err = h.setup.DeleteMappingItem(
 		c.Request.Context(),
-		edipartnerports.DeleteMappingItemRequest{
+		&edipartnerports.DeleteMappingItemRequest{
 			PartnerID:     partnerID,
 			MappingItemID: mappingItemID,
 			TenantInfo:    pagination.FromAuth(authCtx),
@@ -240,7 +240,7 @@ func (h *Handler) deleteMappingProfileItem(c *gin.Context) {
 
 	err = h.setup.DeleteMappingProfileItem(
 		c.Request.Context(),
-		edipartnerports.DeleteMappingProfileItemRequest{
+		&edipartnerports.DeleteMappingProfileItemRequest{
 			ProfileID:     profileID,
 			MappingItemID: mappingItemID,
 			TenantInfo:    pagination.FromAuth(authCtx),

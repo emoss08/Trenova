@@ -235,7 +235,7 @@ func (h *Handler) mappingPreview(c *gin.Context) {
 
 	preview, err := h.transfers.MappingPreview(
 		c.Request.Context(),
-		editenderports.GetEDITransferByIDRequest{
+		&editenderports.GetEDITransferByIDRequest{
 			ID:         transferID,
 			TenantInfo: pagination.FromAuth(authCtx),
 		},

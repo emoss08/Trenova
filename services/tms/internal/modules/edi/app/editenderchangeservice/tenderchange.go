@@ -326,7 +326,11 @@ func (s *Service) applyPendingTransferTenderChange(
 	if err != nil {
 		return err
 	}
-	preview, err := s.tenderMapping.BuildMappingPreview(ctx, targetPartner, change.NewTenderPayload)
+	preview, err := s.tenderMapping.BuildMappingPreview(
+		ctx,
+		targetPartner,
+		&change.NewTenderPayload,
+	)
 	if err != nil {
 		return err
 	}
@@ -391,7 +395,11 @@ func (s *Service) applyLinkedShipmentTenderChange(
 	if err != nil {
 		return err
 	}
-	preview, err := s.tenderMapping.BuildMappingPreview(ctx, targetPartner, change.NewTenderPayload)
+	preview, err := s.tenderMapping.BuildMappingPreview(
+		ctx,
+		targetPartner,
+		&change.NewTenderPayload,
+	)
 	if err != nil {
 		return err
 	}
