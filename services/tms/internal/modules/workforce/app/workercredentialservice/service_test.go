@@ -94,6 +94,19 @@ func (f *fakeRepo) GetTypeByID(
 	return typ, nil
 }
 
+func (f *fakeRepo) GetTypesByIDs(
+	_ context.Context,
+	req *workercredentialports.GetCredentialTypesByIDsRequest,
+) ([]*workercredential.WorkerCredentialType, error) {
+	out := make([]*workercredential.WorkerCredentialType, 0, len(req.TypeIDs))
+	for _, id := range req.TypeIDs {
+		if typ, ok := f.types[id]; ok {
+			out = append(out, typ)
+		}
+	}
+	return out, nil
+}
+
 func (f *fakeRepo) TypeCodeExists(
 	context.Context,
 	*workercredentialports.CredentialTypeCodeExistsRequest,

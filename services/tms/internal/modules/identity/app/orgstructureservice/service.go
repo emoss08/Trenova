@@ -263,6 +263,17 @@ func (s *Service) GetPosition(
 	})
 }
 
+func (s *Service) GetPositionsByIDs(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	ids []pulid.ID,
+) ([]*worker.JobPosition, error) {
+	return s.repo.GetPositionsByIDs(ctx, &orgstructureports.GetJobPositionsByIDsRequest{
+		TenantInfo:  tenantInfo,
+		PositionIDs: ids,
+	})
+}
+
 func (s *Service) CreatePosition(
 	ctx context.Context,
 	entity *worker.JobPosition,

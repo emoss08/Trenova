@@ -20,6 +20,11 @@ type GetTrainingCourseByIDRequest struct {
 	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
 }
 
+type GetTrainingCoursesByIDsRequest struct {
+	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
+	CourseIDs  []pulid.ID            `json:"courseIds"`
+}
+
 type TrainingCourseSelectOptionsRequest struct {
 	SelectQueryRequest *pagination.SelectQueryRequest
 }
@@ -88,6 +93,10 @@ type WorkerTrainingRepository interface {
 		ctx context.Context,
 		req *GetTrainingCourseByIDRequest,
 	) (*workertraining.TrainingCourse, error)
+	GetCoursesByIDs(
+		ctx context.Context,
+		req *GetTrainingCoursesByIDsRequest,
+	) ([]*workertraining.TrainingCourse, error)
 	CourseCodeExists(ctx context.Context, req *TrainingCourseCodeExistsRequest) (bool, error)
 	CreateCourse(
 		ctx context.Context,

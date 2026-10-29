@@ -80,6 +80,13 @@ func (s *Service) Get(
 	return s.repo.GetByID(ctx, req)
 }
 
+func (s *Service) GetByIDs(
+	ctx context.Context,
+	req *ptopolicyports.GetPTOPoliciesByIDsRequest,
+) ([]*pto.PTOPolicy, error) {
+	return s.repo.GetByIDs(ctx, req)
+}
+
 func (s *Service) validate(ctx context.Context, entity *pto.PTOPolicy) error {
 	multiErr := errortypes.NewMultiError()
 	entity.Validate(multiErr)

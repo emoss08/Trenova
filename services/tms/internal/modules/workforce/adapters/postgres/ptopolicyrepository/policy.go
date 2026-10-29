@@ -130,6 +130,29 @@ func (r *repository) SelectOptions(
 	)
 }
 
+func (r *repository) GetByIDs(
+	ctx context.Context,
+	req *ptopolicyports.GetPTOPoliciesByIDsRequest,
+) ([]*pto.PTOPolicy, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*pto.PTOPolicy, error) {
+		if len(req.PolicyIDs) == 0 {
+			return []*pto.PTOPolicy{}, nil
+		}
+
+		p := ptodb.PTOPolicies
+		entities, err := p.Where(p.ID.In(req.PolicyIDs...)).
+			Load(listquery.When(req.IncludeRules, orderedRules())...).
+			Limit(len(req.PolicyIDs)).
+			List(ctx, r.db.Keel(ctx))
+		if err != nil {
+			r.l.Error("failed to get pto policies", zap.Error(err))
+			return nil, err
+		}
+
+		return entities, nil
+	})
+}
+
 func (r *repository) GetByID(
 	ctx context.Context,
 	req *ptopolicyports.GetPTOPolicyByIDRequest,

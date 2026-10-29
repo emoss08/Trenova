@@ -162,6 +162,32 @@ func (r *repository) CourseSelectOptions(
 	)
 }
 
+func (r *repository) GetCoursesByIDs(
+	ctx context.Context,
+	req *workertrainingports.GetTrainingCoursesByIDsRequest,
+) ([]*workertraining.TrainingCourse, error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*workertraining.TrainingCourse, error) {
+			if len(req.CourseIDs) == 0 {
+				return []*workertraining.TrainingCourse{}, nil
+			}
+
+			tc := workertrainingdb.TrainingCourses
+			entities, err := tc.Where(tc.ID.In(req.CourseIDs...)).
+				Limit(len(req.CourseIDs)).
+				List(ctx, r.db.Keel(ctx))
+			if err != nil {
+				r.l.Error("failed to get training courses", zap.Error(err))
+				return nil, err
+			}
+
+			return entities, nil
+		},
+	)
+}
+
 func (r *repository) GetCourseByID(
 	ctx context.Context,
 	req *workertrainingports.GetTrainingCourseByIDRequest,

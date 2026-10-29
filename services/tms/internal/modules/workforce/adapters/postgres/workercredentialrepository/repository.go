@@ -163,6 +163,32 @@ func (r *repository) TypeSelectOptions(
 	)
 }
 
+func (r *repository) GetTypesByIDs(
+	ctx context.Context,
+	req *workercredentialports.GetCredentialTypesByIDsRequest,
+) ([]*workercredential.WorkerCredentialType, error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*workercredential.WorkerCredentialType, error) {
+			if len(req.TypeIDs) == 0 {
+				return []*workercredential.WorkerCredentialType{}, nil
+			}
+
+			ct := workercredentialdb.WorkerCredentialTypes
+			entities, err := ct.Where(ct.ID.In(req.TypeIDs...)).
+				Limit(len(req.TypeIDs)).
+				List(ctx, r.db.Keel(ctx))
+			if err != nil {
+				r.l.Error("failed to get credential types", zap.Error(err))
+				return nil, err
+			}
+
+			return entities, nil
+		},
+	)
+}
+
 func (r *repository) GetTypeByID(
 	ctx context.Context,
 	req *workercredentialports.GetCredentialTypeByIDRequest,

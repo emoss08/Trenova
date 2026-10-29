@@ -33,6 +33,13 @@ func (s *Service) GetType(
 	return s.repo.GetTypeByID(ctx, req)
 }
 
+func (s *Service) GetTypesByIDs(
+	ctx context.Context,
+	req *workercredentialports.GetCredentialTypesByIDsRequest,
+) ([]*workercredential.WorkerCredentialType, error) {
+	return s.repo.GetTypesByIDs(ctx, req)
+}
+
 // ActiveTypes returns the catalog a worker can be measured against, seeding the
 // system rows first so an organisation created after the registry migration
 // still starts with the FMCSA set.

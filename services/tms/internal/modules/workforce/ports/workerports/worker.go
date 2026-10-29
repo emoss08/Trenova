@@ -37,6 +37,11 @@ type GetWorkerByIDRequest struct {
 	IncludeLicenseState bool                  `json:"includeLicenseState"`
 }
 
+type GetWorkersByIDsRequest struct {
+	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
+	WorkerIDs  []pulid.ID            `json:"workerIds"`
+}
+
 type WorkerSyncReadinessCounts struct {
 	TotalWorkers        int `json:"totalWorkers"`
 	ActiveWorkers       int `json:"activeWorkers"`
@@ -74,6 +79,10 @@ type WorkerRepository interface {
 		ctx context.Context,
 		req GetWorkerByIDRequest,
 	) (*worker.Worker, error)
+	GetByIDs(
+		ctx context.Context,
+		req GetWorkersByIDsRequest,
+	) ([]*worker.Worker, error)
 	Create(
 		ctx context.Context,
 		entity *worker.Worker,

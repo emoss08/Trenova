@@ -125,6 +125,17 @@ func (s *Service) GetTemplate(
 	})
 }
 
+func (s *Service) GetTemplatesByIDs(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	ids []pulid.ID,
+) ([]*workerschedule.ShiftTemplate, error) {
+	return s.repo.GetTemplatesByIDs(ctx, &workerscheduleports.GetShiftTemplatesByIDsRequest{
+		TenantInfo:  tenantInfo,
+		TemplateIDs: ids,
+	})
+}
+
 // CreateTemplateRequest is a new working pattern.
 type CreateTemplateRequest struct {
 	Entity     *workerschedule.ShiftTemplate

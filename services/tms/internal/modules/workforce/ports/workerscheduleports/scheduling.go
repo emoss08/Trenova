@@ -19,6 +19,11 @@ type GetShiftTemplateByIDRequest struct {
 	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
 }
 
+type GetShiftTemplatesByIDsRequest struct {
+	TenantInfo  pagination.TenantInfo `json:"tenantInfo"`
+	TemplateIDs []pulid.ID            `json:"templateIds"`
+}
+
 type CountShiftTemplateAssignmentsRequest struct {
 	TenantInfo  pagination.TenantInfo `json:"tenantInfo"`
 	TemplateIDs []pulid.ID            `json:"templateIds"`
@@ -112,6 +117,10 @@ type SchedulingRepository interface {
 		ctx context.Context,
 		req *GetShiftTemplateByIDRequest,
 	) (*workerschedule.ShiftTemplate, error)
+	GetTemplatesByIDs(
+		ctx context.Context,
+		req *GetShiftTemplatesByIDsRequest,
+	) ([]*workerschedule.ShiftTemplate, error)
 	CreateTemplate(
 		ctx context.Context,
 		entity *workerschedule.ShiftTemplate,

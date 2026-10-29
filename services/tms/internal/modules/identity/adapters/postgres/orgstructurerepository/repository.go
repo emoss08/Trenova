@@ -84,6 +84,28 @@ func (r *repository) ListPositions(
 	})
 }
 
+func (r *repository) GetPositionsByIDs(
+	ctx context.Context,
+	req *orgstructureports.GetJobPositionsByIDsRequest,
+) ([]*worker.JobPosition, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.JobPosition, error) {
+		if len(req.PositionIDs) == 0 {
+			return []*worker.JobPosition{}, nil
+		}
+
+		jp := workerdb.JobPositions
+		entities, err := jp.Where(jp.ID.In(req.PositionIDs...)).
+			Limit(len(req.PositionIDs)).
+			List(ctx, r.db.Keel(ctx))
+		if err != nil {
+			r.l.Error("failed to get job positions", zap.Error(err))
+			return nil, err
+		}
+
+		return entities, nil
+	})
+}
+
 func (r *repository) GetPositionByID(
 	ctx context.Context,
 	req *orgstructureports.GetJobPositionByIDRequest,

@@ -139,6 +139,32 @@ func (r *repository) TemplateSelectOptions(
 	)
 }
 
+func (r *repository) GetTemplatesByIDs(
+	ctx context.Context,
+	req *workerreviewports.GetReviewTemplatesByIDsRequest,
+) ([]*workerreview.PerformanceReviewTemplate, error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*workerreview.PerformanceReviewTemplate, error) {
+			if len(req.TemplateIDs) == 0 {
+				return []*workerreview.PerformanceReviewTemplate{}, nil
+			}
+
+			rt := workerreviewdb.PerformanceReviewTemplates
+			entities, err := rt.Where(rt.ID.In(req.TemplateIDs...)).
+				Limit(len(req.TemplateIDs)).
+				List(ctx, r.db.Keel(ctx))
+			if err != nil {
+				r.l.Error("failed to get review templates", zap.Error(err))
+				return nil, err
+			}
+
+			return entities, nil
+		},
+	)
+}
+
 func (r *repository) GetTemplateByID(
 	ctx context.Context,
 	req *workerreviewports.GetReviewTemplateByIDRequest,

@@ -28,6 +28,13 @@ func (s *Service) GetTemplate(
 	return s.repo.GetTemplateByID(ctx, req)
 }
 
+func (s *Service) GetTemplatesByIDs(
+	ctx context.Context,
+	req *workerreviewports.GetReviewTemplatesByIDsRequest,
+) ([]*workerreview.PerformanceReviewTemplate, error) {
+	return s.repo.GetTemplatesByIDs(ctx, req)
+}
+
 func (s *Service) ActiveTemplates(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,

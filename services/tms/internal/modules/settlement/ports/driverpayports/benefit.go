@@ -29,6 +29,11 @@ type GetBenefitPlanByIDRequest struct {
 	IncludePayCode bool                  `json:"includePayCode"`
 }
 
+type GetBenefitPlansByIDsRequest struct {
+	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
+	PlanIDs    []pulid.ID            `json:"planIds"`
+}
+
 type ListBenefitEnrollmentsRequest struct {
 	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
 	WorkerID   pulid.ID              `json:"workerId"`
@@ -71,6 +76,10 @@ type BenefitRepository interface {
 		ctx context.Context,
 		req *GetBenefitPlanByIDRequest,
 	) (*paybenefit.BenefitPlan, error)
+	GetPlansByIDs(
+		ctx context.Context,
+		req *GetBenefitPlansByIDsRequest,
+	) ([]*paybenefit.BenefitPlan, error)
 	CreatePlan(
 		ctx context.Context,
 		entity *paybenefit.BenefitPlan,

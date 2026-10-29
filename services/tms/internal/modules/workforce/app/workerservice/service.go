@@ -238,6 +238,13 @@ func (s *Service) Get(
 	return entity, nil
 }
 
+func (s *Service) GetByIDs(
+	ctx context.Context,
+	req workerports.GetWorkersByIDsRequest,
+) ([]*worker.Worker, error) {
+	return s.repo.GetByIDs(ctx, req)
+}
+
 func (s *Service) Create(
 	ctx context.Context,
 	entity *worker.Worker,

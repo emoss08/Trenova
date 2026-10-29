@@ -22,6 +22,11 @@ type GetWorkerPolicyByIDRequest struct {
 	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
 }
 
+type GetWorkerPoliciesByIDsRequest struct {
+	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
+	PolicyIDs  []pulid.ID            `json:"policyIds"`
+}
+
 type ListPolicyAcknowledgementsRequest struct {
 	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
 	PolicyID   pulid.ID              `json:"policyId"`
@@ -78,6 +83,10 @@ type SelfServiceRepository interface {
 		ctx context.Context,
 		req *GetWorkerPolicyByIDRequest,
 	) (*workerpolicy.WorkerPolicy, error)
+	GetPoliciesByIDs(
+		ctx context.Context,
+		req *GetWorkerPoliciesByIDsRequest,
+	) ([]*workerpolicy.WorkerPolicy, error)
 	CreatePolicy(
 		ctx context.Context,
 		entity *workerpolicy.WorkerPolicy,

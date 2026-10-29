@@ -24,6 +24,11 @@ type GetCredentialTypeByIDRequest struct {
 	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
 }
 
+type GetCredentialTypesByIDsRequest struct {
+	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
+	TypeIDs    []pulid.ID            `json:"typeIds"`
+}
+
 type CredentialTypeCodeExistsRequest struct {
 	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
 	Code       string                `json:"code"`
@@ -117,6 +122,10 @@ type WorkerCredentialRepository interface {
 		ctx context.Context,
 		req *GetCredentialTypeByIDRequest,
 	) (*workercredential.WorkerCredentialType, error)
+	GetTypesByIDs(
+		ctx context.Context,
+		req *GetCredentialTypesByIDsRequest,
+	) ([]*workercredential.WorkerCredentialType, error)
 	TypeCodeExists(ctx context.Context, req *CredentialTypeCodeExistsRequest) (bool, error)
 	CreateType(
 		ctx context.Context,

@@ -174,6 +174,17 @@ func (s *Service) GetPolicy(
 	})
 }
 
+func (s *Service) GetPoliciesByIDs(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	ids []pulid.ID,
+) ([]*workerpolicy.WorkerPolicy, error) {
+	return s.repo.GetPoliciesByIDs(ctx, &selfserviceports.GetWorkerPoliciesByIDsRequest{
+		TenantInfo: tenantInfo,
+		PolicyIDs:  ids,
+	})
+}
+
 // PolicyRequest is a policy being written or rewritten.
 type PolicyRequest struct {
 	Entity     *workerpolicy.WorkerPolicy

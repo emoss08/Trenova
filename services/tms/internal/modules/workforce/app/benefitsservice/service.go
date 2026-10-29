@@ -129,6 +129,17 @@ func (s *Service) GetPlan(
 	})
 }
 
+func (s *Service) GetPlansByIDs(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	ids []pulid.ID,
+) ([]*paybenefit.BenefitPlan, error) {
+	return s.repo.GetPlansByIDs(ctx, &driverpayports.GetBenefitPlansByIDsRequest{
+		TenantInfo: tenantInfo,
+		PlanIDs:    ids,
+	})
+}
+
 func (s *Service) CreatePlan(
 	ctx context.Context,
 	entity *paybenefit.BenefitPlan,

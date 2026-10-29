@@ -28,6 +28,13 @@ func (s *Service) GetCourse(
 	return s.repo.GetCourseByID(ctx, req)
 }
 
+func (s *Service) GetCoursesByIDs(
+	ctx context.Context,
+	req *workertrainingports.GetTrainingCoursesByIDsRequest,
+) ([]*workertraining.TrainingCourse, error) {
+	return s.repo.GetCoursesByIDs(ctx, req)
+}
+
 func (s *Service) ActiveCourses(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,

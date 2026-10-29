@@ -84,6 +84,28 @@ func (r *repository) ListPolicies(
 	})
 }
 
+func (r *repository) GetPoliciesByIDs(
+	ctx context.Context,
+	req *selfserviceports.GetWorkerPoliciesByIDsRequest,
+) ([]*workerpolicy.WorkerPolicy, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*workerpolicy.WorkerPolicy, error) {
+		if len(req.PolicyIDs) == 0 {
+			return []*workerpolicy.WorkerPolicy{}, nil
+		}
+
+		wp := workerpolicydb.WorkerPolicies
+		entities, err := wp.Where(wp.ID.In(req.PolicyIDs...)).
+			Limit(len(req.PolicyIDs)).
+			List(ctx, r.db.Keel(ctx))
+		if err != nil {
+			r.l.Error("failed to get worker policies", zap.Error(err))
+			return nil, err
+		}
+
+		return entities, nil
+	})
+}
+
 func (r *repository) GetPolicyByID(
 	ctx context.Context,
 	req *selfserviceports.GetWorkerPolicyByIDRequest,

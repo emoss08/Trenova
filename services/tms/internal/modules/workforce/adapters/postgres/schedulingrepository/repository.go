@@ -87,6 +87,28 @@ func (r *repository) ListTemplates(
 	})
 }
 
+func (r *repository) GetTemplatesByIDs(
+	ctx context.Context,
+	req *workerscheduleports.GetShiftTemplatesByIDsRequest,
+) ([]*workerschedule.ShiftTemplate, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*workerschedule.ShiftTemplate, error) {
+		if len(req.TemplateIDs) == 0 {
+			return []*workerschedule.ShiftTemplate{}, nil
+		}
+
+		st := workerscheduledb.ShiftTemplates
+		entities, err := st.Where(st.ID.In(req.TemplateIDs...)).
+			Limit(len(req.TemplateIDs)).
+			List(ctx, r.db.Keel(ctx))
+		if err != nil {
+			r.l.Error("failed to get shift templates", zap.Error(err))
+			return nil, err
+		}
+
+		return entities, nil
+	})
+}
+
 func (r *repository) GetTemplateByID(
 	ctx context.Context,
 	req *workerscheduleports.GetShiftTemplateByIDRequest,

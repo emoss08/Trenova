@@ -138,6 +138,28 @@ func (r *repository) PlanSelectOptions(
 	)
 }
 
+func (r *repository) GetPlansByIDs(
+	ctx context.Context,
+	req *driverpayports.GetBenefitPlansByIDsRequest,
+) ([]*paybenefit.BenefitPlan, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*paybenefit.BenefitPlan, error) {
+		if len(req.PlanIDs) == 0 {
+			return []*paybenefit.BenefitPlan{}, nil
+		}
+
+		bp := paybenefitdb.BenefitPlans
+		entities, err := bp.Where(bp.ID.In(req.PlanIDs...)).
+			Limit(len(req.PlanIDs)).
+			List(ctx, r.db.Keel(ctx))
+		if err != nil {
+			r.l.Error("failed to get benefit plans", zap.Error(err))
+			return nil, err
+		}
+
+		return entities, nil
+	})
+}
+
 func (r *repository) GetPlanByID(
 	ctx context.Context,
 	req *driverpayports.GetBenefitPlanByIDRequest,

@@ -26,6 +26,11 @@ type GetJobPositionByIDRequest struct {
 	IncludeReportsTo bool                  `json:"includeReportsTo"`
 }
 
+type GetJobPositionsByIDsRequest struct {
+	TenantInfo  pagination.TenantInfo `json:"tenantInfo"`
+	PositionIDs []pulid.ID            `json:"positionIds"`
+}
+
 type ListApprovalDelegationsRequest struct {
 	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
 	// DelegatorID lists what one person has handed out; DelegateID lists what
@@ -147,6 +152,10 @@ type OrgStructureRepository interface {
 		ctx context.Context,
 		req *GetJobPositionByIDRequest,
 	) (*worker.JobPosition, error)
+	GetPositionsByIDs(
+		ctx context.Context,
+		req *GetJobPositionsByIDsRequest,
+	) ([]*worker.JobPosition, error)
 	CreatePosition(
 		ctx context.Context,
 		entity *worker.JobPosition,

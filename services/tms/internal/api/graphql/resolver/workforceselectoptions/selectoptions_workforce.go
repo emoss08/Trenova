@@ -20,7 +20,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/pto"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerpolicy"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerreview"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerschedule"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workertraining"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/orgstructureports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/ptopolicyports"
@@ -51,21 +53,23 @@ func (r *Sources) WorkerCredentialType(
 	req *selectoption.Request,
 ) (*gqlmodel.SelectOptionConnection, error) {
 	if len(req.IDs) > 0 {
-		items := make([]selectoption.Item, 0, len(req.IDs))
-		for _, id := range req.IDs {
-			entity, err := r.WorkerCredentialService.GetType(
-				ctx,
-				&workercredentialports.GetCredentialTypeByIDRequest{
-					ID:         id,
-					TenantInfo: req.TenantInfo,
-				},
-			)
-			if err != nil {
-				return nil, err
-			}
-			items = append(items, workerCredentialTypeSelectOptionItem(entity))
+		entities, err := r.WorkerCredentialService.GetTypesByIDs(
+			ctx,
+			&workercredentialports.GetCredentialTypesByIDsRequest{
+				TenantInfo: req.TenantInfo,
+				TypeIDs:    req.IDs,
+			},
+		)
+		if err != nil {
+			return nil, err
 		}
 
+		items := selectoption.OrderedItems(
+			req.IDs,
+			entities,
+			(*workercredential.WorkerCredentialType).GetID,
+			workerCredentialTypeSelectOptionItem,
+		)
 		return selectoption.Connection(items, len(items), 0)
 	}
 
@@ -114,21 +118,23 @@ func (r *Sources) TrainingCourse(
 	req *selectoption.Request,
 ) (*gqlmodel.SelectOptionConnection, error) {
 	if len(req.IDs) > 0 {
-		items := make([]selectoption.Item, 0, len(req.IDs))
-		for _, id := range req.IDs {
-			entity, err := r.WorkerTrainingService.GetCourse(
-				ctx,
-				&workertrainingports.GetTrainingCourseByIDRequest{
-					ID:         id,
-					TenantInfo: req.TenantInfo,
-				},
-			)
-			if err != nil {
-				return nil, err
-			}
-			items = append(items, trainingCourseSelectOptionItem(entity))
+		entities, err := r.WorkerTrainingService.GetCoursesByIDs(
+			ctx,
+			&workertrainingports.GetTrainingCoursesByIDsRequest{
+				TenantInfo: req.TenantInfo,
+				CourseIDs:  req.IDs,
+			},
+		)
+		if err != nil {
+			return nil, err
 		}
 
+		items := selectoption.OrderedItems(
+			req.IDs,
+			entities,
+			(*workertraining.TrainingCourse).GetID,
+			trainingCourseSelectOptionItem,
+		)
 		return selectoption.Connection(items, len(items), 0)
 	}
 
@@ -182,21 +188,23 @@ func (r *Sources) PerformanceReviewTemplate(
 	req *selectoption.Request,
 ) (*gqlmodel.SelectOptionConnection, error) {
 	if len(req.IDs) > 0 {
-		items := make([]selectoption.Item, 0, len(req.IDs))
-		for _, id := range req.IDs {
-			entity, err := r.PerformanceReviewService.GetTemplate(
-				ctx,
-				&workerreviewports.GetReviewTemplateByIDRequest{
-					ID:         id,
-					TenantInfo: req.TenantInfo,
-				},
-			)
-			if err != nil {
-				return nil, err
-			}
-			items = append(items, performanceReviewTemplateSelectOptionItem(entity))
+		entities, err := r.PerformanceReviewService.GetTemplatesByIDs(
+			ctx,
+			&workerreviewports.GetReviewTemplatesByIDsRequest{
+				TenantInfo:  req.TenantInfo,
+				TemplateIDs: req.IDs,
+			},
+		)
+		if err != nil {
+			return nil, err
 		}
 
+		items := selectoption.OrderedItems(
+			req.IDs,
+			entities,
+			(*workerreview.PerformanceReviewTemplate).GetID,
+			performanceReviewTemplateSelectOptionItem,
+		)
 		return selectoption.Connection(items, len(items), 0)
 	}
 
@@ -240,19 +248,24 @@ func (r *Sources) PTOPolicy(
 	req *selectoption.Request,
 ) (*gqlmodel.SelectOptionConnection, error) {
 	if len(req.IDs) > 0 {
-		items := make([]selectoption.Item, 0, len(req.IDs))
-		for _, id := range req.IDs {
-			entity, err := r.PtoPolicyService.Get(ctx, &ptopolicyports.GetPTOPolicyByIDRequest{
-				ID:           id,
+		entities, err := r.PtoPolicyService.GetByIDs(
+			ctx,
+			&ptopolicyports.GetPTOPoliciesByIDsRequest{
 				TenantInfo:   req.TenantInfo,
+				PolicyIDs:    req.IDs,
 				IncludeRules: true,
-			})
-			if err != nil {
-				return nil, err
-			}
-			items = append(items, ptoPolicySelectOptionItem(entity))
+			},
+		)
+		if err != nil {
+			return nil, err
 		}
 
+		items := selectoption.OrderedItems(
+			req.IDs,
+			entities,
+			(*pto.PTOPolicy).GetID,
+			ptoPolicySelectOptionItem,
+		)
 		return selectoption.Connection(items, len(items), 0)
 	}
 
@@ -295,15 +308,17 @@ func (r *Sources) BenefitPlan(
 	req *selectoption.Request,
 ) (*gqlmodel.SelectOptionConnection, error) {
 	if len(req.IDs) > 0 {
-		items := make([]selectoption.Item, 0, len(req.IDs))
-		for _, id := range req.IDs {
-			entity, err := r.BenefitsService.GetPlan(ctx, req.TenantInfo, id)
-			if err != nil {
-				return nil, err
-			}
-			items = append(items, benefitPlanSelectOptionItem(entity))
+		entities, err := r.BenefitsService.GetPlansByIDs(ctx, req.TenantInfo, req.IDs)
+		if err != nil {
+			return nil, err
 		}
 
+		items := selectoption.OrderedItems(
+			req.IDs,
+			entities,
+			(*paybenefit.BenefitPlan).GetID,
+			benefitPlanSelectOptionItem,
+		)
 		return selectoption.Connection(items, len(items), 0)
 	}
 
@@ -371,21 +386,23 @@ func (r *Sources) Worker(
 	req *selectoption.Request,
 ) (*gqlmodel.SelectOptionConnection, error) {
 	if len(req.IDs) > 0 {
-		items := make([]selectoption.Item, 0, len(req.IDs))
-		for _, id := range req.IDs {
-			entity, err := r.WorkerService.Get(
-				ctx,
-				workerports.GetWorkerByIDRequest{
-					ID:         id,
-					TenantInfo: req.TenantInfo,
-				},
-			)
-			if err != nil {
-				return nil, err
-			}
-			items = append(items, workerSelectOptionItem(entity))
+		entities, err := r.WorkerService.GetByIDs(
+			ctx,
+			workerports.GetWorkersByIDsRequest{
+				TenantInfo: req.TenantInfo,
+				WorkerIDs:  req.IDs,
+			},
+		)
+		if err != nil {
+			return nil, err
 		}
 
+		items := selectoption.OrderedItems(
+			req.IDs,
+			entities,
+			(*worker.Worker).GetID,
+			workerSelectOptionItem,
+		)
 		return selectoption.Connection(items, len(items), 0)
 	}
 
@@ -442,14 +459,17 @@ func (r *Sources) ShiftTemplate(
 	req *selectoption.Request,
 ) (*gqlmodel.SelectOptionConnection, error) {
 	if len(req.IDs) > 0 {
-		items := make([]selectoption.Item, 0, len(req.IDs))
-		for _, id := range req.IDs {
-			entity, err := r.SchedulingService.GetTemplate(ctx, req.TenantInfo, id)
-			if err != nil {
-				return nil, err
-			}
-			items = append(items, shiftTemplateSelectOptionItem(entity))
+		entities, err := r.SchedulingService.GetTemplatesByIDs(ctx, req.TenantInfo, req.IDs)
+		if err != nil {
+			return nil, err
 		}
+
+		items := selectoption.OrderedItems(
+			req.IDs,
+			entities,
+			(*workerschedule.ShiftTemplate).GetID,
+			shiftTemplateSelectOptionItem,
+		)
 		return selectoption.Connection(items, len(items), 0)
 	}
 
@@ -483,14 +503,17 @@ func (r *Sources) WorkerPolicy(
 	req *selectoption.Request,
 ) (*gqlmodel.SelectOptionConnection, error) {
 	if len(req.IDs) > 0 {
-		items := make([]selectoption.Item, 0, len(req.IDs))
-		for _, id := range req.IDs {
-			entity, err := r.SelfServiceService.GetPolicy(ctx, req.TenantInfo, id)
-			if err != nil {
-				return nil, err
-			}
-			items = append(items, workerPolicySelectOptionItem(entity))
+		entities, err := r.SelfServiceService.GetPoliciesByIDs(ctx, req.TenantInfo, req.IDs)
+		if err != nil {
+			return nil, err
 		}
+
+		items := selectoption.OrderedItems(
+			req.IDs,
+			entities,
+			(*workerpolicy.WorkerPolicy).GetID,
+			workerPolicySelectOptionItem,
+		)
 		return selectoption.Connection(items, len(items), 0)
 	}
 
@@ -527,14 +550,17 @@ func (r *Sources) JobPosition(
 	req *selectoption.Request,
 ) (*gqlmodel.SelectOptionConnection, error) {
 	if len(req.IDs) > 0 {
-		items := make([]selectoption.Item, 0, len(req.IDs))
-		for _, id := range req.IDs {
-			entity, err := r.OrgStructureService.GetPosition(ctx, req.TenantInfo, id)
-			if err != nil {
-				return nil, err
-			}
-			items = append(items, jobPositionSelectOptionItem(entity))
+		entities, err := r.OrgStructureService.GetPositionsByIDs(ctx, req.TenantInfo, req.IDs)
+		if err != nil {
+			return nil, err
 		}
+
+		items := selectoption.OrderedItems(
+			req.IDs,
+			entities,
+			(*worker.JobPosition).GetID,
+			jobPositionSelectOptionItem,
+		)
 		return selectoption.Connection(items, len(items), 0)
 	}
 

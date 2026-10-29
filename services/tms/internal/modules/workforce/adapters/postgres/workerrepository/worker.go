@@ -211,6 +211,28 @@ func workerQuery(req *workerports.GetWorkerByIDRequest) *keel.Query[*worker.Work
 	return w.Where(w.ID.Eq(req.ID)).Load(loads...)
 }
 
+func (r *repository) GetByIDs(
+	ctx context.Context,
+	req workerports.GetWorkersByIDsRequest,
+) ([]*worker.Worker, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.Worker, error) {
+		if len(req.WorkerIDs) == 0 {
+			return []*worker.Worker{}, nil
+		}
+
+		w := workerdb.Workers
+		entities, err := w.Where(w.ID.In(req.WorkerIDs...)).
+			Limit(len(req.WorkerIDs)).
+			List(ctx, r.db.Keel(ctx))
+		if err != nil {
+			r.l.Error("failed to get workers", zap.Error(err))
+			return nil, err
+		}
+
+		return entities, nil
+	})
+}
+
 func (r *repository) GetByID(
 	ctx context.Context,
 	req workerports.GetWorkerByIDRequest,
