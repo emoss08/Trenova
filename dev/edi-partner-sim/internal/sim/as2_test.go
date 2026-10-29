@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/shared/as2"
+	"github.com/emoss08/trenova/shared/smime"
 )
 
 const interopPayload = "ISA*00*          *00*          *ZZ*TRENOVA        *ZZ*PARTNER        " +
@@ -64,11 +65,11 @@ func TestPartnerSimulatorDecryptsEveryEncryptionAlgorithm(t *testing.T) {
 	t.Cleanup(httpServer.Close)
 
 	algorithms := []string{
-		as2.EncryptionAlgorithmTripleDES,
-		as2.EncryptionAlgorithmAES128CBC,
-		as2.EncryptionAlgorithmAES256CBC,
-		as2.EncryptionAlgorithmAES128GCM,
-		as2.EncryptionAlgorithmAES256GCM,
+		smime.EncryptionAlgorithmTripleDES,
+		smime.EncryptionAlgorithmAES128CBC,
+		smime.EncryptionAlgorithmAES256CBC,
+		smime.EncryptionAlgorithmAES128GCM,
+		smime.EncryptionAlgorithmAES256GCM,
 	}
 	for _, algorithm := range algorithms {
 		built, buildErr := as2.BuildMessage(&as2.BuildMessageOptions{

@@ -16,10 +16,12 @@ import (
 	"net/textproto"
 	"slices"
 	"strings"
+
+	"github.com/emoss08/trenova/shared/smime"
 )
 
 const (
-	Version = "1.2"
+	ProtocolVersion = "1.2"
 
 	HeaderAS2From                        = "As2-From"
 	HeaderAS2To                          = "As2-To"
@@ -106,14 +108,14 @@ func BuildMessage(opts *BuildMessageOptions) (*BuiltMessage, error) {
 		"Content-Transfer-Encoding": {"binary"},
 	}, canonicalizeCRLF(opts.Payload))
 
-	micAlgorithm := normalizeAlgorithm(opts.MICAlgorithm, MICAlgorithmSHA256)
+	micAlgorithm := smime.NormalizeAlgorithm(opts.MICAlgorithm, MICAlgorithmSHA256)
 	mic, err := ComputeMIC(entity, micAlgorithm)
 	if err != nil {
 		return nil, err
 	}
 
 	if opts.Compress {
-		compressed, compressErr := Compress(entity)
+		compressed, compressErr := smime.Compress(entity)
 		if compressErr != nil {
 			return nil, compressErr
 		}
@@ -131,7 +133,7 @@ func BuildMessage(opts *BuildMessageOptions) (*BuiltMessage, error) {
 	}
 
 	if opts.EncryptionCertificate != nil {
-		ciphertext, encryptErr := Encrypt(
+		ciphertext, encryptErr := smime.Encrypt(
 			entity,
 			opts.EncryptionCertificate,
 			opts.EncryptionAlgorithm,
@@ -156,7 +158,7 @@ func BuildMessage(opts *BuildMessageOptions) (*BuiltMessage, error) {
 		Body:        body,
 		Headers:     textproto.MIMEHeader{},
 	}
-	built.Headers.Set(HeaderAS2Version, Version)
+	built.Headers.Set(HeaderAS2Version, ProtocolVersion)
 	built.Headers.Set(HeaderAS2From, opts.From)
 	built.Headers.Set(HeaderAS2To, opts.To)
 	built.Headers.Set(HeaderMessageID, messageID)
@@ -235,7 +237,7 @@ func ParseMessage(
 				currentBody,
 				currentHeaders.Get("Content-Transfer-Encoding"),
 			)
-			plaintext, decryptErr := Decrypt(
+			plaintext, decryptErr := smime.Decrypt(
 				decoded,
 				opts.DecryptionCertificate,
 				opts.DecryptionKey,
@@ -261,7 +263,7 @@ func ParseMessage(
 			result.Signed = true
 			result.MIC, err = ComputeMIC(
 				contentPart,
-				normalizeAlgorithm(opts.MICAlgorithm, micAlgorithmFromParams(params)),
+				smime.NormalizeAlgorithm(opts.MICAlgorithm, micAlgorithmFromParams(params)),
 			)
 			if err != nil {
 				return nil, err
@@ -284,7 +286,7 @@ func ParseMessage(
 			result.Signed = true
 			result.MIC, err = ComputeMIC(
 				content,
-				normalizeAlgorithm(opts.MICAlgorithm, MICAlgorithmSHA256),
+				smime.NormalizeAlgorithm(opts.MICAlgorithm, MICAlgorithmSHA256),
 			)
 			if err != nil {
 				return nil, err
@@ -300,7 +302,7 @@ func ParseMessage(
 				currentBody,
 				currentHeaders.Get("Content-Transfer-Encoding"),
 			)
-			decompressed, decompressErr := Decompress(decoded)
+			decompressed, decompressErr := smime.Decompress(decoded)
 			if decompressErr != nil {
 				return nil, decompressErr
 			}
@@ -325,7 +327,7 @@ func ParseMessage(
 			if result.MIC == "" {
 				mic, micErr := ComputeMIC(
 					buildEntity(currentHeaders, currentBody),
-					normalizeAlgorithm(opts.MICAlgorithm, MICAlgorithmSHA256),
+					smime.NormalizeAlgorithm(opts.MICAlgorithm, MICAlgorithmSHA256),
 				)
 				if micErr != nil {
 					return nil, micErr
@@ -347,7 +349,12 @@ func NewMessageID() string {
 }
 
 func buildSignedEntity(entity []byte, opts *BuildMessageOptions) ([]byte, error) {
-	signature, err := Sign(entity, opts.SigningCertificate, opts.SigningKey, opts.SigningAlgorithm)
+	signature, err := smime.Sign(
+		entity,
+		opts.SigningCertificate,
+		opts.SigningKey,
+		opts.SigningAlgorithm,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -366,7 +373,7 @@ func buildSignedEntity(entity []byte, opts *BuildMessageOptions) ([]byte, error)
 	}, encodeBase64(signature))
 
 	micalg := "sha-" + strings.TrimPrefix(
-		normalizeAlgorithm(opts.SigningAlgorithm, SigningAlgorithmSHA256),
+		smime.NormalizeAlgorithm(opts.SigningAlgorithm, smime.SigningAlgorithmSHA256),
 		"sha",
 	)
 	header := textproto.MIMEHeader{
@@ -409,7 +416,7 @@ func verifySignedMultipart(
 		signatureBody,
 		signatureHeaders.Get("Content-Transfer-Encoding"),
 	)
-	if err = Verify(contentPart, signature, partnerCertificate); err != nil {
+	if err = smime.Verify(contentPart, signature, partnerCertificate); err != nil {
 		return nil, err
 	}
 	return contentPart, nil
@@ -419,7 +426,7 @@ func verifyEmbeddedSignedData(
 	der []byte,
 	partnerCertificate *x509.Certificate,
 ) ([]byte, error) {
-	return VerifySignedData(der, partnerCertificate)
+	return smime.VerifySignedData(der, partnerCertificate)
 }
 
 func smimeTypeOf(params map[string]string) string {

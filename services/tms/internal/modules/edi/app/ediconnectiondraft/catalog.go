@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/app/editransport"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
-	"github.com/emoss08/trenova/shared/as2"
+	"github.com/emoss08/trenova/shared/smime"
 )
 
 var qualifierNames = map[string][]string{
@@ -472,14 +472,14 @@ func signingAlgorithmField() *fieldSpec {
 		configKey: editransport.ConfigKeySigningAlgorithm,
 		methods:   as2Only,
 		normalize: as2Algorithms(
-			as2.SigningAlgorithmSHA1, as2.SigningAlgorithmSHA256,
-			as2.SigningAlgorithmSHA384, as2.SigningAlgorithmSHA512,
+			smime.SigningAlgorithmSHA1, smime.SigningAlgorithmSHA256,
+			smime.SigningAlgorithmSHA384, smime.SigningAlgorithmSHA512,
 		),
 		spelled: map[string][]string{
-			as2.SigningAlgorithmSHA1:   {"sha-1"},
-			as2.SigningAlgorithmSHA256: {"sha-256", "sha 256"},
-			as2.SigningAlgorithmSHA384: {"sha-384"},
-			as2.SigningAlgorithmSHA512: {"sha-512"},
+			smime.SigningAlgorithmSHA1:   {"sha-1"},
+			smime.SigningAlgorithmSHA256: {"sha-256", "sha 256"},
+			smime.SigningAlgorithmSHA384: {"sha-384"},
+			smime.SigningAlgorithmSHA512: {"sha-512"},
 		},
 	}
 }
@@ -492,16 +492,16 @@ func encryptionAlgorithmField() *fieldSpec {
 		configKey: editransport.ConfigKeyEncryptionAlgorithm,
 		methods:   as2Only,
 		normalize: as2Algorithms(
-			as2.EncryptionAlgorithmTripleDES, as2.EncryptionAlgorithmAES128CBC,
-			as2.EncryptionAlgorithmAES256CBC, as2.EncryptionAlgorithmAES128GCM,
-			as2.EncryptionAlgorithmAES256GCM,
+			smime.EncryptionAlgorithmTripleDES, smime.EncryptionAlgorithmAES128CBC,
+			smime.EncryptionAlgorithmAES256CBC, smime.EncryptionAlgorithmAES128GCM,
+			smime.EncryptionAlgorithmAES256GCM,
 		),
 		spelled: map[string][]string{
-			as2.EncryptionAlgorithmTripleDES: {"triple des", "3des", "des3"},
-			as2.EncryptionAlgorithmAES128CBC: {"aes 128", "aes-128", "aes128"},
-			as2.EncryptionAlgorithmAES256CBC: {"aes 256", "aes-256", "aes256"},
-			as2.EncryptionAlgorithmAES128GCM: {"aes-128-gcm", "aes 128 gcm"},
-			as2.EncryptionAlgorithmAES256GCM: {"aes-256-gcm", "aes 256 gcm"},
+			smime.EncryptionAlgorithmTripleDES: {"triple des", "3des", "des3"},
+			smime.EncryptionAlgorithmAES128CBC: {"aes 128", "aes-128", "aes128"},
+			smime.EncryptionAlgorithmAES256CBC: {"aes 256", "aes-256", "aes256"},
+			smime.EncryptionAlgorithmAES128GCM: {"aes-128-gcm", "aes 128 gcm"},
+			smime.EncryptionAlgorithmAES256GCM: {"aes-256-gcm", "aes 256 gcm"},
 		},
 	}
 }

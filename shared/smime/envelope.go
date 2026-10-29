@@ -1,4 +1,4 @@
-package as2
+package smime
 
 import (
 	"crypto/aes"
@@ -114,7 +114,7 @@ type gcmParameters struct {
 }
 
 func lookupContentCipher(algorithm string) (contentCipher, error) {
-	normalized := normalizeAlgorithm(algorithm, EncryptionAlgorithmAES256CBC)
+	normalized := NormalizeAlgorithm(algorithm, EncryptionAlgorithmAES256CBC)
 	selected, ok := contentCiphers[normalized]
 	if !ok {
 		return contentCipher{}, fmt.Errorf("%w: %s", ErrUnsupportedEncryptionAlgorithm, algorithm)

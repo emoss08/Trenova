@@ -16,8 +16,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/pkg/lading"
-	"github.com/emoss08/trenova/shared/as2"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/smime"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -80,7 +80,7 @@ func TestEDIPartnerCardToModel_NamesCredentialsWithoutValues(t *testing.T) {
 		Certificates: []ediservice.EDIPartnerCertificate{
 			{
 				Role: ediservice.PartnerCertificateRolePartnerEncryption,
-				Summary: &as2.CertificateSummary{
+				Summary: &smime.CertificateSummary{
 					Subject:   "CN=edi.tyson.example",
 					Issuer:    "CN=Sectigo RSA",
 					NotBefore: 1_690_000_000,

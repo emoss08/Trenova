@@ -78,7 +78,6 @@ debt:
   services/tms/internal/modules/workspace/jobs/reportjobs: 3282
   services/tms/internal/seeds/fixtures: 23241
   services/tms/internal/seeds/volume: 20065
-  shared/as2: 1757
   shared/businesscentral: 3584
   shared/carrierok: 1925
   shared/netsuite: 1931

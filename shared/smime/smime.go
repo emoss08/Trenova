@@ -1,4 +1,4 @@
-package as2
+package smime
 
 import (
 	"crypto"
@@ -131,7 +131,7 @@ func VerifySignedData(der []byte, certificate *x509.Certificate) ([]byte, error)
 	return parsed.Content, nil
 }
 
-func normalizeAlgorithm(algorithm, fallback string) string {
+func NormalizeAlgorithm(algorithm, fallback string) string {
 	normalized := strings.ToLower(strings.TrimSpace(algorithm))
 	if normalized == "" {
 		return fallback
@@ -140,7 +140,7 @@ func normalizeAlgorithm(algorithm, fallback string) string {
 }
 
 func signingDigestOID(algorithm string) (asn1.ObjectIdentifier, error) {
-	switch normalizeAlgorithm(algorithm, SigningAlgorithmSHA256) {
+	switch NormalizeAlgorithm(algorithm, SigningAlgorithmSHA256) {
 	case SigningAlgorithmSHA1:
 		return pkcs7.OIDDigestAlgorithmSHA1, nil
 	case SigningAlgorithmSHA256:

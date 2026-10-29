@@ -18,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/shared/as2"
 	"github.com/emoss08/trenova/shared/httpsafe"
 	"github.com/emoss08/trenova/shared/maputils"
+	"github.com/emoss08/trenova/shared/smime"
 )
 
 const (
@@ -90,7 +91,7 @@ func AS2ConfigFromProfile(
 		BasicAuthPassword:    strings.TrimSpace(secrets[SecretKeyBasicAuthPassword]),
 	}
 	if pemData := maputils.StringValue(profile.Config, ConfigKeyLocalCertificate); pemData != "" {
-		certificate, err := as2.ParseCertificate([]byte(pemData))
+		certificate, err := smime.ParseCertificate([]byte(pemData))
 		if err != nil {
 			return nil, fmt.Errorf("local AS2 certificate is invalid: %w", err)
 		}
@@ -100,7 +101,7 @@ func AS2ConfigFromProfile(
 		profile.Config,
 		ConfigKeyPartnerSigningCertificate,
 	); pemData != "" {
-		certificate, err := as2.ParseCertificate([]byte(pemData))
+		certificate, err := smime.ParseCertificate([]byte(pemData))
 		if err != nil {
 			return nil, fmt.Errorf("partner AS2 signing certificate is invalid: %w", err)
 		}
@@ -110,7 +111,7 @@ func AS2ConfigFromProfile(
 		profile.Config,
 		ConfigKeyPartnerEncryptionCertificate,
 	); pemData != "" {
-		certificate, err := as2.ParseCertificate([]byte(pemData))
+		certificate, err := smime.ParseCertificate([]byte(pemData))
 		if err != nil {
 			return nil, fmt.Errorf("partner AS2 encryption certificate is invalid: %w", err)
 		}
@@ -120,7 +121,7 @@ func AS2ConfigFromProfile(
 		cfg.PartnerEncryptionCertificate = cfg.PartnerSigningCertificate
 	}
 	if keyPEM := strings.TrimSpace(secrets[SecretKeyAS2PrivateKey]); keyPEM != "" {
-		key, err := as2.ParsePrivateKey([]byte(keyPEM))
+		key, err := smime.ParsePrivateKey([]byte(keyPEM))
 		if err != nil {
 			return nil, fmt.Errorf("AS2 private key secret is invalid: %w", err)
 		}

@@ -1,4 +1,4 @@
-package as2
+package smime
 
 import (
 	"crypto/cipher"
@@ -10,6 +10,7 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/emoss08/trenova/shared/smimetest"
 	"github.com/smallstep/pkcs7"
 	"github.com/stretchr/testify/require"
 )
@@ -39,10 +40,10 @@ func parseEnvelopeDER(t *testing.T, der []byte) parsedEnvelope {
 func TestEncryptTripleDESProducesDESEDE3CBC(t *testing.T) {
 	t.Parallel()
 
-	receiver := newTestIdentity(t, "receiver.example")
-	plaintext := []byte(testPayload)
+	receiver := smimetest.NewIdentity(t, "receiver.example")
+	plaintext := []byte(smimetest.SamplePayload)
 
-	der, err := Encrypt(plaintext, receiver.certificate, EncryptionAlgorithmTripleDES)
+	der, err := Encrypt(plaintext, receiver.Certificate, EncryptionAlgorithmTripleDES)
 	require.NoError(t, err)
 
 	parsed := parseEnvelopeDER(t, der)
@@ -59,10 +60,10 @@ func TestEncryptTripleDESProducesDESEDE3CBC(t *testing.T) {
 	recipient := parsed.enveloped.RecipientInfos[0]
 	require.True(t, recipient.KeyEncryptionAlgorithm.Algorithm.Equal(oidRSAEncryption))
 	require.Equal(t, 0, recipient.IssuerAndSerialNumber.SerialNumber.Cmp(
-		receiver.certificate.SerialNumber,
+		receiver.Certificate.SerialNumber,
 	))
 
-	contentKey, err := rsa.DecryptPKCS1v15(nil, receiver.key, recipient.EncryptedKey)
+	contentKey, err := rsa.DecryptPKCS1v15(nil, receiver.Key, recipient.EncryptedKey)
 	require.NoError(t, err)
 	require.Len(t, contentKey, 24)
 	require.NotEqual(t, contentKey[:8], contentKey[8:16])
@@ -81,7 +82,7 @@ func TestEncryptTripleDESProducesDESEDE3CBC(t *testing.T) {
 func TestEncryptEveryAlgorithmUsesItsOIDAndKeyLength(t *testing.T) {
 	t.Parallel()
 
-	receiver := newTestIdentity(t, "receiver.example")
+	receiver := smimetest.NewIdentity(t, "receiver.example")
 	cases := []struct {
 		algorithm string
 		oid       string
@@ -98,7 +99,7 @@ func TestEncryptEveryAlgorithmUsesItsOIDAndKeyLength(t *testing.T) {
 		t.Run(fmt.Sprintf("algorithm=%q", tc.algorithm), func(t *testing.T) {
 			t.Parallel()
 
-			der, err := Encrypt([]byte(testPayload), receiver.certificate, tc.algorithm)
+			der, err := Encrypt([]byte(smimetest.SamplePayload), receiver.Certificate, tc.algorithm)
 			require.NoError(t, err)
 
 			parsed := parseEnvelopeDER(t, der)
@@ -107,7 +108,7 @@ func TestEncryptEveryAlgorithmUsesItsOIDAndKeyLength(t *testing.T) {
 
 			contentKey, err := rsa.DecryptPKCS1v15(
 				nil,
-				receiver.key,
+				receiver.Key,
 				parsed.enveloped.RecipientInfos[0].EncryptedKey,
 			)
 			require.NoError(t, err)
@@ -119,13 +120,13 @@ func TestEncryptEveryAlgorithmUsesItsOIDAndKeyLength(t *testing.T) {
 
 			library, err := pkcs7.Parse(der)
 			require.NoError(t, err)
-			fromLibrary, err := library.Decrypt(receiver.certificate, receiver.key)
+			fromLibrary, err := library.Decrypt(receiver.Certificate, receiver.Key)
 			require.NoError(t, err)
-			require.Equal(t, testPayload, string(fromLibrary))
+			require.Equal(t, smimetest.SamplePayload, string(fromLibrary))
 
-			decrypted, err := Decrypt(der, receiver.certificate, receiver.key)
+			decrypted, err := Decrypt(der, receiver.Certificate, receiver.Key)
 			require.NoError(t, err)
-			require.Equal(t, testPayload, string(decrypted))
+			require.Equal(t, smimetest.SamplePayload, string(decrypted))
 		})
 	}
 }
@@ -142,23 +143,26 @@ func TestNoSupportedAlgorithmEmitsSingleDES(t *testing.T) {
 func TestEncryptRejectsUnknownAlgorithm(t *testing.T) {
 	t.Parallel()
 
-	receiver := newTestIdentity(t, "receiver.example")
+	receiver := smimetest.NewIdentity(t, "receiver.example")
 	for _, algorithm := range []string{"des", "des-cbc", "rc2", "aes192-cbc"} {
-		_, err := Encrypt([]byte(testPayload), receiver.certificate, algorithm)
+		_, err := Encrypt([]byte(smimetest.SamplePayload), receiver.Certificate, algorithm)
 		require.ErrorIs(t, err, ErrUnsupportedEncryptionAlgorithm, algorithm)
 	}
 }
 
 var singleDESMutex sync.Mutex
 
-func encryptWithLibrarySingleDES(t *testing.T, receiver *testIdentity) []byte {
+func encryptWithLibrarySingleDES(t *testing.T, receiver *smimetest.Identity) []byte {
 	t.Helper()
 	singleDESMutex.Lock()
 	defer singleDESMutex.Unlock()
 	previous := pkcs7.ContentEncryptionAlgorithm
 	pkcs7.ContentEncryptionAlgorithm = pkcs7.EncryptionAlgorithmDESCBC
 	defer func() { pkcs7.ContentEncryptionAlgorithm = previous }()
-	der, err := pkcs7.Encrypt([]byte(testPayload), []*x509.Certificate{receiver.certificate})
+	der, err := pkcs7.Encrypt(
+		[]byte(smimetest.SamplePayload),
+		[]*x509.Certificate{receiver.Certificate},
+	)
 	require.NoError(t, err)
 	return der
 }
@@ -166,25 +170,29 @@ func encryptWithLibrarySingleDES(t *testing.T, receiver *testIdentity) []byte {
 func TestDecryptRejectsSingleDES(t *testing.T) {
 	t.Parallel()
 
-	receiver := newTestIdentity(t, "receiver.example")
+	receiver := smimetest.NewIdentity(t, "receiver.example")
 	der := encryptWithLibrarySingleDES(t, receiver)
 
 	detected, err := envelopeContentAlgorithm(der)
 	require.NoError(t, err)
 	require.True(t, detected.Equal(oidDESCBC))
 
-	_, err = Decrypt(der, receiver.certificate, receiver.key)
+	_, err = Decrypt(der, receiver.Certificate, receiver.Key)
 	require.ErrorIs(t, err, ErrInsecureEncryptionAlgorithm)
 
-	_, err = Decrypt(toIndefiniteLength(t, der), receiver.certificate, receiver.key)
+	_, err = Decrypt(toIndefiniteLength(t, der), receiver.Certificate, receiver.Key)
 	require.ErrorIs(t, err, ErrInsecureEncryptionAlgorithm)
 }
 
 func TestDecryptReadsIndefiniteLengthEnvelopes(t *testing.T) {
 	t.Parallel()
 
-	receiver := newTestIdentity(t, "receiver.example")
-	der, err := Encrypt([]byte(testPayload), receiver.certificate, EncryptionAlgorithmTripleDES)
+	receiver := smimetest.NewIdentity(t, "receiver.example")
+	der, err := Encrypt(
+		[]byte(smimetest.SamplePayload),
+		receiver.Certificate,
+		EncryptionAlgorithmTripleDES,
+	)
 	require.NoError(t, err)
 
 	ber := toIndefiniteLength(t, der)
@@ -194,16 +202,20 @@ func TestDecryptReadsIndefiniteLengthEnvelopes(t *testing.T) {
 	require.NoError(t, err)
 	require.True(t, detected.Equal(oidDESEDE3CBC))
 
-	decrypted, err := Decrypt(ber, receiver.certificate, receiver.key)
+	decrypted, err := Decrypt(ber, receiver.Certificate, receiver.Key)
 	require.NoError(t, err)
-	require.Equal(t, testPayload, string(decrypted))
+	require.Equal(t, smimetest.SamplePayload, string(decrypted))
 }
 
 func TestEnvelopeContentAlgorithmRejectsMalformedInput(t *testing.T) {
 	t.Parallel()
 
-	receiver := newTestIdentity(t, "receiver.example")
-	der, err := Encrypt([]byte(testPayload), receiver.certificate, EncryptionAlgorithmAES256CBC)
+	receiver := smimetest.NewIdentity(t, "receiver.example")
+	der, err := Encrypt(
+		[]byte(smimetest.SamplePayload),
+		receiver.Certificate,
+		EncryptionAlgorithmAES256CBC,
+	)
 	require.NoError(t, err)
 
 	cases := map[string][]byte{
@@ -230,7 +242,7 @@ func TestEnvelopeContentAlgorithmRejectsMalformedInput(t *testing.T) {
 func TestEncryptIsSafeForConcurrentMixedAlgorithms(t *testing.T) {
 	t.Parallel()
 
-	receiver := newTestIdentity(t, "receiver.example")
+	receiver := smimetest.NewIdentity(t, "receiver.example")
 	algorithms := []string{
 		EncryptionAlgorithmTripleDES,
 		EncryptionAlgorithmAES128CBC,
@@ -252,7 +264,11 @@ func TestEncryptIsSafeForConcurrentMixedAlgorithms(t *testing.T) {
 	for _, algorithm := range algorithms {
 		for range perAlgorithm {
 			wg.Go(func() {
-				der, err := Encrypt([]byte(testPayload), receiver.certificate, algorithm)
+				der, err := Encrypt(
+					[]byte(smimetest.SamplePayload),
+					receiver.Certificate,
+					algorithm,
+				)
 				if err != nil {
 					errs <- err
 					return
@@ -266,12 +282,12 @@ func TestEncryptIsSafeForConcurrentMixedAlgorithms(t *testing.T) {
 					errs <- fmt.Errorf("%s produced %s", algorithm, detected)
 					return
 				}
-				decrypted, err := Decrypt(der, receiver.certificate, receiver.key)
+				decrypted, err := Decrypt(der, receiver.Certificate, receiver.Key)
 				if err != nil {
 					errs <- err
 					return
 				}
-				if string(decrypted) != testPayload {
+				if string(decrypted) != smimetest.SamplePayload {
 					errs <- fmt.Errorf("%s did not round trip", algorithm)
 				}
 			})
@@ -281,42 +297,6 @@ func TestEncryptIsSafeForConcurrentMixedAlgorithms(t *testing.T) {
 	close(errs)
 	for err := range errs {
 		require.NoError(t, err)
-	}
-}
-
-func TestBuildAndParseMessageWithEveryEncryptionAlgorithm(t *testing.T) {
-	t.Parallel()
-
-	sender := newTestIdentity(t, "sender.example")
-	receiver := newTestIdentity(t, "receiver.example")
-	for algorithm := range contentCiphers {
-		t.Run(algorithm, func(t *testing.T) {
-			t.Parallel()
-
-			built, err := BuildMessage(&BuildMessageOptions{
-				From:                  "SENDER-AS2",
-				To:                    "RECEIVER-AS2",
-				FileName:              "shipment.edi",
-				Payload:               []byte(testPayload),
-				SigningCertificate:    sender.certificate,
-				SigningKey:            sender.key,
-				EncryptionCertificate: receiver.certificate,
-				EncryptionAlgorithm:   algorithm,
-			})
-			require.NoError(t, err)
-
-			parsed, err := ParseMessage(built.ContentType, built.Body, &ParseMessageOptions{
-				DecryptionCertificate: receiver.certificate,
-				DecryptionKey:         receiver.key,
-				PartnerCertificate:    sender.certificate,
-				TransferEncoding:      built.Headers.Get("Content-Transfer-Encoding"),
-				RequireSignature:      true,
-				RequireEncryption:     true,
-			})
-			require.NoError(t, err)
-			require.True(t, parsed.Encrypted)
-			require.Equal(t, testPayload, string(parsed.Payload))
-		})
 	}
 }
 

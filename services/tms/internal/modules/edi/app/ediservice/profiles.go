@@ -14,8 +14,8 @@ import (
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/shared/as2"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/smime"
 )
 
 func (s *Service) ListCommunicationProfiles(
@@ -113,7 +113,7 @@ func (s *Service) TestCommunicationProfileConnection(
 	return result, nil
 }
 
-func (s *Service) InspectAS2Certificate(pemData string) (*as2.CertificateSummary, error) {
+func (s *Service) InspectAS2Certificate(pemData string) (*smime.CertificateSummary, error) {
 	trimmed := strings.TrimSpace(pemData)
 	if trimmed == "" {
 		return nil, errortypes.NewValidationError(
@@ -122,7 +122,7 @@ func (s *Service) InspectAS2Certificate(pemData string) (*as2.CertificateSummary
 			"Certificate PEM is required",
 		)
 	}
-	certificate, err := as2.ParseCertificate([]byte(trimmed))
+	certificate, err := smime.ParseCertificate([]byte(trimmed))
 	if err != nil {
 		return nil, errortypes.NewValidationError(
 			"certificate",
@@ -130,7 +130,7 @@ func (s *Service) InspectAS2Certificate(pemData string) (*as2.CertificateSummary
 			"Certificate must be a valid PEM certificate",
 		)
 	}
-	summary := as2.SummarizeCertificate(certificate)
+	summary := smime.SummarizeCertificate(certificate)
 	return &summary, nil
 }
 

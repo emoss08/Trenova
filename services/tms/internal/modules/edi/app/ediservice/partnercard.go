@@ -18,9 +18,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/shared/as2"
 	"github.com/emoss08/trenova/shared/maputils"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/smime"
 	"github.com/emoss08/trenova/shared/timeutils"
 )
 
@@ -62,7 +62,7 @@ type GetEDIPartnerCardRequest struct {
 
 type EDIPartnerCertificate struct {
 	Role       PartnerCertificateRole
-	Summary    *as2.CertificateSummary
+	Summary    *smime.CertificateSummary
 	Unreadable bool
 }
 
@@ -238,7 +238,7 @@ func partnerCertificates(profile *edi.EDICommunicationProfile) []EDIPartnerCerti
 		if pemData == "" {
 			continue
 		}
-		parsed, err := as2.ParseCertificate([]byte(pemData))
+		parsed, err := smime.ParseCertificate([]byte(pemData))
 		if err != nil {
 			certificates = append(
 				certificates,
@@ -246,7 +246,7 @@ func partnerCertificates(profile *edi.EDICommunicationProfile) []EDIPartnerCerti
 			)
 			continue
 		}
-		summary := as2.SummarizeCertificate(parsed)
+		summary := smime.SummarizeCertificate(parsed)
 		certificates = append(
 			certificates,
 			EDIPartnerCertificate{Role: entry.role, Summary: &summary},

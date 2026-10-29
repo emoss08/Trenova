@@ -1,4 +1,4 @@
-package as2
+package smime
 
 import (
 	"bytes"

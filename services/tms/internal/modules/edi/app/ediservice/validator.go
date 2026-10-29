@@ -9,8 +9,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/app/editransport"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/shared/as2"
 	"github.com/emoss08/trenova/shared/maputils"
+	"github.com/emoss08/trenova/shared/smime"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 )
 
@@ -380,10 +380,10 @@ func (v *Validator) validateAS2ProfileConfig(
 		entity.Config,
 		editransport.ConfigKeySigningAlgorithm,
 		[]string{
-			as2.SigningAlgorithmSHA1,
-			as2.SigningAlgorithmSHA256,
-			as2.SigningAlgorithmSHA384,
-			as2.SigningAlgorithmSHA512,
+			smime.SigningAlgorithmSHA1,
+			smime.SigningAlgorithmSHA256,
+			smime.SigningAlgorithmSHA384,
+			smime.SigningAlgorithmSHA512,
 		},
 		"Signing algorithm must be sha1, sha256, sha384, or sha512",
 	)
@@ -392,11 +392,11 @@ func (v *Validator) validateAS2ProfileConfig(
 		entity.Config,
 		editransport.ConfigKeyEncryptionAlgorithm,
 		[]string{
-			as2.EncryptionAlgorithmTripleDES,
-			as2.EncryptionAlgorithmAES128CBC,
-			as2.EncryptionAlgorithmAES256CBC,
-			as2.EncryptionAlgorithmAES128GCM,
-			as2.EncryptionAlgorithmAES256GCM,
+			smime.EncryptionAlgorithmTripleDES,
+			smime.EncryptionAlgorithmAES128CBC,
+			smime.EncryptionAlgorithmAES256CBC,
+			smime.EncryptionAlgorithmAES128GCM,
+			smime.EncryptionAlgorithmAES256GCM,
 		},
 		"Encryption algorithm must be 3des, aes128-cbc, aes256-cbc, aes128-gcm, or aes256-gcm",
 	)
@@ -467,7 +467,7 @@ func validateAS2Certificate(
 	if pemData == "" {
 		return
 	}
-	if _, err := as2.ParseCertificate([]byte(pemData)); err != nil {
+	if _, err := smime.ParseCertificate([]byte(pemData)); err != nil {
 		multiErr.Add(field, errortypes.ErrInvalid, "Certificate must be a valid PEM certificate")
 	}
 }
