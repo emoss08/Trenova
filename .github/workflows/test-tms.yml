@@ -237,9 +237,12 @@ jobs:
           path: services/tms/coverage-integration.out
           if-no-files-found: error
 
+      # The tail only: the server log runs to thousands of lines, and a full dump
+      # pushes the failing step's output (the plan guard's findings) out of the
+      # job log's tail.
       - name: Postgres logs
         if: failure()
-        run: docker logs trenova-test-postgres || true
+        run: docker logs --tail 300 trenova-test-postgres || true
 
   # The keyword-only fallback: every migration applies on plain PostGIS with no
   # pgvector, and the retrieval storage reports itself unavailable instead of
