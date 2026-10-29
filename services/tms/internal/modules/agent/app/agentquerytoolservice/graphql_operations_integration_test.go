@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/loaders/placesloaders"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentquerytoolservice"
+	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/operationsquerytools"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/detentionrepository"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/orderrepository"
@@ -409,7 +410,7 @@ func operationsListCases(world *operationsWorld, conn *postgres.Connection) []re
 	return []referenceCase{
 		{
 			tool: "order_list", marked: canceled, oldMarked: oldCanceled,
-			old: agentquerytoolservice.NewListOrdersTool(
+			old: operationsquerytools.NewListOrdersTool(
 				orderrepository.New(orderrepository.Params{DB: conn, Logger: logger}), engine),
 			write: func(ctx context.Context, tenant *agentreadtest.Tenant, label string, marked bool) (pulid.ID, error) {
 				return world.writeOrder(ctx, tenant, label, pulid.Nil, marked)
@@ -417,7 +418,7 @@ func operationsListCases(world *operationsWorld, conn *postgres.Connection) []re
 		},
 		{
 			tool: "shipment_list_recurring", marked: paused, oldMarked: oldPaused,
-			old: agentquerytoolservice.NewListRecurringShipmentsTool(
+			old: operationsquerytools.NewListRecurringShipmentsTool(
 				recurringshipmentrepository.New(
 					recurringshipmentrepository.Params{DB: conn, Logger: logger}),
 			),
@@ -530,7 +531,7 @@ func TestConvertedLists_OrderListIsNarrowedToTheOwnerOnBothPaths(t *testing.T) {
 	})
 	converted, err := agentquerytoolservice.ConvertedListTool("order_list", env.reader, env.engine)
 	require.NoError(t, err)
-	old := agentquerytoolservice.NewListOrdersTool(
+	old := operationsquerytools.NewListOrdersTool(
 		orderrepository.New(orderrepository.Params{DB: conn, Logger: zap.NewNop()}), env.engine)
 
 	before, _ := walk(t, scoped, old, tenant.Actor, nil)

@@ -6,6 +6,12 @@ import (
 	"testing"
 
 	"github.com/bytedance/sonic"
+	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/ediquerytools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/graphqllisttool"
+	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/graphqlread"
+	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/querytooltest"
+	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/readspec"
+	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/settlementquerytools"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/graphqlreadports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/stretchr/testify/assert"
@@ -29,13 +35,13 @@ func (r *conditionalReader) Read(
 	edges := make([]any, 0, len(r.rows))
 	if r.holds(encoded) {
 		for _, row := range r.rows {
-			edges = append(edges, map[string]any{connectionNode: row})
+			edges = append(edges, map[string]any{graphqlread.ConnectionNode: row})
 		}
 	}
 
 	return &graphqlreadports.GraphQLReadResult{Data: map[string]any{r.root: map[string]any{
-		connectionEdges:    edges,
-		connectionPageInfo: map[string]any{pageHasNext: false},
+		graphqlread.ConnectionEdges:    edges,
+		graphqlread.ConnectionPageInfo: map[string]any{graphqlread.PageHasNext: false},
 	}}}, nil
 }
 
@@ -49,7 +55,7 @@ func TestNearMiss_NamesTheRowsTheConditionKeptOutAndWhatTheyHold(t *testing.T) {
 	t.Parallel()
 
 	reader := &conditionalReader{
-		root: graphQLReads[toolListDriverSettlements].RootField,
+		root: graphqlread.Reads[settlementquerytools.ToolListDriverSettlements].RootField,
 		rows: []map[string]any{{
 			"id": "dstl_1", "settlementNumber": "SEED-STL-1005", "status": "Posted",
 		}},
@@ -57,17 +63,20 @@ func TestNearMiss_NamesTheRowsTheConditionKeptOutAndWhatTheyHold(t *testing.T) {
 			return !strings.Contains(variables, "PendingApproval")
 		},
 	}
-	tool, err := newGraphQLListTool(keyedSpec(t, toolListDriverSettlements), reader,
-		&mocks.DenyResourcesPermissionEngine{})
+	tool, err := graphqllisttool.New(
+		keyedSpec(t, settlementquerytools.ToolListDriverSettlements),
+		reader,
+		&mocks.DenyResourcesPermissionEngine{},
+	)
 	require.NoError(t, err)
 
-	result, err := tool.Query(t.Context(), dispatchCall(map[string]any{
+	result, err := tool.Query(t.Context(), querytooltest.DispatchCall(map[string]any{
 		"status":   []any{"Draft", "PendingApproval", "Approved"},
 		"workerId": "wrk_01M5ZQX9BB3RWCN048WTDPFDKN",
 	}))
 	require.NoError(t, err)
 
-	note, _ := encodedDocument(t, result)[outcomeNote].(string)
+	note, _ := querytooltest.EncodedDocument(t, result)[graphqlread.OutcomeNote].(string)
 	assert.Contains(t, note, "Without the condition on status, 1 does: "+
 		"SEED-STL-1005 (status Posted)")
 	assert.Contains(t, note, "That condition alone keeps them out.")
@@ -83,26 +92,29 @@ func TestNearMiss_ACallWhoseOnlyConditionFindsNothingIsToldThereIsNothing(t *tes
 	t.Parallel()
 
 	reader := &conditionalReader{
-		root:  graphQLReads[toolEDIListInboundFiles].RootField,
+		root:  graphqlread.Reads[ediquerytools.ToolEDIListInboundFiles].RootField,
 		holds: func(string) bool { return false },
 	}
-	tool, err := newGraphQLListTool(keyedSpec(t, toolEDIListInboundFiles), reader,
+	tool, err := graphqllisttool.New(keyedSpec(t, ediquerytools.ToolEDIListInboundFiles), reader,
 		&mocks.DenyResourcesPermissionEngine{})
 	require.NoError(t, err)
 
-	result, err := tool.Query(t.Context(), keyedCall(map[string]any{"isaSender": "ACMEMFG"}))
+	result, err := tool.Query(
+		t.Context(),
+		querytooltest.KeyedCall(map[string]any{"isaSender": "ACMEMFG"}),
+	)
 	require.NoError(t, err)
 
-	note, _ := encodedDocument(t, result)[outcomeNote].(string)
+	note, _ := querytooltest.EncodedDocument(t, result)[graphqlread.OutcomeNote].(string)
 	assert.Contains(t, note, "without that condition none do either")
 	assert.Contains(t, note, "there are no inbound EDI files here for you to find")
 
-	result, err = tool.Query(t.Context(), keyedCall(map[string]any{
+	result, err = tool.Query(t.Context(), querytooltest.KeyedCall(map[string]any{
 		"isaSender": "ACMEMFG",
 		"status":    []any{"Quarantined"},
 	}))
 	require.NoError(t, err)
-	note, _ = encodedDocument(t, result)[outcomeNote].(string)
+	note, _ = querytooltest.EncodedDocument(t, result)[graphqlread.OutcomeNote].(string)
 	assert.NotContains(t, note, "none do either",
 		"two conditions that each find nothing alone say nothing of the whole set")
 }
@@ -110,19 +122,19 @@ func TestNearMiss_ACallWhoseOnlyConditionFindsNothingIsToldThereIsNothing(t *tes
 func TestKeptOutRows_ReadsAPresentedAmountAndCountsAPartialSample(t *testing.T) {
 	t.Parallel()
 
-	page := &graphQLPage{
-		items: []map[string]any{
+	page := &graphqllisttool.Page{
+		Items: []map[string]any{
 			{"number": "INV-1", "status": "Paid"},
 			{"name": "Acme", "status": "Paid"},
 			{"status": "Void"},
 		},
-		hasMore: true,
+		HasMore: true,
 	}
 
 	assert.Equal(t, "INV-1 (status Paid); Acme (status Paid); status Void",
-		keptOutRows(page, "status", "status"))
+		graphqllisttool.KeptOutRows(page, "status", "status"))
 
-	tool := &graphQLListTool{spec: graphQLListSpec{entityPlural: "invoices"}}
-	assert.Contains(t, tool.keptOut("status", page), "Without the condition on status, "+
+	tool := &graphqllisttool.Tool{Spec: readspec.List{EntityPlural: "invoices"}}
+	assert.Contains(t, tool.KeptOut("status", page), "Without the condition on status, "+
 		"at least 3 do: ")
 }

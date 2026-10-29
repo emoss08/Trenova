@@ -18,7 +18,7 @@ The queue and sender tools live in `agenttools/triagequeuetools` and the reply, 
 exception and conflict tools in `agenttools/triageworktools`; both build on the shared triage
 pieces in `agenttools/inboundtools`, beside the tools that came before them
 (`inbox_link_inbound_message`, `inbox_mark_inbound_message`, `inbox_send_reply`); the reads
-(`inbox_get_inbound_message`, `inbox_list_triage_assignees`) live in `agentquerytoolservice`.
+(`inbox_get_inbound_message`, `inbox_list_triage_assignees`) live in `querytools/inboxquerytools`.
 
 Every write calls the service its GraphQL mutation calls (`inboundmessageservice`,
 `triageworkservice`, `inboundreplyservice`, `triageconflictservice`) and never writes

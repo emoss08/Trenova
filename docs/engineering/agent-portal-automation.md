@@ -285,7 +285,7 @@ every extension does.
 | The wait it sets | `agentwait.KindPortalRun`, `agentwaitservice/portal.go` |
 | `/browser` | the extension command registry: `agentextension/command.go`, `agentruntime/command.go`, `assistantservice/commands.go`, the composer's `use-desk-extension-commands.ts` and `EXTENSION_COMMANDS` in `composer-commands.ts` |
 | Vendor connector | `internal/infrastructure/agentextension/browseruseconnector/` over `shared/browseruse` |
-| Tools | `agentquerytoolservice/portal_tools.go` (`web_list_portal_sites`, `web_read_portal`), `agenttools/portaltools/` (`web_use_portal`) |
+| Tools | `querytools/webquerytools/portal_tools.go` (`web_list_portal_sites`, `web_read_portal`), `agenttools/portaltools/` (`web_use_portal`) |
 | REST API | `/agent-portals/sites/` (list, create, `/:siteID/` update and delete), `/agent-portals/runs/` (list, `/:runID/`, `/:runID/live/`, `/:runID/recording/`, `/:runID/sign-in-code/`) |
 | Relayed codes and signing in by hand | `extensionportal/portalsignin.go`, `agentextensionservice/portal_codes.go`, the code box in `client/apps/web/src/components/assistant/portal-code-form.tsx`, the live browser and "I've signed in" in `portal-sign-in.tsx` |
 | What a person reads of a run | `client/apps/web/src/components/assistant/portal-run-result.tsx`, drawn by AI control and by the Desk's `portal_task` artifact (`routes/desk/_components/artifacts/kinds/portal/`, recorded by `assistantservice/portal_task_artifact.go`) |

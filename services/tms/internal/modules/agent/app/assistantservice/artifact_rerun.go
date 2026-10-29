@@ -3,7 +3,7 @@ package assistantservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agentquerytoolservice"
+	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/reportquerytools"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantartifactports"
@@ -78,7 +78,7 @@ func (s *Service) RunArtifactReport(
 	}
 
 	actor := permissionports.UserActor(req.TenantInfo)
-	request := agentquerytoolservice.ReportingRequestFor(actor)
+	request := reportquerytools.ReportingRequestFor(actor)
 	runReq, name, err := s.rerunOf(ctx, &request, actor, shown)
 	if err != nil {
 		return nil, err
@@ -126,7 +126,7 @@ func (s *Service) rerunOf(
 		if !recorded {
 			return nil, "", errNotReread
 		}
-		previewed, err := agentquerytoolservice.ReportOfPreview(ctx, s.reports, actor, arguments)
+		previewed, err := reportquerytools.ReportOfPreview(ctx, s.reports, actor, arguments)
 		if err != nil {
 			return nil, "", errortypes.NewBusinessError(
 				"This preview can no longer be run: " + err.Error(),

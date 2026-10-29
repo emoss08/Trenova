@@ -34,12 +34,7 @@ var reportSurfaces = []reportSurface{
 	{dir: "../../../jobs/reportjobs", match: allFiles},
 	{dir: "../../../../../infrastructure/reportengine", match: allFiles},
 	{dir: "../../../../../api/graphql/resolver/reportresolver", match: allFiles},
-	{
-		dir: "../../../../agent/app/agentquerytoolservice",
-		match: func(name string) bool {
-			return strings.HasPrefix(name, "report")
-		},
-	},
+	{dir: "../../../../agent/app/querytools/reportquerytools", match: allFiles},
 }
 
 func TestReportSurfacesDecideAccessOnlyThroughReportaccess(t *testing.T) {

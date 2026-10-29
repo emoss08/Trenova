@@ -8,7 +8,7 @@ import (
 	"io"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agentquerytoolservice"
+	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/reportquerytools"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
@@ -141,13 +141,13 @@ func (s *Service) exportReport(
 	if s.reports == nil {
 		return errortypes.NewBusinessError("Reports cannot be downloaded here")
 	}
-	previewed, err := agentquerytoolservice.ReportOfPreview(ctx, s.reports, actor, source.arguments)
+	previewed, err := reportquerytools.ReportOfPreview(ctx, s.reports, actor, source.arguments)
 	if err != nil {
 		return errortypes.NewBusinessError("This preview can no longer be run: " + err.Error())
 	}
 
 	_, err = s.reports.StreamCSV(ctx, &reporting.StreamCSVRequest{
-		Request:    agentquerytoolservice.ReportingRequestFor(actor),
+		Request:    reportquerytools.ReportingRequestFor(actor),
 		Title:      source.artifact.Title,
 		Definition: previewed.Definition,
 		Params:     previewed.Params,

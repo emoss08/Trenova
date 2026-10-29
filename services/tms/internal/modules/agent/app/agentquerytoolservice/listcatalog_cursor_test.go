@@ -4,6 +4,9 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/equipmentquerytools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/masterdataquerytools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/querytooltest"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmenttype"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor"
@@ -32,7 +35,7 @@ func newCursorRepo[T pagination.CursorEntity](count int, build func(id pulid.ID)
 func (r *cursorRepo[T]) page(cursor pagination.CursorInfo) *pagination.CursorListResult[T] {
 	r.received = cursor
 
-	return pageAfter(r.items, cursor)
+	return querytooltest.PageAfter(r.items, cursor)
 }
 
 type pagedTractorRepo struct {
@@ -84,7 +87,7 @@ func cursorCase[T pagination.CursorEntity](
 	return cursorListCase{
 		tool:     tool,
 		received: func() pagination.CursorInfo { return repo.received },
-		ids:      cursorIDs(repo.items),
+		ids:      querytooltest.CursorIDs(repo.items),
 	}
 }
 
@@ -99,7 +102,10 @@ func TestCursorListCatalog_PagesByAfterAndNextCursor(t *testing.T) {
 				return &tractor.Tractor{ID: id, Code: "T"}
 			})
 			return cursorCase(
-				newListTractorsTool(&pagedTractorRepo{cursorRepo: repo}, &fakePermissions{}),
+				equipmentquerytools.NewListTractorsTool(
+					&pagedTractorRepo{cursorRepo: repo},
+					&querytooltest.FakePermissions{},
+				),
 				repo,
 			)
 		},
@@ -107,14 +113,19 @@ func TestCursorListCatalog_PagesByAfterAndNextCursor(t *testing.T) {
 			repo := newCursorRepo(cursorCaseRows, func(id pulid.ID) *trailer.Trailer {
 				return &trailer.Trailer{ID: id, Code: "R"}
 			})
-			return cursorCase(newListTrailersTool(&pagedTrailerRepo{cursorRepo: repo}), repo)
+			return cursorCase(
+				equipmentquerytools.NewListTrailersTool(&pagedTrailerRepo{cursorRepo: repo}),
+				repo,
+			)
 		},
 		"equipment types": func() cursorListCase {
 			repo := newCursorRepo(cursorCaseRows, func(id pulid.ID) *equipmenttype.EquipmentType {
 				return &equipmenttype.EquipmentType{ID: id, Code: "DV"}
 			})
 			return cursorCase(
-				newListEquipmentTypesTool(&pagedEquipmentTypeRepo{cursorRepo: repo}),
+				masterdataquerytools.NewListEquipmentTypesTool(
+					&pagedEquipmentTypeRepo{cursorRepo: repo},
+				),
 				repo,
 			)
 		},
@@ -125,17 +136,17 @@ func TestCursorListCatalog_PagesByAfterAndNextCursor(t *testing.T) {
 			t.Parallel()
 
 			c := build()
-			params := testParams(nil)
-			assertCursorPaging(t, cursorPagingCase{
-				query: func(args map[string]any) (any, error) {
+			params := querytooltest.TestParams(nil)
+			querytooltest.AssertCursorPaging(t, querytooltest.CursorPagingCase{
+				Query: func(args map[string]any) (any, error) {
 					params.Params = args
 					return c.tool.Query(t.Context(), params)
 				},
-				received: c.received,
-				args:     map[string]any{"query": "a"},
-				changed:  map[string]any{"query": "b"},
-				ids:      c.ids,
-				limit:    3,
+				Received: c.received,
+				Args:     map[string]any{"query": "a"},
+				Changed:  map[string]any{"query": "b"},
+				IDs:      c.ids,
+				Limit:    3,
 			})
 		})
 	}

@@ -493,6 +493,32 @@ To add a tool: put it in its family package, export its provider, and add the pr
 the family's place in `ToolProviders()` (or the family's own provider list, such as
 `operationsToolProviders()`).
 
+## Agent query tools
+
+The read-only tools the assistant runs without asking live in one package per domain under
+`internal/modules/agent/app/querytools/<domain>querytools` (`workerquerytools`,
+`shipmentquerytools`, `reportquerytools`, ...). What they share is in packages named for what
+they provide: `querytool` (argument reading, parameter schemas, the read policy, paging and the
+search outcome), `fieldgate` (the field-level access gate and the gated outcome), `readspec`
+(what a person writes for a read: `readspec.List`, `readspec.Get`, `readspec.Reference`),
+`listtool` (the repository-backed list tool), `graphqlread` (the read model of a persisted
+GraphQL operation and the generated `graphqlreads_gen.go`), and `graphqllisttool` and
+`gettool` (the tools built from specs). Test helpers several packages' tests share are in
+`querytooltest` and `fieldgatetest`. `agentquerytoolservice` keeps the public API: `Module`,
+`ToolProviders()`, the registry and `FilterCatalog`, and it collects each domain's
+`ReadSpecs()` and `GetSpecs()` into the GraphQL list and get tools. `ToolProviders()` lists the
+providers in their original order.
+
+A domain package imports the shared packages and, while the graph stays acyclic, another
+domain's (`shipmentreadquerytools` imports `shipmentquerytools`; `shipmentrecordquerytools`
+composes the master-data lists). A test file lives in the package it tests; tests that walk
+every registered spec, and the external tests that read through the real GraphQL reader, live
+in `agentquerytoolservice`. Fields exported across packages that a tool result carries are
+tagged `json:"-"`, so no tool's output changed.
+
+To add a read tool: put it in its domain package, export its provider or spec, and add it to
+that package's provider or spec list (or to `coreToolProviders()` in `agentquerytoolservice`).
+
 ## Measured results
 
 Measured on 2026-10-11 with `task build-bench` on a 16-core WSL2 machine (15 GB), comparing

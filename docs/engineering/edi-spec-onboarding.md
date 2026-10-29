@@ -253,7 +253,7 @@ document digest.
 | Repository | `modules/edi/adapters/postgres/ediconnectiondraftrepository/` |
 | Sample parse | `ediinboundservice.ParseSample` |
 | Tool input | `agent/app/agenttools/edispec/` |
-| Tools | `agent/app/agentquerytoolservice/edi_connection_draft_tool.go`, `agent/app/agenttools/editools/apply_connection_draft.go` (and `preview_connection_draft.go`) |
+| Tools | `agent/app/querytools/ediquerytools/edi_connection_draft_tool.go`, `agent/app/agenttools/editools/apply_connection_draft.go` (and `preview_connection_draft.go`) |
 | Artifact | `assistantservice/edi_connection_draft.go`; client `routes/desk/_components/artifacts/kinds/edi-connection-draft/` (with `connection-draft-skeleton.tsx`) |
 | Approval card | `components/assistant/proposal-presenters.ts` (`edi_apply_connection_draft`) |
 | Bench | `deskbench/scenarios/edi.yaml` (`edi-guide-new-partner`, `edi-guide-revised`), fixtures `deskbench/fixtures/attachments/edi-guide.html` + `edi-guides.json`, rendered by `render.mjs` |

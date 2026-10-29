@@ -184,7 +184,7 @@ The tool is named under [agent-tool-conventions.md](agent-tool-conventions.md):
 - the verb is `run`;
 - the object is `script`, so in reading order it is `run_agent_script`.
 
-`TestNamespacedToolsFollowTheConventions` covers it. It lives in `agentquerytoolservice`
+`TestNamespacedToolsFollowTheConventions` covers it. It lives in `querytools/scriptquerytools`
 (`script_tool.go`), so the catalog, `find_tools`, the safety doc and the contract tests treat it
 as any other read.
 
@@ -696,12 +696,12 @@ decides from its own use whether to keep it.
 | Which providers offer scripts, and the answering provider's settings at dispatch | `completionrouter/scripts.go` (`llmports.ScriptProviders`) |
 | Broker, index, gate check, per-turn count | `agentruntime/scriptbroker.go`, `scripttool.go` |
 | `ToolPolicy.Script`, `CallableFromScript`, `QueryToolParams.Broker` | `agentports/toolpolicy.go`, `agentquerytool.go` |
-| The tool | `agentquerytoolservice/script_tool.go` |
+| The tool | `querytools/scriptquerytools/script_tool.go` |
 | The runner: limits, host functions, outcome | `app/scriptrunner`; port `ports/scriptports` |
 | The WebAssembly host | `pkg/scriptvm` (embeds `scripts.wasm`); the compilation cache, shared with the rules engine, `pkg/wasmcache` |
 | The interpreter, the SDK and the module's ABI | `services/crates/scripts` (`trenova-scripts`), built by `task rust:wasm-scripts`; Monty vendored in `services/vendor/monty` |
 | Permission resource | `permission.ResourceCodeMode`, granted by the `platform.assistant` bundle |
-| Datasets (resolving, typing) | `agentquerytoolservice/script_datasets.go` |
+| Datasets (resolving, typing) | `querytools/scriptquerytools/script_datasets.go` |
 | Paging datasets in, what a script shows | `scriptrunner/display.go`; `domain/analysis` (`run.go`, `display.go`) |
 | Kept analyses and who reads them | `analysisrunservice`, `analysisrunrepository`, `api/handlers/agentanalysishandler`; table `agent_analysis_runs` |
 | The Desk card and the history | `assistantservice/analysis_artifact.go`; client `routes/desk/_components/artifacts/kinds/analysis/`, `components/assistant/analysis-result.tsx` and `analysis-chart.tsx`, `routes/agent-control/_components/activity/analysis-runs.tsx` |

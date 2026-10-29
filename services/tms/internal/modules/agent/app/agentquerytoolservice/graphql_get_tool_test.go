@@ -4,6 +4,11 @@ import (
 	"slices"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/fieldgate"
+	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/gettool"
+	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/graphqlread"
+	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/partyquerytools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/querytooltest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/graphqlreadports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -32,15 +37,18 @@ func TestGraphQLGet_ReadsTheCardByTheIDItsParameterNames(t *testing.T) {
 	t.Parallel()
 
 	carrierID := pulid.MustNew("car_").String()
-	reader := &keyedReader{answers: carrierCardAnswer(carrierID)}
-	spec := carrierGetSpec()
-	tool, err := newGraphQLGetTool(&spec, reader, &mocks.DenyResourcesPermissionEngine{})
+	reader := &querytooltest.KeyedReader{Answers: carrierCardAnswer(carrierID)}
+	spec := partyquerytools.CarrierGetSpec()
+	tool, err := gettool.NewGraphQL(&spec, reader, &mocks.DenyResourcesPermissionEngine{})
 	require.NoError(t, err)
 
-	data, err := tool.Query(t.Context(), keyedCall(map[string]any{"carrierId": carrierID}))
+	data, err := tool.Query(
+		t.Context(),
+		querytooltest.KeyedCall(map[string]any{"carrierId": carrierID}),
+	)
 	require.NoError(t, err)
 
-	sent := reader.sent("DeskCarrierCard")
+	sent := reader.Sent("DeskCarrierCard")
 	require.NotNil(t, sent)
 	assert.Equal(t, map[string]any{"id": carrierID}, sent.Variables)
 	record, ok := data.(map[string]any)
@@ -52,8 +60,8 @@ func TestGraphQLGet_ReadsTheCardByTheIDItsParameterNames(t *testing.T) {
 	policies, _ := record["insurancePolicies"].([]any)
 	require.Len(t, policies, 1)
 	assert.Equal(t, []string{"phone", "insurancePolicies.coverageAmount"},
-		record[outcomeWithheld])
-	assert.Equal(t, withheldNote, record[outcomeWithheldNote])
+		record[graphqlread.OutcomeWithheld])
+	assert.Equal(t, fieldgate.WithheldNote, record[graphqlread.OutcomeWithheldNote])
 }
 
 // A pro number or a paraphrased id pasted where an id belongs is refused
@@ -61,30 +69,33 @@ func TestGraphQLGet_ReadsTheCardByTheIDItsParameterNames(t *testing.T) {
 func TestGraphQLGet_RefusesWhatIsNotAnID(t *testing.T) {
 	t.Parallel()
 
-	reader := &keyedReader{}
-	spec := carrierGetSpec()
-	tool, err := newGraphQLGetTool(&spec, reader, &mocks.DenyResourcesPermissionEngine{})
+	reader := &querytooltest.KeyedReader{}
+	spec := partyquerytools.CarrierGetSpec()
+	tool, err := gettool.NewGraphQL(&spec, reader, &mocks.DenyResourcesPermissionEngine{})
 	require.NoError(t, err)
 
-	_, err = tool.Query(t.Context(), keyedCall(map[string]any{"carrierId": "PRO-48812"}))
+	_, err = tool.Query(
+		t.Context(),
+		querytooltest.KeyedCall(map[string]any{"carrierId": "PRO-48812"}),
+	)
 	require.Error(t, err)
-	assert.Empty(t, reader.requests)
+	assert.Empty(t, reader.Requests)
 }
 
 func TestGraphQLGet_AReadTheServerRefusesIsARefusal(t *testing.T) {
 	t.Parallel()
 
-	reader := &keyedReader{answers: map[string]*graphqlreadports.GraphQLReadResult{
+	reader := &querytooltest.KeyedReader{Answers: map[string]*graphqlreadports.GraphQLReadResult{
 		"DeskLocationCard": {Errors: []graphqlreadports.GraphQLReadError{{
 			Code: graphqlreadports.GraphQLCodeForbidden, Message: "not allowed",
 		}}},
 	}}
-	spec := locationGetSpec()
-	tool, err := newGraphQLGetTool(&spec, reader, &mocks.DenyResourcesPermissionEngine{})
+	spec := partyquerytools.LocationGetSpec()
+	tool, err := gettool.NewGraphQL(&spec, reader, &mocks.DenyResourcesPermissionEngine{})
 	require.NoError(t, err)
 
-	_, err = tool.Query(t.Context(), keyedCall(map[string]any{
-		locationIDParam: pulid.MustNew("loc_").String(),
+	_, err = tool.Query(t.Context(), querytooltest.KeyedCall(map[string]any{
+		partyquerytools.LocationIDParam: pulid.MustNew("loc_").String(),
 	}))
 	var refused *graphqlreadports.ReadRefusedError
 	require.ErrorAs(t, err, &refused)
@@ -95,19 +106,19 @@ func TestGraphQLGet_SpecsMatchWhatTheGeneratorProved(t *testing.T) {
 	t.Parallel()
 
 	for _, spec := range graphQLGetSpecs() {
-		read, ok := graphQLReads[spec.name]
-		require.True(t, ok, spec.name)
-		assert.Equal(t, graphQLVerbGet, read.Verb, spec.name)
+		read, ok := graphqlread.Reads[spec.Name]
+		require.True(t, ok, spec.Name)
+		assert.Equal(t, graphqlread.VerbGet, read.Verb, spec.Name)
 		if read.SelfScoped {
-			assert.Equal(t, agenttooltrust.ToolScopeSelf, spec.scope, spec.name)
+			assert.Equal(t, agenttooltrust.ToolScopeSelf, spec.Scope, spec.Name)
 			continue
 		}
-		assert.Equal(t, string(spec.resource), read.Resource, spec.name)
+		assert.Equal(t, string(spec.Resource), read.Resource, spec.Name)
 	}
 
-	spec := carrierGetSpec()
-	spec.name = "carrier_list"
-	_, err := newGraphQLGetTool(&spec, &keyedReader{}, nil)
+	spec := partyquerytools.CarrierGetSpec()
+	spec.Name = "carrier_list"
+	_, err := gettool.NewGraphQL(&spec, &querytooltest.KeyedReader{}, nil)
 	require.ErrorContains(t, err, "not a get")
 }
 
@@ -117,7 +128,7 @@ func TestGraphQLGet_TheCardSelectsWhatTheSummaryPromises(t *testing.T) {
 
 	selected := func(tool string) []string {
 		var names []string
-		for _, field := range graphQLReads[tool].Fields {
+		for _, field := range graphqlread.Reads[tool].Fields {
 			if field.Selected {
 				names = append(names, field.Name)
 			}

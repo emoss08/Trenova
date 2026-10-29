@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/agentread/agentreadtest"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentquerytoolservice"
+	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/billingquerytools"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/customerpaymentrepository"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/invoiceadjustmentrepository"
@@ -311,7 +312,7 @@ func TestConvertedLists_BillingReadsReadWhatTheRepositoryToolsReadUnderRowLevelS
 			oldMarked: map[string]any{"filters": []any{map[string]any{
 				"field": "settlementStatus", "operator": "in", "values": []any{"Paid"},
 			}}},
-			old: agentquerytoolservice.NewListInvoicesTool(invoices, engine),
+			old: billingquerytools.NewListInvoicesTool(invoices, engine),
 			write: func(ctx context.Context, tenant *agentreadtest.Tenant, label string, marked bool) (pulid.ID, error) {
 				settlement := invoice.SettlementStatusUnpaid
 				if marked {
@@ -372,7 +373,7 @@ func TestConvertedLists_BillingReadsWithholdTheMoneyAtInternal(t *testing.T) {
 	invoiceList, err := agentquerytoolservice.ConvertedListTool("invoice_list", reader, engine)
 	require.NoError(t, err)
 	converted := read(invoiceList)
-	before := read(agentquerytoolservice.NewListInvoicesTool(invoices, engine))
+	before := read(billingquerytools.NewListInvoicesTool(invoices, engine))
 	for _, field := range before["withheldByAccess"].([]any) {
 		assert.Contains(t, converted["withheldByAccess"], field,
 			"the converted list withholds at least what the repository tool did")
@@ -419,7 +420,7 @@ func TestConvertedLists_InvoiceListIsNarrowedToOwnShipmentsOnBothPaths(t *testin
 	reader := agentreadtest.NewReader(t, agentreadtest.Options{Engine: engine, Resolvers: services})
 	converted, err := agentquerytoolservice.ConvertedListTool("invoice_list", reader, engine)
 	require.NoError(t, err)
-	old := agentquerytoolservice.NewListInvoicesTool(invoices, engine)
+	old := billingquerytools.NewListInvoicesTool(invoices, engine)
 
 	before, _ := walk(t, scoped, old, tenant.Actor, nil)
 	after, _ := walk(t, scoped, converted, tenant.Actor, nil)

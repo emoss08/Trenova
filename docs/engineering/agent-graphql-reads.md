@@ -30,7 +30,7 @@ item 4 and §5), widened by the owner's direction to "use GraphQL with everythin
 
 ## Why
 
-Today a read tool reaches a repository or service directly (`agentquerytoolservice`, 176 `list`
+Today a read tool reaches a repository or service directly (`querytools`, 176 `list`
 and `get` tools). That gives four problems.
 
 **Two authorization paths.** The tool checks `resource:read` once in `dispatch`, then reads with
@@ -210,7 +210,7 @@ the last step of `task gqlgen` and in `Codegen Checks`. It reads four sources:
 It writes two files:
 
 - `agentread/executor_gen.go`: the read executor, holding the bound operations byte for byte.
-- `agentquerytoolservice/graphqlreads_gen.go`: for each tool, its operation, root field and node
+- `querytools/graphqlread/graphqlreads_gen.go`: for each tool, its operation, root field and node
   type, the fields the operation selects on the node, the input types its variables take, and a
   constructor for the node's Go entity, read from gqlgen's own binder.
 

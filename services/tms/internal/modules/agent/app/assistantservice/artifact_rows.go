@@ -7,7 +7,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agentquerytoolservice"
+	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/querytool"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
@@ -176,7 +176,7 @@ func (s *Service) ArtifactRows(
 	}
 
 	page, err := list.read(ctx, overrides, query.IncludeTotal)
-	if errors.Is(err, agentquerytoolservice.ErrStaleCursor) {
+	if errors.Is(err, querytool.ErrStaleCursor) {
 		return nil, errStalePage
 	}
 	if err != nil {

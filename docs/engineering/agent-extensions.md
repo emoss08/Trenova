@@ -33,7 +33,7 @@ and every tool call agree on which vendor answers.
 | Marketplace, settings, test, metering, web research, portal sites and tasks, analyses | `internal/modules/agent/app/agentextensionservice/` |
 | REST API (`/agent-extensions/...`) | `internal/api/handlers/agentextensionhandler/` |
 | Vendor connectors | `internal/infrastructure/agentextension/<vendor>connector/` over `shared/<vendor>`, registered with `connectorkit.Provide` |
-| Tools | `internal/modules/agent/app/agentquerytoolservice/` (`web_tools.go`, `web_watch_tools.go`, `portal_tools.go`, `analysis_tool.go`) for reads, `internal/modules/agent/app/agenttools/portaltools/` for `web_use_portal`, `agenttools/webwatchtools/` for `web_watch` and `web_stop_watch` |
+| Tools | `internal/modules/agent/app/querytools/webquerytools/` (`web_tools.go`, `web_watch_tools.go`, `portal_tools.go`, `analysis_tool.go`) for reads, `internal/modules/agent/app/agenttools/portaltools/` for `web_use_portal`, `agenttools/webwatchtools/` for `web_watch` and `web_stop_watch` |
 | Runtime gating and the approval rule | `internal/modules/agent/app/agentruntime/extensions.go` |
 | Extension commands (`/browser`, `/search`) | `agentextension/command.go`, `agentruntime/command.go`, `assistantservice/commands.go`, `EXTENSION_COMMANDS` in the client's `composer-commands.ts` and `use-desk-extension-commands.ts` |
 | Marketplace UI | `client/apps/web/src/routes/agent-control/_components/extensions/` |

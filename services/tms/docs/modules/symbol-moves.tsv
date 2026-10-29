@@ -19369,3 +19369,12 @@ github.com/emoss08/trenova/internal/modules/operations/app/tenderservice.BounceT
 github.com/emoss08/trenova/internal/modules/operations/app/tenderservice.ErrOfferNoLongerAvailable	github.com/emoss08/trenova/internal/modules/operations/app/tenderresponse.ErrOfferNoLongerAvailable
 github.com/emoss08/trenova/internal/modules/operations/app/tenderservice.PublicOfferView	github.com/emoss08/trenova/internal/modules/operations/app/tenderresponse.PublicOfferView
 github.com/emoss08/trenova/internal/modules/operations/app/tenderservice.PublicResponse	github.com/emoss08/trenova/internal/modules/operations/app/tenderresponse.PublicResponse
+github.com/emoss08/trenova/internal/modules/agent/app/agentquerytoolservice.DraftEDIConnectionToolName	github.com/emoss08/trenova/internal/modules/agent/app/querytools/ediquerytools.DraftEDIConnectionToolName
+github.com/emoss08/trenova/internal/modules/agent/app/agentquerytoolservice.ErrMissingActor	github.com/emoss08/trenova/internal/modules/agent/app/querytools/querytool.ErrMissingActor
+github.com/emoss08/trenova/internal/modules/agent/app/agentquerytoolservice.ErrStaleCursor	github.com/emoss08/trenova/internal/modules/agent/app/querytools/querytool.ErrStaleCursor
+github.com/emoss08/trenova/internal/modules/agent/app/agentquerytoolservice.ErrTenantMismatch	github.com/emoss08/trenova/internal/modules/agent/app/querytools/querytool.ErrTenantMismatch
+github.com/emoss08/trenova/internal/modules/agent/app/agentquerytoolservice.NavigationResult	github.com/emoss08/trenova/internal/modules/agent/app/querytools/guidequerytools.NavigationResult
+github.com/emoss08/trenova/internal/modules/agent/app/agentquerytoolservice.PreviewedReport	github.com/emoss08/trenova/internal/modules/agent/app/querytools/reportquerytools.PreviewedReport
+github.com/emoss08/trenova/internal/modules/agent/app/agentquerytoolservice.ReportOfPreview	github.com/emoss08/trenova/internal/modules/agent/app/querytools/reportquerytools.ReportOfPreview
+github.com/emoss08/trenova/internal/modules/agent/app/agentquerytoolservice.ReportingRequestFor	github.com/emoss08/trenova/internal/modules/agent/app/querytools/reportquerytools.ReportingRequestFor
+github.com/emoss08/trenova/internal/modules/agent/app/agentquerytoolservice.ShipmentRecordsToolParams	github.com/emoss08/trenova/internal/modules/agent/app/querytools/shipmentrecordquerytools.ShipmentRecordsToolParams

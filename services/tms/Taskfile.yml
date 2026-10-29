@@ -376,7 +376,7 @@ tasks:
         # Each schema file gets its own executor package, so a new schema file
         # produces new *untracked* generated files. git diff cannot see those,
         # so check porcelain status instead.
-        PATHS="internal/api/graphql/generated internal/api/graphql/gqlmodel internal/api/graphql/resolver internal/api/graphql/gqlexec/internal/e2e internal/api/graphql/agentread internal/modules/agent/app/agentquerytoolservice/graphqlreads_gen.go"
+        PATHS="internal/api/graphql/generated internal/api/graphql/gqlmodel internal/api/graphql/resolver internal/api/graphql/gqlexec/internal/e2e internal/api/graphql/agentread internal/modules/agent/app/querytools/graphqlread/graphqlreads_gen.go"
         if [ -z "$(git status --porcelain -- $PATHS)" ]; then
           echo "GraphQL server generated code is up to date"
         else

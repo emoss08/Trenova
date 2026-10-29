@@ -17,6 +17,11 @@ import (
 	"github.com/emoss08/trenova/internal/bootstrap/crossref"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentquerytoolservice"
+	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/equipmentquerytools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/formulaquerytools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/masterdataquerytools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/partyquerytools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/workerquerytools"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/graphqlreadports"
 	"github.com/emoss08/trenova/internal/modules/equipment/adapters/postgres/equipmentmanufacturerrepository"
@@ -363,7 +368,7 @@ func convertedListCases(
 	cases := []referenceCase{
 		{
 			tool: "equipment_list_types", marked: inactive, oldMarked: oldInactive,
-			old: agentquerytoolservice.NewListEquipmentTypesTool(equipmentTypes),
+			old: masterdataquerytools.NewListEquipmentTypesTool(equipmentTypes),
 			write: func(ctx context.Context, tenant *agentreadtest.Tenant, label string, marked bool) (pulid.ID, error) {
 				bu, org := tenantOf(tenant)
 				row, err := equipmentTypes.Create(ctx, &equipmenttype.EquipmentType{
@@ -375,7 +380,7 @@ func convertedListCases(
 		},
 		{
 			tool: "masterdata_list_fleet_codes", marked: inactive, oldMarked: oldInactive,
-			old: agentquerytoolservice.NewListFleetCodesTool(fleetCodes),
+			old: masterdataquerytools.NewListFleetCodesTool(fleetCodes),
 			write: func(ctx context.Context, tenant *agentreadtest.Tenant, label string, marked bool) (pulid.ID, error) {
 				bu, org := tenantOf(tenant)
 				row, err := fleetCodes.Create(ctx, &fleetcode.FleetCode{
@@ -387,7 +392,7 @@ func convertedListCases(
 		},
 		{
 			tool: "masterdata_list_service_types", marked: inactive, oldMarked: oldInactive,
-			old: agentquerytoolservice.NewListServiceTypesTool(serviceTypes),
+			old: masterdataquerytools.NewListServiceTypesTool(serviceTypes),
 			write: func(ctx context.Context, tenant *agentreadtest.Tenant, label string, marked bool) (pulid.ID, error) {
 				bu, org := tenantOf(tenant)
 				row, err := serviceTypes.Create(ctx, &servicetype.ServiceType{
@@ -398,7 +403,7 @@ func convertedListCases(
 		},
 		{
 			tool: "masterdata_list_shipment_types", marked: inactive, oldMarked: oldInactive,
-			old: agentquerytoolservice.NewListShipmentTypesTool(shipmentTypes),
+			old: masterdataquerytools.NewListShipmentTypesTool(shipmentTypes),
 			write: func(ctx context.Context, tenant *agentreadtest.Tenant, label string, marked bool) (pulid.ID, error) {
 				bu, org := tenantOf(tenant)
 				row, err := shipmentTypes.Create(ctx, &shipmenttype.ShipmentType{
@@ -409,7 +414,7 @@ func convertedListCases(
 		},
 		{
 			tool: "masterdata_list_commodities", marked: inactive, oldMarked: oldInactive,
-			old: agentquerytoolservice.NewListCommoditiesTool(commodities),
+			old: masterdataquerytools.NewListCommoditiesTool(commodities),
 			write: func(ctx context.Context, tenant *agentreadtest.Tenant, label string, marked bool) (pulid.ID, error) {
 				bu, org := tenantOf(tenant)
 				row, err := commodities.Create(ctx, &commodity.Commodity{
@@ -421,7 +426,7 @@ func convertedListCases(
 		},
 		{
 			tool: "masterdata_list_hazardous_materials", marked: inactive, oldMarked: oldInactive,
-			old: agentquerytoolservice.NewListHazardousMaterialsTool(hazmat),
+			old: masterdataquerytools.NewListHazardousMaterialsTool(hazmat),
 			write: func(ctx context.Context, tenant *agentreadtest.Tenant, label string, marked bool) (pulid.ID, error) {
 				bu, org := tenantOf(tenant)
 				row, err := hazmat.Create(ctx, &hazardousmaterial.HazardousMaterial{
@@ -434,7 +439,7 @@ func convertedListCases(
 		},
 		{
 			tool: "masterdata_list_accessorial_charges", marked: inactive, oldMarked: oldInactive,
-			old: agentquerytoolservice.NewListAccessorialChargesTool(accessorials),
+			old: masterdataquerytools.NewListAccessorialChargesTool(accessorials),
 			write: func(ctx context.Context, tenant *agentreadtest.Tenant, label string, marked bool) (pulid.ID, error) {
 				bu, org := tenantOf(tenant)
 				row, err := accessorials.Create(ctx, &accessorialcharge.AccessorialCharge{
@@ -447,7 +452,7 @@ func convertedListCases(
 		},
 		{
 			tool: "document_list_types", marked: systemTyped, oldMarked: systemOld,
-			old: agentquerytoolservice.NewListDocumentTypesTool(documentTypes),
+			old: masterdataquerytools.NewListDocumentTypesTool(documentTypes),
 			write: func(ctx context.Context, tenant *agentreadtest.Tenant, label string, marked bool) (pulid.ID, error) {
 				bu, org := tenantOf(tenant)
 				row, err := documentTypes.Create(ctx, &documenttype.DocumentType{
@@ -460,7 +465,7 @@ func convertedListCases(
 		},
 		{
 			tool: "location_list_categories", marked: parkingTyped, oldMarked: parkingOld,
-			old: agentquerytoolservice.NewListLocationCategoriesTool(categories),
+			old: masterdataquerytools.NewListLocationCategoriesTool(categories),
 			write: func(ctx context.Context, tenant *agentreadtest.Tenant, label string, marked bool) (pulid.ID, error) {
 				bu, org := tenantOf(tenant)
 				row, err := categories.Create(ctx, &locationcategory.LocationCategory{
@@ -474,7 +479,7 @@ func convertedListCases(
 		},
 		{
 			tool: "masterdata_list_hold_reasons", marked: retiredTyped, oldMarked: retiredOld,
-			old: agentquerytoolservice.NewListHoldReasonsTool(holdReasons),
+			old: masterdataquerytools.NewListHoldReasonsTool(holdReasons),
 			write: func(ctx context.Context, tenant *agentreadtest.Tenant, label string, marked bool) (pulid.ID, error) {
 				bu, org := tenantOf(tenant)
 				row, err := holdReasons.Create(ctx, &holdreason.HoldReason{
@@ -488,7 +493,7 @@ func convertedListCases(
 		},
 		{
 			tool: "customer_list", marked: inactive, oldMarked: oldInactive,
-			old: agentquerytoolservice.NewListCustomersTool(customers),
+			old: partyquerytools.NewListCustomersTool(customers),
 			write: func(ctx context.Context, tenant *agentreadtest.Tenant, label string, marked bool) (pulid.ID, error) {
 				bu, org := tenantOf(tenant)
 				row, err := customers.Create(ctx, &customer.Customer{
@@ -501,7 +506,7 @@ func convertedListCases(
 		},
 		{
 			tool: "location_list", marked: inactive, oldMarked: oldInactive,
-			old: agentquerytoolservice.NewListLocationsTool(locations),
+			old: partyquerytools.NewListLocationsTool(locations),
 			write: func(ctx context.Context, tenant *agentreadtest.Tenant, label string, marked bool) (pulid.ID, error) {
 				bu, org := tenantOf(tenant)
 				category, err := categories.Create(ctx, &locationcategory.LocationCategory{
@@ -523,7 +528,7 @@ func convertedListCases(
 		},
 		{
 			tool: "carrier_list", marked: inactive, oldMarked: oldInactive,
-			old: agentquerytoolservice.NewListCarriersTool(carriers),
+			old: partyquerytools.NewListCarriersTool(carriers),
 			write: func(ctx context.Context, tenant *agentreadtest.Tenant, label string, marked bool) (pulid.ID, error) {
 				bu, org := tenantOf(tenant)
 				row, err := carriers.Create(ctx, &carrier.Carrier{
@@ -536,7 +541,7 @@ func convertedListCases(
 		},
 		{
 			tool: "worker_list", marked: inactive, oldMarked: oldInactive,
-			old: agentquerytoolservice.NewListWorkersTool(
+			old: workerquerytools.NewListWorkersTool(
 				workers,
 				&mocks.DenyResourcesPermissionEngine{},
 			),
@@ -547,7 +552,7 @@ func convertedListCases(
 		},
 		{
 			tool: "equipment_list_tractors", marked: outOfService, oldMarked: oldOutOfService,
-			old: agentquerytoolservice.NewListTractorsTool(
+			old: equipmentquerytools.NewListTractorsTool(
 				tractors,
 				&mocks.DenyResourcesPermissionEngine{},
 			),
@@ -567,7 +572,7 @@ func convertedListCases(
 		},
 		{
 			tool: "equipment_list_trailers", marked: outOfService, oldMarked: oldOutOfService,
-			old: agentquerytoolservice.NewListTrailersTool(trailers),
+			old: equipmentquerytools.NewListTrailersTool(trailers),
 			write: func(ctx context.Context, tenant *agentreadtest.Tenant, label string, marked bool) (pulid.ID, error) {
 				typeID, makeID, _, err := parts.write(ctx, tenant, "R"+label)
 				if err != nil {
@@ -605,7 +610,7 @@ func convertedListCases(
 		},
 		{
 			tool: "formula_list_templates", marked: inactive, oldMarked: oldInactive,
-			old: agentquerytoolservice.NewListFormulaTemplatesTool(formulaTemplates),
+			old: formulaquerytools.NewListFormulaTemplatesTool(formulaTemplates),
 			readsWith: func(ctx context.Context, tenant *agentreadtest.Tenant) context.Context {
 				return formulaStats.Attach(ctx, pagination.TenantInfo{
 					OrgID:  tenant.Actor.OrganizationID,
@@ -1192,7 +1197,7 @@ func TestConvertedLists_WorkerListIsNarrowedToTheTeamOnBothPaths(t *testing.T) {
 	reader := agentreadtest.NewReader(t, agentreadtest.Options{Engine: engine, Resolvers: services})
 	converted, err := agentquerytoolservice.ConvertedListTool("worker_list", reader, engine)
 	require.NoError(t, err)
-	old := agentquerytoolservice.NewListWorkersTool(workers, engine)
+	old := workerquerytools.NewListWorkersTool(workers, engine)
 
 	before, _ := walk(t, scoped, old, tenant.Actor, nil)
 	after, _ := walk(t, scoped, converted, tenant.Actor, nil)

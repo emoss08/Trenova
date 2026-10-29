@@ -227,7 +227,7 @@ Paths are relative to `client/apps/web/src/` unless they start with `services/` 
 ### Memory recall and saved events
 - What exists:
   - `memoriesForPrompt` calls `RecordUse` (bump `UseCount`/`LastUsedAt`) but does not record which turn used which memories (agentruntime/memory.go:13-42).
-  - The `recall_memory` query tool returns results only as tool content (agentquerytoolservice/memory_tools.go:113).
+  - The `recall_memory` query tool returns results only as tool content (querytools/memoryquerytools/memory_tools.go:113).
   - `remember` discards the created memory: `_, err = t.memories.Remember(...)` (agenttools/memorytools/memory_tools.go:121-130). Its default tier is `TierActWithApproval` (:91), which is effectively the "ask" state.
   - `forget_memory` exists (:172-237).
 - Needed:
@@ -400,7 +400,7 @@ Paths: W=client/apps/web/src/routes/desk/_components/artifacts/desk-workspace.ts
   - document lineage/versions (add KindDocument to lineage or a version table)
   - export: PDF/DOCX render endpoint (none exists; `/documents/{id}/download/` is for uploaded documents). Markdown/text can stay client-side.
 
-**(c) Extraction.** There is no `extract`/`extraction` Kind in `assistantartifact.AllKinds()` (enums.go). The only agent path is `intake_get_draft` (agentquerytoolservice/intake_tools.go:45), which `artifactFromObservation` turns into a generic **entity_card** through the `get_` prefix (artifacts.go:708). Its draft view has confidence but no bounding boxes or pages. To build: KindExtraction, a mapping from `intake_get_draft` and documentintelligenceservice results (fields, confidence, bbox, page, classification %), and "Create shipment from this" as a proposal.
+**(c) Extraction.** There is no `extract`/`extraction` Kind in `assistantartifact.AllKinds()` (enums.go). The only agent path is `intake_get_draft` (querytools/intakequerytools/intake_tools.go:45), which `artifactFromObservation` turns into a generic **entity_card** through the `get_` prefix (artifacts.go:708). Its draft view has confidence but no bounding boxes or pages. To build: KindExtraction, a mapping from `intake_get_draft` and documentintelligenceservice results (fields, confidence, bbox, page, classification %), and "Create shipment from this" as a proposal.
 
 **(d) CSV.**
 - Table export is client-side only (artifact-export.ts), so a truncated table loses rows.
@@ -551,7 +551,7 @@ No Desk page. Admin editor exists: routes/agent-control/_components/agents/agent
 ## Agent config backend
 Domain: internal/modules/agent/domain/agentdefinition/definition.go:52-134. Admin REST: internal/api/handlers/agentdefinitionhandler/handler.go:54-73 (GET/PUT/DELETE, `/:agentID/budget/`), all on `ResourceAgentDefinition` (Category "Administration"). GraphQL: schema/agentdefinition.graphqls:308-327.
 - [PARTIAL] Tool modes — `ToolNames` (Off = absent) + `ToolTiers map[tool]AutonomyTier` (definition.go:66-68) with tiers Propose / ActWithApproval ("Ask first") / AutoExecute ("Automatic") (domain/agent/enums.go:278-280; labels autonomy.go). Enforced via `EffectiveTier` (definition.go:214-229) clamped by `AutonomyCeiling`. Map: Allowed=AutoExecute, Ask first=ActWithApproval, Off=remove from ToolNames. Propose has no design equivalent — decide whether to collapse it into "Ask first". Trust-earned tiers (TierSourceTrustEarned) can raise a tool above the saved tier; page must show effective vs set.
-- [PARTIAL] Read vs write split — `ToolPolicy.Kind`/`Effect` (ports/services/toolpolicy.go:11-33) distinguishes; query tools (agentquerytoolservice) have no tier. Expose kind in the tool catalog projection.
+- [PARTIAL] Read vs write split — `ToolPolicy.Kind`/`Effect` (ports/services/toolpolicy.go:11-33) distinguishes; query tools (querytools) have no tier. Expose kind in the tool catalog projection.
 - [PARTIAL] Locks + reason — derivable from `ToolPolicy.MaxTier` (< AutoExecute ⇒ "Allowed" disabled), `Reversible=false`, `TierCondition.Description`, `TaintHold.Description`, `Rationale`. No explicit `locked`/`lockReason` field; add a computed `lock {reason, maxMode}` to the tool catalog served by `GET /agent-definitions/tools/`. Design's lock forces "Ask first" entirely (Off also disabled); current model only caps the top.
 - [PARTIAL] Hand-offs — `DelegateIDs` (definition.go:115-119) is an ordered agent list; no topic label. `MyAgent.delegates` (agentdefinition.graphqls:213-218) already exposes them to Desk users. Add `delegateTopics map[id]string` (or `[]{agentId, topic}`) to render "Pay rates, people records → Workforce Coordinator".
 - [MATCHES] Daily request limit + enforcement — `DailyRunLimit` (definition.go:96) enforced in agentbudgetservice/service.go:100-117 via `CheckRun` (called assistantservice/conversation.go:114, agentrunservice/service.go:216). Counts runs (not requests per person).

@@ -1,0 +1,505 @@
+package ratequerytools
+
+import (
+	"context"
+	"fmt"
+	"strings"
+
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
+	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/fieldgate"
+	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/querytool"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/ratequote"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/ratequoteports"
+	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/ratetypes"
+	"github.com/emoss08/trenova/pkg/rules"
+	"github.com/emoss08/trenova/pkg/tarifftypes"
+	"github.com/emoss08/trenova/pkg/toolschema"
+	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/shopspring/decimal"
+)
+
+/*
+"Why is this shipment priced at $2,840?"
+
+The rate engine already answers that: every rating writes a trace — which rules
+were considered, which one won and on what tie-break, every component with its
+basis and running total, the tariff's refusal or skips, and the warnings. Nobody
+could read it, because it lived in a JSONB column behind a quote id.
+
+This reads the trace of the quote that is actually governing the shipment,
+rather than re-rating. A fresh rating months later answers a question nobody
+asked: contracts get amended, fuel indexes move, stops get edited. The number
+on the invoice came from the stored trace, so the explanation has to come from
+the same place or it is an explanation of something else.
+*/
+
+// quoteReader is the slice of the quote repository this tool uses.
+type quoteReader interface {
+	GetAppliedForShipment(
+		ctx context.Context,
+		req *ratequoteports.GetShipmentRateQuoteRequest,
+	) (*ratequote.RateQuote, error)
+}
+
+// shipmentRatingReader reads the rating a shipment carries itself, for the
+// shipments no agreement priced.
+type shipmentRatingReader interface {
+	GetByID(
+		ctx context.Context,
+		req *shipmentports.GetShipmentByIDRequest,
+	) (*shipment.Shipment, error)
+}
+
+type explainRateTool struct {
+	quotes    quoteReader
+	shipments shipmentRatingReader
+	access    fieldgate.Access
+}
+
+func NewExplainRateTool(
+	quotes ratequoteports.RateQuoteRepository,
+	shipments shipmentports.ShipmentRepository,
+	permissions permissionports.PermissionEngine,
+) agenttoolports.AgentQueryTool {
+	return &explainRateTool{
+		quotes:    quotes,
+		shipments: shipments,
+		access:    fieldgate.NewAccess(permissions),
+	}
+}
+
+func (t *explainRateTool) Name() string { return "rate_explain" }
+
+func (t *explainRateTool) Description() string {
+	return "Explain how a saved shipment's rate was arrived at: the agreement and rule that " +
+		"priced it and every charge with its arithmetic. It also shows what separated that " +
+		"rule from the others, a running total, any floor or ceiling that changed the " +
+		"number, and anything the engine warned about. Use it for \"why is this priced at X\", for a " +
+		"customer disputing a charge, and before quoting a similar lane. It reads the " +
+		"rating that actually produced the shipment's price, not a fresh one, so the " +
+		"figures match the invoice even after the contract has since changed."
+}
+
+func (t *explainRateTool) ParamSchema() map[string]any {
+	return map[string]any{
+		"type":     "object",
+		"required": []string{"shipmentId"},
+		"properties": map[string]any{
+			"shipmentId": agenttoolschema.OfResource(map[string]any{
+				"type": "string",
+				toolschema.KeyDescription: "The shipment whose rate to explain, from " +
+					"shipment_list or the page you are on.",
+			}, permission.ResourceShipment),
+			"side": agenttoolschema.Enum(
+				"Which side of the shipment to price: what the customer is "+
+					"charged, or what the carrier is paid. Defaults to Customer.",
+				ratingSides,
+			),
+		},
+		"additionalProperties": false,
+	}
+}
+
+func (t *explainRateTool) Policy() agenttoolports.ToolPolicy {
+	return querytool.ReadPolicy(t.Name(), querytool.ReadSpec{
+		Resource: permission.ResourceRateMatrix,
+	})
+}
+
+type rateExplanation struct {
+	ShipmentID string `json:"shipmentId"`
+	Side       string `json:"side"`
+	Currency   string `json:"currency,omitempty"`
+	// Winner names what priced the shipment, and TieBreak why it rather than
+	// the runner-up — which is the first question a disputed rate raises.
+	Winner   *rateWinnerRow  `json:"winner,omitempty"`
+	TieBreak string          `json:"tieBreak,omitempty"`
+	Rejected []rateRejectRow `json:"rejected,omitempty"`
+	// LaneKeysTried answers "why did nothing apply": the contract has no rule
+	// keyed to any of these.
+	LaneKeysTried []string           `json:"laneKeysTried,omitempty"`
+	Components    []rateComponentRow `json:"components,omitempty"`
+	Inputs        map[string]string  `json:"inputs,omitempty"`
+	Refusal       string             `json:"refusal,omitempty"`
+	Skipped       []rateSkipRow      `json:"skipped,omitempty"`
+	Totals        rateTotalsRow      `json:"totals"`
+	Warnings      []string           `json:"warnings,omitempty"`
+	Error         string             `json:"error,omitempty"`
+	EngineVersion string             `json:"engineVersion,omitempty"`
+	// PricedBy is how a shipment no agreement priced got its price: the
+	// formula template it was rated with, or the amount someone entered.
+	PricedBy *pricedByRow `json:"pricedBy,omitempty"`
+	// OnShipment are the charges the shipment carries that the agreement's
+	// rating did not produce, such as a fuel surcharge program's charge, so
+	// a total that differs from the trace is explained rather than doubted.
+	OnShipment    []shipmentRateCharge `json:"onShipment,omitempty"`
+	ShipmentTotal *decimal.Decimal     `json:"shipmentTotal,omitempty"`
+	ChargesNote   string               `json:"chargesNote,omitempty"`
+	// Note is set when there is nothing to explain, so the model says that
+	// rather than reporting a zero as a price.
+	Note string `json:"note,omitempty"`
+}
+
+// pricedByRow is the rating a shipment stores on itself: no agreement and no
+// quote trace, but the tariff, the inputs it priced with and what it came to.
+type pricedByRow struct {
+	// Method is the tariff that priced it, "Flat Rate" say.
+	Method      string            `json:"method,omitempty"`
+	Source      string            `json:"source,omitempty"`
+	Explanation string            `json:"explanation,omitempty"`
+	Inputs      map[string]string `json:"inputs,omitempty"`
+	Refusal     string            `json:"refusal,omitempty"`
+	RatedAt     int64             `json:"ratedAt,omitempty"`
+	// Override is an amount a person entered over the rating, and why.
+	Override       *decimal.Decimal `json:"override,omitempty"`
+	OverrideReason string           `json:"overrideReason,omitempty"`
+	Locked         bool             `json:"locked,omitempty"`
+}
+
+type rateWinnerRow struct {
+	AgreementCode string   `json:"agreementCode,omitempty"`
+	AgreementName string   `json:"agreementName,omitempty"`
+	RuleLabel     string   `json:"ruleLabel,omitempty"`
+	LaneKey       string   `json:"laneKey,omitempty"`
+	MatchedOn     []string `json:"matchedOn,omitempty"`
+}
+
+type rateRejectRow struct {
+	AgreementCode string `json:"agreementCode,omitempty"`
+	RuleLabel     string `json:"ruleLabel,omitempty"`
+	Reason        string `json:"reason,omitempty"`
+	Detail        string `json:"detail,omitempty"`
+}
+
+type rateComponentRow struct {
+	Label string `json:"label"`
+	Kind  string `json:"kind,omitempty"`
+	Code  string `json:"code,omitempty"`
+	// Basis is the calculation in words — "1,240.0 mi @ $2.15/mi". It is what
+	// goes on a dispute letter, so it is passed through rather than rebuilt.
+	Basis        string          `json:"basis,omitempty"`
+	Amount       decimal.Decimal `json:"amount"`
+	RunningTotal decimal.Decimal `json:"runningTotal"`
+	Source       string          `json:"source,omitempty"`
+	SourceName   string          `json:"sourceName,omitempty"`
+}
+
+type rateSkipRow struct {
+	Code   string `json:"code"`
+	Source string `json:"source"`
+}
+
+type rateTotalsRow struct {
+	Linehaul    decimal.Decimal  `json:"linehaul"`
+	Fuel        decimal.Decimal  `json:"fuel"`
+	Accessorial decimal.Decimal  `json:"accessorial"`
+	Total       decimal.Decimal  `json:"total"`
+	Margin      *decimal.Decimal `json:"margin,omitempty"`
+	MarginPct   *decimal.Decimal `json:"marginPercent,omitempty"`
+}
+
+func (t *explainRateTool) Query(
+	ctx context.Context,
+	params *agenttoolports.QueryToolParams,
+) (any, error) {
+	if err := querytool.GuardQuery(params); err != nil {
+		return nil, err
+	}
+
+	shipmentID, err := pulid.Parse(querytool.OptionalString(params.Params, "shipmentId"))
+	if err != nil {
+		return nil, fmt.Errorf(
+			"%q is not a shipment id",
+			querytool.OptionalString(params.Params, "shipmentId"),
+		)
+	}
+
+	side := rateagreement.PartyTypeCustomer
+	if querytool.OptionalString(params.Params, "side") == "Carrier" {
+		side = rateagreement.PartyTypeCarrier
+	}
+
+	quote, err := t.quotes.GetAppliedForShipment(ctx, &ratequoteports.GetShipmentRateQuoteRequest{
+		ShipmentID: shipmentID,
+		PartyType:  side,
+		TenantInfo: pagination.TenantInfo{
+			OrgID:  params.OrganizationID,
+			BuID:   params.BusinessUnitID,
+			UserID: params.Actor.UserID,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	explanation := rateExplanation{ShipmentID: shipmentID.String(), Side: string(side)}
+	var record *shipment.Shipment
+	if side == rateagreement.PartyTypeCustomer && t.shipments != nil {
+		record, err = t.shipments.GetByID(ctx, &shipmentports.GetShipmentByIDRequest{
+			ID: shipmentID,
+			TenantInfo: pagination.TenantInfo{
+				OrgID:  params.OrganizationID,
+				BuID:   params.BusinessUnitID,
+				UserID: params.Actor.UserID,
+			},
+			ShipmentOptions: shipmentports.ShipmentOptions{ExpandShipmentDetails: true},
+		})
+		if err != nil {
+			return nil, err
+		}
+	}
+	if quote == nil || quote.Trace == nil {
+		if stored, ok := explainStored(explanation, record); ok {
+			return stored, nil
+		}
+		explanation.Note = "This shipment has no rating on record for that side, so there " +
+			"is no price to explain. It may be rated manually, or not yet rated."
+
+		return explanation, nil
+	}
+
+	quote.WithholdFields(t.access.Groups(ctx, params))
+
+	return withShipmentCharges(explainTrace(explanation, quote.Trace), record, quote.ID), nil
+}
+
+type shipmentRateCharge struct {
+	Code        string          `json:"code,omitempty"`
+	Description string          `json:"description,omitempty"`
+	Amount      decimal.Decimal `json:"amount"`
+	Source      string          `json:"source"`
+}
+
+// withShipmentCharges lists the charges on the shipment the governing quote
+// did not produce. The trace prices what the agreement priced; a fuel
+// surcharge program or a charge a person added sits on the shipment beside it,
+// and reading only the trace reported that charge as unpriced.
+func withShipmentCharges(
+	into rateExplanation,
+	record *shipment.Shipment,
+	quoteID pulid.ID,
+) rateExplanation {
+	if record == nil {
+		return into
+	}
+	for _, charge := range record.AdditionalCharges {
+		if charge == nil || (charge.RateQuoteID != nil && *charge.RateQuoteID == quoteID) {
+			continue
+		}
+		row := shipmentRateCharge{Amount: charge.Amount, Source: chargeSource(charge)}
+		if accessorial := charge.AccessorialCharge; accessorial != nil {
+			row.Code = accessorial.Code
+			row.Description = strings.TrimSpace(accessorial.Description)
+		}
+		into.OnShipment = append(into.OnShipment, row)
+	}
+	if len(into.OnShipment) == 0 {
+		return into
+	}
+	if record.TotalChargeAmount.Valid {
+		total := record.TotalChargeAmount.Decimal
+		into.ShipmentTotal = &total
+	}
+	into.ChargesNote = "totals is what the agreement priced. The charges in onShipment are on " +
+		"the shipment too, from the source each names, and shipmentTotal includes them: they " +
+		"are priced, just not by the agreement's rating."
+
+	return into
+}
+
+func chargeSource(charge *shipment.AdditionalCharge) string {
+	switch {
+	case charge.FuelSurchargeProgramID != nil:
+		return "fuel surcharge program"
+	case charge.IsDetention:
+		return "detention"
+	case charge.RateAgreementAccessorialID != nil:
+		return "the agreement's accessorial schedule"
+	default:
+		return "added on the shipment"
+	}
+}
+
+func explainTrace(into rateExplanation, trace *ratetypes.Trace) rateExplanation {
+	into.EngineVersion = trace.EngineVersion
+	into.TieBreak = trace.TieBreak
+	into.LaneKeysTried = trace.LaneKeysTried
+	into.Warnings = trace.Warnings
+	into.Error = trace.Error
+	into.Totals = totalsRow(trace.Totals)
+	if trace.FX != nil {
+		into.Currency = trace.FX.ToCurrency
+	}
+
+	if winner := trace.Winner(); winner != nil {
+		into.Winner = &rateWinnerRow{
+			AgreementCode: winner.AgreementCode,
+			AgreementName: winner.AgreementName,
+			RuleLabel:     winner.RuleLabel,
+			LaneKey:       winner.LaneKey,
+			MatchedOn:     winner.MatchedOn,
+		}
+	}
+
+	// The losers are the other half of the answer: "no rate applied" and "a
+	// rate applied but not the one you expected" are different problems, and
+	// the reason a rule was passed over is what tells them apart.
+	for i := range trace.Candidates {
+		candidate := &trace.Candidates[i]
+		if candidate.Won || candidate.RejectReason == "" {
+			continue
+		}
+		into.Rejected = append(into.Rejected, rateRejectRow{
+			AgreementCode: candidate.AgreementCode,
+			RuleLabel:     candidate.RuleLabel,
+			Reason:        string(candidate.RejectReason),
+			Detail:        candidate.RejectDetail,
+		})
+	}
+
+	into.Components = make([]rateComponentRow, 0, len(trace.Components))
+	for i := range trace.Components {
+		component := &trace.Components[i]
+		into.Components = append(into.Components, rateComponentRow{
+			Label:        component.Label,
+			Kind:         string(component.Kind),
+			Code:         component.Code,
+			Basis:        component.Basis,
+			Amount:       component.Amount,
+			RunningTotal: component.RunningTotal,
+			Source:       string(component.Source),
+			SourceName:   component.SourceName,
+		})
+	}
+
+	into.Inputs = querytool.InputTexts(trace.TariffInputs)
+	into.Refusal = trace.Refusal
+	for _, skip := range trace.Skipped {
+		into.Skipped = append(into.Skipped, rateSkipRow{Code: skip.Code, Source: skip.Source})
+	}
+	return into
+}
+
+func totalsRow(totals ratetypes.Totals) rateTotalsRow {
+	row := rateTotalsRow{
+		Linehaul:    totals.Linehaul,
+		Fuel:        totals.Fuel,
+		Accessorial: totals.Accessorial,
+		Total:       totals.Total,
+	}
+	if totals.Margin.Valid {
+		row.Margin = &totals.Margin.Decimal
+	}
+	if totals.MarginPct.Valid {
+		row.MarginPct = &totals.MarginPct.Decimal
+	}
+
+	return row
+}
+
+// explainStored explains a shipment from the rating it carries, when no
+// agreement priced it. A spot load priced from its formula template has no
+// quote trace, and "no rating on record" was the wrong answer for it: the
+// record says which template priced it, with what expression, and what it
+// came to. Nothing is reported when the shipment carries no rating and no
+// amount either.
+func explainStored(into rateExplanation, record *shipment.Shipment) (rateExplanation, bool) {
+	if record == nil {
+		return into, false
+	}
+	detail := record.RatingDetail
+	override := record.RateOverrideAmount
+	if detail == nil && !override.Valid {
+		return into, false
+	}
+
+	priced := &pricedByRow{
+		OverrideReason: record.RateOverrideReason,
+		Locked:         record.RateLocked,
+	}
+	if override.Valid {
+		amount := override.Decimal
+		priced.Override = &amount
+	}
+
+	var running decimal.Decimal
+	if detail != nil {
+		priced.Method = detail.FormulaTemplateName
+		priced.Source = detail.Source
+		priced.Explanation = detail.Explanation
+		priced.Inputs = querytool.InputTexts(detail.Inputs)
+		priced.Refusal = detail.Refusal
+		priced.RatedAt = detail.RatedAt
+
+		into.Components = storedComponents(record, detail)
+		for i := range into.Components {
+			running = running.Add(into.Components[i].Amount)
+			into.Components[i].RunningTotal = running
+		}
+	}
+
+	freight := running
+	if record.FreightChargeAmount.Valid && !record.FreightChargeAmount.Decimal.IsZero() {
+		freight = record.FreightChargeAmount.Decimal
+	}
+	into.Totals.Linehaul = freight
+	into.Totals.Total = freight
+	if record.TotalChargeAmount.Valid && !record.TotalChargeAmount.Decimal.IsZero() {
+		into.Totals.Total = record.TotalChargeAmount.Decimal
+		into.Totals.Accessorial = into.Totals.Total.Sub(freight)
+	}
+	into.PricedBy = priced
+	into.Note = "No rate agreement priced this shipment, so there is no agreement to explain. " +
+		"pricedBy is how it was priced instead: the tariff named in method, the inputs it " +
+		"priced with, and any amount a person entered over it. components are the bill's lines."
+
+	return into, true
+}
+
+func storedComponents(record *shipment.Shipment, detail *shipment.RatingDetail) []rateComponentRow {
+	if detail.Bill == nil {
+		rows := make([]rateComponentRow, 0, len(record.FreightLines))
+		for i := range record.FreightLines {
+			line := &record.FreightLines[i]
+			rows = append(rows, rateComponentRow{
+				Label:  line.Label,
+				Amount: line.Amount,
+				Source: detail.Source,
+			})
+		}
+		return rows
+	}
+	rows := make([]rateComponentRow, 0, len(detail.Bill.Lines))
+	for i := range detail.Bill.Lines {
+		line := &detail.Bill.Lines[i]
+		label := line.Label
+		if label == "" {
+			label = string(line.Kind)
+		}
+		rows = append(rows, rateComponentRow{
+			Label:      label,
+			Kind:       string(line.Kind),
+			Code:       line.Code,
+			Amount:     line.Amount,
+			Source:     "Tariff",
+			SourceName: detail.FormulaTemplateName,
+			Basis:      lineBasis(line),
+		})
+	}
+	return rows
+}
+
+func lineBasis(line *tarifftypes.Line) string {
+	if line.Quantity == nil || line.Rate == nil {
+		return ""
+	}
+	return line.Quantity.String() + " " + line.QuantityUnit + " @ " +
+		tarifftypes.DisplayValue(rules.QuantityValue(*line.Rate, line.RateUnit))
+}

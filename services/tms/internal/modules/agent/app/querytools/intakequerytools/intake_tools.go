@@ -1,0 +1,885 @@
+package intakequerytools
+
+import (
+	"context"
+	"fmt"
+	"slices"
+	"strings"
+
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
+	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/fieldgate"
+	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/querytool"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/documentshipmentdraft"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
+	"github.com/emoss08/trenova/internal/modules/places/domain/location"
+	"github.com/emoss08/trenova/internal/modules/places/ports/locationports"
+	"github.com/emoss08/trenova/internal/modules/rating/app/ratequoteservice"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/ratequoteports"
+	"github.com/emoss08/trenova/pkg/filtercatalog"
+	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/tarifftypes"
+	"github.com/emoss08/trenova/shared/jsonutils"
+	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/shopspring/decimal"
+)
+
+// draftReader is the one read the intake tool makes on document intelligence.
+type draftReader interface {
+	GetShipmentDraft(
+		ctx context.Context,
+		documentID pulid.ID,
+		tenantInfo pagination.TenantInfo,
+	) (*documentshipmentdraft.DocumentShipmentDraft, error)
+}
+
+// getShipmentDraftTool reads what document intelligence extracted from a
+// customer's document, so an agent can turn it into a shipment without
+// re-reading the PDF. The draft is the import assistant's output; this is the
+// hand-off from that assistant to whichever agent creates the record.
+type getShipmentDraftTool struct {
+	drafts draftReader
+}
+
+func NewGetShipmentDraftTool(drafts draftReader) agenttoolports.AgentQueryTool {
+	return &getShipmentDraftTool{drafts: drafts}
+}
+
+func (t *getShipmentDraftTool) Name() string { return "intake_get_draft" }
+
+func (t *getShipmentDraftTool) Description() string {
+	return "Read the shipment draft extracted from an uploaded document: the fields and " +
+		"stops it found, each with a confidence, and what it could not read. Fields " +
+		"include BOL, customer, rate, pieces, weight and dates; stops carry addresses " +
+		"and dates. The person sees what it read as the document's extraction card beside " +
+		"the conversation, so call it when they ask to see what was extracted and point to " +
+		"the card rather than publishing the reading. Use it before shipment_create so the " +
+		"record is built from the document rather than from memory. Every id the draft names " +
+		"still has to be resolved with customer_list and location_list; the draft " +
+		"carries names and addresses, not ids."
+}
+
+func (t *getShipmentDraftTool) ParamSchema() map[string]any {
+	return map[string]any{
+		"type": "object",
+		"properties": map[string]any{
+			"documentId": agenttoolschema.RecordIDText(permission.ResourceDocument,
+				"The id of the uploaded document the draft was read from: "+
+					"an attachment on the message, a documentId in inbox_get_inbound_message, or "+
+					"this run's subject."),
+		},
+		"required":             []string{"documentId"},
+		"additionalProperties": false,
+	}
+}
+
+func (t *getShipmentDraftTool) Policy() agenttoolports.ToolPolicy {
+	return querytool.ReadPolicy(t.Name(), querytool.ReadSpec{
+		Resource: permission.ResourceDocument,
+		Reads:    agenttooltrust.ExternalReadAlways,
+		Source:   agent.TaintSourceDocument,
+		Rationale: "Reads a shipment drafted from a document someone outside sent; nothing " +
+			"changes and nothing is sent.",
+	})
+}
+
+// draftData is the typed view of what document intelligence stores. The
+// stored map's keys are the ones the extraction job writes; decoding through
+// JSON keeps this in step with it without a second schema.
+type draftData struct {
+	ReviewStatus  string                `json:"reviewStatus"`
+	MissingFields []string              `json:"missingFields"`
+	Fields        map[string]draftField `json:"fields"`
+	Stops         []draftStop           `json:"stops"`
+	Conflicts     []draftConflict       `json:"conflicts"`
+}
+
+type draftField struct {
+	Label          string  `json:"label,omitempty"`
+	Value          any     `json:"value"`
+	Confidence     float64 `json:"confidence"`
+	ReviewRequired bool    `json:"reviewRequired,omitempty"`
+	Conflict       bool    `json:"conflict,omitempty"`
+	// PageNumber is the page the value was read from, which the Desk uses to
+	// point at it; zero when the reading does not say.
+	PageNumber int `json:"pageNumber,omitempty"`
+}
+
+type draftStop struct {
+	Sequence            int     `json:"sequence"`
+	Role                string  `json:"role"`
+	Name                string  `json:"name,omitempty"`
+	AddressLine1        string  `json:"addressLine1,omitempty"`
+	AddressLine2        string  `json:"addressLine2,omitempty"`
+	City                string  `json:"city,omitempty"`
+	State               string  `json:"state,omitempty"`
+	PostalCode          string  `json:"postalCode,omitempty"`
+	Date                string  `json:"date,omitempty"`
+	TimeWindow          string  `json:"timeWindow,omitempty"`
+	AppointmentRequired bool    `json:"appointmentRequired,omitempty"`
+	Confidence          float64 `json:"confidence"`
+	ReviewRequired      bool    `json:"reviewRequired,omitempty"`
+	PageNumber          int     `json:"pageNumber,omitempty"`
+}
+
+type draftConflict struct {
+	Key    string `json:"key"`
+	Label  string `json:"label,omitempty"`
+	Values []any  `json:"values"`
+}
+
+type draftView struct {
+	DocumentID         string                `json:"documentId"`
+	Status             string                `json:"status"`
+	ReviewStatus       string                `json:"reviewStatus,omitempty"`
+	DocumentKind       string                `json:"documentKind,omitempty"`
+	Confidence         float64               `json:"confidence"`
+	AttachedShipmentID string                `json:"attachedShipmentId,omitempty"`
+	FailureMessage     string                `json:"failureMessage,omitempty"`
+	MissingFields      []string              `json:"missingFields"`
+	Fields             map[string]draftField `json:"fields"`
+	Stops              []draftStop           `json:"stops"`
+	Conflicts          []draftConflict       `json:"conflicts,omitempty"`
+	Note               string                `json:"note,omitempty"`
+}
+
+func (t *getShipmentDraftTool) Query(
+	ctx context.Context,
+	params *agenttoolports.QueryToolParams,
+) (any, error) {
+	if err := querytool.GuardQuery(params); err != nil {
+		return nil, err
+	}
+
+	documentID, err := querytool.RequirePulid(params.Params, "documentId")
+	if err != nil {
+		return nil, err
+	}
+
+	draft, err := t.drafts.GetShipmentDraft(ctx, documentID, querytool.TenantOf(params))
+	if err != nil {
+		return nil, err
+	}
+
+	return draftViewOf(draft)
+}
+
+func draftViewOf(draft *documentshipmentdraft.DocumentShipmentDraft) (*draftView, error) {
+	view := &draftView{
+		DocumentID:     draft.DocumentID.String(),
+		Status:         string(draft.Status),
+		DocumentKind:   draft.DocumentKind,
+		Confidence:     draft.Confidence,
+		FailureMessage: draft.FailureMessage,
+		MissingFields:  []string{},
+		Fields:         map[string]draftField{},
+		Stops:          []draftStop{},
+	}
+	if draft.AttachedShipmentID != nil && draft.AttachedShipmentID.IsNotNil() {
+		view.AttachedShipmentID = draft.AttachedShipmentID.String()
+		view.Note = "This draft was already turned into a shipment; do not create it again."
+	}
+
+	if len(draft.DraftData) > 0 {
+		var data draftData
+		if err := jsonutils.Convert(draft.DraftData, &data); err != nil {
+			return nil, fmt.Errorf("draft data: %w", err)
+		}
+		view.ReviewStatus = data.ReviewStatus
+		if data.MissingFields != nil {
+			view.MissingFields = data.MissingFields
+		}
+		if data.Fields != nil {
+			view.Fields = data.Fields
+		}
+		if data.Stops != nil {
+			view.Stops = data.Stops
+		}
+		view.Conflicts = data.Conflicts
+	}
+
+	if view.Note == "" {
+		switch {
+		case draft.Status == documentshipmentdraft.StatusPending:
+			view.Note = "Extraction is still running; ask again shortly."
+		case draft.Status == documentshipmentdraft.StatusFailed,
+			draft.Status == documentshipmentdraft.StatusUnavailable:
+			view.Note = "Nothing usable was extracted from this document."
+		case view.ReviewStatus == draftReviewNeeded:
+			view.Note = "Some fields are low confidence or conflicting; confirm them " +
+				"against the document or ask a person before creating the shipment."
+		}
+	}
+
+	return view, nil
+}
+
+// shipmentQuoter and carrierShopper are the two questions the rating tools
+// ask: what would we charge, and what would a carrier charge us.
+type shipmentQuoter interface {
+	Quote(
+		ctx context.Context,
+		req *ratequoteservice.QuoteRequest,
+	) (*ratequoteports.RatedShipment, error)
+}
+
+type carrierShopper interface {
+	Shop(ctx context.Context, req *ratequoteservice.ShopRequest) (*ratequoteports.ShopResult, error)
+}
+
+type locationReader interface {
+	GetByIDs(
+		ctx context.Context,
+		req locationports.GetLocationsByIDsRequest,
+	) ([]*location.Location, error)
+}
+
+// draftReviewNeeded is the review status document intelligence writes when
+// a field is low confidence or two readings disagree.
+const draftReviewNeeded = "NeedsReview"
+
+const (
+	maxQuoteStops   = 12
+	maxShopCarriers = 25
+	defaultShopMax  = 5
+	maxShopOptions  = 20
+)
+
+// quoteShipmentTool prices a shipment that does not exist yet from the
+// organization's rate agreements, the way the billing panel does before a
+// load is saved. Nothing is written: the quote is not persisted and no
+// shipment is created, so an agent can price a document three ways before
+// proposing one.
+type quoteShipmentTool struct {
+	quotes    shipmentQuoter
+	locations locationReader
+}
+
+func NewQuoteShipmentTool(
+	quotes shipmentQuoter,
+	locations locationReader,
+) agenttoolports.AgentQueryTool {
+	return &quoteShipmentTool{quotes: quotes, locations: locations}
+}
+
+func (t *quoteShipmentTool) Name() string { return "rate_quote" }
+
+func (t *quoteShipmentTool) SearchTerms() []string {
+	return []string{"rate quote", "price a lane", "quote a lane", "quote shipment"}
+}
+
+func (t *quoteShipmentTool) Prerequisites() []string {
+	return []string{
+		querytool.ToolCustomerList,
+		querytool.ToolMasterdataListServiceTypes,
+		querytool.ToolLocationList,
+	}
+}
+
+func (t *quoteShipmentTool) Recipe() []string {
+	return []string{
+		querytool.ToolCustomerList,
+		querytool.ToolMasterdataListServiceTypes,
+		querytool.ToolLocationList,
+		"rate_quote",
+	}
+}
+
+func (t *quoteShipmentTool) Description() string {
+	return "Price a shipment that has not been saved, from the customer's rate " +
+		"agreements and the organization's rating rules. Give the customer, the " +
+		"service type and the stops in order, each with a location id from " +
+		"location_list and a date. Returns the linehaul amount, the currency, which " +
+		"agreement and rule priced it, and whether a formula had to stand in because " +
+		"no agreement covered the lane. Nothing is saved: quote as many variations " +
+		"as you need before shipment_create."
+}
+
+func (t *quoteShipmentTool) ParamSchema() map[string]any {
+	return map[string]any{
+		"type": "object",
+		"properties": map[string]any{
+			"customerId": agenttoolschema.RecordIDText(permission.ResourceCustomer,
+				"The customer being billed, from customer_list."),
+			"serviceTypeId": agenttoolschema.RecordIDText(permission.ResourceServiceType,
+				"The service type, from masterdata_list_service_types."),
+			"shipmentTypeId": agenttoolschema.RecordIDText(permission.ResourceShipmentType,
+				"The shipment type, from masterdata_list_shipment_types."),
+			"stops": map[string]any{
+				"type":        "array",
+				"description": "The stops in travel order: at least a pickup and a delivery.",
+				"items": map[string]any{
+					"type": "object",
+					"properties": map[string]any{
+						"locationId": agenttoolschema.RecordIDText(
+							permission.ResourceLocation, "A location id from location_list.",
+						),
+						"type": agenttoolschema.Enum("", agenttoolschema.StopTypes),
+						"date": map[string]any{
+							"type":        "string",
+							"description": "The scheduled date, YYYY-MM-DD, or an RFC 3339 time.",
+						},
+					},
+					"required":             []string{"locationId", "type"},
+					"additionalProperties": false,
+				},
+			},
+			"pieces": map[string]any{
+				"type":        "integer",
+				"description": "Piece count, when known.",
+			},
+			"weight": map[string]any{
+				"type":        "integer",
+				"description": "Weight in pounds, when known.",
+			},
+			"asOf": map[string]any{
+				"type":        "string",
+				"description": "Rate as of this date, YYYY-MM-DD. Defaults to the first stop's date, then today.",
+			},
+		},
+		"required":             []string{"customerId", "serviceTypeId", "stops"},
+		"additionalProperties": false,
+	}
+}
+
+func (t *quoteShipmentTool) Policy() agenttoolports.ToolPolicy {
+	return querytool.ReadPolicy(t.Name(), querytool.ReadSpec{
+		Resource: permission.ResourceRateQuote,
+	})
+}
+
+type quoteStopParam struct {
+	LocationID string `json:"locationId"`
+	Type       string `json:"type"`
+	Date       string `json:"date"`
+}
+
+type quoteView struct {
+	Outcome           string            `json:"outcome"`
+	Amount            decimal.Decimal   `json:"amount"`
+	Total             decimal.Decimal   `json:"total"`
+	Currency          string            `json:"currency"`
+	Inputs            map[string]string `json:"inputs,omitempty"`
+	Lines             []quoteLine       `json:"lines,omitempty"`
+	Refusal           string            `json:"refusal,omitempty"`
+	AgreementID       string            `json:"agreementId,omitempty"`
+	RuleID            string            `json:"ruleId,omitempty"`
+	FormulaTemplateID string            `json:"formulaTemplateId,omitempty"`
+	BillToCustomerID  string            `json:"billToCustomerId,omitempty"`
+	Lane              []string          `json:"lane"`
+	TotalDistance     float64           `json:"totalDistance"`
+	Note              string            `json:"note,omitempty"`
+}
+
+func (t *quoteShipmentTool) Query(
+	ctx context.Context,
+	params *agenttoolports.QueryToolParams,
+) (any, error) {
+	if err := querytool.GuardQuery(params); err != nil {
+		return nil, err
+	}
+
+	customerID, err := querytool.RequirePulid(params.Params, "customerId")
+	if err != nil {
+		return nil, err
+	}
+	serviceTypeID, err := querytool.RequirePulid(params.Params, "serviceTypeId")
+	if err != nil {
+		return nil, err
+	}
+
+	var stopParams []quoteStopParam
+	if err = querytool.DecodeParam(params.Params, "stops", &stopParams); err != nil {
+		return nil, err
+	}
+	if len(stopParams) < 2 || len(stopParams) > maxQuoteStops {
+		return nil, fmt.Errorf("a quote needs between 2 and %d stops", maxQuoteStops)
+	}
+
+	clk := querytool.ClockFor(params)
+	tenantInfo := querytool.TenantOf(params)
+	entity, err := t.hypotheticalShipment(ctx, tenantInfo, stopParams, clk)
+	if err != nil {
+		return nil, err
+	}
+	entity.CustomerID = customerID
+	entity.ServiceTypeID = serviceTypeID
+	if shipmentTypeID, ok, pErr := querytool.OptionalPulid(params.Params, "shipmentTypeId"); pErr != nil {
+		return nil, pErr
+	} else if ok {
+		entity.ShipmentTypeID = shipmentTypeID
+	}
+	if pieces := querytool.OptionalInt(params.Params, "pieces", 0); pieces > 0 {
+		value := int64(pieces)
+		entity.Pieces = &value
+	}
+	if weight := querytool.OptionalInt(params.Params, "weight", 0); weight > 0 {
+		value := int64(weight)
+		entity.Weight = &value
+	}
+
+	asOf := entity.Moves[0].Stops[0].ScheduledWindowStart
+	if raw := querytool.OptionalString(params.Params, "asOf"); raw != "" {
+		if asOf, err = filtercatalog.CoerceDate("asOf", raw, clk); err != nil {
+			return nil, err
+		}
+	}
+	if asOf == 0 {
+		asOf = clk.Instant()
+	}
+
+	rated, err := t.quotes.Quote(ctx, &ratequoteservice.QuoteRequest{
+		TenantInfo: tenantInfo,
+		Shipment:   entity,
+		AsOf:       asOf,
+		Persist:    false,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	view := quoteViewOf(rated, laneOf(entity))
+	view.TotalDistance = movesDistance(entity.Moves)
+	if view.TotalDistance <= 0 && rated.Outcome.Priced() {
+		view.Note = strings.TrimSpace(view.Note + " No distance could be worked out for these " +
+			"stops, so a per-mile rate priced zero miles and the amount may be only the " +
+			"agreement's minimum charge. Say so rather than quoting it as the lane's rate.")
+	}
+
+	return view, nil
+}
+
+func movesDistance(moves []*shipment.ShipmentMove) float64 {
+	total := 0.0
+	for _, move := range moves {
+		if move != nil && move.Distance != nil {
+			total += *move.Distance
+		}
+	}
+
+	return total
+}
+
+// hypotheticalShipment builds the unsaved shipment the rate engine reads: one
+// move whose stops carry their locations, because the lane is resolved from
+// the locations' cities, states and postal codes.
+func (t *quoteShipmentTool) hypotheticalShipment(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	stopParams []quoteStopParam,
+	clk filtercatalog.Clock,
+) (*shipment.Shipment, error) {
+	ids := make([]pulid.ID, 0, len(stopParams))
+	for idx, stop := range stopParams {
+		id, err := pulid.Parse(stop.LocationID)
+		if err != nil {
+			return nil, fmt.Errorf("stops[%d].locationId is not a location id", idx)
+		}
+		ids = append(ids, id)
+	}
+
+	locations, err := t.locations.GetByIDs(ctx, locationports.GetLocationsByIDsRequest{
+		TenantInfo:  tenantInfo,
+		LocationIDs: ids,
+	})
+	if err != nil {
+		return nil, err
+	}
+	byID := make(map[pulid.ID]*location.Location, len(locations))
+	for _, loc := range locations {
+		byID[loc.ID] = loc
+	}
+
+	move := &shipment.ShipmentMove{
+		OrganizationID: tenantInfo.OrgID,
+		BusinessUnitID: tenantInfo.BuID,
+		Status:         shipment.MoveStatusNew,
+		Loaded:         true,
+		Sequence:       0,
+	}
+	for idx, stop := range stopParams {
+		loc, ok := byID[ids[idx]]
+		if !ok {
+			return nil, fmt.Errorf(
+				"stops[%d].locationId %s is not a location in this organization",
+				idx,
+				ids[idx],
+			)
+		}
+		stopType := shipment.StopType(stop.Type)
+		if !stopType.IsValid() {
+			return nil, fmt.Errorf("stops[%d].type %q is not a stop type", idx, stop.Type)
+		}
+
+		var scheduled int64
+		if strings.TrimSpace(stop.Date) != "" {
+			if scheduled, err = filtercatalog.CoerceDate(
+				fmt.Sprintf("stops[%d].date", idx),
+				stop.Date,
+				clk,
+			); err != nil {
+				return nil, err
+			}
+		}
+
+		move.Stops = append(move.Stops, &shipment.Stop{
+			OrganizationID:       tenantInfo.OrgID,
+			BusinessUnitID:       tenantInfo.BuID,
+			LocationID:           loc.ID,
+			Location:             loc,
+			Status:               shipment.StopStatusNew,
+			Type:                 stopType,
+			ScheduleType:         shipment.StopScheduleTypeOpen,
+			Sequence:             int64(idx),
+			ScheduledWindowStart: scheduled,
+		})
+	}
+
+	return &shipment.Shipment{
+		OrganizationID: tenantInfo.OrgID,
+		BusinessUnitID: tenantInfo.BuID,
+		Status:         shipment.StatusNew,
+		Moves:          []*shipment.ShipmentMove{move},
+	}, nil
+}
+
+func laneOf(entity *shipment.Shipment) []string {
+	lane := make([]string, 0, 2)
+	for _, move := range entity.Moves {
+		if move == nil {
+			continue
+		}
+		for _, stop := range move.Stops {
+			if stop != nil && stop.Location != nil {
+				lane = append(lane, placeLabel(stop.Location))
+			}
+		}
+	}
+	return lane
+}
+
+func placeLabel(loc *location.Location) string {
+	parts := make([]string, 0, 3)
+	if loc.City != "" {
+		parts = append(parts, loc.City)
+	}
+	if loc.State != nil && loc.State.Abbreviation != "" {
+		parts = append(parts, loc.State.Abbreviation)
+	}
+	if loc.PostalCode != "" {
+		parts = append(parts, loc.PostalCode)
+	}
+	if len(parts) == 0 {
+		return loc.Name
+	}
+
+	return strings.Join(parts, ", ")
+}
+
+func quoteViewOf(rated *ratequoteports.RatedShipment, lane []string) *quoteView {
+	view := &quoteView{
+		Outcome:  string(rated.Outcome),
+		Amount:   rated.Amount,
+		Total:    rated.Total,
+		Currency: rated.Currency,
+		Inputs:   querytool.InputTexts(rated.TariffInputs),
+		Lines:    quoteLines(rated.Bill),
+		Refusal:  rated.Refusal,
+		Lane:     lane,
+	}
+	if rated.AgreementID != nil {
+		view.AgreementID = rated.AgreementID.String()
+	}
+	if rated.RuleID != nil {
+		view.RuleID = rated.RuleID.String()
+	}
+	if rated.FormulaTemplateID != nil {
+		view.FormulaTemplateID = rated.FormulaTemplateID.String()
+	}
+	if rated.BillToCustomerID != nil {
+		view.BillToCustomerID = rated.BillToCustomerID.String()
+	}
+
+	switch {
+	case !rated.Outcome.Priced():
+		view.Note = "No agreement or formula could price this lane; the amount is not a rate. " +
+			"Say so rather than quoting a number, or ask a person for a manual rate."
+	case rated.FormulaTemplateID != nil && rated.AgreementID == nil:
+		view.Note = "No agreement covered the lane, so a formula priced it. Treat the amount " +
+			"as a system estimate rather than a contracted rate."
+	}
+
+	return view
+}
+
+// shopCarriersTool asks what several carriers would charge to haul a saved
+// shipment, ranked by the strategy the organization chose, so an agent can
+// tender to the right one rather than the first one.
+type shopCarriersTool struct {
+	shopper  carrierShopper
+	carriers shopCarrierReader
+	access   fieldgate.Access
+}
+
+// shopCarrierReader reads the shopped carriers' standing, so "the cheapest
+// that's active and compliant" is answered from the shop itself rather than
+// by a model that holds no carrier lookup and gives up.
+type shopCarrierReader interface {
+	GetByIDs(
+		ctx context.Context,
+		req carrierports.GetCarriersByIDsRequest,
+	) ([]*carrier.Carrier, error)
+}
+
+func NewShopCarriersTool(
+	shopper carrierShopper,
+	carriers shopCarrierReader,
+	permissions permissionports.PermissionEngine,
+) agenttoolports.AgentQueryTool {
+	return &shopCarriersTool{
+		shopper:  shopper,
+		carriers: carriers,
+		access:   fieldgate.NewAccess(permissions),
+	}
+}
+
+func (t *shopCarriersTool) Name() string { return "carrier_shop" }
+
+func (t *shopCarriersTool) Description() string {
+	return "Price a saved shipment against carriers and rank them by contract cost, " +
+		"margin against the customer's charge, and routing guide rank. Each option says " +
+		"whether the carrier is active and qualified. Leave the carrier list empty to " +
+		"use the shipment's routing guide. Read this before tendering; nothing is " +
+		"tendered or written by it."
+}
+
+func (t *shopCarriersTool) ParamSchema() map[string]any {
+	return map[string]any{
+		"type": "object",
+		"properties": map[string]any{
+			"shipmentId": agenttoolschema.RecordIDText(permission.ResourceShipment,
+				"The saved shipment to price, from shipment_list or "+
+					"the page you are on."),
+			"strategy": agenttoolschema.Enum(
+				"How to rank the options. Defaults to the organization's own choice.",
+				shopStrategies,
+			),
+			"carrierIds": agenttoolschema.OfResource(map[string]any{
+				"type":  "array",
+				"items": map[string]any{"type": "string"},
+				"description": "An explicit shortlist of carrier ids from carrier_list. " +
+					"Empty means the routing guide's candidates.",
+			}, permission.ResourceCarrier),
+			querytool.ParamLimit: querytool.LimitSchema(defaultShopMax, maxShopOptions),
+		},
+		"required":             []string{"shipmentId"},
+		"additionalProperties": false,
+	}
+}
+
+func (t *shopCarriersTool) Policy() agenttoolports.ToolPolicy {
+	return querytool.ReadPolicy(t.Name(), querytool.ReadSpec{
+		Resource: permission.ResourceRateQuote,
+	})
+}
+
+type shopOptionView struct {
+	Rank            int              `json:"rank"`
+	CarrierID       string           `json:"carrierId"`
+	CarrierName     string           `json:"carrierName"`
+	Outcome         string           `json:"outcome"`
+	Priced          bool             `json:"priced"`
+	Cost            decimal.Decimal  `json:"cost"`
+	Currency        string           `json:"currency"`
+	MarginAmount    *decimal.Decimal `json:"marginAmount,omitempty"`
+	MarginPercent   *decimal.Decimal `json:"marginPercent,omitempty"`
+	BelowFloor      *bool            `json:"belowFloor,omitempty"`
+	Status          string           `json:"status,omitempty"`
+	Compliance      string           `json:"compliance,omitempty"`
+	GuideRank       int16            `json:"guideRank,omitempty"`
+	OfferTTLSeconds int32            `json:"offerTtlSeconds,omitempty"`
+	Note            string           `json:"note,omitempty"`
+}
+
+type shopView struct {
+	Strategy       string           `json:"strategy"`
+	RoutingGuideID string           `json:"routingGuideId,omitempty"`
+	SellTotal      *decimal.Decimal `json:"sellTotal,omitempty"`
+	Options        []shopOptionView `json:"options"`
+	Warnings       []string         `json:"warnings,omitempty"`
+	Note           string           `json:"note,omitempty"`
+}
+
+func (t *shopCarriersTool) Query(
+	ctx context.Context,
+	params *agenttoolports.QueryToolParams,
+) (any, error) {
+	if err := querytool.GuardQuery(params); err != nil {
+		return nil, err
+	}
+
+	shipmentID, err := querytool.RequirePulid(params.Params, "shipmentId")
+	if err != nil {
+		return nil, err
+	}
+
+	limit := querytool.ReadLimit(params.Params, defaultShopMax, maxShopOptions)
+
+	req := &ratequoteservice.ShopRequest{
+		TenantInfo: querytool.TenantOf(params),
+		ShipmentID: shipmentID,
+		Strategy: ratequoteports.ShopStrategy(
+			querytool.OptionalString(params.Params, "strategy"),
+		),
+		Limit:   limit,
+		Persist: false,
+	}
+	if raw, ok := params.Params["carrierIds"]; ok && raw != nil {
+		var carrierIDs []string
+		if err = querytool.DecodeParam(params.Params, "carrierIds", &carrierIDs); err != nil {
+			return nil, err
+		}
+		if len(carrierIDs) > maxShopCarriers {
+			return nil, fmt.Errorf("at most %d carriers can be shopped at once", maxShopCarriers)
+		}
+		for idx, rawID := range carrierIDs {
+			id, parseErr := pulid.Parse(rawID)
+			if parseErr != nil {
+				return nil, fmt.Errorf("carrierIds[%d] is not a carrier id", idx)
+			}
+			req.CarrierIDs = append(req.CarrierIDs, id)
+		}
+	}
+
+	visible := t.access.Groups(ctx, params)
+	if err = ratequoteports.AuthorizeShopStrategy(req.Strategy, visible); err != nil {
+		return nil, err
+	}
+
+	result, err := t.shopper.Shop(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	result.WithholdFields(visible)
+
+	view := shopViewOf(result)
+	t.standing(ctx, req.TenantInfo, view)
+
+	return view, nil
+}
+
+// standing adds each shopped carrier's status and compliance. A carrier that
+// cannot be read is left without them rather than failing the shop.
+func (t *shopCarriersTool) standing(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+	view *shopView,
+) {
+	if t.carriers == nil || len(view.Options) == 0 {
+		return
+	}
+	ids := make([]pulid.ID, 0, len(view.Options))
+	for idx := range view.Options {
+		if id, err := pulid.Parse(view.Options[idx].CarrierID); err == nil {
+			ids = append(ids, id)
+		}
+	}
+	found, err := t.carriers.GetByIDs(ctx, carrierports.GetCarriersByIDsRequest{
+		TenantInfo: tenant,
+		CarrierIDs: ids,
+	})
+	if err != nil {
+		return
+	}
+	byID := make(map[string]*carrier.Carrier, len(found))
+	for _, entry := range found {
+		if entry != nil {
+			byID[entry.ID.String()] = entry
+		}
+	}
+	for idx := range view.Options {
+		if entry, ok := byID[view.Options[idx].CarrierID]; ok {
+			view.Options[idx].Status = string(entry.Status)
+			view.Options[idx].Compliance = string(entry.ComplianceStatus)
+		}
+	}
+}
+
+func shopViewOf(result *ratequoteports.ShopResult) *shopView {
+	view := &shopView{
+		Strategy: string(result.Strategy),
+		Options:  make([]shopOptionView, 0, len(result.Options)),
+		Warnings: result.Warnings,
+	}
+	if result.RoutingGuideID != nil {
+		view.RoutingGuideID = result.RoutingGuideID.String()
+	}
+	if result.SellTotal.Valid {
+		sell := result.SellTotal.Decimal
+		view.SellTotal = &sell
+	}
+	for _, option := range result.Options {
+		if option == nil {
+			continue
+		}
+		row := shopOptionView{
+			Rank:            option.Rank,
+			CarrierID:       option.CarrierID.String(),
+			CarrierName:     option.CarrierName,
+			Outcome:         string(option.Outcome),
+			Priced:          option.Priced(),
+			Cost:            option.Cost,
+			Currency:        option.Currency,
+			GuideRank:       option.GuideRank,
+			OfferTTLSeconds: option.OfferTTLSeconds,
+			Note:            option.Note,
+		}
+		if margin := option.Margin; margin != nil {
+			row.MarginAmount = &margin.Amount
+			row.MarginPercent = &margin.Percent
+			row.BelowFloor = &margin.BelowFloor
+		}
+		view.Options = append(view.Options, row)
+	}
+	switch {
+	case len(view.Options) == 0:
+		view.Note = "No carrier could be priced for this shipment. Check the routing guide " +
+			"covers the lane, or name carriers explicitly."
+	case slices.ContainsFunc(view.Options, func(o shopOptionView) bool { return o.Priced }):
+		view.Note = shopPricedNote
+	}
+
+	return view
+}
+
+const shopPricedNote = "A priced option's cost is what that carrier's contract pays for " +
+	"the whole shipment, worked out from its rate: it is the sourced rate dispatch_create_carrier_assignment " +
+	"needs. To cover a one-move shipment with that carrier, pass the cost as a Flat baseRate."
+
+type quoteLine struct {
+	Label  string          `json:"label"`
+	Code   string          `json:"code,omitempty"`
+	Amount decimal.Decimal `json:"amount"`
+}
+
+func quoteLines(bill *tarifftypes.Bill) []quoteLine {
+	if bill == nil {
+		return nil
+	}
+	lines := make([]quoteLine, 0, len(bill.Lines))
+	for i := range bill.Lines {
+		line := &bill.Lines[i]
+		label := line.Label
+		if label == "" {
+			label = string(line.Kind)
+		}
+		lines = append(lines, quoteLine{Label: label, Code: line.Code, Amount: line.Amount})
+	}
+	return lines
+}

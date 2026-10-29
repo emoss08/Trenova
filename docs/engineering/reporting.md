@@ -47,7 +47,7 @@ GraphQL / REST / agent tool ──▶ reporting.Service.Prepare ──▶ report
 | Configuration and defaults | `reporting:` in config, `reportingconfig.Config` |
 | GraphQL | `internal/api/graphql/schema/report.graphqls`, `resolver/reportresolver/` |
 | REST: download, dashboard export | `internal/api/handlers/reporthandler/` |
-| Agent tools | `agent/app/agentquerytoolservice/report*.go`, `agent/app/agenttools/{reporttools,alerttools,dashboardtools}` |
+| Agent tools | `agent/app/querytools/reportquerytools/`, `agent/app/agenttools/{reporttools,alerttools,dashboardtools}` |
 | Client: generated IR module, builder, grid, dashboards | `client/packages/shared/src/generated/keel-analytics.ts`, `client/apps/web/src/routes/reports/`, `lib/report-definition.ts` |
 
 ## The catalog
@@ -468,7 +468,7 @@ The tools are a schema over `reporting.Service`; none of them builds a query or 
 
 | Tools | Where |
 |---|---|
-| `report_list`, `report_get`, `report_list_datasets`, `report_get_dataset`, `report_preview`, `report_run`, `report_get_run`, `report_compare_runs`, `report_list_runs`, `report_list_schedules`, `report_list_dashboards`, `report_compose_table_view` | `agentquerytoolservice` |
+| `report_list`, `report_get`, `report_list_datasets`, `report_get_dataset`, `report_preview`, `report_run`, `report_get_run`, `report_compare_runs`, `report_list_runs`, `report_list_schedules`, `report_list_dashboards`, `report_compose_table_view` | `querytools/reportquerytools`, `querytools/tableviewquerytools` |
 | `report_create`, `report_update`, `report_fork`, `report_delete`, `report_reset_fork`, `report_cancel_run`, `report_update_schedule`, `report_delete_schedule`, `report_delete_dashboard` | `agenttools/reporttools` |
 | `report_create_schedule` | `agenttools/alerttools` |
 | `report_create_dashboard`, `report_add_dashboard_tile`, `report_save_table_view` | `agenttools/dashboardtools` |

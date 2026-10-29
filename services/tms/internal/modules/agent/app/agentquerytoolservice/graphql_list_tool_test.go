@@ -12,6 +12,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/agentread"
 	"github.com/emoss08/trenova/internal/api/graphql/agentread/agentreadtest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentquerytoolservice"
+	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/masterdataquerytools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/querytool"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/graphqlreadports"
 	"github.com/emoss08/trenova/internal/modules/equipment/app/equipmentmanufacturerservice"
@@ -179,7 +181,7 @@ func newHarness(t *testing.T, engine permissionports.PermissionEngine) *harness 
 			),
 		},
 	})
-	tool, err := agentquerytoolservice.ProvideListEquipmentManufacturersTool(reader, engine)
+	tool, err := masterdataquerytools.ProvideListEquipmentManufacturersTool(reader, engine)
 	require.NoError(t, err)
 
 	return &harness{repo: repo, engine: engine, tool: tool}
@@ -337,7 +339,7 @@ func TestGraphQLListTool_KeepsTheCursorContract(t *testing.T) {
 			t.Parallel()
 
 			_, err := h.query(t, person, args)
-			require.ErrorIs(t, err, agentquerytoolservice.ErrStaleCursor)
+			require.ErrorIs(t, err, querytool.ErrStaleCursor)
 		})
 	}
 
@@ -345,7 +347,7 @@ func TestGraphQLListTool_KeepsTheCursorContract(t *testing.T) {
 		t.Parallel()
 
 		_, err := h.query(t, person, map[string]any{"limit": 3, "offset": 3})
-		require.ErrorIs(t, err, agentquerytoolservice.ErrOffsetOnCursorList)
+		require.ErrorIs(t, err, querytool.ErrOffsetOnCursorList)
 	})
 
 	t.Run("a smaller page", func(t *testing.T) {
@@ -410,7 +412,7 @@ func TestGraphQLListTool_ReadsWhatTheRepositoryToolRead(t *testing.T) {
 	t.Parallel()
 
 	h := newHarness(t, &mocks.DenyResourcesPermissionEngine{})
-	old := agentquerytoolservice.NewListEquipmentManufacturersTool(h.repo)
+	old := masterdataquerytools.NewListEquipmentManufacturersTool(h.repo)
 	person := agentreadtest.Person()
 
 	for name, args := range map[string]map[string]any{
@@ -454,7 +456,7 @@ func TestGraphQLListTool_PagesThroughWhatTheRepositoryToolPagedThrough(t *testin
 	t.Parallel()
 
 	h := newHarness(t, &mocks.DenyResourcesPermissionEngine{})
-	old := agentquerytoolservice.NewListEquipmentManufacturersTool(h.repo)
+	old := masterdataquerytools.NewListEquipmentManufacturersTool(h.repo)
 	person := agentreadtest.Person()
 
 	var converted []string

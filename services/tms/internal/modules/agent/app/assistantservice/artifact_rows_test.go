@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agentquerytoolservice"
+	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/querytool"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -341,7 +341,7 @@ func TestArtifactRows_AStaleCursorIsRefusedAsThePageNotAFault(t *testing.T) {
 	t.Parallel()
 
 	f := newRowsFixture(t, &mocks.AllowAllPermissionEngine{})
-	f.tool.err = fmt.Errorf("read shipments: %w", agentquerytoolservice.ErrStaleCursor)
+	f.tool.err = fmt.Errorf("read shipments: %w", querytool.ErrStaleCursor)
 
 	_, err := f.svc.ArtifactRows(
 		t.Context(), f.request(), f.artifact.ID, &assistantports.ArtifactRowsQuery{After: "c-1"},

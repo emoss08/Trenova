@@ -386,7 +386,7 @@ jobs:
           go run ./internal/api/graphql/agentread/gen
           # Each schema file gets its own executor package, so a new schema file
           # produces new *untracked* generated files that git diff cannot see.
-          PATHS="internal/api/graphql/generated internal/api/graphql/gqlmodel internal/api/graphql/resolver internal/api/graphql/gqlexec/internal/e2e internal/api/graphql/agentread internal/modules/agent/app/agentquerytoolservice/graphqlreads_gen.go"
+          PATHS="internal/api/graphql/generated internal/api/graphql/gqlmodel internal/api/graphql/resolver internal/api/graphql/gqlexec/internal/e2e internal/api/graphql/agentread internal/modules/agent/app/querytools/graphqlread/graphqlreads_gen.go"
           if [ -n "$(git status --porcelain -- $PATHS)" ]; then
             echo "::error::GraphQL server code is stale - run 'task gqlgen' and commit"
             git status --porcelain -- $PATHS

@@ -1076,6 +1076,7 @@ modules:
       - proposalexecutor
       - proposalpreviewservice
       - proposalrecorder
+      - querytools
       - recordanchorservice
       - retrievalquery
       - retrievalservice
