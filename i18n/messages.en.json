@@ -30776,6 +30776,15 @@
       "routes/shipment"
     ]
   },
+  "Appointment Scheduling": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Appointment at {0}": {
     "sites": 1,
     "scope": [
@@ -60362,6 +60371,15 @@
       "rules/tariff"
     ]
   },
+  "Compartmentized Cargo": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Compile, execute, render, and deliver a report run": {
     "sites": 1,
     "scope": [
@@ -63361,6 +63379,15 @@
       "routes/shipment"
     ]
   },
+  "Containerized Equipment": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Contains": {
     "sites": 2,
     "scope": [
@@ -65269,6 +65296,15 @@
     ],
     "areas": [
       "apps/web/config"
+    ]
+  },
+  "Core Operations": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Core assumptions behind the cost-per-mile estimate: fuel pricing, fleet efficiency, and how deadhead miles are attributed to shipment cost.": {
@@ -70111,6 +70147,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Crew Based Execution": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Critical": {
@@ -80974,6 +81019,15 @@
     ]
   },
   "Dimension positions must run from zero without gaps": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Dimensional Cargo": {
     "sites": 1,
     "scope": [
       "go"
@@ -118890,7 +118944,7 @@
     ]
   },
   "Hazardous Materials": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go"
     ],
@@ -151153,6 +151207,15 @@
       "go/other"
     ]
   },
+  "Metered Quantity": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Meters": {
     "sites": 1,
     "scope": [
@@ -155001,6 +155064,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Multi Shipment Consolidation": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Multi currency": {
@@ -193928,6 +194000,15 @@
       "routes/shipment"
     ]
   },
+  "Permitting": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Person": {
     "sites": 7,
     "scope": [
@@ -195397,6 +195478,15 @@
     ],
     "areas": [
       "apps/web/types"
+    ]
+  },
+  "Piece Level Tracking": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Piece count": {
@@ -201717,7 +201807,7 @@
     ]
   },
   "Propose": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "go",
       "ts"
@@ -258161,6 +258251,15 @@
       "routes/commodity",
       "routes/desk",
       "routes/shipment"
+    ]
+  },
+  "Temperature Control": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Temperature Max": {
