@@ -27,7 +27,7 @@ func postingPackages() []postingPackage {
 		{name: "invoicepostingservice", enqueuePoints: []string{"Service.Post"}},
 		{
 			name:          "invoiceadjustmentengine",
-			enqueuePoints: []string{"Engine.ExecuteApprovedAdjustment"},
+			enqueuePoints: []string{"Engine.issueCreditMemo"},
 		},
 		{name: "customerpaymentservice", enqueuePoints: []string{
 			"Service.PostAndApply",
