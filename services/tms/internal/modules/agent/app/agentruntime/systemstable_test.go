@@ -3,6 +3,7 @@ package agentruntime
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/stretchr/testify/assert"
@@ -17,8 +18,8 @@ func TestTurn_CarriesTheSharedPartOfItsPromptThroughItsState(t *testing.T) {
 
 	rt := newRuntime(&scriptedCompletion{}, &stubQueryRegistry{}, &stubActionRegistry{}, nil)
 	req := &agentruntimeports.RunRequest{
-		Definition: testDefinition(),
-		Actor:      testActor(),
+		Definition: runtimetest.Definition(),
+		Actor:      runtimetest.Actor(),
 		Input:      "Where is S1?",
 		Context: agentturn.RuntimeContext{
 			Page: &agentturn.PageContext{

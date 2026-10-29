@@ -12,7 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aimetrics"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/tooldispatch"
 	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/assistantturnservice"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
@@ -749,7 +749,7 @@ func (a *Activities) CloseTurnActivity(
 }
 
 // recordLoopRefusals files the calls the loop refused without dispatching
-// them, so the agent's scorecard counts them (agentruntime.RecordLoopRefusals).
+// them, so the agent's scorecard counts them (tooldispatch.RecordLoopRefusals).
 // The turn is already saved, so a failure here is logged, not returned.
 func (a *Activities) recordLoopRefusals(ctx context.Context, in *FinishTurnInput) {
 	if in.Run == nil || len(in.Run.LoopRefusals) == 0 || in.Plan == nil ||
@@ -757,7 +757,7 @@ func (a *Activities) recordLoopRefusals(ctx context.Context, in *FinishTurnInput
 		return
 	}
 	payload := in.Payload
-	failed := agentruntime.RecordLoopRefusals(ctx, &agentruntime.RecordLoopRefusalsRequest{
+	failed := tooldispatch.RecordLoopRefusals(ctx, &tooldispatch.RecordLoopRefusalsRequest{
 		Ledger: a.steps,
 		Tenant: payload.TenantInfo(),
 		Owner: agentruntimeports.RunStepOwner{

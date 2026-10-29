@@ -7,7 +7,7 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/worldwatch"
 	"github.com/emoss08/trenova/internal/modules/agent/app/assistantturnservice"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpagecontext"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
@@ -233,7 +233,7 @@ func (r fakeRun) GetWithOptions(context.Context, any, client.WorkflowRunGetOptio
 type signal struct {
 	workflowID string
 	name       string
-	steer      agentruntime.Steer
+	steer      worldwatch.Steer
 }
 
 type fakeWorkflows struct {
@@ -263,7 +263,7 @@ func (f *fakeWorkflows) SignalWorkflow(
 	if f.signalErr != nil {
 		return f.signalErr
 	}
-	steer, _ := arg.(agentruntime.Steer)
+	steer, _ := arg.(worldwatch.Steer)
 	f.signals = append(f.signals, signal{workflowID: workflowID, name: signalName, steer: steer})
 
 	return nil

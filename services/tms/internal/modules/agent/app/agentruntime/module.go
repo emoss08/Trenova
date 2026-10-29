@@ -1,6 +1,9 @@
 package agentruntime
 
 import (
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/agentmatch"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimecontext"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetools"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"go.uber.org/fx"
@@ -15,9 +18,9 @@ var Module = fx.Module("agentruntime",
 			New,
 			fx.As(fx.Self()),
 			fx.As(new(agentruntimeports.AgentRuntime)),
-			fx.As(new(agentports.AgentRecommender)),
 		),
-		NewContextBuilder,
-		RuntimePolicies,
+		fx.Annotate(agentmatch.NewMatcher, fx.As(new(agentports.AgentRecommender))),
+		runtimecontext.NewBuilder,
+		runtimetools.Policies,
 	),
 )

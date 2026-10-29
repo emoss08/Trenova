@@ -117,7 +117,7 @@ verdicts, so a runtime that misjudges its own authority is still caught.
 ## The rules
 
 Notation: P4(cell, set) is pass^4 averaged over the scenarios of `set`. A route is a profile mode of
-the runtime (`agentruntime.profileFor`):
+the runtime (`toolaccess.Access.ProfileFor`):
 
 - **unattended**: a scenario that fires a run;
 - **delegated**: a scenario tagged `delegation` or expecting `delegate_task`;

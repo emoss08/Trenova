@@ -278,7 +278,7 @@ func factGuard(in *Input) softResult {
 
 // maxReplyTableRows is the most rows a reply writes out as a markdown
 // table; past it the prompt has the reply point to the table its tool kept
-// (agentruntime.InlineRows).
+// (runtimetools.InlineRows).
 const maxReplyTableRows = 12
 
 // replyForm holds every reply to the two rules on its form that the runtime

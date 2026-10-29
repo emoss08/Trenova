@@ -5,7 +5,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/modelstream"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/worldwatch"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpagecontext"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow/agentflowcontract"
@@ -40,22 +41,22 @@ func TestRunReadsASteerAtItsNextStep(t *testing.T) {
 
 	var asked []*llmports.ChatCompletionRequest
 	h.env.OnActivity(h.activities.ModelCallActivity, mock.Anything, mock.Anything).
-		Return(func(_ context.Context, in *ModelCallInput) (*agentruntime.ModelReply, error) {
+		Return(func(_ context.Context, in *ModelCallInput) (*modelstream.Reply, error) {
 			asked = append(asked, in.Request)
 			if len(asked) == 1 {
-				h.env.SignalWorkflow(agentflowcontract.SteerSignal, agentruntime.Steer{
+				h.env.SignalWorkflow(agentflowcontract.SteerSignal, worldwatch.Steer{
 					ID:      pulid.ID("aqm_01J9STEERSTEERSTEERSTEER00"),
 					Content: "Actually the carrier is Werner, not JB Hunt.",
 					Mentions: []agentpagecontext.EntityRef{
 						{Type: "carrier", ID: "car_01J9WERNERWERNERWERNER000", Label: "Werner"},
 					},
 				})
-				return &agentruntime.ModelReply{
+				return &modelstream.Reply{
 					Completion: toolReply("shipment_get", map[string]any{"shipmentId": "shp_1"}),
 				}, nil
 			}
 
-			return &agentruntime.ModelReply{Completion: textReply("Switched to Werner.")}, nil
+			return &modelstream.Reply{Completion: textReply("Switched to Werner.")}, nil
 		}).Times(2)
 
 	result := h.run(t, runContext("shipment_get"))
@@ -84,7 +85,7 @@ func TestRunReadsTheSameSteerOnce(t *testing.T) {
 	t.Parallel()
 
 	h := newHarness(t, harnessParams{})
-	steer := agentruntime.Steer{
+	steer := worldwatch.Steer{
 		ID:      pulid.ID("aqm_01J9ONCEONCEONCEONCEONCE0"),
 		Content: "Use the later slot.",
 	}

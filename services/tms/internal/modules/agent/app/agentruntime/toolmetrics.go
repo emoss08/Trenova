@@ -4,14 +4,10 @@ import (
 	"cmp"
 
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aimetrics"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/toolcall"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aianalytics"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 )
-
-// unregisteredToolLabel is the tool a call is counted under when it names
-// nothing the runtime knows. The name comes from the model, and a label taken
-// from it as sent would let one confused model mint a series per invented tool.
-const unregisteredToolLabel = "unregistered"
 
 // ReplayAware is implemented by effects that can re-run the loop over a
 // recorded history. Workflow code re-executes the loop whenever a worker
@@ -30,29 +26,18 @@ func (s *Service) countToolOutcome(
 	t *Turn,
 	fx TurnEffects,
 	name string,
-	outcome *toolOutcome,
+	outcome *toolcall.Result,
 ) {
 	if aware, ok := fx.(ReplayAware); ok && aware.Replaying() {
 		return
 	}
 
 	s.metrics.RecordToolOutcome(aimetrics.ToolOutcomeLabels{
-		Tool:     s.toolMetricLabel(name),
-		Verdict:  outcome.verdictOrDerived(),
+		Tool:     s.access.ToolMetricLabel(name),
+		Verdict:  outcome.VerdictOrDerived(),
 		Model:    aianalytics.CanonicalModel(t.result.Model),
 		Provider: string(t.providerKind),
 	})
-}
-
-func (s *Service) toolMetricLabel(name string) string {
-	if s.toolNamed(name) != nil {
-		return name
-	}
-	if _, runtime := runtimePolicyNamed(name); runtime {
-		return name
-	}
-
-	return unregisteredToolLabel
 }
 
 const (

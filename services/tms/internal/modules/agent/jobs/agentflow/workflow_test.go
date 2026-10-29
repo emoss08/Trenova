@@ -8,6 +8,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/modelstream"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/toolcall"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
@@ -118,7 +120,7 @@ func newHarness(t *testing.T, p harnessParams) *harness {
 func (h *harness) replies(replies ...*llmports.ChatCompletionResult) {
 	for _, reply := range replies {
 		h.env.OnActivity(h.activities.ModelCallActivity, mock.Anything, mock.Anything).
-			Return(&agentruntime.ModelReply{Completion: reply}, nil).Once()
+			Return(&modelstream.Reply{Completion: reply}, nil).Once()
 	}
 }
 
@@ -513,7 +515,7 @@ func TestToolActivityRefusesWhatIsNotATool(t *testing.T) {
 
 			h.env.ExecuteWorkflow("agentflow-test-call", tt.activity, &ToolInput{
 				Run: runContext("dispatch_assign_move"),
-				Call: agentruntime.DispatchCall{
+				Call: toolcall.Call{
 					Call: llmports.ToolCall{ID: "call_1", Name: tt.call},
 				},
 			})
@@ -545,12 +547,12 @@ func TestRunAsksACutOffCallAgainWithMoreRoom(t *testing.T) {
 		budgets []int
 	)
 	h.env.OnActivity(h.activities.ModelCallActivity, mock.Anything, mock.Anything).
-		Return(func(_ context.Context, in *ModelCallInput) (*agentruntime.ModelReply, error) {
+		Return(func(_ context.Context, in *ModelCallInput) (*modelstream.Reply, error) {
 			mu.Lock()
 			defer mu.Unlock()
 			budgets = append(budgets, in.Request.MaxTokens)
 
-			return &agentruntime.ModelReply{Completion: replies[len(budgets)-1]}, nil
+			return &modelstream.Reply{Completion: replies[len(budgets)-1]}, nil
 		}).Times(2)
 
 	result := h.run(t, runContext())

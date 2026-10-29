@@ -9,7 +9,8 @@ import (
 	"strings"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/tooldispatch"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/toolresult"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpagecontext"
@@ -196,7 +197,7 @@ func refusedAsk(note string) string {
 		return refusedInstruction
 	}
 
-	return agentruntime.FenceUntrusted(
+	return toolresult.FenceUntrusted(
 		decisionNoteHeader,
 		stringutils.TruncateRunes(note, agentdecision.MaxDecisionNoteLength),
 	) + "\n" + personNoteGuard + " Answer what they said as well. " + refusedInstruction
@@ -341,7 +342,7 @@ func followUpAsk(declined bool, note string) string {
 		instruction = declinedInstruction
 	}
 
-	return agentruntime.FenceUntrusted(
+	return toolresult.FenceUntrusted(
 		header,
 		stringutils.TruncateRunes(note, agentdecision.MaxDecisionNoteLength),
 	) + "\n" + personNoteGuard + " " + instruction
@@ -364,7 +365,7 @@ func liftedHold(history []conversation.Message, proposal *agent.AgentProposal) s
 		if message.Role != conversation.RoleTool {
 			continue
 		}
-		if lifted := agentruntime.LiftedHold(message.Content, proposal.ID); lifted != "" {
+		if lifted := tooldispatch.LiftedHold(message.Content, proposal.ID); lifted != "" {
 			return lifted + " What you told the person then was true when you said it: do not " +
 				"take it back or apologise for it. "
 		}

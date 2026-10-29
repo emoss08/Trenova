@@ -7,6 +7,27 @@ Read this before changing anything under `internal/modules/agent/app/agentruntim
 `internal/modules/agent/app/assistantservice/`, or any of the Temporal packages
 named below.
 
+## Where the runtime's code lives
+
+`agentruntime` itself is the loop: `Service` (`Run`, `Drive`, `OpenTurn`,
+`RestoreTurn` and the durable-step facade the workflows call) and `Turn` with
+its state. `New` assembles it from three parts, each with its own params:
+`toolaccess.Access` (which tools an agent holds and may call, the turn's
+`ToolSet`, `find_tools`), `tooldispatch.Dispatcher` (one tool call: arguments,
+permission, write decision, ledger guard, the script tool) and
+`modelstream.Streamer` (the model call). Everything else is a package the loop
+imports, named for what it provides: `runtimetools` (the runtime's own tools
+and their policies), `askuser`, `delegation`, `replycheck` (grounding,
+placement and reply passes over a finished reply), `turnhistory`,
+`toolresult`, `argcheck`, `loopguard`, `worldwatch`, `proposalledger`,
+`toolsummary`, `turntaint`, `turnmemory`, `turnscripts`, `scriptbroker`,
+`toolcall` (`Result`, the durable `Call`/`Outcome`, `StepKey`),
+`usableagents`, `runtimecontext` (the `RuntimeContextBuilder`) and
+`agentmatch` (the `AgentRecommender`). Code that reads the turn takes a narrow
+interface the `Turn` satisfies (`replycheck.Turn`, `runtimetools.Turn`,
+`delegation.HandingTurn`, `turnmemory.Turn`) rather than living on `Turn`.
+Test fixtures shared by these packages are in `runtimetest`.
+
 ## Everything is a workflow
 
 Every AI feature runs on Temporal. The API authenticates the request, records
@@ -1013,7 +1034,7 @@ the unit of permissions, autonomy, budget, schedule and events. What the model
 is shown is built from the profile by the same code on every surface, and what
 differs between a person's conversation, an unattended run and a task handed to
 another agent is the profile's **mode**, worked out once when the turn opens
-(`agentruntime.profileFor`, `profile.go`):
+(`toolaccess.Access.ProfileFor`, `profile.go`):
 
 | Mode | When | Holds | Reaches |
 |---|---|---|---|
@@ -1250,7 +1271,7 @@ and the tool calls on `message` carry `effect` (`lookup`, `change`, `navigate`,
 `discover`, `present`, `ask` or `delegate`), read from the tool's metadata
 (`agenttoolports.EffectOf`, which reads `Effect` from the tool's `Policy()`;
 `find_tools`, `ask_user`, `publish_artifact` and `delegate_task` declare theirs in
-`agentruntime/runtimepolicies.go`). `tool_finished` also carries `summary`, a one-line label worked out
+`agentruntime/runtimetools/runtimepolicies.go`). `tool_finished` also carries `summary`, a one-line label worked out
 where the tool ran from what it returned, or from a write's name or title. The
 thread's saved messages carry the same fields: `summary` is stored on the
 result, and `effect` is read from the registry when the messages are served, so
@@ -1325,7 +1346,7 @@ before changing it.**
 ### Matching a question to an agent
 
 Before a question is asked, the Desk asks `myAgentMatch` how well the person's agents fit
-it (`agentruntime.MatchAgent`, the `AgentRecommender` port): the front page and the
+it (`agentmatch.Matcher.MatchAgent`, the `AgentRecommender` port): the front page and the
 assistant's home for a new question, and an open conversation for the reply being
 written. It is the find_tools hand-off asked before the turn instead of during it, and it
 is built from the same parts. The answer is one of four outcomes:
@@ -1474,7 +1495,7 @@ reply.
   words. The loop reads the signal between steps, before its next model call
   (`TurnEffects.Interject`); reading a signal records no command, and the loop
   reads one only when one is waiting. The words
-  reach the model as the person's own message (`agentruntime.SteerPrompt`, the
+  reach the model as the person's own message (`worldwatch.SteerPrompt`, the
   words and the records they named), followed by a system notice saying they
   arrived mid-reply and how to take them (`steerNotice`; see "Notices are system
   messages"). They are saved as a `Steer` message, which history replay frames
@@ -1503,7 +1524,7 @@ reply.
 
 A turn watches the records it is about (`RunRequest.Records`: subject, page and
 mentions), the records its `get_*` calls read and the records its executed
-writes changed (`agentruntime.WorldState`, at most 64). Between steps, at most
+writes changed (`worldwatch.State`, at most 64). Between steps, at most
 every three seconds by `workflow.Now`, it reads what changed since it last
 looked as a local activity (`agentflow.CheckWorldActivity`). The read is the
 realtime bus, not the database: `realtimebroker.ChangeFeed` scans the tenant's
@@ -1554,7 +1575,7 @@ same where it has to travel as text.
 A conversation keeps the records it is about (`assistant_threads.working_set`,
 `conversation.WorkingRecord`, newest first, at most `MaxWorkingSet` = 12): its
 subject, what the person mentioned or had open, what the agent read with a
-`get_*` call (`agentruntime.RecordsRead`, the same rule the world watch uses; a
+`get_*` call (`worldwatch.RecordsRead`, the same rule the world watch uses; a
 failed read and another agent's delegated steps add nothing) and what its
 executed writes changed. `FinishTurn` adds them through `keepWorkingSet`; the
 subject always sorts first, and the kind is read off the id's prefix
@@ -1670,7 +1691,7 @@ reader's lineage key.
 
 ### Asking the person
 
-`ask_user` is answered by the loop itself (`agentruntime/askuser.go`), in workflow
+`ask_user` is answered by the loop itself (`agentruntime/askuser/askuser.go`), in workflow
 code: it reads and writes nothing, and its result is the question the thread pins
 above the person's message box. A call asks for one value in one of three shapes:
 
@@ -1751,7 +1772,7 @@ A turn's proposals are filed when it ends, and two or more become one plan the p
 approves whole. An agent that proposes a change, notices a mistake and proposes it again
 corrected would otherwise leave both in that plan: one approval ran both, and a load was
 entered twice. Every turn that holds a tool able to file a proposal (an action tool) is
-given `withdraw_proposal {proposalId, reason?}` (`agentruntime/withdrawproposal.go`) from
+given `withdraw_proposal {proposalId, reason?}` (`agentruntime/runtimetools/withdrawproposal.go`) from
 its first model call (`declareWithdrawal`), and the loop refuses the call with
 `unofferedWithdrawal` until the turn has filed a proposal a person would decide
 (`hasFiledProposal`). It used to be added after the first filing, which changed `tools`
@@ -1778,7 +1799,7 @@ with no new event kind or canonical field.
 
 A plan's name is the line the person reads above its steps, on the plan card and in the
 approval box. It used to be "Dispatch: 4 changes" every time. Every turn that is offered
-`withdraw_proposal` is also given `name_plan {title}` (`agentruntime/nameplan.go`,
+`withdraw_proposal` is also given `name_plan {title}` (`agentruntime/runtimetools/nameplan.go`,
 `declareNamePlan`) from its first model call, so the tool array never changes mid-turn. The
 runtime answers it itself: `agentplan.NamedPlanTitle` drops control characters, folds the title to one line of plain text
 and refuses an empty one or one over `agentplan.MaxNamedPlanTitleLength` (80) characters, and the
@@ -1800,7 +1821,7 @@ starts paused. A hold that cannot be read leaves the usual wording.
 
 ### What a tool receives
 
-Every call's arguments go through `contractCall` (`agentruntime/arguments.go`,
+Every call's arguments go through `contractCall` (`agentruntime/argcheck/arguments.go`,
 `coerce.go`) before a tool, a preview or a card sees them. A misnamed
 parameter is renamed to the one it plainly means, the runtime's own owner key
 is set aside, and each value is read as the schema declares it wherever the
@@ -2198,7 +2219,7 @@ replaces the streamed one without a retry.
 
 ### An oversized tool result
 
-A result over 12,000 characters (`maxToolResultChars`, `agentruntime/fence.go`) is
+A result over 12,000 characters (`maxToolResultChars`, `agentruntime/toolresult/fence.go`) is
 shortened before the model reads it. A JSON object keeps every field that is not a list
 whole and writes those first, then shortens its top-level lists to fit, with a note
 saying how many records each list shows and to answer counts from the totals. Cutting
@@ -2402,7 +2423,7 @@ every chapter read; the list is one statement joining each chapter's turn and it
 ### History replay
 
 A turn replays the newest 120 messages, and their tool results are most of it.
-`replayHistory` (`agentruntime/messages.go`) keeps a result whole only while it
+`replayHistory` (`agentruntime/turnhistory/messages.go`) keeps a result whole only while it
 is in the last three turns (a decision note is not a turn) and, newest first,
 within 48,000 characters; the rest are shortened to their first 320 characters
 inside a fence of their own, closed, with a note after it naming the tool to

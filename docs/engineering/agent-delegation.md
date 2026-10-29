@@ -30,7 +30,7 @@ These were made by the product owner and the code enforces each one.
 | Decision | Where it is enforced |
 |---|---|
 | Who an agent may ask is a **per-agent allowlist** on its definition, set in AI Control. | `agentdefinition.Definition.DelegateIDs`, validated on save by the domain and by `agentdefinitionservice.validateDelegates` |
-| A task the agent hands out **only reads.** The delegate's turn holds the tools it holds whose effect is `lookup`, and no write, no `publish_artifact` and no proposal history. A task the person directed keeps the delegate's own autonomy: its tools, tier settings, ceiling and budget. | `assistantservice.OpenDelegate` sets `Delegation.ReadOnly` unless the call is `Directed`; `agentruntime.profileFor` opens a `ReadOnly` delegation as the `fan_out` profile, which keeps only lookups (`Service.looksUp`) |
+| A task the agent hands out **only reads.** The delegate's turn holds the tools it holds whose effect is `lookup`, and no write, no `publish_artifact` and no proposal history. A task the person directed keeps the delegate's own autonomy: its tools, tier settings, ceiling and budget. | `assistantservice.OpenDelegate` sets `Delegation.ReadOnly` unless the call is `Directed`; `toolaccess.Access.ProfileFor` opens a `ReadOnly` delegation as the `fan_out` profile, which keeps only lookups (`Service.looksUp`) |
 | **One level only.** Only the agent the person is talking to delegates. A delegate never holds `delegate_task`, and a call to it from a delegate is refused. | `RunRequest.MayDelegate`, `OpenTurn` (the tool is held only when it is true), `Service.delegate` (refuses when `RunRequest.Delegation` is set) |
 | **Taint crosses both ways.** A delegate opens with the taint of the turn that asked, and its own taint is folded back into that turn when it ends, because its reply enters that turn's context. Its proposals carry its turn's taint. | `DelegateCall.Taint` → `RunRequest.Taint` (`assistantservice.OpenDelegate`), `Turn.inheritDelegateTaint`, `DelegatedRun.Taint` → `persistDelegatedProposals` |
 | **Everything runs as the same person.** Every tool call of the delegate is permission-checked against the person, so a delegate can never do more than they could. The person must also be allowed to use the delegate. | The delegate's turn carries the turn's `RequestActor`; its tool set is narrowed by `permittedTools`; `OpenDelegate` requires `assistant:create`, a delegate the person may use (open to everyone, or granted to one of their roles), and a delegate that is enabled, chat-usable and in the same tenant |
@@ -82,7 +82,7 @@ marks still draws the delegate's icon and accent.
 
 ## What the primary agent is told
 
-`agentruntime.ContextBuilder` resolves the delegates for a conversation turn
+`runtimecontext.Builder` resolves the delegates for a conversation turn
 (`RuntimeContext.Delegates`): the allowlist, in order, keeping only agents in
 the tenant that are enabled and chat-usable and that the person may use (open to
 everyone, or restricted to roles and granted to one of theirs, through
@@ -105,7 +105,7 @@ do.
   conversation turn reaches every tool the person's other agents hold, so a
   match it cannot call is one no agent of theirs holds.
 - When nothing the turn reaches matched, the answer names the person's other
-  agents that hold it (`agentruntime.handOffNote`, from `OtherUsableAgents`: the
+  agents that hold it (`toolaccess.handOffNote`, from `OtherUsableAgents`: the
   enabled chat agents they may use, the same list the Desk's case checklist
   reads to say who can take a step) and tells the model to point the person
   to Hand off to another agent; only when none holds it does it fall back to
@@ -158,7 +158,7 @@ names what it is about instead:
 
 What was handed over rides `DelegateCall.Context` (`Records`, `Results`) to
 `OpenDelegateActivity` and `assistantservice.OpenDelegate`, which asks the
-delegate `agentruntime.DelegateInput(task, context)`: the task, a line saying
+delegate `delegation.Input(task, context)`: the task, a line saying
 what follows is data from the agent that asked, the records fenced in
 `<untrusted_data>`, and each result fenced as `Result from {tool} (call {id})`.
 The saved task step carries the same text; the thread shows the task as the
@@ -443,7 +443,7 @@ the agent they chose takes the task inside it.
 
 - **Request.** `POST /assistant/threads/:threadID/turns/` (and `…/messages/`,
   and `…/queue/`) take `directedAgentId`. The content is the task, at most
-  `agentruntime.MaxDelegateTaskRunes`. It travels as
+  `delegation.MaxTaskRunes`. It travels as
   `SendMessageRequest.DirectedAgentID` → `AssistantTurnRequest.DirectedAgentID`
   → `QueuedRequest.DirectedAgentID`. A directed message never steers a reply
   under way. If one is running it waits in the queue, and sending it now is

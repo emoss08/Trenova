@@ -3,6 +3,9 @@ package agentruntime
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/delegation"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetest"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetools"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
@@ -22,18 +25,18 @@ func taintOf(marks ...agent.TaintMark) *agent.RunTaint {
 
 func delegatingTurnScript(delegateID string) *scriptedCompletion {
 	return &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
-		toolTurn(delegateTaskName, map[string]any{
+		runtimetest.ToolTurn(runtimetools.DelegateTaskName, map[string]any{
 			"agentId": delegateID,
 			"task":    "Create the report and return its id.",
 		}),
-		textTurn("Done."),
+		runtimetest.TextTurn("Done."),
 	}}
 }
 
 func TestDelegate_HandsTheTurnsTaintDown(t *testing.T) {
 	t.Parallel()
 
-	delegate := reportBuilder()
+	delegate := runtimetest.ReportBuilder()
 	email := agent.TaintMark{
 		Source:   agent.TaintSourceInboundMessage,
 		ToolName: "inbox_get_inbound_message",
@@ -59,7 +62,7 @@ func TestDelegate_HandsTheTurnsTaintDown(t *testing.T) {
 func TestDelegate_FoldsTheDelegatesTaintBackUp(t *testing.T) {
 	t.Parallel()
 
-	delegate := reportBuilder()
+	delegate := runtimetest.ReportBuilder()
 	document := agent.TaintMark{
 		Source:   agent.TaintSourceDocument,
 		ToolName: "document_get_summary",
@@ -97,7 +100,7 @@ func TestDelegate_FoldsTheDelegatesTaintBackUp(t *testing.T) {
 func TestDelegate_AnOverflowedDelegateTaintOverflowsTheTurn(t *testing.T) {
 	t.Parallel()
 
-	delegate := reportBuilder()
+	delegate := runtimetest.ReportBuilder()
 	run := scriptedDelegateRun(delegate)
 	run.Result.Taint = &agent.RunTaint{
 		Seen:       []agent.TaintSource{agent.TaintSourceWeb},
@@ -119,7 +122,7 @@ func TestDelegate_AnOverflowedDelegateTaintOverflowsTheTurn(t *testing.T) {
 func TestDelegate_AMarkTheTurnAlreadyHadIsNotAnnouncedAgain(t *testing.T) {
 	t.Parallel()
 
-	delegate := reportBuilder()
+	delegate := runtimetest.ReportBuilder()
 	email := agent.TaintMark{
 		Source:   agent.TaintSourceInboundMessage,
 		ToolName: "inbox_get_inbound_message",
@@ -142,7 +145,7 @@ func TestDelegate_AMarkTheTurnAlreadyHadIsNotAnnouncedAgain(t *testing.T) {
 func TestDelegate_ADelegateOfUnknownTaintLeavesTheTurnUnknown(t *testing.T) {
 	t.Parallel()
 
-	delegate := reportBuilder()
+	delegate := runtimetest.ReportBuilder()
 	run := scriptedDelegateRun(delegate)
 	run.Result.Taint = nil
 	rt := newRuntime(delegatingTurnScript(delegate.ID.String()),
@@ -157,10 +160,10 @@ func TestDelegate_ADelegateOfUnknownTaintLeavesTheTurnUnknown(t *testing.T) {
 func TestDelegate_ADeclinedTaskTaintsNothing(t *testing.T) {
 	t.Parallel()
 
-	delegate := reportBuilder()
+	delegate := runtimetest.ReportBuilder()
 	rt := newRuntime(delegatingTurnScript(delegate.ID.String()),
 		&stubQueryRegistry{}, &stubActionRegistry{}, nil)
-	fx := &delegateRecorder{run: DelegateRun{Declined: "Report Builder is disabled."}}
+	fx := &delegateRecorder{run: delegation.Run{Declined: "Report Builder is disabled."}}
 
 	result := driveWith(t, rt, delegatingRequest(delegate), fx)
 

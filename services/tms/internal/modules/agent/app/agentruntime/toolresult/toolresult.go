@@ -1,0 +1,369 @@
+package toolresult
+
+import (
+	"math"
+	"strings"
+
+	"github.com/bytedance/sonic"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/shared/timeutils"
+)
+
+// dateKeySuffixes are the field-name endings that mean an instant. Matching on
+// the name as well as the range is belt and braces: either test alone has a
+// false positive the other rules out.
+//
+// "on" is deliberately absent — "reason" ends in it.
+var dateKeySuffixes = []string{"at", "date", "expiry", "expires"}
+
+// camelDateSuffixes are date endings too short or too common to match on the
+// lowered name: "reason" and "season" end in "on", "overdue" in "due". Each
+// counts only as its own camel-case word, or as the whole key — detectedOn,
+// nextTrainingDue, effectiveFrom, asOf, dob — which is how the records spell a
+// date that is not an "at".
+var camelDateSuffixes = []string{
+	"On", "Due", "Check", "From", "To", "Through", "Deadline", "Of", "Dob",
+}
+
+// camelInstantSuffixes are the same for instants whose hour matters: an
+// appointment's start, a cutoff, what a run is scheduled for.
+var camelInstantSuffixes = []string{"Start", "End", "Cutoff", "For", "Since", "Until", "Timestamp"}
+
+// instantKeySuffixes are the field-name endings of an instant whose hour
+// matters. A delivery window read as a date alone told the model the stop had
+// no window at all, and it said so.
+var instantKeySuffixes = []string{"time", "windowstart", "windowend", "arrival", "departure", "eta"}
+
+// Keys that say nothing to the model about the record in front of it. The
+// tenant is the one the conversation is in, and a nested record's version and
+// audit stamps repeat on every commodity, stop and charge of a shipment; the
+// shipment_get the Dispatch desk read carried twenty of each.
+//
+// A record's own version stays at the top level, where a write that checks it
+// reads it from.
+var (
+	tenantKeys      = []string{"organizationId", "businessUnitId"}
+	nestedNoiseKeys = []string{"version", "createdAt", "updatedAt"}
+)
+
+// humanizeDates rewrites every epoch integer a tool returned into a date a
+// reader can act on, before the result reaches the model.
+//
+// This is the whole fix for a wrong compliance answer we shipped: tools emitted
+// medicalCardExpiry as 1791591001, and the model — having no arithmetic —
+// guessed its way to the wrong month and reported the opposite of the truth.
+// Rendering the date costs nothing and removes the guess entirely.
+//
+// The epoch is replaced rather than supplemented. Nothing downstream wants the
+// integer: the model cannot compute with it, and the date filters already
+// accept the YYYY-MM-DD form this produces, so a value read out of one result
+// can be passed straight back into the next call.
+func humanizeDates(value any, now int64, timezone string) any {
+	switch typed := value.(type) {
+	case map[string]any:
+		for key, nested := range typed {
+			if replacement, ok := describeInstant(key, nested, now, timezone); ok {
+				typed[key] = replacement
+				continue
+			}
+			typed[key] = humanizeDates(nested, now, timezone)
+		}
+
+		return typed
+	case []any:
+		for i, nested := range typed {
+			typed[i] = humanizeDates(nested, now, timezone)
+		}
+
+		return typed
+	default:
+		return value
+	}
+}
+
+// trimRecord takes out what a record carries for the database rather than for
+// the reader: the tenant everywhere, the version and audit stamps of every
+// record nested inside another, and what says nothing (an empty text, a date
+// left unset as zero, a fleetCodeId beside the fleetCode that carries the
+// same id). A worker row carried all three, and fifty rows of them crowded
+// out the rows a list was read for. depth is zero for the result itself and
+// for each row of a top-level list.
+func trimRecord(value any, depth int) any {
+	switch typed := value.(type) {
+	case map[string]any:
+		for _, key := range tenantKeys {
+			delete(typed, key)
+		}
+		if depth > 0 {
+			for _, key := range nestedNoiseKeys {
+				delete(typed, key)
+			}
+		}
+		for key, nested := range typed {
+			if saysNothing(typed, key, nested) {
+				delete(typed, key)
+				continue
+			}
+			typed[key] = trimRecord(nested, depth+1)
+		}
+
+		return typed
+	case []any:
+		for i, nested := range typed {
+			typed[i] = trimRecord(nested, depth)
+		}
+
+		return typed
+	default:
+		return value
+	}
+}
+
+// saysNothing reports whether a field tells the reader nothing its absence
+// does not: an empty text, a date-named field holding zero (never set), or a
+// reference id the record it names, carried beside it, already holds.
+func saysNothing(record map[string]any, key string, value any) bool {
+	switch typed := value.(type) {
+	case string:
+		if typed == "" {
+			return true
+		}
+		named, found := strings.CutSuffix(key, "Id")
+		if !found || named == "" {
+			return false
+		}
+		related, ok := record[named].(map[string]any)
+
+		return ok && related["id"] == typed
+	default:
+		seconds, ok := WholeNumber(value)
+
+		return ok && seconds == 0 && !counts(key) &&
+			(hasKeySuffix(key, dateKeySuffixes) || hasCamelSuffix(key, camelDateSuffixes))
+	}
+}
+
+// quantityPrefixes open the names of counts that end like a date:
+// daysUntilExpiry is 0 on the day a credential expires, which is the answer.
+var quantityPrefixes = []string{"days", "hours", "minutes", "count", "num", "total"}
+
+func counts(key string) bool {
+	lowered := strings.ToLower(key)
+	for _, prefix := range quantityPrefixes {
+		if strings.HasPrefix(lowered, prefix) {
+			return true
+		}
+	}
+
+	return false
+}
+
+// describeInstant renders one instant as the date it falls on in the
+// organization's zone. The zone matters at the edges, which are exactly where
+// compliance questions live: a card expiring at 00:30 local time is tomorrow's
+// problem to the person asking, whatever a UTC clock says.
+func describeInstant(key string, value any, now int64, timezone string) (string, bool) {
+	withClock := hasKeySuffix(key, instantKeySuffixes) ||
+		hasCamelSuffix(key, camelInstantSuffixes)
+	dated := hasKeySuffix(key, dateKeySuffixes) || hasCamelSuffix(key, camelDateSuffixes)
+	if !withClock && !dated {
+		return "", false
+	}
+
+	seconds, ok := WholeNumber(value)
+	if !ok {
+		return "", false
+	}
+
+	// A count that shares a date-like name — daysUntilExpiry is the one we
+	// already ship — is never in epoch range, so the range check is what keeps
+	// this from turning 21 into 1970.
+	if !timeutils.IsPlausibleInstant(seconds) {
+		return "", false
+	}
+
+	if withClock {
+		return timeutils.DescribeUnixInstantIn(seconds, now, timezone), true
+	}
+
+	return timeutils.DescribeUnixDateIn(seconds, now, timezone), true
+}
+
+func hasKeySuffix(key string, suffixes []string) bool {
+	lowered := strings.ToLower(key)
+	for _, suffix := range suffixes {
+		if strings.HasSuffix(lowered, suffix) {
+			return true
+		}
+	}
+
+	return false
+}
+
+// hasCamelSuffix reports whether key is one of suffixes, or ends in one as a
+// camel-case word of its own: a lowercase letter or digit, then the suffix.
+func hasCamelSuffix(key string, suffixes []string) bool {
+	for _, suffix := range suffixes {
+		if strings.EqualFold(key, suffix) {
+			return true
+		}
+		start := len(key) - len(suffix)
+		if start < 1 || key[start:] != suffix {
+			continue
+		}
+		if previous := key[start-1]; previous >= 'a' && previous <= 'z' ||
+			previous >= '0' && previous <= '9' {
+			return true
+		}
+	}
+
+	return false
+}
+
+// WholeNumber reads the number shapes a decoded JSON document can hold. A
+// fractional value is not an instant any tool here produces, and coercing one
+// would invent a precision the source never had.
+func WholeNumber(value any) (int64, bool) {
+	switch typed := value.(type) {
+	case float64:
+		if typed != math.Trunc(typed) {
+			return 0, false
+		}
+
+		return int64(typed), true
+	case int64:
+		return typed, true
+	case int:
+		return int64(typed), true
+	default:
+		return 0, false
+	}
+}
+
+// Encode renders a tool's return value for the model.
+//
+// The round trip through a generic document is what lets one rule reach every
+// tool: the tools return their own typed rows, and whole domain entities in the
+// case of the get_ family, so there is no single struct to annotate. Doing it
+// here means a tool added later inherits readable dates without knowing this
+// exists, which is the only version of this that stays true.
+//
+// The round trip has one cost that has to be paid back here. Going through a
+// map loses the struct's field order, and sonic's default marshaller emits map
+// keys in whatever order it finds them — so the same rows re-serialised on a
+// later turn came out as a different byte string. That makes a tool result
+// unreadable to a person comparing two turns, and it defeats prompt caching
+// outright, because a cache is keyed on a prefix that is now different for no
+// reason. ConfigStd sorts the keys, which is what the repeat guard and the
+// transcript exporter already do for the same reason.
+func Encode(data any, now int64, timezone string) (string, error) {
+	encoded, _, err := encodeToolDocument(data, now, timezone)
+
+	return encoded, err
+}
+
+func encodeToolDocument(data any, now int64, timezone string) (string, any, error) {
+	return EncodeModelDocument(data, now, timezone, nil)
+}
+
+// EncodeModelDocument is encodeToolDocument with a list's rows narrowed to
+// the columns the call named in fields, for the model's copy alone.
+func EncodeModelDocument(
+	data any,
+	now int64,
+	timezone string,
+	fields []string,
+) (string, any, error) {
+	encoded, err := sonic.Marshal(data)
+	if err != nil {
+		return "", nil, err
+	}
+
+	var document any
+	if err = sonic.Unmarshal(encoded, &document); err != nil {
+		return "", nil, err
+	}
+
+	document = humanizeDates(narrowRows(trimRecord(document, 0), fields), now, timezone)
+	humanized, err := sonic.ConfigStd.Marshal(document)
+	if err != nil {
+		return "", nil, err
+	}
+
+	return string(humanized), document, nil
+}
+
+// narrowRows keeps, in each row of a list the model reads, its id, the
+// columns the call named and what the list works out beside its columns (a
+// worker's dispatchable and why not), which columns does not name. The list
+// returned every column, and the person's table keeps them: narrowing the
+// list itself left a table of names alone, and its later pages too, when the
+// person asked for the inactive drivers. A result that names no columns is
+// left whole, since nothing says which of its fields are columns.
+func narrowRows(document any, fields []string) any {
+	record, ok := document.(map[string]any)
+	if !ok || len(fields) == 0 {
+		return document
+	}
+	listed, _ := record[listColumnsKey].([]any)
+	items, _ := record[listItemsKey].([]any)
+	if len(listed) == 0 || len(items) == 0 {
+		return document
+	}
+	columns := make(map[string]struct{}, len(listed))
+	for _, column := range listed {
+		if name, isText := column.(string); isText {
+			columns[name] = struct{}{}
+		}
+	}
+	wanted := make(map[string]struct{}, len(fields)+1)
+	wanted[listIDKey] = struct{}{}
+	for _, field := range fields {
+		wanted[field] = struct{}{}
+	}
+	drop := func(key string) bool {
+		_, column := columns[key]
+		_, kept := wanted[key]
+
+		return column && !kept
+	}
+	for _, item := range items {
+		row, isRow := item.(map[string]any)
+		if !isRow {
+			continue
+		}
+		for key := range row {
+			if drop(key) {
+				delete(row, key)
+			}
+		}
+	}
+	kept := make([]any, 0, len(listed))
+	for _, column := range listed {
+		if name, _ := column.(string); !drop(name) {
+			kept = append(kept, column)
+		}
+	}
+	record[listColumnsKey] = kept
+
+	return record
+}
+
+const (
+	listColumnsKey = "columns"
+	listItemsKey   = "items"
+	listIDKey      = "id"
+)
+
+// ListFields are the columns a call named for the model to read.
+func ListFields(arguments map[string]any) []string {
+	raw, _ := arguments[agenttoolports.ListFieldsParam].([]any)
+	fields := make([]string, 0, len(raw))
+	for _, entry := range raw {
+		if name, ok := entry.(string); ok && name != "" {
+			fields = append(fields, name)
+		}
+	}
+
+	return fields
+}

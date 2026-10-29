@@ -56,7 +56,7 @@ operation-cost budget, which the screen is.
 ## How it works
 
 ```text
-model call ──▶ agentruntime.dispatch ──▶ graphQL read tool (agent module)
+model call ──▶ tooldispatch.dispatch ──▶ graphQL read tool (agent module)
                                             │  typed params → variables (generated)
                                             ▼
                                 graphqlreadports.GraphQLReader (port, agent module)
@@ -626,7 +626,7 @@ A resolver that leaves an edge's cursor empty is not refused; its pages are only
 A list takes `fields`, the columns of each row the model reads besides the id
 (`agenttoolschema.Derived("<tool>.column", …)`, the operation's selected top-level fields under
 the names a row shows them by). The list returns every column whatever the call names; the
-runtime narrows the model's copy (`agentruntime.narrowRows`): each row keeps its id, the columns
+runtime narrows the model's copy (`toolresult.narrowRows`): each row keeps its id, the columns
 named and what the spec's `shape` works out beside the columns (a worker's `dispatchable`, which
 the spec lists in `derived` so `fields` may name it; Haiku asked for it and was refused twice), and
 `columns` names only what is left. The person's table is drawn from the list, so it and its later

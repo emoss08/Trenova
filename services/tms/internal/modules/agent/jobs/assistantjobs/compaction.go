@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/modelstream"
 	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow"
@@ -93,7 +93,7 @@ type StartedCompaction struct {
 type SummarizedInput struct {
 	Payload *assistantcontract.CompactionPayload `json:"payload"`
 	Plan    *assistantservice.CompactionPlan     `json:"plan"`
-	Reply   *agentruntime.ModelReply             `json:"reply"`
+	Reply   *modelstream.Reply                   `json:"reply"`
 }
 
 // CompactionEndInput is how a compaction that saved nothing ended.
@@ -164,7 +164,7 @@ func (w *Workflows) compact(
 	})
 
 	var flow *agentflow.Activities
-	var reply agentruntime.ModelReply
+	var reply modelstream.Reply
 	summaryCtx := workflow.WithActivityOptions(ctx, withCompactionPriority(summaryOptions, payload))
 	err = workflow.ExecuteActivity(summaryCtx, flow.ModelCallActivity, &agentflow.ModelCallInput{
 		Request: plan.Request,
@@ -443,7 +443,7 @@ func (a *Activities) StartAutoCompactionActivity(
 }
 
 // compactionReply is what the model wrote, as the conversation keeps it.
-func compactionReply(reply *agentruntime.ModelReply) *assistantservice.CompactionReply {
+func compactionReply(reply *modelstream.Reply) *assistantservice.CompactionReply {
 	out := &assistantservice.CompactionReply{}
 	if reply == nil || reply.Completion == nil {
 		return out

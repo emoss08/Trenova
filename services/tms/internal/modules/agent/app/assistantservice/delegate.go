@@ -6,6 +6,8 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/delegation"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/usableagents"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpagecontext"
@@ -39,7 +41,7 @@ type OpenDelegateRequest struct {
 	Actor     *permissionports.RequestActor
 	ThreadID  pulid.ID
 	StepOwner agentruntimeports.RunStepOwner
-	Call      agentruntime.DelegateCall
+	Call      delegation.Call
 	// Records are the records the parent's turn is about. The delegate reads
 	// their memories, since the task is about them too.
 	Records []agentpagecontext.EntityRef
@@ -106,7 +108,7 @@ func (s *Service) OpenDelegate(
 	if refusal := delegateRefusal(parent, delegate, req.Call.Directed); refusal != "" {
 		return nil, declined(refusal)
 	}
-	usable := agentruntime.UsableAgentsFor(ctx, s.permissions, req.Actor, s.logger)
+	usable := usableagents.For(ctx, s.permissions, req.Actor, s.logger)
 	if !usable.Assistant {
 		return nil, declined("The person is not allowed to use other agents, so " +
 			delegate.Name + " cannot be asked.")
@@ -129,7 +131,7 @@ func (s *Service) OpenDelegate(
 		Definition: delegate,
 		Actor:      req.Actor,
 		Context:    s.delegateContext(ctx, parent, delegate, req),
-		Input:      agentruntime.DelegateInput(req.Call.Task, req.Call.Context),
+		Input:      delegation.Input(req.Call.Task, req.Call.Context),
 		ThreadID:   req.ThreadID,
 		Publishes:  s.artifacts != nil && !req.Inline && !readOnly,
 		Inline:     req.Inline,

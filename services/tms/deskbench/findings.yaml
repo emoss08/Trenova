@@ -1354,7 +1354,7 @@ findings:
       uncommitted; unit-tested; .deskbench/runs/20261009-233510-run passed the one-agent
       lifecycle with it live
     files:
-      - services/tms/internal/modules/agent/app/agentruntime/withdrawproposal.go
+      - services/tms/internal/modules/agent/app/agentruntime/runtimetools/withdrawproposal.go
       - services/tms/internal/modules/agent/app/proposalrecorder/recorder.go
       - services/tms/internal/modules/agent/ports/agentports/agentruntime.go
 
@@ -1599,7 +1599,7 @@ findings:
       field holds is a template variable to declare, not something to keep searching for.
     fixedIn: uncommitted; unit-tested; to verify in a run
     files:
-      - services/tms/internal/modules/agent/app/agentruntime/toolset.go
+      - services/tms/internal/modules/agent/app/agentruntime/toolaccess/toolset.go
       - services/tms/internal/modules/agent/app/agentquerytoolservice/formula_schema_view.go
 
   - id: DB-068
@@ -2419,8 +2419,8 @@ findings:
     files:
       - shared/pulid/pulid.go
       - shared/pulid/pulid_test.go
-      - services/tms/internal/modules/agent/app/agentruntime/coerce.go
-      - services/tms/internal/modules/agent/app/agentruntime/coerce_test.go
+      - services/tms/internal/modules/agent/app/agentruntime/argcheck/coerce.go
+      - services/tms/internal/modules/agent/app/agentruntime/argcheck/coerce_test.go
 
   - id: DB-111
     title: Bench conversations taught the agents, and what they learned decided later cases
@@ -2575,7 +2575,7 @@ findings:
       rest of the answer from the ranking.
     fixedIn: uncommitted; TestResolveFind_LoadsTheToolsANeedNamesOutright
     files:
-      - services/tms/internal/modules/agent/app/agentruntime/toolset.go
+      - services/tms/internal/modules/agent/app/agentruntime/toolaccess/toolset.go
       - services/tms/internal/modules/agent/app/agentruntime/toolset_test.go
       - docs/engineering/agent-runtime.md
 
@@ -2879,8 +2879,8 @@ findings:
       and never a count of a cut list.
     fixedIn: uncommitted; TestTruncateToolResult_KeepsTotalsAndShortensTheLists
     files:
-      - services/tms/internal/modules/agent/app/agentruntime/fence.go
-      - services/tms/internal/modules/agent/app/agentruntime/fence_test.go
+      - services/tms/internal/modules/agent/app/agentruntime/toolresult/fence.go
+      - services/tms/internal/modules/agent/app/agentruntime/toolresult/fence_test.go
       - services/tms/deskbench/scenarios/dispatch.yaml
 
   - id: DB-131
@@ -3174,7 +3174,7 @@ findings:
       desk-inline-artifact.test.tsx
     files:
       - services/tms/internal/modules/agent/app/agentruntime/placement.go
-      - services/tms/internal/modules/agent/app/agentruntime/artifactref.go
+      - services/tms/internal/modules/agent/app/agentruntime/replycheck/artifactref.go
       - services/tms/internal/modules/agent/app/assistantservice/artifacts.go
       - services/tms/internal/modules/agent/domain/assistantartifact/naming.go
       - services/tms/internal/modules/identity/domain/permission/recordid.go
@@ -3453,8 +3453,8 @@ findings:
       (written_cards.go); WrittenNote tells the model to point to it in the sentence that says what
       was done. Every write tool with a record ref gets one, not only shipments.
     files:
-      - services/tms/internal/modules/agent/app/agentruntime/recordread.go
-      - services/tms/internal/modules/agent/app/agentruntime/publish.go
+      - services/tms/internal/modules/agent/app/agentruntime/toolaccess/recordread.go
+      - services/tms/internal/modules/agent/app/agentruntime/runtimetools/publish.go
       - services/tms/internal/modules/agent/app/assistantservice/written_cards.go
       - services/tms/internal/modules/agent/app/assistantservice/artifacts.go
       - services/tms/internal/modules/agent/app/assistantservice/turn.go
@@ -4044,7 +4044,7 @@ findings:
       - services/tms/internal/modules/agent/app/agentquerytoolservice/analysis_tool.go
       - services/tms/internal/modules/agent/ports/agentports/agenttool.go
       - services/tms/internal/modules/agent/app/agenttoolcatalog/catalog.go
-      - services/tms/internal/modules/agent/app/agentruntime/toolset.go
+      - services/tms/internal/modules/agent/app/agentruntime/toolaccess/toolset.go
     fixedIn: >
       uncommitted; verified by .deskbench/runs/20261017-231325-run and 20261017-231936-run:
       asked-outright, explore-a-report and chart 3/3 each, asked-from-ask 3/3,
@@ -4351,7 +4351,7 @@ findings:
     files:
       - shared/numberguard/numberguard.go
       - services/tms/internal/modules/agent/app/agentruntime/groundingguard.go
-      - services/tms/internal/modules/agent/app/agentruntime/messages.go
+      - services/tms/internal/modules/agent/app/agentruntime/turnhistory/messages.go
     fixedIn: uncommitted; verified by .deskbench/runs/20261018-080008-run, 20261018-081853-run and 20261018-082639-run
 
   - id: DB-188
@@ -4460,7 +4460,7 @@ findings:
     fix: Not fixed in Phase 0 by decision; the rebuild of context assembly owns it.
     files:
       - services/tms/internal/modules/agent/domain/agentmessage/runinput.go
-      - services/tms/internal/modules/agent/app/agentruntime/toolset.go
+      - services/tms/internal/modules/agent/app/agentruntime/toolaccess/toolset.go
 
   - id: DB-192
     title: CustomerUpdateDesk is handed an empty subject for every arrival and departure
@@ -4865,7 +4865,7 @@ findings:
       strongly than the best own match (Catalog.StrongScore); a reached tool that only matches a
       parameter, or one an own tool matches as well, still is not.
     files:
-      - services/tms/internal/modules/agent/app/agentruntime/toolset.go
+      - services/tms/internal/modules/agent/app/agentruntime/toolaccess/toolset.go
       - services/tms/internal/modules/agent/app/agentruntime/toolset_test.go
       - services/tms/internal/modules/agent/app/agenttoolcatalog/catalog.go
       - services/tms/internal/modules/agent/app/agenttoolcatalog/catalog_test.go
@@ -4962,7 +4962,7 @@ findings:
       - services/tms/internal/modules/agent/ports/agentports/agentruntime.go
       - services/tms/internal/modules/agent/app/assistantservice/artifact_bunch.go
       - services/tms/internal/modules/agent/app/agentruntime/replypass.go
-      - services/tms/internal/modules/agent/app/agentruntime/publish.go
+      - services/tms/internal/modules/agent/app/agentruntime/runtimetools/publish.go
       - services/tms/internal/modules/agent/app/agentruntime/runner.go
     fixedIn: >
       .deskbench/runs/20261019-165003-run: approve-two-settlements-in-one-go #2 read both settlements in parallel; Jane Doe's result reads "This record is now one row of a table titled \"Driver settlements (2)\"" and the reply links no retired card. 3/3.
@@ -5177,7 +5177,7 @@ findings:
       An unattended run loads raise_exception from the start (defersCoreTool); a chat turn still
       defers it. agent-runtime.md says so.
     files:
-      - services/tms/internal/modules/agent/app/agentruntime/toolset.go
+      - services/tms/internal/modules/agent/app/agentruntime/toolaccess/toolset.go
       - services/tms/internal/modules/agent/app/agentruntime/toolset_test.go
       - docs/engineering/agent-runtime.md
     fixedIn: >
@@ -5275,7 +5275,7 @@ findings:
       escalation past the reserve. agent-runtime.md says so.
     files:
       - services/tms/internal/modules/agent/app/agentruntime/runner.go
-      - services/tms/internal/modules/agent/app/agentruntime/toolset.go
+      - services/tms/internal/modules/agent/app/agentruntime/toolaccess/toolset.go
       - services/tms/internal/modules/agent/app/agentruntime/runner_test.go
       - docs/engineering/agent-runtime.md
 

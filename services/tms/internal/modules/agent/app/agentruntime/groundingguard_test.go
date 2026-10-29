@@ -6,6 +6,8 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/replycheck"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/codemode"
@@ -42,31 +44,6 @@ func (fx *groundingEffects) regrounded() []assistantports.AssistantReplyReground
 	return out
 }
 
-func groundedShipmentSchema() map[string]any {
-	return map[string]any{
-		"type": "object",
-		"properties": map[string]any{
-			"customerId": map[string]any{"type": "string"},
-			"baseRate":   map[string]any{"type": "number"},
-			"commodities": map[string]any{
-				"type": "array",
-				"items": map[string]any{
-					"type": "object",
-					"properties": map[string]any{
-						"commodityId": map[string]any{"type": "string"},
-						"pieces":      map[string]any{"type": "integer"},
-					},
-				},
-			},
-			"additionalCharges": map[string]any{
-				"type":  "array",
-				"items": map[string]any{"type": "object"},
-			},
-		},
-		"required": []string{"customerId"},
-	}
-}
-
 type groundingRun struct {
 	result     *agentruntimeports.RunResult
 	completion *scriptedCompletion
@@ -91,22 +68,22 @@ func runGroundedWith(
 ) groundingRun {
 	t.Helper()
 
-	turns := []*llmports.ChatCompletionResult{toolTurn("shipment_create", filed)}
+	turns := []*llmports.ChatCompletionResult{runtimetest.ToolTurn("shipment_create", filed)}
 	for _, reply := range replies {
-		turns = append(turns, textTurn(reply))
+		turns = append(turns, runtimetest.TextTurn(reply))
 	}
 	completion := &scriptedCompletion{Turns: turns}
 	tool := &agenttest.StubActionTool{
 		ToolName: "shipment_create",
 		Tier:     agent.TierPropose,
-		Schema:   groundedShipmentSchema(),
+		Schema:   runtimetest.GroundedShipmentSchema(),
 	}
 	rt := newRuntime(completion, &stubQueryRegistry{}, &stubActionRegistry{
 		Tools: []agenttoolports.AgentTool{tool},
 	}, nil)
 	req := &agentruntimeports.RunRequest{
-		Definition: testDefinition("shipment_create"),
-		Actor:      testActor(),
+		Definition: runtimetest.Definition("shipment_create"),
+		Actor:      runtimetest.Actor(),
 		Input:      "Copy shipment PRO-100 for customer cus_1, same lane, for Tuesday.",
 	}
 	fx.localEffects = &localEffects{
@@ -168,7 +145,7 @@ func TestGroundingGuard_NotesTheCardWhenTheRewriteStillDrifts(t *testing.T) {
 	require.Equal(t, 3, run.completion.CallCount, "the reply is asked for once more, only once")
 	assert.True(t, strings.HasPrefix(run.result.Reply,
 		"Proposed, and the commodities come along too."))
-	assert.True(t, strings.HasSuffix(run.result.Reply, groundingNote))
+	assert.True(t, strings.HasSuffix(run.result.Reply, replycheck.GroundingNote))
 
 	regrounded := run.fx.regrounded()
 	require.Len(t, regrounded, 2)
@@ -223,15 +200,15 @@ func TestGroundingGuard_AConversationThatReadNothingIsNotChecked(t *testing.T) {
 	t.Parallel()
 
 	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
-		textTurn("Detention usually runs $50 to $75 an hour after two free hours."),
+		runtimetest.TextTurn("Detention usually runs $50 to $75 an hour after two free hours."),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{}, &stubActionRegistry{}, nil)
 	fx := &groundingEffects{}
 	fx.localEffects = &localEffects{s: rt, ctx: t.Context(), emit: func(kernelports.StreamEvent) {}}
 
 	_, err := rt.Drive(rt.OpenTurn(t.Context(), &agentruntimeports.RunRequest{
-		Definition: testDefinition(),
-		Actor:      testActor(),
+		Definition: runtimetest.Definition(),
+		Actor:      runtimetest.Actor(),
 		Input:      "what does detention usually cost?",
 	}), fx)
 	require.NoError(t, err)
@@ -260,9 +237,11 @@ func readGroundedWith(
 ) groundingRun {
 	t.Helper()
 
-	turns := []*llmports.ChatCompletionResult{toolTurn("report_get_run", map[string]any{})}
+	turns := []*llmports.ChatCompletionResult{
+		runtimetest.ToolTurn("report_get_run", map[string]any{}),
+	}
 	for _, reply := range replies {
-		turns = append(turns, textTurn(reply))
+		turns = append(turns, runtimetest.TextTurn(reply))
 	}
 	completion := &scriptedCompletion{Turns: turns}
 	registry := &stubQueryRegistry{}
@@ -277,12 +256,12 @@ func readGroundedWith(
 		})
 	}
 	rt := newRuntime(completion, registry, &stubActionRegistry{}, nil)
-	rt.scripts = scriptsOn(aiprovider.ScriptSettings{Scripts: true})
+	rewire(rt, func(p *Params) { p.Scripts = scriptsOn(aiprovider.ScriptSettings{Scripts: true}) })
 	fx.localEffects = &localEffects{s: rt, ctx: t.Context(), emit: func(kernelports.StreamEvent) {}}
 
 	result, err := rt.Drive(rt.OpenTurn(t.Context(), &agentruntimeports.RunRequest{
-		Definition: testDefinition(tools...),
-		Actor:      testActor(),
+		Definition: runtimetest.Definition(tools...),
+		Actor:      runtimetest.Actor(),
 		Input:      "how much of what we billed in the last 30 days is still open?",
 	}), fx)
 	require.NoError(t, err)
@@ -302,11 +281,11 @@ func TestGroundingGuard_RewritesAShareNothingRead(t *testing.T) {
 
 	require.Equal(t, 3, run.completion.CallCount, "the reply is asked for once more")
 	correction := lastUserMessage(run.completion.Requests[2])
-	assert.True(t, strings.HasPrefix(correction, amountsCorrectionLead))
+	assert.True(t, strings.HasPrefix(correction, replycheck.AmountsCorrectionLead))
 	assert.Contains(t, correction, "52.3")
 	assert.Contains(t, correction, codemode.ToolRunScript)
 	assert.Equal(t, "Of the $87,310.40 billed, $45,662.16 is still open.", run.result.Reply)
-	assert.True(t, strings.HasSuffix(correction, unseenCorrection),
+	assert.True(t, strings.HasSuffix(correction, replycheck.UnseenCorrection),
 		"a rewrite answers the person, not the correction")
 
 	regrounded := run.fx.regrounded()
@@ -359,71 +338,6 @@ func TestGroundingGuard_AcceptsWhatTheConversationRead(t *testing.T) {
 	assert.Empty(t, run.fx.regrounded())
 }
 
-func TestFiledLabels_ComeFromTheToolsSchema(t *testing.T) {
-	t.Parallel()
-
-	labels := schemaLabels(groundedShipmentSchema())
-
-	assert.Contains(t, labels, schemaLabel{path: "commodities", words: "commodities"})
-	assert.Contains(t, labels, schemaLabel{path: "additionalCharges", words: "additional charges"})
-	assert.Contains(t, labels, schemaLabel{path: "baseRate", words: "base rate"})
-	for _, label := range labels {
-		assert.NotEqual(t, "customerId", label.path, "an id is not something a reply claims")
-		assert.NotEqual(t, "commodities[].pieces", label.path,
-			"a single word scalar is too common to hold a reply to")
-	}
-}
-
-func TestFiledLabels_MarkANestedOneWordCollection(t *testing.T) {
-	t.Parallel()
-
-	labels := schemaLabels(map[string]any{
-		"type": "object",
-		"properties": map[string]any{
-			"requirements": map[string]any{
-				"type": "array",
-				"items": map[string]any{
-					"type": "object",
-					"properties": map[string]any{
-						"codes": map[string]any{
-							"type":  "array",
-							"items": map[string]any{"type": "string"},
-						},
-						"allowedCodeLists": map[string]any{
-							"type":  "array",
-							"items": map[string]any{"type": "string"},
-						},
-					},
-				},
-			},
-		},
-	})
-
-	assert.Contains(t, labels, schemaLabel{path: "requirements", words: "requirements"})
-	assert.Contains(t, labels,
-		schemaLabel{path: "requirements[].allowedCodeLists", words: "allowed code lists"})
-	assert.Contains(t, labels,
-		schemaLabel{path: "requirements[].codes", words: "codes", nestedWord: true})
-}
-
-func TestGroundingFinding_DropsOnlyWordsNoTopLevelLabelClaims(t *testing.T) {
-	t.Parallel()
-
-	finding := groundingFinding{
-		fields: []string{"codes", "commodities"},
-		tools: map[string][]string{
-			"codes":       {"edi_apply_connection_draft"},
-			"commodities": {"shipment_create"},
-		},
-		nested: []string{"codes"},
-	}
-	finding.dropNestedWords()
-
-	assert.Equal(t, []string{"commodities"}, finding.fields)
-	assert.NotContains(t, finding.tools, "codes")
-	assert.False(t, finding.empty())
-}
-
 func eventNames(events []kernelports.StreamEvent) []string {
 	names := make([]string, 0, len(events))
 	for _, event := range events {
@@ -440,8 +354,10 @@ func TestGroundingGuard_AFileOnlyTheModelReadsIsNotHeldAgainstIt(t *testing.T) {
 	t.Parallel()
 
 	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
-		toolTurn("report_get_run", map[string]any{}),
-		textTurn("The confirmation totals $3,610.00: $3,200.00 line haul and $410.00 fuel."),
+		runtimetest.ToolTurn("report_get_run", map[string]any{}),
+		runtimetest.TextTurn(
+			"The confirmation totals $3,610.00: $3,200.00 line haul and $410.00 fuel.",
+		),
 	}}
 	registry := &stubQueryRegistry{Tools: []agenttoolports.AgentQueryTool{
 		&agenttest.StubQueryTool{ToolName: "report_get_run", Result: map[string]any{}},
@@ -451,8 +367,8 @@ func TestGroundingGuard_AFileOnlyTheModelReadsIsNotHeldAgainstIt(t *testing.T) {
 	fx.localEffects = &localEffects{s: rt, ctx: t.Context(), emit: func(kernelports.StreamEvent) {}}
 
 	turn := rt.OpenTurn(t.Context(), &agentruntimeports.RunRequest{
-		Definition: testDefinition("report_get_run"),
-		Actor:      testActor(),
+		Definition: runtimetest.Definition("report_get_run"),
+		Actor:      runtimetest.Actor(),
 		Input:      "what's the total rate on it?",
 	})
 	turn.messages[len(turn.messages)-1].Files = []llmports.MessageFile{{FileName: "ratecon.pdf"}}
@@ -500,16 +416,16 @@ func runGroundedResult(
 	t.Helper()
 
 	turns := []*llmports.ChatCompletionResult{
-		toolTurn("shipment_create", map[string]any{"customerId": "cus_1"}),
+		runtimetest.ToolTurn("shipment_create", map[string]any{"customerId": "cus_1"}),
 	}
 	for _, reply := range replies {
-		turns = append(turns, textTurn(reply))
+		turns = append(turns, runtimetest.TextTurn(reply))
 	}
 	completion := &scriptedCompletion{Turns: turns}
 	tool := &agenttest.StubActionTool{
 		ToolName: "shipment_create",
 		Tier:     agent.TierPropose,
-		Schema:   groundedShipmentSchema(),
+		Schema:   runtimetest.GroundedShipmentSchema(),
 	}
 	rt := newRuntime(completion, &stubQueryRegistry{}, &stubActionRegistry{
 		Tools: []agenttoolports.AgentTool{tool},
@@ -517,8 +433,8 @@ func runGroundedResult(
 	fx.localEffects = &localEffects{s: rt, ctx: t.Context(), emit: func(kernelports.StreamEvent) {}}
 
 	turn := rt.OpenTurn(t.Context(), &agentruntimeports.RunRequest{
-		Definition: testDefinition("shipment_create"),
-		Actor:      testActor(),
+		Definition: runtimetest.Definition("shipment_create"),
+		Actor:      runtimetest.Actor(),
 		Input:      "Copy shipment PRO-100 for customer cus_1.",
 	})
 	encoded, err := sonic.MarshalString(map[string]any{"rows": rows})
@@ -535,11 +451,11 @@ func TestGroundingGuard_ADifferenceOfThePersonsOwnFiguresIsStated(t *testing.T) 
 	t.Parallel()
 
 	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
-		toolTurn("invoice_get", map[string]any{}),
-		textTurn(
+		runtimetest.ToolTurn("invoice_get", map[string]any{}),
+		runtimetest.TextTurn(
 			"The $3,200 check leaves $500 open on the $3,700 invoice; a $517.40 fee would not.",
 		),
-		textTurn("The $3,200 check leaves $500 open on the $3,700 invoice."),
+		runtimetest.TextTurn("The $3,200 check leaves $500 open on the $3,700 invoice."),
 	}}
 	registry := &stubQueryRegistry{Tools: []agenttoolports.AgentQueryTool{
 		&agenttest.StubQueryTool{ToolName: "invoice_get", Result: map[string]any{"total": "3700"}},
@@ -549,8 +465,8 @@ func TestGroundingGuard_ADifferenceOfThePersonsOwnFiguresIsStated(t *testing.T) 
 	fx.localEffects = &localEffects{s: rt, ctx: t.Context(), emit: func(kernelports.StreamEvent) {}}
 
 	_, err := rt.Drive(rt.OpenTurn(t.Context(), &agentruntimeports.RunRequest{
-		Definition: testDefinition("invoice_get"),
-		Actor:      testActor(),
+		Definition: runtimetest.Definition("invoice_get"),
+		Actor:      runtimetest.Actor(),
 		Input:      "peak sent a check for 3,200 but their invoice was 3,700. what do we do with it",
 	}), fx)
 	require.NoError(t, err)
@@ -620,8 +536,10 @@ func TestGroundingGuard_AProductOfThePersonsFiguresIsStated(t *testing.T) {
 	t.Parallel()
 
 	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
-		toolTurn("agent_find_page", map[string]any{}),
-		textTurn("Key it in at Fuel purchases; the total paid should be about $435.68."),
+		runtimetest.ToolTurn("agent_find_page", map[string]any{}),
+		runtimetest.TextTurn(
+			"Key it in at Fuel purchases; the total paid should be about $435.68.",
+		),
 	}}
 	registry := &stubQueryRegistry{Tools: []agenttoolports.AgentQueryTool{
 		&agenttest.StubQueryTool{ToolName: "agent_find_page", Result: map[string]any{}},
@@ -631,8 +549,8 @@ func TestGroundingGuard_AProductOfThePersonsFiguresIsStated(t *testing.T) {
 	fx.localEffects = &localEffects{s: rt, ctx: t.Context(), emit: func(kernelports.StreamEvent) {}}
 
 	_, err := rt.Drive(rt.OpenTurn(t.Context(), &agentruntimeports.RunRequest{
-		Definition: testDefinition("agent_find_page"),
-		Actor:      testActor(),
+		Definition: runtimetest.Definition("agent_find_page"),
+		Actor:      runtimetest.Actor(),
 		Input:      "log 112 gallons of diesel for TRC-001 bought in Texas yesterday at $3.89",
 	}), fx)
 	require.NoError(t, err)
@@ -721,7 +639,7 @@ func runTransfer(t *testing.T, replies ...string) groundingRun {
 		},
 	}
 	for _, reply := range replies {
-		turns = append(turns, textTurn(reply))
+		turns = append(turns, runtimetest.TextTurn(reply))
 	}
 	completion := &scriptedCompletion{Turns: turns}
 	rt := newRuntime(completion, &stubQueryRegistry{Tools: []agenttoolports.AgentQueryTool{
@@ -744,8 +662,8 @@ func runTransfer(t *testing.T, replies ...string) groundingRun {
 	fx.localEffects = &localEffects{s: rt, ctx: t.Context(), emit: func(kernelports.StreamEvent) {}}
 
 	result, err := rt.Drive(rt.OpenTurn(t.Context(), &agentruntimeports.RunRequest{
-		Definition: testDefinition("shipment_get", "billing_transfer"),
-		Actor:      testActor(),
+		Definition: runtimetest.Definition("shipment_get", "billing_transfer"),
+		Actor:      runtimetest.Actor(),
 		Input:      "acme's last delivered load that hasn't gone to billing yet, send it over",
 	}), fx)
 	require.NoError(t, err)
@@ -803,9 +721,9 @@ func readFigures(
 ) groundingRun {
 	t.Helper()
 
-	turns := []*llmports.ChatCompletionResult{toolTurn("record_get", map[string]any{})}
+	turns := []*llmports.ChatCompletionResult{runtimetest.ToolTurn("record_get", map[string]any{})}
 	for _, reply := range replies {
-		turns = append(turns, textTurn(reply))
+		turns = append(turns, runtimetest.TextTurn(reply))
 	}
 	completion := &scriptedCompletion{Turns: turns}
 	registry := &stubQueryRegistry{Tools: []agenttoolports.AgentQueryTool{
@@ -816,8 +734,8 @@ func readFigures(
 	fx.localEffects = &localEffects{s: rt, ctx: t.Context(), emit: func(kernelports.StreamEvent) {}}
 
 	result, err := rt.Drive(rt.OpenTurn(t.Context(), &agentruntimeports.RunRequest{
-		Definition: testDefinition("record_get"),
-		Actor:      testActor(),
+		Definition: runtimetest.Definition("record_get"),
+		Actor:      runtimetest.Actor(),
 		Input:      input,
 	}), fx)
 	require.NoError(t, err)

@@ -37,7 +37,7 @@ and every tool call agree on which vendor answers.
 | REST API (`/agent-extensions/...`) | `internal/api/handlers/agentextensionhandler/` |
 | Vendor connectors | `internal/infrastructure/agentextension/<vendor>connector/` over `shared/<vendor>`, registered with `connectorkit.Provide` |
 | Tools | `internal/modules/agent/app/querytools/webquerytools/` (`web_tools.go`, `web_watch_tools.go`, `portal_tools.go`, `analysis_tool.go`) for reads, `internal/modules/agent/app/agenttools/portaltools/` for `web_use_portal`, `agenttools/webwatchtools/` for `web_watch` and `web_stop_watch` |
-| Runtime gating and the approval rule | `internal/modules/agent/app/agentruntime/extensions.go` |
+| Runtime gating and the approval rule | `internal/modules/agent/app/agentruntime/toolaccess/extensions.go` |
 | Extension commands (`/browser`, `/search`) | `agentextension/command.go`, `agentruntime/command.go`, `assistantservice/commands.go`, `EXTENSION_COMMANDS` in the client's `composer-commands.ts` and `use-desk-extension-commands.ts` |
 | Marketplace UI | `client/apps/web/src/routes/agent-control/_components/extensions/` |
 
@@ -180,7 +180,7 @@ organization (a web page, or a trading partner's text or guide it was given)". B
 has a `Propose` ceiling of its own and carries the guide's digest; see
 [edi-spec-onboarding.md](edi-spec-onboarding.md).
 
-Which tools set the flag is decided from the name alone (`agentruntime.ReadsExternalContent`: an
+Which tools set the flag is decided from the name alone (`toolaccess.ReadsExternalContent`: an
 extension tool its capability lists as returning outside content
 (`agentextension.ReturnsExternalContent`), or a name in `outsideTextTools`), because the loop
 runs in workflow code and must decide the same way on replay. Each such tool's policy declares

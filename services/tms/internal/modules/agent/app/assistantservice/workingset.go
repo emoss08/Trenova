@@ -5,7 +5,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/worldwatch"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpagecontext"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
@@ -66,7 +66,7 @@ func touchedRecords(turn *workingTurn) []conversation.WorkingRecord {
 			if failed[call.ID] {
 				continue
 			}
-			for _, record := range agentruntime.RecordsRead(call.Name, call.Arguments, summaries[call.ID]) {
+			for _, record := range worldwatch.RecordsRead(call.Name, call.Arguments, summaries[call.ID]) {
 				add(record.ID, record.Label, conversation.WorkingSourceRead)
 			}
 		}

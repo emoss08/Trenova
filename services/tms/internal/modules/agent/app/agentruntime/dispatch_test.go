@@ -6,6 +6,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetest"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/toolsummary"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
@@ -42,19 +44,19 @@ func filedContent(
 		Schema:   schema,
 	}
 	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
-		toolTurn("shipment_create", args),
-		textTurn("I have proposed the shipment."),
+		runtimetest.ToolTurn("shipment_create", args),
+		runtimetest.TextTurn("I have proposed the shipment."),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{}, &stubActionRegistry{
 		Tools: []agenttoolports.AgentTool{tool},
 	}, nil)
 	if previews != nil {
-		rt.previews = previews
+		rewire(rt, func(p *Params) { p.Previews = previews })
 	}
 
 	result, err := rt.Run(t.Context(), &agentruntimeports.RunRequest{
-		Definition: testDefinition("shipment_create"),
-		Actor:      testActor(),
+		Definition: runtimetest.Definition("shipment_create"),
+		Actor:      runtimetest.Actor(),
 		Input:      "copy PRO-100 for Tuesday",
 	})
 	require.NoError(t, err)
@@ -136,12 +138,16 @@ func TestDispatch_FilingEchoIsBoundedToTwoKiB(t *testing.T) {
 		"commodities": commodities,
 	})
 
-	_, echo, found := strings.Cut(content, filedArgumentsLead)
+	_, echo, found := strings.Cut(content, toolsummary.FiledArgumentsLead)
 	require.True(t, found, content)
-	assert.LessOrEqual(t, len(echo), maxFilingEchoBytes+len(filingEchoCutNote)+16)
+	assert.LessOrEqual(
+		t,
+		len(echo),
+		toolsummary.MaxFilingEchoBytes+len(toolsummary.FilingEchoCutNote)+16,
+	)
 	assert.Contains(t, echo, `customerId: "cus_1"`)
 	assert.Contains(t, echo, "commodities: 60 items")
-	assert.Contains(t, echo, filingEchoCutNote)
+	assert.Contains(t, echo, toolsummary.FilingEchoCutNote)
 }
 
 func TestDispatch_FilingSaysWhichArgumentsWereRenamed(t *testing.T) {

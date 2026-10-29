@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentevalgate"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentquerytoolservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/scriptrunner"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
@@ -161,7 +162,7 @@ func realScriptRuntime(
 		}
 	}
 
-	kit := agentevalgate.FromTools(queries, actions, agentruntime.RuntimePolicies())
+	kit := agentevalgate.FromTools(queries, actions, runtimetools.Policies())
 	return kit.NewRuntime(agentevalgate.RuntimeParams{
 		Completion:  completion,
 		Permissions: &agenttest.StubPermissions{},

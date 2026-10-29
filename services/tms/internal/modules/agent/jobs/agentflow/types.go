@@ -23,6 +23,10 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/delegation"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/toolaccess"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/toolcall"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/worldwatch"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpagecontext"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
@@ -205,8 +209,8 @@ type ModelCallInput struct {
 // OpenDelegateInput asks for another agent's turn on a task the run's agent
 // handed it.
 type OpenDelegateInput struct {
-	Run  RunContext                `json:"run"`
-	Call agentruntime.DelegateCall `json:"call"`
+	Run  RunContext      `json:"run"`
+	Call delegation.Call `json:"call"`
 }
 
 // DelegateOpening is the other agent's turn, ready to drive: its run as data
@@ -217,9 +221,9 @@ type DelegateOpening struct {
 }
 
 type FindToolsInput struct {
-	Run       RunContext                `json:"run"`
-	Tools     agentruntime.ToolSetState `json:"tools"`
-	Arguments map[string]any            `json:"arguments"`
+	Run       RunContext              `json:"run"`
+	Tools     toolaccess.ToolSetState `json:"tools"`
+	Arguments map[string]any          `json:"arguments"`
 }
 
 type FindToolsResult struct {
@@ -232,8 +236,8 @@ type FindToolsResult struct {
 // ToolInput is one tool call. The activity running it is named for the tool,
 // so each tool reads as itself in the Temporal UI.
 type ToolInput struct {
-	Run  RunContext                `json:"run"`
-	Call agentruntime.DispatchCall `json:"call"`
+	Run  RunContext    `json:"run"`
+	Call toolcall.Call `json:"call"`
 }
 
 // PublishInput is a document the model asked to publish, as its call.
@@ -243,7 +247,7 @@ type PublishInput struct {
 }
 
 type ToolResult struct {
-	Outcome agentruntime.ToolOutcome `json:"outcome"`
+	Outcome toolcall.Outcome `json:"outcome"`
 	// Artifacts are what the call produced for a person to see beside the
 	// run. They are made where the call ran, since only there does the
 	// tool's raw result exist.
@@ -268,7 +272,7 @@ const (
 )
 
 type WorldCheckInput struct {
-	OrganizationID pulid.ID                `json:"organizationId"`
-	BusinessUnitID pulid.ID                `json:"businessUnitId"`
-	Check          agentruntime.WorldCheck `json:"check"`
+	OrganizationID pulid.ID         `json:"organizationId"`
+	BusinessUnitID pulid.ID         `json:"businessUnitId"`
+	Check          worldwatch.Check `json:"check"`
 }

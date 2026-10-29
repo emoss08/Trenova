@@ -7,6 +7,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace/aitracetest"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetest"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/toolcall"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
@@ -49,9 +51,9 @@ func (v *versionSequence) Version(
 type tracedDispatch struct {
 	rt         *Service
 	req        *agentruntimeports.RunRequest
-	ledger     *keyedLedger
+	ledger     *runtimetest.KeyedLedger
 	shipmentID pulid.ID
-	call       DispatchCall
+	call       toolcall.Call
 }
 
 func newTracedDispatch(t *testing.T, tier, ceiling agent.AutonomyTier) *tracedDispatch {
@@ -62,20 +64,20 @@ func newTracedDispatch(t *testing.T, tier, ceiling agent.AutonomyTier) *tracedDi
 	rt := newRuntime(&scriptedCompletion{}, &stubQueryRegistry{}, &stubActionRegistry{
 		Tools: []agenttoolports.AgentTool{tool},
 	}, nil)
-	rt.versions = &versionSequence{versions: []int64{7, 8}}
+	rewire(rt, func(p *Params) { p.Versions = &versionSequence{versions: []int64{7, 8}} })
 
-	definition := testDefinition("shipment_place_hold")
+	definition := runtimetest.Definition("shipment_place_hold")
 	definition.ID = pulid.MustNew("agdef_")
 	definition.Version = 3
 	definition.AutonomyCeiling = ceiling
-	ledger := newKeyedLedger()
+	ledger := runtimetest.NewKeyedLedger()
 	shipmentID := pulid.MustNew("shp_")
 
 	return &tracedDispatch{
 		rt: rt,
 		req: &agentruntimeports.RunRequest{
 			Definition: definition,
-			Actor:      testActor(),
+			Actor:      runtimetest.Actor(),
 			Input:      "Hold the shipment",
 			Steps:      ledger,
 			StepOwner: agentruntimeports.RunStepOwner{
@@ -86,7 +88,7 @@ func newTracedDispatch(t *testing.T, tier, ceiling agent.AutonomyTier) *tracedDi
 		},
 		ledger:     ledger,
 		shipmentID: shipmentID,
-		call: DispatchCall{
+		call: toolcall.Call{
 			Call: llmports.ToolCall{
 				ID:        "call_hold",
 				Name:      "shipment_place_hold",
@@ -103,8 +105,8 @@ func (d *tracedDispatch) anchor() aitrace.Anchor {
 func (d *tracedDispatch) settled(t *testing.T) agentruntimeports.RunStep {
 	t.Helper()
 
-	require.Len(t, d.ledger.steps, 1)
-	for _, step := range d.ledger.steps {
+	require.Len(t, d.ledger.Steps, 1)
+	for _, step := range d.ledger.Steps {
 		return step
 	}
 
@@ -196,9 +198,11 @@ func TestDispatchStep_RecordsWhyACallWasRefused(t *testing.T) {
 	t.Parallel()
 
 	d := newTracedDispatch(t, agent.TierPropose, agent.TierPropose)
-	d.rt.permissions = &stubPermissions{Denied: map[string]bool{
-		permission.ResourceShipmentMove.String() + ":" + string(permission.OpUpdate): true,
-	}}
+	rewire(d.rt, func(p *Params) {
+		p.Permissions = &stubPermissions{Denied: map[string]bool{
+			permission.ResourceShipmentMove.String() + ":" + string(permission.OpUpdate): true,
+		}}
+	})
 
 	outcome := d.rt.DispatchStep(t.Context(), d.req, d.call)
 
@@ -296,7 +300,7 @@ func TestStreamCompletion_OpensTheCompletionSpanUnderTheTurn(t *testing.T) {
 	aitracetest.Install()
 
 	rt := newRuntime(&scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
-		textTurn("Load 12345 is in Memphis."),
+		runtimetest.TextTurn("Load 12345 is in Memphis."),
 	}}, &stubQueryRegistry{}, &stubActionRegistry{}, nil)
 	turnID := pulid.MustNew("atrn_")
 	req := &llmports.ChatCompletionRequest{
@@ -308,7 +312,7 @@ func TestStreamCompletion_OpensTheCompletionSpanUnderTheTurn(t *testing.T) {
 	}
 	ctx := aitrace.WithCallOrigin(t.Context(), aitrace.CallOrigin{ActivityAttempt: 2, Stream: true})
 
-	reply, err := rt.StreamCompletion(ctx, req, func(kernelports.StreamEvent) {})
+	reply, err := rt.streamer.StreamCompletion(ctx, req, func(kernelports.StreamEvent) {})
 	require.NoError(t, err)
 	assert.False(t, reply.Looped)
 
@@ -331,9 +335,9 @@ func TestRun_TotalsWhatEveryModelCallUsed(t *testing.T) {
 
 	first := decimal.RequireFromString("0.010")
 	second := decimal.RequireFromString("0.025")
-	read := toolTurn("shipment_get", map[string]any{"proNumber": "12345"})
+	read := runtimetest.ToolTurn("shipment_get", map[string]any{"proNumber": "12345"})
 	read.InputTokens, read.OutputTokens, read.CostUSD = 1000, 40, &first
-	answer := textTurn("It is in Memphis.")
+	answer := runtimetest.TextTurn("It is in Memphis.")
 	answer.InputTokens, answer.OutputTokens, answer.CostUSD = 1200, 12, &second
 
 	rt := newRuntime(&scriptedCompletion{Turns: []*llmports.ChatCompletionResult{read, answer}},
@@ -342,8 +346,8 @@ func TestRun_TotalsWhatEveryModelCallUsed(t *testing.T) {
 		}}, &stubActionRegistry{}, nil)
 
 	result, err := rt.Run(t.Context(), &agentruntimeports.RunRequest{
-		Definition: testDefinition("shipment_get"),
-		Actor:      testActor(),
+		Definition: runtimetest.Definition("shipment_get"),
+		Actor:      runtimetest.Actor(),
 		Input:      "Where is 12345?",
 	})
 	require.NoError(t, err)

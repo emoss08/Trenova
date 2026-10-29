@@ -153,7 +153,7 @@ finds `trenova`, `inputs` and `help` as globals:
 
 `the_sdk_names_no_tool` (the crate's tests) asserts that the SDK names no tool.
 
-**The index** is built for each call by `agentruntime.scriptIndex` from the turn's agent: every
+**The index** is built for each call by `scriptbroker.scriptIndex` from the turn's agent: every
 tool the definition holds that the person may use and a script may call. A tool may be called
 from a script when `ToolPolicy.CallableFromScript()` holds:
 
@@ -210,7 +210,7 @@ fans out inside itself. **Search terms:** "for each", "every one of", "reconcile
 **What was decided while building:**
 
 - **Who holds it.** No agent is configured with the tool. Every agent that holds a tool for its
-  work (anything beyond the core tools) holds it too (`agentruntime.heldTools`, `withScripts`),
+  work (anything beyond the core tools) holds it too (`toolaccess.Access.HeldTools`, `withScripts`),
   unless an administrator switched it off for that agent (`DisabledToolNames`). When the E2B
   extension ran scripts it granted the tool; moving scripts in-house first dropped that grant,
   and no agent was offered a script until this rule replaced it.
@@ -694,7 +694,7 @@ decides from its own use whether to keep it.
 | Gate, limits, call and reply types | `internal/modules/agent/domain/codemode/` (`gate.go`, `limits.go`, `script.go`) |
 | Provider settings (Scripts, Scripts may propose writes) | `aiprovider` (`agentsettings.go`, `ScriptSettings`); migrations `20261231010200_ai_provider_agent_settings` and `20261231010530_code_mode_scripts_on` |
 | Which providers offer scripts, and the answering provider's settings at dispatch | `completionrouter/scripts.go` (`llmports.ScriptProviders`) |
-| Broker, index, gate check, per-turn count | `agentruntime/scriptbroker.go`, `scripttool.go` |
+| Broker, index, gate check, per-turn count | `agentruntime/scriptbroker/scriptbroker.go`, `scripttool.go` |
 | `ToolPolicy.Script`, `CallableFromScript`, `QueryToolParams.Broker` | `agentports/toolpolicy.go`, `agentquerytool.go` |
 | The tool | `querytools/scriptquerytools/script_tool.go` |
 | The runner: limits, host functions, outcome | `app/scriptrunner`; port `ports/scriptports` |

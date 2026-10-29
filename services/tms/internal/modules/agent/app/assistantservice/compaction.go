@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/turnhistory"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
@@ -134,7 +134,7 @@ func (s *Service) PrepareCompaction(
 	if err != nil {
 		return nil, err
 	}
-	older, through := agentruntime.SplitForCompaction(history)
+	older, through := turnhistory.SplitForCompaction(history)
 	if len(older) == 0 {
 		return nil, errNothingToCompact()
 	}
@@ -237,7 +237,7 @@ func (s *Service) FinishCompaction(
 	}
 	pending := message
 	pending.Sequence = next
-	usage := agentruntime.MeasureContext(agentruntime.ContextRequest{
+	usage := turnhistory.MeasureContext(turnhistory.ContextRequest{
 		Instructions: plan.Instructions,
 		History:      append(history, pending),
 		Proposals:    s.proposalOutcomes(ctx, thread, tenant),
@@ -304,7 +304,7 @@ func (s *Service) measureAfterTurn(
 	}
 
 	answering := answeringModel(saved)
-	usage := agentruntime.MeasureContext(agentruntime.ContextRequest{
+	usage := turnhistory.MeasureContext(turnhistory.ContextRequest{
 		System:       plan.Turn.System,
 		Tools:        plan.Turn.Tools.Specs,
 		Instructions: lastInstructions(thread),
@@ -371,7 +371,7 @@ func (s *Service) currentUsage(
 	history []conversation.Message,
 	outcomes []agentruntimeports.ProposalOutcome,
 ) conversation.ContextUsage {
-	return agentruntime.MeasureContext(agentruntime.ContextRequest{
+	return turnhistory.MeasureContext(turnhistory.ContextRequest{
 		Instructions: lastInstructions(thread),
 		History:      history,
 		Proposals:    outcomes,

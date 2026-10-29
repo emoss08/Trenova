@@ -5,6 +5,8 @@ import (
 	"slices"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetest"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetools"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
@@ -86,8 +88,8 @@ func chatRequest(proposals ...agentruntimeports.ProposalOutcome) *agentruntimepo
 	}
 
 	return &agentruntimeports.RunRequest{
-		Definition: testDefinition(),
-		Actor:      testActor(),
+		Definition: runtimetest.Definition(),
+		Actor:      runtimetest.Actor(),
 		Context:    agentturn.RuntimeContext{PendingProposals: pending},
 		Input:      "Approved",
 		ThreadID:   pulid.MustNew("athr_"),
@@ -97,7 +99,10 @@ func chatRequest(proposals ...agentruntimeports.ProposalOutcome) *agentruntimepo
 }
 
 func decisionCall(id pulid.ID) *llmports.ChatCompletionResult {
-	return toolTurn(requestDecisionName, map[string]any{"proposalId": id.String()})
+	return runtimetest.ToolTurn(
+		runtimetools.RequestDecisionName,
+		map[string]any{"proposalId": id.String()},
+	)
 }
 
 func toolResult(result *agentruntimeports.RunResult, name string) (string, bool) {
@@ -115,9 +120,12 @@ func TestRequestDecision_IsOfferedOnlyWhileAProposalWaitsInAConversation(t *test
 
 	waiting := waitingOutcome(agent.ProposalStatusPending)
 	offeredIn := func(req *agentruntimeports.RunRequest) bool {
-		run := runDecision(t, req, nil, textTurn("Done."))
+		run := runDecision(t, req, nil, runtimetest.TextTurn("Done."))
 
-		return slices.Contains(offered(run.completion.Requests[0]), requestDecisionName)
+		return slices.Contains(
+			offered(run.completion.Requests[0]),
+			runtimetools.RequestDecisionName,
+		)
 	}
 
 	assert.True(t, offeredIn(chatRequest(waiting)))
@@ -145,7 +153,7 @@ func TestRequestDecision_ShowsTheCardAgainAndSaysTypingDecidesNothing(t *testing
 
 	run := runDecision(t, chatRequest(waiting), observer,
 		decisionCall(waiting.ProposalID),
-		textTurn("The card is above: approve it there."),
+		runtimetest.TextTurn("The card is above: approve it there."),
 	)
 
 	require.Len(t, observer.seen, 1)
@@ -154,7 +162,7 @@ func TestRequestDecision_ShowsTheCardAgainAndSaysTypingDecidesNothing(t *testing
 		ToolName:   "shipment_create",
 	}, observer.seen[0].Data)
 
-	content, failed := toolResult(run.result, requestDecisionName)
+	content, failed := toolResult(run.result, runtimetools.RequestDecisionName)
 	assert.False(t, failed)
 	assert.Contains(t, content, "The approval box under the conversation now shows")
 	assert.Contains(t, content, "does not decide it")
@@ -185,8 +193,11 @@ func TestRequestDecision_RefusesWhatIsNotWaitingHere(t *testing.T) {
 			contains: "no longer waiting on the person: it is rejected",
 		},
 		{
-			name:     "no id at all",
-			call:     toolTurn(requestDecisionName, map[string]any{"proposalId": "yes"}),
+			name: "no id at all",
+			call: runtimetest.ToolTurn(
+				runtimetools.RequestDecisionName,
+				map[string]any{"proposalId": "yes"},
+			),
 			contains: "proposalId must be the id",
 		},
 	}
@@ -197,9 +208,9 @@ func TestRequestDecision_RefusesWhatIsNotWaitingHere(t *testing.T) {
 
 			observer := &decisionObserver{title: "Create shipment"}
 			run := runDecision(t, chatRequest(waiting, decided), observer,
-				tc.call, textTurn("Sorry."))
+				tc.call, runtimetest.TextTurn("Sorry."))
 
-			content, failed := toolResult(run.result, requestDecisionName)
+			content, failed := toolResult(run.result, runtimetools.RequestDecisionName)
 			assert.True(t, failed)
 			assert.Contains(t, content, tc.contains)
 			assert.Empty(t, observer.seen, "nothing is shown for a refused request")
@@ -213,20 +224,20 @@ func TestRequestDecision_ShowsOneCardOncePerTurn(t *testing.T) {
 	waiting := waitingOutcome(agent.ProposalStatusPending)
 	observer := &decisionObserver{title: "Create shipment"}
 	twice := &llmports.ChatCompletionResult{ToolCalls: []llmports.ToolCall{
-		{ID: "call_a", Name: requestDecisionName, Arguments: map[string]any{
+		{ID: "call_a", Name: runtimetools.RequestDecisionName, Arguments: map[string]any{
 			"proposalId": waiting.ProposalID.String(),
 		}},
-		{ID: "call_b", Name: requestDecisionName, Arguments: map[string]any{
+		{ID: "call_b", Name: runtimetools.RequestDecisionName, Arguments: map[string]any{
 			"proposalId": waiting.ProposalID.String(),
 		}},
 	}}
 
-	run := runDecision(t, chatRequest(waiting), observer, twice, textTurn("Above."))
+	run := runDecision(t, chatRequest(waiting), observer, twice, runtimetest.TextTurn("Above."))
 
 	assert.Len(t, observer.seen, 1)
 	contents := make([]string, 0, 2)
 	for _, message := range run.result.Messages {
-		if message.ToolName == requestDecisionName {
+		if message.ToolName == runtimetools.RequestDecisionName {
 			contents = append(contents, message.Content)
 		}
 	}
@@ -241,9 +252,9 @@ func TestRequestDecision_SaysWhenTheCardCouldNotBeShown(t *testing.T) {
 	observer := &decisionObserver{err: errors.New("its card could not be saved")}
 
 	run := runDecision(t, chatRequest(waiting), observer,
-		decisionCall(waiting.ProposalID), textTurn("It is waiting above."))
+		decisionCall(waiting.ProposalID), runtimetest.TextTurn("It is waiting above."))
 
-	content, failed := toolResult(run.result, requestDecisionName)
+	content, failed := toolResult(run.result, runtimetools.RequestDecisionName)
 	assert.True(t, failed)
 	assert.Contains(
 		t,
@@ -257,11 +268,11 @@ func TestRequestDecision_NotOfferedIsRefused(t *testing.T) {
 	t.Parallel()
 
 	run := runDecision(t, chatRequest(), &decisionObserver{},
-		decisionCall(pulid.MustNew("aprop_")), textTurn("Nothing waits."))
+		decisionCall(pulid.MustNew("aprop_")), runtimetest.TextTurn("Nothing waits."))
 
-	content, failed := toolResult(run.result, requestDecisionName)
+	content, failed := toolResult(run.result, runtimetools.RequestDecisionName)
 	assert.True(t, failed)
-	assert.Equal(t, unofferedDecisionRefusal, content)
+	assert.Equal(t, runtimetools.UnofferedDecisionRefusal, content)
 }
 
 func TestPublishStep_ShowsTheCardADurableTurnAskedFor(t *testing.T) {
@@ -273,7 +284,7 @@ func TestPublishStep_ShowsTheCardADurableTurnAskedFor(t *testing.T) {
 
 	outcome := rt.PublishStep(observer.observe, &llmports.ToolCall{
 		ID:        "call_decide",
-		Name:      requestDecisionName,
+		Name:      runtimetools.RequestDecisionName,
 		Arguments: map[string]any{"proposalId": id.String()},
 	})
 
@@ -283,7 +294,7 @@ func TestPublishStep_ShowsTheCardADurableTurnAskedFor(t *testing.T) {
 	assert.Contains(t, outcome.Content, "The approval box under the conversation now shows")
 	assert.Equal(t, "The approval box could not be opened just now. Tell the person the "+
 		"proposal is still waiting on their decision in this conversation, and that "+
-		"typing does not approve it.", UnkeptOutcome(requestDecisionName).Content)
+		"typing does not approve it.", runtimetools.UnkeptOutcome(runtimetools.RequestDecisionName).Content)
 }
 
 func planStep(planID pulid.ID) agentruntimeports.ProposalOutcome {
@@ -301,9 +312,15 @@ func TestRequestDecision_ShowsAPlanAsOneCard(t *testing.T) {
 	first, second := planStep(planID), planStep(planID)
 	observer := &decisionObserver{title: "Billing: 2 changes"}
 
-	run := runDecision(t, chatRequest(first, second), observer,
-		toolTurn(requestDecisionName, map[string]any{"planId": planID.String()}),
-		textTurn("The plan is above."),
+	run := runDecision(
+		t,
+		chatRequest(first, second),
+		observer,
+		runtimetest.ToolTurn(
+			runtimetools.RequestDecisionName,
+			map[string]any{"planId": planID.String()},
+		),
+		runtimetest.TextTurn("The plan is above."),
 	)
 
 	require.Len(t, observer.seen, 1)
@@ -313,7 +330,7 @@ func TestRequestDecision_ShowsAPlanAsOneCard(t *testing.T) {
 		PlanID:      planID,
 		ToolName:    agentplan.PlanToolName,
 	}, observer.seen[0].Data)
-	content, failed := toolResult(run.result, requestDecisionName)
+	content, failed := toolResult(run.result, runtimetools.RequestDecisionName)
 	assert.False(t, failed)
 	assert.Contains(t, content, "The approval box under the conversation now shows")
 }
@@ -326,10 +343,10 @@ func TestRequestDecision_ShowsSeveralProposalsOfOneToolAsOneCard(t *testing.T) {
 	observer := &decisionObserver{title: "Create shipment"}
 
 	run := runDecision(t, chatRequest(first, second), observer,
-		toolTurn(requestDecisionName, map[string]any{
+		runtimetest.ToolTurn(runtimetools.RequestDecisionName, map[string]any{
 			"proposalIds": []any{first.ProposalID.String(), second.ProposalID.String()},
 		}),
-		textTurn("Both are above."),
+		runtimetest.TextTurn("Both are above."),
 	)
 
 	require.Len(t, observer.seen, 1)
@@ -338,7 +355,7 @@ func TestRequestDecision_ShowsSeveralProposalsOfOneToolAsOneCard(t *testing.T) {
 		ProposalIDs: []pulid.ID{first.ProposalID, second.ProposalID},
 		ToolName:    "shipment_create",
 	}, observer.seen[0].Data)
-	_, failed := toolResult(run.result, requestDecisionName)
+	_, failed := toolResult(run.result, runtimetools.RequestDecisionName)
 	assert.False(t, failed)
 }
 
@@ -398,10 +415,18 @@ func TestRequestDecision_RefusesABunchItCannotShowAsOne(t *testing.T) {
 			t.Parallel()
 
 			observer := &decisionObserver{title: "Card"}
-			run := runDecision(t, chatRequest(shipment, other, decided, step), observer,
-				toolTurn(requestDecisionName, tc.args), textTurn("Sorry."))
+			run := runDecision(
+				t,
+				chatRequest(shipment, other, decided, step),
+				observer,
+				runtimetest.ToolTurn(
+					runtimetools.RequestDecisionName,
+					tc.args,
+				),
+				runtimetest.TextTurn("Sorry."),
+			)
 
-			content, failed := toolResult(run.result, requestDecisionName)
+			content, failed := toolResult(run.result, runtimetools.RequestDecisionName)
 			assert.True(t, failed)
 			assert.Contains(t, content, tc.contains)
 			assert.Empty(t, observer.seen)
@@ -419,12 +444,12 @@ func TestPublishStep_ShowsAPlanADurableTurnAskedFor(t *testing.T) {
 
 	rt.PublishStep(observer.observe, &llmports.ToolCall{
 		ID:        "call_plan",
-		Name:      requestDecisionName,
+		Name:      runtimetools.RequestDecisionName,
 		Arguments: map[string]any{"planId": planID.String()},
 	})
 	rt.PublishStep(observer.observe, &llmports.ToolCall{
 		ID:   "call_many",
-		Name: requestDecisionName,
+		Name: runtimetools.RequestDecisionName,
 		Arguments: map[string]any{
 			"proposalIds": []any{ids[0].String(), ids[1].String()},
 		},

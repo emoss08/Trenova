@@ -6,7 +6,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/replycheck"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 )
@@ -99,7 +99,7 @@ func (s *Service) SearchDesk(
 // deskSnippet is a message on one line, starting a little before the first
 // place it matches so the match is in view.
 func deskSnippet(content, query string) string {
-	content = agentruntime.StripArtifactLinks(content)
+	content = replycheck.StripArtifactLinks(content)
 	text := []rune(strings.Join(strings.Fields(content), " "))
 	start := 0
 	if query != "" {

@@ -22,6 +22,8 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/modelstream"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/toolcall"
 	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow"
@@ -111,7 +113,7 @@ func registerTurnStandIns(
 		activity.RegisterOptions{Name: "PrepareTurnActivity"},
 	)
 
-	replies := []*agentruntime.ModelReply{
+	replies := []*modelstream.ModelReply{
 		{Completion: &llmports.ChatCompletionResult{
 			ToolCalls: []llmports.ToolCall{{
 				ID:        "call_recorded_1",
@@ -131,7 +133,7 @@ func registerTurnStandIns(
 	}
 	calls := 0
 	w.RegisterActivityWithOptions(
-		func(context.Context, *agentflow.ModelCallInput) (*agentruntime.ModelReply, error) {
+		func(context.Context, *agentflow.ModelCallInput) (*modelstream.ModelReply, error) {
 			reply := replies[min(calls, len(replies)-1)]
 			calls++
 
@@ -142,7 +144,7 @@ func registerTurnStandIns(
 
 	w.RegisterActivityWithOptions(
 		func(_ context.Context, in *agentflow.ToolInput) (*agentflow.ToolResult, error) {
-			return &agentflow.ToolResult{Outcome: agentruntime.ToolOutcome{
+			return &agentflow.ToolResult{Outcome: toolcall.ToolOutcome{
 				Content: "<tool_result name=\"" + in.Call.Call.Name +
 					"\">{\"status\":\"InTransit\",\"city\":\"Memphis\"}</tool_result>",
 				Summary: "Load 12345",

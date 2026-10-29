@@ -3,7 +3,7 @@ package assistantservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/replycheck"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
@@ -87,7 +87,7 @@ func (s *Service) showAttachments(
 			continue
 		}
 		if saved := recorder.attachedExtraction(documentID); saved != nil {
-			attachments[idx].Shown = agentruntime.ArtifactRef(shownArtifact(saved))
+			attachments[idx].Shown = replycheck.ArtifactRef(shownArtifact(saved))
 		}
 	}
 }
@@ -262,7 +262,7 @@ func (s *Service) showReading(
 	}
 
 	return "\n\nWhat was read off the file is shown beside the conversation as " +
-		agentruntime.ArtifactRef(shownArtifact(saved)) + ". When the reply is about what " +
+		replycheck.ArtifactRef(shownArtifact(saved)) + ". When the reply is about what " +
 		"was read, point to it by writing that link, exactly so, inside the sentence; do not " +
 		"publish the reading as a document."
 }

@@ -11,7 +11,7 @@ import (
 	"strings"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/replycheck"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
@@ -481,11 +481,11 @@ func (r *artifactRecorder) nameLinks(messages []conversation.Message, reply *str
 	}
 	for idx := range messages {
 		if messages[idx].Role == conversation.RoleAssistant {
-			messages[idx].Content = agentruntime.NameArtifactLinks(messages[idx].Content, titleOf)
+			messages[idx].Content = replycheck.NameArtifactLinks(messages[idx].Content, titleOf)
 		}
 	}
 	if reply != nil {
-		*reply = agentruntime.NameArtifactLinks(*reply, titleOf)
+		*reply = replycheck.NameArtifactLinks(*reply, titleOf)
 	}
 }
 
@@ -499,7 +499,7 @@ func (r *artifactRecorder) unrecordedLinks(
 		if messages[idx].Role != conversation.RoleAssistant {
 			continue
 		}
-		for _, raw := range agentruntime.ArtifactRefIDs(messages[idx].Content) {
+		for _, raw := range replycheck.ArtifactRefIDs(messages[idx].Content) {
 			if _, recorded := titles[raw]; recorded || seen[raw] {
 				continue
 			}
@@ -523,7 +523,7 @@ func linkedArtifacts(messages []conversation.Message) map[string]bool {
 		if messages[idx].Role != conversation.RoleAssistant || messages[idx].DelegateCallID != "" {
 			continue
 		}
-		for _, id := range agentruntime.ArtifactRefIDs(messages[idx].Content) {
+		for _, id := range replycheck.ArtifactRefIDs(messages[idx].Content) {
 			linked[id] = true
 		}
 	}

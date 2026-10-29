@@ -5,6 +5,9 @@ import (
 	"testing"
 
 	"github.com/bytedance/sonic"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/loopguard"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetest"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/toolcall"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -44,21 +47,24 @@ func (fx *batchRecorder) record(event kernelports.StreamEvent) {
 	}
 }
 
-func (fx *batchRecorder) answer(call DispatchCall) ToolOutcome {
+func (fx *batchRecorder) answer(call toolcall.Call) toolcall.Outcome {
 	fx.earlier[call.Call.ID] = call.Earlier
 
-	return ToolOutcome{Content: `{"results":[]}`}
+	return toolcall.Outcome{Content: `{"results":[]}`}
 }
 
-func (fx *batchRecorder) Dispatch(_ *Turn, call DispatchCall) ToolOutcome {
+func (fx *batchRecorder) Dispatch(_ *Turn, call toolcall.Call) toolcall.Outcome {
 	fx.steps = append(fx.steps, "alone "+call.Call.ID)
 
 	return fx.answer(call)
 }
 
-func (fx *batchRecorder) DispatchReads(_ *Turn, calls []DispatchCall) []ToolOutcome {
+func (fx *batchRecorder) DispatchReads(
+	_ *Turn,
+	calls []toolcall.Call,
+) []toolcall.Outcome {
 	ids := make([]string, 0, len(calls))
-	outcomes := make([]ToolOutcome, 0, len(calls))
+	outcomes := make([]toolcall.Outcome, 0, len(calls))
 	for _, call := range calls {
 		ids = append(ids, call.Call.ID)
 		outcomes = append(outcomes, fx.answer(call))
@@ -89,7 +95,7 @@ func driveReads(
 	rt := newRuntime(
 		&scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
 			callsTurn(scenario.calls...),
-			textTurn("Done."),
+			runtimetest.TextTurn("Done."),
 		}},
 		&stubQueryRegistry{Tools: []agenttoolports.AgentQueryTool{
 			queryTool("worker_list", map[string]any{"results": []any{}}, nil),
@@ -101,7 +107,12 @@ func driveReads(
 		}},
 		nil,
 	)
-	definition := testDefinition("worker_list", "search_customer", "shipment_get", "record_case")
+	definition := runtimetest.Definition(
+		"worker_list",
+		"search_customer",
+		"shipment_get",
+		"record_case",
+	)
 	if scenario.budget > 0 {
 		definition.MaxToolCalls = scenario.budget
 	}
@@ -109,7 +120,7 @@ func driveReads(
 	fx := newBatchRecorder(t, rt)
 	result, err := rt.Drive(rt.OpenTurn(t.Context(), &agentruntimeports.RunRequest{
 		Definition: definition,
-		Actor:      testActor(),
+		Actor:      runtimetest.Actor(),
 		Input:      "Look it all up.",
 	}), fx)
 	require.NoError(t, err)
@@ -207,7 +218,7 @@ func TestDrive_AnswersARepeatedReadInOneReplyFromTheFirst(t *testing.T) {
 
 	assert.Equal(t, []string{"alone c1"}, fx.steps)
 	require.Equal(t, []string{"c1", "c2"}, resultCallIDs(result))
-	assert.Equal(t, repeatedRead("worker_list"), resultContent(result, "c2"))
+	assert.Equal(t, loopguard.RepeatedRead("worker_list"), resultContent(result, "c2"))
 }
 
 func TestDrive_HoldsAReadBatchToTheToolBudget(t *testing.T) {
@@ -260,8 +271,8 @@ func TestRestoreTurn_BatchesOnlyTheReadsTheTurnOpenedWith(t *testing.T) {
 		nil,
 	)
 	request := &agentruntimeports.RunRequest{
-		Definition: testDefinition("worker_list", "search_customer", "record_case"),
-		Actor:      testActor(),
+		Definition: runtimetest.Definition("worker_list", "search_customer", "record_case"),
+		Actor:      runtimetest.Actor(),
 		Input:      "Who is free?",
 	}
 	state := rt.OpenTurn(t.Context(), request).State()
@@ -275,13 +286,15 @@ func TestRestoreTurn_BatchesOnlyTheReadsTheTurnOpenedWith(t *testing.T) {
 	require.Equal(t, state.Reads, carried.Reads)
 
 	drive := func(state TurnState) []string {
-		rt.completion = &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
-			callsTurn(
-				readCall("c1", "worker_list", map[string]any{"status": "Active"}),
-				readCall("c2", "search_customer", map[string]any{"query": "Acme"}),
-			),
-			textTurn("Done."),
-		}}
+		rewire(rt, func(p *Params) {
+			p.Completion = &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
+				callsTurn(
+					readCall("c1", "worker_list", map[string]any{"status": "Active"}),
+					readCall("c2", "search_customer", map[string]any{"query": "Acme"}),
+				),
+				runtimetest.TextTurn("Done."),
+			}}
+		})
 		fx := newBatchRecorder(t, rt)
 		_, err := rt.Drive(rt.RestoreTurn(request, state), fx)
 		require.NoError(t, err)

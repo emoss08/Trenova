@@ -4,6 +4,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetest"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/turntaint"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolpolicy"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
@@ -77,7 +79,12 @@ func TestCallTaint_EachSourcedRowIsMarkedWithItsOwnSource(t *testing.T) {
 		},
 	}}
 
-	marks := callTaint(feedPolicy(agenttooltrust.ExternalReadMarked), feedCall(), feed, 42)
+	marks := turntaint.Call(
+		feedPolicy(agenttooltrust.ExternalReadMarked),
+		feedCall(),
+		feed,
+		42,
+	)
 
 	require.Len(t, marks, 3)
 	for idx, mark := range marks {
@@ -104,7 +111,12 @@ func TestCallTaint_SourcedMarksArePreferredOverTheRecordList(t *testing.T) {
 		},
 	}
 
-	marks := callTaint(feedPolicy(agenttooltrust.ExternalReadMarked), feedCall(), feed, 1)
+	marks := turntaint.Call(
+		feedPolicy(agenttooltrust.ExternalReadMarked),
+		feedCall(),
+		feed,
+		1,
+	)
 
 	require.Len(t, marks, 1)
 	assert.Equal(t, agent.TaintSourceEDI, marks[0].Source)
@@ -125,7 +137,12 @@ func TestCallTaint_ARowNamingASourceThePolicyDoesNotDeclareStillTaints(t *testin
 		},
 	}}
 
-	marks := callTaint(feedPolicy(agenttooltrust.ExternalReadMarked), feedCall(), feed, 1)
+	marks := turntaint.Call(
+		feedPolicy(agenttooltrust.ExternalReadMarked),
+		feedCall(),
+		feed,
+		1,
+	)
 
 	require.Len(t, marks, 2, "a mark is never dropped for naming the wrong source")
 	for _, mark := range marks {
@@ -145,7 +162,7 @@ func TestCallTaint_ARecordCarrierIsMarkedWithThePolicySource(t *testing.T) {
 		Source:        agent.TaintSourceRunRecord,
 	}
 
-	marks := callTaint(policy, feedCall(), feed, 1)
+	marks := turntaint.Call(policy, feedCall(), feed, 1)
 
 	require.Len(t, marks, 1)
 	assert.Equal(t, agent.TaintSourceRunRecord, marks[0].Source)
@@ -157,17 +174,25 @@ func TestCallTaint_AnEmptySourcedResult(t *testing.T) {
 
 	feed := &sourcedFeed{}
 
-	assert.Empty(t, callTaint(feedPolicy(agenttooltrust.ExternalReadMarked), feedCall(), feed, 1),
-		"a marked read of nothing outside taints nothing")
+	assert.Empty(
+		t,
+		turntaint.Call(feedPolicy(agenttooltrust.ExternalReadMarked), feedCall(), feed, 1),
+		"a marked read of nothing outside taints nothing",
+	)
 
-	always := callTaint(feedPolicy(agenttooltrust.ExternalReadAlways), feedCall(), feed, 1)
+	always := turntaint.Call(
+		feedPolicy(agenttooltrust.ExternalReadAlways),
+		feedCall(),
+		feed,
+		1,
+	)
 	require.Len(t, always, 1, "an always read taints even when no row names itself")
 	assert.Equal(t, agent.TaintSourceInboundMessage, always[0].Source)
 	assert.Nil(t, always[0].Ref)
 
 	never := feedPolicy(agenttooltrust.ExternalReadNever)
 	feed.marks = []agent.SourcedRef{{Source: agent.TaintSourceWeather}}
-	assert.Empty(t, callTaint(never, feedCall(), feed, 1),
+	assert.Empty(t, turntaint.Call(never, feedCall(), feed, 1),
 		"the policy, not the result, says whether a tool reads outside text")
 }
 
@@ -193,20 +218,20 @@ func TestRun_AFeedRowFromAnInboundEmailTaintsTheRunAndHoldsMoney(t *testing.T) {
 		Source:  agent.TaintSourceInboundMessage,
 		Sources: []agent.TaintSource{agent.TaintSourceWeather},
 	}
-	pay := moneyTool()
+	pay := runtimetest.MoneyTool()
 	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
-		toolTurn("exception_list_watchtower_items", map[string]any{}),
-		toolTurn("apply_payment", map[string]any{"invoiceId": "inv_9911"}),
-		textTurn("The payment waits for a person."),
+		runtimetest.ToolTurn("exception_list_watchtower_items", map[string]any{}),
+		runtimetest.ToolTurn("apply_payment", map[string]any{"invoiceId": "inv_9911"}),
+		runtimetest.TextTurn("The payment waits for a person."),
 	}}
 	rt := newRuntime(completion,
 		&stubQueryRegistry{Tools: []agenttoolports.AgentQueryTool{feed}},
 		&stubActionRegistry{Tools: []agenttoolports.AgentTool{pay}}, nil)
-	rt.budgets = &moneyBudgets{Limits: roomyMoneyLimits()}
+	rewire(rt, func(p *Params) { p.Budgets = &moneyBudgets{Limits: roomyMoneyLimits()} })
 
 	run := runTainted(t, rt, &agentruntimeports.RunRequest{
-		Definition: autoDefinition("exception_list_watchtower_items", "apply_payment"),
-		Actor:      testActor(),
+		Definition: runtimetest.AutoDefinition("exception_list_watchtower_items", "apply_payment"),
+		Actor:      runtimetest.Actor(),
 		Input:      "Work the tower.",
 		Unattended: true,
 	})
@@ -233,20 +258,20 @@ func TestRun_AFeedWithNoOutsideRowLeavesTheRunClean(t *testing.T) {
 		Reads:    agenttooltrust.ExternalReadMarked,
 		Source:   agent.TaintSourceInboundMessage,
 	}
-	pay := moneyTool()
+	pay := runtimetest.MoneyTool()
 	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
-		toolTurn("exception_list_watchtower_items", map[string]any{}),
-		toolTurn("apply_payment", map[string]any{"invoiceId": "inv_1"}),
-		textTurn("Applied."),
+		runtimetest.ToolTurn("exception_list_watchtower_items", map[string]any{}),
+		runtimetest.ToolTurn("apply_payment", map[string]any{"invoiceId": "inv_1"}),
+		runtimetest.TextTurn("Applied."),
 	}}
 	rt := newRuntime(completion,
 		&stubQueryRegistry{Tools: []agenttoolports.AgentQueryTool{feed}},
 		&stubActionRegistry{Tools: []agenttoolports.AgentTool{pay}}, nil)
-	rt.budgets = &moneyBudgets{Limits: roomyMoneyLimits()}
+	rewire(rt, func(p *Params) { p.Budgets = &moneyBudgets{Limits: roomyMoneyLimits()} })
 
 	run := runTainted(t, rt, &agentruntimeports.RunRequest{
-		Definition: autoDefinition("exception_list_watchtower_items", "apply_payment"),
-		Actor:      testActor(),
+		Definition: runtimetest.AutoDefinition("exception_list_watchtower_items", "apply_payment"),
+		Actor:      runtimetest.Actor(),
 		Input:      "Work the tower.",
 	})
 

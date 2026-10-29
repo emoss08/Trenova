@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolpolicy"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolpolicy/registered"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -55,11 +55,11 @@ func TestEveryRegisteredToolValidates(t *testing.T) {
 	catalog, err := agenttoolpolicy.Build(
 		tools.Queries,
 		tools.Actions,
-		agentruntime.RuntimePolicies(),
+		runtimetools.Policies(),
 	)
 	require.NoError(t, err)
 
-	total := len(tools.Queries) + len(tools.Actions) + len(agentruntime.RuntimePolicies())
+	total := len(tools.Queries) + len(tools.Actions) + len(runtimetools.Policies())
 	assert.Len(t, catalog.All(), total)
 	for _, policy := range catalog.All() {
 		found, ok := catalog.Get(policy.Name)
@@ -653,7 +653,7 @@ func TestRuntimeToolsStayInside(t *testing.T) {
 	t.Parallel()
 
 	effects := map[string]agent.EgressClass{}
-	for _, policy := range agentruntime.RuntimePolicies() {
+	for _, policy := range runtimetools.Policies() {
 		effects[policy.Name] = policy.Egress[0]
 	}
 

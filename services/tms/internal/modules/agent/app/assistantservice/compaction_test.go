@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/turnhistory"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationreplay"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
@@ -101,7 +102,7 @@ func TestPrepareCompaction_RefusesAConversationWithNothingToCompact(t *testing.T
 	t.Parallel()
 
 	svc, conversations := newConversationService(&scriptedCompletion{}, testDefinition())
-	conversations.messages = longConversation(agentruntime.CompactionKeepTurns)
+	conversations.messages = longConversation(turnhistory.CompactionKeepTurns)
 	actor := testActor()
 
 	_, err := svc.PrepareCompaction(t.Context(), &CompactRequest{

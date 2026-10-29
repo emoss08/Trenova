@@ -66,7 +66,10 @@ func newWritingHarness(
 	t.Helper()
 
 	h := newScriptHarness(t, reads, writes, nil)
-	h.rt.scripts = scriptsOn(aiprovider.ScriptSettings{Scripts: true, Writes: true})
+	rewire(
+		h.rt,
+		func(p *Params) { p.Scripts = scriptsOn(aiprovider.ScriptSettings{Scripts: true, Writes: true}) },
+	)
 	h.req.Definition.AutonomyCeiling = agent.TierAutoExecute
 	h.req.Definition.ToolTiers = map[string]agent.AutonomyTier{}
 	for _, tool := range writes {
@@ -148,7 +151,10 @@ func TestScriptWrites_AModelThatMayNotWriteIsRefusedTheWrite(t *testing.T) {
 
 	holdTool := newPreparable("shipment_place_hold", agent.EgressInternal)
 	h := newWritingHarness(t, nil, holdTool)
-	h.rt.scripts = scriptsOn(aiprovider.ScriptSettings{Scripts: true})
+	rewire(
+		h.rt,
+		func(p *Params) { p.Scripts = scriptsOn(aiprovider.ScriptSettings{Scripts: true}) },
+	)
 
 	outcome := h.run(t.Context(), hold(1, "shipment_place_hold", "shp_1"))
 
@@ -186,7 +192,10 @@ func TestScriptWrites_AWriteThePersonMayNotMakeIsNeverPrepared(t *testing.T) {
 			permission.ResourceShipment.String() + ":" + string(permission.OpUpdate): true,
 		},
 	})
-	h.rt.scripts = scriptsOn(aiprovider.ScriptSettings{Scripts: true, Writes: true})
+	rewire(
+		h.rt,
+		func(p *Params) { p.Scripts = scriptsOn(aiprovider.ScriptSettings{Scripts: true, Writes: true}) },
+	)
 	h.script.data = completedScript{completed: true}
 
 	outcome := h.run(t.Context(), hold(1, "shipment_place_hold", "shp_other"))

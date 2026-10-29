@@ -7,6 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/modelstream"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
@@ -95,7 +96,7 @@ func runEvaluationWorkflow(
 		}).
 		Once()
 	env.OnActivity(fa.ModelCallActivity, mock.Anything, mock.Anything).
-		Return(&agentruntime.ModelReply{Completion: &llmports.ChatCompletionResult{
+		Return(&modelstream.Reply{Completion: &llmports.ChatCompletionResult{
 			Text:            "The rate stays at 1,350.",
 			ModelIdentifier: "test-model",
 		}}, nil).Maybe()

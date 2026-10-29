@@ -138,7 +138,7 @@ a pre-turn router, in-turn tool discovery, and one level of delegation.
 | Layer | What it is | Where |
 |---|---|---|
 | Agents | 29 shipped templates (`DispatchAssistant`, `BillingAssistant`, `GeneralAssistant`, `Receivables`, `EDIDesk`, …). An organization creates agent definitions from them in AI Control, each with its own tools, instructions, autonomy ceiling, tool budget (default 12, ceiling 64) and delegate allowlist. | `domain/agentdefinition/templates.go`, `definition.go:38-47` |
-| Pre-turn router | `myAgentMatch` / `agentruntime.MatchAgent`. Before a question is sent, the question is ranked against tool names, descriptions and search terms by keyword plus embedding (reciprocal-rank fusion). The result is one of `BetterAgent`, `CurrentAgent`, `NoAgent`, `NoMatch`, and the Desk switches agents, offers a switch, or only suggests one, depending on the person's setting. No model is called. | `agentruntime/match.go`, `matchpool.go`; agent-runtime.md "Matching a question to an agent" |
+| Pre-turn router | `myAgentMatch` / `agentmatch.Matcher.MatchAgent`. Before a question is sent, the question is ranked against tool names, descriptions and search terms by keyword plus embedding (reciprocal-rank fusion). The result is one of `BetterAgent`, `CurrentAgent`, `NoAgent`, `NoMatch`, and the Desk switches agents, offers a switch, or only suggests one, depending on the person's setting. No model is called. | `agentruntime/agentmatch/match.go`, `matchpool.go`; agent-runtime.md "Matching a question to an agent" |
 | In-turn discovery | `find_tools` lets the agent load tools it holds but was not shown, and names a delegate or another agent when it finds nothing it may call. Palette questions hold every query tool the person may use, disclosed through `find_tools`. | `agenttoolcatalog/hybrid.go`, `agentruntime/discovery*`; agent-runtime.md "Quick questions from the palette" |
 | Delegation | `delegate_task` hands a task to an agent on the caller's allowlist (at most 8 delegates, 3 tasks per turn, one level only). The delegate runs inline in the same workflow, as the same person, with its own tools and autonomy. | agent-delegation.md |
 | The loop | `agentruntime.Service.Drive` (`runner.go:150`): a model call, then the tool calls, until the tool budget is spent or the reply has no calls. Each model call and each tool call is a Temporal activity. | `runner.go`, `jobs/agentflow` |
@@ -595,7 +595,7 @@ The runtime can lower the tier further:
 
 - taint lowers it to ActWithApproval;
 - web or partner text read earlier in the turn lowers every later write to Propose
-  (`agentruntime/extensions.go:116`);
+  (`agentruntime/toolaccess/extensions.go:116`);
 - a write outside the agent's business hours is held (`changelimits.go:101`);
 - the organization's tool rules apply, and if they cannot be read the tool falls back to
   Propose (`dispatch.go:910-933`).
@@ -646,7 +646,7 @@ key hashed from the owner, tool, canonical arguments and an ordinal (`stepkey.go
 
 - a settled claim replays its outcome;
 - a call whose outcome is unknown is reported to the model as unknown;
-- an unwritable ledger refuses the call (`agentruntime/guard.go:64-206`).
+- an unwritable ledger refuses the call (`agentruntime/tooldispatch/guard.go:64-206`).
 
 **Taint.** A run opens tainted when it starts from outside content: an email, a document, an EDI
 file, an attachment, a tainted memory, or an inherited conversation or delegator. While it is
@@ -2228,7 +2228,7 @@ describes the design as built ("Job profiles in one runtime", "What a provider c
 
 **Job profiles (Phase 4).**
 
-- One runtime: `agentruntime.profileFor` gives every turn a profile, in one of four modes:
+- One runtime: `toolaccess.Access.ProfileFor` gives every turn a profile, in one of four modes:
   conversation, unattended, delegated, or read-only fan-out. The agent definition supplies what
   the profile holds.
 - A conversation turn can reach the tools other agents in the organization hold for the person.

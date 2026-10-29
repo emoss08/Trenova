@@ -46,7 +46,7 @@ type RunStep struct {
 	Attempt int           `json:"attempt"`
 	Kind    RunStepKind   `json:"kind"`
 	Status  RunStepStatus `json:"status"`
-	// Key identifies the operation across attempts. See agentruntime.StepKey.
+	// Key identifies the operation across attempts. See toolcall.StepKey.
 	Key               string         `json:"key"`
 	ToolName          string         `json:"toolName"`
 	CallID            string         `json:"callId"`

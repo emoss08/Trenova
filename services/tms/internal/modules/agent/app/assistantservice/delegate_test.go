@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/delegation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmark"
@@ -190,7 +190,7 @@ func newDelegateFixture() *delegateFixture {
 				Kind: agentruntimeports.RunStepOwnerAssistantTurn,
 				ID:   pulid.MustNew("atrn_"),
 			},
-			Call: agentruntime.DelegateCall{
+			Call: delegation.Call{
 				Call:      llmports.ToolCall{ID: "call_1", Name: "delegate_task"},
 				Delegate:  agentturn.RuntimeDelegate{ID: delegate.ID, Name: delegate.Name},
 				Task:      "Create the on-time report and return its id.",
@@ -581,9 +581,9 @@ func TestOpenDelegate_PutsWhatWasHandedOverAfterTheTask(t *testing.T) {
 	t.Parallel()
 
 	f := newDelegateFixture()
-	f.request.Call.Context = &agentruntime.DelegateContext{
+	f.request.Call.Context = &delegation.Context{
 		Records: []agentrecord.RecordRef{{EntityType: "shipment", ID: "shp_1"}},
-		Results: []agentruntime.SharedResult{{
+		Results: []delegation.SharedResult{{
 			CallID:   "call_read",
 			ToolName: "shipment_get",
 			Content:  `{"proNumber":"PRO-1001"}`,

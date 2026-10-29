@@ -7,6 +7,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/delegation"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/modelstream"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpagecontext"
@@ -35,13 +37,13 @@ type scriptedOpener struct {
 
 	mu     sync.Mutex
 	opened int
-	calls  []agentruntime.DelegateCall
+	calls  []delegation.Call
 }
 
 func (o *scriptedOpener) OpenDelegate(
 	ctx context.Context,
 	run RunContext,
-	call agentruntime.DelegateCall,
+	call delegation.Call,
 ) (*DelegateOpening, error) {
 	o.mu.Lock()
 	o.opened++
@@ -118,7 +120,7 @@ func (h *harness) scopedReplies(
 ) {
 	for _, reply := range replies {
 		h.env.OnActivity(h.activities.ModelCallActivity, mock.Anything, mock.MatchedBy(scope)).
-			Return(&agentruntime.ModelReply{Completion: reply}, nil).Once()
+			Return(&modelstream.Reply{Completion: reply}, nil).Once()
 	}
 }
 
@@ -269,7 +271,7 @@ func TestRunPassesOnADelegatesRefusal(t *testing.T) {
 func TestDeclinedDelegate_AStopIsNotARefusal(t *testing.T) {
 	t.Parallel()
 
-	call := agentruntime.DelegateCall{
+	call := delegation.Call{
 		Delegate: agentturn.RuntimeDelegate{Name: "Shipment Desk"},
 	}
 

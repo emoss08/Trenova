@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
@@ -56,15 +57,15 @@ func runPrivateWithTrust(
 	t.Helper()
 
 	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
-		toolTurn("report_create", map[string]any{"name": "Late loads"}),
-		textTurn("Saved."),
+		runtimetest.ToolTurn("report_create", map[string]any{"name": "Late loads"}),
+		runtimetest.TextTurn("Saved."),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{},
 		&stubActionRegistry{Tools: []agenttoolports.AgentTool{tool}}, nil)
-	rt.trust = trust
+	rewire(rt, func(p *Params) { p.Trust = trust })
 	req := &agentruntimeports.RunRequest{
-		Definition: testDefinition("report_create"),
-		Actor:      testActor(),
+		Definition: runtimetest.Definition("report_create"),
+		Actor:      runtimetest.Actor(),
 		Input:      "Save a report of late loads",
 	}
 	if configure != nil {

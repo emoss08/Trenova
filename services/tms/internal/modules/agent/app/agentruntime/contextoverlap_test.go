@@ -6,6 +6,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimecontext"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
@@ -84,24 +86,24 @@ func TestContextBuilder_ReadsTheOrganizationWhileTheQuestionIsEmbedded(t *testin
 
 	m := &meeting{orgStarted: make(chan struct{}), vectorStarted: make(chan struct{})}
 	memories := &fakeMemories{answer: &agentmemoryports.MemoryContext{}}
-	builder := &ContextBuilder{
-		logger: zap.NewNop(),
-		organizations: &meetingOrganizations{
+	builder := runtimecontext.NewBuilder(runtimecontext.BuilderParams{
+		Logger: zap.NewNop(),
+		Organizations: &meetingOrganizations{
 			meeting: m,
 			org:     &tenant.Organization{Timezone: "America/Chicago"},
 		},
-		users:      &stubUsers{user: &tenant.User{Name: "Dana", Timezone: "UTC"}},
-		vectorizer: &meetingVectorizer{meeting: m},
-		memories:   memories,
-		runtime: newRuntime(
+		Users:      &runtimetest.StubUsers{User: &tenant.User{Name: "Dana", Timezone: "UTC"}},
+		Vectorizer: &meetingVectorizer{meeting: m},
+		Memories:   memories,
+		Runtime: newRuntime(
 			&scriptedCompletion{},
 			&stubQueryRegistry{},
 			&stubActionRegistry{},
 			nil,
 		),
-	}
-	actor := testActor()
-	definition := testDefinition()
+	})
+	actor := runtimetest.Actor()
+	definition := runtimetest.Definition()
 	definition.ContextProviders = []agentdefinition.ContextProvider{
 		agentdefinition.ContextUser,
 		agentdefinition.ContextMemory,

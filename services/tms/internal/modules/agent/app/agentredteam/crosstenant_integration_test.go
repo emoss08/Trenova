@@ -13,7 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentevalgate"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentmemoryservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentquerytoolservice"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolservice"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
@@ -95,7 +95,7 @@ func TestCrossTenantIDsAreRefusedByTheRepositories(t *testing.T) {
 		Repo:   repo,
 	})
 	queries, actions := memoryTools(t, memories)
-	kit := agentevalgate.FromTools(queries, actions, agentruntime.RuntimePolicies())
+	kit := agentevalgate.FromTools(queries, actions, runtimetools.RuntimePolicies())
 
 	c := &Case{
 		Name:  "cross-tenant-memory-ids",

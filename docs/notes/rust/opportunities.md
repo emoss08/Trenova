@@ -378,7 +378,7 @@ only if it shows up in a profile.
 | --- | --- |
 | GraphQL executor and resolvers | The pain is Go compile time (354 s cold before sharding, 152 s after a domain-struct edit). Rust compiles more slowly. `async-graphql` would mean rewriting every resolver. |
 | Agent runtime and model I/O | Network- and Temporal-bound. Streams parse fine with sonic; no partial-JSON parser is needed. |
-| Token counting | Claude's tokenizer is not public. Calibrate from the provider's reported `usage.input_tokens` instead of the `runes/4` (`shared/llmtokens`) and `bytes/4` (`agentruntime/contextuse.go:134-143`) heuristics, which disagree. |
+| Token counting | Claude's tokenizer is not public. Calibrate from the provider's reported `usage.input_tokens` instead of the `runes/4` (`shared/llmtokens`) and `bytes/4` (`agentruntime/turnhistory/contextuse.go:134-143`) heuristics, which disagree. |
 | Tool-argument validation | Compiled once per tool (`pkg/toolschema/validate.go:50-101`); a WASM call would cost more than the validation. |
 | Retrieval | pgvector and Postgres full-text search do the work; in-memory catalogs are a few hundred items. |
 | numberguard | O(citations × supported) decimal comparisons; the fix is a sorted float slice and binary search in Go. |

@@ -7,6 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentguard"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/delegation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
@@ -163,10 +164,10 @@ func (s *Service) prepareTurn(
 		multiErr.Add("directedAgentId", errortypes.ErrInvalid,
 			"Only a message the person writes can be handed to another agent")
 	case req.DirectedAgentID.IsNotNil() &&
-		utf8.RuneCountInString(content) > agentruntime.MaxDelegateTaskRunes:
+		utf8.RuneCountInString(content) > delegation.MaxTaskRunes:
 		multiErr.Add("content", errortypes.ErrInvalid,
 			"A task for another agent can be at most {0} characters",
-			agentruntime.MaxDelegateTaskRunes)
+			delegation.MaxTaskRunes)
 	case commanded && req.DirectedAgentID.IsNotNil():
 		multiErr.Add("directedAgentId", errortypes.ErrInvalid, commandSpec.DirectedReason)
 	case commanded && commandTask == "":

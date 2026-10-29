@@ -12,6 +12,12 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentevalgate"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/delegation"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/modelstream"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/toolaccess"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/toolcall"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/worldwatch"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory"
@@ -183,7 +189,7 @@ func newRuntime(
 		return nil, nil, err
 	}
 
-	kit := agentevalgate.FromTools(built.queries, built.actions, agentruntime.RuntimePolicies())
+	kit := agentevalgate.FromTools(built.queries, built.actions, runtimetools.Policies())
 	params := agentevalgate.RuntimeParams{
 		Completion:  completion,
 		Permissions: &agenttest.StubPermissions{Denied: deniedOf(c.Agent.Denied)},
@@ -422,7 +428,7 @@ func (fx *effects) events() []kernelports.StreamEvent {
 func (fx *effects) Complete(
 	t *agentruntime.Turn,
 	req *llmports.ChatCompletionRequest,
-) (agentruntime.ModelReply, error) {
+) (modelstream.Reply, error) {
 	fx.rec.read(ReadCompletion, t.Definition().Name, req.TenantInfo)
 
 	return fx.rt.StreamCompletion(fx.ctx, req, fx.Emit)
@@ -432,9 +438,9 @@ func (fx *effects) Complete(
 // another, so the record keeps the order the model asked in.
 func (fx *effects) DispatchReads(
 	t *agentruntime.Turn,
-	calls []agentruntime.DispatchCall,
-) []agentruntime.ToolOutcome {
-	outcomes := make([]agentruntime.ToolOutcome, 0, len(calls))
+	calls []toolcall.Call,
+) []toolcall.Outcome {
+	outcomes := make([]toolcall.Outcome, 0, len(calls))
 	for idx := range calls {
 		outcomes = append(outcomes, fx.Dispatch(t, calls[idx]))
 	}
@@ -444,8 +450,8 @@ func (fx *effects) DispatchReads(
 
 func (fx *effects) Dispatch(
 	t *agentruntime.Turn,
-	call agentruntime.DispatchCall,
-) agentruntime.ToolOutcome {
+	call toolcall.Call,
+) toolcall.Outcome {
 	req := t.Request()
 	record := DispatchRecord{
 		Definition: t.Definition(),
@@ -466,11 +472,11 @@ func (fx *effects) Dispatch(
 	return outcome
 }
 
-func (fx *effects) Find(t *agentruntime.Turn, arguments map[string]any) agentruntime.FindAnswer {
+func (fx *effects) Find(t *agentruntime.Turn, arguments map[string]any) toolaccess.FindAnswer {
 	found := fx.rt.FindFor(fx.ctx, t.Request(), t.ToolsState(), arguments)
 	t.LoadTools(found.Loaded)
 
-	return agentruntime.FindAnswer{
+	return toolaccess.FindAnswer{
 		Content: found.Content,
 		Found:   found.Found,
 		HandOff: found.HandOff,
@@ -487,8 +493,8 @@ func (fx *effects) Emit(event kernelports.StreamEvent) {
 func (fx *effects) Observe(
 	_ *agentruntime.Turn,
 	call *llmports.ToolCall,
-	outcome agentruntime.ToolOutcome,
-) agentruntime.ToolOutcome {
+	outcome toolcall.Outcome,
+) toolcall.Outcome {
 	return fx.rt.ObserveCall(nil, call, outcome)
 }
 
@@ -503,9 +509,9 @@ func (fx *effects) NewCallID() string {
 
 func (fx *effects) Delegate(
 	t *agentruntime.Turn,
-	calls []agentruntime.DelegateCall,
-) []agentruntime.DelegateRun {
-	runs := make([]agentruntime.DelegateRun, 0, len(calls))
+	calls []delegation.Call,
+) []delegation.Run {
+	runs := make([]delegation.Run, 0, len(calls))
 	for idx := range calls {
 		runs = append(runs, fx.delegate(t, calls[idx]))
 	}
@@ -515,8 +521,8 @@ func (fx *effects) Delegate(
 
 func (fx *effects) delegate(
 	t *agentruntime.Turn,
-	call agentruntime.DelegateCall,
-) agentruntime.DelegateRun {
+	call delegation.Call,
+) delegation.Run {
 	parent := t.Definition()
 	record := DelegationRecord{
 		Parent:     parent,
@@ -529,7 +535,7 @@ func (fx *effects) delegate(
 		record.Declined = call.Delegate.Name + " is not an agent this case defines."
 		fx.rec.delegated(&record)
 
-		return agentruntime.DelegateRun{Declined: record.Declined}
+		return delegation.Run{Declined: record.Declined}
 	}
 	fx.rec.delegated(&record)
 
@@ -567,7 +573,7 @@ func (fx *effects) delegate(
 	})
 
 	result, err := fx.rt.Drive(turn, fx)
-	run := agentruntime.DelegateRun{
+	run := delegation.Run{
 		Definition:      definition,
 		Result:          result,
 		ExternalContent: turn.ReadExternalContent(),
@@ -579,8 +585,8 @@ func (fx *effects) delegate(
 	return run
 }
 
-func (*effects) Interject(*agentruntime.Turn, *agentruntime.WorldCheck) agentruntime.Interjections {
-	return agentruntime.Interjections{}
+func (*effects) Interject(*agentruntime.Turn, *worldwatch.Check) worldwatch.Interjections {
+	return worldwatch.Interjections{}
 }
 
 func (*effects) Now() int64 { return FixedNow }

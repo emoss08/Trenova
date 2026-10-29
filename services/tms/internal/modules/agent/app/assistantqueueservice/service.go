@@ -12,7 +12,7 @@ import (
 	"fmt"
 	"slices"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/worldwatch"
 	"github.com/emoss08/trenova/internal/modules/agent/app/assistantturnservice"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpagecontext"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
@@ -529,7 +529,7 @@ func (s *Service) steer(
 		mentions = item.Request.Mentions
 	}
 	err := s.workflows.SignalWorkflow(ctx, active.ExecutionID(), "", agentflowcontract.SteerSignal,
-		agentruntime.Steer{ID: item.ID, Content: item.Content, Mentions: mentions})
+		worldwatch.Steer{ID: item.ID, Content: item.Content, Mentions: mentions})
 	if err == nil {
 		return true
 	}

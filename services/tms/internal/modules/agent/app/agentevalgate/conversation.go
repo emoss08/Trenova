@@ -11,7 +11,8 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/replycheck"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetools"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
@@ -186,7 +187,7 @@ func RunConversation(ctx context.Context, c *ConversationCase) (*ConversationOut
 		return nil, err
 	}
 
-	kit := FromTools(queries, nil, agentruntime.RuntimePolicies())
+	kit := FromTools(queries, nil, runtimetools.Policies())
 	rt := kit.NewRuntime(RuntimeParams{
 		Completion:  script,
 		Permissions: &agenttest.StubPermissions{},
@@ -357,9 +358,9 @@ func (o *ConversationOutcome) Failures() []string {
 		switch {
 		case !kept:
 			failures = append(failures, tool+" kept no table")
-		case !slices.Contains(agentruntime.ArtifactRefIDs(reply), table.ID.String()):
+		case !slices.Contains(replycheck.ArtifactRefIDs(reply), table.ID.String()):
 			failures = append(failures, "the reply does not point to "+tool+"'s table")
-		case slices.Contains(agentruntime.StrayArtifactLinks(reply), table.ID.String()):
+		case slices.Contains(replycheck.StrayArtifactLinks(reply), table.ID.String()):
 			failures = append(failures, "the reply points to "+tool+"'s table outside a sentence")
 		}
 	}

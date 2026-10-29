@@ -7,6 +7,12 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/delegation"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/modelstream"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/toolaccess"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/toolcall"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/worldwatch"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow/agentflowcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/modelcall"
@@ -80,16 +86,16 @@ func (fx *workflowEffects) Replaying() bool { return workflow.IsReplaying(fx.ctx
 // and what changed under it.
 func (fx *workflowEffects) Interject(
 	_ *agentruntime.Turn,
-	check *agentruntime.WorldCheck,
-) agentruntime.Interjections {
+	check *worldwatch.Check,
+) worldwatch.Interjections {
 	pending := fx.steers != nil && fx.steers.Len() > 0
 	if !pending && check == nil {
-		return agentruntime.Interjections{}
+		return worldwatch.Interjections{}
 	}
 
-	var got agentruntime.Interjections
+	var got worldwatch.Interjections
 	for pending {
-		var steer agentruntime.Steer
+		var steer worldwatch.Steer
 		if !fx.steers.ReceiveAsync(&steer) {
 			break
 		}
@@ -108,7 +114,7 @@ func (fx *workflowEffects) Interject(
 // checkWorld reads the changes as a local activity: a read of the realtime
 // stream on the worker running the turn, with no queue between steps. A read
 // that fails leaves the cursor where it was, so the next step looks again.
-func (fx *workflowEffects) checkWorld(check *agentruntime.WorldCheck) *realtimeports.RecordChanges {
+func (fx *workflowEffects) checkWorld(check *worldwatch.Check) *realtimeports.RecordChanges {
 	if fx.run.Actor == nil {
 		return nil
 	}
@@ -138,11 +144,11 @@ func (fx *workflowEffects) checkWorld(check *agentruntime.WorldCheck) *realtimep
 func (fx *workflowEffects) Complete(
 	_ *agentruntime.Turn,
 	req *llmports.ChatCompletionRequest,
-) (agentruntime.ModelReply, error) {
+) (modelstream.Reply, error) {
 	var a *Activities
 	ctx := workflow.WithActivityOptions(fx.ctx, fx.modelOptions())
 
-	var reply agentruntime.ModelReply
+	var reply modelstream.Reply
 	err := workflow.ExecuteActivity(ctx, a.ModelCallActivity, &ModelCallInput{
 		Request: req,
 		Stream:  fx.events != nil,
@@ -154,8 +160,8 @@ func (fx *workflowEffects) Complete(
 
 func (fx *workflowEffects) Dispatch(
 	_ *agentruntime.Turn,
-	call agentruntime.DispatchCall,
-) agentruntime.ToolOutcome {
+	call toolcall.Call,
+) toolcall.Outcome {
 	return fx.settleTool(&call, fx.startTool(&call))
 }
 
@@ -165,14 +171,14 @@ func (fx *workflowEffects) Dispatch(
 // order the activities finish in.
 func (fx *workflowEffects) DispatchReads(
 	_ *agentruntime.Turn,
-	calls []agentruntime.DispatchCall,
-) []agentruntime.ToolOutcome {
+	calls []toolcall.Call,
+) []toolcall.Outcome {
 	futures := make([]workflow.Future, 0, len(calls))
 	for idx := range calls {
 		futures = append(futures, fx.startTool(&calls[idx]))
 	}
 
-	outcomes := make([]agentruntime.ToolOutcome, 0, len(calls))
+	outcomes := make([]toolcall.Outcome, 0, len(calls))
 	for idx := range calls {
 		outcomes = append(outcomes, fx.settleTool(&calls[idx], futures[idx]))
 	}
@@ -180,16 +186,16 @@ func (fx *workflowEffects) DispatchReads(
 	return outcomes
 }
 
-func (fx *workflowEffects) startTool(call *agentruntime.DispatchCall) workflow.Future {
+func (fx *workflowEffects) startTool(call *toolcall.Call) workflow.Future {
 	ctx := workflow.WithActivityOptions(fx.ctx, fx.toolOptions(call.Call.Name))
 
 	return workflow.ExecuteActivity(ctx, call.Call.Name, &ToolInput{Run: fx.run, Call: *call})
 }
 
 func (fx *workflowEffects) settleTool(
-	call *agentruntime.DispatchCall,
+	call *toolcall.Call,
 	future workflow.Future,
-) agentruntime.ToolOutcome {
+) toolcall.Outcome {
 	var result ToolResult
 	if err := future.Get(fx.ctx, &result); err != nil {
 		// A tool that could not be run to an answer, after its retries, is
@@ -207,9 +213,9 @@ func (fx *workflowEffects) settleTool(
 // reported back. A stopped turn, a timed-out attempt or a lost worker can each
 // end the wait after the tool made its change and before it said so, so
 // nothing here may tell the person the change did not happen.
-func unsettledToolOutcome(name string, err error) agentruntime.ToolOutcome {
+func unsettledToolOutcome(name string, err error) toolcall.Outcome {
 	if temporal.IsCanceledError(err) {
-		return agentruntime.ToolOutcome{
+		return toolcall.Outcome{
 			Content: fmt.Sprintf("Tool %q was stopped before it reported back. It may or may "+
 				"not have taken effect. Tell the person plainly that this one is unconfirmed, "+
 				"and that it should be checked before anything that depends on it.", name),
@@ -217,7 +223,7 @@ func unsettledToolOutcome(name string, err error) agentruntime.ToolOutcome {
 		}
 	}
 
-	return agentruntime.ToolOutcome{
+	return toolcall.Outcome{
 		Content: fmt.Sprintf("Tool %q did not report back: %s. It may or may not have taken "+
 			"effect. Tell the person it is unconfirmed; do not claim it happened, and do not "+
 			"claim it did not.", name, err),
@@ -228,7 +234,7 @@ func unsettledToolOutcome(name string, err error) agentruntime.ToolOutcome {
 func (fx *workflowEffects) Find(
 	t *agentruntime.Turn,
 	arguments map[string]any,
-) agentruntime.FindAnswer {
+) toolaccess.FindAnswer {
 	var a *Activities
 	ctx := workflow.WithActivityOptions(fx.ctx, fx.findOptions())
 
@@ -239,14 +245,14 @@ func (fx *workflowEffects) Find(
 		Arguments: arguments,
 	}).Get(ctx, &result)
 	if err != nil {
-		return agentruntime.FindAnswer{
+		return toolaccess.FindAnswer{
 			Content: "Tools could not be searched just now. Use the ones you have.",
 		}
 	}
 
 	t.LoadTools(result.Loaded)
 
-	return agentruntime.FindAnswer{
+	return toolaccess.FindAnswer{
 		Content: result.Content,
 		Found:   result.Found,
 		HandOff: result.HandOff,
@@ -294,8 +300,8 @@ func streamedText(event string) bool {
 func (fx *workflowEffects) Observe(
 	_ *agentruntime.Turn,
 	call *llmports.ToolCall,
-	outcome agentruntime.ToolOutcome,
-) agentruntime.ToolOutcome {
+	outcome toolcall.Outcome,
+) toolcall.Outcome {
 	if !outcome.Publishes {
 		return outcome
 	}
@@ -309,7 +315,7 @@ func (fx *workflowEffects) Observe(
 		Call: *call,
 	}).Get(ctx, &result)
 	if err != nil {
-		return agentruntime.UnkeptOutcome(call.Name)
+		return runtimetools.UnkeptOutcome(call.Name)
 	}
 
 	fx.outcome.Artifacts = append(fx.outcome.Artifacts, result.Artifacts...)
@@ -339,9 +345,9 @@ func (fx *workflowEffects) NewCallID() string {
 // kept is folded in in the order the calls were made.
 func (fx *workflowEffects) Delegate(
 	_ *agentruntime.Turn,
-	calls []agentruntime.DelegateCall,
-) []agentruntime.DelegateRun {
-	runs := make([]agentruntime.DelegateRun, len(calls))
+	calls []delegation.Call,
+) []delegation.Run {
+	runs := make([]delegation.Run, len(calls))
 	outcomes := make([]Outcome, len(calls))
 	if len(calls) == 1 {
 		runs[0], outcomes[0] = fx.delegate(fx.ctx, &calls[0])
@@ -366,8 +372,8 @@ func (fx *workflowEffects) Delegate(
 
 func (fx *workflowEffects) delegate(
 	ctx workflow.Context,
-	call *agentruntime.DelegateCall,
-) (agentruntime.DelegateRun, Outcome) {
+	call *delegation.Call,
+) (delegation.Run, Outcome) {
 	var a *Activities
 	openCtx := workflow.WithActivityOptions(ctx, fx.openDelegateOptions(call.Delegate.Name))
 
@@ -391,7 +397,7 @@ func (fx *workflowEffects) delegate(
 	turn.CarryExternalContent(call.AfterExternalContent)
 	result, err := fx.runtime.Drive(turn, sub)
 
-	run := agentruntime.DelegateRun{
+	run := delegation.Run{
 		Definition:      opened.Run.Definition,
 		Result:          result,
 		Documents:       publishedDocuments(sub.outcome.Artifacts),
@@ -411,17 +417,17 @@ func (fx *workflowEffects) delegate(
 // declinedDelegate is a task whose agent's turn could not be opened. A
 // refusal is passed on as it was written; anything else never reached the
 // agent, so nothing it could have written happened.
-func declinedDelegate(call agentruntime.DelegateCall, err error) agentruntime.DelegateRun {
+func declinedDelegate(call delegation.Call, err error) delegation.Run {
 	if temporal.IsCanceledError(err) {
-		return agentruntime.DelegateRun{Stopped: true}
+		return delegation.Run{Stopped: true}
 	}
 
 	var appErr *temporal.ApplicationError
 	if errors.As(err, &appErr) && appErr.Type() == ErrTypeDelegateDeclined {
-		return agentruntime.DelegateRun{Declined: appErr.Message()}
+		return delegation.Run{Declined: appErr.Message()}
 	}
 
-	return agentruntime.DelegateRun{
+	return delegation.Run{
 		Declined: call.Delegate.Name + " could not be started just now. Nothing was asked " +
 			"of it; try again, or tell the person.",
 	}

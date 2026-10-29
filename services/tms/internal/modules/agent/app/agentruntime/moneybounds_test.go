@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
@@ -22,20 +23,20 @@ func roomyMoneyLimits() agenttooltrust.MoneyLimits { return agenttest.RoomyMoney
 func TestRun_AMoneyWritePastTheCeilingIsFiledNamingTheBound(t *testing.T) {
 	t.Parallel()
 
-	pay := moneyTool()
+	pay := runtimetest.MoneyTool()
 	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
-		toolTurn("apply_payment", map[string]any{"invoiceId": "inv_1"}),
-		textTurn("Filed."),
+		runtimetest.ToolTurn("apply_payment", map[string]any{"invoiceId": "inv_1"}),
+		runtimetest.TextTurn("Filed."),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{},
 		&stubActionRegistry{Tools: []agenttoolports.AgentTool{pay}}, nil)
 	limits := roomyMoneyLimits()
 	limits.CallCeilingMinor = 9_999
-	rt.budgets = &moneyBudgets{Limits: limits}
+	rewire(rt, func(p *Params) { p.Budgets = &moneyBudgets{Limits: limits} })
 
 	run := runTainted(t, rt, &agentruntimeports.RunRequest{
-		Definition: autoDefinition("apply_payment"),
-		Actor:      testActor(),
+		Definition: runtimetest.AutoDefinition("apply_payment"),
+		Actor:      runtimetest.Actor(),
 		Input:      "Apply the payment.",
 	})
 
@@ -51,22 +52,22 @@ func TestRun_AMoneyWritePastTheCeilingIsFiledNamingTheBound(t *testing.T) {
 func TestRun_WritesEarlierInTheTurnCountAgainstTheRunCap(t *testing.T) {
 	t.Parallel()
 
-	pay := moneyTool()
+	pay := runtimetest.MoneyTool()
 	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
-		toolTurn("apply_payment", map[string]any{"invoiceId": "inv_1"}),
-		toolTurn("apply_payment", map[string]any{"invoiceId": "inv_2"}),
-		textTurn("Applied one."),
+		runtimetest.ToolTurn("apply_payment", map[string]any{"invoiceId": "inv_1"}),
+		runtimetest.ToolTurn("apply_payment", map[string]any{"invoiceId": "inv_2"}),
+		runtimetest.TextTurn("Applied one."),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{},
 		&stubActionRegistry{Tools: []agenttoolports.AgentTool{pay}}, nil)
 	limits := roomyMoneyLimits()
 	limits.RunCalls = 1
 	budgets := &moneyBudgets{Limits: limits}
-	rt.budgets = budgets
+	rewire(rt, func(p *Params) { p.Budgets = budgets })
 
 	run := runTainted(t, rt, &agentruntimeports.RunRequest{
-		Definition: autoDefinition("apply_payment"),
-		Actor:      testActor(),
+		Definition: runtimetest.AutoDefinition("apply_payment"),
+		Actor:      runtimetest.Actor(),
 		Input:      "Apply both payments.",
 	})
 
@@ -93,18 +94,18 @@ func TestRun_MoneyLimitsThatCannotBeReadHoldTheWrite(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
-			pay := moneyTool()
+			pay := runtimetest.MoneyTool()
 			completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
-				toolTurn("apply_payment", map[string]any{"invoiceId": "inv_1"}),
-				textTurn("Filed."),
+				runtimetest.ToolTurn("apply_payment", map[string]any{"invoiceId": "inv_1"}),
+				runtimetest.TextTurn("Filed."),
 			}}
 			rt := newRuntime(completion, &stubQueryRegistry{},
 				&stubActionRegistry{Tools: []agenttoolports.AgentTool{pay}}, nil)
-			rt.budgets = budgets
+			rewire(rt, func(p *Params) { p.Budgets = budgets })
 
 			run := runTainted(t, rt, &agentruntimeports.RunRequest{
-				Definition: autoDefinition("apply_payment"),
-				Actor:      testActor(),
+				Definition: runtimetest.AutoDefinition("apply_payment"),
+				Actor:      runtimetest.Actor(),
 				Input:      "Apply the payment.",
 			})
 
@@ -122,19 +123,19 @@ func TestRun_MoneyLimitsThatCannotBeReadHoldTheWrite(t *testing.T) {
 func TestRun_AMoneyToolThatProvesNothingAsksFirst(t *testing.T) {
 	t.Parallel()
 
-	pay := moneyTool()
+	pay := runtimetest.MoneyTool()
 	pay.MoneyMinor = nil
 	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
-		toolTurn("apply_payment", map[string]any{"invoiceId": "inv_1"}),
-		textTurn("Filed."),
+		runtimetest.ToolTurn("apply_payment", map[string]any{"invoiceId": "inv_1"}),
+		runtimetest.TextTurn("Filed."),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{},
 		&stubActionRegistry{Tools: []agenttoolports.AgentTool{pay}}, nil)
-	rt.budgets = &moneyBudgets{Limits: roomyMoneyLimits()}
+	rewire(rt, func(p *Params) { p.Budgets = &moneyBudgets{Limits: roomyMoneyLimits()} })
 
 	run := runTainted(t, rt, &agentruntimeports.RunRequest{
-		Definition: autoDefinition("apply_payment"),
-		Actor:      testActor(),
+		Definition: runtimetest.AutoDefinition("apply_payment"),
+		Actor:      runtimetest.Actor(),
 		Input:      "Apply the payment.",
 	})
 
@@ -142,14 +143,4 @@ func TestRun_AMoneyToolThatProvesNothingAsksFirst(t *testing.T) {
 	require.Len(t, run.result.Actions, 1)
 	assert.Equal(t, agent.TierActWithApproval, run.result.Actions[0].Tier)
 	assert.Equal(t, []string{agenttooltrust.HeldByMoneyUnbounded}, run.result.Actions[0].HeldBy)
-}
-
-func TestHeldReason_ExplainsEveryMoneyBound(t *testing.T) {
-	t.Parallel()
-
-	for _, key := range agenttooltrust.MoneyHeldByKeys() {
-		reason := heldReason([]string{key}, agent.EgressMoney)
-		assert.NotEmpty(t, reason, key)
-		assert.Contains(t, reason, moneyHeldReasons[key], key)
-	}
 }

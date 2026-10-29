@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace/aitracetest"
 	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/toolcall"
 	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
@@ -79,7 +80,7 @@ func TestFinish_TheTurnIsOneTraceUnderItsRoot(t *testing.T) {
 		},
 	}, func(kernelports.StreamEvent) {})
 	require.NoError(t, err)
-	runtime.DispatchStep(t.Context(), req, agentruntime.DispatchCall{
+	runtime.DispatchStep(t.Context(), req, toolcall.Call{
 		Call: llmports.ToolCall{
 			ID:        "call_1",
 			Name:      replayToolName,

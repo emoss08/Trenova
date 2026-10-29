@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/toolresult"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
@@ -329,7 +329,7 @@ func newWorld(t *testing.T, decision *agentdecision.AgentDecision) *world {
 			Role:       conversation.RoleTool,
 			ToolName:   "customer_get",
 			ToolCallID: "call_1",
-			Content:    agentruntime.FenceToolResult("customer_get", payload),
+			Content:    toolresult.Fence("customer_get", payload),
 			CreatedAt:  202,
 		},
 		{
@@ -337,7 +337,7 @@ func newWorld(t *testing.T, decision *agentdecision.AgentDecision) *world {
 			Role:       conversation.RoleTool,
 			ToolName:   "find_tools",
 			ToolCallID: "call_2",
-			Content:    agentruntime.FenceToolResult("find_tools", `{"tools":[]}`),
+			Content:    toolresult.Fence("find_tools", `{"tools":[]}`),
 			CreatedAt:  202,
 		},
 		{

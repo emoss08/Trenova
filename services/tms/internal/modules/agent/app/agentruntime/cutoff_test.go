@@ -5,6 +5,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/loopguard"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -74,8 +76,8 @@ func runCutOff(
 	}
 
 	result, err := rt.Drive(rt.OpenTurn(t.Context(), &agentruntimeports.RunRequest{
-		Definition: testDefinition("billing_transfer"),
-		Actor:      testActor(),
+		Definition: runtimetest.Definition("billing_transfer"),
+		Actor:      runtimetest.Actor(),
 		Input:      "Transfer all of them to billing.",
 	}), fx)
 	require.NoError(t, err)
@@ -99,8 +101,8 @@ func TestCutOffCall_IsAskedAgainWithTwiceTheRoom(t *testing.T) {
 
 	run := runCutOff(t,
 		cutMidCall(1024),
-		toolTurn("billing_transfer", map[string]any{"shipmentIds": []any{"shp_1"}}),
-		textTurn("Proposed the transfer of shp_1."),
+		runtimetest.ToolTurn("billing_transfer", map[string]any{"shipmentIds": []any{"shp_1"}}),
+		runtimetest.TextTurn("Proposed the transfer of shp_1."),
 	)
 
 	require.Equal(t, 3, run.completion.CallCount)
@@ -112,7 +114,7 @@ func TestCutOffCall_IsAskedAgainWithTwiceTheRoom(t *testing.T) {
 	assert.Equal(t, "billing_transfer", run.result.Actions[0].ToolName)
 	assert.Equal(t, "Proposed the transfer of shp_1.", run.result.Reply)
 	assert.False(t, run.result.Truncated)
-	assert.Equal(t, []string{cutOffRetryReason}, retryingReasons(run.fx.events),
+	assert.Equal(t, []string{loopguard.CutOffRetryReason}, retryingReasons(run.fx.events),
 		"the reader drops the markup it watched stream")
 	for _, message := range run.result.Messages {
 		assert.NotContains(t, message.Content, "I'll transfer all 21 now.",
@@ -144,7 +146,7 @@ func TestCutOffCall_StillCutSaysItRanOutOfRoomAndNamesTheLimit(t *testing.T) {
 func TestCutOffCall_AReplyThatSpentItsBudgetThinkingIsAskedAgain(t *testing.T) {
 	t.Parallel()
 
-	run := runCutOff(t, cutBeforeAnswering(1024), textTurn("21 shipments can go."))
+	run := runCutOff(t, cutBeforeAnswering(1024), runtimetest.TextTurn("21 shipments can go."))
 
 	require.Equal(t, 2, run.completion.CallCount)
 	assert.Equal(t, 2048, run.completion.Requests[1].MaxTokens)
@@ -176,14 +178,18 @@ func TestCutOffCall_ABrokenNativeCallIsAskedAgain(t *testing.T) {
 func TestCutOffCall_TheRetryIsCappedByTheRuntimeCeiling(t *testing.T) {
 	t.Parallel()
 
-	run := runCutOff(t, cutMidCall(cutOffRetryCeiling), textTurn("never asked"))
+	run := runCutOff(
+		t,
+		cutMidCall(loopguard.CutOffRetryCeiling),
+		runtimetest.TextTurn("never asked"),
+	)
 
 	require.Equal(t, 1, run.completion.CallCount, "no more room to give, so it is not asked again")
 	assert.Contains(t, run.result.Reply, "ran out of room")
 
-	capped := runCutOff(t, cutMidCall(20000), textTurn("Done."))
+	capped := runCutOff(t, cutMidCall(20000), runtimetest.TextTurn("Done."))
 	require.Equal(t, 2, capped.completion.CallCount)
-	assert.Equal(t, cutOffRetryCeiling, capped.completion.Requests[1].MaxTokens)
+	assert.Equal(t, loopguard.CutOffRetryCeiling, capped.completion.Requests[1].MaxTokens)
 }
 
 func TestCutOffCall_ALongTextAnswerKeepsTheOldNotice(t *testing.T) {

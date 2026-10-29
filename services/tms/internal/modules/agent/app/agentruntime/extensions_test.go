@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
@@ -71,14 +72,14 @@ func runWithExtensions(
 		}},
 		nil,
 	)
-	rt.extensions = run.gate
+	rewire(rt, func(p *Params) { p.Extensions = run.gate })
 
-	definition := testDefinition(run.definition...)
+	definition := runtimetest.Definition(run.definition...)
 	definition.AutonomyCeiling = agent.TierAutoExecute
 
 	result, err := rt.Run(t.Context(), &agentruntimeports.RunRequest{
 		Definition: definition,
-		Actor:      testActor(),
+		Actor:      runtimetest.Actor(),
 		Input:      "What changed in the ELD rules, then save a report of it",
 	})
 	require.NoError(t, err)
@@ -115,9 +116,12 @@ func TestRun_AWriteAfterReadingTheWebWaitsForAPerson(t *testing.T) {
 		gate:       webGate(agentextension.AvailabilitySelectedAgents),
 		definition: []string{agentextension.ToolWebSearch, "report_create"},
 		turns: []*llmports.ChatCompletionResult{
-			toolTurn(agentextension.ToolWebSearch, map[string]any{"query": "eld rule changes"}),
-			toolTurn("report_create", map[string]any{"name": "ELD changes"}),
-			textTurn("Proposed."),
+			runtimetest.ToolTurn(
+				agentextension.ToolWebSearch,
+				map[string]any{"query": "eld rule changes"},
+			),
+			runtimetest.ToolTurn("report_create", map[string]any{"name": "ELD changes"}),
+			runtimetest.TextTurn("Proposed."),
 		},
 	})
 
@@ -134,13 +138,16 @@ func TestRun_AnEscalationAfterReadingTheWebStillRuns(t *testing.T) {
 	t.Parallel()
 
 	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
-		toolTurn(agentextension.ToolWebSearch, map[string]any{"query": "eld rule changes"}),
-		toolTurn(
+		runtimetest.ToolTurn(
+			agentextension.ToolWebSearch,
+			map[string]any{"query": "eld rule changes"},
+		),
+		runtimetest.ToolTurn(
 			"agent_raise_exception",
 			map[string]any{"attemptSummary": "The page says to stop."},
 		),
-		toolTurn("report_create", map[string]any{"name": "ELD changes"}),
-		textTurn("Raised it for a person."),
+		runtimetest.ToolTurn("report_create", map[string]any{"name": "ELD changes"}),
+		runtimetest.TextTurn("Raised it for a person."),
 	}}
 	escalation := &agenttest.StubActionTool{
 		ToolName:  "agent_raise_exception",
@@ -158,9 +165,12 @@ func TestRun_AnEscalationAfterReadingTheWebStillRuns(t *testing.T) {
 		}},
 		nil,
 	)
-	rt.extensions = webGate(agentextension.AvailabilitySelectedAgents)
+	rewire(
+		rt,
+		func(p *Params) { p.Extensions = webGate(agentextension.AvailabilitySelectedAgents) },
+	)
 
-	definition := testDefinition(
+	definition := runtimetest.Definition(
 		agentextension.ToolWebSearch,
 		"agent_raise_exception",
 		"report_create",
@@ -169,7 +179,7 @@ func TestRun_AnEscalationAfterReadingTheWebStillRuns(t *testing.T) {
 
 	result, err := rt.Run(t.Context(), &agentruntimeports.RunRequest{
 		Definition: definition,
-		Actor:      testActor(),
+		Actor:      runtimetest.Actor(),
 		Input:      "Check the ELD rules and tell someone if anything is off",
 		Unattended: true,
 		RunID:      pulid.MustNew("ar_"),
@@ -200,8 +210,8 @@ func TestRun_AWriteBeforeAnyWebContentRunsAtItsTier(t *testing.T) {
 		gate:       webGate(agentextension.AvailabilitySelectedAgents),
 		definition: []string{agentextension.ToolWebSearch, "report_create"},
 		turns: []*llmports.ChatCompletionResult{
-			toolTurn("report_create", map[string]any{"name": "Late loads"}),
-			textTurn("Saved."),
+			runtimetest.ToolTurn("report_create", map[string]any{"name": "Late loads"}),
+			runtimetest.TextTurn("Saved."),
 		},
 	})
 
@@ -218,9 +228,12 @@ func TestRun_AFailedSearchReadNothing(t *testing.T) {
 		definition: []string{agentextension.ToolWebSearch, "report_create"},
 		searchErr:  context.DeadlineExceeded,
 		turns: []*llmports.ChatCompletionResult{
-			toolTurn(agentextension.ToolWebSearch, map[string]any{"query": "eld rule changes"}),
-			toolTurn("report_create", map[string]any{"name": "Late loads"}),
-			textTurn("Saved."),
+			runtimetest.ToolTurn(
+				agentextension.ToolWebSearch,
+				map[string]any{"query": "eld rule changes"},
+			),
+			runtimetest.ToolTurn("report_create", map[string]any{"name": "Late loads"}),
+			runtimetest.TextTurn("Saved."),
 		},
 	})
 
@@ -235,8 +248,11 @@ func TestRun_AnExtensionTurnedOffIsNeitherOfferedNorRun(t *testing.T) {
 		gate:       &stubExtensionGate{active: agentextension.Active{}},
 		definition: []string{agentextension.ToolWebSearch, "report_create"},
 		turns: []*llmports.ChatCompletionResult{
-			toolTurn(agentextension.ToolWebSearch, map[string]any{"query": "eld rule changes"}),
-			textTurn("I could not check the web."),
+			runtimetest.ToolTurn(
+				agentextension.ToolWebSearch,
+				map[string]any{"query": "eld rule changes"},
+			),
+			runtimetest.TextTurn("I could not check the web."),
 		},
 	})
 
@@ -256,8 +272,11 @@ func TestRun_AnExtensionForEveryAgentReachesAgentsThatNeverSelectedIt(t *testing
 		gate:       webGate(agentextension.AvailabilityAllAgents),
 		definition: []string{"report_create"},
 		turns: []*llmports.ChatCompletionResult{
-			toolTurn(agentextension.ToolWebSearch, map[string]any{"query": "eld rule changes"}),
-			textTurn("Here is what changed."),
+			runtimetest.ToolTurn(
+				agentextension.ToolWebSearch,
+				map[string]any{"query": "eld rule changes"},
+			),
+			runtimetest.TextTurn("Here is what changed."),
 		},
 	})
 
@@ -276,7 +295,7 @@ func TestRun_AnExtensionForSelectedAgentsStaysWithThem(t *testing.T) {
 	_, completion := runWithExtensions(t, extensionRun{
 		gate:       webGate(agentextension.AvailabilitySelectedAgents),
 		definition: []string{"report_create"},
-		turns:      []*llmports.ChatCompletionResult{textTurn("Done.")},
+		turns:      []*llmports.ChatCompletionResult{runtimetest.TextTurn("Done.")},
 	})
 
 	offered := offeredTools(completion.Requests[0])
@@ -289,7 +308,10 @@ func TestTurnState_KeepsWhetherTheTurnReadTheWeb(t *testing.T) {
 	t.Parallel()
 
 	rt := newRuntime(&scriptedCompletion{}, &stubQueryRegistry{}, &stubActionRegistry{}, nil)
-	req := &agentruntimeports.RunRequest{Definition: testDefinition(), Actor: testActor()}
+	req := &agentruntimeports.RunRequest{
+		Definition: runtimetest.Definition(),
+		Actor:      runtimetest.Actor(),
+	}
 
 	turn := rt.RestoreTurn(
 		req,
@@ -306,33 +328,13 @@ func TestTurnState_KeepsWhetherTheTurnReadTheWeb(t *testing.T) {
 	assert.True(t, fresh.ReadExternalContent())
 }
 
-func TestAfterExternalContentOnlyLowersTheTier(t *testing.T) {
-	t.Parallel()
-
-	tier, held := afterExternalContent(agent.TierAutoExecute, true)
-	assert.Equal(t, agent.TierPropose, tier)
-	assert.True(t, held)
-
-	tier, held = afterExternalContent(agent.TierActWithApproval, true)
-	assert.Equal(t, agent.TierPropose, tier)
-	assert.True(t, held)
-
-	tier, held = afterExternalContent(agent.TierPropose, true)
-	assert.Equal(t, agent.TierPropose, tier)
-	assert.False(t, held)
-
-	tier, held = afterExternalContent(agent.TierAutoExecute, false)
-	assert.Equal(t, agent.TierAutoExecute, tier)
-	assert.False(t, held)
-}
-
 func TestRun_AWriteAfterInspectingPastedX12WaitsForAPerson(t *testing.T) {
 	t.Parallel()
 
 	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
-		toolTurn("edi_inspect_x12", map[string]any{"content": "ISA*00*~"}),
-		toolTurn("report_create", map[string]any{"name": "Partner 214 errors"}),
-		textTurn("Proposed."),
+		runtimetest.ToolTurn("edi_inspect_x12", map[string]any{"content": "ISA*00*~"}),
+		runtimetest.ToolTurn("report_create", map[string]any{"name": "Partner 214 errors"}),
+		runtimetest.TextTurn("Proposed."),
 	}}
 	rt := newRuntime(
 		completion,
@@ -344,13 +346,16 @@ func TestRun_AWriteAfterInspectingPastedX12WaitsForAPerson(t *testing.T) {
 		}},
 		nil,
 	)
-	rt.extensions = webGate(agentextension.AvailabilitySelectedAgents)
-	definition := testDefinition("edi_inspect_x12", "report_create")
+	rewire(
+		rt,
+		func(p *Params) { p.Extensions = webGate(agentextension.AvailabilitySelectedAgents) },
+	)
+	definition := runtimetest.Definition("edi_inspect_x12", "report_create")
 	definition.AutonomyCeiling = agent.TierAutoExecute
 
 	result, err := rt.Run(t.Context(), &agentruntimeports.RunRequest{
 		Definition: definition,
-		Actor:      testActor(),
+		Actor:      runtimetest.Actor(),
 		Input:      "what is wrong with this 214, then save a report of it",
 	})
 	require.NoError(t, err)
@@ -362,16 +367,4 @@ func TestRun_AWriteAfterInspectingPastedX12WaitsForAPerson(t *testing.T) {
 	contents := toolResults(result, "report_create")
 	require.Len(t, contents, 1)
 	assert.Contains(t, contents[0], "a trading partner's text or guide it was given")
-}
-
-func TestReadsExternalContent_NamesTheWebAndPastedPartnerText(t *testing.T) {
-	t.Parallel()
-
-	assert.True(t, ReadsExternalContent(agentextension.ToolWebSearch))
-	assert.True(t, ReadsExternalContent(agentextension.ToolWebRead))
-	assert.True(t, ReadsExternalContent("edi_inspect_x12"))
-	assert.True(t, ReadsExternalContent("edi_draft_connection"),
-		"a partner's implementation guide is their text too")
-	assert.False(t, ReadsExternalContent("edi_get_message"),
-		"a stored partner document taints the run; only text handed to the agent caps writes")
 }

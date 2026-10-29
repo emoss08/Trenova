@@ -22,7 +22,6 @@ debt:
   services/tms/internal/modules/accounting/adapters/postgres/accountingsyncrepository: 5124
   services/tms/internal/modules/accounting/app/accountingconnectionservice: 3903
   services/tms/internal/modules/accounting/app/accountingmappingservice: 3333
-  services/tms/internal/modules/agent/app/agentruntime: 18668
   services/tms/internal/modules/agent/app/aiauditservice: 5108
   services/tms/internal/modules/agent/app/assistantservice: 14610
   services/tms/internal/modules/agent/ports/agentports: 10434

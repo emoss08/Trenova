@@ -3,6 +3,7 @@ package agentruntime
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolpolicy"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
@@ -31,8 +32,8 @@ func TestOpenTurn_AShipmentEnteredByEDIOpensTainted(t *testing.T) {
 	shipmentID := pulid.MustNew("shp_").String()
 
 	turn := rt.OpenTurn(t.Context(), &agentruntimeports.RunRequest{
-		Definition: testDefinition(),
-		Actor:      testActor(),
+		Definition: runtimetest.Definition(),
+		Actor:      runtimetest.Actor(),
 		Input:      "Check the new shipment.",
 		Unattended: true,
 		Context: agentturn.RuntimeContext{
@@ -60,8 +61,8 @@ func TestOpenTurn_AShipmentEnteredByHandOpensClean(t *testing.T) {
 	subject.OutsideAuthored = ""
 
 	turn := rt.OpenTurn(t.Context(), &agentruntimeports.RunRequest{
-		Definition: testDefinition(),
-		Actor:      testActor(),
+		Definition: runtimetest.Definition(),
+		Actor:      runtimetest.Actor(),
 		Input:      "Check the new shipment.",
 		Unattended: true,
 		Context:    agentturn.RuntimeContext{Subject: subject},
@@ -74,18 +75,18 @@ func TestOpenTurn_AShipmentEnteredByHandOpensClean(t *testing.T) {
 func TestRun_AnEDIEnteredShipmentHoldsMoneyForAPerson(t *testing.T) {
 	t.Parallel()
 
-	pay := moneyTool()
+	pay := runtimetest.MoneyTool()
 	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
-		toolTurn("apply_payment", map[string]any{"invoiceId": "inv_2001"}),
-		textTurn("The payment waits for approval."),
+		runtimetest.ToolTurn("apply_payment", map[string]any{"invoiceId": "inv_2001"}),
+		runtimetest.TextTurn("The payment waits for approval."),
 	}}
 	rt := newRuntime(completion,
 		&stubQueryRegistry{},
 		&stubActionRegistry{Tools: []agenttoolports.AgentTool{pay}}, nil)
 
 	run := runTainted(t, rt, &agentruntimeports.RunRequest{
-		Definition: autoDefinition("apply_payment"),
-		Actor:      testActor(),
+		Definition: runtimetest.AutoDefinition("apply_payment"),
+		Actor:      runtimetest.Actor(),
 		Input:      "Check the new shipment.",
 		Unattended: true,
 		Context: agentturn.RuntimeContext{

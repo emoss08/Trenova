@@ -4,7 +4,7 @@ import (
 	"slices"
 	"sync"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetools"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 )
 
@@ -45,7 +45,7 @@ type Retrieval struct {
 }
 
 var runtimeToolNames = sync.OnceValue(func() []string {
-	policies := agentruntime.RuntimePolicies()
+	policies := runtimetools.Policies()
 	names := make([]string, 0, len(policies))
 	for idx := range policies {
 		names = append(names, policies[idx].Name)

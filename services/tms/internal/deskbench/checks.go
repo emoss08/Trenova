@@ -15,7 +15,7 @@ import (
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/replycheck"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/shared/intutils"
@@ -199,16 +199,16 @@ func artifactLinkChecks(turns []*TurnRecord) []CheckResult {
 	var stray, misnamed, corrected []string
 	named := false
 	for _, turn := range turns {
-		if len(turn.Artifacts) == 0 && len(agentruntime.ArtifactRefIDs(turn.Reply)) == 0 {
+		if len(turn.Artifacts) == 0 && len(replycheck.ArtifactRefIDs(turn.Reply)) == 0 {
 			continue
 		}
 		named = true
-		stray = append(stray, agentruntime.StrayArtifactLinks(turn.Reply)...)
+		stray = append(stray, replycheck.StrayArtifactLinks(turn.Reply)...)
 		titles := make(map[string]string, len(turn.Artifacts))
 		for idx := range turn.Artifacts {
 			titles[turn.Artifacts[idx].ID.String()] = turn.Artifacts[idx].Title
 		}
-		titled := agentruntime.NameArtifactLinks(turn.Reply, func(id, words string) (string, bool) {
+		titled := replycheck.NameArtifactLinks(turn.Reply, func(id, words string) (string, bool) {
 			if title, ok := titles[id]; ok {
 				return title, true
 			}

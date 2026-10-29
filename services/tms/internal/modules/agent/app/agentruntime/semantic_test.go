@@ -1,14 +1,15 @@
 package agentruntime
 
 import (
-	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetest"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/toolaccess"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
-	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -16,74 +17,26 @@ import (
 func findContent(
 	t *testing.T,
 	service *Service,
-	set *toolSet,
+	set *toolaccess.ToolSet,
 	arguments map[string]any,
 ) string {
 	t.Helper()
 
-	return service.resolveFind(t.Context(), set, testActor(), arguments).Content
-}
-
-type fixedVectorizer struct {
-	vector retrievalports.QueryVector
-	calls  []retrievalports.QueryVectorRequest
-}
-
-func (v *fixedVectorizer) Vectorize(
-	_ context.Context,
-	req *retrievalports.QueryVectorRequest,
-) (retrievalports.QueryVector, error) {
-	v.calls = append(v.calls, *req)
-
-	return v.vector, nil
-}
-
-func (v *fixedVectorizer) Availability(
-	context.Context,
-	pagination.TenantInfo,
-) (airetrieval.Availability, error) {
-	return airetrieval.Availability{Available: v.vector.Available}, nil
-}
-
-type fixedSimilarities struct {
-	byKey    map[string]float64
-	requests []retrievalports.CatalogSimilarityRequest
-}
-
-func (f *fixedSimilarities) Similarities(
-	_ context.Context,
-	req *retrievalports.CatalogSimilarityRequest,
-) (retrievalports.CatalogSimilarities, error) {
-	f.requests = append(f.requests, *req)
-
-	return retrievalports.CatalogSimilarities{Available: true, ByKey: f.byKey}, nil
-}
-
-func usableQuery() retrievalports.QueryVector {
-	vector := make([]float32, airetrieval.Dimensions768)
-	vector[0] = 1
-	vector[767] = 0.5
-
-	return retrievalports.QueryVector{
-		Available:  true,
-		Vector:     vector,
-		ModelKey:   "localhost/nomic-embed-text@768",
-		Dimensions: airetrieval.Dimensions768,
-	}
+	return service.access.ResolveFind(t.Context(), set, runtimetest.Actor(), arguments).Content
 }
 
 func semanticRuntime(
 	t *testing.T,
 	query retrievalports.QueryVector,
 	similarity map[string]float64,
-) (*Service, []string, *fixedVectorizer, *fixedSimilarities) {
+) (*Service, []string, *runtimetest.FixedVectorizer, *runtimetest.FixedSimilarities) {
 	t.Helper()
 
 	service, names := wideRuntime(t)
-	vectorizer := &fixedVectorizer{vector: query}
-	similarities := &fixedSimilarities{byKey: similarity}
-	service.vectorizer = vectorizer
-	service.vectors = similarities
+	vectorizer := &runtimetest.FixedVectorizer{Vector: query}
+	similarities := &runtimetest.FixedSimilarities{ByKey: similarity}
+	rewire(service, func(p *Params) { p.Vectorizer = vectorizer })
+	rewire(service, func(p *Params) { p.CatalogVectors = similarities })
 
 	return service, names, vectorizer, similarities
 }
@@ -93,7 +46,7 @@ func findToolsHistory(result conversation.Message) []conversation.Message {
 		{Role: conversation.RoleUser, Content: "say hello"},
 		{Role: conversation.RoleAssistant, ToolCalls: []conversation.ToolCallRecord{{
 			ID:        "c1",
-			Name:      findToolsName,
+			Name:      runtimetools.FindToolsName,
 			Arguments: map[string]any{"need": "trailer inspection"},
 		}}},
 		result,
@@ -108,20 +61,20 @@ func TestCarryOver_ReloadsTheToolsASearchRecorded(t *testing.T) {
 	history := findToolsHistory(conversation.Message{
 		Role:       conversation.RoleTool,
 		ToolCallID: "c1",
-		ToolName:   findToolsName,
+		ToolName:   runtimetools.FindToolsName,
 		Content:    "These tools are now callable",
 		FoundTools: []string{"worker_list"},
 	})
 
-	set := service.newToolSet(t.Context(), toolSetRequest{
-		definition: testDefinition(names...),
-		actor:      testActor(),
-		input:      "yes, do that",
-		history:    history,
+	set := service.access.NewToolSet(t.Context(), toolaccess.ToolSetRequest{
+		Definition: runtimetest.Definition(names...),
+		Actor:      runtimetest.Actor(),
+		Input:      "yes, do that",
+		History:    history,
 	})
 
-	require.True(t, set.disclosed)
-	sent := specNames(set.specs)
+	require.True(t, set.Disclosed)
+	sent := specNames(set.Specs)
 	assert.Contains(t, sent, "worker_list", "the recorded result is reloaded as it was")
 	assert.NotContains(t, sent, "equipment_list_trailers",
 		"the search is not run again when its result named what it found")
@@ -134,19 +87,19 @@ func TestCarryOver_SearchesAgainForAResultRecordedBeforeNamesWereKept(t *testing
 	history := findToolsHistory(conversation.Message{
 		Role:       conversation.RoleTool,
 		ToolCallID: "c1",
-		ToolName:   findToolsName,
+		ToolName:   runtimetools.FindToolsName,
 		Content:    "These tools are now callable",
 	})
 
-	set := service.newToolSet(t.Context(), toolSetRequest{
-		definition: testDefinition(names...),
-		actor:      testActor(),
-		input:      "yes, do that",
-		history:    history,
+	set := service.access.NewToolSet(t.Context(), toolaccess.ToolSetRequest{
+		Definition: runtimetest.Definition(names...),
+		Actor:      runtimetest.Actor(),
+		Input:      "yes, do that",
+		History:    history,
 	})
 
-	require.True(t, set.disclosed)
-	sent := specNames(set.specs)
+	require.True(t, set.Disclosed)
+	sent := specNames(set.Specs)
 	assert.Contains(
 		t,
 		sent,
@@ -169,38 +122,42 @@ func TestCarryOver_NeverWidensPastWhatTheAgentHolds(t *testing.T) {
 	history := findToolsHistory(conversation.Message{
 		Role:       conversation.RoleTool,
 		ToolCallID: "c1",
-		ToolName:   findToolsName,
+		ToolName:   runtimetools.FindToolsName,
 		FoundTools: []string{"worker_list"},
 	})
 
-	set := service.newToolSet(t.Context(), toolSetRequest{
-		definition: testDefinition(held...),
-		actor:      testActor(),
-		input:      "yes, do that",
-		history:    history,
+	set := service.access.NewToolSet(t.Context(), toolaccess.ToolSetRequest{
+		Definition: runtimetest.Definition(held...),
+		Actor:      runtimetest.Actor(),
+		Input:      "yes, do that",
+		History:    history,
 	})
 
-	require.True(t, set.disclosed)
-	assert.False(t, set.offers("worker_list"))
+	require.True(t, set.Disclosed)
+	assert.False(t, set.Offers("worker_list"))
 }
 
 func TestRun_RecordsWhatFindToolsFoundOnItsResult(t *testing.T) {
 	t.Parallel()
 
-	service, _, names := wideRun(t,
-		toolTurn(findToolsName, map[string]any{"need": "driver medical card expiry"}),
-		textTurn("Two cards are due."),
+	service, _, names := wideRun(
+		t,
+		runtimetest.ToolTurn(
+			runtimetools.FindToolsName,
+			map[string]any{"need": "driver medical card expiry"},
+		),
+		runtimetest.TextTurn("Two cards are due."),
 	)
 
 	result, err := service.Run(t.Context(), &agentruntimeports.RunRequest{
-		Definition: testDefinition(names...),
-		Actor:      testActor(),
+		Definition: runtimetest.Definition(names...),
+		Actor:      runtimetest.Actor(),
 		Input:      "say hello",
 	})
 	require.NoError(t, err)
 
 	require.Len(t, result.Messages, 4)
-	assert.Equal(t, findToolsName, result.Messages[2].ToolName)
+	assert.Equal(t, runtimetools.FindToolsName, result.Messages[2].ToolName)
 	assert.Contains(t, result.Messages[2].FoundTools, "worker_list_credentials")
 }
 
@@ -214,58 +171,58 @@ func TestNewToolSet_KeywordRankingIsUnchangedWithoutAVector(t *testing.T) {
 		map[string]float64{"carrier_list": 0.99},
 	)
 
-	request := toolSetRequest{
-		definition: testDefinition(names...),
-		actor:      testActor(),
-		input:      "which trailers are due inspection",
-		query: retrievalports.QueryVectorRequest{
-			TenantInfo: testActor().TenantInfo(),
+	request := toolaccess.ToolSetRequest{
+		Definition: runtimetest.Definition(names...),
+		Actor:      runtimetest.Actor(),
+		Input:      "which trailers are due inspection",
+		Query: retrievalports.QueryVectorRequest{
+			TenantInfo: runtimetest.Actor().TenantInfo(),
 			Text:       "which trailers are due inspection",
 		},
 	}
-	want := keyword.newToolSet(t.Context(), request)
-	got := unavailable.newToolSet(t.Context(), request)
+	want := keyword.access.NewToolSet(t.Context(), request)
+	got := unavailable.access.NewToolSet(t.Context(), request)
 
-	assert.Equal(t, specNames(want.specs), specNames(got.specs))
-	assert.Len(t, vectorizer.calls, 1)
-	assert.Empty(t, similarities.requests, "an unavailable vector is never compared")
-	assert.Nil(t, got.state().Query)
+	assert.Equal(t, specNames(want.Specs), specNames(got.Specs))
+	assert.Len(t, vectorizer.Calls, 1)
+	assert.Empty(t, similarities.Requests, "an unavailable vector is never compared")
+	assert.Nil(t, got.State().Query)
 }
 
 func TestNewToolSet_PreselectsByMeaningWhenAVectorIsAvailable(t *testing.T) {
 	t.Parallel()
 
-	query := usableQuery()
+	query := runtimetest.UsableQuery()
 	service, names, vectorizer, similarities := semanticRuntime(t, query, map[string]float64{
 		"worker_list_credentials": 0.83,
 		"worker_list":             0.61,
 		"carrier_list":            0.12,
 	})
 
-	set := service.newToolSet(t.Context(), toolSetRequest{
-		definition: testDefinition(names...),
-		actor:      testActor(),
-		input:      "whose paperwork is going stale",
-		query: retrievalports.QueryVectorRequest{
-			TenantInfo: testActor().TenantInfo(),
+	set := service.access.NewToolSet(t.Context(), toolaccess.ToolSetRequest{
+		Definition: runtimetest.Definition(names...),
+		Actor:      runtimetest.Actor(),
+		Input:      "whose paperwork is going stale",
+		Query: retrievalports.QueryVectorRequest{
+			TenantInfo: runtimetest.Actor().TenantInfo(),
 			Text:       "whose paperwork is going stale",
 		},
 	})
 
-	require.True(t, set.disclosed)
-	require.Len(t, vectorizer.calls, 1, "one query vector per turn")
-	require.Len(t, similarities.requests, 1)
-	assert.Equal(t, airetrieval.CatalogCorpusTools, similarities.requests[0].Corpus)
-	require.NotEmpty(t, set.preselected)
-	assert.Equal(t, "worker_list_credentials", set.preselected[0],
+	require.True(t, set.Disclosed)
+	require.Len(t, vectorizer.Calls, 1, "one query vector per turn")
+	require.Len(t, similarities.Requests, 1)
+	assert.Equal(t, airetrieval.CatalogCorpusTools, similarities.Requests[0].Corpus)
+	require.NotEmpty(t, set.Preselected)
+	assert.Equal(t, "worker_list_credentials", set.Preselected[0],
 		"the closest tool by meaning leads when no word matches")
-	assert.NotContains(t, set.preselected[:3], "carrier_list",
+	assert.NotContains(t, set.Preselected[:3], "carrier_list",
 		"a tool below the similarity floor gains nothing from the vector")
 
-	state := set.state()
+	state := set.State()
 	require.NotNil(t, state.Query, "the vector rides on the turn for find_tools")
-	restored := restoreToolSet(state)
-	assert.Equal(t, query, restored.query)
+	restored := toolaccess.RestoreToolSet(state)
+	assert.Equal(t, query, restored.Query)
 }
 
 func TestFindFor_SearchesByMeaningWithTheTurnsVector(t *testing.T) {
@@ -276,77 +233,68 @@ func TestFindFor_SearchesByMeaningWithTheTurnsVector(t *testing.T) {
 	for idx, name := range names {
 		similarity[name] = 0.9 - 0.02*float64(idx)
 	}
-	service, _, vectorizer, similarities := semanticRuntime(t, usableQuery(), similarity)
+	service, _, vectorizer, similarities := semanticRuntime(
+		t,
+		runtimetest.UsableQuery(),
+		similarity,
+	)
 
-	set := service.newToolSet(t.Context(), toolSetRequest{
-		definition: testDefinition(names...),
-		actor:      testActor(),
-		input:      "say hello",
-		query: retrievalports.QueryVectorRequest{
-			TenantInfo: testActor().TenantInfo(),
+	set := service.access.NewToolSet(t.Context(), toolaccess.ToolSetRequest{
+		Definition: runtimetest.Definition(names...),
+		Actor:      runtimetest.Actor(),
+		Input:      "say hello",
+		Query: retrievalports.QueryVectorRequest{
+			TenantInfo: runtimetest.Actor().TenantInfo(),
 			Text:       "say hello",
 		},
 	})
-	require.True(t, set.disclosed)
-	preselected := specNames(set.specs)
-	for _, name := range names[:preselectedTools] {
+	require.True(t, set.Disclosed)
+	preselected := specNames(set.Specs)
+	for _, name := range names[:toolaccess.PreselectedTools] {
 		require.Contains(t, preselected, name, "preselection spends the vector first")
 	}
-	callsAtOpen := len(vectorizer.calls)
+	callsAtOpen := len(vectorizer.Calls)
 
 	found := service.FindFor(t.Context(), &agentruntimeports.RunRequest{
-		Definition: testDefinition(names...),
-		Actor:      testActor(),
-	}, set.state(), map[string]any{"need": "who is off this week"})
+		Definition: runtimetest.Definition(names...),
+		Actor:      runtimetest.Actor(),
+	}, set.State(), map[string]any{"need": "who is off this week"})
 
-	assert.Equal(t, callsAtOpen, len(vectorizer.calls), "find_tools reuses the turn's vector")
-	assert.Len(t, similarities.requests, 2)
+	assert.Equal(t, callsAtOpen, len(vectorizer.Calls), "find_tools reuses the turn's vector")
+	assert.Len(t, similarities.Requests, 2)
 	require.NotEmpty(t, found.Found)
-	assert.Equal(t, names[preselectedTools], found.Found[0],
+	assert.Equal(t, names[toolaccess.PreselectedTools], found.Found[0],
 		"the next closest tool the turn does not carry comes first")
 	for _, name := range found.Found {
-		assert.NotContains(t, names[:preselectedTools], name,
+		assert.NotContains(t, names[:toolaccess.PreselectedTools], name,
 			"a tool the turn already carries takes no slot")
 	}
-	assert.Contains(t, found.Loaded, names[preselectedTools])
+	assert.Contains(t, found.Loaded, names[toolaccess.PreselectedTools])
 }
 
 func TestFindFor_ReturnsNothingForNonsenseBelowTheFloor(t *testing.T) {
 	t.Parallel()
 
-	service, names, _, _ := semanticRuntime(t, usableQuery(), map[string]float64{
+	service, names, _, _ := semanticRuntime(t, runtimetest.UsableQuery(), map[string]float64{
 		"carrier_list": 0.21,
 		"worker_list":  0.18,
 	})
 
-	set := service.newToolSet(t.Context(), toolSetRequest{
-		definition: testDefinition(names...),
-		actor:      testActor(),
-		input:      "say hello",
-		query: retrievalports.QueryVectorRequest{
-			TenantInfo: testActor().TenantInfo(),
+	set := service.access.NewToolSet(t.Context(), toolaccess.ToolSetRequest{
+		Definition: runtimetest.Definition(names...),
+		Actor:      runtimetest.Actor(),
+		Input:      "say hello",
+		Query: retrievalports.QueryVectorRequest{
+			TenantInfo: runtimetest.Actor().TenantInfo(),
 			Text:       "say hello",
 		},
 	})
 
 	found := service.FindFor(t.Context(), &agentruntimeports.RunRequest{
-		Definition: testDefinition(names...),
-		Actor:      testActor(),
-	}, set.state(), map[string]any{"need": "zzzz qqqq"})
+		Definition: runtimetest.Definition(names...),
+		Actor:      runtimetest.Actor(),
+	}, set.State(), map[string]any{"need": "zzzz qqqq"})
 
 	assert.Empty(t, found.Found)
 	assert.Empty(t, found.Loaded)
-}
-
-func TestQueryVectorState_RefusesATornVector(t *testing.T) {
-	t.Parallel()
-
-	state := packQueryVector(usableQuery())
-	require.NotNil(t, state)
-
-	state.Vector = state.Vector[:len(state.Vector)-4]
-	assert.False(t, state.unpack().Usable())
-
-	var missing *QueryVectorState
-	assert.False(t, missing.unpack().Usable())
 }

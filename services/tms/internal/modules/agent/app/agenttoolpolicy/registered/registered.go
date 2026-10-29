@@ -5,7 +5,7 @@ import (
 	"reflect"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentquerytoolservice"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolpolicy"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolservice"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -33,7 +33,7 @@ func Build() (Tools, error) {
 	out := Tools{
 		Queries: make([]agenttoolports.AgentQueryTool, 0, len(providers)),
 		Actions: make([]agenttoolports.AgentTool, 0, len(providers)),
-		Runtime: agentruntime.RuntimePolicies(),
+		Runtime: runtimetools.Policies(),
 	}
 	for _, provider := range providers {
 		built, err := reflectutils.Construct(provider, supplied)

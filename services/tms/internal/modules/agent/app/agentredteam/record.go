@@ -4,7 +4,8 @@ import (
 	"slices"
 	"sync"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/delegation"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/toolcall"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory"
@@ -33,11 +34,11 @@ type ReadRecord struct {
 type DispatchRecord struct {
 	Definition *agentdefinition.Definition
 	Unattended bool
-	Call       agentruntime.DispatchCall
+	Call       toolcall.Call
 	Held       []string
 	Taint      *agent.RunTaint
 	SourceRead bool
-	Outcome    agentruntime.ToolOutcome
+	Outcome    toolcall.Outcome
 }
 
 type ExecutionRecord struct {
@@ -49,7 +50,7 @@ type ExecutionRecord struct {
 
 type DelegationRecord struct {
 	Parent     *agentdefinition.Definition
-	Call       agentruntime.DelegateCall
+	Call       delegation.Call
 	SourceRead bool
 	Declined   string
 }

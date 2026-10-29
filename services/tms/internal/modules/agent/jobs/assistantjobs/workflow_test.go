@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentguard"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/modelstream"
 	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
@@ -128,7 +129,7 @@ func (s *AssistantTurnWorkflowTestSuite) prepares(plan *assistantservice.TurnPla
 func (s *AssistantTurnWorkflowTestSuite) answers(text string) {
 	var fa *agentflow.Activities
 	s.env.OnActivity(fa.ModelCallActivity, mock.Anything, mock.Anything).Return(
-		&agentruntime.ModelReply{Completion: &llmports.ChatCompletionResult{
+		&modelstream.Reply{Completion: &llmports.ChatCompletionResult{
 			Text:            text,
 			ModelIdentifier: "test-model",
 		}}, nil,
@@ -244,7 +245,7 @@ func (s *AssistantTurnWorkflowTestSuite) TestSavesAStoppedTurn() {
 	var fa *agentflow.Activities
 	s.env.OnActivity(fa.ModelCallActivity, mock.Anything, mock.Anything).
 		After(time.Minute).
-		Return(&agentruntime.ModelReply{}, nil).
+		Return(&modelstream.Reply{}, nil).
 		Maybe()
 	s.finishes(&TurnEnding{Result: assistantcontract.AssistantTurnResult{Status: "Stopped"}}, nil)
 	s.env.RegisterDelayedCallback(s.env.CancelWorkflow, time.Second)
@@ -353,7 +354,7 @@ func (s *AssistantTurnWorkflowTestSuite) TestSaysNothingAboutAStoppedTurn() {
 	var fa *agentflow.Activities
 	s.env.OnActivity(fa.ModelCallActivity, mock.Anything, mock.Anything).
 		After(time.Minute).
-		Return(&agentruntime.ModelReply{}, nil).
+		Return(&modelstream.Reply{}, nil).
 		Maybe()
 	s.finishes(&TurnEnding{Result: assistantcontract.AssistantTurnResult{Status: "Stopped"}}, nil)
 	s.env.RegisterDelayedCallback(s.env.CancelWorkflow, time.Second)
@@ -371,7 +372,7 @@ func (s *AssistantTurnWorkflowTestSuite) TestSaysNothingAboutAStoppedTurnThatCou
 	var fa *agentflow.Activities
 	s.env.OnActivity(fa.ModelCallActivity, mock.Anything, mock.Anything).
 		After(time.Minute).
-		Return(&agentruntime.ModelReply{}, nil).
+		Return(&modelstream.Reply{}, nil).
 		Maybe()
 	s.finishes(nil, errors.New("database is down"))
 	var a *Activities

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -45,8 +46,8 @@ func observedRuntime(t *testing.T, err error) (*Service, *observer.ObservedLogs)
 	service, _ := wideRuntime(t)
 	core, logs := observer.New(zap.WarnLevel)
 	service.logger = zap.New(core)
-	service.vectorizer = failingVectorizer{err: err}
-	service.vectors = failingSimilarities{err: err}
+	rewire(service, func(p *Params) { p.Vectorizer = failingVectorizer{err: err} })
+	rewire(service, func(p *Params) { p.CatalogVectors = failingSimilarities{err: err} })
 
 	return service, logs
 }
@@ -55,12 +56,12 @@ func embedAndCompare(t *testing.T, service *Service) {
 	t.Helper()
 
 	tenant := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
-	query := service.vectorize(t.Context(), &retrievalports.QueryVectorRequest{
+	query := service.access.Vectorize(t.Context(), &retrievalports.QueryVectorRequest{
 		TenantInfo: tenant,
 		Text:       "which invoices are past due",
 	})
 	assert.False(t, query.Usable())
-	assert.Nil(t, service.toolSemantic(t.Context(), tenant, usableQuery()))
+	assert.Nil(t, service.access.ToolSemantic(t.Context(), tenant, runtimetest.UsableQuery()))
 }
 
 func TestSemantic_StaysQuietWhenThePersonTypedOn(t *testing.T) {

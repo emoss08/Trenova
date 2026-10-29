@@ -4,7 +4,7 @@ import (
 	"context"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetools"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
@@ -131,7 +131,7 @@ func (s *Service) showWritten(
 			decisionCallID+proposal.ID.String(), proposal.ToolName, proposal.ExecutionResult,
 		)
 		if saved != nil {
-			notes.WriteString(agentruntime.WrittenNote(shownArtifact(saved)))
+			notes.WriteString(runtimetools.WrittenNote(shownArtifact(saved)))
 		}
 	}
 

@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetools"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -401,7 +401,7 @@ func (b *Bench) escalates(name string) bool {
 			return policy.Escalates
 		}
 	}
-	policies := agentruntime.RuntimePolicies()
+	policies := runtimetools.Policies()
 	at := slices.IndexFunc(
 		policies,
 		func(p agenttoolports.ToolPolicy) bool { return p.Name == name },

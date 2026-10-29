@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/toolresult"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
@@ -233,7 +233,7 @@ func TestRedactor_HistoryToolResultsAndArguments(t *testing.T) {
 			Role:       conversation.RoleTool,
 			ToolName:   "customer_get",
 			ToolCallID: "call_1",
-			Content:    agentruntime.FenceToolResult("customer_get", payload),
+			Content:    toolresult.Fence("customer_get", payload),
 		},
 		{
 			Role:       conversation.RoleTool,
@@ -249,7 +249,7 @@ func TestRedactor_HistoryToolResultsAndArguments(t *testing.T) {
 	assert.Equal(t, "[restricted:taxId]", history[1].ToolCalls[0].Arguments["taxId"])
 	assert.Equal(t, "Acme Foods", history[1].ToolCalls[0].Arguments["name"])
 
-	name, body, fenced := agentruntime.UnfenceToolResult(history[2].Content)
+	name, body, fenced := toolresult.Unfence(history[2].Content)
 	require.True(t, fenced)
 	assert.Equal(t, "customer_get", name)
 	assert.Contains(t, body, "[restricted:creditLimit]")
@@ -265,11 +265,11 @@ func TestRedactor_UnreadablePayloadIsRedactedWhole(t *testing.T) {
 	out := &redaction{}
 	content := testRedactor(t).toolContent(
 		"customer_get",
-		agentruntime.FenceToolResult("customer_get", `{"creditLimit": 50000, "name": "Ac`),
+		toolresult.Fence("customer_get", `{"creditLimit": 50000, "name": "Ac`),
 		out,
 	)
 
-	_, body, fenced := agentruntime.UnfenceToolResult(content)
+	_, body, fenced := toolresult.Unfence(content)
 	require.True(t, fenced)
 	assert.Equal(t, "[restricted:result]", body)
 }
@@ -284,7 +284,7 @@ func TestRedactor_DecodedFixtureResult(t *testing.T) {
 	out := &redaction{}
 	result, ok := redactor.decodedResult(
 		"customer_get",
-		agentruntime.FenceToolResult("customer_get", payload),
+		toolresult.Fence("customer_get", payload),
 		false,
 		out,
 	).(map[string]any)

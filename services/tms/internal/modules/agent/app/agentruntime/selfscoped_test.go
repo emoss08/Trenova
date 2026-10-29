@@ -4,6 +4,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetest"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/toolaccess"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolcatalog"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
@@ -54,17 +56,17 @@ func TestRun_OffersASelfScopedToolToThePersonWithoutAGrant(t *testing.T) {
 	t.Parallel()
 
 	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
-		toolTurn("home_add_widget", map[string]any{
+		runtimetest.ToolTurn("home_add_widget", map[string]any{
 			"key":                              "kpi",
 			agenttoolports.SelfScopeOwnerParam: pulid.MustNew("usr_").String(),
 		}),
-		textTurn("Proposed."),
+		runtimetest.TextTurn("Proposed."),
 	}}
 	service, permissions := selfScopedRuntime(completion)
-	actor := testActor()
+	actor := runtimetest.Actor()
 
 	result, err := service.Run(t.Context(), &agentruntimeports.RunRequest{
-		Definition: testDefinition("home_add_widget"),
+		Definition: runtimetest.Definition("home_add_widget"),
 		Actor:      actor,
 		Input:      "put on-time on my dashboard",
 	})
@@ -85,14 +87,14 @@ func TestRun_WithholdsASelfScopedToolFromARunNobodyIsWatching(t *testing.T) {
 	t.Parallel()
 
 	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
-		toolTurn("home_add_widget", map[string]any{"key": "kpi"}),
-		textTurn("done"),
+		runtimetest.ToolTurn("home_add_widget", map[string]any{"key": "kpi"}),
+		runtimetest.TextTurn("done"),
 	}}
 	service, _ := selfScopedRuntime(completion)
 
 	result, err := service.Run(t.Context(), &agentruntimeports.RunRequest{
-		Definition: testDefinition("home_add_widget"),
-		Actor:      testActor(),
+		Definition: runtimetest.Definition("home_add_widget"),
+		Actor:      runtimetest.Actor(),
 		Input:      "tidy the home page",
 		Unattended: true,
 	})
@@ -107,14 +109,14 @@ func TestRun_WithholdsASelfScopedToolFromAnAgentPrincipal(t *testing.T) {
 	t.Parallel()
 
 	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
-		textTurn("done"),
+		runtimetest.TextTurn("done"),
 	}}
 	service, _ := selfScopedRuntime(completion)
-	actor := testActor()
+	actor := runtimetest.Actor()
 	actor.PrincipalType = permissionports.PrincipalTypeAgent
 
 	_, err := service.Run(t.Context(), &agentruntimeports.RunRequest{
-		Definition: testDefinition("home_add_widget"),
+		Definition: runtimetest.Definition("home_add_widget"),
 		Actor:      actor,
 		Input:      "tidy the home page",
 	})
@@ -139,7 +141,7 @@ func TestNewToolSet_MyDashboardReachesTheHomePage(t *testing.T) {
 	t.Parallel()
 
 	service, names := wideRuntime(t)
-	query := service.queryTools.(*stubQueryRegistry)
+	query := paramsOf(service).QueryTools.(*stubQueryRegistry)
 	query.Tools = append(
 		query.Tools,
 		searchableQuery{
@@ -152,19 +154,22 @@ func TestNewToolSet_MyDashboardReachesTheHomePage(t *testing.T) {
 			"List the report dashboards under Reports, with their tiles.",
 		),
 	)
-	service.catalog = agenttoolcatalog.NewFromRegistries(agenttoolcatalog.Params{
-		QueryTools:  query,
-		ActionTools: service.actionTools,
+	rewire(service, func(p *Params) {
+		p.Catalog = agenttoolcatalog.NewFromRegistries(agenttoolcatalog.Params{
+			QueryTools:  query,
+			ActionTools: service.actionTools,
+		})
 	})
 
-	set := service.newToolSet(t.Context(), toolSetRequest{
-		definition: testDefinition(append(names, "home_get_layout", "report_list_dashboards")...),
-		actor:      testActor(),
-		input:      "Tell me what I have on my dashboard currently",
+	set := service.access.NewToolSet(t.Context(), toolaccess.ToolSetRequest{
+		Definition: runtimetest.Definition(
+			append(names, "home_get_layout", "report_list_dashboards")...),
+		Actor: runtimetest.Actor(),
+		Input: "Tell me what I have on my dashboard currently",
 	})
 
-	require.True(t, set.disclosed)
-	sent := specNames(set.specs)
+	require.True(t, set.Disclosed)
+	sent := specNames(set.Specs)
 	assert.Contains(t, sent, "home_get_layout")
 	assert.Contains(t, sent, "report_list_dashboards")
 }

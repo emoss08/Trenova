@@ -7,6 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/modelstream"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
@@ -146,9 +147,9 @@ func (s *AgentRunWorkflowTestSuite) stubOpen() {
 func (s *AgentRunWorkflowTestSuite) stubAnswer(text string) {
 	var fa *agentflow.Activities
 	s.env.OnActivity(fa.ModelCallActivity, mock.Anything, mock.Anything).Return(
-		func(_ context.Context, in *agentflow.ModelCallInput) (*agentruntime.ModelReply, error) {
+		func(_ context.Context, in *agentflow.ModelCallInput) (*modelstream.Reply, error) {
 			s.False(in.Stream, "nobody watches a background run, so nothing is streamed")
-			return &agentruntime.ModelReply{Completion: &llmports.ChatCompletionResult{
+			return &modelstream.Reply{Completion: &llmports.ChatCompletionResult{
 				Text:            text,
 				ModelIdentifier: "test-model",
 			}}, nil

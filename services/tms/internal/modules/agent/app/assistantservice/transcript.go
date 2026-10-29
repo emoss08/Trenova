@@ -10,7 +10,8 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/replycheck"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/toolresult"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
@@ -472,7 +473,7 @@ func writeTranscriptMessage(
 			b.WriteString("\n</details>\n\n")
 		}
 		// A transcript cannot open an artifact, so a link to one keeps its words.
-		writeText(b, agentruntime.StripArtifactLinks(m.Content))
+		writeText(b, replycheck.StripArtifactLinks(m.Content))
 		for _, call := range m.ToolCalls {
 			fmt.Fprintf(b, "**Called `%s`**\n\n", call.Name)
 			if !trimmed || call.Arguments != nil {
@@ -481,7 +482,7 @@ func writeTranscriptMessage(
 		}
 	case conversation.RoleTool:
 		name := m.ToolName
-		toolName, payload, fenced := agentruntime.UnfenceToolResult(m.Content)
+		toolName, payload, fenced := toolresult.Unfence(m.Content)
 		if fenced && name == "" {
 			name = toolName
 		}

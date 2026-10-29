@@ -10,7 +10,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentquerytoolservice"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolcatalog"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolservice"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -287,7 +287,7 @@ func TestEveryRecipeNamesRegisteredTools(t *testing.T) {
 			queries[tool.Name()] = struct{}{}
 		}
 	}
-	for _, policy := range agentruntime.RuntimePolicies() {
+	for _, policy := range runtimetools.Policies() {
 		known[policy.Name] = struct{}{}
 	}
 

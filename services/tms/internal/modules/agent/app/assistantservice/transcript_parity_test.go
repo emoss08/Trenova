@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/toolresult"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
@@ -68,7 +68,7 @@ func parityMessages() []conversation.Message {
 			DelegateCallID:    "call_d",
 			ToolCallID:        "call_r",
 			ToolName:          "list_rates",
-			Content:           agentruntime.FenceToolResult("list_rates", "plain text result"),
+			Content:           toolresult.Fence("list_rates", "plain text result"),
 			CreatedAt:         1_790_000_054,
 		},
 		conversation.Message{

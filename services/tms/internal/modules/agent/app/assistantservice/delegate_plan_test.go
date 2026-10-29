@@ -5,6 +5,11 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/delegation"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/modelstream"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/toolaccess"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/toolcall"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/worldwatch"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
@@ -49,22 +54,22 @@ type handOffEffects struct {
 func (fx *handOffEffects) Complete(
 	_ *agentruntime.Turn,
 	req *llmports.ChatCompletionRequest,
-) (agentruntime.ModelReply, error) {
+) (modelstream.Reply, error) {
 	return fx.svc.runtime.StreamCompletion(fx.ctx, req, fx.Emit)
 }
 
 func (fx *handOffEffects) Dispatch(
 	t *agentruntime.Turn,
-	call agentruntime.DispatchCall,
-) agentruntime.ToolOutcome {
+	call toolcall.Call,
+) toolcall.Outcome {
 	return fx.svc.runtime.DispatchStep(fx.ctx, t.Request(), call)
 }
 
 func (fx *handOffEffects) DispatchReads(
 	t *agentruntime.Turn,
-	calls []agentruntime.DispatchCall,
-) []agentruntime.ToolOutcome {
-	outcomes := make([]agentruntime.ToolOutcome, 0, len(calls))
+	calls []toolcall.Call,
+) []toolcall.Outcome {
+	outcomes := make([]toolcall.Outcome, 0, len(calls))
 	for _, call := range calls {
 		outcomes = append(outcomes, fx.Dispatch(t, call))
 	}
@@ -72,8 +77,8 @@ func (fx *handOffEffects) DispatchReads(
 	return outcomes
 }
 
-func (*handOffEffects) Find(*agentruntime.Turn, map[string]any) agentruntime.FindAnswer {
-	return agentruntime.FindAnswer{}
+func (*handOffEffects) Find(*agentruntime.Turn, map[string]any) toolaccess.FindAnswer {
+	return toolaccess.FindAnswer{}
 }
 
 func (*handOffEffects) Emit(kernelports.StreamEvent) {}
@@ -81,8 +86,8 @@ func (*handOffEffects) Emit(kernelports.StreamEvent) {}
 func (fx *handOffEffects) Observe(
 	_ *agentruntime.Turn,
 	call *llmports.ToolCall,
-	outcome agentruntime.ToolOutcome,
-) agentruntime.ToolOutcome {
+	outcome toolcall.Outcome,
+) toolcall.Outcome {
 	return fx.svc.runtime.ObserveCall(nil, call, outcome)
 }
 
@@ -90,9 +95,9 @@ func (*handOffEffects) NewCallID() string { return agentruntime.NewCallID() }
 
 func (fx *handOffEffects) Delegate(
 	t *agentruntime.Turn,
-	calls []agentruntime.DelegateCall,
-) []agentruntime.DelegateRun {
-	runs := make([]agentruntime.DelegateRun, 0, len(calls))
+	calls []delegation.Call,
+) []delegation.Run {
+	runs := make([]delegation.Run, 0, len(calls))
 	for _, call := range calls {
 		runs = append(runs, fx.delegate(t, call))
 	}
@@ -102,8 +107,8 @@ func (fx *handOffEffects) Delegate(
 
 func (fx *handOffEffects) delegate(
 	t *agentruntime.Turn,
-	call agentruntime.DelegateCall,
-) agentruntime.DelegateRun {
+	call delegation.Call,
+) delegation.Run {
 	opened, err := fx.svc.OpenDelegate(fx.ctx, &OpenDelegateRequest{
 		Parent:    fx.parent,
 		Actor:     t.Request().Actor,
@@ -119,14 +124,14 @@ func (fx *handOffEffects) delegate(
 	result, err := fx.svc.runtime.Drive(turn, fx)
 	require.NoError(fx.t, err)
 
-	return agentruntime.DelegateRun{Definition: opened.Request.Definition, Result: result}
+	return delegation.Run{Definition: opened.Request.Definition, Result: result}
 }
 
 func (*handOffEffects) Interject(
 	*agentruntime.Turn,
-	*agentruntime.WorldCheck,
-) agentruntime.Interjections {
-	return agentruntime.Interjections{}
+	*worldwatch.Check,
+) worldwatch.Interjections {
+	return worldwatch.Interjections{}
 }
 
 func (*handOffEffects) Now() int64 { return timeutils.NowUnix() }

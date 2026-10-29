@@ -12,6 +12,7 @@ import (
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/tooldispatch"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentscoring"
 	"github.com/emoss08/trenova/internal/modules/agent/app/proposalrecorder"
 	"github.com/emoss08/trenova/internal/modules/agent/app/watchtowersources"
@@ -379,7 +380,7 @@ func (a *Activities) FinishRunActivity(
 
 // recordLoopRefusals files the calls the run's loop refused without
 // dispatching them, so the agent's scorecard counts them
-// (agentruntime.RecordLoopRefusals). The run is already settled, so a failure
+// (tooldispatch.RecordLoopRefusals). The run is already settled, so a failure
 // here is logged, not returned.
 func (a *Activities) recordLoopRefusals(
 	ctx context.Context,
@@ -389,7 +390,7 @@ func (a *Activities) recordLoopRefusals(
 	if len(outcome.LoopRefusals) == 0 || input.Definition == nil {
 		return
 	}
-	failed := agentruntime.RecordLoopRefusals(ctx, &agentruntime.RecordLoopRefusalsRequest{
+	failed := tooldispatch.RecordLoopRefusals(ctx, &tooldispatch.RecordLoopRefusalsRequest{
 		Ledger: a.steps,
 		Tenant: input.Payload.TenantInfo(),
 		Owner: agentruntimeports.RunStepOwner{

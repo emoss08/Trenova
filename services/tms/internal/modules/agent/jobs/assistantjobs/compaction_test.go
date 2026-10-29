@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/modelstream"
 	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow"
@@ -107,11 +107,11 @@ func (s *CompactionWorkflowTestSuite) TestSavesTheSummaryAndClosesTheTurn() {
 	s.prepares(nil)
 	var fa *agentflow.Activities
 	s.env.OnActivity(fa.ModelCallActivity, mock.Anything, mock.Anything).Return(
-		func(_ context.Context, in *agentflow.ModelCallInput) (*agentruntime.ModelReply, error) {
+		func(_ context.Context, in *agentflow.ModelCallInput) (*modelstream.Reply, error) {
 			s.False(in.Stream, "nobody reads the summary as it is written")
 			s.Equal("Summarize.", in.Request.System)
 
-			return &agentruntime.ModelReply{Completion: &llmports.ChatCompletionResult{
+			return &modelstream.Reply{Completion: &llmports.ChatCompletionResult{
 				Text:            "- Customer 1 had 40 loads.",
 				ModelIdentifier: "test-model",
 			}}, nil
@@ -146,7 +146,7 @@ func (s *CompactionWorkflowTestSuite) TestCancelLeavesTheConversationAsItWas() {
 	var fa *agentflow.Activities
 	s.env.OnActivity(fa.ModelCallActivity, mock.Anything, mock.Anything).
 		After(time.Minute).
-		Return(&agentruntime.ModelReply{}, nil).
+		Return(&modelstream.Reply{}, nil).
 		Maybe()
 	s.ends()
 	s.env.RegisterDelayedCallback(s.env.CancelWorkflow, time.Second)

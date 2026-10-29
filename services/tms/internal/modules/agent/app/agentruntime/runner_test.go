@@ -8,8 +8,11 @@ import (
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentguard"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/askuser"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetest"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/toolaccess"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/toolcall"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentevaluation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
@@ -21,7 +24,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -56,49 +58,13 @@ func newRuntime(
 		permissions = &stubPermissions{}
 	}
 
-	return &Service{
-		logger:      zap.NewNop(),
-		completion:  completion,
-		queryTools:  query,
-		actionTools: action,
-		permissions: permissions,
-	}
-}
-
-func testActor() *permissionports.RequestActor {
-	return &permissionports.RequestActor{
-		PrincipalType:  permissionports.PrincipalTypeUser,
-		PrincipalID:    pulid.MustNew("usr_"),
-		UserID:         pulid.MustNew("usr_"),
-		OrganizationID: pulid.MustNew("org_"),
-		BusinessUnitID: pulid.MustNew("bu_"),
-	}
-}
-
-func testDefinition(tools ...string) *agentdefinition.Definition {
-	d := &agentdefinition.Definition{
-		Name:            "Dispatch helper",
-		Instructions:    "Help dispatch.",
-		AutonomyCeiling: agent.TierPropose,
-		ToolNames:       tools,
-		Enabled:         true,
-	}
-	d.ApplyDefaults()
-
-	return d
-}
-
-func textTurn(text string) *llmports.ChatCompletionResult {
-	return &llmports.ChatCompletionResult{Text: text, ModelIdentifier: "test-model"}
-}
-
-func toolTurn(name string, args map[string]any) *llmports.ChatCompletionResult {
-	return &llmports.ChatCompletionResult{
-		ToolCalls: []llmports.ToolCall{
-			{ID: "call_1", Name: name, Arguments: args},
-		},
-		ModelIdentifier: "test-model",
-	}
+	return buildRuntime(Params{
+		Logger:      zap.NewNop(),
+		Completion:  completion,
+		QueryTools:  query,
+		ActionTools: action,
+		Permissions: permissions,
+	})
 }
 
 // A call refused by the tool's schema is a call like any other: it spends
@@ -108,19 +74,19 @@ func TestRun_ASchemaRefusalSpendsTheBudgetAndArmsTheRepeatGuard(t *testing.T) {
 	t.Parallel()
 
 	tool := actionTool("record_case", agent.TierAutoExecute, nil)
-	tool.Schema = closedSchema("subjectId")
+	tool.Schema = runtimetest.ClosedSchema("subjectId")
 	badCall := map[string]any{"subjectId": "shp_1", "runId": "ar_made_up"}
 	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
-		toolTurn("record_case", badCall),
-		toolTurn("record_case", badCall),
-		textTurn("I could not record it."),
+		runtimetest.ToolTurn("record_case", badCall),
+		runtimetest.ToolTurn("record_case", badCall),
+		runtimetest.TextTurn("I could not record it."),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{},
 		&stubActionRegistry{Tools: []agenttoolports.AgentTool{tool}}, nil)
 
 	result, err := rt.Run(t.Context(), &agentruntimeports.RunRequest{
-		Definition: autoDefinition("record_case"),
-		Actor:      testActor(),
+		Definition: runtimetest.AutoDefinition("record_case"),
+		Actor:      runtimetest.Actor(),
 		Input:      "Record it.",
 	})
 	require.NoError(t, err)
@@ -144,13 +110,13 @@ func TestRun_AnswersAndRecordsTheTurn(t *testing.T) {
 	t.Parallel()
 
 	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
-		textTurn("Load 12345 is with Maria Ortiz."),
+		runtimetest.TextTurn("Load 12345 is with Maria Ortiz."),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{}, &stubActionRegistry{}, nil)
 
 	result, err := rt.Run(t.Context(), &agentruntimeports.RunRequest{
-		Definition: testDefinition(),
-		Actor:      testActor(),
+		Definition: runtimetest.Definition(),
+		Actor:      runtimetest.Actor(),
 		Context:    agentturn.RuntimeContext{OrganizationName: "Acme Freight"},
 		Input:      "Who is on load 12345?",
 	})
@@ -176,15 +142,15 @@ func TestRun_RefusesAToolNotEnabledEvenWhenRegistered(t *testing.T) {
 
 	tool := queryTool("worker_list", map[string]any{}, nil)
 	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
-		toolTurn("worker_list", map[string]any{"query": "Maria"}),
-		textTurn("I cannot look that up."),
+		runtimetest.ToolTurn("worker_list", map[string]any{"query": "Maria"}),
+		runtimetest.TextTurn("I cannot look that up."),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{Tools: []agenttoolports.AgentQueryTool{tool}},
 		&stubActionRegistry{}, nil)
 
 	result, err := rt.Run(t.Context(), &agentruntimeports.RunRequest{
-		Definition: testDefinition("shipment_get"),
-		Actor:      testActor(),
+		Definition: runtimetest.Definition("shipment_get"),
+		Actor:      runtimetest.Actor(),
 		Input:      "Who is Maria?",
 	})
 	require.NoError(t, err)
@@ -201,7 +167,7 @@ func TestRun_RefusesAToolNotEnabledEvenWhenRegistered(t *testing.T) {
 	}
 	// ask_user is the runtime's own and rides every turn; it reads nothing, so
 	// it does not widen the agent. Nothing from the registry is offered.
-	assert.Equal(t, []string{askUserName}, offered, "an unenabled tool is not even offered")
+	assert.Equal(t, []string{askuser.Name}, offered, "an unenabled tool is not even offered")
 }
 
 // The agent runs as the person talking to it. Every tool call is checked against
@@ -213,15 +179,15 @@ func TestRun_ChecksPermissionForEveryToolCallAsTheActor(t *testing.T) {
 	tool := queryTool("shipment_get", map[string]any{"proNumber": "S1"}, nil)
 	permissions := &stubPermissions{Denied: map[string]bool{"shipment:read": true}}
 	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
-		toolTurn("shipment_get", map[string]any{"shipmentId": "shp_1"}),
-		textTurn("I am not allowed to see that shipment."),
+		runtimetest.ToolTurn("shipment_get", map[string]any{"shipmentId": "shp_1"}),
+		runtimetest.TextTurn("I am not allowed to see that shipment."),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{Tools: []agenttoolports.AgentQueryTool{tool}},
 		&stubActionRegistry{}, permissions)
-	actor := testActor()
+	actor := runtimetest.Actor()
 
 	result, err := rt.Run(t.Context(), &agentruntimeports.RunRequest{
-		Definition: testDefinition("shipment_get"),
+		Definition: runtimetest.Definition("shipment_get"),
 		Actor:      actor,
 		Input:      "Where is S1?",
 	})
@@ -249,19 +215,19 @@ func TestRun_TenantScopeComesFromTheActorNotTheArguments(t *testing.T) {
 
 	tool := queryTool("shipment_get", map[string]any{"ok": true}, nil)
 	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
-		toolTurn("shipment_get", map[string]any{
+		runtimetest.ToolTurn("shipment_get", map[string]any{
 			"shipmentId":     "shp_1",
 			"organizationId": "org_someone_else",
 			"businessUnitId": "bu_someone_else",
 		}),
-		textTurn("Found it."),
+		runtimetest.TextTurn("Found it."),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{Tools: []agenttoolports.AgentQueryTool{tool}},
 		&stubActionRegistry{}, nil)
-	actor := testActor()
+	actor := runtimetest.Actor()
 
 	_, err := rt.Run(t.Context(), &agentruntimeports.RunRequest{
-		Definition: testDefinition("shipment_get"),
+		Definition: runtimetest.Definition("shipment_get"),
 		Actor:      actor,
 		Input:      "Where is shp_1?",
 	})
@@ -282,15 +248,15 @@ func TestRun_FencesQueryResultsAsUntrustedData(t *testing.T) {
 		nil,
 	)
 	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
-		toolTurn("shipment_get", map[string]any{"shipmentId": "shp_1"}),
-		textTurn("Done."),
+		runtimetest.ToolTurn("shipment_get", map[string]any{"shipmentId": "shp_1"}),
+		runtimetest.TextTurn("Done."),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{Tools: []agenttoolports.AgentQueryTool{tool}},
 		&stubActionRegistry{}, nil)
 
 	result, err := rt.Run(t.Context(), &agentruntimeports.RunRequest{
-		Definition: testDefinition("shipment_get"),
-		Actor:      testActor(),
+		Definition: runtimetest.Definition("shipment_get"),
+		Actor:      runtimetest.Actor(),
 		Input:      "Where is shp_1?",
 	})
 	require.NoError(t, err)
@@ -317,16 +283,16 @@ func TestRun_StopsAtTheToolCallBudget(t *testing.T) {
 
 	tool := queryTool("shipment_get", map[string]any{"ok": true}, nil)
 	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
-		toolTurn("shipment_get", map[string]any{"shipmentId": "shp_1"}),
+		runtimetest.ToolTurn("shipment_get", map[string]any{"shipmentId": "shp_1"}),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{Tools: []agenttoolports.AgentQueryTool{tool}},
 		&stubActionRegistry{}, nil)
-	definition := testDefinition("shipment_get")
+	definition := runtimetest.Definition("shipment_get")
 	definition.MaxToolCalls = 2
 
 	result, err := rt.Run(t.Context(), &agentruntimeports.RunRequest{
 		Definition: definition,
-		Actor:      testActor(),
+		Actor:      runtimetest.Actor(),
 		Input:      "Loop forever please",
 	})
 	require.NoError(t, err)
@@ -345,12 +311,12 @@ func TestRun_TurnsAWriteIntoAProposalAtTheEffectiveTier(t *testing.T) {
 
 	action := actionTool("dispatch_assign_move", agent.TierAutoExecute, nil)
 	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
-		toolTurn("dispatch_assign_move", map[string]any{"moveId": "mv_1"}),
-		textTurn("I have proposed the assignment."),
+		runtimetest.ToolTurn("dispatch_assign_move", map[string]any{"moveId": "mv_1"}),
+		runtimetest.TextTurn("I have proposed the assignment."),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{},
 		&stubActionRegistry{Tools: []agenttoolports.AgentTool{action}}, nil)
-	definition := testDefinition("dispatch_assign_move")
+	definition := runtimetest.Definition("dispatch_assign_move")
 	definition.AutonomyCeiling = agent.TierAutoExecute
 	definition.ToolTiers = map[string]agent.AutonomyTier{
 		"dispatch_assign_move": agent.TierActWithApproval,
@@ -358,7 +324,7 @@ func TestRun_TurnsAWriteIntoAProposalAtTheEffectiveTier(t *testing.T) {
 
 	result, err := rt.Run(t.Context(), &agentruntimeports.RunRequest{
 		Definition: definition,
-		Actor:      testActor(),
+		Actor:      runtimetest.Actor(),
 		Input:      "Assign mv_1",
 	})
 	require.NoError(t, err)
@@ -388,18 +354,18 @@ func TestRun_RefusesAnArgumentTheToolDoesNotDeclare(t *testing.T) {
 		"additionalProperties": false,
 	}
 	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
-		toolTurn(
+		runtimetest.ToolTurn(
 			"agent_raise_exception",
 			map[string]any{"subjectId": "shp_1", "runId": "ar_made_up"},
 		),
-		textTurn("Flagged it."),
+		runtimetest.TextTurn("Flagged it."),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{},
 		&stubActionRegistry{Tools: []agenttoolports.AgentTool{action}}, nil)
 
 	result, err := rt.Run(t.Context(), &agentruntimeports.RunRequest{
-		Definition: testDefinition("agent_raise_exception"),
-		Actor:      testActor(),
+		Definition: runtimetest.Definition("agent_raise_exception"),
+		Actor:      runtimetest.Actor(),
 		Input:      "Flag shp_1",
 		RunID:      pulid.MustNew("ar_"),
 	})
@@ -421,17 +387,17 @@ func TestRun_AutoExecuteToolsRunImmediatelyAndAreRecorded(t *testing.T) {
 	action := actionTool("dispatch_assign_move", agent.TierActWithApproval, nil)
 	permissions := &stubPermissions{}
 	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
-		toolTurn("dispatch_assign_move", map[string]any{"moveId": "mv_1"}),
-		textTurn("Assigned."),
+		runtimetest.ToolTurn("dispatch_assign_move", map[string]any{"moveId": "mv_1"}),
+		runtimetest.TextTurn("Assigned."),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{},
 		&stubActionRegistry{Tools: []agenttoolports.AgentTool{action}}, permissions)
-	definition := testDefinition("dispatch_assign_move")
+	definition := runtimetest.Definition("dispatch_assign_move")
 	definition.AutonomyCeiling = agent.TierAutoExecute
 	definition.ToolTiers = map[string]agent.AutonomyTier{
 		"dispatch_assign_move": agent.TierAutoExecute,
 	}
-	actor := testActor()
+	actor := runtimetest.Actor()
 
 	result, err := rt.Run(t.Context(), &agentruntimeports.RunRequest{
 		Definition: definition,
@@ -461,12 +427,12 @@ func TestRun_ReportsAFailedAutoExecuteAndKeepsTheRecord(t *testing.T) {
 
 	action := actionTool("dispatch_assign_move", "", errors.New("driver is out of hours"))
 	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
-		toolTurn("dispatch_assign_move", map[string]any{"moveId": "mv_1"}),
-		textTurn("That did not work."),
+		runtimetest.ToolTurn("dispatch_assign_move", map[string]any{"moveId": "mv_1"}),
+		runtimetest.TextTurn("That did not work."),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{},
 		&stubActionRegistry{Tools: []agenttoolports.AgentTool{action}}, nil)
-	definition := testDefinition("dispatch_assign_move")
+	definition := runtimetest.Definition("dispatch_assign_move")
 	definition.AutonomyCeiling = agent.TierAutoExecute
 	definition.ToolTiers = map[string]agent.AutonomyTier{
 		"dispatch_assign_move": agent.TierAutoExecute,
@@ -474,7 +440,7 @@ func TestRun_ReportsAFailedAutoExecuteAndKeepsTheRecord(t *testing.T) {
 
 	result, err := rt.Run(t.Context(), &agentruntimeports.RunRequest{
 		Definition: definition,
-		Actor:      testActor(),
+		Actor:      runtimetest.Actor(),
 		Input:      "Assign mv_1",
 	})
 	require.NoError(t, err)
@@ -490,15 +456,15 @@ func TestRun_ForwardsThePreferredProvider(t *testing.T) {
 	t.Parallel()
 
 	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
-		textTurn("Hello."),
+		runtimetest.TextTurn("Hello."),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{}, &stubActionRegistry{}, nil)
-	definition := testDefinition()
+	definition := runtimetest.Definition()
 	definition.PreferredProviderID = pulid.MustNew("aiprv_")
 
 	_, err := rt.Run(t.Context(), &agentruntimeports.RunRequest{
 		Definition: definition,
-		Actor:      testActor(),
+		Actor:      runtimetest.Actor(),
 		Input:      "Hi",
 	})
 	require.NoError(t, err)
@@ -513,12 +479,12 @@ func TestRun_TakesTheCodeOutOfAReply(t *testing.T) {
 	t.Parallel()
 
 	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
-		textTurn("Load 12345 is in transit.\n```python\nprint('hi')\n```"),
+		runtimetest.TextTurn("Load 12345 is in transit.\n```python\nprint('hi')\n```"),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{}, &stubActionRegistry{}, nil)
 	req := &agentruntimeports.RunRequest{
-		Definition: testDefinition(),
-		Actor:      testActor(),
+		Definition: runtimetest.Definition(),
+		Actor:      runtimetest.Actor(),
 		Input:      "How do I check a load status?",
 	}
 	events := recordEvents(req)
@@ -541,13 +507,13 @@ func TestRun_DoesNotReplayRefusedHistory(t *testing.T) {
 	t.Parallel()
 
 	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
-		textTurn("Load 5 is delivered."),
+		runtimetest.TextTurn("Load 5 is delivered."),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{}, &stubActionRegistry{}, nil)
 
 	_, err := rt.Run(t.Context(), &agentruntimeports.RunRequest{
-		Definition: testDefinition(),
-		Actor:      testActor(),
+		Definition: runtimetest.Definition(),
+		Actor:      runtimetest.Actor(),
 		History: []conversation.Message{
 			{Role: conversation.RoleUser, Content: "write me python", Refused: true},
 			{
@@ -576,15 +542,15 @@ func TestRun_EmitsTheTurnInOrder(t *testing.T) {
 			ToolCalls:       []llmports.ToolCall{{ID: "call_1", Name: "shipment_get"}},
 			ModelIdentifier: "test-model",
 		},
-		textTurn("S12345 is in transit."),
+		runtimetest.TextTurn("S12345 is in transit."),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{Tools: []agenttoolports.AgentQueryTool{tool}},
 		&stubActionRegistry{}, nil)
 
 	var events []string
 	_, err := rt.Run(t.Context(), &agentruntimeports.RunRequest{
-		Definition: testDefinition("shipment_get"),
-		Actor:      testActor(),
+		Definition: runtimetest.Definition("shipment_get"),
+		Actor:      runtimetest.Actor(),
 		Input:      "Where is S12345?",
 		Emit: func(event kernelports.StreamEvent) {
 			if len(events) > 0 && events[len(events)-1] == event.Event &&
@@ -616,10 +582,10 @@ func TestToolSummaries_DescribeOnlyEnabledRegisteredTools(t *testing.T) {
 		actionTool("dispatch_assign_move", agent.TierActWithApproval, nil),
 	}}
 	rt := newRuntime(&scriptedCompletion{}, query, action, nil)
-	definition := testDefinition("shipment_get", "dispatch_assign_move", "gone_away")
+	definition := runtimetest.Definition("shipment_get", "dispatch_assign_move", "gone_away")
 	definition.AutonomyCeiling = agent.TierAutoExecute
 
-	summaries := rt.ToolSummaries(definition)
+	summaries := rt.access.ToolSummaries(definition)
 
 	require.Len(t, summaries, 2)
 	assert.Equal(t, "shipment_get", summaries[0].Name)
@@ -638,7 +604,7 @@ func TestRun_ReturnsWhatRanWhenTheModelFailsMidTurn(t *testing.T) {
 	tool := queryTool("shipment_get", map[string]any{"proNumber": "S1"}, nil)
 	completion := &scriptedCompletion{
 		Turns: []*llmports.ChatCompletionResult{
-			toolTurn("shipment_get", map[string]any{"id": "S1"}),
+			runtimetest.ToolTurn("shipment_get", map[string]any{"id": "S1"}),
 		},
 		Errors: map[int]error{1: errors.New("every configured chat provider failed")},
 	}
@@ -647,8 +613,8 @@ func TestRun_ReturnsWhatRanWhenTheModelFailsMidTurn(t *testing.T) {
 	}, &stubActionRegistry{}, nil)
 
 	result, err := rt.Run(t.Context(), &agentruntimeports.RunRequest{
-		Definition: testDefinition("shipment_get"),
-		Actor:      testActor(),
+		Definition: runtimetest.Definition("shipment_get"),
+		Actor:      runtimetest.Actor(),
 		Input:      "Where is S1?",
 	})
 
@@ -678,15 +644,15 @@ func TestRun_RefusesACallWhoseArgumentsWereCutOff(t *testing.T) {
 			}},
 			ModelIdentifier: "test-model",
 		},
-		textTurn("I could not run that."),
+		runtimetest.TextTurn("I could not run that."),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{
 		Tools: []agenttoolports.AgentQueryTool{tool},
 	}, &stubActionRegistry{}, nil)
 
 	result, err := rt.Run(t.Context(), &agentruntimeports.RunRequest{
-		Definition: testDefinition("shipment_list"),
-		Actor:      testActor(),
+		Definition: runtimetest.Definition("shipment_list"),
+		Actor:      runtimetest.Actor(),
 		Input:      "unbilled shipments",
 	})
 	require.NoError(t, err)
@@ -711,17 +677,17 @@ func TestRun_HoldsTheToolBudgetWithinABatch(t *testing.T) {
 			},
 			ModelIdentifier: "test-model",
 		},
-		textTurn("done"),
+		runtimetest.TextTurn("done"),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{
 		Tools: []agenttoolports.AgentQueryTool{tool},
 	}, &stubActionRegistry{}, nil)
-	definition := testDefinition("worker_get")
+	definition := runtimetest.Definition("worker_get")
 	definition.MaxToolCalls = 2
 
 	result, err := rt.Run(t.Context(), &agentruntimeports.RunRequest{
 		Definition: definition,
-		Actor:      testActor(),
+		Actor:      runtimetest.Actor(),
 		Input:      "three drivers",
 	})
 	require.NoError(t, err)
@@ -770,17 +736,20 @@ func TestRun_PinsTheRecordAProposalWouldChange(t *testing.T) {
 	shipmentID := pulid.MustNew("shp_")
 	tool := &targetedStubTool{actionTool("shipment_place_hold", agent.TierPropose, nil)}
 	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
-		toolTurn("shipment_place_hold", map[string]any{"shipmentId": shipmentID.String()}),
-		textTurn("I have proposed a hold."),
+		runtimetest.ToolTurn(
+			"shipment_place_hold",
+			map[string]any{"shipmentId": shipmentID.String()},
+		),
+		runtimetest.TextTurn("I have proposed a hold."),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{}, &stubActionRegistry{
 		Tools: []agenttoolports.AgentTool{tool},
 	}, nil)
-	rt.versions = stubVersions{version: 7}
+	rewire(rt, func(p *Params) { p.Versions = stubVersions{version: 7} })
 
 	result, err := rt.Run(t.Context(), &agentruntimeports.RunRequest{
-		Definition: testDefinition("shipment_place_hold"),
-		Actor:      testActor(),
+		Definition: runtimetest.Definition("shipment_place_hold"),
+		Actor:      runtimetest.Actor(),
 		Input:      "hold it",
 	})
 	require.NoError(t, err)
@@ -798,19 +767,19 @@ func TestRun_ProposesUnpinnedWhenNoVersionReaderIsWired(t *testing.T) {
 
 	tool := &targetedStubTool{actionTool("shipment_place_hold", agent.TierPropose, nil)}
 	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
-		toolTurn(
+		runtimetest.ToolTurn(
 			"shipment_place_hold",
 			map[string]any{"shipmentId": pulid.MustNew("shp_").String()},
 		),
-		textTurn("proposed"),
+		runtimetest.TextTurn("proposed"),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{}, &stubActionRegistry{
 		Tools: []agenttoolports.AgentTool{tool},
 	}, nil)
 
 	result, err := rt.Run(t.Context(), &agentruntimeports.RunRequest{
-		Definition: testDefinition("shipment_place_hold"),
-		Actor:      testActor(),
+		Definition: runtimetest.Definition("shipment_place_hold"),
+		Actor:      runtimetest.Actor(),
 		Input:      "hold it",
 	})
 	require.NoError(t, err)
@@ -826,16 +795,16 @@ func TestRun_HandsQueryToolsTheOrganizationsTimezone(t *testing.T) {
 
 	tool := &agenttest.StubQueryTool{ToolName: "shipment_get", Result: map[string]any{}}
 	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
-		toolTurn("shipment_get", map[string]any{"id": "S1"}),
-		textTurn("done"),
+		runtimetest.ToolTurn("shipment_get", map[string]any{"id": "S1"}),
+		runtimetest.TextTurn("done"),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{
 		Tools: []agenttoolports.AgentQueryTool{tool},
 	}, &stubActionRegistry{}, nil)
 
 	_, err := rt.Run(t.Context(), &agentruntimeports.RunRequest{
-		Definition: testDefinition("shipment_get"),
-		Actor:      testActor(),
+		Definition: runtimetest.Definition("shipment_get"),
+		Actor:      runtimetest.Actor(),
 		Context:    agentturn.RuntimeContext{Timezone: "America/Chicago"},
 		Input:      "where is S1",
 	})
@@ -876,8 +845,8 @@ func TestRun_StreamsKeepsAndReplaysReasoning(t *testing.T) {
 
 	var thoughts []string
 	result, err := rt.Run(t.Context(), &agentruntimeports.RunRequest{
-		Definition: testDefinition("shipment_get"),
-		Actor:      testActor(),
+		Definition: runtimetest.Definition("shipment_get"),
+		Actor:      runtimetest.Actor(),
 		Input:      "Where is S1?",
 		Emit: func(event kernelports.StreamEvent) {
 			if event.Event == assistantports.AssistantEventReasoning {
@@ -944,8 +913,8 @@ func TestRun_KeepsEachReplysIDForTheNextCall(t *testing.T) {
 	)
 
 	result, err := rt.Run(t.Context(), &agentruntimeports.RunRequest{
-		Definition: testDefinition("shipment_get"),
-		Actor:      testActor(),
+		Definition: runtimetest.Definition("shipment_get"),
+		Actor:      runtimetest.Actor(),
 		Input:      "Where is S1?",
 	})
 	require.NoError(t, err)
@@ -978,8 +947,8 @@ func TestRun_KeepsLatencyAndCostOnTheTurn(t *testing.T) {
 	rt := newRuntime(completion, &stubQueryRegistry{}, &stubActionRegistry{}, nil)
 
 	result, err := rt.Run(t.Context(), &agentruntimeports.RunRequest{
-		Definition: testDefinition(),
-		Actor:      testActor(),
+		Definition: runtimetest.Definition(),
+		Actor:      runtimetest.Actor(),
 		Input:      "Where?",
 		ThreadID:   pulid.MustNew("athr_"),
 	})
@@ -991,7 +960,7 @@ func TestRun_KeepsLatencyAndCostOnTheTurn(t *testing.T) {
 	assert.True(t, reply.CostUSD.Equal(cost))
 
 	// And the call said who it was for.
-	assert.Equal(t, testDefinition().ID, completion.LastReq.Attribution.AgentDefinitionID)
+	assert.Equal(t, runtimetest.Definition().ID, completion.LastReq.Attribution.AgentDefinitionID)
 	assert.False(t, completion.LastReq.Attribution.ThreadID.IsNil())
 	assert.Equal(t, aiusage.FeatureAgentTurn, completion.LastReq.Attribution.Feature)
 }
@@ -1007,8 +976,8 @@ func TestRun_AttributesAReplayToEvaluationNotTheLiveAgent(t *testing.T) {
 			{Text: "Replayed.", ModelIdentifier: "test-model"},
 		}}
 		rt := newRuntime(completion, &stubQueryRegistry{}, &stubActionRegistry{}, nil)
-		req.Definition = testDefinition()
-		req.Actor = testActor()
+		req.Definition = runtimetest.Definition()
+		req.Actor = runtimetest.Actor()
 		req.Input = "Where?"
 
 		_, err := rt.Run(t.Context(), req)
@@ -1023,8 +992,8 @@ func TestRun_AttributesAReplayToEvaluationNotTheLiveAgent(t *testing.T) {
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{}, &stubActionRegistry{}, nil)
 	_, err := rt.Run(t.Context(), &agentruntimeports.RunRequest{
-		Definition: testDefinition(),
-		Actor:      testActor(),
+		Definition: runtimetest.Definition(),
+		Actor:      runtimetest.Actor(),
 		Input:      "Where?",
 		RunID:      pulid.MustNew("ar_"),
 	})
@@ -1039,15 +1008,15 @@ func TestRun_ForwardsARetryNoticeAndThePin(t *testing.T) {
 	t.Parallel()
 
 	completion := &scriptedCompletion{
-		Turns: []*llmports.ChatCompletionResult{textTurn("Whole answer.")},
+		Turns: []*llmports.ChatCompletionResult{runtimetest.TextTurn("Whole answer.")},
 	}
 	rt := newRuntime(completion, &stubQueryRegistry{}, &stubActionRegistry{}, nil)
 	provider := pulid.MustNew("aiprv_")
 
 	var events []kernelports.StreamEvent
 	_, err := rt.Run(t.Context(), &agentruntimeports.RunRequest{
-		Definition:          testDefinition(),
-		Actor:               testActor(),
+		Definition:          runtimetest.Definition(),
+		Actor:               runtimetest.Actor(),
 		Input:               "hello",
 		PreferredProviderID: provider,
 		PinProvider:         true,
@@ -1078,14 +1047,20 @@ func TestRun_ForwardsARetryNoticeAndThePin(t *testing.T) {
 func TestRun_DoesNotPinAnAdministratorsDefault(t *testing.T) {
 	t.Parallel()
 
-	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{textTurn("ok")}}
+	completion := &scriptedCompletion{
+		Turns: []*llmports.ChatCompletionResult{runtimetest.TextTurn("ok")},
+	}
 	rt := newRuntime(completion, &stubQueryRegistry{}, &stubActionRegistry{}, nil)
-	definition := testDefinition()
+	definition := runtimetest.Definition()
 	definition.PreferredProviderID = pulid.MustNew("aiprv_")
 
 	_, err := rt.Run(
 		t.Context(),
-		&agentruntimeports.RunRequest{Definition: definition, Actor: testActor(), Input: "hi"},
+		&agentruntimeports.RunRequest{
+			Definition: definition,
+			Actor:      runtimetest.Actor(),
+			Input:      "hi",
+		},
 	)
 	require.NoError(t, err)
 	assert.Equal(t, definition.PreferredProviderID, completion.LastReq.PreferredProviderID)
@@ -1109,8 +1084,8 @@ func TestRun_TagsReasoningWithTheProviderThatProducedIt(t *testing.T) {
 	result, err := rt.Run(
 		t.Context(),
 		&agentruntimeports.RunRequest{
-			Definition: testDefinition(),
-			Actor:      testActor(),
+			Definition: runtimetest.Definition(),
+			Actor:      runtimetest.Actor(),
 			Input:      "hi",
 		},
 	)
@@ -1187,12 +1162,12 @@ func TestRun_AToolsOwnLimitHoldsAnEarnedTierDown(t *testing.T) {
 				limit:          tc.limit,
 			}
 			completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
-				toolTurn("inbox_send_reply", map[string]any{"messageId": "imsg_1"}),
-				textTurn("Done."),
+				runtimetest.ToolTurn("inbox_send_reply", map[string]any{"messageId": "imsg_1"}),
+				runtimetest.TextTurn("Done."),
 			}}
 			rt := newRuntime(completion, &stubQueryRegistry{},
 				&stubActionRegistry{Tools: []agenttoolports.AgentTool{action}}, nil)
-			definition := testDefinition("inbox_send_reply")
+			definition := runtimetest.Definition("inbox_send_reply")
 			definition.AutonomyCeiling = agent.TierAutoExecute
 			definition.ToolTiers = map[string]agent.AutonomyTier{
 				"inbox_send_reply": agent.TierAutoExecute,
@@ -1200,7 +1175,7 @@ func TestRun_AToolsOwnLimitHoldsAnEarnedTierDown(t *testing.T) {
 
 			result, err := rt.Run(t.Context(), &agentruntimeports.RunRequest{
 				Definition: definition,
-				Actor:      testActor(),
+				Actor:      runtimetest.Actor(),
 				Input:      "Answer imsg_1",
 			})
 			require.NoError(t, err)
@@ -1241,12 +1216,12 @@ func TestRun_AToolsCeilingHoldsEvenAnAgentSetToActAlone(t *testing.T) {
 		ceiling:        agent.TierActWithApproval,
 	}
 	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
-		toolTurn("customer_send_email", map[string]any{"customerId": "cus_1"}),
-		textTurn("Drafted."),
+		runtimetest.ToolTurn("customer_send_email", map[string]any{"customerId": "cus_1"}),
+		runtimetest.TextTurn("Drafted."),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{},
 		&stubActionRegistry{Tools: []agenttoolports.AgentTool{action}}, nil)
-	definition := testDefinition("customer_send_email")
+	definition := runtimetest.Definition("customer_send_email")
 	definition.AutonomyCeiling = agent.TierAutoExecute
 	definition.ToolTiers = map[string]agent.AutonomyTier{
 		"customer_send_email": agent.TierAutoExecute,
@@ -1254,7 +1229,7 @@ func TestRun_AToolsCeilingHoldsEvenAnAgentSetToActAlone(t *testing.T) {
 
 	result, err := rt.Run(t.Context(), &agentruntimeports.RunRequest{
 		Definition: definition,
-		Actor:      testActor(),
+		Actor:      runtimetest.Actor(),
 		Input:      "Tell the customer",
 	})
 	require.NoError(t, err)
@@ -1262,7 +1237,7 @@ func TestRun_AToolsCeilingHoldsEvenAnAgentSetToActAlone(t *testing.T) {
 	require.Len(t, result.Actions, 1)
 	assert.Equal(t, agent.TierActWithApproval, result.Actions[0].Tier)
 	assert.False(t, result.Actions[0].Executed, "it waits for a person")
-	assert.Equal(t, agent.TierActWithApproval, rt.ToolSummaries(definition)[0].Tier,
+	assert.Equal(t, agent.TierActWithApproval, rt.access.ToolSummaries(definition)[0].Tier,
 		"the prompt says what will actually happen")
 }
 
@@ -1282,12 +1257,12 @@ func TestRun_BrokenArgumentsCountAgainstTheBudget(t *testing.T) {
 	}
 	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{broken}}
 	rt := newRuntime(completion, &stubQueryRegistry{}, &stubActionRegistry{}, nil)
-	definition := testDefinition("shipment_get")
+	definition := runtimetest.Definition("shipment_get")
 	definition.MaxToolCalls = 3
 
 	result, err := rt.Run(t.Context(), &agentruntimeports.RunRequest{
 		Definition: definition,
-		Actor:      testActor(),
+		Actor:      runtimetest.Actor(),
 		Input:      "Where is shipment S-1?",
 	})
 	require.NoError(t, err)
@@ -1307,20 +1282,20 @@ func TestRun_AnswersFromWhatItGatheredWhenTheBudgetRunsOut(t *testing.T) {
 	t.Parallel()
 
 	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
-		toolTurn("shipment_get", map[string]any{"shipmentId": "shp_1"}),
-		textTurn("Shipment S-1 is in transit; I did not get to its stops."),
+		runtimetest.ToolTurn("shipment_get", map[string]any{"shipmentId": "shp_1"}),
+		runtimetest.TextTurn("Shipment S-1 is in transit; I did not get to its stops."),
 	}}
 	rt := newRuntime(completion,
 		&stubQueryRegistry{Tools: []agenttoolports.AgentQueryTool{
 			queryTool("shipment_get", map[string]any{"status": "InTransit"}, nil),
 		}},
 		&stubActionRegistry{}, nil)
-	definition := testDefinition("shipment_get")
+	definition := runtimetest.Definition("shipment_get")
 	definition.MaxToolCalls = 1
 
 	result, err := rt.Run(t.Context(), &agentruntimeports.RunRequest{
 		Definition: definition,
-		Actor:      testActor(),
+		Actor:      runtimetest.Actor(),
 		Input:      "Where is S-1 and what are its stops?",
 	})
 	require.NoError(t, err)
@@ -1338,19 +1313,19 @@ func TestRun_KeepsThePlainLineWhenTheLastAskWantsAnotherTool(t *testing.T) {
 	t.Parallel()
 
 	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
-		toolTurn("shipment_get", map[string]any{"shipmentId": "shp_1"}),
+		runtimetest.ToolTurn("shipment_get", map[string]any{"shipmentId": "shp_1"}),
 	}}
 	rt := newRuntime(completion,
 		&stubQueryRegistry{Tools: []agenttoolports.AgentQueryTool{
 			queryTool("shipment_get", map[string]any{"status": "InTransit"}, nil),
 		}},
 		&stubActionRegistry{}, nil)
-	definition := testDefinition("shipment_get")
+	definition := runtimetest.Definition("shipment_get")
 	definition.MaxToolCalls = 1
 
 	result, err := rt.Run(t.Context(), &agentruntimeports.RunRequest{
 		Definition: definition,
-		Actor:      testActor(),
+		Actor:      runtimetest.Actor(),
 		Input:      "Where is S-1?",
 	})
 	require.NoError(t, err)
@@ -1367,14 +1342,17 @@ type dispatchRecorder struct {
 	dispatched []string
 }
 
-func (fx *dispatchRecorder) Dispatch(_ *Turn, call DispatchCall) ToolOutcome {
+func (fx *dispatchRecorder) Dispatch(_ *Turn, call toolcall.Call) toolcall.Outcome {
 	fx.dispatched = append(fx.dispatched, call.Call.Name)
 
-	return ToolOutcome{Content: `{"results":[]}`}
+	return toolcall.Outcome{Content: `{"results":[]}`}
 }
 
-func (fx *dispatchRecorder) DispatchReads(t *Turn, calls []DispatchCall) []ToolOutcome {
-	outcomes := make([]ToolOutcome, 0, len(calls))
+func (fx *dispatchRecorder) DispatchReads(
+	t *Turn,
+	calls []toolcall.Call,
+) []toolcall.Outcome {
+	outcomes := make([]toolcall.Outcome, 0, len(calls))
 	for _, call := range calls {
 		outcomes = append(outcomes, fx.Dispatch(t, call))
 	}
@@ -1397,16 +1375,16 @@ func TestRestoreTurn_DecidesFromTheToolsHeldWhenTheTurnOpened(t *testing.T) {
 	tool := queryTool("worker_list", map[string]any{"results": []any{}}, nil)
 	script := func() *scriptedCompletion {
 		return &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
-			toolTurn("worker_list", map[string]any{"query": "Maria"}),
-			textTurn("Nobody by that name."),
+			runtimetest.ToolTurn("worker_list", map[string]any{"query": "Maria"}),
+			runtimetest.TextTurn("Nobody by that name."),
 		}}
 	}
 	rt := newRuntime(script(), &stubQueryRegistry{Tools: []agenttoolports.AgentQueryTool{tool}},
 		&stubActionRegistry{}, nil)
 
 	opened := &agentruntimeports.RunRequest{
-		Definition: testDefinition("worker_list"),
-		Actor:      testActor(),
+		Definition: runtimetest.Definition("worker_list"),
+		Actor:      runtimetest.Actor(),
 		Input:      "Who is Maria?",
 	}
 	state := rt.OpenTurn(t.Context(), opened).State()
@@ -1420,10 +1398,10 @@ func TestRestoreTurn_DecidesFromTheToolsHeldWhenTheTurnOpened(t *testing.T) {
 
 	// What the held set would be if it were worked out again now.
 	replayed := *opened
-	replayed.Definition = testDefinition()
+	replayed.Definition = runtimetest.Definition()
 
 	drive := func(state TurnState) []string {
-		rt.completion = script()
+		rewire(rt, func(p *Params) { p.Completion = script() })
 		fx := &dispatchRecorder{localEffects: &localEffects{
 			s:    rt,
 			ctx:  t.Context(),
@@ -1458,14 +1436,14 @@ func TestRun_OffersRaiseExceptionOnlyWithARun(t *testing.T) {
 			t.Parallel()
 
 			completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
-				textTurn("Nothing to flag."),
+				runtimetest.TextTurn("Nothing to flag."),
 			}}
 			rt := newRuntime(completion, &stubQueryRegistry{},
 				&stubActionRegistry{Tools: []agenttoolports.AgentTool{action}}, nil)
 
 			_, err := rt.Run(t.Context(), &agentruntimeports.RunRequest{
-				Definition: testDefinition("agent_raise_exception"),
-				Actor:      testActor(),
+				Definition: runtimetest.Definition("agent_raise_exception"),
+				Actor:      runtimetest.Actor(),
 				Input:      "Anything wrong with shp_1?",
 				RunID:      tc.runID,
 			})
@@ -1493,16 +1471,24 @@ func TestEscalatesPastBudget_KeepsARunsHandOffWhenItsBudgetIsSpent(t *testing.T)
 		},
 		actionTool("record_case", agent.TierAutoExecute, nil),
 	}}, nil)
-	turn := &Turn{req: &agentruntimeports.RunRequest{Definition: testDefinition("record_case")}}
+	turn := &Turn{
+		req: &agentruntimeports.RunRequest{Definition: runtimetest.Definition("record_case")},
+	}
 
 	assert.True(t, rt.escalatesPastBudget(turn, "agent_raise_exception", 0))
-	assert.True(t, rt.escalatesPastBudget(turn, "agent_raise_exception", escalationReserve-1))
-	assert.False(t, rt.escalatesPastBudget(turn, "agent_raise_exception", escalationReserve),
-		"the reserve is spent too, so a run that only escalates still stops")
+	assert.True(
+		t,
+		rt.escalatesPastBudget(turn, "agent_raise_exception", toolaccess.EscalationReserve-1),
+	)
+	assert.False(
+		t,
+		rt.escalatesPastBudget(turn, "agent_raise_exception", toolaccess.EscalationReserve),
+		"the reserve is spent too, so a run that only escalates still stops",
+	)
 	assert.False(t, rt.escalatesPastBudget(turn, "record_case", 0))
 	assert.False(t, rt.escalatesPastBudget(turn, "worker_list", 0))
 
-	tiered := testDefinition("record_case")
+	tiered := runtimetest.Definition("record_case")
 	tiered.ToolTiers = map[string]agent.AutonomyTier{"agent_raise_exception": agent.TierPropose}
 	assert.False(t, rt.escalatesPastBudget(
 		&Turn{req: &agentruntimeports.RunRequest{Definition: tiered}}, "agent_raise_exception", 0),

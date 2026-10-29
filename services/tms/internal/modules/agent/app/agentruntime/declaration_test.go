@@ -4,12 +4,13 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetest"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/toolaccess"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolcatalog"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
@@ -31,11 +32,13 @@ func deferredCoreRuntime(t *testing.T) (*Service, []string) {
 			"Stop waiting on something you were waiting for.",
 		),
 	}
-	query := service.queryTools.(*stubQueryRegistry)
+	query := paramsOf(service).QueryTools.(*stubQueryRegistry)
 	query.Tools = append(query.Tools, core...)
-	service.catalog = agenttoolcatalog.NewFromRegistries(agenttoolcatalog.Params{
-		QueryTools:  query,
-		ActionTools: service.actionTools,
+	rewire(service, func(p *Params) {
+		p.Catalog = agenttoolcatalog.NewFromRegistries(agenttoolcatalog.Params{
+			QueryTools:  query,
+			ActionTools: service.actionTools,
+		})
 	})
 
 	return service, append(names, agentdefinition.CoreToolRecallMemory,
@@ -46,25 +49,25 @@ func TestNewToolSet_ATurnThatCanSearchDefersTheCoreToolsFewTurnsCall(t *testing.
 	t.Parallel()
 
 	service, names := deferredCoreRuntime(t)
-	set := service.newToolSet(t.Context(), toolSetRequest{
-		definition: testDefinition(names...),
-		actor:      testActor(),
-		input:      "say hello",
+	set := service.access.NewToolSet(t.Context(), toolaccess.ToolSetRequest{
+		Definition: runtimetest.Definition(names...),
+		Actor:      runtimetest.Actor(),
+		Input:      "say hello",
 	})
 
-	require.True(t, set.disclosed)
-	assert.True(t, set.offers(agentdefinition.CoreToolRecallMemory), "memory stays loaded")
-	assert.False(t, set.offers(agentdefinition.CoreToolWaitUntil))
-	assert.False(t, set.offers(agentdefinition.CoreToolCancelWait))
-	assert.Contains(t, set.deferred, agentdefinition.CoreToolWaitUntil,
+	require.True(t, set.Disclosed)
+	assert.True(t, set.Offers(agentdefinition.CoreToolRecallMemory), "memory stays loaded")
+	assert.False(t, set.Offers(agentdefinition.CoreToolWaitUntil))
+	assert.False(t, set.Offers(agentdefinition.CoreToolCancelWait))
+	assert.Contains(t, set.Deferred, agentdefinition.CoreToolWaitUntil,
 		"a core tool not loaded is still declared, so find_tools can load it")
 
-	asked := service.newToolSet(t.Context(), toolSetRequest{
-		definition: testDefinition(names...),
-		actor:      testActor(),
-		input:      "wait until the truck is arriving at the dock",
+	asked := service.access.NewToolSet(t.Context(), toolaccess.ToolSetRequest{
+		Definition: runtimetest.Definition(names...),
+		Actor:      runtimetest.Actor(),
+		Input:      "wait until the truck is arriving at the dock",
 	})
-	assert.True(t, asked.offers(agentdefinition.CoreToolWaitUntil),
+	assert.True(t, asked.Offers(agentdefinition.CoreToolWaitUntil),
 		"a request that names what a deferred core tool does opens with it")
 }
 
@@ -72,15 +75,15 @@ func TestNewToolSet_ATurnThatCannotSearchLoadsEveryCoreTool(t *testing.T) {
 	t.Parallel()
 
 	service, _ := deferredCoreRuntime(t)
-	set := service.newToolSet(t.Context(), toolSetRequest{
-		definition: testDefinition("worker_list", agentdefinition.CoreToolWaitUntil),
-		actor:      testActor(),
-		input:      "say hello",
+	set := service.access.NewToolSet(t.Context(), toolaccess.ToolSetRequest{
+		Definition: runtimetest.Definition("worker_list", agentdefinition.CoreToolWaitUntil),
+		Actor:      runtimetest.Actor(),
+		Input:      "say hello",
 	})
 
-	require.False(t, set.searchable())
-	assert.True(t, set.offers(agentdefinition.CoreToolWaitUntil))
-	assert.Empty(t, set.deferred, "with nothing to search, nothing is declared deferred")
+	require.False(t, set.Searchable())
+	assert.True(t, set.Offers(agentdefinition.CoreToolWaitUntil))
+	assert.Empty(t, set.Deferred, "with nothing to search, nothing is declared deferred")
 }
 
 func TestFindFor_LoadsWhatTheActivityFoundIntoTheTurnAsReferences(t *testing.T) {
@@ -88,12 +91,12 @@ func TestFindFor_LoadsWhatTheActivityFoundIntoTheTurnAsReferences(t *testing.T) 
 
 	service, names := wideRuntime(t)
 	req := &agentruntimeports.RunRequest{
-		Definition: testDefinition(names...),
-		Actor:      testActor(),
+		Definition: runtimetest.Definition(names...),
+		Actor:      runtimetest.Actor(),
 		Input:      "say hello",
 	}
 	turn := service.RestoreTurn(req, service.OpenTurn(t.Context(), req).State())
-	require.False(t, turn.tools.offers("equipment_list_trailers"))
+	require.False(t, turn.tools.Offers("equipment_list_trailers"))
 	declared := turn.completionRequest()
 
 	found := service.FindFor(t.Context(), req, turn.ToolsState(),
@@ -101,17 +104,17 @@ func TestFindFor_LoadsWhatTheActivityFoundIntoTheTurnAsReferences(t *testing.T) 
 	turn.LoadTools(found.Loaded)
 
 	require.Contains(t, found.Loaded, "equipment_list_trailers")
-	assert.True(t, turn.tools.offers("equipment_list_trailers"))
+	assert.True(t, turn.tools.Offers("equipment_list_trailers"))
 	assert.Equal(t, declared.Tools, turn.completionRequest().Tools,
 		"loading a tool leaves what the turn declared as it was")
 	assert.Equal(t, declared.DeferredTools, turn.completionRequest().DeferredTools)
-	assert.Contains(t, turn.tools.takeLoaded(), "equipment_list_trailers",
+	assert.Contains(t, turn.tools.TakeLoaded(), "equipment_list_trailers",
 		"the next tool result names it")
 
 	restored := service.RestoreTurn(req, turn.State())
 	assert.True(
 		t,
-		restored.tools.offers("equipment_list_trailers"),
+		restored.tools.Offers("equipment_list_trailers"),
 		"a restored turn keeps what it loaded",
 	)
 }
@@ -121,8 +124,8 @@ func TestStreamCompletion_DeclaresEachDeferredToolInFullAndSorted(t *testing.T) 
 
 	service, names := wideRuntime(t)
 	req := &agentruntimeports.RunRequest{
-		Definition: testDefinition(names...),
-		Actor:      testActor(),
+		Definition: runtimetest.Definition(names...),
+		Actor:      runtimetest.Actor(),
 		Input:      "say hello",
 	}
 	turn := service.OpenTurn(t.Context(), req)
@@ -132,7 +135,7 @@ func TestStreamCompletion_DeclaresEachDeferredToolInFullAndSorted(t *testing.T) 
 		assert.False(t, spec.Deferred, "a turn's own request carries only what is loaded in full")
 	}
 
-	declared := service.declareTools(request)
+	declared := service.streamer.DeclareTools(request)
 
 	assert.Empty(t, declared.DeferredTools)
 	assert.Len(t, declared.Tools, len(request.Tools)+len(request.DeferredTools))
@@ -147,7 +150,7 @@ func TestStreamCompletion_DeclaresEachDeferredToolInFullAndSorted(t *testing.T) 
 		}
 	}
 	assert.Equal(t, len(request.DeferredTools), deferred)
-	assert.Equal(t, declared.Tools, service.declareTools(turn.completionRequest()).Tools,
+	assert.Equal(t, declared.Tools, service.streamer.DeclareTools(turn.completionRequest()).Tools,
 		"the same declaration every call")
 }
 
@@ -159,14 +162,13 @@ func TestToolMap_GroupsTheToolsByAreaOfTrenova(t *testing.T) {
 		&agenttest.StubQueryTool{ToolName: "shipment_get", Resource: permission.ResourceShipment},
 		&agenttest.StubQueryTool{ToolName: "invoice_list", Resource: permission.ResourceInvoice},
 	}}
-	service := &Service{
-		logger:      zap.NewNop(),
-		queryTools:  query,
-		actionTools: &stubActionRegistry{},
-		registry:    permissioncatalog.NewRegistry(),
-	}
+	service := buildRuntime(Params{
+		Logger:      zap.NewNop(),
+		QueryTools:  query,
+		ActionTools: &stubActionRegistry{},
+	})
 
-	areas := service.toolMap([]string{
+	areas := service.access.ToolMap([]string{
 		"shipment_list", "shipment_get", "invoice_list", "shipment_list", "find_tools",
 	})
 

@@ -2,7 +2,6 @@ package agentruntime
 
 import (
 	"context"
-	"errors"
 	"maps"
 	"slices"
 	"strings"
@@ -13,13 +12,27 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentguard"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/argcheck"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/askuser"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/delegation"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/loopguard"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/modelstream"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/replycheck"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/scriptbroker"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/toolaccess"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/toolcall"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/tooldispatch"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/toolresult"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/toolsummary"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/turnhistory"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/turnmemory"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentshadow"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolcatalog"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolpolicy"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpagecontext"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/codemode"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
@@ -33,10 +46,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
-	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"go.uber.org/fx"
@@ -86,7 +97,6 @@ type Params struct {
 	// Definitions is optional. With it a search for a tool the agent does not
 	// hold names the person's other agents that hold it.
 	Definitions agentdefinitionports.AgentDefinitionRepository `optional:"true"`
-	RateLimits  kernelports.RateLimitStore                     `optional:"true"`
 	AIConfig    *aiconfig.Config                               `optional:"true"`
 	AppConfig   *appconfig.Config                              `optional:"true"`
 	Disclosures agenttoolports.ToolDisclosureObserver          `optional:"true"`
@@ -99,85 +109,77 @@ type Params struct {
 
 type Service struct {
 	logger      *zap.Logger
-	completion  llmports.CompletionService
-	queryTools  agenttoolports.AgentQueryToolRegistry
 	actionTools agenttoolports.AgentToolRegistry
-	permissions permissionports.PermissionEngine
-	definitions agentdefinitionports.AgentDefinitionRepository
-	catalog     *agenttoolcatalog.Catalog
-	versions    agenttoolports.RecordVersionReader
-	budgets     agentports.AgentBudgetService
-	trust       agenttoolports.AgentToolTrustRepository
-	extensions  agentextensionports.AgentExtensionGate
 	memories    agentmemoryports.AgentMemoryService
-	vectorizer  retrievalports.QueryVectorizer
-	vectors     retrievalports.CatalogVectorIndex
-	previews    agentruntimeports.ProposalPreviewService
-	rules       agenttoolports.ToolRuleOverrides
 	changes     realtimeports.RecordChangeFeed
 	metrics     *aimetrics.Assistant
-	disclosures agenttoolports.ToolDisclosureObserver
-	threshold   *int
-	// arguments holds each tool's compiled schema, against which every
-	// call's arguments are checked before the tool sees them.
-	arguments  *toolschema.Validator
-	rateLimits kernelports.RateLimitStore
-	pools      matchPools
-	matchable  func() []string
-	registry   *permissioncatalog.Registry
-	codeMode   codemode.Gate
-	scripts    llmports.ScriptProviders
-	shadow     shadowVerdicts
+	codeMode    codemode.Gate
+	access      *toolaccess.Access
+	dispatcher  *tooldispatch.Dispatcher
+	streamer    *modelstream.Streamer
 }
 
 func New(p Params) *Service {
+	return assemble(p, accessParams(p), dispatcherParams(p))
+}
+
+// assemble builds the runtime from its parts: the tool access every part
+// checks against, the dispatcher that runs tool calls and the streamer that
+// asks the model.
+func assemble(
+	p Params,
+	accessParts toolaccess.AccessParams,
+	dispatchParts tooldispatch.DispatcherParams,
+) *Service {
+	access := toolaccess.NewAccess(accessParts)
+	dispatchParts.Access = access
+
 	return &Service{
-		arguments:   toolschema.NewValidator(),
 		logger:      p.Logger.Named("service.agentruntime"),
-		completion:  p.Completion,
-		queryTools:  p.QueryTools,
 		actionTools: p.ActionTools,
-		permissions: p.Permissions,
-		definitions: p.Definitions,
-		catalog:     p.Catalog,
-		versions:    p.Versions,
-		budgets:     p.Budgets,
-		trust:       p.Trust,
-		extensions:  p.Extensions,
 		memories:    p.Memories,
-		vectorizer:  p.Vectorizer,
-		vectors:     p.CatalogVectors,
-		previews:    p.Previews,
-		rules:       p.Rules,
 		changes:     p.Changes,
 		metrics:     metrics.AssistantFrom(p.Metrics),
-		disclosures: p.Disclosures,
-		threshold:   configuredThreshold(p.AIConfig),
-		rateLimits:  p.RateLimits,
-		pools:       newMatchPools(),
-		matchable:   matchableTools(p.Catalog),
-		registry:    permissioncatalog.NewRegistry(),
-		codeMode:    codeModeGate(p.AppConfig),
-		scripts:     p.Scripts,
-		shadow:      shadowFrom(p.Shadow),
+		codeMode:    dispatchParts.CodeMode,
+		access:      access,
+		streamer:    modelstream.NewStreamer(p.Completion, access),
+		dispatcher:  tooldispatch.NewDispatcher(dispatchParts),
 	}
 }
 
-// codeModeGate decides from the chat providers' script settings, and is
-// forced open on request only in a development or test deployment, where the
-// desk bench runs.
-func codeModeGate(cfg *appconfig.Config) codemode.Gate {
-	return codemode.Gate{
-		Forced: cfg != nil && (cfg.IsDevelopment() || cfg.IsTest()),
+func accessParams(p Params) toolaccess.AccessParams {
+	return toolaccess.AccessParams{
+		Logger:         p.Logger,
+		QueryTools:     p.QueryTools,
+		ActionTools:    p.ActionTools,
+		Permissions:    p.Permissions,
+		Catalog:        p.Catalog,
+		Extensions:     p.Extensions,
+		Vectorizer:     p.Vectorizer,
+		CatalogVectors: p.CatalogVectors,
+		Definitions:    p.Definitions,
+		Threshold:      toolaccess.ConfiguredThreshold(p.AIConfig),
+		Disclosures:    p.Disclosures,
+		Scripts:        p.Scripts,
 	}
 }
 
-func shadowFrom(resolver *agentshadow.Resolver) shadowVerdicts {
-	if resolver == nil {
-		return nil
+func dispatcherParams(p Params) tooldispatch.DispatcherParams {
+	return tooldispatch.DispatcherParams{
+		Logger:      p.Logger,
+		QueryTools:  p.QueryTools,
+		ActionTools: p.ActionTools,
+		Permissions: p.Permissions,
+		Versions:    p.Versions,
+		Budgets:     p.Budgets,
+		Trust:       p.Trust,
+		Previews:    p.Previews,
+		Rules:       p.Rules,
+		CodeMode:    tooldispatch.CodeModeGate(p.AppConfig),
+		Shadow:      tooldispatch.ShadowFrom(p.Shadow),
+		Scripts:     p.Scripts,
+		Brokers:     scriptbroker.Open,
 	}
-
-	return resolver
 }
 
 func (s *Service) Run(
@@ -209,7 +211,7 @@ func (s *Service) Drive(t *Turn, fx TurnEffects) (*agentruntimeports.RunResult, 
 	tools := t.tools
 
 	t.announceOpened(fx)
-	t.announceMemories(fx)
+	turnmemory.Announce(t, fx)
 	if t.directed != nil {
 		return s.driveDirected(t, fx), nil
 	}
@@ -217,13 +219,13 @@ func (s *Service) Drive(t *Turn, fx TurnEffects) (*agentruntimeports.RunResult, 
 	retries := 0
 	asked := false
 	stuck := false
-	grounding := groundingState{}
+	grounding := replycheck.GroundingState{}
 	commandHeld := false
-	placement := placementState{}
+	placement := replycheck.PlacementState{}
 	for result.ToolCallsUsed < budget && !stuck {
 		s.interject(t, fx)
 		reply, err := fx.Complete(t, t.completionRequest())
-		result.Usage = result.Usage.Add(reply.usage())
+		result.Usage = result.Usage.Add(reply.TotalUsage())
 		completion := reply.Completion
 		if err == nil && reply.Looped {
 			s.logger.Warn("agent reply fell into a loop; discarding it",
@@ -232,13 +234,13 @@ func (s *Service) Drive(t *Turn, fx TurnEffects) (*agentruntimeports.RunResult, 
 				zap.Bool("in_reasoning", reply.InReasoning),
 				zap.Int("retry", retries+1),
 			)
-			if retries < maxReplyRetries {
+			if retries < loopguard.MaxReplyRetries {
 				retries++
 				fx.Emit(kernelports.StreamEvent{
 					Event: assistantports.AssistantEventRetrying,
 					Data: assistantports.AssistantRetryingEvent{
 						Attempt: retries,
-						Reason:  loopRestartReason,
+						Reason:  loopguard.LoopRestartReason,
 						Kind:    llmports.RetryKindRestart,
 					},
 				})
@@ -249,12 +251,16 @@ func (s *Service) Drive(t *Turn, fx TurnEffects) (*agentruntimeports.RunResult, 
 				Event: assistantports.AssistantEventRetrying,
 				Data: assistantports.AssistantRetryingEvent{
 					Attempt: retries + 1,
-					Reason:  loopRestartReason,
+					Reason:  loopguard.LoopRestartReason,
 					Kind:    llmports.RetryKindRestart,
 				},
 			})
-			fx.Emit(deltaEvent(loopedReply))
-			return s.finish(result, cannedCompletion(completion, loopedReply), fx), nil
+			fx.Emit(modelstream.DeltaEvent(loopguard.LoopedReply))
+			return s.finish(
+				result,
+				modelstream.CannedCompletion(completion, loopguard.LoopedReply),
+				fx,
+			), nil
 		}
 		if err != nil {
 			// What ran travels with the error. The caller decides whether to
@@ -274,25 +280,29 @@ func (s *Service) Drive(t *Turn, fx TurnEffects) (*agentruntimeports.RunResult, 
 		result.ProviderID = completion.ProviderID
 		result.ContextWindow = completion.ContextWindow
 		t.providerKind = completion.ProviderKind
-		tagReasoning(completion)
+		modelstream.TagReasoning(completion)
 		if stop {
 			return s.finishCutOff(t, fx, completion), nil
 		}
-		tagToolCalls(completion)
-		distinctCallIDs(completion, t.callIDs, fx.NewCallID)
+		modelstream.TagToolCalls(completion)
+		turnhistory.DistinctCallIDs(completion, t.callIDs, fx.NewCallID)
 
 		if len(completion.ToolCalls) == 0 {
 			// A turn that ends in silence reads as a hung screen. One that
 			// asked the person a question has said what it needed to; any
 			// other is asked once more, then given a plain line.
 			if strings.TrimSpace(completion.Text) == "" && !asked {
-				if retries < maxReplyRetries {
+				if retries < loopguard.MaxReplyRetries {
 					retries++
 					s.reask(t, fx, ReaskEmptyReply, completion)
 					continue
 				}
-				fx.Emit(deltaEvent(emptyReply))
-				return s.finish(result, cannedCompletion(completion, emptyReply), fx), nil
+				fx.Emit(modelstream.DeltaEvent(loopguard.EmptyReply))
+				return s.finish(
+					result,
+					modelstream.CannedCompletion(completion, loopguard.EmptyReply),
+					fx,
+				), nil
 			}
 			if !asked && s.holdToCommand(t, fx, completion, &commandHeld) {
 				s.reask(t, fx, ReaskCommand, completion)
@@ -314,11 +324,11 @@ func (s *Service) Drive(t *Turn, fx TurnEffects) (*agentruntimeports.RunResult, 
 		assistantTurn := conversation.Message{
 			Role:              conversation.RoleAssistant,
 			Content:           completion.Text,
-			ToolCalls:         toToolCallRecords(completion.ToolCalls),
+			ToolCalls:         turnhistory.ToToolCallRecords(completion.ToolCalls),
 			Reasoning:         completion.Reasoning,
 			Model:             completion.ModelIdentifier,
 			ProviderID:        completion.ProviderID,
-			FallbackFrom:      fallbackOf(completion),
+			FallbackFrom:      modelstream.FallbackOf(completion),
 			InputTokens:       completion.InputTokens,
 			OutputTokens:      completion.OutputTokens,
 			LatencyMs:         completion.LatencyMs,
@@ -341,36 +351,38 @@ func (s *Service) Drive(t *Turn, fx TurnEffects) (*agentruntimeports.RunResult, 
 			Event: assistantports.AssistantEventMessage,
 			Data: assistantports.AssistantMessageEvent{
 				Content:      assistantTurn.Content,
-				ToolCalls:    s.callsWithEffects(assistantTurn.ToolCalls),
+				ToolCalls:    s.access.CallsWithEffects(assistantTurn.ToolCalls),
 				Model:        assistantTurn.Model,
 				ProviderID:   assistantTurn.ProviderID,
 				FallbackFrom: assistantTurn.FallbackFrom,
 			},
 		})
 
-		batch := &readBatch{}
+		batch := &tooldispatch.ReadBatch{}
 		shownNow := false
-		fannedOut := s.fanOut(t, fx, completion.ToolCalls, result.ToolCallsUsed, budget)
+		fannedOut := delegation.FanOut(
+			t, s.handing(t, fx), completion.ToolCalls, result.ToolCallsUsed, budget,
+		)
 		for _, call := range completion.ToolCalls {
-			check := &joinCheck{
-				call:   call,
-				used:   result.ToolCallsUsed,
-				budget: budget,
-				stuck:  stuck,
+			check := &tooldispatch.JoinCheck{
+				Call:   call,
+				Used:   result.ToolCallsUsed,
+				Budget: budget,
+				Stuck:  stuck,
 			}
 			key, joins := t.joins(batch, check)
-			if !joins && batch.size() > 0 {
+			if !joins && batch.Size() > 0 {
 				// The waiting reads settle first; with them settled the call
 				// may start a batch of its own.
 				s.settleReads(t, fx, batch)
-				check.used = result.ToolCallsUsed
+				check.Used = result.ToolCallsUsed
 				key, joins = t.joins(batch, check)
 			}
 			if joins {
 				s.emitToolStarted(fx, &call)
-				s.load(tools, call.Name)
-				batch.calls = append(batch.calls, t.dispatchCall(&call, completion.Text))
-				batch.keys = append(batch.keys, key)
+				s.access.Load(tools, call.Name)
+				batch.Calls = append(batch.Calls, t.dispatchCall(&call, completion.Text))
+				batch.Keys = append(batch.Keys, key)
 				continue
 			}
 
@@ -382,7 +394,7 @@ func (s *Service) Drive(t *Turn, fx TurnEffects) (*agentruntimeports.RunResult, 
 			// run on the empty map that stood in for them, and a list tool given
 			// no filters lists everything.
 			if call.ArgumentsError != "" {
-				outcome := refusedOutcome(
+				outcome := toolcall.Refused(
 					aitrace.OutcomeInvalid,
 					"its arguments were not valid JSON",
 					"Tool %q was not run: its arguments were not valid JSON (%s). "+
@@ -405,7 +417,7 @@ func (s *Service) Drive(t *Turn, fx TurnEffects) (*agentruntimeports.RunResult, 
 			// run.
 			if result.ToolCallsUsed >= budget &&
 				!s.escalatesPastBudget(t, call.Name, result.ToolCallsUsed-budget) {
-				outcome := refusedOutcome(
+				outcome := toolcall.Refused(
 					aitrace.OutcomeOverBudget,
 					"the turn's tool budget is spent",
 					"Tool %q was not run: this turn's tool budget of %d is spent. "+
@@ -416,52 +428,58 @@ func (s *Service) Drive(t *Turn, fx TurnEffects) (*agentruntimeports.RunResult, 
 				continue
 			}
 
-			if call.Name == findToolsName {
-				tools.findCalls++
-				var outcome toolOutcome
-				if tools.findCalls > maxFindCalls {
+			if call.Name == runtimetools.FindToolsName {
+				tools.FindCalls++
+				var outcome toolcall.Result
+				if tools.FindCalls > toolaccess.MaxFindCalls {
 					// Past the cap the search is charged, so a model that
 					// only ever searches still runs out of turn.
 					result.ToolCallsUsed++
-					outcome = refusedOutcome(
+					outcome = toolcall.Refused(
 						aitrace.OutcomeOverBudget,
 						"the turn's tool searches are spent",
 						"You have searched for tools %d times this turn. Use what is "+
 							"loaded, or tell the person what you could not find.",
-						maxFindCalls,
+						toolaccess.MaxFindCalls,
 					)
 				} else {
 					answer := fx.Find(t, call.Arguments)
-					outcome = toolOutcome{
-						content: answer.Content + searchesLeft(tools.findCalls),
-						found:   answer.Found,
-						handOff: answer.HandOff,
+					outcome = toolcall.Result{
+						Content: answer.Content + toolaccess.SearchesLeft(tools.FindCalls),
+						Found:   answer.Found,
+						HandOff: answer.HandOff,
 					}
 				}
 				s.recordToolResult(t, fx, call, outcome)
 				continue
 			}
 
-			if call.Name == askUserName {
-				question := comparableQuestion(stringArg(call.Arguments, "question"))
+			if call.Name == askuser.Name {
+				question := askuser.ComparableQuestion(
+					argcheck.String(call.Arguments, "question"),
+				)
 				_, repeated := t.questions[question]
-				content, shown := resolveAsk(t.localNow(fx), call.Arguments)
-				outcome := toolOutcome{content: content}
+				content, shown := askuser.Resolve(t.localNow(fx), call.Arguments)
+				outcome := toolcall.Result{Content: content}
 				switch {
-				case !tools.offers(askUserName) && t.req.Delegation != nil:
-					outcome = refusedOutcome(aitrace.OutcomeDenied,
-						"a delegated task cannot ask the person", "%s", delegatedAskRefusal)
-				case !tools.offers(askUserName):
-					outcome = refusedOutcome(aitrace.OutcomeDenied,
-						"nobody is in the conversation to ask", "%s", unattendedAskRefusal)
+				case !tools.Offers(askuser.Name) && t.req.Delegation != nil:
+					outcome = toolcall.Refused(
+						aitrace.OutcomeDenied,
+						"a delegated task cannot ask the person",
+						"%s",
+						delegation.DelegatedAskRefusal,
+					)
+				case !tools.Offers(askuser.Name):
+					outcome = toolcall.Refused(aitrace.OutcomeDenied,
+						"nobody is in the conversation to ask", "%s", askuser.UnattendedRefusal)
 				case question != "" && repeated:
-					outcome = refusedOutcome(aitrace.OutcomeDuplicate,
-						"the same question was already asked", "%s", repeatedAskRefusal)
+					outcome = toolcall.Refused(aitrace.OutcomeDuplicate,
+						"the same question was already asked", "%s", askuser.RepeatedRefusal)
 				case !shown:
 					// Nothing reached the person, so the turn has not asked
 					// anything: it may not end in silence on it, and the
 					// question may be asked again as it should have been.
-					outcome = refusedOutcome(aitrace.OutcomeInvalid,
+					outcome = toolcall.Refused(aitrace.OutcomeInvalid,
 						"the question could not be shown as asked", "%s", content)
 				default:
 					asked = true
@@ -475,64 +493,7 @@ func (s *Service) Drive(t *Turn, fx TurnEffects) (*agentruntimeports.RunResult, 
 				continue
 			}
 
-			if call.Name == requestDecisionName {
-				outcome := refusedOutcome(aitrace.OutcomeDenied,
-					"the turn is not offered the approval box", "%s", unofferedDecisionRefusal)
-				if tools.offers(requestDecisionName) {
-					outcome = t.requestDecision(call.Arguments)
-				}
-				result.ToolCallsUsed++
-				s.recordToolResult(t, fx, call, outcome)
-				continue
-			}
-
-			if call.Name == withdrawProposalName {
-				outcome := refusedOutcome(aitrace.OutcomeDenied,
-					"the turn has filed no proposal to withdraw", "%s", unofferedWithdrawal)
-				if t.req.Delegation != nil {
-					outcome = refusedOutcome(aitrace.OutcomeDenied,
-						"a delegated task cannot withdraw a proposal", "%s", delegatedWithdrawal)
-				}
-				if tools.offers(withdrawProposalName) && t.hasFiledProposal() {
-					outcome = t.withdrawProposal(call.Arguments)
-				}
-				result.ToolCallsUsed++
-				s.recordToolResult(t, fx, call, outcome)
-				continue
-			}
-
-			if call.Name == namePlanName {
-				outcome := refusedOutcome(aitrace.OutcomeDenied,
-					"the turn is not offered plan naming", "%s", unofferedNaming)
-				if t.req.Delegation != nil {
-					outcome = refusedOutcome(aitrace.OutcomeDenied,
-						"a delegated task cannot name the plan", "%s", delegatedNaming)
-				}
-				if tools.offers(namePlanName) {
-					outcome = t.namePlan(call.Arguments)
-				}
-				result.ToolCallsUsed++
-				s.recordToolResult(t, fx, call, outcome)
-				continue
-			}
-
-			if call.Name == publishArtifactName {
-				outcome := publishOutcome(call.Arguments)
-				if !tools.offers(publishArtifactName) {
-					outcome = refusedOutcome(aitrace.OutcomeDenied,
-						"the turn is not offered documents", "%s", unpublishableRefusal)
-				}
-				result.ToolCallsUsed++
-				s.recordToolResult(t, fx, call, outcome)
-				continue
-			}
-
-			if call.Name == showBoardName {
-				outcome := refusedOutcome(aitrace.OutcomeDenied,
-					"the turn is not offered boards", "%s", unboardableRefusal)
-				if tools.offers(showBoardName) {
-					outcome = t.showBoard(call.Arguments)
-				}
+			if outcome, handled := runtimetools.Answer(t, tools.Offers, call); handled {
 				result.ToolCallsUsed++
 				s.recordToolResult(t, fx, call, outcome)
 				continue
@@ -542,29 +503,29 @@ func (s *Service) Drive(t *Turn, fx TurnEffects) (*agentruntimeports.RunResult, 
 			// working for another agent is told why it cannot. Any other turn
 			// that names it is answered as for any tool it does not hold, as
 			// it was before the tool existed.
-			if call.Name == delegateTaskName &&
-				(t.holds(delegateTaskName) || t.req.Delegation != nil) {
+			if call.Name == runtimetools.DelegateTaskName &&
+				(t.Holds(runtimetools.DelegateTaskName) || t.req.Delegation != nil) {
 				outcome, ran := fannedOut[call.ID]
 				if !ran {
-					outcome = s.delegate(t, fx, call)
+					outcome = delegation.Delegate(t, s.handing(t, fx), call)
 				}
 				result.ToolCallsUsed++
 				s.recordToolResult(t, fx, call, outcome)
 				continue
 			}
 
-			if !t.holds(call.Name) {
-				outcome := s.unheldOutcome(tools, call.Name)
+			if !t.Holds(call.Name) {
+				outcome := s.access.UnheldOutcome(tools, call.Name)
 				result.ToolCallsUsed++
 				s.recordToolResult(t, fx, call, outcome)
 				continue
 			}
 			if stuck {
-				s.recordToolResult(t, fx, call, refusedOutcome(
+				s.recordToolResult(t, fx, call, toolcall.Refused(
 					aitrace.OutcomeDuplicate,
 					"the turn stopped calling tools after repeated failed calls",
 					"%s",
-					stoppedCallText(call.Name),
+					loopguard.StoppedCallText(call.Name),
 				))
 				continue
 			}
@@ -572,25 +533,25 @@ func (s *Service) Drive(t *Turn, fx TurnEffects) (*agentruntimeports.RunResult, 
 			// A tool the agent holds but was not sent runs anyway — the
 			// configuration is the grant, disclosure only decides what was
 			// shown — and is loaded, so the next request carries its schema.
-			s.load(tools, call.Name)
+			s.access.Load(tools, call.Name)
 
-			if previous, repeated := t.repeats.seen(call); repeated {
-				outcome := refusedOutcome(
+			if previous, repeated := t.repeats.Seen(call); repeated {
+				outcome := toolcall.Refused(
 					aitrace.OutcomeDuplicate,
 					"the same call already failed this turn",
 					"%s",
-					repeatRefusal(call.Name, previous),
+					loopguard.RepeatRefusal(call.Name, previous),
 				)
 				result.ToolCallsUsed++
 				s.recordToolResult(t, fx, call, outcome)
-				if t.repeats.refused() {
+				if t.repeats.Refused() {
 					stuck = true
 				}
 				continue
 			}
 
-			if t.repeats.readBefore(call) {
-				outcome := toolOutcome{content: repeatedRead(call.Name)}
+			if t.repeats.ReadBefore(call) {
+				outcome := toolcall.Result{Content: loopguard.RepeatedRead(call.Name)}
 				result.ToolCallsUsed++
 				s.recordToolResult(t, fx, call, outcome)
 				continue
@@ -614,13 +575,13 @@ func (s *Service) Drive(t *Turn, fx TurnEffects) (*agentruntimeports.RunResult, 
 
 	note, ending, guard := budgetSpentNote, exhaustedReply, ReaskBudgetSpent
 	if stuck {
-		note, ending, guard = stuckNote, stuckReply, ReaskStuck
+		note, ending, guard = loopguard.StuckNote, loopguard.StuckReply, ReaskStuck
 	}
 	if final := s.finalAnswer(t, fx, result, note, guard); final != nil {
-		grounding.rewritten = true
+		grounding.Rewritten = true
 		s.reground(t, fx, final, &grounding)
 		s.passReply(t, fx, final)
-		placement.retried = true
+		placement.Retried = true
 		s.placeArtifacts(t, fx, final, &placement)
 
 		return s.finish(result, final, fx), nil
@@ -633,7 +594,7 @@ func (s *Service) Drive(t *Turn, fx TurnEffects) (*agentruntimeports.RunResult, 
 		Content:   ending,
 		CreatedAt: fx.Now(),
 	})
-	fx.Emit(deltaEvent(ending))
+	fx.Emit(modelstream.DeltaEvent(ending))
 
 	return result, nil
 }
@@ -645,31 +606,31 @@ func (s *Service) emitToolStarted(effects TurnEffects, call *llmports.ToolCall) 
 			CallID:    call.ID,
 			Name:      call.Name,
 			Arguments: call.Arguments,
-			Effect:    s.ToolEffect(call.Name),
+			Effect:    s.access.ToolEffect(call.Name),
 		},
 	})
 }
 
 // dispatchCall is a call the loop has decided to make, with what the turn
 // knew when it decided.
-func (t *Turn) dispatchCall(call *llmports.ToolCall, completionText string) DispatchCall {
-	continues := t.continueScript(call)
+func (t *Turn) dispatchCall(call *llmports.ToolCall, completionText string) toolcall.Call {
+	continues := t.scripts.Continue(call, t.result.Messages)
 
-	return DispatchCall{
+	return toolcall.Call{
 		Call:                 *call,
 		CompletionText:       completionText,
-		ProposedSoFar:        unwithdrawn(t.result.Actions),
-		Ordinal:              t.counts.next(*call),
+		ProposedSoFar:        runtimetools.Unwithdrawn(t.result.Actions),
+		Ordinal:              t.counts.Next(*call),
 		AfterExternalContent: t.external,
 		Taint:                t.result.Taint,
 		Earlier:              t.earlier(call.Name),
-		MoneySpent:           t.moneySpent(),
+		MoneySpent:           t.MoneySpent(),
 		Beyond:               t.beyondTier(call.Name),
 		Model:                t.result.Model,
 		Provider:             t.providerKind,
 		ProviderID:           t.result.ProviderID,
 		ScriptContinues:      continues,
-		ScriptPosition:       t.scriptPosition(call),
+		ScriptPosition:       t.scripts.Position(call, t.result.Messages),
 		ScriptReach:          t.scriptReach(call),
 	}
 }
@@ -687,170 +648,37 @@ func (t *Turn) scriptReach(call *llmports.ToolCall) map[string]agent.AutonomyTie
 	return maps.Clone(t.beyond)
 }
 
-// scriptPosition is how many calls to the script tool the turn has made up to
-// and including this one, zero for any other tool. A call that continues a
-// script is not counted: it finishes what that script began. Nor is an
-// earlier script that stopped on an error before it read anything, up to
-// ScriptsPerTurn of them: correcting a read's name is not another analysis.
-func (t *Turn) scriptPosition(call *llmports.ToolCall) int {
-	if call.Name != codemode.ToolRunScript {
-		return 0
-	}
-	position, unread := 0, 0
-	for idx := range t.result.Messages {
-		for _, made := range t.result.Messages[idx].ToolCalls {
-			if made.Name != codemode.ToolRunScript {
-				continue
-			}
-			counted := !t.finishes(made.ID)
-			if made.ID != call.ID && t.unread[made.ID] {
-				unread++
-				counted = unread > codemode.ScriptsPerTurn
-			}
-			if counted {
-				position++
-			}
-			if made.ID == call.ID {
-				return position
-			}
-		}
-	}
-
-	return position + 1
-}
-
-// finishes reports whether the call with id continues a script that read a
-// dataset and showed nothing: it finishes that analysis rather than starting
-// another, so the turn's script count leaves it out.
-func (t *Turn) finishes(id string) bool {
-	earlier, continues := t.continuing[id]
-
-	return continues && t.continuable[earlier] == codemode.ContinueFree
-}
-
-// continueScript is the arguments of the script of this turn that call
-// continues, its code the whole of what ran before: one whose answer said it
-// may be continued and that no other call has continued. It claims that
-// script for call, so a second call naming it runs nothing. Nil when call
-// continues nothing it may.
-func (t *Turn) continueScript(call *llmports.ToolCall) map[string]any {
-	if call.Name != codemode.ToolRunScript {
-		return nil
-	}
-	earlier := strings.TrimSpace(stringArg(call.Arguments, codemode.ParamScriptContinues))
-	if earlier == "" {
-		return nil
-	}
-	if t.continuable[earlier] == codemode.ContinueNone {
-		return nil
-	}
-	for other, continued := range t.continuing {
-		if continued == earlier && other != call.ID {
-			return nil
-		}
-	}
-	arguments := t.continuedArguments(earlier, 0)
-	if arguments == nil {
-		return nil
-	}
-	if t.continuing == nil {
-		t.continuing = make(map[string]string, 1)
-	}
-	t.continuing[call.ID] = earlier
-
-	return arguments
-}
-
-// continuedArguments is what the script call with id ran: its own arguments,
-// or for a call that itself continued one, the code of every script before it
-// and then its own, over the datasets and inputs of the first. A chain is
-// never longer than the scripts a turn runs.
-func (t *Turn) continuedArguments(id string, depth int) map[string]any {
-	arguments := t.scriptArguments(id)
-	earlier, chained := t.continuing[id]
-	if arguments == nil || !chained {
-		return arguments
-	}
-	if depth > 2*codemode.ScriptsPerTurn {
-		return nil
-	}
-	base := t.continuedArguments(earlier, depth+1)
-	if base == nil {
-		return nil
-	}
-	whole := maps.Clone(base)
-	whole[codemode.ParamScriptCode] = strings.TrimRight(stringArg(base, codemode.ParamScriptCode),
-		"\n") + "\n\n" + stringArg(arguments, codemode.ParamScriptCode)
-	for _, key := range []string{codemode.ParamScriptTitle, codemode.ParamScriptPurpose} {
-		if own := strings.TrimSpace(stringArg(arguments, key)); own != "" {
-			whole[key] = own
-		}
-	}
-
-	return whole
-}
-
-// scriptArguments is what the turn's script call with id was asked to run.
-func (t *Turn) scriptArguments(id string) map[string]any {
-	for idx := range t.result.Messages {
-		for _, made := range t.result.Messages[idx].ToolCalls {
-			if made.ID == id && made.Name == codemode.ToolRunScript {
-				return made.Arguments
-			}
-		}
-	}
-
-	return nil
-}
-
-// noteContinuable keeps a script a later call of the turn may continue.
-func (t *Turn) noteContinuable(call *llmports.ToolCall, outcome *toolOutcome) {
-	if outcome.unread && call.ID != "" {
-		if t.unread == nil {
-			t.unread = make(map[string]bool, 1)
-		}
-		t.unread[call.ID] = true
-	}
-	if outcome.continuation == codemode.ContinueNone || call.ID == "" {
-		return
-	}
-	if t.continuable == nil {
-		t.continuable = make(map[string]codemode.Continuation, 1)
-	}
-	t.continuable[call.ID] = outcome.continuation
-}
-
 // settleDispatched folds what a dispatched call came to into the turn: the
 // repeat guard, what it read from outside, the memories it touched, the
 // budget, the transcript and what the person was shown.
 func (s *Service) settleDispatched(
 	t *Turn,
 	effects TurnEffects,
-	dispatch *DispatchCall,
-	reported *ToolOutcome,
+	dispatch *toolcall.Call,
+	reported *toolcall.Outcome,
 ) {
 	call := dispatch.Call
-	outcome := reported.internal()
-	outcome.dispatched = true
-	if !outcome.failed {
-		outcome.content += fanOutNote(call.Name, len(dispatch.Earlier)+1)
+	outcome := reported.Result()
+	outcome.Dispatched = true
+	if !outcome.Failed {
+		outcome.Content += loopguard.FanOutNote(call.Name, len(dispatch.Earlier)+1)
 	}
-	if outcome.failed {
-		t.repeats.record(call, outcome.content)
+	if outcome.Failed {
+		t.repeats.Record(call, outcome.Content)
 	} else {
-		t.repeats.ran(call)
+		t.repeats.Ran(call)
 	}
-	if !outcome.failed && ReadsExternalContent(call.Name) {
+	if !outcome.Failed && toolaccess.ReadsExternalContent(call.Name) {
 		t.external = true
 	}
-	t.absorbTaint(effects, outcome.taint)
-	t.noteMemories(effects, &outcome)
+	t.absorbTaint(effects, outcome.Taint)
+	turnmemory.Note(t, effects, &outcome)
 	t.result.ToolCallsUsed++
 	s.recordToolResult(t, effects, call, outcome)
-	if !outcome.failed {
-		t.noteToolMemories(effects, call.Name)
+	if !outcome.Failed {
+		turnmemory.NoteTool(t, effects, call.Name)
 		t.noteShown(&call)
-		t.noteContinuable(&call, &outcome)
+		t.scripts.Note(&call, &outcome)
 		t.noteWorld(effects, &call, &outcome)
 	}
 }
@@ -883,7 +711,7 @@ func (s *Service) finalAnswer(
 	req.Messages = append(slices.Clone(req.Messages), llmports.NoticeMessage(note))
 
 	reply, err := fx.Complete(t, req)
-	result.Usage = result.Usage.Add(reply.usage())
+	result.Usage = result.Usage.Add(reply.TotalUsage())
 	completion := reply.Completion
 	if err != nil || reply.Looped || completion == nil ||
 		len(completion.ToolCalls) > 0 || strings.TrimSpace(completion.Text) == "" {
@@ -893,7 +721,7 @@ func (s *Service) finalAnswer(
 	result.Model = completion.ModelIdentifier
 	result.ProviderID = completion.ProviderID
 	result.ContextWindow = completion.ContextWindow
-	tagReasoning(completion)
+	modelstream.TagReasoning(completion)
 
 	return completion
 }
@@ -906,31 +734,31 @@ func (s *Service) recordToolResult(
 	t *Turn,
 	fx TurnEffects,
 	call llmports.ToolCall,
-	outcome toolOutcome,
+	outcome toolcall.Result,
 ) {
 	result := t.result
-	if outcome.failed && !outcome.dispatched && outcome.verdict != "" {
+	if outcome.Failed && !outcome.Dispatched && outcome.Verdict != "" {
 		result.LoopRefusals = append(result.LoopRefusals, agentruntimeports.LoopRefusal{
 			CallID:   call.ID,
 			ToolName: call.Name,
-			Verdict:  outcome.verdict,
-			Reason:   outcome.reason,
-			Content:  stringutils.Ellipsize(outcome.content, maxLoopRefusalChars),
+			Verdict:  outcome.Verdict,
+			Reason:   outcome.Reason,
+			Content:  stringutils.Ellipsize(outcome.Content, maxLoopRefusalChars),
 		})
 	}
-	if outcome.action != nil {
-		result.Actions = append(result.Actions, *outcome.action)
+	if outcome.Action != nil {
+		result.Actions = append(result.Actions, *outcome.Action)
 	}
-	result.Actions = append(result.Actions, outcome.batch...)
-	outcome = fx.Observe(t, &call, outcome.exported()).internal()
+	result.Actions = append(result.Actions, outcome.Batch...)
+	outcome = fx.Observe(t, &call, outcome.Outcome()).Result()
 	s.countToolOutcome(t, fx, call.Name, &outcome)
 	t.keepShown(&outcome)
-	t.foldReplaced(outcome.shown)
-	effect := s.ToolEffect(call.Name)
-	summary := summarizeOutcome(call, outcome)
+	t.foldReplaced(outcome.Shown)
+	effect := s.access.ToolEffect(call.Name)
+	summary := toolsummary.Outcome(call, outcome)
 	var records []agentpagecontext.EntityRef
-	if !outcome.failed {
-		records = citedRecords(outcome.content)
+	if !outcome.Failed {
+		records = toolresult.CitedRecords(outcome.Content)
 	}
 
 	fx.Emit(kernelports.StreamEvent{
@@ -938,112 +766,43 @@ func (s *Service) recordToolResult(
 		Data: assistantports.AssistantToolFinishedEvent{
 			CallID:        call.ID,
 			Name:          call.Name,
-			Failed:        outcome.failed,
-			Proposed:      outcome.action != nil && !outcome.action.Executed,
-			Content:       outcome.content,
+			Failed:        outcome.Failed,
+			Proposed:      outcome.Action != nil && !outcome.Action.Executed,
+			Content:       outcome.Content,
 			Effect:        effect,
 			Summary:       summary,
-			Verdict:       outcome.verdict,
-			HandOffAgents: outcome.handOff,
+			Verdict:       outcome.Verdict,
+			HandOffAgents: outcome.HandOff,
 			Records:       records,
 		},
 	})
 
 	result.Messages = append(result.Messages, conversation.Message{
 		Role:           conversation.RoleTool,
-		Content:        outcome.content,
+		Content:        outcome.Content,
 		ToolCallID:     call.ID,
 		ToolName:       call.Name,
-		ToolFailed:     outcome.failed,
-		ToolVerdict:    outcome.verdict,
+		ToolFailed:     outcome.Failed,
+		ToolVerdict:    outcome.Verdict,
 		ToolEffect:     effect,
 		ToolSummary:    summary,
-		FoundTools:     outcome.found,
-		HandOffAgents:  outcome.handOff,
-		DelegateReport: outcome.delegateReport,
+		FoundTools:     outcome.Found,
+		HandOffAgents:  outcome.HandOff,
+		DelegateReport: outcome.DelegateReport,
 		CreatedAt:      fx.Now(),
 	})
 	t.messages = append(t.messages, llmports.Message{
 		Role:           llmports.RoleTool,
-		Content:        outcome.content,
+		Content:        outcome.Content,
 		ToolCallID:     call.ID,
 		ToolName:       call.Name,
-		IsError:        outcome.failed,
-		ToolReferences: t.tools.takeLoaded(),
+		IsError:        outcome.Failed,
+		ToolReferences: t.tools.TakeLoaded(),
 	})
 }
 
 // NewCallID mints a tool call id no provider will have used.
 func NewCallID() string { return "call_" + pulid.MustNew("tc_").String() }
-
-// observe hands a finished call to the observer and folds what it showed the
-// person back into the result the model reads.
-func (s *Service) observe(
-	observe agentruntimeports.ToolObserver,
-	call llmports.ToolCall,
-	outcome toolOutcome,
-	earlier []string,
-) toolOutcome {
-	if request, requested := outcome.data.(agentruntimeports.DecisionRequest); requested &&
-		outcome.publishes {
-		return decisionRequested(observe, &call, request)
-	}
-	if observe == nil {
-		if _, boards := outcome.data.(agentruntimeports.BoardRequest); boards {
-			return failedOutcome("%s", unboardableRefusal)
-		}
-		if outcome.publishes {
-			return failedOutcome("%s", unpublishableRefusal)
-		}
-		return outcome
-	}
-
-	shown, err := observe(agentruntimeports.ToolObservation{
-		Call:    call,
-		RanWith: outcome.ranWith,
-		Data:    outcome.data,
-		Failed:  outcome.failed,
-		Action:  outcome.action,
-		Earlier: earlier,
-	})
-
-	if shown != nil {
-		outcome.shown = shown
-	}
-
-	_, boards := outcome.data.(agentruntimeports.BoardRequest)
-	mistake, fixable := errors.AsType[*agentruntimeports.PublishMistake](err)
-	switch {
-	case boards && fixable:
-		return failedOutcome("Tool %q did not show the board: %s. Fix the call and send it "+
-			"again.", showBoardName, mistake.Reason)
-	case boards && (err != nil || shown == nil):
-		return failedOutcome("Tool %q could not show the board just now. Answer in your "+
-			"reply instead.", showBoardName)
-	case boards:
-		outcome.content = boardContent(shown)
-		outcome.summary = summaryLine(shown.Title)
-	case outcome.publishes && fixable:
-		return failedOutcome("Tool %q did not keep the document: %s. Fix the call and send "+
-			"it again.", publishArtifactName, mistake.Reason)
-	case outcome.publishes && err != nil:
-		return failedOutcome("Tool %q could not keep the document: %s. Put the text in your "+
-			"reply instead.", publishArtifactName, err.Error())
-	case outcome.publishes && shown == nil:
-		return failedOutcome("Tool %q could not keep the document. Put the text in your "+
-			"reply instead.", publishArtifactName)
-	case outcome.publishes:
-		outcome.content = publishedContent(shown)
-		outcome.summary = summaryLine(shown.Title)
-	case shown != nil && !outcome.failed:
-		outcome.content += shownNote(shown)
-		if outcome.summary == "" {
-			outcome.summary = summaryLine(shown.Title)
-		}
-	}
-
-	return outcome
-}
 
 func (s *Service) finish(
 	result *agentruntimeports.RunResult,
@@ -1058,7 +817,7 @@ func (s *Service) finish(
 		)
 		result.OutputAltered = true
 		result.OutputRule = outputDecision.MatchedRule
-		fx.Emit(replyReplacedEvent(guarded, outputAlteredReason))
+		fx.Emit(replycheck.ReplyReplacedEvent(guarded, outputAlteredReason))
 		completion.Text = guarded
 	}
 
@@ -1080,7 +839,7 @@ func (s *Service) finish(
 		Model:             completion.ModelIdentifier,
 		ProviderID:        completion.ProviderID,
 		Truncated:         completion.Truncated,
-		FallbackFrom:      fallbackOf(completion),
+		FallbackFrom:      modelstream.FallbackOf(completion),
 		InputTokens:       completion.InputTokens,
 		OutputTokens:      completion.OutputTokens,
 		LatencyMs:         completion.LatencyMs,
@@ -1102,21 +861,6 @@ func (s *Service) finish(
 // when the output guard took code out of it.
 const outputAlteredReason = "The reply held a code block, which was left out."
 
-// fallbackOf is the provider asked first, when another one gave the reply.
-func fallbackOf(completion *llmports.ChatCompletionResult) *conversation.ProviderFallback {
-	if completion == nil || completion.FallbackFrom == nil {
-		return nil
-	}
-	from := completion.FallbackFrom
-
-	return &conversation.ProviderFallback{
-		ProviderID: from.ProviderID,
-		Name:       from.Name,
-		Model:      from.Model,
-		Status:     from.Status,
-	}
-}
-
 // cannedCompletion stands a fixed line in for a reply the model could not
 // give, keeping the provider and usage the attempt was charged under.
 func askedEnding(asking *llmports.ChatCompletionResult) *llmports.ChatCompletionResult {
@@ -1126,27 +870,6 @@ func askedEnding(asking *llmports.ChatCompletionResult) *llmports.ChatCompletion
 		ProviderKind:    asking.ProviderKind,
 		ContextWindow:   asking.ContextWindow,
 	}
-}
-
-func cannedCompletion(
-	attempt *llmports.ChatCompletionResult,
-	text string,
-) *llmports.ChatCompletionResult {
-	canned := &llmports.ChatCompletionResult{Text: text}
-	if attempt != nil {
-		canned.ModelIdentifier = attempt.ModelIdentifier
-		canned.ProviderID = attempt.ProviderID
-		canned.ProviderKind = attempt.ProviderKind
-		canned.InputTokens = attempt.InputTokens
-		canned.OutputTokens = attempt.OutputTokens
-		canned.CacheReadTokens = attempt.CacheReadTokens
-		canned.CacheWriteTokens = attempt.CacheWriteTokens
-		canned.LatencyMs = attempt.LatencyMs
-		canned.CostUSD = attempt.CostUSD
-		canned.ContextWindow = attempt.ContextWindow
-	}
-
-	return canned
 }
 
 // truncationNotice marks a reply the provider stopped partway through.
@@ -1159,52 +882,8 @@ func cannedCompletion(
 const truncationNotice = "\n\n_This reply was cut off before it finished. " +
 	"Ask again to get the rest._"
 
-func (s *Service) ToolSummaries(
-	definition *agentdefinition.Definition,
-) []agentturn.ToolSummary {
-	return s.summarize(definition, s.heldTools(definition))
-}
-
-func (s *Service) summarize(
-	definition *agentdefinition.Definition,
-	names []string,
-) []agentturn.ToolSummary {
-	summaries := make([]agentturn.ToolSummary, 0, len(names))
-
-	for _, name := range names {
-		if tool, ok := s.queryTools.Get(name); ok {
-			summaries = append(summaries, agentturn.ToolSummary{
-				Name:        tool.Name(),
-				Description: tool.Description(),
-				Query:       true,
-				Lookup:      agenttoolports.EffectOf(tool) == agenttooltrust.ToolEffectLookup,
-				Recipe:      recipeOf(tool),
-			})
-			continue
-		}
-
-		tool, ok := s.actionTools.Get(name)
-		if !ok {
-			continue
-		}
-
-		policy := tool.Policy()
-		summaries = append(summaries, agentturn.ToolSummary{
-			Name:                tool.Name(),
-			Description:         tool.Description(),
-			Tier:                agenttoolpolicy.StaticTier(definition, policy),
-			PersonalRunsUnasked: policy.PersonalRunsUnasked && !tierSetFor(definition, name),
-			AlwaysProposes:      agenttoolpolicy.AlwaysProposes(definition, policy),
-			Escalates:           agenttoolpolicy.Escalates(definition, &policy),
-			Recipe:              recipeOf(tool),
-		})
-	}
-
-	return summaries
-}
-
 func (s *Service) escalatesPastBudget(t *Turn, name string, over int) bool {
-	if over >= escalationReserve {
+	if over >= toolaccess.EscalationReserve {
 		return false
 	}
 	tool, ok := s.actionTools.Get(name)
@@ -1214,22 +893,6 @@ func (s *Service) escalatesPastBudget(t *Turn, name string, over int) bool {
 	policy := tool.Policy()
 
 	return agenttoolpolicy.Escalates(t.req.Definition, &policy)
-}
-
-// tierSetFor reports a tool whose tier a person set on the agent, which
-// takes away the personal exemption a tool like remember otherwise has.
-func tierSetFor(definition *agentdefinition.Definition, name string) bool {
-	_, set := definition.ToolTiers[name]
-
-	return set
-}
-
-func recipeOf(tool any) []string {
-	if recipe, ok := tool.(agenttoolports.RecipeTool); ok {
-		return recipe.Recipe()
-	}
-
-	return nil
 }
 
 // preferredProvider resolves whose choice of model wins.
@@ -1251,78 +914,18 @@ func preferredProvider(
 	return definition.PreferredProviderID
 }
 
-// tagReasoning records which protocol produced a trace, so an adapter of
-// another kind knows not to send it back as its own.
-// tagToolCalls names the provider on each call it made, so what the
-// provider attached to the call is replayed to it and to nobody else.
-func tagToolCalls(completion *llmports.ChatCompletionResult) {
-	for idx := range completion.ToolCalls {
-		completion.ToolCalls[idx].ProviderID = completion.ProviderID
-	}
-}
-
-// usedCallIDs is every tool call id the conversation already holds.
-func usedCallIDs(history []conversation.Message) map[string]struct{} {
-	used := make(map[string]struct{})
-	for idx := range history {
-		for _, call := range history[idx].ToolCalls {
-			if call.ID != "" {
-				used[call.ID] = struct{}{}
-			}
-		}
-	}
-
-	return used
-}
-
-// distinctCallIDs gives every call in a completion an id no other call in the
-// conversation has.
-//
-// Providers that return no id get one synthesized from the call's position,
-// call_0 in every completion, so the same id named a different call on every
-// turn. The artifacts a call produces are keyed on it, the transcript pairs
-// results with calls by it, and a provider handed a history with two calls
-// under one id pairs the wrong result with the wrong call. Checking the id
-// against the conversation is not enough: the conversation the turn replays
-// is only its most recent messages, and an artifact keyed on a call_0 from
-// before them was overwritten by the next call_0. So a synthesized id is
-// always replaced. A provider's own unique ids are kept as they are. mint
-// makes a new id: the turn's effects supply it, because a fresh id is random
-// and workflow code may not be.
-func distinctCallIDs(
-	completion *llmports.ChatCompletionResult,
-	used map[string]struct{},
-	mint func() string,
-) {
-	for idx := range completion.ToolCalls {
-		call := &completion.ToolCalls[idx]
-		_, taken := used[call.ID]
-		if call.ID == "" || taken || call.SynthesizedID {
-			call.ID = mint()
-			call.SynthesizedID = false
-		}
-		used[call.ID] = struct{}{}
-	}
-}
-
-func tagReasoning(completion *llmports.ChatCompletionResult) {
-	if completion.Reasoning != nil && completion.Reasoning.ProviderKind == "" {
-		completion.Reasoning.ProviderKind = string(completion.ProviderKind)
-	}
-}
-
 // usableSummaries keeps the summaries of the tools the turn may call and
 // marks which are loaded, so the prompt and the request agree.
 func usableSummaries(
 	summaries []agentturn.ToolSummary,
-	tools *toolSet,
+	tools *toolaccess.ToolSet,
 ) []agentturn.ToolSummary {
 	kept := make([]agentturn.ToolSummary, 0, len(summaries))
 	for _, summary := range summaries {
-		if !slices.Contains(tools.allowed, summary.Name) {
+		if !slices.Contains(tools.Allowed, summary.Name) {
 			continue
 		}
-		_, loaded := tools.loaded[summary.Name]
+		_, loaded := tools.Loaded[summary.Name]
 		summary.Loaded = loaded
 		kept = append(kept, summary)
 	}

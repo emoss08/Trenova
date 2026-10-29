@@ -3,6 +3,9 @@ package agentruntime
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/delegation"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetest"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetools"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpagecontext"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
@@ -37,7 +40,7 @@ over, and the conversation's own model is never asked.
 func TestDriveDirected_RunsTheChosenAgentWithoutAskingTheConversationsModel(t *testing.T) {
 	t.Parallel()
 
-	delegate := reportBuilder()
+	delegate := runtimetest.ReportBuilder()
 	completion := &scriptedCompletion{}
 	rt := newRuntime(completion, &stubQueryRegistry{}, &stubActionRegistry{}, nil)
 	fx := &delegateRecorder{run: scriptedDelegateRun(delegate)}
@@ -62,7 +65,7 @@ func TestDriveDirected_RunsTheChosenAgentWithoutAskingTheConversationsModel(t *t
 	require.Len(t, opening.ToolCalls, 1)
 	callID := opening.ToolCalls[0].ID
 	assert.Equal(t, call.Call.ID, callID)
-	assert.Equal(t, delegateTaskName, opening.ToolCalls[0].Name)
+	assert.Equal(t, runtimetools.DelegateTaskName, opening.ToolCalls[0].Name)
 	assert.Equal(t, delegate.ID.String(), opening.ToolCalls[0].Arguments["agentId"],
 		"a later turn and the thread both read who was asked")
 	assert.Equal(t, directedStep, opening.ToolCalls[0].Arguments["task"])
@@ -112,7 +115,7 @@ func TestDriveDirected_RunsTheChosenAgentWithoutAskingTheConversationsModel(t *t
 func TestDriveDirected_TakesACallIDTheConversationDoesNotHold(t *testing.T) {
 	t.Parallel()
 
-	delegate := reportBuilder()
+	delegate := runtimetest.ReportBuilder()
 	rt := newRuntime(&scriptedCompletion{}, &stubQueryRegistry{}, &stubActionRegistry{}, nil)
 	fx := &delegateRecorder{run: scriptedDelegateRun(delegate)}
 	req := directedRequest(delegate)
@@ -142,9 +145,9 @@ func TestDriveDirected_TakesACallIDTheConversationDoesNotHold(t *testing.T) {
 func TestDriveDirected_ADeclinedTaskRepliesWithTheReason(t *testing.T) {
 	t.Parallel()
 
-	delegate := reportBuilder()
+	delegate := runtimetest.ReportBuilder()
 	rt := newRuntime(&scriptedCompletion{}, &stubQueryRegistry{}, &stubActionRegistry{}, nil)
-	fx := &delegateRecorder{run: DelegateRun{
+	fx := &delegateRecorder{run: delegation.Run{
 		Declined: "The person may not use Report Builder, so it cannot be asked.",
 	}}
 
@@ -181,9 +184,9 @@ func TestDriveDirected_IsIgnoredWhereNoPersonHandsOverATask(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
-			delegate := reportBuilder()
+			delegate := runtimetest.ReportBuilder()
 			completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
-				textTurn("Done."),
+				runtimetest.TextTurn("Done."),
 			}}
 			rt := newRuntime(completion, &stubQueryRegistry{}, &stubActionRegistry{}, nil)
 			fx := &delegateRecorder{run: scriptedDelegateRun(delegate)}
@@ -204,7 +207,7 @@ func TestDriveDirected_IsIgnoredWhereNoPersonHandsOverATask(t *testing.T) {
 func TestDriveDirected_TheTaskSurvivesTheTurnsState(t *testing.T) {
 	t.Parallel()
 
-	delegate := reportBuilder()
+	delegate := runtimetest.ReportBuilder()
 	rt := newRuntime(&scriptedCompletion{}, &stubQueryRegistry{}, &stubActionRegistry{}, nil)
 	req := directedRequest(delegate)
 
@@ -221,56 +224,6 @@ func TestDriveDirected_TheTaskSurvivesTheTurnsState(t *testing.T) {
 	assert.Nil(t, rt.OpenTurn(t.Context(), req).State().Directed)
 }
 
-func TestDirectedReply_SaysWhatCameOfTheTask(t *testing.T) {
-	t.Parallel()
-
-	tests := map[string]struct {
-		report assistantports.AssistantDelegateFinishedEvent
-		want   string
-	}{
-		"completed": {
-			report: assistantports.AssistantDelegateFinishedEvent{
-				Status: assistantports.DelegateStatusCompleted, Reply: "  Marked ready.  ",
-			},
-			want: "Marked ready.",
-		},
-		"completed in silence": {
-			report: assistantports.AssistantDelegateFinishedEvent{
-				Status: assistantports.DelegateStatusCompleted, AgentName: "Billing Assistant",
-			},
-			want: "Billing Assistant finished without saying anything more.",
-		},
-		"out of tool calls": {
-			report: assistantports.AssistantDelegateFinishedEvent{
-				Status: assistantports.DelegateStatusExhausted,
-				Reply:  "I checked the paperwork.",
-				Reason: "It used every tool call.",
-			},
-			want: "I checked the paperwork.\n\nIt used every tool call.",
-		},
-		"failed": {
-			report: assistantports.AssistantDelegateFinishedEvent{
-				Status: assistantports.DelegateStatusFailed, Reason: "The model stopped answering.",
-			},
-			want: "The model stopped answering.",
-		},
-		"failed without a reason": {
-			report: assistantports.AssistantDelegateFinishedEvent{
-				Status: assistantports.DelegateStatusFailed, AgentName: "Billing Assistant",
-			},
-			want: "Billing Assistant did not report back.",
-		},
-	}
-
-	for name, tt := range tests {
-		t.Run(name, func(t *testing.T) {
-			t.Parallel()
-
-			assert.Equal(t, tt.want, directedReply(&tt.report))
-		})
-	}
-}
-
 /*
 "bill it", handed to the billing agent in a conversation about one load,
 reached it as those two words alone, and it went looking for which load. The
@@ -279,7 +232,7 @@ conversation's subject and the records it has been working on go with the task.
 func TestDriveDirected_HandsOverTheRecordsInPlay(t *testing.T) {
 	t.Parallel()
 
-	delegate := reportBuilder()
+	delegate := runtimetest.ReportBuilder()
 	rt := newRuntime(&scriptedCompletion{}, &stubQueryRegistry{}, &stubActionRegistry{}, nil)
 	fx := &delegateRecorder{run: scriptedDelegateRun(delegate)}
 	req := directedRequest(delegate)
@@ -299,7 +252,7 @@ func TestDriveDirected_HandsOverTheRecordsInPlay(t *testing.T) {
 		{EntityType: "shipment", ID: "shp_01M4HYAB7FKYM27B5JC48Q68MB"},
 		{EntityType: "invoice", ID: "inv_01M4HYAB7FKYM27B5JC48Q68MC"},
 	}, fx.calls[0].Context.Records, "a record the person may not read is not handed over")
-	assert.Contains(t, DelegateInput(directedStep, fx.calls[0].Context),
+	assert.Contains(t, delegation.Input(directedStep, fx.calls[0].Context),
 		"shipment shp_01M4HYAB7FKYM27B5JC48Q68MB")
 }
 
@@ -310,7 +263,7 @@ func TestDriveDirected_HandsOverTheRecordsInPlay(t *testing.T) {
 func TestDriveDirected_TheRecordsInPlaySurviveTheTurnsState(t *testing.T) {
 	t.Parallel()
 
-	delegate := reportBuilder()
+	delegate := runtimetest.ReportBuilder()
 	rt := newRuntime(&scriptedCompletion{}, &stubQueryRegistry{}, &stubActionRegistry{}, nil)
 	req := directedRequest(delegate)
 	req.Context.Anchors = []agentturn.RuntimeAnchor{

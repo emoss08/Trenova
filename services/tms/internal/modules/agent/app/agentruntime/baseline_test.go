@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/bytedance/sonic"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
@@ -69,18 +70,21 @@ func heldRun(
 
 	tool := &targetedStubTool{actionTool("shipment_place_hold", agent.TierPropose, nil)}
 	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
-		toolTurn("shipment_place_hold", map[string]any{"shipmentId": shipmentID.String()}),
-		textTurn("I have proposed a hold."),
+		runtimetest.ToolTurn(
+			"shipment_place_hold",
+			map[string]any{"shipmentId": shipmentID.String()},
+		),
+		runtimetest.TextTurn("I have proposed a hold."),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{}, &stubActionRegistry{
 		Tools: []agenttoolports.AgentTool{tool},
 	}, nil)
-	rt.versions = stubVersions{version: 7}
-	rt.previews = previews
+	rewire(rt, func(p *Params) { p.Versions = stubVersions{version: 7} })
+	rewire(rt, func(p *Params) { p.Previews = previews })
 
 	result, err := rt.Run(t.Context(), &agentruntimeports.RunRequest{
-		Definition:   testDefinition("shipment_place_hold"),
-		Actor:        testActor(),
+		Definition:   runtimetest.Definition("shipment_place_hold"),
+		Actor:        runtimetest.Actor(),
 		Input:        "hold it",
 		UsagePurpose: purpose,
 	})
@@ -153,24 +157,24 @@ func TestRun_ASimulatedWriteReadsTheBaselinePreview(t *testing.T) {
 
 	tool := &targetedStubTool{actionTool("shipment_place_hold", agent.TierAutoExecute, nil)}
 	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
-		toolTurn(
+		runtimetest.ToolTurn(
 			"shipment_place_hold",
 			map[string]any{"shipmentId": pulid.MustNew("shp_").String()},
 		),
-		textTurn("held"),
+		runtimetest.TextTurn("held"),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{}, &stubActionRegistry{
 		Tools: []agenttoolports.AgentTool{tool},
 	}, nil)
 	previews := &recordingPreviews{}
-	rt.previews = previews
-	definition := testDefinition("shipment_place_hold")
+	rewire(rt, func(p *Params) { p.Previews = previews })
+	definition := runtimetest.Definition("shipment_place_hold")
 	definition.AutonomyCeiling = agent.TierAutoExecute
 	definition.SimulationMode = true
 
 	result, err := rt.Run(t.Context(), &agentruntimeports.RunRequest{
 		Definition: definition,
-		Actor:      testActor(),
+		Actor:      runtimetest.Actor(),
 		Input:      "hold it",
 	})
 	require.NoError(t, err)
@@ -236,23 +240,23 @@ func TestRun_ASimulatedWriteNeverPreviewsAgainOutsideTheSnapshot(t *testing.T) {
 		},
 	}
 	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
-		toolTurn(
+		runtimetest.ToolTurn(
 			"shipment_place_hold",
 			map[string]any{"shipmentId": pulid.MustNew("shp_").String()},
 		),
-		textTurn("held"),
+		runtimetest.TextTurn("held"),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{}, &stubActionRegistry{
 		Tools: []agenttoolports.AgentTool{tool},
 	}, nil)
-	rt.previews = failingPreviews{}
-	definition := testDefinition("shipment_place_hold")
+	rewire(rt, func(p *Params) { p.Previews = failingPreviews{} })
+	definition := runtimetest.Definition("shipment_place_hold")
 	definition.AutonomyCeiling = agent.TierAutoExecute
 	definition.SimulationMode = true
 
 	result, err := rt.Run(t.Context(), &agentruntimeports.RunRequest{
 		Definition: definition,
-		Actor:      testActor(),
+		Actor:      runtimetest.Actor(),
 		Input:      "hold it",
 	})
 	require.NoError(t, err)
@@ -320,20 +324,23 @@ func TestRun_DoesNotFileAProposalWhoseBaselineWouldBeRefused(t *testing.T) {
 
 	tool := &targetedStubTool{actionTool("shipment_create", agent.TierActWithApproval, nil)}
 	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
-		toolTurn("shipment_create", map[string]any{"shipmentId": pulid.MustNew("shp_").String()}),
-		textTurn("Which BOL should I use?"),
+		runtimetest.ToolTurn(
+			"shipment_create",
+			map[string]any{"shipmentId": pulid.MustNew("shp_").String()},
+		),
+		runtimetest.TextTurn("Which BOL should I use?"),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{}, &stubActionRegistry{
 		Tools: []agenttoolports.AgentTool{tool},
 	}, nil)
 	previews := &refusingPreviews{refuseTool: "shipment_create"}
-	rt.previews = previews
-	definition := testDefinition("shipment_create")
+	rewire(rt, func(p *Params) { p.Previews = previews })
+	definition := runtimetest.Definition("shipment_create")
 	definition.AutonomyCeiling = agent.TierActWithApproval
 
 	result, err := rt.Run(t.Context(), &agentruntimeports.RunRequest{
 		Definition: definition,
-		Actor:      testActor(),
+		Actor:      runtimetest.Actor(),
 		Input:      "copy SEED-DET-009",
 	})
 	require.NoError(t, err)
@@ -367,19 +374,22 @@ func TestRun_FilesAWriteAnEarlierStepMayMakeValid(t *testing.T) {
 	hold := &targetedStubTool{actionTool("shipment_place_hold", agent.TierPropose, nil)}
 	cancel := &targetedStubTool{actionTool("shipment_cancel", agent.TierPropose, nil)}
 	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
-		toolTurn("shipment_place_hold", map[string]any{"shipmentId": shipmentID.String()}),
-		toolTurn("shipment_cancel", map[string]any{"shipmentId": shipmentID.String()}),
-		textTurn("Both are waiting for you."),
+		runtimetest.ToolTurn(
+			"shipment_place_hold",
+			map[string]any{"shipmentId": shipmentID.String()},
+		),
+		runtimetest.ToolTurn("shipment_cancel", map[string]any{"shipmentId": shipmentID.String()}),
+		runtimetest.TextTurn("Both are waiting for you."),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{}, &stubActionRegistry{
 		Tools: []agenttoolports.AgentTool{hold, cancel},
 	}, nil)
 	previews := &refusingPreviews{refuseTool: "shipment_cancel"}
-	rt.previews = previews
+	rewire(rt, func(p *Params) { p.Previews = previews })
 
 	result, err := rt.Run(t.Context(), &agentruntimeports.RunRequest{
-		Definition: testDefinition("shipment_place_hold", "shipment_cancel"),
-		Actor:      testActor(),
+		Definition: runtimetest.Definition("shipment_place_hold", "shipment_cancel"),
+		Actor:      runtimetest.Actor(),
 		Input:      "hold then cancel",
 	})
 	require.NoError(t, err)

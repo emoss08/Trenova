@@ -9,6 +9,8 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/delegation"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/modelstream"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/modelcall"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
@@ -51,7 +53,7 @@ type DelegateOpener interface {
 	OpenDelegate(
 		ctx context.Context,
 		run RunContext,
-		call agentruntime.DelegateCall,
+		call delegation.Call,
 	) (*DelegateOpening, error)
 }
 
@@ -124,7 +126,7 @@ func (a *Activities) CheckWorldActivity(
 func (a *Activities) ModelCallActivity(
 	ctx context.Context,
 	in *ModelCallInput,
-) (*agentruntime.ModelReply, error) {
+) (*modelstream.Reply, error) {
 	// How long the call sat between being scheduled and a worker taking it:
 	// queue time the person spends watching nothing.
 	info := activity.GetInfo(ctx)

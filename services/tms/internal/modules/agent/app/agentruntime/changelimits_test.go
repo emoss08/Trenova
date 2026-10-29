@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolpolicy"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
@@ -34,31 +35,8 @@ func (b hoursBudgets) CheckTool(
 	return agentports.BudgetRefusal{}, nil
 }
 
-func batchSchema() map[string]any {
-	return map[string]any{
-		"type": "object",
-		"properties": map[string]any{
-			"billingQueueItemIds": map[string]any{
-				"type":       "array",
-				"items":      map[string]any{"type": "string"},
-				"x-subsetOf": "billing_queue_item",
-			},
-			"note": map[string]any{"type": "string"},
-		},
-	}
-}
-
-func ids(n int) []any {
-	out := make([]any, 0, n)
-	for i := range n {
-		out = append(out, "bqi_"+string(rune('a'+i%26))+string(rune('a'+i/26)))
-	}
-
-	return out
-}
-
 func autoChangeDefinition(tool string) *agentdefinition.Definition {
-	definition := testDefinition(tool)
+	definition := runtimetest.Definition(tool)
 	definition.AutonomyCeiling = agent.TierAutoExecute
 	definition.ToolTiers = map[string]agent.AutonomyTier{tool: agent.TierAutoExecute}
 
@@ -74,45 +52,12 @@ func runOneCall(
 
 	result, err := rt.Run(t.Context(), &agentruntimeports.RunRequest{
 		Definition: definition,
-		Actor:      testActor(),
+		Actor:      runtimetest.Actor(),
 		Input:      "approve these",
 	})
 	require.NoError(t, err)
 
 	return result
-}
-
-func TestChangeSize_CountsTheLargestRecordList(t *testing.T) {
-	t.Parallel()
-
-	schema := batchSchema()
-	schema["properties"].(map[string]any)["shipment_ids"] = map[string]any{
-		"type": "array", "items": map[string]any{"type": "string"},
-	}
-	schema["properties"].(map[string]any)["lines"] = map[string]any{
-		"type": "array", "items": map[string]any{"type": "object"},
-	}
-
-	tests := []struct {
-		name string
-		args map[string]any
-		want int
-	}{
-		{"a marked record set", map[string]any{"billingQueueItemIds": ids(3)}, 3},
-		{"ids by name", map[string]any{"shipment_ids": []string{"a", "b"}}, 2},
-		{"the larger list wins", map[string]any{
-			"billingQueueItemIds": ids(2), "shipment_ids": []string{"a", "b", "c", "d"},
-		}, 4},
-		{"repeats count once", map[string]any{"billingQueueItemIds": []any{"x", "x", " x "}}, 1},
-		{"lines are not records", map[string]any{"lines": []any{"a", "b", "c"}}, 0},
-		{"nothing listed", map[string]any{"note": "hi"}, 0},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-			assert.Equal(t, tt.want, changeSize(schema, tt.args))
-		})
-	}
 }
 
 // A batch past the agent's largest single change is refused before it is
@@ -122,10 +67,13 @@ func TestRun_RefusesAChangeBiggerThanTheAgentsLargest(t *testing.T) {
 	t.Parallel()
 
 	tool := actionTool("approve_billing_items", agent.TierAutoExecute, nil)
-	tool.Schema = batchSchema()
+	tool.Schema = runtimetest.BatchSchema()
 	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
-		toolTurn("approve_billing_items", map[string]any{"billingQueueItemIds": ids(12)}),
-		textTurn("I will split it."),
+		runtimetest.ToolTurn(
+			"approve_billing_items",
+			map[string]any{"billingQueueItemIds": runtimetest.IDs(12)},
+		),
+		runtimetest.TextTurn("I will split it."),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{},
 		&stubActionRegistry{Tools: []agenttoolports.AgentTool{tool}}, nil)
@@ -145,10 +93,13 @@ func TestRun_AChangeWithinTheLimitRuns(t *testing.T) {
 	t.Parallel()
 
 	tool := actionTool("approve_billing_items", agent.TierAutoExecute, nil)
-	tool.Schema = batchSchema()
+	tool.Schema = runtimetest.BatchSchema()
 	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
-		toolTurn("approve_billing_items", map[string]any{"billingQueueItemIds": ids(10)}),
-		textTurn("Done."),
+		runtimetest.ToolTurn(
+			"approve_billing_items",
+			map[string]any{"billingQueueItemIds": runtimetest.IDs(10)},
+		),
+		runtimetest.TextTurn("Done."),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{},
 		&stubActionRegistry{Tools: []agenttoolports.AgentTool{tool}}, nil)
@@ -169,12 +120,12 @@ func TestRun_HoldsAnAutomaticChangeOutsideBusinessHours(t *testing.T) {
 
 	tool := actionTool("dispatch_assign_move", agent.TierAutoExecute, nil)
 	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
-		toolTurn("dispatch_assign_move", map[string]any{"moveId": "mv_1"}),
-		textTurn("It is waiting for you."),
+		runtimetest.ToolTurn("dispatch_assign_move", map[string]any{"moveId": "mv_1"}),
+		runtimetest.TextTurn("It is waiting for you."),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{},
 		&stubActionRegistry{Tools: []agenttoolports.AgentTool{tool}}, nil)
-	rt.budgets = hoursBudgets{within: false}
+	rewire(rt, func(p *Params) { p.Budgets = hoursBudgets{within: false} })
 	definition := autoChangeDefinition("dispatch_assign_move")
 	definition.BusinessHoursOnly = true
 
@@ -193,12 +144,12 @@ func TestRun_RunsAnAutomaticChangeInsideBusinessHours(t *testing.T) {
 
 	tool := actionTool("dispatch_assign_move", agent.TierAutoExecute, nil)
 	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
-		toolTurn("dispatch_assign_move", map[string]any{"moveId": "mv_1"}),
-		textTurn("Assigned."),
+		runtimetest.ToolTurn("dispatch_assign_move", map[string]any{"moveId": "mv_1"}),
+		runtimetest.TextTurn("Assigned."),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{},
 		&stubActionRegistry{Tools: []agenttoolports.AgentTool{tool}}, nil)
-	rt.budgets = hoursBudgets{within: true}
+	rewire(rt, func(p *Params) { p.Budgets = hoursBudgets{within: true} })
 	definition := autoChangeDefinition("dispatch_assign_move")
 	definition.BusinessHoursOnly = true
 

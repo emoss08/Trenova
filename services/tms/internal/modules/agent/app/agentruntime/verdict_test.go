@@ -5,16 +5,14 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
-	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/askuser"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
-	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -41,16 +39,6 @@ func recordEvents(req *agentruntimeports.RunRequest) *[]kernelports.StreamEvent 
 
 func callsTurn(calls ...llmports.ToolCall) *llmports.ChatCompletionResult {
 	return &llmports.ChatCompletionResult{ToolCalls: calls, ModelIdentifier: "test-model"}
-}
-
-func systemUserActor() *permissionports.RequestActor {
-	return &permissionports.RequestActor{
-		PrincipalType:  permissionports.PrincipalTypeAgent,
-		PrincipalID:    permissionports.AgentPrincipalID,
-		UserID:         pulid.MustNew("usr_"),
-		OrganizationID: pulid.MustNew("org_"),
-		BusinessUnitID: pulid.MustNew("bu_"),
-	}
 }
 
 func TestRun_TheLoopsOwnRefusalsCarryAVerdict(t *testing.T) {
@@ -86,17 +74,17 @@ func TestRun_TheLoopsOwnRefusalsCarryAVerdict(t *testing.T) {
 				Arguments: map[string]any{"id": "shp_2"},
 			},
 		),
-		textTurn("I could not finish."),
+		runtimetest.TextTurn("I could not finish."),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{
 		Tools: []agenttoolports.AgentQueryTool{registered, broken},
 	}, &stubActionRegistry{}, nil)
-	definition := testDefinition("shipment_get")
+	definition := runtimetest.Definition("shipment_get")
 	definition.MaxToolCalls = 5
 
 	req := &agentruntimeports.RunRequest{
 		Definition: definition,
-		Actor:      testActor(),
+		Actor:      runtimetest.Actor(),
 		Input:      "Look it up.",
 	}
 	events := recordEvents(req)
@@ -119,15 +107,15 @@ func TestRun_AnUnattendedQuestionIsDenied(t *testing.T) {
 	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
 		callsTurn(llmports.ToolCall{
 			ID:        "ask",
-			Name:      askUserName,
+			Name:      askuser.Name,
 			Arguments: map[string]any{"question": "Which load?"},
 		}),
-		textTurn("Nobody to ask."),
+		runtimetest.TextTurn("Nobody to ask."),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{}, &stubActionRegistry{}, nil)
 	req := &agentruntimeports.RunRequest{
-		Definition: testDefinition(),
-		Actor:      systemUserActor(),
+		Definition: runtimetest.Definition(),
+		Actor:      runtimetest.SystemUserActor(),
 		Input:      "A shipment was created.",
 		Unattended: true,
 	}
@@ -149,14 +137,14 @@ func TestRun_ACallThatRanCarriesNoRefusalVerdict(t *testing.T) {
 			Name:      "shipment_get",
 			Arguments: map[string]any{"id": "shp_1"},
 		}),
-		textTurn("Found it."),
+		runtimetest.TextTurn("Found it."),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{
 		Tools: []agenttoolports.AgentQueryTool{tool},
 	}, &stubActionRegistry{}, nil)
 	req := &agentruntimeports.RunRequest{
-		Definition: testDefinition("shipment_get"),
-		Actor:      testActor(),
+		Definition: runtimetest.Definition("shipment_get"),
+		Actor:      runtimetest.Actor(),
 		Input:      "Look it up.",
 	}
 	events := recordEvents(req)
@@ -165,45 +153,6 @@ func TestRun_ACallThatRanCarriesNoRefusalVerdict(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Equal(t, aitrace.OutcomeRan, finishedVerdicts(events)["read"])
-}
-
-func TestAuthorize_TheRefusalNamesWhoseAccessFellShort(t *testing.T) {
-	t.Parallel()
-
-	denied := &agenttest.StubPermissions{Denied: map[string]bool{
-		permission.ResourceWorker.String() + ":" + string(permission.OpUpdate): true,
-	}}
-	rt := newRuntime(&scriptedCompletion{}, &stubQueryRegistry{}, &stubActionRegistry{}, denied)
-
-	person, refused := rt.authorize(
-		t.Context(), testActor(), "update_worker", permission.ResourceWorker, permission.OpUpdate,
-	)
-	require.True(t, refused)
-	assert.Equal(t, aitrace.OutcomeDenied, person.verdict)
-	assert.Equal(t,
-		`Tool "update_worker" is not permitted: the person you are working for `+
-			"does not have update access to worker. Do not try it another way or propose it "+
-			"instead. Tell the person plainly that their account does not have update access "+
-			"to worker, that an administrator grants it under their role, and what you would "+
-			"do once it is granted. Do everything else they asked that does not need it.",
-		person.content,
-	)
-
-	unattended, refused := rt.authorize(
-		t.Context(), systemUserActor(), "update_worker", permission.ResourceWorker,
-		permission.OpUpdate,
-	)
-	require.True(t, refused)
-	assert.Equal(t, aitrace.OutcomeDenied, unattended.verdict)
-	assert.Equal(t,
-		`Tool "update_worker" is not permitted: this agent's unattended access `+
-			"does not include update on worker. Do not try it another way. Finish what the "+
-			"run can do without it and say in your report that this step needs a person, or "+
-			"someone to widen what this agent may do unattended in AI Control.",
-		unattended.content,
-	)
-	assert.NotContains(t, unattended.content, "the person you are working for")
-	assert.Equal(t, "lacks update access to worker", unattended.reason)
 }
 
 func TestRun_EachToolMessageKeepsTheVerdictTheStreamCarried(t *testing.T) {
@@ -219,14 +168,14 @@ func TestRun_EachToolMessageKeepsTheVerdictTheStreamCarried(t *testing.T) {
 				Arguments: map[string]any{"id": "shp_1"},
 			},
 		),
-		textTurn("Found it."),
+		runtimetest.TextTurn("Found it."),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{
 		Tools: []agenttoolports.AgentQueryTool{tool, queryTool("worker_list", nil, nil)},
 	}, &stubActionRegistry{}, nil)
 	req := &agentruntimeports.RunRequest{
-		Definition: testDefinition("shipment_get"),
-		Actor:      testActor(),
+		Definition: runtimetest.Definition("shipment_get"),
+		Actor:      runtimetest.Actor(),
 		Input:      "Look it up.",
 	}
 	events := recordEvents(req)

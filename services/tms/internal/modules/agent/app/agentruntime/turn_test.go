@@ -5,6 +5,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
@@ -24,7 +25,7 @@ func openedTurn(t *testing.T, definition *agentdefinition.Definition, input stri
 
 	return rt.OpenTurn(t.Context(), &agentruntimeports.RunRequest{
 		Definition: definition,
-		Actor:      testActor(),
+		Actor:      runtimetest.Actor(),
 		Input:      input,
 		Context: agentturn.RuntimeContext{
 			Timezone: "America/Chicago",
@@ -36,7 +37,7 @@ func openedTurn(t *testing.T, definition *agentdefinition.Definition, input stri
 func TestOpenTurn_PrefixesTheQuestionWithTheTimeInTheOrganizationsZone(t *testing.T) {
 	t.Parallel()
 
-	turn := openedTurn(t, testDefinition(), "what is due before noon?")
+	turn := openedTurn(t, runtimetest.Definition(), "what is due before noon?")
 
 	asked := turn.messages[len(turn.messages)-1]
 	require.Equal(t, llmports.RoleUser, asked.Role)
@@ -49,7 +50,7 @@ func TestOpenTurn_PrefixesTheQuestionWithTheTimeInTheOrganizationsZone(t *testin
 func TestOpenTurn_KeepsTheSystemPromptClockToTheDay(t *testing.T) {
 	t.Parallel()
 
-	turn := openedTurn(t, testDefinition(), "what is due before noon?")
+	turn := openedTurn(t, runtimetest.Definition(), "what is due before noon?")
 
 	assert.Contains(t, turn.system, "Today is: ")
 	assert.NotRegexp(t, regexp.MustCompile(`Today is: [^\n]*\d{2}:\d{2}`), turn.system,
@@ -59,7 +60,7 @@ func TestOpenTurn_KeepsTheSystemPromptClockToTheDay(t *testing.T) {
 func TestOpenTurn_LeavesTheQuestionAloneWhenTheAgentReadsNoClock(t *testing.T) {
 	t.Parallel()
 
-	definition := testDefinition()
+	definition := runtimetest.Definition()
 	definition.ContextProviders = []agentdefinition.ContextProvider{
 		agentdefinition.ContextOrganization,
 	}
@@ -82,8 +83,8 @@ func TestOpenTurn_OpensTheQuestionWithTheRecordsInPlayAndNeverKeepsThem(t *testi
 
 	rt := newRuntime(&scriptedCompletion{}, &stubQueryRegistry{}, &stubActionRegistry{}, nil)
 	turn := rt.OpenTurn(t.Context(), &agentruntimeports.RunRequest{
-		Definition: testDefinition(),
-		Actor:      testActor(),
+		Definition: runtimetest.Definition(),
+		Actor:      runtimetest.Actor(),
 		Input:      "is it still on time?",
 		Context: agentturn.RuntimeContext{
 			Timezone: "America/Chicago",
@@ -111,23 +112,4 @@ func TestOpenTurn_OpensTheQuestionWithTheRecordsInPlayAndNeverKeepsThem(t *testi
 		"what was read this turn is never replayed as if it were current later")
 	assert.NotContains(t, turn.system, "status: Delayed",
 		"the system prompt stays the same bytes from turn to turn")
-}
-
-func TestWatchedRecords_AddsTheReadableRecordsInPlay(t *testing.T) {
-	t.Parallel()
-
-	req := &agentruntimeports.RunRequest{Context: agentturn.RuntimeContext{
-		Anchors: []agentturn.RuntimeAnchor{
-			{Kind: "shipment", ID: "shp_01M49Z0FTJPBFF0HBFFNGYRY9B"},
-			{
-				Kind: "invoice",
-				ID:   "inv_01M49Z0FTJPBFF0HBFFNGYRY9B",
-				Note: "you can no longer read this record",
-			},
-		},
-	}}
-
-	records := watchedRecords(req)
-	require.Len(t, records, 1)
-	assert.Equal(t, "shp_01M49Z0FTJPBFF0HBFFNGYRY9B", records[0].ID)
 }

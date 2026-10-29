@@ -5,6 +5,9 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimecontext"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetest"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/turnmemory"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory"
@@ -61,11 +64,11 @@ func TestContextBuilder_ReadsTheMemoriesOfWhatTheTurnIsAbout(t *testing.T) {
 		}},
 		Relevance: agentmemory.MemoryRelevance{Judged: true},
 	}}
-	builder := &ContextBuilder{
-		logger:        zap.NewNop(),
-		organizations: &stubOrganizations{org: &tenant.Organization{Timezone: "UTC"}},
-		users:         &stubUsers{user: &tenant.User{}},
-		runtime: newRuntime(
+	builder := runtimecontext.NewBuilder(runtimecontext.BuilderParams{
+		Logger:        zap.NewNop(),
+		Organizations: &runtimetest.StubOrganizations{Org: &tenant.Organization{Timezone: "UTC"}},
+		Users:         &runtimetest.StubUsers{User: &tenant.User{}},
+		Runtime: newRuntime(
 			&scriptedCompletion{},
 			&stubQueryRegistry{},
 			&stubActionRegistry{Tools: []agenttoolports.AgentTool{
@@ -73,16 +76,16 @@ func TestContextBuilder_ReadsTheMemoriesOfWhatTheTurnIsAbout(t *testing.T) {
 			}},
 			nil,
 		),
-		memories: memories,
-	}
+		Memories: memories,
+	})
 
 	shipment := pulid.MustNew("shp_").String()
 	location := pulid.MustNew("loc_").String()
 	parentRecord := pulid.MustNew("wrk_").String()
-	definition := testDefinition("dispatch_assign_move")
+	definition := runtimetest.Definition("dispatch_assign_move")
 	rc, err := builder.Build(t.Context(), &agentruntimeports.RuntimeContextRequest{
 		Definition: definition,
-		Actor:      testActor(),
+		Actor:      runtimetest.Actor(),
 		Trigger:    agent.RunTriggerChat,
 		Subject:    &agentturn.RuntimeSubject{Type: agent.SubjectShipment, ID: shipment},
 		Page: &agentturn.PageContext{
@@ -117,7 +120,7 @@ func TestOpenTurn_CarriesWhatFitsTheBudgetAndCountsOnlyThat(t *testing.T) {
 	rt.memories = memories
 
 	budget := agentdefinition.MinMemoryTokenBudget
-	definition := testDefinition()
+	definition := runtimetest.Definition()
 	definition.MemoryTokenBudget = &budget
 
 	pool := make([]*agentmemory.Memory, 0, 5)
@@ -138,7 +141,7 @@ func TestOpenTurn_CarriesWhatFitsTheBudgetAndCountsOnlyThat(t *testing.T) {
 
 	turn := rt.OpenTurn(t.Context(), &agentruntimeports.RunRequest{
 		Definition: definition,
-		Actor:      testActor(),
+		Actor:      runtimetest.Actor(),
 		Input:      "What do we know?",
 		Context:    agentturn.RuntimeContext{Memories: pool},
 	})
@@ -157,11 +160,11 @@ func TestOpenTurn_ReadsNoMemoryForAnAgentThatDoesNotAskForIt(t *testing.T) {
 	rt := newRuntime(&scriptedCompletion{}, &stubQueryRegistry{}, &stubActionRegistry{}, nil)
 	rt.memories = memories
 
-	definition := testDefinition()
+	definition := runtimetest.Definition()
 	definition.ContextProviders = []agentdefinition.ContextProvider{agentdefinition.ContextClock}
 	turn := rt.OpenTurn(t.Context(), &agentruntimeports.RunRequest{
 		Definition: definition,
-		Actor:      testActor(),
+		Actor:      runtimetest.Actor(),
 		Input:      "Hello",
 		Context: agentturn.RuntimeContext{Memories: []*agentmemory.Memory{{
 			ID:      pulid.MustNew("amem_"),
@@ -173,30 +176,6 @@ func TestOpenTurn_ReadsNoMemoryForAnAgentThatDoesNotAskForIt(t *testing.T) {
 	assert.Empty(t, memories.used)
 	assert.False(t, turn.Taint().Tainted())
 	assert.NotContains(t, turn.State().System, "From an email.")
-}
-
-// An agent asked to remember what it already knew got a "saved" card with
-// an Undo, and undoing it retired the memory the person had kept for months.
-// A refreshed memory is now named as used, never offered for undo, and the
-// model is told nothing new was recorded.
-func TestSavedOrRefreshed_ARefreshedMemoryIsUsedNotSaved(t *testing.T) {
-	t.Parallel()
-
-	kept := &agentmemory.Memory{ID: pulid.MustNew("amem_"), Status: agentmemory.MemoryStatusActive}
-	saved, refreshed := savedOrRefreshed(kept, "call_1")
-	require.NotNil(t, saved)
-	assert.Nil(t, refreshed)
-	assert.Equal(t, kept.ID, saved.ID)
-	assert.Equal(t, "call_1", saved.CallID)
-
-	again := &agentmemory.Memory{ID: pulid.MustNew("amem_"), Refreshed: true}
-	saved, refreshed = savedOrRefreshed(again, "call_2")
-	assert.Nil(t, saved)
-	assert.Same(t, again, refreshed)
-
-	content := refreshedContent("agent_create_memory", again)
-	assert.Contains(t, content, "already remembered as memory "+again.ID.String())
-	assert.Contains(t, content, "instead of saving a duplicate")
 }
 
 type memoryEvents struct {
@@ -230,8 +209,8 @@ func TestOpenTurn_CountsOnlyTheMemoriesThatBearOnTheTurn(t *testing.T) {
 	}
 
 	turn := rt.OpenTurn(t.Context(), &agentruntimeports.RunRequest{
-		Definition: testDefinition(),
-		Actor:      testActor(),
+		Definition: runtimetest.Definition(),
+		Actor:      runtimetest.Actor(),
 		Input:      "Let the customer know the load delivered.",
 		Context: agentturn.RuntimeContext{
 			Memories: []*agentmemory.Memory{rule, bearing, unrelated},
@@ -256,21 +235,24 @@ func TestNoteToolMemories_AToolsMemoriesAreUsedOnceItIsCalled(t *testing.T) {
 	rt := newRuntime(&scriptedCompletion{}, &stubQueryRegistry{}, &stubActionRegistry{}, nil)
 	fix := pulid.MustNew("amem_")
 	already := pulid.MustNew("amem_")
-	turn := rt.RestoreTurn(&agentruntimeports.RunRequest{Definition: testDefinition()}, TurnState{
-		Result:       agentruntimeports.RunResult{UsedMemoryIDs: []pulid.ID{already}},
-		ToolMemories: map[string][]pulid.ID{"dispatch_assign_move": {fix}},
-	})
+	turn := rt.RestoreTurn(
+		&agentruntimeports.RunRequest{Definition: runtimetest.Definition()},
+		TurnState{
+			Result:       agentruntimeports.RunResult{UsedMemoryIDs: []pulid.ID{already}},
+			ToolMemories: map[string][]pulid.ID{"dispatch_assign_move": {fix}},
+		},
+	)
 	fx := &memoryEvents{}
 
-	turn.noteToolMemories(fx, "shipment_list")
+	turnmemory.NoteTool(turn, fx, "shipment_list")
 	assert.Empty(t, fx.events, "a call to another tool uses nothing")
 
-	turn.noteToolMemories(fx, "dispatch_assign_move")
+	turnmemory.NoteTool(turn, fx, "dispatch_assign_move")
 	require.Len(t, fx.events, 1)
 	assert.Equal(t, assistantports.AssistantEventMemoryUsed, fx.events[0].Event)
 	assert.Equal(t, []pulid.ID{already, fix}, turn.State().Result.UsedMemoryIDs)
 	assert.Empty(t, turn.State().ToolMemories)
 
-	turn.noteToolMemories(fx, "dispatch_assign_move")
+	turnmemory.NoteTool(turn, fx, "dispatch_assign_move")
 	assert.Len(t, fx.events, 1, "a second call announces nothing new")
 }

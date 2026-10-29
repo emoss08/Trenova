@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/replycheck"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
@@ -101,7 +101,7 @@ func Transcript(history []conversation.Message, budget int) string {
 		if msg.Refused || msg.Role == conversation.RoleTool {
 			continue
 		}
-		text := strings.TrimSpace(agentruntime.StripArtifactLinks(msg.Content))
+		text := strings.TrimSpace(replycheck.StripArtifactLinks(msg.Content))
 		if text == "" {
 			continue
 		}

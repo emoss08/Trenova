@@ -7,6 +7,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/argcheck"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
@@ -87,7 +89,7 @@ func TestArgumentCases_Aliases(t *testing.T) {
 			t.Parallel()
 
 			sent := maps.Clone(tc.Args)
-			got := aliasedArguments(tc.Schema, sent)
+			got := argcheck.AliasedArguments(tc.Schema, sent)
 
 			assert.Equal(t, tc.Want, got)
 			assert.Equal(t, tc.Args, sent, "the model's own call is never changed")
@@ -103,12 +105,12 @@ func TestArgumentCases_WhatAToolReceives(t *testing.T) {
 			t.Parallel()
 
 			sent := maps.Clone(tc.Args)
-			got, _, err := contractArguments(nil, "record_case", tc.Schema, sent)
+			got, _, err := argcheck.ContractArguments(nil, "record_case", tc.Schema, sent)
 			assert.Equal(t, tc.Args, sent, "the model's own call is never changed")
 			if len(tc.Refused) > 0 {
 				var multiErr *errortypes.MultiError
 				require.ErrorAs(t, err, &multiErr)
-				problems := strings.Join(argumentProblems(multiErr), "\n")
+				problems := strings.Join(argcheck.Problems(multiErr), "\n")
 				for _, path := range tc.Refused {
 					assert.Contains(t, problems, path+": ", "the refusal names %s", path)
 				}
@@ -123,15 +125,15 @@ func TestArgumentCases_WhatAToolReceives(t *testing.T) {
 				Schema:   tc.Schema,
 			}
 			completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
-				toolTurn(tool.ToolName, maps.Clone(tc.Args)),
-				textTurn("Done."),
+				runtimetest.ToolTurn(tool.ToolName, maps.Clone(tc.Args)),
+				runtimetest.TextTurn("Done."),
 			}}
 			rt := newRuntime(completion, &stubQueryRegistry{},
 				&stubActionRegistry{Tools: []agenttoolports.AgentTool{tool}}, nil)
 
 			result, err := rt.Run(t.Context(), &agentruntimeports.RunRequest{
-				Definition: autoDefinition(tool.ToolName),
-				Actor:      testActor(),
+				Definition: runtimetest.AutoDefinition(tool.ToolName),
+				Actor:      runtimetest.Actor(),
 				Input:      "Record it.",
 			})
 			require.NoError(t, err)
@@ -178,14 +180,14 @@ func TestArgumentCases_MalformedArgumentsNeverRun(t *testing.T) {
 					}},
 					ModelIdentifier: "test-model",
 				},
-				textTurn("I could not send it."),
+				runtimetest.TextTurn("I could not send it."),
 			}}
 			rt := newRuntime(completion, &stubQueryRegistry{},
 				&stubActionRegistry{Tools: []agenttoolports.AgentTool{tool}}, nil)
 
 			result, err := rt.Run(t.Context(), &agentruntimeports.RunRequest{
-				Definition: autoDefinition(tool.ToolName),
-				Actor:      testActor(),
+				Definition: runtimetest.AutoDefinition(tool.ToolName),
+				Actor:      runtimetest.Actor(),
 				Input:      "Record it.",
 			})
 			require.NoError(t, err)
