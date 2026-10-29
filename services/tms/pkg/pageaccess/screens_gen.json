@@ -6732,6 +6732,14 @@
           "path": "/billing-queue/:param/charges/"
         },
         {
+          "method": "POST",
+          "path": "/billing-queue/:param/issues/:param/resolve/"
+        },
+        {
+          "method": "POST",
+          "path": "/billing-queue/:param/issues/:param/undo/"
+        },
+        {
           "method": "GET",
           "path": "/billing-queue/:param/neighbors/:param"
         },

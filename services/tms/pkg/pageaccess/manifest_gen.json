@@ -1,5 +1,5 @@
 {
-  "version": "sha256:a0e6d363a2be8682f23572301da207bfbfed5a986a869c9c67c0dd566c08db1e",
+  "version": "sha256:039936eddb322c2feec304e6874d56409a52b1ba37c527e47500004e0feba105",
   "screens": [
     {
       "path": "/",
@@ -11561,6 +11561,26 @@
         {
           "method": "PUT",
           "path": "/billing-queue/:param/charges/",
+          "requires": [
+            {
+              "resource": "billing_queue",
+              "operation": "update"
+            }
+          ]
+        },
+        {
+          "method": "POST",
+          "path": "/billing-queue/:param/issues/:param/resolve/",
+          "requires": [
+            {
+              "resource": "billing_queue",
+              "operation": "update"
+            }
+          ]
+        },
+        {
+          "method": "POST",
+          "path": "/billing-queue/:param/issues/:param/undo/",
           "requires": [
             {
               "resource": "billing_queue",
