@@ -3,7 +3,7 @@ package minio
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/storageconfig"
 	miniogo "github.com/minio/minio-go/v7"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -99,7 +99,7 @@ func TestNewStorageClientConfig(t *testing.T) {
 	t.Run("minio defaults", func(t *testing.T) {
 		t.Parallel()
 
-		got, err := newStorageClientConfig(&config.StorageConfig{
+		got, err := newStorageClientConfig(&storageconfig.Config{
 			Endpoint: "localhost:9000",
 		})
 
@@ -114,8 +114,8 @@ func TestNewStorageClientConfig(t *testing.T) {
 	t.Run("r2 defaults", func(t *testing.T) {
 		t.Parallel()
 
-		got, err := newStorageClientConfig(&config.StorageConfig{
-			Provider: config.StorageProviderR2,
+		got, err := newStorageClientConfig(&storageconfig.Config{
+			Provider: storageconfig.ProviderR2,
 			Endpoint: "account-id.r2.cloudflarestorage.com",
 		})
 
@@ -130,8 +130,8 @@ func TestNewStorageClientConfig(t *testing.T) {
 	t.Run("r2 keeps configured region", func(t *testing.T) {
 		t.Parallel()
 
-		got, err := newStorageClientConfig(&config.StorageConfig{
-			Provider: config.StorageProviderR2,
+		got, err := newStorageClientConfig(&storageconfig.Config{
+			Provider: storageconfig.ProviderR2,
 			Endpoint: "https://account-id.r2.cloudflarestorage.com",
 			Region:   "wnam",
 		})
@@ -143,8 +143,8 @@ func TestNewStorageClientConfig(t *testing.T) {
 	t.Run("r2 rejects public endpoint", func(t *testing.T) {
 		t.Parallel()
 
-		_, err := newStorageClientConfig(&config.StorageConfig{
-			Provider:       config.StorageProviderR2,
+		_, err := newStorageClientConfig(&storageconfig.Config{
+			Provider:       storageconfig.ProviderR2,
 			Endpoint:       "https://account-id.r2.cloudflarestorage.com",
 			PublicEndpoint: "https://files.example.com",
 		})
@@ -157,7 +157,7 @@ func TestNewStorageClientConfig(t *testing.T) {
 		t.Parallel()
 
 		autoCreateBucket := false
-		got, err := newStorageClientConfig(&config.StorageConfig{
+		got, err := newStorageClientConfig(&storageconfig.Config{
 			Endpoint:         "localhost:9000",
 			AutoCreateBucket: &autoCreateBucket,
 		})

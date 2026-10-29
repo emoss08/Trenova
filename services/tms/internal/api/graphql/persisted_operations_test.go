@@ -11,6 +11,8 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
@@ -54,7 +56,7 @@ func TestNewPersistedOperationManifest_IncludesShipmentOperations(t *testing.T) 
 	t.Parallel()
 
 	manifest, err := NewPersistedOperationManifest(PersistedOperationManifestParams{
-		Config: &config.Config{App: config.AppConfig{Env: config.EnvProduction}},
+		Config: &config.Config{App: appconfig.Config{Env: appconfig.EnvProduction}},
 		Logger: zap.NewNop(),
 	})
 	require.NoError(t, err)
@@ -302,21 +304,21 @@ func TestDevelopmentManifestSource(t *testing.T) {
 
 	assert.Empty(t, developmentManifestSource(nil))
 	assert.Empty(t, developmentManifestSource(&config.Config{
-		App: config.AppConfig{Env: config.EnvProduction},
-		Security: config.SecurityConfig{
-			GraphQL: config.GraphQLSecurityConfig{PersistedDocumentsPath: path},
+		App: appconfig.Config{Env: appconfig.EnvProduction},
+		Security: securityconfig.Config{
+			GraphQL: securityconfig.GraphQLConfig{PersistedDocumentsPath: path},
 		},
 	}))
 	assert.Empty(t, developmentManifestSource(&config.Config{
-		App: config.AppConfig{Env: config.EnvDevelopment},
-		Security: config.SecurityConfig{GraphQL: config.GraphQLSecurityConfig{
+		App: appconfig.Config{Env: appconfig.EnvDevelopment},
+		Security: securityconfig.Config{GraphQL: securityconfig.GraphQLConfig{
 			PersistedDocumentsPath: filepath.Join(dir, "missing.json"),
 		}},
 	}))
 	assert.Equal(t, path, developmentManifestSource(&config.Config{
-		App: config.AppConfig{Env: config.EnvDevelopment},
-		Security: config.SecurityConfig{
-			GraphQL: config.GraphQLSecurityConfig{PersistedDocumentsPath: path},
+		App: appconfig.Config{Env: appconfig.EnvDevelopment},
+		Security: securityconfig.Config{
+			GraphQL: securityconfig.GraphQLConfig{PersistedDocumentsPath: path},
 		},
 	}))
 }

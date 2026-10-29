@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/serverconfig"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/fx"
@@ -88,11 +89,11 @@ func configureClientIPResolution(router *gin.Engine, cfg *config.Config) error {
 
 func trustedPlatformHeader(platform string) string {
 	switch platform {
-	case config.TrustedPlatformCloudflare:
+	case serverconfig.TrustedPlatformCloudflare:
 		return gin.PlatformCloudflare
-	case config.TrustedPlatformGoogleAppEngine:
+	case serverconfig.TrustedPlatformGoogleAppEngine:
 		return gin.PlatformGoogleAppEngine
-	case config.TrustedPlatformFlyIO:
+	case serverconfig.TrustedPlatformFlyIO:
 		return gin.PlatformFlyIO
 	default:
 		return ""

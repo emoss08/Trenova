@@ -8,6 +8,8 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/serverconfig"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/session"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/sso"
@@ -475,8 +477,8 @@ func TestStartSSOLogin_StoresProviderIDInState(t *testing.T) {
 		ssoRepo:   ssoRepo,
 		stateRepo: stateRepo,
 		cfg: &config.Config{
-			Server: config.ServerConfig{
-				CORS: config.CORSConfig{
+			Server: serverconfig.Config{
+				CORS: serverconfig.CORSConfig{
 					AllowedOrigins: []string{"https://app.test"},
 				},
 			},
@@ -617,8 +619,8 @@ func TestNew(t *testing.T) {
 		UserRepository:    userRepo,
 		SessionRepository: sessionRepo,
 		Config: &config.Config{
-			Security: config.SecurityConfig{
-				Session: config.SessionConfig{
+			Security: securityconfig.Config{
+				Session: securityconfig.SessionConfig{
 					MaxAge:      12 * time.Hour,
 					IdleTimeout: 30 * time.Minute,
 				},

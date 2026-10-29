@@ -1,22 +1,22 @@
 package fiscalperiodhandler_test
 
 import (
-	"github.com/emoss08/trenova/internal/testutil/mocks/fiscalperiodportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/fiscalyearportsmock"
 	"net/http"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/api/handlers/fiscalperiodhandler"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
+	"github.com/emoss08/trenova/internal/modules/accounting/app/fiscalperiodservice"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalclose"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalyear"
-	"github.com/emoss08/trenova/internal/modules/accounting/app/fiscalperiodservice"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalperiodports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalyearports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
+	"github.com/emoss08/trenova/internal/testutil/mocks/fiscalperiodportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/fiscalyearportsmock"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -76,8 +76,8 @@ func newFiscalPeriodHandler(
 	logger := zap.NewNop()
 	errorHandler := helpers.NewErrorHandler(
 		helpers.ErrorHandlerParams{
-			Logger: logger,
-			Config: &config.Config{App: config.AppConfig{Debug: true}},
+			Logger:    logger,
+			AppConfig: &appconfig.Config{Debug: true},
 		},
 	)
 	pm := middleware.NewPermissionMiddleware(

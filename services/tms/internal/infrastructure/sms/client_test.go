@@ -9,14 +9,14 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/twilioconfig"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 )
 
-func testConfig() *config.TwilioConfig {
-	return &config.TwilioConfig{
+func testConfig() *twilioconfig.Config {
+	return &twilioconfig.Config{
 		Enabled:    true,
 		AccountSID: "AC123",
 		AuthToken:  "secret",
@@ -24,7 +24,7 @@ func testConfig() *config.TwilioConfig {
 	}
 }
 
-func newTestClient(t *testing.T, cfg *config.TwilioConfig, handler http.HandlerFunc) *Client {
+func newTestClient(t *testing.T, cfg *twilioconfig.Config, handler http.HandlerFunc) *Client {
 	t.Helper()
 
 	server := httptest.NewServer(handler)

@@ -15,7 +15,7 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/infrastructure/agentcompletion/completionrouter"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/aiconfig"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentevalgate"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
@@ -116,7 +116,7 @@ func liveCompletion(t *testing.T, key string) (llmports.CompletionService, strin
 
 	return completionrouter.New(completionrouter.Params{
 		Logger:     zap.NewNop(),
-		Config:     &config.Config{},
+		AIConfig:   &aiconfig.Config{},
 		Repo:       liveProviders{provider: provider},
 		Encryption: encryption,
 	}), model

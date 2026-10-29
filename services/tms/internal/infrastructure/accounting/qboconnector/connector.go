@@ -8,7 +8,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/accountingconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
@@ -32,9 +33,10 @@ var errNoRedirect = errors.New(
 type Params struct {
 	fx.In
 
-	Config  *config.Config
-	Logger  *zap.Logger
-	Limiter restx.Limiter `name:"accountingLimiter" optional:"true"`
+	AccountingConfig *accountingconfig.Config
+	AppConfig        *appconfig.Config
+	Logger           *zap.Logger
+	Limiter          restx.Limiter `name:"accountingLimiter" optional:"true"`
 }
 
 type Provider struct {
@@ -61,21 +63,21 @@ type Connector struct {
 var _ accountingconnectorports.AccountingConnector = (*Connector)(nil)
 
 func New(p Params) (*Provider, error) {
-	qbo := p.Config.Accounting.QuickBooks
+	qbo := p.AccountingConfig.QuickBooks
 	environment, ok := accountingprovider.ParseAppEnvironment(qbo.GetEnvironment())
 	if !ok {
 		return nil, fmt.Errorf("quickbooks: unknown environment %q", qbo.GetEnvironment())
 	}
 
 	provider := &Provider{
-		redirectURL: qbo.GetRedirectURL(&p.Config.App),
+		redirectURL: qbo.GetRedirectURL(p.AppConfig),
 		l:           p.Logger.Named("accounting.quickbooks"),
 		bound:       make(map[string]*Connector),
 	}
 	if p.Limiter != nil {
 		provider.apiOpts = append(provider.apiOpts, quickbooks.WithLimiter(p.Limiter, ""))
 	}
-	if qbo.IsConfigured(&p.Config.App) {
+	if qbo.IsConfigured(p.AppConfig) {
 		provider.instance = &accountingconnectorports.AccountingApp{
 			Source:               accountingconnection.AppSourceInstance,
 			Environment:          environment,

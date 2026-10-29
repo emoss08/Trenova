@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/keel"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/databaseconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/querybudget"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
@@ -17,7 +17,9 @@ func budgetRouter(t *testing.T) (*gin.Engine, *bool) {
 	t.Helper()
 
 	gin.SetMode(gin.TestMode)
-	budgets := querybudget.New(querybudget.Params{Config: &config.Config{}, Logger: zap.NewNop()})
+	budgets := querybudget.New(
+		querybudget.Params{DatabaseConfig: &databaseconfig.Config{}, Logger: zap.NewNop()},
+	)
 	mw := NewQueryBudgetMiddleware(QueryBudgetMiddlewareParams{Budgets: budgets})
 
 	var budgeted bool

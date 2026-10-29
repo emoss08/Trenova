@@ -9,7 +9,7 @@ import (
 
 	"github.com/emoss08/keel/analytics/export"
 	"github.com/emoss08/keel/analytics/ir"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/reportingconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/infrastructure/reporting/render"
 	"github.com/emoss08/trenova/internal/infrastructure/storage/uploadpipe"
@@ -70,7 +70,7 @@ type ActivitiesParams struct {
 	ReadScopes          permissionports.ReadScopes
 	AuditService        auditports.AuditService
 	Metrics             *metrics.Registry `optional:"true"`
-	Config              *config.Config
+	ReportingConfig     *reportingconfig.Config
 	Logger              *zap.Logger
 }
 
@@ -94,7 +94,7 @@ type Activities struct {
 	audit        auditports.AuditService
 	metrics      *metrics.Report
 	canned       cannedLibrary
-	cfg          *config.ReportingConfig
+	cfg          *reportingconfig.Config
 	l            *zap.Logger
 }
 
@@ -120,7 +120,7 @@ func NewActivities(p ActivitiesParams) *Activities {
 		audit:        p.AuditService,
 		metrics:      reportMetrics(p.Metrics),
 		canned:       p.Reporting,
-		cfg:          p.Config.GetReportingConfig(),
+		cfg:          p.ReportingConfig,
 		l:            p.Logger.Named("reportjobs"),
 	}
 }

@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/99designs/gqlgen/graphql"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/monitoringconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
@@ -111,10 +111,8 @@ func TestNewObservabilityExtension_UsesConfiguredThreshold(t *testing.T) {
 	}
 
 	e := NewObservabilityExtension(ObservabilityParams{
-		Config: &config.Config{
-			Monitoring: config.MonitoringConfig{
-				GraphQL: config.GraphQLObservConfig{SlowOperationAfter: 5 * time.Second},
-			},
+		MonitoringConfig: &monitoringconfig.Config{
+			GraphQL: monitoringconfig.GraphQLObservConfig{SlowOperationAfter: 5 * time.Second},
 		},
 		Logger:  zap.NewNop(),
 		Metrics: registry,

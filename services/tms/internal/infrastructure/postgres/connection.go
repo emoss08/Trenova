@@ -9,6 +9,7 @@ import (
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/databaseconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/observability"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbpool"
@@ -141,7 +142,7 @@ func oltpSettings(cfg *config.Config) connectionSettings {
 }
 
 func reportingSettings(cfg *config.Config) connectionSettings {
-	reporting := cfg.GetReportingConfig()
+	reporting := &cfg.Reporting
 
 	return connectionSettings{
 		component:       "postgres-reporting",
@@ -299,7 +300,7 @@ func (c *Connection) RunScoped(
 
 func (c *Connection) rlsMode() string {
 	if c.rls == nil {
-		return config.RLSModeOff
+		return databaseconfig.RLSModeOff
 	}
 
 	return c.rls.mode

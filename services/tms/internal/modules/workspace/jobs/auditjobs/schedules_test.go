@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/auditconfig"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -50,7 +51,7 @@ func TestScheduleProvider_AuditBufferFlushConfigOverride(t *testing.T) {
 	t.Parallel()
 
 	provider := NewScheduleProvider(&config.Config{
-		Audit: config.AuditConfig{
+		Audit: auditconfig.Config{
 			BufferFlushInterval: 2 * time.Minute,
 		},
 	})
@@ -97,7 +98,7 @@ func TestScheduleProvider_DLQRetryConfigOverride(t *testing.T) {
 	t.Parallel()
 
 	provider := NewScheduleProvider(&config.Config{
-		Audit: config.AuditConfig{
+		Audit: auditconfig.Config{
 			DLQRetryInterval: 15 * time.Minute,
 		},
 	})

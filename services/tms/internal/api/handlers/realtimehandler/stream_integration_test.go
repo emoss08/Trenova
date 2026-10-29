@@ -16,6 +16,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/realtimeconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/realtimebroker"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
@@ -94,17 +96,17 @@ func (r *sseReader) next(t *testing.T, event string) sseEvent {
 func TestStreamEndToEnd(t *testing.T) {
 	client := testutil.SetupTestRedis(t)
 	cfg := &config.Config{
-		App:      config.AppConfig{Debug: true},
-		Realtime: config.RealtimeConfig{ShardCount: 4, HeartbeatInterval: time.Hour},
+		App:      appconfig.Config{Debug: true},
+		Realtime: realtimeconfig.Config{ShardCount: 4, HeartbeatInterval: time.Hour},
 	}
 	logger := zap.NewNop()
 
 	lc := fxtest.NewLifecycle(t)
 	publisher := realtimebroker.NewPublisher(realtimebroker.PublisherParams{
-		Client: client, Config: cfg, Logger: logger, LC: lc,
+		Client: client, RealtimeConfig: &cfg.Realtime, Logger: logger, LC: lc,
 	})
 	broker := realtimebroker.NewBroker(realtimebroker.BrokerParams{
-		Publisher: publisher, Client: client, Config: cfg, Logger: logger, LC: lc,
+		Publisher: publisher, Client: client, RealtimeConfig: &cfg.Realtime, Logger: logger, LC: lc,
 	})
 	lc.RequireStart()
 	t.Cleanup(lc.RequireStop)
@@ -114,24 +116,24 @@ func TestStreamEndToEnd(t *testing.T) {
 		Return(&tenant.User{ID: testUserID, Name: "Dana Dispatcher"}, nil)
 
 	gateway := realtimeservice.NewGateway(realtimeservice.GatewayParams{
-		Logger: logger, Config: cfg, Broker: broker, UserRepo: users,
+		Logger: logger, RealtimeConfig: &cfg.Realtime, Broker: broker, UserRepo: users,
 	})
 	publish := realtimeservice.New(realtimeservice.Params{
-		Logger: logger, Config: cfg, Publisher: publisher,
+		Logger: logger, RealtimeConfig: &cfg.Realtime, Publisher: publisher,
 	})
 
 	engine := permissionportsmock.NewMockPermissionEngine(t)
 	engine.On("Check", mock.Anything, mock.Anything).
 		Return(&permissionports.PermissionCheckResult{Allowed: true}, nil).Maybe()
-	eh := helpers.NewErrorHandler(helpers.ErrorHandlerParams{Logger: logger, Config: cfg})
+	eh := helpers.NewErrorHandler(helpers.ErrorHandlerParams{Logger: logger, AppConfig: &cfg.App})
 	h := New(Params{
 		Gateway:      gateway,
 		ErrorHandler: eh,
 		PermissionMiddleware: middleware.NewPermissionMiddleware(
 			middleware.PermissionMiddlewareParams{PermissionEngine: engine, ErrorHandler: eh},
 		),
-		Config: cfg,
-		Logger: logger,
+		RealtimeConfig: &cfg.Realtime,
+		Logger:         logger,
 	})
 
 	gin.SetMode(gin.TestMode)

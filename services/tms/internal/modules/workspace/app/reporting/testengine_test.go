@@ -8,7 +8,7 @@ import (
 
 	"github.com/emoss08/keel/analytics"
 	"github.com/emoss08/keel/analytics/ir"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/reportingconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/reportengine"
 	"github.com/emoss08/trenova/internal/modules/identity/app/refview"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -206,7 +206,7 @@ func engineService(t *testing.T, opts engineOptions) (*Service, *fakeEngine) {
 		perms:   reader,
 		access:  access,
 		orgRepo: previewOrganizations{},
-		cfg:     &config.ReportingConfig{PreviewRowLimit: 40},
+		cfg:     &reportingconfig.Config{PreviewRowLimit: 40},
 	}, engine
 }
 

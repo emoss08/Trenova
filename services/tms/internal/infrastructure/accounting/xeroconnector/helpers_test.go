@@ -10,7 +10,8 @@ import (
 	"testing"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/accountingconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
@@ -130,14 +131,12 @@ func (f *fakeXero) find(method, path string) (xeroCall, bool) {
 	return xeroCall{}, false
 }
 
-func newProvider(t *testing.T, cfg config.XeroConfig) *Provider {
+func newProvider(t *testing.T, cfg accountingconfig.XeroConfig) *Provider {
 	t.Helper()
 	provider, err := New(Params{
-		Config: &config.Config{
-			App:        config.AppConfig{WebBaseURL: "https://app.example.com"},
-			Accounting: config.AccountingConfig{Xero: cfg},
-		},
-		Logger: zap.NewNop(),
+		AccountingConfig: &accountingconfig.Config{Xero: cfg},
+		AppConfig:        &appconfig.Config{WebBaseURL: "https://app.example.com"},
+		Logger:           zap.NewNop(),
 	})
 	require.NoError(t, err)
 	return provider
@@ -158,7 +157,7 @@ func testConnector(t *testing.T, fake *fakeXero) *Connector {
 	server := httptest.NewServer(fake.handler(t))
 	t.Cleanup(server.Close)
 
-	provider := newProvider(t, config.XeroConfig{})
+	provider := newProvider(t, accountingconfig.XeroConfig{})
 	provider.oauthOpts = []xero.Option{
 		xero.WithIdentityURL(server.URL),
 		xero.WithHTTPClient(server.Client()),

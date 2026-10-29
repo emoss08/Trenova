@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/realtimeconfig"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -24,9 +24,9 @@ var ErrPublishBackpressure = errors.New("realtime event dropped: publish queue i
 type Params struct {
 	fx.In
 
-	Logger    *zap.Logger
-	Config    *config.Config
-	Publisher realtimeports.RealtimePublisher
+	Logger         *zap.Logger
+	RealtimeConfig *realtimeconfig.Config
+	Publisher      realtimeports.RealtimePublisher
 }
 
 type Service struct {
@@ -39,7 +39,7 @@ func New(p Params) realtimeports.RealtimeService {
 	return &Service{
 		l:              p.Logger.Named("service.realtime"),
 		publisher:      p.Publisher,
-		maxEntityBytes: p.Config.GetRealtimeConfig().GetMaxEntityBytes(),
+		maxEntityBytes: p.RealtimeConfig.GetMaxEntityBytes(),
 	}
 }
 

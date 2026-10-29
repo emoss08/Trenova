@@ -36,8 +36,7 @@ type RegistryParams struct {
 
 func QueueWorkerConfig(cfg *config.Config) registry.WorkerConfig {
 	workerConfig := registry.DefaultWorkerConfig()
-	workerConfig.MaxConcurrentActivityExecutionSize = cfg.GetAIConfig().
-		GetMaxConcurrentActivities()
+	workerConfig.MaxConcurrentActivityExecutionSize = cfg.AI.GetMaxConcurrentActivities()
 	workerConfig.MaxConcurrentWorkflowTaskExecutionSize = max(
 		2, workerConfig.MaxConcurrentActivityExecutionSize,
 	)

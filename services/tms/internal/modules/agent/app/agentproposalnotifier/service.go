@@ -18,7 +18,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentshadow"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
@@ -111,7 +111,7 @@ type Params struct {
 	fx.In
 
 	Logger      *zap.Logger
-	Config      *config.Config
+	AppConfig   *appconfig.Config
 	Roles       permissionports.RoleRepository
 	Proposals   agentports.AgentProposalRepository
 	Runs        agentruntimeports.AgentRunRepository
@@ -153,8 +153,8 @@ func New(p Params) agentports.AgentProposalNotifier {
 		shadow:      p.Shadow,
 		inliner:     p.Inliner,
 	}
-	if p.Config != nil {
-		svc.webBaseURL = p.Config.App.GetWebBaseURL()
+	if p.AppConfig != nil {
+		svc.webBaseURL = p.AppConfig.GetWebBaseURL()
 	}
 	if p.Notifications != nil {
 		svc.notifications = p.Notifications

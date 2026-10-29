@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/realtimeconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -44,12 +44,12 @@ var (
 type BrokerParams struct {
 	fx.In
 
-	Publisher *Publisher
-	Client    *redis.Client
-	Config    *config.Config
-	Logger    *zap.Logger
-	Metrics   *metrics.Registry `optional:"true"`
-	LC        fx.Lifecycle
+	Publisher      *Publisher
+	Client         *redis.Client
+	RealtimeConfig *realtimeconfig.Config
+	Logger         *zap.Logger
+	Metrics        *metrics.Registry `optional:"true"`
+	LC             fx.Lifecycle
 }
 
 // Broker fans the bus out to the streams open on this instance and keeps the
@@ -63,7 +63,7 @@ type Broker struct {
 	*Publisher
 
 	client  *redis.Client
-	cfg     config.RealtimeConfig
+	cfg     realtimeconfig.Config
 	l       *zap.Logger
 	metrics *metrics.Realtime
 
@@ -85,7 +85,7 @@ func NewBroker(p BrokerParams) *Broker {
 	b := &Broker{
 		Publisher: p.Publisher,
 		client:    p.Client,
-		cfg:       *p.Config.GetRealtimeConfig(),
+		cfg:       *p.RealtimeConfig,
 		l:         p.Logger.Named("realtime.broker"),
 		tenants:   make(map[string]map[*subscriber]struct{}),
 		perUser:   make(map[string]int),

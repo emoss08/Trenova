@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/temporalconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/connection"
 	"github.com/emoss08/trenova/pkg/temporaltype"
@@ -27,12 +27,12 @@ const claimCheckThreshold = 64 * 1024
 type TemporalClientParams struct {
 	fx.In
 
-	Config   *config.Config
-	Logger   *zap.Logger
-	LC       fx.Lifecycle
-	Payloads converter.StorageDriver
-	Metrics  *metrics.Registry  `optional:"true"`
-	SDKLog   temporallog.Logger `optional:"true"`
+	TemporalConfig *temporalconfig.Config
+	Logger         *zap.Logger
+	LC             fx.Lifecycle
+	Payloads       converter.StorageDriver
+	Metrics        *metrics.Registry  `optional:"true"`
+	SDKLog         temporallog.Logger `optional:"true"`
 }
 
 type TemporalClientResult struct {
@@ -51,7 +51,7 @@ type TemporalClientResult struct {
 // back.
 func NewTemporalClient(p TemporalClientParams) (TemporalClientResult, error) {
 	log := p.Logger.Named("temporal-client")
-	cfg := p.Config.GetTemporalConfig()
+	cfg := p.TemporalConfig
 
 	clientOptions, summary, err := connection.BuildOptions(cfg)
 	if err != nil {

@@ -6,10 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/testutil/mocks/sessionportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
-
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/iam"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/session"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
@@ -17,6 +14,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/sessionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
+	"github.com/emoss08/trenova/internal/testutil/mocks/sessionportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -66,7 +65,10 @@ func (r *memoryRepo) ActivateTOTP(_ context.Context, req *iamports.ActivateTOTPR
 	return nil
 }
 
-func (r *memoryRepo) RecordTOTPUse(_ context.Context, req iamports.RecordTOTPUseRequest) (bool, error) {
+func (r *memoryRepo) RecordTOTPUse(
+	_ context.Context,
+	req iamports.RecordTOTPUseRequest,
+) (bool, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	if r.authenticator.LastUsedStep >= req.Step {
@@ -206,9 +208,9 @@ func newHarness(t *testing.T) *harness {
 		Encryption: encryptionservice.NewWithKeyManager(
 			encryptionservice.NewLocalKeyManager("unit-test-encryption-key-with-at-least-32-bytes"),
 		),
-		Auditor: auditor,
-		Config:  &config.Config{App: config.AppConfig{Name: "Trenova"}},
-		Logger:  zap.NewNop(),
+		Auditor:   auditor,
+		AppConfig: &appconfig.Config{Name: "Trenova"},
+		Logger:    zap.NewNop(),
 	})
 	require.NoError(t, err)
 	h.svc = svc
@@ -227,16 +229,22 @@ func (h *harness) codeAt(t *testing.T, secret string, offsetSteps int64) string 
 func (h *harness) enroll(t *testing.T) (string, []string) {
 	t.Helper()
 
-	enrollment, err := h.svc.BeginTOTPEnrollment(t.Context(), &sessionports.BeginTOTPEnrollmentRequest{
-		TenantInfo: h.tenant,
-		Password:   "correct-horse",
-	})
+	enrollment, err := h.svc.BeginTOTPEnrollment(
+		t.Context(),
+		&sessionports.BeginTOTPEnrollmentRequest{
+			TenantInfo: h.tenant,
+			Password:   "correct-horse",
+		},
+	)
 	require.NoError(t, err)
 
-	resp, err := h.svc.ConfirmTOTPEnrollment(t.Context(), &sessionports.ConfirmTOTPEnrollmentRequest{
-		TenantInfo: h.tenant,
-		Code:       h.codeAt(t, enrollment.Secret, 0),
-	})
+	resp, err := h.svc.ConfirmTOTPEnrollment(
+		t.Context(),
+		&sessionports.ConfirmTOTPEnrollmentRequest{
+			TenantInfo: h.tenant,
+			Code:       h.codeAt(t, enrollment.Secret, 0),
+		},
+	)
 	require.NoError(t, err)
 
 	return enrollment.Secret, resp.RecoveryCodes
@@ -258,10 +266,13 @@ func TestEnrollmentStoresTheSecretEncryptedAndReturnsAQRCode(t *testing.T) {
 	t.Parallel()
 	h := newHarness(t)
 
-	enrollment, err := h.svc.BeginTOTPEnrollment(t.Context(), &sessionports.BeginTOTPEnrollmentRequest{
-		TenantInfo: h.tenant,
-		Password:   "correct-horse",
-	})
+	enrollment, err := h.svc.BeginTOTPEnrollment(
+		t.Context(),
+		&sessionports.BeginTOTPEnrollmentRequest{
+			TenantInfo: h.tenant,
+			Password:   "correct-horse",
+		},
+	)
 	require.NoError(t, err)
 
 	assert.NotEmpty(t, enrollment.Secret)
@@ -281,10 +292,13 @@ func TestConfirmRejectsAWrongCodeAndLeavesTheFactorOff(t *testing.T) {
 	t.Parallel()
 	h := newHarness(t)
 
-	enrollment, err := h.svc.BeginTOTPEnrollment(t.Context(), &sessionports.BeginTOTPEnrollmentRequest{
-		TenantInfo: h.tenant,
-		Password:   "correct-horse",
-	})
+	enrollment, err := h.svc.BeginTOTPEnrollment(
+		t.Context(),
+		&sessionports.BeginTOTPEnrollmentRequest{
+			TenantInfo: h.tenant,
+			Password:   "correct-horse",
+		},
+	)
 	require.NoError(t, err)
 
 	_, err = h.svc.ConfirmTOTPEnrollment(t.Context(), &sessionports.ConfirmTOTPEnrollmentRequest{
@@ -309,17 +323,23 @@ func TestConfirmTurnsTheFactorOnAndRaisesTheSession(t *testing.T) {
 		return s.AuthenticatorAAL == 2 && s.MFAAuthenticatedAt == h.clock.Unix()
 	})).Return(nil)
 
-	enrollment, err := h.svc.BeginTOTPEnrollment(t.Context(), &sessionports.BeginTOTPEnrollmentRequest{
-		TenantInfo: h.tenant,
-		Password:   "correct-horse",
-	})
+	enrollment, err := h.svc.BeginTOTPEnrollment(
+		t.Context(),
+		&sessionports.BeginTOTPEnrollmentRequest{
+			TenantInfo: h.tenant,
+			Password:   "correct-horse",
+		},
+	)
 	require.NoError(t, err)
 
-	resp, err := h.svc.ConfirmTOTPEnrollment(t.Context(), &sessionports.ConfirmTOTPEnrollmentRequest{
-		TenantInfo: h.tenant,
-		SessionID:  sessionID,
-		Code:       h.codeAt(t, enrollment.Secret, 0),
-	})
+	resp, err := h.svc.ConfirmTOTPEnrollment(
+		t.Context(),
+		&sessionports.ConfirmTOTPEnrollmentRequest{
+			TenantInfo: h.tenant,
+			SessionID:  sessionID,
+			Code:       h.codeAt(t, enrollment.Secret, 0),
+		},
+	)
 	require.NoError(t, err)
 	assert.Len(t, resp.RecoveryCodes, totputils.RecoveryCodeCount)
 
@@ -438,10 +458,13 @@ func TestRegenerateRecoveryCodesReplacesTheSet(t *testing.T) {
 	secret, original := h.enroll(t)
 	h.clock = h.clock.Add(2 * totputils.Period)
 
-	resp, err := h.svc.RegenerateRecoveryCodes(t.Context(), &sessionports.RegenerateRecoveryCodesRequest{
-		TenantInfo: h.tenant,
-		Code:       h.codeAt(t, secret, 0),
-	})
+	resp, err := h.svc.RegenerateRecoveryCodes(
+		t.Context(),
+		&sessionports.RegenerateRecoveryCodesRequest{
+			TenantInfo: h.tenant,
+			Code:       h.codeAt(t, secret, 0),
+		},
+	)
 	require.NoError(t, err)
 	assert.Len(t, resp.RecoveryCodes, totputils.RecoveryCodeCount)
 

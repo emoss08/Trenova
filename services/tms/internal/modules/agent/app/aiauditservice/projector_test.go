@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/aiauditconfig"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentfingerprint"
@@ -224,11 +224,11 @@ func newScenario() *scenario {
 
 func testKeyring(signed bool) *Keyring {
 	if !signed {
-		return NewKeyring(&config.AIAuditChainConfig{}, zap.NewNop())
+		return NewKeyring(&aiauditconfig.ChainConfig{}, zap.NewNop())
 	}
 
-	return NewKeyring(&config.AIAuditChainConfig{
-		Keys:        []config.AIAuditChainKey{{ID: "k1", Secret: strings.Repeat("s", 32)}},
+	return NewKeyring(&aiauditconfig.ChainConfig{
+		Keys:        []aiauditconfig.ChainKey{{ID: "k1", Secret: strings.Repeat("s", 32)}},
 		ActiveKeyID: "k1",
 	}, zap.NewNop())
 }

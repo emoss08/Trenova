@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/ediconfig"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edimessage"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/editransportports"
@@ -48,16 +48,15 @@ type sftpNetwork struct {
 	maxFileBytes int64
 }
 
-func sftpNetworkFromConfig(cfg *config.Config) sftpNetwork {
-	edi := cfg.GetEDIConfig()
-	return sftpNetwork{policy: edi.EgressPolicy(), maxFileBytes: edi.GetMaxInboundFileBytes()}
+func sftpNetworkFromConfig(cfg *ediconfig.Config) sftpNetwork {
+	return sftpNetwork{policy: cfg.EgressPolicy(), maxFileBytes: cfg.GetMaxInboundFileBytes()}
 }
 
 type SFTPTransport struct {
 	network sftpNetwork
 }
 
-func NewSFTPTransport(cfg *config.Config) *SFTPTransport {
+func NewSFTPTransport(cfg *ediconfig.Config) *SFTPTransport {
 	return &SFTPTransport{network: sftpNetworkFromConfig(cfg)}
 }
 

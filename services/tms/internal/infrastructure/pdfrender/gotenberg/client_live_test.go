@@ -8,8 +8,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/infrastructure/config/rendererconfig"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/testutil/pdftest"
 	"github.com/stretchr/testify/assert"
@@ -35,14 +35,12 @@ func liveClient(t *testing.T) *Client {
 	}
 
 	return New(Params{
-		Config: &config.Config{
-			Renderer: config.RendererConfig{
-				GotenbergURL:   baseURL,
-				RequestTimeout: 60 * time.Second,
-				HealthTimeout:  5 * time.Second,
-				MaxConcurrent:  2,
-				MaxRetries:     2,
-			},
+		RendererConfig: &rendererconfig.Config{
+			GotenbergURL:   baseURL,
+			RequestTimeout: 60 * time.Second,
+			HealthTimeout:  5 * time.Second,
+			MaxConcurrent:  2,
+			MaxRetries:     2,
 		},
 		Logger: zap.NewNop(),
 	})

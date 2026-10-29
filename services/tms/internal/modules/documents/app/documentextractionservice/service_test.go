@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/aiconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/modules/documents/app/documentextractionservice"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
@@ -29,7 +30,7 @@ func TestReextractResetsStateAndRequeuesWorkflow(t *testing.T) {
 	t.Parallel()
 
 	cfg := &config.Config{
-		AI: config.AIConfig{},
+		AI: aiconfig.Config{},
 	}
 	metricRegistry, err := metrics.NewRegistry(&config.Config{}, zap.NewNop())
 	require.NoError(t, err)
@@ -115,12 +116,13 @@ func TestReextractResetsStateAndRequeuesWorkflow(t *testing.T) {
 		Return(nil, nil)
 
 	service := documentextractionservice.New(documentextractionservice.Params{
-		Logger:              zap.NewNop(),
-		Config:              cfg,
-		Metrics:             metricRegistry,
-		DocumentControlRepo: documentControlRepo,
-		DocumentRepo:        documentRepo,
-		ContentRepo:         contentRepo,
+		Logger:                   zap.NewNop(),
+		DocumentConversionConfig: &cfg.DocumentConversion,
+		SearchConfig:             &cfg.Search,
+		Metrics:                  metricRegistry,
+		DocumentControlRepo:      documentControlRepo,
+		DocumentRepo:             documentRepo,
+		ContentRepo:              contentRepo,
 		DraftRepo: documentshipmentdraftportsmock.NewMockDocumentShipmentDraftRepository(
 			t,
 		),
@@ -136,7 +138,7 @@ func TestEnqueueExtractionSkipsWhenDocumentIntelligenceDisabled(t *testing.T) {
 	t.Parallel()
 
 	cfg := &config.Config{
-		AI: config.AIConfig{},
+		AI: aiconfig.Config{},
 	}
 	metricRegistry, err := metrics.NewRegistry(&config.Config{}, zap.NewNop())
 	require.NoError(t, err)
@@ -157,12 +159,13 @@ func TestEnqueueExtractionSkipsWhenDocumentIntelligenceDisabled(t *testing.T) {
 	workflowStarter.EXPECT().Enabled().Return(true)
 
 	service := documentextractionservice.New(documentextractionservice.Params{
-		Logger:              zap.NewNop(),
-		Config:              cfg,
-		Metrics:             metricRegistry,
-		DocumentControlRepo: documentControlRepo,
-		DocumentRepo:        documentportsmock.NewMockDocumentRepository(t),
-		ContentRepo:         documentcontentportsmock.NewMockDocumentContentRepository(t),
+		Logger:                   zap.NewNop(),
+		DocumentConversionConfig: &cfg.DocumentConversion,
+		SearchConfig:             &cfg.Search,
+		Metrics:                  metricRegistry,
+		DocumentControlRepo:      documentControlRepo,
+		DocumentRepo:             documentportsmock.NewMockDocumentRepository(t),
+		ContentRepo:              documentcontentportsmock.NewMockDocumentContentRepository(t),
 		DraftRepo: documentshipmentdraftportsmock.NewMockDocumentShipmentDraftRepository(
 			t,
 		),
@@ -182,18 +185,19 @@ func TestEnqueueExtractionSkipsWhenProcessingProfileIsNone(t *testing.T) {
 	t.Parallel()
 
 	cfg := &config.Config{
-		AI: config.AIConfig{},
+		AI: aiconfig.Config{},
 	}
 	metricRegistry, err := metrics.NewRegistry(&config.Config{}, zap.NewNop())
 	require.NoError(t, err)
 
 	service := documentextractionservice.New(documentextractionservice.Params{
-		Logger:              zap.NewNop(),
-		Config:              cfg,
-		Metrics:             metricRegistry,
-		DocumentControlRepo: tenantportsmock.NewMockDocumentControlRepository(t),
-		DocumentRepo:        documentportsmock.NewMockDocumentRepository(t),
-		ContentRepo:         documentcontentportsmock.NewMockDocumentContentRepository(t),
+		Logger:                   zap.NewNop(),
+		DocumentConversionConfig: &cfg.DocumentConversion,
+		SearchConfig:             &cfg.Search,
+		Metrics:                  metricRegistry,
+		DocumentControlRepo:      tenantportsmock.NewMockDocumentControlRepository(t),
+		DocumentRepo:             documentportsmock.NewMockDocumentRepository(t),
+		ContentRepo:              documentcontentportsmock.NewMockDocumentContentRepository(t),
 		DraftRepo: documentshipmentdraftportsmock.NewMockDocumentShipmentDraftRepository(
 			t,
 		),
@@ -213,7 +217,7 @@ func TestReextractRejectsDocumentsWithoutTargetedProcessing(t *testing.T) {
 	t.Parallel()
 
 	cfg := &config.Config{
-		AI: config.AIConfig{},
+		AI: aiconfig.Config{},
 	}
 	metricRegistry, err := metrics.NewRegistry(&config.Config{}, zap.NewNop())
 	require.NoError(t, err)
@@ -236,12 +240,13 @@ func TestReextractRejectsDocumentsWithoutTargetedProcessing(t *testing.T) {
 	}, nil)
 
 	service := documentextractionservice.New(documentextractionservice.Params{
-		Logger:              zap.NewNop(),
-		Config:              cfg,
-		Metrics:             metricRegistry,
-		DocumentControlRepo: tenantportsmock.NewMockDocumentControlRepository(t),
-		DocumentRepo:        documentRepo,
-		ContentRepo:         documentcontentportsmock.NewMockDocumentContentRepository(t),
+		Logger:                   zap.NewNop(),
+		DocumentConversionConfig: &cfg.DocumentConversion,
+		SearchConfig:             &cfg.Search,
+		Metrics:                  metricRegistry,
+		DocumentControlRepo:      tenantportsmock.NewMockDocumentControlRepository(t),
+		DocumentRepo:             documentRepo,
+		ContentRepo:              documentcontentportsmock.NewMockDocumentContentRepository(t),
 		DraftRepo: documentshipmentdraftportsmock.NewMockDocumentShipmentDraftRepository(
 			t,
 		),

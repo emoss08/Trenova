@@ -10,7 +10,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/api/helpers"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/updateconfig"
 	"github.com/emoss08/trenova/internal/modules/documents/app/capturereleaseservice"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
@@ -24,10 +25,10 @@ func releaseHandler(t *testing.T, source string) *gin.Engine {
 	public, _ := key.Public().(ed25519.PublicKey)
 	releases, err := capturereleaseservice.New(capturereleaseservice.Params{
 		Logger: zap.NewNop(),
-		Config: &config.Config{Update: config.UpdateConfig{
+		UpdateConfig: &updateconfig.Config{
 			CaptureManifestURL: source,
 			CapturePublicKey:   base64.StdEncoding.EncodeToString(public),
-		}},
+		},
 	})
 	require.NoError(t, err)
 
@@ -36,8 +37,8 @@ func releaseHandler(t *testing.T, source string) *gin.Engine {
 		releases: releases,
 		l:        zap.NewNop(),
 		eh: helpers.NewErrorHandler(helpers.ErrorHandlerParams{
-			Logger: zap.NewNop(),
-			Config: &config.Config{},
+			Logger:    zap.NewNop(),
+			AppConfig: &appconfig.Config{},
 		}),
 	}
 	router := gin.New()
@@ -49,7 +50,9 @@ func releaseHandler(t *testing.T, source string) *gin.Engine {
 func TestLatestReleaseServesTheSignedManifestUnchanged(t *testing.T) {
 	t.Parallel()
 
-	fixture, err := os.ReadFile("../../../modules/documents/app/capturereleaseservice/testdata/signed.json")
+	fixture, err := os.ReadFile(
+		"../../../modules/documents/app/capturereleaseservice/testdata/signed.json",
+	)
 	require.NoError(t, err)
 	source := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		_, _ = w.Write(fixture)

@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/accountingconfig"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/shared/quickbooks"
@@ -417,7 +417,7 @@ func TestCreateBillPaymentRejectsInvalidInput(t *testing.T) {
 func TestPayablesValidationErrorsClassifyAsValidation(t *testing.T) {
 	t.Parallel()
 
-	conn := newConnector(t, config.QuickBooksConfig{})
+	conn := newConnector(t, accountingconfig.QuickBooksConfig{})
 	for _, err := range []error{
 		quickbooks.ErrVendorRequired,
 		quickbooks.ErrAccountRequired,
@@ -436,7 +436,7 @@ func TestPayablesValidationErrorsClassifyAsValidation(t *testing.T) {
 func TestPayablesDocumentURLsAndLimits(t *testing.T) {
 	t.Parallel()
 
-	conn := newConnector(t, config.QuickBooksConfig{Environment: "sandbox"})
+	conn := newConnector(t, accountingconfig.QuickBooksConfig{Environment: "sandbox"})
 	base := "https://app.sandbox.qbo.intuit.com"
 	tests := []struct {
 		kind accountingsync.SyncObjectType

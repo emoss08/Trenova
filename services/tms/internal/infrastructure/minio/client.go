@@ -12,7 +12,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/storageconfig"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
@@ -25,8 +25,8 @@ var ErrUnsafePrefix = errors.New("a prefix delete needs a non-empty prefix that 
 type Params struct {
 	fx.In
 
-	Config *config.Config
-	Logger *zap.Logger
+	StorageConfig *storageconfig.Config
+	Logger        *zap.Logger
 }
 
 type Client struct {
@@ -40,7 +40,7 @@ type Client struct {
 }
 
 func New(p Params) (kernelports.Client, error) {
-	cfg := p.Config.GetStorageConfig()
+	cfg := p.StorageConfig
 	storageCfg, err := newStorageClientConfig(cfg)
 	if err != nil {
 		return nil, err
@@ -114,7 +114,7 @@ type storageClientConfig struct {
 	autoCreateBucket bool
 }
 
-func newStorageClientConfig(cfg *config.StorageConfig) (*storageClientConfig, error) {
+func newStorageClientConfig(cfg *storageconfig.Config) (*storageClientConfig, error) {
 	endpoint, secure, err := normalizeStorageEndpoint(cfg.Endpoint, cfg.UseSSL)
 	if err != nil {
 		return nil, fmt.Errorf("invalid storage endpoint: %w", err)
@@ -125,8 +125,8 @@ func newStorageClientConfig(cfg *config.StorageConfig) (*storageClientConfig, er
 	bucketLookup := minio.BucketLookupAuto
 
 	switch provider {
-	case config.StorageProviderMinio:
-	case config.StorageProviderR2:
+	case storageconfig.ProviderMinio:
+	case storageconfig.ProviderR2:
 		if cfg.PublicEndpoint != "" {
 			return nil, errors.New(
 				"storage public endpoint cannot be set for R2; private R2 presigned URLs must use the R2 S3 API endpoint",
@@ -195,7 +195,7 @@ func normalizeStorageEndpoint(rawEndpoint string, defaultSecure bool) (string, b
 }
 
 func newMinioOptions(
-	cfg *config.StorageConfig,
+	cfg *storageconfig.Config,
 	secure bool,
 	region string,
 	bucketLookup minio.BucketLookupType,

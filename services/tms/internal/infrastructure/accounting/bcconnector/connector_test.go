@@ -12,7 +12,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/accountingconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
@@ -27,7 +28,7 @@ import (
 func TestUnconfiguredInstanceHasNoApp(t *testing.T) {
 	t.Parallel()
 
-	provider := newProvider(t, config.BusinessCentralConfig{})
+	provider := newProvider(t, accountingconfig.BusinessCentralConfig{})
 	_, ok := provider.InstanceApp()
 	assert.False(t, ok)
 	_, err := provider.Bind(nil)
@@ -43,7 +44,7 @@ func TestUnconfiguredInstanceHasNoApp(t *testing.T) {
 func TestConfiguredInstanceAppAndAddresses(t *testing.T) {
 	t.Parallel()
 
-	provider := newProvider(t, config.BusinessCentralConfig{
+	provider := newProvider(t, accountingconfig.BusinessCentralConfig{
 		ClientID:       " id ",
 		ClientSecret:   "secret",
 		WebhookBaseURL: "https://hooks.example.com/",
@@ -81,14 +82,14 @@ func TestConfiguredInstanceAppAndAddresses(t *testing.T) {
 func TestNotificationBaseDefaultsToTheAPIBase(t *testing.T) {
 	t.Parallel()
 
-	provider := newProvider(t, config.BusinessCentralConfig{})
+	provider := newProvider(t, accountingconfig.BusinessCentralConfig{})
 	assert.Equal(t, "https://app.example.com/api/v1", provider.NotificationBaseURL())
 }
 
 func TestBindingReusesTheConnectorForTheSameKeys(t *testing.T) {
 	t.Parallel()
 
-	provider := newProvider(t, config.BusinessCentralConfig{})
+	provider := newProvider(t, accountingconfig.BusinessCentralConfig{})
 	first, err := provider.Bind(tenantApp())
 	require.NoError(t, err)
 	second, err := provider.Bind(tenantApp())
@@ -105,7 +106,8 @@ func TestBindingReusesTheConnectorForTheSameKeys(t *testing.T) {
 func TestWithoutARedirectAddressOAuthIsAConfigurationFailure(t *testing.T) {
 	t.Parallel()
 
-	provider, err := New(Params{Config: &config.Config{}, Logger: zap.NewNop()})
+	provider, err := New(Params{AccountingConfig: &accountingconfig.Config{},
+		AppConfig: &appconfig.Config{}, Logger: zap.NewNop()})
 	require.NoError(t, err)
 	conn, err := provider.Bind(tenantApp())
 	require.NoError(t, err)
@@ -229,7 +231,7 @@ func TestVerifyWebhookNeverAcceptsABody(t *testing.T) {
 func TestProviderParsesNotificationsAndValidationTokens(t *testing.T) {
 	t.Parallel()
 
-	provider := newProvider(t, config.BusinessCentralConfig{})
+	provider := newProvider(t, accountingconfig.BusinessCentralConfig{})
 	notes, err := provider.ParseNotifications([]byte(readFixture(t, "notifications.json")))
 	require.NoError(t, err)
 	require.Len(t, notes, 2)

@@ -11,6 +11,7 @@ import (
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -57,7 +58,7 @@ type IdempotencyMiddleware struct {
 }
 
 func NewIdempotencyMiddleware(p IdempotencyParams) *IdempotencyMiddleware {
-	cfg := config.IdempotencyConfig{}
+	cfg := securityconfig.IdempotencyConfig{}
 	var requestTimeout time.Duration
 	var secret string
 	if p.Config != nil {

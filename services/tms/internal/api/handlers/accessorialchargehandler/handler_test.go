@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/emoss08/trenova/internal/testutil/mocks/accessorialchargeportsmock"
 	"net/http"
 	"testing"
 
@@ -12,10 +11,12 @@ import (
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
 	"github.com/emoss08/trenova/internal/modules/reference/app/accessorialchargeservice"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/accessorialchargeports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
+	"github.com/emoss08/trenova/internal/testutil/mocks/accessorialchargeportsmock"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -46,14 +47,14 @@ func setupAccessorialChargeHandler(
 	})
 
 	cfg := &config.Config{
-		App: config.AppConfig{
+		App: appconfig.Config{
 			Debug: true,
 		},
 	}
 
 	errorHandler := helpers.NewErrorHandler(helpers.ErrorHandlerParams{
-		Logger: logger,
-		Config: cfg,
+		Logger:    logger,
+		AppConfig: &cfg.App,
 	})
 
 	pm := middleware.NewPermissionMiddleware(middleware.PermissionMiddlewareParams{
@@ -161,7 +162,10 @@ func TestAccessorialChargeHandler_List_WithPagination(t *testing.T) {
 func TestAccessorialChargeHandler_List_RejectsOffset(t *testing.T) {
 	t.Parallel()
 
-	handler := setupAccessorialChargeHandler(t, accessorialchargeportsmock.NewMockAccessorialChargeRepository(t))
+	handler := setupAccessorialChargeHandler(
+		t,
+		accessorialchargeportsmock.NewMockAccessorialChargeRepository(t),
+	)
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodGet).

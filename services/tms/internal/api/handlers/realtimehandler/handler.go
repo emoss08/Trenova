@@ -7,7 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/realtimeconfig"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/authctx"
@@ -33,7 +33,7 @@ type Params struct {
 	Gateway              realtimeports.RealtimeGateway
 	ErrorHandler         *helpers.ErrorHandler
 	PermissionMiddleware *middleware.PermissionMiddleware
-	Config               *config.Config
+	RealtimeConfig       *realtimeconfig.Config
 	Logger               *zap.Logger
 }
 
@@ -50,7 +50,7 @@ func New(p Params) *Handler {
 		gateway:     p.Gateway,
 		eh:          p.ErrorHandler,
 		pm:          p.PermissionMiddleware,
-		maxLifetime: p.Config.GetRealtimeConfig().GetMaxStreamLifetime(),
+		maxLifetime: p.RealtimeConfig.GetMaxStreamLifetime(),
 		l:           p.Logger.Named("handler.realtime"),
 	}
 }

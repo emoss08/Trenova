@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/accountingconfig"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountinginbound"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
@@ -64,7 +64,7 @@ func openSandbox(t *testing.T) *sandbox {
 	key, err := os.ReadFile(sandboxEnv("PRIVATE_KEY_FILE"))
 	require.NoError(t, err)
 
-	provider := newProvider(t, config.NetSuiteConfig{})
+	provider := newProvider(t, accountingconfig.NetSuiteConfig{})
 	conn, err := provider.bind(&accountingconnectorports.AccountingApp{
 		Source:      accountingconnection.AppSourceTenant,
 		Environment: accountingprovider.AppEnvironmentProduction,

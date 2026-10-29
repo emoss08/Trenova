@@ -13,7 +13,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/accountingconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
@@ -32,7 +33,7 @@ var testVerifier = strings.Repeat("v", 43)
 func TestUnconfiguredInstanceHasNoApp(t *testing.T) {
 	t.Parallel()
 
-	provider := newProvider(t, config.NetSuiteConfig{})
+	provider := newProvider(t, accountingconfig.NetSuiteConfig{})
 	_, ok := provider.InstanceApp()
 	assert.False(t, ok)
 	_, err := provider.Bind(nil)
@@ -48,7 +49,7 @@ func TestUnconfiguredInstanceHasNoApp(t *testing.T) {
 func TestConfiguredInstanceAppAndAuthorizeURL(t *testing.T) {
 	t.Parallel()
 
-	provider := newProvider(t, config.NetSuiteConfig{
+	provider := newProvider(t, accountingconfig.NetSuiteConfig{
 		ClientID:     " " + testClientID + " ",
 		ClientSecret: "secret",
 	})
@@ -89,7 +90,7 @@ func TestConfiguredInstanceAppAndAuthorizeURL(t *testing.T) {
 func TestBindingReusesTheConnectorForTheSameKeys(t *testing.T) {
 	t.Parallel()
 
-	provider := newProvider(t, config.NetSuiteConfig{})
+	provider := newProvider(t, accountingconfig.NetSuiteConfig{})
 	first, err := provider.Bind(tenantApp())
 	require.NoError(t, err)
 	second, err := provider.Bind(tenantApp())
@@ -106,7 +107,8 @@ func TestBindingReusesTheConnectorForTheSameKeys(t *testing.T) {
 func TestWithoutARedirectAddressOAuthIsAConfigurationFailure(t *testing.T) {
 	t.Parallel()
 
-	provider, err := New(Params{Config: &config.Config{}, Logger: zap.NewNop()})
+	provider, err := New(Params{AccountingConfig: &accountingconfig.Config{},
+		AppConfig: &appconfig.Config{}, Logger: zap.NewNop()})
 	require.NoError(t, err)
 	conn, err := provider.Bind(tenantApp())
 	require.NoError(t, err)
@@ -288,7 +290,7 @@ func TestVerifyAppChecksTheClientIDFormOnly(t *testing.T) {
 	require.NoError(t, conn.VerifyApp(t.Context()))
 	assert.Empty(t, fake.all())
 
-	provider := newProvider(t, config.NetSuiteConfig{})
+	provider := newProvider(t, accountingconfig.NetSuiteConfig{})
 	for _, id := range []string{"short", strings.Repeat("a", 300), "has spaces in the client id!!"} {
 		app := tenantApp()
 		app.ClientID = id

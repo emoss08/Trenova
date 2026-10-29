@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/keel/seed"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/systemconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbpool"
 	"github.com/emoss08/trenova/internal/keeltables"
 	"github.com/emoss08/trenova/internal/seeds/reference"
@@ -29,7 +30,7 @@ type Template struct {
 var referenceTemplate = Template{Name: "reference", Seeds: reference.Seeds}
 
 func testConfig() *config.Config {
-	return &config.Config{System: config.SystemConfig{SystemUserPassword: SystemUserPassword}}
+	return &config.Config{System: systemconfig.Config{SystemUserPassword: SystemUserPassword}}
 }
 
 func seedOptions() seed.Options {

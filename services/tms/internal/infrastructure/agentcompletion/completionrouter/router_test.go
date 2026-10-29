@@ -9,7 +9,7 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/infrastructure/agentcompletion/modeladapter"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/aiconfig"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
@@ -74,7 +74,7 @@ func newTestService(t *testing.T, providers ...*aiprovider.Provider) *Service {
 
 	return &Service{
 		logger:     zap.NewNop(),
-		ai:         &config.AIConfig{MaxRetries: 1},
+		ai:         &aiconfig.Config{MaxRetries: 1},
 		repo:       &fakeRepo{providers: providers},
 		encryption: encryptionservice.NewWithKeyManager(encryptionservice.NewLocalKeyManager("k")),
 		adapters:   modeladapter.NewRegistry(),
@@ -254,12 +254,12 @@ func TestCompleteStructured_DisabledGlobally(t *testing.T) {
 
 	off := false
 	svc := newTestService(t)
-	svc.ai = &config.AIConfig{Enabled: &off}
+	svc.ai = &aiconfig.Config{Enabled: &off}
 
 	_, err := svc.CompleteStructured(t.Context(), generalRequest())
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "disabled")
-	assert.Contains(t, err.Error(), config.AIEnabledKey,
+	assert.Contains(t, err.Error(), aiconfig.EnabledKey,
 		"a refusal that does not name the key leaves the operator searching")
 }
 
@@ -269,12 +269,12 @@ func TestCompleteStructured_IsNotGatedByDocumentExtraction(t *testing.T) {
 	t.Parallel()
 
 	svc := newTestService(t)
-	svc.ai = &config.AIConfig{DocumentExtraction: false}
+	svc.ai = &aiconfig.Config{DocumentExtraction: false}
 
 	_, err := svc.CompleteStructured(t.Context(), generalRequest())
 
 	if err != nil {
-		assert.NotContains(t, err.Error(), config.AIEnabledKey,
+		assert.NotContains(t, err.Error(), aiconfig.EnabledKey,
 			"the document-intelligence switch must not report the AI gate")
 	}
 }

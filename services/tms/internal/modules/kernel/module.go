@@ -1,7 +1,7 @@
 package kernel
 
 import (
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/importsconfig"
 	"github.com/emoss08/trenova/internal/modules/kernel/adapters/postgres/recordvisibilityrepository"
 	"github.com/emoss08/trenova/internal/modules/kernel/adapters/postgres/settingversionrepository"
 	"github.com/emoss08/trenova/internal/modules/kernel/adapters/postgres/usstaterepository"
@@ -51,8 +51,8 @@ func APIOptions() fx.Option {
 	return fx.Options()
 }
 
-func spreadsheetLimits(cfg *config.Config) rateimport.Limits {
-	limits := cfg.GetSpreadsheetImportConfig()
+func spreadsheetLimits(cfg *importsconfig.Config) rateimport.Limits {
+	limits := cfg.Spreadsheet
 	return rateimport.Limits{
 		MaxRows:          limits.MaxRows,
 		MaxColumns:       limits.MaxColumns,

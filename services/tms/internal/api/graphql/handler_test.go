@@ -10,6 +10,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlctx"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -23,15 +25,15 @@ func TestHandler_RejectsAPIKeyPrincipal(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
 	cfg := &config.Config{
-		App: config.AppConfig{
+		App: appconfig.Config{
 			Debug:              true,
 			ProblemTypeBaseURI: "https://api.test/problems/",
 		},
 	}
 	h := &Handler{
 		eh: helpers.NewErrorHandler(helpers.ErrorHandlerParams{
-			Logger: zap.NewNop(),
-			Config: cfg,
+			Logger:    zap.NewNop(),
+			AppConfig: &cfg.App,
 		}),
 		metrics: metrics.NewGraphQL(nil, zap.NewNop(), false, metrics.GraphQLOptions{}),
 	}
@@ -60,19 +62,19 @@ func TestHandler_RejectsOversizedBodyByContentLength(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
 	cfg := &config.Config{
-		App: config.AppConfig{
+		App: appconfig.Config{
 			Debug:              true,
 			ProblemTypeBaseURI: "https://api.test/problems/",
 		},
-		Security: config.SecurityConfig{
-			GraphQL: config.GraphQLSecurityConfig{MaxRequestBodyBytes: 2048},
+		Security: securityconfig.Config{
+			GraphQL: securityconfig.GraphQLConfig{MaxRequestBodyBytes: 2048},
 		},
 	}
 	h := &Handler{
 		cfg: cfg,
 		eh: helpers.NewErrorHandler(helpers.ErrorHandlerParams{
-			Logger: zap.NewNop(),
-			Config: cfg,
+			Logger:    zap.NewNop(),
+			AppConfig: &cfg.App,
 		}),
 		metrics: metrics.NewGraphQL(nil, zap.NewNop(), false, metrics.GraphQLOptions{}),
 	}
@@ -107,19 +109,19 @@ func TestHandler_RejectsOversizedBodyWithoutContentLength(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
 	cfg := &config.Config{
-		App: config.AppConfig{
+		App: appconfig.Config{
 			Debug:              true,
 			ProblemTypeBaseURI: "https://api.test/problems/",
 		},
-		Security: config.SecurityConfig{
-			GraphQL: config.GraphQLSecurityConfig{MaxRequestBodyBytes: 1024},
+		Security: securityconfig.Config{
+			GraphQL: securityconfig.GraphQLConfig{MaxRequestBodyBytes: 1024},
 		},
 	}
 	h := &Handler{
 		cfg: cfg,
 		eh: helpers.NewErrorHandler(helpers.ErrorHandlerParams{
-			Logger: zap.NewNop(),
-			Config: cfg,
+			Logger:    zap.NewNop(),
+			AppConfig: &cfg.App,
 		}),
 		persistedOps: &PersistedOperationManifest{queries: map[string]string{}},
 		metrics:      metrics.NewGraphQL(nil, zap.NewNop(), false, metrics.GraphQLOptions{}),

@@ -7,7 +7,7 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/handler/extension"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlctx"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/monitoringconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/observability"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/vektah/gqlparser/v2/gqlerror"
@@ -29,10 +29,10 @@ const (
 type ObservabilityParams struct {
 	fx.In
 
-	Config  *config.Config
-	Logger  *zap.Logger
-	Metrics *metrics.Registry
-	Tracer  observability.Tracer
+	MonitoringConfig *monitoringconfig.Config
+	Logger           *zap.Logger
+	Metrics          *metrics.Registry
+	Tracer           observability.Tracer
 }
 
 type ObservabilityExtension struct {
@@ -53,7 +53,7 @@ func NewObservabilityExtension(p ObservabilityParams) *ObservabilityExtension {
 		metrics:       p.Metrics.GraphQL,
 		l:             p.Logger.Named("api.graphql.observability"),
 		tracer:        p.Tracer,
-		slowThreshold: p.Config.GetGraphQLObservConfig().GetSlowOperationAfter(),
+		slowThreshold: p.MonitoringConfig.GraphQL.GetSlowOperationAfter(),
 	}
 }
 

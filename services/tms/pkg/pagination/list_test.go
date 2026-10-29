@@ -9,6 +9,7 @@ import (
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
@@ -19,7 +20,7 @@ import (
 func newTestErrorHandler() *helpers.ErrorHandler {
 	logger := zap.NewNop()
 	cfg := &config.Config{
-		App: config.AppConfig{
+		App: appconfig.Config{
 			Name:    "test",
 			Env:     "test",
 			Version: "1.0.0",
@@ -27,8 +28,8 @@ func newTestErrorHandler() *helpers.ErrorHandler {
 		},
 	}
 	return helpers.NewErrorHandler(helpers.ErrorHandlerParams{
-		Logger: logger,
-		Config: cfg,
+		Logger:    logger,
+		AppConfig: &cfg.App,
 	})
 }
 
@@ -809,19 +810,24 @@ func TestList_FollowsItsOffsetCursorToTheNextPage(t *testing.T) {
 	)
 
 	opts := &QueryOptions{Pagination: Info{Limit: 2}}
-	List[cursorTestItem](c, opts, newTestErrorHandler(), func() (*ListResult[cursorTestItem], error) {
-		assert.Equal(t, 2, opts.Pagination.SafeOffset())
-		assert.Equal(t, 3, opts.Pagination.SafeLimit())
+	List[cursorTestItem](
+		c,
+		opts,
+		newTestErrorHandler(),
+		func() (*ListResult[cursorTestItem], error) {
+			assert.Equal(t, 2, opts.Pagination.SafeOffset())
+			assert.Equal(t, 3, opts.Pagination.SafeLimit())
 
-		return &ListResult[cursorTestItem]{
-			Items: []cursorTestItem{
-				{ID: pulid.MustNew("item_"), Name: "Gamma"},
-				{ID: pulid.MustNew("item_"), Name: "Delta"},
-			},
-			Total:      4,
-			TotalExact: true,
-		}, nil
-	})
+			return &ListResult[cursorTestItem]{
+				Items: []cursorTestItem{
+					{ID: pulid.MustNew("item_"), Name: "Gamma"},
+					{ID: pulid.MustNew("item_"), Name: "Delta"},
+				},
+				Total:      4,
+				TotalExact: true,
+			}, nil
+		},
+	)
 
 	require.Equal(t, http.StatusOK, w.Code)
 	assert.Contains(t, w.Body.String(), `"hasNextPage":false`)

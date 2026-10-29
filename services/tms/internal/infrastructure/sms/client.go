@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/twilioconfig"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -28,20 +28,20 @@ var ErrNotConfigured = errors.New("sms: twilio is not enabled")
 type Params struct {
 	fx.In
 
-	Config *config.Config
-	Logger *zap.Logger
+	TwilioConfig *twilioconfig.Config
+	Logger       *zap.Logger
 }
 
 type Client struct {
 	l       *zap.Logger
 	http    *http.Client
-	cfg     *config.TwilioConfig
+	cfg     *twilioconfig.Config
 	baseURL string
 }
 
 func New(p Params) *Client {
 	return newClient(
-		p.Config.GetTwilioConfig(),
+		p.TwilioConfig,
 		p.Logger,
 		&http.Client{Timeout: requestTimeout},
 		defaultBaseURL,
@@ -49,7 +49,7 @@ func New(p Params) *Client {
 }
 
 func newClient(
-	cfg *config.TwilioConfig,
+	cfg *twilioconfig.Config,
 	logger *zap.Logger,
 	httpClient *http.Client,
 	baseURL string,

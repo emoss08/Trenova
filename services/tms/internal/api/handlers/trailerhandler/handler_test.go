@@ -6,20 +6,20 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/mocks/customfieldportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/trailerportsmock"
-	"github.com/emoss08/trenova/internal/testutil/pagetest"
-
 	"github.com/emoss08/trenova/internal/api/handlers/trailerhandler"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
 	"github.com/emoss08/trenova/internal/modules/equipment/app/trailerservice"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/trailer"
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/trailerports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/customfieldservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/customfield"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
+	"github.com/emoss08/trenova/internal/testutil/mocks/customfieldportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/trailerportsmock"
+	"github.com/emoss08/trenova/internal/testutil/pagetest"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -67,14 +67,14 @@ func setupTrailerHandler(t *testing.T, repo *trailerportsmock.MockTrailerReposit
 	})
 
 	cfg := &config.Config{
-		App: config.AppConfig{
+		App: appconfig.Config{
 			Debug: true,
 		},
 	}
 
 	errorHandler := helpers.NewErrorHandler(helpers.ErrorHandlerParams{
-		Logger: logger,
-		Config: cfg,
+		Logger:    logger,
+		AppConfig: &cfg.App,
 	})
 
 	pm := middleware.NewPermissionMiddleware(middleware.PermissionMiddlewareParams{

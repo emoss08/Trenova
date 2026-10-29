@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/aiconfig"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentaiextractionports"
@@ -82,7 +82,10 @@ func newShadowFixture(t *testing.T, lastExtractedAt int64, fallback map[string]a
 
 	pages := make([]*documentcontent.Page, 0, len(evidencePages))
 	for _, page := range evidencePages {
-		pages = append(pages, &documentcontent.Page{PageNumber: page.PageNumber, ExtractedText: page.Text})
+		pages = append(
+			pages,
+			&documentcontent.Page{PageNumber: page.PageNumber, ExtractedText: page.Text},
+		)
 	}
 	contentRepo := documentcontentportsmock.NewMockDocumentContentRepository(t)
 	contentRepo.EXPECT().GetByDocumentID(mock.Anything, request.DocumentID, tenant).
@@ -100,7 +103,7 @@ func newShadowFixture(t *testing.T, lastExtractedAt int64, fallback map[string]a
 	extractor := &shadowExtractor{}
 	return &shadowFixture{
 		predictor: &ShadowPredictor{
-			cfg:       &config.AIConfig{},
+			cfg:       &aiconfig.Config{},
 			documents: docRepo,
 			contents:  contentRepo,
 			extractor: extractor,
@@ -155,10 +158,20 @@ func TestShadowPredictorSendsProductionsInputToThePinnedProvider(t *testing.T) {
 	require.True(t, ok)
 	rate, ok := fields["rate"].(map[string]any)
 	require.True(t, ok)
-	assert.Equal(t, "2563.12", rate["value"], "the candidate's answer replaces the parser's reading")
+	assert.Equal(
+		t,
+		"2563.12",
+		rate["value"],
+		"the candidate's answer replaces the parser's reading",
+	)
 	assert.Equal(t, "deterministic", prediction.DraftData["classifierSource"],
 		"the merge keeps the parser's classification, as production's did")
-	assert.Contains(t, rate["evidenceExcerpt"], "$2,563.12", "evidence is located on the pages as in production")
+	assert.Contains(
+		t,
+		rate["evidenceExcerpt"],
+		"$2,563.12",
+		"evidence is located on the pages as in production",
+	)
 }
 
 func TestShadowPredictorFallsBackToTheParserWhenTheAnswerIsRejected(t *testing.T) {
@@ -167,7 +180,9 @@ func TestShadowPredictorFallsBackToTheParserWhenTheAnswerIsRejected(t *testing.T
 	fixture := newShadowFixture(t, 1_700_000_000, parserFallback())
 	rejected := acceptableExtract()
 	delete(rejected.Fields, "rate")
-	fixture.extractor.result = &documentaiextractionports.AIEvaluationExtractResult{Extract: rejected}
+	fixture.extractor.result = &documentaiextractionports.AIEvaluationExtractResult{
+		Extract: rejected,
+	}
 
 	prediction, err := fixture.predictor.PredictShadowDraft(t.Context(), fixture.request)
 	require.NoError(t, err)
@@ -178,7 +193,12 @@ func TestShadowPredictorFallsBackToTheParserWhenTheAnswerIsRejected(t *testing.T
 	require.True(t, ok)
 	rate, ok := fields["rate"].(map[string]any)
 	require.True(t, ok)
-	assert.Equal(t, "2500.00", rate["value"], "a rejected answer leaves the draft production would have kept")
+	assert.Equal(
+		t,
+		"2500.00",
+		rate["value"],
+		"a rejected answer leaves the draft production would have kept",
+	)
 }
 
 func TestShadowPredictorRefusesASupersededExtraction(t *testing.T) {

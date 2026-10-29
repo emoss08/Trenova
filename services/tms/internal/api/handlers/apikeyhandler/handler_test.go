@@ -10,6 +10,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
 	"github.com/emoss08/trenova/internal/modules/identity/app/apikeyservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/apikey"
 	permissiondomain "github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -35,9 +37,9 @@ func setupAPIKeyHandler(
 
 	repo := apikeyportsmock.NewMockAPIKeyRepository(t)
 	cfg := &config.Config{
-		App: config.AppConfig{Debug: true},
-		Security: config.SecurityConfig{
-			APIToken: config.APITokenConfig{
+		App: appconfig.Config{Debug: true},
+		Security: securityconfig.Config{
+			APIToken: securityconfig.APITokenConfig{
 				Enabled:          true,
 				DefaultExpiry:    24 * time.Hour,
 				MaxExpiry:        7 * 24 * time.Hour,
@@ -46,8 +48,8 @@ func setupAPIKeyHandler(
 		},
 	}
 	errorHandler := helpers.NewErrorHandler(helpers.ErrorHandlerParams{
-		Logger: zap.NewNop(),
-		Config: cfg,
+		Logger:    zap.NewNop(),
+		AppConfig: &cfg.App,
 	})
 	pm := middleware.NewPermissionMiddleware(middleware.PermissionMiddlewareParams{
 		PermissionEngine: &mocks.AllowAllPermissionEngine{},

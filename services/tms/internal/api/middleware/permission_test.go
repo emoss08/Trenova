@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/api/helpers"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -140,8 +140,8 @@ func (m *mockPermissionEngine) RoleCoverage(
 
 func newTestErrorHandler() *helpers.ErrorHandler {
 	return helpers.NewErrorHandler(helpers.ErrorHandlerParams{
-		Logger: zap.NewNop(),
-		Config: &config.Config{App: config.AppConfig{Debug: true}},
+		Logger:    zap.NewNop(),
+		AppConfig: &appconfig.Config{Debug: true},
 	})
 }
 

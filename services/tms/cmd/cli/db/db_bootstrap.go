@@ -191,7 +191,7 @@ func runBootstrap(cmd *cobra.Command, _ []string) error {
 
 	inputs := resolveBootstrapInputs(cmd)
 
-	logger, _, err := config.ProvideLogger(cfg)
+	logger, _, err := config.ProvideLogger(&cfg.Logging)
 	if err != nil {
 		return err
 	}
@@ -306,9 +306,9 @@ func newInstanceBootstrapService(
 			DB:     deps.conn,
 			Logger: deps.logger,
 		}),
-		Auditor: auditor,
-		Config:  deps.cfg,
-		Logger:  deps.logger,
+		Auditor:      auditor,
+		SystemConfig: &deps.cfg.System,
+		Logger:       deps.logger,
 	})
 }
 
@@ -322,6 +322,7 @@ func redisSecurityAuditor(
 	app := fx.New(
 		fx.NopLogger,
 		fx.Supply(cfg),
+		config.SectionProviders,
 		fx.Supply(logger),
 		infrastructure.RedisModule,
 		fx.Populate(&client),

@@ -7,7 +7,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/realtimeconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/redis/go-redis/v9"
@@ -20,11 +20,11 @@ var ErrPublisherStopped = errors.New("realtime publisher is stopped")
 type PublisherParams struct {
 	fx.In
 
-	Client  *redis.Client
-	Config  *config.Config
-	Logger  *zap.Logger
-	Metrics *metrics.Registry `optional:"true"`
-	LC      fx.Lifecycle
+	Client         *redis.Client
+	RealtimeConfig *realtimeconfig.Config
+	Logger         *zap.Logger
+	Metrics        *metrics.Registry `optional:"true"`
+	LC             fx.Lifecycle
 }
 
 // Publisher writes events to the sharded bus.
@@ -37,7 +37,7 @@ type PublisherParams struct {
 // see.
 type Publisher struct {
 	client   *redis.Client
-	cfg      config.RealtimeConfig
+	cfg      realtimeconfig.Config
 	l        *zap.Logger
 	metrics  *metrics.Realtime
 	queue    chan *realtimeports.RealtimeEnvelope
@@ -49,7 +49,7 @@ type Publisher struct {
 }
 
 func NewPublisher(p PublisherParams) *Publisher {
-	cfg := *p.Config.GetRealtimeConfig()
+	cfg := *p.RealtimeConfig
 	pub := &Publisher{
 		client: p.Client,
 		cfg:    cfg,

@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/ediconfig"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edimessage"
@@ -156,10 +156,10 @@ func TestSFTPNetworkCarriesTheEgressPolicyAndFileLimit(t *testing.T) {
 
 	strict := sftpNetworkFromConfig(nil).endpointConfig(profile, nil)
 	require.False(t, strict.EgressPolicy.AllowPrivateNetworks)
-	require.Equal(t, config.DefaultEDIMaxInboundFileBytes, strict.MaxFileBytes)
+	require.Equal(t, ediconfig.DefaultMaxInboundFileBytes, strict.MaxFileBytes)
 
-	relaxed := sftpNetworkFromConfig(&config.Config{
-		EDI: config.EDIConfig{AllowPrivateNetworks: true, MaxInboundFileBytes: 4096},
+	relaxed := sftpNetworkFromConfig(&ediconfig.Config{
+		AllowPrivateNetworks: true, MaxInboundFileBytes: 4096,
 	}).endpointConfig(profile, nil)
 	require.True(t, relaxed.EgressPolicy.AllowPrivateNetworks)
 	require.Equal(t, int64(4096), relaxed.MaxFileBytes)

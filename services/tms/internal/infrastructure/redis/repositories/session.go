@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/session"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/sessionports"
 	"github.com/emoss08/trenova/pkg/redishelpers"
@@ -26,9 +26,9 @@ const (
 type SessionRepositoryParams struct {
 	fx.In
 
-	Client *redis.Client
-	Config *config.Config
-	Logger *zap.Logger
+	Client         *redis.Client
+	SecurityConfig *securityconfig.Config
+	Logger         *zap.Logger
 }
 
 type sessionRepository struct {
@@ -41,8 +41,8 @@ func NewSessionRepository(p SessionRepositoryParams) sessionports.SessionReposit
 	return &sessionRepository{
 		client: p.Client,
 		policy: session.Policy{
-			MaxAge:      p.Config.Security.Session.MaxAge,
-			IdleTimeout: p.Config.Security.Session.IdleTimeout,
+			MaxAge:      p.SecurityConfig.Session.MaxAge,
+			IdleTimeout: p.SecurityConfig.Session.IdleTimeout,
 		},
 		l: p.Logger.Named("redis.session-repository"),
 	}

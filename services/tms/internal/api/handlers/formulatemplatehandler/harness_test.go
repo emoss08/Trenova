@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/formulatemplatehandler"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/formulastudioports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -164,8 +164,8 @@ func newFixture(t *testing.T, opts fixtureOptions) *fixture {
 
 	logger := zap.NewNop()
 	errorHandler := helpers.NewErrorHandler(helpers.ErrorHandlerParams{
-		Logger: logger,
-		Config: &config.Config{App: config.AppConfig{Debug: true}},
+		Logger:    logger,
+		AppConfig: &appconfig.Config{Debug: true},
 	})
 	engine := &grantedEngine{granted: opts.granted}
 	resolver := tariff.NewTemplateResolver(tariff.TemplateResolverParams{

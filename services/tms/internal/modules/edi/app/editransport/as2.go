@@ -12,7 +12,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/ediconfig"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/editransportports"
 	"github.com/emoss08/trenova/shared/as2"
@@ -145,8 +145,8 @@ type AS2Transport struct {
 	policy httpsafe.Policy
 }
 
-func NewAS2Transport(cfg *config.Config) *AS2Transport {
-	return NewAS2TransportWithPolicy(cfg.GetEDIConfig().EgressPolicy())
+func NewAS2Transport(cfg *ediconfig.Config) *AS2Transport {
+	return NewAS2TransportWithPolicy(cfg.EgressPolicy())
 }
 
 func NewAS2TransportWithPolicy(policy httpsafe.Policy) *AS2Transport {

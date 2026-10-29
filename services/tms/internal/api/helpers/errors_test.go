@@ -9,6 +9,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/tenantboundary"
 	"github.com/emoss08/trenova/shared/testutil"
@@ -23,15 +24,15 @@ import (
 func newTestErrorHandler(debug bool) *helpers.ErrorHandler {
 	logger := zap.NewNop()
 	cfg := &config.Config{
-		App: config.AppConfig{
+		App: appconfig.Config{
 			Debug:              debug,
 			ProblemTypeBaseURI: "https://api.test.com/problems/",
 		},
 	}
 
 	return helpers.NewErrorHandler(helpers.ErrorHandlerParams{
-		Logger: logger,
-		Config: cfg,
+		Logger:    logger,
+		AppConfig: &cfg.App,
 	})
 }
 
@@ -445,5 +446,10 @@ func TestErrorHandler_HandleError_ValidationKeepsItsOwnShape(t *testing.T) {
 	multi.Add("code", errortypes.ErrDuplicate, "Code already exists")
 	handler.HandleError(ctx.Context, multi)
 
-	assert.Equal(t, http.StatusBadRequest, ctx.ResponseCode(), "a validator's duplicate stays a field error, not a conflict")
+	assert.Equal(
+		t,
+		http.StatusBadRequest,
+		ctx.ResponseCode(),
+		"a validator's duplicate stays a field error, not a conflict",
+	)
 }

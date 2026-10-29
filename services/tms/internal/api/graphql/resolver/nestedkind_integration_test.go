@@ -19,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/bootstrap/crossref"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/databaseconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/equipment/adapters/postgres/equipmentmanufacturerrepository"
 	"github.com/emoss08/trenova/internal/modules/equipment/adapters/postgres/equipmenttyperepository"
@@ -95,7 +96,7 @@ func TestScreenRead_ATractorsDriverShowsTheWorkerReferenceView(t *testing.T) {
 		Denied: []string{permission.ResourceWorker.String()},
 	}
 	enforced := &config.Config{}
-	enforced.Database.RLS.Mode = config.RLSModeEnforce
+	enforced.Database.RLS.Mode = databaseconfig.RLSModeEnforce
 	scopes := readscopeservice.New(readscopeservice.Params{
 		Config:   enforced,
 		DB:       owner,

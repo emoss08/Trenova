@@ -11,6 +11,9 @@ import (
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/storageconfig"
 	"github.com/emoss08/trenova/internal/modules/identity/app/roleservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/userservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -67,13 +70,13 @@ func setupUserHandler(t *testing.T, opts setupOptions) *userhandler.Handler {
 	}
 	if opts.cfg == nil {
 		opts.cfg = &config.Config{
-			App: config.AppConfig{Debug: true},
-			Security: config.SecurityConfig{
-				Session: config.SessionConfig{
+			App: appconfig.Config{Debug: true},
+			Security: securityconfig.Config{
+				Session: securityconfig.SessionConfig{
 					Name: "trenova_session",
 				},
 			},
-			Storage: config.StorageConfig{
+			Storage: storageconfig.Config{
 				MaxFileSize:        5 * 1024 * 1024,
 				PresignedURLExpiry: 15 * time.Minute,
 				AllowedMIMETypes:   []string{"image/jpeg", "image/png", "image/webp"},
@@ -90,7 +93,7 @@ func setupUserHandler(t *testing.T, opts setupOptions) *userhandler.Handler {
 		AuditService:      &mocks.NoopAuditService{},
 		Realtime:          &mocks.NoopRealtimeService{},
 		Storage:           opts.storage,
-		Config:            opts.cfg,
+		StorageConfig:     &opts.cfg.Storage,
 		Validator:         userservice.NewTestValidator(),
 		PermissionEngine:  opts.permEngine,
 	})
@@ -105,8 +108,8 @@ func setupUserHandler(t *testing.T, opts setupOptions) *userhandler.Handler {
 	})
 
 	errorHandler := helpers.NewErrorHandler(helpers.ErrorHandlerParams{
-		Logger: logger,
-		Config: opts.cfg,
+		Logger:    logger,
+		AppConfig: &opts.cfg.App,
 	})
 
 	pm := middleware.NewPermissionMiddleware(middleware.PermissionMiddlewareParams{

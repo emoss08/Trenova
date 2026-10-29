@@ -9,10 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/testutil/mocks/customerportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/documentuploadportsmock"
-
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/storageconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/workflowstarter"
 	"github.com/emoss08/trenova/internal/modules/documents/app/documentservice"
 	"github.com/emoss08/trenova/internal/modules/documents/app/thumbnailservice"
@@ -23,6 +20,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
+	"github.com/emoss08/trenova/internal/testutil/mocks/customerportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/documentuploadportsmock"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -394,7 +393,7 @@ var (
 // 	storageClient storage.Client,
 // 	validator *documentservice.Validator,
 // 	auditService services.AuditService,
-// 	cfg *config.StorageConfig,
+// 	cfg *storageconfig.Config,
 // 	thumbnailGenerator *thumbnailservice.Generator,
 // 	temporalClient client.Client,
 // ) *documentservice.Service {
@@ -417,13 +416,13 @@ type unitDeps struct {
 }
 
 func newUnitTestService(t *testing.T, repo *mockDocRepo, sc *mockStorageClient) *unitDeps {
-	storageCfg := &config.StorageConfig{
+	storageCfg := &storageconfig.Config{
 		AllowedMIMETypes:   []string{"application/pdf", "image/png", "text/plain"},
 		MaxFileSize:        50 * 1024 * 1024,
 		PresignedURLExpiry: 15 * time.Minute,
 	}
 	validator := documentservice.NewValidator(documentservice.ValidatorParams{
-		Config: &config.Config{Storage: *storageCfg},
+		StorageConfig: storageCfg,
 	})
 	cacheRepo := customerportsmock.NewMockDocumentCacheRepository(t)
 	sessionRepo := documentuploadportsmock.NewMockDocumentUploadSessionRepository(t)
@@ -1421,13 +1420,13 @@ func TestUnit_GetPreviewURL_PresignError(t *testing.T) {
 func TestNew(t *testing.T) {
 	t.Parallel()
 
-	storageCfg := &config.StorageConfig{
+	storageCfg := &storageconfig.Config{
 		AllowedMIMETypes:   []string{"application/pdf"},
 		MaxFileSize:        50 * 1024 * 1024,
 		PresignedURLExpiry: 15 * time.Minute,
 	}
 	validator := documentservice.NewValidator(documentservice.ValidatorParams{
-		Config: &config.Config{Storage: *storageCfg},
+		StorageConfig: storageCfg,
 	})
 
 	repo := &mockDocRepo{
@@ -1458,13 +1457,13 @@ func TestNew(t *testing.T) {
 func TestNewConstructor(t *testing.T) {
 	t.Parallel()
 
-	storageCfg := &config.StorageConfig{
+	storageCfg := &storageconfig.Config{
 		AllowedMIMETypes:   []string{"application/pdf"},
 		MaxFileSize:        50 * 1024 * 1024,
 		PresignedURLExpiry: 15 * time.Minute,
 	}
 	validator := documentservice.NewValidator(documentservice.ValidatorParams{
-		Config: &config.Config{Storage: *storageCfg},
+		StorageConfig: storageCfg,
 	})
 
 	repo := &mockDocRepo{}
@@ -1478,7 +1477,7 @@ func TestNewConstructor(t *testing.T) {
 		Storage:            sc,
 		Validator:          validator,
 		AuditService:       &mocks.NoopAuditService{},
-		Config:             &config.Config{Storage: *storageCfg},
+		StorageConfig:      storageCfg,
 		ThumbnailGenerator: thumbnailservice.NewGenerator(nil),
 		WorkflowStarter:    workflowstarter.New(workflowstarter.Params{}),
 	})

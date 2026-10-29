@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/searchconfig"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/fx"
@@ -15,13 +16,14 @@ func TestMeilisearchClientModuleProvidesSearchRepository(t *testing.T) {
 	t.Parallel()
 
 	cfg := &config.Config{
-		Search: config.SearchConfig{
+		Search: searchconfig.Config{
 			Enabled: false,
 		},
 	}
 
 	app := fx.New(
 		fx.Supply(cfg),
+		config.SectionProviders,
 		fx.Supply(zap.NewNop()),
 		fx.WithLogger(func() fxevent.Logger { return fxevent.NopLogger }),
 		MeilisearchClientModule,

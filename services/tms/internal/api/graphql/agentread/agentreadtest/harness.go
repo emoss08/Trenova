@@ -56,10 +56,10 @@ func NewReader(t testing.TB, opts Options) *agentread.Reader {
 	return agentread.New(agentread.Params{
 		Params: gqlext.Params{
 			Observability: gqlext.NewObservabilityExtension(gqlext.ObservabilityParams{
-				Config: cfg, Logger: logger, Metrics: registry, Tracer: noopTracer{},
+				MonitoringConfig: &cfg.Monitoring, Logger: logger, Metrics: registry, Tracer: noopTracer{},
 			}),
 			CostBudget: gqlext.NewCostBudgetExtension(gqlext.CostBudgetParams{
-				Config: cfg, Logger: logger, Metrics: registry,
+				SecurityConfig: &cfg.Security, Logger: logger, Metrics: registry,
 			}),
 			ReadOnly: gqlext.NewReadOnlyExtension(gqlext.ReadOnlyParams{Logger: logger}),
 			FieldGuard: gqlext.NewFieldGuardExtension(gqlext.FieldGuardParams{

@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/testutil/mocks/permissionportsmock"
@@ -110,8 +111,10 @@ func newTestRouter(t *testing.T, gateway *stubGateway, mode authMode) *gin.Engin
 	t.Helper()
 
 	gin.SetMode(gin.TestMode)
-	cfg := &config.Config{App: config.AppConfig{Debug: true}}
-	eh := helpers.NewErrorHandler(helpers.ErrorHandlerParams{Logger: zap.NewNop(), Config: cfg})
+	cfg := &config.Config{App: appconfig.Config{Debug: true}}
+	eh := helpers.NewErrorHandler(
+		helpers.ErrorHandlerParams{Logger: zap.NewNop(), AppConfig: &cfg.App},
+	)
 
 	engine := permissionportsmock.NewMockPermissionEngine(t)
 	engine.On("Check", mock.Anything, mock.Anything).
@@ -123,8 +126,8 @@ func newTestRouter(t *testing.T, gateway *stubGateway, mode authMode) *gin.Engin
 		PermissionMiddleware: middleware.NewPermissionMiddleware(
 			middleware.PermissionMiddlewareParams{PermissionEngine: engine, ErrorHandler: eh},
 		),
-		Config: cfg,
-		Logger: zap.NewNop(),
+		RealtimeConfig: &cfg.Realtime,
+		Logger:         zap.NewNop(),
 	})
 
 	r := gin.New()

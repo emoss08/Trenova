@@ -8,16 +8,16 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/mocks/onboardingportsmock"
-
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/onboarding"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/onboardingports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/testutil/mocks/onboardingportsmock"
 	"github.com/emoss08/trenova/internal/testutil/permtest"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -54,8 +54,10 @@ func newHarness(t *testing.T, ops ...permission.Operation) *harness {
 	t.Helper()
 	gin.SetMode(gin.TestMode)
 
-	cfg := &config.Config{App: config.AppConfig{Debug: true}}
-	eh := helpers.NewErrorHandler(helpers.ErrorHandlerParams{Logger: zap.NewNop(), Config: cfg})
+	cfg := &config.Config{App: appconfig.Config{Debug: true}}
+	eh := helpers.NewErrorHandler(
+		helpers.ErrorHandlerParams{Logger: zap.NewNop(), AppConfig: &cfg.App},
+	)
 	allowed := make(map[permission.Operation]bool, len(ops))
 	for _, op := range ops {
 		allowed[op] = true

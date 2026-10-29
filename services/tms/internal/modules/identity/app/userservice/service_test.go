@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/storageconfig"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/session"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
@@ -63,7 +64,7 @@ func setupTest(t *testing.T) *testDeps {
 		auditService: auditSvc,
 		realtime:     &mocks.NoopRealtimeService{},
 		storage:      storageClient,
-		storageCfg: &config.StorageConfig{
+		storageCfg: &storageconfig.Config{
 			MaxFileSize:        5 * 1024 * 1024,
 			PresignedURLExpiry: 15 * time.Minute,
 			AllowedMIMETypes:   []string{"image/jpeg", "image/png", "image/webp"},
@@ -644,7 +645,7 @@ func TestNew(t *testing.T) {
 	auditSvc := auditportsmock.NewMockAuditService(t)
 	validator := newTestValidator()
 	cfg := &config.Config{
-		Storage: config.StorageConfig{
+		Storage: storageconfig.Config{
 			MaxFileSize:        5 * 1024 * 1024,
 			PresignedURLExpiry: 15 * time.Minute,
 			AllowedMIMETypes:   []string{"image/jpeg", "image/png", "image/webp"},
@@ -658,7 +659,7 @@ func TestNew(t *testing.T) {
 		AuditService:      auditSvc,
 		Realtime:          &mocks.NoopRealtimeService{},
 		Storage:           storageClient,
-		Config:            cfg,
+		StorageConfig:     &cfg.Storage,
 		Validator:         validator,
 	})
 

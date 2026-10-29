@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/infrastructure/agentcompletion/modeladapter"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/aiconfig"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
@@ -70,7 +70,7 @@ func TestIsTimeout_ReadsTheShapesATransportActuallyReturns(t *testing.T) {
 func TestUnreachable_SeparatesABusyEndpointFromAMissingOne(t *testing.T) {
 	prober := &Prober{
 		logger: zap.NewNop(),
-		cfg:    &config.AIConfig{},
+		cfg:    &aiconfig.Config{},
 	}
 
 	timedOut := prober.unreachable(
@@ -96,7 +96,7 @@ func TestUnreachable_SeparatesABusyEndpointFromAMissingOne(t *testing.T) {
 const serverRequestTimeout = 55 * time.Second
 
 func TestGetProbeTimeout_OutlastsAQueuedFreeTier(t *testing.T) {
-	cfg := &config.AIConfig{}
+	cfg := &aiconfig.Config{}
 	// The probe waits on a real generation, so it must not inherit the
 	// reachability budget that failed NVIDIA's queued endpoints at twenty
 	// seconds. It must still fit inside the server's own request timeout.

@@ -8,7 +8,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -80,8 +80,8 @@ func (tc *transcriptCall) do(t *testing.T, path string) *httptest.ResponseRecord
 	gin.SetMode(gin.TestMode)
 
 	errorHandler := helpers.NewErrorHandler(helpers.ErrorHandlerParams{
-		Logger: zap.NewNop(),
-		Config: &config.Config{App: config.AppConfig{Debug: true}},
+		Logger:    zap.NewNop(),
+		AppConfig: &appconfig.Config{Debug: true},
 	})
 	handler := New(Params{
 		Transcripts: tc.transcripts,

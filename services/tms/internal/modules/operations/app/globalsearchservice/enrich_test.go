@@ -4,10 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/mocks/customerportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/permissionportsmock"
-
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/searchconfig"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/captureports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -15,6 +12,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
+	"github.com/emoss08/trenova/internal/testutil/mocks/customerportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/permissionportsmock"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/types/search"
@@ -68,7 +67,12 @@ type fakeLabels struct {
 	asked  []string
 }
 
-func (f *fakeLabels) Exists(context.Context, pagination.TenantInfo, string, pulid.ID) (bool, error) {
+func (f *fakeLabels) Exists(
+	context.Context,
+	pagination.TenantInfo,
+	string,
+	pulid.ID,
+) (bool, error) {
 	return true, nil
 }
 
@@ -80,7 +84,10 @@ func (f *fakeLabels) Labels(
 	return f.labels[req.ResourceType], nil
 }
 
-func permissionsDenying(t *testing.T, denied ...permission.Resource) *permissionportsmock.MockPermissionEngine {
+func permissionsDenying(
+	t *testing.T,
+	denied ...permission.Resource,
+) *permissionportsmock.MockPermissionEngine {
 	t.Helper()
 
 	engine := permissionportsmock.NewMockPermissionEngine(t)
@@ -105,11 +112,11 @@ func permissionsDenying(t *testing.T, denied ...permission.Resource) *permission
 	return engine
 }
 
-func indexConfig() *config.SearchConfig {
-	return &config.SearchConfig{
+func indexConfig() *searchconfig.Config {
+	return &searchconfig.Config{
 		Enabled: true,
-		Meilisearch: config.MeilisearchConfig{
-			Indexes: config.MeilisearchIndexConfig{
+		Meilisearch: searchconfig.MeilisearchConfig{
+			Indexes: searchconfig.MeilisearchIndexConfig{
 				Shipments: "shipments",
 				Customers: "customers",
 				Workers:   "workers",
@@ -119,7 +126,10 @@ func indexConfig() *config.SearchConfig {
 	}
 }
 
-func repoReturning(t *testing.T, pages map[string]*customerports.SearchPage) *customerportsmock.MockSearchRepository {
+func repoReturning(
+	t *testing.T,
+	pages map[string]*customerports.SearchPage,
+) *customerportsmock.MockSearchRepository {
 	t.Helper()
 
 	repo := customerportsmock.NewMockSearchRepository(t)
@@ -135,7 +145,10 @@ func repoReturning(t *testing.T, pages map[string]*customerports.SearchPage) *cu
 	return repo
 }
 
-func groupOf(result *kernelports.GlobalSearchResult, entityType search.EntityType) *kernelports.GlobalSearchGroup {
+func groupOf(
+	result *kernelports.GlobalSearchResult,
+	entityType search.EntityType,
+) *kernelports.GlobalSearchGroup {
 	for _, group := range result.Groups {
 		if group.EntityType == entityType {
 			return group
@@ -184,7 +197,9 @@ func TestSearchFindsACustomersShipmentsAndAWorkersCurrentLoad(t *testing.T) {
 		logger: zaptest.NewLogger(t),
 		config: indexConfig(),
 		searchRepo: repoReturning(t, map[string]*customerports.SearchPage{
-			"customers": page(map[string]any{"id": customerID.String(), "name": "Acme Foods", "code": "ACME"}),
+			"customers": page(
+				map[string]any{"id": customerID.String(), "name": "Acme Foods", "code": "ACME"},
+			),
 			"workers": page(map[string]any{
 				"id":          workerID.String(),
 				"first_name":  "Leon",
@@ -243,7 +258,9 @@ func TestSearchNamesNoShipmentWithoutShipmentAccess(t *testing.T) {
 		logger: zaptest.NewLogger(t),
 		config: indexConfig(),
 		searchRepo: repoReturning(t, map[string]*customerports.SearchPage{
-			"workers": page(map[string]any{"id": workerID.String(), "first_name": "Leon", "last_name": "Park"}),
+			"workers": page(
+				map[string]any{"id": workerID.String(), "first_name": "Leon", "last_name": "Park"},
+			),
 		}),
 		shipmentRead: reader,
 		permissions:  permissionsDenying(t, permission.ResourceShipment),
@@ -265,7 +282,9 @@ func TestSearchShowsOpenBalancesOnlyWithReceivablesAccess(t *testing.T) {
 	customerID := pulid.MustNew("cus_")
 	tenant := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
 	pages := map[string]*customerports.SearchPage{
-		"customers": page(map[string]any{"id": customerID.String(), "name": "Acme Foods", "city": "Dallas"}),
+		"customers": page(
+			map[string]any{"id": customerID.String(), "name": "Acme Foods", "city": "Dallas"},
+		),
 	}
 
 	balances := &fakeBalances{balances: []*kernelports.CustomerOpenBalance{
@@ -309,7 +328,11 @@ func TestSearchShowsOpenBalancesOnlyWithReceivablesAccess(t *testing.T) {
 	})
 	require.NoError(t, err)
 	require.False(t, denied.called)
-	require.NotContains(t, groupOf(result, search.EntityTypeCustomer).Hits[0].Metadata, "openBalance")
+	require.NotContains(
+		t,
+		groupOf(result, search.EntityTypeCustomer).Hits[0].Metadata,
+		"openBalance",
+	)
 }
 
 func TestSearchLabelsTheRecordADocumentIsAttachedToWhenReadable(t *testing.T) {
@@ -348,8 +371,11 @@ func TestSearchLabelsTheRecordADocumentIsAttachedToWhenReadable(t *testing.T) {
 	}
 
 	result, err := svc.Search(t.Context(), &kernelports.GlobalSearchRequest{
-		Query:       "bol",
-		TenantInfo:  pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")},
+		Query: "bol",
+		TenantInfo: pagination.TenantInfo{
+			OrgID: pulid.MustNew("org_"),
+			BuID:  pulid.MustNew("bu_"),
+		},
 		EntityTypes: []search.EntityType{search.EntityTypeDocument},
 	})
 	require.NoError(t, err)
@@ -369,7 +395,9 @@ func TestSearchReportsTheIndexTotalBeyondTheReturnedHits(t *testing.T) {
 		config: indexConfig(),
 		searchRepo: repoReturning(t, map[string]*customerports.SearchPage{
 			"workers": {
-				Documents:      []map[string]any{{"id": pulid.MustNew("wrk_").String(), "first_name": "Ann"}},
+				Documents: []map[string]any{
+					{"id": pulid.MustNew("wrk_").String(), "first_name": "Ann"},
+				},
 				EstimatedTotal: 41,
 			},
 		}),
@@ -379,8 +407,11 @@ func TestSearchReportsTheIndexTotalBeyondTheReturnedHits(t *testing.T) {
 	}
 
 	result, err := svc.Search(t.Context(), &kernelports.GlobalSearchRequest{
-		Query:       "ann",
-		TenantInfo:  pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")},
+		Query: "ann",
+		TenantInfo: pagination.TenantInfo{
+			OrgID: pulid.MustNew("org_"),
+			BuID:  pulid.MustNew("bu_"),
+		},
 		EntityTypes: []search.EntityType{search.EntityTypeWorker},
 	})
 	require.NoError(t, err)
@@ -414,8 +445,11 @@ func TestSearchBrowsesOneKindOfRecordOnABlankQuery(t *testing.T) {
 	}
 
 	result, err := svc.Search(t.Context(), &kernelports.GlobalSearchRequest{
-		Query:       "  ",
-		TenantInfo:  pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")},
+		Query: "  ",
+		TenantInfo: pagination.TenantInfo{
+			OrgID: pulid.MustNew("org_"),
+			BuID:  pulid.MustNew("bu_"),
+		},
 		EntityTypes: []search.EntityType{search.EntityTypeWorker},
 	})
 	require.NoError(t, err)

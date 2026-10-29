@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/trackingevent"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentmoveports"
@@ -47,12 +48,12 @@ func setupShipmentMoveHandlerWithTracking(
 
 	logger := zap.NewNop()
 	cfg := &config.Config{
-		App: config.AppConfig{Debug: true},
+		App: appconfig.Config{Debug: true},
 	}
 
 	errorHandler := helpers.NewErrorHandler(helpers.ErrorHandlerParams{
-		Logger: logger,
-		Config: cfg,
+		Logger:    logger,
+		AppConfig: &cfg.App,
 	})
 
 	pm := middleware.NewPermissionMiddleware(middleware.PermissionMiddlewareParams{

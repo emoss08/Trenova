@@ -6,13 +6,13 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/mocks/pagefavoriteportsmock"
-
 	"github.com/emoss08/trenova/internal/api/handlers/pagefavoritehandler"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/pagefavoriteservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/pagefavorite"
+	"github.com/emoss08/trenova/internal/testutil/mocks/pagefavoriteportsmock"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/testutil"
 	"github.com/stretchr/testify/assert"
@@ -37,14 +37,14 @@ func setupPageFavoriteHandler(
 	})
 
 	cfg := &config.Config{
-		App: config.AppConfig{
+		App: appconfig.Config{
 			Debug: true,
 		},
 	}
 
 	errorHandler := helpers.NewErrorHandler(helpers.ErrorHandlerParams{
-		Logger: logger,
-		Config: cfg,
+		Logger:    logger,
+		AppConfig: &cfg.App,
 	})
 
 	return pagefavoritehandler.New(pagefavoritehandler.Params{

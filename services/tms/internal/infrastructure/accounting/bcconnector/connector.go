@@ -8,7 +8,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/accountingconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
@@ -42,9 +43,10 @@ var (
 type Params struct {
 	fx.In
 
-	Config  *config.Config
-	Logger  *zap.Logger
-	Limiter restx.Limiter `name:"accountingLimiter" optional:"true"`
+	AccountingConfig *accountingconfig.Config
+	AppConfig        *appconfig.Config
+	Logger           *zap.Logger
+	Limiter          restx.Limiter `name:"accountingLimiter" optional:"true"`
 }
 
 type Provider struct {
@@ -81,10 +83,10 @@ type Connector struct {
 var _ accountingconnectorports.AccountingConnector = (*Connector)(nil)
 
 func New(p Params) (*Provider, error) {
-	cfg := p.Config.Accounting.BusinessCentral
+	cfg := p.AccountingConfig.BusinessCentral
 	provider := &Provider{
-		redirectURL:    cfg.GetRedirectURL(&p.Config.App),
-		webhookBaseURL: cfg.GetWebhookBaseURL(&p.Config.App),
+		redirectURL:    cfg.GetRedirectURL(p.AppConfig),
+		webhookBaseURL: cfg.GetWebhookBaseURL(p.AppConfig),
 		gate:           newCompanyGate(),
 		locks:          newBatchLocks(),
 		setups:         newPostingSetups(time.Now),
@@ -98,7 +100,7 @@ func New(p Params) (*Provider, error) {
 			businesscentral.WithLimiter(p.Limiter, limiterPrefix),
 		)
 	}
-	if cfg.IsConfigured(&p.Config.App) {
+	if cfg.IsConfigured(p.AppConfig) {
 		provider.instance = &accountingconnectorports.AccountingApp{
 			Source:       accountingconnection.AppSourceInstance,
 			Environment:  accountingprovider.AppEnvironmentProduction,

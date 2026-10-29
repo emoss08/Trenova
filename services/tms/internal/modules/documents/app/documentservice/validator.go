@@ -6,7 +6,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/storageconfig"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/fileutils"
 	"go.uber.org/fx"
@@ -22,7 +22,7 @@ var dangerousExtensions = []string{
 type ValidatorParams struct {
 	fx.In
 
-	Config *config.Config
+	StorageConfig *storageconfig.Config
 }
 
 type Validator struct {
@@ -31,7 +31,7 @@ type Validator struct {
 }
 
 func NewValidator(p ValidatorParams) *Validator {
-	cfg := p.Config.GetStorageConfig()
+	cfg := p.StorageConfig
 	return &Validator{
 		maxFileSize:      cfg.GetMaxFileSize(),
 		allowedMIMETypes: cfg.GetAllowedMIMETypes(),

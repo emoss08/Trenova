@@ -7,6 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/session"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/gin-gonic/gin"
@@ -87,7 +88,7 @@ func (h *Handler) Build(ctx context.Context) (*kernelports.PublicConfig, error) 
 	return resp, nil
 }
 
-func publicSessionPolicy(cfg *config.SessionConfig) kernelports.PublicSessionPolicy {
+func publicSessionPolicy(cfg *securityconfig.SessionConfig) kernelports.PublicSessionPolicy {
 	if !cfg.IdleTimeoutEnabled() {
 		return kernelports.PublicSessionPolicy{}
 	}

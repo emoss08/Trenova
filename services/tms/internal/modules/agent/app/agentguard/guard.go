@@ -5,7 +5,7 @@ import (
 	"errors"
 	"time"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/aiconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
@@ -22,7 +22,7 @@ type Params struct {
 	// replica remembers only its own classifications, which is what this
 	// service did before and what a test wants.
 	Verdicts agenttoolports.ScopeVerdictCacheRepository `optional:"true"`
-	Config   *config.Config                             `optional:"true"`
+	AIConfig *aiconfig.Config                           `optional:"true"`
 	Metrics  *metrics.Registry                          `optional:"true"`
 }
 
@@ -72,16 +72,12 @@ type Service struct {
 
 func New(p Params) *Service {
 	logger := p.Logger.Named("service.agent-guard")
-	var ai *config.AIConfig
-	if p.Config != nil {
-		ai = p.Config.GetAIConfig()
-	}
 
 	return &Service{
 		logger:            logger,
 		completion:        p.Completion,
 		metrics:           metrics.AssistantFrom(p.Metrics),
-		verdicts:          newVerdictCache(p.Verdicts, ai.GetVerdictCacheTTL(), logger),
+		verdicts:          newVerdictCache(p.Verdicts, p.AIConfig.GetVerdictCacheTTL(), logger),
 		ClassifierTimeout: DefaultClassifierTimeout,
 	}
 }

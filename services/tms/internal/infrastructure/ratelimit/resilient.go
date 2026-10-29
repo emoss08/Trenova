@@ -6,7 +6,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"go.uber.org/zap"
 )
@@ -45,7 +45,7 @@ func NewResilientStore(opts ResilientStoreOptions) *ResilientStore {
 	}
 	mode := opts.FailureMode
 	if mode == "" {
-		mode = config.RateLimitFailureModeLocal
+		mode = securityconfig.RateLimitFailureModeLocal
 	}
 	return &ResilientStore{
 		primary:     opts.Primary,
@@ -83,9 +83,9 @@ func (s *ResilientStore) Check(
 	s.reportFailure(err)
 
 	switch s.failureMode {
-	case config.RateLimitFailureModeAllow:
+	case securityconfig.RateLimitFailureModeAllow:
 		return allowAll(requests), nil
-	case config.RateLimitFailureModeDeny:
+	case securityconfig.RateLimitFailureModeDeny:
 		return nil, ErrStoreDenied
 	default:
 		if s.fallback == nil {

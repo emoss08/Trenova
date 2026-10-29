@@ -5,7 +5,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/storageconfig"
 	"github.com/emoss08/trenova/internal/modules/documents/app/documentservice"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentupload"
@@ -208,24 +208,25 @@ func TestCreateSession_RecordsWhetherTheUploadWillBeScanned(t *testing.T) {
 				l:           zap.NewNop(),
 				sessionRepo: sessions,
 				validator: documentservice.NewValidator(documentservice.ValidatorParams{
-					Config: &config.Config{
-						Storage: config.StorageConfig{
-							AllowedMIMETypes: []string{"application/pdf"},
-							MaxFileSize:      1024 * 1024,
-						},
+					StorageConfig: &storageconfig.Config{
+						AllowedMIMETypes: []string{"application/pdf"},
+						MaxFileSize:      1024 * 1024,
 					},
 				}),
 				contentGate: tt.gate,
 			}
 
-			session, err := svc.CreateSession(t.Context(), &documentuploadports.CreateSessionRequest{
-				TenantInfo:   tenant,
-				ResourceID:   pulid.MustNew("shp_").String(),
-				ResourceType: "shipment",
-				FileName:     "bol.pdf",
-				FileSize:     2048,
-				ContentType:  "application/pdf",
-			})
+			session, err := svc.CreateSession(
+				t.Context(),
+				&documentuploadports.CreateSessionRequest{
+					TenantInfo:   tenant,
+					ResourceID:   pulid.MustNew("shp_").String(),
+					ResourceType: "shipment",
+					FileName:     "bol.pdf",
+					FileSize:     2048,
+					ContentType:  "application/pdf",
+				},
+			)
 
 			require.NoError(t, err)
 			assert.Equal(t, tt.want, session.MalwareScan)

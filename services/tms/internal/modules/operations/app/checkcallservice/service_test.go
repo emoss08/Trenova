@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/tenderingconfig"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
@@ -394,7 +395,7 @@ func newHarness(t *testing.T) *harness {
 	h.svc = New(Params{
 		DB:     dbtest.NopConnection{},
 		Logger: zap.NewNop(),
-		Config: &config.Config{Tendering: config.TenderingConfig{
+		Config: &config.Config{Tendering: tenderingconfig.Config{
 			PublicBaseURL: "https://app.example.com/",
 		}},
 		Repo:                h.checkCalls,

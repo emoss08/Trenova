@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/edihandler"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
@@ -36,8 +36,8 @@ func setupEDIHandler(
 
 	logger := zap.NewNop()
 	errorHandler := helpers.NewErrorHandler(helpers.ErrorHandlerParams{
-		Logger: logger,
-		Config: &config.Config{App: config.AppConfig{Debug: true}},
+		Logger:    logger,
+		AppConfig: &appconfig.Config{Debug: true},
 	})
 	pm := middleware.NewPermissionMiddleware(middleware.PermissionMiddlewareParams{
 		PermissionEngine: &mocks.AllowAllPermissionEngine{},

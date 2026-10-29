@@ -8,6 +8,7 @@ import (
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/databaseconfig"
 	"github.com/jackc/pgx/v5"
 )
 
@@ -53,7 +54,7 @@ const reconcileRLSSQL = "SELECT trenova_rls.reconcile()"
 func InstallConfiguredRLSScopeKey(
 	ctx context.Context,
 	db *keel.DB,
-	rls config.RLSConfig,
+	rls databaseconfig.RLSConfig,
 ) (bool, error) {
 	if !rls.Enabled() {
 		return false, nil

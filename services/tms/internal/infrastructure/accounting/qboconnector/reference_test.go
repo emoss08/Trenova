@@ -10,6 +10,8 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/accountingconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/shared/quickbooks"
@@ -45,7 +47,7 @@ func TestListReferenceTranslatesTermsIntoDomainObjects(t *testing.T) {
 	}))
 	t.Cleanup(server.Close)
 
-	conn := newConnector(t, config.QuickBooksConfig{})
+	conn := newConnector(t, accountingconfig.QuickBooksConfig{})
 	conn.apiOpts = []quickbooks.Option{
 		quickbooks.WithBaseURL(server.URL),
 		quickbooks.WithHTTPClient(server.Client()),
@@ -93,7 +95,7 @@ func TestCreateReferenceCreatesAVendorWithTheRequestID(t *testing.T) {
 	}))
 	t.Cleanup(server.Close)
 
-	conn := newConnector(t, config.QuickBooksConfig{})
+	conn := newConnector(t, accountingconfig.QuickBooksConfig{})
 	conn.apiOpts = []quickbooks.Option{
 		quickbooks.WithBaseURL(server.URL),
 		quickbooks.WithHTTPClient(server.Client()),
@@ -122,7 +124,7 @@ func TestCreateReferenceCreatesAVendorWithTheRequestID(t *testing.T) {
 func TestCreateReferenceRefusesKindsTheBookkeeperOwns(t *testing.T) {
 	t.Parallel()
 
-	conn := newConnector(t, config.QuickBooksConfig{})
+	conn := newConnector(t, accountingconfig.QuickBooksConfig{})
 	for _, kind := range []accountingprovider.ReferenceKind{
 		accountingprovider.ReferenceKindAccount,
 		accountingprovider.ReferenceKindTerm,
@@ -150,8 +152,9 @@ func TestConnectorRatesEveryAPICallPerRealm(t *testing.T) {
 	t.Cleanup(server.Close)
 
 	limiter := &countingLimiter{}
-	cfg := &config.Config{App: config.AppConfig{WebBaseURL: "https://app.example.com"}}
-	provider, err := New(Params{Config: cfg, Logger: zap.NewNop(), Limiter: limiter})
+	cfg := &config.Config{App: appconfig.Config{WebBaseURL: "https://app.example.com"}}
+	provider, err := New(Params{AccountingConfig: &cfg.Accounting,
+		AppConfig: &cfg.App, Logger: zap.NewNop(), Limiter: limiter})
 	require.NoError(t, err)
 	conn, err := provider.bind(tenantApp(accountingprovider.AppEnvironmentProduction))
 	require.NoError(t, err)
@@ -179,7 +182,7 @@ func TestConnectorRatesEveryAPICallPerRealm(t *testing.T) {
 func TestSanitizeNameUsesEachKindsLimit(t *testing.T) {
 	t.Parallel()
 
-	conn := newConnector(t, config.QuickBooksConfig{})
+	conn := newConnector(t, accountingconfig.QuickBooksConfig{})
 	long := make([]byte, 300)
 	for idx := range long {
 		long[idx] = 'a'

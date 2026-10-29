@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/ratelimit"
 	"github.com/emoss08/trenova/internal/modules/rating/app/rateconfirmationservice"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateconfirmation"
@@ -66,10 +67,10 @@ func newTestHandler(repo *tokenRepo) *Handler {
 		Repo:   repo,
 	})
 	cfg := &config.Config{
-		Security: config.SecurityConfig{
-			RateLimit: config.RateLimitConfig{
+		Security: securityconfig.Config{
+			RateLimit: securityconfig.RateLimitConfig{
 				Enabled: true,
-				PublicToken: config.RateLimitScopeConfig{
+				PublicToken: securityconfig.RateLimitScopeConfig{
 					RequestsPerMinute: 10,
 					BurstSize:         throttleBurst,
 				},
@@ -77,8 +78,8 @@ func newTestHandler(repo *tokenRepo) *Handler {
 		},
 	}
 	errorHandler := helpers.NewErrorHandler(helpers.ErrorHandlerParams{
-		Logger: zap.NewNop(),
-		Config: cfg,
+		Logger:    zap.NewNop(),
+		AppConfig: &cfg.App,
 	})
 	return New(Params{
 		Service:      service,

@@ -1,4 +1,4 @@
-package config
+package databaseconfig
 
 import (
 	"encoding/base64"
@@ -29,17 +29,17 @@ type RLSConfig struct {
 	ScopeTTL   time.Duration `mapstructure:"scopeTtl"`
 }
 
-type DatabaseRole struct {
+type Role struct {
 	User         string `mapstructure:"user"         validate:"omitempty,min=1,max=63"`
 	Password     string `mapstructure:"password"`
 	MaxOpenConns int    `mapstructure:"maxOpenConns" validate:"omitempty,min=1,max=1000"`
 }
 
-func (r *DatabaseRole) Configured() bool {
+func (r *Role) Configured() bool {
 	return strings.TrimSpace(r.User) != ""
 }
 
-func (r *DatabaseRole) GetMaxOpenConns() int {
+func (r *Role) GetMaxOpenConns() int {
 	if r.MaxOpenConns <= 0 {
 		return defaultSystemPoolConns
 	}
@@ -91,21 +91,8 @@ func (c *RLSConfig) DecodeScopeKey() ([]byte, error) {
 	return key, nil
 }
 
-func (c *Config) GetDSNForRole(role DatabaseRole) string {
-	if !role.Configured() {
-		return c.GetDSN(c.Database.Password)
-	}
-
-	return c.postgresDSN(role.User, role.Password)
-}
-
-func (c *Config) GetMigrationDSN() string {
-	return c.GetDSNForRole(c.Database.Migrator)
-}
-
-func validateRLSConfig(config *Config) error {
-	db := &config.Database
-	rls := &db.RLS
+func (c *Config) validateRLS() error {
+	rls := &c.RLS
 
 	if !rls.Enabled() {
 		return nil
@@ -123,16 +110,16 @@ func validateRLSConfig(config *Config) error {
 		return nil
 	}
 
-	if !db.System.Configured() || strings.TrimSpace(db.System.Password) == "" {
+	if !c.System.Configured() || strings.TrimSpace(c.System.Password) == "" {
 		return ErrRLSSystemRoleRequired
 	}
 
-	if strings.EqualFold(strings.TrimSpace(db.System.User), strings.TrimSpace(db.User)) {
+	if strings.EqualFold(strings.TrimSpace(c.System.User), strings.TrimSpace(c.User)) {
 		return ErrRLSSystemRoleMustDiffer
 	}
 
-	if db.Migrator.Configured() &&
-		strings.EqualFold(strings.TrimSpace(db.Migrator.User), strings.TrimSpace(db.User)) {
+	if c.Migrator.Configured() &&
+		strings.EqualFold(strings.TrimSpace(c.Migrator.User), strings.TrimSpace(c.User)) {
 		return ErrRLSMigratorRoleMustDiffer
 	}
 

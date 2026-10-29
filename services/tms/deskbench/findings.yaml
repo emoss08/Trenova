@@ -4082,14 +4082,14 @@ findings:
     problem: >
       analyze_data's schema and agent-data-analysis.md say a dataset may be a CSV, XLSX, JSON or
       text file the person attached, but application/json is not on the default upload allow list
-      (StorageConfig.GetAllowedMIMETypes), so a JSON attachment is refused before it can be read.
+      (storageconfig.Config.GetAllowedMIMETypes), so a JSON attachment is refused before it can be read.
     fix: >
       analyze_data reads what a person can attach: CSV, XLSX and text. JSON is gone from
       analysisExtensions, the refusal message, the documentId schema, the sandbox prelude and
       agent-data-analysis.md. Allowing application/json on every upload surface was the
       alternative, and is a wider decision than this finding.
     files:
-      - services/tms/internal/infrastructure/config/config.go
+      - services/tms/internal/infrastructure/config/storageconfig/storage.go
       - services/tms/internal/modules/agent/app/agentquerytoolservice/analysis_tool.go
       - services/tms/internal/modules/agent/app/agentextensionservice/analysis.go
       - services/tms/internal/modules/agent/app/agentextensionservice/analysis_prelude.py

@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/extensionwebwatch"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/webwatchjobs/webwatchcontract"
@@ -360,7 +361,7 @@ func newBareWatchFixture(t *testing.T, webBase string) *watchFixture {
 		Watches:   w.watches,
 		Findings:  w.findings,
 		Workflows: w.workflows,
-		Config:    &config.Config{App: config.AppConfig{WebBaseURL: webBase}},
+		Config:    &config.Config{App: appconfig.Config{WebBaseURL: webBase}},
 	})
 	f.svc.now = func() int64 { return testNow }
 

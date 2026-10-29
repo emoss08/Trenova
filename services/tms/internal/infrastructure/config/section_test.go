@@ -7,6 +7,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/platformconfig"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -26,14 +28,14 @@ type fakeSettings struct {
 type fakeSection struct {
 	name      string
 	paths     []string
-	modes     []PlatformMode
+	modes     []platformconfig.Mode
 	validated *bool
 	refuse    bool
 }
 
-func (s fakeSection) Name() string                  { return s.name }
-func (s fakeSection) Paths() []string               { return s.paths }
-func (s fakeSection) PlatformModes() []PlatformMode { return s.modes }
+func (s fakeSection) Name() string                         { return s.name }
+func (s fakeSection) Paths() []string                      { return s.paths }
+func (s fakeSection) PlatformModes() []platformconfig.Mode { return s.modes }
 
 func (s fakeSection) SetDefaults(v *viper.Viper, envPrefix string) {
 	v.SetDefault("platform.example.timeout", "5s")
@@ -62,7 +64,7 @@ func newFakeSection() fakeSection {
 	return fakeSection{
 		name:  "example",
 		paths: []string{"platform.example"},
-		modes: []PlatformMode{PlatformModeCloud},
+		modes: []platformconfig.Mode{platformconfig.ModeCloud},
 	}
 }
 
@@ -74,7 +76,7 @@ func loadWithSections(t *testing.T, contents string, sections ...Section) (*Conf
 
 	return NewLoader(
 		WithConfigPath(dir),
-		WithEnvironment(EnvTest),
+		WithEnvironment(appconfig.EnvTest),
 		WithSections(sections...),
 	).Load()
 }

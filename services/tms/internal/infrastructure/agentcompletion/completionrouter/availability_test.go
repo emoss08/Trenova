@@ -4,7 +4,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/aiconfig"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -45,7 +45,7 @@ func TestCanServe_FalseWhenAIIsOff(t *testing.T) {
 	provider.Tasks = []aitask.Task{aitask.TaskDocumentExtraction}
 	svc := newTestService(t, provider)
 	off := false
-	svc.ai = &config.AIConfig{Enabled: &off}
+	svc.ai = &aiconfig.Config{Enabled: &off}
 
 	ok, err := svc.CanServe(t.Context(), aitask.TaskDocumentExtraction, availabilityTenant())
 	require.NoError(t, err)

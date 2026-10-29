@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/weatheralerthandler"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/weatheralertports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -54,8 +55,10 @@ func setupHandler(
 	t.Helper()
 
 	logger := zap.NewNop()
-	cfg := &config.Config{App: config.AppConfig{Debug: true}}
-	errorHandler := helpers.NewErrorHandler(helpers.ErrorHandlerParams{Logger: logger, Config: cfg})
+	cfg := &config.Config{App: appconfig.Config{Debug: true}}
+	errorHandler := helpers.NewErrorHandler(
+		helpers.ErrorHandlerParams{Logger: logger, AppConfig: &cfg.App},
+	)
 	return weatheralerthandler.New(
 		weatheralerthandler.Params{Service: service, ErrorHandler: errorHandler},
 	)

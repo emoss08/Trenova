@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/aiauditconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/infrastructure/storage/uploadpipe"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiaudit"
@@ -60,7 +60,7 @@ type Exports struct {
 	realtime    realtimeports.RealtimeService
 	audit       auditports.AuditService
 	permissions permissionports.PermissionEngine
-	cfg         *config.AIAuditExportConfig
+	cfg         *aiauditconfig.ExportConfig
 	metrics     *metrics.AIAudit
 	now         func() time.Time
 	l           *zap.Logger
@@ -77,7 +77,7 @@ type ExportsParams struct {
 	Realtime    realtimeports.RealtimeService
 	Audit       auditports.AuditService
 	Permissions permissionports.PermissionEngine
-	Config      *config.AIAuditExportConfig
+	Config      *aiauditconfig.ExportConfig
 	Metrics     *metrics.AIAudit
 	Now         func() time.Time
 	Logger      *zap.Logger
@@ -90,7 +90,7 @@ func NewExports(p *ExportsParams) *Exports {
 	}
 	cfg := p.Config
 	if cfg == nil {
-		cfg = &config.AIAuditExportConfig{}
+		cfg = &aiauditconfig.ExportConfig{}
 	}
 
 	return &Exports{

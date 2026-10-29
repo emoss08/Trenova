@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/realtimeconfig"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
@@ -41,9 +41,9 @@ func (p *recordingPublisher) Publish(_ context.Context, env *realtimeports.Realt
 
 func newTestService(pub realtimeports.RealtimePublisher, maxEntityBytes int) *Service {
 	return New(Params{
-		Logger:    zap.NewNop(),
-		Config:    &config.Config{Realtime: config.RealtimeConfig{MaxEntityBytes: maxEntityBytes}},
-		Publisher: pub,
+		Logger:         zap.NewNop(),
+		RealtimeConfig: &realtimeconfig.Config{MaxEntityBytes: maxEntityBytes},
+		Publisher:      pub,
 	}).(*Service)
 }
 
@@ -228,10 +228,10 @@ func newGatewayFixture(t *testing.T) *gatewayFixture {
 	users := tenantportsmock.NewMockUserRepository(t)
 
 	gateway := NewGateway(GatewayParams{
-		Logger:   zap.NewNop(),
-		Config:   &config.Config{},
-		Broker:   broker,
-		UserRepo: users,
+		Logger:         zap.NewNop(),
+		RealtimeConfig: &realtimeconfig.Config{},
+		Broker:         broker,
+		UserRepo:       users,
 	}).(*Gateway)
 
 	return &gatewayFixture{gateway: gateway, broker: broker, conn: conn}
@@ -259,7 +259,7 @@ func TestGateway_OpenResolvesTheReadersName(t *testing.T) {
 		Return(&tenant.User{ID: userID, Name: "Dana"}, nil)
 
 	gateway := NewGateway(GatewayParams{
-		Logger: zap.NewNop(), Config: &config.Config{}, Broker: broker, UserRepo: users,
+		Logger: zap.NewNop(), RealtimeConfig: &realtimeconfig.Config{}, Broker: broker, UserRepo: users,
 	})
 
 	_, err := gateway.Open(t.Context(), &realtimeports.OpenRealtimeStreamRequest{

@@ -8,6 +8,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/infrastructure/ratelimit"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -47,17 +48,17 @@ type RateLimiter struct {
 	errorHandler *helpers.ErrorHandler
 	logger       *zap.Logger
 	metrics      *metrics.RateLimit
-	policies     map[config.RateLimitScope]kernelports.RateLimitPolicy
+	policies     map[securityconfig.RateLimitScope]kernelports.RateLimitPolicy
 	exemptPaths  []string
 }
 
 type scopedRequest struct {
-	scope   config.RateLimitScope
+	scope   securityconfig.RateLimitScope
 	request kernelports.RateLimitRequest
 }
 
 func NewRateLimiter(p RateLimiterParams) *RateLimiter {
-	cfg := config.RateLimitConfig{}
+	cfg := securityconfig.RateLimitConfig{}
 	if p.Config != nil {
 		cfg = p.Config.Security.RateLimit
 	}
@@ -72,13 +73,13 @@ func NewRateLimiter(p RateLimiterParams) *RateLimiter {
 		rateLimitMetrics = p.Metrics.RateLimit
 	}
 
-	scopes := []config.RateLimitScope{
-		config.RateLimitScopeAnonymous,
-		config.RateLimitScopeAPIKey,
-		config.RateLimitScopeTenant,
-		config.RateLimitScopePublicToken,
+	scopes := []securityconfig.RateLimitScope{
+		securityconfig.RateLimitScopeAnonymous,
+		securityconfig.RateLimitScopeAPIKey,
+		securityconfig.RateLimitScopeTenant,
+		securityconfig.RateLimitScopePublicToken,
 	}
-	policies := make(map[config.RateLimitScope]kernelports.RateLimitPolicy, len(scopes))
+	policies := make(map[securityconfig.RateLimitScope]kernelports.RateLimitPolicy, len(scopes))
 	for _, scope := range scopes {
 		policy := cfg.ScopePolicy(scope)
 		if !policy.Enabled {
@@ -162,12 +163,12 @@ func (m *RateLimiter) skip(c *gin.Context) bool {
 }
 
 func (m *RateLimiter) anonymousRequests(c *gin.Context) []scopedRequest {
-	policy, ok := m.policies[config.RateLimitScopeAnonymous]
+	policy, ok := m.policies[securityconfig.RateLimitScopeAnonymous]
 	if !ok {
 		return nil
 	}
 	return []scopedRequest{{
-		scope: config.RateLimitScopeAnonymous,
+		scope: securityconfig.RateLimitScopeAnonymous,
 		request: kernelports.RateLimitRequest{
 			Key:    "anon:" + c.ClientIP(),
 			Policy: policy,
@@ -184,9 +185,9 @@ func (m *RateLimiter) apiKeyRequests(c *gin.Context) []scopedRequest {
 
 	orgTag := "{" + authCtx.OrganizationID.String() + "}"
 	requests := make([]scopedRequest, 0, 2)
-	if policy, ok := m.policies[config.RateLimitScopeAPIKey]; ok {
+	if policy, ok := m.policies[securityconfig.RateLimitScopeAPIKey]; ok {
 		requests = append(requests, scopedRequest{
-			scope: config.RateLimitScopeAPIKey,
+			scope: securityconfig.RateLimitScopeAPIKey,
 			request: kernelports.RateLimitRequest{
 				Key:    orgTag + ":apikey:" + authCtx.APIKeyID.String(),
 				Policy: policy,
@@ -195,9 +196,9 @@ func (m *RateLimiter) apiKeyRequests(c *gin.Context) []scopedRequest {
 		})
 	}
 
-	if policy, ok := m.policies[config.RateLimitScopeTenant]; ok {
+	if policy, ok := m.policies[securityconfig.RateLimitScopeTenant]; ok {
 		requests = append(requests, scopedRequest{
-			scope: config.RateLimitScopeTenant,
+			scope: securityconfig.RateLimitScopeTenant,
 			request: kernelports.RateLimitRequest{
 				Key:    orgTag + ":tenant",
 				Policy: policy,
@@ -210,7 +211,7 @@ func (m *RateLimiter) apiKeyRequests(c *gin.Context) []scopedRequest {
 }
 
 func (m *RateLimiter) publicTokenRequests(c *gin.Context, param string) []scopedRequest {
-	policy, ok := m.policies[config.RateLimitScopePublicToken]
+	policy, ok := m.policies[securityconfig.RateLimitScopePublicToken]
 	if !ok {
 		return nil
 	}
@@ -219,7 +220,7 @@ func (m *RateLimiter) publicTokenRequests(c *gin.Context, param string) []scoped
 		return m.anonymousRequests(c)
 	}
 	return []scopedRequest{{
-		scope: config.RateLimitScopePublicToken,
+		scope: securityconfig.RateLimitScopePublicToken,
 		request: kernelports.RateLimitRequest{
 			Key:    "token:" + hashutils.SHA256Hex(token),
 			Policy: policy,
@@ -318,7 +319,7 @@ func (m *RateLimiter) writeHeaders(
 	c.Header(HeaderRateLimitPolicy, formatRateLimitPolicy(req.request.Policy))
 }
 
-func (m *RateLimiter) recordDecision(scope config.RateLimitScope, allowed bool) {
+func (m *RateLimiter) recordDecision(scope securityconfig.RateLimitScope, allowed bool) {
 	if m.metrics == nil {
 		return
 	}

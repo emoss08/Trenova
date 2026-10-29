@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/imagingconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/imaging"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/testcontainers/testcontainers-go"
@@ -48,7 +48,7 @@ func Endpoint(t testing.TB) string {
 func Client(t testing.TB) kernelports.Imaging {
 	t.Helper()
 
-	client, err := imaging.Dial(&config.ImagingConfig{
+	client, err := imaging.Dial(&imagingconfig.Config{
 		Endpoint:       "passthrough:///" + Endpoint(t),
 		InitialBackoff: 50 * time.Millisecond,
 	}, zap.NewNop())
@@ -74,7 +74,9 @@ func start(ctx context.Context) (string, error) {
 				"TRENOVA_IMAGING__POOL__SIZE":            "2",
 				"TRENOVA_IMAGING__TELEMETRY__LOG_FORMAT": "text",
 			},
-			WaitingFor: wait.ForHTTP("/readyz").WithPort("9464/tcp").WithStartupTimeout(2 * time.Minute),
+			WaitingFor: wait.ForHTTP("/readyz").
+				WithPort("9464/tcp").
+				WithStartupTimeout(2 * time.Minute),
 		},
 		Started: true,
 	})

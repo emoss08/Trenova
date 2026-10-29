@@ -26,7 +26,7 @@ domain write ── PublishResourceInvalidation ──▶ in-memory queue ──
 | HTTP endpoints | `internal/api/handlers/realtimehandler/handler.go` |
 | Wiring (publisher in every process, gateway in the API) | `internal/bootstrap/modules/infrastructure/realtime.go` |
 | Browser client | `client/packages/shared/src/services/realtime.ts` (`realtimeClient`) |
-| Configuration and defaults | `realtime:` in `config/config.example.yaml`, `config.RealtimeConfig` |
+| Configuration and defaults | `realtime:` in `config/config.example.yaml`, `realtimeconfig.Config` |
 
 ## Publishing
 

@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/realtimeconfig"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -23,10 +23,10 @@ var errForeignConnection = errortypes.NewAuthorizationError(
 type GatewayParams struct {
 	fx.In
 
-	Logger   *zap.Logger
-	Config   *config.Config
-	Broker   realtimeports.RealtimeBroker
-	UserRepo tenantports.UserRepository
+	Logger         *zap.Logger
+	RealtimeConfig *realtimeconfig.Config
+	Broker         realtimeports.RealtimeBroker
+	UserRepo       tenantports.UserRepository
 }
 
 // Gateway is what a browser talks to: it opens a reader's stream and lets that
@@ -37,7 +37,7 @@ type Gateway struct {
 	l      *zap.Logger
 	broker realtimeports.RealtimeBroker
 	users  tenantports.UserRepository
-	cfg    config.RealtimeConfig
+	cfg    realtimeconfig.Config
 }
 
 func NewGateway(p GatewayParams) realtimeports.RealtimeGateway {
@@ -45,7 +45,7 @@ func NewGateway(p GatewayParams) realtimeports.RealtimeGateway {
 		l:      p.Logger.Named("service.realtime-gateway"),
 		broker: p.Broker,
 		users:  p.UserRepo,
-		cfg:    *p.Config.GetRealtimeConfig(),
+		cfg:    *p.RealtimeConfig,
 	}
 }
 

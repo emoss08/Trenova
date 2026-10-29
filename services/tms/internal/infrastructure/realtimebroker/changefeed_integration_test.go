@@ -8,6 +8,7 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/realtimeconfig"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/testutil"
@@ -46,12 +47,19 @@ func recordChanged(
 
 func TestChangeFeed_ReadsWatchedChangesSinceTheCursor(t *testing.T) {
 	client := testutil.SetupTestRedis(t)
-	cfg := &config.Config{Realtime: config.RealtimeConfig{ShardCount: 4}}
+	cfg := &config.Config{Realtime: realtimeconfig.Config{ShardCount: 4}}
 	lc := fxtest.NewLifecycle(t)
-	pub := NewPublisher(PublisherParams{Client: client, Config: cfg, Logger: zap.NewNop(), LC: lc})
+	pub := NewPublisher(
+		PublisherParams{
+			Client:         client,
+			RealtimeConfig: &cfg.Realtime,
+			Logger:         zap.NewNop(),
+			LC:             lc,
+		},
+	)
 	lc.RequireStart()
 	t.Cleanup(lc.RequireStop)
-	feed := NewChangeFeed(ChangeFeedParams{Client: client, Config: cfg})
+	feed := NewChangeFeed(ChangeFeedParams{Client: client, RealtimeConfig: &cfg.Realtime})
 
 	tn, stranger := newTenant(), newTenant()
 	before := recordChanged(t, tn, feedRecord, pulid.Nil)
@@ -96,8 +104,8 @@ func TestChangeFeed_ReadsWatchedChangesSinceTheCursor(t *testing.T) {
 
 func TestChangeFeed_ACursorFromAnotherLayoutStartsAtTheHead(t *testing.T) {
 	client := testutil.SetupTestRedis(t)
-	cfg := &config.Config{Realtime: config.RealtimeConfig{ShardCount: 4}}
-	feed := NewChangeFeed(ChangeFeedParams{Client: client, Config: cfg})
+	cfg := &config.Config{Realtime: realtimeconfig.Config{ShardCount: 4}}
+	feed := NewChangeFeed(ChangeFeedParams{Client: client, RealtimeConfig: &cfg.Realtime})
 	tn := newTenant()
 
 	found, err := feed.Since(t.Context(), &realtimeports.RecordChangesRequest{

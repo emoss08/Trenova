@@ -5,7 +5,8 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/documentconversionconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/searchconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/modules/documents/app/documentextractionservice"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
@@ -170,8 +171,9 @@ func (h *doclingHarness) contentService(
 	t.Helper()
 
 	return documentextractionservice.New(documentextractionservice.Params{
-		Logger: zap.NewNop(),
-		Config: &config.Config{},
+		Logger:                   zap.NewNop(),
+		DocumentConversionConfig: &documentconversionconfig.Config{},
+		SearchConfig:             &searchconfig.Config{},
 		Metrics: &metrics.Registry{
 			Document: metrics.NewDocument(prometheus.NewRegistry(), zap.NewNop(), false),
 		},

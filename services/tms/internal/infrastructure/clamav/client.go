@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/contentscanconfig"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/contentscanports"
 )
 
@@ -36,7 +36,7 @@ type Client struct {
 
 var _ contentscanports.Scanner = (*Client)(nil)
 
-func New(cfg config.ClamAVConfig) *Client {
+func New(cfg contentscanconfig.ClamAVConfig) *Client {
 	network, address := "tcp", strings.TrimSpace(cfg.Address)
 	if strings.HasPrefix(address, unixPrefix) {
 		network, address = "unix", strings.TrimPrefix(address, unixPrefix)

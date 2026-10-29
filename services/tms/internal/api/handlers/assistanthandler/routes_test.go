@@ -9,7 +9,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
@@ -133,8 +133,8 @@ func call(t *testing.T, method, path, body string) (*reachedService, int) {
 
 	service := &reachedService{}
 	errorHandler := helpers.NewErrorHandler(helpers.ErrorHandlerParams{
-		Logger: zap.NewNop(),
-		Config: &config.Config{App: config.AppConfig{Debug: true}},
+		Logger:    zap.NewNop(),
+		AppConfig: &appconfig.Config{Debug: true},
 	})
 	handler := New(Params{
 		Service: service,

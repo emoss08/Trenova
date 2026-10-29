@@ -5,7 +5,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/aiconfig"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aireasoning"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
@@ -328,7 +328,7 @@ func TestApply_RefusesAPrivateNetworkTheServerDisallows(t *testing.T) {
 
 	off := false
 	svc := newTestService(&fakeProviderRepo{}, &fakeProber{})
-	svc.ai = &config.AIConfig{PrivateNetworkProviders: &off}
+	svc.ai = &aiconfig.Config{PrivateNetworkProviders: &off}
 	provider := testProvider(t, svc)
 	req := saveRequest(provider, "http://10.0.0.5:11434", nil)
 	req.AllowPrivateNetwork = true

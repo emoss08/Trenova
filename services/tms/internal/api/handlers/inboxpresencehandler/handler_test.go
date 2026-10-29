@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -69,8 +70,10 @@ func newRouter(t *testing.T, gateway *stubGateway, allowed bool) *gin.Engine {
 	t.Helper()
 
 	gin.SetMode(gin.TestMode)
-	cfg := &config.Config{App: config.AppConfig{Debug: true}}
-	eh := helpers.NewErrorHandler(helpers.ErrorHandlerParams{Logger: zap.NewNop(), Config: cfg})
+	cfg := &config.Config{App: appconfig.Config{Debug: true}}
+	eh := helpers.NewErrorHandler(
+		helpers.ErrorHandlerParams{Logger: zap.NewNop(), AppConfig: &cfg.App},
+	)
 
 	engine := permissionportsmock.NewMockPermissionEngine(t)
 	engine.On("Check", mock.Anything, mock.MatchedBy(func(req *permissionports.PermissionCheckRequest) bool {

@@ -5,7 +5,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/aiconfig"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentaiextractionports"
@@ -39,28 +39,28 @@ func TestExtractionAvailabilityNamesWhatStandsInTheWay(t *testing.T) {
 
 	tests := []struct {
 		name         string
-		cfg          config.AIConfig
+		cfg          aiconfig.Config
 		plans        func(t *testing.T) platformplanports.PlanService
 		availability *providerAvailability
 		want         documentaiextractionports.ExtractionAvailability
 	}{
 		{
 			name:         "document extraction switched off on the server",
-			cfg:          config.AIConfig{DocumentExtraction: false},
+			cfg:          aiconfig.Config{DocumentExtraction: false},
 			plans:        func(*testing.T) platformplanports.PlanService { return nil },
 			availability: &providerAvailability{servable: true},
 			want:         documentaiextractionports.ExtractionOffOnServer,
 		},
 		{
 			name:         "all AI switched off on the server",
-			cfg:          config.AIConfig{Enabled: &off, DocumentExtraction: true},
+			cfg:          aiconfig.Config{Enabled: &off, DocumentExtraction: true},
 			plans:        func(*testing.T) platformplanports.PlanService { return nil },
 			availability: &providerAvailability{servable: true},
 			want:         documentaiextractionports.ExtractionOffOnServer,
 		},
 		{
 			name: "plan without document intelligence",
-			cfg:  config.AIConfig{DocumentExtraction: true},
+			cfg:  aiconfig.Config{DocumentExtraction: true},
 			plans: func(t *testing.T) platformplanports.PlanService {
 				return plantest.Restricting(t, platformplan.CapabilityDocumentIntelligence)
 			},
@@ -69,14 +69,14 @@ func TestExtractionAvailabilityNamesWhatStandsInTheWay(t *testing.T) {
 		},
 		{
 			name:         "no provider assigned to document extraction",
-			cfg:          config.AIConfig{DocumentExtraction: true},
+			cfg:          aiconfig.Config{DocumentExtraction: true},
 			plans:        func(*testing.T) platformplanports.PlanService { return nil },
 			availability: &providerAvailability{servable: false},
 			want:         documentaiextractionports.ExtractionNoProviderAssigned,
 		},
 		{
 			name: "a provider serves document extraction",
-			cfg:  config.AIConfig{DocumentExtraction: true},
+			cfg:  aiconfig.Config{DocumentExtraction: true},
 			plans: func(t *testing.T) platformplanports.PlanService {
 				return plantest.Allowing(t, platformplan.CapabilityDocumentIntelligence)
 			},
@@ -110,7 +110,7 @@ func TestExtractionAvailabilityAsksForTheDocumentExtractionTask(t *testing.T) {
 
 	availability := &providerAvailability{servable: true}
 	svc := &Service{
-		cfg:          &config.AIConfig{DocumentExtraction: true},
+		cfg:          &aiconfig.Config{DocumentExtraction: true},
 		availability: availability,
 	}
 
@@ -125,7 +125,7 @@ func TestExtractionAvailabilityReturnsTheRouterError(t *testing.T) {
 
 	failure := errors.New("provider lookup failed")
 	svc := &Service{
-		cfg:          &config.AIConfig{DocumentExtraction: true},
+		cfg:          &aiconfig.Config{DocumentExtraction: true},
 		availability: &providerAvailability{err: failure},
 	}
 

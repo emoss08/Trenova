@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/api/graphql/agentread"
 	"github.com/emoss08/trenova/internal/api/graphql/agentread/agentreadtest"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/reportingconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/reportengine"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentquerytoolservice"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -188,13 +188,13 @@ func TestConvertedLists_ReportReadsUnderRowLevelSecurity(t *testing.T) {
 		ScheduleRepo: reportrepository.NewScheduleRepository(
 			reportrepository.ScheduleParams{DB: conn, Logger: logger}),
 		Engine: reportengine.New(reportengine.Params{
-			LC:      fxtest.NewLifecycle(t),
-			Catalog: catalog,
-			Config:  &config.Config{},
-			Logger:  logger,
+			LC:              fxtest.NewLifecycle(t),
+			Catalog:         catalog,
+			ReportingConfig: &reportingconfig.Config{},
+			Logger:          logger,
 		}),
 		PermissionEngine: engine,
-		Config:           &config.Config{},
+		ReportingConfig:  &reportingconfig.Config{},
 	})
 	require.NoError(t, err)
 	resolvers := agentread.ResolverParams{ReportingService: reportingService}

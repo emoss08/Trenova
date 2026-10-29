@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/infrastructure/agentcompletion/modeladapter"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/aiconfig"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
@@ -40,9 +40,9 @@ var datedSuffix = regexp.MustCompile(`-(\d{8}|\d{4}-\d{2}-\d{2})$`)
 type ModelPriceReferenceParams struct {
 	fx.In
 
-	Logger *zap.Logger
-	Config *config.Config
-	Cache  llmports.ModelPriceCacheRepository `optional:"true"`
+	Logger   *zap.Logger
+	AIConfig *aiconfig.Config
+	Cache    llmports.ModelPriceCacheRepository `optional:"true"`
 }
 
 // openRouterPrices estimates a model's price from OpenRouter's public catalog.
@@ -51,7 +51,7 @@ type ModelPriceReferenceParams struct {
 // OpenRouter, with one read in flight however many lists ask at once.
 type openRouterPrices struct {
 	l      *zap.Logger
-	cfg    *config.AIConfig
+	cfg    *aiconfig.Config
 	cache  llmports.ModelPriceCacheRepository
 	client *http.Client
 	group  singleflight.Group
@@ -64,7 +64,7 @@ type openRouterPrices struct {
 func NewModelPriceReference(p ModelPriceReferenceParams) aiproviderports.ModelPriceReference {
 	return &openRouterPrices{
 		l:      p.Logger.Named("service.aiprovider.price-reference"),
-		cfg:    p.Config.GetAIConfig(),
+		cfg:    p.AIConfig,
 		cache:  p.Cache,
 		client: &http.Client{Timeout: priceCatalogTimeout},
 	}

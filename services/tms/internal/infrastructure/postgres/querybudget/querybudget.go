@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/keel"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/databaseconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/observability"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -19,8 +19,8 @@ const (
 type Params struct {
 	fx.In
 
-	Config *config.Config
-	Logger *zap.Logger
+	DatabaseConfig *databaseconfig.Config
+	Logger         *zap.Logger
 }
 
 type Budgets struct {
@@ -30,7 +30,7 @@ type Budgets struct {
 
 func New(p Params) *Budgets {
 	return &Budgets{
-		maxRepeats: p.Config.Database.Budget.GetMaxRepeats(),
+		maxRepeats: p.DatabaseConfig.Budget.GetMaxRepeats(),
 		logger:     observability.NewContextLogger(p.Logger.Named("database.budget")),
 	}
 }

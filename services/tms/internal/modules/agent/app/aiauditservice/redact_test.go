@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiaudit"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -48,7 +48,7 @@ func testRedactor() *Redactor {
 	return NewRedactor(
 		permissioncatalog.NewRegistry(),
 		testPolicies(),
-		auditservice.NewSensitiveDataManager(config.EncryptionConfig{}),
+		auditservice.NewSensitiveDataManager(securityconfig.EncryptionConfig{}),
 	)
 }
 
@@ -183,7 +183,7 @@ func TestReaderArguments_KeepsAnAlertsDetailsRestricted(t *testing.T) {
 			Kind:     agenttooltrust.ToolKindAction,
 			Resource: permission.ResourceTableChangeAlert,
 		}},
-		auditservice.NewSensitiveDataManager(config.EncryptionConfig{}),
+		auditservice.NewSensitiveDataManager(securityconfig.EncryptionConfig{}),
 	)
 	redacted, err := redactor.Arguments("report_create_table_change_alert", map[string]any{
 		"name":           "Big invoices",

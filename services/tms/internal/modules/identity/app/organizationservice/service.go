@@ -8,7 +8,8 @@ import (
 	"mime/multipart"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/storageconfig"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/contentscanports"
 	"github.com/emoss08/trenova/internal/modules/identity/app/planservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -35,17 +36,18 @@ import (
 type Params struct {
 	fx.In
 
-	Logger       *zap.Logger
-	DB           kernelports.Transactor
-	Repo         tenantports.OrganizationRepository
-	SSORepo      tenantports.SSOConfigRepository
-	AuditService auditports.AuditService
-	Storage      kernelports.Client
-	Config       *config.Config
-	Validator    *Validator
-	Encryption   *encryptionservice.Service
-	Plans        platformplanports.PlanService `optional:"true"`
-	ContentGate  contentscanports.Gate
+	Logger         *zap.Logger
+	DB             kernelports.Transactor
+	Repo           tenantports.OrganizationRepository
+	SSORepo        tenantports.SSOConfigRepository
+	AuditService   auditports.AuditService
+	Storage        kernelports.Client
+	SecurityConfig *securityconfig.Config
+	StorageConfig  *storageconfig.Config
+	Validator      *Validator
+	Encryption     *encryptionservice.Service
+	Plans          platformplanports.PlanService `optional:"true"`
+	ContentGate    contentscanports.Gate
 }
 
 type service struct {
@@ -55,7 +57,7 @@ type service struct {
 	ssoRepo      tenantports.SSOConfigRepository
 	auditService auditports.AuditService
 	storage      kernelports.Client
-	storageCfg   *config.StorageConfig
+	storageCfg   *storageconfig.Config
 	v            *Validator
 	enc          *encryptionservice.Service
 	plans        platformplanports.PlanService
@@ -71,11 +73,11 @@ func New(p Params) tenantports.OrganizationService {
 		ssoRepo:      p.SSORepo,
 		storage:      p.Storage,
 		auditService: p.AuditService,
-		storageCfg:   p.Config.GetStorageConfig(),
+		storageCfg:   p.StorageConfig,
 		v:            p.Validator,
 		enc:          p.Encryption,
 		plans:        p.Plans,
-		issuers:      p.Config.SSOIssuerPolicy(),
+		issuers:      p.SecurityConfig.SSOIssuerPolicy(),
 		contentGate:  p.ContentGate,
 	}
 }

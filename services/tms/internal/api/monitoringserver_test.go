@@ -13,6 +13,8 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/monitoringconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/serverconfig"
 	obsmetrics "github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/testutil/mocks/edimessageportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/edipartnerportsmock"
@@ -94,16 +96,16 @@ func newTestMonitoringServer(
 
 	port := getFreePort(t)
 	cfg := &config.Config{
-		Server: config.ServerConfig{
+		Server: serverconfig.Config{
 			Host: "127.0.0.1",
 		},
-		Monitoring: config.MonitoringConfig{
-			Metrics: config.MetricsConfig{
+		Monitoring: monitoringconfig.Config{
+			Metrics: monitoringconfig.MetricsConfig{
 				Enabled: metricsEnabled,
 				Port:    port,
 				Path:    "/internal/metricsz",
 			},
-			Health: config.HealthConfig{
+			Health: monitoringconfig.HealthConfig{
 				Path:          "/internal/healthz",
 				ReadinessPath: "/internal/readyz",
 				LivenessPath:  "/internal/livez",

@@ -14,7 +14,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/infrastructure/agentcompletion/modeladapter"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/aiconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aipricing"
@@ -43,7 +43,7 @@ type Params struct {
 	fx.In
 
 	Logger     *zap.Logger
-	Config     *config.Config
+	AIConfig   *aiconfig.Config
 	Repo       aiproviderports.AIProviderRepository
 	Encryption *encryptionservice.Service
 	// Usage records every attempt. Optional so a router built without a
@@ -69,7 +69,7 @@ type Service struct {
 	logger *zap.Logger
 	// ai is the whole AI section: the master switch the router gates on,
 	// and the timeouts and retry budget it calls with.
-	ai         *config.AIConfig
+	ai         *aiconfig.Config
 	repo       aiproviderports.AIProviderRepository
 	encryption *encryptionservice.Service
 	adapters   *modeladapter.Registry
@@ -110,7 +110,7 @@ func newService(p Params) *Service {
 
 	return &Service{
 		logger:        logger,
-		ai:            p.Config.GetAIConfig(),
+		ai:            p.AIConfig,
 		repo:          p.Repo,
 		encryption:    p.Encryption,
 		usage:         p.Usage,
@@ -847,5 +847,5 @@ func (s *Service) egressPolicy(allowPrivate bool) httpsafe.Policy {
 // documentIntelligence.enableAI, which ships false. Somebody who had just
 // configured a provider had no way to know which switch was refusing them, or
 // that it was named after a feature they were not using.
-var aiDisabledMessage = "AI features are disabled. Set " + config.AIEnabledKey +
+var aiDisabledMessage = "AI features are disabled. Set " + aiconfig.EnabledKey +
 	" to true in the server configuration."

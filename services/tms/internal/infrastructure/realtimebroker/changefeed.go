@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/realtimeconfig"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/redis/go-redis/v9"
@@ -24,8 +24,8 @@ const (
 type ChangeFeedParams struct {
 	fx.In
 
-	Client *redis.Client
-	Config *config.Config
+	Client         *redis.Client
+	RealtimeConfig *realtimeconfig.Config
 }
 
 type ChangeFeed struct {
@@ -36,7 +36,7 @@ type ChangeFeed struct {
 func NewChangeFeed(p ChangeFeedParams) realtimeports.RecordChangeFeed {
 	return &ChangeFeed{
 		client: p.Client,
-		shards: p.Config.GetRealtimeConfig().GetShardCount(),
+		shards: p.RealtimeConfig.GetShardCount(),
 	}
 }
 

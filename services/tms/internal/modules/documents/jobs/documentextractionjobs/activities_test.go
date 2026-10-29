@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/aiconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent"
@@ -316,7 +316,7 @@ func TestAnalyzeConvertedDocumentActivity_SuppressesShipmentDraftOutsideShipment
 
 	activities := &Activities{
 		logger: zap.NewNop(),
-		cfg:    &config.AIConfig{},
+		cfg:    &aiconfig.Config{},
 		metrics: &metrics.Registry{
 			Document: metrics.NewDocument(prometheus.NewRegistry(), zap.NewNop(), false),
 		},
@@ -412,7 +412,7 @@ func TestAnalyzeConvertedDocumentActivity_AutoCreatesAndAssociatesDocumentTypeFo
 
 	activities := &Activities{
 		logger: zap.NewNop(),
-		cfg:    &config.AIConfig{},
+		cfg:    &aiconfig.Config{},
 		metrics: &metrics.Registry{
 			Document: metrics.NewDocument(prometheus.NewRegistry(), zap.NewNop(), false),
 		},
@@ -501,7 +501,7 @@ func TestAnalyzeConvertedDocumentActivity_AssociatesExistingDocumentTypeByName(t
 
 	activities := &Activities{
 		logger: zap.NewNop(),
-		cfg:    &config.AIConfig{},
+		cfg:    &aiconfig.Config{},
 		metrics: &metrics.Registry{
 			Document: metrics.NewDocument(prometheus.NewRegistry(), zap.NewNop(), false),
 		},
@@ -591,7 +591,7 @@ func TestAnalyzeConvertedDocumentActivity_EnqueuesAsyncAIExtraction(t *testing.T
 
 	activities := &Activities{
 		logger: zap.NewNop(),
-		cfg:    &config.AIConfig{DocumentExtraction: true},
+		cfg:    &aiconfig.Config{DocumentExtraction: true},
 		metrics: &metrics.Registry{
 			Document: metrics.NewDocument(prometheus.NewRegistry(), zap.NewNop(), false),
 		},

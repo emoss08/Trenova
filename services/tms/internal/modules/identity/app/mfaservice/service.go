@@ -10,7 +10,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/iam"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
@@ -61,15 +62,16 @@ var (
 type Params struct {
 	fx.In
 
-	Repository iamports.MFARepository
-	Users      tenantports.UserRepository
-	Sessions   sessionports.SessionRepository
-	Encryption *encryptionservice.Service
-	Auditor    permissionports.SecurityAuditor
-	Config     *config.Config
-	Logger     *zap.Logger
-	Throttle   sessionports.LoginThrottleStore `optional:"true"`
-	AuthEvents iamports.AuthEventRecorder      `optional:"true"`
+	Repository     iamports.MFARepository
+	Users          tenantports.UserRepository
+	Sessions       sessionports.SessionRepository
+	Encryption     *encryptionservice.Service
+	Auditor        permissionports.SecurityAuditor
+	AppConfig      *appconfig.Config
+	SecurityConfig *securityconfig.Config
+	Logger         *zap.Logger
+	Throttle       sessionports.LoginThrottleStore `optional:"true"`
+	AuthEvents     iamports.AuthEventRecorder      `optional:"true"`
 }
 
 type Service struct {
@@ -94,15 +96,11 @@ func New(
 
 func newService(p *Params) (*Service, error) {
 	issuer := defaultIssuer
-	var security *config.SecurityConfig
-	if p.Config != nil {
-		security = &p.Config.Security
-		if strings.TrimSpace(p.Config.App.Name) != "" {
-			issuer = strings.TrimSpace(p.Config.App.Name)
-		}
+	if p.AppConfig != nil && strings.TrimSpace(p.AppConfig.Name) != "" {
+		issuer = strings.TrimSpace(p.AppConfig.Name)
 	}
 
-	recoveryKey, err := security.RecoveryCodePepperKey()
+	recoveryKey, err := p.SecurityConfig.RecoveryCodePepperKey()
 	if err != nil {
 		return nil, fmt.Errorf("derive the recovery code key: %w", err)
 	}

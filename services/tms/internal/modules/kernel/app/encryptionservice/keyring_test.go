@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/api/option"
@@ -30,7 +31,11 @@ func newSHA256LocalKeyManager(secret string) sha256LocalKeyManager {
 	return sha256LocalKeyManager{key: sum[:]}
 }
 
-func (m sha256LocalKeyManager) WrapKey(_ context.Context, dek []byte, aad AAD) (*WrappedKey, error) {
+func (m sha256LocalKeyManager) WrapKey(
+	_ context.Context,
+	dek []byte,
+	aad AAD,
+) (*WrappedKey, error) {
 	gcm, err := newGCM(m.key)
 	if err != nil {
 		return nil, err
@@ -48,8 +53,13 @@ func (m sha256LocalKeyManager) WrapKey(_ context.Context, dek []byte, aad AAD) (
 	}, nil
 }
 
+//
 //nolint:gocritic // hugeParam: WrappedKey is fixed by the KeyManager interface.
-func (m sha256LocalKeyManager) UnwrapKey(_ context.Context, wrapped WrappedKey, aad AAD) ([]byte, error) {
+func (m sha256LocalKeyManager) UnwrapKey(
+	_ context.Context,
+	wrapped WrappedKey,
+	aad AAD,
+) ([]byte, error) {
 	if wrapped.KeyID != localKeyID {
 		return nil, ErrUnknownKeyID
 	}
@@ -172,8 +182,8 @@ func fakeKMSDialer(client *fakeKMSClient) kmsDialer {
 	}
 }
 
-func encryptionConfig(enc config.EncryptionConfig) *config.Config {
-	return &config.Config{Security: config.SecurityConfig{Encryption: enc}}
+func encryptionConfig(enc securityconfig.EncryptionConfig) *config.Config {
+	return &config.Config{Security: securityconfig.Config{Encryption: enc}}
 }
 
 func TestKeyManagerFromConfig_FailsClosed(t *testing.T) {
@@ -181,30 +191,34 @@ func TestKeyManagerFromConfig_FailsClosed(t *testing.T) {
 
 	tests := []struct {
 		name string
-		enc  config.EncryptionConfig
+		enc  securityconfig.EncryptionConfig
 		want error
 	}{
 		{
 			name: "kms client cannot be created",
-			enc: config.EncryptionConfig{
-				KeyManager: config.EncryptionKeyManagerGCPAutokey,
-				GCPKMS:     config.GCPKMSConfig{CryptoKey: testKMSKey},
+			enc: securityconfig.EncryptionConfig{
+				KeyManager: securityconfig.EncryptionKeyManagerGCPAutokey,
+				GCPKMS:     securityconfig.GCPKMSConfig{CryptoKey: testKMSKey},
 			},
 			want: ErrKMSUnavailable,
 		},
 		{
 			name: "kms key missing",
-			enc:  config.EncryptionConfig{KeyManager: config.EncryptionKeyManagerGCPAutokey},
+			enc: securityconfig.EncryptionConfig{
+				KeyManager: securityconfig.EncryptionKeyManagerGCPAutokey,
+			},
 			want: ErrKMSKeyRequired,
 		},
 		{
 			name: "local key missing",
-			enc:  config.EncryptionConfig{KeyManager: config.EncryptionKeyManagerLocal},
+			enc: securityconfig.EncryptionConfig{
+				KeyManager: securityconfig.EncryptionKeyManagerLocal,
+			},
 			want: ErrLocalKeyRequired,
 		},
 		{
 			name: "default manager with no key",
-			enc:  config.EncryptionConfig{},
+			enc:  securityconfig.EncryptionConfig{},
 			want: ErrLocalKeyRequired,
 		},
 	}
@@ -228,10 +242,10 @@ func TestKeyManagerFromConfig_KMSReadsEnvelopesSealedByTheLocalKey(t *testing.T)
 	require.NoError(t, err)
 
 	client := &fakeKMSClient{}
-	manager, err := keyManagerFromConfig(encryptionConfig(config.EncryptionConfig{
-		KeyManager:  config.EncryptionKeyManagerGCPAutokey,
+	manager, err := keyManagerFromConfig(encryptionConfig(securityconfig.EncryptionConfig{
+		KeyManager:  securityconfig.EncryptionKeyManagerGCPAutokey,
 		RetiredKeys: []string{oldLocalSecret},
-		GCPKMS:      config.GCPKMSConfig{CryptoKey: testKMSKey},
+		GCPKMS:      securityconfig.GCPKMSConfig{CryptoKey: testKMSKey},
 	}), fakeKMSDialer(client))
 	require.NoError(t, err)
 	svc := NewWithKeyManager(manager)

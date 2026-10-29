@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/carrierintelligenceconfig"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
@@ -40,29 +40,29 @@ type IntegrationConfigReader interface {
 type Params struct {
 	fx.In
 
-	Logger         *zap.Logger
-	Config         *config.Config
-	DB             kernelports.Transactor
-	Integrations   *integrationservice.Service
-	Connectors     []carrierintelports.CarrierIntelConnector `group:"carrierIntelConnectors"`
-	Limiter        restx.Limiter                             `                               name:"carrierIntelLimiter"`
-	ControlRepo    carrierintelports.CarrierIntelControlRepository
-	SnapshotRepo   carrierintelports.CarrierIntelSnapshotRepository
-	RawRepo        carrierintelports.CarrierIntelRawPayloadRepository
-	EventRepo      carrierintelports.CarrierIntelEventRepository
-	EnrollmentRepo carrierintelports.CarrierMonitoringEnrollmentRepository
-	FeedRepo       carrierintelports.CarrierIntelFeedStateRepository
-	UsageRepo      carrierintelports.CarrierIntelUsageRepository
-	OverrideRepo   carrierintelports.CarrierIntelOverrideRepository
-	VerifyRepo     carrierintelports.CarrierEquipmentVerificationRepository
-	SubjectRepo    carrierintelports.CarrierIntelSubjectRepository
-	CarrierRepo    carrierports.CarrierRepository
-	AssignmentRepo carrierassignmentports.CarrierAssignmentRepository
-	UsStateRepo    usstateports.UsStateRepository
-	CarrierService *carrierservice.Service
-	Notifications  *notificationservice.Service
-	AuditService   auditports.AuditService
-	Realtime       realtimeports.RealtimeService
+	Logger                    *zap.Logger
+	CarrierIntelligenceConfig *carrierintelligenceconfig.Config
+	DB                        kernelports.Transactor
+	Integrations              *integrationservice.Service
+	Connectors                []carrierintelports.CarrierIntelConnector `group:"carrierIntelConnectors"`
+	Limiter                   restx.Limiter                             `                               name:"carrierIntelLimiter"`
+	ControlRepo               carrierintelports.CarrierIntelControlRepository
+	SnapshotRepo              carrierintelports.CarrierIntelSnapshotRepository
+	RawRepo                   carrierintelports.CarrierIntelRawPayloadRepository
+	EventRepo                 carrierintelports.CarrierIntelEventRepository
+	EnrollmentRepo            carrierintelports.CarrierMonitoringEnrollmentRepository
+	FeedRepo                  carrierintelports.CarrierIntelFeedStateRepository
+	UsageRepo                 carrierintelports.CarrierIntelUsageRepository
+	OverrideRepo              carrierintelports.CarrierIntelOverrideRepository
+	VerifyRepo                carrierintelports.CarrierEquipmentVerificationRepository
+	SubjectRepo               carrierintelports.CarrierIntelSubjectRepository
+	CarrierRepo               carrierports.CarrierRepository
+	AssignmentRepo            carrierassignmentports.CarrierAssignmentRepository
+	UsStateRepo               usstateports.UsStateRepository
+	CarrierService            *carrierservice.Service
+	Notifications             *notificationservice.Service
+	AuditService              auditports.AuditService
+	Realtime                  realtimeports.RealtimeService
 	// Watchtower puts a change on a carrier's authority, insurance or
 	// safety record on the feed and takes it off once it is resolved.
 	Watchtower watchtowerports.WatchtowerProjector `                                                          optional:"true"`
@@ -144,7 +144,7 @@ func New(p Params) *Service {
 		realtime:        p.Realtime,
 		watchtower:      p.Watchtower,
 		publisher:       p.Publisher,
-		interactiveWait: p.Config.CarrierIntelligence.GetInteractiveWait(),
+		interactiveWait: p.CarrierIntelligenceConfig.GetInteractiveWait(),
 		breaker:         newCircuitBreaker(),
 		plans:           p.Plans,
 		now:             timeutils.NowUnix,

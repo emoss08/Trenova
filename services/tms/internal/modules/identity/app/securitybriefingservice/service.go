@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/iam"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/iamports"
@@ -42,7 +42,7 @@ type Params struct {
 	IAM            iamports.IAMRepository
 	AccessSettings iamports.AccessSettingsService
 	Permissions    permissionports.PermissionEngine
-	Config         *config.Config
+	SecurityConfig *securityconfig.Config
 	Logger         *zap.Logger
 }
 
@@ -51,7 +51,7 @@ type Service struct {
 	iam            iamports.IAMRepository
 	accessSettings iamports.AccessSettingsService
 	permissions    permissionports.PermissionEngine
-	session        config.SessionConfig
+	session        securityconfig.SessionConfig
 	l              *zap.Logger
 }
 
@@ -61,7 +61,7 @@ func New(p Params) *Service {
 		iam:            p.IAM,
 		accessSettings: p.AccessSettings,
 		permissions:    p.Permissions,
-		session:        p.Config.Security.Session,
+		session:        p.SecurityConfig.Session,
 		l:              p.Logger.Named("service.security-briefing"),
 	}
 }

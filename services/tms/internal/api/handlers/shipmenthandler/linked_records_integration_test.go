@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/api/responseguard"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/databaseconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/identity/app/readscopeservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/refview"
@@ -248,7 +249,7 @@ func TestGetShipment_UnderRowLevelSecurityShowsTheDriversReferenceView(t *testin
 		Denied: []string{permission.ResourceWorker.String()},
 	}
 	enforced := &config.Config{}
-	enforced.Database.RLS.Mode = config.RLSModeEnforce
+	enforced.Database.RLS.Mode = databaseconfig.RLSModeEnforce
 	rls := dbtest.NewRLSConnection(t, load.admin, load.dsn)
 	scopes := readscopeservice.New(readscopeservice.Params{
 		Config:   enforced,

@@ -9,7 +9,7 @@ import (
 	"testing"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/accountingconfig"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/shared/quickbooks"
@@ -74,7 +74,10 @@ func documentConnector(t *testing.T, fake *fakeQBO) *Connector {
 	t.Helper()
 	server := httptest.NewServer(fake.handler(t))
 	t.Cleanup(server.Close)
-	conn := newConnector(t, config.QuickBooksConfig{ClientID: "id", ClientSecret: "secret"})
+	conn := newConnector(
+		t,
+		accountingconfig.QuickBooksConfig{ClientID: "id", ClientSecret: "secret"},
+	)
 	conn.apiOpts = []quickbooks.Option{
 		quickbooks.WithBaseURL(server.URL),
 		quickbooks.WithHTTPClient(server.Client()),
@@ -330,7 +333,7 @@ func TestVoidPaymentAlsoRemovesItsShortPayCredits(t *testing.T) {
 func TestClassifyDocumentErrorNamesTheCategory(t *testing.T) {
 	t.Parallel()
 
-	conn := newConnector(t, config.QuickBooksConfig{})
+	conn := newConnector(t, accountingconfig.QuickBooksConfig{})
 	fault := func(status int, code string) error {
 		return &quickbooks.FaultError{
 			StatusCode: status,
@@ -380,7 +383,7 @@ func TestClassifyDocumentErrorNamesTheCategory(t *testing.T) {
 func TestDocumentURLPointsAtTheRightScreen(t *testing.T) {
 	t.Parallel()
 
-	conn := newConnector(t, config.QuickBooksConfig{Environment: "sandbox"})
+	conn := newConnector(t, accountingconfig.QuickBooksConfig{Environment: "sandbox"})
 	assert.Equal(
 		t,
 		"https://app.sandbox.qbo.intuit.com/app/invoice?txnId=145",

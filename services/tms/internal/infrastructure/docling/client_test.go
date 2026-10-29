@@ -17,6 +17,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/documentconversionconfig"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -28,12 +29,12 @@ const testAPIKey = "test-docling-key"
 func newTestClient(
 	t *testing.T,
 	baseURL string,
-	mutate func(*config.DocumentConversionConfig),
+	mutate func(*documentconversionconfig.Config),
 ) *Client {
 	t.Helper()
 
 	cfg := &config.Config{
-		DocumentConversion: config.DocumentConversionConfig{
+		DocumentConversion: documentconversionconfig.Config{
 			DoclingURL:     baseURL,
 			APIKey:         testAPIKey,
 			RequestTimeout: 5 * time.Second,
@@ -46,7 +47,7 @@ func newTestClient(
 		mutate(&cfg.DocumentConversion)
 	}
 
-	return New(Params{Config: cfg, Logger: zap.NewNop()})
+	return New(Params{DocumentConversionConfig: &cfg.DocumentConversion, Logger: zap.NewNop()})
 }
 
 func convertRequest(body string) *kernelports.ConvertRequest {
@@ -109,7 +110,7 @@ func TestSubmitSendsTheConfiguredRequest(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := newTestClient(t, server.URL, func(cfg *config.DocumentConversionConfig) {
+	client := newTestClient(t, server.URL, func(cfg *documentconversionconfig.Config) {
 		cfg.OCRLanguages = []string{"en", "es"}
 		cfg.TableMode = "fast"
 	})
@@ -161,7 +162,7 @@ func TestSubmitWithVisionEndpointUsesTheVLMPipeline(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := newTestClient(t, server.URL, func(cfg *config.DocumentConversionConfig) {
+	client := newTestClient(t, server.URL, func(cfg *documentconversionconfig.Config) {
 		cfg.VLMEndpoint = "http://vlm:8000/"
 	})
 	_, err := client.Submit(t.Context(), convertRequest("x"))
@@ -263,7 +264,7 @@ func TestSubmitRefusesOversizedFilesBeforeUpload(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := newTestClient(t, server.URL, func(cfg *config.DocumentConversionConfig) {
+	client := newTestClient(t, server.URL, func(cfg *documentconversionconfig.Config) {
 		cfg.MaxFileBytes = 4
 	})
 
@@ -408,9 +409,9 @@ func TestResultLargerThanTheCapIsRefused(t *testing.T) {
 func TestDisabledClientIsUnavailable(t *testing.T) {
 	t.Parallel()
 
-	for name, mutate := range map[string]func(*config.DocumentConversionConfig){
-		"no url": func(c *config.DocumentConversionConfig) { c.DoclingURL = "" },
-		"no api key": func(c *config.DocumentConversionConfig) {
+	for name, mutate := range map[string]func(*documentconversionconfig.Config){
+		"no url": func(c *documentconversionconfig.Config) { c.DoclingURL = "" },
+		"no api key": func(c *documentconversionconfig.Config) {
 			c.DoclingURL = "http://docling:5001"
 			c.APIKey = ""
 		},

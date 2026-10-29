@@ -12,6 +12,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/csrf"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/session"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/sso"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
@@ -28,9 +30,9 @@ import (
 
 func newTestConfig() *config.Config {
 	return &config.Config{
-		App: config.AppConfig{Debug: true},
-		Security: config.SecurityConfig{
-			Session: config.SessionConfig{
+		App: appconfig.Config{Debug: true},
+		Security: securityconfig.Config{
+			Session: securityconfig.SessionConfig{
 				Name:     "session_id",
 				Secret:   "test-session-secret",
 				Path:     "/",
@@ -38,7 +40,7 @@ func newTestConfig() *config.Config {
 				Secure:   false,
 				HTTPOnly: true,
 			},
-			CSRF: config.CSRFConfig{
+			CSRF: securityconfig.CSRFConfig{
 				TokenName:  "csrf_token",
 				HeaderName: "X-CSRF-Token",
 			},
@@ -50,8 +52,8 @@ func newTestHandler(svc *tenantportsmock.MockAuthService) (*Handler, *gin.Engine
 	gin.SetMode(gin.TestMode)
 	cfg := newTestConfig()
 	eh := helpers.NewErrorHandler(helpers.ErrorHandlerParams{
-		Logger: zap.NewNop(),
-		Config: cfg,
+		Logger:    zap.NewNop(),
+		AppConfig: &cfg.App,
 	})
 	h := New(Params{
 		Service:      svc,

@@ -2,21 +2,21 @@ package journalentryhandler_test
 
 import (
 	"context"
-	"github.com/emoss08/trenova/internal/testutil/mocks/journalentryportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/journalsourceportsmock"
 	"net/http"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/api/handlers/journalentryhandler"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
 	"github.com/emoss08/trenova/internal/modules/accounting/app/journalentryservice"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalentry"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalsource"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalsourceports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
+	"github.com/emoss08/trenova/internal/testutil/mocks/journalentryportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/journalsourceportsmock"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	sharedtestutil "github.com/emoss08/trenova/shared/testutil"
@@ -112,8 +112,8 @@ func newJournalEntryHandler(
 	logger := zap.NewNop()
 	errorHandler := helpers.NewErrorHandler(
 		helpers.ErrorHandlerParams{
-			Logger: logger,
-			Config: &config.Config{App: config.AppConfig{Debug: true}},
+			Logger:    logger,
+			AppConfig: &appconfig.Config{Debug: true},
 		},
 	)
 	pm := middleware.NewPermissionMiddleware(

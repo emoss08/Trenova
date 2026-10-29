@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/tenderingconfig"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
@@ -149,7 +150,7 @@ func TestPreviewSend_IsTheEmailSendWouldSend(t *testing.T) {
 	}
 	deps.repo.add(entity)
 	deps.svc.cfg = &config.Config{
-		Tendering: config.TenderingConfig{PublicBaseURL: "https://tender.example"},
+		Tendering: tenderingconfig.Config{PublicBaseURL: "https://tender.example"},
 	}
 	deps.carrierRepo.EXPECT().
 		GetByID(mock.Anything, mock.Anything).

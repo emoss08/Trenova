@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/documentconversionconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/imaging/imagingfake"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -34,7 +34,7 @@ func probingHarness(t *testing.T, probeErr error) *doclingHarness {
 		return nil, probeErr
 	}
 	h.activities.imaging = fake
-	h.activities.conversionCfg = &config.DocumentConversionConfig{
+	h.activities.conversionCfg = &documentconversionconfig.Config{
 		DoclingURL: "http://docling:5001",
 		MaxPages:   10,
 	}

@@ -5,7 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/carrierintelligenceconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/ratelimit"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
@@ -27,9 +28,10 @@ const (
 type Params struct {
 	fx.In
 
-	Config *config.Config
-	Client *redis.Client `optional:"true"`
-	Logger *zap.Logger
+	CarrierIntelligenceConfig *carrierintelligenceconfig.Config
+	SecurityConfig            *securityconfig.Config
+	Client                    *redis.Client `optional:"true"`
+	Logger                    *zap.Logger
 }
 
 var _ restx.Limiter = (*Limiter)(nil)
@@ -39,8 +41,8 @@ type Limiter struct {
 }
 
 func New(p Params) (restx.Limiter, error) {
-	rateCfg := &p.Config.Security.RateLimit
-	replicas := max(p.Config.CarrierIntelligence.GetReplicaHint(), 1)
+	rateCfg := &p.SecurityConfig.RateLimit
+	replicas := max(p.CarrierIntelligenceConfig.GetReplicaHint(), 1)
 	memory := newReplicaScaledStore(
 		ratelimit.NewMemoryStore(
 			ratelimit.MemoryStoreOptions{CleanupInterval: rateCfg.GetCleanupInterval()},
@@ -54,7 +56,7 @@ func New(p Params) (restx.Limiter, error) {
 	}
 	log := logger.Named("carrierintel.outbound")
 
-	if p.Client == nil || rateCfg.GetStore() == config.RateLimitStoreMemory {
+	if p.Client == nil || rateCfg.GetStore() == securityconfig.RateLimitStoreMemory {
 		log.Warn(
 			"outbound carrier intelligence limits use the in-process store",
 			zap.Int("replicaHint", replicas),

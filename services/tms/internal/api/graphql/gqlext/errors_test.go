@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/querycost"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/tenantboundary"
 	"github.com/jackc/pgerrcode"
@@ -22,7 +23,7 @@ import (
 
 func presenterTestConfig() *config.Config {
 	return &config.Config{
-		App: config.AppConfig{
+		App: appconfig.Config{
 			Debug:              true,
 			ProblemTypeBaseURI: "https://api.test/problems/",
 		},

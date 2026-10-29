@@ -10,6 +10,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/apikeyports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -88,7 +89,7 @@ func NewUsageBuffer(
 	l *zap.Logger,
 	cfg *config.Config,
 ) *UsageBuffer {
-	apiTokenCfg := config.APITokenConfig{}
+	apiTokenCfg := securityconfig.APITokenConfig{}
 	if cfg != nil {
 		apiTokenCfg = cfg.Security.APIToken
 	}

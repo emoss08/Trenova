@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/api/responseguard"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/storageconfig"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
@@ -45,7 +46,7 @@ type Params struct {
 	PageAssistant          assistantports.PageAssistant `optional:"true"`
 	ErrorHandler           *helpers.ErrorHandler
 	PermissionMiddleware   *middleware.PermissionMiddleware
-	Config                 *config.Config `optional:"true"`
+	StorageConfig          *storageconfig.Config `optional:"true"`
 	Logger                 *zap.Logger
 }
 
@@ -58,7 +59,7 @@ type Handler struct {
 	pageAssistant   assistantports.PageAssistant
 	eh              *helpers.ErrorHandler
 	pm              *middleware.PermissionMiddleware
-	storageConfig   config.StorageConfig
+	storageConfig   storageconfig.Config
 	logger          *zap.Logger
 }
 
@@ -76,9 +77,9 @@ func requestActorFromAuthContext(authCtx *authctx.AuthContext) permissionports.R
 const multipartFormOverheadBytes int64 = 1 << 20
 
 func New(p Params) *Handler {
-	storageConfig := config.StorageConfig{}
-	if p.Config != nil {
-		storageConfig = p.Config.Storage
+	storageConfig := storageconfig.Config{}
+	if p.StorageConfig != nil {
+		storageConfig = *p.StorageConfig
 	}
 
 	return &Handler{
@@ -140,7 +141,7 @@ func NewTestHandlerWithConfig(
 		assistant = importAssistant[0]
 	}
 
-	storageConfig := config.StorageConfig{}
+	storageConfig := storageconfig.Config{}
 	if cfg != nil {
 		storageConfig = cfg.Storage
 	}

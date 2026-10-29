@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/emoss08/trenova/internal/infrastructure/config/loggingconfig"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -19,6 +20,7 @@ var Module = fx.Module("config",
 		ProvideConfig,
 		ProvideLogger,
 	),
+	SectionProviders,
 )
 
 const sectionsGroup = `group:"config_sections"`
@@ -70,8 +72,8 @@ func (s *LogSink) Close() error {
 	return s.closer.Close()
 }
 
-func ProvideLogger(config *Config) (*zap.Logger, *LogSink, error) {
-	logger, sink, err := newLogger(config.Logging)
+func ProvideLogger(cfg *loggingconfig.Config) (*zap.Logger, *LogSink, error) {
+	logger, sink, err := newLogger(*cfg)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to create logger: %w", err)
 	}
@@ -81,7 +83,7 @@ func ProvideLogger(config *Config) (*zap.Logger, *LogSink, error) {
 	return logger, sink, nil
 }
 
-func newLogger(cfg LoggingConfig) (*zap.Logger, *LogSink, error) {
+func newLogger(cfg loggingconfig.Config) (*zap.Logger, *LogSink, error) {
 	level, err := parseLogLevel(cfg.Level)
 	if err != nil {
 		return nil, nil, err
@@ -140,7 +142,7 @@ func newLogEncoder(format string) (zapcore.Encoder, error) {
 // newLogSink returns where the logger writes and, when that is something the
 // process holds open, the closer for it. Stdout and stderr belong to the
 // process rather than to us, so they come back with no closer.
-func newLogSink(cfg LoggingConfig) (zapcore.WriteSyncer, io.Closer, error) {
+func newLogSink(cfg loggingconfig.Config) (zapcore.WriteSyncer, io.Closer, error) {
 	switch cfg.Output {
 	case "stdout":
 		return zapcore.Lock(os.Stdout), nil, nil
@@ -148,7 +150,7 @@ func newLogSink(cfg LoggingConfig) (zapcore.WriteSyncer, io.Closer, error) {
 		return zapcore.Lock(os.Stderr), nil, nil
 	case "file":
 		if cfg.File == nil {
-			return nil, nil, ErrLoggingOutputIsFileButFileConfigIsMissing
+			return nil, nil, loggingconfig.ErrOutputIsFileButFileConfigIsMissing
 		}
 
 		dir := filepath.Dir(cfg.File.Path)

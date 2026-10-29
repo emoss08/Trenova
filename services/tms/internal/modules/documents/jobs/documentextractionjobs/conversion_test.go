@@ -11,7 +11,8 @@ import (
 	"testing"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/aiconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/documentconversionconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/modules/documents/app/storedobject"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
@@ -308,7 +309,7 @@ func newDoclingHarness(t *testing.T, providerAvailable bool) *doclingHarness {
 
 	activities := &Activities{
 		logger: zap.NewNop(),
-		cfg:    &config.AIConfig{},
+		cfg:    &aiconfig.Config{},
 		metrics: &metrics.Registry{
 			Document: metrics.NewDocument(prometheus.NewRegistry(), zap.NewNop(), false),
 		},
@@ -322,7 +323,7 @@ func newDoclingHarness(t *testing.T, providerAvailable bool) *doclingHarness {
 		encryption:          encryption,
 		workflowStarter:     noopWorkflowStarter{},
 		converter:           converter,
-		conversionCfg:       &config.DocumentConversionConfig{DoclingURL: "http://docling:5001"},
+		conversionCfg:       &documentconversionconfig.Config{DoclingURL: "http://docling:5001"},
 	}
 
 	return &doclingHarness{

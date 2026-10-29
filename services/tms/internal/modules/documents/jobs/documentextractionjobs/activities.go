@@ -7,7 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/aiconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/documentconversionconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/modelcall"
@@ -43,32 +44,33 @@ import (
 type ActivitiesParams struct {
 	fx.In
 
-	Logger              *zap.Logger
-	Config              *config.Config
-	Metrics             *metrics.Registry
-	DocumentRepo        documentports.DocumentRepository
-	DocumentControlRepo tenantports.DocumentControlRepository
-	DocumentTypeRepo    documenttypeports.DocumentTypeRepository
-	ContentRepo         documentcontentports.DocumentContentRepository
-	AIExtractionRepo    documentaiextractionports.DocumentAIExtractionRepository
-	DraftRepo           documentshipmentdraftports.DocumentShipmentDraftRepository
-	AIDocumentService   documentaiextractionports.AIDocumentService
-	SearchProjection    documentsearchprojectionports.DocumentSearchProjectionService
-	Storage             kernelports.Client
-	WorkflowStarter     kernelports.WorkflowStarter
-	Encryption          *encryptionservice.Service
-	AgentEvents         agentports.AgentEventPublisher                 `optional:"true"`
-	ShadowSampler       extractionshadowports.ExtractionShadowSampler  `optional:"true"`
-	Rollout             extractionrolloutports.ExtractionRolloutRouter `optional:"true"`
-	Imaging             kernelports.Imaging
-	Converter           kernelports.DocumentConverter       `optional:"true"`
-	Triage              inboundmessageports.TriageEventSink `optional:"true"`
-	Realtime            realtimeports.RealtimeService       `optional:"true"`
+	Logger                   *zap.Logger
+	AIConfig                 *aiconfig.Config
+	DocumentConversionConfig *documentconversionconfig.Config
+	Metrics                  *metrics.Registry
+	DocumentRepo             documentports.DocumentRepository
+	DocumentControlRepo      tenantports.DocumentControlRepository
+	DocumentTypeRepo         documenttypeports.DocumentTypeRepository
+	ContentRepo              documentcontentports.DocumentContentRepository
+	AIExtractionRepo         documentaiextractionports.DocumentAIExtractionRepository
+	DraftRepo                documentshipmentdraftports.DocumentShipmentDraftRepository
+	AIDocumentService        documentaiextractionports.AIDocumentService
+	SearchProjection         documentsearchprojectionports.DocumentSearchProjectionService
+	Storage                  kernelports.Client
+	WorkflowStarter          kernelports.WorkflowStarter
+	Encryption               *encryptionservice.Service
+	AgentEvents              agentports.AgentEventPublisher                 `optional:"true"`
+	ShadowSampler            extractionshadowports.ExtractionShadowSampler  `optional:"true"`
+	Rollout                  extractionrolloutports.ExtractionRolloutRouter `optional:"true"`
+	Imaging                  kernelports.Imaging
+	Converter                kernelports.DocumentConverter       `optional:"true"`
+	Triage                   inboundmessageports.TriageEventSink `optional:"true"`
+	Realtime                 realtimeports.RealtimeService       `optional:"true"`
 }
 
 type Activities struct {
 	logger              *zap.Logger
-	cfg                 *config.AIConfig
+	cfg                 *aiconfig.Config
 	metrics             *metrics.Registry
 	documentRepo        documentports.DocumentRepository
 	documentControlRepo tenantports.DocumentControlRepository
@@ -86,7 +88,7 @@ type Activities struct {
 	rollout             extractionrolloutports.ExtractionRolloutRouter
 	imaging             kernelports.Imaging
 	converter           kernelports.DocumentConverter
-	conversionCfg       *config.DocumentConversionConfig
+	conversionCfg       *documentconversionconfig.Config
 	triage              inboundmessageports.TriageEventSink
 	realtime            realtimeports.RealtimeService
 }
@@ -110,7 +112,7 @@ func NewActivities(p ActivitiesParams) *Activities {
 
 	return &Activities{
 		logger:              p.Logger.Named("temporal.document-extraction"),
-		cfg:                 p.Config.GetAIConfig(),
+		cfg:                 p.AIConfig,
 		metrics:             p.Metrics,
 		documentRepo:        p.DocumentRepo,
 		documentControlRepo: p.DocumentControlRepo,
@@ -130,7 +132,7 @@ func NewActivities(p ActivitiesParams) *Activities {
 		realtime:            p.Realtime,
 		imaging:             p.Imaging,
 		converter:           p.Converter,
-		conversionCfg:       p.Config.GetDocumentConversionConfig(),
+		conversionCfg:       p.DocumentConversionConfig,
 	}
 }
 

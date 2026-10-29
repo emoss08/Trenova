@@ -7,16 +7,16 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/testutil/mocks/workerportsmock"
-
 	"github.com/emoss08/trenova/internal/api/handlers/integrationhandler"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/samsarasyncservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/jobs/samsarajobs/samsaracontract"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
+	"github.com/emoss08/trenova/internal/testutil/mocks/workerportsmock"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/testutil"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -112,10 +112,10 @@ func setupIntegrationHandler(
 		SyncService:    syncService,
 	})
 
-	cfg := &config.Config{App: config.AppConfig{Debug: true}}
+	cfg := &config.Config{App: appconfig.Config{Debug: true}}
 	errorHandler := helpers.NewErrorHandler(helpers.ErrorHandlerParams{
-		Logger: logger,
-		Config: cfg,
+		Logger:    logger,
+		AppConfig: &cfg.App,
 	})
 
 	pm := middleware.NewPermissionMiddleware(middleware.PermissionMiddlewareParams{

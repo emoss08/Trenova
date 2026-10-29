@@ -3,13 +3,26 @@ package config
 import (
 	"errors"
 	"fmt"
-	"net"
 	"os"
 	"path/filepath"
 	"slices"
 	"strings"
 	"sync"
 
+	"github.com/emoss08/trenova/internal/infrastructure/config/aiauditconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/aiconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/cacheconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/databaseconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/loggingconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/monitoringconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/platformconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/reportingconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/searchconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/serverconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/storageconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/temporalconfig"
 	"github.com/emoss08/trenova/shared/urlutils"
 	"github.com/go-playground/validator/v10"
 	"github.com/joho/godotenv"
@@ -78,7 +91,7 @@ func (l *Loader) Load() (*Config, error) {
 		return nil, fmt.Errorf("failed to determine environment: %w", err)
 	}
 
-	if l.env == EnvDevelopment {
+	if l.env == appconfig.EnvDevelopment {
 		if err := l.loadEnvFile(); err != nil {
 			return nil, fmt.Errorf("failed to load .env file: %w", err)
 		}
@@ -213,14 +226,14 @@ func (l *Loader) determineEnvironment() error {
 		l.env = os.Getenv("APP_ENV")
 	}
 	if l.env == "" {
-		l.env = EnvDevelopment
+		l.env = appconfig.EnvDevelopment
 	}
 
-	if !slices.Contains(ValidEnvs, l.env) {
+	if !slices.Contains(appconfig.ValidEnvs, l.env) {
 		return fmt.Errorf(
 			"invalid environment: %s (must be one of: %s)",
 			l.env,
-			strings.Join(ValidEnvs, ", "),
+			strings.Join(appconfig.ValidEnvs, ", "),
 		)
 	}
 
@@ -256,6 +269,11 @@ func (l *Loader) configureViper() {
 	}
 }
 
+const (
+	aiAuditChainKeysEnvSuffix        = "_AI_AUDIT_CHAIN_KEYS"
+	aiAuditChainActiveKeyIDEnvSuffix = "_AI_AUDIT_CHAIN_ACTIVE_KEY_ID"
+)
+
 var envOnlyKeys = []string{
 	"security.encryption.retiredKeys",
 	"contentScan.failOpen",
@@ -280,7 +298,7 @@ func (l *Loader) applyAIAuditChainKeysEnv(config *Config) error {
 		return nil
 	}
 
-	keys, err := parseAIAuditChainKeys(raw)
+	keys, err := aiauditconfig.ParseChainKeys(raw)
 	if err != nil {
 		return err
 	}
@@ -323,189 +341,31 @@ func (l *Loader) bindAccountingEnv() {
 	_ = l.viper.BindEnv("accounting.netSuite.redirectUrl", "TRENOVA_NETSUITE_REDIRECT_URL")
 }
 
-func (l *Loader) setDefaults() { //nolint:funlen // sets default configs
-	// App defaults
-	l.viper.SetDefault("app.env", l.env)
-	l.viper.SetDefault("app.debug", false)
-	l.viper.SetDefault("app.version", "0.0.0")
-
-	// Server defaults
-	l.viper.SetDefault("server.host", "0.0.0.0")
-	l.viper.SetDefault("server.port", 8080)
-	l.viper.SetDefault("server.mode", "release")
-	l.viper.SetDefault("server.readTimeout", "30s")
-	l.viper.SetDefault("server.readHeaderTimeout", "5s")
-	l.viper.SetDefault("server.writeTimeout", "75s")
-	l.viper.SetDefault("server.idleTimeout", "120s")
-	l.viper.SetDefault("server.shutdownTimeout", "10s")
-	l.viper.SetDefault("server.requestTimeout", "55s")
-	l.viper.SetDefault("server.trustedProxies", DefaultTrustedProxies)
-
-	if l.env == EnvDevelopment || l.env == EnvTest {
-		l.viper.SetDefault("temporal.hostPort", "localhost:7233")
+func (l *Loader) setDefaults() {
+	sections := []struct {
+		key      string
+		defaults map[string]any
+	}{
+		{key: "app", defaults: appconfig.Defaults(l.env)},
+		{key: "server", defaults: serverconfig.Defaults()},
+		{key: "temporal", defaults: temporalconfig.Defaults(l.env)},
+		{key: "database", defaults: databaseconfig.Defaults()},
+		{key: "reporting", defaults: reportingconfig.Defaults()},
+		{key: "security", defaults: securityconfig.Defaults(l.env)},
+		{key: "monitoring", defaults: monitoringconfig.Defaults()},
+		{key: "aiAudit", defaults: aiauditconfig.Defaults()},
+		{key: "logging", defaults: loggingconfig.Defaults()},
+		{key: "cache", defaults: cacheconfig.Defaults()},
+		{key: "search", defaults: searchconfig.Defaults()},
+		{key: "ai", defaults: aiconfig.Defaults()},
+		{key: "platform", defaults: platformconfig.Defaults()},
+		{key: "storage", defaults: storageconfig.Defaults()},
 	}
-	l.viper.SetDefault("temporal.profile", "")
-	l.viper.SetDefault("temporal.configFile", "")
-	l.viper.SetDefault("temporal.apiKey", "")
-	l.viper.SetDefault("temporal.tls.enabled", false)
-	l.viper.SetDefault("temporal.tls.serverName", "")
-	l.viper.SetDefault("temporal.tls.serverCACertPath", "")
-	l.viper.SetDefault("temporal.tls.clientCertPath", "")
-	l.viper.SetDefault("temporal.tls.clientKeyPath", "")
-
-	// Database defaults
-	l.viper.SetDefault("database.sslMode", "prefer")
-	l.viper.SetDefault("database.queryLog", "errors")
-	l.viper.SetDefault("database.maxOpenConns", 100)
-	l.viper.SetDefault("database.connMaxLifetime", "1h")
-	l.viper.SetDefault("database.connMaxIdleTime", "10m")
-	l.viper.SetDefault("database.statementTimeout", "10s")
-	l.viper.SetDefault("database.lockTimeout", "5s")
-	l.viper.SetDefault("database.idleInTransactionSessionTimeout", "30s")
-	l.viper.SetDefault("database.rls.mode", RLSModeOff)
-	l.viper.SetDefault("database.rls.scopeKeyId", "")
-	l.viper.SetDefault("database.rls.scopeKey", "")
-	l.viper.SetDefault("database.rls.scopeTtl", "15m")
-	l.viper.SetDefault("database.system.user", "")
-	l.viper.SetDefault("database.system.password", "")
-	l.viper.SetDefault("database.system.maxOpenConns", 8)
-	l.viper.SetDefault("database.migrator.user", "")
-	l.viper.SetDefault("database.migrator.password", "")
-	l.viper.SetDefault("database.tenantConcurrency", 0)
-	l.viper.SetDefault("database.slowWaitWarning", "5s")
-	l.viper.SetDefault("database.maxWait", "60s")
-	l.viper.SetDefault("database.cache.enabled", true)
-	l.viper.SetDefault("database.cache.localBytes", DefaultDatabaseCacheLocalBytes)
-	l.viper.SetDefault("database.cache.listenHost", "")
-	l.viper.SetDefault("database.cache.listenPort", 0)
-	l.viper.SetDefault("database.cache.shared.enabled", false)
-	l.viper.SetDefault("database.cache.shared.prefix", DefaultDatabaseCacheSharedPrefix)
-	l.viper.SetDefault("database.budget.maxRepeats", DefaultDatabaseBudgetMaxRepeats)
-	l.viper.SetDefault("reporting.resultCache.enabled", true)
-	l.viper.SetDefault("reporting.resultCache.localBytes", DefaultReportResultCacheLocalBytes)
-	l.viper.SetDefault("reporting.resultCache.ttl", "15m")
-	l.viper.SetDefault("reporting.resultCache.shared.enabled", false)
-
-	// Session defaults
-	l.viper.SetDefault("security.session.name", "trv-session-id")
-	l.viper.SetDefault("security.session.maxAge", "12h")
-	l.viper.SetDefault("security.session.idleTimeout", "30m")
-	l.viper.SetDefault("security.session.idleWarning", "2m")
-	l.viper.SetDefault("security.session.httpOnly", true)
-	l.viper.SetDefault("security.session.secure", false)
-	l.viper.SetDefault("security.session.sameSite", "lax")
-	l.viper.SetDefault("security.session.path", "/")
-	l.viper.SetDefault("security.session.refreshWindow", "1h")
-	l.viper.SetDefault("security.apiToken.enabled", true)
-	l.viper.SetDefault("security.apiToken.defaultExpiry", "0s")
-	l.viper.SetDefault("security.apiToken.maxExpiry", "8760h")
-	l.viper.SetDefault("security.apiToken.maxTokensPerUser", 100)
-
-	// CSRF defaults
-	l.viper.SetDefault("security.csrf.tokenName", "csrf_token")
-	l.viper.SetDefault("security.csrf.headerName", "X-CSRF-Token")
-	if l.env == EnvProduction || l.env == EnvStaging {
-		l.viper.SetDefault("security.csrf.browserGuard.mode", "enforce")
-	} else {
-		l.viper.SetDefault("security.csrf.browserGuard.mode", "report")
+	for _, section := range sections {
+		for key, value := range section.defaults {
+			l.viper.SetDefault(section.key+"."+key, value)
+		}
 	}
-
-	// Rate limit defaults
-	l.viper.SetDefault("security.rateLimit.enabled", true)
-	l.viper.SetDefault("security.rateLimit.cleanupInterval", "1m")
-	l.viper.SetDefault("security.rateLimit.store", RateLimitStoreRedis)
-	l.viper.SetDefault("security.rateLimit.failureMode", RateLimitFailureModeLocal)
-	l.viper.SetDefault("security.rateLimit.keyPrefix", defaultRateLimitKeyPrefix)
-	l.viper.SetDefault("security.rateLimit.storeTimeout", "250ms")
-	l.viper.SetDefault("security.rateLimit.exemptPathPrefixes", []string{})
-	for _, scope := range []RateLimitScope{
-		RateLimitScopeAnonymous,
-		RateLimitScopeAPIKey,
-		RateLimitScopeTenant,
-		RateLimitScopePublicToken,
-	} {
-		prefix := "security.rateLimit." + string(scope)
-		l.viper.SetDefault(prefix+".disabled", false)
-		l.viper.SetDefault(prefix+".requestsPerMinute", 0)
-		l.viper.SetDefault(prefix+".burstSize", 0)
-	}
-
-	// Tracing and AI audit trail defaults
-	l.viper.SetDefault("monitoring.tracing.aiSamplingRate", defaultAISamplingRate)
-	l.viper.SetDefault("monitoring.tracing.traceUrlTemplate", "")
-	l.viper.SetDefault("aiAudit.chain.activeKeyId", "")
-	l.viper.SetDefault("aiAudit.export.syncMaxRows", defaultAIAuditExportSyncMaxRows)
-	l.viper.SetDefault("aiAudit.export.maxRows", defaultAIAuditExportMaxRows)
-	l.viper.SetDefault("aiAudit.export.ttl", defaultAIAuditExportTTL.String())
-	l.viper.SetDefault("aiAudit.projector.interval", defaultAIAuditProjectorInterval.String())
-	l.viper.SetDefault("aiAudit.projector.batchSize", defaultAIAuditProjectorBatchSize)
-
-	// Logging defaults
-	l.viper.SetDefault("logging.level", "info")
-	l.viper.SetDefault("logging.format", "json")
-	l.viper.SetDefault("logging.output", "stdout")
-	l.viper.SetDefault("logging.sampling", false)
-	l.viper.SetDefault("logging.stacktrace", false)
-
-	// Metrics defaults
-	l.viper.SetDefault("monitoring.metrics.host", "127.0.0.1")
-	l.viper.SetDefault("monitoring.metrics.port", 9090)
-	l.viper.SetDefault("monitoring.metrics.path", "/internal/metricsz")
-
-	// Health check defaults
-	l.viper.SetDefault("monitoring.health.path", "/health")
-	l.viper.SetDefault("monitoring.health.readinessPath", "/ready")
-	l.viper.SetDefault("monitoring.health.livenessPath", "/live")
-	l.viper.SetDefault("monitoring.health.checkInterval", "30s")
-	l.viper.SetDefault("monitoring.health.timeout", "5s")
-	l.viper.SetDefault("monitoring.pprof.enabled", false)
-	l.viper.SetDefault("monitoring.pprof.host", "127.0.0.1")
-	l.viper.SetDefault("monitoring.pprof.port", 6060)
-
-	// Cache defaults
-	l.viper.SetDefault("cache.host", "localhost")
-	l.viper.SetDefault("cache.port", 6379)
-	l.viper.SetDefault("cache.db", 0)
-	l.viper.SetDefault("cache.poolSize", 10)
-	l.viper.SetDefault("cache.minIdleConns", 5)
-	l.viper.SetDefault("cache.maxRetries", 3)
-	l.viper.SetDefault("cache.maxRetryBackoff", "1s")
-	l.viper.SetDefault("cache.minRetryBackoff", "100ms")
-	l.viper.SetDefault("cache.dialTimeout", "5s")
-	l.viper.SetDefault("cache.readTimeout", "3s")
-	l.viper.SetDefault("cache.writeTimeout", "3s")
-	l.viper.SetDefault("cache.poolTimeout", "10s")
-	l.viper.SetDefault("cache.connMaxIdleTime", "10m")
-	l.viper.SetDefault("cache.connMaxLifetime", "1h")
-
-	// Search defaults
-	l.viper.SetDefault("search.enabled", false)
-	l.viper.SetDefault("search.defaultLimit", 8)
-	l.viper.SetDefault("search.meilisearch.url", "http://localhost:7700")
-	l.viper.SetDefault("search.meilisearch.timeout", "3s")
-	l.viper.SetDefault("search.meilisearch.indexes.shipments", "shipments")
-	l.viper.SetDefault("search.meilisearch.indexes.customers", "customers")
-	l.viper.SetDefault("search.meilisearch.indexes.workers", "workers")
-	l.viper.SetDefault("search.meilisearch.indexes.documents", "documents")
-
-	// AI defaults
-	l.viper.SetDefault("ai.timeout", "20s")
-	l.viper.SetDefault("ai.probeTimeout", "45s")
-	l.viper.SetDefault("ai.completionTimeout", "5m")
-	l.viper.SetDefault("ai.streamIdleTimeout", "5m")
-	l.viper.SetDefault("ai.maxRetries", 2)
-	l.viper.SetDefault("ai.maxInputChars", 24000)
-	l.viper.SetDefault("ai.maxExtractedChars", 200000)
-	l.viper.SetDefault("ai.reconcileBatchSize", 100)
-	l.viper.SetDefault("ai.maxConcurrentActivities", 2)
-
-	// Platform defaults
-	l.viper.SetDefault("platform.mode", string(PlatformModeSelfHosted))
-	l.viper.SetDefault("security.encryption.allowLocalKeyManagerInProduction", false)
-
-	// Storage defaults
-	l.viper.SetDefault("storage.provider", StorageProviderMinio)
-	l.viper.SetDefault("storage.autoCreateBucket", true)
 }
 
 func (l *Loader) bindPlatformEnvAliases() {
@@ -519,7 +379,7 @@ func (l *Loader) loadConfigFiles() error {
 	l.viper.SetConfigFile(baseConfig)
 
 	if err := l.viper.ReadInConfig(); err != nil {
-		if l.env == EnvProduction {
+		if l.env == appconfig.EnvProduction {
 			return fmt.Errorf("config file required in production: %w", err)
 		}
 		if !os.IsNotExist(err) {
@@ -527,12 +387,12 @@ func (l *Loader) loadConfigFiles() error {
 		}
 	}
 
-	if l.env == EnvDevelopment {
+	if l.env == appconfig.EnvDevelopment {
 		return nil
 	}
 
 	envConfig := filepath.Join(l.configPath, fmt.Sprintf("config.%s.yaml", l.env))
-	if l.env == EnvProduction {
+	if l.env == appconfig.EnvProduction {
 		if _, err := os.Stat(envConfig); os.IsNotExist(err) {
 			envConfig = filepath.Join(l.configPath, "config.prod.yaml")
 		}
@@ -552,20 +412,17 @@ func (l *Loader) validateConfig(config *Config) error {
 		return formatValidationError(err)
 	}
 
-	validators := []func(*Config) error{
-		validateRLSConfig,
-		validateDatabaseRuntimeConfig,
-		validateServerTimeouts,
-		validateTrustedProxies,
-		validateHostPrefixCookie,
-		validateSessionLifetime,
-		validateLoggingConfig,
-		validateR2PublicEndpoint,
-		validateTracingConfig,
-		validateAIAuditConfig,
+	validators := []func() error{
+		config.Database.Validate,
+		config.Server.Validate,
+		config.Security.Validate,
+		config.Logging.Validate,
+		config.Storage.Validate,
+		config.Monitoring.Validate,
+		config.AIAudit.Validate,
 	}
-	for _, validator := range validators {
-		if err := validator(config); err != nil {
+	for _, validate := range validators {
+		if err := validate(); err != nil {
 			return err
 		}
 	}
@@ -573,10 +430,11 @@ func (l *Loader) validateConfig(config *Config) error {
 	if err := l.validatePlatformMode(config); err != nil {
 		return err
 	}
-	if err := validateCORSConfig(config, l.env); err != nil {
+	productionLike := IsProductionLike(l.env)
+	if err := config.Server.ValidateCORS(productionLike); err != nil {
 		return err
 	}
-	if isProductionLike(l.env) {
+	if productionLike {
 		if err := validateProductionSecurity(config); err != nil {
 			return err
 		}
@@ -588,7 +446,7 @@ func (l *Loader) validateConfig(config *Config) error {
 		}
 	}
 
-	return validateImagingConfig(config, l.env)
+	return config.Imaging.Validate(productionLike)
 }
 
 func (l *Loader) validatePlatformMode(config *Config) error {
@@ -606,194 +464,31 @@ func (l *Loader) validatePlatformMode(config *Config) error {
 	return fmt.Errorf("%w: %q", ErrPlatformModeRequiresEdition, mode)
 }
 
-func validateServerTimeouts(config *Config) error {
-	if config.Server.RequestTimeout > 0 &&
-		config.Server.WriteTimeout > 0 &&
-		config.Server.RequestTimeout >= config.Server.WriteTimeout {
-		return ErrRequestTimeoutExceedsWriteTimeout
-	}
-
-	return nil
-}
-
-func validateCORSConfig(config *Config, env string) error {
-	if !config.Server.CORS.Enabled {
-		return nil
-	}
-	if len(config.Server.CORS.AllowedOrigins) == 0 {
-		return ErrCorsEnabledButNoAllowedOrigins
-	}
-	if isProductionLike(env) &&
-		config.Server.CORS.Credentials &&
-		slices.Contains(config.Server.CORS.AllowedOrigins, "*") {
-		return ErrCredentialedWildcardCORS
-	}
-
-	return nil
-}
-
-func validateTrustedProxies(config *Config) error {
-	for _, proxy := range config.Server.TrustedProxies {
-		trimmed := strings.TrimSpace(proxy)
-		if trimmed == "" {
-			return fmt.Errorf("%w: %q", ErrInvalidTrustedProxy, proxy)
-		}
-		if strings.Contains(trimmed, "/") {
-			if _, _, err := net.ParseCIDR(trimmed); err != nil {
-				return fmt.Errorf("%w: %q", ErrInvalidTrustedProxy, proxy)
-			}
-			continue
-		}
-		if net.ParseIP(trimmed) == nil {
-			return fmt.Errorf("%w: %q", ErrInvalidTrustedProxy, proxy)
-		}
-	}
-
-	return nil
-}
-
-func validateHostPrefixCookie(config *Config) error {
-	if !strings.HasPrefix(config.Security.Session.Name, "__Host-") {
-		return nil
-	}
-
-	if !config.Security.Session.Secure ||
-		!config.Security.Session.HTTPOnly ||
-		config.Security.Session.Domain != "" ||
-		config.Security.Session.Path != "/" ||
-		!strings.EqualFold(config.Security.Session.SameSite, "strict") {
-		return ErrInvalidHostPrefixCookie
-	}
-
-	return nil
-}
-
-func validateSessionLifetime(config *Config) error {
-	sessionCfg := config.Security.Session
-	if !sessionCfg.IdleTimeoutEnabled() {
-		return nil
-	}
-	if sessionCfg.IdleTimeout > sessionCfg.MaxAge {
-		return ErrSessionIdleTimeoutExceedsMaxAge
-	}
-	if sessionCfg.IdleWarning <= 0 || sessionCfg.IdleWarning >= sessionCfg.IdleTimeout {
-		return ErrSessionIdleWarningOutOfRange
-	}
-
-	return nil
-}
-
-func validateLoggingConfig(config *Config) error {
-	if config.Logging.Output == "file" && config.Logging.File == nil {
-		return ErrLoggingOutputIsFileButFileConfigIsMissing
-	}
-
-	return nil
-}
-
-func validateProductionKeyManager(config *Config) error {
-	keyManager := strings.ToLower(strings.TrimSpace(config.Security.Encryption.KeyManager))
-	if keyManager == EncryptionKeyManagerLocal &&
-		config.Security.Encryption.AllowLocalKeyManagerInProduction {
-		return validateProductionLocalKey(config.Security.Encryption.Key)
-	}
-	if keyManager != EncryptionKeyManagerGCPAutokey {
-		return ErrProductionKMSRequired
-	}
-
-	gcpKey := strings.TrimSpace(config.Security.Encryption.GCPKMS.CryptoKey)
-	if gcpKey == "" {
-		gcpKey = strings.TrimSpace(config.Security.Encryption.GCPKMS.KeyResource)
-	}
-	if gcpKey == "" {
-		return ErrProductionGCPKMSConfigRequired
-	}
-
-	return nil
-}
-
-const minProductionLocalEncryptionKeyLength = 32
-
-func validateProductionRecoveryCodePepper(pepper string) error {
-	trimmed := strings.TrimSpace(pepper)
-	if len(trimmed) < minProductionLocalEncryptionKeyLength {
-		return ErrProductionRecoveryCodePepperRequired
-	}
-	lowered := strings.ToLower(trimmed)
-	for _, placeholder := range InsecureDefaultValues {
-		if strings.Contains(lowered, placeholder) {
-			return ErrProductionRecoveryCodePepperRequired
-		}
-	}
-	return nil
-}
-
-func validateProductionLocalKey(key string) error {
-	trimmed := strings.TrimSpace(key)
-	if len(trimmed) < minProductionLocalEncryptionKeyLength {
-		return ErrProductionLocalEncryptionKeyRequired
-	}
-
-	lowered := strings.ToLower(trimmed)
-	for _, placeholder := range InsecureDefaultValues {
-		if strings.Contains(lowered, placeholder) {
-			return ErrEncryptionKeyIsInsecure
-		}
-	}
-
-	return nil
-}
-
-func validateR2PublicEndpoint(config *Config) error {
-	if config.Storage.GetProvider() == StorageProviderR2 && config.Storage.PublicEndpoint != "" {
-		return errors.New(
-			"storage.publicEndpoint cannot be set when storage.provider is r2; private R2 presigned URLs must use the R2 S3 API endpoint",
-		)
-	}
-
-	return nil
-}
-
 func validateProductionSecurity(config *Config) error {
-	if strings.EqualFold(config.Database.SSLMode, "disable") {
-		return ErrProductionDatabaseSSLRequired
+	validators := []func() error{
+		config.Database.ValidateProduction,
+		config.Security.ValidateProduction,
+		config.Storage.ValidateProduction,
+		config.ContentScan.ValidateProduction,
+		config.AIAudit.ValidateProduction,
 	}
-	if !config.Security.Session.Secure ||
-		!config.Security.Session.HTTPOnly ||
-		!strings.EqualFold(config.Security.Session.SameSite, "strict") {
-		return ErrProductionSessionCookieRequired
-	}
-	encryptionMode := strings.ToLower(strings.TrimSpace(config.Security.Encryption.Mode))
-	if encryptionMode != EncryptionModeEnvelope {
-		return ErrProductionEncryptionModeRequired
-	}
-	if err := validateProductionKeyManager(config); err != nil {
-		return err
-	}
-	if err := validateProductionRecoveryCodePepper(
-		config.Security.MFA.RecoveryCodePepper,
-	); err != nil {
-		return err
-	}
-	if config.Storage.GetProvider() == StorageProviderR2 &&
-		(!config.Storage.UseSSL || !strings.HasPrefix(config.Storage.Endpoint, "https://")) {
-		return ErrProductionStorageTLSRequired
-	}
-	if config.ContentScan.FailOpen {
-		return ErrProductionContentScanFailOpen
+	for _, validate := range validators {
+		if err := validate(); err != nil {
+			return err
+		}
 	}
 
-	return validateAIAuditChainSecrets(config)
+	return nil
 }
 
 func (l *Loader) applyEnvironmentOverrides(config *Config) error {
-	if isProductionLike(l.env) {
+	if IsProductionLike(l.env) {
 		config.App.Debug = false
 		config.Server.Mode = "release"
 		config.Logging.Stacktrace = false
 	}
 
-	if l.env == EnvDevelopment {
+	if l.env == appconfig.EnvDevelopment {
 		config.App.Debug = true
 		config.Server.Mode = "debug"
 		config.Logging.Stacktrace = true
@@ -805,10 +500,6 @@ func (l *Loader) applyEnvironmentOverrides(config *Config) error {
 		return fmt.Errorf("set gin mode: %w", err)
 	}
 	return nil
-}
-
-func isProductionLike(env string) bool {
-	return env == EnvProduction || env == EnvStaging
 }
 
 func newValidator() *validator.Validate {

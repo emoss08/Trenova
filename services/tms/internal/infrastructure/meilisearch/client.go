@@ -6,7 +6,7 @@ import (
 	"net/http"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/searchconfig"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	meili "github.com/meilisearch/meilisearch-go"
 	"go.uber.org/fx"
@@ -16,9 +16,9 @@ import (
 type Params struct {
 	fx.In
 
-	Config *config.Config
-	Logger *zap.Logger
-	LC     fx.Lifecycle
+	SearchConfig *searchconfig.Config
+	Logger       *zap.Logger
+	LC           fx.Lifecycle
 }
 
 type Client struct {
@@ -30,7 +30,7 @@ type Client struct {
 var _ customerports.SearchRepository = (*Client)(nil)
 
 func New(p Params) (*Client, error) {
-	searchConfig := p.Config.GetSearchConfig()
+	searchConfig := p.SearchConfig
 	logger := p.Logger.Named("meilisearch")
 
 	client := &Client{

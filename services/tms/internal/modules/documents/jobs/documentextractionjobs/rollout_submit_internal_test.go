@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/aiconfig"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentaiextraction"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent"
@@ -64,7 +64,7 @@ func submitExtraction(t *testing.T) (*fakeRolloutRouter, *inlineExtraction) {
 	ai := &inlineExtraction{}
 	activities := &Activities{
 		logger: zap.NewNop(),
-		cfg:    &config.AIConfig{},
+		cfg:    &aiconfig.Config{},
 		documentRepo: &memoryDocumentRepository{doc: &document.Document{
 			ID:             docID,
 			OrganizationID: orgID,

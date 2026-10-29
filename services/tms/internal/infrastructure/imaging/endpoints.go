@@ -11,7 +11,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/imagingconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/imaging/imagingpb"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
@@ -48,7 +48,7 @@ type callOutcome struct {
 
 func (e *endpoint) record(
 	outcome callOutcome,
-	breaker *config.ImagingBreakerConfig,
+	breaker *imagingconfig.BreakerConfig,
 	now time.Time,
 ) {
 	e.mu.Lock()
@@ -96,7 +96,7 @@ func draining(err error) bool {
 }
 
 type endpointSet struct {
-	cfg    *config.ImagingConfig
+	cfg    *imagingconfig.Config
 	dial   func(target string) (*grpc.ClientConn, error)
 	logger *zap.Logger
 
@@ -114,7 +114,7 @@ type endpointSet struct {
 }
 
 func newEndpointSet(
-	cfg *config.ImagingConfig,
+	cfg *imagingconfig.Config,
 	logger *zap.Logger,
 	dial func(target string) (*grpc.ClientConn, error),
 ) (*endpointSet, error) {

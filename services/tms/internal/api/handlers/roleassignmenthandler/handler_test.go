@@ -5,14 +5,14 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/mocks/permissionportsmock"
-
 	"github.com/emoss08/trenova/internal/api/handlers/roleassignmenthandler"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
 	"github.com/emoss08/trenova/internal/modules/identity/app/roleassignmentservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/testutil/mocks/permissionportsmock"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/testutil"
@@ -39,14 +39,14 @@ func setupRoleAssignmentHandler(
 	})
 
 	cfg := &config.Config{
-		App: config.AppConfig{
+		App: appconfig.Config{
 			Debug: true,
 		},
 	}
 
 	errorHandler := helpers.NewErrorHandler(helpers.ErrorHandlerParams{
-		Logger: logger,
-		Config: cfg,
+		Logger:    logger,
+		AppConfig: &cfg.App,
 	})
 
 	return roleassignmenthandler.New(roleassignmenthandler.Params{

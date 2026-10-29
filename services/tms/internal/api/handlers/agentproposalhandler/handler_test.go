@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/agentproposalhandler"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
@@ -91,8 +91,8 @@ func newHandler(
 	previews agentruntimeports.ProposalPreviewService,
 ) *agentproposalhandler.Handler {
 	errorHandler := helpers.NewErrorHandler(helpers.ErrorHandlerParams{
-		Logger: zap.NewNop(),
-		Config: &config.Config{App: config.AppConfig{Debug: true}},
+		Logger:    zap.NewNop(),
+		AppConfig: &appconfig.Config{Debug: true},
 	})
 
 	return agentproposalhandler.New(agentproposalhandler.Params{

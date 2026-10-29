@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/permissionhandler"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permissionspec"
@@ -45,8 +46,10 @@ func setupPermissionHandler(
 		},
 	})
 
-	cfg := &config.Config{App: config.AppConfig{Debug: true}}
-	errorHandler := helpers.NewErrorHandler(helpers.ErrorHandlerParams{Logger: logger, Config: cfg})
+	cfg := &config.Config{App: appconfig.Config{Debug: true}}
+	errorHandler := helpers.NewErrorHandler(
+		helpers.ErrorHandlerParams{Logger: logger, AppConfig: &cfg.App},
+	)
 
 	return permissionhandler.New(permissionhandler.Params{
 		PermissionEngine: engine,
@@ -311,13 +314,13 @@ func TestPermissionHandler_GetBundles_DowngradesScopesTheDeploymentDoesNotEnforc
 
 	logger := zap.NewNop()
 	registry := permissioncatalog.NewRegistry()
-	cfg := &config.Config{App: config.AppConfig{Debug: true}}
+	cfg := &config.Config{App: appconfig.Config{Debug: true}}
 	handler := permissionhandler.New(permissionhandler.Params{
 		PermissionEngine: permissionportsmock.NewMockPermissionEngine(t),
 		Registry:         registry,
 		Scopes:           &scopepolicytest.Policy{Registry: registry},
 		ErrorHandler: helpers.NewErrorHandler(
-			helpers.ErrorHandlerParams{Logger: logger, Config: cfg},
+			helpers.ErrorHandlerParams{Logger: logger, AppConfig: &cfg.App},
 		),
 	})
 
@@ -385,13 +388,13 @@ func TestPermissionHandler_GetAvailableResources_TranslatesAndFollowsTheRail(t *
 		Category:    "Desk",
 	}))
 
-	cfg := &config.Config{App: config.AppConfig{Debug: true}}
+	cfg := &config.Config{App: appconfig.Config{Debug: true}}
 	handler := permissionhandler.New(permissionhandler.Params{
 		PermissionEngine: permissionportsmock.NewMockPermissionEngine(t),
 		Registry:         registry,
 		Scopes:           &scopepolicytest.Policy{Registry: registry, DatabaseEnforcing: true},
 		ErrorHandler: helpers.NewErrorHandler(
-			helpers.ErrorHandlerParams{Logger: zap.NewNop(), Config: cfg},
+			helpers.ErrorHandlerParams{Logger: zap.NewNop(), AppConfig: &cfg.App},
 		),
 	})
 

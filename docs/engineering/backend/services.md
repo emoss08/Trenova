@@ -7,7 +7,9 @@ and announce what happened. The reference is
 ## Shape
 
 - fx `Params` struct (`fx.In`) holding ports only: repositories, validators, `AuditService`,
-  `kernelports.WorkflowStarter`, other services' ports. `New(p) *Service`, wired in the module's
+  `kernelports.WorkflowStarter`, other services' ports, and the config sections it reads
+  (`StorageConfig *storageconfig.Config`), never the whole `*config.Config`
+  ([Configuration](README.md#configuration)). `New(p) *Service`, wired in the module's
   `module.go`.
 - Depend on the narrowest port that does the job. A service that needs one method of a wide
   interface gets a narrower port declared next to its consumer.

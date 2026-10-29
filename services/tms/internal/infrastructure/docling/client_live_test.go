@@ -17,6 +17,7 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/documentconversionconfig"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -90,7 +91,7 @@ func liveClient(t *testing.T) *Client {
 	require.NoError(t, liveErr, "start the pinned docling-serve container")
 
 	cfg := &config.Config{
-		DocumentConversion: config.DocumentConversionConfig{
+		DocumentConversion: documentconversionconfig.Config{
 			DoclingURL:     liveBaseURL,
 			APIKey:         liveKey,
 			RequestTimeout: 30 * time.Second,
@@ -98,7 +99,7 @@ func liveClient(t *testing.T) *Client {
 		},
 	}
 
-	return New(Params{Config: cfg, Logger: zap.NewNop()})
+	return New(Params{DocumentConversionConfig: &cfg.DocumentConversion, Logger: zap.NewNop()})
 }
 
 func convertLive(

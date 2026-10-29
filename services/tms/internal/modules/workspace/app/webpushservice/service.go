@@ -8,7 +8,7 @@ import (
 
 	webpush "github.com/SherClockHolmes/webpush-go"
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/pushconfig"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/notificationports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -29,14 +29,14 @@ const (
 type Params struct {
 	fx.In
 
-	Logger *zap.Logger
-	Config *config.Config
-	Repo   notificationports.PushSubscriptionRepository
+	Logger     *zap.Logger
+	PushConfig *pushconfig.Config
+	Repo       notificationports.PushSubscriptionRepository
 }
 
 type Service struct {
 	l            *zap.Logger
-	cfg          config.PushConfig
+	cfg          pushconfig.Config
 	repo         notificationports.PushSubscriptionRepository
 	allowedHosts []string
 	client       webpush.HTTPClient
@@ -45,9 +45,9 @@ type Service struct {
 func New(p Params) *Service {
 	return &Service{
 		l:            p.Logger.Named("service.webpush"),
-		cfg:          p.Config.Push,
+		cfg:          *p.PushConfig,
 		repo:         p.Repo,
-		allowedHosts: p.Config.Push.GetAllowedEndpointHosts(),
+		allowedHosts: p.PushConfig.GetAllowedEndpointHosts(),
 		client:       httpsafe.NewClient(pushRequestTimeout),
 	}
 }

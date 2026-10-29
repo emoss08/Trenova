@@ -23,7 +23,6 @@ debt:
   services/tms/internal/infrastructure/accounting/xeroconnector: 3914
   services/tms/internal/infrastructure/agentcompletion/completionrouter: 4388
   services/tms/internal/infrastructure/agentcompletion/modeladapter: 6687
-  services/tms/internal/infrastructure/config: 4467
   services/tms/internal/infrastructure/observability/metrics: 3261
   services/tms/internal/infrastructure/postgres/tenantbootstrap: 3141
   services/tms/internal/infrastructure/redis/repositories: 3166

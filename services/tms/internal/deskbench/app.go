@@ -12,6 +12,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/bootstrap"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/loggingconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/agent/app/assistantturnservice"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
@@ -238,7 +239,7 @@ func isolate(cfg *config.Config, namespace, logPath string) *config.Config {
 	cfg.Logging.Output = "file"
 	cfg.Logging.Format = "json"
 	cfg.Logging.Sampling = false
-	cfg.Logging.File = &config.LogFileConfig{
+	cfg.Logging.File = &loggingconfig.FileConfig{
 		Path:       logPath,
 		MaxSize:    500,
 		MaxAge:     7,

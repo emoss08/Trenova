@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/imagingconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/imaging/imagingpb"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/stretchr/testify/assert"
@@ -76,7 +76,7 @@ func TestARetiredEndpointFinishesItsCallsBeforeItsConnectionCloses(t *testing.T)
 	addrs := &addresses{}
 	addrs.set(serve(t, leaving))
 
-	cfg := &config.ImagingConfig{InitialBackoff: time.Millisecond, MaxBackoff: 5 * time.Millisecond}
+	cfg := &imagingconfig.Config{InitialBackoff: time.Millisecond, MaxBackoff: 5 * time.Millisecond}
 	set := &endpointSet{
 		cfg:    cfg,
 		logger: zap.NewNop(),
@@ -106,7 +106,12 @@ func TestARetiredEndpointFinishesItsCallsBeforeItsConnectionCloses(t *testing.T)
 	require.NoError(t, render(t.Context(), client), "a new call goes to the remaining endpoint")
 	assert.Equal(t, int32(1), staying.renders.Load())
 
-	assert.NotEqual(t, connectivity.Shutdown, retired.conn.GetState(), "it stays open while a call is in flight")
+	assert.NotEqual(
+		t,
+		connectivity.Shutdown,
+		retired.conn.GetState(),
+		"it stays open while a call is in flight",
+	)
 	close(leaving.release)
 	select {
 	case err := <-inFlight:

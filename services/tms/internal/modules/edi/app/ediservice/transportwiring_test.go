@@ -18,6 +18,7 @@ func TestTransportModuleWiresAllDeliverableMethods(t *testing.T) {
 	app := fxtest.New(
 		t,
 		fx.Supply(&config.Config{}),
+		config.SectionProviders,
 		editransport.Module,
 		fx.Populate(&dispatcher),
 	)

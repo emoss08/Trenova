@@ -13,7 +13,7 @@ import (
 	"time"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/updateconfig"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
@@ -133,10 +133,10 @@ func newService(t *testing.T, url, key string) *Service {
 	t.Helper()
 	svc, err := New(Params{
 		Logger: zap.NewNop(),
-		Config: &config.Config{Update: config.UpdateConfig{
+		UpdateConfig: &updateconfig.Config{
 			CaptureManifestURL: url,
 			CapturePublicKey:   key,
-		}},
+		},
 	})
 	require.NoError(t, err)
 
@@ -234,14 +234,16 @@ func TestLatestIsNothingWhenUnpublishedUnconfiguredOrForged(t *testing.T) {
 func TestTheDefaultManifestIsTheCaptureStableReleaseAndABadKeyIsFatal(t *testing.T) {
 	t.Parallel()
 
-	update := config.UpdateConfig{}
-	assert.Equal(t,
+	update := updateconfig.Config{}
+	assert.Equal(
+		t,
 		"https://github.com/emoss08/trenova/releases/download/capture-stable/trenova-capture-manifest.json",
-		update.GetCaptureManifestURL())
+		update.GetCaptureManifestURL(),
+	)
 
 	_, err := New(Params{
-		Logger: zap.NewNop(),
-		Config: &config.Config{Update: config.UpdateConfig{CapturePublicKey: "not a key"}},
+		Logger:       zap.NewNop(),
+		UpdateConfig: &updateconfig.Config{CapturePublicKey: "not a key"},
 	})
 	require.Error(t, err)
 

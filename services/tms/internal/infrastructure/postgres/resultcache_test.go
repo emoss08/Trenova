@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/databaseconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/observability"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/readscope"
@@ -82,7 +83,7 @@ func TestResultCacheFollowsTheConfiguration(t *testing.T) {
 	cfg := &config.Config{}
 	cfg.Database.Host, cfg.Database.Port, cfg.Database.Name = "db.internal", 6432, "trenova"
 	cfg.Database.User, cfg.Database.Password, cfg.Database.SSLMode = "trenova_app", "secret", "disable"
-	cfg.Database.Cache = config.DatabaseCacheConfig{Enabled: true}
+	cfg.Database.Cache = databaseconfig.CacheConfig{Enabled: true}
 	conn := &Connection{cfg: cfg, logger: observability.NewContextLogger(zap.NewNop())}
 
 	cache, err := conn.resultCache()

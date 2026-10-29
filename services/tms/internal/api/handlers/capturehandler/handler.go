@@ -20,7 +20,8 @@ import (
 	"strconv"
 
 	"github.com/emoss08/trenova/internal/api/helpers"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/realtimeconfig"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/documents/app/capturereleaseservice"
 	"github.com/emoss08/trenova/internal/modules/documents/app/captureservice"
@@ -44,13 +45,14 @@ const (
 type Params struct {
 	fx.In
 
-	Service      *captureservice.Service
-	Releases     *capturereleaseservice.Service
-	Gateway      realtimeports.RealtimeGateway `optional:"true"`
-	Edition      ediports.EditionInfo
-	ErrorHandler *helpers.ErrorHandler
-	Config       *config.Config
-	Logger       *zap.Logger
+	Service        *captureservice.Service
+	Releases       *capturereleaseservice.Service
+	Gateway        realtimeports.RealtimeGateway `optional:"true"`
+	Edition        ediports.EditionInfo
+	ErrorHandler   *helpers.ErrorHandler
+	AppConfig      *appconfig.Config
+	RealtimeConfig *realtimeconfig.Config
+	Logger         *zap.Logger
 }
 
 type Handler struct {
@@ -72,9 +74,9 @@ func New(p Params) *Handler {
 		gateway:     p.Gateway,
 		edition:     p.Edition,
 		eh:          p.ErrorHandler,
-		maxLifetime: int64(p.Config.GetRealtimeConfig().GetMaxStreamLifetime().Seconds()),
-		webBase:     p.Config.App.GetWebBaseURL(),
-		version:     p.Config.App.Version,
+		maxLifetime: int64(p.RealtimeConfig.GetMaxStreamLifetime().Seconds()),
+		webBase:     p.AppConfig.GetWebBaseURL(),
+		version:     p.AppConfig.Version,
 		l:           p.Logger.Named("handler.capture"),
 	}
 }

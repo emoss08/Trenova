@@ -11,7 +11,7 @@ import (
 	"sync"
 
 	"github.com/emoss08/trenova/internal/infrastructure/clamav"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/contentscanconfig"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/contentscanports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -24,10 +24,10 @@ import (
 type Params struct {
 	fx.In
 
-	Config    *config.Config
-	Audit     auditports.AuditService
-	Logger    *zap.Logger
-	Lifecycle fx.Lifecycle `optional:"true"`
+	ContentScanConfig *contentscanconfig.Config
+	Audit             auditports.AuditService
+	Logger            *zap.Logger
+	Lifecycle         fx.Lifecycle `optional:"true"`
 }
 
 type Service struct {
@@ -40,7 +40,7 @@ type Service struct {
 var _ contentscanports.Gate = (*Service)(nil)
 
 func New(p Params) contentscanports.Gate {
-	cfg := p.Config.GetContentScanConfig()
+	cfg := *p.ContentScanConfig
 	var scanner contentscanports.Scanner
 	if cfg.Enabled() {
 		scanner = clamav.New(cfg.ClamAV)

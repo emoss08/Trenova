@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/aiconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolcatalog"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -38,7 +39,7 @@ const (
 	// attention than they buy: thirteen tools is already ~3,900 tokens, and a
 	// model picking from thirty overlapping descriptions reaches for the first
 	// plausible one rather than the right one.
-	disclosureThreshold = config.DefaultToolDisclosureThreshold
+	disclosureThreshold = aiconfig.DefaultToolDisclosureThreshold
 
 	// preselectedTools is how many the turn opens with once disclosure is on.
 	preselectedTools = 8
@@ -1131,7 +1132,7 @@ func configuredThreshold(cfg *config.Config) *int {
 	if cfg == nil {
 		return nil
 	}
-	threshold := cfg.GetAIConfig().GetToolDisclosureThreshold()
+	threshold := cfg.AI.GetToolDisclosureThreshold()
 
 	return &threshold
 }

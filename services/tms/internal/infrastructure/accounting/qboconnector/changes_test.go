@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/accountingconfig"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountinginbound"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
@@ -47,7 +47,10 @@ func (f *fakeChangeFeed) connector(t *testing.T) *Connector {
 		_, _ = w.Write([]byte(f.respond(call)))
 	}))
 	t.Cleanup(server.Close)
-	conn := newConnector(t, config.QuickBooksConfig{ClientID: "id", ClientSecret: "secret"})
+	conn := newConnector(
+		t,
+		accountingconfig.QuickBooksConfig{ClientID: "id", ClientSecret: "secret"},
+	)
 	conn.apiOpts = []quickbooks.Option{
 		quickbooks.WithBaseURL(server.URL),
 		quickbooks.WithHTTPClient(server.Client()),

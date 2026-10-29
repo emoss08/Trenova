@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/aiconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
@@ -81,11 +82,11 @@ func newTestService(t *testing.T, completion *stubCompletion) *Service {
 	registry, err := metrics.NewRegistry(&config.Config{}, zap.NewNop())
 	require.NoError(t, err)
 
-	cfg := &config.Config{AI: config.AIConfig{DocumentExtraction: true}}
+	cfg := &config.Config{AI: aiconfig.Config{DocumentExtraction: true}}
 
 	return &Service{
 		logger:     zap.NewNop(),
-		cfg:        cfg.GetAIConfig(),
+		cfg:        &cfg.AI,
 		metrics:    registry,
 		completion: completion,
 	}
@@ -648,7 +649,7 @@ func TestService_RefusesEveryCallWhenAIIsDisabled(t *testing.T) {
 
 	completion := &stubCompletion{}
 	service := newTestService(t, completion)
-	service.cfg = (&config.Config{}).GetAIConfig()
+	service.cfg = &aiconfig.Config{}
 
 	_, routeErr := service.RouteDocument(t.Context(), routeRequest())
 	_, extractErr := service.ExtractRateConfirmation(t.Context(), extractRequest())

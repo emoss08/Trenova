@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/ratelimit"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/customertracking"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/customertrackingports"
@@ -51,11 +52,20 @@ func (f *fakeService) PreviewByToken(
 	return &customertrackingports.PublicTrackingView{
 		CompanyName:       "Trenova Logistics",
 		ShipmentProNumber: "PRO-77",
-		Fields:            []customertracking.Field{customertracking.FieldStatus, customertracking.FieldEta},
-		Status:            customertrackingports.PublicStatusDelayed,
+		Fields: []customertracking.Field{
+			customertracking.FieldStatus,
+			customertracking.FieldEta,
+		},
+		Status: customertrackingports.PublicStatusDelayed,
 		Stops: []customertrackingports.PublicStop{
 			{Sequence: 1, Type: "Pickup", City: "Dallas", StateCode: "TX"},
-			{Sequence: 2, Type: "Delivery", City: "Memphis", StateCode: "TN", EstimatedArrival: &eta},
+			{
+				Sequence:         2,
+				Type:             "Delivery",
+				City:             "Memphis",
+				StateCode:        "TN",
+				EstimatedArrival: &eta,
+			},
 		},
 	}, nil
 }
@@ -78,10 +88,10 @@ func (f *fakeService) DownloadPodByToken(
 
 func newRouter() *gin.Engine {
 	cfg := &config.Config{
-		Security: config.SecurityConfig{
-			RateLimit: config.RateLimitConfig{
+		Security: securityconfig.Config{
+			RateLimit: securityconfig.RateLimitConfig{
 				Enabled: true,
-				PublicToken: config.RateLimitScopeConfig{
+				PublicToken: securityconfig.RateLimitScopeConfig{
 					RequestsPerMinute: 10,
 					BurstSize:         throttleBurst,
 				},
@@ -89,8 +99,8 @@ func newRouter() *gin.Engine {
 		},
 	}
 	errorHandler := helpers.NewErrorHandler(helpers.ErrorHandlerParams{
-		Logger: zap.NewNop(),
-		Config: cfg,
+		Logger:    zap.NewNop(),
+		AppConfig: &cfg.App,
 	})
 	handler := New(Params{
 		Service:      &fakeService{},

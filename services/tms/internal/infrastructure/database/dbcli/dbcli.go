@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/keel/migrate"
 	"github.com/emoss08/keel/seed"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/databaseconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbpool"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/pgxdsn"
 	"github.com/emoss08/trenova/internal/keeltables"
@@ -132,7 +133,7 @@ func (s *Settings) MustConfig() *config.Config {
 	return cfg
 }
 
-func (s *Settings) RLS() config.RLSConfig {
+func (s *Settings) RLS() databaseconfig.RLSConfig {
 	return s.MustConfig().Database.RLS
 }
 

@@ -14,7 +14,8 @@ import (
 	"time"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/accountingconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
@@ -172,14 +173,12 @@ func readFixture(t *testing.T, name string) string {
 	return string(data)
 }
 
-func newProvider(t *testing.T, cfg config.BusinessCentralConfig) *Provider {
+func newProvider(t *testing.T, cfg accountingconfig.BusinessCentralConfig) *Provider {
 	t.Helper()
 	provider, err := New(Params{
-		Config: &config.Config{
-			App:        config.AppConfig{WebBaseURL: "https://app.example.com"},
-			Accounting: config.AccountingConfig{BusinessCentral: cfg},
-		},
-		Logger: zap.NewNop(),
+		AccountingConfig: &accountingconfig.Config{BusinessCentral: cfg},
+		AppConfig:        &appconfig.Config{WebBaseURL: "https://app.example.com"},
+		Logger:           zap.NewNop(),
 	})
 	require.NoError(t, err)
 	return provider
@@ -199,7 +198,7 @@ func testConnector(t *testing.T, fake *fakeBC) *Connector {
 	server := httptest.NewServer(fake.handler(t))
 	t.Cleanup(server.Close)
 
-	provider := newProvider(t, config.BusinessCentralConfig{})
+	provider := newProvider(t, accountingconfig.BusinessCentralConfig{})
 	provider.oauthOpts = []businesscentral.Option{
 		businesscentral.WithLoginURL(server.URL),
 		businesscentral.WithHTTPClient(server.Client()),

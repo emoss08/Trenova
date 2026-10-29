@@ -1,8 +1,7 @@
-package config
+package monitoringconfig
 
 import (
 	"errors"
-	"net/url"
 	"strings"
 
 	"github.com/emoss08/trenova/shared/urlutils"
@@ -23,25 +22,8 @@ var (
 	)
 )
 
-func (c *TracingConfig) GetAISamplingRate() float64 {
-	if c.AISamplingRate == nil {
-		return defaultAISamplingRate
-	}
-
-	return *c.AISamplingRate
-}
-
-func (c *TracingConfig) TraceURL(traceID string) string {
+func (c *TracingConfig) Validate() error {
 	template := strings.TrimSpace(c.TraceURLTemplate)
-	if template == "" || traceID == "" {
-		return ""
-	}
-
-	return strings.ReplaceAll(template, TraceURLTraceIDPlaceholder, url.PathEscape(traceID))
-}
-
-func validateTracingConfig(config *Config) error {
-	template := strings.TrimSpace(config.Monitoring.Tracing.TraceURLTemplate)
 	if template == "" {
 		return nil
 	}

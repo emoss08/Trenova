@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/platformconfig"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -14,8 +14,8 @@ import (
 type Params struct {
 	fx.In
 
-	Config  *config.Config
-	Edition ediports.EditionInfo
+	PlatformConfig *platformconfig.Config
+	Edition        ediports.EditionInfo
 }
 
 type Guard struct {
@@ -24,10 +24,10 @@ type Guard struct {
 }
 
 func New(p Params) (*Guard, error) {
-	return FromPlatform(&p.Config.Platform, p.Edition)
+	return FromPlatform(p.PlatformConfig, p.Edition)
 }
 
-func FromPlatform(platform *config.PlatformConfig, edition ediports.EditionInfo) (*Guard, error) {
+func FromPlatform(platform *platformconfig.Config, edition ediports.EditionInfo) (*Guard, error) {
 	stewards := make(map[pulid.ID]struct{}, len(platform.ReferenceDataStewards))
 	for _, raw := range platform.ReferenceDataStewards {
 		id, err := pulid.Parse(strings.TrimSpace(raw))

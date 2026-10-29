@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/databaseconfig"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -49,7 +50,7 @@ func (d *inlineDetacher) RunDetached(
 
 func enforcing() *config.Config {
 	cfg := &config.Config{}
-	cfg.Database.RLS.Mode = config.RLSModeEnforce
+	cfg.Database.RLS.Mode = databaseconfig.RLSModeEnforce
 	return cfg
 }
 

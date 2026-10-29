@@ -6,7 +6,7 @@ import (
 
 	gqlgen "github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/keel"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/databaseconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/querybudget"
 	"github.com/stretchr/testify/assert"
 	"github.com/vektah/gqlparser/v2/ast"
@@ -16,7 +16,7 @@ import (
 func queryBudgetExtension() *QueryBudgetExtension {
 	return NewQueryBudgetExtension(QueryBudgetParams{
 		Budgets: querybudget.New(
-			querybudget.Params{Config: &config.Config{}, Logger: zap.NewNop()},
+			querybudget.Params{DatabaseConfig: &databaseconfig.Config{}, Logger: zap.NewNop()},
 		),
 	})
 }

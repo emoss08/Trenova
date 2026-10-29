@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/monitoringconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
@@ -126,7 +127,7 @@ func (tp *TracerProvider) initialize(ctx context.Context) error {
 
 func createExporter(
 	ctx context.Context,
-	cfg *config.TracingConfig,
+	cfg *monitoringconfig.TracingConfig,
 	logger *zap.Logger,
 ) (sdktrace.SpanExporter, error) {
 	switch cfg.Provider {
@@ -146,7 +147,7 @@ func createExporter(
 
 func createOTLPGRPCExporter(
 	ctx context.Context,
-	cfg *config.TracingConfig,
+	cfg *monitoringconfig.TracingConfig,
 ) (sdktrace.SpanExporter, error) {
 	opts := []otlptracegrpc.Option{
 		otlptracegrpc.WithEndpoint(cfg.Endpoint),
@@ -162,7 +163,7 @@ func createOTLPGRPCExporter(
 
 func createOTLPExporter(
 	ctx context.Context,
-	cfg *config.TracingConfig,
+	cfg *monitoringconfig.TracingConfig,
 ) (sdktrace.SpanExporter, error) {
 	opts := []otlptracehttp.Option{
 		otlptracehttp.WithEndpoint(cfg.Endpoint),
@@ -182,7 +183,7 @@ func createStdoutExporter() (sdktrace.SpanExporter, error) {
 	)
 }
 
-func createSampler(cfg *config.TracingConfig) sdktrace.Sampler {
+func createSampler(cfg *monitoringconfig.TracingConfig) sdktrace.Sampler {
 	return aitrace.NewSampler(cfg.SamplingRate)
 }
 

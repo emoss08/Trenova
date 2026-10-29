@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/databaseconfig"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -61,7 +62,7 @@ func databaseEnforcesScopes(cfg *config.Config) bool {
 		return false
 	}
 	switch cfg.Database.RLS.Mode {
-	case config.RLSModeObserve, config.RLSModeEnforce:
+	case databaseconfig.RLSModeObserve, databaseconfig.RLSModeEnforce:
 		return true
 	default:
 		return false

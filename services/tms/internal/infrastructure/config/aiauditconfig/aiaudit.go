@@ -1,4 +1,4 @@
-package config
+package aiauditconfig
 
 import (
 	"errors"
@@ -6,6 +6,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
 )
 
 const (
@@ -16,107 +18,105 @@ const (
 	defaultAIAuditProjectorBatchSize  = 1000
 	minAIAuditProjectorInterval       = 10 * time.Second
 	maxAIAuditProjectorBatchSize      = 10_000
-	MinAIAuditChainSecretLength       = 32
+	MinChainSecretLength              = 32
 	maxAIAuditChainKeyIDLength        = 40
-	aiAuditChainKeysEnvSuffix         = "_AI_AUDIT_CHAIN_KEYS"
-	aiAuditChainActiveKeyIDEnvSuffix  = "_AI_AUDIT_CHAIN_ACTIVE_KEY_ID"
 	aiAuditChainKeysEnvEntrySeparator = ","
 	aiAuditChainKeysEnvPairSeparator  = ":"
 	redactedValue                     = "[redacted]"
 )
 
 var (
-	ErrAIAuditChainKeyIDInvalid = errors.New(
+	ErrChainKeyIDInvalid = errors.New(
 		"aiAudit.chain.keys ids must be 1 to 40 letters, digits, '.', '_' or '-'",
 	)
-	ErrAIAuditChainKeyIDDuplicate = errors.New("aiAudit.chain.keys ids must be unique")
-	ErrAIAuditChainSecretTooShort = fmt.Errorf(
+	ErrChainKeyIDDuplicate = errors.New("aiAudit.chain.keys ids must be unique")
+	ErrChainSecretTooShort = fmt.Errorf(
 		"aiAudit.chain.keys secrets must be at least %d characters",
-		MinAIAuditChainSecretLength,
+		MinChainSecretLength,
 	)
-	ErrAIAuditChainActiveKeyRequired = errors.New(
+	ErrChainActiveKeyRequired = errors.New(
 		"aiAudit.chain.activeKeyId is required when aiAudit.chain.keys are configured",
 	)
-	ErrAIAuditChainActiveKeyUnknown = errors.New(
+	ErrChainActiveKeyUnknown = errors.New(
 		"aiAudit.chain.activeKeyId must name one of aiAudit.chain.keys",
 	)
-	ErrAIAuditChainActiveKeyWithoutKeys = errors.New(
+	ErrChainActiveKeyWithoutKeys = errors.New(
 		"aiAudit.chain.activeKeyId is set but aiAudit.chain.keys is empty",
 	)
-	ErrAIAuditChainSecretInsecure = errors.New(
+	ErrChainSecretInsecure = errors.New(
 		"production and staging require aiAudit.chain.keys secrets that are not placeholders",
 	)
-	ErrAIAuditChainKeysEnvMalformed = errors.New(
+	ErrChainKeysEnvMalformed = errors.New(
 		"AI audit chain keys from the environment must be id:secret pairs separated by commas",
 	)
-	ErrAIAuditExportRowsInvalid = errors.New(
+	ErrExportRowsInvalid = errors.New(
 		"aiAudit.export.syncMaxRows must not exceed aiAudit.export.maxRows",
 	)
-	ErrAIAuditExportTTLInvalid  = errors.New("aiAudit.export.ttl cannot be negative")
-	ErrAIAuditProjectorInterval = fmt.Errorf(
+	ErrExportTTLInvalid  = errors.New("aiAudit.export.ttl cannot be negative")
+	ErrProjectorInterval = fmt.Errorf(
 		"aiAudit.projector.interval must be at least %s",
 		minAIAuditProjectorInterval,
 	)
 )
 
-type AIAuditConfig struct {
-	Chain     AIAuditChainConfig     `mapstructure:"chain"`
-	Export    AIAuditExportConfig    `mapstructure:"export"`
-	Projector AIAuditProjectorConfig `mapstructure:"projector"`
+type Config struct {
+	Chain     ChainConfig     `mapstructure:"chain"`
+	Export    ExportConfig    `mapstructure:"export"`
+	Projector ProjectorConfig `mapstructure:"projector"`
 }
 
-type AIAuditChainKey struct {
+type ChainKey struct {
 	ID     string `mapstructure:"id"`
 	Secret string `mapstructure:"secret"`
 }
 
-func (k AIAuditChainKey) String() string {
+func (k ChainKey) String() string {
 	return k.ID + aiAuditChainKeysEnvPairSeparator + redactedValue
 }
 
-func (k AIAuditChainKey) GoString() string {
-	return "config.AIAuditChainKey{ID:" + strconv.Quote(k.ID) + ", Secret:" + redactedValue + "}"
+func (k ChainKey) GoString() string {
+	return "aiauditconfig.ChainKey{ID:" + strconv.Quote(k.ID) + ", Secret:" + redactedValue + "}"
 }
 
-type AIAuditChainConfig struct {
-	Keys        []AIAuditChainKey `mapstructure:"keys"`
-	ActiveKeyID string            `mapstructure:"activeKeyId"`
+type ChainConfig struct {
+	Keys        []ChainKey `mapstructure:"keys"`
+	ActiveKeyID string     `mapstructure:"activeKeyId"`
 }
 
-type AIAuditExportConfig struct {
+type ExportConfig struct {
 	SyncMaxRows int           `mapstructure:"syncMaxRows" validate:"omitempty,min=1"`
 	MaxRows     int           `mapstructure:"maxRows"     validate:"omitempty,min=1"`
 	TTL         time.Duration `mapstructure:"ttl"`
 }
 
-type AIAuditProjectorConfig struct {
+type ProjectorConfig struct {
 	Interval  time.Duration `mapstructure:"interval"`
 	BatchSize int           `mapstructure:"batchSize" validate:"omitempty,min=1,max=10000"`
 }
 
-func (c *AIAuditChainConfig) Configured() bool {
+func (c *ChainConfig) Configured() bool {
 	return len(c.Keys) > 0
 }
 
-func (c *AIAuditChainConfig) Key(id string) (AIAuditChainKey, bool) {
+func (c *ChainConfig) Key(id string) (ChainKey, bool) {
 	for _, key := range c.Keys {
 		if key.ID == id {
 			return key, true
 		}
 	}
 
-	return AIAuditChainKey{}, false
+	return ChainKey{}, false
 }
 
-func (c *AIAuditChainConfig) ActiveKey() (AIAuditChainKey, bool) {
+func (c *ChainConfig) ActiveKey() (ChainKey, bool) {
 	if c.ActiveKeyID == "" {
-		return AIAuditChainKey{}, false
+		return ChainKey{}, false
 	}
 
 	return c.Key(c.ActiveKeyID)
 }
 
-func (c *AIAuditExportConfig) GetSyncMaxRows() int {
+func (c *ExportConfig) GetSyncMaxRows() int {
 	if c.SyncMaxRows <= 0 {
 		return defaultAIAuditExportSyncMaxRows
 	}
@@ -124,7 +124,7 @@ func (c *AIAuditExportConfig) GetSyncMaxRows() int {
 	return c.SyncMaxRows
 }
 
-func (c *AIAuditExportConfig) GetMaxRows() int {
+func (c *ExportConfig) GetMaxRows() int {
 	if c.MaxRows <= 0 {
 		return defaultAIAuditExportMaxRows
 	}
@@ -132,7 +132,7 @@ func (c *AIAuditExportConfig) GetMaxRows() int {
 	return c.MaxRows
 }
 
-func (c *AIAuditExportConfig) GetTTL() time.Duration {
+func (c *ExportConfig) GetTTL() time.Duration {
 	if c.TTL <= 0 {
 		return defaultAIAuditExportTTL
 	}
@@ -140,7 +140,7 @@ func (c *AIAuditExportConfig) GetTTL() time.Duration {
 	return c.TTL
 }
 
-func (c *AIAuditProjectorConfig) GetInterval() time.Duration {
+func (c *ProjectorConfig) GetInterval() time.Duration {
 	if c.Interval <= 0 {
 		return defaultAIAuditProjectorInterval
 	}
@@ -148,7 +148,7 @@ func (c *AIAuditProjectorConfig) GetInterval() time.Duration {
 	return c.Interval
 }
 
-func (c *AIAuditProjectorConfig) GetBatchSize() int {
+func (c *ProjectorConfig) GetBatchSize() int {
 	if c.BatchSize <= 0 {
 		return defaultAIAuditProjectorBatchSize
 	}
@@ -156,31 +156,42 @@ func (c *AIAuditProjectorConfig) GetBatchSize() int {
 	return c.BatchSize
 }
 
-func validateAIAuditConfig(config *Config) error {
-	if err := validateAIAuditChain(&config.AIAudit.Chain); err != nil {
+func Defaults() map[string]any {
+	return map[string]any{
+		"chain.activeKeyId":   "",
+		"export.syncMaxRows":  defaultAIAuditExportSyncMaxRows,
+		"export.maxRows":      defaultAIAuditExportMaxRows,
+		"export.ttl":          defaultAIAuditExportTTL.String(),
+		"projector.interval":  defaultAIAuditProjectorInterval.String(),
+		"projector.batchSize": defaultAIAuditProjectorBatchSize,
+	}
+}
+
+func (c *Config) Validate() error {
+	if err := validateAIAuditChain(&c.Chain); err != nil {
 		return err
 	}
 
-	export := &config.AIAudit.Export
+	export := &c.Export
 	if export.GetSyncMaxRows() > export.GetMaxRows() {
-		return ErrAIAuditExportRowsInvalid
+		return ErrExportRowsInvalid
 	}
 	if export.TTL < 0 {
-		return ErrAIAuditExportTTLInvalid
+		return ErrExportTTLInvalid
 	}
 
-	if interval := config.AIAudit.Projector.Interval; interval != 0 &&
+	if interval := c.Projector.Interval; interval != 0 &&
 		interval < minAIAuditProjectorInterval {
-		return ErrAIAuditProjectorInterval
+		return ErrProjectorInterval
 	}
 
 	return nil
 }
 
-func validateAIAuditChain(chain *AIAuditChainConfig) error {
+func validateAIAuditChain(chain *ChainConfig) error {
 	if !chain.Configured() {
 		if chain.ActiveKeyID != "" {
-			return ErrAIAuditChainActiveKeyWithoutKeys
+			return ErrChainActiveKeyWithoutKeys
 		}
 
 		return nil
@@ -189,33 +200,33 @@ func validateAIAuditChain(chain *AIAuditChainConfig) error {
 	seen := make(map[string]struct{}, len(chain.Keys))
 	for i, key := range chain.Keys {
 		if !validAIAuditChainKeyID(key.ID) {
-			return fmt.Errorf("%w: entry %d", ErrAIAuditChainKeyIDInvalid, i)
+			return fmt.Errorf("%w: entry %d", ErrChainKeyIDInvalid, i)
 		}
 		if _, duplicate := seen[key.ID]; duplicate {
-			return fmt.Errorf("%w: %q", ErrAIAuditChainKeyIDDuplicate, key.ID)
+			return fmt.Errorf("%w: %q", ErrChainKeyIDDuplicate, key.ID)
 		}
 		seen[key.ID] = struct{}{}
-		if len(key.Secret) < MinAIAuditChainSecretLength {
-			return fmt.Errorf("%w: key %q", ErrAIAuditChainSecretTooShort, key.ID)
+		if len(key.Secret) < MinChainSecretLength {
+			return fmt.Errorf("%w: key %q", ErrChainSecretTooShort, key.ID)
 		}
 	}
 
 	if chain.ActiveKeyID == "" {
-		return ErrAIAuditChainActiveKeyRequired
+		return ErrChainActiveKeyRequired
 	}
 	if _, ok := seen[chain.ActiveKeyID]; !ok {
-		return fmt.Errorf("%w: %q", ErrAIAuditChainActiveKeyUnknown, chain.ActiveKeyID)
+		return fmt.Errorf("%w: %q", ErrChainActiveKeyUnknown, chain.ActiveKeyID)
 	}
 
 	return nil
 }
 
-func validateAIAuditChainSecrets(config *Config) error {
-	for _, key := range config.AIAudit.Chain.Keys {
+func (c *Config) ValidateProduction() error {
+	for _, key := range c.Chain.Keys {
 		secret := strings.ToLower(key.Secret)
-		for _, placeholder := range InsecureDefaultValues {
+		for _, placeholder := range securityconfig.InsecureDefaultValues {
 			if strings.Contains(secret, placeholder) {
-				return fmt.Errorf("%w: key %q", ErrAIAuditChainSecretInsecure, key.ID)
+				return fmt.Errorf("%w: key %q", ErrChainSecretInsecure, key.ID)
 			}
 		}
 	}
@@ -241,15 +252,15 @@ func validAIAuditChainKeyID(id string) bool {
 	return true
 }
 
-func parseAIAuditChainKeys(raw string) ([]AIAuditChainKey, error) {
+func ParseChainKeys(raw string) ([]ChainKey, error) {
 	entries := strings.Split(raw, aiAuditChainKeysEnvEntrySeparator)
-	keys := make([]AIAuditChainKey, 0, len(entries))
+	keys := make([]ChainKey, 0, len(entries))
 	for i, entry := range entries {
 		id, secret, found := strings.Cut(strings.TrimSpace(entry), aiAuditChainKeysEnvPairSeparator)
 		if !found || id == "" || secret == "" {
-			return nil, fmt.Errorf("%w: entry %d", ErrAIAuditChainKeysEnvMalformed, i)
+			return nil, fmt.Errorf("%w: entry %d", ErrChainKeysEnvMalformed, i)
 		}
-		keys = append(keys, AIAuditChainKey{ID: id, Secret: secret})
+		keys = append(keys, ChainKey{ID: id, Secret: secret})
 	}
 
 	return keys, nil

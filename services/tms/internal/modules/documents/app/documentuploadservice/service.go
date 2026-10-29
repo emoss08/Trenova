@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/storageconfig"
 	"github.com/emoss08/trenova/internal/modules/documents/app/documentservice"
 	"github.com/emoss08/trenova/internal/modules/documents/app/storedobject"
 	"github.com/emoss08/trenova/internal/modules/documents/app/thumbnailservice"
@@ -61,7 +61,7 @@ type Params struct {
 	Storage            kernelports.Client
 	Validator          *documentservice.Validator
 	AuditService       auditports.AuditService
-	Config             *config.Config
+	StorageConfig      *storageconfig.Config
 	ThumbnailGenerator *thumbnailservice.Generator
 	WorkflowStarter    kernelports.WorkflowStarter
 	UsageProvider      platformcatalogports.UsageProvider `optional:"true"`
@@ -79,7 +79,7 @@ type Service struct {
 	storage            kernelports.Client
 	validator          *documentservice.Validator
 	auditService       auditports.AuditService
-	config             *config.StorageConfig
+	config             *storageconfig.Config
 	thumbnailGenerator *thumbnailservice.Generator
 	workflowStarter    kernelports.WorkflowStarter
 	usageProvider      platformcatalogports.UsageProvider
@@ -99,7 +99,7 @@ func New(p Params) *Service {
 		storage:            p.Storage,
 		validator:          p.Validator,
 		auditService:       p.AuditService,
-		config:             p.Config.GetStorageConfig(),
+		config:             p.StorageConfig,
 		thumbnailGenerator: p.ThumbnailGenerator,
 		workflowStarter:    p.WorkflowStarter,
 		usageProvider:      p.UsageProvider,

@@ -12,6 +12,8 @@ import (
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/databaseconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/testutil/shapetest"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -49,8 +51,8 @@ func NewRLSConnection(t *testing.T, admin *keel.DB, dsn string) *postgres.Connec
 	require.NoError(t, err)
 
 	cfg := &config.Config{
-		App: config.AppConfig{Name: "trenova-rls-test"},
-		Database: config.DatabaseConfig{
+		App: appconfig.Config{Name: "trenova-rls-test"},
+		Database: databaseconfig.Config{
 			Host:         parsed.Hostname(),
 			Port:         port,
 			Name:         strings.TrimPrefix(parsed.Path, "/"),
@@ -58,12 +60,12 @@ func NewRLSConnection(t *testing.T, admin *keel.DB, dsn string) *postgres.Connec
 			Password:     password,
 			SSLMode:      "disable",
 			MaxOpenConns: 16,
-			RLS: config.RLSConfig{
+			RLS: databaseconfig.RLSConfig{
 				Mode:       "enforce",
 				ScopeKeyID: rlsTestScopeKeyID,
 				ScopeKey:   base64.StdEncoding.EncodeToString(randomBytes(t, 48)),
 			},
-			System: config.DatabaseRole{User: systemRole, Password: password},
+			System: databaseconfig.Role{User: systemRole, Password: password},
 		},
 	}
 

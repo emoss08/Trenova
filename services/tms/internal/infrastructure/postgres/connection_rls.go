@@ -10,6 +10,7 @@ import (
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/databaseconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/observability"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbpool"
@@ -78,7 +79,7 @@ func newRLSRuntime(
 }
 
 func (r *rlsRuntime) enforced() bool {
-	return r != nil && r.mode == config.RLSModeEnforce
+	return r != nil && r.mode == databaseconfig.RLSModeEnforce
 }
 
 func (r *rlsRuntime) guard(pool scopePool, systemFallback bool) *scopeGuard {

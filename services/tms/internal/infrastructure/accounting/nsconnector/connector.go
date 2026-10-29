@@ -8,7 +8,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/accountingconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
@@ -44,9 +45,10 @@ var (
 type Params struct {
 	fx.In
 
-	Config  *config.Config
-	Logger  *zap.Logger
-	Limiter restx.Limiter `name:"accountingLimiter" optional:"true"`
+	AccountingConfig *accountingconfig.Config
+	AppConfig        *appconfig.Config
+	Logger           *zap.Logger
+	Limiter          restx.Limiter `name:"accountingLimiter" optional:"true"`
 }
 
 type Provider struct {
@@ -80,9 +82,9 @@ var (
 )
 
 func New(p Params) (*Provider, error) {
-	cfg := p.Config.Accounting.NetSuite
+	cfg := p.AccountingConfig.NetSuite
 	provider := &Provider{
-		redirectURL: cfg.GetRedirectURL(&p.Config.App),
+		redirectURL: cfg.GetRedirectURL(p.AppConfig),
 		gate:        newAccountGate(),
 		books:       newCurrencyBooks(time.Now),
 		now:         time.Now,
@@ -92,7 +94,7 @@ func New(p Params) (*Provider, error) {
 	if p.Limiter != nil {
 		provider.apiOpts = append(provider.apiOpts, netsuite.WithLimiter(p.Limiter, limiterPrefix))
 	}
-	if cfg.IsConfigured(&p.Config.App) {
+	if cfg.IsConfigured(p.AppConfig) {
 		provider.instance = &accountingconnectorports.AccountingApp{
 			Source:       accountingconnection.AppSourceInstance,
 			Environment:  accountingprovider.AppEnvironmentProduction,

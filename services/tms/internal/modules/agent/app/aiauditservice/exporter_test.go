@@ -13,8 +13,8 @@ import (
 	"time"
 
 	"github.com/bytedance/sonic"
+	"github.com/emoss08/trenova/internal/infrastructure/config/aiauditconfig"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiaudit"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiauditports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -323,7 +323,7 @@ func testExports(
 		Workflows: starter,
 		Notifier:  notifier,
 		Audit:     audited,
-		Config:    &config.AIAuditExportConfig{SyncMaxRows: syncMax, MaxRows: 100},
+		Config:    &aiauditconfig.ExportConfig{SyncMaxRows: syncMax, MaxRows: 100},
 		Now:       func() time.Time { return time.Unix(testNow, 0) },
 		Logger:    zap.NewNop(),
 	}), repo, starter, notifier, audited

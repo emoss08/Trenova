@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/temporalconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
@@ -15,8 +16,8 @@ func TestBuildWorkerInterceptorChain_BothDisabled(t *testing.T) {
 	t.Parallel()
 
 	cfg := &config.Config{
-		Temporal: config.TemporalConfig{
-			Interceptors: config.TemporalInterceptorConfig{
+		Temporal: temporalconfig.Config{
+			Interceptors: temporalconfig.InterceptorConfig{
 				EnableLogging: false,
 			},
 		},
@@ -37,8 +38,8 @@ func TestBuildWorkerInterceptorChain_LoggingOnly(t *testing.T) {
 	t.Parallel()
 
 	cfg := &config.Config{
-		Temporal: config.TemporalConfig{
-			Interceptors: config.TemporalInterceptorConfig{
+		Temporal: temporalconfig.Config{
+			Interceptors: temporalconfig.InterceptorConfig{
 				EnableLogging: true,
 				LogLevel:      "info",
 			},
@@ -60,8 +61,8 @@ func TestBuildWorkerInterceptorChain_MetricsOnly(t *testing.T) {
 	t.Parallel()
 
 	cfg := &config.Config{
-		Temporal: config.TemporalConfig{
-			Interceptors: config.TemporalInterceptorConfig{
+		Temporal: temporalconfig.Config{
+			Interceptors: temporalconfig.InterceptorConfig{
 				EnableLogging: false,
 			},
 		},
@@ -85,8 +86,8 @@ func TestBuildWorkerInterceptorChain_BothEnabled(t *testing.T) {
 	t.Parallel()
 
 	cfg := &config.Config{
-		Temporal: config.TemporalConfig{
-			Interceptors: config.TemporalInterceptorConfig{
+		Temporal: temporalconfig.Config{
+			Interceptors: temporalconfig.InterceptorConfig{
 				EnableLogging: true,
 				LogLevel:      "debug",
 			},
@@ -113,8 +114,8 @@ func TestBuildWorkerInterceptorChain_MetricsDisabledViaHandler(t *testing.T) {
 	t.Parallel()
 
 	cfg := &config.Config{
-		Temporal: config.TemporalConfig{
-			Interceptors: config.TemporalInterceptorConfig{
+		Temporal: temporalconfig.Config{
+			Interceptors: temporalconfig.InterceptorConfig{
 				EnableLogging: false,
 			},
 		},
@@ -138,8 +139,8 @@ func TestBuildWorkerInterceptorChain_DefaultLogLevel(t *testing.T) {
 	t.Parallel()
 
 	cfg := &config.Config{
-		Temporal: config.TemporalConfig{
-			Interceptors: config.TemporalInterceptorConfig{
+		Temporal: temporalconfig.Config{
+			Interceptors: temporalconfig.InterceptorConfig{
 				EnableLogging: true,
 				LogLevel:      "",
 			},
@@ -225,8 +226,8 @@ func TestBuildWorkerInterceptorChain_OrderMetricsThenLogging(t *testing.T) {
 	t.Parallel()
 
 	cfg := &config.Config{
-		Temporal: config.TemporalConfig{
-			Interceptors: config.TemporalInterceptorConfig{
+		Temporal: temporalconfig.Config{
+			Interceptors: temporalconfig.InterceptorConfig{
 				EnableLogging: true,
 				LogLevel:      "warn",
 			},
@@ -255,8 +256,8 @@ func TestBuildWorkerInterceptorChain_NilNilMetricsHandler(t *testing.T) {
 	t.Parallel()
 
 	cfg := &config.Config{
-		Temporal: config.TemporalConfig{
-			Interceptors: config.TemporalInterceptorConfig{
+		Temporal: temporalconfig.Config{
+			Interceptors: temporalconfig.InterceptorConfig{
 				EnableLogging: true,
 				LogLevel:      "info",
 			},

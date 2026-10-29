@@ -1,13 +1,10 @@
-package config_test
+package aiconfig_test
 
 import (
-	"os"
-	"path/filepath"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/aiconfig"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 /*
@@ -26,7 +23,7 @@ the switch for an operator who wants to stop all of it at once.
 func TestAIConfig_AbsentMeansEnabled(t *testing.T) {
 	t.Parallel()
 
-	var unset config.AIConfig
+	var unset aiconfig.Config
 
 	assert.True(t, unset.AIEnabled(), "omitting the key must not disable the assistant")
 }
@@ -36,8 +33,8 @@ func TestAIConfig_HonoursAnExplicitChoice(t *testing.T) {
 
 	off, on := false, true
 
-	assert.False(t, (&config.AIConfig{Enabled: &off}).AIEnabled())
-	assert.True(t, (&config.AIConfig{Enabled: &on}).AIEnabled())
+	assert.False(t, (&aiconfig.Config{Enabled: &off}).AIEnabled())
+	assert.True(t, (&aiconfig.Config{Enabled: &on}).AIEnabled())
 }
 
 // The message has to name the key. "AI features are disabled" on its own sent
@@ -46,7 +43,7 @@ func TestAIConfig_HonoursAnExplicitChoice(t *testing.T) {
 func TestAIEnabledKey_IsTheKeyOperatorsSearchFor(t *testing.T) {
 	t.Parallel()
 
-	assert.Equal(t, "ai.enabled", config.AIEnabledKey)
+	assert.Equal(t, "ai.enabled", aiconfig.EnabledKey)
 }
 
 // A service built without the section at all must not panic inside the gate. A
@@ -55,34 +52,11 @@ func TestAIEnabledKey_IsTheKeyOperatorsSearchFor(t *testing.T) {
 func TestAIConfig_NilReceiverIsEnabled(t *testing.T) {
 	t.Parallel()
 
-	var missing *config.AIConfig
+	var missing *aiconfig.Config
 
 	assert.NotPanics(t, func() {
 		assert.True(t, missing.AIEnabled())
 	})
-}
-
-// An operator upgrading past the merge has documentIntelligence: in their
-// file. An exact unmarshal already refuses the unknown key, but its message
-// reads as a typo; the settings were moved, and saying so is the difference
-// between a five-minute edit and an afternoon.
-func TestLoad_SaysWhereTheDocumentIntelligenceSectionWent(t *testing.T) {
-	dir := t.TempDir()
-	path := filepath.Join(dir, "config.test.yaml")
-	require.NoError(t, os.WriteFile(path, []byte(
-		"documentIntelligence:\n  enableAI: true\n  aiTimeout: 20s\n",
-	), 0o600))
-
-	loader := config.NewLoader(
-		config.WithConfigPath(dir),
-		config.WithEnvironment("test"),
-	)
-	_, err := loader.Load()
-
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "documentIntelligence")
-	assert.Contains(t, err.Error(), "has been removed")
-	assert.Contains(t, err.Error(), "ai.documentExtraction")
 }
 
 // Cache diagnostics ask the Claude API to keep a fingerprint of every call, so
@@ -91,22 +65,30 @@ func TestLoad_SaysWhereTheDocumentIntelligenceSectionWent(t *testing.T) {
 func TestAIConfig_CacheDiagnosticsAreOffUnlessTurnedOn(t *testing.T) {
 	t.Parallel()
 
-	var absent *config.AIConfig
+	var absent *aiconfig.Config
 	assert.False(t, absent.CacheDiagnosticsEnabled())
-	assert.False(t, (&config.AIConfig{}).CacheDiagnosticsEnabled())
-	assert.True(t, (&config.AIConfig{CacheDiagnostics: true}).CacheDiagnosticsEnabled())
+	assert.False(t, (&aiconfig.Config{}).CacheDiagnosticsEnabled())
+	assert.True(t, (&aiconfig.Config{CacheDiagnostics: true}).CacheDiagnosticsEnabled())
 }
 
 func TestAIConfig_ToolDisclosureThresholdDefaultsToTwelve(t *testing.T) {
 	t.Parallel()
 
-	var absent *config.AIConfig
-	assert.Equal(t, config.DefaultToolDisclosureThreshold, absent.GetToolDisclosureThreshold())
-	assert.Equal(t, 12, (&config.AIConfig{}).GetToolDisclosureThreshold())
+	var absent *aiconfig.Config
+	assert.Equal(t, aiconfig.DefaultToolDisclosureThreshold, absent.GetToolDisclosureThreshold())
+	assert.Equal(t, 12, (&aiconfig.Config{}).GetToolDisclosureThreshold())
 
 	zero, thirty, negative := 0, 30, -1
-	assert.Equal(t, 0, (&config.AIConfig{ToolDisclosureThreshold: &zero}).GetToolDisclosureThreshold())
-	assert.Equal(t, 30, (&config.AIConfig{ToolDisclosureThreshold: &thirty}).GetToolDisclosureThreshold())
+	assert.Equal(
+		t,
+		0,
+		(&aiconfig.Config{ToolDisclosureThreshold: &zero}).GetToolDisclosureThreshold(),
+	)
+	assert.Equal(
+		t,
+		30,
+		(&aiconfig.Config{ToolDisclosureThreshold: &thirty}).GetToolDisclosureThreshold(),
+	)
 	assert.Equal(t, 12,
-		(&config.AIConfig{ToolDisclosureThreshold: &negative}).GetToolDisclosureThreshold())
+		(&aiconfig.Config{ToolDisclosureThreshold: &negative}).GetToolDisclosureThreshold())
 }

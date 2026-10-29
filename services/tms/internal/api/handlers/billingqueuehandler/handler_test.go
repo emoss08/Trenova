@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/billingqueuehandler"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -65,8 +65,8 @@ func buildHandler(
 
 	logger := zap.NewNop()
 	errorHandler := helpers.NewErrorHandler(helpers.ErrorHandlerParams{
-		Logger: logger,
-		Config: &config.Config{App: config.AppConfig{Debug: true}},
+		Logger:    logger,
+		AppConfig: &appconfig.Config{Debug: true},
 	})
 	pm := middleware.NewPermissionMiddleware(middleware.PermissionMiddlewareParams{
 		PermissionEngine: permissions,
@@ -151,7 +151,11 @@ func TestBillingQueueHandler_Get_FormulaContentFollowsPermission(t *testing.T) {
 			}
 			assert.Nil(t, body.Shipment.FormulaTemplate)
 			assert.Empty(t, body.Shipment.RatingDetail.Trace)
-			assert.NotEmpty(t, item.Shipment.RatingDetail.Trace, "the stored shipment keeps its trace")
+			assert.NotEmpty(
+				t,
+				item.Shipment.RatingDetail.Trace,
+				"the stored shipment keeps its trace",
+			)
 		})
 	}
 }

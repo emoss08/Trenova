@@ -44,7 +44,7 @@ GraphQL / REST / agent tool ──▶ reporting.Service.Prepare ──▶ report
 | Run workflow, schedule dispatch, delivery, cleanup | `internal/modules/workspace/jobs/reportjobs/` |
 | Renderers: CSV, JSON, XLSX (keel), PDF (Gotenberg), dashboard workbook (excelize) | `internal/infrastructure/reporting/render/` |
 | Reporting connection pool | `postgres.ReportingConnection` (`internal/infrastructure/postgres/connection.go`) |
-| Configuration and defaults | `reporting:` in config, `config.ReportingConfig` |
+| Configuration and defaults | `reporting:` in config, `reportingconfig.Config` |
 | GraphQL | `internal/api/graphql/schema/report.graphqls`, `resolver/reportresolver/` |
 | REST: download, dashboard export | `internal/api/handlers/reporthandler/` |
 | Agent tools | `agent/app/agentquerytoolservice/report*.go`, `agent/app/agenttools/{reporttools,alerttools,dashboardtools}` |

@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/imagingconfig"
 	"github.com/emoss08/trenova/internal/modules/documents/app/storedobject"
 	"github.com/emoss08/trenova/internal/modules/documents/app/thumbnailservice"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
@@ -29,11 +29,11 @@ const (
 type Params struct {
 	fx.In
 
-	Storage    kernelports.Client
-	Encryption *encryptionservice.Service
-	Generator  *thumbnailservice.Generator
-	Config     *config.Config
-	Logger     *zap.Logger
+	Storage       kernelports.Client
+	Encryption    *encryptionservice.Service
+	Generator     *thumbnailservice.Generator
+	ImagingConfig *imagingconfig.Config
+	Logger        *zap.Logger
 }
 
 type Store struct {
@@ -50,7 +50,7 @@ func New(p Params) *Store {
 		storage:       p.Storage,
 		encryption:    p.Encryption,
 		generator:     p.Generator,
-		renderTimeout: p.Config.Imaging.Deadlines.GetRender(),
+		renderTimeout: p.ImagingConfig.Deadlines.GetRender(),
 		logger:        p.Logger.Named("documents.pagerender"),
 	}
 }

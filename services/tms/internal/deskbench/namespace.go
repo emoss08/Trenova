@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/temporalconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/connection"
 	namespacepb "go.temporal.io/api/namespace/v1"
 	"go.temporal.io/api/serviceerror"
@@ -49,7 +50,7 @@ func AssertSafe(cfg *config.Config, namespace string) error {
 	return nil
 }
 
-func EnsureNamespace(ctx context.Context, cfg *config.TemporalConfig, namespace string) error {
+func EnsureNamespace(ctx context.Context, cfg *temporalconfig.Config, namespace string) error {
 	scoped := *cfg
 	scoped.Namespace = namespace
 

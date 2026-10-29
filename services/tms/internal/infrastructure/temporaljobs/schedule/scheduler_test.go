@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/temporalconfig"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.temporal.io/sdk/client"
@@ -185,8 +186,8 @@ func TestScheduler_Stop_PersistOnStopTrue(t *testing.T) {
 	s := &Scheduler{
 		registry: registry,
 		config: &config.Config{
-			Temporal: config.TemporalConfig{
-				Schedule: config.TemporalScheduleConfig{
+			Temporal: temporalconfig.Config{
+				Schedule: temporalconfig.ScheduleConfig{
 					PersistOnStop: true,
 				},
 			},
@@ -207,8 +208,8 @@ func TestScheduler_Stop_PersistOnStopFalse(t *testing.T) {
 	s := &Scheduler{
 		registry: registry,
 		config: &config.Config{
-			Temporal: config.TemporalConfig{
-				Schedule: config.TemporalScheduleConfig{
+			Temporal: temporalconfig.Config{
+				Schedule: temporalconfig.ScheduleConfig{
 					PersistOnStop: false,
 				},
 			},

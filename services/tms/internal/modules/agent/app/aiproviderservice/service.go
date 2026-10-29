@@ -4,7 +4,7 @@ import (
 	"context"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/aiconfig"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiplatform"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiproviderchange"
@@ -42,7 +42,7 @@ type Params struct {
 	AuditService auditports.AuditService
 	// Tester runs a test on a worker, which calls back into RunTest.
 	Tester    aiproviderports.AIProviderTester
-	Config    *config.Config
+	AIConfig  *aiconfig.Config
 	Analytics aianalyticsports.AnalyticsCache `optional:"true"`
 }
 
@@ -70,7 +70,7 @@ type Service struct {
 	prober     EndpointProber
 	audit      auditports.AuditService
 	tester     aiproviderports.AIProviderTester
-	ai         *config.AIConfig
+	ai         *aiconfig.Config
 	analytics  aianalyticsports.AnalyticsCache
 }
 
@@ -80,11 +80,6 @@ var (
 )
 
 func New(p Params) *Service {
-	var ai *config.AIConfig
-	if p.Config != nil {
-		ai = p.Config.GetAIConfig()
-	}
-
 	return &Service{
 		l:          p.Logger.Named("service.aiprovider"),
 		db:         p.DB,
@@ -95,7 +90,7 @@ func New(p Params) *Service {
 		prober:     p.Prober,
 		audit:      p.AuditService,
 		tester:     p.Tester,
-		ai:         ai,
+		ai:         p.AIConfig,
 		analytics:  p.Analytics,
 	}
 }

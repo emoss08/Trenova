@@ -101,7 +101,7 @@ func runRewrap(cmd *cobra.Command, _ []string) error {
 		orgID = parsed
 	}
 
-	logger, sink, err := config.ProvideLogger(cfg)
+	logger, sink, err := config.ProvideLogger(&cfg.Logging)
 	if err != nil {
 		return err
 	}
@@ -123,7 +123,7 @@ func runRewrap(cmd *cobra.Command, _ []string) error {
 
 	var storage kernelports.Client
 	if !rewrapSkipObjects {
-		storage, err = minio.New(minio.Params{Config: cfg, Logger: zap.NewNop()})
+		storage, err = minio.New(minio.Params{StorageConfig: &cfg.Storage, Logger: zap.NewNop()})
 		if err != nil {
 			return fmt.Errorf("connect to object storage: %w", err)
 		}

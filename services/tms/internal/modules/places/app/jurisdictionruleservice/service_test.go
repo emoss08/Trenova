@@ -4,9 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
-
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/platformconfig"
 	"github.com/emoss08/trenova/internal/modules/edi/app/referencedataguard"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -15,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/places/ports/jurisdictionruleports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/permitports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
+	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -97,8 +96,8 @@ func newService(t *testing.T, repo permitports.JurisdictionRuleRepository) *serv
 func selfHostedGuard(t *testing.T) *referencedataguard.Guard {
 	t.Helper()
 
-	guard, err := referencedataguard.FromPlatform(&config.PlatformConfig{
-		Mode: config.PlatformModeSelfHosted,
+	guard, err := referencedataguard.FromPlatform(&platformconfig.Config{
+		Mode: platformconfig.ModeSelfHosted,
 	}, editioninfo.SelfHosted())
 	require.NoError(t, err)
 
@@ -281,8 +280,8 @@ func TestLogAction_LeavesTenantUnsetForGlobalData(t *testing.T) {
 
 func TestWrites_AreRefusedForATenantThatIsNotAStewardInCloudMode(t *testing.T) {
 	steward := pulid.MustNew("org_")
-	guard, err := referencedataguard.FromPlatform(&config.PlatformConfig{
-		Mode:                  config.PlatformModeCloud,
+	guard, err := referencedataguard.FromPlatform(&platformconfig.Config{
+		Mode:                  platformconfig.ModeCloud,
 		ReferenceDataStewards: []string{steward.String()},
 	}, editioninfo.NewStatic("cloud", true))
 	require.NoError(t, err)

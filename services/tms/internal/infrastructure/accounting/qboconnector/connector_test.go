@@ -12,6 +12,8 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/accountingconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
@@ -23,13 +25,14 @@ import (
 	"go.uber.org/zap"
 )
 
-func newProvider(t *testing.T, qbo config.QuickBooksConfig) *Provider {
+func newProvider(t *testing.T, qbo accountingconfig.QuickBooksConfig) *Provider {
 	t.Helper()
 	cfg := &config.Config{
-		App:        config.AppConfig{WebBaseURL: "https://app.example.com"},
-		Accounting: config.AccountingConfig{QuickBooks: qbo},
+		App:        appconfig.Config{WebBaseURL: "https://app.example.com"},
+		Accounting: accountingconfig.Config{QuickBooks: qbo},
 	}
-	provider, err := New(Params{Config: cfg, Logger: zap.NewNop()})
+	provider, err := New(Params{AccountingConfig: &cfg.Accounting,
+		AppConfig: &cfg.App, Logger: zap.NewNop()})
 	require.NoError(t, err)
 	return provider
 }
@@ -46,7 +49,7 @@ func tenantApp(
 	}
 }
 
-func newConnector(t *testing.T, qbo config.QuickBooksConfig) *Connector {
+func newConnector(t *testing.T, qbo accountingconfig.QuickBooksConfig) *Connector {
 	t.Helper()
 	provider := newProvider(t, qbo)
 	app, ok := provider.InstanceApp()
@@ -63,7 +66,7 @@ func newConnector(t *testing.T, qbo config.QuickBooksConfig) *Connector {
 func TestUnconfiguredInstanceHasNoApp(t *testing.T) {
 	t.Parallel()
 
-	provider := newProvider(t, config.QuickBooksConfig{})
+	provider := newProvider(t, accountingconfig.QuickBooksConfig{})
 	_, ok := provider.InstanceApp()
 	assert.False(t, ok)
 	_, err := provider.Bind(nil)
@@ -74,7 +77,7 @@ func TestUnconfiguredInstanceHasNoApp(t *testing.T) {
 func TestConfiguredInstanceAppBuildsAuthorizeURLWithDerivedRedirect(t *testing.T) {
 	t.Parallel()
 
-	provider := newProvider(t, config.QuickBooksConfig{
+	provider := newProvider(t, accountingconfig.QuickBooksConfig{
 		ClientID:     "id",
 		ClientSecret: "secret",
 		Environment:  "sandbox",
@@ -106,7 +109,10 @@ func TestConfiguredInstanceAppBuildsAuthorizeURLWithDerivedRedirect(t *testing.T
 func TestInstanceAppIsReturnedAsACopy(t *testing.T) {
 	t.Parallel()
 
-	provider := newProvider(t, config.QuickBooksConfig{ClientID: "id", ClientSecret: "secret"})
+	provider := newProvider(
+		t,
+		accountingconfig.QuickBooksConfig{ClientID: "id", ClientSecret: "secret"},
+	)
 	app, ok := provider.InstanceApp()
 	require.True(t, ok)
 	app.ClientID = "changed"
@@ -117,7 +123,7 @@ func TestInstanceAppIsReturnedAsACopy(t *testing.T) {
 func TestTenantAppBindsWithoutAnInstanceApp(t *testing.T) {
 	t.Parallel()
 
-	provider := newProvider(t, config.QuickBooksConfig{})
+	provider := newProvider(t, accountingconfig.QuickBooksConfig{})
 	conn, err := provider.Bind(tenantApp(accountingprovider.AppEnvironmentProduction))
 	require.NoError(t, err)
 	raw, err := conn.AuthorizeURL(
@@ -130,7 +136,7 @@ func TestTenantAppBindsWithoutAnInstanceApp(t *testing.T) {
 func TestBindingReusesTheConnectorForTheSameKeys(t *testing.T) {
 	t.Parallel()
 
-	provider := newProvider(t, config.QuickBooksConfig{})
+	provider := newProvider(t, accountingconfig.QuickBooksConfig{})
 	first, err := provider.Bind(tenantApp(accountingprovider.AppEnvironmentSandbox))
 	require.NoError(t, err)
 	second, err := provider.Bind(tenantApp(accountingprovider.AppEnvironmentSandbox))
@@ -147,7 +153,7 @@ func TestBindingReusesTheConnectorForTheSameKeys(t *testing.T) {
 func TestBindingKeepsEachAppsEnvironment(t *testing.T) {
 	t.Parallel()
 
-	provider := newProvider(t, config.QuickBooksConfig{})
+	provider := newProvider(t, accountingconfig.QuickBooksConfig{})
 	sandbox, err := provider.bind(tenantApp(accountingprovider.AppEnvironmentSandbox))
 	require.NoError(t, err)
 	production, err := provider.bind(tenantApp(accountingprovider.AppEnvironmentProduction))
@@ -159,7 +165,7 @@ func TestBindingKeepsEachAppsEnvironment(t *testing.T) {
 func TestBindingRejectsAnUnknownEnvironment(t *testing.T) {
 	t.Parallel()
 
-	provider := newProvider(t, config.QuickBooksConfig{})
+	provider := newProvider(t, accountingconfig.QuickBooksConfig{})
 	_, err := provider.Bind(tenantApp("Staging"))
 	require.Error(t, err)
 }
@@ -167,7 +173,8 @@ func TestBindingRejectsAnUnknownEnvironment(t *testing.T) {
 func TestWithoutARedirectAddressOAuthIsAConfigurationFailure(t *testing.T) {
 	t.Parallel()
 
-	provider, err := New(Params{Config: &config.Config{}, Logger: zap.NewNop()})
+	provider, err := New(Params{AccountingConfig: &accountingconfig.Config{},
+		AppConfig: &appconfig.Config{}, Logger: zap.NewNop()})
 	require.NoError(t, err)
 	assert.Empty(t, provider.RedirectURL())
 	conn, err := provider.Bind(tenantApp(accountingprovider.AppEnvironmentSandbox))
@@ -186,10 +193,11 @@ func TestWithoutARedirectAddressOAuthIsAConfigurationFailure(t *testing.T) {
 func TestUnknownEnvironmentIsRejected(t *testing.T) {
 	t.Parallel()
 
-	cfg := &config.Config{Accounting: config.AccountingConfig{
-		QuickBooks: config.QuickBooksConfig{Environment: "staging"},
+	cfg := &config.Config{Accounting: accountingconfig.Config{
+		QuickBooks: accountingconfig.QuickBooksConfig{Environment: "staging"},
 	}}
-	_, err := New(Params{Config: cfg, Logger: zap.NewNop()})
+	_, err := New(Params{AccountingConfig: &cfg.Accounting,
+		AppConfig: &cfg.App, Logger: zap.NewNop()})
 	require.Error(t, err)
 }
 
@@ -202,7 +210,7 @@ func verifyAppAgainst(t *testing.T, status int, body string) error {
 	}))
 	t.Cleanup(server.Close)
 
-	provider := newProvider(t, config.QuickBooksConfig{})
+	provider := newProvider(t, accountingconfig.QuickBooksConfig{})
 	provider.oauthOpts = []quickbooks.Option{
 		quickbooks.WithBaseURL(server.URL),
 		quickbooks.WithHTTPClient(server.Client()),
@@ -236,7 +244,7 @@ func TestVerifyAppPassesOnOtherFailures(t *testing.T) {
 func TestVerifyWebhookUsesTheBoundAppsVerifier(t *testing.T) {
 	t.Parallel()
 
-	provider := newProvider(t, config.QuickBooksConfig{})
+	provider := newProvider(t, accountingconfig.QuickBooksConfig{})
 	conn, err := provider.Bind(tenantApp(accountingprovider.AppEnvironmentSandbox))
 	require.NoError(t, err)
 	body := []byte(`[]`)
@@ -271,7 +279,7 @@ func TestCompanyFactsCombinesInfoAndPreferences(t *testing.T) {
 	}))
 	t.Cleanup(server.Close)
 
-	conn := newConnector(t, config.QuickBooksConfig{})
+	conn := newConnector(t, accountingconfig.QuickBooksConfig{})
 	conn.apiOpts = []quickbooks.Option{
 		quickbooks.WithBaseURL(server.URL),
 		quickbooks.WithHTTPClient(server.Client()),
@@ -292,7 +300,7 @@ func TestCompanyFactsCombinesInfoAndPreferences(t *testing.T) {
 func TestClassifyError(t *testing.T) {
 	t.Parallel()
 
-	conn := newConnector(t, config.QuickBooksConfig{})
+	conn := newConnector(t, accountingconfig.QuickBooksConfig{})
 	cases := []struct {
 		name string
 		err  error

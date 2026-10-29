@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/emoss08/keel/analytics/ir"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/reportingconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -42,7 +42,7 @@ type Params struct {
 	Storage          kernelports.Client
 	AuditService     auditports.AuditService `optional:"true"`
 	Metrics          *metrics.Registry       `optional:"true"`
-	Config           *config.Config
+	ReportingConfig  *reportingconfig.Config
 }
 
 type Service struct {
@@ -61,7 +61,7 @@ type Service struct {
 	storage       kernelports.Client
 	audit         auditports.AuditService
 	metrics       *metrics.Report
-	cfg           *config.ReportingConfig
+	cfg           *reportingconfig.Config
 	canned        *canned.Registry
 }
 
@@ -104,7 +104,7 @@ func New(p Params) (*Service, error) {
 		storage:       p.Storage,
 		audit:         p.AuditService,
 		metrics:       reportMetrics,
-		cfg:           p.Config.GetReportingConfig(),
+		cfg:           p.ReportingConfig,
 		canned:        library,
 	}, nil
 }

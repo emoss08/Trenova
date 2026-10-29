@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/infrastructure/agentcompletion/modeladapter"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/aiconfig"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
@@ -34,7 +34,7 @@ import (
 // better than discovering it from a malformed billing diagnosis weeks later.
 type Prober struct {
 	logger   *zap.Logger
-	cfg      *config.AIConfig
+	cfg      *aiconfig.Config
 	adapters *modeladapter.Registry
 	prices   aiproviderports.ModelPriceReference
 
@@ -45,15 +45,15 @@ type Prober struct {
 type ProberParams struct {
 	fx.In
 
-	Logger *zap.Logger
-	Config *config.Config
-	Prices aiproviderports.ModelPriceReference `optional:"true"`
+	Logger   *zap.Logger
+	AIConfig *aiconfig.Config
+	Prices   aiproviderports.ModelPriceReference `optional:"true"`
 }
 
 func NewProber(p ProberParams) *Prober {
 	return &Prober{
 		logger:   p.Logger.Named("service.aiprovider.prober"),
-		cfg:      p.Config.GetAIConfig(),
+		cfg:      p.AIConfig,
 		adapters: modeladapter.NewRegistry(),
 		prices:   p.Prices,
 		clients:  make(map[bool]*http.Client, 2),

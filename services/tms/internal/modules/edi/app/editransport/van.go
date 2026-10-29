@@ -4,7 +4,7 @@ import (
 	"context"
 	"path"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/ediconfig"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/editransportports"
 	"github.com/emoss08/trenova/shared/maputils"
@@ -14,7 +14,7 @@ type VANTransport struct {
 	network sftpNetwork
 }
 
-func NewVANTransport(cfg *config.Config) *VANTransport {
+func NewVANTransport(cfg *ediconfig.Config) *VANTransport {
 	return &VANTransport{network: sftpNetworkFromConfig(cfg)}
 }
 

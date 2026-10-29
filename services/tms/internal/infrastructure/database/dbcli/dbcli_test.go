@@ -9,8 +9,8 @@ import (
 
 	"github.com/emoss08/keel/seed"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/databaseconfig"
 	"github.com/emoss08/trenova/internal/seeds/fixtures"
-
 	"github.com/emoss08/trenova/schema"
 	"github.com/emoss08/trenova/schema/migrations"
 	"github.com/stretchr/testify/assert"
@@ -111,7 +111,7 @@ func TestTheDatabaseToolRecordsDataVersionsForItsWrites(t *testing.T) {
 	t.Parallel()
 
 	settings := &Settings{name: "trenova-db", load: func() (*config.Config, error) {
-		return &config.Config{Database: config.DatabaseConfig{
+		return &config.Config{Database: databaseconfig.Config{
 			Host:     "localhost",
 			Port:     5432,
 			Name:     "trenova",

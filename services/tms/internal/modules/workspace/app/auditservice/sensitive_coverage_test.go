@@ -3,9 +3,9 @@ package auditservice
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
+	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -14,7 +14,7 @@ import (
 func TestSanitizeMapInArray_RegisteredGenericFieldPath(t *testing.T) {
 	t.Parallel()
 
-	sdm := NewSensitiveDataManager(config.EncryptionConfig{Key: "test-key"})
+	sdm := NewSensitiveDataManager(securityconfig.EncryptionConfig{Key: "test-key"})
 	sdm.SetAutoDetect(false)
 	sdm.SetMaskStrategy(MaskStrategyStrict)
 
@@ -36,7 +36,7 @@ func TestSanitizeMapInArray_RegisteredGenericFieldPath(t *testing.T) {
 func TestSanitizeMapInArray_RegisteredSpecificFieldPath(t *testing.T) {
 	t.Parallel()
 
-	sdm := NewSensitiveDataManager(config.EncryptionConfig{Key: "test-key"})
+	sdm := NewSensitiveDataManager(securityconfig.EncryptionConfig{Key: "test-key"})
 	sdm.SetAutoDetect(false)
 	sdm.SetMaskStrategy(MaskStrategyStrict)
 
@@ -58,7 +58,7 @@ func TestSanitizeMapInArray_RegisteredSpecificFieldPath(t *testing.T) {
 func TestSanitizeMapInArray_RegisteredArrayNotationPath(t *testing.T) {
 	t.Parallel()
 
-	sdm := NewSensitiveDataManager(config.EncryptionConfig{Key: "test-key"})
+	sdm := NewSensitiveDataManager(securityconfig.EncryptionConfig{Key: "test-key"})
 	sdm.SetAutoDetect(false)
 	sdm.SetMaskStrategy(MaskStrategyStrict)
 
@@ -80,7 +80,7 @@ func TestSanitizeMapInArray_RegisteredArrayNotationPath(t *testing.T) {
 func TestSanitizeMapInArray_RegisteredKeyOnlyNoPath(t *testing.T) {
 	t.Parallel()
 
-	sdm := NewSensitiveDataManager(config.EncryptionConfig{Key: "test-key"})
+	sdm := NewSensitiveDataManager(securityconfig.EncryptionConfig{Key: "test-key"})
 	sdm.SetAutoDetect(false)
 	sdm.SetMaskStrategy(MaskStrategyStrict)
 
@@ -102,7 +102,7 @@ func TestSanitizeMapInArray_RegisteredKeyOnlyNoPath(t *testing.T) {
 func TestSanitizeMapInArray_AutoDetectFieldName(t *testing.T) {
 	t.Parallel()
 
-	sdm := NewSensitiveDataManager(config.EncryptionConfig{Key: "test-key"})
+	sdm := NewSensitiveDataManager(securityconfig.EncryptionConfig{Key: "test-key"})
 	sdm.SetAutoDetect(true)
 	sdm.SetMaskStrategy(MaskStrategyStrict)
 
@@ -120,7 +120,7 @@ func TestSanitizeMapInArray_AutoDetectFieldName(t *testing.T) {
 func TestSanitizeMapInArray_AutoDetectSensitiveValue(t *testing.T) {
 	t.Parallel()
 
-	sdm := NewSensitiveDataManager(config.EncryptionConfig{Key: "test-key"})
+	sdm := NewSensitiveDataManager(securityconfig.EncryptionConfig{Key: "test-key"})
 	sdm.SetAutoDetect(true)
 	sdm.SetMaskStrategy(MaskStrategyStrict)
 
@@ -138,7 +138,7 @@ func TestSanitizeMapInArray_AutoDetectSensitiveValue(t *testing.T) {
 func TestSanitizeMapInArray_NestedMap(t *testing.T) {
 	t.Parallel()
 
-	sdm := NewSensitiveDataManager(config.EncryptionConfig{Key: "test-key"})
+	sdm := NewSensitiveDataManager(securityconfig.EncryptionConfig{Key: "test-key"})
 	sdm.SetAutoDetect(false)
 
 	registeredFields := map[string]SensitiveFieldConfig{
@@ -166,7 +166,7 @@ func TestSanitizeMapInArray_NestedMap(t *testing.T) {
 func TestSanitizeMapInArray_NestedSlice(t *testing.T) {
 	t.Parallel()
 
-	sdm := NewSensitiveDataManager(config.EncryptionConfig{Key: "test-key"})
+	sdm := NewSensitiveDataManager(securityconfig.EncryptionConfig{Key: "test-key"})
 	sdm.SetAutoDetect(true)
 	sdm.SetMaskStrategy(MaskStrategyStrict)
 
@@ -187,7 +187,7 @@ func TestSanitizeMapInArray_NestedSlice(t *testing.T) {
 func TestSanitizeMapInArray_AutoDetectDisabled(t *testing.T) {
 	t.Parallel()
 
-	sdm := NewSensitiveDataManager(config.EncryptionConfig{Key: "test-key"})
+	sdm := NewSensitiveDataManager(securityconfig.EncryptionConfig{Key: "test-key"})
 	sdm.SetAutoDetect(false)
 
 	data := map[string]any{
@@ -204,7 +204,7 @@ func TestSanitizeMapInArray_AutoDetectDisabled(t *testing.T) {
 func TestSanitizeMapInArray_AutoDetectFieldPath(t *testing.T) {
 	t.Parallel()
 
-	sdm := NewSensitiveDataManager(config.EncryptionConfig{Key: "test-key"})
+	sdm := NewSensitiveDataManager(securityconfig.EncryptionConfig{Key: "test-key"})
 	sdm.SetAutoDetect(true)
 	sdm.SetMaskStrategy(MaskStrategyStrict)
 
@@ -220,7 +220,7 @@ func TestSanitizeMapInArray_AutoDetectFieldPath(t *testing.T) {
 func TestGetCompiledPattern_CachesResult(t *testing.T) {
 	t.Parallel()
 
-	sdm := NewSensitiveDataManager(config.EncryptionConfig{Key: "test-key"})
+	sdm := NewSensitiveDataManager(securityconfig.EncryptionConfig{Key: "test-key"})
 
 	pattern := `\btest\b`
 
@@ -238,7 +238,7 @@ func TestGetCompiledPattern_CachesResult(t *testing.T) {
 func TestGetCompiledPattern_InvalidPattern(t *testing.T) {
 	t.Parallel()
 
-	sdm := NewSensitiveDataManager(config.EncryptionConfig{Key: "test-key"})
+	sdm := NewSensitiveDataManager(securityconfig.EncryptionConfig{Key: "test-key"})
 
 	regex, err := sdm.getCompiledPattern(`[invalid`)
 	assert.Error(t, err)
@@ -248,7 +248,7 @@ func TestGetCompiledPattern_InvalidPattern(t *testing.T) {
 func TestApplyEncryptStrategy_Float(t *testing.T) {
 	t.Parallel()
 
-	sdm := NewSensitiveDataManager(config.EncryptionConfig{Key: "test-key"})
+	sdm := NewSensitiveDataManager(securityconfig.EncryptionConfig{Key: "test-key"})
 
 	result := sdm.applyEncryptStrategy(float64(3.14))
 	str, ok := result.(string)
@@ -259,7 +259,7 @@ func TestApplyEncryptStrategy_Float(t *testing.T) {
 func TestApplyEncryptStrategy_Int32(t *testing.T) {
 	t.Parallel()
 
-	sdm := NewSensitiveDataManager(config.EncryptionConfig{Key: "test-key"})
+	sdm := NewSensitiveDataManager(securityconfig.EncryptionConfig{Key: "test-key"})
 
 	result := sdm.applyEncryptStrategy(int32(100))
 	str, ok := result.(string)
@@ -270,7 +270,7 @@ func TestApplyEncryptStrategy_Int32(t *testing.T) {
 func TestApplyEncryptStrategy_Int64(t *testing.T) {
 	t.Parallel()
 
-	sdm := NewSensitiveDataManager(config.EncryptionConfig{Key: "test-key"})
+	sdm := NewSensitiveDataManager(securityconfig.EncryptionConfig{Key: "test-key"})
 
 	result := sdm.applyEncryptStrategy(int64(999))
 	str, ok := result.(string)
@@ -281,7 +281,7 @@ func TestApplyEncryptStrategy_Int64(t *testing.T) {
 func TestApplyEncryptStrategy_Float32(t *testing.T) {
 	t.Parallel()
 
-	sdm := NewSensitiveDataManager(config.EncryptionConfig{Key: "test-key"})
+	sdm := NewSensitiveDataManager(securityconfig.EncryptionConfig{Key: "test-key"})
 
 	result := sdm.applyEncryptStrategy(float32(2.5))
 	str, ok := result.(string)
@@ -292,7 +292,7 @@ func TestApplyEncryptStrategy_Float32(t *testing.T) {
 func TestSanitizeEntry_WithRegisteredFieldsInArray(t *testing.T) {
 	t.Parallel()
 
-	sdm := NewSensitiveDataManager(config.EncryptionConfig{Key: "test-key"})
+	sdm := NewSensitiveDataManager(securityconfig.EncryptionConfig{Key: "test-key"})
 	sdm.SetAutoDetect(false)
 	sdm.SetMaskStrategy(MaskStrategyStrict)
 
@@ -332,7 +332,7 @@ func TestSanitizeEntry_WithRegisteredFieldsInArray(t *testing.T) {
 func TestSanitizeChangesMap_NonMapChangeData(t *testing.T) {
 	t.Parallel()
 
-	sdm := NewSensitiveDataManager(config.EncryptionConfig{Key: "test-key"})
+	sdm := NewSensitiveDataManager(securityconfig.EncryptionConfig{Key: "test-key"})
 	sdm.SetAutoDetect(false)
 
 	changes := map[string]any{
@@ -349,7 +349,7 @@ func TestSanitizeChangesMap_NonMapChangeData(t *testing.T) {
 func TestSanitizeChangesMap_NilFromTo(t *testing.T) {
 	t.Parallel()
 
-	sdm := NewSensitiveDataManager(config.EncryptionConfig{Key: "test-key"})
+	sdm := NewSensitiveDataManager(securityconfig.EncryptionConfig{Key: "test-key"})
 	sdm.SetAutoDetect(true)
 	sdm.SetMaskStrategy(MaskStrategyStrict)
 
@@ -370,7 +370,7 @@ func TestSanitizeChangesMap_NilFromTo(t *testing.T) {
 func TestSanitizeChangesMap_AutoDetectValueInNonSensitiveField(t *testing.T) {
 	t.Parallel()
 
-	sdm := NewSensitiveDataManager(config.EncryptionConfig{Key: "test-key"})
+	sdm := NewSensitiveDataManager(securityconfig.EncryptionConfig{Key: "test-key"})
 	sdm.SetAutoDetect(true)
 	sdm.SetMaskStrategy(MaskStrategyStrict)
 
@@ -391,7 +391,7 @@ func TestSanitizeChangesMap_AutoDetectValueInNonSensitiveField(t *testing.T) {
 func TestSanitizeChangesMap_AutoDetectDisabledNoMasking(t *testing.T) {
 	t.Parallel()
 
-	sdm := NewSensitiveDataManager(config.EncryptionConfig{Key: "test-key"})
+	sdm := NewSensitiveDataManager(securityconfig.EncryptionConfig{Key: "test-key"})
 	sdm.SetAutoDetect(false)
 
 	changes := map[string]any{
@@ -411,7 +411,7 @@ func TestSanitizeChangesMap_AutoDetectDisabledNoMasking(t *testing.T) {
 func TestSanitizeMapInArray_NonStringValueAutoDetect(t *testing.T) {
 	t.Parallel()
 
-	sdm := NewSensitiveDataManager(config.EncryptionConfig{Key: "test-key"})
+	sdm := NewSensitiveDataManager(securityconfig.EncryptionConfig{Key: "test-key"})
 	sdm.SetAutoDetect(true)
 
 	data := map[string]any{

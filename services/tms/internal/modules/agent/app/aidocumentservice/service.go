@@ -11,7 +11,7 @@ import (
 	"context"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/aiconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
@@ -32,7 +32,7 @@ type Params struct {
 	fx.In
 
 	Logger       *zap.Logger
-	Config       *config.Config
+	AIConfig     *aiconfig.Config
 	Metrics      *metrics.Registry
 	Completion   llmports.CompletionService
 	Availability llmports.ProviderAvailability `optional:"true"`
@@ -41,7 +41,7 @@ type Params struct {
 
 type Service struct {
 	logger       *zap.Logger
-	cfg          *config.AIConfig
+	cfg          *aiconfig.Config
 	metrics      *metrics.Registry
 	completion   llmports.CompletionService
 	availability llmports.ProviderAvailability
@@ -51,7 +51,7 @@ type Service struct {
 func New(p Params) documentaiextractionports.AIDocumentService {
 	return &Service{
 		logger:       p.Logger.Named("service.ai-document"),
-		cfg:          p.Config.GetAIConfig(),
+		cfg:          p.AIConfig,
 		metrics:      p.Metrics,
 		completion:   p.Completion,
 		availability: p.Availability,

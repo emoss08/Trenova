@@ -11,6 +11,7 @@ import (
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/databaseconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/querybudget"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -62,7 +63,7 @@ func transactionIsolation(
 }
 
 func TestRuntime_ReadsRunAtRepeatableReadUnlessTheyAskOtherwise(t *testing.T) {
-	f := newRLSFixture(t, config.RLSModeEnforce)
+	f := newRLSFixture(t, databaseconfig.RLSModeEnforce)
 	conn := f.connect(t)
 	ctx := dbscope.WithTenant(t.Context(), f.tenantA)
 
@@ -91,7 +92,7 @@ func TestRuntime_ReadsRunAtRepeatableReadUnlessTheyAskOtherwise(t *testing.T) {
 }
 
 func TestRuntime_ADbtxReadSeesOneSnapshot(t *testing.T) {
-	f := newRLSFixture(t, config.RLSModeEnforce)
+	f := newRLSFixture(t, databaseconfig.RLSModeEnforce)
 	conn := f.connect(t)
 	ctx := dbscope.WithTenant(t.Context(), f.tenantA)
 
@@ -123,8 +124,8 @@ func TestRuntime_ADbtxReadSeesOneSnapshot(t *testing.T) {
 }
 
 func TestRuntime_TheResultCacheServesARepeatedReadPerTenantAndReadScope(t *testing.T) {
-	f := newRLSFixture(t, config.RLSModeEnforce)
-	f.cfg.Database.Cache = config.DatabaseCacheConfig{Enabled: true, LocalBytes: 8 << 20}
+	f := newRLSFixture(t, databaseconfig.RLSModeEnforce)
+	f.cfg.Database.Cache = databaseconfig.CacheConfig{Enabled: true, LocalBytes: 8 << 20}
 	conn := f.connect(t)
 
 	tenantA := dbscope.WithTenant(t.Context(), f.tenantA)
@@ -183,8 +184,8 @@ func TestRuntime_TheResultCacheServesARepeatedReadPerTenantAndReadScope(t *testi
 }
 
 func TestRuntime_ACachedReadWhoseReadScopeReadsTheDatabaseFinishes(t *testing.T) {
-	f := newRLSFixture(t, config.RLSModeEnforce)
-	f.cfg.Database.Cache = config.DatabaseCacheConfig{Enabled: true, LocalBytes: 8 << 20}
+	f := newRLSFixture(t, databaseconfig.RLSModeEnforce)
+	f.cfg.Database.Cache = databaseconfig.CacheConfig{Enabled: true, LocalBytes: 8 << 20}
 	conn := f.connect(t)
 
 	resolved := 0
@@ -216,7 +217,7 @@ func TestRuntime_ACachedReadWhoseReadScopeReadsTheDatabaseFinishes(t *testing.T)
 }
 
 func TestRuntime_AWaitForATenantSlotLogsWhoHoldsIt(t *testing.T) {
-	f := newRLSFixture(t, config.RLSModeEnforce)
+	f := newRLSFixture(t, databaseconfig.RLSModeEnforce)
 	f.cfg.Database.TenantConcurrency = 1
 	f.cfg.Database.SlowWaitWarning = 50 * time.Millisecond
 	core, logs := observer.New(zapcore.WarnLevel)
@@ -264,7 +265,7 @@ func TestRuntime_AWaitForATenantSlotLogsWhoHoldsIt(t *testing.T) {
 }
 
 func TestRuntime_AWaitPastMaxWaitFailsAsRetryable(t *testing.T) {
-	f := newRLSFixture(t, config.RLSModeEnforce)
+	f := newRLSFixture(t, databaseconfig.RLSModeEnforce)
 	f.cfg.Database.TenantConcurrency = 1
 	f.cfg.Database.MaxWait = 100 * time.Millisecond
 	conn := f.connect(t)
@@ -278,14 +279,18 @@ func TestRuntime_AWaitPastMaxWaitFailsAsRetryable(t *testing.T) {
 		_, waitErr := fleetCodes(tenantA, conn)
 		require.ErrorIs(t, waitErr, keel.ErrWaitLimit)
 		assert.Less(t, time.Since(start), 5*time.Second, "the wait ends at database.maxWait")
-		assert.True(t, dberror.IsRetryableTransactionError(waitErr), "a wait past the limit is busy, not broken")
+		assert.True(
+			t,
+			dberror.IsRetryableTransactionError(waitErr),
+			"a wait past the limit is busy, not broken",
+		)
 		return codes, nil
 	})
 	require.NoError(t, err)
 }
 
 func TestRuntime_ConnectionReportsTenantConcurrencyAndCacheStats(t *testing.T) {
-	f := newRLSFixture(t, config.RLSModeEnforce)
+	f := newRLSFixture(t, databaseconfig.RLSModeEnforce)
 	f.cfg.Database.MaxOpenConns = 8
 	conn := f.connect(t)
 
@@ -297,13 +302,15 @@ func TestRuntime_ConnectionReportsTenantConcurrencyAndCacheStats(t *testing.T) {
 }
 
 func TestRuntime_ABudgetLogsAStatementRepeatedPastItsLimitAndLetsTheWorkFinish(t *testing.T) {
-	f := newRLSFixture(t, config.RLSModeEnforce)
+	f := newRLSFixture(t, databaseconfig.RLSModeEnforce)
 	conn := f.connect(t)
 
 	core, logs := observer.New(zapcore.WarnLevel)
 	cfg := &config.Config{}
 	cfg.Database.Budget.MaxRepeats = 2
-	budgets := querybudget.New(querybudget.Params{Config: cfg, Logger: zap.New(core)})
+	budgets := querybudget.New(
+		querybudget.Params{DatabaseConfig: &cfg.Database, Logger: zap.New(core)},
+	)
 
 	ctx := budgets.Start(dbscope.WithTenant(t.Context(), f.tenantA), zap.String("route", "/test"))
 	for range 4 {
@@ -324,7 +331,7 @@ func TestRuntime_ABudgetLogsAStatementRepeatedPastItsLimitAndLetsTheWorkFinish(t
 }
 
 func TestRuntime_AHardBudgetFailsTheReadPastIt(t *testing.T) {
-	f := newRLSFixture(t, config.RLSModeEnforce)
+	f := newRLSFixture(t, databaseconfig.RLSModeEnforce)
 	conn := f.connect(t)
 
 	ctx := keel.Budget(dbscope.WithTenant(t.Context(), f.tenantA), keel.MaxRepeats(1))

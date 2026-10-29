@@ -3,11 +3,11 @@ package authservice
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/mocks/apikeyportsmock"
-
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/apikey"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/apikeyports"
+	"github.com/emoss08/trenova/internal/testutil/mocks/apikeyportsmock"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/stretchr/testify/assert"
@@ -34,8 +34,8 @@ func TestAuthenticateAPIKeyDisabled(t *testing.T) {
 		akr:      apikeyportsmock.NewMockAPIKeyRepository(t),
 		usageBuf: recorder,
 		cfg: &config.Config{
-			Security: config.SecurityConfig{
-				APIToken: config.APITokenConfig{Enabled: false},
+			Security: securityconfig.Config{
+				APIToken: securityconfig.APITokenConfig{Enabled: false},
 			},
 		},
 		l: zap.NewNop(),
@@ -71,8 +71,8 @@ func TestAuthenticateAPIKeyRejectsRevokedKey(t *testing.T) {
 		akr:      repo,
 		usageBuf: recorder,
 		cfg: &config.Config{
-			Security: config.SecurityConfig{
-				APIToken: config.APITokenConfig{Enabled: true},
+			Security: securityconfig.Config{
+				APIToken: securityconfig.APITokenConfig{Enabled: true},
 			},
 		},
 		l: zap.NewNop(),
@@ -109,8 +109,8 @@ func TestAuthenticateAPIKeyRejectsExpiredKey(t *testing.T) {
 		akr:      repo,
 		usageBuf: recorder,
 		cfg: &config.Config{
-			Security: config.SecurityConfig{
-				APIToken: config.APITokenConfig{Enabled: true},
+			Security: securityconfig.Config{
+				APIToken: securityconfig.APITokenConfig{Enabled: true},
 			},
 		},
 		l: zap.NewNop(),
@@ -146,8 +146,8 @@ func TestAuthenticateAPIKeyRejectsInvalidSecret(t *testing.T) {
 		akr:      repo,
 		usageBuf: recorder,
 		cfg: &config.Config{
-			Security: config.SecurityConfig{
-				APIToken: config.APITokenConfig{Enabled: true},
+			Security: securityconfig.Config{
+				APIToken: securityconfig.APITokenConfig{Enabled: true},
 			},
 		},
 		l: zap.NewNop(),
@@ -188,8 +188,8 @@ func TestAuthenticateAPIKeySuccessReturnsMachinePrincipal(t *testing.T) {
 		akr:      repo,
 		usageBuf: recorder,
 		cfg: &config.Config{
-			Security: config.SecurityConfig{
-				APIToken: config.APITokenConfig{Enabled: true},
+			Security: securityconfig.Config{
+				APIToken: securityconfig.APITokenConfig{Enabled: true},
 			},
 		},
 		l: zap.NewNop(),

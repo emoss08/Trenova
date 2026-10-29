@@ -9,7 +9,7 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/infrastructure/agentcompletion/modeladapter"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/aiconfig"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -46,7 +46,7 @@ func embeddingProbeServer(t *testing.T, returnedDims int) (*httptest.Server, *at
 func newTestProber() *Prober {
 	return &Prober{
 		logger:   zap.NewNop(),
-		cfg:      &config.AIConfig{},
+		cfg:      &aiconfig.Config{},
 		adapters: modeladapter.NewRegistry(),
 		clients:  make(map[bool]*http.Client, 2),
 	}

@@ -9,6 +9,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/serverconfig"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
@@ -113,15 +115,15 @@ func TestRequestTimeoutHandler_SkipsAPostedStream(t *testing.T) {
 
 func newRequestTimeoutTestConfig(timeout time.Duration) *config.Config {
 	return &config.Config{
-		App: config.AppConfig{
+		App: appconfig.Config{
 			Name:    "trenova",
-			Env:     config.EnvTest,
+			Env:     appconfig.EnvTest,
 			Version: "test",
 			Debug:   true,
 		},
-		Server: config.ServerConfig{
+		Server: serverconfig.Config{
 			RequestTimeout: timeout,
-			CORS: config.CORSConfig{
+			CORS: serverconfig.CORSConfig{
 				Enabled:        true,
 				AllowedOrigins: []string{"https://cloud.trenova.app"},
 				Credentials:    true,
@@ -132,7 +134,7 @@ func newRequestTimeoutTestConfig(timeout time.Duration) *config.Config {
 
 func newRequestTimeoutTestErrorHandler(cfg *config.Config) *helpers.ErrorHandler {
 	return helpers.NewErrorHandler(helpers.ErrorHandlerParams{
-		Logger: zap.NewNop(),
-		Config: cfg,
+		Logger:    zap.NewNop(),
+		AppConfig: &cfg.App,
 	})
 }

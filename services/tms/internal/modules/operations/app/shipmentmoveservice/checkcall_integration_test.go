@@ -9,6 +9,7 @@ import (
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/tenderingconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/shipmentcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
@@ -140,7 +141,7 @@ func newCheckCallHarness(t *testing.T) (context.Context, *checkCallHarness) {
 		DB:     conn,
 		Logger: zap.NewNop(),
 		Config: &config.Config{
-			Tendering: config.TenderingConfig{PublicBaseURL: "https://app.example.com"},
+			Tendering: tenderingconfig.Config{PublicBaseURL: "https://app.example.com"},
 		},
 		Repo: checkcallrepository.New(
 			checkcallrepository.Params{DB: conn, Logger: zap.NewNop()},

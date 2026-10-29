@@ -3,7 +3,7 @@ package aiauditservice
 import (
 	"sync"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/aiauditconfig"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiaudit"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiauditports"
 	"go.uber.org/zap"
@@ -20,7 +20,7 @@ type Keyring struct {
 	warn   sync.Once
 }
 
-func NewKeyring(cfg *config.AIAuditChainConfig, logger *zap.Logger) *Keyring {
+func NewKeyring(cfg *aiauditconfig.ChainConfig, logger *zap.Logger) *Keyring {
 	ring := &Keyring{
 		keys: make(map[string]*aiaudit.ChainKey),
 		l:    logger.Named("aiaudit.keyring"),

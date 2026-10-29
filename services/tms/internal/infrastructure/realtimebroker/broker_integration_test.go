@@ -11,6 +11,7 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/realtimeconfig"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/testutil"
@@ -23,11 +24,11 @@ import (
 
 const waitFor = 3 * time.Second
 
-func newTestBroker(t *testing.T, mutate func(*config.RealtimeConfig)) (*Broker, *redis.Client) {
+func newTestBroker(t *testing.T, mutate func(*realtimeconfig.Config)) (*Broker, *redis.Client) {
 	t.Helper()
 
 	client := testutil.SetupTestRedis(t)
-	cfg := &config.Config{Realtime: config.RealtimeConfig{
+	cfg := &config.Config{Realtime: realtimeconfig.Config{
 		ShardCount:        4,
 		HeartbeatInterval: time.Hour,
 	}}
@@ -36,13 +37,20 @@ func newTestBroker(t *testing.T, mutate func(*config.RealtimeConfig)) (*Broker, 
 	}
 
 	lc := fxtest.NewLifecycle(t)
-	pub := NewPublisher(PublisherParams{Client: client, Config: cfg, Logger: zap.NewNop(), LC: lc})
+	pub := NewPublisher(
+		PublisherParams{
+			Client:         client,
+			RealtimeConfig: &cfg.Realtime,
+			Logger:         zap.NewNop(),
+			LC:             lc,
+		},
+	)
 	broker := NewBroker(BrokerParams{
-		Publisher: pub,
-		Client:    client,
-		Config:    cfg,
-		Logger:    zap.NewNop(),
-		LC:        lc,
+		Publisher:      pub,
+		Client:         client,
+		RealtimeConfig: &cfg.Realtime,
+		Logger:         zap.NewNop(),
+		LC:             lc,
 	})
 	lc.RequireStart()
 	t.Cleanup(lc.RequireStop)
@@ -401,7 +409,7 @@ func TestBroker_SweepAnnouncesDeadMembers(t *testing.T) {
 }
 
 func TestBroker_SlowReaderIsClosedWithOverflow(t *testing.T) {
-	b, _ := newTestBroker(t, func(c *config.RealtimeConfig) { c.SubscriberBuffer = 8 })
+	b, _ := newTestBroker(t, func(c *realtimeconfig.Config) { c.SubscriberBuffer = 8 })
 	tn := newTenant()
 	stream := subscribe(t, b, tn.conn(pulid.MustNew("usr_"), false), false, "")
 
@@ -415,7 +423,7 @@ func TestBroker_SlowReaderIsClosedWithOverflow(t *testing.T) {
 }
 
 func TestBroker_PerUserConnectionLimit(t *testing.T) {
-	b, _ := newTestBroker(t, func(c *config.RealtimeConfig) { c.MaxConnectionsPerUser = 1 })
+	b, _ := newTestBroker(t, func(c *realtimeconfig.Config) { c.MaxConnectionsPerUser = 1 })
 	tn := newTenant()
 	user := pulid.MustNew("usr_")
 

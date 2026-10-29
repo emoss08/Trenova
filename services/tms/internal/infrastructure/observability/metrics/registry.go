@@ -42,7 +42,7 @@ type Registry struct {
 }
 
 func graphQLOptions(cfg *config.Config) GraphQLOptions {
-	gqlCfg := cfg.GetGraphQLObservConfig()
+	gqlCfg := &cfg.Monitoring.GraphQL
 	return GraphQLOptions{
 		ResolverMetrics: gqlCfg.ResolverMetrics,
 		MaxOperations:   gqlCfg.GetMaxTrackedOperations(),
@@ -50,7 +50,7 @@ func graphQLOptions(cfg *config.Config) GraphQLOptions {
 }
 
 func NewRegistry(cfg *config.Config, logger *zap.Logger) (*Registry, error) {
-	enabled := cfg.GetMetricsConfig().Enabled
+	enabled := cfg.Monitoring.Metrics.Enabled
 
 	if !enabled {
 		logger.Warn("Metrics collection is disabled")

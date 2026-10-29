@@ -3,7 +3,7 @@ package documentextractionjobs
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/aiconfig"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentaiextractionports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentcontentports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
@@ -17,14 +17,14 @@ var _ extractionshadowports.ExtractionShadowPredictor = (*ShadowPredictor)(nil)
 type ShadowPredictorParams struct {
 	fx.In
 
-	Config            *config.Config
+	AIConfig          *aiconfig.Config
 	DocumentRepo      documentports.DocumentRepository
 	ContentRepo       documentcontentports.DocumentContentRepository
 	AIDocumentService documentaiextractionports.AIDocumentService
 }
 
 type ShadowPredictor struct {
-	cfg       *config.AIConfig
+	cfg       *aiconfig.Config
 	documents documentports.DocumentRepository
 	contents  documentcontentports.DocumentContentRepository
 	extractor documentaiextractionports.AIDocumentService
@@ -32,7 +32,7 @@ type ShadowPredictor struct {
 
 func NewShadowPredictor(p ShadowPredictorParams) *ShadowPredictor {
 	return &ShadowPredictor{
-		cfg:       p.Config.GetAIConfig(),
+		cfg:       p.AIConfig,
 		documents: p.DocumentRepo,
 		contents:  p.ContentRepo,
 		extractor: p.AIDocumentService,

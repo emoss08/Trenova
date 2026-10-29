@@ -1,7 +1,9 @@
 package aiauditservice
 
 import (
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/aiauditconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/monitoringconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolpolicy"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiauditports"
@@ -20,21 +22,23 @@ import (
 type Params struct {
 	fx.In
 
-	Ledger        aiauditports.AIAuditRepository
-	Source        aiauditports.AIAuditSourceRepository
-	ExportRepo    aiauditports.AIAuditExportRepository
-	Retention     tenantports.DataRetentionRepository
-	Policies      *agenttoolpolicy.Catalog
-	Registry      *permissioncatalog.Registry
-	Permissions   permissionports.PermissionEngine
-	Storage       kernelports.Client
-	Workflows     kernelports.WorkflowStarter
-	Notifications *notificationservice.Service
-	Realtime      realtimeports.RealtimeService `optional:"true"`
-	Audit         auditports.AuditService
-	Metrics       *metrics.Registry `optional:"true"`
-	Config        *config.Config
-	Logger        *zap.Logger
+	Ledger           aiauditports.AIAuditRepository
+	Source           aiauditports.AIAuditSourceRepository
+	ExportRepo       aiauditports.AIAuditExportRepository
+	Retention        tenantports.DataRetentionRepository
+	Policies         *agenttoolpolicy.Catalog
+	Registry         *permissioncatalog.Registry
+	Permissions      permissionports.PermissionEngine
+	Storage          kernelports.Client
+	Workflows        kernelports.WorkflowStarter
+	Notifications    *notificationservice.Service
+	Realtime         realtimeports.RealtimeService `optional:"true"`
+	Audit            auditports.AuditService
+	Metrics          *metrics.Registry `optional:"true"`
+	AIAuditConfig    *aiauditconfig.Config
+	MonitoringConfig *monitoringconfig.Config
+	SecurityConfig   *securityconfig.Config
+	Logger           *zap.Logger
 }
 
 // Components are the trail's parts: the service the API reads through and
@@ -60,9 +64,9 @@ func aiAuditMetrics(registry *metrics.Registry) *metrics.AIAudit {
 
 //nolint:gocritic // fx.In parameter structs are passed by value
 func New(p Params) Components {
-	keyring := NewKeyring(&p.Config.AIAudit.Chain, p.Logger)
+	keyring := NewKeyring(&p.AIAuditConfig.Chain, p.Logger)
 	registryMetrics := aiAuditMetrics(p.Metrics)
-	masker := auditservice.NewSensitiveDataManager(p.Config.Security.Encryption)
+	masker := auditservice.NewSensitiveDataManager(p.SecurityConfig.Encryption)
 	redactor := NewRedactor(p.Registry, p.Policies, masker)
 
 	projector := NewProjector(&ProjectorParams{
@@ -71,7 +75,7 @@ func New(p Params) Components {
 		Keyring:   keyring,
 		Redactor:  redactor,
 		Metrics:   registryMetrics,
-		BatchSize: p.Config.AIAudit.Projector.GetBatchSize(),
+		BatchSize: p.AIAuditConfig.Projector.GetBatchSize(),
 		Logger:    p.Logger,
 	})
 	verifier := NewVerifier(&VerifierParams{
@@ -94,7 +98,7 @@ func New(p Params) Components {
 		Realtime:    p.Realtime,
 		Audit:       p.Audit,
 		Permissions: p.Permissions,
-		Config:      &p.Config.AIAudit.Export,
+		Config:      &p.AIAuditConfig.Export,
 		Metrics:     registryMetrics,
 		Logger:      p.Logger,
 	})
@@ -106,7 +110,7 @@ func New(p Params) Components {
 			Verifier:  verifier,
 			Exports:   exports,
 			Workflows: p.Workflows,
-			TraceURL:  p.Config.Monitoring.Tracing.TraceURL,
+			TraceURL:  p.MonitoringConfig.Tracing.TraceURL,
 			Logger:    p.Logger,
 		}),
 		Projector: projector,

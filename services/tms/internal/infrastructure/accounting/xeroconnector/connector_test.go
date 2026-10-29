@@ -14,7 +14,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/accountingconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
@@ -30,7 +31,7 @@ import (
 func TestUnconfiguredInstanceHasNoApp(t *testing.T) {
 	t.Parallel()
 
-	provider := newProvider(t, config.XeroConfig{})
+	provider := newProvider(t, accountingconfig.XeroConfig{})
 	_, ok := provider.InstanceApp()
 	assert.False(t, ok)
 	_, err := provider.Bind(nil)
@@ -43,7 +44,7 @@ func TestUnconfiguredInstanceHasNoApp(t *testing.T) {
 func TestConfiguredInstanceAppIsProductionWithTheWebhookKey(t *testing.T) {
 	t.Parallel()
 
-	provider := newProvider(t, config.XeroConfig{
+	provider := newProvider(t, accountingconfig.XeroConfig{
 		ClientID:     " id ",
 		ClientSecret: "secret",
 		WebhookKey:   "hook-key",
@@ -82,14 +83,17 @@ func TestConfiguredInstanceAppIsProductionWithTheWebhookKey(t *testing.T) {
 func TestExplicitRedirectURLWins(t *testing.T) {
 	t.Parallel()
 
-	provider := newProvider(t, config.XeroConfig{RedirectURL: "https://tms.example.com/cb"})
+	provider := newProvider(
+		t,
+		accountingconfig.XeroConfig{RedirectURL: "https://tms.example.com/cb"},
+	)
 	assert.Equal(t, "https://tms.example.com/cb", provider.RedirectURL())
 }
 
 func TestBindingReusesTheConnectorForTheSameKeys(t *testing.T) {
 	t.Parallel()
 
-	provider := newProvider(t, config.XeroConfig{})
+	provider := newProvider(t, accountingconfig.XeroConfig{})
 	first, err := provider.Bind(tenantApp())
 	require.NoError(t, err)
 	second, err := provider.Bind(tenantApp())
@@ -106,7 +110,8 @@ func TestBindingReusesTheConnectorForTheSameKeys(t *testing.T) {
 func TestWithoutARedirectAddressOAuthIsAConfigurationFailure(t *testing.T) {
 	t.Parallel()
 
-	provider, err := New(Params{Config: &config.Config{}, Logger: zap.NewNop()})
+	provider, err := New(Params{AccountingConfig: &accountingconfig.Config{},
+		AppConfig: &appconfig.Config{}, Logger: zap.NewNop()})
 	require.NoError(t, err)
 	conn, err := provider.Bind(tenantApp())
 	require.NoError(t, err)
@@ -137,7 +142,7 @@ func TestExchangeCodeUsesBasicAuthAndReportsTheTokenLifetimes(t *testing.T) {
 	}))
 	t.Cleanup(server.Close)
 
-	provider := newProvider(t, config.XeroConfig{})
+	provider := newProvider(t, accountingconfig.XeroConfig{})
 	provider.oauthOpts = []xero.Option{
 		xero.WithIdentityURL(server.URL),
 		xero.WithHTTPClient(server.Client()),
@@ -331,7 +336,7 @@ func sign(key string, body []byte) string {
 func TestWebhookVerificationAndCompanies(t *testing.T) {
 	t.Parallel()
 
-	provider := newProvider(t, config.XeroConfig{})
+	provider := newProvider(t, accountingconfig.XeroConfig{})
 	conn, err := provider.Bind(tenantApp())
 	require.NoError(t, err)
 

@@ -3,7 +3,7 @@ package aiproviderservice
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/aiconfig"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiplatform"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
@@ -134,7 +134,7 @@ func TestApply_RefusesServerCredentialsTheServerDisallows(t *testing.T) {
 	require.ErrorAs(t, err, &validation)
 	assert.Equal(t, "platformSettings.auth", validation.Field)
 
-	svc.ai = &config.AIConfig{ServerCloudCredentials: true}
+	svc.ai = &aiconfig.Config{ServerCloudCredentials: true}
 	require.NoError(t, svc.apply(provider, req, nil))
 	assert.True(t, provider.UsesServerCredentials())
 }

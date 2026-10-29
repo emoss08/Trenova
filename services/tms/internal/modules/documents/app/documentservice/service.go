@@ -12,7 +12,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/storageconfig"
 	workflowstarterservice "github.com/emoss08/trenova/internal/infrastructure/temporaljobs/workflowstarter"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aicorrectionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
@@ -75,7 +75,7 @@ type Params struct {
 	SearchProjection     documentsearchprojectionports.DocumentSearchProjectionService
 	WorkflowStarter      kernelports.WorkflowStarter
 	UsageProvider        platformcatalogports.UsageProvider `optional:"true"`
-	Config               *config.Config
+	StorageConfig        *storageconfig.Config
 	ThumbnailGenerator   *thumbnailservice.Generator
 	PageRenders          *pagerender.Store
 	Encryption           *encryptionservice.Service
@@ -103,7 +103,7 @@ type Service struct {
 	searchProjection     documentsearchprojectionports.DocumentSearchProjectionService
 	workflowStarter      kernelports.WorkflowStarter
 	usageProvider        platformcatalogports.UsageProvider
-	config               *config.StorageConfig
+	config               *storageconfig.Config
 	thumbnailGenerator   *thumbnailservice.Generator
 	pageRenders          *pagerender.Store
 	encryption           *encryptionservice.Service
@@ -147,7 +147,7 @@ func New(p Params) *Service { //nolint:gocritic // stable API shape
 		searchProjection:     searchProjection,
 		workflowStarter:      workflowStarter,
 		usageProvider:        p.UsageProvider,
-		config:               p.Config.GetStorageConfig(),
+		config:               p.StorageConfig,
 		thumbnailGenerator:   p.ThumbnailGenerator,
 		pageRenders:          p.PageRenders,
 		encryption:           p.Encryption,

@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/apikey"
 	permissiondomain "github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
@@ -32,8 +33,8 @@ func newTestService(t *testing.T) (*Service, *apikeyportsmock.MockAPIKeyReposito
 		registry: permissioncatalog.NewRegistry(),
 		scopes:   scopepolicytest.Enforcing(),
 		cfg: &config.Config{
-			Security: config.SecurityConfig{
-				APIToken: config.APITokenConfig{
+			Security: securityconfig.Config{
+				APIToken: securityconfig.APITokenConfig{
 					DefaultExpiry:    2 * time.Hour,
 					MaxExpiry:        24 * time.Hour,
 					MaxTokensPerUser: 100,

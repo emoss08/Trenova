@@ -8,7 +8,7 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/api/helpers"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/documents/app/captureservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -145,8 +145,8 @@ func TestRequireDeviceRefusesAnythingButABearerToken(t *testing.T) {
 
 	gin.SetMode(gin.TestMode)
 	h := &Handler{l: zap.NewNop(), eh: helpers.NewErrorHandler(helpers.ErrorHandlerParams{
-		Logger: zap.NewNop(),
-		Config: &config.Config{},
+		Logger:    zap.NewNop(),
+		AppConfig: &appconfig.Config{},
 	})}
 
 	for _, header := range []string{"", "Basic abc", "Bearer", "bearer "} {

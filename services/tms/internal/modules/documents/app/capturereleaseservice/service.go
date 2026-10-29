@@ -25,7 +25,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/updateconfig"
 	"github.com/emoss08/trenova/shared/versionutils"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -89,8 +89,8 @@ type Latest struct {
 type Params struct {
 	fx.In
 
-	Logger *zap.Logger
-	Config *config.Config
+	Logger       *zap.Logger
+	UpdateConfig *updateconfig.Config
 }
 
 type Service struct {
@@ -149,7 +149,7 @@ func newClient(proxy string) (*http.Client, error) {
 }
 
 func New(p Params) (*Service, error) {
-	update := p.Config.Update
+	update := *p.UpdateConfig
 	s := &Service{
 		l:       p.Logger.Named("service.capture-release"),
 		url:     update.GetCaptureManifestURL(),

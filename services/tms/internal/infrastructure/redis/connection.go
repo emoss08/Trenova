@@ -5,7 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/cacheconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/monitoringconfig"
 	"github.com/emoss08/trenova/shared/intutils"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/redis/go-redis/extra/redisotel/v9"
@@ -26,14 +27,15 @@ const (
 type ConnectionParams struct {
 	fx.In
 
-	Config *config.Config
-	Logger *zap.Logger
-	LC     fx.Lifecycle
+	CacheConfig      *cacheconfig.Config
+	MonitoringConfig *monitoringconfig.Config
+	Logger           *zap.Logger
+	LC               fx.Lifecycle
 }
 
 func NewConnection(p ConnectionParams) (*redis.Client, error) {
 	logger := p.Logger.With(zap.String("component", "redis"))
-	cacheConfig := p.Config.GetCacheConfig()
+	cacheConfig := p.CacheConfig
 
 	poolSize := intutils.WithDefault(cacheConfig.PoolSize, defaultPoolSize)
 
@@ -58,7 +60,7 @@ func NewConnection(p ConnectionParams) (*redis.Client, error) {
 		MaxRetryBackoff: cacheConfig.MaxRetryBackoff,
 	})
 
-	if p.Config.Monitoring.Tracing.Enabled {
+	if p.MonitoringConfig.Tracing.Enabled {
 		if err := redisotel.InstrumentTracing(client); err != nil {
 			logger.Warn("Failed to instrument Redis tracing", zap.Error(err))
 		}

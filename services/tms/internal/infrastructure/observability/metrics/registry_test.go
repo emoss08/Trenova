@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/monitoringconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -17,8 +18,8 @@ func TestNewRegistry_Disabled(t *testing.T) {
 	t.Parallel()
 
 	cfg := &config.Config{
-		Monitoring: config.MonitoringConfig{
-			Metrics: config.MetricsConfig{
+		Monitoring: monitoringconfig.Config{
+			Metrics: monitoringconfig.MetricsConfig{
 				Enabled: false,
 			},
 		},
@@ -42,8 +43,8 @@ func TestRegistry_IsEnabled(t *testing.T) {
 	t.Run("returns false when disabled", func(t *testing.T) {
 		t.Parallel()
 		cfg := &config.Config{
-			Monitoring: config.MonitoringConfig{
-				Metrics: config.MetricsConfig{
+			Monitoring: monitoringconfig.Config{
+				Metrics: monitoringconfig.MetricsConfig{
 					Enabled: false,
 				},
 			},
@@ -60,8 +61,8 @@ func TestRegistry_Handler_Disabled(t *testing.T) {
 	t.Parallel()
 
 	cfg := &config.Config{
-		Monitoring: config.MonitoringConfig{
-			Metrics: config.MetricsConfig{
+		Monitoring: monitoringconfig.Config{
+			Metrics: monitoringconfig.MetricsConfig{
 				Enabled: false,
 			},
 		},
@@ -84,8 +85,8 @@ func TestRegistry_RecordError_Disabled(t *testing.T) {
 	t.Parallel()
 
 	cfg := &config.Config{
-		Monitoring: config.MonitoringConfig{
-			Metrics: config.MetricsConfig{
+		Monitoring: monitoringconfig.Config{
+			Metrics: monitoringconfig.MetricsConfig{
 				Enabled: false,
 			},
 		},
@@ -103,8 +104,8 @@ func TestRegistry_RecordPanicRecovery_Disabled(t *testing.T) {
 	t.Parallel()
 
 	cfg := &config.Config{
-		Monitoring: config.MonitoringConfig{
-			Metrics: config.MetricsConfig{
+		Monitoring: monitoringconfig.Config{
+			Metrics: monitoringconfig.MetricsConfig{
 				Enabled: false,
 			},
 		},
@@ -122,8 +123,8 @@ func TestRegistry_IncrementActiveRequests_Disabled(t *testing.T) {
 	t.Parallel()
 
 	cfg := &config.Config{
-		Monitoring: config.MonitoringConfig{
-			Metrics: config.MetricsConfig{
+		Monitoring: monitoringconfig.Config{
+			Metrics: monitoringconfig.MetricsConfig{
 				Enabled: false,
 			},
 		},
@@ -141,8 +142,8 @@ func TestRegistry_DecrementActiveRequests_Disabled(t *testing.T) {
 	t.Parallel()
 
 	cfg := &config.Config{
-		Monitoring: config.MonitoringConfig{
-			Metrics: config.MetricsConfig{
+		Monitoring: monitoringconfig.Config{
+			Metrics: monitoringconfig.MetricsConfig{
 				Enabled: false,
 			},
 		},
@@ -160,8 +161,8 @@ func TestNewRegistry_Enabled(t *testing.T) {
 	t.Parallel()
 
 	cfg := &config.Config{
-		Monitoring: config.MonitoringConfig{
-			Metrics: config.MetricsConfig{
+		Monitoring: monitoringconfig.Config{
+			Metrics: monitoringconfig.MetricsConfig{
 				Enabled: true,
 				Port:    9090,
 				Path:    "/metrics",
@@ -191,8 +192,8 @@ func TestRegistry_Handler_Enabled(t *testing.T) {
 	t.Parallel()
 
 	cfg := &config.Config{
-		Monitoring: config.MonitoringConfig{
-			Metrics: config.MetricsConfig{
+		Monitoring: monitoringconfig.Config{
+			Metrics: monitoringconfig.MetricsConfig{
 				Enabled: true,
 				Port:    9090,
 				Path:    "/metrics",

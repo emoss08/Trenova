@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/aiconfig"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiplatform"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aireasoning"
@@ -28,27 +28,22 @@ type Params struct {
 	Service              aiproviderports.AIProviderService
 	ErrorHandler         *helpers.ErrorHandler
 	PermissionMiddleware *middleware.PermissionMiddleware
-	Config               *config.Config `optional:"true"`
+	AIConfig             *aiconfig.Config `optional:"true"`
 }
 
 type Handler struct {
 	service aiproviderports.AIProviderService
 	eh      *helpers.ErrorHandler
 	pm      *middleware.PermissionMiddleware
-	ai      *config.AIConfig
+	ai      *aiconfig.Config
 }
 
 func New(p Params) *Handler {
-	var ai *config.AIConfig
-	if p.Config != nil {
-		ai = p.Config.GetAIConfig()
-	}
-
 	return &Handler{
 		service: p.Service,
 		eh:      p.ErrorHandler,
 		pm:      p.PermissionMiddleware,
-		ai:      ai,
+		ai:      p.AIConfig,
 	}
 }
 
