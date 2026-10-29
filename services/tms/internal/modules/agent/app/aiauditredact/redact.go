@@ -214,7 +214,7 @@ func (w *argumentWalk) redactedPaths() []string {
 // Top-level values are kept in key order while they fit; the rest are
 // replaced with a placeholder, and when even the placeholders do not fit the
 // remaining keys are dropped and the map says it was cut.
-func boundArguments(values map[string]any) (map[string]any, bool, error) {
+func boundArguments(values map[string]any) (bounded map[string]any, cut bool, err error) {
 	encoded, err := CanonicalJSON.Marshal(values)
 	if err != nil {
 		return nil, false, err

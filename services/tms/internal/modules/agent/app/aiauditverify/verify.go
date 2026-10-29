@@ -171,9 +171,8 @@ func (v *Verifier) walk(
 		return fail(result, first, anchorErr), nil
 	}
 
-	expectedSeq := first
+	cursor := &chainCursor{expectedPrev: expectedPrev, expectedSeq: first}
 	after := first - 1
-	signedFrom := int64(0)
 	for after < head.LastSeq {
 		if err = ctx.Err(); err != nil {
 			return nil, err
@@ -188,7 +187,11 @@ func (v *Verifier) walk(
 			return nil, listErr
 		}
 		if len(rows) == 0 {
-			return fail(result, expectedSeq, "rows are missing from the end of the chain"), nil
+			return fail(
+				result,
+				cursor.expectedSeq,
+				"rows are missing from the end of the chain",
+			), nil
 		}
 
 		seals, sealErr := v.pageSeals(ctx, tenantInfo, rows[0].Seq, rows[len(rows)-1].Seq)
@@ -196,58 +199,98 @@ func (v *Verifier) walk(
 			return nil, sealErr
 		}
 
-		for _, row := range rows {
-			if row.Seq > head.LastSeq {
-				break
-			}
-			if row.Seq != expectedSeq {
-				return fail(result, expectedSeq, "row "+strconv.FormatInt(expectedSeq, 10)+
-					" is missing from the chain"), nil
-			}
-			if signedFrom != 0 && row.HashVersion != aiaudit.HashVersionSigned {
-				return fail(result, row.Seq, "the row is unsigned though row "+
-					strconv.FormatInt(signedFrom, 10)+" before it was signed"), nil
-			}
-			if detail := v.checkRow(row, expectedPrev); detail != "" {
-				if detail == keyMissingDetail {
-					result.Status = aiaudit.VerificationKeyMissing
-					seq := row.Seq
-					result.FailedSeq = &seq
-					result.Detail = "row " + strconv.FormatInt(row.Seq, 10) +
-						" is signed with key " + strconv.Quote(row.HashKeyID) +
-						", which is not configured"
-
-					return result, nil
-				}
-
-				return fail(result, row.Seq, detail), nil
-			}
-			if seal, sealed := seals[row.Seq]; sealed && seal.HeadHash != row.Hash {
-				return fail(
-					result,
-					row.Seq,
-					"the seal ending at this row records another hash",
-				), nil
-			}
-
-			if signedFrom == 0 && row.HashVersion == aiaudit.HashVersionSigned {
-				signedFrom = row.Seq
-			}
-			expectedPrev = row.Hash
-			expectedSeq = row.Seq + 1
-			result.VerifiedSeq = row.Seq
-			result.Rows++
+		if v.verifyPage(result, cursor, rows, seals, head.LastSeq) {
+			return result, nil
 		}
 
 		after = rows[len(rows)-1].Seq
 		aiauditheartbeat.Beat(heartbeat, tenantInfo.OrgID.String(), after)
 	}
 
-	if result.VerifiedSeq != head.LastSeq || expectedPrev != head.LastHash {
+	if result.VerifiedSeq != head.LastSeq || cursor.expectedPrev != head.LastHash {
 		return fail(result, head.LastSeq, "the chain head does not name the chain's last row"), nil
 	}
 
 	return result, nil
+}
+
+type chainCursor struct {
+	expectedPrev string
+	expectedSeq  int64
+	signedFrom   int64
+}
+
+func (v *Verifier) verifyPage(
+	result *VerifyResult,
+	cursor *chainCursor,
+	rows []*aiaudit.AIAuditEvent,
+	seals map[int64]*aiaudit.AIAuditSeal,
+	lastSeq int64,
+) (ended bool) {
+	for _, row := range rows {
+		if row.Seq > lastSeq {
+			break
+		}
+		if v.rowEndsChain(result, cursor, row, seals) {
+			return true
+		}
+
+		if cursor.signedFrom == 0 && row.HashVersion == aiaudit.HashVersionSigned {
+			cursor.signedFrom = row.Seq
+		}
+		cursor.expectedPrev = row.Hash
+		cursor.expectedSeq = row.Seq + 1
+		result.VerifiedSeq = row.Seq
+		result.Rows++
+	}
+
+	return false
+}
+
+func (v *Verifier) rowEndsChain(
+	result *VerifyResult,
+	cursor *chainCursor,
+	row *aiaudit.AIAuditEvent,
+	seals map[int64]*aiaudit.AIAuditSeal,
+) bool {
+	if row.Seq != cursor.expectedSeq {
+		fail(result, cursor.expectedSeq, "row "+strconv.FormatInt(cursor.expectedSeq, 10)+
+			" is missing from the chain")
+
+		return true
+	}
+	if cursor.signedFrom != 0 && row.HashVersion != aiaudit.HashVersionSigned {
+		fail(result, row.Seq, "the row is unsigned though row "+
+			strconv.FormatInt(cursor.signedFrom, 10)+" before it was signed")
+
+		return true
+	}
+	if detail := v.checkRow(row, cursor.expectedPrev); detail != "" {
+		if detail == keyMissingDetail {
+			markKeyMissing(result, row)
+
+			return true
+		}
+		fail(result, row.Seq, detail)
+
+		return true
+	}
+	if seal, sealed := seals[row.Seq]; sealed && seal.HeadHash != row.Hash {
+		fail(result, row.Seq, "the seal ending at this row records another hash")
+
+		return true
+	}
+
+	return false
+}
+
+func markKeyMissing(result *VerifyResult, row *aiaudit.AIAuditEvent) {
+	result.Status = aiaudit.VerificationKeyMissing
+	seq := row.Seq
+	result.FailedSeq = &seq
+	result.Detail = "row " + strconv.FormatInt(row.Seq, 10) +
+		" is signed with key " + strconv.Quote(row.HashKeyID) +
+		", which is not configured"
 }
 
 const keyMissingDetail = "key missing"
@@ -278,7 +321,7 @@ func (v *Verifier) anchor(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	first int64,
-) (string, string) {
+) (headHash, problem string) {
 	if first == 1 {
 		return aiaudit.GenesisHash, ""
 	}

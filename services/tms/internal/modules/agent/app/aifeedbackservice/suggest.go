@@ -126,7 +126,7 @@ func (s *Service) suggestForAgent(ctx context.Context, p suggestForAgentParams) 
 			continue
 		}
 
-		memory := cluster.memory(clusterMemoryParams{
+		memory := cluster.memory(&clusterMemoryParams{
 			tenant:    p.tenant,
 			agentID:   p.agentID,
 			agentName: agentName,
@@ -351,7 +351,7 @@ type clusterMemoryParams struct {
 	agentName string
 }
 
-func (c *ratingCluster) memory(p clusterMemoryParams) *agentmemory.Memory {
+func (c *ratingCluster) memory(p *clusterMemoryParams) *agentmemory.Memory {
 	ordered := slices.Clone(c.ratings)
 	slices.SortFunc(ordered, func(a, b *aifeedback.Feedback) int {
 		return cmp.Or(cmp.Compare(b.CreatedAt, a.CreatedAt), cmp.Compare(a.ID, b.ID))
