@@ -1,4 +1,4 @@
-package invoiceadjustmentservice
+package invoiceadjustmentengine
 
 import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment"
@@ -11,7 +11,7 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
-func (s *Service) logAudit(
+func (s *Engine) LogAudit(
 	entity *invoiceadjustment.InvoiceAdjustment,
 	actor *permissionports.RequestActor,
 	op permission.Operation,
@@ -39,7 +39,7 @@ func (s *Service) logAudit(
 	}
 }
 
-func (s *Service) logAdjustmentEvent(
+func (s *Engine) LogAdjustmentEvent(
 	message string,
 	entity *invoiceadjustment.InvoiceAdjustment,
 	level zapcore.Level,

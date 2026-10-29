@@ -1,4 +1,4 @@
-package invoiceadjustmentservice
+package invoiceadjustmentengine
 
 import (
 	"context"
@@ -24,11 +24,62 @@ import (
 	"github.com/shopspring/decimal"
 )
 
-func (s *Service) computePreview( //nolint:cyclop,funlen // legacy workflow
+func resolvePreviewLineValues(req previewLineValuesRequest) previewLineValues {
+	values := previewLineValues{
+		creditAmount:   req.eligible,
+		creditQuantity: req.sourceLine.Quantity,
+		rebillAmount:   decimal.Zero,
+		rebillQuantity: decimal.Zero,
+		description:    req.sourceLine.Description,
+		payload:        map[string]any{},
+	}
+
+	if req.input == nil || req.kind == invoiceadjustment.KindFullReversal {
+		return values
+	}
+
+	if !req.input.CreditAmount.IsZero() {
+		values.creditAmount = req.input.CreditAmount
+	}
+	if !req.input.CreditQuantity.IsZero() {
+		values.creditQuantity = req.input.CreditQuantity
+	}
+	if !req.input.RebillAmount.IsZero() {
+		values.rebillAmount = req.input.RebillAmount
+	}
+	if !req.input.RebillQuantity.IsZero() {
+		values.rebillQuantity = req.input.RebillQuantity
+	}
+	if strings.TrimSpace(req.input.Description) != "" {
+		values.description = req.input.Description
+	}
+	values.payload = req.input.ReplacementPayload
+
+	return values
+}
+
+func appendPreviewError(
+	preview *invoiceadjustmentports.InvoiceAdjustmentPreview,
+	field, message string,
+) {
+	preview.Errors[field] = append(preview.Errors[field], message)
+}
+
+func PreviewErrorsToMultiError(errors map[string][]string) *errortypes.MultiError {
+	multiErr := errortypes.NewMultiError()
+	for field, messages := range errors {
+		for _, message := range messages {
+			multiErr.Add(field, errortypes.ErrInvalidOperation, message)
+		}
+	}
+	return multiErr
+}
+
+func (s *Engine) ComputePreview( //nolint:cyclop,funlen // legacy workflow
 	ctx context.Context,
 	req *invoiceadjustmentports.InvoiceAdjustmentRequest,
 	excludeAdjustmentID pulid.ID,
-) (*previewComputation, error) {
+) (*PreviewComputation, error) {
 	entity, err := s.invoiceRepo.GetByID(ctx, invoiceports.GetInvoiceByIDRequest{
 		ID:         req.InvoiceID,
 		TenantInfo: req.TenantInfo,
@@ -290,53 +341,19 @@ func (s *Service) computePreview( //nolint:cyclop,funlen // legacy workflow
 		)
 	}
 
-	return &previewComputation{
-		invoice:           entity,
+	return &PreviewComputation{
+		Invoice:           entity,
 		correctionGroupID: preview.CorrectionGroupID,
 		control:           control,
 		accountingControl: accountingControl,
-		preview:           preview,
-		lines:             lines,
+		Preview:           preview,
+		Lines:             lines,
 		creditLineItems:   creditLines,
 		replacementLines:  replacementLines,
 	}, nil
 }
 
-func resolvePreviewLineValues(req previewLineValuesRequest) previewLineValues {
-	values := previewLineValues{
-		creditAmount:   req.eligible,
-		creditQuantity: req.sourceLine.Quantity,
-		rebillAmount:   decimal.Zero,
-		rebillQuantity: decimal.Zero,
-		description:    req.sourceLine.Description,
-		payload:        map[string]any{},
-	}
-
-	if req.input == nil || req.kind == invoiceadjustment.KindFullReversal {
-		return values
-	}
-
-	if !req.input.CreditAmount.IsZero() {
-		values.creditAmount = req.input.CreditAmount
-	}
-	if !req.input.CreditQuantity.IsZero() {
-		values.creditQuantity = req.input.CreditQuantity
-	}
-	if !req.input.RebillAmount.IsZero() {
-		values.rebillAmount = req.input.RebillAmount
-	}
-	if !req.input.RebillQuantity.IsZero() {
-		values.rebillQuantity = req.input.RebillQuantity
-	}
-	if strings.TrimSpace(req.input.Description) != "" {
-		values.description = req.input.Description
-	}
-	values.payload = req.input.ReplacementPayload
-
-	return values
-}
-
-func (s *Service) applyCreditBalancePolicy(
+func (s *Engine) applyCreditBalancePolicy(
 	preview *invoiceadjustmentports.InvoiceAdjustmentPreview,
 	entity *invoice.Invoice,
 	control *invoiceadjustmentcontrol.InvoiceAdjustmentControl,
@@ -378,7 +395,7 @@ func (s *Service) applyCreditBalancePolicy(
 	}
 }
 
-func (s *Service) applyApprovalPolicy(
+func (s *Engine) applyApprovalPolicy(
 	preview *invoiceadjustmentports.InvoiceAdjustmentPreview,
 	entity *invoice.Invoice,
 	control *invoiceadjustmentcontrol.InvoiceAdjustmentControl,
@@ -412,7 +429,7 @@ func (s *Service) applyApprovalPolicy(
 	}
 }
 
-func (s *Service) applyReplacementReviewPolicy(
+func (s *Engine) applyReplacementReviewPolicy(
 	preview *invoiceadjustmentports.InvoiceAdjustmentPreview,
 	control *invoiceadjustmentcontrol.InvoiceAdjustmentControl,
 ) {
@@ -440,7 +457,7 @@ func (s *Service) applyReplacementReviewPolicy(
 // by the invoice — one leg for a single-shipment invoice, the line-attributed set for a
 // grouped (order) invoice. Order-level lines (no leg attribution) are carried forward
 // at their billed amount; rerating only re-prices legs.
-func (s *Service) computeRerate( //nolint:gocritic // stable API shape
+func (s *Engine) computeRerate( //nolint:gocritic // stable API shape
 	ctx context.Context,
 	entity *invoice.Invoice,
 	tenantInfo pagination.TenantInfo,
@@ -548,21 +565,4 @@ func (s *Service) computeRerate( //nolint:gocritic // stable API shape
 			Mul(decimal.NewFromInt(100))
 	}
 	return lines, total, variance, nil
-}
-
-func appendPreviewError(
-	preview *invoiceadjustmentports.InvoiceAdjustmentPreview,
-	field, message string,
-) {
-	preview.Errors[field] = append(preview.Errors[field], message)
-}
-
-func previewErrorsToMultiError(errors map[string][]string) *errortypes.MultiError {
-	multiErr := errortypes.NewMultiError()
-	for field, messages := range errors {
-		for _, message := range messages {
-			multiErr.Add(field, errortypes.ErrInvalidOperation, message)
-		}
-	}
-	return multiErr
 }

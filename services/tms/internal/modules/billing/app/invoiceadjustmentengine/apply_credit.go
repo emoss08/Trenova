@@ -1,4 +1,4 @@
-package invoiceadjustmentservice
+package invoiceadjustmentengine
 
 import (
 	"context"
@@ -29,7 +29,7 @@ type creditApplier interface {
 //
 // It returns the source invoice as it now stands, because applying the credit
 // moved its balance and version.
-func (s *Service) applyCreditToSource(
+func (s *Engine) applyCreditToSource(
 	ctx context.Context,
 	adjustment *invoiceadjustment.InvoiceAdjustment,
 	creditMemo *invoice.Invoice,

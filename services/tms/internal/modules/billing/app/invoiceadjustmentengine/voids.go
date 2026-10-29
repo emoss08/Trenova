@@ -1,35 +1,23 @@
-package invoiceadjustmentservice
+package invoiceadjustmentengine
 
 import (
 	"context"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/billing/app/billingnumber"
-
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoicevoid"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/shared/pulid"
 )
-
-func collectBatchItemIDs(items []*invoiceadjustment.InvoiceAdjustmentBatchItem) []pulid.ID {
-	ids := make([]pulid.ID, 0, len(items))
-	for _, item := range items {
-		if item != nil {
-			ids = append(ids, item.ID)
-		}
-	}
-	return ids
-}
 
 // voidReversedInvoice retires the original once a full reversal has credited
 // it. The invoice keeps its number and lines for the audit trail, its open
 // balance drops to zero, and its freight is released according to the
 // disposition recorded when the void was requested (DoNotRebill unless the
 // requester asked otherwise).
-func (s *Service) voidReversedInvoice(
+func (s *Engine) voidReversedInvoice(
 	ctx context.Context,
 	adjustment *invoiceadjustment.InvoiceAdjustment,
 	original *invoice.Invoice,
@@ -95,6 +83,6 @@ func (s *Service) voidReversedInvoice(
 	return nil
 }
 
-func (s *Service) numberer() billingnumber.Numberer {
+func (s *Engine) numberer() billingnumber.Numberer {
 	return billingnumber.New(s.sequenceGenerator, s.sequenceFormats, s.customerRepo)
 }

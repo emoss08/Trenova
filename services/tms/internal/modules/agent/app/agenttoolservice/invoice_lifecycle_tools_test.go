@@ -644,7 +644,7 @@ func TestReceivableTools_PinTheRecordTheyChange(t *testing.T) {
 			agenttoolports.RecordInvoiceAdjustment,
 		},
 		{
-			invoiceadjustmenttools.NewSubmitInvoiceAdjustmentTool(nil),
+			invoiceadjustmenttools.NewSubmitInvoiceAdjustmentTool(nil, nil),
 			invoiceadjustmenttools.ParamDraftAdjustmentID,
 			agenttoolports.RecordInvoiceAdjustment,
 		},

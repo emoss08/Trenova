@@ -17,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/invoiceadjustmentrepository"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/invoicedisputerepository"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/invoicerepository"
+	"github.com/emoss08/trenova/internal/modules/billing/app/invoiceadjustmentengine"
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoiceadjustmentservice"
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoiceservice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
@@ -257,14 +258,20 @@ func billingServices(
 		invoicedisputerepository.Params{DB: conn, Logger: logger})
 	services.InvoiceAdjustmentService = invoiceadjustmentservice.New(
 		invoiceadjustmentservice.Params{
-			Logger: logger,
 			Repo: invoiceadjustmentrepository.New(
 				invoiceadjustmentrepository.Params{DB: conn, Logger: logger},
 			),
-			DocumentRepo: documentrepository.New(
-				documentrepository.Params{DB: conn, Logger: logger},
-			),
 			InvoiceRepo: invoices,
+			Engine: invoiceadjustmentengine.New(invoiceadjustmentengine.Params{
+				Logger: logger,
+				Repo: invoiceadjustmentrepository.New(
+					invoiceadjustmentrepository.Params{DB: conn, Logger: logger},
+				),
+				DocumentRepo: documentrepository.New(
+					documentrepository.Params{DB: conn, Logger: logger},
+				),
+				InvoiceRepo: invoices,
+			}),
 		})
 
 	seed := &billingSeed{

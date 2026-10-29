@@ -5,9 +5,11 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/billing/app/invoiceadjustmentengine"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/mocks/invoiceadjustmentportsmock"
@@ -20,17 +22,34 @@ import (
 	"go.uber.org/zap"
 )
 
+type fakeDecisionDB struct {
+	transactions int
+}
+
+func (f *fakeDecisionDB) Transact(
+	ctx context.Context,
+	_ kernelports.TxOptions,
+	fn func(context.Context) error,
+) error {
+	f.transactions++
+	return fn(ctx)
+}
+
 type rejectFixture struct {
 	tenantInfo pagination.TenantInfo
 	adjustment *invoiceadjustment.InvoiceAdjustment
 	invoice    *invoice.Invoice
 	repo       *invoiceadjustmentportsmock.MockInvoiceAdjustmentRepository
 	invoices   *invoiceportsmock.MockInvoiceRepository
-	db         *fakeAdjustmentDB
+	db         *fakeDecisionDB
 	svc        *Service
 }
 
-func newRejectFixture(t *testing.T, status invoiceadjustment.Status, kind invoiceadjustment.Kind) *rejectFixture {
+func newRejectFixture(
+	t *testing.T,
+	status invoiceadjustment.Status,
+	kind invoiceadjustment.Kind,
+) *rejectFixture {
 	t.Helper()
 
 	tenantInfo := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
@@ -56,22 +75,27 @@ func newRejectFixture(t *testing.T, status invoiceadjustment.Status, kind invoic
 		},
 		repo:     invoiceadjustmentportsmock.NewMockInvoiceAdjustmentRepository(t),
 		invoices: invoiceportsmock.NewMockInvoiceRepository(t),
-		db:       &fakeAdjustmentDB{},
+		db:       &fakeDecisionDB{},
 	}
 	f.svc = &Service{
-		l:            zap.NewNop(),
-		db:           f.db,
-		repo:         f.repo,
-		invoiceRepo:  f.invoices,
-		auditService: &mocks.NoopAuditService{},
-		realtime:     &mocks.NoopRealtimeService{},
+		db:          f.db,
+		repo:        f.repo,
+		invoiceRepo: f.invoices,
+		engine: invoiceadjustmentengine.New(invoiceadjustmentengine.Params{
+			Logger:       zap.NewNop(),
+			AuditService: &mocks.NoopAuditService{},
+			Realtime:     &mocks.NoopRealtimeService{},
+		}),
 	}
 
 	return f
 }
 
 func (f *rejectFixture) expectLockedRead() {
-	request := invoiceadjustmentports.GetInvoiceAdjustmentRequest{ID: f.adjustment.ID, TenantInfo: f.tenantInfo}
+	request := invoiceadjustmentports.GetInvoiceAdjustmentRequest{
+		ID:         f.adjustment.ID,
+		TenantInfo: f.tenantInfo,
+	}
 	f.repo.EXPECT().
 		GetByID(mock.Anything, request).
 		RunAndReturn(func(context.Context, invoiceadjustmentports.GetInvoiceAdjustmentRequest) (*invoiceadjustment.InvoiceAdjustment, error) {
@@ -101,7 +125,11 @@ func (f *rejectFixture) reject(t *testing.T) (*invoiceadjustment.InvoiceAdjustme
 func TestRejectClosesAFailedExecutionAndWithdrawsTheVoid(t *testing.T) {
 	t.Parallel()
 
-	f := newRejectFixture(t, invoiceadjustment.StatusExecutionFailed, invoiceadjustment.KindFullReversal)
+	f := newRejectFixture(
+		t,
+		invoiceadjustment.StatusExecutionFailed,
+		invoiceadjustment.KindFullReversal,
+	)
 	f.expectLockedRead()
 	f.repo.EXPECT().
 		UpdateAdjustment(mock.Anything, mock.MatchedBy(func(entity *invoiceadjustment.InvoiceAdjustment) bool {
@@ -135,7 +163,11 @@ func TestRejectClosesAFailedExecutionAndWithdrawsTheVoid(t *testing.T) {
 func TestRejectLeavesTheInvoiceAloneForOtherKinds(t *testing.T) {
 	t.Parallel()
 
-	f := newRejectFixture(t, invoiceadjustment.StatusPendingApproval, invoiceadjustment.KindCreditOnly)
+	f := newRejectFixture(
+		t,
+		invoiceadjustment.StatusPendingApproval,
+		invoiceadjustment.KindCreditOnly,
+	)
 	f.expectLockedRead()
 	f.repo.EXPECT().
 		UpdateAdjustment(mock.Anything, mock.Anything).
@@ -184,5 +216,8 @@ func TestRetiredIdempotencyKeyStaysWithinTheColumn(t *testing.T) {
 	adjustment.Reject(pulid.MustNew("usr_"), 1_700_000_000, "no")
 
 	assert.Len(t, adjustment.IdempotencyKey, 200)
-	assert.True(t, strings.HasPrefix(adjustment.IdempotencyKey, "rejected:"+adjustment.ID.String()+":"))
+	assert.True(
+		t,
+		strings.HasPrefix(adjustment.IdempotencyKey, "rejected:"+adjustment.ID.String()+":"),
+	)
 }

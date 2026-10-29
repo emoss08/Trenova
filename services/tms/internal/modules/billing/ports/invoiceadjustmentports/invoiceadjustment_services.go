@@ -161,7 +161,7 @@ type InvoiceAdjustGenerator interface {
 	) (string, error)
 }
 
-type InvoiceAdjustmentService interface {
+type InvoiceAdjustmentDraftService interface {
 	CreateDraft(
 		ctx context.Context,
 		req *CreateDraftInvoiceAdjustmentRequest,
@@ -192,6 +192,9 @@ type InvoiceAdjustmentService interface {
 		req *SaveInvoiceAdjustmentDraftRequest,
 		actor *permissionports.RequestActor,
 	) (*InvoiceAdjustmentDraftPreview, error)
+}
+
+type InvoiceAdjustmentService interface {
 	PreviewDecision(
 		ctx context.Context,
 		req *InvoiceAdjustmentDecisionRequest,

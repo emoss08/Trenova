@@ -1,4 +1,4 @@
-package invoiceadjustmentservice
+package invoiceadjustmentengine
 
 import (
 	"testing"
@@ -23,7 +23,7 @@ func TestDetentionWaiversSurviveTheAdjustmentsMetadata(t *testing.T) {
 		RequestedBy:  pulid.MustNew("usr_"),
 	}
 	attachmentID := pulid.MustNew("doc_")
-	metadata := adjustmentMetadata(&invoiceadjustmentports.InvoiceAdjustmentRequest{
+	metadata := AdjustmentMetadata(&invoiceadjustmentports.InvoiceAdjustmentRequest{
 		AttachmentIDs:    []pulid.ID{attachmentID},
 		DetentionWaivers: []detentionports.DetentionWaiver{waiver},
 	})
@@ -42,7 +42,7 @@ func TestDetentionWaiversSurviveTheAdjustmentsMetadata(t *testing.T) {
 func TestAnAdjustmentWithoutWaiversCarriesNone(t *testing.T) {
 	t.Parallel()
 
-	metadata := adjustmentMetadata(&invoiceadjustmentports.InvoiceAdjustmentRequest{})
+	metadata := AdjustmentMetadata(&invoiceadjustmentports.InvoiceAdjustmentRequest{})
 	assert.NotContains(t, metadata, metadataDetentionWaivers)
 
 	waivers, err := detentionWaiversOf(&invoiceadjustment.InvoiceAdjustment{Metadata: metadata})

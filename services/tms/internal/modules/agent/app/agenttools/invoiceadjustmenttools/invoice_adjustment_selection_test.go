@@ -44,7 +44,7 @@ func TestSaveInvoiceAdjustmentDraft_TakesTheDraftsOwnInvoiceBesideIt(t *testing.
 	t.Parallel()
 
 	adjuster, detail := savedDraftAdjuster()
-	tool := NewSaveInvoiceAdjustmentDraftTool(adjuster)
+	tool := NewSaveInvoiceAdjustmentDraftTool(adjuster, adjuster)
 	params := agenttoolstest.AgentParamsFor(map[string]any{
 		ParamAdjustmentID:         detail.ID.String(),
 		toolparams.ParamInvoiceID: detail.OriginalInvoiceID.String(),
@@ -64,7 +64,7 @@ func TestSaveInvoiceAdjustmentDraft_ARefusalForADraftOnAnotherInvoiceShowsBothCa
 	t.Parallel()
 
 	adjuster, detail := savedDraftAdjuster()
-	tool := NewSaveInvoiceAdjustmentDraftTool(adjuster)
+	tool := NewSaveInvoiceAdjustmentDraftTool(adjuster, adjuster)
 	other := pulid.MustNew("inv_")
 	params := agenttoolstest.AgentParamsFor(map[string]any{
 		ParamAdjustmentID:         detail.ID.String(),
@@ -98,7 +98,8 @@ func TestSaveInvoiceAdjustmentDraft_ARefusalForADraftOnAnotherInvoiceShowsBothCa
 func TestSubmitInvoiceAdjustment_ARefusalForBothSelectionsShowsBothCalls(t *testing.T) {
 	t.Parallel()
 
-	tool := NewSubmitInvoiceAdjustmentTool(&fakeAdjuster{figures: adjustmentFigures(false)})
+	adjuster := &fakeAdjuster{figures: adjustmentFigures(false)}
+	tool := NewSubmitInvoiceAdjustmentTool(adjuster, adjuster)
 
 	err := tool.(agenttoolports.ToolValidator).Validate(
 		t.Context(),

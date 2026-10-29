@@ -1,4 +1,4 @@
-package invoiceadjustmentservice
+package invoiceadjustmentengine
 
 import (
 	"context"
@@ -22,7 +22,14 @@ import (
 	"go.uber.org/zap"
 )
 
-func (s *Service) createReplacementDraftInvoice(
+func replacementQueueStatus(reviewRequired bool) billingqueue.Status {
+	if reviewRequired {
+		return billingqueue.StatusReadyForReview
+	}
+	return billingqueue.StatusApproved
+}
+
+func (s *Engine) createReplacementDraftInvoice(
 	ctx context.Context,
 	item *billingqueue.BillingQueueItem,
 	adjustment *invoiceadjustment.InvoiceAdjustment,
@@ -87,7 +94,7 @@ func (s *Service) createReplacementDraftInvoice(
 	return created, nil
 }
 
-func (s *Service) createWriteOffJournalEntry(
+func (s *Engine) createWriteOffJournalEntry(
 	ctx context.Context,
 	adjustment *invoiceadjustment.InvoiceAdjustment,
 	sourceInvoice *invoice.Invoice,
@@ -170,14 +177,7 @@ func (s *Service) createWriteOffJournalEntry(
 	return result.EntryID, nil
 }
 
-func replacementQueueStatus(reviewRequired bool) billingqueue.Status {
-	if reviewRequired {
-		return billingqueue.StatusReadyForReview
-	}
-	return billingqueue.StatusApproved
-}
-
-func (s *Service) creditMemoLedger() *invoiceledger.Poster {
+func (s *Engine) creditMemoLedger() *invoiceledger.Poster {
 	policy := s.accountingPolicy
 	if policy == nil {
 		policy = accountingcontrolpolicyservice.New(
@@ -199,7 +199,7 @@ func (s *Service) creditMemoLedger() *invoiceledger.Poster {
 	return poster
 }
 
-func (s *Service) postCreditMemoLedger(
+func (s *Engine) postCreditMemoLedger(
 	ctx context.Context,
 	adjustment *invoiceadjustment.InvoiceAdjustment,
 	creditMemo *invoice.Invoice,

@@ -18929,3 +18929,6 @@ github.com/emoss08/trenova/internal/modules/agent/app/agenttools/operationstools
 github.com/emoss08/trenova/internal/modules/agent/app/agenttools/operationstools.ServiceFailureDecider	github.com/emoss08/trenova/internal/modules/agent/app/agenttools/servicefailuretools.ServiceFailureDecider
 github.com/emoss08/trenova/internal/modules/agent/app/agenttools/operationstools.ServiceFailureLifecyclePreview	github.com/emoss08/trenova/internal/modules/agent/app/agenttools/servicefailuretools.ServiceFailureLifecyclePreview
 github.com/emoss08/trenova/internal/modules/agent/app/agenttools/operationstools.UpdateShipmentTool	github.com/emoss08/trenova/internal/modules/agent/app/agenttools/intaketools.UpdateShipmentTool
+github.com/emoss08/trenova/internal/modules/billing/app/invoiceadjustmentservice.Validator	github.com/emoss08/trenova/internal/modules/billing/app/invoiceadjustmentengine.Validator
+github.com/emoss08/trenova/internal/modules/billing/app/invoiceadjustmentservice.NewValidator	github.com/emoss08/trenova/internal/modules/billing/app/invoiceadjustmentengine.NewValidator
+github.com/emoss08/trenova/internal/modules/billing/app/invoiceadjustmentservice.ValidatorParams	github.com/emoss08/trenova/internal/modules/billing/app/invoiceadjustmentengine.ValidatorParams

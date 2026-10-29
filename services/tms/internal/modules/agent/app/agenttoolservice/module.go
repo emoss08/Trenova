@@ -641,14 +641,16 @@ func provideUnapplyCreditMemoTool(
 
 func provideSaveInvoiceAdjustmentDraftTool(
 	adjustments invoiceadjustmentports.InvoiceAdjustmentService,
+	drafts invoiceadjustmentports.InvoiceAdjustmentDraftService,
 ) agenttoolports.AgentTool {
-	return invoiceadjustmenttools.NewSaveInvoiceAdjustmentDraftTool(adjustments)
+	return invoiceadjustmenttools.NewSaveInvoiceAdjustmentDraftTool(adjustments, drafts)
 }
 
 func provideSubmitInvoiceAdjustmentTool(
 	adjustments invoiceadjustmentports.InvoiceAdjustmentService,
+	drafts invoiceadjustmentports.InvoiceAdjustmentDraftService,
 ) agenttoolports.AgentTool {
-	return invoiceadjustmenttools.NewSubmitInvoiceAdjustmentTool(adjustments)
+	return invoiceadjustmenttools.NewSubmitInvoiceAdjustmentTool(adjustments, drafts)
 }
 
 func provideApproveInvoiceAdjustmentTool(

@@ -1,4 +1,4 @@
-package invoiceadjustmentservice
+package invoiceadjustmentengine
 
 import (
 	"testing"
@@ -12,7 +12,7 @@ import (
 )
 
 func TestApplyCreditBalancePolicy(t *testing.T) {
-	svc := &Service{}
+	svc := &Engine{}
 	preview := &invoiceadjustmentports.InvoiceAdjustmentPreview{
 		WouldCreateUnappliedCredit: true,
 		Errors:                     make(map[string][]string),
@@ -36,7 +36,7 @@ func TestApplyCreditBalancePolicy(t *testing.T) {
 }
 
 func TestApplyCreditBalancePolicyDisallow(t *testing.T) {
-	svc := &Service{}
+	svc := &Engine{}
 	preview := &invoiceadjustmentports.InvoiceAdjustmentPreview{
 		WouldCreateUnappliedCredit: true,
 		Errors:                     make(map[string][]string),
@@ -58,7 +58,7 @@ func TestApplyCreditBalancePolicyDisallow(t *testing.T) {
 }
 
 func TestApplyReplacementReviewPolicy(t *testing.T) {
-	svc := &Service{}
+	svc := &Engine{}
 	preview := &invoiceadjustmentports.InvoiceAdjustmentPreview{
 		Kind:                  invoiceadjustment.KindCreditRebill,
 		CreditTotalAmount:     decimal.NewFromInt(100),
@@ -75,7 +75,7 @@ func TestApplyReplacementReviewPolicy(t *testing.T) {
 }
 
 func TestValidateSettlementPolicy(t *testing.T) {
-	svc := &Service{}
+	svc := &Engine{}
 	preview := &invoiceadjustmentports.InvoiceAdjustmentPreview{
 		Errors: make(map[string][]string),
 	}

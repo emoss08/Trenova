@@ -1,9 +1,7 @@
-package invoiceadjustmentservice
+package invoiceadjustmentengine
 
 import (
 	"context"
-	"github.com/emoss08/trenova/internal/testutil/mocks/billingqueueportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/invoiceportsmock"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
@@ -11,6 +9,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/internal/testutil"
+	"github.com/emoss08/trenova/internal/testutil/mocks/billingqueueportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/invoiceportsmock"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -20,7 +20,7 @@ import (
 
 func reversalFixture(
 	t *testing.T,
-) (*Service, *invoiceportsmock.MockInvoiceRepository, *billingqueueportsmock.MockBillingQueueRepository, *invoiceadjustment.InvoiceAdjustment, *invoice.Invoice) {
+) (*Engine, *invoiceportsmock.MockInvoiceRepository, *billingqueueportsmock.MockBillingQueueRepository, *invoiceadjustment.InvoiceAdjustment, *invoice.Invoice) {
 	t.Helper()
 	orgID := pulid.MustNew("org_")
 	buID := pulid.MustNew("bu_")
@@ -42,7 +42,7 @@ func reversalFixture(
 	}
 	invoiceRepo := invoiceportsmock.NewMockInvoiceRepository(t)
 	queueRepo := billingqueueportsmock.NewMockBillingQueueRepository(t)
-	svc := &Service{
+	svc := &Engine{
 		l:                 zap.NewNop(),
 		invoiceRepo:       invoiceRepo,
 		billingQueueRepo:  queueRepo,
@@ -127,7 +127,10 @@ func TestVoidReversedInvoiceHonoursTheRequestedDispositionAndReason(t *testing.T
 			if !req.Rebill || req.RenumberFn == nil {
 				return false
 			}
-			number, err := req.RenumberFn(t.Context(), &billingqueue.BillingQueueItem{BillType: billingqueue.BillTypeInvoice})
+			number, err := req.RenumberFn(
+				t.Context(),
+				&billingqueue.BillingQueueItem{BillType: billingqueue.BillTypeInvoice},
+			)
 			return err == nil && number == "INV-2"
 		})).
 		Return([]*billingqueue.BillingQueueItem{}, nil).

@@ -23,6 +23,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/invoiceadjustmentrepository"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/invoicerepository"
 	"github.com/emoss08/trenova/internal/modules/billing/app/billingqueueservice"
+	"github.com/emoss08/trenova/internal/modules/billing/app/invoiceadjustmentengine"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment"
@@ -34,7 +35,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document/documentdb"
 	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/accountingcontrolrepository"
-	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/billingcontrolrepository"
 	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/invoiceadjustmentcontrolrepository"
 	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/shipmentcontrolrepository"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
@@ -1043,9 +1043,6 @@ func newIntegrationHarness(
 	accountingRepo := accountingcontrolrepository.New(
 		accountingcontrolrepository.Params{DB: conn, Logger: logger},
 	)
-	billingCtrlRepo := billingcontrolrepository.New(
-		billingcontrolrepository.Params{DB: conn, Logger: logger},
-	)
 	customerRepo := customerrepository.New(customerrepository.Params{
 		DB:     conn,
 		Logger: logger,
@@ -1138,37 +1135,45 @@ func newIntegrationHarness(
 	}
 
 	h.service = New(Params{
-		Logger:             logger,
 		DB:                 conn,
 		Repo:               adjustmentRepo,
 		InvoiceRepo:        invoiceRepo,
-		CustomerRepo:       customerRepo,
-		BillingQueueRepo:   billingQueueRepo,
-		ShipmentRepo:       shipmentRepo,
-		ShipmentCtrlRepo:   shipmentCtrlRepo,
-		BillingCtrlRepo:    billingCtrlRepo,
 		AdjustmentCtrlRepo: adjustmentCtrlRepo,
-		AccountingRepo:     accountingRepo,
-		JournalRepo: journalpostingrepository.New(
-			journalpostingrepository.Params{DB: conn, Logger: logger},
+		Validator: invoiceadjustmentengine.NewValidator(
+			invoiceadjustmentengine.ValidatorParams{},
 		),
-		FiscalPeriodRepo: fiscalPeriodRepo,
-		DocumentRepo:     documentRepo,
-		CustomerLedgerRepo: customerledgerrepository.New(
-			customerledgerrepository.Params{DB: conn, Logger: logger},
-		),
-		Validator:       NewValidator(ValidatorParams{}),
-		AuditService:    noopAuditService{},
 		WorkflowStarter: starter,
-		Commercial: shipmentcommercial.New(shipmentcommercial.Params{
-			Logger:          zap.NewNop(),
-			RateEngine:      ratingtest.NewFlatEngine(t, formulaAmount),
-			AccessorialRepo: fakeAccessorialRepo{},
+		Engine: invoiceadjustmentengine.New(invoiceadjustmentengine.Params{
+			Logger:           logger,
+			Repo:             adjustmentRepo,
+			InvoiceRepo:      invoiceRepo,
+			CustomerRepo:     customerRepo,
+			BillingQueueRepo: billingQueueRepo,
+			ShipmentRepo:     shipmentRepo,
+			ShipmentCtrlRepo: shipmentCtrlRepo,
+			AccountingRepo:   accountingRepo,
+			JournalRepo: journalpostingrepository.New(
+				journalpostingrepository.Params{DB: conn, Logger: logger},
+			),
+			FiscalPeriodRepo: fiscalPeriodRepo,
+			DocumentRepo:     documentRepo,
+			CustomerLedgerRepo: customerledgerrepository.New(
+				customerledgerrepository.Params{DB: conn, Logger: logger},
+			),
+			Validator: invoiceadjustmentengine.NewValidator(
+				invoiceadjustmentengine.ValidatorParams{},
+			),
+			AuditService: noopAuditService{},
+			Commercial: shipmentcommercial.New(shipmentcommercial.Params{
+				Logger:          zap.NewNop(),
+				RateEngine:      ratingtest.NewFlatEngine(t, formulaAmount),
+				AccessorialRepo: fakeAccessorialRepo{},
+			}),
+			Generator: &fakeGenerator{},
+			SequenceGenerator: testutil.UniqueJournalSequenceGenerator{
+				TestSequenceGenerator: testutil.TestSequenceGenerator{SingleValue: "ACC-SEQ"},
+			},
 		}),
-		Generator: &fakeGenerator{},
-		SequenceGenerator: testutil.UniqueJournalSequenceGenerator{
-			TestSequenceGenerator: testutil.TestSequenceGenerator{SingleValue: "ACC-SEQ"},
-		},
 	})
 
 	return h
@@ -1182,50 +1187,56 @@ func (h *integrationHarness) buildService(
 	t.Helper()
 
 	return New(Params{
-		Logger:      zap.NewNop(),
-		DB:          h.conn,
-		Repo:        h.adjustmentRepo,
-		InvoiceRepo: h.invoiceRepo,
-		CustomerRepo: customerrepository.New(customerrepository.Params{
-			DB:     h.conn,
-			Logger: zap.NewNop(),
-		}),
-		BillingQueueRepo: h.billingQueueRepo,
-		ShipmentRepo: shipmentrepository.New(
-			shipmentrepository.Params{DB: h.conn, Logger: zap.NewNop()},
-		),
-		ShipmentCtrlRepo: shipmentcontrolrepository.New(
-			shipmentcontrolrepository.Params{DB: h.conn, Logger: zap.NewNop()},
-		),
-		BillingCtrlRepo: billingcontrolrepository.New(
-			billingcontrolrepository.Params{DB: h.conn, Logger: zap.NewNop()},
-		),
+		DB:                 h.conn,
+		Repo:               h.adjustmentRepo,
+		InvoiceRepo:        h.invoiceRepo,
 		AdjustmentCtrlRepo: h.adjustmentCtrlRepo,
-		AccountingRepo:     h.accountingRepo,
-		JournalRepo: journalpostingrepository.New(
-			journalpostingrepository.Params{DB: h.conn, Logger: zap.NewNop()},
+		Validator: invoiceadjustmentengine.NewValidator(
+			invoiceadjustmentengine.ValidatorParams{},
 		),
-		FiscalPeriodRepo: fiscalperiodrepository.New(
-			fiscalperiodrepository.Params{DB: h.conn, Logger: zap.NewNop()},
-		),
-		CustomerLedgerRepo: customerledgerrepository.New(
-			customerledgerrepository.Params{DB: h.conn, Logger: zap.NewNop()},
-		),
-		DocumentRepo: documentrepository.New(
-			documentrepository.Params{DB: h.conn, Logger: zap.NewNop()},
-		),
-		Validator:       NewValidator(ValidatorParams{}),
-		AuditService:    noopAuditService{},
 		WorkflowStarter: starter,
-		Commercial: shipmentcommercial.New(shipmentcommercial.Params{
-			Logger:          zap.NewNop(),
-			RateEngine:      ratingtest.NewFlatEngine(t, formulaAmount),
-			AccessorialRepo: fakeAccessorialRepo{},
+		Engine: invoiceadjustmentengine.New(invoiceadjustmentengine.Params{
+			Logger:      zap.NewNop(),
+			Repo:        h.adjustmentRepo,
+			InvoiceRepo: h.invoiceRepo,
+			CustomerRepo: customerrepository.New(customerrepository.Params{
+				DB:     h.conn,
+				Logger: zap.NewNop(),
+			}),
+			BillingQueueRepo: h.billingQueueRepo,
+			ShipmentRepo: shipmentrepository.New(
+				shipmentrepository.Params{DB: h.conn, Logger: zap.NewNop()},
+			),
+			ShipmentCtrlRepo: shipmentcontrolrepository.New(
+				shipmentcontrolrepository.Params{DB: h.conn, Logger: zap.NewNop()},
+			),
+			AccountingRepo: h.accountingRepo,
+			JournalRepo: journalpostingrepository.New(
+				journalpostingrepository.Params{DB: h.conn, Logger: zap.NewNop()},
+			),
+			FiscalPeriodRepo: fiscalperiodrepository.New(
+				fiscalperiodrepository.Params{DB: h.conn, Logger: zap.NewNop()},
+			),
+			CustomerLedgerRepo: customerledgerrepository.New(
+				customerledgerrepository.Params{DB: h.conn, Logger: zap.NewNop()},
+			),
+			DocumentRepo: documentrepository.New(
+				documentrepository.Params{DB: h.conn, Logger: zap.NewNop()},
+			),
+			Validator: invoiceadjustmentengine.NewValidator(
+				invoiceadjustmentengine.ValidatorParams{},
+			),
+			AuditService: noopAuditService{},
+			Commercial: shipmentcommercial.New(shipmentcommercial.Params{
+				Logger:          zap.NewNop(),
+				RateEngine:      ratingtest.NewFlatEngine(t, formulaAmount),
+				AccessorialRepo: fakeAccessorialRepo{},
+			}),
+			Generator: &fakeGenerator{},
+			SequenceGenerator: testutil.UniqueJournalSequenceGenerator{
+				TestSequenceGenerator: testutil.TestSequenceGenerator{SingleValue: "ACC-SEQ"},
+			},
 		}),
-		Generator: &fakeGenerator{},
-		SequenceGenerator: testutil.UniqueJournalSequenceGenerator{
-			TestSequenceGenerator: testutil.TestSequenceGenerator{SingleValue: "ACC-SEQ"},
-		},
 	})
 }
 

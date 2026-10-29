@@ -199,7 +199,7 @@ func TestSubmitInvoiceAdjustment_OneAdjustmentPreviewsItsFigures(t *testing.T) {
 	t.Parallel()
 
 	adjuster := &fakeAdjuster{figures: adjustmentFigures(true), guard: &agenttoolstest.WriteGuard{}}
-	tool := NewSubmitInvoiceAdjustmentTool(adjuster)
+	tool := NewSubmitInvoiceAdjustmentTool(adjuster, adjuster)
 	invoiceID := pulid.MustNew("inv_")
 	params := agenttoolstest.ExecuteParams(map[string]any{
 		toolparams.ParamAdjustments: []any{map[string]any{
@@ -253,7 +253,7 @@ func TestSubmitInvoiceAdjustment_ManyGoAsOneBatch(t *testing.T) {
 	t.Parallel()
 
 	adjuster := &fakeAdjuster{figures: adjustmentFigures(false)}
-	tool := NewSubmitInvoiceAdjustmentTool(adjuster)
+	tool := NewSubmitInvoiceAdjustmentTool(adjuster, adjuster)
 	items := make([]any, 0, 3)
 	for range 3 {
 		items = append(items, map[string]any{
@@ -286,7 +286,7 @@ func TestSubmitInvoiceAdjustment_PreviewErrorsRefuseIt(t *testing.T) {
 	figures := adjustmentFigures(false)
 	figures.Errors = map[string][]string{"invoiceId": {"Only posted invoices may be adjusted"}}
 	adjuster := &fakeAdjuster{figures: figures}
-	tool := NewSubmitInvoiceAdjustmentTool(adjuster)
+	tool := NewSubmitInvoiceAdjustmentTool(adjuster, adjuster)
 	params := agenttoolstest.ExecuteParams(map[string]any{
 		toolparams.ParamAdjustments: []any{map[string]any{
 			toolparams.ParamInvoiceID: pulid.MustNew("inv_").String(),
@@ -306,7 +306,8 @@ func TestSubmitInvoiceAdjustment_PreviewErrorsRefuseIt(t *testing.T) {
 func TestSubmitInvoiceAdjustment_TakesADraftOrAdjustmentsNotBoth(t *testing.T) {
 	t.Parallel()
 
-	tool := NewSubmitInvoiceAdjustmentTool(&fakeAdjuster{figures: adjustmentFigures(false)})
+	adjuster := &fakeAdjuster{figures: adjustmentFigures(false)}
+	tool := NewSubmitInvoiceAdjustmentTool(adjuster, adjuster)
 	both := agenttoolstest.ExecuteParams(map[string]any{
 		ParamDraftAdjustmentID: pulid.MustNew("iadj_").String(),
 		toolparams.ParamAdjustments: []any{map[string]any{
@@ -336,7 +337,7 @@ func TestSubmitInvoiceAdjustment_SubmitsASavedDraft(t *testing.T) {
 		Reason:            "Fuel surcharge disputed",
 	}
 	adjuster := &fakeAdjuster{figures: adjustmentFigures(false), detail: detail}
-	tool := NewSubmitInvoiceAdjustmentTool(adjuster)
+	tool := NewSubmitInvoiceAdjustmentTool(adjuster, adjuster)
 	params := agenttoolstest.ExecuteParams(
 		map[string]any{ParamDraftAdjustmentID: detail.ID.String()},
 	)
@@ -370,7 +371,7 @@ func TestSaveInvoiceAdjustmentDraft_AnAgentSavesADraftAndSaysWhere(t *testing.T)
 			Figures: adjustmentFigures(false),
 		},
 	}
-	tool := NewSaveInvoiceAdjustmentDraftTool(adjuster)
+	tool := NewSaveInvoiceAdjustmentDraftTool(adjuster, adjuster)
 	params := agenttoolstest.AgentParamsFor(map[string]any{
 		toolparams.ParamInvoiceID: inv.ID.String(),
 		paramAdjustmentKind:       string(invoiceadjustment.KindCreditOnly),

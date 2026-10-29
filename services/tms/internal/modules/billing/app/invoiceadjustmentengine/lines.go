@@ -1,4 +1,4 @@
-package invoiceadjustmentservice
+package invoiceadjustmentengine
 
 import (
 	"context"
@@ -17,7 +17,30 @@ import (
 	"github.com/shopspring/decimal"
 )
 
-func (s *Service) validateAttachments(
+func attachmentFieldName(adjustmentID pulid.ID) string {
+	if adjustmentID.IsNotNil() {
+		return "referencedDocumentIds"
+	}
+	return "attachmentIds"
+}
+
+func sumInvoiceLines(
+	lines []*invoice.InvoiceLine,
+	lineType invoice.InvoiceLineType,
+) decimal.Decimal {
+	total := decimal.Zero
+	for _, line := range lines {
+		if line == nil {
+			continue
+		}
+		if lineType == "" || line.Type == lineType {
+			total = total.Add(line.Amount)
+		}
+	}
+	return total
+}
+
+func (s *Engine) validateAttachments(
 	ctx context.Context,
 	req *invoiceadjustmentports.InvoiceAdjustmentRequest,
 	preview *invoiceadjustmentports.InvoiceAdjustmentPreview,
@@ -51,7 +74,7 @@ func (s *Service) validateAttachments(
 	}
 }
 
-func (s *Service) buildDraftLines(
+func (s *Engine) BuildDraftLines(
 	sourceInvoice *invoice.Invoice,
 	adjustmentID pulid.ID,
 	tenantInfo pagination.TenantInfo,
@@ -77,7 +100,7 @@ func (s *Service) buildDraftLines(
 	return lines
 }
 
-func (s *Service) buildAdjustmentLines(
+func (s *Engine) BuildAdjustmentLines(
 	adjustmentID pulid.ID,
 	invoiceID pulid.ID,
 	inputs []*invoiceadjustmentports.InvoiceAdjustmentLineInput,
@@ -107,7 +130,7 @@ func (s *Service) buildAdjustmentLines(
 	return lines
 }
 
-func (s *Service) buildDocumentReferences(
+func (s *Engine) BuildDocumentReferences(
 	ctx context.Context,
 	adjustmentID pulid.ID,
 	documentIDs []pulid.ID,
@@ -181,14 +204,7 @@ func (s *Service) buildDocumentReferences(
 	return refs, nil
 }
 
-func attachmentFieldName(adjustmentID pulid.ID) string {
-	if adjustmentID.IsNotNil() {
-		return "referencedDocumentIds"
-	}
-	return "attachmentIds"
-}
-
-func (s *Service) requestLinesFromAdjustment(
+func (s *Engine) RequestLinesFromAdjustment(
 	entity *invoiceadjustment.InvoiceAdjustment,
 ) []*invoiceadjustmentports.InvoiceAdjustmentLineInput {
 	lines := make([]*invoiceadjustmentports.InvoiceAdjustmentLineInput, 0, len(entity.Lines))
@@ -207,20 +223,4 @@ func (s *Service) requestLinesFromAdjustment(
 		})
 	}
 	return lines
-}
-
-func sumInvoiceLines(
-	lines []*invoice.InvoiceLine,
-	lineType invoice.InvoiceLineType,
-) decimal.Decimal {
-	total := decimal.Zero
-	for _, line := range lines {
-		if line == nil {
-			continue
-		}
-		if lineType == "" || line.Type == lineType {
-			total = total.Add(line.Amount)
-		}
-	}
-	return total
 }

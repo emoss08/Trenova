@@ -1,4 +1,4 @@
-package invoiceadjustmentservice
+package invoiceadjustmentengine
 
 import (
 	"context"
@@ -31,7 +31,9 @@ func (r *recordingCreditApplier) ApplyCreditMemo(
 	return nil, nil
 }
 
-func creditFixture(sourceTotal, sourceApplied, creditTotal int64) (*invoiceadjustment.InvoiceAdjustment, *invoice.Invoice, *invoice.Invoice) {
+func creditFixture(
+	sourceTotal, sourceApplied, creditTotal int64,
+) (*invoiceadjustment.InvoiceAdjustment, *invoice.Invoice, *invoice.Invoice) {
 	orgID, buID := pulid.MustNew("org_"), pulid.MustNew("bu_")
 	adjustment := &invoiceadjustment.InvoiceAdjustment{
 		ID: pulid.MustNew("iadj_"), OrganizationID: orgID, BusinessUnitID: buID,
@@ -58,11 +60,18 @@ func TestApplyCreditToSourceSettlesWhatTheInvoiceStillOwes(t *testing.T) {
 	repo := invoiceadjustmentportsmock.NewMockInvoiceAdjustmentRepository(t)
 	repo.EXPECT().LockInvoiceForUpdate(mock.Anything, mock.Anything).Return(refreshed, nil).Once()
 	credits := &recordingCreditApplier{}
-	svc := &Service{repo: repo, credits: credits}
+	svc := &Engine{repo: repo, credits: credits}
 
 	got, err := svc.applyCreditToSource(
-		t.Context(), adjustment, memo, source,
-		testutil.NewSessionActor(pulid.MustNew("usr_"), adjustment.OrganizationID, adjustment.BusinessUnitID),
+		t.Context(),
+		adjustment,
+		memo,
+		source,
+		testutil.NewSessionActor(
+			pulid.MustNew("usr_"),
+			adjustment.OrganizationID,
+			adjustment.BusinessUnitID,
+		),
 	)
 
 	require.NoError(t, err)
@@ -82,11 +91,18 @@ func TestApplyCreditToSourceLeavesAPaidInvoiceAlone(t *testing.T) {
 
 	adjustment, source, memo := creditFixture(10_000, 10_000, 2_000)
 	credits := &recordingCreditApplier{}
-	svc := &Service{credits: credits}
+	svc := &Engine{credits: credits}
 
 	got, err := svc.applyCreditToSource(
-		t.Context(), adjustment, memo, source,
-		testutil.NewSessionActor(pulid.MustNew("usr_"), adjustment.OrganizationID, adjustment.BusinessUnitID),
+		t.Context(),
+		adjustment,
+		memo,
+		source,
+		testutil.NewSessionActor(
+			pulid.MustNew("usr_"),
+			adjustment.OrganizationID,
+			adjustment.BusinessUnitID,
+		),
 	)
 
 	require.NoError(t, err)

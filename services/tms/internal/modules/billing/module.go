@@ -49,6 +49,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/app/factoringsubmissionservice"
 	"github.com/emoss08/trenova/internal/modules/billing/app/factoringtransport"
 	"github.com/emoss08/trenova/internal/modules/billing/app/factoringtransportservice"
+	"github.com/emoss08/trenova/internal/modules/billing/app/invoiceadjustmentdraftservice"
+	"github.com/emoss08/trenova/internal/modules/billing/app/invoiceadjustmentengine"
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoiceadjustmentservice"
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoicedisputeservice"
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoicerunservice"
@@ -125,7 +127,7 @@ func SharedOptions() fx.Option {
 			billingqueuerepository.New,
 			billingqueuereviewrepository.New,
 			customerpaymentservice.NewValidator,
-			invoiceadjustmentservice.NewValidator,
+			invoiceadjustmentengine.NewValidator,
 			invoiceservice.NewValidator,
 			invoicerunservice.NewValidator,
 			billingqueueservice.NewValidator,
@@ -145,7 +147,9 @@ func SharedOptions() fx.Option {
 			func(s *accountingdriftservice.Service) accountingdriftports.AccountingDriftReconciler { return s },
 			func(s *accountingdriftservice.Service) accountingdriftports.AccountingDriftRechecker { return s },
 			func(s *accountingdriftservice.Service) accountingdriftports.AccountingDriftService { return s },
+			invoiceadjustmentengine.New,
 			invoiceadjustmentservice.New,
+			invoiceadjustmentdraftservice.New,
 			detentioncreditservice.New,
 			func(s *detentioncreditservice.Service) detentionports.BilledDetentionCreditor { return s },
 			invoiceservice.NewService,

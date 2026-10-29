@@ -1,13 +1,12 @@
-package invoiceadjustmentservice
+package invoiceadjustmentengine
 
 import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/billing/app/billingnumber"
-
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/billing/app/billingnumber"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment"
@@ -27,7 +26,26 @@ import (
 	"go.uber.org/zap"
 )
 
-func (s *Service) ensureCorrectionGroup(
+func refuseUnexecutable(adjustment *invoiceadjustment.InvoiceAdjustment) error {
+	switch adjustment.Status { //nolint:exhaustive // every other status may run
+	case invoiceadjustment.StatusDraft:
+		return errortypes.NewValidationError(
+			"adjustmentId",
+			errortypes.ErrInvalidOperation,
+			"Draft adjustments cannot be executed",
+		)
+	case invoiceadjustment.StatusRejected:
+		return errortypes.NewValidationError(
+			"adjustmentId",
+			errortypes.ErrInvalidOperation,
+			"Rejected adjustments cannot be executed",
+		)
+	default:
+		return nil
+	}
+}
+
+func (s *Engine) EnsureCorrectionGroup(
 	ctx context.Context,
 	entity *invoice.Invoice,
 ) (*invoiceadjustment.InvoiceAdjustmentCorrectionGroup, error) {
@@ -70,7 +88,7 @@ func (s *Service) ensureCorrectionGroup(
 	})
 }
 
-func (s *Service) executeApprovedAdjustment( //nolint:cyclop,funlen // legacy workflow
+func (s *Engine) ExecuteApprovedAdjustment( //nolint:cyclop,funlen // legacy workflow
 	ctx context.Context,
 	adjustmentID pulid.ID,
 	req *invoiceadjustmentports.InvoiceAdjustmentRequest,
@@ -140,20 +158,20 @@ func (s *Service) executeApprovedAdjustment( //nolint:cyclop,funlen // legacy wo
 			Reason:         adjustment.Reason,
 			IdempotencyKey: adjustment.IdempotencyKey,
 			TenantInfo:     tenantInfo,
-			Lines:          s.requestLinesFromAdjustment(adjustment),
+			Lines:          s.RequestLinesFromAdjustment(adjustment),
 		}
 	}
 	req.TenantInfo = tenantInfo
 
-	computation, err := s.computePreview(ctx, req, adjustment.ID)
+	computation, err := s.ComputePreview(ctx, req, adjustment.ID)
 	if err != nil {
 		return nil, err
 	}
-	computation.invoice = lockedInvoice
-	if len(computation.preview.Errors) > 0 {
+	computation.Invoice = lockedInvoice
+	if len(computation.Preview.Errors) > 0 {
 		adjustment.Status = invoiceadjustment.StatusExecutionFailed
-		adjustment.ExecutionError = previewErrorsToMultiError(computation.preview.Errors).Error()
-		s.logAdjustmentEvent(
+		adjustment.ExecutionError = PreviewErrorsToMultiError(computation.Preview.Errors).Error()
+		s.LogAdjustmentEvent(
 			"invoice adjustment execution failed revalidation",
 			adjustment,
 			zap.WarnLevel,
@@ -161,7 +179,7 @@ func (s *Service) executeApprovedAdjustment( //nolint:cyclop,funlen // legacy wo
 		return s.repo.UpdateAdjustment(ctx, adjustment)
 	}
 
-	group, err := s.ensureCorrectionGroup(ctx, lockedInvoice)
+	group, err := s.EnsureCorrectionGroup(ctx, lockedInvoice)
 	if err != nil {
 		return nil, err
 	}
@@ -189,7 +207,7 @@ func (s *Service) executeApprovedAdjustment( //nolint:cyclop,funlen // legacy wo
 		ctx,
 		adjustment,
 		lockedInvoice,
-		computation.preview,
+		computation.Preview,
 	)
 	if err != nil {
 		return nil, err
@@ -200,7 +218,7 @@ func (s *Service) executeApprovedAdjustment( //nolint:cyclop,funlen // legacy wo
 		adjustment,
 		lockedInvoice,
 		computation.creditLineItems,
-		computation.preview,
+		computation.Preview,
 		now,
 	)
 	if err != nil {
@@ -245,7 +263,7 @@ func (s *Service) executeApprovedAdjustment( //nolint:cyclop,funlen // legacy wo
 			lockedInvoice,
 			group,
 			computation.replacementLines,
-			computation.preview,
+			computation.Preview,
 		)
 		if err != nil {
 			return nil, err
@@ -256,7 +274,7 @@ func (s *Service) executeApprovedAdjustment( //nolint:cyclop,funlen // legacy wo
 			adjustment,
 			lockedInvoice,
 			computation.replacementLines,
-			computation.preview,
+			computation.Preview,
 		)
 		if err != nil {
 			return nil, err
@@ -271,7 +289,7 @@ func (s *Service) executeApprovedAdjustment( //nolint:cyclop,funlen // legacy wo
 			ctx,
 			adjustment,
 			lockedInvoice,
-			computation.preview,
+			computation.Preview,
 			actor,
 		)
 		if err != nil {
@@ -283,7 +301,7 @@ func (s *Service) executeApprovedAdjustment( //nolint:cyclop,funlen // legacy wo
 		adjustment.Metadata["writeOffJournalEntryId"] = writeOffJournalEntryID.String()
 	}
 
-	if computation.preview.RequiresReconciliationException {
+	if computation.Preview.RequiresReconciliationException {
 		if err = s.repo.CreateAdjustmentArtifacts(
 			ctx,
 			invoiceadjustmentports.CreateAdjustmentArtifactsParams{
@@ -296,7 +314,7 @@ func (s *Service) executeApprovedAdjustment( //nolint:cyclop,funlen // legacy wo
 						CreditMemoInvoiceID: creditMemoInvoice.ID,
 						Status:              invoiceadjustment.ExceptionStatusOpen,
 						Reason:              "Adjustment executed against settled or finance-sensitive invoice state",
-						Amount:              computation.preview.CreditTotalAmount,
+						Amount:              computation.Preview.CreditTotalAmount,
 						Metadata: map[string]any{
 							"settlementStatus": lockedInvoice.SettlementStatus,
 							"disputeStatus":    lockedInvoice.DisputeStatus,
@@ -328,7 +346,7 @@ func (s *Service) executeApprovedAdjustment( //nolint:cyclop,funlen // legacy wo
 				Kind:           invoiceadjustment.SnapshotKindExecution,
 				CreatedByID:    actor.UserID,
 				Payload: map[string]any{
-					"sourceInvoice":          s.snapshotPayload(lockedInvoice),
+					"sourceInvoice":          s.SnapshotPayload(lockedInvoice),
 					"creditMemoId":           creditMemoInvoice.ID.String(),
 					"rebillQueueItemId":      rebillQueueItemID,
 					"replacementInvoiceId":   replacementInvoiceID,
@@ -355,8 +373,8 @@ func (s *Service) executeApprovedAdjustment( //nolint:cyclop,funlen // legacy wo
 
 	adjustment.Status = invoiceadjustment.StatusExecuted
 	adjustment.ExecutionError = ""
-	adjustment.ReplacementReviewStatus = replacementReviewStatus(
-		computation.preview.RequiresReplacementInvoiceReview,
+	adjustment.ReplacementReviewStatus = ReplacementReviewStatus(
+		computation.Preview.RequiresReplacementInvoiceReview,
 	)
 	updated, err := s.repo.UpdateAdjustment(ctx, adjustment)
 	if err != nil {
@@ -371,32 +389,13 @@ func (s *Service) executeApprovedAdjustment( //nolint:cyclop,funlen // legacy wo
 		return nil, err
 	}
 
-	s.logAudit(updated, actor, permission.OpUpdate, "Invoice adjustment executed")
-	s.publishAdjustedInvoices(ctx, actor, lockedInvoice, creditMemoInvoice, replacementInvoice)
-	s.logAdjustmentEvent("invoice adjustment executed", updated, zap.InfoLevel)
+	s.LogAudit(updated, actor, permission.OpUpdate, "Invoice adjustment executed")
+	s.PublishAdjustedInvoices(ctx, actor, lockedInvoice, creditMemoInvoice, replacementInvoice)
+	s.LogAdjustmentEvent("invoice adjustment executed", updated, zap.InfoLevel)
 	return updated, nil
 }
 
-func refuseUnexecutable(adjustment *invoiceadjustment.InvoiceAdjustment) error {
-	switch adjustment.Status { //nolint:exhaustive // every other status may run
-	case invoiceadjustment.StatusDraft:
-		return errortypes.NewValidationError(
-			"adjustmentId",
-			errortypes.ErrInvalidOperation,
-			"Draft adjustments cannot be executed",
-		)
-	case invoiceadjustment.StatusRejected:
-		return errortypes.NewValidationError(
-			"adjustmentId",
-			errortypes.ErrInvalidOperation,
-			"Rejected adjustments cannot be executed",
-		)
-	default:
-		return nil
-	}
-}
-
-func (s *Service) createCreditMemoQueueItem(
+func (s *Engine) createCreditMemoQueueItem(
 	ctx context.Context,
 	adjustment *invoiceadjustment.InvoiceAdjustment,
 	sourceInvoice *invoice.Invoice,
@@ -436,7 +435,7 @@ func (s *Service) createCreditMemoQueueItem(
 	})
 }
 
-func (s *Service) createCreditMemoInvoice(
+func (s *Engine) createCreditMemoInvoice(
 	ctx context.Context,
 	item *billingqueue.BillingQueueItem,
 	adjustment *invoiceadjustment.InvoiceAdjustment,
@@ -514,7 +513,7 @@ func (s *Service) createCreditMemoInvoice(
 	return s.invoiceRepo.Create(ctx, entity)
 }
 
-func (s *Service) createReplacementQueueItem(
+func (s *Engine) createReplacementQueueItem(
 	ctx context.Context,
 	adjustment *invoiceadjustment.InvoiceAdjustment,
 	sourceInvoice *invoice.Invoice,
@@ -566,7 +565,7 @@ func (s *Service) createReplacementQueueItem(
 	})
 }
 
-func (s *Service) snapshotPayload(entity *invoice.Invoice) map[string]any {
+func (s *Engine) SnapshotPayload(entity *invoice.Invoice) map[string]any {
 	payload := jsonutils.MustToJSON(entity)
 	payload["paymentSummary"] = map[string]any{
 		"appliedAmount":     entity.AppliedAmount,

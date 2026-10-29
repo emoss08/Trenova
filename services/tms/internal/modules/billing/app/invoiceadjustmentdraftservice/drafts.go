@@ -1,4 +1,4 @@
-package invoiceadjustmentservice
+package invoiceadjustmentdraftservice
 
 import (
 	"context"
@@ -32,7 +32,7 @@ func (s *Service) CreateDraft(
 		return nil, err
 	}
 
-	group, err := s.ensureCorrectionGroup(ctx, entity)
+	group, err := s.engine.EnsureCorrectionGroup(ctx, entity)
 	if err != nil {
 		return nil, err
 	}
@@ -61,7 +61,7 @@ func (s *Service) CreateDraft(
 		},
 	}
 
-	lines := s.buildDraftLines(entity, draft.ID, req.TenantInfo)
+	lines := s.engine.BuildDraftLines(entity, draft.ID, req.TenantInfo)
 	if err = s.repo.CreateAdjustmentArtifacts(
 		ctx,
 		invoiceadjustmentports.CreateAdjustmentArtifactsParams{
@@ -72,16 +72,19 @@ func (s *Service) CreateDraft(
 		return nil, err
 	}
 
-	created, err := s.GetDetail(ctx, &invoiceadjustmentports.GetInvoiceAdjustmentDetailRequest{
-		AdjustmentID: draft.ID,
-		TenantInfo:   req.TenantInfo,
-	})
+	created, err := s.engine.GetDetail(
+		ctx,
+		&invoiceadjustmentports.GetInvoiceAdjustmentDetailRequest{
+			AdjustmentID: draft.ID,
+			TenantInfo:   req.TenantInfo,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
 
-	s.logAdjustmentEvent("invoice adjustment draft created", created, zap.InfoLevel)
-	s.logAudit(created, actor, permission.OpCreate, "Invoice adjustment draft created")
+	s.engine.LogAdjustmentEvent("invoice adjustment draft created", created, zap.InfoLevel)
+	s.engine.LogAudit(created, actor, permission.OpCreate, "Invoice adjustment draft created")
 
 	return created, nil
 }
@@ -114,7 +117,7 @@ func (s *Service) UpdateDraft(
 		return nil, err
 	}
 
-	references, err := s.buildDocumentReferences(
+	references, err := s.engine.BuildDocumentReferences(
 		ctx,
 		entity.ID,
 		req.ReferencedDocumentIDs,
@@ -131,7 +134,7 @@ func (s *Service) UpdateDraft(
 	entity.RebillStrategy = req.RebillStrategy
 	entity.Reason = req.Reason
 
-	lines := s.buildAdjustmentLines(entity.ID, sourceInvoice.ID, req.Lines, req.TenantInfo)
+	lines := s.engine.BuildAdjustmentLines(entity.ID, sourceInvoice.ID, req.Lines, req.TenantInfo)
 
 	if err = s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		if _, txErr := s.repo.UpdateAdjustment(txCtx, entity); txErr != nil {
@@ -159,7 +162,7 @@ func (s *Service) UpdateDraft(
 		return nil, err
 	}
 
-	return s.GetDetail(ctx, &invoiceadjustmentports.GetInvoiceAdjustmentDetailRequest{
+	return s.engine.GetDetail(ctx, &invoiceadjustmentports.GetInvoiceAdjustmentDetailRequest{
 		AdjustmentID: entity.ID,
 		TenantInfo:   req.TenantInfo,
 	})
@@ -182,7 +185,7 @@ func (s *Service) PreviewDraft(
 		)
 	}
 
-	return s.Preview(ctx, draftReq, nil)
+	return s.engine.Preview(ctx, draftReq, nil)
 }
 
 func (s *Service) loadDraftRequest(

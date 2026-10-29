@@ -42,7 +42,6 @@ debt:
   services/tms/internal/modules/agent/app/watchtowersources: 3873
   services/tms/internal/modules/agent/ports/agentports: 10434
   services/tms/internal/modules/billing/app/billingqueueservice: 4708
-  services/tms/internal/modules/billing/app/invoiceadjustmentservice: 3641
   services/tms/internal/modules/billing/app/invoiceservice: 9852
   services/tms/internal/modules/documents/app/captureservice: 5885
   services/tms/internal/modules/documents/app/inboundmessageservice: 6558

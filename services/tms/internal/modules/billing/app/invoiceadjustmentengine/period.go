@@ -1,4 +1,4 @@
-package invoiceadjustmentservice
+package invoiceadjustmentengine
 
 import (
 	"context"
@@ -13,7 +13,7 @@ import (
 	"github.com/emoss08/trenova/shared/timeutils"
 )
 
-func (s *Service) resolveAccountingDate(
+func (s *Engine) resolveAccountingDate(
 	ctx context.Context,
 	entity *invoice.Invoice,
 	control *invoiceadjustmentcontrol.InvoiceAdjustmentControl,
@@ -77,7 +77,7 @@ func (s *Service) resolveAccountingDate(
 	return timeutils.NowUnix()
 }
 
-func (s *Service) resolveNextOpenPeriodDate(
+func (s *Engine) resolveNextOpenPeriodDate(
 	ctx context.Context,
 	orgID, buID pulid.ID,
 	fallback int64,
@@ -93,7 +93,7 @@ func (s *Service) resolveNextOpenPeriodDate(
 	return timeutils.NowUnix()
 }
 
-func (s *Service) validateSettlementPolicy(
+func (s *Engine) validateSettlementPolicy(
 	entity *invoice.Invoice,
 	control *invoiceadjustmentcontrol.InvoiceAdjustmentControl,
 	preview *invoiceadjustmentports.InvoiceAdjustmentPreview,
