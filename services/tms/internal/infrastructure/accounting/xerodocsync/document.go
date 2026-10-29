@@ -1,16 +1,15 @@
-package xeroconnector
+package xerodocsync
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"maps"
-	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/emoss08/trenova/internal/infrastructure/accounting/xerosession"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -22,32 +21,22 @@ import (
 	"github.com/shopspring/decimal"
 )
 
-var _ accountingconnectorports.AccountingDocumentWriter = (*Connector)(nil)
+type Documents struct {
+	*xerosession.Session
+}
 
 const (
-	providerName        = "Xero"
 	appBaseURL          = "https://go.xero.com/app/"
 	salesViewPath       = "/invoicing/view/"
 	billsViewPath       = "/bills/view/"
 	debitMemoNotePrefix = "Debit memo"
 	defaultLineText     = "Charges"
 	idempotencyWindow   = 6 * time.Minute
-	offlineRetry        = 5 * time.Minute
-	maxErrorMessage     = 2000
 	moneyPlaces         = 2
-	refCreditNote       = "creditNote"
+	RefCreditNote       = "creditNote"
 )
 
-var (
-	errDocumentKind = errors.New("xero: this record type is not a document Xero holds")
-	errInvalidDate  = errors.New("xero: a document date must be written as YYYY-MM-DD")
-	errExternalID   = errors.New("xero: updating a document needs the id Xero gave it")
-	errCreditNoteID = errors.New(
-		"xero: the credit application does not name the credit note it was allocated from",
-	)
-)
-
-func (c *Connector) DocumentLimits() accountingconnectorports.AccountingDocumentLimits {
+func (c *Documents) DocumentLimits() accountingconnectorports.AccountingDocumentLimits {
 	return accountingconnectorports.AccountingDocumentLimits{
 		MaxDocNumberLength:      xerodocs.MaxDocumentNumberLength,
 		SupportsDebitMemo:       false,
@@ -57,7 +46,7 @@ func (c *Connector) DocumentLimits() accountingconnectorports.AccountingDocument
 	}
 }
 
-func (c *Connector) DocumentURL(
+func (c *Documents) DocumentURL(
 	auth accountingconnectorports.AccountingDocumentAuth,
 	link accountingconnectorports.AccountingDocumentLink,
 ) string {
@@ -79,7 +68,7 @@ func (c *Connector) DocumentURL(
 	return appBaseURL + url.PathEscape(code) + path + url.PathEscape(id)
 }
 
-func (c *Connector) UpsertCustomer(
+func (c *Documents) UpsertCustomer(
 	ctx context.Context,
 	doc *accountingconnectorports.AccountingCustomerDocument,
 ) (*accountingconnectorports.AccountingDocumentResult, error) {
@@ -98,15 +87,15 @@ type contactWrite struct {
 	party      *accountingconnectorports.AccountingPartyDraft
 }
 
-func (c *Connector) upsertContact(
+func (c *Documents) upsertContact(
 	ctx context.Context,
 	write *contactWrite,
 ) (*accountingconnectorports.AccountingDocumentResult, error) {
-	client, err := c.client(write.auth)
+	client, err := c.Client(write.auth)
 	if err != nil {
 		return nil, err
 	}
-	input := contactInputOf(write.party)
+	input := xerosession.ContactInputOf(write.party)
 
 	var saved *xeroref.Contact
 	if id := strings.TrimSpace(write.externalID); id != "" {
@@ -146,9 +135,9 @@ func salesKindOf(kind accountingsync.SyncObjectType) (salesKind, error) {
 		accountingsync.SyncObjectJournalEntry,
 		accountingsync.SyncObjectJournalSummary,
 		accountingsync.DriftObjectGLAccount:
-		return salesKind{}, errDocumentKind
+		return salesKind{}, xerosession.ErrDocumentKind
 	default:
-		return salesKind{}, errDocumentKind
+		return salesKind{}, xerosession.ErrDocumentKind
 	}
 }
 
@@ -194,16 +183,16 @@ func (b *documentBody) creditNote(kind string) xerodocs.CreditNoteInput {
 	}
 }
 
-func (c *Connector) salesBody(
+func (c *Documents) salesBody(
 	ctx context.Context,
 	client *xero.Client,
 	doc *accountingconnectorports.AccountingSalesDocument,
 ) (*documentBody, error) {
-	date, err := parseDate(doc.TxnDate)
+	date, err := ParseDate(doc.TxnDate)
 	if err != nil {
 		return nil, err
 	}
-	due, err := parseDate(doc.DueDate)
+	due, err := ParseDate(doc.DueDate)
 	if err != nil {
 		return nil, err
 	}
@@ -214,7 +203,7 @@ func (c *Connector) salesBody(
 	body := &documentBody{
 		contactID:    doc.CustomerExternalID,
 		number:       doc.DocNumber,
-		reference:    reference(note),
+		reference:    Reference(note),
 		date:         date,
 		dueDate:      due,
 		currencyCode: doc.CurrencyCode,
@@ -226,7 +215,7 @@ func (c *Connector) salesBody(
 	}
 	for idx := range doc.Lines {
 		line := &doc.Lines[idx]
-		code, codeErr := c.accountCode(
+		code, codeErr := c.AccountCode(
 			ctx,
 			client,
 			line.AccountExternalID,
@@ -235,40 +224,40 @@ func (c *Connector) salesBody(
 		if codeErr != nil {
 			return nil, codeErr
 		}
-		body.lines = append(body.lines, lineItem(&lineSpec{
-			description: line.Description,
-			quantity:    line.Quantity,
-			unitPrice:   line.UnitPrice,
-			amount:      line.Amount,
-			accountCode: code,
+		body.lines = append(body.lines, LineItem(&LineSpec{
+			Description: line.Description,
+			Quantity:    line.Quantity,
+			UnitPrice:   line.UnitPrice,
+			Amount:      line.Amount,
+			AccountCode: code,
 		}))
 	}
 	return body, nil
 }
 
-type lineSpec struct {
-	description string
-	quantity    decimal.Decimal
-	unitPrice   decimal.Decimal
-	amount      decimal.Decimal
-	accountCode string
+type LineSpec struct {
+	Description string
+	Quantity    decimal.Decimal
+	UnitPrice   decimal.Decimal
+	Amount      decimal.Decimal
+	AccountCode string
 }
 
-func lineItem(spec *lineSpec) xerodocs.LineItem {
+func LineItem(spec *LineSpec) xerodocs.LineItem {
 	item := xerodocs.LineItem{
 		Description: stringutils.TruncateRunes(
-			lineText(spec.description),
+			lineText(spec.Description),
 			xeroref.MaxDescriptionLength,
 		),
 		Quantity:    decimal.NewFromInt(1),
-		UnitAmount:  spec.amount,
-		LineAmount:  spec.amount,
-		AccountCode: spec.accountCode,
+		UnitAmount:  spec.Amount,
+		LineAmount:  spec.Amount,
+		AccountCode: spec.AccountCode,
 	}
-	if spec.quantity.IsPositive() && !spec.unitPrice.IsZero() &&
-		spec.quantity.Mul(spec.unitPrice).Round(moneyPlaces).Equal(spec.amount.Round(moneyPlaces)) {
-		item.Quantity = spec.quantity
-		item.UnitAmount = spec.unitPrice
+	if spec.Quantity.IsPositive() && !spec.UnitPrice.IsZero() &&
+		spec.Quantity.Mul(spec.UnitPrice).Round(moneyPlaces).Equal(spec.Amount.Round(moneyPlaces)) {
+		item.Quantity = spec.Quantity
+		item.UnitAmount = spec.UnitPrice
 	}
 	return item
 }
@@ -280,11 +269,11 @@ func lineText(description string) string {
 	return defaultLineText
 }
 
-func reference(note string) string {
+func Reference(note string) string {
 	return strings.TrimSpace(stringutils.OneLine(note, xerodocs.MaxReferenceLength))
 }
 
-func (c *Connector) writeSales(
+func (c *Documents) writeSales(
 	ctx context.Context,
 	client *xero.Client,
 	doc *accountingconnectorports.AccountingSalesDocument,
@@ -326,7 +315,7 @@ func (c *Connector) writeSales(
 	return invoice.InvoiceID, invoice.InvoiceNumber, nil
 }
 
-func (c *Connector) CreateSalesDocument(
+func (c *Documents) CreateSalesDocument(
 	ctx context.Context,
 	doc *accountingconnectorports.AccountingSalesDocument,
 ) (*accountingconnectorports.AccountingDocumentResult, error) {
@@ -334,11 +323,11 @@ func (c *Connector) CreateSalesDocument(
 	if err != nil {
 		return nil, err
 	}
-	client, err := c.client(doc.Auth)
+	client, err := c.Client(doc.Auth)
 	if err != nil {
 		return nil, err
 	}
-	result := newResult(doc.Refs)
+	result := NewResult(doc.Refs)
 
 	if existing := result.Refs[accountingsync.ExternalRefDocument]; existing != "" {
 		result.ExternalID = existing
@@ -357,7 +346,7 @@ func (c *Connector) CreateSalesDocument(
 		return result, nil
 	}
 
-	date, err := parseDate(doc.TxnDate)
+	date, err := ParseDate(doc.TxnDate)
 	if err != nil {
 		return result, err
 	}
@@ -379,7 +368,7 @@ func (c *Connector) CreateSalesDocument(
 	return result, nil
 }
 
-func (c *Connector) UpdateSalesDocument(
+func (c *Documents) UpdateSalesDocument(
 	ctx context.Context,
 	doc *accountingconnectorports.AccountingSalesDocument,
 ) (*accountingconnectorports.AccountingDocumentResult, error) {
@@ -388,14 +377,14 @@ func (c *Connector) UpdateSalesDocument(
 	}
 	id := strings.TrimSpace(doc.ExternalID)
 	if id == "" {
-		return nil, errExternalID
+		return nil, xerosession.ErrExternalID
 	}
-	client, err := c.client(doc.Auth)
+	client, err := c.Client(doc.Auth)
 	if err != nil {
 		return nil, err
 	}
 
-	result := newResult(doc.Refs)
+	result := NewResult(doc.Refs)
 	result.ExternalID, result.DocNumber, err = c.writeSales(ctx, client, doc, id)
 	if err != nil {
 		return nil, err
@@ -404,7 +393,7 @@ func (c *Connector) UpdateSalesDocument(
 	return result, nil
 }
 
-func (c *Connector) VoidSalesDocument(
+func (c *Documents) VoidSalesDocument(
 	ctx context.Context,
 	ref *accountingconnectorports.AccountingDocumentRef,
 ) (*accountingconnectorports.AccountingDocumentResult, error) {
@@ -412,15 +401,15 @@ func (c *Connector) VoidSalesDocument(
 	if err != nil {
 		return nil, err
 	}
-	client, err := c.client(ref.Auth)
+	client, err := c.Client(ref.Auth)
 	if err != nil {
 		return nil, err
 	}
-	result := newResult(ref.Refs)
+	result := NewResult(ref.Refs)
 	result.ExternalID = ref.ExternalID
 
 	if kind.credit {
-		err = voidCreditNote(ctx, client, ref.RequestID, ref.ExternalID)
+		err = VoidCreditNote(ctx, client, ref.RequestID, ref.ExternalID)
 	} else {
 		err = voidInvoice(ctx, client, ref.RequestID, ref.ExternalID)
 	}
@@ -438,7 +427,7 @@ func voidInvoice(ctx context.Context, client *xero.Client, requestID, invoiceID 
 		}
 		return err
 	}
-	if len(found) == 0 || closedStatus(found[0].Status) {
+	if len(found) == 0 || ClosedStatus(found[0].Status) {
 		return nil
 	}
 	invoice := &found[0]
@@ -503,7 +492,7 @@ func removeAllocationsTo(
 	return nil
 }
 
-func voidCreditNote(ctx context.Context, client *xero.Client, requestID, noteID string) error {
+func VoidCreditNote(ctx context.Context, client *xero.Client, requestID, noteID string) error {
 	found, err := xerodocs.CreditNotesByID(ctx, client, []string{noteID})
 	if err != nil {
 		if xeroerrors.IsNotFound(err) {
@@ -511,7 +500,7 @@ func voidCreditNote(ctx context.Context, client *xero.Client, requestID, noteID 
 		}
 		return err
 	}
-	if len(found) == 0 || closedStatus(found[0].Status) {
+	if len(found) == 0 || ClosedStatus(found[0].Status) {
 		return nil
 	}
 	note := &found[0]
@@ -545,23 +534,23 @@ func voidCreditNote(ctx context.Context, client *xero.Client, requestID, noteID 
 	return nil
 }
 
-func closedStatus(status string) bool {
+func ClosedStatus(status string) bool {
 	return strings.EqualFold(status, xerodocs.StatusVoided) ||
 		strings.EqualFold(status, xerodocs.StatusDeleted)
 }
 
-func (c *Connector) CreateCreditApplication(
+func (c *Documents) CreateCreditApplication(
 	ctx context.Context,
 	doc *accountingconnectorports.AccountingCreditApplicationDocument,
 ) (*accountingconnectorports.AccountingDocumentResult, error) {
 	if !doc.Amount.IsPositive() {
 		return nil, xeroerrors.ErrAmountNotPositive
 	}
-	date, err := parseDate(doc.TxnDate)
+	date, err := ParseDate(doc.TxnDate)
 	if err != nil {
 		return nil, err
 	}
-	client, err := c.client(doc.Auth)
+	client, err := c.Client(doc.Auth)
 	if err != nil {
 		return nil, err
 	}
@@ -589,20 +578,20 @@ func allocationResult(
 		ExternalID: allocation.AllocationID,
 		Refs: map[string]string{
 			accountingsync.ExternalRefDocument: allocation.AllocationID,
-			refCreditNote:                      allocation.CreditNoteID,
+			RefCreditNote:                      allocation.CreditNoteID,
 		},
 	}
 }
 
-func (c *Connector) VoidCreditApplication(
+func (c *Documents) VoidCreditApplication(
 	ctx context.Context,
 	ref *accountingconnectorports.AccountingDocumentRef,
 ) (*accountingconnectorports.AccountingDocumentResult, error) {
-	noteID := strings.TrimSpace(ref.Refs[refCreditNote])
+	noteID := strings.TrimSpace(ref.Refs[RefCreditNote])
 	if noteID == "" {
-		return nil, errCreditNoteID
+		return nil, xerosession.ErrCreditNoteID
 	}
-	client, err := c.client(ref.Auth)
+	client, err := c.Client(ref.Auth)
 	if err != nil {
 		return nil, err
 	}
@@ -616,262 +605,14 @@ func (c *Connector) VoidCreditApplication(
 	}, nil
 }
 
-type documentFault struct {
-	matches    func(err error, apiErr *xeroerrors.APIError) bool
-	category   accountingsync.SyncErrorCategory
-	resolution string
-}
-
-func isConfigurationFault(err error, _ *xeroerrors.APIError) bool {
-	return errors.Is(err, ErrNotConfigured) || errors.Is(err, errNoRedirect)
-}
-
-func isAuthFault(err error, _ *xeroerrors.APIError) bool {
-	return xeroerrors.IsInvalidGrant(err) || xeroerrors.IsAuth(err) || xeroerrors.IsForbidden(err)
-}
-
-func isTransientFault(err error, _ *xeroerrors.APIError) bool {
-	return xeroerrors.IsTransient(err) || errors.Is(err, context.DeadlineExceeded)
-}
-
-func isDuplicateName(err error, apiErr *xeroerrors.APIError) bool {
-	return xeroerrors.IsDuplicateNumber(err) && validationMentions(apiErr, "contact name")
-}
-
-func isValidationFault(err error, apiErr *xeroerrors.APIError) bool {
-	return isLocalValidation(err) || xeroerrors.IsValidation(err) ||
-		hasStatus(apiErr, http.StatusBadRequest)
-}
-
-func ignoringAPIError(match func(error) bool) func(error, *xeroerrors.APIError) bool {
-	return func(err error, _ *xeroerrors.APIError) bool { return match(err) }
-}
-
-func isMappingFaultOf(_ error, apiErr *xeroerrors.APIError) bool {
-	return isMappingFault(apiErr)
-}
-
-var documentFaults = []documentFault{
-	{
-		matches:    isConfigurationFault,
-		category:   accountingsync.SyncErrorConfiguration,
-		resolution: providerName + " is not configured on this server",
-	},
-	{
-		matches:    isAuthFault,
-		category:   accountingsync.SyncErrorAuth,
-		resolution: "Reconnect " + providerName + " from the accounting integration",
-	},
-	{matches: isTransientFault, category: accountingsync.SyncErrorTransient},
-	{
-		matches:  isDuplicateName,
-		category: accountingsync.SyncErrorDuplicate,
-		resolution: "A contact with this name already exists in " + providerName +
-			". Map the record to it instead, or rename one of them",
-	},
-	{
-		matches:  ignoringAPIError(xeroerrors.IsDuplicateNumber),
-		category: accountingsync.SyncErrorDuplicate,
-		resolution: "A document with this number already exists in " + providerName +
-			". Skip this record if it is the same document, or renumber the one in " +
-			providerName,
-	},
-	{
-		matches:  ignoringAPIError(xeroerrors.IsLockDate),
-		category: accountingsync.SyncErrorClosedPeriod,
-		resolution: "The books are locked for this date in " + providerName +
-			". Move the lock date there or skip this record",
-	},
-	{
-		matches:    ignoringAPIError(xeroerrors.IsNotFound),
-		category:   accountingsync.SyncErrorNotFound,
-		resolution: "The linked record no longer exists in " + providerName,
-	},
-	{
-		matches:  isMappingFaultOf,
-		category: accountingsync.SyncErrorMapping,
-		resolution: "A mapped " + providerName + " record is missing or archived. " +
-			"Refresh the reference data and fix the mapping",
-	},
-	{
-		matches:    isValidationFault,
-		category:   accountingsync.SyncErrorValidation,
-		resolution: "Correct the document in Trenova, then retry",
-	},
-}
-
-func (c *Connector) ClassifyDocumentError(err error) *accountingsync.SyncError {
-	if err == nil {
-		return nil
-	}
-	var syncErr *accountingsync.SyncError
-	if errors.As(err, &syncErr) {
-		return syncErr
-	}
-
-	apiErr := apiErrorOf(err)
-	switch {
-	case xeroerrors.IsRateLimited(err):
-		return rateLimited(err, apiErr)
-	case xeroerrors.IsOrganisationOffline(err):
-		return &accountingsync.SyncError{
-			Category: accountingsync.SyncErrorTransient,
-			Code:     "organisation-offline",
-			Message: "The " + providerName + " organisation is offline. Retry in " +
-				offlineRetry.String(),
-			RetryAfter: offlineRetry,
-		}
-	}
-
-	out := &accountingsync.SyncError{
-		Category: accountingsync.SyncErrorTransient,
-		Code:     errorCode(apiErr),
-		Message:  errorMessage(err, apiErr),
-	}
-	for idx := range documentFaults {
-		fault := &documentFaults[idx]
-		if fault.matches(err, apiErr) {
-			out.Category = fault.category
-			out.Resolution = fault.resolution
-			return out
-		}
-	}
-	return out
-}
-
-func rateLimited(err error, apiErr *xeroerrors.APIError) *accountingsync.SyncError {
-	out := &accountingsync.SyncError{
-		Category: accountingsync.SyncErrorRateLimited,
-		Code:     errorCode(apiErr),
-		Message:  errorMessage(err, apiErr),
-	}
-	if apiErr != nil {
-		out.RetryAfter = apiErr.RetryAfter
-	}
-	if apiErr == nil || apiErr.RateLimitProblem != xeroerrors.RateLimitDay {
-		return out
-	}
-	out.Code = xeroerrors.RateLimitDay
-	out.Message = providerName + " has refused further calls for this organisation today"
-	if apiErr.RetryAfter > 0 {
-		out.Message += "; retry after " + apiErr.RetryAfter.String()
-	}
-	out.Resolution = "Trenova retries when " + providerName + "'s daily allowance resets"
-	return out
-}
-
-func apiErrorOf(err error) *xeroerrors.APIError {
-	var apiErr *xeroerrors.APIError
-	if errors.As(err, &apiErr) {
-		return apiErr
-	}
-	return nil
-}
-
-func hasStatus(apiErr *xeroerrors.APIError, status int) bool {
-	return apiErr != nil && apiErr.Status == status
-}
-
-func validationMentions(apiErr *xeroerrors.APIError, needles ...string) bool {
-	if apiErr == nil {
-		return false
-	}
-	for _, message := range apiErr.ValidationMessages {
-		lower := strings.ToLower(message)
-		for _, needle := range needles {
-			if strings.Contains(lower, needle) {
-				return true
-			}
-		}
-	}
-	return false
-}
-
-func isMappingFault(apiErr *xeroerrors.APIError) bool {
-	if !hasStatus(apiErr, http.StatusBadRequest) {
-		return false
-	}
-	return validationMentions(apiErr,
-		"account code",
-		"is not a valid code",
-		"has been archived",
-		"is archived",
-		"item code",
-		"contact could not be found",
-	)
-}
-
-func errorCode(apiErr *xeroerrors.APIError) string {
-	if apiErr == nil {
-		return ""
-	}
-	if apiErr.Type != "" {
-		return apiErr.Type
-	}
-	return strconv.Itoa(apiErr.Status)
-}
-
-func errorMessage(err error, apiErr *xeroerrors.APIError) string {
-	message := err.Error()
-	if apiErr != nil {
-		switch {
-		case len(apiErr.ValidationMessages) > 0:
-			message = strings.Join(apiErr.ValidationMessages, "; ")
-		case apiErr.Message != "":
-			message = apiErr.Message
-		}
-	}
-	return stringutils.TruncateRunes(message, maxErrorMessage)
-}
-
-func isLocalValidation(err error) bool {
-	for _, target := range []error{
-		xeroerrors.ErrTenantIDRequired,
-		xeroerrors.ErrIDRequired,
-		xeroerrors.ErrInvalidID,
-		xeroerrors.ErrTooManyIDs,
-		xeroerrors.ErrIdempotencyKey,
-		xeroerrors.ErrDateRequired,
-		xeroerrors.ErrContactRequired,
-		xeroerrors.ErrLinesRequired,
-		xeroerrors.ErrLineDescription,
-		xeroerrors.ErrUnknownType,
-		xeroerrors.ErrUnknownStatus,
-		xeroerrors.ErrUnknownAmountTypes,
-		xeroerrors.ErrAmountNotPositive,
-		xeroerrors.ErrNegativeRate,
-		xeroerrors.ErrTargetRequired,
-		xeroerrors.ErrAccountRequired,
-		xeroerrors.ErrPaymentsRequired,
-		xeroerrors.ErrItemCodeInvalid,
-		xeroerrors.ErrItemNameInvalid,
-		xeroerrors.ErrContactNameInvalid,
-		xeroerrors.ErrFieldTooLong,
-		xeroerrors.ErrCurrencyCodeInvalid,
-		xeroerrors.ErrEmptyFilter,
-		xeroerrors.ErrInvalidFilter,
-		errDocumentKind,
-		errInvalidDate,
-		errExternalID,
-		errCreditNoteID,
-		errItemDraftRequired,
-		errPartyDraftRequired,
-	} {
-		if errors.Is(err, target) {
-			return true
-		}
-	}
-	return false
-}
-
-func parseDate(raw string) (time.Time, error) {
+func ParseDate(raw string) (time.Time, error) {
 	value := strings.TrimSpace(raw)
 	if value == "" {
 		return time.Time{}, nil
 	}
 	parsed, err := time.Parse(time.DateOnly, value)
 	if err != nil {
-		return time.Time{}, fmt.Errorf("%w: %q", errInvalidDate, value)
+		return time.Time{}, fmt.Errorf("%w: %q", xerosession.ErrInvalidDate, value)
 	}
 	return parsed, nil
 }
@@ -881,7 +622,7 @@ func sameDate(t time.Time, raw string) bool {
 	return value == "" || (!t.IsZero() && t.UTC().Format(time.DateOnly) == value)
 }
 
-func sameMoney(a, b decimal.Decimal) bool {
+func SameMoney(a, b decimal.Decimal) bool {
 	return a.Round(moneyPlaces).Equal(b.Round(moneyPlaces))
 }
 
@@ -889,7 +630,7 @@ func sameID(a, b string) bool {
 	return strings.EqualFold(strings.TrimSpace(a), strings.TrimSpace(b))
 }
 
-func newResult(refs map[string]string) *accountingconnectorports.AccountingDocumentResult {
+func NewResult(refs map[string]string) *accountingconnectorports.AccountingDocumentResult {
 	copied := make(map[string]string, len(refs)+2)
 	maps.Copy(copied, refs)
 	return &accountingconnectorports.AccountingDocumentResult{Refs: copied}

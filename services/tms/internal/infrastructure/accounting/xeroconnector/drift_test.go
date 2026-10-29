@@ -6,6 +6,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/infrastructure/accounting/xerodocsync"
+	"github.com/emoss08/trenova/internal/infrastructure/accounting/xerosession"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/shared/xero"
@@ -153,12 +155,14 @@ func TestReadPaymentsAndAllocations(t *testing.T) {
 			Auth: testAuth(), Kind: accountingsync.SyncObjectCustomerPayment,
 			Targets: []accountingconnectorports.AccountingDocumentTarget{
 				{ExternalID: testBatch, Refs: map[string]string{
-					refPaymentPrefix + testInvoice:  testPayment,
-					refPaymentPrefix + testInvoice2: testPayment2,
+					xerodocsync.RefPaymentPrefix + testInvoice:  testPayment,
+					xerodocsync.RefPaymentPrefix + testInvoice2: testPayment2,
 				}},
 				{
 					ExternalID: testOldPayment,
-					Refs:       map[string]string{refPaymentPrefix + testBill: testOldPayment},
+					Refs: map[string]string{
+						xerodocsync.RefPaymentPrefix + testBill: testOldPayment,
+					},
 				},
 				{ExternalID: "legacy", Refs: map[string]string{}},
 			},
@@ -179,11 +183,11 @@ func TestReadPaymentsAndAllocations(t *testing.T) {
 			Targets: []accountingconnectorports.AccountingDocumentTarget{
 				{
 					ExternalID: testAllocation,
-					Refs:       map[string]string{refCreditNote: testCreditNote},
+					Refs:       map[string]string{xerodocsync.RefCreditNote: testCreditNote},
 				},
 				{
 					ExternalID: "b6c3a2d1-9f8e-4d7c-8b6a-5e4f3d2c1b0e",
-					Refs:       map[string]string{refCreditNote: testCreditNote},
+					Refs:       map[string]string{xerodocsync.RefCreditNote: testCreditNote},
 				},
 			},
 		},
@@ -201,5 +205,5 @@ func TestReadPaymentsAndAllocations(t *testing.T) {
 			Targets: []accountingconnectorports.AccountingDocumentTarget{{ExternalID: "x"}},
 		},
 	)
-	require.ErrorIs(t, err, errDocumentKind)
+	require.ErrorIs(t, err, xerosession.ErrDocumentKind)
 }

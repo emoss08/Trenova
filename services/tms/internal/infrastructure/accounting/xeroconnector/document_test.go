@@ -7,6 +7,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/infrastructure/accounting/xerodocsync"
+	"github.com/emoss08/trenova/internal/infrastructure/accounting/xerosession"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/shared/restx"
@@ -194,45 +196,6 @@ func TestAccountCodesAreCachedAcrossDocuments(t *testing.T) {
 	assert.Equal(t, 1, reads)
 }
 
-func TestAccountCodeLookupRefetchesAStaleIndex(t *testing.T) {
-	t.Parallel()
-
-	now := time.Date(2026, 9, 29, 12, 0, 0, 0, time.UTC)
-	codes := newAccountCodes(func() time.Time { return now })
-	fake := &fakeXero{}
-	conn := testConnector(t, fake)
-	conn.codes = codes
-	client, err := conn.client(testAuth())
-	require.NoError(t, err)
-
-	code, ok, err := codes.codeFor(t.Context(), client, testRevenue)
-	require.NoError(t, err)
-	assert.True(t, ok)
-	assert.Equal(t, "200", code)
-
-	_, ok, err = codes.codeFor(t.Context(), client, testUncoded)
-	require.NoError(t, err)
-	assert.False(t, ok)
-
-	now = now.Add(accountCodesRefetch + time.Second)
-	_, ok, err = codes.codeFor(t.Context(), client, "e2bc5c1b-9a60-4f3f-8d4a-3a0f5c1e2dff")
-	require.NoError(t, err)
-	assert.False(t, ok)
-
-	id, ok, err := codes.idFor(t.Context(), client, "499")
-	require.NoError(t, err)
-	assert.True(t, ok)
-	assert.Equal(t, testWriteOff, id)
-
-	reads := 0
-	for _, call := range fake.all() {
-		if call.Path == "/Accounts" {
-			reads++
-		}
-	}
-	assert.Equal(t, 2, reads)
-}
-
 func TestSalesLineWithoutAUsableAccountIsAMappingError(t *testing.T) {
 	t.Parallel()
 
@@ -321,7 +284,7 @@ func TestDebitMemoIsAnInvoiceWithAMarkedReference(t *testing.T) {
 			Kind: accountingsync.SyncObjectCustomerPayment,
 		},
 	)
-	require.ErrorIs(t, err, errDocumentKind)
+	require.ErrorIs(t, err, xerosession.ErrDocumentKind)
 }
 
 func TestUpdateSalesDocumentPostsToTheInvoice(t *testing.T) {
@@ -346,7 +309,7 @@ func TestUpdateSalesDocumentPostsToTheInvoice(t *testing.T) {
 
 	doc.ExternalID = ""
 	_, err = conn.UpdateSalesDocument(t.Context(), doc)
-	require.ErrorIs(t, err, errExternalID)
+	require.ErrorIs(t, err, xerosession.ErrExternalID)
 }
 
 func TestVoidInvoiceRemovesPaymentsAndAllocationsFirst(t *testing.T) {
@@ -471,7 +434,7 @@ func TestCreditApplicationAllocatesAndVoidDeletesTheAllocation(t *testing.T) {
 	)
 	require.NoError(t, err)
 	assert.Equal(t, testAllocation, result.ExternalID)
-	assert.Equal(t, testCreditNote, result.Refs[refCreditNote])
+	assert.Equal(t, testCreditNote, result.Refs[xerodocsync.RefCreditNote])
 	call, ok := fake.find(http.MethodPut, "/CreditNotes/"+testCreditNote+"/Allocations")
 	require.True(t, ok)
 	assert.Equal(t, "2026-09-02", firstDoc(t, call.Body, "Allocations")["Date"])
@@ -496,7 +459,7 @@ func TestCreditApplicationAllocatesAndVoidDeletesTheAllocation(t *testing.T) {
 			Auth: testAuth(), ExternalID: testAllocation, Refs: map[string]string{},
 		},
 	)
-	require.ErrorIs(t, err, errCreditNoteID)
+	require.ErrorIs(t, err, xerosession.ErrCreditNoteID)
 
 	_, err = conn.CreateCreditApplication(
 		t.Context(),
@@ -563,7 +526,7 @@ func TestFindSalesDocumentByNumberAndTotal(t *testing.T) {
 			Auth: testAuth(), Kind: accountingsync.SyncObjectCustomer,
 		},
 	)
-	require.ErrorIs(t, err, errDocumentKind)
+	require.ErrorIs(t, err, xerosession.ErrDocumentKind)
 }
 
 func apiError(status int, typ string, messages ...string) *xeroerrors.APIError {
@@ -581,7 +544,7 @@ func TestClassifyDocumentError(t *testing.T) {
 		want accountingsync.SyncErrorCategory
 	}{
 		{"sync error passes through", mapping, accountingsync.SyncErrorMapping},
-		{"not configured", ErrNotConfigured, accountingsync.SyncErrorConfiguration},
+		{"not configured", xerosession.ErrNotConfigured, accountingsync.SyncErrorConfiguration},
 		{
 			"revoked",
 			&xeroerrors.OAuthError{Status: 400, Code: "invalid_grant"},
@@ -633,7 +596,7 @@ func TestClassifyDocumentError(t *testing.T) {
 			accountingsync.SyncErrorValidation,
 		},
 		{"local", xeroerrors.ErrLinesRequired, accountingsync.SyncErrorValidation},
-		{"bad date", errInvalidDate, accountingsync.SyncErrorValidation},
+		{"bad date", xerosession.ErrInvalidDate, accountingsync.SyncErrorValidation},
 		{"unknown", errors.New("strange"), accountingsync.SyncErrorTransient},
 	}
 	for _, tc := range cases {

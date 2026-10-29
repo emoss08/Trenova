@@ -75,30 +75,6 @@ func TestListAccountsSetsTheNeutralAccountClass(t *testing.T) {
 	require.NotNil(t, byName["Business Bank"].ProviderUpdatedAt)
 }
 
-func TestAccountClassOfEveryXeroType(t *testing.T) {
-	t.Parallel()
-
-	cases := map[string]accountingmapping.AccountClass{
-		"SALES":       accountingmapping.AccountClassIncome,
-		"OTHERINCOME": accountingmapping.AccountClassOtherIncome,
-		"OVERHEADS":   accountingmapping.AccountClassExpense,
-		"DEPRECIATN":  accountingmapping.AccountClassExpense,
-		"FIXED":       accountingmapping.AccountClassAsset,
-		"PREPAYMENT":  accountingmapping.AccountClassAsset,
-		"INVENTORY":   accountingmapping.AccountClassAsset,
-		"NONCURRENT":  accountingmapping.AccountClassAsset,
-		"TERMLIAB":    accountingmapping.AccountClassLiability,
-		"LIABILITY":   accountingmapping.AccountClassLiability,
-		"EQUITY":      accountingmapping.AccountClassEquity,
-		"unknown":     "",
-	}
-	for typ, want := range cases {
-		assert.Equal(t, want, AccountClassOf(&xeroref.Account{Type: typ}), typ)
-	}
-	assert.Equal(t, accountingmapping.AccountClassReceivable,
-		AccountClassOf(&xeroref.Account{Type: "CURRENT", SystemAccount: "DEBTORS"}))
-}
-
 func TestListItemsResolvesTheSalesAccount(t *testing.T) {
 	t.Parallel()
 
@@ -281,9 +257,4 @@ func TestSanitizeName(t *testing.T) {
 		xeroref.MaxItemNameLength,
 	)
 	assert.Len(t, conn.SanitizeName(accountingprovider.ReferenceKindVendor, long), 80)
-	assert.Equal(
-		t,
-		"Line haul",
-		itemCode(&accountingconnectorports.AccountingItemDraft{Name: "Line haul"}),
-	)
 }

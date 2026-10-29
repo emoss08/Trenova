@@ -1,4 +1,4 @@
-package xeroconnector
+package xerodocsync
 
 import (
 	"context"
@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/infrastructure/accounting/xerosession"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/shared/xero"
@@ -14,11 +15,11 @@ import (
 	"github.com/emoss08/trenova/shared/xeropay"
 )
 
-var errPurchaseDocumentType = errors.New(
+var ErrPurchaseDocumentType = errors.New(
 	"xero: the purchase document type is neither a bill nor a supplier credit",
 )
 
-func (c *Connector) UpsertVendor(
+func (c *Documents) UpsertVendor(
 	ctx context.Context,
 	doc *accountingconnectorports.AccountingVendorDocument,
 ) (*accountingconnectorports.AccountingDocumentResult, error) {
@@ -30,23 +31,23 @@ func (c *Connector) UpsertVendor(
 	})
 }
 
-func (c *Connector) purchaseBody(
+func (c *Documents) purchaseBody(
 	ctx context.Context,
 	client *xero.Client,
 	doc *accountingconnectorports.AccountingPurchaseDocument,
 ) (*documentBody, error) {
-	date, err := parseDate(doc.TxnDate)
+	date, err := ParseDate(doc.TxnDate)
 	if err != nil {
 		return nil, err
 	}
-	due, err := parseDate(doc.DueDate)
+	due, err := ParseDate(doc.DueDate)
 	if err != nil {
 		return nil, err
 	}
 	body := &documentBody{
 		contactID:    doc.VendorExternalID,
 		number:       doc.DocNumber,
-		reference:    reference(doc.PrivateNote),
+		reference:    Reference(doc.PrivateNote),
 		date:         date,
 		dueDate:      due,
 		currencyCode: doc.CurrencyCode,
@@ -55,7 +56,7 @@ func (c *Connector) purchaseBody(
 	}
 	for idx := range doc.Lines {
 		line := &doc.Lines[idx]
-		code, codeErr := c.accountCode(
+		code, codeErr := c.AccountCode(
 			ctx,
 			client,
 			line.AccountExternalID,
@@ -64,10 +65,10 @@ func (c *Connector) purchaseBody(
 		if codeErr != nil {
 			return nil, codeErr
 		}
-		body.lines = append(body.lines, lineItem(&lineSpec{
-			description: line.Description,
-			amount:      line.Amount,
-			accountCode: code,
+		body.lines = append(body.lines, LineItem(&LineSpec{
+			Description: line.Description,
+			Amount:      line.Amount,
+			AccountCode: code,
 		}))
 	}
 	return body, nil
@@ -81,7 +82,7 @@ type purchaseWritten struct {
 	number     string
 }
 
-func (c *Connector) purchaseResult(
+func (c *Documents) purchaseResult(
 	written *purchaseWritten,
 ) *accountingconnectorports.AccountingDocumentResult {
 	docType := xerodocs.InvoiceTypePayable
@@ -108,33 +109,33 @@ func (c *Connector) purchaseResult(
 	}
 }
 
-func (c *Connector) CreatePurchaseDocument(
+func (c *Documents) CreatePurchaseDocument(
 	ctx context.Context,
 	doc *accountingconnectorports.AccountingPurchaseDocument,
 ) (*accountingconnectorports.AccountingDocumentResult, error) {
 	return c.writePurchase(ctx, doc, "")
 }
 
-func (c *Connector) UpdatePurchaseDocument(
+func (c *Documents) UpdatePurchaseDocument(
 	ctx context.Context,
 	doc *accountingconnectorports.AccountingPurchaseDocument,
 ) (*accountingconnectorports.AccountingDocumentResult, error) {
 	id := strings.TrimSpace(doc.ExternalID)
 	if id == "" {
-		return nil, errExternalID
+		return nil, xerosession.ErrExternalID
 	}
 	return c.writePurchase(ctx, doc, id)
 }
 
-func (c *Connector) writePurchase(
+func (c *Documents) writePurchase(
 	ctx context.Context,
 	doc *accountingconnectorports.AccountingPurchaseDocument,
 	externalID string,
 ) (*accountingconnectorports.AccountingDocumentResult, error) {
 	if !doc.Kind.IsBill() {
-		return nil, errDocumentKind
+		return nil, xerosession.ErrDocumentKind
 	}
-	client, err := c.client(doc.Auth)
+	client, err := c.Client(doc.Auth)
 	if err != nil {
 		return nil, err
 	}
@@ -181,11 +182,11 @@ func (c *Connector) writePurchase(
 	}), nil
 }
 
-func purchaseIsCredit(refs map[string]string) (bool, error) {
+func PurchaseIsCredit(refs map[string]string) (bool, error) {
 	if value := strings.TrimSpace(refs[accountingsync.ExternalRefCreditDocument]); value != "" {
 		credit, err := strconv.ParseBool(value)
 		if err != nil {
-			return false, errPurchaseDocumentType
+			return false, ErrPurchaseDocumentType
 		}
 		return credit, nil
 	}
@@ -195,30 +196,30 @@ func purchaseIsCredit(refs map[string]string) (bool, error) {
 	case xerodocs.CreditNoteTypePayable:
 		return true, nil
 	default:
-		return false, errPurchaseDocumentType
+		return false, ErrPurchaseDocumentType
 	}
 }
 
-func (c *Connector) VoidPurchaseDocument(
+func (c *Documents) VoidPurchaseDocument(
 	ctx context.Context,
 	ref *accountingconnectorports.AccountingDocumentRef,
 ) (*accountingconnectorports.AccountingDocumentResult, error) {
 	if !ref.Kind.IsBill() {
-		return nil, errDocumentKind
+		return nil, xerosession.ErrDocumentKind
 	}
-	credit, err := purchaseIsCredit(ref.Refs)
+	credit, err := PurchaseIsCredit(ref.Refs)
 	if err != nil {
 		return nil, err
 	}
-	client, err := c.client(ref.Auth)
+	client, err := c.Client(ref.Auth)
 	if err != nil {
 		return nil, err
 	}
-	result := newResult(ref.Refs)
+	result := NewResult(ref.Refs)
 	result.ExternalID = ref.ExternalID
 
 	if credit {
-		err = voidCreditNote(ctx, client, ref.RequestID, ref.ExternalID)
+		err = VoidCreditNote(ctx, client, ref.RequestID, ref.ExternalID)
 	} else {
 		err = voidInvoice(ctx, client, ref.RequestID, ref.ExternalID)
 	}
@@ -228,35 +229,35 @@ func (c *Connector) VoidPurchaseDocument(
 	return result, nil
 }
 
-func (c *Connector) CreateBillPayment(
+func (c *Documents) CreateBillPayment(
 	ctx context.Context,
 	doc *accountingconnectorports.AccountingBillPaymentDocument,
 ) (*accountingconnectorports.AccountingDocumentResult, error) {
 	if !doc.Kind.IsBillPayment() {
-		return nil, errDocumentKind
+		return nil, xerosession.ErrDocumentKind
 	}
 	return c.writeBillPayment(ctx, doc, doc.RequestID)
 }
 
-func (c *Connector) UpdateBillPayment(
+func (c *Documents) UpdateBillPayment(
 	ctx context.Context,
 	doc *accountingconnectorports.AccountingBillPaymentDocument,
 ) (*accountingconnectorports.AccountingDocumentResult, error) {
 	if !doc.Kind.IsBillPayment() {
-		return nil, errDocumentKind
+		return nil, xerosession.ErrDocumentKind
 	}
 	id := strings.TrimSpace(doc.ExternalID)
 	if id == "" {
-		return nil, errExternalID
+		return nil, xerosession.ErrExternalID
 	}
-	client, err := c.client(doc.Auth)
+	client, err := c.Client(doc.Auth)
 	if err != nil {
 		return nil, err
 	}
 	if err = xeropay.DeletePayment(
 		ctx,
 		client,
-		accountingsync.SyncStepRequestID(doc.RequestID, stepReplaceDelete),
+		accountingsync.SyncStepRequestID(doc.RequestID, StepReplaceDelete),
 		id,
 	); err != nil && !xeroerrors.IsNotFound(err) {
 		return nil, err
@@ -264,20 +265,20 @@ func (c *Connector) UpdateBillPayment(
 	return c.writeBillPayment(
 		ctx,
 		doc,
-		accountingsync.SyncStepRequestID(doc.RequestID, stepReplaceCreate),
+		accountingsync.SyncStepRequestID(doc.RequestID, StepReplaceCreate),
 	)
 }
 
-func (c *Connector) writeBillPayment(
+func (c *Documents) writeBillPayment(
 	ctx context.Context,
 	doc *accountingconnectorports.AccountingBillPaymentDocument,
 	key string,
 ) (*accountingconnectorports.AccountingDocumentResult, error) {
-	date, err := parseDate(doc.TxnDate)
+	date, err := ParseDate(doc.TxnDate)
 	if err != nil {
 		return nil, err
 	}
-	client, err := c.client(doc.Auth)
+	client, err := c.Client(doc.Auth)
 	if err != nil {
 		return nil, err
 	}
@@ -287,13 +288,13 @@ func (c *Connector) writeBillPayment(
 		Date:         date,
 		Amount:       doc.Amount,
 		CurrencyRate: doc.ExchangeRate,
-		Reference:    paymentReference(doc.DocNumber, doc.RequestID),
+		Reference:    PaymentReference(doc.DocNumber, doc.RequestID),
 	})
 	if err != nil {
 		return nil, err
 	}
-	result := newResult(nil)
-	finishPayment(result, payment)
-	delete(result.Refs, refReplaced)
+	result := NewResult(nil)
+	FinishPayment(result, payment)
+	delete(result.Refs, RefReplaced)
 	return result, nil
 }

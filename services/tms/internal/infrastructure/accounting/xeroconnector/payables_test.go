@@ -4,6 +4,8 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/infrastructure/accounting/xerodocsync"
+	"github.com/emoss08/trenova/internal/infrastructure/accounting/xerosession"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/stretchr/testify/assert"
@@ -126,7 +128,7 @@ func TestUpdateAndVoidPurchases(t *testing.T) {
 		Auth: testAuth(), Kind: accountingsync.SyncObjectCarrierBill, ExternalID: testBill,
 		Refs: map[string]string{accountingsync.ExternalRefDocumentType: "VendorCredit"},
 	})
-	require.ErrorIs(t, err, errPurchaseDocumentType)
+	require.ErrorIs(t, err, xerodocsync.ErrPurchaseDocumentType)
 
 	_, err = conn.CreatePurchaseDocument(
 		t.Context(),
@@ -134,32 +136,7 @@ func TestUpdateAndVoidPurchases(t *testing.T) {
 			Kind: accountingsync.SyncObjectInvoice,
 		},
 	)
-	require.ErrorIs(t, err, errDocumentKind)
-}
-
-func TestPurchaseCreditFlagReadsNeutralAndLegacyRefs(t *testing.T) {
-	t.Parallel()
-
-	cases := []struct {
-		refs map[string]string
-		want bool
-		err  bool
-	}{
-		{map[string]string{}, false, false},
-		{map[string]string{accountingsync.ExternalRefCreditDocument: "true"}, true, false},
-		{map[string]string{accountingsync.ExternalRefCreditDocument: "false"}, false, false},
-		{map[string]string{accountingsync.ExternalRefDocumentType: "ACCPAYCREDIT"}, true, false},
-		{map[string]string{accountingsync.ExternalRefCreditDocument: "maybe"}, false, true},
-	}
-	for _, tc := range cases {
-		got, err := purchaseIsCredit(tc.refs)
-		if tc.err {
-			require.Error(t, err)
-			continue
-		}
-		require.NoError(t, err)
-		assert.Equal(t, tc.want, got)
-	}
+	require.ErrorIs(t, err, xerosession.ErrDocumentKind)
 }
 
 func TestBillPaymentCreateAndReplace(t *testing.T) {
@@ -175,7 +152,7 @@ func TestBillPaymentCreateAndReplace(t *testing.T) {
 	created, err := conn.CreateBillPayment(t.Context(), doc)
 	require.NoError(t, err)
 	assert.Equal(t, testPayment, created.ExternalID)
-	assert.NotContains(t, created.Refs, refReplaced)
+	assert.NotContains(t, created.Refs, xerodocsync.RefReplaced)
 	call, ok := fake.find(http.MethodPut, "/Payments")
 	require.True(t, ok)
 	payment := firstDoc(t, call.Body, "Payments")

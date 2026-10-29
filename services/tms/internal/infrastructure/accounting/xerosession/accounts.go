@@ -1,4 +1,4 @@
-package xeroconnector
+package xerosession
 
 import (
 	"context"
@@ -23,17 +23,17 @@ type accountIndex struct {
 	loadedAt time.Time
 }
 
-type accountCodes struct {
+type AccountCodes struct {
 	now      func() time.Time
 	mu       sync.Mutex
 	byTenant map[string]*accountIndex
 }
 
-func newAccountCodes(now func() time.Time) *accountCodes {
-	return &accountCodes{now: now, byTenant: make(map[string]*accountIndex)}
+func NewAccountCodes(now func() time.Time) *AccountCodes {
+	return &AccountCodes{now: now, byTenant: make(map[string]*accountIndex)}
 }
 
-func (a *accountCodes) store(tenant string, accounts []xeroref.Account) *accountIndex {
+func (a *AccountCodes) Store(tenant string, accounts []xeroref.Account) *accountIndex {
 	index := &accountIndex{
 		codeByID: make(map[string]string, len(accounts)),
 		idByCode: make(map[string]string, len(accounts)),
@@ -61,7 +61,7 @@ func (a *accountCodes) store(tenant string, accounts []xeroref.Account) *account
 	return index
 }
 
-func (a *accountCodes) cached(tenant string) (*accountIndex, bool) {
+func (a *AccountCodes) cached(tenant string) (*accountIndex, bool) {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 	index, ok := a.byTenant[tenant]
@@ -71,7 +71,7 @@ func (a *accountCodes) cached(tenant string) (*accountIndex, bool) {
 	return index, true
 }
 
-func (a *accountCodes) lookup(
+func (a *AccountCodes) lookup(
 	ctx context.Context,
 	client *xero.Client,
 	find func(*accountIndex) (string, bool),
@@ -91,11 +91,11 @@ func (a *accountCodes) lookup(
 	if err != nil {
 		return "", false, err
 	}
-	value, found = find(a.store(tenant, accounts))
+	value, found = find(a.Store(tenant, accounts))
 	return value, found, nil
 }
 
-func (a *accountCodes) codeFor(
+func (a *AccountCodes) codeFor(
 	ctx context.Context,
 	client *xero.Client,
 	accountID string,
@@ -107,7 +107,7 @@ func (a *accountCodes) codeFor(
 	})
 }
 
-func (a *accountCodes) idFor(
+func (a *AccountCodes) IDFor(
 	ctx context.Context,
 	client *xero.Client,
 	code string,
@@ -122,7 +122,7 @@ func (a *accountCodes) idFor(
 	})
 }
 
-func (c *Connector) accountCode(
+func (c *Session) AccountCode(
 	ctx context.Context,
 	client *xero.Client,
 	accountID, purpose string,
@@ -130,7 +130,7 @@ func (c *Connector) accountCode(
 	if strings.TrimSpace(accountID) == "" {
 		return "", unmappedAccount(purpose)
 	}
-	code, ok, err := c.codes.codeFor(ctx, client, accountID)
+	code, ok, err := c.Codes.codeFor(ctx, client, accountID)
 	if err != nil {
 		return "", err
 	}
@@ -138,9 +138,9 @@ func (c *Connector) accountCode(
 		return "", &accountingsync.SyncError{
 			Category: accountingsync.SyncErrorMapping,
 			Code:     "account-code",
-			Message: purpose + " is mapped to a " + providerName +
+			Message: purpose + " is mapped to a " + ProviderName +
 				" account that no longer exists or has no code",
-			Resolution: "Refresh the reference data, give the account a code in " + providerName +
+			Resolution: "Refresh the reference data, give the account a code in " + ProviderName +
 				" or map a different account",
 		}
 	}
@@ -151,7 +151,7 @@ func unmappedAccount(purpose string) *accountingsync.SyncError {
 	return &accountingsync.SyncError{
 		Category:   accountingsync.SyncErrorMapping,
 		Code:       "account",
-		Message:    purpose + " has no " + providerName + " account mapped",
-		Resolution: "Map it to a " + providerName + " account",
+		Message:    purpose + " has no " + ProviderName + " account mapped",
+		Resolution: "Map it to a " + ProviderName + " account",
 	}
 }

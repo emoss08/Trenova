@@ -8,6 +8,11 @@ import (
 	"sync"
 	"time"
 
+	"github.com/emoss08/trenova/internal/infrastructure/accounting/xerochangefeed"
+	"github.com/emoss08/trenova/internal/infrastructure/accounting/xerodocsync"
+	"github.com/emoss08/trenova/internal/infrastructure/accounting/xeropaysync"
+	"github.com/emoss08/trenova/internal/infrastructure/accounting/xerorefsync"
+	"github.com/emoss08/trenova/internal/infrastructure/accounting/xerosession"
 	"github.com/emoss08/trenova/internal/infrastructure/config/accountingconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
@@ -23,8 +28,6 @@ import (
 	"go.uber.org/zap"
 )
 
-var ErrNotConfigured = errors.New("xero is not configured on this instance")
-
 const (
 	maxBoundApps        = 512
 	tenantTypeOrg       = "ORGANISATION"
@@ -37,10 +40,6 @@ const (
 
 //nolint:gosec // G101: a placeholder refresh token the endpoint rejects, not a credential
 const credentialProbeToken = "trenova-credential-check"
-
-var errNoRedirect = errors.New(
-	"xero needs app.webBaseUrl or accounting.xero.redirectUrl to build its callback",
-)
 
 var errNoCompany = errors.New("xero did not authorise any organisation for this connection")
 
@@ -59,7 +58,7 @@ type Provider struct {
 	apiOpts     []xero.Option
 	oauthOpts   []xero.Option
 	gate        *tenantGate
-	codes       *accountCodes
+	codes       *xerosession.AccountCodes
 	l           *zap.Logger
 
 	mu    sync.Mutex
@@ -69,22 +68,30 @@ type Provider struct {
 var _ accountingconnectorports.AccountingProvider = (*Provider)(nil)
 
 type Connector struct {
+	*xerosession.Session
+	*xerodocsync.Documents
+	*xeropaysync.Payments
+	*xerochangefeed.Feed
+	*xerorefsync.References
 	oauth      *xero.OAuthClient
 	webhookKey string
-	apiOpts    []xero.Option
-	httpClient *http.Client
-	codes      *accountCodes
-	l          *zap.Logger
 }
 
-var _ accountingconnectorports.AccountingConnector = (*Connector)(nil)
+var (
+	_ accountingconnectorports.AccountingConnector        = (*Connector)(nil)
+	_ accountingconnectorports.AccountingDocumentWriter   = (*Connector)(nil)
+	_ accountingconnectorports.AccountingDocumentReader   = (*Connector)(nil)
+	_ accountingconnectorports.AccountingChangeReader     = (*Connector)(nil)
+	_ accountingconnectorports.AccountingReferenceReader  = (*Connector)(nil)
+	_ accountingconnectorports.AccountingReferenceCreator = (*Connector)(nil)
+)
 
 func New(p Params) (*Provider, error) {
 	cfg := p.AccountingConfig.Xero
 	provider := &Provider{
 		redirectURL: cfg.GetRedirectURL(p.AppConfig),
 		gate:        newTenantGate(),
-		codes:       newAccountCodes(time.Now),
+		codes:       xerosession.NewAccountCodes(time.Now),
 		l:           p.Logger.Named("accounting.xero"),
 		bound:       make(map[string]*Connector),
 	}
@@ -128,7 +135,7 @@ func (p *Provider) Bind(
 
 func (p *Provider) bind(app *accountingconnectorports.AccountingApp) (*Connector, error) {
 	if app == nil {
-		return nil, ErrNotConfigured
+		return nil, xerosession.ErrNotConfigured
 	}
 
 	key := bindingKey(app)
@@ -138,12 +145,19 @@ func (p *Provider) bind(app *accountingconnectorports.AccountingApp) (*Connector
 		return conn, nil
 	}
 
+	session := xerosession.NewSession(
+		p.apiOpts,
+		&http.Client{Transport: p.gate.transport(http.DefaultTransport)},
+		p.codes,
+	)
+	refs := &xerorefsync.References{Session: session}
 	conn := &Connector{
+		Session:    session,
+		Documents:  &xerodocsync.Documents{Session: session},
+		Payments:   &xeropaysync.Payments{Session: session},
+		Feed:       xerochangefeed.NewFeed(session, refs),
+		References: refs,
 		webhookKey: strings.TrimSpace(app.WebhookVerifierToken),
-		apiOpts:    p.apiOpts,
-		httpClient: &http.Client{Transport: p.gate.transport(http.DefaultTransport)},
-		codes:      p.codes,
-		l:          p.l,
 	}
 	if p.redirectURL != "" {
 		oauth, err := xero.NewOAuthClient(xero.OAuthConfig{
@@ -176,7 +190,7 @@ func (p *Provider) WebhookSignatureHeader() string {
 }
 
 func (p *Provider) ClassifyError(err error) accountingsync.ErrorCategory {
-	return classifyError(err)
+	return xerosession.ClassifyError(err)
 }
 
 func bindingKey(app *accountingconnectorports.AccountingApp) string {
@@ -187,27 +201,11 @@ func bindingKey(app *accountingconnectorports.AccountingApp) string {
 	}, "\x00"))
 }
 
-func (c *Connector) IntegrationType() integration.Type {
-	return integration.TypeXero
-}
-
-func (c *Connector) options() []xero.Option {
-	opts := make([]xero.Option, 0, len(c.apiOpts)+1)
-	opts = append(opts, xero.WithHTTPClient(c.httpClient))
-	return append(opts, c.apiOpts...)
-}
-
-func (c *Connector) client(
-	auth accountingconnectorports.AccountingDocumentAuth,
-) (*xero.Client, error) {
-	return xero.New(auth.RealmID, auth.AccessToken, c.options()...)
-}
-
 func (c *Connector) AuthorizeURL(
 	req accountingconnectorports.AccountingAuthorizeRequest,
 ) (string, error) {
 	if c.oauth == nil {
-		return "", errNoRedirect
+		return "", xerosession.ErrNoRedirect
 	}
 	return c.oauth.AuthorizeURL(req.State)
 }
@@ -217,7 +215,7 @@ func (c *Connector) ExchangeCode(
 	req *accountingconnectorports.AccountingCodeExchange,
 ) (*accountingconnectorports.AccountingTokenGrant, error) {
 	if c.oauth == nil {
-		return nil, errNoRedirect
+		return nil, xerosession.ErrNoRedirect
 	}
 	token, err := c.oauth.ExchangeCode(ctx, req.Code)
 	if err != nil {
@@ -231,7 +229,7 @@ func (c *Connector) Refresh(
 	req *accountingconnectorports.AccountingRefreshRequest,
 ) (*accountingconnectorports.AccountingTokenGrant, error) {
 	if c.oauth == nil {
-		return nil, errNoRedirect
+		return nil, xerosession.ErrNoRedirect
 	}
 	token, err := c.oauth.Refresh(ctx, req.RefreshToken)
 	if err != nil {
@@ -245,13 +243,13 @@ func (c *Connector) Revoke(
 	req *accountingconnectorports.AccountingRevokeRequest,
 ) error {
 	if c.oauth == nil {
-		return errNoRedirect
+		return xerosession.ErrNoRedirect
 	}
 	return c.oauth.Revoke(ctx, req.Token)
 }
 
 func (c *Connector) connections(accessToken string) (*xero.ConnectionsClient, error) {
-	return xero.NewConnectionsClient(accessToken, c.options()...)
+	return xero.NewConnectionsClient(accessToken, c.Options()...)
 }
 
 func (c *Connector) Companies(
@@ -325,7 +323,7 @@ func (c *Connector) CompanyFacts(
 	ctx context.Context,
 	realmID, accessToken string,
 ) (*accountingconnection.CompanyFacts, error) {
-	client, err := c.client(accountingconnectorports.AccountingDocumentAuth{
+	client, err := c.Client(accountingconnectorports.AccountingDocumentAuth{
 		RealmID:     realmID,
 		AccessToken: accessToken,
 	})
@@ -385,7 +383,7 @@ func laterOf(first, second *time.Time) *time.Time {
 
 func (c *Connector) VerifyApp(ctx context.Context) error {
 	if c.oauth == nil {
-		return errNoRedirect
+		return xerosession.ErrNoRedirect
 	}
 	_, err := c.oauth.Refresh(ctx, credentialProbeToken)
 	switch {
@@ -400,29 +398,6 @@ func (c *Connector) VerifyApp(ctx context.Context) error {
 
 func (c *Connector) VerifyWebhook(signature string, body []byte) error {
 	return xero.VerifySignature(c.webhookKey, body, signature)
-}
-
-func (c *Connector) ClassifyError(err error) accountingsync.ErrorCategory {
-	return classifyError(err)
-}
-
-func classifyError(err error) accountingsync.ErrorCategory {
-	switch {
-	case err == nil:
-		return ""
-	case errors.Is(err, ErrNotConfigured), errors.Is(err, errNoRedirect):
-		return accountingsync.ErrorCategoryConfiguration
-	case xeroerrors.IsInvalidGrant(err):
-		return accountingsync.ErrorCategoryRevoked
-	case xeroerrors.IsRateLimited(err):
-		return accountingsync.ErrorCategoryRateLimited
-	case xeroerrors.IsInvalidClient(err), xeroerrors.IsAuth(err), xeroerrors.IsForbidden(err):
-		return accountingsync.ErrorCategoryUnauthorized
-	case xeroerrors.IsTransient(err), errors.Is(err, context.DeadlineExceeded):
-		return accountingsync.ErrorCategoryTransient
-	default:
-		return accountingsync.ErrorCategoryUnknown
-	}
 }
 
 func grantOf(token *xero.Token) *accountingconnectorports.AccountingTokenGrant {

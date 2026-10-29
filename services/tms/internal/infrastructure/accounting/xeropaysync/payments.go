@@ -1,4 +1,4 @@
-package xeroconnector
+package xeropaysync
 
 import (
 	"context"
@@ -7,9 +7,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/emoss08/trenova/internal/infrastructure/accounting/xerodocsync"
+	"github.com/emoss08/trenova/internal/infrastructure/accounting/xerosession"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
-	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/xero"
 	"github.com/emoss08/trenova/shared/xerodocs"
 	"github.com/emoss08/trenova/shared/xeroerrors"
@@ -18,19 +19,17 @@ import (
 )
 
 const (
-	docTypePayment           = "Payment"
-	docTypeBatchPayment      = "BatchPayment"
-	refPaymentPrefix         = "payment:"
-	refReplaced              = "replaced"
-	refShortPayAllocPrefix   = "shortPayAllocation:"
+	RefShortPayAllocPrefix   = "shortPayAllocation:"
 	shortPayNote             = "Short pay on "
-	stepReplaceDelete        = 1
-	stepReplaceCreate        = 2
 	stepShortPayBase         = 10
 	stepsPerShortPay         = 2
-	unappliedPaymentCode     = "unapplied-payment"
+	UnappliedPaymentCode     = "unapplied-payment"
 	unappliedPaymentResolved = "Apply the whole payment to invoices in Trenova, then retry"
 )
+
+type Payments struct {
+	*xerosession.Session
+}
 
 type paymentWrite struct {
 	requestID  string
@@ -43,10 +42,10 @@ func (w *paymentWrite) createKey() string {
 	if strings.TrimSpace(w.externalID) == "" {
 		return w.requestID
 	}
-	return accountingsync.SyncStepRequestID(w.requestID, stepReplaceCreate)
+	return accountingsync.SyncStepRequestID(w.requestID, xerodocsync.StepReplaceCreate)
 }
 
-func (c *Connector) SavePayment(
+func (c *Payments) SavePayment(
 	ctx context.Context,
 	doc *accountingconnectorports.AccountingPaymentDocument,
 ) (*accountingconnectorports.AccountingDocumentResult, error) {
@@ -54,11 +53,11 @@ func (c *Connector) SavePayment(
 	if err != nil {
 		return nil, err
 	}
-	date, err := parseDate(doc.TxnDate)
+	date, err := xerodocsync.ParseDate(doc.TxnDate)
 	if err != nil {
 		return nil, err
 	}
-	client, err := c.client(doc.Auth)
+	client, err := c.Client(doc.Auth)
 	if err != nil {
 		return nil, err
 	}
@@ -66,7 +65,7 @@ func (c *Connector) SavePayment(
 		requestID:  doc.RequestID,
 		externalID: doc.ExternalID,
 		refs:       doc.Refs,
-		result:     newResult(doc.Refs),
+		result:     xerodocsync.NewResult(doc.Refs),
 	}
 
 	if err = replacePrevious(ctx, client, write); err != nil {
@@ -81,7 +80,7 @@ func (c *Connector) SavePayment(
 		}
 	}
 
-	paymentRef := paymentReference(doc.ReferenceNumber, doc.RequestID)
+	paymentRef := xerodocsync.PaymentReference(doc.ReferenceNumber, doc.RequestID)
 	clearPaymentRefs(write.result.Refs)
 	if len(cash) == 1 {
 		payment, createErr := xeropay.CreatePayment(
@@ -100,7 +99,7 @@ func (c *Connector) SavePayment(
 		if createErr != nil {
 			return write.result, createErr
 		}
-		finishPayment(write.result, payment)
+		xerodocsync.FinishPayment(write.result, payment)
 		return write.result, nil
 	}
 
@@ -147,17 +146,17 @@ func cashApplications(
 	if len(cash) == 0 {
 		return nil, &accountingsync.SyncError{
 			Category: accountingsync.SyncErrorValidation,
-			Code:     unappliedPaymentCode,
-			Message: "The payment applies no cash to an invoice, so " + providerName +
+			Code:     UnappliedPaymentCode,
+			Message: "The payment applies no cash to an invoice, so " + xerosession.ProviderName +
 				" has nothing to record",
 			Resolution: unappliedPaymentResolved,
 		}
 	}
-	if !sameMoney(applied, doc.TotalAmount) {
+	if !xerodocsync.SameMoney(applied, doc.TotalAmount) {
 		return nil, &accountingsync.SyncError{
 			Category: accountingsync.SyncErrorValidation,
-			Code:     unappliedPaymentCode,
-			Message: providerName + " records a payment only against invoices, " +
+			Code:     UnappliedPaymentCode,
+			Message: xerosession.ProviderName + " records a payment only against invoices, " +
 				"so a payment with an unapplied amount cannot be sent",
 			Resolution: unappliedPaymentResolved,
 		}
@@ -167,19 +166,19 @@ func cashApplications(
 
 func replacePrevious(ctx context.Context, client *xero.Client, write *paymentWrite) error {
 	previous := strings.TrimSpace(write.externalID)
-	if previous == "" || write.result.Refs[refReplaced] == previous {
+	if previous == "" || write.result.Refs[xerodocsync.RefReplaced] == previous {
 		return nil
 	}
 	if err := deletePaymentDocument(
 		ctx,
 		client,
-		accountingsync.SyncStepRequestID(write.requestID, stepReplaceDelete),
+		accountingsync.SyncStepRequestID(write.requestID, xerodocsync.StepReplaceDelete),
 		previous,
 		write.refs,
 	); err != nil {
 		return err
 	}
-	write.result.Refs[refReplaced] = previous
+	write.result.Refs[xerodocsync.RefReplaced] = previous
 	return nil
 }
 
@@ -190,7 +189,7 @@ func deletePaymentDocument(
 	refs map[string]string,
 ) error {
 	var err error
-	if refs[accountingsync.ExternalRefDocumentType] == docTypeBatchPayment {
+	if refs[accountingsync.ExternalRefDocumentType] == xerodocsync.DocTypeBatchPayment {
 		err = xeropay.DeleteBatchPayment(ctx, client, key, externalID)
 	} else {
 		err = xeropay.DeletePayment(ctx, client, key, externalID)
@@ -203,23 +202,9 @@ func deletePaymentDocument(
 
 func clearPaymentRefs(refs map[string]string) {
 	for key := range refs {
-		if strings.HasPrefix(key, refPaymentPrefix) {
+		if strings.HasPrefix(key, xerodocsync.RefPaymentPrefix) {
 			refs[key] = ""
 		}
-	}
-}
-
-func finishPayment(
-	result *accountingconnectorports.AccountingDocumentResult,
-	payment *xeropay.Payment,
-) {
-	result.ExternalID = payment.PaymentID
-	result.DocNumber = payment.Reference
-	result.Refs[accountingsync.ExternalRefDocument] = payment.PaymentID
-	result.Refs[accountingsync.ExternalRefDocumentType] = docTypePayment
-	result.Refs[refReplaced] = ""
-	if payment.InvoiceID != "" {
-		result.Refs[refPaymentPrefix+strings.ToLower(payment.InvoiceID)] = payment.PaymentID
 	}
 }
 
@@ -230,42 +215,21 @@ func finishBatch(
 	result.ExternalID = batch.BatchPaymentID
 	result.DocNumber = batch.Reference
 	result.Refs[accountingsync.ExternalRefDocument] = batch.BatchPaymentID
-	result.Refs[accountingsync.ExternalRefDocumentType] = docTypeBatchPayment
-	result.Refs[refReplaced] = ""
+	result.Refs[accountingsync.ExternalRefDocumentType] = xerodocsync.DocTypeBatchPayment
+	result.Refs[xerodocsync.RefReplaced] = ""
 	for idx := range batch.Payments {
 		item := &batch.Payments[idx]
 		if item.InvoiceID != "" && item.PaymentID != "" {
-			result.Refs[refPaymentPrefix+strings.ToLower(item.InvoiceID)] = item.PaymentID
+			result.Refs[xerodocsync.RefPaymentPrefix+strings.ToLower(item.InvoiceID)] = item.PaymentID
 		}
 	}
-}
-
-func paymentReference(number, requestID string) string {
-	cleaned := strings.Map(func(r rune) rune {
-		if r == '"' || r == '\\' || r < ' ' || r == 0x7f {
-			return ' '
-		}
-		return r
-	}, number)
-	cleaned = stringutils.CollapseWhitespace(cleaned)
-	id := strings.TrimSpace(requestID)
-	if id == "" {
-		return reference(cleaned)
-	}
-	budget := xerodocs.MaxReferenceLength - len([]rune(id)) - 1
-	if budget <= 0 {
-		return stringutils.TruncateRunes(id, xerodocs.MaxReferenceLength)
-	}
-	return strings.TrimSpace(
-		strings.TrimSpace(stringutils.TruncateRunes(cleaned, budget)) + " " + id,
-	)
 }
 
 func shortPayRefKey(invoiceID string) string {
 	return accountingsync.ExternalRefShortPayPrefix + invoiceID
 }
 
-func (c *Connector) shortPay(
+func (c *Payments) shortPay(
 	ctx context.Context,
 	client *xero.Client,
 	doc *accountingconnectorports.AccountingPaymentDocument,
@@ -278,7 +242,7 @@ func (c *Connector) shortPay(
 		return nil
 	}
 	key := shortPayRefKey(app.InvoiceExternalID)
-	allocationKey := refShortPayAllocPrefix + app.InvoiceExternalID
+	allocationKey := RefShortPayAllocPrefix + app.InvoiceExternalID
 	noteID := result.Refs[key]
 
 	if noteID == "" {
@@ -287,10 +251,10 @@ func (c *Connector) shortPay(
 				Category:   accountingsync.SyncErrorMapping,
 				Code:       accountingsync.ItemRoleShortPayWriteOff,
 				Message:    "The short pay write-off account is not mapped",
-				Resolution: "Map the short pay write-off to a " + providerName + " account",
+				Resolution: "Map the short pay write-off to a " + xerosession.ProviderName + " account",
 			}
 		}
-		code, err := c.accountCode(
+		code, err := c.AccountCode(
 			ctx,
 			client,
 			doc.ShortPayAccountExternalID,
@@ -307,16 +271,16 @@ func (c *Connector) shortPay(
 			xerodocs.CreditNoteInput{
 				Type:            xerodocs.CreditNoteTypeReceivable,
 				ContactID:       doc.CustomerExternalID,
-				Reference:       reference(text),
+				Reference:       xerodocsync.Reference(text),
 				Date:            date,
 				CurrencyCode:    doc.CurrencyCode,
 				CurrencyRate:    doc.ExchangeRate,
 				Status:          xerodocs.StatusAuthorised,
 				LineAmountTypes: xerodocs.LineAmountsNoTax,
-				Lines: []xerodocs.LineItem{lineItem(&lineSpec{
-					description: text,
-					amount:      app.ShortPayAmount,
-					accountCode: code,
+				Lines: []xerodocs.LineItem{xerodocsync.LineItem(&xerodocsync.LineSpec{
+					Description: text,
+					Amount:      app.ShortPayAmount,
+					AccountCode: code,
 				})},
 			},
 		)
@@ -348,15 +312,15 @@ func (c *Connector) shortPay(
 	return nil
 }
 
-func (c *Connector) VoidPayment(
+func (c *Payments) VoidPayment(
 	ctx context.Context,
 	ref *accountingconnectorports.AccountingDocumentRef,
 ) (*accountingconnectorports.AccountingDocumentResult, error) {
-	client, err := c.client(ref.Auth)
+	client, err := c.Client(ref.Auth)
 	if err != nil {
 		return nil, err
 	}
-	result := newResult(ref.Refs)
+	result := xerodocsync.NewResult(ref.Refs)
 	result.ExternalID = ref.ExternalID
 
 	if err = deletePaymentDocument(
@@ -376,7 +340,7 @@ func (c *Connector) VoidPayment(
 			continue
 		}
 		step++
-		if err = voidCreditNote(
+		if err = xerodocsync.VoidCreditNote(
 			ctx,
 			client,
 			accountingsync.SyncStepRequestID(ref.RequestID, step),

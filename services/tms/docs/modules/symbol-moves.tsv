@@ -19411,3 +19411,5 @@ github.com/emoss08/trenova/internal/modules/agent/app/agentmemoryservice.NewLabe
 github.com/emoss08/trenova/internal/modules/agent/app/agentmemoryservice.NewSubjectResolver	github.com/emoss08/trenova/internal/modules/agent/app/agentmemorysubjects.NewSubjectResolver
 github.com/emoss08/trenova/internal/modules/agent/app/agentmemoryservice.SubjectLabeler	github.com/emoss08/trenova/internal/modules/agent/app/agentmemorysubjects.SubjectLabeler
 github.com/emoss08/trenova/internal/modules/agent/app/agentmemoryservice.SubjectResolver	github.com/emoss08/trenova/internal/modules/agent/app/agentmemorysubjects.SubjectResolver
+github.com/emoss08/trenova/internal/infrastructure/accounting/xeroconnector.ErrNotConfigured	github.com/emoss08/trenova/internal/infrastructure/accounting/xerosession.ErrNotConfigured
+github.com/emoss08/trenova/internal/infrastructure/accounting/xeroconnector.AccountClassOf	github.com/emoss08/trenova/internal/infrastructure/accounting/xerorefsync.AccountClassOf

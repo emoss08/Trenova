@@ -1,10 +1,12 @@
-package xeroconnector
+package xerochangefeed
 
 import (
 	"context"
 	"strings"
 	"time"
 
+	"github.com/emoss08/trenova/internal/infrastructure/accounting/xerodocsync"
+	"github.com/emoss08/trenova/internal/infrastructure/accounting/xerosession"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/shared/xero"
@@ -12,8 +14,6 @@ import (
 	"github.com/emoss08/trenova/shared/xeropay"
 	"github.com/shopspring/decimal"
 )
-
-var _ accountingconnectorports.AccountingDocumentReader = (*Connector)(nil)
 
 type readKind int
 
@@ -24,7 +24,7 @@ const (
 	readAllocation
 )
 
-func (c *Connector) DocumentReadLimits() accountingconnectorports.AccountingDocumentReadLimits {
+func (c *Feed) DocumentReadLimits() accountingconnectorports.AccountingDocumentReadLimits {
 	return accountingconnectorports.AccountingDocumentReadLimits{MaxPerRead: xero.MaxIDsPerRead}
 }
 
@@ -42,7 +42,7 @@ func readKindOf(
 	case kind == accountingsync.SyncObjectCreditApplication:
 		return readAllocation, nil
 	case kind.IsBill():
-		credit, err := purchaseIsCredit(target.Refs)
+		credit, err := xerodocsync.PurchaseIsCredit(target.Refs)
 		if err != nil {
 			return 0, err
 		}
@@ -51,7 +51,7 @@ func readKindOf(
 		}
 		return readInvoice, nil
 	default:
-		return 0, errDocumentKind
+		return 0, xerosession.ErrDocumentKind
 	}
 }
 
@@ -68,7 +68,7 @@ type driftRead struct {
 	allocations []*accountingconnectorports.AccountingDocumentTarget
 }
 
-func (c *Connector) ReadDocuments(
+func (c *Feed) ReadDocuments(
 	ctx context.Context,
 	req *accountingconnectorports.ReadAccountingDocumentsRequest,
 ) ([]*accountingconnectorports.AccountingDocumentState, error) {
@@ -95,7 +95,7 @@ func (c *Connector) ReadDocuments(
 		}
 	}
 
-	client, err := c.client(req.Auth)
+	client, err := c.Client(req.Auth)
 	if err != nil {
 		return nil, err
 	}
@@ -144,7 +144,7 @@ func readInvoices(
 		if invoice, ok := found[strings.ToLower(id)]; ok {
 			balance := invoice.AmountDue
 			state.Found = true
-			state.Voided = closedStatus(invoice.Status)
+			state.Voided = xerodocsync.ClosedStatus(invoice.Status)
 			state.DocNumber = invoice.InvoiceNumber
 			state.Total = invoice.Total
 			state.Balance = &balance
@@ -177,7 +177,7 @@ func readCreditNotes(
 		if note, ok := found[strings.ToLower(id)]; ok {
 			balance := note.RemainingCredit
 			state.Found = true
-			state.Voided = closedStatus(note.Status)
+			state.Voided = xerodocsync.ClosedStatus(note.Status)
 			state.DocNumber = note.CreditNoteNumber
 			state.Total = note.Total
 			state.Balance = &balance
@@ -192,10 +192,12 @@ func readCreditNotes(
 func paymentIDsOf(refs map[string]string) map[string]string {
 	out := make(map[string]string, len(refs))
 	for key, value := range refs {
-		if value == "" || !strings.HasPrefix(key, refPaymentPrefix) {
+		if value == "" || !strings.HasPrefix(key, xerodocsync.RefPaymentPrefix) {
 			continue
 		}
-		out[strings.ToLower(strings.TrimPrefix(key, refPaymentPrefix))] = strings.ToLower(value)
+		out[strings.ToLower(strings.TrimPrefix(key, xerodocsync.RefPaymentPrefix))] = strings.ToLower(
+			value,
+		)
 	}
 	return out
 }
@@ -270,7 +272,7 @@ func readAllocations(
 	noteIDs := make([]string, 0, len(plan.allocations))
 	seen := make(map[string]struct{}, len(plan.allocations))
 	for _, target := range plan.allocations {
-		noteID := strings.ToLower(strings.TrimSpace(target.Refs[refCreditNote]))
+		noteID := strings.ToLower(strings.TrimSpace(target.Refs[xerodocsync.RefCreditNote]))
 		if noteID == "" {
 			continue
 		}
@@ -295,7 +297,7 @@ func readAllocations(
 
 	out := make([]*accountingconnectorports.AccountingDocumentState, 0, len(plan.allocations))
 	for _, target := range plan.allocations {
-		if strings.TrimSpace(target.Refs[refCreditNote]) == "" {
+		if strings.TrimSpace(target.Refs[xerodocsync.RefCreditNote]) == "" {
 			continue
 		}
 		id := strings.TrimSpace(target.ExternalID)

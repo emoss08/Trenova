@@ -1,10 +1,11 @@
-package xeroconnector
+package xerodocsync
 
 import (
 	"context"
 	"errors"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/infrastructure/accounting/xerosession"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/shared/xero"
@@ -14,7 +15,7 @@ import (
 	"github.com/shopspring/decimal"
 )
 
-func (c *Connector) FindDocument(
+func (c *Documents) FindDocument(
 	ctx context.Context,
 	req *accountingconnectorports.AccountingFindDocumentRequest,
 ) (*accountingconnectorports.AccountingDocumentResult, bool, error) {
@@ -25,9 +26,9 @@ func (c *Connector) FindDocument(
 		req.Kind == accountingsync.SyncObjectCustomerPayment,
 		req.Kind == accountingsync.SyncObjectCreditApplication:
 	default:
-		return nil, false, errDocumentKind
+		return nil, false, xerosession.ErrDocumentKind
 	}
-	client, err := c.client(req.Auth)
+	client, err := c.Client(req.Auth)
 	if err != nil {
 		return nil, false, err
 	}
@@ -87,7 +88,7 @@ func documentFilter(
 	if id := strings.TrimSpace(req.CounterpartyExternalID); id != "" {
 		filter.ContactIDs = []string{id}
 	}
-	date, err := parseDate(req.TxnDate)
+	date, err := ParseDate(req.TxnDate)
 	if err != nil {
 		return filter, err
 	}
@@ -109,14 +110,14 @@ func (m *documentMatch) matches(
 	req *accountingconnectorports.AccountingFindDocumentRequest,
 	receivable bool,
 ) bool {
-	if closedStatus(m.status) {
+	if ClosedStatus(m.status) {
 		return false
 	}
 	if number := strings.TrimSpace(req.DocNumber); number != "" &&
 		!strings.EqualFold(strings.TrimSpace(m.number), number) {
 		return false
 	}
-	if !req.Total.IsZero() && !sameMoney(m.total, req.Total.Abs()) {
+	if !req.Total.IsZero() && !SameMoney(m.total, req.Total.Abs()) {
 		return false
 	}
 	if receivable {
@@ -229,7 +230,7 @@ func findPayment(
 	if err != nil {
 		return nil, false, err
 	}
-	expected := paymentReference(req.DocNumber, req.RequestID)
+	expected := PaymentReference(req.DocNumber, req.RequestID)
 
 	groups := make([]*paymentGroup, 0, len(payments))
 	byBatch := make(map[string]*paymentGroup, len(payments))
@@ -269,7 +270,7 @@ func (g *paymentGroup) fits(
 	requested map[string]struct{},
 	expected string,
 ) bool {
-	if !req.Total.IsZero() && !sameMoney(g.total, req.Total) {
+	if !req.Total.IsZero() && !SameMoney(g.total, req.Total) {
 		return false
 	}
 	for _, payment := range g.payments {
@@ -287,18 +288,18 @@ func (g *paymentGroup) fits(
 }
 
 func (g *paymentGroup) result() *accountingconnectorports.AccountingDocumentResult {
-	result := newResult(nil)
+	result := NewResult(nil)
 	if g.batchID == "" {
-		finishPayment(result, g.payments[0])
-		delete(result.Refs, refReplaced)
+		FinishPayment(result, g.payments[0])
+		delete(result.Refs, RefReplaced)
 		return result
 	}
 	result.ExternalID = g.batchID
 	result.DocNumber = g.payments[0].Reference
 	result.Refs[accountingsync.ExternalRefDocument] = g.batchID
-	result.Refs[accountingsync.ExternalRefDocumentType] = docTypeBatchPayment
+	result.Refs[accountingsync.ExternalRefDocumentType] = DocTypeBatchPayment
 	for _, payment := range g.payments {
-		result.Refs[refPaymentPrefix+strings.ToLower(payment.InvoiceID)] = payment.PaymentID
+		result.Refs[RefPaymentPrefix+strings.ToLower(payment.InvoiceID)] = payment.PaymentID
 	}
 	return result
 }
@@ -327,7 +328,7 @@ func findAllocation(
 				!sameDate(allocation.Date, req.TxnDate) {
 				continue
 			}
-			if !req.Total.IsZero() && !sameMoney(allocation.Amount, req.Total) {
+			if !req.Total.IsZero() && !SameMoney(allocation.Amount, req.Total) {
 				continue
 			}
 			if allocation.CreditNoteID == "" {

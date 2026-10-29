@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/bytedance/sonic"
+	"github.com/emoss08/trenova/internal/infrastructure/accounting/xerosession"
 	"github.com/emoss08/trenova/internal/infrastructure/config/accountingconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
@@ -164,11 +165,14 @@ func testConnector(t *testing.T, fake *fakeXero) *Connector {
 	}
 	conn, err := provider.bind(tenantApp())
 	require.NoError(t, err)
-	conn.httpClient = &http.Client{Transport: provider.gate.transport(server.Client().Transport)}
-	conn.apiOpts = []xero.Option{
-		xero.WithBaseURL(server.URL),
-		xero.WithRetry(restx.RetryConfig{}),
-	}
+	*conn.Session = *xerosession.NewSession(
+		[]xero.Option{
+			xero.WithBaseURL(server.URL),
+			xero.WithRetry(restx.RetryConfig{}),
+		},
+		&http.Client{Transport: provider.gate.transport(server.Client().Transport)},
+		conn.Codes,
+	)
 	return conn
 }
 

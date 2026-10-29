@@ -14,6 +14,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/infrastructure/accounting/xerosession"
 	"github.com/emoss08/trenova/internal/infrastructure/config/accountingconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
@@ -36,7 +37,7 @@ func TestUnconfiguredInstanceHasNoApp(t *testing.T) {
 	_, ok := provider.InstanceApp()
 	assert.False(t, ok)
 	_, err := provider.Bind(nil)
-	require.ErrorIs(t, err, ErrNotConfigured)
+	require.ErrorIs(t, err, xerosession.ErrNotConfigured)
 	assert.Equal(t, accountingsync.ErrorCategoryConfiguration, provider.ClassifyError(err))
 	assert.Equal(t, integration.TypeXero, provider.IntegrationType())
 	assert.Equal(t, xero.SignatureHeader, provider.WebhookSignatureHeader())
@@ -124,7 +125,7 @@ func TestWithoutARedirectAddressOAuthIsAConfigurationFailure(t *testing.T) {
 		&accountingconnectorports.AccountingCodeExchange{Code: "code"},
 	)
 	require.Error(t, err)
-	require.ErrorIs(t, conn.VerifyApp(t.Context()), errNoRedirect)
+	require.ErrorIs(t, conn.VerifyApp(t.Context()), xerosession.ErrNoRedirect)
 }
 
 func TestExchangeCodeUsesBasicAuthAndReportsTheTokenLifetimes(t *testing.T) {
@@ -377,7 +378,7 @@ func TestClassifyError(t *testing.T) {
 		want accountingsync.ErrorCategory
 	}{
 		{"nil", nil, ""},
-		{"not configured", ErrNotConfigured, accountingsync.ErrorCategoryConfiguration},
+		{"not configured", xerosession.ErrNotConfigured, accountingsync.ErrorCategoryConfiguration},
 		{
 			"revoked",
 			&xeroerrors.OAuthError{Status: 400, Code: "invalid_grant"},

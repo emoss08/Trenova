@@ -19,7 +19,6 @@ debt:
   services/tms/internal/deskbench: 13871
   services/tms/internal/infrastructure/accounting/bcconnector: 3718
   services/tms/internal/infrastructure/accounting/nsconnector: 4676
-  services/tms/internal/infrastructure/accounting/xeroconnector: 3914
   services/tms/internal/infrastructure/agentcompletion/completionrouter: 4388
   services/tms/internal/infrastructure/agentcompletion/modeladapter: 6687
   services/tms/internal/modules/accounting/adapters/postgres/accountingsyncrepository: 5124

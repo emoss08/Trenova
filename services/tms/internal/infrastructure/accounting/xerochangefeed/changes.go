@@ -1,4 +1,4 @@
-package xeroconnector
+package xerochangefeed
 
 import (
 	"context"
@@ -8,6 +8,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/emoss08/trenova/internal/infrastructure/accounting/xerorefsync"
+	"github.com/emoss08/trenova/internal/infrastructure/accounting/xerosession"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountinginbound"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
@@ -19,7 +21,14 @@ import (
 	"github.com/shopspring/decimal"
 )
 
-var _ accountingconnectorports.AccountingChangeReader = (*Connector)(nil)
+type Feed struct {
+	*xerosession.Session
+	refs *xerorefsync.References
+}
+
+func NewFeed(session *xerosession.Session, refs *xerorefsync.References) *Feed {
+	return &Feed{Session: session, refs: refs}
+}
 
 type changeTarget string
 
@@ -37,7 +46,7 @@ const (
 	cursorPrecision   = time.Second
 )
 
-var errChangeCursor = errors.New("xero: the change cursor is not one this adapter wrote")
+var ErrChangeCursor = errors.New("xero: the change cursor is not one this adapter wrote")
 
 func (t changeTarget) valid() bool {
 	switch t {
@@ -72,7 +81,7 @@ func parseInstant(raw string) (time.Time, error) {
 	}
 	parsed, err := time.Parse(time.RFC3339, raw)
 	if err != nil {
-		return time.Time{}, errChangeCursor
+		return time.Time{}, ErrChangeCursor
 	}
 	return parsed.UTC(), nil
 }
@@ -104,14 +113,14 @@ func parseChangeCursor(raw string, now time.Time) (*changeCursor, error) {
 	if !strings.HasPrefix(value, cursorPaging+cursorSeparator) {
 		since, err := parseInstant(value)
 		if err != nil || since.IsZero() {
-			return nil, errChangeCursor
+			return nil, ErrChangeCursor
 		}
 		return &changeCursor{since: since}, nil
 	}
 
 	parts := strings.Split(value, cursorSeparator)
 	if len(parts) != cursorParts {
-		return nil, errChangeCursor
+		return nil, ErrChangeCursor
 	}
 	since, sinceErr := parseInstant(parts[1])
 	started, startedErr := parseInstant(parts[2])
@@ -119,18 +128,18 @@ func parseChangeCursor(raw string, now time.Time) (*changeCursor, error) {
 	index, indexErr := strconv.Atoi(parts[5])
 	page, pageErr := strconv.Atoi(parts[6])
 	if errors.Join(sinceErr, startedErr, latestErr, indexErr, pageErr) != nil || since.IsZero() {
-		return nil, errChangeCursor
+		return nil, ErrChangeCursor
 	}
 	targets := make([]changeTarget, 0, 6)
 	for name := range strings.SplitSeq(parts[4], targetSeparator) {
 		target := changeTarget(name)
 		if !target.valid() {
-			return nil, errChangeCursor
+			return nil, ErrChangeCursor
 		}
 		targets = append(targets, target)
 	}
 	if index < 0 || index >= len(targets) || page < 1 {
-		return nil, errChangeCursor
+		return nil, ErrChangeCursor
 	}
 	return &changeCursor{
 		since:   since,
@@ -158,7 +167,7 @@ func nextSince(since, latest, started time.Time) time.Time {
 	return next
 }
 
-func (c *Connector) ChangeFeedLimits() accountingconnectorports.AccountingChangeFeedLimits {
+func (c *Feed) ChangeFeedLimits() accountingconnectorports.AccountingChangeFeedLimits {
 	return accountingconnectorports.AccountingChangeFeedLimits{
 		MaxLookback:    0,
 		ReportsDeletes: true,
@@ -166,7 +175,7 @@ func (c *Connector) ChangeFeedLimits() accountingconnectorports.AccountingChange
 	}
 }
 
-func (c *Connector) ChangeCursorAt(at time.Time) string {
+func (c *Feed) ChangeCursorAt(at time.Time) string {
 	return formatInstant(at)
 }
 
@@ -201,7 +210,7 @@ func changeTargets(
 	return targets, nil
 }
 
-func (c *Connector) ReadChanges(
+func (c *Feed) ReadChanges(
 	ctx context.Context,
 	req *accountingconnectorports.ReadAccountingChangesRequest,
 ) (*accountingconnectorports.AccountingChangePage, error) {
@@ -220,11 +229,11 @@ func (c *Connector) ReadChanges(
 	if len(targets) == 0 {
 		return &accountingconnectorports.AccountingChangePage{NextCursor: cursor.String()}, nil
 	}
-	client, err := c.client(req.Auth)
+	client, err := c.Client(req.Auth)
 	if err != nil {
 		return nil, err
 	}
-	collect := newChangeCollector(c, client, req)
+	collect := newChangeCollector(c.refs, client, req)
 
 	if cursor.paging {
 		return collect.continuePaging(ctx, cursor)
@@ -269,7 +278,7 @@ func laterTime(a, b time.Time) time.Time {
 }
 
 type changeCollector struct {
-	conn     *Connector
+	refs     *xerorefsync.References
 	client   *xero.Client
 	req      *accountingconnectorports.ReadAccountingChangesRequest
 	page     *accountingconnectorports.AccountingChangePage
@@ -278,12 +287,12 @@ type changeCollector struct {
 }
 
 func newChangeCollector(
-	conn *Connector,
+	refs *xerorefsync.References,
 	client *xero.Client,
 	req *accountingconnectorports.ReadAccountingChangesRequest,
 ) *changeCollector {
 	return &changeCollector{
-		conn:   conn,
+		refs:   refs,
 		client: client,
 		req:    req,
 		page: &accountingconnectorports.AccountingChangePage{
@@ -347,7 +356,7 @@ func (c *changeCollector) read(
 	case targetItems:
 		return false, c.readItems(ctx, &since)
 	default:
-		return false, errChangeCursor
+		return false, ErrChangeCursor
 	}
 }
 
@@ -438,7 +447,7 @@ func (c *changeCollector) readAccounts(ctx context.Context, since *time.Time) er
 		c.page.References = append(
 			c.page.References,
 			accountingconnectorports.AccountingChangedReference{
-				Object:  accountObjectOf(account),
+				Object:  xerorefsync.AccountObjectOf(account),
 				Deleted: strings.EqualFold(account.Status, accountStatusDeleted),
 			},
 		)
@@ -454,7 +463,7 @@ func (c *changeCollector) readItems(ctx context.Context, since *time.Time) error
 	for idx := range items {
 		c.seen(items[idx].UpdatedAt)
 	}
-	objects, err := c.conn.itemObjects(ctx, c.client, items)
+	objects, err := c.refs.ItemObjects(ctx, c.client, items)
 	if err != nil {
 		return err
 	}
@@ -491,13 +500,14 @@ func (c *changeCollector) contact(contact *xeroref.Contact) {
 		accountingprovider.ReferenceKindCustomer,
 		accountingprovider.ReferenceKindVendor,
 	} {
-		if !slices.Contains(c.req.ReferenceKinds, kind) || !contactHolds(contact, kind) {
+		if !slices.Contains(c.req.ReferenceKinds, kind) ||
+			!xerorefsync.ContactHolds(contact, kind) {
 			continue
 		}
 		c.page.References = append(
 			c.page.References,
 			accountingconnectorports.AccountingChangedReference{
-				Object: contactObjectOf(kind, contact),
+				Object: xerorefsync.ContactObjectOf(kind, contact),
 			},
 		)
 	}

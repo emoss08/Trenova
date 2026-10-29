@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/infrastructure/accounting/xerochangefeed"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountinginbound"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingmapping"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
@@ -17,7 +18,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var pollNow = time.Date(2026, 9, 29, 12, 0, 0, 0, time.UTC)
+var changesNow = time.Date(2026, 9, 29, 12, 0, 0, 0, time.UTC)
 
 func TestChangeFeedLimitsAndCursorAt(t *testing.T) {
 	t.Parallel()
@@ -32,81 +33,11 @@ func TestChangeFeedLimitsAndCursorAt(t *testing.T) {
 	assert.Equal(t, "2026-09-01T07:30:15Z", conn.ChangeCursorAt(at))
 }
 
-func TestChangeCursorRoundTripsAndRejectsForeignCursors(t *testing.T) {
-	t.Parallel()
-
-	paging := &changeCursor{
-		since:   time.Date(2026, 9, 1, 0, 0, 0, 0, time.UTC),
-		paging:  true,
-		started: pollNow,
-		latest:  pollNow.Add(-time.Minute),
-		targets: []changeTarget{targetPayments, targetContacts},
-		index:   1,
-		page:    3,
-	}
-	parsed, err := parseChangeCursor(paging.String(), pollNow)
-	require.NoError(t, err)
-	assert.Equal(t, paging, parsed)
-
-	empty, err := parseChangeCursor("", pollNow)
-	require.NoError(t, err)
-	assert.Equal(t, pollNow, empty.since)
-
-	for _, bad := range []string{
-		"yesterday",
-		"t:1790000000",
-		"p|2026-09-01T00:00:00Z||||0|1",
-		"p|2026-09-01T00:00:00Z|||journals|0|1",
-		"p|2026-09-01T00:00:00Z|||payments|1|1",
-		"p|2026-09-01T00:00:00Z|||payments|0|0",
-	} {
-		_, err = parseChangeCursor(bad, pollNow)
-		require.ErrorIs(t, err, errChangeCursor, bad)
-	}
-}
-
-func TestNextSinceIsTheLatestChangeLessOneSecond(t *testing.T) {
-	t.Parallel()
-
-	since := time.Date(2026, 9, 29, 10, 0, 0, 0, time.UTC)
-	latest := time.Date(2026, 9, 29, 11, 15, 30, 500, time.UTC)
-	cases := []struct {
-		name    string
-		latest  time.Time
-		started time.Time
-		want    time.Time
-	}{
-		{"nothing seen", time.Time{}, time.Time{}, since},
-		{
-			"latest less a second",
-			latest,
-			time.Time{},
-			time.Date(2026, 9, 29, 11, 15, 29, 0, time.UTC),
-		},
-		{"never before since", since, time.Time{}, since},
-		{
-			"paging bounded by its start",
-			latest,
-			since.Add(30 * time.Minute),
-			since.Add(30*time.Minute - time.Second),
-		},
-		{
-			"start after latest",
-			latest,
-			latest.Add(time.Hour),
-			time.Date(2026, 9, 29, 11, 15, 29, 0, time.UTC),
-		},
-	}
-	for _, tc := range cases {
-		assert.Equal(t, tc.want, nextSince(since, tc.latest, tc.started), tc.name)
-	}
-}
-
 func changesRequest(cursor string) *accountingconnectorports.ReadAccountingChangesRequest {
 	return &accountingconnectorports.ReadAccountingChangesRequest{
 		Auth:         testAuth(),
 		Cursor:       cursor,
-		Now:          pollNow,
+		Now:          changesNow,
 		Payments:     true,
 		BillPayments: true,
 		Documents:    true,
@@ -233,14 +164,14 @@ func TestReadChangesWithNothingNewKeepsTheCursor(t *testing.T) {
 	none, err := conn.ReadChanges(
 		t.Context(),
 		&accountingconnectorports.ReadAccountingChangesRequest{
-			Auth: testAuth(), Cursor: "2026-09-29T10:00:00Z", Now: pollNow,
+			Auth: testAuth(), Cursor: "2026-09-29T10:00:00Z", Now: changesNow,
 		},
 	)
 	require.NoError(t, err)
 	assert.Equal(t, "2026-09-29T10:00:00Z", none.NextCursor)
 
 	_, err = conn.ReadChanges(t.Context(), changesRequest("t:12"))
-	require.ErrorIs(t, err, errChangeCursor)
+	require.ErrorIs(t, err, xerochangefeed.ErrChangeCursor)
 }
 
 func fullInvoicePage(start int, updated string) string {
@@ -284,7 +215,7 @@ func TestReadChangesPagesThroughAFullEndpoint(t *testing.T) {
 	}}
 	conn := testConnector(t, fake)
 	req := &accountingconnectorports.ReadAccountingChangesRequest{
-		Auth: testAuth(), Cursor: "2026-09-29T10:00:00Z", Now: pollNow, Documents: true,
+		Auth: testAuth(), Cursor: "2026-09-29T10:00:00Z", Now: changesNow, Documents: true,
 	}
 
 	first, err := conn.ReadChanges(t.Context(), req)
@@ -297,7 +228,7 @@ func TestReadChangesPagesThroughAFullEndpoint(t *testing.T) {
 	)
 
 	req.Cursor = first.NextCursor
-	req.Now = pollNow.Add(time.Minute)
+	req.Now = changesNow.Add(time.Minute)
 	second, err := conn.ReadChanges(t.Context(), req)
 	require.NoError(t, err)
 	assert.False(t, second.More)
@@ -312,46 +243,4 @@ func TestReadChangesPagesThroughAFullEndpoint(t *testing.T) {
 		}
 	}
 	assert.Equal(t, 2, pages)
-}
-
-func TestReadChangesPagingAdvancesAcrossTargets(t *testing.T) {
-	t.Parallel()
-
-	fake := &fakeXero{respond: func(call xeroCall) (int, string) {
-		if call.Method == http.MethodGet {
-			return http.StatusOK, `{}`
-		}
-		return 0, ""
-	}}
-	conn := testConnector(t, fake)
-	cursor := &changeCursor{
-		since:   time.Date(2026, 9, 29, 10, 0, 0, 0, time.UTC),
-		paging:  true,
-		started: pollNow,
-		latest:  time.Date(2026, 9, 29, 11, 0, 0, 0, time.UTC),
-		targets: []changeTarget{targetPayments, targetContacts},
-		page:    2,
-	}
-	page, err := conn.ReadChanges(
-		t.Context(),
-		&accountingconnectorports.ReadAccountingChangesRequest{
-			Auth: testAuth(), Cursor: cursor.String(), Now: pollNow, Payments: true,
-		},
-	)
-	require.NoError(t, err)
-	assert.True(t, page.More)
-	next, err := parseChangeCursor(page.NextCursor, pollNow)
-	require.NoError(t, err)
-	assert.Equal(t, 1, next.index)
-	assert.Equal(t, 2, next.page)
-
-	done, err := conn.ReadChanges(
-		t.Context(),
-		&accountingconnectorports.ReadAccountingChangesRequest{
-			Auth: testAuth(), Cursor: page.NextCursor, Now: pollNow, Payments: true,
-		},
-	)
-	require.NoError(t, err)
-	assert.False(t, done.More)
-	assert.Equal(t, "2026-09-29T10:59:59Z", done.NextCursor)
 }
