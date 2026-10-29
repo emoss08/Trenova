@@ -384,8 +384,8 @@ type WorkerLeaveEntry struct {
 	WorkerID       pulid.ID `json:"workerId"       keel:"worker_id"`
 	LeaveCaseID    pulid.ID `json:"leaveCaseId"    keel:"leave_case_id"`
 
-	UsedOn int64           `json:"usedOn"                   keel:"used_on"`
-	Hours  decimal.Decimal `json:"hours"                    keel:"hours"`
+	UsedOn int64           `json:"usedOn" keel:"used_on"`
+	Hours  decimal.Decimal `json:"hours"  keel:"hours"`
 	// CountsAgainstEntitlement is copied from the case when the day is
 	// recorded. It lives on the entry so that undesignating a case later does
 	// not silently rewrite what was already counted.

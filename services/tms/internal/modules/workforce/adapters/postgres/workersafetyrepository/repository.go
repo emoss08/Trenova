@@ -119,7 +119,11 @@ func (r *repository) CreateEvent(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*workersafety.WorkerSafetyEvent, error) {
-			if err := workersafetydb.WorkerSafetyEvents.Create(ctx, r.db.Keel(ctx), entity); err != nil {
+			if err := workersafetydb.WorkerSafetyEvents.Create(
+				ctx,
+				r.db.Keel(ctx),
+				entity,
+			); err != nil {
 				r.l.Error("failed to create worker safety event", zap.Error(err))
 				return nil, eventErrors.Map(err, entity.ID.String())
 			}
@@ -137,7 +141,11 @@ func (r *repository) UpdateEvent(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*workersafety.WorkerSafetyEvent, error) {
-			if err := workersafetydb.WorkerSafetyEvents.Save(ctx, r.db.Keel(ctx), entity); err != nil {
+			if err := workersafetydb.WorkerSafetyEvents.Save(
+				ctx,
+				r.db.Keel(ctx),
+				entity,
+			); err != nil {
 				r.l.Error("failed to update worker safety event", zap.Error(err))
 				return nil, eventErrors.Map(err, entity.ID.String())
 			}
@@ -300,7 +308,11 @@ func (r *repository) CreateRecognition(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*workerdiscipline.WorkerRecognition, error) {
-			if err := workerdisciplinedb.WorkerRecognitions.Create(ctx, r.db.Keel(ctx), entity); err != nil {
+			if err := workerdisciplinedb.WorkerRecognitions.Create(
+				ctx,
+				r.db.Keel(ctx),
+				entity,
+			); err != nil {
 				r.l.Error("failed to create recognition", zap.Error(err))
 				return nil, recognitionErrors.Map(err, entity.ID.String())
 			}

@@ -141,7 +141,11 @@ func (r *recurringDeductionRepository) Create(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*recurringpay.RecurringDeduction, error) {
-			if err := recurringpaydb.RecurringDeductions.Create(ctx, r.db.Keel(ctx), entity); err != nil {
+			if err := recurringpaydb.RecurringDeductions.Create(
+				ctx,
+				r.db.Keel(ctx),
+				entity,
+			); err != nil {
 				return nil, recurringDeductionErrors.Map(err, entity.ID.String())
 			}
 

@@ -75,7 +75,11 @@ func (r *repository) CreateViolation(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*fleetsafety.WorkerSafetyViolation, error) {
-			if err := fleetsafetydb.WorkerSafetyViolations.Create(ctx, r.db.Keel(ctx), entity); err != nil {
+			if err := fleetsafetydb.WorkerSafetyViolations.Create(
+				ctx,
+				r.db.Keel(ctx),
+				entity,
+			); err != nil {
 				r.l.Error("failed to create worker safety violation", zap.Error(err))
 				return nil, violationErrors.Map(err, entity.ID.String())
 			}
@@ -93,7 +97,11 @@ func (r *repository) UpdateViolation(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*fleetsafety.WorkerSafetyViolation, error) {
-			if err := fleetsafetydb.WorkerSafetyViolations.Save(ctx, r.db.Keel(ctx), entity); err != nil {
+			if err := fleetsafetydb.WorkerSafetyViolations.Save(
+				ctx,
+				r.db.Keel(ctx),
+				entity,
+			); err != nil {
 				r.l.Error("failed to update worker safety violation", zap.Error(err))
 				return nil, violationErrors.Map(err, entity.ID.String())
 			}

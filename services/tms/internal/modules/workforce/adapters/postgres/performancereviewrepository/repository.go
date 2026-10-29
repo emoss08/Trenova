@@ -366,7 +366,11 @@ func (r *repository) CreateReview(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*workerreview.PerformanceReview, error) {
-			if err := workerreviewdb.PerformanceReviews.Create(ctx, r.db.Keel(ctx), entity); err != nil {
+			if err := workerreviewdb.PerformanceReviews.Create(
+				ctx,
+				r.db.Keel(ctx),
+				entity,
+			); err != nil {
 				r.l.Error("failed to create performance review", zap.Error(err))
 				return nil, reviewErrors.Map(err, entity.ID.String())
 			}
@@ -384,7 +388,11 @@ func (r *repository) UpdateReview(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*workerreview.PerformanceReview, error) {
-			if err := workerreviewdb.PerformanceReviews.Save(ctx, r.db.Keel(ctx), entity); err != nil {
+			if err := workerreviewdb.PerformanceReviews.Save(
+				ctx,
+				r.db.Keel(ctx),
+				entity,
+			); err != nil {
 				r.l.Error("failed to update performance review", zap.Error(err))
 				return nil, reviewErrors.Map(err, entity.ID.String())
 			}

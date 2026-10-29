@@ -108,11 +108,11 @@ type ShiftTemplate struct {
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
 
-	Status      domaintypes.Status `json:"status"          keel:"status"`
-	Code        string             `json:"code"            keel:"code"`
-	Name        string             `json:"name"            keel:"name"`
-	Description string             `json:"description"     keel:"description,nullzero"`
-	Color       string             `json:"color"           keel:"color,nullzero"`
+	Status      domaintypes.Status `json:"status"      keel:"status"`
+	Code        string             `json:"code"        keel:"code"`
+	Name        string             `json:"name"        keel:"name"`
+	Description string             `json:"description" keel:"description,nullzero"`
+	Color       string             `json:"color"       keel:"color,nullzero"`
 	// DaysOfWeek is seven characters indexed from Sunday: 0111110 is Monday to
 	// Friday. A mask rather than an array so a pattern reads at a glance and
 	// compares without unpacking.
@@ -121,7 +121,7 @@ type ShiftTemplate struct {
 	DurationMinutes int16  `json:"durationMinutes" keel:"duration_minutes"`
 	// CycleWeeks lets an A/B rotation be one template: the assignment carries
 	// which week of the cycle a worker starts on.
-	CycleWeeks int16 `json:"cycleWeeks"      keel:"cycle_weeks"`
+	CycleWeeks int16 `json:"cycleWeeks" keel:"cycle_weeks"`
 
 	Version   int64 `json:"version"   keel:"version,version"`
 	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
@@ -276,8 +276,8 @@ type WorkerShiftAssignment struct {
 	WorkerID        pulid.ID `json:"workerId"        keel:"worker_id"`
 	ShiftTemplateID pulid.ID `json:"shiftTemplateId" keel:"shift_template_id"`
 
-	EffectiveFrom int64  `json:"effectiveFrom"    keel:"effective_from"`
-	EffectiveTo   *int64 `json:"effectiveTo"      keel:"effective_to"`
+	EffectiveFrom int64  `json:"effectiveFrom" keel:"effective_from"`
+	EffectiveTo   *int64 `json:"effectiveTo"   keel:"effective_to"`
 	// CycleOffsetWeeks is which week of the template's cycle this worker starts
 	// on, so an A/B rotation is one template and two offsets.
 	CycleOffsetWeeks int16    `json:"cycleOffsetWeeks" keel:"cycle_offset_weeks"`
@@ -433,7 +433,7 @@ type ShiftSwapRequest struct {
 	RequestingWorkerID   pulid.ID `json:"requestingWorkerId"   keel:"requesting_worker_id"`
 	CounterpartyWorkerID pulid.ID `json:"counterpartyWorkerId" keel:"counterparty_worker_id,nullzero"`
 
-	Status ShiftSwapStatus `json:"status"                keel:"status"`
+	Status ShiftSwapStatus `json:"status" keel:"status"`
 	// ShiftDate is the day being given up; CounterpartyShiftDate is the day
 	// offered back, when the swap is a trade rather than a hand-off.
 	ShiftDate             int64  `json:"shiftDate"             keel:"shift_date"`

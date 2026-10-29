@@ -142,7 +142,7 @@ type TimeClockEntry struct {
 	WorkerID       pulid.ID `json:"workerId"       keel:"worker_id"`
 	TimesheetID    pulid.ID `json:"timesheetId"    keel:"timesheet_id,nullzero"`
 
-	Source TimeEntrySource `json:"source"       keel:"source"`
+	Source TimeEntrySource `json:"source" keel:"source"`
 	// ClockedOutAt of nil means the worker is still on the clock.
 	ClockedInAt  int64    `json:"clockedInAt"  keel:"clocked_in_at"`
 	ClockedOutAt *int64   `json:"clockedOutAt" keel:"clocked_out_at"`
@@ -299,10 +299,10 @@ type Timesheet struct {
 	PeriodStart int64           `json:"periodStart" keel:"period_start"`
 	PeriodEnd   int64           `json:"periodEnd"   keel:"period_end"`
 
-	RegularMinutes   int32 `json:"regularMinutes"           keel:"regular_minutes"`
-	OvertimeMinutes  int32 `json:"overtimeMinutes"          keel:"overtime_minutes"`
-	PaidLeaveMinutes int32 `json:"paidLeaveMinutes"         keel:"paid_leave_minutes"`
-	EntryCount       int32 `json:"entryCount"               keel:"entry_count"`
+	RegularMinutes   int32 `json:"regularMinutes"   keel:"regular_minutes"`
+	OvertimeMinutes  int32 `json:"overtimeMinutes"  keel:"overtime_minutes"`
+	PaidLeaveMinutes int32 `json:"paidLeaveMinutes" keel:"paid_leave_minutes"`
+	EntryCount       int32 `json:"entryCount"       keel:"entry_count"`
 	// OvertimeThresholdMinutes is copied onto the sheet rather than read from a
 	// setting, so changing the rule next quarter cannot restate a week that was
 	// already approved.

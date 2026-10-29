@@ -338,7 +338,11 @@ func (r *repository) Create(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*workertraining.WorkerTrainingRecord, error) {
-			if err := workertrainingdb.WorkerTrainingRecords.Create(ctx, r.db.Keel(ctx), entity); err != nil {
+			if err := workertrainingdb.WorkerTrainingRecords.Create(
+				ctx,
+				r.db.Keel(ctx),
+				entity,
+			); err != nil {
 				r.l.Error("failed to create worker training record", zap.Error(err))
 				return nil, recordErrors.Map(err, entity.ID.String())
 			}
@@ -356,7 +360,11 @@ func (r *repository) Update(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*workertraining.WorkerTrainingRecord, error) {
-			if err := workertrainingdb.WorkerTrainingRecords.Save(ctx, r.db.Keel(ctx), entity); err != nil {
+			if err := workertrainingdb.WorkerTrainingRecords.Save(
+				ctx,
+				r.db.Keel(ctx),
+				entity,
+			); err != nil {
 				r.l.Error("failed to update worker training record", zap.Error(err))
 				return nil, recordErrors.Map(err, entity.ID.String())
 			}

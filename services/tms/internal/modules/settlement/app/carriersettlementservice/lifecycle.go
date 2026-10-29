@@ -454,7 +454,10 @@ func (s *Service) RemoveAdjustmentLine(
 	settlementID, lineID pulid.ID,
 	actor *permissionports.RequestActor,
 ) (*carriersettlement.CarrierSettlement, error) {
-	if err := settlementshared.RequireActor(actor, "Carrier settlement adjustment removal"); err != nil {
+	if err := settlementshared.RequireActor(
+		actor,
+		"Carrier settlement adjustment removal",
+	); err != nil {
 		return nil, err
 	}
 	entity, err := s.getForUpdate(ctx, tenantInfo, settlementID)

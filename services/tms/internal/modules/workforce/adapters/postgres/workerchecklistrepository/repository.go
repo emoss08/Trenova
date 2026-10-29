@@ -274,7 +274,11 @@ func (r *repository) createTemplate(
 		}
 	}
 
-	if err := workerchecklistdb.WorkerChecklistTemplates.Create(ctx, r.db.Keel(ctx), entity); err != nil {
+	if err := workerchecklistdb.WorkerChecklistTemplates.Create(
+		ctx,
+		r.db.Keel(ctx),
+		entity,
+	); err != nil {
 		return err
 	}
 
@@ -385,7 +389,10 @@ func (r *repository) CountOpenChecklistsByTemplateIDs(
 		rows, err := keel.Into[templateCount](ctx, r.db.Keel(ctx), c.
 			Group(c.TemplateID).
 			Pick(c.TemplateID, keel.Count()).
-			Where(c.Status.Eq(workerchecklist.ChecklistStatusOpen), c.TemplateID.In(req.TemplateIDs...)),
+			Where(
+				c.Status.Eq(workerchecklist.ChecklistStatusOpen),
+				c.TemplateID.In(req.TemplateIDs...),
+			),
 		)
 		if err != nil {
 			r.l.Error("failed to count open checklists by template", zap.Error(err))
@@ -517,7 +524,11 @@ func (r *repository) Update(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*workerchecklist.WorkerChecklist, error) {
-			if err := workerchecklistdb.WorkerChecklists.Save(ctx, r.db.Keel(ctx), entity); err != nil {
+			if err := workerchecklistdb.WorkerChecklists.Save(
+				ctx,
+				r.db.Keel(ctx),
+				entity,
+			); err != nil {
 				r.l.Error("failed to update worker checklist", zap.Error(err))
 				return nil, checklistErrors.Map(err, entity.ID.String())
 			}

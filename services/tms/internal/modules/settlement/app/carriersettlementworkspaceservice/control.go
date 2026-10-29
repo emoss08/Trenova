@@ -27,7 +27,10 @@ func (s *Service) UpdateControl(
 	entity *carriersettlementcontrol.CarrierSettlementControl,
 	actor *permissionports.RequestActor,
 ) (*carriersettlementcontrol.CarrierSettlementControl, error) {
-	if err := settlementshared.RequireActor(actor, "Carrier settlement control update"); err != nil {
+	if err := settlementshared.RequireActor(
+		actor,
+		"Carrier settlement control update",
+	); err != nil {
 		return nil, err
 	}
 

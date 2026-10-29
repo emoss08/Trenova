@@ -132,11 +132,11 @@ type WorkerSafetyViolation struct {
 	SafetyEventID  pulid.ID `json:"safetyEventId"  keel:"safety_event_id"`
 	// WorkerID is denormalised from the event so a per-driver violation list
 	// does not need the join. The event owns the date; nothing here does.
-	WorkerID pulid.ID `json:"workerId"       keel:"worker_id"`
+	WorkerID pulid.ID `json:"workerId" keel:"worker_id"`
 
-	Basic       CSABasic `json:"basic"          keel:"basic"`
-	Code        string   `json:"code"           keel:"code,nullzero"`
-	Description string   `json:"description"    keel:"description"`
+	Basic       CSABasic `json:"basic"       keel:"basic"`
+	Code        string   `json:"code"        keel:"code,nullzero"`
+	Description string   `json:"description" keel:"description"`
 	// SeverityWeight is the FMCSA weight, 1 to 10. Out of service adds two more
 	// when the BASIC is scored, which is why the flag stays beside it rather
 	// than being folded in — folding it in would make the weight unreadable

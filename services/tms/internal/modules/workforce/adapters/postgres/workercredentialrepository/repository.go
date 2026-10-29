@@ -208,7 +208,11 @@ func (r *repository) CreateType(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*workercredential.WorkerCredentialType, error) {
-			if err := workercredentialdb.WorkerCredentialTypes.Create(ctx, r.db.Keel(ctx), entity); err != nil {
+			if err := workercredentialdb.WorkerCredentialTypes.Create(
+				ctx,
+				r.db.Keel(ctx),
+				entity,
+			); err != nil {
 				r.l.Error("failed to create credential type", zap.Error(err))
 				return nil, typeErrors.Map(err, entity.ID.String())
 			}
@@ -226,7 +230,11 @@ func (r *repository) UpdateType(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*workercredential.WorkerCredentialType, error) {
-			if err := workercredentialdb.WorkerCredentialTypes.Save(ctx, r.db.Keel(ctx), entity); err != nil {
+			if err := workercredentialdb.WorkerCredentialTypes.Save(
+				ctx,
+				r.db.Keel(ctx),
+				entity,
+			); err != nil {
 				r.l.Error("failed to update credential type", zap.Error(err))
 				return nil, typeErrors.Map(err, entity.ID.String())
 			}
@@ -445,7 +453,11 @@ func (r *repository) Update(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*workercredential.WorkerCredential, error) {
-			if err := workercredentialdb.WorkerCredentials.Save(ctx, r.db.Keel(ctx), entity); err != nil {
+			if err := workercredentialdb.WorkerCredentials.Save(
+				ctx,
+				r.db.Keel(ctx),
+				entity,
+			); err != nil {
 				r.l.Error("failed to update worker credential", zap.Error(err))
 				return nil, credentialErrors.Map(err, entity.ID.String())
 			}

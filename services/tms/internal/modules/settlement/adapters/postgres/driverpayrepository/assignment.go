@@ -165,7 +165,11 @@ func (r *workerPayAssignmentRepository) Create(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*payassignment.WorkerPayAssignment, error) {
-			if err := payassignmentdb.WorkerPayAssignments.Create(ctx, r.db.Keel(ctx), entity); err != nil {
+			if err := payassignmentdb.WorkerPayAssignments.Create(
+				ctx,
+				r.db.Keel(ctx),
+				entity,
+			); err != nil {
 				return nil, assignmentErrors.Map(err, entity.ID.String())
 			}
 

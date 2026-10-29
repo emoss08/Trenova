@@ -544,10 +544,13 @@ func (s *Service) mirrorToProfile(ctx context.Context, entity *workercredential.
 		if field == workercredential.CredentialProfileFieldLicenseExpiry {
 			return
 		}
-		active, err := s.repo.ListForWorker(ctx, &workercredentialports.ListWorkerCredentialsRequest{
-			TenantInfo: tenantInfo,
-			WorkerIDs:  []pulid.ID{entity.WorkerID},
-		})
+		active, err := s.repo.ListForWorker(
+			ctx,
+			&workercredentialports.ListWorkerCredentialsRequest{
+				TenantInfo: tenantInfo,
+				WorkerIDs:  []pulid.ID{entity.WorkerID},
+			},
+		)
 		if err != nil {
 			s.l.Warn("failed to check remaining credentials before clearing profile field",
 				zap.Error(err))

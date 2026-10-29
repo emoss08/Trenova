@@ -236,7 +236,11 @@ func (r *repository) CreateAssignment(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*workerschedule.WorkerShiftAssignment, error) {
-			if err := workerscheduledb.WorkerShiftAssignments.Create(ctx, r.db.Keel(ctx), entity); err != nil {
+			if err := workerscheduledb.WorkerShiftAssignments.Create(
+				ctx,
+				r.db.Keel(ctx),
+				entity,
+			); err != nil {
 				r.l.Error("failed to create shift assignment", zap.Error(err))
 				return nil, assignmentErrors.Map(err, entity.ID.String())
 			}
@@ -254,7 +258,11 @@ func (r *repository) UpdateAssignment(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*workerschedule.WorkerShiftAssignment, error) {
-			if err := workerscheduledb.WorkerShiftAssignments.Save(ctx, r.db.Keel(ctx), entity); err != nil {
+			if err := workerscheduledb.WorkerShiftAssignments.Save(
+				ctx,
+				r.db.Keel(ctx),
+				entity,
+			); err != nil {
 				r.l.Error("failed to update shift assignment", zap.Error(err))
 				return nil, assignmentErrors.Map(err, entity.ID.String())
 			}
@@ -276,7 +284,8 @@ func (r *repository) ListPreferences(
 			// An empty worker reads the whole roster's stated availability,
 			// which is what the rota needs: seven rows a worker at most, so
 			// one read beats one per line on the board.
-			entities, err := p.Where(keel.When(req.WorkerID.IsNotNil(), p.WorkerID.Eq(req.WorkerID))).
+			byWorker := keel.When(req.WorkerID.IsNotNil(), p.WorkerID.Eq(req.WorkerID))
+			entities, err := p.Where(byWorker).
 				Order(p.WorkerID.Asc(), p.DayOfWeek.Asc()).
 				All(ctx, r.db.Keel(ctx))
 			if err != nil {
@@ -310,8 +319,10 @@ func (r *repository) UpsertPreference(
 				return nil, preferenceErrors.Map(err, entity.ID.String())
 			}
 
-			stored, err := p.Where(p.WorkerID.Eq(entity.WorkerID), p.DayOfWeek.Eq(entity.DayOfWeek)).
-				One(ctx, db)
+			stored, err := p.Where(
+				p.WorkerID.Eq(entity.WorkerID),
+				p.DayOfWeek.Eq(entity.DayOfWeek),
+			).One(ctx, db)
 			if err != nil {
 				return nil, preferenceErrors.Map(err, entity.ID.String())
 			}
@@ -387,7 +398,11 @@ func (r *repository) CreateSwap(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*workerschedule.ShiftSwapRequest, error) {
-			if err := workerscheduledb.ShiftSwapRequests.Create(ctx, r.db.Keel(ctx), entity); err != nil {
+			if err := workerscheduledb.ShiftSwapRequests.Create(
+				ctx,
+				r.db.Keel(ctx),
+				entity,
+			); err != nil {
 				r.l.Error("failed to create shift swap", zap.Error(err))
 				return nil, swapErrors.Map(err, entity.ID.String())
 			}
@@ -405,7 +420,11 @@ func (r *repository) UpdateSwap(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*workerschedule.ShiftSwapRequest, error) {
-			if err := workerscheduledb.ShiftSwapRequests.Save(ctx, r.db.Keel(ctx), entity); err != nil {
+			if err := workerscheduledb.ShiftSwapRequests.Save(
+				ctx,
+				r.db.Keel(ctx),
+				entity,
+			); err != nil {
 				r.l.Error("failed to update shift swap", zap.Error(err))
 				return nil, swapErrors.Map(err, entity.ID.String())
 			}

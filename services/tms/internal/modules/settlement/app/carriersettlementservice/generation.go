@@ -48,7 +48,10 @@ func (s *Service) GenerateBatch(
 	req *GenerateBatchRequest,
 	actor *permissionports.RequestActor,
 ) (*carriersettlement.CarrierSettlementBatch, error) {
-	if err := settlementshared.RequireActor(actor, "Carrier settlement batch generation"); err != nil {
+	if err := settlementshared.RequireActor(
+		actor,
+		"Carrier settlement batch generation",
+	); err != nil {
 		return nil, err
 	}
 	control, err := s.settlementControl.GetOrCreate(ctx, req.TenantInfo)

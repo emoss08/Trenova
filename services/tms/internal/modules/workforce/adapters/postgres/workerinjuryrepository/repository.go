@@ -236,7 +236,11 @@ func (r *repository) CreateSummary(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*workerinjury.OSHAAnnualSummary, error) {
-			if err := workerinjurydb.OSHAAnnualSummaries.Create(ctx, r.db.Keel(ctx), entity); err != nil {
+			if err := workerinjurydb.OSHAAnnualSummaries.Create(
+				ctx,
+				r.db.Keel(ctx),
+				entity,
+			); err != nil {
 				r.l.Error("failed to create osha summary", zap.Error(err))
 				return nil, summaryErrors.Map(err, entity.ID.String())
 			}
@@ -254,7 +258,11 @@ func (r *repository) UpdateSummary(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*workerinjury.OSHAAnnualSummary, error) {
-			if err := workerinjurydb.OSHAAnnualSummaries.Save(ctx, r.db.Keel(ctx), entity); err != nil {
+			if err := workerinjurydb.OSHAAnnualSummaries.Save(
+				ctx,
+				r.db.Keel(ctx),
+				entity,
+			); err != nil {
 				r.l.Error("failed to update osha summary", zap.Error(err))
 				return nil, summaryErrors.Map(err, entity.ID.String())
 			}

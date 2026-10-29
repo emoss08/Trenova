@@ -118,7 +118,11 @@ func (r *repository) Create(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*employment.WorkerEmploymentEvent, error) {
-			if err := employmentdb.WorkerEmploymentEvents.Create(ctx, r.db.Keel(ctx), entity); err != nil {
+			if err := employmentdb.WorkerEmploymentEvents.Create(
+				ctx,
+				r.db.Keel(ctx),
+				entity,
+			); err != nil {
 				r.l.Error("failed to create worker employment event", zap.Error(err))
 				return nil, eventErrors.Map(err, entity.ID.String())
 			}
@@ -136,7 +140,11 @@ func (r *repository) Update(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*employment.WorkerEmploymentEvent, error) {
-			if err := employmentdb.WorkerEmploymentEvents.Save(ctx, r.db.Keel(ctx), entity); err != nil {
+			if err := employmentdb.WorkerEmploymentEvents.Save(
+				ctx,
+				r.db.Keel(ctx),
+				entity,
+			); err != nil {
 				r.l.Error("failed to update worker employment event", zap.Error(err))
 				return nil, eventErrors.Map(err, entity.ID.String())
 			}
