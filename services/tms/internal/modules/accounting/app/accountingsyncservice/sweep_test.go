@@ -4,6 +4,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingsyncbackfill"
+	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingsyncsweep"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingbackfill"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
@@ -129,13 +131,13 @@ func TestSafetyNetPagesThroughEverything(t *testing.T) {
 	h.addCandidates(
 		accountingsync.SyncObjectInvoice,
 		accountingsync.SyncOperationCreate,
-		safetyNetPage+5,
+		accountingsyncsweep.SafetyNetPage+5,
 		syncEnabledAt+1,
 	)
 
 	result := h.safetyNet(t)
 
-	assert.Equal(t, safetyNetPage+5, result.Queued)
+	assert.Equal(t, accountingsyncsweep.SafetyNetPage+5, result.Queued)
 	pages := 0
 	for _, call := range h.records.candidateCalls {
 		if call.ObjectType == accountingsync.SyncObjectInvoice {
@@ -228,7 +230,7 @@ func TestBackfillPagesEachTypeAndSavesTheCursor(t *testing.T) {
 	invoices := h.addCandidates(
 		accountingsync.SyncObjectInvoice,
 		accountingsync.SyncOperationCreate,
-		backfillPage+3,
+		accountingsyncbackfill.Page+3,
 		syncStartDate+100,
 	)
 	payments := h.addCandidates(
@@ -251,7 +253,7 @@ func TestBackfillPagesEachTypeAndSavesTheCursor(t *testing.T) {
 
 	first := h.backfillStep(t, backfill.ID)
 
-	assert.Equal(t, backfillPage, first.Enqueued)
+	assert.Equal(t, accountingsyncbackfill.Page, first.Enqueued)
 	assert.False(t, first.Done)
 	saved := h.backfills.get(backfill.ID)
 	assert.Equal(t, accountingbackfill.BackfillStatusRunning, saved.Status)
@@ -259,12 +261,12 @@ func TestBackfillPagesEachTypeAndSavesTheCursor(t *testing.T) {
 	assert.Equal(t, accountingsync.SyncObjectInvoice, saved.Cursor.ObjectType)
 	assert.Equal(
 		t,
-		invoices[backfillPage-1].ObjectID,
+		invoices[accountingsyncbackfill.Page-1].ObjectID,
 		saved.Cursor.AfterID,
 		"the cursor is saved after every page",
 	)
-	assert.Equal(t, invoices[backfillPage-1].PostedAt, saved.Cursor.AfterAt)
-	assert.Equal(t, backfillPage, saved.EnqueuedCount)
+	assert.Equal(t, invoices[accountingsyncbackfill.Page-1].PostedAt, saved.Cursor.AfterAt)
+	assert.Equal(t, accountingsyncbackfill.Page, saved.EnqueuedCount)
 
 	second := h.backfillStep(t, backfill.ID)
 
@@ -281,7 +283,7 @@ func TestBackfillPagesEachTypeAndSavesTheCursor(t *testing.T) {
 	assert.True(t, third.Done)
 	saved = h.backfills.get(backfill.ID)
 	assert.Equal(t, accountingbackfill.BackfillStatusCompleted, saved.Status)
-	assert.Equal(t, backfillPage+5, saved.EnqueuedCount)
+	assert.Equal(t, accountingsyncbackfill.Page+5, saved.EnqueuedCount)
 	for _, call := range h.records.candidateCalls {
 		require.NotNil(t, call.PostedBefore)
 		assert.Equal(
@@ -302,7 +304,7 @@ func TestBackfillPagesEachTypeAndSavesTheCursor(t *testing.T) {
 		)
 		assert.Equal(t, accountingsync.SyncSourceBackfill, record.SourceEvent)
 	}
-	assert.Len(t, h.records.all(), backfillPage+5)
+	assert.Len(t, h.records.all(), accountingsyncbackfill.Page+5)
 }
 
 func TestBackfillStepStopsWhenPausedOrFinished(t *testing.T) {
@@ -409,8 +411,8 @@ func TestPurgeHistoryUsesTheRetentionWindowAndDrainsInBatches(t *testing.T) {
 
 	h := newHarness(t)
 	h.records.purgeRounds = []accountingsyncports.PurgeAccountingSyncHistoryResult{
-		{PayloadsCleared: purgeBatch, AttemptsDeleted: 10},
-		{PayloadsCleared: 5, AttemptsDeleted: purgeBatch},
+		{PayloadsCleared: accountingsyncsweep.PurgeBatch, AttemptsDeleted: 10},
+		{PayloadsCleared: 5, AttemptsDeleted: accountingsyncsweep.PurgeBatch},
 		{PayloadsCleared: 1, AttemptsDeleted: 2},
 		{PayloadsCleared: 99, AttemptsDeleted: 99},
 	}
@@ -418,13 +420,13 @@ func TestPurgeHistoryUsesTheRetentionWindowAndDrainsInBatches(t *testing.T) {
 	total, err := h.svc.PurgeHistory(t.Context())
 	require.NoError(t, err)
 
-	assert.Equal(t, int64(purgeBatch+6), total.PayloadsCleared)
-	assert.Equal(t, int64(purgeBatch+12), total.AttemptsDeleted)
+	assert.Equal(t, int64(accountingsyncsweep.PurgeBatch+6), total.PayloadsCleared)
+	assert.Equal(t, int64(accountingsyncsweep.PurgeBatch+12), total.AttemptsDeleted)
 	require.Len(t, h.records.purgeRequests, 3, "rounds stop once a batch comes back short")
 	ninetyDaysAgo := time.Now().Add(-90 * 24 * time.Hour).Unix()
 	for _, req := range h.records.purgeRequests {
 		assert.InDelta(t, ninetyDaysAgo, req.PayloadsSyncedBefore, 2)
 		assert.InDelta(t, ninetyDaysAgo, req.AttemptsBefore, 2)
-		assert.Equal(t, purgeBatch, req.Limit)
+		assert.Equal(t, accountingsyncsweep.PurgeBatch, req.Limit)
 	}
 }

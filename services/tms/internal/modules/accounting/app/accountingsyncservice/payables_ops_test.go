@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingsyncpush"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingbackfill"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingmapping"
@@ -152,7 +153,7 @@ func TestVendorUpdatesAreEnqueuedOnlyForConfirmedMappings(t *testing.T) {
 	tests := []struct {
 		name       string
 		objectType accountingsync.SyncObjectType
-		target     func(pulid.ID) mappingTarget
+		target     func(pulid.ID) accountingsyncpush.MappingTarget
 		prefix     string
 		state      accountingmapping.MappingState
 		mapped     bool

@@ -782,7 +782,20 @@ modules:
       - accountingconnlookup
       - accountinginboundservice
       - accountingmappingservice
+      - accountingsyncactions
+      - accountingsyncbackfill
+      - accountingsyncdrain
+      - accountingsynceffects
+      - accountingsyncenqueue
+      - accountingsyncledger
+      - accountingsyncparty
+      - accountingsyncpayables
+      - accountingsyncpush
+      - accountingsyncreads
+      - accountingsyncsales
       - accountingsyncservice
+      - accountingsyncsetup
+      - accountingsyncsweep
       - accounttypeservice
       - fiscalcloseblockers
       - fiscalcloseservice

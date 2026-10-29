@@ -5,6 +5,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingsyncactions"
+	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingsyncenqueue"
+	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingsyncreads"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingbackfill"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
@@ -54,16 +57,20 @@ func (h *harness) seedRecord(
 	status accountingsync.SyncStatus,
 	category accountingsync.SyncErrorCategory,
 ) *accountingsync.AccountingSyncRecord {
-	record := NewRecordFor(h.conn, &accountingsyncports.AccountingSyncEnqueueRequest{
-		TenantInfo:   h.tenant,
-		ObjectType:   accountingsync.SyncObjectInvoice,
-		ObjectID:     pulid.MustNew("inv_"),
-		ObjectNumber: "INV-" + string(status),
-		Operation:    accountingsync.SyncOperationCreate,
-		Revision:     1,
-		SourceEvent:  accountingsync.SyncSourceInvoicePosted,
-		DocumentDate: aprilTenth,
-	}, time.Now().Unix())
+	record := accountingsyncenqueue.NewRecordFor(
+		h.conn,
+		&accountingsyncports.AccountingSyncEnqueueRequest{
+			TenantInfo:   h.tenant,
+			ObjectType:   accountingsync.SyncObjectInvoice,
+			ObjectID:     pulid.MustNew("inv_"),
+			ObjectNumber: "INV-" + string(status),
+			Operation:    accountingsync.SyncOperationCreate,
+			Revision:     1,
+			SourceEvent:  accountingsync.SyncSourceInvoicePosted,
+			DocumentDate: aprilTenth,
+		},
+		time.Now().Unix(),
+	)
 	record.Status = status
 	record.ErrorCategory = category
 	record.AttemptCount = 3
@@ -405,7 +412,7 @@ func TestRetryRejectsBadFilters(t *testing.T) {
 	_, err := h.retry(t, nil, "Gremlins")
 	requireValidationField(t, err, "errorCategories")
 
-	ids := make([]pulid.ID, maxRetryIDs+1)
+	ids := make([]pulid.ID, accountingsyncactions.MaxRetryIDs+1)
 	for idx := range ids {
 		ids[idx] = pulid.MustNew("acctsr_")
 	}
@@ -816,14 +823,18 @@ func TestObjectStatesPicksTheMostRelevantRecord(t *testing.T) {
 	put := func(conn *accountingconnection.AccountingConnection, objectID pulid.ID, operation accountingsync.SyncOperation,
 		revision int64, status accountingsync.SyncStatus,
 	) *accountingsync.AccountingSyncRecord {
-		record := NewRecordFor(conn, &accountingsyncports.AccountingSyncEnqueueRequest{
-			TenantInfo:  h.tenant,
-			ObjectType:  accountingsync.SyncObjectInvoice,
-			ObjectID:    objectID,
-			Operation:   operation,
-			Revision:    revision,
-			SourceEvent: accountingsync.SyncSourceInvoicePosted,
-		}, time.Now().Unix()+revision)
+		record := accountingsyncenqueue.NewRecordFor(
+			conn,
+			&accountingsyncports.AccountingSyncEnqueueRequest{
+				TenantInfo:  h.tenant,
+				ObjectType:  accountingsync.SyncObjectInvoice,
+				ObjectID:    objectID,
+				Operation:   operation,
+				Revision:    revision,
+				SourceEvent: accountingsync.SyncSourceInvoicePosted,
+			},
+			time.Now().Unix()+revision,
+		)
 		record.Status = status
 		h.records.put(record)
 		return record
@@ -904,14 +915,18 @@ func TestObjectStatesNarrowsToOneSystemWhenAsked(t *testing.T) {
 	invoiceID := pulid.MustNew("inv_")
 	put := func(conn *accountingconnection.AccountingConnection, status accountingsync.SyncStatus,
 	) *accountingsync.AccountingSyncRecord {
-		record := NewRecordFor(conn, &accountingsyncports.AccountingSyncEnqueueRequest{
-			TenantInfo:  h.tenant,
-			ObjectType:  accountingsync.SyncObjectInvoice,
-			ObjectID:    invoiceID,
-			Operation:   accountingsync.SyncOperationCreate,
-			Revision:    1,
-			SourceEvent: accountingsync.SyncSourceInvoicePosted,
-		}, time.Now().Unix())
+		record := accountingsyncenqueue.NewRecordFor(
+			conn,
+			&accountingsyncports.AccountingSyncEnqueueRequest{
+				TenantInfo:  h.tenant,
+				ObjectType:  accountingsync.SyncObjectInvoice,
+				ObjectID:    invoiceID,
+				Operation:   accountingsync.SyncOperationCreate,
+				Revision:    1,
+				SourceEvent: accountingsync.SyncSourceInvoicePosted,
+			},
+			time.Now().Unix(),
+		)
 		record.Status = status
 		h.records.put(record)
 		return record
@@ -939,14 +954,18 @@ func TestObjectStatesShowsTheLatestStepOfASettlement(t *testing.T) {
 	h := newHarness(t)
 	settlementID := pulid.MustNew("carstl_")
 	put := func(objectType accountingsync.SyncObjectType, queuedAt int64) *accountingsync.AccountingSyncRecord {
-		record := NewRecordFor(h.conn, &accountingsyncports.AccountingSyncEnqueueRequest{
-			TenantInfo:  h.tenant,
-			ObjectType:  objectType,
-			ObjectID:    settlementID,
-			Operation:   accountingsync.SyncOperationCreate,
-			Revision:    1,
-			SourceEvent: accountingsync.SyncSourceCarrierSettlementPosted,
-		}, queuedAt)
+		record := accountingsyncenqueue.NewRecordFor(
+			h.conn,
+			&accountingsyncports.AccountingSyncEnqueueRequest{
+				TenantInfo:  h.tenant,
+				ObjectType:  objectType,
+				ObjectID:    settlementID,
+				Operation:   accountingsync.SyncOperationCreate,
+				Revision:    1,
+				SourceEvent: accountingsync.SyncSourceCarrierSettlementPosted,
+			},
+			queuedAt,
+		)
 		record.Status = accountingsync.SyncStatusSynced
 		h.records.put(record)
 		return record
@@ -966,7 +985,7 @@ func TestObjectStatesIsBounded(t *testing.T) {
 	t.Parallel()
 
 	h := newHarness(t)
-	ids := make([]pulid.ID, maxStateObjects+25)
+	ids := make([]pulid.ID, accountingsyncreads.MaxStateObjects+25)
 	for idx := range ids {
 		ids[idx] = pulid.MustNew("inv_")
 	}
@@ -975,7 +994,7 @@ func TestObjectStatesIsBounded(t *testing.T) {
 	require.NoError(t, err)
 
 	require.Len(t, h.records.byObjectsCalls, 1)
-	assert.Len(t, h.records.byObjectsCalls[0].ObjectIDs, maxStateObjects)
+	assert.Len(t, h.records.byObjectsCalls[0].ObjectIDs, accountingsyncreads.MaxStateObjects)
 	assert.Equal(t, h.tenant, h.records.byObjectsCalls[0].TenantInfo)
 }
 

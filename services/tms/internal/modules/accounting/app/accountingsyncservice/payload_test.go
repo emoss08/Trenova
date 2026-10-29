@@ -5,6 +5,8 @@ import (
 	"time"
 
 	"github.com/bytedance/sonic"
+	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingsyncenqueue"
+	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingsyncpush"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingmapping"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
@@ -58,7 +60,7 @@ func TestInvoiceDocumentCarriesExternalIDsFromConfirmedMappings(t *testing.T) {
 	chargeID := pulid.MustNew("acc_")
 	freight := h.confirm(freightTarget(), "qb-item-freight")
 	charge := h.confirm(chargeTarget(chargeID), "qb-item-det")
-	term := h.confirm(mappingTarget{
+	term := h.confirm(accountingsyncpush.MappingTarget{
 		TargetType: accountingsync.TargetPaymentTerm,
 		Key:        string(invoice.PaymentTermNet30),
 		Label:      "Net 30",
@@ -148,9 +150,9 @@ func TestPayloadHashDoesNotDependOnTheCredentials(t *testing.T) {
 		}
 	}
 
-	firstPayload, firstHash, err := payloadOf(doc("token-before-refresh"))
+	firstPayload, firstHash, err := accountingsyncpush.PayloadOf(doc("token-before-refresh"))
 	require.NoError(t, err)
-	secondPayload, secondHash, err := payloadOf(doc("token-after-refresh"))
+	secondPayload, secondHash, err := accountingsyncpush.PayloadOf(doc("token-after-refresh"))
 	require.NoError(t, err)
 
 	assert.Equal(t, firstPayload, secondPayload)
@@ -428,7 +430,7 @@ func TestCreditMemoDocumentSendsPositiveAmountsWithoutTermsOrDueDate(t *testing.
 	h := newHarness(t)
 	customerID, _ := h.mappedCustomer("Acme")
 	h.confirm(freightTarget(), "qb-item-freight")
-	h.confirm(mappingTarget{
+	h.confirm(accountingsyncpush.MappingTarget{
 		TargetType: accountingsync.TargetPaymentTerm,
 		Key:        string(invoice.PaymentTermNet30),
 	}, "qb-term-30")
@@ -630,11 +632,11 @@ func (h *harness) postedPayment(customerID pulid.ID, spec paymentSpec) *customer
 }
 
 func (h *harness) mapPaymentAccounts(method customerpayment.Method) {
-	h.confirm(mappingTarget{
+	h.confirm(accountingsyncpush.MappingTarget{
 		TargetType: accountingsync.TargetAccountRole,
 		Key:        accountingsync.AccountRoleDeposit,
 	}, "qb-acct-undeposited")
-	h.confirm(mappingTarget{
+	h.confirm(accountingsyncpush.MappingTarget{
 		TargetType: accountingsync.TargetPaymentMethod,
 		Key:        string(method),
 	}, "qb-method-"+string(method))
@@ -736,7 +738,7 @@ func TestShortPayNeedsTheWriteOffItem(t *testing.T) {
 		blocked.Resolution,
 	)
 
-	h.confirm(mappingTarget{
+	h.confirm(accountingsyncpush.MappingTarget{
 		TargetType: accountingsync.TargetItemRole,
 		Key:        accountingsync.ItemRoleShortPayWriteOff,
 	}, "qb-item-shortpay")
@@ -780,7 +782,7 @@ func TestUnmappedPaymentMethodAndDepositAccountBlock(t *testing.T) {
 			h := newHarness(t)
 			customerID, _ := h.mappedCustomer("Acme")
 			if tc.mapDeposit {
-				h.confirm(mappingTarget{
+				h.confirm(accountingsyncpush.MappingTarget{
 					TargetType: accountingsync.TargetAccountRole,
 					Key:        accountingsync.AccountRoleDeposit,
 				}, "qb-acct-undeposited")
@@ -888,7 +890,7 @@ func TestPaymentVoidUsesTheSyncedPayment(t *testing.T) {
 	h := newHarness(t)
 	customerID, _ := h.mappedCustomer("Acme")
 	payment := h.postedPayment(customerID, paymentSpec{amountMinor: 5000})
-	created := NewRecordFor(h.conn, accountingsyncports.PaymentSyncRequest(
+	created := accountingsyncenqueue.NewRecordFor(h.conn, accountingsyncports.PaymentSyncRequest(
 		payment, accountingsync.SyncOperationCreate, accountingsync.SyncSourceCustomerPaymentPosted,
 	), mayTenth)
 	created.MarkSynced(&accountingsync.SyncResult{
@@ -897,11 +899,15 @@ func TestPaymentVoidUsesTheSyncedPayment(t *testing.T) {
 	}, mayTenth)
 	h.records.put(created)
 	payment.Version = 2
-	staleUpdate := NewRecordFor(h.conn, accountingsyncports.PaymentSyncRequest(
-		payment,
-		accountingsync.SyncOperationUpdate,
-		accountingsync.SyncSourceCustomerPaymentApplied,
-	), time.Now().Add(time.Hour).Unix())
+	staleUpdate := accountingsyncenqueue.NewRecordFor(
+		h.conn,
+		accountingsyncports.PaymentSyncRequest(
+			payment,
+			accountingsync.SyncOperationUpdate,
+			accountingsync.SyncSourceCustomerPaymentApplied,
+		),
+		time.Now().Add(time.Hour).Unix(),
+	)
 	h.records.put(staleUpdate)
 	void := h.enqueuePayment(t, payment, accountingsync.SyncOperationVoid)
 
@@ -926,7 +932,7 @@ func TestAPaymentSharedWithOtherDocumentsInTheBooksIsNotVoidedAlone(t *testing.T
 	h := newHarness(t)
 	customerID, _ := h.mappedCustomer("Acme")
 	payment := h.postedPayment(customerID, paymentSpec{amountMinor: 5000})
-	created := NewRecordFor(h.conn, accountingsyncports.PaymentSyncRequest(
+	created := accountingsyncenqueue.NewRecordFor(h.conn, accountingsyncports.PaymentSyncRequest(
 		payment, accountingsync.SyncOperationCreate, accountingsync.SyncSourceCustomerPaymentPosted,
 	), mayTenth)
 	require.True(t, created.Link(&accountingsync.SyncLink{
@@ -953,7 +959,7 @@ func TestAPaymentLinkedAloneIsVoidedNormally(t *testing.T) {
 	h := newHarness(t)
 	customerID, _ := h.mappedCustomer("Acme")
 	payment := h.postedPayment(customerID, paymentSpec{amountMinor: 5000})
-	created := NewRecordFor(h.conn, accountingsyncports.PaymentSyncRequest(
+	created := accountingsyncenqueue.NewRecordFor(h.conn, accountingsyncports.PaymentSyncRequest(
 		payment, accountingsync.SyncOperationCreate, accountingsync.SyncSourceCustomerPaymentPosted,
 	), mayTenth)
 	require.True(t, created.Link(&accountingsync.SyncLink{ExternalID: "qb-pay-301"}, mayTenth))
@@ -975,7 +981,7 @@ func TestVoidOfAPaymentThatNeverReachedTheBooksWithdrawsIt(t *testing.T) {
 	h := newHarness(t)
 	customerID, _ := h.mappedCustomer("Acme")
 	payment := h.postedPayment(customerID, paymentSpec{amountMinor: 5000})
-	created := NewRecordFor(h.conn, accountingsyncports.PaymentSyncRequest(
+	created := accountingsyncenqueue.NewRecordFor(h.conn, accountingsyncports.PaymentSyncRequest(
 		payment, accountingsync.SyncOperationCreate, accountingsync.SyncSourceCustomerPaymentPosted,
 	), mayTenth)
 	created.MarkFailed(

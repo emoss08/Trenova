@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingsyncenqueue"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingmapping"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
@@ -830,16 +831,20 @@ func TestOpeningBalancesSendEveryBalanceBeforeTheStartDate(t *testing.T) {
 	h.ledger.add(closing)
 	h.ledger.add(invoiceJournal(accts, acme, "JE-AFTER", syncStartDate+86_400, 5_000))
 
-	record := NewRecordFor(h.conn, &accountingsyncports.AccountingSyncEnqueueRequest{
-		TenantInfo:   h.tenant,
-		ObjectType:   accountingsync.SyncObjectJournalSummary,
-		ObjectID:     "jopen_20260101",
-		ObjectNumber: "2025-12-31",
-		Operation:    accountingsync.SyncOperationCreate,
-		Revision:     1,
-		SourceEvent:  accountingsync.SyncSourceOpeningBalances,
-		DocumentDate: syncStartDate - 86_400,
-	}, syncEnabledAt)
+	record := accountingsyncenqueue.NewRecordFor(
+		h.conn,
+		&accountingsyncports.AccountingSyncEnqueueRequest{
+			TenantInfo:   h.tenant,
+			ObjectType:   accountingsync.SyncObjectJournalSummary,
+			ObjectID:     "jopen_20260101",
+			ObjectNumber: "2025-12-31",
+			Operation:    accountingsync.SyncOperationCreate,
+			Revision:     1,
+			SourceEvent:  accountingsync.SyncSourceOpeningBalances,
+			DocumentDate: syncStartDate - 86_400,
+		},
+		syncEnabledAt,
+	)
 	h.records.put(record)
 
 	h.drain(t)

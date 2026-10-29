@@ -1,4 +1,4 @@
-package accountingsyncservice
+package accountingsynceffects
 
 import (
 	"context"
@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -17,28 +18,28 @@ import (
 	"go.uber.org/zap"
 )
 
-func tenantOf(conn *accountingconnection.AccountingConnection) pagination.TenantInfo {
+func TenantOf(conn *accountingconnection.AccountingConnection) pagination.TenantInfo {
 	return pagination.TenantInfo{OrgID: conn.OrganizationID, BuID: conn.BusinessUnitID}
 }
 
-func (s *Service) refreshAttention(
+func (e *Effects) RefreshAttention(
 	ctx context.Context,
 	conn *accountingconnection.AccountingConnection,
 ) {
-	if s.watchtower == nil {
+	if e.watchtower == nil {
 		return
 	}
-	tenant := tenantOf(conn)
-	groups, err := s.records.ListAttention(
+	tenant := TenantOf(conn)
+	groups, err := e.records.ListAttention(
 		ctx,
 		accountingsyncports.ListAccountingSyncAttentionRequest{
 			TenantInfo:   tenant,
 			ConnectionID: conn.ID,
-			Limit:        attentionGroups,
+			Limit:        AttentionGroups,
 		},
 	)
 	if err != nil {
-		s.l.Warn("failed to read accounting sync attention", zap.Error(err))
+		e.l.Warn("failed to read accounting sync attention", zap.Error(err))
 		return
 	}
 
@@ -49,10 +50,10 @@ func (s *Service) refreshAttention(
 			key,
 			byKey[key],
 		); open {
-			s.watchtower.Upsert(ctx, item)
+			e.watchtower.Upsert(ctx, item)
 			continue
 		}
-		s.watchtower.Resolve(
+		e.watchtower.Resolve(
 			ctx,
 			tenant,
 			watchtower.SourceAccountingSync,
@@ -61,34 +62,34 @@ func (s *Service) refreshAttention(
 	}
 }
 
-func (s *Service) refreshPaused(
+func (e *Effects) RefreshPaused(
 	ctx context.Context,
 	conn *accountingconnection.AccountingConnection,
 ) {
-	if s.watchtower == nil {
+	if e.watchtower == nil {
 		return
 	}
 	if item, open := watchtoweraccounting.DescribeAccountingSyncPaused(
 		conn,
 		timeutils.NowUnix(),
 	); open {
-		s.watchtower.Upsert(ctx, item)
+		e.watchtower.Upsert(ctx, item)
 		return
 	}
-	s.watchtower.Resolve(
+	e.watchtower.Resolve(
 		ctx,
-		tenantOf(conn),
+		TenantOf(conn),
 		watchtower.SourceAccountingSync,
 		watchtoweraccounting.AccountingSyncPausedSourceID(conn),
 	)
 }
 
-func (s *Service) reportSafetyNet(
+func (e *Effects) ReportSafetyNet(
 	ctx context.Context,
 	conn *accountingconnection.AccountingConnection,
 	found int,
 ) {
-	if s.watchtower == nil || found == 0 {
+	if e.watchtower == nil || found == 0 {
 		return
 	}
 	if item, open := watchtoweraccounting.DescribeAccountingSafetyNet(
@@ -96,11 +97,11 @@ func (s *Service) reportSafetyNet(
 		found,
 		timeutils.NowUnix(),
 	); open {
-		s.watchtower.Upsert(ctx, item)
+		e.watchtower.Upsert(ctx, item)
 	}
 }
 
-func (s *Service) publishOutcome(
+func (e *Effects) PublishOutcome(
 	ctx context.Context,
 	record *accountingsync.AccountingSyncRecord,
 	outcome accountingsync.SyncAttemptOutcome,
@@ -118,23 +119,23 @@ func (s *Service) publishOutcome(
 	default:
 		return
 	}
-	agentports.PublishAgentEvent(ctx, s.publisher, agentports.AgentEvent{
+	agentports.PublishAgentEvent(ctx, e.publisher, agentports.AgentEvent{
 		Kind:       kind,
 		SubjectID:  record.ID,
 		TenantInfo: record.TenantInfo(),
 	})
 }
 
-func (s *Service) publishInvalidation(
+func (e *Effects) PublishInvalidation(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	actorID pulid.ID,
 	recordID pulid.ID,
 ) {
-	if s.realtime == nil {
+	if e.realtime == nil {
 		return
 	}
-	if err := realtimeinvalidation.Publish(ctx, s.realtime, &realtimeinvalidation.PublishParams{
+	if err := realtimeinvalidation.Publish(ctx, e.realtime, &realtimeinvalidation.PublishParams{
 		OrganizationID: tenantInfo.OrgID,
 		BusinessUnitID: tenantInfo.BuID,
 		ActorUserID:    actorID,
@@ -142,6 +143,8 @@ func (s *Service) publishInvalidation(
 		Action:         "updated",
 		RecordID:       recordID,
 	}); err != nil {
-		s.l.Warn("failed to publish accounting sync invalidation", zap.Error(err))
+		e.l.Warn("failed to publish accounting sync invalidation", zap.Error(err))
 	}
 }
+
+var permissionResource = permission.ResourceAccountingSync.String()

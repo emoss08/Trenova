@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingsyncservice"
+	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingsyncbackfill"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingbackfill"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
@@ -1029,7 +1029,7 @@ func (t *RequestAccountingBackfillTool) plan(
 	if err != nil {
 		return nil, err
 	}
-	if types, err = accountingsyncservice.BackfillTypes(summary.Connection, types); err != nil {
+	if types, err = accountingsyncbackfill.ObjectTypes(summary.Connection, types); err != nil {
 		return nil, err
 	}
 	if summary.ActiveBackfill != nil {

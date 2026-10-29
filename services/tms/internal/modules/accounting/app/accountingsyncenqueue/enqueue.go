@@ -1,10 +1,11 @@
-package accountingsyncservice
+package accountingsyncenqueue
 
 import (
 	"context"
 	"fmt"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingsynceffects"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingmapping"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
@@ -22,7 +23,7 @@ import (
 	"go.uber.org/zap"
 )
 
-type EnqueuerParams struct {
+type Params struct {
 	fx.In
 
 	Logger      *zap.Logger
@@ -50,7 +51,7 @@ var (
 	_ accountingsyncports.AccountingLedgerEnqueuer = (*Enqueuer)(nil)
 )
 
-func NewEnqueuer(p EnqueuerParams) *Enqueuer {
+func New(p Params) *Enqueuer {
 	return &Enqueuer{
 		l:           p.Logger.Named("service.accounting-sync-enqueuer"),
 		connections: p.Connections,
@@ -423,4 +424,50 @@ func (e *Enqueuer) kickAfterCommit(
 			}
 		})
 	}
+}
+
+func candidateRequest(
+	conn *accountingconnection.AccountingConnection,
+	candidate *accountingsyncports.AccountingSyncCandidate,
+	source accountingsync.SyncSourceEvent,
+) *accountingsyncports.AccountingSyncEnqueueRequest {
+	return &accountingsyncports.AccountingSyncEnqueueRequest{
+		TenantInfo:   accountingsynceffects.TenantOf(conn),
+		ObjectType:   candidate.ObjectType,
+		ObjectID:     candidate.ObjectID,
+		ObjectNumber: candidate.ObjectNumber,
+		Operation:    candidate.Operation,
+		Revision:     1,
+		SourceEvent:  source,
+		DocumentDate: candidate.DocumentDate,
+	}
+}
+
+func (e *Enqueuer) QueueCandidates(
+	ctx context.Context,
+	conn *accountingconnection.AccountingConnection,
+	candidates []accountingsyncports.AccountingSyncCandidate,
+	source accountingsync.SyncSourceEvent,
+	loc *time.Location,
+) (*accountingsyncports.EnqueueAccountingSyncRecordsResult, error) {
+	now := timeutils.NowUnix()
+	records := make([]*accountingsync.AccountingSyncRecord, 0, len(candidates))
+	days := make(map[pulid.ID]struct{}, len(candidates))
+	for idx := range candidates {
+		req := candidateRequest(conn, &candidates[idx], source)
+		if candidates[idx].ObjectType == accountingsync.SyncObjectJournalSummary {
+			req = JournalDayRequest(
+				accountingsynceffects.TenantOf(conn),
+				candidates[idx].DocumentDate,
+				loc,
+			)
+			req.SourceEvent = source
+			if _, seen := days[req.ObjectID]; seen {
+				continue
+			}
+			days[req.ObjectID] = struct{}{}
+		}
+		records = append(records, NewRecordFor(conn, req, now))
+	}
+	return e.QueueRecords(ctx, accountingsynceffects.TenantOf(conn), records)
 }

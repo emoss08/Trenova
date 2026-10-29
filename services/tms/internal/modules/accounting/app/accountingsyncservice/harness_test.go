@@ -4,6 +4,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingsyncenqueue"
+	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingsyncpush"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingmapping"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
@@ -34,7 +36,7 @@ var (
 
 type harness struct {
 	svc         *Service
-	enqueuer    *Enqueuer
+	enqueuer    *accountingsyncenqueue.Enqueuer
 	connections *fakeConnections
 	records     *fakeRecords
 	backfills   *fakeBackfills
@@ -115,7 +117,7 @@ func newHarness(t *testing.T, opts ...harnessOption) *harness {
 	if cfg.withoutDispatcher {
 		dispatcher = nil
 	}
-	h.enqueuer = NewEnqueuer(EnqueuerParams{
+	h.enqueuer = accountingsyncenqueue.New(accountingsyncenqueue.Params{
 		Logger:      zap.NewNop(),
 		Connections: h.connections,
 		Records:     h.records,
@@ -130,7 +132,6 @@ func newHarness(t *testing.T, opts ...harnessOption) *harness {
 		Connections:       h.connections,
 		Records:           h.records,
 		Backfills:         h.backfills,
-		Mappings:          fakeMappingRepo{store: h.mappings},
 		MappingService:    fakeMappingService{store: h.mappings},
 		ConnectionService: h.connService,
 		Invoices:          h.invoices,
@@ -193,30 +194,30 @@ func (h *harness) updateConnection(fn func(*accountingconnection.AccountingConne
 }
 
 func (h *harness) confirm(
-	target mappingTarget,
+	target accountingsyncpush.MappingTarget,
 	externalID string,
 ) *accountingmapping.AccountingMapping {
 	return h.mappings.set(h.conn, target, accountingmapping.MappingStateConfirmed, externalID)
 }
 
-func customerTarget(customerID pulid.ID, name string) mappingTarget {
-	return mappingTarget{
+func customerTarget(customerID pulid.ID, name string) accountingsyncpush.MappingTarget {
+	return accountingsyncpush.MappingTarget{
 		TargetType: accountingsync.TargetCustomer,
 		ObjectID:   customerID,
 		Label:      name,
 	}
 }
 
-func freightTarget() mappingTarget {
-	return mappingTarget{
+func freightTarget() accountingsyncpush.MappingTarget {
+	return accountingsyncpush.MappingTarget{
 		TargetType: accountingsync.TargetLineType,
 		Key:        string(invoice.InvoiceLineTypeFreight),
 		Label:      "Freight",
 	}
 }
 
-func chargeTarget(chargeID pulid.ID) mappingTarget {
-	return mappingTarget{
+func chargeTarget(chargeID pulid.ID) accountingsyncpush.MappingTarget {
+	return accountingsyncpush.MappingTarget{
 		TargetType: accountingsync.TargetAccessorialCharge,
 		ObjectID:   chargeID,
 		Label:      "DET",
@@ -355,7 +356,7 @@ func (h *harness) syncedInvoiceRecord(
 		inv,
 		accountingsync.PostedSourceEvent(inv.BillType),
 	)
-	record := NewRecordFor(h.conn, req, inv.InvoiceDate)
+	record := accountingsyncenqueue.NewRecordFor(h.conn, req, inv.InvoiceDate)
 	record.MarkSynced(&accountingsync.SyncResult{ExternalID: externalID}, inv.InvoiceDate)
 	h.records.put(record)
 	return record

@@ -1,4 +1,4 @@
-package accountingsyncservice
+package accountingsyncpush
 
 import (
 	"context"
@@ -6,10 +6,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
-	"github.com/shopspring/decimal"
 )
 
-type createFunc func() (*accountingconnectorports.AccountingDocumentResult, error)
+type CreateFunc func() (*accountingconnectorports.AccountingDocumentResult, error)
 
 func outcomeUnknown(record *accountingsync.AccountingSyncRecord) bool {
 	if record.AttemptCount <= 1 {
@@ -19,22 +18,22 @@ func outcomeUnknown(record *accountingsync.AccountingSyncRecord) bool {
 		record.ErrorCategory == accountingsync.SyncErrorTransient
 }
 
-func (s *Service) createAdopting(
+func (k *Kit) CreateAdopting(
 	ctx context.Context,
-	sess *pushSession,
+	sess *Session,
 	record *accountingsync.AccountingSyncRecord,
 	match *accountingconnectorports.AccountingFindDocumentRequest,
-	create createFunc,
+	create CreateFunc,
 ) (*accountingconnectorports.AccountingDocumentResult, error) {
-	if sess.limits.IdempotencyWindow <= 0 {
+	if sess.Limits.IdempotencyWindow <= 0 {
 		return create()
 	}
-	match.Auth = sess.auth
+	match.Auth = sess.Auth
 	match.Kind = record.ObjectType
 	match.RequestID = record.RequestID
 
 	if outcomeUnknown(record) {
-		found, ok, err := sess.writer.FindDocument(ctx, match)
+		found, ok, err := sess.Writer.FindDocument(ctx, match)
 		if err != nil {
 			return nil, err
 		}
@@ -47,15 +46,15 @@ func (s *Service) createAdopting(
 	if err == nil || !isDuplicate(sess, err) {
 		return written, err
 	}
-	found, ok, findErr := sess.writer.FindDocument(ctx, match)
+	found, ok, findErr := sess.Writer.FindDocument(ctx, match)
 	if findErr != nil || !ok {
 		return written, err
 	}
 	return adopted(found), nil
 }
 
-func isDuplicate(sess *pushSession, err error) bool {
-	classified := sess.writer.ClassifyDocumentError(err)
+func isDuplicate(sess *Session, err error) bool {
+	classified := sess.Writer.ClassifyDocumentError(err)
 	return classified != nil && classified.Category == accountingsync.SyncErrorDuplicate
 }
 
@@ -70,30 +69,4 @@ func adopted(
 	maps.Copy(result.Refs, found.Refs)
 	result.Refs[accountingsync.ExternalRefAdopted] = "true"
 	return result
-}
-
-func salesTotal(lines []accountingconnectorports.AccountingDocumentLine) decimal.Decimal {
-	total := decimal.Zero
-	for idx := range lines {
-		total = total.Add(lines[idx].Amount)
-	}
-	return total
-}
-
-func purchaseTotal(lines []accountingconnectorports.AccountingPurchaseLine) decimal.Decimal {
-	total := decimal.Zero
-	for idx := range lines {
-		total = total.Add(lines[idx].Amount)
-	}
-	return total
-}
-
-func appliedInvoices(
-	applications []accountingconnectorports.AccountingPaymentApplication,
-) []string {
-	ids := make([]string, 0, len(applications))
-	for idx := range applications {
-		ids = append(ids, applications[idx].InvoiceExternalID)
-	}
-	return ids
 }

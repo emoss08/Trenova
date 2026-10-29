@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingconnectionservice"
 	"github.com/emoss08/trenova/internal/modules/accounting/app/accountinginboundservice"
 	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingmappingservice"
+	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingsyncenqueue"
 	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingsyncservice"
 	"github.com/emoss08/trenova/internal/modules/accounting/app/accounttypeservice"
 	"github.com/emoss08/trenova/internal/modules/accounting/app/fiscalcloseservice"
@@ -82,9 +83,9 @@ func SharedOptions() fx.Option {
 			fiscalcloseservice.New,
 			fiscalyearservice.New,
 			fiscalperiodservice.New,
-			accountingsyncservice.NewEnqueuer,
-			func(e *accountingsyncservice.Enqueuer) accountingsyncports.AccountingSyncEnqueuer { return e },
-			func(e *accountingsyncservice.Enqueuer) accountingsyncports.AccountingLedgerEnqueuer { return e },
+			accountingsyncenqueue.New,
+			func(e *accountingsyncenqueue.Enqueuer) accountingsyncports.AccountingSyncEnqueuer { return e },
+			func(e *accountingsyncenqueue.Enqueuer) accountingsyncports.AccountingLedgerEnqueuer { return e },
 			accountingsyncservice.New,
 			func(s *accountingsyncservice.Service) accountingsyncports.AccountingSyncService { return s },
 			journalentryservice.New,

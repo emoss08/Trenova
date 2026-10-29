@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingsyncenqueue"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingmapping"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
@@ -69,7 +70,7 @@ func TestRequestIDIsStableAndDerivedFromConnectionAndKey(t *testing.T) {
 	assert.Equal(t, "trn-"+hex.EncodeToString(sum[:])[:40], record.RequestID)
 	assert.Len(t, record.RequestID, len("trn-")+40)
 
-	again := NewRecordFor(
+	again := accountingsyncenqueue.NewRecordFor(
 		h.conn,
 		accountingsyncports.InvoiceSyncRequest(inv, accountingsync.SyncSourceSafetyNet),
 		1,

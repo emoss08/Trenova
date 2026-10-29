@@ -19616,3 +19616,9 @@ github.com/emoss08/trenova/internal/modules/agent/app/agentextensionservice.Read
 github.com/emoss08/trenova/internal/modules/agent/app/agentextensionservice.EnvelopeColumns	github.com/emoss08/trenova/internal/modules/agent/app/extensionsecrets.EnvelopeColumns
 github.com/emoss08/trenova/internal/infrastructure/accounting/nsconnector.ErrNotConfigured	github.com/emoss08/trenova/internal/infrastructure/accounting/nsbinding.ErrNotConfigured
 github.com/emoss08/trenova/internal/infrastructure/accounting/nsconnector.AccountClassOf	github.com/emoss08/trenova/internal/infrastructure/accounting/nsrefsync.AccountClassOf
+github.com/emoss08/trenova/internal/modules/accounting/app/accountingsyncservice.Enqueuer	github.com/emoss08/trenova/internal/modules/accounting/app/accountingsyncenqueue.Enqueuer
+github.com/emoss08/trenova/internal/modules/accounting/app/accountingsyncservice.EnqueuerParams	github.com/emoss08/trenova/internal/modules/accounting/app/accountingsyncenqueue.Params
+github.com/emoss08/trenova/internal/modules/accounting/app/accountingsyncservice.NewEnqueuer	github.com/emoss08/trenova/internal/modules/accounting/app/accountingsyncenqueue.New
+github.com/emoss08/trenova/internal/modules/accounting/app/accountingsyncservice.JournalDayRequest	github.com/emoss08/trenova/internal/modules/accounting/app/accountingsyncenqueue.JournalDayRequest
+github.com/emoss08/trenova/internal/modules/accounting/app/accountingsyncservice.NewRecordFor	github.com/emoss08/trenova/internal/modules/accounting/app/accountingsyncenqueue.NewRecordFor
+github.com/emoss08/trenova/internal/modules/accounting/app/accountingsyncservice.BackfillTypes	github.com/emoss08/trenova/internal/modules/accounting/app/accountingsyncbackfill.ObjectTypes

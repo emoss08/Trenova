@@ -4,6 +4,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingsyncenqueue"
+	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingsyncpush"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingmapping"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
@@ -148,28 +150,32 @@ type payableMappings struct {
 	escrow  *accountingmapping.AccountingMapping
 }
 
-func carrierVendorTarget(carrierID pulid.ID) mappingTarget {
-	return mappingTarget{
+func carrierVendorTarget(carrierID pulid.ID) accountingsyncpush.MappingTarget {
+	return accountingsyncpush.MappingTarget{
 		TargetType: accountingsync.TargetCarrier,
 		ObjectID:   carrierID,
 		Label:      "Swift Haulers",
 	}
 }
 
-func driverVendorTarget(workerID pulid.ID) mappingTarget {
-	return mappingTarget{
+func driverVendorTarget(workerID pulid.ID) accountingsyncpush.MappingTarget {
+	return accountingsyncpush.MappingTarget{
 		TargetType: accountingsync.TargetDriver,
 		ObjectID:   workerID,
 		Label:      "Dana Ortiz",
 	}
 }
 
-func roleTarget(key, label string) mappingTarget {
-	return mappingTarget{TargetType: accountingsync.TargetAccountRole, Key: key, Label: label}
+func roleTarget(key, label string) accountingsyncpush.MappingTarget {
+	return accountingsyncpush.MappingTarget{
+		TargetType: accountingsync.TargetAccountRole,
+		Key:        key,
+		Label:      label,
+	}
 }
 
-func glTarget(accountID pulid.ID, label string) mappingTarget {
-	return mappingTarget{
+func glTarget(accountID pulid.ID, label string) accountingsyncpush.MappingTarget {
+	return accountingsyncpush.MappingTarget{
 		TargetType: accountingsync.TargetGLAccount,
 		ObjectID:   accountID,
 		Label:      label,
@@ -267,7 +273,7 @@ func (h *harness) syncedSettlementRecord(
 	externalID string,
 	refs map[string]string,
 ) *accountingsync.AccountingSyncRecord {
-	record := NewRecordFor(
+	record := accountingsyncenqueue.NewRecordFor(
 		h.conn,
 		settlementRequest(h, objectType, accountingsync.SyncOperationCreate, settlement),
 		*settlement.PostedAt,
@@ -1106,7 +1112,7 @@ func TestVendorUpdatePushesThePartyToTheMappedVendor(t *testing.T) {
 	tests := []struct {
 		name       string
 		objectType accountingsync.SyncObjectType
-		target     func(pulid.ID) mappingTarget
+		target     func(pulid.ID) accountingsyncpush.MappingTarget
 		prefix     string
 	}{
 		{
@@ -1670,8 +1676,12 @@ func TestBillPaymentOfABillThatWasNotSentSendsNothing(t *testing.T) {
 			accts := newPayableAccounts()
 			settlement := h.paidCarrierSettlement(accts)
 			h.mapCarrierBill(accts, settlement)
-			bill := NewRecordFor(h.conn, settlementRequest(h, accountingsync.SyncObjectCarrierBill,
-				accountingsync.SyncOperationCreate, settlement), settledPosted)
+			bill := accountingsyncenqueue.NewRecordFor(
+				h.conn,
+				settlementRequest(h, accountingsync.SyncObjectCarrierBill,
+					accountingsync.SyncOperationCreate, settlement),
+				settledPosted,
+			)
 			tc.apply(bill)
 			h.records.put(bill)
 			record := h.enqueueSettlement(t, accountingsync.SyncObjectCarrierBillPay,

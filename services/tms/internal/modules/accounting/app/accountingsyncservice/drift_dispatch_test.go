@@ -3,6 +3,7 @@ package accountingsyncservice
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingsyncenqueue"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
@@ -20,16 +21,20 @@ func (h *harness) driftRecord(
 	revision int64,
 	dated int64,
 ) *accountingsync.AccountingSyncRecord {
-	record := NewRecordFor(h.conn, &accountingsyncports.AccountingSyncEnqueueRequest{
-		TenantInfo:   h.tenant,
-		ObjectType:   objectType,
-		ObjectID:     objectID,
-		ObjectNumber: number,
-		Operation:    operation,
-		Revision:     revision,
-		SourceEvent:  accountingsync.SyncSourceDriftResolved,
-		DocumentDate: dated,
-	}, dated)
+	record := accountingsyncenqueue.NewRecordFor(
+		h.conn,
+		&accountingsyncports.AccountingSyncEnqueueRequest{
+			TenantInfo:   h.tenant,
+			ObjectType:   objectType,
+			ObjectID:     objectID,
+			ObjectNumber: number,
+			Operation:    operation,
+			Revision:     revision,
+			SourceEvent:  accountingsync.SyncSourceDriftResolved,
+			DocumentDate: dated,
+		},
+		dated,
+	)
 	h.records.put(record)
 	return record
 }
@@ -99,7 +104,7 @@ func TestUpdateOfAnInvoicePaidInOneProviderPaymentWithOthersIsRefused(t *testing
 
 	h := newHarness(t)
 	inv := mappedInvoice(t, h)
-	created := NewRecordFor(
+	created := accountingsyncenqueue.NewRecordFor(
 		h.conn,
 		accountingsyncports.InvoiceSyncRequest(inv, accountingsync.PostedSourceEvent(inv.BillType)),
 		inv.InvoiceDate,
@@ -124,7 +129,7 @@ func TestRecreateSendsTheInvoiceAgainAndLaterVoidsUseTheNewDocument(t *testing.T
 
 	h := newHarness(t)
 	inv := mappedInvoice(t, h)
-	created := NewRecordFor(
+	created := accountingsyncenqueue.NewRecordFor(
 		h.conn,
 		accountingsyncports.InvoiceSyncRequest(inv, accountingsync.PostedSourceEvent(inv.BillType)),
 		inv.InvoiceDate,

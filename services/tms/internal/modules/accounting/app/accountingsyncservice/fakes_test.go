@@ -10,6 +10,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingsyncpush"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingbackfill"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingmapping"
@@ -854,13 +855,17 @@ func mappingIdentity(
 	objectID pulid.ID,
 	key string,
 ) string {
-	return mappingTarget{TargetType: targetType, ObjectID: objectID, Key: key}.identity() +
+	return accountingsyncpush.MappingTarget{
+		TargetType: targetType,
+		ObjectID:   objectID,
+		Key:        key,
+	}.Identity() +
 		"@" + connectionID.String()
 }
 
 func (f *fakeMappingStore) set(
 	conn *accountingconnection.AccountingConnection,
-	target mappingTarget,
+	target accountingsyncpush.MappingTarget,
 	state accountingmapping.MappingState,
 	externalID string,
 ) *accountingmapping.AccountingMapping {
