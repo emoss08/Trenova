@@ -59,6 +59,15 @@ func (l *stubLedger) Record(
 	return nil
 }
 
+func (l *stubLedger) Find(
+	context.Context,
+	pagination.TenantInfo,
+	agentruntimeports.RunStepOwner,
+	string,
+) (agentruntimeports.RunStep, bool, error) {
+	return agentruntimeports.RunStep{}, false, nil
+}
+
 func (l *stubLedger) Loaded(
 	_ context.Context,
 	_ pagination.TenantInfo,

@@ -142,7 +142,13 @@ func (r *repository) Settle(
 
 func (r *repository) Record(ctx context.Context, step *agentrunstep.AgentRunStep) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		if err := agentrunstepdb.AgentRunSteps.Create(ctx, r.db.Keel(ctx), step); err != nil {
+		err := dbtx.Savepoint(ctx, r.db, func(ctx context.Context) error {
+			return agentrunstepdb.AgentRunSteps.Create(ctx, r.db.Keel(ctx), step)
+		})
+		if dberror.IsUniqueConstraintViolation(err) {
+			return nil
+		}
+		if err != nil {
 			r.l.Error("failed to record an agent run step",
 				zap.String("owner", step.OwnerID.String()),
 				zap.String("kind", step.Kind),

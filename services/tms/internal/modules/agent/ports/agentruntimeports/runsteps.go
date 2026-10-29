@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aianalytics"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -17,9 +18,9 @@ const RunStepOwnerAssistantTurn kernelports.RunStepOwnerKind = "AssistantTurn"
 // RunStepKind distinguishes a model reply from a tool call.
 type RunStepKind string
 
-// RunStepCompletion is one model reply. It is recorded but never replayed:
-// it is what makes retry waste measurable, and the precondition for
-// replaying a reply later when the retry lands on the same provider.
+// RunStepCompletion is one model reply. It is recorded whole, and an attempt
+// that reaches the same call with the same request is handed the reply
+// instead of asking the model again.
 const RunStepCompletion RunStepKind = "Completion"
 
 // RunStepTool is one tool call. This is the one that matters — it is what
@@ -87,6 +88,12 @@ type RunStepOutcome struct {
 	Reason  string            `json:"reason,omitempty"`
 	Verdict string            `json:"verdict,omitempty"`
 	Cause   aianalytics.Cause `json:"cause,omitempty"`
+	Reply   *RunStepReply     `json:"reply,omitempty"`
+}
+
+type RunStepReply struct {
+	Completion *llmports.ChatCompletionResult `json:"completion"`
+	Usage      *RunUsage                      `json:"usage,omitempty"`
 }
 
 // StepState is what a claim found.
@@ -142,6 +149,12 @@ type RunStepLedger interface {
 	Settle(ctx context.Context, tenant pagination.TenantInfo, step *RunStep) error
 	// Record files a step that needs no claim, such as a model reply.
 	Record(ctx context.Context, tenant pagination.TenantInfo, step *RunStep) error
+	Find(
+		ctx context.Context,
+		tenant pagination.TenantInfo,
+		owner RunStepOwner,
+		key string,
+	) (RunStep, bool, error)
 	// Loaded is every step already on record for this run, read once when the
 	// run starts. The repeat guard is seeded from it, so a resumed attempt
 	// does not re-learn a failure the first attempt already had.

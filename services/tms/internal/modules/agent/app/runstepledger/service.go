@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aianalytics"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/intutils"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -176,6 +177,13 @@ func (s *Service) storedOutcome(step *agentruntimeports.RunStep) map[string]any 
 		)
 		outcome.Content = ""
 	}
+	if outcome.Reply != nil && !replyFits(outcome.Reply) {
+		s.l.Debug("a model reply was too large to keep; a replay asks the model again",
+			zap.String("owner", step.OwnerID.String()),
+			zap.String("key", step.Key),
+		)
+		outcome.Reply = nil
+	}
 
 	encoded, err := encodeOutcome(&outcome)
 	if err != nil {
@@ -210,26 +218,60 @@ func (s *Service) Loaded(
 
 	steps := make([]agentruntimeports.RunStep, 0, len(rows))
 	for _, row := range rows {
-		steps = append(steps, agentruntimeports.RunStep{
-			OwnerKind:         kernelports.RunStepOwnerKind(row.OwnerKind),
-			OwnerID:           row.OwnerID,
-			Attempt:           row.Attempt,
-			Kind:              agentruntimeports.RunStepKind(row.Kind),
-			Status:            agentruntimeports.RunStepStatus(row.Status),
-			Key:               row.StepKey,
-			ToolName:          row.ToolName,
-			CallID:            row.CallID,
-			Args:              row.Arguments,
-			Outcome:           decodeOutcome(s.l, row),
-			TraceID:           row.TraceID,
-			SpanID:            row.SpanID,
-			DefinitionID:      row.AgentDefinitionID,
-			DefinitionVersion: intutils.ClonePointer(row.AgentDefinitionVersion),
-			DelegateCallID:    row.DelegateCallID,
-		})
+		steps = append(steps, toStep(s.l, row))
 	}
 
 	return steps, nil
+}
+
+func (s *Service) Find(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+	owner agentruntimeports.RunStepOwner,
+	key string,
+) (agentruntimeports.RunStep, bool, error) {
+	row, err := s.repo.Get(ctx, &agentruntimeports.GetAgentRunStepRequest{
+		TenantInfo: tenant,
+		OwnerID:    owner.ID,
+		StepKey:    key,
+	})
+	if errortypes.IsNotFoundError(err) {
+		return agentruntimeports.RunStep{}, false, nil
+	}
+	if err != nil {
+		return agentruntimeports.RunStep{}, false, fmt.Errorf("find run step: %w", err)
+	}
+	if row == nil || row.OwnerKind != string(owner.Kind) {
+		return agentruntimeports.RunStep{}, false, nil
+	}
+
+	return toStep(s.l, row), true, nil
+}
+
+func toStep(logger *zap.Logger, row *agentrunstep.AgentRunStep) agentruntimeports.RunStep {
+	return agentruntimeports.RunStep{
+		OwnerKind:         kernelports.RunStepOwnerKind(row.OwnerKind),
+		OwnerID:           row.OwnerID,
+		Attempt:           row.Attempt,
+		Kind:              agentruntimeports.RunStepKind(row.Kind),
+		Status:            agentruntimeports.RunStepStatus(row.Status),
+		Key:               row.StepKey,
+		ToolName:          row.ToolName,
+		CallID:            row.CallID,
+		Args:              row.Arguments,
+		Outcome:           decodeOutcome(logger, row),
+		TraceID:           row.TraceID,
+		SpanID:            row.SpanID,
+		DefinitionID:      row.AgentDefinitionID,
+		DefinitionVersion: intutils.ClonePointer(row.AgentDefinitionVersion),
+		DelegateCallID:    row.DelegateCallID,
+	}
+}
+
+func replyFits(reply *agentruntimeports.RunStepReply) bool {
+	encoded, err := sonic.Marshal(reply)
+
+	return err == nil && len(encoded) <= maxStoredOutcomeChars
 }
 
 func toEntity(

@@ -131,6 +131,20 @@ func (l *syncLedger) Record(
 	return nil
 }
 
+func (l *syncLedger) Find(
+	_ context.Context,
+	_ pagination.TenantInfo,
+	_ agentruntimeports.RunStepOwner,
+	key string,
+) (agentruntimeports.RunStep, bool, error) {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+
+	step, found := l.steps[key]
+
+	return step, found, nil
+}
+
 func (l *syncLedger) Loaded(
 	context.Context,
 	pagination.TenantInfo,

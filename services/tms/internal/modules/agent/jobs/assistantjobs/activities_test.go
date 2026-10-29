@@ -133,6 +133,20 @@ func (l *ledger) Record(context.Context, pagination.TenantInfo, *agentruntimepor
 	return nil
 }
 
+func (l *ledger) Find(
+	_ context.Context,
+	_ pagination.TenantInfo,
+	_ agentruntimeports.RunStepOwner,
+	key string,
+) (agentruntimeports.RunStep, bool, error) {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+
+	step, found := l.steps[key]
+
+	return step, found, nil
+}
+
 func (l *ledger) Loaded(
 	context.Context,
 	pagination.TenantInfo,

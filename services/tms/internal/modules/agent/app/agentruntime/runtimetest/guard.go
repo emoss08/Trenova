@@ -62,6 +62,17 @@ func (l *KeyedLedger) Record(
 	return nil
 }
 
+func (l *KeyedLedger) Find(
+	_ context.Context,
+	_ pagination.TenantInfo,
+	_ agentruntimeports.RunStepOwner,
+	key string,
+) (agentruntimeports.RunStep, bool, error) {
+	step, found := l.Steps[key]
+
+	return step, found, nil
+}
+
 func (l *KeyedLedger) Loaded(
 	context.Context,
 	pagination.TenantInfo,

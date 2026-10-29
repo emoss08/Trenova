@@ -8,6 +8,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrunstep"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -20,6 +22,7 @@ type fakeStepRepo struct {
 	settled  []agentruntimeports.SettleAgentRunStepRequest
 	recorded []*agentrunstep.AgentRunStep
 	rows     []*agentrunstep.AgentRunStep
+	getErr   error
 }
 
 func (f *fakeStepRepo) Claim(
@@ -54,10 +57,19 @@ func (f *fakeStepRepo) List(
 }
 
 func (f *fakeStepRepo) Get(
-	context.Context,
-	*agentruntimeports.GetAgentRunStepRequest,
+	_ context.Context,
+	req *agentruntimeports.GetAgentRunStepRequest,
 ) (*agentrunstep.AgentRunStep, error) {
-	return nil, errors.New("not used")
+	if f.getErr != nil {
+		return nil, f.getErr
+	}
+	for _, row := range f.rows {
+		if row.OwnerID == req.OwnerID && row.StepKey == req.StepKey {
+			return row, nil
+		}
+	}
+
+	return nil, errortypes.NewNotFoundError("AgentRunStep not found within your organization")
 }
 
 func (f *fakeStepRepo) Prune(
@@ -328,4 +340,114 @@ func TestSettle_StoresTheOutcomeAndReadsItBack(t *testing.T) {
 	require.Len(t, steps, 1)
 	assert.Equal(t, agentruntimeports.RunStepCompleted, steps[0].Status)
 	assert.Equal(t, outcome, steps[0].Outcome)
+}
+
+func modelReplyStep(owner pulid.ID, text string) *agentruntimeports.RunStep {
+	return &agentruntimeports.RunStep{
+		OwnerKind: agentruntimeports.RunStepOwnerAssistantTurn,
+		OwnerID:   owner,
+		Kind:      agentruntimeports.RunStepCompletion,
+		Status:    agentruntimeports.RunStepCompleted,
+		Key:       "completion:reply-1",
+		Outcome: agentruntimeports.RunStepOutcome{
+			Reply: &agentruntimeports.RunStepReply{
+				Completion: &llmports.ChatCompletionResult{
+					Text: text,
+					ToolCalls: []llmports.ToolCall{{
+						ID:        "call_1",
+						Name:      "shipment_get",
+						Arguments: map[string]any{"proNumber": "12345"},
+					}},
+					ModelIdentifier: "test-model",
+					InputTokens:     1200,
+					OutputTokens:    40,
+				},
+				Usage: &agentruntimeports.RunUsage{
+					ModelCalls:   1,
+					InputTokens:  1200,
+					OutputTokens: 40,
+				},
+			},
+		},
+	}
+}
+
+func TestFind_ReadsAKeptModelReplyBackWhole(t *testing.T) {
+	t.Parallel()
+
+	repo := &fakeStepRepo{}
+	ledger := New(Params{Logger: zap.NewNop(), Repo: repo})
+	owner := pulid.MustNew("atrn_")
+	step := modelReplyStep(owner, "Looking it up.")
+
+	require.NoError(t, ledger.Record(t.Context(), pagination.TenantInfo{}, step))
+	repo.rows = repo.recorded
+
+	found, ok, err := ledger.Find(t.Context(), pagination.TenantInfo{}, agentruntimeports.RunStepOwner{
+		Kind: agentruntimeports.RunStepOwnerAssistantTurn,
+		ID:   owner,
+	}, step.Key)
+	require.NoError(t, err)
+	require.True(t, ok)
+	assert.Equal(t, agentruntimeports.RunStepCompletion, found.Kind)
+	assert.Equal(t, agentruntimeports.RunStepCompleted, found.Status)
+	require.NotNil(t, found.Outcome.Reply)
+	assert.Equal(t, step.Outcome.Reply.Completion.Text, found.Outcome.Reply.Completion.Text)
+	assert.Equal(t, step.Outcome.Reply.Completion.ToolCalls, found.Outcome.Reply.Completion.ToolCalls)
+	assert.Equal(t, step.Outcome.Reply.Usage, found.Outcome.Reply.Usage)
+}
+
+func TestFind_ReportsAKeyNobodyHolds(t *testing.T) {
+	t.Parallel()
+
+	ledger := New(Params{Logger: zap.NewNop(), Repo: &fakeStepRepo{}})
+
+	_, ok, err := ledger.Find(t.Context(), pagination.TenantInfo{}, agentruntimeports.RunStepOwner{
+		Kind: agentruntimeports.RunStepOwnerAgentRun,
+		ID:   pulid.MustNew("ar_"),
+	}, "completion:missing")
+	require.NoError(t, err)
+	assert.False(t, ok)
+}
+
+func TestFind_ReportsAFailedRead(t *testing.T) {
+	t.Parallel()
+
+	ledger := New(Params{
+		Logger: zap.NewNop(),
+		Repo:   &fakeStepRepo{getErr: errors.New("connection reset")},
+	})
+
+	_, ok, err := ledger.Find(t.Context(), pagination.TenantInfo{}, agentruntimeports.RunStepOwner{
+		Kind: agentruntimeports.RunStepOwnerAgentRun,
+		ID:   pulid.MustNew("ar_"),
+	}, "completion:any")
+	require.Error(t, err)
+	assert.False(t, ok)
+}
+
+func TestRecord_DropsAModelReplyTooLargeToKeep(t *testing.T) {
+	t.Parallel()
+
+	repo := &fakeStepRepo{}
+	ledger := New(Params{Logger: zap.NewNop(), Repo: repo})
+	owner := pulid.MustNew("atrn_")
+	step := modelReplyStep(owner, strings.Repeat("x", maxStoredOutcomeChars+1))
+
+	require.NoError(t, ledger.Record(t.Context(), pagination.TenantInfo{}, step))
+
+	require.Len(t, repo.recorded, 1)
+	row := repo.recorded[0]
+	assert.Equal(t, string(agentruntimeports.RunStepCompleted), row.Status,
+		"the model turn is still on record")
+	assert.NotContains(t, row.Outcome, "reply", "a reply is kept whole or not at all")
+
+	repo.rows = repo.recorded
+	found, ok, err := ledger.Find(t.Context(), pagination.TenantInfo{}, agentruntimeports.RunStepOwner{
+		Kind: agentruntimeports.RunStepOwnerAssistantTurn,
+		ID:   owner,
+	}, step.Key)
+	require.NoError(t, err)
+	require.True(t, ok)
+	assert.Nil(t, found.Outcome.Reply, "a replay finds nothing to hand back and asks the model")
 }
