@@ -463,7 +463,7 @@ func agreementPrices(
 
 	priced, err := shipmentrating.PriceAgreementAccessorials(
 		ctx,
-		shp.AccessorialMeasures(),
+		shipmentrating.AccessorialMeasures(shp),
 		accessorials,
 		shp.FreightChargeAmount.Decimal,
 	)

@@ -79,7 +79,7 @@ func (c *Calculator) syncAgreementAccessorials(
 	applicable := applicableAccessorials(contract, entity, ratingDate(entity, c.now), pass)
 	charges, err := shipmentrating.PriceAgreementAccessorials(
 		ctx,
-		entity.AccessorialMeasures(),
+		shipmentrating.AccessorialMeasures(entity),
 		applicable,
 		freightOf(entity),
 	)

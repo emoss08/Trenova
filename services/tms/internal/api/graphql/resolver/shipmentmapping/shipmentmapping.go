@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/tariffmapping"
 	shipmentdomain "github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentrating"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/shopspring/decimal"
 )
@@ -335,7 +336,7 @@ func ratingDetailToModel(
 		RuleLabel:           detail.RuleLabel,
 		Source:              detail.Source,
 		Explanation:         detail.Explanation,
-		AwaitingReview:      detail.AwaitsReview(),
+		AwaitingReview:      shipmentrating.DetailAwaitsReview(detail),
 		ReviewApproval:      ratingReviewApprovalToModel(detail.ReviewApproval),
 	}, nil
 }

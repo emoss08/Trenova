@@ -1583,7 +1583,7 @@ queue update permission, refused to agents, audited on the shipment), which stor
 `RatingReviewApproval` naming the reviews it approved. A re-rate keeps the approval while the
 reviews are the same, holds again when they change and clears the hold when there are none.
 While held, approving the queue item (by hand, in bulk or automatically), every invoice path
-and invoice runs refuse (`shipment.RatingReviewHoldError`), and the queue item carries a
+and invoice runs refuse (`shipmentrating.ReviewHoldError`), and the queue item carries a
 `ratingReviewHold` and a `RatingAwaitingReview` check, as detention holds do.
 
 **The resolver.** `TemplateResolver.ResolveBilling` (the `tariffports.Resolver` rating calls)

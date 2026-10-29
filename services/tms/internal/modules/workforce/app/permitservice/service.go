@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentenvelope"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentholdports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/places/domain/jurisdictionrule"
@@ -190,7 +191,7 @@ func (s *service) resolveRules(
 }
 
 func measurementsFor(entity *shipment.Shipment) jurisdictionrule.Measurements {
-	envelope := entity.CurrentEnvelope()
+	envelope := shipmentenvelope.Of(entity)
 
 	m := jurisdictionrule.Measurements{
 		WidthFeet:  envelope.WidthFeet,
@@ -296,7 +297,7 @@ func (s *service) Assess(
 		WeightPounds: measurements.WeightPounds,
 	}
 
-	if !entity.HasEnvelope() {
+	if !shipmentenvelope.Present(entity) {
 		return assessment, nil
 	}
 

@@ -28,6 +28,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/chargeallocation"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentrating"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/chargeallocationports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
@@ -270,7 +271,7 @@ func (s *Service) guardRatingReview(
 		entity = loaded
 	}
 
-	return shipment.RatingReviewHoldError([]*shipment.Shipment{entity})
+	return shipmentrating.ReviewHoldError([]*shipment.Shipment{entity})
 }
 
 func (s *Service) expandShipmentDetails(

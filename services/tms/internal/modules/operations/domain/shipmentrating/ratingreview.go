@@ -1,20 +1,15 @@
-package shipment
+package shipmentrating
 
 import (
 	"slices"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
-type RatingReviewApproval struct {
-	Reviews      []string `json:"reviews"`
-	ApprovedByID pulid.ID `json:"approvedById"`
-	ApprovedAt   int64    `json:"approvedAt"`
-}
-
-func (a *RatingReviewApproval) Covers(reasons []string) bool {
+func ApprovalCovers(a *shipment.RatingReviewApproval, reasons []string) bool {
 	if a == nil || len(a.Reviews) != len(reasons) {
 		return false
 	}
@@ -25,7 +20,7 @@ func (a *RatingReviewApproval) Covers(reasons []string) bool {
 	return slices.Equal(approved, pending)
 }
 
-func (d *RatingDetail) ReviewReasons() []string {
+func ReviewReasons(d *shipment.RatingDetail) []string {
 	if d == nil || d.Bill == nil || len(d.Bill.Reviews) == 0 {
 		return nil
 	}
@@ -38,12 +33,12 @@ func (d *RatingDetail) ReviewReasons() []string {
 	return out
 }
 
-func (d *RatingDetail) AwaitsReview() bool {
-	reasons := d.ReviewReasons()
-	return len(reasons) > 0 && !d.ReviewApproval.Covers(reasons)
+func DetailAwaitsReview(d *shipment.RatingDetail) bool {
+	reasons := ReviewReasons(d)
+	return len(reasons) > 0 && !ApprovalCovers(d.ReviewApproval, reasons)
 }
 
-func (d *RatingDetail) CarryReviewApproval(previous *RatingDetail) {
+func CarryReviewApproval(d, previous *shipment.RatingDetail) {
 	if d == nil {
 		return
 	}
@@ -51,8 +46,8 @@ func (d *RatingDetail) CarryReviewApproval(previous *RatingDetail) {
 	if previous == nil || previous.ReviewApproval == nil {
 		return
 	}
-	reasons := d.ReviewReasons()
-	if len(reasons) == 0 || !previous.ReviewApproval.Covers(reasons) {
+	reasons := ReviewReasons(d)
+	if len(reasons) == 0 || !ApprovalCovers(previous.ReviewApproval, reasons) {
 		return
 	}
 	approval := *previous.ReviewApproval
@@ -60,17 +55,17 @@ func (d *RatingDetail) CarryReviewApproval(previous *RatingDetail) {
 	d.ReviewApproval = &approval
 }
 
-func (d *RatingDetail) ApproveReview(userID pulid.ID, at int64) (bool, error) {
-	reasons := d.ReviewReasons()
+func ApproveReview(d *shipment.RatingDetail, userID pulid.ID, at int64) (bool, error) {
+	reasons := ReviewReasons(d)
 	if len(reasons) == 0 {
 		return false, errortypes.NewBusinessError(
 			"This shipment's rating has nothing waiting for review",
 		)
 	}
-	if d.ReviewApproval.Covers(reasons) {
+	if ApprovalCovers(d.ReviewApproval, reasons) {
 		return false, nil
 	}
-	d.ReviewApproval = &RatingReviewApproval{
+	d.ReviewApproval = &shipment.RatingReviewApproval{
 		Reviews:      reasons,
 		ApprovedByID: userID,
 		ApprovedAt:   at,
@@ -78,15 +73,15 @@ func (d *RatingDetail) ApproveReview(userID pulid.ID, at int64) (bool, error) {
 	return true, nil
 }
 
-func (s *Shipment) AwaitsRatingReview() bool {
-	return s != nil && s.RatingDetail.AwaitsReview()
+func AwaitsReview(s *shipment.Shipment) bool {
+	return s != nil && DetailAwaitsReview(s.RatingDetail)
 }
 
-func RatingReviewHoldError(shipments []*Shipment) error {
+func ReviewHoldError(shipments []*shipment.Shipment) error {
 	held := make([]string, 0, len(shipments))
 	numbers := make([]string, 0, len(shipments))
 	for _, entity := range shipments {
-		if !entity.AwaitsRatingReview() {
+		if !AwaitsReview(entity) {
 			continue
 		}
 		held = append(held, entity.ID.String())

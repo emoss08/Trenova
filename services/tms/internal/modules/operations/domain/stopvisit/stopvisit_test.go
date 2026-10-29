@@ -1,10 +1,11 @@
-package shipment_test
+package stopvisit_test
 
 import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/stopvisit"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 )
@@ -41,8 +42,8 @@ func TestMatchObservedVisit(t *testing.T) {
 		ret := visitStop(3, yard, false, false)
 		move := &shipment.ShipmentMove{Stops: []*shipment.Stop{ret, pickup, first}}
 
-		stop, match := move.MatchObservedVisit(yard, shipmentvocab.VisitArrival)
-		assert.Equal(t, shipment.VisitMatchStop, match)
+		stop, match := stopvisit.MatchObserved(move, yard, shipmentvocab.VisitArrival)
+		assert.Equal(t, stopvisit.MatchStop, match)
 		assert.Equal(t, ret.ID, stop.ID)
 	})
 
@@ -52,8 +53,8 @@ func TestMatchObservedVisit(t *testing.T) {
 		later := visitStop(3, yard, false, false)
 		move := &shipment.ShipmentMove{Stops: []*shipment.Stop{onSite, later}}
 
-		_, match := move.MatchObservedVisit(yard, shipmentvocab.VisitArrival)
-		assert.Equal(t, shipment.VisitMatchDuplicate, match)
+		_, match := stopvisit.MatchObserved(move, yard, shipmentvocab.VisitArrival)
+		assert.Equal(t, stopvisit.MatchDuplicate, match)
 	})
 
 	t.Run("departure matches the stop the truck is at", func(t *testing.T) {
@@ -61,8 +62,8 @@ func TestMatchObservedVisit(t *testing.T) {
 		onSite := visitStop(2, consignee, true, false)
 		move := &shipment.ShipmentMove{Stops: []*shipment.Stop{onSite}}
 
-		stop, match := move.MatchObservedVisit(consignee, shipmentvocab.VisitDeparture)
-		assert.Equal(t, shipment.VisitMatchStop, match)
+		stop, match := stopvisit.MatchObserved(move, consignee, shipmentvocab.VisitDeparture)
+		assert.Equal(t, stopvisit.MatchStop, match)
 		assert.Equal(t, onSite.ID, stop.ID)
 	})
 
@@ -71,8 +72,8 @@ func TestMatchObservedVisit(t *testing.T) {
 		unarrived := visitStop(1, yard, false, false)
 		move := &shipment.ShipmentMove{Stops: []*shipment.Stop{unarrived}}
 
-		stop, match := move.MatchObservedVisit(yard, shipmentvocab.VisitDeparture)
-		assert.Equal(t, shipment.VisitMatchStop, match)
+		stop, match := stopvisit.MatchObserved(move, yard, shipmentvocab.VisitDeparture)
+		assert.Equal(t, stopvisit.MatchStop, match)
 		assert.Equal(t, unarrived.ID, stop.ID)
 	})
 
@@ -81,10 +82,10 @@ func TestMatchObservedVisit(t *testing.T) {
 		done := visitStop(1, shipper, true, true)
 		move := &shipment.ShipmentMove{Stops: []*shipment.Stop{done}}
 
-		_, arrive := move.MatchObservedVisit(shipper, shipmentvocab.VisitArrival)
-		_, depart := move.MatchObservedVisit(shipper, shipmentvocab.VisitDeparture)
-		assert.Equal(t, shipment.VisitMatchDuplicate, arrive)
-		assert.Equal(t, shipment.VisitMatchDuplicate, depart)
+		_, arrive := stopvisit.MatchObserved(move, shipper, shipmentvocab.VisitArrival)
+		_, depart := stopvisit.MatchObserved(move, shipper, shipmentvocab.VisitDeparture)
+		assert.Equal(t, stopvisit.MatchDuplicate, arrive)
+		assert.Equal(t, stopvisit.MatchDuplicate, depart)
 	})
 
 	t.Run("a location not on the move or no location never picks a stop", func(t *testing.T) {
@@ -96,9 +97,9 @@ func TestMatchObservedVisit(t *testing.T) {
 		}
 
 		for _, locationID := range []pulid.ID{elsewhere, pulid.Nil} {
-			stop, match := move.MatchObservedVisit(locationID, shipmentvocab.VisitArrival)
+			stop, match := stopvisit.MatchObserved(move, locationID, shipmentvocab.VisitArrival)
 			assert.Nil(t, stop)
-			assert.Equal(t, shipment.VisitMatchNoStop, match)
+			assert.Equal(t, stopvisit.MatchNoStop, match)
 		}
 	})
 }
@@ -116,7 +117,11 @@ func TestStopForObservedVisit(t *testing.T) {
 		later := visitStop(3, yard, false, false)
 		move := &shipment.ShipmentMove{Stops: []*shipment.Stop{onSite, later}}
 
-		assert.Equal(t, onSite.ID, move.StopForObservedVisit(yard, shipmentvocab.VisitArrival).ID)
+		assert.Equal(
+			t,
+			onSite.ID,
+			stopvisit.StopForObserved(move, yard, shipmentvocab.VisitArrival).ID,
+		)
 	})
 
 	t.Run("a late arrival for a finished stop names that stop", func(t *testing.T) {
@@ -124,11 +129,15 @@ func TestStopForObservedVisit(t *testing.T) {
 		done := visitStop(1, shipper, true, true)
 		move := &shipment.ShipmentMove{Stops: []*shipment.Stop{done}}
 
-		assert.Equal(t, done.ID, move.StopForObservedVisit(shipper, shipmentvocab.VisitArrival).ID)
 		assert.Equal(
 			t,
 			done.ID,
-			move.StopForObservedVisit(shipper, shipmentvocab.VisitDeparture).ID,
+			stopvisit.StopForObserved(move, shipper, shipmentvocab.VisitArrival).ID,
+		)
+		assert.Equal(
+			t,
+			done.ID,
+			stopvisit.StopForObserved(move, shipper, shipmentvocab.VisitDeparture).ID,
 		)
 	})
 
@@ -138,15 +147,19 @@ func TestStopForObservedVisit(t *testing.T) {
 		ret := visitStop(3, yard, false, false)
 		move := &shipment.ShipmentMove{Stops: []*shipment.Stop{first, ret}}
 
-		assert.Equal(t, ret.ID, move.StopForObservedVisit(yard, shipmentvocab.VisitArrival).ID)
+		assert.Equal(
+			t,
+			ret.ID,
+			stopvisit.StopForObserved(move, yard, shipmentvocab.VisitArrival).ID,
+		)
 	})
 
 	t.Run("a place that is not a stop names nothing", func(t *testing.T) {
 		t.Parallel()
 		move := &shipment.ShipmentMove{Stops: []*shipment.Stop{visitStop(1, yard, false, false)}}
 
-		assert.Nil(t, move.StopForObservedVisit(elsewhere, shipmentvocab.VisitArrival))
-		assert.Nil(t, move.StopForObservedVisit(pulid.Nil, shipmentvocab.VisitArrival))
+		assert.Nil(t, stopvisit.StopForObserved(move, elsewhere, shipmentvocab.VisitArrival))
+		assert.Nil(t, stopvisit.StopForObserved(move, pulid.Nil, shipmentvocab.VisitArrival))
 	})
 }
 
@@ -175,7 +188,7 @@ func TestStopForReportedVisit(t *testing.T) {
 		assert.Equal(
 			t,
 			middle.ID,
-			move.StopForReportedVisit(isDelivery, shipmentvocab.VisitArrival).ID,
+			stopvisit.StopForReported(move, isDelivery, shipmentvocab.VisitArrival).ID,
 		)
 	})
 
@@ -189,7 +202,7 @@ func TestStopForReportedVisit(t *testing.T) {
 		assert.Equal(
 			t,
 			onSite.ID,
-			move.StopForReportedVisit(isDelivery, shipmentvocab.VisitDeparture).ID,
+			stopvisit.StopForReported(move, isDelivery, shipmentvocab.VisitDeparture).ID,
 		)
 	})
 
@@ -199,6 +212,6 @@ func TestStopForReportedVisit(t *testing.T) {
 			pickup(visitStop(1, pulid.MustNew("loc_"), false, false)),
 		}}
 
-		assert.Nil(t, move.StopForReportedVisit(isDelivery, shipmentvocab.VisitArrival))
+		assert.Nil(t, stopvisit.StopForReported(move, isDelivery, shipmentvocab.VisitArrival))
 	})
 }

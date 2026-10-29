@@ -1,9 +1,10 @@
-package shipment_test
+package shipmentrating_test
 
 import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentrating"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/commodity"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/hazardousmaterial"
@@ -45,30 +46,30 @@ func TestShipment_OrderedStopsFollowMoveThenStopSequence(t *testing.T) {
 		nil,
 	}}
 
-	assert.Equal(t, []*shipment.Stop{p1, d1, d2, p2, d3}, entity.OrderedStops())
-	assert.Equal(t, []*shipment.Stop{p1, d2, p2, d3}, entity.RatedStops())
-	assert.Equal(t, 4, entity.RatedStopCount())
-	assert.Nil(t, (*shipment.Shipment)(nil).OrderedStops())
-	assert.Zero(t, (*shipment.Shipment)(nil).RatedStopCount())
+	assert.Equal(t, []*shipment.Stop{p1, d1, d2, p2, d3}, shipmentrating.OrderedStops(entity))
+	assert.Equal(t, []*shipment.Stop{p1, d2, p2, d3}, shipmentrating.RatedStops(entity))
+	assert.Equal(t, 4, shipmentrating.RatedStopCount(entity))
+	assert.Nil(t, shipmentrating.OrderedStops((*shipment.Shipment)(nil)))
+	assert.Zero(t, shipmentrating.RatedStopCount((*shipment.Shipment)(nil)))
 }
 
 func TestShipment_RatingWeightAndPiecesPreferTheCommodityLines(t *testing.T) {
 	t.Parallel()
 
 	entity := &shipment.Shipment{Weight: int64Ptr(5_000), Pieces: int64Ptr(40)}
-	assert.True(t, decimal.NewFromInt(5_000).Equal(entity.RatingWeight()))
-	assert.EqualValues(t, 40, entity.RatingPieces())
+	assert.True(t, decimal.NewFromInt(5_000).Equal(shipmentrating.Weight(entity)))
+	assert.EqualValues(t, 40, shipmentrating.Pieces(entity))
 
 	entity.Commodities = []*shipment.ShipmentCommodity{
 		{Weight: 1_200, Pieces: 6},
 		nil,
 		{Weight: 1_360, Pieces: 4},
 	}
-	assert.True(t, decimal.NewFromInt(2_560).Equal(entity.RatingWeight()))
-	assert.EqualValues(t, 10, entity.RatingPieces())
+	assert.True(t, decimal.NewFromInt(2_560).Equal(shipmentrating.Weight(entity)))
+	assert.EqualValues(t, 10, shipmentrating.Pieces(entity))
 
-	assert.True(t, (&shipment.Shipment{}).RatingWeight().IsZero())
-	assert.Zero(t, (&shipment.Shipment{}).RatingPieces())
+	assert.True(t, shipmentrating.Weight(&shipment.Shipment{}).IsZero())
+	assert.Zero(t, shipmentrating.Pieces(&shipment.Shipment{}))
 }
 
 func TestShipment_RatingCubicFeetPrefersTheEnvelope(t *testing.T) {
@@ -95,18 +96,18 @@ func TestShipment_RatingCubicFeetPrefersTheEnvelope(t *testing.T) {
 	}
 	entity := &shipment.Shipment{Commodities: lines}
 
-	assert.True(t, decimal.NewFromInt(184).Equal(entity.RatingCubicFeet()),
-		entity.RatingCubicFeet().String())
-	density, ok := entity.RatingDensity()
+	assert.True(t, decimal.NewFromInt(184).Equal(shipmentrating.CubicFeet(entity)),
+		shipmentrating.CubicFeet(entity).String())
+	density, ok := shipmentrating.Density(entity)
 	require.True(t, ok)
 	assert.Equal(t, "4.8913", density.Round(4).String())
 
 	entity.EnvelopeLengthFeet = floatPtr(10)
 	entity.EnvelopeWidthFeet = floatPtr(8)
 	entity.EnvelopeHeightFeet = floatPtr(9)
-	assert.True(t, decimal.NewFromInt(720).Equal(entity.RatingCubicFeet()))
+	assert.True(t, decimal.NewFromInt(720).Equal(shipmentrating.CubicFeet(entity)))
 
-	_, ok = (&shipment.Shipment{}).RatingDensity()
+	_, ok = shipmentrating.Density(&shipment.Shipment{})
 	assert.False(t, ok)
 }
 
@@ -127,9 +128,9 @@ func TestShipment_HasHazardousMaterialByIDOrRecord(t *testing.T) {
 		{Commodity: &commodity.Commodity{}}, {}, nil,
 	}}
 
-	assert.True(t, byID.HasHazardousMaterial())
-	assert.True(t, byRecord.HasHazardousMaterial())
-	assert.False(t, none.HasHazardousMaterial())
+	assert.True(t, shipmentrating.HasHazardousMaterial(byID))
+	assert.True(t, shipmentrating.HasHazardousMaterial(byRecord))
+	assert.False(t, shipmentrating.HasHazardousMaterial(none))
 }
 
 func TestShipment_FreightClasses(t *testing.T) {
@@ -151,26 +152,26 @@ func TestShipment_FreightClasses(t *testing.T) {
 
 	assert.Equal(t, []commodity.FreightClass{
 		commodity.FreightClass85, commodity.FreightClass100, commodity.FreightClass92_5,
-	}, entity.FreightClasses())
-	assert.Equal(t, commodity.FreightClass100, entity.PrimaryFreightClass())
-	assert.Equal(t, commodity.FreightClass100, entity.HighestFreightClass())
-	assert.Empty(t, (&shipment.Shipment{}).HighestFreightClass())
+	}, shipmentrating.FreightClasses(entity))
+	assert.Equal(t, commodity.FreightClass100, shipmentrating.PrimaryFreightClass(entity))
+	assert.Equal(t, commodity.FreightClass100, shipmentrating.HighestFreightClass(entity))
+	assert.Empty(t, shipmentrating.HighestFreightClass(&shipment.Shipment{}))
 }
 
 func TestShipment_RatingAsOfPrefersTheShipDateThenEntry(t *testing.T) {
 	t.Parallel()
 
 	const now int64 = 1_800_000_000
-	assert.Equal(t, now, (*shipment.Shipment)(nil).RatingAsOf(now))
-	assert.Equal(t, now, (&shipment.Shipment{}).RatingAsOf(now))
+	assert.Equal(t, now, shipmentrating.AsOf((*shipment.Shipment)(nil), now))
+	assert.Equal(t, now, shipmentrating.AsOf(&shipment.Shipment{}, now))
 	assert.Equal(t, int64(1_700_000_000),
-		(&shipment.Shipment{CreatedAt: 1_700_000_000}).RatingAsOf(now))
-	assert.Equal(t, int64(1_750_000_000), (&shipment.Shipment{
+		shipmentrating.AsOf(&shipment.Shipment{CreatedAt: 1_700_000_000}, now))
+	assert.Equal(t, int64(1_750_000_000), shipmentrating.AsOf(&shipment.Shipment{
 		CreatedAt:      1_700_000_000,
 		ActualShipDate: int64Ptr(1_750_000_000),
-	}).RatingAsOf(now))
-	assert.Equal(t, int64(1_700_000_000), (&shipment.Shipment{
+	}, now))
+	assert.Equal(t, int64(1_700_000_000), shipmentrating.AsOf(&shipment.Shipment{
 		CreatedAt:      1_700_000_000,
 		ActualShipDate: int64Ptr(0),
-	}).RatingAsOf(now))
+	}, now))
 }

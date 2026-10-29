@@ -259,7 +259,7 @@ func contractAccessorials(
 
 	priced, err := shipmentrating.PriceAgreementAccessorials(
 		ctx,
-		parts.entity.AccessorialMeasures(),
+		shipmentrating.AccessorialMeasures(parts.entity),
 		applicable,
 		parts.rated.Amount,
 	)

@@ -118,7 +118,9 @@ func (c *Calculator) applyBill(
 	pass *ratingPass,
 ) error {
 	if own == nil {
-		entity.SetFreightLines(entity.ManualFreightLines(i18n.T(ctx, "Freight charge")))
+		entity.SetFreightLines(
+			shipmentrating.ManualFreightLines(entity, i18n.T(ctx, "Freight charge")),
+		)
 		removeTariffCharges(entity)
 		return nil
 	}

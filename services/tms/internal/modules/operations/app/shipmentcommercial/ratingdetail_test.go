@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentrating"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratequote"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratequoteports"
 	"github.com/emoss08/trenova/pkg/ratetypes"
@@ -84,7 +85,7 @@ func reviewedRating(reviews ...string) *ratequoteports.RatedShipment {
 
 func approvedDetail(reviews ...string) *shipment.RatingDetail {
 	detail := ratingDetailFromQuote(reviewedRating(reviews...))
-	changed, err := detail.ApproveReview(pulid.MustNew("usr_"), 1_790_000_000)
+	changed, err := shipmentrating.ApproveReview(detail, pulid.MustNew("usr_"), 1_790_000_000)
 	if err != nil || !changed {
 		panic("the fixture rating must be approvable")
 	}
@@ -99,8 +100,8 @@ func TestRatingDetail_HoldsANewlyReviewedRating(t *testing.T) {
 
 	detail := calc.ratingDetail(entity, reviewedRating("Liftgate on a dock"), &ratingPass{})
 
-	assert.Equal(t, []string{"Liftgate on a dock"}, detail.ReviewReasons())
-	assert.True(t, detail.AwaitsReview())
+	assert.Equal(t, []string{"Liftgate on a dock"}, shipmentrating.ReviewReasons(detail))
+	assert.True(t, shipmentrating.DetailAwaitsReview(detail))
 	assert.Nil(t, detail.ReviewApproval)
 }
 
@@ -119,7 +120,7 @@ func TestRatingDetail_KeepsTheApprovalWhileTheReviewsAreTheSame(t *testing.T) {
 
 	require.NotNil(t, detail.ReviewApproval)
 	assert.Equal(t, previous.ReviewApproval.ApprovedByID, detail.ReviewApproval.ApprovedByID)
-	assert.False(t, detail.AwaitsReview())
+	assert.False(t, shipmentrating.DetailAwaitsReview(detail))
 }
 
 func TestRatingDetail_HoldsAgainWhenTheReviewsChange(t *testing.T) {
@@ -135,7 +136,7 @@ func TestRatingDetail_HoldsAgainWhenTheReviewsChange(t *testing.T) {
 	)
 
 	assert.Nil(t, detail.ReviewApproval)
-	assert.True(t, detail.AwaitsReview())
+	assert.True(t, shipmentrating.DetailAwaitsReview(detail))
 }
 
 func TestRatingDetail_ClearsTheHoldWhenARerateHasNoReviews(t *testing.T) {
@@ -147,9 +148,9 @@ func TestRatingDetail_ClearsTheHoldWhenARerateHasNoReviews(t *testing.T) {
 
 	detail := calc.ratingDetail(entity, reviewedRating(), &ratingPass{})
 
-	assert.Empty(t, detail.ReviewReasons())
+	assert.Empty(t, shipmentrating.ReviewReasons(detail))
 	assert.Nil(t, detail.ReviewApproval)
-	assert.False(t, detail.AwaitsReview())
+	assert.False(t, shipmentrating.DetailAwaitsReview(detail))
 }
 
 func TestApplyQuote_CarriesTheApprovalOfTheSameReviews(t *testing.T) {
@@ -159,10 +160,10 @@ func TestApplyQuote_CarriesTheApprovalOfTheSameReviews(t *testing.T) {
 	entity := &shipment.Shipment{RatingDetail: approvedDetail("Holiday pickup")}
 
 	calc.applyQuote(entity, reviewedRating("Holiday pickup"))
-	assert.False(t, entity.AwaitsRatingReview())
+	assert.False(t, shipmentrating.AwaitsReview(entity))
 
 	calc.applyQuote(entity, reviewedRating("Detention over 4 hours"))
-	assert.True(t, entity.AwaitsRatingReview())
+	assert.True(t, shipmentrating.AwaitsReview(entity))
 }
 
 func TestRatingDetail_KeepsALockedRatesApproval(t *testing.T) {
@@ -175,5 +176,5 @@ func TestRatingDetail_KeepsALockedRatesApproval(t *testing.T) {
 	detail := calc.ratingDetail(entity, reviewedRating("Other"), &ratingPass{})
 
 	assert.Same(t, previous, detail)
-	assert.False(t, detail.AwaitsReview())
+	assert.False(t, shipmentrating.DetailAwaitsReview(detail))
 }

@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentrating"
 	"github.com/emoss08/trenova/pkg/tarifftypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -52,7 +53,7 @@ func TestNewRatingReviewHold_HoldsNothingWhenNothingBills(t *testing.T) {
 	t.Parallel()
 
 	approved := reviewedItem("Holiday pickup")
-	_, err := approved.Shipment.RatingDetail.ApproveReview(pulid.MustNew("usr_"), 1)
+	_, err := shipmentrating.ApproveReview(approved.Shipment.RatingDetail, pulid.MustNew("usr_"), 1)
 	require.NoError(t, err)
 
 	credit := reviewedItem("Holiday pickup")

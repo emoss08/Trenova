@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmenttimeline"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentnormalize"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/assignmentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
@@ -242,8 +243,8 @@ func (v *Validator) ValidateCreateWithAdvisories(
 	ctx context.Context,
 	entity *shipment.Shipment,
 ) (*errortypes.MultiError, []*errortypes.AdvisoryError) {
-	entity.ApplyEntryMethodDefault(nil)
-	entity.ApplyFreightTermsDefault(nil)
+	shipmentnormalize.EntryMethod(entity, nil)
+	shipmentnormalize.FreightTerms(entity, nil)
 
 	base := v.validator.ValidateCreate(ctx, entity)
 	timeline := shipmenttimeline.ValidateResourceActualTimeline(
@@ -261,8 +262,8 @@ func (v *Validator) ValidateUpdate(
 	ctx context.Context,
 	entity *shipment.Shipment,
 ) *errortypes.MultiError {
-	entity.ApplyEntryMethodDefault(nil)
-	entity.ApplyFreightTermsDefault(nil)
+	shipmentnormalize.EntryMethod(entity, nil)
+	shipmentnormalize.FreightTerms(entity, nil)
 
 	return errortypes.MergeMultiErrors(
 		v.validator.ValidateUpdate(ctx, entity),
@@ -284,8 +285,8 @@ func (v *Validator) ValidateUpdateWithOriginalAndAdvisories(
 	original *shipment.Shipment,
 	entity *shipment.Shipment,
 ) (*errortypes.MultiError, []*errortypes.AdvisoryError) {
-	entity.ApplyEntryMethodDefault(original)
-	entity.ApplyFreightTermsDefault(original)
+	shipmentnormalize.EntryMethod(entity, original)
+	shipmentnormalize.FreightTerms(entity, original)
 
 	base := v.validator.ValidateUpdate(ctx, entity)
 	timeline := shipmenttimeline.ValidateResourceActualTimeline(

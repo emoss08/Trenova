@@ -611,14 +611,17 @@ modules:
       - servicefailure
       - shipment
       - shipmentcoverage
+      - shipmentenvelope
       - shipmentevent
       - shipmentformula
       - shipmenthold
+      - shipmentnormalize
       - shipmentrating
       - shipmentstate
       - shipmentsuggestion
       - shipmentvocab
       - stopeta
+      - stopvisit
       - tender
       - trackingevent
       - weatheralert

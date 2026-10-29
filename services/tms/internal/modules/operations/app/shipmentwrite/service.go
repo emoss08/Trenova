@@ -25,6 +25,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmenteventservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentvalidator"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentnormalize"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentrating"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentstate"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
@@ -150,9 +151,9 @@ func (s *Service) prepareCreate(
 		return nil, err
 	}
 
-	entity.ApplyEntryMethodDefault(nil)
-	entity.ApplyFreightTermsDefault(nil)
-	entity.NormalizeBillTo()
+	shipmentnormalize.EntryMethod(entity, nil)
+	shipmentnormalize.FreightTerms(entity, nil)
+	shipmentnormalize.BillTo(entity)
 
 	if multiErr := s.coordinator.PrepareForCreateWithDelayThreshold(
 		entity,
@@ -483,10 +484,10 @@ func (s *Service) Update( //nolint:cyclop // legacy workflow
 		return nil, err
 	}
 
-	entity.ApplyEntryMethodDefault(original)
-	entity.ApplyFreightTermsDefault(original)
-	shipment.FollowCustomerChange(original, entity)
-	entity.NormalizeBillTo()
+	shipmentnormalize.EntryMethod(entity, original)
+	shipmentnormalize.FreightTerms(entity, original)
+	shipmentnormalize.FollowCustomerChange(original, entity)
+	shipmentnormalize.BillTo(entity)
 	entity.PreviousCustomerID = original.CustomerID
 	if err = s.effects.RefuseCreditHold(ctx, entity, original); err != nil {
 		return nil, err

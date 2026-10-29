@@ -1,9 +1,10 @@
-package shipment
+package shipmentrating
 
 import (
 	"errors"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/tarifftypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -11,42 +12,42 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func reviewed(texts ...string) *RatingDetail {
+func reviewed(texts ...string) *shipment.RatingDetail {
 	bill := &tarifftypes.Bill{Currency: "USD"}
 	for _, text := range texts {
 		bill.Reviews = append(bill.Reviews, tarifftypes.Note{Text: text})
 	}
-	return &RatingDetail{Bill: bill}
+	return &shipment.RatingDetail{Bill: bill}
 }
 
 func TestRatingDetail_ReviewReasonsSkipBlankText(t *testing.T) {
 	t.Parallel()
 
-	assert.Equal(t, []string{"Holiday pickup"}, reviewed(" ", "Holiday pickup ").ReviewReasons())
-	assert.Empty(t, (&RatingDetail{}).ReviewReasons())
-	assert.Empty(t, (*RatingDetail)(nil).ReviewReasons())
-	assert.False(t, reviewed(" ").AwaitsReview())
+	assert.Equal(t, []string{"Holiday pickup"}, ReviewReasons(reviewed(" ", "Holiday pickup ")))
+	assert.Empty(t, ReviewReasons(&shipment.RatingDetail{}))
+	assert.Empty(t, ReviewReasons((*shipment.RatingDetail)(nil)))
+	assert.False(t, DetailAwaitsReview(reviewed(" ")))
 }
 
 func TestRatingDetail_ApproveReviewSettlesTheHold(t *testing.T) {
 	t.Parallel()
 
 	detail := reviewed("Holiday pickup", "Liftgate on a dock")
-	require.True(t, detail.AwaitsReview())
+	require.True(t, DetailAwaitsReview(detail))
 	approver := pulid.MustNew("usr_")
 
-	changed, err := detail.ApproveReview(approver, 1_800_000_000)
+	changed, err := ApproveReview(detail, approver, 1_800_000_000)
 	require.NoError(t, err)
 
 	assert.True(t, changed)
-	assert.False(t, detail.AwaitsReview())
-	assert.Equal(t, &RatingReviewApproval{
+	assert.False(t, DetailAwaitsReview(detail))
+	assert.Equal(t, &shipment.RatingReviewApproval{
 		Reviews:      []string{"Holiday pickup", "Liftgate on a dock"},
 		ApprovedByID: approver,
 		ApprovedAt:   1_800_000_000,
 	}, detail.ReviewApproval)
 
-	again, err := detail.ApproveReview(pulid.MustNew("usr_"), 1_900_000_000)
+	again, err := ApproveReview(detail, pulid.MustNew("usr_"), 1_900_000_000)
 	require.NoError(t, err)
 	assert.False(t, again, "approving twice changes nothing")
 	assert.Equal(t, approver, detail.ReviewApproval.ApprovedByID)
@@ -55,8 +56,8 @@ func TestRatingDetail_ApproveReviewSettlesTheHold(t *testing.T) {
 func TestRatingDetail_ApproveReviewRefusesARatingWithNothingToReview(t *testing.T) {
 	t.Parallel()
 
-	for _, detail := range []*RatingDetail{nil, {}, reviewed()} {
-		changed, err := detail.ApproveReview(pulid.MustNew("usr_"), 1)
+	for _, detail := range []*shipment.RatingDetail{nil, {}, reviewed()} {
+		changed, err := ApproveReview(detail, pulid.MustNew("usr_"), 1)
 		assert.False(t, changed)
 		var business *errortypes.BusinessError
 		assert.True(t, errors.As(err, &business), "%v", err)
@@ -67,47 +68,55 @@ func TestRatingDetail_CarryReviewApprovalOnlyForTheSameReasons(t *testing.T) {
 	t.Parallel()
 
 	previous := reviewed("A", "B")
-	_, err := previous.ApproveReview(pulid.MustNew("usr_"), 1)
+	_, err := ApproveReview(previous, pulid.MustNew("usr_"), 1)
 	require.NoError(t, err)
 
 	same := reviewed("B", "A")
-	same.CarryReviewApproval(previous)
-	assert.False(t, same.AwaitsReview())
+	CarryReviewApproval(same, previous)
+	assert.False(t, DetailAwaitsReview(same))
 	require.NotNil(t, same.ReviewApproval)
 	assert.NotSame(t, previous.ReviewApproval, same.ReviewApproval)
 
 	changed := reviewed("A", "C")
-	changed.CarryReviewApproval(previous)
+	CarryReviewApproval(changed, previous)
 	assert.Nil(t, changed.ReviewApproval)
-	assert.True(t, changed.AwaitsReview())
+	assert.True(t, DetailAwaitsReview(changed))
 
 	fewer := reviewed("A")
-	fewer.CarryReviewApproval(previous)
-	assert.True(t, fewer.AwaitsReview())
+	CarryReviewApproval(fewer, previous)
+	assert.True(t, DetailAwaitsReview(fewer))
 
 	none := reviewed()
-	none.CarryReviewApproval(previous)
+	CarryReviewApproval(none, previous)
 	assert.Nil(t, none.ReviewApproval)
 
 	unapproved := reviewed("A", "B")
-	unapproved.CarryReviewApproval(reviewed("A", "B"))
-	assert.True(t, unapproved.AwaitsReview())
+	CarryReviewApproval(unapproved, reviewed("A", "B"))
+	assert.True(t, DetailAwaitsReview(unapproved))
 }
 
 func TestRatingReviewHoldError_NamesTheHeldShipments(t *testing.T) {
 	t.Parallel()
 
-	held := &Shipment{ID: pulid.MustNew("shp_"), ProNumber: "PRO-1", RatingDetail: reviewed("A")}
-	other := &Shipment{ID: pulid.MustNew("shp_"), ProNumber: "PRO-2", RatingDetail: reviewed("B")}
-	clean := &Shipment{ID: pulid.MustNew("shp_"), RatingDetail: reviewed()}
+	held := &shipment.Shipment{
+		ID:           pulid.MustNew("shp_"),
+		ProNumber:    "PRO-1",
+		RatingDetail: reviewed("A"),
+	}
+	other := &shipment.Shipment{
+		ID:           pulid.MustNew("shp_"),
+		ProNumber:    "PRO-2",
+		RatingDetail: reviewed("B"),
+	}
+	clean := &shipment.Shipment{ID: pulid.MustNew("shp_"), RatingDetail: reviewed()}
 
-	require.NoError(t, RatingReviewHoldError([]*Shipment{clean, nil}))
+	require.NoError(t, ReviewHoldError([]*shipment.Shipment{clean, nil}))
 
 	var one *errortypes.BusinessError
-	require.ErrorAs(t, RatingReviewHoldError([]*Shipment{clean, held}), &one)
+	require.ErrorAs(t, ReviewHoldError([]*shipment.Shipment{clean, held}), &one)
 	assert.Equal(t, held.ID.String(), one.Params["shipmentIds"])
 
 	var many *errortypes.BusinessError
-	require.ErrorAs(t, RatingReviewHoldError([]*Shipment{held, other}), &many)
+	require.ErrorAs(t, ReviewHoldError([]*shipment.Shipment{held, other}), &many)
 	assert.Equal(t, held.ID.String()+","+other.ID.String(), many.Params["shipmentIds"])
 }

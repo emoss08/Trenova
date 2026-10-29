@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentrating"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -49,7 +50,7 @@ func guardItemRatingReview(item *billingqueue.BillingQueueItem, entity *shipment
 		return nil
 	}
 
-	return shipment.RatingReviewHoldError([]*shipment.Shipment{entity})
+	return shipmentrating.ReviewHoldError([]*shipment.Shipment{entity})
 }
 
 // syncDetentionBilling marks billed the detention charges a new invoice

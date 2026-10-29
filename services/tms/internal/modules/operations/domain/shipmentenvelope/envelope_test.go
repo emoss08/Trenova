@@ -1,9 +1,10 @@
-package shipment_test
+package shipmentenvelope_test
 
 import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentenvelope"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/commodity"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -23,7 +24,7 @@ func line(length, width, height *float64, com *commodity.Commodity) *shipment.Sh
 func TestComputeEnvelope_TakesMaximumAcrossLines(t *testing.T) {
 	t.Parallel()
 
-	envelope := shipment.ComputeEnvelope([]*shipment.ShipmentCommodity{
+	envelope := shipmentenvelope.Compute([]*shipment.ShipmentCommodity{
 		line(ptr(20), ptr(8), ptr(6), nil),
 		line(ptr(40), ptr(12.5), ptr(9), nil),
 		line(ptr(10), ptr(7), ptr(11), nil),
@@ -37,7 +38,7 @@ func TestComputeEnvelope_TakesMaximumAcrossLines(t *testing.T) {
 func TestComputeEnvelope_OverallHeightAddsDeck(t *testing.T) {
 	t.Parallel()
 
-	envelope := shipment.ComputeEnvelope([]*shipment.ShipmentCommodity{
+	envelope := shipmentenvelope.Compute([]*shipment.ShipmentCommodity{
 		line(ptr(20), ptr(8), ptr(9), nil),
 	}, 5)
 
@@ -48,7 +49,7 @@ func TestComputeEnvelope_OverallHeightAddsDeck(t *testing.T) {
 func TestComputeEnvelope_NoHeightMeansNoOverallHeight(t *testing.T) {
 	t.Parallel()
 
-	envelope := shipment.ComputeEnvelope([]*shipment.ShipmentCommodity{
+	envelope := shipmentenvelope.Compute([]*shipment.ShipmentCommodity{
 		line(ptr(20), ptr(8), nil, nil),
 	}, 5)
 
@@ -64,7 +65,7 @@ func TestComputeEnvelope_FallsBackToCommodityDefaults(t *testing.T) {
 		HeightPerUnit: ptr(8),
 	}
 
-	envelope := shipment.ComputeEnvelope([]*shipment.ShipmentCommodity{
+	envelope := shipmentenvelope.Compute([]*shipment.ShipmentCommodity{
 		line(nil, nil, nil, com),
 	}, 0)
 
@@ -82,7 +83,7 @@ func TestComputeEnvelope_LineOverrideBeatsCommodityDefault(t *testing.T) {
 		HeightPerUnit: ptr(8),
 	}
 
-	envelope := shipment.ComputeEnvelope([]*shipment.ShipmentCommodity{
+	envelope := shipmentenvelope.Compute([]*shipment.ShipmentCommodity{
 		line(ptr(45), ptr(14), ptr(9), com),
 	}, 0)
 
@@ -94,7 +95,7 @@ func TestComputeEnvelope_LineOverrideBeatsCommodityDefault(t *testing.T) {
 func TestComputeEnvelope_IgnoresNilLines(t *testing.T) {
 	t.Parallel()
 
-	envelope := shipment.ComputeEnvelope([]*shipment.ShipmentCommodity{
+	envelope := shipmentenvelope.Compute([]*shipment.ShipmentCommodity{
 		nil,
 		line(ptr(12), ptr(9), ptr(7), nil),
 		nil,
@@ -106,14 +107,14 @@ func TestComputeEnvelope_IgnoresNilLines(t *testing.T) {
 func TestComputeEnvelope_EmptyIsZero(t *testing.T) {
 	t.Parallel()
 
-	assert.True(t, shipment.ComputeEnvelope(nil, 5).IsZero())
+	assert.True(t, shipmentenvelope.Compute(nil, 5).IsZero())
 }
 
 func TestApplyEnvelope_RoundTrips(t *testing.T) {
 	t.Parallel()
 
 	sp := new(shipment.Shipment)
-	sp.ApplyEnvelope(shipment.Envelope{
+	shipmentenvelope.Apply(sp, shipmentenvelope.Envelope{
 		LengthFeet:        40,
 		WidthFeet:         12.5,
 		HeightFeet:        9,
@@ -122,9 +123,9 @@ func TestApplyEnvelope_RoundTrips(t *testing.T) {
 
 	require.NotNil(t, sp.EnvelopeWidthFeet)
 	assert.InDelta(t, 12.5, *sp.EnvelopeWidthFeet, 0.001)
-	assert.True(t, sp.HasEnvelope())
+	assert.True(t, shipmentenvelope.Present(sp))
 
-	current := sp.CurrentEnvelope()
+	current := shipmentenvelope.Of(sp)
 	assert.InDelta(t, 40.0, current.LengthFeet, 0.001)
 	assert.InDelta(t, 14.0, current.OverallHeightFeet, 0.001)
 }
@@ -133,23 +134,14 @@ func TestApplyEnvelope_ZeroClearsStoredValues(t *testing.T) {
 	t.Parallel()
 
 	sp := new(shipment.Shipment)
-	sp.ApplyEnvelope(shipment.Envelope{WidthFeet: 12})
+	shipmentenvelope.Apply(sp, shipmentenvelope.Envelope{WidthFeet: 12})
 	require.NotNil(t, sp.EnvelopeWidthFeet)
 
-	sp.ApplyEnvelope(shipment.Envelope{})
+	shipmentenvelope.Apply(sp, shipmentenvelope.Envelope{})
 
 	assert.Nil(t, sp.EnvelopeLengthFeet)
 	assert.Nil(t, sp.EnvelopeWidthFeet)
 	assert.Nil(t, sp.EnvelopeHeightFeet)
 	assert.Nil(t, sp.EnvelopeOverallHeightFeet)
-	assert.False(t, sp.HasEnvelope())
-}
-
-func TestHasDimensions_RequiresAllThree(t *testing.T) {
-	t.Parallel()
-
-	assert.True(t, line(ptr(10), ptr(8), ptr(6), nil).HasDimensions())
-	assert.False(t, line(ptr(10), ptr(8), nil, nil).HasDimensions())
-	assert.False(t, line(nil, ptr(8), ptr(6), nil).HasDimensions())
-	assert.False(t, line(nil, nil, nil, nil).HasDimensions())
+	assert.False(t, shipmentenvelope.Present(sp))
 }

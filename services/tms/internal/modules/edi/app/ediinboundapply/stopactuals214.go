@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edipayload"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/stopvisit"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/trackingevent"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentmoveports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/trackingeventports"
@@ -104,7 +105,7 @@ func resolve214TargetStop(
 
 	kind := plan.visit()
 	if event != nil && event.HasPlace() {
-		stop := move.StopForReportedVisit(func(stop *shipment.Stop) bool {
+		stop := stopvisit.StopForReported(move, func(stop *shipment.Stop) bool {
 			return plan.target.matches(stop) && stopInPlace(stop, event.City, event.StateCode)
 		}, kind)
 		if stop != nil {
@@ -112,7 +113,7 @@ func resolve214TargetStop(
 		}
 	}
 
-	if stop := move.StopForReportedVisit(plan.target.matches, kind); stop != nil {
+	if stop := stopvisit.StopForReported(move, plan.target.matches, kind); stop != nil {
 		return stop, trackingevent.MatchStopRole
 	}
 	return nil, ""

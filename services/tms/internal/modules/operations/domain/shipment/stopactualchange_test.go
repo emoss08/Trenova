@@ -127,3 +127,20 @@ func TestApplyStopActualChangesCorrectsACompletedLoad(t *testing.T) {
 	assert.Equal(t, at(50), stop.ActualArrival)
 	assert.Equal(t, shipmentvocab.StopStatusCompleted, stop.Status)
 }
+
+func visitStop(sequence int64, locationID pulid.ID, arrived, departed bool) *shipment.Stop {
+	stop := &shipment.Stop{
+		ID:         pulid.MustNew("stp_"),
+		Sequence:   sequence,
+		LocationID: locationID,
+		Status:     shipmentvocab.StopStatusNew,
+	}
+	at := int64(100 + sequence)
+	if arrived {
+		stop.ActualArrival = &at
+	}
+	if departed {
+		stop.ActualDeparture = &at
+	}
+	return stop
+}

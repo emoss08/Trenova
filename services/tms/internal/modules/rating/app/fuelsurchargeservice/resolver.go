@@ -7,6 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/identity/app/orgzone"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentrating"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/fuelsurcharge"
@@ -292,7 +293,7 @@ func idListMatches(allowed []pulid.ID, id pulid.ID) bool {
 }
 
 func shipmentMiles(entity *shipment.Shipment) decimal.Decimal {
-	return entity.RatingMiles()
+	return shipmentrating.Miles(entity)
 }
 
 type detailParams struct {

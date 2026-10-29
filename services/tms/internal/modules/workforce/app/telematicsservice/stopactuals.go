@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenteventports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/stopvisit"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentmoveports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/telematics"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/telematicsports"
@@ -118,8 +119,8 @@ func (s *Service) notifyVisitWaits(
 	if s.waits == nil {
 		return
 	}
-	stop, match := move.MatchObservedVisit(event.record.LocationID, event.visit)
-	if stop == nil || match == shipment.VisitMatchNoStop {
+	stop, match := stopvisit.MatchObserved(move, event.record.LocationID, event.visit)
+	if stop == nil || match == stopvisit.MatchNoStop {
 		return
 	}
 
@@ -149,7 +150,7 @@ func (s *Service) settleStopVisit(
 ) (*telematics.StopVisitResult, bool) {
 	result := &telematics.StopVisitResult{Visit: event.visit, MoveID: move.ID}
 
-	stop := move.StopForObservedVisit(event.record.LocationID, event.visit)
+	stop := stopvisit.StopForObserved(move, event.record.LocationID, event.visit)
 	if stop == nil {
 		if !event.providerStop {
 			return result, false

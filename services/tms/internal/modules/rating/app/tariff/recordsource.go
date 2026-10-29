@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/app/orgzone"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentrating"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/places/domain/rategeo"
 	"github.com/emoss08/trenova/internal/modules/rating/app/tariff/record"
@@ -277,7 +278,7 @@ func (s *RecordSource) ShipmentRecord(
 	}
 	asOf := req.AsOf
 	if asOf == 0 {
-		asOf = entity.RatingAsOf(timeutils.NowUnix())
+		asOf = shipmentrating.AsOf(entity, timeutils.NowUnix())
 	}
 	return s.Build(ctx, &RecordRequest{
 		TenantInfo: req.TenantInfo,

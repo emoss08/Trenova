@@ -6,6 +6,7 @@ import (
 	"math"
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentrating"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location"
 	"github.com/emoss08/trenova/internal/modules/places/domain/rategeo"
 	"github.com/emoss08/trenova/internal/modules/rating/app/tariff"
@@ -42,7 +43,7 @@ func (s *Service) buildContext(
 
 	asOf := req.AsOf
 	if asOf == 0 {
-		asOf = entity.RatingAsOf(s.now())
+		asOf = shipmentrating.AsOf(entity, s.now())
 	}
 
 	rateCtx := &RateContext{
@@ -52,19 +53,19 @@ func (s *Service) buildContext(
 		AsOf:            asOf,
 		Origin:          placeOf(entity.ShipperStop()),
 		Destination:     placeOf(entity.DeliveryStop()),
-		Distance:        entity.RatingDistance(),
-		Weight:          entity.RatingWeight(),
-		Pieces:          entity.RatingPieces(),
+		Distance:        shipmentrating.Distance(entity),
+		Weight:          shipmentrating.Weight(entity),
+		Pieces:          shipmentrating.Pieces(entity),
 		Stops:           ratedStops(entity),
-		LinearFeet:      entity.RatingLinearFeet(),
-		CubicFeet:       entity.RatingCubicFeet(),
+		LinearFeet:      shipmentrating.LinearFeet(entity),
+		CubicFeet:       shipmentrating.CubicFeet(entity),
 		ServiceTypeID:   entity.ServiceTypeID,
 		ShipmentTypeID:  entity.ShipmentTypeID,
 		TractorTypeID:   entity.TractorTypeID,
 		TrailerTypeID:   entity.TrailerTypeID,
 		CommodityIDs:    commodityIDs(entity),
-		FreightClasses:  entity.FreightClasses(),
-		HasHazmat:       entity.HasHazardousMaterial(),
+		FreightClasses:  shipmentrating.FreightClasses(entity),
+		HasHazmat:       shipmentrating.HasHazardousMaterial(entity),
 		BillingCurrency: tariff.BillingCurrency(entity),
 		SellTotal:       req.SellTotal,
 		Entity:          entity,
@@ -235,7 +236,7 @@ func LocationOf(loc *location.Location) rategeo.Place {
 }
 
 func ratedStops(entity *shipment.Shipment) int16 {
-	count := entity.RatedStopCount()
+	count := shipmentrating.RatedStopCount(entity)
 	if count > math.MaxInt16 {
 		return math.MaxInt16
 	}

@@ -1,7 +1,9 @@
 package shipment
 
 import (
+	"cmp"
 	"context"
+	"slices"
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
@@ -182,4 +184,18 @@ func (ShipmentMove) Constraints() []keel.Constraint {
 			Message: "Shipment does not exist in your organization",
 		},
 	}
+}
+
+func (m *ShipmentMove) ActiveStopsBySequence() []*Stop {
+	stops := make([]*Stop, 0, len(m.Stops))
+	for _, stop := range m.Stops {
+		if stop != nil && stop.Status != shipmentvocab.StopStatusCanceled {
+			stops = append(stops, stop)
+		}
+	}
+	slices.SortStableFunc(stops, func(a, b *Stop) int {
+		return cmp.Compare(a.Sequence, b.Sequence)
+	})
+
+	return stops
 }

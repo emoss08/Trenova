@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/chargeallocation"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentrating"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentstate"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
@@ -206,7 +207,7 @@ func (c *Calculator) calculateCommercialTotals(
 			return nil, err
 		}
 	} else if len(entity.FreightLines) == 0 {
-		entity.SetFreightLines(entity.ManualFreightLines(i18n.T(ctx, "Freight charge")))
+		entity.SetFreightLines(shipmentrating.ManualFreightLines(entity, i18n.T(ctx, "Freight charge")))
 	}
 
 	contract := sync.contract
@@ -313,7 +314,7 @@ func (c *Calculator) ratingDetail(
 	detail := ratingDetailFromQuote(own)
 	detail.Skipped = pass.skipped
 	carryContractProvenance(entity, detail)
-	detail.CarryReviewApproval(entity.RatingDetail)
+	shipmentrating.CarryReviewApproval(detail, entity.RatingDetail)
 	return detail
 }
 
@@ -356,7 +357,7 @@ func (c *Calculator) applyQuote(
 	entity.TariffInputs = rated.TariffInputs.Clone()
 
 	detail := ratingDetailFromQuote(rated)
-	detail.CarryReviewApproval(entity.RatingDetail)
+	shipmentrating.CarryReviewApproval(detail, entity.RatingDetail)
 	entity.RatingDetail = detail
 }
 

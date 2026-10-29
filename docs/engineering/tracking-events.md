@@ -26,7 +26,7 @@ EDI 214 (every AT7)  ─────────────────┴ Reco
 |---|---|
 | Entity, enums, the projection | `internal/modules/operations/domain/trackingevent` |
 | Applying a projection to a move | `shipment.ShipmentMove.ApplyStopActualChanges` (`domain/shipment/stopactualchange.go`) |
-| Which stop a visit is about | `domain/shipment/stopvisit.go` (`StopForObservedVisit`, `StopForReportedVisit`, `MatchObservedVisit`) |
+| Which stop a visit is about | `domain/stopvisit` (`StopForObserved`, `StopForReported`, `MatchObserved`) |
 | Service | `internal/modules/operations/app/trackingeventservice` |
 | Reconcile under the move lock | `app/shipmentmoveservice/stopactual_reconcile.go` |
 | Repository and table | `adapters/postgres/trackingeventrepository`, migration `20261231008990_tracking_events` |
@@ -112,7 +112,7 @@ that event `Refused` with the reason instead of failing the caller; any other er
 returned and the event stays `Pending` for the next reconcile.
 
 Telematics declares `StopVisitRecorder` in workforce and operations implements it, so
-workforce takes no new upward dependency. The stop is chosen by `StopForObservedVisit`: the
+workforce takes no new upward dependency. The stop is chosen by `stopvisit.StopForObserved`: the
 stop at the geofence's location the truck is at, else the next one it has not reached, else
 the last one it visited, so a repeat or late ping is still recorded against its stop rather
 than dropped. The telematics row keeps its own outcome (`Recorded`, `Duplicate`, `Pending`,

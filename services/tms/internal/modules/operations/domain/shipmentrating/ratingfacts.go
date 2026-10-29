@@ -1,20 +1,22 @@
-package shipment
+package shipmentrating
 
 import (
 	"cmp"
 	"slices"
 
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentenvelope"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/commodity"
 	"github.com/shopspring/decimal"
 )
 
-func (sp *Shipment) OrderedStops() []*Stop {
+func OrderedStops(sp *shipment.Shipment) []*shipment.Stop {
 	if sp == nil {
 		return nil
 	}
 
 	type sequenced struct {
-		stop    *Stop
+		stop    *shipment.Stop
 		moveSeq int64
 	}
 
@@ -38,7 +40,7 @@ func (sp *Shipment) OrderedStops() []*Stop {
 		)
 	})
 
-	stops := make([]*Stop, len(collected))
+	stops := make([]*shipment.Stop, len(collected))
 	for i, entry := range collected {
 		stops[i] = entry.stop
 	}
@@ -46,12 +48,12 @@ func (sp *Shipment) OrderedStops() []*Stop {
 	return stops
 }
 
-func (sp *Shipment) RatedStops() []*Stop {
-	return RatedStopsOf(sp.OrderedStops())
+func RatedStops(sp *shipment.Shipment) []*shipment.Stop {
+	return RatedStopsOf(OrderedStops(sp))
 }
 
-func RatedStopsOf(ordered []*Stop) []*Stop {
-	rated := make([]*Stop, 0, len(ordered))
+func RatedStopsOf(ordered []*shipment.Stop) []*shipment.Stop {
+	rated := make([]*shipment.Stop, 0, len(ordered))
 	for _, stop := range ordered {
 		if !stop.IsCanceled() {
 			rated = append(rated, stop)
@@ -60,7 +62,7 @@ func RatedStopsOf(ordered []*Stop) []*Stop {
 	return rated
 }
 
-func (sp *Shipment) RatedStopCount() int {
+func RatedStopCount(sp *shipment.Shipment) int {
 	if sp == nil {
 		return 0
 	}
@@ -80,7 +82,7 @@ func (sp *Shipment) RatedStopCount() int {
 	return count
 }
 
-func (sp *Shipment) RatingDistance() decimal.Decimal {
+func Distance(sp *shipment.Shipment) decimal.Decimal {
 	total := decimal.Zero
 	if sp == nil {
 		return total
@@ -95,7 +97,7 @@ func (sp *Shipment) RatingDistance() decimal.Decimal {
 	return total
 }
 
-func (sp *Shipment) RatingWeight() decimal.Decimal {
+func Weight(sp *shipment.Shipment) decimal.Decimal {
 	if sp == nil {
 		return decimal.Zero
 	}
@@ -117,7 +119,7 @@ func (sp *Shipment) RatingWeight() decimal.Decimal {
 	return decimal.Zero
 }
 
-func (sp *Shipment) RatingPieces() int64 {
+func Pieces(sp *shipment.Shipment) int64 {
 	if sp == nil {
 		return 0
 	}
@@ -139,7 +141,7 @@ func (sp *Shipment) RatingPieces() int64 {
 	return 0
 }
 
-func (sp *Shipment) RatingLinearFeet() decimal.Decimal {
+func LinearFeet(sp *shipment.Shipment) decimal.Decimal {
 	total := decimal.Zero
 	if sp == nil {
 		return total
@@ -158,7 +160,7 @@ func (sp *Shipment) RatingLinearFeet() decimal.Decimal {
 	return total
 }
 
-func (sc *ShipmentCommodity) CubicFeet() decimal.Decimal {
+func LineCubicFeet(sc *shipment.ShipmentCommodity) decimal.Decimal {
 	if sc == nil || !sc.HasDimensions() || sc.Pieces <= 0 {
 		return decimal.Zero
 	}
@@ -169,12 +171,12 @@ func (sc *ShipmentCommodity) CubicFeet() decimal.Decimal {
 		Mul(decimal.NewFromInt(sc.Pieces))
 }
 
-func (sp *Shipment) RatingCubicFeet() decimal.Decimal {
+func CubicFeet(sp *shipment.Shipment) decimal.Decimal {
 	if sp == nil {
 		return decimal.Zero
 	}
 
-	if envelope := sp.CurrentEnvelope(); envelope.LengthFeet > 0 && envelope.WidthFeet > 0 &&
+	if envelope := shipmentenvelope.Of(sp); envelope.LengthFeet > 0 && envelope.WidthFeet > 0 &&
 		envelope.HeightFeet > 0 {
 		return decimal.NewFromFloat(envelope.LengthFeet).
 			Mul(decimal.NewFromFloat(envelope.WidthFeet)).
@@ -183,22 +185,22 @@ func (sp *Shipment) RatingCubicFeet() decimal.Decimal {
 
 	total := decimal.Zero
 	for _, line := range sp.Commodities {
-		total = total.Add(line.CubicFeet())
+		total = total.Add(LineCubicFeet(line))
 	}
 
 	return total
 }
 
-func (sp *Shipment) RatingDensity() (decimal.Decimal, bool) {
-	cube := sp.RatingCubicFeet()
+func Density(sp *shipment.Shipment) (decimal.Decimal, bool) {
+	cube := CubicFeet(sp)
 	if !cube.IsPositive() {
 		return decimal.Zero, false
 	}
 
-	return sp.RatingWeight().Div(cube), true
+	return Weight(sp).Div(cube), true
 }
 
-func (sp *Shipment) HasHazardousMaterial() bool {
+func HasHazardousMaterial(sp *shipment.Shipment) bool {
 	if sp == nil {
 		return false
 	}
@@ -216,7 +218,7 @@ func (sp *Shipment) HasHazardousMaterial() bool {
 	return false
 }
 
-func (sp *Shipment) FreightClasses() []commodity.FreightClass {
+func FreightClasses(sp *shipment.Shipment) []commodity.FreightClass {
 	if sp == nil {
 		return nil
 	}
@@ -238,7 +240,7 @@ func (sp *Shipment) FreightClasses() []commodity.FreightClass {
 	return classes
 }
 
-func (sp *Shipment) PrimaryFreightClass() commodity.FreightClass {
+func PrimaryFreightClass(sp *shipment.Shipment) commodity.FreightClass {
 	if sp == nil {
 		return ""
 	}
@@ -258,10 +260,10 @@ func (sp *Shipment) PrimaryFreightClass() commodity.FreightClass {
 	return primary
 }
 
-func (sp *Shipment) HighestFreightClass() commodity.FreightClass {
+func HighestFreightClass(sp *shipment.Shipment) commodity.FreightClass {
 	var highest commodity.FreightClass
 	highestRank := -1
-	for _, class := range sp.FreightClasses() {
+	for _, class := range FreightClasses(sp) {
 		if rank := slices.Index(commodity.FreightClasses, class); rank > highestRank {
 			highestRank = rank
 			highest = class
@@ -271,7 +273,7 @@ func (sp *Shipment) HighestFreightClass() commodity.FreightClass {
 	return highest
 }
 
-func (sp *Shipment) RatingAsOf(now int64) int64 {
+func AsOf(sp *shipment.Shipment, now int64) int64 {
 	if sp == nil {
 		return now
 	}
@@ -289,7 +291,7 @@ const (
 	secondsPerDay  = 86400
 )
 
-func (s *Stop) DwellSeconds() (int64, bool) {
+func DwellSeconds(s *shipment.Stop) (int64, bool) {
 	if s == nil || s.ActualArrival == nil || s.ActualDeparture == nil {
 		return 0, false
 	}
@@ -299,7 +301,7 @@ func (s *Stop) DwellSeconds() (int64, bool) {
 	return *s.ActualDeparture - *s.ActualArrival, true
 }
 
-func (s *Stop) spanStart() (int64, bool) {
+func spanStart(s *shipment.Stop) (int64, bool) {
 	if s.ActualArrival != nil {
 		return *s.ActualArrival, true
 	}
@@ -309,7 +311,7 @@ func (s *Stop) spanStart() (int64, bool) {
 	return 0, false
 }
 
-func (s *Stop) spanEnd() (int64, bool) {
+func spanEnd(s *shipment.Stop) (int64, bool) {
 	switch {
 	case s.ActualDeparture != nil:
 		return *s.ActualDeparture, true
@@ -324,15 +326,15 @@ func (s *Stop) spanEnd() (int64, bool) {
 	}
 }
 
-func (sp *Shipment) RatingDurationHours() decimal.Decimal {
+func DurationHours(sp *shipment.Shipment) decimal.Decimal {
 	var start, end int64
 	found := false
-	for _, stop := range sp.RatedStops() {
-		first, ok := stop.spanStart()
+	for _, stop := range RatedStops(sp) {
+		first, ok := spanStart(stop)
 		if !ok {
 			continue
 		}
-		last, hasEnd := stop.spanEnd()
+		last, hasEnd := spanEnd(stop)
 		if !hasEnd {
 			last = first
 		}
@@ -350,11 +352,11 @@ func (sp *Shipment) RatingDurationHours() decimal.Decimal {
 	return decimal.NewFromInt(end - start).Div(decimal.NewFromInt(secondsPerHour))
 }
 
-func (sp *Shipment) DwellHours() []decimal.Decimal {
-	stops := sp.RatedStops()
+func DwellHours(sp *shipment.Shipment) []decimal.Decimal {
+	stops := RatedStops(sp)
 	dwells := make([]decimal.Decimal, 0, len(stops))
 	for _, stop := range stops {
-		if seconds, ok := stop.DwellSeconds(); ok {
+		if seconds, ok := DwellSeconds(stop); ok {
 			dwells = append(
 				dwells,
 				decimal.NewFromInt(seconds).Div(decimal.NewFromInt(secondsPerHour)),
@@ -364,10 +366,10 @@ func (sp *Shipment) DwellHours() []decimal.Decimal {
 	return dwells
 }
 
-func (sp *Shipment) ServiceDays() decimal.Decimal {
+func ServiceDays(sp *shipment.Shipment) decimal.Decimal {
 	var start, end int64
 	var started, ended bool
-	for _, stop := range sp.RatedStops() {
+	for _, stop := range RatedStops(sp) {
 		if stop.IsOriginStop() && stop.ActualArrival != nil &&
 			(!started || *stop.ActualArrival < start) {
 			start, started = *stop.ActualArrival, true
@@ -387,7 +389,7 @@ const distanceKilometers = "Kilometers"
 
 var kilometresPerMile = decimal.RequireFromString("1.609344")
 
-func (sp *Shipment) RatingMiles() decimal.Decimal {
+func Miles(sp *shipment.Shipment) decimal.Decimal {
 	total := decimal.Zero
 	if sp == nil {
 		return total

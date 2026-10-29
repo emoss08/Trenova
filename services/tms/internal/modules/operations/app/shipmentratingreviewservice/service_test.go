@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentratingreviewservice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentrating"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/ratingreviewports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
@@ -128,7 +129,7 @@ func TestApprove_RecordsWhoApprovedTheReviewedRatingAndAuditsIt(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	assert.False(t, saved.AwaitsRatingReview())
+	assert.False(t, shipmentrating.AwaitsReview(saved))
 	require.NotNil(t, saved.RatingDetail.ReviewApproval)
 	assert.Equal(t, actor.UserID, saved.RatingDetail.ReviewApproval.ApprovedByID)
 	assert.Equal(
@@ -164,7 +165,7 @@ func TestApprove_IsANoOpOnceTheRatingIsApproved(t *testing.T) {
 	again, err := svc.Approve(t.Context(), req, person(tenant))
 	require.NoError(t, err)
 
-	assert.False(t, again.AwaitsRatingReview())
+	assert.False(t, shipmentrating.AwaitsReview(again))
 	assert.Equal(t, 1, repo.saves)
 	assert.Len(t, audit.entries, 1)
 }
@@ -231,5 +232,5 @@ func TestApprove_ReturnsTheSaveErrorAndAuditsNothing(t *testing.T) {
 
 	require.ErrorIs(t, err, conflict)
 	assert.Empty(t, audit.entries)
-	assert.True(t, repo.row.AwaitsRatingReview(), "the stored rating is still held")
+	assert.True(t, shipmentrating.AwaitsReview(repo.row), "the stored rating is still held")
 }

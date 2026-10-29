@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentrating"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -64,13 +65,13 @@ func HeldForRatingReview(item *BillingQueueItem) bool {
 
 func NewRatingReviewHold(item *BillingQueueItem) *RatingReviewHold {
 	if !HeldForRatingReview(item) || item.Shipment == nil ||
-		!item.Shipment.AwaitsRatingReview() {
+		!shipmentrating.AwaitsReview(item.Shipment) {
 		return nil
 	}
 	detail := item.Shipment.RatingDetail
 	return &RatingReviewHold{
 		ShipmentID:          item.Shipment.ID,
-		Reasons:             detail.ReviewReasons(),
+		Reasons:             shipmentrating.ReviewReasons(detail),
 		RatedAt:             detail.RatedAt,
 		FormulaTemplateName: detail.FormulaTemplateName,
 	}

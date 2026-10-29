@@ -140,7 +140,7 @@ func freightLines(
 	charge chargeallocation.AllocatedCharge,
 	startLineNumber int,
 ) []*invoice.InvoiceLine {
-	billed := shp.BilledFreightLines(FreightDescription)
+	billed := shipmentrating.BilledFreightLines(shp, FreightDescription)
 	amounts := shipmentrating.SplitFreightShare(billed, charge.Amount)
 	templateID, templateName := ratedWith(shp)
 

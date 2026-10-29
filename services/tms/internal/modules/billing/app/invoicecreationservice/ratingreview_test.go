@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentrating"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/tarifftypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -40,7 +41,7 @@ func TestGuardItemRatingReview_LetsACreditMemoAndAnApprovedRatingThrough(t *test
 	t.Parallel()
 
 	approved := heldRating()
-	_, err := approved.RatingDetail.ApproveReview(pulid.MustNew("usr_"), 1)
+	_, err := shipmentrating.ApproveReview(approved.RatingDetail, pulid.MustNew("usr_"), 1)
 	require.NoError(t, err)
 
 	invoiceItem := &billingqueue.BillingQueueItem{BillType: billingqueue.BillTypeInvoice}

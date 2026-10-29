@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/chargeallocation"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentrating"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -141,7 +142,7 @@ func (s *Service) createConsolidatedTx(
 	if err := s.guardDetentionHolds(txCtx, params.TenantInfo, legIDs(params.Legs)); err != nil {
 		return nil, err
 	}
-	if err := shipment.RatingReviewHoldError(params.Legs); err != nil {
+	if err := shipmentrating.ReviewHoldError(params.Legs); err != nil {
 		return nil, err
 	}
 

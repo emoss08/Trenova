@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/chargeallocation"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/order"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentrating"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/chargeallocationports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/orderports"
@@ -98,7 +99,7 @@ func (s *Service) CreateInvoicesFromShipments(
 	if err = s.guardDetentionHolds(ctx, req.TenantInfo, []pulid.ID{shp.ID}); err != nil {
 		return nil, err
 	}
-	if err = shipment.RatingReviewHoldError([]*shipment.Shipment{shp}); err != nil {
+	if err = shipmentrating.ReviewHoldError([]*shipment.Shipment{shp}); err != nil {
 		return nil, err
 	}
 

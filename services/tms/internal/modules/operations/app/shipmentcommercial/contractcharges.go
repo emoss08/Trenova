@@ -54,7 +54,7 @@ func (c *Calculator) ContractCharges(
 
 	priced, err := shipmentrating.PriceAgreementAccessorials(
 		ctx,
-		entity.AccessorialMeasures(),
+		shipmentrating.AccessorialMeasures(entity),
 		applicable,
 		rated.Amount,
 	)

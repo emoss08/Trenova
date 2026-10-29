@@ -21259,3 +21259,12 @@ github.com/emoss08/trenova/internal/modules/operations/domain/shipment.TenderSta
 github.com/emoss08/trenova/internal/modules/operations/domain/shipment.VisitArrival	github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab.VisitArrival
 github.com/emoss08/trenova/internal/modules/operations/domain/shipment.VisitDeparture	github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab.VisitDeparture
 github.com/emoss08/trenova/internal/modules/operations/domain/shipment.VisitKind	github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab.VisitKind
+github.com/emoss08/trenova/internal/modules/operations/domain/shipment.RatedStopsOf	github.com/emoss08/trenova/internal/modules/operations/domain/shipmentrating.RatedStopsOf
+github.com/emoss08/trenova/internal/modules/operations/domain/shipment.RatingReviewHoldError	github.com/emoss08/trenova/internal/modules/operations/domain/shipmentrating.ReviewHoldError
+github.com/emoss08/trenova/internal/modules/operations/domain/shipment.ComputeEnvelope	github.com/emoss08/trenova/internal/modules/operations/domain/shipmentenvelope.Compute
+github.com/emoss08/trenova/internal/modules/operations/domain/shipment.Envelope	github.com/emoss08/trenova/internal/modules/operations/domain/shipmentenvelope.Envelope
+github.com/emoss08/trenova/internal/modules/operations/domain/shipment.FollowCustomerChange	github.com/emoss08/trenova/internal/modules/operations/domain/shipmentnormalize.FollowCustomerChange
+github.com/emoss08/trenova/internal/modules/operations/domain/shipment.VisitMatch	github.com/emoss08/trenova/internal/modules/operations/domain/stopvisit.Match
+github.com/emoss08/trenova/internal/modules/operations/domain/shipment.VisitMatchStop	github.com/emoss08/trenova/internal/modules/operations/domain/stopvisit.MatchStop
+github.com/emoss08/trenova/internal/modules/operations/domain/shipment.VisitMatchDuplicate	github.com/emoss08/trenova/internal/modules/operations/domain/stopvisit.MatchDuplicate
+github.com/emoss08/trenova/internal/modules/operations/domain/shipment.VisitMatchNoStop	github.com/emoss08/trenova/internal/modules/operations/domain/stopvisit.MatchNoStop

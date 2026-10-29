@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentservicetest"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentenvelope"
 	"github.com/emoss08/trenova/internal/modules/operations/operationstest"
 	"github.com/emoss08/trenova/internal/modules/places/domain/jurisdictionrule"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/modeprofile"
@@ -483,7 +484,10 @@ func TestCapabilityPolicy_DeckFitBlocksOverhangBeyondAllowance(t *testing.T) {
 
 	entity := shipmentservicetest.ValidShipment()
 	entity.TrailerTypeID = pulid.MustNew("et_")
-	entity.ApplyEnvelope(shipment.Envelope{LengthFeet: 62, WidthFeet: 8, HeightFeet: 6})
+	shipmentenvelope.Apply(
+		entity,
+		shipmentenvelope.Envelope{LengthFeet: 62, WidthFeet: 8, HeightFeet: 6},
+	)
 
 	v := validatorWithProfileAndEquipment(
 		t,
@@ -510,7 +514,10 @@ func TestCapabilityPolicy_DeckFitAllowsOverhangWithinAllowance(t *testing.T) {
 
 	entity := shipmentservicetest.ValidShipment()
 	entity.TrailerTypeID = pulid.MustNew("et_")
-	entity.ApplyEnvelope(shipment.Envelope{LengthFeet: 56, WidthFeet: 8, HeightFeet: 6})
+	shipmentenvelope.Apply(
+		entity,
+		shipmentenvelope.Envelope{LengthFeet: 56, WidthFeet: 8, HeightFeet: 6},
+	)
 
 	v := validatorWithProfileAndEquipment(
 		t,

@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmenteventservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentvalidator"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentenvelope"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/orderports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenteventports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
@@ -113,7 +114,7 @@ func (s *Effects) ApplyShipmentEnvelope(
 
 	deckHeightFeet := s.deckHeightFeetForShipment(ctx, entity)
 
-	entity.ApplyEnvelope(shipment.ComputeEnvelope(entity.Commodities, deckHeightFeet))
+	shipmentenvelope.Apply(entity, shipmentenvelope.Compute(entity.Commodities, deckHeightFeet))
 }
 
 type Effects struct {

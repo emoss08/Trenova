@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentrating"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/ratingreviewports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
@@ -91,7 +92,7 @@ func (s *Service) Approve(
 		before.RatingDetail = entity.RatingDetail
 		entity.RatingDetail = &detail
 
-		changed, err := detail.ApproveReview(actor.UserID, s.now())
+		changed, err := shipmentrating.ApproveReview(&detail, actor.UserID, s.now())
 		if err != nil {
 			return err
 		}
@@ -123,7 +124,7 @@ func (s *Service) audit(
 	actor *permissionports.RequestActor,
 ) {
 	auditActor := actor.AuditActor()
-	reasons := updated.RatingDetail.ReviewReasons()
+	reasons := shipmentrating.ReviewReasons(updated.RatingDetail)
 	if err := s.auditService.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourceShipment,
 		ResourceID:     updated.ID.String(),
