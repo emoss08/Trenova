@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/shared/netsuite"
+	"github.com/emoss08/trenova/shared/netsuiteerrors"
 )
 
 const (
@@ -27,7 +28,7 @@ func (c *Connector) Companies(
 	callbackRealmID string,
 ) ([]accountingconnectorports.AccountingCompany, error) {
 	if grant == nil {
-		return nil, netsuite.ErrAccessTokenRequired
+		return nil, netsuiteerrors.ErrAccessTokenRequired
 	}
 	account, err := accountOf(callbackRealmID)
 	if err != nil {
@@ -45,7 +46,7 @@ func (c *Connector) Companies(
 	})
 	switch {
 	case err == nil:
-	case netsuite.IsUnsupportedTable(err):
+	case netsuiteerrors.IsUnsupportedTable(err):
 		return singleCompany(ctx, s)
 	case isUnreachable(err):
 		return nil, fmt.Errorf("%w: %w", errUnreachable, err)
@@ -131,7 +132,7 @@ func readFacts(ctx context.Context, s *session) (*accountingconnection.CompanyFa
 		return nil, err
 	}
 	if len(company) == 0 {
-		return nil, netsuite.ErrUnexpectedPayload
+		return nil, netsuiteerrors.ErrUnexpectedPayload
 	}
 	home := &company[0]
 	facts := &accountingconnection.CompanyFacts{

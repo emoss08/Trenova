@@ -7,6 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/shared/netsuite"
+	"github.com/emoss08/trenova/shared/netsuiteerrors"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
 
@@ -63,7 +64,7 @@ func (c *Connector) TokenFromCertificate(
 		PrivateKey:    key,
 	})
 	if err != nil {
-		if netsuite.IsInvalidClient(err) || netsuite.IsInvalidGrant(err) {
+		if netsuiteerrors.IsInvalidClient(err) || netsuiteerrors.IsInvalidGrant(err) {
 			return nil, fmt.Errorf("%w: %w", errCertificateRevoked, err)
 		}
 		return nil, err

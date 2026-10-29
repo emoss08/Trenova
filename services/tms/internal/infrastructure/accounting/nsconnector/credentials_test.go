@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/shared/netsuite"
+	"github.com/emoss08/trenova/shared/netsuiteerrors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -30,7 +31,7 @@ func TestNormalizeAccountIDAcceptsNetSuiteAccountForms(t *testing.T) {
 		assert.Equal(t, want, got)
 	}
 	_, err := conn.NormalizeAccountID("1234567-s3")
-	require.ErrorIs(t, err, netsuite.ErrInvalidAccountID)
+	require.ErrorIs(t, err, netsuiteerrors.ErrInvalidAccountID)
 }
 
 func TestPrepareCertificateIsValidForTwoYears(t *testing.T) {
@@ -51,7 +52,7 @@ func TestPrepareCertificateIsValidForTwoYears(t *testing.T) {
 	require.NoError(t, err)
 
 	_, err = conn.PrepareCertificate("   ")
-	require.ErrorIs(t, err, netsuite.ErrSubjectRequired)
+	require.ErrorIs(t, err, netsuiteerrors.ErrSubjectRequired)
 }
 
 func TestTokenFromCertificateSignsAnAssertionForTheRealmAccount(t *testing.T) {
@@ -96,7 +97,7 @@ func TestTokenFromCertificateSignsAnAssertionForTheRealmAccount(t *testing.T) {
 			PrivateKeyPEM: cert.PrivateKeyPEM,
 		},
 	)
-	require.ErrorIs(t, err, netsuite.ErrInvalidCompanyRef)
+	require.ErrorIs(t, err, netsuiteerrors.ErrInvalidCompanyRef)
 	_, err = conn.TokenFromCertificate(
 		t.Context(),
 		&accountingconnectorports.AccountingCertificateGrant{
@@ -105,7 +106,7 @@ func TestTokenFromCertificateSignsAnAssertionForTheRealmAccount(t *testing.T) {
 			PrivateKeyPEM: []byte("not a key"),
 		},
 	)
-	require.ErrorIs(t, err, netsuite.ErrInvalidPrivateKey)
+	require.ErrorIs(t, err, netsuiteerrors.ErrInvalidPrivateKey)
 	assert.Equal(t, 1, fake.count(http.MethodPost, tokenPath))
 }
 

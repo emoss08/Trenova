@@ -7,6 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/shared/netsuite"
+	"github.com/emoss08/trenova/shared/netsuiteerrors"
 	"github.com/shopspring/decimal"
 )
 
@@ -36,7 +37,7 @@ type reversal struct {
 func (c *Connector) retireDocument(ctx context.Context, s *session, r *reversal) (string, error) {
 	state, found, err := transactionState(ctx, s.client, r.id)
 	if err != nil {
-		if netsuite.IsNotFound(err) {
+		if netsuiteerrors.IsNotFound(err) {
 			return "", nil
 		}
 		return "", err
@@ -60,7 +61,7 @@ func (c *Connector) retireDocument(ctx context.Context, s *session, r *reversal)
 	if !locked {
 		err = s.client.Delete(ctx, r.recordType, r.id)
 		switch {
-		case err == nil, netsuite.IsNotFound(err):
+		case err == nil, netsuiteerrors.IsNotFound(err):
 			return "", nil
 		case !deleteRefused(err):
 			return "", err
@@ -239,7 +240,7 @@ type creditOffset struct {
 func (c *Connector) unwindRecord(ctx context.Context, s *session, u *unwind) (string, error) {
 	state, found, err := transactionState(ctx, s.client, u.id)
 	if err != nil {
-		if netsuite.IsNotFound(err) {
+		if netsuiteerrors.IsNotFound(err) {
 			return "", nil
 		}
 		return "", err
@@ -302,7 +303,7 @@ func (c *Connector) offsetCredit(
 
 func (u *unwind) settle(err error) error {
 	switch {
-	case err == nil, netsuite.IsNotFound(err):
+	case err == nil, netsuiteerrors.IsNotFound(err):
 		return nil
 	case deleteRefused(err):
 		return errors.Join(u.refused(), err)

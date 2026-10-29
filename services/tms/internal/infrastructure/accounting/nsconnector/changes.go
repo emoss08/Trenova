@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/shared/netsuite"
+	"github.com/emoss08/trenova/shared/netsuiteerrors"
 )
 
 var _ accountingconnectorports.AccountingChangeReader = (*Connector)(nil)
@@ -411,7 +412,7 @@ func (c *changeCollector) payment(
 		ExpandSubResources: true,
 	}, &record)
 	if err != nil {
-		if netsuite.IsNotFound(err) {
+		if netsuiteerrors.IsNotFound(err) {
 			return nil
 		}
 		return err
@@ -560,7 +561,7 @@ func (c *changeCollector) readDeleted(
 		Limit:  limit,
 	}, &rows)
 	if err != nil {
-		if netsuite.IsUnsupportedTable(err) || isPermissionFault(err) {
+		if netsuiteerrors.IsUnsupportedTable(err) || isPermissionFault(err) {
 			c.page.DeletesUnread = true
 			return pos, false, nil
 		}

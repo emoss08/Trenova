@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/shared/netsuite"
+	"github.com/emoss08/trenova/shared/netsuiteerrors"
 )
 
 var (
@@ -319,7 +320,7 @@ func readReference(
 	}
 	internalID, ok := parseInternalID(id)
 	if !ok {
-		return nil, netsuite.ErrInvalidRecordID
+		return nil, netsuiteerrors.ErrInvalidRecordID
 	}
 	b := (&sqlBuilder{}).where(spec.column("id")+" = ?", internalID)
 	var rows []referenceRow
@@ -331,7 +332,7 @@ func readReference(
 		return nil, err
 	}
 	if len(rows) == 0 {
-		return nil, netsuite.ErrUnexpectedPayload
+		return nil, netsuiteerrors.ErrUnexpectedPayload
 	}
 	return referenceObjectOf(kind, &rows[0]), nil
 }
@@ -410,7 +411,7 @@ func (c *Connector) createItem(
 }
 
 func itemTypeRefused(err error) bool {
-	return netsuite.IsNotFound(err) || errorCode(err) == netsuite.CodeInvalidRequest
+	return netsuiteerrors.IsNotFound(err) || errorCode(err) == netsuiteerrors.CodeInvalidRequest
 }
 
 type addressLine struct {
@@ -503,7 +504,7 @@ func createParty(ctx context.Context, s *session, p *partyCreate) (string, error
 }
 
 func (c *Connector) IsDuplicateName(err error) bool {
-	return errors.Is(err, errDuplicateName) || netsuite.IsDuplicateExternalID(err)
+	return errors.Is(err, errDuplicateName) || netsuiteerrors.IsDuplicateExternalID(err)
 }
 
 func (c *Connector) SanitizeName(kind accountingprovider.ReferenceKind, name string) string {

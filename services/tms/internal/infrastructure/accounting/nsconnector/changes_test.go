@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/shared/netsuite"
+	"github.com/emoss08/trenova/shared/netsuiteerrors"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -185,7 +186,7 @@ func TestReadChangesFailsWhenSystemNotesAreBusy(t *testing.T) {
 	conn := testConnector(t, fake)
 	_, err := conn.ReadChanges(t.Context(), changesRequest(""))
 	require.Error(t, err)
-	assert.True(t, netsuite.IsConcurrencyLimit(err))
+	assert.True(t, netsuiteerrors.IsConcurrencyLimit(err))
 }
 
 func normalizeLines(

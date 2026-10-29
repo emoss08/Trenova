@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
-	"github.com/emoss08/trenova/shared/netsuite"
+	"github.com/emoss08/trenova/shared/netsuiteerrors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -72,7 +72,7 @@ func TestCompaniesFailures(t *testing.T) {
 	assert.Equal(t, accountingsync.ErrorCategoryConfiguration, conn.ClassifyError(err))
 
 	_, err = conn.Companies(t.Context(), nil, testAccount)
-	require.ErrorIs(t, err, netsuite.ErrAccessTokenRequired)
+	require.ErrorIs(t, err, netsuiteerrors.ErrAccessTokenRequired)
 	_, err = conn.Companies(t.Context(), &accountingconnectorports.AccountingTokenGrant{
 		AccessToken: "access-token",
 	}, "")
@@ -161,7 +161,7 @@ func TestCompanyFactsSurfacesAnUnreachableAccount(t *testing.T) {
 	assert.Equal(t, accountingsync.ErrorCategoryUnauthorized, failing.ClassifyError(err))
 
 	_, err = failing.CompanyFacts(t.Context(), "bad realm", "access-token")
-	require.ErrorIs(t, err, netsuite.ErrInvalidCompanyRef)
+	require.ErrorIs(t, err, netsuiteerrors.ErrInvalidCompanyRef)
 }
 
 func TestBooksClosedThroughIgnoresOpenAndYearPeriods(t *testing.T) {

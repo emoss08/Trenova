@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/shared/netsuite"
+	"github.com/emoss08/trenova/shared/netsuiteerrors"
 	"github.com/shopspring/decimal"
 )
 
@@ -319,7 +320,7 @@ func (c *Connector) VoidCreditApplication(
 		ID:   memo,
 		Body: &transactionBody{Apply: unapplyLines([]string{invoice})},
 	})
-	if err != nil && !netsuite.IsNotFound(err) {
+	if err != nil && !netsuiteerrors.IsNotFound(err) {
 		return result, err
 	}
 	return result, nil

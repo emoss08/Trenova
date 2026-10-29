@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/shared/netsuite"
+	"github.com/emoss08/trenova/shared/netsuiteerrors"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
 
@@ -38,13 +38,13 @@ func classifyError(err error) accountingsync.ErrorCategory {
 		return ""
 	case isConfigurationFault(err):
 		return accountingsync.ErrorCategoryConfiguration
-	case errors.Is(err, errCertificateRevoked), netsuite.IsInvalidGrant(err):
+	case errors.Is(err, errCertificateRevoked), netsuiteerrors.IsInvalidGrant(err):
 		return accountingsync.ErrorCategoryRevoked
-	case netsuite.IsRateLimited(err):
+	case netsuiteerrors.IsRateLimited(err):
 		return accountingsync.ErrorCategoryRateLimited
-	case netsuite.IsInvalidClient(err), netsuite.IsUnauthorized(err):
+	case netsuiteerrors.IsInvalidClient(err), netsuiteerrors.IsUnauthorized(err):
 		return accountingsync.ErrorCategoryUnauthorized
-	case netsuite.IsForbidden(err), netsuite.IsPermission(err):
+	case netsuiteerrors.IsForbidden(err), netsuiteerrors.IsPermission(err):
 		return accountingsync.ErrorCategoryConfiguration
 	case isTransientFault(err):
 		return accountingsync.ErrorCategoryTransient
@@ -59,29 +59,29 @@ func isConfigurationFault(err error) bool {
 }
 
 func isAuthFault(err error) bool {
-	return errors.Is(err, errCertificateRevoked) || netsuite.IsInvalidGrant(err) ||
-		netsuite.IsInvalidClient(err) || netsuite.IsUnauthorized(err)
+	return errors.Is(err, errCertificateRevoked) || netsuiteerrors.IsInvalidGrant(err) ||
+		netsuiteerrors.IsInvalidClient(err) || netsuiteerrors.IsUnauthorized(err)
 }
 
 func isPermissionFault(err error) bool {
-	return netsuite.IsForbidden(err) || netsuite.IsPermission(err)
+	return netsuiteerrors.IsForbidden(err) || netsuiteerrors.IsPermission(err)
 }
 
 func isQueryRefused(err error) bool {
-	if netsuite.IsUnsupportedTable(err) || isPermissionFault(err) {
+	if netsuiteerrors.IsUnsupportedTable(err) || isPermissionFault(err) {
 		return true
 	}
-	var apiErr *netsuite.APIError
+	var apiErr *netsuiteerrors.APIError
 	return errors.As(err, &apiErr) && apiErr.Status == http.StatusBadRequest
 }
 
 func isTransientFault(err error) bool {
-	return netsuite.IsTransient(err) || errors.Is(err, context.DeadlineExceeded)
+	return netsuiteerrors.IsTransient(err) || errors.Is(err, context.DeadlineExceeded)
 }
 
 func isDuplicateFault(err error) bool {
-	return errors.Is(err, errDuplicateName) || netsuite.IsIdempotencyConflict(err) ||
-		netsuite.IsDuplicateExternalID(err)
+	return errors.Is(err, errDuplicateName) || netsuiteerrors.IsIdempotencyConflict(err) ||
+		netsuiteerrors.IsDuplicateExternalID(err)
 }
 
 func isValidationFault(err error) bool {
@@ -89,13 +89,13 @@ func isValidationFault(err error) bool {
 		return true
 	}
 	code := errorCode(err)
-	return code == netsuite.CodeInvalidContent || code == netsuite.CodeInvalidRequest ||
-		code == netsuite.CodeUserError
+	return code == netsuiteerrors.CodeInvalidContent || code == netsuiteerrors.CodeInvalidRequest ||
+		code == netsuiteerrors.CodeUserError
 }
 
 func isUnreachable(err error) bool {
 	var dnsErr *net.DNSError
-	return netsuite.IsNotFound(err) || errors.As(err, &dnsErr)
+	return netsuiteerrors.IsNotFound(err) || errors.As(err, &dnsErr)
 }
 
 type documentFault struct {
@@ -129,17 +129,17 @@ var documentFaults = []documentFault{
 			". Skip this record if it is the same one, or change the one in " + providerName,
 	},
 	{
-		matches:    netsuite.IsClosedPeriod,
+		matches:    netsuiteerrors.IsClosedPeriod,
 		category:   accountingsync.SyncErrorClosedPeriod,
 		resolution: closedPeriodResolved,
 	},
 	{
-		matches:    netsuite.IsNotFound,
+		matches:    netsuiteerrors.IsNotFound,
 		category:   accountingsync.SyncErrorNotFound,
 		resolution: "The linked record no longer exists in " + providerName,
 	},
 	{
-		matches:  netsuite.IsInvalidReference,
+		matches:  netsuiteerrors.IsInvalidReference,
 		category: accountingsync.SyncErrorMapping,
 		resolution: "Check the mapping for the record " + providerName +
 			" named, then retry",
@@ -167,10 +167,10 @@ func (c *Connector) ClassifyDocumentError(err error) *accountingsync.SyncError {
 		Category:   accountingsync.SyncErrorTransient,
 		Code:       errorCode(err),
 		Message:    errorMessage(err),
-		RetryAfter: netsuite.RetryAfter(err),
+		RetryAfter: netsuiteerrors.RetryAfter(err),
 	}
 	switch {
-	case netsuite.IsRateLimited(err):
+	case netsuiteerrors.IsRateLimited(err):
 		out.Category = accountingsync.SyncErrorRateLimited
 		if out.RetryAfter <= 0 {
 			out.RetryAfter = defaultRateLimitWait
@@ -195,8 +195,8 @@ func (c *Connector) ClassifyDocumentError(err error) *accountingsync.SyncError {
 	return out
 }
 
-func apiErrorOf(err error) *netsuite.APIError {
-	var apiErr *netsuite.APIError
+func apiErrorOf(err error) *netsuiteerrors.APIError {
+	var apiErr *netsuiteerrors.APIError
 	if errors.As(err, &apiErr) {
 		return apiErr
 	}
@@ -206,7 +206,7 @@ func apiErrorOf(err error) *netsuite.APIError {
 func errorCode(err error) string {
 	apiErr := apiErrorOf(err)
 	if apiErr == nil {
-		var oauthErr *netsuite.OAuthError
+		var oauthErr *netsuiteerrors.OAuthError
 		if errors.As(err, &oauthErr) {
 			return oauthErr.Code
 		}
@@ -244,23 +244,23 @@ func permissionRecord(err error) string {
 }
 
 func deleteRefused(err error) bool {
-	if netsuite.IsClosedPeriod(err) {
+	if netsuiteerrors.IsClosedPeriod(err) {
 		return true
 	}
-	return errorCode(err) == netsuite.CodeUserError && !netsuite.IsPermission(err)
+	return errorCode(err) == netsuiteerrors.CodeUserError && !netsuiteerrors.IsPermission(err)
 }
 
 func isLocalValidation(err error) bool {
 	for _, target := range []error{
-		netsuite.ErrInvalidAccountID,
-		netsuite.ErrInvalidSubsidiaryID,
-		netsuite.ErrInvalidCompanyRef,
-		netsuite.ErrInvalidRecordType,
-		netsuite.ErrInvalidRecordID,
-		netsuite.ErrInvalidExternalID,
-		netsuite.ErrInvalidFieldName,
-		netsuite.ErrBodyRequired,
-		netsuite.ErrInvalidQueryTime,
+		netsuiteerrors.ErrInvalidAccountID,
+		netsuiteerrors.ErrInvalidSubsidiaryID,
+		netsuiteerrors.ErrInvalidCompanyRef,
+		netsuiteerrors.ErrInvalidRecordType,
+		netsuiteerrors.ErrInvalidRecordID,
+		netsuiteerrors.ErrInvalidExternalID,
+		netsuiteerrors.ErrInvalidFieldName,
+		netsuiteerrors.ErrBodyRequired,
+		netsuiteerrors.ErrInvalidQueryTime,
 		errDocumentKind,
 		errExternalID,
 		errRequestID,

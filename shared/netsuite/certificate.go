@@ -17,6 +17,7 @@ import (
 	"time"
 
 	"github.com/bytedance/sonic"
+	"github.com/emoss08/trenova/shared/netsuiteerrors"
 	"github.com/emoss08/trenova/shared/tokenutils"
 )
 
@@ -79,10 +80,10 @@ type assertionClaims struct {
 func (c *OAuthClient) ClientAssertion(req AssertionRequest) (string, error) {
 	certificateID := strings.TrimSpace(req.CertificateID)
 	if !validCertificateID(certificateID) {
-		return "", ErrInvalidCertificate
+		return "", netsuiteerrors.ErrInvalidCertificate
 	}
 	if !isP256(req.PrivateKey) {
-		return "", ErrInvalidPrivateKey
+		return "", netsuiteerrors.ErrInvalidPrivateKey
 	}
 	audience, err := c.TokenURL(req.AccountID)
 	if err != nil {
@@ -151,14 +152,14 @@ func (c *OAuthClient) TokenFromCertificate(
 func NewCertificate(req CertificateRequest) (*Certificate, error) {
 	subject := strings.TrimSpace(req.Subject)
 	if subject == "" || len(subject) > maxSubjectLength {
-		return nil, ErrSubjectRequired
+		return nil, netsuiteerrors.ErrSubjectRequired
 	}
 	validity := req.Validity
 	if validity == 0 {
 		validity = MaxCertificateValidity
 	}
 	if validity < 0 || validity > MaxCertificateValidity {
-		return nil, ErrInvalidValidity
+		return nil, netsuiteerrors.ErrInvalidValidity
 	}
 	now := req.Now
 	if now.IsZero() {
@@ -201,31 +202,31 @@ func NewCertificate(req CertificateRequest) (*Certificate, error) {
 func ParsePrivateKey(data []byte) (*ecdsa.PrivateKey, error) {
 	block, _ := pem.Decode(data)
 	if block == nil {
-		return nil, ErrInvalidPrivateKey
+		return nil, netsuiteerrors.ErrInvalidPrivateKey
 	}
 	var key *ecdsa.PrivateKey
 	switch block.Type {
 	case pemPrivateKey:
 		parsed, err := x509.ParsePKCS8PrivateKey(block.Bytes)
 		if err != nil {
-			return nil, fmt.Errorf("%w: %w", ErrInvalidPrivateKey, err)
+			return nil, fmt.Errorf("%w: %w", netsuiteerrors.ErrInvalidPrivateKey, err)
 		}
 		ecKey, ok := parsed.(*ecdsa.PrivateKey)
 		if !ok {
-			return nil, ErrInvalidPrivateKey
+			return nil, netsuiteerrors.ErrInvalidPrivateKey
 		}
 		key = ecKey
 	case pemECPrivateKey:
 		parsed, err := x509.ParseECPrivateKey(block.Bytes)
 		if err != nil {
-			return nil, fmt.Errorf("%w: %w", ErrInvalidPrivateKey, err)
+			return nil, fmt.Errorf("%w: %w", netsuiteerrors.ErrInvalidPrivateKey, err)
 		}
 		key = parsed
 	default:
-		return nil, ErrInvalidPrivateKey
+		return nil, netsuiteerrors.ErrInvalidPrivateKey
 	}
 	if !isP256(key) {
-		return nil, ErrInvalidPrivateKey
+		return nil, netsuiteerrors.ErrInvalidPrivateKey
 	}
 	return key, nil
 }

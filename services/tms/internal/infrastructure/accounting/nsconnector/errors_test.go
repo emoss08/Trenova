@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/shared/netsuite"
+	"github.com/emoss08/trenova/shared/netsuiteerrors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -146,7 +146,7 @@ func TestClassifyDocumentErrorExplainsPermissionsAndDetails(t *testing.T) {
 	assert.Contains(t, permission.Resolution, "Transactions -> Invoice")
 
 	forbidden := conn.ClassifyDocumentError(
-		&netsuite.APIError{Status: http.StatusForbidden, Title: "Forbidden"},
+		&netsuiteerrors.APIError{Status: http.StatusForbidden, Title: "Forbidden"},
 	)
 	assert.Equal(t, "The role lacks permission for this record in NetSuite", forbidden.Message)
 
@@ -174,27 +174,27 @@ func TestClassifyDocumentErrorPassesThroughAndHandlesLocalFailures(t *testing.T)
 	assert.Same(t, own, conn.ClassifyDocumentError(fmt.Errorf("wrapped: %w", own)))
 
 	cases := map[error]accountingsync.SyncErrorCategory{
-		ErrNotConfigured:                            accountingsync.SyncErrorConfiguration,
-		errNoRedirect:                               accountingsync.SyncErrorConfiguration,
-		errLinesRequired:                            accountingsync.SyncErrorValidation,
-		netsuite.ErrInvalidExternalID:               accountingsync.SyncErrorValidation,
-		&netsuite.OAuthError{Code: "invalid_grant"}: accountingsync.SyncErrorAuth,
-		context.DeadlineExceeded:                    accountingsync.SyncErrorTransient,
-		errors.New("boom"):                          accountingsync.SyncErrorTransient,
-		fmt.Errorf("%w: item", errDuplicateName):    accountingsync.SyncErrorDuplicate,
+		ErrNotConfigured:                    accountingsync.SyncErrorConfiguration,
+		errNoRedirect:                       accountingsync.SyncErrorConfiguration,
+		errLinesRequired:                    accountingsync.SyncErrorValidation,
+		netsuiteerrors.ErrInvalidExternalID: accountingsync.SyncErrorValidation,
+		&netsuiteerrors.OAuthError{Code: "invalid_grant"}: accountingsync.SyncErrorAuth,
+		context.DeadlineExceeded:                          accountingsync.SyncErrorTransient,
+		errors.New("boom"):                                accountingsync.SyncErrorTransient,
+		fmt.Errorf("%w: item", errDuplicateName):          accountingsync.SyncErrorDuplicate,
 	}
 	for err, want := range cases {
 		assert.Equal(t, want, conn.ClassifyDocumentError(err).Category, err.Error())
 	}
-	assert.Equal(t, "invalid_grant", errorCode(&netsuite.OAuthError{Code: "invalid_grant"}))
-	assert.Equal(t, "400", errorCode(&netsuite.APIError{Status: 400}))
+	assert.Equal(t, "invalid_grant", errorCode(&netsuiteerrors.OAuthError{Code: "invalid_grant"}))
+	assert.Equal(t, "400", errorCode(&netsuiteerrors.APIError{Status: 400}))
 }
 
 func TestUnreachableCoversNotFoundAndDNSFailures(t *testing.T) {
 	t.Parallel()
 
 	assert.True(t, isUnreachable(&net.DNSError{Err: "no such host", Name: "x"}))
-	assert.True(t, isUnreachable(&netsuite.APIError{Status: http.StatusNotFound}))
+	assert.True(t, isUnreachable(&netsuiteerrors.APIError{Status: http.StatusNotFound}))
 	assert.False(t, isUnreachable(errors.New("boom")))
 	assert.True(t, deleteRefused(fixtureError(t, 400, "error_user_error.json")))
 	assert.True(t, deleteRefused(fixtureError(t, 400, "error_period_closed.json")))

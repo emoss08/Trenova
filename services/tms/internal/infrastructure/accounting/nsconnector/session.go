@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/shared/netsuite"
+	"github.com/emoss08/trenova/shared/netsuiteerrors"
 	"github.com/shopspring/decimal"
 )
 
@@ -123,7 +124,7 @@ func homeOf(
 		return nil, err
 	}
 	if len(rows) == 0 {
-		return nil, netsuite.ErrUnexpectedPayload
+		return nil, netsuiteerrors.ErrUnexpectedPayload
 	}
 	return &rows[0], nil
 }

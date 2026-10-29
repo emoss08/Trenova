@@ -19,7 +19,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
-	"github.com/emoss08/trenova/shared/netsuite"
+	"github.com/emoss08/trenova/shared/netsuiteerrors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
@@ -173,7 +173,7 @@ func TestExchangeCodeSendsTheVerifierToTheCallbackAccount(t *testing.T) {
 		CallbackRealmID: "not an account",
 		CodeVerifier:    testVerifier,
 	})
-	require.ErrorIs(t, err, netsuite.ErrInvalidCompanyRef)
+	require.ErrorIs(t, err, netsuiteerrors.ErrInvalidCompanyRef)
 	_, err = conn.ExchangeCode(t.Context(), &accountingconnectorports.AccountingCodeExchange{
 		Code:         "code-1",
 		CodeVerifier: testVerifier,
@@ -212,7 +212,7 @@ func TestRefreshParsesCompositeRealmsAndKeepsAMissingRefreshTokenEmpty(t *testin
 		RefreshToken: "stored-refresh",
 		RealmID:      testAccount + "-s0",
 	})
-	require.ErrorIs(t, err, netsuite.ErrInvalidCompanyRef)
+	require.ErrorIs(t, err, netsuiteerrors.ErrInvalidCompanyRef)
 	assert.Equal(t, 1, fake.count(http.MethodPost, tokenPath))
 }
 
@@ -270,7 +270,7 @@ func TestRevokeCallsTheAccountRevokeEndpoint(t *testing.T) {
 	require.ErrorIs(t, conn.Revoke(t.Context(), &accountingconnectorports.AccountingRevokeRequest{
 		Token:   "refresh-token",
 		RealmID: "bad realm",
-	}), netsuite.ErrInvalidCompanyRef)
+	}), netsuiteerrors.ErrInvalidCompanyRef)
 	require.NoError(
 		t,
 		conn.ReleaseCompanies(t.Context(), nil, []accountingconnectorports.AccountingCompany{
@@ -315,9 +315,9 @@ func TestClassifyErrorMapsConnectionFailures(t *testing.T) {
 
 	conn := testConnector(t, &fakeNS{})
 	apiErr := func(status int, code, detail string) error {
-		return &netsuite.APIError{
+		return &netsuiteerrors.APIError{
 			Status:  status,
-			Details: []netsuite.ErrorDetail{{Code: code, Detail: detail}},
+			Details: []netsuiteerrors.ErrorDetail{{Code: code, Detail: detail}},
 		}
 	}
 	cases := []struct {
@@ -330,13 +330,13 @@ func TestClassifyErrorMapsConnectionFailures(t *testing.T) {
 		{"unreachable", errUnreachable, accountingsync.ErrorCategoryConfiguration},
 		{
 			"revoked",
-			&netsuite.OAuthError{Code: "invalid_grant"},
+			&netsuiteerrors.OAuthError{Code: "invalid_grant"},
 			accountingsync.ErrorCategoryRevoked,
 		},
 		{"certificate", errCertificateRevoked, accountingsync.ErrorCategoryRevoked},
 		{
 			"client",
-			&netsuite.OAuthError{Code: "invalid_client"},
+			&netsuiteerrors.OAuthError{Code: "invalid_client"},
 			accountingsync.ErrorCategoryUnauthorized,
 		},
 		{

@@ -1,4 +1,4 @@
-package netsuite
+package netsuiteerrors
 
 import (
 	"errors"
@@ -240,7 +240,7 @@ type oauthErrorBody struct {
 	ErrorDescription string `json:"error_description"`
 }
 
-func decodeAPIError(status int, body []byte, header http.Header) error {
+func DecodeAPIError(status int, body []byte, header http.Header) error {
 	apiErr := &APIError{
 		Status: status,
 		cause:  restx.DecodeAPIError(status, body, header),
@@ -273,7 +273,7 @@ func decodeAPIError(status int, body []byte, header http.Header) error {
 	return apiErr
 }
 
-func decodeOAuthError(status int, body []byte, header http.Header) error {
+func DecodeOAuthError(status int, body []byte, header http.Header) error {
 	var parsed oauthErrorBody
 	if err := sonic.Unmarshal(body, &parsed); err == nil && parsed.Error != "" {
 		return &OAuthError{
@@ -300,7 +300,7 @@ func plainMessage(body []byte) string {
 	return text[:cut]
 }
 
-func redactAPIError(err error, redact func(string) string) {
+func RedactAPIError(err error, redact func(string) string) {
 	apiErr, ok := apiErrorOf(err)
 	if !ok {
 		return
@@ -312,7 +312,7 @@ func redactAPIError(err error, redact func(string) string) {
 	}
 }
 
-func redactSecrets(err error, secrets ...string) {
+func RedactSecrets(err error, secrets ...string) {
 	replace := func(value string) string {
 		for _, secret := range secrets {
 			if len(secret) >= minRedactedSecretLength {

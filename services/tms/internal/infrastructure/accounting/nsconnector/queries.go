@@ -8,6 +8,7 @@ import (
 
 	"github.com/emoss08/trenova/shared/jsonflex"
 	"github.com/emoss08/trenova/shared/netsuite"
+	"github.com/emoss08/trenova/shared/netsuiteerrors"
 	"github.com/shopspring/decimal"
 )
 
@@ -390,7 +391,7 @@ func transactionState(
 ) (*transactionRow, bool, error) {
 	internalID, ok := parseInternalID(id)
 	if !ok {
-		return nil, false, netsuite.ErrInvalidRecordID
+		return nil, false, netsuiteerrors.ErrInvalidRecordID
 	}
 	var rows []transactionRow
 	if _, err := client.Query(ctx, netsuite.Query{

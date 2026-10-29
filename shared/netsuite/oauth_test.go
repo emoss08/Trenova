@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/shared/netsuite"
+	"github.com/emoss08/trenova/shared/netsuiteerrors"
 	"github.com/emoss08/trenova/shared/tokenutils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -82,11 +83,11 @@ func TestNewOAuthClientRequiresConfig(t *testing.T) {
 	t.Parallel()
 
 	_, err := netsuite.NewOAuthClient(netsuite.OAuthConfig{ClientSecret: "s", RedirectURL: "r"})
-	require.ErrorIs(t, err, netsuite.ErrClientIDRequired)
+	require.ErrorIs(t, err, netsuiteerrors.ErrClientIDRequired)
 	_, err = netsuite.NewOAuthClient(netsuite.OAuthConfig{ClientID: "c", RedirectURL: "r"})
-	require.ErrorIs(t, err, netsuite.ErrClientSecretRequired)
+	require.ErrorIs(t, err, netsuiteerrors.ErrClientSecretRequired)
 	_, err = netsuite.NewOAuthClient(netsuite.OAuthConfig{ClientID: "c", ClientSecret: "s"})
-	require.ErrorIs(t, err, netsuite.ErrRedirectURLRequired)
+	require.ErrorIs(t, err, netsuiteerrors.ErrRedirectURLRequired)
 }
 
 func TestAuthorizeURL(t *testing.T) {
@@ -140,13 +141,13 @@ func TestAuthorizeURLValidates(t *testing.T) {
 		_, err = client.AuthorizeURL(netsuite.AuthorizeRequest{
 			State: state, CodeChallenge: challenge,
 		})
-		require.ErrorIs(t, err, netsuite.ErrInvalidState, state)
+		require.ErrorIs(t, err, netsuiteerrors.ErrInvalidState, state)
 	}
 	for _, bad := range []string{"", testVerifier[:42], challenge[:42] + "+"} {
 		_, err = client.AuthorizeURL(netsuite.AuthorizeRequest{
 			State: testState, CodeChallenge: bad,
 		})
-		require.ErrorIs(t, err, netsuite.ErrInvalidChallenge, bad)
+		require.ErrorIs(t, err, netsuiteerrors.ErrInvalidChallenge, bad)
 	}
 }
 
@@ -161,7 +162,7 @@ func TestTokenURLIsPerAccount(t *testing.T) {
 		"https://1234567-sb1.suitetalk.api.netsuite.com/services/rest/auth/oauth2/v1/token",
 		tokenURL)
 	_, err = client.TokenURL("evil.example/x")
-	require.ErrorIs(t, err, netsuite.ErrInvalidAccountID)
+	require.ErrorIs(t, err, netsuiteerrors.ErrInvalidAccountID)
 }
 
 func TestExchangeCodeSendsBasicAuthAndVerifier(t *testing.T) {
@@ -200,15 +201,15 @@ func TestExchangeCodeValidates(t *testing.T) {
 	_, err := client.ExchangeCode(t.Context(), netsuite.CodeExchange{
 		AccountID: testAccount, CodeVerifier: testVerifier,
 	})
-	require.ErrorIs(t, err, netsuite.ErrCodeRequired)
+	require.ErrorIs(t, err, netsuiteerrors.ErrCodeRequired)
 	_, err = client.ExchangeCode(t.Context(), netsuite.CodeExchange{
 		AccountID: testAccount, Code: "c", CodeVerifier: testVerifier[:42],
 	})
-	require.ErrorIs(t, err, netsuite.ErrInvalidVerifier)
+	require.ErrorIs(t, err, netsuiteerrors.ErrInvalidVerifier)
 	_, err = client.ExchangeCode(t.Context(), netsuite.CodeExchange{
 		AccountID: "../evil", Code: "c", CodeVerifier: testVerifier,
 	})
-	require.ErrorIs(t, err, netsuite.ErrInvalidAccountID)
+	require.ErrorIs(t, err, netsuiteerrors.ErrInvalidAccountID)
 }
 
 func TestExchangeWithoutRefreshTokenIsUnexpected(t *testing.T) {
@@ -220,7 +221,7 @@ func TestExchangeWithoutRefreshTokenIsUnexpected(t *testing.T) {
 	_, err := client.ExchangeCode(t.Context(), netsuite.CodeExchange{
 		AccountID: testAccount, Code: "c", CodeVerifier: testVerifier,
 	})
-	require.ErrorIs(t, err, netsuite.ErrUnexpectedPayload)
+	require.ErrorIs(t, err, netsuiteerrors.ErrUnexpectedPayload)
 }
 
 func TestRefreshWithoutARefreshTokenInTheResponse(t *testing.T) {
@@ -244,7 +245,7 @@ func TestRefreshWithoutARefreshTokenInTheResponse(t *testing.T) {
 	assert.Equal(t, time.Hour, token.ExpiresIn)
 
 	_, err = client.Refresh(t.Context(), netsuite.RefreshRequest{AccountID: testAccount})
-	require.ErrorIs(t, err, netsuite.ErrTokenRequired)
+	require.ErrorIs(t, err, netsuiteerrors.ErrTokenRequired)
 }
 
 func TestRefreshWithARotatedRefreshToken(t *testing.T) {
@@ -277,7 +278,7 @@ func TestRevoke(t *testing.T) {
 
 	require.ErrorIs(t, client.Revoke(t.Context(), netsuite.RevokeRequest{
 		AccountID: testAccount,
-	}), netsuite.ErrTokenRequired)
+	}), netsuiteerrors.ErrTokenRequired)
 }
 
 func TestRefreshRejectedAsInvalidGrant(t *testing.T) {
@@ -288,10 +289,10 @@ func TestRefreshRejectedAsInvalidGrant(t *testing.T) {
 		AccountID: testAccount, RefreshToken: "expired-refresh",
 	})
 	require.Error(t, err)
-	assert.True(t, netsuite.IsInvalidGrant(err))
-	assert.False(t, netsuite.IsInvalidClient(err))
-	assert.False(t, netsuite.IsTransient(err))
-	var oauthErr *netsuite.OAuthError
+	assert.True(t, netsuiteerrors.IsInvalidGrant(err))
+	assert.False(t, netsuiteerrors.IsInvalidClient(err))
+	assert.False(t, netsuiteerrors.IsTransient(err))
+	var oauthErr *netsuiteerrors.OAuthError
 	require.ErrorAs(t, err, &oauthErr)
 	assert.Equal(t, http.StatusBadRequest, oauthErr.Status)
 	assert.Equal(t, "invalid_grant", oauthErr.Code)
@@ -305,8 +306,8 @@ func TestRefreshRejectedAsInvalidClient(t *testing.T) {
 		AccountID: testAccount, RefreshToken: "refresh",
 	})
 	require.Error(t, err)
-	assert.True(t, netsuite.IsInvalidClient(err))
-	assert.False(t, netsuite.IsInvalidGrant(err))
+	assert.True(t, netsuiteerrors.IsInvalidClient(err))
+	assert.False(t, netsuiteerrors.IsInvalidGrant(err))
 	assert.NotContains(t, err.Error(), testClientSecret)
 }
 
@@ -338,6 +339,6 @@ func TestTokenCallsAreNeverRetried(t *testing.T) {
 		AccountID: testAccount, RefreshToken: "refresh",
 	})
 	require.Error(t, err)
-	assert.True(t, netsuite.IsTransient(err))
+	assert.True(t, netsuiteerrors.IsTransient(err))
 	assert.Equal(t, int32(1), calls.Load())
 }
