@@ -381,7 +381,7 @@ func (t *RetryAccountingSyncTool) ResolveProposalSelection(
 func (t *RetryAccountingSyncTool) waitingCount(
 	ctx context.Context,
 	req *accountingsyncports.RetryAccountingSyncRequest,
-) (int, bool, error) {
+) (count int, exact bool, err error) {
 	candidates := retryCandidatesRequest(req.TenantInfo, req.IntegrationType, req.ErrorCategories)
 	candidates.Cursor.Limit = 1
 	candidates.Cursor.IncludeTotalCount = true

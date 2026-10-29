@@ -141,7 +141,7 @@ func (t *ScheduleReportTool) Policy() agenttoolports.ToolPolicy {
 
 func (t *ScheduleReportTool) Validate(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
 ) error {
 	if err := t.validateArgs(params.Params); err != nil {
 		return err
@@ -263,7 +263,7 @@ func (t *ScheduleReportTool) validateArgs(params map[string]any) error {
 
 func (t *ScheduleReportTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	request, err := t.request(&params)
 	if err != nil {
@@ -447,7 +447,7 @@ func (t *CreateTableChangeAlertTool) Policy() agenttoolports.ToolPolicy {
 
 func (t *CreateTableChangeAlertTool) Validate(
 	_ context.Context,
-	params agenttoolports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
 ) error {
 	return t.validateArgs(params.Params)
 }
@@ -517,7 +517,7 @@ func alertConditions(params map[string]any) []tablechangealert.Condition {
 
 func (t *CreateTableChangeAlertTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err

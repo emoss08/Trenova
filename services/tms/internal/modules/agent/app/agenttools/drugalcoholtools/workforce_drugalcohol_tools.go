@@ -69,9 +69,19 @@ var randomSelectionMoves = agenttoolschema.Source(
 )
 
 var dotTestFields = []string{
-	workforcekit.FieldWorkerID, paramDOTTestType, paramSubstance, changepreview.FieldStatus, "result", paramIsDOT,
-	changepreview.FieldReason, paramScheduledAt, paramCollection, workforcekit.ParamSafetyEventID, paramDrawEntryID,
-	workforcekit.FieldNotes, "orderedById",
+	workforcekit.FieldWorkerID,
+	paramDOTTestType,
+	paramSubstance,
+	changepreview.FieldStatus,
+	"result",
+	paramIsDOT,
+	changepreview.FieldReason,
+	paramScheduledAt,
+	paramCollection,
+	workforcekit.ParamSafetyEventID,
+	paramDrawEntryID,
+	workforcekit.FieldNotes,
+	"orderedById",
 }
 
 var drawFields = []string{
@@ -236,7 +246,10 @@ func scheduledTestFrom(params *agenttoolports.ToolExecuteParams) (*workerdot.Wor
 		CollectionSite: site,
 		Notes:          notes,
 	}
-	if test.SafetyEventID, err = toolparams.OptionalID(params.Params, workforcekit.ParamSafetyEventID); err != nil {
+	if test.SafetyEventID, err = toolparams.OptionalID(
+		params.Params,
+		workforcekit.ParamSafetyEventID,
+	); err != nil {
 		return nil, err
 	}
 	if test.DrawEntryID, err = toolparams.OptionalID(params.Params, paramDrawEntryID); err != nil {

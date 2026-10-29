@@ -400,7 +400,11 @@ func NewDeleteTableChangeAlertTool(alerts AlertKeeper) agenttoolports.AgentTool 
 			id pulid.ID,
 			params *agenttoolports.ToolExecuteParams,
 		) (*agentrecord.ToolExecutionResult, error) {
-			if err := alerts.DeleteSubscription(ctx, id, toolparams.TenantFrom(*params)); err != nil {
+			if err := alerts.DeleteSubscription(
+				ctx,
+				id,
+				toolparams.TenantFrom(*params),
+			); err != nil {
 				return nil, err
 			}
 

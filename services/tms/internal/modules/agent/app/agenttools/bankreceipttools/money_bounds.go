@@ -40,7 +40,7 @@ func (t *PostCustomerPaymentTool) withinBounds(
 	if t.payments == nil || t.receipts == nil {
 		return agenttoolports.OutsideMoneyBound(agenttooltrust.HeldByMoneyUnproven)
 	}
-	args, err := t.arguments(ctx, params)
+	args, err := t.arguments(ctx, &params)
 	if err != nil {
 		return agenttoolports.OutsideMoneyBound(agenttooltrust.HeldByMoneyUnproven)
 	}
@@ -120,7 +120,7 @@ func (t *MatchBankReceiptTool) withinBounds(
 	if t.receipts == nil {
 		return agenttoolports.OutsideMoneyBound(agenttooltrust.HeldByMoneyUnproven)
 	}
-	request, err := t.request(params)
+	request, err := t.request(&params)
 	if err != nil {
 		return agenttoolports.OutsideMoneyBound(agenttooltrust.HeldByMoneyUnproven)
 	}

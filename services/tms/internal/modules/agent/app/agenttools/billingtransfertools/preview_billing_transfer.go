@@ -56,7 +56,7 @@ func (t *TransferToBillingTool) Preview(
 		changes = append(changes, change)
 	}
 
-	preview := toolpreview.Build(transferSummary(request, plan), changes...)
+	preview := toolpreview.Build(transferSummary(&request, plan), changes...)
 	if request.background() && len(plan.Decisions) < len(request.shipmentIDs) {
 		preview.Partial = true
 	}
@@ -202,7 +202,7 @@ func validationIssues(decision *shipmentbillingports.BillingTransferDecision) st
 }
 
 func transferSummary(
-	request transferRequest,
+	request *transferRequest,
 	plan *shipmentbillingports.BillingTransferPlan,
 ) string {
 	counts := fmt.Sprintf("%d would transfer", plan.Transfer)

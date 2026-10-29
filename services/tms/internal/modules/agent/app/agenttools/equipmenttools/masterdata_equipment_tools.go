@@ -344,7 +344,10 @@ func NewCreateTractorTool(
 			"sent and it can be marked Sold or out of service.",
 		Fields: tractorFields(),
 		Required: []string{
-			masterdatakit.MdCode, paramPrimaryWorkerID, masterdatakit.MdEquipmentTypeID, masterdatakit.MdManufacturerID,
+			masterdatakit.MdCode,
+			paramPrimaryWorkerID,
+			masterdatakit.MdEquipmentTypeID,
+			masterdatakit.MdManufacturerID,
 		},
 		SearchTerms: []string{"new tractor", "add truck", "power unit", "new unit"},
 		Policy:      masterdatakit.MdInternalAsk,

@@ -186,7 +186,7 @@ type transferRequest struct {
 	criteria    billingtransfercriteria.Criteria
 }
 
-func (r transferRequest) background() bool {
+func (r *transferRequest) background() bool {
 	return len(r.shipmentIDs) > shipmentbillingports.MaxBulkTransferToBillingShipments
 }
 
@@ -414,7 +414,7 @@ func (t *TransferToBillingTool) ExecuteWithResult(
 	}
 
 	if request.background() {
-		return t.startRun(ctx, &params, request)
+		return t.startRun(ctx, &params, &request)
 	}
 
 	response, err := t.shipments.BulkTransferToBilling(
@@ -440,7 +440,7 @@ func (t *TransferToBillingTool) ExecuteWithResult(
 func (t *TransferToBillingTool) startRun(
 	ctx context.Context,
 	params *agenttoolports.ToolExecuteParams,
-	request transferRequest,
+	request *transferRequest,
 ) (*agentrecord.ToolExecutionResult, error) {
 	run, err := t.runs.Start(ctx, &billingtransferservice.StartRunRequest{
 		TenantInfo:                  toolparams.TenantFrom(*params),

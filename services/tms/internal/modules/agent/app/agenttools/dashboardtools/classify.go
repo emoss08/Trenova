@@ -7,7 +7,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 )
 
-func classifyTableView(params agenttoolports.ToolExecuteParams) agenttoolports.CallPolicy {
+func classifyTableView(
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // ToolPolicy.Classify passes params by value
+) agenttoolports.CallPolicy {
 	actor := params.Actor
 	if toolparams.OptionalBool(params.Params, "shared") || actor == nil ||
 		actor.PrincipalType != permissionports.PrincipalTypeUser || actor.UserID.IsNil() {

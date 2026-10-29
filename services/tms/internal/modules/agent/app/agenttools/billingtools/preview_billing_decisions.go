@@ -35,7 +35,10 @@ var decisionFields = map[billingqueue.Status][]string{
 		billingqueuepreview.FieldReviewCompletedAt,
 	},
 	billingqueue.StatusCanceled: {
-		changepreview.FieldStatus, changepreview.FieldCancelReason, changepreview.FieldCanceledByID, "canceledAt",
+		changepreview.FieldStatus,
+		changepreview.FieldCancelReason,
+		changepreview.FieldCanceledByID,
+		"canceledAt",
 	},
 }
 

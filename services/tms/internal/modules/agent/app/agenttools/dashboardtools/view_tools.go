@@ -116,7 +116,7 @@ func (t *SaveTableViewTool) Policy() agenttoolports.ToolPolicy {
 
 func (t *SaveTableViewTool) Validate(
 	_ context.Context,
-	params agenttoolports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
 ) error {
 	return t.validateArgs(params.Params)
 }
@@ -145,7 +145,7 @@ func (t *SaveTableViewTool) validateArgs(params map[string]any) error {
 
 func (t *SaveTableViewTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err

@@ -42,7 +42,7 @@ func (t *ResolveBankReceiptWorkItemTool) Preview(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agentpreview.ToolPreview, error) {
-	args, err := t.arguments(params)
+	args, err := t.arguments(&params)
 	if err != nil {
 		return nil, err
 	}

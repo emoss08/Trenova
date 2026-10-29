@@ -183,7 +183,7 @@ func (t *CreateDashboardTool) Policy() agenttoolports.ToolPolicy {
 
 func (t *CreateDashboardTool) Validate(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
 ) error {
 	if err := t.validateArgs(params.Params); err != nil {
 		return err
@@ -262,7 +262,7 @@ func validateTiles(tiles []map[string]any, multiErr *errortypes.MultiError) {
 
 func (t *CreateDashboardTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
@@ -372,7 +372,7 @@ func (t *AddDashboardTileTool) Policy() agenttoolports.ToolPolicy {
 
 func (t *AddDashboardTileTool) Validate(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
 ) error {
 	if err := t.validateArgs(params.Params); err != nil {
 		return err
@@ -422,7 +422,7 @@ func (t *AddDashboardTileTool) validateArgs(params map[string]any) error {
 
 func (t *AddDashboardTileTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err

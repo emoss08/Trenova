@@ -113,7 +113,7 @@ func (t *UpdateTractorStatusTool) Policy() agenttoolports.ToolPolicy {
 
 func (t *UpdateTractorStatusTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
@@ -184,7 +184,7 @@ func (t *UpdateTrailerStatusTool) Policy() agenttoolports.ToolPolicy {
 
 func (t *UpdateTrailerStatusTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err

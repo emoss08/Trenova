@@ -91,7 +91,7 @@ const inReviewConditionDescription = "An item on hold was held there by a person
 
 func (t *TransitionToInReviewTool) tierLimit(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // a TierCondition passes params by value
 ) agent.AutonomyTier {
 	if params.Actor == nil {
 		return agent.TierPropose

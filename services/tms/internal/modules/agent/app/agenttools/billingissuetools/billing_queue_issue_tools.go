@@ -446,28 +446,7 @@ func newResolveBillingQueueIssueTool(review queueReviewer) agenttoolports.AgentT
 			*billingqueueports.ResolveBillingQueueIssueRequest,
 			*billingqueueports.IssueSettlementPlan,
 		]{
-			Request: func(
-				params *agenttoolports.ToolExecuteParams,
-			) (*billingqueueports.ResolveBillingQueueIssueRequest, error) {
-				itemID, issueID, err := queueIssueIDs(params)
-				if err != nil {
-					return nil, err
-				}
-				optionKey, err := toolparams.RequireBoundedText(
-					params.Params,
-					paramOptionKey,
-					maxOptionKeyChars,
-				)
-				if err != nil {
-					return nil, err
-				}
-				return &billingqueueports.ResolveBillingQueueIssueRequest{
-					ItemID:     itemID,
-					IssueID:    issueID,
-					OptionKey:  optionKey,
-					TenantInfo: toolparams.TenantFrom(*params),
-				}, nil
-			},
+			Request: resolveIssueRequest,
 			Plan: func(
 				ctx context.Context,
 				req *billingqueueports.ResolveBillingQueueIssueRequest,
@@ -492,6 +471,29 @@ func newResolveBillingQueueIssueTool(review queueReviewer) agenttoolports.AgentT
 			},
 		},
 	)
+}
+
+func resolveIssueRequest(
+	params *agenttoolports.ToolExecuteParams,
+) (*billingqueueports.ResolveBillingQueueIssueRequest, error) {
+	itemID, issueID, err := queueIssueIDs(params)
+	if err != nil {
+		return nil, err
+	}
+	optionKey, err := toolparams.RequireBoundedText(
+		params.Params,
+		paramOptionKey,
+		maxOptionKeyChars,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return &billingqueueports.ResolveBillingQueueIssueRequest{
+		ItemID:     itemID,
+		IssueID:    issueID,
+		OptionKey:  optionKey,
+		TenantInfo: toolparams.TenantFrom(*params),
+	}, nil
 }
 
 func queueIssueIDs(params *agenttoolports.ToolExecuteParams) (itemID, issueID pulid.ID, err error) {

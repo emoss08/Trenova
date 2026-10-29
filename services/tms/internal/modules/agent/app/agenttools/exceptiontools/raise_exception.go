@@ -180,7 +180,7 @@ func (t *RaiseExceptionTool) Policy() agenttoolports.ToolPolicy {
 
 func (t *RaiseExceptionTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
@@ -204,7 +204,7 @@ func (t *RaiseExceptionTool) request(
 		return nil, ErrMissingRun
 	}
 
-	subjectType, subjectID, err := t.subject(ctx, *params)
+	subjectType, subjectID, err := t.subject(ctx, params)
 	if err != nil {
 		return nil, err
 	}
@@ -261,7 +261,7 @@ func (t *RaiseExceptionTool) request(
 
 func (t *RaiseExceptionTool) Validate(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
 ) error {
 	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
@@ -270,7 +270,7 @@ func (t *RaiseExceptionTool) Validate(
 	if _, err := givenEvidence(params.Params); err != nil {
 		return err
 	}
-	_, _, err := t.subject(ctx, params)
+	_, _, err := t.subject(ctx, &params)
 
 	return err
 }
@@ -307,7 +307,7 @@ func givenEvidence(params map[string]any) ([]agentevidence.EvidenceRef, error) {
 // approval runs it long after the proposal was validated.
 func (t *RaiseExceptionTool) subject(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (agent.SubjectType, pulid.ID, error) {
 	subjectTypeRaw, err := toolparams.RequireString(params.Params, "subjectType")
 	if err != nil {

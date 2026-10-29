@@ -2,8 +2,11 @@ package bankreceipttools
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
+
+	"github.com/emoss08/trenova/pkg/toolschema"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/invoicepreview"
@@ -29,6 +32,11 @@ import (
 )
 
 const maxResolutionNoteChars = 500
+
+const (
+	paramBankReceiptID     = "bankReceiptId"
+	paramCustomerPaymentID = "customerPaymentId"
+)
 
 const defaultPaymentMethod = customerpayment.MethodACH
 
@@ -122,20 +130,20 @@ func (t *MatchBankReceiptTool) Description() string {
 
 func (t *MatchBankReceiptTool) ParamSchema() map[string]any {
 	return map[string]any{
-		"type": "object",
-		"properties": map[string]any{
-			"bankReceiptId": agenttoolschema.RecordIDText(
+		toolschema.KeyType: toolschema.TypeObject,
+		toolschema.KeyProperties: map[string]any{
+			paramBankReceiptID: agenttoolschema.RecordIDText(
 				permission.ResourceBankReceipt,
 				"The bank receipt, from receivable_list_bank_receipt_exceptions or the page.",
 			),
-			"customerPaymentId": agenttoolschema.RecordIDText(
+			paramCustomerPaymentID: agenttoolschema.RecordIDText(
 				permission.ResourceCustomerPayment,
 				"The posted payment, from receivable_get_bank_receipt's suggestions or "+
 					"receivable_list_customer_payments.",
 			),
 		},
-		"required":             []string{"bankReceiptId", "customerPaymentId"},
-		"additionalProperties": false,
+		toolschema.KeyRequired:             []string{paramBankReceiptID, paramCustomerPaymentID},
+		toolschema.KeyAdditionalProperties: false,
 	}
 }
 
@@ -161,7 +169,7 @@ func (t *MatchBankReceiptTool) Policy() agenttoolports.ToolPolicy {
 }
 
 func (t *MatchBankReceiptTool) Target(params map[string]any) (agenttoolports.ToolTarget, bool) {
-	id, err := toolparams.RequirePulid(params, "bankReceiptId")
+	id, err := toolparams.RequirePulid(params, paramBankReceiptID)
 	if err != nil {
 		return agenttoolports.ToolTarget{}, false
 	}
@@ -171,9 +179,9 @@ func (t *MatchBankReceiptTool) Target(params map[string]any) (agenttoolports.Too
 
 func (t *MatchBankReceiptTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
-	request, err := t.request(params)
+	request, err := t.request(&params)
 	if err != nil {
 		return err
 	}
@@ -184,7 +192,7 @@ func (t *MatchBankReceiptTool) Execute(
 }
 
 func (t *MatchBankReceiptTool) request(
-	params agenttoolports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*bankreceiptports.MatchBankReceiptRequest, error) {
 	receiptID, paymentID, err := t.arguments(params)
 	if err != nil {
@@ -194,23 +202,23 @@ func (t *MatchBankReceiptTool) request(
 	return &bankreceiptports.MatchBankReceiptRequest{
 		ReceiptID:  receiptID,
 		PaymentID:  paymentID,
-		TenantInfo: toolparams.TenantFrom(params),
+		TenantInfo: toolparams.TenantFrom(*params),
 	}, nil
 }
 
 func (t *MatchBankReceiptTool) arguments(
-	params agenttoolports.ToolExecuteParams,
-) (pulid.ID, pulid.ID, error) {
-	if err := toolguard.GuardExecute(t, params); err != nil {
+	params *agenttoolports.ToolExecuteParams,
+) (receiptID, paymentID pulid.ID, err error) {
+	if err = toolguard.GuardExecute(t, *params); err != nil {
 		return "", "", err
 	}
 
-	receiptID, err := toolparams.RequirePulid(params.Params, "bankReceiptId")
+	receiptID, err = toolparams.RequirePulid(params.Params, paramBankReceiptID)
 	if err != nil {
 		return "", "", err
 	}
 
-	paymentID, err := toolparams.RequirePulid(params.Params, "customerPaymentId")
+	paymentID, err = toolparams.RequirePulid(params.Params, paramCustomerPaymentID)
 	if err != nil {
 		return "", "", err
 	}
@@ -268,16 +276,16 @@ func (t *PostCustomerPaymentTool) Description() string {
 
 func (t *PostCustomerPaymentTool) ParamSchema() map[string]any {
 	return map[string]any{
-		"type": "object",
-		"properties": map[string]any{
-			"customerId": agenttoolschema.RecordIDText(
+		toolschema.KeyType: toolschema.TypeObject,
+		toolschema.KeyProperties: map[string]any{
+			toolparams.ParamCustomerID: agenttoolschema.RecordIDText(
 				permission.ResourceCustomer,
 				"The paying customer, from customer_list or receivable_get_bank_receipt's "+
 					"suggestions.",
 			),
 			toolparams.ParamAmount: map[string]any{
-				"type":        "string",
-				"description": "The payment amount as a decimal string, such as 1250.00.",
+				toolschema.KeyType:        toolschema.TypeString,
+				toolschema.KeyDescription: "The payment amount as a decimal string, such as 1250.00.",
 			},
 			"paymentDate": agenttoolschema.Date(
 				"The day the money arrived; the receipt date for a bank receipt.",
@@ -286,46 +294,53 @@ func (t *PostCustomerPaymentTool) ParamSchema() map[string]any {
 				"How it was paid. Defaults to ACH.", customerPaymentMethods,
 			),
 			"referenceNumber": map[string]any{
-				"type":        "string",
-				"description": "The bank's reference, so the payment can be found again.",
+				toolschema.KeyType:        toolschema.TypeString,
+				toolschema.KeyDescription: "The bank's reference, so the payment can be found again.",
 			},
 			"memo": map[string]any{
-				"type": "string",
-				"description": "A note kept on the payment, such as the remittance text or why a " +
+				toolschema.KeyType: toolschema.TypeString,
+				toolschema.KeyDescription: "A note kept on the payment, such as the remittance text or why a " +
 					"remainder was left unapplied.",
 			},
 			"applications": map[string]any{
-				"type":        "array",
-				"description": "The invoices this payment pays and how much of it goes to each.",
-				"items": map[string]any{
-					"type": "object",
-					"properties": map[string]any{
+				toolschema.KeyType:        toolschema.TypeArray,
+				toolschema.KeyDescription: "The invoices this payment pays and how much of it goes to each.",
+				toolschema.KeyItems: map[string]any{
+					toolschema.KeyType: toolschema.TypeObject,
+					toolschema.KeyProperties: map[string]any{
 						"invoiceId": agenttoolschema.RecordIDText(
 							permission.ResourceInvoice,
 							"An open invoice of this customer, from invoice_list.",
 						),
 						toolparams.ParamAmount: map[string]any{
-							"type":        "string",
-							"description": "Applied to this invoice, as a decimal string.",
+							toolschema.KeyType:        toolschema.TypeString,
+							toolschema.KeyDescription: "Applied to this invoice, as a decimal string.",
 						},
 						"shortPayAmount": map[string]any{
-							"type":        "string",
-							"description": "Written off on this invoice as a short pay, if any.",
+							toolschema.KeyType:        toolschema.TypeString,
+							toolschema.KeyDescription: "Written off on this invoice as a short pay, if any.",
 						},
 					},
-					"required":             []string{"invoiceId", toolparams.ParamAmount},
-					"additionalProperties": false,
+					toolschema.KeyRequired: []string{
+						"invoiceId",
+						toolparams.ParamAmount,
+					},
+					toolschema.KeyAdditionalProperties: false,
 				},
 			},
-			"bankReceiptId": agenttoolschema.RecordIDText(
+			paramBankReceiptID: agenttoolschema.RecordIDText(
 				permission.ResourceBankReceipt,
 				"The unmatched bank receipt this payment records, from "+
 					"receivable_list_bank_receipt_exceptions or receivable_get_bank_receipt, to match it in the same "+
 					"step.",
 			),
 		},
-		"required":             []string{"customerId", toolparams.ParamAmount, "paymentDate"},
-		"additionalProperties": false,
+		toolschema.KeyRequired: []string{
+			toolparams.ParamCustomerID,
+			toolparams.ParamAmount,
+			"paymentDate",
+		},
+		toolschema.KeyAdditionalProperties: false,
 	}
 }
 
@@ -353,7 +368,7 @@ func (t *PostCustomerPaymentTool) Policy() agenttoolports.ToolPolicy {
 }
 
 func (t *PostCustomerPaymentTool) Target(params map[string]any) (agenttoolports.ToolTarget, bool) {
-	id, err := toolparams.RequirePulid(params, "bankReceiptId")
+	id, err := toolparams.RequirePulid(params, paramBankReceiptID)
 	if err != nil {
 		return agenttoolports.ToolTarget{}, false
 	}
@@ -369,7 +384,7 @@ type postPaymentArgs struct {
 
 func (t *PostCustomerPaymentTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	_, err := t.ExecuteWithResult(ctx, params)
 
@@ -384,7 +399,7 @@ func (t *PostCustomerPaymentTool) ExecuteWithResult(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
 ) (*agentrecord.ToolExecutionResult, error) {
-	args, err := t.arguments(ctx, params)
+	args, err := t.arguments(ctx, &params)
 	if err != nil {
 		return nil, err
 	}
@@ -398,8 +413,8 @@ func (t *PostCustomerPaymentTool) ExecuteWithResult(
 		Kind:   "customer payment",
 		Name:   payment.ReferenceNumber,
 		IDs: map[string]string{
-			"customerPaymentId": payment.ID.String(),
-			"customerId":        payment.CustomerID.String(),
+			paramCustomerPaymentID:     payment.ID.String(),
+			toolparams.ParamCustomerID: payment.CustomerID.String(),
 		},
 		Record: &agentrecord.RecordRef{
 			EntityType: changepreview.CustomerRecordEntity,
@@ -438,13 +453,13 @@ func (t *PostCustomerPaymentTool) ExecuteWithResult(
 
 func (t *PostCustomerPaymentTool) arguments(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (postPaymentArgs, error) {
-	if err := toolguard.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, *params); err != nil {
 		return postPaymentArgs{}, err
 	}
 
-	customerID, err := toolparams.RequirePulid(params.Params, "customerId")
+	customerID, err := toolparams.RequirePulid(params.Params, toolparams.ParamCustomerID)
 	if err != nil {
 		return postPaymentArgs{}, err
 	}
@@ -474,7 +489,7 @@ func (t *PostCustomerPaymentTool) arguments(
 		return postPaymentArgs{}, err
 	}
 
-	tenant := toolparams.TenantFrom(params)
+	tenant := toolparams.TenantFrom(*params)
 	args := postPaymentArgs{request: &customerpaymentports.PostCustomerPaymentRequest{
 		CustomerID:     customerID,
 		PaymentDate:    paymentDate,
@@ -489,7 +504,7 @@ func (t *PostCustomerPaymentTool) arguments(
 		TenantInfo:   tenant,
 	}}
 
-	receiptID, present, err := toolparams.OptionalPulid(params.Params, "bankReceiptId")
+	receiptID, present, err := toolparams.OptionalPulid(params.Params, paramBankReceiptID)
 	if err != nil {
 		return postPaymentArgs{}, err
 	}
@@ -533,7 +548,7 @@ func (t *PostCustomerPaymentTool) authorizeMatch(
 	actor *permissionports.RequestActor,
 ) error {
 	if t.permissions == nil {
-		return fmt.Errorf(
+		return errors.New(
 			"matching the bank receipt could not be authorized; post the payment without bankReceiptId and match it with receivable_match_bank_receipt",
 		)
 	}
@@ -552,7 +567,7 @@ func (t *PostCustomerPaymentTool) authorizeMatch(
 		return fmt.Errorf("authorize bank receipt match: %w", err)
 	}
 	if !result.Allowed {
-		return fmt.Errorf(
+		return errors.New(
 			"the person you are working for may not match bank receipts; post the payment without bankReceiptId",
 		)
 	}
@@ -629,8 +644,8 @@ func (t *ResolveBankReceiptWorkItemTool) Description() string {
 
 func (t *ResolveBankReceiptWorkItemTool) ParamSchema() map[string]any {
 	return map[string]any{
-		"type": "object",
-		"properties": map[string]any{
+		toolschema.KeyType: toolschema.TypeObject,
+		toolschema.KeyProperties: map[string]any{
 			"workItemId": agenttoolschema.RecordIDText(
 				permission.ResourceBankReceiptWorkItem,
 				"The work item's id, from receivable_get_bank_receipt.",
@@ -641,15 +656,15 @@ func (t *ResolveBankReceiptWorkItemTool) ParamSchema() map[string]any {
 				bankReceiptResolutions,
 			),
 			"note": map[string]any{
-				"type": "string",
-				"description": fmt.Sprintf(
+				toolschema.KeyType: toolschema.TypeString,
+				toolschema.KeyDescription: fmt.Sprintf(
 					"Why, and what a person should do next, at most %d characters.",
 					maxResolutionNoteChars,
 				),
 			},
 		},
-		"required":             []string{"workItemId", "resolution", "note"},
-		"additionalProperties": false,
+		toolschema.KeyRequired:             []string{"workItemId", "resolution", "note"},
+		toolschema.KeyAdditionalProperties: false,
 	}
 }
 
@@ -689,9 +704,9 @@ type resolveWorkItemArgs struct {
 
 func (t *ResolveBankReceiptWorkItemTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
-	args, err := t.arguments(params)
+	args, err := t.arguments(&params)
 	if err != nil {
 		return err
 	}
@@ -734,9 +749,9 @@ func (a resolveWorkItemArgs) resolved(
 }
 
 func (t *ResolveBankReceiptWorkItemTool) arguments(
-	params agenttoolports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (resolveWorkItemArgs, error) {
-	if err := toolguard.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, *params); err != nil {
 		return resolveWorkItemArgs{}, err
 	}
 
@@ -751,12 +766,11 @@ func (t *ResolveBankReceiptWorkItemTool) arguments(
 	switch resolution {
 	case bankreceiptworkitem.ResolutionRequiresExternalFollowUp,
 		bankreceiptworkitem.ResolutionMarkedFalsePositive:
+	case bankreceiptworkitem.ResolutionMatchedToPayment,
+		bankreceiptworkitem.ResolutionSuperseded:
+		return resolveWorkItemArgs{}, errUnsupportedResolution()
 	default:
-		return resolveWorkItemArgs{}, fmt.Errorf(
-			"resolution must be %s or %s; to match the receipt use receivable_match_bank_receipt",
-			bankreceiptworkitem.ResolutionRequiresExternalFollowUp,
-			bankreceiptworkitem.ResolutionMarkedFalsePositive,
-		)
+		return resolveWorkItemArgs{}, errUnsupportedResolution()
 	}
 
 	note, err := toolparams.RequireString(params.Params, "note")
@@ -772,4 +786,12 @@ func (t *ResolveBankReceiptWorkItemTool) arguments(
 	}
 
 	return resolveWorkItemArgs{id: id, resolution: resolution, note: note}, nil
+}
+
+func errUnsupportedResolution() error {
+	return fmt.Errorf(
+		"resolution must be %s or %s; to match the receipt use receivable_match_bank_receipt",
+		bankreceiptworkitem.ResolutionRequiresExternalFollowUp,
+		bankreceiptworkitem.ResolutionMarkedFalsePositive,
+	)
 }

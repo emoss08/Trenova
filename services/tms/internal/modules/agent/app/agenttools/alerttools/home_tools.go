@@ -74,9 +74,9 @@ type homeEditor struct {
 	targets homeTargetChecker
 }
 
-func homeRequestFor(params agenttoolports.ToolExecuteParams) *homelayoutservice.Request {
+func homeRequestFor(params *agenttoolports.ToolExecuteParams) *homelayoutservice.Request {
 	return &homelayoutservice.Request{
-		TenantInfo: toolparams.TenantFrom(params),
+		TenantInfo: toolparams.TenantFrom(*params),
 		Principal: kernelports.PrincipalInfo{
 			Type:     params.Actor.PrincipalType,
 			ID:       params.Actor.PrincipalID,
@@ -91,7 +91,7 @@ func homeRequestFor(params agenttoolports.ToolExecuteParams) *homelayoutservice.
 // what a person approves is what runs.
 func (e homeEditor) plan(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 	edit homeEdit,
 ) (*homePlan, error) {
 	if params.Actor == nil || params.Actor.PrincipalType != permissionports.PrincipalTypeUser {
@@ -158,7 +158,7 @@ func (e homeEditor) plan(
 
 func (e homeEditor) execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 	edit homeEdit,
 ) error {
 	plan, err := e.plan(ctx, params, edit)
@@ -329,7 +329,7 @@ func (t *AddHomeWidgetTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *AddHomeWidgetTool) edit(params agenttoolports.ToolExecuteParams) homeEdit {
+func (t *AddHomeWidgetTool) edit(params *agenttoolports.ToolExecuteParams) homeEdit {
 	return func(
 		ctx context.Context,
 		layout *homelayout.Layout,
@@ -387,21 +387,21 @@ func (t *AddHomeWidgetTool) edit(params agenttoolports.ToolExecuteParams) homeEd
 
 func (t *AddHomeWidgetTool) Validate(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
 ) error {
-	_, err := t.editor.plan(ctx, params, t.edit(params))
+	_, err := t.editor.plan(ctx, &params, t.edit(&params))
 	return err
 }
 
 func (t *AddHomeWidgetTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
 	}
 
-	return t.editor.execute(ctx, params, t.edit(params))
+	return t.editor.execute(ctx, &params, t.edit(&params))
 }
 
 func offeredWidget(
@@ -505,12 +505,12 @@ func checkWidgetMetrics(
 // checkWidgetTargets refuses a report or dashboard the person cannot open.
 func (e homeEditor) checkWidgetTargets(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 	kind homelayout.ConfigKind,
 	config homelayout.WidgetConfig,
 	multiErr *errortypes.MultiError,
 ) {
-	tenant := toolparams.TenantFrom(params)
+	tenant := toolparams.TenantFrom(*params)
 	switch kind {
 	case homelayout.ConfigKindReport:
 		if config.DefinitionID.IsNil() && config.CannedKey == "" {
@@ -601,7 +601,7 @@ func (t *RemoveHomeWidgetTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *RemoveHomeWidgetTool) edit(params agenttoolports.ToolExecuteParams) homeEdit {
+func (t *RemoveHomeWidgetTool) edit(params *agenttoolports.ToolExecuteParams) homeEdit {
 	return func(
 		_ context.Context,
 		layout *homelayout.Layout,
@@ -624,21 +624,21 @@ func (t *RemoveHomeWidgetTool) edit(params agenttoolports.ToolExecuteParams) hom
 
 func (t *RemoveHomeWidgetTool) Validate(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
 ) error {
-	_, err := t.editor.plan(ctx, params, t.edit(params))
+	_, err := t.editor.plan(ctx, &params, t.edit(&params))
 	return err
 }
 
 func (t *RemoveHomeWidgetTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
 	}
 
-	return t.editor.execute(ctx, params, t.edit(params))
+	return t.editor.execute(ctx, &params, t.edit(&params))
 }
 
 type ArrangeHomeLayoutTool struct {
@@ -698,7 +698,7 @@ func (t *ArrangeHomeLayoutTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *ArrangeHomeLayoutTool) edit(params agenttoolports.ToolExecuteParams) homeEdit {
+func (t *ArrangeHomeLayoutTool) edit(params *agenttoolports.ToolExecuteParams) homeEdit {
 	return func(
 		_ context.Context,
 		layout *homelayout.Layout,
@@ -743,19 +743,19 @@ func (t *ArrangeHomeLayoutTool) edit(params agenttoolports.ToolExecuteParams) ho
 
 func (t *ArrangeHomeLayoutTool) Validate(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
 ) error {
-	_, err := t.editor.plan(ctx, params, t.edit(params))
+	_, err := t.editor.plan(ctx, &params, t.edit(&params))
 	return err
 }
 
 func (t *ArrangeHomeLayoutTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
 	}
 
-	return t.editor.execute(ctx, params, t.edit(params))
+	return t.editor.execute(ctx, &params, t.edit(&params))
 }
