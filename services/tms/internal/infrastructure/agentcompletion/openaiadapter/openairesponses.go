@@ -179,7 +179,9 @@ func (a openAIResponsesAdapter) baseRequest(call *modeladapter.Call) responsesRe
 		body.Tools = toResponsesSearchTools(call.Request.Tools)
 	} else {
 		body.Input = toResponsesInput(call.Request.System, call.Request.Messages, nil)
-		body.Tools = toResponsesTools(modeladapter.LoadedTools(call.Request.Tools, call.Request.Messages))
+		body.Tools = toResponsesTools(
+			modeladapter.LoadedTools(call.Request.Tools, call.Request.Messages),
+		)
 	}
 	body.applyReasoning(call)
 	body.MaxOutputTokens = answerRoom(call, body.MaxOutputTokens)

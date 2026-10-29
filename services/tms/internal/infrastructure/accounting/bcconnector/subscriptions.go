@@ -106,7 +106,12 @@ func (c *Connector) Unsubscribe(
 	if err != nil {
 		return err
 	}
-	if err = businesscentralwebhook.DeleteSubscription(ctx, client, req.ExternalID, req.ETag); err != nil &&
+	if err = businesscentralwebhook.DeleteSubscription(
+		ctx,
+		client,
+		req.ExternalID,
+		req.ETag,
+	); err != nil &&
 		!businesscentralerrors.IsNotFound(err) {
 		return err
 	}

@@ -55,13 +55,13 @@ func (c *MetricsConfig) GetHost() string {
 
 type TracingConfig struct {
 	Enabled      bool    `mapstructure:"enabled"`
-	Provider     string  `mapstructure:"provider"         validate:"required_if=Enabled true,oneof=jaeger otlp otlp-grpc stdout"`
-	Endpoint     string  `mapstructure:"endpoint"         validate:"required_if=Enabled true"`
-	ServiceName  string  `mapstructure:"serviceName"      validate:"required_if=Enabled true"`
-	SamplingRate float64 `mapstructure:"samplingRate"     validate:"min=0,max=1"`
+	Provider     string  `mapstructure:"provider"     validate:"required_if=Enabled true,oneof=jaeger otlp otlp-grpc stdout"`
+	Endpoint     string  `mapstructure:"endpoint"     validate:"required_if=Enabled true"`
+	ServiceName  string  `mapstructure:"serviceName"  validate:"required_if=Enabled true"`
+	SamplingRate float64 `mapstructure:"samplingRate" validate:"min=0,max=1"`
 	// AISamplingRate is the share of agent runs, turns and delegates whose
 	// traces are kept. Unset keeps every one.
-	AISamplingRate *float64 `mapstructure:"aiSamplingRate"   validate:"omitempty,min=0,max=1"`
+	AISamplingRate *float64 `mapstructure:"aiSamplingRate" validate:"omitempty,min=0,max=1"`
 	// TraceURLTemplate opens a trace in the tracing backend, with {traceId}
 	// where the id goes. Empty leaves the id to be copied.
 	TraceURLTemplate string `mapstructure:"traceUrlTemplate"`

@@ -238,7 +238,12 @@ func (c *Connector) VoidSalesDocument(
 
 	switch ref.Kind {
 	case accountingsync.SyncObjectInvoice, accountingsync.SyncObjectDebitMemo:
-		if _, err = quickbookstxn.VoidInvoice(ctx, client, ref.RequestID, ref.ExternalID); err != nil &&
+		if _, err = quickbookstxn.VoidInvoice(
+			ctx,
+			client,
+			ref.RequestID,
+			ref.ExternalID,
+		); err != nil &&
 			!quickbookstxn.IsObjectNotFound(err) {
 			return result, err
 		}
@@ -254,7 +259,12 @@ func (c *Connector) VoidSalesDocument(
 				return result, err
 			}
 		}
-		if _, err = quickbookstxn.DeleteCreditMemo(ctx, client, ref.RequestID, ref.ExternalID); err != nil &&
+		if _, err = quickbookstxn.DeleteCreditMemo(
+			ctx,
+			client,
+			ref.RequestID,
+			ref.ExternalID,
+		); err != nil &&
 			!quickbookstxn.IsObjectNotFound(err) {
 			return result, err
 		}

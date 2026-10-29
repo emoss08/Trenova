@@ -56,7 +56,7 @@ type Config struct {
 	// misses, and the API keeps a fingerprint of each request it is asked
 	// about for a short while.
 	CacheDiagnostics bool `mapstructure:"cacheDiagnostics"`
-	MaxRetries       int  `mapstructure:"maxRetries"              validate:"omitempty,min=0,max=10"`
+	MaxRetries       int  `mapstructure:"maxRetries"       validate:"omitempty,min=0,max=10"`
 
 	ToolDisclosureThreshold *int `mapstructure:"toolDisclosureThreshold" validate:"omitempty,min=0"`
 

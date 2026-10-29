@@ -34,7 +34,11 @@ func CreateControls(ctx context.Context, db *keel.DB, scope tenantscope.Scope) e
 
 	accountingControl := accountingcontrol.NewDefaultAccountingControl(org, bu)
 	accountingControl.ID = pulid.MustNew("ac_")
-	if err := accountingcontroldb.AccountingControls.Create(ctx, db, accountingControl); err != nil {
+	if err := accountingcontroldb.AccountingControls.Create(
+		ctx,
+		db,
+		accountingControl,
+	); err != nil {
 		return fmt.Errorf("create accounting control: %w", err)
 	}
 

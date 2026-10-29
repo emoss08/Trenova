@@ -39,16 +39,19 @@ func (s *Engine) RecordAdvisorRefusal(
 
 	recordCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), slotStoreTimeout)
 	defer cancel()
-	if err := s.Advisors.RecordAdvisorRefusal(recordCtx, &aiproviderports.RecordAdvisorRefusalRequest{
-		ID:         provider.ID,
-		TenantInfo: tenant,
-		Refusal: aiprovider.AdvisorRefusal{
-			Advisor:   advisor,
-			Model:     provider.Model,
-			Message:   message,
-			RefusedAt: time.Now().Unix(),
+	if err := s.Advisors.RecordAdvisorRefusal(
+		recordCtx,
+		&aiproviderports.RecordAdvisorRefusalRequest{
+			ID:         provider.ID,
+			TenantInfo: tenant,
+			Refusal: aiprovider.AdvisorRefusal{
+				Advisor:   advisor,
+				Model:     provider.Model,
+				Message:   message,
+				RefusedAt: time.Now().Unix(),
+			},
 		},
-	}); err != nil {
+	); err != nil {
 		s.Logger.Warn("could not record the provider's advisor refusal",
 			zap.String("provider", provider.ID.String()),
 			zap.Error(err),
