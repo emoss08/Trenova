@@ -19,7 +19,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentwaitports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantartifactports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantchapterports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/recordanchorports"
@@ -75,8 +74,7 @@ type Params struct {
 	// Waits reads a wait whose ending a turn picks up.
 	Waits agentwaitports.AgentWaitRepository `optional:"true"`
 	// ReadWaits parks a conversation on a file still being read.
-	ReadWaits agentwaitports.DocumentReadWaiter       `optional:"true"`
-	Chapters  assistantchapterports.ChapterRepository `optional:"true"`
+	ReadWaits agentwaitports.DocumentReadWaiter `optional:"true"`
 }
 
 // Module provides the turn service for the worker that runs turns; the
@@ -119,7 +117,6 @@ type Service struct {
 	quota         platformplanports.QuotaGuard
 	waits         agentwaitports.AgentWaitRepository
 	readWaits     agentwaitports.DocumentReadWaiter
-	chapters      assistantchapterports.ChapterRepository
 }
 
 func New(p Params) *Service {
@@ -147,7 +144,6 @@ func New(p Params) *Service {
 		runs:          p.Runs,
 		waits:         p.Waits,
 		readWaits:     p.ReadWaits,
-		chapters:      p.Chapters,
 		agentControls: p.AgentControls,
 		users:         p.Users,
 		queries:       p.Queries,

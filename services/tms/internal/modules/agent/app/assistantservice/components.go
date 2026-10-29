@@ -4,7 +4,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice/agentaccess"
 	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice/assistantproviders"
 	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice/attribution"
-	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice/chaptertitles"
 	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice/contextusage"
 	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice/decisionnotes"
 	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice/memorynotes"
@@ -49,10 +48,6 @@ func (s *Service) outcomes() *proposaloutcomes.Reader {
 		Proposals: s.proposals,
 		Decisions: s.decisions,
 	}
-}
-
-func (s *Service) chapterList() *chaptertitles.Index {
-	return &chaptertitles.Index{Logger: s.logger, Chapters: s.chapters}
 }
 
 func (s *Service) notes() *decisionnotes.Notes {

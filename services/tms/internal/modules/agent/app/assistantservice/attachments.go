@@ -2,7 +2,6 @@ package assistantservice
 
 import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpagecontext"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 )
@@ -13,7 +12,6 @@ import (
 type turnContext struct {
 	page        *agentpagecontext.PageContext
 	attachments []conversation.MessageAttachment
-	runtime     []agentturn.RuntimeAttachment
 	mentions    []agentpagecontext.EntityRef
 }
 

@@ -525,6 +525,8 @@ func (s *Service) keepThreadTaint(
 // the only place its raw result exists. It answers with what the person now
 // sees, for the model to be told, and with what it kept, so the turn can tie
 // each artifact to its message once the turn is saved.
+//
+//nolint:gocritic // the observation arrives by value from agentruntimeports.ToolObserver
 func (s *Service) ObserveTool(
 	ctx context.Context,
 	threadID pulid.ID,
