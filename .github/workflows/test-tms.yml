@@ -79,6 +79,13 @@ jobs:
     if: github.event_name != 'schedule'
     runs-on: ubuntu-latest
 
+    env:
+      # The agent eval gates' hybrid ranking reads
+      # evals/embeddings/nomic-embed-text.json and skips until it is recorded;
+      # set the repository variable TRENOVA_EVAL_REQUIRE_HYBRID to true once it
+      # is, so a missing fixture fails.
+      TRENOVA_EVAL_REQUIRE_HYBRID: ${{ vars.TRENOVA_EVAL_REQUIRE_HYBRID || 'false' }}
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v5
@@ -86,6 +93,9 @@ jobs:
       - name: Set up Go
         uses: ./.github/actions/setup-go
 
+      # Also the build check: -coverprofile compiles every package of the four
+      # modules, test-less and main packages included. If coverage is ever
+      # dropped here, add `go build ./...` for each module in its place.
       - name: Run unit tests
         run: |
           set -euo pipefail
@@ -94,6 +104,41 @@ jobs:
             (cd "$module" && go test -coverprofile=coverage-unit.out -covermode=atomic ./...)
             echo "::endgroup::"
           done
+
+      # The agent eval gates ran above with the rest of the module; this writes
+      # what they measured to the run summary.
+      - name: Agent eval summary
+        if: ${{ !cancelled() }}
+        working-directory: ./services/tms
+        run: |
+          set -euo pipefail
+          go test -v -run 'AgainstFloors' ./internal/modules/agent/app/agentevalgate/ \
+            > "$RUNNER_TEMP/selection.log"
+          go test -v ./internal/modules/agent/app/agentredteam/ > "$RUNNER_TEMP/redteam.log"
+          {
+            echo "## Tool selection, development and held-out"
+            echo
+            grep -oE '(find_tools|agent_find_page) by [^:]+: recall@5 [0-9.]+, top-1 [0-9.]+ over [0-9]+ requests' \
+              "$RUNNER_TEMP/selection.log" | sed 's/^/- /' || echo "Not reported."
+            echo
+            echo "## Red-team known gaps"
+            echo
+            if grep -q 'KNOWN GAP' "$RUNNER_TEMP/redteam.log"; then
+              grep -o 'KNOWN GAP [a-z-]*' "$RUNNER_TEMP/redteam.log" | sort | uniq -c \
+                | sed 's/^/- /'
+            else
+              echo "None reproduced."
+            fi
+            echo
+            echo "## Stale recordings"
+            echo
+            if grep -q 'stale recording' "$RUNNER_TEMP/redteam.log"; then
+              grep -o 'stale recording: [^ ]*' "$RUNNER_TEMP/redteam.log" | sort -u \
+                | sed 's/^/- /'
+            else
+              echo "None."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload unit coverage artifacts
         uses: actions/upload-artifact@v4
@@ -498,27 +543,6 @@ jobs:
             echo "::error::Agent write coverage needs attention - fix services/tms/internal/api/writecoverage/writecoverage.yml as the messages above say, run 'go generate ./internal/api/writecoverage/...' in services/tms and commit"
             exit 1
           fi
-
-  build:
-    name: Build
-    if: github.event_name != 'schedule'
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v5
-
-      - name: Set up Go
-        uses: ./.github/actions/setup-go
-
-      - name: Build every workspace module
-        run: |
-          set -euo pipefail
-          for module in shared services/tms dev/samsara-sim dev/edi-partner-sim; do
-            echo "::group::${module}"
-            (cd "$module" && go build ./...)
-            echo "::endgroup::"
-          done
 
   race-detection:
     name: Race Detection

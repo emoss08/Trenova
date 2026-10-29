@@ -1,89 +1,14 @@
 name: Agent Evals
 
-# What an agent sees and what it may do, checked on every change that can move
-# either. The deterministic job needs no model and no secret: it proves the
-# harness contains a model that has been compromised. The live job asks a real
-# model and measures how often it declines the injected instruction at all.
+# A real model against the red-team suite: how often it declines the injected
+# instruction at all. Run it by hand (Actions -> Agent Evals -> Run workflow),
+# on a branch to measure a change; it needs the TRENOVA_EVAL_API_KEY secret.
+# The deterministic gates (prompt and tool catalog snapshots, ranking floors,
+# argument parsing, the red-team suite and recorded replays) need no model and
+# run with every other package in Test Go's Unit Tests.
 # See https://github.com/emoss08/trenova-documentation/blob/main/docs/engineering/agent-evals.md.
 
 on:
-  push:
-    branches:
-      - master
-    paths:
-      - "services/tms/internal/modules/agent/domain/agentdefinition/**"
-      - "services/tms/internal/modules/agent/domain/agentprompt/**"
-      - "services/tms/internal/modules/agent/domain/agentturn/**"
-      - "services/tms/internal/modules/agent/domain/agentmessage/**"
-      - "services/tms/internal/modules/agent/domain/agentmemoryprompt/**"
-      - "services/tms/internal/modules/agent/domain/agentpageprompt/**"
-      - "services/tms/internal/modules/agent/domain/agenttaskframe/**"
-      - "services/tms/internal/modules/agent/domain/agentinstructions/**"
-      - "services/tms/internal/modules/agent/domain/agenttemplate/**"
-      - "services/tms/internal/modules/agent/domain/agentpreset/**"
-      - "services/tms/internal/modules/agent/domain/agentstarter/**"
-      - "services/tms/internal/modules/agent/app/agentruntime/**"
-      - "services/tms/internal/modules/agent/app/agenttoolservice/**"
-      - "services/tms/internal/modules/agent/app/agentquerytoolservice/**"
-      - "services/tms/internal/modules/agent/app/querytools/**"
-      - "services/tms/internal/modules/agent/app/agenttoolpolicy/**"
-      - "services/tms/internal/modules/agent/app/agenttoolcatalog/**"
-      - "services/tms/internal/modules/agent/app/agentguard/**"
-      - "services/tms/internal/modules/agent/app/agentscoring/**"
-      - "services/tms/internal/modules/agent/app/agentredteam/**"
-      - "services/tms/internal/modules/agent/app/agentevalgate/**"
-      - "services/tms/internal/modules/agent/domain/evalsplit/**"
-      - "services/tms/internal/modules/agent/app/productguideservice/**"
-      - "services/tms/pkg/productguide/catalog_gen.json"
-      - "services/tms/internal/modules/agent/ports/agenttoolports/agenttool.go"
-      - "services/tms/internal/modules/agent/ports/agenttoolports/toolpolicy.go"
-      - "services/tms/internal/modules/agent/ports/agentruntimeports/agentruntime.go"
-      - "services/tms/internal/modules/agent/ports/retrievalports/retrievalquery.go"
-      - "shared/rankfusion/**"
-      - "services/tms/internal/modules/agent/app/insightservice/narrator/**"
-      - "services/tms/internal/modules/agent/app/briefingservice/briefingwriter/**"
-      - "shared/numberguard/**"
-      - ".github/workflows/agent-evals.yml"
-  pull_request:
-    branches:
-      - master
-    types: [opened, synchronize, reopened, labeled]
-    paths:
-      - "services/tms/internal/modules/agent/domain/agentdefinition/**"
-      - "services/tms/internal/modules/agent/domain/agentprompt/**"
-      - "services/tms/internal/modules/agent/domain/agentturn/**"
-      - "services/tms/internal/modules/agent/domain/agentmessage/**"
-      - "services/tms/internal/modules/agent/domain/agentmemoryprompt/**"
-      - "services/tms/internal/modules/agent/domain/agentpageprompt/**"
-      - "services/tms/internal/modules/agent/domain/agenttaskframe/**"
-      - "services/tms/internal/modules/agent/domain/agentinstructions/**"
-      - "services/tms/internal/modules/agent/domain/agenttemplate/**"
-      - "services/tms/internal/modules/agent/domain/agentpreset/**"
-      - "services/tms/internal/modules/agent/domain/agentstarter/**"
-      - "services/tms/internal/modules/agent/app/agentruntime/**"
-      - "services/tms/internal/modules/agent/app/agenttoolservice/**"
-      - "services/tms/internal/modules/agent/app/agentquerytoolservice/**"
-      - "services/tms/internal/modules/agent/app/querytools/**"
-      - "services/tms/internal/modules/agent/app/agenttoolpolicy/**"
-      - "services/tms/internal/modules/agent/app/agenttoolcatalog/**"
-      - "services/tms/internal/modules/agent/app/agentguard/**"
-      - "services/tms/internal/modules/agent/app/agentscoring/**"
-      - "services/tms/internal/modules/agent/app/agentredteam/**"
-      - "services/tms/internal/modules/agent/app/agentevalgate/**"
-      - "services/tms/internal/modules/agent/domain/evalsplit/**"
-      - "services/tms/internal/modules/agent/app/productguideservice/**"
-      - "services/tms/pkg/productguide/catalog_gen.json"
-      - "services/tms/internal/modules/agent/ports/agenttoolports/agenttool.go"
-      - "services/tms/internal/modules/agent/ports/agenttoolports/toolpolicy.go"
-      - "services/tms/internal/modules/agent/ports/agentruntimeports/agentruntime.go"
-      - "services/tms/internal/modules/agent/ports/retrievalports/retrievalquery.go"
-      - "shared/rankfusion/**"
-      - "services/tms/internal/modules/agent/app/insightservice/narrator/**"
-      - "services/tms/internal/modules/agent/app/briefingservice/briefingwriter/**"
-      - "shared/numberguard/**"
-      - ".github/workflows/agent-evals.yml"
-  schedule:
-    - cron: "30 5 * * *"
   workflow_dispatch:
     inputs:
       record:
@@ -103,114 +28,14 @@ permissions:
   contents: read
 
 env:
-  # Matches test-tms.yml, so this job shares its build cache. Steps that pass
-  # -tags spell nomsgpack out themselves, because -tags replaces GOFLAGS' tags.
+  # Matches test-tms.yml. Steps that pass -tags spell nomsgpack out
+  # themselves, because -tags replaces GOFLAGS' tags.
   GOFLAGS: -tags=nomsgpack
   APP_ENV: test
 
 jobs:
-  deterministic:
-    name: Deterministic
-    if: github.event_name != 'pull_request' || github.event.action != 'labeled'
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v5
-
-      - name: Set up Go
-        uses: ./.github/actions/setup-go
-
-      - name: Prompt snapshots
-        working-directory: ./services/tms
-        run: |
-          set -euo pipefail
-          go test -tags=nomsgpack -count=1 -run 'TestPromptSnapshots' \
-            ./internal/modules/agent/domain/agentprompt/
-
-      - name: Tool catalog snapshot
-        working-directory: ./services/tms
-        run: |
-          set -euo pipefail
-          go test -tags=nomsgpack -count=1 -run 'TestToolCatalogSnapshot' \
-            ./internal/modules/agent/app/agentevalgate/
-
-      # The hybrid gates rank from evals/embeddings/nomic-embed-text.json and
-      # skip until it is recorded; set the repository variable
-      # TRENOVA_EVAL_REQUIRE_HYBRID to true once it is, so a missing fixture fails.
-      - name: find_tools and agent_find_page ranking against their floors
-        working-directory: ./services/tms
-        env:
-          TRENOVA_EVAL_REQUIRE_HYBRID: ${{ vars.TRENOVA_EVAL_REQUIRE_HYBRID || 'false' }}
-        run: |
-          set -euo pipefail
-          go test -tags=nomsgpack -count=1 -v \
-            -run 'AgainstFloors|Splits|TestParaphrasesShareNoWordWithTheirTool|EmbeddingFixture' \
-            ./internal/modules/agent/app/agentevalgate/ | tee "$RUNNER_TEMP/selection.log"
-          {
-            echo "## Tool selection, development and held-out"
-            echo
-            grep -oE '(find_tools|agent_find_page) by [^:]+: recall@5 [0-9.]+, top-1 [0-9.]+ over [0-9]+ requests' \
-              "$RUNNER_TEMP/selection.log" | sed 's/^/- /' || echo "Not reported."
-          } >> "$GITHUB_STEP_SUMMARY"
-
-      - name: Argument parsing and aliasing
-        working-directory: ./services/tms
-        run: |
-          set -euo pipefail
-          go test -tags=nomsgpack -count=1 \
-            -run 'TestArgumentCases|TestDeclaredArguments|TestAliasedArguments' \
-            ./internal/modules/agent/app/agentruntime/
-
-      - name: Red-team suite and recorded replays
-        working-directory: ./services/tms
-        run: |
-          set -euo pipefail
-          go test -tags=nomsgpack -count=1 -v ./internal/modules/agent/app/agentredteam/ \
-            | tee "$RUNNER_TEMP/redteam.log"
-          {
-            echo "## Red-team known gaps"
-            echo
-            if grep -q 'KNOWN GAP' "$RUNNER_TEMP/redteam.log"; then
-              grep -o 'KNOWN GAP [a-z-]*' "$RUNNER_TEMP/redteam.log" | sort | uniq -c \
-                | sed 's/^/- /'
-            else
-              echo "None reproduced."
-            fi
-            echo
-            echo "## Stale recordings"
-            echo
-            if grep -q 'stale recording' "$RUNNER_TEMP/redteam.log"; then
-              grep -o 'stale recording: [^ ]*' "$RUNNER_TEMP/redteam.log" | sort -u \
-                | sed 's/^/- /'
-            else
-              echo "None."
-            fi
-          } >> "$GITHUB_STEP_SUMMARY"
-
-      - name: Policy, catalog, guard and scoring suites
-        working-directory: ./services/tms
-        run: |
-          set -euo pipefail
-          go test -tags=nomsgpack -count=1 \
-            ./internal/modules/agent/app/agenttoolpolicy/... \
-            ./internal/modules/agent/app/agenttoolcatalog/... \
-            ./internal/modules/agent/app/agentguard/... \
-            ./internal/modules/agent/app/agentscoring/... \
-            ./internal/modules/agent/app/insightservice/narrator/... \
-            ./internal/modules/agent/app/briefingservice/briefingwriter/...
-
-      - name: Number guard
-        working-directory: ./shared
-        run: go test -count=1 ./numberguard/...
-
   live:
     name: Live
-    if: >-
-      github.event_name == 'schedule' ||
-      github.event_name == 'workflow_dispatch' ||
-      (github.event_name == 'pull_request' &&
-        contains(github.event.pull_request.labels.*.name, 'eval:live'))
     runs-on: ubuntu-latest
     env:
       EVAL_KEY: ${{ secrets.TRENOVA_EVAL_API_KEY }}
