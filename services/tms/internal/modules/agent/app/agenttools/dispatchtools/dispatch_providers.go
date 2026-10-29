@@ -2,7 +2,7 @@ package dispatchtools
 
 import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/carriertools"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/ratetools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/rateconfirmationtools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/tendertools"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/tenderservice"
@@ -33,23 +33,23 @@ func ProvideRecordTenderResponseTool(tenders *tenderservice.Service) agenttoolpo
 func ProvideGenerateRateConfirmationTool(
 	rateCons *rateconfirmationservice.Service,
 ) agenttoolports.AgentTool {
-	return ratetools.NewGenerateRateConfirmationTool(rateCons)
+	return rateconfirmationtools.NewGenerateRateConfirmationTool(rateCons)
 }
 
 func ProvideSendRateConfirmationTool(
 	rateCons *rateconfirmationservice.Service,
 ) agenttoolports.AgentTool {
-	return ratetools.NewSendRateConfirmationTool(rateCons)
+	return rateconfirmationtools.NewSendRateConfirmationTool(rateCons)
 }
 
 func ProvideVoidRateConfirmationTool(
 	rateCons *rateconfirmationservice.Service,
 ) agenttoolports.AgentTool {
-	return ratetools.NewVoidRateConfirmationTool(rateCons)
+	return rateconfirmationtools.NewVoidRateConfirmationTool(rateCons)
 }
 
 func ProvideRecordRateConfirmationConfirmedTool(
 	rateCons *rateconfirmationservice.Service,
 ) agenttoolports.AgentTool {
-	return ratetools.NewRecordRateConfirmationConfirmedTool(rateCons)
+	return rateconfirmationtools.NewRecordRateConfirmationConfirmedTool(rateCons)
 }

@@ -11,7 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/invoicetools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/movetools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/ptodecisiontools"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/ratetools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/rateconfirmationtools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/shipmentcommenttools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/shipmenttools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/tendertools"
@@ -109,22 +109,22 @@ func TestSingleRecordTools_NameTheirTarget(t *testing.T) {
 		// withdrawal proposed against a tender that has since moved is stale.
 		{&tendertools.CancelTenderTool{}, "tenderId", permission.ResourceTender},
 		{
-			&ratetools.GenerateRateConfirmationTool{},
+			&rateconfirmationtools.GenerateRateConfirmationTool{},
 			"shipmentMoveId",
 			permission.ResourceShipmentMove,
 		},
 		{
-			&ratetools.SendRateConfirmationTool{},
+			&rateconfirmationtools.SendRateConfirmationTool{},
 			"rateConfirmationId",
 			permission.ResourceRateConfirmation,
 		},
 		{
-			&ratetools.VoidRateConfirmationTool{},
+			&rateconfirmationtools.VoidRateConfirmationTool{},
 			"rateConfirmationId",
 			permission.ResourceRateConfirmation,
 		},
 		{
-			&ratetools.RecordRateConfirmationConfirmedTool{},
+			&rateconfirmationtools.RecordRateConfirmationConfirmedTool{},
 			"rateConfirmationId",
 			permission.ResourceRateConfirmation,
 		},

@@ -1,4 +1,4 @@
-package ratetools
+package rateconfirmationtools
 
 import (
 	"context"
