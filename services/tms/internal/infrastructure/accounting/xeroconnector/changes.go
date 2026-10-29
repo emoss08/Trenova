@@ -13,6 +13,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/shared/xero"
+	"github.com/emoss08/trenova/shared/xerodocs"
+	"github.com/emoss08/trenova/shared/xeropay"
+	"github.com/emoss08/trenova/shared/xeroref"
 	"github.com/shopspring/decimal"
 )
 
@@ -271,7 +274,7 @@ type changeCollector struct {
 	req      *accountingconnectorports.ReadAccountingChangesRequest
 	page     *accountingconnectorports.AccountingChangePage
 	latest   time.Time
-	payments []xero.Payment
+	payments []xeropay.Payment
 }
 
 func newChangeCollector(
@@ -353,7 +356,7 @@ func (c *changeCollector) readPayments(
 	page int,
 	since *time.Time,
 ) (bool, error) {
-	listed, err := c.client.Payments(ctx, page, since)
+	listed, err := xeropay.Payments(ctx, c.client, page, since)
 	if err != nil {
 		return false, err
 	}
@@ -369,7 +372,7 @@ func (c *changeCollector) readInvoices(
 	page int,
 	since *time.Time,
 ) (bool, error) {
-	listed, err := c.client.Invoices(ctx, page, since)
+	listed, err := xerodocs.Invoices(ctx, c.client, page, since)
 	if err != nil {
 		return false, err
 	}
@@ -391,7 +394,7 @@ func (c *changeCollector) readCreditNotes(
 	page int,
 	since *time.Time,
 ) (bool, error) {
-	listed, err := c.client.CreditNotes(ctx, page, since)
+	listed, err := xerodocs.CreditNotes(ctx, c.client, page, since)
 	if err != nil {
 		return false, err
 	}
@@ -413,7 +416,7 @@ func (c *changeCollector) readContacts(
 	page int,
 	since *time.Time,
 ) (bool, error) {
-	listed, err := c.client.Contacts(ctx, page, since)
+	listed, err := xeroref.Contacts(ctx, c.client, page, since)
 	if err != nil {
 		return false, err
 	}
@@ -425,7 +428,7 @@ func (c *changeCollector) readContacts(
 }
 
 func (c *changeCollector) readAccounts(ctx context.Context, since *time.Time) error {
-	accounts, err := c.client.Accounts(ctx, since)
+	accounts, err := xeroref.Accounts(ctx, c.client, since)
 	if err != nil {
 		return err
 	}
@@ -444,7 +447,7 @@ func (c *changeCollector) readAccounts(ctx context.Context, since *time.Time) er
 }
 
 func (c *changeCollector) readItems(ctx context.Context, since *time.Time) error {
-	items, err := c.client.Items(ctx, since)
+	items, err := xeroref.Items(ctx, c.client, since)
 	if err != nil {
 		return err
 	}
@@ -483,7 +486,7 @@ func (c *changeCollector) document(doc *changedDocument) {
 	})
 }
 
-func (c *changeCollector) contact(contact *xero.Contact) {
+func (c *changeCollector) contact(contact *xeroref.Contact) {
 	for _, kind := range []accountingprovider.ReferenceKind{
 		accountingprovider.ReferenceKindCustomer,
 		accountingprovider.ReferenceKindVendor,
@@ -502,9 +505,9 @@ func (c *changeCollector) contact(contact *xero.Contact) {
 
 func documentOperation(status string) accountingconnectorports.AccountingChangeOperation {
 	switch {
-	case strings.EqualFold(status, xero.StatusDeleted):
+	case strings.EqualFold(status, xerodocs.StatusDeleted):
 		return accountingconnectorports.AccountingChangeDelete
-	case strings.EqualFold(status, xero.StatusVoided):
+	case strings.EqualFold(status, xerodocs.StatusVoided):
 		return accountingconnectorports.AccountingChangeVoid
 	default:
 		return accountingconnectorports.AccountingChangeUpsert
@@ -520,12 +523,12 @@ func payableTypes() []accountingsync.SyncObjectType {
 
 func invoiceObjectTypes(kind string) []accountingsync.SyncObjectType {
 	switch strings.ToUpper(kind) {
-	case xero.InvoiceTypeReceivable:
+	case xerodocs.InvoiceTypeReceivable:
 		return []accountingsync.SyncObjectType{
 			accountingsync.SyncObjectInvoice,
 			accountingsync.SyncObjectDebitMemo,
 		}
-	case xero.InvoiceTypePayable:
+	case xerodocs.InvoiceTypePayable:
 		return payableTypes()
 	default:
 		return nil
@@ -534,9 +537,9 @@ func invoiceObjectTypes(kind string) []accountingsync.SyncObjectType {
 
 func creditNoteObjectTypes(kind string) []accountingsync.SyncObjectType {
 	switch strings.ToUpper(kind) {
-	case xero.CreditNoteTypeReceivable:
+	case xerodocs.CreditNoteTypeReceivable:
 		return []accountingsync.SyncObjectType{accountingsync.SyncObjectCreditMemo}
-	case xero.CreditNoteTypePayable:
+	case xerodocs.CreditNoteTypePayable:
 		return payableTypes()
 	default:
 		return nil
@@ -550,12 +553,12 @@ type inboundShape struct {
 
 func inboundShapeOf(paymentType string) (inboundShape, bool) {
 	switch strings.ToUpper(paymentType) {
-	case xero.PaymentTypeReceivable:
+	case xeropay.PaymentTypeReceivable:
 		return inboundShape{
 			kind:     accountinginbound.InboundCustomerPayment,
 			document: accountinginbound.InboundDocInvoice,
 		}, true
-	case xero.PaymentTypePayable:
+	case xeropay.PaymentTypePayable:
 		return inboundShape{
 			kind:     accountinginbound.InboundBillPayment,
 			document: accountinginbound.InboundDocBill,
@@ -574,7 +577,7 @@ func (c *changeCollector) wants(shape inboundShape) bool {
 
 type inboundGroup struct {
 	shape    inboundShape
-	payments []*xero.Payment
+	payments []*xeropay.Payment
 }
 
 func (c *changeCollector) finish(ctx context.Context) error {
@@ -612,7 +615,7 @@ func (c *changeCollector) finish(ctx context.Context) error {
 	return nil
 }
 
-func isForeign(payment *xero.Payment) bool {
+func isForeign(payment *xeropay.Payment) bool {
 	return !payment.CurrencyRate.IsZero() && !payment.CurrencyRate.Equal(decimal.NewFromInt(1))
 }
 
@@ -636,7 +639,7 @@ func (c *changeCollector) foreignCurrencies(
 	}
 	currencies := make(map[string]string, len(ids))
 	for _, chunk := range chunks(ids) {
-		invoices, err := c.client.InvoicesByID(ctx, chunk)
+		invoices, err := xerodocs.InvoicesByID(ctx, c.client, chunk)
 		if err != nil {
 			return nil, err
 		}
@@ -677,7 +680,7 @@ func (g *inboundGroup) inbound(
 	}
 	for _, payment := range g.payments {
 		out.ModifiedAt = max(out.ModifiedAt, unixOrZero(payment.UpdatedAt))
-		if strings.EqualFold(payment.Status, xero.StatusDeleted) {
+		if strings.EqualFold(payment.Status, xerodocs.StatusDeleted) {
 			continue
 		}
 		out.Operation = accountingconnectorports.AccountingChangeUpsert

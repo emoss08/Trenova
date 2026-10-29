@@ -12,6 +12,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/xero"
+	"github.com/emoss08/trenova/shared/xeroerrors"
+	"github.com/emoss08/trenova/shared/xeroref"
 )
 
 var (
@@ -47,7 +49,7 @@ func (c *Connector) ListReference(
 
 	switch req.Kind {
 	case accountingprovider.ReferenceKindAccount:
-		accounts, listErr := client.Accounts(ctx, nil)
+		accounts, listErr := xeroref.Accounts(ctx, client, nil)
 		if listErr != nil {
 			return nil, listErr
 		}
@@ -60,7 +62,7 @@ func (c *Connector) ListReference(
 		}
 		return out, nil
 	case accountingprovider.ReferenceKindItem:
-		items, listErr := client.Items(ctx, nil)
+		items, listErr := xeroref.Items(ctx, client, nil)
 		if listErr != nil {
 			return nil, listErr
 		}
@@ -71,7 +73,7 @@ func (c *Connector) ListReference(
 		return &accountingconnectorports.AccountingReferencePage{Objects: objects}, nil
 	case accountingprovider.ReferenceKindCustomer, accountingprovider.ReferenceKindVendor:
 		page := max(req.StartPosition, 1)
-		contacts, listErr := client.Contacts(ctx, page, nil)
+		contacts, listErr := xeroref.Contacts(ctx, client, page, nil)
 		if listErr != nil {
 			return nil, listErr
 		}
@@ -102,7 +104,7 @@ func (c *Connector) ListReference(
 func (c *Connector) itemObjects(
 	ctx context.Context,
 	client *xero.Client,
-	items []xero.Item,
+	items []xeroref.Item,
 ) ([]*accountingmapping.AccountingReferenceObject, error) {
 	objects := make([]*accountingmapping.AccountingReferenceObject, 0, len(items))
 	for idx := range items {
@@ -139,10 +141,13 @@ func (c *Connector) CreateReference(
 		if req.Item == nil {
 			return nil, errItemDraftRequired
 		}
-		input := xero.ItemInput{
-			Code:        itemCode(req.Item),
-			Name:        c.SanitizeName(accountingprovider.ReferenceKindItem, req.Item.Name),
-			Description: stringutils.TruncateRunes(req.Item.Description, xero.MaxDescriptionLength),
+		input := xeroref.ItemInput{
+			Code: itemCode(req.Item),
+			Name: c.SanitizeName(accountingprovider.ReferenceKindItem, req.Item.Name),
+			Description: stringutils.TruncateRunes(
+				req.Item.Description,
+				xeroref.MaxDescriptionLength,
+			),
 		}
 		if strings.TrimSpace(req.Item.IncomeAccountID) != "" {
 			code, codeErr := c.accountCode(
@@ -156,7 +161,7 @@ func (c *Connector) CreateReference(
 			}
 			input.SalesAccountCode = code
 		}
-		created, createErr := client.CreateItem(ctx, req.RequestID, input)
+		created, createErr := xeroref.CreateItem(ctx, client, req.RequestID, input)
 		if createErr != nil {
 			return nil, createErr
 		}
@@ -167,7 +172,12 @@ func (c *Connector) CreateReference(
 		if req.Party == nil {
 			return nil, errPartyDraftRequired
 		}
-		created, createErr := client.CreateContact(ctx, req.RequestID, contactInputOf(req.Party))
+		created, createErr := xeroref.CreateContact(
+			ctx,
+			client,
+			req.RequestID,
+			contactInputOf(req.Party),
+		)
 		if createErr != nil {
 			return nil, createErr
 		}
@@ -182,14 +192,14 @@ func (c *Connector) CreateReference(
 }
 
 func (c *Connector) IsDuplicateName(err error) bool {
-	return xero.IsDuplicateNumber(err)
+	return xeroerrors.IsDuplicateNumber(err)
 }
 
 func (c *Connector) SanitizeName(kind accountingprovider.ReferenceKind, name string) string {
 	if kind == accountingprovider.ReferenceKindItem {
-		return strings.TrimSpace(stringutils.OneLine(name, xero.MaxItemNameLength))
+		return strings.TrimSpace(stringutils.OneLine(name, xeroref.MaxItemNameLength))
 	}
-	return strings.TrimSpace(stringutils.OneLine(name, xero.MaxContactNameLength))
+	return strings.TrimSpace(stringutils.OneLine(name, xeroref.MaxContactNameLength))
 }
 
 func itemCode(draft *accountingconnectorports.AccountingItemDraft) string {
@@ -197,18 +207,18 @@ func itemCode(draft *accountingconnectorports.AccountingItemDraft) string {
 	if source == "" {
 		source = draft.Name
 	}
-	return strings.TrimSpace(stringutils.OneLine(source, xero.MaxItemCodeLength))
+	return strings.TrimSpace(stringutils.OneLine(source, xeroref.MaxItemCodeLength))
 }
 
-func contactInputOf(draft *accountingconnectorports.AccountingPartyDraft) xero.ContactInput {
-	input := xero.ContactInput{
+func contactInputOf(draft *accountingconnectorports.AccountingPartyDraft) xeroref.ContactInput {
+	input := xeroref.ContactInput{
 		Name: strings.TrimSpace(
-			stringutils.OneLine(draft.DisplayName, xero.MaxContactNameLength),
+			stringutils.OneLine(draft.DisplayName, xeroref.MaxContactNameLength),
 		),
 		EmailAddress: strings.TrimSpace(draft.Email),
 	}
-	address := xero.Address{
-		AddressType:  xero.AddressTypeStreet,
+	address := xeroref.Address{
+		AddressType:  xeroref.AddressTypeStreet,
 		AddressLine1: strings.TrimSpace(draft.AddressLine1),
 		City:         strings.TrimSpace(draft.City),
 		Region:       strings.TrimSpace(draft.State),
@@ -217,12 +227,12 @@ func contactInputOf(draft *accountingconnectorports.AccountingPartyDraft) xero.C
 	}
 	if address.AddressLine1 != "" || address.City != "" || address.Region != "" ||
 		address.PostalCode != "" || address.Country != "" {
-		input.Addresses = []xero.Address{address}
+		input.Addresses = []xeroref.Address{address}
 	}
 	return input
 }
 
-func contactHolds(contact *xero.Contact, kind accountingprovider.ReferenceKind) bool {
+func contactHolds(contact *xeroref.Contact, kind accountingprovider.ReferenceKind) bool {
 	if !contact.IsCustomer && !contact.IsSupplier {
 		return true
 	}
@@ -234,14 +244,14 @@ func contactHolds(contact *xero.Contact, kind accountingprovider.ReferenceKind) 
 
 func contactObjectOf(
 	kind accountingprovider.ReferenceKind,
-	contact *xero.Contact,
+	contact *xeroref.Contact,
 ) *accountingmapping.AccountingReferenceObject {
 	out := &accountingmapping.AccountingReferenceObject{
 		Kind:        kind,
 		ExternalID:  contact.ContactID,
 		Name:        contact.Name,
 		Number:      contact.ContactNumber,
-		Active:      !strings.EqualFold(contact.ContactStatus, xero.ContactStatusArchived),
+		Active:      !strings.EqualFold(contact.ContactStatus, xeroref.ContactStatusArchived),
 		CompanyName: contact.Name,
 		Email:       contact.EmailAddress,
 	}
@@ -255,14 +265,14 @@ func contactObjectOf(
 	return out
 }
 
-func primaryAddress(addresses []xero.Address) (*xero.Address, bool) {
-	var fallback *xero.Address
+func primaryAddress(addresses []xeroref.Address) (*xeroref.Address, bool) {
+	var fallback *xeroref.Address
 	for idx := range addresses {
 		address := &addresses[idx]
 		if address.AddressLine1 == "" && address.City == "" && address.PostalCode == "" {
 			continue
 		}
-		if strings.EqualFold(address.AddressType, xero.AddressTypeStreet) {
+		if strings.EqualFold(address.AddressType, xeroref.AddressTypeStreet) {
 			return address, true
 		}
 		if fallback == nil {
@@ -272,7 +282,7 @@ func primaryAddress(addresses []xero.Address) (*xero.Address, bool) {
 	return fallback, fallback != nil
 }
 
-func itemObjectOf(item *xero.Item) *accountingmapping.AccountingReferenceObject {
+func itemObjectOf(item *xeroref.Item) *accountingmapping.AccountingReferenceObject {
 	name := item.Name
 	if name == "" {
 		name = item.Code
@@ -289,7 +299,7 @@ func itemObjectOf(item *xero.Item) *accountingmapping.AccountingReferenceObject 
 	}
 }
 
-func accountObjectOf(account *xero.Account) *accountingmapping.AccountingReferenceObject {
+func accountObjectOf(account *xeroref.Account) *accountingmapping.AccountingReferenceObject {
 	subType := account.SystemAccount
 	if subType == "" {
 		subType = account.BankAccountType
@@ -334,7 +344,7 @@ var accountClasses = map[string]accountingmapping.AccountClass{
 	"WAGESEXPENSE":            accountingmapping.AccountClassExpense,
 }
 
-func AccountClassOf(account *xero.Account) accountingmapping.AccountClass {
+func AccountClassOf(account *xeroref.Account) accountingmapping.AccountClass {
 	switch {
 	case account.IsReceivable():
 		return accountingmapping.AccountClassReceivable

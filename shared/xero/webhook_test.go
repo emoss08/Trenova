@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/shared/xero"
+	"github.com/emoss08/trenova/shared/xeroerrors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -30,11 +31,27 @@ func TestVerifySignature(t *testing.T) {
 
 	tampered := append([]byte{}, body...)
 	tampered[20] = 'X'
-	require.ErrorIs(t, xero.VerifySignature(testWebhookKey, tampered, signature), xero.ErrInvalidSignature)
-	require.ErrorIs(t, xero.VerifySignature("other-key", body, signature), xero.ErrInvalidSignature)
-	require.ErrorIs(t, xero.VerifySignature(testWebhookKey, body, ""), xero.ErrMissingSignature)
-	require.ErrorIs(t, xero.VerifySignature(testWebhookKey, body, "%%%"), xero.ErrMissingSignature)
-	require.ErrorIs(t, xero.VerifySignature("", body, signature), xero.ErrWebhookKeyRequired)
+	require.ErrorIs(
+		t,
+		xero.VerifySignature(testWebhookKey, tampered, signature),
+		xeroerrors.ErrInvalidSignature,
+	)
+	require.ErrorIs(
+		t,
+		xero.VerifySignature("other-key", body, signature),
+		xeroerrors.ErrInvalidSignature,
+	)
+	require.ErrorIs(
+		t,
+		xero.VerifySignature(testWebhookKey, body, ""),
+		xeroerrors.ErrMissingSignature,
+	)
+	require.ErrorIs(
+		t,
+		xero.VerifySignature(testWebhookKey, body, "%%%"),
+		xeroerrors.ErrMissingSignature,
+	)
+	require.ErrorIs(t, xero.VerifySignature("", body, signature), xeroerrors.ErrWebhookKeyRequired)
 	assert.Equal(t, "x-xero-signature", xero.SignatureHeader)
 }
 
@@ -57,8 +74,12 @@ func TestParseWebhookReadsEventsAndTenants(t *testing.T) {
 	assert.Equal(t, "ORGANISATION", event.TenantType)
 	assert.Equal(t, time.Date(2026, 9, 25, 1, 15, 39, 902_000_000, time.UTC), event.EventDate)
 
-	assert.Equal(t, []string{testTenant, "9a8b7c6d-5e4f-4a3b-8c2d-1e0f9a8b7c6d"}, payload.TenantIDs(),
-		"tenants are listed once, in the order they first appear")
+	assert.Equal(
+		t,
+		[]string{testTenant, "9a8b7c6d-5e4f-4a3b-8c2d-1e0f9a8b7c6d"},
+		payload.TenantIDs(),
+		"tenants are listed once, in the order they first appear",
+	)
 }
 
 func TestParseWebhookIntentToReceive(t *testing.T) {
@@ -76,7 +97,7 @@ func TestParseWebhookRejectsGarbage(t *testing.T) {
 
 	for _, body := range []string{"", "  ", "not json", "[]", `{"events":[`} {
 		_, err := xero.ParseWebhook([]byte(body))
-		require.ErrorIs(t, err, xero.ErrUnexpectedPayload, body)
+		require.ErrorIs(t, err, xeroerrors.ErrUnexpectedPayload, body)
 	}
 
 	var nilPayload *xero.WebhookPayload

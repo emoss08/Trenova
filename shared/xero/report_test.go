@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/shared/xero"
+	"github.com/emoss08/trenova/shared/xeroerrors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -44,12 +44,14 @@ func TestTrialBalanceNeedsADateAndReadableAmounts(t *testing.T) {
 	t.Parallel()
 
 	client := newAPIClient(t, func(w http.ResponseWriter, _ *http.Request) {
-		_, _ = w.Write([]byte(`{"Reports":[{"Rows":[{"RowType":"Section","Rows":[{"RowType":"Row",` +
-			`"Cells":[{"Value":"Sales","Attributes":[{"Id":"account","Value":"a"}]},{"Value":"n/a"}]}]}]}]}`))
+		_, _ = w.Write(
+			[]byte(`{"Reports":[{"Rows":[{"RowType":"Section","Rows":[{"RowType":"Row",` +
+				`"Cells":[{"Value":"Sales","Attributes":[{"Id":"account","Value":"a"}]},{"Value":"n/a"}]}]}]}]}`),
+		)
 	})
 
 	_, err := client.TrialBalance(t.Context(), time.Time{})
-	require.ErrorIs(t, err, xero.ErrReportDateRequired)
+	require.ErrorIs(t, err, xeroerrors.ErrReportDateRequired)
 	_, err = client.TrialBalance(t.Context(), time.Date(2026, 9, 30, 0, 0, 0, 0, time.UTC))
-	require.ErrorIs(t, err, xero.ErrUnexpectedPayload)
+	require.ErrorIs(t, err, xeroerrors.ErrUnexpectedPayload)
 }

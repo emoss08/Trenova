@@ -8,6 +8,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/shared/xero"
+	"github.com/emoss08/trenova/shared/xerodocs"
+	"github.com/emoss08/trenova/shared/xeroerrors"
+	"github.com/emoss08/trenova/shared/xeropay"
 	"github.com/shopspring/decimal"
 )
 
@@ -35,19 +38,19 @@ func (c *Connector) FindDocument(
 	)
 	switch {
 	case req.Kind == accountingsync.SyncObjectCreditMemo:
-		found, ok, err = findCreditNote(ctx, client, req, xero.CreditNoteTypeReceivable)
+		found, ok, err = findCreditNote(ctx, client, req, xerodocs.CreditNoteTypeReceivable)
 	case req.Kind.IsSalesDocument():
-		found, ok, err = findInvoice(ctx, client, req, xero.InvoiceTypeReceivable)
+		found, ok, err = findInvoice(ctx, client, req, xerodocs.InvoiceTypeReceivable)
 	case req.Kind.IsBill() && req.Credit:
-		found, ok, err = findCreditNote(ctx, client, req, xero.CreditNoteTypePayable)
+		found, ok, err = findCreditNote(ctx, client, req, xerodocs.CreditNoteTypePayable)
 	case req.Kind.IsBill():
-		found, ok, err = findInvoice(ctx, client, req, xero.InvoiceTypePayable)
+		found, ok, err = findInvoice(ctx, client, req, xerodocs.InvoiceTypePayable)
 	case req.Kind == accountingsync.SyncObjectCreditApplication:
 		found, ok, err = findAllocation(ctx, client, req)
 	default:
 		found, ok, err = findPayment(ctx, client, req)
 	}
-	if errors.Is(err, xero.ErrEmptyFilter) || errors.Is(err, xero.ErrInvalidFilter) {
+	if errors.Is(err, xeroerrors.ErrEmptyFilter) || errors.Is(err, xeroerrors.ErrInvalidFilter) {
 		return nil, false, nil
 	}
 	if err != nil || !ok {
@@ -68,15 +71,16 @@ func (c *Connector) FindDocument(
 func documentFilter(
 	req *accountingconnectorports.AccountingFindDocumentRequest,
 	kind string,
-) (xero.InvoiceFilter, error) {
-	filter := xero.InvoiceFilter{Type: kind}
+) (xerodocs.InvoiceFilter, error) {
+	filter := xerodocs.InvoiceFilter{Type: kind}
 	if number := strings.TrimSpace(req.DocNumber); number != "" {
 		filter.Numbers = []string{number}
 	}
-	receivable := kind == xero.InvoiceTypeReceivable || kind == xero.CreditNoteTypeReceivable
+	receivable := kind == xerodocs.InvoiceTypeReceivable ||
+		kind == xerodocs.CreditNoteTypeReceivable
 	if receivable {
 		if len(filter.Numbers) == 0 {
-			return filter, xero.ErrEmptyFilter
+			return filter, xeroerrors.ErrEmptyFilter
 		}
 		return filter, nil
 	}
@@ -89,7 +93,7 @@ func documentFilter(
 	}
 	filter.DateFrom, filter.DateTo = date, date
 	if len(filter.Numbers) == 0 && len(filter.ContactIDs) == 0 {
-		return filter, xero.ErrEmptyFilter
+		return filter, xeroerrors.ErrEmptyFilter
 	}
 	return filter, nil
 }
@@ -132,11 +136,11 @@ func findInvoice(
 	if err != nil {
 		return nil, false, err
 	}
-	invoices, err := client.FindInvoices(ctx, filter)
+	invoices, err := xerodocs.FindInvoices(ctx, client, filter)
 	if err != nil {
 		return nil, false, err
 	}
-	receivable := kind == xero.InvoiceTypeReceivable
+	receivable := kind == xerodocs.InvoiceTypeReceivable
 	for idx := range invoices {
 		invoice := &invoices[idx]
 		match := documentMatch{
@@ -165,11 +169,11 @@ func findCreditNote(
 	if err != nil {
 		return nil, false, err
 	}
-	notes, err := client.FindCreditNotes(ctx, filter)
+	notes, err := xerodocs.FindCreditNotes(ctx, client, filter)
 	if err != nil {
 		return nil, false, err
 	}
-	receivable := kind == xero.CreditNoteTypeReceivable
+	receivable := kind == xerodocs.CreditNoteTypeReceivable
 	for idx := range notes {
 		note := &notes[idx]
 		match := documentMatch{
@@ -198,7 +202,7 @@ func documentResult(externalID, number string) *accountingconnectorports.Account
 
 type paymentGroup struct {
 	batchID  string
-	payments []*xero.Payment
+	payments []*xeropay.Payment
 	total    decimal.Decimal
 }
 
@@ -217,9 +221,10 @@ func findPayment(
 		return nil, false, nil
 	}
 
-	payments, err := client.FindPayments(
+	payments, err := xeropay.FindPayments(
 		ctx,
-		xero.PaymentFilter{InvoiceIDs: req.AppliesToExternalIDs},
+		client,
+		xeropay.PaymentFilter{InvoiceIDs: req.AppliesToExternalIDs},
 	)
 	if err != nil {
 		return nil, false, err
@@ -230,13 +235,13 @@ func findPayment(
 	byBatch := make(map[string]*paymentGroup, len(payments))
 	for idx := range payments {
 		payment := &payments[idx]
-		if strings.EqualFold(payment.Status, xero.StatusDeleted) ||
+		if strings.EqualFold(payment.Status, xerodocs.StatusDeleted) ||
 			!sameDate(payment.Date, req.TxnDate) {
 			continue
 		}
 		if payment.BatchPaymentID == "" {
 			groups = append(groups, &paymentGroup{
-				payments: []*xero.Payment{payment},
+				payments: []*xeropay.Payment{payment},
 				total:    payment.Amount,
 			})
 			continue
@@ -308,9 +313,9 @@ func findAllocation(
 		return nil, false, nil
 	}
 	invoiceID := req.AppliesToExternalIDs[0]
-	notes, err := client.CreditNotesByID(ctx, []string{noteID})
+	notes, err := xerodocs.CreditNotesByID(ctx, client, []string{noteID})
 	if err != nil {
-		if xero.IsNotFound(err) {
+		if xeroerrors.IsNotFound(err) {
 			return nil, false, nil
 		}
 		return nil, false, err

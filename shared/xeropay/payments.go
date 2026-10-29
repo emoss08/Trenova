@@ -1,4 +1,4 @@
-package xero
+package xeropay
 
 import (
 	"context"
@@ -7,6 +7,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/emoss08/trenova/shared/xero"
+	"github.com/emoss08/trenova/shared/xerodocs"
+	"github.com/emoss08/trenova/shared/xeroerrors"
+	"github.com/emoss08/trenova/shared/xeroref"
 	"github.com/shopspring/decimal"
 )
 
@@ -21,7 +25,7 @@ const (
 	PaymentTypePayablePrepayment     = "APPREPAYMENTPAYMENT"
 	paymentsResource                 = "Payments"
 	batchPaymentsResource            = "BatchPayments"
-	paymentListStatuses              = StatusAuthorised + "," + StatusDeleted
+	paymentListStatuses              = xerodocs.StatusAuthorised + "," + xerodocs.StatusDeleted
 )
 
 type PaymentInput struct {
@@ -96,14 +100,14 @@ type BatchPayment struct {
 }
 
 type paymentBody struct {
-	Invoice      *idRef  `json:"Invoice,omitempty"`
-	CreditNote   *idRef  `json:"CreditNote,omitempty"`
-	Account      *idRef  `json:"Account,omitempty"`
-	Date         string  `json:"Date,omitempty"`
-	Amount       *amount `json:"Amount,omitempty"`
-	CurrencyRate *number `json:"CurrencyRate,omitempty"`
-	Reference    string  `json:"Reference,omitempty"`
-	Status       string  `json:"Status,omitempty"`
+	Invoice      *xero.IDRef  `json:"Invoice,omitempty"`
+	CreditNote   *xero.IDRef  `json:"CreditNote,omitempty"`
+	Account      *xero.IDRef  `json:"Account,omitempty"`
+	Date         string       `json:"Date,omitempty"`
+	Amount       *xero.Amount `json:"Amount,omitempty"`
+	CurrencyRate *xero.Number `json:"CurrencyRate,omitempty"`
+	Reference    string       `json:"Reference,omitempty"`
+	Status       string       `json:"Status,omitempty"`
 }
 
 type paymentWriteEnvelope struct {
@@ -118,12 +122,12 @@ type wirePayment struct {
 	Reference      string          `json:"Reference"`
 	Amount         decimal.Decimal `json:"Amount"`
 	CurrencyRate   decimal.Decimal `json:"CurrencyRate"`
-	Date           wireTime        `json:"Date"`
-	UpdatedDateUTC wireTime        `json:"UpdatedDateUTC"`
+	Date           xero.WireTime   `json:"Date"`
+	UpdatedDateUTC xero.WireTime   `json:"UpdatedDateUTC"`
 	IsReconciled   bool            `json:"IsReconciled"`
-	Invoice        *wireRef        `json:"Invoice"`
-	CreditNote     *wireRef        `json:"CreditNote"`
-	Account        *wireRef        `json:"Account"`
+	Invoice        *xero.WireRef   `json:"Invoice"`
+	CreditNote     *xero.WireRef   `json:"CreditNote"`
+	Account        *xero.WireRef   `json:"Account"`
 }
 
 func (w *wirePayment) payment() Payment {
@@ -135,20 +139,20 @@ func (w *wirePayment) payment() Payment {
 		Reference:      w.Reference,
 		Amount:         w.Amount,
 		CurrencyRate:   w.CurrencyRate,
-		Date:           w.Date.time(),
-		UpdatedAt:      w.UpdatedDateUTC.time(),
+		Date:           w.Date.Time(),
+		UpdatedAt:      w.UpdatedDateUTC.Time(),
 		IsReconciled:   w.IsReconciled,
 	}
 	if w.Invoice != nil {
 		out.InvoiceID = w.Invoice.InvoiceID
 		out.InvoiceType = w.Invoice.Type
 		out.InvoiceNumber = w.Invoice.InvoiceNumber
-		out.ContactID = w.Invoice.contactID()
+		out.ContactID = w.Invoice.NestedContactID()
 	}
 	if w.CreditNote != nil {
 		out.CreditNoteID = w.CreditNote.CreditNoteID
 		if out.ContactID == "" {
-			out.ContactID = w.CreditNote.contactID()
+			out.ContactID = w.CreditNote.NestedContactID()
 		}
 	}
 	if w.Account != nil {
@@ -159,8 +163,8 @@ func (w *wirePayment) payment() Payment {
 }
 
 type paymentsEnvelope struct {
-	Payments   []wirePayment   `json:"Payments"`
-	Pagination *wirePagination `json:"pagination"`
+	Payments   []wirePayment        `json:"Payments"`
+	Pagination *xero.WirePagination `json:"pagination"`
 }
 
 func (e *paymentsEnvelope) payments() []Payment {
@@ -172,13 +176,13 @@ func (e *paymentsEnvelope) payments() []Payment {
 }
 
 type batchPaymentLineBody struct {
-	Invoice idRef  `json:"Invoice"`
-	Amount  amount `json:"Amount"`
+	Invoice xero.IDRef  `json:"Invoice"`
+	Amount  xero.Amount `json:"Amount"`
 }
 
 type batchPaymentBody struct {
 	BatchPaymentID string                 `json:"BatchPaymentID,omitempty"`
-	Account        *idRef                 `json:"Account,omitempty"`
+	Account        *xero.IDRef            `json:"Account,omitempty"`
 	Date           string                 `json:"Date,omitempty"`
 	Reference      string                 `json:"Reference,omitempty"`
 	Status         string                 `json:"Status,omitempty"`
@@ -195,8 +199,8 @@ type wireBatchPayment struct {
 	Type           string          `json:"Type"`
 	Reference      string          `json:"Reference"`
 	TotalAmount    decimal.Decimal `json:"TotalAmount"`
-	Date           wireTime        `json:"Date"`
-	UpdatedDateUTC wireTime        `json:"UpdatedDateUTC"`
+	Date           xero.WireTime   `json:"Date"`
+	UpdatedDateUTC xero.WireTime   `json:"UpdatedDateUTC"`
 	Payments       []wirePayment   `json:"Payments"`
 }
 
@@ -204,9 +208,15 @@ type batchPaymentsEnvelope struct {
 	BatchPayments []wireBatchPayment `json:"BatchPayments"`
 }
 
+//
 //nolint:gocritic // value inputs are the package contract the accounting adapter is written against.
-func (c *Client) CreatePayment(ctx context.Context, key string, in PaymentInput) (*Payment, error) {
-	idem, err := idempotencyKey(key)
+func CreatePayment(
+	ctx context.Context,
+	c *xero.Client,
+	key string,
+	in PaymentInput,
+) (*Payment, error) {
+	idem, err := xero.IdempotencyKey(key)
 	if err != nil {
 		return nil, err
 	}
@@ -216,18 +226,18 @@ func (c *Client) CreatePayment(ctx context.Context, key string, in PaymentInput)
 	}
 
 	var out paymentsEnvelope
-	if err = c.do(ctx, &call{
-		endpoint: "payments-create",
-		method:   http.MethodPut,
-		path:     accountingPath(paymentsResource),
-		key:      idem,
-		body:     paymentWriteEnvelope{Payments: []paymentBody{body}},
-		out:      &out,
+	if err = c.Do(ctx, &xero.Call{
+		Endpoint: "payments-create",
+		Method:   http.MethodPut,
+		Path:     xero.AccountingPath(paymentsResource),
+		Key:      idem,
+		Body:     paymentWriteEnvelope{Payments: []paymentBody{body}},
+		Out:      &out,
 	}); err != nil {
 		return nil, err
 	}
 	if len(out.Payments) == 0 {
-		return nil, ErrUnexpectedPayload
+		return nil, xeroerrors.ErrUnexpectedPayload
 	}
 	created := out.Payments[0].payment()
 	return &created, nil
@@ -237,150 +247,154 @@ func (in *PaymentInput) body() (paymentBody, error) {
 	invoiceID := strings.TrimSpace(in.InvoiceID)
 	creditNoteID := strings.TrimSpace(in.CreditNoteID)
 	if (invoiceID == "") == (creditNoteID == "") {
-		return paymentBody{}, ErrTargetRequired
+		return paymentBody{}, xeroerrors.ErrTargetRequired
 	}
 	account, err := accountRef(in.AccountID, in.AccountCode)
 	if err != nil {
 		return paymentBody{}, err
 	}
 	if in.Date.IsZero() {
-		return paymentBody{}, ErrDateRequired
+		return paymentBody{}, xeroerrors.ErrDateRequired
 	}
 	if !in.Amount.IsPositive() {
-		return paymentBody{}, ErrAmountNotPositive
+		return paymentBody{}, xeroerrors.ErrAmountNotPositive
 	}
 	if in.CurrencyRate.IsNegative() {
-		return paymentBody{}, ErrNegativeRate
+		return paymentBody{}, xeroerrors.ErrNegativeRate
 	}
 	reference := strings.TrimSpace(in.Reference)
-	if !textWithin(reference, MaxReferenceLength) {
-		return paymentBody{}, ErrFieldTooLong
+	if !xero.TextWithin(reference, xerodocs.MaxReferenceLength) {
+		return paymentBody{}, xeroerrors.ErrFieldTooLong
 	}
 
-	value := amount(in.Amount)
+	value := xero.Amount(in.Amount)
 	body := paymentBody{
 		Account:      account,
-		Date:         formatDate(in.Date),
+		Date:         xero.FormatDate(in.Date),
 		Amount:       &value,
-		CurrencyRate: numberOf(in.CurrencyRate),
+		CurrencyRate: xero.NumberOf(in.CurrencyRate),
 		Reference:    reference,
 	}
 	if invoiceID != "" {
-		id, idErr := guid(invoiceID)
+		id, idErr := xero.GUID(invoiceID)
 		if idErr != nil {
 			return paymentBody{}, idErr
 		}
-		body.Invoice = &idRef{InvoiceID: id}
+		body.Invoice = &xero.IDRef{InvoiceID: id}
 		return body, nil
 	}
-	id, err := guid(creditNoteID)
+	id, err := xero.GUID(creditNoteID)
 	if err != nil {
 		return paymentBody{}, err
 	}
-	body.CreditNote = &idRef{CreditNoteID: id}
+	body.CreditNote = &xero.IDRef{CreditNoteID: id}
 	return body, nil
 }
 
-func accountRef(accountID, accountCode string) (*idRef, error) {
+func accountRef(accountID, accountCode string) (*xero.IDRef, error) {
 	id := strings.TrimSpace(accountID)
 	code := strings.TrimSpace(accountCode)
 	if (id == "") == (code == "") {
-		return nil, ErrAccountRequired
+		return nil, xeroerrors.ErrAccountRequired
 	}
 	if code != "" {
-		if !textWithin(code, MaxItemCodeLength) || hasControl(code) {
-			return nil, ErrFieldTooLong
+		if !xero.TextWithin(code, xeroref.MaxItemCodeLength) || xero.HasControl(code) {
+			return nil, xeroerrors.ErrFieldTooLong
 		}
-		return &idRef{Code: code}, nil
+		return &xero.IDRef{Code: code}, nil
 	}
-	parsed, err := guid(id)
+	parsed, err := xero.GUID(id)
 	if err != nil {
 		return nil, err
 	}
-	return &idRef{AccountID: parsed}, nil
+	return &xero.IDRef{AccountID: parsed}, nil
 }
 
-func (c *Client) DeletePayment(ctx context.Context, key, paymentID string) error {
-	idem, err := idempotencyKey(key)
+func DeletePayment(ctx context.Context, c *xero.Client, key, paymentID string) error {
+	idem, err := xero.IdempotencyKey(key)
 	if err != nil {
 		return err
 	}
-	id, err := guid(paymentID)
+	id, err := xero.GUID(paymentID)
 	if err != nil {
 		return err
 	}
-	return c.do(ctx, &call{
-		endpoint: "payments-delete",
-		method:   http.MethodPost,
-		path:     accountingPath(paymentsResource, id),
-		key:      idem,
-		body:     paymentWriteEnvelope{Payments: []paymentBody{{Status: StatusDeleted}}},
+	return c.Do(ctx, &xero.Call{
+		Endpoint: "payments-delete",
+		Method:   http.MethodPost,
+		Path:     xero.AccountingPath(paymentsResource, id),
+		Key:      idem,
+		Body:     paymentWriteEnvelope{Payments: []paymentBody{{Status: xerodocs.StatusDeleted}}},
 	})
+
 }
 
-func (c *Client) Payments(
+func Payments(
 	ctx context.Context,
+	c *xero.Client,
 	page int,
 	modifiedSince *time.Time,
 ) (*PaymentPage, error) {
-	query, err := pageQuery(page)
+	query, err := xero.PageQuery(page)
 	if err != nil {
 		return nil, err
 	}
-	query.Set(statusesParam, paymentListStatuses)
+	query.Set(xero.StatusesParam, paymentListStatuses)
 
 	var out paymentsEnvelope
-	if err = c.readPage(ctx, "payments", paymentsResource, query, modifiedSince, &out); err != nil {
+	if err = xero.ReadPage(ctx, c, "payments", paymentsResource, query, modifiedSince, &out); err != nil {
 		return nil, err
 	}
 	payments := out.payments()
 	return &PaymentPage{
 		Payments: payments,
-		More:     hasMore(out.Pagination, page, len(payments)),
+		More:     xero.HasMore(out.Pagination, page, len(payments)),
 	}, nil
 }
 
-func (c *Client) FindPayments(ctx context.Context, f PaymentFilter) ([]Payment, error) {
-	invoiceIDs, err := guids(f.InvoiceIDs, MaxIDsPerRead)
+func FindPayments(ctx context.Context, c *xero.Client, f PaymentFilter) ([]Payment, error) {
+	invoiceIDs, err := xero.GUIDs(f.InvoiceIDs, xero.MaxIDsPerRead)
 	if err != nil {
 		return nil, err
 	}
 	reference := strings.TrimSpace(f.Reference)
-	if reference != "" && (!textWithin(reference, MaxReferenceLength) ||
-		strings.ContainsAny(reference, "\"\\") || hasControl(reference)) {
-		return nil, ErrInvalidFilter
+	if reference != "" && (!xero.TextWithin(reference, xerodocs.MaxReferenceLength) ||
+		strings.ContainsAny(reference, "\"\\") || xero.HasControl(reference)) {
+		return nil, xeroerrors.ErrInvalidFilter
 	}
 	if len(invoiceIDs) == 0 && reference == "" {
-		return nil, ErrEmptyFilter
+		return nil, xeroerrors.ErrEmptyFilter
 	}
-	base := url.Values{whereParam: {whereJoin(
-		whereAnyOf("Invoice.InvoiceID", invoiceIDs, whereGUID),
-		whereAnyOf("Reference", optional(reference), whereString),
+	base := url.Values{whereParam: {xero.WhereJoin(
+		xero.WhereAnyOf("Invoice.InvoiceID", invoiceIDs, xero.WhereGUID),
+		xero.WhereAnyOf("Reference", xero.Optional(reference), xero.WhereString),
 	)}}
 
-	return collectPages(func(page int) ([]Payment, bool, error) {
-		query, queryErr := withPage(base, page)
+	return xero.CollectPages(func(page int) ([]Payment, bool, error) {
+		query, queryErr := xero.WithPage(base, page)
 		if queryErr != nil {
 			return nil, false, queryErr
 		}
 		var out paymentsEnvelope
-		if readErr := c.readPage(
-			ctx, "payments-search", paymentsResource, query, nil, &out,
+		if readErr := xero.ReadPage(
+			ctx,
+			c, "payments-search", paymentsResource, query, nil, &out,
 		); readErr != nil {
 			return nil, false, readErr
 		}
 		payments := out.payments()
-		return payments, hasMore(out.Pagination, page, len(payments)), nil
+		return payments, xero.HasMore(out.Pagination, page, len(payments)), nil
 	})
 }
 
 //nolint:gocritic // value inputs are the package contract the accounting adapter is written against.
-func (c *Client) CreateBatchPayment(
+func CreateBatchPayment(
 	ctx context.Context,
+	c *xero.Client,
 	key string,
 	in BatchPaymentInput,
 ) (*BatchPayment, error) {
-	idem, err := idempotencyKey(key)
+	idem, err := xero.IdempotencyKey(key)
 	if err != nil {
 		return nil, err
 	}
@@ -390,18 +404,18 @@ func (c *Client) CreateBatchPayment(
 	}
 
 	var out batchPaymentsEnvelope
-	if err = c.do(ctx, &call{
-		endpoint: "batch-payments-create",
-		method:   http.MethodPut,
-		path:     accountingPath(batchPaymentsResource),
-		key:      idem,
-		body:     batchPaymentWriteEnvelope{BatchPayments: []batchPaymentBody{body}},
-		out:      &out,
+	if err = c.Do(ctx, &xero.Call{
+		Endpoint: "batch-payments-create",
+		Method:   http.MethodPut,
+		Path:     xero.AccountingPath(batchPaymentsResource),
+		Key:      idem,
+		Body:     batchPaymentWriteEnvelope{BatchPayments: []batchPaymentBody{body}},
+		Out:      &out,
 	}); err != nil {
 		return nil, err
 	}
 	if len(out.BatchPayments) == 0 {
-		return nil, ErrUnexpectedPayload
+		return nil, xeroerrors.ErrUnexpectedPayload
 	}
 	return out.BatchPayments[0].batchPayment(), nil
 }
@@ -412,34 +426,34 @@ func (in *BatchPaymentInput) body() (batchPaymentBody, error) {
 		return batchPaymentBody{}, err
 	}
 	if in.Date.IsZero() {
-		return batchPaymentBody{}, ErrDateRequired
+		return batchPaymentBody{}, xeroerrors.ErrDateRequired
 	}
 	reference := strings.TrimSpace(in.Reference)
-	if !textWithin(reference, MaxReferenceLength) {
-		return batchPaymentBody{}, ErrFieldTooLong
+	if !xero.TextWithin(reference, xerodocs.MaxReferenceLength) {
+		return batchPaymentBody{}, xeroerrors.ErrFieldTooLong
 	}
 	if len(in.Payments) == 0 {
-		return batchPaymentBody{}, ErrPaymentsRequired
+		return batchPaymentBody{}, xeroerrors.ErrPaymentsRequired
 	}
 
 	lines := make([]batchPaymentLineBody, 0, len(in.Payments))
 	for idx := range in.Payments {
 		line := &in.Payments[idx]
-		invoiceID, idErr := guid(line.InvoiceID)
+		invoiceID, idErr := xero.GUID(line.InvoiceID)
 		if idErr != nil {
 			return batchPaymentBody{}, idErr
 		}
 		if !line.Amount.IsPositive() {
-			return batchPaymentBody{}, ErrAmountNotPositive
+			return batchPaymentBody{}, xeroerrors.ErrAmountNotPositive
 		}
 		lines = append(lines, batchPaymentLineBody{
-			Invoice: idRef{InvoiceID: invoiceID},
-			Amount:  amount(line.Amount),
+			Invoice: xero.IDRef{InvoiceID: invoiceID},
+			Amount:  xero.Amount(line.Amount),
 		})
 	}
 	return batchPaymentBody{
 		Account:   account,
-		Date:      formatDate(in.Date),
+		Date:      xero.FormatDate(in.Date),
 		Reference: reference,
 		Payments:  lines,
 	}, nil
@@ -452,8 +466,8 @@ func (w *wireBatchPayment) batchPayment() *BatchPayment {
 		Type:           w.Type,
 		Reference:      w.Reference,
 		TotalAmount:    w.TotalAmount,
-		Date:           w.Date.time(),
-		UpdatedAt:      w.UpdatedDateUTC.time(),
+		Date:           w.Date.Time(),
+		UpdatedAt:      w.UpdatedDateUTC.Time(),
 		Payments:       make([]BatchPaymentItem, 0, len(w.Payments)),
 	}
 	for idx := range w.Payments {
@@ -469,23 +483,24 @@ func (w *wireBatchPayment) batchPayment() *BatchPayment {
 	return out
 }
 
-func (c *Client) DeleteBatchPayment(ctx context.Context, key, batchID string) error {
-	idem, err := idempotencyKey(key)
+func DeleteBatchPayment(ctx context.Context, c *xero.Client, key, batchID string) error {
+	idem, err := xero.IdempotencyKey(key)
 	if err != nil {
 		return err
 	}
-	id, err := guid(batchID)
+	id, err := xero.GUID(batchID)
 	if err != nil {
 		return err
 	}
-	return c.do(ctx, &call{
-		endpoint: "batch-payments-delete",
-		method:   http.MethodPost,
-		path:     accountingPath(batchPaymentsResource),
-		key:      idem,
-		body: batchPaymentWriteEnvelope{BatchPayments: []batchPaymentBody{{
+	return c.Do(ctx, &xero.Call{
+		Endpoint: "batch-payments-delete",
+		Method:   http.MethodPost,
+		Path:     xero.AccountingPath(batchPaymentsResource),
+		Key:      idem,
+		Body: batchPaymentWriteEnvelope{BatchPayments: []batchPaymentBody{{
 			BatchPaymentID: id,
-			Status:         StatusDeleted,
+			Status:         xerodocs.StatusDeleted,
 		}}},
 	})
+
 }

@@ -6,6 +6,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/emoss08/trenova/shared/xeroerrors"
 )
 
 const (
@@ -27,7 +29,7 @@ var isoLayouts = [...]string{
 func ParseDate(raw string) (time.Time, error) {
 	value := strings.TrimSpace(raw)
 	if value == "" {
-		return time.Time{}, ErrInvalidDate
+		return time.Time{}, xeroerrors.ErrInvalidDate
 	}
 	if strings.HasPrefix(value, msDatePrefix) && strings.HasSuffix(value, msDateSuffix) {
 		return parseMSDate(value[len(msDatePrefix) : len(value)-len(msDateSuffix)])
@@ -37,7 +39,7 @@ func ParseDate(raw string) (time.Time, error) {
 			return parsed.UTC(), nil
 		}
 	}
-	return time.Time{}, ErrInvalidDate
+	return time.Time{}, xeroerrors.ErrInvalidDate
 }
 
 func parseMSDate(inner string) (time.Time, error) {
@@ -45,13 +47,13 @@ func parseMSDate(inner string) (time.Time, error) {
 	if cut := strings.LastIndexAny(inner, "+-"); cut > 0 {
 		offset := inner[cut+1:]
 		if len(offset) != offsetDigits || !allDigits(offset) {
-			return time.Time{}, ErrInvalidDate
+			return time.Time{}, xeroerrors.ErrInvalidDate
 		}
 		digits = inner[:cut]
 	}
 	millis, err := strconv.ParseInt(digits, millisecondsBase, 64)
 	if err != nil {
-		return time.Time{}, ErrInvalidDate
+		return time.Time{}, xeroerrors.ErrInvalidDate
 	}
 	return time.UnixMilli(millis).UTC(), nil
 }
@@ -65,7 +67,7 @@ func allDigits(value string) bool {
 	return value != ""
 }
 
-func formatDate(t time.Time) string {
+func FormatDate(t time.Time) string {
 	if t.IsZero() {
 		return ""
 	}
@@ -76,35 +78,35 @@ func formatHTTPDate(t time.Time) string {
 	return t.UTC().Format(http.TimeFormat)
 }
 
-type wireTime time.Time
+type WireTime time.Time
 
-func (w *wireTime) UnmarshalJSON(data []byte) error {
+func (w *WireTime) UnmarshalJSON(data []byte) error {
 	trimmed := bytes.TrimSpace(data)
 	if len(trimmed) == 0 || bytes.Equal(trimmed, []byte("null")) {
-		*w = wireTime{}
+		*w = WireTime{}
 		return nil
 	}
 	text, err := strconv.Unquote(string(trimmed))
 	if err != nil {
-		return ErrInvalidDate
+		return xeroerrors.ErrInvalidDate
 	}
 	if strings.TrimSpace(text) == "" {
-		*w = wireTime{}
+		*w = WireTime{}
 		return nil
 	}
 	parsed, err := ParseDate(text)
 	if err != nil {
 		return err
 	}
-	*w = wireTime(parsed)
+	*w = WireTime(parsed)
 	return nil
 }
 
-func (w wireTime) time() time.Time {
+func (w WireTime) Time() time.Time {
 	return time.Time(w)
 }
 
-func (w wireTime) ptr() *time.Time {
+func (w WireTime) Ptr() *time.Time {
 	t := time.Time(w)
 	if t.IsZero() {
 		return nil

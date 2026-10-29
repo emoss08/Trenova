@@ -10,7 +10,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/shared/restx"
-	"github.com/emoss08/trenova/shared/xero"
+	"github.com/emoss08/trenova/shared/xerodocs"
+	"github.com/emoss08/trenova/shared/xeroerrors"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -25,7 +26,7 @@ func TestDocumentLimits(t *testing.T) {
 
 	limits := testConnector(t, &fakeXero{}).DocumentLimits()
 	assert.Equal(t, accountingconnectorports.AccountingDocumentLimits{
-		MaxDocNumberLength:      xero.MaxDocumentNumberLength,
+		MaxDocNumberLength:      xerodocs.MaxDocumentNumberLength,
 		SupportsDebitMemo:       false,
 		CanVoidCreditMemo:       true,
 		CanVoidPurchaseDocument: true,
@@ -503,7 +504,7 @@ func TestCreditApplicationAllocatesAndVoidDeletesTheAllocation(t *testing.T) {
 			Auth: testAuth(), Amount: decimal.Zero,
 		},
 	)
-	require.ErrorIs(t, err, xero.ErrAmountNotPositive)
+	require.ErrorIs(t, err, xeroerrors.ErrAmountNotPositive)
 }
 
 func TestFindSalesDocumentByNumberAndTotal(t *testing.T) {
@@ -565,8 +566,8 @@ func TestFindSalesDocumentByNumberAndTotal(t *testing.T) {
 	require.ErrorIs(t, err, errDocumentKind)
 }
 
-func apiError(status int, typ string, messages ...string) *xero.APIError {
-	return &xero.APIError{Status: status, Type: typ, ValidationMessages: messages}
+func apiError(status int, typ string, messages ...string) *xeroerrors.APIError {
+	return &xeroerrors.APIError{Status: status, Type: typ, ValidationMessages: messages}
 }
 
 func TestClassifyDocumentError(t *testing.T) {
@@ -583,12 +584,16 @@ func TestClassifyDocumentError(t *testing.T) {
 		{"not configured", ErrNotConfigured, accountingsync.SyncErrorConfiguration},
 		{
 			"revoked",
-			&xero.OAuthError{Status: 400, Code: "invalid_grant"},
+			&xeroerrors.OAuthError{Status: 400, Code: "invalid_grant"},
 			accountingsync.SyncErrorAuth,
 		},
 		{"unauthorized", apiError(401, ""), accountingsync.SyncErrorAuth},
-		{"scope", apiError(401, xero.TypeInsufficientScope), accountingsync.SyncErrorAuth},
-		{"disconnected", apiError(403, xero.TypeAuthUnsuccessful), accountingsync.SyncErrorAuth},
+		{"scope", apiError(401, xeroerrors.TypeInsufficientScope), accountingsync.SyncErrorAuth},
+		{
+			"disconnected",
+			apiError(403, xeroerrors.TypeAuthUnsuccessful),
+			accountingsync.SyncErrorAuth,
+		},
 		{"not found", apiError(404, ""), accountingsync.SyncErrorNotFound},
 		{"rate limited", apiError(429, ""), accountingsync.SyncErrorRateLimited},
 		{"offline", apiError(503, ""), accountingsync.SyncErrorTransient},
@@ -601,29 +606,33 @@ func TestClassifyDocumentError(t *testing.T) {
 		{"deadline", context.DeadlineExceeded, accountingsync.SyncErrorTransient},
 		{
 			"duplicate number",
-			apiError(400, xero.TypeValidation, "Invoice # must be unique."),
+			apiError(400, xeroerrors.TypeValidation, "Invoice # must be unique."),
 			accountingsync.SyncErrorDuplicate,
 		},
 		{
 			"lock date",
 			apiError(
 				400,
-				xero.TypeValidation,
+				xeroerrors.TypeValidation,
 				"The document date cannot be before the period lock date of 30 June 2026",
 			),
 			accountingsync.SyncErrorClosedPeriod,
 		},
 		{
 			"archived account",
-			apiError(400, xero.TypeValidation, "Account code '310' has been archived, or deleted."),
+			apiError(
+				400,
+				xeroerrors.TypeValidation,
+				"Account code '310' has been archived, or deleted.",
+			),
 			accountingsync.SyncErrorMapping,
 		},
 		{
 			"validation",
-			apiError(400, xero.TypeValidation, "Email address must be valid."),
+			apiError(400, xeroerrors.TypeValidation, "Email address must be valid."),
 			accountingsync.SyncErrorValidation,
 		},
-		{"local", xero.ErrLinesRequired, accountingsync.SyncErrorValidation},
+		{"local", xeroerrors.ErrLinesRequired, accountingsync.SyncErrorValidation},
 		{"bad date", errInvalidDate, accountingsync.SyncErrorValidation},
 		{"unknown", errors.New("strange"), accountingsync.SyncErrorTransient},
 	}
@@ -634,9 +643,9 @@ func TestClassifyDocumentError(t *testing.T) {
 	}
 	assert.Nil(t, conn.ClassifyDocumentError(nil))
 
-	validation := conn.ClassifyDocumentError(apiError(400, xero.TypeValidation, "A", "B"))
+	validation := conn.ClassifyDocumentError(apiError(400, xeroerrors.TypeValidation, "A", "B"))
 	assert.Equal(t, "A; B", validation.Message)
-	assert.Equal(t, xero.TypeValidation, validation.Code)
+	assert.Equal(t, xeroerrors.TypeValidation, validation.Code)
 
 	offline := conn.ClassifyDocumentError(apiError(503, ""))
 	assert.Equal(t, "organisation-offline", offline.Code)
@@ -647,21 +656,21 @@ func TestDailyRateLimitCarriesTheRetryDelay(t *testing.T) {
 	t.Parallel()
 
 	conn := testConnector(t, &fakeXero{})
-	daily := conn.ClassifyDocumentError(&xero.APIError{
+	daily := conn.ClassifyDocumentError(&xeroerrors.APIError{
 		Status:           429,
-		RateLimitProblem: xero.RateLimitDay,
+		RateLimitProblem: xeroerrors.RateLimitDay,
 		RetryAfter:       3 * time.Hour,
 	})
 	assert.Equal(t, accountingsync.SyncErrorRateLimited, daily.Category)
-	assert.Equal(t, xero.RateLimitDay, daily.Code)
+	assert.Equal(t, xeroerrors.RateLimitDay, daily.Code)
 	assert.Contains(t, daily.Message, "3h0m0s")
 
-	minute := conn.ClassifyDocumentError(&xero.APIError{
+	minute := conn.ClassifyDocumentError(&xeroerrors.APIError{
 		Status:           429,
-		RateLimitProblem: xero.RateLimitMinute,
+		RateLimitProblem: xeroerrors.RateLimitMinute,
 	})
 	assert.Equal(t, accountingsync.SyncErrorRateLimited, minute.Category)
-	assert.NotEqual(t, xero.RateLimitDay, minute.Code)
+	assert.NotEqual(t, xeroerrors.RateLimitDay, minute.Code)
 }
 
 func TestUpsertCustomerCreatesThenUpdates(t *testing.T) {

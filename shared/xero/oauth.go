@@ -11,6 +11,7 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/shared/restx"
+	"github.com/emoss08/trenova/shared/xeroerrors"
 )
 
 const (
@@ -70,13 +71,13 @@ func DefaultScopes() []string {
 
 func NewOAuthClient(cfg OAuthConfig, opts ...Option) (*OAuthClient, error) {
 	if strings.TrimSpace(cfg.ClientID) == "" {
-		return nil, ErrClientIDRequired
+		return nil, xeroerrors.ErrClientIDRequired
 	}
 	if strings.TrimSpace(cfg.ClientSecret) == "" {
-		return nil, ErrClientSecretRequired
+		return nil, xeroerrors.ErrClientSecretRequired
 	}
 	if strings.TrimSpace(cfg.RedirectURL) == "" {
-		return nil, ErrRedirectURLRequired
+		return nil, xeroerrors.ErrRedirectURLRequired
 	}
 
 	scopes := make([]string, 0, len(cfg.Scopes))
@@ -102,7 +103,7 @@ func NewOAuthClient(cfg OAuthConfig, opts ...Option) (*OAuthClient, error) {
 		Headers:      map[string]string{authorizationHeader: "Basic " + credentials},
 		Retry:        restx.RetryConfig{},
 		Observer:     settings.observer,
-		ErrorDecoder: decodeOAuthError,
+		ErrorDecoder: xeroerrors.DecodeOAuthError,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("xero: configure identity transport: %w", err)
@@ -118,7 +119,7 @@ func NewOAuthClient(cfg OAuthConfig, opts ...Option) (*OAuthClient, error) {
 
 func (c *OAuthClient) AuthorizeURL(state string) (string, error) {
 	if strings.TrimSpace(state) == "" {
-		return "", ErrStateRequired
+		return "", xeroerrors.ErrStateRequired
 	}
 
 	target, err := url.Parse(strings.TrimRight(c.loginURL, "/") + authorizePath)
@@ -138,7 +139,7 @@ func (c *OAuthClient) AuthorizeURL(state string) (string, error) {
 
 func (c *OAuthClient) ExchangeCode(ctx context.Context, code string) (*Token, error) {
 	if strings.TrimSpace(code) == "" {
-		return nil, ErrCodeRequired
+		return nil, xeroerrors.ErrCodeRequired
 	}
 
 	return c.requestToken(ctx, url.Values{
@@ -150,7 +151,7 @@ func (c *OAuthClient) ExchangeCode(ctx context.Context, code string) (*Token, er
 
 func (c *OAuthClient) Refresh(ctx context.Context, refreshToken string) (*Token, error) {
 	if strings.TrimSpace(refreshToken) == "" {
-		return nil, ErrTokenRequired
+		return nil, xeroerrors.ErrTokenRequired
 	}
 
 	return c.requestToken(ctx, url.Values{
@@ -161,7 +162,7 @@ func (c *OAuthClient) Refresh(ctx context.Context, refreshToken string) (*Token,
 
 func (c *OAuthClient) Revoke(ctx context.Context, refreshToken string) error {
 	if strings.TrimSpace(refreshToken) == "" {
-		return ErrTokenRequired
+		return xeroerrors.ErrTokenRequired
 	}
 
 	_, err := c.identity.Do(ctx, &restx.Request{
@@ -185,7 +186,7 @@ func (c *OAuthClient) requestToken(ctx context.Context, form url.Values) (*Token
 		return nil, err
 	}
 	if out.AccessToken == "" || out.RefreshToken == "" || out.ExpiresIn <= 0 {
-		return nil, ErrUnexpectedPayload
+		return nil, xeroerrors.ErrUnexpectedPayload
 	}
 
 	return &Token{
@@ -200,19 +201,19 @@ func (c *OAuthClient) requestToken(ctx context.Context, form url.Values) (*Token
 func AuthEventID(accessToken string) (string, error) {
 	segments := strings.Split(strings.TrimSpace(accessToken), ".")
 	if len(segments) != jwtSegments || segments[1] == "" {
-		return "", ErrMalformedToken
+		return "", xeroerrors.ErrMalformedToken
 	}
 	payload, err := base64.RawURLEncoding.DecodeString(strings.TrimRight(segments[1], "="))
 	if err != nil {
-		return "", ErrMalformedToken
+		return "", xeroerrors.ErrMalformedToken
 	}
 	var claims accessTokenClaims
 	if err = sonic.Unmarshal(payload, &claims); err != nil {
-		return "", ErrMalformedToken
+		return "", xeroerrors.ErrMalformedToken
 	}
 	eventID := strings.TrimSpace(claims.AuthenticationEventID)
 	if eventID == "" {
-		return "", ErrAuthEventMissing
+		return "", xeroerrors.ErrAuthEventMissing
 	}
 	return eventID, nil
 }

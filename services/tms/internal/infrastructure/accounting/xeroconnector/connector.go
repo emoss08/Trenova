@@ -18,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/shared/hashutils"
 	"github.com/emoss08/trenova/shared/restx"
 	"github.com/emoss08/trenova/shared/xero"
+	"github.com/emoss08/trenova/shared/xeroerrors"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -259,7 +260,7 @@ func (c *Connector) Companies(
 	_ string,
 ) ([]accountingconnectorports.AccountingCompany, error) {
 	if grant == nil {
-		return nil, xero.ErrAccessTokenRequired
+		return nil, xeroerrors.ErrAccessTokenRequired
 	}
 	eventID, err := xero.AuthEventID(grant.AccessToken)
 	if err != nil {
@@ -301,7 +302,7 @@ func (c *Connector) ReleaseCompanies(
 		return nil
 	}
 	if grant == nil {
-		return xero.ErrAccessTokenRequired
+		return xeroerrors.ErrAccessTokenRequired
 	}
 	client, err := c.connections(grant.AccessToken)
 	if err != nil {
@@ -313,7 +314,7 @@ func (c *Connector) ReleaseCompanies(
 		if id == "" {
 			continue
 		}
-		if delErr := client.Delete(ctx, id); delErr != nil && !xero.IsNotFound(delErr) {
+		if delErr := client.Delete(ctx, id); delErr != nil && !xeroerrors.IsNotFound(delErr) {
 			errs = append(errs, delErr)
 		}
 	}
@@ -388,9 +389,9 @@ func (c *Connector) VerifyApp(ctx context.Context) error {
 	}
 	_, err := c.oauth.Refresh(ctx, credentialProbeToken)
 	switch {
-	case err == nil, xero.IsInvalidGrant(err):
+	case err == nil, xeroerrors.IsInvalidGrant(err):
 		return nil
-	case xero.IsInvalidClient(err), xero.IsAuth(err):
+	case xeroerrors.IsInvalidClient(err), xeroerrors.IsAuth(err):
 		return accountingconnectorports.ErrAccountingAppRejected
 	default:
 		return err
@@ -411,13 +412,13 @@ func classifyError(err error) accountingsync.ErrorCategory {
 		return ""
 	case errors.Is(err, ErrNotConfigured), errors.Is(err, errNoRedirect):
 		return accountingsync.ErrorCategoryConfiguration
-	case xero.IsInvalidGrant(err):
+	case xeroerrors.IsInvalidGrant(err):
 		return accountingsync.ErrorCategoryRevoked
-	case xero.IsRateLimited(err):
+	case xeroerrors.IsRateLimited(err):
 		return accountingsync.ErrorCategoryRateLimited
-	case xero.IsInvalidClient(err), xero.IsAuth(err), xero.IsForbidden(err):
+	case xeroerrors.IsInvalidClient(err), xeroerrors.IsAuth(err), xeroerrors.IsForbidden(err):
 		return accountingsync.ErrorCategoryUnauthorized
-	case xero.IsTransient(err), errors.Is(err, context.DeadlineExceeded):
+	case xeroerrors.IsTransient(err), errors.Is(err, context.DeadlineExceeded):
 		return accountingsync.ErrorCategoryTransient
 	default:
 		return accountingsync.ErrorCategoryUnknown

@@ -1,4 +1,4 @@
-package xero
+package xerodocs
 
 import (
 	"context"
@@ -7,6 +7,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/emoss08/trenova/shared/xero"
+	"github.com/emoss08/trenova/shared/xeroerrors"
 	"github.com/shopspring/decimal"
 )
 
@@ -52,18 +54,18 @@ type InvoicePage struct {
 }
 
 type invoiceBody struct {
-	InvoiceID       string     `json:"InvoiceID,omitempty"`
-	Type            string     `json:"Type,omitempty"`
-	Contact         *idRef     `json:"Contact,omitempty"`
-	InvoiceNumber   string     `json:"InvoiceNumber,omitempty"`
-	Reference       string     `json:"Reference,omitempty"`
-	Date            string     `json:"Date,omitempty"`
-	DueDate         string     `json:"DueDate,omitempty"`
-	CurrencyCode    string     `json:"CurrencyCode,omitempty"`
-	CurrencyRate    *number    `json:"CurrencyRate,omitempty"`
-	Status          string     `json:"Status,omitempty"`
-	LineAmountTypes string     `json:"LineAmountTypes,omitempty"`
-	LineItems       []lineBody `json:"LineItems,omitempty"`
+	InvoiceID       string       `json:"InvoiceID,omitempty"`
+	Type            string       `json:"Type,omitempty"`
+	Contact         *xero.IDRef  `json:"Contact,omitempty"`
+	InvoiceNumber   string       `json:"InvoiceNumber,omitempty"`
+	Reference       string       `json:"Reference,omitempty"`
+	Date            string       `json:"Date,omitempty"`
+	DueDate         string       `json:"DueDate,omitempty"`
+	CurrencyCode    string       `json:"CurrencyCode,omitempty"`
+	CurrencyRate    *xero.Number `json:"CurrencyRate,omitempty"`
+	Status          string       `json:"Status,omitempty"`
+	LineAmountTypes string       `json:"LineAmountTypes,omitempty"`
+	LineItems       []lineBody   `json:"LineItems,omitempty"`
 }
 
 type invoiceWriteEnvelope struct {
@@ -82,15 +84,15 @@ type wireInvoice struct {
 	Status         string                `json:"Status"`
 	Reference      string                `json:"Reference"`
 	CurrencyCode   string                `json:"CurrencyCode"`
-	Contact        *wireRef              `json:"Contact"`
+	Contact        *xero.WireRef         `json:"Contact"`
 	Total          decimal.Decimal       `json:"Total"`
 	AmountDue      decimal.Decimal       `json:"AmountDue"`
 	AmountPaid     decimal.Decimal       `json:"AmountPaid"`
 	AmountCredited decimal.Decimal       `json:"AmountCredited"`
 	CurrencyRate   decimal.Decimal       `json:"CurrencyRate"`
-	Date           wireTime              `json:"Date"`
-	DueDate        wireTime              `json:"DueDate"`
-	UpdatedDateUTC wireTime              `json:"UpdatedDateUTC"`
+	Date           xero.WireTime         `json:"Date"`
+	DueDate        xero.WireTime         `json:"DueDate"`
+	UpdatedDateUTC xero.WireTime         `json:"UpdatedDateUTC"`
 	Payments       []wireDocumentPayment `json:"Payments"`
 	CreditNotes    []wireAppliedCredit   `json:"CreditNotes"`
 }
@@ -108,9 +110,9 @@ func (w *wireInvoice) invoice() Invoice {
 		AmountPaid:     w.AmountPaid,
 		AmountCredited: w.AmountCredited,
 		CurrencyRate:   w.CurrencyRate,
-		Date:           w.Date.time(),
-		DueDate:        w.DueDate.time(),
-		UpdatedAt:      w.UpdatedDateUTC.time(),
+		Date:           w.Date.Time(),
+		DueDate:        w.DueDate.Time(),
+		UpdatedAt:      w.UpdatedDateUTC.Time(),
 		Payments:       documentPayments(w.Payments),
 	}
 	if w.Contact != nil {
@@ -129,8 +131,8 @@ func (w *wireInvoice) invoice() Invoice {
 }
 
 type invoicesEnvelope struct {
-	Invoices   []wireInvoice   `json:"Invoices"`
-	Pagination *wirePagination `json:"pagination"`
+	Invoices   []wireInvoice        `json:"Invoices"`
+	Pagination *xero.WirePagination `json:"pagination"`
 }
 
 func (e *invoicesEnvelope) invoices() []Invoice {
@@ -141,22 +143,29 @@ func (e *invoicesEnvelope) invoices() []Invoice {
 	return out
 }
 
+//
 //nolint:gocritic // value inputs are the package contract the accounting adapter is written against.
-func (c *Client) CreateInvoice(ctx context.Context, key string, in InvoiceInput) (*Invoice, error) {
+func CreateInvoice(
+	ctx context.Context,
+	c *xero.Client,
+	key string,
+	in InvoiceInput,
+) (*Invoice, error) {
 	body, err := in.body()
 	if err != nil {
 		return nil, err
 	}
-	return c.writeInvoice(ctx, key, "", &body)
+	return writeInvoice(ctx, c, key, "", &body)
 }
 
 //nolint:gocritic // value inputs are the package contract the accounting adapter is written against.
-func (c *Client) UpdateInvoice(
+func UpdateInvoice(
 	ctx context.Context,
+	c *xero.Client,
 	key, invoiceID string,
 	in InvoiceInput,
 ) (*Invoice, error) {
-	id, err := guid(invoiceID)
+	id, err := xero.GUID(invoiceID)
 	if err != nil {
 		return nil, err
 	}
@@ -165,15 +174,15 @@ func (c *Client) UpdateInvoice(
 		return nil, err
 	}
 	body.InvoiceID = id
-	return c.writeInvoice(ctx, key, id, &body)
+	return writeInvoice(ctx, c, key, id, &body)
 }
 
-func (c *Client) VoidInvoice(ctx context.Context, key, invoiceID string) (*Invoice, error) {
-	id, err := guid(invoiceID)
+func VoidInvoice(ctx context.Context, c *xero.Client, key, invoiceID string) (*Invoice, error) {
+	id, err := xero.GUID(invoiceID)
 	if err != nil {
 		return nil, err
 	}
-	return c.writeInvoice(ctx, key, id, &invoiceBody{InvoiceID: id, Status: StatusVoided})
+	return writeInvoice(ctx, c, key, id, &invoiceBody{InvoiceID: id, Status: StatusVoided})
 }
 
 func (in *InvoiceInput) body() (invoiceBody, error) {
@@ -199,7 +208,7 @@ func (in *InvoiceInput) body() (invoiceBody, error) {
 		InvoiceNumber:   fields.number,
 		Reference:       fields.reference,
 		Date:            fields.date,
-		DueDate:         formatDate(in.DueDate),
+		DueDate:         xero.FormatDate(in.DueDate),
 		CurrencyCode:    fields.currencyCode,
 		CurrencyRate:    fields.currencyRate,
 		Status:          fields.status,
@@ -208,44 +217,45 @@ func (in *InvoiceInput) body() (invoiceBody, error) {
 	}, nil
 }
 
-func (c *Client) writeInvoice(
+func writeInvoice(
 	ctx context.Context,
+	c *xero.Client,
 	key, invoiceID string,
 	body *invoiceBody,
 ) (*Invoice, error) {
-	idem, err := idempotencyKey(key)
+	idem, err := xero.IdempotencyKey(key)
 	if err != nil {
 		return nil, err
 	}
-	req := &call{
-		endpoint: "invoices-create",
-		method:   http.MethodPut,
-		path:     accountingPath(invoicesResource),
-		query:    url.Values{unitDPParam: {unitDecimalPlaces}},
-		key:      idem,
-		body:     invoiceWriteEnvelope{Invoices: []invoiceBody{*body}},
+	req := &xero.Call{
+		Endpoint: "invoices-create",
+		Method:   http.MethodPut,
+		Path:     xero.AccountingPath(invoicesResource),
+		Query:    url.Values{unitDPParam: {unitDecimalPlaces}},
+		Key:      idem,
+		Body:     invoiceWriteEnvelope{Invoices: []invoiceBody{*body}},
 	}
 	if invoiceID != "" {
-		req.endpoint = "invoices-update"
-		req.method = http.MethodPost
-		req.path = accountingPath(invoicesResource, invoiceID)
+		req.Endpoint = "invoices-update"
+		req.Method = http.MethodPost
+		req.Path = xero.AccountingPath(invoicesResource, invoiceID)
 	}
 
 	var out invoicesEnvelope
-	req.out = &out
-	if err = c.do(ctx, req); err != nil {
+	req.Out = &out
+	if err = c.Do(ctx, req); err != nil {
 		return nil, err
 	}
 	if len(out.Invoices) == 0 {
-		return nil, ErrUnexpectedPayload
+		return nil, xeroerrors.ErrUnexpectedPayload
 	}
 	written := out.Invoices[0].invoice()
 	return &written, nil
 }
 
-func (c *Client) InvoicesByID(ctx context.Context, ids []string) ([]Invoice, error) {
+func InvoicesByID(ctx context.Context, c *xero.Client, ids []string) ([]Invoice, error) {
 	var out invoicesEnvelope
-	requested, err := c.readByIDs(ctx, "invoices-by-id", invoicesResource, ids, &out)
+	requested, err := readByIDs(ctx, c, "invoices-by-id", invoicesResource, ids, &out)
 	if err != nil {
 		return nil, err
 	}
@@ -255,28 +265,29 @@ func (c *Client) InvoicesByID(ctx context.Context, ids []string) ([]Invoice, err
 	return out.invoices(), nil
 }
 
-func (c *Client) Invoices(
+func Invoices(
 	ctx context.Context,
+	c *xero.Client,
 	page int,
 	modifiedSince *time.Time,
 ) (*InvoicePage, error) {
-	query, err := pageQuery(page)
+	query, err := xero.PageQuery(page)
 	if err != nil {
 		return nil, err
 	}
 	var out invoicesEnvelope
-	if err = c.readPage(ctx, "invoices", invoicesResource, query, modifiedSince, &out); err != nil {
+	if err = xero.ReadPage(ctx, c, "invoices", invoicesResource, query, modifiedSince, &out); err != nil {
 		return nil, err
 	}
 	invoices := out.invoices()
 	return &InvoicePage{
 		Invoices: invoices,
-		More:     hasMore(out.Pagination, page, len(invoices)),
+		More:     xero.HasMore(out.Pagination, page, len(invoices)),
 	}, nil
 }
 
 //nolint:gocritic // value inputs are the package contract the accounting adapter is written against.
-func (c *Client) FindInvoices(ctx context.Context, f InvoiceFilter) ([]Invoice, error) {
+func FindInvoices(ctx context.Context, c *xero.Client, f InvoiceFilter) ([]Invoice, error) {
 	terms, err := f.terms(InvoiceTypeReceivable, InvoiceTypePayable)
 	if err != nil {
 		return nil, err
@@ -289,25 +300,26 @@ func (c *Client) FindInvoices(ctx context.Context, f InvoiceFilter) ([]Invoice, 
 		base.Set("ContactIDs", strings.Join(terms.contactIDs, ","))
 	}
 	if len(terms.statuses) > 0 {
-		base.Set(statusesParam, strings.Join(terms.statuses, ","))
+		base.Set(xero.StatusesParam, strings.Join(terms.statuses, ","))
 	}
 	from, to := terms.dateClauses()
-	if where := whereJoin(
-		whereAnyOf("Type", optional(terms.kind), whereString),
+	if where := xero.WhereJoin(
+		xero.WhereAnyOf("Type", xero.Optional(terms.kind), xero.WhereString),
 		from,
 		to,
 	); where != "" {
-		base.Set(whereParam, where)
+		base.Set(xero.WhereParam, where)
 	}
 
-	return collectPages(func(page int) ([]Invoice, bool, error) {
-		query, queryErr := withPage(base, page)
+	return xero.CollectPages(func(page int) ([]Invoice, bool, error) {
+		query, queryErr := xero.WithPage(base, page)
 		if queryErr != nil {
 			return nil, false, queryErr
 		}
 		var out invoicesEnvelope
-		if readErr := c.readPage(
+		if readErr := xero.ReadPage(
 			ctx,
+			c,
 			"invoices-search",
 			invoicesResource,
 			query,
@@ -317,13 +329,6 @@ func (c *Client) FindInvoices(ctx context.Context, f InvoiceFilter) ([]Invoice, 
 			return nil, false, readErr
 		}
 		invoices := out.invoices()
-		return invoices, hasMore(out.Pagination, page, len(invoices)), nil
+		return invoices, xero.HasMore(out.Pagination, page, len(invoices)), nil
 	})
-}
-
-func optional(value string) []string {
-	if value == "" {
-		return nil
-	}
-	return []string{value}
 }

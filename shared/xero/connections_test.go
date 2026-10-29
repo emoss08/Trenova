@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/shared/xero"
+	"github.com/emoss08/trenova/shared/xeroerrors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -21,7 +22,11 @@ func newConnectionsClient(t *testing.T, handler http.HandlerFunc) *xero.Connecti
 	server := httptest.NewServer(handler)
 	t.Cleanup(server.Close)
 
-	client, err := xero.NewConnectionsClient(testAccessToken, xero.WithBaseURL(server.URL), fastRetry())
+	client, err := xero.NewConnectionsClient(
+		testAccessToken,
+		xero.WithBaseURL(server.URL),
+		fastRetry(),
+	)
 	require.NoError(t, err)
 	return client
 }
@@ -30,7 +35,7 @@ func TestNewConnectionsClientRequiresToken(t *testing.T) {
 	t.Parallel()
 
 	_, err := xero.NewConnectionsClient(" ")
-	require.ErrorIs(t, err, xero.ErrAccessTokenRequired)
+	require.ErrorIs(t, err, xeroerrors.ErrAccessTokenRequired)
 }
 
 func TestConnectionsListFiltersByAuthEvent(t *testing.T) {
@@ -81,8 +86,8 @@ func TestConnectionsDelete(t *testing.T) {
 	})
 
 	require.NoError(t, client.Delete(t.Context(), testConnection))
-	require.ErrorIs(t, client.Delete(t.Context(), "../tenants"), xero.ErrInvalidID)
-	require.ErrorIs(t, client.Delete(t.Context(), ""), xero.ErrIDRequired)
+	require.ErrorIs(t, client.Delete(t.Context(), "../tenants"), xeroerrors.ErrInvalidID)
+	require.ErrorIs(t, client.Delete(t.Context(), ""), xeroerrors.ErrIDRequired)
 }
 
 func TestConnectionsExpiredTokenIsAuth(t *testing.T) {
@@ -95,6 +100,6 @@ func TestConnectionsExpiredTokenIsAuth(t *testing.T) {
 
 	_, err := client.List(t.Context(), testAuthEvent)
 	require.Error(t, err)
-	assert.True(t, xero.IsAuth(err))
+	assert.True(t, xeroerrors.IsAuth(err))
 	assert.NotContains(t, err.Error(), testAccessToken)
 }

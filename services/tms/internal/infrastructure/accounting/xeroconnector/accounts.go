@@ -8,6 +8,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/shared/xero"
+	"github.com/emoss08/trenova/shared/xeroref"
 )
 
 const (
@@ -32,7 +33,7 @@ func newAccountCodes(now func() time.Time) *accountCodes {
 	return &accountCodes{now: now, byTenant: make(map[string]*accountIndex)}
 }
 
-func (a *accountCodes) store(tenant string, accounts []xero.Account) *accountIndex {
+func (a *accountCodes) store(tenant string, accounts []xeroref.Account) *accountIndex {
 	index := &accountIndex{
 		codeByID: make(map[string]string, len(accounts)),
 		idByCode: make(map[string]string, len(accounts)),
@@ -86,7 +87,7 @@ func (a *accountCodes) lookup(
 		}
 	}
 
-	accounts, err := client.Accounts(ctx, nil)
+	accounts, err := xeroref.Accounts(ctx, client, nil)
 	if err != nil {
 		return "", false, err
 	}

@@ -9,6 +9,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/shared/xero"
+	"github.com/emoss08/trenova/shared/xerodocs"
+	"github.com/emoss08/trenova/shared/xeroerrors"
+	"github.com/emoss08/trenova/shared/xeropay"
 )
 
 var errPurchaseDocumentType = errors.New(
@@ -48,7 +51,7 @@ func (c *Connector) purchaseBody(
 		dueDate:      due,
 		currencyCode: doc.CurrencyCode,
 		currencyRate: doc.ExchangeRate,
-		lines:        make([]xero.LineItem, 0, len(doc.Lines)),
+		lines:        make([]xerodocs.LineItem, 0, len(doc.Lines)),
 	}
 	for idx := range doc.Lines {
 		line := &doc.Lines[idx]
@@ -81,9 +84,9 @@ type purchaseWritten struct {
 func (c *Connector) purchaseResult(
 	written *purchaseWritten,
 ) *accountingconnectorports.AccountingDocumentResult {
-	docType := xero.InvoiceTypePayable
+	docType := xerodocs.InvoiceTypePayable
 	if written.credit {
-		docType = xero.CreditNoteTypePayable
+		docType = xerodocs.CreditNoteTypePayable
 	}
 	refs := map[string]string{
 		accountingsync.ExternalRefDocument:       written.externalID,
@@ -141,12 +144,12 @@ func (c *Connector) writePurchase(
 	}
 
 	if doc.VendorCredit {
-		input := body.creditNote(xero.CreditNoteTypePayable)
-		var note *xero.CreditNote
+		input := body.creditNote(xerodocs.CreditNoteTypePayable)
+		var note *xerodocs.CreditNote
 		if externalID == "" {
-			note, err = client.CreateCreditNote(ctx, doc.RequestID, input)
+			note, err = xerodocs.CreateCreditNote(ctx, client, doc.RequestID, input)
 		} else {
-			note, err = client.UpdateCreditNote(ctx, doc.RequestID, externalID, input)
+			note, err = xerodocs.UpdateCreditNote(ctx, client, doc.RequestID, externalID, input)
 		}
 		if err != nil {
 			return nil, err
@@ -160,12 +163,12 @@ func (c *Connector) writePurchase(
 		}), nil
 	}
 
-	input := body.invoice(xero.InvoiceTypePayable)
-	var bill *xero.Invoice
+	input := body.invoice(xerodocs.InvoiceTypePayable)
+	var bill *xerodocs.Invoice
 	if externalID == "" {
-		bill, err = client.CreateInvoice(ctx, doc.RequestID, input)
+		bill, err = xerodocs.CreateInvoice(ctx, client, doc.RequestID, input)
 	} else {
-		bill, err = client.UpdateInvoice(ctx, doc.RequestID, externalID, input)
+		bill, err = xerodocs.UpdateInvoice(ctx, client, doc.RequestID, externalID, input)
 	}
 	if err != nil {
 		return nil, err
@@ -187,9 +190,9 @@ func purchaseIsCredit(refs map[string]string) (bool, error) {
 		return credit, nil
 	}
 	switch strings.TrimSpace(refs[accountingsync.ExternalRefDocumentType]) {
-	case "", xero.InvoiceTypePayable:
+	case "", xerodocs.InvoiceTypePayable:
 		return false, nil
-	case xero.CreditNoteTypePayable:
+	case xerodocs.CreditNoteTypePayable:
 		return true, nil
 	default:
 		return false, errPurchaseDocumentType
@@ -250,11 +253,12 @@ func (c *Connector) UpdateBillPayment(
 	if err != nil {
 		return nil, err
 	}
-	if err = client.DeletePayment(
+	if err = xeropay.DeletePayment(
 		ctx,
+		client,
 		accountingsync.SyncStepRequestID(doc.RequestID, stepReplaceDelete),
 		id,
-	); err != nil && !xero.IsNotFound(err) {
+	); err != nil && !xeroerrors.IsNotFound(err) {
 		return nil, err
 	}
 	return c.writeBillPayment(
@@ -277,7 +281,7 @@ func (c *Connector) writeBillPayment(
 	if err != nil {
 		return nil, err
 	}
-	payment, err := client.CreatePayment(ctx, key, xero.PaymentInput{
+	payment, err := xeropay.CreatePayment(ctx, client, key, xeropay.PaymentInput{
 		InvoiceID:    doc.BillExternalID,
 		AccountID:    doc.BankAccountExternalID,
 		Date:         date,

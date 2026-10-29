@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/shared/restx"
+	"github.com/emoss08/trenova/shared/xeroerrors"
 )
 
 type Connection struct {
@@ -31,14 +32,14 @@ type wireConnection struct {
 	TenantID       string   `json:"tenantId"`
 	TenantType     string   `json:"tenantType"`
 	TenantName     string   `json:"tenantName"`
-	CreatedDateUTC wireTime `json:"createdDateUtc"`
-	UpdatedDateUTC wireTime `json:"updatedDateUtc"`
+	CreatedDateUTC WireTime `json:"createdDateUtc"`
+	UpdatedDateUTC WireTime `json:"updatedDateUtc"`
 }
 
 func NewConnectionsClient(accessToken string, opts ...Option) (*ConnectionsClient, error) {
 	token := strings.TrimSpace(accessToken)
 	if token == "" {
-		return nil, ErrAccessTokenRequired
+		return nil, xeroerrors.ErrAccessTokenRequired
 	}
 
 	settings := resolveOptions(opts)
@@ -50,7 +51,7 @@ func NewConnectionsClient(accessToken string, opts ...Option) (*ConnectionsClien
 		Headers:      map[string]string{authorizationHeader: "Bearer " + token},
 		Retry:        settings.retry,
 		Observer:     settings.observer,
-		ErrorDecoder: decodeAPIError,
+		ErrorDecoder: xeroerrors.DecodeAPIError,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("xero: configure connections transport: %w", err)
@@ -85,15 +86,15 @@ func (c *ConnectionsClient) List(ctx context.Context, authEventID string) ([]Con
 			TenantID:    wire.TenantID,
 			TenantType:  wire.TenantType,
 			TenantName:  wire.TenantName,
-			CreatedAt:   wire.CreatedDateUTC.time(),
-			UpdatedAt:   wire.UpdatedDateUTC.time(),
+			CreatedAt:   wire.CreatedDateUTC.Time(),
+			UpdatedAt:   wire.UpdatedDateUTC.Time(),
 		})
 	}
 	return connections, nil
 }
 
 func (c *ConnectionsClient) Delete(ctx context.Context, connectionID string) error {
-	id, err := guid(connectionID)
+	id, err := GUID(connectionID)
 	if err != nil {
 		return err
 	}

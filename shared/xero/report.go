@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/emoss08/trenova/shared/xeroerrors"
 	"github.com/shopspring/decimal"
 )
 
@@ -56,21 +57,21 @@ type trialBalanceColumns struct {
 
 func (c *Client) TrialBalance(ctx context.Context, date time.Time) ([]TrialBalanceRow, error) {
 	if date.IsZero() {
-		return nil, ErrReportDateRequired
+		return nil, xeroerrors.ErrReportDateRequired
 	}
 
 	var out reportsEnvelope
-	if err := c.do(ctx, &call{
-		endpoint: "report-trial-balance",
-		method:   http.MethodGet,
-		path:     accountingPath("Reports", "TrialBalance"),
-		query:    url.Values{"date": {formatDate(date)}},
-		out:      &out,
+	if err := c.Do(ctx, &Call{
+		Endpoint: "report-trial-balance",
+		Method:   http.MethodGet,
+		Path:     AccountingPath("Reports", "TrialBalance"),
+		Query:    url.Values{"date": {FormatDate(date)}},
+		Out:      &out,
 	}); err != nil {
 		return nil, err
 	}
 	if len(out.Reports) == 0 {
-		return nil, ErrUnexpectedPayload
+		return nil, xeroerrors.ErrUnexpectedPayload
 	}
 
 	rows := out.Reports[0].Rows
@@ -172,7 +173,7 @@ func reportAmount(cells []reportCell, idx int) (decimal.Decimal, error) {
 	}
 	value, err := decimal.NewFromString(raw)
 	if err != nil {
-		return decimal.Zero, ErrUnexpectedPayload
+		return decimal.Zero, xeroerrors.ErrUnexpectedPayload
 	}
 	return value, nil
 }

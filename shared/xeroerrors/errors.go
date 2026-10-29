@@ -1,4 +1,4 @@
-package xero
+package xeroerrors
 
 import (
 	"errors"
@@ -180,7 +180,7 @@ type oauthErrorBody struct {
 	ErrorDescription string `json:"error_description"`
 }
 
-func decodeAPIError(status int, body []byte, header http.Header) error {
+func DecodeAPIError(status int, body []byte, header http.Header) error {
 	apiErr := &APIError{
 		Status: status,
 		cause:  restx.DecodeAPIError(status, body, header),
@@ -271,7 +271,7 @@ func firstNonBlank(values ...string) string {
 	return ""
 }
 
-func decodeOAuthError(status int, body []byte, header http.Header) error {
+func DecodeOAuthError(status int, body []byte, header http.Header) error {
 	var parsed oauthErrorBody
 	if err := sonic.Unmarshal(body, &parsed); err == nil && parsed.Error != "" {
 		return &OAuthError{
@@ -283,7 +283,7 @@ func decodeOAuthError(status int, body []byte, header http.Header) error {
 	return restx.DecodeAPIError(status, body, header)
 }
 
-func apiErrorOf(err error) (*APIError, bool) {
+func APIErrorOf(err error) (*APIError, bool) {
 	var apiErr *APIError
 	if errors.As(err, &apiErr) && apiErr != nil {
 		return apiErr, true
@@ -292,14 +292,14 @@ func apiErrorOf(err error) (*APIError, bool) {
 }
 
 func hasStatus(err error, status int) bool {
-	if apiErr, ok := apiErrorOf(err); ok {
+	if apiErr, ok := APIErrorOf(err); ok {
 		return apiErr.Status == status
 	}
 	return restx.IsStatus(err, status)
 }
 
 func validationContains(err error, needles ...string) bool {
-	apiErr, ok := apiErrorOf(err)
+	apiErr, ok := APIErrorOf(err)
 	if !ok || apiErr.Status != http.StatusBadRequest {
 		return false
 	}
@@ -319,7 +319,7 @@ func IsAuth(err error) bool {
 }
 
 func IsInsufficientScope(err error) bool {
-	apiErr, ok := apiErrorOf(err)
+	apiErr, ok := APIErrorOf(err)
 	return ok && apiErr.Status == http.StatusUnauthorized && apiErr.Type == TypeInsufficientScope
 }
 
@@ -336,7 +336,7 @@ func IsRateLimited(err error) bool {
 }
 
 func IsValidation(err error) bool {
-	apiErr, ok := apiErrorOf(err)
+	apiErr, ok := APIErrorOf(err)
 	if !ok || apiErr.Status != http.StatusBadRequest {
 		return false
 	}
@@ -379,7 +379,7 @@ func IsTransient(err error) bool {
 	if errors.As(err, &transport) {
 		return true
 	}
-	if apiErr, ok := apiErrorOf(err); ok {
+	if apiErr, ok := APIErrorOf(err); ok {
 		return apiErr.Status >= http.StatusInternalServerError
 	}
 	var oauthErr *OAuthError

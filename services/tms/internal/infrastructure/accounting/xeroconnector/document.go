@@ -15,6 +15,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/xero"
+	"github.com/emoss08/trenova/shared/xerodocs"
+	"github.com/emoss08/trenova/shared/xeroerrors"
+	"github.com/emoss08/trenova/shared/xeropay"
+	"github.com/emoss08/trenova/shared/xeroref"
 	"github.com/shopspring/decimal"
 )
 
@@ -45,7 +49,7 @@ var (
 
 func (c *Connector) DocumentLimits() accountingconnectorports.AccountingDocumentLimits {
 	return accountingconnectorports.AccountingDocumentLimits{
-		MaxDocNumberLength:      xero.MaxDocumentNumberLength,
+		MaxDocNumberLength:      xerodocs.MaxDocumentNumberLength,
 		SupportsDebitMemo:       false,
 		CanVoidCreditMemo:       true,
 		CanVoidPurchaseDocument: true,
@@ -104,11 +108,11 @@ func (c *Connector) upsertContact(
 	}
 	input := contactInputOf(write.party)
 
-	var saved *xero.Contact
+	var saved *xeroref.Contact
 	if id := strings.TrimSpace(write.externalID); id != "" {
-		saved, err = client.UpdateContact(ctx, write.requestID, id, input)
+		saved, err = xeroref.UpdateContact(ctx, client, write.requestID, id, input)
 	} else {
-		saved, err = client.CreateContact(ctx, write.requestID, input)
+		saved, err = xeroref.CreateContact(ctx, client, write.requestID, input)
 	}
 	if err != nil {
 		return nil, err
@@ -156,11 +160,11 @@ type documentBody struct {
 	dueDate      time.Time
 	currencyCode string
 	currencyRate decimal.Decimal
-	lines        []xero.LineItem
+	lines        []xerodocs.LineItem
 }
 
-func (b *documentBody) invoice(kind string) xero.InvoiceInput {
-	return xero.InvoiceInput{
+func (b *documentBody) invoice(kind string) xerodocs.InvoiceInput {
+	return xerodocs.InvoiceInput{
 		Type:            kind,
 		ContactID:       b.contactID,
 		InvoiceNumber:   b.number,
@@ -169,14 +173,14 @@ func (b *documentBody) invoice(kind string) xero.InvoiceInput {
 		DueDate:         b.dueDate,
 		CurrencyCode:    b.currencyCode,
 		CurrencyRate:    b.currencyRate,
-		Status:          xero.StatusAuthorised,
-		LineAmountTypes: xero.LineAmountsNoTax,
+		Status:          xerodocs.StatusAuthorised,
+		LineAmountTypes: xerodocs.LineAmountsNoTax,
 		Lines:           b.lines,
 	}
 }
 
-func (b *documentBody) creditNote(kind string) xero.CreditNoteInput {
-	return xero.CreditNoteInput{
+func (b *documentBody) creditNote(kind string) xerodocs.CreditNoteInput {
+	return xerodocs.CreditNoteInput{
 		Type:             kind,
 		ContactID:        b.contactID,
 		CreditNoteNumber: b.number,
@@ -184,8 +188,8 @@ func (b *documentBody) creditNote(kind string) xero.CreditNoteInput {
 		Date:             b.date,
 		CurrencyCode:     b.currencyCode,
 		CurrencyRate:     b.currencyRate,
-		Status:           xero.StatusAuthorised,
-		LineAmountTypes:  xero.LineAmountsNoTax,
+		Status:           xerodocs.StatusAuthorised,
+		LineAmountTypes:  xerodocs.LineAmountsNoTax,
 		Lines:            b.lines,
 	}
 }
@@ -215,7 +219,7 @@ func (c *Connector) salesBody(
 		dueDate:      due,
 		currencyCode: doc.CurrencyCode,
 		currencyRate: doc.ExchangeRate,
-		lines:        make([]xero.LineItem, 0, len(doc.Lines)),
+		lines:        make([]xerodocs.LineItem, 0, len(doc.Lines)),
 	}
 	if doc.Kind == accountingsync.SyncObjectCreditMemo {
 		body.dueDate = time.Time{}
@@ -250,11 +254,11 @@ type lineSpec struct {
 	accountCode string
 }
 
-func lineItem(spec *lineSpec) xero.LineItem {
-	item := xero.LineItem{
+func lineItem(spec *lineSpec) xerodocs.LineItem {
+	item := xerodocs.LineItem{
 		Description: stringutils.TruncateRunes(
 			lineText(spec.description),
-			xero.MaxDescriptionLength,
+			xeroref.MaxDescriptionLength,
 		),
 		Quantity:    decimal.NewFromInt(1),
 		UnitAmount:  spec.amount,
@@ -277,7 +281,7 @@ func lineText(description string) string {
 }
 
 func reference(note string) string {
-	return strings.TrimSpace(stringutils.OneLine(note, xero.MaxReferenceLength))
+	return strings.TrimSpace(stringutils.OneLine(note, xerodocs.MaxReferenceLength))
 }
 
 func (c *Connector) writeSales(
@@ -296,12 +300,12 @@ func (c *Connector) writeSales(
 	}
 
 	if kind.credit {
-		input := body.creditNote(xero.CreditNoteTypeReceivable)
-		var note *xero.CreditNote
+		input := body.creditNote(xerodocs.CreditNoteTypeReceivable)
+		var note *xerodocs.CreditNote
 		if externalID == "" {
-			note, err = client.CreateCreditNote(ctx, doc.RequestID, input)
+			note, err = xerodocs.CreateCreditNote(ctx, client, doc.RequestID, input)
 		} else {
-			note, err = client.UpdateCreditNote(ctx, doc.RequestID, externalID, input)
+			note, err = xerodocs.UpdateCreditNote(ctx, client, doc.RequestID, externalID, input)
 		}
 		if err != nil {
 			return "", "", err
@@ -309,12 +313,12 @@ func (c *Connector) writeSales(
 		return note.CreditNoteID, note.CreditNoteNumber, nil
 	}
 
-	input := body.invoice(xero.InvoiceTypeReceivable)
-	var invoice *xero.Invoice
+	input := body.invoice(xerodocs.InvoiceTypeReceivable)
+	var invoice *xerodocs.Invoice
 	if externalID == "" {
-		invoice, err = client.CreateInvoice(ctx, doc.RequestID, input)
+		invoice, err = xerodocs.CreateInvoice(ctx, client, doc.RequestID, input)
 	} else {
-		invoice, err = client.UpdateInvoice(ctx, doc.RequestID, externalID, input)
+		invoice, err = xerodocs.UpdateInvoice(ctx, client, doc.RequestID, externalID, input)
 	}
 	if err != nil {
 		return "", "", err
@@ -357,11 +361,12 @@ func (c *Connector) CreateSalesDocument(
 	if err != nil {
 		return result, err
 	}
-	allocation, err := client.Allocate(
+	allocation, err := xerodocs.Allocate(
 		ctx,
+		client,
 		accountingsync.SyncStepRequestID(doc.RequestID, 1),
 		result.ExternalID,
-		xero.AllocationInput{
+		xerodocs.AllocationInput{
 			InvoiceID: doc.ApplyToExternalID,
 			Amount:    doc.ApplyAmount,
 			Date:      date,
@@ -426,9 +431,9 @@ func (c *Connector) VoidSalesDocument(
 }
 
 func voidInvoice(ctx context.Context, client *xero.Client, requestID, invoiceID string) error {
-	found, err := client.InvoicesByID(ctx, []string{invoiceID})
+	found, err := xerodocs.InvoicesByID(ctx, client, []string{invoiceID})
 	if err != nil {
-		if xero.IsNotFound(err) {
+		if xeroerrors.IsNotFound(err) {
 			return nil
 		}
 		return err
@@ -439,25 +444,30 @@ func voidInvoice(ctx context.Context, client *xero.Client, requestID, invoiceID 
 	invoice := &found[0]
 
 	for idx := range invoice.Payments {
-		if delErr := client.DeletePayment(
+		if delErr := xeropay.DeletePayment(
 			ctx,
+			client,
 			accountingsync.SyncStepRequestID(requestID, idx+1),
 			invoice.Payments[idx].PaymentID,
-		); delErr != nil && !xero.IsNotFound(delErr) {
+		); delErr != nil && !xeroerrors.IsNotFound(delErr) {
 			return delErr
 		}
 	}
 	if err = removeAllocationsTo(ctx, client, invoice); err != nil {
 		return err
 	}
-	if _, err = client.VoidInvoice(ctx, requestID, invoice.InvoiceID); err != nil &&
-		!xero.IsNotFound(err) {
+	if _, err = xerodocs.VoidInvoice(ctx, client, requestID, invoice.InvoiceID); err != nil &&
+		!xeroerrors.IsNotFound(err) {
 		return err
 	}
 	return nil
 }
 
-func removeAllocationsTo(ctx context.Context, client *xero.Client, invoice *xero.Invoice) error {
+func removeAllocationsTo(
+	ctx context.Context,
+	client *xero.Client,
+	invoice *xerodocs.Invoice,
+) error {
 	if len(invoice.CreditNotes) == 0 {
 		return nil
 	}
@@ -466,8 +476,9 @@ func removeAllocationsTo(ctx context.Context, client *xero.Client, invoice *xero
 		noteIDs = append(noteIDs, invoice.CreditNotes[idx].CreditNoteID)
 	}
 	for start := 0; start < len(noteIDs); start += xero.MaxIDsPerRead {
-		notes, err := client.CreditNotesByID(
+		notes, err := xerodocs.CreditNotesByID(
 			ctx,
+			client,
 			noteIDs[start:min(start+xero.MaxIDsPerRead, len(noteIDs))],
 		)
 		if err != nil {
@@ -478,11 +489,12 @@ func removeAllocationsTo(ctx context.Context, client *xero.Client, invoice *xero
 				if allocation.IsDeleted || !sameID(allocation.InvoiceID, invoice.InvoiceID) {
 					continue
 				}
-				if delErr := client.DeleteAllocation(
+				if delErr := xerodocs.DeleteAllocation(
 					ctx,
+					client,
 					notes[idx].CreditNoteID,
 					allocation.AllocationID,
-				); delErr != nil && !xero.IsNotFound(delErr) {
+				); delErr != nil && !xeroerrors.IsNotFound(delErr) {
 					return delErr
 				}
 			}
@@ -492,9 +504,9 @@ func removeAllocationsTo(ctx context.Context, client *xero.Client, invoice *xero
 }
 
 func voidCreditNote(ctx context.Context, client *xero.Client, requestID, noteID string) error {
-	found, err := client.CreditNotesByID(ctx, []string{noteID})
+	found, err := xerodocs.CreditNotesByID(ctx, client, []string{noteID})
 	if err != nil {
-		if xero.IsNotFound(err) {
+		if xeroerrors.IsNotFound(err) {
 			return nil
 		}
 		return err
@@ -507,33 +519,35 @@ func voidCreditNote(ctx context.Context, client *xero.Client, requestID, noteID 
 		if allocation.IsDeleted {
 			continue
 		}
-		if delErr := client.DeleteAllocation(
+		if delErr := xerodocs.DeleteAllocation(
 			ctx,
+			client,
 			note.CreditNoteID,
 			allocation.AllocationID,
-		); delErr != nil && !xero.IsNotFound(delErr) {
+		); delErr != nil && !xeroerrors.IsNotFound(delErr) {
 			return delErr
 		}
 	}
 	for idx := range note.Payments {
-		if delErr := client.DeletePayment(
+		if delErr := xeropay.DeletePayment(
 			ctx,
+			client,
 			accountingsync.SyncStepRequestID(requestID, idx+1),
 			note.Payments[idx].PaymentID,
-		); delErr != nil && !xero.IsNotFound(delErr) {
+		); delErr != nil && !xeroerrors.IsNotFound(delErr) {
 			return delErr
 		}
 	}
-	if _, err = client.VoidCreditNote(ctx, requestID, note.CreditNoteID); err != nil &&
-		!xero.IsNotFound(err) {
+	if _, err = xerodocs.VoidCreditNote(ctx, client, requestID, note.CreditNoteID); err != nil &&
+		!xeroerrors.IsNotFound(err) {
 		return err
 	}
 	return nil
 }
 
 func closedStatus(status string) bool {
-	return strings.EqualFold(status, xero.StatusVoided) ||
-		strings.EqualFold(status, xero.StatusDeleted)
+	return strings.EqualFold(status, xerodocs.StatusVoided) ||
+		strings.EqualFold(status, xerodocs.StatusDeleted)
 }
 
 func (c *Connector) CreateCreditApplication(
@@ -541,7 +555,7 @@ func (c *Connector) CreateCreditApplication(
 	doc *accountingconnectorports.AccountingCreditApplicationDocument,
 ) (*accountingconnectorports.AccountingDocumentResult, error) {
 	if !doc.Amount.IsPositive() {
-		return nil, xero.ErrAmountNotPositive
+		return nil, xeroerrors.ErrAmountNotPositive
 	}
 	date, err := parseDate(doc.TxnDate)
 	if err != nil {
@@ -551,11 +565,12 @@ func (c *Connector) CreateCreditApplication(
 	if err != nil {
 		return nil, err
 	}
-	allocation, err := client.Allocate(
+	allocation, err := xerodocs.Allocate(
 		ctx,
+		client,
 		doc.RequestID,
 		doc.CreditMemoExternalID,
-		xero.AllocationInput{
+		xerodocs.AllocationInput{
 			InvoiceID: doc.InvoiceExternalID,
 			Amount:    doc.Amount,
 			Date:      date,
@@ -568,7 +583,7 @@ func (c *Connector) CreateCreditApplication(
 }
 
 func allocationResult(
-	allocation *xero.Allocation,
+	allocation *xerodocs.Allocation,
 ) *accountingconnectorports.AccountingDocumentResult {
 	return &accountingconnectorports.AccountingDocumentResult{
 		ExternalID: allocation.AllocationID,
@@ -591,8 +606,8 @@ func (c *Connector) VoidCreditApplication(
 	if err != nil {
 		return nil, err
 	}
-	if err = client.DeleteAllocation(ctx, noteID, ref.ExternalID); err != nil &&
-		!xero.IsNotFound(err) {
+	if err = xerodocs.DeleteAllocation(ctx, client, noteID, ref.ExternalID); err != nil &&
+		!xeroerrors.IsNotFound(err) {
 		return nil, err
 	}
 	return &accountingconnectorports.AccountingDocumentResult{
@@ -602,37 +617,37 @@ func (c *Connector) VoidCreditApplication(
 }
 
 type documentFault struct {
-	matches    func(err error, apiErr *xero.APIError) bool
+	matches    func(err error, apiErr *xeroerrors.APIError) bool
 	category   accountingsync.SyncErrorCategory
 	resolution string
 }
 
-func isConfigurationFault(err error, _ *xero.APIError) bool {
+func isConfigurationFault(err error, _ *xeroerrors.APIError) bool {
 	return errors.Is(err, ErrNotConfigured) || errors.Is(err, errNoRedirect)
 }
 
-func isAuthFault(err error, _ *xero.APIError) bool {
-	return xero.IsInvalidGrant(err) || xero.IsAuth(err) || xero.IsForbidden(err)
+func isAuthFault(err error, _ *xeroerrors.APIError) bool {
+	return xeroerrors.IsInvalidGrant(err) || xeroerrors.IsAuth(err) || xeroerrors.IsForbidden(err)
 }
 
-func isTransientFault(err error, _ *xero.APIError) bool {
-	return xero.IsTransient(err) || errors.Is(err, context.DeadlineExceeded)
+func isTransientFault(err error, _ *xeroerrors.APIError) bool {
+	return xeroerrors.IsTransient(err) || errors.Is(err, context.DeadlineExceeded)
 }
 
-func isDuplicateName(err error, apiErr *xero.APIError) bool {
-	return xero.IsDuplicateNumber(err) && validationMentions(apiErr, "contact name")
+func isDuplicateName(err error, apiErr *xeroerrors.APIError) bool {
+	return xeroerrors.IsDuplicateNumber(err) && validationMentions(apiErr, "contact name")
 }
 
-func isValidationFault(err error, apiErr *xero.APIError) bool {
-	return isLocalValidation(err) || xero.IsValidation(err) ||
+func isValidationFault(err error, apiErr *xeroerrors.APIError) bool {
+	return isLocalValidation(err) || xeroerrors.IsValidation(err) ||
 		hasStatus(apiErr, http.StatusBadRequest)
 }
 
-func ignoringAPIError(match func(error) bool) func(error, *xero.APIError) bool {
-	return func(err error, _ *xero.APIError) bool { return match(err) }
+func ignoringAPIError(match func(error) bool) func(error, *xeroerrors.APIError) bool {
+	return func(err error, _ *xeroerrors.APIError) bool { return match(err) }
 }
 
-func isMappingFaultOf(_ error, apiErr *xero.APIError) bool {
+func isMappingFaultOf(_ error, apiErr *xeroerrors.APIError) bool {
 	return isMappingFault(apiErr)
 }
 
@@ -655,20 +670,20 @@ var documentFaults = []documentFault{
 			". Map the record to it instead, or rename one of them",
 	},
 	{
-		matches:  ignoringAPIError(xero.IsDuplicateNumber),
+		matches:  ignoringAPIError(xeroerrors.IsDuplicateNumber),
 		category: accountingsync.SyncErrorDuplicate,
 		resolution: "A document with this number already exists in " + providerName +
 			". Skip this record if it is the same document, or renumber the one in " +
 			providerName,
 	},
 	{
-		matches:  ignoringAPIError(xero.IsLockDate),
+		matches:  ignoringAPIError(xeroerrors.IsLockDate),
 		category: accountingsync.SyncErrorClosedPeriod,
 		resolution: "The books are locked for this date in " + providerName +
 			". Move the lock date there or skip this record",
 	},
 	{
-		matches:    ignoringAPIError(xero.IsNotFound),
+		matches:    ignoringAPIError(xeroerrors.IsNotFound),
 		category:   accountingsync.SyncErrorNotFound,
 		resolution: "The linked record no longer exists in " + providerName,
 	},
@@ -696,9 +711,9 @@ func (c *Connector) ClassifyDocumentError(err error) *accountingsync.SyncError {
 
 	apiErr := apiErrorOf(err)
 	switch {
-	case xero.IsRateLimited(err):
+	case xeroerrors.IsRateLimited(err):
 		return rateLimited(err, apiErr)
-	case xero.IsOrganisationOffline(err):
+	case xeroerrors.IsOrganisationOffline(err):
 		return &accountingsync.SyncError{
 			Category: accountingsync.SyncErrorTransient,
 			Code:     "organisation-offline",
@@ -724,7 +739,7 @@ func (c *Connector) ClassifyDocumentError(err error) *accountingsync.SyncError {
 	return out
 }
 
-func rateLimited(err error, apiErr *xero.APIError) *accountingsync.SyncError {
+func rateLimited(err error, apiErr *xeroerrors.APIError) *accountingsync.SyncError {
 	out := &accountingsync.SyncError{
 		Category: accountingsync.SyncErrorRateLimited,
 		Code:     errorCode(apiErr),
@@ -733,10 +748,10 @@ func rateLimited(err error, apiErr *xero.APIError) *accountingsync.SyncError {
 	if apiErr != nil {
 		out.RetryAfter = apiErr.RetryAfter
 	}
-	if apiErr == nil || apiErr.RateLimitProblem != xero.RateLimitDay {
+	if apiErr == nil || apiErr.RateLimitProblem != xeroerrors.RateLimitDay {
 		return out
 	}
-	out.Code = xero.RateLimitDay
+	out.Code = xeroerrors.RateLimitDay
 	out.Message = providerName + " has refused further calls for this organisation today"
 	if apiErr.RetryAfter > 0 {
 		out.Message += "; retry after " + apiErr.RetryAfter.String()
@@ -745,19 +760,19 @@ func rateLimited(err error, apiErr *xero.APIError) *accountingsync.SyncError {
 	return out
 }
 
-func apiErrorOf(err error) *xero.APIError {
-	var apiErr *xero.APIError
+func apiErrorOf(err error) *xeroerrors.APIError {
+	var apiErr *xeroerrors.APIError
 	if errors.As(err, &apiErr) {
 		return apiErr
 	}
 	return nil
 }
 
-func hasStatus(apiErr *xero.APIError, status int) bool {
+func hasStatus(apiErr *xeroerrors.APIError, status int) bool {
 	return apiErr != nil && apiErr.Status == status
 }
 
-func validationMentions(apiErr *xero.APIError, needles ...string) bool {
+func validationMentions(apiErr *xeroerrors.APIError, needles ...string) bool {
 	if apiErr == nil {
 		return false
 	}
@@ -772,7 +787,7 @@ func validationMentions(apiErr *xero.APIError, needles ...string) bool {
 	return false
 }
 
-func isMappingFault(apiErr *xero.APIError) bool {
+func isMappingFault(apiErr *xeroerrors.APIError) bool {
 	if !hasStatus(apiErr, http.StatusBadRequest) {
 		return false
 	}
@@ -786,7 +801,7 @@ func isMappingFault(apiErr *xero.APIError) bool {
 	)
 }
 
-func errorCode(apiErr *xero.APIError) string {
+func errorCode(apiErr *xeroerrors.APIError) string {
 	if apiErr == nil {
 		return ""
 	}
@@ -796,7 +811,7 @@ func errorCode(apiErr *xero.APIError) string {
 	return strconv.Itoa(apiErr.Status)
 }
 
-func errorMessage(err error, apiErr *xero.APIError) string {
+func errorMessage(err error, apiErr *xeroerrors.APIError) string {
 	message := err.Error()
 	if apiErr != nil {
 		switch {
@@ -811,30 +826,30 @@ func errorMessage(err error, apiErr *xero.APIError) string {
 
 func isLocalValidation(err error) bool {
 	for _, target := range []error{
-		xero.ErrTenantIDRequired,
-		xero.ErrIDRequired,
-		xero.ErrInvalidID,
-		xero.ErrTooManyIDs,
-		xero.ErrIdempotencyKey,
-		xero.ErrDateRequired,
-		xero.ErrContactRequired,
-		xero.ErrLinesRequired,
-		xero.ErrLineDescription,
-		xero.ErrUnknownType,
-		xero.ErrUnknownStatus,
-		xero.ErrUnknownAmountTypes,
-		xero.ErrAmountNotPositive,
-		xero.ErrNegativeRate,
-		xero.ErrTargetRequired,
-		xero.ErrAccountRequired,
-		xero.ErrPaymentsRequired,
-		xero.ErrItemCodeInvalid,
-		xero.ErrItemNameInvalid,
-		xero.ErrContactNameInvalid,
-		xero.ErrFieldTooLong,
-		xero.ErrCurrencyCodeInvalid,
-		xero.ErrEmptyFilter,
-		xero.ErrInvalidFilter,
+		xeroerrors.ErrTenantIDRequired,
+		xeroerrors.ErrIDRequired,
+		xeroerrors.ErrInvalidID,
+		xeroerrors.ErrTooManyIDs,
+		xeroerrors.ErrIdempotencyKey,
+		xeroerrors.ErrDateRequired,
+		xeroerrors.ErrContactRequired,
+		xeroerrors.ErrLinesRequired,
+		xeroerrors.ErrLineDescription,
+		xeroerrors.ErrUnknownType,
+		xeroerrors.ErrUnknownStatus,
+		xeroerrors.ErrUnknownAmountTypes,
+		xeroerrors.ErrAmountNotPositive,
+		xeroerrors.ErrNegativeRate,
+		xeroerrors.ErrTargetRequired,
+		xeroerrors.ErrAccountRequired,
+		xeroerrors.ErrPaymentsRequired,
+		xeroerrors.ErrItemCodeInvalid,
+		xeroerrors.ErrItemNameInvalid,
+		xeroerrors.ErrContactNameInvalid,
+		xeroerrors.ErrFieldTooLong,
+		xeroerrors.ErrCurrencyCodeInvalid,
+		xeroerrors.ErrEmptyFilter,
+		xeroerrors.ErrInvalidFilter,
 		errDocumentKind,
 		errInvalidDate,
 		errExternalID,

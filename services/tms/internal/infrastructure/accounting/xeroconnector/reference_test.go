@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
-	"github.com/emoss08/trenova/shared/xero"
+	"github.com/emoss08/trenova/shared/xeroref"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -93,10 +93,10 @@ func TestAccountClassOfEveryXeroType(t *testing.T) {
 		"unknown":     "",
 	}
 	for typ, want := range cases {
-		assert.Equal(t, want, AccountClassOf(&xero.Account{Type: typ}), typ)
+		assert.Equal(t, want, AccountClassOf(&xeroref.Account{Type: typ}), typ)
 	}
 	assert.Equal(t, accountingmapping.AccountClassReceivable,
-		AccountClassOf(&xero.Account{Type: "CURRENT", SystemAccount: "DEBTORS"}))
+		AccountClassOf(&xeroref.Account{Type: "CURRENT", SystemAccount: "DEBTORS"}))
 }
 
 func TestListItemsResolvesTheSalesAccount(t *testing.T) {
@@ -278,7 +278,7 @@ func TestSanitizeName(t *testing.T) {
 	assert.Len(
 		t,
 		conn.SanitizeName(accountingprovider.ReferenceKindItem, long),
-		xero.MaxItemNameLength,
+		xeroref.MaxItemNameLength,
 	)
 	assert.Len(t, conn.SanitizeName(accountingprovider.ReferenceKindVendor, long), 80)
 	assert.Equal(

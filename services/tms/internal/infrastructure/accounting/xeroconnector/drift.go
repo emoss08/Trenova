@@ -8,6 +8,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/shared/xero"
+	"github.com/emoss08/trenova/shared/xerodocs"
+	"github.com/emoss08/trenova/shared/xeropay"
 	"github.com/shopspring/decimal"
 )
 
@@ -126,9 +128,9 @@ func readInvoices(
 	client *xero.Client,
 	plan *driftRead,
 ) ([]*accountingconnectorports.AccountingDocumentState, error) {
-	found := make(map[string]*xero.Invoice, len(plan.invoices))
+	found := make(map[string]*xerodocs.Invoice, len(plan.invoices))
 	for _, chunk := range chunks(plan.invoices) {
-		invoices, err := client.InvoicesByID(ctx, chunk)
+		invoices, err := xerodocs.InvoicesByID(ctx, client, chunk)
 		if err != nil {
 			return nil, err
 		}
@@ -159,9 +161,9 @@ func readCreditNotes(
 	client *xero.Client,
 	plan *driftRead,
 ) ([]*accountingconnectorports.AccountingDocumentState, error) {
-	found := make(map[string]*xero.CreditNote, len(plan.creditNotes))
+	found := make(map[string]*xerodocs.CreditNote, len(plan.creditNotes))
 	for _, chunk := range chunks(plan.creditNotes) {
-		notes, err := client.CreditNotesByID(ctx, chunk)
+		notes, err := xerodocs.CreditNotesByID(ctx, client, chunk)
 		if err != nil {
 			return nil, err
 		}
@@ -214,9 +216,9 @@ func readPayments(
 			invoiceIDs = append(invoiceIDs, invoiceID)
 		}
 	}
-	byID := make(map[string]*xero.Payment, len(invoiceIDs))
+	byID := make(map[string]*xeropay.Payment, len(invoiceIDs))
 	for _, chunk := range chunks(invoiceIDs) {
-		payments, err := client.FindPayments(ctx, xero.PaymentFilter{InvoiceIDs: chunk})
+		payments, err := xeropay.FindPayments(ctx, client, xeropay.PaymentFilter{InvoiceIDs: chunk})
 		if err != nil {
 			return nil, err
 		}
@@ -243,7 +245,7 @@ func readPayments(
 			}
 			read++
 			state.DocNumber = payment.Reference
-			if strings.EqualFold(payment.Status, xero.StatusDeleted) {
+			if strings.EqualFold(payment.Status, xerodocs.StatusDeleted) {
 				deleted++
 				continue
 			}
@@ -277,9 +279,9 @@ func readAllocations(
 			noteIDs = append(noteIDs, noteID)
 		}
 	}
-	byID := make(map[string]*xero.Allocation, len(noteIDs))
+	byID := make(map[string]*xerodocs.Allocation, len(noteIDs))
 	for _, chunk := range chunks(noteIDs) {
-		notes, err := client.CreditNotesByID(ctx, chunk)
+		notes, err := xerodocs.CreditNotesByID(ctx, client, chunk)
 		if err != nil {
 			return nil, err
 		}

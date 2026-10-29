@@ -11,6 +11,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/xero"
+	"github.com/emoss08/trenova/shared/xerodocs"
+	"github.com/emoss08/trenova/shared/xeroerrors"
+	"github.com/emoss08/trenova/shared/xeropay"
 	"github.com/shopspring/decimal"
 )
 
@@ -81,14 +84,19 @@ func (c *Connector) SavePayment(
 	paymentRef := paymentReference(doc.ReferenceNumber, doc.RequestID)
 	clearPaymentRefs(write.result.Refs)
 	if len(cash) == 1 {
-		payment, createErr := client.CreatePayment(ctx, write.createKey(), xero.PaymentInput{
-			InvoiceID:    cash[0].InvoiceExternalID,
-			AccountID:    doc.DepositAccountExternalID,
-			Date:         date,
-			Amount:       cash[0].AppliedAmount,
-			CurrencyRate: doc.ExchangeRate,
-			Reference:    paymentRef,
-		})
+		payment, createErr := xeropay.CreatePayment(
+			ctx,
+			client,
+			write.createKey(),
+			xeropay.PaymentInput{
+				InvoiceID:    cash[0].InvoiceExternalID,
+				AccountID:    doc.DepositAccountExternalID,
+				Date:         date,
+				Amount:       cash[0].AppliedAmount,
+				CurrencyRate: doc.ExchangeRate,
+				Reference:    paymentRef,
+			},
+		)
 		if createErr != nil {
 			return write.result, createErr
 		}
@@ -96,19 +104,24 @@ func (c *Connector) SavePayment(
 		return write.result, nil
 	}
 
-	lines := make([]xero.BatchPaymentLine, 0, len(cash))
+	lines := make([]xeropay.BatchPaymentLine, 0, len(cash))
 	for idx := range cash {
-		lines = append(lines, xero.BatchPaymentLine{
+		lines = append(lines, xeropay.BatchPaymentLine{
 			InvoiceID: cash[idx].InvoiceExternalID,
 			Amount:    cash[idx].AppliedAmount,
 		})
 	}
-	batch, err := client.CreateBatchPayment(ctx, write.createKey(), xero.BatchPaymentInput{
-		AccountID: doc.DepositAccountExternalID,
-		Date:      date,
-		Reference: paymentRef,
-		Payments:  lines,
-	})
+	batch, err := xeropay.CreateBatchPayment(
+		ctx,
+		client,
+		write.createKey(),
+		xeropay.BatchPaymentInput{
+			AccountID: doc.DepositAccountExternalID,
+			Date:      date,
+			Reference: paymentRef,
+			Payments:  lines,
+		},
+	)
 	if err != nil {
 		return write.result, err
 	}
@@ -124,7 +137,7 @@ func cashApplications(
 	for idx := range doc.Applications {
 		app := &doc.Applications[idx]
 		if app.AppliedAmount.IsNegative() || app.ShortPayAmount.IsNegative() {
-			return nil, xero.ErrAmountNotPositive
+			return nil, xeroerrors.ErrAmountNotPositive
 		}
 		if app.AppliedAmount.IsPositive() {
 			cash = append(cash, app)
@@ -178,11 +191,11 @@ func deletePaymentDocument(
 ) error {
 	var err error
 	if refs[accountingsync.ExternalRefDocumentType] == docTypeBatchPayment {
-		err = client.DeleteBatchPayment(ctx, key, externalID)
+		err = xeropay.DeleteBatchPayment(ctx, client, key, externalID)
 	} else {
-		err = client.DeletePayment(ctx, key, externalID)
+		err = xeropay.DeletePayment(ctx, client, key, externalID)
 	}
-	if err != nil && !xero.IsNotFound(err) {
+	if err != nil && !xeroerrors.IsNotFound(err) {
 		return err
 	}
 	return nil
@@ -198,7 +211,7 @@ func clearPaymentRefs(refs map[string]string) {
 
 func finishPayment(
 	result *accountingconnectorports.AccountingDocumentResult,
-	payment *xero.Payment,
+	payment *xeropay.Payment,
 ) {
 	result.ExternalID = payment.PaymentID
 	result.DocNumber = payment.Reference
@@ -212,7 +225,7 @@ func finishPayment(
 
 func finishBatch(
 	result *accountingconnectorports.AccountingDocumentResult,
-	batch *xero.BatchPayment,
+	batch *xeropay.BatchPayment,
 ) {
 	result.ExternalID = batch.BatchPaymentID
 	result.DocNumber = batch.Reference
@@ -239,9 +252,9 @@ func paymentReference(number, requestID string) string {
 	if id == "" {
 		return reference(cleaned)
 	}
-	budget := xero.MaxReferenceLength - len([]rune(id)) - 1
+	budget := xerodocs.MaxReferenceLength - len([]rune(id)) - 1
 	if budget <= 0 {
-		return stringutils.TruncateRunes(id, xero.MaxReferenceLength)
+		return stringutils.TruncateRunes(id, xerodocs.MaxReferenceLength)
 	}
 	return strings.TrimSpace(
 		strings.TrimSpace(stringutils.TruncateRunes(cleaned, budget)) + " " + id,
@@ -287,19 +300,20 @@ func (c *Connector) shortPay(
 			return err
 		}
 		text := shortPayNote + app.InvoiceNumber
-		note, err := client.CreateCreditNote(
+		note, err := xerodocs.CreateCreditNote(
 			ctx,
+			client,
 			accountingsync.SyncStepRequestID(doc.RequestID, stepShortPayBase+idx*stepsPerShortPay),
-			xero.CreditNoteInput{
-				Type:            xero.CreditNoteTypeReceivable,
+			xerodocs.CreditNoteInput{
+				Type:            xerodocs.CreditNoteTypeReceivable,
 				ContactID:       doc.CustomerExternalID,
 				Reference:       reference(text),
 				Date:            date,
 				CurrencyCode:    doc.CurrencyCode,
 				CurrencyRate:    doc.ExchangeRate,
-				Status:          xero.StatusAuthorised,
-				LineAmountTypes: xero.LineAmountsNoTax,
-				Lines: []xero.LineItem{lineItem(&lineSpec{
+				Status:          xerodocs.StatusAuthorised,
+				LineAmountTypes: xerodocs.LineAmountsNoTax,
+				Lines: []xerodocs.LineItem{lineItem(&lineSpec{
 					description: text,
 					amount:      app.ShortPayAmount,
 					accountCode: code,
@@ -316,11 +330,12 @@ func (c *Connector) shortPay(
 		return nil
 	}
 
-	allocation, err := client.Allocate(
+	allocation, err := xerodocs.Allocate(
 		ctx,
+		client,
 		accountingsync.SyncStepRequestID(doc.RequestID, stepShortPayBase+idx*stepsPerShortPay+1),
 		noteID,
-		xero.AllocationInput{
+		xerodocs.AllocationInput{
 			InvoiceID: app.InvoiceExternalID,
 			Amount:    app.ShortPayAmount,
 			Date:      date,

@@ -1,4 +1,4 @@
-package xero
+package xerodocs
 
 import (
 	"context"
@@ -6,6 +6,8 @@ import (
 	"net/url"
 	"time"
 
+	"github.com/emoss08/trenova/shared/xero"
+	"github.com/emoss08/trenova/shared/xeroerrors"
 	"github.com/shopspring/decimal"
 )
 
@@ -65,17 +67,17 @@ type Allocation struct {
 }
 
 type creditNoteBody struct {
-	CreditNoteID     string     `json:"CreditNoteID,omitempty"`
-	Type             string     `json:"Type,omitempty"`
-	Contact          *idRef     `json:"Contact,omitempty"`
-	CreditNoteNumber string     `json:"CreditNoteNumber,omitempty"`
-	Reference        string     `json:"Reference,omitempty"`
-	Date             string     `json:"Date,omitempty"`
-	CurrencyCode     string     `json:"CurrencyCode,omitempty"`
-	CurrencyRate     *number    `json:"CurrencyRate,omitempty"`
-	Status           string     `json:"Status,omitempty"`
-	LineAmountTypes  string     `json:"LineAmountTypes,omitempty"`
-	LineItems        []lineBody `json:"LineItems,omitempty"`
+	CreditNoteID     string       `json:"CreditNoteID,omitempty"`
+	Type             string       `json:"Type,omitempty"`
+	Contact          *xero.IDRef  `json:"Contact,omitempty"`
+	CreditNoteNumber string       `json:"CreditNoteNumber,omitempty"`
+	Reference        string       `json:"Reference,omitempty"`
+	Date             string       `json:"Date,omitempty"`
+	CurrencyCode     string       `json:"CurrencyCode,omitempty"`
+	CurrencyRate     *xero.Number `json:"CurrencyRate,omitempty"`
+	Status           string       `json:"Status,omitempty"`
+	LineAmountTypes  string       `json:"LineAmountTypes,omitempty"`
+	LineItems        []lineBody   `json:"LineItems,omitempty"`
 }
 
 type creditNoteWriteEnvelope struct {
@@ -85,10 +87,10 @@ type creditNoteWriteEnvelope struct {
 type wireAllocation struct {
 	AllocationID string          `json:"AllocationID"`
 	Amount       decimal.Decimal `json:"Amount"`
-	Date         wireTime        `json:"Date"`
+	Date         xero.WireTime   `json:"Date"`
 	IsDeleted    bool            `json:"IsDeleted"`
-	Invoice      *wireRef        `json:"Invoice"`
-	CreditNote   *wireRef        `json:"CreditNote"`
+	Invoice      *xero.WireRef   `json:"Invoice"`
+	CreditNote   *xero.WireRef   `json:"CreditNote"`
 }
 
 func (w *wireAllocation) allocation(creditNoteID string) Allocation {
@@ -96,7 +98,7 @@ func (w *wireAllocation) allocation(creditNoteID string) Allocation {
 		AllocationID: w.AllocationID,
 		CreditNoteID: creditNoteID,
 		Amount:       w.Amount,
-		Date:         w.Date.time(),
+		Date:         w.Date.Time(),
 		IsDeleted:    w.IsDeleted,
 	}
 	if w.Invoice != nil {
@@ -115,12 +117,12 @@ type wireCreditNote struct {
 	Status           string                `json:"Status"`
 	Reference        string                `json:"Reference"`
 	CurrencyCode     string                `json:"CurrencyCode"`
-	Contact          *wireRef              `json:"Contact"`
+	Contact          *xero.WireRef         `json:"Contact"`
 	Total            decimal.Decimal       `json:"Total"`
 	RemainingCredit  decimal.Decimal       `json:"RemainingCredit"`
 	CurrencyRate     decimal.Decimal       `json:"CurrencyRate"`
-	Date             wireTime              `json:"Date"`
-	UpdatedDateUTC   wireTime              `json:"UpdatedDateUTC"`
+	Date             xero.WireTime         `json:"Date"`
+	UpdatedDateUTC   xero.WireTime         `json:"UpdatedDateUTC"`
 	Allocations      []wireAllocation      `json:"Allocations"`
 	Payments         []wireDocumentPayment `json:"Payments"`
 }
@@ -136,8 +138,8 @@ func (w *wireCreditNote) creditNote() CreditNote {
 		Total:            w.Total,
 		RemainingCredit:  w.RemainingCredit,
 		CurrencyRate:     w.CurrencyRate,
-		Date:             w.Date.time(),
-		UpdatedAt:        w.UpdatedDateUTC.time(),
+		Date:             w.Date.Time(),
+		UpdatedAt:        w.UpdatedDateUTC.Time(),
 		Payments:         documentPayments(w.Payments),
 	}
 	if w.Contact != nil {
@@ -153,8 +155,8 @@ func (w *wireCreditNote) creditNote() CreditNote {
 }
 
 type creditNotesEnvelope struct {
-	CreditNotes []wireCreditNote `json:"CreditNotes"`
-	Pagination  *wirePagination  `json:"pagination"`
+	CreditNotes []wireCreditNote     `json:"CreditNotes"`
+	Pagination  *xero.WirePagination `json:"pagination"`
 }
 
 func (e *creditNotesEnvelope) creditNotes() []CreditNote {
@@ -166,9 +168,9 @@ func (e *creditNotesEnvelope) creditNotes() []CreditNote {
 }
 
 type allocationBody struct {
-	Invoice idRef  `json:"Invoice"`
-	Amount  amount `json:"Amount"`
-	Date    string `json:"Date,omitempty"`
+	Invoice xero.IDRef  `json:"Invoice"`
+	Amount  xero.Amount `json:"Amount"`
+	Date    string      `json:"Date,omitempty"`
 }
 
 type allocationWriteEnvelope struct {
@@ -180,8 +182,9 @@ type allocationsEnvelope struct {
 }
 
 //nolint:gocritic // value inputs are the package contract the accounting adapter is written against.
-func (c *Client) CreateCreditNote(
+func CreateCreditNote(
 	ctx context.Context,
+	c *xero.Client,
 	key string,
 	in CreditNoteInput,
 ) (*CreditNote, error) {
@@ -189,16 +192,17 @@ func (c *Client) CreateCreditNote(
 	if err != nil {
 		return nil, err
 	}
-	return c.writeCreditNote(ctx, key, "", &body)
+	return writeCreditNote(ctx, c, key, "", &body)
 }
 
 //nolint:gocritic // value inputs are the package contract the accounting adapter is written against.
-func (c *Client) UpdateCreditNote(
+func UpdateCreditNote(
 	ctx context.Context,
+	c *xero.Client,
 	key, id string,
 	in CreditNoteInput,
 ) (*CreditNote, error) {
-	creditNoteID, err := guid(id)
+	creditNoteID, err := xero.GUID(id)
 	if err != nil {
 		return nil, err
 	}
@@ -207,15 +211,15 @@ func (c *Client) UpdateCreditNote(
 		return nil, err
 	}
 	body.CreditNoteID = creditNoteID
-	return c.writeCreditNote(ctx, key, creditNoteID, &body)
+	return writeCreditNote(ctx, c, key, creditNoteID, &body)
 }
 
-func (c *Client) VoidCreditNote(ctx context.Context, key, id string) (*CreditNote, error) {
-	creditNoteID, err := guid(id)
+func VoidCreditNote(ctx context.Context, c *xero.Client, key, id string) (*CreditNote, error) {
+	creditNoteID, err := xero.GUID(id)
 	if err != nil {
 		return nil, err
 	}
-	return c.writeCreditNote(ctx, key, creditNoteID, &creditNoteBody{
+	return writeCreditNote(ctx, c, key, creditNoteID, &creditNoteBody{
 		CreditNoteID: creditNoteID,
 		Status:       StatusVoided,
 	})
@@ -252,44 +256,45 @@ func (in *CreditNoteInput) body() (creditNoteBody, error) {
 	}, nil
 }
 
-func (c *Client) writeCreditNote(
+func writeCreditNote(
 	ctx context.Context,
+	c *xero.Client,
 	key, creditNoteID string,
 	body *creditNoteBody,
 ) (*CreditNote, error) {
-	idem, err := idempotencyKey(key)
+	idem, err := xero.IdempotencyKey(key)
 	if err != nil {
 		return nil, err
 	}
-	req := &call{
-		endpoint: "credit-notes-create",
-		method:   http.MethodPut,
-		path:     accountingPath(creditNotesResource),
-		query:    url.Values{unitDPParam: {unitDecimalPlaces}},
-		key:      idem,
-		body:     creditNoteWriteEnvelope{CreditNotes: []creditNoteBody{*body}},
+	req := &xero.Call{
+		Endpoint: "credit-notes-create",
+		Method:   http.MethodPut,
+		Path:     xero.AccountingPath(creditNotesResource),
+		Query:    url.Values{unitDPParam: {unitDecimalPlaces}},
+		Key:      idem,
+		Body:     creditNoteWriteEnvelope{CreditNotes: []creditNoteBody{*body}},
 	}
 	if creditNoteID != "" {
-		req.endpoint = "credit-notes-update"
-		req.method = http.MethodPost
-		req.path = accountingPath(creditNotesResource, creditNoteID)
+		req.Endpoint = "credit-notes-update"
+		req.Method = http.MethodPost
+		req.Path = xero.AccountingPath(creditNotesResource, creditNoteID)
 	}
 
 	var out creditNotesEnvelope
-	req.out = &out
-	if err = c.do(ctx, req); err != nil {
+	req.Out = &out
+	if err = c.Do(ctx, req); err != nil {
 		return nil, err
 	}
 	if len(out.CreditNotes) == 0 {
-		return nil, ErrUnexpectedPayload
+		return nil, xeroerrors.ErrUnexpectedPayload
 	}
 	written := out.CreditNotes[0].creditNote()
 	return &written, nil
 }
 
-func (c *Client) CreditNotesByID(ctx context.Context, ids []string) ([]CreditNote, error) {
+func CreditNotesByID(ctx context.Context, c *xero.Client, ids []string) ([]CreditNote, error) {
 	var out creditNotesEnvelope
-	requested, err := c.readByIDs(ctx, "credit-notes-by-id", creditNotesResource, ids, &out)
+	requested, err := readByIDs(ctx, c, "credit-notes-by-id", creditNotesResource, ids, &out)
 	if err != nil {
 		return nil, err
 	}
@@ -299,116 +304,125 @@ func (c *Client) CreditNotesByID(ctx context.Context, ids []string) ([]CreditNot
 	return out.creditNotes(), nil
 }
 
-func (c *Client) CreditNotes(
+func CreditNotes(
 	ctx context.Context,
+	c *xero.Client,
 	page int,
 	modifiedSince *time.Time,
 ) (*CreditNotePage, error) {
-	query, err := pageQuery(page)
+	query, err := xero.PageQuery(page)
 	if err != nil {
 		return nil, err
 	}
 	var out creditNotesEnvelope
-	if err = c.readPage(
-		ctx, "credit-notes", creditNotesResource, query, modifiedSince, &out,
+	if err = xero.ReadPage(
+		ctx,
+		c, "credit-notes", creditNotesResource, query, modifiedSince, &out,
 	); err != nil {
 		return nil, err
 	}
 	notes := out.creditNotes()
 	return &CreditNotePage{
 		CreditNotes: notes,
-		More:        hasMore(out.Pagination, page, len(notes)),
+		More:        xero.HasMore(out.Pagination, page, len(notes)),
 	}, nil
 }
 
 //nolint:gocritic // value inputs are the package contract the accounting adapter is written against.
-func (c *Client) FindCreditNotes(ctx context.Context, f InvoiceFilter) ([]CreditNote, error) {
+func FindCreditNotes(ctx context.Context, c *xero.Client, f InvoiceFilter) ([]CreditNote, error) {
 	terms, err := f.terms(CreditNoteTypeReceivable, CreditNoteTypePayable)
 	if err != nil {
 		return nil, err
 	}
 	from, to := terms.dateClauses()
-	base := url.Values{whereParam: {whereJoin(
-		whereAnyOf("Type", optional(terms.kind), whereString),
-		whereAnyOf("CreditNoteNumber", terms.numbers, whereString),
-		whereAnyOf("Contact.ContactID", terms.contactIDs, whereGUID),
-		whereAnyOf("Status", terms.statuses, whereString),
+	base := url.Values{whereParam: {xero.WhereJoin(
+		xero.WhereAnyOf("Type", xero.Optional(terms.kind), xero.WhereString),
+		xero.WhereAnyOf("CreditNoteNumber", terms.numbers, xero.WhereString),
+		xero.WhereAnyOf("Contact.ContactID", terms.contactIDs, xero.WhereGUID),
+		xero.WhereAnyOf("Status", terms.statuses, xero.WhereString),
 		from,
 		to,
 	)}}
 
-	return collectPages(func(page int) ([]CreditNote, bool, error) {
-		query, queryErr := withPage(base, page)
+	return xero.CollectPages(func(page int) ([]CreditNote, bool, error) {
+		query, queryErr := xero.WithPage(base, page)
 		if queryErr != nil {
 			return nil, false, queryErr
 		}
 		var out creditNotesEnvelope
-		if readErr := c.readPage(
-			ctx, "credit-notes-search", creditNotesResource, query, nil, &out,
+		if readErr := xero.ReadPage(
+			ctx,
+			c, "credit-notes-search", creditNotesResource, query, nil, &out,
 		); readErr != nil {
 			return nil, false, readErr
 		}
 		notes := out.creditNotes()
-		return notes, hasMore(out.Pagination, page, len(notes)), nil
+		return notes, xero.HasMore(out.Pagination, page, len(notes)), nil
 	})
 }
 
-func (c *Client) Allocate(
+func Allocate(
 	ctx context.Context,
+	c *xero.Client,
 	key, creditNoteID string,
 	a AllocationInput,
 ) (*Allocation, error) {
-	idem, err := idempotencyKey(key)
+	idem, err := xero.IdempotencyKey(key)
 	if err != nil {
 		return nil, err
 	}
-	noteID, err := guid(creditNoteID)
+	noteID, err := xero.GUID(creditNoteID)
 	if err != nil {
 		return nil, err
 	}
-	invoiceID, err := guid(a.InvoiceID)
+	invoiceID, err := xero.GUID(a.InvoiceID)
 	if err != nil {
 		return nil, err
 	}
 	if !a.Amount.IsPositive() {
-		return nil, ErrAmountNotPositive
+		return nil, xeroerrors.ErrAmountNotPositive
 	}
 
 	var out allocationsEnvelope
-	if err = c.do(ctx, &call{
-		endpoint: "credit-note-allocate",
-		method:   http.MethodPut,
-		path:     accountingPath(creditNotesResource, noteID, allocationsResource),
-		key:      idem,
-		body: allocationWriteEnvelope{Allocations: []allocationBody{{
-			Invoice: idRef{InvoiceID: invoiceID},
-			Amount:  amount(a.Amount),
-			Date:    formatDate(a.Date),
+	if err = c.Do(ctx, &xero.Call{
+		Endpoint: "credit-note-allocate",
+		Method:   http.MethodPut,
+		Path:     xero.AccountingPath(creditNotesResource, noteID, allocationsResource),
+		Key:      idem,
+		Body: allocationWriteEnvelope{Allocations: []allocationBody{{
+			Invoice: xero.IDRef{InvoiceID: invoiceID},
+			Amount:  xero.Amount(a.Amount),
+			Date:    xero.FormatDate(a.Date),
 		}}},
-		out: &out,
+		Out: &out,
 	}); err != nil {
 		return nil, err
 	}
 	if len(out.Allocations) == 0 {
-		return nil, ErrUnexpectedPayload
+		return nil, xeroerrors.ErrUnexpectedPayload
 	}
 	allocation := out.Allocations[0].allocation(noteID)
 	return &allocation, nil
 }
 
-func (c *Client) DeleteAllocation(ctx context.Context, creditNoteID, allocationID string) error {
-	noteID, err := guid(creditNoteID)
+func DeleteAllocation(
+	ctx context.Context,
+	c *xero.Client,
+	creditNoteID, allocationID string,
+) error {
+	noteID, err := xero.GUID(creditNoteID)
 	if err != nil {
 		return err
 	}
-	allocID, err := guid(allocationID)
+	allocID, err := xero.GUID(allocationID)
 	if err != nil {
 		return err
 	}
-	return c.do(ctx, &call{
-		endpoint: "credit-note-allocation-delete",
-		method:   http.MethodDelete,
-		path:     accountingPath(creditNotesResource, noteID, allocationsResource, allocID),
-		expected: []int{http.StatusOK, http.StatusNoContent},
+	return c.Do(ctx, &xero.Call{
+		Endpoint: "credit-note-allocation-delete",
+		Method:   http.MethodDelete,
+		Path:     xero.AccountingPath(creditNotesResource, noteID, allocationsResource, allocID),
+		Expected: []int{http.StatusOK, http.StatusNoContent},
 	})
+
 }

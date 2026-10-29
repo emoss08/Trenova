@@ -6,13 +6,15 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/shared/xero"
+	"github.com/emoss08/trenova/shared/xerodocs"
+	"github.com/emoss08/trenova/shared/xeroerrors"
+	"github.com/emoss08/trenova/shared/xeropay"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func invoicePayment() xero.PaymentInput {
-	return xero.PaymentInput{
+func invoicePayment() xeropay.PaymentInput {
+	return xeropay.PaymentInput{
 		InvoiceID: testInvoice,
 		AccountID: testAccount,
 		Date:      time.Date(2026, 9, 25, 0, 0, 0, 0, time.UTC),
@@ -31,7 +33,7 @@ func TestCreatePaymentPutsAPaymentAgainstAnInvoice(t *testing.T) {
 		_, _ = w.Write(fixture(t, "create_payment.json"))
 	})
 
-	payment, err := client.CreatePayment(t.Context(), testKey, invoicePayment())
+	payment, err := xeropay.CreatePayment(t.Context(), client, testKey, invoicePayment())
 	require.NoError(t, err)
 
 	sent := firstOf(t, body, "Payments")
@@ -45,8 +47,8 @@ func TestCreatePaymentPutsAPaymentAgainstAnInvoice(t *testing.T) {
 	assert.NotContains(t, sent, "Status")
 
 	assert.Equal(t, testPayment, payment.PaymentID)
-	assert.Equal(t, xero.StatusAuthorised, payment.Status)
-	assert.Equal(t, xero.PaymentTypeReceivable, payment.PaymentType)
+	assert.Equal(t, xerodocs.StatusAuthorised, payment.Status)
+	assert.Equal(t, xeropay.PaymentTypeReceivable, payment.PaymentType)
 	assert.True(t, dec("500").Equal(payment.Amount))
 	assert.Equal(t, testInvoice, payment.InvoiceID)
 	assert.Equal(t, "ACCREC", payment.InvoiceType)
@@ -67,7 +69,7 @@ func TestCreatePaymentAgainstACreditNoteByAccountCode(t *testing.T) {
 		_, _ = w.Write(fixture(t, "create_payment.json"))
 	})
 
-	_, err := client.CreatePayment(t.Context(), testKey, xero.PaymentInput{
+	_, err := xeropay.CreatePayment(t.Context(), client, testKey, xeropay.PaymentInput{
 		CreditNoteID: testCreditNote,
 		AccountCode:  "090",
 		Date:         time.Date(2026, 9, 25, 0, 0, 0, 0, time.UTC),
@@ -88,21 +90,27 @@ func TestCreatePaymentValidatesBeforeCallingXero(t *testing.T) {
 	var calls atomic.Int32
 	client := newAPIClient(t, func(http.ResponseWriter, *http.Request) { calls.Add(1) })
 
-	check := func(mutate func(*xero.PaymentInput), want error) {
+	check := func(mutate func(*xeropay.PaymentInput), want error) {
 		t.Helper()
 		in := invoicePayment()
 		mutate(&in)
-		_, err := client.CreatePayment(t.Context(), testKey, in)
+		_, err := xeropay.CreatePayment(t.Context(), client, testKey, in)
 		require.ErrorIs(t, err, want)
 	}
-	check(func(in *xero.PaymentInput) { in.InvoiceID = "" }, xero.ErrTargetRequired)
-	check(func(in *xero.PaymentInput) { in.CreditNoteID = testCreditNote }, xero.ErrTargetRequired)
-	check(func(in *xero.PaymentInput) { in.AccountID = "" }, xero.ErrAccountRequired)
-	check(func(in *xero.PaymentInput) { in.AccountCode = "090" }, xero.ErrAccountRequired)
-	check(func(in *xero.PaymentInput) { in.Date = time.Time{} }, xero.ErrDateRequired)
-	check(func(in *xero.PaymentInput) { in.Amount = dec("-5") }, xero.ErrAmountNotPositive)
-	check(func(in *xero.PaymentInput) { in.CurrencyRate = dec("-1") }, xero.ErrNegativeRate)
-	check(func(in *xero.PaymentInput) { in.InvoiceID = "INV-1001" }, xero.ErrInvalidID)
+	check(func(in *xeropay.PaymentInput) { in.InvoiceID = "" }, xeroerrors.ErrTargetRequired)
+	check(
+		func(in *xeropay.PaymentInput) { in.CreditNoteID = testCreditNote },
+		xeroerrors.ErrTargetRequired,
+	)
+	check(func(in *xeropay.PaymentInput) { in.AccountID = "" }, xeroerrors.ErrAccountRequired)
+	check(func(in *xeropay.PaymentInput) { in.AccountCode = "090" }, xeroerrors.ErrAccountRequired)
+	check(func(in *xeropay.PaymentInput) { in.Date = time.Time{} }, xeroerrors.ErrDateRequired)
+	check(func(in *xeropay.PaymentInput) { in.Amount = dec("-5") }, xeroerrors.ErrAmountNotPositive)
+	check(
+		func(in *xeropay.PaymentInput) { in.CurrencyRate = dec("-1") },
+		xeroerrors.ErrNegativeRate,
+	)
+	check(func(in *xeropay.PaymentInput) { in.InvoiceID = "INV-1001" }, xeroerrors.ErrInvalidID)
 	assert.Zero(t, calls.Load())
 }
 
@@ -116,9 +124,13 @@ func TestDeletePaymentPostsADeletedStatus(t *testing.T) {
 		_, _ = w.Write(fixture(t, "delete_payment.json"))
 	})
 
-	require.NoError(t, client.DeletePayment(t.Context(), testKey, testPayment))
+	require.NoError(t, xeropay.DeletePayment(t.Context(), client, testKey, testPayment))
 	assert.Equal(t, map[string]any{"Status": "DELETED"}, firstOf(t, body, "Payments"))
-	require.ErrorIs(t, client.DeletePayment(t.Context(), "", testPayment), xero.ErrIdempotencyKey)
+	require.ErrorIs(
+		t,
+		xeropay.DeletePayment(t.Context(), client, "", testPayment),
+		xeroerrors.ErrIdempotencyKey,
+	)
 }
 
 func TestPaymentsPageReadsAuthorisedAndDeleted(t *testing.T) {
@@ -135,14 +147,14 @@ func TestPaymentsPageReadsAuthorisedAndDeleted(t *testing.T) {
 		_, _ = w.Write(fixture(t, "payments_page.json"))
 	})
 
-	page, err := client.Payments(t.Context(), 3, &since)
+	page, err := xeropay.Payments(t.Context(), client, 3, &since)
 	require.NoError(t, err)
 	assert.False(t, page.More)
 	require.Len(t, page.Payments, 2)
 
 	refund := page.Payments[1]
-	assert.Equal(t, xero.StatusDeleted, refund.Status)
-	assert.Equal(t, xero.PaymentTypeReceivableCredit, refund.PaymentType)
+	assert.Equal(t, xerodocs.StatusDeleted, refund.Status)
+	assert.Equal(t, xeropay.PaymentTypeReceivableCredit, refund.PaymentType)
 	assert.Equal(t, testCreditNote, refund.CreditNoteID)
 	assert.Equal(t, testContact, refund.ContactID)
 	assert.Equal(t, testBatch, refund.BatchPaymentID)
@@ -161,7 +173,7 @@ func TestFindPaymentsBuildsAWhere(t *testing.T) {
 		_, _ = w.Write(fixture(t, "payments_page.json"))
 	})
 
-	payments, err := client.FindPayments(t.Context(), xero.PaymentFilter{
+	payments, err := xeropay.FindPayments(t.Context(), client, xeropay.PaymentFilter{
 		InvoiceIDs: []string{testInvoice, testBill},
 		Reference:  "ACH 7781",
 	})
@@ -172,10 +184,14 @@ func TestFindPaymentsBuildsAWhere(t *testing.T) {
 			`")) AND Reference=="ACH 7781"`,
 		where)
 
-	_, err = client.FindPayments(t.Context(), xero.PaymentFilter{})
-	require.ErrorIs(t, err, xero.ErrEmptyFilter)
-	_, err = client.FindPayments(t.Context(), xero.PaymentFilter{Reference: `x" OR 1==1 OR "`})
-	require.ErrorIs(t, err, xero.ErrInvalidFilter)
+	_, err = xeropay.FindPayments(t.Context(), client, xeropay.PaymentFilter{})
+	require.ErrorIs(t, err, xeroerrors.ErrEmptyFilter)
+	_, err = xeropay.FindPayments(
+		t.Context(),
+		client,
+		xeropay.PaymentFilter{Reference: `x" OR 1==1 OR "`},
+	)
+	require.ErrorIs(t, err, xeroerrors.ErrInvalidFilter)
 }
 
 func TestCreateBatchPayment(t *testing.T) {
@@ -188,15 +204,20 @@ func TestCreateBatchPayment(t *testing.T) {
 		_, _ = w.Write(fixture(t, "batch_payment.json"))
 	})
 
-	batch, err := client.CreateBatchPayment(t.Context(), testKey, xero.BatchPaymentInput{
-		AccountID: testAccount,
-		Date:      time.Date(2026, 9, 25, 0, 0, 0, 0, time.UTC),
-		Reference: "Carrier run 2026-09-25",
-		Payments: []xero.BatchPaymentLine{
-			{InvoiceID: testBill, Amount: dec("900")},
-			{InvoiceID: testInvoice, Amount: dec("450.5")},
+	batch, err := xeropay.CreateBatchPayment(
+		t.Context(),
+		client,
+		testKey,
+		xeropay.BatchPaymentInput{
+			AccountID: testAccount,
+			Date:      time.Date(2026, 9, 25, 0, 0, 0, 0, time.UTC),
+			Reference: "Carrier run 2026-09-25",
+			Payments: []xeropay.BatchPaymentLine{
+				{InvoiceID: testBill, Amount: dec("900")},
+				{InvoiceID: testInvoice, Amount: dec("450.5")},
+			},
 		},
-	})
+	)
 	require.NoError(t, err)
 
 	sent := firstOf(t, body, "BatchPayments")
@@ -212,7 +233,7 @@ func TestCreateBatchPayment(t *testing.T) {
 	assert.InDelta(t, 450.5, second["Amount"], 0)
 
 	assert.Equal(t, testBatch, batch.BatchPaymentID)
-	assert.Equal(t, xero.StatusAuthorised, batch.Status)
+	assert.Equal(t, xerodocs.StatusAuthorised, batch.Status)
 	assert.Equal(t, "PAYBATCH", batch.Type)
 	assert.True(t, dec("1350.50").Equal(batch.TotalAmount))
 	require.Len(t, batch.Payments, 2)
@@ -228,19 +249,19 @@ func TestCreateBatchPaymentValidates(t *testing.T) {
 	client := newAPIClient(t, func(http.ResponseWriter, *http.Request) { calls.Add(1) })
 
 	day := time.Date(2026, 9, 25, 0, 0, 0, 0, time.UTC)
-	_, err := client.CreateBatchPayment(t.Context(), testKey, xero.BatchPaymentInput{
+	_, err := xeropay.CreateBatchPayment(t.Context(), client, testKey, xeropay.BatchPaymentInput{
 		AccountID: testAccount, Date: day,
 	})
-	require.ErrorIs(t, err, xero.ErrPaymentsRequired)
-	_, err = client.CreateBatchPayment(t.Context(), testKey, xero.BatchPaymentInput{
-		Date: day, Payments: []xero.BatchPaymentLine{{InvoiceID: testBill, Amount: dec("1")}},
+	require.ErrorIs(t, err, xeroerrors.ErrPaymentsRequired)
+	_, err = xeropay.CreateBatchPayment(t.Context(), client, testKey, xeropay.BatchPaymentInput{
+		Date: day, Payments: []xeropay.BatchPaymentLine{{InvoiceID: testBill, Amount: dec("1")}},
 	})
-	require.ErrorIs(t, err, xero.ErrAccountRequired)
-	_, err = client.CreateBatchPayment(t.Context(), testKey, xero.BatchPaymentInput{
+	require.ErrorIs(t, err, xeroerrors.ErrAccountRequired)
+	_, err = xeropay.CreateBatchPayment(t.Context(), client, testKey, xeropay.BatchPaymentInput{
 		AccountID: testAccount, Date: day,
-		Payments: []xero.BatchPaymentLine{{InvoiceID: testBill, Amount: dec("0")}},
+		Payments: []xeropay.BatchPaymentLine{{InvoiceID: testBill, Amount: dec("0")}},
 	})
-	require.ErrorIs(t, err, xero.ErrAmountNotPositive)
+	require.ErrorIs(t, err, xeroerrors.ErrAmountNotPositive)
 	assert.Zero(t, calls.Load())
 }
 
@@ -254,7 +275,7 @@ func TestDeleteBatchPayment(t *testing.T) {
 		_, _ = w.Write(fixture(t, "delete_batch_payment.json"))
 	})
 
-	require.NoError(t, client.DeleteBatchPayment(t.Context(), testKey, testBatch))
+	require.NoError(t, xeropay.DeleteBatchPayment(t.Context(), client, testKey, testBatch))
 	assert.Equal(t, map[string]any{"BatchPaymentID": testBatch, "Status": "DELETED"},
 		firstOf(t, body, "BatchPayments"))
 }

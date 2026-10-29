@@ -61,4 +61,3 @@ debt:
   services/tms/internal/modules/workspace/jobs/reportjobs: 3282
   services/tms/internal/seeds/fixtures: 23241
   services/tms/internal/seeds/volume: 20065
-  shared/xero: 3868

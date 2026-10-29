@@ -1,4 +1,4 @@
-package xero
+package xeroref
 
 import (
 	"context"
@@ -6,6 +6,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/emoss08/trenova/shared/xero"
+	"github.com/emoss08/trenova/shared/xeroerrors"
 	"github.com/shopspring/decimal"
 )
 
@@ -119,32 +121,18 @@ type ContactPage struct {
 	More     bool
 }
 
-type wirePagination struct {
-	Page      int `json:"page"`
-	PageSize  int `json:"pageSize"`
-	PageCount int `json:"pageCount"`
-	ItemCount int `json:"itemCount"`
-}
-
-func hasMore(pagination *wirePagination, page, received int) bool {
-	if pagination != nil && pagination.PageCount > 0 {
-		return page < pagination.PageCount
-	}
-	return received >= MaxPageSize
-}
-
 type wireAccount struct {
-	AccountID               string   `json:"AccountID"`
-	Code                    string   `json:"Code"`
-	Name                    string   `json:"Name"`
-	Type                    string   `json:"Type"`
-	Status                  string   `json:"Status"`
-	Class                   string   `json:"Class"`
-	SystemAccount           string   `json:"SystemAccount"`
-	BankAccountType         string   `json:"BankAccountType"`
-	CurrencyCode            string   `json:"CurrencyCode"`
-	EnablePaymentsToAccount bool     `json:"EnablePaymentsToAccount"`
-	UpdatedDateUTC          wireTime `json:"UpdatedDateUTC"`
+	AccountID               string        `json:"AccountID"`
+	Code                    string        `json:"Code"`
+	Name                    string        `json:"Name"`
+	Type                    string        `json:"Type"`
+	Status                  string        `json:"Status"`
+	Class                   string        `json:"Class"`
+	SystemAccount           string        `json:"SystemAccount"`
+	BankAccountType         string        `json:"BankAccountType"`
+	CurrencyCode            string        `json:"CurrencyCode"`
+	EnablePaymentsToAccount bool          `json:"EnablePaymentsToAccount"`
+	UpdatedDateUTC          xero.WireTime `json:"UpdatedDateUTC"`
 }
 
 type accountsEnvelope struct {
@@ -164,7 +152,7 @@ type wireItem struct {
 	IsSold         bool              `json:"IsSold"`
 	IsPurchased    bool              `json:"IsPurchased"`
 	SalesDetails   *wireSalesDetails `json:"SalesDetails"`
-	UpdatedDateUTC wireTime          `json:"UpdatedDateUTC"`
+	UpdatedDateUTC xero.WireTime     `json:"UpdatedDateUTC"`
 }
 
 func (w *wireItem) item() Item {
@@ -175,7 +163,7 @@ func (w *wireItem) item() Item {
 		Description: w.Description,
 		IsSold:      w.IsSold,
 		IsPurchased: w.IsPurchased,
-		UpdatedAt:   w.UpdatedDateUTC.time(),
+		UpdatedAt:   w.UpdatedDateUTC.Time(),
 	}
 	if w.SalesDetails != nil {
 		out.SalesAccountCode = w.SalesDetails.AccountCode
@@ -207,18 +195,18 @@ type itemWriteEnvelope struct {
 }
 
 type wireContact struct {
-	ContactID      string    `json:"ContactID"`
-	ContactNumber  string    `json:"ContactNumber"`
-	Name           string    `json:"Name"`
-	FirstName      string    `json:"FirstName"`
-	LastName       string    `json:"LastName"`
-	EmailAddress   string    `json:"EmailAddress"`
-	ContactStatus  string    `json:"ContactStatus"`
-	TaxNumber      string    `json:"TaxNumber"`
-	IsCustomer     bool      `json:"IsCustomer"`
-	IsSupplier     bool      `json:"IsSupplier"`
-	Addresses      []Address `json:"Addresses"`
-	UpdatedDateUTC wireTime  `json:"UpdatedDateUTC"`
+	ContactID      string        `json:"ContactID"`
+	ContactNumber  string        `json:"ContactNumber"`
+	Name           string        `json:"Name"`
+	FirstName      string        `json:"FirstName"`
+	LastName       string        `json:"LastName"`
+	EmailAddress   string        `json:"EmailAddress"`
+	ContactStatus  string        `json:"ContactStatus"`
+	TaxNumber      string        `json:"TaxNumber"`
+	IsCustomer     bool          `json:"IsCustomer"`
+	IsSupplier     bool          `json:"IsSupplier"`
+	Addresses      []Address     `json:"Addresses"`
+	UpdatedDateUTC xero.WireTime `json:"UpdatedDateUTC"`
 }
 
 func (w *wireContact) contact() Contact {
@@ -234,13 +222,13 @@ func (w *wireContact) contact() Contact {
 		IsCustomer:    w.IsCustomer,
 		IsSupplier:    w.IsSupplier,
 		Addresses:     w.Addresses,
-		UpdatedAt:     w.UpdatedDateUTC.time(),
+		UpdatedAt:     w.UpdatedDateUTC.Time(),
 	}
 }
 
 type contactsEnvelope struct {
-	Contacts   []wireContact   `json:"Contacts"`
-	Pagination *wirePagination `json:"pagination"`
+	Contacts   []wireContact        `json:"Contacts"`
+	Pagination *xero.WirePagination `json:"pagination"`
 }
 
 type contactBody struct {
@@ -256,15 +244,15 @@ type contactWriteEnvelope struct {
 	Contacts []contactBody `json:"Contacts"`
 }
 
-func (c *Client) Accounts(ctx context.Context, modifiedSince *time.Time) ([]Account, error) {
+func Accounts(ctx context.Context, c *xero.Client, modifiedSince *time.Time) ([]Account, error) {
 	var out accountsEnvelope
-	if err := c.do(ctx, &call{
-		endpoint:      "accounts",
-		method:        http.MethodGet,
-		path:          accountingPath("Accounts"),
-		modifiedSince: modifiedSince,
-		out:           &out,
-		expected:      []int{http.StatusOK, http.StatusNotModified},
+	if err := c.Do(ctx, &xero.Call{
+		Endpoint:      "accounts",
+		Method:        http.MethodGet,
+		Path:          xero.AccountingPath("Accounts"),
+		ModifiedSince: modifiedSince,
+		Out:           &out,
+		Expected:      []int{http.StatusOK, http.StatusNotModified},
 	}); err != nil {
 		return nil, err
 	}
@@ -283,21 +271,21 @@ func (c *Client) Accounts(ctx context.Context, modifiedSince *time.Time) ([]Acco
 			BankAccountType:         wire.BankAccountType,
 			CurrencyCode:            wire.CurrencyCode,
 			EnablePaymentsToAccount: wire.EnablePaymentsToAccount,
-			UpdatedAt:               wire.UpdatedDateUTC.time(),
+			UpdatedAt:               wire.UpdatedDateUTC.Time(),
 		})
 	}
 	return accounts, nil
 }
 
-func (c *Client) Items(ctx context.Context, modifiedSince *time.Time) ([]Item, error) {
+func Items(ctx context.Context, c *xero.Client, modifiedSince *time.Time) ([]Item, error) {
 	var out itemsEnvelope
-	if err := c.do(ctx, &call{
-		endpoint:      "items",
-		method:        http.MethodGet,
-		path:          accountingPath(itemsResource),
-		modifiedSince: modifiedSince,
-		out:           &out,
-		expected:      []int{http.StatusOK, http.StatusNotModified},
+	if err := c.Do(ctx, &xero.Call{
+		Endpoint:      "items",
+		Method:        http.MethodGet,
+		Path:          xero.AccountingPath(itemsResource),
+		ModifiedSince: modifiedSince,
+		Out:           &out,
+		Expected:      []int{http.StatusOK, http.StatusNotModified},
 	}); err != nil {
 		return nil, err
 	}
@@ -309,8 +297,8 @@ func (c *Client) Items(ctx context.Context, modifiedSince *time.Time) ([]Item, e
 	return items, nil
 }
 
-func (c *Client) CreateItem(ctx context.Context, key string, item ItemInput) (*Item, error) {
-	idem, err := idempotencyKey(key)
+func CreateItem(ctx context.Context, c *xero.Client, key string, item ItemInput) (*Item, error) {
+	idem, err := xero.IdempotencyKey(key)
 	if err != nil {
 		return nil, err
 	}
@@ -320,18 +308,18 @@ func (c *Client) CreateItem(ctx context.Context, key string, item ItemInput) (*I
 	}
 
 	var out itemsEnvelope
-	if err = c.do(ctx, &call{
-		endpoint: "items-create",
-		method:   http.MethodPut,
-		path:     accountingPath(itemsResource),
-		key:      idem,
-		body:     itemWriteEnvelope{Items: []itemBody{body}},
-		out:      &out,
+	if err = c.Do(ctx, &xero.Call{
+		Endpoint: "items-create",
+		Method:   http.MethodPut,
+		Path:     xero.AccountingPath(itemsResource),
+		Key:      idem,
+		Body:     itemWriteEnvelope{Items: []itemBody{body}},
+		Out:      &out,
 	}); err != nil {
 		return nil, err
 	}
 	if len(out.Items) == 0 {
-		return nil, ErrUnexpectedPayload
+		return nil, xeroerrors.ErrUnexpectedPayload
 	}
 	created := out.Items[0].item()
 	return &created, nil
@@ -339,16 +327,16 @@ func (c *Client) CreateItem(ctx context.Context, key string, item ItemInput) (*I
 
 func (in *ItemInput) body() (itemBody, error) {
 	code := strings.TrimSpace(in.Code)
-	if code == "" || !textWithin(code, MaxItemCodeLength) {
-		return itemBody{}, ErrItemCodeInvalid
+	if code == "" || !xero.TextWithin(code, MaxItemCodeLength) {
+		return itemBody{}, xeroerrors.ErrItemCodeInvalid
 	}
 	name := strings.TrimSpace(in.Name)
-	if name == "" || !textWithin(name, MaxItemNameLength) {
-		return itemBody{}, ErrItemNameInvalid
+	if name == "" || !xero.TextWithin(name, MaxItemNameLength) {
+		return itemBody{}, xeroerrors.ErrItemNameInvalid
 	}
 	description := strings.TrimSpace(in.Description)
-	if !textWithin(description, MaxDescriptionLength) {
-		return itemBody{}, ErrFieldTooLong
+	if !xero.TextWithin(description, MaxDescriptionLength) {
+		return itemBody{}, xeroerrors.ErrFieldTooLong
 	}
 
 	body := itemBody{Code: code, Name: name, Description: description, IsSold: true}
@@ -358,26 +346,27 @@ func (in *ItemInput) body() (itemBody, error) {
 	return body, nil
 }
 
-func (c *Client) Contacts(
+func Contacts(
 	ctx context.Context,
+	c *xero.Client,
 	page int,
 	modifiedSince *time.Time,
 ) (*ContactPage, error) {
-	query, err := pageQuery(page)
+	query, err := xero.PageQuery(page)
 	if err != nil {
 		return nil, err
 	}
 	query.Set(includeArchivedParam, includeArchivedParamYes)
 
 	var out contactsEnvelope
-	if err = c.do(ctx, &call{
-		endpoint:      "contacts",
-		method:        http.MethodGet,
-		path:          accountingPath(contactsResource),
-		query:         query,
-		modifiedSince: modifiedSince,
-		out:           &out,
-		expected:      []int{http.StatusOK, http.StatusNotModified},
+	if err = c.Do(ctx, &xero.Call{
+		Endpoint:      "contacts",
+		Method:        http.MethodGet,
+		Path:          xero.AccountingPath(contactsResource),
+		Query:         query,
+		ModifiedSince: modifiedSince,
+		Out:           &out,
+		Expected:      []int{http.StatusOK, http.StatusNotModified},
 	}); err != nil {
 		return nil, err
 	}
@@ -388,34 +377,42 @@ func (c *Client) Contacts(
 	}
 	return &ContactPage{
 		Contacts: contacts,
-		More:     hasMore(out.Pagination, page, len(contacts)),
+		More:     xero.HasMore(out.Pagination, page, len(contacts)),
 	}, nil
 }
 
+//
 //nolint:gocritic // value inputs are the package contract the accounting adapter is written against.
-func (c *Client) CreateContact(ctx context.Context, key string, in ContactInput) (*Contact, error) {
-	return c.writeContact(ctx, key, "", &in)
+func CreateContact(
+	ctx context.Context,
+	c *xero.Client,
+	key string,
+	in ContactInput,
+) (*Contact, error) {
+	return writeContact(ctx, c, key, "", &in)
 }
 
 //nolint:gocritic // value inputs are the package contract the accounting adapter is written against.
-func (c *Client) UpdateContact(
+func UpdateContact(
 	ctx context.Context,
+	c *xero.Client,
 	key, contactID string,
 	in ContactInput,
 ) (*Contact, error) {
-	id, err := guid(contactID)
+	id, err := xero.GUID(contactID)
 	if err != nil {
 		return nil, err
 	}
-	return c.writeContact(ctx, key, id, &in)
+	return writeContact(ctx, c, key, id, &in)
 }
 
-func (c *Client) writeContact(
+func writeContact(
 	ctx context.Context,
+	c *xero.Client,
 	key, contactID string,
 	in *ContactInput,
 ) (*Contact, error) {
-	idem, err := idempotencyKey(key)
+	idem, err := xero.IdempotencyKey(key)
 	if err != nil {
 		return nil, err
 	}
@@ -425,26 +422,26 @@ func (c *Client) writeContact(
 	}
 	body.ContactID = contactID
 
-	req := &call{
-		endpoint: "contacts-create",
-		method:   http.MethodPut,
-		path:     accountingPath(contactsResource),
-		key:      idem,
-		body:     contactWriteEnvelope{Contacts: []contactBody{body}},
+	req := &xero.Call{
+		Endpoint: "contacts-create",
+		Method:   http.MethodPut,
+		Path:     xero.AccountingPath(contactsResource),
+		Key:      idem,
+		Body:     contactWriteEnvelope{Contacts: []contactBody{body}},
 	}
 	if contactID != "" {
-		req.endpoint = "contacts-update"
-		req.method = http.MethodPost
-		req.path = accountingPath(contactsResource, contactID)
+		req.Endpoint = "contacts-update"
+		req.Method = http.MethodPost
+		req.Path = xero.AccountingPath(contactsResource, contactID)
 	}
 
 	var out contactsEnvelope
-	req.out = &out
-	if err = c.do(ctx, req); err != nil {
+	req.Out = &out
+	if err = c.Do(ctx, req); err != nil {
 		return nil, err
 	}
 	if len(out.Contacts) == 0 {
-		return nil, ErrUnexpectedPayload
+		return nil, xeroerrors.ErrUnexpectedPayload
 	}
 	written := out.Contacts[0].contact()
 	return &written, nil
@@ -452,8 +449,8 @@ func (c *Client) writeContact(
 
 func (in *ContactInput) body() (contactBody, error) {
 	name := strings.TrimSpace(in.Name)
-	if name == "" || !textWithin(name, MaxContactNameLength) {
-		return contactBody{}, ErrContactNameInvalid
+	if name == "" || !xero.TextWithin(name, MaxContactNameLength) {
+		return contactBody{}, xeroerrors.ErrContactNameInvalid
 	}
 	body := contactBody{
 		Name:          name,
@@ -461,10 +458,10 @@ func (in *ContactInput) body() (contactBody, error) {
 		EmailAddress:  strings.TrimSpace(in.EmailAddress),
 		TaxNumber:     strings.TrimSpace(in.TaxNumber),
 	}
-	if !textWithin(body.ContactNumber, MaxContactNumberLength) ||
-		!textWithin(body.EmailAddress, MaxEmailLength) ||
-		!textWithin(body.TaxNumber, MaxTaxNumberLength) {
-		return contactBody{}, ErrFieldTooLong
+	if !xero.TextWithin(body.ContactNumber, MaxContactNumberLength) ||
+		!xero.TextWithin(body.EmailAddress, MaxEmailLength) ||
+		!xero.TextWithin(body.TaxNumber, MaxTaxNumberLength) {
+		return contactBody{}, xeroerrors.ErrFieldTooLong
 	}
 	if len(in.Addresses) > 0 {
 		body.Addresses = make([]Address, 0, len(in.Addresses))
@@ -495,17 +492,17 @@ func cleanAddress(in *Address) (Address, error) {
 		out.AddressType = AddressTypeStreet
 	}
 	if out.AddressType != AddressTypeStreet && out.AddressType != AddressTypePOBox {
-		return Address{}, ErrUnknownType
+		return Address{}, xeroerrors.ErrUnknownType
 	}
-	if !textWithin(out.AddressLine1, MaxAddressLineLength) ||
-		!textWithin(out.AddressLine2, MaxAddressLineLength) ||
-		!textWithin(out.AddressLine3, MaxAddressLineLength) ||
-		!textWithin(out.AddressLine4, MaxAddressLineLength) ||
-		!textWithin(out.City, MaxAddressPartLength) ||
-		!textWithin(out.Region, MaxAddressPartLength) ||
-		!textWithin(out.Country, MaxAddressPartLength) ||
-		!textWithin(out.PostalCode, MaxPostalCodeLength) {
-		return Address{}, ErrFieldTooLong
+	if !xero.TextWithin(out.AddressLine1, MaxAddressLineLength) ||
+		!xero.TextWithin(out.AddressLine2, MaxAddressLineLength) ||
+		!xero.TextWithin(out.AddressLine3, MaxAddressLineLength) ||
+		!xero.TextWithin(out.AddressLine4, MaxAddressLineLength) ||
+		!xero.TextWithin(out.City, MaxAddressPartLength) ||
+		!xero.TextWithin(out.Region, MaxAddressPartLength) ||
+		!xero.TextWithin(out.Country, MaxAddressPartLength) ||
+		!xero.TextWithin(out.PostalCode, MaxPostalCodeLength) {
+		return Address{}, xeroerrors.ErrFieldTooLong
 	}
 	return out, nil
 }

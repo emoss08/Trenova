@@ -23,6 +23,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/shared/restx"
 	"github.com/emoss08/trenova/shared/xero"
+	"github.com/emoss08/trenova/shared/xeroerrors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
@@ -227,7 +228,7 @@ func TestCompaniesFailsWithoutAnOrganisation(t *testing.T) {
 		&accountingconnectorports.AccountingTokenGrant{AccessToken: "opaque"},
 		"",
 	)
-	require.ErrorIs(t, err, xero.ErrMalformedToken)
+	require.ErrorIs(t, err, xeroerrors.ErrMalformedToken)
 }
 
 func TestReleaseCompaniesDeletesTheirConnections(t *testing.T) {
@@ -345,7 +346,11 @@ func TestWebhookVerificationAndCompanies(t *testing.T) {
 	 {"resourceId":"` + testCustomer + `","tenantId":"` + testTenant + `","eventCategory":"CONTACT","eventType":"CREATE","eventDateUtc":"2026-09-29T10:00:01.000"}
 	],"firstEventSequence":1,"lastEventSequence":2,"entropy":"X"}`)
 	require.NoError(t, conn.VerifyWebhook(sign("tenant-webhook-key", body), body))
-	require.ErrorIs(t, conn.VerifyWebhook(sign("other-key", body), body), xero.ErrInvalidSignature)
+	require.ErrorIs(
+		t,
+		conn.VerifyWebhook(sign("other-key", body), body),
+		xeroerrors.ErrInvalidSignature,
+	)
 	require.Error(t, conn.VerifyWebhook("", body))
 
 	realms, err := provider.WebhookRealmIDs(body)
@@ -375,29 +380,37 @@ func TestClassifyError(t *testing.T) {
 		{"not configured", ErrNotConfigured, accountingsync.ErrorCategoryConfiguration},
 		{
 			"revoked",
-			&xero.OAuthError{Status: 400, Code: "invalid_grant"},
+			&xeroerrors.OAuthError{Status: 400, Code: "invalid_grant"},
 			accountingsync.ErrorCategoryRevoked,
 		},
 		{
 			"bad client",
-			&xero.OAuthError{Status: 400, Code: "invalid_client"},
+			&xeroerrors.OAuthError{Status: 400, Code: "invalid_client"},
 			accountingsync.ErrorCategoryUnauthorized,
 		},
-		{"unauthorized", &xero.APIError{Status: 401}, accountingsync.ErrorCategoryUnauthorized},
+		{
+			"unauthorized",
+			&xeroerrors.APIError{Status: 401},
+			accountingsync.ErrorCategoryUnauthorized,
+		},
 		{
 			"disconnected",
-			&xero.APIError{Status: 403, Type: xero.TypeAuthUnsuccessful},
+			&xeroerrors.APIError{Status: 403, Type: xeroerrors.TypeAuthUnsuccessful},
 			accountingsync.ErrorCategoryUnauthorized,
 		},
-		{"rate limited", &xero.APIError{Status: 429}, accountingsync.ErrorCategoryRateLimited},
-		{"server", &xero.APIError{Status: 503}, accountingsync.ErrorCategoryTransient},
+		{
+			"rate limited",
+			&xeroerrors.APIError{Status: 429},
+			accountingsync.ErrorCategoryRateLimited,
+		},
+		{"server", &xeroerrors.APIError{Status: 503}, accountingsync.ErrorCategoryTransient},
 		{
 			"transport",
 			&restx.TransportError{Err: errors.New("reset")},
 			accountingsync.ErrorCategoryTransient,
 		},
 		{"deadline", context.DeadlineExceeded, accountingsync.ErrorCategoryTransient},
-		{"validation", &xero.APIError{Status: 400}, accountingsync.ErrorCategoryUnknown},
+		{"validation", &xeroerrors.APIError{Status: 400}, accountingsync.ErrorCategoryUnknown},
 	}
 	for _, tc := range cases {
 		assert.Equal(t, tc.want, conn.ClassifyError(tc.err), tc.name)
