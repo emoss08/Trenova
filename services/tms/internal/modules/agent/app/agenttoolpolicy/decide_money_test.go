@@ -334,8 +334,8 @@ func TestDecide_ABoundedMoneyCallHeldByItsOwnLimitRecordsNoAmount(t *testing.T) 
 func TestPromotable_ABoundedMoneyToolMayEarnAutomatic(t *testing.T) {
 	t.Parallel()
 
-	assert.Equal(t, agent.TierAutoExecute, agenttoolpolicy.Promotable(moneyPolicy(boundAt(1))))
-	assert.Equal(t, agent.TierActWithApproval, agenttoolpolicy.Promotable(moneyPolicy(nil)))
+	assert.Equal(t, agent.TierAutoExecute, agenttoolpolicy.Promotable(new(moneyPolicy(boundAt(1)))))
+	assert.Equal(t, agent.TierActWithApproval, agenttoolpolicy.Promotable(new(moneyPolicy(nil))))
 }
 
 func receipt(id string) agentrecord.RecordRef {

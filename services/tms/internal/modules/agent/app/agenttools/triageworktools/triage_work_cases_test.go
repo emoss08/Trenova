@@ -148,7 +148,7 @@ func TestTriageWorkTools_KeepTheirCaps(t *testing.T) {
 	}
 
 	settle := policies["detention_resolve_dispute"]
-	assert.Equal(t, agent.TierPropose, agenttoolpolicy.Promotable(settle))
+	assert.Equal(t, agent.TierPropose, agenttoolpolicy.Promotable(&settle))
 	assert.True(t, settle.HeldWhenTainted(), "a decision that moves money waits once tainted")
 
 	draft := policies["inbox_draft_reply"]
@@ -156,7 +156,7 @@ func TestTriageWorkTools_KeepTheirCaps(t *testing.T) {
 		"a draft is only seen inside the organization")
 
 	create := policies["inbox_create_load"]
-	assert.Equal(t, agent.TierActWithApproval, agenttoolpolicy.Promotable(create),
+	assert.Equal(t, agent.TierActWithApproval, agenttoolpolicy.Promotable(&create),
 		"a load is never created unattended")
 	assert.True(t, create.Idempotent)
 }

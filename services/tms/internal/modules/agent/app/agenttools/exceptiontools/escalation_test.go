@@ -61,8 +61,8 @@ func TestEscalation_RunsWhateverTheAgentsCeiling(t *testing.T) {
 			assert.Equal(t, agent.TierAutoExecute, decision.Tier, "%s under %s", name, ceiling)
 			assert.Empty(t, decision.HeldBy, "%s under %s", name, ceiling)
 			assert.Equal(t, agent.TierAutoExecute,
-				agenttoolpolicy.StaticTier(definition, policy), "%s under %s", name, ceiling)
-			assert.False(t, agenttoolpolicy.AlwaysProposes(definition, policy),
+				agenttoolpolicy.StaticTier(definition, &policy), "%s under %s", name, ceiling)
+			assert.False(t, agenttoolpolicy.AlwaysProposes(definition, &policy),
 				"%s under %s is not listed as a change that waits for a person", name, ceiling)
 		}
 	}
@@ -87,6 +87,6 @@ func TestEscalation_KeepsATierAPersonSetOnTheAgent(t *testing.T) {
 
 		assert.Equal(t, agent.TierPropose, decision.Tier, name)
 		assert.Equal(t, agenttooltrust.TierSourcePersonSetting, decision.Source, name)
-		assert.Equal(t, agent.TierPropose, agenttoolpolicy.StaticTier(definition, policy), name)
+		assert.Equal(t, agent.TierPropose, agenttoolpolicy.StaticTier(definition, &policy), name)
 	}
 }

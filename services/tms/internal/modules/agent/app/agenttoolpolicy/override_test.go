@@ -23,7 +23,7 @@ func declaredRule() agenttoolports.ToolPolicy {
 func TestApplyOverride_HoldsTheToolLower(t *testing.T) {
 	t.Parallel()
 
-	got := agenttoolpolicy.ApplyOverride(declaredRule(), &agenttooltrust.ToolRuleOverride{
+	got := agenttoolpolicy.ApplyOverride(new(declaredRule()), &agenttooltrust.ToolRuleOverride{
 		MaxTier:       agent.TierPropose,
 		ReadsExternal: agenttooltrust.ExternalReadAlways,
 	})
@@ -44,7 +44,7 @@ func TestApplyOverride_NeverLoosensTheDeclaredRule(t *testing.T) {
 	declared := declaredRule()
 	declared.MaxTier = agent.TierActWithApproval
 
-	got := agenttoolpolicy.ApplyOverride(declared, &agenttooltrust.ToolRuleOverride{
+	got := agenttoolpolicy.ApplyOverride(&declared, &agenttooltrust.ToolRuleOverride{
 		MaxTier:       agent.TierAutoExecute,
 		ReadsExternal: agenttooltrust.ExternalReadNever,
 	})
@@ -58,16 +58,16 @@ func TestApplyOverride_LeavesTheDeclaredRuleWithoutAnOverride(t *testing.T) {
 
 	declared := declaredRule()
 
-	assert.Equal(t, declared, agenttoolpolicy.ApplyOverride(declared, nil))
+	assert.Equal(t, declared, agenttoolpolicy.ApplyOverride(&declared, nil))
 	assert.Equal(
 		t,
 		declared,
-		agenttoolpolicy.ApplyOverride(declared, &agenttooltrust.ToolRuleOverride{Reason: "reset"}),
+		agenttoolpolicy.ApplyOverride(&declared, &agenttooltrust.ToolRuleOverride{Reason: "reset"}),
 	)
 	assert.Equal(
 		t,
 		declared,
-		agenttoolpolicy.ApplyOverrides(declared, map[string]*agenttooltrust.ToolRuleOverride{
+		agenttoolpolicy.ApplyOverrides(&declared, map[string]*agenttooltrust.ToolRuleOverride{
 			"other_tool": {MaxTier: agent.TierPropose},
 		}),
 	)

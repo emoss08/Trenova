@@ -114,7 +114,7 @@ func snapshotPolicy(policy *agenttoolports.ToolPolicy) PolicySnapshot {
 		Scope:               policy.Scope.String(),
 		DefaultTier:         string(policy.DefaultTier),
 		MaxTier:             string(policy.MaxTier),
-		PromotableTo:        string(agenttoolpolicy.Promotable(*policy)),
+		PromotableTo:        string(agenttoolpolicy.Promotable(policy)),
 		Egress:              egress,
 		ClassifiesEachCall:  policy.Classify != nil,
 		Condition:           condition,

@@ -49,7 +49,7 @@ func Validate(specs []Spec) error {
 }
 
 func specProblems(spec *Spec) []string {
-	policy := spec.Policy
+	policy := &spec.Policy
 	problems := make([]string, 0)
 	add := func(format string, args ...any) {
 		problems = append(problems, fmt.Sprintf(format, args...))
@@ -101,7 +101,7 @@ func specProblems(spec *Spec) []string {
 	if !spec.Reports && policy.Artifact != "" && !artifactResolves(policy.Artifact) {
 		add("artifact %q is not a record-link key", policy.Artifact)
 	}
-	problems = append(problems, conditionProblems(&policy)...)
+	problems = append(problems, conditionProblems(policy)...)
 
 	return problems
 }
@@ -138,7 +138,7 @@ func conditionProblems(policy *agenttoolports.ToolPolicy) []string {
 	return problems
 }
 
-func egressProblems(policy agenttoolports.ToolPolicy) []string {
+func egressProblems(policy *agenttoolports.ToolPolicy) []string {
 	problems := make([]string, 0)
 	add := func(format string, args ...any) {
 		problems = append(problems, fmt.Sprintf(format, args...))
@@ -156,6 +156,28 @@ func egressProblems(policy agenttoolports.ToolPolicy) []string {
 			add("egress class %q is listed twice", class)
 		}
 		seen[class] = struct{}{}
+	}
+	problems = append(problems, kindEgressProblems(policy)...)
+
+	if len(policy.Egress) > 1 && policy.Classify == nil {
+		add("declares %d egress classes, so it must classify each call", len(policy.Egress))
+	}
+	if policy.Scope == agenttooltrust.ToolScopeSelf &&
+		policy.Kind != agenttooltrust.ToolKindQuery &&
+		!policy.HasEgress(agent.EgressPersonal) {
+		add("acts only on the caller's own records, so personal is one of its classes")
+	}
+	if policy.PersonalRunsUnasked && !policy.HasEgress(agent.EgressPersonal) {
+		add("runs a personal call unasked, so personal is one of its classes")
+	}
+
+	return problems
+}
+
+func kindEgressProblems(policy *agenttoolports.ToolPolicy) []string {
+	problems := make([]string, 0)
+	add := func(format string, args ...any) {
+		problems = append(problems, fmt.Sprintf(format, args...))
 	}
 
 	switch policy.Kind {
@@ -178,22 +200,10 @@ func egressProblems(policy agenttoolports.ToolPolicy) []string {
 		}
 	}
 
-	if len(policy.Egress) > 1 && policy.Classify == nil {
-		add("declares %d egress classes, so it must classify each call", len(policy.Egress))
-	}
-	if policy.Scope == agenttooltrust.ToolScopeSelf &&
-		policy.Kind != agenttooltrust.ToolKindQuery &&
-		!policy.HasEgress(agent.EgressPersonal) {
-		add("acts only on the caller's own records, so personal is one of its classes")
-	}
-	if policy.PersonalRunsUnasked && !policy.HasEgress(agent.EgressPersonal) {
-		add("runs a personal call unasked, so personal is one of its classes")
-	}
-
 	return problems
 }
 
-func tierProblems(policy agenttoolports.ToolPolicy) []string {
+func tierProblems(policy *agenttoolports.ToolPolicy) []string {
 	if !policy.DefaultTier.IsValid() || !policy.MaxTier.IsValid() || len(policy.Egress) == 0 {
 		return nil
 	}
@@ -237,7 +247,7 @@ func furtherSourceProblems(policy *agenttoolports.ToolPolicy) []string {
 	return problems
 }
 
-func externalReadProblems(policy agenttoolports.ToolPolicy) []string {
+func externalReadProblems(policy *agenttoolports.ToolPolicy) []string {
 	problems := make([]string, 0)
 	if !policy.ReadsExternal.IsValid() {
 		problems = append(problems,
@@ -250,7 +260,7 @@ func externalReadProblems(policy agenttoolports.ToolPolicy) []string {
 	if policy.Source != "" && !policy.Source.IsValid() {
 		problems = append(problems, fmt.Sprintf("taint source %q is not valid", policy.Source))
 	}
-	problems = append(problems, furtherSourceProblems(&policy)...)
+	problems = append(problems, furtherSourceProblems(policy)...)
 	if policy.CarriesTaint && policy.Kind != agenttooltrust.ToolKindAction {
 		problems = append(problems, "only a write can carry a run's taint into what it saves")
 	}

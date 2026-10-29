@@ -68,7 +68,7 @@ func validateToolSelection(selection toolSelection, multiErr *errortypes.MultiEr
 			continue
 		}
 		policy := tool.Policy()
-		if limit := agenttoolpolicy.Promotable(policy); tier.Above(limit) {
+		if limit := agenttoolpolicy.Promotable(&policy); tier.Above(limit) {
 			multiErr.Add(
 				fmt.Sprintf("toolTiers.%s", name),
 				errortypes.ErrInvalid,
@@ -163,7 +163,7 @@ func catalogEntry(
 	entry.Prerequisites = prerequisitesOf(tool)
 	if kind == agentdefinitionports.ToolCatalogKindAction {
 		entry.DefaultAutonomyTier = policy.DefaultTier
-		entry.MaxAutonomyTier = agenttoolpolicy.Promotable(policy)
+		entry.MaxAutonomyTier = agenttoolpolicy.Promotable(&policy)
 	}
 
 	return entry

@@ -429,5 +429,5 @@ func TestCreateShipment_IsNeverCreatedUnattended(t *testing.T) {
 
 	policy := (&intaketools.CreateShipmentTool{}).Policy()
 	assert.False(t, policy.MaxTier.Above(agent.TierActWithApproval))
-	assert.Equal(t, agent.TierActWithApproval, agenttoolpolicy.Promotable(policy))
+	assert.Equal(t, agent.TierActWithApproval, agenttoolpolicy.Promotable(&policy))
 }

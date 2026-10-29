@@ -59,8 +59,8 @@ func HeldWhenTainted(class agent.EgressClass) bool {
 }
 
 func Decide(ctx context.Context, in DecideInput) Decision {
-	policy := in.Policy
-	if !in.FromScript && Escalates(in.Definition, &policy) {
+	policy := &in.Policy
+	if !in.FromScript && Escalates(in.Definition, policy) {
 		return Decision{
 			Tier:   agent.TierAutoExecute,
 			Egress: policy.Classified(in.Params).Egress,
@@ -95,10 +95,10 @@ func Decide(ctx context.Context, in DecideInput) Decision {
 	}
 
 	if policy.Condition != nil && policy.Condition.Limit != nil {
-		decision.lower(conditionLimit(ctx, policy.Condition, in.Params), HeldByCondition)
+		decision.lower(conditionLimit(ctx, policy.Condition, &in.Params), HeldByCondition)
 	}
 
-	if runsUnasked(in, call) {
+	if runsUnasked(&in, call) {
 		decision.Tier = agent.TierAutoExecute
 		decision.Source = agenttooltrust.TierSourcePersonalExemption
 		decision.HeldBy = []string{HeldByPersonalExemption}
@@ -129,7 +129,7 @@ func Escalates(definition *agentdefinition.Definition, policy *agenttoolports.To
 	return definition == nil || !definition.SetsToolTier(policy.Name)
 }
 
-func Promotable(policy agenttoolports.ToolPolicy) agent.AutonomyTier {
+func Promotable(policy *agenttoolports.ToolPolicy) agent.AutonomyTier {
 	return maxTier(policy).AtMost(policy.EgressCeiling())
 }
 
@@ -142,9 +142,9 @@ func Promotable(policy agenttoolports.ToolPolicy) agent.AutonomyTier {
 // condition or what it reached held for a person contradicted it.
 func AlwaysProposes(
 	definition *agentdefinition.Definition,
-	policy agenttoolports.ToolPolicy,
+	policy *agenttoolports.ToolPolicy,
 ) bool {
-	if Escalates(definition, &policy) {
+	if Escalates(definition, policy) {
 		return false
 	}
 	if agent.TierAutoExecute.Above(Promotable(policy)) {
@@ -159,16 +159,16 @@ func AlwaysProposes(
 
 func StaticTier(
 	definition *agentdefinition.Definition,
-	policy agenttoolports.ToolPolicy,
+	policy *agenttoolports.ToolPolicy,
 ) agent.AutonomyTier {
-	if Escalates(definition, &policy) {
+	if Escalates(definition, policy) {
 		return agent.TierAutoExecute
 	}
 
 	return effectiveTier(definition, policy).AtMost(maxTier(policy))
 }
 
-func ExplainTier(policy agenttoolports.ToolPolicy) string {
+func ExplainTier(policy *agenttoolports.ToolPolicy) string {
 	parts := make([]string, 0, 6)
 	if limit := Promotable(policy); limit != agent.TierAutoExecute {
 		parts = append(parts, fmt.Sprintf(
@@ -305,7 +305,7 @@ func (d *Decision) hold(key string) {
 	}
 }
 
-func SeeksPersonalExemption(in DecideInput) bool {
+func SeeksPersonalExemption(in *DecideInput) bool {
 	if !in.Policy.PersonalRunsUnasked {
 		return false
 	}
@@ -313,11 +313,11 @@ func SeeksPersonalExemption(in DecideInput) bool {
 	return personalCall(in, in.Policy.Classified(in.Params))
 }
 
-func runsUnasked(in DecideInput, call agenttoolports.CallPolicy) bool {
+func runsUnasked(in *DecideInput, call agenttoolports.CallPolicy) bool {
 	return personalCall(in, call) && !in.TierSetByPerson
 }
 
-func personalCall(in DecideInput, call agenttoolports.CallPolicy) bool {
+func personalCall(in *DecideInput, call agenttoolports.CallPolicy) bool {
 	actor := in.Params.Actor
 
 	return in.Policy.PersonalRunsUnasked &&
@@ -329,7 +329,7 @@ func personalCall(in DecideInput, call agenttoolports.CallPolicy) bool {
 
 func toolTier(
 	definition *agentdefinition.Definition,
-	policy agenttoolports.ToolPolicy,
+	policy *agenttoolports.ToolPolicy,
 ) agent.AutonomyTier {
 	requested := policy.DefaultTier
 	if definition != nil {
@@ -346,7 +346,7 @@ func toolTier(
 
 func effectiveTier(
 	definition *agentdefinition.Definition,
-	policy agenttoolports.ToolPolicy,
+	policy *agenttoolports.ToolPolicy,
 ) agent.AutonomyTier {
 	if definition == nil {
 		return toolTier(nil, policy)
@@ -355,7 +355,7 @@ func effectiveTier(
 	return definition.EffectiveTier(policy.Name, policy.DefaultTier)
 }
 
-func maxTier(policy agenttoolports.ToolPolicy) agent.AutonomyTier {
+func maxTier(policy *agenttoolports.ToolPolicy) agent.AutonomyTier {
 	if policy.MaxTier.IsValid() {
 		return policy.MaxTier
 	}
@@ -366,9 +366,9 @@ func maxTier(policy agenttoolports.ToolPolicy) agent.AutonomyTier {
 func conditionLimit(
 	ctx context.Context,
 	condition *agenttoolports.TierCondition,
-	params agenttoolports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) agent.AutonomyTier {
-	limit := condition.Limit(ctx, params)
+	limit := condition.Limit(ctx, *params)
 	if !limit.IsValid() {
 		return agent.TierPropose
 	}

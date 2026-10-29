@@ -333,5 +333,5 @@ func TestAssess_ARegisteredToolAnswersLikeItsPolicy(t *testing.T) {
 
 	assert.False(t, clean.Answer.WithoutAPerson())
 	assert.False(t, tainted.Answer.WithoutAPerson())
-	assert.False(t, clean.Tier.Above(agenttoolpolicy.Promotable(policy)))
+	assert.False(t, clean.Tier.Above(agenttoolpolicy.Promotable(&policy)))
 }

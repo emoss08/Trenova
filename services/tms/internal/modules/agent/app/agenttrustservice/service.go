@@ -409,7 +409,7 @@ func (s *Service) promotable(toolName string) agent.AutonomyTier {
 		return agent.TierAutoExecute
 	}
 
-	return agenttoolpolicy.Promotable(policy)
+	return agenttoolpolicy.Promotable(&policy)
 }
 
 func (s *Service) policyOf(toolName string) (agenttoolports.ToolPolicy, bool) {

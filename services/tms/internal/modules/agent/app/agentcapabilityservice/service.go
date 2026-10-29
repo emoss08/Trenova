@@ -337,7 +337,7 @@ func (s *Service) row(
 	}
 	policy := tool.Policy()
 	row.Write = true
-	row.Mode = ModeForTier(agenttoolpolicy.StaticTier(definition, policy))
+	row.Mode = ModeForTier(agenttoolpolicy.StaticTier(definition, &policy))
 	if !held {
 		row.Mode = agentcapabilityports.AgentCapabilityOff
 	}
@@ -367,7 +367,7 @@ func WriteModes(
 		return asks, "Always asks · this can't be undone"
 	case policy.EgressCeiling() != agent.TierAutoExecute:
 		return asks, "Always asks · it reaches outside the organization"
-	case agenttoolpolicy.Promotable(*policy) != agent.TierAutoExecute:
+	case agenttoolpolicy.Promotable(policy) != agent.TierAutoExecute:
 		return asks, "Always asks · this change always needs a person"
 	case definition.AutonomyCeiling != agent.TierAutoExecute:
 		return asks, "Always asks · this agent asks before every change"

@@ -121,9 +121,9 @@ func PolicyView(policy *agenttoolports.ToolPolicy) agenttoolports.AgentToolPolic
 		Title: textcase.HumanizeCamelCaseSentence(
 			agenttoolports.ReadingOrder(policy.Name),
 		),
-		Promotable:  agenttoolpolicy.Promotable(*policy),
+		Promotable:  agenttoolpolicy.Promotable(policy),
 		Leaves:      slices.ContainsFunc(policy.Egress, agent.EgressClass.Leaves),
-		Explanation: agenttoolpolicy.ExplainTier(*policy),
+		Explanation: agenttoolpolicy.ExplainTier(policy),
 	}
 
 	held := agentaccessservice.HeldToolOf(policy)
@@ -138,7 +138,7 @@ func OverriddenView(
 	declared *agenttoolports.ToolPolicy,
 	override *agenttooltrust.ToolRuleOverride,
 ) agenttoolports.AgentToolPolicyView {
-	applied := agenttoolpolicy.ApplyOverride(*declared, override)
+	applied := agenttoolpolicy.ApplyOverride(declared, override)
 	view := PolicyView(&applied)
 	if override != nil {
 		original := *declared

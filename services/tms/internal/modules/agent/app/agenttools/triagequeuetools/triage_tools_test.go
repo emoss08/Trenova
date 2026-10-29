@@ -157,7 +157,7 @@ func TestTriageTools_KeepTheirCaps(t *testing.T) {
 	}
 
 	block := policies["inbox_block_sender"]
-	assert.Equal(t, agent.TierActWithApproval, agenttoolpolicy.Promotable(block),
+	assert.Equal(t, agent.TierActWithApproval, agenttoolpolicy.Promotable(&block),
 		"blocking a sender is always asked first")
 }
 

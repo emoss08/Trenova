@@ -91,8 +91,8 @@ func (s *Service) Impact(
 	return s.impact.RuleImpact(ctx, &agenttoolports.RuleImpactRequest{
 		TenantInfo: req.TenantInfo,
 		ToolName:   req.ToolName,
-		Before:     agenttoolpolicy.ApplyOverride(declared, current),
-		After:      agenttoolpolicy.ApplyOverride(declared, overrideOf(declared, req.Change)),
+		Before:     agenttoolpolicy.ApplyOverride(&declared, current),
+		After:      agenttoolpolicy.ApplyOverride(&declared, overrideOf(&declared, req.Change)),
 	})
 }
 
@@ -118,10 +118,10 @@ func (s *Service) Save(
 		return nil, dberror.CreateVersionMismatchError("Tool rule", req.ToolName)
 	}
 
-	next := overrideOf(declared, req.Change)
+	next := overrideOf(&declared, req.Change)
 	next.Reason = strings.TrimSpace(req.Reason)
-	before := agenttoolpolicy.ApplyOverride(declared, existing)
-	after := agenttoolpolicy.ApplyOverride(declared, next)
+	before := agenttoolpolicy.ApplyOverride(&declared, existing)
+	after := agenttoolpolicy.ApplyOverride(&declared, next)
 
 	multiErr := errortypes.NewMultiError()
 	next.Validate(agenttooltrust.ToolRuleBounds{
@@ -182,7 +182,7 @@ func (s *Service) declared(toolName string) (agenttoolports.ToolPolicy, error) {
 }
 
 func overrideOf(
-	declared agenttoolports.ToolPolicy,
+	declared *agenttoolports.ToolPolicy,
 	change agenttoolports.ToolRuleChange,
 ) *agenttooltrust.ToolRuleOverride {
 	override := &agenttooltrust.ToolRuleOverride{ToolName: declared.Name}

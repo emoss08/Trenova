@@ -205,7 +205,7 @@ func writeGroup(buf *bytes.Buffer, class agent.EgressClass, policies []agenttool
 				policy.Name,
 			)),
 			stringutils.MarkdownTableCell(classList(policy.Egress)),
-			agenttoolpolicy.Promotable(*policy).Label(),
+			agenttoolpolicy.Promotable(policy).Label(),
 			stringutils.MarkdownTableCell(condition(policy)),
 			stringutils.MarkdownTableCell(externalRead(policy)),
 			stringutils.MarkdownTableCell(policy.Rationale),

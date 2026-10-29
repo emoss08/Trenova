@@ -166,7 +166,7 @@ func (s *Service) surveyAgent(ctx context.Context, in *surveyAgentInput) {
 	}
 
 	for idx := range held {
-		policy := agenttoolpolicy.ApplyOverrides(held[idx], in.rules)
+		policy := agenttoolpolicy.ApplyOverrides(&held[idx], in.rules)
 		if policy.EffectiveEffect() != agenttooltrust.ToolEffectChange {
 			continue
 		}

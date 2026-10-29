@@ -90,9 +90,10 @@ func (c *Catalog) All() []agenttoolports.ToolPolicy {
 }
 
 func ApplyOverride(
-	policy agenttoolports.ToolPolicy,
+	declared *agenttoolports.ToolPolicy,
 	override *agenttooltrust.ToolRuleOverride,
 ) agenttoolports.ToolPolicy {
+	policy := *declared
 	if override.Empty() {
 		return policy
 	}
@@ -113,7 +114,7 @@ func ApplyOverride(
 }
 
 func ApplyOverrides(
-	policy agenttoolports.ToolPolicy,
+	policy *agenttoolports.ToolPolicy,
 	overrides map[string]*agenttooltrust.ToolRuleOverride,
 ) agenttoolports.ToolPolicy {
 	return ApplyOverride(policy, overrides[policy.Name])

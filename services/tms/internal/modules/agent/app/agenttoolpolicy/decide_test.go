@@ -373,7 +373,7 @@ func TestDecide_OutboundApprovalCap(t *testing.T) {
 			})
 			assert.Equal(t, agent.TierActWithApproval, decision.Tier)
 			assert.Equal(t, []string{agenttoolpolicy.HeldByToolMax}, decision.HeldBy)
-			assert.Equal(t, agent.TierActWithApproval, agenttoolpolicy.Promotable(policy))
+			assert.Equal(t, agent.TierActWithApproval, agenttoolpolicy.Promotable(&policy))
 		})
 	}
 }
@@ -552,7 +552,7 @@ func TestDetentionMoneyDecisionsAreCappedAtPropose(t *testing.T) {
 			assert.Equal(t, agent.TierPropose, policy.DefaultTier)
 			assert.Equal(t, agent.TierPropose, policy.MaxTier)
 			assert.Equal(t, []agent.EgressClass{agent.EgressMoney}, policy.Egress)
-			assert.Equal(t, agent.TierPropose, agenttoolpolicy.Promotable(policy))
+			assert.Equal(t, agent.TierPropose, agenttoolpolicy.Promotable(&policy))
 
 			decision := agenttoolpolicy.Decide(t.Context(), agenttoolpolicy.DecideInput{
 				Policy: policy,
@@ -584,14 +584,14 @@ func TestPromotable(t *testing.T) {
 		"shipment_cancel":                  agent.TierActWithApproval,
 	}
 	for name, want := range cases {
-		assert.Equal(t, want, agenttoolpolicy.Promotable(registeredPolicy(t, name)), name)
+		assert.Equal(t, want, agenttoolpolicy.Promotable(new(registeredPolicy(t, name))), name)
 	}
 
 	uncapped := agenttoolports.ToolPolicy{
 		MaxTier: agent.TierAutoExecute,
 		Egress:  []agent.EgressClass{agent.EgressDriverVisible},
 	}
-	assert.Equal(t, agent.TierActWithApproval, agenttoolpolicy.Promotable(uncapped),
+	assert.Equal(t, agent.TierActWithApproval, agenttoolpolicy.Promotable(&uncapped),
 		"a class that leaves caps a max tier set above it")
 }
 
@@ -602,9 +602,9 @@ func TestStaticTierAndExplainTier(t *testing.T) {
 		"shipment_create": agent.TierAutoExecute,
 	})
 	assert.Equal(t, agent.TierActWithApproval,
-		agenttoolpolicy.StaticTier(actsAlone, registeredPolicy(t, "shipment_create")))
+		agenttoolpolicy.StaticTier(actsAlone, new(registeredPolicy(t, "shipment_create"))))
 
-	explained := agenttoolpolicy.ExplainTier(registeredPolicy(t, "shipment_add_comment"))
+	explained := agenttoolpolicy.ExplainTier(new(registeredPolicy(t, "shipment_add_comment")))
 	assert.Contains(t, explained, "customer visible")
 	assert.Contains(t, explained, "waits for approval")
 }
@@ -680,7 +680,7 @@ func TestSeeksPersonalExemption(t *testing.T) {
 		},
 	}
 	for _, tc := range cases {
-		assert.Equal(t, tc.want, agenttoolpolicy.SeeksPersonalExemption(tc.in), tc.name)
+		assert.Equal(t, tc.want, agenttoolpolicy.SeeksPersonalExemption(&tc.in), tc.name)
 	}
 }
 
@@ -700,10 +700,10 @@ func TestAlwaysProposes_OnlyWhenNothingLetsACallRun(t *testing.T) {
 	full := definition(agent.TierAutoExecute, nil)
 	held := definition(agent.TierActWithApproval, nil)
 
-	assert.False(t, agenttoolpolicy.AlwaysProposes(full, open))
-	assert.True(t, agenttoolpolicy.AlwaysProposes(full, capped), "the tool's own ceiling")
-	assert.True(t, agenttoolpolicy.AlwaysProposes(held, open), "the agent's ceiling")
-	assert.False(t, agenttoolpolicy.AlwaysProposes(full, earning),
+	assert.False(t, agenttoolpolicy.AlwaysProposes(full, &open))
+	assert.True(t, agenttoolpolicy.AlwaysProposes(full, &capped), "the tool's own ceiling")
+	assert.True(t, agenttoolpolicy.AlwaysProposes(held, &open), "the agent's ceiling")
+	assert.False(t, agenttoolpolicy.AlwaysProposes(full, &earning),
 		"a tool that starts at Propose can still earn its way up")
-	assert.False(t, agenttoolpolicy.AlwaysProposes(nil, open))
+	assert.False(t, agenttoolpolicy.AlwaysProposes(nil, &open))
 }

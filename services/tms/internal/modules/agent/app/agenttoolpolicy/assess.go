@@ -157,7 +157,7 @@ func approvalsToNext(in *AssessInput, definition *agentdefinition.Definition) *i
 
 	current := definition.EffectiveTier(in.Policy.Name, in.Policy.DefaultTier)
 	next, ok := current.Next()
-	if !ok || !definition.WithinCeiling(next) || next.Above(Promotable(in.Policy)) {
+	if !ok || !definition.WithinCeiling(next) || next.Above(Promotable(&in.Policy)) {
 		return nil
 	}
 

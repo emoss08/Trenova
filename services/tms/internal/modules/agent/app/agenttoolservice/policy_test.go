@@ -46,11 +46,11 @@ func TestEgressTools_NeverRunWithoutAPerson(t *testing.T) {
 	} {
 		policy := tool.Policy()
 		assert.Equal(t, agent.TierActWithApproval, policy.MaxTier, tool.Name())
-		assert.Equal(t, agent.TierActWithApproval, agenttoolpolicy.Promotable(policy), tool.Name())
+		assert.Equal(t, agent.TierActWithApproval, agenttoolpolicy.Promotable(&policy), tool.Name())
 	}
 
 	assert.Equal(t, agent.TierAutoExecute,
-		agenttoolpolicy.Promotable((&shipmentcommenttools.AddShipmentCommentTool{}).Policy()),
+		agenttoolpolicy.Promotable(new((&shipmentcommenttools.AddShipmentCommentTool{}).Policy())),
 		"an internal note has no ceiling of its own")
 }
 
