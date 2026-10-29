@@ -253,7 +253,7 @@ var DriverPayLedger = Seeds.Add(seed.Seed{
 	Name:        "driver_pay_ledger",
 	Kind:        seed.Fixture,
 	Description: "Wires driver settlement GL accounts, cost-control sourcing, recurring earnings, and journals for seeded settlements",
-	After:       []*seed.Seed{AdminAccount, SystemAccount, DriverPay},
+	After:       []*seed.Seed{AdminAccount, SystemAccount, DriverPay, FiscalYear},
 	Run:         (&accountingfixtures.DriverPayLedgerSeed{}).Run,
 })
 
