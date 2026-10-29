@@ -244,7 +244,7 @@ func publishedSources(raw any) (sources []agentruntimeports.PublishedSource, pro
 }
 
 // publishedAnalyses reads the analyses a document includes, each once.
-func publishedAnalyses(raw any) ([]pulid.ID, []string) {
+func publishedAnalyses(raw any) (analyses []pulid.ID, problems []string) {
 	entries, ok := raw.([]any)
 	if !ok || len(entries) == 0 {
 		return nil, nil
@@ -253,7 +253,7 @@ func publishedAnalyses(raw any) ([]pulid.ID, []string) {
 		return nil, []string{fmt.Sprintf("at most %d analyses", maxDocumentAnalyses)}
 	}
 
-	analyses := make([]pulid.ID, 0, len(entries))
+	analyses = make([]pulid.ID, 0, len(entries))
 	for _, entry := range entries {
 		text, _ := entry.(string)
 		id, err := pulid.Parse(strings.TrimSpace(text))

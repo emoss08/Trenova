@@ -181,33 +181,7 @@ func (s *Access) openToolSet(ctx context.Context, req *ToolSetRequest) *ToolSet 
 		text = req.Need + "\n" + req.Input
 	}
 
-	// The core tools ride on every turn and do not count toward narrowing: a
-	// turn that opened with eight slots would otherwise spend half of them on
-	// memory and escalation before reaching the work it was asked to do. On a
-	// turn that can search, the ones few turns call wait, deferred, unless the
-	// request names what they do.
-	waiting := make([]string, 0, len(deferredCoreTools))
-	for _, name := range coreOf(allowed) {
-		if name == agentdefinition.CoreToolReadAttachment && !req.Attachments {
-			continue
-		}
-		if searchable && defersCoreTool(name, req.Unattended) {
-			waiting = append(waiting, name)
-			continue
-		}
-		s.Load(set, name)
-	}
-	if len(waiting) > 0 {
-		found := s.catalog.FindHybrid(agenttoolcatalog.Query{
-			Allowed:    waiting,
-			Text:       text,
-			Limit:      len(waiting),
-			StrongOnly: true,
-		})
-		for idx := range found {
-			s.Load(set, found[idx].Name)
-		}
-	}
+	s.loadCoreTools(set, req, searchable, text)
 
 	if !disclosed {
 		for _, name := range selected {
@@ -252,6 +226,37 @@ func (s *Access) openToolSet(ctx context.Context, req *ToolSetRequest) *ToolSet 
 	s.declareNamePlan(set, req.Delegated)
 
 	return set
+}
+
+// loadCoreTools loads the core tools, which ride on every turn and do not
+// count toward narrowing: a turn that opened with eight slots would otherwise
+// spend half of them on memory and escalation before reaching the work it was
+// asked to do. On a turn that can search, the ones few turns call wait,
+// deferred, unless the request names what they do.
+func (s *Access) loadCoreTools(set *ToolSet, req *ToolSetRequest, searchable bool, text string) {
+	waiting := make([]string, 0, len(deferredCoreTools))
+	for _, name := range coreOf(set.Allowed) {
+		if name == agentdefinition.CoreToolReadAttachment && !req.Attachments {
+			continue
+		}
+		if searchable && defersCoreTool(name, req.Unattended) {
+			waiting = append(waiting, name)
+			continue
+		}
+		s.Load(set, name)
+	}
+	if len(waiting) == 0 {
+		return
+	}
+	found := s.catalog.FindHybrid(agenttoolcatalog.Query{
+		Allowed:    waiting,
+		Text:       text,
+		Limit:      len(waiting),
+		StrongOnly: true,
+	})
+	for idx := range found {
+		s.Load(set, found[idx].Name)
+	}
 }
 
 var deferredCoreTools = []string{

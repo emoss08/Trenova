@@ -204,23 +204,23 @@ func (s *Service) Run(
 // Drive runs a turn to its end: the model is asked, the tools it calls are run,
 // and it is asked again, until it answers or runs out of tool calls.
 //
-// Nothing here reaches outside the turn except through fx, which is what lets
+// Nothing here reaches outside the turn except through effects, which is what lets
 // the same loop run in process and as durable workflow code.
-func (s *Service) Drive(t *Turn, fx TurnEffects) (*agentruntimeports.RunResult, error) {
-	t.announceOpened(fx)
-	turnmemory.Announce(t, fx)
+func (s *Service) Drive(t *Turn, effects TurnEffects) (*agentruntimeports.RunResult, error) {
+	t.announceOpened(effects)
+	turnmemory.Announce(t, effects)
 	if t.directed != nil {
-		return s.driveDirected(t, fx), nil
+		return s.driveDirected(t, effects), nil
 	}
 
 	loop := &driveLoop{}
 	for t.result.ToolCallsUsed < t.budget && !loop.stuck {
-		if step := s.driveRound(t, fx, loop); step.done {
+		if step := s.driveRound(t, effects, loop); step.done {
 			return step.result, step.err
 		}
 	}
 
-	return s.driveSpent(t, fx, loop), nil
+	return s.driveSpent(t, effects, loop), nil
 }
 
 // driveLoop is what the loop carries from one round to the next.
@@ -245,14 +245,14 @@ func finished(result *agentruntimeports.RunResult) driveStep {
 	return driveStep{done: true, result: result}
 }
 
-func (s *Service) driveRound(t *Turn, fx TurnEffects, loop *driveLoop) driveStep {
+func (s *Service) driveRound(t *Turn, effects TurnEffects, loop *driveLoop) driveStep {
 	result := t.result
-	s.interject(t, fx)
-	reply, err := fx.Complete(t, t.completionRequest())
+	s.interject(t, effects)
+	reply, err := effects.Complete(t, t.completionRequest())
 	result.Usage = result.Usage.Add(reply.TotalUsage())
 	completion := reply.Completion
 	if err == nil && reply.Looped {
-		return s.loopedReply(t, fx, loop, &reply)
+		return s.loopedReply(t, effects, loop, &reply)
 	}
 	if err != nil {
 		// What ran travels with the error. The caller decides whether to
@@ -262,9 +262,9 @@ func (s *Service) driveRound(t *Turn, fx TurnEffects, loop *driveLoop) driveStep
 		return driveStep{done: true, result: result, err: err}
 	}
 
-	retry, stop := s.handleCutOff(t, fx, completion)
+	retry, stop := s.handleCutOff(t, effects, completion)
 	if retry {
-		s.reask(t, fx, ReaskCutOff, completion)
+		s.reask(t, effects, ReaskCutOff, completion)
 		return driveStep{}
 	}
 
@@ -274,18 +274,18 @@ func (s *Service) driveRound(t *Turn, fx TurnEffects, loop *driveLoop) driveStep
 	t.providerKind = completion.ProviderKind
 	modelstream.TagReasoning(completion)
 	if stop {
-		return finished(s.finishCutOff(t, fx, completion))
+		return finished(s.finishCutOff(t, effects, completion))
 	}
 	modelstream.TagToolCalls(completion)
-	turnhistory.DistinctCallIDs(completion, t.callIDs, fx.NewCallID)
+	turnhistory.DistinctCallIDs(completion, t.callIDs, effects.NewCallID)
 
 	if len(completion.ToolCalls) == 0 {
-		return s.driveReply(t, fx, loop, completion)
+		return s.driveReply(t, effects, loop, completion)
 	}
 
-	s.recordAssistantTurn(t, fx, completion)
-	if s.runToolCalls(t, fx, loop, completion) {
-		return finished(s.finish(result, askedEnding(completion), fx))
+	s.recordAssistantTurn(t, effects, completion)
+	if s.runToolCalls(t, effects, loop, completion) {
+		return finished(s.finish(result, askedEnding(completion), effects))
 	}
 
 	s.logger.Debug("agent tool iteration",
@@ -299,7 +299,7 @@ func (s *Service) driveRound(t *Turn, fx TurnEffects, loop *driveLoop) driveStep
 
 func (s *Service) loopedReply(
 	t *Turn,
-	fx TurnEffects,
+	effects TurnEffects,
 	loop *driveLoop,
 	reply *modelstream.Reply,
 ) driveStep {
@@ -312,7 +312,7 @@ func (s *Service) loopedReply(
 	)
 	if loop.retries < loopguard.MaxReplyRetries {
 		loop.retries++
-		fx.Emit(kernelports.StreamEvent{
+		effects.Emit(kernelports.StreamEvent{
 			Event: assistantstreamports.AssistantEventRetrying,
 			Data: assistantstreamports.AssistantRetryingEvent{
 				Attempt: loop.retries,
@@ -320,10 +320,10 @@ func (s *Service) loopedReply(
 				Kind:    llmports.RetryKindRestart,
 			},
 		})
-		s.reask(t, fx, ReaskLoop, completion)
+		s.reask(t, effects, ReaskLoop, completion)
 		return driveStep{}
 	}
-	fx.Emit(kernelports.StreamEvent{
+	effects.Emit(kernelports.StreamEvent{
 		Event: assistantstreamports.AssistantEventRetrying,
 		Data: assistantstreamports.AssistantRetryingEvent{
 			Attempt: loop.retries + 1,
@@ -331,12 +331,12 @@ func (s *Service) loopedReply(
 			Kind:    llmports.RetryKindRestart,
 		},
 	})
-	fx.Emit(modelstream.DeltaEvent(loopguard.LoopedReply))
+	effects.Emit(modelstream.DeltaEvent(loopguard.LoopedReply))
 
 	return finished(s.finish(
 		t.result,
 		modelstream.CannedCompletion(completion, loopguard.LoopedReply),
-		fx,
+		effects,
 	))
 }
 
@@ -344,7 +344,7 @@ func (s *Service) loopedReply(
 // unless a guard sends the model back to fix it.
 func (s *Service) driveReply(
 	t *Turn,
-	fx TurnEffects,
+	effects TurnEffects,
 	loop *driveLoop,
 	completion *llmports.ChatCompletionResult,
 ) driveStep {
@@ -354,36 +354,36 @@ func (s *Service) driveReply(
 	if strings.TrimSpace(completion.Text) == "" && !loop.asked {
 		if loop.retries < loopguard.MaxReplyRetries {
 			loop.retries++
-			s.reask(t, fx, ReaskEmptyReply, completion)
+			s.reask(t, effects, ReaskEmptyReply, completion)
 			return driveStep{}
 		}
-		fx.Emit(modelstream.DeltaEvent(loopguard.EmptyReply))
+		effects.Emit(modelstream.DeltaEvent(loopguard.EmptyReply))
 		return finished(s.finish(
 			t.result,
 			modelstream.CannedCompletion(completion, loopguard.EmptyReply),
-			fx,
+			effects,
 		))
 	}
-	if !loop.asked && s.holdToCommand(t, fx, completion, &loop.commandHeld) {
-		s.reask(t, fx, ReaskCommand, completion)
+	if !loop.asked && s.holdToCommand(t, effects, completion, &loop.commandHeld) {
+		s.reask(t, effects, ReaskCommand, completion)
 		return driveStep{}
 	}
-	if s.reground(t, fx, completion, &loop.grounding) {
-		s.reask(t, fx, ReaskGrounding, completion)
+	if s.reground(t, effects, completion, &loop.grounding) {
+		s.reask(t, effects, ReaskGrounding, completion)
 		return driveStep{}
 	}
-	s.passReply(t, fx, completion)
-	if s.placeArtifacts(t, fx, completion, &loop.placement) {
-		s.reask(t, fx, ReaskPlacement, completion)
+	s.passReply(t, effects, completion)
+	if s.placeArtifacts(t, effects, completion, &loop.placement) {
+		s.reask(t, effects, ReaskPlacement, completion)
 		return driveStep{}
 	}
 
-	return finished(s.finish(t.result, completion, fx))
+	return finished(s.finish(t.result, completion, effects))
 }
 
 func (s *Service) recordAssistantTurn(
 	t *Turn,
-	fx TurnEffects,
+	effects TurnEffects,
 	completion *llmports.ChatCompletionResult,
 ) {
 	assistantTurn := conversation.Message{
@@ -398,7 +398,7 @@ func (s *Service) recordAssistantTurn(
 		OutputTokens:      completion.OutputTokens,
 		LatencyMs:         completion.LatencyMs,
 		CostUSD:           completion.CostUSD,
-		CreatedAt:         fx.Now(),
+		CreatedAt:         effects.Now(),
 		ProviderMessageID: completion.ProviderMessageID,
 	}
 	t.result.Messages = append(t.result.Messages, assistantTurn)
@@ -412,7 +412,7 @@ func (s *Service) recordAssistantTurn(
 		ReplyID:       completion.ProviderMessageID,
 		ReplyProvider: completion.ProviderID,
 	})
-	fx.Emit(kernelports.StreamEvent{
+	effects.Emit(kernelports.StreamEvent{
 		Event: assistantstreamports.AssistantEventMessage,
 		Data: assistantstreamports.AssistantMessageEvent{
 			Content:      assistantTurn.Content,
@@ -436,7 +436,7 @@ type roundCall struct {
 // question reached the person, which ends the turn.
 func (s *Service) runToolCalls(
 	t *Turn,
-	fx TurnEffects,
+	effects TurnEffects,
 	loop *driveLoop,
 	completion *llmports.ChatCompletionResult,
 ) bool {
@@ -444,7 +444,7 @@ func (s *Service) runToolCalls(
 	batch := &tooldispatch.ReadBatch{}
 	shownNow := false
 	fannedOut := delegation.FanOut(
-		t, s.handing(t, fx), completion.ToolCalls, result.ToolCallsUsed, t.budget,
+		t, s.handing(t, effects), completion.ToolCalls, result.ToolCallsUsed, t.budget,
 	)
 	for _, call := range completion.ToolCalls {
 		check := &tooldispatch.JoinCheck{
@@ -457,12 +457,12 @@ func (s *Service) runToolCalls(
 		if !joins && batch.Size() > 0 {
 			// The waiting reads settle first; with them settled the call
 			// may start a batch of its own.
-			s.settleReads(t, fx, batch)
+			s.settleReads(t, effects, batch)
 			check.Used = result.ToolCallsUsed
 			key, joins = t.joins(batch, check)
 		}
 		if joins {
-			s.emitToolStarted(fx, &call)
+			s.emitToolStarted(effects, &call)
 			s.access.Load(t.tools, call.Name)
 			batch.Calls = append(batch.Calls, t.dispatchCall(&call, completion.Text))
 			batch.Keys = append(batch.Keys, key)
@@ -470,9 +470,9 @@ func (s *Service) runToolCalls(
 		}
 
 		if _, ran := fannedOut[call.ID]; !ran {
-			s.emitToolStarted(fx, &call)
+			s.emitToolStarted(effects, &call)
 		}
-		if s.runToolCall(t, fx, loop, &roundCall{
+		if s.runToolCall(t, effects, loop, &roundCall{
 			call:      &call,
 			text:      completion.Text,
 			fannedOut: fannedOut,
@@ -480,21 +480,21 @@ func (s *Service) runToolCalls(
 			shownNow = true
 		}
 	}
-	s.settleReads(t, fx, batch)
+	s.settleReads(t, effects, batch)
 
 	return shownNow
 }
 
 // runToolCall answers one tool call the loop runs on its own, and reports
 // whether it was a question that reached the person.
-func (s *Service) runToolCall(t *Turn, fx TurnEffects, loop *driveLoop, rc *roundCall) bool {
+func (s *Service) runToolCall(t *Turn, effects TurnEffects, loop *driveLoop, rc *roundCall) bool {
 	call := rc.call
 	// Arguments that did not parse are not arguments. The tool used to
 	// run on the empty map that stood in for them, and a list tool given
 	// no filters lists everything.
 	if call.ArgumentsError != "" {
 		outcome := invalidArguments(call)
-		s.recordToolResult(t, fx, call, &outcome)
+		s.recordToolResult(t, effects, call, &outcome)
 		// It counts against the budget like any call. A model whose output
 		// limit cuts every call short sends the same broken call each time,
 		// and a loop that did not count it asked the model again, and paid for
@@ -503,25 +503,25 @@ func (s *Service) runToolCall(t *Turn, fx TurnEffects, loop *driveLoop, rc *roun
 		return false
 	}
 	if outcome, refused := s.overBudget(t, call); refused {
-		s.recordToolResult(t, fx, call, &outcome)
+		s.recordToolResult(t, effects, call, &outcome)
 		return false
 	}
 
 	switch call.Name {
 	case runtimetools.FindToolsName:
-		outcome := s.findTools(t, fx, call)
-		s.recordToolResult(t, fx, call, &outcome)
+		outcome := s.findTools(t, effects, call)
+		s.recordToolResult(t, effects, call, &outcome)
 		return false
 	case askuser.Name:
-		outcome, shown := s.askUser(t, fx, loop, call)
+		outcome, shown := s.askUser(t, effects, loop, call)
 		t.result.ToolCallsUsed++
-		s.recordToolResult(t, fx, call, &outcome)
+		s.recordToolResult(t, effects, call, &outcome)
 		return shown
 	}
 
 	if outcome, handled := runtimetools.Answer(t, t.tools.Offers, call); handled {
 		t.result.ToolCallsUsed++
-		s.recordToolResult(t, fx, call, &outcome)
+		s.recordToolResult(t, effects, call, &outcome)
 		return false
 	}
 
@@ -533,14 +533,14 @@ func (s *Service) runToolCall(t *Turn, fx TurnEffects, loop *driveLoop, rc *roun
 		(t.Holds(runtimetools.DelegateTaskName) || t.req.Delegation != nil) {
 		outcome, ran := rc.fannedOut[call.ID]
 		if !ran {
-			outcome = delegation.Delegate(t, s.handing(t, fx), call)
+			outcome = delegation.Delegate(t, s.handing(t, effects), call)
 		}
 		t.result.ToolCallsUsed++
-		s.recordToolResult(t, fx, call, &outcome)
+		s.recordToolResult(t, effects, call, &outcome)
 		return false
 	}
 
-	s.runHeldCall(t, fx, loop, rc)
+	s.runHeldCall(t, effects, loop, rc)
 
 	return false
 }
@@ -575,7 +575,7 @@ func (s *Service) overBudget(t *Turn, call *llmports.ToolCall) (toolcall.Result,
 	), true
 }
 
-func (s *Service) findTools(t *Turn, fx TurnEffects, call *llmports.ToolCall) toolcall.Result {
+func (s *Service) findTools(t *Turn, effects TurnEffects, call *llmports.ToolCall) toolcall.Result {
 	tools := t.tools
 	tools.FindCalls++
 	if tools.FindCalls > toolaccess.MaxFindCalls {
@@ -591,7 +591,7 @@ func (s *Service) findTools(t *Turn, fx TurnEffects, call *llmports.ToolCall) to
 		)
 	}
 
-	answer := fx.Find(t, call.Arguments)
+	answer := effects.Find(t, call.Arguments)
 
 	return toolcall.Result{
 		Content: answer.Content + toolaccess.SearchesLeft(tools.FindCalls),
@@ -602,14 +602,14 @@ func (s *Service) findTools(t *Turn, fx TurnEffects, call *llmports.ToolCall) to
 
 func (s *Service) askUser(
 	t *Turn,
-	fx TurnEffects,
+	effects TurnEffects,
 	loop *driveLoop,
 	call *llmports.ToolCall,
 ) (toolcall.Result, bool) {
 	tools := t.tools
 	question := askuser.ComparableQuestion(argcheck.String(call.Arguments, "question"))
 	_, repeated := t.questions[question]
-	content, shown := askuser.Resolve(t.localNow(fx), call.Arguments)
+	content, shown := askuser.Resolve(t.localNow(effects), call.Arguments)
 	switch {
 	case !tools.Offers(askuser.Name) && t.req.Delegation != nil:
 		return toolcall.Refused(
@@ -642,13 +642,13 @@ func (s *Service) askUser(
 
 // runHeldCall runs a call to a tool the loop dispatches: one the agent holds,
 // unless the turn stopped for repeats or the same call already failed or read.
-func (s *Service) runHeldCall(t *Turn, fx TurnEffects, loop *driveLoop, rc *roundCall) {
+func (s *Service) runHeldCall(t *Turn, effects TurnEffects, loop *driveLoop, rc *roundCall) {
 	call := rc.call
 	result := t.result
 	if !t.Holds(call.Name) {
 		outcome := s.access.UnheldOutcome(t.tools, call.Name)
 		result.ToolCallsUsed++
-		s.recordToolResult(t, fx, call, &outcome)
+		s.recordToolResult(t, effects, call, &outcome)
 		return
 	}
 	if loop.stuck {
@@ -658,7 +658,7 @@ func (s *Service) runHeldCall(t *Turn, fx TurnEffects, loop *driveLoop, rc *roun
 			"%s",
 			loopguard.StoppedCallText(call.Name),
 		)
-		s.recordToolResult(t, fx, call, &outcome)
+		s.recordToolResult(t, effects, call, &outcome)
 		return
 	}
 
@@ -675,7 +675,7 @@ func (s *Service) runHeldCall(t *Turn, fx TurnEffects, loop *driveLoop, rc *roun
 			loopguard.RepeatRefusal(call.Name, previous),
 		)
 		result.ToolCallsUsed++
-		s.recordToolResult(t, fx, call, &outcome)
+		s.recordToolResult(t, effects, call, &outcome)
 		if t.repeats.Refused() {
 			loop.stuck = true
 		}
@@ -685,20 +685,20 @@ func (s *Service) runHeldCall(t *Turn, fx TurnEffects, loop *driveLoop, rc *roun
 	if t.repeats.ReadBefore(call) {
 		outcome := toolcall.Result{Content: loopguard.RepeatedRead(call.Name)}
 		result.ToolCallsUsed++
-		s.recordToolResult(t, fx, call, &outcome)
+		s.recordToolResult(t, effects, call, &outcome)
 		return
 	}
 
 	dispatch := t.dispatchCall(call, rc.text)
-	outcome := fx.Dispatch(t, &dispatch)
-	s.settleDispatched(t, fx, &dispatch, &outcome)
+	outcome := effects.Dispatch(t, &dispatch)
+	s.settleDispatched(t, effects, &dispatch, &outcome)
 }
 
 // driveSpent ends a turn whose tool budget is spent, or whose tools closed
 // for repeats, with an answer from what the tools returned.
 func (s *Service) driveSpent(
 	t *Turn,
-	fx TurnEffects,
+	effects TurnEffects,
 	loop *driveLoop,
 ) *agentruntimeports.RunResult {
 	result := t.result
@@ -706,14 +706,14 @@ func (s *Service) driveSpent(
 	if loop.stuck {
 		note, ending, guard = loopguard.StuckNote, loopguard.StuckReply, ReaskStuck
 	}
-	if final := s.finalAnswer(t, fx, result, note, guard); final != nil {
+	if final := s.finalAnswer(t, effects, result, note, guard); final != nil {
 		loop.grounding.Rewritten = true
-		s.reground(t, fx, final, &loop.grounding)
-		s.passReply(t, fx, final)
+		s.reground(t, effects, final, &loop.grounding)
+		s.passReply(t, effects, final)
 		loop.placement.Retried = true
-		s.placeArtifacts(t, fx, final, &loop.placement)
+		s.placeArtifacts(t, effects, final, &loop.placement)
 
-		return s.finish(result, final, fx)
+		return s.finish(result, final, effects)
 	}
 
 	result.Exhausted = true
@@ -721,9 +721,9 @@ func (s *Service) driveSpent(
 	result.Messages = append(result.Messages, conversation.Message{
 		Role:      conversation.RoleAssistant,
 		Content:   ending,
-		CreatedAt: fx.Now(),
+		CreatedAt: effects.Now(),
 	})
-	fx.Emit(modelstream.DeltaEvent(ending))
+	effects.Emit(modelstream.DeltaEvent(ending))
 
 	return result
 }
@@ -830,16 +830,16 @@ const budgetSpentNote = "You have used every tool call this turn allows. Answer 
 // still better than any of those.
 func (s *Service) finalAnswer(
 	t *Turn,
-	fx TurnEffects,
+	effects TurnEffects,
 	result *agentruntimeports.RunResult,
 	note, guard string,
 ) *llmports.ChatCompletionResult {
-	s.reask(t, fx, guard, nil)
+	s.reask(t, effects, guard, nil)
 	req := t.completionRequest()
 	req.ToolChoiceNone = true
 	req.Messages = append(slices.Clone(req.Messages), llmports.NoticeMessage(note))
 
-	reply, err := fx.Complete(t, req)
+	reply, err := effects.Complete(t, req)
 	result.Usage = result.Usage.Add(reply.TotalUsage())
 	completion := reply.Completion
 	if err != nil || reply.Looped || completion == nil ||
@@ -861,7 +861,7 @@ func (s *Service) finalAnswer(
 // to the model, and a transcript that hid it would not explain the turn.
 func (s *Service) recordToolResult(
 	t *Turn,
-	fx TurnEffects,
+	effects TurnEffects,
 	call *llmports.ToolCall,
 	reported *toolcall.Result,
 ) {
@@ -880,9 +880,9 @@ func (s *Service) recordToolResult(
 	}
 	result.Actions = append(result.Actions, reported.Batch...)
 	observable := reported.Outcome()
-	observed := fx.Observe(t, call, &observable)
+	observed := effects.Observe(t, call, &observable)
 	outcome := observed.Result()
-	s.countToolOutcome(t, fx, call.Name, &outcome)
+	s.countToolOutcome(t, effects, call.Name, &outcome)
 	t.keepShown(&outcome)
 	t.foldReplaced(outcome.Shown)
 	effect := s.access.ToolEffect(call.Name)
@@ -892,7 +892,7 @@ func (s *Service) recordToolResult(
 		records = toolresult.CitedRecords(outcome.Content)
 	}
 
-	fx.Emit(kernelports.StreamEvent{
+	effects.Emit(kernelports.StreamEvent{
 		Event: assistantstreamports.AssistantEventToolFinished,
 		Data: assistantstreamports.AssistantToolFinishedEvent{
 			CallID:        call.ID,
@@ -920,7 +920,7 @@ func (s *Service) recordToolResult(
 		FoundTools:     outcome.Found,
 		HandOffAgents:  outcome.HandOff,
 		DelegateReport: outcome.DelegateReport,
-		CreatedAt:      fx.Now(),
+		CreatedAt:      effects.Now(),
 	})
 	t.messages = append(t.messages, llmports.Message{
 		Role:           llmports.RoleTool,
@@ -938,7 +938,7 @@ func NewCallID() string { return "call_" + pulid.MustNew("tc_").String() }
 func (s *Service) finish(
 	result *agentruntimeports.RunResult,
 	completion *llmports.ChatCompletionResult,
-	fx TurnEffects,
+	effects TurnEffects,
 ) *agentruntimeports.RunResult {
 	guarded, outputDecision := agentguard.EvaluateOutput(completion.Text)
 	if outputDecision.Altered {
@@ -948,7 +948,7 @@ func (s *Service) finish(
 		)
 		result.OutputAltered = true
 		result.OutputRule = outputDecision.MatchedRule
-		fx.Emit(replycheck.ReplyReplacedEvent(guarded, outputAlteredReason))
+		effects.Emit(replycheck.ReplyReplacedEvent(guarded, outputAlteredReason))
 		completion.Text = guarded
 	}
 
@@ -975,7 +975,7 @@ func (s *Service) finish(
 		OutputTokens:      completion.OutputTokens,
 		LatencyMs:         completion.LatencyMs,
 		CostUSD:           completion.CostUSD,
-		CreatedAt:         fx.Now(),
+		CreatedAt:         effects.Now(),
 		ProviderMessageID: completion.ProviderMessageID,
 	}
 	if outputDecision.Altered {

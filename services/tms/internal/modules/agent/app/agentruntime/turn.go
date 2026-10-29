@@ -387,17 +387,115 @@ func (s *Service) OpenTurn(ctx context.Context, req *agentruntimeports.RunReques
 	if len(runtimeContext.Tools) == 0 {
 		runtimeContext.Tools = s.access.ToolSummaries(definition)
 	}
+
+	// Another agent's steps on a task this one handed it are never replayed:
+	// the model only ever saw its own call and the answer it got back. The
+	// thread's reader leaves them out already; this holds for any caller.
+	history := turnhistory.ModelHistory(req.History)
+
+	kit := s.openTurnTools(ctx, req, &runtimeContext, history)
+	memoryFit := s.memoriesForPrompt(ctx, req, &runtimeContext)
+	runtimeContext.Memories = memoryFit.Carried
+	runtimeContext.MemoriesHeldBack = memoryFit.HeldBack
+	// A task handed to another agent reads memories for that agent; the card
+	// under the reply says what the conversation's own agent used.
+	var (
+		usedMemories []pulid.ID
+		toolMemories map[string][]pulid.ID
+	)
+	if req.Delegation == nil {
+		usedMemories = memoryFit.Used
+		toolMemories = memoryFit.ByTool
+	}
+	repeats := loopguard.NewRepeatGuard()
+	counts := tooldispatch.NewOrdinals()
+	// A delegate's turn shares the ledger of the turn that delegated, and is
+	// opened once per task, so there is no earlier attempt of it to learn
+	// from; the ledger's lessons are the other turn's.
+	if req.Delegation == nil {
+		s.dispatcher.SeedFromLedger(ctx, req, repeats)
+	}
+
+	messages, shortened := turnhistory.ReplayHistoryWithFiles(history, req.Proposals, req.FileTexts)
+	now := turnNow(&runtimeContext)
+	input := &turnInput{
+		req:     req,
+		history: history,
+		command: kit.command,
+		context: &runtimeContext,
+		now:     now,
+	}
+	messages = append(messages, input.message())
+	taint, opened := turntaint.Open(req, &runtimeContext, now)
+
+	prompt := agentprompt.BuildSystemPromptParts(definition, &runtimeContext)
+
+	return &Turn{
+		s:            s,
+		req:          req,
+		budget:       budget,
+		system:       prompt.Stable + prompt.Volatile,
+		systemStable: len(prompt.Stable),
+		messages:     messages,
+		evidence: replycheck.FiguresOf(
+			append(shortened, maputils.SortedValues(req.FileTexts)...),
+		),
+		tools:  kit.set,
+		held:   kit.held,
+		beyond: kit.beyond,
+		mode:   kit.mode,
+		reads: s.dispatcher.ConcurrentReads(
+			append(slices.Clone(kit.held), toolaccess.BeyondNames(kit.beyond)...),
+		),
+		repeats:   repeats,
+		counts:    counts,
+		questions: askuser.AskedQuestions(history),
+		decisions: make(map[pulid.ID]struct{}, 1),
+		callIDs:   turnhistory.UsedCallIDs(req.History),
+		result: &agentruntimeports.RunResult{
+			Messages: []conversation.Message{{
+				Role:      conversation.RoleUser,
+				Content:   req.Input,
+				CreatedAt: now,
+			}},
+			Taint:         taint,
+			Fingerprint:   s.access.Fingerprint(definition, preferredProvider(req, definition), ""),
+			UsedMemoryIDs: usedMemories,
+		},
+		delegates:    kit.delegates,
+		directed:     delegation.DirectedTask(req),
+		command:      kit.command,
+		opened:       opened,
+		external:     req.AfterExternalContent,
+		world:        s.watchWorld(ctx, req, now),
+		toolMemories: toolMemories,
+	}
+}
+
+type turnTools struct {
+	set       *toolaccess.ToolSet
+	held      []string
+	beyond    map[string]agent.AutonomyTier
+	mode      toolaccess.ProfileMode
+	delegates []agentturn.RuntimeDelegate
+	command   agentextension.Command
+}
+
+// openTurnTools builds the tool set the actor may use on the turn and
+// describes it in the runtime context.
+func (s *Service) openTurnTools(
+	ctx context.Context,
+	req *agentruntimeports.RunRequest,
+	runtimeContext *agentturn.RuntimeContext,
+	history []conversation.Message,
+) turnTools {
+	definition := req.Definition
 	active := s.access.ActiveExtensions(ctx, req.Actor)
 	granted := active.Grants()
 	runtimeContext.Tools = toolaccess.WithSummaries(
 		runtimeContext.Tools,
 		s.access.Summarize(definition, granted),
 	)
-
-	// Another agent's steps on a task this one handed it are never replayed:
-	// the model only ever saw its own call and the answer it got back. The
-	// thread's reader leaves them out already; this holds for any caller.
-	history := turnhistory.ModelHistory(req.History)
 
 	job := s.access.ProfileFor(ctx, req, granted)
 	held := job.Held
@@ -434,82 +532,15 @@ func (s *Service) OpenTurn(ctx context.Context, req *agentruntimeports.RunReques
 	if tools.Pinned {
 		command = req.Command
 	}
-	s.describeToolSet(&runtimeContext, req, tools, job.Mode)
-	memoryFit := s.memoriesForPrompt(ctx, req, &runtimeContext)
-	runtimeContext.Memories = memoryFit.Carried
-	runtimeContext.MemoriesHeldBack = memoryFit.HeldBack
-	// A task handed to another agent reads memories for that agent; the card
-	// under the reply says what the conversation's own agent used.
-	var (
-		usedMemories []pulid.ID
-		toolMemories map[string][]pulid.ID
-	)
-	if req.Delegation == nil {
-		usedMemories = memoryFit.Used
-		toolMemories = memoryFit.ByTool
-	}
-	repeats := loopguard.NewRepeatGuard()
-	counts := tooldispatch.NewOrdinals()
-	// A delegate's turn shares the ledger of the turn that delegated, and is
-	// opened once per task, so there is no earlier attempt of it to learn
-	// from; the ledger's lessons are the other turn's.
-	if req.Delegation == nil {
-		s.dispatcher.SeedFromLedger(ctx, req, repeats)
-	}
+	s.describeToolSet(runtimeContext, req, tools, job.Mode)
 
-	messages, shortened := turnhistory.ReplayHistoryWithFiles(history, req.Proposals, req.FileTexts)
-	now := turnNow(&runtimeContext)
-	input := &turnInput{
-		req:     req,
-		history: history,
-		command: command,
-		context: &runtimeContext,
-		now:     now,
-	}
-	messages = append(messages, input.message())
-	taint, opened := turntaint.Open(req, &runtimeContext, now)
-
-	prompt := agentprompt.BuildSystemPromptParts(definition, &runtimeContext)
-
-	return &Turn{
-		s:            s,
-		req:          req,
-		budget:       budget,
-		system:       prompt.Stable + prompt.Volatile,
-		systemStable: len(prompt.Stable),
-		messages:     messages,
-		evidence: replycheck.FiguresOf(
-			append(shortened, maputils.SortedValues(req.FileTexts)...),
-		),
-		tools:  tools,
-		held:   held,
-		beyond: job.Beyond,
-		mode:   job.Mode,
-		reads: s.dispatcher.ConcurrentReads(
-			append(slices.Clone(held), toolaccess.BeyondNames(job.Beyond)...),
-		),
-		repeats:   repeats,
-		counts:    counts,
-		questions: askuser.AskedQuestions(history),
-		decisions: make(map[pulid.ID]struct{}, 1),
-		callIDs:   turnhistory.UsedCallIDs(req.History),
-		result: &agentruntimeports.RunResult{
-			Messages: []conversation.Message{{
-				Role:      conversation.RoleUser,
-				Content:   req.Input,
-				CreatedAt: now,
-			}},
-			Taint:         taint,
-			Fingerprint:   s.access.Fingerprint(definition, preferredProvider(req, definition), ""),
-			UsedMemoryIDs: usedMemories,
-		},
-		delegates:    delegates,
-		directed:     delegation.DirectedTask(req),
-		command:      command,
-		opened:       opened,
-		external:     req.AfterExternalContent,
-		world:        s.watchWorld(ctx, req, now),
-		toolMemories: toolMemories,
+	return turnTools{
+		set:       tools,
+		held:      held,
+		beyond:    job.Beyond,
+		mode:      job.Mode,
+		delegates: delegates,
+		command:   command,
 	}
 }
 

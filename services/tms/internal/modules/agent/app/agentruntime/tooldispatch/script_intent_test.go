@@ -53,7 +53,7 @@ func intentDispatch(
 		mutate(&p)
 	}
 
-	return d.dispatch(t.Context(), p)
+	return d.dispatch(t.Context(), &p)
 }
 
 func TestDispatch_AScriptsWriteIsAnIntentThatNeverRuns(t *testing.T) {
@@ -111,7 +111,7 @@ func TestDispatch_AScriptsWriteTheActorMayNotMakeIsRefused(t *testing.T) {
 			Denied: map[string]bool{"shipment_move:update": true},
 		},
 	})
-	outcome := d.dispatch(t.Context(), DispatchParams{
+	outcome := d.dispatch(t.Context(), &DispatchParams{
 		req: &agentruntimeports.RunRequest{
 			Definition: runtimetest.Definition(tool.ToolName),
 			Actor:      runtimetest.Actor(),

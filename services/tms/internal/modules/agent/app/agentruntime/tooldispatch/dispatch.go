@@ -75,7 +75,7 @@ type DispatchParams struct {
 	caller string
 }
 
-func (s *Dispatcher) dispatch(ctx context.Context, p DispatchParams) toolcall.Result {
+func (s *Dispatcher) dispatch(ctx context.Context, p *DispatchParams) toolcall.Result {
 	req := p.req
 	call := p.call
 	// The loop refuses a tool the agent does not hold before it gets here, with
@@ -104,7 +104,7 @@ func (s *Dispatcher) dispatch(ctx context.Context, p DispatchParams) toolcall.Re
 	}
 
 	if tool, ok := s.queryTools.Get(call.Name); ok {
-		return s.dispatchQuery(ctx, &p, tool, selfScoped)
+		return s.dispatchQuery(ctx, p, tool, selfScoped)
 	}
 
 	tool, ok := s.actionTools.Get(call.Name)
@@ -113,7 +113,7 @@ func (s *Dispatcher) dispatch(ctx context.Context, p DispatchParams) toolcall.Re
 			"Tool %q does not exist.", call.Name)
 	}
 
-	return s.dispatchAction(ctx, &p, tool, selfScoped)
+	return s.dispatchAction(ctx, p, tool, selfScoped)
 }
 
 func (s *Dispatcher) dispatchQuery(

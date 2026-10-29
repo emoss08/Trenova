@@ -110,7 +110,7 @@ func (s *Dispatcher) GuardedDispatch(
 	defer span.End()
 
 	if key == "" {
-		outcome := s.dispatch(ctx, DispatchParams{
+		outcome := s.dispatch(ctx, &DispatchParams{
 			req:            req,
 			call:           p.Call,
 			completionText: p.CompletionText,
@@ -194,7 +194,7 @@ func (s *Dispatcher) claimAndDispatch(
 	case agentruntimeports.StepFresh:
 	}
 
-	outcome := s.dispatch(ctx, DispatchParams{
+	outcome := s.dispatch(ctx, &DispatchParams{
 		req:            req,
 		call:           p.Call,
 		completionText: p.CompletionText,
