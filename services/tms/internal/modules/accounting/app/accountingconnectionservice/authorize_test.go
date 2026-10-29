@@ -4,6 +4,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingconnectionauth"
+	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingconnectionkit"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
@@ -82,7 +84,7 @@ func TestTheHeldGrantIsSealed(t *testing.T) {
 		assert.NotContains(t, state.SealedGrant, "refresh-1")
 		assert.NotContains(t, state.SealedGrant, "access-1")
 		assert.Len(t, state.Companies, 2)
-		assert.Equal(t, companyChoiceTTL, h.states.ttls[state.State])
+		assert.Equal(t, accountingconnectionauth.CompanyChoiceTTL, h.states.ttls[state.State])
 	}
 }
 
@@ -99,7 +101,12 @@ func TestChoosingACompanyConnectsItAndReleasesTheOthers(t *testing.T) {
 	assert.Equal(
 		t,
 		"refresh-1",
-		h.decrypt(t, conn, refreshTokenField, h.connections.tokens[conn.ID].refresh),
+		h.decrypt(
+			t,
+			conn,
+			accountingconnectionkit.RefreshTokenField,
+			h.connections.tokens[conn.ID].refresh,
+		),
 	)
 	assert.Equal(
 		t,

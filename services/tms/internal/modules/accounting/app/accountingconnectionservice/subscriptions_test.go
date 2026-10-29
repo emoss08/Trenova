@@ -9,6 +9,8 @@ import (
 	"time"
 
 	"github.com/bytedance/sonic"
+	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingconnectionkit"
+	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingconnectionsubscriptions"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
@@ -336,7 +338,7 @@ func (h *bcHarness) seedConnection(t *testing.T) *accountingconnection.Accountin
 	}
 	conn.BindApp(testInstanceApp.Identity())
 	conn.EnableSync(accountingconnection.SyncSettings{StartDate: now}, now)
-	grant, err := h.svc.seal(conn, &accountingconnectorports.AccountingTokenGrant{
+	grant, err := h.kit.Seal(conn, &accountingconnectorports.AccountingTokenGrant{
 		AccessToken:     "bc-access",
 		RefreshToken:    "bc-refresh",
 		AccessTokenTTL:  time.Hour,
@@ -471,7 +473,11 @@ func TestWithoutAPublicAddressNothingSubscribes(t *testing.T) {
 	assert.Empty(t, h.bc.sub.created)
 	for _, row := range h.subs.all() {
 		assert.Equal(t, accountingconnection.WebhookSubscriptionFailed, row.Status)
-		assert.Equal(t, errNoNotificationURL.Error(), row.LastError)
+		assert.Equal(
+			t,
+			accountingconnectionsubscriptions.ErrNoNotificationURL.Error(),
+			row.LastError,
+		)
 	}
 	status, err := h.svc.Status(t.Context(), h.tenant, integration.TypeBusinessCentral)
 	require.NoError(t, err)
@@ -562,7 +568,7 @@ func TestANotificationOnAnotherAppsPathIsRefused(t *testing.T) {
 	}
 	sealed, err := h.encryption.EncryptStringWithAAD(
 		"other-secret",
-		appAAD(other, clientSecretField),
+		accountingconnectionkit.AppAAD(other, accountingconnectionkit.ClientSecretField),
 	)
 	require.NoError(t, err)
 	other.ClientSecretCiphertext = sealed

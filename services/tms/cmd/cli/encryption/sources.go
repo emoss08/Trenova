@@ -3,7 +3,7 @@ package encryption
 import (
 	"slices"
 
-	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingconnectionservice"
+	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingconnectionkit"
 	"github.com/emoss08/trenova/internal/modules/agent/app/aiproviderservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/extensionsecrets"
 	"github.com/emoss08/trenova/internal/modules/billing/app/factoringtransportservice"
@@ -20,7 +20,7 @@ import (
 func envelopeSources(includeObjects bool) *kernelports.EnvelopeSources {
 	sources := &kernelports.EnvelopeSources{
 		Columns: slices.Concat(
-			accountingconnectionservice.EnvelopeColumns(),
+			accountingconnectionkit.EnvelopeColumns(),
 			aiproviderservice.EnvelopeColumns(),
 			extensionsecrets.EnvelopeColumns(),
 			integrationservice.EnvelopeColumns(),

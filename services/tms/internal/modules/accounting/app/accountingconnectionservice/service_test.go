@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingconnectionkit"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
@@ -30,6 +31,7 @@ const testRealm = "9341452431742015"
 
 type harness struct {
 	svc          *Service
+	kit          *accountingconnectionkit.Kit
 	connections  *fakeConnections
 	apps         *fakeApps
 	states       *fakeStates
@@ -81,6 +83,12 @@ func newHarness(t *testing.T) *harness {
 		Refresher:    h.refresher,
 		Poller:       h.poller,
 		Certificates: h.certificates,
+	})
+	h.kit = accountingconnectionkit.New(accountingconnectionkit.Deps{
+		Logger:      zap.NewNop(),
+		Connections: h.connections,
+		Apps:        h.apps,
+		Encryption:  h.encryption,
 	})
 	return h
 }
@@ -139,7 +147,10 @@ func (h *harness) decrypt(
 	field, ciphertext string,
 ) string {
 	t.Helper()
-	value, err := h.encryption.DecryptStringWithAAD(ciphertext, connectionAAD(conn, field))
+	value, err := h.encryption.DecryptStringWithAAD(
+		ciphertext,
+		accountingconnectionkit.ConnectionAAD(conn, field),
+	)
 	require.NoError(t, err)
 	return value
 }
@@ -220,14 +231,22 @@ func TestCompleteAuthorizationConnectsWithEncryptedTokens(t *testing.T) {
 	stored := h.connections.tokens[conn.ID]
 	assert.NotEqual(t, "access-1", stored.access)
 	assert.NotEqual(t, "refresh-1", stored.refresh)
-	assert.Equal(t, "access-1", h.decrypt(t, conn, accessTokenField, stored.access))
-	assert.Equal(t, "refresh-1", h.decrypt(t, conn, refreshTokenField, stored.refresh))
+	assert.Equal(
+		t,
+		"access-1",
+		h.decrypt(t, conn, accountingconnectionkit.AccessTokenField, stored.access),
+	)
+	assert.Equal(
+		t,
+		"refresh-1",
+		h.decrypt(t, conn, accountingconnectionkit.RefreshTokenField, stored.refresh),
+	)
 
 	other := *conn
 	other.ID = pulid.MustNew("acctc_")
 	_, err := h.encryption.DecryptStringWithAAD(
 		stored.access,
-		connectionAAD(&other, accessTokenField),
+		accountingconnectionkit.ConnectionAAD(&other, accountingconnectionkit.AccessTokenField),
 	)
 	require.Error(t, err, "a token must not decrypt under another connection's binding")
 
@@ -388,7 +407,12 @@ func TestReconnectAfterRevocationReusesTheRow(t *testing.T) {
 	assert.Equal(
 		t,
 		"access-2",
-		h.decrypt(t, again, accessTokenField, h.connections.tokens[conn.ID].access),
+		h.decrypt(
+			t,
+			again,
+			accountingconnectionkit.AccessTokenField,
+			h.connections.tokens[conn.ID].access,
+		),
 	)
 	assert.Len(t, h.connections.rows, 1)
 }
@@ -473,8 +497,16 @@ func TestCheckHealthRefreshesAnExpiringToken(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, []string{"refresh-1"}, h.connector.refreshedWith)
 	stored := h.connections.tokens[conn.ID]
-	assert.Equal(t, "access-2", h.decrypt(t, conn, accessTokenField, stored.access))
-	assert.Equal(t, "refresh-2", h.decrypt(t, conn, refreshTokenField, stored.refresh))
+	assert.Equal(
+		t,
+		"access-2",
+		h.decrypt(t, conn, accountingconnectionkit.AccessTokenField, stored.access),
+	)
+	assert.Equal(
+		t,
+		"refresh-2",
+		h.decrypt(t, conn, accountingconnectionkit.RefreshTokenField, stored.refresh),
+	)
 	assert.Equal(t, "access-2", h.connector.factsCalls[len(h.connector.factsCalls)-1])
 	assert.Greater(t, stored.accessExpires, timeutils.NowUnix()+3000)
 }

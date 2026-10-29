@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingconnectionkit"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
@@ -122,7 +123,7 @@ func TestPrepareCertificateSealsTheKeyAndReturnsTheCertificate(t *testing.T) {
 	assert.NotContains(t, pending.PrivateKeyCiphertext, "PRIVATE KEY")
 	key, err := h.encryption.DecryptStringWithAAD(
 		pending.PrivateKeyCiphertext,
-		pendingKeyAAD(pending),
+		accountingconnectionkit.PendingKeyAAD(pending),
 	)
 	require.NoError(t, err)
 	assert.Equal(t, h.connector.clientCredentials().preparedKeys[0], key)
@@ -210,8 +211,16 @@ func TestConnectWithCertificateStoresTheKeyAndNoRefreshToken(t *testing.T) {
 
 	stored := h.connections.tokens[conn.ID]
 	assert.Empty(t, stored.refresh)
-	assert.Equal(t, "cert-access", h.decrypt(t, conn, accessTokenField, stored.access))
-	assert.Equal(t, cc.preparedKeys[0], h.decrypt(t, conn, clientKeyField, stored.clientKey))
+	assert.Equal(
+		t,
+		"cert-access",
+		h.decrypt(t, conn, accountingconnectionkit.AccessTokenField, stored.access),
+	)
+	assert.Equal(
+		t,
+		cc.preparedKeys[0],
+		h.decrypt(t, conn, accountingconnectionkit.ClientKeyField, stored.clientKey),
+	)
 	assert.Zero(t, h.certificates.count(), "the pending certificate is consumed by the connection")
 	assert.Empty(
 		t,
@@ -270,7 +279,7 @@ func TestConnectWithCertificateOffersTheSubsidiariesAndKeepsTheKeyOutOfTheChoice
 	assert.Equal(
 		t,
 		h.connector.clientCredentials().preparedKeys[0],
-		h.decrypt(t, conn, clientKeyField, stored.clientKey),
+		h.decrypt(t, conn, accountingconnectionkit.ClientKeyField, stored.clientKey),
 	)
 	assert.Zero(t, h.certificates.count())
 }
@@ -295,7 +304,11 @@ func TestCertificateConnectionTakesATokenPerAssertionAndNeverRefreshes(t *testin
 	assert.Equal(t, netSuiteRealm, cc.assertions[1].realmID)
 	assert.Equal(t, cc.preparedKeys[0], cc.assertions[1].privateKey)
 	stored := h.connections.tokens[conn.ID]
-	assert.Equal(t, "cert-access-2", h.decrypt(t, conn, accessTokenField, stored.access))
+	assert.Equal(
+		t,
+		"cert-access-2",
+		h.decrypt(t, conn, accountingconnectionkit.AccessTokenField, stored.access),
+	)
 	assert.Empty(t, stored.refresh)
 	assert.Equal(t, "cert-access-2", h.connector.factsCalls[len(h.connector.factsCalls)-1])
 }
@@ -347,7 +360,11 @@ func TestRenewCertificateReplacesTheKeyAndCertificate(t *testing.T) {
 	assert.Equal(t, cc.preparedKeys[1], cc.assertions[1].privateKey)
 
 	stored := h.connections.tokens[conn.ID]
-	assert.Equal(t, cc.preparedKeys[1], h.decrypt(t, conn, clientKeyField, stored.clientKey))
+	assert.Equal(
+		t,
+		cc.preparedKeys[1],
+		h.decrypt(t, conn, accountingconnectionkit.ClientKeyField, stored.clientKey),
+	)
 	assert.Zero(t, h.certificates.count())
 	assert.NotEmpty(t, h.audit.entries)
 	assert.True(t, h.audit.entries[len(h.audit.entries)-1].Critical)
@@ -443,6 +460,11 @@ func TestSigningInAfterACertificateConnectionDropsTheCertificate(t *testing.T) {
 	assert.Equal(
 		t,
 		"refresh-1",
-		h.decrypt(t, reconnected, refreshTokenField, h.connections.tokens[conn.ID].refresh),
+		h.decrypt(
+			t,
+			reconnected,
+			accountingconnectionkit.RefreshTokenField,
+			h.connections.tokens[conn.ID].refresh,
+		),
 	)
 }

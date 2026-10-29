@@ -1,14 +1,17 @@
-package accountingconnectionservice
+package accountingconnectionapps
 
 import (
 	"context"
 	"errors"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingconnectionkit"
+	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingconnectionstatus"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -22,273 +25,6 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/zap"
 )
-
-const (
-	clientSecretField    = "client_secret"
-	webhookVerifierField = "webhook_verifier"
-)
-
-var errAppChanged = errors.New(
-	"the app this company was connected through was changed or removed; reconnect to resume",
-)
-
-func (s *Service) provider(
-	typ integration.Type,
-) (accountingconnectorports.AccountingProvider, error) {
-	provider, ok := s.connectors.For(typ)
-	if !ok || !accountingprovider.SupportsAccountingSync(typ) {
-		return nil, errortypes.NewValidationError(
-			"integrationType",
-			errortypes.ErrInvalid,
-			"{0} is not an accounting system Trenova can sync with",
-			string(typ),
-		)
-	}
-	return provider, nil
-}
-
-func errAppNotSetUp(provider string) error {
-	return errortypes.NewBusinessError(
-		"{0} has no app to connect through. Add your own {0} app's keys on this page, or ask the server's administrator to configure one for the whole server.",
-		provider,
-	)
-}
-
-func errNoRedirect(provider string) error {
-	return errortypes.NewBusinessError(
-		"This Trenova server has no web address configured (app.webBaseUrl), so {0} cannot send people back after they sign in. Ask the server's administrator to set it.",
-		provider,
-	)
-}
-
-func appAAD(
-	cred *accountingconnection.AccountingAppCredential,
-	field string,
-) encryptionservice.AAD {
-	return encryptionservice.AAD{
-		Purpose:        encryptionservice.PurposeAccountingAppSecret,
-		OrganizationID: cred.OrganizationID,
-		BusinessUnitID: cred.BusinessUnitID,
-		ResourceID:     cred.ID.String() + ":" + field,
-	}
-}
-
-func (s *Service) tenantCredential(
-	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
-	typ integration.Type,
-) (*accountingconnection.AccountingAppCredential, bool, error) {
-	cred, err := s.apps.GetByType(ctx, accountingconnectionports.GetAccountingAppCredentialRequest{
-		TenantInfo:      tenantInfo,
-		IntegrationType: typ,
-	})
-	switch {
-	case err == nil:
-		return cred, true, nil
-	case errortypes.IsNotFoundError(err):
-		return nil, false, nil
-	default:
-		return nil, false, err
-	}
-}
-
-func (s *Service) openCredential(
-	cred *accountingconnection.AccountingAppCredential,
-) (*accountingconnectorports.AccountingApp, error) {
-	secret, err := s.encryption.DecryptStringWithAAD(
-		cred.ClientSecretCiphertext,
-		appAAD(cred, clientSecretField),
-	)
-	if err != nil {
-		return nil, err
-	}
-	app := &accountingconnectorports.AccountingApp{
-		Source:       accountingconnection.AppSourceTenant,
-		Environment:  cred.Environment,
-		ClientID:     cred.ClientID,
-		ClientSecret: secret,
-	}
-	if cred.HasWebhookVerifier() {
-		verifier, openErr := s.encryption.DecryptStringWithAAD(
-			cred.WebhookVerifierCiphertext,
-			appAAD(cred, webhookVerifierField),
-		)
-		if openErr != nil {
-			return nil, openErr
-		}
-		app.WebhookVerifierToken = verifier
-	}
-	return app, nil
-}
-
-func (s *Service) appForTenant(
-	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
-	provider accountingconnectorports.AccountingProvider,
-) (*accountingconnectorports.AccountingApp, error) {
-	name := accountingprovider.ProviderName(provider.IntegrationType())
-	cred, found, err := s.tenantCredential(ctx, tenantInfo, provider.IntegrationType())
-	if err != nil {
-		return nil, err
-	}
-	if found {
-		app, openErr := s.openCredential(cred)
-		if openErr != nil {
-			return nil, errortypes.NewBusinessError(
-				"The saved {0} app keys could not be read. Enter them again.",
-				name,
-			).WithInternal(openErr)
-		}
-		return app, nil
-	}
-	if app, ok := provider.InstanceApp(); ok {
-		return app, nil
-	}
-	return nil, errAppNotSetUp(name)
-}
-
-func (s *Service) appForConnection(
-	ctx context.Context,
-	provider accountingconnectorports.AccountingProvider,
-	conn *accountingconnection.AccountingConnection,
-) (*accountingconnectorports.AccountingApp, error) {
-	var app *accountingconnectorports.AccountingApp
-	switch conn.AppSource {
-	case accountingconnection.AppSourceTenant:
-		cred, found, err := s.tenantCredential(
-			ctx,
-			pagination.TenantInfo{OrgID: conn.OrganizationID, BuID: conn.BusinessUnitID},
-			conn.IntegrationType,
-		)
-		if err != nil {
-			return nil, err
-		}
-		if !found {
-			return nil, errAppChanged
-		}
-		if app, err = s.openCredential(cred); err != nil {
-			return nil, err
-		}
-	case accountingconnection.AppSourceInstance:
-		instance, ok := provider.InstanceApp()
-		if !ok {
-			return nil, errAppChanged
-		}
-		app = instance
-	default:
-		return nil, errAppChanged
-	}
-	if !conn.ConnectedThrough(app.Identity()) {
-		return nil, errAppChanged
-	}
-	return app, nil
-}
-
-func (s *Service) connectorFor(
-	ctx context.Context,
-	provider accountingconnectorports.AccountingProvider,
-	conn *accountingconnection.AccountingConnection,
-) (accountingconnectorports.AccountingConnector, error) {
-	app, err := s.appForConnection(ctx, provider, conn)
-	if err != nil {
-		return nil, err
-	}
-	return provider.Bind(app)
-}
-
-func (s *Service) appSettings(
-	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
-	provider accountingconnectorports.AccountingProvider,
-) (*accountingconnectionports.AccountingAppSettings, error) {
-	typ := provider.IntegrationType()
-	profile := accountingprovider.MustProfile(typ)
-	settings := &accountingconnectionports.AccountingAppSettings{
-		RedirectURL: provider.RedirectURL(),
-		WebhookPath: profile.WebhookPath(),
-	}
-	if instance, ok := provider.InstanceApp(); ok {
-		settings.InstanceAppAvailable = true
-		settings.InstanceEnvironment = instance.Environment
-		settings.ActiveSource = accountingconnection.AppSourceInstance
-	}
-
-	cred, found, err := s.tenantCredential(ctx, tenantInfo, typ)
-	if err != nil {
-		return nil, err
-	}
-	if found {
-		settings.TenantApp = cred
-		settings.ActiveSource = accountingconnection.AppSourceTenant
-		settings.WebhookPath = profile.AppWebhookPath(cred.ID.String())
-	}
-	return settings, nil
-}
-
-func validateSaveApp(req *accountingconnectionports.SaveAccountingAppRequest) error {
-	multiErr := errortypes.NewMultiError()
-	if strings.TrimSpace(req.ClientID) == "" {
-		multiErr.Add("clientId", errortypes.ErrRequired, "Client ID is required")
-	}
-	profile := accountingprovider.MustProfile(req.IntegrationType)
-	if !req.Environment.IsValid() || !profile.HasEnvironment(req.Environment) {
-		multiErr.Add(
-			"environment",
-			errortypes.ErrInvalid,
-			"{0} apps run in {1}",
-			profile.Name,
-			environmentList(profile.Environments),
-		)
-	}
-	if req.ClearWebhookVerifierToken && strings.TrimSpace(req.WebhookVerifierToken) != "" {
-		multiErr.Add(
-			"webhookVerifierToken",
-			errortypes.ErrInvalid,
-			"Enter a verifier token or clear it, not both",
-		)
-	}
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-	return nil
-}
-
-func environmentList(environments []accountingprovider.AppEnvironment) string {
-	names := make([]string, 0, len(environments))
-	for _, env := range environments {
-		names = append(names, string(env))
-	}
-	return strings.Join(names, " or ")
-}
-
-type appChange struct {
-	req      *accountingconnectionports.SaveAccountingAppRequest
-	existing *accountingconnection.AccountingAppCredential
-	conn     *accountingconnection.AccountingConnection
-	provider string
-}
-
-func (c *appChange) guardActiveConnection() error {
-	if c.conn == nil || !c.conn.IsActive() {
-		return nil
-	}
-	if c.conn.AppSource != accountingconnection.AppSourceTenant {
-		return errortypes.NewBusinessError(
-			"{0} company {1} is connected through this server's app. Disconnect it before switching to your own app.",
-			c.provider,
-			c.conn.ExternalCompanyName,
-		)
-	}
-	fingerprint := accountingconnection.AppFingerprint(c.req.Environment, c.req.ClientID)
-	if c.conn.AppFingerprint != fingerprint {
-		return errortypes.NewBusinessError(
-			"Disconnect {0} company {1} before changing the client ID or environment. Its authorization belongs to the app it was connected through; you can still replace the client secret or the webhook verifier token.",
-			c.provider,
-			c.conn.ExternalCompanyName,
-		)
-	}
-	return nil
-}
 
 func (s *Service) activeConnection(
 	ctx context.Context,
@@ -336,7 +72,7 @@ func (s *Service) sealCredential(
 	case secret != "":
 		sealed, err := s.encryption.EncryptStringWithAAD(
 			secret,
-			appAAD(cred, clientSecretField),
+			accountingconnectionkit.AppAAD(cred, accountingconnectionkit.ClientSecretField),
 		)
 		if err != nil {
 			return nil, err
@@ -354,7 +90,7 @@ func (s *Service) sealCredential(
 	case verifier != "":
 		sealed, err := s.encryption.EncryptStringWithAAD(
 			verifier,
-			appAAD(cred, webhookVerifierField),
+			accountingconnectionkit.AppAAD(cred, accountingconnectionkit.WebhookVerifierField),
 		)
 		if err != nil {
 			return nil, err
@@ -379,9 +115,9 @@ func (s *Service) verifyCredential(
 ) error {
 	name := accountingprovider.ProviderName(provider.IntegrationType())
 	if provider.RedirectURL() == "" {
-		return errNoRedirect(name)
+		return accountingconnectionkit.ErrNoRedirect(name)
 	}
-	app, err := s.openCredential(cred)
+	app, err := s.kit.OpenCredential(cred)
 	if err != nil {
 		return err
 	}
@@ -412,7 +148,7 @@ func (s *Service) prepareAppChange(
 	req *accountingconnectionports.SaveAccountingAppRequest,
 ) (*appChange, error) {
 	change := &appChange{req: req, provider: accountingprovider.ProviderName(req.IntegrationType)}
-	existing, found, err := s.tenantCredential(ctx, req.TenantInfo, req.IntegrationType)
+	existing, found, err := s.kit.TenantCredential(ctx, req.TenantInfo, req.IntegrationType)
 	if err != nil {
 		return nil, err
 	}
@@ -436,10 +172,10 @@ func (s *Service) SaveApp(
 	if err := validateSaveApp(req); err != nil {
 		return nil, err
 	}
-	if err := s.requireIntegrations(ctx, req.TenantInfo); err != nil {
+	if err := s.kit.RequireIntegrations(ctx, req.TenantInfo); err != nil {
 		return nil, err
 	}
-	provider, err := s.provider(req.IntegrationType)
+	provider, err := s.kit.Provider(req.IntegrationType)
 	if err != nil {
 		return nil, err
 	}
@@ -485,28 +221,25 @@ func (s *Service) SaveApp(
 	s.logAppAudit(saved, req.UserID, previous, "Saved the "+name+" app keys ("+
 		string(saved.Environment)+", client "+saved.ClientID+")")
 	s.publishAppInvalidation(ctx, saved.OrganizationID, saved.BusinessUnitID, saved.ID, req.UserID)
-	return s.Status(ctx, req.TenantInfo, req.IntegrationType)
-}
-
-func sameCredentialVersion(before, after *accountingconnection.AccountingAppCredential) bool {
-	if before == nil || after == nil {
-		return before == nil && after == nil
-	}
-	return before.ID == after.ID && before.Version == after.Version
+	return s.status.Status(ctx, req.TenantInfo, req.IntegrationType)
 }
 
 func (s *Service) RemoveApp(
 	ctx context.Context,
 	req *accountingconnectionports.RemoveAccountingAppRequest,
 ) (*accountingconnectionports.AccountingSyncStatus, error) {
-	if _, err := s.provider(req.IntegrationType); err != nil {
+	if _, err := s.kit.Provider(req.IntegrationType); err != nil {
 		return nil, err
 	}
 	name := accountingprovider.ProviderName(req.IntegrationType)
 
 	var removed *accountingconnection.AccountingAppCredential
 	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
-		existing, found, getErr := s.tenantCredential(txCtx, req.TenantInfo, req.IntegrationType)
+		existing, found, getErr := s.kit.TenantCredential(
+			txCtx,
+			req.TenantInfo,
+			req.IntegrationType,
+		)
 		if getErr != nil || !found {
 			return getErr
 		}
@@ -543,7 +276,7 @@ func (s *Service) RemoveApp(
 			req.UserID,
 		)
 	}
-	return s.Status(ctx, req.TenantInfo, req.IntegrationType)
+	return s.status.Status(ctx, req.TenantInfo, req.IntegrationType)
 }
 
 func (s *Service) logAppAudit(
@@ -584,5 +317,44 @@ func (s *Service) publishAppInvalidation(
 		RecordID:       recordID,
 	}); err != nil {
 		s.l.Warn("failed to publish accounting app invalidation", zap.Error(err))
+	}
+}
+
+type Deps struct {
+	Logger      *zap.Logger
+	DB          kernelports.Transactor
+	Apps        accountingconnectionports.AccountingAppCredentialRepository
+	Connections accountingconnectionports.AccountingConnectionRepository
+	Encryption  *encryptionservice.Service
+	Audit       auditports.AuditService
+	Realtime    realtimeports.RealtimeService
+	Kit         *accountingconnectionkit.Kit
+	Status      *accountingconnectionstatus.Service
+}
+
+type Service struct {
+	l           *zap.Logger
+	db          kernelports.Transactor
+	apps        accountingconnectionports.AccountingAppCredentialRepository
+	connections accountingconnectionports.AccountingConnectionRepository
+	encryption  *encryptionservice.Service
+	audit       auditports.AuditService
+	realtime    realtimeports.RealtimeService
+	kit         *accountingconnectionkit.Kit
+	status      *accountingconnectionstatus.Service
+}
+
+//nolint:gocritic // dependency injection
+func New(d Deps) *Service {
+	return &Service{
+		l:           d.Logger,
+		db:          d.DB,
+		apps:        d.Apps,
+		connections: d.Connections,
+		encryption:  d.Encryption,
+		audit:       d.Audit,
+		realtime:    d.Realtime,
+		kit:         d.Kit,
+		status:      d.Status,
 	}
 }

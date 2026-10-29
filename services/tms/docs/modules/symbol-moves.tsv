@@ -19806,3 +19806,5 @@ github.com/emoss08/trenova/internal/infrastructure/agentcompletion/modeladapter.
 github.com/emoss08/trenova/internal/infrastructure/agentcompletion/modeladapter.ListReferencePrices	github.com/emoss08/trenova/internal/infrastructure/agentcompletion/modelcatalog.ListReferencePrices
 github.com/emoss08/trenova/internal/infrastructure/agentcompletion/modeladapter.ModelInfo	github.com/emoss08/trenova/internal/infrastructure/agentcompletion/modelcatalog.ModelInfo
 github.com/emoss08/trenova/internal/infrastructure/agentcompletion/modeladapter.ModelsCall	github.com/emoss08/trenova/internal/infrastructure/agentcompletion/modelcatalog.ModelsCall
+github.com/emoss08/trenova/internal/modules/accounting/app/accountingconnectionservice.EnvelopeColumns	github.com/emoss08/trenova/internal/modules/accounting/app/accountingconnectionkit.EnvelopeColumns
+github.com/emoss08/trenova/internal/modules/accounting/app/accountingconnectionservice.HealthCheckInterval	github.com/emoss08/trenova/internal/modules/accounting/app/accountingconnectionhealth.HealthCheckInterval

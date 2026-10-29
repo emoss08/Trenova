@@ -1,13 +1,16 @@
-package accountingconnectionservice
+package accountingconnectionwebhook
 
 import (
 	"context"
 	"slices"
 
+	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingconnectionkit"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountinginboundports"
+	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -16,30 +19,63 @@ import (
 	"go.uber.org/zap"
 )
 
-const appCredentialPrefix = "acctapp_"
-
-type webhookSender struct {
-	identity accountingconnection.AppIdentity
-	tenant   *pagination.TenantInfo
-}
-
-func (w *webhookSender) owns(conn *accountingconnection.AccountingConnection) bool {
-	if w.tenant != nil &&
-		(conn.OrganizationID != w.tenant.OrgID || conn.BusinessUnitID != w.tenant.BuID) {
-		return false
+func subscriptionIDs(
+	notifications []accountingconnectorports.AccountingWebhookNotification,
+) []string {
+	ids := make([]string, 0, len(notifications))
+	seen := make(map[string]struct{}, len(notifications))
+	for idx := range notifications {
+		id := notifications[idx].SubscriptionID
+		if id == "" {
+			continue
+		}
+		if _, dup := seen[id]; dup {
+			continue
+		}
+		seen[id] = struct{}{}
+		ids = append(ids, id)
 	}
-	return conn.ConnectedThrough(w.identity)
+	return ids
 }
 
-func errWebhookUnverified() error {
-	return errortypes.NewAuthenticationError("The webhook signature did not verify")
+type Deps struct {
+	Logger        *zap.Logger
+	Apps          accountingconnectionports.AccountingAppCredentialRepository
+	Connections   accountingconnectionports.AccountingConnectionRepository
+	Subscriptions accountingconnectionports.AccountingWebhookSubscriptionRepository
+	Encryption    *encryptionservice.Service
+	Poller        accountinginboundports.AccountingChangePoller
+	Kit           *accountingconnectionkit.Kit
+}
+
+type Service struct {
+	l             *zap.Logger
+	apps          accountingconnectionports.AccountingAppCredentialRepository
+	connections   accountingconnectionports.AccountingConnectionRepository
+	subscriptions accountingconnectionports.AccountingWebhookSubscriptionRepository
+	encryption    *encryptionservice.Service
+	poller        accountinginboundports.AccountingChangePoller
+	kit           *accountingconnectionkit.Kit
+}
+
+//nolint:gocritic // dependency injection
+func New(d Deps) *Service {
+	return &Service{
+		l:             d.Logger,
+		apps:          d.Apps,
+		connections:   d.Connections,
+		subscriptions: d.Subscriptions,
+		encryption:    d.Encryption,
+		poller:        d.Poller,
+		kit:           d.Kit,
+	}
 }
 
 func (s *Service) ReceiveWebhook(
 	ctx context.Context,
 	req *accountingconnectionports.ReceiveAccountingWebhookRequest,
 ) error {
-	provider, err := s.provider(req.IntegrationType)
+	provider, err := s.kit.Provider(req.IntegrationType)
 	if err != nil {
 		return err
 	}
@@ -145,7 +181,7 @@ func (s *Service) namedApp(
 		}
 		return nil, nil, err
 	}
-	app, err := s.openCredential(cred)
+	app, err := s.kit.OpenCredential(cred)
 	if err != nil {
 		s.l.Warn("could not open the app named by a webhook",
 			zap.String("appId", req.AppID), zap.Error(err))
@@ -155,21 +191,6 @@ func (s *Service) namedApp(
 		identity: app.Identity(),
 		tenant:   &pagination.TenantInfo{OrgID: cred.OrganizationID, BuID: cred.BusinessUnitID},
 	}, nil
-}
-
-func webhookRealms(
-	provider accountingconnectorports.AccountingProvider,
-	body []byte,
-) ([]string, error) {
-	realms, err := provider.WebhookRealmIDs(body)
-	if err != nil {
-		return nil, errortypes.NewValidationError(
-			"body",
-			errortypes.ErrInvalid,
-			"The webhook body could not be read",
-		)
-	}
-	return realms, nil
 }
 
 func (s *Service) receiveLegacyWebhook(
@@ -236,21 +257,11 @@ func (s *Service) pollChanged(
 			continue
 		}
 		tenant := pagination.TenantInfo{OrgID: holder.OrganizationID, BuID: holder.BusinessUnitID}
-		if err := s.poller.PollNow(connectionScope(ctx, holder), tenant, holder.ID); err != nil {
+		if err := s.poller.PollNow(accountingconnectionkit.ConnectionScope(ctx, holder), tenant, holder.ID); err != nil {
 			s.l.Warn("failed to wake the change reader after a webhook",
 				zap.String("connectionId", holder.ID.String()), zap.Error(err))
 		}
 	}
-}
-
-func connectionScope(
-	ctx context.Context,
-	conn *accountingconnection.AccountingConnection,
-) context.Context {
-	return dbscope.WithTenant(ctx, dbscope.Tenant{
-		OrganizationID: conn.OrganizationID,
-		BusinessUnitID: conn.BusinessUnitID,
-	})
 }
 
 func (s *Service) verifiedRealms(
@@ -262,7 +273,11 @@ func (s *Service) verifiedRealms(
 	byApp := make(map[string]bool, len(holders))
 	verified := make([]string, 0, len(holders))
 	for _, holder := range holders {
-		app, err := s.appForConnection(connectionScope(ctx, holder), provider, holder)
+		app, err := s.kit.AppForConnection(
+			accountingconnectionkit.ConnectionScope(ctx, holder),
+			provider,
+			holder,
+		)
 		if err != nil {
 			continue
 		}
@@ -278,4 +293,132 @@ func (s *Service) verifiedRealms(
 		}
 	}
 	return verified
+}
+
+func (s *Service) receiveSubscribedWebhook(
+	ctx context.Context,
+	provider accountingconnectorports.AccountingProvider,
+	req *accountingconnectionports.ReceiveAccountingWebhookRequest,
+) error {
+	subscribing, ok := provider.(accountingconnectorports.AccountingSubscriptionProvider)
+	if !ok || s.subscriptions == nil {
+		return errWebhookUnverified()
+	}
+	sender, err := s.subscribedSender(ctx, provider, req)
+	if err != nil {
+		return err
+	}
+	notifications, err := subscribing.ParseNotifications(req.Body)
+	if err != nil {
+		return errortypes.NewValidationError(
+			"body",
+			errortypes.ErrInvalid,
+			"The webhook body could not be read",
+		)
+	}
+
+	verified, err := s.verifiedSubscriptions(ctx, req, notifications)
+	if err != nil {
+		return err
+	}
+	if len(verified) == 0 {
+		return errWebhookUnverified()
+	}
+
+	owned := make([]*accountingconnection.AccountingConnection, 0, len(verified))
+	realms := make([]string, 0, len(verified))
+	for _, target := range verified {
+		conn, getErr := s.connections.GetByID(
+			dbscope.WithTenant(ctx, target.tenant.DBTenant()),
+			accountingconnectionports.GetAccountingConnectionByIDRequest{
+				TenantInfo: target.tenant,
+				ID:         target.id,
+			},
+		)
+		if getErr != nil {
+			if errortypes.IsNotFoundError(getErr) {
+				continue
+			}
+			return getErr
+		}
+		if !conn.IsActive() || !sender.owns(conn) {
+			continue
+		}
+		owned = append(owned, conn)
+		realms = append(realms, conn.ExternalRealmID)
+	}
+	if len(owned) == 0 {
+		return errWebhookUnverified()
+	}
+	return s.recordWebhook(ctx, req, owned, realms)
+}
+
+func (s *Service) subscribedSender(
+	ctx context.Context,
+	provider accountingconnectorports.AccountingProvider,
+	req *accountingconnectionports.ReceiveAccountingWebhookRequest,
+) (*webhookSender, error) {
+	if req.AppID != "" {
+		_, sender, err := s.namedApp(ctx, req)
+		return sender, err
+	}
+	instance, ok := provider.InstanceApp()
+	if !ok {
+		return nil, errWebhookUnverified()
+	}
+	return &webhookSender{identity: instance.Identity()}, nil
+}
+
+func (s *Service) verifiedSubscriptions(
+	ctx context.Context,
+	req *accountingconnectionports.ReceiveAccountingWebhookRequest,
+	notifications []accountingconnectorports.AccountingWebhookNotification,
+) ([]subscribedConnection, error) {
+	ids := subscriptionIDs(notifications)
+	if len(ids) == 0 {
+		return nil, nil
+	}
+	rows, err := s.subscriptions.ListByExternalIDs(ctx, req.IntegrationType, ids)
+	if err != nil {
+		return nil, err
+	}
+	byID := make(map[string]*accountingconnection.AccountingWebhookSubscription, len(rows))
+	for _, row := range rows {
+		byID[row.ExternalSubscriptionID] = row
+	}
+
+	seen := make(map[pulid.ID]struct{}, len(rows))
+	verified := make([]subscribedConnection, 0, len(rows))
+	for idx := range notifications {
+		note := &notifications[idx]
+		row, found := byID[note.SubscriptionID]
+		if !found || !row.Receives() || !s.clientStateMatches(row, note.ClientState) {
+			continue
+		}
+		if _, dup := seen[row.ConnectionID]; dup {
+			continue
+		}
+		seen[row.ConnectionID] = struct{}{}
+		verified = append(verified, subscribedConnection{
+			tenant: pagination.TenantInfo{OrgID: row.OrganizationID, BuID: row.BusinessUnitID},
+			id:     row.ConnectionID,
+		})
+	}
+	return verified, nil
+}
+
+func (s *Service) clientStateMatches(
+	row *accountingconnection.AccountingWebhookSubscription,
+	received string,
+) bool {
+	held, err := s.encryption.DecryptStringWithAAD(
+		row.ClientStateCiphertext,
+		accountingconnectionkit.ClientStateAAD(row),
+	)
+	if err != nil {
+		s.l.Warn("could not open a webhook subscription's client state",
+			zap.String("subscriptionId", row.ID.String()), zap.Error(err))
+		return false
+	}
+	return accountingconnection.ClientStatesMatch(held, received)
 }

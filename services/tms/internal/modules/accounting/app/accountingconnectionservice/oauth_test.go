@@ -3,6 +3,7 @@ package accountingconnectionservice
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingconnectionkit"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
@@ -202,8 +203,16 @@ func TestRefreshWithoutARefreshTokenKeepsTheStoredOneAndItsExpiry(t *testing.T) 
 			_, err = h.svc.CheckHealth(t.Context(), h.tenant, conn.ID)
 			require.NoError(t, err)
 			after := h.connections.tokens[conn.ID]
-			assert.Equal(t, "access-2", h.decrypt(t, conn, accessTokenField, after.access))
-			assert.Equal(t, "refresh-1", h.decrypt(t, conn, refreshTokenField, after.refresh))
+			assert.Equal(
+				t,
+				"access-2",
+				h.decrypt(t, conn, accountingconnectionkit.AccessTokenField, after.access),
+			)
+			assert.Equal(
+				t,
+				"refresh-1",
+				h.decrypt(t, conn, accountingconnectionkit.RefreshTokenField, after.refresh),
+			)
 			assert.Equal(t, before.refreshExpires, after.refreshExpires)
 		})
 	}

@@ -789,7 +789,15 @@ modules:
       - journalsource
       - manualjournal
     service:
+      - accountingconnectionapps
+      - accountingconnectionauth
+      - accountingconnectioncert
+      - accountingconnectionhealth
+      - accountingconnectionkit
       - accountingconnectionservice
+      - accountingconnectionstatus
+      - accountingconnectionsubscriptions
+      - accountingconnectionwebhook
       - accountingconnlookup
       - accountinginboundservice
       - accountingmappingservice

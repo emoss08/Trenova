@@ -9,12 +9,16 @@ import (
 	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/zap"
 )
 
 func TestAccountingConnectionsRefuseWhenThePlanRestrictsIntegrations(t *testing.T) {
 	t.Parallel()
 
-	svc := &Service{plans: plantest.Restricting(t, platformplan.CapabilityIntegrations)}
+	svc := New(Params{
+		Logger: zap.NewNop(),
+		Plans:  plantest.Restricting(t, platformplan.CapabilityIntegrations),
+	})
 	tenant := plantest.Tenant()
 
 	start, err := svc.StartAuthorization(

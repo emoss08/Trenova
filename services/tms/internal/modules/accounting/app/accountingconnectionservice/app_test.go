@@ -93,7 +93,7 @@ func TestTenantAppSecretsAreSealed(t *testing.T) {
 	assert.NotContains(t, row.ClientSecretCiphertext, tenantSecret)
 	assert.NotContains(t, row.WebhookVerifierCiphertext, tenantVerifier)
 
-	app, err := h.svc.openCredential(row)
+	app, err := h.kit.OpenCredential(row)
 	require.NoError(t, err)
 	assert.Equal(t, tenantSecret, app.ClientSecret)
 	assert.Equal(t, tenantVerifier, app.WebhookVerifierToken)
@@ -223,7 +223,7 @@ func TestSaveAppKeepsTheStoredSecretWhenLeftBlank(t *testing.T) {
 	require.NoError(t, err)
 
 	row := h.apps.rows[integrationKey(h.tenant, integration.TypeQuickBooksOnline)]
-	app, err := h.svc.openCredential(row)
+	app, err := h.kit.OpenCredential(row)
 	require.NoError(t, err)
 	assert.Equal(t, tenantSecret, app.ClientSecret)
 	assert.Equal(t, tenantVerifier, app.WebhookVerifierToken)
