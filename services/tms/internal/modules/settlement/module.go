@@ -11,7 +11,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/settlement/adapters/postgres/driversettlementrepository"
 	"github.com/emoss08/trenova/internal/modules/settlement/adapters/postgres/fuelpurchaserepository"
 	"github.com/emoss08/trenova/internal/modules/settlement/adapters/postgres/iftarepository"
+	"github.com/emoss08/trenova/internal/modules/settlement/app/carriersettlementcostservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/carriersettlementservice"
+	"github.com/emoss08/trenova/internal/modules/settlement/app/carriersettlementworkspaceservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/driverpayservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementaccrualservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementreviewservice"
@@ -57,9 +59,13 @@ func SharedOptions() fx.Option {
 			driversettlementtransferservice.New,
 			driversettlementworkspaceservice.New,
 			carriersettlementservice.New,
-			func(s *carriersettlementservice.Service) carrierports.CarrierCostAccrual { return s },
-			func(s *carriersettlementservice.Service) carrierports.CarrierInvoiceAutoMatcher { return s },
-			func(s *carriersettlementservice.Service) inboundmessageports.TriageCarrierPayQueuer {
+			carriersettlementcostservice.New,
+			carriersettlementworkspaceservice.New,
+			func(s *carriersettlementcostservice.Service) carrierports.CarrierCostAccrual { return s },
+			func(s *carriersettlementcostservice.Service) carrierports.CarrierInvoiceAutoMatcher {
+				return s
+			},
+			func(s *carriersettlementcostservice.Service) inboundmessageports.TriageCarrierPayQueuer {
 				return s
 			},
 			func(s *carriersettlementservice.Service) carriersettlementports.CarrierSettlementPayer { return s },

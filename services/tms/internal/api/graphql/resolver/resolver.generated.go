@@ -634,11 +634,13 @@ func FromServices(s *Services) *Resolver {
 		CarrierIntelVerifyService:     s.CarrierIntelVerifyService,
 	}
 	carriersettlementDeps := &carriersettlementresolver.Deps{
-		Core:                       s.Core,
-		CarrierSettlementService:   s.CarrierSettlementService,
-		CarrierSettlementRepo:      s.CarrierSettlementRepo,
-		CarrierSettlementBatchRepo: s.CarrierSettlementBatchRepo,
-		CarrierCostEventRepo:       s.CarrierCostEventRepo,
+		Core:                              s.Core,
+		CarrierSettlementService:          s.CarrierSettlementService,
+		CarrierSettlementCostService:      s.CarrierSettlementCostService,
+		CarrierSettlementWorkspaceService: s.CarrierSettlementWorkspaceService,
+		CarrierSettlementRepo:             s.CarrierSettlementRepo,
+		CarrierSettlementBatchRepo:        s.CarrierSettlementBatchRepo,
+		CarrierCostEventRepo:              s.CarrierCostEventRepo,
 	}
 	checkcallDeps := &checkcallresolver.Deps{
 		Core:             s.Core,
@@ -745,7 +747,7 @@ func FromServices(s *Services) *Resolver {
 		PayEventRepo:                     s.PayEventRepo,
 	}
 	ediDeps := &ediresolver.Deps{
-		Core:              s.Core,
+		Core:               s.Core,
 		EdiSetupService:    s.EdiSetupService,
 		EdiTransferService: s.EdiTransferService,
 		EdiOutboundService: s.EdiOutboundService,

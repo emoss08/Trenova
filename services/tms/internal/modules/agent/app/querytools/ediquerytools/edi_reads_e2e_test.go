@@ -30,7 +30,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
-	"github.com/emoss08/trenova/internal/modules/settlement/app/carriersettlementservice"
+	"github.com/emoss08/trenova/internal/modules/settlement/app/carriersettlementcostservice"
 	"github.com/emoss08/trenova/internal/testutil/ediservicetest"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -401,11 +401,13 @@ func ediReader(
 				Outbound:        edis.Outbound,
 				Alerts:          edis.Alerts,
 			}),
-			CarrierSettlementService: carriersettlementservice.New(carriersettlementservice.Params{
-				Logger:         logger,
-				EDIInvoiceRepo: &fakeEDICarrierInvoiceRepo{ediFakes: fakes},
-				CarrierRepo:    &fakeEDICarrierRepo{ediFakes: fakes},
-			}),
+			CarrierSettlementCostService: carriersettlementcostservice.New(
+				carriersettlementcostservice.Params{
+					Logger:         logger,
+					EDIInvoiceRepo: &fakeEDICarrierInvoiceRepo{ediFakes: fakes},
+					CarrierRepo:    &fakeEDICarrierRepo{ediFakes: fakes},
+				},
+			),
 		},
 	})
 }

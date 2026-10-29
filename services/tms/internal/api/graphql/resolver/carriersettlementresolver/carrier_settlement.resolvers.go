@@ -26,6 +26,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/carriersettlementservice"
+	"github.com/emoss08/trenova/internal/modules/settlement/app/carriersettlementworkspaceservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/settlementshared"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/settlementload"
@@ -229,13 +230,13 @@ func (r *MutationResolver) UpdateCarrierSettlementControl(ctx context.Context, i
 		return nil, err
 	}
 	if input.HoldUntilInvoiceMatched == nil {
-		current, currentErr := r.CarrierSettlementService.GetControl(ctx, resolvercore.TenantInfo(authCtx))
+		current, currentErr := r.CarrierSettlementWorkspaceService.GetControl(ctx, resolvercore.TenantInfo(authCtx))
 		if currentErr != nil {
 			return nil, currentErr
 		}
 		entity.HoldUntilInvoiceMatched = current.HoldUntilInvoiceMatched
 	}
-	return r.CarrierSettlementService.UpdateControl(ctx, entity, actorutil.FromAuthContext(authCtx))
+	return r.CarrierSettlementWorkspaceService.UpdateControl(ctx, entity, actorutil.FromAuthContext(authCtx))
 }
 
 func (r *MutationResolver) LinkEDICarrierInvoiceToCarrier(ctx context.Context, invoiceID string, carrierID string) (*edicarrierinvoice.CarrierInvoice, error) {
@@ -251,7 +252,7 @@ func (r *MutationResolver) LinkEDICarrierInvoiceToCarrier(ctx context.Context, i
 	if err != nil {
 		return nil, errortypes.NewValidationError("carrierId", errortypes.ErrInvalid, "Invalid carrier")
 	}
-	return r.CarrierSettlementService.LinkInvoiceToCarrier(
+	return r.CarrierSettlementCostService.LinkInvoiceToCarrier(
 		ctx,
 		resolvercore.TenantInfo(authCtx),
 		parsedInvoiceID,
@@ -269,7 +270,7 @@ func (r *MutationResolver) CreateCarrierInvoiceMatch(ctx context.Context, input 
 	if err != nil {
 		return nil, err
 	}
-	return r.CarrierSettlementService.CreateMatch(ctx, req, actorutil.FromAuthContext(authCtx))
+	return r.CarrierSettlementCostService.CreateMatch(ctx, req, actorutil.FromAuthContext(authCtx))
 }
 
 func (r *MutationResolver) AcceptCarrierInvoiceMatch(ctx context.Context, input gqlmodel.CarrierInvoiceMatchActionInput) (*carriersettlement.InvoiceMatch, error) {
@@ -277,7 +278,7 @@ func (r *MutationResolver) AcceptCarrierInvoiceMatch(ctx context.Context, input 
 	if err != nil {
 		return nil, err
 	}
-	return r.CarrierSettlementService.AcceptMatch(
+	return r.CarrierSettlementCostService.AcceptMatch(
 		ctx,
 		resolvercore.TenantInfo(authCtx),
 		matchID,
@@ -291,7 +292,7 @@ func (r *MutationResolver) AcceptCarrierInvoiceMatchWithVariance(ctx context.Con
 	if err != nil {
 		return nil, err
 	}
-	return r.CarrierSettlementService.AcceptWithVariance(
+	return r.CarrierSettlementCostService.AcceptWithVariance(
 		ctx,
 		resolvercore.TenantInfo(authCtx),
 		matchID,
@@ -305,7 +306,7 @@ func (r *MutationResolver) RejectCarrierInvoiceMatch(ctx context.Context, input 
 	if err != nil {
 		return nil, err
 	}
-	return r.CarrierSettlementService.RejectMatch(
+	return r.CarrierSettlementCostService.RejectMatch(
 		ctx,
 		resolvercore.TenantInfo(authCtx),
 		matchID,
@@ -408,7 +409,7 @@ func (r *QueryResolver) CarrierSettlementControl(ctx context.Context) (*carriers
 	if err != nil {
 		return nil, err
 	}
-	return r.CarrierSettlementService.GetControl(ctx, resolvercore.TenantInfo(authCtx))
+	return r.CarrierSettlementWorkspaceService.GetControl(ctx, resolvercore.TenantInfo(authCtx))
 }
 
 func (r *QueryResolver) CurrentCarrierSettlementPeriod(ctx context.Context) (*settlementshared.PeriodBounds, error) {
@@ -416,10 +417,10 @@ func (r *QueryResolver) CurrentCarrierSettlementPeriod(ctx context.Context) (*se
 	if err != nil {
 		return nil, err
 	}
-	return r.CarrierSettlementService.GetCurrentPeriod(ctx, resolvercore.TenantInfo(authCtx))
+	return r.CarrierSettlementWorkspaceService.GetCurrentPeriod(ctx, resolvercore.TenantInfo(authCtx))
 }
 
-func (r *QueryResolver) CarrierSettlementWorkspaceSummary(ctx context.Context, periodStart *int, periodEnd *int) (*carriersettlementservice.WorkspaceSummary, error) {
+func (r *QueryResolver) CarrierSettlementWorkspaceSummary(ctx context.Context, periodStart *int, periodEnd *int) (*carriersettlementworkspaceservice.WorkspaceSummary, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceCarrierSettlement, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -431,7 +432,7 @@ func (r *QueryResolver) CarrierSettlementWorkspaceSummary(ctx context.Context, p
 	if periodEnd != nil {
 		end = int64(*periodEnd)
 	}
-	return r.CarrierSettlementService.GetWorkspaceSummary(ctx, resolvercore.TenantInfo(authCtx), start, end)
+	return r.CarrierSettlementWorkspaceService.GetWorkspaceSummary(ctx, resolvercore.TenantInfo(authCtx), start, end)
 }
 
 func (r *QueryResolver) CarrierLedgerEntries(ctx context.Context, carrierID string, limit *int) ([]*carriersettlement.LedgerEntry, error) {
@@ -471,7 +472,7 @@ func (r *QueryResolver) CarrierInvoiceMatches(ctx context.Context, status *carri
 	if parsedCarrierID != nil {
 		req.CarrierID = *parsedCarrierID
 	}
-	result, err := r.CarrierSettlementService.ListInvoiceMatches(ctx, req)
+	result, err := r.CarrierSettlementCostService.ListInvoiceMatches(ctx, req)
 	if err != nil {
 		return nil, err
 	}
@@ -497,7 +498,7 @@ func (r *QueryResolver) EDICarrierInvoices(ctx context.Context, reconciliationSt
 				"Reconciliation status must be Unmatched, MappingRequired, Matched or Variance")
 		}
 	}
-	result, err := r.CarrierSettlementService.ListUnmatchedEDIInvoices(ctx, req)
+	result, err := r.CarrierSettlementCostService.ListUnmatchedEDIInvoices(ctx, req)
 	if err != nil {
 		return nil, err
 	}
@@ -517,7 +518,7 @@ func (r *QueryResolver) SuggestCarrierForEDIInvoice(ctx context.Context, invoice
 	if err != nil {
 		return nil, errortypes.NewValidationError("invoiceId", errortypes.ErrInvalid, "Invalid invoice")
 	}
-	return r.CarrierSettlementService.SuggestCarrierForInvoice(ctx, resolvercore.TenantInfo(authCtx), parsedInvoiceID)
+	return r.CarrierSettlementCostService.SuggestCarrierForInvoice(ctx, resolvercore.TenantInfo(authCtx), parsedInvoiceID)
 }
 
 func (r *QueryResolver) ExportCarrierSettlementBatchCSV(ctx context.Context, batchID string) (string, error) {
@@ -529,7 +530,7 @@ func (r *QueryResolver) ExportCarrierSettlementBatchCSV(ctx context.Context, bat
 	if err != nil {
 		return "", errortypes.NewValidationError("batchId", errortypes.ErrInvalid, "Invalid batch")
 	}
-	return r.CarrierSettlementService.ExportBatchRemittanceCSV(
+	return r.CarrierSettlementWorkspaceService.ExportBatchRemittanceCSV(
 		ctx,
 		resolvercore.TenantInfo(authCtx),
 		parsedBatchID,
@@ -594,5 +595,5 @@ func (r *EdiCarrierInvoiceResolver) SuggestedCarrier(ctx context.Context, obj *e
 		return nil, nil
 	}
 
-	return r.CarrierSettlementService.SuggestCarrierFor(ctx, resolvercore.TenantInfo(authCtx), obj)
+	return r.CarrierSettlementCostService.SuggestCarrierFor(ctx, resolvercore.TenantInfo(authCtx), obj)
 }

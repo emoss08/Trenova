@@ -1,4 +1,4 @@
-package carriersettlementservice
+package carriersettlementcostservice
 
 import (
 	"context"
@@ -256,7 +256,7 @@ func (s *Service) upsertCostEvent(
 			if updateErr != nil {
 				return updateErr
 			}
-			s.publishCostEventInvalidation(ctx, refreshed, permission.OpUpdate, pulid.Nil)
+			s.publisher.PublishCostEvent(ctx, refreshed, permission.OpUpdate, pulid.Nil)
 			return nil
 		}
 		return nil
@@ -293,7 +293,7 @@ func (s *Service) upsertCostEvent(
 	if err != nil {
 		return err
 	}
-	s.publishCostEventInvalidation(ctx, created, permission.OpCreate, pulid.Nil)
+	s.publisher.PublishCostEvent(ctx, created, permission.OpCreate, pulid.Nil)
 	return nil
 }
 
@@ -434,7 +434,7 @@ func (s *Service) voidStaleMoveCostEvents(
 		if _, err = s.costEventRepo.Update(ctx, event); err != nil {
 			return err
 		}
-		s.publishCostEventInvalidation(ctx, event, permission.OpCancel, pulid.Nil)
+		s.publisher.PublishCostEvent(ctx, event, permission.OpCancel, pulid.Nil)
 	}
 	return nil
 }
@@ -481,7 +481,7 @@ func (s *Service) voidPendingEvents(
 		if _, err := s.costEventRepo.Update(ctx, event); err != nil {
 			return err
 		}
-		s.publishCostEventInvalidation(ctx, event, permission.OpCancel, pulid.Nil)
+		s.publisher.PublishCostEvent(ctx, event, permission.OpCancel, pulid.Nil)
 	}
 	return nil
 }

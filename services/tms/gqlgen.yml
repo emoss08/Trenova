@@ -5366,7 +5366,7 @@ models:
       - github.com/emoss08/trenova/internal/modules/settlement/app/carriersettlementservice.PeriodBounds
   CarrierSettlementWorkspaceSummary:
     model:
-      - github.com/emoss08/trenova/internal/modules/settlement/app/carriersettlementservice.WorkspaceSummary
+      - github.com/emoss08/trenova/internal/modules/settlement/app/carriersettlementworkspaceservice.WorkspaceSummary
   EdiCarrierInvoice:
     model:
       - github.com/emoss08/trenova/internal/modules/edi/domain/edicarrierinvoice.CarrierInvoice

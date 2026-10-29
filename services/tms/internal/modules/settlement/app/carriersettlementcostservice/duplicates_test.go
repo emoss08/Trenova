@@ -1,4 +1,4 @@
-package carriersettlementservice
+package carriersettlementcostservice
 
 import (
 	"context"
@@ -192,41 +192,6 @@ func TestAcceptMatch_RefusesAMatchRepeatingALiveOne(t *testing.T) {
 
 	require.True(t, isDuplicateRefusal(err))
 	deps.matches.AssertNotCalled(t, "Update", mock.Anything, mock.Anything)
-}
-
-func TestApprovalHold_RefusesASettlementWithUnmatchedLoads(t *testing.T) {
-	deps := setupMatchingTest(t)
-	tenantInfo := accrualTenantInfo()
-	settlementID := pulid.MustNew("cs_")
-	deps.control.On("GetOrCreate", mock.Anything, tenantInfo).
-		Return(&carriersettlementcontrol.CarrierSettlementControl{HoldUntilInvoiceMatched: true}, nil)
-	deps.costEvents.On("CountAwaitingInvoiceMatch", mock.Anything, tenantInfo, settlementID).
-		Return(2, nil).Once()
-
-	hold, err := deps.svc.approvalHoldGuard(t.Context(), tenantInfo, settlementID)
-
-	require.NoError(t, err)
-	require.True(t, hold.refused())
-	assert.Contains(t, hold.refusal.Error(), "waiting on a resolved carrier invoice match")
-}
-
-func TestApprovalHold_IsOffByDefault(t *testing.T) {
-	deps := setupMatchingTest(t)
-	tenantInfo := accrualTenantInfo()
-	deps.control.On("GetOrCreate", mock.Anything, tenantInfo).
-		Return(&carriersettlementcontrol.CarrierSettlementControl{}, nil)
-
-	hold, err := deps.svc.approvalHoldGuard(t.Context(), tenantInfo, pulid.MustNew("cs_"))
-
-	require.NoError(t, err)
-	require.False(t, hold.refused())
-	deps.costEvents.AssertNotCalled(
-		t,
-		"CountAwaitingInvoiceMatch",
-		mock.Anything,
-		mock.Anything,
-		mock.Anything,
-	)
 }
 
 func TestAutoMatch_LeavesAPossibleDuplicateForReview(t *testing.T) {

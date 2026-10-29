@@ -14,7 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
-	"github.com/emoss08/trenova/internal/modules/settlement/app/carriersettlementservice"
+	"github.com/emoss08/trenova/internal/modules/settlement/app/carriersettlementcostservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -26,35 +26,35 @@ import (
 
 type fakeMatches struct {
 	match     *carriersettlement.InvoiceMatch
-	performed *carriersettlementservice.MatchDecisionRequest
+	performed *carriersettlementcostservice.MatchDecisionRequest
 }
 
 func (f *fakeMatches) PlanMatchDecision(
 	_ context.Context,
-	req *carriersettlementservice.MatchDecisionRequest,
-) (*carriersettlementservice.MatchDecisionPlan, error) {
+	req *carriersettlementcostservice.MatchDecisionRequest,
+) (*carriersettlementcostservice.MatchDecisionPlan, error) {
 	after := *f.match
-	plan := &carriersettlementservice.MatchDecisionPlan{Before: f.match, After: &after}
+	plan := &carriersettlementcostservice.MatchDecisionPlan{Before: f.match, After: &after}
 	const now = int64(1_790_000_000)
 	userID := req.TenantInfo.UserID
 	switch req.Decision {
-	case carriersettlementservice.MatchDecisionAccept:
-		plan.Refusal = carriersettlementservice.PlanAcceptMatch(&after, req.Note, userID, now)
-	case carriersettlementservice.MatchDecisionAcceptWithVariance:
-		plan.Refusal = carriersettlementservice.PlanAcceptWithVariance(
+	case carriersettlementcostservice.MatchDecisionAccept:
+		plan.Refusal = carriersettlementcostservice.PlanAcceptMatch(&after, req.Note, userID, now)
+	case carriersettlementcostservice.MatchDecisionAcceptWithVariance:
+		plan.Refusal = carriersettlementcostservice.PlanAcceptWithVariance(
 			&after,
-			&carriersettlementservice.VarianceResolution{
+			&carriersettlementcostservice.VarianceResolution{
 				Note:       req.Note,
 				UserID:     userID,
 				ResolvedAt: now,
 			},
 		)
 		if plan.Refusal == nil {
-			plan.Adjustment = carriersettlementservice.VarianceAdjustmentEvent(
+			plan.Adjustment = carriersettlementcostservice.VarianceAdjustmentEvent(
 				req.TenantInfo, f.match, now)
 		}
-	case carriersettlementservice.MatchDecisionReject:
-		plan.Refusal = carriersettlementservice.PlanRejectMatch(&after, req.Note, userID, now)
+	case carriersettlementcostservice.MatchDecisionReject:
+		plan.Refusal = carriersettlementcostservice.PlanRejectMatch(&after, req.Note, userID, now)
 	}
 
 	return plan, nil
@@ -62,7 +62,7 @@ func (f *fakeMatches) PlanMatchDecision(
 
 func (f *fakeMatches) PerformMatchDecision(
 	_ context.Context,
-	req *carriersettlementservice.MatchDecisionRequest,
+	req *carriersettlementcostservice.MatchDecisionRequest,
 	_ *permissionports.RequestActor,
 ) (*carriersettlement.InvoiceMatch, error) {
 	f.performed = req
@@ -142,7 +142,7 @@ func TestAcceptCarrierInvoiceMatchWithVariance_AccruesTheDifference(t *testing.T
 		settlementpreview.ErrSettlementNeedsAPerson,
 	)
 	require.NoError(t, tool.Execute(t.Context(), agenttoolstest.ApprovedParams(raw)))
-	assert.Equal(t, carriersettlementservice.MatchDecisionAcceptWithVariance,
+	assert.Equal(t, carriersettlementcostservice.MatchDecisionAcceptWithVariance,
 		matches.performed.Decision)
 	assert.Equal(t, "Two hours of agreed detention at the consignee", matches.performed.Note)
 }
@@ -194,19 +194,19 @@ func TestRejectCarrierInvoiceMatch_RunsInsideAndHoldsOnOutsideText(t *testing.T)
 	assert.NotContains(t, preview.Summary, "reconciled")
 
 	require.NoError(t, tool.Execute(t.Context(), agenttoolstest.ExecuteParams(raw)))
-	assert.Equal(t, carriersettlementservice.MatchDecisionReject, matches.performed.Decision)
+	assert.Equal(t, carriersettlementcostservice.MatchDecisionReject, matches.performed.Decision)
 }
 
 type fakeMatchCreator struct {
-	plan    *carriersettlementservice.CreateMatchPlan
-	created *carriersettlementservice.CreateMatchRequest
-	planned *carriersettlementservice.CreateMatchRequest
+	plan    *carriersettlementcostservice.CreateMatchPlan
+	created *carriersettlementcostservice.CreateMatchRequest
+	planned *carriersettlementcostservice.CreateMatchRequest
 }
 
 func (f *fakeMatchCreator) PlanCreateMatch(
 	_ context.Context,
-	req *carriersettlementservice.CreateMatchRequest,
-) (*carriersettlementservice.CreateMatchPlan, error) {
+	req *carriersettlementcostservice.CreateMatchRequest,
+) (*carriersettlementcostservice.CreateMatchPlan, error) {
 	f.planned = req
 
 	return f.plan, nil
@@ -214,7 +214,7 @@ func (f *fakeMatchCreator) PlanCreateMatch(
 
 func (f *fakeMatchCreator) CreateMatch(
 	_ context.Context,
-	req *carriersettlementservice.CreateMatchRequest,
+	req *carriersettlementcostservice.CreateMatchRequest,
 	_ *permissionports.RequestActor,
 ) (*carriersettlement.InvoiceMatch, error) {
 	f.created = req
@@ -226,7 +226,7 @@ func TestCreateCarrierInvoiceMatch_MatchesAnEDIInvoiceOnly(t *testing.T) {
 	t.Parallel()
 
 	match := varianceMatch()
-	creator := &fakeMatchCreator{plan: &carriersettlementservice.CreateMatchPlan{
+	creator := &fakeMatchCreator{plan: &carriersettlementcostservice.CreateMatchPlan{
 		Match:   match,
 		Invoice: &edicarrierinvoice.CarrierInvoice{},
 	}}
@@ -268,7 +268,7 @@ func (f *fakeInvoiceLinker) PlanLinkInvoice(
 	_ context.Context,
 	_ pagination.TenantInfo,
 	invoiceID, carrierID pulid.ID,
-) (*carriersettlementservice.LinkInvoicePlan, error) {
+) (*carriersettlementcostservice.LinkInvoicePlan, error) {
 	if f.refusal != nil {
 		return nil, f.refusal
 	}
@@ -276,7 +276,7 @@ func (f *fakeInvoiceLinker) PlanLinkInvoice(
 	after := *before
 	after.CarrierID = carrierID
 
-	return &carriersettlementservice.LinkInvoicePlan{
+	return &carriersettlementcostservice.LinkInvoicePlan{
 		Carrier: &carrier.Carrier{ID: carrierID, Name: "Blue Ridge Haulers"},
 		Before:  before,
 		After:   &after,

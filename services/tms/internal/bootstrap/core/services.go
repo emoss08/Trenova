@@ -22,7 +22,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
 	"github.com/emoss08/trenova/internal/modules/rating/app/carrierassignmentservice"
-	"github.com/emoss08/trenova/internal/modules/settlement/app/carriersettlementservice"
+	"github.com/emoss08/trenova/internal/modules/settlement/app/carriersettlementcostservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementaccrualservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/driverportalservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workeremploymentservice"
@@ -74,11 +74,15 @@ var ServiceModule = fx.Module("api-services", ledgersync.Module, fx.Provide(
 		fx.ResultTags(`group:"move_status_observers"`),
 	),
 	fx.Annotate(
-		func(s *carriersettlementservice.Service) shipmentserviceports.ShipmentMutationObserver { return s },
+		func(s *carriersettlementcostservice.Service) shipmentserviceports.ShipmentMutationObserver {
+			return s
+		},
 		fx.ResultTags(`group:"shipment_mutation_observers"`),
 	),
 	fx.Annotate(
-		func(s *carriersettlementservice.Service) shipmentserviceports.MoveStatusObserver { return s },
+		func(s *carriersettlementcostservice.Service) shipmentserviceports.MoveStatusObserver {
+			return s
+		},
 		fx.ResultTags(`group:"move_status_observers"`),
 	),
 	fx.Annotate(

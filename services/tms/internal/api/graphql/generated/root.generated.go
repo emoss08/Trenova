@@ -3,6 +3,7 @@
 package generated
 
 import (
+	"github.com/emoss08/trenova/internal/modules/settlement/app/carriersettlementworkspaceservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementaccrualservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementworkspaceservice"
 	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelsourcingservice"
@@ -353,7 +354,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/reference/domain/holdreason"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/servicetype"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/shipmenttype"
-	"github.com/emoss08/trenova/internal/modules/settlement/app/carriersettlementservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/fueldeskcardservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/settlementshared"
@@ -2978,7 +2978,7 @@ type QueryResolver interface {
 	CarrierCostEvents(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.CarrierCostEventConnection, error)
 	CarrierSettlementControl(ctx context.Context) (*carriersettlementcontrol.CarrierSettlementControl, error)
 	CurrentCarrierSettlementPeriod(ctx context.Context) (*settlementshared.PeriodBounds, error)
-	CarrierSettlementWorkspaceSummary(ctx context.Context, periodStart *int, periodEnd *int) (*carriersettlementservice.WorkspaceSummary, error)
+	CarrierSettlementWorkspaceSummary(ctx context.Context, periodStart *int, periodEnd *int) (*carriersettlementworkspaceservice.WorkspaceSummary, error)
 	CarrierLedgerEntries(ctx context.Context, carrierID string, limit *int) ([]*carriersettlement.LedgerEntry, error)
 	CarrierInvoiceMatches(ctx context.Context, status *carriersettlement.InvoiceMatchStatus, carrierID *string, limit *int, offset *int) (*gqlmodel.CarrierInvoiceMatchList, error)
 	EDICarrierInvoices(ctx context.Context, reconciliationStatus *string, limit *int, offset *int) (*gqlmodel.EDICarrierInvoiceList, error)

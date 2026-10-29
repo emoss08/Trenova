@@ -1,4 +1,4 @@
-package carriersettlementservice
+package carriersettlementcostservice
 
 import (
 	"context"
@@ -247,8 +247,8 @@ func (s *Service) planAcceptRefusal(
 	if err != nil {
 		return err
 	}
-	if verdict.refused() {
-		plan.Refusal = verdict.refusal
+	if verdict.Refused() {
+		plan.Refusal = verdict.Refusal
 	}
 	return nil
 }

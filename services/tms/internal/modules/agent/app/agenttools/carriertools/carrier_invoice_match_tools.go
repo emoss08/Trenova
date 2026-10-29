@@ -17,7 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edicarrierinvoice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
-	"github.com/emoss08/trenova/internal/modules/settlement/app/carriersettlementservice"
+	"github.com/emoss08/trenova/internal/modules/settlement/app/carriersettlementcostservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/money"
@@ -51,11 +51,11 @@ const fieldMatchedVia = "matchedVia"
 type matchDecider interface {
 	PlanMatchDecision(
 		ctx context.Context,
-		req *carriersettlementservice.MatchDecisionRequest,
-	) (*carriersettlementservice.MatchDecisionPlan, error)
+		req *carriersettlementcostservice.MatchDecisionRequest,
+	) (*carriersettlementcostservice.MatchDecisionPlan, error)
 	PerformMatchDecision(
 		ctx context.Context,
-		req *carriersettlementservice.MatchDecisionRequest,
+		req *carriersettlementcostservice.MatchDecisionRequest,
 		actor *permissionports.RequestActor,
 	) (*carriersettlement.InvoiceMatch, error)
 }
@@ -64,7 +64,7 @@ type matchDecision struct {
 	name         string
 	recipe       []string
 	description  string
-	decision     carriersettlementservice.MatchDecision
+	decision     carriersettlementcostservice.MatchDecision
 	operation    permission.Operation
 	personOnly   bool
 	noteRequired bool
@@ -133,7 +133,7 @@ func (t *CarrierInvoiceMatchTool) Target(params map[string]any) (agenttoolports.
 
 func (t *CarrierInvoiceMatchTool) request(
 	params *agenttoolports.ToolExecuteParams,
-) (*carriersettlementservice.MatchDecisionRequest, error) {
+) (*carriersettlementcostservice.MatchDecisionRequest, error) {
 	if err := toolguard.GuardPreview(t, params); err != nil {
 		return nil, err
 	}
@@ -151,7 +151,7 @@ func (t *CarrierInvoiceMatchTool) request(
 		return nil, err
 	}
 
-	return &carriersettlementservice.MatchDecisionRequest{
+	return &carriersettlementcostservice.MatchDecisionRequest{
 		TenantInfo: toolparams.TenantFrom(*params),
 		MatchID:    matchID,
 		Decision:   t.decision.decision,
@@ -162,7 +162,7 @@ func (t *CarrierInvoiceMatchTool) request(
 func (t *CarrierInvoiceMatchTool) plan(
 	ctx context.Context,
 	params *agenttoolports.ToolExecuteParams,
-) (*carriersettlementservice.MatchDecisionPlan, error) {
+) (*carriersettlementcostservice.MatchDecisionPlan, error) {
 	req, err := t.request(params)
 	if err != nil {
 		return nil, err
@@ -278,24 +278,24 @@ func (t *CarrierInvoiceMatchTool) Preview(
 		adjustment.Operation = agentpreview.PreviewOperationCreate
 		changes = append(changes, adjustment)
 		summary += " The variance is accrued as an adjustment on the carrier's next settlement."
-	case t.decision.decision == carriersettlementservice.MatchDecisionAccept:
+	case t.decision.decision == carriersettlementcostservice.MatchDecisionAccept:
 		summary += " The invoice is cleared for the carrier's settlement at the expected cost."
 	}
 	if plan.Before.HasEDISource() &&
-		t.decision.decision != carriersettlementservice.MatchDecisionReject {
+		t.decision.decision != carriersettlementcostservice.MatchDecisionReject {
 		summary += " The EDI invoice is marked reconciled."
 	}
 
 	return toolpreview.Build(summary, changes...), nil
 }
 
-func matchVerb(decision carriersettlementservice.MatchDecision) string {
+func matchVerb(decision carriersettlementcostservice.MatchDecision) string {
 	switch decision {
-	case carriersettlementservice.MatchDecisionAccept:
+	case carriersettlementcostservice.MatchDecisionAccept:
 		return "accept"
-	case carriersettlementservice.MatchDecisionAcceptWithVariance:
+	case carriersettlementcostservice.MatchDecisionAcceptWithVariance:
 		return "accept with its variance"
-	case carriersettlementservice.MatchDecisionReject:
+	case carriersettlementcostservice.MatchDecisionReject:
 		return changepreview.VerbReject
 	default:
 		return string(decision)
@@ -303,7 +303,7 @@ func matchVerb(decision carriersettlementservice.MatchDecision) string {
 }
 
 func ProvideAcceptCarrierInvoiceMatchTool(
-	s *carriersettlementservice.Service,
+	s *carriersettlementcostservice.Service,
 ) agenttoolports.AgentTool {
 	return &CarrierInvoiceMatchTool{matches: s, decision: matchDecision{
 		name:   "carrier_accept_invoice_match",
@@ -312,7 +312,7 @@ func ProvideAcceptCarrierInvoiceMatchTool(
 			"expected to cost, clearing it for payment on the carrier's settlement. A person " +
 			"always decides. An invoice with a variance needs " +
 			"carrier_accept_invoice_match_with_variance or a rejection instead.",
-		decision:   carriersettlementservice.MatchDecisionAccept,
+		decision:   carriersettlementcostservice.MatchDecisionAccept,
 		operation:  permission.OpApprove,
 		personOnly: true,
 		noteText:   "Anything accounts payable should know about the acceptance.",
@@ -323,7 +323,7 @@ func ProvideAcceptCarrierInvoiceMatchTool(
 }
 
 func ProvideAcceptCarrierInvoiceMatchWithVarianceTool(
-	s *carriersettlementservice.Service,
+	s *carriersettlementcostservice.Service,
 ) agenttoolports.AgentTool {
 	return &CarrierInvoiceMatchTool{matches: s, decision: matchDecision{
 		name: "carrier_accept_invoice_match_with_variance",
@@ -331,7 +331,7 @@ func ProvideAcceptCarrierInvoiceMatchWithVarianceTool(
 			"cost and paying the difference. The variance is accrued as an adjustment on the " +
 			"carrier's next settlement. A person always decides; say why the variance is " +
 			"owed, such as agreed detention.",
-		decision:     carriersettlementservice.MatchDecisionAcceptWithVariance,
+		decision:     carriersettlementcostservice.MatchDecisionAcceptWithVariance,
 		operation:    permission.OpApprove,
 		personOnly:   true,
 		noteRequired: true,
@@ -342,14 +342,14 @@ func ProvideAcceptCarrierInvoiceMatchWithVarianceTool(
 }
 
 func ProvideRejectCarrierInvoiceMatchTool(
-	s *carriersettlementservice.Service,
+	s *carriersettlementcostservice.Service,
 ) agenttoolports.AgentTool {
 	return &CarrierInvoiceMatchTool{matches: s, decision: matchDecision{
 		name: "carrier_reject_invoice_match",
 		description: "Reject a carrier's invoice match that is wrong, such as an invoice for " +
 			"another load or a duplicate, with a note saying why. Nothing is paid on it; the " +
 			"carrier can send a corrected invoice.",
-		decision:     carriersettlementservice.MatchDecisionReject,
+		decision:     carriersettlementcostservice.MatchDecisionReject,
 		operation:    permission.OpReject,
 		noteRequired: true,
 		noteText:     "Why the invoice is rejected, for accounts payable and the carrier.",
@@ -361,11 +361,11 @@ func ProvideRejectCarrierInvoiceMatchTool(
 type matchCreator interface {
 	PlanCreateMatch(
 		ctx context.Context,
-		req *carriersettlementservice.CreateMatchRequest,
-	) (*carriersettlementservice.CreateMatchPlan, error)
+		req *carriersettlementcostservice.CreateMatchRequest,
+	) (*carriersettlementcostservice.CreateMatchPlan, error)
 	CreateMatch(
 		ctx context.Context,
-		req *carriersettlementservice.CreateMatchRequest,
+		req *carriersettlementcostservice.CreateMatchRequest,
 		actor *permissionports.RequestActor,
 	) (*carriersettlement.InvoiceMatch, error)
 }
@@ -375,7 +375,7 @@ type CreateCarrierInvoiceMatchTool struct {
 }
 
 func ProvideCreateCarrierInvoiceMatchTool(
-	s *carriersettlementservice.Service,
+	s *carriersettlementcostservice.Service,
 ) agenttoolports.AgentTool {
 	return &CreateCarrierInvoiceMatchTool{matches: s}
 }
@@ -426,7 +426,7 @@ func (t *CreateCarrierInvoiceMatchTool) Policy() agenttoolports.ToolPolicy {
 
 func (t *CreateCarrierInvoiceMatchTool) request(
 	params *agenttoolports.ToolExecuteParams,
-) (*carriersettlementservice.CreateMatchRequest, error) {
+) (*carriersettlementcostservice.CreateMatchRequest, error) {
 	if err := toolguard.GuardPreview(t, params); err != nil {
 		return nil, err
 	}
@@ -447,7 +447,7 @@ func (t *CreateCarrierInvoiceMatchTool) request(
 	if err != nil {
 		return nil, err
 	}
-	req := &carriersettlementservice.CreateMatchRequest{
+	req := &carriersettlementcostservice.CreateMatchRequest{
 		TenantInfo:          toolparams.TenantFrom(*params),
 		EDICarrierInvoiceID: &invoiceID,
 		ProNumber:           proNumber,
@@ -462,7 +462,7 @@ func (t *CreateCarrierInvoiceMatchTool) request(
 func (t *CreateCarrierInvoiceMatchTool) plan(
 	ctx context.Context,
 	params *agenttoolports.ToolExecuteParams,
-) (*carriersettlementservice.CreateMatchPlan, error) {
+) (*carriersettlementcostservice.CreateMatchPlan, error) {
 	req, err := t.request(params)
 	if err != nil {
 		return nil, err
@@ -546,7 +546,7 @@ type invoiceLinker interface {
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 		invoiceID, carrierID pulid.ID,
-	) (*carriersettlementservice.LinkInvoicePlan, error)
+	) (*carriersettlementcostservice.LinkInvoicePlan, error)
 	LinkInvoiceToCarrier(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
@@ -560,7 +560,7 @@ type LinkEDICarrierInvoiceTool struct {
 }
 
 func ProvideLinkEDICarrierInvoiceTool(
-	s *carriersettlementservice.Service,
+	s *carriersettlementcostservice.Service,
 ) agenttoolports.AgentTool {
 	return &LinkEDICarrierInvoiceTool{invoices: s}
 }

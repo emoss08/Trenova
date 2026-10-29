@@ -31,7 +31,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edipayload"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/editransfer"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/editransfer/editransferdb"
-	"github.com/emoss08/trenova/internal/modules/settlement/app/carriersettlementservice"
+	"github.com/emoss08/trenova/internal/modules/settlement/app/carriersettlementcostservice"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/ediservicetest"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
@@ -220,9 +220,9 @@ func TestConvertedReads_EDIReadsUnderRowLevelSecurity(t *testing.T) {
 			Outbound:        edis.Outbound,
 			Alerts:          edis.Alerts,
 		}),
-		CarrierSettlementService: carriersettlementservice.New(carriersettlementservice.Params{
-			Logger: logger, EDIInvoiceRepo: invoices,
-		}),
+		CarrierSettlementCostService: carriersettlementcostservice.New(
+			carriersettlementcostservice.Params{Logger: logger, EDIInvoiceRepo: invoices},
+		),
 	}
 	engine := &mocks.DenyResourcesPermissionEngine{}
 	reader := agentreadtest.NewReader(

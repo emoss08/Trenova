@@ -1,9 +1,10 @@
-package carriersettlementservice
+package carriersettlementcostservice
 
 import (
 	"context"
 	"errors"
 
+	"github.com/emoss08/trenova/internal/modules/settlement/app/settlementshared"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/carriersettlementports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -66,14 +67,6 @@ func (s *Service) screenDuplicateMatch(
 	return &first, nil
 }
 
-type guard struct {
-	refusal error
-}
-
-func (g guard) refused() bool { return g.refusal != nil }
-
-func refuse(err error) guard { return guard{refusal: err} }
-
 func (s *Service) checkAcceptable(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
@@ -84,7 +77,7 @@ func (s *Service) checkAcceptable(
 	if err != nil {
 		return err
 	}
-	return verdict.refusal
+	return verdict.Refusal
 }
 
 func (s *Service) acceptGuard(
@@ -92,7 +85,7 @@ func (s *Service) acceptGuard(
 	tenantInfo pagination.TenantInfo,
 	match *carriersettlement.InvoiceMatch,
 	withVariance bool,
-) (guard, error) {
+) (settlementshared.Guard, error) {
 	if match.IsDuplicate() {
 		original, err := s.invoiceMatchRepo.GetByID(
 			ctx,
@@ -102,10 +95,10 @@ func (s *Service) acceptGuard(
 			},
 		)
 		if err != nil && !errortypes.IsNotFoundError(err) {
-			return guard{}, err
+			return settlementshared.Guard{}, err
 		}
 		if original != nil && original.Status != carriersettlement.InvoiceMatchStatusRejected {
-			return refuse(errortypes.NewValidationError(
+			return settlementshared.Refuse(errortypes.NewValidationError(
 				"duplicateOfMatchId",
 				errortypes.ErrDuplicate,
 				"This match repeats invoice {0}, which another match already holds; reject one of them before accepting",
@@ -115,7 +108,7 @@ func (s *Service) acceptGuard(
 	}
 
 	if !withVariance {
-		return guard{}, nil
+		return settlementshared.Guard{}, nil
 	}
 
 	onLoad, err := s.invoiceMatchRepo.ListLiveByAssignment(
@@ -126,7 +119,7 @@ func (s *Service) acceptGuard(
 		},
 	)
 	if err != nil {
-		return guard{}, err
+		return settlementshared.Guard{}, err
 	}
 	for _, other := range onLoad {
 		if other.ID == match.ID ||
@@ -134,7 +127,7 @@ func (s *Service) acceptGuard(
 			other.AdjustmentCostEventID == nil {
 			continue
 		}
-		return refuse(errortypes.NewValidationError(
+		return settlementshared.Refuse(errortypes.NewValidationError(
 			"carrierAssignmentId",
 			errortypes.ErrInvalidOperation,
 			"This load's carrier cost was already adjusted for invoice {0}; accepting this variance too would pay the difference twice",
@@ -142,33 +135,5 @@ func (s *Service) acceptGuard(
 		)), nil
 	}
 
-	return guard{}, nil
-}
-
-func (s *Service) approvalHoldGuard(
-	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
-	settlementID pulid.ID,
-) (guard, error) {
-	control, err := s.settlementControl.GetOrCreate(ctx, tenantInfo)
-	if err != nil {
-		return guard{}, err
-	}
-	if !control.HoldUntilInvoiceMatched {
-		return guard{}, nil
-	}
-
-	awaiting, err := s.costEventRepo.CountAwaitingInvoiceMatch(ctx, tenantInfo, settlementID)
-	if err != nil {
-		return guard{}, err
-	}
-	if awaiting == 0 {
-		return guard{}, nil
-	}
-	return refuse(errortypes.NewValidationError(
-		"lines",
-		errortypes.ErrInvalidOperation,
-		"{0} load(s) on this settlement are still waiting on a resolved carrier invoice match; resolve the matches or recalculate the settlement before approving",
-		awaiting,
-	)), nil
+	return settlementshared.Guard{}, nil
 }

@@ -111,8 +111,8 @@ func (s *Service) approveInternal(
 		if holdErr != nil {
 			return holdErr
 		}
-		if hold.refused() {
-			return hold.refusal
+		if hold.Refused() {
+			return hold.Refusal
 		}
 		updated, txErr = s.settlementRepo.Update(txCtx, entity)
 		return txErr
@@ -216,7 +216,7 @@ func (s *Service) MarkPaid(
 		}, &entity.PaidExchangeRate, &entity.PaidExchangeRateDate); txErr != nil {
 			return txErr
 		}
-		batchID, txErr := s.postPaymentJournal(txCtx, entity, actor, paidAt)
+		batchID, txErr := s.journals.PostPayment(txCtx, entity, actor, paidAt)
 		if txErr != nil {
 			return txErr
 		}

@@ -1,8 +1,9 @@
-package carriersettlementservice
+package carriersettlementworkspaceservice
 
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/settlement/app/carriersettlementservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/carriersettlementports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -37,9 +38,9 @@ func (s *Service) GetWorkspaceSummary(
 		return nil, err
 	}
 
-	bounds := PeriodBounds{PeriodStart: periodStart, PeriodEnd: periodEnd}
+	bounds := carriersettlementservice.PeriodBounds{PeriodStart: periodStart, PeriodEnd: periodEnd}
 	if bounds.PeriodStart == 0 || bounds.PeriodEnd == 0 {
-		bounds = ResolveCurrentPeriod(control, timeutils.NowUnix())
+		bounds = carriersettlementservice.ResolveCurrentPeriod(control, timeutils.NowUnix())
 	}
 
 	counts, err := s.settlementRepo.GetWorkspaceCounts(
@@ -96,11 +97,11 @@ func (s *Service) GetWorkspaceSummary(
 func (s *Service) GetCurrentPeriod(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-) (*PeriodBounds, error) {
+) (*carriersettlementservice.PeriodBounds, error) {
 	control, err := s.settlementControl.GetOrCreate(ctx, tenantInfo)
 	if err != nil {
 		return nil, err
 	}
-	bounds := ResolveCurrentPeriod(control, timeutils.NowUnix())
+	bounds := carriersettlementservice.ResolveCurrentPeriod(control, timeutils.NowUnix())
 	return &bounds, nil
 }

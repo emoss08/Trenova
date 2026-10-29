@@ -1,4 +1,4 @@
-package carriersettlementservice
+package carriersettlementjournal
 
 import (
 	"testing"

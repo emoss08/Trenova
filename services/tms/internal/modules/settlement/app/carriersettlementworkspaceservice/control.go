@@ -1,4 +1,4 @@
-package carriersettlementservice
+package carriersettlementworkspaceservice
 
 import (
 	"context"
@@ -52,7 +52,7 @@ func (s *Service) UpdateControl(
 		return nil, err
 	}
 
-	s.publishRealtimeInvalidation(
+	s.publisher.Publish(
 		ctx,
 		permission.ResourceCarrierSettlementControl.String(),
 		permission.OpUpdate,

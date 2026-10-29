@@ -1,4 +1,4 @@
-package carriersettlementservice
+package carriersettlementcostservice
 
 import (
 	"context"
@@ -119,7 +119,7 @@ func (s *Service) LinkInvoiceToCarrier(
 	if err != nil {
 		return nil, err
 	}
-	s.publishRealtimeInvalidation(
+	s.publisher.Publish(
 		ctx,
 		permission.ResourceCarrierInvoiceMatch.String(),
 		permission.OpUpdate,
@@ -364,7 +364,7 @@ func (s *Service) createVarianceAdjustmentEvent(
 	if err != nil {
 		return nil, err
 	}
-	s.publishCostEventInvalidation(ctx, created, permission.OpCreate, pulid.Nil)
+	s.publisher.PublishCostEvent(ctx, created, permission.OpCreate, pulid.Nil)
 	return created, nil
 }
 
@@ -458,7 +458,7 @@ func (s *Service) logInvoiceMatchAudit(
 	operation permission.Operation,
 	comment string,
 ) {
-	s.publishRealtimeInvalidation(
+	s.publisher.Publish(
 		ctx,
 		permission.ResourceCarrierInvoiceMatch.String(),
 		operation,

@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/carriersettlementcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/settlement/app/carriersettlementservice"
+	"github.com/emoss08/trenova/internal/modules/settlement/app/carriersettlementcostservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -179,7 +179,7 @@ func carrierSettlementControlFromInput(
 func createCarrierInvoiceMatchRequest(
 	input *gqlmodel.CreateCarrierInvoiceMatchInput,
 	tenantInfo pagination.TenantInfo,
-) (*carriersettlementservice.CreateMatchRequest, error) {
+) (*carriersettlementcostservice.CreateMatchRequest, error) {
 	ediInvoiceID, err := gqlid.OptionalPulid(input.EDICarrierInvoiceID)
 	if err != nil {
 		return nil, errortypes.NewValidationError(
@@ -221,7 +221,7 @@ func createCarrierInvoiceMatchRequest(
 		)
 	}
 
-	req := &carriersettlementservice.CreateMatchRequest{
+	req := &carriersettlementcostservice.CreateMatchRequest{
 		TenantInfo:             tenantInfo,
 		EDICarrierInvoiceID:    ediInvoiceID,
 		DocumentAIExtractionID: extractionID,

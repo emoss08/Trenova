@@ -1,4 +1,4 @@
-package carriersettlementservice
+package carriersettlementjournal
 
 import (
 	"context"
@@ -74,7 +74,7 @@ func TestPaymentJournalIsDatedWhenThePaymentWasMade(t *testing.T) {
 		}).
 		Once()
 
-	svc := &Service{journalRepo: journals, fiscalPeriodRepo: periods, generator: numberingOnly{}}
+	svc := &Writer{journalRepo: journals, fiscalPeriodRepo: periods, generator: numberingOnly{}}
 	actor := &permissionports.RequestActor{UserID: pulid.MustNew("usr_")}
 	draft, err := svc.draftJournal(t.Context(), entity, actor.UserID, &createJournalPostingParams{
 		Control: &accountingcontrol.AccountingControl{},
@@ -88,7 +88,7 @@ func TestPaymentJournalIsDatedWhenThePaymentWasMade(t *testing.T) {
 		AccountingDate: paidAt,
 	})
 	require.NoError(t, err)
-	assert.Equal(t, paidAt, draft.plan.AccountingDate)
+	assert.Equal(t, paidAt, draft.JournalPlan.AccountingDate)
 	_, err = svc.writeJournal(t.Context(), entity, actor, draft)
 	require.NoError(t, err)
 	assert.Equal(t, paidAt, posted.AccountingDate)

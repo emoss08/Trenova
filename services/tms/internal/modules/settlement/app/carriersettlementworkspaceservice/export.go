@@ -1,4 +1,4 @@
-package carriersettlementservice
+package carriersettlementworkspaceservice
 
 import (
 	"context"
