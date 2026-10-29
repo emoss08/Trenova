@@ -416,6 +416,9 @@ is rewritten as a range on the column itself.
 - **A computed time** (a move's completion: its last stop time, else its last change) is found
   through index ranges on its inputs first (`movecompletion.Candidates`), then computed exactly
   for those candidates.
+- **A balance as of a past date** walks back from the stored balance through the changes after
+  the window start, read by an index on (tenant, creation time), instead of summing every change
+  ever made ("History in one pass" in [scale.md](scale.md)).
 - **More than eight joined relations** split a pipelined load's semi-join from its joins
   (`join_collapse_limit`), so the joins are planned without the parent filter: such a level loads
   with `keel.LoadPerLevel` (`shipmentrepository.movesWithDetails`).
