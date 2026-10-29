@@ -72,9 +72,12 @@ func BatchByIDFunc[T EntityWithID](
 	}
 }
 
-func ParseBatchKeys(keys []string, errs []error) ([]pulid.ID, map[pulid.ID][]int) {
-	ids := make([]pulid.ID, 0, len(keys))
-	indexesByID := make(map[pulid.ID][]int, len(keys))
+func ParseBatchKeys(
+	keys []string,
+	errs []error,
+) (ids []pulid.ID, indexesByID map[pulid.ID][]int) {
+	ids = make([]pulid.ID, 0, len(keys))
+	indexesByID = make(map[pulid.ID][]int, len(keys))
 
 	for idx, key := range keys {
 		id, err := ParseLoaderID(key)

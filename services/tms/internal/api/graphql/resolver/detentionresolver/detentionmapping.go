@@ -735,7 +735,7 @@ func detentionWaiverStatToModel(
 }
 
 func detentionBacktestBucketToModel(
-	bucket detentionsimulation.BacktestBucket,
+	bucket *detentionsimulation.BacktestBucket,
 ) *gqlmodel.DetentionBacktestBucket {
 	return &gqlmodel.DetentionBacktestBucket{
 		Key:             bucket.Key,
@@ -758,13 +758,13 @@ func detentionBacktestResultToModel(
 	}
 
 	byCustomer := make([]*gqlmodel.DetentionBacktestBucket, 0, len(result.ByCustomer))
-	for _, bucket := range result.ByCustomer {
-		byCustomer = append(byCustomer, detentionBacktestBucketToModel(bucket))
+	for i := range result.ByCustomer {
+		byCustomer = append(byCustomer, detentionBacktestBucketToModel(&result.ByCustomer[i]))
 	}
 
 	byFacility := make([]*gqlmodel.DetentionBacktestBucket, 0, len(result.ByFacility))
-	for _, bucket := range result.ByFacility {
-		byFacility = append(byFacility, detentionBacktestBucketToModel(bucket))
+	for i := range result.ByFacility {
+		byFacility = append(byFacility, detentionBacktestBucketToModel(&result.ByFacility[i]))
 	}
 
 	return &gqlmodel.DetentionBacktestResult{

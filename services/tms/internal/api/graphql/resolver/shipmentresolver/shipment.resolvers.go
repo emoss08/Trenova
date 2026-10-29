@@ -87,7 +87,7 @@ func (r *MutationResolver) CreateShipment(ctx context.Context, input gqlmodel.Sh
 		return nil, err
 	}
 
-	entity, err := shipmentinputmapping.ShipmentFromInput(input, pulid.Nil, authCtx)
+	entity, err := shipmentinputmapping.ShipmentFromInput(&input, pulid.Nil, authCtx)
 	if err != nil {
 		return nil, err
 	}
@@ -136,7 +136,7 @@ func (r *MutationResolver) UpdateShipment(ctx context.Context, id string, input 
 	if err != nil {
 		return nil, err
 	}
-	entity, err := shipmentinputmapping.ShipmentFromInput(input, shipmentID, authCtx)
+	entity, err := shipmentinputmapping.ShipmentFromInput(&input, shipmentID, authCtx)
 	if err != nil {
 		return nil, err
 	}
@@ -307,7 +307,7 @@ func (r *MutationResolver) CalculateShipmentTotals(ctx context.Context, input gq
 		return nil, err
 	}
 
-	entity, err := shipmentinputmapping.ShipmentFromInput(input, pulid.Nil, authCtx)
+	entity, err := shipmentinputmapping.ShipmentFromInput(&input, pulid.Nil, authCtx)
 	if err != nil {
 		return nil, err
 	}
@@ -325,7 +325,7 @@ func (r *MutationResolver) PreviewShipmentContractRate(ctx context.Context, inpu
 		return nil, err
 	}
 
-	entity, err := shipmentinputmapping.ShipmentFromInput(input, pulid.Nil, authCtx)
+	entity, err := shipmentinputmapping.ShipmentFromInput(&input, pulid.Nil, authCtx)
 	if err != nil {
 		return nil, err
 	}
@@ -383,7 +383,7 @@ func (r *MutationResolver) CalculateShipmentDistance(ctx context.Context, input 
 		return nil, err
 	}
 
-	entity, err := shipmentinputmapping.ShipmentFromInput(input, pulid.Nil, authCtx)
+	entity, err := shipmentinputmapping.ShipmentFromInput(&input, pulid.Nil, authCtx)
 	if err != nil {
 		return nil, err
 	}

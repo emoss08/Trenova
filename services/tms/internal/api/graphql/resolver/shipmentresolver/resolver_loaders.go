@@ -60,7 +60,7 @@ func (r *ShipmentResolver) loadShipmentOrder(
 	obj *gqlmodel.Shipment,
 ) (*order.Order, error) {
 	if obj == nil || obj.OrderID == nil || *obj.OrderID == "" {
-		return nil, nil
+		return nil, nil //nolint:nilnil // a shipment without an order resolves to null
 	}
 
 	if !loadercore.Available(ctx) {
@@ -70,7 +70,7 @@ func (r *ShipmentResolver) loadShipmentOrder(
 	parent, err := operationsloaders.OrderByID(ctx, *obj.OrderID)
 	if err != nil {
 		if errortypes.IsNotFoundError(err) {
-			return nil, nil
+			return nil, nil //nolint:nilnil // a deleted order resolves to null
 		}
 		return nil, err
 	}

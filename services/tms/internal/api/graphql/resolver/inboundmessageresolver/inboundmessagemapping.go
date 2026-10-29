@@ -62,7 +62,7 @@ func inboundMessageConnection(
 // at the reading pane's narrowest.
 const inboundPreviewLength = 180
 
-func mailboxSettings(input gqlmodel.InboundMailboxInput) inboundmailbox.MailboxSettings {
+func mailboxSettings(input *gqlmodel.InboundMailboxInput) inboundmailbox.MailboxSettings {
 	return inboundmailbox.MailboxSettings{
 		Name:          input.Name,
 		Address:       input.Address,

@@ -47,7 +47,7 @@ func TestShipmentFromInput_MapsNestedPayloads(t *testing.T) {
 	pieces := 6
 	weight := 700
 
-	entity, err := ShipmentFromInput(gqlmodel.ShipmentInput{
+	entity, err := ShipmentFromInput(&gqlmodel.ShipmentInput{
 		ServiceTypeID:         serviceTypeID.String(),
 		ShipmentTypeID:        shipmentTypeID.String(),
 		CustomerID:            customerID.String(),
@@ -151,7 +151,7 @@ func TestShipmentFromInput_MapsNestedPayloads(t *testing.T) {
 func TestShipmentFromInput_RejectsOutOfRangeTemperature(t *testing.T) {
 	t.Parallel()
 
-	_, err := ShipmentFromInput(gqlmodel.ShipmentInput{
+	_, err := ShipmentFromInput(&gqlmodel.ShipmentInput{
 		ServiceTypeID:     pulid.MustNew("svc_").String(),
 		ShipmentTypeID:    pulid.MustNew("sht_").String(),
 		CustomerID:        pulid.MustNew("cus_").String(),
@@ -170,7 +170,7 @@ func TestShipmentFromInput_AllowsAShipmentRatedByHand(t *testing.T) {
 	t.Parallel()
 
 	for _, id := range []pulid.ID{pulid.Nil, pulid.MustNew("shp_")} {
-		entity, err := ShipmentFromInput(gqlmodel.ShipmentInput{
+		entity, err := ShipmentFromInput(&gqlmodel.ShipmentInput{
 			ServiceTypeID:  pulid.MustNew("svc_").String(),
 			ShipmentTypeID: pulid.MustNew("sht_").String(),
 			CustomerID:     pulid.MustNew("cus_").String(),
@@ -191,7 +191,7 @@ func TestShipmentFromInput_AllowsAShipmentRatedByHand(t *testing.T) {
 func TestShipmentFromInput_RejectsAMalformedRatingMethodOnANewShipment(t *testing.T) {
 	t.Parallel()
 
-	_, err := ShipmentFromInput(gqlmodel.ShipmentInput{
+	_, err := ShipmentFromInput(&gqlmodel.ShipmentInput{
 		ServiceTypeID:     pulid.MustNew("svc_").String(),
 		ShipmentTypeID:    pulid.MustNew("sht_").String(),
 		CustomerID:        pulid.MustNew("cus_").String(),

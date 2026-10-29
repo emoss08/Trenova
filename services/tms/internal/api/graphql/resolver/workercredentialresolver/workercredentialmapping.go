@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/intutils"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -30,21 +31,17 @@ func workerCredentialTypeFromInput(
 		Status:                 input.Status,
 		IsRequired:             input.IsRequired,
 		RequiredForDriverTypes: input.RequiredForDriverTypes,
-		RenewalWindowDays: int32(
-			input.RenewalWindowDays,
-		), //nolint:gosec // bounded by validation
-		RequiresNumber:   input.RequiresNumber,
-		RequiresDocument: input.RequiresDocument,
-		SortOrder: int32(
-			gqlscalar.IntValue(input.SortOrder),
-		), //nolint:gosec // small ordinal
-		Version: int64(gqlscalar.IntValue(input.Version)),
+		RenewalWindowDays:      intutils.SafeToInt32(input.RenewalWindowDays),
+		RequiresNumber:         input.RequiresNumber,
+		RequiresDocument:       input.RequiresDocument,
+		SortOrder:              intutils.SafeToInt32(gqlscalar.IntValue(input.SortOrder)),
+		Version:                int64(gqlscalar.IntValue(input.Version)),
 	}
 	if entity.RequiredForDriverTypes == nil {
 		entity.RequiredForDriverTypes = []worker.DriverType{}
 	}
 	if input.ValidityMonths != nil {
-		months := int32(*input.ValidityMonths) //nolint:gosec // bounded by validation
+		months := intutils.SafeToInt32(*input.ValidityMonths)
 		entity.ValidityMonths = &months
 	}
 	return entity

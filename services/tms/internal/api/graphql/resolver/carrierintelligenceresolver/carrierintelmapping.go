@@ -478,12 +478,12 @@ func sourcingQueryFromInput(
 const carrierIntelReviewQueueCountLimit = 500
 
 func sourcingSortValue(
-	sort *carrierintelsourcingservice.SourcingSort,
+	value *carrierintelsourcingservice.SourcingSort,
 ) carrierintelsourcingservice.SourcingSort {
-	if sort == nil {
+	if value == nil {
 		return carrierintelsourcingservice.SourcingSortBestMatch
 	}
-	return *sort
+	return *value
 }
 
 func carrierIntelEventFieldLabel(event *carrierintelevent.CarrierIntelEvent) *string {

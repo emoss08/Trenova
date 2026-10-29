@@ -132,8 +132,8 @@ func shipmentBillingRequirementsToModel(
 	items []shipmentbillingports.ShipmentBillingRequirement,
 ) []*gqlmodel.ShipmentBillingRequirement {
 	out := make([]*gqlmodel.ShipmentBillingRequirement, 0, len(items))
-	for _, item := range items {
-		out = append(out, shipmentBillingRequirementToModel(item))
+	for i := range items {
+		out = append(out, shipmentBillingRequirementToModel(&items[i]))
 	}
 	return out
 }
@@ -153,7 +153,7 @@ func shipmentBillingValidationsToModel(
 }
 
 func shipmentBillingRequirementToModel(
-	item shipmentbillingports.ShipmentBillingRequirement,
+	item *shipmentbillingports.ShipmentBillingRequirement,
 ) *gqlmodel.ShipmentBillingRequirement {
 	return &gqlmodel.ShipmentBillingRequirement{
 		DocumentTypeID:   item.DocumentTypeID,

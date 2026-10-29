@@ -225,7 +225,7 @@ func (r *MutationResolver) CreateInboundMailbox(ctx context.Context, input gqlmo
 
 	return r.InboundMailboxService.CreateMailbox(ctx, inboundmailbox.CreateMailboxRequest{
 		Actor:          actorutil.FromAuthContext(authCtx),
-		Settings:       mailboxSettings(input),
+		Settings:       mailboxSettings(&input),
 		SigningSecret:  stringutils.FromPtr(signingSecret),
 		ProviderAPIKey: stringutils.FromPtr(apiKey),
 	})
@@ -248,7 +248,7 @@ func (r *MutationResolver) UpdateInboundMailbox(ctx context.Context, id string, 
 		Actor:    actorutil.FromAuthContext(authCtx),
 		ID:       mailboxID,
 		Version:  int64(version),
-		Settings: mailboxSettings(input),
+		Settings: mailboxSettings(&input),
 	})
 }
 

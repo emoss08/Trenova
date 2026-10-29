@@ -81,7 +81,9 @@ func deskMemoryToModel(memory *agentmemoryports.DeskMemory) *gqlmodel.DeskMemory
 	return out
 }
 
-func deskEvidence(evidence *agentmemory.MemoryEvidence) (string, []string) {
+func deskEvidence(
+	evidence *agentmemory.MemoryEvidence,
+) (reason string, quotes []string) {
 	if evidence == nil || evidence.Quotes == nil {
 		return evidence.GetReason(), []string{}
 	}

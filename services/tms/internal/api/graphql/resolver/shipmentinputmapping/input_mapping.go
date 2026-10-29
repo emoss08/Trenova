@@ -22,120 +22,25 @@ import (
 )
 
 func ShipmentFromInput(
-	input gqlmodel.ShipmentInput,
+	input *gqlmodel.ShipmentInput,
 	id pulid.ID,
 	authCtx *authctx.AuthContext,
 ) (*shipmentdomain.Shipment, error) {
-	serviceTypeID, err := gqlid.RequiredID("serviceTypeId", input.ServiceTypeID)
-	if err != nil {
-		return nil, err
-	}
-	shipmentTypeID, err := gqlid.RequiredID("shipmentTypeId", input.ShipmentTypeID)
-	if err != nil {
-		return nil, err
-	}
-	customerID, err := gqlid.RequiredID("customerId", input.CustomerID)
-	if err != nil {
-		return nil, err
-	}
-	formulaTemplateID, err := gqlid.OptionalScopedID("formulaTemplateId", input.FormulaTemplateID)
-	if err != nil {
-		return nil, err
-	}
-	tractorTypeID, err := gqlid.OptionalID(input.TractorTypeID)
-	if err != nil {
-		return nil, err
-	}
-	trailerTypeID, err := gqlid.OptionalID(input.TrailerTypeID)
-	if err != nil {
-		return nil, err
-	}
-	ownerID, err := gqlid.OptionalID(input.OwnerID)
-	if err != nil {
-		return nil, err
-	}
-	enteredByID, err := gqlid.OptionalID(input.EnteredByID)
-	if err != nil {
-		return nil, err
-	}
-	canceledByID, err := gqlid.OptionalID(input.CanceledByID)
-	if err != nil {
-		return nil, err
-	}
-	consolidationGroupID, err := gqlid.OptionalID(input.ConsolidationGroupID)
-	if err != nil {
-		return nil, err
-	}
-	orderID, err := gqlid.OptionalID(input.OrderID)
-	if err != nil {
-		return nil, err
-	}
-	otherChargeAmount, err := nullDecimalFromInput(input.OtherChargeAmount)
-	if err != nil {
-		return nil, err
-	}
-	freightChargeAmount, err := nullDecimalFromInput(input.FreightChargeAmount)
-	if err != nil {
-		return nil, err
-	}
-	tariffInputs, err := tariffmapping.TariffInputsFromModel("tariffInputs", input.TariffInputs)
-	if err != nil {
-		return nil, err
-	}
-	totalChargeAmount, err := nullDecimalFromInput(input.TotalChargeAmount)
-	if err != nil {
-		return nil, err
-	}
-	temperatureMin, err := int16PtrFromInput("temperatureMin", input.TemperatureMin)
-	if err != nil {
-		return nil, err
-	}
-	temperatureMax, err := int16PtrFromInput("temperatureMax", input.TemperatureMax)
-	if err != nil {
-		return nil, err
-	}
-
-	status := shipmentvocab.StatusNew
-	if input.Status != nil {
-		status = shipmentvocab.Status(*input.Status)
-	}
-	entryMethod := shipmentvocab.EntryMethodManual
-	if input.EntryMethod != nil {
-		entryMethod = shipmentvocab.EntryMethod(*input.EntryMethod)
-	}
-
 	entity := &shipmentdomain.Shipment{
-		ID:                   id,
-		BusinessUnitID:       authCtx.BusinessUnitID,
-		OrganizationID:       authCtx.OrganizationID,
-		ServiceTypeID:        serviceTypeID,
-		ShipmentTypeID:       shipmentTypeID,
-		CustomerID:           customerID,
-		TractorTypeID:        tractorTypeID,
-		TrailerTypeID:        trailerTypeID,
-		OwnerID:              ownerID,
-		EnteredByID:          enteredByID,
-		CanceledByID:         canceledByID,
-		FormulaTemplateID:    formulaTemplateID,
-		ConsolidationGroupID: consolidationGroupID,
-		OrderID:              orderID,
-		Status:               status,
-		EntryMethod:          entryMethod,
-		ProNumber:            gqlscalar.StringValue(input.ProNumber),
-		BOL:                  gqlscalar.StringValue(input.BOL),
-		ExternalReference:    gqlscalar.StringValue(input.ExternalReference),
-		CancelReason:         gqlscalar.StringValue(input.CancelReason),
-		OtherChargeAmount:    otherChargeAmount,
-		FreightChargeAmount:  freightChargeAmount,
-		TariffInputs:         tariffInputs.OrEmpty(),
-		TotalChargeAmount:    totalChargeAmount,
-		Pieces:               gqlscalar.Int64Ptr(input.Pieces),
-		Weight:               gqlscalar.Int64Ptr(input.Weight),
-		TemperatureMin:       temperatureMin,
-		TemperatureMax:       temperatureMax,
-		ActualDeliveryDate:   gqlscalar.Int64Ptr(input.ActualDeliveryDate),
-		ActualShipDate:       gqlscalar.Int64Ptr(input.ActualShipDate),
-		CanceledAt:           gqlscalar.Int64Ptr(input.CanceledAt),
+		ID:                 id,
+		BusinessUnitID:     authCtx.BusinessUnitID,
+		OrganizationID:     authCtx.OrganizationID,
+		Status:             shipmentvocab.StatusNew,
+		EntryMethod:        shipmentvocab.EntryMethodManual,
+		ProNumber:          gqlscalar.StringValue(input.ProNumber),
+		BOL:                gqlscalar.StringValue(input.BOL),
+		ExternalReference:  gqlscalar.StringValue(input.ExternalReference),
+		CancelReason:       gqlscalar.StringValue(input.CancelReason),
+		Pieces:             gqlscalar.Int64Ptr(input.Pieces),
+		Weight:             gqlscalar.Int64Ptr(input.Weight),
+		ActualDeliveryDate: gqlscalar.Int64Ptr(input.ActualDeliveryDate),
+		ActualShipDate:     gqlscalar.Int64Ptr(input.ActualShipDate),
+		CanceledAt:         gqlscalar.Int64Ptr(input.CanceledAt),
 		BillingTransferStatus: shipmentvocab.BillingTransferStatus(
 			gqlscalar.StringValue(input.BillingTransferStatus),
 		),
@@ -147,15 +52,113 @@ func ShipmentFromInput(
 		SourceDocumentID:       gqlscalar.StringValue(input.SourceDocumentID),
 		FreightTerms:           shipmentvocab.FreightTermsPrepaid,
 	}
-	if input.FreightTerms != nil {
-		entity.FreightTerms = *input.FreightTerms
-	}
-	billToCustomerID, err := gqlid.OptionalScopedID("billToCustomerId", input.BillToCustomerID)
-	if err != nil {
+	if err := applyShipmentReferences(entity, input); err != nil {
 		return nil, err
 	}
-	if billToCustomerID.IsNotNil() {
-		entity.BillToCustomerID = &billToCustomerID
+	if err := applyShipmentMeasures(entity, input); err != nil {
+		return nil, err
+	}
+	applyShipmentOptionalFields(entity, input)
+	if err := applyShipmentBillTo(entity, input); err != nil {
+		return nil, err
+	}
+	if err := applyShipmentChildren(entity, input, authCtx); err != nil {
+		return nil, err
+	}
+
+	return entity, nil
+}
+
+func applyShipmentReferences(
+	entity *shipmentdomain.Shipment,
+	input *gqlmodel.ShipmentInput,
+) error {
+	var err error
+	if entity.ServiceTypeID, err = gqlid.RequiredID(
+		"serviceTypeId",
+		input.ServiceTypeID,
+	); err != nil {
+		return err
+	}
+	if entity.ShipmentTypeID, err = gqlid.RequiredID(
+		"shipmentTypeId",
+		input.ShipmentTypeID,
+	); err != nil {
+		return err
+	}
+	if entity.CustomerID, err = gqlid.RequiredID("customerId", input.CustomerID); err != nil {
+		return err
+	}
+	if entity.FormulaTemplateID, err = gqlid.OptionalScopedID(
+		"formulaTemplateId",
+		input.FormulaTemplateID,
+	); err != nil {
+		return err
+	}
+	if entity.TractorTypeID, err = gqlid.OptionalID(input.TractorTypeID); err != nil {
+		return err
+	}
+	if entity.TrailerTypeID, err = gqlid.OptionalID(input.TrailerTypeID); err != nil {
+		return err
+	}
+	if entity.OwnerID, err = gqlid.OptionalID(input.OwnerID); err != nil {
+		return err
+	}
+	if entity.EnteredByID, err = gqlid.OptionalID(input.EnteredByID); err != nil {
+		return err
+	}
+	if entity.CanceledByID, err = gqlid.OptionalID(input.CanceledByID); err != nil {
+		return err
+	}
+	if entity.ConsolidationGroupID, err = gqlid.OptionalID(
+		input.ConsolidationGroupID,
+	); err != nil {
+		return err
+	}
+	entity.OrderID, err = gqlid.OptionalID(input.OrderID)
+	return err
+}
+
+func applyShipmentMeasures(
+	entity *shipmentdomain.Shipment,
+	input *gqlmodel.ShipmentInput,
+) error {
+	var err error
+	if entity.OtherChargeAmount, err = nullDecimalFromInput(input.OtherChargeAmount); err != nil {
+		return err
+	}
+	if entity.FreightChargeAmount, err = nullDecimalFromInput(
+		input.FreightChargeAmount,
+	); err != nil {
+		return err
+	}
+	tariffInputs, err := tariffmapping.TariffInputsFromModel("tariffInputs", input.TariffInputs)
+	if err != nil {
+		return err
+	}
+	entity.TariffInputs = tariffInputs.OrEmpty()
+	if entity.TotalChargeAmount, err = nullDecimalFromInput(input.TotalChargeAmount); err != nil {
+		return err
+	}
+	if entity.TemperatureMin, err = int16PtrFromInput(
+		"temperatureMin",
+		input.TemperatureMin,
+	); err != nil {
+		return err
+	}
+	entity.TemperatureMax, err = int16PtrFromInput("temperatureMax", input.TemperatureMax)
+	return err
+}
+
+func applyShipmentOptionalFields(entity *shipmentdomain.Shipment, input *gqlmodel.ShipmentInput) {
+	if input.Status != nil {
+		entity.Status = shipmentvocab.Status(*input.Status)
+	}
+	if input.EntryMethod != nil {
+		entity.EntryMethod = shipmentvocab.EntryMethod(*input.EntryMethod)
+	}
+	if input.FreightTerms != nil {
+		entity.FreightTerms = *input.FreightTerms
 	}
 	if input.TenderStatus != nil {
 		tenderStatus := shipmentvocab.TenderStatus(*input.TenderStatus)
@@ -164,29 +167,45 @@ func ShipmentFromInput(
 	if input.Version != nil {
 		entity.Version = int64(*input.Version)
 	}
+}
 
+func applyShipmentBillTo(entity *shipmentdomain.Shipment, input *gqlmodel.ShipmentInput) error {
+	billToCustomerID, err := gqlid.OptionalScopedID("billToCustomerId", input.BillToCustomerID)
+	if err != nil {
+		return err
+	}
+	if billToCustomerID.IsNotNil() {
+		entity.BillToCustomerID = &billToCustomerID
+	}
+	return nil
+}
+
+func applyShipmentChildren(
+	entity *shipmentdomain.Shipment,
+	input *gqlmodel.ShipmentInput,
+	authCtx *authctx.AuthContext,
+) error {
 	moves, err := shipmentMovesFromInput(input.Moves, authCtx)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	additionalCharges, err := shipmentAdditionalChargesFromInput(input.AdditionalCharges, authCtx)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	commodities, err := shipmentCommoditiesFromInput(input.Commodities, authCtx)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	allocations, err := shipmentChargeAllocationsFromInput(&input, authCtx)
+	allocations, err := shipmentChargeAllocationsFromInput(input, authCtx)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	entity.Moves = moves
 	entity.AdditionalCharges = additionalCharges
 	entity.Commodities = commodities
 	entity.ChargeAllocations = allocations
-
-	return entity, nil
+	return nil
 }
 
 func shipmentMovesFromInput(
@@ -340,9 +359,9 @@ func shipmentAdditionalChargesFromInput(
 		}
 		unit := int16(1)
 		if input.Unit != nil {
-			parsedUnit, err := int16FromInput("unit", *input.Unit)
-			if err != nil {
-				return nil, err
+			parsedUnit, unitErr := int16FromInput("unit", *input.Unit)
+			if unitErr != nil {
+				return nil, unitErr
 			}
 			unit = parsedUnit
 		}
@@ -546,7 +565,7 @@ func decimalFromInput(value *string) (decimal.Decimal, error) {
 
 func int16PtrFromInput(field string, value *int) (*int16, error) {
 	if value == nil {
-		return nil, nil
+		return nil, nil //nolint:nilnil // an omitted input leaves the optional field unset
 	}
 	converted, err := int16FromInput(field, *value)
 	if err != nil {

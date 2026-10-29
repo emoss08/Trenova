@@ -27,7 +27,7 @@ func BillingQueueItemToModel(ctx context.Context,
 	item *billingqueue.BillingQueueItem,
 ) (*gqlmodel.BillingQueueItem, error) {
 	if item == nil {
-		return nil, nil
+		return nil, nil //nolint:nilnil // a missing item maps to a null GraphQL field
 	}
 
 	shipment, err := shipmentmapping.ShipmentToModel(ctx, item.Shipment)

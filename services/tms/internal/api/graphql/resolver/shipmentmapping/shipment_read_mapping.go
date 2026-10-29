@@ -71,7 +71,7 @@ func ShipmentCommentToModel(
 	entity *shipmentdomain.ShipmentComment,
 ) (*gqlmodel.ShipmentComment, error) {
 	if entity == nil {
-		return nil, nil
+		return nil, nil //nolint:nilnil // a missing comment maps to a null GraphQL field
 	}
 	mentions := make([]*gqlmodel.ShipmentCommentMention, 0, len(entity.MentionedUsers))
 	for _, mention := range entity.MentionedUsers {
@@ -165,7 +165,8 @@ func ShipmentDistanceToModel(
 	response *shipmentdistanceports.DistanceCalculationResponse,
 ) *gqlmodel.ShipmentDistanceResponse {
 	moves := make([]*gqlmodel.ShipmentDistanceMoveResult, 0, len(response.Moves))
-	for _, move := range response.Moves {
+	for i := range response.Moves {
+		move := &response.Moves[i]
 		moves = append(moves, &gqlmodel.ShipmentDistanceMoveResult{
 			MoveID:              gqlid.IDPtr(move.MoveID),
 			MoveIndex:           move.MoveIndex,
@@ -232,7 +233,8 @@ func LoadingOptimizationToModel(
 	result *shipmentserviceports.LoadingOptimizationResult,
 ) *gqlmodel.ShipmentLoadingOptimizationResponse {
 	placements := make([]*gqlmodel.ShipmentLoadingCommodity, 0, len(result.Placements))
-	for _, item := range result.Placements {
+	for i := range result.Placements {
+		item := &result.Placements[i]
 		placements = append(placements, &gqlmodel.ShipmentLoadingCommodity{
 			CommodityID:         item.CommodityID.String(),
 			CommodityName:       item.CommodityName,

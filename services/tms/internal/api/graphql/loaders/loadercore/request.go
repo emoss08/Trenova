@@ -110,8 +110,8 @@ func Get[F Source, V any](ctx context.Context, k *Key[F, V]) (V, bool) {
 	defer r.mu.Unlock()
 
 	if value, built := r.values[k]; built {
-		typed, ok := value.(V)
-		return typed, ok
+		typed, matches := value.(V)
+		return typed, matches
 	}
 	source, registered := r.sources[k.source].(F)
 	if !registered {
