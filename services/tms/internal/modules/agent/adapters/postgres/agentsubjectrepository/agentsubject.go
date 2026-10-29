@@ -27,7 +27,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/domain/ediinboundfile/ediinboundfiledb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention/detentiondb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
-	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel/carrierinteldb"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelevent/carrierinteleventdb"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulalibrary/formulalibrarydb"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate/formulatemplatedb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
@@ -99,7 +99,7 @@ var subjectTables = map[agent.SubjectType]subjectExists{
 		return keel.ExistsInto(t.Where(t.ID.Eq(id)), found)
 	},
 	agent.SubjectCarrierIntelEvent: func(id pulid.ID, found *bool) keel.BatchItem {
-		t := carrierinteldb.CarrierIntelEvents
+		t := carrierinteleventdb.CarrierIntelEvents
 		return keel.ExistsInto(t.Where(t.ID.Eq(id)), found)
 	},
 	agent.SubjectEDIInboundFile: func(id pulid.ID, found *bool) keel.BatchItem {

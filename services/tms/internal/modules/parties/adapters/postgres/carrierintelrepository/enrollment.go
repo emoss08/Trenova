@@ -7,8 +7,8 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel/carrierinteldb"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelenrollment"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelenrollment/carrierintelenrollmentdb"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/pkg/dberror"
@@ -63,7 +63,7 @@ func (r *enrollmentRepository) ListBySubjects(
 				return []*carrierintelenrollment.CarrierMonitoringEnrollment{}, nil
 			}
 
-			en := carrierinteldb.CarrierMonitoringEnrollments
+			en := carrierintelenrollmentdb.CarrierMonitoringEnrollments
 			entities, err := en.Where(
 				en.Provider.Eq(req.Provider),
 				en.SubjectType.Eq(req.SubjectType),
@@ -95,7 +95,7 @@ func (r *enrollmentRepository) GetByCarrierIDs(
 				return []*carrierintelenrollment.CarrierMonitoringEnrollment{}, nil
 			}
 
-			en := carrierinteldb.CarrierMonitoringEnrollments
+			en := carrierintelenrollmentdb.CarrierMonitoringEnrollments
 			entities, err := en.Where(en.CarrierID.In(carrierIDs...)).
 				Order(
 					keel.Desc(en.DesiredState.Eq(carrierintelenrollment.DesiredStateEnrolled)),
@@ -121,7 +121,7 @@ func (r *enrollmentRepository) ListDesired(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*carrierintelenrollment.CarrierMonitoringEnrollment, error) {
-			en := carrierinteldb.CarrierMonitoringEnrollments
+			en := carrierintelenrollmentdb.CarrierMonitoringEnrollments
 			entities, err := en.Where(
 				en.Provider.Eq(provider),
 				en.DesiredState.Eq(carrierintelenrollment.DesiredStateEnrolled),
@@ -147,7 +147,7 @@ func (r *enrollmentRepository) Upsert(
 			return nil
 		}
 
-		en := carrierinteldb.CarrierMonitoringEnrollments
+		en := carrierintelenrollmentdb.CarrierMonitoringEnrollments
 		_, err := en.Upsert(
 			ctx,
 			r.db.Keel(ctx),
@@ -189,7 +189,7 @@ func (r *enrollmentRepository) SaveSyncState(
 			return nil
 		}
 
-		en := carrierinteldb.CarrierMonitoringEnrollments
+		en := carrierintelenrollmentdb.CarrierMonitoringEnrollments
 		db := r.db.Keel(ctx)
 		now := timeutils.NowUnix()
 		for _, entity := range entities {
@@ -231,7 +231,7 @@ func (r *enrollmentRepository) ListNeedingSync(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*carrierintelenrollment.CarrierMonitoringEnrollment, error) {
-			en := carrierinteldb.CarrierMonitoringEnrollments
+			en := carrierintelenrollmentdb.CarrierMonitoringEnrollments
 			limit := intutils.Clamp(
 				intutils.WithDefault(max(req.Limit, 0), defaultNeedingSyncLimit),
 				1,
@@ -256,7 +256,7 @@ func (r *enrollmentRepository) ListNeedingSync(
 }
 
 func pendingSyncPredicate() keel.Pred {
-	en := carrierinteldb.CarrierMonitoringEnrollments
+	en := carrierintelenrollmentdb.CarrierMonitoringEnrollments
 
 	return keel.Or(
 		keel.And(
@@ -278,7 +278,7 @@ func (r *enrollmentRepository) ListActive(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*carrierintelenrollment.CarrierMonitoringEnrollment, error) {
-			en := carrierinteldb.CarrierMonitoringEnrollments
+			en := carrierintelenrollmentdb.CarrierMonitoringEnrollments
 			limit := intutils.Clamp(
 				intutils.WithDefault(max(req.Limit, 0), defaultActiveLimit),
 				1,
@@ -328,7 +328,7 @@ func (r *enrollmentRepository) ListByProviderRefs(
 				return []*carrierintelenrollment.CarrierMonitoringEnrollment{}, nil
 			}
 
-			en := carrierinteldb.CarrierMonitoringEnrollments
+			en := carrierintelenrollmentdb.CarrierMonitoringEnrollments
 			entities, err := en.Where(en.Provider.Eq(provider), en.ProviderRef.In(refs...)).
 				All(ctx, r.db.Keel(ctx))
 			if err != nil {
@@ -355,7 +355,7 @@ func (r *enrollmentRepository) ListConnection(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.CursorListResult[*carrierintelenrollment.CarrierMonitoringEnrollment], error) {
-			en := carrierinteldb.CarrierMonitoringEnrollments
+			en := carrierintelenrollmentdb.CarrierMonitoringEnrollments
 			result, err := listquery.Connection(
 				ctx,
 				r.db.Keel(ctx),
@@ -384,7 +384,7 @@ func (r *enrollmentRepository) TouchConfirmed(
 	req *carrierintelports.TouchEnrollmentsConfirmedRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		en := carrierinteldb.CarrierMonitoringEnrollments
+		en := carrierintelenrollmentdb.CarrierMonitoringEnrollments
 		scope := en.VendorState.Eq(carrierintelenrollment.VendorStateActive)
 		if len(req.SubjectIDs) > 0 {
 			scope = en.SubjectID.In(req.SubjectIDs...)
@@ -420,7 +420,7 @@ func (r *enrollmentRepository) Counts(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*carrierintelports.CarrierIntelEnrollmentCounts, error) {
-			en := carrierinteldb.CarrierMonitoringEnrollments
+			en := carrierintelenrollmentdb.CarrierMonitoringEnrollments
 			enrolled := en.DesiredState.Eq(carrierintelenrollment.DesiredStateEnrolled)
 			counts, err := keel.IntoOne[carrierintelports.CarrierIntelEnrollmentCounts](
 				ctx,

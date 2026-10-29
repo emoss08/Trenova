@@ -30,25 +30,25 @@ func NewProposalPreview(
 	}
 
 	m.previews = prometheus.NewCounterVec(prometheus.CounterOpts{
-		metricbase.Namespace: metricbase.Namespace,
-		Subsystem:            "ai",
-		Name:                 "proposal_preview_total",
-		Help:                 "Proposal previews computed, by tool and coverage",
+		Namespace: metricbase.Namespace,
+		Subsystem: "ai",
+		Name:      "proposal_preview_total",
+		Help:      "Proposal previews computed, by tool and coverage",
 	}, []string{toolLabel, "coverage"})
 
 	m.duration = prometheus.NewHistogramVec(prometheus.HistogramOpts{
-		metricbase.Namespace: metricbase.Namespace,
-		Subsystem:            "ai",
-		Name:                 "proposal_preview_duration_seconds",
-		Help:                 "Time to compute one proposal preview, by tool",
-		Buckets:              []float64{0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2, 3, 5},
+		Namespace: metricbase.Namespace,
+		Subsystem: "ai",
+		Name:      "proposal_preview_duration_seconds",
+		Help:      "Time to compute one proposal preview, by tool",
+		Buckets:   []float64{0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2, 3, 5},
 	}, []string{toolLabel})
 
 	m.conflicts = prometheus.NewCounterVec(prometheus.CounterOpts{
-		metricbase.Namespace: metricbase.Namespace,
-		Subsystem:            "ai",
-		Name:                 "proposal_preview_conflicts_total",
-		Help:                 "Approvals refused because the preview digest no longer matched, by tool",
+		Namespace: metricbase.Namespace,
+		Subsystem: "ai",
+		Name:      "proposal_preview_conflicts_total",
+		Help:      "Approvals refused because the preview digest no longer matched, by tool",
 	}, []string{toolLabel})
 
 	m.MustRegister(m.previews, m.duration, m.conflicts)

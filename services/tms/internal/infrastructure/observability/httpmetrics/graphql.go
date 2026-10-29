@@ -88,82 +88,82 @@ func NewGraphQL(
 
 	m.operationsTotal = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
-			metricbase.Namespace: metricbase.Namespace,
-			Subsystem:            "graphql",
-			Name:                 "operations_total",
-			Help:                 "Total number of GraphQL operations executed",
+			Namespace: metricbase.Namespace,
+			Subsystem: "graphql",
+			Name:      "operations_total",
+			Help:      "Total number of GraphQL operations executed",
 		},
 		[]string{"operation", "type", "status"},
 	)
 
 	m.operationDuration = prometheus.NewHistogramVec(
 		prometheus.HistogramOpts{
-			metricbase.Namespace: metricbase.Namespace,
-			Subsystem:            "graphql",
-			Name:                 "operation_duration_seconds",
-			Help:                 "GraphQL operation execution latencies in seconds",
-			Buckets:              GraphQLDurationBuckets,
+			Namespace: metricbase.Namespace,
+			Subsystem: "graphql",
+			Name:      "operation_duration_seconds",
+			Help:      "GraphQL operation execution latencies in seconds",
+			Buckets:   GraphQLDurationBuckets,
 		},
 		[]string{"operation", "type"},
 	)
 
 	m.operationErrors = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
-			metricbase.Namespace: metricbase.Namespace,
-			Subsystem:            "graphql",
-			Name:                 "operation_errors_total",
-			Help:                 "Total number of GraphQL operations that returned errors, by error code",
+			Namespace: metricbase.Namespace,
+			Subsystem: "graphql",
+			Name:      "operation_errors_total",
+			Help:      "Total number of GraphQL operations that returned errors, by error code",
 		},
 		[]string{"operation", "type", "code"},
 	)
 
 	m.activeOperations = prometheus.NewGauge(
 		prometheus.GaugeOpts{
-			metricbase.Namespace: metricbase.Namespace,
-			Subsystem:            "graphql",
-			Name:                 "active_operations",
-			Help:                 "Number of GraphQL operations currently executing",
+			Namespace: metricbase.Namespace,
+			Subsystem: "graphql",
+			Name:      "active_operations",
+			Help:      "Number of GraphQL operations currently executing",
 		},
 	)
 
 	m.operationCost = prometheus.NewHistogramVec(
 		prometheus.HistogramOpts{
-			metricbase.Namespace: metricbase.Namespace,
-			Subsystem:            "graphql",
-			Name:                 "operation_cost",
-			Help:                 "Computed GraphQL query complexity per operation",
-			Buckets:              GraphQLCostBuckets,
+			Namespace: metricbase.Namespace,
+			Subsystem: "graphql",
+			Name:      "operation_cost",
+			Help:      "Computed GraphQL query complexity per operation",
+			Buckets:   GraphQLCostBuckets,
 		},
 		[]string{"operation", "type"},
 	)
 
 	m.rejectionsTotal = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
-			metricbase.Namespace: metricbase.Namespace,
-			Subsystem:            "graphql",
-			Name:                 "rejections_total",
-			Help:                 "Total number of GraphQL requests rejected before execution",
+			Namespace: metricbase.Namespace,
+			Subsystem: "graphql",
+			Name:      "rejections_total",
+			Help:      "Total number of GraphQL requests rejected before execution",
 		},
 		[]string{metricbase.LabelReason},
 	)
 
 	m.parseDuration = prometheus.NewHistogram(
 		prometheus.HistogramOpts{
-			metricbase.Namespace: metricbase.Namespace,
-			Subsystem:            "graphql",
-			Name:                 "parse_duration_seconds",
-			Help:                 "Time spent parsing GraphQL documents in seconds",
-			Buckets:              GraphQLPhaseDurationBuckets,
+			Namespace: metricbase.Namespace,
+			Subsystem: "graphql",
+			Name:      "parse_duration_seconds",
+			Help:      "Time spent parsing GraphQL documents in seconds",
+			Buckets:   GraphQLPhaseDurationBuckets,
 		},
 	)
 
 	m.validationDuration = prometheus.NewHistogram(
 		prometheus.HistogramOpts{
-			metricbase.Namespace: metricbase.Namespace,
-			Subsystem:            "graphql",
-			Name:                 "validation_duration_seconds",
-			Help:                 "Time spent validating GraphQL documents in seconds",
-			Buckets:              GraphQLPhaseDurationBuckets,
+			Namespace: metricbase.Namespace,
+			Subsystem: "graphql",
+			Name:      "validation_duration_seconds",
+			Help:      "Time spent validating GraphQL documents in seconds",
+			Buckets:   GraphQLPhaseDurationBuckets,
 		},
 	)
 
@@ -188,31 +188,31 @@ func NewGraphQL(
 func (m *GraphQL) registerResolverCollectors() {
 	m.resolverCalls = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
-			metricbase.Namespace: metricbase.Namespace,
-			Subsystem:            "graphql",
-			Name:                 "resolver_calls_total",
-			Help:                 "Total number of GraphQL resolver invocations, for N+1 detection",
+			Namespace: metricbase.Namespace,
+			Subsystem: "graphql",
+			Name:      "resolver_calls_total",
+			Help:      "Total number of GraphQL resolver invocations, for N+1 detection",
 		},
 		[]string{"object", "field"},
 	)
 
 	m.resolverDuration = prometheus.NewHistogramVec(
 		prometheus.HistogramOpts{
-			metricbase.Namespace: metricbase.Namespace,
-			Subsystem:            "graphql",
-			Name:                 "resolver_duration_seconds",
-			Help:                 "GraphQL resolver latencies in seconds",
-			Buckets:              GraphQLResolverDurationBuckets,
+			Namespace: metricbase.Namespace,
+			Subsystem: "graphql",
+			Name:      "resolver_duration_seconds",
+			Help:      "GraphQL resolver latencies in seconds",
+			Buckets:   GraphQLResolverDurationBuckets,
 		},
 		[]string{"object", "field"},
 	)
 
 	m.resolverErrors = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
-			metricbase.Namespace: metricbase.Namespace,
-			Subsystem:            "graphql",
-			Name:                 "resolver_errors_total",
-			Help:                 "Total number of GraphQL resolver invocations that returned an error",
+			Namespace: metricbase.Namespace,
+			Subsystem: "graphql",
+			Name:      "resolver_errors_total",
+			Help:      "Total number of GraphQL resolver invocations that returned an error",
 		},
 		[]string{"object", "field"},
 	)

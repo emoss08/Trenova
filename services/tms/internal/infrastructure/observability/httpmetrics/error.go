@@ -23,20 +23,20 @@ func NewError(registry *prometheus.Registry, logger *zap.Logger, enabled bool) *
 
 	m.errorsTotal = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
-			metricbase.Namespace: metricbase.Namespace,
-			Subsystem:            "errors",
-			Name:                 "total",
-			Help:                 "Total number of errors by type and source",
+			Namespace: metricbase.Namespace,
+			Subsystem: "errors",
+			Name:      "total",
+			Help:      "Total number of errors by type and source",
 		},
 		[]string{"type", "source"},
 	)
 
 	m.panicRecoveries = prometheus.NewCounter(
 		prometheus.CounterOpts{
-			metricbase.Namespace: metricbase.Namespace,
-			Subsystem:            "errors",
-			Name:                 "panic_recoveries_total",
-			Help:                 "Total number of recovered panics",
+			Namespace: metricbase.Namespace,
+			Subsystem: "errors",
+			Name:      "panic_recoveries_total",
+			Help:      "Total number of recovered panics",
 		},
 	)
 

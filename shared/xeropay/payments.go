@@ -365,7 +365,7 @@ func FindPayments(ctx context.Context, c *xero.Client, f PaymentFilter) ([]Payme
 	if len(invoiceIDs) == 0 && reference == "" {
 		return nil, xeroerrors.ErrEmptyFilter
 	}
-	base := url.Values{whereParam: {xero.WhereJoin(
+	base := url.Values{xero.WhereParam: {xero.WhereJoin(
 		xero.WhereAnyOf("Invoice.InvoiceID", invoiceIDs, xero.WhereGUID),
 		xero.WhereAnyOf("Reference", xero.Optional(reference), xero.WhereString),
 	)}}

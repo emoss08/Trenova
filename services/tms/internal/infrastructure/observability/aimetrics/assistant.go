@@ -50,11 +50,11 @@ func NewAssistant(registry *prometheus.Registry, logger *zap.Logger, enabled boo
 
 	m.turnDuration = prometheus.NewHistogramVec(
 		prometheus.HistogramOpts{
-			metricbase.Namespace: metricbase.Namespace,
-			Subsystem:            "assistant",
-			Name:                 "turn_duration_seconds",
-			Help:                 "How long an assistant turn took, end to end",
-			Buckets:              TurnDurationBuckets,
+			Namespace: metricbase.Namespace,
+			Subsystem: "assistant",
+			Name:      "turn_duration_seconds",
+			Help:      "How long an assistant turn took, end to end",
+			Buckets:   TurnDurationBuckets,
 		},
 		[]string{"outcome"},
 	)
@@ -65,30 +65,30 @@ func NewAssistant(registry *prometheus.Registry, logger *zap.Logger, enabled boo
 	// slow worker or a backed-up queue makes worse first.
 	m.firstEvent = prometheus.NewHistogram(
 		prometheus.HistogramOpts{
-			metricbase.Namespace: metricbase.Namespace,
-			Subsystem:            "assistant",
-			Name:                 "turn_first_event_seconds",
-			Help:                 "How long a reader watching a turn from its start waited for its first event",
-			Buckets:              TurnDurationBuckets,
+			Namespace: metricbase.Namespace,
+			Subsystem: "assistant",
+			Name:      "turn_first_event_seconds",
+			Help:      "How long a reader watching a turn from its start waited for its first event",
+			Buckets:   TurnDurationBuckets,
 		},
 	)
 
 	m.turnTotal = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
-			metricbase.Namespace: metricbase.Namespace,
-			Subsystem:            "assistant",
-			Name:                 "turns_total",
-			Help:                 "Assistant turns by how they ended",
+			Namespace: metricbase.Namespace,
+			Subsystem: "assistant",
+			Name:      "turns_total",
+			Help:      "Assistant turns by how they ended",
 		},
 		[]string{"outcome"},
 	)
 
 	m.turnsStopped = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
-			metricbase.Namespace: metricbase.Namespace,
-			Subsystem:            "assistant",
-			Name:                 "turns_stopped_total",
-			Help:                 "Turns a person ended themselves, by whether anything had to be cancelled",
+			Namespace: metricbase.Namespace,
+			Subsystem: "assistant",
+			Name:      "turns_stopped_total",
+			Help:      "Turns a person ended themselves, by whether anything had to be cancelled",
 		},
 		[]string{metricbase.LabelResult},
 	)
@@ -97,10 +97,10 @@ func NewAssistant(registry *prometheus.Registry, logger *zap.Logger, enabled boo
 	// retry would have made twice.
 	m.stepsReplayed = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
-			metricbase.Namespace: metricbase.Namespace,
-			Subsystem:            "assistant",
-			Name:                 "steps_replayed_total",
-			Help:                 "Operations a later attempt declined to repeat, by what the ledger knew about them",
+			Namespace: metricbase.Namespace,
+			Subsystem: "assistant",
+			Name:      "steps_replayed_total",
+			Help:      "Operations a later attempt declined to repeat, by what the ledger knew about them",
 		},
 		[]string{"owner_kind", "state"},
 	)
@@ -112,10 +112,10 @@ func NewAssistant(registry *prometheus.Registry, logger *zap.Logger, enabled boo
 	// stays visible at all is here.
 	m.trajectoryEvents = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
-			metricbase.Namespace: metricbase.Namespace,
-			Subsystem:            "assistant",
-			Name:                 "trajectory_events_total",
-			Help:                 "Trajectory events by owner kind and whether they were stored",
+			Namespace: metricbase.Namespace,
+			Subsystem: "assistant",
+			Name:      "trajectory_events_total",
+			Help:      "Trajectory events by owner kind and whether they were stored",
 		},
 		[]string{"owner_kind", metricbase.LabelResult},
 	)
@@ -125,30 +125,30 @@ func NewAssistant(registry *prometheus.Registry, logger *zap.Logger, enabled boo
 	// wrongly looked the same as one that worked until somebody read threads.
 	m.toolOutcomes = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
-			metricbase.Namespace: metricbase.Namespace,
-			Subsystem:            "assistant",
-			Name:                 "tool_outcomes_total",
-			Help:                 "Agent tool calls by tool and by what became of the call",
+			Namespace: metricbase.Namespace,
+			Subsystem: "assistant",
+			Name:      "tool_outcomes_total",
+			Help:      "Agent tool calls by tool and by what became of the call",
 		},
 		[]string{"tool", "verdict", "model", "provider"},
 	)
 
 	m.guardReasks = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
-			metricbase.Namespace: metricbase.Namespace,
-			Subsystem:            "assistant",
-			Name:                 "guard_reasks_total",
-			Help:                 "Model calls the runtime made again because a guard sent the answer back",
+			Namespace: metricbase.Namespace,
+			Subsystem: "assistant",
+			Name:      "guard_reasks_total",
+			Help:      "Model calls the runtime made again because a guard sent the answer back",
 		},
 		[]string{"guard", "model", "provider"},
 	)
 
 	m.streamAttached = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
-			metricbase.Namespace: metricbase.Namespace,
-			Subsystem:            "assistant",
-			Name:                 "stream_attach_total",
-			Help:                 "Readers attaching to a turn, by what they found",
+			Namespace: metricbase.Namespace,
+			Subsystem: "assistant",
+			Name:      "stream_attach_total",
+			Help:      "Readers attaching to a turn, by what they found",
 		},
 		[]string{metricbase.LabelResult},
 	)
@@ -158,31 +158,31 @@ func NewAssistant(registry *prometheus.Registry, logger *zap.Logger, enabled boo
 	// long a model call sat in the queue before a worker took it.
 	m.prepare = prometheus.NewHistogramVec(
 		prometheus.HistogramOpts{
-			metricbase.Namespace: metricbase.Namespace,
-			Subsystem:            "assistant",
-			Name:                 "prepare_seconds",
-			Help:                 "How long preparing a turn took, by whether the question was answered",
-			Buckets:              PhaseBuckets,
+			Namespace: metricbase.Namespace,
+			Subsystem: "assistant",
+			Name:      "prepare_seconds",
+			Help:      "How long preparing a turn took, by whether the question was answered",
+			Buckets:   PhaseBuckets,
 		},
 		[]string{"outcome"},
 	)
 	m.guard = prometheus.NewHistogramVec(
 		prometheus.HistogramOpts{
-			metricbase.Namespace: metricbase.Namespace,
-			Subsystem:            "assistant",
-			Name:                 "guard_seconds",
-			Help:                 "How long the scope check took, by the stage that decided it",
-			Buckets:              PhaseBuckets,
+			Namespace: metricbase.Namespace,
+			Subsystem: "assistant",
+			Name:      "guard_seconds",
+			Help:      "How long the scope check took, by the stage that decided it",
+			Buckets:   PhaseBuckets,
 		},
 		[]string{"stage"},
 	)
 	m.modelCallWait = prometheus.NewHistogram(
 		prometheus.HistogramOpts{
-			metricbase.Namespace: metricbase.Namespace,
-			Subsystem:            "assistant",
-			Name:                 "model_call_wait_seconds",
-			Help:                 "How long a model call waited between being scheduled and a worker starting it",
-			Buckets:              PhaseBuckets,
+			Namespace: metricbase.Namespace,
+			Subsystem: "assistant",
+			Name:      "model_call_wait_seconds",
+			Help:      "How long a model call waited between being scheduled and a worker starting it",
+			Buckets:   PhaseBuckets,
 		},
 	)
 

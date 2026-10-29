@@ -6,8 +6,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel/carrierinteldb"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierinteloverride"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierinteloverride/carrierinteloverridedb"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -48,7 +48,7 @@ func (r *overrideRepository) ListActiveByCarrierIDs(
 				return []*carrierinteloverride.CarrierIntelOverride{}, nil
 			}
 
-			o := carrierinteldb.CarrierIntelOverrides
+			o := carrierinteloverridedb.CarrierIntelOverrides
 			entities, err := o.Where(
 				o.CarrierID.In(carrierIDs...),
 				o.RevokedAt.IsNull(),
@@ -75,7 +75,7 @@ func (r *overrideRepository) ListByCarrier(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*carrierinteloverride.CarrierIntelOverride, error) {
-			o := carrierinteldb.CarrierIntelOverrides
+			o := carrierinteloverridedb.CarrierIntelOverrides
 			entities, err := o.Where(o.CarrierID.Eq(carrierID)).
 				Order(o.GrantedAt.Desc(), o.ID.Desc()).
 				Limit(carrierOverrideHistoryLimit).
@@ -99,7 +99,7 @@ func (r *overrideRepository) GetByID(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*carrierinteloverride.CarrierIntelOverride, error) {
-			entity, err := carrierinteldb.CarrierIntelOverrides.Get(ctx, r.db.Keel(ctx), id)
+			entity, err := carrierinteloverridedb.CarrierIntelOverrides.Get(ctx, r.db.Keel(ctx), id)
 			if err != nil {
 				return nil, overrideErrors.Map(err, id.String())
 			}
@@ -117,7 +117,7 @@ func (r *overrideRepository) Create(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*carrierinteloverride.CarrierIntelOverride, error) {
-			err := carrierinteldb.CarrierIntelOverrides.Create(ctx, r.db.Keel(ctx), entity)
+			err := carrierinteloverridedb.CarrierIntelOverrides.Create(ctx, r.db.Keel(ctx), entity)
 			if err != nil {
 				r.l.Error("failed to create carrier intel override", zap.Error(err))
 				return nil, fmt.Errorf("create carrier intel override: %w", err)
@@ -136,7 +136,7 @@ func (r *overrideRepository) Update(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*carrierinteloverride.CarrierIntelOverride, error) {
-			err := carrierinteldb.CarrierIntelOverrides.Save(ctx, r.db.Keel(ctx), entity)
+			err := carrierinteloverridedb.CarrierIntelOverrides.Save(ctx, r.db.Keel(ctx), entity)
 			if err != nil {
 				r.l.Error("failed to update carrier intel override", zap.Error(err))
 				return nil, saveError(

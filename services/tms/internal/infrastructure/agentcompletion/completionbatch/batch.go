@@ -36,7 +36,7 @@ type Batch struct {
 	*completionengine.Engine
 }
 
-var _ llmports.BatchCompletionService = (*completionengine.Engine)(nil)
+var _ llmports.BatchCompletionService = (*Batch)(nil)
 
 func (s *Batch) SubmitBatch(
 	ctx context.Context,
@@ -321,7 +321,7 @@ func (s *Batch) BatchResults(
 	if task == "" {
 		task = aitask.TaskGeneral
 	}
-	reader := &batchReader{service: s, Provider: provider, Task: task, req: req}
+	reader := &batchReader{service: s.Engine, Provider: provider, Task: task, req: req}
 	limited := s.WithDeadline(ctx, batchReadTimeout)
 	err = limited.Finish(s.WithKeyFallback(provider, func(apiKey string) error {
 		reader.reset()

@@ -25,45 +25,45 @@ func NewAIAudit(registry *prometheus.Registry, logger *zap.Logger, enabled bool)
 	}
 
 	m.projectorLag = prometheus.NewGaugeVec(prometheus.GaugeOpts{
-		metricbase.Namespace: metricbase.Namespace,
-		Subsystem:            "ai_audit",
-		Name:                 "projector_lag_seconds",
-		Help:                 "Age of the oldest source row the AI audit projector has not yet read, per source",
+		Namespace: metricbase.Namespace,
+		Subsystem: "ai_audit",
+		Name:      "projector_lag_seconds",
+		Help:      "Age of the oldest source row the AI audit projector has not yet read, per source",
 	}, []string{"source"})
 
 	m.projectedTotal = prometheus.NewCounter(prometheus.CounterOpts{
-		metricbase.Namespace: metricbase.Namespace,
-		Subsystem:            "ai_audit",
-		Name:                 "events_projected_total",
-		Help:                 "AI audit events appended to the trail",
+		Namespace: metricbase.Namespace,
+		Subsystem: "ai_audit",
+		Name:      "events_projected_total",
+		Help:      "AI audit events appended to the trail",
 	})
 
 	m.passTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
-		metricbase.Namespace: metricbase.Namespace,
-		Subsystem:            "ai_audit",
-		Name:                 "projector_passes_total",
-		Help:                 "AI audit projector passes by result",
+		Namespace: metricbase.Namespace,
+		Subsystem: "ai_audit",
+		Name:      "projector_passes_total",
+		Help:      "AI audit projector passes by result",
 	}, []string{"result"})
 
 	m.verifications = prometheus.NewCounterVec(prometheus.CounterOpts{
-		metricbase.Namespace: metricbase.Namespace,
-		Subsystem:            "ai_audit",
-		Name:                 "verifications_total",
-		Help:                 "AI audit chain verifications by status",
+		Namespace: metricbase.Namespace,
+		Subsystem: "ai_audit",
+		Name:      "verifications_total",
+		Help:      "AI audit chain verifications by status",
 	}, []string{"status"})
 
 	m.exports = prometheus.NewCounterVec(prometheus.CounterOpts{
-		metricbase.Namespace: metricbase.Namespace,
-		Subsystem:            "ai_audit",
-		Name:                 "exports_total",
-		Help:                 "AI audit exports by format and final status",
+		Namespace: metricbase.Namespace,
+		Subsystem: "ai_audit",
+		Name:      "exports_total",
+		Help:      "AI audit exports by format and final status",
 	}, []string{"format", "status"})
 
 	m.prunedTotal = prometheus.NewCounter(prometheus.CounterOpts{
-		metricbase.Namespace: metricbase.Namespace,
-		Subsystem:            "ai_audit",
-		Name:                 "events_pruned_total",
-		Help:                 "AI audit events removed by the retention sweep",
+		Namespace: metricbase.Namespace,
+		Subsystem: "ai_audit",
+		Name:      "events_pruned_total",
+		Help:      "AI audit events removed by the retention sweep",
 	})
 
 	m.MustRegister(

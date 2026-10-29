@@ -226,7 +226,7 @@ func (s *Service) Update(
 	if err = s.apply(&updated, req, actor); err != nil {
 		return nil, err
 	}
-	aiproviderkey.ForgetExpiredPreviousKey(updated, timeutils.NowUnix())
+	aiproviderkey.ForgetExpiredPreviousKey(&updated, timeutils.NowUnix())
 
 	multiErr := errortypes.NewMultiError()
 	if keptKeyForNewEndpoint(existing, &updated, req) {

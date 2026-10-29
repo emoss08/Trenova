@@ -37,40 +37,40 @@ func NewDatabase(registry *prometheus.Registry, logger *zap.Logger, enabled bool
 
 	m.concurrencyTotal = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
-			metricbase.Namespace: metricbase.Namespace,
-			Subsystem:            "db",
-			Name:                 "concurrency_total",
-			Help:                 "Total number of database concurrency outcomes by kind, entity, and postgres code",
+			Namespace: metricbase.Namespace,
+			Subsystem: "db",
+			Name:      "concurrency_total",
+			Help:      "Total number of database concurrency outcomes by kind, entity, and postgres code",
 		},
 		[]string{"kind", "entity", "code"},
 	)
 
 	m.operatorActions = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
-			metricbase.Namespace: metricbase.Namespace,
-			Subsystem:            "db",
-			Name:                 "operator_actions_total",
-			Help:                 "Total number of database operator actions by action and outcome",
+			Namespace: metricbase.Namespace,
+			Subsystem: "db",
+			Name:      "operator_actions_total",
+			Help:      "Total number of database operator actions by action and outcome",
 		},
 		[]string{"action", "outcome"},
 	)
 
 	m.rlsScopeEvents = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
-			metricbase.Namespace: metricbase.Namespace,
-			Subsystem:            "db",
-			Name:                 "rls_scope_events_total",
-			Help:                 "Total number of row-level security scope decisions by pool, event, and outcome",
+			Namespace: metricbase.Namespace,
+			Subsystem: "db",
+			Name:      "rls_scope_events_total",
+			Help:      "Total number of row-level security scope decisions by pool, event, and outcome",
 		},
 		[]string{rlsLabelPool, rlsLabelEvent, rlsLabelOutcome},
 	)
 
 	m.slowWaits = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
-			metricbase.Namespace: metricbase.Namespace,
-			Subsystem:            "db",
-			Name:                 "slow_waits_total",
-			Help:                 "Total number of waits for a tenant slot, a connection or a cache fill past database.slowWaitWarning, by component, pool and kind",
+			Namespace: metricbase.Namespace,
+			Subsystem: "db",
+			Name:      "slow_waits_total",
+			Help:      "Total number of waits for a tenant slot, a connection or a cache fill past database.slowWaitWarning, by component, pool and kind",
 		},
 		[]string{"component", "pool", "kind"},
 	)
@@ -94,42 +94,42 @@ func (m *Database) RegisterPoolStats(stats func() PoolStats) {
 	m.IfEnabled(func() {
 		m.MustRegister(
 			prometheus.NewGaugeFunc(prometheus.GaugeOpts{
-				metricbase.Namespace: metricbase.Namespace,
-				Subsystem:            "db_pool",
-				Name:                 "open_connections",
-				Help:                 "Number of established database connections.",
+				Namespace: metricbase.Namespace,
+				Subsystem: "db_pool",
+				Name:      "open_connections",
+				Help:      "Number of established database connections.",
 			}, func() float64 {
 				return float64(stats().Open)
 			}),
 			prometheus.NewGaugeFunc(prometheus.GaugeOpts{
-				metricbase.Namespace: metricbase.Namespace,
-				Subsystem:            "db_pool",
-				Name:                 "in_use_connections",
-				Help:                 "Number of database connections currently in use.",
+				Namespace: metricbase.Namespace,
+				Subsystem: "db_pool",
+				Name:      "in_use_connections",
+				Help:      "Number of database connections currently in use.",
 			}, func() float64 {
 				return float64(stats().InUse)
 			}),
 			prometheus.NewGaugeFunc(prometheus.GaugeOpts{
-				metricbase.Namespace: metricbase.Namespace,
-				Subsystem:            "db_pool",
-				Name:                 "idle_connections",
-				Help:                 "Number of idle database connections.",
+				Namespace: metricbase.Namespace,
+				Subsystem: "db_pool",
+				Name:      "idle_connections",
+				Help:      "Number of idle database connections.",
 			}, func() float64 {
 				return float64(stats().Idle)
 			}),
 			prometheus.NewCounterFunc(prometheus.CounterOpts{
-				metricbase.Namespace: metricbase.Namespace,
-				Subsystem:            "db_pool",
-				Name:                 "wait_count_total",
-				Help:                 "Total number of database connection pool waits.",
+				Namespace: metricbase.Namespace,
+				Subsystem: "db_pool",
+				Name:      "wait_count_total",
+				Help:      "Total number of database connection pool waits.",
 			}, func() float64 {
 				return float64(stats().WaitCount)
 			}),
 			prometheus.NewCounterFunc(prometheus.CounterOpts{
-				metricbase.Namespace: metricbase.Namespace,
-				Subsystem:            "db_pool",
-				Name:                 "wait_duration_seconds_total",
-				Help:                 "Total time spent waiting for database connections.",
+				Namespace: metricbase.Namespace,
+				Subsystem: "db_pool",
+				Name:      "wait_duration_seconds_total",
+				Help:      "Total time spent waiting for database connections.",
 			}, func() float64 {
 				return stats().WaitDuration.Seconds()
 			}),
@@ -157,58 +157,58 @@ func (m *Database) RegisterRuntimeStats(stats func() RuntimeStats) {
 	m.IfEnabled(func() {
 		m.MustRegister(
 			prometheus.NewCounterFunc(prometheus.CounterOpts{
-				metricbase.Namespace: metricbase.Namespace,
-				Subsystem:            dbCacheSubsystem,
-				Name:                 "hits_total",
-				Help:                 "Total number of database reads served from the result cache.",
+				Namespace: metricbase.Namespace,
+				Subsystem: dbCacheSubsystem,
+				Name:      "hits_total",
+				Help:      "Total number of database reads served from the result cache.",
 			}, func() float64 {
 				return float64(stats().Cache.Hits)
 			}),
 			prometheus.NewCounterFunc(prometheus.CounterOpts{
-				metricbase.Namespace: metricbase.Namespace,
-				Subsystem:            dbCacheSubsystem,
-				Name:                 "misses_total",
-				Help:                 "Total number of cacheable database reads that read the database.",
+				Namespace: metricbase.Namespace,
+				Subsystem: dbCacheSubsystem,
+				Name:      "misses_total",
+				Help:      "Total number of cacheable database reads that read the database.",
 			}, func() float64 {
 				return float64(stats().Cache.Misses)
 			}),
 			prometheus.NewCounterFunc(prometheus.CounterOpts{
-				metricbase.Namespace: metricbase.Namespace,
-				Subsystem:            dbCacheSubsystem,
-				Name:                 "bypasses_total",
-				Help:                 "Total number of cacheable database reads where the result cache did not apply.",
+				Namespace: metricbase.Namespace,
+				Subsystem: dbCacheSubsystem,
+				Name:      "bypasses_total",
+				Help:      "Total number of cacheable database reads where the result cache did not apply.",
 			}, func() float64 {
 				return float64(stats().Cache.Bypasses)
 			}),
 			prometheus.NewCounterFunc(prometheus.CounterOpts{
-				metricbase.Namespace: metricbase.Namespace,
-				Subsystem:            dbCacheSubsystem,
-				Name:                 "errors_total",
-				Help:                 "Total number of result cache store, listener and decoder failures.",
+				Namespace: metricbase.Namespace,
+				Subsystem: dbCacheSubsystem,
+				Name:      "errors_total",
+				Help:      "Total number of result cache store, listener and decoder failures.",
 			}, func() float64 {
 				return float64(stats().Cache.Errors)
 			}),
 			prometheus.NewGaugeFunc(prometheus.GaugeOpts{
-				metricbase.Namespace: metricbase.Namespace,
-				Subsystem:            dbCacheSubsystem,
-				Name:                 "bytes",
-				Help:                 "Bytes held by the in-process result cache.",
+				Namespace: metricbase.Namespace,
+				Subsystem: dbCacheSubsystem,
+				Name:      "bytes",
+				Help:      "Bytes held by the in-process result cache.",
 			}, func() float64 {
 				return float64(stats().Cache.Bytes)
 			}),
 			prometheus.NewGaugeFunc(prometheus.GaugeOpts{
-				metricbase.Namespace: metricbase.Namespace,
-				Subsystem:            dbCacheSubsystem,
-				Name:                 "versions",
-				Help:                 "Number of (tenant, table) data versions the result cache holds.",
+				Namespace: metricbase.Namespace,
+				Subsystem: dbCacheSubsystem,
+				Name:      "versions",
+				Help:      "Number of (tenant, table) data versions the result cache holds.",
 			}, func() float64 {
 				return float64(stats().Cache.Versions)
 			}),
 			prometheus.NewGaugeFunc(prometheus.GaugeOpts{
-				metricbase.Namespace: metricbase.Namespace,
-				Subsystem:            dbCacheSubsystem,
-				Name:                 "listening",
-				Help:                 "1 while the result cache's data version listener is connected; the cache is bypassed at 0.",
+				Namespace: metricbase.Namespace,
+				Subsystem: dbCacheSubsystem,
+				Name:      "listening",
+				Help:      "1 while the result cache's data version listener is connected; the cache is bypassed at 0.",
 			}, func() float64 {
 				if stats().Cache.Listening {
 					return 1
@@ -216,18 +216,18 @@ func (m *Database) RegisterRuntimeStats(stats func() RuntimeStats) {
 				return 0
 			}),
 			prometheus.NewCounterFunc(prometheus.CounterOpts{
-				metricbase.Namespace: metricbase.Namespace,
-				Subsystem:            "db_pool",
-				Name:                 "tenant_waits_total",
-				Help:                 "Total number of times work waited for one of its tenant's concurrency slots.",
+				Namespace: metricbase.Namespace,
+				Subsystem: "db_pool",
+				Name:      "tenant_waits_total",
+				Help:      "Total number of times work waited for one of its tenant's concurrency slots.",
 			}, func() float64 {
 				return float64(stats().TenantWaits)
 			}),
 			prometheus.NewCounterFunc(prometheus.CounterOpts{
-				metricbase.Namespace: metricbase.Namespace,
-				Subsystem:            "db_pool",
-				Name:                 "read_commit_failures_total",
-				Help:                 "Total number of connections closed because the reply to a read transaction's end failed.",
+				Namespace: metricbase.Namespace,
+				Subsystem: "db_pool",
+				Name:      "read_commit_failures_total",
+				Help:      "Total number of connections closed because the reply to a read transaction's end failed.",
 			}, func() float64 {
 				return float64(stats().ReadCommitFailures)
 			}),

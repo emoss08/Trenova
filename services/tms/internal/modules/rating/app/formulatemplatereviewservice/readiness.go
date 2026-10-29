@@ -122,10 +122,10 @@ func (s *Service) Readiness(
 		log.Error("failed to check the template's source", zap.Error(err))
 		return nil, err
 	}
-	resp.TestTotal = len(gate.content.tests.Tests)
+	resp.TestTotal = len(gate.content.TestRun.Tests)
 	resp.TestPassed = gate.content.PassedTests()
 	resp.TestFailing = gate.content.FailingTests()
-	resp.Coverage = tariffverdict.SummarizeCoverage(template.Source, gate.content.tests.Coverage)
+	resp.Coverage = tariffverdict.SummarizeCoverage(template.Source, gate.content.TestRun.Coverage)
 	locale := i18n.FromContext(ctx)
 
 	libraries, err := s.libraryReadiness(ctx, template)
@@ -338,8 +338,8 @@ func testsReadiness(
 		Label: i18n.Translate(locale, "Tests pass"),
 	}
 	total := 0
-	if content.tests != nil {
-		total = len(content.tests.Tests)
+	if content.TestRun != nil {
+		total = len(content.TestRun.Tests)
 	}
 	passed := content.PassedTests()
 
@@ -351,7 +351,7 @@ func testsReadiness(
 		check.Status = ReadinessFail
 		check.Detail = i18n.Translate(locale, "Add at least one test")
 		check.refusal = i18n.Translate(locale, "Add at least one test block before submitting")
-	case content.tests.Error != nil:
+	case content.TestRun.Error != nil:
 		check.Status = ReadinessFail
 		check.Detail = i18n.Translate(locale, "The tests could not run")
 	case passed < total:
@@ -362,7 +362,7 @@ func testsReadiness(
 			"Only {0} of {1} tests pass ({2}); fix the formula or the tests before submitting",
 			passed,
 			total,
-			strings.Join(tariffverdict.FailingTests(locale, content.tests), "; "),
+			strings.Join(tariffverdict.FailingTests(locale, content.TestRun), "; "),
 		)
 	default:
 		check.Status = ReadinessPass

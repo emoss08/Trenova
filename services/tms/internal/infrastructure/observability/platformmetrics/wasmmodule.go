@@ -49,32 +49,32 @@ func NewWasmModule(
 	}
 
 	m.calls = prometheus.NewCounterVec(prometheus.CounterOpts{
-		metricbase.Namespace: metricbase.Namespace,
-		Subsystem:            subsystem,
-		Name:                 "calls_total",
-		Help:                 "Calls into the " + module + " WebAssembly module, by operation and outcome",
+		Namespace: metricbase.Namespace,
+		Subsystem: subsystem,
+		Name:      "calls_total",
+		Help:      "Calls into the " + module + " WebAssembly module, by operation and outcome",
 	}, []string{labelOp, metricbase.LabelOutcome})
 
 	m.duration = prometheus.NewHistogramVec(prometheus.HistogramOpts{
-		metricbase.Namespace: metricbase.Namespace,
-		Subsystem:            subsystem,
-		Name:                 "call_duration_seconds",
-		Help:                 "Time a " + module + " module call took, including the wait for a free instance",
-		Buckets:              WasmModuleDurationBuckets,
+		Namespace: metricbase.Namespace,
+		Subsystem: subsystem,
+		Name:      "call_duration_seconds",
+		Help:      "Time a " + module + " module call took, including the wait for a free instance",
+		Buckets:   WasmModuleDurationBuckets,
 	}, []string{labelOp})
 
 	m.inUse = prometheus.NewGauge(prometheus.GaugeOpts{
-		metricbase.Namespace: metricbase.Namespace,
-		Subsystem:            subsystem,
-		Name:                 "instances_in_use",
-		Help:                 "The " + module + " module's instances running a call",
+		Namespace: metricbase.Namespace,
+		Subsystem: subsystem,
+		Name:      "instances_in_use",
+		Help:      "The " + module + " module's instances running a call",
 	})
 
 	m.discarded = prometheus.NewCounterVec(prometheus.CounterOpts{
-		metricbase.Namespace: metricbase.Namespace,
-		Subsystem:            subsystem,
-		Name:                 "instances_discarded_total",
-		Help:                 "The " + module + " module's instances thrown away instead of reused, by reason",
+		Namespace: metricbase.Namespace,
+		Subsystem: subsystem,
+		Name:      "instances_discarded_total",
+		Help:      "The " + module + " module's instances thrown away instead of reused, by reason",
 	}, []string{metricbase.LabelReason})
 
 	m.MustRegister(m.calls, m.duration, m.inUse, m.discarded)

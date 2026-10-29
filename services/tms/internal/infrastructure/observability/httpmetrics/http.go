@@ -29,42 +29,42 @@ func NewHTTP(registry *prometheus.Registry, logger *zap.Logger, enabled bool) *H
 
 	m.requestsTotal = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
-			metricbase.Namespace: metricbase.Namespace,
-			Subsystem:            "http",
-			Name:                 "requests_total",
-			Help:                 "Total number of HTTP requests processed",
+			Namespace: metricbase.Namespace,
+			Subsystem: "http",
+			Name:      "requests_total",
+			Help:      "Total number of HTTP requests processed",
 		},
 		[]string{"method", "path", "status"},
 	)
 
 	m.requestDuration = prometheus.NewHistogramVec(
 		prometheus.HistogramOpts{
-			metricbase.Namespace: metricbase.Namespace,
-			Subsystem:            "http",
-			Name:                 "request_duration_seconds",
-			Help:                 "HTTP request latencies in seconds",
-			Buckets:              metricbase.HTTPDurationBuckets,
+			Namespace: metricbase.Namespace,
+			Subsystem: "http",
+			Name:      "request_duration_seconds",
+			Help:      "HTTP request latencies in seconds",
+			Buckets:   metricbase.HTTPDurationBuckets,
 		},
 		[]string{"method", "path", "status"},
 	)
 
 	m.responseSize = prometheus.NewHistogramVec(
 		prometheus.HistogramOpts{
-			metricbase.Namespace: metricbase.Namespace,
-			Subsystem:            "http",
-			Name:                 "response_size_bytes",
-			Help:                 "HTTP response sizes in bytes",
-			Buckets:              metricbase.HTTPResponseSizeBuckets,
+			Namespace: metricbase.Namespace,
+			Subsystem: "http",
+			Name:      "response_size_bytes",
+			Help:      "HTTP response sizes in bytes",
+			Buckets:   metricbase.HTTPResponseSizeBuckets,
 		},
 		[]string{"method", "path"},
 	)
 
 	m.activeRequests = prometheus.NewGauge(
 		prometheus.GaugeOpts{
-			metricbase.Namespace: metricbase.Namespace,
-			Subsystem:            "http",
-			Name:                 "active_requests",
-			Help:                 "Number of HTTP requests currently being processed",
+			Namespace: metricbase.Namespace,
+			Subsystem: "http",
+			Name:      "active_requests",
+			Help:      "Number of HTTP requests currently being processed",
 		},
 	)
 

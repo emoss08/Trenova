@@ -335,7 +335,7 @@ func FindCreditNotes(ctx context.Context, c *xero.Client, f InvoiceFilter) ([]Cr
 		return nil, err
 	}
 	from, to := terms.dateClauses()
-	base := url.Values{whereParam: {xero.WhereJoin(
+	base := url.Values{xero.WhereParam: {xero.WhereJoin(
 		xero.WhereAnyOf("Type", xero.Optional(terms.kind), xero.WhereString),
 		xero.WhereAnyOf("CreditNoteNumber", terms.numbers, xero.WhereString),
 		xero.WhereAnyOf("Contact.ContactID", terms.contactIDs, xero.WhereGUID),

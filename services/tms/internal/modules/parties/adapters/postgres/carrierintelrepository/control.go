@@ -7,8 +7,8 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel/carrierinteldb"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelcontrol"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelcontrol/carrierintelcontroldb"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -42,7 +42,7 @@ func (r *controlRepository) GetOrCreate(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 ) (*carrierintelcontrol.CarrierIntelControl, error) {
-	c := carrierinteldb.CarrierIntelControls
+	c := carrierintelcontroldb.CarrierIntelControls
 	newDefault := func() *carrierintelcontrol.CarrierIntelControl {
 		return carrierintelcontrol.NewDefaultControl(tenantInfo.OrgID, tenantInfo.BuID)
 	}
@@ -85,7 +85,7 @@ func (r *controlRepository) Update(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*carrierintelcontrol.CarrierIntelControl, error) {
-			err := carrierinteldb.CarrierIntelControls.Save(ctx, r.db.Keel(ctx), entity)
+			err := carrierintelcontroldb.CarrierIntelControls.Save(ctx, r.db.Keel(ctx), entity)
 			if err != nil {
 				r.l.Error("failed to update carrier intel control", zap.Error(err))
 				return nil, saveError(
@@ -110,7 +110,7 @@ func (r *controlRepository) ListConfigured(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*carrierintelcontrol.CarrierIntelControl, error) {
-			c := carrierinteldb.CarrierIntelControls
+			c := carrierintelcontroldb.CarrierIntelControls
 			limit := intutils.Clamp(
 				intutils.WithDefault(max(req.Limit, 0), defaultConfiguredTenantLimit),
 				1,

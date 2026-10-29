@@ -7,8 +7,8 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel/carrierinteldb"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelusage"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelusage/carrierintelusagedb"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -41,7 +41,7 @@ func (r *usageRepository) Insert(
 	entity *carrierintelusage.CarrierIntelUsageRecord,
 ) (bool, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (bool, error) {
-		inserted, err := carrierinteldb.CarrierIntelUsageRecords.CreateOrSkip(
+		inserted, err := carrierintelusagedb.CarrierIntelUsageRecords.CreateOrSkip(
 			ctx,
 			r.db.Keel(ctx),
 			[]*carrierintelusage.CarrierIntelUsageRecord{entity},
@@ -62,7 +62,7 @@ func (r *usageRepository) ExistsDedupeKey(
 	dedupeKey string,
 ) (bool, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (bool, error) {
-		u := carrierinteldb.CarrierIntelUsageRecords
+		u := carrierintelusagedb.CarrierIntelUsageRecords
 		exists, err := u.Where(
 			u.Provider.Eq(provider),
 			u.Billable.IsTrue(),
@@ -83,7 +83,7 @@ func (r *usageRepository) CostSince(
 	since int64,
 ) (decimal.Decimal, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (decimal.Decimal, error) {
-		u := carrierinteldb.CarrierIntelUsageRecords
+		u := carrierintelusagedb.CarrierIntelUsageRecords
 		total, err := keel.IntoOne[decimal.Decimal](
 			ctx,
 			r.db.Keel(ctx),
@@ -104,7 +104,7 @@ func (r *usageRepository) CountBillableSince(
 	req *carrierintelports.CountBillableUsageRequest,
 ) (int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
-		u := carrierinteldb.CarrierIntelUsageRecords
+		u := carrierintelusagedb.CarrierIntelUsageRecords
 		count, err := u.Where(
 			u.Provider.Eq(req.Provider),
 			u.Endpoint.Eq(req.Endpoint),
@@ -128,7 +128,7 @@ func (r *usageRepository) Summary(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]carrierintelports.CarrierIntelUsageSummaryRow, error) {
-			u := carrierinteldb.CarrierIntelUsageRecords
+			u := carrierintelusagedb.CarrierIntelUsageRecords
 			q := u.Pick(u.Provider, u.Endpoint, keel.Count(), u.BillableUnits.Sum(), u.EstimatedCost.Sum()).
 				Where(
 					u.CreatedAt.Gte(req.Since),
@@ -163,7 +163,7 @@ func (r *usageRepository) ListDaily(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*carrierintelusage.CarrierIntelUsageDaily, error) {
-			d := carrierinteldb.CarrierIntelUsageDailies
+			d := carrierintelusagedb.CarrierIntelUsageDailies
 			entities, err := d.Where(d.Day.Between(int64(req.FromDay), int64(req.ToDay))).
 				Order(d.Day.Asc(), d.Provider.Asc(), d.Endpoint.Asc()).
 				All(ctx, r.db.Keel(ctx))
@@ -181,8 +181,8 @@ func (r *usageRepository) RollupDay(ctx context.Context, dayStart int64) (int, e
 	ctx = dbscope.WithSystem(ctx, "roll up carrier intelligence usage across every organization")
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
 		start := timeutils.DayStartUTC(dayStart)
-		l := carrierinteldb.CarrierIntelUsageRecords
-		d := carrierinteldb.CarrierIntelUsageDailies
+		l := carrierintelusagedb.CarrierIntelUsageRecords
+		d := carrierintelusagedb.CarrierIntelUsageDailies
 		day := keel.Int64(int64(timeutils.DayKeyUTC(start)))
 		affected, err := d.UpsertFrom(
 			ctx,
@@ -229,7 +229,7 @@ func (r *usageRepository) DeleteOlderThan(
 		"delete carrier intelligence usage past retention across every organization",
 	)
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
-		u := carrierinteldb.CarrierIntelUsageRecords
+		u := carrierintelusagedb.CarrierIntelUsageRecords
 		batch := intutils.Clamp(
 			intutils.WithDefault(max(limit, 0), defaultUsageDeleteBatchSize),
 			1,

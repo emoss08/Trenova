@@ -43,7 +43,7 @@ const (
 	PartyVendor
 )
 
-func (k PartyKind) recordType() string {
+func (k PartyKind) RecordType() string {
 	if k == PartyVendor {
 		return RecordVendor
 	}
@@ -496,7 +496,7 @@ func CreateParty(ctx context.Context, s *nsbinding.Session, p *PartyCreate) (str
 	}
 	body.Subsidiary = s.Subsidiary()
 	return s.Client.Upsert(ctx, netsuite.RecordWrite{
-		Type:       p.Kind.recordType(),
+		Type:       p.Kind.RecordType(),
 		ExternalID: requestID,
 		Body:       body,
 	})

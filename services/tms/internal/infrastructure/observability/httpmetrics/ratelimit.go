@@ -28,20 +28,20 @@ func NewRateLimit(registry *prometheus.Registry, logger *zap.Logger, enabled boo
 
 	m.decisionsTotal = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
-			metricbase.Namespace: metricbase.Namespace,
-			Subsystem:            "ratelimit",
-			Name:                 "decisions_total",
-			Help:                 "Rate limit decisions by scope and outcome",
+			Namespace: metricbase.Namespace,
+			Subsystem: "ratelimit",
+			Name:      "decisions_total",
+			Help:      "Rate limit decisions by scope and outcome",
 		},
 		[]string{"scope", "outcome"},
 	)
 
 	m.storeFailuresTotal = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
-			metricbase.Namespace: metricbase.Namespace,
-			Subsystem:            "ratelimit",
-			Name:                 "store_failures_total",
-			Help:                 "Rate limit store failures by the failure mode that was applied",
+			Namespace: metricbase.Namespace,
+			Subsystem: "ratelimit",
+			Name:      "store_failures_total",
+			Help:      "Rate limit store failures by the failure mode that was applied",
 		},
 		[]string{"failure_mode"},
 	)

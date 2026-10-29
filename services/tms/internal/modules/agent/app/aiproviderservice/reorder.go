@@ -152,7 +152,7 @@ func (s *Service) modify(
 		updated.Version = *req.version
 	}
 	req.edit(&updated)
-	aiproviderkey.ForgetExpiredPreviousKey(updated, timeutils.NowUnix())
+	aiproviderkey.ForgetExpiredPreviousKey(&updated, timeutils.NowUnix())
 
 	multiErr := errortypes.NewMultiError()
 	updated.Validate(multiErr)

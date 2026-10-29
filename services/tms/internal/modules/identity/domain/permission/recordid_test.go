@@ -67,7 +67,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender/tenderdb"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier/carrierdb"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carriercapacity/carriercapacitydb"
-	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel/carrierinteldb"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelevent/carrierinteleventdb"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer/customerdb"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/factoringcompany/factoringcompanydb"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location/locationdb"
@@ -361,10 +361,12 @@ var kindMinters = map[permission.RecordKind]minter{
 	permission.KindAccountingDriftFinding: prefixed(
 		accountingdriftdb.AccountingDriftFindingsSchema(),
 	),
-	permission.KindCarrierIntelligenceEvent: prefixed(carrierinteldb.CarrierIntelEventsSchema()),
-	permission.KindInsurancePolicy:          prefixed(carrierdb.CarrierInsurancePoliciesSchema()),
-	permission.KindCarrierAssignment:        prefixed(shipmentdb.CarrierAssignmentsSchema()),
-	permission.KindAdditionalCharge:         prefixed(shipmentdb.AdditionalChargesSchema()),
+	permission.KindCarrierIntelligenceEvent: prefixed(
+		carrierinteleventdb.CarrierIntelEventsSchema(),
+	),
+	permission.KindInsurancePolicy:   prefixed(carrierdb.CarrierInsurancePoliciesSchema()),
+	permission.KindCarrierAssignment: prefixed(shipmentdb.CarrierAssignmentsSchema()),
+	permission.KindAdditionalCharge:  prefixed(shipmentdb.AdditionalChargesSchema()),
 	permission.KindBillingTransferRun: prefixed(
 		billingtransferdb.BillingTransferRunsSchema(),
 	),

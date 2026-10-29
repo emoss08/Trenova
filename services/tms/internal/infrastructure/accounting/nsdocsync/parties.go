@@ -41,7 +41,7 @@ func (c *Documents) upsertParty(
 			replace = []string{sublistAddressBook}
 		}
 		if err = s.Client.Patch(ctx, netsuite.RecordPatch{
-			Type:    w.kind.recordType(),
+			Type:    w.kind.RecordType(),
 			ID:      id,
 			Body:    body,
 			Replace: replace,

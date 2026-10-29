@@ -124,9 +124,13 @@ func (c *Connector) UpdateSalesDocument(
 	}
 	switch doc.Kind {
 	case accountingsync.SyncObjectInvoice, accountingsync.SyncObjectDebitMemo:
-		update = client.UpdateInvoice
+		update = func(ctx context.Context, requestID, id string, txn *quickbookstxn.SalesTxn) (*quickbookstxn.TxnResult, error) {
+			return quickbookstxn.UpdateInvoice(ctx, client, requestID, id, txn)
+		}
 	case accountingsync.SyncObjectCreditMemo:
-		update = client.UpdateCreditMemo
+		update = func(ctx context.Context, requestID, id string, txn *quickbookstxn.SalesTxn) (*quickbookstxn.TxnResult, error) {
+			return quickbookstxn.UpdateCreditMemo(ctx, client, requestID, id, txn)
+		}
 	case accountingsync.SyncObjectCustomer,
 		accountingsync.SyncObjectCustomerPayment,
 		accountingsync.SyncObjectCreditApplication,

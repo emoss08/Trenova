@@ -6,8 +6,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel/carrierinteldb"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelverification"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelverification/carrierintelverificationdb"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -39,7 +39,11 @@ func (r *verificationRepository) Create(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*carrierintelverification.CarrierEquipmentVerification, error) {
-			err := carrierinteldb.CarrierEquipmentVerifications.Create(ctx, r.db.Keel(ctx), entity)
+			err := carrierintelverificationdb.CarrierEquipmentVerifications.Create(
+				ctx,
+				r.db.Keel(ctx),
+				entity,
+			)
 			if err != nil {
 				r.l.Error("failed to create carrier equipment verification", zap.Error(err))
 				return nil, fmt.Errorf("create carrier equipment verification: %w", err)
@@ -59,7 +63,11 @@ func (r *verificationRepository) GetByID(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*carrierintelverification.CarrierEquipmentVerification, error) {
-			entity, err := carrierinteldb.CarrierEquipmentVerifications.Get(ctx, r.db.Keel(ctx), id)
+			entity, err := carrierintelverificationdb.CarrierEquipmentVerifications.Get(
+				ctx,
+				r.db.Keel(ctx),
+				id,
+			)
 			if err != nil {
 				return nil, verificationErrors.Map(err, id.String())
 			}
@@ -82,7 +90,7 @@ func (r *verificationRepository) ListByAssignmentIDs(
 				return []*carrierintelverification.CarrierEquipmentVerification{}, nil
 			}
 
-			v := carrierinteldb.CarrierEquipmentVerifications
+			v := carrierintelverificationdb.CarrierEquipmentVerifications
 			entities, err := v.Where(v.CarrierAssignmentID.In(assignmentIDs...)).
 				Order(v.VerifiedAt.Desc(), v.ID.Desc()).
 				All(ctx, r.db.Keel(ctx))
@@ -104,7 +112,11 @@ func (r *verificationRepository) Update(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*carrierintelverification.CarrierEquipmentVerification, error) {
-			err := carrierinteldb.CarrierEquipmentVerifications.Save(ctx, r.db.Keel(ctx), entity)
+			err := carrierintelverificationdb.CarrierEquipmentVerifications.Save(
+				ctx,
+				r.db.Keel(ctx),
+				entity,
+			)
 			if dberror.IsNotFoundError(err) {
 				return nil, dberror.CreateVersionMismatchError(
 					verificationEntityName,

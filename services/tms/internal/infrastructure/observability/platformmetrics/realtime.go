@@ -32,72 +32,72 @@ func NewRealtime(registry *prometheus.Registry, logger *zap.Logger, enabled bool
 	}
 
 	m.connections = prometheus.NewGauge(prometheus.GaugeOpts{
-		metricbase.Namespace: metricbase.Namespace,
-		Subsystem:            realtimeSubsystem,
-		Name:                 "connections",
-		Help:                 "Event streams currently open on this instance",
+		Namespace: metricbase.Namespace,
+		Subsystem: realtimeSubsystem,
+		Name:      "connections",
+		Help:      "Event streams currently open on this instance",
 	})
 	m.connectionsOpened = prometheus.NewCounterVec(prometheus.CounterOpts{
-		metricbase.Namespace: metricbase.Namespace,
-		Subsystem:            realtimeSubsystem,
-		Name:                 "connections_opened_total",
-		Help:                 "Event stream open attempts by result",
+		Namespace: metricbase.Namespace,
+		Subsystem: realtimeSubsystem,
+		Name:      "connections_opened_total",
+		Help:      "Event stream open attempts by result",
 	}, []string{metricbase.LabelResult})
 	m.connectionsClosed = prometheus.NewCounterVec(prometheus.CounterOpts{
-		metricbase.Namespace: metricbase.Namespace,
-		Subsystem:            realtimeSubsystem,
-		Name:                 "connections_closed_total",
-		Help:                 "Event streams closed by reason",
+		Namespace: metricbase.Namespace,
+		Subsystem: realtimeSubsystem,
+		Name:      "connections_closed_total",
+		Help:      "Event streams closed by reason",
 	}, []string{metricbase.LabelReason})
 	m.published = prometheus.NewCounterVec(prometheus.CounterOpts{
-		metricbase.Namespace: metricbase.Namespace,
-		Subsystem:            realtimeSubsystem,
-		Name:                 "published_total",
-		Help:                 "Events written to the realtime bus by event and result",
+		Namespace: metricbase.Namespace,
+		Subsystem: realtimeSubsystem,
+		Name:      "published_total",
+		Help:      "Events written to the realtime bus by event and result",
 	}, []string{"event", metricbase.LabelResult})
 	m.publishDropped = prometheus.NewCounterVec(prometheus.CounterOpts{
-		metricbase.Namespace: metricbase.Namespace,
-		Subsystem:            realtimeSubsystem,
-		Name:                 "publish_dropped_total",
-		Help:                 "Events dropped before reaching the realtime bus by reason",
+		Namespace: metricbase.Namespace,
+		Subsystem: realtimeSubsystem,
+		Name:      "publish_dropped_total",
+		Help:      "Events dropped before reaching the realtime bus by reason",
 	}, []string{metricbase.LabelReason})
 	m.publishBatch = prometheus.NewHistogram(prometheus.HistogramOpts{
-		metricbase.Namespace: metricbase.Namespace,
-		Subsystem:            realtimeSubsystem,
-		Name:                 "publish_batch_size",
-		Help:                 "Events written per pipelined flush",
-		Buckets:              []float64{1, 2, 5, 10, 25, 50, 100, 250, 500},
+		Namespace: metricbase.Namespace,
+		Subsystem: realtimeSubsystem,
+		Name:      "publish_batch_size",
+		Help:      "Events written per pipelined flush",
+		Buckets:   []float64{1, 2, 5, 10, 25, 50, 100, 250, 500},
 	})
 	m.publishLatency = prometheus.NewHistogram(prometheus.HistogramOpts{
-		metricbase.Namespace: metricbase.Namespace,
-		Subsystem:            realtimeSubsystem,
-		Name:                 "publish_flush_seconds",
-		Help:                 "Duration of one pipelined flush to the realtime bus",
-		Buckets:              metricbase.HTTPDurationBuckets,
+		Namespace: metricbase.Namespace,
+		Subsystem: realtimeSubsystem,
+		Name:      "publish_flush_seconds",
+		Help:      "Duration of one pipelined flush to the realtime bus",
+		Buckets:   metricbase.HTTPDurationBuckets,
 	})
 	m.delivered = prometheus.NewCounterVec(prometheus.CounterOpts{
-		metricbase.Namespace: metricbase.Namespace,
-		Subsystem:            realtimeSubsystem,
-		Name:                 "delivered_total",
-		Help:                 "Frames handed to local event streams by event",
+		Namespace: metricbase.Namespace,
+		Subsystem: realtimeSubsystem,
+		Name:      "delivered_total",
+		Help:      "Frames handed to local event streams by event",
 	}, []string{"event"})
 	m.replays = prometheus.NewCounterVec(prometheus.CounterOpts{
-		metricbase.Namespace: metricbase.Namespace,
-		Subsystem:            realtimeSubsystem,
-		Name:                 "replays_total",
-		Help:                 "Resume attempts by result",
+		Namespace: metricbase.Namespace,
+		Subsystem: realtimeSubsystem,
+		Name:      "replays_total",
+		Help:      "Resume attempts by result",
 	}, []string{metricbase.LabelResult})
 	m.fanoutErrors = prometheus.NewCounter(prometheus.CounterOpts{
-		metricbase.Namespace: metricbase.Namespace,
-		Subsystem:            realtimeSubsystem,
-		Name:                 "fanout_errors_total",
-		Help:                 "Failed reads from the realtime bus",
+		Namespace: metricbase.Namespace,
+		Subsystem: realtimeSubsystem,
+		Name:      "fanout_errors_total",
+		Help:      "Failed reads from the realtime bus",
 	})
 	m.presenceSwept = prometheus.NewCounter(prometheus.CounterOpts{
-		metricbase.Namespace: metricbase.Namespace,
-		Subsystem:            realtimeSubsystem,
-		Name:                 "presence_swept_total",
-		Help:                 "Presence members removed after their connection stopped refreshing them",
+		Namespace: metricbase.Namespace,
+		Subsystem: realtimeSubsystem,
+		Name:      "presence_swept_total",
+		Help:      "Presence members removed after their connection stopped refreshing them",
 	})
 
 	m.MustRegister(

@@ -8,8 +8,8 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
-	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel/carrierinteldb"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelevent"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelevent/carrierinteleventdb"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbtype"
@@ -84,7 +84,7 @@ func (r *eventRepository) InsertIgnoreDuplicates(
 				return []*carrierintelevent.CarrierIntelEvent{}, nil
 			}
 
-			e := carrierinteldb.CarrierIntelEvents
+			e := carrierinteleventdb.CarrierIntelEvents
 			db := r.db.Keel(ctx)
 			inserted, err := e.CreateOrSkip(
 				ctx,
@@ -139,7 +139,7 @@ func (r *eventRepository) InsertIgnoreDuplicates(
 }
 
 func eventFilters(req *carrierintelports.ListCarrierIntelEventsRequest) []keel.Pred {
-	e := carrierinteldb.CarrierIntelEvents
+	e := carrierinteleventdb.CarrierIntelEvents
 
 	return []keel.Pred{
 		keel.When(len(req.Statuses) > 0, e.Status.In(req.Statuses...)),
@@ -171,7 +171,7 @@ func (r *eventRepository) ListConnection(
 			result, err := listquery.Connection(
 				ctx,
 				r.db.Keel(ctx),
-				carrierinteldb.CarrierIntelEvents.Where(eventFilters(req)...),
+				carrierinteleventdb.CarrierIntelEvents.Where(eventFilters(req)...),
 				&listquery.Request[carrierintelevent.CarrierIntelEvent]{
 					Filter: req.Filter,
 					Cursor: req.Cursor,
@@ -200,7 +200,7 @@ func (r *eventRepository) GetByIDs(
 				return []*carrierintelevent.CarrierIntelEvent{}, nil
 			}
 
-			e := carrierinteldb.CarrierIntelEvents
+			e := carrierinteleventdb.CarrierIntelEvents
 			entities, err := e.Where(e.ID.In(ids...)).Limit(len(ids)).List(ctx, r.db.Keel(ctx))
 			if err != nil {
 				r.l.Error("failed to get carrier intel events", zap.Error(err))
@@ -220,7 +220,7 @@ func (r *eventRepository) Update(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*carrierintelevent.CarrierIntelEvent, error) {
-			err := carrierinteldb.CarrierIntelEvents.Save(ctx, r.db.Keel(ctx), entity)
+			err := carrierinteleventdb.CarrierIntelEvents.Save(ctx, r.db.Keel(ctx), entity)
 			if err != nil {
 				r.l.Error("failed to update carrier intel event", zap.Error(err))
 				return nil, saveError(
@@ -245,7 +245,7 @@ func (r *eventRepository) BulkAcknowledge(
 			return 0, nil
 		}
 
-		e := carrierinteldb.CarrierIntelEvents
+		e := carrierinteleventdb.CarrierIntelEvents
 		affected, err := e.Where(
 			e.ID.In(req.EventIDs...),
 			e.Status.Eq(carrierintelevent.EventStatusOpen),
@@ -276,7 +276,7 @@ func (r *eventRepository) CountOpenByCarrierIDs(
 			return map[pulid.ID]int{}, nil
 		}
 
-		e := carrierinteldb.CarrierIntelEvents
+		e := carrierinteleventdb.CarrierIntelEvents
 		rows, err := keel.Into[carrierEventCount](
 			ctx,
 			r.db.Keel(ctx),
@@ -306,7 +306,7 @@ func (r *eventRepository) CountOpen(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*carrierintelports.CarrierIntelEventCounts, error) {
-			e := carrierinteldb.CarrierIntelEvents
+			e := carrierinteleventdb.CarrierIntelEvents
 			rows, err := keel.Into[eventStatusSeverityCount](
 				ctx,
 				r.db.Keel(ctx),
@@ -349,7 +349,7 @@ func eventCounts(rows []eventStatusSeverityCount) *carrierintelports.CarrierInte
 }
 
 func eventSeverityRank() keel.Int64Expr {
-	severity := keel.CastText(carrierinteldb.CarrierIntelEvents.Severity)
+	severity := keel.CastText(carrierinteleventdb.CarrierIntelEvents.Severity)
 	rank := keel.CaseInt64()
 	for i, level := range eventSeverityOrder {
 		rank = rank.When(severity.Eq(string(level)), keel.Int64(int64(i)))
@@ -366,7 +366,7 @@ func (r *eventRepository) ListForDigest(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*carrierintelevent.CarrierIntelEvent, error) {
-			e := carrierinteldb.CarrierIntelEvents
+			e := carrierinteleventdb.CarrierIntelEvents
 			limit := intutils.Clamp(
 				intutils.WithDefault(max(req.Limit, 0), defaultDigestLimit),
 				1,
@@ -402,7 +402,7 @@ func (r *eventRepository) MarkNotified(
 			return nil
 		}
 
-		e := carrierinteldb.CarrierIntelEvents
+		e := carrierinteleventdb.CarrierIntelEvents
 		_, err := e.Where(e.ID.In(ids...)).Update(
 			ctx,
 			r.db.Keel(ctx),

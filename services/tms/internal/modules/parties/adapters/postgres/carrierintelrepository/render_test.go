@@ -4,9 +4,9 @@ import (
 	"testing"
 
 	"github.com/emoss08/keel"
-
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
-	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel/carrierinteldb"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelenrollment/carrierintelenrollmentdb"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelevent/carrierinteleventdb"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
 	"github.com/emoss08/trenova/internal/testutil/keeltest"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -51,7 +51,7 @@ func TestPruneHistoryDeletesOnlyRankedNonCurrentSnapshots(t *testing.T) {
 func TestEventFiltersBoundTheDetectedWindowOnlyWhenAsked(t *testing.T) {
 	t.Parallel()
 
-	e := carrierinteldb.CarrierIntelEvents
+	e := carrierinteleventdb.CarrierIntelEvents
 	bounded, args := keeltest.Render(
 		t,
 		e.Where(eventFilters(&carrierintelports.ListCarrierIntelEventsRequest{
@@ -77,7 +77,7 @@ func TestEventFiltersBoundTheDetectedWindowOnlyWhenAsked(t *testing.T) {
 func TestEventFiltersCombineStatusesAndSubject(t *testing.T) {
 	t.Parallel()
 
-	e := carrierinteldb.CarrierIntelEvents
+	e := carrierinteleventdb.CarrierIntelEvents
 	sql, args := keeltest.Render(
 		t,
 		e.Where(eventFilters(&carrierintelports.ListCarrierIntelEventsRequest{
@@ -96,7 +96,7 @@ func TestEventFiltersCombineStatusesAndSubject(t *testing.T) {
 func TestDigestOrdersBySeverityRank(t *testing.T) {
 	t.Parallel()
 
-	e := carrierinteldb.CarrierIntelEvents
+	e := carrierinteleventdb.CarrierIntelEvents
 	sql, args := keeltest.Render(t, e.Query().Order(keel.Asc(eventSeverityRank())).Limit(1))
 
 	assert.Contains(t, sql, "CASE", sql)
@@ -108,7 +108,7 @@ func TestDigestOrdersBySeverityRank(t *testing.T) {
 func TestPendingSyncCoversEnrolAndUnenrol(t *testing.T) {
 	t.Parallel()
 
-	en := carrierinteldb.CarrierMonitoringEnrollments
+	en := carrierintelenrollmentdb.CarrierMonitoringEnrollments
 	sql, args := keeltest.Render(t, en.Where(pendingSyncPredicate()))
 
 	assert.Contains(t, sql, " OR ", sql)

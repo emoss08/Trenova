@@ -44,7 +44,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender/tenderdb"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier/carrierdb"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carriercapacity/carriercapacitydb"
-	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel/carrierinteldb"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelevent/carrierinteleventdb"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer/customerdb"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/factoringcompany/factoringcompanydb"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location/locationdb"
@@ -311,7 +311,7 @@ var lookups = map[permission.Resource]lookup{
 		return t.Pick(t.UpdatedAt).Where(t.ID.Eq(id))
 	}),
 	permission.ResourceCarrierIntelligence: by(func(id pulid.ID) keel.Projection {
-		t := carrierinteldb.CarrierIntelEvents
+		t := carrierinteleventdb.CarrierIntelEvents
 		return t.Pick(t.Version).Where(t.ID.Eq(id))
 	}),
 	permission.ResourceDriverSettlement: by(func(id pulid.ID) keel.Projection {

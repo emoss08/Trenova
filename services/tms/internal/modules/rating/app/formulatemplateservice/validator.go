@@ -16,7 +16,7 @@ import (
 
 type ContentCheck struct {
 	Checked *tariff.SourceCheck
-	tests   *rules.TariffTestRun
+	TestRun *rules.TariffTestRun
 }
 
 func (c *ContentCheck) Checks() bool {
@@ -24,16 +24,16 @@ func (c *ContentCheck) Checks() bool {
 }
 
 func (c *ContentCheck) TestsPass() bool {
-	return c.tests != nil && c.tests.Passed()
+	return c.TestRun != nil && c.TestRun.Passed()
 }
 
 func (c *ContentCheck) PassedTests() int {
-	if c.tests == nil {
+	if c.TestRun == nil {
 		return 0
 	}
 	passed := 0
-	for i := range c.tests.Tests {
-		if c.tests.Tests[i].Status == rules.TariffTestPassed {
+	for i := range c.TestRun.Tests {
+		if c.TestRun.Tests[i].Status == rules.TariffTestPassed {
 			passed++
 		}
 	}
@@ -41,23 +41,23 @@ func (c *ContentCheck) PassedTests() int {
 }
 
 func (c *ContentCheck) FailingTests() []string {
-	if c.tests == nil {
+	if c.TestRun == nil {
 		return nil
 	}
-	names := make([]string, 0, len(c.tests.Tests))
-	for i := range c.tests.Tests {
-		if c.tests.Tests[i].Status != rules.TariffTestPassed {
-			names = append(names, c.tests.Tests[i].Name)
+	names := make([]string, 0, len(c.TestRun.Tests))
+	for i := range c.TestRun.Tests {
+		if c.TestRun.Tests[i].Status != rules.TariffTestPassed {
+			names = append(names, c.TestRun.Tests[i].Name)
 		}
 	}
 	return names
 }
 
 func (c *ContentCheck) TestCount() int32 {
-	if c.tests == nil {
+	if c.TestRun == nil {
 		return 0
 	}
-	return intutils.SafeToInt32(len(c.tests.Tests))
+	return intutils.SafeToInt32(len(c.TestRun.Tests))
 }
 
 func (c *ContentCheck) HeaderName() string {
@@ -100,7 +100,7 @@ func (s *Service) CheckContent(ctx context.Context, req *ContentRequest) (*Conte
 		return nil, err
 	}
 
-	return &ContentCheck{Checked: checked, tests: tests}, nil
+	return &ContentCheck{Checked: checked, TestRun: tests}, nil
 }
 
 func TemplateTenant(template *formulatemplate.FormulaTemplate) pagination.TenantInfo {

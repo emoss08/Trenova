@@ -10,8 +10,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier/carrierdb"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
-	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel/carrierinteldb"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelsnapshot"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelsnapshot/carrierintelsnapshotdb"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -51,7 +51,7 @@ func (r *snapshotRepository) GetCurrent(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*carrierintelsnapshot.CarrierIntelSnapshot, error) {
-			s := carrierinteldb.CarrierIntelSnapshots
+			s := carrierintelsnapshotdb.CarrierIntelSnapshots
 			entity, err := s.Where(
 				s.SubjectType.Eq(subject.SubjectType),
 				s.SubjectID.Eq(subject.SubjectID),
@@ -83,7 +83,7 @@ func (r *snapshotRepository) GetCurrentByCarrierIDs(
 				return []*carrierintelsnapshot.CarrierIntelSnapshot{}, nil
 			}
 
-			s := carrierinteldb.CarrierIntelSnapshots
+			s := carrierintelsnapshotdb.CarrierIntelSnapshots
 			entities, err := s.Where(s.IsCurrent.IsTrue(), s.CarrierID.In(carrierIDs...)).
 				All(ctx, r.db.Keel(ctx))
 			if err != nil {
@@ -113,7 +113,7 @@ func (r *snapshotRepository) GetCurrentBySubjectIDs(
 				return []*carrierintelsnapshot.CarrierIntelSnapshot{}, nil
 			}
 
-			s := carrierinteldb.CarrierIntelSnapshots
+			s := carrierintelsnapshotdb.CarrierIntelSnapshots
 			entities, err := s.Where(
 				s.IsCurrent.IsTrue(),
 				s.SubjectType.Eq(subjectType),
@@ -142,7 +142,7 @@ func (r *snapshotRepository) GetLatestFullByDOT(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*carrierintelsnapshot.CarrierIntelSnapshot, error) {
-			s := carrierinteldb.CarrierIntelSnapshots
+			s := carrierintelsnapshotdb.CarrierIntelSnapshots
 			entity, err := s.Where(
 				s.DOTNumber.Eq(dotNumber),
 				s.Depth.Eq(carrierintel.LookupDepthFull),
@@ -171,7 +171,7 @@ func (r *snapshotRepository) ListHistory(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*carrierintelsnapshot.CarrierIntelSnapshot, error) {
-			s := carrierinteldb.CarrierIntelSnapshots
+			s := carrierintelsnapshotdb.CarrierIntelSnapshots
 			limit := intutils.Clamp(
 				intutils.WithDefault(max(req.Limit, 0), defaultSnapshotHistoryLimit),
 				1,
@@ -203,7 +203,7 @@ func (r *snapshotRepository) InsertCurrent(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*carrierintelsnapshot.CarrierIntelSnapshot, error) {
-			s := carrierinteldb.CarrierIntelSnapshots
+			s := carrierintelsnapshotdb.CarrierIntelSnapshots
 			db := r.db.Keel(ctx)
 
 			_, err := s.Where(
@@ -237,7 +237,7 @@ func (r *snapshotRepository) UpdateEvaluation(
 	entity *carrierintelsnapshot.CarrierIntelSnapshot,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		s := carrierinteldb.CarrierIntelSnapshots
+		s := carrierintelsnapshotdb.CarrierIntelSnapshots
 		err := s.Save(
 			ctx,
 			r.db.Keel(ctx),
@@ -272,7 +272,7 @@ func (r *snapshotRepository) TouchConfirmed(
 			return nil
 		}
 
-		s := carrierinteldb.CarrierIntelSnapshots
+		s := carrierintelsnapshotdb.CarrierIntelSnapshots
 		_, err := s.Where(s.ID.In(snapshotIDs...)).Update(
 			ctx,
 			r.db.Keel(ctx),
@@ -293,7 +293,7 @@ func (r *snapshotRepository) MarkReviewed(
 	req *carrierintelports.MarkSnapshotReviewedRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		s := carrierinteldb.CarrierIntelSnapshots
+		s := carrierintelsnapshotdb.CarrierIntelSnapshots
 		affected, err := s.Where(
 			s.SubjectType.Eq(req.SubjectType),
 			s.SubjectID.Eq(req.SubjectID),
@@ -328,7 +328,7 @@ func (r *snapshotRepository) ListForRecompute(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*carrierintelsnapshot.CarrierIntelSnapshot, error) {
-			s := carrierinteldb.CarrierIntelSnapshots
+			s := carrierintelsnapshotdb.CarrierIntelSnapshots
 			limit := intutils.Clamp(
 				intutils.WithDefault(max(req.Limit, 0), defaultRecomputeLimit),
 				1,
@@ -365,7 +365,7 @@ func (r *snapshotRepository) ListReviewQueue(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*carrierintelsnapshot.CarrierIntelSnapshot, error) {
-			s := carrierinteldb.CarrierIntelSnapshots
+			s := carrierintelsnapshotdb.CarrierIntelSnapshots
 			limit := intutils.Clamp(
 				intutils.WithDefault(max(req.Limit, 0), defaultReviewQueueLimit),
 				1,
@@ -390,7 +390,7 @@ func (r *snapshotRepository) ListReviewQueue(
 }
 
 func pruneHistoryQuery(keep int) *keel.Query[*carrierintelsnapshot.CarrierIntelSnapshot] {
-	s := carrierinteldb.CarrierIntelSnapshots
+	s := carrierintelsnapshotdb.CarrierIntelSnapshots
 	h := s.As("history")
 	ranked := keel.CTE("ranked", []string{"id", "rn"}, h.Pick(
 		h.ID,

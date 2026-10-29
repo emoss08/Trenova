@@ -29,81 +29,81 @@ func NewTemporal(registry *prometheus.Registry, logger *zap.Logger, enabled bool
 
 	m.activityDuration = prometheus.NewHistogramVec(
 		prometheus.HistogramOpts{
-			metricbase.Namespace: metricbase.Namespace,
-			Subsystem:            "temporal",
-			Name:                 "activity_duration_seconds",
-			Help:                 "Duration of Temporal activity executions in seconds",
-			Buckets:              metricbase.TemporalDurationBuckets,
+			Namespace: metricbase.Namespace,
+			Subsystem: "temporal",
+			Name:      "activity_duration_seconds",
+			Help:      "Duration of Temporal activity executions in seconds",
+			Buckets:   metricbase.TemporalDurationBuckets,
 		},
 		[]string{"activity_type", "task_queue"},
 	)
 
 	m.activityTotal = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
-			metricbase.Namespace: metricbase.Namespace,
-			Subsystem:            "temporal",
-			Name:                 "activity_total",
-			Help:                 "Total number of Temporal activity executions",
+			Namespace: metricbase.Namespace,
+			Subsystem: "temporal",
+			Name:      "activity_total",
+			Help:      "Total number of Temporal activity executions",
 		},
 		[]string{"activity_type", "task_queue", "status"},
 	)
 
 	m.activityErrors = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
-			metricbase.Namespace: metricbase.Namespace,
-			Subsystem:            "temporal",
-			Name:                 "activity_errors_total",
-			Help:                 "Total number of Temporal activity errors",
+			Namespace: metricbase.Namespace,
+			Subsystem: "temporal",
+			Name:      "activity_errors_total",
+			Help:      "Total number of Temporal activity errors",
 		},
 		[]string{"activity_type", "error_type"},
 	)
 
 	m.workflowDuration = prometheus.NewHistogramVec(
 		prometheus.HistogramOpts{
-			metricbase.Namespace: metricbase.Namespace,
-			Subsystem:            "temporal",
-			Name:                 "workflow_duration_seconds",
-			Help:                 "Duration of Temporal workflow executions in seconds",
-			Buckets:              metricbase.TemporalDurationBuckets,
+			Namespace: metricbase.Namespace,
+			Subsystem: "temporal",
+			Name:      "workflow_duration_seconds",
+			Help:      "Duration of Temporal workflow executions in seconds",
+			Buckets:   metricbase.TemporalDurationBuckets,
 		},
 		[]string{"workflow_type"},
 	)
 
 	m.workflowTotal = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
-			metricbase.Namespace: metricbase.Namespace,
-			Subsystem:            "temporal",
-			Name:                 "workflow_total",
-			Help:                 "Total number of Temporal workflow executions",
+			Namespace: metricbase.Namespace,
+			Subsystem: "temporal",
+			Name:      "workflow_total",
+			Help:      "Total number of Temporal workflow executions",
 		},
 		[]string{"workflow_type", "status"},
 	)
 
 	m.workflowErrors = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
-			metricbase.Namespace: metricbase.Namespace,
-			Subsystem:            "temporal",
-			Name:                 "workflow_errors_total",
-			Help:                 "Total number of Temporal workflow errors",
+			Namespace: metricbase.Namespace,
+			Subsystem: "temporal",
+			Name:      "workflow_errors_total",
+			Help:      "Total number of Temporal workflow errors",
 		},
 		[]string{"workflow_type", "error_type"},
 	)
 
 	m.activeActivities = prometheus.NewGauge(
 		prometheus.GaugeOpts{
-			metricbase.Namespace: metricbase.Namespace,
-			Subsystem:            "temporal",
-			Name:                 "active_activities",
-			Help:                 "Number of Temporal activities currently being executed",
+			Namespace: metricbase.Namespace,
+			Subsystem: "temporal",
+			Name:      "active_activities",
+			Help:      "Number of Temporal activities currently being executed",
 		},
 	)
 
 	m.activeWorkflows = prometheus.NewGauge(
 		prometheus.GaugeOpts{
-			metricbase.Namespace: metricbase.Namespace,
-			Subsystem:            "temporal",
-			Name:                 "active_workflows",
-			Help:                 "Number of Temporal workflows currently being executed",
+			Namespace: metricbase.Namespace,
+			Subsystem: "temporal",
+			Name:      "active_workflows",
+			Help:      "Number of Temporal workflows currently being executed",
 		},
 	)
 

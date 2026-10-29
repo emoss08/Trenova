@@ -140,7 +140,7 @@ func previewOf(content *formulatemplateservice.ContentCheck) *formulatemplatepor
 		Imports:     content.Checked.Imports,
 		Tables:      content.Checked.Tables,
 		Charges:     check.Charges,
-		Tests:       content.tests.Tests,
+		Tests:       content.TestRun.Tests,
 		Choices:     []rules.TariffChoice{},
 	}
 	if result.Diagnostics == nil {
@@ -512,6 +512,6 @@ func (s *Service) TestSource(
 		Inputs:  tarifftypes.InputDeclsFrom(content.Checked.Check.Inputs),
 		Imports: content.Checked.Imports,
 		Tables:  content.Checked.Tables,
-		Tests:   content.tests,
+		Tests:   content.TestRun,
 	}, nil
 }
