@@ -6,7 +6,8 @@ import (
 	"strconv"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringledger"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringsubmission"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringledgerports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -44,8 +45,8 @@ func (s *LedgerService) RecordFunding(
 		return nil, err
 	}
 
-	entries := make([]*factoring.ReserveEntry, 0, len(draft.inputs))
-	var updated *factoring.Submission
+	entries := make([]*factoringledger.ReserveEntry, 0, len(draft.inputs))
+	var updated *factoringsubmission.Submission
 	err = s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		for _, in := range draft.inputs {
 			entry, postErr := s.postMovement(txCtx, in)
@@ -132,7 +133,7 @@ func (s *LedgerService) planFunding(
 		remitLines[req.Items[idx].ItemID] = req.Items[idx].RemittanceLineID
 	}
 	for _, item := range funded {
-		movement, planErr := factoring.PlanFundingMovement(item, treatment)
+		movement, planErr := factoringledger.PlanFundingMovement(item, treatment)
 		if planErr != nil {
 			return nil, planErr
 		}
@@ -193,7 +194,7 @@ func (s *LedgerService) validateFundingRequest(
 		if !input.Outcome.IsValid() {
 			multiErr.Add(field+".outcome", errortypes.ErrInvalid, "Choose funded or rejected")
 		}
-		if input.Outcome == factoring.FundingOutcomeRejected &&
+		if input.Outcome == factoringledger.FundingOutcomeRejected &&
 			(input.AdvanceMinor != nil || input.FeeMinor != nil) {
 			multiErr.Add(
 				field+".advanceMinor",
@@ -206,11 +207,11 @@ func (s *LedgerService) validateFundingRequest(
 }
 
 func applyFundingOutcomes(
-	after *factoring.Submission,
+	after *factoringsubmission.Submission,
 	req *factoringledgerports.RecordFundingRequest,
 	plan *factoringledgerports.FundingPlan,
-) ([]*factoring.SubmissionItem, error) {
-	funded := make([]*factoring.SubmissionItem, 0, len(req.Items))
+) ([]*factoringsubmission.SubmissionItem, error) {
+	funded := make([]*factoringsubmission.SubmissionItem, 0, len(req.Items))
 	multiErr := errortypes.NewMultiError()
 	for idx := range req.Items {
 		input := &req.Items[idx]
@@ -226,7 +227,7 @@ func applyFundingOutcomes(
 		}
 		var err error
 		switch input.Outcome {
-		case factoring.FundingOutcomeFunded:
+		case factoringledger.FundingOutcomeFunded:
 			funding := item.ExpectedFunding()
 			if input.AdvanceMinor != nil {
 				funding.AdvanceMinor = *input.AdvanceMinor
@@ -242,7 +243,7 @@ func applyFundingOutcomes(
 				plan.FeeMinor += fee
 				plan.ReserveMinor += reserve
 			}
-		case factoring.FundingOutcomeRejected:
+		case factoringledger.FundingOutcomeRejected:
 			if err = item.Reject(input.Reason); err == nil {
 				plan.RejectCount++
 			}

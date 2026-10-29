@@ -5,7 +5,7 @@ import (
 	"strconv"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringsubmission"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringsubmissionports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
@@ -32,7 +32,8 @@ func (s *SubmissionService) Deliver(
 	if err != nil {
 		return nil, err
 	}
-	if sub.Status != factoring.SubmissionStatusSending || sub.SendAttemptGroup != req.Group {
+	if sub.Status != factoringsubmission.SubmissionStatusSending ||
+		sub.SendAttemptGroup != req.Group {
 		return &factoringsubmissionports.DeliverSubmissionResult{
 			Status:  sub.Status,
 			Skipped: true,
@@ -121,7 +122,8 @@ func (s *SubmissionService) MarkFailed(
 	if err != nil {
 		return err
 	}
-	if sub.Status != factoring.SubmissionStatusSending || sub.SendAttemptGroup != req.Group {
+	if sub.Status != factoringsubmission.SubmissionStatusSending ||
+		sub.SendAttemptGroup != req.Group {
 		return nil
 	}
 	previous := *sub
@@ -151,8 +153,8 @@ func (s *SubmissionService) MarkFailed(
 func (s *SubmissionService) deliveryFiles(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	sub *factoring.Submission,
-	transport *factoring.Transport,
+	sub *factoringsubmission.Submission,
+	transport *factoringsubmission.Transport,
 ) ([]factoringsubmissionports.TransportFile, error) {
 	if sub.SchedulePDFDocumentID.IsNil() || sub.ScheduleCSVDocumentID.IsNil() {
 		return nil, errortypes.NewBusinessError(
@@ -160,7 +162,7 @@ func (s *SubmissionService) deliveryFiles(
 			sub.Number,
 		)
 	}
-	attach := transport.Method == factoring.TransportMethodSftp || transport.AttachPackets
+	attach := transport.Method == factoringsubmission.TransportMethodSftp || transport.AttachPackets
 	files := make([]factoringsubmissionports.TransportFile, 0, len(sub.Items)+2)
 	read := func(kind factoringsubmissionports.TransportFileKind, id pulid.ID, name, contentType string, invoiceID pulid.ID) error {
 		content, err := s.readDocument(ctx, tenantInfo, id)
@@ -208,7 +210,7 @@ func (s *SubmissionService) deliveryFiles(
 func (s *SubmissionService) messageRenderer(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	sub *factoring.Submission,
+	sub *factoringsubmission.Submission,
 ) (factoringsubmissionports.MessageRenderer, error) {
 	org, err := s.organizations.GetByID(ctx, tenantports.GetOrganizationByIDRequest{
 		TenantInfo: tenantInfo,
@@ -259,7 +261,7 @@ func (s *SubmissionService) messageRenderer(
 	}, nil
 }
 
-func SendKey(sub *factoring.Submission) string {
+func SendKey(sub *factoringsubmission.Submission) string {
 	return submissionKeyPrefix + sub.ID.String() + scheduleSendKeyInfix +
 		strconv.Itoa(sub.SendAttemptGroup)
 }

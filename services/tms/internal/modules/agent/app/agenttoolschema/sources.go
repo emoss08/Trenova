@@ -10,7 +10,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringledger"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringremittance"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringremittanceports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -61,11 +62,11 @@ var (
 	)
 	FactoringFundingOutcomes = Source(
 		"factoring.fundingOutcome",
-		factoring.AllFundingOutcomes(),
+		factoringledger.AllFundingOutcomes(),
 	)
 	FactoringRemittanceLineKinds = Source(
 		"factoring.remittanceLineKind",
-		factoring.AllRemittanceLineKinds(),
+		factoringremittance.AllRemittanceLineKinds(),
 	)
 	FactoringRemittanceLineActions = Source(
 		"factoring.remittanceLineAction",

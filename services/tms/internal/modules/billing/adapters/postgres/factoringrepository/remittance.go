@@ -9,6 +9,8 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring/factoringdb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringremittance"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringsubmission"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringremittanceports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/listquery"
@@ -44,48 +46,60 @@ func NewRemittanceRepository(p Params) factoringremittanceports.RemittanceReposi
 
 func (r *remittanceRepository) Create(
 	ctx context.Context,
-	entity *factoring.Remittance,
-) (*factoring.Remittance, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*factoring.Remittance, error) {
-		if err := factoringdb.Remittances.Create(ctx, r.db.Keel(ctx), entity); err != nil {
-			return nil, remittanceErrors.Map(err, entity.ID.String())
-		}
+	entity *factoringremittance.Remittance,
+) (*factoringremittance.Remittance, error) {
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*factoringremittance.Remittance, error) {
+			if err := factoringdb.Remittances.Create(ctx, r.db.Keel(ctx), entity); err != nil {
+				return nil, remittanceErrors.Map(err, entity.ID.String())
+			}
 
-		return entity, nil
-	})
+			return entity, nil
+		},
+	)
 }
 
 func (r *remittanceRepository) Update(
 	ctx context.Context,
-	entity *factoring.Remittance,
-) (*factoring.Remittance, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*factoring.Remittance, error) {
-		rem := factoringdb.Remittances
-		err := rem.SaveExcept(ctx, r.db.Keel(ctx), entity,
-			rem.FactoringCompanyID,
-			rem.Source,
-			rem.InboundMessageID,
-			rem.CreatedByID,
-		)
-		if err != nil {
-			return nil, remittanceErrors.Map(err, entity.ID.String())
-		}
+	entity *factoringremittance.Remittance,
+) (*factoringremittance.Remittance, error) {
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*factoringremittance.Remittance, error) {
+			rem := factoringdb.Remittances
+			err := rem.SaveExcept(ctx, r.db.Keel(ctx), entity,
+				rem.FactoringCompanyID,
+				rem.Source,
+				rem.InboundMessageID,
+				rem.CreatedByID,
+			)
+			if err != nil {
+				return nil, remittanceErrors.Map(err, entity.ID.String())
+			}
 
-		return entity, nil
-	})
+			return entity, nil
+		},
+	)
 }
 
 func (r *remittanceRepository) Get(
 	ctx context.Context,
 	req factoringremittanceports.GetRemittanceRequest,
-) (*factoring.Remittance, error) {
+) (*factoringremittance.Remittance, error) {
 	if req.ForUpdate {
-		return dbtx.Write(ctx, r.db, func(ctx context.Context) (*factoring.Remittance, error) {
-			return r.get(ctx, req)
-		})
+		return dbtx.Write(
+			ctx,
+			r.db,
+			func(ctx context.Context) (*factoringremittance.Remittance, error) {
+				return r.get(ctx, req)
+			},
+		)
 	}
 
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*factoring.Remittance, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*factoringremittance.Remittance, error) {
 		return r.get(ctx, req)
 	})
 }
@@ -93,7 +107,7 @@ func (r *remittanceRepository) Get(
 func (r *remittanceRepository) get(
 	ctx context.Context,
 	req factoringremittanceports.GetRemittanceRequest,
-) (*factoring.Remittance, error) {
+) (*factoringremittance.Remittance, error) {
 	db := r.db.Keel(ctx)
 	rem := factoringdb.Remittances
 	q := rem.Where(rem.ID.Eq(req.ID)).Load(rem.FactoringCompany())
@@ -123,8 +137,8 @@ func (r *remittanceRepository) get(
 }
 
 func withMatchedItem(
-	q *keel.Query[*factoring.RemittanceLine],
-) *keel.Query[*factoring.RemittanceLine] {
+	q *keel.Query[*factoringremittance.RemittanceLine],
+) *keel.Query[*factoringremittance.RemittanceLine] {
 	line := factoringdb.RemittanceLines
 	item := line.SubmissionItem()
 	return q.
@@ -135,8 +149,8 @@ func withMatchedItem(
 func (r *remittanceRepository) FindByInboundDocument(
 	ctx context.Context,
 	req *factoringremittanceports.FindRemittanceByDocumentRequest,
-) (*factoring.Remittance, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*factoring.Remittance, error) {
+) (*factoringremittance.Remittance, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*factoringremittance.Remittance, error) {
 		rem := factoringdb.Remittances
 		entity, err := rem.Where(
 			rem.InboundMessageID.Eq(req.InboundMessageID),
@@ -153,11 +167,11 @@ func (r *remittanceRepository) FindByInboundDocument(
 func (r *remittanceRepository) ListConnection(
 	ctx context.Context,
 	req *factoringremittanceports.ListRemittanceConnectionRequest,
-) (*pagination.CursorListResult[*factoring.Remittance], error) {
+) (*pagination.CursorListResult[*factoringremittance.Remittance], error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) (*pagination.CursorListResult[*factoring.Remittance], error) {
+		func(ctx context.Context) (*pagination.CursorListResult[*factoringremittance.Remittance], error) {
 			filter, term := withoutQuery(req.Filter)
 			rem := factoringdb.Remittances
 			result, err := listquery.Connection(
@@ -175,7 +189,10 @@ func (r *remittanceRepository) ListConnection(
 					),
 					keel.When(len(req.Statuses) > 0, rem.Status.In(req.Statuses...)),
 				),
-				&listquery.Request[factoring.Remittance]{Filter: filter, Cursor: req.Cursor},
+				&listquery.Request[factoringremittance.Remittance]{
+					Filter: filter,
+					Cursor: req.Cursor,
+				},
 			)
 			if err != nil {
 				r.l.Error("failed to list factoring remittances", zap.Error(err))
@@ -190,11 +207,11 @@ func (r *remittanceRepository) ListConnection(
 func (r *remittanceRepository) ListLineConnection(
 	ctx context.Context,
 	req *factoringremittanceports.ListRemittanceLineConnectionRequest,
-) (*pagination.CursorListResult[*factoring.RemittanceLine], error) {
+) (*pagination.CursorListResult[*factoringremittance.RemittanceLine], error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) (*pagination.CursorListResult[*factoring.RemittanceLine], error) {
+		func(ctx context.Context) (*pagination.CursorListResult[*factoringremittance.RemittanceLine], error) {
 			line := factoringdb.RemittanceLines
 			result, err := listquery.Connection(
 				ctx,
@@ -206,7 +223,7 @@ func (r *remittanceRepository) ListLineConnection(
 						line.MatchStatus.In(req.MatchStatuses...),
 					),
 				),
-				&listquery.Request[factoring.RemittanceLine]{
+				&listquery.Request[factoringremittance.RemittanceLine]{
 					Filter: req.Filter,
 					Cursor: req.Cursor,
 					Shape:  withMatchedItem,
@@ -224,7 +241,7 @@ func (r *remittanceRepository) ListLineConnection(
 
 func (r *remittanceRepository) ReplaceLines(
 	ctx context.Context,
-	remittance *factoring.Remittance,
+	remittance *factoringremittance.Remittance,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		db := r.db.Keel(ctx)
@@ -248,7 +265,7 @@ func (r *remittanceRepository) ReplaceLines(
 
 func (r *remittanceRepository) UpdateLines(
 	ctx context.Context,
-	lines []*factoring.RemittanceLine,
+	lines []*factoringremittance.RemittanceLine,
 ) error {
 	if len(lines) == 0 {
 		return nil
@@ -266,8 +283,8 @@ func (r *remittanceRepository) UpdateLines(
 }
 
 func lineOutcomes(
-	lines []*factoring.RemittanceLine,
-) (*keel.Query[*factoring.RemittanceLine], []keel.Assignment, error) {
+	lines []*factoringremittance.RemittanceLine,
+) (*keel.Query[*factoringremittance.RemittanceLine], []keel.Assignment, error) {
 	n := len(lines)
 	ids := make([]pulid.ID, n)
 	kinds := make([]string, n)
@@ -281,7 +298,7 @@ func lineOutcomes(
 	reserves := make([]pulid.ID, n)
 	for i, l := range lines {
 		if l.Suggestions == nil {
-			l.Suggestions = []*factoring.RemittanceSuggestion{}
+			l.Suggestions = []*factoringremittance.RemittanceSuggestion{}
 		}
 		encoded, err := sonic.MarshalString(l.Suggestions)
 		if err != nil {
@@ -328,19 +345,19 @@ func lineOutcomes(
 func (r *remittanceRepository) ListCandidates(
 	ctx context.Context,
 	req *factoringremittanceports.ListRemittanceCandidatesRequest,
-) ([]*factoring.RemittanceCandidate, error) {
+) ([]*factoringremittance.RemittanceCandidate, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) ([]*factoring.RemittanceCandidate, error) {
+		func(ctx context.Context) ([]*factoringremittance.RemittanceCandidate, error) {
 			items, err := remittanceCandidates(req).List(ctx, r.db.Keel(ctx))
 			if err != nil {
 				return nil, err
 			}
 
-			out := make([]*factoring.RemittanceCandidate, 0, len(items))
+			out := make([]*factoringremittance.RemittanceCandidate, 0, len(items))
 			for _, item := range items {
-				candidate := &factoring.RemittanceCandidate{Item: item}
+				candidate := &factoringremittance.RemittanceCandidate{Item: item}
 				if sub := item.Submission; sub != nil {
 					candidate.SubmissionNumber = sub.Number
 					candidate.SentAt = sub.SentAt
@@ -358,7 +375,7 @@ func (r *remittanceRepository) ListCandidates(
 
 func remittanceCandidates(
 	req *factoringremittanceports.ListRemittanceCandidatesRequest,
-) *keel.Query[*factoring.SubmissionItem] {
+) *keel.Query[*factoringsubmission.SubmissionItem] {
 	item := factoringdb.SubmissionItems
 	sub := item.Submission()
 	agr := sub.Agreement()
@@ -370,11 +387,14 @@ func remittanceCandidates(
 	return item.Where(
 		sub.FactoringCompanyID.Eq(req.FactoringCompanyID),
 		sub.Status.In(
-			factoring.SubmissionStatusSent,
-			factoring.SubmissionStatusPartially,
-			factoring.SubmissionStatusFunded,
+			factoringsubmission.SubmissionStatusSent,
+			factoringsubmission.SubmissionStatusPartially,
+			factoringsubmission.SubmissionStatusFunded,
 		),
-		item.Status.In(factoring.SubmissionItemStatusPending, factoring.SubmissionItemStatusFunded),
+		item.Status.In(
+			factoringsubmission.SubmissionItemStatusPending,
+			factoringsubmission.SubmissionItemStatusFunded,
+		),
 		keel.Or(
 			invoiceMatch,
 			amountMatch,
@@ -449,7 +469,7 @@ func (r *remittanceRepository) ListOpen(
 	)
 }
 
-func openRemittances(limit int) *keel.Query[*factoring.Remittance] {
+func openRemittances(limit int) *keel.Query[*factoringremittance.Remittance] {
 	rem := factoringdb.Remittances
 	fac := rem.FactoringCompany()
 	return rem.Pick(
@@ -464,13 +484,13 @@ func openRemittances(limit int) *keel.Query[*factoring.Remittance] {
 	).
 		Where(
 			rem.Status.In(
-				factoring.RemittanceStatusNeedsMapping,
-				factoring.RemittanceStatusParsed,
-				factoring.RemittanceStatusPartiallyApplied,
+				factoringremittance.RemittanceStatusNeedsMapping,
+				factoringremittance.RemittanceStatusParsed,
+				factoringremittance.RemittanceStatusPartiallyApplied,
 			),
 			keel.Or(
 				rem.ExceptionCount.Gt(0),
-				rem.Status.Eq(factoring.RemittanceStatusNeedsMapping),
+				rem.Status.Eq(factoringremittance.RemittanceStatusNeedsMapping),
 			),
 		).
 		Order(rem.CreatedAt.Asc()).
@@ -480,27 +500,31 @@ func openRemittances(limit int) *keel.Query[*factoring.Remittance] {
 func (r *remittanceRepository) GetProfile(
 	ctx context.Context,
 	req factoringremittanceports.GetRemittanceProfileRequest,
-) (*factoring.RemittanceProfile, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*factoring.RemittanceProfile, error) {
-		p := factoringdb.RemittanceProfiles
-		profile, err := p.Where(p.FactoringCompanyID.Eq(req.FactoringCompanyID)).
-			One(ctx, r.db.Keel(ctx))
-		if err != nil {
-			return nil, profileErrors.Map(err, req.FactoringCompanyID.String())
-		}
+) (*factoringremittance.RemittanceProfile, error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*factoringremittance.RemittanceProfile, error) {
+			p := factoringdb.RemittanceProfiles
+			profile, err := p.Where(p.FactoringCompanyID.Eq(req.FactoringCompanyID)).
+				One(ctx, r.db.Keel(ctx))
+			if err != nil {
+				return nil, profileErrors.Map(err, req.FactoringCompanyID.String())
+			}
 
-		return profile, nil
-	})
+			return profile, nil
+		},
+	)
 }
 
 func (r *remittanceRepository) SaveProfile(
 	ctx context.Context,
-	profile *factoring.RemittanceProfile,
+	profile *factoringremittance.RemittanceProfile,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		db := r.db.Keel(ctx)
 		p := factoringdb.RemittanceProfiles
-		_, err := p.Upsert(ctx, db, []*factoring.RemittanceProfile{profile},
+		_, err := p.Upsert(ctx, db, []*factoringremittance.RemittanceProfile{profile},
 			keel.OnConflict(p.OrganizationID, p.BusinessUnitID, p.FactoringCompanyID).
 				Update(p.Mapping, p.HeaderSignature),
 		)

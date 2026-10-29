@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringreadiness"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
@@ -40,7 +40,7 @@ const (
 
 type documentRequest struct {
 	inv       *invoice.Invoice
-	needs     []factoring.Check
+	needs     []factoringreadiness.Check
 	recipient []string
 	kind      string
 }
@@ -161,7 +161,7 @@ func (s *ReadinessService) planDocumentRequest(
 		for _, id := range req.DocumentTypeIDs {
 			wanted[id] = struct{}{}
 		}
-		filtered := make([]factoring.Check, 0, len(needs))
+		filtered := make([]factoringreadiness.Check, 0, len(needs))
 		for idx := range needs {
 			if _, ok := wanted[needs[idx].DocumentTypeID]; ok {
 				filtered = append(filtered, needs[idx])
@@ -189,7 +189,7 @@ func (s *ReadinessService) resolveRecipient(
 	ctx context.Context,
 	req *factoringports.RequestMissingDocumentsRequest,
 	inv *invoice.Invoice,
-	needs []factoring.Check,
+	needs []factoringreadiness.Check,
 ) (recipients []string, kind string, err error) {
 	if explicit := strings.TrimSpace(req.Recipient); explicit != "" {
 		to := stringutils.SplitEmailList(explicit)
@@ -294,18 +294,19 @@ func (s *ReadinessService) renderDocumentRequest(
 	})
 }
 
-func requestableChecks(checks []factoring.Check) []factoring.Check {
-	out := make([]factoring.Check, 0, len(checks))
+func requestableChecks(checks []factoringreadiness.Check) []factoringreadiness.Check {
+	out := make([]factoringreadiness.Check, 0, len(checks))
 	for idx := range checks {
 		c := checks[idx]
-		if !c.Passed && c.Fix == factoring.FixRequestDocument && !c.DocumentTypeID.IsNil() {
+		if !c.Passed && c.Fix == factoringreadiness.FixRequestDocument &&
+			!c.DocumentTypeID.IsNil() {
 			out = append(out, c)
 		}
 	}
 	return out
 }
 
-func neededNames(needs []factoring.Check) []string {
+func neededNames(needs []factoringreadiness.Check) []string {
 	multi := len(neededShipments(needs)) > 1
 	names := make([]string, 0, len(needs))
 	for idx := range needs {
@@ -320,7 +321,7 @@ func neededNames(needs []factoring.Check) []string {
 	return names
 }
 
-func neededShipments(needs []factoring.Check) []pulid.ID {
+func neededShipments(needs []factoringreadiness.Check) []pulid.ID {
 	ids := make([]pulid.ID, 0, len(needs))
 	for idx := range needs {
 		if id := needs[idx].ShipmentID; !id.IsNil() && !slices.Contains(ids, id) {
@@ -330,7 +331,7 @@ func neededShipments(needs []factoring.Check) []pulid.ID {
 	return ids
 }
 
-func singlePro(needs []factoring.Check, inv *invoice.Invoice) string {
+func singlePro(needs []factoringreadiness.Check, inv *invoice.Invoice) string {
 	if len(neededShipments(needs)) > 1 {
 		return ""
 	}

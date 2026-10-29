@@ -1,17 +1,9 @@
-package factoring
+package factoringledger
 
 import (
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringsubmission"
 	"github.com/emoss08/trenova/pkg/errortypes"
-)
-
-type AccountRole string
-
-const (
-	AccountRoleAR            = AccountRole("AccountsReceivable")
-	AccountRoleCash          = AccountRole("Cash")
-	AccountRoleDueFromFactor = AccountRole("DueFromFactor")
-	AccountRoleFeeExpense    = AccountRole("FeeExpense")
-	AccountRoleLiability     = AccountRole("Liability")
 )
 
 type InvoiceEffect string
@@ -23,22 +15,22 @@ const (
 )
 
 type MovementLine struct {
-	Role   AccountRole `json:"role"`
-	Debit  int64       `json:"debit"`
-	Credit int64       `json:"credit"`
+	Role   factoring.AccountRole `json:"role"`
+	Debit  int64                 `json:"debit"`
+	Credit int64                 `json:"credit"`
 }
 
 type Movement struct {
-	Kind           ReserveEntryKind    `json:"kind"`
-	Treatment      AccountingTreatment `json:"treatment"`
-	Lines          []MovementLine      `json:"lines"`
-	CashMinor      int64               `json:"cashMinor"`
-	FeeMinor       int64               `json:"feeMinor"`
-	ReserveMinor   int64               `json:"reserveMinor"`
-	LiabilityMinor int64               `json:"liabilityMinor"`
-	ARMinor        int64               `json:"arMinor"`
-	InvoiceEffect  InvoiceEffect       `json:"invoiceEffect"`
-	InvoiceMinor   int64               `json:"invoiceMinor"`
+	Kind           ReserveEntryKind              `json:"kind"`
+	Treatment      factoring.AccountingTreatment `json:"treatment"`
+	Lines          []MovementLine                `json:"lines"`
+	CashMinor      int64                         `json:"cashMinor"`
+	FeeMinor       int64                         `json:"feeMinor"`
+	ReserveMinor   int64                         `json:"reserveMinor"`
+	LiabilityMinor int64                         `json:"liabilityMinor"`
+	ARMinor        int64                         `json:"arMinor"`
+	InvoiceEffect  InvoiceEffect                 `json:"invoiceEffect"`
+	InvoiceMinor   int64                         `json:"invoiceMinor"`
 }
 
 type deltas struct {
@@ -53,7 +45,10 @@ func (d *deltas) balanceWithFee() {
 	d.fee = -(d.cash + d.reserve + d.ar - d.liability)
 }
 
-func PlanFundingMovement(item *SubmissionItem, treatment AccountingTreatment) (Movement, error) {
+func PlanFundingMovement(
+	item *factoringsubmission.SubmissionItem,
+	treatment factoring.AccountingTreatment,
+) (Movement, error) {
 	if err := requirePlannable(item, treatment); err != nil {
 		return Movement{}, err
 	}
@@ -61,9 +56,9 @@ func PlanFundingMovement(item *SubmissionItem, treatment AccountingTreatment) (M
 	d := deltas{cash: advance, fee: fee}
 	movement := Movement{Kind: ReserveEntryFunding, Treatment: treatment}
 	switch treatment {
-	case AccountingTreatmentSecuredBorrowing:
+	case factoring.AccountingTreatmentSecuredBorrowing:
 		d.liability = advance + fee
-	case AccountingTreatmentSale:
+	case factoring.AccountingTreatmentSale:
 		d.reserve = reserve
 		d.ar = -item.FaceMinor
 		movement.InvoiceEffect = InvoiceEffectSettle
@@ -73,8 +68,8 @@ func PlanFundingMovement(item *SubmissionItem, treatment AccountingTreatment) (M
 }
 
 func PlanReleaseMovement(
-	item *SubmissionItem,
-	treatment AccountingTreatment,
+	item *factoringsubmission.SubmissionItem,
+	treatment factoring.AccountingTreatment,
 	cashMinor int64,
 ) (Movement, error) {
 	if err := requirePlannable(item, treatment); err != nil {
@@ -91,12 +86,12 @@ func PlanReleaseMovement(
 	d := deltas{cash: cashMinor}
 	movement := Movement{Kind: ReserveEntryRelease, Treatment: treatment}
 	switch treatment {
-	case AccountingTreatmentSecuredBorrowing:
+	case factoring.AccountingTreatmentSecuredBorrowing:
 		d.liability = -(advance + fee)
 		d.ar = -item.FaceMinor
 		movement.InvoiceEffect = InvoiceEffectSettle
 		movement.InvoiceMinor = item.FaceMinor
-	case AccountingTreatmentSale:
+	case factoring.AccountingTreatmentSale:
 		d.reserve = -reserve
 	}
 	d.balanceWithFee()
@@ -104,8 +99,8 @@ func PlanReleaseMovement(
 }
 
 func PlanChargebackMovement(
-	item *SubmissionItem,
-	treatment AccountingTreatment,
+	item *factoringsubmission.SubmissionItem,
+	treatment factoring.AccountingTreatment,
 	cashMinor int64,
 ) (Movement, error) {
 	if err := requirePlannable(item, treatment); err != nil {
@@ -122,9 +117,9 @@ func PlanChargebackMovement(
 	d := deltas{cash: -cashMinor}
 	movement := Movement{Kind: ReserveEntryChargeback, Treatment: treatment}
 	switch treatment {
-	case AccountingTreatmentSecuredBorrowing:
+	case factoring.AccountingTreatmentSecuredBorrowing:
 		d.liability = -(advance + fee)
-	case AccountingTreatmentSale:
+	case factoring.AccountingTreatmentSale:
 		d.reserve = -reserve
 		d.ar = item.FaceMinor
 		movement.InvoiceEffect = InvoiceEffectReopen
@@ -134,7 +129,7 @@ func PlanChargebackMovement(
 	return finish(&movement, d)
 }
 
-func ChargebackRepurchaseMinor(item *SubmissionItem) int64 {
+func ChargebackRepurchaseMinor(item *factoringsubmission.SubmissionItem) int64 {
 	advance, fee, _ := item.Actuals()
 	return advance + fee
 }
@@ -189,7 +184,10 @@ func (m *Movement) Total() int64 {
 	return debit
 }
 
-func requirePlannable(item *SubmissionItem, treatment AccountingTreatment) error {
+func requirePlannable(
+	item *factoringsubmission.SubmissionItem,
+	treatment factoring.AccountingTreatment,
+) error {
 	if !treatment.IsValid() {
 		return errortypes.NewBusinessError(
 			"The agreement's accounting treatment is not set; choose sale or secured borrowing",
@@ -209,11 +207,11 @@ func finish(movement *Movement, d deltas) (Movement, error) {
 	movement.LiabilityMinor = d.liability
 	movement.ARMinor = d.ar
 	movement.Lines = make([]MovementLine, 0, 5)
-	movement.Lines = appendSigned(movement.Lines, AccountRoleCash, d.cash)
-	movement.Lines = appendSigned(movement.Lines, AccountRoleFeeExpense, d.fee)
-	movement.Lines = appendSigned(movement.Lines, AccountRoleDueFromFactor, d.reserve)
-	movement.Lines = appendSigned(movement.Lines, AccountRoleLiability, -d.liability)
-	movement.Lines = appendSigned(movement.Lines, AccountRoleAR, d.ar)
+	movement.Lines = appendSigned(movement.Lines, factoring.AccountRoleCash, d.cash)
+	movement.Lines = appendSigned(movement.Lines, factoring.AccountRoleFeeExpense, d.fee)
+	movement.Lines = appendSigned(movement.Lines, factoring.AccountRoleDueFromFactor, d.reserve)
+	movement.Lines = appendSigned(movement.Lines, factoring.AccountRoleLiability, -d.liability)
+	movement.Lines = appendSigned(movement.Lines, factoring.AccountRoleAR, d.ar)
 	if movement.IsEmpty() {
 		return *movement, nil
 	}
@@ -225,7 +223,7 @@ func finish(movement *Movement, d deltas) (Movement, error) {
 	return *movement, nil
 }
 
-func appendSigned(lines []MovementLine, role AccountRole, amount int64) []MovementLine {
+func appendSigned(lines []MovementLine, role factoring.AccountRole, amount int64) []MovementLine {
 	switch {
 	case amount > 0:
 		return append(lines, MovementLine{Role: role, Debit: amount})

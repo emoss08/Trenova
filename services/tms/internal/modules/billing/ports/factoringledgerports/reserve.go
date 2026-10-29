@@ -3,18 +3,18 @@ package factoringledgerports
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringledger"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
 type ListReserveEntryConnectionRequest struct {
-	Filter             *pagination.QueryOptions     `json:"filter"`
-	Cursor             pagination.CursorInfo        `json:"-"`
-	FactoringCompanyID pulid.ID                     `json:"factoringCompanyId"`
-	SubmissionID       pulid.ID                     `json:"submissionId"`
-	InvoiceID          pulid.ID                     `json:"invoiceId"`
-	Kinds              []factoring.ReserveEntryKind `json:"kinds"`
+	Filter             *pagination.QueryOptions           `json:"filter"`
+	Cursor             pagination.CursorInfo              `json:"-"`
+	FactoringCompanyID pulid.ID                           `json:"factoringCompanyId"`
+	SubmissionID       pulid.ID                           `json:"submissionId"`
+	InvoiceID          pulid.ID                           `json:"invoiceId"`
+	Kinds              []factoringledger.ReserveEntryKind `json:"kinds"`
 }
 
 type GetReserveBalanceRequest struct {
@@ -40,14 +40,17 @@ type ReserveBalance struct {
 }
 
 type ReserveEntryRepository interface {
-	Create(ctx context.Context, entity *factoring.ReserveEntry) (*factoring.ReserveEntry, error)
+	Create(
+		ctx context.Context,
+		entity *factoringledger.ReserveEntry,
+	) (*factoringledger.ReserveEntry, error)
 	ListConnection(
 		ctx context.Context,
 		req *ListReserveEntryConnectionRequest,
-	) (*pagination.CursorListResult[*factoring.ReserveEntry], error)
+	) (*pagination.CursorListResult[*factoringledger.ReserveEntry], error)
 	ListForItem(
 		ctx context.Context,
 		req ListReserveEntriesForItemRequest,
-	) ([]*factoring.ReserveEntry, error)
+	) ([]*factoringledger.ReserveEntry, error)
 	GetBalance(ctx context.Context, req GetReserveBalanceRequest) (*ReserveBalance, error)
 }

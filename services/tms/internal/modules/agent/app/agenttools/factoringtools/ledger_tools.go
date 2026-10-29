@@ -16,7 +16,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringledger"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringsubmission"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringledgerports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -37,8 +38,8 @@ const (
 	paramMemo      = "memo"
 	paramCash      = "cash"
 	paramOccurred  = "occurredOn"
-	maxMemoLength  = factoring.MaxReserveMemoLength
-	maxReasonText  = factoring.MaxFundingReasonLength
+	maxMemoLength  = factoringledger.MaxReserveMemoLength
+	maxReasonText  = factoringsubmission.MaxFundingReasonLength
 	toolGetSubmit  = "factoring_get_submission"
 	toolGetBalance = "factoring_get_reserve_balance"
 )
@@ -149,13 +150,13 @@ func journalOf(movement *factoringledgerports.PlannedMovement) *kernelports.Jour
 
 func movementLabel(movement *factoringledgerports.PlannedMovement) string {
 	switch movement.Movement.Kind {
-	case factoring.ReserveEntryFunding:
+	case factoringledger.ReserveEntryFunding:
 		return "Factor funding of invoice " + movement.InvoiceNumber
-	case factoring.ReserveEntryRelease:
+	case factoringledger.ReserveEntryRelease:
 		return "Reserve release on invoice " + movement.InvoiceNumber
-	case factoring.ReserveEntryChargeback:
+	case factoringledger.ReserveEntryChargeback:
 		return "Chargeback of invoice " + movement.InvoiceNumber
-	case factoring.ReserveEntryChargebackReversal:
+	case factoringledger.ReserveEntryChargebackReversal:
 		return "Chargeback reversal on invoice " + movement.InvoiceNumber
 	default:
 		return "Factoring entry for invoice " + movement.InvoiceNumber
@@ -221,7 +222,7 @@ func (t *RecordFactoringFundingTool) ParamSchema() map[string]any {
 			toolschema.KeyDescription: "What the factor did with each invoice it decided; " +
 				"leave out the ones it has not decided yet.",
 			toolschema.KeyMinItems: 1,
-			toolschema.KeyMaxItems: factoring.MaxSubmissionInvoices,
+			toolschema.KeyMaxItems: factoringsubmission.MaxSubmissionInvoices,
 			toolschema.KeyItems: map[string]any{
 				toolschema.KeyType: toolschema.TypeObject,
 				toolschema.KeyProperties: map[string]any{
@@ -306,7 +307,7 @@ func fundingItems(params map[string]any) ([]factoringledgerports.FundingItemInpu
 	if !ok || len(raw) == 0 {
 		return nil, fmt.Errorf("parameter %q must list at least one invoice", paramItems)
 	}
-	if len(raw) > factoring.MaxSubmissionInvoices {
+	if len(raw) > factoringsubmission.MaxSubmissionInvoices {
 		return nil, fmt.Errorf("parameter %q lists more invoices than a schedule holds", paramItems)
 	}
 	items := make([]factoringledgerports.FundingItemInput, 0, len(raw))
@@ -319,7 +320,7 @@ func fundingItems(params map[string]any) ([]factoringledgerports.FundingItemInpu
 		if err != nil {
 			return nil, fmt.Errorf("%s[%d]: %w", paramItems, idx, err)
 		}
-		outcome := factoring.FundingOutcome(
+		outcome := factoringledger.FundingOutcome(
 			strings.TrimSpace(toolparams.OptionalString(fields, paramOutcome)),
 		)
 		if !outcome.IsValid() {
@@ -577,13 +578,13 @@ func (t *ReserveMovementTool) Execute(
 }
 
 type itemView struct {
-	Status           factoring.SubmissionItemStatus `json:"status"`
-	SettledOn        *int64                         `json:"settledOn"`
-	ChargedBackOn    *int64                         `json:"chargedBackOn"`
-	ChargebackReason string                         `json:"chargebackReason"`
+	Status           factoringsubmission.SubmissionItemStatus `json:"status"`
+	SettledOn        *int64                                   `json:"settledOn"`
+	ChargedBackOn    *int64                                   `json:"chargedBackOn"`
+	ChargebackReason string                                   `json:"chargebackReason"`
 }
 
-func itemViewOf(item *factoring.SubmissionItem) *itemView {
+func itemViewOf(item *factoringsubmission.SubmissionItem) *itemView {
 	if item == nil {
 		return &itemView{}
 	}

@@ -4,7 +4,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringledger"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringledgerports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -70,11 +70,11 @@ func movementRequestFromModel(
 }
 
 func reserveConnectionToModel(
-	result *pagination.CursorListResult[*factoring.ReserveEntry],
+	result *pagination.CursorListResult[*factoringledger.ReserveEntry],
 ) (*gqlmodel.FactoringReserveEntryConnection, error) {
 	page, err := gqlconnection.EntityCursorConnection(
 		result,
-		func(node *factoring.ReserveEntry, cursor string) *gqlmodel.FactoringReserveEntryEdge {
+		func(node *factoringledger.ReserveEntry, cursor string) *gqlmodel.FactoringReserveEntryEdge {
 			return &gqlmodel.FactoringReserveEntryEdge{Node: node, Cursor: cursor}
 		},
 		func(edge *gqlmodel.FactoringReserveEntryEdge) string { return edge.Cursor },
@@ -90,13 +90,13 @@ func reserveConnectionToModel(
 	}, nil
 }
 
-func invoiceEffectToModel(effect factoring.InvoiceEffect) gqlmodel.FactoringInvoiceEffect {
+func invoiceEffectToModel(effect factoringledger.InvoiceEffect) gqlmodel.FactoringInvoiceEffect {
 	switch effect {
-	case factoring.InvoiceEffectSettle:
+	case factoringledger.InvoiceEffectSettle:
 		return gqlmodel.FactoringInvoiceEffectSettle
-	case factoring.InvoiceEffectReopen:
+	case factoringledger.InvoiceEffectReopen:
 		return gqlmodel.FactoringInvoiceEffectReopen
-	case factoring.InvoiceEffectNone:
+	case factoringledger.InvoiceEffectNone:
 		return gqlmodel.FactoringInvoiceEffectNone
 	default:
 		return gqlmodel.FactoringInvoiceEffectNone

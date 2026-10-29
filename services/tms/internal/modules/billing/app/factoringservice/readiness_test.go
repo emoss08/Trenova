@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringreadiness"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
@@ -21,20 +22,22 @@ import (
 
 type stubStates struct {
 	factoringports.InvoiceStateRepository
-	saved map[pulid.ID]*factoring.InvoiceState
+	saved map[pulid.ID]*factoringreadiness.InvoiceState
 }
 
 func (s *stubStates) Get(
 	_ context.Context,
 	req factoringports.GetInvoiceStateRequest,
-) (*factoring.InvoiceState, error) {
+) (*factoringreadiness.InvoiceState, error) {
 	if state, ok := s.saved[req.InvoiceID]; ok {
 		return state, nil
 	}
-	return nil, errortypes.NewNotFoundError("FactoringInvoiceState not found within your organization")
+	return nil, errortypes.NewNotFoundError(
+		"FactoringInvoiceState not found within your organization",
+	)
 }
 
-func (s *stubStates) Upsert(_ context.Context, entity *factoring.InvoiceState) error {
+func (s *stubStates) Upsert(_ context.Context, entity *factoringreadiness.InvoiceState) error {
 	s.saved[entity.InvoiceID] = entity
 	return nil
 }
@@ -104,7 +107,7 @@ func TestEvaluateFirstTimeWithoutAgreementOrNotice(t *testing.T) {
 		TotalAmountMinor:   100000,
 		FactoringCompanyID: &factorID,
 	}
-	states := &stubStates{saved: map[pulid.ID]*factoring.InvoiceState{}}
+	states := &stubStates{saved: map[pulid.ID]*factoringreadiness.InvoiceState{}}
 	svc := NewReadinessService(ReadinessParams{
 		States:      states,
 		Agreements:  stubAgreements{},
@@ -126,12 +129,19 @@ func TestEvaluateFirstTimeWithoutAgreementOrNotice(t *testing.T) {
 
 	state := states.saved[inv.ID]
 	require.NotNil(t, state)
-	assert.Equal(t, factoring.VerdictNotReady, state.Verdict)
-	failed := make([]factoring.CheckCode, 0, 2)
+	assert.Equal(t, factoringreadiness.VerdictNotReady, state.Verdict)
+	failed := make([]factoringreadiness.CheckCode, 0, 2)
 	for _, check := range state.Checks {
 		if !check.Passed {
 			failed = append(failed, check.Code)
 		}
 	}
-	assert.Equal(t, []factoring.CheckCode{factoring.CheckAgreement, factoring.CheckNoa}, failed)
+	assert.Equal(
+		t,
+		[]factoringreadiness.CheckCode{
+			factoringreadiness.CheckAgreement,
+			factoringreadiness.CheckNoa,
+		},
+		failed,
+	)
 }

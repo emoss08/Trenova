@@ -10,8 +10,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/receivablesql"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment/customerpaymentdb"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring/factoringdb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringsubmission"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice/invoicedb"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerledgerports"
@@ -453,8 +453,8 @@ func cashFlowQuery(req customerledgerports.ListARCashFlowRequest) *keel.Query[*k
 				Join(fs, fs.ID.EqCol(fsi.SubmissionID)).
 				Join(agr, agr.ID.EqCol(fs.AgreementID)).
 				Where(
-					fsi.Status.Eq(factoring.SubmissionItemStatusPending),
-					fs.Status.In(factoring.SubmissionStatusSent, factoring.SubmissionStatusPartially),
+					fsi.Status.Eq(factoringsubmission.SubmissionItemStatusPending),
+					fs.Status.In(factoringsubmission.SubmissionStatusSent, factoringsubmission.SubmissionStatusPartially),
 					fs.SentAt.IsNotNull(),
 					inWeek(advanceAt),
 				),
@@ -463,7 +463,7 @@ func cashFlowQuery(req customerledgerports.ListARCashFlowRequest) *keel.Query[*k
 				Pick(reserved.ReserveMinor.Sum()).
 				Join(reservedInv, reservedInv.ID.EqCol(reserved.InvoiceID)).
 				Where(
-					reserved.Status.Eq(factoring.SubmissionItemStatusFunded),
+					reserved.Status.Eq(factoringsubmission.SubmissionItemStatusFunded),
 					reservedInv.DueDate.IsNotNull(),
 					inWeek(releaseAt),
 				))),

@@ -9,6 +9,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringreadiness"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringremittance"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringremittanceports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringwatchtowerports"
@@ -61,7 +63,7 @@ func NewFactoringSource(
 func (s *FactoringSource) Kind() watchtower.SourceKind { return watchtower.SourceFactoring }
 
 type factoringSnapshot struct {
-	ready       []*factoring.InvoiceState
+	ready       []*factoringreadiness.InvoiceState
 	labels      map[pulid.ID]*factoringwatchtowerports.InvoiceLabel
 	missing     []*factoringwatchtowerports.CustomerMissingNoa
 	expiring    []*factoringwatchtowerports.ExpiringNoa
@@ -92,7 +94,7 @@ func (s *FactoringSource) read(
 	var err error
 	snap.ready, err = s.states.ListReadyUnsubmitted(ctx, factoringports.ListReadyUnsubmittedRequest{
 		TenantInfo:  tenant,
-		ReadyBefore: now - factoring.ReadyUnsubmittedSeconds,
+		ReadyBefore: now - factoringreadiness.ReadyUnsubmittedSeconds,
 		Limit:       snapshotLimit,
 	})
 	if err != nil {
@@ -358,12 +360,12 @@ func DescribeFactoringSendFailed(
 
 func DescribeFactoringReadyUnsubmitted(
 	tenant pagination.TenantInfo,
-	state *factoring.InvoiceState,
+	state *factoringreadiness.InvoiceState,
 	label *factoringwatchtowerports.InvoiceLabel,
 	now int64,
 ) (watchtowerports.WatchtowerItemInput, bool) {
 	if state == nil || state.InvoiceID.IsNil() || state.ReadySince == nil ||
-		!state.ReadyLongerThan(now, factoring.ReadyUnsubmittedSeconds) {
+		!state.ReadyLongerThan(now, factoringreadiness.ReadyUnsubmittedSeconds) {
 		return watchtowerports.WatchtowerItemInput{}, false
 	}
 
@@ -405,7 +407,7 @@ func DescribeFactoringReadyUnsubmitted(
 		SubjectID:   state.InvoiceID,
 		EventKind:   agent.EventFactoringInvoiceReady,
 		Path:        factoringRecordPath("invoice", state.InvoiceID, pathFactoringInvoices),
-		OccurredAt:  *state.ReadySince + factoring.ReadyUnsubmittedSeconds,
+		OccurredAt:  *state.ReadySince + factoringreadiness.ReadyUnsubmittedSeconds,
 	}, true
 }
 
@@ -562,7 +564,7 @@ func DescribeFactoringRemittanceExceptions(
 	if row == nil || row.RemittanceID.IsNil() {
 		return watchtowerports.WatchtowerItemInput{}, false
 	}
-	needsMapping := row.Status == factoring.RemittanceStatusNeedsMapping
+	needsMapping := row.Status == factoringremittance.RemittanceStatusNeedsMapping
 	if !needsMapping && (row.ExceptionCount <= 0 || !row.Status.CanEditLines()) {
 		return watchtowerports.WatchtowerItemInput{}, false
 	}

@@ -10,6 +10,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/imaging/imagingkit"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringsubmission"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringsubmissionports"
@@ -86,7 +87,7 @@ func (s *SubmissionService) PrepareDocuments(
 	if err != nil {
 		return err
 	}
-	if sub.Status != factoring.SubmissionStatusSending || !documentsMissing(sub) {
+	if sub.Status != factoringsubmission.SubmissionStatusSending || !documentsMissing(sub) {
 		return nil
 	}
 
@@ -157,7 +158,7 @@ func (s *SubmissionService) PrepareDocuments(
 	return s.repo.SetDocuments(ctx, update)
 }
 
-func documentsMissing(sub *factoring.Submission) bool {
+func documentsMissing(sub *factoringsubmission.Submission) bool {
 	if sub.SchedulePDFDocumentID.IsNil() || sub.ScheduleCSVDocumentID.IsNil() {
 		return true
 	}
@@ -172,7 +173,7 @@ func documentsMissing(sub *factoring.Submission) bool {
 func (s *SubmissionService) scheduleSources(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	sub *factoring.Submission,
+	sub *factoringsubmission.Submission,
 ) (*scheduleSources, error) {
 	org, err := s.organizations.GetByID(ctx, tenantports.GetOrganizationByIDRequest{
 		TenantInfo:   tenantInfo,
@@ -222,7 +223,7 @@ func (s *SubmissionService) scheduleSources(
 func (s *SubmissionService) loadCustomers(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	sub *factoring.Submission,
+	sub *factoringsubmission.Submission,
 ) (map[pulid.ID]*customer.Customer, error) {
 	ids := make([]pulid.ID, 0, len(sub.Items))
 	seen := make(map[pulid.ID]struct{}, len(sub.Items))
@@ -259,7 +260,7 @@ func (s *SubmissionService) loadCustomers(
 func (s *SubmissionService) renderSchedule(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	sub *factoring.Submission,
+	sub *factoringsubmission.Submission,
 	sources *scheduleSources,
 ) (*documenttemplateports.RenderedDocument, error) {
 	return s.templates.RenderDocument(ctx, &documenttemplateports.RenderDocumentRequest{
@@ -273,7 +274,7 @@ func (s *SubmissionService) renderSchedule(
 }
 
 func scheduleContext(
-	sub *factoring.Submission,
+	sub *factoringsubmission.Submission,
 	sources *scheduleSources,
 ) *documenttemplate.FactoringScheduleContext {
 	tz := sources.org.Timezone
@@ -344,7 +345,10 @@ func (r *scheduleRow) reference() string {
 	return strings.Join(parts, " · ")
 }
 
-func scheduleRowFor(item *factoring.SubmissionItem, sources *scheduleSources) scheduleRow {
+func scheduleRowFor(
+	item *factoringsubmission.SubmissionItem,
+	sources *scheduleSources,
+) scheduleRow {
 	row := scheduleRow{}
 	if cus := sources.customers[item.CustomerID]; cus != nil {
 		row.debtor = cus.DisplayName()
@@ -389,7 +393,7 @@ func nonEmpty(values ...string) []string {
 	return out
 }
 
-func scheduleCSV(sub *factoring.Submission, sources *scheduleSources) ([]byte, error) {
+func scheduleCSV(sub *factoringsubmission.Submission, sources *scheduleSources) ([]byte, error) {
 	buf := new(bytes.Buffer)
 	writer := csv.NewWriter(buf)
 	if err := writer.Write(scheduleCSVHeader); err != nil {
@@ -428,7 +432,7 @@ func scheduleCSV(sub *factoring.Submission, sources *scheduleSources) ([]byte, e
 func (s *SubmissionService) buildPacket(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	item *factoring.SubmissionItem,
+	item *factoringsubmission.SubmissionItem,
 	sources *scheduleSources,
 ) ([]byte, error) {
 	inv, err := s.invoices.GetByID(ctx, invoiceports.GetInvoiceByIDRequest{
@@ -640,7 +644,7 @@ type storedFile struct {
 func (s *SubmissionService) storeFile(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	sub *factoring.Submission,
+	sub *factoringsubmission.Submission,
 	file *storedFile,
 ) (pulid.ID, error) {
 	stored, err := s.store.Store(ctx, &documentports.StoreDocumentRequest{
@@ -649,7 +653,7 @@ func (s *SubmissionService) storeFile(
 		Content:      file.content,
 		FileName:     file.name,
 		ContentType:  file.contentType,
-		ResourceType: factoring.SubmissionDocumentResourceType,
+		ResourceType: factoringsubmission.SubmissionDocumentResourceType,
 		ResourceID:   sub.ID.String(),
 		Description:  file.description,
 		Tags:         []string{submissionDocTag, sub.Number},
@@ -669,7 +673,7 @@ func systemActor(tenantInfo pagination.TenantInfo) permissionports.RequestActor 
 	}
 }
 
-func scheduleFileName(sub *factoring.Submission, ext string) string {
+func scheduleFileName(sub *factoringsubmission.Submission, ext string) string {
 	return fileutils.SanitizeDisplayFilename(
 		sub.Number+ext,
 		scheduleFallbackName+ext,
@@ -677,7 +681,7 @@ func scheduleFileName(sub *factoring.Submission, ext string) string {
 	)
 }
 
-func packetFileName(item *factoring.SubmissionItem) string {
+func packetFileName(item *factoringsubmission.SubmissionItem) string {
 	return fileutils.SanitizeDisplayFilename(
 		item.InvoiceNumber+".pdf",
 		packetFallbackName+".pdf",

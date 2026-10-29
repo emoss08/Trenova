@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringreadiness"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -140,12 +141,12 @@ func (f *fakeReadiness) SetOverride(
 	_ context.Context,
 	req *factoringports.SetOverrideRequest,
 	_ *permissionports.RequestActor,
-) (*factoring.InvoiceState, error) {
+) (*factoringreadiness.InvoiceState, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
 	}
 	f.overridden = req
-	return &factoring.InvoiceState{}, nil
+	return &factoringreadiness.InvoiceState{}, nil
 }
 
 func (f *fakeReadiness) PlanDocumentRequest(

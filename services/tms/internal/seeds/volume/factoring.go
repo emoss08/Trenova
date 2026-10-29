@@ -21,6 +21,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerledger"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring/factoringdb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringledger"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringreadiness"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringremittance"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringsubmission"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice/invoicedb"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
@@ -77,7 +81,7 @@ type facStyle struct {
 type facFactor struct {
 	company   *factoringcompany.FactoringCompany
 	agreement *factoring.Agreement
-	transport *factoring.Transport
+	transport *factoringsubmission.Transport
 	noas      map[pulid.ID]*factoring.Noa
 	style     facStyle
 	slug      string
@@ -335,7 +339,7 @@ func (g *generator) facFactors(
 				agreement = a
 			}
 		}
-		var transport *factoring.Transport
+		var transport *factoringsubmission.Transport
 		for _, t := range transports {
 			if t.FactoringCompanyID == c.ID {
 				transport = t
@@ -358,7 +362,7 @@ func (g *generator) facFactors(
 	var newCompanies []*factoringcompany.FactoringCompany
 	var newAgreements []*factoring.Agreement
 	var newTiers []*factoring.FeeTier
-	var newTransports []*factoring.Transport
+	var newTransports []*factoringsubmission.Transport
 	var companyStamps, agreementStamps, transportStamps []stamp
 	for _, p := range facCatalog {
 		if len(factors) == len(facCatalog) {
@@ -440,12 +444,12 @@ func (g *generator) facFactors(
 			agreement.FeeTiers = append(agreement.FeeTiers, fee)
 			newTiers = append(newTiers, fee)
 		}
-		transport := &factoring.Transport{
+		transport := &factoringsubmission.Transport{
 			ID:                 idAt("factrn_", effective),
 			OrganizationID:     g.refs.orgID,
 			BusinessUnitID:     g.refs.buID,
 			FactoringCompanyID: company.ID,
-			Method:             factoring.TransportMethodEmail,
+			Method:             factoringsubmission.TransportMethodEmail,
 			EmailRecipients:    []string{"schedules@" + slug + ".example.com"},
 			AttachPackets:      true,
 			LastTestedAt:       ptr(effective + facHour),
@@ -834,20 +838,20 @@ type facInvoice struct {
 type facItem struct {
 	fi           *facInvoice
 	sub          *facSub
-	item         *factoring.SubmissionItem
+	item         *factoringsubmission.SubmissionItem
 	fundOn       int64
 	payOn        int64
 	chargebackOn int64
 	reversalOn   int64
 	decline      string
 	extraFee     int64
-	chargeback   *factoring.Movement
+	chargeback   *factoringledger.Movement
 	chargebackID pulid.ID
 }
 
 type facSub struct {
 	factor *facFactor
-	sub    *factoring.Submission
+	sub    *factoringsubmission.Submission
 	items  []*facItem
 	slot   int64
 	keys   []string
@@ -855,13 +859,13 @@ type facSub struct {
 
 type facEvent struct {
 	at   int64
-	kind factoring.RemittanceLineKind
+	kind factoringremittance.RemittanceLineKind
 	item *facItem
 	cash int64
 }
 
 type facAppliedLine struct {
-	line    *factoring.RemittanceLine
+	line    *factoringremittance.RemittanceLine
 	entryID pulid.ID
 }
 
@@ -872,13 +876,13 @@ type facRun struct {
 	bookable    map[pulid.ID]bool
 	invoices    []*facInvoice
 	subs        []*facSub
-	entries     []*factoring.ReserveEntry
-	remittances []*factoring.Remittance
-	lines       []*factoring.RemittanceLine
+	entries     []*factoringledger.ReserveEntry
+	remittances []*factoringremittance.Remittance
+	lines       []*factoringremittance.RemittanceLine
 	applied     []facAppliedLine
-	profiles    []*factoring.RemittanceProfile
+	profiles    []*factoringremittance.RemittanceProfile
 	docs        []*document.Document
-	states      []*factoring.InvoiceState
+	states      []*factoringreadiness.InvoiceState
 	remStamps   []stamp
 	lineStamps  []stamp
 	excluded    int
@@ -1059,8 +1063,8 @@ func (g *generator) facSubmit(ctx context.Context, run *facRun) error {
 	var resubmitAt []int64
 	for _, key := range keys {
 		members := groups[key]
-		for begin := 0; begin < len(members); begin += factoring.MaxSubmissionInvoices {
-			batch := members[begin:min(begin+factoring.MaxSubmissionInvoices, len(members))]
+		for begin := 0; begin < len(members); begin += factoringsubmission.MaxSubmissionInvoices {
+			batch := members[begin:min(begin+factoringsubmission.MaxSubmissionInvoices, len(members))]
 			fs := g.facNewSub(byFactor[key.factor], key.slot, batch)
 			run.subs = append(run.subs, fs)
 			if cancelled := g.facDeliver(fs, now); cancelled > 0 {
@@ -1101,7 +1105,7 @@ func (g *generator) facSubmit(ctx context.Context, run *facRun) error {
 	for _, key := range retryKeys {
 		members := retries[key]
 		fs := g.facNewSub(byFactor[key.factor], key.slot, members)
-		fs.sub.Status = factoring.SubmissionStatusSent
+		fs.sub.Status = factoringsubmission.SubmissionStatusSent
 		fs.sub.Attempts = 1
 		fs.sub.SentAt = ptr(key.slot + g.fake.between64(facMinute, 8*facMinute))
 		fs.sub.TransportReference = g.facMessageID(fs.factor)
@@ -1126,13 +1130,13 @@ func (g *generator) facSubmit(ctx context.Context, run *facRun) error {
 func (g *generator) facNewSub(f *facFactor, slot int64, members []*facInvoice) *facSub {
 	submitter := g.bilPick(g.refs.userIDs)
 	fs := &facSub{factor: f, slot: slot, keys: []string{f.company.ID.String()}}
-	fs.sub = &factoring.Submission{
+	fs.sub = &factoringsubmission.Submission{
 		ID:                 idAt("facsub_", slot),
 		OrganizationID:     g.refs.orgID,
 		BusinessUnitID:     g.refs.buID,
 		FactoringCompanyID: f.company.ID,
 		AgreementID:        f.agreement.ID,
-		Status:             factoring.SubmissionStatusSending,
+		Status:             factoringsubmission.SubmissionStatusSending,
 		CurrencyCode:       money.DefaultCurrencyCode,
 		TransportMethod:    f.transport.Method,
 		TransportTarget:    f.transport.Target(),
@@ -1147,7 +1151,7 @@ func (g *generator) facNewSub(f *facFactor, slot int64, members []*facInvoice) *
 			f.agreement,
 			factoring.DaysToRun(fi.inv.DueDate, slot),
 		)
-		item := &factoring.SubmissionItem{
+		item := &factoringsubmission.SubmissionItem{
 			ID:                   idAt("facsit_", slot),
 			OrganizationID:       g.refs.orgID,
 			BusinessUnitID:       g.refs.buID,
@@ -1161,7 +1165,7 @@ func (g *generator) facNewSub(f *facFactor, slot int64, members []*facInvoice) *
 			ExpectedFeeMinor:     funding.FeeMinor,
 			ExpectedReserveMinor: funding.ReserveMinor,
 			ExpectedDays:         funding.Days,
-			Status:               factoring.SubmissionItemStatusPending,
+			Status:               factoringsubmission.SubmissionItemStatusPending,
 			CreatedAt:            slot,
 			UpdatedAt:            slot,
 		}
@@ -1191,7 +1195,7 @@ func (g *generator) facDeliver(fs *facSub, now int64) int64 {
 	sub := fs.sub
 	sentAt := fs.slot + g.fake.between64(facMinute, 8*facMinute)
 	if !g.fake.chance(0.04) {
-		sub.Status = factoring.SubmissionStatusSent
+		sub.Status = factoringsubmission.SubmissionStatusSent
 		sub.Attempts = 1
 		sub.SentAt = ptr(sentAt)
 		sub.TransportReference = g.facMessageID(fs.factor)
@@ -1200,7 +1204,7 @@ func (g *generator) facDeliver(fs *facSub, now int64) int64 {
 	}
 
 	failedAt := fs.slot + g.fake.between64(2*facMinute, 20*facMinute)
-	sub.Status = factoring.SubmissionStatusFailed
+	sub.Status = factoringsubmission.SubmissionStatusFailed
 	sub.Attempts = 3
 	sub.FailedAt = ptr(failedAt)
 	sub.LastError = pick(g.fake, facFailures)
@@ -1210,7 +1214,7 @@ func (g *generator) facDeliver(fs *facSub, now int64) int64 {
 	}
 	if g.fake.chance(0.75) {
 		retried := min(failedAt+g.fake.between64(facHour, 20*facHour), now-facMinute)
-		sub.Status = factoring.SubmissionStatusSent
+		sub.Status = factoringsubmission.SubmissionStatusSent
 		sub.SendAttemptGroup = 2
 		sub.Attempts = 1
 		sub.SentAt = ptr(retried + 2*facMinute)
@@ -1220,12 +1224,12 @@ func (g *generator) facDeliver(fs *facSub, now int64) int64 {
 		return 0
 	}
 	cancelled := min(failedAt+g.fake.between64(2*facHour, 30*facHour), now-facMinute)
-	sub.Status = factoring.SubmissionStatusCancelled
+	sub.Status = factoringsubmission.SubmissionStatusCancelled
 	sub.CancelledAt = ptr(cancelled)
 	sub.CancelReason = "Factor asked for the invoices on a fresh schedule after the failed delivery"
 	sub.UpdatedAt = cancelled
 	for _, it := range fs.items {
-		it.item.Status = factoring.SubmissionItemStatusReleased
+		it.item.Status = factoringsubmission.SubmissionItemStatusReleased
 		it.item.ReleasedAt = ptr(cancelled)
 		it.item.UpdatedAt = cancelled
 	}
@@ -1246,7 +1250,7 @@ func (g *generator) facMessageID(f *facFactor) string {
 // pays, or charge the invoice back when it does not.
 func (g *generator) facPlanEvents(run *facRun) {
 	for _, fs := range run.subs {
-		if fs.sub.Status != factoring.SubmissionStatusSent || fs.sub.SentAt == nil {
+		if fs.sub.Status != factoringsubmission.SubmissionStatusSent || fs.sub.SentAt == nil {
 			continue
 		}
 		agreement := fs.factor.agreement
@@ -1314,20 +1318,24 @@ func (g *generator) facRemit(run *facRun) error {
 			if it.decline != "" {
 				add(
 					fs.factor,
-					&facEvent{at: it.fundOn, kind: factoring.RemittanceLineRejection, item: it},
+					&facEvent{
+						at:   it.fundOn,
+						kind: factoringremittance.RemittanceLineRejection,
+						item: it,
+					},
 				)
 				continue
 			}
 			add(
 				fs.factor,
-				&facEvent{at: it.fundOn, kind: factoring.RemittanceLineFunding, item: it},
+				&facEvent{at: it.fundOn, kind: factoringremittance.RemittanceLineFunding, item: it},
 			)
 			if it.chargebackOn > 0 {
 				add(
 					fs.factor,
 					&facEvent{
 						at:   it.chargebackOn,
-						kind: factoring.RemittanceLineChargeback,
+						kind: factoringremittance.RemittanceLineChargeback,
 						item: it,
 					},
 				)
@@ -1338,7 +1346,11 @@ func (g *generator) facRemit(run *facRun) error {
 			if it.payOn > 0 {
 				add(
 					fs.factor,
-					&facEvent{at: it.payOn, kind: factoring.RemittanceLineReserveRelease, item: it},
+					&facEvent{
+						at:   it.payOn,
+						kind: factoringremittance.RemittanceLineReserveRelease,
+						item: it,
+					},
 				)
 			}
 		}
@@ -1380,12 +1392,12 @@ func (g *generator) facRemit(run *facRun) error {
 	return nil
 }
 
-var facKindOrder = map[factoring.RemittanceLineKind]int{
-	factoring.RemittanceLineFunding:        0,
-	factoring.RemittanceLineRejection:      1,
-	factoring.RemittanceLineChargeback:     2,
-	factoring.RemittanceLineReserveRelease: 3,
-	factoring.RemittanceLineOther:          4,
+var facKindOrder = map[factoringremittance.RemittanceLineKind]int{
+	factoringremittance.RemittanceLineFunding:        0,
+	factoringremittance.RemittanceLineRejection:      1,
+	factoringremittance.RemittanceLineChargeback:     2,
+	factoringremittance.RemittanceLineReserveRelease: 3,
+	factoringremittance.RemittanceLineOther:          4,
 }
 
 func facMoney(minor int64) string {
@@ -1405,7 +1417,11 @@ func (g *generator) facApplyBucket(run *facRun, b *facBucket, received int64) er
 	if g.fake.chance(0.4) {
 		b.events = append(
 			b.events,
-			&facEvent{at: b.week + 4*facDay, kind: factoring.RemittanceLineOther, cash: -2500},
+			&facEvent{
+				at:   b.week + 4*facDay,
+				kind: factoringremittance.RemittanceLineOther,
+				cash: -2500,
+			},
 		)
 	}
 
@@ -1423,7 +1439,7 @@ func (g *generator) facApplyBucket(run *facRun, b *facBucket, received int64) er
 	sheet := &rateimport.Sheet{Headers: f.style.headers, Rows: rows, FirstDataRow: 2}
 	mapping := factoringremit.GuessMapping(f.style.headers)
 	parsed := factoringremit.ToDomain(factoringremit.Parse(sheet, mapping, factoringremit.Options{
-		DefaultKind: factoring.RemittanceLineFunding,
+		DefaultKind: factoringremittance.RemittanceLineFunding,
 		Location:    time.UTC,
 	}))
 	if len(parsed) != len(b.events) {
@@ -1435,16 +1451,16 @@ func (g *generator) facApplyBucket(run *facRun, b *facBucket, received int64) er
 		)
 	}
 
-	rem := &factoring.Remittance{
+	rem := &factoringremittance.Remittance{
 		ID:                 idAt("facrem_", received),
 		OrganizationID:     g.refs.orgID,
 		BusinessUnitID:     g.refs.buID,
 		FactoringCompanyID: f.company.ID,
 		FileName:           fileName,
-		Source:             factoring.RemittanceSourceUpload,
+		Source:             factoringremittance.RemittanceSourceUpload,
 		SourceFormat:       facFormat(f.style.ext),
-		Status:             factoring.RemittanceStatusParsed,
-		DefaultKind:        factoring.RemittanceLineFunding,
+		Status:             factoringremittance.RemittanceStatusParsed,
+		DefaultKind:        factoringremittance.RemittanceLineFunding,
 		RemittedOn:         ptr(weekEnd),
 		CurrencyCode:       money.DefaultCurrencyCode,
 		Mapping:            mapping.Strings(),
@@ -1453,7 +1469,7 @@ func (g *generator) facApplyBucket(run *facRun, b *facBucket, received int64) er
 		StagedAt:           ptr(received + 2*facMinute),
 		CreatedByID:        uploader,
 	}
-	doc := g.facDocument(factoring.RemittanceDocumentResourceType, rem.ID, fileName,
+	doc := g.facDocument(factoringremittance.RemittanceDocumentResourceType, rem.ID, fileName,
 		facContentType(f.style.ext), document.ProcessingProfileNone, received, uploader,
 		g.fake.between64(4_000, 60_000))
 	rem.DocumentID = doc.ID
@@ -1466,7 +1482,7 @@ func (g *generator) facApplyBucket(run *facRun, b *facBucket, received int64) er
 	}
 	rem.Lines = parsed
 
-	factoring.MatchRemittance(parsed, g.facCandidates(run, f))
+	factoringremittance.MatchRemittance(parsed, g.facCandidates(run, f))
 
 	touched := make(map[*facSub]int64)
 	if applied {
@@ -1481,29 +1497,36 @@ func (g *generator) facApplyBucket(run *facRun, b *facBucket, received int64) er
 				continue
 			}
 			if !facBookable(ev) {
-				if line.MatchStatus == factoring.RemittanceLineMatched {
-					line.Suggest(nil, factoring.MatchReasonNoOpenItem)
+				if line.MatchStatus == factoringremittance.RemittanceLineMatched {
+					line.Suggest(nil, factoringremittance.MatchReasonNoOpenItem)
 				}
 				continue
 			}
-			if line.MatchStatus != factoring.RemittanceLineMatched ||
+			if line.MatchStatus != factoringremittance.RemittanceLineMatched ||
 				line.SubmissionItemID != ev.item.item.ID {
-				score, _ := factoring.ScoreRemittanceLine(line, &factoring.RemittanceCandidate{
-					Item:             ev.item.item,
-					SubmissionNumber: ev.item.sub.sub.Number,
-					SentAt:           ev.item.sub.sub.SentAt,
-					Recourse:         f.agreement.Recourse == factoring.RecourseFull,
-				})
-				line.MatchTo(ev.item.item, factoring.RemittanceMatchedByPerson, max(score, 1),
-					factoring.MatchReasonChosenByPerson)
+				score, _ := factoringremittance.ScoreRemittanceLine(
+					line,
+					&factoringremittance.RemittanceCandidate{
+						Item:             ev.item.item,
+						SubmissionNumber: ev.item.sub.sub.Number,
+						SentAt:           ev.item.sub.sub.SentAt,
+						Recourse:         f.agreement.Recourse == factoring.RecourseFull,
+					},
+				)
+				line.MatchTo(
+					ev.item.item,
+					factoringremittance.RemittanceMatchedByPerson,
+					max(score, 1),
+					factoringremittance.MatchReasonChosenByPerson,
+				)
 			}
 			entryID, err := g.facBookLine(run, rem, line, ev, applyAt, uploader)
 			if err != nil {
 				return err
 			}
 			line.MarkApplied(entryID)
-			if ev.kind == factoring.RemittanceLineFunding ||
-				ev.kind == factoring.RemittanceLineRejection {
+			if ev.kind == factoringremittance.RemittanceLineFunding ||
+				ev.kind == factoringremittance.RemittanceLineRejection {
 				touched[ev.item.sub] = max(touched[ev.item.sub], ev.at)
 			}
 			if entryID.IsNotNil() {
@@ -1534,7 +1557,7 @@ func (g *generator) facApplyBucket(run *facRun, b *facBucket, received int64) er
 	}
 	if !f.profiled {
 		f.profiled = true
-		run.profiles = append(run.profiles, &factoring.RemittanceProfile{
+		run.profiles = append(run.profiles, &factoringremittance.RemittanceProfile{
 			ID:                 idAt("facrmp_", received),
 			OrganizationID:     g.refs.orgID,
 			BusinessUnitID:     g.refs.buID,
@@ -1552,23 +1575,24 @@ func (g *generator) facApplyBucket(run *facRun, b *facBucket, received int64) er
 // expects it; one that is not stays on the remittance for someone to resolve.
 func facBookable(ev *facEvent) bool {
 	switch ev.kind {
-	case factoring.RemittanceLineFunding, factoring.RemittanceLineRejection:
-		return ev.item.item.Status == factoring.SubmissionItemStatusPending
-	case factoring.RemittanceLineReserveRelease, factoring.RemittanceLineChargeback:
-		return ev.item.item.Status == factoring.SubmissionItemStatusFunded
-	case factoring.RemittanceLineOther:
+	case factoringremittance.RemittanceLineFunding, factoringremittance.RemittanceLineRejection:
+		return ev.item.item.Status == factoringsubmission.SubmissionItemStatusPending
+	case factoringremittance.RemittanceLineReserveRelease,
+		factoringremittance.RemittanceLineChargeback:
+		return ev.item.item.Status == factoringsubmission.SubmissionItemStatusFunded
+	case factoringremittance.RemittanceLineOther:
 	}
 	return false
 }
 
-func facFormat(ext string) factoring.RemittanceFormat {
+func facFormat(ext string) factoringremittance.RemittanceFormat {
 	switch ext {
 	case ".xlsx":
-		return factoring.RemittanceFormatXlsx
+		return factoringremittance.RemittanceFormatXlsx
 	case ".pdf":
-		return factoring.RemittanceFormatPdf
+		return factoringremittance.RemittanceFormatPdf
 	default:
-		return factoring.RemittanceFormatCsv
+		return factoringremittance.RemittanceFormatCsv
 	}
 }
 
@@ -1602,19 +1626,19 @@ func (g *generator) facCells(f *facFactor, ev *facEvent) []string {
 	debtor := it.fi.rec.Customer.Name
 	face := facMoney(it.item.FaceMinor)
 	switch ev.kind {
-	case factoring.RemittanceLineFunding:
+	case factoringremittance.RemittanceLineFunding:
 		reserve := it.item.FaceMinor - it.item.ExpectedAdvanceMinor - it.item.ExpectedFeeMinor
 		return []string{
 			number, it.sub.sub.Number, debtor, f.style.purchase, face,
 			facMoney(it.item.ExpectedAdvanceMinor), facMoney(it.item.ExpectedFeeMinor),
 			facMoney(reserve), facMoney(it.item.ExpectedAdvanceMinor), date,
 		}
-	case factoring.RemittanceLineRejection:
+	case factoringremittance.RemittanceLineRejection:
 		return []string{
 			number, it.sub.sub.Number, debtor, f.style.decline + " - " + it.decline, face,
 			"", "", "", "", date,
 		}
-	case factoring.RemittanceLineChargeback:
+	case factoringremittance.RemittanceLineChargeback:
 		repurchase := it.item.ExpectedAdvanceMinor + it.item.ExpectedFeeMinor
 		return []string{
 			number, it.sub.sub.Number, debtor, f.style.chargeback, face,
@@ -1634,9 +1658,12 @@ func (g *generator) facCells(f *facFactor, ev *facEvent) []string {
 	}
 }
 
-func (g *generator) facCandidates(run *facRun, f *facFactor) []*factoring.RemittanceCandidate {
+func (g *generator) facCandidates(
+	run *facRun,
+	f *facFactor,
+) []*factoringremittance.RemittanceCandidate {
 	recourse := f.agreement.Recourse == factoring.RecourseFull
-	out := make([]*factoring.RemittanceCandidate, 0)
+	out := make([]*factoringremittance.RemittanceCandidate, 0)
 	for _, fs := range run.subs {
 		if fs.factor != f {
 			continue
@@ -1645,7 +1672,7 @@ func (g *generator) facCandidates(run *facRun, f *facFactor) []*factoring.Remitt
 			if !it.item.Status.IsLive() {
 				continue
 			}
-			out = append(out, &factoring.RemittanceCandidate{
+			out = append(out, &factoringremittance.RemittanceCandidate{
 				Item:             it.item,
 				SubmissionNumber: fs.sub.Number,
 				SentAt:           fs.sub.SentAt,
@@ -1661,8 +1688,8 @@ func (g *generator) facCandidates(run *facRun, f *facFactor) []*factoring.Remitt
 // reserve ledger.
 func (g *generator) facBookLine(
 	run *facRun,
-	rem *factoring.Remittance,
-	line *factoring.RemittanceLine,
+	rem *factoringremittance.Remittance,
+	line *factoringremittance.RemittanceLine,
 	ev *facEvent,
 	at int64,
 	actor pulid.ID,
@@ -1671,12 +1698,12 @@ func (g *generator) facBookLine(
 	agreement := it.sub.factor.agreement
 	row := "row " + strconv.Itoa(line.RowNumber)
 	switch ev.kind {
-	case factoring.RemittanceLineFunding:
+	case factoringremittance.RemittanceLineFunding:
 		if err := it.item.Fund(ev.at, it.item.ExpectedFunding()); err != nil {
 			return pulid.Nil, err
 		}
 		it.item.UpdatedAt = at
-		movement, err := factoring.PlanFundingMovement(it.item, agreement.AccountingTreatment)
+		movement, err := factoringledger.PlanFundingMovement(it.item, agreement.AccountingTreatment)
 		if err != nil {
 			return pulid.Nil, err
 		}
@@ -1685,16 +1712,19 @@ func (g *generator) facBookLine(
 			key: "factoring-funded:" + it.item.ID.String(), on: ev.at, at: at, actor: actor,
 			memo: "Factor remittance " + rem.FileName, remitLine: line.ID,
 		})
-	case factoring.RemittanceLineRejection:
+	case factoringremittance.RemittanceLineRejection:
 		if err := it.item.Reject("Declined on the factor's remittance " + rem.FileName + ", " + row); err != nil {
 			return pulid.Nil, err
 		}
 		it.item.UpdatedAt = at
 		it.fi.rejectedAt = at
 		return pulid.Nil, nil
-	case factoring.RemittanceLineChargeback:
-		movement, err := factoring.PlanChargebackMovement(it.item, agreement.AccountingTreatment,
-			factoring.ChargebackRepurchaseMinor(it.item))
+	case factoringremittance.RemittanceLineChargeback:
+		movement, err := factoringledger.PlanChargebackMovement(
+			it.item,
+			agreement.AccountingTreatment,
+			factoringledger.ChargebackRepurchaseMinor(it.item),
+		)
 		if err != nil {
 			return pulid.Nil, err
 		}
@@ -1713,7 +1743,11 @@ func (g *generator) facBookLine(
 	default:
 		_, _, reserve := it.item.Actuals()
 		cash := max(reserve-min(it.extraFee, reserve), 0)
-		movement, err := factoring.PlanReleaseMovement(it.item, agreement.AccountingTreatment, cash)
+		movement, err := factoringledger.PlanReleaseMovement(
+			it.item,
+			agreement.AccountingTreatment,
+			cash,
+		)
 		if err != nil {
 			return pulid.Nil, err
 		}
@@ -1732,11 +1766,12 @@ func (g *generator) facBookLine(
 // facReverse undoes a chargeback by hand once the customer paid the factor
 // after all, as LedgerService.ReverseChargeback does.
 func (g *generator) facReverse(run *facRun, it *facItem, at int64) error {
-	if it.chargeback == nil || it.item.Status != factoring.SubmissionItemStatusChargedBack {
+	if it.chargeback == nil ||
+		it.item.Status != factoringsubmission.SubmissionItemStatusChargedBack {
 		it.payOn = 0
 		return nil
 	}
-	movement := factoring.ReverseMovement(it.chargeback)
+	movement := factoringledger.ReverseMovement(it.chargeback)
 	if err := it.item.ReverseChargeback(); err != nil {
 		return err
 	}
@@ -1752,7 +1787,7 @@ func (g *generator) facReverse(run *facRun, it *facItem, at int64) error {
 
 type facBooking struct {
 	item      *facItem
-	movement  factoring.Movement
+	movement  factoringledger.Movement
 	event     accountingcontrol.JournalSourceEventType
 	key       string
 	on        int64
@@ -1763,15 +1798,15 @@ type facBooking struct {
 	reverses  pulid.ID
 }
 
-func facDescription(kind factoring.ReserveEntryKind, number, schedule string) string {
+func facDescription(kind factoringledger.ReserveEntryKind, number, schedule string) string {
 	switch kind {
-	case factoring.ReserveEntryFunding:
+	case factoringledger.ReserveEntryFunding:
 		return "Factor advance on invoice " + number + ", schedule " + schedule
-	case factoring.ReserveEntryRelease:
+	case factoringledger.ReserveEntryRelease:
 		return "Factor reserve released on invoice " + number + ", schedule " + schedule
-	case factoring.ReserveEntryChargeback:
+	case factoringledger.ReserveEntryChargeback:
 		return "Factor chargeback of invoice " + number + ", schedule " + schedule
-	case factoring.ReserveEntryChargebackReversal:
+	case factoringledger.ReserveEntryChargebackReversal:
 		return "Factor chargeback reversed on invoice " + number + ", schedule " + schedule
 	default:
 		return "Factoring of invoice " + number + ", schedule " + schedule
@@ -1812,8 +1847,8 @@ func (g *generator) facBook(run *facRun, b *facBooking) (pulid.ID, error) {
 	}
 	run.rows.journals = append(run.rows.journals, journal)
 
-	entry := factoring.NewReserveEntry(it.item, sub, &b.movement, b.on)
-	row := &factoring.ReserveEntry{
+	entry := factoringledger.NewReserveEntry(it.item, sub, &b.movement, b.on)
+	row := &factoringledger.ReserveEntry{
 		ID:                 idAt("facres_", b.at),
 		OrganizationID:     entry.OrganizationID,
 		BusinessUnitID:     entry.BusinessUnitID,
@@ -1841,8 +1876,8 @@ func (g *generator) facBook(run *facRun, b *facBooking) (pulid.ID, error) {
 		CreatedByID:        b.actor,
 		CreatedAt:          b.at,
 	}
-	if len([]rune(row.Memo)) > factoring.MaxReserveMemoLength {
-		row.Memo = string([]rune(row.Memo)[:factoring.MaxReserveMemoLength])
+	if len([]rune(row.Memo)) > factoringledger.MaxReserveMemoLength {
+		row.Memo = string([]rune(row.Memo)[:factoringledger.MaxReserveMemoLength])
 	}
 	if row.CurrencyCode == "" {
 		row.CurrencyCode = money.DefaultCurrencyCode
@@ -1852,13 +1887,13 @@ func (g *generator) facBook(run *facRun, b *facBooking) (pulid.ID, error) {
 	inv := it.fi.inv
 	signed := int64(0)
 	switch b.movement.InvoiceEffect {
-	case factoring.InvoiceEffectSettle:
+	case factoringledger.InvoiceEffectSettle:
 		inv.ApplyPaymentMinor(b.movement.InvoiceMinor)
 		signed = -b.movement.InvoiceMinor
-	case factoring.InvoiceEffectReopen:
+	case factoringledger.InvoiceEffectReopen:
 		inv.RemovePaymentMinor(b.movement.InvoiceMinor)
 		signed = b.movement.InvoiceMinor
-	case factoring.InvoiceEffectNone:
+	case factoringledger.InvoiceEffectNone:
 	}
 	if signed != 0 {
 		it.fi.touched = true
@@ -1902,7 +1937,7 @@ func (g *generator) facExclude(run *facRun) error {
 		}
 		number := ""
 		for _, it := range fi.items {
-			if it.item.Status == factoring.SubmissionItemStatusRejected {
+			if it.item.Status == factoringsubmission.SubmissionItemStatusRejected {
 				number = it.sub.sub.Number
 			}
 		}
@@ -1948,7 +1983,7 @@ func (g *generator) facStates(run *facRun) {
 	for _, fi := range run.invoices {
 		inv := fi.inv
 		evaluated := now - g.fake.between64(facMinute, 50*facMinute)
-		facts := factoring.InvoiceFacts{
+		facts := factoringreadiness.InvoiceFacts{
 			Posted:           inv.Status == invoice.StatusPosted,
 			Voided:           inv.Status == invoice.StatusVoided,
 			Excluded:         inv.FactoringOverride.Excludes(),
@@ -1957,7 +1992,7 @@ func (g *generator) facStates(run *facRun) {
 		if inv.FactoringCompanyID != nil {
 			facts.FactoringCompanyID = *inv.FactoringCompanyID
 		}
-		in := &factoring.ReadinessInputs{At: evaluated, Invoice: facts}
+		in := &factoringreadiness.ReadinessInputs{At: evaluated, Invoice: facts}
 		if f := fi.factor; f != nil && inv.FactoringCompanyID != nil {
 			if f.agreement.InForce(evaluated) {
 				in.Agreement = f.agreement
@@ -1967,7 +2002,7 @@ func (g *generator) facStates(run *facRun) {
 				in.Noa = noa
 			}
 			in.OpenDispute = inv.DisputeStatus == invoice.DisputeStatusDisputed
-			in.Shipments = []factoring.ShipmentFacts{{
+			in.Shipments = []factoringreadiness.ShipmentFacts{{
 				ShipmentID: fi.rec.ID,
 				ProNumber:  fi.rec.ProNumber,
 				Available:  true,
@@ -1977,17 +2012,17 @@ func (g *generator) facStates(run *facRun) {
 				case it.item.Status.IsLive():
 					in.SubmissionNumber = it.sub.sub.Number
 					in.SubmissionItemStatus = it.item.Status
-				case it.item.Status == factoring.SubmissionItemStatusChargedBack:
+				case it.item.Status == factoringsubmission.SubmissionItemStatusChargedBack:
 					in.ChargedBack = true
 				}
 			}
 		}
-		readiness := factoring.EvaluateReadiness(in)
+		readiness := factoringreadiness.EvaluateReadiness(in)
 		posted := inv.InvoiceDate
 		if inv.PostedAt != nil {
 			posted = *inv.PostedAt
 		}
-		state := &factoring.InvoiceState{
+		state := &factoringreadiness.InvoiceState{
 			InvoiceID:          inv.ID,
 			OrganizationID:     inv.OrganizationID,
 			BusinessUnitID:     inv.BusinessUnitID,
@@ -2000,7 +2035,7 @@ func (g *generator) facStates(run *facRun) {
 			EvaluatedAt:        evaluated,
 			CreatedAt:          min(posted+facMinute, evaluated),
 		}
-		if readiness.Verdict == factoring.VerdictReady {
+		if readiness.Verdict == factoringreadiness.VerdictReady {
 			since := fi.readyAt
 			for _, it := range fi.items {
 				if it.item.ReleasedAt != nil {
@@ -2032,16 +2067,16 @@ func (g *generator) facOddRemittances(run *facRun, now int64) {
 	mappingAt := now - g.fake.between64(2*facHour, 2*facDay)
 	headers := []string{"Client", "Doc #", "Purch Dt", "Gross", "Holdback", "Net Funds"}
 	mapping := factoringremit.GuessMapping(headers)
-	needs := &factoring.Remittance{
+	needs := &factoringremittance.Remittance{
 		ID:                 idAt("facrem_", mappingAt),
 		OrganizationID:     g.refs.orgID,
 		BusinessUnitID:     g.refs.buID,
 		FactoringCompanyID: f.company.ID,
 		FileName:           strings.ToUpper(f.company.Code) + "_month_end_statement.csv",
-		Source:             factoring.RemittanceSourceUpload,
-		SourceFormat:       factoring.RemittanceFormatCsv,
-		Status:             factoring.RemittanceStatusNeedsMapping,
-		DefaultKind:        factoring.RemittanceLineReserveRelease,
+		Source:             factoringremittance.RemittanceSourceUpload,
+		SourceFormat:       factoringremittance.RemittanceFormatCsv,
+		Status:             factoringremittance.RemittanceStatusNeedsMapping,
+		DefaultKind:        factoringremittance.RemittanceLineReserveRelease,
 		CurrencyCode:       money.DefaultCurrencyCode,
 		Mapping:            mapping.Strings(),
 		Headers:            headers,
@@ -2049,28 +2084,36 @@ func (g *generator) facOddRemittances(run *facRun, now int64) {
 		StagedAt:           ptr(mappingAt + facMinute),
 		CreatedByID:        uploader,
 	}
-	needsDoc := g.facDocument(factoring.RemittanceDocumentResourceType, needs.ID, needs.FileName,
-		"text/csv", document.ProcessingProfileNone, mappingAt, uploader, 18_400)
+	needsDoc := g.facDocument(
+		factoringremittance.RemittanceDocumentResourceType,
+		needs.ID,
+		needs.FileName,
+		"text/csv",
+		document.ProcessingProfileNone,
+		mappingAt,
+		uploader,
+		18_400,
+	)
 	needs.DocumentID = needsDoc.ID
 
 	failedAt := now - g.fake.between64(3*facDay, 20*facDay)
-	failed := &factoring.Remittance{
+	failed := &factoringremittance.Remittance{
 		ID:                 idAt("facrem_", failedAt),
 		OrganizationID:     g.refs.orgID,
 		BusinessUnitID:     g.refs.buID,
 		FactoringCompanyID: f.company.ID,
 		FileName:           strings.ToUpper(f.company.Code) + "_funding_report_scan.pdf",
-		Source:             factoring.RemittanceSourceUpload,
-		SourceFormat:       factoring.RemittanceFormatPdf,
-		Status:             factoring.RemittanceStatusFailed,
-		DefaultKind:        factoring.RemittanceLineFunding,
+		Source:             factoringremittance.RemittanceSourceUpload,
+		SourceFormat:       factoringremittance.RemittanceFormatPdf,
+		Status:             factoringremittance.RemittanceStatusFailed,
+		DefaultKind:        factoringremittance.RemittanceLineFunding,
 		CurrencyCode:       money.DefaultCurrencyCode,
 		Error:              "The PDF is a scanned image with no readable table of invoices",
 		StagedAt:           ptr(failedAt + 3*facMinute),
 		CreatedByID:        uploader,
 	}
 	failedDoc := g.facDocument(
-		factoring.RemittanceDocumentResourceType,
+		factoringremittance.RemittanceDocumentResourceType,
 		failed.ID,
 		failed.FileName,
 		"application/pdf",
@@ -2083,16 +2126,16 @@ func (g *generator) facOddRemittances(run *facRun, now int64) {
 
 	original := run.remittances[g.fake.intn(len(run.remittances))]
 	dupAt := (*original.StagedAt) + g.fake.between64(facHour, 6*facHour)
-	discarded := &factoring.Remittance{
+	discarded := &factoringremittance.Remittance{
 		ID:                 idAt("facrem_", dupAt),
 		OrganizationID:     g.refs.orgID,
 		BusinessUnitID:     g.refs.buID,
 		FactoringCompanyID: original.FactoringCompanyID,
 		FileName:           original.FileName,
-		Source:             factoring.RemittanceSourceUpload,
+		Source:             factoringremittance.RemittanceSourceUpload,
 		SourceFormat:       original.SourceFormat,
-		Status:             factoring.RemittanceStatusDiscarded,
-		DefaultKind:        factoring.RemittanceLineFunding,
+		Status:             factoringremittance.RemittanceStatusDiscarded,
+		DefaultKind:        factoringremittance.RemittanceLineFunding,
 		CurrencyCode:       money.DefaultCurrencyCode,
 		DiscardedAt:        ptr(dupAt + 20*facMinute),
 		DiscardReason:      "Duplicate upload of " + original.FileName,
@@ -2123,8 +2166,8 @@ func (g *generator) facWrite(ctx context.Context, tx *keel.DB, run *facRun) erro
 		}
 	}
 
-	subs := make([]*factoring.Submission, 0, len(run.subs))
-	items := make([]*factoring.SubmissionItem, 0)
+	subs := make([]*factoringsubmission.Submission, 0, len(run.subs))
+	items := make([]*factoringsubmission.SubmissionItem, 0)
 	subMarks := make([]stamp, 0, len(run.subs))
 	itemMarks := make([]stamp, 0)
 	for _, fs := range run.subs {
@@ -2151,7 +2194,7 @@ func (g *generator) facWrite(ctx context.Context, tx *keel.DB, run *facRun) erro
 	pending := make(map[pulid.ID]pulid.ID, len(run.applied))
 	for _, a := range run.applied {
 		pending[a.line.ID] = a.entryID
-		a.line.MatchStatus = factoring.RemittanceLineMatched
+		a.line.MatchStatus = factoringremittance.RemittanceLineMatched
 		a.line.ReserveEntryID = pulid.Nil
 	}
 	if err := insertRows(ctx, tx, factoringdb.Remittances.Handle, run.remittances); err != nil {
@@ -2190,7 +2233,7 @@ func (g *generator) facWrite(ctx context.Context, tx *keel.DB, run *facRun) erro
 		if _, err := rl.With(d).Join(d, d.Col("id").EqCol(rl.ID)).Where(keel.True()).Update(
 			ctx,
 			tx,
-			rl.MatchStatus.To(factoring.RemittanceLineApplied),
+			rl.MatchStatus.To(factoringremittance.RemittanceLineApplied),
 			rl.ReserveEntryID.ToExpr(d.Col("reserve_entry_id")),
 			keepUpdated(rl.Handle),
 		); err != nil {
@@ -2287,19 +2330,20 @@ func (g *generator) facCount(run *facRun) {
 		for _, it := range fs.items {
 			items++
 			switch it.item.Status {
-			case factoring.SubmissionItemStatusFunded:
+			case factoringsubmission.SubmissionItemStatusFunded:
 				funded++
-			case factoring.SubmissionItemStatusRejected:
+			case factoringsubmission.SubmissionItemStatusRejected:
 				rejected++
-			case factoring.SubmissionItemStatusSettled:
+			case factoringsubmission.SubmissionItemStatusSettled:
 				settled++
-			case factoring.SubmissionItemStatusChargedBack:
+			case factoringsubmission.SubmissionItemStatusChargedBack:
 				chargedBack++
-			case factoring.SubmissionItemStatusPending, factoring.SubmissionItemStatusReleased:
+			case factoringsubmission.SubmissionItemStatusPending,
+				factoringsubmission.SubmissionItemStatusReleased:
 			}
 		}
 	}
-	verdicts := make(map[factoring.Verdict]int)
+	verdicts := make(map[factoringreadiness.Verdict]int)
 	for _, s := range run.states {
 		verdicts[s.Verdict]++
 	}
@@ -2322,10 +2366,10 @@ func (g *generator) facCount(run *facRun) {
 	)
 	g.opts.Logf(
 		"  • factoring readiness: %d ready, %d not ready, %d submitted, %d funded, %d excluded",
-		verdicts[factoring.VerdictReady],
-		verdicts[factoring.VerdictNotReady],
-		verdicts[factoring.VerdictSubmitted],
-		verdicts[factoring.VerdictFunded],
-		verdicts[factoring.VerdictExcluded],
+		verdicts[factoringreadiness.VerdictReady],
+		verdicts[factoringreadiness.VerdictNotReady],
+		verdicts[factoringreadiness.VerdictSubmitted],
+		verdicts[factoringreadiness.VerdictFunded],
+		verdicts[factoringreadiness.VerdictExcluded],
 	)
 }

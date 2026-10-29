@@ -13,6 +13,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/paymentreminderrepository"
 	"github.com/emoss08/trenova/internal/modules/billing/app/factoringservice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringledger"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringsubmission"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerledgerports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringledgerports"
@@ -226,7 +228,7 @@ func TestFactoringLedgerKeepsTheBooksBalanced(t *testing.T) {
 	assert.Equal(t, sub.ID, unfunded[0].SubmissionID)
 	assert.Equal(t, 3, unfunded[0].PendingCount)
 
-	itemFor := func(invoiceID pulid.ID) *factoring.SubmissionItem {
+	itemFor := func(invoiceID pulid.ID) *factoringsubmission.SubmissionItem {
 		for _, item := range sub.Items {
 			if item.InvoiceID == invoiceID {
 				return item
@@ -244,18 +246,18 @@ func TestFactoringLedgerKeepsTheBooksBalanced(t *testing.T) {
 		Version:      sub.Version,
 		FundedOn:     now,
 		Items: []factoringledgerports.FundingItemInput{
-			{ItemID: releasedItem.ID, Outcome: factoring.FundingOutcomeFunded},
-			{ItemID: chargedItem.ID, Outcome: factoring.FundingOutcomeFunded},
+			{ItemID: releasedItem.ID, Outcome: factoringledger.FundingOutcomeFunded},
+			{ItemID: chargedItem.ID, Outcome: factoringledger.FundingOutcomeFunded},
 			{
 				ItemID:  rejectedItem.ID,
-				Outcome: factoring.FundingOutcomeRejected,
+				Outcome: factoringledger.FundingOutcomeRejected,
 				Reason:  "Over limit",
 			},
 		},
 	}, actor)
 	require.NoError(t, err)
 	require.Len(t, funding.Entries, 2)
-	assert.Equal(t, factoring.SubmissionStatusFunded, funding.Submission.Status)
+	assert.Equal(t, factoringsubmission.SubmissionStatusFunded, funding.Submission.Status)
 
 	balance, err := e.svc.GetBalance(e.ctx, factoringledgerports.GetReserveBalanceRequest{
 		TenantInfo:         e.tenantInfo,
@@ -398,7 +400,11 @@ func TestFactoringLedgerKeepsTheBooksBalanced(t *testing.T) {
 		IncludeChargedBack: true,
 	})
 	require.NoError(t, err)
-	assert.Equal(t, factoring.SubmissionItemStatusChargedBack, live[charged.ID].ItemStatus)
+	assert.Equal(
+		t,
+		factoringsubmission.SubmissionItemStatusChargedBack,
+		live[charged.ID].ItemStatus,
+	)
 
 	reminders := paymentreminderrepository.New(paymentreminderrepository.Params{
 		DB: postgres.NewTestConnection(e.db), Logger: zap.NewNop(),

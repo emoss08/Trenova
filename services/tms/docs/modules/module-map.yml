@@ -741,6 +741,10 @@ modules:
       - customerledger
       - customerpayment
       - customerstatement
+      - factoringledger
+      - factoringreadiness
+      - factoringremittance
+      - factoringsubmission
       - invoice
       - invoiceadjustment
       - invoicerun

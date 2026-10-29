@@ -1,10 +1,11 @@
-package factoring
+package factoringremittance
 
 import (
 	"cmp"
 	"slices"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringsubmission"
 	"github.com/emoss08/trenova/shared/intutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -20,7 +21,7 @@ const (
 )
 
 type RemittanceCandidate struct {
-	Item             *SubmissionItem
+	Item             *factoringsubmission.SubmissionItem
 	SubmissionNumber string
 	SentAt           *int64
 	Recourse         bool
@@ -36,11 +37,12 @@ func (k RemittanceLineKind) Accepts(candidate *RemittanceCandidate) bool {
 	}
 	switch k {
 	case RemittanceLineFunding, RemittanceLineRejection:
-		return candidate.Item.Status == SubmissionItemStatusPending
+		return candidate.Item.Status == factoringsubmission.SubmissionItemStatusPending
 	case RemittanceLineReserveRelease:
-		return candidate.Item.Status == SubmissionItemStatusFunded
+		return candidate.Item.Status == factoringsubmission.SubmissionItemStatusFunded
 	case RemittanceLineChargeback:
-		return candidate.Item.Status == SubmissionItemStatusFunded && candidate.Recourse
+		return candidate.Item.Status == factoringsubmission.SubmissionItemStatusFunded &&
+			candidate.Recourse
 	case RemittanceLineOther:
 	}
 	return false
@@ -89,7 +91,10 @@ func resolveRemittanceScore(
 	return 0, ""
 }
 
-func invoiceFlags(line *RemittanceLine, item *SubmissionItem) (exact, partial bool) {
+func invoiceFlags(
+	line *RemittanceLine,
+	item *factoringsubmission.SubmissionItem,
+) (exact, partial bool) {
 	target := NormalizeRemittanceReference(item.InvoiceNumber)
 	if target == "" {
 		return false, false
@@ -111,7 +116,10 @@ func invoiceFlags(line *RemittanceLine, item *SubmissionItem) (exact, partial bo
 	return false, partial
 }
 
-func amountFlags(line *RemittanceLine, item *SubmissionItem) (exact, near bool) {
+func amountFlags(
+	line *RemittanceLine,
+	item *factoringsubmission.SubmissionItem,
+) (exact, near bool) {
 	got, want, ok := comparableAmounts(line, item)
 	if !ok {
 		return false, false
@@ -123,7 +131,10 @@ func amountFlags(line *RemittanceLine, item *SubmissionItem) (exact, near bool) 
 	return false, intutils.AbsDiff(got, want) <= tolerance
 }
 
-func comparableAmounts(line *RemittanceLine, item *SubmissionItem) (got, want int64, ok bool) {
+func comparableAmounts(
+	line *RemittanceLine,
+	item *factoringsubmission.SubmissionItem,
+) (got, want int64, ok bool) {
 	switch line.Kind {
 	case RemittanceLineFunding:
 		switch {
@@ -159,7 +170,7 @@ func comparableAmounts(line *RemittanceLine, item *SubmissionItem) (got, want in
 	return 0, 0, false
 }
 
-func heldReserve(item *SubmissionItem) int64 {
+func heldReserve(item *factoringsubmission.SubmissionItem) int64 {
 	_, _, reserve := item.Actuals()
 	return reserve
 }

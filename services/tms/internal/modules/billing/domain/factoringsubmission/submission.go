@@ -1,18 +1,18 @@
-package factoring
+package factoringsubmission
 
 import (
 	"context"
 	"strings"
 
-	"github.com/emoss08/trenova/shared/money"
-
 	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/factoringcompany"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
@@ -65,7 +65,7 @@ type Submission struct {
 	UpdatedAt             int64            `json:"updatedAt"             keel:"updated_at,autoupdate"`
 
 	FactoringCompany *factoringcompany.FactoringCompany `json:"factoringCompany,omitempty" keel:"belongs:factoring_company_id"`
-	Agreement        *Agreement                         `json:"agreement,omitempty"        keel:"belongs:agreement_id"`
+	Agreement        *factoring.Agreement               `json:"agreement,omitempty"        keel:"belongs:agreement_id"`
 	Items            []*SubmissionItem                  `json:"items,omitempty"            keel:"many:submission_id"`
 }
 

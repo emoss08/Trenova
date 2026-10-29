@@ -10,6 +10,8 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/imaging/imagingfake"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringreadiness"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringsubmission"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringsubmissionports"
@@ -33,19 +35,19 @@ import (
 type fakeSubmissions struct {
 	factoringsubmissionports.SubmissionRepository
 	mu      sync.Mutex
-	byID    map[pulid.ID]*factoring.Submission
+	byID    map[pulid.ID]*factoringsubmission.Submission
 	created int
 	docs    *factoringsubmissionports.SetSubmissionDocumentsRequest
 }
 
 func newFakeSubmissions() *fakeSubmissions {
-	return &fakeSubmissions{byID: map[pulid.ID]*factoring.Submission{}}
+	return &fakeSubmissions{byID: map[pulid.ID]*factoringsubmission.Submission{}}
 }
 
 func (f *fakeSubmissions) Create(
 	_ context.Context,
-	e *factoring.Submission,
-) (*factoring.Submission, error) {
+	e *factoringsubmission.Submission,
+) (*factoringsubmission.Submission, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	e.ID = pulid.MustNew("facsub_")
@@ -62,8 +64,8 @@ func (f *fakeSubmissions) Create(
 
 func (f *fakeSubmissions) Update(
 	_ context.Context,
-	e *factoring.Submission,
-) (*factoring.Submission, error) {
+	e *factoringsubmission.Submission,
+) (*factoringsubmission.Submission, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	current := f.byID[e.ID]
@@ -78,7 +80,7 @@ func (f *fakeSubmissions) Update(
 func (f *fakeSubmissions) GetByID(
 	_ context.Context,
 	req factoringsubmissionports.GetSubmissionRequest,
-) (*factoring.Submission, error) {
+) (*factoringsubmission.Submission, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	found := f.byID[req.ID]
@@ -91,7 +93,7 @@ func (f *fakeSubmissions) GetByID(
 func (f *fakeSubmissions) GetByIdempotencyKey(
 	_ context.Context,
 	req factoringsubmissionports.GetSubmissionByKeyRequest,
-) (*factoring.Submission, error) {
+) (*factoringsubmission.Submission, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	for _, sub := range f.byID {
@@ -129,14 +131,14 @@ func (f *fakeSubmissions) ListLiveItems(
 
 type fakeTransports struct {
 	factoringsubmissionports.TransportRepository
-	entity *factoring.Transport
-	tested *factoring.Transport
+	entity *factoringsubmission.Transport
+	tested *factoringsubmission.Transport
 }
 
 func (f *fakeTransports) Get(
 	context.Context,
 	factoringsubmissionports.GetTransportRequest,
-) (*factoring.Transport, error) {
+) (*factoringsubmission.Transport, error) {
 	if f.entity == nil {
 		return nil, errortypes.NewNotFoundError("Factoring transport not found")
 	}
@@ -146,8 +148,8 @@ func (f *fakeTransports) Get(
 
 func (f *fakeTransports) Create(
 	_ context.Context,
-	e *factoring.Transport,
-) (*factoring.Transport, error) {
+	e *factoringsubmission.Transport,
+) (*factoringsubmission.Transport, error) {
 	copied := *e
 	f.entity = &copied
 	return e, nil
@@ -155,8 +157,8 @@ func (f *fakeTransports) Create(
 
 func (f *fakeTransports) Update(
 	_ context.Context,
-	e *factoring.Transport,
-) (*factoring.Transport, error) {
+	e *factoringsubmission.Transport,
+) (*factoringsubmission.Transport, error) {
 	if f.entity == nil || f.entity.Version != e.Version {
 		return nil, errortypes.NewConflictError("version")
 	}
@@ -166,7 +168,7 @@ func (f *fakeTransports) Update(
 	return e, nil
 }
 
-func (f *fakeTransports) RecordTest(_ context.Context, e *factoring.Transport) error {
+func (f *fakeTransports) RecordTest(_ context.Context, e *factoringsubmission.Transport) error {
 	copied := *e
 	f.tested = &copied
 	return nil
@@ -174,14 +176,14 @@ func (f *fakeTransports) RecordTest(_ context.Context, e *factoring.Transport) e
 
 type fakeStates struct {
 	factoringports.InvoiceStateRepository
-	states map[pulid.ID]*factoring.InvoiceState
+	states map[pulid.ID]*factoringreadiness.InvoiceState
 }
 
 func (f *fakeStates) ListByInvoiceIDs(
 	_ context.Context,
 	req *factoringports.ListInvoiceStatesByInvoiceIDsRequest,
-) (map[pulid.ID]*factoring.InvoiceState, error) {
-	out := make(map[pulid.ID]*factoring.InvoiceState, len(req.InvoiceIDs))
+) (map[pulid.ID]*factoringreadiness.InvoiceState, error) {
+	out := make(map[pulid.ID]*factoringreadiness.InvoiceState, len(req.InvoiceIDs))
 	for _, id := range req.InvoiceIDs {
 		if state, ok := f.states[id]; ok {
 			out[id] = state
@@ -405,13 +407,13 @@ func (fakeCipher) Open(
 }
 
 type fakeSender struct {
-	method   factoring.TransportMethod
+	method   factoringsubmission.TransportMethod
 	requests []*factoringsubmissionports.TransportSendRequest
 	err      error
 	testErr  error
 }
 
-func (f *fakeSender) Method() factoring.TransportMethod { return f.method }
+func (f *fakeSender) Method() factoringsubmission.TransportMethod { return f.method }
 
 func (f *fakeSender) Send(
 	_ context.Context,
@@ -438,13 +440,13 @@ func (f *fakeSender) Test(context.Context, *factoringsubmissionports.TransportTe
 }
 
 type fakeStarter struct {
-	started []*factoring.Submission
+	started []*factoringsubmission.Submission
 }
 
 func (f *fakeStarter) StartSend(
 	_ context.Context,
 	_ pagination.TenantInfo,
-	sub *factoring.Submission,
+	sub *factoringsubmission.Submission,
 ) {
 	f.started = append(f.started, cloneSubmission(sub))
 }

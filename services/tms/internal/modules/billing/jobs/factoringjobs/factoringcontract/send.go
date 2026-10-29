@@ -4,7 +4,7 @@ import (
 	"context"
 	"strconv"
 
-	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringsubmission"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringsubmissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -58,7 +58,7 @@ func NewSendStarter(p SendStarterParams) factoringsubmissionports.SubmissionSend
 func (s *SendStarter) StartSend(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	submission *factoring.Submission,
+	submission *factoringsubmission.Submission,
 ) {
 	if submission == nil {
 		return

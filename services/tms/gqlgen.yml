@@ -1758,13 +1758,13 @@ models:
       - github.com/emoss08/trenova/internal/modules/billing/domain/factoring.NoaStatus
   FactoringVerdict:
     model:
-      - github.com/emoss08/trenova/internal/modules/billing/domain/factoring.Verdict
+      - github.com/emoss08/trenova/internal/modules/billing/domain/factoringreadiness.Verdict
   FactoringCheckCode:
     model:
-      - github.com/emoss08/trenova/internal/modules/billing/domain/factoring.CheckCode
+      - github.com/emoss08/trenova/internal/modules/billing/domain/factoringreadiness.CheckCode
   FactoringFixAction:
     model:
-      - github.com/emoss08/trenova/internal/modules/billing/domain/factoring.FixAction
+      - github.com/emoss08/trenova/internal/modules/billing/domain/factoringreadiness.FixAction
   InvoiceFactoringOverride:
     model:
       - github.com/emoss08/trenova/internal/modules/billing/domain/invoice.FactoringOverride
@@ -1797,7 +1797,7 @@ models:
         resolver: true
   FactoringCheck:
     model:
-      - github.com/emoss08/trenova/internal/modules/billing/domain/factoring.Check
+      - github.com/emoss08/trenova/internal/modules/billing/domain/factoringreadiness.Check
     fields:
       fix:
         resolver: true
@@ -1807,7 +1807,7 @@ models:
         resolver: true
   FactoringInvoiceState:
     model:
-      - github.com/emoss08/trenova/internal/modules/billing/domain/factoring.InvoiceState
+      - github.com/emoss08/trenova/internal/modules/billing/domain/factoringreadiness.InvoiceState
     fields:
       submission:
         resolver: true
@@ -1828,22 +1828,22 @@ models:
       - github.com/emoss08/trenova/internal/modules/billing/ports/factoringports.RequestMissingDocumentsResult
   FactoringSubmissionStatus:
     model:
-      - github.com/emoss08/trenova/internal/modules/billing/domain/factoring.SubmissionStatus
+      - github.com/emoss08/trenova/internal/modules/billing/domain/factoringsubmission.SubmissionStatus
   FactoringSubmissionItemStatus:
     model:
-      - github.com/emoss08/trenova/internal/modules/billing/domain/factoring.SubmissionItemStatus
+      - github.com/emoss08/trenova/internal/modules/billing/domain/factoringsubmission.SubmissionItemStatus
   FactoringTransportMethod:
     model:
-      - github.com/emoss08/trenova/internal/modules/billing/domain/factoring.TransportMethod
+      - github.com/emoss08/trenova/internal/modules/billing/domain/factoringsubmission.TransportMethod
   FactoringSftpAuthMethod:
     model:
-      - github.com/emoss08/trenova/internal/modules/billing/domain/factoring.SftpAuthMethod
+      - github.com/emoss08/trenova/internal/modules/billing/domain/factoringsubmission.SftpAuthMethod
   FactoringFunding:
     model:
       - github.com/emoss08/trenova/internal/modules/billing/domain/factoring.Funding
   FactoringSubmissionItem:
     model:
-      - github.com/emoss08/trenova/internal/modules/billing/domain/factoring.SubmissionItem
+      - github.com/emoss08/trenova/internal/modules/billing/domain/factoringsubmission.SubmissionItem
     fields:
       packetDocumentId:
         resolver: true
@@ -1853,7 +1853,7 @@ models:
         resolver: true
   FactoringSubmission:
     model:
-      - github.com/emoss08/trenova/internal/modules/billing/domain/factoring.Submission
+      - github.com/emoss08/trenova/internal/modules/billing/domain/factoringsubmission.Submission
     fields:
       schedulePdfDocumentId:
         resolver: true
@@ -1879,7 +1879,7 @@ models:
       - github.com/emoss08/trenova/internal/modules/billing/ports/factoringsubmissionports.LiveItem
   FactoringTransport:
     model:
-      - github.com/emoss08/trenova/internal/modules/billing/domain/factoring.Transport
+      - github.com/emoss08/trenova/internal/modules/billing/domain/factoringsubmission.Transport
     fields:
       emailRecipients:
         resolver: true
@@ -1890,16 +1890,16 @@ models:
       - github.com/emoss08/trenova/internal/modules/billing/ports/factoringsubmissionports.TransportTestResult
   FactoringFundingOutcome:
     model:
-      - github.com/emoss08/trenova/internal/modules/billing/domain/factoring.FundingOutcome
+      - github.com/emoss08/trenova/internal/modules/billing/domain/factoringledger.FundingOutcome
   FactoringReserveEntryKind:
     model:
-      - github.com/emoss08/trenova/internal/modules/billing/domain/factoring.ReserveEntryKind
+      - github.com/emoss08/trenova/internal/modules/billing/domain/factoringledger.ReserveEntryKind
   FactoringAccountRole:
     model:
       - github.com/emoss08/trenova/internal/modules/billing/domain/factoring.AccountRole
   FactoringReserveEntry:
     model:
-      - github.com/emoss08/trenova/internal/modules/billing/domain/factoring.ReserveEntry
+      - github.com/emoss08/trenova/internal/modules/billing/domain/factoringledger.ReserveEntry
     fields:
       reversesEntryId:
         resolver: true
@@ -1924,7 +1924,7 @@ models:
         resolver: true
   FactoringMovement:
     model:
-      - github.com/emoss08/trenova/internal/modules/billing/domain/factoring.Movement
+      - github.com/emoss08/trenova/internal/modules/billing/domain/factoringledger.Movement
     fields:
       invoiceEffect:
         resolver: true
@@ -1954,25 +1954,25 @@ models:
         resolver: true
   FactoringRemittanceStatus:
     model:
-      - github.com/emoss08/trenova/internal/modules/billing/domain/factoring.RemittanceStatus
+      - github.com/emoss08/trenova/internal/modules/billing/domain/factoringremittance.RemittanceStatus
   FactoringRemittanceSource:
     model:
-      - github.com/emoss08/trenova/internal/modules/billing/domain/factoring.RemittanceSource
+      - github.com/emoss08/trenova/internal/modules/billing/domain/factoringremittance.RemittanceSource
   FactoringRemittanceFormat:
     model:
-      - github.com/emoss08/trenova/internal/modules/billing/domain/factoring.RemittanceFormat
+      - github.com/emoss08/trenova/internal/modules/billing/domain/factoringremittance.RemittanceFormat
   FactoringRemittanceLineKind:
     model:
-      - github.com/emoss08/trenova/internal/modules/billing/domain/factoring.RemittanceLineKind
+      - github.com/emoss08/trenova/internal/modules/billing/domain/factoringremittance.RemittanceLineKind
   FactoringRemittanceMatchStatus:
     model:
-      - github.com/emoss08/trenova/internal/modules/billing/domain/factoring.RemittanceMatchStatus
+      - github.com/emoss08/trenova/internal/modules/billing/domain/factoringremittance.RemittanceMatchStatus
   FactoringRemittanceMatchedBy:
     model:
-      - github.com/emoss08/trenova/internal/modules/billing/domain/factoring.RemittanceMatchedBy
+      - github.com/emoss08/trenova/internal/modules/billing/domain/factoringremittance.RemittanceMatchedBy
   FactoringRemittanceMatchReason:
     model:
-      - github.com/emoss08/trenova/internal/modules/billing/domain/factoring.RemittanceMatchReason
+      - github.com/emoss08/trenova/internal/modules/billing/domain/factoringremittance.RemittanceMatchReason
   FactoringRemittanceLineAction:
     model:
       - github.com/emoss08/trenova/internal/modules/billing/ports/factoringremittanceports.RemittanceLineAction
@@ -1982,7 +1982,7 @@ models:
         resolver: true
   FactoringRemittance:
     model:
-      - github.com/emoss08/trenova/internal/modules/billing/domain/factoring.Remittance
+      - github.com/emoss08/trenova/internal/modules/billing/domain/factoringremittance.Remittance
     fields:
       documentId:
         resolver: true
@@ -2002,10 +2002,10 @@ models:
         resolver: true
   FactoringRemittanceSuggestion:
     model:
-      - github.com/emoss08/trenova/internal/modules/billing/domain/factoring.RemittanceSuggestion
+      - github.com/emoss08/trenova/internal/modules/billing/domain/factoringremittance.RemittanceSuggestion
   FactoringRemittanceLine:
     model:
-      - github.com/emoss08/trenova/internal/modules/billing/domain/factoring.RemittanceLine
+      - github.com/emoss08/trenova/internal/modules/billing/domain/factoringremittance.RemittanceLine
     fields:
       matchedBy:
         resolver: true

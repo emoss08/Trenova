@@ -4,6 +4,8 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringreadiness"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringremittance"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/shared/typeutils"
 )
@@ -81,7 +83,7 @@ func readinessListSpec() graphQLListSpec {
 				"their failed checks.",
 		},
 		defaults: map[string]any{
-			paramFactoringVerdict: []any{string(factoring.VerdictReady)},
+			paramFactoringVerdict: []any{string(factoringreadiness.VerdictReady)},
 		},
 		references: map[string]idReference{
 			paramFactoringCompany: factoringCompanyReference,
@@ -281,7 +283,7 @@ func factoringGetSpecs() []getSpec {
 // readinessChecks keeps a NotReady invoice's failed checks, which say what
 // holds it back, and drops every other invoice's.
 func readinessChecks(row map[string]any, _ map[string]struct{}, _ clock) {
-	if stringOf(row[paramFactoringVerdict]) != string(factoring.VerdictNotReady) {
+	if stringOf(row[paramFactoringVerdict]) != string(factoringreadiness.VerdictNotReady) {
 		delete(row, fieldFactoringChecks)
 		return
 	}
@@ -337,7 +339,7 @@ func remittanceLines(record map[string]any, withheld map[string]struct{}, clk cl
 	lines, _ := record["lines"].([]any)
 	for _, line := range lines {
 		object, _ := line.(map[string]any)
-		if stringOf(object[fieldMatchStatus]) != string(factoring.RemittanceLineError) {
+		if stringOf(object[fieldMatchStatus]) != string(factoringremittance.RemittanceLineError) {
 			delete(object, fieldRemittanceCells)
 		}
 	}

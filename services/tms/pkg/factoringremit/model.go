@@ -3,7 +3,7 @@ package factoringremit
 import (
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringremittance"
 	"github.com/emoss08/trenova/pkg/rateimport"
 	"github.com/emoss08/trenova/shared/jsonschemautils"
 )
@@ -41,8 +41,8 @@ func ModelMapping() Mapping {
 
 func ModelSchema() map[string]any {
 	text := jsonschemautils.String(maxModelValueRunes)
-	kinds := make([]string, 0, len(factoring.AllRemittanceLineKinds()))
-	for _, kind := range factoring.AllRemittanceLineKinds() {
+	kinds := make([]string, 0, len(factoringremittance.AllRemittanceLineKinds()))
+	for _, kind := range factoringremittance.AllRemittanceLineKinds() {
 		kinds = append(kinds, kind.String())
 	}
 	line := jsonschemautils.Object(map[string]any{
@@ -92,16 +92,16 @@ func ModelSheet(lines []ModelLine) *rateimport.Sheet {
 }
 
 func modelKindText(raw string) string {
-	switch factoring.RemittanceLineKind(strings.TrimSpace(raw)) {
-	case factoring.RemittanceLineFunding:
+	switch factoringremittance.RemittanceLineKind(strings.TrimSpace(raw)) {
+	case factoringremittance.RemittanceLineFunding:
 		return "funding"
-	case factoring.RemittanceLineRejection:
+	case factoringremittance.RemittanceLineRejection:
 		return "rejected"
-	case factoring.RemittanceLineReserveRelease:
+	case factoringremittance.RemittanceLineReserveRelease:
 		return "reserve release"
-	case factoring.RemittanceLineChargeback:
+	case factoringremittance.RemittanceLineChargeback:
 		return "chargeback"
-	case factoring.RemittanceLineOther:
+	case factoringremittance.RemittanceLineOther:
 		return "adjustment"
 	}
 	return ""

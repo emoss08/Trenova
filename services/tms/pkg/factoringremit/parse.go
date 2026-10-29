@@ -5,7 +5,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringremittance"
 	"github.com/emoss08/trenova/pkg/rateimport"
 	"github.com/emoss08/trenova/shared/decimalutils"
 	"github.com/emoss08/trenova/shared/money"
@@ -15,14 +15,14 @@ import (
 
 const (
 	maxCells      = 40
-	maxCellRunes  = factoring.MaxRemittanceCellLength
+	maxCellRunes  = factoringremittance.MaxRemittanceCellLength
 	maxFieldRunes = 100
 )
 
 type Line struct {
 	RowNumber       int
 	Cells           []string
-	Kind            factoring.RemittanceLineKind
+	Kind            factoringremittance.RemittanceLineKind
 	InvoiceNumber   string
 	FactorReference string
 	Debtor          string
@@ -36,7 +36,7 @@ type Line struct {
 }
 
 type Options struct {
-	DefaultKind factoring.RemittanceLineKind
+	DefaultKind factoringremittance.RemittanceLineKind
 	Location    *time.Location
 }
 
@@ -44,8 +44,8 @@ func Parse(sheet *rateimport.Sheet, mapping Mapping, opts Options) []*Line {
 	if sheet == nil {
 		return nil
 	}
-	if !opts.DefaultKind.IsValid() || opts.DefaultKind == factoring.RemittanceLineOther {
-		opts.DefaultKind = factoring.RemittanceLineFunding
+	if !opts.DefaultKind.IsValid() || opts.DefaultKind == factoringremittance.RemittanceLineOther {
+		opts.DefaultKind = factoringremittance.RemittanceLineFunding
 	}
 	lines := make([]*Line, 0, len(sheet.Rows))
 	for idx, cells := range sheet.Rows {
@@ -134,7 +134,10 @@ func amountAt(
 	return money.MinorUnits(value), true, nil
 }
 
-func KindFromText(raw string, fallback factoring.RemittanceLineKind) factoring.RemittanceLineKind {
+func KindFromText(
+	raw string,
+	fallback factoringremittance.RemittanceLineKind,
+) factoringremittance.RemittanceLineKind {
 	text := normalizeHeader(raw)
 	if text == "" {
 		return fallback
@@ -142,15 +145,15 @@ func KindFromText(raw string, fallback factoring.RemittanceLineKind) factoring.R
 	compact := strings.ReplaceAll(text, " ", "")
 	switch {
 	case containsAny(compact, "chargeback", "recourse", "repurchase", "buyback"):
-		return factoring.RemittanceLineChargeback
+		return factoringremittance.RemittanceLineChargeback
 	case containsAny(compact, "rebate", "reserve", "release", "escrow"):
-		return factoring.RemittanceLineReserveRelease
+		return factoringremittance.RemittanceLineReserveRelease
 	case containsAny(compact, "declin", "reject", "denied", "nonpurchase", "notpurchased"):
-		return factoring.RemittanceLineRejection
+		return factoringremittance.RemittanceLineRejection
 	case containsAny(compact, "purchase", "advance", "fund", "buy"):
-		return factoring.RemittanceLineFunding
+		return factoringremittance.RemittanceLineFunding
 	case containsAny(compact, "adjust", "interest", "misc", "wire", "ach", "fuel", "deduction"):
-		return factoring.RemittanceLineOther
+		return factoringremittance.RemittanceLineOther
 	}
 	return fallback
 }

@@ -9,6 +9,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringledger"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringremittance"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringsubmission"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edicarrierinvoice"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/ediinboundfile"
@@ -53,9 +56,9 @@ var namedKinds = map[reflect.Type]permission.Resource{
 	reflect.TypeFor[billingqueue.BillingQueueItem]():               permission.ResourceBillingQueue,
 	reflect.TypeFor[factoring.Agreement]():                         permission.ResourceFactoringAgreement,
 	reflect.TypeFor[factoring.Noa]():                               permission.ResourceFactoringNoa,
-	reflect.TypeFor[factoring.Submission]():                        permission.ResourceFactoringSubmission,
-	reflect.TypeFor[factoring.ReserveEntry]():                      permission.ResourceFactoringReserve,
-	reflect.TypeFor[factoring.Remittance]():                        permission.ResourceFactoringRemittance,
+	reflect.TypeFor[factoringsubmission.Submission]():              permission.ResourceFactoringSubmission,
+	reflect.TypeFor[factoringledger.ReserveEntry]():                permission.ResourceFactoringReserve,
+	reflect.TypeFor[factoringremittance.Remittance]():              permission.ResourceFactoringRemittance,
 	reflect.TypeFor[rateagreement.RateAgreementVersion]():          permission.ResourceRateAgreement,
 	reflect.TypeFor[report.ReportDefinition]():                     permission.ResourceReport,
 	reflect.TypeFor[servicefailure.ReasonCode]():                   permission.ResourceServiceFailureReasonCode,

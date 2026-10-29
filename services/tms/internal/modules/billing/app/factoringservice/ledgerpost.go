@@ -5,7 +5,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/accounting/app/journalposting"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerledger"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringledger"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringsubmission"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringledgerports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
@@ -24,8 +25,8 @@ const (
 
 type movementInput struct {
 	scope     *ledgerScope
-	item      *factoring.SubmissionItem
-	movement  factoring.Movement
+	item      *factoringsubmission.SubmissionItem
+	movement  factoringledger.Movement
 	event     accountingcontrol.JournalSourceEventType
 	key       string
 	date      int64
@@ -46,13 +47,13 @@ func (in *movementInput) tenantInfo() pagination.TenantInfo {
 func (in *movementInput) description() string {
 	number, schedule := in.item.InvoiceNumber, in.scope.before.Number
 	switch in.movement.Kind {
-	case factoring.ReserveEntryFunding:
+	case factoringledger.ReserveEntryFunding:
 		return "Factor advance on invoice " + number + ", schedule " + schedule
-	case factoring.ReserveEntryRelease:
+	case factoringledger.ReserveEntryRelease:
 		return "Factor reserve released on invoice " + number + ", schedule " + schedule
-	case factoring.ReserveEntryChargeback:
+	case factoringledger.ReserveEntryChargeback:
 		return "Factor chargeback of invoice " + number + ", schedule " + schedule
-	case factoring.ReserveEntryChargebackReversal:
+	case factoringledger.ReserveEntryChargebackReversal:
 		return "Factor chargeback reversed on invoice " + number + ", schedule " + schedule
 	default:
 		return "Factoring of invoice " + number + ", schedule " + schedule
@@ -137,7 +138,7 @@ func (s *LedgerService) planMovement(
 func (s *LedgerService) postMovement(
 	ctx context.Context,
 	in *movementInput,
-) (*factoring.ReserveEntry, error) {
+) (*factoringledger.ReserveEntry, error) {
 	if in.movement.IsEmpty() {
 		return nil, nil //nolint:nilnil // an empty movement books nothing and leaves no ledger row
 	}
@@ -145,14 +146,14 @@ func (s *LedgerService) postMovement(
 	if err != nil {
 		return nil, err
 	}
-	entry := factoring.NewReserveEntry(in.item, in.scope.before, &in.movement, in.date)
+	entry := factoringledger.NewReserveEntry(in.item, in.scope.before, &in.movement, in.date)
 	entry.ID = pulid.MustNew("facres_")
 	entry.JournalEntryID = result.EntryID
 	entry.JournalBatchID = result.BatchID
 	entry.AccountingDate = result.AccountingDate
 	entry.ReversesEntryID = in.reverses
 	entry.RemittanceLineID = in.remitLine
-	entry.Memo = stringutils.TruncateRunes(in.memo, factoring.MaxReserveMemoLength)
+	entry.Memo = stringutils.TruncateRunes(in.memo, factoringledger.MaxReserveMemoLength)
 	entry.CreatedByID = in.actor.ExecutorUserID()
 	created, err := s.entries.Create(ctx, entry)
 	if err != nil {
@@ -167,9 +168,9 @@ func (s *LedgerService) postMovement(
 func (s *LedgerService) applyInvoiceEffect(
 	ctx context.Context,
 	in *movementInput,
-	entry *factoring.ReserveEntry,
+	entry *factoringledger.ReserveEntry,
 ) error {
-	if in.movement.InvoiceEffect == factoring.InvoiceEffectNone {
+	if in.movement.InvoiceEffect == factoringledger.InvoiceEffectNone {
 		return nil
 	}
 	inv, err := s.invoices.LockForUpdate(ctx, invoiceports.GetInvoiceByIDRequest{
@@ -185,12 +186,12 @@ func (s *LedgerService) applyInvoiceEffect(
 	}
 	signed := amount
 	switch in.movement.InvoiceEffect {
-	case factoring.InvoiceEffectSettle:
+	case factoringledger.InvoiceEffectSettle:
 		inv.ApplyPaymentMinor(amount)
 		signed = -amount
-	case factoring.InvoiceEffectReopen:
+	case factoringledger.InvoiceEffectReopen:
 		inv.RemovePaymentMinor(amount)
-	case factoring.InvoiceEffectNone:
+	case factoringledger.InvoiceEffectNone:
 	}
 	if _, err = s.invoices.Update(ctx, inv); err != nil {
 		return err
@@ -215,23 +216,27 @@ func (s *LedgerService) applyInvoiceEffect(
 	}})
 }
 
-func checkInvoiceEffect(inv *invoice.Invoice, effect factoring.InvoiceEffect, amount int64) error {
+func checkInvoiceEffect(
+	inv *invoice.Invoice,
+	effect factoringledger.InvoiceEffect,
+	amount int64,
+) error {
 	switch effect {
-	case factoring.InvoiceEffectSettle:
+	case factoringledger.InvoiceEffectSettle:
 		if inv.TotalAmountMinor-inv.AppliedAmountMinor < amount {
 			return errortypes.NewBusinessError(
 				"Invoice {0} no longer has the open balance the factor bought; record the payment it received first",
 				inv.Number,
 			)
 		}
-	case factoring.InvoiceEffectReopen:
+	case factoringledger.InvoiceEffectReopen:
 		if inv.AppliedAmountMinor < amount {
 			return errortypes.NewBusinessError(
 				"Invoice {0} has had payments taken off since it was factored; reload it and try again",
 				inv.Number,
 			)
 		}
-	case factoring.InvoiceEffectNone:
+	case factoringledger.InvoiceEffectNone:
 	}
 	return nil
 }
@@ -243,7 +248,7 @@ func (s *LedgerService) checkInvoices(
 ) error {
 	ids := make([]pulid.ID, 0, len(inputs))
 	for _, in := range inputs {
-		if in.movement.InvoiceEffect != factoring.InvoiceEffectNone {
+		if in.movement.InvoiceEffect != factoringledger.InvoiceEffectNone {
 			ids = append(ids, in.item.InvoiceID)
 		}
 	}
@@ -264,7 +269,7 @@ func (s *LedgerService) checkInvoices(
 		}
 	}
 	for _, in := range inputs {
-		if in.movement.InvoiceEffect == factoring.InvoiceEffectNone {
+		if in.movement.InvoiceEffect == factoringledger.InvoiceEffectNone {
 			continue
 		}
 		inv, ok := byID[in.item.InvoiceID]

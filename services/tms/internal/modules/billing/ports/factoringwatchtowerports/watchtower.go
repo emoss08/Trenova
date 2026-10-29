@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringsubmission"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -83,16 +84,16 @@ type ListUnfundedSubmissionsRequest struct {
 }
 
 type UnfundedSubmission struct {
-	SubmissionID         pulid.ID                   `json:"submissionId"`
-	Number               string                     `json:"number"`
-	Status               factoring.SubmissionStatus `json:"status"`
-	FactoringCompanyID   pulid.ID                   `json:"factoringCompanyId"`
-	FactorName           string                     `json:"factorName"`
-	CurrencyCode         string                     `json:"currencyCode"`
-	PendingCount         int                        `json:"pendingCount"`
-	ExpectedAdvanceMinor int64                      `json:"expectedAdvanceMinor"`
-	SentAt               int64                      `json:"sentAt"`
-	DueAt                int64                      `json:"dueAt"`
+	SubmissionID         pulid.ID                             `json:"submissionId"`
+	Number               string                               `json:"number"`
+	Status               factoringsubmission.SubmissionStatus `json:"status"`
+	FactoringCompanyID   pulid.ID                             `json:"factoringCompanyId"`
+	FactorName           string                               `json:"factorName"`
+	CurrencyCode         string                               `json:"currencyCode"`
+	PendingCount         int                                  `json:"pendingCount"`
+	ExpectedAdvanceMinor int64                                `json:"expectedAdvanceMinor"`
+	SentAt               int64                                `json:"sentAt"`
+	DueAt                int64                                `json:"dueAt"`
 }
 
 type ListChargebacksDueRequest struct {

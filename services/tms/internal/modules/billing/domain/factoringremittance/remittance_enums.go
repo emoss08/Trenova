@@ -1,4 +1,4 @@
-package factoring
+package factoringremittance
 
 type RemittanceStatus string
 

@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringsubmission"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringsubmissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/factoringcompany"
@@ -19,7 +19,7 @@ import (
 
 func newTransportHarness() (*TransportService, *fakeTransports, *fakeSender, pagination.TenantInfo, pulid.ID) {
 	repo := &fakeTransports{}
-	sftp := &fakeSender{method: factoring.TransportMethodSftp}
+	sftp := &fakeSender{method: factoringsubmission.TransportMethodSftp}
 	factorID := pulid.MustNew("fac_")
 	svc := NewTransportService(TransportParams{
 		Repo:       repo,
@@ -34,10 +34,10 @@ func newTransportHarness() (*TransportService, *fakeTransports, *fakeSender, pag
 
 func sftpInput(secret *string) factoringsubmissionports.TransportInput {
 	return factoringsubmissionports.TransportInput{
-		Method:           factoring.TransportMethodSftp,
+		Method:           factoringsubmission.TransportMethodSftp,
 		SftpHost:         "sftp.lonestar.test",
 		SftpUsername:     "carrier",
-		SftpAuthMethod:   factoring.SftpAuthPassword,
+		SftpAuthMethod:   factoringsubmission.SftpAuthPassword,
 		SftpSecret:       secret,
 		SftpKnownHostKey: "ssh-ed25519 AAAA",
 		SftpDirectory:    "/in",
@@ -85,7 +85,7 @@ func TestSaveTransportSealsTheSecretToTheRow(t *testing.T) {
 	assert.True(t, errortypes.IsConflictError(err))
 
 	switched := sftpInput(nil)
-	switched.SftpAuthMethod = factoring.SftpAuthPrivateKey
+	switched.SftpAuthMethod = factoringsubmission.SftpAuthPrivateKey
 	current := kept.Version
 	_, err = svc.Save(t.Context(), &factoringsubmissionports.SaveTransportRequest{
 		TenantInfo:         tenant,

@@ -3,6 +3,10 @@
 package factoringdb
 
 import (
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringledger"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringreadiness"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringremittance"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringsubmission"
 	"context"
 	"unsafe"
 
@@ -645,12 +649,12 @@ func valueFeeTier(p unsafe.Pointer, c int32) any {
 	return nil
 }
 
-// invoiceStatesTable is the schema of factoring.InvoiceState.
+// invoiceStatesTable is the schema of factoringreadiness.InvoiceState.
 var invoiceStatesTable = schema.Table{
 	Name:   "factoring_invoice_states",
 	Quoted: `"factoring_invoice_states"`,
 	Alias:  "fis",
-	Model:  "factoring.InvoiceState",
+	Model:  "factoringreadiness.InvoiceState",
 	Label:  `Invoice Factoring State`,
 	Plural: `Invoice Factoring States`,
 	Doc:    `Whether each factored invoice is ready to submit to its factor, what is holding it back, and since when`,
@@ -688,7 +692,7 @@ var invoiceStatesTable = schema.Table{
 	IDPrefix:   "",
 	New:        newInvoiceState,
 	NewN:       newNInvoiceState,
-	Size:       unsafe.Sizeof(factoring.InvoiceState{}),
+	Size:       unsafe.Sizeof(factoringreadiness.InvoiceState{}),
 	Ptr:        ptrInvoiceState,
 	Value:      valueInvoiceState,
 	Attach:     attachInvoiceState,
@@ -696,9 +700,9 @@ var invoiceStatesTable = schema.Table{
 
 var invoiceStatesRef = keel.Ref{Table: &invoiceStatesTable}
 
-// InvoiceStatesTable is the table of factoring.InvoiceState.
+// InvoiceStatesTable is the table of factoringreadiness.InvoiceState.
 type InvoiceStatesTable struct {
-	keel.Handle[*factoring.InvoiceState]
+	keel.Handle[*factoringreadiness.InvoiceState]
 	InvoiceID          keelkinds.PulidIDCol
 	OrganizationID     keelkinds.PulidIDCol
 	BusinessUnitID     keelkinds.PulidIDCol
@@ -716,7 +720,7 @@ type InvoiceStatesTable struct {
 
 // InvoiceStates references the factoring_invoice_states table.
 var InvoiceStates = &InvoiceStatesTable{
-	Handle:             keel.Handle[*factoring.InvoiceState]{Ref: &invoiceStatesRef},
+	Handle:             keel.Handle[*factoringreadiness.InvoiceState]{Ref: &invoiceStatesRef},
 	InvoiceID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceStatesRef, Index: 0}}},
 	OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceStatesRef, Index: 1}}},
 	BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceStatesRef, Index: 2}}},
@@ -735,7 +739,7 @@ var InvoiceStates = &InvoiceStatesTable{
 // BuildInvoiceStates builds the handle of factoring_invoice_states for ref. Generated relation and alias methods call it.
 func BuildInvoiceStates(r *keel.Ref) *InvoiceStatesTable {
 	return &InvoiceStatesTable{
-		Handle:             keel.Handle[*factoring.InvoiceState]{Ref: r},
+		Handle:             keel.Handle[*factoringreadiness.InvoiceState]{Ref: r},
 		InvoiceID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -776,18 +780,18 @@ func (t *InvoiceStatesTable) FactoringCompany() *factoringcompanydb.FactoringCom
 }
 
 // Get returns the factoring_invoice_states row with the given key, or keel.ErrNotFound.
-func (t *InvoiceStatesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*factoring.InvoiceState, error) {
+func (t *InvoiceStatesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*factoringreadiness.InvoiceState, error) {
 	return t.Where(t.InvoiceID.Eq(key)).One(ctx, db)
 }
 
-func newInvoiceState() unsafe.Pointer { return unsafe.Pointer(new(factoring.InvoiceState)) }
+func newInvoiceState() unsafe.Pointer { return unsafe.Pointer(new(factoringreadiness.InvoiceState)) }
 
 func newNInvoiceState(n int) unsafe.Pointer {
-	return unsafe.Pointer(unsafe.SliceData(make([]factoring.InvoiceState, n)))
+	return unsafe.Pointer(unsafe.SliceData(make([]factoringreadiness.InvoiceState, n)))
 }
 
 func ptrInvoiceState(p unsafe.Pointer, c int32) any {
-	r := (*factoring.InvoiceState)(p)
+	r := (*factoringreadiness.InvoiceState)(p)
 	switch c {
 	case 0:
 		return (*string)(unsafe.Pointer(&r.InvoiceID))
@@ -820,7 +824,7 @@ func ptrInvoiceState(p unsafe.Pointer, c int32) any {
 }
 
 func valueInvoiceState(p unsafe.Pointer, c int32) any {
-	r := (*factoring.InvoiceState)(p)
+	r := (*factoringreadiness.InvoiceState)(p)
 	switch c {
 	case 0:
 		return string(r.InvoiceID)
@@ -865,7 +869,7 @@ func valueInvoiceState(p unsafe.Pointer, c int32) any {
 }
 
 func attachInvoiceState(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
-	r := (*factoring.InvoiceState)(p)
+	r := (*factoringreadiness.InvoiceState)(p)
 	switch rel {
 	case 0:
 		r.Invoice = (*invoice.Invoice)(child)
@@ -1156,12 +1160,12 @@ func beforeCreateNoa(ctx context.Context, p unsafe.Pointer) error {
 	return (*factoring.Noa)(p).BeforeCreate(ctx)
 }
 
-// remittancesTable is the schema of factoring.Remittance.
+// remittancesTable is the schema of factoringremittance.Remittance.
 var remittancesTable = schema.Table{
 	Name:   "factoring_remittances",
 	Quoted: `"factoring_remittances"`,
 	Alias:  "fr",
-	Model:  "factoring.Remittance",
+	Model:  "factoringremittance.Remittance",
 	Label:  `Factoring Remittance`,
 	Plural: `Factoring Remittances`,
 	Doc:    `The funding and reserve reports factors sent, how far each was read, matched and booked`,
@@ -1216,7 +1220,7 @@ var remittancesTable = schema.Table{
 	IDPrefix:     "facrem_",
 	New:          newRemittance,
 	NewN:         newNRemittance,
-	Size:         unsafe.Sizeof(factoring.Remittance{}),
+	Size:         unsafe.Sizeof(factoringremittance.Remittance{}),
 	Ptr:          ptrRemittance,
 	Value:        valueRemittance,
 	Attach:       attachRemittance,
@@ -1225,9 +1229,9 @@ var remittancesTable = schema.Table{
 
 var remittancesRef = keel.Ref{Table: &remittancesTable}
 
-// RemittancesTable is the table of factoring.Remittance.
+// RemittancesTable is the table of factoringremittance.Remittance.
 type RemittancesTable struct {
-	keel.Handle[*factoring.Remittance]
+	keel.Handle[*factoringremittance.Remittance]
 	ID                 keelkinds.PulidIDCol
 	OrganizationID     keelkinds.PulidIDCol
 	BusinessUnitID     keelkinds.PulidIDCol
@@ -1263,7 +1267,7 @@ type RemittancesTable struct {
 
 // Remittances references the factoring_remittances table.
 var Remittances = &RemittancesTable{
-	Handle:             keel.Handle[*factoring.Remittance]{Ref: &remittancesRef},
+	Handle:             keel.Handle[*factoringremittance.Remittance]{Ref: &remittancesRef},
 	ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &remittancesRef, Index: 0}}},
 	OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &remittancesRef, Index: 1}}},
 	BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &remittancesRef, Index: 2}}},
@@ -1300,7 +1304,7 @@ var Remittances = &RemittancesTable{
 // BuildRemittances builds the handle of factoring_remittances for ref. Generated relation and alias methods call it.
 func BuildRemittances(r *keel.Ref) *RemittancesTable {
 	return &RemittancesTable{
-		Handle:             keel.Handle[*factoring.Remittance]{Ref: r},
+		Handle:             keel.Handle[*factoringremittance.Remittance]{Ref: r},
 		ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -1354,18 +1358,18 @@ func (t *RemittancesTable) Lines() *RemittanceLinesTable {
 }
 
 // Get returns the factoring_remittances row with the given key, or keel.ErrNotFound.
-func (t *RemittancesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*factoring.Remittance, error) {
+func (t *RemittancesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*factoringremittance.Remittance, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
 }
 
-func newRemittance() unsafe.Pointer { return unsafe.Pointer(new(factoring.Remittance)) }
+func newRemittance() unsafe.Pointer { return unsafe.Pointer(new(factoringremittance.Remittance)) }
 
 func newNRemittance(n int) unsafe.Pointer {
-	return unsafe.Pointer(unsafe.SliceData(make([]factoring.Remittance, n)))
+	return unsafe.Pointer(unsafe.SliceData(make([]factoringremittance.Remittance, n)))
 }
 
 func ptrRemittance(p unsafe.Pointer, c int32) any {
-	r := (*factoring.Remittance)(p)
+	r := (*factoringremittance.Remittance)(p)
 	switch c {
 	case 0:
 		return (*string)(unsafe.Pointer(&r.ID))
@@ -1434,7 +1438,7 @@ func ptrRemittance(p unsafe.Pointer, c int32) any {
 }
 
 func valueRemittance(p unsafe.Pointer, c int32) any {
-	r := (*factoring.Remittance)(p)
+	r := (*factoringremittance.Remittance)(p)
 	switch c {
 	case 0:
 		return string(r.ID)
@@ -1548,25 +1552,25 @@ func valueRemittance(p unsafe.Pointer, c int32) any {
 }
 
 func attachRemittance(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
-	r := (*factoring.Remittance)(p)
+	r := (*factoringremittance.Remittance)(p)
 	switch rel {
 	case 0:
 		r.FactoringCompany = (*factoringcompany.FactoringCompany)(child)
 	case 1:
-		r.Lines = append(r.Lines, (*factoring.RemittanceLine)(child))
+		r.Lines = append(r.Lines, (*factoringremittance.RemittanceLine)(child))
 	}
 }
 
 func beforeCreateRemittance(ctx context.Context, p unsafe.Pointer) error {
-	return (*factoring.Remittance)(p).BeforeCreate(ctx)
+	return (*factoringremittance.Remittance)(p).BeforeCreate(ctx)
 }
 
-// remittanceLinesTable is the schema of factoring.RemittanceLine.
+// remittanceLinesTable is the schema of factoringremittance.RemittanceLine.
 var remittanceLinesTable = schema.Table{
 	Name:   "factoring_remittance_lines",
 	Quoted: `"factoring_remittance_lines"`,
 	Alias:  "frl",
-	Model:  "factoring.RemittanceLine",
+	Model:  "factoringremittance.RemittanceLine",
 	Label:  `Factoring Remittance Line`,
 	Plural: `Factoring Remittance Lines`,
 	Doc:    `Each row of a factor's remittance, its amounts as printed and the schedule item it was matched to`,
@@ -1619,7 +1623,7 @@ var remittanceLinesTable = schema.Table{
 	IDPrefix:     "facrml_",
 	New:          newRemittanceLine,
 	NewN:         newNRemittanceLine,
-	Size:         unsafe.Sizeof(factoring.RemittanceLine{}),
+	Size:         unsafe.Sizeof(factoringremittance.RemittanceLine{}),
 	Ptr:          ptrRemittanceLine,
 	Value:        valueRemittanceLine,
 	Attach:       attachRemittanceLine,
@@ -1629,9 +1633,9 @@ var remittanceLinesTable = schema.Table{
 
 var remittanceLinesRef = keel.Ref{Table: &remittanceLinesTable}
 
-// RemittanceLinesTable is the table of factoring.RemittanceLine.
+// RemittanceLinesTable is the table of factoringremittance.RemittanceLine.
 type RemittanceLinesTable struct {
-	keel.Handle[*factoring.RemittanceLine]
+	keel.Handle[*factoringremittance.RemittanceLine]
 	ID                keelkinds.PulidIDCol
 	OrganizationID    keelkinds.PulidIDCol
 	BusinessUnitID    keelkinds.PulidIDCol
@@ -1666,7 +1670,7 @@ type RemittanceLinesTable struct {
 
 // RemittanceLines references the factoring_remittance_lines table.
 var RemittanceLines = &RemittanceLinesTable{
-	Handle:            keel.Handle[*factoring.RemittanceLine]{Ref: &remittanceLinesRef},
+	Handle:            keel.Handle[*factoringremittance.RemittanceLine]{Ref: &remittanceLinesRef},
 	ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &remittanceLinesRef, Index: 0}}},
 	OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &remittanceLinesRef, Index: 1}}},
 	BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &remittanceLinesRef, Index: 2}}},
@@ -1702,7 +1706,7 @@ var RemittanceLines = &RemittanceLinesTable{
 // BuildRemittanceLines builds the handle of factoring_remittance_lines for ref. Generated relation and alias methods call it.
 func BuildRemittanceLines(r *keel.Ref) *RemittanceLinesTable {
 	return &RemittanceLinesTable{
-		Handle:            keel.Handle[*factoring.RemittanceLine]{Ref: r},
+		Handle:            keel.Handle[*factoringremittance.RemittanceLine]{Ref: r},
 		ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -1750,18 +1754,18 @@ func (t *RemittanceLinesTable) SubmissionItem() *SubmissionItemsTable {
 }
 
 // Get returns the factoring_remittance_lines row with the given key, or keel.ErrNotFound.
-func (t *RemittanceLinesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*factoring.RemittanceLine, error) {
+func (t *RemittanceLinesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*factoringremittance.RemittanceLine, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
 }
 
-func newRemittanceLine() unsafe.Pointer { return unsafe.Pointer(new(factoring.RemittanceLine)) }
+func newRemittanceLine() unsafe.Pointer { return unsafe.Pointer(new(factoringremittance.RemittanceLine)) }
 
 func newNRemittanceLine(n int) unsafe.Pointer {
-	return unsafe.Pointer(unsafe.SliceData(make([]factoring.RemittanceLine, n)))
+	return unsafe.Pointer(unsafe.SliceData(make([]factoringremittance.RemittanceLine, n)))
 }
 
 func ptrRemittanceLine(p unsafe.Pointer, c int32) any {
-	r := (*factoring.RemittanceLine)(p)
+	r := (*factoringremittance.RemittanceLine)(p)
 	switch c {
 	case 0:
 		return (*string)(unsafe.Pointer(&r.ID))
@@ -1828,7 +1832,7 @@ func ptrRemittanceLine(p unsafe.Pointer, c int32) any {
 }
 
 func valueRemittanceLine(p unsafe.Pointer, c int32) any {
-	r := (*factoring.RemittanceLine)(p)
+	r := (*factoringremittance.RemittanceLine)(p)
 	switch c {
 	case 0:
 		return string(r.ID)
@@ -1949,27 +1953,27 @@ func valueRemittanceLine(p unsafe.Pointer, c int32) any {
 }
 
 func attachRemittanceLine(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
-	r := (*factoring.RemittanceLine)(p)
+	r := (*factoringremittance.RemittanceLine)(p)
 	switch rel {
 	case 0:
-		r.SubmissionItem = (*factoring.SubmissionItem)(child)
+		r.SubmissionItem = (*factoringsubmission.SubmissionItem)(child)
 	}
 }
 
 func beforeCreateRemittanceLine(ctx context.Context, p unsafe.Pointer) error {
-	return (*factoring.RemittanceLine)(p).BeforeCreate(ctx)
+	return (*factoringremittance.RemittanceLine)(p).BeforeCreate(ctx)
 }
 
 func beforeUpdateRemittanceLine(ctx context.Context, p unsafe.Pointer) error {
-	return (*factoring.RemittanceLine)(p).BeforeUpdate(ctx)
+	return (*factoringremittance.RemittanceLine)(p).BeforeUpdate(ctx)
 }
 
-// remittanceProfilesTable is the schema of factoring.RemittanceProfile.
+// remittanceProfilesTable is the schema of factoringremittance.RemittanceProfile.
 var remittanceProfilesTable = schema.Table{
 	Name:   "factoring_remittance_profiles",
 	Quoted: `"factoring_remittance_profiles"`,
 	Alias:  "frp",
-	Model:  "factoring.RemittanceProfile",
+	Model:  "factoringremittance.RemittanceProfile",
 	Label:  `Remittance Profile`,
 	Plural: `Remittance Profiles`,
 	Columns: []schema.Column{
@@ -1996,7 +2000,7 @@ var remittanceProfilesTable = schema.Table{
 	IDPrefix:     "facrmp_",
 	New:          newRemittanceProfile,
 	NewN:         newNRemittanceProfile,
-	Size:         unsafe.Sizeof(factoring.RemittanceProfile{}),
+	Size:         unsafe.Sizeof(factoringremittance.RemittanceProfile{}),
 	Ptr:          ptrRemittanceProfile,
 	Value:        valueRemittanceProfile,
 	BeforeCreate: beforeCreateRemittanceProfile,
@@ -2004,9 +2008,9 @@ var remittanceProfilesTable = schema.Table{
 
 var remittanceProfilesRef = keel.Ref{Table: &remittanceProfilesTable}
 
-// RemittanceProfilesTable is the table of factoring.RemittanceProfile.
+// RemittanceProfilesTable is the table of factoringremittance.RemittanceProfile.
 type RemittanceProfilesTable struct {
-	keel.Handle[*factoring.RemittanceProfile]
+	keel.Handle[*factoringremittance.RemittanceProfile]
 	ID                 keelkinds.PulidIDCol
 	OrganizationID     keelkinds.PulidIDCol
 	BusinessUnitID     keelkinds.PulidIDCol
@@ -2020,7 +2024,7 @@ type RemittanceProfilesTable struct {
 
 // RemittanceProfiles references the factoring_remittance_profiles table.
 var RemittanceProfiles = &RemittanceProfilesTable{
-	Handle:             keel.Handle[*factoring.RemittanceProfile]{Ref: &remittanceProfilesRef},
+	Handle:             keel.Handle[*factoringremittance.RemittanceProfile]{Ref: &remittanceProfilesRef},
 	ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &remittanceProfilesRef, Index: 0}}},
 	OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &remittanceProfilesRef, Index: 1}}},
 	BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &remittanceProfilesRef, Index: 2}}},
@@ -2035,7 +2039,7 @@ var RemittanceProfiles = &RemittanceProfilesTable{
 // BuildRemittanceProfiles builds the handle of factoring_remittance_profiles for ref. Generated relation and alias methods call it.
 func BuildRemittanceProfiles(r *keel.Ref) *RemittanceProfilesTable {
 	return &RemittanceProfilesTable{
-		Handle:             keel.Handle[*factoring.RemittanceProfile]{Ref: r},
+		Handle:             keel.Handle[*factoringremittance.RemittanceProfile]{Ref: r},
 		ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -2057,18 +2061,18 @@ func (t *RemittanceProfilesTable) As(alias string) *RemittanceProfilesTable {
 }
 
 // Get returns the factoring_remittance_profiles row with the given key, or keel.ErrNotFound.
-func (t *RemittanceProfilesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*factoring.RemittanceProfile, error) {
+func (t *RemittanceProfilesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*factoringremittance.RemittanceProfile, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
 }
 
-func newRemittanceProfile() unsafe.Pointer { return unsafe.Pointer(new(factoring.RemittanceProfile)) }
+func newRemittanceProfile() unsafe.Pointer { return unsafe.Pointer(new(factoringremittance.RemittanceProfile)) }
 
 func newNRemittanceProfile(n int) unsafe.Pointer {
-	return unsafe.Pointer(unsafe.SliceData(make([]factoring.RemittanceProfile, n)))
+	return unsafe.Pointer(unsafe.SliceData(make([]factoringremittance.RemittanceProfile, n)))
 }
 
 func ptrRemittanceProfile(p unsafe.Pointer, c int32) any {
-	r := (*factoring.RemittanceProfile)(p)
+	r := (*factoringremittance.RemittanceProfile)(p)
 	switch c {
 	case 0:
 		return (*string)(unsafe.Pointer(&r.ID))
@@ -2093,7 +2097,7 @@ func ptrRemittanceProfile(p unsafe.Pointer, c int32) any {
 }
 
 func valueRemittanceProfile(p unsafe.Pointer, c int32) any {
-	r := (*factoring.RemittanceProfile)(p)
+	r := (*factoringremittance.RemittanceProfile)(p)
 	switch c {
 	case 0:
 		return string(r.ID)
@@ -2121,20 +2125,20 @@ func valueRemittanceProfile(p unsafe.Pointer, c int32) any {
 }
 
 func beforeCreateRemittanceProfile(ctx context.Context, p unsafe.Pointer) error {
-	return (*factoring.RemittanceProfile)(p).BeforeCreate(ctx)
+	return (*factoringremittance.RemittanceProfile)(p).BeforeCreate(ctx)
 }
 
-// reserveEntriesTable is the schema of factoring.ReserveEntry.
+// reserveEntriesTable is the schema of factoringledger.ReserveEntry.
 var reserveEntriesTable = schema.Table{
 	Name:        "factoring_reserve_entries",
 	Quoted:      `"factoring_reserve_entries"`,
 	Alias:       "fre",
-	Model:       "factoring.ReserveEntry",
+	Model:       "factoringledger.ReserveEntry",
 	Label:       `Factoring Reserve Entry`,
 	Plural:      `Factoring Reserve Entries`,
 	Doc:         `Each funding, reserve release, chargeback and reversal booked with a factor, with the cash, fee, reserve and receivables it moved`,
 	Report:      &schema.TableReport{Category: `Billing`},
-	Constraints: (&factoring.ReserveEntry{}).Constraints(),
+	Constraints: (&factoringledger.ReserveEntry{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`, Report: &reportDimString},
 		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`, JSON: `organizationId`, Report: &reportDimStringHidden},
@@ -2182,7 +2186,7 @@ var reserveEntriesTable = schema.Table{
 	IDPrefix:     "facres_",
 	New:          newReserveEntry,
 	NewN:         newNReserveEntry,
-	Size:         unsafe.Sizeof(factoring.ReserveEntry{}),
+	Size:         unsafe.Sizeof(factoringledger.ReserveEntry{}),
 	Ptr:          ptrReserveEntry,
 	Value:        valueReserveEntry,
 	Attach:       attachReserveEntry,
@@ -2191,9 +2195,9 @@ var reserveEntriesTable = schema.Table{
 
 var reserveEntriesRef = keel.Ref{Table: &reserveEntriesTable}
 
-// ReserveEntriesTable is the table of factoring.ReserveEntry.
+// ReserveEntriesTable is the table of factoringledger.ReserveEntry.
 type ReserveEntriesTable struct {
-	keel.Handle[*factoring.ReserveEntry]
+	keel.Handle[*factoringledger.ReserveEntry]
 	ID                 keelkinds.PulidIDCol
 	OrganizationID     keelkinds.PulidIDCol
 	BusinessUnitID     keelkinds.PulidIDCol
@@ -2224,7 +2228,7 @@ type ReserveEntriesTable struct {
 
 // ReserveEntries references the factoring_reserve_entries table.
 var ReserveEntries = &ReserveEntriesTable{
-	Handle:             keel.Handle[*factoring.ReserveEntry]{Ref: &reserveEntriesRef},
+	Handle:             keel.Handle[*factoringledger.ReserveEntry]{Ref: &reserveEntriesRef},
 	ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reserveEntriesRef, Index: 0}}},
 	OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reserveEntriesRef, Index: 1}}},
 	BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reserveEntriesRef, Index: 2}}},
@@ -2256,7 +2260,7 @@ var ReserveEntries = &ReserveEntriesTable{
 // BuildReserveEntries builds the handle of factoring_reserve_entries for ref. Generated relation and alias methods call it.
 func BuildReserveEntries(r *keel.Ref) *ReserveEntriesTable {
 	return &ReserveEntriesTable{
-		Handle:             keel.Handle[*factoring.ReserveEntry]{Ref: r},
+		Handle:             keel.Handle[*factoringledger.ReserveEntry]{Ref: r},
 		ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -2315,18 +2319,18 @@ func (t *ReserveEntriesTable) Submission() *SubmissionsTable {
 }
 
 // Get returns the factoring_reserve_entries row with the given key, or keel.ErrNotFound.
-func (t *ReserveEntriesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*factoring.ReserveEntry, error) {
+func (t *ReserveEntriesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*factoringledger.ReserveEntry, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
 }
 
-func newReserveEntry() unsafe.Pointer { return unsafe.Pointer(new(factoring.ReserveEntry)) }
+func newReserveEntry() unsafe.Pointer { return unsafe.Pointer(new(factoringledger.ReserveEntry)) }
 
 func newNReserveEntry(n int) unsafe.Pointer {
-	return unsafe.Pointer(unsafe.SliceData(make([]factoring.ReserveEntry, n)))
+	return unsafe.Pointer(unsafe.SliceData(make([]factoringledger.ReserveEntry, n)))
 }
 
 func ptrReserveEntry(p unsafe.Pointer, c int32) any {
-	r := (*factoring.ReserveEntry)(p)
+	r := (*factoringledger.ReserveEntry)(p)
 	switch c {
 	case 0:
 		return (*string)(unsafe.Pointer(&r.ID))
@@ -2385,7 +2389,7 @@ func ptrReserveEntry(p unsafe.Pointer, c int32) any {
 }
 
 func valueReserveEntry(p unsafe.Pointer, c int32) any {
-	r := (*factoring.ReserveEntry)(p)
+	r := (*factoringledger.ReserveEntry)(p)
 	switch c {
 	case 0:
 		return string(r.ID)
@@ -2456,7 +2460,7 @@ func valueReserveEntry(p unsafe.Pointer, c int32) any {
 }
 
 func attachReserveEntry(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
-	r := (*factoring.ReserveEntry)(p)
+	r := (*factoringledger.ReserveEntry)(p)
 	switch rel {
 	case 0:
 		r.FactoringCompany = (*factoringcompany.FactoringCompany)(child)
@@ -2465,25 +2469,25 @@ func attachReserveEntry(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	case 2:
 		r.Customer = (*customer.Customer)(child)
 	case 3:
-		r.Submission = (*factoring.Submission)(child)
+		r.Submission = (*factoringsubmission.Submission)(child)
 	}
 }
 
 func beforeCreateReserveEntry(ctx context.Context, p unsafe.Pointer) error {
-	return (*factoring.ReserveEntry)(p).BeforeCreate(ctx)
+	return (*factoringledger.ReserveEntry)(p).BeforeCreate(ctx)
 }
 
-// submissionsTable is the schema of factoring.Submission.
+// submissionsTable is the schema of factoringsubmission.Submission.
 var submissionsTable = schema.Table{
 	Name:        "factoring_submissions",
 	Quoted:      `"factoring_submissions"`,
 	Alias:       "fs",
-	Model:       "factoring.Submission",
+	Model:       "factoringsubmission.Submission",
 	Label:       `Factoring Schedule`,
 	Plural:      `Factoring Schedules`,
 	Doc:         `Schedules of accounts sent to each factor, with their invoices' total, expected advance, fee and reserve, and how delivery went`,
 	Report:      &schema.TableReport{Category: `Billing`},
-	Constraints: (&factoring.Submission{}).Constraints(),
+	Constraints: (&factoringsubmission.Submission{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`, Report: &reportDimString},
 		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`, JSON: `organizationId`, Report: &reportDimStringHidden},
@@ -2536,7 +2540,7 @@ var submissionsTable = schema.Table{
 	IDPrefix:     "facsub_",
 	New:          newSubmission,
 	NewN:         newNSubmission,
-	Size:         unsafe.Sizeof(factoring.Submission{}),
+	Size:         unsafe.Sizeof(factoringsubmission.Submission{}),
 	Ptr:          ptrSubmission,
 	Value:        valueSubmission,
 	Attach:       attachSubmission,
@@ -2545,9 +2549,9 @@ var submissionsTable = schema.Table{
 
 var submissionsRef = keel.Ref{Table: &submissionsTable}
 
-// SubmissionsTable is the table of factoring.Submission.
+// SubmissionsTable is the table of factoringsubmission.Submission.
 type SubmissionsTable struct {
-	keel.Handle[*factoring.Submission]
+	keel.Handle[*factoringsubmission.Submission]
 	ID                    keelkinds.PulidIDCol
 	OrganizationID        keelkinds.PulidIDCol
 	BusinessUnitID        keelkinds.PulidIDCol
@@ -2584,7 +2588,7 @@ type SubmissionsTable struct {
 
 // Submissions references the factoring_submissions table.
 var Submissions = &SubmissionsTable{
-	Handle:                keel.Handle[*factoring.Submission]{Ref: &submissionsRef},
+	Handle:                keel.Handle[*factoringsubmission.Submission]{Ref: &submissionsRef},
 	ID:                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &submissionsRef, Index: 0}}},
 	OrganizationID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &submissionsRef, Index: 1}}},
 	BusinessUnitID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &submissionsRef, Index: 2}}},
@@ -2622,7 +2626,7 @@ var Submissions = &SubmissionsTable{
 // BuildSubmissions builds the handle of factoring_submissions for ref. Generated relation and alias methods call it.
 func BuildSubmissions(r *keel.Ref) *SubmissionsTable {
 	return &SubmissionsTable{
-		Handle:                keel.Handle[*factoring.Submission]{Ref: r},
+		Handle:                keel.Handle[*factoringsubmission.Submission]{Ref: r},
 		ID:                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -2680,18 +2684,18 @@ func (t *SubmissionsTable) Items() *SubmissionItemsTable {
 }
 
 // Get returns the factoring_submissions row with the given key, or keel.ErrNotFound.
-func (t *SubmissionsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*factoring.Submission, error) {
+func (t *SubmissionsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*factoringsubmission.Submission, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
 }
 
-func newSubmission() unsafe.Pointer { return unsafe.Pointer(new(factoring.Submission)) }
+func newSubmission() unsafe.Pointer { return unsafe.Pointer(new(factoringsubmission.Submission)) }
 
 func newNSubmission(n int) unsafe.Pointer {
-	return unsafe.Pointer(unsafe.SliceData(make([]factoring.Submission, n)))
+	return unsafe.Pointer(unsafe.SliceData(make([]factoringsubmission.Submission, n)))
 }
 
 func ptrSubmission(p unsafe.Pointer, c int32) any {
-	r := (*factoring.Submission)(p)
+	r := (*factoringsubmission.Submission)(p)
 	switch c {
 	case 0:
 		return (*string)(unsafe.Pointer(&r.ID))
@@ -2762,7 +2766,7 @@ func ptrSubmission(p unsafe.Pointer, c int32) any {
 }
 
 func valueSubmission(p unsafe.Pointer, c int32) any {
-	r := (*factoring.Submission)(p)
+	r := (*factoringsubmission.Submission)(p)
 	switch c {
 	case 0:
 		return string(r.ID)
@@ -2866,32 +2870,32 @@ func valueSubmission(p unsafe.Pointer, c int32) any {
 }
 
 func attachSubmission(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
-	r := (*factoring.Submission)(p)
+	r := (*factoringsubmission.Submission)(p)
 	switch rel {
 	case 0:
 		r.FactoringCompany = (*factoringcompany.FactoringCompany)(child)
 	case 1:
 		r.Agreement = (*factoring.Agreement)(child)
 	case 2:
-		r.Items = append(r.Items, (*factoring.SubmissionItem)(child))
+		r.Items = append(r.Items, (*factoringsubmission.SubmissionItem)(child))
 	}
 }
 
 func beforeCreateSubmission(ctx context.Context, p unsafe.Pointer) error {
-	return (*factoring.Submission)(p).BeforeCreate(ctx)
+	return (*factoringsubmission.Submission)(p).BeforeCreate(ctx)
 }
 
-// submissionItemsTable is the schema of factoring.SubmissionItem.
+// submissionItemsTable is the schema of factoringsubmission.SubmissionItem.
 var submissionItemsTable = schema.Table{
 	Name:        "factoring_submission_items",
 	Quoted:      `"factoring_submission_items"`,
 	Alias:       "fsi",
-	Model:       "factoring.SubmissionItem",
+	Model:       "factoringsubmission.SubmissionItem",
 	Label:       `Factoring Schedule Invoice`,
 	Plural:      `Factoring Schedule Invoices`,
 	Doc:         `Each invoice on a factoring schedule, with what the factor was expected to advance, charge and hold back on it`,
 	Report:      &schema.TableReport{Category: `Billing`},
-	Constraints: (&factoring.SubmissionItem{}).Constraints(),
+	Constraints: (&factoringsubmission.SubmissionItem{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`, Report: &reportDimString},
 		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`, JSON: `organizationId`, Report: &reportDimStringHidden},
@@ -2939,7 +2943,7 @@ var submissionItemsTable = schema.Table{
 	IDPrefix:     "facsit_",
 	New:          newSubmissionItem,
 	NewN:         newNSubmissionItem,
-	Size:         unsafe.Sizeof(factoring.SubmissionItem{}),
+	Size:         unsafe.Sizeof(factoringsubmission.SubmissionItem{}),
 	Ptr:          ptrSubmissionItem,
 	Value:        valueSubmissionItem,
 	Attach:       attachSubmissionItem,
@@ -2948,9 +2952,9 @@ var submissionItemsTable = schema.Table{
 
 var submissionItemsRef = keel.Ref{Table: &submissionItemsTable}
 
-// SubmissionItemsTable is the table of factoring.SubmissionItem.
+// SubmissionItemsTable is the table of factoringsubmission.SubmissionItem.
 type SubmissionItemsTable struct {
-	keel.Handle[*factoring.SubmissionItem]
+	keel.Handle[*factoringsubmission.SubmissionItem]
 	ID                   keelkinds.PulidIDCol
 	OrganizationID       keelkinds.PulidIDCol
 	BusinessUnitID       keelkinds.PulidIDCol
@@ -2982,7 +2986,7 @@ type SubmissionItemsTable struct {
 
 // SubmissionItems references the factoring_submission_items table.
 var SubmissionItems = &SubmissionItemsTable{
-	Handle:               keel.Handle[*factoring.SubmissionItem]{Ref: &submissionItemsRef},
+	Handle:               keel.Handle[*factoringsubmission.SubmissionItem]{Ref: &submissionItemsRef},
 	ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &submissionItemsRef, Index: 0}}},
 	OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &submissionItemsRef, Index: 1}}},
 	BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &submissionItemsRef, Index: 2}}},
@@ -3015,7 +3019,7 @@ var SubmissionItems = &SubmissionItemsTable{
 // BuildSubmissionItems builds the handle of factoring_submission_items for ref. Generated relation and alias methods call it.
 func BuildSubmissionItems(r *keel.Ref) *SubmissionItemsTable {
 	return &SubmissionItemsTable{
-		Handle:               keel.Handle[*factoring.SubmissionItem]{Ref: r},
+		Handle:               keel.Handle[*factoringsubmission.SubmissionItem]{Ref: r},
 		ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -3070,18 +3074,18 @@ func (t *SubmissionItemsTable) Submission() *SubmissionsTable {
 }
 
 // Get returns the factoring_submission_items row with the given key, or keel.ErrNotFound.
-func (t *SubmissionItemsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*factoring.SubmissionItem, error) {
+func (t *SubmissionItemsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*factoringsubmission.SubmissionItem, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
 }
 
-func newSubmissionItem() unsafe.Pointer { return unsafe.Pointer(new(factoring.SubmissionItem)) }
+func newSubmissionItem() unsafe.Pointer { return unsafe.Pointer(new(factoringsubmission.SubmissionItem)) }
 
 func newNSubmissionItem(n int) unsafe.Pointer {
-	return unsafe.Pointer(unsafe.SliceData(make([]factoring.SubmissionItem, n)))
+	return unsafe.Pointer(unsafe.SliceData(make([]factoringsubmission.SubmissionItem, n)))
 }
 
 func ptrSubmissionItem(p unsafe.Pointer, c int32) any {
-	r := (*factoring.SubmissionItem)(p)
+	r := (*factoringsubmission.SubmissionItem)(p)
 	switch c {
 	case 0:
 		return (*string)(unsafe.Pointer(&r.ID))
@@ -3142,7 +3146,7 @@ func ptrSubmissionItem(p unsafe.Pointer, c int32) any {
 }
 
 func valueSubmissionItem(p unsafe.Pointer, c int32) any {
-	r := (*factoring.SubmissionItem)(p)
+	r := (*factoringsubmission.SubmissionItem)(p)
 	switch c {
 	case 0:
 		return string(r.ID)
@@ -3236,30 +3240,30 @@ func valueSubmissionItem(p unsafe.Pointer, c int32) any {
 }
 
 func attachSubmissionItem(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
-	r := (*factoring.SubmissionItem)(p)
+	r := (*factoringsubmission.SubmissionItem)(p)
 	switch rel {
 	case 0:
 		r.Invoice = (*invoice.Invoice)(child)
 	case 1:
 		r.Customer = (*customer.Customer)(child)
 	case 2:
-		r.Submission = (*factoring.Submission)(child)
+		r.Submission = (*factoringsubmission.Submission)(child)
 	}
 }
 
 func beforeCreateSubmissionItem(ctx context.Context, p unsafe.Pointer) error {
-	return (*factoring.SubmissionItem)(p).BeforeCreate(ctx)
+	return (*factoringsubmission.SubmissionItem)(p).BeforeCreate(ctx)
 }
 
-// transportsTable is the schema of factoring.Transport.
+// transportsTable is the schema of factoringsubmission.Transport.
 var transportsTable = schema.Table{
 	Name:        "factoring_transports",
 	Quoted:      `"factoring_transports"`,
 	Alias:       "ft",
-	Model:       "factoring.Transport",
+	Model:       "factoringsubmission.Transport",
 	Label:       `Transport`,
 	Plural:      `Transports`,
-	Constraints: (&factoring.Transport{}).Constraints(),
+	Constraints: (&factoringsubmission.Transport{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`, JSON: `organizationId`},
@@ -3294,7 +3298,7 @@ var transportsTable = schema.Table{
 	IDPrefix:     "factrn_",
 	New:          newTransport,
 	NewN:         newNTransport,
-	Size:         unsafe.Sizeof(factoring.Transport{}),
+	Size:         unsafe.Sizeof(factoringsubmission.Transport{}),
 	Ptr:          ptrTransport,
 	Value:        valueTransport,
 	BeforeCreate: beforeCreateTransport,
@@ -3302,9 +3306,9 @@ var transportsTable = schema.Table{
 
 var transportsRef = keel.Ref{Table: &transportsTable}
 
-// TransportsTable is the table of factoring.Transport.
+// TransportsTable is the table of factoringsubmission.Transport.
 type TransportsTable struct {
-	keel.Handle[*factoring.Transport]
+	keel.Handle[*factoringsubmission.Transport]
 	ID                 keelkinds.PulidIDCol
 	OrganizationID     keelkinds.PulidIDCol
 	BusinessUnitID     keelkinds.PulidIDCol
@@ -3328,7 +3332,7 @@ type TransportsTable struct {
 
 // Transports references the factoring_transports table.
 var Transports = &TransportsTable{
-	Handle:             keel.Handle[*factoring.Transport]{Ref: &transportsRef},
+	Handle:             keel.Handle[*factoringsubmission.Transport]{Ref: &transportsRef},
 	ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &transportsRef, Index: 0}}},
 	OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &transportsRef, Index: 1}}},
 	BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &transportsRef, Index: 2}}},
@@ -3353,7 +3357,7 @@ var Transports = &TransportsTable{
 // BuildTransports builds the handle of factoring_transports for ref. Generated relation and alias methods call it.
 func BuildTransports(r *keel.Ref) *TransportsTable {
 	return &TransportsTable{
-		Handle:             keel.Handle[*factoring.Transport]{Ref: r},
+		Handle:             keel.Handle[*factoringsubmission.Transport]{Ref: r},
 		ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -3385,18 +3389,18 @@ func (t *TransportsTable) As(alias string) *TransportsTable {
 }
 
 // Get returns the factoring_transports row with the given key, or keel.ErrNotFound.
-func (t *TransportsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*factoring.Transport, error) {
+func (t *TransportsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*factoringsubmission.Transport, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
 }
 
-func newTransport() unsafe.Pointer { return unsafe.Pointer(new(factoring.Transport)) }
+func newTransport() unsafe.Pointer { return unsafe.Pointer(new(factoringsubmission.Transport)) }
 
 func newNTransport(n int) unsafe.Pointer {
-	return unsafe.Pointer(unsafe.SliceData(make([]factoring.Transport, n)))
+	return unsafe.Pointer(unsafe.SliceData(make([]factoringsubmission.Transport, n)))
 }
 
 func ptrTransport(p unsafe.Pointer, c int32) any {
-	r := (*factoring.Transport)(p)
+	r := (*factoringsubmission.Transport)(p)
 	switch c {
 	case 0:
 		return (*string)(unsafe.Pointer(&r.ID))
@@ -3441,7 +3445,7 @@ func ptrTransport(p unsafe.Pointer, c int32) any {
 }
 
 func valueTransport(p unsafe.Pointer, c int32) any {
-	r := (*factoring.Transport)(p)
+	r := (*factoringsubmission.Transport)(p)
 	switch c {
 	case 0:
 		return string(r.ID)
@@ -3516,7 +3520,7 @@ func valueTransport(p unsafe.Pointer, c int32) any {
 }
 
 func beforeCreateTransport(ctx context.Context, p unsafe.Pointer) error {
-	return (*factoring.Transport)(p).BeforeCreate(ctx)
+	return (*factoringsubmission.Transport)(p).BeforeCreate(ctx)
 }
 
 func init() {
@@ -3815,459 +3819,459 @@ func (c RecourseCol) NotIn(vs ...factoring.Recourse) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 
-// RemittanceFormatCol is a column of factoring.RemittanceFormat values.
+// RemittanceFormatCol is a column of factoringremittance.RemittanceFormat values.
 type RemittanceFormatCol struct{ keel.StringCol }
 
-func (c RemittanceFormatCol) Eq(v factoring.RemittanceFormat) keel.Pred {
+func (c RemittanceFormatCol) Eq(v factoringremittance.RemittanceFormat) keel.Pred {
 	return c.StringCol.Eq(string(v))
 }
-func (c RemittanceFormatCol) Ne(v factoring.RemittanceFormat) keel.Pred {
+func (c RemittanceFormatCol) Ne(v factoringremittance.RemittanceFormat) keel.Pred {
 	return c.StringCol.Ne(string(v))
 }
-func (c RemittanceFormatCol) Gt(v factoring.RemittanceFormat) keel.Pred {
+func (c RemittanceFormatCol) Gt(v factoringremittance.RemittanceFormat) keel.Pred {
 	return c.StringCol.Gt(string(v))
 }
-func (c RemittanceFormatCol) Gte(v factoring.RemittanceFormat) keel.Pred {
+func (c RemittanceFormatCol) Gte(v factoringremittance.RemittanceFormat) keel.Pred {
 	return c.StringCol.Gte(string(v))
 }
-func (c RemittanceFormatCol) Lt(v factoring.RemittanceFormat) keel.Pred {
+func (c RemittanceFormatCol) Lt(v factoringremittance.RemittanceFormat) keel.Pred {
 	return c.StringCol.Lt(string(v))
 }
-func (c RemittanceFormatCol) Lte(v factoring.RemittanceFormat) keel.Pred {
+func (c RemittanceFormatCol) Lte(v factoringremittance.RemittanceFormat) keel.Pred {
 	return c.StringCol.Lte(string(v))
 }
-func (c RemittanceFormatCol) IsDistinctFrom(v factoring.RemittanceFormat) keel.Pred {
+func (c RemittanceFormatCol) IsDistinctFrom(v factoringremittance.RemittanceFormat) keel.Pred {
 	return c.StringCol.IsDistinctFrom(string(v))
 }
-func (c RemittanceFormatCol) Between(lo, hi factoring.RemittanceFormat) keel.Pred {
+func (c RemittanceFormatCol) Between(lo, hi factoringremittance.RemittanceFormat) keel.Pred {
 	return c.StringCol.Between(string(lo), string(hi))
 }
-func (c RemittanceFormatCol) To(v factoring.RemittanceFormat) keel.Assignment {
+func (c RemittanceFormatCol) To(v factoringremittance.RemittanceFormat) keel.Assignment {
 	return c.StringCol.To(string(v))
 }
-func (c RemittanceFormatCol) In(vs ...factoring.RemittanceFormat) keel.Pred {
+func (c RemittanceFormatCol) In(vs ...factoringremittance.RemittanceFormat) keel.Pred {
 	return c.StringCol.In(keel.Strings(vs)...)
 }
-func (c RemittanceFormatCol) NotIn(vs ...factoring.RemittanceFormat) keel.Pred {
+func (c RemittanceFormatCol) NotIn(vs ...factoringremittance.RemittanceFormat) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 
-// RemittanceLineKindCol is a column of factoring.RemittanceLineKind values.
+// RemittanceLineKindCol is a column of factoringremittance.RemittanceLineKind values.
 type RemittanceLineKindCol struct{ keel.StringCol }
 
-func (c RemittanceLineKindCol) Eq(v factoring.RemittanceLineKind) keel.Pred {
+func (c RemittanceLineKindCol) Eq(v factoringremittance.RemittanceLineKind) keel.Pred {
 	return c.StringCol.Eq(string(v))
 }
-func (c RemittanceLineKindCol) Ne(v factoring.RemittanceLineKind) keel.Pred {
+func (c RemittanceLineKindCol) Ne(v factoringremittance.RemittanceLineKind) keel.Pred {
 	return c.StringCol.Ne(string(v))
 }
-func (c RemittanceLineKindCol) Gt(v factoring.RemittanceLineKind) keel.Pred {
+func (c RemittanceLineKindCol) Gt(v factoringremittance.RemittanceLineKind) keel.Pred {
 	return c.StringCol.Gt(string(v))
 }
-func (c RemittanceLineKindCol) Gte(v factoring.RemittanceLineKind) keel.Pred {
+func (c RemittanceLineKindCol) Gte(v factoringremittance.RemittanceLineKind) keel.Pred {
 	return c.StringCol.Gte(string(v))
 }
-func (c RemittanceLineKindCol) Lt(v factoring.RemittanceLineKind) keel.Pred {
+func (c RemittanceLineKindCol) Lt(v factoringremittance.RemittanceLineKind) keel.Pred {
 	return c.StringCol.Lt(string(v))
 }
-func (c RemittanceLineKindCol) Lte(v factoring.RemittanceLineKind) keel.Pred {
+func (c RemittanceLineKindCol) Lte(v factoringremittance.RemittanceLineKind) keel.Pred {
 	return c.StringCol.Lte(string(v))
 }
-func (c RemittanceLineKindCol) IsDistinctFrom(v factoring.RemittanceLineKind) keel.Pred {
+func (c RemittanceLineKindCol) IsDistinctFrom(v factoringremittance.RemittanceLineKind) keel.Pred {
 	return c.StringCol.IsDistinctFrom(string(v))
 }
-func (c RemittanceLineKindCol) Between(lo, hi factoring.RemittanceLineKind) keel.Pred {
+func (c RemittanceLineKindCol) Between(lo, hi factoringremittance.RemittanceLineKind) keel.Pred {
 	return c.StringCol.Between(string(lo), string(hi))
 }
-func (c RemittanceLineKindCol) To(v factoring.RemittanceLineKind) keel.Assignment {
+func (c RemittanceLineKindCol) To(v factoringremittance.RemittanceLineKind) keel.Assignment {
 	return c.StringCol.To(string(v))
 }
-func (c RemittanceLineKindCol) In(vs ...factoring.RemittanceLineKind) keel.Pred {
+func (c RemittanceLineKindCol) In(vs ...factoringremittance.RemittanceLineKind) keel.Pred {
 	return c.StringCol.In(keel.Strings(vs)...)
 }
-func (c RemittanceLineKindCol) NotIn(vs ...factoring.RemittanceLineKind) keel.Pred {
+func (c RemittanceLineKindCol) NotIn(vs ...factoringremittance.RemittanceLineKind) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 
-// RemittanceMatchReasonCol is a column of factoring.RemittanceMatchReason values.
+// RemittanceMatchReasonCol is a column of factoringremittance.RemittanceMatchReason values.
 type RemittanceMatchReasonCol struct{ keel.StringCol }
 
-func (c RemittanceMatchReasonCol) Eq(v factoring.RemittanceMatchReason) keel.Pred {
+func (c RemittanceMatchReasonCol) Eq(v factoringremittance.RemittanceMatchReason) keel.Pred {
 	return c.StringCol.Eq(string(v))
 }
-func (c RemittanceMatchReasonCol) Ne(v factoring.RemittanceMatchReason) keel.Pred {
+func (c RemittanceMatchReasonCol) Ne(v factoringremittance.RemittanceMatchReason) keel.Pred {
 	return c.StringCol.Ne(string(v))
 }
-func (c RemittanceMatchReasonCol) Gt(v factoring.RemittanceMatchReason) keel.Pred {
+func (c RemittanceMatchReasonCol) Gt(v factoringremittance.RemittanceMatchReason) keel.Pred {
 	return c.StringCol.Gt(string(v))
 }
-func (c RemittanceMatchReasonCol) Gte(v factoring.RemittanceMatchReason) keel.Pred {
+func (c RemittanceMatchReasonCol) Gte(v factoringremittance.RemittanceMatchReason) keel.Pred {
 	return c.StringCol.Gte(string(v))
 }
-func (c RemittanceMatchReasonCol) Lt(v factoring.RemittanceMatchReason) keel.Pred {
+func (c RemittanceMatchReasonCol) Lt(v factoringremittance.RemittanceMatchReason) keel.Pred {
 	return c.StringCol.Lt(string(v))
 }
-func (c RemittanceMatchReasonCol) Lte(v factoring.RemittanceMatchReason) keel.Pred {
+func (c RemittanceMatchReasonCol) Lte(v factoringremittance.RemittanceMatchReason) keel.Pred {
 	return c.StringCol.Lte(string(v))
 }
-func (c RemittanceMatchReasonCol) IsDistinctFrom(v factoring.RemittanceMatchReason) keel.Pred {
+func (c RemittanceMatchReasonCol) IsDistinctFrom(v factoringremittance.RemittanceMatchReason) keel.Pred {
 	return c.StringCol.IsDistinctFrom(string(v))
 }
-func (c RemittanceMatchReasonCol) Between(lo, hi factoring.RemittanceMatchReason) keel.Pred {
+func (c RemittanceMatchReasonCol) Between(lo, hi factoringremittance.RemittanceMatchReason) keel.Pred {
 	return c.StringCol.Between(string(lo), string(hi))
 }
-func (c RemittanceMatchReasonCol) To(v factoring.RemittanceMatchReason) keel.Assignment {
+func (c RemittanceMatchReasonCol) To(v factoringremittance.RemittanceMatchReason) keel.Assignment {
 	return c.StringCol.To(string(v))
 }
-func (c RemittanceMatchReasonCol) In(vs ...factoring.RemittanceMatchReason) keel.Pred {
+func (c RemittanceMatchReasonCol) In(vs ...factoringremittance.RemittanceMatchReason) keel.Pred {
 	return c.StringCol.In(keel.Strings(vs)...)
 }
-func (c RemittanceMatchReasonCol) NotIn(vs ...factoring.RemittanceMatchReason) keel.Pred {
+func (c RemittanceMatchReasonCol) NotIn(vs ...factoringremittance.RemittanceMatchReason) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 
-// RemittanceMatchStatusCol is a column of factoring.RemittanceMatchStatus values.
+// RemittanceMatchStatusCol is a column of factoringremittance.RemittanceMatchStatus values.
 type RemittanceMatchStatusCol struct{ keel.StringCol }
 
-func (c RemittanceMatchStatusCol) Eq(v factoring.RemittanceMatchStatus) keel.Pred {
+func (c RemittanceMatchStatusCol) Eq(v factoringremittance.RemittanceMatchStatus) keel.Pred {
 	return c.StringCol.Eq(string(v))
 }
-func (c RemittanceMatchStatusCol) Ne(v factoring.RemittanceMatchStatus) keel.Pred {
+func (c RemittanceMatchStatusCol) Ne(v factoringremittance.RemittanceMatchStatus) keel.Pred {
 	return c.StringCol.Ne(string(v))
 }
-func (c RemittanceMatchStatusCol) Gt(v factoring.RemittanceMatchStatus) keel.Pred {
+func (c RemittanceMatchStatusCol) Gt(v factoringremittance.RemittanceMatchStatus) keel.Pred {
 	return c.StringCol.Gt(string(v))
 }
-func (c RemittanceMatchStatusCol) Gte(v factoring.RemittanceMatchStatus) keel.Pred {
+func (c RemittanceMatchStatusCol) Gte(v factoringremittance.RemittanceMatchStatus) keel.Pred {
 	return c.StringCol.Gte(string(v))
 }
-func (c RemittanceMatchStatusCol) Lt(v factoring.RemittanceMatchStatus) keel.Pred {
+func (c RemittanceMatchStatusCol) Lt(v factoringremittance.RemittanceMatchStatus) keel.Pred {
 	return c.StringCol.Lt(string(v))
 }
-func (c RemittanceMatchStatusCol) Lte(v factoring.RemittanceMatchStatus) keel.Pred {
+func (c RemittanceMatchStatusCol) Lte(v factoringremittance.RemittanceMatchStatus) keel.Pred {
 	return c.StringCol.Lte(string(v))
 }
-func (c RemittanceMatchStatusCol) IsDistinctFrom(v factoring.RemittanceMatchStatus) keel.Pred {
+func (c RemittanceMatchStatusCol) IsDistinctFrom(v factoringremittance.RemittanceMatchStatus) keel.Pred {
 	return c.StringCol.IsDistinctFrom(string(v))
 }
-func (c RemittanceMatchStatusCol) Between(lo, hi factoring.RemittanceMatchStatus) keel.Pred {
+func (c RemittanceMatchStatusCol) Between(lo, hi factoringremittance.RemittanceMatchStatus) keel.Pred {
 	return c.StringCol.Between(string(lo), string(hi))
 }
-func (c RemittanceMatchStatusCol) To(v factoring.RemittanceMatchStatus) keel.Assignment {
+func (c RemittanceMatchStatusCol) To(v factoringremittance.RemittanceMatchStatus) keel.Assignment {
 	return c.StringCol.To(string(v))
 }
-func (c RemittanceMatchStatusCol) In(vs ...factoring.RemittanceMatchStatus) keel.Pred {
+func (c RemittanceMatchStatusCol) In(vs ...factoringremittance.RemittanceMatchStatus) keel.Pred {
 	return c.StringCol.In(keel.Strings(vs)...)
 }
-func (c RemittanceMatchStatusCol) NotIn(vs ...factoring.RemittanceMatchStatus) keel.Pred {
+func (c RemittanceMatchStatusCol) NotIn(vs ...factoringremittance.RemittanceMatchStatus) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 
-// RemittanceMatchedByCol is a column of factoring.RemittanceMatchedBy values.
+// RemittanceMatchedByCol is a column of factoringremittance.RemittanceMatchedBy values.
 type RemittanceMatchedByCol struct{ keel.StringCol }
 
-func (c RemittanceMatchedByCol) Eq(v factoring.RemittanceMatchedBy) keel.Pred {
+func (c RemittanceMatchedByCol) Eq(v factoringremittance.RemittanceMatchedBy) keel.Pred {
 	return c.StringCol.Eq(string(v))
 }
-func (c RemittanceMatchedByCol) Ne(v factoring.RemittanceMatchedBy) keel.Pred {
+func (c RemittanceMatchedByCol) Ne(v factoringremittance.RemittanceMatchedBy) keel.Pred {
 	return c.StringCol.Ne(string(v))
 }
-func (c RemittanceMatchedByCol) Gt(v factoring.RemittanceMatchedBy) keel.Pred {
+func (c RemittanceMatchedByCol) Gt(v factoringremittance.RemittanceMatchedBy) keel.Pred {
 	return c.StringCol.Gt(string(v))
 }
-func (c RemittanceMatchedByCol) Gte(v factoring.RemittanceMatchedBy) keel.Pred {
+func (c RemittanceMatchedByCol) Gte(v factoringremittance.RemittanceMatchedBy) keel.Pred {
 	return c.StringCol.Gte(string(v))
 }
-func (c RemittanceMatchedByCol) Lt(v factoring.RemittanceMatchedBy) keel.Pred {
+func (c RemittanceMatchedByCol) Lt(v factoringremittance.RemittanceMatchedBy) keel.Pred {
 	return c.StringCol.Lt(string(v))
 }
-func (c RemittanceMatchedByCol) Lte(v factoring.RemittanceMatchedBy) keel.Pred {
+func (c RemittanceMatchedByCol) Lte(v factoringremittance.RemittanceMatchedBy) keel.Pred {
 	return c.StringCol.Lte(string(v))
 }
-func (c RemittanceMatchedByCol) IsDistinctFrom(v factoring.RemittanceMatchedBy) keel.Pred {
+func (c RemittanceMatchedByCol) IsDistinctFrom(v factoringremittance.RemittanceMatchedBy) keel.Pred {
 	return c.StringCol.IsDistinctFrom(string(v))
 }
-func (c RemittanceMatchedByCol) Between(lo, hi factoring.RemittanceMatchedBy) keel.Pred {
+func (c RemittanceMatchedByCol) Between(lo, hi factoringremittance.RemittanceMatchedBy) keel.Pred {
 	return c.StringCol.Between(string(lo), string(hi))
 }
-func (c RemittanceMatchedByCol) To(v factoring.RemittanceMatchedBy) keel.Assignment {
+func (c RemittanceMatchedByCol) To(v factoringremittance.RemittanceMatchedBy) keel.Assignment {
 	return c.StringCol.To(string(v))
 }
-func (c RemittanceMatchedByCol) In(vs ...factoring.RemittanceMatchedBy) keel.Pred {
+func (c RemittanceMatchedByCol) In(vs ...factoringremittance.RemittanceMatchedBy) keel.Pred {
 	return c.StringCol.In(keel.Strings(vs)...)
 }
-func (c RemittanceMatchedByCol) NotIn(vs ...factoring.RemittanceMatchedBy) keel.Pred {
+func (c RemittanceMatchedByCol) NotIn(vs ...factoringremittance.RemittanceMatchedBy) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 
-// RemittanceSourceCol is a column of factoring.RemittanceSource values.
+// RemittanceSourceCol is a column of factoringremittance.RemittanceSource values.
 type RemittanceSourceCol struct{ keel.StringCol }
 
-func (c RemittanceSourceCol) Eq(v factoring.RemittanceSource) keel.Pred {
+func (c RemittanceSourceCol) Eq(v factoringremittance.RemittanceSource) keel.Pred {
 	return c.StringCol.Eq(string(v))
 }
-func (c RemittanceSourceCol) Ne(v factoring.RemittanceSource) keel.Pred {
+func (c RemittanceSourceCol) Ne(v factoringremittance.RemittanceSource) keel.Pred {
 	return c.StringCol.Ne(string(v))
 }
-func (c RemittanceSourceCol) Gt(v factoring.RemittanceSource) keel.Pred {
+func (c RemittanceSourceCol) Gt(v factoringremittance.RemittanceSource) keel.Pred {
 	return c.StringCol.Gt(string(v))
 }
-func (c RemittanceSourceCol) Gte(v factoring.RemittanceSource) keel.Pred {
+func (c RemittanceSourceCol) Gte(v factoringremittance.RemittanceSource) keel.Pred {
 	return c.StringCol.Gte(string(v))
 }
-func (c RemittanceSourceCol) Lt(v factoring.RemittanceSource) keel.Pred {
+func (c RemittanceSourceCol) Lt(v factoringremittance.RemittanceSource) keel.Pred {
 	return c.StringCol.Lt(string(v))
 }
-func (c RemittanceSourceCol) Lte(v factoring.RemittanceSource) keel.Pred {
+func (c RemittanceSourceCol) Lte(v factoringremittance.RemittanceSource) keel.Pred {
 	return c.StringCol.Lte(string(v))
 }
-func (c RemittanceSourceCol) IsDistinctFrom(v factoring.RemittanceSource) keel.Pred {
+func (c RemittanceSourceCol) IsDistinctFrom(v factoringremittance.RemittanceSource) keel.Pred {
 	return c.StringCol.IsDistinctFrom(string(v))
 }
-func (c RemittanceSourceCol) Between(lo, hi factoring.RemittanceSource) keel.Pred {
+func (c RemittanceSourceCol) Between(lo, hi factoringremittance.RemittanceSource) keel.Pred {
 	return c.StringCol.Between(string(lo), string(hi))
 }
-func (c RemittanceSourceCol) To(v factoring.RemittanceSource) keel.Assignment {
+func (c RemittanceSourceCol) To(v factoringremittance.RemittanceSource) keel.Assignment {
 	return c.StringCol.To(string(v))
 }
-func (c RemittanceSourceCol) In(vs ...factoring.RemittanceSource) keel.Pred {
+func (c RemittanceSourceCol) In(vs ...factoringremittance.RemittanceSource) keel.Pred {
 	return c.StringCol.In(keel.Strings(vs)...)
 }
-func (c RemittanceSourceCol) NotIn(vs ...factoring.RemittanceSource) keel.Pred {
+func (c RemittanceSourceCol) NotIn(vs ...factoringremittance.RemittanceSource) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 
-// RemittanceStatusCol is a column of factoring.RemittanceStatus values.
+// RemittanceStatusCol is a column of factoringremittance.RemittanceStatus values.
 type RemittanceStatusCol struct{ keel.StringCol }
 
-func (c RemittanceStatusCol) Eq(v factoring.RemittanceStatus) keel.Pred {
+func (c RemittanceStatusCol) Eq(v factoringremittance.RemittanceStatus) keel.Pred {
 	return c.StringCol.Eq(string(v))
 }
-func (c RemittanceStatusCol) Ne(v factoring.RemittanceStatus) keel.Pred {
+func (c RemittanceStatusCol) Ne(v factoringremittance.RemittanceStatus) keel.Pred {
 	return c.StringCol.Ne(string(v))
 }
-func (c RemittanceStatusCol) Gt(v factoring.RemittanceStatus) keel.Pred {
+func (c RemittanceStatusCol) Gt(v factoringremittance.RemittanceStatus) keel.Pred {
 	return c.StringCol.Gt(string(v))
 }
-func (c RemittanceStatusCol) Gte(v factoring.RemittanceStatus) keel.Pred {
+func (c RemittanceStatusCol) Gte(v factoringremittance.RemittanceStatus) keel.Pred {
 	return c.StringCol.Gte(string(v))
 }
-func (c RemittanceStatusCol) Lt(v factoring.RemittanceStatus) keel.Pred {
+func (c RemittanceStatusCol) Lt(v factoringremittance.RemittanceStatus) keel.Pred {
 	return c.StringCol.Lt(string(v))
 }
-func (c RemittanceStatusCol) Lte(v factoring.RemittanceStatus) keel.Pred {
+func (c RemittanceStatusCol) Lte(v factoringremittance.RemittanceStatus) keel.Pred {
 	return c.StringCol.Lte(string(v))
 }
-func (c RemittanceStatusCol) IsDistinctFrom(v factoring.RemittanceStatus) keel.Pred {
+func (c RemittanceStatusCol) IsDistinctFrom(v factoringremittance.RemittanceStatus) keel.Pred {
 	return c.StringCol.IsDistinctFrom(string(v))
 }
-func (c RemittanceStatusCol) Between(lo, hi factoring.RemittanceStatus) keel.Pred {
+func (c RemittanceStatusCol) Between(lo, hi factoringremittance.RemittanceStatus) keel.Pred {
 	return c.StringCol.Between(string(lo), string(hi))
 }
-func (c RemittanceStatusCol) To(v factoring.RemittanceStatus) keel.Assignment {
+func (c RemittanceStatusCol) To(v factoringremittance.RemittanceStatus) keel.Assignment {
 	return c.StringCol.To(string(v))
 }
-func (c RemittanceStatusCol) In(vs ...factoring.RemittanceStatus) keel.Pred {
+func (c RemittanceStatusCol) In(vs ...factoringremittance.RemittanceStatus) keel.Pred {
 	return c.StringCol.In(keel.Strings(vs)...)
 }
-func (c RemittanceStatusCol) NotIn(vs ...factoring.RemittanceStatus) keel.Pred {
+func (c RemittanceStatusCol) NotIn(vs ...factoringremittance.RemittanceStatus) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 
-// ReserveEntryKindCol is a column of factoring.ReserveEntryKind values.
+// ReserveEntryKindCol is a column of factoringledger.ReserveEntryKind values.
 type ReserveEntryKindCol struct{ keel.StringCol }
 
-func (c ReserveEntryKindCol) Eq(v factoring.ReserveEntryKind) keel.Pred {
+func (c ReserveEntryKindCol) Eq(v factoringledger.ReserveEntryKind) keel.Pred {
 	return c.StringCol.Eq(string(v))
 }
-func (c ReserveEntryKindCol) Ne(v factoring.ReserveEntryKind) keel.Pred {
+func (c ReserveEntryKindCol) Ne(v factoringledger.ReserveEntryKind) keel.Pred {
 	return c.StringCol.Ne(string(v))
 }
-func (c ReserveEntryKindCol) Gt(v factoring.ReserveEntryKind) keel.Pred {
+func (c ReserveEntryKindCol) Gt(v factoringledger.ReserveEntryKind) keel.Pred {
 	return c.StringCol.Gt(string(v))
 }
-func (c ReserveEntryKindCol) Gte(v factoring.ReserveEntryKind) keel.Pred {
+func (c ReserveEntryKindCol) Gte(v factoringledger.ReserveEntryKind) keel.Pred {
 	return c.StringCol.Gte(string(v))
 }
-func (c ReserveEntryKindCol) Lt(v factoring.ReserveEntryKind) keel.Pred {
+func (c ReserveEntryKindCol) Lt(v factoringledger.ReserveEntryKind) keel.Pred {
 	return c.StringCol.Lt(string(v))
 }
-func (c ReserveEntryKindCol) Lte(v factoring.ReserveEntryKind) keel.Pred {
+func (c ReserveEntryKindCol) Lte(v factoringledger.ReserveEntryKind) keel.Pred {
 	return c.StringCol.Lte(string(v))
 }
-func (c ReserveEntryKindCol) IsDistinctFrom(v factoring.ReserveEntryKind) keel.Pred {
+func (c ReserveEntryKindCol) IsDistinctFrom(v factoringledger.ReserveEntryKind) keel.Pred {
 	return c.StringCol.IsDistinctFrom(string(v))
 }
-func (c ReserveEntryKindCol) Between(lo, hi factoring.ReserveEntryKind) keel.Pred {
+func (c ReserveEntryKindCol) Between(lo, hi factoringledger.ReserveEntryKind) keel.Pred {
 	return c.StringCol.Between(string(lo), string(hi))
 }
-func (c ReserveEntryKindCol) To(v factoring.ReserveEntryKind) keel.Assignment {
+func (c ReserveEntryKindCol) To(v factoringledger.ReserveEntryKind) keel.Assignment {
 	return c.StringCol.To(string(v))
 }
-func (c ReserveEntryKindCol) In(vs ...factoring.ReserveEntryKind) keel.Pred {
+func (c ReserveEntryKindCol) In(vs ...factoringledger.ReserveEntryKind) keel.Pred {
 	return c.StringCol.In(keel.Strings(vs)...)
 }
-func (c ReserveEntryKindCol) NotIn(vs ...factoring.ReserveEntryKind) keel.Pred {
+func (c ReserveEntryKindCol) NotIn(vs ...factoringledger.ReserveEntryKind) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 
-// SftpAuthMethodCol is a column of factoring.SftpAuthMethod values.
+// SftpAuthMethodCol is a column of factoringsubmission.SftpAuthMethod values.
 type SftpAuthMethodCol struct{ keel.StringCol }
 
-func (c SftpAuthMethodCol) Eq(v factoring.SftpAuthMethod) keel.Pred { return c.StringCol.Eq(string(v)) }
-func (c SftpAuthMethodCol) Ne(v factoring.SftpAuthMethod) keel.Pred { return c.StringCol.Ne(string(v)) }
-func (c SftpAuthMethodCol) Gt(v factoring.SftpAuthMethod) keel.Pred { return c.StringCol.Gt(string(v)) }
-func (c SftpAuthMethodCol) Gte(v factoring.SftpAuthMethod) keel.Pred {
+func (c SftpAuthMethodCol) Eq(v factoringsubmission.SftpAuthMethod) keel.Pred { return c.StringCol.Eq(string(v)) }
+func (c SftpAuthMethodCol) Ne(v factoringsubmission.SftpAuthMethod) keel.Pred { return c.StringCol.Ne(string(v)) }
+func (c SftpAuthMethodCol) Gt(v factoringsubmission.SftpAuthMethod) keel.Pred { return c.StringCol.Gt(string(v)) }
+func (c SftpAuthMethodCol) Gte(v factoringsubmission.SftpAuthMethod) keel.Pred {
 	return c.StringCol.Gte(string(v))
 }
-func (c SftpAuthMethodCol) Lt(v factoring.SftpAuthMethod) keel.Pred { return c.StringCol.Lt(string(v)) }
-func (c SftpAuthMethodCol) Lte(v factoring.SftpAuthMethod) keel.Pred {
+func (c SftpAuthMethodCol) Lt(v factoringsubmission.SftpAuthMethod) keel.Pred { return c.StringCol.Lt(string(v)) }
+func (c SftpAuthMethodCol) Lte(v factoringsubmission.SftpAuthMethod) keel.Pred {
 	return c.StringCol.Lte(string(v))
 }
-func (c SftpAuthMethodCol) IsDistinctFrom(v factoring.SftpAuthMethod) keel.Pred {
+func (c SftpAuthMethodCol) IsDistinctFrom(v factoringsubmission.SftpAuthMethod) keel.Pred {
 	return c.StringCol.IsDistinctFrom(string(v))
 }
-func (c SftpAuthMethodCol) Between(lo, hi factoring.SftpAuthMethod) keel.Pred {
+func (c SftpAuthMethodCol) Between(lo, hi factoringsubmission.SftpAuthMethod) keel.Pred {
 	return c.StringCol.Between(string(lo), string(hi))
 }
-func (c SftpAuthMethodCol) To(v factoring.SftpAuthMethod) keel.Assignment {
+func (c SftpAuthMethodCol) To(v factoringsubmission.SftpAuthMethod) keel.Assignment {
 	return c.StringCol.To(string(v))
 }
-func (c SftpAuthMethodCol) In(vs ...factoring.SftpAuthMethod) keel.Pred {
+func (c SftpAuthMethodCol) In(vs ...factoringsubmission.SftpAuthMethod) keel.Pred {
 	return c.StringCol.In(keel.Strings(vs)...)
 }
-func (c SftpAuthMethodCol) NotIn(vs ...factoring.SftpAuthMethod) keel.Pred {
+func (c SftpAuthMethodCol) NotIn(vs ...factoringsubmission.SftpAuthMethod) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 
-// SubmissionItemStatusCol is a column of factoring.SubmissionItemStatus values.
+// SubmissionItemStatusCol is a column of factoringsubmission.SubmissionItemStatus values.
 type SubmissionItemStatusCol struct{ keel.StringCol }
 
-func (c SubmissionItemStatusCol) Eq(v factoring.SubmissionItemStatus) keel.Pred {
+func (c SubmissionItemStatusCol) Eq(v factoringsubmission.SubmissionItemStatus) keel.Pred {
 	return c.StringCol.Eq(string(v))
 }
-func (c SubmissionItemStatusCol) Ne(v factoring.SubmissionItemStatus) keel.Pred {
+func (c SubmissionItemStatusCol) Ne(v factoringsubmission.SubmissionItemStatus) keel.Pred {
 	return c.StringCol.Ne(string(v))
 }
-func (c SubmissionItemStatusCol) Gt(v factoring.SubmissionItemStatus) keel.Pred {
+func (c SubmissionItemStatusCol) Gt(v factoringsubmission.SubmissionItemStatus) keel.Pred {
 	return c.StringCol.Gt(string(v))
 }
-func (c SubmissionItemStatusCol) Gte(v factoring.SubmissionItemStatus) keel.Pred {
+func (c SubmissionItemStatusCol) Gte(v factoringsubmission.SubmissionItemStatus) keel.Pred {
 	return c.StringCol.Gte(string(v))
 }
-func (c SubmissionItemStatusCol) Lt(v factoring.SubmissionItemStatus) keel.Pred {
+func (c SubmissionItemStatusCol) Lt(v factoringsubmission.SubmissionItemStatus) keel.Pred {
 	return c.StringCol.Lt(string(v))
 }
-func (c SubmissionItemStatusCol) Lte(v factoring.SubmissionItemStatus) keel.Pred {
+func (c SubmissionItemStatusCol) Lte(v factoringsubmission.SubmissionItemStatus) keel.Pred {
 	return c.StringCol.Lte(string(v))
 }
-func (c SubmissionItemStatusCol) IsDistinctFrom(v factoring.SubmissionItemStatus) keel.Pred {
+func (c SubmissionItemStatusCol) IsDistinctFrom(v factoringsubmission.SubmissionItemStatus) keel.Pred {
 	return c.StringCol.IsDistinctFrom(string(v))
 }
-func (c SubmissionItemStatusCol) Between(lo, hi factoring.SubmissionItemStatus) keel.Pred {
+func (c SubmissionItemStatusCol) Between(lo, hi factoringsubmission.SubmissionItemStatus) keel.Pred {
 	return c.StringCol.Between(string(lo), string(hi))
 }
-func (c SubmissionItemStatusCol) To(v factoring.SubmissionItemStatus) keel.Assignment {
+func (c SubmissionItemStatusCol) To(v factoringsubmission.SubmissionItemStatus) keel.Assignment {
 	return c.StringCol.To(string(v))
 }
-func (c SubmissionItemStatusCol) In(vs ...factoring.SubmissionItemStatus) keel.Pred {
+func (c SubmissionItemStatusCol) In(vs ...factoringsubmission.SubmissionItemStatus) keel.Pred {
 	return c.StringCol.In(keel.Strings(vs)...)
 }
-func (c SubmissionItemStatusCol) NotIn(vs ...factoring.SubmissionItemStatus) keel.Pred {
+func (c SubmissionItemStatusCol) NotIn(vs ...factoringsubmission.SubmissionItemStatus) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 
-// SubmissionStatusCol is a column of factoring.SubmissionStatus values.
+// SubmissionStatusCol is a column of factoringsubmission.SubmissionStatus values.
 type SubmissionStatusCol struct{ keel.StringCol }
 
-func (c SubmissionStatusCol) Eq(v factoring.SubmissionStatus) keel.Pred {
+func (c SubmissionStatusCol) Eq(v factoringsubmission.SubmissionStatus) keel.Pred {
 	return c.StringCol.Eq(string(v))
 }
-func (c SubmissionStatusCol) Ne(v factoring.SubmissionStatus) keel.Pred {
+func (c SubmissionStatusCol) Ne(v factoringsubmission.SubmissionStatus) keel.Pred {
 	return c.StringCol.Ne(string(v))
 }
-func (c SubmissionStatusCol) Gt(v factoring.SubmissionStatus) keel.Pred {
+func (c SubmissionStatusCol) Gt(v factoringsubmission.SubmissionStatus) keel.Pred {
 	return c.StringCol.Gt(string(v))
 }
-func (c SubmissionStatusCol) Gte(v factoring.SubmissionStatus) keel.Pred {
+func (c SubmissionStatusCol) Gte(v factoringsubmission.SubmissionStatus) keel.Pred {
 	return c.StringCol.Gte(string(v))
 }
-func (c SubmissionStatusCol) Lt(v factoring.SubmissionStatus) keel.Pred {
+func (c SubmissionStatusCol) Lt(v factoringsubmission.SubmissionStatus) keel.Pred {
 	return c.StringCol.Lt(string(v))
 }
-func (c SubmissionStatusCol) Lte(v factoring.SubmissionStatus) keel.Pred {
+func (c SubmissionStatusCol) Lte(v factoringsubmission.SubmissionStatus) keel.Pred {
 	return c.StringCol.Lte(string(v))
 }
-func (c SubmissionStatusCol) IsDistinctFrom(v factoring.SubmissionStatus) keel.Pred {
+func (c SubmissionStatusCol) IsDistinctFrom(v factoringsubmission.SubmissionStatus) keel.Pred {
 	return c.StringCol.IsDistinctFrom(string(v))
 }
-func (c SubmissionStatusCol) Between(lo, hi factoring.SubmissionStatus) keel.Pred {
+func (c SubmissionStatusCol) Between(lo, hi factoringsubmission.SubmissionStatus) keel.Pred {
 	return c.StringCol.Between(string(lo), string(hi))
 }
-func (c SubmissionStatusCol) To(v factoring.SubmissionStatus) keel.Assignment {
+func (c SubmissionStatusCol) To(v factoringsubmission.SubmissionStatus) keel.Assignment {
 	return c.StringCol.To(string(v))
 }
-func (c SubmissionStatusCol) In(vs ...factoring.SubmissionStatus) keel.Pred {
+func (c SubmissionStatusCol) In(vs ...factoringsubmission.SubmissionStatus) keel.Pred {
 	return c.StringCol.In(keel.Strings(vs)...)
 }
-func (c SubmissionStatusCol) NotIn(vs ...factoring.SubmissionStatus) keel.Pred {
+func (c SubmissionStatusCol) NotIn(vs ...factoringsubmission.SubmissionStatus) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 
-// TransportMethodCol is a column of factoring.TransportMethod values.
+// TransportMethodCol is a column of factoringsubmission.TransportMethod values.
 type TransportMethodCol struct{ keel.StringCol }
 
-func (c TransportMethodCol) Eq(v factoring.TransportMethod) keel.Pred {
+func (c TransportMethodCol) Eq(v factoringsubmission.TransportMethod) keel.Pred {
 	return c.StringCol.Eq(string(v))
 }
-func (c TransportMethodCol) Ne(v factoring.TransportMethod) keel.Pred {
+func (c TransportMethodCol) Ne(v factoringsubmission.TransportMethod) keel.Pred {
 	return c.StringCol.Ne(string(v))
 }
-func (c TransportMethodCol) Gt(v factoring.TransportMethod) keel.Pred {
+func (c TransportMethodCol) Gt(v factoringsubmission.TransportMethod) keel.Pred {
 	return c.StringCol.Gt(string(v))
 }
-func (c TransportMethodCol) Gte(v factoring.TransportMethod) keel.Pred {
+func (c TransportMethodCol) Gte(v factoringsubmission.TransportMethod) keel.Pred {
 	return c.StringCol.Gte(string(v))
 }
-func (c TransportMethodCol) Lt(v factoring.TransportMethod) keel.Pred {
+func (c TransportMethodCol) Lt(v factoringsubmission.TransportMethod) keel.Pred {
 	return c.StringCol.Lt(string(v))
 }
-func (c TransportMethodCol) Lte(v factoring.TransportMethod) keel.Pred {
+func (c TransportMethodCol) Lte(v factoringsubmission.TransportMethod) keel.Pred {
 	return c.StringCol.Lte(string(v))
 }
-func (c TransportMethodCol) IsDistinctFrom(v factoring.TransportMethod) keel.Pred {
+func (c TransportMethodCol) IsDistinctFrom(v factoringsubmission.TransportMethod) keel.Pred {
 	return c.StringCol.IsDistinctFrom(string(v))
 }
-func (c TransportMethodCol) Between(lo, hi factoring.TransportMethod) keel.Pred {
+func (c TransportMethodCol) Between(lo, hi factoringsubmission.TransportMethod) keel.Pred {
 	return c.StringCol.Between(string(lo), string(hi))
 }
-func (c TransportMethodCol) To(v factoring.TransportMethod) keel.Assignment {
+func (c TransportMethodCol) To(v factoringsubmission.TransportMethod) keel.Assignment {
 	return c.StringCol.To(string(v))
 }
-func (c TransportMethodCol) In(vs ...factoring.TransportMethod) keel.Pred {
+func (c TransportMethodCol) In(vs ...factoringsubmission.TransportMethod) keel.Pred {
 	return c.StringCol.In(keel.Strings(vs)...)
 }
-func (c TransportMethodCol) NotIn(vs ...factoring.TransportMethod) keel.Pred {
+func (c TransportMethodCol) NotIn(vs ...factoringsubmission.TransportMethod) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 
-// VerdictCol is a column of factoring.Verdict values.
+// VerdictCol is a column of factoringreadiness.Verdict values.
 type VerdictCol struct{ keel.StringCol }
 
-func (c VerdictCol) Eq(v factoring.Verdict) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c VerdictCol) Ne(v factoring.Verdict) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c VerdictCol) Gt(v factoring.Verdict) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c VerdictCol) Gte(v factoring.Verdict) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c VerdictCol) Lt(v factoring.Verdict) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c VerdictCol) Lte(v factoring.Verdict) keel.Pred { return c.StringCol.Lte(string(v)) }
-func (c VerdictCol) IsDistinctFrom(v factoring.Verdict) keel.Pred {
+func (c VerdictCol) Eq(v factoringreadiness.Verdict) keel.Pred  { return c.StringCol.Eq(string(v)) }
+func (c VerdictCol) Ne(v factoringreadiness.Verdict) keel.Pred  { return c.StringCol.Ne(string(v)) }
+func (c VerdictCol) Gt(v factoringreadiness.Verdict) keel.Pred  { return c.StringCol.Gt(string(v)) }
+func (c VerdictCol) Gte(v factoringreadiness.Verdict) keel.Pred { return c.StringCol.Gte(string(v)) }
+func (c VerdictCol) Lt(v factoringreadiness.Verdict) keel.Pred  { return c.StringCol.Lt(string(v)) }
+func (c VerdictCol) Lte(v factoringreadiness.Verdict) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c VerdictCol) IsDistinctFrom(v factoringreadiness.Verdict) keel.Pred {
 	return c.StringCol.IsDistinctFrom(string(v))
 }
-func (c VerdictCol) Between(lo, hi factoring.Verdict) keel.Pred {
+func (c VerdictCol) Between(lo, hi factoringreadiness.Verdict) keel.Pred {
 	return c.StringCol.Between(string(lo), string(hi))
 }
-func (c VerdictCol) To(v factoring.Verdict) keel.Assignment { return c.StringCol.To(string(v)) }
-func (c VerdictCol) In(vs ...factoring.Verdict) keel.Pred   { return c.StringCol.In(keel.Strings(vs)...) }
-func (c VerdictCol) NotIn(vs ...factoring.Verdict) keel.Pred {
+func (c VerdictCol) To(v factoringreadiness.Verdict) keel.Assignment { return c.StringCol.To(string(v)) }
+func (c VerdictCol) In(vs ...factoringreadiness.Verdict) keel.Pred   { return c.StringCol.In(keel.Strings(vs)...) }
+func (c VerdictCol) NotIn(vs ...factoringreadiness.Verdict) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }

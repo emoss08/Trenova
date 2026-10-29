@@ -12,6 +12,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringreadiness"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringsubmission"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringsubmissionports"
@@ -90,7 +92,7 @@ type SubmissionService struct {
 	inliner          documenttemplateports.AssetInliner
 	sequences        seqgen.Generator
 	cipher           kernelports.SecretCipher
-	senders          map[factoring.TransportMethod]factoringsubmissionports.FactoringTransport
+	senders          map[factoringsubmission.TransportMethod]factoringsubmissionports.FactoringTransport
 	starter          factoringsubmissionports.SubmissionSendStarter
 	requester        factoringports.EvaluationRequester
 	events           agentports.AgentEventPublisher
@@ -135,21 +137,21 @@ func NewSubmissionService(p SubmissionParams) factoringsubmissionports.Submissio
 func (s *SubmissionService) Get(
 	ctx context.Context,
 	req factoringsubmissionports.GetSubmissionRequest,
-) (*factoring.Submission, error) {
+) (*factoringsubmission.Submission, error) {
 	return s.repo.GetByID(ctx, req)
 }
 
 func (s *SubmissionService) List(
 	ctx context.Context,
 	req *factoringsubmissionports.ListSubmissionConnectionRequest,
-) (*pagination.CursorListResult[*factoring.Submission], error) {
+) (*pagination.CursorListResult[*factoringsubmission.Submission], error) {
 	return s.repo.ListConnection(ctx, req)
 }
 
 func (s *SubmissionService) ListItems(
 	ctx context.Context,
 	req *factoringsubmissionports.ListItemsBySubmissionIDsRequest,
-) (map[pulid.ID][]*factoring.SubmissionItem, error) {
+) (map[pulid.ID][]*factoringsubmission.SubmissionItem, error) {
 	return s.repo.ListItemsBySubmissionIDs(ctx, req)
 }
 
@@ -163,7 +165,7 @@ func (s *SubmissionService) LiveItems(
 type plannedSubmission struct {
 	plan      *factoringsubmissionports.SubmissionPlan
 	factor    *factoringcompany.FactoringCompany
-	transport *factoring.Transport
+	transport *factoringsubmission.Transport
 	invoices  map[pulid.ID]*invoice.Invoice
 }
 
@@ -253,7 +255,7 @@ func (s *SubmissionService) plan(
 		Agreement:            agreement,
 		TransportMethod:      transport.Method,
 		TransportTarget:      transport.Target(),
-		AttachPackets: transport.Method == factoring.TransportMethodSftp ||
+		AttachPackets: transport.Method == factoringsubmission.TransportMethodSftp ||
 			transport.AttachPackets,
 		Items: make([]*factoringsubmissionports.SubmissionPlanItem, 0, len(ids)),
 	}
@@ -283,7 +285,7 @@ func (s *SubmissionService) plan(
 type planInputs struct {
 	ids       []pulid.ID
 	invoices  map[pulid.ID]*invoice.Invoice
-	states    map[pulid.ID]*factoring.InvoiceState
+	states    map[pulid.ID]*factoringreadiness.InvoiceState
 	names     map[pulid.ID]string
 	agreement *factoring.Agreement
 	factorID  pulid.ID
@@ -339,7 +341,7 @@ func (s *SubmissionService) Submit(
 	ctx context.Context,
 	req *factoringsubmissionports.PlanSubmissionRequest,
 	actor *permissionports.RequestActor,
-) (*factoring.Submission, error) {
+) (*factoringsubmission.Submission, error) {
 	if err := requireActor(actor, "Submitting invoices to a factor"); err != nil {
 		return nil, err
 	}
@@ -372,13 +374,13 @@ func (s *SubmissionService) Submit(
 		return nil, err
 	}
 
-	entity := &factoring.Submission{
+	entity := &factoringsubmission.Submission{
 		OrganizationID:     req.TenantInfo.OrgID,
 		BusinessUnitID:     req.TenantInfo.BuID,
 		Number:             number,
 		FactoringCompanyID: plan.FactoringCompanyID,
 		AgreementID:        plan.Agreement.ID,
-		Status:             factoring.SubmissionStatusSending,
+		Status:             factoringsubmission.SubmissionStatusSending,
 		CurrencyCode:       plan.CurrencyCode,
 		TransportMethod:    plan.TransportMethod,
 		TransportTarget:    plan.TransportTarget,
@@ -446,7 +448,7 @@ func (s *SubmissionService) Retry(
 	ctx context.Context,
 	req *factoringsubmissionports.SubmissionActionRequest,
 	actor *permissionports.RequestActor,
-) (*factoring.Submission, error) {
+) (*factoringsubmission.Submission, error) {
 	if err := requireActor(actor, "Retrying a factoring schedule"); err != nil {
 		return nil, err
 	}
@@ -489,7 +491,7 @@ func (s *SubmissionService) Cancel(
 	ctx context.Context,
 	req *factoringsubmissionports.SubmissionActionRequest,
 	actor *permissionports.RequestActor,
-) (*factoring.Submission, error) {
+) (*factoringsubmission.Submission, error) {
 	if err := requireActor(actor, "Cancelling a factoring schedule"); err != nil {
 		return nil, err
 	}
@@ -516,7 +518,7 @@ func (s *SubmissionService) Cancel(
 func (s *SubmissionService) loadForAction(
 	ctx context.Context,
 	req *factoringsubmissionports.SubmissionActionRequest,
-) (*factoring.Submission, error) {
+) (*factoringsubmission.Submission, error) {
 	if err := requireRequest(req != nil); err != nil {
 		return nil, err
 	}
@@ -594,7 +596,7 @@ func (s *SubmissionService) customerNames(
 func (s *SubmissionService) requestInvoices(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	sub *factoring.Submission,
+	sub *factoringsubmission.Submission,
 ) {
 	if s.requester == nil {
 		return
@@ -607,7 +609,7 @@ func (s *SubmissionService) requestInvoices(
 func (s *SubmissionService) startSend(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	sub *factoring.Submission,
+	sub *factoringsubmission.Submission,
 ) {
 	if s.starter == nil {
 		s.l.Warn("factoring schedule sending is not available in this process",
@@ -620,7 +622,7 @@ func (s *SubmissionService) startSend(
 func (s *SubmissionService) publishEvent(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	sub *factoring.Submission,
+	sub *factoringsubmission.Submission,
 	kind agent.EventKind,
 	detail string,
 ) {
@@ -642,7 +644,7 @@ func submissionInvoiceIDs(raw []pulid.ID) ([]pulid.ID, error) {
 			"Choose at least one invoice",
 		)
 	}
-	if len(ids) > factoring.MaxSubmissionInvoices {
+	if len(ids) > factoringsubmission.MaxSubmissionInvoices {
 		return nil, errortypes.NewValidationError(
 			"invoiceIds",
 			errortypes.ErrInvalid,
@@ -655,7 +657,7 @@ func submissionInvoiceIDs(raw []pulid.ID) ([]pulid.ID, error) {
 func planProblem(
 	id pulid.ID,
 	inv *invoice.Invoice,
-	state *factoring.InvoiceState,
+	state *factoringreadiness.InvoiceState,
 	factorID pulid.ID,
 ) string {
 	switch {
@@ -665,9 +667,9 @@ func planProblem(
 		return inv.Number + " is not assigned to this factor"
 	case state == nil:
 		return inv.Number + " has not been checked for factoring yet"
-	case state.Verdict == factoring.VerdictSubmitted:
+	case state.Verdict == factoringreadiness.VerdictSubmitted:
 		return inv.Number + " is already on a schedule"
-	case state.Verdict != factoring.VerdictReady || state.ReadySince == nil:
+	case state.Verdict != factoringreadiness.VerdictReady || state.ReadySince == nil:
 		return inv.Number + " is not ready to factor"
 	default:
 		return ""
@@ -692,10 +694,12 @@ func submissionKey(parts []string) string {
 	return submissionKeyPrefix + hex.EncodeToString(sum[:16])
 }
 
-func itemsFromPlan(plan *factoringsubmissionports.SubmissionPlan) []*factoring.SubmissionItem {
-	items := make([]*factoring.SubmissionItem, 0, len(plan.Items))
+func itemsFromPlan(
+	plan *factoringsubmissionports.SubmissionPlan,
+) []*factoringsubmission.SubmissionItem {
+	items := make([]*factoringsubmission.SubmissionItem, 0, len(plan.Items))
 	for _, item := range plan.Items {
-		items = append(items, &factoring.SubmissionItem{
+		items = append(items, &factoringsubmission.SubmissionItem{
 			InvoiceID:            item.InvoiceID,
 			InvoiceNumber:        item.InvoiceNumber,
 			CustomerID:           item.CustomerID,
@@ -704,15 +708,15 @@ func itemsFromPlan(plan *factoringsubmissionports.SubmissionPlan) []*factoring.S
 			ExpectedFeeMinor:     item.Funding.FeeMinor,
 			ExpectedReserveMinor: item.Funding.ReserveMinor,
 			ExpectedDays:         item.Funding.Days,
-			Status:               factoring.SubmissionItemStatusPending,
+			Status:               factoringsubmission.SubmissionItemStatusPending,
 		})
 	}
 	return items
 }
 
-func cloneSubmission(src *factoring.Submission) *factoring.Submission {
+func cloneSubmission(src *factoringsubmission.Submission) *factoringsubmission.Submission {
 	copied := *src
-	copied.Items = make([]*factoring.SubmissionItem, 0, len(src.Items))
+	copied.Items = make([]*factoringsubmission.SubmissionItem, 0, len(src.Items))
 	for _, item := range src.Items {
 		if item == nil {
 			continue

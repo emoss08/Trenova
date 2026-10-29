@@ -3,7 +3,7 @@ package factoringcontract
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringremittance"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringremittanceports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -63,7 +63,7 @@ func NewRemittanceStageStarter(
 func (s *RemittanceStageStarter) StartStage(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	remittance *factoring.Remittance,
+	remittance *factoringremittance.Remittance,
 ) {
 	if remittance == nil {
 		return

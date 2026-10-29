@@ -2,22 +2,22 @@ package factoringsql
 
 import (
 	"github.com/emoss08/keel"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring/factoringdb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringsubmission"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice/invoicedb"
 )
 
 func ChargedBackInvoicePred(inv *invoicedb.InvoicesTable) keel.Pred {
-	return invoiceWithItemPred(inv, factoring.SubmissionItemStatusChargedBack)
+	return invoiceWithItemPred(inv, factoringsubmission.SubmissionItemStatusChargedBack)
 }
 
 func LiveInvoicePred(inv *invoicedb.InvoicesTable) keel.Pred {
-	return invoiceWithItemPred(inv, factoring.LiveSubmissionItemStatuses()...)
+	return invoiceWithItemPred(inv, factoringsubmission.LiveSubmissionItemStatuses()...)
 }
 
 func invoiceWithItemPred(
 	inv *invoicedb.InvoicesTable,
-	statuses ...factoring.SubmissionItemStatus,
+	statuses ...factoringsubmission.SubmissionItemStatus,
 ) keel.Pred {
 	item := factoringdb.SubmissionItems.As("fsi")
 	return keel.Exists(item.Where(

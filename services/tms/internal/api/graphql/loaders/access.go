@@ -16,6 +16,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/app/costingservice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringreadiness"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringsubmission"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/latecharge"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringsubmissionports"
@@ -1609,10 +1611,17 @@ func (f *FactoringCompanyByIDLoaderFactory) Attach(
 	})
 }
 
-func FactoringStateByInvoiceID(ctx context.Context, key string) (*factoring.InvoiceState, error) {
-	return load(ctx, key, func(s *set) *dataloadgen.Loader[string, *factoring.InvoiceState] {
-		return s.factoringStateByInvoiceID
-	})
+func FactoringStateByInvoiceID(
+	ctx context.Context,
+	key string,
+) (*factoringreadiness.InvoiceState, error) {
+	return load(
+		ctx,
+		key,
+		func(s *set) *dataloadgen.Loader[string, *factoringreadiness.InvoiceState] {
+			return s.factoringStateByInvoiceID
+		},
+	)
 }
 
 func (f *FactoringStateByInvoiceIDLoaderFactory) Attach(
@@ -1645,10 +1654,14 @@ func (f *FactoringAgreementsByCompanyIDLoaderFactory) Attach(
 func FactoringSubmissionItems(
 	ctx context.Context,
 	key string,
-) ([]*factoring.SubmissionItem, error) {
-	return load(ctx, key, func(s *set) *dataloadgen.Loader[string, []*factoring.SubmissionItem] {
-		return s.factoringSubmissionItems
-	})
+) ([]*factoringsubmission.SubmissionItem, error) {
+	return load(
+		ctx,
+		key,
+		func(s *set) *dataloadgen.Loader[string, []*factoringsubmission.SubmissionItem] {
+			return s.factoringSubmissionItems
+		},
+	)
 }
 
 func (f *FactoringSubmissionItemsLoaderFactory) Attach(
@@ -1660,10 +1673,17 @@ func (f *FactoringSubmissionItemsLoaderFactory) Attach(
 	})
 }
 
-func FactoringSubmissionByID(ctx context.Context, key string) (*factoring.Submission, error) {
-	return load(ctx, key, func(s *set) *dataloadgen.Loader[string, *factoring.Submission] {
-		return s.factoringSubmissionByID
-	})
+func FactoringSubmissionByID(
+	ctx context.Context,
+	key string,
+) (*factoringsubmission.Submission, error) {
+	return load(
+		ctx,
+		key,
+		func(s *set) *dataloadgen.Loader[string, *factoringsubmission.Submission] {
+			return s.factoringSubmissionByID
+		},
+	)
 }
 
 func (f *FactoringSubmissionByIDLoaderFactory) Attach(

@@ -1,28 +1,30 @@
-package factoring_test
+package factoringledger_test
 
 import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringledger"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringsubmission"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func fundedItem(t *testing.T) *factoring.SubmissionItem {
+func fundedItem(t *testing.T) *factoringsubmission.SubmissionItem {
 	t.Helper()
-	item := &factoring.SubmissionItem{
+	item := &factoringsubmission.SubmissionItem{
 		InvoiceNumber:        "INV-1",
 		FaceMinor:            1000,
 		ExpectedAdvanceMinor: 900,
 		ExpectedFeeMinor:     30,
-		Status:               factoring.SubmissionItemStatusPending,
+		Status:               factoringsubmission.SubmissionItemStatusPending,
 	}
 	require.NoError(t, item.Fund(now, item.ExpectedFunding()))
 	return item
 }
 
-func line(role factoring.AccountRole, debit, credit int64) factoring.MovementLine {
-	return factoring.MovementLine{Role: role, Debit: debit, Credit: credit}
+func line(role factoring.AccountRole, debit, credit int64) factoringledger.MovementLine {
+	return factoringledger.MovementLine{Role: role, Debit: debit, Credit: credit}
 }
 
 func TestPlanFundingMovement(t *testing.T) {
@@ -30,38 +32,38 @@ func TestPlanFundingMovement(t *testing.T) {
 
 	cases := map[string]struct {
 		treatment factoring.AccountingTreatment
-		lines     []factoring.MovementLine
-		effect    factoring.InvoiceEffect
+		lines     []factoringledger.MovementLine
+		effect    factoringledger.InvoiceEffect
 		invoice   int64
 	}{
 		"sale": {
 			treatment: factoring.AccountingTreatmentSale,
-			lines: []factoring.MovementLine{
+			lines: []factoringledger.MovementLine{
 				line(factoring.AccountRoleCash, 900, 0),
 				line(factoring.AccountRoleFeeExpense, 30, 0),
 				line(factoring.AccountRoleDueFromFactor, 70, 0),
 				line(factoring.AccountRoleAR, 0, 1000),
 			},
-			effect:  factoring.InvoiceEffectSettle,
+			effect:  factoringledger.InvoiceEffectSettle,
 			invoice: 1000,
 		},
 		"secured borrowing": {
 			treatment: factoring.AccountingTreatmentSecuredBorrowing,
-			lines: []factoring.MovementLine{
+			lines: []factoringledger.MovementLine{
 				line(factoring.AccountRoleCash, 900, 0),
 				line(factoring.AccountRoleFeeExpense, 30, 0),
 				line(factoring.AccountRoleLiability, 0, 930),
 			},
-			effect: factoring.InvoiceEffectNone,
+			effect: factoringledger.InvoiceEffectNone,
 		},
 	}
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
-			got, err := factoring.PlanFundingMovement(fundedItem(t), tc.treatment)
+			got, err := factoringledger.PlanFundingMovement(fundedItem(t), tc.treatment)
 			require.NoError(t, err)
-			assert.Equal(t, factoring.ReserveEntryFunding, got.Kind)
+			assert.Equal(t, factoringledger.ReserveEntryFunding, got.Kind)
 			assert.Equal(t, tc.lines, got.Lines)
 			assert.True(t, got.Balanced())
 			assert.Equal(t, tc.effect, got.InvoiceEffect)
@@ -76,13 +78,13 @@ func TestPlanReleaseMovementBalancesWithFee(t *testing.T) {
 	cases := map[string]struct {
 		treatment factoring.AccountingTreatment
 		cash      int64
-		lines     []factoring.MovementLine
+		lines     []factoringledger.MovementLine
 		fee       int64
 	}{
 		"sale paid in full": {
 			treatment: factoring.AccountingTreatmentSale,
 			cash:      70,
-			lines: []factoring.MovementLine{
+			lines: []factoringledger.MovementLine{
 				line(factoring.AccountRoleCash, 70, 0),
 				line(factoring.AccountRoleDueFromFactor, 0, 70),
 			},
@@ -90,7 +92,7 @@ func TestPlanReleaseMovementBalancesWithFee(t *testing.T) {
 		"sale with an extra fee": {
 			treatment: factoring.AccountingTreatmentSale,
 			cash:      60,
-			lines: []factoring.MovementLine{
+			lines: []factoringledger.MovementLine{
 				line(factoring.AccountRoleCash, 60, 0),
 				line(factoring.AccountRoleFeeExpense, 10, 0),
 				line(factoring.AccountRoleDueFromFactor, 0, 70),
@@ -100,7 +102,7 @@ func TestPlanReleaseMovementBalancesWithFee(t *testing.T) {
 		"sale with a fee rebate": {
 			treatment: factoring.AccountingTreatmentSale,
 			cash:      80,
-			lines: []factoring.MovementLine{
+			lines: []factoringledger.MovementLine{
 				line(factoring.AccountRoleCash, 80, 0),
 				line(factoring.AccountRoleFeeExpense, 0, 10),
 				line(factoring.AccountRoleDueFromFactor, 0, 70),
@@ -110,7 +112,7 @@ func TestPlanReleaseMovementBalancesWithFee(t *testing.T) {
 		"secured borrowing": {
 			treatment: factoring.AccountingTreatmentSecuredBorrowing,
 			cash:      70,
-			lines: []factoring.MovementLine{
+			lines: []factoringledger.MovementLine{
 				line(factoring.AccountRoleCash, 70, 0),
 				line(factoring.AccountRoleLiability, 930, 0),
 				line(factoring.AccountRoleAR, 0, 1000),
@@ -121,7 +123,7 @@ func TestPlanReleaseMovementBalancesWithFee(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
-			got, err := factoring.PlanReleaseMovement(fundedItem(t), tc.treatment, tc.cash)
+			got, err := factoringledger.PlanReleaseMovement(fundedItem(t), tc.treatment, tc.cash)
 			require.NoError(t, err)
 			assert.Equal(t, tc.lines, got.Lines)
 			assert.Equal(t, tc.fee, got.FeeMinor)
@@ -133,30 +135,37 @@ func TestPlanReleaseMovementBalancesWithFee(t *testing.T) {
 func TestPlanReleaseMovementSettlesTheInvoiceOnlyWhenBorrowed(t *testing.T) {
 	t.Parallel()
 
-	sale, err := factoring.PlanReleaseMovement(fundedItem(t), factoring.AccountingTreatmentSale, 70)
+	sale, err := factoringledger.PlanReleaseMovement(
+		fundedItem(t),
+		factoring.AccountingTreatmentSale,
+		70,
+	)
 	require.NoError(t, err)
-	assert.Equal(t, factoring.InvoiceEffectNone, sale.InvoiceEffect)
+	assert.Equal(t, factoringledger.InvoiceEffectNone, sale.InvoiceEffect)
 
-	borrowed, err := factoring.PlanReleaseMovement(
+	borrowed, err := factoringledger.PlanReleaseMovement(
 		fundedItem(t),
 		factoring.AccountingTreatmentSecuredBorrowing,
 		70,
 	)
 	require.NoError(t, err)
-	assert.Equal(t, factoring.InvoiceEffectSettle, borrowed.InvoiceEffect)
+	assert.Equal(t, factoringledger.InvoiceEffectSettle, borrowed.InvoiceEffect)
 	assert.Equal(t, int64(1000), borrowed.InvoiceMinor)
 }
 
 func TestPlanReleaseMovementOfAnEmptyReserve(t *testing.T) {
 	t.Parallel()
 
-	item := &factoring.SubmissionItem{
+	item := &factoringsubmission.SubmissionItem{
 		FaceMinor: 1000,
-		Status:    factoring.SubmissionItemStatusPending,
+		Status:    factoringsubmission.SubmissionItemStatusPending,
 	}
-	require.NoError(t, item.Fund(now, factoring.ItemFunding{AdvanceMinor: 970, FeeMinor: 30}))
+	require.NoError(
+		t,
+		item.Fund(now, factoringsubmission.ItemFunding{AdvanceMinor: 970, FeeMinor: 30}),
+	)
 
-	got, err := factoring.PlanReleaseMovement(item, factoring.AccountingTreatmentSale, 0)
+	got, err := factoringledger.PlanReleaseMovement(item, factoring.AccountingTreatmentSale, 0)
 	require.NoError(t, err)
 	assert.True(t, got.IsEmpty())
 	assert.Zero(t, got.Total())
@@ -165,51 +174,51 @@ func TestPlanReleaseMovementOfAnEmptyReserve(t *testing.T) {
 func TestPlanChargebackMovement(t *testing.T) {
 	t.Parallel()
 
-	repurchase := factoring.ChargebackRepurchaseMinor(fundedItem(t))
+	repurchase := factoringledger.ChargebackRepurchaseMinor(fundedItem(t))
 	assert.Equal(t, int64(930), repurchase)
 
 	cases := map[string]struct {
 		treatment factoring.AccountingTreatment
 		cash      int64
-		lines     []factoring.MovementLine
-		effect    factoring.InvoiceEffect
+		lines     []factoringledger.MovementLine
+		effect    factoringledger.InvoiceEffect
 	}{
 		"sale at the repurchase price": {
 			treatment: factoring.AccountingTreatmentSale,
 			cash:      repurchase,
-			lines: []factoring.MovementLine{
+			lines: []factoringledger.MovementLine{
 				line(factoring.AccountRoleCash, 0, 930),
 				line(factoring.AccountRoleDueFromFactor, 0, 70),
 				line(factoring.AccountRoleAR, 1000, 0),
 			},
-			effect: factoring.InvoiceEffectReopen,
+			effect: factoringledger.InvoiceEffectReopen,
 		},
 		"sale with a penalty": {
 			treatment: factoring.AccountingTreatmentSale,
 			cash:      950,
-			lines: []factoring.MovementLine{
+			lines: []factoringledger.MovementLine{
 				line(factoring.AccountRoleCash, 0, 950),
 				line(factoring.AccountRoleFeeExpense, 20, 0),
 				line(factoring.AccountRoleDueFromFactor, 0, 70),
 				line(factoring.AccountRoleAR, 1000, 0),
 			},
-			effect: factoring.InvoiceEffectReopen,
+			effect: factoringledger.InvoiceEffectReopen,
 		},
 		"secured borrowing": {
 			treatment: factoring.AccountingTreatmentSecuredBorrowing,
 			cash:      repurchase,
-			lines: []factoring.MovementLine{
+			lines: []factoringledger.MovementLine{
 				line(factoring.AccountRoleCash, 0, 930),
 				line(factoring.AccountRoleLiability, 930, 0),
 			},
-			effect: factoring.InvoiceEffectNone,
+			effect: factoringledger.InvoiceEffectNone,
 		},
 	}
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
-			got, err := factoring.PlanChargebackMovement(fundedItem(t), tc.treatment, tc.cash)
+			got, err := factoringledger.PlanChargebackMovement(fundedItem(t), tc.treatment, tc.cash)
 			require.NoError(t, err)
 			assert.Equal(t, tc.lines, got.Lines)
 			assert.Equal(t, tc.effect, got.InvoiceEffect)
@@ -221,17 +230,17 @@ func TestPlanChargebackMovement(t *testing.T) {
 func TestReverseMovementSwapsEveryLine(t *testing.T) {
 	t.Parallel()
 
-	original, err := factoring.PlanChargebackMovement(
+	original, err := factoringledger.PlanChargebackMovement(
 		fundedItem(t),
 		factoring.AccountingTreatmentSale,
 		950,
 	)
 	require.NoError(t, err)
 
-	reversed := factoring.ReverseMovement(&original)
+	reversed := factoringledger.ReverseMovement(&original)
 
-	assert.Equal(t, factoring.ReserveEntryChargebackReversal, reversed.Kind)
-	assert.Equal(t, factoring.InvoiceEffectSettle, reversed.InvoiceEffect)
+	assert.Equal(t, factoringledger.ReserveEntryChargebackReversal, reversed.Kind)
+	assert.Equal(t, factoringledger.InvoiceEffectSettle, reversed.InvoiceEffect)
 	assert.Equal(t, original.InvoiceMinor, reversed.InvoiceMinor)
 	assert.Equal(t, -original.CashMinor, reversed.CashMinor)
 	assert.Equal(t, -original.FeeMinor, reversed.FeeMinor)
@@ -248,22 +257,33 @@ func TestReverseMovementSwapsEveryLine(t *testing.T) {
 func TestMovementsRefuseAnUnfundedItem(t *testing.T) {
 	t.Parallel()
 
-	item := &factoring.SubmissionItem{FaceMinor: 1000, Status: factoring.SubmissionItemStatusPending}
+	item := &factoringsubmission.SubmissionItem{
+		FaceMinor: 1000,
+		Status:    factoringsubmission.SubmissionItemStatusPending,
+	}
 
-	_, err := factoring.PlanFundingMovement(item, factoring.AccountingTreatmentSale)
+	_, err := factoringledger.PlanFundingMovement(item, factoring.AccountingTreatmentSale)
 	require.Error(t, err)
-	_, err = factoring.PlanReleaseMovement(item, factoring.AccountingTreatmentSale, 0)
+	_, err = factoringledger.PlanReleaseMovement(item, factoring.AccountingTreatmentSale, 0)
 	require.Error(t, err)
-	_, err = factoring.PlanChargebackMovement(item, factoring.AccountingTreatmentSale, 0)
+	_, err = factoringledger.PlanChargebackMovement(item, factoring.AccountingTreatmentSale, 0)
 	require.Error(t, err)
 }
 
 func TestMovementsRefuseNegativeCash(t *testing.T) {
 	t.Parallel()
 
-	_, err := factoring.PlanReleaseMovement(fundedItem(t), factoring.AccountingTreatmentSale, -1)
+	_, err := factoringledger.PlanReleaseMovement(
+		fundedItem(t),
+		factoring.AccountingTreatmentSale,
+		-1,
+	)
 	require.Error(t, err)
-	_, err = factoring.PlanChargebackMovement(fundedItem(t), factoring.AccountingTreatmentSale, -1)
+	_, err = factoringledger.PlanChargebackMovement(
+		fundedItem(t),
+		factoring.AccountingTreatmentSale,
+		-1,
+	)
 	require.Error(t, err)
 }
 
@@ -275,12 +295,12 @@ func TestReserveEntryRebuildsTheMovement(t *testing.T) {
 		factoring.AccountingTreatmentSecuredBorrowing,
 	} {
 		item := fundedItem(t)
-		movement, err := factoring.PlanChargebackMovement(item, treatment, 950)
+		movement, err := factoringledger.PlanChargebackMovement(item, treatment, 950)
 		require.NoError(t, err)
 
-		entry := factoring.NewReserveEntry(
+		entry := factoringledger.NewReserveEntry(
 			item,
-			&factoring.Submission{CurrencyCode: "USD"},
+			&factoringsubmission.Submission{CurrencyCode: "USD"},
 			&movement,
 			now,
 		)
@@ -295,6 +315,6 @@ func TestReserveEntryRebuildsTheMovement(t *testing.T) {
 func TestMovementsRefuseAnUnknownTreatment(t *testing.T) {
 	t.Parallel()
 
-	_, err := factoring.PlanFundingMovement(fundedItem(t), factoring.AccountingTreatment(""))
+	_, err := factoringledger.PlanFundingMovement(fundedItem(t), factoring.AccountingTreatment(""))
 	require.Error(t, err)
 }

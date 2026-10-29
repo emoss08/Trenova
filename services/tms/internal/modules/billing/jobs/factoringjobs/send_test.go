@@ -4,7 +4,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringsubmission"
 	"github.com/emoss08/trenova/internal/modules/billing/jobs/factoringjobs/factoringcontract"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringsubmissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -35,7 +35,7 @@ func TestSendWorkflowPreparesThenDelivers(t *testing.T) {
 		Once()
 	env.OnActivity(a.DeliverFactoringSubmissionActivity, mock.Anything, mock.Anything).
 		Return(&factoringsubmissionports.DeliverSubmissionResult{
-			Status:    factoring.SubmissionStatusSent,
+			Status:    factoringsubmission.SubmissionStatusSent,
 			Reference: "/in/FS1",
 			Parts:     1,
 		}, nil).Once()
@@ -46,7 +46,7 @@ func TestSendWorkflowPreparesThenDelivers(t *testing.T) {
 	require.NoError(t, env.GetWorkflowError())
 	var result factoringsubmissionports.DeliverSubmissionResult
 	require.NoError(t, env.GetWorkflowResult(&result))
-	assert.Equal(t, factoring.SubmissionStatusSent, result.Status)
+	assert.Equal(t, factoringsubmission.SubmissionStatusSent, result.Status)
 	env.AssertExpectations(t)
 }
 

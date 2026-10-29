@@ -3,6 +3,10 @@
 package gqlmodel
 
 import (
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringledger"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringreadiness"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringremittance"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringsubmission"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/fleetsafety"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerdiscipline"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerinjury"
@@ -2704,7 +2708,7 @@ type CreateDocumentTemplateVersionInput struct {
 type CreateFactoringRemittanceInput struct {
 	FactoringCompanyID string `json:"factoringCompanyId"`
 	// Funding unless the report is of reserve releases, rejections or chargebacks.
-	DefaultKind *factoring.RemittanceLineKind `json:"defaultKind,omitempty"`
+	DefaultKind *factoringremittance.RemittanceLineKind `json:"defaultKind,omitempty"`
 	// The day the factor sent the report.
 	RemittedOn *int `json:"remittedOn,omitempty"`
 }
@@ -5231,7 +5235,7 @@ type FactoringFeeTierInput struct {
 
 type FactoringFundingItemInput struct {
 	ItemID  string                   `json:"itemId"`
-	Outcome factoring.FundingOutcome `json:"outcome"`
+	Outcome factoringledger.FundingOutcome `json:"outcome"`
 	// What the factor advanced. Defaults to the expected advance.
 	AdvanceMinor *int `json:"advanceMinor,omitempty"`
 	// What the factor kept as its fee. Defaults to the expected fee.
@@ -5249,13 +5253,13 @@ type FactoringInvoiceStateConnection struct {
 }
 
 type FactoringInvoiceStateEdge struct {
-	Node   *factoring.InvoiceState `json:"node"`
+	Node   *factoringreadiness.InvoiceState `json:"node"`
 	Cursor string                  `json:"cursor"`
 }
 
 type FactoringInvoiceStateListInput struct {
 	Table              *DataTableConnectionInput `json:"table"`
-	Verdicts           []factoring.Verdict       `json:"verdicts,omitempty"`
+	Verdicts           []factoringreadiness.Verdict       `json:"verdicts,omitempty"`
 	FactoringCompanyID *string                   `json:"factoringCompanyId,omitempty"`
 	CustomerID         *string                   `json:"customerId,omitempty"`
 }
@@ -5301,7 +5305,7 @@ type FactoringRemittanceConnection struct {
 }
 
 type FactoringRemittanceEdge struct {
-	Node   *factoring.Remittance `json:"node"`
+	Node   *factoringremittance.Remittance `json:"node"`
 	Cursor string                `json:"cursor"`
 }
 
@@ -5314,21 +5318,21 @@ type FactoringRemittanceLineConnection struct {
 }
 
 type FactoringRemittanceLineEdge struct {
-	Node   *factoring.RemittanceLine `json:"node"`
+	Node   *factoringremittance.RemittanceLine `json:"node"`
 	Cursor string                    `json:"cursor"`
 }
 
 type FactoringRemittanceLineListInput struct {
 	Table         *DataTableConnectionInput         `json:"table"`
 	RemittanceID  string                            `json:"remittanceId"`
-	MatchStatuses []factoring.RemittanceMatchStatus `json:"matchStatuses,omitempty"`
+	MatchStatuses []factoringremittance.RemittanceMatchStatus `json:"matchStatuses,omitempty"`
 }
 
 type FactoringRemittanceListInput struct {
 	Table              *DataTableConnectionInput    `json:"table"`
 	FactoringCompanyID *string                      `json:"factoringCompanyId,omitempty"`
 	InboundMessageID   *string                      `json:"inboundMessageId,omitempty"`
-	Statuses           []factoring.RemittanceStatus `json:"statuses,omitempty"`
+	Statuses           []factoringremittance.RemittanceStatus `json:"statuses,omitempty"`
 }
 
 type FactoringRemittanceVersionInput struct {
@@ -5345,7 +5349,7 @@ type FactoringReserveEntryConnection struct {
 }
 
 type FactoringReserveEntryEdge struct {
-	Node   *factoring.ReserveEntry `json:"node"`
+	Node   *factoringledger.ReserveEntry `json:"node"`
 	Cursor string                  `json:"cursor"`
 }
 
@@ -5354,7 +5358,7 @@ type FactoringReserveEntryListInput struct {
 	FactoringCompanyID *string                      `json:"factoringCompanyId,omitempty"`
 	SubmissionID       *string                      `json:"submissionId,omitempty"`
 	InvoiceID          *string                      `json:"invoiceId,omitempty"`
-	Kinds              []factoring.ReserveEntryKind `json:"kinds,omitempty"`
+	Kinds              []factoringledger.ReserveEntryKind `json:"kinds,omitempty"`
 }
 
 type FactoringReserveMovementInput struct {
@@ -5379,14 +5383,14 @@ type FactoringSubmissionConnection struct {
 }
 
 type FactoringSubmissionEdge struct {
-	Node   *factoring.Submission `json:"node"`
+	Node   *factoringsubmission.Submission `json:"node"`
 	Cursor string                `json:"cursor"`
 }
 
 type FactoringSubmissionListInput struct {
 	Table              *DataTableConnectionInput    `json:"table"`
 	FactoringCompanyID *string                      `json:"factoringCompanyId,omitempty"`
-	Statuses           []factoring.SubmissionStatus `json:"statuses,omitempty"`
+	Statuses           []factoringsubmission.SubmissionStatus `json:"statuses,omitempty"`
 }
 
 type FactoringSubmissionPlanInput struct {
@@ -8728,13 +8732,13 @@ type SaveFactoringTransportInput struct {
 	FactoringCompanyID string `json:"factoringCompanyId"`
 	// Required when the factor already has delivery settings.
 	Version         *int                      `json:"version,omitempty"`
-	Method          factoring.TransportMethod `json:"method"`
+	Method          factoringsubmission.TransportMethod `json:"method"`
 	EmailRecipients []string                  `json:"emailRecipients,omitempty"`
 	AttachPackets   *bool                     `json:"attachPackets,omitempty"`
 	SftpHost        *string                   `json:"sftpHost,omitempty"`
 	SftpPort        *int                      `json:"sftpPort,omitempty"`
 	SftpUsername    *string                   `json:"sftpUsername,omitempty"`
-	SftpAuthMethod  *factoring.SftpAuthMethod `json:"sftpAuthMethod,omitempty"`
+	SftpAuthMethod  *factoringsubmission.SftpAuthMethod `json:"sftpAuthMethod,omitempty"`
 	// Leave empty to keep the stored password or key.
 	SftpSecret       *string `json:"sftpSecret,omitempty"`
 	SftpKnownHostKey *string `json:"sftpKnownHostKey,omitempty"`
@@ -10987,7 +10991,7 @@ type StageFactoringRemittanceInput struct {
 	DocumentID string `json:"documentId"`
 	// Which column holds each field; omitted to use the factor's saved layout or the standard headers. A mapping that reads is saved for the factor.
 	Mapping     []*FactoringRemittanceColumnInput `json:"mapping,omitempty"`
-	DefaultKind *factoring.RemittanceLineKind     `json:"defaultKind,omitempty"`
+	DefaultKind *factoringremittance.RemittanceLineKind     `json:"defaultKind,omitempty"`
 	RemittedOn  *int                              `json:"remittedOn,omitempty"`
 }
 
@@ -11832,7 +11836,7 @@ type UpdateFactoringRemittanceLineInput struct {
 	// The schedule item, for Match.
 	ItemID *string `json:"itemId,omitempty"`
 	// What the line records, for SetKind.
-	Kind *factoring.RemittanceLineKind `json:"kind,omitempty"`
+	Kind *factoringremittance.RemittanceLineKind `json:"kind,omitempty"`
 	// Why the line is not booked, for Ignore.
 	Reason *string `json:"reason,omitempty"`
 }

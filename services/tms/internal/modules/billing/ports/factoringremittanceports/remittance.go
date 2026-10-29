@@ -3,7 +3,8 @@ package factoringremittanceports
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringledger"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringremittance"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringledgerports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -18,19 +19,19 @@ type GetRemittanceRequest struct {
 }
 
 type ListRemittanceConnectionRequest struct {
-	Filter             *pagination.QueryOptions     `json:"filter"`
-	Cursor             pagination.CursorInfo        `json:"-"`
-	FactoringCompanyID pulid.ID                     `json:"factoringCompanyId"`
-	InboundMessageID   pulid.ID                     `json:"inboundMessageId"`
-	Statuses           []factoring.RemittanceStatus `json:"statuses"`
+	Filter             *pagination.QueryOptions               `json:"filter"`
+	Cursor             pagination.CursorInfo                  `json:"-"`
+	FactoringCompanyID pulid.ID                               `json:"factoringCompanyId"`
+	InboundMessageID   pulid.ID                               `json:"inboundMessageId"`
+	Statuses           []factoringremittance.RemittanceStatus `json:"statuses"`
 }
 
 type ListRemittanceLineConnectionRequest struct {
-	Filter        *pagination.QueryOptions          `json:"filter"`
-	TenantInfo    pagination.TenantInfo             `json:"-"`
-	Cursor        pagination.CursorInfo             `json:"-"`
-	RemittanceID  pulid.ID                          `json:"remittanceId"`
-	MatchStatuses []factoring.RemittanceMatchStatus `json:"matchStatuses"`
+	Filter        *pagination.QueryOptions                    `json:"filter"`
+	TenantInfo    pagination.TenantInfo                       `json:"-"`
+	Cursor        pagination.CursorInfo                       `json:"-"`
+	RemittanceID  pulid.ID                                    `json:"remittanceId"`
+	MatchStatuses []factoringremittance.RemittanceMatchStatus `json:"matchStatuses"`
 }
 
 type ListRemittanceCandidatesRequest struct {
@@ -59,47 +60,53 @@ type ListOpenRemittancesRequest struct {
 }
 
 type OpenRemittance struct {
-	RemittanceID       pulid.ID                   `json:"remittanceId"`
-	FactoringCompanyID pulid.ID                   `json:"factoringCompanyId"`
-	FactorName         string                     `json:"factorName"`
-	FileName           string                     `json:"fileName"`
-	Status             factoring.RemittanceStatus `json:"status"`
-	ExceptionCount     int                        `json:"exceptionCount"`
-	MatchedCount       int                        `json:"matchedCount"`
-	CreatedAt          int64                      `json:"createdAt"`
+	RemittanceID       pulid.ID                             `json:"remittanceId"`
+	FactoringCompanyID pulid.ID                             `json:"factoringCompanyId"`
+	FactorName         string                               `json:"factorName"`
+	FileName           string                               `json:"fileName"`
+	Status             factoringremittance.RemittanceStatus `json:"status"`
+	ExceptionCount     int                                  `json:"exceptionCount"`
+	MatchedCount       int                                  `json:"matchedCount"`
+	CreatedAt          int64                                `json:"createdAt"`
 }
 
 type RemittanceRepository interface {
-	Create(ctx context.Context, entity *factoring.Remittance) (*factoring.Remittance, error)
-	Update(ctx context.Context, entity *factoring.Remittance) (*factoring.Remittance, error)
-	Get(ctx context.Context, req GetRemittanceRequest) (*factoring.Remittance, error)
+	Create(
+		ctx context.Context,
+		entity *factoringremittance.Remittance,
+	) (*factoringremittance.Remittance, error)
+	Update(
+		ctx context.Context,
+		entity *factoringremittance.Remittance,
+	) (*factoringremittance.Remittance, error)
+	Get(ctx context.Context, req GetRemittanceRequest) (*factoringremittance.Remittance, error)
 	FindByInboundDocument(
 		ctx context.Context,
 		req *FindRemittanceByDocumentRequest,
-	) (*factoring.Remittance, error)
+	) (*factoringremittance.Remittance, error)
 	ListConnection(
 		ctx context.Context,
 		req *ListRemittanceConnectionRequest,
-	) (*pagination.CursorListResult[*factoring.Remittance], error)
+	) (*pagination.CursorListResult[*factoringremittance.Remittance], error)
 	ListLineConnection(
 		ctx context.Context,
 		req *ListRemittanceLineConnectionRequest,
-	) (*pagination.CursorListResult[*factoring.RemittanceLine], error)
+	) (*pagination.CursorListResult[*factoringremittance.RemittanceLine], error)
 	ReplaceLines(
 		ctx context.Context,
-		remittance *factoring.Remittance,
+		remittance *factoringremittance.Remittance,
 	) error
-	UpdateLines(ctx context.Context, lines []*factoring.RemittanceLine) error
+	UpdateLines(ctx context.Context, lines []*factoringremittance.RemittanceLine) error
 	ListCandidates(
 		ctx context.Context,
 		req *ListRemittanceCandidatesRequest,
-	) ([]*factoring.RemittanceCandidate, error)
+	) ([]*factoringremittance.RemittanceCandidate, error)
 	ListOpen(ctx context.Context, req *ListOpenRemittancesRequest) ([]*OpenRemittance, error)
 	GetProfile(
 		ctx context.Context,
 		req GetRemittanceProfileRequest,
-	) (*factoring.RemittanceProfile, error)
-	SaveProfile(ctx context.Context, profile *factoring.RemittanceProfile) error
+	) (*factoringremittance.RemittanceProfile, error)
+	SaveProfile(ctx context.Context, profile *factoringremittance.RemittanceProfile) error
 }
 
 type RemittanceLineAction string
@@ -136,20 +143,20 @@ func AllRemittanceLineActions() []RemittanceLineAction {
 }
 
 type CreateRemittanceRequest struct {
-	TenantInfo         pagination.TenantInfo        `json:"-"`
-	FactoringCompanyID pulid.ID                     `json:"factoringCompanyId"`
-	DefaultKind        factoring.RemittanceLineKind `json:"defaultKind"`
-	RemittedOn         *int64                       `json:"remittedOn"`
+	TenantInfo         pagination.TenantInfo                  `json:"-"`
+	FactoringCompanyID pulid.ID                               `json:"factoringCompanyId"`
+	DefaultKind        factoringremittance.RemittanceLineKind `json:"defaultKind"`
+	RemittedOn         *int64                                 `json:"remittedOn"`
 }
 
 type StageRemittanceRequest struct {
-	TenantInfo  pagination.TenantInfo        `json:"-"`
-	ID          pulid.ID                     `json:"id"`
-	Version     int64                        `json:"version"`
-	DocumentID  pulid.ID                     `json:"documentId"`
-	Mapping     map[string]int               `json:"mapping"`
-	DefaultKind factoring.RemittanceLineKind `json:"defaultKind"`
-	RemittedOn  *int64                       `json:"remittedOn"`
+	TenantInfo  pagination.TenantInfo                  `json:"-"`
+	ID          pulid.ID                               `json:"id"`
+	Version     int64                                  `json:"version"`
+	DocumentID  pulid.ID                               `json:"documentId"`
+	Mapping     map[string]int                         `json:"mapping"`
+	DefaultKind factoringremittance.RemittanceLineKind `json:"defaultKind"`
+	RemittedOn  *int64                                 `json:"remittedOn"`
 }
 
 type RemittanceVersionRequest struct {
@@ -159,14 +166,14 @@ type RemittanceVersionRequest struct {
 }
 
 type UpdateRemittanceLineRequest struct {
-	TenantInfo   pagination.TenantInfo        `json:"-"`
-	RemittanceID pulid.ID                     `json:"remittanceId"`
-	Version      int64                        `json:"version"`
-	LineID       pulid.ID                     `json:"lineId"`
-	Action       RemittanceLineAction         `json:"action"`
-	ItemID       pulid.ID                     `json:"itemId"`
-	Kind         factoring.RemittanceLineKind `json:"kind"`
-	Reason       string                       `json:"reason"`
+	TenantInfo   pagination.TenantInfo                  `json:"-"`
+	RemittanceID pulid.ID                               `json:"remittanceId"`
+	Version      int64                                  `json:"version"`
+	LineID       pulid.ID                               `json:"lineId"`
+	Action       RemittanceLineAction                   `json:"action"`
+	ItemID       pulid.ID                               `json:"itemId"`
+	Kind         factoringremittance.RemittanceLineKind `json:"kind"`
+	Reason       string                                 `json:"reason"`
 }
 
 type DiscardRemittanceRequest struct {
@@ -177,33 +184,33 @@ type DiscardRemittanceRequest struct {
 }
 
 type PlannedRemittanceLine struct {
-	LineID        pulid.ID                              `json:"lineId"`
-	RowNumber     int                                   `json:"rowNumber"`
-	Kind          factoring.RemittanceLineKind          `json:"kind"`
-	InvoiceNumber string                                `json:"invoiceNumber"`
-	SubmissionID  pulid.ID                              `json:"submissionId"`
-	ItemID        pulid.ID                              `json:"itemId"`
-	CashMinor     int64                                 `json:"cashMinor"`
-	Movement      *factoringledgerports.PlannedMovement `json:"movement"`
+	LineID        pulid.ID                               `json:"lineId"`
+	RowNumber     int                                    `json:"rowNumber"`
+	Kind          factoringremittance.RemittanceLineKind `json:"kind"`
+	InvoiceNumber string                                 `json:"invoiceNumber"`
+	SubmissionID  pulid.ID                               `json:"submissionId"`
+	ItemID        pulid.ID                               `json:"itemId"`
+	CashMinor     int64                                  `json:"cashMinor"`
+	Movement      *factoringledgerports.PlannedMovement  `json:"movement"`
 }
 
 type RemittancePlan struct {
-	Remittance      *factoring.Remittance    `json:"remittance"`
-	Lines           []*PlannedRemittanceLine `json:"lines"`
-	FundedCount     int                      `json:"fundedCount"`
-	RejectedCount   int                      `json:"rejectedCount"`
-	ReleasedCount   int                      `json:"releasedCount"`
-	ChargebackCount int                      `json:"chargebackCount"`
-	LeftOpenCount   int                      `json:"leftOpenCount"`
-	AdvanceMinor    int64                    `json:"advanceMinor"`
-	FeeMinor        int64                    `json:"feeMinor"`
-	ReleasedMinor   int64                    `json:"releasedMinor"`
-	ChargebackMinor int64                    `json:"chargebackMinor"`
+	Remittance      *factoringremittance.Remittance `json:"remittance"`
+	Lines           []*PlannedRemittanceLine        `json:"lines"`
+	FundedCount     int                             `json:"fundedCount"`
+	RejectedCount   int                             `json:"rejectedCount"`
+	ReleasedCount   int                             `json:"releasedCount"`
+	ChargebackCount int                             `json:"chargebackCount"`
+	LeftOpenCount   int                             `json:"leftOpenCount"`
+	AdvanceMinor    int64                           `json:"advanceMinor"`
+	FeeMinor        int64                           `json:"feeMinor"`
+	ReleasedMinor   int64                           `json:"releasedMinor"`
+	ChargebackMinor int64                           `json:"chargebackMinor"`
 }
 
 type ApplyRemittanceResult struct {
-	Remittance *factoring.Remittance     `json:"remittance"`
-	Entries    []*factoring.ReserveEntry `json:"entries"`
+	Remittance *factoringremittance.Remittance `json:"remittance"`
+	Entries    []*factoringledger.ReserveEntry `json:"entries"`
 }
 
 type RemittanceEmailAttachment struct {
@@ -228,43 +235,43 @@ type IngestRemittanceEmailResult struct {
 }
 
 type RemittanceLinePlan struct {
-	Before     *factoring.Remittance     `json:"before"`
-	After      *factoring.Remittance     `json:"after"`
-	LineBefore *factoring.RemittanceLine `json:"lineBefore"`
-	LineAfter  *factoring.RemittanceLine `json:"lineAfter"`
-	Comment    string                    `json:"comment"`
+	Before     *factoringremittance.Remittance     `json:"before"`
+	After      *factoringremittance.Remittance     `json:"after"`
+	LineBefore *factoringremittance.RemittanceLine `json:"lineBefore"`
+	LineAfter  *factoringremittance.RemittanceLine `json:"lineAfter"`
+	Comment    string                              `json:"comment"`
 }
 
 type RemittanceDiscardPlan struct {
-	Before *factoring.Remittance `json:"before"`
-	After  *factoring.Remittance `json:"after"`
+	Before *factoringremittance.Remittance `json:"before"`
+	After  *factoringremittance.Remittance `json:"after"`
 }
 
 type StagePendingResult struct {
-	Remittance *factoring.Remittance `json:"remittance"`
-	Waiting    bool                  `json:"waiting"`
+	Remittance *factoringremittance.Remittance `json:"remittance"`
+	Waiting    bool                            `json:"waiting"`
 }
 
 type RemittanceService interface {
-	Get(ctx context.Context, req GetRemittanceRequest) (*factoring.Remittance, error)
+	Get(ctx context.Context, req GetRemittanceRequest) (*factoringremittance.Remittance, error)
 	ListConnection(
 		ctx context.Context,
 		req *ListRemittanceConnectionRequest,
-	) (*pagination.CursorListResult[*factoring.Remittance], error)
+	) (*pagination.CursorListResult[*factoringremittance.Remittance], error)
 	ListLineConnection(
 		ctx context.Context,
 		req *ListRemittanceLineConnectionRequest,
-	) (*pagination.CursorListResult[*factoring.RemittanceLine], error)
+	) (*pagination.CursorListResult[*factoringremittance.RemittanceLine], error)
 	Create(
 		ctx context.Context,
 		req *CreateRemittanceRequest,
 		actor *permissionports.RequestActor,
-	) (*factoring.Remittance, error)
+	) (*factoringremittance.Remittance, error)
 	Stage(
 		ctx context.Context,
 		req *StageRemittanceRequest,
 		actor *permissionports.RequestActor,
-	) (*factoring.Remittance, error)
+	) (*factoringremittance.Remittance, error)
 	StagePending(
 		ctx context.Context,
 		req *RemittanceVersionRequest,
@@ -274,7 +281,7 @@ type RemittanceService interface {
 		ctx context.Context,
 		req *RemittanceVersionRequest,
 		actor *permissionports.RequestActor,
-	) (*factoring.Remittance, error)
+	) (*factoringremittance.Remittance, error)
 	PlanUpdateLine(
 		ctx context.Context,
 		req *UpdateRemittanceLineRequest,
@@ -284,7 +291,7 @@ type RemittanceService interface {
 		ctx context.Context,
 		req *UpdateRemittanceLineRequest,
 		actor *permissionports.RequestActor,
-	) (*factoring.Remittance, error)
+	) (*factoringremittance.Remittance, error)
 	PlanApply(
 		ctx context.Context,
 		req *RemittanceVersionRequest,
@@ -304,7 +311,7 @@ type RemittanceService interface {
 		ctx context.Context,
 		req *DiscardRemittanceRequest,
 		actor *permissionports.RequestActor,
-	) (*factoring.Remittance, error)
+	) (*factoringremittance.Remittance, error)
 	IngestEmail(
 		ctx context.Context,
 		req *IngestRemittanceEmailRequest,
@@ -315,6 +322,6 @@ type RemittanceStageStarter interface {
 	StartStage(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
-		remittance *factoring.Remittance,
+		remittance *factoringremittance.Remittance,
 	)
 }

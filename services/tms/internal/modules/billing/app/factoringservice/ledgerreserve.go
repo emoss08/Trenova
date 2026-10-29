@@ -6,6 +6,8 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringledger"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringsubmission"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringledgerports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -26,9 +28,9 @@ type itemDraft struct {
 }
 
 type itemHistory struct {
-	funding     *factoring.ReserveEntry
+	funding     *factoringledger.ReserveEntry
 	chargebacks int
-	open        *factoring.ReserveEntry
+	open        *factoringledger.ReserveEntry
 }
 
 func (s *LedgerService) PlanRelease(
@@ -122,7 +124,7 @@ func (s *LedgerService) planRelease(
 	if req.CashMinor != nil {
 		cash = *req.CashMinor
 	}
-	movement, err := factoring.PlanReleaseMovement(item, history.funding.Treatment, cash)
+	movement, err := factoringledger.PlanReleaseMovement(item, history.funding.Treatment, cash)
 	if err != nil {
 		return nil, err
 	}
@@ -158,11 +160,11 @@ func (s *LedgerService) planChargeback(
 		)
 	}
 	item := plan.Item
-	cash := factoring.ChargebackRepurchaseMinor(item)
+	cash := factoringledger.ChargebackRepurchaseMinor(item)
 	if req.CashMinor != nil {
 		cash = *req.CashMinor
 	}
-	movement, err := factoring.PlanChargebackMovement(item, history.funding.Treatment, cash)
+	movement, err := factoringledger.PlanChargebackMovement(item, history.funding.Treatment, cash)
 	if err != nil {
 		return nil, err
 	}
@@ -214,7 +216,7 @@ func (s *LedgerService) planReversal(
 		)
 	}
 	original := history.open.Movement()
-	movement := factoring.ReverseMovement(&original)
+	movement := factoringledger.ReverseMovement(&original)
 	item := plan.Item
 	if err = item.ReverseChargeback(); err != nil {
 		return nil, err
@@ -321,8 +323,8 @@ func (s *LedgerService) recordItemMovement(
 	draft *itemDraft,
 	comment string,
 ) (*factoringledgerports.ReserveMovementResult, error) {
-	var entry *factoring.ReserveEntry
-	var updated *factoring.Submission
+	var entry *factoringledger.ReserveEntry
+	var updated *factoringsubmission.Submission
 	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		var txErr error
 		if entry, txErr = s.postMovement(txCtx, draft.input); txErr != nil {
@@ -341,27 +343,27 @@ func (s *LedgerService) recordItemMovement(
 	return &factoringledgerports.ReserveMovementResult{Submission: updated, Entry: entry}, nil
 }
 
-func readHistory(entries []*factoring.ReserveEntry) *itemHistory {
+func readHistory(entries []*factoringledger.ReserveEntry) *itemHistory {
 	history := &itemHistory{}
 	reversed := make(map[pulid.ID]struct{}, len(entries))
 	for _, entry := range entries {
-		if entry.Kind == factoring.ReserveEntryChargebackReversal &&
+		if entry.Kind == factoringledger.ReserveEntryChargebackReversal &&
 			entry.ReversesEntryID.IsNotNil() {
 			reversed[entry.ReversesEntryID] = struct{}{}
 		}
 	}
 	for _, entry := range entries {
 		switch entry.Kind {
-		case factoring.ReserveEntryFunding:
+		case factoringledger.ReserveEntryFunding:
 			if history.funding == nil {
 				history.funding = entry
 			}
-		case factoring.ReserveEntryChargeback:
+		case factoringledger.ReserveEntryChargeback:
 			history.chargebacks++
 			if _, done := reversed[entry.ID]; !done {
 				history.open = entry
 			}
-		case factoring.ReserveEntryRelease, factoring.ReserveEntryChargebackReversal:
+		case factoringledger.ReserveEntryRelease, factoringledger.ReserveEntryChargebackReversal:
 		}
 	}
 	return history

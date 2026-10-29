@@ -12,7 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringsubmission"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringsubmissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/shared/jsonschemautils"
@@ -30,7 +30,7 @@ const (
 	maxCancelReason = 500
 )
 
-func submissionRecord(sub *factoring.Submission) toolpreview.Record {
+func submissionRecord(sub *factoringsubmission.Submission) toolpreview.Record {
 	return toolpreview.Record{
 		Resource: permission.ResourceFactoringSubmission,
 		ID:       sub.ID,
@@ -125,7 +125,7 @@ func (t *SubmitInvoicesToFactorTool) ParamSchema() map[string]any {
 		paramInvoiceIDs: agenttoolschema.RecordIDs(
 			permission.ResourceInvoice,
 			"The Ready invoices to sell, from factoring_list_readiness.",
-			factoring.MaxSubmissionInvoices,
+			factoringsubmission.MaxSubmissionInvoices,
 		),
 	}, paramFactorID, paramInvoiceIDs)
 }
@@ -162,7 +162,7 @@ func (t *SubmitInvoicesToFactorTool) request(
 	invoiceIDs, err := toolparams.RequirePulidSlice(
 		params.Params,
 		paramInvoiceIDs,
-		factoring.MaxSubmissionInvoices,
+		factoringsubmission.MaxSubmissionInvoices,
 	)
 	if err != nil {
 		return nil, err
@@ -213,11 +213,11 @@ func (t *SubmitInvoicesToFactorTool) Preview(
 		return refused(summary, err)
 	}
 
-	draft := &factoring.Submission{
+	draft := &factoringsubmission.Submission{
 		OrganizationID:     req.TenantInfo.OrgID,
 		BusinessUnitID:     req.TenantInfo.BuID,
 		FactoringCompanyID: plan.FactoringCompanyID,
-		Status:             factoring.SubmissionStatusSending,
+		Status:             factoringsubmission.SubmissionStatusSending,
 		TransportMethod:    plan.TransportMethod,
 		TransportTarget:    plan.TransportTarget,
 		InvoiceCount:       plan.InvoiceCount,
@@ -232,7 +232,7 @@ func (t *SubmitInvoicesToFactorTool) Preview(
 	toolpreview.AttachMoney(created, planMoney(plan))
 
 	changes := []*agent.RecordChange{created}
-	if plan.TransportMethod == factoring.TransportMethodEmail {
+	if plan.TransportMethod == factoringsubmission.TransportMethodEmail {
 		changes = append(changes, toolpreview.Send(toolpreview.Record{
 			Resource: permission.ResourceFactoringSubmission,
 			Label:    "Schedule to " + plan.FactoringCompanyName,

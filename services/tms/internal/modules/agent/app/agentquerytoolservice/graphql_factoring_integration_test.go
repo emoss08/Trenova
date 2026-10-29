@@ -18,6 +18,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue/billingqueuedb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringreadiness"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringremittance"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringsubmission"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringledgerports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
@@ -184,38 +187,43 @@ func writeFactoringRows(
 		out.noas = append(out.noas, noa.ID.String())
 
 		inv := postFactoredInvoice(t, ctx, admin, repos, tenant, cust.ID, factor.ID, suffix)
-		state := &factoring.InvoiceState{
+		state := &factoringreadiness.InvoiceState{
 			InvoiceID: inv.ID, OrganizationID: org, BusinessUnitID: bu,
 			FactoringCompanyID: &factor.ID, CustomerID: cust.ID,
 			OpenBalanceMinor: inv.TotalAmountMinor,
 		}
-		factoring.NextState(nil, state, &factoring.Readiness{Verdict: factoring.VerdictReady}, now)
+		factoringreadiness.NextState(
+			nil,
+			state,
+			&factoringreadiness.Readiness{Verdict: factoringreadiness.VerdictReady},
+			now,
+		)
 		require.NoError(t, repos.states.Upsert(ctx, state))
 		out.invoices = append(out.invoices, inv.ID.String())
 
-		sub, subErr := repos.submissions.Create(ctx, &factoring.Submission{
+		sub, subErr := repos.submissions.Create(ctx, &factoringsubmission.Submission{
 			OrganizationID: org, BusinessUnitID: bu, Number: "SCH-" + suffix,
 			FactoringCompanyID: factor.ID, AgreementID: agreement.ID,
-			Status: factoring.SubmissionStatusSent, InvoiceCount: 1, FaceMinor: 100_00,
-			ExpectedAdvanceMinor: 90_00, TransportMethod: factoring.TransportMethodEmail,
+			Status: factoringsubmission.SubmissionStatusSent, InvoiceCount: 1, FaceMinor: 100_00,
+			ExpectedAdvanceMinor: 90_00, TransportMethod: factoringsubmission.TransportMethodEmail,
 			TransportTarget: "funding@" + label + ".example.com",
 			IdempotencyKey:  "key-" + suffix, SentAt: &now,
 		})
 		require.NoError(t, subErr)
 		out.submissions = append(out.submissions, sub.ID.String())
 
-		remittance, remErr := repos.remittances.Create(ctx, &factoring.Remittance{
+		remittance, remErr := repos.remittances.Create(ctx, &factoringremittance.Remittance{
 			OrganizationID: org, BusinessUnitID: bu, FactoringCompanyID: factor.ID,
-			FileName: "funding-" + suffix + ".csv", Status: factoring.RemittanceStatusPending,
+			FileName: "funding-" + suffix + ".csv", Status: factoringremittance.RemittanceStatusPending,
 			LineCount: 2, TotalCashMinor: 50_00,
 		})
 		require.NoError(t, remErr)
 		cash := int64(25_00)
-		remittance.Lines = []*factoring.RemittanceLine{
+		remittance.Lines = []*factoringremittance.RemittanceLine{
 			{RowNumber: 1, Cells: []string{"INV-1", "25.00"}, InvoiceNumber: "INV-1",
-				CashMinor: &cash, MatchStatus: factoring.RemittanceLineUnmatched},
+				CashMinor: &cash, MatchStatus: factoringremittance.RemittanceLineUnmatched},
 			{RowNumber: 2, Cells: []string{"???", "x"}, Error: "no amount",
-				MatchStatus: factoring.RemittanceLineError},
+				MatchStatus: factoringremittance.RemittanceLineError},
 		}
 		require.NoError(t, repos.remittances.ReplaceLines(ctx, remittance))
 		out.remittances = append(out.remittances, remittance.ID.String())

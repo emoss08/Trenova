@@ -1,30 +1,44 @@
-package factoring_test
+package factoringsubmission_test
 
 import (
 	"strings"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringsubmission"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func sendingSubmission() *factoring.Submission {
-	sub := &factoring.Submission{
+func sendingSubmission() *factoringsubmission.Submission {
+	sub := &factoringsubmission.Submission{
 		OrganizationID:     "org_1",
 		BusinessUnitID:     "bu_1",
 		Number:             "FS2610000001",
 		FactoringCompanyID: factorID,
 		AgreementID:        "facagr_1",
-		Status:             factoring.SubmissionStatusSending,
-		TransportMethod:    factoring.TransportMethodEmail,
+		Status:             factoringsubmission.SubmissionStatusSending,
+		TransportMethod:    factoringsubmission.TransportMethodEmail,
 		TransportTarget:    "schedules@factor.test",
 		IdempotencyKey:     "key",
 		SendAttemptGroup:   1,
-		Items: []*factoring.SubmissionItem{
-			{InvoiceID: "inv_1", FaceMinor: 1000, ExpectedAdvanceMinor: 900, ExpectedFeeMinor: 30, ExpectedReserveMinor: 100, Status: factoring.SubmissionItemStatusPending},
-			{InvoiceID: "inv_2", FaceMinor: 2000, ExpectedAdvanceMinor: 1800, ExpectedFeeMinor: 60, ExpectedReserveMinor: 200, Status: factoring.SubmissionItemStatusPending},
+		Items: []*factoringsubmission.SubmissionItem{
+			{
+				InvoiceID:            "inv_1",
+				FaceMinor:            1000,
+				ExpectedAdvanceMinor: 900,
+				ExpectedFeeMinor:     30,
+				ExpectedReserveMinor: 100,
+				Status:               factoringsubmission.SubmissionItemStatusPending,
+			},
+			{
+				InvoiceID:            "inv_2",
+				FaceMinor:            2000,
+				ExpectedAdvanceMinor: 1800,
+				ExpectedFeeMinor:     60,
+				ExpectedReserveMinor: 200,
+				Status:               factoringsubmission.SubmissionItemStatusPending,
+			},
 		},
 	}
 	sub.Totalize()
@@ -57,17 +71,17 @@ func TestSubmissionLifecycle(t *testing.T) {
 
 	sub := sendingSubmission()
 	require.NoError(t, sub.MarkFailed(now, strings.Repeat("x", 3000), 6))
-	assert.Equal(t, factoring.SubmissionStatusFailed, sub.Status)
-	assert.Len(t, sub.LastError, factoring.MaxSubmissionErrorLength)
+	assert.Equal(t, factoringsubmission.SubmissionStatusFailed, sub.Status)
+	assert.Len(t, sub.LastError, factoringsubmission.MaxSubmissionErrorLength)
 	assert.True(t, sub.IsLive())
 
 	require.NoError(t, sub.Retry())
-	assert.Equal(t, factoring.SubmissionStatusSending, sub.Status)
+	assert.Equal(t, factoringsubmission.SubmissionStatusSending, sub.Status)
 	assert.Equal(t, 2, sub.SendAttemptGroup)
 	assert.Nil(t, sub.FailedAt)
 
 	require.NoError(t, sub.MarkSent(now+60, "<msg@factor>", 1))
-	assert.Equal(t, factoring.SubmissionStatusSent, sub.Status)
+	assert.Equal(t, factoringsubmission.SubmissionStatusSent, sub.Status)
 	assert.Empty(t, sub.LastError)
 	require.Error(t, sub.Cancel(now, "no"))
 	require.Error(t, sub.Retry())
@@ -83,16 +97,16 @@ func TestSubmissionCancelReleasesItems(t *testing.T) {
 	assert.Equal(t, "The factor could not be reached", sub.LastError)
 	require.Error(t, sub.Cancel(now, "  "))
 	require.NoError(t, sub.Cancel(now, "Factor closed the account"))
-	assert.Equal(t, factoring.SubmissionStatusCancelled, sub.Status)
+	assert.Equal(t, factoringsubmission.SubmissionStatusCancelled, sub.Status)
 	assert.False(t, sub.IsLive())
 	for _, item := range sub.Items {
-		assert.Equal(t, factoring.SubmissionItemStatusReleased, item.Status)
+		assert.Equal(t, factoringsubmission.SubmissionItemStatusReleased, item.Status)
 		assert.NotNil(t, item.ReleasedAt)
 	}
 	assert.Equal(t, []string{"inv_1", "inv_2"}, idsOf(sub))
 }
 
-func idsOf(sub *factoring.Submission) []string {
+func idsOf(sub *factoringsubmission.Submission) []string {
 	out := make([]string, 0, len(sub.Items))
 	for _, id := range sub.InvoiceIDs() {
 		out = append(out, id.String())
@@ -103,11 +117,11 @@ func idsOf(sub *factoring.Submission) []string {
 func TestTransportNormalizeAndValidate(t *testing.T) {
 	t.Parallel()
 
-	email := &factoring.Transport{
+	email := &factoringsubmission.Transport{
 		OrganizationID:     "org_1",
 		BusinessUnitID:     "bu_1",
 		FactoringCompanyID: factorID,
-		Method:             factoring.TransportMethodEmail,
+		Method:             factoringsubmission.TransportMethodEmail,
 		EmailRecipients:    []string{" a@factor.test ", "A@factor.test", ""},
 		SftpHost:           "left.over",
 	}
@@ -119,15 +133,15 @@ func TestTransportNormalizeAndValidate(t *testing.T) {
 	assert.False(t, multiErr.HasErrors())
 	assert.Equal(t, "a@factor.test", email.Target())
 
-	sftp := &factoring.Transport{
+	sftp := &factoringsubmission.Transport{
 		OrganizationID:     "org_1",
 		BusinessUnitID:     "bu_1",
 		FactoringCompanyID: factorID,
-		Method:             factoring.TransportMethodSftp,
+		Method:             factoringsubmission.TransportMethodSftp,
 		EmailRecipients:    []string{"a@factor.test"},
 		SftpHost:           "sftp.factor.test",
 		SftpUsername:       "carrier",
-		SftpAuthMethod:     factoring.SftpAuthPassword,
+		SftpAuthMethod:     factoringsubmission.SftpAuthPassword,
 		SftpSecret:         "sealed",
 		SftpKnownHostKey:   "ssh-ed25519 AAAA",
 		SftpDirectory:      "/in/schedules/",

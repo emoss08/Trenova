@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringremittance"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringremittanceports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent"
@@ -34,9 +34,9 @@ const (
 )
 
 type stageInput struct {
-	rem      *factoring.Remittance
+	rem      *factoringremittance.Remittance
 	doc      *document.Document
-	staging  *factoring.RemittanceStaging
+	staging  *factoringremittance.RemittanceStaging
 	override map[string]int
 	actor    *permissionports.RequestActor
 }
@@ -52,7 +52,7 @@ func (s *RemittanceService) Stage(
 	ctx context.Context,
 	req *factoringremittanceports.StageRemittanceRequest,
 	actor *permissionports.RequestActor,
-) (*factoring.Remittance, error) {
+) (*factoringremittance.Remittance, error) {
 	if err := requireRequest(req != nil); err != nil {
 		return nil, err
 	}
@@ -88,7 +88,7 @@ func (s *RemittanceService) Stage(
 		return nil, err
 	}
 
-	var updated *factoring.Remittance
+	var updated *factoringremittance.Remittance
 	err = s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		rem, lockErr := s.lock(txCtx, req.TenantInfo, req.ID, req.Version)
 		if lockErr != nil {
@@ -123,7 +123,7 @@ func (s *RemittanceService) validateStageRequest(
 		)
 	}
 	if req.DefaultKind != "" &&
-		(!req.DefaultKind.IsValid() || req.DefaultKind == factoring.RemittanceLineOther) {
+		(!req.DefaultKind.IsValid() || req.DefaultKind == factoringremittance.RemittanceLineOther) {
 		return errortypes.NewValidationError(
 			"defaultKind",
 			errortypes.ErrInvalid,
@@ -133,7 +133,7 @@ func (s *RemittanceService) validateStageRequest(
 	return s.requireRemittedOn(req.RemittedOn)
 }
 
-func requireVersion(rem *factoring.Remittance, version int64) error {
+func requireVersion(rem *factoringremittance.Remittance, version int64) error {
 	if rem.Version == version {
 		return nil
 	}
@@ -164,7 +164,7 @@ func (s *RemittanceService) StagePending(
 	}
 	actor := new(systemActor(req.TenantInfo))
 	prepared := &preparedStage{}
-	var staging *factoring.RemittanceStaging
+	var staging *factoringremittance.RemittanceStaging
 	doc, err := s.remittanceDocument(ctx, current, current.DocumentID)
 	if err == nil {
 		staging, err = stagingFor(current, doc, "", nil, s.now())
@@ -221,12 +221,12 @@ func isUserFacing(err error) bool {
 }
 
 func stagingFor(
-	rem *factoring.Remittance,
+	rem *factoringremittance.Remittance,
 	doc *document.Document,
-	defaultKind factoring.RemittanceLineKind,
+	defaultKind factoringremittance.RemittanceLineKind,
 	remittedOn *int64,
 	at int64,
-) (*factoring.RemittanceStaging, error) {
+) (*factoringremittance.RemittanceStaging, error) {
 	fileName := strings.TrimSpace(doc.OriginalName)
 	if fileName == "" {
 		fileName = doc.FileName
@@ -245,7 +245,7 @@ func stagingFor(
 	if remittedOn == nil {
 		remittedOn = rem.RemittedOn
 	}
-	return &factoring.RemittanceStaging{
+	return &factoringremittance.RemittanceStaging{
 		DocumentID:  doc.ID,
 		FileName:    fileName,
 		Format:      format,
@@ -259,7 +259,7 @@ func stagingFor(
 
 func (s *RemittanceService) remittanceDocument(
 	ctx context.Context,
-	rem *factoring.Remittance,
+	rem *factoringremittance.Remittance,
 	documentID pulid.ID,
 ) (*document.Document, error) {
 	doc, err := s.documents.Get(ctx, documentports.GetDocumentByIDRequest{
@@ -283,7 +283,7 @@ func (s *RemittanceService) remittanceDocument(
 			"This file was not uploaded for this remittance",
 		)
 	}
-	if doc.FileSize > factoring.MaxRemittanceBytes {
+	if doc.FileSize > factoringremittance.MaxRemittanceBytes {
 		return nil, errortypes.NewValidationError(
 			"documentId",
 			errortypes.ErrInvalid,
@@ -293,14 +293,14 @@ func (s *RemittanceService) remittanceDocument(
 	return doc, nil
 }
 
-func documentBelongsTo(doc *document.Document, rem *factoring.Remittance) bool {
+func documentBelongsTo(doc *document.Document, rem *factoringremittance.Remittance) bool {
 	switch rem.Source {
-	case factoring.RemittanceSourceEmail:
+	case factoringremittance.RemittanceSourceEmail:
 		return rem.InboundMessageID.IsNotNil() &&
 			doc.ResourceType == inboundmessage.AttachmentResourceType &&
 			doc.ResourceID == rem.InboundMessageID.String()
-	case factoring.RemittanceSourceUpload:
-		return doc.ResourceType == factoring.RemittanceDocumentResourceType &&
+	case factoringremittance.RemittanceSourceUpload:
+		return doc.ResourceType == factoringremittance.RemittanceDocumentResourceType &&
 			doc.ResourceID == rem.ID.String()
 	}
 	return false
@@ -308,12 +308,12 @@ func documentBelongsTo(doc *document.Document, rem *factoring.Remittance) bool {
 
 func (s *RemittanceService) prepare(
 	ctx context.Context,
-	rem *factoring.Remittance,
+	rem *factoringremittance.Remittance,
 	doc *document.Document,
-	staging *factoring.RemittanceStaging,
+	staging *factoringremittance.RemittanceStaging,
 	wait bool,
 ) (*preparedStage, error) {
-	if staging.Format == factoring.RemittanceFormatPdf {
+	if staging.Format == factoringremittance.RemittanceFormatPdf {
 		return s.preparePdf(ctx, rem, doc, wait)
 	}
 	data, err := s.readDocument(ctx, rem, doc.ID)
@@ -331,7 +331,7 @@ func (s *RemittanceService) applyStage(
 	ctx context.Context,
 	in *stageInput,
 	prepared *preparedStage,
-) (*factoring.Remittance, error) {
+) (*factoringremittance.Remittance, error) {
 	switch {
 	case prepared.problem != "":
 		return s.fail(ctx, in.rem, in.staging, prepared.problem, in.actor)
@@ -356,7 +356,7 @@ func (s *RemittanceService) stageSheet(
 	ctx context.Context,
 	in *stageInput,
 	sheet *rateimport.Sheet,
-) (*factoring.Remittance, error) {
+) (*factoringremittance.Remittance, error) {
 	mapping, chosen, err := s.resolveMapping(ctx, in, sheet.Headers)
 	if err != nil {
 		return nil, err
@@ -372,10 +372,10 @@ func (s *RemittanceService) stageSheet(
 		Location:    time.UTC,
 	})
 	updated, err := s.finishStage(ctx, in, factoringremit.ToDomain(parsed))
-	if err != nil || !chosen || updated.Status != factoring.RemittanceStatusParsed {
+	if err != nil || !chosen || updated.Status != factoringremittance.RemittanceStatusParsed {
 		return updated, err
 	}
-	if err = s.remittances.SaveProfile(ctx, &factoring.RemittanceProfile{
+	if err = s.remittances.SaveProfile(ctx, &factoringremittance.RemittanceProfile{
 		OrganizationID:     updated.OrganizationID,
 		BusinessUnitID:     updated.BusinessUnitID,
 		FactoringCompanyID: updated.FactoringCompanyID,
@@ -422,7 +422,7 @@ func (s *RemittanceService) resolveMapping(
 }
 
 func usableProfile(
-	profile *factoring.RemittanceProfile,
+	profile *factoringremittance.RemittanceProfile,
 	width int,
 ) (factoringremit.Mapping, bool) {
 	saved, err := factoringremit.MappingFromStrings(profile.Mapping)
@@ -458,7 +458,7 @@ func mappingFromRequest(raw map[string]int, width int) (factoringremit.Mapping, 
 func (s *RemittanceService) needsMapping(
 	ctx context.Context,
 	in *stageInput,
-) (*factoring.Remittance, error) {
+) (*factoringremittance.Remittance, error) {
 	before := cloneRemittance(in.rem)
 	if err := in.rem.MarkNeedsMapping(in.staging); err != nil {
 		return nil, err
@@ -478,12 +478,12 @@ func (s *RemittanceService) needsMapping(
 func (s *RemittanceService) finishStage(
 	ctx context.Context,
 	in *stageInput,
-	lines []*factoring.RemittanceLine,
-) (*factoring.Remittance, error) {
+	lines []*factoringremittance.RemittanceLine,
+) (*factoringremittance.Remittance, error) {
 	switch {
 	case len(lines) == 0:
 		return s.fail(ctx, in.rem, in.staging, problemNoRows, in.actor)
-	case len(lines) > factoring.MaxRemittanceLines:
+	case len(lines) > factoringremittance.MaxRemittanceLines:
 		return s.fail(ctx, in.rem, in.staging, problemTooManyLines, in.actor)
 	}
 	before := cloneRemittance(in.rem)
@@ -494,7 +494,7 @@ func (s *RemittanceService) finishStage(
 	if err != nil {
 		return nil, err
 	}
-	factoring.MatchRemittance(lines, candidates)
+	factoringremittance.MatchRemittance(lines, candidates)
 	in.rem.Recount()
 	if err = s.remittances.ReplaceLines(ctx, in.rem); err != nil {
 		return nil, err
@@ -511,11 +511,11 @@ func (s *RemittanceService) finishStage(
 
 func (s *RemittanceService) fail(
 	ctx context.Context,
-	rem *factoring.Remittance,
-	staging *factoring.RemittanceStaging,
+	rem *factoringremittance.Remittance,
+	staging *factoringremittance.RemittanceStaging,
 	problem string,
 	actor *permissionports.RequestActor,
-) (*factoring.Remittance, error) {
+) (*factoringremittance.Remittance, error) {
 	before := cloneRemittance(rem)
 	documentID, fileName, at := rem.DocumentID, rem.FileName, s.now()
 	if staging != nil {
@@ -539,7 +539,7 @@ func (s *RemittanceService) fail(
 
 func (s *RemittanceService) readDocument(
 	ctx context.Context,
-	rem *factoring.Remittance,
+	rem *factoringremittance.Remittance,
 	documentID pulid.ID,
 ) ([]byte, error) {
 	content, err := s.documents.GetDownloadContent(ctx, documentports.GetDocumentByIDRequest{
@@ -554,12 +554,12 @@ func (s *RemittanceService) readDocument(
 	}
 	defer func() { _ = content.Body.Close() }()
 
-	data, err := io.ReadAll(io.LimitReader(content.Body, factoring.MaxRemittanceBytes+1))
+	data, err := io.ReadAll(io.LimitReader(content.Body, factoringremittance.MaxRemittanceBytes+1))
 	if err != nil {
 		return nil, fmt.Errorf("read remittance document: %w", err)
 	}
 	switch {
-	case len(data) > factoring.MaxRemittanceBytes:
+	case len(data) > factoringremittance.MaxRemittanceBytes:
 		return nil, errortypes.NewValidationError(
 			"documentId",
 			errortypes.ErrInvalid,
@@ -604,7 +604,7 @@ func problemOf(err error) string {
 
 func (s *RemittanceService) preparePdf(
 	ctx context.Context,
-	rem *factoring.Remittance,
+	rem *factoringremittance.Remittance,
 	doc *document.Document,
 	wait bool,
 ) (*preparedStage, error) {
@@ -648,7 +648,7 @@ func (s *RemittanceService) preparePdf(
 func (s *RemittanceService) awaitPdf(
 	ctx context.Context,
 	in *stageInput,
-) (*factoring.Remittance, error) {
+) (*factoringremittance.Remittance, error) {
 	before := cloneRemittance(in.rem)
 	if err := in.rem.MarkReading(in.staging); err != nil {
 		return nil, err

@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringremittance"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringremittanceports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -77,11 +77,11 @@ func remittanceMappingFromModel(
 }
 
 func remittanceConnectionToModel(
-	result *pagination.CursorListResult[*factoring.Remittance],
+	result *pagination.CursorListResult[*factoringremittance.Remittance],
 ) (*gqlmodel.FactoringRemittanceConnection, error) {
 	page, err := gqlconnection.EntityCursorConnection(
 		result,
-		func(node *factoring.Remittance, cursor string) *gqlmodel.FactoringRemittanceEdge {
+		func(node *factoringremittance.Remittance, cursor string) *gqlmodel.FactoringRemittanceEdge {
 			return &gqlmodel.FactoringRemittanceEdge{Node: node, Cursor: cursor}
 		},
 		func(edge *gqlmodel.FactoringRemittanceEdge) string { return edge.Cursor },
@@ -98,11 +98,11 @@ func remittanceConnectionToModel(
 }
 
 func remittanceLineConnectionToModel(
-	result *pagination.CursorListResult[*factoring.RemittanceLine],
+	result *pagination.CursorListResult[*factoringremittance.RemittanceLine],
 ) (*gqlmodel.FactoringRemittanceLineConnection, error) {
 	page, err := gqlconnection.EntityCursorConnection(
 		result,
-		func(node *factoring.RemittanceLine, cursor string) *gqlmodel.FactoringRemittanceLineEdge {
+		func(node *factoringremittance.RemittanceLine, cursor string) *gqlmodel.FactoringRemittanceLineEdge {
 			return &gqlmodel.FactoringRemittanceLineEdge{Node: node, Cursor: cursor}
 		},
 		func(edge *gqlmodel.FactoringRemittanceLineEdge) string { return edge.Cursor },
@@ -125,8 +125,10 @@ func nonEmptyEnum[T ~string](value T) *T {
 	return &value
 }
 
-func validRemittanceKind(kind *factoring.RemittanceLineKind) factoring.RemittanceLineKind {
-	if kind == nil || !slices.Contains(factoring.AllRemittanceLineKinds(), *kind) {
+func validRemittanceKind(
+	kind *factoringremittance.RemittanceLineKind,
+) factoringremittance.RemittanceLineKind {
+	if kind == nil || !slices.Contains(factoringremittance.AllRemittanceLineKinds(), *kind) {
 		return ""
 	}
 	return *kind
@@ -150,10 +152,10 @@ func remittanceVersionFromModel(
 // linesIn are a remittance's lines in the file's order, or those in the
 // match statuses named.
 func linesIn(
-	lines []*factoring.RemittanceLine,
-	statuses []factoring.RemittanceMatchStatus,
-) []*factoring.RemittanceLine {
-	out := make([]*factoring.RemittanceLine, 0, len(lines))
+	lines []*factoringremittance.RemittanceLine,
+	statuses []factoringremittance.RemittanceMatchStatus,
+) []*factoringremittance.RemittanceLine {
+	out := make([]*factoringremittance.RemittanceLine, 0, len(lines))
 	for _, line := range lines {
 		if line != nil && (len(statuses) == 0 || slices.Contains(statuses, line.MatchStatus)) {
 			out = append(out, line)

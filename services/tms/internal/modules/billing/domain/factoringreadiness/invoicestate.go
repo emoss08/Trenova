@@ -1,4 +1,4 @@
-package factoring
+package factoringreadiness
 
 import (
 	"github.com/emoss08/keel"

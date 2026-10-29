@@ -4,18 +4,20 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringledger"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringsubmission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
 type FundingItemInput struct {
-	ItemID           pulid.ID                 `json:"itemId"`
-	Outcome          factoring.FundingOutcome `json:"outcome"`
-	AdvanceMinor     *int64                   `json:"advanceMinor"`
-	FeeMinor         *int64                   `json:"feeMinor"`
-	Reason           string                   `json:"reason"`
-	RemittanceLineID pulid.ID                 `json:"-"`
+	ItemID           pulid.ID                       `json:"itemId"`
+	Outcome          factoringledger.FundingOutcome `json:"outcome"`
+	AdvanceMinor     *int64                         `json:"advanceMinor"`
+	FeeMinor         *int64                         `json:"feeMinor"`
+	Reason           string                         `json:"reason"`
+	RemittanceLineID pulid.ID                       `json:"-"`
 }
 
 type RecordFundingRequest struct {
@@ -46,18 +48,18 @@ type PlannedLine struct {
 }
 
 type PlannedMovement struct {
-	ItemID           pulid.ID           `json:"itemId"`
-	InvoiceID        pulid.ID           `json:"invoiceId"`
-	InvoiceNumber    string             `json:"invoiceNumber"`
-	CustomerID       pulid.ID           `json:"customerId"`
-	Movement         factoring.Movement `json:"movement"`
-	Lines            []PlannedLine      `json:"lines"`
-	RequestedDate    int64              `json:"requestedDate"`
-	AccountingDate   int64              `json:"accountingDate"`
-	FiscalPeriodID   pulid.ID           `json:"fiscalPeriodId"`
-	FiscalPeriodName string             `json:"fiscalPeriodName"`
-	EntryStatus      string             `json:"entryStatus"`
-	RequiresApproval bool               `json:"requiresApproval"`
+	ItemID           pulid.ID                 `json:"itemId"`
+	InvoiceID        pulid.ID                 `json:"invoiceId"`
+	InvoiceNumber    string                   `json:"invoiceNumber"`
+	CustomerID       pulid.ID                 `json:"customerId"`
+	Movement         factoringledger.Movement `json:"movement"`
+	Lines            []PlannedLine            `json:"lines"`
+	RequestedDate    int64                    `json:"requestedDate"`
+	AccountingDate   int64                    `json:"accountingDate"`
+	FiscalPeriodID   pulid.ID                 `json:"fiscalPeriodId"`
+	FiscalPeriodName string                   `json:"fiscalPeriodName"`
+	EntryStatus      string                   `json:"entryStatus"`
+	RequiresApproval bool                     `json:"requiresApproval"`
 }
 
 func (m *PlannedMovement) Redated() bool {
@@ -65,39 +67,39 @@ func (m *PlannedMovement) Redated() bool {
 }
 
 type FundingPlan struct {
-	Before       *factoring.Submission `json:"before"`
-	After        *factoring.Submission `json:"after"`
-	Movements    []*PlannedMovement    `json:"movements"`
-	FundedCount  int                   `json:"fundedCount"`
-	RejectCount  int                   `json:"rejectCount"`
-	AdvanceMinor int64                 `json:"advanceMinor"`
-	FeeMinor     int64                 `json:"feeMinor"`
-	ReserveMinor int64                 `json:"reserveMinor"`
+	Before       *factoringsubmission.Submission `json:"before"`
+	After        *factoringsubmission.Submission `json:"after"`
+	Movements    []*PlannedMovement              `json:"movements"`
+	FundedCount  int                             `json:"fundedCount"`
+	RejectCount  int                             `json:"rejectCount"`
+	AdvanceMinor int64                           `json:"advanceMinor"`
+	FeeMinor     int64                           `json:"feeMinor"`
+	ReserveMinor int64                           `json:"reserveMinor"`
 }
 
 type ReserveMovementPlan struct {
-	Before   *factoring.Submission     `json:"before"`
-	After    *factoring.Submission     `json:"after"`
-	Item     *factoring.SubmissionItem `json:"item"`
-	Movement *PlannedMovement          `json:"movement"`
-	Reverses *factoring.ReserveEntry   `json:"reverses"`
+	Before   *factoringsubmission.Submission     `json:"before"`
+	After    *factoringsubmission.Submission     `json:"after"`
+	Item     *factoringsubmission.SubmissionItem `json:"item"`
+	Movement *PlannedMovement                    `json:"movement"`
+	Reverses *factoringledger.ReserveEntry       `json:"reverses"`
 }
 
 type FundingResult struct {
-	Submission *factoring.Submission     `json:"submission"`
-	Entries    []*factoring.ReserveEntry `json:"entries"`
+	Submission *factoringsubmission.Submission `json:"submission"`
+	Entries    []*factoringledger.ReserveEntry `json:"entries"`
 }
 
 type ReserveMovementResult struct {
-	Submission *factoring.Submission   `json:"submission"`
-	Entry      *factoring.ReserveEntry `json:"entry"`
+	Submission *factoringsubmission.Submission `json:"submission"`
+	Entry      *factoringledger.ReserveEntry   `json:"entry"`
 }
 
 type LedgerService interface {
 	ListEntries(
 		ctx context.Context,
 		req *ListReserveEntryConnectionRequest,
-	) (*pagination.CursorListResult[*factoring.ReserveEntry], error)
+	) (*pagination.CursorListResult[*factoringledger.ReserveEntry], error)
 	GetBalance(ctx context.Context, req GetReserveBalanceRequest) (*ReserveBalance, error)
 	PlanFunding(
 		ctx context.Context,

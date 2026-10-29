@@ -13,6 +13,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/app/costingservice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringreadiness"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringsubmission"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/latecharge"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringsubmissionports"
@@ -315,10 +317,10 @@ type set struct {
 	settlementDisputesBySettlementID          *dataloadgen.Loader[string, []*driversettlement.Dispute]
 	carrierInvoiceMatchesByMoveID             *dataloadgen.Loader[string, []*carriersettlement.InvoiceMatch]
 	factoringCompanyByID                      *dataloadgen.Loader[string, *factoringcompany.FactoringCompany]
-	factoringStateByInvoiceID                 *dataloadgen.Loader[string, *factoring.InvoiceState]
+	factoringStateByInvoiceID                 *dataloadgen.Loader[string, *factoringreadiness.InvoiceState]
 	factoringAgreementsByCompanyID            *dataloadgen.Loader[string, []*factoring.Agreement]
-	factoringSubmissionItems                  *dataloadgen.Loader[string, []*factoring.SubmissionItem]
-	factoringSubmissionByID                   *dataloadgen.Loader[string, *factoring.Submission]
+	factoringSubmissionItems                  *dataloadgen.Loader[string, []*factoringsubmission.SubmissionItem]
+	factoringSubmissionByID                   *dataloadgen.Loader[string, *factoringsubmission.Submission]
 	factoringLiveItemByInvoiceID              *dataloadgen.Loader[string, *factoringsubmissionports.LiveItem]
 	lateChargeAssessmentsByInvoiceID          *dataloadgen.Loader[string, []*latecharge.LateChargeAssessment]
 	invoiceEDISendPlanByInvoiceID             *dataloadgen.Loader[string, *invoiceports.InvoiceEDISendPlan]

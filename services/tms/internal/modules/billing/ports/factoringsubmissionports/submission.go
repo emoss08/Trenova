@@ -3,7 +3,7 @@ package factoringsubmissionports
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringsubmission"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -25,10 +25,10 @@ type GetSubmissionByKeyRequest struct {
 }
 
 type ListSubmissionConnectionRequest struct {
-	Filter             *pagination.QueryOptions     `json:"filter"`
-	Cursor             pagination.CursorInfo        `json:"-"`
-	FactoringCompanyID pulid.ID                     `json:"factoringCompanyId"`
-	Statuses           []factoring.SubmissionStatus `json:"statuses"`
+	Filter             *pagination.QueryOptions               `json:"filter"`
+	Cursor             pagination.CursorInfo                  `json:"-"`
+	FactoringCompanyID pulid.ID                               `json:"factoringCompanyId"`
+	Statuses           []factoringsubmission.SubmissionStatus `json:"statuses"`
 }
 
 type ListLiveItemsRequest struct {
@@ -38,12 +38,12 @@ type ListLiveItemsRequest struct {
 }
 
 type LiveItem struct {
-	InvoiceID        pulid.ID                       `json:"invoiceId"`
-	SubmissionID     pulid.ID                       `json:"submissionId"`
-	SubmissionNumber string                         `json:"submissionNumber"`
-	SubmissionStatus factoring.SubmissionStatus     `json:"submissionStatus"`
-	ItemID           pulid.ID                       `json:"itemId"`
-	ItemStatus       factoring.SubmissionItemStatus `json:"itemStatus"`
+	InvoiceID        pulid.ID                                 `json:"invoiceId"`
+	SubmissionID     pulid.ID                                 `json:"submissionId"`
+	SubmissionNumber string                                   `json:"submissionNumber"`
+	SubmissionStatus factoringsubmission.SubmissionStatus     `json:"submissionStatus"`
+	ItemID           pulid.ID                                 `json:"itemId"`
+	ItemStatus       factoringsubmission.SubmissionItemStatus `json:"itemStatus"`
 }
 
 func (l *LiveItem) IsLive() bool {
@@ -71,24 +71,33 @@ type ClaimChargebackWarningRequest struct {
 
 type SubmissionRepository interface {
 	ClaimChargebackWarning(ctx context.Context, req ClaimChargebackWarningRequest) (bool, error)
-	Create(ctx context.Context, entity *factoring.Submission) (*factoring.Submission, error)
-	Update(ctx context.Context, entity *factoring.Submission) (*factoring.Submission, error)
+	Create(
+		ctx context.Context,
+		entity *factoringsubmission.Submission,
+	) (*factoringsubmission.Submission, error)
+	Update(
+		ctx context.Context,
+		entity *factoringsubmission.Submission,
+	) (*factoringsubmission.Submission, error)
 	SetDocuments(ctx context.Context, req *SetSubmissionDocumentsRequest) error
-	GetByID(ctx context.Context, req GetSubmissionRequest) (*factoring.Submission, error)
-	GetByIDs(ctx context.Context, req GetSubmissionsByIDsRequest) ([]*factoring.Submission, error)
+	GetByID(ctx context.Context, req GetSubmissionRequest) (*factoringsubmission.Submission, error)
+	GetByIDs(
+		ctx context.Context,
+		req GetSubmissionsByIDsRequest,
+	) ([]*factoringsubmission.Submission, error)
 	GetByIdempotencyKey(
 		ctx context.Context,
 		req GetSubmissionByKeyRequest,
-	) (*factoring.Submission, error)
+	) (*factoringsubmission.Submission, error)
 	ListConnection(
 		ctx context.Context,
 		req *ListSubmissionConnectionRequest,
-	) (*pagination.CursorListResult[*factoring.Submission], error)
+	) (*pagination.CursorListResult[*factoringsubmission.Submission], error)
 	ListLiveItems(ctx context.Context, req *ListLiveItemsRequest) (map[pulid.ID]*LiveItem, error)
 	ListItemsBySubmissionIDs(
 		ctx context.Context,
 		req *ListItemsBySubmissionIDsRequest,
-	) (map[pulid.ID][]*factoring.SubmissionItem, error)
+	) (map[pulid.ID][]*factoringsubmission.SubmissionItem, error)
 }
 
 type GetTransportRequest struct {
@@ -97,8 +106,14 @@ type GetTransportRequest struct {
 }
 
 type TransportRepository interface {
-	Get(ctx context.Context, req GetTransportRequest) (*factoring.Transport, error)
-	Create(ctx context.Context, entity *factoring.Transport) (*factoring.Transport, error)
-	Update(ctx context.Context, entity *factoring.Transport) (*factoring.Transport, error)
-	RecordTest(ctx context.Context, entity *factoring.Transport) error
+	Get(ctx context.Context, req GetTransportRequest) (*factoringsubmission.Transport, error)
+	Create(
+		ctx context.Context,
+		entity *factoringsubmission.Transport,
+	) (*factoringsubmission.Transport, error)
+	Update(
+		ctx context.Context,
+		entity *factoringsubmission.Transport,
+	) (*factoringsubmission.Transport, error)
+	RecordTest(ctx context.Context, entity *factoringsubmission.Transport) error
 }

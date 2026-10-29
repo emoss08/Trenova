@@ -1,17 +1,17 @@
-package factoring
+package factoringremittance
 
 import (
 	"context"
 	"strings"
 
-	"github.com/emoss08/trenova/shared/money"
-
 	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringsubmission"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/factoringcompany"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/intutils"
+	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
@@ -111,7 +111,7 @@ type RemittanceLine struct {
 	CreatedAt         int64                   `json:"createdAt"        keel:"created_at,autocreate"`
 	UpdatedAt         int64                   `json:"updatedAt"        keel:"updated_at,autoupdate"`
 
-	SubmissionItem *SubmissionItem `json:"submissionItem,omitempty" keel:"belongs:submission_item_id"`
+	SubmissionItem *factoringsubmission.SubmissionItem `json:"submissionItem,omitempty" keel:"belongs:submission_item_id"`
 }
 
 func (l *RemittanceLine) BeforeUpdate(_ context.Context) error {
@@ -513,7 +513,7 @@ func (l *RemittanceLine) SignedCash() int64 {
 }
 
 func (l *RemittanceLine) MatchTo(
-	item *SubmissionItem,
+	item *factoringsubmission.SubmissionItem,
 	by RemittanceMatchedBy,
 	score int,
 	reason RemittanceMatchReason,

@@ -4,6 +4,8 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringreadiness"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringsubmission"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringsubmissionports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/factoringcompany"
@@ -64,9 +66,9 @@ func NewFactoringStateByInvoiceIDLoaderFactory(
 func newFactoringStateByInvoiceIDLoader(
 	f *FactoringStateByInvoiceIDLoaderFactory,
 	tenantInfo pagination.TenantInfo,
-) *dataloadgen.Loader[string, *factoring.InvoiceState] {
+) *dataloadgen.Loader[string, *factoringreadiness.InvoiceState] {
 	return newLoader(batchValueFunc(
-		func(ctx context.Context, ids []pulid.ID) (map[pulid.ID]*factoring.InvoiceState, error) {
+		func(ctx context.Context, ids []pulid.ID) (map[pulid.ID]*factoringreadiness.InvoiceState, error) {
 			return f.states.ListByInvoiceIDs(
 				ctx,
 				&factoringports.ListInvoiceStatesByInvoiceIDsRequest{
@@ -130,9 +132,9 @@ func NewFactoringSubmissionByIDLoaderFactory(
 func newFactoringSubmissionByIDLoader(
 	f *FactoringSubmissionByIDLoaderFactory,
 	tenantInfo pagination.TenantInfo,
-) *dataloadgen.Loader[string, *factoring.Submission] {
+) *dataloadgen.Loader[string, *factoringsubmission.Submission] {
 	return newLoader(batchByIDFunc(
-		func(ctx context.Context, ids []pulid.ID) ([]*factoring.Submission, error) {
+		func(ctx context.Context, ids []pulid.ID) ([]*factoringsubmission.Submission, error) {
 			return f.submissions.GetByIDs(ctx, factoringsubmissionports.GetSubmissionsByIDsRequest{
 				IDs:        ids,
 				TenantInfo: tenantInfo,
@@ -161,9 +163,9 @@ func NewFactoringSubmissionItemsLoaderFactory(
 func newFactoringSubmissionItemsLoader(
 	f *FactoringSubmissionItemsLoaderFactory,
 	tenantInfo pagination.TenantInfo,
-) *dataloadgen.Loader[string, []*factoring.SubmissionItem] {
+) *dataloadgen.Loader[string, []*factoringsubmission.SubmissionItem] {
 	return newLoader(batchGroupFunc(
-		func(ctx context.Context, ids []pulid.ID) (map[pulid.ID][]*factoring.SubmissionItem, error) {
+		func(ctx context.Context, ids []pulid.ID) (map[pulid.ID][]*factoringsubmission.SubmissionItem, error) {
 			return f.submissions.ListItemsBySubmissionIDs(
 				ctx,
 				&factoringsubmissionports.ListItemsBySubmissionIDsRequest{

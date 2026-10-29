@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/billing/app/factoringtransport"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringsubmission"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringsubmissionports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/email"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
@@ -68,8 +68,8 @@ func (f *fakeEmail) Send(
 	return &email.Message{ID: pulid.MustNew("emsg_")}, nil
 }
 
-func submission() *factoring.Submission {
-	return &factoring.Submission{ID: pulid.MustNew("facsub_"), Number: "FS2610000001"}
+func submission() *factoringsubmission.Submission {
+	return &factoringsubmission.Submission{ID: pulid.MustNew("facsub_"), Number: "FS2610000001"}
 }
 
 func TestEmailSendsOnePartWithKeyedParts(t *testing.T) {
@@ -80,8 +80,8 @@ func TestEmailSendsOnePartWithKeyedParts(t *testing.T) {
 	var rendered []string
 	result, err := transport.Send(t.Context(), &factoringsubmissionports.TransportSendRequest{
 		Submission: submission(),
-		Transport: &factoring.Transport{
-			Method:          factoring.TransportMethodEmail,
+		Transport: &factoringsubmission.Transport{
+			Method:          factoringsubmission.TransportMethodEmail,
 			EmailRecipients: []string{"schedules@factor.test"},
 		},
 		Files: []factoringsubmissionports.TransportFile{file("FS.pdf", 10), file("FS.csv", 5)},
@@ -116,13 +116,13 @@ func (f *fakeRemote) WriteFile(remotePath string, contents []byte) error {
 func (f *fakeRemote) Stat(string) error { return f.statErr }
 func (f *fakeRemote) Close() error      { return nil }
 
-func sftpTransport() *factoring.Transport {
-	return &factoring.Transport{
-		Method:           factoring.TransportMethodSftp,
+func sftpTransport() *factoringsubmission.Transport {
+	return &factoringsubmission.Transport{
+		Method:           factoringsubmission.TransportMethodSftp,
 		SftpHost:         "sftp.factor.test",
 		SftpPort:         22,
 		SftpUsername:     "carrier",
-		SftpAuthMethod:   factoring.SftpAuthPassword,
+		SftpAuthMethod:   factoringsubmission.SftpAuthPassword,
 		SftpKnownHostKey: "sftp.factor.test ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl",
 		SftpDirectory:    "/inbound",
 	}

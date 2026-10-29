@@ -9,7 +9,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalperiodports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerledger"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringledger"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringsubmission"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerledgerports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringledgerports"
@@ -37,13 +38,13 @@ func (fakeTx) Transact(
 type fakeReserveEntries struct {
 	factoringledgerports.ReserveEntryRepository
 	mu      sync.Mutex
-	entries []*factoring.ReserveEntry
+	entries []*factoringledger.ReserveEntry
 }
 
 func (f *fakeReserveEntries) Create(
 	_ context.Context,
-	e *factoring.ReserveEntry,
-) (*factoring.ReserveEntry, error) {
+	e *factoringledger.ReserveEntry,
+) (*factoringledger.ReserveEntry, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	for _, existing := range f.entries {
@@ -60,10 +61,10 @@ func (f *fakeReserveEntries) Create(
 func (f *fakeReserveEntries) ListForItem(
 	_ context.Context,
 	req factoringledgerports.ListReserveEntriesForItemRequest,
-) ([]*factoring.ReserveEntry, error) {
+) ([]*factoringledger.ReserveEntry, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
-	out := make([]*factoring.ReserveEntry, 0, len(f.entries))
+	out := make([]*factoringledger.ReserveEntry, 0, len(f.entries))
 	for _, e := range f.entries {
 		if e.SubmissionItemID == req.SubmissionItemID {
 			copied := *e
@@ -211,7 +212,7 @@ func (f *fakeSubmissions) ClaimChargebackWarning(
 				continue
 			}
 			if item.ChargebackWarnedAt != nil ||
-				item.Status != factoring.SubmissionItemStatusFunded {
+				item.Status != factoringsubmission.SubmissionItemStatusFunded {
 				return false, nil
 			}
 			at := req.At

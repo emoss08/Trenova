@@ -9,6 +9,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringreadiness"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringremittance"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringsubmission"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringremittanceports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringwatchtowerports"
@@ -27,14 +30,14 @@ func factoringTenant() pagination.TenantInfo {
 	return pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
 }
 
-func readyState(tenant pagination.TenantInfo, readyFor int64) *factoring.InvoiceState {
+func readyState(tenant pagination.TenantInfo, readyFor int64) *factoringreadiness.InvoiceState {
 	since := factoringNow - readyFor
-	return &factoring.InvoiceState{
+	return &factoringreadiness.InvoiceState{
 		InvoiceID:        pulid.MustNew("inv_"),
 		OrganizationID:   tenant.OrgID,
 		BusinessUnitID:   tenant.BuID,
 		CustomerID:       pulid.MustNew("cus_"),
-		Verdict:          factoring.VerdictReady,
+		Verdict:          factoringreadiness.VerdictReady,
 		OpenBalanceMinor: 125_050,
 		ReadySince:       &since,
 	}
@@ -43,7 +46,7 @@ func readyState(tenant pagination.TenantInfo, readyFor int64) *factoring.Invoice
 type fakeFactoringStates struct {
 	factoringports.InvoiceStateRepository
 
-	ready []*factoring.InvoiceState
+	ready []*factoringreadiness.InvoiceState
 	err   error
 	req   factoringports.ListReadyUnsubmittedRequest
 }
@@ -51,7 +54,7 @@ type fakeFactoringStates struct {
 func (f *fakeFactoringStates) ListReadyUnsubmitted(
 	_ context.Context,
 	req factoringports.ListReadyUnsubmittedRequest,
-) ([]*factoring.InvoiceState, error) {
+) ([]*factoringreadiness.InvoiceState, error) {
 	f.req = req
 	return f.ready, f.err
 }
@@ -178,7 +181,7 @@ func TestDescribeFactoringReadyUnsubmitted(t *testing.T) {
 	t.Parallel()
 
 	tenant := factoringTenant()
-	state := readyState(tenant, factoring.ReadyUnsubmittedSeconds+3600)
+	state := readyState(tenant, factoringreadiness.ReadyUnsubmittedSeconds+3600)
 	label := &factoringwatchtowerports.InvoiceLabel{
 		InvoiceID:    state.InvoiceID,
 		Number:       "INV-1042",
@@ -200,7 +203,7 @@ func TestDescribeFactoringReadyUnsubmitted(t *testing.T) {
 	assert.Equal(t, agent.SubjectInvoice, item.SubjectType)
 	assert.Equal(t, state.InvoiceID, item.SubjectID)
 	assert.Equal(t, agent.EventFactoringInvoiceReady, item.EventKind)
-	assert.Equal(t, *state.ReadySince+factoring.ReadyUnsubmittedSeconds, item.OccurredAt)
+	assert.Equal(t, *state.ReadySince+factoringreadiness.ReadyUnsubmittedSeconds, item.OccurredAt)
 	assert.Equal(t, tenant, item.TenantInfo)
 	assert.Contains(t, item.Path, "/billing/invoices")
 	assert.Contains(t, item.Path, state.InvoiceID.String())
@@ -226,21 +229,21 @@ func TestDescribeFactoringReadyUnsubmittedClearsWhenNotLate(t *testing.T) {
 
 	tenant := factoringTenant()
 
-	fresh := readyState(tenant, factoring.ReadyUnsubmittedSeconds-60)
+	fresh := readyState(tenant, factoringreadiness.ReadyUnsubmittedSeconds-60)
 	_, open := DescribeFactoringReadyUnsubmitted(tenant, fresh, nil, factoringNow)
 	assert.False(t, open, "a day has not passed yet")
 
-	notReady := readyState(tenant, 2*factoring.ReadyUnsubmittedSeconds)
-	notReady.Verdict = factoring.VerdictNotReady
+	notReady := readyState(tenant, 2*factoringreadiness.ReadyUnsubmittedSeconds)
+	notReady.Verdict = factoringreadiness.VerdictNotReady
 	_, open = DescribeFactoringReadyUnsubmitted(tenant, notReady, nil, factoringNow)
 	assert.False(t, open, "an invoice that stopped being ready clears")
 
-	submitted := readyState(tenant, 2*factoring.ReadyUnsubmittedSeconds)
-	submitted.Verdict = factoring.VerdictExcluded
+	submitted := readyState(tenant, 2*factoringreadiness.ReadyUnsubmittedSeconds)
+	submitted.Verdict = factoringreadiness.VerdictExcluded
 	_, open = DescribeFactoringReadyUnsubmitted(tenant, submitted, nil, factoringNow)
 	assert.False(t, open, "a factored invoice is excluded and clears")
 
-	undated := readyState(tenant, 2*factoring.ReadyUnsubmittedSeconds)
+	undated := readyState(tenant, 2*factoringreadiness.ReadyUnsubmittedSeconds)
 	undated.ReadySince = nil
 	_, open = DescribeFactoringReadyUnsubmitted(tenant, undated, nil, factoringNow)
 	assert.False(t, open)
@@ -450,8 +453,8 @@ func TestFactoringSourceSnapshot(t *testing.T) {
 	t.Parallel()
 
 	tenant := factoringTenant()
-	late := readyState(tenant, 2*factoring.ReadyUnsubmittedSeconds)
-	states := &fakeFactoringStates{ready: []*factoring.InvoiceState{late, nil}}
+	late := readyState(tenant, 2*factoringreadiness.ReadyUnsubmittedSeconds)
+	states := &fakeFactoringStates{ready: []*factoringreadiness.InvoiceState{late, nil}}
 	reader := &fakeFactoringReader{
 		labels: map[pulid.ID]*factoringwatchtowerports.InvoiceLabel{
 			late.InvoiceID: {InvoiceID: late.InvoiceID, Number: "INV-7"},
@@ -472,7 +475,7 @@ func TestFactoringSourceSnapshot(t *testing.T) {
 	require.Len(t, items, 4)
 
 	assert.Equal(t, tenant, states.req.TenantInfo)
-	assert.Equal(t, factoringNow-factoring.ReadyUnsubmittedSeconds, states.req.ReadyBefore)
+	assert.Equal(t, factoringNow-factoringreadiness.ReadyUnsubmittedSeconds, states.req.ReadyBefore)
 	assert.Equal(t, snapshotLimit, states.req.Limit)
 	assert.Equal(t, []pulid.ID{late.InvoiceID}, reader.labelReq.InvoiceIDs)
 	assert.Equal(t, factoringNow, reader.missingReq.At)
@@ -572,7 +575,7 @@ func TestDescribeFactoringUnfunded(t *testing.T) {
 	row := &factoringwatchtowerports.UnfundedSubmission{
 		SubmissionID:         pulid.MustNew("facsub_"),
 		Number:               "FS2610000007",
-		Status:               factoring.SubmissionStatusPartially,
+		Status:               factoringsubmission.SubmissionStatusPartially,
 		FactorName:           "Lone Star Funding",
 		CurrencyCode:         "USD",
 		PendingCount:         2,
@@ -682,7 +685,7 @@ func TestDescribeFactoringRemittanceExceptions(t *testing.T) {
 		RemittanceID:   pulid.MustNew("facrem_"),
 		FactorName:     "RTS Financial",
 		FileName:       "rts-funding.csv",
-		Status:         factoring.RemittanceStatusParsed,
+		Status:         factoringremittance.RemittanceStatusParsed,
 		ExceptionCount: 2,
 		MatchedCount:   5,
 		CreatedAt:      factoringNow,
@@ -698,7 +701,7 @@ func TestDescribeFactoringRemittanceExceptions(t *testing.T) {
 	assertStorable(t, item)
 
 	mapping := *open
-	mapping.Status = factoring.RemittanceStatusNeedsMapping
+	mapping.Status = factoringremittance.RemittanceStatusNeedsMapping
 	mapping.ExceptionCount = 0
 	item, ok = DescribeFactoringRemittanceExceptions(tenant, &mapping)
 	require.True(t, ok)
@@ -710,7 +713,7 @@ func TestDescribeFactoringRemittanceExceptions(t *testing.T) {
 	assert.False(t, ok, "a remittance with nothing left to resolve raises nothing")
 
 	applied := *open
-	applied.Status = factoring.RemittanceStatusApplied
+	applied.Status = factoringremittance.RemittanceStatusApplied
 	_, ok = DescribeFactoringRemittanceExceptions(tenant, &applied)
 	assert.False(t, ok)
 }
@@ -723,7 +726,7 @@ func TestFactoringSnapshotRaisesOpenRemittances(t *testing.T) {
 	source.remittances = &fakeFactoringRemittances{
 		open: []*factoringremittanceports.OpenRemittance{{
 			RemittanceID:   pulid.MustNew("facrem_"),
-			Status:         factoring.RemittanceStatusPartiallyApplied,
+			Status:         factoringremittance.RemittanceStatusPartiallyApplied,
 			ExceptionCount: 1,
 		}},
 	}

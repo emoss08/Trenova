@@ -6,6 +6,9 @@ import (
 	"strconv"
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringledger"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringremittance"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringsubmission"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringledgerports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringremittanceports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringsubmissionports"
@@ -18,14 +21,14 @@ import (
 )
 
 type applyStep struct {
-	kind         factoring.RemittanceLineKind
+	kind         factoringremittance.RemittanceLineKind
 	submissionID pulid.ID
-	lines        []*factoring.RemittanceLine
-	items        map[pulid.ID]*factoring.SubmissionItem
+	lines        []*factoringremittance.RemittanceLine
+	items        map[pulid.ID]*factoringsubmission.SubmissionItem
 }
 
 type applyRun struct {
-	rem      *factoring.Remittance
+	rem      *factoringremittance.Remittance
 	actor    *permissionports.RequestActor
 	steps    []*applyStep
 	versions map[pulid.ID]int64
@@ -86,7 +89,7 @@ func (s *RemittanceService) Apply(
 		return nil, err
 	}
 	result := &factoringremittanceports.ApplyRemittanceResult{}
-	var before *factoring.Remittance
+	var before *factoringremittance.Remittance
 	var booked int
 	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		rem, err := s.lock(txCtx, req.TenantInfo, req.ID, req.Version)
@@ -98,7 +101,7 @@ func (s *RemittanceService) Apply(
 		if err != nil {
 			return err
 		}
-		applied := make([]*factoring.RemittanceLine, 0, rem.MatchedCount)
+		applied := make([]*factoringremittance.RemittanceLine, 0, rem.MatchedCount)
 		for _, step := range run.steps {
 			entries, stepErr := s.runStep(txCtx, run, step)
 			if stepErr != nil {
@@ -127,16 +130,16 @@ func (s *RemittanceService) Apply(
 
 func (s *RemittanceService) prepareApply(
 	ctx context.Context,
-	rem *factoring.Remittance,
+	rem *factoringremittance.Remittance,
 	actor *permissionports.RequestActor,
 ) (*applyRun, error) {
 	if err := rem.RequireApplicable(); err != nil {
 		return nil, err
 	}
-	matched := make([]*factoring.RemittanceLine, 0, rem.MatchedCount)
+	matched := make([]*factoringremittance.RemittanceLine, 0, rem.MatchedCount)
 	itemIDs := make([]pulid.ID, 0, rem.MatchedCount)
 	for _, line := range rem.Lines {
-		if line != nil && line.MatchStatus == factoring.RemittanceLineMatched {
+		if line != nil && line.MatchStatus == factoringremittance.RemittanceLineMatched {
 			matched = append(matched, line)
 			itemIDs = append(itemIDs, line.SubmissionItemID)
 		}
@@ -153,7 +156,7 @@ func (s *RemittanceService) prepareApply(
 	if err != nil {
 		return nil, err
 	}
-	byItem := make(map[pulid.ID]*factoring.RemittanceCandidate, len(candidates))
+	byItem := make(map[pulid.ID]*factoringremittance.RemittanceCandidate, len(candidates))
 	for _, candidate := range candidates {
 		byItem[candidate.Item.ID] = candidate
 	}
@@ -169,8 +172,8 @@ func (s *RemittanceService) prepareApply(
 }
 
 func groupSteps(
-	lines []*factoring.RemittanceLine,
-	byItem map[pulid.ID]*factoring.RemittanceCandidate,
+	lines []*factoringremittance.RemittanceLine,
+	byItem map[pulid.ID]*factoringremittance.RemittanceCandidate,
 ) ([]*applyStep, error) {
 	steps := make([]*applyStep, 0, len(lines))
 	funding := make(map[pulid.ID]*applyStep, len(lines))
@@ -185,27 +188,28 @@ func groupSteps(
 		}
 		item := candidate.Item
 		switch line.Kind {
-		case factoring.RemittanceLineFunding, factoring.RemittanceLineRejection:
+		case factoringremittance.RemittanceLineFunding, factoringremittance.RemittanceLineRejection:
 			step, ok := funding[item.SubmissionID]
 			if !ok {
 				step = &applyStep{
-					kind:         factoring.RemittanceLineFunding,
+					kind:         factoringremittance.RemittanceLineFunding,
 					submissionID: item.SubmissionID,
-					items:        make(map[pulid.ID]*factoring.SubmissionItem, 4),
+					items:        make(map[pulid.ID]*factoringsubmission.SubmissionItem, 4),
 				}
 				funding[item.SubmissionID] = step
 				steps = append(steps, step)
 			}
 			step.lines = append(step.lines, line)
 			step.items[line.ID] = item
-		case factoring.RemittanceLineReserveRelease, factoring.RemittanceLineChargeback:
+		case factoringremittance.RemittanceLineReserveRelease,
+			factoringremittance.RemittanceLineChargeback:
 			steps = append(steps, &applyStep{
 				kind:         line.Kind,
 				submissionID: item.SubmissionID,
-				lines:        []*factoring.RemittanceLine{line},
-				items:        map[pulid.ID]*factoring.SubmissionItem{line.ID: item},
+				lines:        []*factoringremittance.RemittanceLine{line},
+				items:        map[pulid.ID]*factoringsubmission.SubmissionItem{line.ID: item},
 			})
-		case factoring.RemittanceLineOther:
+		case factoringremittance.RemittanceLineOther:
 		}
 	}
 	return steps, nil
@@ -213,7 +217,7 @@ func groupSteps(
 
 func (s *RemittanceService) submissionVersions(
 	ctx context.Context,
-	rem *factoring.Remittance,
+	rem *factoringremittance.Remittance,
 	steps []*applyStep,
 ) (map[pulid.ID]int64, error) {
 	ids := make([]pulid.ID, 0, len(steps))
@@ -245,7 +249,7 @@ func (s *RemittanceService) planStep(
 	plan *factoringremittanceports.RemittancePlan,
 ) error {
 	switch step.kind {
-	case factoring.RemittanceLineFunding:
+	case factoringremittance.RemittanceLineFunding:
 		funding, err := s.ledger.PlanFunding(ctx, s.fundingRequest(run, step), run.actor)
 		if err != nil {
 			return stepError(err)
@@ -264,11 +268,12 @@ func (s *RemittanceService) planStep(
 			plan.Lines = append(plan.Lines, planned)
 		}
 		return nil
-	case factoring.RemittanceLineReserveRelease, factoring.RemittanceLineChargeback:
+	case factoringremittance.RemittanceLineReserveRelease,
+		factoringremittance.RemittanceLineChargeback:
 		var movement *factoringledgerports.ReserveMovementPlan
 		var err error
 		req := s.movementRequest(run, step)
-		if step.kind == factoring.RemittanceLineReserveRelease {
+		if step.kind == factoringremittance.RemittanceLineReserveRelease {
 			movement, err = s.ledger.PlanRelease(ctx, req, run.actor)
 		} else {
 			movement, err = s.ledger.PlanChargeback(ctx, req, run.actor)
@@ -281,7 +286,7 @@ func (s *RemittanceService) planStep(
 		if movement.Movement != nil {
 			planned.CashMinor = movementCash(movement.Movement)
 		}
-		if step.kind == factoring.RemittanceLineReserveRelease {
+		if step.kind == factoringremittance.RemittanceLineReserveRelease {
 			plan.ReleasedCount++
 			plan.ReleasedMinor += planned.CashMinor
 		} else {
@@ -290,7 +295,7 @@ func (s *RemittanceService) planStep(
 		}
 		plan.Lines = append(plan.Lines, planned)
 		return nil
-	case factoring.RemittanceLineRejection, factoring.RemittanceLineOther:
+	case factoringremittance.RemittanceLineRejection, factoringremittance.RemittanceLineOther:
 	}
 	return nil
 }
@@ -299,9 +304,9 @@ func (s *RemittanceService) runStep(
 	ctx context.Context,
 	run *applyRun,
 	step *applyStep,
-) ([]*factoring.ReserveEntry, error) {
+) ([]*factoringledger.ReserveEntry, error) {
 	switch step.kind {
-	case factoring.RemittanceLineFunding:
+	case factoringremittance.RemittanceLineFunding:
 		funded, err := s.ledger.RecordFunding(ctx, s.fundingRequest(run, step), run.actor)
 		if err != nil {
 			return nil, stepError(err)
@@ -315,11 +320,12 @@ func (s *RemittanceService) runStep(
 			line.MarkApplied(byItem[step.items[line.ID].ID])
 		}
 		return funded.Entries, nil
-	case factoring.RemittanceLineReserveRelease, factoring.RemittanceLineChargeback:
+	case factoringremittance.RemittanceLineReserveRelease,
+		factoringremittance.RemittanceLineChargeback:
 		var moved *factoringledgerports.ReserveMovementResult
 		var err error
 		req := s.movementRequest(run, step)
-		if step.kind == factoring.RemittanceLineReserveRelease {
+		if step.kind == factoringremittance.RemittanceLineReserveRelease {
 			moved, err = s.ledger.ReleaseReserve(ctx, req, run.actor)
 		} else {
 			moved, err = s.ledger.RecordChargeback(ctx, req, run.actor)
@@ -329,14 +335,14 @@ func (s *RemittanceService) runStep(
 		}
 		run.versions[step.submissionID] = moved.Submission.Version
 		entryID := pulid.Nil
-		entries := make([]*factoring.ReserveEntry, 0, 1)
+		entries := make([]*factoringledger.ReserveEntry, 0, 1)
 		if moved.Entry != nil {
 			entryID = moved.Entry.ID
 			entries = append(entries, moved.Entry)
 		}
 		step.lines[0].MarkApplied(entryID)
 		return entries, nil
-	case factoring.RemittanceLineRejection, factoring.RemittanceLineOther:
+	case factoringremittance.RemittanceLineRejection, factoringremittance.RemittanceLineOther:
 	}
 	return nil, nil
 }
@@ -351,11 +357,11 @@ func (s *RemittanceService) fundingRequest(
 		fundedOn = max(fundedOn, s.lineDate(run.rem, line))
 		input := factoringledgerports.FundingItemInput{
 			ItemID:           step.items[line.ID].ID,
-			Outcome:          factoring.FundingOutcomeFunded,
+			Outcome:          factoringledger.FundingOutcomeFunded,
 			RemittanceLineID: line.ID,
 		}
-		if line.Kind == factoring.RemittanceLineRejection {
-			input.Outcome = factoring.FundingOutcomeRejected
+		if line.Kind == factoringremittance.RemittanceLineRejection {
+			input.Outcome = factoringledger.FundingOutcomeRejected
 			input.Reason = "Declined on the factor's remittance " + remittanceName(run.rem) +
 				", row " + strconv.Itoa(line.RowNumber)
 		} else {
@@ -388,13 +394,13 @@ func (s *RemittanceService) movementRequest(
 		RemittanceLineID: line.ID,
 	}
 	source := line.CashMinor
-	if source == nil && line.Kind == factoring.RemittanceLineReserveRelease {
+	if source == nil && line.Kind == factoringremittance.RemittanceLineReserveRelease {
 		source = line.ReserveMinor
 	}
 	if source != nil {
 		req.CashMinor = new(intutils.Abs(*source))
 	}
-	if line.Kind == factoring.RemittanceLineChargeback {
+	if line.Kind == factoringremittance.RemittanceLineChargeback {
 		req.Reason = "Charged back on the factor's remittance " + remittanceName(run.rem) +
 			", row " + strconv.Itoa(line.RowNumber)
 	} else {
@@ -404,7 +410,7 @@ func (s *RemittanceService) movementRequest(
 	return req
 }
 
-func fundedAdvance(line *factoring.RemittanceLine) *int64 {
+func fundedAdvance(line *factoringremittance.RemittanceLine) *int64 {
 	switch {
 	case line.AdvanceMinor != nil:
 		return line.AdvanceMinor
@@ -416,8 +422,8 @@ func fundedAdvance(line *factoring.RemittanceLine) *int64 {
 }
 
 func (s *RemittanceService) lineDate(
-	rem *factoring.Remittance,
-	line *factoring.RemittanceLine,
+	rem *factoringremittance.Remittance,
+	line *factoringremittance.RemittanceLine,
 ) int64 {
 	now := s.now()
 	for _, candidate := range []*int64{line.OccurredOn, rem.RemittedOn, rem.StagedAt} {
@@ -429,7 +435,7 @@ func (s *RemittanceService) lineDate(
 }
 
 func plannedLine(
-	line *factoring.RemittanceLine,
+	line *factoringremittance.RemittanceLine,
 	step *applyStep,
 ) *factoringremittanceports.PlannedRemittanceLine {
 	item := step.items[line.ID]

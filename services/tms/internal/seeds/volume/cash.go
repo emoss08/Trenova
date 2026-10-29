@@ -34,6 +34,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerstatement/customerstatementdb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring/factoringdb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringsubmission"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice/invoicedb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/latecharge"
@@ -343,7 +344,7 @@ func (g *generator) cashLoadFactoring(ctx context.Context) (*cashFactoring, erro
 
 	fsi := factoringdb.SubmissionItems
 	charged, err := fsi.Pick(fsi.InvoiceID).
-		Where(fsi.Status.Eq(factoring.SubmissionItemStatusChargedBack)).
+		Where(fsi.Status.Eq(factoringsubmission.SubmissionItemStatusChargedBack)).
 		All(ctx, g.db)
 	if err != nil {
 		return nil, fmt.Errorf("load charged back factoring items: %w", err)

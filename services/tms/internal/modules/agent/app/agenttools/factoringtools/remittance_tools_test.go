@@ -8,7 +8,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringledger"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringremittance"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringremittanceports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -23,8 +24,8 @@ type fakeRemittances struct {
 
 	guard     agenttoolstest.WriteGuard
 	ledger    *fakeLedger
-	rem       *factoring.Remittance
-	line      *factoring.RemittanceLine
+	rem       *factoringremittance.Remittance
+	line      *factoringremittance.RemittanceLine
 	updated   *factoringremittanceports.UpdateRemittanceLineRequest
 	applied   *factoringremittanceports.RemittanceVersionRequest
 	rematched *factoringremittanceports.RemittanceVersionRequest
@@ -33,26 +34,26 @@ type fakeRemittances struct {
 
 func newFakeRemittances() *fakeRemittances {
 	ledger := newFakeLedger()
-	line := &factoring.RemittanceLine{
+	line := &factoringremittance.RemittanceLine{
 		ID:            pulid.MustNew("facrml_"),
 		RowNumber:     4,
-		Kind:          factoring.RemittanceLineFunding,
+		Kind:          factoringremittance.RemittanceLineFunding,
 		InvoiceNumber: "INV-7",
-		MatchStatus:   factoring.RemittanceLineSuggested,
+		MatchStatus:   factoringremittance.RemittanceLineSuggested,
 	}
 	return &fakeRemittances{
 		ledger: ledger,
 		line:   line,
-		rem: &factoring.Remittance{
+		rem: &factoringremittance.Remittance{
 			ID:             pulid.MustNew("facrem_"),
 			FileName:       "rts-funding.csv",
-			Status:         factoring.RemittanceStatusParsed,
+			Status:         factoringremittance.RemittanceStatusParsed,
 			CurrencyCode:   "USD",
 			LineCount:      2,
 			MatchedCount:   1,
 			ExceptionCount: 1,
 			Version:        5,
-			Lines:          []*factoring.RemittanceLine{line},
+			Lines:          []*factoringremittance.RemittanceLine{line},
 		},
 	}
 }
@@ -70,7 +71,7 @@ func (f *fakeRemittances) check(id pulid.ID, version int64) error {
 func (f *fakeRemittances) Get(
 	_ context.Context,
 	req factoringremittanceports.GetRemittanceRequest,
-) (*factoring.Remittance, error) {
+) (*factoringremittance.Remittance, error) {
 	if req.ID != f.rem.ID {
 		return nil, errortypes.NewNotFoundError("Factoring remittance not found")
 	}
@@ -86,7 +87,7 @@ func (f *fakeRemittances) PlanUpdateLine(
 		return nil, err
 	}
 	after := *f.line
-	after.MatchStatus = factoring.RemittanceLineMatched
+	after.MatchStatus = factoringremittance.RemittanceLineMatched
 	after.SubmissionItemID = req.ItemID
 	afterRem := *f.rem
 	afterRem.MatchedCount, afterRem.ExceptionCount = 2, 0
@@ -103,7 +104,7 @@ func (f *fakeRemittances) UpdateLine(
 	_ context.Context,
 	req *factoringremittanceports.UpdateRemittanceLineRequest,
 	_ *permissionports.RequestActor,
-) (*factoring.Remittance, error) {
+) (*factoringremittance.Remittance, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
 	}
@@ -115,7 +116,7 @@ func (f *fakeRemittances) Rematch(
 	_ context.Context,
 	req *factoringremittanceports.RemittanceVersionRequest,
 	_ *permissionports.RequestActor,
-) (*factoring.Remittance, error) {
+) (*factoringremittance.Remittance, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
 	}
@@ -136,9 +137,9 @@ func (f *fakeRemittances) PlanApply(
 		Lines: []*factoringremittanceports.PlannedRemittanceLine{{
 			LineID:        f.line.ID,
 			RowNumber:     f.line.RowNumber,
-			Kind:          factoring.RemittanceLineFunding,
+			Kind:          factoringremittance.RemittanceLineFunding,
 			InvoiceNumber: "INV-7",
-			Movement:      f.ledger.planned(factoring.ReserveEntryFunding),
+			Movement:      f.ledger.planned(factoringledger.ReserveEntryFunding),
 		}},
 		FundedCount:   1,
 		LeftOpenCount: 1,
@@ -168,7 +169,7 @@ func (f *fakeRemittances) PlanDiscard(
 		return nil, err
 	}
 	after := *f.rem
-	after.Status = factoring.RemittanceStatusDiscarded
+	after.Status = factoringremittance.RemittanceStatusDiscarded
 	after.DiscardReason = req.Reason
 	return &factoringremittanceports.RemittanceDiscardPlan{Before: f.rem, After: &after}, nil
 }
@@ -177,7 +178,7 @@ func (f *fakeRemittances) Discard(
 	_ context.Context,
 	req *factoringremittanceports.DiscardRemittanceRequest,
 	_ *permissionports.RequestActor,
-) (*factoring.Remittance, error) {
+) (*factoringremittance.Remittance, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
 	}
@@ -318,7 +319,7 @@ func TestDiscardAndRematchFactoringRemittance(t *testing.T) {
 	require.NoError(t, rematch.Execute(t.Context(), rematchParams))
 	require.NotNil(t, remittances.rematched)
 
-	remittances.rem.Status = factoring.RemittanceStatusApplied
+	remittances.rem.Status = factoringremittance.RemittanceStatusApplied
 	require.Error(t, rematch.(agenttoolports.ToolValidator).Validate(t.Context(), rematchParams),
 		"an applied remittance cannot be matched again")
 }

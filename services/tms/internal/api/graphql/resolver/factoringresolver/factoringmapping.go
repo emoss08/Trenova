@@ -8,6 +8,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringreadiness"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringsubmission"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringsubmissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -139,11 +141,11 @@ func noaConnectionToModel(
 }
 
 func invoiceStateConnectionToModel(
-	result *pagination.CursorListResult[*factoring.InvoiceState],
+	result *pagination.CursorListResult[*factoringreadiness.InvoiceState],
 ) (*gqlmodel.FactoringInvoiceStateConnection, error) {
 	page, err := gqlconnection.EntityCursorConnection(
 		result,
-		func(node *factoring.InvoiceState, cursor string) *gqlmodel.FactoringInvoiceStateEdge {
+		func(node *factoringreadiness.InvoiceState, cursor string) *gqlmodel.FactoringInvoiceStateEdge {
 			return &gqlmodel.FactoringInvoiceStateEdge{Node: node, Cursor: cursor}
 		},
 		func(edge *gqlmodel.FactoringInvoiceStateEdge) string { return edge.Cursor },
@@ -160,11 +162,11 @@ func invoiceStateConnectionToModel(
 }
 
 func submissionConnectionToModel(
-	result *pagination.CursorListResult[*factoring.Submission],
+	result *pagination.CursorListResult[*factoringsubmission.Submission],
 ) (*gqlmodel.FactoringSubmissionConnection, error) {
 	page, err := gqlconnection.EntityCursorConnection(
 		result,
-		func(node *factoring.Submission, cursor string) *gqlmodel.FactoringSubmissionEdge {
+		func(node *factoringsubmission.Submission, cursor string) *gqlmodel.FactoringSubmissionEdge {
 			return &gqlmodel.FactoringSubmissionEdge{Node: node, Cursor: cursor}
 		},
 		func(edge *gqlmodel.FactoringSubmissionEdge) string { return edge.Cursor },

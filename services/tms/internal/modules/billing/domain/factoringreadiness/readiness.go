@@ -1,6 +1,8 @@
-package factoring
+package factoringreadiness
 
 import (
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringsubmission"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -72,19 +74,19 @@ type InvoiceFacts struct {
 type ReadinessInputs struct {
 	At                     int64
 	Invoice                InvoiceFacts
-	Agreement              *Agreement
-	Noa                    *Noa
+	Agreement              *factoring.Agreement
+	Noa                    *factoring.Noa
 	OpenDispute            bool
 	Shipments              []ShipmentFacts
 	InvoiceAcceptedTypeIDs map[pulid.ID]struct{}
 	AgreementDocuments     []DocumentNeed
 	SubmissionNumber       string
-	SubmissionItemStatus   SubmissionItemStatus
+	SubmissionItemStatus   factoringsubmission.SubmissionItemStatus
 	ChargedBack            bool
 }
 
 func EvaluateReadiness(in *ReadinessInputs) Readiness {
-	if in.SubmissionItemStatus == SubmissionItemStatusFunded {
+	if in.SubmissionItemStatus == factoringsubmission.SubmissionItemStatusFunded {
 		return Readiness{Verdict: VerdictFunded, Checks: []Check{{
 			Code:    CheckEligible,
 			Passed:  true,
@@ -165,19 +167,19 @@ func noaCheck(in *ReadinessInputs) Check {
 			Passed:  true,
 			Message: "The customer acknowledged the notice of assignment",
 		}
-	case in.Noa == nil || in.Noa.Status == NoaStatusReleased:
+	case in.Noa == nil || in.Noa.Status == factoring.NoaStatusReleased:
 		return Check{
 			Code:    CheckNoa,
 			Message: "No notice of assignment has been sent to the customer",
 			Fix:     FixSendNoa,
 		}
-	case in.Noa.Status == NoaStatusAcknowledged:
+	case in.Noa.Status == factoring.NoaStatusAcknowledged:
 		return Check{
 			Code:    CheckNoa,
 			Message: "The notice of assignment has expired",
 			Fix:     FixSendNoa,
 		}
-	case in.Noa.Status == NoaStatusDraft:
+	case in.Noa.Status == factoring.NoaStatusDraft:
 		return Check{
 			Code:    CheckNoa,
 			Message: "The notice of assignment is drafted but not sent",

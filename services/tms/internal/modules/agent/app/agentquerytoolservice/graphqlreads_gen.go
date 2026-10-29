@@ -3,6 +3,9 @@
 package agentquerytoolservice
 
 import (
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringreadiness"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringremittance"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringsubmission"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingdrift"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountinginbound"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/ediinboundfile"
@@ -3529,7 +3532,7 @@ var graphQLReads = map[string]graphQLRead{
 		RootField: "factoringInvoiceStates",
 		Node:      "FactoringInvoiceState",
 		Resource:  "invoice",
-		Entity:    func() domaintypes.PostgresSearchable { return new(factoring.InvoiceState) },
+		Entity:    func() domaintypes.PostgresSearchable { return new(factoringreadiness.InvoiceState) },
 		Variables: []graphQLVariable{
 			{Name: "includeTotalCount", Type: "Boolean", NonNull: false, List: false, Kind: "scalar", Description: "true also returns totalCountExact: Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."},
 			{Name: "input", Type: "DataTableConnectionInput", NonNull: true, List: false, Kind: "input"},
@@ -3559,7 +3562,7 @@ var graphQLReads = map[string]graphQLRead{
 		RootField: "factoringRemittances",
 		Node:      "FactoringRemittance",
 		Resource:  "factoring_remittance",
-		Entity:    func() domaintypes.PostgresSearchable { return new(factoring.Remittance) },
+		Entity:    func() domaintypes.PostgresSearchable { return new(factoringremittance.Remittance) },
 		Variables: []graphQLVariable{
 			{Name: "includeTotalCount", Type: "Boolean", NonNull: false, List: false, Kind: "scalar", Description: "true also returns totalCountExact: Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."},
 			{Name: "input", Type: "DataTableConnectionInput", NonNull: true, List: false, Kind: "input"},
@@ -3629,7 +3632,7 @@ var graphQLReads = map[string]graphQLRead{
 		RootField: "factoringSubmissions",
 		Node:      "FactoringSubmission",
 		Resource:  "factoring_submission",
-		Entity:    func() domaintypes.PostgresSearchable { return new(factoring.Submission) },
+		Entity:    func() domaintypes.PostgresSearchable { return new(factoringsubmission.Submission) },
 		Variables: []graphQLVariable{
 			{Name: "includeTotalCount", Type: "Boolean", NonNull: false, List: false, Kind: "scalar", Description: "true also returns totalCountExact: Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."},
 			{Name: "input", Type: "DataTableConnectionInput", NonNull: true, List: false, Kind: "input"},

@@ -4,7 +4,7 @@ import (
 	"context"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringremittance"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringremittanceports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/factoringcompany"
@@ -125,15 +125,15 @@ func (s *RemittanceService) ingestAttachment(
 	}
 
 	actor := new(systemActor(req.TenantInfo))
-	rem := &factoring.Remittance{
+	rem := &factoringremittance.Remittance{
 		OrganizationID:     req.TenantInfo.OrgID,
 		BusinessUnitID:     req.TenantInfo.BuID,
 		FactoringCompanyID: factor.ID,
-		Source:             factoring.RemittanceSourceEmail,
+		Source:             factoringremittance.RemittanceSourceEmail,
 		InboundMessageID:   req.InboundMessageID,
 		DocumentID:         attachment.DocumentID,
 		FileName:           attachment.FileName,
-		DefaultKind:        factoring.RemittanceLineFunding,
+		DefaultKind:        factoringremittance.RemittanceLineFunding,
 	}
 	if req.ReceivedAt > 0 && req.ReceivedAt <= s.now()+maxFutureMovementSeconds {
 		rem.RemittedOn = new(req.ReceivedAt)
@@ -150,13 +150,13 @@ func (s *RemittanceService) ingestAttachment(
 
 func (s *RemittanceService) stageEmailed(
 	ctx context.Context,
-	created *factoring.Remittance,
+	created *factoringremittance.Remittance,
 	documentID pulid.ID,
 ) error {
 	tenantInfo := remittanceTenant(created)
 	actor := new(systemActor(tenantInfo))
 	prepared := &preparedStage{}
-	var staging *factoring.RemittanceStaging
+	var staging *factoringremittance.RemittanceStaging
 	doc, err := s.remittanceDocument(ctx, created, documentID)
 	if err == nil {
 		staging, err = stagingFor(created, doc, "", nil, s.now())

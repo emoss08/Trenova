@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring/factoringdb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringsubmission"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice/invoicedb"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringwatchtowerports"
@@ -207,7 +208,7 @@ func (r *watchtowerReader) ListFailedSubmissions(
 	)
 }
 
-func failedSubmissions(limit int) *keel.Query[*factoring.Submission] {
+func failedSubmissions(limit int) *keel.Query[*factoringsubmission.Submission] {
 	sub := factoringdb.Submissions
 	return sub.Pick(
 		sub.ID,
@@ -221,7 +222,7 @@ func failedSubmissions(limit int) *keel.Query[*factoring.Submission] {
 		blank(sub.LastError),
 		sub.FailedAt,
 	).
-		Where(sub.Status.Eq(factoring.SubmissionStatusFailed), sub.FailedAt.IsNotNull()).
+		Where(sub.Status.Eq(factoringsubmission.SubmissionStatusFailed), sub.FailedAt.IsNotNull()).
 		Order(sub.FailedAt.Asc(), sub.ID.Asc()).
 		Limit(boundedLimit(limit, maxAttentionRows))
 }
@@ -245,7 +246,7 @@ func (r *watchtowerReader) ListUnfundedSubmissions(
 
 func unfundedSubmissions(
 	req *factoringwatchtowerports.ListUnfundedSubmissionsRequest,
-) *keel.Query[*factoring.Submission] {
+) *keel.Query[*factoringsubmission.Submission] {
 	sub := factoringdb.Submissions
 	item := factoringdb.SubmissionItems
 	agr := factoringdb.Agreements
@@ -266,11 +267,11 @@ func unfundedSubmissions(
 	).
 		Join(item,
 			item.SubmissionID.EqCol(sub.ID),
-			item.Status.Eq(factoring.SubmissionItemStatusPending),
+			item.Status.Eq(factoringsubmission.SubmissionItemStatusPending),
 		).
 		Join(agr, agr.ID.EqCol(sub.AgreementID)).
 		Where(
-			sub.Status.In(factoring.AwaitingFundingStatuses()...),
+			sub.Status.In(factoringsubmission.AwaitingFundingStatuses()...),
 			sub.SentAt.IsNotNull(),
 			dueAt.Lt(req.At),
 		).
@@ -298,7 +299,7 @@ func (r *watchtowerReader) ListChargebacksDue(
 
 func chargebacksDueSoon(
 	req *factoringwatchtowerports.ListChargebacksDueRequest,
-) *keel.Query[*factoring.SubmissionItem] {
+) *keel.Query[*factoringsubmission.SubmissionItem] {
 	item := factoringdb.SubmissionItems
 	sub := item.Submission()
 	agr := sub.Agreement()
@@ -322,7 +323,7 @@ func chargebacksDueSoon(
 	).
 		Where(
 			sub.ID.IsNotNull(),
-			item.Status.Eq(factoring.SubmissionItemStatusFunded),
+			item.Status.Eq(factoringsubmission.SubmissionItemStatusFunded),
 			item.FundedOn.IsNotNull(),
 			agr.Recourse.Eq(factoring.RecourseFull),
 			deadline.Lte(req.Before),

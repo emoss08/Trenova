@@ -8,6 +8,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringsubmission"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringsubmissionports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringwatchtowerports"
@@ -31,22 +32,22 @@ func (e *factoringEnv) submission(
 	agreement *factoring.Agreement,
 	number, key string,
 	invoices ...*invoice.Invoice,
-) *factoring.Submission {
-	sub := &factoring.Submission{
+) *factoringsubmission.Submission {
+	sub := &factoringsubmission.Submission{
 		OrganizationID:     e.tenantInfo.OrgID,
 		BusinessUnitID:     e.tenantInfo.BuID,
 		Number:             number,
 		FactoringCompanyID: agreement.FactoringCompanyID,
 		AgreementID:        agreement.ID,
-		Status:             factoring.SubmissionStatusSending,
+		Status:             factoringsubmission.SubmissionStatusSending,
 		CurrencyCode:       "USD",
-		TransportMethod:    factoring.TransportMethodEmail,
+		TransportMethod:    factoringsubmission.TransportMethodEmail,
 		TransportTarget:    "schedules@factor.test",
 		IdempotencyKey:     key,
 	}
 	for _, inv := range invoices {
 		funding := factoring.ExpectedFunding(inv.TotalAmountMinor, agreement, 30)
-		sub.Items = append(sub.Items, &factoring.SubmissionItem{
+		sub.Items = append(sub.Items, &factoringsubmission.SubmissionItem{
 			InvoiceID:            inv.ID,
 			InvoiceNumber:        inv.Number,
 			CustomerID:           inv.CustomerID,
@@ -177,7 +178,7 @@ func TestSubmissionLifecycleAndLiveInvoices(t *testing.T) {
 	)
 	require.NoError(t, err)
 	assert.Len(t, items[created.ID], 2)
-	assert.Equal(t, factoring.SubmissionItemStatusReleased, items[created.ID][0].Status)
+	assert.Equal(t, factoringsubmission.SubmissionItemStatusReleased, items[created.ID][0].Status)
 	assert.Len(t, items[again.ID], 1)
 
 	page, err := submissions.ListConnection(
@@ -204,33 +205,33 @@ func TestTransportOnePerFactor(t *testing.T) {
 	_, transports := newSubmissionRepos(e)
 	factor := e.createFactor(t, "FTRN")
 
-	entity := &factoring.Transport{
+	entity := &factoringsubmission.Transport{
 		OrganizationID:     e.tenantInfo.OrgID,
 		BusinessUnitID:     e.tenantInfo.BuID,
 		FactoringCompanyID: factor.ID,
-		Method:             factoring.TransportMethodEmail,
+		Method:             factoringsubmission.TransportMethodEmail,
 		EmailRecipients:    []string{"schedules@factor.test"},
 		AttachPackets:      true,
 	}
 	created, err := transports.Create(e.ctx, entity)
 	require.NoError(t, err)
 
-	_, err = transports.Create(e.ctx, &factoring.Transport{
+	_, err = transports.Create(e.ctx, &factoringsubmission.Transport{
 		OrganizationID:     e.tenantInfo.OrgID,
 		BusinessUnitID:     e.tenantInfo.BuID,
 		FactoringCompanyID: factor.ID,
-		Method:             factoring.TransportMethodEmail,
+		Method:             factoringsubmission.TransportMethodEmail,
 		EmailRecipients:    []string{"other@factor.test"},
 	})
 	require.Error(t, err)
 	assert.True(t, errortypes.IsConflictError(err))
 
-	created.Method = factoring.TransportMethodSftp
+	created.Method = factoringsubmission.TransportMethodSftp
 	created.EmailRecipients = nil
 	created.SftpHost = "sftp.factor.test"
 	created.SftpPort = 22
 	created.SftpUsername = "carrier"
-	created.SftpAuthMethod = factoring.SftpAuthPassword
+	created.SftpAuthMethod = factoringsubmission.SftpAuthPassword
 	created.SftpSecret = "sealed"
 	created.SftpKnownHostKey = "ssh-ed25519 AAAA"
 	created.SftpDirectory = "/in"
@@ -245,7 +246,7 @@ func TestTransportOnePerFactor(t *testing.T) {
 		TenantInfo: e.tenantInfo, FactoringCompanyID: factor.ID,
 	})
 	require.NoError(t, err)
-	assert.Equal(t, factoring.TransportMethodSftp, got.Method)
+	assert.Equal(t, factoringsubmission.TransportMethodSftp, got.Method)
 	assert.Equal(t, "sealed", got.SftpSecret)
 	assert.NotNil(t, got.LastTestedAt)
 }
@@ -255,11 +256,11 @@ func TestTransportKeepsPacketsOffWhenCreatedWithout(t *testing.T) {
 	_, transports := newSubmissionRepos(e)
 	factor := e.createFactor(t, "FNOP")
 
-	_, err := transports.Create(e.ctx, &factoring.Transport{
+	_, err := transports.Create(e.ctx, &factoringsubmission.Transport{
 		OrganizationID:     e.tenantInfo.OrgID,
 		BusinessUnitID:     e.tenantInfo.BuID,
 		FactoringCompanyID: factor.ID,
-		Method:             factoring.TransportMethodEmail,
+		Method:             factoringsubmission.TransportMethodEmail,
 		EmailRecipients:    []string{"schedules@factor.test"},
 		AttachPackets:      false,
 	})
@@ -294,7 +295,7 @@ func TestSubmissionFundingPersistsItemOutcomes(t *testing.T) {
 	require.NoError(t, err)
 
 	fundedOn := time.Now().Unix()
-	byInvoice := make(map[pulid.ID]*factoring.SubmissionItem, len(created.Items))
+	byInvoice := make(map[pulid.ID]*factoringsubmission.SubmissionItem, len(created.Items))
 	for _, item := range created.Items {
 		byInvoice[item.InvoiceID] = item
 	}
@@ -302,12 +303,12 @@ func TestSubmissionFundingPersistsItemOutcomes(t *testing.T) {
 		t,
 		byInvoice[first.ID].Fund(
 			fundedOn,
-			factoring.ItemFunding{AdvanceMinor: 90000, FeeMinor: 2500},
+			factoringsubmission.ItemFunding{AdvanceMinor: 90000, FeeMinor: 2500},
 		),
 	)
 	require.NoError(t, byInvoice[second.ID].Reject("Debtor over its credit limit"))
 	created.Resolve(fundedOn)
-	assert.Equal(t, factoring.SubmissionStatusFunded, created.Status)
+	assert.Equal(t, factoringsubmission.SubmissionStatusFunded, created.Status)
 	_, err = submissions.Update(e.ctx, created)
 	require.NoError(t, err)
 
@@ -315,11 +316,11 @@ func TestSubmissionFundingPersistsItemOutcomes(t *testing.T) {
 		ID: created.ID, TenantInfo: e.tenantInfo, IncludeItems: true,
 	})
 	require.NoError(t, err)
-	assert.Equal(t, factoring.SubmissionStatusFunded, loaded.Status)
+	assert.Equal(t, factoringsubmission.SubmissionStatusFunded, loaded.Status)
 	require.NotNil(t, loaded.FundedAt)
 	funded := loaded.Item(byInvoice[first.ID].ID)
 	require.NotNil(t, funded)
-	assert.Equal(t, factoring.SubmissionItemStatusFunded, funded.Status)
+	assert.Equal(t, factoringsubmission.SubmissionItemStatusFunded, funded.Status)
 	advance, fee, reserve := funded.Actuals()
 	assert.Equal(t, int64(90000), advance)
 	assert.Equal(t, int64(2500), fee)
@@ -328,7 +329,7 @@ func TestSubmissionFundingPersistsItemOutcomes(t *testing.T) {
 	assert.Equal(t, fundedOn, *funded.FundedOn)
 	rejected := loaded.Item(byInvoice[second.ID].ID)
 	require.NotNil(t, rejected)
-	assert.Equal(t, factoring.SubmissionItemStatusRejected, rejected.Status)
+	assert.Equal(t, factoringsubmission.SubmissionItemStatusRejected, rejected.Status)
 	assert.Equal(t, "Debtor over its credit limit", rejected.RejectionReason)
 
 	live, err := submissions.ListLiveItems(e.ctx, &factoringsubmissionports.ListLiveItemsRequest{
@@ -337,7 +338,7 @@ func TestSubmissionFundingPersistsItemOutcomes(t *testing.T) {
 	})
 	require.NoError(t, err)
 	require.Len(t, live, 1)
-	assert.Equal(t, factoring.SubmissionItemStatusFunded, live[first.ID].ItemStatus)
+	assert.Equal(t, factoringsubmission.SubmissionItemStatusFunded, live[first.ID].ItemStatus)
 
 	require.NoError(t, funded.ChargeBack(fundedOn+86_400, "Customer never paid"))
 	_, err = submissions.Update(e.ctx, loaded)
@@ -360,7 +361,11 @@ func TestSubmissionFundingPersistsItemOutcomes(t *testing.T) {
 	)
 	require.NoError(t, err)
 	require.Len(t, withChargebacks, 1)
-	assert.Equal(t, factoring.SubmissionItemStatusChargedBack, withChargebacks[first.ID].ItemStatus)
+	assert.Equal(
+		t,
+		factoringsubmission.SubmissionItemStatusChargedBack,
+		withChargebacks[first.ID].ItemStatus,
+	)
 	assert.False(t, withChargebacks[first.ID].IsLive())
 
 	again, err := submissions.Create(e.ctx, e.submission(agreement, "FS-F2", "key-f2", first))

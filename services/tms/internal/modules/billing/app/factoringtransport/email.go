@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringsubmission"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringsubmissionports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/email"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
@@ -29,8 +29,8 @@ func NewEmail(p EmailParams) factoringsubmissionports.FactoringTransport {
 	return &Email{email: p.Email}
 }
 
-func (t *Email) Method() factoring.TransportMethod {
-	return factoring.TransportMethodEmail
+func (t *Email) Method() factoringsubmission.TransportMethod {
+	return factoringsubmission.TransportMethodEmail
 }
 
 func (t *Email) Send(

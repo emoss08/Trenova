@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringremittance"
 	"github.com/emoss08/trenova/pkg/factoringremit"
 	"github.com/emoss08/trenova/pkg/rateimport"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -47,7 +47,7 @@ func (p *pdfProblemError) Error() string { return p.message }
 
 func (s *RemittanceService) extractPdf(
 	ctx context.Context,
-	rem *factoring.Remittance,
+	rem *factoringremittance.Remittance,
 	documentID pulid.ID,
 	text string,
 ) (*rateimport.Sheet, error) {

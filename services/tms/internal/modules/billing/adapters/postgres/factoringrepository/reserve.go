@@ -6,8 +6,8 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring/factoringdb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringledger"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringledgerports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -35,9 +35,9 @@ func NewReserveEntryRepository(p Params) factoringledgerports.ReserveEntryReposi
 
 func (r *reserveEntryRepository) Create(
 	ctx context.Context,
-	entity *factoring.ReserveEntry,
-) (*factoring.ReserveEntry, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*factoring.ReserveEntry, error) {
+	entity *factoringledger.ReserveEntry,
+) (*factoringledger.ReserveEntry, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*factoringledger.ReserveEntry, error) {
 		if err := factoringdb.ReserveEntries.Create(ctx, r.db.Keel(ctx), entity); err != nil {
 			if dberror.IsUniqueConstraintViolation(err) &&
 				dberror.ExtractConstraintName(err) == reserveReversalIndex {
@@ -55,17 +55,20 @@ func (r *reserveEntryRepository) Create(
 func (r *reserveEntryRepository) ListConnection(
 	ctx context.Context,
 	req *factoringledgerports.ListReserveEntryConnectionRequest,
-) (*pagination.CursorListResult[*factoring.ReserveEntry], error) {
+) (*pagination.CursorListResult[*factoringledger.ReserveEntry], error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) (*pagination.CursorListResult[*factoring.ReserveEntry], error) {
+		func(ctx context.Context) (*pagination.CursorListResult[*factoringledger.ReserveEntry], error) {
 			filter, term := withoutQuery(req.Filter)
 			result, err := listquery.Connection(
 				ctx,
 				r.db.Keel(ctx),
 				reserveScope(req, term),
-				&listquery.Request[factoring.ReserveEntry]{Filter: filter, Cursor: req.Cursor},
+				&listquery.Request[factoringledger.ReserveEntry]{
+					Filter: filter,
+					Cursor: req.Cursor,
+				},
 			)
 			if err != nil {
 				r.l.Error("failed to list factoring reserve entries", zap.Error(err))
@@ -80,7 +83,7 @@ func (r *reserveEntryRepository) ListConnection(
 func reserveScope(
 	req *factoringledgerports.ListReserveEntryConnectionRequest,
 	term string,
-) *keel.Query[*factoring.ReserveEntry] {
+) *keel.Query[*factoringledger.ReserveEntry] {
 	re := factoringdb.ReserveEntries
 	pattern := "%" + stringutils.EscapeLikePattern(term) + "%"
 	return re.Where(
@@ -101,8 +104,8 @@ func reserveScope(
 func (r *reserveEntryRepository) ListForItem(
 	ctx context.Context,
 	req factoringledgerports.ListReserveEntriesForItemRequest,
-) ([]*factoring.ReserveEntry, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*factoring.ReserveEntry, error) {
+) ([]*factoringledger.ReserveEntry, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*factoringledger.ReserveEntry, error) {
 		re := factoringdb.ReserveEntries
 		rows, err := re.Where(re.SubmissionItemID.Eq(req.SubmissionItemID)).
 			Order(re.CreatedAt.Asc(), re.ID.Asc()).
@@ -111,7 +114,7 @@ func (r *reserveEntryRepository) ListForItem(
 			return nil, err
 		}
 		if rows == nil {
-			return []*factoring.ReserveEntry{}, nil
+			return []*factoringledger.ReserveEntry{}, nil
 		}
 
 		return rows, nil
@@ -163,20 +166,20 @@ func (r *reserveEntryRepository) GetBalance(
 
 func reserveBalance(
 	req *factoringledgerports.GetReserveBalanceRequest,
-) *keel.Query[*factoring.ReserveEntry] {
+) *keel.Query[*factoringledger.ReserveEntry] {
 	re := factoringdb.ReserveEntries
-	cash := func(kinds ...factoring.ReserveEntryKind) keel.Agg {
+	cash := func(kinds ...factoringledger.ReserveEntryKind) keel.Agg {
 		return re.CashMinor.Sum().Filter(re.Kind.In(kinds...))
 	}
 
 	return re.Pick(
 		keel.NumericOf(re.ReserveMinor.Sum()).Coalesce(0),
 		keel.NumericOf(re.LiabilityMinor.Sum()).Coalesce(0),
-		keel.NumericOf(cash(factoring.ReserveEntryFunding)).Coalesce(0),
-		keel.NumericOf(cash(factoring.ReserveEntryRelease)).Coalesce(0),
+		keel.NumericOf(cash(factoringledger.ReserveEntryFunding)).Coalesce(0),
+		keel.NumericOf(cash(factoringledger.ReserveEntryRelease)).Coalesce(0),
 		keel.NumericOf(cash(
-			factoring.ReserveEntryChargeback,
-			factoring.ReserveEntryChargebackReversal,
+			factoringledger.ReserveEntryChargeback,
+			factoringledger.ReserveEntryChargebackReversal,
 		)).Neg().Coalesce(0),
 		keel.NumericOf(re.FeeMinor.Sum()).Coalesce(0),
 		keel.Count(),

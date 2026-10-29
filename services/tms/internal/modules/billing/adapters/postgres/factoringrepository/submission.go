@@ -6,8 +6,8 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring/factoringdb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringsubmission"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringsubmissionports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -41,61 +41,69 @@ func NewSubmissionRepository(p Params) factoringsubmissionports.SubmissionReposi
 
 func (r *submissionRepository) Create(
 	ctx context.Context,
-	entity *factoring.Submission,
-) (*factoring.Submission, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*factoring.Submission, error) {
-		db := r.db.Keel(ctx)
-		if err := factoringdb.Submissions.Create(ctx, db, entity); err != nil {
-			return nil, translateSubmissionError(err, entity.ID)
-		}
-		if len(entity.Items) == 0 {
-			return entity, nil
-		}
-		for idx, item := range entity.Items {
-			item.SubmissionID = entity.ID
-			item.Position = idx + 1
-		}
-		if err := factoringdb.SubmissionItems.CreateMany(ctx, db, entity.Items); err != nil {
-			return nil, translateSubmissionError(err, entity.ID)
-		}
+	entity *factoringsubmission.Submission,
+) (*factoringsubmission.Submission, error) {
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*factoringsubmission.Submission, error) {
+			db := r.db.Keel(ctx)
+			if err := factoringdb.Submissions.Create(ctx, db, entity); err != nil {
+				return nil, translateSubmissionError(err, entity.ID)
+			}
+			if len(entity.Items) == 0 {
+				return entity, nil
+			}
+			for idx, item := range entity.Items {
+				item.SubmissionID = entity.ID
+				item.Position = idx + 1
+			}
+			if err := factoringdb.SubmissionItems.CreateMany(ctx, db, entity.Items); err != nil {
+				return nil, translateSubmissionError(err, entity.ID)
+			}
 
-		return entity, nil
-	})
+			return entity, nil
+		},
+	)
 }
 
 func (r *submissionRepository) Update(
 	ctx context.Context,
-	entity *factoring.Submission,
-) (*factoring.Submission, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*factoring.Submission, error) {
-		s := factoringdb.Submissions
-		err := s.SaveExcept(ctx, r.db.Keel(ctx), entity,
-			s.Number,
-			s.FactoringCompanyID,
-			s.AgreementID,
-			s.IdempotencyKey,
-			s.InvoiceCount,
-			s.FaceMinor,
-			s.ExpectedAdvanceMinor,
-			s.ExpectedFeeMinor,
-			s.ExpectedReserveMinor,
-			s.SubmittedByID,
-			s.AgentRunID,
-		)
-		if err != nil {
-			return nil, translateSubmissionError(err, entity.ID)
-		}
-		if err = r.updateItemStatuses(ctx, entity); err != nil {
-			return nil, err
-		}
+	entity *factoringsubmission.Submission,
+) (*factoringsubmission.Submission, error) {
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*factoringsubmission.Submission, error) {
+			s := factoringdb.Submissions
+			err := s.SaveExcept(ctx, r.db.Keel(ctx), entity,
+				s.Number,
+				s.FactoringCompanyID,
+				s.AgreementID,
+				s.IdempotencyKey,
+				s.InvoiceCount,
+				s.FaceMinor,
+				s.ExpectedAdvanceMinor,
+				s.ExpectedFeeMinor,
+				s.ExpectedReserveMinor,
+				s.SubmittedByID,
+				s.AgentRunID,
+			)
+			if err != nil {
+				return nil, translateSubmissionError(err, entity.ID)
+			}
+			if err = r.updateItemStatuses(ctx, entity); err != nil {
+				return nil, err
+			}
 
-		return entity, nil
-	})
+			return entity, nil
+		},
+	)
 }
 
 func (r *submissionRepository) updateItemStatuses(
 	ctx context.Context,
-	entity *factoring.Submission,
+	entity *factoringsubmission.Submission,
 ) error {
 	db := r.db.Keel(ctx)
 	item := factoringdb.SubmissionItems
@@ -167,7 +175,7 @@ func (r *submissionRepository) SetDocuments(
 	})
 }
 
-func submissionWithItems() *keel.Query[*factoring.Submission] {
+func submissionWithItems() *keel.Query[*factoringsubmission.Submission] {
 	s := factoringdb.Submissions
 	items := s.Items()
 	return s.Load(items.Order(items.Position.Asc()))
@@ -176,8 +184,8 @@ func submissionWithItems() *keel.Query[*factoring.Submission] {
 func (r *submissionRepository) GetByID(
 	ctx context.Context,
 	req factoringsubmissionports.GetSubmissionRequest,
-) (*factoring.Submission, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*factoring.Submission, error) {
+) (*factoringsubmission.Submission, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*factoringsubmission.Submission, error) {
 		s := factoringdb.Submissions
 		q := s.Query()
 		if req.IncludeItems {
@@ -196,8 +204,8 @@ func (r *submissionRepository) GetByID(
 func (r *submissionRepository) GetByIdempotencyKey(
 	ctx context.Context,
 	req factoringsubmissionports.GetSubmissionByKeyRequest,
-) (*factoring.Submission, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*factoring.Submission, error) {
+) (*factoringsubmission.Submission, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*factoringsubmission.Submission, error) {
 		entity, err := submissionWithItems().
 			Where(factoringdb.Submissions.IdempotencyKey.Eq(req.IdempotencyKey)).
 			One(ctx, r.db.Keel(ctx))
@@ -212,17 +220,20 @@ func (r *submissionRepository) GetByIdempotencyKey(
 func (r *submissionRepository) ListConnection(
 	ctx context.Context,
 	req *factoringsubmissionports.ListSubmissionConnectionRequest,
-) (*pagination.CursorListResult[*factoring.Submission], error) {
+) (*pagination.CursorListResult[*factoringsubmission.Submission], error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) (*pagination.CursorListResult[*factoring.Submission], error) {
+		func(ctx context.Context) (*pagination.CursorListResult[*factoringsubmission.Submission], error) {
 			filter, term := withoutQuery(req.Filter)
 			result, err := listquery.Connection(
 				ctx,
 				r.db.Keel(ctx),
 				submissionScope(req, term),
-				&listquery.Request[factoring.Submission]{Filter: filter, Cursor: req.Cursor},
+				&listquery.Request[factoringsubmission.Submission]{
+					Filter: filter,
+					Cursor: req.Cursor,
+				},
 			)
 			if err != nil {
 				r.l.Error("failed to list factoring submissions", zap.Error(err))
@@ -237,7 +248,7 @@ func (r *submissionRepository) ListConnection(
 func submissionScope(
 	req *factoringsubmissionports.ListSubmissionConnectionRequest,
 	term string,
-) *keel.Query[*factoring.Submission] {
+) *keel.Query[*factoringsubmission.Submission] {
 	s := factoringdb.Submissions
 	items := s.Items()
 	return s.Where(
@@ -290,7 +301,7 @@ func (r *submissionRepository) ListLiveItems(
 
 func liveItems(
 	req *factoringsubmissionports.ListLiveItemsRequest,
-) *keel.Query[*factoring.SubmissionItem] {
+) *keel.Query[*factoringsubmission.SubmissionItem] {
 	item := factoringdb.SubmissionItems
 	sub := factoringdb.Submissions
 	return item.Pick(item.InvoiceID, item.SubmissionID, sub.Number, sub.Status, item.ID, item.Status).
@@ -304,12 +315,15 @@ func liveItems(
 func (r *submissionRepository) ListItemsBySubmissionIDs(
 	ctx context.Context,
 	req *factoringsubmissionports.ListItemsBySubmissionIDsRequest,
-) (map[pulid.ID][]*factoring.SubmissionItem, error) {
+) (map[pulid.ID][]*factoringsubmission.SubmissionItem, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) (map[pulid.ID][]*factoring.SubmissionItem, error) {
-			result := make(map[pulid.ID][]*factoring.SubmissionItem, len(req.SubmissionIDs))
+		func(ctx context.Context) (map[pulid.ID][]*factoringsubmission.SubmissionItem, error) {
+			result := make(
+				map[pulid.ID][]*factoringsubmission.SubmissionItem,
+				len(req.SubmissionIDs),
+			)
 			if len(req.SubmissionIDs) == 0 {
 				return result, nil
 			}
@@ -358,10 +372,10 @@ func translateSubmissionError(err error, id pulid.ID) error {
 	return submissionErrors.Map(err, id.String())
 }
 
-func liveItemStatuses(includeChargedBack bool) []factoring.SubmissionItemStatus {
-	statuses := factoring.LiveSubmissionItemStatuses()
+func liveItemStatuses(includeChargedBack bool) []factoringsubmission.SubmissionItemStatus {
+	statuses := factoringsubmission.LiveSubmissionItemStatuses()
 	if includeChargedBack {
-		statuses = append(statuses, factoring.SubmissionItemStatusChargedBack)
+		statuses = append(statuses, factoringsubmission.SubmissionItemStatusChargedBack)
 	}
 	return statuses
 }
@@ -374,7 +388,7 @@ func (r *submissionRepository) ClaimChargebackWarning(
 		item := factoringdb.SubmissionItems
 		n, err := item.Where(
 			item.ID.Eq(req.ItemID),
-			item.Status.Eq(factoring.SubmissionItemStatusFunded),
+			item.Status.Eq(factoringsubmission.SubmissionItemStatusFunded),
 			item.ChargebackWarnedAt.IsNull(),
 		).Update(ctx, r.db.Keel(ctx),
 			item.ChargebackWarnedAt.To(req.At),
@@ -391,25 +405,29 @@ func (r *submissionRepository) ClaimChargebackWarning(
 func (r *submissionRepository) GetByIDs(
 	ctx context.Context,
 	req factoringsubmissionports.GetSubmissionsByIDsRequest,
-) ([]*factoring.Submission, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*factoring.Submission, error) {
-		if len(req.IDs) == 0 {
-			return []*factoring.Submission{}, nil
-		}
-		if len(req.IDs) > maxSubmissionIDsPerLookup {
-			return nil, errortypes.NewValidationError(
-				"ids",
-				errortypes.ErrInvalid,
-				"Too many schedules were asked for at once",
-			)
-		}
+) ([]*factoringsubmission.Submission, error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*factoringsubmission.Submission, error) {
+			if len(req.IDs) == 0 {
+				return []*factoringsubmission.Submission{}, nil
+			}
+			if len(req.IDs) > maxSubmissionIDsPerLookup {
+				return nil, errortypes.NewValidationError(
+					"ids",
+					errortypes.ErrInvalid,
+					"Too many schedules were asked for at once",
+				)
+			}
 
-		s := factoringdb.Submissions
-		rows, err := s.Where(s.ID.In(req.IDs...)).Limit(len(req.IDs)).List(ctx, r.db.Keel(ctx))
-		if err != nil {
-			return nil, err
-		}
+			s := factoringdb.Submissions
+			rows, err := s.Where(s.ID.In(req.IDs...)).Limit(len(req.IDs)).List(ctx, r.db.Keel(ctx))
+			if err != nil {
+				return nil, err
+			}
 
-		return rows, nil
-	})
+			return rows, nil
+		},
+	)
 }

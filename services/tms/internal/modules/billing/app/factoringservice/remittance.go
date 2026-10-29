@@ -9,7 +9,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringremittance"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringsubmission"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringledgerports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringremittanceports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringsubmissionports"
@@ -92,14 +93,14 @@ func NewRemittanceService(p RemittanceParams) factoringremittanceports.Remittanc
 	}
 }
 
-func remittanceTenant(rem *factoring.Remittance) pagination.TenantInfo {
+func remittanceTenant(rem *factoringremittance.Remittance) pagination.TenantInfo {
 	return pagination.TenantInfo{OrgID: rem.OrganizationID, BuID: rem.BusinessUnitID}
 }
 
 func (s *RemittanceService) Get(
 	ctx context.Context,
 	req factoringremittanceports.GetRemittanceRequest,
-) (*factoring.Remittance, error) {
+) (*factoringremittance.Remittance, error) {
 	if req.ID.IsNil() {
 		return nil, errortypes.NewValidationError(
 			"id",
@@ -114,7 +115,7 @@ func (s *RemittanceService) Get(
 func (s *RemittanceService) ListConnection(
 	ctx context.Context,
 	req *factoringremittanceports.ListRemittanceConnectionRequest,
-) (*pagination.CursorListResult[*factoring.Remittance], error) {
+) (*pagination.CursorListResult[*factoringremittance.Remittance], error) {
 	if err := requireRequest(req != nil); err != nil {
 		return nil, err
 	}
@@ -124,7 +125,7 @@ func (s *RemittanceService) ListConnection(
 func (s *RemittanceService) ListLineConnection(
 	ctx context.Context,
 	req *factoringremittanceports.ListRemittanceLineConnectionRequest,
-) (*pagination.CursorListResult[*factoring.RemittanceLine], error) {
+) (*pagination.CursorListResult[*factoringremittance.RemittanceLine], error) {
 	if err := requireRequest(req != nil); err != nil {
 		return nil, err
 	}
@@ -142,18 +143,18 @@ func (s *RemittanceService) Create(
 	ctx context.Context,
 	req *factoringremittanceports.CreateRemittanceRequest,
 	actor *permissionports.RequestActor,
-) (*factoring.Remittance, error) {
+) (*factoringremittance.Remittance, error) {
 	if err := requireRequest(req != nil); err != nil {
 		return nil, err
 	}
 	if err := requireActor(actor, "Importing a remittance"); err != nil {
 		return nil, err
 	}
-	return s.create(ctx, &factoring.Remittance{
+	return s.create(ctx, &factoringremittance.Remittance{
 		OrganizationID:     req.TenantInfo.OrgID,
 		BusinessUnitID:     req.TenantInfo.BuID,
 		FactoringCompanyID: req.FactoringCompanyID,
-		Source:             factoring.RemittanceSourceUpload,
+		Source:             factoringremittance.RemittanceSourceUpload,
 		DefaultKind:        req.DefaultKind,
 		RemittedOn:         req.RemittedOn,
 		CreatedByID:        actor.ExecutorUserID(),
@@ -162,15 +163,15 @@ func (s *RemittanceService) Create(
 
 func (s *RemittanceService) create(
 	ctx context.Context,
-	rem *factoring.Remittance,
+	rem *factoringremittance.Remittance,
 	actor *permissionports.RequestActor,
-) (*factoring.Remittance, error) {
-	rem.Status = factoring.RemittanceStatusPending
+) (*factoringremittance.Remittance, error) {
+	rem.Status = factoringremittance.RemittanceStatusPending
 	if rem.DefaultKind == "" {
-		rem.DefaultKind = factoring.RemittanceLineFunding
+		rem.DefaultKind = factoringremittance.RemittanceLineFunding
 	}
 	if rem.Source == "" {
-		rem.Source = factoring.RemittanceSourceUpload
+		rem.Source = factoringremittance.RemittanceSourceUpload
 	}
 	if err := s.requireRemittedOn(rem.RemittedOn); err != nil {
 		return nil, err
@@ -228,14 +229,14 @@ func (s *RemittanceService) Rematch(
 	ctx context.Context,
 	req *factoringremittanceports.RemittanceVersionRequest,
 	actor *permissionports.RequestActor,
-) (*factoring.Remittance, error) {
+) (*factoringremittance.Remittance, error) {
 	if err := requireRequest(req != nil); err != nil {
 		return nil, err
 	}
 	if err := requireActor(actor, "Matching a remittance"); err != nil {
 		return nil, err
 	}
-	var before, updated *factoring.Remittance
+	var before, updated *factoringremittance.Remittance
 	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		rem, err := s.lock(txCtx, req.TenantInfo, req.ID, req.Version)
 		if err != nil {
@@ -249,7 +250,7 @@ func (s *RemittanceService) Rematch(
 		if err != nil {
 			return err
 		}
-		factoring.MatchRemittance(rem.Lines, candidates)
+		factoringremittance.MatchRemittance(rem.Lines, candidates)
 		rem.Recount()
 		if err = s.remittances.UpdateLines(txCtx, rem.Lines); err != nil {
 			return err
@@ -269,7 +270,7 @@ func (s *RemittanceService) UpdateLine(
 	ctx context.Context,
 	req *factoringremittanceports.UpdateRemittanceLineRequest,
 	actor *permissionports.RequestActor,
-) (*factoring.Remittance, error) {
+) (*factoringremittance.Remittance, error) {
 	if err := requireRequest(req != nil); err != nil {
 		return nil, err
 	}
@@ -279,7 +280,7 @@ func (s *RemittanceService) UpdateLine(
 	if err := validateLineRequest(req); err != nil {
 		return nil, err
 	}
-	var before, updated *factoring.Remittance
+	var before, updated *factoringremittance.Remittance
 	var comment string
 	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		rem, err := s.lock(txCtx, req.TenantInfo, req.RemittanceID, req.Version)
@@ -295,7 +296,7 @@ func (s *RemittanceService) UpdateLine(
 			return err
 		}
 		rem.SettleIfDone()
-		if err = s.remittances.UpdateLines(txCtx, []*factoring.RemittanceLine{line}); err != nil {
+		if err = s.remittances.UpdateLines(txCtx, []*factoringremittance.RemittanceLine{line}); err != nil {
 			return err
 		}
 		updated, err = s.save(txCtx, rem)
@@ -379,8 +380,8 @@ func validateLineRequest(req *factoringremittanceports.UpdateRemittanceLineReque
 
 func (s *RemittanceService) resolveLine(
 	ctx context.Context,
-	rem *factoring.Remittance,
-	line *factoring.RemittanceLine,
+	rem *factoringremittance.Remittance,
+	line *factoringremittance.RemittanceLine,
 	req *factoringremittanceports.UpdateRemittanceLineRequest,
 ) (string, error) {
 	row := "Row " + strconv.Itoa(line.RowNumber) + " of remittance " + rem.FileName
@@ -392,7 +393,7 @@ func (s *RemittanceService) resolveLine(
 		}
 		return row + " matched to invoice " + item.InvoiceNumber, nil
 	case factoringremittanceports.RemittanceLineActionUnmatch:
-		if line.MatchStatus != factoring.RemittanceLineMatched {
+		if line.MatchStatus != factoringremittance.RemittanceLineMatched {
 			return "", errortypes.NewBusinessError(
 				"Row {0} is not matched",
 				line.RowNumber,
@@ -406,7 +407,7 @@ func (s *RemittanceService) resolveLine(
 		}
 		return row + " ignored: " + line.IgnoredReason, nil
 	case factoringremittanceports.RemittanceLineActionRestore:
-		if line.MatchStatus != factoring.RemittanceLineIgnored {
+		if line.MatchStatus != factoringremittance.RemittanceLineIgnored {
 			return "", errortypes.NewBusinessError(
 				"Row {0} is not ignored",
 				line.RowNumber,
@@ -435,11 +436,11 @@ func (s *RemittanceService) resolveLine(
 
 func (s *RemittanceService) matchByPerson(
 	ctx context.Context,
-	rem *factoring.Remittance,
-	line *factoring.RemittanceLine,
+	rem *factoringremittance.Remittance,
+	line *factoringremittance.RemittanceLine,
 	itemID pulid.ID,
-) (*factoring.SubmissionItem, error) {
-	if line.MatchStatus == factoring.RemittanceLineError {
+) (*factoringsubmission.SubmissionItem, error) {
+	if line.MatchStatus == factoringremittance.RemittanceLineError {
 		return nil, errortypes.NewBusinessError(
 			"Row {0} could not be read; ignore it and book it by hand",
 			line.RowNumber,
@@ -463,7 +464,7 @@ func (s *RemittanceService) matchByPerson(
 	if err != nil {
 		return nil, err
 	}
-	var candidate *factoring.RemittanceCandidate
+	var candidate *factoringremittance.RemittanceCandidate
 	for _, c := range candidates {
 		if c.Item.ID == itemID {
 			candidate = c
@@ -491,8 +492,8 @@ func (s *RemittanceService) matchByPerson(
 			other.SubmissionItemID != itemID {
 			continue
 		}
-		if other.MatchStatus == factoring.RemittanceLineMatched ||
-			other.MatchStatus == factoring.RemittanceLineApplied {
+		if other.MatchStatus == factoringremittance.RemittanceLineMatched ||
+			other.MatchStatus == factoringremittance.RemittanceLineApplied {
 			return nil, errortypes.NewValidationError(
 				"itemId",
 				errortypes.ErrInvalid,
@@ -502,33 +503,33 @@ func (s *RemittanceService) matchByPerson(
 			)
 		}
 	}
-	score, _ := factoring.ScoreRemittanceLine(line, candidate)
+	score, _ := factoringremittance.ScoreRemittanceLine(line, candidate)
 	line.MatchTo(
 		candidate.Item,
-		factoring.RemittanceMatchedByPerson,
+		factoringremittance.RemittanceMatchedByPerson,
 		score,
-		factoring.MatchReasonChosenByPerson,
+		factoringremittance.MatchReasonChosenByPerson,
 	)
 	return candidate.Item, nil
 }
 
 func (s *RemittanceService) suggestFor(
 	ctx context.Context,
-	rem *factoring.Remittance,
-	line *factoring.RemittanceLine,
+	rem *factoringremittance.Remittance,
+	line *factoringremittance.RemittanceLine,
 ) error {
 	if !line.Matchable() {
 		return nil
 	}
 	if !line.Kind.Books() {
-		line.Suggest(nil, factoring.MatchReasonNotBookedFromRemittance)
+		line.Suggest(nil, factoringremittance.MatchReasonNotBookedFromRemittance)
 		return nil
 	}
-	candidates, err := s.candidatesFor(ctx, rem, []*factoring.RemittanceLine{line})
+	candidates, err := s.candidatesFor(ctx, rem, []*factoringremittance.RemittanceLine{line})
 	if err != nil {
 		return err
 	}
-	line.Suggest(factoring.RankRemittanceLine(line, candidates), "")
+	line.Suggest(factoringremittance.RankRemittanceLine(line, candidates), "")
 	return nil
 }
 
@@ -565,14 +566,14 @@ func (s *RemittanceService) Discard(
 	ctx context.Context,
 	req *factoringremittanceports.DiscardRemittanceRequest,
 	actor *permissionports.RequestActor,
-) (*factoring.Remittance, error) {
+) (*factoringremittance.Remittance, error) {
 	if err := requireRequest(req != nil); err != nil {
 		return nil, err
 	}
 	if err := requireActor(actor, "Discarding a remittance"); err != nil {
 		return nil, err
 	}
-	var before, updated *factoring.Remittance
+	var before, updated *factoringremittance.Remittance
 	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		rem, err := s.lock(txCtx, req.TenantInfo, req.ID, req.Version)
 		if err != nil {
@@ -598,7 +599,7 @@ func (s *RemittanceService) lock(
 	tenantInfo pagination.TenantInfo,
 	id pulid.ID,
 	version int64,
-) (*factoring.Remittance, error) {
+) (*factoringremittance.Remittance, error) {
 	if id.IsNil() {
 		return nil, errortypes.NewValidationError(
 			"id",
@@ -623,8 +624,8 @@ func (s *RemittanceService) lock(
 
 func (s *RemittanceService) save(
 	ctx context.Context,
-	rem *factoring.Remittance,
-) (*factoring.Remittance, error) {
+	rem *factoringremittance.Remittance,
+) (*factoringremittance.Remittance, error) {
 	lines := rem.Lines
 	updated, err := s.remittances.Update(ctx, rem)
 	if err != nil {
@@ -636,15 +637,15 @@ func (s *RemittanceService) save(
 
 func (s *RemittanceService) candidatesFor(
 	ctx context.Context,
-	rem *factoring.Remittance,
-	lines []*factoring.RemittanceLine,
-) ([]*factoring.RemittanceCandidate, error) {
+	rem *factoringremittance.Remittance,
+	lines []*factoringremittance.RemittanceLine,
+) ([]*factoringremittance.RemittanceCandidate, error) {
 	invoices := make([]string, 0, len(lines)*2)
 	amounts := make([]int64, 0, len(lines)*3)
 	seenInvoice := make(map[string]struct{}, len(lines)*2)
 	seenAmount := make(map[int64]struct{}, len(lines)*3)
 	addInvoice := func(raw string) {
-		value := factoring.NormalizeRemittanceReference(raw)
+		value := factoringremittance.NormalizeRemittanceReference(raw)
 		if value == "" {
 			return
 		}
@@ -678,7 +679,7 @@ func (s *RemittanceService) candidatesFor(
 		addAmount(line.ReserveMinor)
 	}
 	if len(invoices) == 0 && len(amounts) == 0 {
-		return []*factoring.RemittanceCandidate{}, nil
+		return []*factoringremittance.RemittanceCandidate{}, nil
 	}
 	return s.remittances.ListCandidates(
 		ctx,
@@ -694,7 +695,7 @@ func (s *RemittanceService) candidatesFor(
 func (s *RemittanceService) record(
 	ctx context.Context,
 	actor *permissionports.RequestActor,
-	before, updated *factoring.Remittance,
+	before, updated *factoringremittance.Remittance,
 	op permission.Operation,
 	comment string,
 ) {
@@ -714,8 +715,11 @@ func (s *RemittanceService) record(
 	})
 }
 
-func (s *RemittanceService) announceStaged(ctx context.Context, rem *factoring.Remittance) {
-	if rem.Status != factoring.RemittanceStatusParsed {
+func (s *RemittanceService) announceStaged(
+	ctx context.Context,
+	rem *factoringremittance.Remittance,
+) {
+	if rem.Status != factoringremittance.RemittanceStatusParsed {
 		return
 	}
 	agentports.PublishAgentEvent(ctx, s.events, agentports.AgentEvent{
@@ -727,7 +731,7 @@ func (s *RemittanceService) announceStaged(ctx context.Context, rem *factoring.R
 	})
 }
 
-func withoutLines(rem *factoring.Remittance) *factoring.Remittance {
+func withoutLines(rem *factoringremittance.Remittance) *factoringremittance.Remittance {
 	if rem == nil {
 		return nil
 	}
@@ -737,36 +741,36 @@ func withoutLines(rem *factoring.Remittance) *factoring.Remittance {
 	return &out
 }
 
-func cloneRemittance(rem *factoring.Remittance) *factoring.Remittance {
+func cloneRemittance(rem *factoringremittance.Remittance) *factoringremittance.Remittance {
 	out := *rem
 	out.Lines = nil
 	return &out
 }
 
-func remittanceName(rem *factoring.Remittance) string {
+func remittanceName(rem *factoringremittance.Remittance) string {
 	if name := strings.TrimSpace(rem.FileName); name != "" {
 		return name
 	}
 	return rem.ID.String()
 }
 
-func countsPhrase(rem *factoring.Remittance) string {
+func countsPhrase(rem *factoringremittance.Remittance) string {
 	return strconv.Itoa(rem.LineCount) + " lines, " +
 		strconv.Itoa(rem.MatchedCount) + " matched, " +
 		strconv.Itoa(rem.ExceptionCount) + " to resolve"
 }
 
-func kindPhrase(kind factoring.RemittanceLineKind) string {
+func kindPhrase(kind factoringremittance.RemittanceLineKind) string {
 	switch kind {
-	case factoring.RemittanceLineFunding:
+	case factoringremittance.RemittanceLineFunding:
 		return "a funding"
-	case factoring.RemittanceLineRejection:
+	case factoringremittance.RemittanceLineRejection:
 		return "a rejection"
-	case factoring.RemittanceLineReserveRelease:
+	case factoringremittance.RemittanceLineReserveRelease:
 		return "a reserve release"
-	case factoring.RemittanceLineChargeback:
+	case factoringremittance.RemittanceLineChargeback:
 		return "a chargeback"
-	case factoring.RemittanceLineOther:
+	case factoringremittance.RemittanceLineOther:
 		return "an adjustment"
 	}
 	return string(kind)

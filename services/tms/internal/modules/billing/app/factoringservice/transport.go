@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringsubmission"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringsubmissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -38,7 +38,7 @@ type TransportService struct {
 	repo       factoringsubmissionports.TransportRepository
 	factors    factoringcompanyports.FactoringCompanyRepository
 	cipher     kernelports.SecretCipher
-	transports map[factoring.TransportMethod]factoringsubmissionports.FactoringTransport
+	transports map[factoringsubmission.TransportMethod]factoringsubmissionports.FactoringTransport
 	rec        recorder
 	l          *zap.Logger
 	now        func() int64
@@ -62,9 +62,9 @@ func NewTransportService(p TransportParams) factoringsubmissionports.TransportSe
 
 func transportsByMethod(
 	list []factoringsubmissionports.FactoringTransport,
-) map[factoring.TransportMethod]factoringsubmissionports.FactoringTransport {
+) map[factoringsubmission.TransportMethod]factoringsubmissionports.FactoringTransport {
 	out := make(
-		map[factoring.TransportMethod]factoringsubmissionports.FactoringTransport,
+		map[factoringsubmission.TransportMethod]factoringsubmissionports.FactoringTransport,
 		len(list),
 	)
 	for _, transport := range list {
@@ -78,7 +78,7 @@ func transportsByMethod(
 func (s *TransportService) Get(
 	ctx context.Context,
 	req factoringsubmissionports.GetTransportRequest,
-) (*factoring.Transport, error) {
+) (*factoringsubmission.Transport, error) {
 	return s.repo.Get(ctx, req)
 }
 
@@ -86,7 +86,7 @@ func (s *TransportService) Save(
 	ctx context.Context,
 	req *factoringsubmissionports.SaveTransportRequest,
 	actor *permissionports.RequestActor,
-) (*factoring.Transport, error) {
+) (*factoringsubmission.Transport, error) {
 	if err := requireRequest(req != nil); err != nil {
 		return nil, err
 	}
@@ -114,13 +114,13 @@ func (s *TransportService) Save(
 		)
 	}
 
-	entity := &factoring.Transport{
+	entity := &factoringsubmission.Transport{
 		ID:                 pulid.MustNew("factrn_"),
 		OrganizationID:     req.TenantInfo.OrgID,
 		BusinessUnitID:     req.TenantInfo.BuID,
 		FactoringCompanyID: req.FactoringCompanyID,
 	}
-	var previous *factoring.Transport
+	var previous *factoringsubmission.Transport
 	if exists {
 		snapshot := *current
 		previous = &snapshot
@@ -130,7 +130,7 @@ func (s *TransportService) Save(
 		return nil, err
 	}
 
-	var saved *factoring.Transport
+	var saved *factoringsubmission.Transport
 	if exists {
 		saved, err = s.repo.Update(ctx, entity)
 	} else {
@@ -154,8 +154,8 @@ func (s *TransportService) Save(
 func (s *TransportService) apply(
 	ctx context.Context,
 	req *factoringsubmissionports.SaveTransportRequest,
-	entity *factoring.Transport,
-	previous *factoring.Transport,
+	entity *factoringsubmission.Transport,
+	previous *factoringsubmission.Transport,
 ) error {
 	in := req.Input
 	entity.Method = in.Method
@@ -195,7 +195,7 @@ func (s *TransportService) apply(
 func (s *TransportService) seal(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	entity *factoring.Transport,
+	entity *factoringsubmission.Transport,
 	secret string,
 ) (string, error) {
 	sealed, err := s.cipher.Seal(ctx, secret, transportSecretScope(tenantInfo, entity))
@@ -263,9 +263,9 @@ func openSecret(
 	ctx context.Context,
 	cipher kernelports.SecretCipher,
 	tenantInfo pagination.TenantInfo,
-	entity *factoring.Transport,
+	entity *factoringsubmission.Transport,
 ) (string, error) {
-	if entity.Method != factoring.TransportMethodSftp || entity.SftpSecret == "" {
+	if entity.Method != factoringsubmission.TransportMethodSftp || entity.SftpSecret == "" {
 		return "", nil
 	}
 	secret, err := cipher.Open(ctx, entity.SftpSecret, transportSecretScope(tenantInfo, entity))
@@ -279,7 +279,7 @@ func openSecret(
 
 func transportSecretScope(
 	tenantInfo pagination.TenantInfo,
-	entity *factoring.Transport,
+	entity *factoringsubmission.Transport,
 ) *kernelports.SecretScope {
 	return &kernelports.SecretScope{
 		Purpose:    kernelports.SecretPurposeFactoringTransport,
@@ -288,7 +288,7 @@ func transportSecretScope(
 	}
 }
 
-func redacted(entity *factoring.Transport) *factoring.Transport {
+func redacted(entity *factoringsubmission.Transport) *factoringsubmission.Transport {
 	if entity == nil {
 		return nil
 	}

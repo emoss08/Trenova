@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringsubmission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -29,20 +30,20 @@ type SubmissionPlanItem struct {
 }
 
 type SubmissionPlan struct {
-	FactoringCompanyID   pulid.ID                  `json:"factoringCompanyId"`
-	FactoringCompanyName string                    `json:"factoringCompanyName"`
-	Agreement            *factoring.Agreement      `json:"agreement"`
-	TransportMethod      factoring.TransportMethod `json:"transportMethod"`
-	TransportTarget      string                    `json:"transportTarget"`
-	AttachPackets        bool                      `json:"attachPackets"`
-	CurrencyCode         string                    `json:"currencyCode"`
-	Items                []*SubmissionPlanItem     `json:"items"`
-	InvoiceCount         int                       `json:"invoiceCount"`
-	FaceMinor            int64                     `json:"faceMinor"`
-	ExpectedAdvanceMinor int64                     `json:"expectedAdvanceMinor"`
-	ExpectedFeeMinor     int64                     `json:"expectedFeeMinor"`
-	ExpectedReserveMinor int64                     `json:"expectedReserveMinor"`
-	IdempotencyKey       string                    `json:"-"`
+	FactoringCompanyID   pulid.ID                            `json:"factoringCompanyId"`
+	FactoringCompanyName string                              `json:"factoringCompanyName"`
+	Agreement            *factoring.Agreement                `json:"agreement"`
+	TransportMethod      factoringsubmission.TransportMethod `json:"transportMethod"`
+	TransportTarget      string                              `json:"transportTarget"`
+	AttachPackets        bool                                `json:"attachPackets"`
+	CurrencyCode         string                              `json:"currencyCode"`
+	Items                []*SubmissionPlanItem               `json:"items"`
+	InvoiceCount         int                                 `json:"invoiceCount"`
+	FaceMinor            int64                               `json:"faceMinor"`
+	ExpectedAdvanceMinor int64                               `json:"expectedAdvanceMinor"`
+	ExpectedFeeMinor     int64                               `json:"expectedFeeMinor"`
+	ExpectedReserveMinor int64                               `json:"expectedReserveMinor"`
+	IdempotencyKey       string                              `json:"-"`
 }
 
 type SubmissionActionRequest struct {
@@ -53,8 +54,8 @@ type SubmissionActionRequest struct {
 }
 
 type SubmissionActionPlan struct {
-	Before *factoring.Submission `json:"before"`
-	After  *factoring.Submission `json:"after"`
+	Before *factoringsubmission.Submission `json:"before"`
+	After  *factoringsubmission.Submission `json:"after"`
 }
 
 type DeliverSubmissionRequest struct {
@@ -73,10 +74,10 @@ type FailSubmissionRequest struct {
 }
 
 type DeliverSubmissionResult struct {
-	Status    factoring.SubmissionStatus `json:"status"`
-	Reference string                     `json:"reference"`
-	Parts     int                        `json:"parts"`
-	Skipped   bool                       `json:"skipped"`
+	Status    factoringsubmission.SubmissionStatus `json:"status"`
+	Reference string                               `json:"reference"`
+	Parts     int                                  `json:"parts"`
+	Skipped   bool                                 `json:"skipped"`
 }
 
 type SubmissionService interface {
@@ -85,28 +86,28 @@ type SubmissionService interface {
 		ctx context.Context,
 		req *PlanSubmissionRequest,
 		actor *permissionports.RequestActor,
-	) (*factoring.Submission, error)
+	) (*factoringsubmission.Submission, error)
 	PlanRetry(ctx context.Context, req *SubmissionActionRequest) (*SubmissionActionPlan, error)
 	Retry(
 		ctx context.Context,
 		req *SubmissionActionRequest,
 		actor *permissionports.RequestActor,
-	) (*factoring.Submission, error)
+	) (*factoringsubmission.Submission, error)
 	PlanCancel(ctx context.Context, req *SubmissionActionRequest) (*SubmissionActionPlan, error)
 	Cancel(
 		ctx context.Context,
 		req *SubmissionActionRequest,
 		actor *permissionports.RequestActor,
-	) (*factoring.Submission, error)
-	Get(ctx context.Context, req GetSubmissionRequest) (*factoring.Submission, error)
+	) (*factoringsubmission.Submission, error)
+	Get(ctx context.Context, req GetSubmissionRequest) (*factoringsubmission.Submission, error)
 	List(
 		ctx context.Context,
 		req *ListSubmissionConnectionRequest,
-	) (*pagination.CursorListResult[*factoring.Submission], error)
+	) (*pagination.CursorListResult[*factoringsubmission.Submission], error)
 	ListItems(
 		ctx context.Context,
 		req *ListItemsBySubmissionIDsRequest,
-	) (map[pulid.ID][]*factoring.SubmissionItem, error)
+	) (map[pulid.ID][]*factoringsubmission.SubmissionItem, error)
 	LiveItems(ctx context.Context, req *ListLiveItemsRequest) (map[pulid.ID]*LiveItem, error)
 	PrepareDocuments(ctx context.Context, req *DeliverSubmissionRequest) error
 	Deliver(
@@ -117,16 +118,16 @@ type SubmissionService interface {
 }
 
 type TransportInput struct {
-	Method           factoring.TransportMethod `json:"method"`
-	EmailRecipients  []string                  `json:"emailRecipients"`
-	AttachPackets    bool                      `json:"attachPackets"`
-	SftpHost         string                    `json:"sftpHost"`
-	SftpPort         int                       `json:"sftpPort"`
-	SftpUsername     string                    `json:"sftpUsername"`
-	SftpAuthMethod   factoring.SftpAuthMethod  `json:"sftpAuthMethod"`
-	SftpSecret       *string                   `json:"-"`
-	SftpKnownHostKey string                    `json:"sftpKnownHostKey"`
-	SftpDirectory    string                    `json:"sftpDirectory"`
+	Method           factoringsubmission.TransportMethod `json:"method"`
+	EmailRecipients  []string                            `json:"emailRecipients"`
+	AttachPackets    bool                                `json:"attachPackets"`
+	SftpHost         string                              `json:"sftpHost"`
+	SftpPort         int                                 `json:"sftpPort"`
+	SftpUsername     string                              `json:"sftpUsername"`
+	SftpAuthMethod   factoringsubmission.SftpAuthMethod  `json:"sftpAuthMethod"`
+	SftpSecret       *string                             `json:"-"`
+	SftpKnownHostKey string                              `json:"sftpKnownHostKey"`
+	SftpDirectory    string                              `json:"sftpDirectory"`
 }
 
 type SaveTransportRequest struct {
@@ -142,18 +143,18 @@ type TestTransportRequest struct {
 }
 
 type TransportTestResult struct {
-	Transport *factoring.Transport `json:"transport"`
-	Passed    bool                 `json:"passed"`
-	Message   string               `json:"message"`
+	Transport *factoringsubmission.Transport `json:"transport"`
+	Passed    bool                           `json:"passed"`
+	Message   string                         `json:"message"`
 }
 
 type TransportService interface {
-	Get(ctx context.Context, req GetTransportRequest) (*factoring.Transport, error)
+	Get(ctx context.Context, req GetTransportRequest) (*factoringsubmission.Transport, error)
 	Save(
 		ctx context.Context,
 		req *SaveTransportRequest,
 		actor *permissionports.RequestActor,
-	) (*factoring.Transport, error)
+	) (*factoringsubmission.Transport, error)
 	Test(
 		ctx context.Context,
 		req *TestTransportRequest,
@@ -165,6 +166,6 @@ type SubmissionSendStarter interface {
 	StartSend(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
-		submission *factoring.Submission,
+		submission *factoringsubmission.Submission,
 	)
 }

@@ -14,7 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringremittance"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringledgerports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringremittanceports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -29,10 +29,10 @@ const (
 	paramLineKind       = "kind"
 	toolGetRemittance   = "factoring_get_remittance"
 	toolListRemittances = "factoring_list_remittances"
-	maxRemittanceReason = factoring.MaxRemittanceReasonLength
+	maxRemittanceReason = factoringremittance.MaxRemittanceReasonLength
 )
 
-func remittanceRecord(rem *factoring.Remittance) toolpreview.Record {
+func remittanceRecord(rem *factoringremittance.Remittance) toolpreview.Record {
 	label := "Factor remittance"
 	if rem.FileName != "" {
 		label += " " + rem.FileName
@@ -60,8 +60,8 @@ func remittancePreviewOptions() []toolpreview.Option {
 }
 
 func remittanceLineRecord(
-	rem *factoring.Remittance,
-	line *factoring.RemittanceLine,
+	rem *factoringremittance.Remittance,
+	line *factoringremittance.RemittanceLine,
 ) toolpreview.Record {
 	return toolpreview.Record{
 		Resource: permission.ResourceFactoringRemittance,
@@ -219,7 +219,7 @@ func (t *ResolveFactoringRemittanceLineTool) request(
 		Version:      base.Version,
 		LineID:       lineID,
 		Action:       action,
-		Kind: factoring.RemittanceLineKind(
+		Kind: factoringremittance.RemittanceLineKind(
 			strings.TrimSpace(toolparams.OptionalString(params.Params, paramLineKind)),
 		),
 	}

@@ -3,6 +3,10 @@
 package generated
 
 import (
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringledger"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringreadiness"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringremittance"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringsubmission"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/fleetsafety"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/safetyscorecard"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerdiscipline"
@@ -1442,9 +1446,9 @@ type FactoringAgreementResolver interface {
 }
 
 type FactoringCheckResolver interface {
-	Fix(ctx context.Context, obj *factoring.Check) (*factoring.FixAction, error)
-	DocumentTypeID(ctx context.Context, obj *factoring.Check) (*string, error)
-	ShipmentID(ctx context.Context, obj *factoring.Check) (*string, error)
+	Fix(ctx context.Context, obj *factoringreadiness.Check) (*factoringreadiness.FixAction, error)
+	DocumentTypeID(ctx context.Context, obj *factoringreadiness.Check) (*string, error)
+	ShipmentID(ctx context.Context, obj *factoringreadiness.Check) (*string, error)
 }
 
 type FactoringCompanyResolver interface {
@@ -1453,18 +1457,18 @@ type FactoringCompanyResolver interface {
 
 type FactoringFundingPlanResolver interface {
 	SubmissionID(ctx context.Context, obj *factoringledgerports.FundingPlan) (string, error)
-	Status(ctx context.Context, obj *factoringledgerports.FundingPlan) (factoring.SubmissionStatus, error)
+	Status(ctx context.Context, obj *factoringledgerports.FundingPlan) (factoringsubmission.SubmissionStatus, error)
 }
 
 type FactoringInvoiceStateResolver interface {
-	Invoice(ctx context.Context, obj *factoring.InvoiceState) (*invoice.Invoice, error)
-	Customer(ctx context.Context, obj *factoring.InvoiceState) (*customer.Customer, error)
-	FactoringCompany(ctx context.Context, obj *factoring.InvoiceState) (*factoringcompany.FactoringCompany, error)
-	Submission(ctx context.Context, obj *factoring.InvoiceState) (*factoringsubmissionports.LiveItem, error)
+	Invoice(ctx context.Context, obj *factoringreadiness.InvoiceState) (*invoice.Invoice, error)
+	Customer(ctx context.Context, obj *factoringreadiness.InvoiceState) (*customer.Customer, error)
+	FactoringCompany(ctx context.Context, obj *factoringreadiness.InvoiceState) (*factoringcompany.FactoringCompany, error)
+	Submission(ctx context.Context, obj *factoringreadiness.InvoiceState) (*factoringsubmissionports.LiveItem, error)
 }
 
 type FactoringMovementResolver interface {
-	InvoiceEffect(ctx context.Context, obj *factoring.Movement) (gqlmodel.FactoringInvoiceEffect, error)
+	InvoiceEffect(ctx context.Context, obj *factoringledger.Movement) (gqlmodel.FactoringInvoiceEffect, error)
 }
 
 type FactoringNoaResolver interface {
@@ -1482,22 +1486,22 @@ type FactoringPlannedMovementResolver interface {
 }
 
 type FactoringRemittanceResolver interface {
-	DocumentID(ctx context.Context, obj *factoring.Remittance) (*string, error)
-	InboundMessageID(ctx context.Context, obj *factoring.Remittance) (*string, error)
-	SourceFormat(ctx context.Context, obj *factoring.Remittance) (*factoring.RemittanceFormat, error)
-	Mapping(ctx context.Context, obj *factoring.Remittance) ([]*gqlmodel.FactoringRemittanceColumn, error)
-	AppliedByID(ctx context.Context, obj *factoring.Remittance) (*string, error)
-	CreatedByID(ctx context.Context, obj *factoring.Remittance) (*string, error)
-	FactoringCompany(ctx context.Context, obj *factoring.Remittance) (*factoringcompany.FactoringCompany, error)
-	Lines(ctx context.Context, obj *factoring.Remittance, matchStatuses []factoring.RemittanceMatchStatus) ([]*factoring.RemittanceLine, error)
+	DocumentID(ctx context.Context, obj *factoringremittance.Remittance) (*string, error)
+	InboundMessageID(ctx context.Context, obj *factoringremittance.Remittance) (*string, error)
+	SourceFormat(ctx context.Context, obj *factoringremittance.Remittance) (*factoringremittance.RemittanceFormat, error)
+	Mapping(ctx context.Context, obj *factoringremittance.Remittance) ([]*gqlmodel.FactoringRemittanceColumn, error)
+	AppliedByID(ctx context.Context, obj *factoringremittance.Remittance) (*string, error)
+	CreatedByID(ctx context.Context, obj *factoringremittance.Remittance) (*string, error)
+	FactoringCompany(ctx context.Context, obj *factoringremittance.Remittance) (*factoringcompany.FactoringCompany, error)
+	Lines(ctx context.Context, obj *factoringremittance.Remittance, matchStatuses []factoringremittance.RemittanceMatchStatus) ([]*factoringremittance.RemittanceLine, error)
 }
 
 type FactoringRemittanceLineResolver interface {
-	MatchedBy(ctx context.Context, obj *factoring.RemittanceLine) (*factoring.RemittanceMatchedBy, error)
-	SubmissionItemID(ctx context.Context, obj *factoring.RemittanceLine) (*string, error)
-	MatchedSubmissionID(ctx context.Context, obj *factoring.RemittanceLine) (*string, error)
-	Reason(ctx context.Context, obj *factoring.RemittanceLine) (*factoring.RemittanceMatchReason, error)
-	ReserveEntryID(ctx context.Context, obj *factoring.RemittanceLine) (*string, error)
+	MatchedBy(ctx context.Context, obj *factoringremittance.RemittanceLine) (*factoringremittance.RemittanceMatchedBy, error)
+	SubmissionItemID(ctx context.Context, obj *factoringremittance.RemittanceLine) (*string, error)
+	MatchedSubmissionID(ctx context.Context, obj *factoringremittance.RemittanceLine) (*string, error)
+	Reason(ctx context.Context, obj *factoringremittance.RemittanceLine) (*factoringremittance.RemittanceMatchReason, error)
+	ReserveEntryID(ctx context.Context, obj *factoringremittance.RemittanceLine) (*string, error)
 }
 
 type FactoringRemittancePlanResolver interface {
@@ -1505,32 +1509,32 @@ type FactoringRemittancePlanResolver interface {
 }
 
 type FactoringReserveEntryResolver interface {
-	ReversesEntryID(ctx context.Context, obj *factoring.ReserveEntry) (*string, error)
-	CreatedByID(ctx context.Context, obj *factoring.ReserveEntry) (*string, error)
-	FactoringCompany(ctx context.Context, obj *factoring.ReserveEntry) (*factoringcompany.FactoringCompany, error)
-	Invoice(ctx context.Context, obj *factoring.ReserveEntry) (*invoice.Invoice, error)
-	Customer(ctx context.Context, obj *factoring.ReserveEntry) (*customer.Customer, error)
-	Submission(ctx context.Context, obj *factoring.ReserveEntry) (*factoring.Submission, error)
+	ReversesEntryID(ctx context.Context, obj *factoringledger.ReserveEntry) (*string, error)
+	CreatedByID(ctx context.Context, obj *factoringledger.ReserveEntry) (*string, error)
+	FactoringCompany(ctx context.Context, obj *factoringledger.ReserveEntry) (*factoringcompany.FactoringCompany, error)
+	Invoice(ctx context.Context, obj *factoringledger.ReserveEntry) (*invoice.Invoice, error)
+	Customer(ctx context.Context, obj *factoringledger.ReserveEntry) (*customer.Customer, error)
+	Submission(ctx context.Context, obj *factoringledger.ReserveEntry) (*factoringsubmission.Submission, error)
 }
 
 type FactoringReserveMovementPlanResolver interface {
 	SubmissionID(ctx context.Context, obj *factoringledgerports.ReserveMovementPlan) (string, error)
 	ItemID(ctx context.Context, obj *factoringledgerports.ReserveMovementPlan) (string, error)
-	ItemStatus(ctx context.Context, obj *factoringledgerports.ReserveMovementPlan) (factoring.SubmissionItemStatus, error)
+	ItemStatus(ctx context.Context, obj *factoringledgerports.ReserveMovementPlan) (factoringsubmission.SubmissionItemStatus, error)
 }
 
 type FactoringSubmissionResolver interface {
-	SchedulePDFDocumentID(ctx context.Context, obj *factoring.Submission) (*string, error)
-	ScheduleCSVDocumentID(ctx context.Context, obj *factoring.Submission) (*string, error)
-	SubmittedByID(ctx context.Context, obj *factoring.Submission) (*string, error)
-	Items(ctx context.Context, obj *factoring.Submission) ([]*factoring.SubmissionItem, error)
-	FactoringCompany(ctx context.Context, obj *factoring.Submission) (*factoringcompany.FactoringCompany, error)
+	SchedulePDFDocumentID(ctx context.Context, obj *factoringsubmission.Submission) (*string, error)
+	ScheduleCSVDocumentID(ctx context.Context, obj *factoringsubmission.Submission) (*string, error)
+	SubmittedByID(ctx context.Context, obj *factoringsubmission.Submission) (*string, error)
+	Items(ctx context.Context, obj *factoringsubmission.Submission) ([]*factoringsubmission.SubmissionItem, error)
+	FactoringCompany(ctx context.Context, obj *factoringsubmission.Submission) (*factoringcompany.FactoringCompany, error)
 }
 
 type FactoringSubmissionItemResolver interface {
-	PacketDocumentID(ctx context.Context, obj *factoring.SubmissionItem) (*string, error)
-	Invoice(ctx context.Context, obj *factoring.SubmissionItem) (*invoice.Invoice, error)
-	Customer(ctx context.Context, obj *factoring.SubmissionItem) (*customer.Customer, error)
+	PacketDocumentID(ctx context.Context, obj *factoringsubmission.SubmissionItem) (*string, error)
+	Invoice(ctx context.Context, obj *factoringsubmission.SubmissionItem) (*invoice.Invoice, error)
+	Customer(ctx context.Context, obj *factoringsubmission.SubmissionItem) (*customer.Customer, error)
 }
 
 type FactoringSubmissionPlanResolver interface {
@@ -1538,8 +1542,8 @@ type FactoringSubmissionPlanResolver interface {
 }
 
 type FactoringTransportResolver interface {
-	EmailRecipients(ctx context.Context, obj *factoring.Transport) ([]string, error)
-	SftpSecretSet(ctx context.Context, obj *factoring.Transport) (bool, error)
+	EmailRecipients(ctx context.Context, obj *factoringsubmission.Transport) ([]string, error)
+	SftpSecretSet(ctx context.Context, obj *factoringsubmission.Transport) (bool, error)
 }
 
 type FiscalYearResolver interface {
@@ -1855,7 +1859,7 @@ type InvoiceResolver interface {
 	ChargeSummary(ctx context.Context, obj *invoice.Invoice) ([]*invoice.ChargeGroup, error)
 	VoidedBy(ctx context.Context, obj *invoice.Invoice) (*tenant.User, error)
 	FactoringCompany(ctx context.Context, obj *invoice.Invoice) (*factoringcompany.FactoringCompany, error)
-	FactoringState(ctx context.Context, obj *invoice.Invoice) (*factoring.InvoiceState, error)
+	FactoringState(ctx context.Context, obj *invoice.Invoice) (*factoringreadiness.InvoiceState, error)
 	Disputes(ctx context.Context, obj *invoice.Invoice) ([]*invoice.InvoiceDispute, error)
 	OpenDispute(ctx context.Context, obj *invoice.Invoice) (*invoice.InvoiceDispute, error)
 	LateChargeAssessments(ctx context.Context, obj *invoice.Invoice) ([]*latecharge.LateChargeAssessment, error)
@@ -2271,23 +2275,23 @@ type MutationResolver interface {
 	SendFactoringNoa(ctx context.Context, input gqlmodel.SendFactoringNoaInput) (*factoring.Noa, error)
 	AcknowledgeFactoringNoa(ctx context.Context, input gqlmodel.AcknowledgeFactoringNoaInput) (*factoring.Noa, error)
 	ReleaseFactoringNoa(ctx context.Context, input gqlmodel.ReleaseFactoringNoaInput) (*factoring.Noa, error)
-	SetInvoiceFactoringOverride(ctx context.Context, input gqlmodel.SetInvoiceFactoringOverrideInput) (*factoring.InvoiceState, error)
+	SetInvoiceFactoringOverride(ctx context.Context, input gqlmodel.SetInvoiceFactoringOverrideInput) (*factoringreadiness.InvoiceState, error)
 	RequestMissingFactoringDocuments(ctx context.Context, input gqlmodel.RequestMissingFactoringDocumentsInput) (*factoringports.RequestMissingDocumentsResult, error)
-	SubmitInvoicesToFactor(ctx context.Context, input gqlmodel.FactoringSubmissionPlanInput) (*factoring.Submission, error)
-	RetryFactoringSubmission(ctx context.Context, input gqlmodel.RetryFactoringSubmissionInput) (*factoring.Submission, error)
-	CancelFactoringSubmission(ctx context.Context, input gqlmodel.CancelFactoringSubmissionInput) (*factoring.Submission, error)
-	SaveFactoringTransport(ctx context.Context, input gqlmodel.SaveFactoringTransportInput) (*factoring.Transport, error)
+	SubmitInvoicesToFactor(ctx context.Context, input gqlmodel.FactoringSubmissionPlanInput) (*factoringsubmission.Submission, error)
+	RetryFactoringSubmission(ctx context.Context, input gqlmodel.RetryFactoringSubmissionInput) (*factoringsubmission.Submission, error)
+	CancelFactoringSubmission(ctx context.Context, input gqlmodel.CancelFactoringSubmissionInput) (*factoringsubmission.Submission, error)
+	SaveFactoringTransport(ctx context.Context, input gqlmodel.SaveFactoringTransportInput) (*factoringsubmission.Transport, error)
 	TestFactoringTransport(ctx context.Context, factoringCompanyID string) (*factoringsubmissionports.TransportTestResult, error)
-	RecordFactoringFunding(ctx context.Context, input gqlmodel.RecordFactoringFundingInput) (*factoring.Submission, error)
-	ReleaseFactoringReserve(ctx context.Context, input gqlmodel.FactoringReserveMovementInput) (*factoring.Submission, error)
-	RecordFactoringChargeback(ctx context.Context, input gqlmodel.FactoringReserveMovementInput) (*factoring.Submission, error)
-	ReverseFactoringChargeback(ctx context.Context, input gqlmodel.FactoringReserveMovementInput) (*factoring.Submission, error)
-	CreateFactoringRemittance(ctx context.Context, input gqlmodel.CreateFactoringRemittanceInput) (*factoring.Remittance, error)
-	StageFactoringRemittance(ctx context.Context, input gqlmodel.StageFactoringRemittanceInput) (*factoring.Remittance, error)
-	RematchFactoringRemittance(ctx context.Context, input gqlmodel.FactoringRemittanceVersionInput) (*factoring.Remittance, error)
-	UpdateFactoringRemittanceLine(ctx context.Context, input gqlmodel.UpdateFactoringRemittanceLineInput) (*factoring.Remittance, error)
-	ApplyFactoringRemittance(ctx context.Context, input gqlmodel.FactoringRemittanceVersionInput) (*factoring.Remittance, error)
-	DiscardFactoringRemittance(ctx context.Context, input gqlmodel.DiscardFactoringRemittanceInput) (*factoring.Remittance, error)
+	RecordFactoringFunding(ctx context.Context, input gqlmodel.RecordFactoringFundingInput) (*factoringsubmission.Submission, error)
+	ReleaseFactoringReserve(ctx context.Context, input gqlmodel.FactoringReserveMovementInput) (*factoringsubmission.Submission, error)
+	RecordFactoringChargeback(ctx context.Context, input gqlmodel.FactoringReserveMovementInput) (*factoringsubmission.Submission, error)
+	ReverseFactoringChargeback(ctx context.Context, input gqlmodel.FactoringReserveMovementInput) (*factoringsubmission.Submission, error)
+	CreateFactoringRemittance(ctx context.Context, input gqlmodel.CreateFactoringRemittanceInput) (*factoringremittance.Remittance, error)
+	StageFactoringRemittance(ctx context.Context, input gqlmodel.StageFactoringRemittanceInput) (*factoringremittance.Remittance, error)
+	RematchFactoringRemittance(ctx context.Context, input gqlmodel.FactoringRemittanceVersionInput) (*factoringremittance.Remittance, error)
+	UpdateFactoringRemittanceLine(ctx context.Context, input gqlmodel.UpdateFactoringRemittanceLineInput) (*factoringremittance.Remittance, error)
+	ApplyFactoringRemittance(ctx context.Context, input gqlmodel.FactoringRemittanceVersionInput) (*factoringremittance.Remittance, error)
+	DiscardFactoringRemittance(ctx context.Context, input gqlmodel.DiscardFactoringRemittanceInput) (*factoringremittance.Remittance, error)
 	CreateFactoringCompany(ctx context.Context, input gqlmodel.FactoringCompanyInput) (*factoringcompany.FactoringCompany, error)
 	UpdateFactoringCompany(ctx context.Context, input gqlmodel.UpdateFactoringCompanyInput) (*factoringcompany.FactoringCompany, error)
 	RecordSafetyViolation(ctx context.Context, input gqlmodel.RecordSafetyViolationInput) (*fleetsafety.WorkerSafetyViolation, error)
@@ -3114,13 +3118,13 @@ type QueryResolver interface {
 	FactoringAgreement(ctx context.Context, id string) (*factoring.Agreement, error)
 	FactoringNoas(ctx context.Context, input gqlmodel.FactoringNoaListInput) (*gqlmodel.FactoringNoaConnection, error)
 	FactoringNoa(ctx context.Context, id string) (*factoring.Noa, error)
-	FactoringReadiness(ctx context.Context, invoiceID string) (*factoring.InvoiceState, error)
+	FactoringReadiness(ctx context.Context, invoiceID string) (*factoringreadiness.InvoiceState, error)
 	FactoringInvoiceStates(ctx context.Context, input gqlmodel.FactoringInvoiceStateListInput) (*gqlmodel.FactoringInvoiceStateConnection, error)
 	FactoringSummary(ctx context.Context) (*factoringports.Summary, error)
 	FactoringSubmissions(ctx context.Context, input gqlmodel.FactoringSubmissionListInput) (*gqlmodel.FactoringSubmissionConnection, error)
-	FactoringSubmission(ctx context.Context, id string) (*factoring.Submission, error)
+	FactoringSubmission(ctx context.Context, id string) (*factoringsubmission.Submission, error)
 	FactoringSubmissionPlan(ctx context.Context, input gqlmodel.FactoringSubmissionPlanInput) (*factoringsubmissionports.SubmissionPlan, error)
-	FactoringTransport(ctx context.Context, factoringCompanyID string) (*factoring.Transport, error)
+	FactoringTransport(ctx context.Context, factoringCompanyID string) (*factoringsubmission.Transport, error)
 	FactoringReserveEntries(ctx context.Context, input gqlmodel.FactoringReserveEntryListInput) (*gqlmodel.FactoringReserveEntryConnection, error)
 	FactoringReserveBalance(ctx context.Context, factoringCompanyID string) (*factoringledgerports.ReserveBalance, error)
 	FactoringFundingPlan(ctx context.Context, input gqlmodel.RecordFactoringFundingInput) (*factoringledgerports.FundingPlan, error)
@@ -3128,7 +3132,7 @@ type QueryResolver interface {
 	FactoringChargebackPlan(ctx context.Context, input gqlmodel.FactoringReserveMovementInput) (*factoringledgerports.ReserveMovementPlan, error)
 	FactoringChargebackReversalPlan(ctx context.Context, input gqlmodel.FactoringReserveMovementInput) (*factoringledgerports.ReserveMovementPlan, error)
 	FactoringRemittances(ctx context.Context, input gqlmodel.FactoringRemittanceListInput) (*gqlmodel.FactoringRemittanceConnection, error)
-	FactoringRemittance(ctx context.Context, id string) (*factoring.Remittance, error)
+	FactoringRemittance(ctx context.Context, id string) (*factoringremittance.Remittance, error)
 	FactoringRemittanceLines(ctx context.Context, input gqlmodel.FactoringRemittanceLineListInput) (*gqlmodel.FactoringRemittanceLineConnection, error)
 	FactoringRemittancePlan(ctx context.Context, input gqlmodel.FactoringRemittanceVersionInput) (*factoringremittanceports.RemittancePlan, error)
 	FactoringCompanies(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.FactoringCompanyConnection, error)

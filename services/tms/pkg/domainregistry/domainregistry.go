@@ -4,6 +4,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/shipmentimportchat"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceipt"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringreadiness"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoicerun"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
@@ -142,6 +143,6 @@ func RegisterEntities() []any {
 		&factoring.FeeTier{},
 		&factoring.AgreementDocumentType{},
 		&factoring.Noa{},
-		&factoring.InvoiceState{},
+		&factoringreadiness.InvoiceState{},
 	}
 }

@@ -10,6 +10,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringledger"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringsubmission"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerledgerports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringledgerports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
@@ -95,7 +97,7 @@ func NewLedgerService(p LedgerParams) factoringledgerports.LedgerService {
 func (s *LedgerService) ListEntries(
 	ctx context.Context,
 	req *factoringledgerports.ListReserveEntryConnectionRequest,
-) (*pagination.CursorListResult[*factoring.ReserveEntry], error) {
+) (*pagination.CursorListResult[*factoringledger.ReserveEntry], error) {
 	if err := requireRequest(req != nil); err != nil {
 		return nil, err
 	}
@@ -117,7 +119,7 @@ func (s *LedgerService) GetBalance(
 }
 
 type ledgerScope struct {
-	before    *factoring.Submission
+	before    *factoringsubmission.Submission
 	agreement *factoring.Agreement
 	control   *accountingcontrol.AccountingControl
 	accounts  factoring.PostingAccounts
@@ -223,7 +225,7 @@ func (s *LedgerService) finish(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	actor *permissionports.RequestActor,
-	before, updated *factoring.Submission,
+	before, updated *factoringsubmission.Submission,
 	comment string,
 	invoiceIDs []pulid.ID,
 ) {

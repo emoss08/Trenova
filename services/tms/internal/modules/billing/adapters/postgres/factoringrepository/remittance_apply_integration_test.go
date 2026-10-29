@@ -12,7 +12,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/billing/app/factoringservice"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringremittance"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringledgerports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringremittanceports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
@@ -106,7 +106,7 @@ func TestRemittanceAppliesThroughTheLedgerInOneTransaction(t *testing.T) {
 		ID:           docID,
 		OriginalName: "frap.csv",
 		FileSize:     int64(len(csv)),
-		ResourceType: factoring.RemittanceDocumentResourceType,
+		ResourceType: factoringremittance.RemittanceDocumentResourceType,
 		ResourceID:   rem.ID.String(),
 	}
 	files.contents[docID] = []byte(csv)
@@ -118,7 +118,7 @@ func TestRemittanceAppliesThroughTheLedgerInOneTransaction(t *testing.T) {
 		DocumentID: docID,
 	}, actor)
 	require.NoError(t, err)
-	require.Equal(t, factoring.RemittanceStatusParsed, staged.Status, staged.Error)
+	require.Equal(t, factoringremittance.RemittanceStatusParsed, staged.Status, staged.Error)
 	assert.Equal(t, 2, staged.MatchedCount)
 
 	plan, err := svc.PlanApply(e.ctx, &factoringremittanceports.RemittanceVersionRequest{
@@ -140,7 +140,7 @@ func TestRemittanceAppliesThroughTheLedgerInOneTransaction(t *testing.T) {
 		Version:    staged.Version,
 	}, actor)
 	require.NoError(t, err)
-	assert.Equal(t, factoring.RemittanceStatusApplied, applied.Remittance.Status)
+	assert.Equal(t, factoringremittance.RemittanceStatusApplied, applied.Remittance.Status)
 	require.Len(t, applied.Entries, 2)
 	assert.Zero(t, e.unbalancedEntries(t))
 
@@ -151,7 +151,7 @@ func TestRemittanceAppliesThroughTheLedgerInOneTransaction(t *testing.T) {
 	})
 	require.NoError(t, err)
 	for _, line := range loaded.Lines {
-		assert.Equal(t, factoring.RemittanceLineApplied, line.MatchStatus)
+		assert.Equal(t, factoringremittance.RemittanceLineApplied, line.MatchStatus)
 		assert.NotEmpty(t, line.ReserveEntryID)
 		assert.Equal(t, sub.ID, line.MatchedSubmission)
 		assert.NotEmpty(t, line.MatchedInvoice)

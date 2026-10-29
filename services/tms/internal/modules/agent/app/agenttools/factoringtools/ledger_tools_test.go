@@ -10,6 +10,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringledger"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringsubmission"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringledgerports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -23,8 +25,8 @@ type fakeLedger struct {
 	factoringledgerports.LedgerService
 
 	guard     agenttoolstest.WriteGuard
-	sub       *factoring.Submission
-	item      *factoring.SubmissionItem
+	sub       *factoringsubmission.Submission
+	item      *factoringsubmission.SubmissionItem
 	funding   *factoringledgerports.RecordFundingRequest
 	movement  *factoringledgerports.ReserveMovementRequest
 	recorded  string
@@ -32,43 +34,43 @@ type fakeLedger struct {
 }
 
 func newFakeLedger() *fakeLedger {
-	item := &factoring.SubmissionItem{
+	item := &factoringsubmission.SubmissionItem{
 		ID:                   pulid.MustNew("facsit_"),
 		InvoiceID:            pulid.MustNew("inv_"),
 		InvoiceNumber:        "INV-7",
 		FaceMinor:            100_000,
 		ExpectedAdvanceMinor: 90_000,
 		ExpectedFeeMinor:     3_000,
-		Status:               factoring.SubmissionItemStatusPending,
+		Status:               factoringsubmission.SubmissionItemStatusPending,
 	}
 	return &fakeLedger{
-		sub: &factoring.Submission{
+		sub: &factoringsubmission.Submission{
 			ID:           pulid.MustNew("facsub_"),
 			Number:       "FS2610000009",
-			Status:       factoring.SubmissionStatusSent,
+			Status:       factoringsubmission.SubmissionStatusSent,
 			CurrencyCode: "USD",
 			Version:      3,
-			Items:        []*factoring.SubmissionItem{item},
+			Items:        []*factoringsubmission.SubmissionItem{item},
 		},
 		item: item,
 	}
 }
 
 func (f *fakeLedger) planned(
-	kind factoring.ReserveEntryKind,
+	kind factoringledger.ReserveEntryKind,
 ) *factoringledgerports.PlannedMovement {
 	if f.emptyPlan {
 		return &factoringledgerports.PlannedMovement{
 			ItemID:        f.item.ID,
 			InvoiceNumber: f.item.InvoiceNumber,
-			Movement:      factoring.Movement{Kind: kind},
+			Movement:      factoringledger.Movement{Kind: kind},
 		}
 	}
 	return &factoringledgerports.PlannedMovement{
 		ItemID:        f.item.ID,
 		InvoiceID:     f.item.InvoiceID,
 		InvoiceNumber: f.item.InvoiceNumber,
-		Movement:      factoring.Movement{Kind: kind, CashMinor: 88_000},
+		Movement:      factoringledger.Movement{Kind: kind, CashMinor: 88_000},
 		Lines: []factoringledgerports.PlannedLine{
 			{Role: factoring.AccountRoleCash, AccountID: pulid.MustNew("gla_"), Debit: 88_000},
 			{Role: factoring.AccountRoleFeeExpense, AccountID: pulid.MustNew("gla_"), Debit: 2_500},
@@ -96,12 +98,12 @@ func (f *fakeLedger) PlanFunding(
 		return nil, errortypes.NewNotFoundError("Factoring schedule not found")
 	}
 	after := *f.sub
-	after.Status = factoring.SubmissionStatusFunded
+	after.Status = factoringsubmission.SubmissionStatusFunded
 	return &factoringledgerports.FundingPlan{
 		Before: f.sub,
 		After:  &after,
 		Movements: []*factoringledgerports.PlannedMovement{
-			f.planned(factoring.ReserveEntryFunding),
+			f.planned(factoringledger.ReserveEntryFunding),
 		},
 		FundedCount:  1,
 		AdvanceMinor: 88_000,
@@ -123,16 +125,16 @@ func (f *fakeLedger) RecordFunding(
 }
 
 func (f *fakeLedger) movementPlan(
-	kind factoring.ReserveEntryKind,
+	kind factoringledger.ReserveEntryKind,
 ) *factoringledgerports.ReserveMovementPlan {
 	after := *f.item
 	switch kind {
-	case factoring.ReserveEntryRelease:
-		after.Status = factoring.SubmissionItemStatusSettled
-	case factoring.ReserveEntryChargeback:
-		after.Status = factoring.SubmissionItemStatusChargedBack
-	case factoring.ReserveEntryFunding, factoring.ReserveEntryChargebackReversal:
-		after.Status = factoring.SubmissionItemStatusFunded
+	case factoringledger.ReserveEntryRelease:
+		after.Status = factoringsubmission.SubmissionItemStatusSettled
+	case factoringledger.ReserveEntryChargeback:
+		after.Status = factoringsubmission.SubmissionItemStatusChargedBack
+	case factoringledger.ReserveEntryFunding, factoringledger.ReserveEntryChargebackReversal:
+		after.Status = factoringsubmission.SubmissionItemStatusFunded
 	}
 	return &factoringledgerports.ReserveMovementPlan{
 		Before:   f.sub,
@@ -147,7 +149,7 @@ func (f *fakeLedger) PlanRelease(
 	_ *factoringledgerports.ReserveMovementRequest,
 	_ *permissionports.RequestActor,
 ) (*factoringledgerports.ReserveMovementPlan, error) {
-	return f.movementPlan(factoring.ReserveEntryRelease), nil
+	return f.movementPlan(factoringledger.ReserveEntryRelease), nil
 }
 
 func (f *fakeLedger) ReleaseReserve(
@@ -167,7 +169,7 @@ func (f *fakeLedger) PlanChargeback(
 	_ *factoringledgerports.ReserveMovementRequest,
 	_ *permissionports.RequestActor,
 ) (*factoringledgerports.ReserveMovementPlan, error) {
-	return f.movementPlan(factoring.ReserveEntryChargeback), nil
+	return f.movementPlan(factoringledger.ReserveEntryChargeback), nil
 }
 
 func (f *fakeLedger) RecordChargeback(
@@ -219,7 +221,7 @@ func TestRecordFactoringFunding_PreviewsTheJournalAndRunsOnlyWhenApproved(t *tes
 	tool := NewRecordFactoringFundingTool(ledger, nil)
 	params := fundingParams(ledger, map[string]any{
 		paramItemID:  ledger.item.ID.String(),
-		paramOutcome: string(factoring.FundingOutcomeFunded),
+		paramOutcome: string(factoringledger.FundingOutcomeFunded),
 		paramAdvance: "880.00",
 		paramFee:     "25",
 	})

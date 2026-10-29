@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringremittance"
 	"github.com/emoss08/trenova/pkg/factoringremit"
 	"github.com/emoss08/trenova/pkg/rateimport"
 	"github.com/stretchr/testify/assert"
@@ -20,7 +20,11 @@ const fundingReport = "Schedule #,Invoice No,Debtor Name,Invoice Amount,Advance 
 
 func readCSV(t *testing.T, body string) *rateimport.Sheet {
 	t.Helper()
-	sheet, err := factoringremit.ReadSheet([]byte(body), factoring.RemittanceFormatCsv, rateimport.Limits{})
+	sheet, err := factoringremit.ReadSheet(
+		[]byte(body),
+		factoringremittance.RemittanceFormatCsv,
+		rateimport.Limits{},
+	)
 	require.NoError(t, err)
 	return sheet
 }
@@ -67,15 +71,19 @@ func TestParseReadsEachRowAsTheFactorWroteIt(t *testing.T) {
 	t.Parallel()
 
 	sheet := readCSV(t, fundingReport)
-	lines := factoringremit.Parse(sheet, factoringremit.GuessMapping(sheet.Headers), factoringremit.Options{
-		DefaultKind: factoring.RemittanceLineFunding,
-		Location:    time.UTC,
-	})
+	lines := factoringremit.Parse(
+		sheet,
+		factoringremit.GuessMapping(sheet.Headers),
+		factoringremit.Options{
+			DefaultKind: factoringremittance.RemittanceLineFunding,
+			Location:    time.UTC,
+		},
+	)
 	require.Len(t, lines, 3, "the blank row and the totals row are not lines")
 
 	funded := lines[0]
 	assert.Equal(t, 2, funded.RowNumber)
-	assert.Equal(t, factoring.RemittanceLineFunding, funded.Kind)
+	assert.Equal(t, factoringremittance.RemittanceLineFunding, funded.Kind)
 	assert.Equal(t, "INV-1001", funded.InvoiceNumber)
 	assert.Equal(t, "FS-1", funded.FactorReference)
 	assert.Equal(t, "Acme Foods", funded.Debtor)
@@ -87,10 +95,10 @@ func TestParseReadsEachRowAsTheFactorWroteIt(t *testing.T) {
 	assert.Equal(t, time.Date(2026, 10, 7, 0, 0, 0, 0, time.UTC).Unix(), *funded.OccurredOn)
 	assert.Empty(t, funded.Err)
 
-	assert.Equal(t, factoring.RemittanceLineRejection, lines[1].Kind)
+	assert.Equal(t, factoringremittance.RemittanceLineRejection, lines[1].Kind)
 
 	chargeback := lines[2]
-	assert.Equal(t, factoring.RemittanceLineChargeback, chargeback.Kind)
+	assert.Equal(t, factoringremittance.RemittanceLineChargeback, chargeback.Kind)
 	assert.Equal(t, int64(-8_500), *chargeback.AdvanceMinor, "parenthesized amounts are negative")
 	assert.Nil(t, chargeback.FaceMinor)
 }
@@ -98,46 +106,66 @@ func TestParseReadsEachRowAsTheFactorWroteIt(t *testing.T) {
 func TestParseKeepsABadRowAsAnErrorLine(t *testing.T) {
 	t.Parallel()
 
-	sheet := readCSV(t, "Invoice,Amount Paid,Date\nINV-9,twelve,10/07/2026\n,40.00,\nINV-10,15.00,someday\n")
-	lines := factoringremit.Parse(sheet, factoringremit.GuessMapping(sheet.Headers), factoringremit.Options{
-		DefaultKind: factoring.RemittanceLineReserveRelease,
-	})
+	sheet := readCSV(
+		t,
+		"Invoice,Amount Paid,Date\nINV-9,twelve,10/07/2026\n,40.00,\nINV-10,15.00,someday\n",
+	)
+	lines := factoringremit.Parse(
+		sheet,
+		factoringremit.GuessMapping(sheet.Headers),
+		factoringremit.Options{
+			DefaultKind: factoringremittance.RemittanceLineReserveRelease,
+		},
+	)
 	require.Len(t, lines, 3)
 	assert.Equal(t, `Amount paid "twelve" is not an amount`, lines[0].Err)
 	assert.Equal(t, "The row has no invoice number or reference", lines[1].Err)
 	assert.Equal(t, `The date "someday" could not be read`, lines[2].Err)
-	assert.Equal(t, factoring.RemittanceLineReserveRelease, lines[2].Kind, "no type column: the report's kind")
+	assert.Equal(
+		t,
+		factoringremittance.RemittanceLineReserveRelease,
+		lines[2].Kind,
+		"no type column: the report's kind",
+	)
 
 	domain := factoringremit.ToDomain(lines)
 	require.Len(t, domain, 3)
-	assert.Equal(t, factoring.RemittanceLineError, domain[0].MatchStatus)
+	assert.Equal(t, factoringremittance.RemittanceLineError, domain[0].MatchStatus)
 	assert.Equal(t, "INV9", domain[0].NormalizedInvoice)
 }
 
 func TestKindFromTextReadsTheWordsFactorsUse(t *testing.T) {
 	t.Parallel()
 
-	cases := map[string]factoring.RemittanceLineKind{
-		"Charge Back":       factoring.RemittanceLineChargeback,
-		"Recourse":          factoring.RemittanceLineChargeback,
-		"Reserve Release":   factoring.RemittanceLineReserveRelease,
-		"Rebate":            factoring.RemittanceLineReserveRelease,
-		"DECLINED":          factoring.RemittanceLineRejection,
-		"Non-Purchase":      factoring.RemittanceLineRejection,
-		"Purchase":          factoring.RemittanceLineFunding,
-		"Advance":           factoring.RemittanceLineFunding,
-		"Wire fee":          factoring.RemittanceLineOther,
-		"Something unusual": factoring.RemittanceLineReserveRelease,
+	cases := map[string]factoringremittance.RemittanceLineKind{
+		"Charge Back":       factoringremittance.RemittanceLineChargeback,
+		"Recourse":          factoringremittance.RemittanceLineChargeback,
+		"Reserve Release":   factoringremittance.RemittanceLineReserveRelease,
+		"Rebate":            factoringremittance.RemittanceLineReserveRelease,
+		"DECLINED":          factoringremittance.RemittanceLineRejection,
+		"Non-Purchase":      factoringremittance.RemittanceLineRejection,
+		"Purchase":          factoringremittance.RemittanceLineFunding,
+		"Advance":           factoringremittance.RemittanceLineFunding,
+		"Wire fee":          factoringremittance.RemittanceLineOther,
+		"Something unusual": factoringremittance.RemittanceLineReserveRelease,
 	}
 	for text, want := range cases {
-		assert.Equal(t, want, factoringremit.KindFromText(text, factoring.RemittanceLineReserveRelease), text)
+		assert.Equal(
+			t,
+			want,
+			factoringremit.KindFromText(text, factoringremittance.RemittanceLineReserveRelease),
+			text,
+		)
 	}
 }
 
 func TestMappingRoundTripsThroughItsStoredForm(t *testing.T) {
 	t.Parallel()
 
-	mapping := factoringremit.Mapping{factoringremit.FieldInvoiceNumber: 2, factoringremit.FieldCash: 5}
+	mapping := factoringremit.Mapping{
+		factoringremit.FieldInvoiceNumber: 2,
+		factoringremit.FieldCash:          5,
+	}
 	back, err := factoringremit.MappingFromStrings(mapping.Strings())
 	require.NoError(t, err)
 	assert.Equal(t, mapping, back)
@@ -164,11 +192,11 @@ func TestFormatForReadsTheExtensionThenTheContentType(t *testing.T) {
 
 	format, err := factoringremit.FormatFor("Remit 10-07.XLSX", "")
 	require.NoError(t, err)
-	assert.Equal(t, factoring.RemittanceFormatXlsx, format)
+	assert.Equal(t, factoringremittance.RemittanceFormatXlsx, format)
 
 	format, err = factoringremit.FormatFor("remit", "application/pdf")
 	require.NoError(t, err)
-	assert.Equal(t, factoring.RemittanceFormatPdf, format)
+	assert.Equal(t, factoringremittance.RemittanceFormatPdf, format)
 
 	_, err = factoringremit.FormatFor("remit.docx", "application/msword")
 	require.ErrorIs(t, err, factoringremit.ErrUnsupportedFile)

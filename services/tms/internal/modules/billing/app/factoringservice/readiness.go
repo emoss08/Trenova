@@ -9,6 +9,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringreadiness"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringsubmission"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringsubmissionports"
@@ -113,7 +115,7 @@ func NewReadinessService(p ReadinessParams) factoringports.ReadinessService {
 func (s *ReadinessService) GetReadiness(
 	ctx context.Context,
 	req factoringports.GetReadinessRequest,
-) (*factoring.InvoiceState, error) {
+) (*factoringreadiness.InvoiceState, error) {
 	inv, err := s.invoices.GetByID(ctx, invoiceports.GetInvoiceByIDRequest{
 		ID:         req.InvoiceID,
 		TenantInfo: req.TenantInfo,
@@ -178,7 +180,7 @@ func (s *ReadinessService) evaluateOne(
 }
 
 type evaluation struct {
-	factoring.StateTransition
+	factoringreadiness.StateTransition
 	announced bool
 }
 
@@ -186,7 +188,7 @@ func (s *ReadinessService) evaluate(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	inv *invoice.Invoice,
-) (*factoring.InvoiceState, evaluation, error) {
+) (*factoringreadiness.InvoiceState, evaluation, error) {
 	now := s.now()
 	readiness, err := s.assess(ctx, tenantInfo, inv, now)
 	if err != nil {
@@ -204,7 +206,7 @@ func (s *ReadinessService) evaluate(
 		previous = nil
 	}
 
-	next := &factoring.InvoiceState{
+	next := &factoringreadiness.InvoiceState{
 		InvoiceID:          inv.ID,
 		OrganizationID:     inv.OrganizationID,
 		BusinessUnitID:     inv.BusinessUnitID,
@@ -212,12 +214,14 @@ func (s *ReadinessService) evaluate(
 		CustomerID:         inv.CustomerID,
 		OpenBalanceMinor:   inv.OpenBalanceMinor(),
 	}
-	result := evaluation{StateTransition: factoring.NextState(previous, next, &readiness, now)}
+	result := evaluation{
+		StateTransition: factoringreadiness.NextState(previous, next, &readiness, now),
+	}
 	if err = s.states.Upsert(ctx, next); err != nil {
 		return nil, evaluation{}, err
 	}
 
-	if next.Verdict == factoring.VerdictReady && next.ReadyAnnouncedAt == nil {
+	if next.Verdict == factoringreadiness.VerdictReady && next.ReadyAnnouncedAt == nil {
 		result.announced = s.announce(ctx, tenantInfo, next, inv, now)
 	}
 	if result.BecameReady || result.LeftReady || previous == nil ||
@@ -232,22 +236,22 @@ func (s *ReadinessService) assess(
 	tenantInfo pagination.TenantInfo,
 	inv *invoice.Invoice,
 	now int64,
-) (factoring.Readiness, error) {
-	inputs := &factoring.ReadinessInputs{At: now, Invoice: invoiceFacts(inv)}
-	readiness := factoring.EvaluateReadiness(inputs)
-	if readiness.Verdict == factoring.VerdictExcluded {
+) (factoringreadiness.Readiness, error) {
+	inputs := &factoringreadiness.ReadinessInputs{At: now, Invoice: invoiceFacts(inv)}
+	readiness := factoringreadiness.EvaluateReadiness(inputs)
+	if readiness.Verdict == factoringreadiness.VerdictExcluded {
 		return readiness, nil
 	}
 	if err := s.gather(ctx, tenantInfo, inv, inputs); err != nil {
-		return factoring.Readiness{}, err
+		return factoringreadiness.Readiness{}, err
 	}
-	return factoring.EvaluateReadiness(inputs), nil
+	return factoringreadiness.EvaluateReadiness(inputs), nil
 }
 
 func (s *ReadinessService) announce(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	state *factoring.InvoiceState,
+	state *factoringreadiness.InvoiceState,
 	inv *invoice.Invoice,
 	now int64,
 ) bool {
@@ -290,7 +294,7 @@ func (s *ReadinessService) gather(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	inv *invoice.Invoice,
-	in *factoring.ReadinessInputs,
+	in *factoringreadiness.ReadinessInputs,
 ) error {
 	factorID := *inv.FactoringCompanyID
 
@@ -334,7 +338,7 @@ func (s *ReadinessService) gather(
 			in.SubmissionNumber = item.SubmissionNumber
 			in.SubmissionItemStatus = item.ItemStatus
 		} else {
-			in.ChargedBack = item.ItemStatus == factoring.SubmissionItemStatusChargedBack
+			in.ChargedBack = item.ItemStatus == factoringsubmission.SubmissionItemStatusChargedBack
 		}
 	}
 
@@ -344,10 +348,10 @@ func (s *ReadinessService) gather(
 		return err
 	}
 	in.InvoiceAcceptedTypeIDs = accepted[inv.ID]
-	in.Shipments = make([]factoring.ShipmentFacts, 0, len(legs))
+	in.Shipments = make([]factoringreadiness.ShipmentFacts, 0, len(legs))
 	pros := legPros(inv)
 	for _, shipmentID := range legs {
-		facts := factoring.ShipmentFacts{
+		facts := factoringreadiness.ShipmentFacts{
 			ShipmentID:      shipmentID,
 			ProNumber:       pros[shipmentID],
 			AcceptedTypeIDs: accepted[shipmentID],
@@ -376,7 +380,7 @@ func (s *ReadinessService) liveItem(
 func (s *ReadinessService) fillBillingReadiness(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	facts *factoring.ShipmentFacts,
+	facts *factoringreadiness.ShipmentFacts,
 ) {
 	if s.shipments == nil {
 		return
@@ -397,16 +401,19 @@ func (s *ReadinessService) fillBillingReadiness(
 		if name == "" {
 			name = req.DocumentTypeCode
 		}
-		facts.MissingDocuments = append(facts.MissingDocuments, factoring.DocumentNeed{
+		facts.MissingDocuments = append(facts.MissingDocuments, factoringreadiness.DocumentNeed{
 			TypeID: typeID,
 			Name:   name,
 		})
 	}
 	for _, failure := range readiness.ValidationFailures {
-		facts.ValidationFailures = append(facts.ValidationFailures, factoring.ShipmentValidation{
-			Code:    failure.Code,
-			Message: failure.Message,
-		})
+		facts.ValidationFailures = append(
+			facts.ValidationFailures,
+			factoringreadiness.ShipmentValidation{
+				Code:    failure.Code,
+				Message: failure.Message,
+			},
+		)
 	}
 }
 
@@ -465,14 +472,14 @@ func (s *ReadinessService) acceptedTypes(
 func (s *ReadinessService) ListStates(
 	ctx context.Context,
 	req *factoringports.ListInvoiceStateConnectionRequest,
-) (*pagination.CursorListResult[*factoring.InvoiceState], error) {
+) (*pagination.CursorListResult[*factoringreadiness.InvoiceState], error) {
 	return s.states.ListConnection(ctx, req)
 }
 
 func (s *ReadinessService) GetStates(
 	ctx context.Context,
 	req *factoringports.ListInvoiceStatesByInvoiceIDsRequest,
-) (map[pulid.ID]*factoring.InvoiceState, error) {
+) (map[pulid.ID]*factoringreadiness.InvoiceState, error) {
 	return s.states.ListByInvoiceIDs(ctx, req)
 }
 
@@ -483,7 +490,7 @@ func (s *ReadinessService) Summary(
 	now := s.now()
 	return s.states.GetSummary(ctx, factoringports.GetSummaryRequest{
 		TenantInfo:       tenantInfo,
-		ReadyBefore:      now - factoring.ReadyUnsubmittedSeconds,
+		ReadyBefore:      now - factoringreadiness.ReadyUnsubmittedSeconds,
 		ChargebackBefore: now + int64(factoring.ChargebackWarningDays)*timeutils.SecondsPerDay,
 	})
 }
@@ -492,7 +499,7 @@ func (s *ReadinessService) SetOverride(
 	ctx context.Context,
 	req *factoringports.SetOverrideRequest,
 	actor *permissionports.RequestActor,
-) (*factoring.InvoiceState, error) {
+) (*factoringreadiness.InvoiceState, error) {
 	if err := requireActor(actor, "Changing whether an invoice is factored"); err != nil {
 		return nil, err
 	}
@@ -811,8 +818,8 @@ func (s *ReadinessService) warnExpiringNoas(
 	return warned, nil
 }
 
-func invoiceFacts(inv *invoice.Invoice) factoring.InvoiceFacts {
-	facts := factoring.InvoiceFacts{
+func invoiceFacts(inv *invoice.Invoice) factoringreadiness.InvoiceFacts {
+	facts := factoringreadiness.InvoiceFacts{
 		Posted:           inv.Status == invoice.StatusPosted,
 		Voided:           inv.Status == invoice.StatusVoided,
 		CreditMemo:       inv.BillType == billingqueue.BillTypeCreditMemo,
@@ -825,8 +832,8 @@ func invoiceFacts(inv *invoice.Invoice) factoring.InvoiceFacts {
 	return facts
 }
 
-func agreementNeeds(a *factoring.Agreement) []factoring.DocumentNeed {
-	needs := make([]factoring.DocumentNeed, 0, len(a.DocumentTypes))
+func agreementNeeds(a *factoring.Agreement) []factoringreadiness.DocumentNeed {
+	needs := make([]factoringreadiness.DocumentNeed, 0, len(a.DocumentTypes))
 	for _, dt := range a.DocumentTypes {
 		if dt == nil {
 			continue
@@ -835,7 +842,7 @@ func agreementNeeds(a *factoring.Agreement) []factoring.DocumentNeed {
 		if name == "" {
 			name = dt.Code
 		}
-		needs = append(needs, factoring.DocumentNeed{TypeID: dt.ID, Name: name})
+		needs = append(needs, factoringreadiness.DocumentNeed{TypeID: dt.ID, Name: name})
 	}
 	return needs
 }

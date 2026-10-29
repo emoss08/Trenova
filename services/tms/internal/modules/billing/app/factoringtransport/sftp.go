@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringsubmission"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringsubmissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/fileutils"
@@ -43,8 +43,8 @@ func NewSftpWith(dial Dialer, resolve Resolver) *Sftp {
 	return &Sftp{dial: dial, resolve: resolve}
 }
 
-func (t *Sftp) Method() factoring.TransportMethod {
-	return factoring.TransportMethodSftp
+func (t *Sftp) Method() factoringsubmission.TransportMethod {
+	return factoringsubmission.TransportMethodSftp
 }
 
 func (t *Sftp) Send(
@@ -99,7 +99,7 @@ func (t *Sftp) Test(ctx context.Context, req *factoringsubmissionports.Transport
 
 func (t *Sftp) connect(
 	ctx context.Context,
-	transport *factoring.Transport,
+	transport *factoringsubmission.Transport,
 	secret string,
 ) (RemoteClient, error) {
 	if strings.TrimSpace(secret) == "" {
@@ -117,7 +117,7 @@ func (t *Sftp) connect(
 		Username:     transport.SftpUsername,
 		KnownHostKey: transport.SftpKnownHostKey,
 	}
-	if transport.SftpAuthMethod == factoring.SftpAuthPassword {
+	if transport.SftpAuthMethod == factoringsubmission.SftpAuthPassword {
 		cfg.AuthMode = sftp.AuthModePassword
 		cfg.Password = secret
 	} else {
@@ -154,10 +154,13 @@ func (t *Sftp) publicAddress(ctx context.Context, host string) (string, error) {
 	return ips[0].String(), nil
 }
 
-func RemoteDirectory(transport *factoring.Transport, submission *factoring.Submission) string {
+func RemoteDirectory(
+	transport *factoringsubmission.Transport,
+	submission *factoringsubmission.Submission,
+) string {
 	base := transport.SftpDirectory
 	if base == "" {
-		base = factoring.DefaultSftpDirectory
+		base = factoringsubmission.DefaultSftpDirectory
 	}
 	return path.Join(base, RemoteName(submission.Number))
 }
