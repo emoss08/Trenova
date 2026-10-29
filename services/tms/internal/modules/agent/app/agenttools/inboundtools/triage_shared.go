@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
-	"github.com/emoss08/trenova/internal/modules/documents/app/inboundmessageservice"
+	"github.com/emoss08/trenova/internal/modules/documents/app/inboundqueue"
 	"github.com/emoss08/trenova/internal/modules/documents/app/inboundreplyservice"
 	"github.com/emoss08/trenova/internal/modules/documents/app/triageconflictservice"
 	"github.com/emoss08/trenova/internal/modules/documents/app/triagepeekservice"
@@ -29,7 +29,7 @@ const (
 type TriageToolParams struct {
 	fx.In
 
-	Inbox     *inboundmessageservice.Service
+	Inbox     *inboundqueue.Service
 	Work      *triageworkservice.Service
 	Replies   *inboundreplyservice.Service
 	Conflicts *triageconflictservice.Service
@@ -54,13 +54,13 @@ func ActorOf(params *agenttoolports.ToolExecuteParams) pulid.ID {
 
 func MessageAction(
 	params *agenttoolports.ToolExecuteParams,
-) (*inboundmessageservice.MessageActionRequest, error) {
+) (*inboundqueue.MessageActionRequest, error) {
 	messageID, err := toolparams.RequirePulid(params.Params, ParamMessageID)
 	if err != nil {
 		return nil, err
 	}
 
-	return &inboundmessageservice.MessageActionRequest{
+	return &inboundqueue.MessageActionRequest{
 		TenantInfo: TenantOnly(params),
 		ActorID:    ActorOf(params),
 		MessageID:  messageID,

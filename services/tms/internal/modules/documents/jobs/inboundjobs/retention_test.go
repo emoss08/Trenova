@@ -6,8 +6,8 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/documents/app/inboundupkeep"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/modules/documents/app/inboundmessageservice"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -32,12 +32,12 @@ type scriptedPurger struct {
 	mu      sync.Mutex
 	batches map[pulid.ID][]int
 	fail    map[pulid.ID]bool
-	asked   []inboundmessageservice.PurgeSettledRequest
+	asked   []inboundupkeep.PurgeSettledRequest
 }
 
 func (p *scriptedPurger) PurgeSettled(
 	_ context.Context,
-	req inboundmessageservice.PurgeSettledRequest,
+	req inboundupkeep.PurgeSettledRequest,
 ) (int, error) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
@@ -89,7 +89,7 @@ func TestInboundMessageRetention_PagesEachTenantAndStepsOverAFailure(t *testing.
 	assert.Equal(t, []string{broken.String()}, result.Failed)
 
 	perTenant := map[pulid.ID]int{}
-	cutoff := timeutils.NowUnix() - inboundmessageservice.RetentionDays*24*60*60
+	cutoff := timeutils.NowUnix() - inboundupkeep.RetentionDays*24*60*60
 	for _, req := range purger.asked {
 		perTenant[req.TenantInfo.OrgID]++
 		assert.Equal(t, inboundRetentionBatch, req.Limit)

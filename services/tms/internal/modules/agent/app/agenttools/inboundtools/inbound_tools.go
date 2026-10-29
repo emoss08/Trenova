@@ -14,7 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
-	"github.com/emoss08/trenova/internal/modules/documents/app/inboundmessageservice"
+	"github.com/emoss08/trenova/internal/modules/documents/app/inboundqueue"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/portaltemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
@@ -71,14 +71,14 @@ type MessageReader interface {
 
 type inboundMessageDesk interface {
 	MessageReader
-	CheckLink(ctx context.Context, req inboundmessageservice.LinkRequest) error
+	CheckLink(ctx context.Context, req inboundqueue.LinkRequest) error
 	Link(
 		ctx context.Context,
-		req inboundmessageservice.LinkRequest,
+		req inboundqueue.LinkRequest,
 	) (*inboundmessage.InboundMessage, error)
 	Review(
 		ctx context.Context,
-		req inboundmessageservice.ReviewRequest,
+		req inboundqueue.ReviewRequest,
 	) (*inboundmessage.InboundMessage, error)
 }
 
@@ -213,13 +213,13 @@ func (t *LinkInboundMessageTool) Target(params map[string]any) (agenttoolports.T
 
 func (t *LinkInboundMessageTool) request(
 	params agenttoolports.ToolExecuteParams,
-) (inboundmessageservice.LinkRequest, error) {
+) (inboundqueue.LinkRequest, error) {
 	messageID, err := toolparams.RequirePulid(params.Params, ParamMessageID)
 	if err != nil {
-		return inboundmessageservice.LinkRequest{}, err
+		return inboundqueue.LinkRequest{}, err
 	}
 
-	req := inboundmessageservice.LinkRequest{
+	req := inboundqueue.LinkRequest{
 		MessageID:  messageID,
 		TenantInfo: toolparams.TenantFrom(params),
 		ReviewerID: params.Actor.UserID,
@@ -234,7 +234,7 @@ func (t *LinkInboundMessageTool) request(
 			continue
 		}
 		if *target, err = toolparams.RequirePulid(params.Params, key); err != nil {
-			return inboundmessageservice.LinkRequest{}, err
+			return inboundqueue.LinkRequest{}, err
 		}
 	}
 
@@ -418,8 +418,8 @@ func reviewRequest(
 	message *inboundmessage.InboundMessage,
 	status inboundmessage.Status,
 	note string,
-) inboundmessageservice.ReviewRequest {
-	return inboundmessageservice.ReviewRequest{
+) inboundqueue.ReviewRequest {
+	return inboundqueue.ReviewRequest{
 		MessageID:  message.ID,
 		TenantInfo: toolparams.TenantFrom(*params),
 		ReviewerID: params.Actor.UserID,
@@ -444,7 +444,7 @@ type inboundReplier struct {
 type replyToInboundMessageParams struct {
 	fx.In
 
-	Inbox     *inboundmessageservice.Service
+	Inbox     *inboundqueue.Service
 	Email     emailports.EmailService
 	Templates documenttemplateports.DocumentTemplateResolver
 	OrgRepo   tenantports.OrganizationRepository
@@ -627,7 +627,7 @@ func (t *ReplyToInboundMessageTool) Execute(
 		return err
 	}
 
-	if _, err = t.inbox.Review(ctx, inboundmessageservice.ReviewRequest{
+	if _, err = t.inbox.Review(ctx, inboundqueue.ReviewRequest{
 		MessageID:  composed.reply.message.ID,
 		TenantInfo: composed.send.TenantInfo,
 		ReviewerID: params.Actor.UserID,

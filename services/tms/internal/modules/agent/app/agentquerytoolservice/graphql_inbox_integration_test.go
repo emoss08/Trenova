@@ -21,7 +21,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/adapters/postgres/inboundmessagerepository"
 	"github.com/emoss08/trenova/internal/modules/documents/adapters/postgres/inboundreplyrepository"
 	"github.com/emoss08/trenova/internal/modules/documents/app/captureservice"
-	"github.com/emoss08/trenova/internal/modules/documents/app/inboundmessageservice"
+	"github.com/emoss08/trenova/internal/modules/documents/app/inboundqueue"
+	"github.com/emoss08/trenova/internal/modules/documents/app/inboundreads"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/capture"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/capture/capturedb"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
@@ -111,10 +112,8 @@ func newInboxEnv(t *testing.T) *inboxEnv {
 	captures := capturerepository.Params{DB: conn, Logger: logger}
 
 	resolvers := agentread.ResolverParams{
-		InboundMessageService: inboundmessageservice.New(inboundmessageservice.Params{
-			Logger: logger,
-			MailboxRepo: inboundmessagerepository.NewMailboxRepository(
-				inboundmessagerepository.MailboxParams{DB: conn, Logger: logger}),
+		InboundQueueService: inboundqueue.New(inboundqueue.Params{
+			Logger:       logger,
 			MessageRepo:  messages,
 			DB:           conn,
 			QueueRepo:    queue,
@@ -123,6 +122,12 @@ func newInboxEnv(t *testing.T) *inboxEnv {
 			Organizations: organizationrepository.New(organizationrepository.Params{
 				DB: conn, Logger: logger, Cache: organizationCacheMiss{},
 			}),
+		}),
+		InboundReadService: inboundreads.New(inboundreads.Params{
+			MailboxRepo: inboundmessagerepository.NewMailboxRepository(
+				inboundmessagerepository.MailboxParams{DB: conn, Logger: logger}),
+			MessageRepo: messages,
+			QueueRepo:   queue,
 		}),
 		CaptureService: captureservice.New(captureservice.Params{
 			Logger:      logger,

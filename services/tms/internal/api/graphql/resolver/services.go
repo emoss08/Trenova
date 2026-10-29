@@ -60,8 +60,12 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/app/captureservice"
 	"github.com/emoss08/trenova/internal/modules/documents/app/documentpacketruleservice"
 	"github.com/emoss08/trenova/internal/modules/documents/app/documenttemplateservice"
-	"github.com/emoss08/trenova/internal/modules/documents/app/inboundmessageservice"
+	"github.com/emoss08/trenova/internal/modules/documents/app/inboundintake"
+	"github.com/emoss08/trenova/internal/modules/documents/app/inboundmailbox"
+	"github.com/emoss08/trenova/internal/modules/documents/app/inboundqueue"
+	"github.com/emoss08/trenova/internal/modules/documents/app/inboundreads"
 	"github.com/emoss08/trenova/internal/modules/documents/app/inboundreplyservice"
+	"github.com/emoss08/trenova/internal/modules/documents/app/inboundviews"
 	"github.com/emoss08/trenova/internal/modules/documents/app/triagebriefingservice"
 	"github.com/emoss08/trenova/internal/modules/documents/app/triageconflictservice"
 	"github.com/emoss08/trenova/internal/modules/documents/app/triagecorrectionservice"
@@ -402,7 +406,11 @@ type Params struct {
 	AgentToolRuleService              agenttoolports.AgentToolRuleService
 	WatchtowerService                 watchtowerports.WatchtowerService
 	WatchtowerExceptions              watchtowerports.ExceptionService
-	InboundMessageService             *inboundmessageservice.Service
+	InboundQueueService               *inboundqueue.Service
+	InboundReadService                *inboundreads.Service
+	InboundViewService                *inboundviews.Service
+	InboundMailboxService             *inboundmailbox.Service
+	InboundIntakeService              *inboundintake.Service
 	InboundReplyService               *inboundreplyservice.Service
 	TriageWorkService                 *triageworkservice.Service
 	TriagePeekService                 *triagepeekservice.Service
@@ -658,7 +666,11 @@ type Services struct {
 	AgentToolRuleService              agenttoolports.AgentToolRuleService
 	WatchtowerService                 watchtowerports.WatchtowerService
 	WatchtowerExceptions              watchtowerports.ExceptionService
-	InboundMessageService             *inboundmessageservice.Service
+	InboundQueueService               *inboundqueue.Service
+	InboundReadService                *inboundreads.Service
+	InboundViewService                *inboundviews.Service
+	InboundMailboxService             *inboundmailbox.Service
+	InboundIntakeService              *inboundintake.Service
 	InboundReplyService               *inboundreplyservice.Service
 	TriageWorkService                 *triageworkservice.Service
 	TriagePeekService                 *triagepeekservice.Service
@@ -920,7 +932,11 @@ func newServices(p *Params) *Services {
 		AgentToolRuleService:              p.AgentToolRuleService,
 		WatchtowerService:                 p.WatchtowerService,
 		WatchtowerExceptions:              p.WatchtowerExceptions,
-		InboundMessageService:             p.InboundMessageService,
+		InboundQueueService:               p.InboundQueueService,
+		InboundReadService:                p.InboundReadService,
+		InboundViewService:                p.InboundViewService,
+		InboundMailboxService:             p.InboundMailboxService,
+		InboundIntakeService:              p.InboundIntakeService,
 		InboundReplyService:               p.InboundReplyService,
 		TriageWorkService:                 p.TriageWorkService,
 		TriagePeekService:                 p.TriagePeekService,

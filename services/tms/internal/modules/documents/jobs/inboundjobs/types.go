@@ -6,26 +6,28 @@
 // costs the message.
 package inboundjobs
 
-import "github.com/emoss08/trenova/internal/modules/documents/app/inboundmessageservice"
+import (
+	"github.com/emoss08/trenova/internal/modules/documents/app/inboundintake"
+)
 
 // The payloads are the service's own, re-exported so the workflow reads
 // naturally without the two packages importing each other.
 
-type ProcessInboundMessagePayload = inboundmessageservice.ProcessInboundMessagePayload
+type ProcessInboundMessagePayload = inboundintake.ProcessInboundMessagePayload
 
-type ProcessInboundMessageResult = inboundmessageservice.ProcessInboundMessageResult
+type ProcessInboundMessageResult = inboundintake.ProcessInboundMessageResult
 
-type FailInboundMessagePayload = inboundmessageservice.FailInboundMessagePayload
+type FailInboundMessagePayload = inboundintake.FailInboundMessagePayload
 
-type AttachmentRef = inboundmessageservice.AttachmentRef
+type AttachmentRef = inboundintake.AttachmentRef
 
-type ListInboundAttachmentsResult = inboundmessageservice.ListInboundAttachmentsResult
+type ListInboundAttachmentsResult = inboundintake.ListInboundAttachmentsResult
 
-type RecordInboundAttachmentPayload = inboundmessageservice.RecordInboundAttachmentPayload
+type RecordInboundAttachmentPayload = inboundintake.RecordInboundAttachmentPayload
 
-type PollInboundAttachmentPayload = inboundmessageservice.PollInboundAttachmentPayload
+type PollInboundAttachmentPayload = inboundintake.PollInboundAttachmentPayload
 
-type AttachmentExtractionState = inboundmessageservice.AttachmentExtractionState
+type AttachmentExtractionState = inboundintake.AttachmentExtractionState
 
 // FetchInboundContentResult says whether the message can go on to be read.
 // Readable is false when its content could not be fetched and it has already

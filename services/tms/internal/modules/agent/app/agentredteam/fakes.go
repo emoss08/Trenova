@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
-	"github.com/emoss08/trenova/internal/modules/documents/app/inboundmessageservice"
+	"github.com/emoss08/trenova/internal/modules/documents/app/inboundqueue"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -57,7 +57,7 @@ func (r *inboundMessageRepository) GetByID(
 	return r.desk.GetByID(ctx, req)
 }
 
-func (d *inboundDesk) CheckLink(_ context.Context, req inboundmessageservice.LinkRequest) error {
+func (d *inboundDesk) CheckLink(_ context.Context, req inboundqueue.LinkRequest) error {
 	d.rec.read(ReadInboundBox, "CheckLink", req.TenantInfo)
 
 	return nil
@@ -65,7 +65,7 @@ func (d *inboundDesk) CheckLink(_ context.Context, req inboundmessageservice.Lin
 
 func (d *inboundDesk) Link(
 	ctx context.Context,
-	req inboundmessageservice.LinkRequest,
+	req inboundqueue.LinkRequest,
 ) (*inboundmessage.InboundMessage, error) {
 	return d.GetByID(ctx, inboundmessageports.GetInboundMessageByIDRequest{
 		ID:         req.MessageID,
@@ -75,7 +75,7 @@ func (d *inboundDesk) Link(
 
 func (d *inboundDesk) Review(
 	ctx context.Context,
-	req inboundmessageservice.ReviewRequest,
+	req inboundqueue.ReviewRequest,
 ) (*inboundmessage.InboundMessage, error) {
 	return d.GetByID(ctx, inboundmessageports.GetInboundMessageByIDRequest{
 		ID:         req.MessageID,

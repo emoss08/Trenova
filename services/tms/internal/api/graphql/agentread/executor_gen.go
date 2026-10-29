@@ -172,8 +172,12 @@ import (
 	invoiceports "github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	capturereleaseservice "github.com/emoss08/trenova/internal/modules/documents/app/capturereleaseservice"
 	captureservice "github.com/emoss08/trenova/internal/modules/documents/app/captureservice"
-	inboundmessageservice "github.com/emoss08/trenova/internal/modules/documents/app/inboundmessageservice"
+	inboundintake "github.com/emoss08/trenova/internal/modules/documents/app/inboundintake"
+	inboundmailbox "github.com/emoss08/trenova/internal/modules/documents/app/inboundmailbox"
+	inboundqueue "github.com/emoss08/trenova/internal/modules/documents/app/inboundqueue"
+	inboundreads "github.com/emoss08/trenova/internal/modules/documents/app/inboundreads"
 	inboundreplyservice "github.com/emoss08/trenova/internal/modules/documents/app/inboundreplyservice"
+	inboundviews "github.com/emoss08/trenova/internal/modules/documents/app/inboundviews"
 	triagebriefingservice "github.com/emoss08/trenova/internal/modules/documents/app/triagebriefingservice"
 	triageconflictservice "github.com/emoss08/trenova/internal/modules/documents/app/triageconflictservice"
 	triagecorrectionservice "github.com/emoss08/trenova/internal/modules/documents/app/triagecorrectionservice"
@@ -363,8 +367,12 @@ type ResolverParams struct {
 	HoldReasonService                 *holdreasonservice.Service
 	HomeLayoutService                 *homelayoutservice.Service
 	IFTAService                       *iftaservice.Service
-	InboundMessageService             *inboundmessageservice.Service
+	InboundIntakeService              *inboundintake.Service
+	InboundMailboxService             *inboundmailbox.Service
+	InboundQueueService               *inboundqueue.Service
+	InboundReadService                *inboundreads.Service
 	InboundReplyService               *inboundreplyservice.Service
+	InboundViewService                *inboundviews.Service
 	InvoiceAdjustmentService          invoiceadjustmentports.InvoiceAdjustmentService
 	InvoiceDisputeRepo                invoiceports.InvoiceDisputeRepository
 	InvoiceDisputeService             invoiceports.InvoiceDisputeService
@@ -1450,7 +1458,11 @@ func NewSchema(p ResolverParams) Schema {
 	}
 	inboundmessageDeps := &inboundmessageresolver.Deps{
 		Core:                  core,
-		InboundMessageService: p.InboundMessageService,
+		InboundQueueService:   p.InboundQueueService,
+		InboundReadService:    p.InboundReadService,
+		InboundViewService:    p.InboundViewService,
+		InboundMailboxService: p.InboundMailboxService,
+		InboundIntakeService:  p.InboundIntakeService,
 	}
 	inboundreplyDeps := &inboundreplyresolver.Deps{
 		Core:                core,

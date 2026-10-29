@@ -13,7 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
-	"github.com/emoss08/trenova/internal/modules/documents/app/inboundmessageservice"
+	"github.com/emoss08/trenova/internal/modules/documents/app/inboundqueue"
 	"github.com/emoss08/trenova/internal/modules/documents/app/triageworkservice"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
@@ -206,13 +206,13 @@ func newUnblockInboundSenderTool(
 			Target:      inboundtools.TargetMessage,
 		},
 		toolspec.ReceivablePlan[
-			*inboundmessageservice.MessageActionRequest,
+			*inboundqueue.MessageActionRequest,
 			*triageworkservice.SenderPlan,
 		]{
 			Request: inboundtools.MessageAction,
 			Plan: func(
 				ctx context.Context,
-				req *inboundmessageservice.MessageActionRequest,
+				req *inboundqueue.MessageActionRequest,
 				_ *agenttoolports.ToolExecuteParams,
 			) (*triageworkservice.SenderPlan, error) {
 				unblock, err := unblockRequest(ctx, inbox, req)
@@ -222,13 +222,13 @@ func newUnblockInboundSenderTool(
 
 				return senders.PlanUnblockSender(ctx, unblock)
 			},
-			Refused: func(*inboundmessageservice.MessageActionRequest) string {
+			Refused: func(*inboundqueue.MessageActionRequest) string {
 				return "Would let a blocked sender's mail through again."
 			},
 			Render: renderUnblockSender,
 			Run: func(
 				ctx context.Context,
-				req *inboundmessageservice.MessageActionRequest,
+				req *inboundqueue.MessageActionRequest,
 				_ *agenttoolports.ToolExecuteParams,
 			) (*agentrecord.ToolExecutionResult, error) {
 				unblock, err := unblockRequest(ctx, inbox, req)
@@ -261,7 +261,7 @@ func newUnblockInboundSenderTool(
 func unblockRequest(
 	ctx context.Context,
 	inbox inboundtools.MessageReader,
-	req *inboundmessageservice.MessageActionRequest,
+	req *inboundqueue.MessageActionRequest,
 ) (*triageworkservice.UnblockSenderRequest, error) {
 	message, err := inbox.GetByID(ctx, inboundmessageports.GetInboundMessageByIDRequest{
 		ID:         req.MessageID,
@@ -284,7 +284,7 @@ func unblockRequest(
 }
 
 func renderUnblockSender(
-	_ *inboundmessageservice.MessageActionRequest,
+	_ *inboundqueue.MessageActionRequest,
 	plan *triageworkservice.SenderPlan,
 ) (*agentpreview.ToolPreview, error) {
 	summary := "Would let mail from " + plan.Sender + " on " + plan.Mailbox.Address +

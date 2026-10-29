@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
-	"github.com/emoss08/trenova/internal/modules/documents/app/inboundmessageservice"
+	"github.com/emoss08/trenova/internal/modules/documents/app/inboundqueue"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -33,13 +33,13 @@ func (d *savingInboundDesk) GetByID(
 	return &copied, nil
 }
 
-func (d *savingInboundDesk) CheckLink(context.Context, inboundmessageservice.LinkRequest) error {
+func (d *savingInboundDesk) CheckLink(context.Context, inboundqueue.LinkRequest) error {
 	return d.linkErr
 }
 
 func (d *savingInboundDesk) Link(
 	_ context.Context,
-	req inboundmessageservice.LinkRequest,
+	req inboundqueue.LinkRequest,
 ) (*inboundmessage.InboundMessage, error) {
 	if err := d.guard.Write(); err != nil {
 		return nil, err
@@ -47,19 +47,19 @@ func (d *savingInboundDesk) Link(
 	if d.linkErr != nil {
 		return nil, d.linkErr
 	}
-	inboundmessageservice.ApplyLink(d.message, &req)
+	inboundqueue.ApplyLink(d.message, &req)
 
 	return d.message, nil
 }
 
 func (d *savingInboundDesk) Review(
 	_ context.Context,
-	req inboundmessageservice.ReviewRequest,
+	req inboundqueue.ReviewRequest,
 ) (*inboundmessage.InboundMessage, error) {
 	if err := d.guard.Write(); err != nil {
 		return nil, err
 	}
-	if err := inboundmessageservice.ApplyReview(d.message, &req, timeutils.NowUnix()); err != nil {
+	if err := inboundqueue.ApplyReview(d.message, &req, timeutils.NowUnix()); err != nil {
 		return nil, err
 	}
 

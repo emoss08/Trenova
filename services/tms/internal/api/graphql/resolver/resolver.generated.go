@@ -855,7 +855,11 @@ func FromServices(s *Services) *Resolver {
 	}
 	inboundmessageDeps := &inboundmessageresolver.Deps{
 		Core:                  s.Core,
-		InboundMessageService: s.InboundMessageService,
+		InboundQueueService:   s.InboundQueueService,
+		InboundReadService:    s.InboundReadService,
+		InboundViewService:    s.InboundViewService,
+		InboundMailboxService: s.InboundMailboxService,
+		InboundIntakeService:  s.InboundIntakeService,
 	}
 	inboundreplyDeps := &inboundreplyresolver.Deps{
 		Core:                s.Core,

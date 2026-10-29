@@ -4,12 +4,20 @@ package inboundmessageresolver
 
 import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
-	inboundmessageservice "github.com/emoss08/trenova/internal/modules/documents/app/inboundmessageservice"
+	inboundintake "github.com/emoss08/trenova/internal/modules/documents/app/inboundintake"
+	inboundmailbox "github.com/emoss08/trenova/internal/modules/documents/app/inboundmailbox"
+	inboundqueue "github.com/emoss08/trenova/internal/modules/documents/app/inboundqueue"
+	inboundreads "github.com/emoss08/trenova/internal/modules/documents/app/inboundreads"
+	inboundviews "github.com/emoss08/trenova/internal/modules/documents/app/inboundviews"
 )
 
 type Deps struct {
 	*resolvercore.Core
-	InboundMessageService *inboundmessageservice.Service
+	InboundQueueService   *inboundqueue.Service
+	InboundReadService    *inboundreads.Service
+	InboundViewService    *inboundviews.Service
+	InboundMailboxService *inboundmailbox.Service
+	InboundIntakeService  *inboundintake.Service
 }
 
 type InboundActivityResolver struct{ *Deps }

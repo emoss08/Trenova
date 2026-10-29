@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/intaketools"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
-	"github.com/emoss08/trenova/internal/modules/documents/app/inboundmessageservice"
+	"github.com/emoss08/trenova/internal/modules/documents/app/inboundqueue"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/portaltemplate"
@@ -23,9 +23,9 @@ import (
 type fakeInboundDesk struct {
 	message   *inboundmessage.InboundMessage
 	linkErr   error
-	checked   *inboundmessageservice.LinkRequest
-	linked    *inboundmessageservice.LinkRequest
-	reviewed  *inboundmessageservice.ReviewRequest
+	checked   *inboundqueue.LinkRequest
+	linked    *inboundqueue.LinkRequest
+	reviewed  *inboundqueue.ReviewRequest
 	requested *inboundmessageports.GetInboundMessageByIDRequest
 }
 
@@ -43,7 +43,7 @@ func (f *fakeInboundDesk) GetByID(
 
 func (f *fakeInboundDesk) CheckLink(
 	_ context.Context,
-	req inboundmessageservice.LinkRequest,
+	req inboundqueue.LinkRequest,
 ) error {
 	f.checked = &req
 	return f.linkErr
@@ -51,7 +51,7 @@ func (f *fakeInboundDesk) CheckLink(
 
 func (f *fakeInboundDesk) Link(
 	_ context.Context,
-	req inboundmessageservice.LinkRequest,
+	req inboundqueue.LinkRequest,
 ) (*inboundmessage.InboundMessage, error) {
 	f.linked = &req
 	return f.message, f.linkErr
@@ -59,7 +59,7 @@ func (f *fakeInboundDesk) Link(
 
 func (f *fakeInboundDesk) Review(
 	_ context.Context,
-	req inboundmessageservice.ReviewRequest,
+	req inboundqueue.ReviewRequest,
 ) (*inboundmessage.InboundMessage, error) {
 	f.reviewed = &req
 	return f.message, nil

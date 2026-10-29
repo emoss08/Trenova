@@ -13,7 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
-	"github.com/emoss08/trenova/internal/modules/documents/app/inboundmessageservice"
+	"github.com/emoss08/trenova/internal/modules/documents/app/inboundqueue"
 	"github.com/emoss08/trenova/internal/modules/documents/app/inboundreplyservice"
 	"github.com/emoss08/trenova/internal/modules/documents/app/triagenova"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
@@ -298,22 +298,22 @@ func newDiscardInboundReplyDraftTool(replies triageReplies) agenttoolports.Agent
 			Target:      inboundtools.TargetMessage,
 		},
 		toolspec.ReceivablePlan[
-			*inboundmessageservice.MessageActionRequest,
+			*inboundqueue.MessageActionRequest,
 			*inboundreplyservice.DraftPlan,
 		]{
 			Request: inboundtools.MessageAction,
 			Plan: func(
 				ctx context.Context,
-				req *inboundmessageservice.MessageActionRequest,
+				req *inboundqueue.MessageActionRequest,
 				_ *agenttoolports.ToolExecuteParams,
 			) (*inboundreplyservice.DraftPlan, error) {
 				return replies.PlanDiscardDraft(ctx, req.TenantInfo, req.MessageID)
 			},
-			Refused: func(*inboundmessageservice.MessageActionRequest) string {
+			Refused: func(*inboundqueue.MessageActionRequest) string {
 				return "Would throw away a reply draft."
 			},
 			Render: func(
-				_ *inboundmessageservice.MessageActionRequest,
+				_ *inboundqueue.MessageActionRequest,
 				plan *inboundreplyservice.DraftPlan,
 			) (*agentpreview.ToolPreview, error) {
 				summary := "Would throw away the reply draft on " +
@@ -331,7 +331,7 @@ func newDiscardInboundReplyDraftTool(replies triageReplies) agenttoolports.Agent
 			},
 			Run: func(
 				ctx context.Context,
-				req *inboundmessageservice.MessageActionRequest,
+				req *inboundqueue.MessageActionRequest,
 				_ *agenttoolports.ToolExecuteParams,
 			) (*agentrecord.ToolExecutionResult, error) {
 				plan, err := replies.PlanDiscardDraft(ctx, req.TenantInfo, req.MessageID)

@@ -13,7 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
-	"github.com/emoss08/trenova/internal/modules/documents/app/inboundmessageservice"
+	"github.com/emoss08/trenova/internal/modules/documents/app/inboundqueue"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/reflectutils"
@@ -24,7 +24,7 @@ var passthroughTools = []string{agentdefinition.CoreToolRemember}
 
 type toolDeps struct {
 	desk        *inboundDesk
-	inbox       *inboundmessageservice.Service
+	inbox       *inboundqueue.Service
 	memories    agentmemoryports.AgentMemoryService
 	shipments   *shipmentDesk
 	comments    *commentDesk
@@ -38,7 +38,7 @@ func newToolDeps(rec *recorder, responses map[string]map[string]any) toolDeps {
 
 	return toolDeps{
 		desk: desk,
-		inbox: inboundmessageservice.New(inboundmessageservice.Params{
+		inbox: inboundqueue.New(inboundqueue.Params{
 			Logger:      zap.NewNop(),
 			MessageRepo: &inboundMessageRepository{desk: desk},
 		}),

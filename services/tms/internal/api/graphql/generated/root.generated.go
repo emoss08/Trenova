@@ -3,23 +3,44 @@
 package generated
 
 import (
-	"github.com/emoss08/trenova/internal/modules/settlement/app/carriersettlementworkspaceservice"
-	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementaccrualservice"
-	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementworkspaceservice"
-	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelsourcingservice"
+	"context"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingdriftports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountinginboundports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingmappingports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentevaluation"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentexception"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentqualitycontrol"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentqualitysuite"
-	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrixreview"
-	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrixversion"
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/payadvance"
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/payassignment"
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/paybenefit"
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/paycode"
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/payescrow"
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/payexpense"
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/recurringpay"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentreflection"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrunevent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiproviderkey"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/airouting"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringledger"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringreadiness"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringremittance"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringsubmission"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoicechargegroup"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoicedispute"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringledgerports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringremittanceports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringsubmissionports"
+	"github.com/emoss08/trenova/internal/modules/documents/app/inboundmailbox"
+	"github.com/emoss08/trenova/internal/modules/documents/app/inboundreads"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/captureprofile"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/capturerequest"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/agentcontrol"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/carriersettlementcontrol"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/dashcontrol"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/settlementcontrol"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/boardgrouping"
+	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelsourcingservice"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelcontrol"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelenrollment"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelevent"
@@ -28,59 +49,40 @@ import (
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelsnapshot"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelsync"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelverification"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/invoicechargegroup"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/invoicedispute"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentevaluation"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentexception"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentreflection"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrunevent"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringledger"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringreadiness"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringremittance"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringsubmission"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/fleetsafety"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/safetyscorecard"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerdiscipline"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerinjury"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/agentcontrol"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/carriersettlementcontrol"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/dashcontrol"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/settlementcontrol"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/aiproviderkey"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/airouting"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/boardgrouping"
-	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringledgerports"
-	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringremittanceports"
-	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringsubmissionports"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingdriftports"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountinginboundports"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingmappingports"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/ptoledgerports"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerdqfports"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerptoports"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrixreview"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrixversion"
+	"github.com/emoss08/trenova/internal/modules/settlement/app/carriersettlementworkspaceservice"
+	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementaccrualservice"
+	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementworkspaceservice"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payadvance"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payassignment"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/paybenefit"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/paycode"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payescrow"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payexpense"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/recurringpay"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/approvaldelegation"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/employment"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/fleetsafety"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/profilechange"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/pto"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/safetyscorecard"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/timesheet"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerchecklist"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercompliance"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerdiscipline"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerdot"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerinjury"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerleave"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerpolicy"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerreview"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerschedule"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workertraining"
-	"context"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/ptoledgerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerdqfports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerptoports"
 	"sync"
 
 	"github.com/99designs/gqlgen/graphql"
@@ -287,7 +289,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/ports/latechargeports"
 	"github.com/emoss08/trenova/internal/modules/documents/app/capturereleaseservice"
 	"github.com/emoss08/trenova/internal/modules/documents/app/captureservice"
-	"github.com/emoss08/trenova/internal/modules/documents/app/inboundmessageservice"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/capture"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentpacketrule"
@@ -1819,7 +1820,7 @@ type InboundMailboxResolver interface {
 }
 
 type InboundMailboxCredentialsResolver interface {
-	WebhookPath(ctx context.Context, obj *inboundmessageservice.MailboxCredentials) (string, error)
+	WebhookPath(ctx context.Context, obj *inboundmailbox.MailboxCredentials) (string, error)
 }
 
 type InboundMessageResolver interface {
@@ -2376,9 +2377,9 @@ type MutationResolver interface {
 	BackfillJurisdictionMiles(ctx context.Context, input gqlmodel.BackfillJurisdictionMilesInput) (*gqlmodel.JurisdictionMilesBackfillResult, error)
 	ReviewInboundMessage(ctx context.Context, id string, input gqlmodel.ReviewInboundMessageInput) (*inboundmessage.InboundMessage, error)
 	LinkInboundMessage(ctx context.Context, id string, input gqlmodel.LinkInboundMessageInput) (*inboundmessage.InboundMessage, error)
-	CreateInboundMailbox(ctx context.Context, input gqlmodel.InboundMailboxInput, signingSecret *string, apiKey *string) (*inboundmessageservice.MailboxCredentials, error)
+	CreateInboundMailbox(ctx context.Context, input gqlmodel.InboundMailboxInput, signingSecret *string, apiKey *string) (*inboundmailbox.MailboxCredentials, error)
 	UpdateInboundMailbox(ctx context.Context, id string, version int, input gqlmodel.InboundMailboxInput) (*inboundmessage.Mailbox, error)
-	RotateInboundMailboxToken(ctx context.Context, id string) (*inboundmessageservice.MailboxCredentials, error)
+	RotateInboundMailboxToken(ctx context.Context, id string) (*inboundmailbox.MailboxCredentials, error)
 	SetInboundMailboxSigningSecret(ctx context.Context, id string, secret string) (*inboundmessage.Mailbox, error)
 	SetInboundMailboxAPIKey(ctx context.Context, id string, apiKey string) (*inboundmessage.Mailbox, error)
 	ReviewInboundMessages(ctx context.Context, selection gqlmodel.TriageSelectionInput, input gqlmodel.BulkReviewInboundMessagesInput) (*inboundmessageports.BulkResult, error)
@@ -3226,7 +3227,7 @@ type QueryResolver interface {
 	IFTACurrentPeriod(ctx context.Context) (*ifta.Period, error)
 	InboundMessages(ctx context.Context, input gqlmodel.InboundMessagesInput) (*gqlmodel.InboundMessageConnection, error)
 	InboundMessage(ctx context.Context, id string) (*inboundmessage.InboundMessage, error)
-	InboundMessageCounts(ctx context.Context) (*inboundmessageservice.Counts, error)
+	InboundMessageCounts(ctx context.Context) (*inboundreads.Counts, error)
 	InboundMailboxes(ctx context.Context) ([]*inboundmessage.Mailbox, error)
 	InboundThread(ctx context.Context, threadKey string) ([]*inboundmessage.InboundMessage, error)
 	MyTriageViews(ctx context.Context) ([]*triage.View, error)

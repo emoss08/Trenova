@@ -66,7 +66,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/latechargeports"
 	"github.com/emoss08/trenova/internal/modules/documents/app/documentservice"
-	"github.com/emoss08/trenova/internal/modules/documents/app/inboundmessageservice"
+	"github.com/emoss08/trenova/internal/modules/documents/app/inboundqueue"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/edi/app/edidelivery"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediinboundservice"
@@ -528,11 +528,11 @@ func provideAttachDocumentTool(documents *documentservice.Service) agenttoolport
 	return documenttools.NewAttachDocumentTool(documents)
 }
 
-func provideLinkInboundMessageTool(inbox *inboundmessageservice.Service) agenttoolports.AgentTool {
+func provideLinkInboundMessageTool(inbox *inboundqueue.Service) agenttoolports.AgentTool {
 	return inboundtools.NewLinkInboundMessageTool(inbox)
 }
 
-func provideMarkInboundMessageTool(inbox *inboundmessageservice.Service) agenttoolports.AgentTool {
+func provideMarkInboundMessageTool(inbox *inboundqueue.Service) agenttoolports.AgentTool {
 	return inboundtools.NewMarkInboundMessageTool(inbox)
 }
 

@@ -460,3 +460,35 @@ func AnnounceDocumentAttached(ctx context.Context, sink TriageEventSink, doc *do
 		*doc.DocumentTypeID,
 	)
 }
+
+func MessageFromState(state *QueueState) *inboundmessage.InboundMessage {
+	return &inboundmessage.InboundMessage{
+		ID:                   state.ID,
+		OrganizationID:       state.OrganizationID,
+		BusinessUnitID:       state.BusinessUnitID,
+		MailboxID:            state.MailboxID,
+		Status:               state.Status,
+		Classification:       state.Classification,
+		ReceivedAt:           state.ReceivedAt,
+		FromAddress:          state.FromAddress,
+		FromName:             state.FromName,
+		Subject:              state.Subject,
+		SenderDomain:         state.SenderDomain,
+		ThreadKey:            state.ThreadKey,
+		OwnerID:              state.OwnerID,
+		DueAt:                state.DueAt,
+		Parked:               state.Parked,
+		SnoozedUntil:         state.SnoozedUntil,
+		SnoozeEvent:          state.SnoozeEvent,
+		SnoozeWatchID:        state.SnoozeWatchID,
+		SnoozeDocumentTypeID: state.SnoozeDocumentTypeID,
+		AwaitingUntil:        state.AwaitingUntil,
+		MatchedShipmentID:    state.MatchedShipmentID,
+		MatchedCustomerID:    state.MatchedCustomerID,
+		MatchedCarrierID:     state.MatchedCarrierID,
+		MatchReason:          state.MatchReason,
+		FailureText:          state.FailureText,
+		ReviewNote:           state.ReviewNote,
+		NovaRead:             state.NovaRead,
+	}
+}

@@ -3426,13 +3426,13 @@ models:
         fieldName: PONumber
   InboundMessageCounts:
     model:
-      - github.com/emoss08/trenova/internal/modules/documents/app/inboundmessageservice.Counts
+      - github.com/emoss08/trenova/internal/modules/documents/app/inboundreads.Counts
   InboundClassificationCount:
     model:
-      - github.com/emoss08/trenova/internal/modules/documents/app/inboundmessageservice.ClassificationCount
+      - github.com/emoss08/trenova/internal/modules/documents/app/inboundreads.ClassificationCount
   InboundMailboxCount:
     model:
-      - github.com/emoss08/trenova/internal/modules/documents/app/inboundmessageservice.MailboxCount
+      - github.com/emoss08/trenova/internal/modules/documents/app/inboundreads.MailboxCount
   InboundAttachment:
     model:
       - github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage.InboundAttachment
@@ -3473,7 +3473,7 @@ models:
         resolver: true
   InboundMailboxCredentials:
     model:
-      - github.com/emoss08/trenova/internal/modules/documents/app/inboundmessageservice.MailboxCredentials
+      - github.com/emoss08/trenova/internal/modules/documents/app/inboundmailbox.MailboxCredentials
     fields:
       webhookPath:
         resolver: true

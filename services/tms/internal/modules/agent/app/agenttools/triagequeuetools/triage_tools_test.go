@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
-	"github.com/emoss08/trenova/internal/modules/documents/app/inboundmessageservice"
+	"github.com/emoss08/trenova/internal/modules/documents/app/inboundqueue"
 	"github.com/emoss08/trenova/internal/modules/documents/app/triageworkservice"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
@@ -31,13 +31,13 @@ func queueStateOf(message *inboundmessage.InboundMessage) *inboundmessageports.Q
 func onePlannedChange(
 	message *inboundmessage.InboundMessage,
 	change func(*inboundmessageports.QueueState),
-) *inboundmessageservice.QueuePlan {
+) *inboundqueue.QueuePlan {
 	before := queueStateOf(message)
 	after := *before
 	change(&after)
 
-	return &inboundmessageservice.QueuePlan{
-		Changes: []inboundmessageservice.QueueChange{{Before: before, After: &after}},
+	return &inboundqueue.QueuePlan{
+		Changes: []inboundqueue.QueueChange{{Before: before, After: &after}},
 	}
 }
 
@@ -189,7 +189,7 @@ func TestAssignInboundMessages_GivesTheSelectionToTheOwner(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, "assigned", result.Action)
 	require.Len(t, f.Written, 1)
-	req := f.Written[0].(*inboundmessageservice.AssignRequest)
+	req := f.Written[0].(*inboundqueue.AssignRequest)
 	assert.Equal(t, params.OrganizationID, req.TenantInfo.OrgID)
 	assert.Equal(t, params.BusinessUnitID, req.TenantInfo.BuID)
 	assert.Equal(t, params.Actor.UserID, req.ActorID)
@@ -203,7 +203,7 @@ func TestQueueTools_WarnWhenNothingWouldChange(t *testing.T) {
 	t.Parallel()
 
 	f := agenttoolstest.NewFakeTriage()
-	f.QueuePlan = &inboundmessageservice.QueuePlan{Unchanged: 1}
+	f.QueuePlan = &inboundqueue.QueuePlan{Unchanged: 1}
 	preview, err := newReopenInboundMessagesTool(f).(agenttoolports.ToolPreviewer).Preview(
 		t.Context(),
 		agenttoolstest.DeskParams(map[string]any{
@@ -243,7 +243,7 @@ func TestSnoozeInboundMessages_TakesATimeOrAnEventButNotBoth(t *testing.T) {
 		"messageIds": ids,
 		"until":      "2026-11-02T08:00",
 	})))
-	timed := f.Written[0].(*inboundmessageservice.SnoozeRequest)
+	timed := f.Written[0].(*inboundqueue.SnoozeRequest)
 	assert.Equal(t, time.Date(2026, time.November, 2, 8, 0, 0, 0, time.UTC).Unix(), timed.Until)
 	assert.Empty(t, timed.Event)
 
@@ -253,7 +253,7 @@ func TestSnoozeInboundMessages_TakesATimeOrAnEventButNotBoth(t *testing.T) {
 		"event":          "DocumentAttached",
 		"documentTypeId": documentType.String(),
 	})))
-	evented := f.Written[1].(*inboundmessageservice.SnoozeRequest)
+	evented := f.Written[1].(*inboundqueue.SnoozeRequest)
 	assert.Equal(t, inboundmessage.SnoozeEventDocumentAttached, evented.Event)
 	assert.Equal(t, documentType, evented.DocumentTypeID)
 	assert.Zero(t, evented.Until)
@@ -280,7 +280,7 @@ func TestWakeInboundMessage_CallsTheWakeThatFitsHowItIsParked(t *testing.T) {
 
 	f.Message.Parked = inboundmessage.ParkingSnoozed
 	require.NoError(t, tool.Execute(t.Context(), params))
-	_, woke := f.Written[0].(*inboundmessageservice.MessageActionRequest)
+	_, woke := f.Written[0].(*inboundqueue.MessageActionRequest)
 	assert.True(t, woke, "a snoozed message is woken")
 
 	f.Message.Parked = inboundmessage.ParkingAwaitingReply
@@ -306,7 +306,7 @@ func TestWaitForInboundReply_ParksUntilTheTimeGiven(t *testing.T) {
 		"messageId": f.Message.ID.String(),
 		"until":     "2026-11-04T17:30",
 	})))
-	req := f.Written[0].(*inboundmessageservice.WaitForReplyRequest)
+	req := f.Written[0].(*inboundqueue.WaitForReplyRequest)
 	assert.Equal(t, f.Message.ID, req.MessageID)
 	assert.Equal(t, time.Date(2026, time.November, 4, 17, 30, 0, 0, time.UTC).Unix(), req.Until)
 
@@ -326,8 +326,8 @@ func TestUnlinkInboundMessage_RemovesTheLinkNamed(t *testing.T) {
 		"messageId": f.Message.ID.String(),
 		"record":    "Customer",
 	})))
-	req := f.Written[0].(*inboundmessageservice.UnlinkRequest)
-	assert.Equal(t, inboundmessageservice.LinkedCustomer, req.Record)
+	req := f.Written[0].(*inboundqueue.UnlinkRequest)
+	assert.Equal(t, inboundqueue.LinkedCustomer, req.Record)
 
 	assert.Error(t, tool.Execute(t.Context(), agenttoolstest.DeskParams(map[string]any{
 		"messageId": f.Message.ID.String(),
@@ -356,7 +356,7 @@ func TestHandOffTriage_SaysWhenTheQueueIsLargerThanThePreview(t *testing.T) {
 	result, err := tool.(agenttoolports.ToolResultReporter).ExecuteWithResult(t.Context(), params)
 	require.NoError(t, err)
 	assert.Equal(t, 3, result.Total)
-	assert.Equal(t, to, f.Written[0].(*inboundmessageservice.HandOffRequest).ToUserID)
+	assert.Equal(t, to, f.Written[0].(*inboundqueue.HandOffRequest).ToUserID)
 }
 
 func TestBlockInboundSender_PreviewsTheSourceAndTheMessage(t *testing.T) {

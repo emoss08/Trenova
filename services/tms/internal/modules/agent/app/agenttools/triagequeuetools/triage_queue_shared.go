@@ -14,7 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
-	"github.com/emoss08/trenova/internal/modules/documents/app/inboundmessageservice"
+	"github.com/emoss08/trenova/internal/modules/documents/app/inboundqueue"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -31,68 +31,68 @@ type triageQueue interface {
 	inboundtools.MessageReader
 	Assign(
 		ctx context.Context,
-		req *inboundmessageservice.AssignRequest,
+		req *inboundqueue.AssignRequest,
 	) (*inboundmessageports.BulkResult, error)
 	PlanAssign(
 		ctx context.Context,
-		req *inboundmessageservice.AssignRequest,
-	) (*inboundmessageservice.QueuePlan, error)
+		req *inboundqueue.AssignRequest,
+	) (*inboundqueue.QueuePlan, error)
 	Reopen(
 		ctx context.Context,
-		req *inboundmessageservice.ReopenRequest,
+		req *inboundqueue.ReopenRequest,
 	) (*inboundmessageports.BulkResult, error)
 	PlanReopen(
 		ctx context.Context,
-		req *inboundmessageservice.ReopenRequest,
-	) (*inboundmessageservice.QueuePlan, error)
+		req *inboundqueue.ReopenRequest,
+	) (*inboundqueue.QueuePlan, error)
 	Snooze(
 		ctx context.Context,
-		req *inboundmessageservice.SnoozeRequest,
+		req *inboundqueue.SnoozeRequest,
 	) (*inboundmessageports.BulkResult, error)
 	PlanSnooze(
 		ctx context.Context,
-		req *inboundmessageservice.SnoozeRequest,
-	) (*inboundmessageservice.QueuePlan, error)
+		req *inboundqueue.SnoozeRequest,
+	) (*inboundqueue.QueuePlan, error)
 	Wake(
 		ctx context.Context,
-		req *inboundmessageservice.MessageActionRequest,
+		req *inboundqueue.MessageActionRequest,
 	) (*inboundmessage.InboundMessage, error)
 	PlanWake(
 		ctx context.Context,
-		req *inboundmessageservice.MessageActionRequest,
-	) (*inboundmessageservice.QueuePlan, error)
+		req *inboundqueue.MessageActionRequest,
+	) (*inboundqueue.QueuePlan, error)
 	StopWaiting(
 		ctx context.Context,
-		req *inboundmessageservice.MessageActionRequest,
+		req *inboundqueue.MessageActionRequest,
 	) (*inboundmessage.InboundMessage, error)
 	PlanStopWaiting(
 		ctx context.Context,
-		req *inboundmessageservice.MessageActionRequest,
-	) (*inboundmessageservice.QueuePlan, error)
+		req *inboundqueue.MessageActionRequest,
+	) (*inboundqueue.QueuePlan, error)
 	WaitForReply(
 		ctx context.Context,
-		req *inboundmessageservice.WaitForReplyRequest,
+		req *inboundqueue.WaitForReplyRequest,
 	) (*inboundmessage.InboundMessage, error)
 	PlanWaitForReply(
 		ctx context.Context,
-		req *inboundmessageservice.WaitForReplyRequest,
-	) (*inboundmessageservice.QueuePlan, error)
+		req *inboundqueue.WaitForReplyRequest,
+	) (*inboundqueue.QueuePlan, error)
 	Unlink(
 		ctx context.Context,
-		req *inboundmessageservice.UnlinkRequest,
+		req *inboundqueue.UnlinkRequest,
 	) (*inboundmessage.InboundMessage, error)
 	PlanUnlink(
 		ctx context.Context,
-		req *inboundmessageservice.UnlinkRequest,
-	) (*inboundmessageservice.QueuePlan, error)
+		req *inboundqueue.UnlinkRequest,
+	) (*inboundqueue.QueuePlan, error)
 	HandOff(
 		ctx context.Context,
-		req *inboundmessageservice.HandOffRequest,
+		req *inboundqueue.HandOffRequest,
 	) (*inboundmessageports.HandOffResult, error)
 	PlanHandOff(
 		ctx context.Context,
-		req *inboundmessageservice.HandOffRequest,
-	) (*inboundmessageservice.QueuePlan, error)
+		req *inboundqueue.HandOffRequest,
+	) (*inboundqueue.QueuePlan, error)
 }
 
 var errNothingInTheQueueChanges = errors.New(
@@ -107,13 +107,13 @@ func messageIDsProperty(description string) map[string]any {
 
 func triageSelection(
 	params *agenttoolports.ToolExecuteParams,
-) (inboundmessageservice.Selection, error) {
+) (inboundqueue.Selection, error) {
 	ids, err := toolparams.RequirePulidSlice(params.Params, paramMessageIDs, maxTriageSelection)
 	if err != nil {
-		return inboundmessageservice.Selection{}, err
+		return inboundqueue.Selection{}, err
 	}
 
-	return inboundmessageservice.Selection{IDs: ids}, nil
+	return inboundqueue.Selection{IDs: ids}, nil
 }
 
 type queueStateView struct {
@@ -186,7 +186,7 @@ func describeQueueState(state *inboundmessageports.QueueState) string {
 
 func renderQueuePlan(
 	summary string,
-	plan *inboundmessageservice.QueuePlan,
+	plan *inboundqueue.QueuePlan,
 ) (*agentpreview.ToolPreview, error) {
 	changes := make([]*agentpreview.RecordChange, 0, len(plan.Changes))
 	for _, change := range plan.Changes {
@@ -227,7 +227,7 @@ func countMessages(n int) string {
 	return fmt.Sprintf("%d messages", n)
 }
 
-func skippedNote(plan *inboundmessageservice.QueuePlan) string {
+func skippedNote(plan *inboundqueue.QueuePlan) string {
 	parts := make([]string, 0, 2)
 	if plan.Unchanged > 0 {
 		parts = append(parts, countMessages(plan.Unchanged)+" already as asked or not eligible")

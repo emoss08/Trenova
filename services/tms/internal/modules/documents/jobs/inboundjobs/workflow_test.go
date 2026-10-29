@@ -5,8 +5,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/documents/app/inboundintake"
+	"github.com/emoss08/trenova/internal/modules/documents/app/inboundupkeep"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
-	"github.com/emoss08/trenova/internal/modules/documents/app/inboundmessageservice"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -116,7 +117,7 @@ func TestProcessInboundMessageWorkflow_RecordsAFetchThatFailedOutright(t *testin
 	require.True(t, env.IsWorkflowCompleted())
 	require.Error(t, env.GetWorkflowError())
 	require.NotNil(t, recorded)
-	assert.Equal(t, inboundmessageservice.ContentUnavailableCode, recorded.Code)
+	assert.Equal(t, inboundintake.ContentUnavailableCode, recorded.Code)
 	assert.Equal(t, payload.MessageID, recorded.MessageID)
 	env.AssertNotCalled(t, "SettleInboundMessageActivity", mock.Anything, mock.Anything)
 }
@@ -141,7 +142,7 @@ func TestProcessInboundMessageWorkflow_HandsAFactorRemittanceToBilling(t *testin
 			Classification: inboundmessage.ClassificationFactorRemittance,
 		}, nil).Once()
 	env.OnActivity(a.IngestFactorRemittanceActivity, mock.Anything, mock.Anything).
-		Return(&inboundmessageservice.IngestRemittancesResult{
+		Return(&inboundupkeep.IngestRemittancesResult{
 			RemittanceIDs: []pulid.ID{pulid.MustNew("facrem_")},
 		}, nil).Once()
 

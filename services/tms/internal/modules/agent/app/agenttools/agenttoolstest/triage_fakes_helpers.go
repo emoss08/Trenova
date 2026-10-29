@@ -3,7 +3,7 @@ package agenttoolstest
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/documents/app/inboundmessageservice"
+	"github.com/emoss08/trenova/internal/modules/documents/app/inboundqueue"
 	"github.com/emoss08/trenova/internal/modules/documents/app/inboundreplyservice"
 	"github.com/emoss08/trenova/internal/modules/documents/app/triageconflictservice"
 	"github.com/emoss08/trenova/internal/modules/documents/app/triageworkservice"
@@ -19,7 +19,7 @@ type FakeTriage struct {
 	Message *inboundmessage.InboundMessage
 	PlanErr error
 
-	QueuePlan       *inboundmessageservice.QueuePlan
+	QueuePlan       *inboundqueue.QueuePlan
 	SenderPlan      *triageworkservice.SenderPlan
 	DraftPlan       *inboundreplyservice.DraftPlan
 	LoadDraft       *triageworkservice.LoadDraftPlan
@@ -67,7 +67,7 @@ func (f *FakeTriage) bulk() *inboundmessageports.BulkResult {
 
 func (f *FakeTriage) Assign(
 	_ context.Context,
-	req *inboundmessageservice.AssignRequest,
+	req *inboundqueue.AssignRequest,
 ) (*inboundmessageports.BulkResult, error) {
 	f.write(req)
 
@@ -76,14 +76,14 @@ func (f *FakeTriage) Assign(
 
 func (f *FakeTriage) PlanAssign(
 	_ context.Context,
-	req *inboundmessageservice.AssignRequest,
-) (*inboundmessageservice.QueuePlan, error) {
+	req *inboundqueue.AssignRequest,
+) (*inboundqueue.QueuePlan, error) {
 	return f.QueuePlan, f.plan(req)
 }
 
 func (f *FakeTriage) Reopen(
 	_ context.Context,
-	req *inboundmessageservice.ReopenRequest,
+	req *inboundqueue.ReopenRequest,
 ) (*inboundmessageports.BulkResult, error) {
 	f.write(req)
 
@@ -92,14 +92,14 @@ func (f *FakeTriage) Reopen(
 
 func (f *FakeTriage) PlanReopen(
 	_ context.Context,
-	req *inboundmessageservice.ReopenRequest,
-) (*inboundmessageservice.QueuePlan, error) {
+	req *inboundqueue.ReopenRequest,
+) (*inboundqueue.QueuePlan, error) {
 	return f.QueuePlan, f.plan(req)
 }
 
 func (f *FakeTriage) Snooze(
 	_ context.Context,
-	req *inboundmessageservice.SnoozeRequest,
+	req *inboundqueue.SnoozeRequest,
 ) (*inboundmessageports.BulkResult, error) {
 	f.write(req)
 
@@ -108,14 +108,14 @@ func (f *FakeTriage) Snooze(
 
 func (f *FakeTriage) PlanSnooze(
 	_ context.Context,
-	req *inboundmessageservice.SnoozeRequest,
-) (*inboundmessageservice.QueuePlan, error) {
+	req *inboundqueue.SnoozeRequest,
+) (*inboundqueue.QueuePlan, error) {
 	return f.QueuePlan, f.plan(req)
 }
 
 func (f *FakeTriage) Wake(
 	_ context.Context,
-	req *inboundmessageservice.MessageActionRequest,
+	req *inboundqueue.MessageActionRequest,
 ) (*inboundmessage.InboundMessage, error) {
 	f.write(req)
 
@@ -124,14 +124,14 @@ func (f *FakeTriage) Wake(
 
 func (f *FakeTriage) PlanWake(
 	_ context.Context,
-	req *inboundmessageservice.MessageActionRequest,
-) (*inboundmessageservice.QueuePlan, error) {
+	req *inboundqueue.MessageActionRequest,
+) (*inboundqueue.QueuePlan, error) {
 	return f.QueuePlan, f.plan(req)
 }
 
 func (f *FakeTriage) StopWaiting(
 	_ context.Context,
-	req *inboundmessageservice.MessageActionRequest,
+	req *inboundqueue.MessageActionRequest,
 ) (*inboundmessage.InboundMessage, error) {
 	f.write(StopWaitingCall{req})
 
@@ -140,18 +140,18 @@ func (f *FakeTriage) StopWaiting(
 
 func (f *FakeTriage) PlanStopWaiting(
 	_ context.Context,
-	req *inboundmessageservice.MessageActionRequest,
-) (*inboundmessageservice.QueuePlan, error) {
+	req *inboundqueue.MessageActionRequest,
+) (*inboundqueue.QueuePlan, error) {
 	return f.QueuePlan, f.plan(StopWaitingCall{req})
 }
 
 type StopWaitingCall struct {
-	Req *inboundmessageservice.MessageActionRequest
+	Req *inboundqueue.MessageActionRequest
 }
 
 func (f *FakeTriage) WaitForReply(
 	_ context.Context,
-	req *inboundmessageservice.WaitForReplyRequest,
+	req *inboundqueue.WaitForReplyRequest,
 ) (*inboundmessage.InboundMessage, error) {
 	f.write(req)
 
@@ -160,14 +160,14 @@ func (f *FakeTriage) WaitForReply(
 
 func (f *FakeTriage) PlanWaitForReply(
 	_ context.Context,
-	req *inboundmessageservice.WaitForReplyRequest,
-) (*inboundmessageservice.QueuePlan, error) {
+	req *inboundqueue.WaitForReplyRequest,
+) (*inboundqueue.QueuePlan, error) {
 	return f.QueuePlan, f.plan(req)
 }
 
 func (f *FakeTriage) Unlink(
 	_ context.Context,
-	req *inboundmessageservice.UnlinkRequest,
+	req *inboundqueue.UnlinkRequest,
 ) (*inboundmessage.InboundMessage, error) {
 	f.write(req)
 
@@ -176,14 +176,14 @@ func (f *FakeTriage) Unlink(
 
 func (f *FakeTriage) PlanUnlink(
 	_ context.Context,
-	req *inboundmessageservice.UnlinkRequest,
-) (*inboundmessageservice.QueuePlan, error) {
+	req *inboundqueue.UnlinkRequest,
+) (*inboundqueue.QueuePlan, error) {
 	return f.QueuePlan, f.plan(req)
 }
 
 func (f *FakeTriage) HandOff(
 	_ context.Context,
-	req *inboundmessageservice.HandOffRequest,
+	req *inboundqueue.HandOffRequest,
 ) (*inboundmessageports.HandOffResult, error) {
 	f.write(req)
 
@@ -192,8 +192,8 @@ func (f *FakeTriage) HandOff(
 
 func (f *FakeTriage) PlanHandOff(
 	_ context.Context,
-	req *inboundmessageservice.HandOffRequest,
-) (*inboundmessageservice.QueuePlan, error) {
+	req *inboundqueue.HandOffRequest,
+) (*inboundqueue.QueuePlan, error) {
 	return f.QueuePlan, f.plan(req)
 }
 

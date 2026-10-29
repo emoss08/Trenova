@@ -11,7 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
-	"github.com/emoss08/trenova/internal/modules/documents/app/inboundmessageservice"
+	"github.com/emoss08/trenova/internal/modules/documents/app/inboundqueue"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -86,7 +86,7 @@ func (t *LinkInboundMessageTool) Preview(
 		MessageRecord(message),
 		message,
 		func(linked *inboundmessage.InboundMessage) error {
-			inboundmessageservice.ApplyLink(linked, &req)
+			inboundqueue.ApplyLink(linked, &req)
 
 			return nil
 		},
@@ -125,7 +125,7 @@ func (t *MarkInboundMessageTool) Preview(
 		MessageRecord(message),
 		message,
 		func(settled *inboundmessage.InboundMessage) error {
-			return inboundmessageservice.ApplyReview(settled, &review, now)
+			return inboundqueue.ApplyReview(settled, &review, now)
 		},
 		toolpreview.Only(inboundReviewFields...),
 		toolpreview.Volatile("reviewedAt"),

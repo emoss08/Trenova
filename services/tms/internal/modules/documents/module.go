@@ -35,8 +35,14 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/app/extractionevalservice"
 	"github.com/emoss08/trenova/internal/modules/documents/app/extractionrolloutservice"
 	"github.com/emoss08/trenova/internal/modules/documents/app/extractionshadowservice"
-	"github.com/emoss08/trenova/internal/modules/documents/app/inboundmessageservice"
+	"github.com/emoss08/trenova/internal/modules/documents/app/inboundintake"
+	"github.com/emoss08/trenova/internal/modules/documents/app/inboundmailbox"
+	"github.com/emoss08/trenova/internal/modules/documents/app/inboundprocessing"
+	"github.com/emoss08/trenova/internal/modules/documents/app/inboundqueue"
+	"github.com/emoss08/trenova/internal/modules/documents/app/inboundreads"
 	"github.com/emoss08/trenova/internal/modules/documents/app/inboundreplyservice"
+	"github.com/emoss08/trenova/internal/modules/documents/app/inboundupkeep"
+	"github.com/emoss08/trenova/internal/modules/documents/app/inboundviews"
 	"github.com/emoss08/trenova/internal/modules/documents/app/pagerender"
 	"github.com/emoss08/trenova/internal/modules/documents/app/thumbnailservice"
 	"github.com/emoss08/trenova/internal/modules/documents/app/triagebriefingservice"
@@ -54,6 +60,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionevalports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/triageports"
+	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerdqfservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
 	"go.uber.org/fx"
@@ -156,15 +163,22 @@ func SharedOptions() fx.Option {
 			extractionshadowservice.NewRunner,
 			extractionshadowservice.AsRunner,
 			extractionshadowservice.AsScorer,
-			inboundmessageservice.New,
-			inboundmessageservice.NewNotifier,
-			func(n *inboundmessageservice.Notifier) inboundmessageports.TriageMessageNotifier { return n },
-			inboundmessageservice.NewActivityRecorder,
-			func(r *inboundmessageservice.ActivityRecorder) inboundmessageports.TriageActivityRecorder {
+			inboundqueue.New,
+			inboundviews.New,
+			inboundreads.New,
+			inboundmailbox.New,
+			func(s *encryptionservice.Service) inboundmailbox.SecretKeeper { return s },
+			inboundprocessing.New,
+			inboundintake.New,
+			inboundupkeep.New,
+			inboundqueue.NewNotifier,
+			func(n *inboundqueue.Notifier) inboundmessageports.TriageMessageNotifier { return n },
+			inboundqueue.NewActivityRecorder,
+			func(r *inboundqueue.ActivityRecorder) inboundmessageports.TriageActivityRecorder {
 				return r
 			},
-			inboundmessageservice.NewEventSink,
-			func(e *inboundmessageservice.EventSink) inboundmessageports.TriageEventSink { return e },
+			inboundqueue.NewEventSink,
+			func(e *inboundqueue.EventSink) inboundmessageports.TriageEventSink { return e },
 			triagewakecontract.NewScheduler,
 			func(s *triagewakecontract.Scheduler) inboundmessageports.TriageWakeScheduler { return s },
 			triagenova.New,

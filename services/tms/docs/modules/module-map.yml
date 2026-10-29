@@ -460,7 +460,13 @@ modules:
       - extractionevalservice
       - extractionrolloutservice
       - extractionshadowservice
-      - inboundmessageservice
+      - inboundintake
+      - inboundmailbox
+      - inboundprocessing
+      - inboundqueue
+      - inboundreads
+      - inboundupkeep
+      - inboundviews
       - thumbnailservice
       - triagebriefingservice
       - triageconflictservice

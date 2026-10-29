@@ -13,7 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
-	"github.com/emoss08/trenova/internal/modules/documents/app/inboundmessageservice"
+	"github.com/emoss08/trenova/internal/modules/documents/app/inboundqueue"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -35,10 +35,10 @@ var (
 	)
 	triageLinkedRecords = agenttoolschema.Source(
 		"inboundMessage.linkedRecord",
-		[]inboundmessageservice.LinkedRecord{
-			inboundmessageservice.LinkedShipment,
-			inboundmessageservice.LinkedCustomer,
-			inboundmessageservice.LinkedCarrier,
+		[]inboundqueue.LinkedRecord{
+			inboundqueue.LinkedShipment,
+			inboundqueue.LinkedCustomer,
+			inboundqueue.LinkedCarrier,
 		},
 	)
 	errInboundNotParked = errors.New(
@@ -86,12 +86,12 @@ func newAssignInboundMessagesTool(queue triageQueue) agenttoolports.AgentTool {
 			Recipe:      []string{toolListAssignees, "inbox_assign_inbound_message"},
 		},
 		toolspec.ReceivablePlan[
-			*inboundmessageservice.AssignRequest,
-			*inboundmessageservice.QueuePlan,
+			*inboundqueue.AssignRequest,
+			*inboundqueue.QueuePlan,
 		]{
 			Request: func(
 				params *agenttoolports.ToolExecuteParams,
-			) (*inboundmessageservice.AssignRequest, error) {
+			) (*inboundqueue.AssignRequest, error) {
 				selection, err := triageSelection(params)
 				if err != nil {
 					return nil, err
@@ -101,7 +101,7 @@ func newAssignInboundMessagesTool(queue triageQueue) agenttoolports.AgentTool {
 					return nil, err
 				}
 
-				return &inboundmessageservice.AssignRequest{
+				return &inboundqueue.AssignRequest{
 					TenantInfo:      inboundtools.TenantOnly(params),
 					ActorID:         inboundtools.ActorOf(params),
 					Selection:       selection,
@@ -111,17 +111,17 @@ func newAssignInboundMessagesTool(queue triageQueue) agenttoolports.AgentTool {
 			},
 			Plan: func(
 				ctx context.Context,
-				req *inboundmessageservice.AssignRequest,
+				req *inboundqueue.AssignRequest,
 				_ *agenttoolports.ToolExecuteParams,
-			) (*inboundmessageservice.QueuePlan, error) {
+			) (*inboundqueue.QueuePlan, error) {
 				return queue.PlanAssign(ctx, req)
 			},
-			Refused: func(*inboundmessageservice.AssignRequest) string {
+			Refused: func(*inboundqueue.AssignRequest) string {
 				return "Would change who owns messages in Triage."
 			},
 			Render: func(
-				req *inboundmessageservice.AssignRequest,
-				plan *inboundmessageservice.QueuePlan,
+				req *inboundqueue.AssignRequest,
+				plan *inboundqueue.QueuePlan,
 			) (*agentpreview.ToolPreview, error) {
 				if req.OwnerID.IsNil() {
 					return renderQueuePlan(
@@ -137,7 +137,7 @@ func newAssignInboundMessagesTool(queue triageQueue) agenttoolports.AgentTool {
 			},
 			Run: func(
 				ctx context.Context,
-				req *inboundmessageservice.AssignRequest,
+				req *inboundqueue.AssignRequest,
 				_ *agenttoolports.ToolExecuteParams,
 			) (*agentrecord.ToolExecutionResult, error) {
 				result, err := queue.Assign(ctx, req)
@@ -182,18 +182,18 @@ func newReopenInboundMessagesTool(queue triageQueue) agenttoolports.AgentTool {
 			SearchTerms: []string{"return to the queue", "unsettle", "undo ignore"},
 		},
 		toolspec.ReceivablePlan[
-			*inboundmessageservice.ReopenRequest,
-			*inboundmessageservice.QueuePlan,
+			*inboundqueue.ReopenRequest,
+			*inboundqueue.QueuePlan,
 		]{
 			Request: func(
 				params *agenttoolports.ToolExecuteParams,
-			) (*inboundmessageservice.ReopenRequest, error) {
+			) (*inboundqueue.ReopenRequest, error) {
 				selection, err := triageSelection(params)
 				if err != nil {
 					return nil, err
 				}
 
-				return &inboundmessageservice.ReopenRequest{
+				return &inboundqueue.ReopenRequest{
 					TenantInfo: inboundtools.TenantOnly(params),
 					ActorID:    inboundtools.ActorOf(params),
 					Selection:  selection,
@@ -201,17 +201,17 @@ func newReopenInboundMessagesTool(queue triageQueue) agenttoolports.AgentTool {
 			},
 			Plan: func(
 				ctx context.Context,
-				req *inboundmessageservice.ReopenRequest,
+				req *inboundqueue.ReopenRequest,
 				_ *agenttoolports.ToolExecuteParams,
-			) (*inboundmessageservice.QueuePlan, error) {
+			) (*inboundqueue.QueuePlan, error) {
 				return queue.PlanReopen(ctx, req)
 			},
-			Refused: func(*inboundmessageservice.ReopenRequest) string {
+			Refused: func(*inboundqueue.ReopenRequest) string {
 				return "Would put settled messages back in the Triage queue."
 			},
 			Render: func(
-				_ *inboundmessageservice.ReopenRequest,
-				plan *inboundmessageservice.QueuePlan,
+				_ *inboundqueue.ReopenRequest,
+				plan *inboundqueue.QueuePlan,
 			) (*agentpreview.ToolPreview, error) {
 				return renderQueuePlan(
 					"Would put "+countMessages(len(plan.Changes))+" back in the Triage queue",
@@ -220,7 +220,7 @@ func newReopenInboundMessagesTool(queue triageQueue) agenttoolports.AgentTool {
 			},
 			Run: func(
 				ctx context.Context,
-				req *inboundmessageservice.ReopenRequest,
+				req *inboundqueue.ReopenRequest,
 				_ *agenttoolports.ToolExecuteParams,
 			) (*agentrecord.ToolExecutionResult, error) {
 				result, err := queue.Reopen(ctx, req)
@@ -283,23 +283,23 @@ func newSnoozeInboundMessagesTool(queue triageQueue) agenttoolports.AgentTool {
 			Recipe:      []string{toolListInboundMessage, "inbox_snooze_inbound_message"},
 		},
 		toolspec.ReceivablePlan[
-			*inboundmessageservice.SnoozeRequest,
-			*inboundmessageservice.QueuePlan,
+			*inboundqueue.SnoozeRequest,
+			*inboundqueue.QueuePlan,
 		]{
 			Request: snoozeRequest,
 			Plan: func(
 				ctx context.Context,
-				req *inboundmessageservice.SnoozeRequest,
+				req *inboundqueue.SnoozeRequest,
 				_ *agenttoolports.ToolExecuteParams,
-			) (*inboundmessageservice.QueuePlan, error) {
+			) (*inboundqueue.QueuePlan, error) {
 				return queue.PlanSnooze(ctx, req)
 			},
-			Refused: func(*inboundmessageservice.SnoozeRequest) string {
+			Refused: func(*inboundqueue.SnoozeRequest) string {
 				return "Would snooze messages in Triage."
 			},
 			Render: func(
-				req *inboundmessageservice.SnoozeRequest,
-				plan *inboundmessageservice.QueuePlan,
+				req *inboundqueue.SnoozeRequest,
+				plan *inboundqueue.QueuePlan,
 			) (*agentpreview.ToolPreview, error) {
 				until := "until " + string(req.Event)
 				if req.Event == "" {
@@ -314,7 +314,7 @@ func newSnoozeInboundMessagesTool(queue triageQueue) agenttoolports.AgentTool {
 			},
 			Run: func(
 				ctx context.Context,
-				req *inboundmessageservice.SnoozeRequest,
+				req *inboundqueue.SnoozeRequest,
 				_ *agenttoolports.ToolExecuteParams,
 			) (*agentrecord.ToolExecutionResult, error) {
 				result, err := queue.Snooze(ctx, req)
@@ -330,7 +330,7 @@ func newSnoozeInboundMessagesTool(queue triageQueue) agenttoolports.AgentTool {
 
 func snoozeRequest(
 	params *agenttoolports.ToolExecuteParams,
-) (*inboundmessageservice.SnoozeRequest, error) {
+) (*inboundqueue.SnoozeRequest, error) {
 	selection, err := triageSelection(params)
 	if err != nil {
 		return nil, err
@@ -353,7 +353,7 @@ func snoozeRequest(
 		return nil, err
 	}
 
-	req := &inboundmessageservice.SnoozeRequest{
+	req := &inboundqueue.SnoozeRequest{
 		TenantInfo:     inboundtools.TenantOnly(params),
 		ActorID:        inboundtools.ActorOf(params),
 		Selection:      selection,
@@ -398,15 +398,15 @@ func newWakeInboundMessageTool(queue triageQueue) agenttoolports.AgentTool {
 			Target:      inboundtools.TargetMessage,
 		},
 		toolspec.ReceivablePlan[
-			*inboundmessageservice.MessageActionRequest,
-			*inboundmessageservice.QueuePlan,
+			*inboundqueue.MessageActionRequest,
+			*inboundqueue.QueuePlan,
 		]{
 			Request: inboundtools.MessageAction,
 			Plan: func(
 				ctx context.Context,
-				req *inboundmessageservice.MessageActionRequest,
+				req *inboundqueue.MessageActionRequest,
 				_ *agenttoolports.ToolExecuteParams,
-			) (*inboundmessageservice.QueuePlan, error) {
+			) (*inboundqueue.QueuePlan, error) {
 				parked, err := parkedAs(ctx, queue, req)
 				if err != nil {
 					return nil, err
@@ -417,15 +417,15 @@ func newWakeInboundMessageTool(queue triageQueue) agenttoolports.AgentTool {
 				case inboundmessage.ParkingAwaitingReply:
 					return queue.PlanStopWaiting(ctx, req)
 				default:
-					return &inboundmessageservice.QueuePlan{Unchanged: 1}, nil
+					return &inboundqueue.QueuePlan{Unchanged: 1}, nil
 				}
 			},
-			Refused: func(*inboundmessageservice.MessageActionRequest) string {
+			Refused: func(*inboundqueue.MessageActionRequest) string {
 				return "Would bring a parked message back to the Triage queue."
 			},
 			Render: func(
-				_ *inboundmessageservice.MessageActionRequest,
-				plan *inboundmessageservice.QueuePlan,
+				_ *inboundqueue.MessageActionRequest,
+				plan *inboundqueue.QueuePlan,
 			) (*agentpreview.ToolPreview, error) {
 				if len(plan.Changes) == 0 {
 					return inboundtools.RefusedPreview(
@@ -439,7 +439,7 @@ func newWakeInboundMessageTool(queue triageQueue) agenttoolports.AgentTool {
 			},
 			Run: func(
 				ctx context.Context,
-				req *inboundmessageservice.MessageActionRequest,
+				req *inboundqueue.MessageActionRequest,
 				_ *agenttoolports.ToolExecuteParams,
 			) (*agentrecord.ToolExecutionResult, error) {
 				parked, err := parkedAs(ctx, queue, req)
@@ -469,7 +469,7 @@ func newWakeInboundMessageTool(queue triageQueue) agenttoolports.AgentTool {
 func parkedAs(
 	ctx context.Context,
 	queue inboundtools.MessageReader,
-	action *inboundmessageservice.MessageActionRequest,
+	action *inboundqueue.MessageActionRequest,
 ) (inboundmessage.Parking, error) {
 	message, err := queue.GetByID(ctx, inboundmessageports.GetInboundMessageByIDRequest{
 		ID:         action.MessageID,
@@ -519,12 +519,12 @@ func newWaitForInboundReplyTool(queue triageQueue) agenttoolports.AgentTool {
 			Target:      inboundtools.TargetMessage,
 		},
 		toolspec.ReceivablePlan[
-			*inboundmessageservice.WaitForReplyRequest,
-			*inboundmessageservice.QueuePlan,
+			*inboundqueue.WaitForReplyRequest,
+			*inboundqueue.QueuePlan,
 		]{
 			Request: func(
 				params *agenttoolports.ToolExecuteParams,
-			) (*inboundmessageservice.WaitForReplyRequest, error) {
+			) (*inboundqueue.WaitForReplyRequest, error) {
 				action, err := inboundtools.MessageAction(params)
 				if err != nil {
 					return nil, err
@@ -535,7 +535,7 @@ func newWaitForInboundReplyTool(queue triageQueue) agenttoolports.AgentTool {
 					return nil, err
 				}
 
-				return &inboundmessageservice.WaitForReplyRequest{
+				return &inboundqueue.WaitForReplyRequest{
 					TenantInfo: action.TenantInfo,
 					ActorID:    action.ActorID,
 					MessageID:  action.MessageID,
@@ -544,17 +544,17 @@ func newWaitForInboundReplyTool(queue triageQueue) agenttoolports.AgentTool {
 			},
 			Plan: func(
 				ctx context.Context,
-				req *inboundmessageservice.WaitForReplyRequest,
+				req *inboundqueue.WaitForReplyRequest,
 				_ *agenttoolports.ToolExecuteParams,
-			) (*inboundmessageservice.QueuePlan, error) {
+			) (*inboundqueue.QueuePlan, error) {
 				return queue.PlanWaitForReply(ctx, req)
 			},
-			Refused: func(*inboundmessageservice.WaitForReplyRequest) string {
+			Refused: func(*inboundqueue.WaitForReplyRequest) string {
 				return "Would park a message until its sender replies."
 			},
 			Render: func(
-				_ *inboundmessageservice.WaitForReplyRequest,
-				plan *inboundmessageservice.QueuePlan,
+				_ *inboundqueue.WaitForReplyRequest,
+				plan *inboundqueue.QueuePlan,
 			) (*agentpreview.ToolPreview, error) {
 				return renderQueuePlan(
 					"Would park the message until its sender replies on the thread, or until "+
@@ -564,7 +564,7 @@ func newWaitForInboundReplyTool(queue triageQueue) agenttoolports.AgentTool {
 			},
 			Run: func(
 				ctx context.Context,
-				req *inboundmessageservice.WaitForReplyRequest,
+				req *inboundqueue.WaitForReplyRequest,
 				_ *agenttoolports.ToolExecuteParams,
 			) (*agentrecord.ToolExecutionResult, error) {
 				message, err := queue.WaitForReply(ctx, req)
@@ -615,12 +615,12 @@ func newUnlinkInboundMessageTool(queue triageQueue) agenttoolports.AgentTool {
 			Target:      inboundtools.TargetMessage,
 		},
 		toolspec.ReceivablePlan[
-			*inboundmessageservice.UnlinkRequest,
-			*inboundmessageservice.QueuePlan,
+			*inboundqueue.UnlinkRequest,
+			*inboundqueue.QueuePlan,
 		]{
 			Request: func(
 				params *agenttoolports.ToolExecuteParams,
-			) (*inboundmessageservice.UnlinkRequest, error) {
+			) (*inboundqueue.UnlinkRequest, error) {
 				action, err := inboundtools.MessageAction(params)
 				if err != nil {
 					return nil, err
@@ -631,7 +631,7 @@ func newUnlinkInboundMessageTool(queue triageQueue) agenttoolports.AgentTool {
 					return nil, err
 				}
 
-				return &inboundmessageservice.UnlinkRequest{
+				return &inboundqueue.UnlinkRequest{
 					TenantInfo: action.TenantInfo,
 					ActorID:    action.ActorID,
 					MessageID:  action.MessageID,
@@ -640,17 +640,17 @@ func newUnlinkInboundMessageTool(queue triageQueue) agenttoolports.AgentTool {
 			},
 			Plan: func(
 				ctx context.Context,
-				req *inboundmessageservice.UnlinkRequest,
+				req *inboundqueue.UnlinkRequest,
 				_ *agenttoolports.ToolExecuteParams,
-			) (*inboundmessageservice.QueuePlan, error) {
+			) (*inboundqueue.QueuePlan, error) {
 				return queue.PlanUnlink(ctx, req)
 			},
-			Refused: func(*inboundmessageservice.UnlinkRequest) string {
+			Refused: func(*inboundqueue.UnlinkRequest) string {
 				return "Would remove a link from an inbound message."
 			},
 			Render: func(
-				req *inboundmessageservice.UnlinkRequest,
-				plan *inboundmessageservice.QueuePlan,
+				req *inboundqueue.UnlinkRequest,
+				plan *inboundqueue.QueuePlan,
 			) (*agentpreview.ToolPreview, error) {
 				return renderQueuePlan(
 					fmt.Sprintf("Would remove the message's %s link", req.Record),
@@ -659,7 +659,7 @@ func newUnlinkInboundMessageTool(queue triageQueue) agenttoolports.AgentTool {
 			},
 			Run: func(
 				ctx context.Context,
-				req *inboundmessageservice.UnlinkRequest,
+				req *inboundqueue.UnlinkRequest,
 				_ *agenttoolports.ToolExecuteParams,
 			) (*agentrecord.ToolExecutionResult, error) {
 				message, err := queue.Unlink(ctx, req)
@@ -704,18 +704,18 @@ func newHandOffTriageTool(queue triageQueue) agenttoolports.AgentTool {
 			Recipe:      []string{toolListAssignees, "inbox_assign_queue"},
 		},
 		toolspec.ReceivablePlan[
-			*inboundmessageservice.HandOffRequest,
-			*inboundmessageservice.QueuePlan,
+			*inboundqueue.HandOffRequest,
+			*inboundqueue.QueuePlan,
 		]{
 			Request: func(
 				params *agenttoolports.ToolExecuteParams,
-			) (*inboundmessageservice.HandOffRequest, error) {
+			) (*inboundqueue.HandOffRequest, error) {
 				to, err := toolparams.RequirePulid(params.Params, paramToUserID)
 				if err != nil {
 					return nil, err
 				}
 
-				return &inboundmessageservice.HandOffRequest{
+				return &inboundqueue.HandOffRequest{
 					TenantInfo: inboundtools.TenantOnly(params),
 					ActorID:    inboundtools.ActorOf(params),
 					ToUserID:   to,
@@ -723,17 +723,17 @@ func newHandOffTriageTool(queue triageQueue) agenttoolports.AgentTool {
 			},
 			Plan: func(
 				ctx context.Context,
-				req *inboundmessageservice.HandOffRequest,
+				req *inboundqueue.HandOffRequest,
 				_ *agenttoolports.ToolExecuteParams,
-			) (*inboundmessageservice.QueuePlan, error) {
+			) (*inboundqueue.QueuePlan, error) {
 				return queue.PlanHandOff(ctx, req)
 			},
-			Refused: func(*inboundmessageservice.HandOffRequest) string {
+			Refused: func(*inboundqueue.HandOffRequest) string {
 				return "Would hand the Triage queue to one person."
 			},
 			Render: func(
-				_ *inboundmessageservice.HandOffRequest,
-				plan *inboundmessageservice.QueuePlan,
+				_ *inboundqueue.HandOffRequest,
+				plan *inboundqueue.QueuePlan,
 			) (*agentpreview.ToolPreview, error) {
 				count := countMessages(len(plan.Changes))
 				if plan.More {
@@ -745,7 +745,7 @@ func newHandOffTriageTool(queue triageQueue) agenttoolports.AgentTool {
 			},
 			Run: func(
 				ctx context.Context,
-				req *inboundmessageservice.HandOffRequest,
+				req *inboundqueue.HandOffRequest,
 				_ *agenttoolports.ToolExecuteParams,
 			) (*agentrecord.ToolExecutionResult, error) {
 				result, err := queue.HandOff(ctx, req)

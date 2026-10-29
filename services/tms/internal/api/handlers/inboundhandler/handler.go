@@ -15,7 +15,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/api/helpers"
-	"github.com/emoss08/trenova/internal/modules/documents/app/inboundmessageservice"
+	"github.com/emoss08/trenova/internal/modules/documents/app/inboundintake"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/fx"
 )
@@ -30,12 +30,12 @@ const maxInboundBodyBytes = 32 << 20
 type Params struct {
 	fx.In
 
-	Service      *inboundmessageservice.Service
+	Service      *inboundintake.Service
 	ErrorHandler *helpers.ErrorHandler
 }
 
 type Handler struct {
-	service *inboundmessageservice.Service
+	service *inboundintake.Service
 	eh      *helpers.ErrorHandler
 }
 
@@ -76,7 +76,7 @@ func (h *Handler) receive(c *gin.Context) {
 
 	result, err := h.service.ReceiveWebhook(
 		c.Request.Context(),
-		&inboundmessageservice.ReceiveWebhookRequest{
+		&inboundintake.ReceiveWebhookRequest{
 			MailboxToken:       c.Param("mailboxToken"),
 			Body:               body,
 			SignatureID:        c.GetHeader("svix-id"),
@@ -111,13 +111,13 @@ func (h *Handler) receive(c *gin.Context) {
 // it forever.
 func (h *Handler) reject(c *gin.Context, err error) {
 	switch {
-	case errors.Is(err, inboundmessageservice.ErrUnknownMailbox),
-		errors.Is(err, inboundmessageservice.ErrMailboxInactive):
+	case errors.Is(err, inboundintake.ErrUnknownMailbox),
+		errors.Is(err, inboundintake.ErrMailboxInactive):
 		c.Status(http.StatusNotFound)
-	case errors.Is(err, inboundmessageservice.ErrUnverified):
+	case errors.Is(err, inboundintake.ErrUnverified):
 		c.Status(http.StatusUnauthorized)
-	case errors.Is(err, inboundmessageservice.ErrMalformedPayload),
-		errors.Is(err, inboundmessageservice.ErrUnsupportedProvider):
+	case errors.Is(err, inboundintake.ErrMalformedPayload),
+		errors.Is(err, inboundintake.ErrUnsupportedProvider):
 		c.Status(http.StatusBadRequest)
 	default:
 		h.eh.HandleError(c, err)

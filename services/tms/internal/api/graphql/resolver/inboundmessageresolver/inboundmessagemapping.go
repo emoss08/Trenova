@@ -11,7 +11,9 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/loaderfields"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
-	"github.com/emoss08/trenova/internal/modules/documents/app/inboundmessageservice"
+	"github.com/emoss08/trenova/internal/modules/documents/app/inboundmailbox"
+	"github.com/emoss08/trenova/internal/modules/documents/app/inboundqueue"
+	"github.com/emoss08/trenova/internal/modules/documents/app/inboundreads"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -60,8 +62,8 @@ func inboundMessageConnection(
 // at the reading pane's narrowest.
 const inboundPreviewLength = 180
 
-func mailboxSettings(input gqlmodel.InboundMailboxInput) inboundmessageservice.MailboxSettings {
-	return inboundmessageservice.MailboxSettings{
+func mailboxSettings(input gqlmodel.InboundMailboxInput) inboundmailbox.MailboxSettings {
+	return inboundmailbox.MailboxSettings{
 		Name:          input.Name,
 		Address:       input.Address,
 		Provider:      input.Provider,
@@ -139,7 +141,7 @@ func (d *Deps) visibleShipment(
 func (r *MutationResolver) messageAction(
 	ctx context.Context,
 	id string,
-) (*inboundmessageservice.MessageActionRequest, error) {
+) (*inboundqueue.MessageActionRequest, error) {
 	authCtx, err := r.RequirePermission(
 		ctx, permission.ResourceInboundMessage, permission.OpUpdate,
 	)
@@ -152,7 +154,7 @@ func (r *MutationResolver) messageAction(
 		return nil, err
 	}
 
-	return &inboundmessageservice.MessageActionRequest{
+	return &inboundqueue.MessageActionRequest{
 		TenantInfo: resolvercore.TenantInfo(authCtx),
 		ActorID:    actorutil.FromAuthContext(authCtx).UserID,
 		MessageID:  messageID,
@@ -211,7 +213,7 @@ func folderRequest(
 	if req.OwnerID, err = gqlid.OptionalID(input.OwnerID); err != nil {
 		return nil, err
 	}
-	if err = inboundmessageservice.PrepareList(req); err != nil {
+	if err = inboundreads.PrepareList(req); err != nil {
 		return nil, err
 	}
 
@@ -222,30 +224,30 @@ func selectionOf(
 	input gqlmodel.TriageSelectionInput,
 	tenantInfo pagination.TenantInfo,
 	viewerID pulid.ID,
-) (inboundmessageservice.Selection, error) {
+) (inboundqueue.Selection, error) {
 	if len(input.Ids) > 0 && input.Folder != nil {
-		return inboundmessageservice.Selection{}, errortypes.NewValidationError(
+		return inboundqueue.Selection{}, errortypes.NewValidationError(
 			"selection", errortypes.ErrInvalid, "Choose some messages or a folder, not both",
 		)
 	}
 	if len(input.Ids) > 0 {
 		ids, err := gqlid.ParseIDs(input.Ids)
 		if err != nil {
-			return inboundmessageservice.Selection{}, err
+			return inboundqueue.Selection{}, err
 		}
 
-		return inboundmessageservice.Selection{IDs: ids}, nil
+		return inboundqueue.Selection{IDs: ids}, nil
 	}
 	if input.Folder == nil {
-		return inboundmessageservice.Selection{}, errortypes.NewValidationError(
+		return inboundqueue.Selection{}, errortypes.NewValidationError(
 			"selection", errortypes.ErrRequired, "Choose some messages or a folder",
 		)
 	}
 
 	folder, err := folderRequest(input.Folder, tenantInfo, viewerID)
 	if err != nil {
-		return inboundmessageservice.Selection{}, err
+		return inboundqueue.Selection{}, err
 	}
 
-	return inboundmessageservice.Selection{Folder: folder}, nil
+	return inboundqueue.Selection{Folder: folder}, nil
 }
