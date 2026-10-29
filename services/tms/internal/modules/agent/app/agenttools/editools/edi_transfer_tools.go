@@ -209,9 +209,9 @@ func (t *EdiTransferDecisionTool) outcome(
 
 func (t *EdiTransferDecisionTool) Validate(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	_, outcome, err := t.outcome(ctx, &params)
+	_, outcome, err := t.outcome(ctx, params)
 	if err != nil {
 		return err
 	}
@@ -221,16 +221,16 @@ func (t *EdiTransferDecisionTool) Validate(
 
 func (t *EdiTransferDecisionTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	if err := toolguard.GuardExecute(t, &params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
 	}
 	if !params.ApprovedFromProposal() {
 		return ErrEDIDecisionNeedsAPerson
 	}
 
-	call, err := t.call(&params)
+	call, err := t.call(params)
 	if err != nil {
 		return err
 	}

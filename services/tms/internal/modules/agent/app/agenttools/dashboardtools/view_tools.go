@@ -116,7 +116,7 @@ func (t *SaveTableViewTool) Policy() agenttoolports.ToolPolicy {
 
 func (t *SaveTableViewTool) Validate(
 	_ context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
 	return t.validateArgs(params.Params)
 }
@@ -145,19 +145,19 @@ func (t *SaveTableViewTool) validateArgs(params map[string]any) error {
 
 func (t *SaveTableViewTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	if err := toolguard.GuardExecute(t, &params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
 	}
 
-	draft, err := t.Draft(&params)
+	draft, err := t.Draft(params)
 	if err != nil {
 		return err
 	}
 
 	composed, err := t.composer.Compose(ctx, &tablequeryservice.ComposeRequest{
-		TenantInfo: toolparams.TenantFrom(&params),
+		TenantInfo: toolparams.TenantFrom(params),
 		Actor:      params.Actor,
 		Resource:   draft.resource.Resource,
 		Prompt:     draft.prompt,
@@ -176,7 +176,7 @@ func (t *SaveTableViewTool) Execute(
 		)
 	}
 
-	_, err = t.configs.Create(ctx, draft.configuration(&params, composed), params.Actor)
+	_, err = t.configs.Create(ctx, draft.configuration(params, composed), params.Actor)
 
 	return err
 }

@@ -82,9 +82,9 @@ func (t *BillingQueueDecisionTool) planned(
 
 func (t *BillingQueueDecisionTool) Preview(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) (*agentpreview.ToolPreview, error) {
-	plan, item, err := t.planned(ctx, &params)
+	plan, item, err := t.planned(ctx, params)
 	if err != nil {
 		return nil, err
 	}
@@ -100,7 +100,7 @@ func (t *BillingQueueDecisionTool) Preview(
 	}
 
 	after := *item
-	after.ExceptionReasonCode = t.reasonOf(&params)
+	after.ExceptionReasonCode = t.reasonOf(params)
 	after.ExceptionNotes = toolparams.OptionalString(params.Params, toolparams.ParamNote)
 	comment := billingqueueservice.SendBackComment(&after, params.Actor.UserIDOrNil())
 	note := toolpreview.Send(toolpreview.Record{
@@ -146,9 +146,9 @@ func decisionVerb(status billingqueue.Status) string {
 
 func (t *AssignBillerTool) Preview(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) (*agentpreview.ToolPreview, error) {
-	req, asker, err := t.request(ctx, &params)
+	req, asker, err := t.request(ctx, params)
 	if err != nil {
 		return nil, err
 	}

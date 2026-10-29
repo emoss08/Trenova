@@ -277,7 +277,7 @@ func NewUpdateInvoiceDraftTool(invoices invoiceDraftEditor) agenttoolports.Agent
 
 func draftUpdateTierLimit(
 	_ context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // a TierCondition passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) agent.AutonomyTier {
 	for _, key := range recipientParams {
 		if _, ok := params.Params[key]; ok {

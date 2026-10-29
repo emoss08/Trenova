@@ -387,21 +387,21 @@ func (t *AddHomeWidgetTool) edit(params *agenttoolports.ToolExecuteParams) homeE
 
 func (t *AddHomeWidgetTool) Validate(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	_, err := t.editor.plan(ctx, &params, t.edit(&params))
+	_, err := t.editor.plan(ctx, params, t.edit(params))
 	return err
 }
 
 func (t *AddHomeWidgetTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	if err := toolguard.GuardExecute(t, &params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
 	}
 
-	return t.editor.execute(ctx, &params, t.edit(&params))
+	return t.editor.execute(ctx, params, t.edit(params))
 }
 
 func offeredWidget(
@@ -624,21 +624,21 @@ func (t *RemoveHomeWidgetTool) edit(params *agenttoolports.ToolExecuteParams) ho
 
 func (t *RemoveHomeWidgetTool) Validate(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	_, err := t.editor.plan(ctx, &params, t.edit(&params))
+	_, err := t.editor.plan(ctx, params, t.edit(params))
 	return err
 }
 
 func (t *RemoveHomeWidgetTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	if err := toolguard.GuardExecute(t, &params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
 	}
 
-	return t.editor.execute(ctx, &params, t.edit(&params))
+	return t.editor.execute(ctx, params, t.edit(params))
 }
 
 type ArrangeHomeLayoutTool struct {
@@ -743,19 +743,19 @@ func (t *ArrangeHomeLayoutTool) edit(params *agenttoolports.ToolExecuteParams) h
 
 func (t *ArrangeHomeLayoutTool) Validate(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	_, err := t.editor.plan(ctx, &params, t.edit(&params))
+	_, err := t.editor.plan(ctx, params, t.edit(params))
 	return err
 }
 
 func (t *ArrangeHomeLayoutTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	if err := toolguard.GuardExecute(t, &params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
 	}
 
-	return t.editor.execute(ctx, &params, t.edit(&params))
+	return t.editor.execute(ctx, params, t.edit(params))
 }

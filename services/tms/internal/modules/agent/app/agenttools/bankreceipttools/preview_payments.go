@@ -23,9 +23,9 @@ import (
 
 func (t *MatchBankReceiptTool) Preview(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) (*agentpreview.ToolPreview, error) {
-	request, err := t.request(&params)
+	request, err := t.request(params)
 	if err != nil {
 		return nil, err
 	}
@@ -52,9 +52,9 @@ func (t *MatchBankReceiptTool) Preview(
 
 func (t *PostCustomerPaymentTool) Preview(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) (*agentpreview.ToolPreview, error) {
-	args, err := t.arguments(ctx, &params)
+	args, err := t.arguments(ctx, params)
 	if err != nil {
 		return nil, err
 	}

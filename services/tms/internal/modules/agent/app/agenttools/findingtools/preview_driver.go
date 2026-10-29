@@ -13,9 +13,9 @@ import (
 
 func (t *RequestCredentialRenewalTool) Preview(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) (*agentpreview.ToolPreview, error) {
-	request, err := t.arguments(&params)
+	request, err := t.arguments(params)
 	if err != nil {
 		return nil, err
 	}

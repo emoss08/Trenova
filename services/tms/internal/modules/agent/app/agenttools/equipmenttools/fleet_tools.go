@@ -113,9 +113,9 @@ func (t *UpdateTractorStatusTool) Policy() agenttoolports.ToolPolicy {
 
 func (t *UpdateTractorStatusTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	if err := toolguard.GuardExecute(t, &params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
 	}
 
@@ -125,7 +125,7 @@ func (t *UpdateTractorStatusTool) Execute(
 	}
 
 	_, err = t.tractors.BulkUpdateStatus(ctx, &tractorports.BulkUpdateTractorStatusRequest{
-		TenantInfo: toolparams.TenantFrom(&params),
+		TenantInfo: toolparams.TenantFrom(params),
 		TractorIDs: ids,
 		Status:     status,
 	})
@@ -184,9 +184,9 @@ func (t *UpdateTrailerStatusTool) Policy() agenttoolports.ToolPolicy {
 
 func (t *UpdateTrailerStatusTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	if err := toolguard.GuardExecute(t, &params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
 	}
 
@@ -196,7 +196,7 @@ func (t *UpdateTrailerStatusTool) Execute(
 	}
 
 	_, err = t.trailers.BulkUpdateStatus(ctx, &trailerports.BulkUpdateTrailerStatusRequest{
-		TenantInfo: toolparams.TenantFrom(&params),
+		TenantInfo: toolparams.TenantFrom(params),
 		TrailerIDs: ids,
 		Status:     status,
 	})

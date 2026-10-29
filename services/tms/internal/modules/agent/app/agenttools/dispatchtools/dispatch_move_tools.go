@@ -115,9 +115,9 @@ func (t *UnassignMovesTool) Policy() agenttoolports.ToolPolicy {
 
 func (t *UnassignMovesTool) tierLimit(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // a TierCondition passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) agent.AutonomyTier {
-	requests, err := t.requests(&params)
+	requests, err := t.requests(params)
 	if err != nil || len(requests) != 1 {
 		return agent.TierPropose
 	}
@@ -130,9 +130,9 @@ func (t *UnassignMovesTool) tierLimit(
 
 func (t *UnassignMovesTool) Validate(
 	_ context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	requests, err := t.requests(&params)
+	requests, err := t.requests(params)
 	if err != nil {
 		return err
 	}
@@ -150,13 +150,13 @@ func (t *UnassignMovesTool) Validate(
 // every move that was not unassigned and how many were.
 func (t *UnassignMovesTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	if err := toolguard.GuardExecute(t, &params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
 	}
 
-	requests, err := t.requests(&params)
+	requests, err := t.requests(params)
 	if err != nil {
 		return err
 	}
@@ -271,7 +271,7 @@ func (t *UpdateMoveStatusTool) Policy() agenttoolports.ToolPolicy {
 
 func moveStatusTierLimit(
 	_ context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // a TierCondition passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) agent.AutonomyTier {
 	status, err := moveStatusArg(params.Params)
 	if err != nil || status == shipmentvocab.MoveStatusCanceled {
@@ -283,9 +283,9 @@ func moveStatusTierLimit(
 
 func (t *UpdateMoveStatusTool) Validate(
 	_ context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	request, err := t.request(&params)
+	request, err := t.request(params)
 	if err != nil {
 		return err
 	}
@@ -301,13 +301,13 @@ func (t *UpdateMoveStatusTool) Validate(
 // every move in one transaction or none.
 func (t *UpdateMoveStatusTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	if err := toolguard.GuardExecute(t, &params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
 	}
 
-	request, err := t.request(&params)
+	request, err := t.request(params)
 	if err != nil {
 		return err
 	}

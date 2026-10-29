@@ -81,22 +81,22 @@ func (t *CheckAccountingConnectionTool) Policy() agenttoolports.ToolPolicy {
 
 func (t *CheckAccountingConnectionTool) Validate(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	_, err := t.connection(ctx, &params)
+	_, err := t.connection(ctx, params)
 	return err
 }
 
 func (t *CheckAccountingConnectionTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	conn, err := t.connection(ctx, &params)
+	conn, err := t.connection(ctx, params)
 	if err != nil {
 		return err
 	}
 
-	_, err = t.health.CheckHealth(ctx, toolparams.TenantFrom(&params), conn.ID)
+	_, err = t.health.CheckHealth(ctx, toolparams.TenantFrom(params), conn.ID)
 	return err
 }
 

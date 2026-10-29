@@ -100,9 +100,9 @@ func (t *DismissInsightTool) Target(params map[string]any) (agenttoolports.ToolT
 
 func (t *DismissInsightTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	request, err := t.request(&params)
+	request, err := t.request(params)
 	if err != nil {
 		return err
 	}

@@ -141,7 +141,7 @@ func (t *ScheduleReportTool) Policy() agenttoolports.ToolPolicy {
 
 func (t *ScheduleReportTool) Validate(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
 	if err := t.validateArgs(params.Params); err != nil {
 		return err
@@ -154,7 +154,7 @@ func (t *ScheduleReportTool) Validate(
 	definitionID, err := pulid.Parse(raw)
 	if err == nil {
 		_, err = t.reports.GetDefinition(ctx, &reporting.GetDefinitionRequest{
-			Request:      reporting.Request{TenantInfo: toolparams.TenantFrom(&params)},
+			Request:      reporting.Request{TenantInfo: toolparams.TenantFrom(params)},
 			DefinitionID: definitionID,
 		})
 	}
@@ -167,7 +167,7 @@ func (t *ScheduleReportTool) Validate(
 		return multiErr
 	}
 
-	return t.refuseRepeat(ctx, &params, definitionID)
+	return t.refuseRepeat(ctx, params, definitionID)
 }
 
 // refuseRepeat refuses a schedule the report already has: the same time, zone
@@ -263,9 +263,9 @@ func (t *ScheduleReportTool) validateArgs(params map[string]any) error {
 
 func (t *ScheduleReportTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	request, err := t.request(&params)
+	request, err := t.request(params)
 	if err != nil {
 		return err
 	}
@@ -447,7 +447,7 @@ func (t *CreateTableChangeAlertTool) Policy() agenttoolports.ToolPolicy {
 
 func (t *CreateTableChangeAlertTool) Validate(
 	_ context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
 	return t.validateArgs(params.Params)
 }
@@ -517,13 +517,13 @@ func alertConditions(params map[string]any) []tablechangealert.Condition {
 
 func (t *CreateTableChangeAlertTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	if err := toolguard.GuardExecute(t, &params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
 	}
 
-	_, err := t.alerts.CreateSubscription(ctx, alertSubscription(&params))
+	_, err := t.alerts.CreateSubscription(ctx, alertSubscription(params))
 
 	return err
 }

@@ -151,9 +151,9 @@ func (t *PostInvoiceTool) Target(params map[string]any) (agenttoolports.ToolTarg
 
 func (t *PostInvoiceTool) Validate(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	req, err := invoiceRequest(t, &params)
+	req, err := invoiceRequest(t, params)
 	if err != nil {
 		return err
 	}
@@ -174,16 +174,16 @@ func (t *PostInvoiceTool) Validate(
 
 func (t *PostInvoiceTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	if err := toolguard.GuardExecute(t, &params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
 	}
 	if !params.ApprovedFromProposal() {
 		return ErrInvoiceNeedsAPerson
 	}
 
-	req, err := invoiceRequest(t, &params)
+	req, err := invoiceRequest(t, params)
 	if err != nil {
 		return err
 	}
@@ -198,16 +198,16 @@ func (t *PostInvoiceTool) Execute(
 // than sending them to look.
 func (t *PostInvoiceTool) ExecuteWithResult(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) (*agentrecord.ToolExecutionResult, error) {
-	if err := toolguard.GuardExecute(t, &params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return nil, err
 	}
 	if !params.ApprovedFromProposal() {
 		return nil, ErrInvoiceNeedsAPerson
 	}
 
-	req, err := invoiceRequest(t, &params)
+	req, err := invoiceRequest(t, params)
 	if err != nil {
 		return nil, err
 	}
@@ -335,9 +335,9 @@ func sendRefusal(plan *invoiceports.InvoiceSendPlan) error {
 
 func (t *SendInvoiceTool) Validate(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	send, err := t.plan(ctx, &params)
+	send, err := t.plan(ctx, params)
 	if err != nil {
 		return err
 	}
@@ -347,16 +347,16 @@ func (t *SendInvoiceTool) Validate(
 
 func (t *SendInvoiceTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	if err := toolguard.GuardExecute(t, &params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
 	}
 	if !params.ApprovedFromProposal() {
 		return ErrInvoiceNeedsAPerson
 	}
 
-	send, err := t.plan(ctx, &params)
+	send, err := t.plan(ctx, params)
 	if err != nil {
 		return err
 	}
@@ -366,7 +366,7 @@ func (t *SendInvoiceTool) Execute(
 
 	_, err = t.invoices.Send(ctx, &invoiceports.InvoiceSendRequest{
 		InvoiceID:  send.plan.InvoiceID,
-		TenantInfo: toolparams.TenantFrom(&params),
+		TenantInfo: toolparams.TenantFrom(params),
 	}, params.Actor)
 
 	return err

@@ -42,14 +42,14 @@ var (
 
 func (t *ApplyConnectionDraftTool) Preview(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) (*agentpreview.ToolPreview, error) {
-	if err := toolguard.GuardPreview(t, &params); err != nil {
+	if err := toolguard.GuardPreview(t, params); err != nil {
 		return nil, err
 	}
 
 	summary := "Would set up an EDI connection from the partner's guide."
-	input, plan, err := t.plan(ctx, &params)
+	input, plan, err := t.plan(ctx, params)
 	if err != nil {
 		if changepreview.IsRefusal(err) || errortypes.IsNotFoundError(err) {
 			return changepreview.WarnWouldFail(toolpreview.Build(summary), err), nil

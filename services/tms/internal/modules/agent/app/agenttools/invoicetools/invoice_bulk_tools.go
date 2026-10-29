@@ -131,9 +131,9 @@ func (t *PostInvoicesTool) Policy() agenttoolports.ToolPolicy {
 
 func (t *PostInvoicesTool) Preview(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) (*agentpreview.ToolPreview, error) {
-	return t.batch.Preview(ctx, t, &params)
+	return t.batch.Preview(ctx, t, params)
 }
 
 func (t *PostInvoicesTool) SplitRecords(params map[string]any) ([]map[string]any, error) {
@@ -142,14 +142,14 @@ func (t *PostInvoicesTool) SplitRecords(params map[string]any) ([]map[string]any
 
 func (t *PostInvoicesTool) Validate(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	return t.batch.Validate(ctx, t, &params)
+	return t.batch.Validate(ctx, t, params)
 }
 
 func (t *PostInvoicesTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
 	_, err := t.ExecuteWithResult(ctx, params)
 
@@ -158,9 +158,9 @@ func (t *PostInvoicesTool) Execute(
 
 func (t *PostInvoicesTool) ExecuteWithResult(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) (*agentrecord.ToolExecutionResult, error) {
-	return t.batch.Execute(ctx, t, &params)
+	return t.batch.Execute(ctx, t, params)
 }
 
 type SendInvoicesTool struct {
@@ -217,9 +217,9 @@ func (t *SendInvoicesTool) Policy() agenttoolports.ToolPolicy {
 
 func (t *SendInvoicesTool) Preview(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) (*agentpreview.ToolPreview, error) {
-	return t.batch.Preview(ctx, t, &params)
+	return t.batch.Preview(ctx, t, params)
 }
 
 func (t *SendInvoicesTool) SplitRecords(params map[string]any) ([]map[string]any, error) {
@@ -228,14 +228,14 @@ func (t *SendInvoicesTool) SplitRecords(params map[string]any) ([]map[string]any
 
 func (t *SendInvoicesTool) Validate(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	return t.batch.Validate(ctx, t, &params)
+	return t.batch.Validate(ctx, t, params)
 }
 
 func (t *SendInvoicesTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
 	_, err := t.ExecuteWithResult(ctx, params)
 
@@ -244,9 +244,9 @@ func (t *SendInvoicesTool) Execute(
 
 func (t *SendInvoicesTool) ExecuteWithResult(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) (*agentrecord.ToolExecutionResult, error) {
-	return t.batch.Execute(ctx, t, &params)
+	return t.batch.Execute(ctx, t, params)
 }
 
 type ApproveBillingQueueItemsTool struct {
@@ -322,9 +322,9 @@ func (t *ApproveBillingQueueItemsTool) Policy() agenttoolports.ToolPolicy {
 
 func (t *ApproveBillingQueueItemsTool) Preview(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) (*agentpreview.ToolPreview, error) {
-	return t.batch.Preview(ctx, t, &params)
+	return t.batch.Preview(ctx, t, params)
 }
 
 func (t *ApproveBillingQueueItemsTool) SplitRecords(
@@ -335,14 +335,14 @@ func (t *ApproveBillingQueueItemsTool) SplitRecords(
 
 func (t *ApproveBillingQueueItemsTool) Validate(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	return t.batch.Validate(ctx, t, &params)
+	return t.batch.Validate(ctx, t, params)
 }
 
 func (t *ApproveBillingQueueItemsTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
 	_, err := t.ExecuteWithResult(ctx, params)
 
@@ -351,7 +351,7 @@ func (t *ApproveBillingQueueItemsTool) Execute(
 
 func (t *ApproveBillingQueueItemsTool) ExecuteWithResult(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) (*agentrecord.ToolExecutionResult, error) {
-	return t.batch.Execute(ctx, t, &params)
+	return t.batch.Execute(ctx, t, params)
 }

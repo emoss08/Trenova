@@ -106,7 +106,7 @@ func (t *BillingQueueDecisionTool) Policy() agenttoolports.ToolPolicy {
 		policy.TaintHold = &agenttoolports.TaintHold{
 			Description: "Its notes are what a biller or operations reads next, so a run " +
 				"that has read outside text proposes it rather than writing it.",
-			Applies: func(agenttoolports.ToolExecuteParams) bool { return true },
+			Applies: func(*agenttoolports.ToolExecuteParams) bool { return true },
 		}
 	}
 
@@ -208,9 +208,9 @@ func (t *BillingQueueDecisionTool) load(
 
 func (t *BillingQueueDecisionTool) Validate(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	req, err := t.request(&params)
+	req, err := t.request(params)
 	if err != nil {
 		return err
 	}
@@ -274,16 +274,16 @@ func issueSummaries(issues []*billingqueue.Issue) string {
 
 func (t *BillingQueueDecisionTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	if err := toolguard.GuardExecute(t, &params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
 	}
 	if t.decision.personOnly && !params.ApprovedFromProposal() {
 		return billingqueuepreview.ErrDecisionNeedsAPerson
 	}
 
-	req, err := t.request(&params)
+	req, err := t.request(params)
 	if err != nil {
 		return err
 	}
@@ -660,9 +660,9 @@ func (t *AssignBillerTool) load(
 
 func (t *AssignBillerTool) Validate(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	req, _, err := t.request(ctx, &params)
+	req, _, err := t.request(ctx, params)
 	if err != nil {
 		return err
 	}
@@ -677,13 +677,13 @@ func (t *AssignBillerTool) Validate(
 
 func (t *AssignBillerTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	if err := toolguard.GuardExecute(t, &params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
 	}
 
-	req, _, err := t.request(ctx, &params)
+	req, _, err := t.request(ctx, params)
 	if err != nil {
 		return err
 	}

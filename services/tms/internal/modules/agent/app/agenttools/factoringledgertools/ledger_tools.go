@@ -371,9 +371,9 @@ func fundingItems(params map[string]any) ([]factoringledgerports.FundingItemInpu
 
 func (t *RecordFactoringFundingTool) Validate(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	req, err := t.request(&params)
+	req, err := t.request(params)
 	if err != nil {
 		return err
 	}
@@ -383,12 +383,12 @@ func (t *RecordFactoringFundingTool) Validate(
 
 func (t *RecordFactoringFundingTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	if err := requireApproval(t.Name(), &params); err != nil {
+	if err := requireApproval(t.Name(), params); err != nil {
 		return err
 	}
-	req, err := t.request(&params)
+	req, err := t.request(params)
 	if err != nil {
 		return err
 	}
@@ -398,10 +398,10 @@ func (t *RecordFactoringFundingTool) Execute(
 
 func (t *RecordFactoringFundingTool) Preview(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) (*agentpreview.ToolPreview, error) {
 	const summary = "Would record the factor's funding of a schedule and book it to the ledger."
-	req, err := t.request(&params)
+	req, err := t.request(params)
 	if err != nil {
 		return factoringkit.Refused(summary, err)
 	}
@@ -573,9 +573,9 @@ func (t *ReserveMovementTool) request(
 
 func (t *ReserveMovementTool) Validate(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	req, err := t.request(&params)
+	req, err := t.request(params)
 	if err != nil {
 		return err
 	}
@@ -585,12 +585,12 @@ func (t *ReserveMovementTool) Validate(
 
 func (t *ReserveMovementTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	if err := requireApproval(t.Name(), &params); err != nil {
+	if err := requireApproval(t.Name(), params); err != nil {
 		return err
 	}
-	req, err := t.request(&params)
+	req, err := t.request(params)
 	if err != nil {
 		return err
 	}
@@ -619,9 +619,9 @@ func itemViewOf(item *factoringsubmission.SubmissionItem) *itemView {
 
 func (t *ReserveMovementTool) Preview(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) (*agentpreview.ToolPreview, error) {
-	req, err := t.request(&params)
+	req, err := t.request(params)
 	if err != nil {
 		return factoringkit.Refused(t.spec.refusal, err)
 	}

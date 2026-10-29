@@ -188,9 +188,9 @@ func (t *SubmitInvoicesToFactorTool) request(
 
 func (t *SubmitInvoicesToFactorTool) Validate(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	req, err := t.request(&params)
+	req, err := t.request(params)
 	if err != nil {
 		return err
 	}
@@ -200,9 +200,9 @@ func (t *SubmitInvoicesToFactorTool) Validate(
 
 func (t *SubmitInvoicesToFactorTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	req, err := t.request(&params)
+	req, err := t.request(params)
 	if err != nil {
 		return err
 	}
@@ -212,10 +212,10 @@ func (t *SubmitInvoicesToFactorTool) Execute(
 
 func (t *SubmitInvoicesToFactorTool) Preview(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) (*agentpreview.ToolPreview, error) {
 	const summary = "Would send a schedule of accounts to the factor."
-	req, err := t.request(&params)
+	req, err := t.request(params)
 	if err != nil {
 		return factoringkit.Refused(summary, err)
 	}
@@ -374,9 +374,9 @@ func (t *RetryFactoringSubmissionTool) request(
 
 func (t *RetryFactoringSubmissionTool) Validate(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	req, err := t.request(&params)
+	req, err := t.request(params)
 	if err != nil {
 		return err
 	}
@@ -386,9 +386,9 @@ func (t *RetryFactoringSubmissionTool) Validate(
 
 func (t *RetryFactoringSubmissionTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	req, err := t.request(&params)
+	req, err := t.request(params)
 	if err != nil {
 		return err
 	}
@@ -398,10 +398,10 @@ func (t *RetryFactoringSubmissionTool) Execute(
 
 func (t *RetryFactoringSubmissionTool) Preview(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) (*agentpreview.ToolPreview, error) {
 	const summary = "Would send the failed schedule to the factor again."
-	req, err := t.request(&params)
+	req, err := t.request(params)
 	if err != nil {
 		return factoringkit.Refused(summary, err)
 	}
@@ -502,9 +502,9 @@ func (t *CancelFactoringSubmissionTool) request(
 
 func (t *CancelFactoringSubmissionTool) Validate(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	req, err := t.request(&params)
+	req, err := t.request(params)
 	if err != nil {
 		return err
 	}
@@ -514,9 +514,9 @@ func (t *CancelFactoringSubmissionTool) Validate(
 
 func (t *CancelFactoringSubmissionTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	req, err := t.request(&params)
+	req, err := t.request(params)
 	if err != nil {
 		return err
 	}
@@ -526,10 +526,10 @@ func (t *CancelFactoringSubmissionTool) Execute(
 
 func (t *CancelFactoringSubmissionTool) Preview(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) (*agentpreview.ToolPreview, error) {
 	const summary = "Would cancel the failed schedule and release its invoices."
-	req, err := t.request(&params)
+	req, err := t.request(params)
 	if err != nil {
 		return factoringkit.Refused(summary, err)
 	}

@@ -421,7 +421,7 @@ func (t *CreateShipmentTool) Policy() agenttoolports.ToolPolicy {
 
 func (t *CreateShipmentTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
 	_, err := t.ExecuteWithResult(ctx, params)
 
@@ -430,13 +430,13 @@ func (t *CreateShipmentTool) Execute(
 
 func (t *CreateShipmentTool) ExecuteWithResult(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) (*agentrecord.ToolExecutionResult, error) {
-	if err := toolguard.GuardExecute(t, &params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return nil, err
 	}
 
-	entity, err := t.Draft(ctx, &params)
+	entity, err := t.Draft(ctx, params)
 	if err != nil {
 		return nil, err
 	}
@@ -450,7 +450,7 @@ func (t *CreateShipmentTool) ExecuteWithResult(
 		if completeErr := t.imports.CompleteHistory(
 			ctx,
 			entity.SourceDocumentID,
-			toolparams.TenantFrom(&params),
+			toolparams.TenantFrom(params),
 		); completeErr != nil {
 			t.logger.Warn("shipment created but the import conversation could not be closed",
 				zap.String("sourceDocumentId", entity.SourceDocumentID),
@@ -468,9 +468,9 @@ func (t *CreateShipmentTool) ExecuteWithResult(
 // is refused to the model before it is proposed to a person.
 func (t *CreateShipmentTool) Validate(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	return toolspec.PreviewValidates(ctx, t, &params)
+	return toolspec.PreviewValidates(ctx, t, params)
 }
 
 func (t *CreateShipmentTool) Draft(
@@ -694,9 +694,9 @@ func (p *shipmentPatch) empty() bool {
 
 func (t *UpdateShipmentTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	_, entity, err := t.plan(ctx, &params)
+	_, entity, err := t.plan(ctx, params)
 	if err != nil {
 		return err
 	}

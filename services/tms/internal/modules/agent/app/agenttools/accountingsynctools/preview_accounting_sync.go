@@ -124,9 +124,9 @@ func syncConnectionRecord(summary *accountingsyncports.AccountingSyncSummary) to
 
 func (t *RetryAccountingSyncTool) Preview(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) (*agentpreview.ToolPreview, error) {
-	plan, err := t.plan(ctx, &params)
+	plan, err := t.plan(ctx, params)
 	if err != nil {
 		return accountingtools.RefusedSync(
 			"Would send documents to the accounting system again.",
@@ -208,9 +208,9 @@ func (t *RetryAccountingSyncTool) Preview(
 
 func (t *SkipAccountingSyncTool) Preview(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) (*agentpreview.ToolPreview, error) {
-	req, record, err := t.request(ctx, &params)
+	req, record, err := t.request(ctx, params)
 	if err != nil {
 		return accountingtools.RefusedSync(
 			"Would keep a document out of the accounting system.",
@@ -240,9 +240,9 @@ func (t *SkipAccountingSyncTool) Preview(
 
 func (t *redateAccountingSyncTool) Preview(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) (*agentpreview.ToolPreview, error) {
-	req, redatePlan, err := t.request(ctx, &params)
+	req, redatePlan, err := t.request(ctx, params)
 	if err != nil {
 		return accountingtools.RefusedSync(
 			"Would send a document to the accounting system dated on the first open day.",
@@ -273,9 +273,9 @@ func (t *redateAccountingSyncTool) Preview(
 
 func (t *PauseAccountingSyncTool) Preview(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) (*agentpreview.ToolPreview, error) {
-	req, summary, err := t.request(ctx, &params)
+	req, summary, err := t.request(ctx, params)
 	if err != nil {
 		return accountingtools.RefusedSync("Would pause sending to the accounting system.", err)
 	}
@@ -305,9 +305,9 @@ func (t *PauseAccountingSyncTool) Preview(
 
 func (t *ResumeAccountingSyncTool) Preview(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) (*agentpreview.ToolPreview, error) {
-	_, summary, err := t.request(ctx, &params)
+	_, summary, err := t.request(ctx, params)
 	if err != nil {
 		return accountingtools.RefusedSync("Would resume sending to the accounting system.", err)
 	}
@@ -356,9 +356,9 @@ func (p *backfillPlan) backfill() *accountingbackfill.AccountingBackfill {
 
 func (t *RequestAccountingBackfillTool) Preview(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) (*agentpreview.ToolPreview, error) {
-	plan, err := t.plan(ctx, &params)
+	plan, err := t.plan(ctx, params)
 	if err != nil {
 		return accountingtools.RefusedSync(
 			"Would send earlier documents to the accounting system.",

@@ -30,9 +30,9 @@ var tenderPayloadIgnored = []string{
 
 func (t *EdiChangeReviewTool) Preview(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) (*agentpreview.ToolPreview, error) {
-	plan, err := t.plan(ctx, &params)
+	plan, err := t.plan(ctx, params)
 	if err != nil {
 		if changepreview.IsRefusal(err) || errortypes.IsNotFoundError(err) {
 			return changepreview.WarnWouldFail(toolpreview.Build(t.kind.description), err), nil

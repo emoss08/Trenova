@@ -23,9 +23,9 @@ type moveStatusView struct {
 
 func (t *UnassignMovesTool) Preview(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) (*agentpreview.ToolPreview, error) {
-	requests, err := t.requests(&params)
+	requests, err := t.requests(params)
 	if err != nil {
 		return nil, err
 	}
@@ -85,9 +85,9 @@ func (t *UnassignMovesTool) Preview(
 
 func (t *UpdateMoveStatusTool) Preview(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) (*agentpreview.ToolPreview, error) {
-	request, err := t.request(&params)
+	request, err := t.request(params)
 	if err != nil {
 		return nil, err
 	}

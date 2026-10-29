@@ -183,20 +183,20 @@ func (t *ApplyAccountingInboundChangeTool) PlanPreview(
 
 func (t *ApplyAccountingInboundChangeTool) Validate(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	_, err := t.PlanPreview(ctx, &params)
+	_, err := t.PlanPreview(ctx, params)
 	return err
 }
 
 func (t *ApplyAccountingInboundChangeTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	if _, err := t.PlanPreview(ctx, &params); err != nil {
+	if _, err := t.PlanPreview(ctx, params); err != nil {
 		return err
 	}
-	req, err := inboundRequest(&params)
+	req, err := inboundRequest(params)
 	if err != nil {
 		return err
 	}
@@ -312,17 +312,17 @@ func (t *IgnoreAccountingInboundChangeTool) request(
 
 func (t *IgnoreAccountingInboundChangeTool) Validate(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	_, _, err := t.request(ctx, &params)
+	_, _, err := t.request(ctx, params)
 	return err
 }
 
 func (t *IgnoreAccountingInboundChangeTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	req, _, err := t.request(ctx, &params)
+	req, _, err := t.request(ctx, params)
 	if err != nil {
 		return err
 	}

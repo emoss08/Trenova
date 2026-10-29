@@ -8,7 +8,7 @@ import (
 )
 
 func classifyTableView(
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // ToolPolicy.Classify passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) agenttoolports.CallPolicy {
 	actor := params.Actor
 	if toolparams.OptionalBool(params.Params, "shared") || actor == nil ||

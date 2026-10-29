@@ -151,14 +151,14 @@ func (t *EscalateDetentionTool) arguments(
 
 func (t *EscalateDetentionTool) Validate(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	occurrenceID, _, err := t.arguments(&params)
+	occurrenceID, _, err := t.arguments(params)
 	if err != nil {
 		return err
 	}
 
-	occurrence, err := t.occurrence(ctx, occurrenceID, &params)
+	occurrence, err := t.occurrence(ctx, occurrenceID, params)
 	if err != nil {
 		return err
 	}
@@ -187,16 +187,16 @@ func (t *EscalateDetentionTool) occurrence(
 
 func (t *EscalateDetentionTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	occurrenceID, reason, err := t.arguments(&params)
+	occurrenceID, reason, err := t.arguments(params)
 	if err != nil {
 		return err
 	}
 
 	_, err = t.detention.Escalate(ctx, &detentionreview.EscalateParams{
 		OccurrenceID: occurrenceID,
-		TenantInfo:   toolparams.TenantFrom(&params),
+		TenantInfo:   toolparams.TenantFrom(params),
 		Reason:       reason,
 		UserID:       params.Actor.UserID,
 	})
@@ -341,14 +341,14 @@ func (t *ApproveDetentionTool) pending(
 
 func (t *ApproveDetentionTool) Validate(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	occurrenceID, _, err := t.arguments(&params)
+	occurrenceID, _, err := t.arguments(params)
 	if err != nil {
 		return err
 	}
 
-	_, err = t.pending(ctx, occurrenceID, &params)
+	_, err = t.pending(ctx, occurrenceID, params)
 
 	return err
 }
@@ -380,16 +380,16 @@ func (t *ApproveDetentionTool) request(
 
 func (t *ApproveDetentionTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	if _, _, err := t.arguments(&params); err != nil {
+	if _, _, err := t.arguments(params); err != nil {
 		return err
 	}
 	if !params.ApprovedFromProposal() {
 		return detentionpreview.ErrApprovalNeedsAPerson
 	}
 
-	request, _, err := t.request(ctx, &params)
+	request, _, err := t.request(ctx, params)
 	if err != nil {
 		return err
 	}
@@ -539,18 +539,18 @@ func (t *RequestCredentialRenewalTool) arguments(
 
 func (t *RequestCredentialRenewalTool) Validate(
 	_ context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	_, err := t.arguments(&params)
+	_, err := t.arguments(params)
 
 	return err
 }
 
 func (t *RequestCredentialRenewalTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	request, err := t.arguments(&params)
+	request, err := t.arguments(params)
 	if err != nil {
 		return err
 	}
@@ -664,9 +664,9 @@ func (t *PlaceWorkerDispatchHoldTool) arguments(
 
 func (t *PlaceWorkerDispatchHoldTool) Validate(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	request, err := t.arguments(&params)
+	request, err := t.arguments(params)
 	if err != nil {
 		return err
 	}
@@ -687,9 +687,9 @@ func (t *PlaceWorkerDispatchHoldTool) Validate(
 
 func (t *PlaceWorkerDispatchHoldTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	request, err := t.arguments(&params)
+	request, err := t.arguments(params)
 	if err != nil {
 		return err
 	}
@@ -891,9 +891,9 @@ func (t *carrierIntelEventTool) arguments(
 
 func (t *carrierIntelEventTool) Validate(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	request, err := t.arguments(&params)
+	request, err := t.arguments(params)
 	if err != nil {
 		return err
 	}
@@ -911,9 +911,9 @@ func (t *carrierIntelEventTool) Validate(
 
 func (t *carrierIntelEventTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	request, err := t.arguments(&params)
+	request, err := t.arguments(params)
 	if err != nil {
 		return err
 	}

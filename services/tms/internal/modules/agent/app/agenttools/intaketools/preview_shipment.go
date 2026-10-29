@@ -13,9 +13,9 @@ import (
 
 func (t *UpdateShipmentTool) Preview(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) (*agentpreview.ToolPreview, error) {
-	before, after, err := t.plan(ctx, &params)
+	before, after, err := t.plan(ctx, params)
 	if err != nil {
 		return nil, err
 	}

@@ -251,9 +251,9 @@ func (t *ResolveFactoringRemittanceLineTool) request(
 
 func (t *ResolveFactoringRemittanceLineTool) Validate(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	req, err := t.request(&params)
+	req, err := t.request(params)
 	if err != nil {
 		return err
 	}
@@ -263,9 +263,9 @@ func (t *ResolveFactoringRemittanceLineTool) Validate(
 
 func (t *ResolveFactoringRemittanceLineTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	req, err := t.request(&params)
+	req, err := t.request(params)
 	if err != nil {
 		return err
 	}
@@ -275,10 +275,10 @@ func (t *ResolveFactoringRemittanceLineTool) Execute(
 
 func (t *ResolveFactoringRemittanceLineTool) Preview(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) (*agentpreview.ToolPreview, error) {
 	const summary = "Would change how a remittance line is matched."
-	req, err := t.request(&params)
+	req, err := t.request(params)
 	if err != nil {
 		return factoringkit.Refused(summary, err)
 	}
@@ -374,9 +374,9 @@ func (t *RematchFactoringRemittanceTool) request(
 
 func (t *RematchFactoringRemittanceTool) Validate(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	req, err := t.request(&params)
+	req, err := t.request(params)
 	if err != nil {
 		return err
 	}
@@ -392,9 +392,9 @@ func (t *RematchFactoringRemittanceTool) Validate(
 
 func (t *RematchFactoringRemittanceTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	req, err := t.request(&params)
+	req, err := t.request(params)
 	if err != nil {
 		return err
 	}
@@ -404,7 +404,7 @@ func (t *RematchFactoringRemittanceTool) Execute(
 
 func (t *RematchFactoringRemittanceTool) Preview(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) (*agentpreview.ToolPreview, error) {
 	const summary = "Would match the remittance's open lines again."
 	if err := t.Validate(ctx, params); err != nil {
@@ -483,9 +483,9 @@ func (t *ApplyFactoringRemittanceTool) request(
 
 func (t *ApplyFactoringRemittanceTool) Validate(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	req, err := t.request(&params)
+	req, err := t.request(params)
 	if err != nil {
 		return err
 	}
@@ -495,12 +495,12 @@ func (t *ApplyFactoringRemittanceTool) Validate(
 
 func (t *ApplyFactoringRemittanceTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	if err := requireApproval(t.Name(), &params); err != nil {
+	if err := requireApproval(t.Name(), params); err != nil {
 		return err
 	}
-	req, err := t.request(&params)
+	req, err := t.request(params)
 	if err != nil {
 		return err
 	}
@@ -510,10 +510,10 @@ func (t *ApplyFactoringRemittanceTool) Execute(
 
 func (t *ApplyFactoringRemittanceTool) Preview(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) (*agentpreview.ToolPreview, error) {
 	const summary = "Would book the remittance's matched lines to the ledger."
-	req, err := t.request(&params)
+	req, err := t.request(params)
 	if err != nil {
 		return factoringkit.Refused(summary, err)
 	}
@@ -635,9 +635,9 @@ func (t *DiscardFactoringRemittanceTool) request(
 
 func (t *DiscardFactoringRemittanceTool) Validate(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	req, err := t.request(&params)
+	req, err := t.request(params)
 	if err != nil {
 		return err
 	}
@@ -647,9 +647,9 @@ func (t *DiscardFactoringRemittanceTool) Validate(
 
 func (t *DiscardFactoringRemittanceTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	req, err := t.request(&params)
+	req, err := t.request(params)
 	if err != nil {
 		return err
 	}
@@ -659,10 +659,10 @@ func (t *DiscardFactoringRemittanceTool) Execute(
 
 func (t *DiscardFactoringRemittanceTool) Preview(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) (*agentpreview.ToolPreview, error) {
 	const summary = "Would discard the remittance."
-	req, err := t.request(&params)
+	req, err := t.request(params)
 	if err != nil {
 		return factoringkit.Refused(summary, err)
 	}

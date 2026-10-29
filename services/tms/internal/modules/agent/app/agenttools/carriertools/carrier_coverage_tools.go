@@ -185,7 +185,7 @@ func (t *AssignMoveToCarrierTool) Policy() agenttoolports.ToolPolicy {
 
 func carrierAssignmentTierLimit(
 	_ context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // a TierCondition passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) agent.AutonomyTier {
 	if toolparams.OptionalBool(params.Params, fieldReplace) ||
 		toolparams.OptionalBool(params.Params, fieldOverrideInsuranceWarning) {
@@ -197,9 +197,9 @@ func carrierAssignmentTierLimit(
 
 func (t *AssignMoveToCarrierTool) Validate(
 	_ context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	request, err := t.request(&params)
+	request, err := t.request(params)
 	if err != nil {
 		return err
 	}
@@ -212,13 +212,13 @@ func (t *AssignMoveToCarrierTool) Validate(
 
 func (t *AssignMoveToCarrierTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	if err := toolguard.GuardExecute(t, &params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
 	}
 
-	request, err := t.request(&params)
+	request, err := t.request(params)
 	if err != nil {
 		return err
 	}
@@ -373,9 +373,9 @@ func (t *CancelCarrierAssignmentTool) Policy() agenttoolports.ToolPolicy {
 
 func (t *CancelCarrierAssignmentTool) tierLimit(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // a TierCondition passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) agent.AutonomyTier {
-	request, err := t.request(&params)
+	request, err := t.request(params)
 	if err != nil {
 		return agent.TierPropose
 	}
@@ -391,9 +391,9 @@ func (t *CancelCarrierAssignmentTool) tierLimit(
 
 func (t *CancelCarrierAssignmentTool) Validate(
 	_ context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	request, err := t.request(&params)
+	request, err := t.request(params)
 	if err != nil {
 		return err
 	}
@@ -406,13 +406,13 @@ func (t *CancelCarrierAssignmentTool) Validate(
 
 func (t *CancelCarrierAssignmentTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	if err := toolguard.GuardExecute(t, &params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
 	}
 
-	request, err := t.request(&params)
+	request, err := t.request(params)
 	if err != nil {
 		return err
 	}

@@ -179,9 +179,9 @@ func (t *MatchBankReceiptTool) Target(params map[string]any) (agenttoolports.Too
 
 func (t *MatchBankReceiptTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	request, err := t.request(&params)
+	request, err := t.request(params)
 	if err != nil {
 		return err
 	}
@@ -384,7 +384,7 @@ type postPaymentArgs struct {
 
 func (t *PostCustomerPaymentTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
 	_, err := t.ExecuteWithResult(ctx, params)
 
@@ -397,9 +397,9 @@ func (t *PostCustomerPaymentTool) Execute(
 // say nothing moved, and a retry would post the payment again.
 func (t *PostCustomerPaymentTool) ExecuteWithResult(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) (*agentrecord.ToolExecutionResult, error) {
-	args, err := t.arguments(ctx, &params)
+	args, err := t.arguments(ctx, params)
 	if err != nil {
 		return nil, err
 	}
@@ -704,14 +704,14 @@ type resolveWorkItemArgs struct {
 
 func (t *ResolveBankReceiptWorkItemTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	args, err := t.arguments(&params)
+	args, err := t.arguments(params)
 	if err != nil {
 		return err
 	}
 
-	tenant := toolparams.TenantFrom(&params)
+	tenant := toolparams.TenantFrom(params)
 	if args.dismisses() {
 		_, err = t.items.Dismiss(ctx, args.dismissal(tenant), params.Actor)
 

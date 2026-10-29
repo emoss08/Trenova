@@ -34,9 +34,9 @@ type journalView struct {
 
 func (t *PostInvoiceTool) Preview(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) (*agentpreview.ToolPreview, error) {
-	req, err := invoiceRequest(t, &params)
+	req, err := invoiceRequest(t, params)
 	if err != nil {
 		return nil, err
 	}
@@ -250,9 +250,9 @@ func ediSentence(plan *invoiceports.InvoiceEDISendPlan) string {
 
 func (t *SendInvoiceTool) Preview(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) (*agentpreview.ToolPreview, error) {
-	send, err := t.plan(ctx, &params)
+	send, err := t.plan(ctx, params)
 	if err != nil {
 		return nil, err
 	}

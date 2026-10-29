@@ -115,9 +115,9 @@ func (t *AssignBillersTool) Policy() agenttoolports.ToolPolicy {
 
 func (t *AssignBillersTool) Preview(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) (*agentpreview.ToolPreview, error) {
-	return t.batch.Preview(ctx, t, &params)
+	return t.batch.Preview(ctx, t, params)
 }
 
 func (t *AssignBillersTool) SplitRecords(params map[string]any) ([]map[string]any, error) {
@@ -126,14 +126,14 @@ func (t *AssignBillersTool) SplitRecords(params map[string]any) ([]map[string]an
 
 func (t *AssignBillersTool) Validate(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	return t.batch.Validate(ctx, t, &params)
+	return t.batch.Validate(ctx, t, params)
 }
 
 func (t *AssignBillersTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
 	_, err := t.ExecuteWithResult(ctx, params)
 
@@ -142,9 +142,9 @@ func (t *AssignBillersTool) Execute(
 
 func (t *AssignBillersTool) ExecuteWithResult(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) (*agentrecord.ToolExecutionResult, error) {
-	return t.batch.Execute(ctx, t, &params)
+	return t.batch.Execute(ctx, t, params)
 }
 
 // TransitionItemsToInReviewTool moves a set of items into review, each as
@@ -217,7 +217,7 @@ func (t *TransitionItemsToInReviewTool) Policy() agenttoolports.ToolPolicy {
 // so a held item among ten waiting ones still puts the call before a person.
 func (t *TransitionItemsToInReviewTool) tierLimit(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // a TierCondition passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) agent.AutonomyTier {
 	if params.Actor == nil {
 		return agent.TierPropose
@@ -230,7 +230,7 @@ func (t *TransitionItemsToInReviewTool) tierLimit(
 	if err != nil {
 		return agent.TierPropose
 	}
-	tenant := toolparams.TenantFrom(&params)
+	tenant := toolparams.TenantFrom(params)
 	for _, id := range ids {
 		if t.single.tierFor(ctx, tenant, id) == agent.TierPropose {
 			return agent.TierPropose
@@ -242,9 +242,9 @@ func (t *TransitionItemsToInReviewTool) tierLimit(
 
 func (t *TransitionItemsToInReviewTool) Preview(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) (*agentpreview.ToolPreview, error) {
-	return t.batch.Preview(ctx, t, &params)
+	return t.batch.Preview(ctx, t, params)
 }
 
 func (t *TransitionItemsToInReviewTool) SplitRecords(
@@ -255,14 +255,14 @@ func (t *TransitionItemsToInReviewTool) SplitRecords(
 
 func (t *TransitionItemsToInReviewTool) Validate(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	return t.batch.Validate(ctx, t, &params)
+	return t.batch.Validate(ctx, t, params)
 }
 
 func (t *TransitionItemsToInReviewTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
 	_, err := t.ExecuteWithResult(ctx, params)
 
@@ -271,7 +271,7 @@ func (t *TransitionItemsToInReviewTool) Execute(
 
 func (t *TransitionItemsToInReviewTool) ExecuteWithResult(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) (*agentrecord.ToolExecutionResult, error) {
-	return t.batch.Execute(ctx, t, &params)
+	return t.batch.Execute(ctx, t, params)
 }

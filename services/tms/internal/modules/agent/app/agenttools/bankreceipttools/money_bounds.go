@@ -35,12 +35,12 @@ const matchReceiptBoundText = "Runs on its own only when the payment is the one 
 
 func (t *PostCustomerPaymentTool) withinBounds(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the TierCondition bounds pass params by value
+	params *agenttoolports.ToolExecuteParams,
 ) agenttoolports.MoneyBound {
 	if t.payments == nil || t.receipts == nil {
 		return agenttoolports.OutsideMoneyBound(agenttooltrust.HeldByMoneyUnproven)
 	}
-	args, err := t.arguments(ctx, &params)
+	args, err := t.arguments(ctx, params)
 	if err != nil {
 		return agenttoolports.OutsideMoneyBound(agenttooltrust.HeldByMoneyUnproven)
 	}
@@ -115,12 +115,12 @@ func remittanceMatches(
 
 func (t *MatchBankReceiptTool) withinBounds(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the TierCondition bounds pass params by value
+	params *agenttoolports.ToolExecuteParams,
 ) agenttoolports.MoneyBound {
 	if t.receipts == nil {
 		return agenttoolports.OutsideMoneyBound(agenttooltrust.HeldByMoneyUnproven)
 	}
-	request, err := t.request(&params)
+	request, err := t.request(params)
 	if err != nil {
 		return agenttoolports.OutsideMoneyBound(agenttooltrust.HeldByMoneyUnproven)
 	}

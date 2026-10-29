@@ -168,16 +168,16 @@ func (t *RetryEDIMessageDeliveryTool) Policy() agenttoolports.ToolPolicy {
 
 func (t *RetryEDIMessageDeliveryTool) Validate(
 	_ context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	_, err := ediRecordSet(t, &params, paramEDIMessageIDs)
+	_, err := ediRecordSet(t, params, paramEDIMessageIDs)
 
 	return err
 }
 
 func (t *RetryEDIMessageDeliveryTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
 	_, err := t.ExecuteWithResult(ctx, params)
 
@@ -186,16 +186,16 @@ func (t *RetryEDIMessageDeliveryTool) Execute(
 
 func (t *RetryEDIMessageDeliveryTool) ExecuteWithResult(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) (*agentrecord.ToolExecutionResult, error) {
-	if err := toolguard.GuardExecute(t, &params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return nil, err
 	}
 	if !params.ApprovedFromProposal() {
 		return nil, ErrEDIDecisionNeedsAPerson
 	}
 
-	ids, err := ediRecordSet(t, &params, paramEDIMessageIDs)
+	ids, err := ediRecordSet(t, params, paramEDIMessageIDs)
 	if err != nil {
 		return nil, err
 	}
@@ -203,7 +203,7 @@ func (t *RetryEDIMessageDeliveryTool) ExecuteWithResult(
 	result, err := t.deliveries.BulkRetryMessageDelivery(
 		ctx,
 		&edidelivery.BulkRetryMessageDeliveryRequest{
-			TenantInfo: toolparams.TenantFrom(&params),
+			TenantInfo: toolparams.TenantFrom(params),
 			MessageIDs: ids,
 		},
 	)
@@ -272,9 +272,9 @@ func (t *ReplayEDIMessageTool) request(
 
 func (t *ReplayEDIMessageTool) Validate(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	req, err := t.request(&params)
+	req, err := t.request(params)
 	if err != nil {
 		return err
 	}
@@ -286,16 +286,16 @@ func (t *ReplayEDIMessageTool) Validate(
 
 func (t *ReplayEDIMessageTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	if err := toolguard.GuardExecute(t, &params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
 	}
 	if !params.ApprovedFromProposal() {
 		return ErrEDIDecisionNeedsAPerson
 	}
 
-	req, err := t.request(&params)
+	req, err := t.request(params)
 	if err != nil {
 		return err
 	}
@@ -351,16 +351,16 @@ func (t *ReprocessEDIInboundFilesTool) Policy() agenttoolports.ToolPolicy {
 
 func (t *ReprocessEDIInboundFilesTool) Validate(
 	_ context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	_, err := ediRecordSet(t, &params, paramEDIInboundFileIDs)
+	_, err := ediRecordSet(t, params, paramEDIInboundFileIDs)
 
 	return err
 }
 
 func (t *ReprocessEDIInboundFilesTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
 	_, err := t.ExecuteWithResult(ctx, params)
 
@@ -369,16 +369,16 @@ func (t *ReprocessEDIInboundFilesTool) Execute(
 
 func (t *ReprocessEDIInboundFilesTool) ExecuteWithResult(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) (*agentrecord.ToolExecutionResult, error) {
-	if err := toolguard.GuardExecute(t, &params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return nil, err
 	}
 	if !params.ApprovedFromProposal() {
 		return nil, ErrEDIDecisionNeedsAPerson
 	}
 
-	ids, err := ediRecordSet(t, &params, paramEDIInboundFileIDs)
+	ids, err := ediRecordSet(t, params, paramEDIInboundFileIDs)
 	if err != nil {
 		return nil, err
 	}
@@ -386,7 +386,7 @@ func (t *ReprocessEDIInboundFilesTool) ExecuteWithResult(
 	result, err := t.files.BulkReprocessInboundFiles(
 		ctx,
 		&ediinboundservice.BulkReprocessInboundFilesRequest{
-			TenantInfo: toolparams.TenantFrom(&params),
+			TenantInfo: toolparams.TenantFrom(params),
 			FileIDs:    ids,
 		},
 	)

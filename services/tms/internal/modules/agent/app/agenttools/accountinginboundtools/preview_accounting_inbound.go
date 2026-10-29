@@ -84,11 +84,11 @@ func inboundPostingSummary(preview *accountinginboundports.AccountingInboundAppl
 
 func (t *ApplyAccountingInboundChangeTool) Preview(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) (*agentpreview.ToolPreview, error) {
 	const refusedSummary = "Would bring a payment from the accounting system into Trenova."
 
-	plan, err := t.PlanPreview(ctx, &params)
+	plan, err := t.PlanPreview(ctx, params)
 	if err != nil {
 		return accountingtools.RefusedSync(refusedSummary, err)
 	}
@@ -119,11 +119,11 @@ func (t *ApplyAccountingInboundChangeTool) Preview(
 
 func (t *IgnoreAccountingInboundChangeTool) Preview(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) (*agentpreview.ToolPreview, error) {
 	const refusedSummary = "Would keep a payment from the accounting system out of Trenova."
 
-	req, change, err := t.request(ctx, &params)
+	req, change, err := t.request(ctx, params)
 	if err != nil {
 		return accountingtools.RefusedSync(refusedSummary, err)
 	}

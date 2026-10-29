@@ -374,7 +374,7 @@ func chargeClause(plan *billingqueueports.IssueSettlementPlan) string {
 }
 
 func classifyIssueOption(
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // Classify passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) agenttoolports.CallPolicy {
 	if strings.TrimSpace(toolparams.OptionalString(params.Params, paramOptionKey)) ==
 		billingqueue.OptionKeyRequest {

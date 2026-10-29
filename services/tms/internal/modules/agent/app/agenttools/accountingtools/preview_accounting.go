@@ -73,9 +73,9 @@ func MappingOptions() []toolpreview.Option {
 
 func (t *CheckAccountingConnectionTool) Preview(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) (*agentpreview.ToolPreview, error) {
-	conn, err := t.connection(ctx, &params)
+	conn, err := t.connection(ctx, params)
 	if err != nil {
 		if changepreview.IsRefusal(err) {
 			return changepreview.WarnWouldFail(
@@ -118,9 +118,9 @@ func (t *CheckAccountingConnectionTool) Preview(
 
 func (t *SetAccountingMappingTool) Preview(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) (*agentpreview.ToolPreview, error) {
-	req, row, ref, err := t.request(ctx, &params)
+	req, row, ref, err := t.request(ctx, params)
 	if err != nil {
 		if changepreview.IsRefusal(err) {
 			return changepreview.WarnWouldFail(
@@ -172,9 +172,9 @@ func (t *SetAccountingMappingTool) Preview(
 
 func (t *ClearAccountingMappingTool) Preview(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) (*agentpreview.ToolPreview, error) {
-	row, err := t.mapping(ctx, &params)
+	row, err := t.mapping(ctx, params)
 	if err != nil {
 		if changepreview.IsRefusal(err) {
 			return changepreview.WarnWouldFail(
@@ -194,7 +194,7 @@ func (t *ClearAccountingMappingTool) Preview(
 	)
 	if _, err = t.history.GuardHistory(
 		ctx,
-		toolparams.TenantFrom(&params),
+		toolparams.TenantFrom(params),
 		row,
 		false,
 	); err != nil {
@@ -225,9 +225,9 @@ type accountingRecordDraft struct {
 
 func (t *CreateAccountingReferenceRecordTool) Preview(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) (*agentpreview.ToolPreview, error) {
-	row, err := t.mapping(ctx, &params)
+	row, err := t.mapping(ctx, params)
 	if err != nil {
 		if changepreview.IsRefusal(err) {
 			return changepreview.WarnWouldFail(
@@ -244,7 +244,7 @@ func (t *CreateAccountingReferenceRecordTool) Preview(
 		return nil, err
 	}
 
-	name := t.requestedName(&params, row)
+	name := t.requestedName(params, row)
 	created, err := toolpreview.Create(toolpreview.Record{
 		Resource: permission.ResourceAccountingIntegration,
 		Label:    name,
@@ -302,9 +302,9 @@ func (t *CreateAccountingReferenceRecordTool) requestedName(
 
 func (t *RefreshAccountingReferenceDataTool) Preview(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) (*agentpreview.ToolPreview, error) {
-	_, summary, err := t.setup(ctx, &params)
+	_, summary, err := t.setup(ctx, params)
 	if err != nil {
 		if changepreview.IsRefusal(err) {
 			return changepreview.WarnWouldFail(

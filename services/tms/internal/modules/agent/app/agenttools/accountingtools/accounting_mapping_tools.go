@@ -281,17 +281,17 @@ func (t *SetAccountingMappingTool) request(
 
 func (t *SetAccountingMappingTool) Validate(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	_, _, _, err := t.request(ctx, &params)
+	_, _, _, err := t.request(ctx, params)
 	return err
 }
 
 func (t *SetAccountingMappingTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	req, _, _, err := t.request(ctx, &params)
+	req, _, _, err := t.request(ctx, params)
 	if err != nil {
 		return err
 	}
@@ -364,22 +364,22 @@ func (t *ClearAccountingMappingTool) mapping(
 
 func (t *ClearAccountingMappingTool) Validate(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	_, err := t.mapping(ctx, &params)
+	_, err := t.mapping(ctx, params)
 	return err
 }
 
 func (t *ClearAccountingMappingTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	row, err := t.mapping(ctx, &params)
+	row, err := t.mapping(ctx, params)
 	if err != nil {
 		return err
 	}
 	_, err = t.decisions.Clear(ctx, &accountingmappingports.AccountingMappingActionRequest{
-		TenantInfo: toolparams.TenantFrom(&params),
+		TenantInfo: toolparams.TenantFrom(params),
 		UserID:     params.Actor.UserID,
 		ID:         row.ID,
 		Source:     accountingmapping.MappingSourceAgent,
@@ -470,24 +470,24 @@ func (t *CreateAccountingReferenceRecordTool) mapping(
 
 func (t *CreateAccountingReferenceRecordTool) Validate(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	_, err := t.mapping(ctx, &params)
+	_, err := t.mapping(ctx, params)
 	return err
 }
 
 func (t *CreateAccountingReferenceRecordTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	row, err := t.mapping(ctx, &params)
+	row, err := t.mapping(ctx, params)
 	if err != nil {
 		return err
 	}
 	_, err = t.creator.CreateReferenceRecord(
 		ctx,
 		&accountingmappingports.CreateAccountingReferenceRecordRequest{
-			TenantInfo: toolparams.TenantFrom(&params),
+			TenantInfo: toolparams.TenantFrom(params),
 			UserID:     params.Actor.UserID,
 			MappingID:  row.ID,
 			Name:       strings.TrimSpace(toolparams.OptionalString(params.Params, "name")),
@@ -592,17 +592,17 @@ func (t *RefreshAccountingReferenceDataTool) setup(
 
 func (t *RefreshAccountingReferenceDataTool) Validate(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	_, _, err := t.setup(ctx, &params)
+	_, _, err := t.setup(ctx, params)
 	return err
 }
 
 func (t *RefreshAccountingReferenceDataTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	req, _, err := t.setup(ctx, &params)
+	req, _, err := t.setup(ctx, params)
 	if err != nil {
 		return err
 	}

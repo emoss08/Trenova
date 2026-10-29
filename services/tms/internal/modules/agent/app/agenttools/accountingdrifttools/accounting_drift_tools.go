@@ -205,17 +205,17 @@ func (t *ResolveAccountingDriftTool) plan(
 
 func (t *ResolveAccountingDriftTool) Validate(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	_, _, err := t.plan(ctx, &params)
+	_, _, err := t.plan(ctx, params)
 	return err
 }
 
 func (t *ResolveAccountingDriftTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	req, _, err := t.plan(ctx, &params)
+	req, _, err := t.plan(ctx, params)
 	if err != nil {
 		return err
 	}
@@ -320,17 +320,17 @@ func (t *DismissAccountingDriftTool) plan(
 
 func (t *DismissAccountingDriftTool) Validate(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	_, _, err := t.plan(ctx, &params)
+	_, _, err := t.plan(ctx, params)
 	return err
 }
 
 func (t *DismissAccountingDriftTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	req, _, err := t.plan(ctx, &params)
+	req, _, err := t.plan(ctx, params)
 	if err != nil {
 		return err
 	}
@@ -407,20 +407,20 @@ func (t *CheckAccountingDriftTool) setup(
 
 func (t *CheckAccountingDriftTool) Validate(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	_, _, err := t.setup(ctx, &params)
+	_, _, err := t.setup(ctx, params)
 	return err
 }
 
 func (t *CheckAccountingDriftTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	system, _, err := t.setup(ctx, &params)
+	system, _, err := t.setup(ctx, params)
 	if err != nil {
 		return err
 	}
-	_, err = t.drift.CheckNow(ctx, toolparams.TenantFrom(&params), system)
+	_, err = t.drift.CheckNow(ctx, toolparams.TenantFrom(params), system)
 	return err
 }

@@ -139,9 +139,9 @@ func (t *CorrectChargeCodeTool) Policy() agenttoolports.ToolPolicy {
 
 func (t *CorrectChargeCodeTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	request, err := t.request(&params)
+	request, err := t.request(params)
 	if err != nil {
 		return err
 	}
@@ -156,9 +156,9 @@ func (t *CorrectChargeCodeTool) Execute(
 // model before it is proposed.
 func (t *CorrectChargeCodeTool) Validate(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	return toolspec.PreviewValidates(ctx, t, &params)
+	return toolspec.PreviewValidates(ctx, t, params)
 }
 
 // request is the charge edit the preview and the write both make: the

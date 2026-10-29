@@ -145,9 +145,9 @@ func refusedRecord(
 
 func (t *RetryEDIMessageDeliveryTool) Preview(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) (*agentpreview.ToolPreview, error) {
-	ids, err := ediRecordSet(t, &params, paramEDIMessageIDs)
+	ids, err := ediRecordSet(t, params, paramEDIMessageIDs)
 	if err != nil {
 		return nil, err
 	}
@@ -159,7 +159,7 @@ func (t *RetryEDIMessageDeliveryTool) Preview(
 			ctx,
 			&edidelivery.RetryMessageDeliveryRequest{
 				MessageID:  id,
-				TenantInfo: toolparams.TenantFrom(&params),
+				TenantInfo: toolparams.TenantFrom(params),
 			},
 		)
 		if planErr != nil {
@@ -192,9 +192,9 @@ func (t *RetryEDIMessageDeliveryTool) Preview(
 
 func (t *ReplayEDIMessageTool) Preview(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) (*agentpreview.ToolPreview, error) {
-	req, err := t.request(&params)
+	req, err := t.request(params)
 	if err != nil {
 		return nil, err
 	}
@@ -224,9 +224,9 @@ func (t *ReplayEDIMessageTool) Preview(
 
 func (t *ReprocessEDIInboundFilesTool) Preview(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) (*agentpreview.ToolPreview, error) {
-	ids, err := ediRecordSet(t, &params, paramEDIInboundFileIDs)
+	ids, err := ediRecordSet(t, params, paramEDIInboundFileIDs)
 	if err != nil {
 		return nil, err
 	}
@@ -234,7 +234,7 @@ func (t *ReprocessEDIInboundFilesTool) Preview(
 	checked, more := previewedIDs(ids)
 	planned := make([]plannedEDIRecord, 0, len(checked))
 	for _, id := range checked {
-		record, pErr := t.planFile(ctx, &params, id)
+		record, pErr := t.planFile(ctx, params, id)
 		if pErr != nil {
 			return nil, pErr
 		}

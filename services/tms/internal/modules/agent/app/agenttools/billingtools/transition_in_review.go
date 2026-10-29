@@ -91,7 +91,7 @@ const inReviewConditionDescription = "An item on hold was held there by a person
 
 func (t *TransitionToInReviewTool) tierLimit(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // a TierCondition passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) agent.AutonomyTier {
 	if params.Actor == nil {
 		return agent.TierPropose
@@ -105,7 +105,7 @@ func (t *TransitionToInReviewTool) tierLimit(
 		return agent.TierPropose
 	}
 
-	return t.tierFor(ctx, toolparams.TenantFrom(&params), itemID)
+	return t.tierFor(ctx, toolparams.TenantFrom(params), itemID)
 }
 
 // tierFor is the reach one item allows: a held item waits for a person, and
@@ -220,9 +220,9 @@ func (t *TransitionToInReviewTool) move(
 
 func (t *TransitionToInReviewTool) Validate(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	move, err := t.move(ctx, &params)
+	move, err := t.move(ctx, params)
 	if err != nil {
 		return err
 	}
@@ -233,13 +233,13 @@ func (t *TransitionToInReviewTool) Validate(
 
 func (t *TransitionToInReviewTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	if err := toolguard.GuardExecute(t, &params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
 	}
 
-	move, err := t.move(ctx, &params)
+	move, err := t.move(ctx, params)
 	if err != nil {
 		return err
 	}

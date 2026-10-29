@@ -183,7 +183,7 @@ func (t *CreateDashboardTool) Policy() agenttoolports.ToolPolicy {
 
 func (t *CreateDashboardTool) Validate(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
 	if err := t.validateArgs(params.Params); err != nil {
 		return err
@@ -192,7 +192,7 @@ func (t *CreateDashboardTool) Validate(
 	return checkTileTargets(
 		ctx,
 		t.dashboards,
-		toolparams.TenantFrom(&params),
+		toolparams.TenantFrom(params),
 		tileParams(params.Params),
 		"tiles",
 	)
@@ -262,13 +262,13 @@ func validateTiles(tiles []map[string]any, multiErr *errortypes.MultiError) {
 
 func (t *CreateDashboardTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	if err := toolguard.GuardExecute(t, &params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
 	}
 
-	request, err := t.request(&params)
+	request, err := t.request(params)
 	if err != nil {
 		return err
 	}
@@ -372,13 +372,13 @@ func (t *AddDashboardTileTool) Policy() agenttoolports.ToolPolicy {
 
 func (t *AddDashboardTileTool) Validate(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
 	if err := t.validateArgs(params.Params); err != nil {
 		return err
 	}
 
-	tenant := toolparams.TenantFrom(&params)
+	tenant := toolparams.TenantFrom(params)
 	dashboardID, err := pulid.Parse(toolparams.OptionalString(params.Params, "dashboardId"))
 	if err == nil {
 		_, err = t.dashboards.GetDashboard(ctx, &reportdashboardservice.GetDashboardRequest{
@@ -422,13 +422,13 @@ func (t *AddDashboardTileTool) validateArgs(params map[string]any) error {
 
 func (t *AddDashboardTileTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	if err := toolguard.GuardExecute(t, &params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
 	}
 
-	request, _, err := t.request(ctx, &params)
+	request, _, err := t.request(ctx, params)
 	if err != nil {
 		return err
 	}

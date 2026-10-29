@@ -32,9 +32,9 @@ var transferPreviewLabels = map[string]string{
 
 func (t *EdiTransferDecisionTool) Preview(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) (*agentpreview.ToolPreview, error) {
-	call, outcome, err := t.outcome(ctx, &params)
+	call, outcome, err := t.outcome(ctx, params)
 	if err != nil {
 		if changepreview.IsRefusal(err) || errortypes.IsNotFoundError(err) {
 			return changepreview.WarnWouldFail(toolpreview.Build(t.decision.description), err), nil

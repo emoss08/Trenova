@@ -87,21 +87,21 @@ func (e homeEditor) PlanPreview(
 
 func (t *AddHomeWidgetTool) Preview(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) (*agentpreview.ToolPreview, error) {
-	return t.editor.PlanPreview(ctx, &params, t.edit(&params))
+	return t.editor.PlanPreview(ctx, params, t.edit(params))
 }
 
 func (t *RemoveHomeWidgetTool) Preview(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) (*agentpreview.ToolPreview, error) {
-	return t.editor.PlanPreview(ctx, &params, t.edit(&params))
+	return t.editor.PlanPreview(ctx, params, t.edit(params))
 }
 
 func (t *ArrangeHomeLayoutTool) Preview(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) (*agentpreview.ToolPreview, error) {
-	return t.editor.PlanPreview(ctx, &params, t.edit(&params))
+	return t.editor.PlanPreview(ctx, params, t.edit(params))
 }

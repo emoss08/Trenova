@@ -40,14 +40,14 @@ func (a resolveWorkItemArgs) close(
 
 func (t *ResolveBankReceiptWorkItemTool) Preview(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) (*agentpreview.ToolPreview, error) {
-	args, err := t.arguments(&params)
+	args, err := t.arguments(params)
 	if err != nil {
 		return nil, err
 	}
 
-	tenant := toolparams.TenantFrom(&params)
+	tenant := toolparams.TenantFrom(params)
 	item, err := t.items.Get(ctx, &bankreceiptworkitemports.GetBankReceiptWorkItemRequest{
 		WorkItemID: args.id,
 		TenantInfo: tenant,

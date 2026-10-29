@@ -127,9 +127,9 @@ func MessageCondition(desk MessageReader) *agenttoolports.TierCondition {
 			"and anything held, quarantined, settled or unreadable waits for a person.",
 		Limit: func(
 			ctx context.Context,
-			params agenttoolports.ToolExecuteParams,
+			params *agenttoolports.ToolExecuteParams,
 		) agent.AutonomyTier {
-			return inboundTierLimit(ctx, desk, &params)
+			return inboundTierLimit(ctx, desk, params)
 		},
 	}
 }
@@ -245,13 +245,13 @@ func (t *LinkInboundMessageTool) request(
 
 func (t *LinkInboundMessageTool) Validate(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	req, err := t.request(&params)
+	req, err := t.request(params)
 	if err != nil {
 		return err
 	}
-	if _, err = loadInboundMessage(ctx, t.inbox, &params); err != nil {
+	if _, err = loadInboundMessage(ctx, t.inbox, params); err != nil {
 		return err
 	}
 
@@ -260,13 +260,13 @@ func (t *LinkInboundMessageTool) Validate(
 
 func (t *LinkInboundMessageTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	if err := toolguard.GuardExecute(t, &params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
 	}
 
-	req, err := t.request(&params)
+	req, err := t.request(params)
 	if err != nil {
 		return err
 	}
@@ -390,27 +390,27 @@ func (t *MarkInboundMessageTool) settle(
 
 func (t *MarkInboundMessageTool) Validate(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	_, _, _, err := t.settle(ctx, &params)
+	_, _, _, err := t.settle(ctx, params)
 
 	return err
 }
 
 func (t *MarkInboundMessageTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	if err := toolguard.GuardExecute(t, &params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
 	}
 
-	message, status, note, err := t.settle(ctx, &params)
+	message, status, note, err := t.settle(ctx, params)
 	if err != nil {
 		return err
 	}
 
-	_, err = t.inbox.Review(ctx, reviewRequest(&params, message, status, note))
+	_, err = t.inbox.Review(ctx, reviewRequest(params, message, status, note))
 
 	return err
 }
@@ -611,18 +611,18 @@ func replyable(message *inboundmessage.InboundMessage) error {
 
 func (t *ReplyToInboundMessageTool) Validate(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	_, err := t.prepare(ctx, &params)
+	_, err := t.prepare(ctx, params)
 
 	return err
 }
 
 func (t *ReplyToInboundMessageTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	composed, err := t.compose(ctx, &params)
+	composed, err := t.compose(ctx, params)
 	if err != nil {
 		return err
 	}

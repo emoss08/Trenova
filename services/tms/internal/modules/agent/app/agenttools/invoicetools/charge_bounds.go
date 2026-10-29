@@ -22,12 +22,12 @@ const correctChargeBoundText = "Runs on its own only while nothing has been invo
 
 func (t *CorrectChargeCodeTool) withinBounds(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the TierCondition bounds pass params by value
+	params *agenttoolports.ToolExecuteParams,
 ) agenttoolports.MoneyBound {
 	if t.billing == nil || t.profiles == nil {
 		return agenttoolports.OutsideMoneyBound(agenttooltrust.HeldByMoneyUnproven)
 	}
-	request, err := t.request(&params)
+	request, err := t.request(params)
 	if err != nil {
 		return agenttoolports.OutsideMoneyBound(agenttooltrust.HeldByMoneyUnproven)
 	}

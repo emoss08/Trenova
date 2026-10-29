@@ -249,9 +249,9 @@ func (t *TransferToBillingTool) request(
 
 func (t *TransferToBillingTool) ResolveSelection(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolSelectionResolver interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) (map[string]any, error) {
-	request, err := t.request(&params)
+	request, err := t.request(params)
 	if err != nil {
 		return nil, err
 	}
@@ -259,7 +259,7 @@ func (t *TransferToBillingTool) ResolveSelection(
 		return withoutCriteria(params.Params), nil
 	}
 
-	ids, _, err := t.transferable(ctx, &params, &request)
+	ids, _, err := t.transferable(ctx, params, &request)
 	if err != nil {
 		return nil, err
 	}
@@ -379,16 +379,16 @@ func isBillType(billType billingqueue.BillType) bool {
 
 func (t *TransferToBillingTool) Validate(
 	_ context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	_, err := t.request(&params)
+	_, err := t.request(params)
 
 	return err
 }
 
 func (t *TransferToBillingTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
 	_, err := t.ExecuteWithResult(ctx, params)
 
@@ -400,12 +400,12 @@ func (t *TransferToBillingTool) Execute(
 // set was handed to.
 func (t *TransferToBillingTool) ExecuteWithResult(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) (*agentrecord.ToolExecutionResult, error) {
-	if err := toolguard.GuardExecute(t, &params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return nil, err
 	}
-	request, err := t.request(&params)
+	request, err := t.request(params)
 	if err != nil {
 		return nil, err
 	}
@@ -414,7 +414,7 @@ func (t *TransferToBillingTool) ExecuteWithResult(
 	}
 
 	if request.background() {
-		return t.startRun(ctx, &params, &request)
+		return t.startRun(ctx, params, &request)
 	}
 
 	response, err := t.shipments.BulkTransferToBilling(

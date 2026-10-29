@@ -108,9 +108,9 @@ func (k equipmentKind[T]) PlanPreview(
 
 func (t *UpdateTractorStatusTool) Preview(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) (*agentpreview.ToolPreview, error) {
-	if err := toolguard.GuardPreview(t, &params); err != nil {
+	if err := toolguard.GuardPreview(t, params); err != nil {
 		return nil, err
 	}
 
@@ -120,7 +120,7 @@ func (t *UpdateTractorStatusTool) Preview(
 	}
 
 	units, err := t.tractors.GetByIDs(ctx, tractorports.GetTractorsByIDsRequest{
-		TenantInfo: toolparams.TenantFrom(&params),
+		TenantInfo: toolparams.TenantFrom(params),
 		TractorIDs: ids,
 	})
 	if err != nil {
@@ -132,9 +132,9 @@ func (t *UpdateTractorStatusTool) Preview(
 
 func (t *UpdateTrailerStatusTool) Preview(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) (*agentpreview.ToolPreview, error) {
-	if err := toolguard.GuardPreview(t, &params); err != nil {
+	if err := toolguard.GuardPreview(t, params); err != nil {
 		return nil, err
 	}
 
@@ -144,7 +144,7 @@ func (t *UpdateTrailerStatusTool) Preview(
 	}
 
 	units, err := t.trailers.GetByIDs(ctx, trailerports.GetTrailersByIDsRequest{
-		TenantInfo: toolparams.TenantFrom(&params),
+		TenantInfo: toolparams.TenantFrom(params),
 		TrailerIDs: ids,
 	})
 	if err != nil {

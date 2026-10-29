@@ -58,17 +58,17 @@ func inboundLinkOptions() []toolpreview.Option {
 
 func (t *LinkInboundMessageTool) Preview(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) (*agentpreview.ToolPreview, error) {
-	if err := toolguard.GuardPreview(t, &params); err != nil {
+	if err := toolguard.GuardPreview(t, params); err != nil {
 		return nil, err
 	}
 
-	req, err := t.request(&params)
+	req, err := t.request(params)
 	if err != nil {
 		return nil, err
 	}
-	message, err := loadInboundMessage(ctx, t.inbox, &params)
+	message, err := loadInboundMessage(ctx, t.inbox, params)
 	if err != nil {
 		return nil, err
 	}
@@ -101,13 +101,13 @@ func (t *LinkInboundMessageTool) Preview(
 
 func (t *MarkInboundMessageTool) Preview(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) (*agentpreview.ToolPreview, error) {
-	if err := toolguard.GuardPreview(t, &params); err != nil {
+	if err := toolguard.GuardPreview(t, params); err != nil {
 		return nil, err
 	}
 
-	message, status, note, err := t.settle(ctx, &params)
+	message, status, note, err := t.settle(ctx, params)
 	if err != nil {
 		if changepreview.IsRefusal(err) || errors.Is(err, errInboundQuarantined) {
 			return changepreview.WarnWouldFail(
@@ -119,7 +119,7 @@ func (t *MarkInboundMessageTool) Preview(
 		return nil, err
 	}
 
-	review := reviewRequest(&params, message, status, note)
+	review := reviewRequest(params, message, status, note)
 	now := timeutils.NowUnix()
 	plan, err := changepreview.PlanArchive(
 		MessageRecord(message),

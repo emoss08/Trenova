@@ -131,9 +131,9 @@ func (t *SetInvoiceFactoringOverrideTool) request(
 
 func (t *SetInvoiceFactoringOverrideTool) Validate(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	req, err := t.request(&params)
+	req, err := t.request(params)
 	if err != nil {
 		return err
 	}
@@ -143,9 +143,9 @@ func (t *SetInvoiceFactoringOverrideTool) Validate(
 
 func (t *SetInvoiceFactoringOverrideTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	req, err := t.request(&params)
+	req, err := t.request(params)
 	if err != nil {
 		return err
 	}
@@ -155,10 +155,10 @@ func (t *SetInvoiceFactoringOverrideTool) Execute(
 
 func (t *SetInvoiceFactoringOverrideTool) Preview(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) (*agentpreview.ToolPreview, error) {
 	const summary = "Would change whether the invoice is factored."
-	req, err := t.request(&params)
+	req, err := t.request(params)
 	if err != nil {
 		return factoringkit.Refused(summary, err)
 	}
@@ -308,9 +308,9 @@ func (t *RequestMissingFactoringDocumentTool) request(
 
 func (t *RequestMissingFactoringDocumentTool) Validate(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	req, err := t.request(&params)
+	req, err := t.request(params)
 	if err != nil {
 		return err
 	}
@@ -320,9 +320,9 @@ func (t *RequestMissingFactoringDocumentTool) Validate(
 
 func (t *RequestMissingFactoringDocumentTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	req, err := t.request(&params)
+	req, err := t.request(params)
 	if err != nil {
 		return err
 	}
@@ -332,10 +332,10 @@ func (t *RequestMissingFactoringDocumentTool) Execute(
 
 func (t *RequestMissingFactoringDocumentTool) Preview(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) (*agentpreview.ToolPreview, error) {
 	const summary = "Would email a request for the invoice's missing documents."
-	req, err := t.request(&params)
+	req, err := t.request(params)
 	if err != nil {
 		return factoringkit.Refused(summary, err)
 	}

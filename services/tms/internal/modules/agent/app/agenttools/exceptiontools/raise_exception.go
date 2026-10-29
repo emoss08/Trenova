@@ -180,13 +180,13 @@ func (t *RaiseExceptionTool) Policy() agenttoolports.ToolPolicy {
 
 func (t *RaiseExceptionTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	if err := toolguard.GuardExecute(t, &params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
 	}
 
-	request, err := t.request(ctx, &params)
+	request, err := t.request(ctx, params)
 	if err != nil {
 		return err
 	}
@@ -261,16 +261,16 @@ func (t *RaiseExceptionTool) request(
 
 func (t *RaiseExceptionTool) Validate(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	if err := toolguard.GuardExecute(t, &params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
 	}
 
 	if _, err := givenEvidence(params.Params); err != nil {
 		return err
 	}
-	_, _, err := t.subject(ctx, &params)
+	_, _, err := t.subject(ctx, params)
 
 	return err
 }

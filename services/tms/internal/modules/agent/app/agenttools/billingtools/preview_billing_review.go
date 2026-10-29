@@ -23,9 +23,9 @@ var inReviewVolatileFields = []string{"reviewStartedAt"}
 
 func (t *TransitionToInReviewTool) Preview(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) (*agentpreview.ToolPreview, error) {
-	move, err := t.move(ctx, &params)
+	move, err := t.move(ctx, params)
 	if err != nil {
 		return nil, err
 	}

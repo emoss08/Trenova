@@ -91,9 +91,9 @@ func (t *ApproveBillingQueueItemTool) draftRequest(
 
 func (t *ApproveBillingQueueItemTool) Preview(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) (*agentpreview.ToolPreview, error) {
-	plan, item, err := t.planned(ctx, &params)
+	plan, item, err := t.planned(ctx, params)
 	if err != nil {
 		return nil, err
 	}
@@ -103,7 +103,7 @@ func (t *ApproveBillingQueueItemTool) Preview(
 		return plan.PlanPreview(summary + "."), nil
 	}
 
-	draftReq, err := t.draftRequest(&params)
+	draftReq, err := t.draftRequest(params)
 	if err != nil {
 		return nil, err
 	}
@@ -148,13 +148,13 @@ func (t *ApproveBillingQueueItemTool) Preview(
 // and names the invoice approval made, which invoice_post takes next.
 func (t *ApproveBillingQueueItemTool) ExecuteWithResult(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) (*agentrecord.ToolExecutionResult, error) {
 	if err := t.BillingQueueDecisionTool.Execute(ctx, params); err != nil {
 		return nil, err
 	}
 
-	draftReq, err := t.draftRequest(&params)
+	draftReq, err := t.draftRequest(params)
 	if err != nil {
 		return nil, err
 	}
@@ -181,7 +181,7 @@ func (t *ApproveBillingQueueItemTool) ExecuteWithResult(
 
 func (t *ApproveBillingQueueItemTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
 	_, err := t.ExecuteWithResult(ctx, params)
 

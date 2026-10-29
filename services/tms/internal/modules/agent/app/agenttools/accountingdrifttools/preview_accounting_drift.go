@@ -79,11 +79,11 @@ func applyDriftFix(
 
 func (t *ResolveAccountingDriftTool) Preview(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) (*agentpreview.ToolPreview, error) {
 	const refusedSummary = "Would fix a difference between the accounting system and Trenova."
 
-	_, fix, err := t.plan(ctx, &params)
+	_, fix, err := t.plan(ctx, params)
 	if err != nil {
 		return accountingtools.RefusedSync(refusedSummary, err)
 	}
@@ -108,11 +108,11 @@ func (t *ResolveAccountingDriftTool) Preview(
 
 func (t *DismissAccountingDriftTool) Preview(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) (*agentpreview.ToolPreview, error) {
 	const refusedSummary = "Would dismiss a difference between the accounting system and Trenova."
 
-	req, fix, err := t.plan(ctx, &params)
+	req, fix, err := t.plan(ctx, params)
 	if err != nil {
 		return accountingtools.RefusedSync(refusedSummary, err)
 	}
@@ -137,11 +137,11 @@ func (t *DismissAccountingDriftTool) Preview(
 
 func (t *CheckAccountingDriftTool) Preview(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) (*agentpreview.ToolPreview, error) {
 	const refusedSummary = "Would compare the accounting system with Trenova now."
 
-	_, overview, err := t.setup(ctx, &params)
+	_, overview, err := t.setup(ctx, params)
 	if err != nil {
 		return accountingtools.RefusedSync(refusedSummary, err)
 	}

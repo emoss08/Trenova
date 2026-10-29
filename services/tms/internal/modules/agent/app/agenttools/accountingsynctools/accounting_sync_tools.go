@@ -319,20 +319,20 @@ func (t *RetryAccountingSyncTool) plan(
 
 func (t *RetryAccountingSyncTool) Validate(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	_, err := t.plan(ctx, &params)
+	_, err := t.plan(ctx, params)
 	return err
 }
 
 func (t *RetryAccountingSyncTool) ResolveProposalSelection(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolProposalSelectionResolver interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) (map[string]any, error) {
 	if _, named := params.Params[ParamSyncRecordIDs]; named {
 		return params.Params, nil
 	}
-	if err := toolguard.GuardPreview(t, &params); err != nil {
+	if err := toolguard.GuardPreview(t, params); err != nil {
 		return nil, err
 	}
 	system, err := accountingtools.SystemFrom(params.Params)
@@ -351,7 +351,7 @@ func (t *RetryAccountingSyncTool) ResolveProposalSelection(
 		return params.Params, nil
 	}
 
-	candidates := retryCandidatesRequest(toolparams.TenantFrom(&params), system, categories)
+	candidates := retryCandidatesRequest(toolparams.TenantFrom(params), system, categories)
 	candidates.Cursor.Limit = maxSyncRetryIDs
 	page, err := t.reads.ListRecords(ctx, candidates)
 	if err != nil {
@@ -415,12 +415,12 @@ func joinCategories(categories []accountingsync.SyncErrorCategory) string {
 
 func (t *RetryAccountingSyncTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	if err := toolguard.GuardExecute(t, &params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
 	}
-	plan, err := t.plan(ctx, &params)
+	plan, err := t.plan(ctx, params)
 	if err != nil {
 		return err
 	}
@@ -534,17 +534,17 @@ func (t *SkipAccountingSyncTool) request(
 
 func (t *SkipAccountingSyncTool) Validate(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	_, _, err := t.request(ctx, &params)
+	_, _, err := t.request(ctx, params)
 	return err
 }
 
 func (t *SkipAccountingSyncTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	req, _, err := t.request(ctx, &params)
+	req, _, err := t.request(ctx, params)
 	if err != nil {
 		return err
 	}
@@ -636,17 +636,17 @@ func (t *redateAccountingSyncTool) request(
 
 func (t *redateAccountingSyncTool) Validate(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	_, _, err := t.request(ctx, &params)
+	_, _, err := t.request(ctx, params)
 	return err
 }
 
 func (t *redateAccountingSyncTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	req, _, err := t.request(ctx, &params)
+	req, _, err := t.request(ctx, params)
 	if err != nil {
 		return err
 	}
@@ -753,17 +753,17 @@ func (t *PauseAccountingSyncTool) request(
 
 func (t *PauseAccountingSyncTool) Validate(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	_, _, err := t.request(ctx, &params)
+	_, _, err := t.request(ctx, params)
 	return err
 }
 
 func (t *PauseAccountingSyncTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	req, _, err := t.request(ctx, &params)
+	req, _, err := t.request(ctx, params)
 	if err != nil {
 		return err
 	}
@@ -862,17 +862,17 @@ func (t *ResumeAccountingSyncTool) request(
 
 func (t *ResumeAccountingSyncTool) Validate(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	_, _, err := t.request(ctx, &params)
+	_, _, err := t.request(ctx, params)
 	return err
 }
 
 func (t *ResumeAccountingSyncTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	req, _, err := t.request(ctx, &params)
+	req, _, err := t.request(ctx, params)
 	if err != nil {
 		return err
 	}
@@ -1072,17 +1072,17 @@ func (t *RequestAccountingBackfillTool) plan(
 
 func (t *RequestAccountingBackfillTool) Validate(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	_, err := t.plan(ctx, &params)
+	_, err := t.plan(ctx, params)
 	return err
 }
 
 func (t *RequestAccountingBackfillTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	plan, err := t.plan(ctx, &params)
+	plan, err := t.plan(ctx, params)
 	if err != nil {
 		return err
 	}

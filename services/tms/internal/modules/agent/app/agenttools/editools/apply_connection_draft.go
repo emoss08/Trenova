@@ -163,19 +163,19 @@ func readiness(input *edispec.Input, draft *ediconnectiondraftports.ConnectionDr
 
 func (t *ApplyConnectionDraftTool) ResolveSelection(
 	_ context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolSelectionResolver interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) (map[string]any, error) {
 	return edispec.RedactQuotes(params.Params), nil
 }
 
 func (t *ApplyConnectionDraftTool) Validate(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	if err := toolguard.GuardPreview(t, &params); err != nil {
+	if err := toolguard.GuardPreview(t, params); err != nil {
 		return err
 	}
-	input, plan, err := t.plan(ctx, &params)
+	input, plan, err := t.plan(ctx, params)
 	if err != nil {
 		return err
 	}
@@ -184,7 +184,7 @@ func (t *ApplyConnectionDraftTool) Validate(
 
 func (t *ApplyConnectionDraftTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
 	_, err := t.ExecuteWithResult(ctx, params)
 	return err
@@ -192,16 +192,16 @@ func (t *ApplyConnectionDraftTool) Execute(
 
 func (t *ApplyConnectionDraftTool) ExecuteWithResult(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) (*agentrecord.ToolExecutionResult, error) {
-	if err := toolguard.GuardExecute(t, &params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return nil, err
 	}
 	if !params.ApprovedFromProposal() {
 		return nil, ErrEDIDecisionNeedsAPerson
 	}
 
-	input, err := t.input(ctx, &params)
+	input, err := t.input(ctx, params)
 	if err != nil {
 		return nil, err
 	}

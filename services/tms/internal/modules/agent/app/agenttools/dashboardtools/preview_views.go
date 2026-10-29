@@ -34,13 +34,13 @@ func savedViewAudience(visibility tableconfiguration.Visibility) string {
 
 func (t *SaveTableViewTool) Preview(
 	_ context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) (*agentpreview.ToolPreview, error) {
-	if err := toolguard.GuardPreview(t, &params); err != nil {
+	if err := toolguard.GuardPreview(t, params); err != nil {
 		return nil, err
 	}
 
-	draft, err := t.Draft(&params)
+	draft, err := t.Draft(params)
 	if err != nil {
 		return changepreview.WarnWouldFail(toolpreview.Build("Would save a table view."), err), nil
 	}
@@ -48,7 +48,7 @@ func (t *SaveTableViewTool) Preview(
 	change, err := toolpreview.Create(toolpreview.Record{
 		Resource: permission.ResourceTableConfiguration,
 		Label:    draft.name,
-	}, draft.configuration(&params, nil), savedViewOptions()...)
+	}, draft.configuration(params, nil), savedViewOptions()...)
 	if err != nil {
 		return nil, err
 	}

@@ -178,17 +178,17 @@ func (t *DraftFactoringNoaTool) request(
 
 func (t *DraftFactoringNoaTool) Validate(
 	_ context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	_, err := t.request(&params)
+	_, err := t.request(params)
 	return err
 }
 
 func (t *DraftFactoringNoaTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	req, err := t.request(&params)
+	req, err := t.request(params)
 	if err != nil {
 		return err
 	}
@@ -198,10 +198,10 @@ func (t *DraftFactoringNoaTool) Execute(
 
 func (t *DraftFactoringNoaTool) Preview(
 	_ context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) (*agentpreview.ToolPreview, error) {
 	const summary = "Would draft a notice of assignment for the customer. Nothing is sent."
-	req, err := t.request(&params)
+	req, err := t.request(params)
 	if err != nil {
 		return factoringkit.Refused(summary, err)
 	}
@@ -313,9 +313,9 @@ func (t *SendFactoringNoaTool) request(
 
 func (t *SendFactoringNoaTool) Validate(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	req, err := t.request(&params)
+	req, err := t.request(params)
 	if err != nil {
 		return err
 	}
@@ -325,9 +325,9 @@ func (t *SendFactoringNoaTool) Validate(
 
 func (t *SendFactoringNoaTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	req, err := t.request(&params)
+	req, err := t.request(params)
 	if err != nil {
 		return err
 	}
@@ -337,10 +337,10 @@ func (t *SendFactoringNoaTool) Execute(
 
 func (t *SendFactoringNoaTool) Preview(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) (*agentpreview.ToolPreview, error) {
 	const summary = "Would email the customer the notice of assignment."
-	req, err := t.request(&params)
+	req, err := t.request(params)
 	if err != nil {
 		return factoringkit.Refused(summary, err)
 	}
@@ -500,9 +500,9 @@ func (a *acknowledgement) apply(noa *factoring.Noa) error {
 
 func (t *RecordFactoringNoaAcknowledgementTool) Validate(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	planned, err := t.plan(ctx, &params)
+	planned, err := t.plan(ctx, params)
 	if err != nil {
 		return err
 	}
@@ -511,9 +511,9 @@ func (t *RecordFactoringNoaAcknowledgementTool) Validate(
 
 func (t *RecordFactoringNoaAcknowledgementTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	planned, err := t.plan(ctx, &params)
+	planned, err := t.plan(ctx, params)
 	if err != nil {
 		return err
 	}
@@ -523,10 +523,10 @@ func (t *RecordFactoringNoaAcknowledgementTool) Execute(
 
 func (t *RecordFactoringNoaAcknowledgementTool) Preview(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) (*agentpreview.ToolPreview, error) {
 	const summary = "Would record that the customer signed the notice of assignment."
-	planned, err := t.plan(ctx, &params)
+	planned, err := t.plan(ctx, params)
 	if err != nil {
 		return factoringkit.Refused(summary, err)
 	}
@@ -625,9 +625,9 @@ func (r *release) apply(noa *factoring.Noa) error {
 
 func (t *ReleaseFactoringNoaTool) Validate(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	planned, err := t.plan(ctx, &params)
+	planned, err := t.plan(ctx, params)
 	if err != nil {
 		return err
 	}
@@ -636,9 +636,9 @@ func (t *ReleaseFactoringNoaTool) Validate(
 
 func (t *ReleaseFactoringNoaTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	planned, err := t.plan(ctx, &params)
+	planned, err := t.plan(ctx, params)
 	if err != nil {
 		return err
 	}
@@ -648,10 +648,10 @@ func (t *ReleaseFactoringNoaTool) Execute(
 
 func (t *ReleaseFactoringNoaTool) Preview(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) (*agentpreview.ToolPreview, error) {
 	const summary = "Would release the notice of assignment."
-	planned, err := t.plan(ctx, &params)
+	planned, err := t.plan(ctx, params)
 	if err != nil {
 		return factoringkit.Refused(summary, err)
 	}

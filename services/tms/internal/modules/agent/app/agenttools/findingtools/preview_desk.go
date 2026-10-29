@@ -34,14 +34,14 @@ func detentionOccurrenceRecord(occurrence *detention.DetentionOccurrence) toolpr
 
 func (t *EscalateDetentionTool) Preview(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) (*agentpreview.ToolPreview, error) {
-	occurrenceID, reason, err := t.arguments(&params)
+	occurrenceID, reason, err := t.arguments(params)
 	if err != nil {
 		return nil, err
 	}
 
-	occurrence, err := t.occurrence(ctx, occurrenceID, &params)
+	occurrence, err := t.occurrence(ctx, occurrenceID, params)
 	if err != nil {
 		return nil, err
 	}
@@ -79,9 +79,9 @@ func (t *EscalateDetentionTool) Preview(
 
 func (t *PlaceWorkerDispatchHoldTool) Preview(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) (*agentpreview.ToolPreview, error) {
-	request, err := t.arguments(&params)
+	request, err := t.arguments(params)
 	if err != nil {
 		return nil, err
 	}
@@ -126,9 +126,9 @@ func carrierIntelRecord(event *carrierintelevent.CarrierIntelEvent) toolpreview.
 
 func (t *carrierIntelEventTool) Preview(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) (*agentpreview.ToolPreview, error) {
-	request, err := t.arguments(&params)
+	request, err := t.arguments(params)
 	if err != nil {
 		return nil, err
 	}
