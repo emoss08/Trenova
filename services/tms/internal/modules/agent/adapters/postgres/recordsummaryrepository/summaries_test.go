@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/board"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/testutil/keeltest"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -57,8 +57,8 @@ func TestPlainSummaries_CoverEveryRowKindWithoutMeasures(t *testing.T) {
 }
 
 func stop(
-	kind shipment.StopType,
-	status shipment.StopStatus,
+	kind shipmentvocab.StopType,
+	status shipmentvocab.StopStatus,
 	end int64,
 	arrival *int64,
 	city string,
@@ -77,7 +77,13 @@ func estimated(row stopRow, arrival int64) stopRow {
 func TestLateness_MeasuresTheNextStopAgainstItsWindow(t *testing.T) {
 	t.Parallel()
 
-	pickedUp := stop(shipment.StopTypePickup, shipment.StopStatusCompleted, now-20000, at(now-21000), "Dallas")
+	pickedUp := stop(
+		shipmentvocab.StopTypePickup,
+		shipmentvocab.StopStatusCompleted,
+		now-20000,
+		at(now-21000),
+		"Dallas",
+	)
 
 	cases := map[string]struct {
 		route   []stopRow
@@ -88,42 +94,99 @@ func TestLateness_MeasuresTheNextStopAgainstItsWindow(t *testing.T) {
 	}{
 		"on the road and past the window": {
 			route: []stopRow{pickedUp,
-				stop(shipment.StopTypeDelivery, shipment.StopStatusNew, now-6000, nil, "Memphis")},
+				stop(
+					shipmentvocab.StopTypeDelivery,
+					shipmentvocab.StopStatusNew,
+					now-6000,
+					nil,
+					"Memphis",
+				)},
 			state: board.MeasureLate, behind: 6000, tone: board.ToneWarn, measure: true,
 		},
 		"waiting at the stop past the window": {
 			route: []stopRow{pickedUp,
-				stop(shipment.StopTypeDelivery, shipment.StopStatusInTransit, now-1800, at(now-2400), "Memphis")},
+				stop(
+					shipmentvocab.StopTypeDelivery,
+					shipmentvocab.StopStatusInTransit,
+					now-1800,
+					at(now-2400),
+					"Memphis",
+				)},
 			state: board.MeasureHeld, behind: 1800, tone: board.ToneWarn, measure: true,
 		},
 		"before the window closes, estimated inside it": {
 			route: []stopRow{pickedUp,
-				estimated(stop(shipment.StopTypeDelivery, shipment.StopStatusNew, now+3600, nil, "Memphis"), now+1800)},
+				estimated(
+					stop(
+						shipmentvocab.StopTypeDelivery,
+						shipmentvocab.StopStatusNew,
+						now+3600,
+						nil,
+						"Memphis",
+					),
+					now+1800,
+				)},
 			state: board.MeasureOnTime, behind: 0, tone: board.ToneOK, measure: true,
 		},
 		"before the window closes, estimated after it": {
 			route: []stopRow{pickedUp,
-				estimated(stop(shipment.StopTypeDelivery, shipment.StopStatusNew, now+3600, nil, "Memphis"), now+3960)},
+				estimated(
+					stop(
+						shipmentvocab.StopTypeDelivery,
+						shipmentvocab.StopStatusNew,
+						now+3600,
+						nil,
+						"Memphis",
+					),
+					now+3960,
+				)},
 			state: board.MeasureProjected, behind: 360, tone: board.ToneWarn, measure: true,
 		},
 		"before the window closes, with no estimate": {
 			route: []stopRow{pickedUp,
-				stop(shipment.StopTypeDelivery, shipment.StopStatusNew, now+3600, nil, "Memphis")},
+				stop(
+					shipmentvocab.StopTypeDelivery,
+					shipmentvocab.StopStatusNew,
+					now+3600,
+					nil,
+					"Memphis",
+				)},
 			state: board.MeasureDue, behind: 0, tone: "", measure: true,
 		},
 		"past the window, whatever the estimate says": {
 			route: []stopRow{pickedUp,
-				estimated(stop(shipment.StopTypeDelivery, shipment.StopStatusNew, now-600, nil, "Memphis"), now+600)},
+				estimated(
+					stop(
+						shipmentvocab.StopTypeDelivery,
+						shipmentvocab.StopStatusNew,
+						now-600,
+						nil,
+						"Memphis",
+					),
+					now+600,
+				)},
 			state: board.MeasureLate, behind: 600, tone: board.ToneWarn, measure: true,
 		},
 		"delivered after the window": {
 			route: []stopRow{pickedUp,
-				stop(shipment.StopTypeDelivery, shipment.StopStatusCompleted, now-9000, at(now-6000), "Memphis")},
+				stop(
+					shipmentvocab.StopTypeDelivery,
+					shipmentvocab.StopStatusCompleted,
+					now-9000,
+					at(now-6000),
+					"Memphis",
+				)},
 			state: board.MeasureDelivered, behind: 3000, tone: board.ToneInfo, measure: true,
 		},
 		"delivered in the window": {
 			route: []stopRow{pickedUp,
-				stop(shipment.StopTypeDelivery, shipment.StopStatusCompleted, now-6000, at(now-9000), "Memphis")},
+				stop(
+					shipmentvocab.StopTypeDelivery,
+					shipmentvocab.StopStatusCompleted,
+					now-6000,
+					at(now-9000),
+					"Memphis",
+				)},
 			state: board.MeasureDelivered, behind: 0, tone: board.ToneOK, measure: true,
 		},
 		"no stops": {measure: false},
@@ -152,10 +215,16 @@ func TestLane_RunsFromTheFirstPickupToTheLastDelivery(t *testing.T) {
 	t.Parallel()
 
 	route := []stopRow{
-		stop(shipment.StopTypePickup, shipment.StopStatusCompleted, now, nil, "Dallas"),
-		stop(shipment.StopTypeSplitPickup, shipment.StopStatusCompleted, now, nil, "Fort Worth"),
-		stop(shipment.StopTypeDelivery, shipment.StopStatusNew, now, nil, "Shreveport"),
-		{Type: string(shipment.StopTypeDelivery), City: "Memphis", State: "TN"},
+		stop(shipmentvocab.StopTypePickup, shipmentvocab.StopStatusCompleted, now, nil, "Dallas"),
+		stop(
+			shipmentvocab.StopTypeSplitPickup,
+			shipmentvocab.StopStatusCompleted,
+			now,
+			nil,
+			"Fort Worth",
+		),
+		stop(shipmentvocab.StopTypeDelivery, shipmentvocab.StopStatusNew, now, nil, "Shreveport"),
+		{Type: string(shipmentvocab.StopTypeDelivery), City: "Memphis", State: "TN"},
 	}
 
 	assert.Equal(t, "Dallas, TX → Memphis, TN", lane(route))

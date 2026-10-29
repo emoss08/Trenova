@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/app/detentionengine"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionpolicy"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
@@ -61,8 +61,8 @@ func baseSnapshot() detentionpolicy.PolicySnapshot {
 func baseInput(snap detentionpolicy.PolicySnapshot) detentionengine.ComputeInput {
 	return detentionengine.ComputeInput{
 		Snapshot:        snap,
-		StopType:        shipment.StopTypeDelivery,
-		ScheduleType:    shipment.StopScheduleTypeAppointment,
+		StopType:        shipmentvocab.StopTypeDelivery,
+		ScheduleType:    shipmentvocab.StopScheduleTypeAppointment,
 		ArrivedAt:       ptr(baseTime),
 		Now:             baseTime + 10*hour,
 		Location:        time.UTC,
@@ -869,7 +869,7 @@ func TestCompute_StopTypeFreeTimeOverrideIsHonoredViaSnapshot(t *testing.T) {
 	snap.FreeMinutes = 60
 
 	in := baseInput(snap)
-	in.StopType = shipment.StopTypePickup
+	in.StopType = shipmentvocab.StopTypePickup
 	in.DepartedAt = ptr(baseTime + 3*hour)
 
 	result := detentionengine.Compute(in)

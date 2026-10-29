@@ -21,6 +21,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentcoverage"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/accessorialchargeports"
@@ -184,7 +185,8 @@ func (t *rescheduleStopTool) plan(
 		return nil, errortypes.NewValidationError("stopId", errortypes.ErrInvalid,
 			"That stop is not on this shipment; take the stop id from shipment_get's moves")
 	}
-	if stop.Status == shipment.StopStatusCompleted || stop.Status == shipment.StopStatusCanceled {
+	if stop.Status == shipmentvocab.StopStatusCompleted ||
+		stop.Status == shipmentvocab.StopStatusCanceled {
 		return nil, errortypes.NewBusinessError(
 			"This stop is {0} and can no longer be rescheduled", string(stop.Status),
 		)
@@ -485,7 +487,8 @@ func (t *addShipmentChargeTool) plan(
 	if err != nil {
 		return nil, err
 	}
-	if before.Status == shipment.StatusInvoiced || before.Status == shipment.StatusCanceled {
+	if before.Status == shipmentvocab.StatusInvoiced ||
+		before.Status == shipmentvocab.StatusCanceled {
 		return nil, errortypes.NewBusinessError(
 			"Shipment {0} is {1}; its charges can no longer change here",
 			before.ProNumber, string(before.Status),

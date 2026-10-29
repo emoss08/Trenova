@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmentcommentrepository"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentcommentports"
 	"github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
@@ -42,7 +43,7 @@ func newHarness(t *testing.T) *harness {
 		BOL:          "BOL-CMT",
 		ProNumber:    "PRO-CMT",
 		ShipmentID:   pulid.MustNew("shp_"),
-		MoveStatuses: []shipment.MoveStatus{shipment.MoveStatusNew},
+		MoveStatuses: []shipmentvocab.MoveStatus{shipmentvocab.MoveStatusNew},
 	})
 
 	return &harness{
@@ -93,8 +94,8 @@ func TestCreate_StoresTheCommentWithDefaultsMentionsAndReplies(t *testing.T) {
 
 	root, err := h.repo.Create(h.ctx, h.comment("Driver is running late", nil))
 	require.NoError(t, err)
-	assert.Equal(t, shipment.CommentTypeInternal, root.Type)
-	assert.Equal(t, shipment.CommentPriorityNormal, root.Priority)
+	assert.Equal(t, shipmentvocab.CommentTypeInternal, root.Type)
+	assert.Equal(t, shipmentvocab.CommentPriorityNormal, root.Priority)
 	require.Len(t, root.MentionedUsers, 1)
 	require.NotNil(t, root.MentionedUsers[0].MentionedUser)
 

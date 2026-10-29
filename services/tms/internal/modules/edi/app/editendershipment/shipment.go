@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/edi/ports/editenderports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -24,7 +25,7 @@ func (s *Service) SetTenderStatus(
 	ctx context.Context,
 	shipmentID pulid.ID,
 	tenantInfo pagination.TenantInfo,
-	status shipment.TenderStatus,
+	status shipmentvocab.TenderStatus,
 ) error {
 	return s.shipmentTenderRepo.SetShipmentTenderStatus(
 		ctx,
@@ -63,10 +64,10 @@ func (s *Service) CreateSystemComment(
 		BusinessUnitID:   tenantInfo.BuID,
 		UserID:           systemUser.ID,
 		Comment:          comment,
-		Type:             shipment.CommentTypeStatusUpdate,
-		Visibility:       shipment.CommentVisibilityOperations,
-		Priority:         shipment.CommentPriorityNormal,
-		Source:           shipment.CommentSourceSystem,
+		Type:             shipmentvocab.CommentTypeStatusUpdate,
+		Visibility:       shipmentvocab.CommentVisibilityOperations,
+		Priority:         shipmentvocab.CommentPriorityNormal,
+		Source:           shipmentvocab.CommentSourceSystem,
 		Metadata:         metadata,
 		MentionedUserIDs: []pulid.ID{},
 	})

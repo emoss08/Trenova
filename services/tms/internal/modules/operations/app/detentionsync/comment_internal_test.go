@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionpolicy"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/require"
 )
@@ -15,7 +16,7 @@ func billableOccurrence(amount string) *detention.DetentionOccurrence {
 		Status:             detention.OccurrenceStatusPending,
 		BillableAmount:     decimal.RequireFromString(amount),
 		Currency:           "USD",
-		StopType:           shipment.StopTypeDelivery,
+		StopType:           shipmentvocab.StopTypeDelivery,
 		RawDwellMinutes:    270,
 		FreeMinutesGranted: 120,
 		RoundedMinutes:     150,
@@ -104,7 +105,7 @@ func TestChargeCommentPriority_RaisesOnlyWhatNeedsAction(t *testing.T) {
 	clean := billableOccurrence("150")
 	require.Equal(
 		t,
-		shipment.CommentPriorityNormal,
+		shipmentvocab.CommentPriorityNormal,
 		chargeCommentPriority(chargeCommentAdded, clean),
 	)
 
@@ -112,13 +113,13 @@ func TestChargeCommentPriority_RaisesOnlyWhatNeedsAction(t *testing.T) {
 	atRisk.SuppressedByGate = true
 	require.Equal(
 		t,
-		shipment.CommentPriorityHigh,
+		shipmentvocab.CommentPriorityHigh,
 		chargeCommentPriority(chargeCommentAdded, atRisk),
 	)
 
 	require.Equal(
 		t,
-		shipment.CommentPriorityNormal,
+		shipmentvocab.CommentPriorityNormal,
 		chargeCommentPriority(chargeCommentRemoved, atRisk),
 	)
 }

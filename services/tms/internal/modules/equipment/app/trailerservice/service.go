@@ -18,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentvalidator"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentstate"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/assignmentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentcommentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
@@ -448,7 +449,7 @@ func (s *Service) Locate( //nolint:gocognit // legacy workflow
 			BusinessUnitID:  req.TenantInfo.BuID,
 			ShipmentMoveID:  newMove.ID,
 			TrailerID:       &req.TrailerID,
-			Status:          shipment.AssignmentStatusCompleted,
+			Status:          shipmentvocab.AssignmentStatusCompleted,
 			PrimaryWorkerID: nil,
 			TractorID:       nil,
 		})
@@ -502,7 +503,7 @@ func appendLocateMove(
 		ShipmentID:     entity.ID,
 		OrganizationID: entity.OrganizationID,
 		BusinessUnitID: entity.BusinessUnitID,
-		Status:         shipment.MoveStatusCompleted,
+		Status:         shipmentvocab.MoveStatusCompleted,
 		Loaded:         false,
 		Sequence:       int64(len(entity.Moves)),
 		Stops: []*shipment.Stop{
@@ -510,9 +511,9 @@ func appendLocateMove(
 				OrganizationID:       entity.OrganizationID,
 				BusinessUnitID:       entity.BusinessUnitID,
 				LocationID:           current.CurrentLocationID,
-				Status:               shipment.StopStatusCompleted,
-				Type:                 shipment.StopTypePickup,
-				ScheduleType:         shipment.StopScheduleTypeOpen,
+				Status:               shipmentvocab.StopStatusCompleted,
+				Type:                 shipmentvocab.StopTypePickup,
+				ScheduleType:         shipmentvocab.StopScheduleTypeOpen,
 				Sequence:             0,
 				ScheduledWindowStart: timing.pickupArrival,
 				ScheduledWindowEnd:   &timing.pickupDeparture,
@@ -523,9 +524,9 @@ func appendLocateMove(
 				OrganizationID:       entity.OrganizationID,
 				BusinessUnitID:       entity.BusinessUnitID,
 				LocationID:           req.NewLocationID,
-				Status:               shipment.StopStatusCompleted,
-				Type:                 shipment.StopTypeDelivery,
-				ScheduleType:         shipment.StopScheduleTypeOpen,
+				Status:               shipmentvocab.StopStatusCompleted,
+				Type:                 shipmentvocab.StopTypeDelivery,
+				ScheduleType:         shipmentvocab.StopScheduleTypeOpen,
 				Sequence:             1,
 				ScheduledWindowStart: timing.deliveryArrival,
 				ScheduledWindowEnd:   &timing.deliveryDeparture,
@@ -590,10 +591,10 @@ func (s *Service) createLocateComment(
 		OrganizationID: shipmentEntity.OrganizationID,
 		BusinessUnitID: shipmentEntity.BusinessUnitID,
 		UserID:         actorUserID,
-		Type:           shipment.CommentTypeDispatch,
-		Visibility:     shipment.CommentVisibilityOperations,
-		Priority:       shipment.CommentPriorityNormal,
-		Source:         shipment.CommentSourceSystem,
+		Type:           shipmentvocab.CommentTypeDispatch,
+		Visibility:     shipmentvocab.CommentVisibilityOperations,
+		Priority:       shipmentvocab.CommentPriorityNormal,
+		Source:         shipmentvocab.CommentSourceSystem,
 		Metadata: map[string]any{
 			"trailerId":      trailerEntity.ID,
 			"fromLocationId": fromLocationID,

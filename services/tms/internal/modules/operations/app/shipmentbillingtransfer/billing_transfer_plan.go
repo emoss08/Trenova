@@ -2,6 +2,7 @@ package shipmentbillingtransfer
 
 import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentbillingports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -23,8 +24,8 @@ func transferGate(
 			)
 	}
 
-	markReady = markCompleted && entity.Status == shipment.StatusCompleted
-	if entity.Status != shipment.StatusReadyToInvoice && !markReady {
+	markReady = markCompleted && entity.Status == shipmentvocab.StatusCompleted
+	if entity.Status != shipmentvocab.StatusReadyToInvoice && !markReady {
 		return false, shipmentbillingports.BillingTransferFailureInvalidStatus, errortypes.NewValidationError(
 			"shipmentId",
 			errortypes.ErrInvalidOperation,

@@ -19,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/order/orderdb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/chargeallocationports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/orderports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentmoveports"
@@ -221,7 +222,9 @@ func (r *repository) SelectOptions(
 				q = q.Where(sp.CustomerID.Eq(req.CustomerID))
 			}
 			if req.AttachableOnly {
-				q = q.Where(sp.Status.NotIn(shipment.StatusCanceled, shipment.StatusInvoiced))
+				q = q.Where(
+					sp.Status.NotIn(shipmentvocab.StatusCanceled, shipmentvocab.StatusInvoiced),
+				)
 			}
 			if !req.ExcludeOrderID.IsNil() {
 				q = q.Where(sp.OrderID.Ne(req.ExcludeOrderID))
@@ -257,7 +260,10 @@ func (r *repository) GetUnassigned(
 			return listquery.Connection(
 				ctx,
 				r.db.Keel(ctx),
-				sp.Where(sp.Status.Eq(shipment.StatusNew), shipmentpredicate.UnassignedPredicate()),
+				sp.Where(
+					sp.Status.Eq(shipmentvocab.StatusNew),
+					shipmentpredicate.UnassignedPredicate(),
+				),
 				&listquery.Request[shipment.Shipment]{
 					Filter: req.Filter,
 					Cursor: req.Cursor,
@@ -282,7 +288,7 @@ func (r *repository) GetPreviousRates(
 			q := sp.Where(
 				sp.ShipmentTypeID.Eq(req.ShipmentTypeID),
 				sp.ServiceTypeID.Eq(req.ServiceTypeID),
-				sp.Status.Eq(shipment.StatusInvoiced),
+				sp.Status.Eq(shipmentvocab.StatusInvoiced),
 				sp.ID.InQuery(previousRateOrigins(req.OriginLocationID)),
 				sp.ID.InQuery(previousRateDestinations(req.DestinationLocationID)),
 			)
@@ -608,9 +614,9 @@ func (r *repository) Cancel(
 			sp.Where(
 				sp.ID.Eq(req.ShipmentID),
 				sp.Version.Eq(req.ExpectedVersion),
-				sp.Status.NotIn(shipment.StatusCanceled, shipment.StatusInvoiced),
+				sp.Status.NotIn(shipmentvocab.StatusCanceled, shipmentvocab.StatusInvoiced),
 			),
-			sp.Status.To(shipment.StatusCanceled),
+			sp.Status.To(shipmentvocab.StatusCanceled),
 			sp.CanceledAt.To(req.CanceledAt),
 			sp.CanceledByID.To(req.CanceledByID),
 			sp.CancelReason.To(req.CancelReason),
@@ -638,7 +644,7 @@ func (r *repository) Uncancel(
 			sp.Where(
 				sp.ID.Eq(req.ShipmentID),
 				sp.Version.Eq(req.ExpectedVersion),
-				sp.Status.Eq(shipment.StatusCanceled),
+				sp.Status.Eq(shipmentvocab.StatusCanceled),
 			),
 			sp.Status.To(restoredShipmentStatus(req)),
 			sp.CanceledAt.ToNull(),
@@ -687,7 +693,7 @@ func (r *repository) FindByExternalReference(
 			q := sp.Pick(sp.ID, sp.ProNumber).Where(
 				sp.CustomerID.Eq(req.CustomerID),
 				sp.ExternalReference.Lower().Eq(strings.ToLower(reference)),
-				sp.Status.Ne(shipment.StatusCanceled),
+				sp.Status.Ne(shipmentvocab.StatusCanceled),
 			)
 			if req.ShipmentID.IsNotNil() {
 				q = q.Where(sp.ID.Ne(req.ShipmentID))
@@ -746,7 +752,7 @@ func (r *repository) CheckForDuplicateBOLs(
 			sp := shipmentdb.Shipments
 			q := sp.Pick(sp.ID, sp.ProNumber).Where(
 				sp.BOL.Eq(req.BOL),
-				sp.Status.Ne(shipment.StatusCanceled),
+				sp.Status.Ne(shipmentvocab.StatusCanceled),
 			)
 			if req.ShipmentID != nil {
 				q = q.Where(sp.ID.Ne(pulid.ConvertFromPtr(req.ShipmentID)))

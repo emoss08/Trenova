@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentservicetest"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
@@ -36,7 +37,7 @@ func TestServiceGetBillingReadiness_UsesTenantEnforcementOverride(t *testing.T) 
 
 	entity := shipmentservicetest.ValidShipment()
 	entity.ID = pulid.MustNew("shp_")
-	entity.Status = shipment.StatusCompleted
+	entity.Status = shipmentvocab.StatusCompleted
 	entity.BOL = ""
 
 	requiredType := &documenttype.DocumentType{
@@ -151,7 +152,7 @@ func TestServiceGetBillingReadiness_FallsBackToCustomerSettings(t *testing.T) {
 
 	entity := shipmentservicetest.ValidShipment()
 	entity.ID = pulid.MustNew("shp_")
-	entity.Status = shipment.StatusCompleted
+	entity.Status = shipmentvocab.StatusCompleted
 
 	requiredType := &documenttype.DocumentType{
 		ID:   pulid.MustNew("dt_"),
@@ -241,7 +242,7 @@ func TestValidateBillingReadinessForStatusChange_RejectsMissingRequirements(t *t
 
 	entity := shipmentservicetest.ValidShipment()
 	entity.ID = pulid.MustNew("shp_")
-	entity.Status = shipment.StatusReadyToInvoice
+	entity.Status = shipmentvocab.StatusReadyToInvoice
 	entity.BOL = ""
 
 	requiredType := &documenttype.DocumentType{
@@ -301,7 +302,7 @@ func TestBuildShipmentBillingReadiness_UsesEmptyArraysForUnsetCollections(t *tes
 
 	entity := shipmentservicetest.ValidShipment()
 	entity.ID = pulid.MustNew("shp_")
-	entity.Status = shipment.StatusCompleted
+	entity.Status = shipmentvocab.StatusCompleted
 
 	readiness := buildShipmentBillingReadiness(entity, nil, nil, nil)
 
@@ -334,7 +335,7 @@ func TestBuildShipmentBillingReadiness_BlocksOnRateVarianceWhenConfigured(t *tes
 
 	entity := shipmentservicetest.ValidShipment()
 	entity.ID = pulid.MustNew("shp_")
-	entity.Status = shipment.StatusCompleted
+	entity.Status = shipmentvocab.StatusCompleted
 	entity.FreightChargeAmount = decimal.NewNullDecimal(decimal.NewFromInt(125))
 	entity.RatingDetail = &shipment.RatingDetail{Bill: billOf(100)}
 
@@ -361,7 +362,7 @@ func TestBuildShipmentBillingReadiness_RequireReviewStopsAutoProgressButAllowsBi
 
 	entity := shipmentservicetest.ValidShipment()
 	entity.ID = pulid.MustNew("shp_")
-	entity.Status = shipment.StatusCompleted
+	entity.Status = shipmentvocab.StatusCompleted
 	entity.FreightChargeAmount = decimal.NewNullDecimal(decimal.NewFromInt(125))
 	entity.RatingDetail = &shipment.RatingDetail{Bill: billOf(100)}
 
@@ -393,7 +394,7 @@ func TestBuildShipmentBillingReadiness_ReturnToOperationsBlocksManualProgressFor
 
 	entity := shipmentservicetest.ValidShipment()
 	entity.ID = pulid.MustNew("shp_")
-	entity.Status = shipment.StatusCompleted
+	entity.Status = shipmentvocab.StatusCompleted
 
 	requiredType := &documenttype.DocumentType{
 		ID:   pulid.MustNew("dt_"),
@@ -480,7 +481,7 @@ func TestBuildShipmentBillingReadiness_RejectedPODBlocksReadyToInvoice(t *testin
 
 	entity := shipmentservicetest.ValidShipment()
 	entity.ID = pulid.MustNew("shp_")
-	entity.Status = shipment.StatusCompleted
+	entity.Status = shipmentvocab.StatusCompleted
 
 	pod := &documenttype.DocumentType{
 		ID:   pulid.MustNew("dt_"),

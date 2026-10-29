@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentcommentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/toolschema"
@@ -40,9 +41,9 @@ func (f *fakeCommentModerator) comment() *shipment.ShipmentComment {
 			ShipmentID: pulid.MustNew("shp_"),
 			UserID:     pulid.MustNew("usr_"),
 			Comment:    "Waiting on the lumper receipt",
-			Type:       shipment.CommentTypeInternal,
-			Visibility: shipment.CommentVisibilityInternal,
-			Priority:   shipment.CommentPriorityNormal,
+			Type:       shipmentvocab.CommentTypeInternal,
+			Visibility: shipmentvocab.CommentVisibilityInternal,
+			Priority:   shipmentvocab.CommentPriorityNormal,
 			Version:    2,
 		}
 	}
@@ -333,7 +334,7 @@ func TestEditShipmentComment_ChangesOnlyWhatIsSentAndKeepsMentions(t *testing.T)
 	permissions := &agenttoolstest.FakePermissionCheck{}
 	tool := shipmentcommenttools.NewEditShipmentCommentTool(comments, permissions)
 	params := commentParams(comments, map[string]any{
-		shipmentcommenttools.FieldPriority: string(shipment.CommentPriorityHigh),
+		shipmentcommenttools.FieldPriority: string(shipmentvocab.CommentPriorityHigh),
 	})
 	params.Actor.UserID = comments.comment().UserID
 
@@ -373,15 +374,15 @@ func TestEditShipmentComment_TakesEveryDomainPriorityAndRefusesTheRest(t *testin
 	property, ok := tool.ParamSchema()[toolschema.KeyProperties].(map[string]any)[shipmentcommenttools.FieldPriority].(map[string]any)
 	require.True(t, ok)
 	assert.Equal(t, agenttoolschema.CommentPriorities.Name, property[toolschema.KeyEnumOf])
-	assert.Contains(t, property[toolschema.KeyEnum], string(shipment.CommentPriorityUrgent))
+	assert.Contains(t, property[toolschema.KeyEnum], string(shipmentvocab.CommentPriorityUrgent))
 
 	params := commentParams(comments, map[string]any{
-		shipmentcommenttools.FieldPriority: string(shipment.CommentPriorityUrgent),
+		shipmentcommenttools.FieldPriority: string(shipmentvocab.CommentPriorityUrgent),
 	})
 	params.Actor.UserID = comments.comment().UserID
 	require.NoError(t, tool.Execute(t.Context(), params))
 	require.NotNil(t, comments.updated)
-	assert.Equal(t, shipment.CommentPriorityUrgent, comments.updated.Entity.Priority)
+	assert.Equal(t, shipmentvocab.CommentPriorityUrgent, comments.updated.Entity.Priority)
 
 	comments = &fakeCommentModerator{guard: &agenttoolstest.WriteGuard{}}
 	tool = shipmentcommenttools.NewEditShipmentCommentTool(
@@ -432,7 +433,7 @@ func TestEditShipmentComment_VisibilityDecidesWhoReadsIt(t *testing.T) {
 		t,
 		agent.EgressCustomerVisible,
 		policy.Classify(agenttoolstest.ExecuteParams(map[string]any{
-			shipmentcommenttools.FieldCommentVisib: string(shipment.CommentVisibilityCustomer),
+			shipmentcommenttools.FieldCommentVisib: string(shipmentvocab.CommentVisibilityCustomer),
 		})).Egress,
 	)
 	assert.Equal(

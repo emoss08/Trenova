@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/billing/app/billingtransfercriteria"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentbillingports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentserviceports"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
@@ -155,7 +155,7 @@ func (t *listBillingTransferCandidatesTool) Query(
 		candidates.Decisions,
 		window.Offset == 0 && !candidates.HasMore,
 	)
-	if selection.Status == shipment.StatusReadyToInvoice {
+	if selection.Status == shipmentvocab.StatusReadyToInvoice {
 		if note := t.completedAlsoWaiting(ctx, params, selection); note != "" {
 			result.Note = strings.TrimSpace(result.Note + " " + note)
 		}
@@ -173,7 +173,7 @@ func (t *listBillingTransferCandidatesTool) completedAlsoWaiting(
 	params *agenttoolports.QueryToolParams,
 	selection billingtransfercriteria.Criteria,
 ) string {
-	selection.Status = shipment.StatusCompleted
+	selection.Status = shipmentvocab.StatusCompleted
 	completed, err := t.shipments.ListBillingTransferCandidates(
 		ctx,
 		&shipmentbillingports.ListBillingTransferCandidatesRequest{

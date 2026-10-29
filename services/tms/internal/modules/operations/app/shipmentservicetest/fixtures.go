@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -19,7 +20,7 @@ func ValidShipment() *shipment.Shipment {
 		ShipmentTypeID:    pulid.MustNew("sht_"),
 		CustomerID:        pulid.MustNew("cus_"),
 		FormulaTemplateID: pulid.MustNew("fmt_"),
-		Status:            shipment.StatusNew,
+		Status:            shipmentvocab.StatusNew,
 		BOL:               "BOL-100",
 		Moves: []*shipment.ShipmentMove{
 			ValidMove(),
@@ -29,18 +30,18 @@ func ValidShipment() *shipment.Shipment {
 
 func ValidMove() *shipment.ShipmentMove {
 	return &shipment.ShipmentMove{
-		Status:   shipment.MoveStatusNew,
+		Status:   shipmentvocab.MoveStatusNew,
 		Loaded:   true,
 		Sequence: 0,
 		Stops: []*shipment.Stop{
-			MakeStop(shipment.StopTypePickup, 0, 1, 2),
-			MakeStop(shipment.StopTypeDelivery, 1, 3, 4),
+			MakeStop(shipmentvocab.StopTypePickup, 0, 1, 2),
+			MakeStop(shipmentvocab.StopTypeDelivery, 1, 3, 4),
 		},
 	}
 }
 
 func MakeStop(
-	stopType shipment.StopType,
+	stopType shipmentvocab.StopType,
 	sequence int64,
 	scheduledWindowStart int64,
 	scheduledWindowEnd int64,
@@ -87,9 +88,9 @@ func BillingControlWith(
 func ValidStop() *shipment.Stop {
 	return &shipment.Stop{
 		LocationID:           pulid.MustNew("loc_"),
-		Status:               shipment.StopStatusNew,
-		Type:                 shipment.StopTypePickup,
-		ScheduleType:         shipment.StopScheduleTypeOpen,
+		Status:               shipmentvocab.StopStatusNew,
+		Type:                 shipmentvocab.StopTypePickup,
+		ScheduleType:         shipmentvocab.StopScheduleTypeOpen,
 		Sequence:             0,
 		ScheduledWindowStart: 1,
 		ScheduledWindowEnd:   new(int64(1)),

@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/carriersettlementcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/settlementcontrol"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement"
 	"github.com/emoss08/trenova/internal/testutil/mocks/carrierassignmentportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/carriersettlementportsmock"
@@ -51,8 +52,8 @@ func newCarrierMove(sp *shipment.Shipment) *shipment.ShipmentMove {
 		OrganizationID: sp.OrganizationID,
 		BusinessUnitID: sp.BusinessUnitID,
 		ShipmentID:     sp.ID,
-		Status:         shipment.MoveStatusCompleted,
-		CoverageType:   shipment.MoveCoverageTypeCarrier,
+		Status:         shipmentvocab.MoveStatusCompleted,
+		CoverageType:   shipmentvocab.MoveCoverageTypeCarrier,
 	}
 }
 
@@ -375,7 +376,7 @@ func TestReaccrueMoveReplaceAfterDeliveryAccruesNewCarrier(t *testing.T) {
 	deps := setupReaccrueTest(t)
 	tenantInfo := accrualTenantInfo()
 	sp := newAccrualShipment(tenantInfo)
-	sp.Status = shipment.StatusCompleted
+	sp.Status = shipmentvocab.StatusCompleted
 	move := newCarrierMove(sp)
 	sp.Moves = []*shipment.ShipmentMove{move}
 
@@ -425,9 +426,9 @@ func TestReaccrueMoveBeforeTriggerOnlyVoidsStale(t *testing.T) {
 	deps := setupReaccrueTest(t)
 	tenantInfo := accrualTenantInfo()
 	sp := newAccrualShipment(tenantInfo)
-	sp.Status = shipment.StatusInTransit
+	sp.Status = shipmentvocab.StatusInTransit
 	move := newCarrierMove(sp)
-	move.Status = shipment.MoveStatusInTransit
+	move.Status = shipmentvocab.MoveStatusInTransit
 	sp.Moves = []*shipment.ShipmentMove{move}
 
 	replacement := newFlatAssignment()

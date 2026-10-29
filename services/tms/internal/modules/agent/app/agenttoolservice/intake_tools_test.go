@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -101,12 +102,12 @@ func TestCreateShipment_EntersTheShipmentUnderTheActorTenant(t *testing.T) {
 	assert.Equal(t, customerID, created.CustomerID)
 	assert.Equal(t, "BOL-778", created.BOL)
 	assert.EqualValues(t, 18000, *created.Weight)
-	assert.Equal(t, shipment.StatusNew, created.Status)
+	assert.Equal(t, shipmentvocab.StatusNew, created.Status)
 	assert.Equal(t, docID.String(), created.SourceDocumentID)
 	require.Len(t, created.Moves, 1)
 	require.Len(t, created.Moves[0].Stops, 2)
 	assert.Equal(t, params.OrganizationID, created.Moves[0].Stops[1].OrganizationID)
-	assert.Equal(t, shipment.StopScheduleTypeOpen, created.Moves[0].Stops[1].ScheduleType)
+	assert.Equal(t, shipmentvocab.StopScheduleTypeOpen, created.Moves[0].Stops[1].ScheduleType)
 	assert.Equal(t, destID, created.Moves[0].Stops[1].LocationID)
 	assert.Same(t, params.Actor, writer.Actor)
 
@@ -296,10 +297,10 @@ func TestTenderToCarriers_BuildsEachLineAndRefusesJunk(t *testing.T) {
 	require.Len(t, tenders.Spot.Lines, 2)
 	assert.Equal(t, carrierA, tenders.Spot.Lines[0].CarrierID)
 	assert.Equal(t, "1450", tenders.Spot.Lines[0].Rate.String())
-	assert.Equal(t, shipment.CarrierRateMethodFlat, tenders.Spot.Lines[0].RateMethod)
+	assert.Equal(t, shipmentvocab.CarrierRateMethodFlat, tenders.Spot.Lines[0].RateMethod)
 	assert.EqualValues(t, 1800, tenders.Spot.Lines[0].OfferTTLSeconds)
 	assert.Equal(t, tender.ChannelEmail, tenders.Spot.Lines[0].Channel)
-	assert.Equal(t, shipment.CarrierRateMethodPerMile, tenders.Spot.Lines[1].RateMethod)
+	assert.Equal(t, shipmentvocab.CarrierRateMethodPerMile, tenders.Spot.Lines[1].RateMethod)
 	assert.False(t, tenders.Spot.OverrideInsuranceWarnings)
 
 	bad := agenttoolstest.ExecuteParams(map[string]any{

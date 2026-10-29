@@ -2,12 +2,12 @@ package shipmentbillingtransfer
 
 import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentbillingports"
 )
 
 func readinessAllowsAutoTransfer(
-	status shipment.Status,
+	status shipmentvocab.Status,
 	readiness *shipmentbillingports.ShipmentBillingReadiness,
 ) bool {
 	if readiness == nil ||
@@ -19,9 +19,9 @@ func readinessAllowsAutoTransfer(
 	}
 
 	switch status { //nolint:exhaustive // only these two may be transferred
-	case shipment.StatusReadyToInvoice:
+	case shipmentvocab.StatusReadyToInvoice:
 		return true
-	case shipment.StatusCompleted:
+	case shipmentvocab.StatusCompleted:
 		return readiness.ShouldAutoMarkReadyToInvoice
 	default:
 		return false

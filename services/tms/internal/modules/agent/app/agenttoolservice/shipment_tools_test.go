@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmenthold"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentcommentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentholdports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
@@ -107,7 +108,7 @@ func TestAddShipmentComment_MarksItselfAsAIWritten(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, comments.created)
 
-	assert.Equal(t, shipment.CommentSourceAI, comments.created.Source)
+	assert.Equal(t, shipmentvocab.CommentSourceAI, comments.created.Source)
 	assert.Equal(t, "Carrier confirmed a 14:00 pickup.", comments.created.Comment)
 }
 
@@ -124,7 +125,7 @@ func TestAddShipmentComment_DefaultsToInternalVisibility(t *testing.T) {
 		"comment":    "Checked the BOL.",
 	})))
 
-	assert.Equal(t, shipment.CommentVisibilityInternal, comments.created.Visibility)
+	assert.Equal(t, shipmentvocab.CommentVisibilityInternal, comments.created.Visibility)
 }
 
 func TestAddShipmentComment_CarriesTheAuthorAndTenant(t *testing.T) {
@@ -346,10 +347,10 @@ would miss it.
 func TestAddShipmentComment_KeepsTypeAndVisibilityConsistent(t *testing.T) {
 	t.Parallel()
 
-	for visibility, expected := range map[shipment.CommentVisibility]shipment.CommentType{
-		shipment.CommentVisibilityCustomer: shipment.CommentTypeCustomerUpdate,
-		shipment.CommentVisibilityDriver:   shipment.CommentTypeDriverUpdate,
-		shipment.CommentVisibilityInternal: shipment.CommentTypeInternal,
+	for visibility, expected := range map[shipmentvocab.CommentVisibility]shipmentvocab.CommentType{
+		shipmentvocab.CommentVisibilityCustomer: shipmentvocab.CommentTypeCustomerUpdate,
+		shipmentvocab.CommentVisibilityDriver:   shipmentvocab.CommentTypeDriverUpdate,
+		shipmentvocab.CommentVisibilityInternal: shipmentvocab.CommentTypeInternal,
 	} {
 		comments := &fakeCommentService{}
 		tool := shipmentcommenttools.NewAddShipmentCommentTool(comments)

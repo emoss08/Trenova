@@ -19,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/portalinvitation"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/portalinvitation/portalinvitationdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
@@ -553,7 +554,7 @@ func (r *portalAccessRepository) UpdateAssignmentAck(
 	_ pagination.TenantInfo,
 	workerID pulid.ID,
 	assignmentID pulid.ID,
-	ack shipment.AssignmentAck,
+	ack shipmentvocab.AssignmentAck,
 	reason string,
 ) (*shipment.Assignment, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*shipment.Assignment, error) {
@@ -609,7 +610,7 @@ func (r *portalAccessRepository) ListDriverShipmentComments(
 		sc := shipmentdb.ShipmentComments
 		items, err := sc.Where(
 			sc.ShipmentID.Eq(shipmentID),
-			sc.Visibility.Eq(shipment.CommentVisibilityDriver),
+			sc.Visibility.Eq(shipmentvocab.CommentVisibilityDriver),
 			sc.DeletedAt.IsNull(),
 		).
 			Load(sc.User()).

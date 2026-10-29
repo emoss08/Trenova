@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/app/detentionengine"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionpolicy"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
@@ -47,8 +47,8 @@ func TestPriceShipmentClocks_PricesARunningClockAsOfNow(t *testing.T) {
 		ID:              pulid.MustNew("dto_"),
 		ShipmentID:      shipmentID,
 		PolicySnapshot:  hourlySnapshot(),
-		StopType:        shipment.StopTypeDelivery,
-		ScheduleType:    shipment.StopScheduleTypeAppointment,
+		StopType:        shipmentvocab.StopTypeDelivery,
+		ScheduleType:    shipmentvocab.StopScheduleTypeAppointment,
 		ArrivedAt:       &arrived,
 		ClockStartAt:    arrived,
 		IsOpen:          true,
@@ -61,8 +61,8 @@ func TestPriceShipmentClocks_PricesARunningClockAsOfNow(t *testing.T) {
 		ID:             pulid.MustNew("dto_"),
 		ShipmentID:     shipmentID,
 		PolicySnapshot: hourlySnapshot(),
-		StopType:       shipment.StopTypePickup,
-		ScheduleType:   shipment.StopScheduleTypeAppointment,
+		StopType:       shipmentvocab.StopTypePickup,
+		ScheduleType:   shipmentvocab.StopScheduleTypeAppointment,
 		ArrivedAt:      &arrived,
 		DepartedAt:     &departed,
 		ClockStartAt:   arrived - 3600,

@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
@@ -93,7 +94,7 @@ func TestDropSystemGeneratedAdditionalChargesForCreate_ClearsForgedOwnership(t *
 	assert.Nil(t, charge.RateAgreementAccessorialID)
 	assert.Nil(t, charge.FuelSurchargeProgramID)
 	assert.False(t, charge.IsDetention)
-	assert.Equal(t, shipment.SystemOwnerNone, charge.Owner())
+	assert.Equal(t, shipmentvocab.SystemOwnerNone, charge.Owner())
 }
 
 func TestDropSystemGeneratedAdditionalChargesForCreate_NilShipment(t *testing.T) {

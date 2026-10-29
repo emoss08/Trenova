@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentcommentports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
@@ -225,9 +225,9 @@ func (s *service) comment(ctx context.Context, params commentParams) {
 			},
 			ShipmentID: params.entity.ShipmentID,
 			Comment:    params.comment,
-			Type:       shipment.CommentTypeException,
-			Visibility: shipment.CommentVisibilityOperations,
-			Priority:   shipment.CommentPriorityHigh,
+			Type:       shipmentvocab.CommentTypeException,
+			Visibility: shipmentvocab.CommentVisibilityOperations,
+			Priority:   shipmentvocab.CommentPriorityHigh,
 			Metadata:   params.metadata,
 		},
 	); err != nil {

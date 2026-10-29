@@ -17,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/testutil/mocks/edipartnerportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/editenderportsmock"
@@ -141,7 +142,7 @@ func TestService_SubmitLoadTenderRequiresReciprocalPartnerInSameBusinessUnit(t *
 			ID:                sourceShipmentID,
 			BusinessUnitID:    buID,
 			OrganizationID:    sourceOrgID,
-			Status:            shipment.StatusNew,
+			Status:            shipmentvocab.StatusNew,
 			ServiceTypeID:     pulid.MustNew("st_"),
 			CustomerID:        pulid.MustNew("cus_"),
 			FormulaTemplateID: pulid.MustNew("ft_"),

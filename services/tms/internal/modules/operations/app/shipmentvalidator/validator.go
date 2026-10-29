@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmenttimeline"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/assignmentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
@@ -168,14 +169,14 @@ func createShipmentStatusCoordinationRule() validationframework.TenantedRule[*sh
 			_ *validationframework.TenantedValidationContext,
 			multiErr *errortypes.MultiError,
 		) error {
-			if entity.Status == shipment.StatusCompleted ||
-				entity.Status == shipment.StatusReadyToInvoice {
+			if entity.Status == shipmentvocab.StatusCompleted ||
+				entity.Status == shipmentvocab.StatusReadyToInvoice {
 				for moveIndex, move := range entity.Moves {
 					if move == nil {
 						continue
 					}
 
-					if move.Status != shipment.MoveStatusCompleted {
+					if move.Status != shipmentvocab.MoveStatusCompleted {
 						multiErr.Add(
 							"status",
 							errortypes.ErrInvalidOperation,
@@ -195,13 +196,13 @@ func createShipmentStatusCoordinationRule() validationframework.TenantedRule[*sh
 					continue
 				}
 
-				if move.Status == shipment.MoveStatusCompleted {
+				if move.Status == shipmentvocab.MoveStatusCompleted {
 					for stopIndex, stop := range move.Stops {
 						if stop == nil {
 							continue
 						}
 
-						if stop.Status != shipment.StopStatusCompleted {
+						if stop.Status != shipmentvocab.StopStatusCompleted {
 							multiErr.Add(
 								fmt.Sprintf("moves[%d].status", moveIndex),
 								errortypes.ErrInvalidOperation,

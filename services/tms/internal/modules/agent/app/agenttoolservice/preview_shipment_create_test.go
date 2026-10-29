@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentserviceports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -43,7 +44,7 @@ func (f *pricingShipments) prepare(entity *shipment.Shipment) error {
 	entity.FreightChargeAmount = decimal.NewNullDecimal(decimal.NewFromInt(1_850))
 	entity.OtherChargeAmount = decimal.NewNullDecimal(decimal.NewFromInt(150))
 	entity.TotalChargeAmount = decimal.NewNullDecimal(decimal.NewFromInt(2_000))
-	entity.FreightTerms = shipment.FreightTermsPrepaid
+	entity.FreightTerms = shipmentvocab.FreightTermsPrepaid
 
 	return nil
 }

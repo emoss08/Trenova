@@ -24,6 +24,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmentrepository"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
@@ -64,7 +65,7 @@ func seedDispatchedLoad(t *testing.T) (context.Context, *postgres.Connection, di
 
 	sm := shipmentdb.ShipmentMoves
 	move, err := sm.AllTenants().
-		Where(sm.Status.Ne(shipment.MoveStatusCanceled)).
+		Where(sm.Status.Ne(shipmentvocab.MoveStatusCanceled)).
 		Order(sm.OrganizationID.Asc(), sm.BusinessUnitID.Asc(), sm.ShipmentID.Asc()).
 		First(dbscope.WithSystem(ctx, "find a seeded shipment move for the test"), db)
 	require.NoError(t, err)
@@ -89,7 +90,7 @@ func seedDispatchedLoad(t *testing.T) (context.Context, *postgres.Connection, di
 	require.NoError(t, a.Create(tenantCtx, db, &shipment.Assignment{
 		ShipmentMoveID:  move.ID,
 		PrimaryWorkerID: &driver.ID,
-		Status:          shipment.AssignmentStatusNew,
+		Status:          shipmentvocab.AssignmentStatusNew,
 	}))
 
 	return ctx, postgres.NewTestConnection(db), dispatchedLoad{

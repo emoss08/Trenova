@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/assignmentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentmoveports"
 	"github.com/emoss08/trenova/shared/jsonschemautils"
@@ -273,7 +274,7 @@ func moveStatusTierLimit(
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // a TierCondition passes params by value
 ) agent.AutonomyTier {
 	status, err := moveStatusArg(params.Params)
-	if err != nil || status == shipment.MoveStatusCanceled {
+	if err != nil || status == shipmentvocab.MoveStatusCanceled {
 		return agent.TierPropose
 	}
 
@@ -352,11 +353,13 @@ func (t *UpdateMoveStatusTool) request(
 // moveStatusArg refuses anything but the three statuses a person sets by
 // hand. Assigned and New follow from covering and uncovering a move, which
 // have tools of their own.
-func moveStatusArg(params map[string]any) (shipment.MoveStatus, error) {
+func moveStatusArg(params map[string]any) (shipmentvocab.MoveStatus, error) {
 	raw := toolparams.OptionalString(params, changepreview.FieldStatus)
 	//nolint:exhaustive // New and Assigned follow from covering a move, never from this tool
-	switch status := shipment.MoveStatus(raw); status {
-	case shipment.MoveStatusInTransit, shipment.MoveStatusCompleted, shipment.MoveStatusCanceled:
+	switch status := shipmentvocab.MoveStatus(raw); status {
+	case shipmentvocab.MoveStatusInTransit,
+		shipmentvocab.MoveStatusCompleted,
+		shipmentvocab.MoveStatusCanceled:
 		return status, nil
 	default:
 		return "", fmt.Errorf(

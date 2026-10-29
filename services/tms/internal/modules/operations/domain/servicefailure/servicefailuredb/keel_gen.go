@@ -368,7 +368,7 @@ var serviceFailuresTable = schema.Table{
 		{Name: "type", Quoted: `"type"`, Field: "Type", Kind: schema.KindString, Flags: 0, Label: `Type`, JSON: `type`, Enum: enumType[:]},
 		{Name: "source", Quoted: `"source"`, Field: "Source", Kind: schema.KindString, Flags: 0, Label: `Source`, JSON: `source`, Enum: enumSource[:]},
 		{Name: "status", Quoted: `"status"`, Field: "Status", Kind: schema.KindString, Flags: 0, Label: `Status`, JSON: `status`, Enum: enumStatus[:]},
-		{Name: "stop_type", Quoted: `"stop_type"`, Field: "StopType", Kind: schema.KindString, Flags: 0, Label: `Stop Type`, JSON: `stopType`, Enum: enumShipmentStopType[:]},
+		{Name: "stop_type", Quoted: `"stop_type"`, Field: "StopType", Kind: schema.KindString, Flags: 0, Label: `Stop Type`, JSON: `stopType`, Enum: enumShipmentvocabStopType[:]},
 		{Name: "scheduled_cutoff", Quoted: `"scheduled_cutoff"`, Field: "ScheduledCutoff", Kind: schema.KindInt64, Flags: 0, Label: `Scheduled Cutoff`, JSON: `scheduledCutoff`},
 		{Name: "actual_arrival", Quoted: `"actual_arrival"`, Field: "ActualArrival", Kind: schema.KindInt64, Flags: 0, Label: `Actual Arrival`, JSON: `actualArrival`},
 		{Name: "grace_period_minutes", Quoted: `"grace_period_minutes"`, Field: "GracePeriodMinutes", Kind: schema.KindInt64, Flags: 0, Label: `Grace Period Minutes`, JSON: `gracePeriodMinutes`},
@@ -439,7 +439,7 @@ type ServiceFailuresTable struct {
 	Type                  TypeCol
 	Source                SourceCol
 	Status                StatusCol
-	StopType              shipmentdb.StopTypeCol
+	StopType              keelkinds.ShipmentvocabStopTypeCol
 	ScheduledCutoff       keel.Int64Col
 	ActualArrival         keel.Int64Col
 	GracePeriodMinutes    keel.Int64Col
@@ -478,7 +478,7 @@ var ServiceFailures = &ServiceFailuresTable{
 	Type:                  TypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &serviceFailuresRef, Index: 8}}},
 	Source:                SourceCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &serviceFailuresRef, Index: 9}}},
 	Status:                StatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &serviceFailuresRef, Index: 10}}},
-	StopType:              shipmentdb.StopTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &serviceFailuresRef, Index: 11}}},
+	StopType:              keelkinds.ShipmentvocabStopTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &serviceFailuresRef, Index: 11}}},
 	ScheduledCutoff:       keel.Int64Col{Col: keel.Col{Ref: &serviceFailuresRef, Index: 12}},
 	ActualArrival:         keel.Int64Col{Col: keel.Col{Ref: &serviceFailuresRef, Index: 13}},
 	GracePeriodMinutes:    keel.Int64Col{Col: keel.Col{Ref: &serviceFailuresRef, Index: 14}},
@@ -518,7 +518,7 @@ func BuildServiceFailures(r *keel.Ref) *ServiceFailuresTable {
 		Type:                  TypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 8}}},
 		Source:                SourceCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 9}}},
 		Status:                StatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 10}}},
-		StopType:              shipmentdb.StopTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 11}}},
+		StopType:              keelkinds.ShipmentvocabStopTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 11}}},
 		ScheduledCutoff:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 12}},
 		ActualArrival:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 13}},
 		GracePeriodMinutes:    keel.Int64Col{Col: keel.Col{Ref: r, Index: 14}},
@@ -862,7 +862,7 @@ var enumReasonCodeAppliesTo = [...]schema.EnumValue{
 	{Value: `All`, Label: `All`},
 }
 
-var enumShipmentStopType = [...]schema.EnumValue{
+var enumShipmentvocabStopType = [...]schema.EnumValue{
 	{Value: `Pickup`, Label: `Pickup`},
 	{Value: `Delivery`, Label: `Delivery`},
 	{Value: `SplitDelivery`, Label: `Split Delivery`},

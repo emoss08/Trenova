@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -13,9 +14,9 @@ type CreateSystemShipmentCommentRequest struct {
 	TenantInfo pagination.TenantInfo
 	ShipmentID pulid.ID
 	Comment    string
-	Type       shipment.CommentType
-	Visibility shipment.CommentVisibility
-	Priority   shipment.CommentPriority
+	Type       shipmentvocab.CommentType
+	Visibility shipmentvocab.CommentVisibility
+	Priority   shipmentvocab.CommentPriority
 	Metadata   map[string]any
 }
 

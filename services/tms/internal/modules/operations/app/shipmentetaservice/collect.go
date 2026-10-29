@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/checkcall"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchboardports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/telematics"
@@ -37,7 +38,7 @@ func openMoveIDs(entities []*shipment.Shipment) []pulid.ID {
 	moveIDs := make([]pulid.ID, 0, len(entities))
 	for _, entity := range entities {
 		for _, move := range entity.Moves {
-			if move != nil && move.Status != shipment.MoveStatusCanceled {
+			if move != nil && move.Status != shipmentvocab.MoveStatusCanceled {
 				moveIDs = append(moveIDs, move.ID)
 			}
 		}
@@ -103,7 +104,7 @@ func (s *Service) collectAssignments(
 	moves, err := s.board.ListBoardMoves(ctx, &dispatchboardports.DispatchBoardFilter{
 		TenantInfo:     tenantInfo,
 		MoveIDs:        moveIDs,
-		MoveStatuses:   shipment.MoveStatuses(),
+		MoveStatuses:   shipmentvocab.MoveStatuses(),
 		IncludeCovered: true,
 		Limit:          len(moveIDs),
 	})

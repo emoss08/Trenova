@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -680,8 +681,8 @@ func (h *Handler) deleteFilterPreset(c *gin.Context) {
 }
 
 type reassignChargeRequest struct {
-	ChargeKind         shipment.ChargeAllocationKind `json:"chargeKind"`
-	AdditionalChargeID pulid.ID                      `json:"additionalChargeId"`
+	ChargeKind         shipmentvocab.ChargeAllocationKind `json:"chargeKind"`
+	AdditionalChargeID pulid.ID                           `json:"additionalChargeId"`
 	// Allocations divide the charge among payers. An empty list gives it back
 	// whole to the shipment's payer.
 	Allocations []*shipment.ChargeAllocation `json:"allocations"`

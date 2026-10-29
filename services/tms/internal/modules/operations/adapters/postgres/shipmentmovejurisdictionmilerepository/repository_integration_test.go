@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmentmovejurisdictionmilerepository"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentdistanceports"
 	"github.com/emoss08/trenova/internal/testutil/seededtest"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -95,11 +96,11 @@ func (f *fixture) insertCompletedMove(
 		BusinessUnitID: f.tenantInfo.BuID,
 		OrganizationID: f.tenantInfo.OrgID,
 		ShipmentID:     f.shipmentID,
-		Status:         shipment.MoveStatusCompleted,
+		Status:         shipmentvocab.MoveStatusCompleted,
 		Loaded:         true,
 		Sequence:       90,
 		Distance:       &distance,
-		DistanceUnits:  shipment.JurisdictionDistanceUnitsMiles,
+		DistanceUnits:  shipmentvocab.JurisdictionDistanceUnitsMiles,
 	}
 	require.NoError(t, shipmentdb.ShipmentMoves.Create(f.ctx, f.db, move))
 
@@ -111,8 +112,8 @@ func (f *fixture) insertCompletedMove(
 			OrganizationID:       f.tenantInfo.OrgID,
 			ShipmentMoveID:       move.ID,
 			LocationID:           f.locationID,
-			Status:               shipment.StopStatusCompleted,
-			Type:                 shipment.StopTypePickup,
+			Status:               shipmentvocab.StopStatusCompleted,
+			Type:                 shipmentvocab.StopTypePickup,
 			Sequence:             0,
 			ScheduledWindowStart: arrivedAt - 7200,
 			ActualArrival:        &arrivedAt,
@@ -124,8 +125,8 @@ func (f *fixture) insertCompletedMove(
 			OrganizationID:       f.tenantInfo.OrgID,
 			ShipmentMoveID:       move.ID,
 			LocationID:           f.locationID,
-			Status:               shipment.StopStatusCompleted,
-			Type:                 shipment.StopTypeDelivery,
+			Status:               shipmentvocab.StopStatusCompleted,
+			Type:                 shipmentvocab.StopTypeDelivery,
 			Sequence:             1,
 			ScheduledWindowStart: arrivedAt,
 			ActualArrival:        &departedAt,
@@ -151,9 +152,9 @@ func row(
 		JurisdictionCode: code,
 		Sequence:         sequence,
 		Distance:         distance,
-		DistanceUnits:    shipment.JurisdictionDistanceUnitsMiles,
+		DistanceUnits:    shipmentvocab.JurisdictionDistanceUnitsMiles,
 		Loaded:           true,
-		Source:           shipment.JurisdictionMileSourceRouteCalculation,
+		Source:           shipmentvocab.JurisdictionMileSourceRouteCalculation,
 		CalculatedAt:     completedAt,
 	}
 }

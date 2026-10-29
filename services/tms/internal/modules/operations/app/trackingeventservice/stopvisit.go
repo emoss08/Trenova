@@ -3,7 +3,7 @@ package trackingeventservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/trackingevent"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/trackingeventports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/telematics"
@@ -40,9 +40,9 @@ func stopVisitParams(
 	report *telematicsports.StopVisitReport,
 ) *trackingeventports.RecordObservedStopEventParams {
 	event := report.Event
-	kind := shipment.VisitArrival
+	kind := shipmentvocab.VisitArrival
 	if report.Departure {
-		kind = shipment.VisitDeparture
+		kind = shipmentvocab.VisitDeparture
 	}
 	method := trackingevent.MatchLocation
 	if report.ProviderStop {

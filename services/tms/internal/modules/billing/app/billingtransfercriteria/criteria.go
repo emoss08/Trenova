@@ -7,7 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
@@ -31,7 +31,7 @@ const (
 
 var Statuses = agenttoolschema.Source(
 	"billingTransfer.candidateStatus",
-	[]string{string(shipment.StatusReadyToInvoice), string(shipment.StatusCompleted)},
+	[]string{string(shipmentvocab.StatusReadyToInvoice), string(shipmentvocab.StatusCompleted)},
 )
 
 var paramNames = []string{
@@ -44,7 +44,7 @@ var paramNames = []string{
 
 type Criteria struct {
 	Query            string
-	Status           shipment.Status
+	Status           shipmentvocab.Status
 	CustomerID       pulid.ID
 	DeliveredFrom    int64
 	DeliveredTo      int64
@@ -93,7 +93,7 @@ func Read(params map[string]any, clk filtercatalog.Clock) (Criteria, error) {
 			return Criteria{}, fmt.Errorf("%s %q is not one of %s",
 				ParamStatus, status, strings.Join(Statuses.Values, ", "))
 		}
-		criteria.Status = shipment.Status(status)
+		criteria.Status = shipmentvocab.Status(status)
 	}
 
 	if raw := maputils.StringValue(params, ParamCustomerID); raw != "" {

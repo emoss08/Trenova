@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/shipmentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -167,7 +168,7 @@ func (d *ShipmentDraft) Build(
 		OrganizationID:    tenant.OrgID,
 		BusinessUnitID:    tenant.BuID,
 		EnteredByID:       tenant.UserID,
-		Status:            shipment.StatusNew,
+		Status:            shipmentvocab.StatusNew,
 		CustomerID:        read.requiredID("customerId", d.CustomerID),
 		ServiceTypeID:     read.requiredID("serviceTypeId", d.ServiceTypeID),
 		ShipmentTypeID:    read.requiredID("shipmentTypeId", d.ShipmentTypeID),
@@ -190,7 +191,7 @@ func (d *ShipmentDraft) Build(
 		entity.BillToCustomerID = &billTo
 	}
 	if terms := strings.TrimSpace(d.FreightTerms); terms != "" {
-		entity.FreightTerms = shipment.FreightTerms(terms)
+		entity.FreightTerms = shipmentvocab.FreightTerms(terms)
 		if !entity.FreightTerms.IsValid() {
 			multiErr.Add("freightTerms", errortypes.ErrInvalid,
 				"{0} is not one of Prepaid, Collect or ThirdParty", terms)
@@ -229,7 +230,7 @@ func (d *ShipmentDraft) buildMoves(
 		move := &shipment.ShipmentMove{
 			OrganizationID: entity.OrganizationID,
 			BusinessUnitID: entity.BusinessUnitID,
-			Status:         shipment.MoveStatusNew,
+			Status:         shipmentvocab.MoveStatusNew,
 			Loaded:         draft.Loaded == nil || *draft.Loaded,
 			Sequence:       int64(moveIdx),
 			Stops:          make([]*shipment.Stop, 0, len(draft.Stops)),
@@ -263,16 +264,16 @@ func buildStop(draft *stopDraft, b stopBuild) *shipment.Stop {
 		OrganizationID: b.tenant.OrganizationID,
 		BusinessUnitID: b.tenant.BusinessUnitID,
 		LocationID:     b.read.requiredID(b.path+".locationId", draft.LocationID),
-		Status:         shipment.StopStatusNew,
-		Type:           shipment.StopType(strings.TrimSpace(draft.Type)),
-		ScheduleType:   shipment.StopScheduleType(strings.TrimSpace(draft.ScheduleType)),
+		Status:         shipmentvocab.StopStatusNew,
+		Type:           shipmentvocab.StopType(strings.TrimSpace(draft.Type)),
+		ScheduleType:   shipmentvocab.StopScheduleType(strings.TrimSpace(draft.ScheduleType)),
 		Sequence:       int64(b.position),
 		Pieces:         draft.Pieces,
 		Weight:         draft.Weight,
 		AddressLine:    strings.TrimSpace(draft.AddressLine),
 	}
 	if stop.ScheduleType == "" {
-		stop.ScheduleType = shipment.StopScheduleTypeOpen
+		stop.ScheduleType = shipmentvocab.StopScheduleTypeOpen
 	}
 
 	zone := b.zones.At(stop.LocationID)

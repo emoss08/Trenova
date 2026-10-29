@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/quickfilter"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentboardports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -114,7 +114,7 @@ func ZeroFilledStageSummary(
 		byRank[row.StageRank] = row
 	}
 
-	stages := shipment.Stages()
+	stages := shipmentvocab.Stages()
 	out := make([]*shipmentboardports.ShipmentStageSummary, 0, len(stages))
 	for _, stage := range stages {
 		summary := &shipmentboardports.ShipmentStageSummary{

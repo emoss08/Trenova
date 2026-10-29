@@ -19,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentcommentports"
 	"github.com/emoss08/trenova/shared/timeutils"
 )
@@ -71,25 +72,25 @@ func (t *AddShipmentCommentTool) Preview(
 		created,
 		shared,
 	)
-	if entity.Visibility == shipment.CommentVisibilityCustomer ||
-		entity.Visibility == shipment.CommentVisibilityDriver {
+	if entity.Visibility == shipmentvocab.CommentVisibilityCustomer ||
+		entity.Visibility == shipmentvocab.CommentVisibilityDriver {
 		outboundpreview.WarnSensitiveContent(preview, entity.Comment)
 	}
 
 	return preview, nil
 }
 
-func commentAudience(visibility shipment.CommentVisibility) string {
+func commentAudience(visibility shipmentvocab.CommentVisibility) string {
 	switch visibility {
-	case shipment.CommentVisibilityCustomer:
+	case shipmentvocab.CommentVisibilityCustomer:
 		return "The customer"
-	case shipment.CommentVisibilityDriver:
+	case shipmentvocab.CommentVisibilityDriver:
 		return "The driver"
-	case shipment.CommentVisibilityAccounting:
+	case shipmentvocab.CommentVisibilityAccounting:
 		return "Accounting"
-	case shipment.CommentVisibilityOperations:
+	case shipmentvocab.CommentVisibilityOperations:
 		return "Operations"
-	case shipment.CommentVisibilityInternal:
+	case shipmentvocab.CommentVisibilityInternal:
 		return "Internal staff"
 	default:
 		return "Internal staff"
@@ -210,7 +211,7 @@ func (t *AddShipmentCommentTool) comment(
 		return nil, err
 	}
 	if !given {
-		visibility = shipment.CommentVisibilityInternal
+		visibility = shipmentvocab.CommentVisibilityInternal
 	}
 
 	priority, given, err := toolparams.OptionalEnum(
@@ -220,7 +221,7 @@ func (t *AddShipmentCommentTool) comment(
 		return nil, err
 	}
 	if !given {
-		priority = shipment.CommentPriorityNormal
+		priority = shipmentvocab.CommentPriorityNormal
 	}
 
 	// Source is the assistant's, always. A note that reads as hand-typed but
@@ -234,7 +235,7 @@ func (t *AddShipmentCommentTool) comment(
 		Type:           commentType(visibility),
 		Visibility:     visibility,
 		Priority:       priority,
-		Source:         shipment.CommentSourceAI,
+		Source:         shipmentvocab.CommentSourceAI,
 		Metadata:       commentTaintMetadata(*params),
 	}, nil
 }
@@ -259,20 +260,20 @@ func commentTaintMetadata(params agenttoolports.ToolExecuteParams) map[string]an
 // commentType follows the audience. Type and visibility are separate axes in the
 // domain, and a note filed as Internal but shown to the customer contradicts
 // itself — anyone later filtering the thread by type would miss it.
-func commentType(visibility shipment.CommentVisibility) shipment.CommentType {
+func commentType(visibility shipmentvocab.CommentVisibility) shipmentvocab.CommentType {
 	switch visibility {
-	case shipment.CommentVisibilityCustomer:
-		return shipment.CommentTypeCustomerUpdate
-	case shipment.CommentVisibilityDriver:
-		return shipment.CommentTypeDriverUpdate
-	case shipment.CommentVisibilityAccounting:
-		return shipment.CommentTypeBilling
-	case shipment.CommentVisibilityOperations:
-		return shipment.CommentTypeDispatch
-	case shipment.CommentVisibilityInternal:
-		return shipment.CommentTypeInternal
+	case shipmentvocab.CommentVisibilityCustomer:
+		return shipmentvocab.CommentTypeCustomerUpdate
+	case shipmentvocab.CommentVisibilityDriver:
+		return shipmentvocab.CommentTypeDriverUpdate
+	case shipmentvocab.CommentVisibilityAccounting:
+		return shipmentvocab.CommentTypeBilling
+	case shipmentvocab.CommentVisibilityOperations:
+		return shipmentvocab.CommentTypeDispatch
+	case shipmentvocab.CommentVisibilityInternal:
+		return shipmentvocab.CommentTypeInternal
 	default:
-		return shipment.CommentTypeInternal
+		return shipmentvocab.CommentTypeInternal
 	}
 }
 

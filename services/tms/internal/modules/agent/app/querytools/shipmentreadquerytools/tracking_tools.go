@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmenttracking"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/stopeta"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchboardports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
@@ -311,7 +312,7 @@ func (t *getShipmentTrackingTool) assignments(
 	moves, err := t.board.ListBoardMoves(ctx, &dispatchboardports.DispatchBoardFilter{
 		TenantInfo:     tenant,
 		MoveIDs:        moveIDs,
-		MoveStatuses:   shipment.MoveStatuses(),
+		MoveStatuses:   shipmentvocab.MoveStatuses(),
 		IncludeCovered: true,
 		Limit:          len(moveIDs),
 	})

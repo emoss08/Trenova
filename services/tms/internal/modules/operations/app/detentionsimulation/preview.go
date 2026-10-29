@@ -3,21 +3,21 @@ package detentionsimulation
 import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionpolicy"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/shopspring/decimal"
 )
 
 // PreviewScenario is a hypothetical stop used to exercise a policy before it is
 // activated.
 type PreviewScenario struct {
-	ArrivedAt        int64                     `json:"arrivedAt"`
-	DepartedAt       *int64                    `json:"departedAt"`
-	AppointmentStart *int64                    `json:"appointmentStart"`
-	AppointmentEnd   *int64                    `json:"appointmentEnd"`
-	StopType         shipment.StopType         `json:"stopType"`
-	ScheduleType     shipment.StopScheduleType `json:"scheduleType"`
-	NoticeSentAt     *int64                    `json:"noticeSentAt"`
-	DriverPayRate    *string                   `json:"driverPayRate"`
+	ArrivedAt        int64                          `json:"arrivedAt"`
+	DepartedAt       *int64                         `json:"departedAt"`
+	AppointmentStart *int64                         `json:"appointmentStart"`
+	AppointmentEnd   *int64                         `json:"appointmentEnd"`
+	StopType         shipmentvocab.StopType         `json:"stopType"`
+	ScheduleType     shipmentvocab.StopScheduleType `json:"scheduleType"`
+	NoticeSentAt     *int64                         `json:"noticeSentAt"`
+	DriverPayRate    *string                        `json:"driverPayRate"`
 }
 
 // PreviewResult is what the configured terms would produce for the scenario.

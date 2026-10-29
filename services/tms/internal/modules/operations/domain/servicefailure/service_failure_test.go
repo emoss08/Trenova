@@ -3,7 +3,7 @@ package servicefailure
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -18,7 +18,7 @@ func TestServiceFailureValidateGeneratesIdentity(t *testing.T) {
 		Type:               TypeLateDelivery,
 		Source:             SourceDetected,
 		Status:             StatusOpen,
-		StopType:           shipment.StopTypeDelivery,
+		StopType:           shipmentvocab.StopTypeDelivery,
 		ScheduledCutoff:    1_799_000_000,
 		ActualArrival:      1_799_003_601,
 		GracePeriodMinutes: 30,

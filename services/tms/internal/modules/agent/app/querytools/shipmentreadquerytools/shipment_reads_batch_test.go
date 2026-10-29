@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/shipmentquerytools"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmenthold"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/holdreason"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -87,9 +88,9 @@ func TestGetShipment_SeveralLoadsAreOneTableReadOnceForEachSource(t *testing.T) 
 	t.Parallel()
 
 	first := &shipment.Shipment{ID: pulid.MustNew("shp_"), ProNumber: "S-1",
-		Status: shipment.StatusDelayed}
+		Status: shipmentvocab.StatusDelayed}
 	second := &shipment.Shipment{ID: pulid.MustNew("shp_"), ProNumber: "S-2",
-		Status: shipment.StatusDelayed}
+		Status: shipmentvocab.StatusDelayed}
 	missing := pulid.MustNew("shp_")
 	repo := &fakeTrackingShipments{listed: []*shipment.Shipment{second, first}}
 	holds := &fakeActiveHolds{holds: []*shipmenthold.ShipmentHold{
@@ -98,11 +99,11 @@ func TestGetShipment_SeveralLoadsAreOneTableReadOnceForEachSource(t *testing.T) 
 	comments := &fakeNewestComments{comments: []*shipment.ShipmentComment{
 		{
 			ID: pulid.MustNew("shc_"), ShipmentID: first.ID, Comment: "Receiver closed",
-			Source: shipment.CommentSourceUser,
+			Source: shipmentvocab.CommentSourceUser,
 		},
 		{
 			ID: pulid.MustNew("shc_"), ShipmentID: second.ID, Comment: "ETA 4pm",
-			Source: shipment.CommentSourceIntegration,
+			Source: shipmentvocab.CommentSourceIntegration,
 		},
 	}}
 	tool := newGetShipmentTool(repo, nil, nil, &querytooltest.FakePermissions{Allowed: true}).

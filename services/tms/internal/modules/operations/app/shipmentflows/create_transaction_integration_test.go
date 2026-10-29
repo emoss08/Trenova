@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentwrite"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenteventports"
 	internaltestutil "github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
@@ -132,7 +133,7 @@ func TestCreateIntegration_ExternalReferenceNamesOneLiveShipmentPerCustomer(t *t
 		FormulaTemplateID: created.FormulaTemplateID,
 		ProNumber:         "PRO-RACE-EXTREF",
 		ExternalReference: "Po-7781",
-		Status:            shipment.StatusNew,
+		Status:            shipmentvocab.StatusNew,
 	})
 	require.Error(t, err, "the unique index holds even when the check is raced")
 	assert.Nil(t, shipmentwrite.ExternalReferenceConflict(errors.New("unrelated"), repeat))
@@ -140,7 +141,7 @@ func TestCreateIntegration_ExternalReferenceNamesOneLiveShipmentPerCustomer(t *t
 
 	_, err = keel.Exec(ctx, db,
 		"UPDATE shipments SET status = $1 WHERE id = $2",
-		string(shipment.StatusCanceled), created.ID.String())
+		string(shipmentvocab.StatusCanceled), created.ID.String())
 	require.NoError(t, err)
 
 	err = shipmentdb.Shipments.Create(ctx, db, &shipment.Shipment{
@@ -153,7 +154,7 @@ func TestCreateIntegration_ExternalReferenceNamesOneLiveShipmentPerCustomer(t *t
 		FormulaTemplateID: created.FormulaTemplateID,
 		ProNumber:         "PRO-REBOOK-EXTREF",
 		ExternalReference: "PO-7781",
-		Status:            shipment.StatusNew,
+		Status:            shipmentvocab.StatusNew,
 	})
 	require.NoError(t, err, "a canceled shipment releases its reference")
 }

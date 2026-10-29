@@ -27,8 +27,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/order"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/order/orderdb"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/seeds/volume/ledgervolume"
 	"github.com/emoss08/trenova/internal/seeds/volume/volumegen"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -1761,7 +1761,7 @@ func (g *adjustmentPhase) adjVoid(
 		at:     at,
 		reason: adjCancelReason(reason),
 	})
-	p.req.rec.Status = shipment.StatusCompleted
+	p.req.rec.Status = shipmentvocab.StatusCompleted
 }
 
 func adjCancelReason(reason string) string {
@@ -2096,10 +2096,10 @@ func (g *adjustmentPhase) adjApplyReversals(ctx context.Context, tx *keel.DB, ro
 	if _, err := sh.With(restored).Join(restored, restored.Col("id").EqCol(sh.ID)).Where(keel.True()).Update(
 		ctx,
 		tx,
-		sh.Status.To(shipment.StatusCompleted),
+		sh.Status.To(shipmentvocab.StatusCompleted),
 		sh.BilledAt.ToNull(),
 		sh.RateLocked.To(false),
-		sh.BillingTransferStatus.To(shipment.BillingTransferStatus(billingqueue.StatusCanceled)),
+		sh.BillingTransferStatus.To(shipmentvocab.BillingTransferStatus(billingqueue.StatusCanceled)),
 		sh.UpdatedAt.ToExpr(restored.Col("at")),
 	); err != nil {
 		return fmt.Errorf("restore reversed shipments: %w", err)

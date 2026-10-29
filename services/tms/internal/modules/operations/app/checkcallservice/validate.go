@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/checkcall"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/checkcallports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentmoveports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -136,7 +137,7 @@ func addTenant(multiErr *errortypes.MultiError, tenantInfo pagination.TenantInfo
 
 func findStop(move *shipment.ShipmentMove, stopID pulid.ID) *shipment.Stop {
 	for _, stop := range move.Stops {
-		if stop != nil && stop.ID == stopID && stop.Status != shipment.StopStatusCanceled {
+		if stop != nil && stop.ID == stopID && stop.Status != shipmentvocab.StopStatusCanceled {
 			return stop
 		}
 	}
@@ -144,12 +145,13 @@ func findStop(move *shipment.ShipmentMove, stopID pulid.ID) *shipment.Stop {
 }
 
 func moveIsClosed(move *shipment.ShipmentMove) bool {
-	return move.Status == shipment.MoveStatusCompleted || move.Status == shipment.MoveStatusCanceled
+	return move.Status == shipmentvocab.MoveStatusCompleted ||
+		move.Status == shipmentvocab.MoveStatusCanceled
 }
 
-func visitKind(kind checkcall.Kind) shipment.VisitKind {
+func visitKind(kind checkcall.Kind) shipmentvocab.VisitKind {
 	if kind == checkcall.KindDeparture {
-		return shipment.VisitDeparture
+		return shipmentvocab.VisitDeparture
 	}
-	return shipment.VisitArrival
+	return shipmentvocab.VisitArrival
 }

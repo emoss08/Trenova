@@ -6,7 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/app/detentioneffects"
 	"github.com/emoss08/trenova/internal/modules/operations/app/detentionengine"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionpolicy"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/accessorialchargeports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -115,8 +115,8 @@ func (s *Service) Backtest(
 			continue
 		}
 
-		stopType := shipment.StopType(fact.StopType)
-		scheduleType := shipment.StopScheduleType(fact.ScheduleType)
+		stopType := shipmentvocab.StopType(fact.StopType)
+		scheduleType := shipmentvocab.StopScheduleType(fact.ScheduleType)
 
 		if !req.Policy.Matches(detentionpolicy.MatchInput{
 			CustomerID:     fact.CustomerID,
@@ -374,10 +374,10 @@ func (s *Service) PreviewPolicy(
 	}
 
 	if scenario.StopType == "" {
-		scenario.StopType = shipment.StopTypeDelivery
+		scenario.StopType = shipmentvocab.StopTypeDelivery
 	}
 	if scenario.ScheduleType == "" {
-		scenario.ScheduleType = shipment.StopScheduleTypeAppointment
+		scenario.ScheduleType = shipmentvocab.StopScheduleTypeAppointment
 	}
 
 	accessorial, err := s.accessorialRepo.GetByID(

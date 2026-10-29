@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
 	"github.com/emoss08/trenova/shared/inflect"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -90,7 +91,7 @@ func detectedFailureChanges(
 			Label:    plan.Shipment.ProNumber,
 			Version:  changepreview.PreviewVersion(plan.Shipment.Version),
 		}, &shipmentpreview.ShipmentStatusView{Status: string(plan.Shipment.Status)},
-			&shipmentpreview.ShipmentStatusView{Status: string(shipment.StatusDelayed)},
+			&shipmentpreview.ShipmentStatusView{Status: string(shipmentvocab.StatusDelayed)},
 		)
 		if err != nil {
 			return nil, err

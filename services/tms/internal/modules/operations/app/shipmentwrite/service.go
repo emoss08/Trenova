@@ -27,6 +27,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentrating"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentstate"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/assignmentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/chargeallocationports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/orderports"
@@ -611,7 +612,7 @@ func (s *Service) Update( //nolint:cyclop // legacy workflow
 	}
 	s.evaluateServiceFailuresAfterShipmentUpdate(ctx, updatedEntity, actor)
 
-	if updatedEntity.Status == shipment.StatusCompleted &&
+	if updatedEntity.Status == shipmentvocab.StatusCompleted &&
 		s.customerRepo != nil &&
 		s.documentRepo != nil &&
 		s.billingRepo != nil {

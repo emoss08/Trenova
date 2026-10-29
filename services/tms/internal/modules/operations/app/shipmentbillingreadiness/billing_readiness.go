@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/chargeallocation"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentbillingports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype"
@@ -190,7 +191,7 @@ func applyPayerReadiness(
 	readiness.CanMarkReadyToInvoice = isBillingReadyStatus(entity.Status) &&
 		canProceedManually(readiness.Policy, requirementIssues, rateIssues)
 	readiness.ShouldAutoMarkReadyToInvoice = readiness.Policy.ReadyToBillAssignmentMode == billingcontrol.ReadyToBillAssignmentModeAutomaticWhenEligible &&
-		entity.Status == shipment.StatusCompleted &&
+		entity.Status == shipmentvocab.StatusCompleted &&
 		canAutoProgress(readiness.Policy, requirementIssues, rateIssues)
 	readiness.ShouldAutoTransferToBilling = readiness.ShouldAutoMarkReadyToInvoice &&
 		readiness.Policy.BillingQueueTransferMode == billingcontrol.BillingQueueTransferModeAutomaticWhenReady
@@ -255,10 +256,10 @@ func buildShipmentBillingReadiness(
 		appendRateDepartureReasonFailure(entity, billingControl, readiness)
 		requirementIssues := HasShipmentRequirementIssues(readiness)
 		rateIssues := HasRateIssues(readiness)
-		readiness.CanMarkReadyToInvoice = entity.Status == shipment.StatusCompleted &&
+		readiness.CanMarkReadyToInvoice = entity.Status == shipmentvocab.StatusCompleted &&
 			canProceedManually(readiness.Policy, requirementIssues, rateIssues)
 		readiness.ShouldAutoMarkReadyToInvoice = readiness.Policy.ReadyToBillAssignmentMode == billingcontrol.ReadyToBillAssignmentModeAutomaticWhenEligible &&
-			entity.Status == shipment.StatusCompleted &&
+			entity.Status == shipmentvocab.StatusCompleted &&
 			canAutoProgress(readiness.Policy, requirementIssues, rateIssues)
 		readiness.ShouldAutoTransferToBilling = readiness.ShouldAutoMarkReadyToInvoice &&
 			readiness.Policy.BillingQueueTransferMode == billingcontrol.BillingQueueTransferModeAutomaticWhenReady
@@ -297,7 +298,7 @@ func buildShipmentBillingReadiness(
 	readiness.CanMarkReadyToInvoice = isBillingReadyStatus(entity.Status) &&
 		canProceedManually(readiness.Policy, requirementIssues, rateIssues)
 	readiness.ShouldAutoMarkReadyToInvoice = readiness.Policy.ReadyToBillAssignmentMode == billingcontrol.ReadyToBillAssignmentModeAutomaticWhenEligible &&
-		entity.Status == shipment.StatusCompleted &&
+		entity.Status == shipmentvocab.StatusCompleted &&
 		canAutoProgress(readiness.Policy, requirementIssues, rateIssues)
 	readiness.ShouldAutoTransferToBilling = readiness.ShouldAutoMarkReadyToInvoice &&
 		readiness.Policy.BillingQueueTransferMode == billingcontrol.BillingQueueTransferModeAutomaticWhenReady
@@ -340,10 +341,10 @@ func shouldAutoApproveBilling(
 		!rateIssues
 }
 
-func isBillingReadyStatus(status shipment.Status) bool {
-	return status == shipment.StatusCompleted ||
-		status == shipment.StatusReadyToInvoice ||
-		status == shipment.StatusInvoiced
+func isBillingReadyStatus(status shipmentvocab.Status) bool {
+	return status == shipmentvocab.StatusCompleted ||
+		status == shipmentvocab.StatusReadyToInvoice ||
+		status == shipmentvocab.StatusInvoiced
 }
 
 func resolveShipmentBillingRequirementEnforcement(

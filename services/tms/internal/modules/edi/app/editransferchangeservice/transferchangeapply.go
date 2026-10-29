@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentevent"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentstate"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -21,7 +22,7 @@ type approvedTransferChangeContext struct {
 	opposite     *shipment.Shipment
 	oppositeInfo pagination.TenantInfo
 	oppositeID   pulid.ID
-	nextStatus   shipment.Status
+	nextStatus   shipmentvocab.Status
 }
 
 func (s *Service) applyApprovedTransferChange(
@@ -190,9 +191,9 @@ func (s *Service) buildApprovedTransferChangeContext(
 		return approvedTransferChangeContext{}, err
 	}
 
-	nextStatus := shipment.Status(transferChangePayloadString(change.Payload, "newStatus"))
+	nextStatus := shipmentvocab.Status(transferChangePayloadString(change.Payload, "newStatus"))
 	if change.ChangeType == edisync.TransferChangeTypeShipmentCancel214 {
-		nextStatus = shipment.StatusCanceled
+		nextStatus = shipmentvocab.StatusCanceled
 	}
 	if nextStatus == "" {
 		return approvedTransferChangeContext{}, fmt.Errorf(
@@ -339,13 +340,15 @@ func transferChangePayloadString(payload map[string]any, key string) string {
 	}
 }
 
-func transferChangeSeverityForStatus(status shipment.Status) shipmentevent.Severity {
+func transferChangeSeverityForStatus(status shipmentvocab.Status) shipmentevent.Severity {
 	switch status {
-	case shipment.StatusCanceled, shipment.StatusDelayed:
+	case shipmentvocab.StatusCanceled, shipmentvocab.StatusDelayed:
 		return shipmentevent.SeverityDanger
-	case shipment.StatusCompleted, shipment.StatusReadyToInvoice, shipment.StatusInvoiced:
+	case shipmentvocab.StatusCompleted,
+		shipmentvocab.StatusReadyToInvoice,
+		shipmentvocab.StatusInvoiced:
 		return shipmentevent.SeveritySuccess
-	case shipment.StatusInTransit:
+	case shipmentvocab.StatusInTransit:
 		return shipmentevent.SeverityBrand
 	default:
 		return shipmentevent.SeverityMuted

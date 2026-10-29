@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentinvalidation"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/jobs/shipmentjobs/shipmentcontract"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
@@ -127,7 +128,7 @@ func TestActivitiesAutoDelayShipmentsActivity(t *testing.T) {
 			ID:             shipmentID,
 			OrganizationID: orgID,
 			BusinessUnitID: buID,
-			Status:         shipment.StatusDelayed,
+			Status:         shipmentvocab.StatusDelayed,
 		}}, nil).
 		Once()
 	realtime.EXPECT().
@@ -170,7 +171,7 @@ func TestActivitiesAutoCancelShipmentsActivity(t *testing.T) {
 			ID:             shipmentID,
 			OrganizationID: orgID,
 			BusinessUnitID: buID,
-			Status:         shipment.StatusCanceled,
+			Status:         shipmentvocab.StatusCanceled,
 		}}, nil).
 		Once()
 	realtime.EXPECT().
@@ -218,19 +219,19 @@ func TestActivitiesAutoCancelShipmentsActivity_PublishesPerAffectedTenant(t *tes
 				ID:             pulid.MustNew("shp_"),
 				OrganizationID: orgOne,
 				BusinessUnitID: buOne,
-				Status:         shipment.StatusCanceled,
+				Status:         shipmentvocab.StatusCanceled,
 			},
 			{
 				ID:             pulid.MustNew("shp_"),
 				OrganizationID: orgOne,
 				BusinessUnitID: buOne,
-				Status:         shipment.StatusCanceled,
+				Status:         shipmentvocab.StatusCanceled,
 			},
 			{
 				ID:             pulid.MustNew("shp_"),
 				OrganizationID: orgTwo,
 				BusinessUnitID: buTwo,
-				Status:         shipment.StatusCanceled,
+				Status:         shipmentvocab.StatusCanceled,
 			},
 		}, nil).
 		Once()

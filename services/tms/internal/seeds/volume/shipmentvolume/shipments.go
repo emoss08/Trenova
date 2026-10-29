@@ -24,6 +24,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmenthold"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmenthold/shipmentholddb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentstate"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/places/domain/distancecalculation"
 	"github.com/emoss08/trenova/internal/modules/places/domain/distanceprofile"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
@@ -77,7 +78,7 @@ type shpLane struct {
 
 type shpStopPlan struct {
 	loc *volumegen.LocationRecord
-	typ shipment.StopType
+	typ shipmentvocab.StopType
 }
 
 type shpCommodityPlan struct {
@@ -162,7 +163,7 @@ type shpBuilder struct {
 	allCrews        []int
 	zones           map[string]*time.Location
 	counts          map[string]int
-	statuses        map[shipment.Status]int
+	statuses        map[shipmentvocab.Status]int
 	externalRefs    map[string]struct{}
 }
 
@@ -229,11 +230,11 @@ func (g *shipmentPhase) seedShipments(ctx context.Context) error {
 	} {
 		g.Report.Add(entity.label, b.counts[entity.table])
 	}
-	for _, status := range []shipment.Status{
-		shipment.StatusNew, shipment.StatusPartiallyAssigned, shipment.StatusAssigned,
-		shipment.StatusInTransit, shipment.StatusDelayed, shipment.StatusPartiallyCompleted,
-		shipment.StatusCompleted, shipment.StatusReadyToInvoice, shipment.StatusInvoiced,
-		shipment.StatusCanceled,
+	for _, status := range []shipmentvocab.Status{
+		shipmentvocab.StatusNew, shipmentvocab.StatusPartiallyAssigned, shipmentvocab.StatusAssigned,
+		shipmentvocab.StatusInTransit, shipmentvocab.StatusDelayed, shipmentvocab.StatusPartiallyCompleted,
+		shipmentvocab.StatusCompleted, shipmentvocab.StatusReadyToInvoice, shipmentvocab.StatusInvoiced,
+		shipmentvocab.StatusCanceled,
 	} {
 		g.Opts.Logf("  • shipments %s: %d", status, b.statuses[status])
 	}
@@ -346,7 +347,7 @@ func (g *shipmentPhase) shpNewBuilder(look *shpLookups) *shpBuilder {
 		allCrews:     make([]int, len(g.Crews)),
 		zones:        make(map[string]*time.Location),
 		counts:       make(map[string]int),
-		statuses:     make(map[shipment.Status]int),
+		statuses:     make(map[shipmentvocab.Status]int),
 		externalRefs: make(map[string]struct{}),
 	}
 	for i, c := range g.Crews {
@@ -544,22 +545,22 @@ func (b *shpBuilder) planRoute() *shpPlan {
 	switch f.Weighted([]int{82, 10, 8}) {
 	case 0:
 		p.moves = [][]shpStopPlan{{
-			{loc: l.origin, typ: shipment.StopTypePickup},
-			{loc: l.dest, typ: shipment.StopTypeDelivery},
+			{loc: l.origin, typ: shipmentvocab.StopTypePickup},
+			{loc: l.dest, typ: shipmentvocab.StopTypeDelivery},
 		}}
 	case 1:
-		stops := []shpStopPlan{{loc: l.origin, typ: shipment.StopTypePickup}}
+		stops := []shpStopPlan{{loc: l.origin, typ: shipmentvocab.StopTypePickup}}
 		if f.Chance(0.3) {
 			stops = append(stops, shpStopPlan{
 				loc: b.nearLocation(b.shippers, l.origin.City, 120, l.origin),
-				typ: shipment.StopTypePickup,
+				typ: shipmentvocab.StopTypePickup,
 			})
 		}
 		prev := l.dest
-		stops = append(stops, shpStopPlan{loc: prev, typ: shipment.StopTypeDelivery})
+		stops = append(stops, shpStopPlan{loc: prev, typ: shipmentvocab.StopTypeDelivery})
 		for range f.Between(1, 2) {
 			next := b.nearLocation(b.consignees, prev.City, 220, prev)
-			stops = append(stops, shpStopPlan{loc: next, typ: shipment.StopTypeDelivery})
+			stops = append(stops, shpStopPlan{loc: next, typ: shipmentvocab.StopTypeDelivery})
 			prev = next
 		}
 		p.moves = [][]shpStopPlan{stops}
@@ -573,8 +574,8 @@ func (b *shpBuilder) planRoute() *shpPlan {
 		points = append(points, l.dest)
 		for i := range legs {
 			p.moves = append(p.moves, []shpStopPlan{
-				{loc: points[i], typ: shipment.StopTypePickup},
-				{loc: points[i+1], typ: shipment.StopTypeDelivery},
+				{loc: points[i], typ: shipmentvocab.StopTypePickup},
+				{loc: points[i+1], typ: shipmentvocab.StopTypeDelivery},
 			})
 		}
 	}
@@ -876,13 +877,13 @@ func (b *shpBuilder) carrierAssignment(
 	}
 	assigner := b.user()
 	ca := &shipment.CarrierAssignment{
-		ID:                    volumegen.IDAt(shipment.CarrierAssignmentIDPrefix, assignedAt),
+		ID:                    volumegen.IDAt(shipmentvocab.CarrierAssignmentIDPrefix, assignedAt),
 		BusinessUnitID:        b.g.Refs.BuID,
 		OrganizationID:        b.g.Refs.OrgID,
 		ShipmentMoveID:        move.ID,
 		CarrierID:             b.carrierFor(p.customer),
-		Status:                shipment.CarrierAssignmentStatusConfirmed,
-		RateMethod:            shipment.CarrierRateMethodFlat,
+		Status:                shipmentvocab.CarrierAssignmentStatusConfirmed,
+		RateMethod:            shipmentvocab.CarrierRateMethodFlat,
 		CurrencyCode:          "USD",
 		ProNumber:             f.Letters(2) + f.Digits(7),
 		ExternalDriverName:    f.FirstName() + " " + f.LastName(),
@@ -895,7 +896,7 @@ func (b *shpBuilder) carrierAssignment(
 	}
 	rpm := 1.7 + 120/(miles+40) + f.Float()*0.35
 	if f.Chance(0.4) && miles >= 150 {
-		ca.RateMethod = shipment.CarrierRateMethodPerMile
+		ca.RateMethod = shipmentvocab.CarrierRateMethodPerMile
 		ca.BaseRate = decimal.NewFromFloat(rpm).Round(2)
 	} else {
 		ca.BaseRate = decimal.NewFromFloat(math.Round(math.Max(miles*rpm, 300)/5) * 5)
@@ -903,7 +904,7 @@ func (b *shpBuilder) carrierAssignment(
 	ca.FuelSurcharge = decimal.NewFromFloat(miles * (0.38 + f.Float()*0.2)).Round(2)
 	ca.SyncTotals(move.Distance)
 	if !started && f.Chance(0.25) {
-		ca.Status = shipment.CarrierAssignmentStatusPending
+		ca.Status = shipmentvocab.CarrierAssignmentStatusPending
 	} else {
 		ca.ConfirmedAt = volumegen.Ptr(min(assignedAt+b.at(10*shpMinute, 6*shpHour), b.now))
 	}
@@ -965,24 +966,24 @@ func (b *shpBuilder) build(batch *shpBatch, p *shpPlan, pro, orderNumber string)
 		OwnerID:             owner.ID,
 		EnteredByID:         entered.ID,
 		OrderID:             orderID,
-		EntryMethod:         shipment.EntryMethodManual,
+		EntryMethod:         shipmentvocab.EntryMethodManual,
 		ProNumber:           pro,
 		BOL:                 bol,
 		Pieces:              volumegen.Ptr(p.pieces),
 		Weight:              volumegen.Ptr(p.weight),
-		FreightTerms:        shipment.FreightTermsPrepaid,
+		FreightTerms:        shipmentvocab.FreightTermsPrepaid,
 		Version:             1,
-		Status:              shipment.StatusNew,
+		Status:              shipmentvocab.StatusNew,
 		FreightLines:        []shipment.FreightLine{},
 		OtherChargeAmount:   decimal.NewNullDecimal(decimal.RequireFromString("0")),
 		FreightChargeAmount: decimal.NewNullDecimal(decimal.RequireFromString("0")),
 		TotalChargeAmount:   decimal.NewNullDecimal(decimal.RequireFromString("0")),
 	}
 	if f.Chance(0.08) {
-		entity.FreightTerms = shipment.FreightTermsCollect
+		entity.FreightTerms = shipmentvocab.FreightTermsCollect
 	}
 	if f.Chance(0.15) {
-		entity.EntryMethod = shipment.EntryMethodEDI
+		entity.EntryMethod = shipmentvocab.EntryMethodEDI
 		entity.ExternalReference = b.externalRef(p, func() string { return "LT" + f.Digits(9) })
 	} else if f.Chance(0.2) {
 		entity.ExternalReference = b.externalRef(p, func() string {
@@ -1007,13 +1008,13 @@ func (b *shpBuilder) build(batch *shpBatch, p *shpPlan, pro, orderNumber string)
 			BusinessUnitID: buID,
 			OrganizationID: orgID,
 			ShipmentID:     shipmentID,
-			Status:         shipment.MoveStatusNew,
-			CoverageType:   shipment.MoveCoverageTypeUnassigned,
+			Status:         shipmentvocab.MoveStatusNew,
+			CoverageType:   shipmentvocab.MoveCoverageTypeUnassigned,
 			Loaded:         true,
 			Sequence:       int64(m),
 		}
 		miles := 0.0
-		perType := make(map[shipment.StopType]int64, 2)
+		perType := make(map[shipmentvocab.StopType]int64, 2)
 		for _, ts := range timed {
 			perType[ts.plan.typ]++
 		}
@@ -1032,7 +1033,7 @@ func (b *shpBuilder) build(batch *shpBatch, p *shpPlan, pro, orderNumber string)
 				ShipmentMoveID:       moveID,
 				LocationID:           ts.plan.loc.ID,
 				Type:                 ts.plan.typ,
-				ScheduleType:         shipment.StopScheduleTypeOpen,
+				ScheduleType:         shipmentvocab.StopScheduleTypeOpen,
 				Sequence:             int64(s),
 				Pieces:               volumegen.Ptr(pieces),
 				Weight:               volumegen.Ptr(weight),
@@ -1040,10 +1041,10 @@ func (b *shpBuilder) build(batch *shpBatch, p *shpPlan, pro, orderNumber string)
 				ScheduledWindowEnd:   volumegen.Ptr(ts.windowEnd),
 				AddressLine:          shpAddressLine(ts.plan.loc),
 				Version:              1,
-				Status:               shipment.StopStatusNew,
+				Status:               shipmentvocab.StopStatusNew,
 			}
 			if ts.appointment {
-				stop.ScheduleType = shipment.StopScheduleTypeAppointment
+				stop.ScheduleType = shipmentvocab.StopScheduleTypeAppointment
 			}
 			if !p.canceled && ts.arrival <= b.now {
 				stop.ActualArrival = volumegen.Ptr(ts.arrival)
@@ -1103,7 +1104,7 @@ func (b *shpBuilder) build(batch *shpBatch, p *shpPlan, pro, orderNumber string)
 		assignedAt = max(assignedAt, p.createdAt)
 		if len(b.g.Carriers) > 0 && f.Chance(0.12) {
 			move.CarrierAssignment = b.carrierAssignment(move, p, assignedAt, moveStarted)
-			move.CoverageType = shipment.MoveCoverageTypeCarrier
+			move.CoverageType = shipmentvocab.MoveCoverageTypeCarrier
 			continue
 		}
 		c := b.pickCrew(start-2*shpHour, end, p, b.trailerKind(p))
@@ -1121,26 +1122,26 @@ func (b *shpBuilder) build(batch *shpBatch, p *shpPlan, pro, orderNumber string)
 			TractorID:         volumegen.Ptr(c.TractorID),
 			TrailerID:         pulid.PtrOrNil(c.TrailerID),
 			SecondaryWorkerID: c.SecondaryWorkerID,
-			Status:            shipment.AssignmentStatusNew,
-			AckStatus:         shipment.AssignmentAckPending,
+			Status:            shipmentvocab.AssignmentStatusNew,
+			AckStatus:         shipmentvocab.AssignmentAckPending,
 			Version:           1,
 			CreatedAt:         assignedAt,
 		}
 		if moveStarted || f.Chance(0.75) {
 			ackAt := min(assignedAt+b.at(5*shpMinute, 90*shpMinute), b.now)
-			a.AckStatus = shipment.AssignmentAckAccepted
+			a.AckStatus = shipmentvocab.AssignmentAckAccepted
 			a.AckAt = volumegen.Ptr(ackAt)
 		}
 		move.Assignment = a
-		move.CoverageType = shipment.MoveCoverageTypeDriver
+		move.CoverageType = shipmentvocab.MoveCoverageTypeDriver
 	}
 
 	if p.canceled {
-		entity.Status = shipment.StatusCanceled
+		entity.Status = shipmentvocab.StatusCanceled
 		for _, move := range entity.Moves {
-			move.Status = shipment.MoveStatusCanceled
+			move.Status = shipmentvocab.MoveStatusCanceled
 			for _, stop := range move.Stops {
-				stop.Status = shipment.StopStatusCanceled
+				stop.Status = shipmentvocab.StopStatusCanceled
 			}
 		}
 		canceledAt := b.at(p.createdAt+shpHour, min(p.pickupAt, b.now-shpMinute))
@@ -1161,12 +1162,12 @@ func (b *shpBuilder) build(batch *shpBatch, p *shpPlan, pro, orderNumber string)
 			continue
 		}
 		switch move.Status {
-		case shipment.MoveStatusCompleted:
-			move.Assignment.Status = shipment.AssignmentStatusCompleted
-		case shipment.MoveStatusInTransit:
-			move.Assignment.Status = shipment.AssignmentStatusInProgress
+		case shipmentvocab.MoveStatusCompleted:
+			move.Assignment.Status = shipmentvocab.AssignmentStatusCompleted
+		case shipmentvocab.MoveStatusInTransit:
+			move.Assignment.Status = shipmentvocab.AssignmentStatusInProgress
 		default:
-			move.Assignment.Status = shipment.AssignmentStatusNew
+			move.Assignment.Status = shipmentvocab.AssignmentStatusNew
 		}
 	}
 
@@ -1244,8 +1245,8 @@ func (b *shpBuilder) build(batch *shpBatch, p *shpPlan, pro, orderNumber string)
 			if a.AckAt != nil {
 				assignUpdated = *a.AckAt
 			}
-			if move.Status == shipment.MoveStatusCompleted ||
-				move.Status == shipment.MoveStatusInTransit {
+			if move.Status == shipmentvocab.MoveStatusCompleted ||
+				move.Status == shipmentvocab.MoveStatusInTransit {
 				assignUpdated = max(assignUpdated, lastActual)
 			}
 			batch.assignments = append(batch.assignments, a)
@@ -1310,7 +1311,7 @@ func shpMoveRecords(
 		if first.ActualArrival != nil {
 			rec.StartedAt = *first.ActualArrival
 		}
-		if move.Status == shipment.MoveStatusCompleted && last.ActualDeparture != nil {
+		if move.Status == shipmentvocab.MoveStatusCompleted && last.ActualDeparture != nil {
 			rec.CompletedAt = *last.ActualDeparture
 		}
 		records = append(records, rec)
@@ -1349,17 +1350,21 @@ func shpAddressLine(loc *volumegen.LocationRecord) string {
 	return fmt.Sprintf("%s, %s, %s", loc.Address, loc.City.Name, loc.City.State)
 }
 
-func shpOrderStatus(status shipment.Status) order.Status {
+func shpOrderStatus(status shipmentvocab.Status) order.Status {
 	switch status {
-	case shipment.StatusNew, shipment.StatusAssigned, shipment.StatusPartiallyAssigned:
+	case shipmentvocab.StatusNew,
+		shipmentvocab.StatusAssigned,
+		shipmentvocab.StatusPartiallyAssigned:
 		return order.StatusConfirmed
-	case shipment.StatusInTransit, shipment.StatusDelayed, shipment.StatusPartiallyCompleted:
+	case shipmentvocab.StatusInTransit,
+		shipmentvocab.StatusDelayed,
+		shipmentvocab.StatusPartiallyCompleted:
 		return order.StatusInProgress
-	case shipment.StatusCompleted, shipment.StatusReadyToInvoice:
+	case shipmentvocab.StatusCompleted, shipmentvocab.StatusReadyToInvoice:
 		return order.StatusCompleted
-	case shipment.StatusInvoiced:
+	case shipmentvocab.StatusInvoiced:
 		return order.StatusBilled
-	case shipment.StatusCanceled:
+	case shipmentvocab.StatusCanceled:
 		return order.StatusCanceled
 	default:
 		return order.StatusConfirmed
@@ -1367,7 +1372,7 @@ func shpOrderStatus(status shipment.Status) order.Status {
 }
 
 func (b *shpBuilder) planBilling(entity *shipment.Shipment, rec *volumegen.ShipmentRecord) {
-	if entity.Status != shipment.StatusCompleted || rec.DeliveredAt == 0 {
+	if entity.Status != shipmentvocab.StatusCompleted || rec.DeliveredAt == 0 {
 		return
 	}
 	f := b.g.Fake
@@ -1398,8 +1403,8 @@ func (b *shpBuilder) planBilling(entity *shipment.Shipment, rec *volumegen.Shipm
 			rec.TransferredAt = b.at(rec.ReadyToBillAt, rec.InvoiceDate-shpMinute)
 			rec.Stage = volumegen.BillingStageInvoiced
 			rec.QueueStatus = billingqueue.StatusPosted
-			entity.Status = shipment.StatusInvoiced
-			entity.BillingTransferStatus = shipment.BillingTransferPosted
+			entity.Status = shipmentvocab.StatusInvoiced
+			entity.BillingTransferStatus = shipmentvocab.BillingTransferPosted
 			entity.MarkedReadyToBillAt = volumegen.Ptr(rec.ReadyToBillAt)
 			entity.TransferredToBillingAt = volumegen.Ptr(rec.TransferredAt)
 			entity.BilledAt = volumegen.Ptr(rec.InvoiceDate)
@@ -1422,8 +1427,8 @@ func (b *shpBuilder) planBilling(entity *shipment.Shipment, rec *volumegen.Shipm
 		billingqueue.StatusSentBackToOps,
 		billingqueue.StatusApproved,
 	}[f.Weighted([]int{40, 25, 10, 10, 5, 10})]
-	entity.Status = shipment.StatusReadyToInvoice
-	entity.BillingTransferStatus = shipment.BillingTransferStatus(rec.QueueStatus)
+	entity.Status = shipmentvocab.StatusReadyToInvoice
+	entity.BillingTransferStatus = shipmentvocab.BillingTransferStatus(rec.QueueStatus)
 	entity.MarkedReadyToBillAt = volumegen.Ptr(rec.ReadyToBillAt)
 	entity.TransferredToBillingAt = volumegen.Ptr(rec.TransferredAt)
 }
@@ -1508,9 +1513,9 @@ func (b *shpBuilder) price(
 		freight = baseRate.Mul(unit.quantity).Round(2)
 	}
 
-	delivered := entity.Status == shipment.StatusCompleted ||
-		entity.Status == shipment.StatusReadyToInvoice ||
-		entity.Status == shipment.StatusInvoiced
+	delivered := entity.Status == shipmentvocab.StatusCompleted ||
+		entity.Status == shipmentvocab.StatusReadyToInvoice ||
+		entity.Status == shipmentvocab.StatusInvoiced
 
 	var charges []volumegen.ChargeRecord
 	add := func(code string, amount decimal.Decimal, unit int64, at int64) {
@@ -1696,9 +1701,9 @@ func shpRatingDetail(
 }
 
 type shpCommentSpec struct {
-	typ        shipment.CommentType
-	visibility shipment.CommentVisibility
-	priority   shipment.CommentPriority
+	typ        shipmentvocab.CommentType
+	visibility shipmentvocab.CommentVisibility
+	priority   shipmentvocab.CommentPriority
 	text       string
 	at         int64
 }
@@ -1747,9 +1752,9 @@ func (b *shpBuilder) comments(
 
 	var specs []shpCommentSpec
 	addSpec := func(
-		typ shipment.CommentType,
-		vis shipment.CommentVisibility,
-		priority shipment.CommentPriority,
+		typ shipmentvocab.CommentType,
+		vis shipmentvocab.CommentVisibility,
+		priority shipmentvocab.CommentPriority,
 		low, high int64,
 		text string,
 	) {
@@ -1771,8 +1776,8 @@ func (b *shpBuilder) comments(
 			if !first.appointment {
 				return
 			}
-			addSpec(shipment.CommentTypeAppointment, shipment.CommentVisibilityOperations,
-				shipment.CommentPriorityNormal, rec.CreatedAt, preEnd,
+			addSpec(shipmentvocab.CommentTypeAppointment, shipmentvocab.CommentVisibilityOperations,
+				shipmentvocab.CommentPriorityNormal, rec.CreatedAt, preEnd,
 				fmt.Sprintf("Pickup appointment confirmed at %s for %s.%s",
 					origin.Name, pickupAppt, shpPORef(" Reference PO ", rec.PONumber, ".")))
 		},
@@ -1781,9 +1786,9 @@ func (b *shpBuilder) comments(
 				return
 			}
 			addSpec(
-				shipment.CommentTypeAppointment,
-				shipment.CommentVisibilityOperations,
-				shipment.CommentPriorityNormal,
+				shipmentvocab.CommentTypeAppointment,
+				shipmentvocab.CommentVisibilityOperations,
+				shipmentvocab.CommentPriorityNormal,
 				rec.CreatedAt,
 				preEnd,
 				fmt.Sprintf(
@@ -1795,9 +1800,9 @@ func (b *shpBuilder) comments(
 		},
 		func() {
 			addSpec(
-				shipment.CommentTypePickupInstruction,
-				shipment.CommentVisibilityDriver,
-				shipment.CommentPriorityNormal,
+				shipmentvocab.CommentTypePickupInstruction,
+				shipmentvocab.CommentVisibilityDriver,
+				shipmentvocab.CommentPriorityNormal,
 				rec.CreatedAt,
 				preEnd,
 				fmt.Sprintf(
@@ -1809,9 +1814,9 @@ func (b *shpBuilder) comments(
 		},
 		func() {
 			addSpec(
-				shipment.CommentTypePickupInstruction,
-				shipment.CommentVisibilityDriver,
-				shipment.CommentPriorityNormal,
+				shipmentvocab.CommentTypePickupInstruction,
+				shipmentvocab.CommentVisibilityDriver,
+				shipmentvocab.CommentPriorityNormal,
 				rec.CreatedAt,
 				preEnd,
 				fmt.Sprintf(
@@ -1823,15 +1828,20 @@ func (b *shpBuilder) comments(
 			)
 		},
 		func() {
-			addSpec(shipment.CommentTypeDeliveryInstruction, shipment.CommentVisibilityDriver,
-				shipment.CommentPriorityNormal, rec.CreatedAt, preEnd,
-				shpDeliveryInstruction(f, dest, charged))
+			addSpec(
+				shipmentvocab.CommentTypeDeliveryInstruction,
+				shipmentvocab.CommentVisibilityDriver,
+				shipmentvocab.CommentPriorityNormal,
+				rec.CreatedAt,
+				preEnd,
+				shpDeliveryInstruction(f, dest, charged),
+			)
 		},
 		func() {
 			addSpec(
-				shipment.CommentTypeDispatch,
-				shipment.CommentVisibilityOperations,
-				shipment.CommentPriorityNormal,
+				shipmentvocab.CommentTypeDispatch,
+				shipmentvocab.CommentVisibilityOperations,
+				shipmentvocab.CommentPriorityNormal,
 				rec.CreatedAt,
 				preEnd,
 				fmt.Sprintf(
@@ -1844,9 +1854,9 @@ func (b *shpBuilder) comments(
 		},
 		func() {
 			addSpec(
-				shipment.CommentTypeInternal,
-				shipment.CommentVisibilityInternal,
-				shipment.CommentPriorityLow,
+				shipmentvocab.CommentTypeInternal,
+				shipmentvocab.CommentVisibilityInternal,
+				shipmentvocab.CommentPriorityLow,
 				rec.CreatedAt,
 				preEnd,
 				fmt.Sprintf(
@@ -1858,16 +1868,16 @@ func (b *shpBuilder) comments(
 		func() {
 			if p.hazmat {
 				addSpec(
-					shipment.CommentTypeCompliance,
-					shipment.CommentVisibilityDriver,
-					shipment.CommentPriorityHigh,
+					shipmentvocab.CommentTypeCompliance,
+					shipmentvocab.CommentVisibilityDriver,
+					shipmentvocab.CommentPriorityHigh,
 					rec.CreatedAt,
 					preEnd,
 					"Hazmat load: placards on all four sides, H endorsement required, shipping papers within reach.",
 				)
 			} else if p.reefer {
-				addSpec(shipment.CommentTypePickupInstruction, shipment.CommentVisibilityDriver,
-					shipment.CommentPriorityHigh, rec.CreatedAt, preEnd,
+				addSpec(shipmentvocab.CommentTypePickupInstruction, shipmentvocab.CommentVisibilityDriver,
+					shipmentvocab.CommentPriorityHigh, rec.CreatedAt, preEnd,
 					"Pre-cool the trailer before arrival and run continuous, not cycle-sentry.")
 			}
 		},
@@ -1884,9 +1894,9 @@ func (b *shpBuilder) comments(
 		transit = []func(){
 			func() {
 				addSpec(
-					shipment.CommentTypeDriverUpdate,
-					shipment.CommentVisibilityOperations,
-					shipment.CommentPriorityNormal,
+					shipmentvocab.CommentTypeDriverUpdate,
+					shipmentvocab.CommentVisibilityOperations,
+					shipmentvocab.CommentPriorityNormal,
 					departed,
 					departed+2*shpHour,
 					fmt.Sprintf(
@@ -1897,24 +1907,43 @@ func (b *shpBuilder) comments(
 				)
 			},
 			func() {
-				addSpec(shipment.CommentTypeDriverUpdate, shipment.CommentVisibilityOperations,
-					shipment.CommentPriorityNormal, departed, transitEnd,
-					fmt.Sprintf("Fuel stop, on schedule for %s.", deliveryAppt))
+				addSpec(
+					shipmentvocab.CommentTypeDriverUpdate,
+					shipmentvocab.CommentVisibilityOperations,
+					shipmentvocab.CommentPriorityNormal,
+					departed,
+					transitEnd,
+					fmt.Sprintf("Fuel stop, on schedule for %s.", deliveryAppt),
+				)
 			},
 			func() {
-				addSpec(shipment.CommentTypeStatusUpdate, shipment.CommentVisibilityOperations,
-					shipment.CommentPriorityLow, departed, departed+shpHour,
-					fmt.Sprintf("Departed %s at %s.", origin.Name, b.localTime(departed, origin)))
+				addSpec(
+					shipmentvocab.CommentTypeStatusUpdate,
+					shipmentvocab.CommentVisibilityOperations,
+					shipmentvocab.CommentPriorityLow,
+					departed,
+					departed+shpHour,
+					fmt.Sprintf("Departed %s at %s.", origin.Name, b.localTime(departed, origin)),
+				)
 			},
 			func() {
-				addSpec(shipment.CommentTypeException, shipment.CommentVisibilityOperations,
-					shipment.CommentPriorityHigh, departed, transitEnd,
+				addSpec(
+					shipmentvocab.CommentTypeException,
+					shipmentvocab.CommentVisibilityOperations,
+					shipmentvocab.CommentPriorityHigh,
+					departed,
+					transitEnd,
 					fmt.Sprintf("Running %d hours behind on weather near %s. New ETA %s.",
-						f.Between(2, 6), volumegen.Pick(f, volumegen.Cities).Name, deliveryAppt))
+						f.Between(2, 6), volumegen.Pick(f, volumegen.Cities).Name, deliveryAppt),
+				)
 			},
 			func() {
-				addSpec(shipment.CommentTypeException, shipment.CommentVisibilityOperations,
-					shipment.CommentPriorityUrgent, departed, transitEnd,
+				addSpec(
+					shipmentvocab.CommentTypeException,
+					shipmentvocab.CommentVisibilityOperations,
+					shipmentvocab.CommentPriorityUrgent,
+					departed,
+					transitEnd,
 					volumegen.Pick(f, []string{
 						"Tractor down with a DEF sensor fault; road service dispatched, ETA 2 hours.",
 						"Driver out of hours short of the receiver; delivering first thing tomorrow.",
@@ -1922,13 +1951,14 @@ func (b *shpBuilder) comments(
 							"Receiver at %s refused the appointment slot; working a reschedule.",
 							dest.Name,
 						),
-					}))
+					}),
+				)
 			},
 			func() {
 				addSpec(
-					shipment.CommentTypeCustomerUpdate,
-					shipment.CommentVisibilityCustomer,
-					shipment.CommentPriorityNormal,
+					shipmentvocab.CommentTypeCustomerUpdate,
+					shipmentvocab.CommentVisibilityCustomer,
+					shipmentvocab.CommentPriorityNormal,
 					departed,
 					transitEnd,
 					fmt.Sprintf(
@@ -1941,9 +1971,14 @@ func (b *shpBuilder) comments(
 		}
 		if p.reefer {
 			transit = append(transit, func() {
-				addSpec(shipment.CommentTypeDriverUpdate, shipment.CommentVisibilityOperations,
-					shipment.CommentPriorityNormal, departed, transitEnd,
-					fmt.Sprintf("Reefer holding %d°F, return air steady.", f.Between(-5, 38)))
+				addSpec(
+					shipmentvocab.CommentTypeDriverUpdate,
+					shipmentvocab.CommentVisibilityOperations,
+					shipmentvocab.CommentPriorityNormal,
+					departed,
+					transitEnd,
+					fmt.Sprintf("Reefer holding %d°F, return air steady.", f.Between(-5, 38)),
+				)
 			})
 		}
 	}
@@ -1956,9 +1991,9 @@ func (b *shpBuilder) comments(
 		post = []func(){
 			func() {
 				addSpec(
-					shipment.CommentTypeDocument,
-					shipment.CommentVisibilityOperations,
-					shipment.CommentPriorityNormal,
+					shipmentvocab.CommentTypeDocument,
+					shipmentvocab.CommentVisibilityOperations,
+					shipmentvocab.CommentPriorityNormal,
 					delivered,
 					delivered+shpDay,
 					fmt.Sprintf(
@@ -1970,21 +2005,26 @@ func (b *shpBuilder) comments(
 				)
 			},
 			func() {
-				addSpec(shipment.CommentTypeCustomerUpdate, shipment.CommentVisibilityCustomer,
-					shipment.CommentPriorityNormal, delivered, delivered+4*shpHour,
-					fmt.Sprintf("Delivered to %s at %s.", dest.Name, b.localTime(delivered, dest)))
+				addSpec(
+					shipmentvocab.CommentTypeCustomerUpdate,
+					shipmentvocab.CommentVisibilityCustomer,
+					shipmentvocab.CommentPriorityNormal,
+					delivered,
+					delivered+4*shpHour,
+					fmt.Sprintf("Delivered to %s at %s.", dest.Name, b.localTime(delivered, dest)),
+				)
 			},
 			func() {
-				addSpec(shipment.CommentTypeBilling, shipment.CommentVisibilityAccounting,
-					shipment.CommentPriorityNormal, delivered, postEnd,
+				addSpec(shipmentvocab.CommentTypeBilling, shipmentvocab.CommentVisibilityAccounting,
+					shipmentvocab.CommentPriorityNormal, delivered, postEnd,
 					shpBillingNote(f, p.customer, rec.PONumber, charged))
 			},
 			func() {
 				if charged["DET"] {
 					addSpec(
-						shipment.CommentTypeBilling,
-						shipment.CommentVisibilityAccounting,
-						shipment.CommentPriorityHigh,
+						shipmentvocab.CommentTypeBilling,
+						shipmentvocab.CommentVisibilityAccounting,
+						shipmentvocab.CommentPriorityHigh,
 						delivered,
 						postEnd,
 						fmt.Sprintf(
@@ -1996,15 +2036,15 @@ func (b *shpBuilder) comments(
 				}
 			},
 			func() {
-				addSpec(shipment.CommentTypeInternal, shipment.CommentVisibilityInternal,
-					shipment.CommentPriorityLow, delivered, postEnd,
+				addSpec(shipmentvocab.CommentTypeInternal, shipmentvocab.CommentVisibilityInternal,
+					shipmentvocab.CommentPriorityLow, delivered, postEnd,
 					fmt.Sprintf("Good lane, add %s to the backhaul list.", lane))
 			},
 		}
 	}
 	if entity.CanceledAt != nil {
-		addSpec(shipment.CommentTypeDispatch, shipment.CommentVisibilityOperations,
-			shipment.CommentPriorityHigh, *entity.CanceledAt, *entity.CanceledAt+shpHour,
+		addSpec(shipmentvocab.CommentTypeDispatch, shipmentvocab.CommentVisibilityOperations,
+			shipmentvocab.CommentPriorityHigh, *entity.CanceledAt, *entity.CanceledAt+shpHour,
 			"Canceled: "+entity.CancelReason+".")
 	}
 
@@ -2040,33 +2080,33 @@ func (b *shpBuilder) comments(
 			Type:           spec.typ,
 			Visibility:     spec.visibility,
 			Priority:       spec.priority,
-			Source:         shipment.CommentSourceUser,
+			Source:         shipmentvocab.CommentSourceUser,
 			Metadata:       map[string]any{},
 			Version:        1,
 			CreatedAt:      spec.at,
 		}
-		if spec.typ == shipment.CommentTypeStatusUpdate && f.Chance(0.6) {
-			c.Source = shipment.CommentSourceSystem
+		if spec.typ == shipmentvocab.CommentTypeStatusUpdate && f.Chance(0.6) {
+			c.Source = shipmentvocab.CommentSourceSystem
 			c.UserID = pulid.Nil
 		}
-		if spec.typ == shipment.CommentTypeDriverUpdate && f.Chance(0.4) {
+		if spec.typ == shipmentvocab.CommentTypeDriverUpdate && f.Chance(0.4) {
 			c.Metadata[shipment.CommentMetadataOrigin] = shipment.CommentOriginDash
 		}
-		if entity.EntryMethod == shipment.EntryMethodEDI &&
-			spec.typ == shipment.CommentTypeAppointment &&
+		if entity.EntryMethod == shipmentvocab.EntryMethodEDI &&
+			spec.typ == shipmentvocab.CommentTypeAppointment &&
 			f.Chance(0.5) {
-			c.Source = shipment.CommentSourceIntegration
+			c.Source = shipmentvocab.CommentSourceIntegration
 			c.Metadata[shipment.CommentMetadataOrigin] = shipment.CommentOriginEDI
 		}
 
 		updated := spec.at
-		if len(topLevel) > 0 && c.Source == shipment.CommentSourceUser && f.Chance(0.2) {
+		if len(topLevel) > 0 && c.Source == shipmentvocab.CommentSourceUser && f.Chance(0.2) {
 			parent := volumegen.Pick(f, topLevel)
 			c.ParentCommentID = volumegen.Ptr(parent.ID)
 			c.Comment = volumegen.Pick(f, shpReplies)
 			c.Type = parent.Type
 			c.Visibility = parent.Visibility
-			c.Priority = shipment.CommentPriorityNormal
+			c.Priority = shipmentvocab.CommentPriorityNormal
 		} else {
 			topLevel = append(topLevel, c)
 		}
@@ -2111,8 +2151,8 @@ func (b *shpBuilder) comments(
 			c.PinnedByID = volumegen.Ptr(pinner.ID)
 			updated = pinnedAt
 		}
-		if c.Type == shipment.CommentTypeException && c.ParentCommentID == nil {
-			if spec.priority == shipment.CommentPriorityUrgent && c.UserID.IsNotNil() &&
+		if c.Type == shipmentvocab.CommentTypeException && c.ParentCommentID == nil {
+			if spec.priority == shipmentvocab.CommentPriorityUrgent && c.UserID.IsNotNil() &&
 				f.Chance(0.5) {
 				c.RequiresAcknowledgment = true
 				seen := map[pulid.ID]bool{c.UserID: true}
@@ -2292,7 +2332,7 @@ func (b *shpBuilder) checkCalls(
 				)
 				point := volumegen.NearestCity(from, c, share)
 				add(move, pulid.Nil, checkcall.KindUpdate, at, point)
-				if entity.Status == shipment.StatusDelayed && stop.ActualArrival == nil {
+				if entity.Status == shipmentvocab.StatusDelayed && stop.ActualArrival == nil {
 					last := batch.checkCalls[len(batch.checkCalls)-1]
 					if last.ShipmentID == entity.ID && last.Kind == checkcall.KindUpdate &&
 						!last.Delayed {
@@ -2320,7 +2360,7 @@ func (b *shpBuilder) holds(
 	var started int64
 	var released *int64
 	switch {
-	case entity.Status == shipment.StatusDelayed && f.Chance(0.35):
+	case entity.Status == shipmentvocab.StatusDelayed && f.Chance(0.35):
 		started = b.at(rec.PickupAt, b.now-shpMinute)
 	case rec.DeliveredAt > 0 && b.now-rec.DeliveredAt < 60*shpDay && f.Chance(0.03):
 		started = b.at(rec.PickupAt, rec.DeliveredAt)

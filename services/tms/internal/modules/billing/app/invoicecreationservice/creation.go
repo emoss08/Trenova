@@ -19,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/chargeallocation"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/order"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/orderports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
@@ -608,7 +609,7 @@ func invoiceLines(ctx context.Context, p *buildInvoiceParams) ([]*invoice.Invoic
 	switch {
 	case p.OrderChargeShare != nil:
 		for _, charge := range p.OrderChargeShare.Charges {
-			if charge.Kind != shipment.ChargeAllocationKindOrderCharge {
+			if charge.Kind != shipmentvocab.ChargeAllocationKindOrderCharge {
 				continue
 			}
 			lines = append(lines, invoicelines.ForOrderChargeShare(

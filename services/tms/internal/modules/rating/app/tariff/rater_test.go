@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/rating/app/tariff"
 	"github.com/emoss08/trenova/internal/modules/rating/app/tariff/record"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/tariffports"
@@ -104,13 +105,13 @@ func recordFrom(t *testing.T, state string) rules.RawJSON {
 	t.Helper()
 
 	entity := &shipment.Shipment{
-		Status: shipment.StatusNew,
+		Status: shipmentvocab.StatusNew,
 		Moves: []*shipment.ShipmentMove{{
 			Loaded:   true,
 			Distance: new(100.0),
 			Stops: []*shipment.Stop{
-				{Type: shipment.StopTypePickup, Status: shipment.StopStatusNew},
-				{Type: shipment.StopTypeDelivery, Status: shipment.StopStatusNew},
+				{Type: shipmentvocab.StopTypePickup, Status: shipmentvocab.StopStatusNew},
+				{Type: shipmentvocab.StopTypeDelivery, Status: shipmentvocab.StopStatusNew},
 			},
 		}},
 	}

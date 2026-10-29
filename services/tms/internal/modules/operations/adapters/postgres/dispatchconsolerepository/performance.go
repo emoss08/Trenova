@@ -8,8 +8,8 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure/servicefailuredb"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchboardports"
 )
 
@@ -42,8 +42,8 @@ func (r *repository) ListWorkerOnTimeStats(
 				).
 				Where(
 					asn.PrimaryWorkerID.In(req.WorkerIDs...),
-					st.Status.Eq(shipment.StopStatusCompleted),
-					st.Type.In(shipment.StopTypeDelivery, shipment.StopTypeSplitDelivery),
+					st.Status.Eq(shipmentvocab.StopStatusCompleted),
+					st.Type.In(shipmentvocab.StopTypeDelivery, shipmentvocab.StopTypeSplitDelivery),
 					st.ActualArrival.IsNotNull(),
 					st.ScheduledWindowStart.Gt(0),
 					keel.When(req.Since > 0, st.ActualArrival.Gte(req.Since)),
@@ -113,8 +113,8 @@ func (r *repository) ListWorkerAcceptanceStats(
 
 			asn := shipmentdb.Assignments
 			answered := asn.AckStatus.In(
-				shipment.AssignmentAckAccepted,
-				shipment.AssignmentAckDeclined,
+				shipmentvocab.AssignmentAckAccepted,
+				shipmentvocab.AssignmentAckDeclined,
 			)
 			rows, err := keel.Into[dispatchboardports.WorkerAcceptanceStats](
 				ctx,
@@ -123,8 +123,8 @@ func (r *repository) ListWorkerAcceptanceStats(
 					Group(asn.PrimaryWorkerID).
 					Pick(
 						asn.PrimaryWorkerID,
-						countIf(asn.AckStatus.Eq(shipment.AssignmentAckAccepted)),
-						countIf(asn.AckStatus.Eq(shipment.AssignmentAckDeclined)),
+						countIf(asn.AckStatus.Eq(shipmentvocab.AssignmentAckAccepted)),
+						countIf(asn.AckStatus.Eq(shipmentvocab.AssignmentAckDeclined)),
 						keel.CastFloat64(keel.NumericOf(
 							asn.AckAt.Sub(asn.CreatedAt).Avg().
 								Filter(keel.And(

@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentevent"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/internal/testutil/mocks/ediportsmock"
@@ -37,7 +38,7 @@ func acceptedTenderOfferForTest() *tender.TenderOffer {
 		CarrierID:    pulid.MustNew("car_"),
 		Channel:      tender.ChannelEDI,
 		Status:       tender.OfferStatusAccepted,
-		RateMethod:   shipment.CarrierRateMethodFlat,
+		RateMethod:   shipmentvocab.CarrierRateMethodFlat,
 		Rate:         decimal.NewFromInt(1500),
 		EDIPartnerID: &partnerID,
 		Tender: &tender.Tender{
@@ -204,11 +205,11 @@ func TestRecordInboundFreightInvoice_AcceptedOfferStampsCarrierAndShipment(t *te
 
 	for _, testCase := range []struct {
 		name           string
-		rateMethod     shipment.CarrierRateMethod
+		rateMethod     shipmentvocab.CarrierRateMethod
 		expectedAmount bool
 	}{
-		{name: "flat rate stamps expected amount", rateMethod: shipment.CarrierRateMethodFlat, expectedAmount: true},
-		{name: "per mile leaves expected amount null", rateMethod: shipment.CarrierRateMethodPerMile, expectedAmount: false},
+		{name: "flat rate stamps expected amount", rateMethod: shipmentvocab.CarrierRateMethodFlat, expectedAmount: true},
+		{name: "per mile leaves expected amount null", rateMethod: shipmentvocab.CarrierRateMethodPerMile, expectedAmount: false},
 	} {
 		t.Run(testCase.name, func(t *testing.T) {
 			t.Parallel()

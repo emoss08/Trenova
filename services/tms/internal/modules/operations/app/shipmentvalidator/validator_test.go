@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentservicetest"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/assignmentports"
 	"github.com/emoss08/trenova/internal/testutil/mocks/assignmentportsmock"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -43,7 +44,7 @@ func TestValidateCreate_DefaultsMissingEntryMethod(t *testing.T) {
 	multiErr := v.ValidateCreate(t.Context(), entity)
 
 	require.Nil(t, multiErr)
-	assert.Equal(t, shipment.EntryMethodManual, entity.EntryMethod)
+	assert.Equal(t, shipmentvocab.EntryMethodManual, entity.EntryMethod)
 }
 
 func TestValidateUpdate_RejectsDuplicateMoveIDs(t *testing.T) {
@@ -414,7 +415,7 @@ func TestValidateCreate_RejectsMoveWithNonPickupFirstStop(t *testing.T) {
 
 	v := newTestValidator(t)
 	entity := shipmentservicetest.ValidShipment()
-	entity.Moves[0].Stops[0].Type = shipment.StopTypeDelivery
+	entity.Moves[0].Stops[0].Type = shipmentvocab.StopTypeDelivery
 
 	multiErr := v.ValidateCreate(t.Context(), entity)
 
@@ -428,7 +429,7 @@ func TestValidateCreate_RejectsMoveWithNonDeliveryLastStop(t *testing.T) {
 
 	v := newTestValidator(t)
 	entity := shipmentservicetest.ValidShipment()
-	entity.Moves[0].Stops[1].Type = shipment.StopTypePickup
+	entity.Moves[0].Stops[1].Type = shipmentvocab.StopTypePickup
 
 	multiErr := v.ValidateCreate(t.Context(), entity)
 
@@ -445,18 +446,18 @@ func TestValidateCreate_RejectsDeliveryBeforePickup(t *testing.T) {
 	entity.Moves[0].Stops = []*shipment.Stop{
 		{
 			LocationID:           pulid.MustNew("loc_"),
-			Status:               shipment.StopStatusNew,
-			Type:                 shipment.StopTypeDelivery,
-			ScheduleType:         shipment.StopScheduleTypeOpen,
+			Status:               shipmentvocab.StopStatusNew,
+			Type:                 shipmentvocab.StopTypeDelivery,
+			ScheduleType:         shipmentvocab.StopScheduleTypeOpen,
 			Sequence:             0,
 			ScheduledWindowStart: 1,
 			ScheduledWindowEnd:   new(int64(2)),
 		},
 		{
 			LocationID:           pulid.MustNew("loc_"),
-			Status:               shipment.StopStatusNew,
-			Type:                 shipment.StopTypeDelivery,
-			ScheduleType:         shipment.StopScheduleTypeOpen,
+			Status:               shipmentvocab.StopStatusNew,
+			Type:                 shipmentvocab.StopTypeDelivery,
+			ScheduleType:         shipmentvocab.StopScheduleTypeOpen,
 			Sequence:             1,
 			ScheduledWindowStart: 3,
 			ScheduledWindowEnd:   new(int64(4)),
@@ -515,10 +516,10 @@ func TestValidateCreate_AllowsLegacyCompatibleMixedStopSequence(t *testing.T) {
 	v := newTestValidator(t)
 	entity := shipmentservicetest.ValidShipment()
 	entity.Moves[0].Stops = []*shipment.Stop{
-		shipmentservicetest.MakeStop(shipment.StopTypePickup, 0, 1, 2),
-		shipmentservicetest.MakeStop(shipment.StopTypeDelivery, 1, 3, 4),
-		shipmentservicetest.MakeStop(shipment.StopTypeSplitPickup, 2, 5, 6),
-		shipmentservicetest.MakeStop(shipment.StopTypeSplitDelivery, 3, 7, 8),
+		shipmentservicetest.MakeStop(shipmentvocab.StopTypePickup, 0, 1, 2),
+		shipmentservicetest.MakeStop(shipmentvocab.StopTypeDelivery, 1, 3, 4),
+		shipmentservicetest.MakeStop(shipmentvocab.StopTypeSplitPickup, 2, 5, 6),
+		shipmentservicetest.MakeStop(shipmentvocab.StopTypeSplitDelivery, 3, 7, 8),
 	}
 
 	multiErr := v.ValidateCreate(t.Context(), entity)
@@ -696,7 +697,7 @@ func TestValidateUpdate_RejectsOverlappingActualTimesWithinShipmentForSameTracto
 			BusinessUnitID:  entity.BusinessUnitID,
 			PrimaryWorkerID: &workerID,
 			TractorID:       &tractorID,
-			Status:          shipment.AssignmentStatusNew,
+			Status:          shipmentvocab.AssignmentStatusNew,
 		}
 		move.Stops[0].ID = pulid.MustNew("stp_")
 		move.Stops[0].ShipmentMoveID = move.ID
@@ -831,7 +832,7 @@ func TestValidateUpdateWithOriginal_PreservesOriginalEntryMethod(t *testing.T) {
 	original := shipmentservicetest.ValidShipment()
 	original.ID = pulid.MustNew("shp_")
 	original.Version = 1
-	original.EntryMethod = shipment.EntryMethodEDI
+	original.EntryMethod = shipmentvocab.EntryMethodEDI
 
 	updated := shipmentservicetest.CloneShipment(original)
 	updated.EntryMethod = ""
@@ -839,7 +840,7 @@ func TestValidateUpdateWithOriginal_PreservesOriginalEntryMethod(t *testing.T) {
 	multiErr := v.ValidateUpdateWithOriginal(t.Context(), original, updated)
 
 	require.Nil(t, multiErr)
-	assert.Equal(t, shipment.EntryMethodEDI, updated.EntryMethod)
+	assert.Equal(t, shipmentvocab.EntryMethodEDI, updated.EntryMethod)
 }
 
 func validAssignmentForValidation(
@@ -857,7 +858,7 @@ func validAssignmentForValidation(
 		BusinessUnitID:  buID,
 		PrimaryWorkerID: &workerID,
 		TractorID:       &tractorID,
-		Status:          shipment.AssignmentStatusNew,
+		Status:          shipmentvocab.AssignmentStatusNew,
 	}
 }
 

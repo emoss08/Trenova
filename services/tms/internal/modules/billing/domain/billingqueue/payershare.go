@@ -1,7 +1,7 @@
 package billingqueue
 
 import (
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 )
@@ -25,15 +25,15 @@ type PayerShareParty struct {
 // PayerShareLine is one charge as a single payer's bill sees it: the whole
 // charge, this payer's part of it, and everyone who pays some of it.
 type PayerShareLine struct {
-	Kind               shipment.ChargeAllocationKind   `json:"kind"`
-	AdditionalChargeID pulid.ID                        `json:"additionalChargeId"`
-	Description        string                          `json:"description"`
-	ChargeTotal        decimal.Decimal                 `json:"chargeTotal"`
-	Amount             decimal.Decimal                 `json:"amount"`
-	Percent            decimal.NullDecimal             `json:"percent"`
-	Method             shipment.ChargeAllocationMethod `json:"method"`
-	Partial            bool                            `json:"partial"`
-	Payers             []PayerShareParty               `json:"payers"`
+	Kind               shipmentvocab.ChargeAllocationKind   `json:"kind"`
+	AdditionalChargeID pulid.ID                             `json:"additionalChargeId"`
+	Description        string                               `json:"description"`
+	ChargeTotal        decimal.Decimal                      `json:"chargeTotal"`
+	Amount             decimal.Decimal                      `json:"amount"`
+	Percent            decimal.NullDecimal                  `json:"percent"`
+	Method             shipmentvocab.ChargeAllocationMethod `json:"method"`
+	Partial            bool                                 `json:"partial"`
+	Payers             []PayerShareParty                    `json:"payers"`
 }
 
 // PayerShare is what one billing queue item bills: the charges its payer owes,

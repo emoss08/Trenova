@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -72,7 +73,7 @@ func (f *detectingFailures) plan() (*servicefailureports.ServiceFailureDetection
 			Existing: existing,
 		})
 		if existing == nil {
-			plan.MarksDelayed = f.shipment.Status != shipment.StatusDelayed
+			plan.MarksDelayed = f.shipment.Status != shipmentvocab.StatusDelayed
 		}
 	}
 
@@ -118,7 +119,7 @@ func lateShipment() (*shipment.Shipment, *shipment.Stop, *shipment.Stop) {
 	pickup := &shipment.Stop{
 		ID:                   pulid.MustNew("stp_"),
 		ShipmentMoveID:       moveID,
-		Type:                 shipment.StopTypePickup,
+		Type:                 shipmentvocab.StopTypePickup,
 		Sequence:             0,
 		ScheduledWindowStart: 1_700_000_000,
 		ActualArrival:        &arrival,
@@ -127,7 +128,7 @@ func lateShipment() (*shipment.Shipment, *shipment.Stop, *shipment.Stop) {
 	delivery := &shipment.Stop{
 		ID:                   pulid.MustNew("stp_"),
 		ShipmentMoveID:       moveID,
-		Type:                 shipment.StopTypeDelivery,
+		Type:                 shipmentvocab.StopTypeDelivery,
 		Sequence:             1,
 		ScheduledWindowStart: 1_700_000_000,
 		ActualArrival:        &arrival,
@@ -137,7 +138,7 @@ func lateShipment() (*shipment.Shipment, *shipment.Stop, *shipment.Stop) {
 	return &shipment.Shipment{
 		ID:        pulid.MustNew("shp_"),
 		ProNumber: "S-40211",
-		Status:    shipment.StatusInTransit,
+		Status:    shipmentvocab.StatusInTransit,
 		Version:   4,
 		Moves: []*shipment.ShipmentMove{{
 			ID:    moveID,
@@ -160,7 +161,7 @@ func TestEvaluateServiceFailures_PreviewMatchesWhatIsSaved(t *testing.T) {
 		StopID:          pickup.ID,
 		Type:            servicefailure.TypeLatePickup,
 		Status:          servicefailure.StatusOpen,
-		StopType:        shipment.StopTypePickup,
+		StopType:        shipmentvocab.StopTypePickup,
 		ScheduledCutoff: 1_699_990_000,
 		ActualArrival:   1_700_000_900,
 		LateMinutes:     10,
@@ -208,7 +209,7 @@ func TestEvaluateServiceFailures_PreviewMatchesWhatIsSaved(t *testing.T) {
 	assert.Equal(t, entity.ID, delayed.EntityID)
 	assert.Equal(
 		t,
-		string(shipment.StatusDelayed),
+		string(shipmentvocab.StatusDelayed),
 		agenttoolstest.FieldByPath(t, delayed, "status").After,
 	)
 

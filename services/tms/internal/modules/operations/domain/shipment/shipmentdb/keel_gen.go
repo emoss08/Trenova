@@ -359,8 +359,8 @@ var assignmentsTable = schema.Table{
 		{Name: "tractor_id", Quoted: `"tractor_id"`, Field: "TractorID", Kind: schema.KindString, Flags: schema.FlagNullable, Label: `Tractor ID`, JSON: `tractorId`, Report: &reportDimStringHidden},
 		{Name: "trailer_id", Quoted: `"trailer_id"`, Field: "TrailerID", Kind: schema.KindString, Flags: schema.FlagNullable, Label: `Trailer ID`, JSON: `trailerId`, Report: &reportDimStringHidden},
 		{Name: "secondary_worker_id", Quoted: `"secondary_worker_id"`, Field: "SecondaryWorkerID", Kind: schema.KindString, Flags: schema.FlagNullable, Label: `Secondary Worker ID`, JSON: `secondaryWorkerId`, Report: &reportDimStringHidden},
-		{Name: "status", Quoted: `"status"`, Field: "Status", Kind: schema.KindString, Flags: 0, Label: `Status`, JSON: `status`, Enum: enumAssignmentStatus[:], Report: &reportDimEnum},
-		{Name: "ack_status", Quoted: `"ack_status"`, Field: "AckStatus", Kind: schema.KindString, Flags: 0, Label: `Ack Status`, JSON: `ackStatus`, Enum: enumAssignmentAck[:], Report: &reportDimEnum},
+		{Name: "status", Quoted: `"status"`, Field: "Status", Kind: schema.KindString, Flags: 0, Label: `Status`, JSON: `status`, Enum: enumShipmentvocabAssignmentStatus[:], Report: &reportDimEnum},
+		{Name: "ack_status", Quoted: `"ack_status"`, Field: "AckStatus", Kind: schema.KindString, Flags: 0, Label: `Ack Status`, JSON: `ackStatus`, Enum: enumShipmentvocabAssignmentAck[:], Report: &reportDimEnum},
 		{Name: "ack_at", Quoted: `"ack_at"`, Field: "AckAt", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Ack At`, JSON: `ackAt`, Report: &reportDimEpoch},
 		{Name: "ack_reason", Quoted: `"ack_reason"`, Field: "AckReason", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Ack Reason`, JSON: `ackReason`, Report: &reportDimString},
 		{Name: "archived_at", Quoted: `"archived_at"`, Field: "ArchivedAt", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Archived At`, JSON: `archivedAt`, Report: &reportDimEpoch},
@@ -408,8 +408,8 @@ type AssignmentsTable struct {
 	TractorID         keelkinds.PulidIDCol
 	TrailerID         keelkinds.PulidIDCol
 	SecondaryWorkerID keelkinds.PulidIDCol
-	Status            AssignmentStatusCol
-	AckStatus         AssignmentAckCol
+	Status            keelkinds.ShipmentvocabAssignmentStatusCol
+	AckStatus         keelkinds.ShipmentvocabAssignmentAckCol
 	AckAt             keel.Int64Col
 	AckReason         keel.StringCol
 	ArchivedAt        keel.Int64Col
@@ -429,8 +429,8 @@ var Assignments = &AssignmentsTable{
 	TractorID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &assignmentsRef, Index: 5}}},
 	TrailerID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &assignmentsRef, Index: 6}}},
 	SecondaryWorkerID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &assignmentsRef, Index: 7}}},
-	Status:            AssignmentStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &assignmentsRef, Index: 8}}},
-	AckStatus:         AssignmentAckCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &assignmentsRef, Index: 9}}},
+	Status:            keelkinds.ShipmentvocabAssignmentStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &assignmentsRef, Index: 8}}},
+	AckStatus:         keelkinds.ShipmentvocabAssignmentAckCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &assignmentsRef, Index: 9}}},
 	AckAt:             keel.Int64Col{Col: keel.Col{Ref: &assignmentsRef, Index: 10}},
 	AckReason:         keel.StringCol{Col: keel.Col{Ref: &assignmentsRef, Index: 11}},
 	ArchivedAt:        keel.Int64Col{Col: keel.Col{Ref: &assignmentsRef, Index: 12}},
@@ -451,8 +451,8 @@ func BuildAssignments(r *keel.Ref) *AssignmentsTable {
 		TractorID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
 		TrailerID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
 		SecondaryWorkerID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 7}}},
-		Status:            AssignmentStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 8}}},
-		AckStatus:         AssignmentAckCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 9}}},
+		Status:            keelkinds.ShipmentvocabAssignmentStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 8}}},
+		AckStatus:         keelkinds.ShipmentvocabAssignmentAckCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 9}}},
 		AckAt:             keel.Int64Col{Col: keel.Col{Ref: r, Index: 10}},
 		AckReason:         keel.StringCol{Col: keel.Col{Ref: r, Index: 11}},
 		ArchivedAt:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 12}},
@@ -640,8 +640,8 @@ var carrierAssignmentsTable = schema.Table{
 		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`, JSON: `organizationId`},
 		{Name: "shipment_move_id", Quoted: `"shipment_move_id"`, Field: "ShipmentMoveID", Kind: schema.KindString, Flags: 0, Label: `Shipment Move ID`, JSON: `shipmentMoveId`},
 		{Name: "carrier_id", Quoted: `"carrier_id"`, Field: "CarrierID", Kind: schema.KindString, Flags: 0, Label: `Carrier ID`, JSON: `carrierId`},
-		{Name: "status", Quoted: `"status"`, Field: "Status", Kind: schema.KindString, Flags: 0, Label: `Status`, JSON: `status`, Enum: enumCarrierAssignmentStatus[:]},
-		{Name: "rate_method", Quoted: `"rate_method"`, Field: "RateMethod", Kind: schema.KindString, Flags: 0, Label: `Rate Method`, JSON: `rateMethod`, Enum: enumCarrierRateMethod[:]},
+		{Name: "status", Quoted: `"status"`, Field: "Status", Kind: schema.KindString, Flags: 0, Label: `Status`, JSON: `status`, Enum: enumShipmentvocabCarrierAssignmentStatus[:]},
+		{Name: "rate_method", Quoted: `"rate_method"`, Field: "RateMethod", Kind: schema.KindString, Flags: 0, Label: `Rate Method`, JSON: `rateMethod`, Enum: enumShipmentvocabCarrierRateMethod[:]},
 		{Name: "base_rate", Quoted: `"base_rate"`, Field: "BaseRate", Kind: schema.KindOther, Flags: 0, Label: `Base Rate`, JSON: `baseRate`},
 		{Name: "base_amount", Quoted: `"base_amount"`, Field: "BaseAmount", Kind: schema.KindOther, Flags: 0, Label: `Base Amount`, JSON: `baseAmount`},
 		{Name: "fuel_surcharge", Quoted: `"fuel_surcharge"`, Field: "FuelSurcharge", Kind: schema.KindOther, Flags: 0, Label: `Fuel Surcharge`, JSON: `fuelSurcharge`},
@@ -697,8 +697,8 @@ type CarrierAssignmentsTable struct {
 	OrganizationID        keelkinds.PulidIDCol
 	ShipmentMoveID        keelkinds.PulidIDCol
 	CarrierID             keelkinds.PulidIDCol
-	Status                CarrierAssignmentStatusCol
-	RateMethod            CarrierRateMethodCol
+	Status                keelkinds.ShipmentvocabCarrierAssignmentStatusCol
+	RateMethod            keelkinds.ShipmentvocabCarrierRateMethodCol
 	BaseRate              keelkinds.DecimalDecimalCol
 	BaseAmount            keelkinds.DecimalDecimalCol
 	FuelSurcharge         keelkinds.DecimalDecimalCol
@@ -728,8 +728,8 @@ var CarrierAssignments = &CarrierAssignmentsTable{
 	OrganizationID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierAssignmentsRef, Index: 2}}},
 	ShipmentMoveID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierAssignmentsRef, Index: 3}}},
 	CarrierID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierAssignmentsRef, Index: 4}}},
-	Status:                CarrierAssignmentStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierAssignmentsRef, Index: 5}}},
-	RateMethod:            CarrierRateMethodCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierAssignmentsRef, Index: 6}}},
+	Status:                keelkinds.ShipmentvocabCarrierAssignmentStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierAssignmentsRef, Index: 5}}},
+	RateMethod:            keelkinds.ShipmentvocabCarrierRateMethodCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierAssignmentsRef, Index: 6}}},
 	BaseRate:              keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &carrierAssignmentsRef, Index: 7}}},
 	BaseAmount:            keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &carrierAssignmentsRef, Index: 8}}},
 	FuelSurcharge:         keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &carrierAssignmentsRef, Index: 9}}},
@@ -760,8 +760,8 @@ func BuildCarrierAssignments(r *keel.Ref) *CarrierAssignmentsTable {
 		OrganizationID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
 		ShipmentMoveID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
 		CarrierID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		Status:                CarrierAssignmentStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
-		RateMethod:            CarrierRateMethodCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		Status:                keelkinds.ShipmentvocabCarrierAssignmentStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		RateMethod:            keelkinds.ShipmentvocabCarrierRateMethodCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
 		BaseRate:              keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 7}}},
 		BaseAmount:            keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 8}}},
 		FuelSurcharge:         keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 9}}},
@@ -1189,9 +1189,9 @@ var chargeAllocationsTable = schema.Table{
 		{Name: "shipment_id", Quoted: `"shipment_id"`, Field: "ShipmentID", Kind: schema.KindString, Flags: schema.FlagNullable, Label: `Shipment ID`, JSON: `shipmentId`},
 		{Name: "additional_charge_id", Quoted: `"additional_charge_id"`, Field: "AdditionalChargeID", Kind: schema.KindString, Flags: schema.FlagNullable, Label: `Additional Charge ID`, JSON: `additionalChargeId`},
 		{Name: "order_charge_id", Quoted: `"order_charge_id"`, Field: "OrderChargeID", Kind: schema.KindString, Flags: schema.FlagNullable, Label: `Order Charge ID`, JSON: `orderChargeId`},
-		{Name: "charge_kind", Quoted: `"charge_kind"`, Field: "ChargeKind", Kind: schema.KindString, Flags: 0, Label: `Charge Kind`, JSON: `chargeKind`, Enum: enumChargeAllocationKind[:]},
+		{Name: "charge_kind", Quoted: `"charge_kind"`, Field: "ChargeKind", Kind: schema.KindString, Flags: 0, Label: `Charge Kind`, JSON: `chargeKind`, Enum: enumShipmentvocabChargeAllocationKind[:]},
 		{Name: "bill_to_customer_id", Quoted: `"bill_to_customer_id"`, Field: "BillToCustomerID", Kind: schema.KindString, Flags: 0, Label: `Bill To Customer ID`, JSON: `billToCustomerId`},
-		{Name: "method", Quoted: `"method"`, Field: "Method", Kind: schema.KindString, Flags: 0, Label: `Method`, JSON: `method`, Enum: enumChargeAllocationMethod[:]},
+		{Name: "method", Quoted: `"method"`, Field: "Method", Kind: schema.KindString, Flags: 0, Label: `Method`, JSON: `method`, Enum: enumShipmentvocabChargeAllocationMethod[:]},
 		{Name: "percent", Quoted: `"percent"`, Field: "Percent", Kind: schema.KindOther, Flags: schema.FlagNullable, Label: `Percent`, JSON: `percent`},
 		{Name: "amount", Quoted: `"amount"`, Field: "Amount", Kind: schema.KindOther, Flags: schema.FlagNullable, Label: `Amount`, JSON: `amount`},
 		{Name: "sequence", Quoted: `"sequence"`, Field: "Sequence", Kind: schema.KindInt16, Flags: 0, Label: `Sequence`, JSON: `sequence`},
@@ -1235,9 +1235,9 @@ type ChargeAllocationsTable struct {
 	ShipmentID         keelkinds.PulidIDCol
 	AdditionalChargeID keelkinds.PulidIDCol
 	OrderChargeID      keelkinds.PulidIDCol
-	ChargeKind         ChargeAllocationKindCol
+	ChargeKind         keelkinds.ShipmentvocabChargeAllocationKindCol
 	BillToCustomerID   keelkinds.PulidIDCol
-	Method             ChargeAllocationMethodCol
+	Method             keelkinds.ShipmentvocabChargeAllocationMethodCol
 	Percent            keelkinds.DecimalNullDecimalCol
 	Amount             keelkinds.DecimalNullDecimalCol
 	Sequence           keel.Int16Col
@@ -1257,9 +1257,9 @@ var ChargeAllocations = &ChargeAllocationsTable{
 	ShipmentID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &chargeAllocationsRef, Index: 3}}},
 	AdditionalChargeID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &chargeAllocationsRef, Index: 4}}},
 	OrderChargeID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &chargeAllocationsRef, Index: 5}}},
-	ChargeKind:         ChargeAllocationKindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &chargeAllocationsRef, Index: 6}}},
+	ChargeKind:         keelkinds.ShipmentvocabChargeAllocationKindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &chargeAllocationsRef, Index: 6}}},
 	BillToCustomerID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &chargeAllocationsRef, Index: 7}}},
-	Method:             ChargeAllocationMethodCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &chargeAllocationsRef, Index: 8}}},
+	Method:             keelkinds.ShipmentvocabChargeAllocationMethodCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &chargeAllocationsRef, Index: 8}}},
 	Percent:            keelkinds.DecimalNullDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &chargeAllocationsRef, Index: 9}}},
 	Amount:             keelkinds.DecimalNullDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &chargeAllocationsRef, Index: 10}}},
 	Sequence:           keel.Int16Col{Col: keel.Col{Ref: &chargeAllocationsRef, Index: 11}},
@@ -1280,9 +1280,9 @@ func BuildChargeAllocations(r *keel.Ref) *ChargeAllocationsTable {
 		ShipmentID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
 		AdditionalChargeID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
 		OrderChargeID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
-		ChargeKind:         ChargeAllocationKindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		ChargeKind:         keelkinds.ShipmentvocabChargeAllocationKindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
 		BillToCustomerID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 7}}},
-		Method:             ChargeAllocationMethodCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 8}}},
+		Method:             keelkinds.ShipmentvocabChargeAllocationMethodCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 8}}},
 		Percent:            keelkinds.DecimalNullDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 9}}},
 		Amount:             keelkinds.DecimalNullDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 10}}},
 		Sequence:           keel.Int16Col{Col: keel.Col{Ref: r, Index: 11}},
@@ -1456,10 +1456,10 @@ var shipmentsTable = schema.Table{
 		{Name: "formula_template_id", Quoted: `"formula_template_id"`, Field: "FormulaTemplateID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Formula Template ID`, JSON: `formulaTemplateId`, Report: &reportDimString},
 		{Name: "consolidation_group_id", Quoted: `"consolidation_group_id"`, Field: "ConsolidationGroupID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Consolidation Group ID`, JSON: `consolidationGroupId`, Report: &reportDimString},
 		{Name: "order_id", Quoted: `"order_id"`, Field: "OrderID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Order ID`, JSON: `orderId`, Report: &reportDimString},
-		{Name: "status", Quoted: `"status"`, Field: "Status", Kind: schema.KindString, Flags: 0, Label: `Status`, JSON: `status`, Enum: enumStatus[:], Report: &reportDimEnum},
+		{Name: "status", Quoted: `"status"`, Field: "Status", Kind: schema.KindString, Flags: 0, Label: `Status`, JSON: `status`, Enum: enumShipmentvocabStatus[:], Report: &reportDimEnum},
 		{Name: "stage_rank", Quoted: `"stage_rank"`, Field: "StageRank", Kind: schema.KindInt16, Flags: schema.FlagReadOnly, Label: `Stage Rank`, JSON: `stageRank`, Report: &reportMeasureIntegerHidden},
-		{Name: "tender_status", Quoted: `"tender_status"`, Field: "TenderStatus", Kind: schema.KindString, Flags: schema.FlagNullable, Label: `Tender Status`, JSON: `tenderStatus`, Enum: enumTenderStatus[:], Report: &reportDimEnum},
-		{Name: "entry_method", Quoted: `"entry_method"`, Field: "EntryMethod", Kind: schema.KindString, Flags: 0, Label: `Entry Method`, JSON: `entryMethod`, Enum: enumEntryMethod[:], Report: &reportDimEnum},
+		{Name: "tender_status", Quoted: `"tender_status"`, Field: "TenderStatus", Kind: schema.KindString, Flags: schema.FlagNullable, Label: `Tender Status`, JSON: `tenderStatus`, Enum: enumShipmentvocabTenderStatus[:], Report: &reportDimEnum},
+		{Name: "entry_method", Quoted: `"entry_method"`, Field: "EntryMethod", Kind: schema.KindString, Flags: 0, Label: `Entry Method`, JSON: `entryMethod`, Enum: enumShipmentvocabEntryMethod[:], Report: &reportDimEnum},
 		{Name: "pro_number", Quoted: `"pro_number"`, Field: "ProNumber", Kind: schema.KindString, Flags: 0, Label: `PRO Number`, JSON: `proNumber`, Report: &reportDimString},
 		{Name: "bol", Quoted: `"bol"`, Field: "BOL", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `BOL`, JSON: `bol`, Report: &reportDimString},
 		{Name: "external_reference", Quoted: `"external_reference"`, Field: "ExternalReference", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Customer Reference`, JSON: `externalReference`, Report: &reportDimString},
@@ -1481,7 +1481,7 @@ var shipmentsTable = schema.Table{
 		{Name: "actual_delivery_date", Quoted: `"actual_delivery_date"`, Field: "ActualDeliveryDate", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Delivery Date`, JSON: `actualDeliveryDate`, Report: &reportDimEpoch},
 		{Name: "actual_ship_date", Quoted: `"actual_ship_date"`, Field: "ActualShipDate", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Ship Date`, JSON: `actualShipDate`, Report: &reportDimEpoch},
 		{Name: "canceled_at", Quoted: `"canceled_at"`, Field: "CanceledAt", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Canceled At`, JSON: `canceledAt`, Report: &reportDimEpoch},
-		{Name: "billing_transfer_status", Quoted: `"billing_transfer_status"`, Field: "BillingTransferStatus", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Billing Transfer Status`, JSON: `billingTransferStatus`, Enum: enumBillingTransferStatus[:], Report: &reportDimEnum},
+		{Name: "billing_transfer_status", Quoted: `"billing_transfer_status"`, Field: "BillingTransferStatus", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Billing Transfer Status`, JSON: `billingTransferStatus`, Enum: enumShipmentvocabBillingTransferStatus[:], Report: &reportDimEnum},
 		{Name: "transferred_to_billing_at", Quoted: `"transferred_to_billing_at"`, Field: "TransferredToBillingAt", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Transferred To Billing At`, JSON: `transferredToBillingAt`, Report: &reportDimEpoch},
 		{Name: "marked_ready_to_bill_at", Quoted: `"marked_ready_to_bill_at"`, Field: "MarkedReadyToBillAt", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Ready to Bill At`, JSON: `markedReadyToBillAt`, Report: &reportDimEpoch},
 		{Name: "billed_at", Quoted: `"billed_at"`, Field: "BilledAt", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Billed At`, JSON: `billedAt`, Report: &reportDimEpoch},
@@ -1498,7 +1498,7 @@ var shipmentsTable = schema.Table{
 		{Name: "auto_rated", Quoted: `"auto_rated"`, Field: "AutoRated", Kind: schema.KindBool, Flags: 0, Label: `Auto Rated`, JSON: `autoRated`, Report: &reportDimBool},
 		{Name: "auto_rated_at", Quoted: `"auto_rated_at"`, Field: "AutoRatedAt", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Auto Rated At`, JSON: `autoRatedAt`, Report: &reportDimEpoch},
 		{Name: "bill_to_customer_id", Quoted: `"bill_to_customer_id"`, Field: "BillToCustomerID", Kind: schema.KindString, Flags: schema.FlagNullable, Label: `Bill To Customer ID`, JSON: `billToCustomerId`, Report: &reportDimStringHidden},
-		{Name: "freight_terms", Quoted: `"freight_terms"`, Field: "FreightTerms", Kind: schema.KindString, Flags: 0, Label: `Freight Terms`, JSON: `freightTerms`, Enum: enumFreightTerms[:], Report: &reportDimEnum},
+		{Name: "freight_terms", Quoted: `"freight_terms"`, Field: "FreightTerms", Kind: schema.KindString, Flags: 0, Label: `Freight Terms`, JSON: `freightTerms`, Enum: enumShipmentvocabFreightTerms[:], Report: &reportDimEnum},
 		{Name: "search_vector", Quoted: `"search_vector"`, Field: "SearchVector", Kind: schema.KindTSVector, Flags: schema.FlagReadOnly | schema.FlagNoSelect, Label: `Search Vector`, Report: &reportDimTsvectorHidden},
 		{Name: "rank", Quoted: `"rank"`, Field: "Rank", Kind: schema.KindString, Flags: schema.FlagComputed, Label: `Rank`, Report: &reportDimStringHidden},
 		{Name: "version", Quoted: `"version"`, Field: "Version", Kind: schema.KindInt64, Flags: schema.FlagVersion, Label: `Version`, JSON: `version`, Report: &reportMeasureIntegerHidden},
@@ -1568,10 +1568,10 @@ type ShipmentsTable struct {
 	FormulaTemplateID         keelkinds.PulidIDCol
 	ConsolidationGroupID      keelkinds.PulidIDCol
 	OrderID                   keelkinds.PulidIDCol
-	Status                    StatusCol
+	Status                    keelkinds.ShipmentvocabStatusCol
 	StageRank                 keel.Int16Col
-	TenderStatus              TenderStatusCol
-	EntryMethod               EntryMethodCol
+	TenderStatus              keelkinds.ShipmentvocabTenderStatusCol
+	EntryMethod               keelkinds.ShipmentvocabEntryMethodCol
 	ProNumber                 keel.StringCol
 	BOL                       keel.StringCol
 	ExternalReference         keel.StringCol
@@ -1593,7 +1593,7 @@ type ShipmentsTable struct {
 	ActualDeliveryDate        keel.Int64Col
 	ActualShipDate            keel.Int64Col
 	CanceledAt                keel.Int64Col
-	BillingTransferStatus     BillingTransferStatusCol
+	BillingTransferStatus     keelkinds.ShipmentvocabBillingTransferStatusCol
 	TransferredToBillingAt    keel.Int64Col
 	MarkedReadyToBillAt       keel.Int64Col
 	BilledAt                  keel.Int64Col
@@ -1610,7 +1610,7 @@ type ShipmentsTable struct {
 	AutoRated                 keel.BoolCol
 	AutoRatedAt               keel.Int64Col
 	BillToCustomerID          keelkinds.PulidIDCol
-	FreightTerms              FreightTermsCol
+	FreightTerms              keelkinds.ShipmentvocabFreightTermsCol
 	SearchVector              keel.TSVectorCol
 	Rank                      keel.StringCol
 	Version                   keel.Int64Col
@@ -1635,10 +1635,10 @@ var Shipments = &ShipmentsTable{
 	FormulaTemplateID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &shipmentsRef, Index: 11}}},
 	ConsolidationGroupID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &shipmentsRef, Index: 12}}},
 	OrderID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &shipmentsRef, Index: 13}}},
-	Status:                    StatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &shipmentsRef, Index: 14}}},
+	Status:                    keelkinds.ShipmentvocabStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &shipmentsRef, Index: 14}}},
 	StageRank:                 keel.Int16Col{Col: keel.Col{Ref: &shipmentsRef, Index: 15}},
-	TenderStatus:              TenderStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &shipmentsRef, Index: 16}}},
-	EntryMethod:               EntryMethodCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &shipmentsRef, Index: 17}}},
+	TenderStatus:              keelkinds.ShipmentvocabTenderStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &shipmentsRef, Index: 16}}},
+	EntryMethod:               keelkinds.ShipmentvocabEntryMethodCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &shipmentsRef, Index: 17}}},
 	ProNumber:                 keel.StringCol{Col: keel.Col{Ref: &shipmentsRef, Index: 18}},
 	BOL:                       keel.StringCol{Col: keel.Col{Ref: &shipmentsRef, Index: 19}},
 	ExternalReference:         keel.StringCol{Col: keel.Col{Ref: &shipmentsRef, Index: 20}},
@@ -1660,7 +1660,7 @@ var Shipments = &ShipmentsTable{
 	ActualDeliveryDate:        keel.Int64Col{Col: keel.Col{Ref: &shipmentsRef, Index: 36}},
 	ActualShipDate:            keel.Int64Col{Col: keel.Col{Ref: &shipmentsRef, Index: 37}},
 	CanceledAt:                keel.Int64Col{Col: keel.Col{Ref: &shipmentsRef, Index: 38}},
-	BillingTransferStatus:     BillingTransferStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &shipmentsRef, Index: 39}}},
+	BillingTransferStatus:     keelkinds.ShipmentvocabBillingTransferStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &shipmentsRef, Index: 39}}},
 	TransferredToBillingAt:    keel.Int64Col{Col: keel.Col{Ref: &shipmentsRef, Index: 40}},
 	MarkedReadyToBillAt:       keel.Int64Col{Col: keel.Col{Ref: &shipmentsRef, Index: 41}},
 	BilledAt:                  keel.Int64Col{Col: keel.Col{Ref: &shipmentsRef, Index: 42}},
@@ -1677,7 +1677,7 @@ var Shipments = &ShipmentsTable{
 	AutoRated:                 keel.BoolCol{Col: keel.Col{Ref: &shipmentsRef, Index: 53}},
 	AutoRatedAt:               keel.Int64Col{Col: keel.Col{Ref: &shipmentsRef, Index: 54}},
 	BillToCustomerID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &shipmentsRef, Index: 55}}},
-	FreightTerms:              FreightTermsCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &shipmentsRef, Index: 56}}},
+	FreightTerms:              keelkinds.ShipmentvocabFreightTermsCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &shipmentsRef, Index: 56}}},
 	SearchVector:              keel.TSVectorCol{Col: keel.Col{Ref: &shipmentsRef, Index: 57}},
 	Rank:                      keel.StringCol{Col: keel.Col{Ref: &shipmentsRef, Index: 58}},
 	Version:                   keel.Int64Col{Col: keel.Col{Ref: &shipmentsRef, Index: 59}},
@@ -1703,10 +1703,10 @@ func BuildShipments(r *keel.Ref) *ShipmentsTable {
 		FormulaTemplateID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 11}}},
 		ConsolidationGroupID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 12}}},
 		OrderID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 13}}},
-		Status:                    StatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 14}}},
+		Status:                    keelkinds.ShipmentvocabStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 14}}},
 		StageRank:                 keel.Int16Col{Col: keel.Col{Ref: r, Index: 15}},
-		TenderStatus:              TenderStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 16}}},
-		EntryMethod:               EntryMethodCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 17}}},
+		TenderStatus:              keelkinds.ShipmentvocabTenderStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 16}}},
+		EntryMethod:               keelkinds.ShipmentvocabEntryMethodCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 17}}},
 		ProNumber:                 keel.StringCol{Col: keel.Col{Ref: r, Index: 18}},
 		BOL:                       keel.StringCol{Col: keel.Col{Ref: r, Index: 19}},
 		ExternalReference:         keel.StringCol{Col: keel.Col{Ref: r, Index: 20}},
@@ -1728,7 +1728,7 @@ func BuildShipments(r *keel.Ref) *ShipmentsTable {
 		ActualDeliveryDate:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 36}},
 		ActualShipDate:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 37}},
 		CanceledAt:                keel.Int64Col{Col: keel.Col{Ref: r, Index: 38}},
-		BillingTransferStatus:     BillingTransferStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 39}}},
+		BillingTransferStatus:     keelkinds.ShipmentvocabBillingTransferStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 39}}},
 		TransferredToBillingAt:    keel.Int64Col{Col: keel.Col{Ref: r, Index: 40}},
 		MarkedReadyToBillAt:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 41}},
 		BilledAt:                  keel.Int64Col{Col: keel.Col{Ref: r, Index: 42}},
@@ -1745,7 +1745,7 @@ func BuildShipments(r *keel.Ref) *ShipmentsTable {
 		AutoRated:                 keel.BoolCol{Col: keel.Col{Ref: r, Index: 53}},
 		AutoRatedAt:               keel.Int64Col{Col: keel.Col{Ref: r, Index: 54}},
 		BillToCustomerID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 55}}},
-		FreightTerms:              FreightTermsCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 56}}},
+		FreightTerms:              keelkinds.ShipmentvocabFreightTermsCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 56}}},
 		SearchVector:              keel.TSVectorCol{Col: keel.Col{Ref: r, Index: 57}},
 		Rank:                      keel.StringCol{Col: keel.Col{Ref: r, Index: 58}},
 		Version:                   keel.Int64Col{Col: keel.Col{Ref: r, Index: 59}},
@@ -2320,10 +2320,10 @@ var shipmentCommentsTable = schema.Table{
 		{Name: "parent_comment_id", Quoted: `"parent_comment_id"`, Field: "ParentCommentID", Kind: schema.KindString, Flags: schema.FlagNullable, Label: `Parent Comment ID`, JSON: `parentCommentId`},
 		{Name: "comment", Quoted: `"comment"`, Field: "Comment", Kind: schema.KindString, Flags: 0, Label: `Comment`, JSON: `comment`},
 		{Name: "body", Quoted: `"body"`, Field: "Body", Kind: schema.KindJSON, Flags: schema.FlagJSONB | schema.FlagNullZero, Label: `Body`, JSON: `body`},
-		{Name: "type", Quoted: `"type"`, Field: "Type", Kind: schema.KindString, Flags: 0, Label: `Type`, JSON: `type`, Enum: enumCommentType[:]},
-		{Name: "visibility", Quoted: `"visibility"`, Field: "Visibility", Kind: schema.KindString, Flags: 0, Label: `Visibility`, JSON: `visibility`, Enum: enumCommentVisibility[:]},
-		{Name: "priority", Quoted: `"priority"`, Field: "Priority", Kind: schema.KindString, Flags: 0, Label: `Priority`, JSON: `priority`, Enum: enumCommentPriority[:]},
-		{Name: "source", Quoted: `"source"`, Field: "Source", Kind: schema.KindString, Flags: 0, Label: `Source`, JSON: `source`, Enum: enumCommentSource[:]},
+		{Name: "type", Quoted: `"type"`, Field: "Type", Kind: schema.KindString, Flags: 0, Label: `Type`, JSON: `type`, Enum: enumShipmentvocabCommentType[:]},
+		{Name: "visibility", Quoted: `"visibility"`, Field: "Visibility", Kind: schema.KindString, Flags: 0, Label: `Visibility`, JSON: `visibility`, Enum: enumShipmentvocabCommentVisibility[:]},
+		{Name: "priority", Quoted: `"priority"`, Field: "Priority", Kind: schema.KindString, Flags: 0, Label: `Priority`, JSON: `priority`, Enum: enumShipmentvocabCommentPriority[:]},
+		{Name: "source", Quoted: `"source"`, Field: "Source", Kind: schema.KindString, Flags: 0, Label: `Source`, JSON: `source`, Enum: enumShipmentvocabCommentSource[:]},
 		{Name: "metadata", Quoted: `"metadata"`, Field: "Metadata", Kind: schema.KindJSON, Flags: schema.FlagJSONB, Label: `Metadata`, JSON: `metadata`},
 		{Name: "edited_at", Quoted: `"edited_at"`, Field: "EditedAt", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Edited At`, JSON: `editedAt`},
 		{Name: "pinned_at", Quoted: `"pinned_at"`, Field: "PinnedAt", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Pinned At`, JSON: `pinnedAt`},
@@ -2379,10 +2379,10 @@ type ShipmentCommentsTable struct {
 	ParentCommentID        keelkinds.PulidIDCol
 	Comment                keel.StringCol
 	Body                   keel.JSONBCol
-	Type                   CommentTypeCol
-	Visibility             CommentVisibilityCol
-	Priority               CommentPriorityCol
-	Source                 CommentSourceCol
+	Type                   keelkinds.ShipmentvocabCommentTypeCol
+	Visibility             keelkinds.ShipmentvocabCommentVisibilityCol
+	Priority               keelkinds.ShipmentvocabCommentPriorityCol
+	Source                 keelkinds.ShipmentvocabCommentSourceCol
 	Metadata               keel.JSONBCol
 	EditedAt               keel.Int64Col
 	PinnedAt               keel.Int64Col
@@ -2410,10 +2410,10 @@ var ShipmentComments = &ShipmentCommentsTable{
 	ParentCommentID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &shipmentCommentsRef, Index: 5}}},
 	Comment:                keel.StringCol{Col: keel.Col{Ref: &shipmentCommentsRef, Index: 6}},
 	Body:                   keel.JSONBCol{Col: keel.Col{Ref: &shipmentCommentsRef, Index: 7}},
-	Type:                   CommentTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &shipmentCommentsRef, Index: 8}}},
-	Visibility:             CommentVisibilityCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &shipmentCommentsRef, Index: 9}}},
-	Priority:               CommentPriorityCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &shipmentCommentsRef, Index: 10}}},
-	Source:                 CommentSourceCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &shipmentCommentsRef, Index: 11}}},
+	Type:                   keelkinds.ShipmentvocabCommentTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &shipmentCommentsRef, Index: 8}}},
+	Visibility:             keelkinds.ShipmentvocabCommentVisibilityCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &shipmentCommentsRef, Index: 9}}},
+	Priority:               keelkinds.ShipmentvocabCommentPriorityCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &shipmentCommentsRef, Index: 10}}},
+	Source:                 keelkinds.ShipmentvocabCommentSourceCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &shipmentCommentsRef, Index: 11}}},
 	Metadata:               keel.JSONBCol{Col: keel.Col{Ref: &shipmentCommentsRef, Index: 12}},
 	EditedAt:               keel.Int64Col{Col: keel.Col{Ref: &shipmentCommentsRef, Index: 13}},
 	PinnedAt:               keel.Int64Col{Col: keel.Col{Ref: &shipmentCommentsRef, Index: 14}},
@@ -2442,10 +2442,10 @@ func BuildShipmentComments(r *keel.Ref) *ShipmentCommentsTable {
 		ParentCommentID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
 		Comment:                keel.StringCol{Col: keel.Col{Ref: r, Index: 6}},
 		Body:                   keel.JSONBCol{Col: keel.Col{Ref: r, Index: 7}},
-		Type:                   CommentTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 8}}},
-		Visibility:             CommentVisibilityCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 9}}},
-		Priority:               CommentPriorityCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 10}}},
-		Source:                 CommentSourceCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 11}}},
+		Type:                   keelkinds.ShipmentvocabCommentTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 8}}},
+		Visibility:             keelkinds.ShipmentvocabCommentVisibilityCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 9}}},
+		Priority:               keelkinds.ShipmentvocabCommentPriorityCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 10}}},
+		Source:                 keelkinds.ShipmentvocabCommentSourceCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 11}}},
 		Metadata:               keel.JSONBCol{Col: keel.Col{Ref: r, Index: 12}},
 		EditedAt:               keel.Int64Col{Col: keel.Col{Ref: r, Index: 13}},
 		PinnedAt:               keel.Int64Col{Col: keel.Col{Ref: r, Index: 14}},
@@ -3232,8 +3232,8 @@ var shipmentMovesTable = schema.Table{
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`, Report: &reportDimStringHidden},
 		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`, JSON: `organizationId`, Report: &reportDimStringHidden},
 		{Name: "shipment_id", Quoted: `"shipment_id"`, Field: "ShipmentID", Kind: schema.KindString, Flags: 0, Label: `Shipment ID`, JSON: `shipmentId`, Report: &reportDimStringHidden},
-		{Name: "status", Quoted: `"status"`, Field: "Status", Kind: schema.KindString, Flags: 0, Label: `Status`, JSON: `status`, Enum: enumMoveStatus[:], Report: &reportDimEnum},
-		{Name: "coverage_type", Quoted: `"coverage_type"`, Field: "CoverageType", Kind: schema.KindString, Flags: 0, Label: `Coverage Type`, JSON: `coverageType`, Enum: enumMoveCoverageType[:], Report: &reportDimEnum},
+		{Name: "status", Quoted: `"status"`, Field: "Status", Kind: schema.KindString, Flags: 0, Label: `Status`, JSON: `status`, Enum: enumShipmentvocabMoveStatus[:], Report: &reportDimEnum},
+		{Name: "coverage_type", Quoted: `"coverage_type"`, Field: "CoverageType", Kind: schema.KindString, Flags: 0, Label: `Coverage Type`, JSON: `coverageType`, Enum: enumShipmentvocabMoveCoverageType[:], Report: &reportDimEnum},
 		{Name: "loaded", Quoted: `"loaded"`, Field: "Loaded", Kind: schema.KindBool, Flags: 0, Label: `Loaded`, JSON: `loaded`, Report: &reportDimBool},
 		{Name: "sequence", Quoted: `"sequence"`, Field: "Sequence", Kind: schema.KindInt64, Flags: 0, Label: `Sequence`, JSON: `sequence`, Report: &reportDimInteger},
 		{Name: "distance", Quoted: `"distance"`, Field: "Distance", Kind: schema.KindFloat64, Flags: schema.FlagNullable, Label: `Miles`, JSON: `distance`, Report: &reportMeasureFloatDistance},
@@ -3286,8 +3286,8 @@ type ShipmentMovesTable struct {
 	BusinessUnitID         keelkinds.PulidIDCol
 	OrganizationID         keelkinds.PulidIDCol
 	ShipmentID             keelkinds.PulidIDCol
-	Status                 MoveStatusCol
-	CoverageType           MoveCoverageTypeCol
+	Status                 keelkinds.ShipmentvocabMoveStatusCol
+	CoverageType           keelkinds.ShipmentvocabMoveCoverageTypeCol
 	Loaded                 keel.BoolCol
 	Sequence               keel.Int64Col
 	Distance               keel.Float64Col
@@ -3311,8 +3311,8 @@ var ShipmentMoves = &ShipmentMovesTable{
 	BusinessUnitID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &shipmentMovesRef, Index: 1}}},
 	OrganizationID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &shipmentMovesRef, Index: 2}}},
 	ShipmentID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &shipmentMovesRef, Index: 3}}},
-	Status:                 MoveStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &shipmentMovesRef, Index: 4}}},
-	CoverageType:           MoveCoverageTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &shipmentMovesRef, Index: 5}}},
+	Status:                 keelkinds.ShipmentvocabMoveStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &shipmentMovesRef, Index: 4}}},
+	CoverageType:           keelkinds.ShipmentvocabMoveCoverageTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &shipmentMovesRef, Index: 5}}},
 	Loaded:                 keel.BoolCol{Col: keel.Col{Ref: &shipmentMovesRef, Index: 6}},
 	Sequence:               keel.Int64Col{Col: keel.Col{Ref: &shipmentMovesRef, Index: 7}},
 	Distance:               keel.Float64Col{Col: keel.Col{Ref: &shipmentMovesRef, Index: 8}},
@@ -3337,8 +3337,8 @@ func BuildShipmentMoves(r *keel.Ref) *ShipmentMovesTable {
 		BusinessUnitID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
 		ShipmentID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		Status:                 MoveStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		CoverageType:           MoveCoverageTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		Status:                 keelkinds.ShipmentvocabMoveStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		CoverageType:           keelkinds.ShipmentvocabMoveCoverageTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
 		Loaded:                 keel.BoolCol{Col: keel.Col{Ref: r, Index: 6}},
 		Sequence:               keel.Int64Col{Col: keel.Col{Ref: r, Index: 7}},
 		Distance:               keel.Float64Col{Col: keel.Col{Ref: r, Index: 8}},
@@ -3563,7 +3563,7 @@ var shipmentMoveJurisdictionMilesTable = schema.Table{
 		{Name: "toll_distance", Quoted: `"toll_distance"`, Field: "TollDistance", Kind: schema.KindFloat64, Flags: schema.FlagNullable, Label: `Toll Distance`, JSON: `tollDistance`},
 		{Name: "ferry_distance", Quoted: `"ferry_distance"`, Field: "FerryDistance", Kind: schema.KindFloat64, Flags: schema.FlagNullable, Label: `Ferry Distance`, JSON: `ferryDistance`},
 		{Name: "loaded", Quoted: `"loaded"`, Field: "Loaded", Kind: schema.KindBool, Flags: 0, Label: `Loaded`, JSON: `loaded`},
-		{Name: "source", Quoted: `"source"`, Field: "Source", Kind: schema.KindString, Flags: 0, Label: `Source`, JSON: `source`, Enum: enumJurisdictionMileSource[:]},
+		{Name: "source", Quoted: `"source"`, Field: "Source", Kind: schema.KindString, Flags: 0, Label: `Source`, JSON: `source`, Enum: enumShipmentvocabJurisdictionMileSource[:]},
 		{Name: "provider", Quoted: `"provider"`, Field: "Provider", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Provider`, JSON: `provider`},
 		{Name: "data_version", Quoted: `"data_version"`, Field: "DataVersion", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Data Version`, JSON: `dataVersion`},
 		{Name: "distance_profile_id", Quoted: `"distance_profile_id"`, Field: "DistanceProfileID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Distance Profile ID`, JSON: `distanceProfileId`},
@@ -3609,7 +3609,7 @@ type ShipmentMoveJurisdictionMilesTable struct {
 	TollDistance      keel.Float64Col
 	FerryDistance     keel.Float64Col
 	Loaded            keel.BoolCol
-	Source            JurisdictionMileSourceCol
+	Source            keelkinds.ShipmentvocabJurisdictionMileSourceCol
 	Provider          keel.StringCol
 	DataVersion       keel.StringCol
 	DistanceProfileID keelkinds.PulidIDCol
@@ -3635,7 +3635,7 @@ var ShipmentMoveJurisdictionMiles = &ShipmentMoveJurisdictionMilesTable{
 	TollDistance:      keel.Float64Col{Col: keel.Col{Ref: &shipmentMoveJurisdictionMilesRef, Index: 10}},
 	FerryDistance:     keel.Float64Col{Col: keel.Col{Ref: &shipmentMoveJurisdictionMilesRef, Index: 11}},
 	Loaded:            keel.BoolCol{Col: keel.Col{Ref: &shipmentMoveJurisdictionMilesRef, Index: 12}},
-	Source:            JurisdictionMileSourceCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &shipmentMoveJurisdictionMilesRef, Index: 13}}},
+	Source:            keelkinds.ShipmentvocabJurisdictionMileSourceCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &shipmentMoveJurisdictionMilesRef, Index: 13}}},
 	Provider:          keel.StringCol{Col: keel.Col{Ref: &shipmentMoveJurisdictionMilesRef, Index: 14}},
 	DataVersion:       keel.StringCol{Col: keel.Col{Ref: &shipmentMoveJurisdictionMilesRef, Index: 15}},
 	DistanceProfileID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &shipmentMoveJurisdictionMilesRef, Index: 16}}},
@@ -3662,7 +3662,7 @@ func BuildShipmentMoveJurisdictionMiles(r *keel.Ref) *ShipmentMoveJurisdictionMi
 		TollDistance:      keel.Float64Col{Col: keel.Col{Ref: r, Index: 10}},
 		FerryDistance:     keel.Float64Col{Col: keel.Col{Ref: r, Index: 11}},
 		Loaded:            keel.BoolCol{Col: keel.Col{Ref: r, Index: 12}},
-		Source:            JurisdictionMileSourceCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 13}}},
+		Source:            keelkinds.ShipmentvocabJurisdictionMileSourceCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 13}}},
 		Provider:          keel.StringCol{Col: keel.Col{Ref: r, Index: 14}},
 		DataVersion:       keel.StringCol{Col: keel.Col{Ref: r, Index: 15}},
 		DistanceProfileID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 16}}},
@@ -3828,9 +3828,9 @@ var stopsTable = schema.Table{
 		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`, JSON: `organizationId`, Report: &reportDimStringHidden},
 		{Name: "shipment_move_id", Quoted: `"shipment_move_id"`, Field: "ShipmentMoveID", Kind: schema.KindString, Flags: 0, Label: `Shipment Move ID`, JSON: `shipmentMoveId`, Report: &reportDimString},
 		{Name: "location_id", Quoted: `"location_id"`, Field: "LocationID", Kind: schema.KindString, Flags: 0, Label: `Location ID`, JSON: `locationId`, Report: &reportDimStringHidden},
-		{Name: "status", Quoted: `"status"`, Field: "Status", Kind: schema.KindString, Flags: 0, Label: `Status`, JSON: `status`, Enum: enumStopStatus[:], Report: &reportDimEnum},
-		{Name: "type", Quoted: `"type"`, Field: "Type", Kind: schema.KindString, Flags: 0, Label: `Type`, JSON: `type`, Enum: enumStopType[:], Report: &reportDimEnum},
-		{Name: "schedule_type", Quoted: `"schedule_type"`, Field: "ScheduleType", Kind: schema.KindString, Flags: 0, Label: `Schedule Type`, JSON: `scheduleType`, Enum: enumStopScheduleType[:], Report: &reportDimEnum},
+		{Name: "status", Quoted: `"status"`, Field: "Status", Kind: schema.KindString, Flags: 0, Label: `Status`, JSON: `status`, Enum: enumShipmentvocabStopStatus[:], Report: &reportDimEnum},
+		{Name: "type", Quoted: `"type"`, Field: "Type", Kind: schema.KindString, Flags: 0, Label: `Type`, JSON: `type`, Enum: enumShipmentvocabStopType[:], Report: &reportDimEnum},
+		{Name: "schedule_type", Quoted: `"schedule_type"`, Field: "ScheduleType", Kind: schema.KindString, Flags: 0, Label: `Schedule Type`, JSON: `scheduleType`, Enum: enumShipmentvocabStopScheduleType[:], Report: &reportDimEnum},
 		{Name: "sequence", Quoted: `"sequence"`, Field: "Sequence", Kind: schema.KindInt64, Flags: 0, Label: `Sequence`, JSON: `sequence`, Report: &reportDimInteger},
 		{Name: "pieces", Quoted: `"pieces"`, Field: "Pieces", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Pieces`, JSON: `pieces`, Report: &reportMeasureIntegerCount},
 		{Name: "weight", Quoted: `"weight"`, Field: "Weight", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Weight`, JSON: `weight`, Report: &reportMeasureIntegerWeight},
@@ -3879,9 +3879,9 @@ type StopsTable struct {
 	OrganizationID         keelkinds.PulidIDCol
 	ShipmentMoveID         keelkinds.PulidIDCol
 	LocationID             keelkinds.PulidIDCol
-	Status                 StopStatusCol
-	Type                   StopTypeCol
-	ScheduleType           StopScheduleTypeCol
+	Status                 keelkinds.ShipmentvocabStopStatusCol
+	Type                   keelkinds.ShipmentvocabStopTypeCol
+	ScheduleType           keelkinds.ShipmentvocabStopScheduleTypeCol
 	Sequence               keel.Int64Col
 	Pieces                 keel.Int64Col
 	Weight                 keel.Int64Col
@@ -3905,9 +3905,9 @@ var Stops = &StopsTable{
 	OrganizationID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &stopsRef, Index: 2}}},
 	ShipmentMoveID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &stopsRef, Index: 3}}},
 	LocationID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &stopsRef, Index: 4}}},
-	Status:                 StopStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &stopsRef, Index: 5}}},
-	Type:                   StopTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &stopsRef, Index: 6}}},
-	ScheduleType:           StopScheduleTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &stopsRef, Index: 7}}},
+	Status:                 keelkinds.ShipmentvocabStopStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &stopsRef, Index: 5}}},
+	Type:                   keelkinds.ShipmentvocabStopTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &stopsRef, Index: 6}}},
+	ScheduleType:           keelkinds.ShipmentvocabStopScheduleTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &stopsRef, Index: 7}}},
 	Sequence:               keel.Int64Col{Col: keel.Col{Ref: &stopsRef, Index: 8}},
 	Pieces:                 keel.Int64Col{Col: keel.Col{Ref: &stopsRef, Index: 9}},
 	Weight:                 keel.Int64Col{Col: keel.Col{Ref: &stopsRef, Index: 10}},
@@ -3932,9 +3932,9 @@ func BuildStops(r *keel.Ref) *StopsTable {
 		OrganizationID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
 		ShipmentMoveID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
 		LocationID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		Status:                 StopStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
-		Type:                   StopTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
-		ScheduleType:           StopScheduleTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 7}}},
+		Status:                 keelkinds.ShipmentvocabStopStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		Type:                   keelkinds.ShipmentvocabStopTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		ScheduleType:           keelkinds.ShipmentvocabStopScheduleTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 7}}},
 		Sequence:               keel.Int64Col{Col: keel.Col{Ref: r, Index: 8}},
 		Pieces:                 keel.Int64Col{Col: keel.Col{Ref: r, Index: 9}},
 		Weight:                 keel.Int64Col{Col: keel.Col{Ref: r, Index: 10}},
@@ -4173,20 +4173,20 @@ var enumAccessorialchargeMethod = [...]schema.EnumValue{
 	{Value: `Percentage`, Label: `Percentage`, Doc: `Percentage of linehaul (fuel surcharge)`},
 }
 
-var enumAssignmentAck = [...]schema.EnumValue{
+var enumShipmentvocabAssignmentAck = [...]schema.EnumValue{
 	{Value: `Pending`, Label: `Pending`},
 	{Value: `Accepted`, Label: `Accepted`},
 	{Value: `Declined`, Label: `Declined`},
 }
 
-var enumAssignmentStatus = [...]schema.EnumValue{
+var enumShipmentvocabAssignmentStatus = [...]schema.EnumValue{
 	{Value: `New`, Label: `New`},
 	{Value: `InProgress`, Label: `In Progress`},
 	{Value: `Completed`, Label: `Completed`},
 	{Value: `Canceled`, Label: `Canceled`},
 }
 
-var enumBillingTransferStatus = [...]schema.EnumValue{
+var enumShipmentvocabBillingTransferStatus = [...]schema.EnumValue{
 	{Value: ``, Label: `Billing Transfer None`},
 	{Value: `ReadyForReview`, Label: `Billing Transfer Ready For Review`},
 	{Value: `InReview`, Label: `Billing Transfer In Review`},
@@ -4198,43 +4198,43 @@ var enumBillingTransferStatus = [...]schema.EnumValue{
 	{Value: `Canceled`, Label: `Billing Transfer Canceled`},
 }
 
-var enumCarrierAssignmentStatus = [...]schema.EnumValue{
+var enumShipmentvocabCarrierAssignmentStatus = [...]schema.EnumValue{
 	{Value: `Pending`, Label: `Pending`},
 	{Value: `Confirmed`, Label: `Confirmed`},
 	{Value: `Canceled`, Label: `Canceled`},
 }
 
-var enumCarrierRateMethod = [...]schema.EnumValue{
+var enumShipmentvocabCarrierRateMethod = [...]schema.EnumValue{
 	{Value: `Flat`, Label: `Flat`},
 	{Value: `PerMile`, Label: `Per Mile`},
 }
 
-var enumChargeAllocationKind = [...]schema.EnumValue{
+var enumShipmentvocabChargeAllocationKind = [...]schema.EnumValue{
 	{Value: `Freight`, Label: `Freight`},
 	{Value: `Accessorial`, Label: `Accessorial`},
 	{Value: `OrderCharge`, Label: `Order Charge`},
 }
 
-var enumChargeAllocationMethod = [...]schema.EnumValue{
+var enumShipmentvocabChargeAllocationMethod = [...]schema.EnumValue{
 	{Value: `Percent`, Label: `Percent`},
 	{Value: `Amount`, Label: `Amount`},
 }
 
-var enumCommentPriority = [...]schema.EnumValue{
+var enumShipmentvocabCommentPriority = [...]schema.EnumValue{
 	{Value: `Low`, Label: `Low`},
 	{Value: `Normal`, Label: `Normal`},
 	{Value: `High`, Label: `High`},
 	{Value: `Urgent`, Label: `Urgent`},
 }
 
-var enumCommentSource = [...]schema.EnumValue{
+var enumShipmentvocabCommentSource = [...]schema.EnumValue{
 	{Value: `User`, Label: `User`},
 	{Value: `System`, Label: `System`},
 	{Value: `Integration`, Label: `Integration`},
 	{Value: `AI`, Label: `AI`},
 }
 
-var enumCommentType = [...]schema.EnumValue{
+var enumShipmentvocabCommentType = [...]schema.EnumValue{
 	{Value: `Internal`, Label: `Internal`},
 	{Value: `Dispatch`, Label: `Dispatch`},
 	{Value: `DriverUpdate`, Label: `Driver Update`},
@@ -4249,7 +4249,7 @@ var enumCommentType = [...]schema.EnumValue{
 	{Value: `Compliance`, Label: `Compliance`},
 }
 
-var enumCommentVisibility = [...]schema.EnumValue{
+var enumShipmentvocabCommentVisibility = [...]schema.EnumValue{
 	{Value: `Internal`, Label: `Internal`},
 	{Value: `Operations`, Label: `Operations`},
 	{Value: `Customer`, Label: `Customer`},
@@ -4257,29 +4257,29 @@ var enumCommentVisibility = [...]schema.EnumValue{
 	{Value: `Accounting`, Label: `Accounting`},
 }
 
-var enumEntryMethod = [...]schema.EnumValue{
+var enumShipmentvocabEntryMethod = [...]schema.EnumValue{
 	{Value: `Manual`, Label: `Manual`},
 	{Value: `EDI`, Label: `EDI`},
 }
 
-var enumFreightTerms = [...]schema.EnumValue{
+var enumShipmentvocabFreightTerms = [...]schema.EnumValue{
 	{Value: `Prepaid`, Label: `Prepaid`},
 	{Value: `Collect`, Label: `Collect`},
 	{Value: `ThirdParty`, Label: `Third Party`},
 }
 
-var enumJurisdictionMileSource = [...]schema.EnumValue{
+var enumShipmentvocabJurisdictionMileSource = [...]schema.EnumValue{
 	{Value: `RouteCalculation`, Label: `Route Calculation`},
 	{Value: `Manual`, Label: `Manual`},
 }
 
-var enumMoveCoverageType = [...]schema.EnumValue{
+var enumShipmentvocabMoveCoverageType = [...]schema.EnumValue{
 	{Value: `unassigned`, Label: `Unassigned`},
 	{Value: `driver`, Label: `Driver`},
 	{Value: `carrier`, Label: `Carrier`},
 }
 
-var enumMoveStatus = [...]schema.EnumValue{
+var enumShipmentvocabMoveStatus = [...]schema.EnumValue{
 	{Value: `New`, Label: `New`},
 	{Value: `Assigned`, Label: `Assigned`},
 	{Value: `InTransit`, Label: `In Transit`},
@@ -4287,7 +4287,7 @@ var enumMoveStatus = [...]schema.EnumValue{
 	{Value: `Canceled`, Label: `Canceled`},
 }
 
-var enumStatus = [...]schema.EnumValue{
+var enumShipmentvocabStatus = [...]schema.EnumValue{
 	{Value: `New`, Label: `New`},
 	{Value: `PartiallyAssigned`, Label: `Partially Assigned`},
 	{Value: `Assigned`, Label: `Assigned`},
@@ -4300,26 +4300,26 @@ var enumStatus = [...]schema.EnumValue{
 	{Value: `Canceled`, Label: `Canceled`},
 }
 
-var enumStopScheduleType = [...]schema.EnumValue{
+var enumShipmentvocabStopScheduleType = [...]schema.EnumValue{
 	{Value: `Open`, Label: `Open`},
 	{Value: `Appointment`, Label: `Appointment`},
 }
 
-var enumStopStatus = [...]schema.EnumValue{
+var enumShipmentvocabStopStatus = [...]schema.EnumValue{
 	{Value: `New`, Label: `New`},
 	{Value: `InTransit`, Label: `In Transit`},
 	{Value: `Completed`, Label: `Completed`},
 	{Value: `Canceled`, Label: `Canceled`},
 }
 
-var enumStopType = [...]schema.EnumValue{
+var enumShipmentvocabStopType = [...]schema.EnumValue{
 	{Value: `Pickup`, Label: `Pickup`},
 	{Value: `Delivery`, Label: `Delivery`},
 	{Value: `SplitDelivery`, Label: `Split Delivery`},
 	{Value: `SplitPickup`, Label: `Split Pickup`},
 }
 
-var enumTenderStatus = [...]schema.EnumValue{
+var enumShipmentvocabTenderStatus = [...]schema.EnumValue{
 	{Value: `Tendered`, Label: `Tendered`},
 	{Value: `Accepted`, Label: `Accepted`},
 	{Value: `Rejected`, Label: `Rejected`},
@@ -4356,669 +4356,3 @@ var reportMeasureIntegerCount = schema.ReportInfo{Included: true, Kind: schema.M
 var reportMeasureIntegerHidden = schema.ReportInfo{Kind: schema.Measure, Type: schema.ValueInt, Aggs: schema.AggsNumeric}
 
 var reportMeasureIntegerWeight = schema.ReportInfo{Included: true, Kind: schema.Measure, Type: schema.ValueInt, Aggs: schema.AggsNumeric, Format: `weight`}
-
-// AssignmentAckCol is a column of shipment.AssignmentAck values.
-type AssignmentAckCol struct{ keel.StringCol }
-
-func (c AssignmentAckCol) Eq(v shipment.AssignmentAck) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c AssignmentAckCol) Ne(v shipment.AssignmentAck) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c AssignmentAckCol) Gt(v shipment.AssignmentAck) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c AssignmentAckCol) Gte(v shipment.AssignmentAck) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c AssignmentAckCol) Lt(v shipment.AssignmentAck) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c AssignmentAckCol) Lte(v shipment.AssignmentAck) keel.Pred { return c.StringCol.Lte(string(v)) }
-func (c AssignmentAckCol) IsDistinctFrom(v shipment.AssignmentAck) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
-}
-func (c AssignmentAckCol) Between(lo, hi shipment.AssignmentAck) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
-}
-func (c AssignmentAckCol) To(v shipment.AssignmentAck) keel.Assignment {
-	return c.StringCol.To(string(v))
-}
-func (c AssignmentAckCol) In(vs ...shipment.AssignmentAck) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
-}
-func (c AssignmentAckCol) NotIn(vs ...shipment.AssignmentAck) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
-}
-
-// AssignmentStatusCol is a column of shipment.AssignmentStatus values.
-type AssignmentStatusCol struct{ keel.StringCol }
-
-func (c AssignmentStatusCol) Eq(v shipment.AssignmentStatus) keel.Pred {
-	return c.StringCol.Eq(string(v))
-}
-func (c AssignmentStatusCol) Ne(v shipment.AssignmentStatus) keel.Pred {
-	return c.StringCol.Ne(string(v))
-}
-func (c AssignmentStatusCol) Gt(v shipment.AssignmentStatus) keel.Pred {
-	return c.StringCol.Gt(string(v))
-}
-func (c AssignmentStatusCol) Gte(v shipment.AssignmentStatus) keel.Pred {
-	return c.StringCol.Gte(string(v))
-}
-func (c AssignmentStatusCol) Lt(v shipment.AssignmentStatus) keel.Pred {
-	return c.StringCol.Lt(string(v))
-}
-func (c AssignmentStatusCol) Lte(v shipment.AssignmentStatus) keel.Pred {
-	return c.StringCol.Lte(string(v))
-}
-func (c AssignmentStatusCol) IsDistinctFrom(v shipment.AssignmentStatus) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
-}
-func (c AssignmentStatusCol) Between(lo, hi shipment.AssignmentStatus) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
-}
-func (c AssignmentStatusCol) To(v shipment.AssignmentStatus) keel.Assignment {
-	return c.StringCol.To(string(v))
-}
-func (c AssignmentStatusCol) In(vs ...shipment.AssignmentStatus) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
-}
-func (c AssignmentStatusCol) NotIn(vs ...shipment.AssignmentStatus) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
-}
-
-// BillingTransferStatusCol is a column of shipment.BillingTransferStatus values.
-type BillingTransferStatusCol struct{ keel.StringCol }
-
-func (c BillingTransferStatusCol) Eq(v shipment.BillingTransferStatus) keel.Pred {
-	return c.StringCol.Eq(string(v))
-}
-func (c BillingTransferStatusCol) Ne(v shipment.BillingTransferStatus) keel.Pred {
-	return c.StringCol.Ne(string(v))
-}
-func (c BillingTransferStatusCol) Gt(v shipment.BillingTransferStatus) keel.Pred {
-	return c.StringCol.Gt(string(v))
-}
-func (c BillingTransferStatusCol) Gte(v shipment.BillingTransferStatus) keel.Pred {
-	return c.StringCol.Gte(string(v))
-}
-func (c BillingTransferStatusCol) Lt(v shipment.BillingTransferStatus) keel.Pred {
-	return c.StringCol.Lt(string(v))
-}
-func (c BillingTransferStatusCol) Lte(v shipment.BillingTransferStatus) keel.Pred {
-	return c.StringCol.Lte(string(v))
-}
-func (c BillingTransferStatusCol) IsDistinctFrom(v shipment.BillingTransferStatus) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
-}
-func (c BillingTransferStatusCol) Between(lo, hi shipment.BillingTransferStatus) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
-}
-func (c BillingTransferStatusCol) To(v shipment.BillingTransferStatus) keel.Assignment {
-	return c.StringCol.To(string(v))
-}
-func (c BillingTransferStatusCol) In(vs ...shipment.BillingTransferStatus) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
-}
-func (c BillingTransferStatusCol) NotIn(vs ...shipment.BillingTransferStatus) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
-}
-
-// CarrierAssignmentStatusCol is a column of shipment.CarrierAssignmentStatus values.
-type CarrierAssignmentStatusCol struct{ keel.StringCol }
-
-func (c CarrierAssignmentStatusCol) Eq(v shipment.CarrierAssignmentStatus) keel.Pred {
-	return c.StringCol.Eq(string(v))
-}
-func (c CarrierAssignmentStatusCol) Ne(v shipment.CarrierAssignmentStatus) keel.Pred {
-	return c.StringCol.Ne(string(v))
-}
-func (c CarrierAssignmentStatusCol) Gt(v shipment.CarrierAssignmentStatus) keel.Pred {
-	return c.StringCol.Gt(string(v))
-}
-func (c CarrierAssignmentStatusCol) Gte(v shipment.CarrierAssignmentStatus) keel.Pred {
-	return c.StringCol.Gte(string(v))
-}
-func (c CarrierAssignmentStatusCol) Lt(v shipment.CarrierAssignmentStatus) keel.Pred {
-	return c.StringCol.Lt(string(v))
-}
-func (c CarrierAssignmentStatusCol) Lte(v shipment.CarrierAssignmentStatus) keel.Pred {
-	return c.StringCol.Lte(string(v))
-}
-func (c CarrierAssignmentStatusCol) IsDistinctFrom(v shipment.CarrierAssignmentStatus) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
-}
-func (c CarrierAssignmentStatusCol) Between(lo, hi shipment.CarrierAssignmentStatus) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
-}
-func (c CarrierAssignmentStatusCol) To(v shipment.CarrierAssignmentStatus) keel.Assignment {
-	return c.StringCol.To(string(v))
-}
-func (c CarrierAssignmentStatusCol) In(vs ...shipment.CarrierAssignmentStatus) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
-}
-func (c CarrierAssignmentStatusCol) NotIn(vs ...shipment.CarrierAssignmentStatus) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
-}
-
-// CarrierRateMethodCol is a column of shipment.CarrierRateMethod values.
-type CarrierRateMethodCol struct{ keel.StringCol }
-
-func (c CarrierRateMethodCol) Eq(v shipment.CarrierRateMethod) keel.Pred {
-	return c.StringCol.Eq(string(v))
-}
-func (c CarrierRateMethodCol) Ne(v shipment.CarrierRateMethod) keel.Pred {
-	return c.StringCol.Ne(string(v))
-}
-func (c CarrierRateMethodCol) Gt(v shipment.CarrierRateMethod) keel.Pred {
-	return c.StringCol.Gt(string(v))
-}
-func (c CarrierRateMethodCol) Gte(v shipment.CarrierRateMethod) keel.Pred {
-	return c.StringCol.Gte(string(v))
-}
-func (c CarrierRateMethodCol) Lt(v shipment.CarrierRateMethod) keel.Pred {
-	return c.StringCol.Lt(string(v))
-}
-func (c CarrierRateMethodCol) Lte(v shipment.CarrierRateMethod) keel.Pred {
-	return c.StringCol.Lte(string(v))
-}
-func (c CarrierRateMethodCol) IsDistinctFrom(v shipment.CarrierRateMethod) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
-}
-func (c CarrierRateMethodCol) Between(lo, hi shipment.CarrierRateMethod) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
-}
-func (c CarrierRateMethodCol) To(v shipment.CarrierRateMethod) keel.Assignment {
-	return c.StringCol.To(string(v))
-}
-func (c CarrierRateMethodCol) In(vs ...shipment.CarrierRateMethod) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
-}
-func (c CarrierRateMethodCol) NotIn(vs ...shipment.CarrierRateMethod) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
-}
-
-// ChargeAllocationKindCol is a column of shipment.ChargeAllocationKind values.
-type ChargeAllocationKindCol struct{ keel.StringCol }
-
-func (c ChargeAllocationKindCol) Eq(v shipment.ChargeAllocationKind) keel.Pred {
-	return c.StringCol.Eq(string(v))
-}
-func (c ChargeAllocationKindCol) Ne(v shipment.ChargeAllocationKind) keel.Pred {
-	return c.StringCol.Ne(string(v))
-}
-func (c ChargeAllocationKindCol) Gt(v shipment.ChargeAllocationKind) keel.Pred {
-	return c.StringCol.Gt(string(v))
-}
-func (c ChargeAllocationKindCol) Gte(v shipment.ChargeAllocationKind) keel.Pred {
-	return c.StringCol.Gte(string(v))
-}
-func (c ChargeAllocationKindCol) Lt(v shipment.ChargeAllocationKind) keel.Pred {
-	return c.StringCol.Lt(string(v))
-}
-func (c ChargeAllocationKindCol) Lte(v shipment.ChargeAllocationKind) keel.Pred {
-	return c.StringCol.Lte(string(v))
-}
-func (c ChargeAllocationKindCol) IsDistinctFrom(v shipment.ChargeAllocationKind) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
-}
-func (c ChargeAllocationKindCol) Between(lo, hi shipment.ChargeAllocationKind) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
-}
-func (c ChargeAllocationKindCol) To(v shipment.ChargeAllocationKind) keel.Assignment {
-	return c.StringCol.To(string(v))
-}
-func (c ChargeAllocationKindCol) In(vs ...shipment.ChargeAllocationKind) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
-}
-func (c ChargeAllocationKindCol) NotIn(vs ...shipment.ChargeAllocationKind) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
-}
-
-// ChargeAllocationMethodCol is a column of shipment.ChargeAllocationMethod values.
-type ChargeAllocationMethodCol struct{ keel.StringCol }
-
-func (c ChargeAllocationMethodCol) Eq(v shipment.ChargeAllocationMethod) keel.Pred {
-	return c.StringCol.Eq(string(v))
-}
-func (c ChargeAllocationMethodCol) Ne(v shipment.ChargeAllocationMethod) keel.Pred {
-	return c.StringCol.Ne(string(v))
-}
-func (c ChargeAllocationMethodCol) Gt(v shipment.ChargeAllocationMethod) keel.Pred {
-	return c.StringCol.Gt(string(v))
-}
-func (c ChargeAllocationMethodCol) Gte(v shipment.ChargeAllocationMethod) keel.Pred {
-	return c.StringCol.Gte(string(v))
-}
-func (c ChargeAllocationMethodCol) Lt(v shipment.ChargeAllocationMethod) keel.Pred {
-	return c.StringCol.Lt(string(v))
-}
-func (c ChargeAllocationMethodCol) Lte(v shipment.ChargeAllocationMethod) keel.Pred {
-	return c.StringCol.Lte(string(v))
-}
-func (c ChargeAllocationMethodCol) IsDistinctFrom(v shipment.ChargeAllocationMethod) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
-}
-func (c ChargeAllocationMethodCol) Between(lo, hi shipment.ChargeAllocationMethod) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
-}
-func (c ChargeAllocationMethodCol) To(v shipment.ChargeAllocationMethod) keel.Assignment {
-	return c.StringCol.To(string(v))
-}
-func (c ChargeAllocationMethodCol) In(vs ...shipment.ChargeAllocationMethod) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
-}
-func (c ChargeAllocationMethodCol) NotIn(vs ...shipment.ChargeAllocationMethod) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
-}
-
-// CommentPriorityCol is a column of shipment.CommentPriority values.
-type CommentPriorityCol struct{ keel.StringCol }
-
-func (c CommentPriorityCol) Eq(v shipment.CommentPriority) keel.Pred {
-	return c.StringCol.Eq(string(v))
-}
-func (c CommentPriorityCol) Ne(v shipment.CommentPriority) keel.Pred {
-	return c.StringCol.Ne(string(v))
-}
-func (c CommentPriorityCol) Gt(v shipment.CommentPriority) keel.Pred {
-	return c.StringCol.Gt(string(v))
-}
-func (c CommentPriorityCol) Gte(v shipment.CommentPriority) keel.Pred {
-	return c.StringCol.Gte(string(v))
-}
-func (c CommentPriorityCol) Lt(v shipment.CommentPriority) keel.Pred {
-	return c.StringCol.Lt(string(v))
-}
-func (c CommentPriorityCol) Lte(v shipment.CommentPriority) keel.Pred {
-	return c.StringCol.Lte(string(v))
-}
-func (c CommentPriorityCol) IsDistinctFrom(v shipment.CommentPriority) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
-}
-func (c CommentPriorityCol) Between(lo, hi shipment.CommentPriority) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
-}
-func (c CommentPriorityCol) To(v shipment.CommentPriority) keel.Assignment {
-	return c.StringCol.To(string(v))
-}
-func (c CommentPriorityCol) In(vs ...shipment.CommentPriority) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
-}
-func (c CommentPriorityCol) NotIn(vs ...shipment.CommentPriority) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
-}
-
-// CommentSourceCol is a column of shipment.CommentSource values.
-type CommentSourceCol struct{ keel.StringCol }
-
-func (c CommentSourceCol) Eq(v shipment.CommentSource) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c CommentSourceCol) Ne(v shipment.CommentSource) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c CommentSourceCol) Gt(v shipment.CommentSource) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c CommentSourceCol) Gte(v shipment.CommentSource) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c CommentSourceCol) Lt(v shipment.CommentSource) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c CommentSourceCol) Lte(v shipment.CommentSource) keel.Pred { return c.StringCol.Lte(string(v)) }
-func (c CommentSourceCol) IsDistinctFrom(v shipment.CommentSource) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
-}
-func (c CommentSourceCol) Between(lo, hi shipment.CommentSource) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
-}
-func (c CommentSourceCol) To(v shipment.CommentSource) keel.Assignment {
-	return c.StringCol.To(string(v))
-}
-func (c CommentSourceCol) In(vs ...shipment.CommentSource) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
-}
-func (c CommentSourceCol) NotIn(vs ...shipment.CommentSource) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
-}
-
-// CommentTypeCol is a column of shipment.CommentType values.
-type CommentTypeCol struct{ keel.StringCol }
-
-func (c CommentTypeCol) Eq(v shipment.CommentType) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c CommentTypeCol) Ne(v shipment.CommentType) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c CommentTypeCol) Gt(v shipment.CommentType) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c CommentTypeCol) Gte(v shipment.CommentType) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c CommentTypeCol) Lt(v shipment.CommentType) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c CommentTypeCol) Lte(v shipment.CommentType) keel.Pred { return c.StringCol.Lte(string(v)) }
-func (c CommentTypeCol) IsDistinctFrom(v shipment.CommentType) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
-}
-func (c CommentTypeCol) Between(lo, hi shipment.CommentType) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
-}
-func (c CommentTypeCol) To(v shipment.CommentType) keel.Assignment { return c.StringCol.To(string(v)) }
-func (c CommentTypeCol) In(vs ...shipment.CommentType) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
-}
-func (c CommentTypeCol) NotIn(vs ...shipment.CommentType) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
-}
-
-// CommentVisibilityCol is a column of shipment.CommentVisibility values.
-type CommentVisibilityCol struct{ keel.StringCol }
-
-func (c CommentVisibilityCol) Eq(v shipment.CommentVisibility) keel.Pred {
-	return c.StringCol.Eq(string(v))
-}
-func (c CommentVisibilityCol) Ne(v shipment.CommentVisibility) keel.Pred {
-	return c.StringCol.Ne(string(v))
-}
-func (c CommentVisibilityCol) Gt(v shipment.CommentVisibility) keel.Pred {
-	return c.StringCol.Gt(string(v))
-}
-func (c CommentVisibilityCol) Gte(v shipment.CommentVisibility) keel.Pred {
-	return c.StringCol.Gte(string(v))
-}
-func (c CommentVisibilityCol) Lt(v shipment.CommentVisibility) keel.Pred {
-	return c.StringCol.Lt(string(v))
-}
-func (c CommentVisibilityCol) Lte(v shipment.CommentVisibility) keel.Pred {
-	return c.StringCol.Lte(string(v))
-}
-func (c CommentVisibilityCol) IsDistinctFrom(v shipment.CommentVisibility) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
-}
-func (c CommentVisibilityCol) Between(lo, hi shipment.CommentVisibility) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
-}
-func (c CommentVisibilityCol) To(v shipment.CommentVisibility) keel.Assignment {
-	return c.StringCol.To(string(v))
-}
-func (c CommentVisibilityCol) In(vs ...shipment.CommentVisibility) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
-}
-func (c CommentVisibilityCol) NotIn(vs ...shipment.CommentVisibility) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
-}
-
-// EntryMethodCol is a column of shipment.EntryMethod values.
-type EntryMethodCol struct{ keel.StringCol }
-
-func (c EntryMethodCol) Eq(v shipment.EntryMethod) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c EntryMethodCol) Ne(v shipment.EntryMethod) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c EntryMethodCol) Gt(v shipment.EntryMethod) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c EntryMethodCol) Gte(v shipment.EntryMethod) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c EntryMethodCol) Lt(v shipment.EntryMethod) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c EntryMethodCol) Lte(v shipment.EntryMethod) keel.Pred { return c.StringCol.Lte(string(v)) }
-func (c EntryMethodCol) IsDistinctFrom(v shipment.EntryMethod) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
-}
-func (c EntryMethodCol) Between(lo, hi shipment.EntryMethod) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
-}
-func (c EntryMethodCol) To(v shipment.EntryMethod) keel.Assignment { return c.StringCol.To(string(v)) }
-func (c EntryMethodCol) In(vs ...shipment.EntryMethod) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
-}
-func (c EntryMethodCol) NotIn(vs ...shipment.EntryMethod) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
-}
-
-// FreightTermsCol is a column of shipment.FreightTerms values.
-type FreightTermsCol struct{ keel.StringCol }
-
-func (c FreightTermsCol) Eq(v shipment.FreightTerms) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c FreightTermsCol) Ne(v shipment.FreightTerms) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c FreightTermsCol) Gt(v shipment.FreightTerms) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c FreightTermsCol) Gte(v shipment.FreightTerms) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c FreightTermsCol) Lt(v shipment.FreightTerms) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c FreightTermsCol) Lte(v shipment.FreightTerms) keel.Pred { return c.StringCol.Lte(string(v)) }
-func (c FreightTermsCol) IsDistinctFrom(v shipment.FreightTerms) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
-}
-func (c FreightTermsCol) Between(lo, hi shipment.FreightTerms) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
-}
-func (c FreightTermsCol) To(v shipment.FreightTerms) keel.Assignment {
-	return c.StringCol.To(string(v))
-}
-func (c FreightTermsCol) In(vs ...shipment.FreightTerms) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
-}
-func (c FreightTermsCol) NotIn(vs ...shipment.FreightTerms) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
-}
-
-// JurisdictionMileSourceCol is a column of shipment.JurisdictionMileSource values.
-type JurisdictionMileSourceCol struct{ keel.StringCol }
-
-func (c JurisdictionMileSourceCol) Eq(v shipment.JurisdictionMileSource) keel.Pred {
-	return c.StringCol.Eq(string(v))
-}
-func (c JurisdictionMileSourceCol) Ne(v shipment.JurisdictionMileSource) keel.Pred {
-	return c.StringCol.Ne(string(v))
-}
-func (c JurisdictionMileSourceCol) Gt(v shipment.JurisdictionMileSource) keel.Pred {
-	return c.StringCol.Gt(string(v))
-}
-func (c JurisdictionMileSourceCol) Gte(v shipment.JurisdictionMileSource) keel.Pred {
-	return c.StringCol.Gte(string(v))
-}
-func (c JurisdictionMileSourceCol) Lt(v shipment.JurisdictionMileSource) keel.Pred {
-	return c.StringCol.Lt(string(v))
-}
-func (c JurisdictionMileSourceCol) Lte(v shipment.JurisdictionMileSource) keel.Pred {
-	return c.StringCol.Lte(string(v))
-}
-func (c JurisdictionMileSourceCol) IsDistinctFrom(v shipment.JurisdictionMileSource) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
-}
-func (c JurisdictionMileSourceCol) Between(lo, hi shipment.JurisdictionMileSource) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
-}
-func (c JurisdictionMileSourceCol) To(v shipment.JurisdictionMileSource) keel.Assignment {
-	return c.StringCol.To(string(v))
-}
-func (c JurisdictionMileSourceCol) In(vs ...shipment.JurisdictionMileSource) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
-}
-func (c JurisdictionMileSourceCol) NotIn(vs ...shipment.JurisdictionMileSource) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
-}
-
-// MoveCoverageTypeCol is a column of shipment.MoveCoverageType values.
-type MoveCoverageTypeCol struct{ keel.StringCol }
-
-func (c MoveCoverageTypeCol) Eq(v shipment.MoveCoverageType) keel.Pred {
-	return c.StringCol.Eq(string(v))
-}
-func (c MoveCoverageTypeCol) Ne(v shipment.MoveCoverageType) keel.Pred {
-	return c.StringCol.Ne(string(v))
-}
-func (c MoveCoverageTypeCol) Gt(v shipment.MoveCoverageType) keel.Pred {
-	return c.StringCol.Gt(string(v))
-}
-func (c MoveCoverageTypeCol) Gte(v shipment.MoveCoverageType) keel.Pred {
-	return c.StringCol.Gte(string(v))
-}
-func (c MoveCoverageTypeCol) Lt(v shipment.MoveCoverageType) keel.Pred {
-	return c.StringCol.Lt(string(v))
-}
-func (c MoveCoverageTypeCol) Lte(v shipment.MoveCoverageType) keel.Pred {
-	return c.StringCol.Lte(string(v))
-}
-func (c MoveCoverageTypeCol) IsDistinctFrom(v shipment.MoveCoverageType) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
-}
-func (c MoveCoverageTypeCol) Between(lo, hi shipment.MoveCoverageType) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
-}
-func (c MoveCoverageTypeCol) To(v shipment.MoveCoverageType) keel.Assignment {
-	return c.StringCol.To(string(v))
-}
-func (c MoveCoverageTypeCol) In(vs ...shipment.MoveCoverageType) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
-}
-func (c MoveCoverageTypeCol) NotIn(vs ...shipment.MoveCoverageType) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
-}
-
-// MoveStatusCol is a column of shipment.MoveStatus values.
-type MoveStatusCol struct{ keel.StringCol }
-
-func (c MoveStatusCol) Eq(v shipment.MoveStatus) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c MoveStatusCol) Ne(v shipment.MoveStatus) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c MoveStatusCol) Gt(v shipment.MoveStatus) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c MoveStatusCol) Gte(v shipment.MoveStatus) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c MoveStatusCol) Lt(v shipment.MoveStatus) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c MoveStatusCol) Lte(v shipment.MoveStatus) keel.Pred { return c.StringCol.Lte(string(v)) }
-func (c MoveStatusCol) IsDistinctFrom(v shipment.MoveStatus) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
-}
-func (c MoveStatusCol) Between(lo, hi shipment.MoveStatus) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
-}
-func (c MoveStatusCol) To(v shipment.MoveStatus) keel.Assignment { return c.StringCol.To(string(v)) }
-func (c MoveStatusCol) In(vs ...shipment.MoveStatus) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
-}
-func (c MoveStatusCol) NotIn(vs ...shipment.MoveStatus) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
-}
-
-// StatusCol is a column of shipment.Status values.
-type StatusCol struct{ keel.StringCol }
-
-func (c StatusCol) Eq(v shipment.Status) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c StatusCol) Ne(v shipment.Status) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c StatusCol) Gt(v shipment.Status) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c StatusCol) Gte(v shipment.Status) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c StatusCol) Lt(v shipment.Status) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c StatusCol) Lte(v shipment.Status) keel.Pred { return c.StringCol.Lte(string(v)) }
-func (c StatusCol) IsDistinctFrom(v shipment.Status) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
-}
-func (c StatusCol) Between(lo, hi shipment.Status) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
-}
-func (c StatusCol) To(v shipment.Status) keel.Assignment { return c.StringCol.To(string(v)) }
-func (c StatusCol) In(vs ...shipment.Status) keel.Pred   { return c.StringCol.In(keel.Strings(vs)...) }
-func (c StatusCol) NotIn(vs ...shipment.Status) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
-}
-
-// StopScheduleTypeCol is a column of shipment.StopScheduleType values.
-type StopScheduleTypeCol struct{ keel.StringCol }
-
-func (c StopScheduleTypeCol) Eq(v shipment.StopScheduleType) keel.Pred {
-	return c.StringCol.Eq(string(v))
-}
-func (c StopScheduleTypeCol) Ne(v shipment.StopScheduleType) keel.Pred {
-	return c.StringCol.Ne(string(v))
-}
-func (c StopScheduleTypeCol) Gt(v shipment.StopScheduleType) keel.Pred {
-	return c.StringCol.Gt(string(v))
-}
-func (c StopScheduleTypeCol) Gte(v shipment.StopScheduleType) keel.Pred {
-	return c.StringCol.Gte(string(v))
-}
-func (c StopScheduleTypeCol) Lt(v shipment.StopScheduleType) keel.Pred {
-	return c.StringCol.Lt(string(v))
-}
-func (c StopScheduleTypeCol) Lte(v shipment.StopScheduleType) keel.Pred {
-	return c.StringCol.Lte(string(v))
-}
-func (c StopScheduleTypeCol) IsDistinctFrom(v shipment.StopScheduleType) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
-}
-func (c StopScheduleTypeCol) Between(lo, hi shipment.StopScheduleType) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
-}
-func (c StopScheduleTypeCol) To(v shipment.StopScheduleType) keel.Assignment {
-	return c.StringCol.To(string(v))
-}
-func (c StopScheduleTypeCol) In(vs ...shipment.StopScheduleType) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
-}
-func (c StopScheduleTypeCol) NotIn(vs ...shipment.StopScheduleType) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
-}
-
-// StopStatusCol is a column of shipment.StopStatus values.
-type StopStatusCol struct{ keel.StringCol }
-
-func (c StopStatusCol) Eq(v shipment.StopStatus) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c StopStatusCol) Ne(v shipment.StopStatus) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c StopStatusCol) Gt(v shipment.StopStatus) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c StopStatusCol) Gte(v shipment.StopStatus) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c StopStatusCol) Lt(v shipment.StopStatus) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c StopStatusCol) Lte(v shipment.StopStatus) keel.Pred { return c.StringCol.Lte(string(v)) }
-func (c StopStatusCol) IsDistinctFrom(v shipment.StopStatus) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
-}
-func (c StopStatusCol) Between(lo, hi shipment.StopStatus) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
-}
-func (c StopStatusCol) To(v shipment.StopStatus) keel.Assignment { return c.StringCol.To(string(v)) }
-func (c StopStatusCol) In(vs ...shipment.StopStatus) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
-}
-func (c StopStatusCol) NotIn(vs ...shipment.StopStatus) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
-}
-
-// StopTypeCol is a column of shipment.StopType values.
-type StopTypeCol struct{ keel.StringCol }
-
-func (c StopTypeCol) Eq(v shipment.StopType) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c StopTypeCol) Ne(v shipment.StopType) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c StopTypeCol) Gt(v shipment.StopType) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c StopTypeCol) Gte(v shipment.StopType) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c StopTypeCol) Lt(v shipment.StopType) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c StopTypeCol) Lte(v shipment.StopType) keel.Pred { return c.StringCol.Lte(string(v)) }
-func (c StopTypeCol) IsDistinctFrom(v shipment.StopType) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
-}
-func (c StopTypeCol) Between(lo, hi shipment.StopType) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
-}
-func (c StopTypeCol) To(v shipment.StopType) keel.Assignment { return c.StringCol.To(string(v)) }
-func (c StopTypeCol) In(vs ...shipment.StopType) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
-}
-func (c StopTypeCol) NotIn(vs ...shipment.StopType) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
-}
-
-// TenderStatusCol is a column of shipment.TenderStatus values.
-type TenderStatusCol struct{ keel.StringCol }
-
-func (c TenderStatusCol) Eq(v shipment.TenderStatus) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c TenderStatusCol) Ne(v shipment.TenderStatus) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c TenderStatusCol) Gt(v shipment.TenderStatus) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c TenderStatusCol) Gte(v shipment.TenderStatus) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c TenderStatusCol) Lt(v shipment.TenderStatus) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c TenderStatusCol) Lte(v shipment.TenderStatus) keel.Pred { return c.StringCol.Lte(string(v)) }
-func (c TenderStatusCol) IsDistinctFrom(v shipment.TenderStatus) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
-}
-func (c TenderStatusCol) Between(lo, hi shipment.TenderStatus) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
-}
-func (c TenderStatusCol) To(v shipment.TenderStatus) keel.Assignment {
-	return c.StringCol.To(string(v))
-}
-func (c TenderStatusCol) In(vs ...shipment.TenderStatus) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
-}
-func (c TenderStatusCol) NotIn(vs ...shipment.TenderStatus) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
-}
-
-// VisitKindCol is a column of shipment.VisitKind values.
-type VisitKindCol struct{ keel.StringCol }
-
-func (c VisitKindCol) Eq(v shipment.VisitKind) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c VisitKindCol) Ne(v shipment.VisitKind) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c VisitKindCol) Gt(v shipment.VisitKind) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c VisitKindCol) Gte(v shipment.VisitKind) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c VisitKindCol) Lt(v shipment.VisitKind) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c VisitKindCol) Lte(v shipment.VisitKind) keel.Pred { return c.StringCol.Lte(string(v)) }
-func (c VisitKindCol) IsDistinctFrom(v shipment.VisitKind) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
-}
-func (c VisitKindCol) Between(lo, hi shipment.VisitKind) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
-}
-func (c VisitKindCol) To(v shipment.VisitKind) keel.Assignment { return c.StringCol.To(string(v)) }
-func (c VisitKindCol) In(vs ...shipment.VisitKind) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
-}
-func (c VisitKindCol) NotIn(vs ...shipment.VisitKind) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
-}

@@ -15,8 +15,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/userrepository"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmentcommentrepository"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
@@ -47,7 +47,7 @@ func TestRejectTransferChange_CommentsOnBothOrganizationsShipmentsUnderRowLevelS
 			BOL:          "BOL-RECEIVED",
 			ProNumber:    "PRO-RECEIVED",
 			ShipmentID:   pulid.MustNew("shp_"),
-			MoveStatuses: []shipment.MoveStatus{shipment.MoveStatusNew},
+			MoveStatuses: []shipmentvocab.MoveStatus{shipmentvocab.MoveStatusNew},
 		},
 	).Shipment
 	link := &edisync.ShipmentLink{
@@ -64,7 +64,7 @@ func TestRejectTransferChange_CommentsOnBothOrganizationsShipmentsUnderRowLevelS
 		Direction:      edisync.TransferChangeDirectionSourceToTarget,
 		ChangeType:     edisync.TransferChangeTypeShipmentStatus214,
 		IdempotencyKey: "status-" + link.ID.String(),
-		Payload:        map[string]any{"newStatus": string(shipment.StatusInTransit)},
+		Payload:        map[string]any{"newStatus": string(shipmentvocab.StatusInTransit)},
 	}
 	require.NoError(t, edisyncdb.TransferChanges.Create(tender.Source.Ctx, admin, change))
 
@@ -117,6 +117,6 @@ func TestRejectTransferChange_CommentsOnBothOrganizationsShipmentsUnderRowLevelS
 		require.NoError(t, listErr, name)
 		require.Len(t, comments, 1, name)
 		assert.Equal(t, side.scope.Info.OrgID, comments[0].OrganizationID, name)
-		assert.Equal(t, shipment.CommentSourceSystem, comments[0].Source, name)
+		assert.Equal(t, shipmentvocab.CommentSourceSystem, comments[0].Source, name)
 	}
 }

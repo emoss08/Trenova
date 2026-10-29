@@ -22,7 +22,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -36,9 +36,9 @@ const paramRunAction = "action"
 
 var reassignableKinds = agenttoolschema.Source(
 	"shipment.reassignableChargeKind",
-	[]shipment.ChargeAllocationKind{
-		shipment.ChargeAllocationKindFreight,
-		shipment.ChargeAllocationKindAccessorial,
+	[]shipmentvocab.ChargeAllocationKind{
+		shipmentvocab.ChargeAllocationKindFreight,
+		shipmentvocab.ChargeAllocationKindAccessorial,
 	},
 )
 
@@ -160,7 +160,7 @@ func reassignRequest(
 	if err != nil {
 		return nil, fmt.Errorf("parameter %q is not a valid id: %w", paramAdditionalChargeID, err)
 	}
-	if kind == shipment.ChargeAllocationKindAccessorial && chargeID.IsNil() {
+	if kind == shipmentvocab.ChargeAllocationKindAccessorial && chargeID.IsNil() {
 		return nil, fmt.Errorf("parameter %q is required for an accessorial charge",
 			paramAdditionalChargeID)
 	}

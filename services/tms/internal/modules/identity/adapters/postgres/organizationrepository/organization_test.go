@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
@@ -99,15 +99,15 @@ func TestBrokerageDependencyStatusSetsMatchDomainPredicates(t *testing.T) {
 func TestAssetDependencyStatusSetsMatchDomainPredicates(t *testing.T) {
 	t.Parallel()
 
-	allAssignmentStatuses := []shipment.AssignmentStatus{
-		shipment.AssignmentStatusNew,
-		shipment.AssignmentStatusInProgress,
-		shipment.AssignmentStatusCompleted,
-		shipment.AssignmentStatusCanceled,
+	allAssignmentStatuses := []shipmentvocab.AssignmentStatus{
+		shipmentvocab.AssignmentStatusNew,
+		shipmentvocab.AssignmentStatusInProgress,
+		shipmentvocab.AssignmentStatusCompleted,
+		shipmentvocab.AssignmentStatusCanceled,
 	}
-	blockingAssignmentStatuses := map[shipment.AssignmentStatus]bool{
-		shipment.AssignmentStatusNew:        true,
-		shipment.AssignmentStatusInProgress: true,
+	blockingAssignmentStatuses := map[shipmentvocab.AssignmentStatus]bool{
+		shipmentvocab.AssignmentStatusNew:        true,
+		shipmentvocab.AssignmentStatusInProgress: true,
 	}
 	for _, status := range allAssignmentStatuses {
 		assert.Equal(t,

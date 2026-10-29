@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentevent"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmenthold"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -38,7 +39,7 @@ func TestBuildShipmentCreated(t *testing.T) {
 	sh := &shipment.Shipment{
 		ID:        pulid.MustNew("shp_"),
 		ProNumber: "PRO-1042",
-		Status:    shipment.StatusNew,
+		Status:    shipmentvocab.StatusNew,
 	}
 
 	params := BuildShipmentCreated(tenant, sh, userActor())
@@ -56,14 +57,14 @@ func TestBuildStatusChangedSeverity(t *testing.T) {
 
 	cases := []struct {
 		name     string
-		status   shipment.Status
+		status   shipmentvocab.Status
 		expected shipmentevent.Severity
 	}{
-		{"InTransit -> brand", shipment.StatusInTransit, shipmentevent.SeverityBrand},
-		{"Completed -> success", shipment.StatusCompleted, shipmentevent.SeveritySuccess},
-		{"Canceled -> danger", shipment.StatusCanceled, shipmentevent.SeverityDanger},
-		{"Delayed -> danger", shipment.StatusDelayed, shipmentevent.SeverityDanger},
-		{"New -> muted", shipment.StatusNew, shipmentevent.SeverityMuted},
+		{"InTransit -> brand", shipmentvocab.StatusInTransit, shipmentevent.SeverityBrand},
+		{"Completed -> success", shipmentvocab.StatusCompleted, shipmentevent.SeveritySuccess},
+		{"Canceled -> danger", shipmentvocab.StatusCanceled, shipmentevent.SeverityDanger},
+		{"Delayed -> danger", shipmentvocab.StatusDelayed, shipmentevent.SeverityDanger},
+		{"New -> muted", shipmentvocab.StatusNew, shipmentevent.SeverityMuted},
 	}
 
 	for _, tc := range cases {
@@ -76,7 +77,7 @@ func TestBuildStatusChangedSeverity(t *testing.T) {
 				ProNumber: "PRO-1",
 				Status:    tc.status,
 			}
-			params := BuildStatusChanged(tenant, sh, shipment.StatusNew, userActor())
+			params := BuildStatusChanged(tenant, sh, shipmentvocab.StatusNew, userActor())
 			assert.Equal(t, shipmentevent.TypeStatusChanged, params.Type)
 			assert.Equal(t, tc.expected, params.Severity)
 		})
@@ -102,31 +103,31 @@ func TestBuildMoveStatusChangedClassification(t *testing.T) {
 
 	cases := []struct {
 		name        string
-		newStatus   shipment.MoveStatus
+		newStatus   shipmentvocab.MoveStatus
 		expectType  shipmentevent.Type
 		expectSever shipmentevent.Severity
 	}{
 		{
 			"InTransit -> Departed",
-			shipment.MoveStatusInTransit,
+			shipmentvocab.MoveStatusInTransit,
 			shipmentevent.TypeMoveDeparted,
 			shipmentevent.SeverityBrand,
 		},
 		{
 			"Completed -> Arrived",
-			shipment.MoveStatusCompleted,
+			shipmentvocab.MoveStatusCompleted,
 			shipmentevent.TypeMoveArrived,
 			shipmentevent.SeveritySuccess,
 		},
 		{
 			"Canceled -> Danger",
-			shipment.MoveStatusCanceled,
+			shipmentvocab.MoveStatusCanceled,
 			shipmentevent.TypeMoveStatusChanged,
 			shipmentevent.SeverityDanger,
 		},
 		{
 			"Assigned -> Generic",
-			shipment.MoveStatusAssigned,
+			shipmentvocab.MoveStatusAssigned,
 			shipmentevent.TypeMoveStatusChanged,
 			shipmentevent.SeverityMuted,
 		},
@@ -144,7 +145,7 @@ func TestBuildMoveStatusChangedClassification(t *testing.T) {
 			params := BuildMoveStatusChanged(
 				newTenant(t),
 				move,
-				shipment.MoveStatusNew,
+				shipmentvocab.MoveStatusNew,
 				userActor(),
 			)
 
@@ -188,7 +189,7 @@ func TestBuildCommentPostedCarriesBody(t *testing.T) {
 		ID:         pulid.MustNew("shc_"),
 		ShipmentID: pulid.MustNew("shp_"),
 		Comment:    body,
-		Type:       shipment.CommentTypeInternal,
+		Type:       shipmentvocab.CommentTypeInternal,
 	}
 
 	params := BuildCommentPosted(newTenant(t), comment, userActor())

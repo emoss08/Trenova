@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/testutil/keeltest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -96,17 +96,17 @@ func TestBuildTomorrowsPickupsCardMapsStatuses(t *testing.T) {
 		{
 			ShipmentID: "sp_1", ProNumber: "PRO-1001", PickupWindowStart: pickupStart,
 			Customer: "Acme Manufacturing", Origin: "TERM-LA", Destination: "DC-CHI",
-			Driver: "M. Alvarez", ShipmentStatus: shipment.StatusAssigned, HasPrimaryWorker: true,
+			Driver: "M. Alvarez", ShipmentStatus: shipmentvocab.StatusAssigned, HasPrimaryWorker: true,
 		},
 		{
 			ShipmentID: "sp_2", ProNumber: "PRO-1002", PickupWindowStart: pickupStart + 3600,
 			Customer: "FreshHaul Foods", Origin: "COLD-SEA", Destination: "DC-PDX",
-			ShipmentStatus: shipment.StatusNew,
+			ShipmentStatus: shipmentvocab.StatusNew,
 		},
 		{
 			ShipmentID: "sp_3", ProNumber: "PRO-1003", PickupWindowStart: pickupStart + 7200,
 			Customer: "Range Logistics", Origin: "ATL", Destination: "CLT",
-			Driver: "A. Romero", ShipmentStatus: shipment.StatusPartiallyAssigned, HasPrimaryWorker: true,
+			Driver: "A. Romero", ShipmentStatus: shipmentvocab.StatusPartiallyAssigned, HasPrimaryWorker: true,
 		},
 	})
 

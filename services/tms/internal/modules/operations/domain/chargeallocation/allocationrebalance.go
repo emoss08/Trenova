@@ -5,13 +5,14 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/pkg/rules"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 )
 
 type StaleAmountSplit struct {
-	Kind               shipment.ChargeAllocationKind
+	Kind               shipmentvocab.ChargeAllocationKind
 	AdditionalChargeID pulid.ID
 	ChargeIndex        int
 	AllocatedTotal     decimal.Decimal
@@ -42,7 +43,7 @@ func (r *AmountSplitRebalance) ConvertToPercent() int {
 			if i >= len(conversion.percents) || !conversion.percents[i].Valid {
 				continue
 			}
-			row.Method = shipment.ChargeAllocationMethodPercent
+			row.Method = shipmentvocab.ChargeAllocationMethodPercent
 			row.Percent = conversion.percents[i]
 			row.Amount = decimal.NullDecimal{}
 		}
@@ -52,7 +53,7 @@ func (r *AmountSplitRebalance) ConvertToPercent() int {
 }
 
 type splitGroup struct {
-	kind        shipment.ChargeAllocationKind
+	kind        shipmentvocab.ChargeAllocationKind
 	chargeID    pulid.ID
 	chargeIndex int
 	rows        []*shipment.ChargeAllocation
@@ -75,7 +76,7 @@ func RebalanceAmountSplits(
 	}
 	if len(freightRows) > 0 {
 		groups = append(groups, splitGroup{
-			kind:        shipment.ChargeAllocationKindFreight,
+			kind:        shipmentvocab.ChargeAllocationKindFreight,
 			chargeIndex: -1,
 			rows:        freightRows,
 		})
@@ -91,7 +92,7 @@ func RebalanceAmountSplits(
 		}
 		rows := byCharge[charge.ID]
 		groups = append(groups, splitGroup{
-			kind:        shipment.ChargeAllocationKindAccessorial,
+			kind:        shipmentvocab.ChargeAllocationKindAccessorial,
 			chargeID:    charge.ID,
 			chargeIndex: i,
 			rows:        rows,

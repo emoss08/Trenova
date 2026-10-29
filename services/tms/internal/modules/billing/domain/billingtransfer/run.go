@@ -6,7 +6,7 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -28,7 +28,7 @@ type BillingTransferRun struct {
 	Status                      RunStatus             `json:"status"                      keel:"status"`
 	Scope                       RunScope              `json:"scope"                       keel:"scope"`
 	SearchQuery                 string                `json:"searchQuery"                 keel:"search_query,nullzero"`
-	ShipmentStatus              shipment.Status       `json:"shipmentStatus"              keel:"shipment_status,nullzero"`
+	ShipmentStatus              shipmentvocab.Status  `json:"shipmentStatus"              keel:"shipment_status,nullzero"`
 	BillType                    billingqueue.BillType `json:"billType"                    keel:"bill_type"`
 	MarkCompletedReadyToInvoice bool                  `json:"markCompletedReadyToInvoice" keel:"mark_completed_ready_to_invoice"`
 	TotalCount                  int                   `json:"totalCount"                  keel:"total_count"`

@@ -19,7 +19,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/protectedfield"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -482,7 +482,7 @@ var nestedRules = []nestedRule{
 		label:    permission.ResourceWorker.String(),
 	},
 	{
-		idPrefix: shipment.CarrierAssignmentIDPrefix,
+		idPrefix: shipmentvocab.CarrierAssignmentIDPrefix,
 		resource: permission.ResourceShipmentMove,
 		label:    "shipmentMove",
 	},

@@ -8,8 +8,8 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender/tenderdb"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
@@ -33,9 +33,9 @@ const (
 )
 
 var (
-	openCarrierAssignmentStatuses = []shipment.CarrierAssignmentStatus{
-		shipment.CarrierAssignmentStatusPending,
-		shipment.CarrierAssignmentStatusConfirmed,
+	openCarrierAssignmentStatuses = []shipmentvocab.CarrierAssignmentStatus{
+		shipmentvocab.CarrierAssignmentStatusPending,
+		shipmentvocab.CarrierAssignmentStatusConfirmed,
 	}
 	openTenderOfferStatuses = []tender.OfferStatus{
 		tender.OfferStatusPending,

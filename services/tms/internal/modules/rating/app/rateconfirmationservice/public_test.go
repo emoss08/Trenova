@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateconfirmation"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/mocks/carrierassignmentportsmock"
@@ -169,7 +170,7 @@ func TestConfirmByTokenConfirmsThenBurns(t *testing.T) {
 	assignment := &shipment.CarrierAssignment{
 		ID:        entity.CarrierAssignmentID,
 		CarrierID: entity.CarrierID,
-		Status:    shipment.CarrierAssignmentStatusPending,
+		Status:    shipmentvocab.CarrierAssignmentStatusPending,
 	}
 	deps.carrierAssignmentRepo.On("GetByID", mock.Anything, mock.Anything).
 		Return(assignment, nil)
@@ -184,7 +185,7 @@ func TestConfirmByTokenConfirmsThenBurns(t *testing.T) {
 	assert.Equal(t, "J. Doe", entity.ConfirmedByName)
 	assert.Equal(t, "Operations Manager", entity.ConfirmedByTitle)
 	require.NotNil(t, entity.ConfirmedAt)
-	assert.Equal(t, shipment.CarrierAssignmentStatusConfirmed, assignment.Status)
+	assert.Equal(t, shipmentvocab.CarrierAssignmentStatusConfirmed, assignment.Status)
 	require.Len(t, deps.repo.markedUsed, 1)
 	assert.Equal(t, token.ID, deps.repo.markedUsed[0])
 }

@@ -12,8 +12,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/trailer"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/trailer/trailerdb"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate/usstatedb"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchboardports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
@@ -94,7 +94,7 @@ func liveStops(moveID keel.Expr) (*shipmentdb.StopsTable, []keel.Pred) {
 	st := shipmentdb.Stops.As("win")
 	return st, []keel.Pred{
 		st.ShipmentMoveID.EqCol(moveID),
-		st.Status.Ne(shipment.StopStatusCanceled),
+		st.Status.Ne(shipmentvocab.StopStatusCanceled),
 	}
 }
 
@@ -239,7 +239,7 @@ func (r *repository) ListWorkerWorkload(
 					).
 					Where(
 						asn.PrimaryWorkerID.In(req.WorkerIDs...),
-						sm.Status.Ne(shipment.MoveStatusCanceled),
+						sm.Status.Ne(shipmentvocab.MoveStatusCanceled),
 						keel.When(req.Since > 0, asn.CreatedAt.Gte(req.Since)),
 					),
 			)

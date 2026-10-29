@@ -7,8 +7,8 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmentpredicate"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/quickfilter"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentboardports"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location/locationdb"
 	"go.uber.org/zap"
@@ -113,7 +113,7 @@ func (r *Repository) NextUncoveredPickup(
 					ldLoc.City.Coalesce(""),
 				).
 				Where(
-					shipmentpredicate.StageCondition(shipment.StageNeedsCoverage),
+					shipmentpredicate.StageCondition(shipmentvocab.StageNeedsCoverage),
 					fp.ScheduledWindowStart.Gte(req.Basis.Now.Unix()),
 				).
 				Order(fp.ScheduledWindowStart.Asc(), sp.ID.Asc()).

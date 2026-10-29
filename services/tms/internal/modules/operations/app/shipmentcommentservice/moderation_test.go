@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentcommentports"
 	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/documentportsmock"
@@ -152,7 +153,7 @@ func TestCreate_ReplyForcesRequiresAcknowledgmentOff(t *testing.T) {
 		BusinessUnitID:         testutil.TestBuID,
 		ParentCommentID:        &parentID,
 		Comment:                "a reply",
-		Priority:               shipment.CommentPriorityUrgent,
+		Priority:               shipmentvocab.CommentPriorityUrgent,
 		RequiresAcknowledgment: true,
 	}, testActor())
 
@@ -528,7 +529,7 @@ func TestPin_EnforcesPinnedCap(t *testing.T) {
 	}, nil).Once()
 	m.repo.EXPECT().
 		CountPinnedByShipmentID(mock.Anything, mock.Anything).
-		Return(shipment.MaxPinnedComments, nil).
+		Return(shipmentvocab.MaxPinnedComments, nil).
 		Once()
 
 	pinned, err := svc.Pin(t.Context(), &shipmentcommentports.ToggleShipmentCommentRequest{

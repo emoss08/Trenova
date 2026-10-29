@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/triageworkports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentcommentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/triagelookupports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -104,8 +105,8 @@ func (s *Service) CreateLoad(
 				TenantInfo: req.TenantInfo,
 				ShipmentID: created.ID,
 				Comment:    stringutils.TruncateRunes(instructions, instructionsMaxRunes),
-				Type:       shipment.CommentTypePickupInstruction,
-				Visibility: shipment.CommentVisibilityOperations,
+				Type:       shipmentvocab.CommentTypePickupInstruction,
+				Visibility: shipmentvocab.CommentVisibilityOperations,
 			},
 		); commentErr != nil {
 			s.l.Warn("created a load from Triage but could not add its instructions",
@@ -130,9 +131,9 @@ func (s *Service) buildShipment(ctx context.Context, b *loadBuild) (*shipment.Sh
 		OrganizationID:   tenantInfo.OrgID,
 		BusinessUnitID:   tenantInfo.BuID,
 		CustomerID:       customerID,
-		Status:           shipment.StatusNew,
-		EntryMethod:      shipment.EntryMethodManual,
-		FreightTerms:     shipment.FreightTermsPrepaid,
+		Status:           shipmentvocab.StatusNew,
+		EntryMethod:      shipmentvocab.EntryMethodManual,
+		FreightTerms:     shipmentvocab.FreightTermsPrepaid,
 		IdempotencyKey:   b.req.IdempotencyKey,
 		SourceDocumentID: sourceDocument(b.req.SourceDocumentID),
 	}
@@ -177,11 +178,11 @@ func (s *Service) buildShipment(ctx context.Context, b *loadBuild) (*shipment.Sh
 		entity.Moves = []*shipment.ShipmentMove{{
 			OrganizationID: tenantInfo.OrgID,
 			BusinessUnitID: tenantInfo.BuID,
-			Status:         shipment.MoveStatusNew,
+			Status:         shipmentvocab.MoveStatusNew,
 			Loaded:         true,
 			Stops: []*shipment.Stop{
-				newStop(entity, origin.id, shipment.StopTypePickup, 0, pickup),
-				newStop(entity, destination.id, shipment.StopTypeDelivery, 1, delivery),
+				newStop(entity, origin.id, shipmentvocab.StopTypePickup, 0, pickup),
+				newStop(entity, destination.id, shipmentvocab.StopTypeDelivery, 1, delivery),
 			},
 		}}
 	}
@@ -200,7 +201,7 @@ func sourceDocument(id pulid.ID) string {
 func newStop(
 	entity *shipment.Shipment,
 	locationID pulid.ID,
-	stopType shipment.StopType,
+	stopType shipmentvocab.StopType,
 	sequence int64,
 	window *timeutils.Window,
 ) *shipment.Stop {
@@ -208,9 +209,9 @@ func newStop(
 		OrganizationID:       entity.OrganizationID,
 		BusinessUnitID:       entity.BusinessUnitID,
 		LocationID:           locationID,
-		Status:               shipment.StopStatusNew,
+		Status:               shipmentvocab.StopStatusNew,
 		Type:                 stopType,
-		ScheduleType:         shipment.StopScheduleTypeOpen,
+		ScheduleType:         shipmentvocab.StopScheduleTypeOpen,
 		Sequence:             sequence,
 		ScheduledWindowStart: window.Start,
 	}

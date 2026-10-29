@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/internal/modules/rating/app/rateconfirmationservice"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateconfirmation"
@@ -44,14 +45,14 @@ func newFakeRateCons(status rateconfirmation.Status) *fakeRateCons {
 	assignment := &shipment.CarrierAssignment{
 		ID:            pulid.MustNew("casn_"),
 		CarrierID:     carrierEntity.ID,
-		Status:        shipment.CarrierAssignmentStatusPending,
-		RateMethod:    shipment.CarrierRateMethodFlat,
+		Status:        shipmentvocab.CarrierAssignmentStatusPending,
+		RateMethod:    shipmentvocab.CarrierRateMethodFlat,
 		BaseAmount:    decimal.NewFromInt(1850),
 		FuelSurcharge: decimal.NewFromInt(150),
 		CurrencyCode:  "USD",
 	}
 	if status == rateconfirmation.StatusConfirmed {
-		assignment.Status = shipment.CarrierAssignmentStatusConfirmed
+		assignment.Status = shipmentvocab.CarrierAssignmentStatusConfirmed
 	}
 
 	return &fakeRateCons{

@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -17,20 +18,20 @@ type CarrierAccessorialInput struct {
 }
 
 type AssignMoveToCarrierRequest struct {
-	TenantInfo               pagination.TenantInfo      `json:"-"`
-	ShipmentMoveID           pulid.ID                   `json:"shipmentMoveId"`
-	CarrierID                pulid.ID                   `json:"carrierId"`
-	RateMethod               shipment.CarrierRateMethod `json:"rateMethod"`
-	BaseRate                 decimal.Decimal            `json:"baseRate"`
-	FuelSurcharge            decimal.Decimal            `json:"fuelSurcharge"`
-	Accessorials             []CarrierAccessorialInput  `json:"accessorials"`
-	ProNumber                string                     `json:"proNumber"`
-	ExternalDriverName       string                     `json:"externalDriverName"`
-	ExternalDriverPhone      string                     `json:"externalDriverPhone"`
-	ExternalTractorNumber    string                     `json:"externalTractorNumber"`
-	ExternalTrailerNumber    string                     `json:"externalTrailerNumber"`
-	Replace                  bool                       `json:"replace"`
-	OverrideInsuranceWarning bool                       `json:"overrideInsuranceWarning"`
+	TenantInfo               pagination.TenantInfo           `json:"-"`
+	ShipmentMoveID           pulid.ID                        `json:"shipmentMoveId"`
+	CarrierID                pulid.ID                        `json:"carrierId"`
+	RateMethod               shipmentvocab.CarrierRateMethod `json:"rateMethod"`
+	BaseRate                 decimal.Decimal                 `json:"baseRate"`
+	FuelSurcharge            decimal.Decimal                 `json:"fuelSurcharge"`
+	Accessorials             []CarrierAccessorialInput       `json:"accessorials"`
+	ProNumber                string                          `json:"proNumber"`
+	ExternalDriverName       string                          `json:"externalDriverName"`
+	ExternalDriverPhone      string                          `json:"externalDriverPhone"`
+	ExternalTractorNumber    string                          `json:"externalTractorNumber"`
+	ExternalTrailerNumber    string                          `json:"externalTrailerNumber"`
+	Replace                  bool                            `json:"replace"`
+	OverrideInsuranceWarning bool                            `json:"overrideInsuranceWarning"`
 
 	// AutoRate asks the carrier's contract to price this assignment instead of
 	// taking the rate from the request. A rate typed alongside it wins: that is

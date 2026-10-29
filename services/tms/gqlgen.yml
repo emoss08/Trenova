@@ -1687,13 +1687,13 @@ models:
       - github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue.BillType
   FreightTerms:
     model:
-      - github.com/emoss08/trenova/internal/modules/operations/domain/shipment.FreightTerms
+      - github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab.FreightTerms
   ChargeAllocationKind:
     model:
-      - github.com/emoss08/trenova/internal/modules/operations/domain/shipment.ChargeAllocationKind
+      - github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab.ChargeAllocationKind
   ChargeAllocationMethod:
     model:
-      - github.com/emoss08/trenova/internal/modules/operations/domain/shipment.ChargeAllocationMethod
+      - github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab.ChargeAllocationMethod
   ChargeAllocation:
     model:
       - github.com/emoss08/trenova/internal/modules/operations/domain/shipment.ChargeAllocation
@@ -4690,13 +4690,13 @@ models:
         resolver: true
   MoveCoverageType:
     model:
-      - github.com/emoss08/trenova/internal/modules/operations/domain/shipment.MoveCoverageType
+      - github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab.MoveCoverageType
   CarrierAssignmentStatus:
     model:
-      - github.com/emoss08/trenova/internal/modules/operations/domain/shipment.CarrierAssignmentStatus
+      - github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab.CarrierAssignmentStatus
   CarrierRateMethod:
     model:
-      - github.com/emoss08/trenova/internal/modules/operations/domain/shipment.CarrierRateMethod
+      - github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab.CarrierRateMethod
   CarrierAssignment:
     model:
       - github.com/emoss08/trenova/internal/modules/operations/domain/shipment.CarrierAssignment
@@ -4719,7 +4719,7 @@ models:
         resolver: true
   ShipmentStage:
     model:
-      - github.com/emoss08/trenova/internal/modules/operations/domain/shipment.Stage
+      - github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab.Stage
   OperationType:
     model:
       - github.com/emoss08/trenova/internal/modules/identity/domain/tenant.OperationType
@@ -5906,7 +5906,7 @@ models:
       - github.com/emoss08/trenova/internal/modules/operations/domain/trackingevent.Outcome
   StopVisitKind:
     model:
-      - github.com/emoss08/trenova/internal/modules/operations/domain/shipment.VisitKind
+      - github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab.VisitKind
   CheckCall:
     model:
       - github.com/emoss08/trenova/internal/modules/operations/domain/checkcall.CheckCall

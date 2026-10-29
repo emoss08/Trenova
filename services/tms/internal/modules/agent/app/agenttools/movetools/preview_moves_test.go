@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentmoveports"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -42,8 +43,8 @@ func (f *savingMoves) arrive(
 		at = *req.OccurredAt
 	}
 	stop.ActualArrival = &at
-	stop.Status = shipment.StopStatusInTransit
-	move.Status = shipment.MoveStatusInTransit
+	stop.Status = shipmentvocab.StopStatusInTransit
+	move.Status = shipmentvocab.MoveStatusInTransit
 
 	return nil
 }
@@ -84,12 +85,12 @@ func (f *savingMoves) RecordStopActual(
 func dispatchedMove() *shipment.ShipmentMove {
 	return &shipment.ShipmentMove{
 		ID:      pulid.MustNew("smv_"),
-		Status:  shipment.MoveStatusAssigned,
+		Status:  shipmentvocab.MoveStatusAssigned,
 		Version: 3,
 		Stops: []*shipment.Stop{{
 			ID:       pulid.MustNew("stp_"),
-			Type:     shipment.StopTypePickup,
-			Status:   shipment.StopStatusNew,
+			Type:     shipmentvocab.StopTypePickup,
+			Status:   shipmentvocab.StopStatusNew,
 			Location: &location.Location{Name: "Reno Cold Storage"},
 		}},
 	}

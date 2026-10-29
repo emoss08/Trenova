@@ -22,6 +22,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentevent"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/trackingevent"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentmoveports"
@@ -147,7 +148,7 @@ func (f *tenderedCarrierFixture) acceptedOffer() *tender.TenderOffer {
 		CarrierID:    pulid.MustNew("car_"),
 		Channel:      tender.ChannelEDI,
 		Status:       tender.OfferStatusAccepted,
-		RateMethod:   shipment.CarrierRateMethodFlat,
+		RateMethod:   shipmentvocab.CarrierRateMethodFlat,
 		Rate:         decimal.NewFromInt(1500),
 		EDIPartnerID: &partnerID,
 		Tender: &tender.Tender{
@@ -402,19 +403,19 @@ func (f *tenderedCarrierFixture) tenderedMoveWithStops(
 ) (*shipment.ShipmentMove, *shipment.Stop, *shipment.Stop) {
 	origin := &shipment.Stop{
 		ID:       pulid.MustNew("stp_"),
-		Type:     shipment.StopTypePickup,
-		Status:   shipment.StopStatusNew,
+		Type:     shipmentvocab.StopTypePickup,
+		Status:   shipmentvocab.StopStatusNew,
 		Sequence: 0,
 	}
 	destination := &shipment.Stop{
 		ID:       pulid.MustNew("stp_"),
-		Type:     shipment.StopTypeDelivery,
-		Status:   shipment.StopStatusNew,
+		Type:     shipmentvocab.StopTypeDelivery,
+		Status:   shipmentvocab.StopStatusNew,
 		Sequence: 1,
 	}
 	move := &shipment.ShipmentMove{
 		ID:     moveID,
-		Status: shipment.MoveStatusAssigned,
+		Status: shipmentvocab.MoveStatusAssigned,
 		Stops:  []*shipment.Stop{origin, destination},
 	}
 	return move, origin, destination
@@ -488,7 +489,7 @@ func TestRouteShipmentStatus_X3RecordsOriginArrivalWithEventTime(t *testing.T) {
 	require.Empty(t, warnings)
 	require.Len(t, *recordedEvents, 1)
 	recorded := (*recordedEvents)[0]
-	require.Equal(t, shipment.VisitArrival, recorded.Kind)
+	require.Equal(t, shipmentvocab.VisitArrival, recorded.Kind)
 	require.Equal(t, origin.ID, recorded.StopID)
 	require.Equal(t, moveID, recorded.MoveID)
 	require.Equal(t, trackingevent.SourceEDI, recorded.Source)
@@ -541,8 +542,8 @@ func TestRouteShipmentStatus_D1RecordsArriveAndDepartAtDestination(t *testing.T)
 	require.Empty(t, warnings)
 	recorded := *recordedEvents
 	require.Len(t, recorded, 2)
-	require.Equal(t, shipment.VisitArrival, recorded[0].Kind)
-	require.Equal(t, shipment.VisitDeparture, recorded[1].Kind)
+	require.Equal(t, shipmentvocab.VisitArrival, recorded[0].Kind)
+	require.Equal(t, shipmentvocab.VisitDeparture, recorded[1].Kind)
 	require.Equal(t, destination.ID, recorded[0].StopID)
 	require.Equal(t, destination.ID, recorded[1].StopID)
 }
@@ -718,7 +719,7 @@ func TestRouteFreightInvoice_PerMileOfferLeavesExpectedAmountNull(t *testing.T) 
 
 	fixture := newTenderedCarrierFixture(t)
 	offer := fixture.acceptedOffer()
-	offer.RateMethod = shipment.CarrierRateMethodPerMile
+	offer.RateMethod = shipmentvocab.CarrierRateMethodPerMile
 	fixture.tenderRepo.acceptedOffer = offer
 	fixture.expectRecipientMiss()
 	fixture.expectSystemUser()
@@ -1053,20 +1054,20 @@ func TestRouteShipmentStatus_EveryAT7BecomesATimedTrackingEvent(t *testing.T) {
 
 	origin := &shipment.Stop{
 		ID:       pulid.MustNew("stp_"),
-		Type:     shipment.StopTypePickup,
-		Status:   shipment.StopStatusNew,
+		Type:     shipmentvocab.StopTypePickup,
+		Status:   shipmentvocab.StopStatusNew,
 		Sequence: 0,
 	}
 	intermediate := &shipment.Stop{
 		ID:       pulid.MustNew("stp_"),
-		Type:     shipment.StopTypeDelivery,
-		Status:   shipment.StopStatusNew,
+		Type:     shipmentvocab.StopTypeDelivery,
+		Status:   shipmentvocab.StopStatusNew,
 		Sequence: 1,
 	}
 	final := &shipment.Stop{
 		ID:       pulid.MustNew("stp_"),
-		Type:     shipment.StopTypeDelivery,
-		Status:   shipment.StopStatusNew,
+		Type:     shipmentvocab.StopTypeDelivery,
+		Status:   shipmentvocab.StopStatusNew,
 		Sequence: 2,
 		Location: &location.Location{
 			City:     "Denver",
@@ -1076,7 +1077,7 @@ func TestRouteShipmentStatus_EveryAT7BecomesATimedTrackingEvent(t *testing.T) {
 	}
 	move := &shipment.ShipmentMove{
 		ID:     moveID,
-		Status: shipment.MoveStatusAssigned,
+		Status: shipmentvocab.MoveStatusAssigned,
 		Stops:  []*shipment.Stop{origin, intermediate, final},
 	}
 	fixture.moveRepo.EXPECT().
@@ -1123,17 +1124,17 @@ func TestRouteShipmentStatus_EveryAT7BecomesATimedTrackingEvent(t *testing.T) {
 	require.Len(t, recorded, 3)
 
 	require.Equal(t, origin.ID, recorded[0].StopID)
-	require.Equal(t, shipment.VisitDeparture, recorded[0].Kind)
+	require.Equal(t, shipmentvocab.VisitDeparture, recorded[0].Kind)
 	require.Equal(t, trackingevent.MatchStopReference, recorded[0].MatchMethod)
 	require.Equal(t, time.Date(2026, 1, 7, 9, 45, 0, 0, newYork).Unix(), recorded[0].EventAt)
 
 	require.Equal(t, intermediate.ID, recorded[1].StopID)
-	require.Equal(t, shipment.VisitArrival, recorded[1].Kind)
+	require.Equal(t, shipmentvocab.VisitArrival, recorded[1].Kind)
 	require.Equal(t, trackingevent.MatchStopReference, recorded[1].MatchMethod)
 	require.Equal(t, time.Date(2026, 1, 7, 20, 15, 0, 0, time.UTC).Unix(), recorded[1].EventAt)
 
 	require.Equal(t, final.ID, recorded[2].StopID)
-	require.Equal(t, shipment.VisitArrival, recorded[2].Kind)
+	require.Equal(t, shipmentvocab.VisitArrival, recorded[2].Kind)
 	require.Equal(t, trackingevent.MatchLocation, recorded[2].MatchMethod)
 	require.Equal(t, time.Date(2026, 1, 8, 7, 0, 0, 0, denver).Unix(), recorded[2].EventAt)
 

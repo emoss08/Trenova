@@ -7,8 +7,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/billing/app/invoiceediservice"
-
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/fiscalperiodrepository"
@@ -17,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/billingqueuerepository"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/invoicerepository"
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoiceaction"
+	"github.com/emoss08/trenova/internal/modules/billing/app/invoiceediservice"
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoicevalidation"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue/billingqueuedb"
@@ -25,6 +24,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/accountingcontrolrepository"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/fiscaltest"
@@ -173,12 +173,12 @@ func TestPostCreatesInvoiceJournalSourceAndBalances(t *testing.T) {
 			ID:             shp.ID,
 			OrganizationID: org.ID,
 			BusinessUnitID: org.BusinessUnitID,
-			Status:         shipment.StatusReadyToInvoice,
+			Status:         shipmentvocab.StatusReadyToInvoice,
 		}, nil)
 	shipmentRepo.EXPECT().
 		UpdateDerivedState(mock.Anything, mock.MatchedBy(func(entity *shipment.Shipment) bool {
 			return entity != nil && entity.ID == shp.ID &&
-				entity.Status == shipment.StatusInvoiced &&
+				entity.Status == shipmentvocab.StatusInvoiced &&
 				entity.BilledAt != nil
 		})).
 		Return(&shipment.Shipment{ID: shp.ID}, nil)
@@ -399,7 +399,7 @@ func TestPostSkipsInvoiceLedgerWhenRevenueRecognitionIsCashReceipt(t *testing.T)
 
 	shipmentRepo.EXPECT().
 		GetByID(mock.Anything, mock.Anything).
-		Return(&shipment.Shipment{ID: shp.ID, OrganizationID: org.ID, BusinessUnitID: org.BusinessUnitID, Status: shipment.StatusReadyToInvoice}, nil)
+		Return(&shipment.Shipment{ID: shp.ID, OrganizationID: org.ID, BusinessUnitID: org.BusinessUnitID, Status: shipmentvocab.StatusReadyToInvoice}, nil)
 	shipmentRepo.EXPECT().
 		UpdateDerivedState(mock.Anything, mock.Anything).
 		Return(&shipment.Shipment{ID: shp.ID}, nil)

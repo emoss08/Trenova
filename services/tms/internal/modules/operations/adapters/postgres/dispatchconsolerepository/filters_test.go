@@ -5,8 +5,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchboardports"
 	"github.com/emoss08/trenova/internal/testutil/keeltest"
 	"github.com/stretchr/testify/require"
@@ -74,7 +74,7 @@ func TestMoveFiltersHonorExplicitStatuses(t *testing.T) {
 	t.Parallel()
 
 	sql, args := renderMoveFilters(t, &dispatchboardports.DispatchBoardFilter{
-		MoveStatuses: []shipment.MoveStatus{shipment.MoveStatusCompleted},
+		MoveStatuses: []shipmentvocab.MoveStatus{shipmentvocab.MoveStatusCompleted},
 		WindowStart:  testWindowStart,
 	})
 

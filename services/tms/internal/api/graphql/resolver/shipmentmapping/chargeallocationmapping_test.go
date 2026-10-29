@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvertest"
 	shipmentdomain "github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -35,43 +36,43 @@ func TestChargeAllocationsFromInput_RejectsBadValues(t *testing.T) {
 	_, err := ChargeAllocationsFromInput([]*gqlmodel.ChargeAllocationInput{
 		{
 			BillToCustomerID: payer,
-			Method:           shipmentdomain.ChargeAllocationMethodPercent,
+			Method:           shipmentvocab.ChargeAllocationMethodPercent,
 			Percent:          new("sixty"),
 		},
-	}, shipmentdomain.ChargeAllocationKindFreight, "freightAllocations", authCtx, nil)
+	}, shipmentvocab.ChargeAllocationKindFreight, "freightAllocations", authCtx, nil)
 	require.Error(t, err)
 
 	_, err = ChargeAllocationsFromInput([]*gqlmodel.ChargeAllocationInput{
 		{
 			BillToCustomerID: payer,
-			Method:           shipmentdomain.ChargeAllocationMethodAmount,
+			Method:           shipmentvocab.ChargeAllocationMethodAmount,
 			Amount:           new("ten"),
 		},
-	}, shipmentdomain.ChargeAllocationKindFreight, "freightAllocations", authCtx, nil)
+	}, shipmentvocab.ChargeAllocationKindFreight, "freightAllocations", authCtx, nil)
 	require.Error(t, err)
 
 	_, err = ChargeAllocationsFromInput([]*gqlmodel.ChargeAllocationInput{
 		{
 			BillToCustomerID: payer,
-			Method:           shipmentdomain.ChargeAllocationMethodPercent,
+			Method:           shipmentvocab.ChargeAllocationMethodPercent,
 			Percent:          new("60"),
 			Sequence:         &negative,
 		},
-	}, shipmentdomain.ChargeAllocationKindFreight, "freightAllocations", authCtx, nil)
+	}, shipmentvocab.ChargeAllocationKindFreight, "freightAllocations", authCtx, nil)
 	require.Error(t, err)
 
 	_, err = ChargeAllocationsFromInput([]*gqlmodel.ChargeAllocationInput{
 		{
 			BillToCustomerID: "",
-			Method:           shipmentdomain.ChargeAllocationMethodPercent,
+			Method:           shipmentvocab.ChargeAllocationMethodPercent,
 			Percent:          new("60"),
 		},
-	}, shipmentdomain.ChargeAllocationKindFreight, "freightAllocations", authCtx, nil)
+	}, shipmentvocab.ChargeAllocationKindFreight, "freightAllocations", authCtx, nil)
 	require.Error(t, err)
 
 	rows, err := ChargeAllocationsFromInput(
 		[]*gqlmodel.ChargeAllocationInput{nil},
-		shipmentdomain.ChargeAllocationKindFreight,
+		shipmentvocab.ChargeAllocationKindFreight,
 		"freightAllocations",
 		authCtx,
 		nil,
@@ -112,11 +113,11 @@ func TestBillingSplitSummaryToModel(t *testing.T) {
 			AdditionalCharges:   []*shipmentdomain.AdditionalCharge{charge},
 			ChargeAllocations: []*shipmentdomain.ChargeAllocation{{
 				ID:                 pulid.MustNew("chal_"),
-				ChargeKind:         shipmentdomain.ChargeAllocationKindAccessorial,
+				ChargeKind:         shipmentvocab.ChargeAllocationKindAccessorial,
 				AdditionalChargeID: &chargeID,
 				BillToCustomerID:   amd.ID,
 				BillToCustomer:     amd,
-				Method:             shipmentdomain.ChargeAllocationMethodPercent,
+				Method:             shipmentvocab.ChargeAllocationMethodPercent,
 				Percent:            decimal.NewNullDecimal(decimal.NewFromInt(100)),
 			}},
 		}
@@ -149,9 +150,9 @@ func TestBillingSplitSummaryToModel(t *testing.T) {
 			FreightChargeAmount: decimal.NewNullDecimal(decimal.NewFromInt(1000)),
 			AdditionalCharges:   []*shipmentdomain.AdditionalCharge{},
 			ChargeAllocations: []*shipmentdomain.ChargeAllocation{{
-				ChargeKind:       shipmentdomain.ChargeAllocationKindFreight,
+				ChargeKind:       shipmentvocab.ChargeAllocationKindFreight,
 				BillToCustomerID: pulid.MustNew("cus_"),
-				Method:           shipmentdomain.ChargeAllocationMethodPercent,
+				Method:           shipmentvocab.ChargeAllocationMethodPercent,
 				Percent:          decimal.NewNullDecimal(decimal.NewFromInt(50)),
 			}},
 		}

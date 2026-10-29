@@ -12,7 +12,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingtransfer"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/pkg/keelkinds"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -34,7 +33,7 @@ var billingTransferRunsTable = schema.Table{
 		{Name: "status", Quoted: `"status"`, Field: "Status", Kind: schema.KindString, Flags: 0, Label: `Status`, JSON: `status`, Enum: enumRunStatus[:]},
 		{Name: "scope", Quoted: `"scope"`, Field: "Scope", Kind: schema.KindString, Flags: 0, Label: `Scope`, JSON: `scope`, Enum: enumRunScope[:]},
 		{Name: "search_query", Quoted: `"search_query"`, Field: "SearchQuery", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Search Query`, JSON: `searchQuery`},
-		{Name: "shipment_status", Quoted: `"shipment_status"`, Field: "ShipmentStatus", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Shipment Status`, JSON: `shipmentStatus`, Enum: enumShipmentStatus[:]},
+		{Name: "shipment_status", Quoted: `"shipment_status"`, Field: "ShipmentStatus", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Shipment Status`, JSON: `shipmentStatus`, Enum: enumShipmentvocabStatus[:]},
 		{Name: "bill_type", Quoted: `"bill_type"`, Field: "BillType", Kind: schema.KindString, Flags: 0, Label: `Bill Type`, JSON: `billType`, Enum: enumBillingqueueBillType[:]},
 		{Name: "mark_completed_ready_to_invoice", Quoted: `"mark_completed_ready_to_invoice"`, Field: "MarkCompletedReadyToInvoice", Kind: schema.KindBool, Flags: 0, Label: `Mark Completed Ready To Invoice`, JSON: `markCompletedReadyToInvoice`},
 		{Name: "total_count", Quoted: `"total_count"`, Field: "TotalCount", Kind: schema.KindInt64, Flags: 0, Label: `Total Count`, JSON: `totalCount`},
@@ -93,7 +92,7 @@ type BillingTransferRunsTable struct {
 	Status                      RunStatusCol
 	Scope                       RunScopeCol
 	SearchQuery                 keel.StringCol
-	ShipmentStatus              shipmentdb.StatusCol
+	ShipmentStatus              keelkinds.ShipmentvocabStatusCol
 	BillType                    billingqueuedb.BillTypeCol
 	MarkCompletedReadyToInvoice keel.BoolCol
 	TotalCount                  keel.Int64Col
@@ -128,7 +127,7 @@ var BillingTransferRuns = &BillingTransferRunsTable{
 	Status:                      RunStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &billingTransferRunsRef, Index: 5}}},
 	Scope:                       RunScopeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &billingTransferRunsRef, Index: 6}}},
 	SearchQuery:                 keel.StringCol{Col: keel.Col{Ref: &billingTransferRunsRef, Index: 7}},
-	ShipmentStatus:              shipmentdb.StatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &billingTransferRunsRef, Index: 8}}},
+	ShipmentStatus:              keelkinds.ShipmentvocabStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &billingTransferRunsRef, Index: 8}}},
 	BillType:                    billingqueuedb.BillTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &billingTransferRunsRef, Index: 9}}},
 	MarkCompletedReadyToInvoice: keel.BoolCol{Col: keel.Col{Ref: &billingTransferRunsRef, Index: 10}},
 	TotalCount:                  keel.Int64Col{Col: keel.Col{Ref: &billingTransferRunsRef, Index: 11}},
@@ -164,7 +163,7 @@ func BuildBillingTransferRuns(r *keel.Ref) *BillingTransferRunsTable {
 		Status:                      RunStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
 		Scope:                       RunScopeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
 		SearchQuery:                 keel.StringCol{Col: keel.Col{Ref: r, Index: 7}},
-		ShipmentStatus:              shipmentdb.StatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 8}}},
+		ShipmentStatus:              keelkinds.ShipmentvocabStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 8}}},
 		BillType:                    billingqueuedb.BillTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 9}}},
 		MarkCompletedReadyToInvoice: keel.BoolCol{Col: keel.Col{Ref: r, Index: 10}},
 		TotalCount:                  keel.Int64Col{Col: keel.Col{Ref: r, Index: 11}},
@@ -713,7 +712,7 @@ var enumRunStatus = [...]schema.EnumValue{
 	{Value: `Failed`, Label: `Failed`},
 }
 
-var enumShipmentStatus = [...]schema.EnumValue{
+var enumShipmentvocabStatus = [...]schema.EnumValue{
 	{Value: `New`, Label: `New`},
 	{Value: `PartiallyAssigned`, Label: `Partially Assigned`},
 	{Value: `Assigned`, Label: `Assigned`},

@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateconfirmation"
@@ -60,7 +61,7 @@ func pendingAssignment(
 	return &shipment.CarrierAssignment{
 		ID:        pulid.MustNew("cass_"),
 		CarrierID: req.CarrierID,
-		Status:    shipment.CarrierAssignmentStatusPending,
+		Status:    shipmentvocab.CarrierAssignmentStatusPending,
 	}
 }
 
@@ -190,7 +191,7 @@ func TestIssueForTenderAcceptanceResumesGeneratedRevision(t *testing.T) {
 	require.NotNil(t, pending.ConfirmedAt)
 	assert.Equal(t, req.AcceptedAt, *pending.ConfirmedAt)
 
-	assert.Equal(t, shipment.CarrierAssignmentStatusConfirmed, assignment.Status)
+	assert.Equal(t, shipmentvocab.CarrierAssignmentStatusConfirmed, assignment.Status)
 	require.NotNil(t, assignment.ConfirmedAt)
 	assert.Equal(t, req.AcceptedAt, *assignment.ConfirmedAt)
 }

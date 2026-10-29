@@ -23,6 +23,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/sequenceconfig"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/settlementcontrol"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier/carrierdb"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateconfirmation"
@@ -531,7 +532,7 @@ func (g *settlementPhase) csInvoices(
 	tolerance := setup.control.VarianceToleranceMinor
 	for _, mv := range moves {
 		if mv.carrier == nil || mv.carrier.partner == nil ||
-			mv.move.Status != shipment.MoveStatusCompleted || mv.move.CompletedAt == 0 ||
+			mv.move.Status != shipmentvocab.MoveStatusCompleted || mv.move.CompletedAt == 0 ||
 			!mv.assignment.IsActive() {
 			continue
 		}
@@ -809,7 +810,7 @@ func (g *settlementPhase) csVarianceEvent(
 func (g *settlementPhase) csAccrue(rows *csRows, setup *csSetup, moves []*csMove) []*csEvent {
 	for _, mv := range moves {
 		ca := mv.assignment
-		if !ca.IsActive() || mv.move.Status == shipment.MoveStatusCanceled {
+		if !ca.IsActive() || mv.move.Status == shipmentvocab.MoveStatusCanceled {
 			continue
 		}
 		accruedAt, eventDate, ok := csTrigger(setup.control.PayTrigger, mv.rec, mv.move)
@@ -871,21 +872,21 @@ func csTrigger(
 	rec *volumegen.ShipmentRecord,
 	mv *volumegen.MoveRecord,
 ) (accruedAt, eventDate int64, ok bool) {
-	delivered := rec.DeliveredAt > 0 && (rec.Status == shipment.StatusCompleted ||
-		rec.Status == shipment.StatusReadyToInvoice || rec.Status == shipment.StatusInvoiced)
+	delivered := rec.DeliveredAt > 0 && (rec.Status == shipmentvocab.StatusCompleted ||
+		rec.Status == shipmentvocab.StatusReadyToInvoice || rec.Status == shipmentvocab.StatusInvoiced)
 	switch trigger {
 	case settlementcontrol.PayTriggerMoveCompleted:
-		if mv.Status == shipment.MoveStatusCompleted && mv.CompletedAt > 0 {
+		if mv.Status == shipmentvocab.MoveStatusCompleted && mv.CompletedAt > 0 {
 			return mv.CompletedAt, mv.CompletedAt, true
 		}
 		return 0, 0, false
 	case settlementcontrol.PayTriggerPODReceived:
-		if !delivered || rec.Status == shipment.StatusCompleted {
+		if !delivered || rec.Status == shipmentvocab.StatusCompleted {
 			return 0, 0, false
 		}
 		return max(rec.ReadyToBillAt, rec.DeliveredAt), rec.DeliveredAt, true
 	case settlementcontrol.PayTriggerShipmentInvoiced:
-		if !delivered || rec.Status != shipment.StatusInvoiced || rec.InvoiceDate == 0 {
+		if !delivered || rec.Status != shipmentvocab.StatusInvoiced || rec.InvoiceDate == 0 {
 			return 0, 0, false
 		}
 		return rec.InvoiceDate, rec.DeliveredAt, true

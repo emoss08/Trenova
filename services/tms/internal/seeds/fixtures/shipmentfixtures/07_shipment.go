@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/keel/seed"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer/customerdb"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location/locationdb"
@@ -438,7 +439,7 @@ func (s *ShipmentSeed) createShipments(
 		{
 			ID: shp1ID, BusinessUnitID: buID, OrganizationID: orgID,
 			CustomerID: custs["ACME"], ServiceTypeID: svcTypes["STD"], ShipmentTypeID: shpTypes["FTL"],
-			FormulaTemplateID: flatRateTemplate.ID, Status: shipment.StatusNew,
+			FormulaTemplateID: flatRateTemplate.ID, Status: shipmentvocab.StatusNew,
 			ProNumber: "SEED-SHP-001", BOL: "BOL-2026-0001",
 			Pieces: new(int64(24)), Weight: new(int64(42000)),
 			FreightChargeAmount: decimal.NullDecimal{
@@ -450,9 +451,9 @@ func (s *ShipmentSeed) createShipments(
 				Valid:   true,
 			},
 
-			EntryMethod: shipment.EntryMethodManual,
+			EntryMethod: shipmentvocab.EntryMethodManual,
 
-			FreightTerms: shipment.FreightTermsPrepaid,
+			FreightTerms: shipmentvocab.FreightTermsPrepaid,
 
 			FreightLines: []shipment.FreightLine{},
 
@@ -461,7 +462,7 @@ func (s *ShipmentSeed) createShipments(
 		{
 			ID: shp2ID, BusinessUnitID: buID, OrganizationID: orgID,
 			CustomerID: custs["PEAK"], ServiceTypeID: svcTypes["STD"], ShipmentTypeID: shpTypes["LTL"],
-			FormulaTemplateID: perMileTemplate.ID, Status: shipment.StatusNew,
+			FormulaTemplateID: perMileTemplate.ID, Status: shipmentvocab.StatusNew,
 			ProNumber: "SEED-SHP-002", BOL: "BOL-2026-0002",
 			Pieces: new(int64(8)), Weight: new(int64(12000)),
 			FreightChargeAmount: decimal.NullDecimal{
@@ -477,16 +478,16 @@ func (s *ShipmentSeed) createShipments(
 				Valid:   true,
 			},
 
-			EntryMethod: shipment.EntryMethodManual,
+			EntryMethod: shipmentvocab.EntryMethodManual,
 
-			FreightTerms: shipment.FreightTermsPrepaid,
+			FreightTerms: shipmentvocab.FreightTermsPrepaid,
 
 			FreightLines: []shipment.FreightLine{},
 		},
 		{
 			ID: shp3ID, BusinessUnitID: buID, OrganizationID: orgID,
 			CustomerID: custs["GLBL"], ServiceTypeID: svcTypes["EXP"], ShipmentTypeID: shpTypes["FTL"],
-			FormulaTemplateID: perMileTemplate.ID, Status: shipment.StatusNew,
+			FormulaTemplateID: perMileTemplate.ID, Status: shipmentvocab.StatusNew,
 			ProNumber: "SEED-SHP-003", BOL: "BOL-2026-0003",
 			Pieces: new(int64(30)), Weight: new(int64(44000)),
 			FreightChargeAmount: decimal.NullDecimal{
@@ -502,16 +503,16 @@ func (s *ShipmentSeed) createShipments(
 				Valid:   true,
 			},
 
-			EntryMethod: shipment.EntryMethodManual,
+			EntryMethod: shipmentvocab.EntryMethodManual,
 
-			FreightTerms: shipment.FreightTermsPrepaid,
+			FreightTerms: shipmentvocab.FreightTermsPrepaid,
 
 			FreightLines: []shipment.FreightLine{},
 		},
 		{
 			ID: shp4ID, BusinessUnitID: buID, OrganizationID: orgID,
 			CustomerID: custs["FRSH"], ServiceTypeID: svcTypes["TEMP"], ShipmentTypeID: shpTypes["REEF"],
-			FormulaTemplateID: flatRateTemplate.ID, Status: shipment.StatusNew,
+			FormulaTemplateID: flatRateTemplate.ID, Status: shipmentvocab.StatusNew,
 			ProNumber: "SEED-SHP-004", BOL: "BOL-2026-0004",
 			Pieces: new(int64(20)), Weight: new(int64(38000)),
 			TemperatureMin: new(int16(34)), TemperatureMax: new(int16(38)),
@@ -524,9 +525,9 @@ func (s *ShipmentSeed) createShipments(
 				Valid:   true,
 			},
 
-			EntryMethod: shipment.EntryMethodManual,
+			EntryMethod: shipmentvocab.EntryMethodManual,
 
-			FreightTerms: shipment.FreightTermsPrepaid,
+			FreightTerms: shipmentvocab.FreightTermsPrepaid,
 
 			FreightLines: []shipment.FreightLine{},
 
@@ -535,7 +536,7 @@ func (s *ShipmentSeed) createShipments(
 		{
 			ID: shp5ID, BusinessUnitID: buID, OrganizationID: orgID,
 			CustomerID: custs["ACME"], ServiceTypeID: svcTypes["STD"], ShipmentTypeID: shpTypes["FTL"],
-			FormulaTemplateID: flatRateTemplate.ID, Status: shipment.StatusCompleted,
+			FormulaTemplateID: flatRateTemplate.ID, Status: shipmentvocab.StatusCompleted,
 			ProNumber: "SEED-SHP-005", BOL: "BOL-2026-0005",
 			Pieces: new(int64(26)), Weight: new(int64(40000)),
 			ActualShipDate: new(now - 5*day), ActualDeliveryDate: new(now - 3*day),
@@ -552,16 +553,16 @@ func (s *ShipmentSeed) createShipments(
 				Valid:   true,
 			},
 
-			EntryMethod: shipment.EntryMethodManual,
+			EntryMethod: shipmentvocab.EntryMethodManual,
 
-			FreightTerms: shipment.FreightTermsPrepaid,
+			FreightTerms: shipmentvocab.FreightTermsPrepaid,
 
 			FreightLines: []shipment.FreightLine{},
 		},
 		{
 			ID: shp6ID, BusinessUnitID: buID, OrganizationID: orgID,
 			CustomerID: custs["GLBL"], ServiceTypeID: svcTypes["TEAM"], ShipmentTypeID: shpTypes["FTL"],
-			FormulaTemplateID: perMileTemplate.ID, Status: shipment.StatusNew,
+			FormulaTemplateID: perMileTemplate.ID, Status: shipmentvocab.StatusNew,
 			ProNumber: "SEED-SHP-006", BOL: "BOL-2026-0006",
 			Pieces: new(int64(40)), Weight: new(int64(43000)),
 			FreightChargeAmount: decimal.NullDecimal{
@@ -577,16 +578,16 @@ func (s *ShipmentSeed) createShipments(
 				Valid:   true,
 			},
 
-			EntryMethod: shipment.EntryMethodManual,
+			EntryMethod: shipmentvocab.EntryMethodManual,
 
-			FreightTerms: shipment.FreightTermsPrepaid,
+			FreightTerms: shipmentvocab.FreightTermsPrepaid,
 
 			FreightLines: []shipment.FreightLine{},
 		},
 		{
 			ID: shp7ID, BusinessUnitID: buID, OrganizationID: orgID,
 			CustomerID: custs["RNGE"], ServiceTypeID: svcTypes["HAZM"], ShipmentTypeID: shpTypes["HAZM"],
-			FormulaTemplateID: flatRateTemplate.ID, Status: shipment.StatusNew,
+			FormulaTemplateID: flatRateTemplate.ID, Status: shipmentvocab.StatusNew,
 			ProNumber: "SEED-SHP-007", BOL: "BOL-2026-0007",
 			Pieces: new(int64(10)), Weight: new(int64(22000)),
 			FreightChargeAmount: decimal.NullDecimal{
@@ -602,16 +603,16 @@ func (s *ShipmentSeed) createShipments(
 				Valid:   true,
 			},
 
-			EntryMethod: shipment.EntryMethodManual,
+			EntryMethod: shipmentvocab.EntryMethodManual,
 
-			FreightTerms: shipment.FreightTermsPrepaid,
+			FreightTerms: shipmentvocab.FreightTermsPrepaid,
 
 			FreightLines: []shipment.FreightLine{},
 		},
 		{
 			ID: shp8ID, BusinessUnitID: buID, OrganizationID: orgID,
 			CustomerID: custs["SUNB"], ServiceTypeID: svcTypes["WHG"], ShipmentTypeID: shpTypes["PART"],
-			FormulaTemplateID: perStopTemplate.ID, Status: shipment.StatusInTransit,
+			FormulaTemplateID: perStopTemplate.ID, Status: shipmentvocab.StatusInTransit,
 			ProNumber: "SEED-SHP-008", BOL: "BOL-2026-0008",
 			Pieces: new(int64(14)), Weight: new(int64(18000)),
 			ActualShipDate: new(now - 1*day),
@@ -624,9 +625,9 @@ func (s *ShipmentSeed) createShipments(
 				Valid:   true,
 			},
 
-			EntryMethod: shipment.EntryMethodManual,
+			EntryMethod: shipmentvocab.EntryMethodManual,
 
-			FreightTerms: shipment.FreightTermsPrepaid,
+			FreightTerms: shipmentvocab.FreightTermsPrepaid,
 
 			FreightLines: []shipment.FreightLine{},
 
@@ -635,7 +636,7 @@ func (s *ShipmentSeed) createShipments(
 		{
 			ID: shp9ID, BusinessUnitID: buID, OrganizationID: orgID,
 			CustomerID: custs["PEAK"], ServiceTypeID: svcTypes["DTP"], ShipmentTypeID: shpTypes["FTL"],
-			FormulaTemplateID: flatRateTemplate.ID, Status: shipment.StatusReadyToInvoice,
+			FormulaTemplateID: flatRateTemplate.ID, Status: shipmentvocab.StatusReadyToInvoice,
 			ProNumber: "SEED-SHP-009", BOL: "BOL-2026-0009",
 			Pieces: new(int64(32)), Weight: new(int64(44000)),
 			ActualShipDate: new(now - 7*day), ActualDeliveryDate: new(now - 4*day),
@@ -652,16 +653,16 @@ func (s *ShipmentSeed) createShipments(
 				Valid:   true,
 			},
 
-			EntryMethod: shipment.EntryMethodManual,
+			EntryMethod: shipmentvocab.EntryMethodManual,
 
-			FreightTerms: shipment.FreightTermsPrepaid,
+			FreightTerms: shipmentvocab.FreightTermsPrepaid,
 
 			FreightLines: []shipment.FreightLine{},
 		},
 		{
 			ID: shp10ID, BusinessUnitID: buID, OrganizationID: orgID,
 			CustomerID: custs["FRSH"], ServiceTypeID: svcTypes["TEMP"], ShipmentTypeID: shpTypes["REEF"],
-			FormulaTemplateID: flatRateTemplate.ID, Status: shipment.StatusDelayed,
+			FormulaTemplateID: flatRateTemplate.ID, Status: shipmentvocab.StatusDelayed,
 			ProNumber: "SEED-SHP-010", BOL: "BOL-2026-0010",
 			Pieces: new(int64(18)), Weight: new(int64(36000)),
 			TemperatureMin: new(int16(0)), TemperatureMax: new(int16(10)),
@@ -679,9 +680,9 @@ func (s *ShipmentSeed) createShipments(
 				Valid:   true,
 			},
 
-			EntryMethod: shipment.EntryMethodManual,
+			EntryMethod: shipmentvocab.EntryMethodManual,
 
-			FreightTerms: shipment.FreightTermsPrepaid,
+			FreightTerms: shipmentvocab.FreightTermsPrepaid,
 
 			FreightLines: []shipment.FreightLine{},
 		},
@@ -727,11 +728,11 @@ func (s *ShipmentSeed) createShipments(
 			BusinessUnitID: buID,
 			OrganizationID: orgID,
 			ShipmentID:     shp1ID,
-			Status:         shipment.MoveStatusNew,
+			Status:         shipmentvocab.MoveStatusNew,
 			Loaded:         true,
 			Sequence:       0,
 
-			CoverageType: shipment.MoveCoverageTypeUnassigned,
+			CoverageType: shipmentvocab.MoveCoverageTypeUnassigned,
 		},
 		// 2: single move, multi-stop
 		{
@@ -739,11 +740,11 @@ func (s *ShipmentSeed) createShipments(
 			BusinessUnitID: buID,
 			OrganizationID: orgID,
 			ShipmentID:     shp2ID,
-			Status:         shipment.MoveStatusNew,
+			Status:         shipmentvocab.MoveStatusNew,
 			Loaded:         true,
 			Sequence:       0,
 
-			CoverageType: shipment.MoveCoverageTypeUnassigned,
+			CoverageType: shipmentvocab.MoveCoverageTypeUnassigned,
 		},
 		// 3: two moves
 		{
@@ -751,22 +752,22 @@ func (s *ShipmentSeed) createShipments(
 			BusinessUnitID: buID,
 			OrganizationID: orgID,
 			ShipmentID:     shp3ID,
-			Status:         shipment.MoveStatusNew,
+			Status:         shipmentvocab.MoveStatusNew,
 			Loaded:         true,
 			Sequence:       0,
 
-			CoverageType: shipment.MoveCoverageTypeUnassigned,
+			CoverageType: shipmentvocab.MoveCoverageTypeUnassigned,
 		},
 		{
 			ID:             shp3M2,
 			BusinessUnitID: buID,
 			OrganizationID: orgID,
 			ShipmentID:     shp3ID,
-			Status:         shipment.MoveStatusNew,
+			Status:         shipmentvocab.MoveStatusNew,
 			Loaded:         true,
 			Sequence:       1,
 
-			CoverageType: shipment.MoveCoverageTypeUnassigned,
+			CoverageType: shipmentvocab.MoveCoverageTypeUnassigned,
 		},
 		// 4: single move
 		{
@@ -774,11 +775,11 @@ func (s *ShipmentSeed) createShipments(
 			BusinessUnitID: buID,
 			OrganizationID: orgID,
 			ShipmentID:     shp4ID,
-			Status:         shipment.MoveStatusNew,
+			Status:         shipmentvocab.MoveStatusNew,
 			Loaded:         true,
 			Sequence:       0,
 
-			CoverageType: shipment.MoveCoverageTypeUnassigned,
+			CoverageType: shipmentvocab.MoveCoverageTypeUnassigned,
 		},
 		// 5: completed
 		{
@@ -786,11 +787,11 @@ func (s *ShipmentSeed) createShipments(
 			BusinessUnitID: buID,
 			OrganizationID: orgID,
 			ShipmentID:     shp5ID,
-			Status:         shipment.MoveStatusCompleted,
+			Status:         shipmentvocab.MoveStatusCompleted,
 			Loaded:         true,
 			Sequence:       0,
 
-			CoverageType: shipment.MoveCoverageTypeUnassigned,
+			CoverageType: shipmentvocab.MoveCoverageTypeUnassigned,
 		},
 		// 6: three-move relay
 		{
@@ -798,33 +799,33 @@ func (s *ShipmentSeed) createShipments(
 			BusinessUnitID: buID,
 			OrganizationID: orgID,
 			ShipmentID:     shp6ID,
-			Status:         shipment.MoveStatusNew,
+			Status:         shipmentvocab.MoveStatusNew,
 			Loaded:         true,
 			Sequence:       0,
 
-			CoverageType: shipment.MoveCoverageTypeUnassigned,
+			CoverageType: shipmentvocab.MoveCoverageTypeUnassigned,
 		},
 		{
 			ID:             shp6M2,
 			BusinessUnitID: buID,
 			OrganizationID: orgID,
 			ShipmentID:     shp6ID,
-			Status:         shipment.MoveStatusNew,
+			Status:         shipmentvocab.MoveStatusNew,
 			Loaded:         true,
 			Sequence:       1,
 
-			CoverageType: shipment.MoveCoverageTypeUnassigned,
+			CoverageType: shipmentvocab.MoveCoverageTypeUnassigned,
 		},
 		{
 			ID:             shp6M3,
 			BusinessUnitID: buID,
 			OrganizationID: orgID,
 			ShipmentID:     shp6ID,
-			Status:         shipment.MoveStatusNew,
+			Status:         shipmentvocab.MoveStatusNew,
 			Loaded:         true,
 			Sequence:       2,
 
-			CoverageType: shipment.MoveCoverageTypeUnassigned,
+			CoverageType: shipmentvocab.MoveCoverageTypeUnassigned,
 		},
 		// 7: hazmat single move
 		{
@@ -832,11 +833,11 @@ func (s *ShipmentSeed) createShipments(
 			BusinessUnitID: buID,
 			OrganizationID: orgID,
 			ShipmentID:     shp7ID,
-			Status:         shipment.MoveStatusNew,
+			Status:         shipmentvocab.MoveStatusNew,
 			Loaded:         true,
 			Sequence:       0,
 
-			CoverageType: shipment.MoveCoverageTypeUnassigned,
+			CoverageType: shipmentvocab.MoveCoverageTypeUnassigned,
 		},
 		// 8: in-transit, two moves
 		{
@@ -844,22 +845,22 @@ func (s *ShipmentSeed) createShipments(
 			BusinessUnitID: buID,
 			OrganizationID: orgID,
 			ShipmentID:     shp8ID,
-			Status:         shipment.MoveStatusCompleted,
+			Status:         shipmentvocab.MoveStatusCompleted,
 			Loaded:         true,
 			Sequence:       0,
 
-			CoverageType: shipment.MoveCoverageTypeUnassigned,
+			CoverageType: shipmentvocab.MoveCoverageTypeUnassigned,
 		},
 		{
 			ID:             shp8M2,
 			BusinessUnitID: buID,
 			OrganizationID: orgID,
 			ShipmentID:     shp8ID,
-			Status:         shipment.MoveStatusInTransit,
+			Status:         shipmentvocab.MoveStatusInTransit,
 			Loaded:         true,
 			Sequence:       1,
 
-			CoverageType: shipment.MoveCoverageTypeUnassigned,
+			CoverageType: shipmentvocab.MoveCoverageTypeUnassigned,
 		},
 		// 9: ready to invoice, completed
 		{
@@ -867,11 +868,11 @@ func (s *ShipmentSeed) createShipments(
 			BusinessUnitID: buID,
 			OrganizationID: orgID,
 			ShipmentID:     shp9ID,
-			Status:         shipment.MoveStatusCompleted,
+			Status:         shipmentvocab.MoveStatusCompleted,
 			Loaded:         true,
 			Sequence:       0,
 
-			CoverageType: shipment.MoveCoverageTypeUnassigned,
+			CoverageType: shipmentvocab.MoveCoverageTypeUnassigned,
 		},
 		// 10: delayed, in transit
 		{
@@ -879,11 +880,11 @@ func (s *ShipmentSeed) createShipments(
 			BusinessUnitID: buID,
 			OrganizationID: orgID,
 			ShipmentID:     shp10ID,
-			Status:         shipment.MoveStatusInTransit,
+			Status:         shipmentvocab.MoveStatusInTransit,
 			Loaded:         true,
 			Sequence:       0,
 
-			CoverageType: shipment.MoveCoverageTypeUnassigned,
+			CoverageType: shipmentvocab.MoveCoverageTypeUnassigned,
 		},
 	}
 
@@ -900,13 +901,13 @@ func (s *ShipmentSeed) createShipments(
 			OrganizationID:       orgID,
 			ShipmentMoveID:       shp1M1,
 			LocationID:           locLA,
-			Type:                 shipment.StopTypePickup,
-			Status:               shipment.StopStatusNew,
+			Type:                 shipmentvocab.StopTypePickup,
+			Status:               shipmentvocab.StopStatusNew,
 			Sequence:             0,
 			ScheduledWindowStart: now + 1*day,
 			ScheduledWindowEnd:   new(now + 1*day + 7200),
 
-			ScheduleType: shipment.StopScheduleTypeOpen,
+			ScheduleType: shipmentvocab.StopScheduleTypeOpen,
 		},
 		{
 			ID:                   pulid.MustNew("stp_"),
@@ -914,13 +915,13 @@ func (s *ShipmentSeed) createShipments(
 			OrganizationID:       orgID,
 			ShipmentMoveID:       shp1M1,
 			LocationID:           locChicago,
-			Type:                 shipment.StopTypeDelivery,
-			Status:               shipment.StopStatusNew,
+			Type:                 shipmentvocab.StopTypeDelivery,
+			Status:               shipmentvocab.StopStatusNew,
 			Sequence:             1,
 			ScheduledWindowStart: now + 3*day,
 			ScheduledWindowEnd:   new(now + 3*day + 7200),
 
-			ScheduleType: shipment.StopScheduleTypeOpen,
+			ScheduleType: shipmentvocab.StopScheduleTypeOpen,
 		},
 
 		// SHP 2 — Dallas → Denver → Chicago (1 move, 3 stops)
@@ -930,13 +931,13 @@ func (s *ShipmentSeed) createShipments(
 			OrganizationID:       orgID,
 			ShipmentMoveID:       shp2M1,
 			LocationID:           locDallas,
-			Type:                 shipment.StopTypePickup,
-			Status:               shipment.StopStatusNew,
+			Type:                 shipmentvocab.StopTypePickup,
+			Status:               shipmentvocab.StopStatusNew,
 			Sequence:             0,
 			ScheduledWindowStart: now + 1*day,
 			ScheduledWindowEnd:   new(now + 1*day + 7200),
 
-			ScheduleType: shipment.StopScheduleTypeOpen,
+			ScheduleType: shipmentvocab.StopScheduleTypeOpen,
 		},
 		{
 			ID:                   pulid.MustNew("stp_"),
@@ -944,13 +945,13 @@ func (s *ShipmentSeed) createShipments(
 			OrganizationID:       orgID,
 			ShipmentMoveID:       shp2M1,
 			LocationID:           locDenver,
-			Type:                 shipment.StopTypeSplitDelivery,
-			Status:               shipment.StopStatusNew,
+			Type:                 shipmentvocab.StopTypeSplitDelivery,
+			Status:               shipmentvocab.StopStatusNew,
 			Sequence:             1,
 			ScheduledWindowStart: now + 2*day,
 			ScheduledWindowEnd:   new(now + 2*day + 7200),
 
-			ScheduleType: shipment.StopScheduleTypeOpen,
+			ScheduleType: shipmentvocab.StopScheduleTypeOpen,
 		},
 		{
 			ID:                   pulid.MustNew("stp_"),
@@ -958,13 +959,13 @@ func (s *ShipmentSeed) createShipments(
 			OrganizationID:       orgID,
 			ShipmentMoveID:       shp2M1,
 			LocationID:           locChicago,
-			Type:                 shipment.StopTypeDelivery,
-			Status:               shipment.StopStatusNew,
+			Type:                 shipmentvocab.StopTypeDelivery,
+			Status:               shipmentvocab.StopStatusNew,
 			Sequence:             2,
 			ScheduledWindowStart: now + 3*day,
 			ScheduledWindowEnd:   new(now + 3*day + 7200),
 
-			ScheduleType: shipment.StopScheduleTypeOpen,
+			ScheduleType: shipmentvocab.StopScheduleTypeOpen,
 		},
 
 		// SHP 3 — LA → Dallas (move 1), Dallas → Chicago (move 2) — 2 moves, 4 stops
@@ -974,13 +975,13 @@ func (s *ShipmentSeed) createShipments(
 			OrganizationID:       orgID,
 			ShipmentMoveID:       shp3M1,
 			LocationID:           locLA,
-			Type:                 shipment.StopTypePickup,
-			Status:               shipment.StopStatusNew,
+			Type:                 shipmentvocab.StopTypePickup,
+			Status:               shipmentvocab.StopStatusNew,
 			Sequence:             0,
 			ScheduledWindowStart: now + 1*day,
 			ScheduledWindowEnd:   new(now + 1*day + 7200),
 
-			ScheduleType: shipment.StopScheduleTypeOpen,
+			ScheduleType: shipmentvocab.StopScheduleTypeOpen,
 		},
 		{
 			ID:                   pulid.MustNew("stp_"),
@@ -988,13 +989,13 @@ func (s *ShipmentSeed) createShipments(
 			OrganizationID:       orgID,
 			ShipmentMoveID:       shp3M1,
 			LocationID:           locDallas,
-			Type:                 shipment.StopTypeDelivery,
-			Status:               shipment.StopStatusNew,
+			Type:                 shipmentvocab.StopTypeDelivery,
+			Status:               shipmentvocab.StopStatusNew,
 			Sequence:             1,
 			ScheduledWindowStart: now + 2*day,
 			ScheduledWindowEnd:   new(now + 2*day + 7200),
 
-			ScheduleType: shipment.StopScheduleTypeOpen,
+			ScheduleType: shipmentvocab.StopScheduleTypeOpen,
 		},
 		{
 			ID:                   pulid.MustNew("stp_"),
@@ -1002,13 +1003,13 @@ func (s *ShipmentSeed) createShipments(
 			OrganizationID:       orgID,
 			ShipmentMoveID:       shp3M2,
 			LocationID:           locDallas,
-			Type:                 shipment.StopTypePickup,
-			Status:               shipment.StopStatusNew,
+			Type:                 shipmentvocab.StopTypePickup,
+			Status:               shipmentvocab.StopStatusNew,
 			Sequence:             0,
 			ScheduledWindowStart: now + 3*day,
 			ScheduledWindowEnd:   new(now + 3*day + 7200),
 
-			ScheduleType: shipment.StopScheduleTypeOpen,
+			ScheduleType: shipmentvocab.StopScheduleTypeOpen,
 		},
 		{
 			ID:                   pulid.MustNew("stp_"),
@@ -1016,13 +1017,13 @@ func (s *ShipmentSeed) createShipments(
 			OrganizationID:       orgID,
 			ShipmentMoveID:       shp3M2,
 			LocationID:           locChicago,
-			Type:                 shipment.StopTypeDelivery,
-			Status:               shipment.StopStatusNew,
+			Type:                 shipmentvocab.StopTypeDelivery,
+			Status:               shipmentvocab.StopStatusNew,
 			Sequence:             1,
 			ScheduledWindowStart: now + 4*day,
 			ScheduledWindowEnd:   new(now + 4*day + 7200),
 
-			ScheduleType: shipment.StopScheduleTypeOpen,
+			ScheduleType: shipmentvocab.StopScheduleTypeOpen,
 		},
 
 		// SHP 4 — Phoenix → Denver (1 move, 2 stops)
@@ -1032,13 +1033,13 @@ func (s *ShipmentSeed) createShipments(
 			OrganizationID:       orgID,
 			ShipmentMoveID:       shp4M1,
 			LocationID:           locPhoenix,
-			Type:                 shipment.StopTypePickup,
-			Status:               shipment.StopStatusNew,
+			Type:                 shipmentvocab.StopTypePickup,
+			Status:               shipmentvocab.StopStatusNew,
 			Sequence:             0,
 			ScheduledWindowStart: now + 1*day,
 			ScheduledWindowEnd:   new(now + 1*day + 7200),
 
-			ScheduleType: shipment.StopScheduleTypeOpen,
+			ScheduleType: shipmentvocab.StopScheduleTypeOpen,
 		},
 		{
 			ID:                   pulid.MustNew("stp_"),
@@ -1046,13 +1047,13 @@ func (s *ShipmentSeed) createShipments(
 			OrganizationID:       orgID,
 			ShipmentMoveID:       shp4M1,
 			LocationID:           locDenver,
-			Type:                 shipment.StopTypeDelivery,
-			Status:               shipment.StopStatusNew,
+			Type:                 shipmentvocab.StopTypeDelivery,
+			Status:               shipmentvocab.StopStatusNew,
 			Sequence:             1,
 			ScheduledWindowStart: now + 2*day,
 			ScheduledWindowEnd:   new(now + 2*day + 7200),
 
-			ScheduleType: shipment.StopScheduleTypeOpen,
+			ScheduleType: shipmentvocab.StopScheduleTypeOpen,
 		},
 
 		// SHP 5 — Dallas → Chicago completed (1 move, 2 stops)
@@ -1062,15 +1063,15 @@ func (s *ShipmentSeed) createShipments(
 			OrganizationID:       orgID,
 			ShipmentMoveID:       shp5M1,
 			LocationID:           locDallas,
-			Type:                 shipment.StopTypePickup,
-			Status:               shipment.StopStatusCompleted,
+			Type:                 shipmentvocab.StopTypePickup,
+			Status:               shipmentvocab.StopStatusCompleted,
 			Sequence:             0,
 			ScheduledWindowStart: now - 6*day,
 			ScheduledWindowEnd:   new(now - 6*day + 7200),
 			ActualArrival:        new(now - 5*day),
 			ActualDeparture:      new(now - 5*day + 3600),
 
-			ScheduleType: shipment.StopScheduleTypeOpen,
+			ScheduleType: shipmentvocab.StopScheduleTypeOpen,
 		},
 		{
 			ID:                   pulid.MustNew("stp_"),
@@ -1078,15 +1079,15 @@ func (s *ShipmentSeed) createShipments(
 			OrganizationID:       orgID,
 			ShipmentMoveID:       shp5M1,
 			LocationID:           locChicago,
-			Type:                 shipment.StopTypeDelivery,
-			Status:               shipment.StopStatusCompleted,
+			Type:                 shipmentvocab.StopTypeDelivery,
+			Status:               shipmentvocab.StopStatusCompleted,
 			Sequence:             1,
 			ScheduledWindowStart: now - 4*day,
 			ScheduledWindowEnd:   new(now - 4*day + 7200),
 			ActualArrival:        new(now - 3*day),
 			ActualDeparture:      new(now - 3*day + 1800),
 
-			ScheduleType: shipment.StopScheduleTypeOpen,
+			ScheduleType: shipmentvocab.StopScheduleTypeOpen,
 		},
 
 		// SHP 6 — LA → Dallas → Chicago → Miami relay (3 moves, 6 stops)
@@ -1096,13 +1097,13 @@ func (s *ShipmentSeed) createShipments(
 			OrganizationID:       orgID,
 			ShipmentMoveID:       shp6M1,
 			LocationID:           locLA,
-			Type:                 shipment.StopTypePickup,
-			Status:               shipment.StopStatusNew,
+			Type:                 shipmentvocab.StopTypePickup,
+			Status:               shipmentvocab.StopStatusNew,
 			Sequence:             0,
 			ScheduledWindowStart: now + 1*day,
 			ScheduledWindowEnd:   new(now + 1*day + 7200),
 
-			ScheduleType: shipment.StopScheduleTypeOpen,
+			ScheduleType: shipmentvocab.StopScheduleTypeOpen,
 		},
 		{
 			ID:                   pulid.MustNew("stp_"),
@@ -1110,13 +1111,13 @@ func (s *ShipmentSeed) createShipments(
 			OrganizationID:       orgID,
 			ShipmentMoveID:       shp6M1,
 			LocationID:           locDallas,
-			Type:                 shipment.StopTypeDelivery,
-			Status:               shipment.StopStatusNew,
+			Type:                 shipmentvocab.StopTypeDelivery,
+			Status:               shipmentvocab.StopStatusNew,
 			Sequence:             1,
 			ScheduledWindowStart: now + 2*day,
 			ScheduledWindowEnd:   new(now + 2*day + 7200),
 
-			ScheduleType: shipment.StopScheduleTypeOpen,
+			ScheduleType: shipmentvocab.StopScheduleTypeOpen,
 		},
 		{
 			ID:                   pulid.MustNew("stp_"),
@@ -1124,13 +1125,13 @@ func (s *ShipmentSeed) createShipments(
 			OrganizationID:       orgID,
 			ShipmentMoveID:       shp6M2,
 			LocationID:           locDallas,
-			Type:                 shipment.StopTypePickup,
-			Status:               shipment.StopStatusNew,
+			Type:                 shipmentvocab.StopTypePickup,
+			Status:               shipmentvocab.StopStatusNew,
 			Sequence:             0,
 			ScheduledWindowStart: now + 3*day,
 			ScheduledWindowEnd:   new(now + 3*day + 7200),
 
-			ScheduleType: shipment.StopScheduleTypeOpen,
+			ScheduleType: shipmentvocab.StopScheduleTypeOpen,
 		},
 		{
 			ID:                   pulid.MustNew("stp_"),
@@ -1138,13 +1139,13 @@ func (s *ShipmentSeed) createShipments(
 			OrganizationID:       orgID,
 			ShipmentMoveID:       shp6M2,
 			LocationID:           locChicago,
-			Type:                 shipment.StopTypeDelivery,
-			Status:               shipment.StopStatusNew,
+			Type:                 shipmentvocab.StopTypeDelivery,
+			Status:               shipmentvocab.StopStatusNew,
 			Sequence:             1,
 			ScheduledWindowStart: now + 4*day,
 			ScheduledWindowEnd:   new(now + 4*day + 7200),
 
-			ScheduleType: shipment.StopScheduleTypeOpen,
+			ScheduleType: shipmentvocab.StopScheduleTypeOpen,
 		},
 		{
 			ID:                   pulid.MustNew("stp_"),
@@ -1152,13 +1153,13 @@ func (s *ShipmentSeed) createShipments(
 			OrganizationID:       orgID,
 			ShipmentMoveID:       shp6M3,
 			LocationID:           locChicago,
-			Type:                 shipment.StopTypePickup,
-			Status:               shipment.StopStatusNew,
+			Type:                 shipmentvocab.StopTypePickup,
+			Status:               shipmentvocab.StopStatusNew,
 			Sequence:             0,
 			ScheduledWindowStart: now + 5*day,
 			ScheduledWindowEnd:   new(now + 5*day + 7200),
 
-			ScheduleType: shipment.StopScheduleTypeOpen,
+			ScheduleType: shipmentvocab.StopScheduleTypeOpen,
 		},
 		{
 			ID:                   pulid.MustNew("stp_"),
@@ -1166,13 +1167,13 @@ func (s *ShipmentSeed) createShipments(
 			OrganizationID:       orgID,
 			ShipmentMoveID:       shp6M3,
 			LocationID:           locMiami,
-			Type:                 shipment.StopTypeDelivery,
-			Status:               shipment.StopStatusNew,
+			Type:                 shipmentvocab.StopTypeDelivery,
+			Status:               shipmentvocab.StopStatusNew,
 			Sequence:             1,
 			ScheduledWindowStart: now + 7*day,
 			ScheduledWindowEnd:   new(now + 7*day + 7200),
 
-			ScheduleType: shipment.StopScheduleTypeOpen,
+			ScheduleType: shipmentvocab.StopScheduleTypeOpen,
 		},
 
 		// SHP 7 — Chicago → Denver hazmat (1 move, 2 stops)
@@ -1182,13 +1183,13 @@ func (s *ShipmentSeed) createShipments(
 			OrganizationID:       orgID,
 			ShipmentMoveID:       shp7M1,
 			LocationID:           locChicago,
-			Type:                 shipment.StopTypePickup,
-			Status:               shipment.StopStatusNew,
+			Type:                 shipmentvocab.StopTypePickup,
+			Status:               shipmentvocab.StopStatusNew,
 			Sequence:             0,
 			ScheduledWindowStart: now + 2*day,
 			ScheduledWindowEnd:   new(now + 2*day + 7200),
 
-			ScheduleType: shipment.StopScheduleTypeOpen,
+			ScheduleType: shipmentvocab.StopScheduleTypeOpen,
 		},
 		{
 			ID:                   pulid.MustNew("stp_"),
@@ -1196,13 +1197,13 @@ func (s *ShipmentSeed) createShipments(
 			OrganizationID:       orgID,
 			ShipmentMoveID:       shp7M1,
 			LocationID:           locDenver,
-			Type:                 shipment.StopTypeDelivery,
-			Status:               shipment.StopStatusNew,
+			Type:                 shipmentvocab.StopTypeDelivery,
+			Status:               shipmentvocab.StopStatusNew,
 			Sequence:             1,
 			ScheduledWindowStart: now + 4*day,
 			ScheduledWindowEnd:   new(now + 4*day + 7200),
 
-			ScheduleType: shipment.StopScheduleTypeOpen,
+			ScheduleType: shipmentvocab.StopScheduleTypeOpen,
 		},
 
 		// SHP 8 — Miami → Dallas (completed) → Dallas → Chicago (in transit) — 2 moves, 4 stops
@@ -1212,15 +1213,15 @@ func (s *ShipmentSeed) createShipments(
 			OrganizationID:       orgID,
 			ShipmentMoveID:       shp8M1,
 			LocationID:           locMiami,
-			Type:                 shipment.StopTypePickup,
-			Status:               shipment.StopStatusCompleted,
+			Type:                 shipmentvocab.StopTypePickup,
+			Status:               shipmentvocab.StopStatusCompleted,
 			Sequence:             0,
 			ScheduledWindowStart: now - 2*day,
 			ScheduledWindowEnd:   new(now - 2*day + 7200),
 			ActualArrival:        new(now - 1*day),
 			ActualDeparture:      new(now - 1*day + 2700),
 
-			ScheduleType: shipment.StopScheduleTypeOpen,
+			ScheduleType: shipmentvocab.StopScheduleTypeOpen,
 		},
 		{
 			ID:                   pulid.MustNew("stp_"),
@@ -1228,15 +1229,15 @@ func (s *ShipmentSeed) createShipments(
 			OrganizationID:       orgID,
 			ShipmentMoveID:       shp8M1,
 			LocationID:           locDallas,
-			Type:                 shipment.StopTypeDelivery,
-			Status:               shipment.StopStatusCompleted,
+			Type:                 shipmentvocab.StopTypeDelivery,
+			Status:               shipmentvocab.StopStatusCompleted,
 			Sequence:             1,
 			ScheduledWindowStart: now - 1*day,
 			ScheduledWindowEnd:   new(now - 1*day + 7200),
 			ActualArrival:        new(now - 12*3600),
 			ActualDeparture:      new(now - 11*3600),
 
-			ScheduleType: shipment.StopScheduleTypeOpen,
+			ScheduleType: shipmentvocab.StopScheduleTypeOpen,
 		},
 		{
 			ID:                   pulid.MustNew("stp_"),
@@ -1244,15 +1245,15 @@ func (s *ShipmentSeed) createShipments(
 			OrganizationID:       orgID,
 			ShipmentMoveID:       shp8M2,
 			LocationID:           locDallas,
-			Type:                 shipment.StopTypePickup,
-			Status:               shipment.StopStatusCompleted,
+			Type:                 shipmentvocab.StopTypePickup,
+			Status:               shipmentvocab.StopStatusCompleted,
 			Sequence:             0,
 			ScheduledWindowStart: now,
 			ScheduledWindowEnd:   new(now + 7200),
 			ActualArrival:        new(now - 10*3600),
 			ActualDeparture:      new(now - 9*3600),
 
-			ScheduleType: shipment.StopScheduleTypeOpen,
+			ScheduleType: shipmentvocab.StopScheduleTypeOpen,
 		},
 		{
 			ID:                   pulid.MustNew("stp_"),
@@ -1260,13 +1261,13 @@ func (s *ShipmentSeed) createShipments(
 			OrganizationID:       orgID,
 			ShipmentMoveID:       shp8M2,
 			LocationID:           locChicago,
-			Type:                 shipment.StopTypeDelivery,
-			Status:               shipment.StopStatusNew,
+			Type:                 shipmentvocab.StopTypeDelivery,
+			Status:               shipmentvocab.StopStatusNew,
 			Sequence:             1,
 			ScheduledWindowStart: now + 1*day,
 			ScheduledWindowEnd:   new(now + 1*day + 7200),
 
-			ScheduleType: shipment.StopScheduleTypeOpen,
+			ScheduleType: shipmentvocab.StopScheduleTypeOpen,
 		},
 
 		// SHP 9 — Denver → Phoenix ready-to-invoice (1 move, 2 stops)
@@ -1276,15 +1277,15 @@ func (s *ShipmentSeed) createShipments(
 			OrganizationID:       orgID,
 			ShipmentMoveID:       shp9M1,
 			LocationID:           locDenver,
-			Type:                 shipment.StopTypePickup,
-			Status:               shipment.StopStatusCompleted,
+			Type:                 shipmentvocab.StopTypePickup,
+			Status:               shipmentvocab.StopStatusCompleted,
 			Sequence:             0,
 			ScheduledWindowStart: now - 8*day,
 			ScheduledWindowEnd:   new(now - 8*day + 7200),
 			ActualArrival:        new(now - 7*day),
 			ActualDeparture:      new(now - 7*day + 3600),
 
-			ScheduleType: shipment.StopScheduleTypeOpen,
+			ScheduleType: shipmentvocab.StopScheduleTypeOpen,
 		},
 		{
 			ID:                   pulid.MustNew("stp_"),
@@ -1292,15 +1293,15 @@ func (s *ShipmentSeed) createShipments(
 			OrganizationID:       orgID,
 			ShipmentMoveID:       shp9M1,
 			LocationID:           locPhoenix,
-			Type:                 shipment.StopTypeDelivery,
-			Status:               shipment.StopStatusCompleted,
+			Type:                 shipmentvocab.StopTypeDelivery,
+			Status:               shipmentvocab.StopStatusCompleted,
 			Sequence:             1,
 			ScheduledWindowStart: now - 5*day,
 			ScheduledWindowEnd:   new(now - 5*day + 7200),
 			ActualArrival:        new(now - 4*day),
 			ActualDeparture:      new(now - 4*day + 1800),
 
-			ScheduleType: shipment.StopScheduleTypeOpen,
+			ScheduleType: shipmentvocab.StopScheduleTypeOpen,
 		},
 
 		// SHP 10 — Phoenix → LA delayed reefer (1 move, 2 stops)
@@ -1310,15 +1311,15 @@ func (s *ShipmentSeed) createShipments(
 			OrganizationID:       orgID,
 			ShipmentMoveID:       shp10M1,
 			LocationID:           locPhoenix,
-			Type:                 shipment.StopTypePickup,
-			Status:               shipment.StopStatusCompleted,
+			Type:                 shipmentvocab.StopTypePickup,
+			Status:               shipmentvocab.StopStatusCompleted,
 			Sequence:             0,
 			ScheduledWindowStart: now - 3*day,
 			ScheduledWindowEnd:   new(now - 3*day + 7200),
 			ActualArrival:        new(now - 2*day),
 			ActualDeparture:      new(now - 2*day + 3600),
 
-			ScheduleType: shipment.StopScheduleTypeOpen,
+			ScheduleType: shipmentvocab.StopScheduleTypeOpen,
 		},
 		{
 			ID:                   pulid.MustNew("stp_"),
@@ -1326,13 +1327,13 @@ func (s *ShipmentSeed) createShipments(
 			OrganizationID:       orgID,
 			ShipmentMoveID:       shp10M1,
 			LocationID:           locLA,
-			Type:                 shipment.StopTypeDelivery,
-			Status:               shipment.StopStatusNew,
+			Type:                 shipmentvocab.StopTypeDelivery,
+			Status:               shipmentvocab.StopStatusNew,
 			Sequence:             1,
 			ScheduledWindowStart: now - 1*day,
 			ScheduledWindowEnd:   new(now - 1*day + 7200),
 
-			ScheduleType: shipment.StopScheduleTypeOpen,
+			ScheduleType: shipmentvocab.StopScheduleTypeOpen,
 		},
 	}
 

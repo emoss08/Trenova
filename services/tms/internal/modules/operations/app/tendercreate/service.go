@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmenteventservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/tendereffects"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
 	"github.com/emoss08/trenova/internal/modules/operations/jobs/tenderjobs/tendercontract"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/assignmentports"
@@ -83,7 +84,7 @@ func (s *Service) priceGuideEntry(
 	// The contract produced one number, already through its own minimums and
 	// rounding. Offering it as a per-mile rate would invite the offer to be
 	// recomputed into something the contract never said.
-	return offerPrice{method: shipment.CarrierRateMethodFlat, rate: rated.Total}
+	return offerPrice{method: shipmentvocab.CarrierRateMethodFlat, rate: rated.Total}
 }
 
 // shipmentForContractPricing loads the shipment a contract-priced entry needs.
@@ -444,7 +445,7 @@ func (s *Service) buildGuideOffers(
 			continue
 		}
 
-		if price.method == shipment.CarrierRateMethodPerMile &&
+		if price.method == shipmentvocab.CarrierRateMethodPerMile &&
 			(move.Distance == nil || *move.Distance <= 0) {
 			entryErr.Add(
 				"rateMethod",
@@ -612,9 +613,9 @@ func (s *Service) buildSpotOffers(
 
 		rateMethod := line.RateMethod
 		if rateMethod == "" {
-			rateMethod = shipment.CarrierRateMethodFlat
+			rateMethod = shipmentvocab.CarrierRateMethodFlat
 		}
-		if rateMethod == shipment.CarrierRateMethodPerMile &&
+		if rateMethod == shipmentvocab.CarrierRateMethodPerMile &&
 			(move.Distance == nil || *move.Distance <= 0) {
 			lineErr.Add(
 				"rateMethod",

@@ -17,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/movesplit"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentstate"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/assignmentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/orderports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
@@ -102,7 +103,7 @@ func (s *service) notifyMoveObservers(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	move *shipment.ShipmentMove,
-	previous shipment.MoveStatus,
+	previous shipmentvocab.MoveStatus,
 ) {
 	if move == nil || previous == move.Status {
 		return
@@ -158,7 +159,7 @@ func (s *service) UpdateStatus(
 	}
 
 	var updatedMove *shipment.ShipmentMove
-	var previousStatus shipment.MoveStatus
+	var previousStatus shipmentvocab.MoveStatus
 	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		plan, err := s.planMoveStatus(txCtx, &moveStatusRequest{
 			tenantInfo: req.TenantInfo,
@@ -285,7 +286,7 @@ func (s *service) notifyBulkMoveObservers(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	moves []*shipment.ShipmentMove,
-	previousStatuses map[pulid.ID]shipment.MoveStatus,
+	previousStatuses map[pulid.ID]shipmentvocab.MoveStatus,
 ) {
 	for _, m := range moves {
 		if m == nil {
@@ -319,7 +320,7 @@ func (s *service) emitBulkMoveStatusEvents(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	moves []*shipment.ShipmentMove,
-	previousStatuses map[pulid.ID]shipment.MoveStatus,
+	previousStatuses map[pulid.ID]shipmentvocab.MoveStatus,
 ) {
 	tenantRef := tenantRefForMoveTenant(tenantInfo)
 	actor := actorForMoveTenant(tenantInfo)
@@ -420,15 +421,16 @@ func validateSplitRequest(
 			WithParam("moveId", move.ID.String())
 	}
 
-	if move.Status != shipment.MoveStatusNew && move.Status != shipment.MoveStatusAssigned {
+	if move.Status != shipmentvocab.MoveStatusNew &&
+		move.Status != shipmentvocab.MoveStatusAssigned {
 		return errortypes.NewBusinessError("Only new or assigned moves can be split").
 			WithParam("moveId", move.ID.String())
 	}
 
 	originStop := move.Stops[0]
 	deliveryStop := move.Stops[1]
-	if originStop.Type != shipment.StopTypePickup ||
-		deliveryStop.Type != shipment.StopTypeDelivery {
+	if originStop.Type != shipmentvocab.StopTypePickup ||
+		deliveryStop.Type != shipmentvocab.StopTypeDelivery {
 		return errortypes.NewBusinessError("Only pickup-to-delivery moves can be split").
 			WithParam("moveId", move.ID.String())
 	}
@@ -540,9 +542,9 @@ func (s *service) ensureNoDeliveryHold(
 	ctx context.Context,
 	shipmentID pulid.ID,
 	tenantInfo pagination.TenantInfo,
-	status shipment.MoveStatus,
+	status shipmentvocab.MoveStatus,
 ) error {
-	if status != shipment.MoveStatusCompleted {
+	if status != shipmentvocab.MoveStatusCompleted {
 		return nil
 	}
 
@@ -581,11 +583,11 @@ func (s *service) ensureEquipmentAvailableForProgressBulk(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	moveID pulid.ID,
-	status shipment.MoveStatus,
+	status shipmentvocab.MoveStatus,
 	seenTractors map[pulid.ID]pulid.ID,
 	seenTrailers map[pulid.ID]pulid.ID,
 ) error {
-	if status != shipment.MoveStatusInTransit {
+	if status != shipmentvocab.MoveStatusInTransit {
 		return nil
 	}
 
@@ -634,9 +636,9 @@ func (s *service) advanceEquipmentContinuityForMove(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	move *shipment.ShipmentMove,
-	status shipment.MoveStatus,
+	status shipmentvocab.MoveStatus,
 ) error {
-	if status != shipment.MoveStatusCompleted {
+	if status != shipmentvocab.MoveStatusCompleted {
 		return nil
 	}
 

@@ -12,7 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/dispatchconsolerepository"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/mocks/costingcontrolportsmock"
@@ -52,7 +52,7 @@ func newProviderFixture(t *testing.T) *providerFixture {
 		BOL:          "BOL-ANALYTICS",
 		ProNumber:    "PRO-ANALYTICS",
 		ShipmentID:   pulid.MustNew("shp_"),
-		MoveStatuses: []shipment.MoveStatus{shipment.MoveStatusNew},
+		MoveStatuses: []shipmentvocab.MoveStatus{shipmentvocab.MoveStatusNew},
 	})
 
 	deps := providerMocks{

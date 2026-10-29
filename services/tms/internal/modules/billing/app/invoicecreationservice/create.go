@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/chargeallocation"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/order"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/chargeallocationports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/orderports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
@@ -86,7 +87,8 @@ func (s *Service) CreateInvoicesFromShipments(
 	if err != nil {
 		return nil, err
 	}
-	if shp.Status != shipment.StatusReadyToInvoice && shp.Status != shipment.StatusCompleted {
+	if shp.Status != shipmentvocab.StatusReadyToInvoice &&
+		shp.Status != shipmentvocab.StatusCompleted {
 		return nil, errortypes.NewValidationError(
 			"shipmentIds",
 			errortypes.ErrInvalid,
@@ -231,8 +233,8 @@ func (s *Service) collectBillableLegs(
 				continue
 			}
 			matched++
-			if leg.Status != shipment.StatusReadyToInvoice &&
-				leg.Status != shipment.StatusCompleted {
+			if leg.Status != shipmentvocab.StatusReadyToInvoice &&
+				leg.Status != shipmentvocab.StatusCompleted {
 				return nil, errortypes.NewValidationError(
 					"shipmentIds",
 					errortypes.ErrInvalid,
@@ -240,7 +242,8 @@ func (s *Service) collectBillableLegs(
 				)
 			}
 		}
-		if leg.Status != shipment.StatusReadyToInvoice && leg.Status != shipment.StatusCompleted {
+		if leg.Status != shipmentvocab.StatusReadyToInvoice &&
+			leg.Status != shipmentvocab.StatusCompleted {
 			continue
 		}
 		if leg.CustomerID != ord.CustomerID {

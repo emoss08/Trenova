@@ -6,7 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/shipmentcommenttools"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -27,8 +27,8 @@ func TestAddShipmentComment_TakesEveryDomainPriorityAndRefusesTheRest(t *testing
 		"comment":    "Reefer alarm; call the driver now.",
 		"priority":   "Urgent",
 	})))
-	assert.Equal(t, shipment.CommentPriorityUrgent, comments.created.Priority)
-	assert.Equal(t, shipment.CommentVisibilityInternal, comments.created.Visibility,
+	assert.Equal(t, shipmentvocab.CommentPriorityUrgent, comments.created.Priority)
+	assert.Equal(t, shipmentvocab.CommentVisibilityInternal, comments.created.Visibility,
 		"an absent visibility is Internal")
 
 	comments = &fakeCommentService{}

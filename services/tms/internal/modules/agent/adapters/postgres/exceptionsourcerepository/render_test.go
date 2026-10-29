@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/testutil/keeltest"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -14,7 +14,7 @@ func TestMissedStopsQuery(t *testing.T) {
 	t.Parallel()
 
 	sql, args := keeltest.Render(t, missedStopsQuery(&watchtowerports.ListMissedStopsRequest{
-		StopTypes:    []shipment.StopType{shipment.StopTypePickup},
+		StopTypes:    []shipmentvocab.StopType{shipmentvocab.StopTypePickup},
 		ClosedBefore: 100,
 		ShipmentIDs:  []pulid.ID{"shp_1"},
 	}))
@@ -45,7 +45,10 @@ func TestMissingPODsQuery(t *testing.T) {
 func TestExhaustedTendersQuery(t *testing.T) {
 	t.Parallel()
 
-	sql, _ := keeltest.Render(t, exhaustedTendersQuery(&watchtowerports.ListExhaustedTendersRequest{}))
+	sql, _ := keeltest.Render(
+		t,
+		exhaustedTendersQuery(&watchtowerports.ListExhaustedTendersRequest{}),
+	)
 
 	assert.Contains(t, sql, "NOT EXISTS")
 	assert.Contains(t, sql, `"carrier_assignments"`)

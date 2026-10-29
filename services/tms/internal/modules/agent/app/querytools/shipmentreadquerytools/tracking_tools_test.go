@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmenttracking"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/stopeta"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchboardports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
@@ -107,14 +108,14 @@ func (f *fakeTelematics) ListWorkerHOSStates(
 func trackedShipment() (*shipment.Shipment, *shipment.ShipmentMove) {
 	move := &shipment.ShipmentMove{
 		ID:           pulid.MustNew("smv_"),
-		Status:       shipment.MoveStatusInTransit,
-		CoverageType: shipment.MoveCoverageTypeDriver,
+		Status:       shipmentvocab.MoveStatusInTransit,
+		CoverageType: shipmentvocab.MoveCoverageTypeDriver,
 		Stops: []*shipment.Stop{
 			{
 				ID:                   pulid.MustNew("stp_"),
 				Sequence:             0,
-				Type:                 shipment.StopTypePickup,
-				Status:               shipment.StopStatusCompleted,
+				Type:                 shipmentvocab.StopTypePickup,
+				Status:               shipmentvocab.StopStatusCompleted,
 				ScheduledWindowStart: 1_790_000_000 - 7200,
 				ActualArrival:        ptrOf(int64(1_790_000_000 - 7000)),
 				Location:             &location.Location{Name: "Dallas Yard", City: "Dallas"},
@@ -122,8 +123,8 @@ func trackedShipment() (*shipment.Shipment, *shipment.ShipmentMove) {
 			{
 				ID:                   pulid.MustNew("stp_"),
 				Sequence:             1,
-				Type:                 shipment.StopTypeDelivery,
-				Status:               shipment.StopStatusNew,
+				Type:                 shipmentvocab.StopTypeDelivery,
+				Status:               shipmentvocab.StopStatusNew,
 				ScheduledWindowStart: 1_790_000_000 + 3*3600,
 				Location: &location.Location{
 					Name: "Houston DC", City: "Houston",
@@ -136,7 +137,7 @@ func trackedShipment() (*shipment.Shipment, *shipment.ShipmentMove) {
 	return &shipment.Shipment{
 		ID:        pulid.MustNew("shp_"),
 		ProNumber: "S12345",
-		Status:    shipment.StatusInTransit,
+		Status:    shipmentvocab.StatusInTransit,
 		Customer:  &customer.Customer{Name: "Acme"},
 		Moves:     []*shipment.ShipmentMove{move},
 	}, move

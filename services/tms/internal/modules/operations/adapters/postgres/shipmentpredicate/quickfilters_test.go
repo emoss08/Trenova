@@ -6,8 +6,8 @@ import (
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/quickfilter"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/testutil/keeltest"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -58,10 +58,10 @@ func TestQuickFilterCondition_StageFiltersUseStageRank(t *testing.T) {
 	t.Parallel()
 
 	basis := quickFilterTestBasis(t)
-	cases := map[quickfilter.QuickFilter]shipment.Stage{
-		quickfilter.QuickFilterLate:      shipment.StageLate,
-		quickfilter.QuickFilterUncovered: shipment.StageNeedsCoverage,
-		quickfilter.QuickFilterMoving:    shipment.StageMoving,
+	cases := map[quickfilter.QuickFilter]shipmentvocab.Stage{
+		quickfilter.QuickFilterLate:      shipmentvocab.StageLate,
+		quickfilter.QuickFilterUncovered: shipmentvocab.StageNeedsCoverage,
+		quickfilter.QuickFilterMoving:    shipmentvocab.StageMoving,
 	}
 	for filter, stage := range cases {
 		sql, args := renderQuickFilter(t, basis, quickfilter.Quick(filter))

@@ -9,7 +9,7 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -373,7 +373,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*tender.RoutingGuideEntry)
 					return obj.RateMethod, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNCarrierRateMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋshipmentᚐCarrierRateMethod),
+				Marshal: gqlexec.Marshal(marshalNCarrierRateMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋshipmentvocabᚐCarrierRateMethod),
 			},
 			{
 				Name:       "rate",
@@ -637,7 +637,7 @@ func marshalNBoolean2bool(ctx context.Context, ec *gqlexec.Exec, sel ast.Selecti
 	return res
 }
 
-func marshalNCarrierRateMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋshipmentᚐCarrierRateMethod(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v shipment.CarrierRateMethod) graphql.Marshaler {
+func marshalNCarrierRateMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋshipmentvocabᚐCarrierRateMethod(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v shipmentvocab.CarrierRateMethod) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)

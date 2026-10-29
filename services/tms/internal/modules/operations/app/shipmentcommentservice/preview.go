@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentcommentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -96,7 +97,7 @@ func (s *service) planPin(
 		if countErr != nil {
 			return nil, pulid.Nil, countErr
 		}
-		if pinnedCount >= shipment.MaxPinnedComments {
+		if pinnedCount >= shipmentvocab.MaxPinnedComments {
 			return nil, pulid.Nil, errortypes.NewConflictError(
 				"This shipment already has the maximum number of pinned comments",
 			)

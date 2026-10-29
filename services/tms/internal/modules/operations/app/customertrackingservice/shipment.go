@@ -7,6 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
@@ -67,7 +68,7 @@ type routeStop struct {
 func route(sh *shipment.Shipment) []routeStop {
 	moves := make([]*shipment.ShipmentMove, 0, len(sh.Moves))
 	for _, move := range sh.Moves {
-		if move != nil && move.Status != shipment.MoveStatusCanceled {
+		if move != nil && move.Status != shipmentvocab.MoveStatusCanceled {
 			moves = append(moves, move)
 		}
 	}
@@ -125,17 +126,17 @@ func originAndDestination(stops []routeStop) (origin, destination *shipment.Stop
 
 func isClosed(sh *shipment.Shipment) bool {
 	switch sh.Status {
-	case shipment.StatusCompleted,
-		shipment.StatusReadyToInvoice,
-		shipment.StatusInvoiced,
-		shipment.StatusCanceled:
+	case shipmentvocab.StatusCompleted,
+		shipmentvocab.StatusReadyToInvoice,
+		shipmentvocab.StatusInvoiced,
+		shipmentvocab.StatusCanceled:
 		return true
-	case shipment.StatusNew,
-		shipment.StatusPartiallyAssigned,
-		shipment.StatusAssigned,
-		shipment.StatusInTransit,
-		shipment.StatusDelayed,
-		shipment.StatusPartiallyCompleted:
+	case shipmentvocab.StatusNew,
+		shipmentvocab.StatusPartiallyAssigned,
+		shipmentvocab.StatusAssigned,
+		shipmentvocab.StatusInTransit,
+		shipmentvocab.StatusDelayed,
+		shipmentvocab.StatusPartiallyCompleted:
 		return false
 	default:
 		return false

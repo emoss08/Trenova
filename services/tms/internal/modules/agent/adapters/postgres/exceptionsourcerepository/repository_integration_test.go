@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document/documentdb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender/tenderdb"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype"
@@ -46,9 +47,11 @@ func newHarness(t *testing.T) *harness {
 	data := seedtest.SeedFullTestData(t, ctx, db)
 	tenant := pagination.TenantInfo{OrgID: data.Organization.ID, BuID: data.BusinessUnit.ID}
 	return &harness{
-		ctx:     dbscope.WithTenant(ctx, tenant.DBTenant()),
-		db:      db,
-		reader:  exceptionsourcerepository.New(exceptionsourcerepository.Params{DB: postgres.NewTestConnection(db)}),
+		ctx: dbscope.WithTenant(ctx, tenant.DBTenant()),
+		db:  db,
+		reader: exceptionsourcerepository.New(
+			exceptionsourcerepository.Params{DB: postgres.NewTestConnection(db)},
+		),
 		tenant:  tenant,
 		data:    data,
 		fixture: testutil.SeedShipmentIntegrationFixture(t, ctx, db, data, tenant),
@@ -56,14 +59,25 @@ func newHarness(t *testing.T) *harness {
 	}
 }
 
-func (h *harness) shipment(t *testing.T, code string, status shipment.Status) *testutil.ShipmentGraph {
+func (h *harness) shipment(
+	t *testing.T,
+	code string,
+	status shipmentvocab.Status,
+) *testutil.ShipmentGraph {
 	t.Helper()
-	graph := testutil.CreateShipmentGraph(t, h.ctx, h.db, h.fixture, h.tenant, testutil.ShipmentGraphParams{
-		BOL:          "BOL-" + code,
-		ProNumber:    "PRO-" + code,
-		ShipmentID:   pulid.MustNew("shp_"),
-		MoveStatuses: []shipment.MoveStatus{shipment.MoveStatusNew},
-	})
+	graph := testutil.CreateShipmentGraph(
+		t,
+		h.ctx,
+		h.db,
+		h.fixture,
+		h.tenant,
+		testutil.ShipmentGraphParams{
+			BOL:          "BOL-" + code,
+			ProNumber:    "PRO-" + code,
+			ShipmentID:   pulid.MustNew("shp_"),
+			MoveStatuses: []shipmentvocab.MoveStatus{shipmentvocab.MoveStatusNew},
+		},
+	)
 	h.exec(t, `UPDATE shipments SET status = $1, owner_id = $2 WHERE id = $3`,
 		string(status), h.data.User.ID.String(), graph.Shipment.ID.String())
 	return graph
@@ -77,34 +91,42 @@ func (h *harness) exec(t *testing.T, query string, args ...any) {
 
 func (h *harness) window(t *testing.T, stop *shipment.Stop, end int64) {
 	t.Helper()
-	h.exec(t, `UPDATE stops SET scheduled_window_start = $1, scheduled_window_end = $2 WHERE id = $3`,
-		end-1800, end, stop.ID.String())
+	h.exec(
+		t,
+		`UPDATE stops SET scheduled_window_start = $1, scheduled_window_end = $2 WHERE id = $3`,
+		end-1800,
+		end,
+		stop.ID.String(),
+	)
 }
 
 func (h *harness) arrive(t *testing.T, stop *shipment.Stop, at int64) {
 	t.Helper()
 	h.exec(t, `UPDATE stops SET actual_arrival = $1, status = $2 WHERE id = $3`,
-		at, string(shipment.StopStatusCompleted), stop.ID.String())
+		at, string(shipmentvocab.StopStatusCompleted), stop.ID.String())
 }
 
 func TestListMissedStopsFindsClosedWindowsWithoutAnArrival(t *testing.T) {
 	h := newHarness(t)
 
-	missed := h.shipment(t, "MS-1", shipment.StatusAssigned)
+	missed := h.shipment(t, "MS-1", shipmentvocab.StatusAssigned)
 	pickup, delivery := missed.Moves[0].Stops[0], missed.Moves[0].Stops[1]
 	h.window(t, pickup, h.now-7200)
 	h.window(t, delivery, h.now+7200)
 
-	arrived := h.shipment(t, "MS-2", shipment.StatusInTransit)
+	arrived := h.shipment(t, "MS-2", shipmentvocab.StatusInTransit)
 	h.window(t, arrived.Moves[0].Stops[0], h.now-7200)
 	h.arrive(t, arrived.Moves[0].Stops[0], h.now-7000)
 
-	canceled := h.shipment(t, "MS-3", shipment.StatusCanceled)
+	canceled := h.shipment(t, "MS-3", shipmentvocab.StatusCanceled)
 	h.window(t, canceled.Moves[0].Stops[0], h.now-7200)
 
 	stops, err := h.reader.ListMissedStops(h.ctx, &watchtowerports.ListMissedStopsRequest{
-		TenantInfo:   h.tenant,
-		StopTypes:    []shipment.StopType{shipment.StopTypePickup, shipment.StopTypeSplitPickup},
+		TenantInfo: h.tenant,
+		StopTypes: []shipmentvocab.StopType{
+			shipmentvocab.StopTypePickup,
+			shipmentvocab.StopTypeSplitPickup,
+		},
 		ClosedBefore: h.now - 1800,
 	})
 	require.NoError(t, err)
@@ -118,7 +140,7 @@ func TestListMissedStopsFindsClosedWindowsWithoutAnArrival(t *testing.T) {
 
 	deliveries, err := h.reader.ListMissedStops(h.ctx, &watchtowerports.ListMissedStopsRequest{
 		TenantInfo:   h.tenant,
-		StopTypes:    []shipment.StopType{shipment.StopTypeDelivery},
+		StopTypes:    []shipmentvocab.StopType{shipmentvocab.StopTypeDelivery},
 		ClosedBefore: h.now - 1800,
 	})
 	require.NoError(t, err)
@@ -126,7 +148,7 @@ func TestListMissedStopsFindsClosedWindowsWithoutAnArrival(t *testing.T) {
 
 	scoped, err := h.reader.ListMissedStops(h.ctx, &watchtowerports.ListMissedStopsRequest{
 		TenantInfo:   h.tenant,
-		StopTypes:    []shipment.StopType{shipment.StopTypePickup},
+		StopTypes:    []shipmentvocab.StopType{shipmentvocab.StopTypePickup},
 		ClosedBefore: h.now - 1800,
 		ShipmentIDs:  []pulid.ID{arrived.Shipment.ID},
 	})
@@ -148,7 +170,12 @@ func (h *harness) podType(t *testing.T) *documenttype.DocumentType {
 	return docType
 }
 
-func (h *harness) attach(t *testing.T, shipmentID pulid.ID, docType *documenttype.DocumentType, status document.Status) {
+func (h *harness) attach(
+	t *testing.T,
+	shipmentID pulid.ID,
+	docType *documenttype.DocumentType,
+	status document.Status,
+) {
 	t.Helper()
 	typeID := docType.ID
 	entity := &document.Document{
@@ -182,18 +209,18 @@ func TestListMissingPODsSkipsShipmentsWithAPodOnFile(t *testing.T) {
 	h := newHarness(t)
 	podType := h.podType(t)
 
-	missing := h.shipment(t, "POD-1", shipment.StatusCompleted)
+	missing := h.shipment(t, "POD-1", shipmentvocab.StatusCompleted)
 	h.arrive(t, missing.Moves[0].Stops[1], h.now-30*3600)
 
-	filed := h.shipment(t, "POD-2", shipment.StatusCompleted)
+	filed := h.shipment(t, "POD-2", shipmentvocab.StatusCompleted)
 	h.arrive(t, filed.Moves[0].Stops[1], h.now-30*3600)
 	h.attach(t, filed.Shipment.ID, podType, document.StatusActive)
 
-	rejected := h.shipment(t, "POD-3", shipment.StatusReadyToInvoice)
+	rejected := h.shipment(t, "POD-3", shipmentvocab.StatusReadyToInvoice)
 	h.arrive(t, rejected.Moves[0].Stops[1], h.now-30*3600)
 	h.attach(t, rejected.Shipment.ID, podType, document.StatusRejected)
 
-	recent := h.shipment(t, "POD-4", shipment.StatusCompleted)
+	recent := h.shipment(t, "POD-4", shipmentvocab.StatusCompleted)
 	h.arrive(t, recent.Moves[0].Stops[1], h.now-3600)
 
 	rows, err := h.reader.ListMissingPODs(h.ctx, &watchtowerports.ListMissingPODsRequest{
@@ -213,7 +240,12 @@ func TestListMissingPODsSkipsShipmentsWithAPodOnFile(t *testing.T) {
 	}
 }
 
-func (h *harness) tender(t *testing.T, graph *testutil.ShipmentGraph, status tender.Status, createdAt int64) *tender.Tender {
+func (h *harness) tender(
+	t *testing.T,
+	graph *testutil.ShipmentGraph,
+	status tender.Status,
+	createdAt int64,
+) *tender.Tender {
 	t.Helper()
 	entity := &tender.Tender{
 		ID:             pulid.MustNew("tnd_"),
@@ -238,17 +270,17 @@ func (h *harness) tender(t *testing.T, graph *testutil.ShipmentGraph, status ten
 func TestListExhaustedTendersOnlyForStillUncoveredMoves(t *testing.T) {
 	h := newHarness(t)
 
-	open := h.shipment(t, "TND-1", shipment.StatusNew)
+	open := h.shipment(t, "TND-1", shipmentvocab.StatusNew)
 	exhausted := h.tender(t, open, tender.StatusExhausted, h.now-600)
 
-	retendered := h.shipment(t, "TND-2", shipment.StatusNew)
+	retendered := h.shipment(t, "TND-2", shipmentvocab.StatusNew)
 	h.tender(t, retendered, tender.StatusExhausted, h.now-900)
 	h.tender(t, retendered, tender.StatusActive, h.now-300)
 
-	assigned := h.shipment(t, "TND-3", shipment.StatusAssigned)
+	assigned := h.shipment(t, "TND-3", shipmentvocab.StatusAssigned)
 	h.tender(t, assigned, tender.StatusExhausted, h.now-600)
 	h.exec(t, `UPDATE shipment_moves SET status = $1 WHERE id = $2`,
-		string(shipment.MoveStatusAssigned), assigned.Moves[0].ID.String())
+		string(shipmentvocab.MoveStatusAssigned), assigned.Moves[0].ID.String())
 
 	rows, err := h.reader.ListExhaustedTenders(h.ctx, &watchtowerports.ListExhaustedTendersRequest{
 		TenantInfo: h.tenant,

@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/chargeallocation"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -40,7 +41,7 @@ func staleAmountSplitError(
 	multiErr := errortypes.NewMultiError()
 	for _, split := range stale {
 		charge := "freight"
-		if split.Kind == shipment.ChargeAllocationKindAccessorial {
+		if split.Kind == shipmentvocab.ChargeAllocationKindAccessorial {
 			charge = names[split.AdditionalChargeID]
 			if charge == "" {
 				charge = "accessorial charge " + strconv.Itoa(split.ChargeIndex+1)

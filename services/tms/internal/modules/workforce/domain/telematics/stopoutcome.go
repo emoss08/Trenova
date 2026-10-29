@@ -3,7 +3,7 @@ package telematics
 import (
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
@@ -49,7 +49,7 @@ func (e *TelematicsEvent) RecordStopOutcome(result *StopVisitResult) {
 
 type StopVisitResult struct {
 	Outcome StopOutcome
-	Visit   shipment.VisitKind
+	Visit   shipmentvocab.VisitKind
 	MoveID  pulid.ID
 	StopID  pulid.ID
 	Reason  string

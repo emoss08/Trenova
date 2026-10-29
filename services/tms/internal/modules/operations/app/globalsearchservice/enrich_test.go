@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/internal/testutil/mocks/customerportsmock"
@@ -170,7 +170,7 @@ func TestSearchFindsACustomersShipmentsAndAWorkersCurrentLoad(t *testing.T) {
 				ShipmentID:       customerLoad,
 				ProNumber:        "S-240193",
 				BOL:              "88213",
-				Status:           shipment.StatusInTransit,
+				Status:           shipmentvocab.StatusInTransit,
 				CustomerID:       customerID,
 				CustomerName:     "Acme Foods",
 				CustomerCode:     "ACME",
@@ -184,7 +184,7 @@ func TestSearchFindsACustomersShipmentsAndAWorkersCurrentLoad(t *testing.T) {
 			workerLoad: {
 				ShipmentID: workerLoad,
 				ProNumber:  "S-240201",
-				Status:     shipment.StatusDelayed,
+				Status:     shipmentvocab.StatusDelayed,
 			},
 		},
 		links: []*shipmentports.ShipmentPartyLink{

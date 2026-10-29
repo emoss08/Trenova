@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/trackingtemplate"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/customertracking"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/stopeta"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/customertrackingports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
@@ -16,10 +17,10 @@ import (
 )
 
 func pickedUpShipment(h *harness) *shipment.Shipment {
-	return h.addShipment(shipment.StatusInTransit,
-		stopSpec{stopType: shipment.StopTypePickup, city: "Dallas", state: "TX",
+	return h.addShipment(shipmentvocab.StatusInTransit,
+		stopSpec{stopType: shipmentvocab.StopTypePickup, city: "Dallas", state: "TX",
 			arrival: at(-7200), departure: at(-3600)},
-		stopSpec{stopType: shipment.StopTypeDelivery, city: "Memphis", state: "TN"},
+		stopSpec{stopType: shipmentvocab.StopTypeDelivery, city: "Memphis", state: "TN"},
 	)
 }
 
@@ -236,10 +237,10 @@ func TestEvaluate_DelayedNamesTheStopAndItsNewArrival(t *testing.T) {
 
 func TestEvaluate_PodReadyFromTheDocumentOnFile(t *testing.T) {
 	h := newHarness()
-	sh := h.addShipment(shipment.StatusCompleted,
-		stopSpec{stopType: shipment.StopTypePickup, city: "Dallas", state: "TX",
+	sh := h.addShipment(shipmentvocab.StatusCompleted,
+		stopSpec{stopType: shipmentvocab.StopTypePickup, city: "Dallas", state: "TX",
 			departure: at(-90000)},
-		stopSpec{stopType: shipment.StopTypeDelivery, city: "Memphis", state: "TN",
+		stopSpec{stopType: shipmentvocab.StopTypeDelivery, city: "Memphis", state: "TN",
 			arrival: at(-7200), departure: at(-3600)},
 	)
 	h.notify(sh.CustomerID, func(p *customertracking.Profile) {

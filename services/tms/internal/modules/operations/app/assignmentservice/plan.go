@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentcoverage"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentstate"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/assignmentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
@@ -42,7 +43,7 @@ func NewMoveAssignment(
 		TractorID:         &req.TractorID,
 		TrailerID:         req.TrailerID,
 		SecondaryWorkerID: req.SecondaryWorkerID,
-		Status:            shipment.AssignmentStatusNew,
+		Status:            shipmentvocab.AssignmentStatusNew,
 	}, nil
 }
 
@@ -309,7 +310,7 @@ func (s *service) projectAssignment(
 		return nil, errMoveNotOnShipment(plan.moveID)
 	}
 	targetMove.Assignment = assignment
-	targetMove.CoverageType = shipment.MoveCoverageTypeDriver
+	targetMove.CoverageType = shipmentvocab.MoveCoverageTypeDriver
 
 	control, err := s.controlRepo.Get(ctx, tenantports.GetShipmentControlRequest{
 		TenantInfo: tenantInfo,
@@ -391,7 +392,7 @@ func (s *service) planUnassign(
 		return nil, err
 	}
 
-	if move.Status != shipment.MoveStatusAssigned {
+	if move.Status != shipmentvocab.MoveStatusAssigned {
 		return nil, errortypes.NewBusinessError("Only fresh assigned shipment moves can be unassigned").
 			WithParam("shipmentMoveId", req.ShipmentMoveID.String())
 	}
@@ -417,7 +418,7 @@ func (s *service) planUnassign(
 	if existing == nil {
 		return nil, errortypes.NewNotFoundError("Assignment not found within your organization")
 	}
-	if existing.Status != shipment.AssignmentStatusNew {
+	if existing.Status != shipmentvocab.AssignmentStatusNew {
 		return nil, errortypes.NewBusinessError("Only fresh assignments can be unassigned").
 			WithParam("shipmentMoveId", req.ShipmentMoveID.String())
 	}
@@ -438,8 +439,8 @@ func (s *service) projectUnassign(
 		return nil, errMoveNotOnShipment(req.ShipmentMoveID)
 	}
 	targetMove.Assignment = nil
-	targetMove.CoverageType = shipment.MoveCoverageTypeUnassigned
-	targetMove.Status = shipment.MoveStatusNew
+	targetMove.CoverageType = shipmentvocab.MoveCoverageTypeUnassigned
+	targetMove.Status = shipmentvocab.MoveStatusNew
 
 	control, err := s.controlRepo.Get(ctx, tenantports.GetShipmentControlRequest{
 		TenantInfo: req.TenantInfo,

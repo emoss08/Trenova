@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/usstateports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentdistanceports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentmoveports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
@@ -1361,7 +1362,7 @@ func buildJurisdictionMiles(params moveDistanceParams) []*shipment.ShipmentMoveJ
 			Distance:          roundDistance(item.Distance),
 			DistanceUnits:     units,
 			Loaded:            params.move.Loaded,
-			Source:            shipment.JurisdictionMileSourceRouteCalculation,
+			Source:            shipmentvocab.JurisdictionMileSourceRouteCalculation,
 			Provider:          params.provider,
 			DataVersion:       params.dataVersion,
 			DistanceProfileID: pulid.ID(params.profileID),
@@ -1381,10 +1382,13 @@ func buildJurisdictionMiles(params moveDistanceParams) []*shipment.ShipmentMoveJ
 }
 
 func normalizeJurisdictionUnits(units string) string {
-	if strings.EqualFold(strings.TrimSpace(units), shipment.JurisdictionDistanceUnitsKilometers) {
-		return shipment.JurisdictionDistanceUnitsKilometers
+	if strings.EqualFold(
+		strings.TrimSpace(units),
+		shipmentvocab.JurisdictionDistanceUnitsKilometers,
+	) {
+		return shipmentvocab.JurisdictionDistanceUnitsKilometers
 	}
-	return shipment.JurisdictionDistanceUnitsMiles
+	return shipmentvocab.JurisdictionDistanceUnitsMiles
 }
 
 func normalizeJurisdictionCountry(country string) string {

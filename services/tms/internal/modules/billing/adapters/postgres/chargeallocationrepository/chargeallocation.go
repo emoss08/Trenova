@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/chargeallocation"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/chargeallocationports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -80,7 +81,8 @@ func (r *repository) syncShipmentRows(ctx context.Context, entity *shipment.Ship
 
 	kept := make(map[pulid.ID]struct{}, len(entity.ChargeAllocations))
 	for _, allocation := range entity.ChargeAllocations {
-		if allocation == nil || allocation.ChargeKind == shipment.ChargeAllocationKindOrderCharge {
+		if allocation == nil ||
+			allocation.ChargeKind == shipmentvocab.ChargeAllocationKindOrderCharge {
 			continue
 		}
 		if err = r.normalize(entity, allocation); err != nil {
@@ -146,10 +148,10 @@ func (r *repository) normalize(
 	allocation.OrderChargeID = nil
 
 	switch allocation.ChargeKind {
-	case shipment.ChargeAllocationKindFreight:
+	case shipmentvocab.ChargeAllocationKindFreight:
 		allocation.AdditionalChargeID = nil
 		allocation.AdditionalChargeIndex = nil
-	case shipment.ChargeAllocationKindAccessorial:
+	case shipmentvocab.ChargeAllocationKindAccessorial:
 		if allocation.AdditionalChargeIndex != nil {
 			idx := *allocation.AdditionalChargeIndex
 			if idx < 0 || idx >= len(entity.AdditionalCharges) ||
@@ -186,7 +188,7 @@ func (r *repository) normalize(
 				"Allocation points at an additional charge that is not on this shipment",
 			)
 		}
-	case shipment.ChargeAllocationKindOrderCharge:
+	case shipmentvocab.ChargeAllocationKindOrderCharge:
 	}
 
 	return nil
@@ -268,7 +270,7 @@ func (r *repository) dropOrphans(ctx context.Context, entity *shipment.Shipment)
 	ac := shipmentdb.AdditionalCharges
 	_, err := ca.Where(
 		ca.ShipmentID.Eq(entity.ID),
-		ca.ChargeKind.Eq(shipment.ChargeAllocationKindAccessorial),
+		ca.ChargeKind.Eq(shipmentvocab.ChargeAllocationKindAccessorial),
 		ca.InvoiceID.IsNull(),
 		keel.NotExists(ac.Where(ac.ID.EqCol(ca.AdditionalChargeID))),
 	).Delete(ctx, r.db.Keel(ctx))
@@ -298,7 +300,7 @@ func (r *repository) SyncForOrderCharge(
 			}
 			allocation.OrganizationID = req.TenantInfo.OrgID
 			allocation.BusinessUnitID = req.TenantInfo.BuID
-			allocation.ChargeKind = shipment.ChargeAllocationKindOrderCharge
+			allocation.ChargeKind = shipmentvocab.ChargeAllocationKindOrderCharge
 			chargeID := req.OrderChargeID
 			allocation.OrderChargeID = &chargeID
 			allocation.ShipmentID = nil

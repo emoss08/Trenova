@@ -19,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentvalidator"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentstate"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/assignmentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchcontrolports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenteventports"
@@ -347,7 +348,7 @@ func (s *service) Reassign(
 			updated.TractorID = &req.TractorID
 			updated.TrailerID = req.TrailerID
 			updated.SecondaryWorkerID = req.SecondaryWorkerID
-			updated.Status = shipment.AssignmentStatusNew
+			updated.Status = shipmentvocab.AssignmentStatusNew
 
 			return &updated, nil
 		},

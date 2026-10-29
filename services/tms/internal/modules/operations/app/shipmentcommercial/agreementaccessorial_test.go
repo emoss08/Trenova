@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/shipmentcontrol"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentcommercial/shipmentcommercialtest"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/fuelsurchargeports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/rateagreementports"
@@ -44,7 +45,7 @@ func TestAdoptContractRate_AppliesAgreementAccessorials(t *testing.T) {
 	require.Len(t, entity.AdditionalCharges, 1)
 	charge := entity.AdditionalCharges[0]
 
-	assert.Equal(t, shipment.SystemOwnerAgreement, charge.Owner())
+	assert.Equal(t, shipmentvocab.SystemOwnerAgreement, charge.Owner())
 	assert.Equal(t, agreement.Accessorials[0].ID, *charge.RateAgreementAccessorialID)
 	assert.True(t, decimal.NewFromInt(75).Equal(charge.Amount))
 	assert.True(t, decimal.NewFromInt(175).Equal(entity.TotalChargeAmount.Decimal))

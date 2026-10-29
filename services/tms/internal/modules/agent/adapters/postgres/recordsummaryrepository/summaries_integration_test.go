@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/stopeta"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/stopeta/stopetadb"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier/carrierdb"
@@ -155,7 +156,7 @@ func TestSummaries_ReadALoadEstimatedToMissAWindowStillOpenAsProjected(t *testin
 	now := time.Now().Unix()
 	due := now + 3600
 	_, err = stp.Where(stp.ShipmentMoveID.In(moveIDs...)).Update(ctx, db,
-		stp.Status.To(shipment.StopStatusNew), stp.ScheduledWindowStart.To(due-1800),
+		stp.Status.To(shipmentvocab.StopStatusNew), stp.ScheduledWindowStart.To(due-1800),
 		stp.ScheduledWindowEnd.To(due))
 	require.NoError(t, err)
 	next := stops[0]

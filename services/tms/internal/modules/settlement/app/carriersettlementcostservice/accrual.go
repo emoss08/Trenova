@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/settlementcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/carrierassignmentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/settlementshared"
@@ -33,7 +34,7 @@ func (s *Service) AfterShipmentUpdate(
 		BuID:  updated.BusinessUnitID,
 	}
 
-	if updated.Status == shipment.StatusCanceled {
+	if updated.Status == shipmentvocab.StatusCanceled {
 		if err := s.VoidShipmentCostEvents(ctx, tenantInfo, updated.ID,
 			"Shipment canceled"); err != nil {
 			s.l.Error("failed to void carrier cost events for canceled shipment",
@@ -71,17 +72,17 @@ func (s *Service) AfterMoveStatusChange(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	move *shipment.ShipmentMove,
-	previous shipment.MoveStatus,
+	previous shipmentvocab.MoveStatus,
 ) error {
 	if move == nil {
 		return nil
 	}
 
-	if move.Status != shipment.MoveStatusCompleted &&
-		(previous == shipment.MoveStatusCompleted ||
-			move.Status == shipment.MoveStatusCanceled) {
+	if move.Status != shipmentvocab.MoveStatusCompleted &&
+		(previous == shipmentvocab.MoveStatusCompleted ||
+			move.Status == shipmentvocab.MoveStatusCanceled) {
 		reason := "Move canceled"
-		if move.Status != shipment.MoveStatusCanceled {
+		if move.Status != shipmentvocab.MoveStatusCanceled {
 			reason = "Move status reverted from completed"
 		}
 		if err := s.voidMoveCostEvents(ctx, tenantInfo, move.ID, reason); err != nil {
@@ -91,8 +92,8 @@ func (s *Service) AfterMoveStatusChange(
 		return nil
 	}
 
-	if move.Status != shipment.MoveStatusCompleted ||
-		previous == shipment.MoveStatusCompleted {
+	if move.Status != shipmentvocab.MoveStatusCompleted ||
+		previous == shipmentvocab.MoveStatusCompleted {
 		return nil
 	}
 
@@ -152,7 +153,7 @@ func (s *Service) accrueShipmentMoves(
 	}
 
 	for _, move := range sp.Moves {
-		if move == nil || move.Status == shipment.MoveStatusCanceled ||
+		if move == nil || move.Status == shipmentvocab.MoveStatusCanceled ||
 			!move.IsCarrierCovered() {
 			continue
 		}
@@ -337,7 +338,7 @@ func (s *Service) ReaccrueMove(
 			break
 		}
 	}
-	if move == nil || move.Status == shipment.MoveStatusCanceled || !move.IsCarrierCovered() {
+	if move == nil || move.Status == shipmentvocab.MoveStatusCanceled || !move.IsCarrierCovered() {
 		return s.voidStaleMoveCostEvents(ctx, tenantInfo, moveID, nil)
 	}
 
@@ -358,11 +359,11 @@ func (s *Service) ReaccrueMove(
 
 func payTriggerCrossed(
 	trigger settlementcontrol.PayTrigger,
-	shipmentStatus shipment.Status,
-	moveStatus shipment.MoveStatus,
+	shipmentStatus shipmentvocab.Status,
+	moveStatus shipmentvocab.MoveStatus,
 ) bool {
 	if trigger == settlementcontrol.PayTriggerMoveCompleted &&
-		moveStatus == shipment.MoveStatusCompleted {
+		moveStatus == shipmentvocab.MoveStatusCompleted {
 		return true
 	}
 	rank, ok := settlementshared.ShipmentStatusRank(shipmentStatus)

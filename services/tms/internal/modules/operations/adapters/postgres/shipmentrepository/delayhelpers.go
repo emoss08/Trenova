@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentstate"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -146,7 +147,7 @@ func (r *repository) markDelayed(
 	if _, err := scoped(sp.Where(sp.ID.In(shipmentIDsFromEntities(entities)...)), t).Update(
 		ctx,
 		r.db.Keel(ctx),
-		sp.Status.To(shipment.StatusDelayed),
+		sp.Status.To(shipmentvocab.StatusDelayed),
 		sp.UpdatedAt.To(currentTime),
 		sp.Version.ToExpr(sp.Version),
 	); err != nil {
@@ -154,7 +155,7 @@ func (r *repository) markDelayed(
 	}
 
 	for _, entity := range entities {
-		entity.Status = shipment.StatusDelayed
+		entity.Status = shipmentvocab.StatusDelayed
 		entity.UpdatedAt = currentTime
 	}
 

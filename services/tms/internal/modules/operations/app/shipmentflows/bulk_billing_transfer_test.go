@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentservicetest"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentbillingports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
@@ -100,7 +101,7 @@ func (f *bulkTransferFixture) tenant() pagination.TenantInfo {
 
 func (f *bulkTransferFixture) newShipment(
 	proNumber string,
-	status shipment.Status,
+	status shipmentvocab.Status,
 ) *shipment.Shipment {
 	entity := shipmentservicetest.ValidShipment()
 	entity.ID = pulid.MustNew("shp_")
@@ -204,10 +205,10 @@ func TestBulkTransferToBilling_ReportsEachShipmentsOutcomeInRequestOrder(t *test
 
 	f := newBulkTransferFixture(t)
 
-	clean := f.newShipment("PRO-1", shipment.StatusReadyToInvoice)
-	missingDocs := f.newShipment("PRO-2", shipment.StatusReadyToInvoice)
-	alreadyQueued := f.newShipment("PRO-3", shipment.StatusReadyToInvoice)
-	alreadyQueued.BillingTransferStatus = shipment.BillingTransferInReview
+	clean := f.newShipment("PRO-1", shipmentvocab.StatusReadyToInvoice)
+	missingDocs := f.newShipment("PRO-2", shipmentvocab.StatusReadyToInvoice)
+	alreadyQueued := f.newShipment("PRO-3", shipmentvocab.StatusReadyToInvoice)
+	alreadyQueued.BillingTransferStatus = shipmentvocab.BillingTransferInReview
 
 	podType := &documenttype.DocumentType{
 		ID:   pulid.MustNew("dt_"),
@@ -286,14 +287,14 @@ func TestBulkTransferToBilling_MarksCompletedShipmentsReadyBeforeTransferring(t 
 
 	f := newBulkTransferFixture(t)
 
-	completed := f.newShipment("PRO-10", shipment.StatusCompleted)
+	completed := f.newShipment("PRO-10", shipmentvocab.StatusCompleted)
 
 	f.expectShipment(completed)
 	f.expectReadiness(completed, &customer.CustomerBillingProfile{}, manualBillingControl(), nil)
 	f.repo.EXPECT().
 		MarkReadyToInvoice(mock.Anything, mock.MatchedBy(func(entity *shipment.Shipment) bool {
 			return entity.ID == completed.ID &&
-				entity.Status == shipment.StatusReadyToInvoice &&
+				entity.Status == shipmentvocab.StatusReadyToInvoice &&
 				entity.MarkedReadyToBillAt != nil &&
 				*entity.MarkedReadyToBillAt > 0
 		})).
@@ -329,7 +330,7 @@ func TestBulkTransferToBilling_LeavesCompletedShipmentsAloneWithoutOptIn(t *test
 
 	f := newBulkTransferFixture(t)
 
-	completed := f.newShipment("PRO-20", shipment.StatusCompleted)
+	completed := f.newShipment("PRO-20", shipmentvocab.StatusCompleted)
 	f.expectShipment(completed)
 
 	response, err := f.svc.transfer.BulkTransferToBilling(
@@ -356,7 +357,7 @@ func TestBulkTransferToBilling_DoesNotMarkCompletedShipmentsThatFailReadiness(t 
 
 	f := newBulkTransferFixture(t)
 
-	completed := f.newShipment("PRO-30", shipment.StatusCompleted)
+	completed := f.newShipment("PRO-30", shipmentvocab.StatusCompleted)
 	control := manualBillingControl()
 	control.RateValidationEnforcement = tenant.EnforcementLevelBlock
 
@@ -390,7 +391,7 @@ func TestBulkTransferToBilling_ReportsMissingShipmentsAndKeepsGoing(t *testing.T
 	f := newBulkTransferFixture(t)
 
 	missingID := pulid.MustNew("shp_")
-	clean := f.newShipment("PRO-40", shipment.StatusReadyToInvoice)
+	clean := f.newShipment("PRO-40", shipmentvocab.StatusReadyToInvoice)
 
 	f.repo.EXPECT().
 		GetByID(mock.Anything, mock.MatchedBy(func(req *shipmentports.GetShipmentByIDRequest) bool {
@@ -429,7 +430,7 @@ func TestBulkTransferToBilling_ReportsAQueueConflictAsAlreadyTransferred(t *test
 
 	f := newBulkTransferFixture(t)
 
-	raced := f.newShipment("PRO-50", shipment.StatusReadyToInvoice)
+	raced := f.newShipment("PRO-50", shipmentvocab.StatusReadyToInvoice)
 	f.expectShipment(raced)
 	f.expectReadiness(raced, &customer.CustomerBillingProfile{}, manualBillingControl(), nil)
 	f.billingQueue.EXPECT().
@@ -460,7 +461,7 @@ func TestBulkTransferToBilling_TransfersADuplicatedIDOnce(t *testing.T) {
 
 	f := newBulkTransferFixture(t)
 
-	clean := f.newShipment("PRO-60", shipment.StatusReadyToInvoice)
+	clean := f.newShipment("PRO-60", shipmentvocab.StatusReadyToInvoice)
 	f.expectShipment(clean)
 	f.expectReadiness(clean, &customer.CustomerBillingProfile{}, manualBillingControl(), nil)
 	f.expectQueued(clean)
@@ -530,7 +531,7 @@ func TestListBillingTransferCandidateIDs(t *testing.T) {
 			ListBillingTransferCandidateIDs(mock.Anything, mock.MatchedBy(func(req *shipmentports.ListBillingTransferCandidateIDsQuery) bool {
 				return req.Filter.TenantInfo.OrgID == orgID &&
 					req.Filter.Query == "PRO" &&
-					req.Status == shipment.StatusCompleted &&
+					req.Status == shipmentvocab.StatusCompleted &&
 					req.Limit == shipmentbillingports.MaxBillingTransferCandidateIDs
 			})).
 			Return(&shipmentports.BillingTransferCandidateIDsResult{IDs: ids, TotalCount: 9000}, nil).
@@ -544,7 +545,7 @@ func TestListBillingTransferCandidateIDs(t *testing.T) {
 					TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID},
 					Query:      "PRO",
 				},
-				Status: shipment.StatusCompleted,
+				Status: shipmentvocab.StatusCompleted,
 			},
 		)
 
@@ -590,7 +591,7 @@ func TestListBillingTransferCandidateIDs(t *testing.T) {
 				Filter: &pagination.QueryOptions{
 					TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID},
 				},
-				Status: shipment.StatusInTransit,
+				Status: shipmentvocab.StatusInTransit,
 			},
 		)
 
@@ -607,9 +608,9 @@ func TestBulkTransferToBilling_ReportsEachOutcomeAsItHappens(t *testing.T) {
 
 	f := newBulkTransferFixture(t)
 
-	first := f.newShipment("PRO-1", shipment.StatusReadyToInvoice)
-	second := f.newShipment("PRO-2", shipment.StatusReadyToInvoice)
-	missing := f.newShipment("PRO-3", shipment.StatusReadyToInvoice)
+	first := f.newShipment("PRO-1", shipmentvocab.StatusReadyToInvoice)
+	second := f.newShipment("PRO-2", shipmentvocab.StatusReadyToInvoice)
+	missing := f.newShipment("PRO-3", shipmentvocab.StatusReadyToInvoice)
 
 	profile := &customer.CustomerBillingProfile{}
 
@@ -690,7 +691,7 @@ func TestBulkTransferToBilling_SuppressesExceptionNotificationsWhenAsked(t *test
 		DocumentTypes: []*documenttype.DocumentType{podType},
 	}
 
-	missingDocs := f.newShipment("PRO-1", shipment.StatusReadyToInvoice)
+	missingDocs := f.newShipment("PRO-1", shipmentvocab.StatusReadyToInvoice)
 	f.expectShipment(missingDocs)
 	f.expectReadiness(missingDocs, profile, manualBillingControl(), []*document.Document{})
 
@@ -734,9 +735,9 @@ func TestBulkTransferToBilling_ReadsTheBillingPolicyOncePerRun(t *testing.T) {
 
 	profile := &customer.CustomerBillingProfile{}
 	shipments := []*shipment.Shipment{
-		f.newShipment("PRO-1", shipment.StatusReadyToInvoice),
-		f.newShipment("PRO-2", shipment.StatusReadyToInvoice),
-		f.newShipment("PRO-3", shipment.StatusReadyToInvoice),
+		f.newShipment("PRO-1", shipmentvocab.StatusReadyToInvoice),
+		f.newShipment("PRO-2", shipmentvocab.StatusReadyToInvoice),
+		f.newShipment("PRO-3", shipmentvocab.StatusReadyToInvoice),
 	}
 
 	ids := make([]pulid.ID, 0, len(shipments))
@@ -773,12 +774,12 @@ func TestBulkTransferToBilling_DoesNotShareThePolicyAcrossRuns(t *testing.T) {
 	f := newBulkTransferFixture(t)
 	profile := &customer.CustomerBillingProfile{}
 
-	first := f.newShipment("PRO-1", shipment.StatusReadyToInvoice)
+	first := f.newShipment("PRO-1", shipmentvocab.StatusReadyToInvoice)
 	f.expectShipment(first)
 	f.expectReadiness(first, profile, manualBillingControl(), []*document.Document{})
 	f.expectQueued(first)
 
-	second := f.newShipment("PRO-2", shipment.StatusReadyToInvoice)
+	second := f.newShipment("PRO-2", shipmentvocab.StatusReadyToInvoice)
 	f.expectShipment(second)
 	f.expectReadiness(second, profile, manualBillingControl(), []*document.Document{})
 	f.expectQueued(second)

@@ -3,7 +3,7 @@ package shipmentpredicate
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -68,7 +68,7 @@ func TestShipmentOptionPredicates_IDsAndStatusesMatchThoseShipments(t *testing.T
 	id := pulid.MustNew("shp_")
 	sql, args := renderShipments(t, OptionPredicates(&shipmentports.ShipmentOptions{
 		IDs:      []pulid.ID{id},
-		Statuses: []shipment.Status{shipment.StatusNew},
+		Statuses: []shipmentvocab.Status{shipmentvocab.StatusNew},
 	})...)
 
 	assert.Contains(t, sql, `s."id" = ANY(`)

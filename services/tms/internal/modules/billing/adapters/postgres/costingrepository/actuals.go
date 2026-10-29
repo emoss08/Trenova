@@ -9,8 +9,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod/fiscalperioddb"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/glbalance/glbalancedb"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/costingcontrolports"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"go.uber.org/fx"
@@ -105,7 +105,7 @@ func (r *actualsRepository) ShipmentMilesByIDs(
 				LeftJoin(
 					sm,
 					sm.ShipmentID.EqCol(sp.ID),
-					sm.Status.Ne(shipment.MoveStatusCanceled),
+					sm.Status.Ne(shipmentvocab.MoveStatusCanceled),
 				).
 				Pick(
 					sp.ID,
@@ -163,8 +163,8 @@ func (r *actualsRepository) FleetMiles(
 					Where(
 						sm.Distance.IsNotNull(),
 						sm.Distance.Gt(0),
-						sm.Status.Ne(shipment.MoveStatusCanceled),
-						sp.Status.Ne(shipment.StatusCanceled),
+						sm.Status.Ne(shipmentvocab.MoveStatusCanceled),
+						sp.Status.Ne(shipmentvocab.StatusCanceled),
 						sm.CreatedAt.Gte(req.FromDate),
 						sm.CreatedAt.Lte(req.ToDate),
 					),
@@ -202,7 +202,7 @@ func (r *actualsRepository) FleetCostAggregates(
 						sm.ShipmentID.EqCol(sp.ID),
 						sm.Distance.IsNotNull(),
 						sm.Distance.Gt(0),
-						sm.Status.Ne(shipment.MoveStatusCanceled),
+						sm.Status.Ne(shipmentvocab.MoveStatusCanceled),
 					).
 					Pick(
 						sp.ID,
@@ -212,7 +212,7 @@ func (r *actualsRepository) FleetCostAggregates(
 						floatSum(sm.Distance.Sum().Filter(sm.Loaded.IsFalse())),
 					).
 					Where(
-						sp.Status.Ne(shipment.StatusCanceled),
+						sp.Status.Ne(shipmentvocab.StatusCanceled),
 						sp.CreatedAt.Gte(req.FromDate),
 						sp.CreatedAt.Lte(req.ToDate),
 					).

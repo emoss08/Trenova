@@ -2,6 +2,7 @@ package invoiceservicetest
 
 import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 )
@@ -23,16 +24,16 @@ func FreightSplit(leg *shipment.Shipment, payer, other pulid.ID, payerPercent in
 	leg.ChargeAllocations = []*shipment.ChargeAllocation{
 		{
 			ID:               pulid.MustNew("chal_"),
-			ChargeKind:       shipment.ChargeAllocationKindFreight,
+			ChargeKind:       shipmentvocab.ChargeAllocationKindFreight,
 			BillToCustomerID: payer,
-			Method:           shipment.ChargeAllocationMethodPercent,
+			Method:           shipmentvocab.ChargeAllocationMethodPercent,
 			Percent:          decimal.NewNullDecimal(decimal.NewFromInt(payerPercent)),
 		},
 		{
 			ID:               pulid.MustNew("chal_"),
-			ChargeKind:       shipment.ChargeAllocationKindFreight,
+			ChargeKind:       shipmentvocab.ChargeAllocationKindFreight,
 			BillToCustomerID: other,
-			Method:           shipment.ChargeAllocationMethodPercent,
+			Method:           shipmentvocab.ChargeAllocationMethodPercent,
 			Percent:          decimal.NewNullDecimal(decimal.NewFromInt(100 - payerPercent)),
 			Sequence:         1,
 		},

@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/shipmentcontrol"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentcommercial/shipmentcommercialtest"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/fuelsurchargeports"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/accessorialchargeports"
@@ -642,8 +643,8 @@ func validShipment() *shipment.Shipment {
 			{
 				Stops: []*shipment.Stop{
 					{
-						Status: shipment.StopStatusNew,
-						Type:   shipment.StopTypePickup,
+						Status: shipmentvocab.StopStatusNew,
+						Type:   shipmentvocab.StopTypePickup,
 					},
 				},
 			},

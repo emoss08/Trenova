@@ -21,6 +21,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/app/orderservice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/order"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -110,9 +111,9 @@ func splitWords(rows []*shipment.ChargeAllocation) string {
 			continue
 		}
 		switch row.Method {
-		case shipment.ChargeAllocationMethodPercent:
+		case shipmentvocab.ChargeAllocationMethodPercent:
 			parts = append(parts, row.Percent.Decimal.String()+"%")
-		case shipment.ChargeAllocationMethodAmount:
+		case shipmentvocab.ChargeAllocationMethodAmount:
 			parts = append(parts, row.Amount.Decimal.StringFixed(2))
 		}
 	}
@@ -244,7 +245,7 @@ func NewAddOrderChargeTool(charges orderChargeKeeper) agenttoolports.AgentTool {
 			allocations, err := allocationparams.ReadAllocations(
 				params.Params,
 				tenant,
-				shipment.ChargeAllocationKindOrderCharge,
+				shipmentvocab.ChargeAllocationKindOrderCharge,
 				nil,
 			)
 			if err != nil {
@@ -359,7 +360,7 @@ func (r *chargeRef) updateRequest(
 	if req.Allocations, err = allocationparams.ReadAllocations(
 		r.params,
 		r.tenant,
-		shipment.ChargeAllocationKindOrderCharge,
+		shipmentvocab.ChargeAllocationKindOrderCharge,
 		current.Allocations,
 	); err != nil {
 		return nil, err
@@ -379,7 +380,7 @@ func (r *chargeRef) allocationRequest(
 	allocations, err := allocationparams.ReadAllocations(
 		r.params,
 		r.tenant,
-		shipment.ChargeAllocationKindOrderCharge,
+		shipmentvocab.ChargeAllocationKindOrderCharge,
 		current.Allocations,
 	)
 	if err != nil {
@@ -506,7 +507,7 @@ func NewSetOrderChargeAllocationsTool(charges orderChargeKeeper) agenttoolports.
 					return nil, err
 				}
 				if _, err = allocationparams.ReadAllocations(params.Params, ref.tenant,
-					shipment.ChargeAllocationKindOrderCharge, nil); err != nil {
+					shipmentvocab.ChargeAllocationKindOrderCharge, nil); err != nil {
 					return nil, err
 				}
 				if !toolparams.SendsAny(params.Params, allocationparams.ParamAllocations) {

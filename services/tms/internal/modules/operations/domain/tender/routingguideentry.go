@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/keel"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -28,9 +28,9 @@ type RoutingGuideEntry struct {
 	RoutingGuideID pulid.ID `json:"routingGuideId" keel:"routing_guide_id"`
 	CarrierID      pulid.ID `json:"carrierId"      keel:"carrier_id"`
 
-	Rank       int16                      `json:"rank"       keel:"rank"`
-	RateMethod shipment.CarrierRateMethod `json:"rateMethod" keel:"rate_method"`
-	Rate       decimal.Decimal            `json:"rate"       keel:"rate"`
+	Rank       int16                           `json:"rank"       keel:"rank"`
+	RateMethod shipmentvocab.CarrierRateMethod `json:"rateMethod" keel:"rate_method"`
+	Rate       decimal.Decimal                 `json:"rate"       keel:"rate"`
 
 	// UseContractRate offers what the carrier's contract says today rather than
 	// the rate frozen on this entry. A guide written a year ago carries the
@@ -50,7 +50,7 @@ type RoutingGuideEntry struct {
 
 func (rge *RoutingGuideEntry) applyDefaults() {
 	if rge.RateMethod == "" {
-		rge.RateMethod = shipment.CarrierRateMethodFlat
+		rge.RateMethod = shipmentvocab.CarrierRateMethodFlat
 	}
 	if rge.Channel == "" {
 		rge.Channel = ChannelEmail
@@ -72,7 +72,7 @@ func (rge *RoutingGuideEntry) Validate(multiErr *errortypes.MultiError) {
 		),
 		validation.Field(&rge.RateMethod,
 			validation.Required.Error("Rate method is required"),
-			domainvalidation.ValidEnum[shipment.CarrierRateMethod]("Rate method is invalid"),
+			domainvalidation.ValidEnum[shipmentvocab.CarrierRateMethod]("Rate method is invalid"),
 		),
 		validation.Field(&rge.Channel,
 			validation.Required.Error("Channel is required"),
@@ -113,7 +113,7 @@ func (rge *RoutingGuideEntry) GetBusinessUnitID() pulid.ID {
 
 func (rge *RoutingGuideEntry) BeforeCreate(_ context.Context) error {
 	if rge.RateMethod == "" {
-		rge.RateMethod = shipment.CarrierRateMethodFlat
+		rge.RateMethod = shipmentvocab.CarrierRateMethodFlat
 	}
 	if rge.Channel == "" {
 		rge.Channel = ChannelEmail

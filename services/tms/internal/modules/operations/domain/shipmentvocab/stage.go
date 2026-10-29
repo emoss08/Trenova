@@ -1,4 +1,4 @@
-package shipment
+package shipmentvocab
 
 import (
 	"strconv"
@@ -98,10 +98,6 @@ func Stages() []Stage {
 func (s Stage) IsValid() bool {
 	_, ok := rankByStage[s]
 	return ok
-}
-
-func (s *Shipment) Stage() Stage {
-	return StageOf(s.Status)
 }
 
 func StageRankSQL(statusColumn string) string {

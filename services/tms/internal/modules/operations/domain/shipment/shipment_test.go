@@ -3,6 +3,7 @@ package shipment
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/require"
 )
@@ -14,29 +15,29 @@ func TestShipment_ApplyEntryMethodDefault(t *testing.T) {
 		name     string
 		shipment *Shipment
 		original *Shipment
-		want     EntryMethod
+		want     shipmentvocab.EntryMethod
 	}{
 		{
 			name:     "defaults create to manual",
 			shipment: &Shipment{},
-			want:     EntryMethodManual,
+			want:     shipmentvocab.EntryMethodManual,
 		},
 		{
 			name:     "preserves original update value",
 			shipment: &Shipment{},
-			original: &Shipment{EntryMethod: EntryMethodEDI},
-			want:     EntryMethodEDI,
+			original: &Shipment{EntryMethod: shipmentvocab.EntryMethodEDI},
+			want:     shipmentvocab.EntryMethodEDI,
 		},
 		{
 			name:     "keeps explicit update value",
-			shipment: &Shipment{EntryMethod: EntryMethodManual},
-			original: &Shipment{EntryMethod: EntryMethodEDI},
-			want:     EntryMethodManual,
+			shipment: &Shipment{EntryMethod: shipmentvocab.EntryMethodManual},
+			original: &Shipment{EntryMethod: shipmentvocab.EntryMethodEDI},
+			want:     shipmentvocab.EntryMethodManual,
 		},
 		{
 			name:     "leaves invalid explicit value for validation",
-			shipment: &Shipment{EntryMethod: EntryMethod("CarrierPortal")},
-			want:     EntryMethod("CarrierPortal"),
+			shipment: &Shipment{EntryMethod: shipmentvocab.EntryMethod("CarrierPortal")},
+			want:     shipmentvocab.EntryMethod("CarrierPortal"),
 		},
 	}
 
@@ -58,22 +59,22 @@ func TestShipment_ShipperStop(t *testing.T) {
 
 	latePickup := &Stop{
 		ID:       pulid.ID("stp_late"),
-		Type:     StopTypePickup,
+		Type:     shipmentvocab.StopTypePickup,
 		Sequence: 5,
 	}
 	firstPickup := &Stop{
 		ID:       pulid.ID("stp_first"),
-		Type:     StopTypeSplitPickup,
+		Type:     shipmentvocab.StopTypeSplitPickup,
 		Sequence: 2,
 	}
 	delivery := &Stop{
 		ID:       pulid.ID("stp_delivery"),
-		Type:     StopTypeDelivery,
+		Type:     shipmentvocab.StopTypeDelivery,
 		Sequence: 0,
 	}
 	earlierMovePickup := &Stop{
 		ID:       pulid.ID("stp_earlier"),
-		Type:     StopTypePickup,
+		Type:     shipmentvocab.StopTypePickup,
 		Sequence: 8,
 	}
 	entity := &Shipment{
@@ -105,7 +106,11 @@ func TestShipment_ShipperStopSkipsNilAndNonOriginStops(t *testing.T) {
 				Sequence: 1,
 				Stops: []*Stop{
 					nil,
-					{ID: pulid.ID("stp_delivery"), Type: StopTypeDelivery, Sequence: 1},
+					{
+						ID:       pulid.ID("stp_delivery"),
+						Type:     shipmentvocab.StopTypeDelivery,
+						Sequence: 1,
+					},
 				},
 			},
 		},
@@ -230,20 +235,24 @@ func TestShipment_ApplyFreightTermsDefault(t *testing.T) {
 		name     string
 		shipment *Shipment
 		original *Shipment
-		want     FreightTerms
+		want     shipmentvocab.FreightTerms
 	}{
-		{name: "defaults to prepaid", shipment: &Shipment{}, want: FreightTermsPrepaid},
+		{
+			name:     "defaults to prepaid",
+			shipment: &Shipment{},
+			want:     shipmentvocab.FreightTermsPrepaid,
+		},
 		{
 			name:     "preserves the original on update",
 			shipment: &Shipment{},
-			original: &Shipment{FreightTerms: FreightTermsCollect},
-			want:     FreightTermsCollect,
+			original: &Shipment{FreightTerms: shipmentvocab.FreightTermsCollect},
+			want:     shipmentvocab.FreightTermsCollect,
 		},
 		{
 			name:     "keeps an explicit value",
-			shipment: &Shipment{FreightTerms: FreightTermsThirdParty},
-			original: &Shipment{FreightTerms: FreightTermsCollect},
-			want:     FreightTermsThirdParty,
+			shipment: &Shipment{FreightTerms: shipmentvocab.FreightTermsThirdParty},
+			original: &Shipment{FreightTerms: shipmentvocab.FreightTermsCollect},
+			want:     shipmentvocab.FreightTermsThirdParty,
 		},
 	}
 
@@ -258,14 +267,4 @@ func TestShipment_ApplyFreightTermsDefault(t *testing.T) {
 
 	var none *Shipment
 	none.ApplyFreightTermsDefault(nil)
-}
-
-func TestFreightTerms_IsValid(t *testing.T) {
-	t.Parallel()
-
-	require.True(t, FreightTermsPrepaid.IsValid())
-	require.True(t, FreightTermsCollect.IsValid())
-	require.True(t, FreightTermsThirdParty.IsValid())
-	require.False(t, FreightTerms("").IsValid())
-	require.False(t, FreightTerms("Consignee").IsValid())
 }

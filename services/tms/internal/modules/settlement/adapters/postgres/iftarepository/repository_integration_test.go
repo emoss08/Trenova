@@ -4,29 +4,27 @@ package iftarepository_test
 
 import (
 	"context"
-
 	"testing"
 	"time"
 	_ "time/tzdata"
 
 	"github.com/emoss08/keel"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
-	"github.com/emoss08/trenova/pkg/dbscope"
-	"github.com/jackc/pgx/v5"
-
-	"github.com/emoss08/trenova/internal/testutil/seededtest"
-
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/settlement/adapters/postgres/iftarepository"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/ifta"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/iftaports"
 	"github.com/emoss08/trenova/internal/testutil/cachetest"
+	"github.com/emoss08/trenova/internal/testutil/seededtest"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/jackc/pgx/v5"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -145,7 +143,7 @@ func (f *fixture) tenantScalar(
 }
 
 type moveSpec struct {
-	status      shipment.MoveStatus
+	status      shipmentvocab.MoveStatus
 	loaded      bool
 	distance    float64
 	units       string
@@ -173,7 +171,7 @@ func (f *fixture) insertMove(t *testing.T, spec moveSpec) *shipment.ShipmentMove
 		BusinessUnitID:       f.tenantA.BuID,
 		ShipmentMoveID:       move.ID,
 		LocationID:           f.locationID,
-		Status:               shipment.StopStatusCompleted,
+		Status:               shipmentvocab.StopStatusCompleted,
 		Sequence:             1,
 		ScheduledWindowStart: f.start,
 		ActualDeparture:      spec.completedAt,
@@ -215,7 +213,7 @@ func (f *fixture) insertRow(
 		Distance:         distance,
 		DistanceUnits:    units,
 		Loaded:           move.Loaded,
-		Source:           shipment.JurisdictionMileSourceRouteCalculation,
+		Source:           shipmentvocab.JurisdictionMileSourceRouteCalculation,
 		CalculatedAt:     f.start,
 	}
 	require.NoError(t, shipmentdb.ShipmentMoveJurisdictionMiles.Create(f.ctxA, f.db, row))
@@ -229,7 +227,7 @@ func (f *fixture) assign(t *testing.T, move *shipment.ShipmentMove, archived boo
 		BusinessUnitID: f.tenantA.BuID,
 		ShipmentMoveID: move.ID,
 		TractorID:      &tractorID,
-		Status:         shipment.AssignmentStatusCompleted,
+		Status:         shipmentvocab.AssignmentStatusCompleted,
 	}
 	if archived {
 		archivedAt := f.start + 10
@@ -303,13 +301,13 @@ func rowFor(rows []*iftaports.MileRow, tractor pulid.ID, code string) *iftaports
 func TestAccumulateMiles(t *testing.T) {
 	f := setup(t)
 	inside := ptr(f.start + 86_400)
-	miles := shipment.JurisdictionDistanceUnitsMiles
-	km := shipment.JurisdictionDistanceUnitsKilometers
+	miles := shipmentvocab.JurisdictionDistanceUnitsMiles
+	km := shipmentvocab.JurisdictionDistanceUnitsKilometers
 
 	m1 := f.insertMove(
 		t,
 		moveSpec{
-			status:      shipment.MoveStatusCompleted,
+			status:      shipmentvocab.MoveStatusCompleted,
 			loaded:      true,
 			distance:    500,
 			units:       miles,
@@ -323,7 +321,7 @@ func TestAccumulateMiles(t *testing.T) {
 	m2 := f.insertMove(
 		t,
 		moveSpec{
-			status:      shipment.MoveStatusCompleted,
+			status:      shipmentvocab.MoveStatusCompleted,
 			loaded:      false,
 			distance:    200,
 			units:       miles,
@@ -337,7 +335,7 @@ func TestAccumulateMiles(t *testing.T) {
 	m3 := f.insertMove(
 		t,
 		moveSpec{
-			status:      shipment.MoveStatusCompleted,
+			status:      shipmentvocab.MoveStatusCompleted,
 			loaded:      true,
 			distance:    150,
 			units:       miles,
@@ -349,7 +347,7 @@ func TestAccumulateMiles(t *testing.T) {
 	m4 := f.insertMove(
 		t,
 		moveSpec{
-			status:      shipment.MoveStatusCompleted,
+			status:      shipmentvocab.MoveStatusCompleted,
 			loaded:      true,
 			distance:    100,
 			units:       miles,
@@ -362,7 +360,7 @@ func TestAccumulateMiles(t *testing.T) {
 	m5 := f.insertMove(
 		t,
 		moveSpec{
-			status:      shipment.MoveStatusCompleted,
+			status:      shipmentvocab.MoveStatusCompleted,
 			loaded:      true,
 			distance:    250,
 			units:       miles,
@@ -376,7 +374,7 @@ func TestAccumulateMiles(t *testing.T) {
 	m6 := f.insertMove(
 		t,
 		moveSpec{
-			status:      shipment.MoveStatusCompleted,
+			status:      shipmentvocab.MoveStatusCompleted,
 			loaded:      true,
 			distance:    100,
 			units:       miles,
@@ -389,7 +387,7 @@ func TestAccumulateMiles(t *testing.T) {
 	m7 := f.insertMove(
 		t,
 		moveSpec{
-			status:    shipment.MoveStatusCompleted,
+			status:    shipmentvocab.MoveStatusCompleted,
 			loaded:    true,
 			distance:  100,
 			units:     miles,
@@ -402,7 +400,7 @@ func TestAccumulateMiles(t *testing.T) {
 	boundary := f.insertMove(
 		t,
 		moveSpec{
-			status:      shipment.MoveStatusCompleted,
+			status:      shipmentvocab.MoveStatusCompleted,
 			loaded:      true,
 			distance:    100,
 			units:       miles,
@@ -415,7 +413,7 @@ func TestAccumulateMiles(t *testing.T) {
 	m9 := f.insertMove(
 		t,
 		moveSpec{
-			status:      shipment.MoveStatusCompleted,
+			status:      shipmentvocab.MoveStatusCompleted,
 			loaded:      true,
 			distance:    300,
 			units:       miles,
@@ -428,7 +426,7 @@ func TestAccumulateMiles(t *testing.T) {
 	inTransit := f.insertMove(
 		t,
 		moveSpec{
-			status:      shipment.MoveStatusInTransit,
+			status:      shipmentvocab.MoveStatusInTransit,
 			loaded:      true,
 			distance:    100,
 			units:       miles,

@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentevent"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentstate"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/orderports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenteventports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentinvalidationports"
@@ -106,8 +107,8 @@ type syncContext struct {
 	changed       *shipment.Shipment
 	opposite      *shipment.Shipment
 	oppositeSide  side
-	previous      shipment.Status
-	next          shipment.Status
+	previous      shipmentvocab.Status
+	next          shipmentvocab.Status
 	changeType    string
 	cancelReason  string
 	canceledByID  pulid.ID
@@ -237,7 +238,7 @@ func (o *Observer) buildSyncContext(
 		return syncContext{}, nil
 	}
 	result.link = link
-	result.previous = shipment.Status(metadataString(event.Metadata, "previousStatus"))
+	result.previous = shipmentvocab.Status(metadataString(event.Metadata, "previousStatus"))
 	result.cancelReason = metadataString(event.Metadata, "reason")
 	result.canceledByID = canceledByIDForEvent(event)
 
@@ -638,13 +639,13 @@ func buildMirroredEvent(
 	}
 }
 
-func nextStatusForEvent(event *shipmentevent.Event) (shipment.Status, bool) {
+func nextStatusForEvent(event *shipmentevent.Event) (shipmentvocab.Status, bool) {
 	switch event.Type {
 	case shipmentevent.TypeStatusChanged:
-		next := shipment.Status(metadataString(event.Metadata, "newStatus"))
+		next := shipmentvocab.Status(metadataString(event.Metadata, "newStatus"))
 		return next, next != ""
 	case shipmentevent.TypeShipmentCanceled:
-		return shipment.StatusCanceled, true
+		return shipmentvocab.StatusCanceled, true
 	default:
 		return "", false
 	}
@@ -728,28 +729,32 @@ func metadataString(metadata map[string]any, key string) string {
 	}
 }
 
-func shipmentStatusCode(status shipment.Status) string {
+func shipmentStatusCode(status shipmentvocab.Status) string {
 	switch status {
-	case shipment.StatusInTransit:
+	case shipmentvocab.StatusInTransit:
 		return "AF"
-	case shipment.StatusCompleted, shipment.StatusReadyToInvoice, shipment.StatusInvoiced:
+	case shipmentvocab.StatusCompleted,
+		shipmentvocab.StatusReadyToInvoice,
+		shipmentvocab.StatusInvoiced:
 		return "D1"
-	case shipment.StatusDelayed:
+	case shipmentvocab.StatusDelayed:
 		return "A3"
-	case shipment.StatusCanceled:
+	case shipmentvocab.StatusCanceled:
 		return "A7"
 	default:
 		return "X3"
 	}
 }
 
-func severityForStatus(status shipment.Status) shipmentevent.Severity {
+func severityForStatus(status shipmentvocab.Status) shipmentevent.Severity {
 	switch status {
-	case shipment.StatusCanceled, shipment.StatusDelayed:
+	case shipmentvocab.StatusCanceled, shipmentvocab.StatusDelayed:
 		return shipmentevent.SeverityDanger
-	case shipment.StatusCompleted, shipment.StatusReadyToInvoice, shipment.StatusInvoiced:
+	case shipmentvocab.StatusCompleted,
+		shipmentvocab.StatusReadyToInvoice,
+		shipmentvocab.StatusInvoiced:
 		return shipmentevent.SeveritySuccess
-	case shipment.StatusInTransit:
+	case shipmentvocab.StatusInTransit:
 		return shipmentevent.SeverityBrand
 	default:
 		return shipmentevent.SeverityMuted

@@ -6,7 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/querytool"
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/querytooltest"
 	"github.com/emoss08/trenova/internal/modules/operations/app/dispatchconsoleservice"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchboardports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -31,7 +31,7 @@ func TestBoardView_SaysWhatEachLateMoveIsLateFor(t *testing.T) {
 	const now = int64(1_790_000_000)
 	past, future := now-3600, now+3600
 	arrived := now - 86_400
-	move := func(pro string, status shipment.Status, originArrive *int64, destEnd int64) *dispatchconsoleservice.BoardMove {
+	move := func(pro string, status shipmentvocab.Status, originArrive *int64, destEnd int64) *dispatchconsoleservice.BoardMove {
 		return &dispatchconsoleservice.BoardMove{
 			BoardMove: &dispatchboardports.BoardMove{
 				MoveID:                 pulid.MustNew("sm_"),
@@ -50,9 +50,9 @@ func TestBoardView_SaysWhatEachLateMoveIsLateFor(t *testing.T) {
 		WindowStart: now,
 		WindowEnd:   now + 86_400,
 		Moves: []*dispatchconsoleservice.BoardMove{
-			move("SEED-NOT-PICKED", shipment.StatusNew, nil, future),
-			move("SEED-ON-TIME", shipment.StatusInTransit, &arrived, future),
-			move("SEED-LATE-DELIVERY", shipment.StatusDelayed, &arrived, past),
+			move("SEED-NOT-PICKED", shipmentvocab.StatusNew, nil, future),
+			move("SEED-ON-TIME", shipmentvocab.StatusInTransit, &arrived, future),
+			move("SEED-LATE-DELIVERY", shipmentvocab.StatusDelayed, &arrived, past),
 		},
 	}
 
@@ -134,7 +134,7 @@ func TestDispatchBoard_ReadsDueFirstAndPagesTheLateMoves(t *testing.T) {
 				MoveID:                 pulid.MustNew("sm_"),
 				ShipmentID:             pulid.MustNew("shp_"),
 				ProNumber:              pro,
-				ShipmentStatus:         shipment.StatusDelayed,
+				ShipmentStatus:         shipmentvocab.StatusDelayed,
 				OriginWindowStart:      arrived,
 				OriginActualArrive:     &arrived,
 				DestinationWindowStart: deadline - 3600,

@@ -1,7 +1,7 @@
 package tendercreate
 
 import (
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -27,12 +27,12 @@ func (r *CreateWaterfallTenderRequest) Validate() *errortypes.MultiError {
 }
 
 type SpotTenderLine struct {
-	CarrierID       pulid.ID                   `json:"carrierId"`
-	RateMethod      shipment.CarrierRateMethod `json:"rateMethod"`
-	Rate            decimal.Decimal            `json:"rate"`
-	OfferTTLSeconds int32                      `json:"offerTtlSeconds"`
-	Channel         tender.Channel             `json:"channel"`
-	Email           string                     `json:"email"`
+	CarrierID       pulid.ID                        `json:"carrierId"`
+	RateMethod      shipmentvocab.CarrierRateMethod `json:"rateMethod"`
+	Rate            decimal.Decimal                 `json:"rate"`
+	OfferTTLSeconds int32                           `json:"offerTtlSeconds"`
+	Channel         tender.Channel                  `json:"channel"`
+	Email           string                          `json:"email"`
 }
 
 type CreateSpotTenderRequest struct {

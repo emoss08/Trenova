@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentevent"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -40,7 +41,7 @@ func exhaustedWaterfall(
 			TenderID:        entity.ID,
 			CarrierID:       pulid.MustNew("car_"),
 			Rank:            int16(idx + 1),
-			RateMethod:      shipment.CarrierRateMethodFlat,
+			RateMethod:      shipmentvocab.CarrierRateMethodFlat,
 			Rate:            decimal.NewFromInt(int64(1500 + 100*idx)),
 			OfferTTLSeconds: 7200,
 			Channel:         tender.ChannelEmail,

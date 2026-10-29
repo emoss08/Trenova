@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentrating"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratequoteports"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -163,7 +164,7 @@ func reconcileTariffCharges(
 		if charge == nil {
 			continue
 		}
-		if charge.Owner() == shipment.SystemOwnerTariff {
+		if charge.Owner() == shipmentvocab.SystemOwnerTariff {
 			existing = append(existing, charge)
 			continue
 		}
@@ -230,7 +231,7 @@ func nullDecimal(value *decimal.Decimal) decimal.NullDecimal {
 func removeTariffCharges(entity *shipment.Shipment) {
 	kept := entity.AdditionalCharges[:0]
 	for _, charge := range entity.AdditionalCharges {
-		if charge != nil && charge.Owner() != shipment.SystemOwnerTariff {
+		if charge != nil && charge.Owner() != shipmentvocab.SystemOwnerTariff {
 			kept = append(kept, charge)
 		}
 	}

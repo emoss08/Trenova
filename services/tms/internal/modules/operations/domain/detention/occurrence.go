@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionevidence"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionnotice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionpolicy"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -47,33 +47,33 @@ type DetentionOccurrence struct {
 	PolicySnapshot    *detentionpolicy.PolicySnapshot `json:"policySnapshot"    keel:"policy_snapshot,jsonb"`
 	CalculationTrace  *CalculationTrace               `json:"calculationTrace"  keel:"calculation_trace,jsonb"`
 
-	StopType           shipment.StopType         `json:"stopType"           keel:"stop_type"`
-	ScheduleType       shipment.StopScheduleType `json:"scheduleType"       keel:"schedule_type"`
-	AppointmentStart   *int64                    `json:"appointmentStart"   keel:"appointment_start"`
-	AppointmentEnd     *int64                    `json:"appointmentEnd"     keel:"appointment_end"`
-	ArrivedAt          *int64                    `json:"arrivedAt"          keel:"arrived_at"`
-	DepartedAt         *int64                    `json:"departedAt"         keel:"departed_at"`
-	ClockStartAt       int64                     `json:"clockStartAt"       keel:"clock_start_at"`
-	ClockStopAt        *int64                    `json:"clockStopAt"        keel:"clock_stop_at"`
-	FreeTimeExpiresAt  int64                     `json:"freeTimeExpiresAt"  keel:"free_time_expires_at"`
-	NoticeDueAt        *int64                    `json:"noticeDueAt"        keel:"notice_due_at"`
-	NoticeDeadlineAt   *int64                    `json:"noticeDeadlineAt"   keel:"notice_deadline_at"`
-	IsOpen             bool                      `json:"isOpen"             keel:"is_open"`
-	ArrivedLate        bool                      `json:"arrivedLate"        keel:"arrived_late"`
-	LateByMinutes      int32                     `json:"lateByMinutes"      keel:"late_by_minutes"`
-	FreeMinutesGranted int32                     `json:"freeMinutesGranted" keel:"free_minutes_granted"`
-	RawDwellMinutes    int32                     `json:"rawDwellMinutes"    keel:"raw_dwell_minutes"`
-	BillableMinutes    int32                     `json:"billableMinutes"    keel:"billable_minutes"`
-	RoundedMinutes     int32                     `json:"roundedMinutes"     keel:"rounded_minutes"`
-	BillableUnits      decimal.Decimal           `json:"billableUnits"      keel:"billable_units"`
-	GrossAmount        decimal.Decimal           `json:"grossAmount"        keel:"gross_amount"`
-	BillableAmount     decimal.Decimal           `json:"billableAmount"     keel:"billable_amount"`
-	DriverPayMinutes   int32                     `json:"driverPayMinutes"   keel:"driver_pay_minutes"`
-	DriverPayAmount    decimal.NullDecimal       `json:"driverPayAmount"    keel:"driver_pay_amount,default"`
-	NetMargin          decimal.NullDecimal       `json:"netMargin"          keel:"net_margin"`
-	CapApplied         CapKind                   `json:"capApplied"         keel:"cap_applied"`
-	ConvertedToLayover bool                      `json:"convertedToLayover" keel:"converted_to_layover"`
-	Currency           string                    `json:"currency"           keel:"currency"`
+	StopType           shipmentvocab.StopType         `json:"stopType"           keel:"stop_type"`
+	ScheduleType       shipmentvocab.StopScheduleType `json:"scheduleType"       keel:"schedule_type"`
+	AppointmentStart   *int64                         `json:"appointmentStart"   keel:"appointment_start"`
+	AppointmentEnd     *int64                         `json:"appointmentEnd"     keel:"appointment_end"`
+	ArrivedAt          *int64                         `json:"arrivedAt"          keel:"arrived_at"`
+	DepartedAt         *int64                         `json:"departedAt"         keel:"departed_at"`
+	ClockStartAt       int64                          `json:"clockStartAt"       keel:"clock_start_at"`
+	ClockStopAt        *int64                         `json:"clockStopAt"        keel:"clock_stop_at"`
+	FreeTimeExpiresAt  int64                          `json:"freeTimeExpiresAt"  keel:"free_time_expires_at"`
+	NoticeDueAt        *int64                         `json:"noticeDueAt"        keel:"notice_due_at"`
+	NoticeDeadlineAt   *int64                         `json:"noticeDeadlineAt"   keel:"notice_deadline_at"`
+	IsOpen             bool                           `json:"isOpen"             keel:"is_open"`
+	ArrivedLate        bool                           `json:"arrivedLate"        keel:"arrived_late"`
+	LateByMinutes      int32                          `json:"lateByMinutes"      keel:"late_by_minutes"`
+	FreeMinutesGranted int32                          `json:"freeMinutesGranted" keel:"free_minutes_granted"`
+	RawDwellMinutes    int32                          `json:"rawDwellMinutes"    keel:"raw_dwell_minutes"`
+	BillableMinutes    int32                          `json:"billableMinutes"    keel:"billable_minutes"`
+	RoundedMinutes     int32                          `json:"roundedMinutes"     keel:"rounded_minutes"`
+	BillableUnits      decimal.Decimal                `json:"billableUnits"      keel:"billable_units"`
+	GrossAmount        decimal.Decimal                `json:"grossAmount"        keel:"gross_amount"`
+	BillableAmount     decimal.Decimal                `json:"billableAmount"     keel:"billable_amount"`
+	DriverPayMinutes   int32                          `json:"driverPayMinutes"   keel:"driver_pay_minutes"`
+	DriverPayAmount    decimal.NullDecimal            `json:"driverPayAmount"    keel:"driver_pay_amount,default"`
+	NetMargin          decimal.NullDecimal            `json:"netMargin"          keel:"net_margin"`
+	CapApplied         CapKind                        `json:"capApplied"         keel:"cap_applied"`
+	ConvertedToLayover bool                           `json:"convertedToLayover" keel:"converted_to_layover"`
+	Currency           string                         `json:"currency"           keel:"currency"`
 
 	Status             OccurrenceStatus   `json:"status"             keel:"status"`
 	NotificationStatus NotificationStatus `json:"notificationStatus" keel:"notification_status"`

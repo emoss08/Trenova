@@ -7,14 +7,14 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/triageworkports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmenttracking"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/triagelookupports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
-const stopStatusCompleted = string(shipment.StopStatusCompleted)
+const stopStatusCompleted = string(shipmentvocab.StopStatusCompleted)
 
 func (s *Service) ShipmentPeeks(
 	ctx context.Context,

@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/boardgrouping"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentboardports"
 	"go.uber.org/zap"
 )
@@ -66,9 +67,9 @@ func groupSummaryQuery(
 ) (*keel.Query[*shipment.Shipment], error) {
 	switch groupBy {
 	case boardgrouping.BoardGroupingShipDate:
-		return dayGroups(q, shipment.PickupStopTypes(), false, timezone), nil
+		return dayGroups(q, shipmentvocab.PickupStopTypes(), false, timezone), nil
 	case boardgrouping.BoardGroupingDeliveryDate:
-		return dayGroups(q, shipment.DeliveryStopTypes(), true, timezone), nil
+		return dayGroups(q, shipmentvocab.DeliveryStopTypes(), true, timezone), nil
 	case boardgrouping.BoardGroupingCustomer:
 		return customerGroups(q), nil
 	case boardgrouping.BoardGroupingOwner:
@@ -78,7 +79,7 @@ func groupSummaryQuery(
 	}
 }
 
-func endStopID(types []shipment.StopType, last bool) keel.Expr {
+func endStopID(types []shipmentvocab.StopType, last bool) keel.Expr {
 	sp := shipmentdb.Shipments
 	st := shipmentdb.Stops.As(endStopAlias)
 	sm := shipmentdb.ShipmentMoves.As(endMoveAlias)
@@ -105,7 +106,7 @@ func endStopID(types []shipment.StopType, last bool) keel.Expr {
 
 func dayGroups(
 	q *keel.Query[*shipment.Shipment],
-	types []shipment.StopType,
+	types []shipmentvocab.StopType,
 	last bool,
 	timezone string,
 ) *keel.Query[*shipment.Shipment] {

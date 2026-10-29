@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmenttimeline"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -210,10 +211,11 @@ func moveFieldPath(moveIndex int, field string) string {
 	return fmt.Sprintf("moves[%d].%s", moveIndex, field)
 }
 
-func isPickupLikeStopType(stopType shipment.StopType) bool {
-	return stopType == shipment.StopTypePickup || stopType == shipment.StopTypeSplitPickup
+func isPickupLikeStopType(stopType shipmentvocab.StopType) bool {
+	return stopType == shipmentvocab.StopTypePickup || stopType == shipmentvocab.StopTypeSplitPickup
 }
 
-func isDeliveryLikeStopType(stopType shipment.StopType) bool {
-	return stopType == shipment.StopTypeDelivery || stopType == shipment.StopTypeSplitDelivery
+func isDeliveryLikeStopType(stopType shipmentvocab.StopType) bool {
+	return stopType == shipmentvocab.StopTypeDelivery ||
+		stopType == shipmentvocab.StopTypeSplitDelivery
 }

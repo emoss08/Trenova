@@ -20,6 +20,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol/accountingcontroldb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer/customerdb"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location/locationdb"
@@ -605,7 +606,7 @@ func (s *ReceivablesSeed) createDeliveredShipment(
 		ServiceTypeID:     refs.serviceType,
 		ShipmentTypeID:    refs.shipmentType,
 		FormulaTemplateID: refs.template,
-		Status:            shipment.StatusInvoiced,
+		Status:            shipmentvocab.StatusInvoiced,
 		ProNumber:         spec.pro,
 		BOL:               "BOL-" + spec.pro,
 		Pieces:            new(int64(22)),
@@ -618,12 +619,12 @@ func (s *ReceivablesSeed) createDeliveredShipment(
 		TotalChargeAmount:      charge,
 		ActualShipDate:         &pickedUp,
 		ActualDeliveryDate:     &delivered,
-		BillingTransferStatus:  shipment.BillingTransferPosted,
+		BillingTransferStatus:  shipmentvocab.BillingTransferPosted,
 		MarkedReadyToBillAt:    &delivered,
 		TransferredToBillingAt: &delivered,
 		BilledAt:               &invoiceDate,
-		EntryMethod:            shipment.EntryMethodManual,
-		FreightTerms:           shipment.FreightTermsPrepaid,
+		EntryMethod:            shipmentvocab.EntryMethodManual,
+		FreightTerms:           shipmentvocab.FreightTermsPrepaid,
 		FreightLines:           []shipment.FreightLine{},
 		OtherChargeAmount:      decimal.NewNullDecimal(decimal.RequireFromString("0")),
 	}
@@ -633,10 +634,10 @@ func (s *ReceivablesSeed) createDeliveredShipment(
 		BusinessUnitID: refs.buID,
 		OrganizationID: refs.orgID,
 		ShipmentID:     shp.ID,
-		Status:         shipment.MoveStatusCompleted,
+		Status:         shipmentvocab.MoveStatusCompleted,
 		Loaded:         true,
 		Sequence:       0,
-		CoverageType:   shipment.MoveCoverageTypeUnassigned,
+		CoverageType:   shipmentvocab.MoveCoverageTypeUnassigned,
 	}
 	stops := []*shipment.Stop{
 		{
@@ -645,15 +646,15 @@ func (s *ReceivablesSeed) createDeliveredShipment(
 			OrganizationID:       refs.orgID,
 			ShipmentMoveID:       move.ID,
 			LocationID:           origin,
-			Type:                 shipment.StopTypePickup,
-			Status:               shipment.StopStatusCompleted,
+			Type:                 shipmentvocab.StopTypePickup,
+			Status:               shipmentvocab.StopStatusCompleted,
 			Sequence:             0,
 			ScheduledWindowStart: pickedUp - 3600,
 			ScheduledWindowEnd:   new(pickedUp + 3600),
 			ActualArrival:        new(pickedUp - 1800),
 			ActualDeparture:      &pickedUp,
 
-			ScheduleType: shipment.StopScheduleTypeOpen,
+			ScheduleType: shipmentvocab.StopScheduleTypeOpen,
 		},
 		{
 			ID:                   pulid.MustNew("stp_"),
@@ -661,15 +662,15 @@ func (s *ReceivablesSeed) createDeliveredShipment(
 			OrganizationID:       refs.orgID,
 			ShipmentMoveID:       move.ID,
 			LocationID:           destination,
-			Type:                 shipment.StopTypeDelivery,
-			Status:               shipment.StopStatusCompleted,
+			Type:                 shipmentvocab.StopTypeDelivery,
+			Status:               shipmentvocab.StopStatusCompleted,
 			Sequence:             1,
 			ScheduledWindowStart: delivered - 3600,
 			ScheduledWindowEnd:   new(delivered + 3600),
 			ActualArrival:        new(delivered - 2700),
 			ActualDeparture:      &delivered,
 
-			ScheduleType: shipment.StopScheduleTypeOpen,
+			ScheduleType: shipmentvocab.StopScheduleTypeOpen,
 		},
 	}
 

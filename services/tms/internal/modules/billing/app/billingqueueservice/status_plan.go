@@ -5,6 +5,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -126,10 +127,10 @@ func SendBackComment(
 		ShipmentID:     entity.ShipmentID,
 		UserID:         userID,
 		Comment:        comment,
-		Type:           shipment.CommentTypeBilling,
-		Visibility:     shipment.CommentVisibilityOperations,
-		Priority:       shipment.CommentPriorityHigh,
-		Source:         shipment.CommentSourceSystem,
+		Type:           shipmentvocab.CommentTypeBilling,
+		Visibility:     shipmentvocab.CommentVisibilityOperations,
+		Priority:       shipmentvocab.CommentPriorityHigh,
+		Source:         shipmentvocab.CommentSourceSystem,
 	}
 }
 

@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentserviceports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/i18n"
@@ -133,7 +134,7 @@ func (t *CreateShipmentTool) Preview(
 
 func warnRateCoverage(preview *agentpreview.ToolPreview, advisories []*errortypes.AdvisoryError) {
 	for _, advisory := range advisories {
-		if advisory == nil || advisory.RuleKey != shipment.RateCoverageRuleKey {
+		if advisory == nil || advisory.RuleKey != shipmentvocab.RateCoverageRuleKey {
 			continue
 		}
 

@@ -6,7 +6,7 @@ import (
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -55,29 +55,29 @@ type DetentionPolicy struct {
 	ServiceTypeIDs   []pulid.ID `json:"serviceTypeIds"   keel:"service_type_ids,jsonb,nullzero"`
 	CommodityIDs     []pulid.ID `json:"commodityIds"     keel:"commodity_ids,jsonb,nullzero"`
 
-	StopTypes                  []shipment.StopType `json:"stopTypes"                  keel:"stop_types,jsonb,nullzero"`
-	AppointmentStopsOnly       bool                `json:"appointmentStopsOnly"       keel:"appointment_stops_only"`
-	EffectiveStartDate         *int64              `json:"effectiveStartDate"         keel:"effective_start_date"`
-	EffectiveEndDate           *int64              `json:"effectiveEndDate"           keel:"effective_end_date"`
-	ClockStartBasis            ClockStartBasis     `json:"clockStartBasis"            keel:"clock_start_basis"`
-	LateArrivalRule            LateArrivalRule     `json:"lateArrivalRule"            keel:"late_arrival_rule"`
-	LateArrivalGraceMinutes    int16               `json:"lateArrivalGraceMinutes"    keel:"late_arrival_grace_minutes"`
-	BillingFreeMinutes         int32               `json:"billingFreeMinutes"         keel:"billing_free_minutes"`
-	PickupFreeMinutes          *int32              `json:"pickupFreeMinutes"          keel:"pickup_free_minutes"`
-	DeliveryFreeMinutes        *int32              `json:"deliveryFreeMinutes"        keel:"delivery_free_minutes"`
-	PayFreeMinutes             *int32              `json:"payFreeMinutes"             keel:"pay_free_minutes"`
-	MinimumBillableMinutes     int32               `json:"minimumBillableMinutes"     keel:"minimum_billable_minutes"`
-	BillingIncrementMinutes    int16               `json:"billingIncrementMinutes"    keel:"billing_increment_minutes"`
-	RoundingMode               RoundingMode        `json:"roundingMode"               keel:"rounding_mode"`
-	RateSource                 RateSource          `json:"rateSource"                 keel:"rate_source"`
-	AccessorialChargeID        pulid.ID            `json:"accessorialChargeId"        keel:"accessorial_charge_id"`
-	MaxBillableMinutesPerStop  *int32              `json:"maxBillableMinutesPerStop"  keel:"max_billable_minutes_per_stop"`
-	MaxChargePerStop           decimal.NullDecimal `json:"maxChargePerStop"           keel:"max_charge_per_stop"`
-	MaxChargePerDay            decimal.NullDecimal `json:"maxChargePerDay"            keel:"max_charge_per_day"`
-	MaxChargePerShipment       decimal.NullDecimal `json:"maxChargePerShipment"       keel:"max_charge_per_shipment"`
-	DayBoundaryMode            CapScope            `json:"dayBoundaryMode"            keel:"day_boundary_mode"`
-	ConvertToLayoverAtMinutes  *int32              `json:"convertToLayoverAtMinutes"  keel:"convert_to_layover_at_minutes"`
-	LayoverAccessorialChargeID *pulid.ID           `json:"layoverAccessorialChargeId" keel:"layover_accessorial_charge_id"`
+	StopTypes                  []shipmentvocab.StopType `json:"stopTypes"                  keel:"stop_types,jsonb,nullzero"`
+	AppointmentStopsOnly       bool                     `json:"appointmentStopsOnly"       keel:"appointment_stops_only"`
+	EffectiveStartDate         *int64                   `json:"effectiveStartDate"         keel:"effective_start_date"`
+	EffectiveEndDate           *int64                   `json:"effectiveEndDate"           keel:"effective_end_date"`
+	ClockStartBasis            ClockStartBasis          `json:"clockStartBasis"            keel:"clock_start_basis"`
+	LateArrivalRule            LateArrivalRule          `json:"lateArrivalRule"            keel:"late_arrival_rule"`
+	LateArrivalGraceMinutes    int16                    `json:"lateArrivalGraceMinutes"    keel:"late_arrival_grace_minutes"`
+	BillingFreeMinutes         int32                    `json:"billingFreeMinutes"         keel:"billing_free_minutes"`
+	PickupFreeMinutes          *int32                   `json:"pickupFreeMinutes"          keel:"pickup_free_minutes"`
+	DeliveryFreeMinutes        *int32                   `json:"deliveryFreeMinutes"        keel:"delivery_free_minutes"`
+	PayFreeMinutes             *int32                   `json:"payFreeMinutes"             keel:"pay_free_minutes"`
+	MinimumBillableMinutes     int32                    `json:"minimumBillableMinutes"     keel:"minimum_billable_minutes"`
+	BillingIncrementMinutes    int16                    `json:"billingIncrementMinutes"    keel:"billing_increment_minutes"`
+	RoundingMode               RoundingMode             `json:"roundingMode"               keel:"rounding_mode"`
+	RateSource                 RateSource               `json:"rateSource"                 keel:"rate_source"`
+	AccessorialChargeID        pulid.ID                 `json:"accessorialChargeId"        keel:"accessorial_charge_id"`
+	MaxBillableMinutesPerStop  *int32                   `json:"maxBillableMinutesPerStop"  keel:"max_billable_minutes_per_stop"`
+	MaxChargePerStop           decimal.NullDecimal      `json:"maxChargePerStop"           keel:"max_charge_per_stop"`
+	MaxChargePerDay            decimal.NullDecimal      `json:"maxChargePerDay"            keel:"max_charge_per_day"`
+	MaxChargePerShipment       decimal.NullDecimal      `json:"maxChargePerShipment"       keel:"max_charge_per_shipment"`
+	DayBoundaryMode            CapScope                 `json:"dayBoundaryMode"            keel:"day_boundary_mode"`
+	ConvertToLayoverAtMinutes  *int32                   `json:"convertToLayoverAtMinutes"  keel:"convert_to_layover_at_minutes"`
+	LayoverAccessorialChargeID *pulid.ID                `json:"layoverAccessorialChargeId" keel:"layover_accessorial_charge_id"`
 
 	NotificationRequirement     NotificationRequirement `json:"notificationRequirement"     keel:"notification_requirement"`
 	NotificationLeadMinutes     int16                   `json:"notificationLeadMinutes"     keel:"notification_lead_minutes"`
@@ -160,13 +160,13 @@ func (p *DetentionPolicy) ComputeSpecificity() int32 {
 // FreeMinutesForStopType resolves the free-time allowance, preferring the
 // stop-type specific override when the contract distinguishes loading from
 // unloading.
-func (p *DetentionPolicy) FreeMinutesForStopType(stopType shipment.StopType) int32 {
+func (p *DetentionPolicy) FreeMinutesForStopType(stopType shipmentvocab.StopType) int32 {
 	switch stopType {
-	case shipment.StopTypePickup, shipment.StopTypeSplitPickup:
+	case shipmentvocab.StopTypePickup, shipmentvocab.StopTypeSplitPickup:
 		if p.PickupFreeMinutes != nil {
 			return *p.PickupFreeMinutes
 		}
-	case shipment.StopTypeDelivery, shipment.StopTypeSplitDelivery:
+	case shipmentvocab.StopTypeDelivery, shipmentvocab.StopTypeSplitDelivery:
 		if p.DeliveryFreeMinutes != nil {
 			return *p.DeliveryFreeMinutes
 		}
@@ -205,8 +205,8 @@ type MatchInput struct {
 	ShipmentTypeID pulid.ID
 	ServiceTypeID  pulid.ID
 	CommodityIDs   []pulid.ID
-	StopType       shipment.StopType
-	ScheduleType   shipment.StopScheduleType
+	StopType       shipmentvocab.StopType
+	ScheduleType   shipmentvocab.StopScheduleType
 	Timestamp      int64
 }
 
@@ -245,7 +245,7 @@ func (p *DetentionPolicy) Matches(in MatchInput) bool {
 		return false
 	}
 
-	if p.AppointmentStopsOnly && in.ScheduleType != shipment.StopScheduleTypeAppointment {
+	if p.AppointmentStopsOnly && in.ScheduleType != shipmentvocab.StopScheduleTypeAppointment {
 		return false
 	}
 

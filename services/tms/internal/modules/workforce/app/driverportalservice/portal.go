@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/dashcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentmoveports"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
@@ -152,15 +153,15 @@ func (s *Service) MyLoads(
 		return nil, err
 	}
 
-	statuses := []shipment.MoveStatus{
-		shipment.MoveStatusNew,
-		shipment.MoveStatusAssigned,
-		shipment.MoveStatusInTransit,
+	statuses := []shipmentvocab.MoveStatus{
+		shipmentvocab.MoveStatusNew,
+		shipmentvocab.MoveStatusAssigned,
+		shipmentvocab.MoveStatusInTransit,
 	}
 	if scope == LoadScopeHistory {
-		statuses = []shipment.MoveStatus{
-			shipment.MoveStatusCompleted,
-			shipment.MoveStatusCanceled,
+		statuses = []shipmentvocab.MoveStatus{
+			shipmentvocab.MoveStatusCompleted,
+			shipmentvocab.MoveStatusCanceled,
 		}
 	}
 
@@ -341,7 +342,7 @@ func (s *Service) MyLoadComments(
 		switch {
 		case comment.User != nil:
 			view.AuthorName = comment.User.Name
-		case comment.Source == shipment.CommentSourceSystem:
+		case comment.Source == shipmentvocab.CommentSourceSystem:
 			view.AuthorName = "System"
 		default:
 			view.AuthorName = "Dispatch"
@@ -430,10 +431,10 @@ func (s *Service) CreateMyLoadComment(
 		OrganizationID: tenantInfo.OrgID,
 		ShipmentID:     shipmentID,
 		Comment:        strings.TrimSpace(body),
-		Type:           shipment.CommentTypeDriverUpdate,
-		Visibility:     shipment.CommentVisibilityDriver,
-		Priority:       shipment.CommentPriorityNormal,
-		Source:         shipment.CommentSourceUser,
+		Type:           shipmentvocab.CommentTypeDriverUpdate,
+		Visibility:     shipmentvocab.CommentVisibilityDriver,
+		Priority:       shipmentvocab.CommentPriorityNormal,
+		Source:         shipmentvocab.CommentSourceUser,
 		Metadata: map[string]any{
 			shipment.CommentMetadataOrigin: shipment.CommentOriginDash,
 		},

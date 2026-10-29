@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate/usstatedb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location/locationdb"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
@@ -90,14 +91,20 @@ func overlapQuery(
 	sp := shipmentdb.Shipments
 
 	pickup := stopAt(sp, "pick", stopAtRequest{
-		types: []shipment.StopType{shipment.StopTypePickup, shipment.StopTypeSplitPickup},
+		types: []shipmentvocab.StopType{
+			shipmentvocab.StopTypePickup,
+			shipmentvocab.StopTypeSplitPickup,
+		},
 		city:  load.OriginCity,
 		state: load.OriginState,
 		from:  load.PickupFrom,
 		to:    load.PickupTo,
 	})
 	delivery := stopAt(sp, "drop", stopAtRequest{
-		types: []shipment.StopType{shipment.StopTypeDelivery, shipment.StopTypeSplitDelivery},
+		types: []shipmentvocab.StopType{
+			shipmentvocab.StopTypeDelivery,
+			shipmentvocab.StopTypeSplitDelivery,
+		},
 		city:  load.DestinationCity,
 		state: load.DestinationState,
 	})
@@ -105,7 +112,7 @@ func overlapQuery(
 	return sp.Pick(sp.ID).
 		Where(
 			sp.CustomerID.Eq(customerID),
-			sp.Status.Ne(shipment.StatusCanceled),
+			sp.Status.Ne(shipmentvocab.StatusCanceled),
 			keel.Exists(pickup),
 			keel.Exists(delivery),
 		).
@@ -114,7 +121,7 @@ func overlapQuery(
 }
 
 type stopAtRequest struct {
-	types []shipment.StopType
+	types []shipmentvocab.StopType
 	city  string
 	state string
 	from  int64
@@ -138,7 +145,7 @@ func stopAt(
 		Where(
 			move.ShipmentID.EqCol(sp.ID),
 			stop.Type.In(req.types...),
-			stop.Status.Ne(shipment.StopStatusCanceled),
+			stop.Status.Ne(shipmentvocab.StopStatusCanceled),
 			loc.City.Trim().Lower().
 				Eq(strings.ToLower(strings.TrimSpace(req.city))),
 			state.Abbreviation.Upper().Eq(strings.ToUpper(req.state)),

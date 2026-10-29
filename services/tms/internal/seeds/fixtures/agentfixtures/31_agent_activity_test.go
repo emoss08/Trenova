@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/seeds/fixtures/fixturetest"
@@ -44,7 +45,7 @@ func activityRefs(t *testing.T) *activitySeedRefs {
 			OrganizationID: orgID,
 			BusinessUnitID: buID,
 			ProNumber:      "S0000" + string(rune('1'+i)),
-			Status:         shipment.StatusInTransit,
+			Status:         shipmentvocab.StatusInTransit,
 			Version:        3,
 		})
 	}

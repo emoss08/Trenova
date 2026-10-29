@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/tariffmapping"
 	shipmentdomain "github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/shopspring/decimal"
 )
 
@@ -49,7 +50,7 @@ func ShipmentToModel(
 		FormulaTemplateID:      gqlid.IDPtr(entity.FormulaTemplateID),
 		ConsolidationGroupID:   gqlid.IDPtr(entity.ConsolidationGroupID),
 		OrderID:                gqlid.IDPtr(entity.OrderID),
-		Stage:                  entity.Stage(),
+		Stage:                  shipmentvocab.StageOf(entity.Status),
 		Status:                 gqlmodel.ShipmentStatus(entity.Status),
 		TenderStatus:           tenderStatusToModel(entity.TenderStatus),
 		EntryMethod:            entryMethodToModel(entity.EntryMethod),
@@ -102,7 +103,7 @@ func ShipmentToModel(
 		return nil, err
 	}
 	if model.FreightTerms == "" {
-		model.FreightTerms = shipmentdomain.FreightTermsPrepaid
+		model.FreightTerms = shipmentvocab.FreightTermsPrepaid
 	}
 	return model, nil
 }
@@ -126,7 +127,7 @@ func shipmentMovesToModel(entities []*shipmentdomain.ShipmentMove) []*gqlmodel.S
 		assignment := shipmentAssignmentToModel(entity.Assignment)
 		coverageType := entity.CoverageType
 		if coverageType == "" {
-			coverageType = shipmentdomain.MoveCoverageTypeUnassigned
+			coverageType = shipmentvocab.MoveCoverageTypeUnassigned
 		}
 		moves = append(moves, &gqlmodel.ShipmentMove{
 			ID:                     gqlid.IDPtr(entity.ID),
@@ -356,7 +357,7 @@ func ratingReviewApprovalToModel(
 	}
 }
 
-func tenderStatusToModel(status *shipmentdomain.TenderStatus) *gqlmodel.ShipmentTenderStatus {
+func tenderStatusToModel(status *shipmentvocab.TenderStatus) *gqlmodel.ShipmentTenderStatus {
 	if status == nil {
 		return nil
 	}
@@ -364,7 +365,7 @@ func tenderStatusToModel(status *shipmentdomain.TenderStatus) *gqlmodel.Shipment
 	return &value
 }
 
-func entryMethodToModel(method shipmentdomain.EntryMethod) *gqlmodel.ShipmentEntryMethod {
+func entryMethodToModel(method shipmentvocab.EntryMethod) *gqlmodel.ShipmentEntryMethod {
 	if method == "" {
 		return nil
 	}

@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/app/detentionnoticerender"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 )
 
 type chargeCommentKind string
@@ -54,13 +55,13 @@ func occurrenceCarriesCharge(occurrence *detention.DetentionOccurrence) bool {
 func chargeCommentPriority(
 	kind chargeCommentKind,
 	occurrence *detention.DetentionOccurrence,
-) shipment.CommentPriority {
+) shipmentvocab.CommentPriority {
 	if kind != chargeCommentRemoved &&
 		(occurrence.SuppressedByGate || occurrence.RequiresApproval) {
-		return shipment.CommentPriorityHigh
+		return shipmentvocab.CommentPriorityHigh
 	}
 
-	return shipment.CommentPriorityNormal
+	return shipmentvocab.CommentPriorityNormal
 }
 
 func buildChargeComment(kind chargeCommentKind, p chargeCommentParams) string {

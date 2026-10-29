@@ -2,8 +2,8 @@ package shipmentrepository
 
 import (
 	"github.com/emoss08/keel"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 )
 
@@ -81,7 +81,7 @@ func movesWithRoute() keel.Loader {
 	return m.Order(m.Sequence.Asc()).Load(
 		orderedStopsWithLocation(m.Stops()),
 		a.Where(a.ArchivedAt.IsNull()).Load(a.PrimaryWorker(), a.Tractor()),
-		ca.Where(ca.Status.Ne(shipment.CarrierAssignmentStatusCanceled)),
+		ca.Where(ca.Status.Ne(shipmentvocab.CarrierAssignmentStatusCanceled)),
 	)
 }
 
@@ -94,7 +94,7 @@ func movesWithDetails() keel.Loader {
 		orderedStopsWithLocation(m.Stops()),
 		a.Where(a.ArchivedAt.IsNull()).
 			Load(a.Tractor(), a.Trailer(), a.PrimaryWorker(), a.SecondaryWorker()),
-		ca.Where(ca.Status.Ne(shipment.CarrierAssignmentStatusCanceled)).
+		ca.Where(ca.Status.Ne(shipmentvocab.CarrierAssignmentStatusCanceled)).
 			Load(ca.Carrier(), ca.Accessorials()),
 	)
 }

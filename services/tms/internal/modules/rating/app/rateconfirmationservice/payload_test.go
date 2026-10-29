@@ -3,9 +3,10 @@ package rateconfirmationservice
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -28,7 +29,7 @@ func TestBuildContext(t *testing.T) {
 			PaymentTermDays: 30,
 		},
 		Assignment: &shipment.CarrierAssignment{
-			RateMethod:            shipment.CarrierRateMethodFlat,
+			RateMethod:            shipmentvocab.CarrierRateMethodFlat,
 			BaseRate:              decimal.NewFromInt(1850),
 			BaseAmount:            decimal.NewFromInt(1850),
 			FuelSurcharge:         decimal.RequireFromString("142.50"),
@@ -44,7 +45,7 @@ func TestBuildContext(t *testing.T) {
 		Move: &shipment.ShipmentMove{
 			Stops: []*shipment.Stop{
 				{
-					Type:                 shipment.StopTypePickup,
+					Type:                 shipmentvocab.StopTypePickup,
 					ScheduledWindowStart: 1783585800,
 					ScheduledWindowEnd:   &windowEnd,
 					Location: &location.Location{
@@ -55,7 +56,7 @@ func TestBuildContext(t *testing.T) {
 					},
 				},
 				{
-					Type:                 shipment.StopTypeDelivery,
+					Type:                 shipmentvocab.StopTypeDelivery,
 					ScheduledWindowStart: 1783665000,
 					AddressLine:          "880 Commerce Pkwy, Des Moines, IA 50313",
 				},
@@ -96,7 +97,7 @@ func TestBuildContextPerMile(t *testing.T) {
 		Shipment: &shipment.Shipment{ProNumber: "PRO-2"},
 		Carrier:  &carrier.Carrier{Name: "Carrier", PaymentTermDays: 0},
 		Assignment: &shipment.CarrierAssignment{
-			RateMethod: shipment.CarrierRateMethodPerMile,
+			RateMethod: shipmentvocab.CarrierRateMethodPerMile,
 			BaseRate:   decimal.RequireFromString("2.35"),
 			BaseAmount: decimal.RequireFromString("1057.50"),
 			TotalCost:  decimal.RequireFromString("1057.50"),

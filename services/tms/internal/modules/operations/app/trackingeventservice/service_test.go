@@ -11,6 +11,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/operations/app/trackingeventservice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/trackingevent"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentmoveports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/trackingeventports"
@@ -166,13 +167,13 @@ func newHarness(t *testing.T, stopCount int) *harness {
 	tenant := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
 	ship := &shipment.Shipment{
 		ID:                    pulid.MustNew("shp_"),
-		Status:                shipment.StatusInTransit,
-		BillingTransferStatus: shipment.BillingTransferNone,
+		Status:                shipmentvocab.StatusInTransit,
+		BillingTransferStatus: shipmentvocab.BillingTransferNone,
 	}
 	move := &shipment.ShipmentMove{
 		ID:         pulid.MustNew("smv_"),
 		ShipmentID: ship.ID,
-		Status:     shipment.MoveStatusAssigned,
+		Status:     shipmentvocab.MoveStatusAssigned,
 	}
 	stops := make([]*shipment.Stop, 0, stopCount)
 	for i := range stopCount {
@@ -180,7 +181,7 @@ func newHarness(t *testing.T, stopCount int) *harness {
 			ID:         pulid.MustNew("stp_"),
 			Sequence:   int64(i + 1),
 			LocationID: pulid.MustNew("loc_"),
-			Status:     shipment.StopStatusNew,
+			Status:     shipmentvocab.StopStatusNew,
 		}
 		stops = append(stops, stop)
 		move.Stops = append(move.Stops, stop)
@@ -215,7 +216,7 @@ func newHarness(t *testing.T, stopCount int) *harness {
 
 func (h *harness) observed(
 	stop int,
-	kind shipment.VisitKind,
+	kind shipmentvocab.VisitKind,
 	source trackingevent.Source,
 	key string,
 	at int64,
@@ -253,21 +254,33 @@ func TestRecordObserved_OrderAndRepeatsDoNotChangeTheFinalActuals(t *testing.T) 
 	base := timeutils.NowUnix() - 10*3600
 	type input struct {
 		stop   int
-		kind   shipment.VisitKind
+		kind   shipmentvocab.VisitKind
 		source trackingevent.Source
 		key    string
 		at     int64
 	}
 	inputs := []input{
-		{0, shipment.VisitArrival, trackingevent.SourceTelematics, "samsara:1", base},
-		{0, shipment.VisitArrival, trackingevent.SourceEDI, "edi:a:0", base + 120},
-		{0, shipment.VisitDeparture, trackingevent.SourceTelematics, "samsara:2", base + 3600},
-		{0, shipment.VisitDeparture, trackingevent.SourceEDI, "edi:a:1", base + 3500},
-		{1, shipment.VisitArrival, trackingevent.SourceEDI, "edi:b:0", base + 2*3600},
-		{1, shipment.VisitArrival, trackingevent.SourceTelematics, "samsara:3", base + 2*3600 + 60},
-		{1, shipment.VisitDeparture, trackingevent.SourceTelematics, "samsara:4", base + 3*3600},
-		{2, shipment.VisitArrival, trackingevent.SourceTelematics, "samsara:5", base + 5*3600},
-		{2, shipment.VisitDeparture, trackingevent.SourceEDI, "edi:c:0", base + 6*3600},
+		{0, shipmentvocab.VisitArrival, trackingevent.SourceTelematics, "samsara:1", base},
+		{0, shipmentvocab.VisitArrival, trackingevent.SourceEDI, "edi:a:0", base + 120},
+		{0, shipmentvocab.VisitDeparture, trackingevent.SourceTelematics, "samsara:2", base + 3600},
+		{0, shipmentvocab.VisitDeparture, trackingevent.SourceEDI, "edi:a:1", base + 3500},
+		{1, shipmentvocab.VisitArrival, trackingevent.SourceEDI, "edi:b:0", base + 2*3600},
+		{
+			1,
+			shipmentvocab.VisitArrival,
+			trackingevent.SourceTelematics,
+			"samsara:3",
+			base + 2*3600 + 60,
+		},
+		{
+			1,
+			shipmentvocab.VisitDeparture,
+			trackingevent.SourceTelematics,
+			"samsara:4",
+			base + 3*3600,
+		},
+		{2, shipmentvocab.VisitArrival, trackingevent.SourceTelematics, "samsara:5", base + 5*3600},
+		{2, shipmentvocab.VisitDeparture, trackingevent.SourceEDI, "edi:c:0", base + 6*3600},
 	}
 
 	run := func(t *testing.T, order []input) [][2]int64 {
@@ -306,7 +319,13 @@ func TestRecordObserved_ARepeatIsReplayedWithoutReconciling(t *testing.T) {
 
 	h := newHarness(t, 2)
 	at := timeutils.NowUnix() - 3600
-	params := h.observed(0, shipment.VisitArrival, trackingevent.SourceTelematics, "samsara:9", at)
+	params := h.observed(
+		0,
+		shipmentvocab.VisitArrival,
+		trackingevent.SourceTelematics,
+		"samsara:9",
+		at,
+	)
 
 	first, err := h.service.RecordObserved(t.Context(), params)
 	require.NoError(t, err)
@@ -328,14 +347,14 @@ func TestRecordObserved_AnEventAheadOfAnOpenStopWaits(t *testing.T) {
 
 	result, err := h.service.RecordObserved(
 		t.Context(),
-		h.observed(1, shipment.VisitArrival, trackingevent.SourceEDI, "edi:x:0", at),
+		h.observed(1, shipmentvocab.VisitArrival, trackingevent.SourceEDI, "edi:x:0", at),
 	)
 	require.NoError(t, err)
 	assert.Equal(t, trackingevent.OutcomePending, result.Outcome)
 	assert.NotEmpty(t, result.Reason)
 	assert.Nil(t, h.stops[1].ActualArrival)
 
-	for idx, kind := range []shipment.VisitKind{shipment.VisitArrival, shipment.VisitDeparture} {
+	for idx, kind := range []shipmentvocab.VisitKind{shipmentvocab.VisitArrival, shipmentvocab.VisitDeparture} {
 		_, err = h.service.RecordObserved(t.Context(), h.observed(
 			0,
 			kind,
@@ -355,12 +374,12 @@ func TestRecordObserved_AnInvoicedLoadKeepsItsActuals(t *testing.T) {
 	t.Parallel()
 
 	h := newHarness(t, 1)
-	h.ship.Status = shipment.StatusInvoiced
+	h.ship.Status = shipmentvocab.StatusInvoiced
 	at := timeutils.NowUnix() - 3600
 
 	result, err := h.service.RecordObserved(
 		t.Context(),
-		h.observed(0, shipment.VisitArrival, trackingevent.SourceTelematics, "samsara:1", at),
+		h.observed(0, shipmentvocab.VisitArrival, trackingevent.SourceTelematics, "samsara:1", at),
 	)
 	require.NoError(t, err)
 	assert.Equal(t, trackingevent.OutcomeSuperseded, result.Outcome)
@@ -372,12 +391,12 @@ func TestRecordObserved_ACanceledLoadRefusesTheEvent(t *testing.T) {
 	t.Parallel()
 
 	h := newHarness(t, 1)
-	h.move.Status = shipment.MoveStatusCanceled
+	h.move.Status = shipmentvocab.MoveStatusCanceled
 	at := timeutils.NowUnix() - 3600
 
 	result, err := h.service.RecordObserved(
 		t.Context(),
-		h.observed(0, shipment.VisitArrival, trackingevent.SourceEDI, "edi:z:0", at),
+		h.observed(0, shipmentvocab.VisitArrival, trackingevent.SourceEDI, "edi:z:0", at),
 	)
 	require.NoError(t, err)
 	assert.Equal(t, trackingevent.OutcomeRefused, result.Outcome)
@@ -392,10 +411,10 @@ func TestRecordObserved_RejectsInteractiveSourcesAndBadInput(t *testing.T) {
 
 	for name, params := range map[string]*trackingeventports.RecordObservedStopEventParams{
 		"interactive source": h.observed(
-			0, shipment.VisitArrival, trackingevent.SourceDriver, "k", at,
+			0, shipmentvocab.VisitArrival, trackingevent.SourceDriver, "k", at,
 		),
 		"future time": h.observed(
-			0, shipment.VisitArrival, trackingevent.SourceEDI, "k", at+86400,
+			0, shipmentvocab.VisitArrival, trackingevent.SourceEDI, "k", at+86400,
 		),
 		"bad kind": h.observed(0, "Dwell", trackingevent.SourceEDI, "k", at),
 	} {
@@ -410,7 +429,7 @@ func TestRecordObserved_RejectsInteractiveSourcesAndBadInput(t *testing.T) {
 			TenantInfo:  h.tenant,
 			MoveID:      h.move.ID,
 			StopID:      pulid.MustNew("stp_"),
-			Kind:        shipment.VisitArrival,
+			Kind:        shipmentvocab.VisitArrival,
 			Source:      trackingevent.SourceEDI,
 			SourceKey:   "k",
 			MatchMethod: trackingevent.MatchLocation,
@@ -445,7 +464,7 @@ func TestRecordReported_RecordsArrivalAndDepartureOnce(t *testing.T) {
 	assert.Equal(t, trackingevent.OutcomeApplied, result.Outcome)
 	assert.False(t, result.Replayed)
 	require.Len(t, h.repo.events, 2)
-	assert.Equal(t, shipment.VisitDeparture, h.repo.byKey("run_1:step_2:departure").Kind)
+	assert.Equal(t, shipmentvocab.VisitDeparture, h.repo.byKey("run_1:step_2:departure").Kind)
 	assert.Equal(t, [2]int64{arrived, departed}, actuals(h.stops)[0])
 
 	again, err := h.service.RecordReported(t.Context(), params)
@@ -570,7 +589,7 @@ func TestReportDriverStop_RecordsATapOnceUnderTheDriversKey(t *testing.T) {
 	stored := h.repo.byKey(driver.String() + ":7f1c2a")
 	require.NotNil(t, stored)
 	assert.Equal(t, trackingevent.SourceDriver, stored.Source)
-	assert.Equal(t, shipment.VisitArrival, stored.Kind)
+	assert.Equal(t, shipmentvocab.VisitArrival, stored.Kind)
 	assert.Equal(t, driver, stored.ReportedByID)
 	assert.Equal(t, tapped, *h.stops[0].ActualArrival)
 	assert.Len(t, h.moves.recorded, 1)

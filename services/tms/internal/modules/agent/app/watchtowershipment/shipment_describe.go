@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/stopeta"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/checkcallports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/stopetaports"
@@ -41,7 +41,7 @@ func DescribeTelematicsStopVisit(
 	event := review.Event
 
 	visit := "Arrival"
-	if event.StopVisit == shipment.VisitDeparture {
+	if event.StopVisit == shipmentvocab.VisitDeparture {
 		visit = "Departure"
 	}
 	title := visit + " not recorded"
@@ -152,7 +152,7 @@ func DescribeEtaRisk(
 	}
 
 	windowLabel := "Delivery window closes"
-	if stop.StopType == shipment.StopTypePickup {
+	if stop.StopType == shipmentvocab.StopTypePickup {
 		windowLabel = "Pickup window closes"
 	}
 	facts := []watchtower.Fact{

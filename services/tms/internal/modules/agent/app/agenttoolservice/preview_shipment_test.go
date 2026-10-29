@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentserviceports"
@@ -89,7 +90,7 @@ func (f *fakeShipmentService) PreviewCancel(
 	before := &shipment.Shipment{
 		ID:        req.ShipmentID,
 		ProNumber: "SHP-3001",
-		Status:    shipment.StatusAssigned,
+		Status:    shipmentvocab.StatusAssigned,
 		Version:   9,
 	}
 	after := *before

@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement"
 	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -16,8 +17,8 @@ func newFlatAssignment() *shipment.CarrierAssignment {
 	assignment := &shipment.CarrierAssignment{
 		ID:            pulid.ID("casn_test"),
 		CarrierID:     pulid.MustNew("car_"),
-		Status:        shipment.CarrierAssignmentStatusConfirmed,
-		RateMethod:    shipment.CarrierRateMethodFlat,
+		Status:        shipmentvocab.CarrierAssignmentStatusConfirmed,
+		RateMethod:    shipmentvocab.CarrierRateMethodFlat,
 		BaseRate:      decimal.NewFromFloat(1500),
 		FuelSurcharge: decimal.NewFromFloat(125.50),
 		CurrencyCode:  "USD",
@@ -57,7 +58,7 @@ func TestBuildAssignmentCostEventInputsPerMile(t *testing.T) {
 	assignment := &shipment.CarrierAssignment{
 		ID:           pulid.ID("casn_permile"),
 		CarrierID:    pulid.MustNew("car_"),
-		RateMethod:   shipment.CarrierRateMethodPerMile,
+		RateMethod:   shipmentvocab.CarrierRateMethodPerMile,
 		BaseRate:     decimal.NewFromFloat(2.15),
 		CurrencyCode: "USD",
 	}

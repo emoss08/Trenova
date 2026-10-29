@@ -110,6 +110,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/recurringshipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/stopeta"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/trackingevent"
@@ -2512,13 +2513,13 @@ type ChangeFactoringAgreementStatusInput struct {
 }
 
 type ChargeAllocationInput struct {
-	ID               *string                         `json:"id,omitempty"`
-	BillToCustomerID string                          `json:"billToCustomerId"`
-	Method           shipment.ChargeAllocationMethod `json:"method"`
-	Percent          *string                         `json:"percent,omitempty"`
-	Amount           *string                         `json:"amount,omitempty"`
-	Sequence         *int                            `json:"sequence,omitempty"`
-	Version          *int                            `json:"version,omitempty"`
+	ID               *string                              `json:"id,omitempty"`
+	BillToCustomerID string                               `json:"billToCustomerId"`
+	Method           shipmentvocab.ChargeAllocationMethod `json:"method"`
+	Percent          *string                              `json:"percent,omitempty"`
+	Amount           *string                              `json:"amount,omitempty"`
+	Sequence         *int                                 `json:"sequence,omitempty"`
+	Version          *int                                 `json:"version,omitempty"`
 }
 
 type ChooseAccountingCompanyInput struct {
@@ -3849,7 +3850,7 @@ type DispatchAssignMoveInput struct {
 type DispatchAssignMoveToCarrierInput struct {
 	MoveID                string                             `json:"moveId"`
 	CarrierID             string                             `json:"carrierId"`
-	RateMethod            shipment.CarrierRateMethod         `json:"rateMethod"`
+	RateMethod            shipmentvocab.CarrierRateMethod    `json:"rateMethod"`
 	BaseRate              string                             `json:"baseRate"`
 	FuelSurcharge         *string                            `json:"fuelSurcharge,omitempty"`
 	Accessorials          []*DispatchCarrierAccessorialInput `json:"accessorials,omitempty"`
@@ -9046,8 +9047,8 @@ type ShiftTemplateInput struct {
 }
 
 type Shipment struct {
-	ID    string         `json:"id"`
-	Stage shipment.Stage `json:"stage"`
+	ID    string              `json:"id"`
+	Stage shipmentvocab.Stage `json:"stage"`
 	// Projected arrival at the final delivery, read from the latest position and the remaining stops.
 	Eta              *ShipmentEta `json:"eta,omitempty"`
 	BusinessUnitID   string       `json:"businessUnitId"`
@@ -9057,13 +9058,13 @@ type Shipment struct {
 	ShipmentTypeID   string       `json:"shipmentTypeId"`
 	CustomerID       string       `json:"customerId"`
 	// The customer billed by default. Null means the shipment's customer pays.
-	BillToCustomerID *string               `json:"billToCustomerId,omitempty"`
-	FreightTerms     shipment.FreightTerms `json:"freightTerms"`
-	TractorTypeID    *string               `json:"tractorTypeId,omitempty"`
-	TrailerTypeID    *string               `json:"trailerTypeId,omitempty"`
-	OwnerID          *string               `json:"ownerId,omitempty"`
-	EnteredByID      *string               `json:"enteredById,omitempty"`
-	CanceledByID     *string               `json:"canceledById,omitempty"`
+	BillToCustomerID *string                    `json:"billToCustomerId,omitempty"`
+	FreightTerms     shipmentvocab.FreightTerms `json:"freightTerms"`
+	TractorTypeID    *string                    `json:"tractorTypeId,omitempty"`
+	TrailerTypeID    *string                    `json:"trailerTypeId,omitempty"`
+	OwnerID          *string                    `json:"ownerId,omitempty"`
+	EnteredByID      *string                    `json:"enteredById,omitempty"`
+	CanceledByID     *string                    `json:"canceledById,omitempty"`
 	// The tariff that rates the shipment. Null when it is rated by hand.
 	FormulaTemplateID    *string       `json:"formulaTemplateId,omitempty"`
 	ConsolidationGroupID *string       `json:"consolidationGroupId,omitempty"`
@@ -10134,13 +10135,13 @@ type ShipmentInput struct {
 	ShipmentTypeID   string  `json:"shipmentTypeId"`
 	CustomerID       string  `json:"customerId"`
 	// Null bills the shipment to its customer.
-	BillToCustomerID *string                `json:"billToCustomerId,omitempty"`
-	FreightTerms     *shipment.FreightTerms `json:"freightTerms,omitempty"`
-	TractorTypeID    *string                `json:"tractorTypeId,omitempty"`
-	TrailerTypeID    *string                `json:"trailerTypeId,omitempty"`
-	OwnerID          *string                `json:"ownerId,omitempty"`
-	EnteredByID      *string                `json:"enteredById,omitempty"`
-	CanceledByID     *string                `json:"canceledById,omitempty"`
+	BillToCustomerID *string                     `json:"billToCustomerId,omitempty"`
+	FreightTerms     *shipmentvocab.FreightTerms `json:"freightTerms,omitempty"`
+	TractorTypeID    *string                     `json:"tractorTypeId,omitempty"`
+	TrailerTypeID    *string                     `json:"trailerTypeId,omitempty"`
+	OwnerID          *string                     `json:"ownerId,omitempty"`
+	EnteredByID      *string                     `json:"enteredById,omitempty"`
+	CanceledByID     *string                     `json:"canceledById,omitempty"`
 	// Null rates the shipment by hand at its freight charge amount.
 	FormulaTemplateID    *string               `json:"formulaTemplateId,omitempty"`
 	ConsolidationGroupID *string               `json:"consolidationGroupId,omitempty"`
@@ -10318,22 +10319,22 @@ type ShipmentLoadingWarning struct {
 }
 
 type ShipmentMove struct {
-	ID                     *string                   `json:"id,omitempty"`
-	BusinessUnitID         string                    `json:"businessUnitId"`
-	OrganizationID         string                    `json:"organizationId"`
-	ShipmentID             *string                   `json:"shipmentId,omitempty"`
-	Status                 MoveStatus                `json:"status"`
-	CoverageType           shipment.MoveCoverageType `json:"coverageType"`
-	Loaded                 bool                      `json:"loaded"`
-	Sequence               int                       `json:"sequence"`
-	Distance               *float64                  `json:"distance,omitempty"`
-	DistanceSource         *string                   `json:"distanceSource,omitempty"`
-	DistanceProvider       *string                   `json:"distanceProvider,omitempty"`
-	DistanceCalculatedAt   *int                      `json:"distanceCalculatedAt,omitempty"`
-	DistanceRouteSignature *string                   `json:"distanceRouteSignature,omitempty"`
-	DistanceDataVersion    *string                   `json:"distanceDataVersion,omitempty"`
-	DistanceRoutingType    *string                   `json:"distanceRoutingType,omitempty"`
-	DistanceUnits          *string                   `json:"distanceUnits,omitempty"`
+	ID                     *string                        `json:"id,omitempty"`
+	BusinessUnitID         string                         `json:"businessUnitId"`
+	OrganizationID         string                         `json:"organizationId"`
+	ShipmentID             *string                        `json:"shipmentId,omitempty"`
+	Status                 MoveStatus                     `json:"status"`
+	CoverageType           shipmentvocab.MoveCoverageType `json:"coverageType"`
+	Loaded                 bool                           `json:"loaded"`
+	Sequence               int                            `json:"sequence"`
+	Distance               *float64                       `json:"distance,omitempty"`
+	DistanceSource         *string                        `json:"distanceSource,omitempty"`
+	DistanceProvider       *string                        `json:"distanceProvider,omitempty"`
+	DistanceCalculatedAt   *int                           `json:"distanceCalculatedAt,omitempty"`
+	DistanceRouteSignature *string                        `json:"distanceRouteSignature,omitempty"`
+	DistanceDataVersion    *string                        `json:"distanceDataVersion,omitempty"`
+	DistanceRoutingType    *string                        `json:"distanceRoutingType,omitempty"`
+	DistanceUnits          *string                        `json:"distanceUnits,omitempty"`
 	// Distance providers may return provider-specific route details, so this remains intentionally open-ended.
 	DistanceMetadata  map[string]any              `json:"distanceMetadata,omitempty"`
 	Version           int                         `json:"version"`
@@ -10637,7 +10638,7 @@ type ShipmentSparklinePoint struct {
 }
 
 type ShipmentStageSummary struct {
-	Stage shipment.Stage `json:"stage"`
+	Stage shipmentvocab.Stage `json:"stage"`
 	// Sort position of the stage on the board.
 	Rank    int    `json:"rank"`
 	Count   int    `json:"count"`

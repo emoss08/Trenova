@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentevent"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location"
@@ -615,14 +616,16 @@ func shipmentEventStatusCode(event *shipmentevent.Event) string {
 		return "A7"
 	case shipmentevent.TypeStatusChanged:
 		//nolint:exhaustive // Only statuses with EDI 214-specific codes need overrides.
-		switch shipment.Status(metadataString(event.Metadata, "newStatus")) {
-		case shipment.StatusInTransit:
+		switch shipmentvocab.Status(metadataString(event.Metadata, "newStatus")) {
+		case shipmentvocab.StatusInTransit:
 			return "AF"
-		case shipment.StatusCompleted, shipment.StatusInvoiced, shipment.StatusReadyToInvoice:
+		case shipmentvocab.StatusCompleted,
+			shipmentvocab.StatusInvoiced,
+			shipmentvocab.StatusReadyToInvoice:
 			return "D1"
-		case shipment.StatusDelayed:
+		case shipmentvocab.StatusDelayed:
 			return "A3"
-		case shipment.StatusCanceled:
+		case shipmentvocab.StatusCanceled:
 			return "A7"
 		}
 	}

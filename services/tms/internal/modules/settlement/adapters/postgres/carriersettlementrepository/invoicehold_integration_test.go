@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/settlement/adapters/postgres/carrierinvoicematchrepository"
 	"github.com/emoss08/trenova/internal/modules/settlement/adapters/postgres/carriersettlementrepository"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement"
@@ -133,8 +134,8 @@ func (f *holdFixture) assignment(t *testing.T) pulid.ID {
 		BusinessUnitID: f.tenant.BuID,
 		ShipmentMoveID: moveID,
 		CarrierID:      f.carrierID,
-		Status:         shipment.CarrierAssignmentStatusConfirmed,
-		RateMethod:     shipment.CarrierRateMethodFlat,
+		Status:         shipmentvocab.CarrierAssignmentStatusConfirmed,
+		RateMethod:     shipmentvocab.CarrierRateMethodFlat,
 		BaseRate:       decimal.NewFromInt(1000),
 		TotalCost:      decimal.NewFromInt(1000),
 		CurrencyCode:   "USD",

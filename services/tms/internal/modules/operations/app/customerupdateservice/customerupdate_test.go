@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentcommentports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -26,7 +27,7 @@ func (s *stubComments) ListByShipmentID(
 func agentEmailComment(at int64) *shipment.ShipmentComment {
 	return &shipment.ShipmentComment{
 		CreatedAt: at,
-		Type:      shipment.CommentTypeCustomerUpdate,
+		Type:      shipmentvocab.CommentTypeCustomerUpdate,
 		Metadata:  map[string]any{"source": "agent", "tool": "customer_send_email"},
 	}
 }
@@ -57,7 +58,7 @@ func TestAlreadyTold(t *testing.T) {
 			name: "a delay notice sent from the board",
 			items: []*shipment.ShipmentComment{{
 				CreatedAt: now - 120,
-				Type:      shipment.CommentTypeCustomerUpdate,
+				Type:      shipmentvocab.CommentTypeCustomerUpdate,
 				Metadata:  map[string]any{"source": "board", "tool": SourceDelayNotice},
 			}},
 			want: true,
@@ -71,7 +72,7 @@ func TestAlreadyTold(t *testing.T) {
 			name: "a dispatcher typing an update is not an email",
 			items: []*shipment.ShipmentComment{{
 				CreatedAt: now - 60,
-				Type:      shipment.CommentTypeCustomerUpdate,
+				Type:      shipmentvocab.CommentTypeCustomerUpdate,
 				Metadata:  map[string]any{"source": "user"},
 			}},
 			want: false,
@@ -80,7 +81,7 @@ func TestAlreadyTold(t *testing.T) {
 			name: "another agent tool is not this one",
 			items: []*shipment.ShipmentComment{{
 				CreatedAt: now - 60,
-				Type:      shipment.CommentTypeCustomerUpdate,
+				Type:      shipmentvocab.CommentTypeCustomerUpdate,
 				Metadata:  map[string]any{"source": "agent", "tool": "shipment_add_comment"},
 			}},
 			want: false,

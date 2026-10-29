@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/workforce/adapters/postgres/schedulingrepository"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
@@ -66,10 +67,10 @@ func TestRotaAssignedDays_CountsLiveAssignmentsPerRosterDay(t *testing.T) {
 			BOL:        "BOL-ROTA",
 			ProNumber:  "PRO-ROTA",
 			ShipmentID: pulid.MustNew("shp_"),
-			MoveStatuses: []shipment.MoveStatus{
-				shipment.MoveStatusAssigned,
-				shipment.MoveStatusAssigned,
-				shipment.MoveStatusAssigned,
+			MoveStatuses: []shipmentvocab.MoveStatus{
+				shipmentvocab.MoveStatusAssigned,
+				shipmentvocab.MoveStatusAssigned,
+				shipmentvocab.MoveStatusAssigned,
 			},
 		},
 	)
@@ -83,7 +84,7 @@ func TestRotaAssignedDays_CountsLiveAssignmentsPerRosterDay(t *testing.T) {
 			OrganizationID:  tenant.OrgID,
 			ShipmentMoveID:  graph.Moves[i].ID,
 			PrimaryWorkerID: &driver.ID,
-			Status:          shipment.AssignmentStatusNew,
+			Status:          shipmentvocab.AssignmentStatusNew,
 			CreatedAt:       created,
 		}
 		if i == 2 {

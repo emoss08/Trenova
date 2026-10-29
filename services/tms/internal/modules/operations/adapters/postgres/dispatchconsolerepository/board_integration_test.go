@@ -9,8 +9,8 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/dispatchconsolerepository"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchboardports"
 	"github.com/emoss08/trenova/internal/testutil/seededtest"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -27,7 +27,7 @@ func TestListBoardMoves_ReadsWhetherTheLoadArrivedAtItsDelivery(t *testing.T) {
 
 	sm := shipmentdb.ShipmentMoves
 	move, err := sm.AllTenants().
-		Where(sm.Status.In(shipment.MoveStatusNew, shipment.MoveStatusAssigned)).
+		Where(sm.Status.In(shipmentvocab.MoveStatusNew, shipmentvocab.MoveStatusAssigned)).
 		Order(sm.ID.Asc()).
 		First(dbscope.WithSystem(ctx, "test"), db)
 	require.NoError(t, err)
@@ -35,7 +35,7 @@ func TestListBoardMoves_ReadsWhetherTheLoadArrivedAtItsDelivery(t *testing.T) {
 	ctx = dbscope.WithTenant(ctx, tenant.DBTenant())
 
 	stp := shipmentdb.Stops
-	last, err := stp.Where(stp.ShipmentMoveID.Eq(move.ID), stp.Status.Ne(shipment.StopStatusCanceled)).
+	last, err := stp.Where(stp.ShipmentMoveID.Eq(move.ID), stp.Status.Ne(shipmentvocab.StopStatusCanceled)).
 		Order(stp.Sequence.Desc()).
 		First(ctx, db)
 	require.NoError(t, err)
@@ -76,7 +76,7 @@ func TestGetBoardSummary_CountsMovesByTheirNextStop(t *testing.T) {
 
 	sm := shipmentdb.ShipmentMoves
 	move, err := sm.AllTenants().
-		Where(sm.Status.In(shipment.MoveStatusNew, shipment.MoveStatusAssigned)).
+		Where(sm.Status.In(shipmentvocab.MoveStatusNew, shipmentvocab.MoveStatusAssigned)).
 		Order(sm.ID.Asc()).
 		First(dbscope.WithSystem(ctx, "test"), db)
 	require.NoError(t, err)
@@ -84,7 +84,10 @@ func TestGetBoardSummary_CountsMovesByTheirNextStop(t *testing.T) {
 	ctx = dbscope.WithTenant(ctx, tenant.DBTenant())
 
 	stp := shipmentdb.Stops
-	live := keel.And(stp.ShipmentMoveID.Eq(move.ID), stp.Status.Ne(shipment.StopStatusCanceled))
+	live := keel.And(
+		stp.ShipmentMoveID.Eq(move.ID),
+		stp.Status.Ne(shipmentvocab.StopStatusCanceled),
+	)
 	first, err := stp.Where(live).Order(stp.Sequence.Asc()).First(ctx, db)
 	require.NoError(t, err)
 	last, err := stp.Where(live).Order(stp.Sequence.Desc()).First(ctx, db)

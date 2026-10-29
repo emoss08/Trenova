@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/shipmentcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
@@ -41,14 +42,14 @@ func TestServiceCancel_Success(t *testing.T) {
 		ID:             shipmentID,
 		OrganizationID: orgID,
 		BusinessUnitID: buID,
-		Status:         shipment.StatusAssigned,
+		Status:         shipmentvocab.StatusAssigned,
 		Version:        3,
 	}
 	updated := &shipment.Shipment{
 		ID:             shipmentID,
 		OrganizationID: orgID,
 		BusinessUnitID: buID,
-		Status:         shipment.StatusCanceled,
+		Status:         shipmentvocab.StatusCanceled,
 	}
 
 	repo.EXPECT().
@@ -120,7 +121,7 @@ func TestServiceCancel_Success(t *testing.T) {
 	})
 
 	require.NoError(t, err)
-	assert.Equal(t, shipment.StatusCanceled, entity.Status)
+	assert.Equal(t, shipmentvocab.StatusCanceled, entity.Status)
 }
 
 func TestServiceCancel_RejectsAlreadyCanceledShipment(t *testing.T) {
@@ -129,7 +130,7 @@ func TestServiceCancel_RejectsAlreadyCanceledShipment(t *testing.T) {
 	repo := shipmentportsmock.NewMockShipmentRepository(t)
 	repo.EXPECT().
 		GetByID(mock.Anything, mock.Anything).
-		Return(&shipment.Shipment{Status: shipment.StatusCanceled}, nil).
+		Return(&shipment.Shipment{Status: shipmentvocab.StatusCanceled}, nil).
 		Once()
 
 	svc := assembled(&rig{
@@ -170,13 +171,13 @@ func TestServiceUncancel_Success(t *testing.T) {
 		ID:             shipmentID,
 		OrganizationID: orgID,
 		BusinessUnitID: buID,
-		Status:         shipment.StatusCanceled,
+		Status:         shipmentvocab.StatusCanceled,
 	}
 	updated := &shipment.Shipment{
 		ID:             shipmentID,
 		OrganizationID: orgID,
 		BusinessUnitID: buID,
-		Status:         shipment.StatusNew,
+		Status:         shipmentvocab.StatusNew,
 	}
 
 	repo.EXPECT().
@@ -194,7 +195,7 @@ func TestServiceUncancel_Success(t *testing.T) {
 		Uncancel(mock.Anything, mock.MatchedBy(func(req *shipmentports.UncancelShipmentRequest) bool {
 			return req.ShipmentID == shipmentID && req.TenantInfo.OrgID == orgID &&
 				req.TenantInfo.BuID == buID &&
-				req.RestoredStatus == shipment.StatusNew
+				req.RestoredStatus == shipmentvocab.StatusNew
 		})).
 		Return(updated, nil).
 		Once()
@@ -236,7 +237,7 @@ func TestServiceUncancel_Success(t *testing.T) {
 	})
 
 	require.NoError(t, err)
-	assert.Equal(t, shipment.StatusNew, entity.Status)
+	assert.Equal(t, shipmentvocab.StatusNew, entity.Status)
 }
 
 func TestServiceUncancel_RejectsNonCanceledShipment(t *testing.T) {
@@ -245,7 +246,7 @@ func TestServiceUncancel_RejectsNonCanceledShipment(t *testing.T) {
 	repo := shipmentportsmock.NewMockShipmentRepository(t)
 	repo.EXPECT().
 		GetByID(mock.Anything, mock.Anything).
-		Return(&shipment.Shipment{Status: shipment.StatusAssigned}, nil).
+		Return(&shipment.Shipment{Status: shipmentvocab.StatusAssigned}, nil).
 		Once()
 
 	svc := assembled(&rig{
@@ -279,18 +280,18 @@ func TestServiceCancel_RefusesLockedShipments(t *testing.T) {
 	}{
 		{
 			name:     "invoiced",
-			original: &shipment.Shipment{Status: shipment.StatusInvoiced},
+			original: &shipment.Shipment{Status: shipmentvocab.StatusInvoiced},
 		},
 		{
 			name: "in billing queue",
 			original: &shipment.Shipment{
-				Status:                shipment.StatusReadyToInvoice,
-				BillingTransferStatus: shipment.BillingTransferInReview,
+				Status:                shipmentvocab.StatusReadyToInvoice,
+				BillingTransferStatus: shipmentvocab.BillingTransferInReview,
 			},
 		},
 		{
 			name:     "completed",
-			original: &shipment.Shipment{Status: shipment.StatusCompleted},
+			original: &shipment.Shipment{Status: shipmentvocab.StatusCompleted},
 		},
 	}
 
@@ -341,36 +342,36 @@ func TestServiceUncancel_RestoresStatusesFromActuals(t *testing.T) {
 
 	completedStop := &shipment.Stop{
 		ID:              pulid.MustNew("stp_"),
-		Type:            shipment.StopTypePickup,
-		Status:          shipment.StopStatusCompleted,
+		Type:            shipmentvocab.StopTypePickup,
+		Status:          shipmentvocab.StopStatusCompleted,
 		ActualArrival:   &arrived,
 		ActualDeparture: &departed,
 	}
 	arrivedStop := &shipment.Stop{
 		ID:            pulid.MustNew("stp_"),
-		Type:          shipment.StopTypeDelivery,
-		Status:        shipment.StopStatusCanceled,
+		Type:          shipmentvocab.StopTypeDelivery,
+		Status:        shipmentvocab.StopStatusCanceled,
 		ActualArrival: &arrived,
 	}
 	openStop := &shipment.Stop{
 		ID:     pulid.MustNew("stp_"),
-		Type:   shipment.StopTypeDelivery,
-		Status: shipment.StopStatusCanceled,
+		Type:   shipmentvocab.StopTypeDelivery,
+		Status: shipmentvocab.StopStatusCanceled,
 	}
 	move := &shipment.ShipmentMove{
 		ID:     pulid.MustNew("smv_"),
-		Status: shipment.MoveStatusCanceled,
+		Status: shipmentvocab.MoveStatusCanceled,
 		Stops:  []*shipment.Stop{completedStop, arrivedStop, openStop},
 		Assignment: &shipment.Assignment{
 			ID:     pulid.MustNew("a_"),
-			Status: shipment.AssignmentStatusCanceled,
+			Status: shipmentvocab.AssignmentStatusCanceled,
 		},
 	}
 	original := &shipment.Shipment{
 		ID:             pulid.MustNew("shp_"),
 		OrganizationID: orgID,
 		BusinessUnitID: buID,
-		Status:         shipment.StatusCanceled,
+		Status:         shipmentvocab.StatusCanceled,
 		Version:        7,
 		Moves:          []*shipment.ShipmentMove{move},
 	}
@@ -398,16 +399,16 @@ func TestServiceUncancel_RestoresStatusesFromActuals(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Same(t, original, before)
-	assert.Equal(t, shipment.StopStatusCanceled, arrivedStop.Status)
+	assert.Equal(t, shipmentvocab.StopStatusCanceled, arrivedStop.Status)
 	assert.Equal(t, int64(7), req.ExpectedVersion)
-	assert.Equal(t, shipment.StatusInTransit, req.RestoredStatus)
-	assert.Equal(t, shipment.StatusInTransit, after.Status)
+	assert.Equal(t, shipmentvocab.StatusInTransit, req.RestoredStatus)
+	assert.Equal(t, shipmentvocab.StatusInTransit, after.Status)
 	assert.Equal(t, []shipmentports.MoveStatusRestore{
-		{MoveID: move.ID, Status: shipment.MoveStatusInTransit},
+		{MoveID: move.ID, Status: shipmentvocab.MoveStatusInTransit},
 	}, req.MoveStatuses)
 	assert.ElementsMatch(t, []shipmentports.StopStatusRestore{
-		{StopID: arrivedStop.ID, Status: shipment.StopStatusInTransit},
-		{StopID: openStop.ID, Status: shipment.StopStatusNew},
+		{StopID: arrivedStop.ID, Status: shipmentvocab.StopStatusInTransit},
+		{StopID: openStop.ID, Status: shipmentvocab.StopStatusNew},
 	}, req.StopStatuses)
 	assert.Nil(t, after.CanceledAt)
 }

@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/customertracking"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/stopeta"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/customertrackingports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -176,8 +177,8 @@ func TestDownloadPod_OnlyWhenTheCustomerSeesProofOfDelivery(t *testing.T) {
 
 func TestIssueLink_RefusesWhatItCannotShare(t *testing.T) {
 	h := newHarness()
-	canceled := h.addShipment(shipment.StatusCanceled,
-		stopSpec{stopType: shipment.StopTypePickup, city: "Dallas", state: "TX"})
+	canceled := h.addShipment(shipmentvocab.StatusCanceled,
+		stopSpec{stopType: shipmentvocab.StopTypePickup, city: "Dallas", state: "TX"})
 	_, err := h.service.IssueLink(t.Context(), &customertrackingports.IssueLinkRequest{
 		TenantInfo: testTenant,
 		ShipmentID: canceled.ID,

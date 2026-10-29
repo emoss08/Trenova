@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	shipmentdomain "github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
@@ -36,8 +37,8 @@ func TestShipmentToModel_MapsTypedRelationFields(t *testing.T) {
 		ShipmentTypeID:    pulid.MustNew("sht_"),
 		CustomerID:        customerID,
 		FormulaTemplateID: formulaTemplateID,
-		Status:            shipmentdomain.StatusNew,
-		EntryMethod:       shipmentdomain.EntryMethodManual,
+		Status:            shipmentvocab.StatusNew,
+		EntryMethod:       shipmentvocab.EntryMethodManual,
 		ProNumber:         "SHP-100",
 		Customer: &customer.Customer{
 			ID:                    customerID,

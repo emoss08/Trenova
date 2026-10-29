@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentcoverage"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentstate"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/assignmentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/rating/ratingtest"
@@ -48,8 +49,8 @@ func previewUnassignService(
 			ShipmentID:     original.ID,
 			OrganizationID: tenantInfo.OrgID,
 			BusinessUnitID: tenantInfo.BuID,
-			Status:         shipment.MoveStatusAssigned,
-			CoverageType:   shipment.MoveCoverageTypeDriver,
+			Status:         shipmentvocab.MoveStatusAssigned,
+			CoverageType:   shipmentvocab.MoveCoverageTypeDriver,
 		}, nil).
 		Once()
 	repo.EXPECT().
@@ -96,9 +97,9 @@ func assignedShipment(
 	tenantInfo pagination.TenantInfo,
 ) *shipment.Shipment {
 	original := validShipment(shipmentID, moveID, tenantInfo)
-	original.Status = shipment.StatusAssigned
-	original.Moves[0].Status = shipment.MoveStatusAssigned
-	original.Moves[0].CoverageType = shipment.MoveCoverageTypeDriver
+	original.Status = shipmentvocab.StatusAssigned
+	original.Moves[0].Status = shipmentvocab.MoveStatusAssigned
+	original.Moves[0].CoverageType = shipmentvocab.MoveCoverageTypeDriver
 	original.Moves[0].Assignment = &shipment.Assignment{
 		ID:              pulid.MustNew("asn_"),
 		OrganizationID:  tenantInfo.OrgID,
@@ -106,7 +107,7 @@ func assignedShipment(
 		ShipmentMoveID:  moveID,
 		PrimaryWorkerID: pulid.Must("wrk_"),
 		TractorID:       pulid.Must("trc_"),
-		Status:          shipment.AssignmentStatusNew,
+		Status:          shipmentvocab.AssignmentStatusNew,
 	}
 
 	return original
@@ -129,11 +130,15 @@ func TestPreviewUnassign_ProjectsTheMoveWithoutItsDriver(t *testing.T) {
 
 	require.NotNil(t, plan.Assignment)
 	assert.Equal(t, original.Moves[0].Assignment.ID, plan.Assignment.ID)
-	assert.Equal(t, shipment.StatusAssigned, plan.ShipmentBefore.Status)
-	assert.Equal(t, shipment.MoveStatusAssigned, plan.ShipmentBefore.Moves[0].Status)
-	assert.Equal(t, shipment.StatusNew, plan.ShipmentAfter.Status)
-	assert.Equal(t, shipment.MoveStatusNew, plan.ShipmentAfter.Moves[0].Status)
-	assert.Equal(t, shipment.MoveCoverageTypeUnassigned, plan.ShipmentAfter.Moves[0].CoverageType)
+	assert.Equal(t, shipmentvocab.StatusAssigned, plan.ShipmentBefore.Status)
+	assert.Equal(t, shipmentvocab.MoveStatusAssigned, plan.ShipmentBefore.Moves[0].Status)
+	assert.Equal(t, shipmentvocab.StatusNew, plan.ShipmentAfter.Status)
+	assert.Equal(t, shipmentvocab.MoveStatusNew, plan.ShipmentAfter.Moves[0].Status)
+	assert.Equal(
+		t,
+		shipmentvocab.MoveCoverageTypeUnassigned,
+		plan.ShipmentAfter.Moves[0].CoverageType,
+	)
 	assert.Nil(t, plan.ShipmentAfter.Moves[0].Assignment)
 }
 
@@ -148,7 +153,7 @@ func TestPreviewUnassign_RefusesAMoveAlreadyUnderway(t *testing.T) {
 	repo := assignmentportsmock.NewMockAssignmentRepository(t)
 	repo.EXPECT().
 		GetMoveByID(mock.Anything, tenantInfo, moveID).
-		Return(&shipment.ShipmentMove{ID: moveID, Status: shipment.MoveStatusInTransit}, nil).
+		Return(&shipment.ShipmentMove{ID: moveID, Status: shipmentvocab.MoveStatusInTransit}, nil).
 		Twice()
 
 	svc := &service{

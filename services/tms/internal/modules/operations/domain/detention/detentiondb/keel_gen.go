@@ -15,7 +15,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionnotice/detentionnoticedb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionpolicy"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionpolicy/detentionpolicydb"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/pkg/keelkinds"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -42,8 +41,8 @@ var detentionOccurrencesTable = schema.Table{
 		{Name: "detention_policy_id", Quoted: `"detention_policy_id"`, Field: "DetentionPolicyID", Kind: schema.KindString, Flags: schema.FlagNullable, Label: `Detention Policy ID`, JSON: `detentionPolicyId`},
 		{Name: "policy_snapshot", Quoted: `"policy_snapshot"`, Field: "PolicySnapshot", Kind: schema.KindJSON, Flags: schema.FlagNullable | schema.FlagJSONB, Label: `Policy Snapshot`, JSON: `policySnapshot`},
 		{Name: "calculation_trace", Quoted: `"calculation_trace"`, Field: "CalculationTrace", Kind: schema.KindJSON, Flags: schema.FlagNullable | schema.FlagJSONB, Label: `Calculation Trace`, JSON: `calculationTrace`},
-		{Name: "stop_type", Quoted: `"stop_type"`, Field: "StopType", Kind: schema.KindString, Flags: 0, Label: `Stop Type`, JSON: `stopType`, Enum: enumShipmentStopType[:]},
-		{Name: "schedule_type", Quoted: `"schedule_type"`, Field: "ScheduleType", Kind: schema.KindString, Flags: 0, Label: `Schedule Type`, JSON: `scheduleType`, Enum: enumShipmentStopScheduleType[:]},
+		{Name: "stop_type", Quoted: `"stop_type"`, Field: "StopType", Kind: schema.KindString, Flags: 0, Label: `Stop Type`, JSON: `stopType`, Enum: enumShipmentvocabStopType[:]},
+		{Name: "schedule_type", Quoted: `"schedule_type"`, Field: "ScheduleType", Kind: schema.KindString, Flags: 0, Label: `Schedule Type`, JSON: `scheduleType`, Enum: enumShipmentvocabStopScheduleType[:]},
 		{Name: "appointment_start", Quoted: `"appointment_start"`, Field: "AppointmentStart", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Appointment Start`, JSON: `appointmentStart`},
 		{Name: "appointment_end", Quoted: `"appointment_end"`, Field: "AppointmentEnd", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Appointment End`, JSON: `appointmentEnd`},
 		{Name: "arrived_at", Quoted: `"arrived_at"`, Field: "ArrivedAt", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Arrived At`, JSON: `arrivedAt`},
@@ -135,8 +134,8 @@ type DetentionOccurrencesTable struct {
 	DetentionPolicyID   keelkinds.PulidIDCol
 	PolicySnapshot      keel.JSONBCol
 	CalculationTrace    keel.JSONBCol
-	StopType            shipmentdb.StopTypeCol
-	ScheduleType        shipmentdb.StopScheduleTypeCol
+	StopType            keelkinds.ShipmentvocabStopTypeCol
+	ScheduleType        keelkinds.ShipmentvocabStopScheduleTypeCol
 	AppointmentStart    keel.Int64Col
 	AppointmentEnd      keel.Int64Col
 	ArrivedAt           keel.Int64Col
@@ -201,8 +200,8 @@ var DetentionOccurrences = &DetentionOccurrencesTable{
 	DetentionPolicyID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &detentionOccurrencesRef, Index: 8}}},
 	PolicySnapshot:      keel.JSONBCol{Col: keel.Col{Ref: &detentionOccurrencesRef, Index: 9}},
 	CalculationTrace:    keel.JSONBCol{Col: keel.Col{Ref: &detentionOccurrencesRef, Index: 10}},
-	StopType:            shipmentdb.StopTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &detentionOccurrencesRef, Index: 11}}},
-	ScheduleType:        shipmentdb.StopScheduleTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &detentionOccurrencesRef, Index: 12}}},
+	StopType:            keelkinds.ShipmentvocabStopTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &detentionOccurrencesRef, Index: 11}}},
+	ScheduleType:        keelkinds.ShipmentvocabStopScheduleTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &detentionOccurrencesRef, Index: 12}}},
 	AppointmentStart:    keel.Int64Col{Col: keel.Col{Ref: &detentionOccurrencesRef, Index: 13}},
 	AppointmentEnd:      keel.Int64Col{Col: keel.Col{Ref: &detentionOccurrencesRef, Index: 14}},
 	ArrivedAt:           keel.Int64Col{Col: keel.Col{Ref: &detentionOccurrencesRef, Index: 15}},
@@ -268,8 +267,8 @@ func BuildDetentionOccurrences(r *keel.Ref) *DetentionOccurrencesTable {
 		DetentionPolicyID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 8}}},
 		PolicySnapshot:      keel.JSONBCol{Col: keel.Col{Ref: r, Index: 9}},
 		CalculationTrace:    keel.JSONBCol{Col: keel.Col{Ref: r, Index: 10}},
-		StopType:            shipmentdb.StopTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 11}}},
-		ScheduleType:        shipmentdb.StopScheduleTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 12}}},
+		StopType:            keelkinds.ShipmentvocabStopTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 11}}},
+		ScheduleType:        keelkinds.ShipmentvocabStopScheduleTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 12}}},
 		AppointmentStart:    keel.Int64Col{Col: keel.Col{Ref: r, Index: 13}},
 		AppointmentEnd:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 14}},
 		ArrivedAt:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 15}},
@@ -732,12 +731,12 @@ var enumOccurrenceStatus = [...]schema.EnumValue{
 	{Value: `NotBillable`, Label: `Not Billable`},
 }
 
-var enumShipmentStopScheduleType = [...]schema.EnumValue{
+var enumShipmentvocabStopScheduleType = [...]schema.EnumValue{
 	{Value: `Open`, Label: `Open`},
 	{Value: `Appointment`, Label: `Appointment`},
 }
 
-var enumShipmentStopType = [...]schema.EnumValue{
+var enumShipmentvocabStopType = [...]schema.EnumValue{
 	{Value: `Pickup`, Label: `Pickup`},
 	{Value: `Delivery`, Label: `Delivery`},
 	{Value: `SplitDelivery`, Label: `Split Delivery`},

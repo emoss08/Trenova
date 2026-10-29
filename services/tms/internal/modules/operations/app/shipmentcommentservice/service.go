@@ -19,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmenteventservice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentcommentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenteventports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
@@ -309,7 +310,7 @@ func (s *service) CreateSystem(
 		Type:           defaultCommentType(req.Type),
 		Visibility:     defaultCommentVisibility(req.Visibility),
 		Priority:       defaultCommentPriority(req.Priority),
-		Source:         shipment.CommentSourceSystem,
+		Source:         shipmentvocab.CommentSourceSystem,
 		Metadata:       req.Metadata,
 	}
 	if entity.Metadata == nil {
@@ -892,25 +893,27 @@ func uniqueMentionIDs(ids []pulid.ID) []pulid.ID {
 	return unique
 }
 
-func defaultCommentType(value shipment.CommentType) shipment.CommentType {
+func defaultCommentType(value shipmentvocab.CommentType) shipmentvocab.CommentType {
 	if value == "" {
-		return shipment.CommentTypeInternal
+		return shipmentvocab.CommentTypeInternal
 	}
 
 	return value
 }
 
-func defaultCommentVisibility(value shipment.CommentVisibility) shipment.CommentVisibility {
+func defaultCommentVisibility(
+	value shipmentvocab.CommentVisibility,
+) shipmentvocab.CommentVisibility {
 	if value == "" {
-		return shipment.CommentVisibilityInternal
+		return shipmentvocab.CommentVisibilityInternal
 	}
 
 	return value
 }
 
-func defaultCommentPriority(value shipment.CommentPriority) shipment.CommentPriority {
+func defaultCommentPriority(value shipmentvocab.CommentPriority) shipmentvocab.CommentPriority {
 	if value == "" {
-		return shipment.CommentPriorityNormal
+		return shipmentvocab.CommentPriorityNormal
 	}
 
 	return value

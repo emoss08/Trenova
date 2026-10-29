@@ -6,7 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -72,7 +72,7 @@ type ShipmentBillingPayerReadiness struct {
 
 type ShipmentBillingReadiness struct {
 	ShipmentID                   string                               `json:"shipmentId"`
-	ShipmentStatus               shipment.Status                      `json:"shipmentStatus"`
+	ShipmentStatus               shipmentvocab.Status                 `json:"shipmentStatus"`
 	Policy                       ShipmentBillingReadinessPolicy       `json:"policy"`
 	Requirements                 []ShipmentBillingRequirement         `json:"requirements"`
 	MissingRequirements          []ShipmentBillingRequirement         `json:"missingRequirements"`
@@ -182,7 +182,7 @@ type BulkTransferToBillingResponse struct {
 
 type ListBillingTransferCandidateIDsRequest struct {
 	Filter *pagination.QueryOptions `json:"filter"`
-	Status shipment.Status          `json:"status"`
+	Status shipmentvocab.Status     `json:"status"`
 }
 
 // ListAutoTransferCandidateIDsRequest asks for the shipments an automatic
@@ -234,23 +234,23 @@ const BillingTransferOutcomeReturnToOperations = BillingTransferOutcome("ReturnT
 // BillingTransferDecision is one shipment's answer: what a transfer would do
 // and the readiness it was decided from, by the same checks a transfer makes.
 type BillingTransferDecision struct {
-	ShipmentID pulid.ID        `json:"shipmentId"`
-	ProNumber  string          `json:"proNumber"`
-	Status     shipment.Status `json:"status"`
+	ShipmentID pulid.ID             `json:"shipmentId"`
+	ProNumber  string               `json:"proNumber"`
+	Status     shipmentvocab.Status `json:"status"`
 	// BillingTransferStatus is the stage the shipment is at now: empty for
 	// one billing has never received, SentBackToOps for one it returned.
-	BillingTransferStatus shipment.BillingTransferStatus `json:"billingTransferStatus"`
-	CustomerID            pulid.ID                       `json:"customerId"`
-	CustomerName          string                         `json:"customerName"`
-	TotalCharge           decimal.NullDecimal            `json:"totalCharge"`
-	CurrencyCode          string                         `json:"currencyCode"`
-	DeliveredAt           *int64                         `json:"deliveredAt"`
-	Outcome               BillingTransferOutcome         `json:"outcome"`
-	FailureCode           BillingTransferFailureCode     `json:"failureCode,omitempty"`
-	Reason                string                         `json:"reason,omitempty"`
-	MissingRequirements   []ShipmentBillingRequirement   `json:"missingRequirements"`
-	ValidationFailures    []ShipmentBillingValidation    `json:"validationFailures"`
-	Warnings              []ShipmentBillingWarning       `json:"warnings"`
+	BillingTransferStatus shipmentvocab.BillingTransferStatus `json:"billingTransferStatus"`
+	CustomerID            pulid.ID                            `json:"customerId"`
+	CustomerName          string                              `json:"customerName"`
+	TotalCharge           decimal.NullDecimal                 `json:"totalCharge"`
+	CurrencyCode          string                              `json:"currencyCode"`
+	DeliveredAt           *int64                              `json:"deliveredAt"`
+	Outcome               BillingTransferOutcome              `json:"outcome"`
+	FailureCode           BillingTransferFailureCode          `json:"failureCode,omitempty"`
+	Reason                string                              `json:"reason,omitempty"`
+	MissingRequirements   []ShipmentBillingRequirement        `json:"missingRequirements"`
+	ValidationFailures    []ShipmentBillingValidation         `json:"validationFailures"`
+	Warnings              []ShipmentBillingWarning            `json:"warnings"`
 	// AutoApprove means at least one payer's item would clear the queue on
 	// its own, by the organization's deterministic rule.
 	AutoApprove bool `json:"autoApprove"`
@@ -272,7 +272,7 @@ type BillingTransferPlan struct {
 // decision on each row.
 type ListBillingTransferCandidatesRequest struct {
 	Filter                      *pagination.QueryOptions
-	Status                      shipment.Status
+	Status                      shipmentvocab.Status
 	MarkCompletedReadyToInvoice bool
 }
 

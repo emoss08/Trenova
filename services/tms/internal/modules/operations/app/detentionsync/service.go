@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionevidence"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionpolicy"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentcommentports"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
@@ -51,10 +52,10 @@ func (s *Service) recordChargeComment(ctx context.Context, p chargeCommentParams
 		BusinessUnitID: p.occurrence.BusinessUnitID,
 		ShipmentID:     p.occurrence.ShipmentID,
 		Comment:        buildChargeComment(kind, p),
-		Type:           shipment.CommentTypeBilling,
-		Visibility:     shipment.CommentVisibilityInternal,
+		Type:           shipmentvocab.CommentTypeBilling,
+		Visibility:     shipmentvocab.CommentVisibilityInternal,
 		Priority:       chargeCommentPriority(kind, p.occurrence),
-		Source:         shipment.CommentSourceSystem,
+		Source:         shipmentvocab.CommentSourceSystem,
 		Metadata: map[string]any{
 			"event":                 "DetentionCharge" + string(kind),
 			"detentionOccurrenceId": p.occurrence.ID.String(),

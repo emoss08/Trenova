@@ -3,7 +3,7 @@ package shipmentmoveservice
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentmoveports"
 	"github.com/emoss08/trenova/internal/testutil/mocks/assignmentportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentholdportsmock"
@@ -54,8 +54,8 @@ func TestPreviewStopActual_ReadsWithoutWriting(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	assert.Equal(t, shipment.MoveStatusAssigned, plan.Before.Status)
-	assert.Equal(t, shipment.MoveStatusInTransit, plan.After.Status)
+	assert.Equal(t, shipmentvocab.MoveStatusAssigned, plan.Before.Status)
+	assert.Equal(t, shipmentvocab.MoveStatusInTransit, plan.After.Status)
 	assert.Nil(t, plan.Before.Stops[0].ActualArrival)
 	require.NotNil(t, plan.After.Stops[0].ActualArrival)
 	assert.Equal(t, occurredAt, *plan.After.Stops[0].ActualArrival)
@@ -118,6 +118,6 @@ func TestPreviewStopActual_ArrivalAndDepartureTogether(t *testing.T) {
 	require.NotNil(t, stop.ActualDeparture)
 	assert.Equal(t, arrivedAt, *stop.ActualArrival)
 	assert.Equal(t, departedAt, *stop.ActualDeparture)
-	assert.Equal(t, shipment.StopStatusCompleted, stop.Status)
+	assert.Equal(t, shipmentvocab.StopStatusCompleted, stop.Status)
 	assert.Nil(t, plan.Before.Stops[0].ActualDeparture)
 }

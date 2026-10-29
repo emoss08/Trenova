@@ -12,7 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/app/tenderbounce"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/money"
@@ -245,7 +245,7 @@ func (t *RecordTenderResponseTool) previewBounce(
 	return preview, nil
 }
 
-func rateWords(method shipment.CarrierRateMethod, rate decimal.Decimal) string {
+func rateWords(method shipmentvocab.CarrierRateMethod, rate decimal.Decimal) string {
 	return money.FormatMinor(money.MinorUnits(rate), money.DefaultCurrencyCode) + " " +
 		carrierpreview.RateMethodWords(method)
 }
@@ -350,7 +350,7 @@ func attachOfferPay(
 	offer *tender.TenderOffer,
 	carrier string,
 ) {
-	if offer.RateMethod == shipment.CarrierRateMethodPerMile {
+	if offer.RateMethod == shipmentvocab.CarrierRateMethodPerMile {
 		return
 	}
 	for _, change := range changes {

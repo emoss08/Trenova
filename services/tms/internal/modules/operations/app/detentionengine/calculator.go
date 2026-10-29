@@ -7,7 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionpolicy"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
 	"github.com/emoss08/trenova/shared/intutils"
 	"github.com/shopspring/decimal"
@@ -29,8 +29,8 @@ var (
 // what makes a stored trace replayable months later during a dispute.
 type ComputeInput struct {
 	Snapshot         detentionpolicy.PolicySnapshot
-	StopType         shipment.StopType
-	ScheduleType     shipment.StopScheduleType
+	StopType         shipmentvocab.StopType
+	ScheduleType     shipmentvocab.StopScheduleType
 	ArrivedAt        *int64
 	DepartedAt       *int64
 	AppointmentStart *int64

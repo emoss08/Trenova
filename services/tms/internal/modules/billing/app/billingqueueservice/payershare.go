@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingpayershare"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -88,7 +88,7 @@ func (s *Service) payerNames(
 			)
 			continue
 		}
-		if allocation.ChargeKind != shipment.ChargeAllocationKindOrderCharge {
+		if allocation.ChargeKind != shipmentvocab.ChargeAllocationKindOrderCharge {
 			want(allocation.BillToCustomerID)
 		}
 	}

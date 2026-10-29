@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/stopeta"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchboardports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/telematics"
@@ -232,16 +233,16 @@ func Build(in Input) *Snapshot {
 					stop.Sequence, stop.Type, stopPlace(stop), stop.LateBy,
 				))
 			}
-			if nextStop == nil && stop.Status != string(shipment.StopStatusCompleted) &&
-				stop.Status != string(shipment.StopStatusCanceled) {
+			if nextStop == nil && stop.Status != string(shipmentvocab.StopStatusCompleted) &&
+				stop.Status != string(shipmentvocab.StopStatusCanceled) {
 				stop.Next = true
 				nextStop = stop
 				nextMove = ms
 			}
 		}
-		if ms.Coverage == string(shipment.MoveCoverageTypeUnassigned) &&
-			ms.Status != string(shipment.MoveStatusCompleted) &&
-			ms.Status != string(shipment.MoveStatusCanceled) {
+		if ms.Coverage == string(shipmentvocab.MoveCoverageTypeUnassigned) &&
+			ms.Status != string(shipmentvocab.MoveStatusCompleted) &&
+			ms.Status != string(shipmentvocab.MoveStatusCanceled) {
 			snapshot.Flags = append(snapshot.Flags, fmt.Sprintf(
 				"Move %d has no driver or carrier", ms.Sequence,
 			))
@@ -261,7 +262,7 @@ func Build(in Input) *Snapshot {
 			))
 		}
 		if snapshot.Position == nil &&
-			nextMove.Coverage == string(shipment.MoveCoverageTypeDriver) {
+			nextMove.Coverage == string(shipmentvocab.MoveCoverageTypeDriver) {
 			snapshot.Flags = append(snapshot.Flags,
 				"No telematics position is on file for the assigned tractor")
 		}
@@ -283,7 +284,7 @@ func buildMove(move *shipment.ShipmentMove, in Input) MoveSnapshot {
 		Stops:    make([]StopSnapshot, 0, len(move.Stops)),
 	}
 	if ms.Coverage == "" {
-		ms.Coverage = string(shipment.MoveCoverageTypeUnassigned)
+		ms.Coverage = string(shipmentvocab.MoveCoverageTypeUnassigned)
 	}
 	if move.Distance != nil {
 		ms.Distance = *move.Distance
@@ -305,12 +306,12 @@ func buildMove(move *shipment.ShipmentMove, in Input) MoveSnapshot {
 			ms.Coverage = board.CoverageType
 		}
 	}
-	if ms.Coverage == string(shipment.MoveCoverageTypeUnassigned) {
+	if ms.Coverage == string(shipmentvocab.MoveCoverageTypeUnassigned) {
 		switch {
 		case ms.Carrier != "":
-			ms.Coverage = string(shipment.MoveCoverageTypeCarrier)
+			ms.Coverage = string(shipmentvocab.MoveCoverageTypeCarrier)
 		case ms.Driver != "":
-			ms.Coverage = string(shipment.MoveCoverageTypeDriver)
+			ms.Coverage = string(shipmentvocab.MoveCoverageTypeDriver)
 		}
 	}
 
@@ -337,7 +338,7 @@ func buildStop(stop *shipment.Stop, moveID pulid.ID, in Input) StopSnapshot {
 		Status:             string(stop.Status),
 		ScheduledStart:     stop.ScheduledWindowStart,
 		ScheduledStartText: timeutils.FormatUnixDateTimeIn(stop.ScheduledWindowStart, in.Timezone),
-		Appointment:        stop.ScheduleType == shipment.StopScheduleTypeAppointment,
+		Appointment:        stop.ScheduleType == shipmentvocab.StopScheduleTypeAppointment,
 	}
 	if stop.ScheduledWindowEnd != nil {
 		ss.ScheduledEnd = *stop.ScheduledWindowEnd

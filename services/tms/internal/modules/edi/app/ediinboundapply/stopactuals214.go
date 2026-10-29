@@ -8,6 +8,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edipayload"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/trackingevent"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentmoveports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/trackingeventports"
@@ -30,11 +31,11 @@ type stopActuals214Plan struct {
 	arriveIfMissing bool
 }
 
-func (p stopActuals214Plan) visit() shipment.VisitKind {
+func (p stopActuals214Plan) visit() shipmentvocab.VisitKind {
 	if p.action == shipmentmoveports.StopActualActionDepart {
-		return shipment.VisitDeparture
+		return shipmentvocab.VisitDeparture
 	}
-	return shipment.VisitArrival
+	return shipmentvocab.VisitArrival
 }
 
 func (t stopActualTarget) matches(stop *shipment.Stop) bool {
@@ -229,7 +230,7 @@ func (s *Service) applyTendered214StopActuals(
 	reports := make([]*trackingeventports.RecordObservedStopEventParams, 0, 2)
 	if target.plan.arriveIfMissing && target.stop.ActualArrival == nil {
 		reports = append(reports, tendered214Report(req, target, tendered214ReportInput{
-			kind:      shipment.VisitArrival,
+			kind:      shipmentvocab.VisitArrival,
 			method:    trackingevent.MatchInferred,
 			sourceKey: sourceKey + inferredArrivalKeySuffix,
 			eventAt:   eventAt,
@@ -275,7 +276,7 @@ func (s *Service) applyTendered214StopActuals(
 }
 
 type tendered214ReportInput struct {
-	kind      shipment.VisitKind
+	kind      shipmentvocab.VisitKind
 	method    trackingevent.MatchMethod
 	sourceKey string
 	eventAt   int64
@@ -322,7 +323,7 @@ func tendered214Warning(
 	reason string,
 ) string {
 	action := "arrival"
-	if report.Kind == shipment.VisitDeparture {
+	if report.Kind == shipmentvocab.VisitDeparture {
 		action = "departure"
 	}
 	return fmt.Sprintf(

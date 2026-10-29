@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmentholdrepository"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmenthold"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentholdports"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/holdreason"
 	"github.com/emoss08/trenova/internal/testutil"
@@ -44,7 +45,7 @@ func newHarness(t *testing.T) *harness {
 		BOL:          "BOL-HOLD",
 		ProNumber:    "PRO-HOLD",
 		ShipmentID:   pulid.MustNew("shp_"),
-		MoveStatuses: []shipment.MoveStatus{shipment.MoveStatusNew},
+		MoveStatuses: []shipmentvocab.MoveStatus{shipmentvocab.MoveStatusNew},
 	})
 
 	return &harness{

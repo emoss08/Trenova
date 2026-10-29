@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentstate"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -117,7 +118,7 @@ func (r *repository) autoCancel(
 	if _, err := scoped(sp.Where(sp.ID.In(ids...)), t).Update(
 		ctx,
 		r.db.Keel(ctx),
-		sp.Status.To(shipment.StatusCanceled),
+		sp.Status.To(shipmentvocab.StatusCanceled),
 		sp.CanceledAt.To(currentTime),
 		sp.CanceledByID.ToNull(),
 		sp.CancelReason.To(autoCancelReason),
@@ -132,7 +133,7 @@ func (r *repository) autoCancel(
 	}
 
 	for _, entity := range entities {
-		entity.Status = shipment.StatusCanceled
+		entity.Status = shipmentvocab.StatusCanceled
 		entity.CanceledAt = &currentTime
 		entity.CanceledByID = pulid.Nil
 		entity.CancelReason = autoCancelReason
@@ -156,7 +157,7 @@ func autoCancelableShipments(
 	sp := shipmentdb.Shipments
 
 	return sp.Where(
-		sp.Status.Eq(shipment.StatusNew),
+		sp.Status.Eq(shipmentvocab.StatusNew),
 		sp.CreatedAt.Lte(currentTime-thresholdSeconds),
 	).Order(sp.ID.Asc()).Limit(limit)
 }
@@ -170,7 +171,7 @@ func controlledAutoCancelIDs(currentTime int64, t tenancy) *keel.Query[*shipment
 		Join(sc, sc.OrganizationID.EqCol(sp.OrganizationID), sc.BusinessUnitID.EqCol(sp.BusinessUnitID)).
 		Where(
 			sc.AutoCancelShipments.IsTrue(),
-			sp.Status.Eq(shipment.StatusNew),
+			sp.Status.Eq(shipmentvocab.StatusNew),
 			keel.Int64Of(sp.CreatedAt).LteExpr(
 				keel.Int64(currentTime).Sub(keel.CastInt64(days).Mul(keel.Int64(secondsPerDay))),
 			),

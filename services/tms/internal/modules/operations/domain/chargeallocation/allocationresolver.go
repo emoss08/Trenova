@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -21,10 +22,10 @@ var errSplitShape = errors.New("the rules module answered a split with the wrong
 
 // AllocatedCharge is one payer's slice of one charge.
 type AllocatedCharge struct {
-	Kind         shipment.ChargeAllocationKind
+	Kind         shipmentvocab.ChargeAllocationKind
 	AllocationID pulid.ID
 	// Method is how the charge was split; empty when it was billed whole.
-	Method        shipment.ChargeAllocationMethod
+	Method        shipmentvocab.ChargeAllocationMethod
 	Charge        *shipment.AdditionalCharge
 	OrderChargeID pulid.ID
 	Description   string
@@ -145,13 +146,13 @@ func groupAllocations(
 			continue
 		}
 		switch allocation.ChargeKind {
-		case shipment.ChargeAllocationKindFreight:
+		case shipmentvocab.ChargeAllocationKindFreight:
 			freight = append(freight, allocation)
-		case shipment.ChargeAllocationKindAccessorial:
+		case shipmentvocab.ChargeAllocationKindAccessorial:
 			if target := allocation.TargetID(); target.IsNotNil() {
 				byCharge[target] = append(byCharge[target], allocation)
 			}
-		case shipment.ChargeAllocationKindOrderCharge:
+		case shipmentvocab.ChargeAllocationKindOrderCharge:
 		}
 	}
 
@@ -219,7 +220,7 @@ func resolveGroups(
 			allocated := groups[i].base
 			allocated.ChargeTotal = charge.Total
 			allocated.AllocationID = pulid.ID(share.AllocationID)
-			allocated.Method = shipment.ChargeAllocationMethod(share.Method)
+			allocated.Method = shipmentvocab.ChargeAllocationMethod(share.Method)
 			allocated.Percent = share.Percent
 			allocated.Amount = share.Amount
 			allocated.Partial = share.Partial
@@ -248,7 +249,7 @@ func ResolveShares(
 
 	groups := make([]chargeGroup, 0, len(shp.AdditionalCharges)+1)
 	groups = append(groups, chargeGroup{
-		base:   AllocatedCharge{Kind: shipment.ChargeAllocationKindFreight},
+		base:   AllocatedCharge{Kind: shipmentvocab.ChargeAllocationKindFreight},
 		field:  "freightAllocations",
 		charge: totalCharge(rules.AllocationKindFreight, freight, freightAllocations),
 	})
@@ -258,7 +259,7 @@ func ResolveShares(
 		}
 		groups = append(groups, chargeGroup{
 			base: AllocatedCharge{
-				Kind:   shipment.ChargeAllocationKindAccessorial,
+				Kind:   shipmentvocab.ChargeAllocationKindAccessorial,
 				Charge: charge,
 			},
 			field:  "additionalCharges[" + strconv.Itoa(i) + "].allocations",
@@ -316,7 +317,8 @@ func ResolveOrderChargeShares(
 ) (*ShareResolution, error) {
 	byCharge := make(map[pulid.ID][]*shipment.ChargeAllocation, len(allocations))
 	for _, allocation := range allocations {
-		if allocation == nil || allocation.ChargeKind != shipment.ChargeAllocationKindOrderCharge {
+		if allocation == nil ||
+			allocation.ChargeKind != shipmentvocab.ChargeAllocationKindOrderCharge {
 			continue
 		}
 		if target := allocation.TargetID(); target.IsNotNil() {
@@ -328,7 +330,7 @@ func ResolveOrderChargeShares(
 	for i, charge := range charges {
 		groups = append(groups, chargeGroup{
 			base: AllocatedCharge{
-				Kind:          shipment.ChargeAllocationKindOrderCharge,
+				Kind:          shipmentvocab.ChargeAllocationKindOrderCharge,
 				OrderChargeID: charge.ID,
 				Description:   charge.Description,
 			},

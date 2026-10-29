@@ -5,8 +5,8 @@ import (
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender/tenderdb"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateconfirmation"
@@ -91,7 +91,7 @@ func brokerageDependencyCounts(counts *tenantports.BrokerageDependencyCounts) []
 			count: func(total *int64) keel.BatchItem {
 				ca := shipmentdb.CarrierAssignments
 				return keel.CountInto(
-					ca.Where(ca.Status.Ne(shipment.CarrierAssignmentStatusCanceled)),
+					ca.Where(ca.Status.Ne(shipmentvocab.CarrierAssignmentStatusCanceled)),
 					total,
 				)
 			},

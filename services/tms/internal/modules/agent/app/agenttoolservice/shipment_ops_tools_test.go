@@ -18,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/movesplit"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmenthold"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentdistanceports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentholdports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentmoveports"
@@ -50,7 +51,7 @@ func (f *fakeShipmentOperator) shipment() *shipment.Shipment {
 		f.existing = &shipment.Shipment{
 			ID:                  pulid.MustNew("shp_"),
 			ProNumber:           "PRO-7001",
-			Status:              shipment.StatusCanceled,
+			Status:              shipmentvocab.StatusCanceled,
 			CancelReason:        "Customer pulled the load",
 			OwnerID:             pulid.MustNew("usr_"),
 			CustomerID:          pulid.MustNew("cus_"),
@@ -632,17 +633,17 @@ func splitSourceMove() *shipment.ShipmentMove {
 	return &shipment.ShipmentMove{
 		ID:       pulid.MustNew("sm_"),
 		Sequence: 0,
-		Status:   shipment.MoveStatusAssigned,
+		Status:   shipmentvocab.MoveStatusAssigned,
 		Version:  5,
 		Stops: []*shipment.Stop{
 			{
 				ID:         pulid.MustNew("stp_"),
-				Type:       shipment.StopTypePickup,
+				Type:       shipmentvocab.StopTypePickup,
 				LocationID: pulid.MustNew("loc_"),
 			},
 			{
 				ID:         pulid.MustNew("stp_"),
-				Type:       shipment.StopTypeDelivery,
+				Type:       shipmentvocab.StopTypeDelivery,
 				LocationID: pulid.MustNew("loc_"),
 			},
 		},
@@ -700,7 +701,7 @@ func TestSplitMoveAtRelay_AlwaysProposesAndShowsTheNewMove(t *testing.T) {
 	require.Len(t, preview.Changes, 2)
 	assert.Equal(
 		t,
-		string(shipment.StopTypeSplitDelivery),
+		string(shipmentvocab.StopTypeSplitDelivery),
 		agenttoolstest.FieldByPath(
 			t,
 			agenttoolstest.PreviewChange(t, preview, 0),

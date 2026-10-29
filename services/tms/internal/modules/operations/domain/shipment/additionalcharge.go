@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -81,33 +82,21 @@ func (a *AdditionalCharge) Validate(multiErr *errortypes.MultiError) {
 	))
 }
 
-// SystemOwner names the engine that owns a machine generated charge, which is
-// how the reconciliation passes tell their own rows apart from each other's.
-type SystemOwner string
-
-const (
-	SystemOwnerNone      = SystemOwner("")
-	SystemOwnerFuel      = SystemOwner("FuelSurcharge")
-	SystemOwnerDetention = SystemOwner("Detention")
-	SystemOwnerTariff    = SystemOwner("Tariff")
-	SystemOwnerAgreement = SystemOwner("RateAgreement")
-)
-
 // Owner reports which engine, if any, owns this charge.
-func (a *AdditionalCharge) Owner() SystemOwner {
+func (a *AdditionalCharge) Owner() shipmentvocab.SystemOwner {
 	switch {
 	case !a.IsSystemGenerated:
-		return SystemOwnerNone
+		return shipmentvocab.SystemOwnerNone
 	case a.FuelSurchargeProgramID != nil:
-		return SystemOwnerFuel
+		return shipmentvocab.SystemOwnerFuel
 	case a.IsDetention:
-		return SystemOwnerDetention
+		return shipmentvocab.SystemOwnerDetention
 	case a.IsTariff:
-		return SystemOwnerTariff
+		return shipmentvocab.SystemOwnerTariff
 	case a.RateAgreementAccessorialID != nil:
-		return SystemOwnerAgreement
+		return shipmentvocab.SystemOwnerAgreement
 	default:
-		return SystemOwnerNone
+		return shipmentvocab.SystemOwnerNone
 	}
 }
 

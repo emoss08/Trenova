@@ -31,7 +31,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/domain/ediinboundfile"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/edimessageports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmenttracking"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/stopeta"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchboardports"
@@ -325,7 +325,7 @@ func everyMove(
 	return &dispatchboardports.DispatchBoardFilter{
 		TenantInfo:     tenant,
 		MoveIDs:        moveIDs,
-		MoveStatuses:   shipment.MoveStatuses(),
+		MoveStatuses:   shipmentvocab.MoveStatuses(),
 		IncludeCovered: true,
 		Limit:          len(moveIDs),
 	}
@@ -444,7 +444,7 @@ func (s *Service) shipment(
 	})
 	subject.Label = "Shipment PRO " + entity.ProNumber
 	subject.Notes = marshalNotes(snapshot)
-	if entity.EntryMethod == shipment.EntryMethodEDI {
+	if entity.EntryMethod == shipmentvocab.EntryMethodEDI {
 		subject.OutsideAuthored = agent.TaintSourceEDI
 	}
 

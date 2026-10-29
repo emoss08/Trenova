@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/checkcall"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/stopeta"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchboardports"
 	"github.com/emoss08/trenova/internal/modules/places/ports/routeestimateports"
@@ -229,7 +230,7 @@ func checkCallPoint(call *checkcall.CheckCall) *routeestimateports.Point {
 func orderedStops(sp *shipment.Shipment) []plannedStop {
 	moves := make([]*shipment.ShipmentMove, 0, len(sp.Moves))
 	for _, move := range sp.Moves {
-		if move != nil && move.Status != shipment.MoveStatusCanceled {
+		if move != nil && move.Status != shipmentvocab.MoveStatusCanceled {
 			moves = append(moves, move)
 		}
 	}
@@ -256,7 +257,8 @@ func orderedStops(sp *shipment.Shipment) []plannedStop {
 }
 
 func openStop(move *shipment.ShipmentMove, stop *shipment.Stop) bool {
-	if move.Status == shipment.MoveStatusCompleted || move.Status == shipment.MoveStatusCanceled {
+	if move.Status == shipmentvocab.MoveStatusCompleted ||
+		move.Status == shipmentvocab.MoveStatusCanceled {
 		return false
 	}
 

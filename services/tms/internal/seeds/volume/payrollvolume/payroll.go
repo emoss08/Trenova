@@ -14,7 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/sequenceconfig"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/settlementcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/settlementcontrol/settlementcontroldb"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay/driverpaydb"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
@@ -1123,7 +1123,7 @@ var payHoldReasons = []string{
 func (g *payrollPhase) payAccrueEvents(setup *paySetup, workers map[pulid.ID]*payWorker) {
 	now := volumegen.Unix(g.Now)
 	for _, r := range g.Shipments {
-		if r.DeliveredAt == 0 || r.Status == shipment.StatusCanceled {
+		if r.DeliveredAt == 0 || r.Status == shipmentvocab.StatusCanceled {
 			continue
 		}
 		facts := &payMoveFacts{shipment: r}
@@ -1137,7 +1137,7 @@ func (g *payrollPhase) payAccrueEvents(setup *paySetup, workers map[pulid.ID]*pa
 			}
 		}
 		for i, m := range r.Moves {
-			if m.Crew == nil || m.Status == shipment.MoveStatusCanceled {
+			if m.Crew == nil || m.Status == shipmentvocab.MoveStatusCanceled {
 				continue
 			}
 			facts.move = m

@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/stretchr/testify/assert"
@@ -56,7 +57,7 @@ func TestEmailCustomerPreview_SaysNothingGoesToACustomerAlreadyTold(t *testing.T
 	tool, mailer, _, comments, renderer := agenttoolstest.CustomerEmailFixture()
 	comments.Existing = []*shipment.ShipmentComment{{
 		CreatedAt: timeutils.NowUnix() - 600,
-		Type:      shipment.CommentTypeCustomerUpdate,
+		Type:      shipmentvocab.CommentTypeCustomerUpdate,
 		Metadata:  map[string]any{"source": "agent", "tool": "customer_send_email"},
 	}}
 	params := agenttoolstest.ExecuteParams(map[string]any{

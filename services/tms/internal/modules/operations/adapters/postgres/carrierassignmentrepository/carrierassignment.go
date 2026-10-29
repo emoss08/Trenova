@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/carrierassignmentports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -66,7 +67,7 @@ func (r *repository) GetActiveByMoveID(
 		ca := shipmentdb.CarrierAssignments
 		entity, err := ca.Where(
 			ca.ShipmentMoveID.Eq(moveID),
-			ca.Status.Ne(shipment.CarrierAssignmentStatusCanceled),
+			ca.Status.Ne(shipmentvocab.CarrierAssignmentStatusCanceled),
 		).
 			Load(ca.Carrier(), ca.Accessorials()).
 			One(ctx, r.db.Keel(ctx))
@@ -98,7 +99,7 @@ func (r *repository) FindForMatching(
 		}
 
 		entity, err := ca.Where(
-			ca.Status.Ne(shipment.CarrierAssignmentStatusCanceled),
+			ca.Status.Ne(shipmentvocab.CarrierAssignmentStatusCanceled),
 			keel.When(!req.CarrierID.IsNil(), ca.CarrierID.Eq(req.CarrierID)),
 			reference,
 		).

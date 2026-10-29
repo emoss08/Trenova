@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -18,8 +19,8 @@ func TestResolveShares_SubCentPercentSplitAddsUpToTheRoundedCharge(t *testing.T)
 	other := pulid.MustNew("cus_")
 
 	resolution, err := ResolveShares(t.Context(), shp, []*shipment.ChargeAllocation{
-		percentAllocation(shipment.ChargeAllocationKindFreight, shp.CustomerID, "50", 0),
-		percentAllocation(shipment.ChargeAllocationKindFreight, other, "50", 1),
+		percentAllocation(shipmentvocab.ChargeAllocationKindFreight, shp.CustomerID, "50", 0),
+		percentAllocation(shipmentvocab.ChargeAllocationKindFreight, other, "50", 1),
 	})
 	require.NoError(t, err)
 
@@ -37,8 +38,8 @@ func TestResolveShares_SubCentAmountRowsMustAddUpInCents(t *testing.T) {
 	other := pulid.MustNew("cus_")
 
 	_, err := ResolveShares(t.Context(), shp, []*shipment.ChargeAllocation{
-		amountAllocation(shipment.ChargeAllocationKindFreight, shp.CustomerID, "0.005", 0),
-		amountAllocation(shipment.ChargeAllocationKindFreight, other, "0.005", 1),
+		amountAllocation(shipmentvocab.ChargeAllocationKindFreight, shp.CustomerID, "0.005", 0),
+		amountAllocation(shipmentvocab.ChargeAllocationKindFreight, other, "0.005", 1),
 	})
 	require.Error(t, err)
 
@@ -54,10 +55,15 @@ func TestResolveShares_UnsavedRowsSortBeforeSavedRowsOfTheirSequence(t *testing.
 
 	shp := allocationShipment("0.03")
 	saved, first, second := pulid.MustNew("cus_"), pulid.MustNew("cus_"), pulid.MustNew("cus_")
-	savedRow := percentAllocation(shipment.ChargeAllocationKindFreight, saved, "33.333334", 0)
-	firstRow := percentAllocation(shipment.ChargeAllocationKindFreight, first, "33.333333", 0)
+	savedRow := percentAllocation(shipmentvocab.ChargeAllocationKindFreight, saved, "33.333334", 0)
+	firstRow := percentAllocation(shipmentvocab.ChargeAllocationKindFreight, first, "33.333333", 0)
 	firstRow.ID = pulid.Nil
-	secondRow := percentAllocation(shipment.ChargeAllocationKindFreight, second, "33.333333", 0)
+	secondRow := percentAllocation(
+		shipmentvocab.ChargeAllocationKindFreight,
+		second,
+		"33.333333",
+		0,
+	)
 	secondRow.ID = pulid.Nil
 
 	resolution, err := ResolveShares(t.Context(), shp, []*shipment.ChargeAllocation{

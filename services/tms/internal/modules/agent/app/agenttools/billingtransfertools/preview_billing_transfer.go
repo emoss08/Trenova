@@ -12,7 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentbillingports"
 )
 
@@ -136,10 +136,10 @@ func transferChange(
 
 	switch decision.Outcome {
 	case shipmentbillingports.BillingTransferOutcomeMarkReadyAndTransfer:
-		after.Status = string(shipment.StatusReadyToInvoice)
-		after.BillingTransferStatus = string(shipment.BillingTransferReadyForReview)
+		after.Status = string(shipmentvocab.StatusReadyToInvoice)
+		after.BillingTransferStatus = string(shipmentvocab.BillingTransferReadyForReview)
 	case shipmentbillingports.BillingTransferOutcomeTransfer:
-		after.BillingTransferStatus = string(shipment.BillingTransferReadyForReview)
+		after.BillingTransferStatus = string(shipmentvocab.BillingTransferReadyForReview)
 	case shipmentbillingports.BillingTransferOutcomeRefused,
 		shipmentbillingports.BillingTransferOutcomeReturnToOperations:
 	}

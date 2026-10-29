@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionpolicy"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -109,7 +110,7 @@ func buildOccurrence(
 }
 
 func stopIsBillable(stop *shipment.Stop) bool {
-	if stop == nil || stop.Status == shipment.StopStatusCanceled {
+	if stop == nil || stop.Status == shipmentvocab.StopStatusCanceled {
 		return false
 	}
 

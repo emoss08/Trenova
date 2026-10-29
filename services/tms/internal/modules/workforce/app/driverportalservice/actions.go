@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/app/ptoledgerservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/dashcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementaccrualservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementreviewservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementworkspaceservice"
@@ -308,7 +308,7 @@ func (s *Service) RespondToMyAssignment(
 		return err
 	}
 
-	ack := shipment.AssignmentAckAccepted
+	ack := shipmentvocab.AssignmentAckAccepted
 	if !req.Accept {
 		if !control.AllowLoadRefusals {
 			return errortypes.NewValidationError(
@@ -317,7 +317,7 @@ func (s *Service) RespondToMyAssignment(
 				"Your carrier doesn't allow declining loads in Dash — call your dispatcher instead.",
 			)
 		}
-		ack = shipment.AssignmentAckDeclined
+		ack = shipmentvocab.AssignmentAckDeclined
 		if strings.TrimSpace(req.Reason) == "" {
 			return errortypes.NewValidationError(
 				"reason",

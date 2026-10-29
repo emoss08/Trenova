@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -54,18 +55,18 @@ func newSplitFixture() *splitFixture {
 			{
 				ID:               pulid.MustNew("chal_"),
 				ShipmentID:       &shipmentID,
-				ChargeKind:       shipment.ChargeAllocationKindFreight,
+				ChargeKind:       shipmentvocab.ChargeAllocationKindFreight,
 				BillToCustomerID: peak,
-				Method:           shipment.ChargeAllocationMethodAmount,
+				Method:           shipmentvocab.ChargeAllocationMethodAmount,
 				Amount:           decimal.NewNullDecimal(dec("1500")),
 				Sequence:         0,
 			},
 			{
 				ID:               pulid.MustNew("chal_"),
 				ShipmentID:       &shipmentID,
-				ChargeKind:       shipment.ChargeAllocationKindFreight,
+				ChargeKind:       shipmentvocab.ChargeAllocationKindFreight,
 				BillToCustomerID: acme,
-				Method:           shipment.ChargeAllocationMethodAmount,
+				Method:           shipmentvocab.ChargeAllocationMethodAmount,
 				Amount:           decimal.NewNullDecimal(dec("1350")),
 				Sequence:         1,
 			},
@@ -101,15 +102,15 @@ func TestBuildPayerShare_ShowsOnlyWhatThePayerOwes(t *testing.T) {
 
 	require.Len(t, share.Lines, 2)
 	freight := share.Lines[0]
-	assert.Equal(t, shipment.ChargeAllocationKindFreight, freight.Kind)
+	assert.Equal(t, shipmentvocab.ChargeAllocationKindFreight, freight.Kind)
 	assert.True(t, freight.ChargeTotal.Equal(dec("2850")))
 	assert.True(t, freight.Amount.Equal(dec("1350")))
 	assert.True(t, freight.Partial)
-	assert.Equal(t, shipment.ChargeAllocationMethodAmount, freight.Method)
+	assert.Equal(t, shipmentvocab.ChargeAllocationMethodAmount, freight.Method)
 	require.Len(t, freight.Payers, 2)
 
 	detention := share.Lines[1]
-	assert.Equal(t, shipment.ChargeAllocationKindAccessorial, detention.Kind)
+	assert.Equal(t, shipmentvocab.ChargeAllocationKindAccessorial, detention.Kind)
 	assert.Equal(t, f.detention.ID, detention.AdditionalChargeID)
 	assert.Equal(t, "Detention Fee", detention.Description)
 	assert.True(t, detention.Amount.Equal(dec("1154.38")))
@@ -132,7 +133,7 @@ func TestBuildPayerShare_ChargesOwnedByOthersMoveToTheirOwnGroup(t *testing.T) {
 	require.Empty(t, share.ResolutionError)
 	assert.True(t, share.TotalAmount.Equal(dec("1500")), "total %s", share.TotalAmount)
 	require.Len(t, share.Lines, 1)
-	assert.Equal(t, shipment.ChargeAllocationKindFreight, share.Lines[0].Kind)
+	assert.Equal(t, shipmentvocab.ChargeAllocationKindFreight, share.Lines[0].Kind)
 	assert.True(t, share.Lines[0].Amount.Equal(dec("1500")))
 
 	require.Len(t, share.OtherPayerLines, 1)

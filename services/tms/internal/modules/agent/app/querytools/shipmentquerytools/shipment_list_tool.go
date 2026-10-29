@@ -14,8 +14,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/graphqlreadports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmenthold"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/internal/modules/places/ports/locationports"
@@ -649,7 +649,7 @@ func withRowHolds(items any, holds map[string][]shipmentRowHold) any {
 
 func withStatusFilter(
 	params *agenttoolports.QueryToolParams,
-	statuses []shipment.Status,
+	statuses []shipmentvocab.Status,
 ) *agenttoolports.QueryToolParams {
 	listed := make(map[string]any, len(params.Params)+1)
 	for key, value := range params.Params {
@@ -679,7 +679,7 @@ func withStatusFilter(
 type wordSearch struct {
 	params   *agenttoolports.QueryToolParams
 	query    string
-	statuses []shipment.Status
+	statuses []shipmentvocab.Status
 	held     shipmentHoldFilter
 	// lateAt keeps the shipments running late at that instant, when set.
 	lateAt  int64
@@ -840,7 +840,7 @@ func (t *shipmentListTool) withEachStatus(
 			continue
 		}
 		one := *search
-		one.statuses = []shipment.Status{status}
+		one.statuses = []shipmentvocab.Status{status}
 		one.window = querytool.FirstCursorWindow(1)
 		found, err := t.search(
 			ctx,
@@ -981,13 +981,13 @@ func (t *shipmentListTool) addPartyMatches(
 // an empty result is one it reports as fact. Several statuses are taken at
 // once: asked for the load "that hasn't picked up yet", a model searched New,
 // Assigned and PartiallyAssigned in three calls.
-func StatusFilter(params map[string]any) ([]shipment.Status, error) {
+func StatusFilter(params map[string]any) ([]shipmentvocab.Status, error) {
 	named := querytool.OptionalStrings(params, querytool.ParamStatus)
 	if len(named) == 0 {
 		return nil, nil
 	}
 
-	statuses := make([]shipment.Status, 0, len(named))
+	statuses := make([]shipmentvocab.Status, 0, len(named))
 	for _, status := range named {
 		if !slices.Contains(shipmentStatuses, status) {
 			return nil, fmt.Errorf(
@@ -995,15 +995,15 @@ func StatusFilter(params map[string]any) ([]shipment.Status, error) {
 				querytool.ParamStatus, status, strings.Join(shipmentStatuses, ", "),
 			)
 		}
-		if !slices.Contains(statuses, shipment.Status(status)) {
-			statuses = append(statuses, shipment.Status(status))
+		if !slices.Contains(statuses, shipmentvocab.Status(status)) {
+			statuses = append(statuses, shipmentvocab.Status(status))
 		}
 	}
 
 	return statuses, nil
 }
 
-func statusNames(statuses []shipment.Status) string {
+func statusNames(statuses []shipmentvocab.Status) string {
 	names := make([]string, 0, len(statuses))
 	for _, status := range statuses {
 		names = append(names, string(status))

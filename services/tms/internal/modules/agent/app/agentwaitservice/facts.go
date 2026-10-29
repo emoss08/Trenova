@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/assignmentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentmoveports"
@@ -165,7 +166,8 @@ func (f *facts) assessStopVisit(
 	if err != nil {
 		return err
 	}
-	if move.Status == shipment.MoveStatusCompleted || move.Status == shipment.MoveStatusCanceled {
+	if move.Status == shipmentvocab.MoveStatusCompleted ||
+		move.Status == shipmentvocab.MoveStatusCanceled {
 		return alreadyTrue("the move is %s.", move.Status)
 	}
 	if c.StopID.IsNil() {

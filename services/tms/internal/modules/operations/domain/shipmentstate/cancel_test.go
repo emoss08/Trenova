@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -18,36 +19,36 @@ func TestValidateCancel(t *testing.T) {
 		conflict bool
 		business bool
 	}{
-		{name: "new", entity: &shipment.Shipment{Status: shipment.StatusNew}},
-		{name: "in transit", entity: &shipment.Shipment{Status: shipment.StatusInTransit}},
+		{name: "new", entity: &shipment.Shipment{Status: shipmentvocab.StatusNew}},
+		{name: "in transit", entity: &shipment.Shipment{Status: shipmentvocab.StatusInTransit}},
 		{
 			name: "sent back to operations",
 			entity: &shipment.Shipment{
-				Status:                shipment.StatusReadyToInvoice,
-				BillingTransferStatus: shipment.BillingTransferSentBackToOps,
+				Status:                shipmentvocab.StatusReadyToInvoice,
+				BillingTransferStatus: shipmentvocab.BillingTransferSentBackToOps,
 			},
 		},
 		{
 			name:     "already canceled",
-			entity:   &shipment.Shipment{Status: shipment.StatusCanceled},
+			entity:   &shipment.Shipment{Status: shipmentvocab.StatusCanceled},
 			business: true,
 		},
 		{
 			name:     "invoiced",
-			entity:   &shipment.Shipment{Status: shipment.StatusInvoiced},
+			entity:   &shipment.Shipment{Status: shipmentvocab.StatusInvoiced},
 			conflict: true,
 		},
 		{
 			name: "in billing queue",
 			entity: &shipment.Shipment{
-				Status:                shipment.StatusReadyToInvoice,
-				BillingTransferStatus: shipment.BillingTransferApproved,
+				Status:                shipmentvocab.StatusReadyToInvoice,
+				BillingTransferStatus: shipmentvocab.BillingTransferApproved,
 			},
 			conflict: true,
 		},
 		{
 			name:     "completed",
-			entity:   &shipment.Shipment{Status: shipment.StatusCompleted},
+			entity:   &shipment.Shipment{Status: shipmentvocab.StatusCompleted},
 			conflict: true,
 		},
 	}
@@ -80,33 +81,36 @@ func TestPrepareForUncancel(t *testing.T) {
 	canceledAt := arrived + 7200
 
 	entity := &shipment.Shipment{
-		Status:       shipment.StatusCanceled,
+		Status:       shipmentvocab.StatusCanceled,
 		CanceledAt:   &canceledAt,
 		CancelReason: "customer request",
 		Moves: []*shipment.ShipmentMove{
 			{
-				Status: shipment.MoveStatusCompleted,
+				Status: shipmentvocab.MoveStatusCompleted,
 				Stops: []*shipment.Stop{
 					{
-						Type:            shipment.StopTypePickup,
-						Status:          shipment.StopStatusCompleted,
+						Type:            shipmentvocab.StopTypePickup,
+						Status:          shipmentvocab.StopStatusCompleted,
 						ActualArrival:   &arrived,
 						ActualDeparture: &departed,
 					},
 					{
-						Type:            shipment.StopTypeDelivery,
-						Status:          shipment.StopStatusCompleted,
+						Type:            shipmentvocab.StopTypeDelivery,
+						Status:          shipmentvocab.StopStatusCompleted,
 						ActualArrival:   &arrived,
 						ActualDeparture: &departed,
 					},
 				},
 			},
 			{
-				Status:     shipment.MoveStatusCanceled,
-				Assignment: &shipment.Assignment{Status: shipment.AssignmentStatusCanceled},
+				Status:     shipmentvocab.MoveStatusCanceled,
+				Assignment: &shipment.Assignment{Status: shipmentvocab.AssignmentStatusCanceled},
 				Stops: []*shipment.Stop{
-					{Type: shipment.StopTypePickup, Status: shipment.StopStatusCanceled},
-					{Type: shipment.StopTypeDelivery, Status: shipment.StopStatusCanceled},
+					{Type: shipmentvocab.StopTypePickup, Status: shipmentvocab.StopStatusCanceled},
+					{
+						Type:   shipmentvocab.StopTypeDelivery,
+						Status: shipmentvocab.StopStatusCanceled,
+					},
 				},
 			},
 		},
@@ -117,10 +121,10 @@ func TestPrepareForUncancel(t *testing.T) {
 
 	assert.Nil(t, entity.CanceledAt)
 	assert.Empty(t, entity.CancelReason)
-	assert.Equal(t, shipment.MoveStatusCompleted, entity.Moves[0].Status)
-	assert.Equal(t, shipment.StopStatusCompleted, entity.Moves[0].Stops[1].Status)
-	assert.Equal(t, shipment.AssignmentStatusNew, entity.Moves[1].Assignment.Status)
-	assert.Equal(t, shipment.MoveStatusAssigned, entity.Moves[1].Status)
-	assert.Equal(t, shipment.StopStatusNew, entity.Moves[1].Stops[0].Status)
-	assert.Equal(t, shipment.StatusPartiallyCompleted, entity.Status)
+	assert.Equal(t, shipmentvocab.MoveStatusCompleted, entity.Moves[0].Status)
+	assert.Equal(t, shipmentvocab.StopStatusCompleted, entity.Moves[0].Stops[1].Status)
+	assert.Equal(t, shipmentvocab.AssignmentStatusNew, entity.Moves[1].Assignment.Status)
+	assert.Equal(t, shipmentvocab.MoveStatusAssigned, entity.Moves[1].Status)
+	assert.Equal(t, shipmentvocab.StopStatusNew, entity.Moves[1].Stops[0].Status)
+	assert.Equal(t, shipmentvocab.StatusPartiallyCompleted, entity.Status)
 }

@@ -33,6 +33,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/order/orderdb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/orderports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentbillingports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenteventports"
@@ -270,7 +271,7 @@ func (h *bulkTransferHarness) completedShipment(t *testing.T, n int) *shipment.S
 		testutil.ShipmentGraphParams{
 			BOL:          fmt.Sprintf("BOL-BULK-%03d", n),
 			ProNumber:    fmt.Sprintf("PRO-BULK-%03d", n),
-			MoveStatuses: []shipment.MoveStatus{shipment.MoveStatusCompleted},
+			MoveStatuses: []shipmentvocab.MoveStatus{shipmentvocab.MoveStatusCompleted},
 		},
 	)
 
@@ -278,7 +279,7 @@ func (h *bulkTransferHarness) completedShipment(t *testing.T, n int) *shipment.S
 	_, err := keel.Exec(h.ctx, h.db,
 		"UPDATE shipments SET status = $1, order_id = $2, freight_charge_amount = $3, "+
 			"total_charge_amount = $3 WHERE id = $4",
-		string(shipment.StatusCompleted), ord.ID.String(), freight, graph.Shipment.ID.String())
+		string(shipmentvocab.StatusCompleted), ord.ID.String(), freight, graph.Shipment.ID.String())
 	require.NoError(t, err)
 
 	return graph.Shipment
@@ -371,7 +372,7 @@ func TestBulkTransferToBillingIntegration_QueriesPerShipment(t *testing.T) {
 			TenantInfo: h.tenantInfo,
 		})
 		require.NoError(t, getErr)
-		assert.Equal(t, shipment.StatusReadyToInvoice, shp.Status)
+		assert.Equal(t, shipmentvocab.StatusReadyToInvoice, shp.Status)
 		assert.NotNil(t, shp.MarkedReadyToBillAt)
 		assert.False(t, shp.BillingTransferStatus.IsOutsideBillingQueue(),
 			"the shipment reads as transferred")
@@ -381,7 +382,11 @@ func TestBulkTransferToBillingIntegration_QueriesPerShipment(t *testing.T) {
 			TenantInfo: h.tenantInfo,
 		})
 		require.NoError(t, ordErr)
-		assert.Equal(t, order.Derive([]shipment.Status{shipment.StatusReadyToInvoice}), ord.Status,
-			"the order follows its only leg")
+		assert.Equal(
+			t,
+			order.Derive([]shipmentvocab.Status{shipmentvocab.StatusReadyToInvoice}),
+			ord.Status,
+			"the order follows its only leg",
+		)
 	}
 }

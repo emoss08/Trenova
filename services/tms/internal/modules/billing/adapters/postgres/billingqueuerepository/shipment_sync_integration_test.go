@@ -7,10 +7,6 @@ import (
 	"testing"
 
 	"github.com/emoss08/keel"
-	"github.com/emoss08/trenova/pkg/dbscope"
-
-	"github.com/emoss08/trenova/internal/testutil/seededtest"
-
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/chargeallocationrepository"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
@@ -18,8 +14,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmentcommodityrepository"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmentmoverepository"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmentrepository"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/testutil/seededtest"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/require"
@@ -215,7 +213,7 @@ func TestShipmentWritesCannotOverwriteTheMirror(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	entity.BillingTransferStatus = shipment.BillingTransferSentBackToOps
+	entity.BillingTransferStatus = shipmentvocab.BillingTransferSentBackToOps
 	entity.TransferredToBillingAt = nil
 	entity, err = f.shipmentRepo.Update(f.ctx, entity)
 	require.NoError(t, err)
@@ -224,7 +222,7 @@ func TestShipmentWritesCannotOverwriteTheMirror(t *testing.T) {
 	requireTransferStatus(t, row, billingqueue.StatusInReview)
 	require.Equal(t, transferredAt, row.TransferredToBillingAt)
 
-	entity.BillingTransferStatus = shipment.BillingTransferNone
+	entity.BillingTransferStatus = shipmentvocab.BillingTransferNone
 	_, err = f.shipmentRepo.UpdateDerivedState(f.ctx, entity)
 	require.NoError(t, err)
 

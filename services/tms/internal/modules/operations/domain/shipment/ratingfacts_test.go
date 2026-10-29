@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/commodity"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/hazardousmaterial"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -19,16 +20,24 @@ func int64Ptr(value int64) *int64 { return &value }
 func TestShipment_OrderedStopsFollowMoveThenStopSequence(t *testing.T) {
 	t.Parallel()
 
-	p1 := &shipment.Stop{ID: pulid.MustNew("stp_"), Type: shipment.StopTypePickup, Sequence: 0}
+	p1 := &shipment.Stop{ID: pulid.MustNew("stp_"), Type: shipmentvocab.StopTypePickup, Sequence: 0}
 	d1 := &shipment.Stop{
 		ID:       pulid.MustNew("stp_"),
-		Type:     shipment.StopTypeDelivery,
-		Status:   shipment.StopStatusCanceled,
+		Type:     shipmentvocab.StopTypeDelivery,
+		Status:   shipmentvocab.StopStatusCanceled,
 		Sequence: 1,
 	}
-	d2 := &shipment.Stop{ID: pulid.MustNew("stp_"), Type: shipment.StopTypeDelivery, Sequence: 2}
-	p2 := &shipment.Stop{ID: pulid.MustNew("stp_"), Type: shipment.StopTypePickup, Sequence: 0}
-	d3 := &shipment.Stop{ID: pulid.MustNew("stp_"), Type: shipment.StopTypeDelivery, Sequence: 1}
+	d2 := &shipment.Stop{
+		ID:       pulid.MustNew("stp_"),
+		Type:     shipmentvocab.StopTypeDelivery,
+		Sequence: 2,
+	}
+	p2 := &shipment.Stop{ID: pulid.MustNew("stp_"), Type: shipmentvocab.StopTypePickup, Sequence: 0}
+	d3 := &shipment.Stop{
+		ID:       pulid.MustNew("stp_"),
+		Type:     shipmentvocab.StopTypeDelivery,
+		Sequence: 1,
+	}
 
 	entity := &shipment.Shipment{Moves: []*shipment.ShipmentMove{
 		{Sequence: 1, Stops: []*shipment.Stop{d3, p2}},

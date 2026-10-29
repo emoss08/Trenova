@@ -6,7 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/shipmentmapping"
-	shipmentdomain "github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/rules"
@@ -102,7 +102,7 @@ func TestShipmentFromInput_MapsNestedPayloads(t *testing.T) {
 	assert.Equal(t, shipmentID, entity.ID)
 	assert.Equal(t, authCtx.BusinessUnitID, entity.BusinessUnitID)
 	assert.Equal(t, authCtx.OrganizationID, entity.OrganizationID)
-	assert.Equal(t, shipmentdomain.StatusInTransit, entity.Status)
+	assert.Equal(t, shipmentvocab.StatusInTransit, entity.Status)
 	assert.Equal(t, "SHP-100", entity.ProNumber)
 	assert.Equal(t, "1.25", entity.OtherChargeAmount.Decimal.String())
 	assert.Equal(t, "2.5", entity.FreightChargeAmount.Decimal.String())
@@ -119,18 +119,18 @@ func TestShipmentFromInput_MapsNestedPayloads(t *testing.T) {
 
 	require.Len(t, entity.Moves, 1)
 	assert.Equal(t, moveID, entity.Moves[0].ID)
-	assert.Equal(t, shipmentdomain.MoveStatusAssigned, entity.Moves[0].Status)
+	assert.Equal(t, shipmentvocab.MoveStatusAssigned, entity.Moves[0].Status)
 	assert.False(t, entity.Moves[0].Loaded)
 	assert.Equal(t, int64(2), entity.Moves[0].Sequence)
 
 	require.Len(t, entity.Moves[0].Stops, 1)
 	assert.Equal(t, stopID, entity.Moves[0].Stops[0].ID)
 	assert.Equal(t, locationID, entity.Moves[0].Stops[0].LocationID)
-	assert.Equal(t, shipmentdomain.StopStatusInTransit, entity.Moves[0].Stops[0].Status)
-	assert.Equal(t, shipmentdomain.StopTypeDelivery, entity.Moves[0].Stops[0].Type)
+	assert.Equal(t, shipmentvocab.StopStatusInTransit, entity.Moves[0].Stops[0].Status)
+	assert.Equal(t, shipmentvocab.StopTypeDelivery, entity.Moves[0].Stops[0].Type)
 	assert.Equal(
 		t,
-		shipmentdomain.StopScheduleTypeAppointment,
+		shipmentvocab.StopScheduleTypeAppointment,
 		entity.Moves[0].Stops[0].ScheduleType,
 	)
 	assert.Equal(t, int64(3), entity.Moves[0].Stops[0].Sequence)

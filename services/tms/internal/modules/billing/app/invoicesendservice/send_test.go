@@ -6,10 +6,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/billing/app/invoiceediservice"
-
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoiceaction"
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoicedocument"
+	"github.com/emoss08/trenova/internal/modules/billing/app/invoiceediservice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
@@ -17,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location"
@@ -545,7 +545,7 @@ func TestAppendShipmentDetailIncludesRouteAndCharges(t *testing.T) {
 			{
 				Stops: []*shipment.Stop{
 					{
-						Type:     shipment.StopTypePickup,
+						Type:     shipmentvocab.StopTypePickup,
 						Sequence: 1,
 						Location: &location.Location{
 							Name:       "Origin DC",
@@ -554,7 +554,7 @@ func TestAppendShipmentDetailIncludesRouteAndCharges(t *testing.T) {
 						},
 					},
 					{
-						Type:     shipment.StopTypeDelivery,
+						Type:     shipmentvocab.StopTypeDelivery,
 						Sequence: 2,
 						Location: &location.Location{
 							Name:       "Destination DC",

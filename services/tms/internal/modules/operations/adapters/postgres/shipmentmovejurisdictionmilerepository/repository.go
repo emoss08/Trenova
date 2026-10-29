@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentdistanceports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -184,7 +185,7 @@ func completedMovesWithoutBreakdown() *keel.CTETable {
 
 	body := sm.LeftJoin(st, st.ShipmentMoveID.EqCol(sm.ID)).
 		Where(
-			sm.Status.Eq(shipment.MoveStatusCompleted),
+			sm.Status.Eq(shipmentvocab.MoveStatusCompleted),
 			sm.Distance.Gt(0),
 			keel.NotExists(jm.Where(jm.ShipmentMoveID.EqCol(sm.ID))),
 		).
@@ -193,7 +194,7 @@ func completedMovesWithoutBreakdown() *keel.CTETable {
 			sm.ID,
 			keel.CaseFloat64().
 				When(
-					sm.DistanceUnits.Eq(shipment.JurisdictionDistanceUnitsKilometers),
+					sm.DistanceUnits.Eq(shipmentvocab.JurisdictionDistanceUnitsKilometers),
 					sm.Distance.Div(keel.Float64(kilometersPerMile)),
 				).
 				Else(sm.Distance),

@@ -6,7 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/boardgrouping"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/quickfilter"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/shopspring/decimal"
 )
@@ -35,7 +35,7 @@ type ShipmentBoardScopeRequest struct {
 }
 
 type ShipmentStageSummary struct {
-	Stage   shipment.Stage
+	Stage   shipmentvocab.Stage
 	Rank    int
 	Count   int
 	Revenue decimal.Decimal

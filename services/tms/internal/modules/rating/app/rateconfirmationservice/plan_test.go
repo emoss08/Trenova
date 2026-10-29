@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/config/tenderingconfig"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateconfirmation"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
@@ -83,7 +84,7 @@ func TestPreviewGenerate_IsTheNextRevisionAndVoidsTheStandingOne(t *testing.T) {
 		ID:             pulid.MustNew("cass_"),
 		CarrierID:      pulid.MustNew("car_"),
 		ShipmentMoveID: moveID,
-		Status:         shipment.CarrierAssignmentStatusPending,
+		Status:         shipmentvocab.CarrierAssignmentStatusPending,
 		ShipmentMove:   &shipment.ShipmentMove{ID: moveID, ShipmentID: shipmentID},
 	}
 	standing := &rateconfirmation.RateConfirmation{
@@ -211,7 +212,7 @@ func TestPreviewVoid_RevertsTheAssignmentOfAConfirmedAgreement(t *testing.T) {
 	deps.repo.add(entity)
 	assignment := &shipment.CarrierAssignment{
 		ID:          entity.CarrierAssignmentID,
-		Status:      shipment.CarrierAssignmentStatusConfirmed,
+		Status:      shipmentvocab.CarrierAssignmentStatusConfirmed,
 		ConfirmedAt: &confirmedAt,
 	}
 	deps.carrierAssignmentRepo.On("GetByID", mock.Anything, mock.Anything).Return(assignment, nil)
@@ -222,10 +223,10 @@ func TestPreviewVoid_RevertsTheAssignmentOfAConfirmedAgreement(t *testing.T) {
 	assert.Equal(t, rateconfirmation.StatusVoided, plan.After.Status)
 	assert.Equal(t, "Rate renegotiated", plan.After.VoidReason)
 	require.NotNil(t, plan.AssignmentAfter)
-	assert.Equal(t, shipment.CarrierAssignmentStatusConfirmed, plan.AssignmentBefore.Status)
-	assert.Equal(t, shipment.CarrierAssignmentStatusPending, plan.AssignmentAfter.Status)
+	assert.Equal(t, shipmentvocab.CarrierAssignmentStatusConfirmed, plan.AssignmentBefore.Status)
+	assert.Equal(t, shipmentvocab.CarrierAssignmentStatusPending, plan.AssignmentAfter.Status)
 	assert.Equal(t, rateconfirmation.StatusConfirmed, entity.Status)
-	assert.Equal(t, shipment.CarrierAssignmentStatusConfirmed, assignment.Status)
+	assert.Equal(t, shipmentvocab.CarrierAssignmentStatusConfirmed, assignment.Status)
 	assert.Empty(t, deps.repo.revokedFor, "a preview revokes no sign link")
 }
 
@@ -248,7 +249,7 @@ func TestPreviewMarkConfirmed_ConfirmsTheAgreementAndItsAssignment(t *testing.T)
 	deps.repo.add(entity)
 	assignment := &shipment.CarrierAssignment{
 		ID:     entity.CarrierAssignmentID,
-		Status: shipment.CarrierAssignmentStatusPending,
+		Status: shipmentvocab.CarrierAssignmentStatusPending,
 	}
 	deps.carrierAssignmentRepo.On("GetByID", mock.Anything, mock.Anything).Return(assignment, nil)
 
@@ -258,7 +259,7 @@ func TestPreviewMarkConfirmed_ConfirmsTheAgreementAndItsAssignment(t *testing.T)
 	assert.Equal(t, rateconfirmation.StatusConfirmed, plan.After.Status)
 	assert.Equal(t, "Dana Ruiz", plan.After.ConfirmedByName)
 	assert.Equal(t, rateconfirmation.ViaDispatcher, plan.After.ConfirmedVia)
-	assert.Equal(t, shipment.CarrierAssignmentStatusConfirmed, plan.AssignmentAfter.Status)
+	assert.Equal(t, shipmentvocab.CarrierAssignmentStatusConfirmed, plan.AssignmentAfter.Status)
 	assert.Equal(t, rateconfirmation.StatusSent, entity.Status)
 	assert.Empty(t, deps.repo.updated)
 }

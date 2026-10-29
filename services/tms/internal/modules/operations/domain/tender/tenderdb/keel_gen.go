@@ -285,7 +285,7 @@ var routingGuideEntriesTable = schema.Table{
 		{Name: "routing_guide_id", Quoted: `"routing_guide_id"`, Field: "RoutingGuideID", Kind: schema.KindString, Flags: 0, Label: `Routing Guide ID`, JSON: `routingGuideId`},
 		{Name: "carrier_id", Quoted: `"carrier_id"`, Field: "CarrierID", Kind: schema.KindString, Flags: 0, Label: `Carrier ID`, JSON: `carrierId`},
 		{Name: "rank", Quoted: `"rank"`, Field: "Rank", Kind: schema.KindInt16, Flags: 0, Label: `Rank`, JSON: `rank`},
-		{Name: "rate_method", Quoted: `"rate_method"`, Field: "RateMethod", Kind: schema.KindString, Flags: 0, Label: `Rate Method`, JSON: `rateMethod`, Enum: enumShipmentCarrierRateMethod[:]},
+		{Name: "rate_method", Quoted: `"rate_method"`, Field: "RateMethod", Kind: schema.KindString, Flags: 0, Label: `Rate Method`, JSON: `rateMethod`, Enum: enumShipmentvocabCarrierRateMethod[:]},
 		{Name: "rate", Quoted: `"rate"`, Field: "Rate", Kind: schema.KindOther, Flags: 0, Label: `Rate`, JSON: `rate`},
 		{Name: "use_contract_rate", Quoted: `"use_contract_rate"`, Field: "UseContractRate", Kind: schema.KindBool, Flags: 0, Label: `Use Contract Rate`, Doc: `UseContractRate offers what the carrier's contract says today rather than the rate frozen on this entry. A guide written a year ago carries the number somebody typed a year ago; a contract carries the one that was negotiated. The rate above stays as the fallback for a lane no contract covers.`, JSON: `useContractRate`},
 		{Name: "offer_ttl_seconds", Quoted: `"offer_ttl_seconds"`, Field: "OfferTTLSeconds", Kind: schema.KindInt32, Flags: 0, Label: `Offer TTL Seconds`, JSON: `offerTtlSeconds`},
@@ -329,7 +329,7 @@ type RoutingGuideEntriesTable struct {
 	RoutingGuideID  keelkinds.PulidIDCol
 	CarrierID       keelkinds.PulidIDCol
 	Rank            keel.Int16Col
-	RateMethod      shipmentdb.CarrierRateMethodCol
+	RateMethod      keelkinds.ShipmentvocabCarrierRateMethodCol
 	Rate            keelkinds.DecimalDecimalCol
 	UseContractRate keel.BoolCol
 	OfferTTLSeconds keel.Int32Col
@@ -348,7 +348,7 @@ var RoutingGuideEntries = &RoutingGuideEntriesTable{
 	RoutingGuideID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &routingGuideEntriesRef, Index: 3}}},
 	CarrierID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &routingGuideEntriesRef, Index: 4}}},
 	Rank:            keel.Int16Col{Col: keel.Col{Ref: &routingGuideEntriesRef, Index: 5}},
-	RateMethod:      shipmentdb.CarrierRateMethodCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &routingGuideEntriesRef, Index: 6}}},
+	RateMethod:      keelkinds.ShipmentvocabCarrierRateMethodCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &routingGuideEntriesRef, Index: 6}}},
 	Rate:            keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &routingGuideEntriesRef, Index: 7}}},
 	UseContractRate: keel.BoolCol{Col: keel.Col{Ref: &routingGuideEntriesRef, Index: 8}},
 	OfferTTLSeconds: keel.Int32Col{Col: keel.Col{Ref: &routingGuideEntriesRef, Index: 9}},
@@ -368,7 +368,7 @@ func BuildRoutingGuideEntries(r *keel.Ref) *RoutingGuideEntriesTable {
 		RoutingGuideID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
 		CarrierID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
 		Rank:            keel.Int16Col{Col: keel.Col{Ref: r, Index: 5}},
-		RateMethod:      shipmentdb.CarrierRateMethodCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		RateMethod:      keelkinds.ShipmentvocabCarrierRateMethodCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
 		Rate:            keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 7}}},
 		UseContractRate: keel.BoolCol{Col: keel.Col{Ref: r, Index: 8}},
 		OfferTTLSeconds: keel.Int32Col{Col: keel.Col{Ref: r, Index: 9}},
@@ -856,7 +856,7 @@ var tenderOffersTable = schema.Table{
 		{Name: "tender_id", Quoted: `"tender_id"`, Field: "TenderID", Kind: schema.KindString, Flags: 0, Label: `Tender ID`, JSON: `tenderId`},
 		{Name: "carrier_id", Quoted: `"carrier_id"`, Field: "CarrierID", Kind: schema.KindString, Flags: 0, Label: `Carrier ID`, JSON: `carrierId`},
 		{Name: "rank", Quoted: `"rank"`, Field: "Rank", Kind: schema.KindInt16, Flags: 0, Label: `Rank`, JSON: `rank`},
-		{Name: "rate_method", Quoted: `"rate_method"`, Field: "RateMethod", Kind: schema.KindString, Flags: 0, Label: `Rate Method`, JSON: `rateMethod`, Enum: enumShipmentCarrierRateMethod[:]},
+		{Name: "rate_method", Quoted: `"rate_method"`, Field: "RateMethod", Kind: schema.KindString, Flags: 0, Label: `Rate Method`, JSON: `rateMethod`, Enum: enumShipmentvocabCarrierRateMethod[:]},
 		{Name: "rate", Quoted: `"rate"`, Field: "Rate", Kind: schema.KindOther, Flags: 0, Label: `Rate`, JSON: `rate`},
 		{Name: "offer_ttl_seconds", Quoted: `"offer_ttl_seconds"`, Field: "OfferTTLSeconds", Kind: schema.KindInt32, Flags: 0, Label: `Offer TTL Seconds`, JSON: `offerTtlSeconds`},
 		{Name: "channel", Quoted: `"channel"`, Field: "Channel", Kind: schema.KindString, Flags: 0, Label: `Channel`, JSON: `channel`, Enum: enumChannel[:]},
@@ -922,7 +922,7 @@ type TenderOffersTable struct {
 	TenderID             keelkinds.PulidIDCol
 	CarrierID            keelkinds.PulidIDCol
 	Rank                 keel.Int16Col
-	RateMethod           shipmentdb.CarrierRateMethodCol
+	RateMethod           keelkinds.ShipmentvocabCarrierRateMethodCol
 	Rate                 keelkinds.DecimalDecimalCol
 	OfferTTLSeconds      keel.Int32Col
 	Channel              ChannelCol
@@ -963,7 +963,7 @@ var TenderOffers = &TenderOffersTable{
 	TenderID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tenderOffersRef, Index: 3}}},
 	CarrierID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tenderOffersRef, Index: 4}}},
 	Rank:                 keel.Int16Col{Col: keel.Col{Ref: &tenderOffersRef, Index: 5}},
-	RateMethod:           shipmentdb.CarrierRateMethodCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tenderOffersRef, Index: 6}}},
+	RateMethod:           keelkinds.ShipmentvocabCarrierRateMethodCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tenderOffersRef, Index: 6}}},
 	Rate:                 keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &tenderOffersRef, Index: 7}}},
 	OfferTTLSeconds:      keel.Int32Col{Col: keel.Col{Ref: &tenderOffersRef, Index: 8}},
 	Channel:              ChannelCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tenderOffersRef, Index: 9}}},
@@ -1005,7 +1005,7 @@ func BuildTenderOffers(r *keel.Ref) *TenderOffersTable {
 		TenderID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
 		CarrierID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
 		Rank:                 keel.Int16Col{Col: keel.Col{Ref: r, Index: 5}},
-		RateMethod:           shipmentdb.CarrierRateMethodCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		RateMethod:           keelkinds.ShipmentvocabCarrierRateMethodCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
 		Rate:                 keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 7}}},
 		OfferTTLSeconds:      keel.Int32Col{Col: keel.Col{Ref: r, Index: 8}},
 		Channel:              ChannelCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 9}}},
@@ -1536,7 +1536,7 @@ var enumResponseSource = [...]schema.EnumValue{
 	{Value: `Manual`, Label: `Manual`},
 }
 
-var enumShipmentCarrierRateMethod = [...]schema.EnumValue{
+var enumShipmentvocabCarrierRateMethod = [...]schema.EnumValue{
 	{Value: `Flat`, Label: `Flat`},
 	{Value: `PerMile`, Label: `Per Mile`},
 }

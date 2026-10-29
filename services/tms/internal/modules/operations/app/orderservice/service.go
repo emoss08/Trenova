@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/chargeallocation"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/order"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/chargeallocationports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/orderports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
@@ -304,7 +305,8 @@ func (s *Service) validateAttachRefs(
 				"Every shipment attached to an order must belong to the order's customer",
 			)
 		}
-		if ref.Status == shipment.StatusCanceled || ref.Status == shipment.StatusInvoiced {
+		if ref.Status == shipmentvocab.StatusCanceled ||
+			ref.Status == shipmentvocab.StatusInvoiced {
 			return nil, nil, errortypes.NewValidationError(
 				"shipmentIds",
 				errortypes.ErrInvalid,
@@ -484,7 +486,7 @@ func detachableLeg(ord *order.Order, shipmentID pulid.ID) (*shipment.Shipment, e
 			"Shipment is not a leg of this order",
 		)
 	}
-	if leg.Status == shipment.StatusInvoiced {
+	if leg.Status == shipmentvocab.StatusInvoiced {
 		return nil, errortypes.NewValidationError(
 			"shipmentId",
 			errortypes.ErrInvalid,
@@ -900,7 +902,7 @@ func (s *Service) validateChargeAllocations(
 		if allocation == nil {
 			continue
 		}
-		allocation.ChargeKind = shipment.ChargeAllocationKindOrderCharge
+		allocation.ChargeKind = shipmentvocab.ChargeAllocationKindOrderCharge
 		if charge.ID.IsNotNil() {
 			chargeID := charge.ID
 			allocation.OrderChargeID = &chargeID

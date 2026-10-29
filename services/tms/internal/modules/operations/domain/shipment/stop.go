@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -15,39 +16,39 @@ import (
 type Stop struct {
 	keel.Table `keel:"stops,report=Operations"`
 
-	ID                     pulid.ID           `json:"id"                     keel:"id,pk,autoid:stp_"`
-	BusinessUnitID         pulid.ID           `json:"businessUnitId"         keel:"business_unit_id,pk,tenant"`
-	OrganizationID         pulid.ID           `json:"organizationId"         keel:"organization_id,pk,tenant"`
-	ShipmentMoveID         pulid.ID           `json:"shipmentMoveId"         keel:"shipment_move_id"`
-	LocationID             pulid.ID           `json:"locationId"             keel:"location_id"`
-	Status                 StopStatus         `json:"status"                 keel:"status"`
-	Type                   StopType           `json:"type"                   keel:"type"`
-	ScheduleType           StopScheduleType   `json:"scheduleType"           keel:"schedule_type"`
-	Sequence               int64              `json:"sequence"               keel:"sequence,dimension"`
-	Pieces                 *int64             `json:"pieces"                 keel:"pieces,format=count"`
-	Weight                 *int64             `json:"weight"                 keel:"weight,format=weight"`
-	ScheduledWindowStart   int64              `json:"scheduledWindowStart"   keel:"scheduled_window_start,type=epoch"`
-	ScheduledWindowEnd     *int64             `json:"scheduledWindowEnd"     keel:"scheduled_window_end,type=epoch"`
-	ActualArrival          *int64             `json:"actualArrival"          keel:"actual_arrival,type=epoch"`
-	ActualDeparture        *int64             `json:"actualDeparture"        keel:"actual_departure,type=epoch"`
-	CountLateOverride      *bool              `json:"countLateOverride"      keel:"count_late_override"`
-	CountDetentionOverride *bool              `json:"countDetentionOverride" keel:"count_detention_override"`
-	AddressLine            string             `json:"addressLine"            keel:"address_line,nullzero"`
-	Version                int64              `json:"version"                keel:"version,version"`
-	CreatedAt              int64              `json:"createdAt"              keel:"created_at,autocreate"`
-	UpdatedAt              int64              `json:"updatedAt"              keel:"updated_at,autoupdate"`
-	Location               *location.Location `json:"location,omitempty"     keel:"belongs:location_id"`
+	ID                     pulid.ID                       `json:"id"                     keel:"id,pk,autoid:stp_"`
+	BusinessUnitID         pulid.ID                       `json:"businessUnitId"         keel:"business_unit_id,pk,tenant"`
+	OrganizationID         pulid.ID                       `json:"organizationId"         keel:"organization_id,pk,tenant"`
+	ShipmentMoveID         pulid.ID                       `json:"shipmentMoveId"         keel:"shipment_move_id"`
+	LocationID             pulid.ID                       `json:"locationId"             keel:"location_id"`
+	Status                 shipmentvocab.StopStatus       `json:"status"                 keel:"status"`
+	Type                   shipmentvocab.StopType         `json:"type"                   keel:"type"`
+	ScheduleType           shipmentvocab.StopScheduleType `json:"scheduleType"           keel:"schedule_type"`
+	Sequence               int64                          `json:"sequence"               keel:"sequence,dimension"`
+	Pieces                 *int64                         `json:"pieces"                 keel:"pieces,format=count"`
+	Weight                 *int64                         `json:"weight"                 keel:"weight,format=weight"`
+	ScheduledWindowStart   int64                          `json:"scheduledWindowStart"   keel:"scheduled_window_start,type=epoch"`
+	ScheduledWindowEnd     *int64                         `json:"scheduledWindowEnd"     keel:"scheduled_window_end,type=epoch"`
+	ActualArrival          *int64                         `json:"actualArrival"          keel:"actual_arrival,type=epoch"`
+	ActualDeparture        *int64                         `json:"actualDeparture"        keel:"actual_departure,type=epoch"`
+	CountLateOverride      *bool                          `json:"countLateOverride"      keel:"count_late_override"`
+	CountDetentionOverride *bool                          `json:"countDetentionOverride" keel:"count_detention_override"`
+	AddressLine            string                         `json:"addressLine"            keel:"address_line,nullzero"`
+	Version                int64                          `json:"version"                keel:"version,version"`
+	CreatedAt              int64                          `json:"createdAt"              keel:"created_at,autocreate"`
+	UpdatedAt              int64                          `json:"updatedAt"              keel:"updated_at,autoupdate"`
+	Location               *location.Location             `json:"location,omitempty"     keel:"belongs:location_id"`
 }
 
 func (s *Stop) BeforeCreate(ctx context.Context) error {
 	if s.Status == "" {
-		s.Status = StopStatusNew
+		s.Status = shipmentvocab.StopStatusNew
 	}
 	if s.Type == "" {
-		s.Type = StopTypePickup
+		s.Type = shipmentvocab.StopTypePickup
 	}
 	if s.ScheduleType == "" {
-		s.ScheduleType = StopScheduleTypeOpen
+		s.ScheduleType = shipmentvocab.StopScheduleTypeOpen
 	}
 
 	return nil
@@ -55,38 +56,38 @@ func (s *Stop) BeforeCreate(ctx context.Context) error {
 
 func (s *Stop) BeforeUpdate(ctx context.Context) error {
 	if s.ScheduleType == "" {
-		s.ScheduleType = StopScheduleTypeOpen
+		s.ScheduleType = shipmentvocab.StopScheduleTypeOpen
 	}
 
 	return nil
 }
 
 func (s *Stop) IsOriginStop() bool {
-	return s.Type == StopTypePickup || s.Type == StopTypeSplitPickup
+	return s.Type == shipmentvocab.StopTypePickup || s.Type == shipmentvocab.StopTypeSplitPickup
 }
 
-func (s *Stop) StatusEquals(status StopStatus) bool {
+func (s *Stop) StatusEquals(status shipmentvocab.StopStatus) bool {
 	return s.Status == status
 }
 
 func (s *Stop) IsDestinationStop() bool {
-	return s.Type == StopTypeDelivery || s.Type == StopTypeSplitDelivery
+	return s.Type == shipmentvocab.StopTypeDelivery || s.Type == shipmentvocab.StopTypeSplitDelivery
 }
 
 func (s *Stop) IsCompleted() bool {
-	return s.Status == StopStatusCompleted
+	return s.Status == shipmentvocab.StopStatusCompleted
 }
 
 func (s *Stop) IsCanceled() bool {
-	return s.Status == StopStatusCanceled
+	return s.Status == shipmentvocab.StopStatusCanceled
 }
 
 func (s *Stop) IsInTransit() bool {
-	return s.Status == StopStatusInTransit
+	return s.Status == shipmentvocab.StopStatusInTransit
 }
 
 func (s *Stop) IsNew() bool {
-	return s.Status == StopStatusNew
+	return s.Status == shipmentvocab.StopStatusNew
 }
 
 func (s *Stop) EffectiveScheduledCutoff() int64 {
@@ -123,15 +124,15 @@ func (s *Stop) Validate(multiErr *errortypes.MultiError) {
 		validation.Field(&s.LocationID, validation.Required.Error("Location is required")),
 		validation.Field(&s.Status,
 			validation.Required.Error("Status is required"),
-			domainvalidation.ValidEnum[StopStatus]("Status is invalid"),
+			domainvalidation.ValidEnum[shipmentvocab.StopStatus]("Status is invalid"),
 		),
 		validation.Field(&s.Type,
 			validation.Required.Error("Type is required"),
-			domainvalidation.ValidEnum[StopType]("Type is invalid"),
+			domainvalidation.ValidEnum[shipmentvocab.StopType]("Type is invalid"),
 		),
 		validation.Field(&s.ScheduleType,
 			validation.Required.Error("Schedule type is required"),
-			domainvalidation.ValidEnum[StopScheduleType]("Schedule type is invalid"),
+			domainvalidation.ValidEnum[shipmentvocab.StopScheduleType]("Schedule type is invalid"),
 		),
 		validation.Field(&s.Sequence,
 			validation.Min(int64(0)).Error("Sequence cannot be negative"),

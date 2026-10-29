@@ -14,8 +14,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/domain/ladingproject"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ladingports"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentevent"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenteventports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/lading"
@@ -132,17 +132,21 @@ func (s *Service) loadState(
 }
 
 // LoadStateOf is the state a flow sees a load in, from its shipment's status.
-func LoadStateOf(status shipment.Status) string {
+func LoadStateOf(status shipmentvocab.Status) string {
 	switch status {
-	case shipment.StatusInTransit, shipment.StatusDelayed, shipment.StatusPartiallyCompleted:
+	case shipmentvocab.StatusInTransit,
+		shipmentvocab.StatusDelayed,
+		shipmentvocab.StatusPartiallyCompleted:
 		return lading.LoadDispatched
-	case shipment.StatusReadyToInvoice, shipment.StatusCompleted:
+	case shipmentvocab.StatusReadyToInvoice, shipmentvocab.StatusCompleted:
 		return lading.LoadDelivered
-	case shipment.StatusInvoiced:
+	case shipmentvocab.StatusInvoiced:
 		return lading.LoadInvoiced
-	case shipment.StatusCanceled:
+	case shipmentvocab.StatusCanceled:
 		return lading.LoadCancelled
-	case shipment.StatusNew, shipment.StatusPartiallyAssigned, shipment.StatusAssigned:
+	case shipmentvocab.StatusNew,
+		shipmentvocab.StatusPartiallyAssigned,
+		shipmentvocab.StatusAssigned:
 	}
 	return lading.LoadOpen
 }

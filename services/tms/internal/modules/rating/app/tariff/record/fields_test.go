@@ -6,6 +6,7 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location"
 	"github.com/emoss08/trenova/internal/modules/places/domain/locationcategory"
 	"github.com/emoss08/trenova/internal/modules/rating/app/tariff/record"
@@ -129,21 +130,21 @@ func TestBuildSendsEachStopsLocationCategory(t *testing.T) {
 		Moves: []*shipment.ShipmentMove{{
 			Stops: []*shipment.Stop{
 				{
-					Type:     shipment.StopTypePickup,
+					Type:     shipmentvocab.StopTypePickup,
 					Sequence: 1,
 					Location: &location.Location{City: "Dallas", LocationCategory: cold},
 				},
 				{
-					Type:     shipment.StopTypeSplitDelivery,
+					Type:     shipmentvocab.StopTypeSplitDelivery,
 					Sequence: 2,
 					Location: &location.Location{City: "Tulsa", LocationCategory: terminal},
 				},
 				{
-					Type:     shipment.StopTypeSplitDelivery,
+					Type:     shipmentvocab.StopTypeSplitDelivery,
 					Sequence: 3,
 					Location: &location.Location{City: "Wichita"},
 				},
-				{Type: shipment.StopTypeDelivery, Sequence: 4},
+				{Type: shipmentvocab.StopTypeDelivery, Sequence: 4},
 			},
 		}},
 	}
@@ -172,7 +173,7 @@ func TestBuildSendsTheDistanceFromThePreviousStop(t *testing.T) {
 
 	a, b, c, d := pulid.MustNew("loc_"), pulid.MustNew("loc_"), pulid.MustNew("loc_"),
 		pulid.MustNew("loc_")
-	stop := func(locationID pulid.ID, sequence int64, kind shipment.StopType) *shipment.Stop {
+	stop := func(locationID pulid.ID, sequence int64, kind shipmentvocab.StopType) *shipment.Stop {
 		return &shipment.Stop{LocationID: locationID, Sequence: sequence, Type: kind}
 	}
 	entity := &shipment.Shipment{
@@ -182,32 +183,32 @@ func TestBuildSendsTheDistanceFromThePreviousStop(t *testing.T) {
 				Sequence: 1,
 				Distance: new(120.5),
 				Stops: []*shipment.Stop{
-					stop(a, 1, shipment.StopTypePickup),
-					stop(b, 2, shipment.StopTypeDelivery),
+					stop(a, 1, shipmentvocab.StopTypePickup),
+					stop(b, 2, shipmentvocab.StopTypeDelivery),
 				},
 			},
 			{
 				Sequence: 2,
 				Distance: new(80.0),
 				Stops: []*shipment.Stop{
-					stop(b, 1, shipment.StopTypePickup),
-					stop(c, 2, shipment.StopTypeDelivery),
+					stop(b, 1, shipmentvocab.StopTypePickup),
+					stop(c, 2, shipmentvocab.StopTypeDelivery),
 				},
 			},
 			{
 				Sequence: 3,
 				Distance: new(300.0),
 				Stops: []*shipment.Stop{
-					stop(d, 1, shipment.StopTypePickup),
-					stop(a, 2, shipment.StopTypeSplitDelivery),
-					stop(b, 3, shipment.StopTypeDelivery),
+					stop(d, 1, shipmentvocab.StopTypePickup),
+					stop(a, 2, shipmentvocab.StopTypeSplitDelivery),
+					stop(b, 3, shipmentvocab.StopTypeDelivery),
 				},
 			},
 			{
 				Sequence: 4,
 				Stops: []*shipment.Stop{
-					stop(b, 1, shipment.StopTypePickup),
-					stop(c, 2, shipment.StopTypeDelivery),
+					stop(b, 1, shipmentvocab.StopTypePickup),
+					stop(c, 2, shipmentvocab.StopTypeDelivery),
 				},
 			},
 		},
@@ -262,11 +263,19 @@ func TestBuildLeavesTheLegDistanceOfACanceledMoveUnknown(t *testing.T) {
 	entity := &shipment.Shipment{
 		ProNumber: "PRO-4",
 		Moves: []*shipment.ShipmentMove{{
-			Status:   shipment.MoveStatusCanceled,
+			Status:   shipmentvocab.MoveStatusCanceled,
 			Distance: new(40.0),
 			Stops: []*shipment.Stop{
-				{LocationID: pulid.MustNew("loc_"), Sequence: 1, Type: shipment.StopTypePickup},
-				{LocationID: pulid.MustNew("loc_"), Sequence: 2, Type: shipment.StopTypeDelivery},
+				{
+					LocationID: pulid.MustNew("loc_"),
+					Sequence:   1,
+					Type:       shipmentvocab.StopTypePickup,
+				},
+				{
+					LocationID: pulid.MustNew("loc_"),
+					Sequence:   2,
+					Type:       shipmentvocab.StopTypeDelivery,
+				},
 			},
 		}},
 	}

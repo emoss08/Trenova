@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/app/detentionengine"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionpolicy"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -24,8 +24,8 @@ func replay(
 ) detentionengine.ComputeResult {
 	return detentionengine.Compute(detentionengine.ComputeInput{
 		Snapshot:        snap,
-		StopType:        shipment.StopTypeDelivery,
-		ScheduleType:    shipment.StopScheduleTypeAppointment,
+		StopType:        shipmentvocab.StopTypeDelivery,
+		ScheduleType:    shipmentvocab.StopScheduleTypeAppointment,
 		ArrivedAt:       &arrival,
 		DepartedAt:      &departure,
 		NoticeSentAt:    &arrival,
@@ -83,8 +83,8 @@ func TestBacktest_ForfeitTermsCollapseRevenueOnLateStops(t *testing.T) {
 
 	lenientResult := detentionengine.Compute(detentionengine.ComputeInput{
 		Snapshot:       lenient,
-		StopType:       shipment.StopTypeDelivery,
-		ScheduleType:   shipment.StopScheduleTypeAppointment,
+		StopType:       shipmentvocab.StopTypeDelivery,
+		ScheduleType:   shipmentvocab.StopScheduleTypeAppointment,
 		ArrivedAt:      &arrival,
 		DepartedAt:     &departure,
 		AppointmentEnd: &apptEnd,
@@ -93,8 +93,8 @@ func TestBacktest_ForfeitTermsCollapseRevenueOnLateStops(t *testing.T) {
 	})
 	strictResult := detentionengine.Compute(detentionengine.ComputeInput{
 		Snapshot:       strict,
-		StopType:       shipment.StopTypeDelivery,
-		ScheduleType:   shipment.StopScheduleTypeAppointment,
+		StopType:       shipmentvocab.StopTypeDelivery,
+		ScheduleType:   shipmentvocab.StopScheduleTypeAppointment,
 		ArrivedAt:      &arrival,
 		DepartedAt:     &departure,
 		AppointmentEnd: &apptEnd,
@@ -120,8 +120,8 @@ func TestBacktest_NoticeComplianceAssumptionChangesTheAnswer(t *testing.T) {
 
 	compliant := detentionengine.Compute(detentionengine.ComputeInput{
 		Snapshot:     snap,
-		StopType:     shipment.StopTypeDelivery,
-		ScheduleType: shipment.StopScheduleTypeAppointment,
+		StopType:     shipmentvocab.StopTypeDelivery,
+		ScheduleType: shipmentvocab.StopScheduleTypeAppointment,
 		ArrivedAt:    &arrival,
 		DepartedAt:   &departure,
 		NoticeSentAt: &arrival,
@@ -130,8 +130,8 @@ func TestBacktest_NoticeComplianceAssumptionChangesTheAnswer(t *testing.T) {
 	})
 	asHappened := detentionengine.Compute(detentionengine.ComputeInput{
 		Snapshot:     snap,
-		StopType:     shipment.StopTypeDelivery,
-		ScheduleType: shipment.StopScheduleTypeAppointment,
+		StopType:     shipmentvocab.StopTypeDelivery,
+		ScheduleType: shipmentvocab.StopScheduleTypeAppointment,
 		ArrivedAt:    &arrival,
 		DepartedAt:   &departure,
 		NoticeSentAt: nil,

@@ -8,6 +8,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
@@ -198,7 +199,7 @@ func testShipment() *shipment.Shipment {
 		OrganizationID: orgID,
 		BusinessUnitID: buID,
 		CustomerID:     custID,
-		Status:         shipment.StatusNew,
+		Status:         shipmentvocab.StatusNew,
 		CreatedAt:      testNow,
 		Weight:         new(int64(40000)),
 		Pieces:         new(int64(22)),
@@ -218,15 +219,15 @@ func testShipment() *shipment.Shipment {
 					{
 						ID:         pulid.MustNew("stp_"),
 						Sequence:   0,
-						Type:       shipment.StopTypePickup,
-						Status:     shipment.StopStatusNew,
+						Type:       shipmentvocab.StopTypePickup,
+						Status:     shipmentvocab.StopStatusNew,
 						LocationID: pulid.MustNew("loc_"),
 					},
 					{
 						ID:         pulid.MustNew("stp_"),
 						Sequence:   1,
-						Type:       shipment.StopTypeDelivery,
-						Status:     shipment.StopStatusNew,
+						Type:       shipmentvocab.StopTypeDelivery,
+						Status:     shipmentvocab.StopStatusNew,
 						LocationID: pulid.MustNew("loc_"),
 					},
 				},

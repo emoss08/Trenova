@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/app/dispatcheligibility"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentcoverage"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/assignmentports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -41,9 +42,9 @@ func (f *savingAssignments) plan(
 	after := shipmentcoverage.CloneForUpdate(f.shipment)
 	move := after.FindMove(req.ShipmentMoveID)
 	move.Assignment = assignment
-	move.CoverageType = shipment.MoveCoverageTypeDriver
-	move.Status = shipment.MoveStatusAssigned
-	after.Status = shipment.StatusAssigned
+	move.CoverageType = shipmentvocab.MoveCoverageTypeDriver
+	move.Status = shipmentvocab.MoveStatusAssigned
+	after.Status = shipmentvocab.StatusAssigned
 
 	return &assignmentports.AssignmentPlan{
 		Assignment:     assignment,
@@ -96,11 +97,11 @@ func uncoveredShipment() *shipment.Shipment {
 	return &shipment.Shipment{
 		ID:        pulid.MustNew("shp_"),
 		ProNumber: "S-88213",
-		Status:    shipment.StatusNew,
+		Status:    shipmentvocab.StatusNew,
 		Moves: []*shipment.ShipmentMove{{
 			ID:           moveID,
-			Status:       shipment.MoveStatusNew,
-			CoverageType: shipment.MoveCoverageTypeUnassigned,
+			Status:       shipmentvocab.MoveStatusNew,
+			CoverageType: shipmentvocab.MoveCoverageTypeUnassigned,
 			Version:      2,
 		}},
 	}

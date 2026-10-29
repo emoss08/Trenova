@@ -9,8 +9,8 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/order"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/order/orderdb"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/orderports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/listquery"
@@ -189,10 +189,10 @@ func (r *repository) GetShipmentStatuses(
 	ctx context.Context,
 	_ pagination.TenantInfo,
 	orderID pulid.ID,
-) ([]shipment.Status, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]shipment.Status, error) {
+) ([]shipmentvocab.Status, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]shipmentvocab.Status, error) {
 		sp := shipmentdb.Shipments
-		statuses, err := keel.Into[shipment.Status](
+		statuses, err := keel.Into[shipmentvocab.Status](
 			ctx,
 			r.db.Keel(ctx),
 			sp.Pick(sp.Status).Where(sp.OrderID.Eq(orderID)),
@@ -202,7 +202,7 @@ func (r *repository) GetShipmentStatuses(
 			return nil, err
 		}
 		if statuses == nil {
-			statuses = []shipment.Status{}
+			statuses = []shipmentvocab.Status{}
 		}
 
 		return statuses, nil
@@ -228,7 +228,7 @@ func (r *repository) AttachShipments(
 		sp := shipmentdb.Shipments
 		affected, err := sp.Where(
 			sp.ID.In(shipmentIDs...),
-			sp.Status.NotIn(shipment.StatusCanceled, shipment.StatusInvoiced),
+			sp.Status.NotIn(shipmentvocab.StatusCanceled, shipmentvocab.StatusInvoiced),
 		).Update(
 			ctx,
 			r.db.Keel(ctx),
@@ -255,7 +255,7 @@ func (r *repository) DetachShipment(
 		affected, err := sp.Where(
 			sp.ID.Eq(shipmentID),
 			sp.OrderID.Eq(orderID),
-			sp.Status.Ne(shipment.StatusInvoiced),
+			sp.Status.Ne(shipmentvocab.StatusInvoiced),
 		).Update(
 			ctx,
 			r.db.Keel(ctx),
@@ -579,7 +579,7 @@ func (r *repository) RecalculateTotal(
 		oc := orderdb.OrderCharges.As("leg_charge")
 
 		legTotal := keel.Scalar(sp.Pick(keel.NumericOf(sp.TotalChargeAmount.Sum()).Coalesce(0)).
-			Where(sp.OrderID.Eq(orderID), sp.Status.Ne(shipment.StatusCanceled)))
+			Where(sp.OrderID.Eq(orderID), sp.Status.Ne(shipmentvocab.StatusCanceled)))
 		chargeTotal := keel.Scalar(oc.Pick(keel.NumericOf(oc.Amount.Sum()).Coalesce(0)).
 			Where(oc.OrderID.Eq(orderID)))
 

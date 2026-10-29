@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmentadditionalchargerepository"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
 	"github.com/emoss08/trenova/internal/testutil"
@@ -46,7 +47,7 @@ func newHarness(t *testing.T) *harness {
 		BOL:          "BOL-ACC",
 		ProNumber:    "PRO-ACC",
 		ShipmentID:   pulid.MustNew("shp_"),
-		MoveStatuses: []shipment.MoveStatus{shipment.MoveStatusNew},
+		MoveStatuses: []shipmentvocab.MoveStatus{shipmentvocab.MoveStatusNew},
 	})
 	graph.Shipment.FreightChargeAmount = decimal.NewNullDecimal(decimal.NewFromInt(100))
 

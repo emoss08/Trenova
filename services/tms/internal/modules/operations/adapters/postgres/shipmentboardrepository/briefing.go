@@ -8,8 +8,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmentpredicate"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure/servicefailuredb"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentboardports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"go.uber.org/zap"
@@ -36,7 +36,7 @@ func (r *Repository) LeadingLateReason(
 				Pick(rc.Label, count).
 				Where(
 					sf.Status.In(servicefailure.UnresolvedStatuses()...),
-					shipmentpredicate.StageCondition(shipment.StageLate),
+					shipmentpredicate.StageCondition(shipmentvocab.StageLate),
 				).
 				Group(rc.Label).
 				Order(keel.Desc(count), rc.Label.Asc()).

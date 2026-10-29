@@ -4,14 +4,8 @@ import (
 	"cmp"
 	"slices"
 
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/shared/pulid"
-)
-
-type VisitKind string
-
-const (
-	VisitArrival   = VisitKind("Arrival")
-	VisitDeparture = VisitKind("Departure")
 )
 
 type VisitMatch string
@@ -25,7 +19,7 @@ const (
 func (m *ShipmentMove) ActiveStopsBySequence() []*Stop {
 	stops := make([]*Stop, 0, len(m.Stops))
 	for _, stop := range m.Stops {
-		if stop != nil && stop.Status != StopStatusCanceled {
+		if stop != nil && stop.Status != shipmentvocab.StopStatusCanceled {
 			stops = append(stops, stop)
 		}
 	}
@@ -68,11 +62,11 @@ func (c *visitCandidates) consider(stop *Stop) {
 	}
 }
 
-func (c *visitCandidates) reported(kind VisitKind) *Stop {
+func (c *visitCandidates) reported(kind shipmentvocab.VisitKind) *Stop {
 	switch kind {
-	case VisitArrival:
+	case shipmentvocab.VisitArrival:
 		return firstStop(c.onSite, c.unarrived, c.lastArrived)
-	case VisitDeparture:
+	case shipmentvocab.VisitDeparture:
 		return firstStop(c.onSite, c.undeparted, c.lastDeparted)
 	default:
 		return nil
@@ -88,18 +82,18 @@ func firstStop(stops ...*Stop) *Stop {
 	return nil
 }
 
-func (c *visitCandidates) match(kind VisitKind) (*Stop, VisitMatch) {
+func (c *visitCandidates) match(kind shipmentvocab.VisitKind) (*Stop, VisitMatch) {
 	if c.atLocation == nil {
 		return nil, VisitMatchNoStop
 	}
 
 	switch kind {
-	case VisitArrival:
+	case shipmentvocab.VisitArrival:
 		if c.onSite != nil || c.unarrived == nil {
 			return nil, VisitMatchDuplicate
 		}
 		return c.unarrived, VisitMatchStop
-	case VisitDeparture:
+	case shipmentvocab.VisitDeparture:
 		if c.onSite != nil {
 			return c.onSite, VisitMatchStop
 		}
@@ -114,16 +108,22 @@ func (c *visitCandidates) match(kind VisitKind) (*Stop, VisitMatch) {
 
 func (m *ShipmentMove) MatchObservedVisit(
 	locationID pulid.ID,
-	kind VisitKind,
+	kind shipmentvocab.VisitKind,
 ) (*Stop, VisitMatch) {
 	return m.visitCandidatesAt(locationID).match(kind)
 }
 
-func (m *ShipmentMove) StopForObservedVisit(locationID pulid.ID, kind VisitKind) *Stop {
+func (m *ShipmentMove) StopForObservedVisit(
+	locationID pulid.ID,
+	kind shipmentvocab.VisitKind,
+) *Stop {
 	return m.visitCandidatesAt(locationID).reported(kind)
 }
 
-func (m *ShipmentMove) StopForReportedVisit(matches func(*Stop) bool, kind VisitKind) *Stop {
+func (m *ShipmentMove) StopForReportedVisit(
+	matches func(*Stop) bool,
+	kind shipmentvocab.VisitKind,
+) *Stop {
 	return m.visitCandidatesWhere(matches).reported(kind)
 }
 

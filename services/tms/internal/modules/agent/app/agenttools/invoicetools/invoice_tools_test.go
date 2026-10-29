@@ -18,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -75,10 +76,10 @@ func postPreviewFixture() *invoicepostingservice.PostPreview {
 	leg := &shipment.Shipment{
 		ID:        pulid.MustNew("shp_"),
 		ProNumber: "PRO-700",
-		Status:    shipment.StatusReadyToInvoice,
+		Status:    shipmentvocab.StatusReadyToInvoice,
 	}
 	invoicedLeg := *leg
-	invoicedLeg.Status = shipment.StatusInvoiced
+	invoicedLeg.Status = shipmentvocab.StatusInvoiced
 	invoicedLeg.BilledAt = &postedAt
 
 	queueBefore := &billingqueue.BillingQueueItem{

@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentstate"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentmoveports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -20,7 +21,7 @@ func (s *service) ReconcileStopActuals(
 	}
 
 	result := &shipmentmoveports.ReconcileStopActualsResult{}
-	var previousStatus shipment.MoveStatus
+	var previousStatus shipmentvocab.MoveStatus
 	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		move, err := s.repo.GetByID(txCtx, &shipmentmoveports.GetMoveByIDRequest{
 			MoveID:            req.MoveID,
@@ -159,12 +160,12 @@ func (s *service) checkReconciledStatus(
 	ctx context.Context,
 	req *shipmentmoveports.ReconcileStopActualsRequest,
 	move *shipment.ShipmentMove,
-	previousStatus, targetStatus shipment.MoveStatus,
+	previousStatus, targetStatus shipmentvocab.MoveStatus,
 ) error {
 	if targetStatus == previousStatus {
 		return nil
 	}
-	if targetStatus == shipment.MoveStatusInTransit {
+	if targetStatus == shipmentvocab.MoveStatusInTransit {
 		if err := s.ensureEquipmentAvailableForProgress(ctx, req.TenantInfo, move.ID); err != nil {
 			return err
 		}

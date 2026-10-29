@@ -6,7 +6,7 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/modules/operations/app/tendercreate"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentcapacityports"
 	"github.com/emoss08/trenova/internal/modules/rating/app/ratequoteservice"
@@ -129,7 +129,7 @@ func (s *Service) tenderSpot(
 		Mode:           tender.ModeSpotBroadcast,
 		Lines: []tendercreate.SpotTenderLine{{
 			CarrierID:  option.CarrierID,
-			RateMethod: shipment.CarrierRateMethodFlat,
+			RateMethod: shipmentvocab.CarrierRateMethodFlat,
 			Rate:       option.Cost,
 		}},
 	})

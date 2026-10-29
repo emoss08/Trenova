@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/documentshipmentdraft"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location"
@@ -499,7 +500,7 @@ func (t *quoteShipmentTool) hypotheticalShipment(
 	move := &shipment.ShipmentMove{
 		OrganizationID: tenantInfo.OrgID,
 		BusinessUnitID: tenantInfo.BuID,
-		Status:         shipment.MoveStatusNew,
+		Status:         shipmentvocab.MoveStatusNew,
 		Loaded:         true,
 		Sequence:       0,
 	}
@@ -512,7 +513,7 @@ func (t *quoteShipmentTool) hypotheticalShipment(
 				ids[idx],
 			)
 		}
-		stopType := shipment.StopType(stop.Type)
+		stopType := shipmentvocab.StopType(stop.Type)
 		if !stopType.IsValid() {
 			return nil, fmt.Errorf("stops[%d].type %q is not a stop type", idx, stop.Type)
 		}
@@ -533,9 +534,9 @@ func (t *quoteShipmentTool) hypotheticalShipment(
 			BusinessUnitID:       tenantInfo.BuID,
 			LocationID:           loc.ID,
 			Location:             loc,
-			Status:               shipment.StopStatusNew,
+			Status:               shipmentvocab.StopStatusNew,
 			Type:                 stopType,
-			ScheduleType:         shipment.StopScheduleTypeOpen,
+			ScheduleType:         shipmentvocab.StopScheduleTypeOpen,
 			Sequence:             int64(idx),
 			ScheduledWindowStart: scheduled,
 		})
@@ -544,7 +545,7 @@ func (t *quoteShipmentTool) hypotheticalShipment(
 	return &shipment.Shipment{
 		OrganizationID: tenantInfo.OrgID,
 		BusinessUnitID: tenantInfo.BuID,
-		Status:         shipment.StatusNew,
+		Status:         shipmentvocab.StatusNew,
 		Moves:          []*shipment.ShipmentMove{move},
 	}, nil
 }

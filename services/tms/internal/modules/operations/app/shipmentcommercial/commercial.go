@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentstate"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratequote"
@@ -527,7 +528,7 @@ func detentionExposure(
 		}
 
 		for _, stop := range move.Stops {
-			if stop == nil || stop.Status == shipment.StopStatusCanceled ||
+			if stop == nil || stop.Status == shipmentvocab.StopStatusCanceled ||
 				stop.ActualArrival == nil {
 				continue
 			}
@@ -701,7 +702,7 @@ func isDetentionChargeFor(charge *shipment.AdditionalCharge, accessorialID pulid
 
 	owner := charge.Owner()
 
-	return owner == shipment.SystemOwnerDetention || owner == shipment.SystemOwnerNone
+	return owner == shipmentvocab.SystemOwnerDetention || owner == shipmentvocab.SystemOwnerNone
 }
 
 func preferDetentionCharge(candidate, current *shipment.AdditionalCharge) bool {
@@ -819,7 +820,7 @@ func reconcileDetentionOccurrenceCharges(
 
 	kept := make([]*shipment.AdditionalCharge, 0, len(rest)+len(generated))
 	for _, charge := range rest {
-		if charge == nil || charge.Owner() == shipment.SystemOwnerDetention {
+		if charge == nil || charge.Owner() == shipmentvocab.SystemOwnerDetention {
 			continue
 		}
 		kept = append(kept, charge)

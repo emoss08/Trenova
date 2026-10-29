@@ -1,4 +1,4 @@
-package shipment
+package shipmentvocab
 
 import (
 	"testing"

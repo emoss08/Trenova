@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentcommercial"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentstate"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentholdports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentmoveports"
 	"github.com/emoss08/trenova/internal/modules/rating/ratingtest"
@@ -50,17 +51,17 @@ func TestUpdateStatus_RecomputesShipmentState(t *testing.T) {
 		Return(&shipment.ShipmentMove{
 			ID:         moveID,
 			ShipmentID: shipmentID,
-			Status:     shipment.MoveStatusAssigned,
+			Status:     shipmentvocab.MoveStatusAssigned,
 		}, nil).
 		Once()
 	moveRepo.EXPECT().
 		UpdateStatus(mock.Anything, mock.MatchedBy(func(req *shipmentmoveports.UpdateMoveStatusRequest) bool {
-			return req.MoveID == moveID && req.Status == shipment.MoveStatusInTransit
+			return req.MoveID == moveID && req.Status == shipmentvocab.MoveStatusInTransit
 		})).
 		Return(&shipment.ShipmentMove{
 			ID:         moveID,
 			ShipmentID: shipmentID,
-			Status:     shipment.MoveStatusInTransit,
+			Status:     shipmentvocab.MoveStatusInTransit,
 		}, nil).
 		Once()
 
@@ -73,13 +74,13 @@ func TestUpdateStatus_RecomputesShipmentState(t *testing.T) {
 			BusinessUnitID:    tenantInfo.BuID,
 			CustomerID:        pulid.MustNew("cus_"),
 			FormulaTemplateID: pulid.MustNew("ft_"),
-			Status:            shipment.StatusAssigned,
+			Status:            shipmentvocab.StatusAssigned,
 			Version:           1,
 			Moves: []*shipment.ShipmentMove{
 				{
 					ID:         moveID,
 					ShipmentID: shipmentID,
-					Status:     shipment.MoveStatusInTransit,
+					Status:     shipmentvocab.MoveStatusInTransit,
 				},
 			},
 		}, nil).
@@ -87,7 +88,7 @@ func TestUpdateStatus_RecomputesShipmentState(t *testing.T) {
 	shipmentRepo.EXPECT().
 		UpdateDerivedState(mock.Anything, mock.AnythingOfType("*shipment.Shipment")).
 		RunAndReturn(func(_ context.Context, entity *shipment.Shipment) (*shipment.Shipment, error) {
-			assert.Equal(t, shipment.StatusInTransit, entity.Status)
+			assert.Equal(t, shipmentvocab.StatusInTransit, entity.Status)
 			return entity, nil
 		}).
 		Once()
@@ -123,12 +124,12 @@ func TestUpdateStatus_RecomputesShipmentState(t *testing.T) {
 	entity, err := svc.UpdateStatus(t.Context(), &shipmentmoveports.UpdateMoveStatusRequest{
 		TenantInfo: tenantInfo,
 		MoveID:     moveID,
-		Status:     shipment.MoveStatusInTransit,
+		Status:     shipmentvocab.MoveStatusInTransit,
 	})
 
 	require.NoError(t, err)
 	require.NotNil(t, entity)
-	assert.Equal(t, shipment.MoveStatusInTransit, entity.Status)
+	assert.Equal(t, shipmentvocab.MoveStatusInTransit, entity.Status)
 }
 
 func TestBulkUpdateStatus_RejectsInvalidTransition(t *testing.T) {
@@ -147,7 +148,7 @@ func TestBulkUpdateStatus_RejectsInvalidTransition(t *testing.T) {
 		})).
 		Return(&shipment.ShipmentMove{
 			ID:     moveID,
-			Status: shipment.MoveStatusCompleted,
+			Status: shipmentvocab.MoveStatusCompleted,
 		}, nil).
 		Once()
 
@@ -170,7 +171,7 @@ func TestBulkUpdateStatus_RejectsInvalidTransition(t *testing.T) {
 	entity, err := svc.BulkUpdateStatus(t.Context(), &shipmentmoveports.BulkUpdateMoveStatusRequest{
 		TenantInfo: tenantInfo,
 		MoveIDs:    []pulid.ID{moveID},
-		Status:     shipment.MoveStatusAssigned,
+		Status:     shipmentvocab.MoveStatusAssigned,
 	})
 
 	require.Nil(t, entity)
@@ -195,7 +196,7 @@ func TestSplitMove_RejectsNonSimpleMove(t *testing.T) {
 		})).
 		Return(&shipment.ShipmentMove{
 			ID:         moveID,
-			Status:     shipment.MoveStatusNew,
+			Status:     shipmentvocab.MoveStatusNew,
 			ShipmentID: pulid.MustNew("shp_"),
 		}, nil).
 		Once()
@@ -206,11 +207,11 @@ func TestSplitMove_RejectsNonSimpleMove(t *testing.T) {
 		Return(&shipment.ShipmentMove{
 			ID: moveID,
 			Stops: []*shipment.Stop{
-				{Type: shipment.StopTypePickup},
-				{Type: shipment.StopTypeDelivery},
-				{Type: shipment.StopTypeDelivery},
+				{Type: shipmentvocab.StopTypePickup},
+				{Type: shipmentvocab.StopTypeDelivery},
+				{Type: shipmentvocab.StopTypeDelivery},
 			},
-			Status: shipment.MoveStatusNew,
+			Status: shipmentvocab.MoveStatusNew,
 		}, nil).
 		Once()
 
@@ -268,7 +269,7 @@ func TestSplitMove_RecomputesShipmentState(t *testing.T) {
 		Return(&shipment.ShipmentMove{
 			ID:         moveID,
 			ShipmentID: shipmentID,
-			Status:     shipment.MoveStatusAssigned,
+			Status:     shipmentvocab.MoveStatusAssigned,
 		}, nil).
 		Once()
 	moveRepo.EXPECT().
@@ -278,19 +279,19 @@ func TestSplitMove_RecomputesShipmentState(t *testing.T) {
 		Return(&shipment.ShipmentMove{
 			ID:         moveID,
 			ShipmentID: shipmentID,
-			Status:     shipment.MoveStatusAssigned,
+			Status:     shipmentvocab.MoveStatusAssigned,
 			Assignment: &shipment.Assignment{ID: pulid.MustNew("asn_")},
 			Stops: []*shipment.Stop{
 				{
-					Type:                 shipment.StopTypePickup,
-					ScheduleType:         shipment.StopScheduleTypeOpen,
+					Type:                 shipmentvocab.StopTypePickup,
+					ScheduleType:         shipmentvocab.StopScheduleTypeOpen,
 					ScheduledWindowStart: 1,
 					ScheduledWindowEnd:   new(int64(2)),
 					LocationID:           pulid.MustNew("loc_"),
 				},
 				{
-					Type:                 shipment.StopTypeDelivery,
-					ScheduleType:         shipment.StopScheduleTypeOpen,
+					Type:                 shipmentvocab.StopTypeDelivery,
+					ScheduleType:         shipmentvocab.StopScheduleTypeOpen,
 					ScheduledWindowStart: 3,
 					ScheduledWindowEnd:   new(int64(4)),
 					LocationID:           bridgeLocationID,
@@ -304,12 +305,12 @@ func TestSplitMove_RecomputesShipmentState(t *testing.T) {
 			OriginalMove: &shipment.ShipmentMove{
 				ID:         moveID,
 				ShipmentID: shipmentID,
-				Status:     shipment.MoveStatusAssigned,
+				Status:     shipmentvocab.MoveStatusAssigned,
 			},
 			NewMove: &shipment.ShipmentMove{
 				ID:         pulid.MustNew("sm_"),
 				ShipmentID: shipmentID,
-				Status:     shipment.MoveStatusNew,
+				Status:     shipmentvocab.MoveStatusNew,
 			},
 		}, nil).
 		Once()
@@ -323,16 +324,20 @@ func TestSplitMove_RecomputesShipmentState(t *testing.T) {
 			BusinessUnitID:    tenantInfo.BuID,
 			CustomerID:        pulid.MustNew("cus_"),
 			FormulaTemplateID: pulid.MustNew("ft_"),
-			Status:            shipment.StatusAssigned,
+			Status:            shipmentvocab.StatusAssigned,
 			Version:           2,
 			Moves: []*shipment.ShipmentMove{
 				{
 					ID:         moveID,
 					ShipmentID: shipmentID,
-					Status:     shipment.MoveStatusAssigned,
+					Status:     shipmentvocab.MoveStatusAssigned,
 					Assignment: &shipment.Assignment{ID: pulid.MustNew("asn_")},
 				},
-				{ID: pulid.MustNew("sm_"), ShipmentID: shipmentID, Status: shipment.MoveStatusNew},
+				{
+					ID:         pulid.MustNew("sm_"),
+					ShipmentID: shipmentID,
+					Status:     shipmentvocab.MoveStatusNew,
+				},
 			},
 		}, nil).
 		Once()
@@ -399,7 +404,7 @@ func TestUpdateStatus_RecomputesDelayedShipmentStateUsingControlThreshold(t *tes
 		Return(&shipment.ShipmentMove{
 			ID:         moveID,
 			ShipmentID: shipmentID,
-			Status:     shipment.MoveStatusAssigned,
+			Status:     shipmentvocab.MoveStatusAssigned,
 		}, nil).
 		Once()
 	moveRepo.EXPECT().
@@ -407,7 +412,7 @@ func TestUpdateStatus_RecomputesDelayedShipmentStateUsingControlThreshold(t *tes
 		Return(&shipment.ShipmentMove{
 			ID:         moveID,
 			ShipmentID: shipmentID,
-			Status:     shipment.MoveStatusInTransit,
+			Status:     shipmentvocab.MoveStatusInTransit,
 		}, nil).
 		Once()
 
@@ -425,16 +430,16 @@ func TestUpdateStatus_RecomputesDelayedShipmentStateUsingControlThreshold(t *tes
 				{
 					ID:         moveID,
 					ShipmentID: shipmentID,
-					Status:     shipment.MoveStatusInTransit,
+					Status:     shipmentvocab.MoveStatusInTransit,
 					Stops: []*shipment.Stop{
 						{
-							Type:               shipment.StopTypePickup,
-							Status:             shipment.StopStatusInTransit,
+							Type:               shipmentvocab.StopTypePickup,
+							Status:             shipmentvocab.StopStatusInTransit,
 							ScheduledWindowEnd: new(int64(100)),
 						},
 						{
-							Type:               shipment.StopTypeDelivery,
-							Status:             shipment.StopStatusNew,
+							Type:               shipmentvocab.StopTypeDelivery,
+							Status:             shipmentvocab.StopStatusNew,
 							ScheduledWindowEnd: new(int64(4000)),
 						},
 					},
@@ -445,7 +450,7 @@ func TestUpdateStatus_RecomputesDelayedShipmentStateUsingControlThreshold(t *tes
 	shipmentRepo.EXPECT().
 		UpdateDerivedState(mock.Anything, mock.AnythingOfType("*shipment.Shipment")).
 		RunAndReturn(func(_ context.Context, entity *shipment.Shipment) (*shipment.Shipment, error) {
-			assert.Equal(t, shipment.StatusDelayed, entity.Status)
+			assert.Equal(t, shipmentvocab.StatusDelayed, entity.Status)
 			return entity, nil
 		}).
 		Once()
@@ -485,7 +490,7 @@ func TestUpdateStatus_RecomputesDelayedShipmentStateUsingControlThreshold(t *tes
 	entity, err := svc.UpdateStatus(t.Context(), &shipmentmoveports.UpdateMoveStatusRequest{
 		TenantInfo: tenantInfo,
 		MoveID:     moveID,
-		Status:     shipment.MoveStatusInTransit,
+		Status:     shipmentvocab.MoveStatusInTransit,
 	})
 
 	require.NoError(t, err)
@@ -510,7 +515,7 @@ func TestUpdateStatus_DoesNotAutoDelayShipmentWhenToggleDisabled(t *testing.T) {
 		Return(&shipment.ShipmentMove{
 			ID:         moveID,
 			ShipmentID: shipmentID,
-			Status:     shipment.MoveStatusAssigned,
+			Status:     shipmentvocab.MoveStatusAssigned,
 		}, nil).
 		Once()
 	moveRepo.EXPECT().
@@ -518,7 +523,7 @@ func TestUpdateStatus_DoesNotAutoDelayShipmentWhenToggleDisabled(t *testing.T) {
 		Return(&shipment.ShipmentMove{
 			ID:         moveID,
 			ShipmentID: shipmentID,
-			Status:     shipment.MoveStatusInTransit,
+			Status:     shipmentvocab.MoveStatusInTransit,
 		}, nil).
 		Once()
 
@@ -536,16 +541,16 @@ func TestUpdateStatus_DoesNotAutoDelayShipmentWhenToggleDisabled(t *testing.T) {
 				{
 					ID:         moveID,
 					ShipmentID: shipmentID,
-					Status:     shipment.MoveStatusInTransit,
+					Status:     shipmentvocab.MoveStatusInTransit,
 					Stops: []*shipment.Stop{
 						{
-							Type:               shipment.StopTypePickup,
-							Status:             shipment.StopStatusInTransit,
+							Type:               shipmentvocab.StopTypePickup,
+							Status:             shipmentvocab.StopStatusInTransit,
 							ScheduledWindowEnd: new(int64(100)),
 						},
 						{
-							Type:               shipment.StopTypeDelivery,
-							Status:             shipment.StopStatusNew,
+							Type:               shipmentvocab.StopTypeDelivery,
+							Status:             shipmentvocab.StopStatusNew,
 							ScheduledWindowEnd: new(int64(4000)),
 						},
 					},
@@ -556,7 +561,7 @@ func TestUpdateStatus_DoesNotAutoDelayShipmentWhenToggleDisabled(t *testing.T) {
 	shipmentRepo.EXPECT().
 		UpdateDerivedState(mock.Anything, mock.AnythingOfType("*shipment.Shipment")).
 		RunAndReturn(func(_ context.Context, entity *shipment.Shipment) (*shipment.Shipment, error) {
-			assert.Equal(t, shipment.StatusInTransit, entity.Status)
+			assert.Equal(t, shipmentvocab.StatusInTransit, entity.Status)
 			return entity, nil
 		}).
 		Once()
@@ -596,7 +601,7 @@ func TestUpdateStatus_DoesNotAutoDelayShipmentWhenToggleDisabled(t *testing.T) {
 	entity, err := svc.UpdateStatus(t.Context(), &shipmentmoveports.UpdateMoveStatusRequest{
 		TenantInfo: tenantInfo,
 		MoveID:     moveID,
-		Status:     shipment.MoveStatusInTransit,
+		Status:     shipmentvocab.MoveStatusInTransit,
 	})
 
 	require.NoError(t, err)
@@ -624,7 +629,7 @@ func TestUpdateStatus_RejectsTrailerAlreadyInProgressOnAnotherMove(t *testing.T)
 		Return(&shipment.ShipmentMove{
 			ID:         moveID,
 			ShipmentID: shipmentID,
-			Status:     shipment.MoveStatusAssigned,
+			Status:     shipmentvocab.MoveStatusAssigned,
 		}, nil).
 		Once()
 
@@ -672,7 +677,7 @@ func TestUpdateStatus_RejectsTrailerAlreadyInProgressOnAnotherMove(t *testing.T)
 	entity, err := svc.UpdateStatus(t.Context(), &shipmentmoveports.UpdateMoveStatusRequest{
 		TenantInfo: tenantInfo,
 		MoveID:     moveID,
-		Status:     shipment.MoveStatusInTransit,
+		Status:     shipmentvocab.MoveStatusInTransit,
 	})
 
 	require.Nil(t, entity)
@@ -701,7 +706,7 @@ func TestUpdateStatus_RejectsTractorAlreadyInProgressOnAnotherMove(t *testing.T)
 		Return(&shipment.ShipmentMove{
 			ID:         moveID,
 			ShipmentID: shipmentID,
-			Status:     shipment.MoveStatusAssigned,
+			Status:     shipmentvocab.MoveStatusAssigned,
 		}, nil).
 		Once()
 
@@ -744,7 +749,7 @@ func TestUpdateStatus_RejectsTractorAlreadyInProgressOnAnotherMove(t *testing.T)
 	entity, err := svc.UpdateStatus(t.Context(), &shipmentmoveports.UpdateMoveStatusRequest{
 		TenantInfo: tenantInfo,
 		MoveID:     moveID,
-		Status:     shipment.MoveStatusInTransit,
+		Status:     shipmentvocab.MoveStatusInTransit,
 	})
 
 	require.Nil(t, entity)
@@ -775,17 +780,17 @@ func TestUpdateStatus_AdvancesEquipmentContinuityOnCompletion(t *testing.T) {
 		Return(&shipment.ShipmentMove{
 			ID:         moveID,
 			ShipmentID: shipmentID,
-			Status:     shipment.MoveStatusInTransit,
+			Status:     shipmentvocab.MoveStatusInTransit,
 		}, nil).
 		Once()
 	moveRepo.EXPECT().
 		UpdateStatus(mock.Anything, mock.MatchedBy(func(req *shipmentmoveports.UpdateMoveStatusRequest) bool {
-			return req.MoveID == moveID && req.Status == shipment.MoveStatusCompleted
+			return req.MoveID == moveID && req.Status == shipmentvocab.MoveStatusCompleted
 		})).
 		Return(&shipment.ShipmentMove{
 			ID:         moveID,
 			ShipmentID: shipmentID,
-			Status:     shipment.MoveStatusCompleted,
+			Status:     shipmentvocab.MoveStatusCompleted,
 			Assignment: &shipment.Assignment{
 				ID:             assignmentID,
 				ShipmentMoveID: moveID,
@@ -793,8 +798,12 @@ func TestUpdateStatus_AdvancesEquipmentContinuityOnCompletion(t *testing.T) {
 				TrailerID:      &trailerID,
 			},
 			Stops: []*shipment.Stop{
-				{Type: shipment.StopTypePickup, Sequence: 0, LocationID: pulid.MustNew("loc_")},
-				{Type: shipment.StopTypeDelivery, Sequence: 1, LocationID: deliveryLocationID},
+				{
+					Type:       shipmentvocab.StopTypePickup,
+					Sequence:   0,
+					LocationID: pulid.MustNew("loc_"),
+				},
+				{Type: shipmentvocab.StopTypeDelivery, Sequence: 1, LocationID: deliveryLocationID},
 			},
 		}, nil).
 		Once()
@@ -842,13 +851,13 @@ func TestUpdateStatus_AdvancesEquipmentContinuityOnCompletion(t *testing.T) {
 			BusinessUnitID:    tenantInfo.BuID,
 			CustomerID:        pulid.MustNew("cus_"),
 			FormulaTemplateID: pulid.MustNew("ft_"),
-			Status:            shipment.StatusInTransit,
+			Status:            shipmentvocab.StatusInTransit,
 			Version:           1,
 			Moves: []*shipment.ShipmentMove{
 				{
 					ID:         moveID,
 					ShipmentID: shipmentID,
-					Status:     shipment.MoveStatusCompleted,
+					Status:     shipmentvocab.MoveStatusCompleted,
 				},
 			},
 		}, nil).
@@ -885,12 +894,12 @@ func TestUpdateStatus_AdvancesEquipmentContinuityOnCompletion(t *testing.T) {
 	entity, err := svc.UpdateStatus(t.Context(), &shipmentmoveports.UpdateMoveStatusRequest{
 		TenantInfo: tenantInfo,
 		MoveID:     moveID,
-		Status:     shipment.MoveStatusCompleted,
+		Status:     shipmentvocab.MoveStatusCompleted,
 	})
 
 	require.NoError(t, err)
 	require.NotNil(t, entity)
-	assert.Equal(t, shipment.MoveStatusCompleted, entity.Status)
+	assert.Equal(t, shipmentvocab.MoveStatusCompleted, entity.Status)
 }
 
 func TestUpdateStatus_RejectsDeliveryBlockingHold(t *testing.T) {
@@ -911,7 +920,7 @@ func TestUpdateStatus_RejectsDeliveryBlockingHold(t *testing.T) {
 		Return(&shipment.ShipmentMove{
 			ID:         moveID,
 			ShipmentID: shipmentID,
-			Status:     shipment.MoveStatusInTransit,
+			Status:     shipmentvocab.MoveStatusInTransit,
 		}, nil).
 		Once()
 
@@ -942,7 +951,7 @@ func TestUpdateStatus_RejectsDeliveryBlockingHold(t *testing.T) {
 	entity, err := svc.UpdateStatus(t.Context(), &shipmentmoveports.UpdateMoveStatusRequest{
 		TenantInfo: tenantInfo,
 		MoveID:     moveID,
-		Status:     shipment.MoveStatusCompleted,
+		Status:     shipmentvocab.MoveStatusCompleted,
 	})
 
 	require.Nil(t, entity)

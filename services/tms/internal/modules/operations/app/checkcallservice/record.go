@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/checkcall"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/trackingevent"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/checkcallports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentmoveports"
@@ -210,7 +211,7 @@ func (s *Service) prepareLog(
 	if err != nil {
 		return nil, err
 	}
-	if move.Status == shipment.MoveStatusCanceled {
+	if move.Status == shipmentvocab.MoveStatusCanceled {
 		return nil, errortypes.NewBusinessError("This load is canceled, so it takes no check calls")
 	}
 	if details.Kind.IsStopVisit() && findStop(move, details.StopID) == nil {

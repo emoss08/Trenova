@@ -1,4 +1,4 @@
-package shipment
+package shipmentvocab
 
 type Status string
 

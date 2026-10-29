@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmenttype"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -98,7 +99,7 @@ type DriverRecord struct {
 type MoveRecord struct {
 	ID                pulid.ID
 	Sequence          int64
-	Status            shipment.MoveStatus
+	Status            shipmentvocab.MoveStatus
 	Miles             float64
 	Cities            []*CityRecord
 	StartedAt         int64
@@ -135,7 +136,7 @@ type ShipmentRecord struct {
 	OrderNumber       string
 	PONumber          string
 	Customer          *CustomerRecord
-	Status            shipment.Status
+	Status            shipmentvocab.Status
 	FormulaTemplateID pulid.ID
 	FormulaName       string
 	CreatedAt         int64

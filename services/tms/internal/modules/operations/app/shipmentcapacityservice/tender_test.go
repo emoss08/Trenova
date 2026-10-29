@@ -7,6 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/operations/app/tendercreate"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentcapacityports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
@@ -89,7 +90,7 @@ func uncoveredShipment(moves ...*shipment.ShipmentMove) *shipment.Shipment {
 	return &shipment.Shipment{ID: pulid.MustNew("shp_"), Moves: moves}
 }
 
-func move(sequence int64, coverage shipment.MoveCoverageType) *shipment.ShipmentMove {
+func move(sequence int64, coverage shipmentvocab.MoveCoverageType) *shipment.ShipmentMove {
 	return &shipment.ShipmentMove{
 		ID:           pulid.MustNew("smv_"),
 		Sequence:     sequence,
@@ -142,8 +143,8 @@ func tenant() pagination.TenantInfo {
 func TestTenderShipments_NamedCarrierGetsASpotTenderAtItsPricedRate(t *testing.T) {
 	t.Parallel()
 
-	first := move(0, shipment.MoveCoverageTypeDriver)
-	second := move(1, shipment.MoveCoverageTypeUnassigned)
+	first := move(0, shipmentvocab.MoveCoverageTypeDriver)
+	second := move(1, shipmentvocab.MoveCoverageTypeUnassigned)
 	sp := uncoveredShipment(second, first)
 	f := newTenderFixture(sp)
 	carrierID := pulid.MustNew("car_")
@@ -168,7 +169,7 @@ func TestTenderShipments_NamedCarrierGetsASpotTenderAtItsPricedRate(t *testing.T
 	assert.Equal(t, second.ID, spot.ShipmentMoveID, "the first move still without coverage")
 	assert.Equal(t, tender.ModeSpotBroadcast, spot.Mode)
 	require.Len(t, spot.Lines, 1)
-	assert.Equal(t, shipment.CarrierRateMethodFlat, spot.Lines[0].RateMethod)
+	assert.Equal(t, shipmentvocab.CarrierRateMethodFlat, spot.Lines[0].RateMethod)
 	assert.Equal(
 		t,
 		"620",
@@ -182,7 +183,7 @@ func TestTenderShipments_NamedCarrierGetsASpotTenderAtItsPricedRate(t *testing.T
 func TestTenderShipments_UsesTheRoutingGuideWhenNoCarrierIsNamed(t *testing.T) {
 	t.Parallel()
 
-	sp := uncoveredShipment(move(0, shipment.MoveCoverageTypeUnassigned))
+	sp := uncoveredShipment(move(0, shipmentvocab.MoveCoverageTypeUnassigned))
 	f := newTenderFixture(sp)
 
 	result, err := f.service.TenderShipments(
@@ -203,7 +204,7 @@ func TestTenderShipments_UsesTheRoutingGuideWhenNoCarrierIsNamed(t *testing.T) {
 func TestTenderShipments_FallsBackToTheBestPricedCarrierOnlyWhenNoGuideMatches(t *testing.T) {
 	t.Parallel()
 
-	sp := uncoveredShipment(move(0, shipment.MoveCoverageTypeUnassigned))
+	sp := uncoveredShipment(move(0, shipmentvocab.MoveCoverageTypeUnassigned))
 	noGuide := newTenderFixture(sp)
 	noGuide.tenderer.waterfallErr = errortypes.NewBusinessError("No routing guide matches this lane").
 		WithInternal(tendercreate.ErrNoRoutingGuideMatch)
@@ -239,8 +240,8 @@ func TestTenderShipments_FallsBackToTheBestPricedCarrierOnlyWhenNoGuideMatches(t
 func TestTenderShipments_ReportsEachShipmentItCouldNotTender(t *testing.T) {
 	t.Parallel()
 
-	covered := uncoveredShipment(move(0, shipment.MoveCoverageTypeCarrier))
-	open := uncoveredShipment(move(0, shipment.MoveCoverageTypeUnassigned))
+	covered := uncoveredShipment(move(0, shipmentvocab.MoveCoverageTypeCarrier))
+	open := uncoveredShipment(move(0, shipmentvocab.MoveCoverageTypeUnassigned))
 	f := newTenderFixture(covered, open)
 	missing := pulid.MustNew("shp_")
 

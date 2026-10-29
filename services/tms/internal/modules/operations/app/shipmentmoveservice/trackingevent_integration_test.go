@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/trackingeventrepository"
 	"github.com/emoss08/trenova/internal/modules/operations/app/trackingeventservice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/trackingevent"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentmoveports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/trackingeventports"
@@ -58,7 +59,7 @@ func newTrackingHarness(t *testing.T, bol string) (context.Context, *trackingHar
 			BOL:          bol,
 			ProNumber:    "PRO-" + bol,
 			ShipmentID:   pulid.MustNew("shp_"),
-			MoveStatuses: []shipment.MoveStatus{shipment.MoveStatusAssigned},
+			MoveStatuses: []shipmentvocab.MoveStatus{shipmentvocab.MoveStatusAssigned},
 		},
 	)
 
@@ -85,7 +86,7 @@ func newTrackingHarness(t *testing.T, bol string) (context.Context, *trackingHar
 
 type observedReport struct {
 	stop   int
-	kind   shipment.VisitKind
+	kind   shipmentvocab.VisitKind
 	source trackingevent.Source
 	key    string
 	at     int64
@@ -142,11 +143,17 @@ func TestTrackingEventsIntegrationSettleTheSameInAnyOrder(t *testing.T) {
 
 	base := timeutils.NowUnix() - 12*3600
 	reports := []observedReport{
-		{0, shipment.VisitArrival, trackingevent.SourceTelematics, "samsara:a1", base},
-		{0, shipment.VisitArrival, trackingevent.SourceEDI, "edi:p:x3", base + 300},
-		{0, shipment.VisitDeparture, trackingevent.SourceTelematics, "samsara:d1", base + 3600},
-		{1, shipment.VisitArrival, trackingevent.SourceEDI, "edi:d:x1", base + 4*3600},
-		{1, shipment.VisitDeparture, trackingevent.SourceEDI, "edi:d:d1", base + 5*3600},
+		{0, shipmentvocab.VisitArrival, trackingevent.SourceTelematics, "samsara:a1", base},
+		{0, shipmentvocab.VisitArrival, trackingevent.SourceEDI, "edi:p:x3", base + 300},
+		{
+			0,
+			shipmentvocab.VisitDeparture,
+			trackingevent.SourceTelematics,
+			"samsara:d1",
+			base + 3600,
+		},
+		{1, shipmentvocab.VisitArrival, trackingevent.SourceEDI, "edi:d:x1", base + 4*3600},
+		{1, shipmentvocab.VisitDeparture, trackingevent.SourceEDI, "edi:d:d1", base + 5*3600},
 	}
 	want := [][2]int64{{base, base + 3600}, {base + 4*3600, base + 5*3600}}
 
@@ -166,7 +173,7 @@ func TestTrackingEventsIntegrationSettleTheSameInAnyOrder(t *testing.T) {
 
 			move := h.persisted(t, ctx)
 			assert.Equal(t, want, persistedActuals(move))
-			assert.Equal(t, shipment.MoveStatusCompleted, move.Status)
+			assert.Equal(t, shipmentvocab.MoveStatusCompleted, move.Status)
 
 			events, err := h.tracking.ListForShipment(
 				ctx,
@@ -203,7 +210,7 @@ func TestTrackingEventsIntegrationAWaitingArrivalLandsWithTheEarlierDeparture(t 
 		ctx,
 		observedReport{
 			1,
-			shipment.VisitArrival,
+			shipmentvocab.VisitArrival,
 			trackingevent.SourceEDI,
 			"edi:w:x1",
 			base + 3*3600,
@@ -217,7 +224,7 @@ func TestTrackingEventsIntegrationAWaitingArrivalLandsWithTheEarlierDeparture(t 
 		ctx,
 		observedReport{
 			1,
-			shipment.VisitArrival,
+			shipmentvocab.VisitArrival,
 			trackingevent.SourceEDI,
 			"edi:w:x1",
 			base + 3*3600,
@@ -230,7 +237,7 @@ func TestTrackingEventsIntegrationAWaitingArrivalLandsWithTheEarlierDeparture(t 
 		ctx,
 		observedReport{
 			0,
-			shipment.VisitArrival,
+			shipmentvocab.VisitArrival,
 			trackingevent.SourceTelematics,
 			"samsara:w1",
 			base,
@@ -241,7 +248,7 @@ func TestTrackingEventsIntegrationAWaitingArrivalLandsWithTheEarlierDeparture(t 
 		ctx,
 		observedReport{
 			0,
-			shipment.VisitDeparture,
+			shipmentvocab.VisitDeparture,
 			trackingevent.SourceTelematics,
 			"samsara:w2",
 			base + 3600,
@@ -250,7 +257,7 @@ func TestTrackingEventsIntegrationAWaitingArrivalLandsWithTheEarlierDeparture(t 
 
 	move := h.persisted(t, ctx)
 	assert.Equal(t, [][2]int64{{base, base + 3600}, {base + 3*3600, 0}}, persistedActuals(move))
-	assert.Equal(t, shipment.MoveStatusInTransit, move.Status)
+	assert.Equal(t, shipmentvocab.MoveStatusInTransit, move.Status)
 }
 
 func TestTrackingEventsIntegrationADispatcherReportOutranksTelematics(t *testing.T) {
@@ -264,7 +271,7 @@ func TestTrackingEventsIntegrationADispatcherReportOutranksTelematics(t *testing
 		ctx,
 		observedReport{
 			0,
-			shipment.VisitArrival,
+			shipmentvocab.VisitArrival,
 			trackingevent.SourceTelematics,
 			"samsara:q1",
 			base + 600,

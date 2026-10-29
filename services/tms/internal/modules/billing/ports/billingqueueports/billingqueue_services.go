@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/chargeallocation"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/tarifftypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -91,7 +92,7 @@ type ChargeUpdatePreview struct {
 type ReassignChargeRequest struct {
 	ItemID             pulid.ID
 	TenantInfo         pagination.TenantInfo
-	ChargeKind         shipment.ChargeAllocationKind
+	ChargeKind         shipmentvocab.ChargeAllocationKind
 	AdditionalChargeID pulid.ID
 	Allocations        []*shipment.ChargeAllocation
 }

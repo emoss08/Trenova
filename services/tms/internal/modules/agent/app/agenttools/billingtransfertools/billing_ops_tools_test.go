@@ -20,6 +20,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/chargeallocation"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -120,7 +121,7 @@ func TestReassignBillingCharge_ShowsTheItemsItOpensAndCancels(t *testing.T) {
 	require.NoError(t, tool.Execute(t.Context(), params))
 	require.NotNil(t, billing.reassigned)
 	require.Len(t, billing.reassigned.Allocations, 1)
-	assert.Equal(t, shipment.ChargeAllocationKindFreight,
+	assert.Equal(t, shipmentvocab.ChargeAllocationKindFreight,
 		billing.reassigned.Allocations[0].ChargeKind)
 
 	require.ErrorIs(t, tool.Execute(t.Context(), agenttoolstest.ExecuteParams(params.Params)),

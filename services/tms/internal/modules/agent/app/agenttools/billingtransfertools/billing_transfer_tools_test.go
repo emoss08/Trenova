@@ -15,7 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingtransfer"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentbillingports"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -104,16 +104,16 @@ func TestTransferToBilling_PreviewSaysWhatHappensToEachShipment(t *testing.T) {
 		Refused:  1,
 		Decisions: []shipmentbillingports.BillingTransferDecision{
 			{
-				ShipmentID: ready, ProNumber: "PRO-1", Status: shipment.StatusReadyToInvoice,
+				ShipmentID: ready, ProNumber: "PRO-1", Status: shipmentvocab.StatusReadyToInvoice,
 				Outcome: shipmentbillingports.BillingTransferOutcomeTransfer, AutoApprove: true,
 				Version: 4,
 			},
 			{
-				ShipmentID: completed, ProNumber: "PRO-2", Status: shipment.StatusCompleted,
+				ShipmentID: completed, ProNumber: "PRO-2", Status: shipmentvocab.StatusCompleted,
 				Outcome: shipmentbillingports.BillingTransferOutcomeMarkReadyAndTransfer,
 			},
 			{
-				ShipmentID: blocked, ProNumber: "PRO-3", Status: shipment.StatusReadyToInvoice,
+				ShipmentID: blocked, ProNumber: "PRO-3", Status: shipmentvocab.StatusReadyToInvoice,
 				Outcome:     shipmentbillingports.BillingTransferOutcomeRefused,
 				FailureCode: shipmentbillingports.BillingTransferFailureRequirementsUnmet,
 				Reason:      "Shipment billing requirements must be resolved before transfer",

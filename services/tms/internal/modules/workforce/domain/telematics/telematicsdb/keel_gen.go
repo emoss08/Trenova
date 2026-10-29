@@ -10,7 +10,6 @@ import (
 	"github.com/emoss08/keel/schema"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor/tractordb"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/telematics"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
@@ -809,7 +808,7 @@ var telematicsEventsTable = schema.Table{
 		{Name: "payload", Quoted: `"payload"`, Field: "Payload", Kind: schema.KindJSON, Flags: schema.FlagJSONB | schema.FlagNullZero, Label: `Payload`, JSON: `payload`},
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: 0, Label: `Created At`, JSON: `createdAt`},
 		{Name: "stop_outcome", Quoted: `"stop_outcome"`, Field: "StopOutcome", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Stop Outcome`, JSON: `stopOutcome`, Enum: enumStopOutcome[:]},
-		{Name: "stop_visit", Quoted: `"stop_visit"`, Field: "StopVisit", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Stop Visit`, JSON: `stopVisit`, Enum: enumShipmentVisitKind[:]},
+		{Name: "stop_visit", Quoted: `"stop_visit"`, Field: "StopVisit", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Stop Visit`, JSON: `stopVisit`, Enum: enumShipmentvocabVisitKind[:]},
 		{Name: "shipment_move_id", Quoted: `"shipment_move_id"`, Field: "ShipmentMoveID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Shipment Move ID`, JSON: `shipmentMoveId`},
 		{Name: "stop_id", Quoted: `"stop_id"`, Field: "StopID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Stop ID`, JSON: `stopId`},
 		{Name: "stop_outcome_reason", Quoted: `"stop_outcome_reason"`, Field: "StopOutcomeReason", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Stop Outcome Reason`, JSON: `stopOutcomeReason`},
@@ -853,7 +852,7 @@ type TelematicsEventsTable struct {
 	Payload           keel.JSONBCol
 	CreatedAt         keel.Int64Col
 	StopOutcome       StopOutcomeCol
-	StopVisit         shipmentdb.VisitKindCol
+	StopVisit         keelkinds.ShipmentvocabVisitKindCol
 	ShipmentMoveID    keelkinds.PulidIDCol
 	StopID            keelkinds.PulidIDCol
 	StopOutcomeReason keel.StringCol
@@ -877,7 +876,7 @@ var TelematicsEvents = &TelematicsEventsTable{
 	Payload:           keel.JSONBCol{Col: keel.Col{Ref: &telematicsEventsRef, Index: 11}},
 	CreatedAt:         keel.Int64Col{Col: keel.Col{Ref: &telematicsEventsRef, Index: 12}},
 	StopOutcome:       StopOutcomeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &telematicsEventsRef, Index: 13}}},
-	StopVisit:         shipmentdb.VisitKindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &telematicsEventsRef, Index: 14}}},
+	StopVisit:         keelkinds.ShipmentvocabVisitKindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &telematicsEventsRef, Index: 14}}},
 	ShipmentMoveID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &telematicsEventsRef, Index: 15}}},
 	StopID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &telematicsEventsRef, Index: 16}}},
 	StopOutcomeReason: keel.StringCol{Col: keel.Col{Ref: &telematicsEventsRef, Index: 17}},
@@ -902,7 +901,7 @@ func BuildTelematicsEvents(r *keel.Ref) *TelematicsEventsTable {
 		Payload:           keel.JSONBCol{Col: keel.Col{Ref: r, Index: 11}},
 		CreatedAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 12}},
 		StopOutcome:       StopOutcomeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 13}}},
-		StopVisit:         shipmentdb.VisitKindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 14}}},
+		StopVisit:         keelkinds.ShipmentvocabVisitKindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 14}}},
 		ShipmentMoveID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 15}}},
 		StopID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 16}}},
 		StopOutcomeReason: keel.StringCol{Col: keel.Col{Ref: r, Index: 17}},
@@ -2258,7 +2257,7 @@ var enumFormMappingTargetKind = [...]schema.EnumValue{
 	{Value: `StopField`, Label: `Form Mapping Target Stop Field`},
 }
 
-var enumShipmentVisitKind = [...]schema.EnumValue{
+var enumShipmentvocabVisitKind = [...]schema.EnumValue{
 	{Value: `Arrival`, Label: `Visit Arrival`},
 	{Value: `Departure`, Label: `Visit Departure`},
 }

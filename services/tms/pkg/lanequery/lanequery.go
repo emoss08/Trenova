@@ -5,6 +5,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate/usstatedb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location/locationdb"
 )
 
@@ -72,9 +73,9 @@ func shipmentEndpoints(filter []keel.Pred) *keel.Query[*shipment.Shipment] {
 		Pick(
 			keel.StringArrayOf(keel.ArrayAgg(st.LocationID).
 				OrderBy(m.Sequence.Asc(), st.Sequence.Asc()).
-				Filter(st.Type.In(shipment.PickupStopTypes()...))).At(1),
+				Filter(st.Type.In(shipmentvocab.PickupStopTypes()...))).At(1),
 			keel.StringArrayOf(keel.ArrayAgg(st.LocationID).
 				OrderBy(m.Sequence.Desc(), st.Sequence.Desc()).
-				Filter(st.Type.In(shipment.DeliveryStopTypes()...))).At(1),
+				Filter(st.Type.In(shipmentvocab.DeliveryStopTypes()...))).At(1),
 		)
 }

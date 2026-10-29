@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/chargeallocationports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/orderports"
@@ -174,7 +175,7 @@ func TestReleasePostedRebillReturnsShipmentsToReadyToInvoice(t *testing.T) {
 	shp := &shipment.Shipment{
 		ID:         f.shipmentID,
 		OrderID:    f.orderID,
-		Status:     shipment.StatusInvoiced,
+		Status:     shipmentvocab.StatusInvoiced,
 		BilledAt:   &billedAt,
 		RateLocked: true,
 	}
@@ -192,8 +193,9 @@ func TestReleasePostedRebillReturnsShipmentsToReadyToInvoice(t *testing.T) {
 		Once()
 	f.shipmentRepo.EXPECT().
 		UpdateDerivedState(mock.Anything, mock.MatchedBy(func(updated *shipment.Shipment) bool {
-			return updated.ID == f.shipmentID && updated.Status == shipment.StatusReadyToInvoice &&
-				updated.BilledAt == nil && !updated.RateLocked
+			return updated.ID == f.shipmentID && updated.Status == shipmentvocab.StatusReadyToInvoice &&
+				updated.BilledAt == nil &&
+				!updated.RateLocked
 		})).
 		Return(shp, nil).
 		Once()
@@ -213,7 +215,11 @@ func TestReleasePostedDoNotRebillCompletesShipments(t *testing.T) {
 
 	f := newReleaseFixture(t)
 	f.expectCommonReleases(false)
-	shp := &shipment.Shipment{ID: f.shipmentID, Status: shipment.StatusInvoiced, RateLocked: true}
+	shp := &shipment.Shipment{
+		ID:         f.shipmentID,
+		Status:     shipmentvocab.StatusInvoiced,
+		RateLocked: true,
+	}
 	f.invoiceRepo.EXPECT().
 		ListByShipmentIDs(mock.Anything, mock.Anything).
 		Return(map[pulid.ID][]*invoice.Invoice{}, nil).
@@ -221,7 +227,7 @@ func TestReleasePostedDoNotRebillCompletesShipments(t *testing.T) {
 	f.shipmentRepo.EXPECT().GetByID(mock.Anything, mock.Anything).Return(shp, nil).Once()
 	f.shipmentRepo.EXPECT().
 		UpdateDerivedState(mock.Anything, mock.MatchedBy(func(updated *shipment.Shipment) bool {
-			return updated.Status == shipment.StatusCompleted && updated.BilledAt == nil &&
+			return updated.Status == shipmentvocab.StatusCompleted && updated.BilledAt == nil &&
 				!updated.RateLocked
 		})).
 		Return(shp, nil).
@@ -242,7 +248,11 @@ func TestReleaseDoNotRebillKeepsALegAnotherPayersInvoiceStillBills(t *testing.T)
 
 	f := newReleaseFixture(t)
 	f.expectCommonReleases(false)
-	shp := &shipment.Shipment{ID: f.shipmentID, Status: shipment.StatusInvoiced, RateLocked: true}
+	shp := &shipment.Shipment{
+		ID:         f.shipmentID,
+		Status:     shipmentvocab.StatusInvoiced,
+		RateLocked: true,
+	}
 	f.invoiceRepo.EXPECT().ListByShipmentIDs(mock.Anything, mock.Anything).
 		Return(map[pulid.ID][]*invoice.Invoice{
 			f.shipmentID: {
@@ -263,7 +273,7 @@ func TestReleaseDoNotRebillKeepsALegAnotherPayersInvoiceStillBills(t *testing.T)
 	f.shipmentRepo.EXPECT().GetByID(mock.Anything, mock.Anything).Return(shp, nil).Once()
 	f.shipmentRepo.EXPECT().
 		UpdateDerivedState(mock.Anything, mock.MatchedBy(func(updated *shipment.Shipment) bool {
-			return updated.Status == shipment.StatusInvoiced && updated.BilledAt == nil &&
+			return updated.Status == shipmentvocab.StatusInvoiced && updated.BilledAt == nil &&
 				updated.RateLocked
 		})).
 		Return(shp, nil).

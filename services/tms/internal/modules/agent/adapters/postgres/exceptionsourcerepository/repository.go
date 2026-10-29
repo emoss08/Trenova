@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document/documentdb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender/tenderdb"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location/locationdb"
@@ -51,22 +52,22 @@ func boundedLimit(limit int) int {
 	return min(limit, maxLimit)
 }
 
-func openShipmentStatuses() []shipment.Status {
-	return []shipment.Status{
-		shipment.StatusNew,
-		shipment.StatusPartiallyAssigned,
-		shipment.StatusAssigned,
-		shipment.StatusInTransit,
-		shipment.StatusDelayed,
-		shipment.StatusPartiallyCompleted,
+func openShipmentStatuses() []shipmentvocab.Status {
+	return []shipmentvocab.Status{
+		shipmentvocab.StatusNew,
+		shipmentvocab.StatusPartiallyAssigned,
+		shipmentvocab.StatusAssigned,
+		shipmentvocab.StatusInTransit,
+		shipmentvocab.StatusDelayed,
+		shipmentvocab.StatusPartiallyCompleted,
 	}
 }
 
-func deliveredShipmentStatuses() []shipment.Status {
-	return []shipment.Status{
-		shipment.StatusPartiallyCompleted,
-		shipment.StatusCompleted,
-		shipment.StatusReadyToInvoice,
+func deliveredShipmentStatuses() []shipmentvocab.Status {
+	return []shipmentvocab.Status{
+		shipmentvocab.StatusPartiallyCompleted,
+		shipmentvocab.StatusCompleted,
+		shipmentvocab.StatusReadyToInvoice,
 	}
 }
 
@@ -96,8 +97,8 @@ func missedStopsQuery(req *watchtowerports.ListMissedStopsRequest) *keel.Query[*
 		Where(
 			stp.Type.In(req.StopTypes...),
 			stp.ActualArrival.IsNull(),
-			stp.Status.NotIn(shipment.StopStatusCompleted, shipment.StopStatusCanceled),
-			sm.Status.Ne(shipment.MoveStatusCanceled),
+			stp.Status.NotIn(shipmentvocab.StopStatusCompleted, shipmentvocab.StopStatusCanceled),
+			sm.Status.Ne(shipmentvocab.MoveStatusCanceled),
 			sp.Status.In(openShipmentStatuses()...),
 			cutoff.Lt(req.ClosedBefore),
 			keel.When(len(req.ShipmentIDs) > 0, sp.ID.In(req.ShipmentIDs...)),
@@ -114,9 +115,9 @@ func lastDeliveryQuery(sp *shipmentdb.ShipmentsTable) *keel.Query[*shipment.Stop
 		Join(sm, sm.ID.EqCol(stp.ShipmentMoveID)).
 		Where(
 			sm.ShipmentID.EqCol(sp.ID),
-			sm.Status.Ne(shipment.MoveStatusCanceled),
-			stp.Type.In(shipment.StopTypeDelivery, shipment.StopTypeSplitDelivery),
-			stp.Status.Ne(shipment.StopStatusCanceled),
+			sm.Status.Ne(shipmentvocab.MoveStatusCanceled),
+			stp.Type.In(shipmentvocab.StopTypeDelivery, shipmentvocab.StopTypeSplitDelivery),
+			stp.Status.Ne(shipmentvocab.StopStatusCanceled),
 			stp.ActualArrival.IsNotNull(),
 		).
 		Order(sm.Sequence.Desc(), stp.Sequence.Desc()).
@@ -173,7 +174,7 @@ func exhaustedTendersQuery(
 	)
 	covered := ca.Where(
 		ca.ShipmentMoveID.EqCol(sm.ID),
-		ca.Status.Ne(shipment.CarrierAssignmentStatusCanceled),
+		ca.Status.Ne(shipmentvocab.CarrierAssignmentStatusCanceled),
 	)
 
 	return tc.Join(sm, sm.ID.EqCol(tc.ShipmentMoveID)).
@@ -188,7 +189,7 @@ func exhaustedTendersQuery(
 		).
 		Where(
 			tc.Status.Eq(tender.StatusExhausted),
-			sm.Status.Eq(shipment.MoveStatusNew),
+			sm.Status.Eq(shipmentvocab.MoveStatusNew),
 			sp.Status.In(openShipmentStatuses()...),
 			keel.NotExists(newerTender),
 			keel.NotExists(covered),

@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -11,13 +12,13 @@ import (
 )
 
 type ShipmentCommentListFilters struct {
-	Types          []shipment.CommentType     `json:"types,omitempty"`
-	Priorities     []shipment.CommentPriority `json:"priorities,omitempty"`
-	AuthorIDs      []pulid.ID                 `json:"authorIds,omitempty"`
-	MentionsUserID *pulid.ID                  `json:"mentionsUserId,omitempty"`
-	PinnedOnly     bool                       `json:"pinnedOnly,omitempty"`
-	UnresolvedOnly bool                       `json:"unresolvedOnly,omitempty"`
-	Search         string                     `json:"search,omitempty"`
+	Types          []shipmentvocab.CommentType     `json:"types,omitempty"`
+	Priorities     []shipmentvocab.CommentPriority `json:"priorities,omitempty"`
+	AuthorIDs      []pulid.ID                      `json:"authorIds,omitempty"`
+	MentionsUserID *pulid.ID                       `json:"mentionsUserId,omitempty"`
+	PinnedOnly     bool                            `json:"pinnedOnly,omitempty"`
+	UnresolvedOnly bool                            `json:"unresolvedOnly,omitempty"`
+	Search         string                          `json:"search,omitempty"`
 }
 
 func (f *ShipmentCommentListFilters) HasAny() bool {

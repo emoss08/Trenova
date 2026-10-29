@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/chargeallocationports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/orderports"
@@ -195,13 +195,13 @@ func restoreShipments(
 
 		switch {
 		case rebill:
-			shp.Status = shipment.StatusReadyToInvoice
+			shp.Status = shipmentvocab.StatusReadyToInvoice
 			shp.BilledAt = nil
 			shp.RateLocked = false
 		case stillBilled:
 			shp.BilledAt = nil
 		default:
-			shp.Status = shipment.StatusCompleted
+			shp.Status = shipmentvocab.StatusCompleted
 			shp.BilledAt = nil
 			shp.RateLocked = false
 		}

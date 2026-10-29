@@ -17,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/settlementcontrol/settlementcontroldb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer/customerdb"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location/locationdb"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
@@ -1344,7 +1345,7 @@ func (s *DriverPaySeed) createPaidShipments(
 			ServiceTypeID:      stdServiceID,
 			ShipmentTypeID:     ftlTypeID,
 			FormulaTemplateID:  refs.flatTemplate.ID,
-			Status:             shipment.StatusCompleted,
+			Status:             shipmentvocab.StatusCompleted,
 			ProNumber:          def.pro,
 			BOL:                def.bol,
 			Pieces:             new(def.pieces),
@@ -1360,8 +1361,8 @@ func (s *DriverPaySeed) createPaidShipments(
 				Valid:   true,
 			},
 			TotalChargeAmount: decimal.NullDecimal{Decimal: revenue, Valid: true},
-			EntryMethod:       shipment.EntryMethodManual,
-			FreightTerms:      shipment.FreightTermsPrepaid,
+			EntryMethod:       shipmentvocab.EntryMethodManual,
+			FreightTerms:      shipmentvocab.FreightTermsPrepaid,
 			FreightLines:      []shipment.FreightLine{},
 			OtherChargeAmount: decimal.NewNullDecimal(decimal.RequireFromString("0")),
 		}
@@ -1402,12 +1403,12 @@ func (s *DriverPaySeed) createPaidShipments(
 				BusinessUnitID: refs.buID,
 				OrganizationID: refs.orgID,
 				ShipmentID:     shp.ID,
-				Status:         shipment.MoveStatusCompleted,
+				Status:         shipmentvocab.MoveStatusCompleted,
 				Loaded:         true,
 				Sequence:       int64(moveIdx),
 				Distance:       &miles,
 				DistanceUnits:  "miles",
-				CoverageType:   shipment.MoveCoverageTypeDriver,
+				CoverageType:   shipmentvocab.MoveCoverageTypeDriver,
 			}
 			if err = shipmentdb.ShipmentMoves.Create(ctx, db, move); err != nil {
 				return nil, fmt.Errorf("insert move for %s: %w", def.pro, err)
@@ -1435,8 +1436,8 @@ func (s *DriverPaySeed) createPaidShipments(
 				PrimaryWorkerID: &workerID,
 				TractorID:       &tractorID,
 				TrailerID:       &trailerID,
-				Status:          shipment.AssignmentStatusCompleted,
-				AckStatus:       shipment.AssignmentAckPending,
+				Status:          shipmentvocab.AssignmentStatusCompleted,
+				AckStatus:       shipmentvocab.AssignmentAckPending,
 			}
 			if err = shipmentdb.Assignments.Create(ctx, db, assignment); err != nil {
 				return nil, fmt.Errorf("insert assignment for %s: %w", def.pro, err)
@@ -1476,12 +1477,12 @@ func (s *DriverPaySeed) createMoveStops(
 			return fmt.Errorf("location %s not found", code)
 		}
 
-		stopType := shipment.StopTypeSplitDelivery
+		stopType := shipmentvocab.StopTypeSplitDelivery
 		switch idx {
 		case 0:
-			stopType = shipment.StopTypePickup
+			stopType = shipmentvocab.StopTypePickup
 		case len(stopCodes) - 1:
-			stopType = shipment.StopTypeDelivery
+			stopType = shipmentvocab.StopTypeDelivery
 		}
 
 		arrival := moveEnd - (int64(len(stopCodes)-1-idx) * 6 * hour)
@@ -1496,13 +1497,13 @@ func (s *DriverPaySeed) createMoveStops(
 			ShipmentMoveID:       moveID,
 			LocationID:           locationID,
 			Type:                 stopType,
-			Status:               shipment.StopStatusCompleted,
+			Status:               shipmentvocab.StopStatusCompleted,
 			Sequence:             int64(idx),
 			ScheduledWindowStart: scheduledStart,
 			ScheduledWindowEnd:   &scheduledEnd,
 			ActualArrival:        &arrival,
 			ActualDeparture:      &departure,
-			ScheduleType:         shipment.StopScheduleTypeOpen,
+			ScheduleType:         shipmentvocab.StopScheduleTypeOpen,
 		})
 	}
 

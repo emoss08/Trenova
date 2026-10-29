@@ -19,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmenthold"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
@@ -171,7 +172,7 @@ func TestSearchShipments_ReturnsTheCuratedRowNotTheStoredEntity(t *testing.T) {
 	repo := &fakeShipmentRepo{items: []*shipment.Shipment{{
 		ID:        pulid.MustNew("shp_"),
 		ProNumber: "S-1001",
-		Status:    shipment.StatusNew,
+		Status:    shipmentvocab.StatusNew,
 	}}}
 
 	result, err := shipmentquerytools.NewShipmentListTool(
@@ -197,7 +198,7 @@ func TestSearchShipments_DistinguishesInTransitFromUnrecorded(t *testing.T) {
 	t.Parallel()
 
 	repo := &fakeShipmentRepo{items: []*shipment.Shipment{{
-		ID: pulid.MustNew("shp_"), ProNumber: "S-1001", Status: shipment.StatusNew,
+		ID: pulid.MustNew("shp_"), ProNumber: "S-1001", Status: shipmentvocab.StatusNew,
 	}}}
 
 	result, err := shipmentquerytools.NewShipmentListTool(
@@ -285,7 +286,7 @@ func TestSearchShipments_TakesSeveralStatusesInOneCall(t *testing.T) {
 		"status": []any{"New", "Assigned"},
 	}))
 	require.NoError(t, err)
-	assert.Equal(t, []shipment.Status{shipment.StatusNew, shipment.StatusAssigned},
+	assert.Equal(t, []shipmentvocab.Status{shipmentvocab.StatusNew, shipmentvocab.StatusAssigned},
 		repo.captured.ShipmentOptions.Statuses, "a search by words narrows by status itself")
 }
 
@@ -387,8 +388,8 @@ func realisticShipment() shipmentFixture {
 		OrganizationID:       orgID,
 		BusinessUnitID:       buID,
 		LocationID:           chicago.ID,
-		Status:               shipment.StopStatusCompleted,
-		Type:                 shipment.StopTypePickup,
+		Status:               shipmentvocab.StopStatusCompleted,
+		Type:                 shipmentvocab.StopTypePickup,
 		Sequence:             1,
 		ScheduledWindowStart: 1_790_859_600,
 		ScheduledWindowEnd:   &windowEnd,
@@ -402,8 +403,8 @@ func realisticShipment() shipmentFixture {
 		OrganizationID:       orgID,
 		BusinessUnitID:       buID,
 		LocationID:           columbus.ID,
-		Status:               shipment.StopStatusNew,
-		Type:                 shipment.StopTypeDelivery,
+		Status:               shipmentvocab.StopStatusNew,
+		Type:                 shipmentvocab.StopTypeDelivery,
 		Sequence:             2,
 		ScheduledWindowStart: 1_790_942_400,
 		AddressLine:          "4100 Alum Creek Dr, Columbus, OH 43207",
@@ -441,13 +442,13 @@ func realisticShipment() shipmentFixture {
 		ID:             pulid.MustNew("sm_"),
 		OrganizationID: orgID,
 		BusinessUnitID: buID,
-		Status:         shipment.MoveStatusInTransit,
+		Status:         shipmentvocab.MoveStatusInTransit,
 		Loaded:         true,
 		Sequence:       1,
 		Stops:          []*shipment.Stop{delivery, pickup},
 		Assignment: &shipment.Assignment{
 			ID:                pulid.MustNew("a_"),
-			Status:            shipment.AssignmentStatusInProgress,
+			Status:            shipmentvocab.AssignmentStatusInProgress,
 			TractorID:         &tractorID,
 			TrailerID:         &trailerID,
 			PrimaryWorkerID:   &primary.ID,
@@ -459,7 +460,7 @@ func realisticShipment() shipmentFixture {
 		},
 		CarrierAssignment: &shipment.CarrierAssignment{
 			ID:                  pulid.MustNew("casn_"),
-			Status:              shipment.CarrierAssignmentStatusConfirmed,
+			Status:              shipmentvocab.CarrierAssignmentStatusConfirmed,
 			ExternalDriverName:  "Pat Carrier",
 			ExternalDriverPhone: "312-555-0111",
 			Carrier: &carrier.Carrier{
@@ -477,7 +478,7 @@ func realisticShipment() shipmentFixture {
 		BusinessUnitID:    buID,
 		CustomerID:        customerID,
 		FormulaTemplateID: templateID,
-		Status:            shipment.StatusInTransit,
+		Status:            shipmentvocab.StatusInTransit,
 		ProNumber:         "S-1001",
 		BOL:               "BOL-77812",
 		TariffInputs: tarifftypes.Inputs{
@@ -1088,11 +1089,11 @@ func TestSearchShipments_AFullPageStillShowsEachStatusAskedFor(t *testing.T) {
 	items := make([]*shipment.Shipment, 0, 11)
 	for range shipmentquerytools.DefaultSearchLimit {
 		items = append(items, &shipment.Shipment{
-			ID: pulid.MustNew("shp_"), ProNumber: "NEW", Status: shipment.StatusNew,
+			ID: pulid.MustNew("shp_"), ProNumber: "NEW", Status: shipmentvocab.StatusNew,
 		})
 	}
 	delayed := &shipment.Shipment{
-		ID: pulid.MustNew("shp_"), ProNumber: "SEED-SHP-010", Status: shipment.StatusDelayed,
+		ID: pulid.MustNew("shp_"), ProNumber: "SEED-SHP-010", Status: shipmentvocab.StatusDelayed,
 	}
 	items = append(items, delayed)
 
@@ -1227,7 +1228,7 @@ func TestShipmentList_PagesByCursor(t *testing.T) {
 		items = append(items, &shipment.Shipment{
 			ID:        pulid.MustNew("shp_"),
 			ProNumber: fmt.Sprintf("P%d", idx),
-			Status:    shipment.StatusInTransit,
+			Status:    shipmentvocab.StatusInTransit,
 		})
 	}
 

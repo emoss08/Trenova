@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentcommercial"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentstate"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location"
 	"github.com/emoss08/trenova/internal/modules/places/ports/locationports"
 	"github.com/emoss08/trenova/internal/modules/rating/ratingtest"
@@ -428,14 +429,14 @@ func TestLocate_AppendsMoveAndAdvancesContinuity(t *testing.T) {
 			CustomerID:        pulid.MustNew("cust_"),
 			FormulaTemplateID: pulid.MustNew("ft_"),
 			BOL:               "BOL-1",
-			Status:            shipment.StatusNew,
+			Status:            shipmentvocab.StatusNew,
 			Moves: []*shipment.ShipmentMove{
 				{
 					ID:             sourceMoveID,
 					ShipmentID:     shipmentID,
 					OrganizationID: orgID,
 					BusinessUnitID: buID,
-					Status:         shipment.MoveStatusAssigned,
+					Status:         shipmentvocab.MoveStatusAssigned,
 					Stops: []*shipment.Stop{
 						{
 							ID:                   pulid.MustNew("stp_"),
@@ -443,12 +444,12 @@ func TestLocate_AppendsMoveAndAdvancesContinuity(t *testing.T) {
 							OrganizationID:       orgID,
 							BusinessUnitID:       buID,
 							LocationID:           currentLocationID,
-							Type:                 shipment.StopTypePickup,
-							ScheduleType:         shipment.StopScheduleTypeOpen,
+							Type:                 shipmentvocab.StopTypePickup,
+							ScheduleType:         shipmentvocab.StopScheduleTypeOpen,
 							Sequence:             0,
 							ScheduledWindowStart: 1,
 							ScheduledWindowEnd:   new(int64(2)),
-							Status:               shipment.StopStatusNew,
+							Status:               shipmentvocab.StopStatusNew,
 						},
 						{
 							ID:                   pulid.MustNew("stp_"),
@@ -456,12 +457,12 @@ func TestLocate_AppendsMoveAndAdvancesContinuity(t *testing.T) {
 							OrganizationID:       orgID,
 							BusinessUnitID:       buID,
 							LocationID:           currentLocationID,
-							Type:                 shipment.StopTypeDelivery,
-							ScheduleType:         shipment.StopScheduleTypeOpen,
+							Type:                 shipmentvocab.StopTypeDelivery,
+							ScheduleType:         shipmentvocab.StopScheduleTypeOpen,
 							Sequence:             1,
 							ScheduledWindowStart: 3,
 							ScheduledWindowEnd:   new(int64(4)),
-							Status:               shipment.StopStatusNew,
+							Status:               shipmentvocab.StopStatusNew,
 						},
 					},
 				},
@@ -475,12 +476,12 @@ func TestLocate_AppendsMoveAndAdvancesContinuity(t *testing.T) {
 			lastMove := entity.Moves[1]
 			lastMove.ID = pulid.MustNew("sm_")
 			require.False(t, lastMove.Loaded)
-			assert.Equal(t, shipment.MoveStatusCompleted, lastMove.Status)
+			assert.Equal(t, shipmentvocab.MoveStatusCompleted, lastMove.Status)
 			require.Len(t, lastMove.Stops, 2)
 			assert.Equal(t, currentLocationID, lastMove.Stops[0].LocationID)
 			assert.Equal(t, newLocationID, lastMove.Stops[1].LocationID)
-			assert.Equal(t, shipment.StopStatusCompleted, lastMove.Stops[0].Status)
-			assert.Equal(t, shipment.StopStatusCompleted, lastMove.Stops[1].Status)
+			assert.Equal(t, shipmentvocab.StopStatusCompleted, lastMove.Stops[0].Status)
+			assert.Equal(t, shipmentvocab.StopStatusCompleted, lastMove.Stops[1].Status)
 			require.NotNil(t, lastMove.Stops[0].ActualArrival)
 			require.NotNil(t, lastMove.Stops[0].ActualDeparture)
 			require.NotNil(t, lastMove.Stops[1].ActualArrival)
@@ -528,7 +529,7 @@ func TestLocate_AppendsMoveAndAdvancesContinuity(t *testing.T) {
 			return entity.OrganizationID == orgID &&
 				entity.BusinessUnitID == buID &&
 				entity.ShipmentMoveID != pulid.Nil &&
-				entity.Status == shipment.AssignmentStatusCompleted &&
+				entity.Status == shipmentvocab.AssignmentStatusCompleted &&
 				entity.PrimaryWorkerID == nil &&
 				entity.TractorID == nil &&
 				entity.TrailerID != nil &&

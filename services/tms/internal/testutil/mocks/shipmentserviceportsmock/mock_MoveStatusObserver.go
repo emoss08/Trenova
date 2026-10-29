@@ -5,6 +5,7 @@
 package shipmentserviceportsmock
 
 import (
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -40,7 +41,7 @@ func (_m *MockMoveStatusObserver) EXPECT() *MockMoveStatusObserver_Expecter {
 }
 
 // AfterMoveStatusChange provides a mock function for the type MockMoveStatusObserver
-func (_mock *MockMoveStatusObserver) AfterMoveStatusChange(ctx context.Context, tenantInfo pagination.TenantInfo, move *shipment.ShipmentMove, previous shipment.MoveStatus) error {
+func (_mock *MockMoveStatusObserver) AfterMoveStatusChange(ctx context.Context, tenantInfo pagination.TenantInfo, move *shipment.ShipmentMove, previous shipmentvocab.MoveStatus) error {
 	ret := _mock.Called(ctx, tenantInfo, move, previous)
 
 	if len(ret) == 0 {
@@ -48,7 +49,7 @@ func (_mock *MockMoveStatusObserver) AfterMoveStatusChange(ctx context.Context, 
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.TenantInfo, *shipment.ShipmentMove, shipment.MoveStatus) error); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.TenantInfo, *shipment.ShipmentMove, shipmentvocab.MoveStatus) error); ok {
 		r0 = returnFunc(ctx, tenantInfo, move, previous)
 	} else {
 		r0 = ret.Error(0)
@@ -65,12 +66,12 @@ type MockMoveStatusObserver_AfterMoveStatusChange_Call struct {
 //   - ctx context.Context
 //   - tenantInfo pagination.TenantInfo
 //   - move *shipment.ShipmentMove
-//   - previous shipment.MoveStatus
+//   - previous shipmentvocab.MoveStatus
 func (_e *MockMoveStatusObserver_Expecter) AfterMoveStatusChange(ctx interface{}, tenantInfo interface{}, move interface{}, previous interface{}) *MockMoveStatusObserver_AfterMoveStatusChange_Call {
 	return &MockMoveStatusObserver_AfterMoveStatusChange_Call{Call: _e.mock.On("AfterMoveStatusChange", ctx, tenantInfo, move, previous)}
 }
 
-func (_c *MockMoveStatusObserver_AfterMoveStatusChange_Call) Run(run func(ctx context.Context, tenantInfo pagination.TenantInfo, move *shipment.ShipmentMove, previous shipment.MoveStatus)) *MockMoveStatusObserver_AfterMoveStatusChange_Call {
+func (_c *MockMoveStatusObserver_AfterMoveStatusChange_Call) Run(run func(ctx context.Context, tenantInfo pagination.TenantInfo, move *shipment.ShipmentMove, previous shipmentvocab.MoveStatus)) *MockMoveStatusObserver_AfterMoveStatusChange_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -84,9 +85,9 @@ func (_c *MockMoveStatusObserver_AfterMoveStatusChange_Call) Run(run func(ctx co
 		if args[2] != nil {
 			arg2 = args[2].(*shipment.ShipmentMove)
 		}
-		var arg3 shipment.MoveStatus
+		var arg3 shipmentvocab.MoveStatus
 		if args[3] != nil {
-			arg3 = args[3].(shipment.MoveStatus)
+			arg3 = args[3].(shipmentvocab.MoveStatus)
 		}
 		run(
 			arg0,
@@ -103,7 +104,7 @@ func (_c *MockMoveStatusObserver_AfterMoveStatusChange_Call) Return(err error) *
 	return _c
 }
 
-func (_c *MockMoveStatusObserver_AfterMoveStatusChange_Call) RunAndReturn(run func(ctx context.Context, tenantInfo pagination.TenantInfo, move *shipment.ShipmentMove, previous shipment.MoveStatus) error) *MockMoveStatusObserver_AfterMoveStatusChange_Call {
+func (_c *MockMoveStatusObserver_AfterMoveStatusChange_Call) RunAndReturn(run func(ctx context.Context, tenantInfo pagination.TenantInfo, move *shipment.ShipmentMove, previous shipmentvocab.MoveStatus) error) *MockMoveStatusObserver_AfterMoveStatusChange_Call {
 	_c.Call.Return(run)
 	return _c
 }

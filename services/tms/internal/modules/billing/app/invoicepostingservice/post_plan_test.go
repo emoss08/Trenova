@@ -4,11 +4,10 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/billing/app/invoiceediservice"
-
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoiceaction"
+	"github.com/emoss08/trenova/internal/modules/billing/app/invoiceediservice"
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoicevalidation"
 	"github.com/emoss08/trenova/internal/modules/billing/billingtest/invoiceservicetest"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
@@ -19,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/identitytest"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
@@ -72,7 +72,7 @@ func newPostFixture(t *testing.T) *postFixture {
 		OrganizationID: f.tenant.OrgID,
 		BusinessUnitID: f.tenant.BuID,
 		ProNumber:      "PRO-88",
-		Status:         shipment.StatusReadyToInvoice,
+		Status:         shipmentvocab.StatusReadyToInvoice,
 	}
 	f.item = &billingqueue.BillingQueueItem{
 		ID:             pulid.MustNew("bqi_"),
@@ -223,8 +223,8 @@ func TestPreviewPost_PlansWhatPostWouldWrite(t *testing.T) {
 	require.NotNil(t, preview.After.PostedAt)
 
 	require.Len(t, preview.Legs, 1)
-	assert.Equal(t, shipment.StatusReadyToInvoice, preview.Legs[0].Before.Status)
-	assert.Equal(t, shipment.StatusInvoiced, preview.Legs[0].After.Status)
+	assert.Equal(t, shipmentvocab.StatusReadyToInvoice, preview.Legs[0].Before.Status)
+	assert.Equal(t, shipmentvocab.StatusInvoiced, preview.Legs[0].After.Status)
 
 	require.NotNil(t, preview.QueueAfter)
 	assert.Equal(t, billingqueue.StatusApproved, preview.QueueBefore.Status)

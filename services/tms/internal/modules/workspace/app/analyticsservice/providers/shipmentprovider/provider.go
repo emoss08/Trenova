@@ -18,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/stopeta"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/stopeta/stopetadb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/weatheralert/weatheralertdb"
@@ -90,7 +91,7 @@ type tomorrowPickupRow struct {
 	Origin            string
 	Destination       string
 	Driver            string
-	ShipmentStatus    shipment.Status
+	ShipmentStatus    shipmentvocab.Status
 	HasPrimaryWorker  bool
 }
 
@@ -372,21 +373,21 @@ func (p *Provider) getProfitability(
 	return card, nil
 }
 
-var activeStatuses = []shipment.Status{
-	shipment.StatusNew,
-	shipment.StatusPartiallyAssigned,
-	shipment.StatusAssigned,
-	shipment.StatusInTransit,
-	shipment.StatusDelayed,
-	shipment.StatusPartiallyCompleted,
+var activeStatuses = []shipmentvocab.Status{
+	shipmentvocab.StatusNew,
+	shipmentvocab.StatusPartiallyAssigned,
+	shipmentvocab.StatusAssigned,
+	shipmentvocab.StatusInTransit,
+	shipmentvocab.StatusDelayed,
+	shipmentvocab.StatusPartiallyCompleted,
 }
 
 var etaAttentionVerdicts = []stopeta.Verdict{stopeta.VerdictAtRisk, stopeta.VerdictLate}
 
-var doneStatuses = []shipment.Status{
-	shipment.StatusCompleted,
-	shipment.StatusInvoiced,
-	shipment.StatusReadyToInvoice,
+var doneStatuses = []shipmentvocab.Status{
+	shipmentvocab.StatusCompleted,
+	shipmentvocab.StatusInvoiced,
+	shipmentvocab.StatusReadyToInvoice,
 }
 
 const (
@@ -512,9 +513,9 @@ func activeShipmentsQuery(window analyticsWindow) *keel.Query[*shipment.Shipment
 		countWhere(sp.Status.In(activeStatuses...)),
 		countWhere(within(sp.CreatedAt, window.TodayStart, window.Now)),
 		countWhere(within(sp.CreatedAt, window.YesterdayStart, window.YesterdayEnd)),
-		countWhere(sp.Status.Eq(shipment.StatusInTransit)),
-		countWhere(sp.Status.Eq(shipment.StatusDelayed)),
-		countWhere(sp.Status.Eq(shipment.StatusAssigned)),
+		countWhere(sp.Status.Eq(shipmentvocab.StatusInTransit)),
+		countWhere(sp.Status.Eq(shipmentvocab.StatusDelayed)),
+		countWhere(sp.Status.Eq(shipmentvocab.StatusAssigned)),
 		countWhere(sp.Status.In(doneStatuses...)),
 	)
 }
@@ -583,8 +584,8 @@ func onTimeQuery(window analyticsWindow) *keel.Query[*shipment.Stop] {
 		countWhere(sevenDay),
 		countWhere(sevenDay, onTime),
 	).Where(
-		stp.Status.Eq(shipment.StopStatusCompleted),
-		stp.Type.In(shipment.DeliveryStopTypes()...),
+		stp.Status.Eq(shipmentvocab.StopStatusCompleted),
+		stp.Type.In(shipmentvocab.DeliveryStopTypes()...),
 		stp.ActualArrival.IsNotNull(),
 		stp.ActualArrival.Gt(0),
 		stp.ScheduledWindowStart.Gt(0),
@@ -770,9 +771,9 @@ func atRiskQuery(window analyticsWindow) *keel.Query[*shipment.Shipment] {
 	).Where(
 		sp.Status.In(activeStatuses...),
 		keel.Or(
-			sp.Status.Eq(shipment.StatusDelayed),
+			sp.Status.Eq(shipmentvocab.StatusDelayed),
 			moves.Any(stops.Any(
-				stops.Status.Ne(shipment.StopStatusCompleted),
+				stops.Status.Ne(shipmentvocab.StopStatusCompleted),
 				stops.ScheduledWindowStart.Gt(0),
 				stops.ScheduledWindowStart.Lt(window.Now),
 			)),
@@ -823,9 +824,9 @@ func unassignedQuery(window analyticsWindow) *keel.Query[*shipment.Shipment] {
 				a,
 				a.ShipmentMoveID.EqCol(sm.ID),
 				a.ArchivedAt.IsNull(),
-				a.Status.Ne(shipment.AssignmentStatusCanceled),
+				a.Status.Ne(shipmentvocab.AssignmentStatusCanceled),
 			).
-			Where(sm.ShipmentID.EqCol(sp.ID), sm.Status.Ne(shipment.MoveStatusCanceled))),
+			Where(sm.ShipmentID.EqCol(sp.ID), sm.Status.Ne(shipmentvocab.MoveStatusCanceled))),
 	)
 }
 
@@ -862,12 +863,16 @@ func readyToDispatchQuery(window analyticsWindow) *keel.Query[*shipment.Shipment
 		readyAssignmentsCTE,
 		[]string{readyAssignmentsShipment, readyAssignmentsWorker},
 		assigned.
-			Join(sm, sm.ShipmentID.EqCol(assigned.ID), sm.Status.Ne(shipment.MoveStatusCanceled)).
+			Join(
+				sm,
+				sm.ShipmentID.EqCol(assigned.ID),
+				sm.Status.Ne(shipmentvocab.MoveStatusCanceled),
+			).
 			Join(
 				a,
 				a.ShipmentMoveID.EqCol(sm.ID),
 				a.ArchivedAt.IsNull(),
-				a.Status.Ne(shipment.AssignmentStatusCanceled),
+				a.Status.Ne(shipmentvocab.AssignmentStatusCanceled),
 			).
 			DistinctOn(assigned.ID, a.PrimaryWorkerID).
 			Pick(assigned.ID, a.PrimaryWorkerID).
@@ -875,7 +880,7 @@ func readyToDispatchQuery(window analyticsWindow) *keel.Query[*shipment.Shipment
 			Order(assigned.ID.Asc(), a.PrimaryWorkerID.Asc()),
 	)
 	ready := keel.And(
-		sp.Status.Eq(shipment.StatusAssigned),
+		sp.Status.Eq(shipmentvocab.StatusAssigned),
 		sa.Col(readyAssignmentsShipment).IsNotNull(),
 	)
 
@@ -942,7 +947,7 @@ func detentionWatchlistQuery(now int64) *keel.Query[*shipment.Stop] {
 		Join(cus, cus.ID.EqCol(sp.CustomerID)).
 		Pick(sp.ProNumber, cus.Name, dwell).
 		Where(
-			stp.Status.Ne(shipment.StopStatusCanceled),
+			stp.Status.Ne(shipmentvocab.StopStatusCanceled),
 			stp.ActualArrival.IsNotNull(),
 			stp.ActualArrival.Gt(0),
 			keel.Or(stp.ActualDeparture.IsNull(), stp.ActualDeparture.Eq(0)),
@@ -998,7 +1003,7 @@ func customerMixQuery(now, currentStart, previousStart int64) *keel.Query[*shipm
 		).
 		Where(
 			within(sp.CreatedAt, previousStart, now),
-			sp.Status.Ne(shipment.StatusCanceled),
+			sp.Status.Ne(shipmentvocab.StatusCanceled),
 		).
 		Group(sp.CustomerID, cus.Name).
 		Having(revenue.Gt(0)).
@@ -1047,8 +1052,8 @@ func tomorrowsPickupsQuery(from, to int64, limit, offset int) *keel.Query[*shipm
 		Pick(destLoc.Code, destLoc.City, destLoc.Name).
 		Where(
 			destMove.ShipmentID.EqCol(sp.ID),
-			destStop.Status.Ne(shipment.StopStatusCanceled),
-			destStop.Type.In(shipment.DeliveryStopTypes()...),
+			destStop.Status.Ne(shipmentvocab.StopStatusCanceled),
+			destStop.Type.In(shipmentvocab.DeliveryStopTypes()...),
 		).
 		Order(destMove.Sequence.Desc(), destStop.Sequence.Desc()).
 		Limit(1)
@@ -1065,7 +1070,7 @@ func tomorrowsPickupsQuery(from, to int64, limit, offset int) *keel.Query[*shipm
 			a,
 			a.ShipmentMoveID.EqCol(sm.ID),
 			a.ArchivedAt.IsNull(),
-			a.Status.Ne(shipment.AssignmentStatusCanceled),
+			a.Status.Ne(shipmentvocab.AssignmentStatusCanceled),
 		).
 		LeftJoin(wrk, wrk.ID.EqCol(a.PrimaryWorkerID)).
 		LeftJoinLateral(destination).
@@ -1081,10 +1086,10 @@ func tomorrowsPickupsQuery(from, to int64, limit, offset int) *keel.Query[*shipm
 			a.PrimaryWorkerID.IsNotNull(),
 		).
 		Where(
-			stp.Type.In(shipment.PickupStopTypes()...),
-			stp.Status.Ne(shipment.StopStatusCanceled),
-			sm.Status.Ne(shipment.MoveStatusCanceled),
-			sp.Status.Ne(shipment.StatusCanceled),
+			stp.Type.In(shipmentvocab.PickupStopTypes()...),
+			stp.Status.Ne(shipmentvocab.StopStatusCanceled),
+			sm.Status.Ne(shipmentvocab.MoveStatusCanceled),
+			sp.Status.Ne(shipmentvocab.StatusCanceled),
 			stp.ScheduledWindowStart.Gte(from),
 			stp.ScheduledWindowStart.Lt(to),
 		).
@@ -1152,7 +1157,7 @@ func (p *Provider) getLaneHeatmap(ctx context.Context, windowDays int) (*LaneHea
 				Shipments: []keel.Pred{
 					s.CreatedAt.Gte(windowStart),
 					s.CreatedAt.Lte(now),
-					s.Status.Ne(shipment.StatusCanceled),
+					s.Status.Ne(shipmentvocab.StatusCanceled),
 				},
 			}),
 		)
@@ -1230,16 +1235,16 @@ func tomorrowPickupStatus(row tomorrowPickupRow) TomorrowPickupStatus {
 	}
 
 	switch row.ShipmentStatus {
-	case shipment.StatusNew, shipment.StatusPartiallyAssigned:
+	case shipmentvocab.StatusNew, shipmentvocab.StatusPartiallyAssigned:
 		return TomorrowPickupStatusTentative
-	case shipment.StatusAssigned, shipment.StatusInTransit:
+	case shipmentvocab.StatusAssigned, shipmentvocab.StatusInTransit:
 		return TomorrowPickupStatusConfirmed
-	case shipment.StatusDelayed,
-		shipment.StatusPartiallyCompleted,
-		shipment.StatusReadyToInvoice,
-		shipment.StatusCompleted,
-		shipment.StatusInvoiced,
-		shipment.StatusCanceled:
+	case shipmentvocab.StatusDelayed,
+		shipmentvocab.StatusPartiallyCompleted,
+		shipmentvocab.StatusReadyToInvoice,
+		shipmentvocab.StatusCompleted,
+		shipmentvocab.StatusInvoiced,
+		shipmentvocab.StatusCanceled:
 		return TomorrowPickupStatusScheduled
 	}
 

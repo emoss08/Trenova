@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentservicetest"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/chargeallocation"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -25,7 +26,7 @@ func splitReadinessFixture(
 
 	entity := shipmentservicetest.ValidShipment()
 	entity.ID = pulid.MustNew("shp_")
-	entity.Status = shipment.StatusCompleted
+	entity.Status = shipmentvocab.StatusCompleted
 	entity.FreightChargeAmount = decimal.NewNullDecimal(decimal.NewFromInt(1000))
 	entity.RatingDetail = &shipment.RatingDetail{Bill: billOf(1000)}
 	entity.AdditionalCharges = []*shipment.AdditionalCharge{}
@@ -33,16 +34,16 @@ func splitReadinessFixture(
 	entity.ChargeAllocations = []*shipment.ChargeAllocation{
 		{
 			ID:               pulid.MustNew("chal_"),
-			ChargeKind:       shipment.ChargeAllocationKindFreight,
+			ChargeKind:       shipmentvocab.ChargeAllocationKindFreight,
 			BillToCustomerID: entity.CustomerID,
-			Method:           shipment.ChargeAllocationMethodPercent,
+			Method:           shipmentvocab.ChargeAllocationMethodPercent,
 			Percent:          decimal.NewNullDecimal(decimal.NewFromInt(60)),
 		},
 		{
 			ID:               pulid.MustNew("chal_"),
-			ChargeKind:       shipment.ChargeAllocationKindFreight,
+			ChargeKind:       shipmentvocab.ChargeAllocationKindFreight,
 			BillToCustomerID: amd,
-			Method:           shipment.ChargeAllocationMethodPercent,
+			Method:           shipmentvocab.ChargeAllocationMethodPercent,
 			Percent:          decimal.NewNullDecimal(decimal.NewFromInt(40)),
 			Sequence:         1,
 		},
@@ -308,17 +309,17 @@ func TestPreviewForResolutionMapsPositionalAllocationsToPlaceholderIDs(t *testin
 	unsavedIndex := 2
 	entity.ChargeAllocations = []*shipment.ChargeAllocation{
 		{
-			ChargeKind:         shipment.ChargeAllocationKindAccessorial,
+			ChargeKind:         shipmentvocab.ChargeAllocationKindAccessorial,
 			AdditionalChargeID: &savedID,
 			BillToCustomerID:   payer,
-			Method:             shipment.ChargeAllocationMethodPercent,
+			Method:             shipmentvocab.ChargeAllocationMethodPercent,
 			Percent:            decimal.NewNullDecimal(decimal.NewFromInt(100)),
 		},
 		{
-			ChargeKind:            shipment.ChargeAllocationKindAccessorial,
+			ChargeKind:            shipmentvocab.ChargeAllocationKindAccessorial,
 			AdditionalChargeIndex: &unsavedIndex,
 			BillToCustomerID:      payer,
-			Method:                shipment.ChargeAllocationMethodPercent,
+			Method:                shipmentvocab.ChargeAllocationMethodPercent,
 			Percent:               decimal.NewNullDecimal(decimal.NewFromInt(100)),
 		},
 		nil,

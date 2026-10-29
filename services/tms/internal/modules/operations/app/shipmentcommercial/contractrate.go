@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/shipmentcontrol"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratequote"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratequoteports"
@@ -242,7 +243,7 @@ func (c *Calculator) recordQuote(
 	}
 
 	for _, charge := range entity.AdditionalCharges {
-		if charge != nil && charge.Owner() == shipment.SystemOwnerAgreement {
+		if charge != nil && charge.Owner() == shipmentvocab.SystemOwnerAgreement {
 			charge.RateQuoteID = &quoteID
 		}
 	}

@@ -18,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/order"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/trackingevent"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
@@ -529,7 +530,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*shipment.CarrierAssignment)
 					return obj.Status, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNCarrierAssignmentStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋshipmentᚐCarrierAssignmentStatus),
+				Marshal: gqlexec.Marshal(marshalNCarrierAssignmentStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋshipmentvocabᚐCarrierAssignmentStatus),
 			},
 			{
 				Name:     "rateMethod",
@@ -539,7 +540,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*shipment.CarrierAssignment)
 					return obj.RateMethod, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNCarrierRateMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋshipmentᚐCarrierRateMethod),
+				Marshal: gqlexec.Marshal(marshalNCarrierRateMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋshipmentvocabᚐCarrierRateMethod),
 			},
 			{
 				Name:       "baseRate",
@@ -912,7 +913,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*shipment.ChargeAllocation)
 					return obj.ChargeKind, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNChargeAllocationKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋshipmentᚐChargeAllocationKind),
+				Marshal: gqlexec.Marshal(marshalNChargeAllocationKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋshipmentvocabᚐChargeAllocationKind),
 			},
 			{
 				Name:     "billToCustomerId",
@@ -932,7 +933,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*shipment.ChargeAllocation)
 					return obj.Method, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNChargeAllocationMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋshipmentᚐChargeAllocationMethod),
+				Marshal: gqlexec.Marshal(marshalNChargeAllocationMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋshipmentvocabᚐChargeAllocationMethod),
 			},
 			{
 				Name:       "percent",
@@ -1602,7 +1603,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.Shipment)
 					return obj.Stage, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNShipmentStage2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋshipmentᚐStage),
+				Marshal: gqlexec.Marshal(marshalNShipmentStage2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋshipmentvocabᚐStage),
 			},
 			{
 				Name:       "eta",
@@ -1692,7 +1693,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.Shipment)
 					return obj.FreightTerms, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNFreightTerms2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋshipmentᚐFreightTerms),
+				Marshal: gqlexec.Marshal(marshalNFreightTerms2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋshipmentvocabᚐFreightTerms),
 			},
 			{
 				Name:     "tractorTypeId",
@@ -7625,7 +7626,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.ShipmentMove)
 					return obj.CoverageType, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNMoveCoverageType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋshipmentᚐMoveCoverageType),
+				Marshal: gqlexec.Marshal(marshalNMoveCoverageType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋshipmentvocabᚐMoveCoverageType),
 			},
 			{
 				Name:     "loaded",
@@ -10147,7 +10148,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*trackingevent.TrackingEvent)
 					return obj.Kind, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNStopVisitKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋshipmentᚐVisitKind),
+				Marshal: gqlexec.Marshal(marshalNStopVisitKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋshipmentvocabᚐVisitKind),
 			},
 			{
 				Name:     "matchMethod",
@@ -11180,7 +11181,7 @@ func unmarshalInputChargeAllocationInput(ctx context.Context, ec *gqlexec.Exec, 
 			it.BillToCustomerID = data
 		case "method":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("method"))
-			data, err := unmarshalNChargeAllocationMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋshipmentᚐChargeAllocationMethod(ctx, ec, v)
+			data, err := unmarshalNChargeAllocationMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋshipmentvocabᚐChargeAllocationMethod(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -12165,7 +12166,7 @@ func unmarshalInputShipmentInput(ctx context.Context, ec *gqlexec.Exec, obj any)
 			it.BillToCustomerID = data
 		case "freightTerms":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("freightTerms"))
-			data, err := unmarshalOFreightTerms2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋshipmentᚐFreightTerms(ctx, ec, v)
+			data, err := unmarshalOFreightTerms2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋshipmentvocabᚐFreightTerms(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -13215,9 +13216,9 @@ func unmarshalNChargeAllocationInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinter
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalNChargeAllocationMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋshipmentᚐChargeAllocationMethod(ctx context.Context, ec *gqlexec.Exec, v any) (shipment.ChargeAllocationMethod, error) {
+func unmarshalNChargeAllocationMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋshipmentvocabᚐChargeAllocationMethod(ctx context.Context, ec *gqlexec.Exec, v any) (shipmentvocab.ChargeAllocationMethod, error) {
 	tmp, err := graphql.UnmarshalString(v)
-	res := shipment.ChargeAllocationMethod(tmp)
+	res := shipmentvocab.ChargeAllocationMethod(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -13441,12 +13442,12 @@ func unmarshalOFloat2ᚖfloat64(ctx context.Context, ec *gqlexec.Exec, v any) (*
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalOFreightTerms2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋshipmentᚐFreightTerms(ctx context.Context, ec *gqlexec.Exec, v any) (*shipment.FreightTerms, error) {
+func unmarshalOFreightTerms2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋshipmentvocabᚐFreightTerms(ctx context.Context, ec *gqlexec.Exec, v any) (*shipmentvocab.FreightTerms, error) {
 	if v == nil {
 		return nil, nil
 	}
 	tmp, err := graphql.UnmarshalString(v)
-	res := shipment.FreightTerms(tmp)
+	res := shipmentvocab.FreightTerms(tmp)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -13725,7 +13726,7 @@ func marshalNCarrierAssignmentAccessorial2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋ
 	return ec.MarshalType(ctx, sel, "CarrierAssignmentAccessorial", v)
 }
 
-func marshalNCarrierAssignmentStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋshipmentᚐCarrierAssignmentStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v shipment.CarrierAssignmentStatus) graphql.Marshaler {
+func marshalNCarrierAssignmentStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋshipmentvocabᚐCarrierAssignmentStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v shipmentvocab.CarrierAssignmentStatus) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -13733,7 +13734,7 @@ func marshalNCarrierAssignmentStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternal
 	return res
 }
 
-func marshalNCarrierRateMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋshipmentᚐCarrierRateMethod(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v shipment.CarrierRateMethod) graphql.Marshaler {
+func marshalNCarrierRateMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋshipmentvocabᚐCarrierRateMethod(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v shipmentvocab.CarrierRateMethod) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -13757,7 +13758,7 @@ func marshalNChargeAllocation2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋm
 	return ec.MarshalType(ctx, sel, "ChargeAllocation", v)
 }
 
-func marshalNChargeAllocationKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋshipmentᚐChargeAllocationKind(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v shipment.ChargeAllocationKind) graphql.Marshaler {
+func marshalNChargeAllocationKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋshipmentvocabᚐChargeAllocationKind(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v shipmentvocab.ChargeAllocationKind) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -13765,7 +13766,7 @@ func marshalNChargeAllocationKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋ
 	return res
 }
 
-func marshalNChargeAllocationMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋshipmentᚐChargeAllocationMethod(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v shipment.ChargeAllocationMethod) graphql.Marshaler {
+func marshalNChargeAllocationMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋshipmentvocabᚐChargeAllocationMethod(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v shipmentvocab.ChargeAllocationMethod) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -13797,7 +13798,7 @@ func marshalNFloat2float64(ctx context.Context, ec *gqlexec.Exec, sel ast.Select
 	return graphql.WrapContextMarshaler(ctx, res)
 }
 
-func marshalNFreightTerms2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋshipmentᚐFreightTerms(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v shipment.FreightTerms) graphql.Marshaler {
+func marshalNFreightTerms2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋshipmentvocabᚐFreightTerms(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v shipmentvocab.FreightTerms) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -13866,7 +13867,7 @@ func marshalNJSON2map(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSe
 	return res
 }
 
-func marshalNMoveCoverageType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋshipmentᚐMoveCoverageType(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v shipment.MoveCoverageType) graphql.Marshaler {
+func marshalNMoveCoverageType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋshipmentvocabᚐMoveCoverageType(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v shipmentvocab.MoveCoverageType) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -14530,7 +14531,7 @@ func marshalNShipmentSparklinePoint2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋintern
 	return ec.MarshalType(ctx, sel, "ShipmentSparklinePoint", v)
 }
 
-func marshalNShipmentStage2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋshipmentᚐStage(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v shipment.Stage) graphql.Marshaler {
+func marshalNShipmentStage2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋshipmentvocabᚐStage(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v shipmentvocab.Stage) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -14626,7 +14627,7 @@ func marshalNStopType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphq
 	return v
 }
 
-func marshalNStopVisitKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋshipmentᚐVisitKind(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v shipment.VisitKind) graphql.Marshaler {
+func marshalNStopVisitKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋshipmentvocabᚐVisitKind(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v shipmentvocab.VisitKind) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)

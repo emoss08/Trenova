@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmenteventservice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentstate"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentmoveports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -29,7 +30,7 @@ func (s *service) RecordStopActual(
 	}
 
 	var updatedMove *shipment.ShipmentMove
-	var previousStatus shipment.MoveStatus
+	var previousStatus shipmentvocab.MoveStatus
 	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		move, err := s.repo.GetByID(txCtx, &shipmentmoveports.GetMoveByIDRequest{
 			MoveID:            req.MoveID,
@@ -80,7 +81,7 @@ func (s *service) announceStopActuals(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	move *shipment.ShipmentMove,
-	previousStatus shipment.MoveStatus,
+	previousStatus shipmentvocab.MoveStatus,
 	recorded []*shipmentmoveports.RecordStopActualRequest,
 ) {
 	kernelports.AfterCommit(ctx, func(committed context.Context) {
@@ -191,7 +192,7 @@ func (s *service) flagDetentionCandidate(
 func (s *service) applyDerivedMoveStatus(
 	ctx context.Context,
 	req *shipmentmoveports.RecordStopActualRequest,
-	previousStatus, targetStatus shipment.MoveStatus,
+	previousStatus, targetStatus shipmentvocab.MoveStatus,
 ) (*shipment.ShipmentMove, error) {
 	if targetStatus == previousStatus {
 		return s.repo.GetByID(ctx, &shipmentmoveports.GetMoveByIDRequest{
@@ -230,10 +231,10 @@ func applyStopActual(
 	move *shipment.ShipmentMove,
 	req *shipmentmoveports.RecordStopActualRequest,
 ) (*shipment.Stop, error) {
-	if move.Status == shipment.MoveStatusCanceled {
+	if move.Status == shipmentvocab.MoveStatusCanceled {
 		return nil, errortypes.NewBusinessError("This load has been canceled")
 	}
-	if move.Status == shipment.MoveStatusCompleted {
+	if move.Status == shipmentvocab.MoveStatusCompleted {
 		return nil, errortypes.NewBusinessError("This load is already completed")
 	}
 
@@ -274,7 +275,7 @@ func applyStopActual(
 			}
 		}
 		stop.ActualArrival = &occurredAt
-		stop.Status = shipment.StopStatusInTransit
+		stop.Status = shipmentvocab.StopStatusInTransit
 	case shipmentmoveports.StopActualActionDepart:
 		if stop.ActualArrival == nil {
 			return nil, errortypes.NewBusinessError("Arrive at this stop before departing")
@@ -288,7 +289,7 @@ func applyStopActual(
 			)
 		}
 		stop.ActualDeparture = &occurredAt
-		stop.Status = shipment.StopStatusCompleted
+		stop.Status = shipmentvocab.StopStatusCompleted
 	default:
 		return nil, errortypes.NewValidationError(
 			"action",
@@ -300,7 +301,7 @@ func applyStopActual(
 	return stop, nil
 }
 
-func deriveMoveStatusFromStops(move *shipment.ShipmentMove) shipment.MoveStatus {
+func deriveMoveStatusFromStops(move *shipment.ShipmentMove) shipmentvocab.MoveStatus {
 	stops := move.ActiveStopsBySequence()
 	if len(stops) == 0 {
 		return move.Status
@@ -319,9 +320,9 @@ func deriveMoveStatusFromStops(move *shipment.ShipmentMove) shipment.MoveStatus 
 
 	switch {
 	case allCompleted:
-		return shipment.MoveStatusCompleted
+		return shipmentvocab.MoveStatusCompleted
 	case anyProgress:
-		return shipment.MoveStatusInTransit
+		return shipmentvocab.MoveStatusInTransit
 	default:
 		return move.Status
 	}

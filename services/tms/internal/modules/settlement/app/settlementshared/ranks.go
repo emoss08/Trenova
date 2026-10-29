@@ -5,25 +5,25 @@ package settlementshared
 
 import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/settlementcontrol"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 )
 
 //nolint:exhaustive // canceled shipments never accrue pay or cost
-var shipmentStatusRank = map[shipment.Status]int{
-	shipment.StatusNew:                0,
-	shipment.StatusPartiallyAssigned:  1,
-	shipment.StatusAssigned:           2,
-	shipment.StatusInTransit:          3,
-	shipment.StatusDelayed:            3,
-	shipment.StatusPartiallyCompleted: 4,
-	shipment.StatusCompleted:          5,
-	shipment.StatusReadyToInvoice:     6,
-	shipment.StatusInvoiced:           7,
+var shipmentStatusRank = map[shipmentvocab.Status]int{
+	shipmentvocab.StatusNew:                0,
+	shipmentvocab.StatusPartiallyAssigned:  1,
+	shipmentvocab.StatusAssigned:           2,
+	shipmentvocab.StatusInTransit:          3,
+	shipmentvocab.StatusDelayed:            3,
+	shipmentvocab.StatusPartiallyCompleted: 4,
+	shipmentvocab.StatusCompleted:          5,
+	shipmentvocab.StatusReadyToInvoice:     6,
+	shipmentvocab.StatusInvoiced:           7,
 }
 
 // ShipmentStatusRank returns the monotonic progression rank for a shipment
 // status; ok is false for statuses that never accrue (e.g. canceled).
-func ShipmentStatusRank(status shipment.Status) (rank int, ok bool) {
+func ShipmentStatusRank(status shipmentvocab.Status) (rank int, ok bool) {
 	rank, ok = shipmentStatusRank[status]
 	return rank, ok
 }
@@ -33,12 +33,12 @@ func ShipmentStatusRank(status shipment.Status) (rank int, ok bool) {
 func PayTriggerRank(trigger settlementcontrol.PayTrigger) int {
 	switch trigger {
 	case settlementcontrol.PayTriggerMoveCompleted, settlementcontrol.PayTriggerShipmentDelivered:
-		return shipmentStatusRank[shipment.StatusCompleted]
+		return shipmentStatusRank[shipmentvocab.StatusCompleted]
 	case settlementcontrol.PayTriggerPODReceived:
-		return shipmentStatusRank[shipment.StatusReadyToInvoice]
+		return shipmentStatusRank[shipmentvocab.StatusReadyToInvoice]
 	case settlementcontrol.PayTriggerShipmentInvoiced:
-		return shipmentStatusRank[shipment.StatusInvoiced]
+		return shipmentStatusRank[shipmentvocab.StatusInvoiced]
 	default:
-		return shipmentStatusRank[shipment.StatusCompleted]
+		return shipmentStatusRank[shipmentvocab.StatusCompleted]
 	}
 }

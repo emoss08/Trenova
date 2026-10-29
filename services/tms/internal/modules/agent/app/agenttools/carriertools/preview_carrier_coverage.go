@@ -12,7 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/rating/app/carrierassignmentservice"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/money"
@@ -160,7 +160,7 @@ func (t *CancelCarrierAssignmentTool) Preview(
 		summary += fmt.Sprintf(" Their rate confirmation (revision %d) would be voided and "+
 			"its sign link stop working.", plan.VoidedBefore.Revision)
 	}
-	if plan.CanceledBefore.Status == shipment.CarrierAssignmentStatusConfirmed {
+	if plan.CanceledBefore.Status == shipmentvocab.CarrierAssignmentStatusConfirmed {
 		summary += " The carrier had confirmed the rate."
 	}
 

@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentcoverage"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentstate"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/assignmentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/rating/ratingtest"
@@ -60,8 +61,8 @@ func previewAssignmentServiceWith(
 			ShipmentID:     original.ID,
 			OrganizationID: tenantInfo.OrgID,
 			BusinessUnitID: tenantInfo.BuID,
-			Status:         shipment.MoveStatusNew,
-			CoverageType:   shipment.MoveCoverageTypeUnassigned,
+			Status:         shipmentvocab.MoveStatusNew,
+			CoverageType:   shipmentvocab.MoveCoverageTypeUnassigned,
 		}, nil).
 		Once()
 	repo.EXPECT().GetByMoveID(mock.Anything, tenantInfo, moveID).Return(existing, nil).Once()
@@ -136,7 +137,7 @@ func TestPreviewAssignToMove_ProjectsTheAssignmentWithoutSavingIt(t *testing.T) 
 	shipmentID := pulid.MustNew("shp_")
 	tenantInfo := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
 	original := validShipment(shipmentID, moveID, tenantInfo)
-	original.Moves[0].CoverageType = shipment.MoveCoverageTypeUnassigned
+	original.Moves[0].CoverageType = shipmentvocab.MoveCoverageTypeUnassigned
 	workerID := pulid.MustNew("wrk_")
 
 	svc := previewAssignmentService(t, tenantInfo, original, nil)
@@ -151,11 +152,11 @@ func TestPreviewAssignToMove_ProjectsTheAssignmentWithoutSavingIt(t *testing.T) 
 
 	require.NotNil(t, plan.Assignment.PrimaryWorkerID)
 	assert.Equal(t, workerID, *plan.Assignment.PrimaryWorkerID)
-	assert.Equal(t, shipment.AssignmentStatusNew, plan.Assignment.Status)
-	assert.NotEqual(t, shipment.StatusAssigned, plan.ShipmentBefore.Status)
-	assert.Equal(t, shipment.StatusAssigned, plan.ShipmentAfter.Status)
-	assert.Equal(t, shipment.MoveStatusAssigned, plan.ShipmentAfter.Moves[0].Status)
-	assert.Equal(t, shipment.MoveCoverageTypeDriver, plan.ShipmentAfter.Moves[0].CoverageType)
+	assert.Equal(t, shipmentvocab.AssignmentStatusNew, plan.Assignment.Status)
+	assert.NotEqual(t, shipmentvocab.StatusAssigned, plan.ShipmentBefore.Status)
+	assert.Equal(t, shipmentvocab.StatusAssigned, plan.ShipmentAfter.Status)
+	assert.Equal(t, shipmentvocab.MoveStatusAssigned, plan.ShipmentAfter.Moves[0].Status)
+	assert.Equal(t, shipmentvocab.MoveCoverageTypeDriver, plan.ShipmentAfter.Moves[0].CoverageType)
 }
 
 // A tractor still on another move in progress can be assigned ahead, but the
@@ -167,7 +168,7 @@ func TestPreviewAssignToMove_SaysWhenEquipmentIsOnAMoveInProgress(t *testing.T) 
 	moveID := pulid.MustNew("sm_")
 	tenantInfo := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
 	original := validShipment(pulid.MustNew("shp_"), moveID, tenantInfo)
-	original.Moves[0].CoverageType = shipment.MoveCoverageTypeUnassigned
+	original.Moves[0].CoverageType = shipmentvocab.MoveCoverageTypeUnassigned
 	tractorID := pulid.MustNew("trac_")
 	busyMove := pulid.MustNew("sm_")
 

@@ -6,7 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/billing/app/billingtransfercriteria"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentbillingports"
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/toolschema"
@@ -41,7 +41,7 @@ func newTransferSelection() *transferSelection {
 				{ShipmentID: ready, Outcome: shipmentbillingports.BillingTransferOutcomeTransfer},
 				{
 					ShipmentID: marked,
-					Status:     shipment.StatusCompleted,
+					Status:     shipmentvocab.StatusCompleted,
 					Outcome:    shipmentbillingports.BillingTransferOutcomeMarkReadyAndTransfer,
 				},
 				{ShipmentID: refused, Outcome: shipmentbillingports.BillingTransferOutcomeRefused},
@@ -86,7 +86,7 @@ func TestTransferToBilling_ResolvesEveryTransferableShipmentToIDs(t *testing.T) 
 
 	listed := sel.planner.listed
 	require.NotNil(t, listed)
-	assert.Equal(t, shipment.StatusCompleted, listed.Status)
+	assert.Equal(t, shipmentvocab.StatusCompleted, listed.Status)
 	assert.Equal(t, "acme", listed.Filter.Query)
 	require.Len(t, listed.Filter.FieldFilters, 3)
 	assert.Equal(t, "customerId", listed.Filter.FieldFilters[0].Field)

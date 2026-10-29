@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentevent"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
 	"github.com/emoss08/trenova/internal/modules/operations/jobs/tenderjobs/tendercontract"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/carrierassignmentports"
@@ -178,7 +179,7 @@ func sentWaterfall(tenantInfo pagination.TenantInfo) *tender.Tender {
 			TenderID:        entity.ID,
 			CarrierID:       pulid.MustNew("car_"),
 			Rank:            int16(idx + 1),
-			RateMethod:      shipment.CarrierRateMethodFlat,
+			RateMethod:      shipmentvocab.CarrierRateMethodFlat,
 			Rate:            decimal.NewFromInt(1600),
 			OfferTTLSeconds: 3600,
 			Channel:         tender.ChannelEmail,

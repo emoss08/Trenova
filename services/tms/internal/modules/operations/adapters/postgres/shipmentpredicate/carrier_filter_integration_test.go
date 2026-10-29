@@ -6,8 +6,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/keel"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/testutil/seededtest"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -52,7 +52,7 @@ func TestCarrierIDsFilter_MatchesShipmentsTenderedToTheCarrier(t *testing.T) {
 	require.NoError(t, err)
 	require.NotEmpty(t, carrierID)
 
-	tender := func(moveIndex int, status shipment.CarrierAssignmentStatus) {
+	tender := func(moveIndex int, status shipmentvocab.CarrierAssignmentStatus) {
 		_, tErr := keel.Exec(sys, db, `
 			INSERT INTO carrier_assignments (
 				id, business_unit_id, organization_id, shipment_move_id, carrier_id, status,
@@ -67,8 +67,8 @@ func TestCarrierIDsFilter_MatchesShipmentsTenderedToTheCarrier(t *testing.T) {
 		)
 		require.NoError(t, tErr)
 	}
-	tender(0, shipment.CarrierAssignmentStatusConfirmed)
-	tender(1, shipment.CarrierAssignmentStatusCanceled)
+	tender(0, shipmentvocab.CarrierAssignmentStatusConfirmed)
+	tender(1, shipmentvocab.CarrierAssignmentStatusCanceled)
 
 	tenantCtx := dbscope.WithTenant(ctx, dbscope.Tenant{
 		OrganizationID: moves[0].OrganizationID,

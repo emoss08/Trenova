@@ -1,7 +1,7 @@
 package trackingeventservice
 
 import (
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentmoveports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/trackingeventports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -22,7 +22,7 @@ func validateObserved(
 	if params.Source.Interactive() || !params.Source.IsValid() {
 		multiErr.Add("source", errortypes.ErrInvalid, "Source must be Carrier, Telematics or EDI")
 	}
-	if params.Kind != shipment.VisitArrival && params.Kind != shipment.VisitDeparture {
+	if params.Kind != shipmentvocab.VisitArrival && params.Kind != shipmentvocab.VisitDeparture {
 		multiErr.Add("kind", errortypes.ErrInvalid, "Kind must be Arrival or Departure")
 	}
 	addEventTime(multiErr, "eventAt", &params.EventAt)

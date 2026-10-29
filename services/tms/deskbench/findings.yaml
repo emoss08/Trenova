@@ -1298,7 +1298,7 @@ findings:
       "nobody: the move needs a driver or carrier", and Haiku told the person the assignment to
       David Park had been removed.
     fix: >
-      Both readers ask the board for every move status (shipment.MoveStatuses()). A finished move
+      Both readers ask the board for every move status (shipmentvocab.MoveStatuses()). A finished move
       with nobody on it reads "nobody on record".
     fixedIn: uncommitted; verified by .deskbench/runs/20261009-223506-run
     files:

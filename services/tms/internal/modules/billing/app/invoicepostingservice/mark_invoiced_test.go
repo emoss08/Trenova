@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
 	"github.com/emoss08/trenova/internal/testutil/mocks/billingqueueportsmock"
@@ -47,7 +48,7 @@ func TestMarkInvoicedLegsKeepsEachShipmentsAdditionalCharges(t *testing.T) {
 		ID:                shipmentID,
 		OrganizationID:    tenantInfo.OrgID,
 		BusinessUnitID:    tenantInfo.BuID,
-		Status:            shipment.StatusReadyToInvoice,
+		Status:            shipmentvocab.StatusReadyToInvoice,
 		AdditionalCharges: charges,
 	}
 
@@ -101,7 +102,7 @@ func TestMarkInvoicedLegsKeepsEachShipmentsAdditionalCharges(t *testing.T) {
 
 	require.Len(t, legs, 1)
 	require.NotNil(t, persisted)
-	assert.Equal(t, shipment.StatusInvoiced, persisted.Status)
+	assert.Equal(t, shipmentvocab.StatusInvoiced, persisted.Status)
 	require.NotNil(t, persisted.BilledAt)
 	assert.Equal(t, int64(1_789_339_461), *persisted.BilledAt)
 	assert.Equal(t, charges, persisted.AdditionalCharges)

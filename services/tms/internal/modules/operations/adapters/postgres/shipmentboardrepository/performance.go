@@ -6,8 +6,8 @@ import (
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender/tenderdb"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentboardports"
@@ -82,8 +82,8 @@ func perMileRatesQuery(req *shipmentboardports.ListCarrierPerformanceRequest) ke
 	q := ca.Group(ca.CarrierID).
 		Pick(ca.CarrierID, keel.Count(), keel.Avg(ca.BaseRate)).
 		Where(
-			ca.RateMethod.Eq(shipment.CarrierRateMethodPerMile),
-			ca.Status.Ne(shipment.CarrierAssignmentStatusCanceled),
+			ca.RateMethod.Eq(shipmentvocab.CarrierRateMethodPerMile),
+			ca.Status.Ne(shipmentvocab.CarrierAssignmentStatusCanceled),
 			ca.CreatedAt.Gte(req.Since),
 		)
 	if len(req.CarrierIDs) > 0 {

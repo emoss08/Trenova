@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentserviceports"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratequote"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -263,7 +264,7 @@ func TestCreateShipment_NumbersStopsFromZeroInTravelOrder(t *testing.T) {
 	stops := writer.Created.Moves[0].Stops
 	require.Len(t, stops, 2)
 	assert.Equal(t, []int64{0, 1}, []int64{stops[0].Sequence, stops[1].Sequence})
-	assert.Equal(t, shipment.StopTypePickup, stops[0].Type)
+	assert.Equal(t, shipmentvocab.StopTypePickup, stops[0].Type)
 	assert.True(t, writer.Created.Moves[0].Loaded, "a move is loaded unless it says otherwise")
 }
 
@@ -365,7 +366,7 @@ func TestCreateShipment_EntersTheFreightChargesAndRating(t *testing.T) {
 	require.NotNil(t, created.BillToCustomerID)
 	assert.Equal(t, billTo, *created.BillToCustomerID)
 	assert.True(t, ratedInputs(t, "$2.45/mi").Equal(created.TariffInputs))
-	assert.Equal(t, shipment.FreightTermsCollect, created.FreightTerms)
+	assert.Equal(t, shipmentvocab.FreightTermsCollect, created.FreightTerms)
 	require.Len(t, created.Commodities, 1)
 	assert.Equal(t, commodityID, created.Commodities[0].CommodityID)
 	assert.EqualValues(t, 26, created.Commodities[0].Pieces)
@@ -432,7 +433,7 @@ func TestCreateShipment_PreviewWarnsOfAShipmentNothingPrices(t *testing.T) {
 			"freightChargeAmount", errortypes.ErrInvalidOperation,
 			"No rate agreement covers this lane, so this shipment is priced at zero",
 			errortypes.SeverityRequireReview,
-		).WithRuleKey(shipment.RateCoverageRuleKey),
+		).WithRuleKey(shipmentvocab.RateCoverageRuleKey),
 		errortypes.NewAdvisory(
 			"tractorTypeId", errortypes.ErrInvalidOperation, "Not a rate matter",
 			errortypes.SeverityWarn,

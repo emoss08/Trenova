@@ -17,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentsuggestion"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/assignmentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchboardports"
@@ -400,7 +401,7 @@ func TestDelayNotice_SkipsCustomersAlreadyToldThisHour(t *testing.T) {
 	h.watchlist.late = []shipmentboardports.LateDelivery{told, untold}
 	h.comments.byShipment[told.ShipmentID] = []*shipment.ShipmentComment{{
 		CreatedAt: fixedNow.Add(-10 * time.Minute).Unix(),
-		Type:      shipment.CommentTypeCustomerUpdate,
+		Type:      shipmentvocab.CommentTypeCustomerUpdate,
 		Metadata:  map[string]any{"source": "board", "tool": "notify_shipment_delay"},
 	}}
 

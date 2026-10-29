@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenteventports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentmoveports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/telematics"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/telematicsports"
@@ -41,7 +42,7 @@ func (s *Service) autoStopActualsEnabled(
 type stopEvent struct {
 	tenantInfo   pagination.TenantInfo
 	record       *telematics.TelematicsEvent
-	visit        shipment.VisitKind
+	visit        shipmentvocab.VisitKind
 	providerStop bool
 }
 
@@ -123,7 +124,7 @@ func (s *Service) notifyVisitWaits(
 	}
 
 	kind, verb := agenttrigger.EventShipmentMoveArrived, "entered"
-	if event.visit == shipment.VisitDeparture {
+	if event.visit == shipmentvocab.VisitDeparture {
 		kind, verb = agenttrigger.EventShipmentMoveDeparted, "left"
 	}
 	at := event.record.OccurredAt
@@ -164,7 +165,7 @@ func (s *Service) settleStopVisit(
 		Event:        event.record,
 		MoveID:       move.ID,
 		StopID:       stop.ID,
-		Departure:    event.visit == shipment.VisitDeparture,
+		Departure:    event.visit == shipmentvocab.VisitDeparture,
 		ProviderStop: event.providerStop,
 	})
 	if err != nil {
@@ -217,8 +218,8 @@ func (s *Service) projectStopVisit(
 	}
 }
 
-func visitNoun(visit shipment.VisitKind) string {
-	if visit == shipment.VisitDeparture {
+func visitNoun(visit shipmentvocab.VisitKind) string {
+	if visit == shipmentvocab.VisitDeparture {
 		return "departure"
 	}
 	return "arrival"

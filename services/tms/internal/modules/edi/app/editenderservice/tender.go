@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -238,7 +239,7 @@ func (s *Service) SubmitLoadTender(
 					txCtx,
 					req.SourceShipmentID,
 					req.TenantInfo,
-					shipment.TenderStatusTendered,
+					shipmentvocab.TenderStatusTendered,
 				); err != nil {
 					return err
 				}
@@ -312,10 +313,10 @@ func validateTenderEligibility(entity *shipment.Shipment) error {
 	}
 
 	eligibleTenderStatus := entity.TenderStatus == nil ||
-		*entity.TenderStatus == shipment.TenderStatusRejected ||
-		*entity.TenderStatus == shipment.TenderStatusExpired ||
-		*entity.TenderStatus == shipment.TenderStatusCanceled
-	if entity.Status == shipment.StatusNew && eligibleTenderStatus {
+		*entity.TenderStatus == shipmentvocab.TenderStatusRejected ||
+		*entity.TenderStatus == shipmentvocab.TenderStatusExpired ||
+		*entity.TenderStatus == shipmentvocab.TenderStatusCanceled
+	if entity.Status == shipmentvocab.StatusNew && eligibleTenderStatus {
 		return nil
 	}
 

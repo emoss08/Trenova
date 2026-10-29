@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/recurringshipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/recurringshipmentports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -66,10 +67,13 @@ func TestResolveOccurrence_ExplicitDateWins(t *testing.T) {
 	series.NextOccurrenceAt = &stored
 
 	explicit := mustUnix(t, "2026-07-22 08:00", "America/New_York")
-	occurrence, err := resolveOccurrence(series, &recurringshipmentports.GenerateRecurringShipmentRequest{
-		OccurrenceAt: &explicit,
-		Trigger:      recurringshipment.RunTriggerManual,
-	})
+	occurrence, err := resolveOccurrence(
+		series,
+		&recurringshipmentports.GenerateRecurringShipmentRequest{
+			OccurrenceAt: &explicit,
+			Trigger:      recurringshipment.RunTriggerManual,
+		},
+	)
 	require.NoError(t, err)
 	assert.Equal(t, explicit, occurrence.At)
 	assert.Equal(t, explicit, occurrence.OriginalAt)
@@ -84,9 +88,12 @@ func TestResolveOccurrence_UsesStoredPointerWithShiftMetadata(t *testing.T) {
 	series.NextOccurrenceAt = &shifted
 	series.NextOccurrenceSourceAt = &source
 
-	occurrence, err := resolveOccurrence(series, &recurringshipmentports.GenerateRecurringShipmentRequest{
-		Trigger: recurringshipment.RunTriggerAuto,
-	})
+	occurrence, err := resolveOccurrence(
+		series,
+		&recurringshipmentports.GenerateRecurringShipmentRequest{
+			Trigger: recurringshipment.RunTriggerAuto,
+		},
+	)
 	require.NoError(t, err)
 	assert.Equal(t, shifted, occurrence.At)
 	assert.Equal(t, source, occurrence.OriginalAt)
@@ -148,18 +155,27 @@ func TestShouldAdvancePointer(t *testing.T) {
 	series.NextOccurrenceAt = &next
 
 	occurrence := &recurringshipment.Occurrence{At: next, OriginalAt: next}
-	assert.True(t, shouldAdvancePointer(series, &recurringshipmentports.GenerateRecurringShipmentRequest{
-		Trigger: recurringshipment.RunTriggerAuto,
-	}, occurrence))
-	assert.True(t, shouldAdvancePointer(series, &recurringshipmentports.GenerateRecurringShipmentRequest{
-		Trigger: recurringshipment.RunTriggerManual,
-	}, occurrence))
+	assert.True(
+		t,
+		shouldAdvancePointer(series, &recurringshipmentports.GenerateRecurringShipmentRequest{
+			Trigger: recurringshipment.RunTriggerAuto,
+		}, occurrence),
+	)
+	assert.True(
+		t,
+		shouldAdvancePointer(series, &recurringshipmentports.GenerateRecurringShipmentRequest{
+			Trigger: recurringshipment.RunTriggerManual,
+		}, occurrence),
+	)
 
 	other := mustUnix(t, "2026-07-24 08:00", "America/New_York")
-	assert.False(t, shouldAdvancePointer(series, &recurringshipmentports.GenerateRecurringShipmentRequest{
-		Trigger:      recurringshipment.RunTriggerManual,
-		OccurrenceAt: &other,
-	}, &recurringshipment.Occurrence{At: other, OriginalAt: other}))
+	assert.False(
+		t,
+		shouldAdvancePointer(series, &recurringshipmentports.GenerateRecurringShipmentRequest{
+			Trigger:      recurringshipment.RunTriggerManual,
+			OccurrenceAt: &other,
+		}, &recurringshipment.Occurrence{At: other, OriginalAt: other}),
+	)
 }
 
 func TestDeriveRecurringBOL(t *testing.T) {
@@ -192,15 +208,23 @@ func TestDestinationLocationID_PicksLastDeliveryStop(t *testing.T) {
 		{
 			Sequence: 0,
 			Stops: []*shipment.Stop{
-				{Type: shipment.StopTypePickup, Sequence: 0, LocationID: pulid.MustNew("loc_")},
-				{Type: shipment.StopTypeDelivery, Sequence: 1, LocationID: firstDelivery},
+				{
+					Type:       shipmentvocab.StopTypePickup,
+					Sequence:   0,
+					LocationID: pulid.MustNew("loc_"),
+				},
+				{Type: shipmentvocab.StopTypeDelivery, Sequence: 1, LocationID: firstDelivery},
 			},
 		},
 		{
 			Sequence: 1,
 			Stops: []*shipment.Stop{
-				{Type: shipment.StopTypePickup, Sequence: 0, LocationID: pulid.MustNew("loc_")},
-				{Type: shipment.StopTypeDelivery, Sequence: 1, LocationID: lastDelivery},
+				{
+					Type:       shipmentvocab.StopTypePickup,
+					Sequence:   0,
+					LocationID: pulid.MustNew("loc_"),
+				},
+				{Type: shipmentvocab.StopTypeDelivery, Sequence: 1, LocationID: lastDelivery},
 			},
 		},
 	}

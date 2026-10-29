@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmenthold"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmenthold/shipmentholddb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/customertrackingports"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype/documenttypedb"
@@ -76,7 +77,7 @@ func newHarness(t *testing.T) *harness {
 func (h *harness) shipment(
 	t *testing.T,
 	code string,
-	status shipment.Status,
+	status shipmentvocab.Status,
 ) *testutil.ShipmentGraph {
 	t.Helper()
 	graph := testutil.CreateShipmentGraph(
@@ -89,7 +90,7 @@ func (h *harness) shipment(
 			BOL:          "BOL-" + code,
 			ProNumber:    "PRO-" + code,
 			ShipmentID:   pulid.MustNew("shp_"),
-			MoveStatuses: []shipment.MoveStatus{shipment.MoveStatusNew},
+			MoveStatuses: []shipmentvocab.MoveStatus{shipmentvocab.MoveStatusNew},
 		},
 	)
 	sp := shipmentdb.Shipments
@@ -118,7 +119,7 @@ func (h *harness) profile(
 
 func TestProfilesRoundTripTheirFieldsAndGuardTheVersion(t *testing.T) {
 	h := newHarness(t)
-	graph := h.shipment(t, "PR-1", shipment.StatusInTransit)
+	graph := h.shipment(t, "PR-1", shipmentvocab.StatusInTransit)
 	customerID := graph.Shipment.CustomerID
 
 	missing, err := h.profiles.GetByCustomer(h.ctx, h.tenant, customerID)
@@ -154,7 +155,7 @@ func TestProfilesRoundTripTheirFieldsAndGuardTheVersion(t *testing.T) {
 
 func TestAProfileCreatedWithLinksOffStoresFalse(t *testing.T) {
 	h := newHarness(t)
-	graph := h.shipment(t, "PR-OFF", shipment.StatusInTransit)
+	graph := h.shipment(t, "PR-OFF", shipmentvocab.StatusInTransit)
 
 	profile := customertracking.DefaultProfile(
 		h.tenant.OrgID,
@@ -176,7 +177,7 @@ func TestAProfileCreatedWithLinksOffStoresFalse(t *testing.T) {
 
 func TestTheDatabaseRefusesAProfileWithRulesButNoStartTime(t *testing.T) {
 	h := newHarness(t)
-	graph := h.shipment(t, "PR-2", shipment.StatusInTransit)
+	graph := h.shipment(t, "PR-2", shipmentvocab.StatusInTransit)
 	profile := customertracking.DefaultProfile(
 		h.tenant.OrgID,
 		h.tenant.BuID,
@@ -191,7 +192,7 @@ func TestTheDatabaseRefusesAProfileWithRulesButNoStartTime(t *testing.T) {
 
 func TestLinksResolveByHashAndRevoke(t *testing.T) {
 	h := newHarness(t)
-	graph := h.shipment(t, "LK-1", shipment.StatusInTransit)
+	graph := h.shipment(t, "LK-1", shipmentvocab.StatusInTransit)
 	newLink := func() (*customertracking.Link, string) {
 		token, hash, err := tokenutils.New()
 		require.NoError(t, err)
@@ -252,7 +253,7 @@ func TestLinksResolveByHashAndRevoke(t *testing.T) {
 
 func TestNotificationsAreOwedOnceAndSettledOnce(t *testing.T) {
 	h := newHarness(t)
-	graph := h.shipment(t, "NT-1", shipment.StatusInTransit)
+	graph := h.shipment(t, "NT-1", shipmentvocab.StatusInTransit)
 	row := func() *customertracking.Notification {
 		return &customertracking.Notification{
 			ID:             customertracking.NewNotificationID(),
@@ -316,8 +317,8 @@ func TestNotificationsAreOwedOnceAndSettledOnce(t *testing.T) {
 
 func TestCandidatesAreLiveShipmentsOfNotifyingCustomers(t *testing.T) {
 	h := newHarness(t)
-	moving := h.shipment(t, "CD-1", shipment.StatusInTransit)
-	canceled := h.shipment(t, "CD-2", shipment.StatusCanceled)
+	moving := h.shipment(t, "CD-1", shipmentvocab.StatusInTransit)
+	canceled := h.shipment(t, "CD-2", shipmentvocab.StatusCanceled)
 	h.profile(t, moving.Shipment.CustomerID, true)
 
 	tenants, err := h.facts.ListNotifyingTenants(context.Background())
@@ -338,7 +339,7 @@ func TestCandidatesAreLiveShipmentsOfNotifyingCustomers(t *testing.T) {
 
 func TestLatestPodsIsTheFirstCurrentPodOnFile(t *testing.T) {
 	h := newHarness(t)
-	graph := h.shipment(t, "PD-1", shipment.StatusCompleted)
+	graph := h.shipment(t, "PD-1", shipmentvocab.StatusCompleted)
 	docType := &documenttype.DocumentType{
 		ID:             pulid.MustNew("dt_"),
 		OrganizationID: h.tenant.OrgID,
@@ -393,7 +394,7 @@ func TestLatestPodsIsTheFirstCurrentPodOnFile(t *testing.T) {
 
 func TestOnlyCustomerVisibleHoldsAndNotesAreShown(t *testing.T) {
 	h := newHarness(t)
-	graph := h.shipment(t, "VS-1", shipment.StatusInTransit)
+	graph := h.shipment(t, "VS-1", shipmentvocab.StatusInTransit)
 	hold := func(holdType holdreason.HoldType, visible, released bool) {
 		entity := &shipmenthold.ShipmentHold{
 			ID:                pulid.MustNew("shh_"),
@@ -417,7 +418,7 @@ func TestOnlyCustomerVisibleHoldsAndNotesAreShown(t *testing.T) {
 	hold(holdreason.HoldTypeOperational, false, false)
 	hold(holdreason.HoldTypeFinance, true, true)
 
-	comment := func(visibility shipment.CommentVisibility, text string) {
+	comment := func(visibility shipmentvocab.CommentVisibility, text string) {
 		entity := &shipment.ShipmentComment{
 			ID:             pulid.MustNew("shc_"),
 			OrganizationID: h.tenant.OrgID,
@@ -429,8 +430,8 @@ func TestOnlyCustomerVisibleHoldsAndNotesAreShown(t *testing.T) {
 		}
 		require.NoError(t, shipmentdb.ShipmentComments.Create(h.ctx, h.db, entity))
 	}
-	comment(shipment.CommentVisibilityCustomer, "Appointment moved to 14:00")
-	comment(shipment.CommentVisibilityInternal, "Driver is grumpy")
+	comment(shipmentvocab.CommentVisibilityCustomer, "Appointment moved to 14:00")
+	comment(shipmentvocab.CommentVisibilityInternal, "Driver is grumpy")
 
 	holds, err := h.facts.CustomerVisibleHolds(h.ctx, h.tenant, graph.Shipment.ID)
 	require.NoError(t, err)

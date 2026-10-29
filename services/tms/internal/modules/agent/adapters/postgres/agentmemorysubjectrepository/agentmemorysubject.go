@@ -14,8 +14,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice/invoicedb"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document/documentdb"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage/inboundmessagedb"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -148,7 +148,7 @@ func (r *repository) shipmentLinks(
 					Join(asnMove, asnMove.ID.EqCol(asn.ShipmentMoveID)).
 					Where(
 						asnMove.ShipmentID.In(ids...),
-						asn.Status.Ne(shipment.AssignmentStatusCanceled),
+						asn.Status.Ne(shipmentvocab.AssignmentStatusCanceled),
 					).
 					Order(asnMove.Sequence.Asc()), &workers),
 				keel.IntoSlice(casn.
@@ -156,7 +156,7 @@ func (r *repository) shipmentLinks(
 					Join(casnMove, casnMove.ID.EqCol(casn.ShipmentMoveID)).
 					Where(
 						casnMove.ShipmentID.In(ids...),
-						casn.Status.Ne(shipment.CarrierAssignmentStatusCanceled),
+						casn.Status.Ne(shipmentvocab.CarrierAssignmentStatusCanceled),
 					).
 					Order(casnMove.Sequence.Asc()), &carriers),
 			)

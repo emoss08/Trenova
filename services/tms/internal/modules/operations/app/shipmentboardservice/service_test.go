@@ -12,7 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/boardgrouping"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/quickfilter"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentboardports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/integrationservice"
@@ -196,7 +196,7 @@ func TestStageSummaryZeroFillsEveryStage(t *testing.T) {
 	t.Parallel()
 
 	repo := &stubBoardRepo{stageRows: []*shipmentboardports.ShipmentStageSummaryRow{
-		{StageRank: shipment.StageMoving.Rank(), Count: 4, Revenue: decimal.NewFromInt(900)},
+		{StageRank: shipmentvocab.StageMoving.Rank(), Count: 4, Revenue: decimal.NewFromInt(900)},
 	}}
 	basis := &stubBasis{}
 	svc := NewWithDependencies(&Dependencies{Repo: repo, QuickFilters: basis})
@@ -206,8 +206,8 @@ func TestStageSummaryZeroFillsEveryStage(t *testing.T) {
 		scopeRequest(quickfilter.Quick(quickfilter.QuickFilterLowMargin)),
 	)
 	require.NoError(t, err)
-	require.Len(t, rows, len(shipment.Stages()))
-	assert.Equal(t, shipment.StageLate, rows[0].Stage)
+	require.Len(t, rows, len(shipmentvocab.Stages()))
+	assert.Equal(t, shipmentvocab.StageLate, rows[0].Stage)
 	assert.Equal(t, 0, rows[0].Count)
 	assert.True(t, rows[0].Revenue.IsZero())
 	assert.Equal(t, 4, rows[2].Count)

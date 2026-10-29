@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/app/tendercreate"
 	"github.com/emoss08/trenova/internal/modules/operations/app/tendereffects"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"go.uber.org/fx"
@@ -60,7 +60,7 @@ func (s *Service) Escalate(
 		ceiling := tender.RateCeiling(
 			sell,
 			policy.CounterMarginFloor,
-			offer.RateMethod == shipment.CarrierRateMethodPerMile,
+			offer.RateMethod == shipmentvocab.CarrierRateMethodPerMile,
 			move.Distance,
 		)
 		offer.Rate = tender.EscalationRate(offer.Rate, policy.EscalationRateIncrease, ceiling)

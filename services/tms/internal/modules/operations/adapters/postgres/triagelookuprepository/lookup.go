@@ -10,8 +10,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmenttype"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmenttype/equipmenttypedb"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate/usstatedb"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/triagelookupports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer/customerdb"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location/locationdb"
@@ -94,7 +94,10 @@ func (r *repository) CustomerShipments(
 ) ([]pulid.ID, int, error) {
 	return dbtx.Read2(ctx, r.db, func(ctx context.Context) ([]pulid.ID, int, error) {
 		sp := shipmentdb.Shipments
-		scope := sp.Where(sp.CustomerID.Eq(req.CustomerID), sp.Status.Ne(shipment.StatusCanceled))
+		scope := sp.Where(
+			sp.CustomerID.Eq(req.CustomerID),
+			sp.Status.Ne(shipmentvocab.StatusCanceled),
+		)
 
 		var ids []pulid.ID
 		var thisWeek int64
@@ -133,7 +136,7 @@ func (r *repository) CustomerDefaults(
 					text(sp.TractorTypeID),
 					text(sp.TrailerTypeID),
 				).
-					Where(sp.CustomerID.Eq(customerID), sp.Status.Ne(shipment.StatusCanceled)).
+					Where(sp.CustomerID.Eq(customerID), sp.Status.Ne(shipmentvocab.StatusCanceled)).
 					Order(sp.CreatedAt.Desc()).
 					Limit(1),
 			)

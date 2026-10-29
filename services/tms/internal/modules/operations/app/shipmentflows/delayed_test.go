@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmenteffects"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentstate"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/testutil/mocks/realtimeportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
@@ -120,7 +121,7 @@ func TestServiceDelayShipments_PublishesRealtimeInvalidations(t *testing.T) {
 			ID:             shipmentID,
 			OrganizationID: orgID,
 			BusinessUnitID: buID,
-			Status:         shipment.StatusDelayed,
+			Status:         shipmentvocab.StatusDelayed,
 		}}, nil).
 		Once()
 

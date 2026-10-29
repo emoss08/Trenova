@@ -33,6 +33,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/order"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/quickfilter"
 	shipmentdomain "github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/trackingevent"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/ratingreviewports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentbillingports"
@@ -497,19 +498,19 @@ func (r *MutationResolver) CreateShipmentComment(ctx context.Context, shipmentID
 		}
 		parentCommentID = &parsedParentID
 	}
-	commentType := shipmentdomain.CommentTypeInternal
+	commentType := shipmentvocab.CommentTypeInternal
 	if input.Type != nil {
-		commentType = shipmentdomain.CommentType(*input.Type)
+		commentType = shipmentvocab.CommentType(*input.Type)
 	}
-	visibility := shipmentdomain.CommentVisibilityInternal
+	visibility := shipmentvocab.CommentVisibilityInternal
 	if input.Visibility != nil {
-		visibility = shipmentdomain.CommentVisibility(*input.Visibility)
+		visibility = shipmentvocab.CommentVisibility(*input.Visibility)
 	}
-	priority := shipmentdomain.CommentPriorityNormal
+	priority := shipmentvocab.CommentPriorityNormal
 	if input.Priority != nil {
-		priority = shipmentdomain.CommentPriority(*input.Priority)
+		priority = shipmentvocab.CommentPriority(*input.Priority)
 	}
-	requiresAcknowledgment := priority == shipmentdomain.CommentPriorityUrgent &&
+	requiresAcknowledgment := priority == shipmentvocab.CommentPriorityUrgent &&
 		parentCommentID == nil
 	if input.RequiresAcknowledgment != nil {
 		requiresAcknowledgment = *input.RequiresAcknowledgment
@@ -563,19 +564,19 @@ func (r *MutationResolver) UpdateShipmentComment(ctx context.Context, shipmentID
 	if err != nil {
 		return nil, err
 	}
-	commentType := shipmentdomain.CommentTypeInternal
+	commentType := shipmentvocab.CommentTypeInternal
 	if input.Type != nil {
-		commentType = shipmentdomain.CommentType(*input.Type)
+		commentType = shipmentvocab.CommentType(*input.Type)
 	}
-	visibility := shipmentdomain.CommentVisibilityInternal
+	visibility := shipmentvocab.CommentVisibilityInternal
 	if input.Visibility != nil {
-		visibility = shipmentdomain.CommentVisibility(*input.Visibility)
+		visibility = shipmentvocab.CommentVisibility(*input.Visibility)
 	}
-	priority := shipmentdomain.CommentPriorityNormal
+	priority := shipmentvocab.CommentPriorityNormal
 	if input.Priority != nil {
-		priority = shipmentdomain.CommentPriority(*input.Priority)
+		priority = shipmentvocab.CommentPriority(*input.Priority)
 	}
-	requiresAcknowledgment := priority == shipmentdomain.CommentPriorityUrgent
+	requiresAcknowledgment := priority == shipmentvocab.CommentPriorityUrgent
 	if input.RequiresAcknowledgment != nil {
 		requiresAcknowledgment = *input.RequiresAcknowledgment
 	}
@@ -972,9 +973,9 @@ func (r *QueryResolver) ShipmentBillingTransferCandidateIds(ctx context.Context,
 		return nil, err
 	}
 
-	var status shipmentdomain.Status
+	var status shipmentvocab.Status
 	if input.Status != nil {
-		status = shipmentdomain.Status(*input.Status)
+		status = shipmentvocab.Status(*input.Status)
 	}
 
 	response, err := r.ShipmentBillingTransfer.ListBillingTransferCandidateIDs(ctx, &shipmentbillingports.ListBillingTransferCandidateIDsRequest{

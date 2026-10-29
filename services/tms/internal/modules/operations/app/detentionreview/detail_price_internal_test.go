@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/operations/app/detentioneffects"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
 	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -65,8 +65,8 @@ func TestGetOccurrenceDetail_PricesARunningClockAsOfNow(t *testing.T) {
 		ID:              pulid.MustNew("dto_"),
 		ShipmentID:      pulid.MustNew("shp_"),
 		PolicySnapshot:  hourlySnapshot(),
-		StopType:        shipment.StopTypeDelivery,
-		ScheduleType:    shipment.StopScheduleTypeAppointment,
+		StopType:        shipmentvocab.StopTypeDelivery,
+		ScheduleType:    shipmentvocab.StopScheduleTypeAppointment,
 		ArrivedAt:       &arrived,
 		ClockStartAt:    arrived,
 		IsOpen:          true,

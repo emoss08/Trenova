@@ -12,7 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionpolicy"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/pickupwindow"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/quickfilter"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchboardports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentboardports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
@@ -60,7 +60,7 @@ func TestBuildDeliveryWatch(t *testing.T) {
 			ShipmentID: pulid.MustNew("shp_"),
 			DeliveryAt: day + 17*3600,
 			Cutoff:     day + 17*3600,
-			StageRank:  shipment.StageLate.Rank(),
+			StageRank:  shipmentvocab.StageLate.Rank(),
 		},
 		{
 			ShipmentID:    pulid.MustNew("shp_"),

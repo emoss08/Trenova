@@ -17,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/app/orderservice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/order"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/orderports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -71,7 +72,7 @@ func newFakeOrders() *fakeOrders {
 			Allocations: []*shipment.ChargeAllocation{{
 				ID:               pulid.MustNew("chal_"),
 				BillToCustomerID: payer,
-				Method:           shipment.ChargeAllocationMethodPercent,
+				Method:           shipmentvocab.ChargeAllocationMethodPercent,
 				Percent:          decimal.NewNullDecimal(decimal.RequireFromString("100")),
 				Version:          3,
 			}},
@@ -557,8 +558,8 @@ func TestCancelOrder_NamesEveryLiveShipmentAndNeedsAReason(t *testing.T) {
 
 	orders := newFakeOrders()
 	orders.legs = []*shipment.Shipment{
-		{ID: pulid.MustNew("shp_"), ProNumber: "PRO-1", Status: shipment.StatusNew},
-		{ID: pulid.MustNew("shp_"), ProNumber: "PRO-2", Status: shipment.StatusInTransit},
+		{ID: pulid.MustNew("shp_"), ProNumber: "PRO-1", Status: shipmentvocab.StatusNew},
+		{ID: pulid.MustNew("shp_"), ProNumber: "PRO-2", Status: shipmentvocab.StatusInTransit},
 	}
 	tool := NewCancelOrderTool(orders)
 	params := agenttoolstest.ApprovedParams(map[string]any{
@@ -631,7 +632,7 @@ func TestAddOrderCharge_ShowsTheMoneyAndReadsTheSplit(t *testing.T) {
 	assert.Equal(t, int16(1), orders.added.Allocations[1].Sequence)
 	assert.Equal(
 		t,
-		shipment.ChargeAllocationKindOrderCharge,
+		shipmentvocab.ChargeAllocationKindOrderCharge,
 		orders.added.Allocations[0].ChargeKind,
 	)
 	assert.Equal(t, []agent.EgressClass{agent.EgressMoney}, tool.Policy().Egress)

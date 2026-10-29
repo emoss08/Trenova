@@ -20,6 +20,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/assignmentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentmoveports"
 	"github.com/emoss08/trenova/internal/modules/places/domain/geofence"
@@ -388,7 +389,7 @@ func moveWithStop(arrived *int64) (*shipment.ShipmentMove, *shipment.Stop) {
 	}
 	move := &shipment.ShipmentMove{
 		ID:     pulid.MustNew("smv_"),
-		Status: shipment.MoveStatusInTransit,
+		Status: shipmentvocab.MoveStatusInTransit,
 		Stops:  []*shipment.Stop{stop},
 	}
 	stop.ShipmentMoveID = move.ID
@@ -758,7 +759,7 @@ func movingTo(stop *shipment.Stop, location *location.Location) *shipment.Shipme
 	stop.Location = location
 	return &shipment.ShipmentMove{
 		ID:     stop.ShipmentMoveID,
-		Status: shipment.MoveStatusInTransit,
+		Status: shipmentvocab.MoveStatusInTransit,
 		Stops:  []*shipment.Stop{stop},
 	}
 }

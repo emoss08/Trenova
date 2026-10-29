@@ -5,7 +5,7 @@ import (
 	"regexp"
 
 	"github.com/emoss08/keel"
-	"github.com/emoss08/trenova/internal/modules/places/domain/distanceprofile"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/places/domain/storedmileage"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -15,28 +15,10 @@ import (
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 )
 
-const (
-	JurisdictionDistanceUnitsMiles      = distanceprofile.DefaultDistanceUnits
-	JurisdictionDistanceUnitsKilometers = "Kilometers"
-)
-
 var (
 	jurisdictionCountryCodeRE = regexp.MustCompile(`^[A-Z]{2}$`)
 	jurisdictionCodeRE        = regexp.MustCompile(`^[A-Z0-9]{1,5}$`)
 )
-
-type JurisdictionMileSource string
-
-const (
-	JurisdictionMileSourceRouteCalculation = JurisdictionMileSource("RouteCalculation")
-	JurisdictionMileSourceManual           = JurisdictionMileSource("Manual")
-)
-
-func (s JurisdictionMileSource) String() string { return string(s) }
-
-func (s JurisdictionMileSource) IsValid() bool {
-	return s == JurisdictionMileSourceRouteCalculation || s == JurisdictionMileSourceManual
-}
 
 var (
 	_ validationframework.TenantedEntity = (*ShipmentMoveJurisdictionMile)(nil)
@@ -45,27 +27,27 @@ var (
 type ShipmentMoveJurisdictionMile struct {
 	keel.Table `keel:"shipment_move_jurisdiction_miles"`
 
-	ID                pulid.ID               `json:"id"                keel:"id,pk,autoid:smjm_"`
-	BusinessUnitID    pulid.ID               `json:"businessUnitId"    keel:"business_unit_id,pk,tenant"`
-	OrganizationID    pulid.ID               `json:"organizationId"    keel:"organization_id,pk,tenant"`
-	ShipmentMoveID    pulid.ID               `json:"shipmentMoveId"    keel:"shipment_move_id"`
-	ShipmentID        pulid.ID               `json:"shipmentId"        keel:"shipment_id"`
-	CountryCode       string                 `json:"countryCode"       keel:"country_code"`
-	JurisdictionCode  string                 `json:"jurisdictionCode"  keel:"jurisdiction_code"`
-	Sequence          int                    `json:"sequence"          keel:"sequence"`
-	Distance          float64                `json:"distance"          keel:"distance"`
-	DistanceUnits     string                 `json:"distanceUnits"     keel:"distance_units"`
-	TollDistance      *float64               `json:"tollDistance"      keel:"toll_distance"`
-	FerryDistance     *float64               `json:"ferryDistance"     keel:"ferry_distance"`
-	Loaded            bool                   `json:"loaded"            keel:"loaded"`
-	Source            JurisdictionMileSource `json:"source"            keel:"source"`
-	Provider          string                 `json:"provider"          keel:"provider,nullzero"`
-	DataVersion       string                 `json:"dataVersion"       keel:"data_version,nullzero"`
-	DistanceProfileID pulid.ID               `json:"distanceProfileId" keel:"distance_profile_id,nullzero"`
-	CalculatedAt      int64                  `json:"calculatedAt"      keel:"calculated_at"`
-	Version           int64                  `json:"version"           keel:"version,version"`
-	CreatedAt         int64                  `json:"createdAt"         keel:"created_at,autocreate"`
-	UpdatedAt         int64                  `json:"updatedAt"         keel:"updated_at,autoupdate"`
+	ID                pulid.ID                             `json:"id"                keel:"id,pk,autoid:smjm_"`
+	BusinessUnitID    pulid.ID                             `json:"businessUnitId"    keel:"business_unit_id,pk,tenant"`
+	OrganizationID    pulid.ID                             `json:"organizationId"    keel:"organization_id,pk,tenant"`
+	ShipmentMoveID    pulid.ID                             `json:"shipmentMoveId"    keel:"shipment_move_id"`
+	ShipmentID        pulid.ID                             `json:"shipmentId"        keel:"shipment_id"`
+	CountryCode       string                               `json:"countryCode"       keel:"country_code"`
+	JurisdictionCode  string                               `json:"jurisdictionCode"  keel:"jurisdiction_code"`
+	Sequence          int                                  `json:"sequence"          keel:"sequence"`
+	Distance          float64                              `json:"distance"          keel:"distance"`
+	DistanceUnits     string                               `json:"distanceUnits"     keel:"distance_units"`
+	TollDistance      *float64                             `json:"tollDistance"      keel:"toll_distance"`
+	FerryDistance     *float64                             `json:"ferryDistance"     keel:"ferry_distance"`
+	Loaded            bool                                 `json:"loaded"            keel:"loaded"`
+	Source            shipmentvocab.JurisdictionMileSource `json:"source"            keel:"source"`
+	Provider          string                               `json:"provider"          keel:"provider,nullzero"`
+	DataVersion       string                               `json:"dataVersion"       keel:"data_version,nullzero"`
+	DistanceProfileID pulid.ID                             `json:"distanceProfileId" keel:"distance_profile_id,nullzero"`
+	CalculatedAt      int64                                `json:"calculatedAt"      keel:"calculated_at"`
+	Version           int64                                `json:"version"           keel:"version,version"`
+	CreatedAt         int64                                `json:"createdAt"         keel:"created_at,autocreate"`
+	UpdatedAt         int64                                `json:"updatedAt"         keel:"updated_at,autoupdate"`
 }
 
 func (m *ShipmentMoveJurisdictionMile) Validate(multiErr *errortypes.MultiError) {
@@ -102,7 +84,7 @@ func (m *ShipmentMoveJurisdictionMile) Validate(multiErr *errortypes.MultiError)
 		validation.Field(
 			&m.DistanceUnits,
 			validation.Required.Error("Distance units are required"),
-			validation.In(JurisdictionDistanceUnitsMiles, JurisdictionDistanceUnitsKilometers).
+			validation.In(shipmentvocab.JurisdictionDistanceUnitsMiles, shipmentvocab.JurisdictionDistanceUnitsKilometers).
 				Error("Distance units must be Miles or Kilometers"),
 		),
 		validation.Field(
@@ -116,7 +98,7 @@ func (m *ShipmentMoveJurisdictionMile) Validate(multiErr *errortypes.MultiError)
 		validation.Field(
 			&m.Source,
 			validation.Required.Error("Source is required"),
-			domainvalidation.ValidEnum[JurisdictionMileSource]("Source is invalid"),
+			domainvalidation.ValidEnum[shipmentvocab.JurisdictionMileSource]("Source is invalid"),
 		),
 		validation.Field(
 			&m.CalculatedAt,
@@ -134,7 +116,7 @@ func (m *ShipmentMoveJurisdictionMile) DistanceInMiles() float64 {
 	return storedmileage.ConvertDistance(
 		m.Distance,
 		m.DistanceUnits,
-		JurisdictionDistanceUnitsMiles,
+		shipmentvocab.JurisdictionDistanceUnitsMiles,
 	)
 }
 
@@ -153,10 +135,10 @@ func (m *ShipmentMoveJurisdictionMile) GetTableName() string {
 func (m *ShipmentMoveJurisdictionMile) BeforeCreate(ctx context.Context) error {
 	now := timeutils.NowUnix()
 	if m.Source == "" {
-		m.Source = JurisdictionMileSourceRouteCalculation
+		m.Source = shipmentvocab.JurisdictionMileSourceRouteCalculation
 	}
 	if m.DistanceUnits == "" {
-		m.DistanceUnits = JurisdictionDistanceUnitsMiles
+		m.DistanceUnits = shipmentvocab.JurisdictionDistanceUnitsMiles
 	}
 	if m.CalculatedAt == 0 {
 		m.CalculatedAt = now

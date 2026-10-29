@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/tariffmapping"
 	shipmentdomain "github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentcommentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentserviceports"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
@@ -94,13 +95,13 @@ func ShipmentFromInput(
 		return nil, err
 	}
 
-	status := shipmentdomain.StatusNew
+	status := shipmentvocab.StatusNew
 	if input.Status != nil {
-		status = shipmentdomain.Status(*input.Status)
+		status = shipmentvocab.Status(*input.Status)
 	}
-	entryMethod := shipmentdomain.EntryMethodManual
+	entryMethod := shipmentvocab.EntryMethodManual
 	if input.EntryMethod != nil {
-		entryMethod = shipmentdomain.EntryMethod(*input.EntryMethod)
+		entryMethod = shipmentvocab.EntryMethod(*input.EntryMethod)
 	}
 
 	entity := &shipmentdomain.Shipment{
@@ -135,7 +136,7 @@ func ShipmentFromInput(
 		ActualDeliveryDate:   gqlscalar.Int64Ptr(input.ActualDeliveryDate),
 		ActualShipDate:       gqlscalar.Int64Ptr(input.ActualShipDate),
 		CanceledAt:           gqlscalar.Int64Ptr(input.CanceledAt),
-		BillingTransferStatus: shipmentdomain.BillingTransferStatus(
+		BillingTransferStatus: shipmentvocab.BillingTransferStatus(
 			gqlscalar.StringValue(input.BillingTransferStatus),
 		),
 		TransferredToBillingAt: gqlscalar.Int64Ptr(input.TransferredToBillingAt),
@@ -144,7 +145,7 @@ func ShipmentFromInput(
 		FuelSurchargeLocked:    gqlscalar.BoolValue(input.FuelSurchargeLocked),
 		RateOverrideReason:     gqlscalar.StringValue(input.RateOverrideReason),
 		SourceDocumentID:       gqlscalar.StringValue(input.SourceDocumentID),
-		FreightTerms:           shipmentdomain.FreightTermsPrepaid,
+		FreightTerms:           shipmentvocab.FreightTermsPrepaid,
 	}
 	if input.FreightTerms != nil {
 		entity.FreightTerms = *input.FreightTerms
@@ -157,7 +158,7 @@ func ShipmentFromInput(
 		entity.BillToCustomerID = &billToCustomerID
 	}
 	if input.TenderStatus != nil {
-		tenderStatus := shipmentdomain.TenderStatus(*input.TenderStatus)
+		tenderStatus := shipmentvocab.TenderStatus(*input.TenderStatus)
 		entity.TenderStatus = &tenderStatus
 	}
 	if input.Version != nil {
@@ -206,9 +207,9 @@ func shipmentMovesFromInput(
 		if err != nil {
 			return nil, err
 		}
-		status := shipmentdomain.MoveStatusNew
+		status := shipmentvocab.MoveStatusNew
 		if input.Status != nil {
-			status = shipmentdomain.MoveStatus(*input.Status)
+			status = shipmentvocab.MoveStatus(*input.Status)
 		}
 		loaded := true
 		if input.Loaded != nil {
@@ -268,17 +269,17 @@ func shipmentStopsFromInput(
 		if err != nil {
 			return nil, err
 		}
-		status := shipmentdomain.StopStatusNew
+		status := shipmentvocab.StopStatusNew
 		if input.Status != nil {
-			status = shipmentdomain.StopStatus(*input.Status)
+			status = shipmentvocab.StopStatus(*input.Status)
 		}
-		stopType := shipmentdomain.StopTypePickup
+		stopType := shipmentvocab.StopTypePickup
 		if input.Type != nil {
-			stopType = shipmentdomain.StopType(*input.Type)
+			stopType = shipmentvocab.StopType(*input.Type)
 		}
-		scheduleType := shipmentdomain.StopScheduleTypeOpen
+		scheduleType := shipmentvocab.StopScheduleTypeOpen
 		if input.ScheduleType != nil {
-			scheduleType = shipmentdomain.StopScheduleType(*input.ScheduleType)
+			scheduleType = shipmentvocab.StopScheduleType(*input.ScheduleType)
 		}
 		stop := &shipmentdomain.Stop{
 			ID:                     id,
@@ -436,17 +437,17 @@ func CommentFiltersFromGraphQL(
 	}
 
 	if len(filter.Types) > 0 {
-		filters.Types = make([]shipmentdomain.CommentType, 0, len(filter.Types))
+		filters.Types = make([]shipmentvocab.CommentType, 0, len(filter.Types))
 		for _, commentType := range filter.Types {
-			filters.Types = append(filters.Types, shipmentdomain.CommentType(commentType))
+			filters.Types = append(filters.Types, shipmentvocab.CommentType(commentType))
 		}
 	}
 	if len(filter.Priorities) > 0 {
-		filters.Priorities = make([]shipmentdomain.CommentPriority, 0, len(filter.Priorities))
+		filters.Priorities = make([]shipmentvocab.CommentPriority, 0, len(filter.Priorities))
 		for _, priority := range filter.Priorities {
 			filters.Priorities = append(
 				filters.Priorities,
-				shipmentdomain.CommentPriority(priority),
+				shipmentvocab.CommentPriority(priority),
 			)
 		}
 	}

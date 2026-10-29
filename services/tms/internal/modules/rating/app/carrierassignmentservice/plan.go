@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentcoverage"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentstate"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/carrierassignmentports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateconfirmation"
@@ -228,7 +229,7 @@ func (s *Service) planCancel(
 	if err != nil {
 		return nil, err
 	}
-	if move.Status != shipment.MoveStatusAssigned {
+	if move.Status != shipmentvocab.MoveStatusAssigned {
 		return nil, errortypes.NewBusinessError("Only fresh assigned shipment moves can have their carrier assignment canceled").
 			WithParam("shipmentMoveId", req.ShipmentMoveID.String())
 	}
@@ -302,9 +303,9 @@ func (s *Service) projectCoverageChange(
 
 	targetMove.CarrierAssignment = assignment
 	if assignment != nil {
-		targetMove.CoverageType = shipment.MoveCoverageTypeCarrier
+		targetMove.CoverageType = shipmentvocab.MoveCoverageTypeCarrier
 	} else {
-		targetMove.CoverageType = shipment.MoveCoverageTypeUnassigned
+		targetMove.CoverageType = shipmentvocab.MoveCoverageTypeUnassigned
 	}
 
 	control, err := s.controlRepo.Get(ctx, tenantports.GetShipmentControlRequest{

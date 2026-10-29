@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentbillingports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -106,7 +107,7 @@ func queueItem(status billingqueue.Status) *billingqueue.BillingQueueItem {
 		BillToCustomer:       &customer.Customer{Name: "Acme Foods"},
 		AssignedBiller:       &tenant.User{Name: "Dana Biller"},
 		PayerShare: &billingqueue.PayerShare{Lines: []*billingqueue.PayerShareLine{{
-			Kind:        shipment.ChargeAllocationKindFreight,
+			Kind:        shipmentvocab.ChargeAllocationKindFreight,
 			Description: "Freight",
 			Amount:      decimal.RequireFromString("1850.00"),
 			ChargeTotal: decimal.RequireFromString("1850.00"),
@@ -302,7 +303,7 @@ func TestListBillingTransferCandidates_SaysWhatATransferWouldDoWithEachRow(t *te
 			{
 				ShipmentID:   ready,
 				ProNumber:    "PRO-1",
-				Status:       shipment.StatusReadyToInvoice,
+				Status:       shipmentvocab.StatusReadyToInvoice,
 				CustomerName: "Acme Foods",
 				Outcome:      shipmentbillingports.BillingTransferOutcomeTransfer,
 				AutoApprove:  true,
@@ -311,7 +312,7 @@ func TestListBillingTransferCandidates_SaysWhatATransferWouldDoWithEachRow(t *te
 			{
 				ShipmentID:  blocked,
 				ProNumber:   "PRO-2",
-				Status:      shipment.StatusReadyToInvoice,
+				Status:      shipmentvocab.StatusReadyToInvoice,
 				Outcome:     shipmentbillingports.BillingTransferOutcomeRefused,
 				FailureCode: shipmentbillingports.BillingTransferFailureRequirementsUnmet,
 				Reason:      "Shipment billing requirements must be resolved",
@@ -336,7 +337,7 @@ func TestListBillingTransferCandidates_SaysWhatATransferWouldDoWithEachRow(t *te
 	require.NoError(t, err)
 
 	req := candidates.captured
-	assert.Equal(t, shipment.StatusReadyToInvoice, req.Status)
+	assert.Equal(t, shipmentvocab.StatusReadyToInvoice, req.Status)
 	assert.Equal(t, 2, req.Filter.Pagination.Limit)
 	assert.Equal(t, 2, req.Filter.Pagination.Offset)
 	require.Len(t, req.Filter.FieldFilters, 2)
@@ -379,7 +380,7 @@ func candidateDecision(
 ) shipmentbillingports.BillingTransferDecision {
 	decision := shipmentbillingports.BillingTransferDecision{
 		ShipmentID:   pulid.MustNew("shp_"),
-		Status:       shipment.StatusReadyToInvoice,
+		Status:       shipmentvocab.StatusReadyToInvoice,
 		Outcome:      outcome,
 		CurrencyCode: currency,
 	}

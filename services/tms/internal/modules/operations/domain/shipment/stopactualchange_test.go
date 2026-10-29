@@ -4,13 +4,14 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func changeMove(stops ...*shipment.Stop) *shipment.ShipmentMove {
-	return &shipment.ShipmentMove{Status: shipment.MoveStatusAssigned, Stops: stops}
+	return &shipment.ShipmentMove{Status: shipmentvocab.MoveStatusAssigned, Stops: stops}
 }
 
 func at(v int64) *int64 { return &v }
@@ -29,8 +30,8 @@ func TestApplyStopActualChangesSetsTimesAndStatuses(t *testing.T) {
 
 	require.NoError(t, err)
 	assert.Len(t, touched, 2)
-	assert.Equal(t, shipment.StopStatusCompleted, first.Status)
-	assert.Equal(t, shipment.StopStatusInTransit, second.Status)
+	assert.Equal(t, shipmentvocab.StopStatusCompleted, first.Status)
+	assert.Equal(t, shipmentvocab.StopStatusInTransit, second.Status)
 	assert.Equal(t, at(300), second.ActualArrival)
 }
 
@@ -97,7 +98,7 @@ func TestApplyStopActualChangesRefusesACanceledLoadOrAMissingStop(t *testing.T) 
 
 	stop := visitStop(1, pulid.MustNew("loc_"), false, false)
 	canceled := changeMove(stop)
-	canceled.Status = shipment.MoveStatusCanceled
+	canceled.Status = shipmentvocab.MoveStatusCanceled
 	_, err := canceled.ApplyStopActualChanges(
 		[]shipment.StopActualChange{{StopID: stop.ID, Arrival: at(1)}},
 	)
@@ -116,7 +117,7 @@ func TestApplyStopActualChangesCorrectsACompletedLoad(t *testing.T) {
 
 	stop := visitStop(1, pulid.MustNew("loc_"), true, true)
 	move := changeMove(stop)
-	move.Status = shipment.MoveStatusCompleted
+	move.Status = shipmentvocab.MoveStatusCompleted
 
 	_, err := move.ApplyStopActualChanges(
 		[]shipment.StopActualChange{{StopID: stop.ID, Arrival: at(50)}},
@@ -124,5 +125,5 @@ func TestApplyStopActualChangesCorrectsACompletedLoad(t *testing.T) {
 
 	require.NoError(t, err)
 	assert.Equal(t, at(50), stop.ActualArrival)
-	assert.Equal(t, shipment.StopStatusCompleted, stop.Status)
+	assert.Equal(t, shipmentvocab.StopStatusCompleted, stop.Status)
 }

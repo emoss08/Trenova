@@ -617,6 +617,7 @@ modules:
       - shipmentrating
       - shipmentstate
       - shipmentsuggestion
+      - shipmentvocab
       - stopeta
       - tender
       - trackingevent

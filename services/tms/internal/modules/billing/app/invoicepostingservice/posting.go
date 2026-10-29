@@ -20,6 +20,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
@@ -322,7 +323,7 @@ func (s *Service) planInvoicedLegs(
 		shp.BilledAt = &now
 		shp.RateLocked = true
 		if _, open := stillOpen[shp.ID]; !open {
-			shp.Status = shipment.StatusInvoiced
+			shp.Status = shipmentvocab.StatusInvoiced
 		}
 		changes = append(changes, LegChange{Before: &before, After: shp})
 	}

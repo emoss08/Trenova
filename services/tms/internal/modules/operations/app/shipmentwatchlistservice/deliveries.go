@@ -5,7 +5,7 @@ import (
 	"slices"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentboardports"
 )
 
@@ -38,7 +38,7 @@ func classifyDelivery(
 	if now > row.Cutoff {
 		return deliveryLate, int((now - row.Cutoff) / secondsPerMinute)
 	}
-	if row.StageRank == shipment.StageLate.Rank() {
+	if row.StageRank == shipmentvocab.StageLate.Rank() {
 		return deliveryLate, 0
 	}
 

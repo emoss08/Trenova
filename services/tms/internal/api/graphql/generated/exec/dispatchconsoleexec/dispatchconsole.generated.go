@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
 	"github.com/vektah/gqlparser/v2/ast"
 )
@@ -2665,7 +2666,7 @@ func unmarshalInputDispatchAssignMoveToCarrierInput(ctx context.Context, ec *gql
 			it.CarrierID = data
 		case "rateMethod":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("rateMethod"))
-			data, err := unmarshalNCarrierRateMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋshipmentᚐCarrierRateMethod(ctx, ec, v)
+			data, err := unmarshalNCarrierRateMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋshipmentvocabᚐCarrierRateMethod(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -3116,9 +3117,9 @@ func unmarshalInputDispatchPlanInput(ctx context.Context, ec *gqlexec.Exec, obj 
 	return it, nil
 }
 
-func unmarshalNCarrierRateMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋshipmentᚐCarrierRateMethod(ctx context.Context, ec *gqlexec.Exec, v any) (shipment.CarrierRateMethod, error) {
+func unmarshalNCarrierRateMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋshipmentvocabᚐCarrierRateMethod(ctx context.Context, ec *gqlexec.Exec, v any) (shipmentvocab.CarrierRateMethod, error) {
 	tmp, err := graphql.UnmarshalString(v)
-	res := shipment.CarrierRateMethod(tmp)
+	res := shipmentvocab.CarrierRateMethod(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 

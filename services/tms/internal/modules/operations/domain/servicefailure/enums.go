@@ -1,6 +1,9 @@
 package servicefailure
 
-import "github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+import (
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
+)
 
 type ReasonCategory string
 
@@ -91,14 +94,16 @@ func (a ReasonCodeAppliesTo) IsValid() bool {
 	}
 }
 
-func (a ReasonCodeAppliesTo) AllowsStopType(stopType shipment.StopType) bool {
+func (a ReasonCodeAppliesTo) AllowsStopType(stopType shipmentvocab.StopType) bool {
 	switch a {
 	case ReasonCodeAppliesToBoth, ReasonCodeAppliesToAll:
 		return true
 	case ReasonCodeAppliesToPickup:
-		return stopType == shipment.StopTypePickup || stopType == shipment.StopTypeSplitPickup
+		return stopType == shipmentvocab.StopTypePickup ||
+			stopType == shipmentvocab.StopTypeSplitPickup
 	case ReasonCodeAppliesToDelivery:
-		return stopType == shipment.StopTypeDelivery || stopType == shipment.StopTypeSplitDelivery
+		return stopType == shipmentvocab.StopTypeDelivery ||
+			stopType == shipmentvocab.StopTypeSplitDelivery
 	default:
 		return false
 	}

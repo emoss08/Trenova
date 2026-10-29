@@ -13,7 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/boardgrouping"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/pickupwindow"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/quickfilter"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/stopeta"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vektah/gqlparser/v2/ast"
@@ -1521,7 +1521,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.ShipmentStageSummary)
 					return obj.Stage, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNShipmentStage2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋshipmentᚐStage),
+				Marshal: gqlexec.Marshal(marshalNShipmentStage2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋshipmentvocabᚐStage),
 			},
 			{
 				Name:     "rank",
@@ -3176,7 +3176,7 @@ func marshalNShipmentQuickFilterCount2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinte
 	return ec.MarshalType(ctx, sel, "ShipmentQuickFilterCount", v)
 }
 
-func marshalNShipmentStage2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋshipmentᚐStage(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v shipment.Stage) graphql.Marshaler {
+func marshalNShipmentStage2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋshipmentvocabᚐStage(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v shipmentvocab.Stage) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)

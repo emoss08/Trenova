@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/trackingevent"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -18,13 +19,18 @@ type fixture struct {
 }
 
 func newFixture(stopCount int) *fixture {
-	f := &fixture{move: &shipment.ShipmentMove{ID: pulid.MustNew("smv_"), Status: shipment.MoveStatusAssigned}}
+	f := &fixture{
+		move: &shipment.ShipmentMove{
+			ID:     pulid.MustNew("smv_"),
+			Status: shipmentvocab.MoveStatusAssigned,
+		},
+	}
 	for i := range stopCount {
 		stop := &shipment.Stop{
 			ID:         pulid.MustNew("stp_"),
 			Sequence:   int64(i),
 			LocationID: pulid.MustNew("loc_"),
-			Status:     shipment.StopStatusNew,
+			Status:     shipmentvocab.StopStatusNew,
 		}
 		f.stops = append(f.stops, stop)
 		f.move.Stops = append(f.move.Stops, stop)
@@ -44,7 +50,7 @@ func (f *fixture) clone() *fixture {
 
 func event(
 	stop *shipment.Stop,
-	kind shipment.VisitKind,
+	kind shipmentvocab.VisitKind,
 	source trackingevent.Source,
 	key string,
 	at int64,
@@ -66,7 +72,7 @@ func settleAll(
 	opts trackingevent.Options,
 ) trackingevent.Projection {
 	t.Helper()
-	for range 2 * len(f.stops) + 2 {
+	for range 2*len(f.stops) + 2 {
 		projection := trackingevent.Project(f.move, events, opts)
 		if !projection.HasChanges() {
 			return projection
@@ -96,16 +102,16 @@ func ptr(v int64) *int64 { return &v }
 func scenario(f *fixture) []*trackingevent.TrackingEvent {
 	s1, s2, s3 := f.stops[0], f.stops[1], f.stops[2]
 	return []*trackingevent.TrackingEvent{
-		event(s1, shipment.VisitArrival, trackingevent.SourceTelematics, "t-1", 1000),
-		event(s1, shipment.VisitArrival, trackingevent.SourceEDI, "e-1", 990),
-		event(s1, shipment.VisitArrival, trackingevent.SourceTelematics, "t-2", 1005),
-		event(s1, shipment.VisitDeparture, trackingevent.SourceTelematics, "t-3", 2000),
-		event(s1, shipment.VisitDeparture, trackingevent.SourceDriver, "d-1", 2010),
-		event(s2, shipment.VisitArrival, trackingevent.SourceTelematics, "t-4", 3000),
-		event(s2, shipment.VisitArrival, trackingevent.SourceTelematics, "t-5", 3000),
-		event(s2, shipment.VisitDeparture, trackingevent.SourceEDI, "e-2", 4000),
-		event(s3, shipment.VisitArrival, trackingevent.SourceTelematics, "t-6", 5000),
-		event(s3, shipment.VisitDeparture, trackingevent.SourceTelematics, "t-7", 6000),
+		event(s1, shipmentvocab.VisitArrival, trackingevent.SourceTelematics, "t-1", 1000),
+		event(s1, shipmentvocab.VisitArrival, trackingevent.SourceEDI, "e-1", 990),
+		event(s1, shipmentvocab.VisitArrival, trackingevent.SourceTelematics, "t-2", 1005),
+		event(s1, shipmentvocab.VisitDeparture, trackingevent.SourceTelematics, "t-3", 2000),
+		event(s1, shipmentvocab.VisitDeparture, trackingevent.SourceDriver, "d-1", 2010),
+		event(s2, shipmentvocab.VisitArrival, trackingevent.SourceTelematics, "t-4", 3000),
+		event(s2, shipmentvocab.VisitArrival, trackingevent.SourceTelematics, "t-5", 3000),
+		event(s2, shipmentvocab.VisitDeparture, trackingevent.SourceEDI, "e-2", 4000),
+		event(s3, shipmentvocab.VisitArrival, trackingevent.SourceTelematics, "t-6", 5000),
+		event(s3, shipmentvocab.VisitDeparture, trackingevent.SourceTelematics, "t-7", 6000),
 	}
 }
 
@@ -165,22 +171,54 @@ func TestProjectVerdictsForTheScenario(t *testing.T) {
 
 func TestProjectHoldsALaterStopUntilTheEarlierStopsComplete(t *testing.T) {
 	f := newFixture(2)
-	early := event(f.stops[1], shipment.VisitArrival, trackingevent.SourceTelematics, "t-1", 3000)
+	early := event(
+		f.stops[1],
+		shipmentvocab.VisitArrival,
+		trackingevent.SourceTelematics,
+		"t-1",
+		3000,
+	)
 
-	projection := trackingevent.Project(f.move, []*trackingevent.TrackingEvent{early}, trackingevent.Options{})
+	projection := trackingevent.Project(
+		f.move,
+		[]*trackingevent.TrackingEvent{early},
+		trackingevent.Options{},
+	)
 
 	assert.False(t, projection.HasChanges())
 	assert.Equal(t, trackingevent.OutcomePending, projection.Verdicts[early.ID].Outcome)
-	assert.Equal(t, "Waiting for the earlier stops on this load", projection.Verdicts[early.ID].Reason)
+	assert.Equal(
+		t,
+		"Waiting for the earlier stops on this load",
+		projection.Verdicts[early.ID].Reason,
+	)
 }
 
 func TestProjectRefusesTimesThatBreakTheTimeline(t *testing.T) {
 	f := newFixture(2)
 	f.stops[0].ActualArrival = ptr(1000)
 	f.stops[0].ActualDeparture = ptr(2000)
-	arrival := event(f.stops[0], shipment.VisitArrival, trackingevent.SourceDriver, "d-1", 1000)
-	departure := event(f.stops[0], shipment.VisitDeparture, trackingevent.SourceDriver, "d-2", 2000)
-	tooEarly := event(f.stops[1], shipment.VisitArrival, trackingevent.SourceTelematics, "t-1", 1500)
+	arrival := event(
+		f.stops[0],
+		shipmentvocab.VisitArrival,
+		trackingevent.SourceDriver,
+		"d-1",
+		1000,
+	)
+	departure := event(
+		f.stops[0],
+		shipmentvocab.VisitDeparture,
+		trackingevent.SourceDriver,
+		"d-2",
+		2000,
+	)
+	tooEarly := event(
+		f.stops[1],
+		shipmentvocab.VisitArrival,
+		trackingevent.SourceTelematics,
+		"t-1",
+		1500,
+	)
 
 	projection := trackingevent.Project(
 		f.move,
@@ -190,16 +228,30 @@ func TestProjectRefusesTimesThatBreakTheTimeline(t *testing.T) {
 
 	assert.False(t, projection.HasChanges())
 	assert.Equal(t, trackingevent.OutcomeRefused, projection.Verdicts[tooEarly.ID].Outcome)
-	assert.Equal(t, "Earlier than the previous stop's departure", projection.Verdicts[tooEarly.ID].Reason)
+	assert.Equal(
+		t,
+		"Earlier than the previous stop's departure",
+		projection.Verdicts[tooEarly.ID].Reason,
+	)
 	assert.Equal(t, trackingevent.OutcomeApplied, projection.Verdicts[arrival.ID].Outcome)
 }
 
 func TestProjectKeepsATimeEnteredOnTheShipment(t *testing.T) {
 	f := newFixture(1)
 	f.stops[0].ActualArrival = ptr(900)
-	reported := event(f.stops[0], shipment.VisitArrival, trackingevent.SourceTelematics, "t-1", 1000)
+	reported := event(
+		f.stops[0],
+		shipmentvocab.VisitArrival,
+		trackingevent.SourceTelematics,
+		"t-1",
+		1000,
+	)
 
-	projection := trackingevent.Project(f.move, []*trackingevent.TrackingEvent{reported}, trackingevent.Options{})
+	projection := trackingevent.Project(
+		f.move,
+		[]*trackingevent.TrackingEvent{reported},
+		trackingevent.Options{},
+	)
 
 	assert.False(t, projection.HasChanges())
 	assert.Equal(t, trackingevent.OutcomeSuperseded, projection.Verdicts[reported.ID].Outcome)
@@ -207,19 +259,41 @@ func TestProjectKeepsATimeEnteredOnTheShipment(t *testing.T) {
 
 func TestProjectCorrectsACompletedLoadButNotABilledOne(t *testing.T) {
 	f := newFixture(1)
-	f.move.Status = shipment.MoveStatusCompleted
+	f.move.Status = shipmentvocab.MoveStatusCompleted
 	f.stops[0].ActualArrival = ptr(1005)
 	f.stops[0].ActualDeparture = ptr(2000)
-	recorded := event(f.stops[0], shipment.VisitArrival, trackingevent.SourceTelematics, "t-2", 1005)
-	departed := event(f.stops[0], shipment.VisitDeparture, trackingevent.SourceTelematics, "t-3", 2000)
-	earlier := event(f.stops[0], shipment.VisitArrival, trackingevent.SourceTelematics, "t-1", 1000)
+	recorded := event(
+		f.stops[0],
+		shipmentvocab.VisitArrival,
+		trackingevent.SourceTelematics,
+		"t-2",
+		1005,
+	)
+	departed := event(
+		f.stops[0],
+		shipmentvocab.VisitDeparture,
+		trackingevent.SourceTelematics,
+		"t-3",
+		2000,
+	)
+	earlier := event(
+		f.stops[0],
+		shipmentvocab.VisitArrival,
+		trackingevent.SourceTelematics,
+		"t-1",
+		1000,
+	)
 	events := []*trackingevent.TrackingEvent{recorded, departed, earlier}
 
 	open := trackingevent.Project(f.move, events, trackingevent.Options{})
 	require.Len(t, open.Changes, 1)
 	assert.Equal(t, ptr(1000), open.Changes[0].Arrival)
 
-	locked := trackingevent.Project(f.move, events, trackingevent.Options{LockedReason: "This load has been invoiced"})
+	locked := trackingevent.Project(
+		f.move,
+		events,
+		trackingevent.Options{LockedReason: "This load has been invoiced"},
+	)
 	assert.False(t, locked.HasChanges())
 	assert.Equal(t, trackingevent.OutcomeApplied, locked.Verdicts[recorded.ID].Outcome)
 	assert.Equal(t, trackingevent.OutcomeSuperseded, locked.Verdicts[earlier.ID].Outcome)
@@ -228,14 +302,24 @@ func TestProjectCorrectsACompletedLoadButNotABilledOne(t *testing.T) {
 
 func TestProjectRefusesEventsOnACanceledLoadOrARemovedStop(t *testing.T) {
 	f := newFixture(1)
-	f.move.Status = shipment.MoveStatusCanceled
-	onLoad := event(f.stops[0], shipment.VisitArrival, trackingevent.SourceTelematics, "t-1", 1000)
+	f.move.Status = shipmentvocab.MoveStatusCanceled
+	onLoad := event(
+		f.stops[0],
+		shipmentvocab.VisitArrival,
+		trackingevent.SourceTelematics,
+		"t-1",
+		1000,
+	)
 	removed := &trackingevent.TrackingEvent{
 		ID: pulid.MustNew("tkev_"), StopID: pulid.MustNew("stp_"),
-		Kind: shipment.VisitArrival, Source: trackingevent.SourceEDI, SourceKey: "e-1", EventAt: 1000,
+		Kind: shipmentvocab.VisitArrival, Source: trackingevent.SourceEDI, SourceKey: "e-1", EventAt: 1000,
 	}
 
-	projection := trackingevent.Project(f.move, []*trackingevent.TrackingEvent{onLoad, removed}, trackingevent.Options{})
+	projection := trackingevent.Project(
+		f.move,
+		[]*trackingevent.TrackingEvent{onLoad, removed},
+		trackingevent.Options{},
+	)
 
 	assert.False(t, projection.HasChanges())
 	assert.Equal(t, trackingevent.OutcomeRefused, projection.Verdicts[onLoad.ID].Outcome)
@@ -246,10 +330,27 @@ func TestProjectRefusesEventsOnACanceledLoadOrARemovedStop(t *testing.T) {
 
 func TestProjectPrefersAPersonOverADevice(t *testing.T) {
 	f := newFixture(1)
-	device := event(f.stops[0], shipment.VisitArrival, trackingevent.SourceTelematics, "t-1", 1000)
-	person := event(f.stops[0], shipment.VisitArrival, trackingevent.SourceDispatcher, "m-1", 1100)
+	device := event(
+		f.stops[0],
+		shipmentvocab.VisitArrival,
+		trackingevent.SourceTelematics,
+		"t-1",
+		1000,
+	)
+	person := event(
+		f.stops[0],
+		shipmentvocab.VisitArrival,
+		trackingevent.SourceDispatcher,
+		"m-1",
+		1100,
+	)
 
-	projection := settleAll(t, f, []*trackingevent.TrackingEvent{device, person}, trackingevent.Options{})
+	projection := settleAll(
+		t,
+		f,
+		[]*trackingevent.TrackingEvent{device, person},
+		trackingevent.Options{},
+	)
 
 	assert.Equal(t, ptr(1100), f.stops[0].ActualArrival)
 	assert.Equal(t, trackingevent.OutcomeApplied, projection.Verdicts[person.ID].Outcome)

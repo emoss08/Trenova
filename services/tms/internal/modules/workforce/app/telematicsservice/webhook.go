@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/telematics"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/telematicsports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
@@ -159,7 +159,7 @@ func (s *Service) dispatchEventSideEffects(
 		s.applyStopEvent(ctx, &stopEvent{
 			tenantInfo:   tenantInfo,
 			record:       record,
-			visit:        shipment.VisitArrival,
+			visit:        shipmentvocab.VisitArrival,
 			providerStop: event.Kind == telematicsports.ProviderEventKindStopArrival,
 		})
 	case telematicsports.ProviderEventKindGeofenceExit,
@@ -167,7 +167,7 @@ func (s *Service) dispatchEventSideEffects(
 		s.applyStopEvent(ctx, &stopEvent{
 			tenantInfo:   tenantInfo,
 			record:       record,
-			visit:        shipment.VisitDeparture,
+			visit:        shipmentvocab.VisitDeparture,
 			providerStop: event.Kind == telematicsports.ProviderEventKindStopDeparture,
 		})
 	case telematicsports.ProviderEventKindFormSubmission:

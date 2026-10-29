@@ -7,6 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/order"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/shared/intutils"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -93,7 +94,7 @@ func Copy(source *shipment.Shipment, spec CopySpec) *shipment.Shipment {
 		FormulaTemplateID:   source.FormulaTemplateID,
 		TariffInputs:        source.TariffInputs.Clone(),
 		FreightLines:        slices.Clone(source.FreightLines),
-		Status:              shipment.StatusNew,
+		Status:              shipmentvocab.StatusNew,
 		ProNumber:           spec.ProNumber,
 		BOL:                 spec.BOL,
 		OtherChargeAmount:   source.OtherChargeAmount,
@@ -148,7 +149,8 @@ func duplicateChargeAllocations(
 
 	rows := make([]*shipment.ChargeAllocation, 0, len(source.ChargeAllocations))
 	for _, allocation := range source.ChargeAllocations {
-		if allocation == nil || allocation.ChargeKind == shipment.ChargeAllocationKindOrderCharge {
+		if allocation == nil ||
+			allocation.ChargeKind == shipmentvocab.ChargeAllocationKindOrderCharge {
 			continue
 		}
 		row := &shipment.ChargeAllocation{
@@ -163,7 +165,7 @@ func duplicateChargeAllocations(
 			Amount:           allocation.Amount,
 			Sequence:         allocation.Sequence,
 		}
-		if allocation.ChargeKind == shipment.ChargeAllocationKindAccessorial {
+		if allocation.ChargeKind == shipmentvocab.ChargeAllocationKindAccessorial {
 			if allocation.AdditionalChargeID == nil {
 				continue
 			}
@@ -219,7 +221,7 @@ func duplicateMovesAndStops(
 			BusinessUnitID: sourceMove.BusinessUnitID,
 			OrganizationID: sourceMove.OrganizationID,
 			ShipmentID:     parent.ID,
-			Status:         shipment.MoveStatusNew,
+			Status:         shipmentvocab.MoveStatusNew,
 			Loaded:         sourceMove.Loaded,
 			Sequence:       sourceMove.Sequence,
 			Distance:       intutils.ClonePointer(sourceMove.Distance),
@@ -272,7 +274,7 @@ func duplicateStops(
 			OrganizationID:       sourceStop.OrganizationID,
 			ShipmentMoveID:       moveID,
 			LocationID:           sourceStop.LocationID,
-			Status:               shipment.StopStatusNew,
+			Status:               shipmentvocab.StopStatusNew,
 			Type:                 sourceStop.Type,
 			Sequence:             sourceStop.Sequence,
 			Pieces:               intutils.ClonePointer(sourceStop.Pieces),

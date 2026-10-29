@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/settlementcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/settlementshared"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
@@ -33,7 +34,7 @@ func (s *Service) AfterShipmentUpdate(
 		BuID:  updated.BusinessUnitID,
 	}
 
-	if updated.Status == shipment.StatusCanceled {
+	if updated.Status == shipmentvocab.StatusCanceled {
 		if err := s.VoidShipmentPayEvents(ctx, tenantInfo, updated.ID,
 			"Shipment canceled"); err != nil {
 			s.l.Error("failed to void pay events for canceled shipment",
@@ -71,17 +72,17 @@ func (s *Service) AfterMoveStatusChange(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	move *shipment.ShipmentMove,
-	previous shipment.MoveStatus,
+	previous shipmentvocab.MoveStatus,
 ) error {
 	if move == nil {
 		return nil
 	}
 
-	if move.Status != shipment.MoveStatusCompleted &&
-		(previous == shipment.MoveStatusCompleted ||
-			move.Status == shipment.MoveStatusCanceled) {
+	if move.Status != shipmentvocab.MoveStatusCompleted &&
+		(previous == shipmentvocab.MoveStatusCompleted ||
+			move.Status == shipmentvocab.MoveStatusCanceled) {
 		reason := "Move canceled"
-		if move.Status != shipment.MoveStatusCanceled {
+		if move.Status != shipmentvocab.MoveStatusCanceled {
 			reason = "Move status reverted from completed"
 		}
 		if err := s.voidMovePayEvents(ctx, tenantInfo, move.ID, reason); err != nil {
@@ -91,8 +92,8 @@ func (s *Service) AfterMoveStatusChange(
 		return nil
 	}
 
-	if move.Status != shipment.MoveStatusCompleted ||
-		previous == shipment.MoveStatusCompleted {
+	if move.Status != shipmentvocab.MoveStatusCompleted ||
+		previous == shipmentvocab.MoveStatusCompleted {
 		return nil
 	}
 
@@ -185,7 +186,7 @@ func (s *Service) accrueShipmentMoves(
 	accruedWorkers := make(map[pulid.ID]struct{}, 2)
 	for _, move := range sp.Moves {
 		if move == nil || move.Assignment == nil ||
-			move.Status == shipment.MoveStatusCanceled {
+			move.Status == shipmentvocab.MoveStatusCanceled {
 			continue
 		}
 		if onlyMoveID != nil && move.ID != *onlyMoveID {

@@ -1,6 +1,7 @@
 package shipment
 
 import (
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -16,7 +17,7 @@ func (c StopActualChange) Empty() bool {
 }
 
 func (m *ShipmentMove) ApplyStopActualChanges(changes []StopActualChange) ([]*Stop, error) {
-	if m.Status == MoveStatusCanceled {
+	if m.Status == shipmentvocab.MoveStatusCanceled {
 		return nil, errortypes.NewBusinessError("This load has been canceled")
 	}
 
@@ -57,9 +58,9 @@ func (m *ShipmentMove) ApplyStopActualChanges(changes []StopActualChange) ([]*St
 	for _, stop := range touched {
 		switch {
 		case stop.ActualDeparture != nil:
-			stop.Status = StopStatusCompleted
+			stop.Status = shipmentvocab.StopStatusCompleted
 		case stop.ActualArrival != nil:
-			stop.Status = StopStatusInTransit
+			stop.Status = shipmentvocab.StopStatusInTransit
 		}
 	}
 

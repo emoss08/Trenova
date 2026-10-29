@@ -3,6 +3,7 @@ package shipment
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -19,9 +20,9 @@ func validJurisdictionMile() *ShipmentMoveJurisdictionMile {
 		JurisdictionCode: "TX",
 		Sequence:         0,
 		Distance:         120.5,
-		DistanceUnits:    JurisdictionDistanceUnitsMiles,
+		DistanceUnits:    shipmentvocab.JurisdictionDistanceUnitsMiles,
 		Loaded:           true,
-		Source:           JurisdictionMileSourceRouteCalculation,
+		Source:           shipmentvocab.JurisdictionMileSourceRouteCalculation,
 		Provider:         "PCMiler",
 		DataVersion:      "Current",
 		CalculatedAt:     1_700_000_000,
@@ -31,11 +32,11 @@ func validJurisdictionMile() *ShipmentMoveJurisdictionMile {
 func TestJurisdictionMileSource_IsValid(t *testing.T) {
 	t.Parallel()
 
-	assert.True(t, JurisdictionMileSourceRouteCalculation.IsValid())
-	assert.True(t, JurisdictionMileSourceManual.IsValid())
-	assert.False(t, JurisdictionMileSource("").IsValid())
-	assert.False(t, JurisdictionMileSource("Telematics").IsValid())
-	assert.Equal(t, "Manual", JurisdictionMileSourceManual.String())
+	assert.True(t, shipmentvocab.JurisdictionMileSourceRouteCalculation.IsValid())
+	assert.True(t, shipmentvocab.JurisdictionMileSourceManual.IsValid())
+	assert.False(t, shipmentvocab.JurisdictionMileSource("").IsValid())
+	assert.False(t, shipmentvocab.JurisdictionMileSource("Telematics").IsValid())
+	assert.Equal(t, "Manual", shipmentvocab.JurisdictionMileSourceManual.String())
 }
 
 func TestShipmentMoveJurisdictionMile_Validate(t *testing.T) {
@@ -52,13 +53,13 @@ func TestShipmentMoveJurisdictionMile_Validate(t *testing.T) {
 		{
 			name: "valid kilometers row",
 			mutate: func(m *ShipmentMoveJurisdictionMile) {
-				m.DistanceUnits = JurisdictionDistanceUnitsKilometers
+				m.DistanceUnits = shipmentvocab.JurisdictionDistanceUnitsKilometers
 			},
 		},
 		{
 			name: "valid manual row with toll and ferry",
 			mutate: func(m *ShipmentMoveJurisdictionMile) {
-				m.Source = JurisdictionMileSourceManual
+				m.Source = shipmentvocab.JurisdictionMileSourceManual
 				toll, ferry := 10.0, 0.0
 				m.TollDistance = &toll
 				m.FerryDistance = &ferry
@@ -203,7 +204,7 @@ func TestShipmentMoveJurisdictionMile_DistanceInMiles(t *testing.T) {
 
 	kilometers := validJurisdictionMile()
 	kilometers.Distance = 160.9344
-	kilometers.DistanceUnits = JurisdictionDistanceUnitsKilometers
+	kilometers.DistanceUnits = shipmentvocab.JurisdictionDistanceUnitsKilometers
 	assert.InDelta(t, 100.0, kilometers.DistanceInMiles(), 0.000001)
 
 	lowercase := validJurisdictionMile()
@@ -218,18 +219,18 @@ func TestShipmentMoveJurisdictionMile_BeforeCreateDefaults(t *testing.T) {
 	row := &ShipmentMoveJurisdictionMile{}
 	require.NoError(t, row.BeforeCreate(t.Context()))
 
-	assert.Equal(t, JurisdictionMileSourceRouteCalculation, row.Source)
-	assert.Equal(t, JurisdictionDistanceUnitsMiles, row.DistanceUnits)
+	assert.Equal(t, shipmentvocab.JurisdictionMileSourceRouteCalculation, row.Source)
+	assert.Equal(t, shipmentvocab.JurisdictionDistanceUnitsMiles, row.DistanceUnits)
 	assert.NotZero(t, row.CalculatedAt)
 
 	explicit := &ShipmentMoveJurisdictionMile{
-		Source:        JurisdictionMileSourceManual,
-		DistanceUnits: JurisdictionDistanceUnitsKilometers,
+		Source:        shipmentvocab.JurisdictionMileSourceManual,
+		DistanceUnits: shipmentvocab.JurisdictionDistanceUnitsKilometers,
 		CalculatedAt:  42,
 	}
 	require.NoError(t, explicit.BeforeCreate(t.Context()))
-	assert.Equal(t, JurisdictionMileSourceManual, explicit.Source)
-	assert.Equal(t, JurisdictionDistanceUnitsKilometers, explicit.DistanceUnits)
+	assert.Equal(t, shipmentvocab.JurisdictionMileSourceManual, explicit.Source)
+	assert.Equal(t, shipmentvocab.JurisdictionDistanceUnitsKilometers, explicit.DistanceUnits)
 	assert.Equal(t, int64(42), explicit.CalculatedAt)
 }
 
@@ -248,14 +249,14 @@ func TestShipmentMove_JurisdictionMilesSumMiles(t *testing.T) {
 				CountryCode:      "US",
 				JurisdictionCode: "TX",
 				Distance:         100,
-				DistanceUnits:    JurisdictionDistanceUnitsMiles,
+				DistanceUnits:    shipmentvocab.JurisdictionDistanceUnitsMiles,
 			},
 			nil,
 			{
 				CountryCode:      "US",
 				JurisdictionCode: "OK",
 				Distance:         160.9344,
-				DistanceUnits:    JurisdictionDistanceUnitsKilometers,
+				DistanceUnits:    shipmentvocab.JurisdictionDistanceUnitsKilometers,
 			},
 		},
 	}

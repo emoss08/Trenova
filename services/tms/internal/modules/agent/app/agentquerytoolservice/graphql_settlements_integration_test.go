@@ -20,6 +20,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier/carrierdb"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
@@ -153,7 +154,7 @@ func (s *settlementRows) shipment(
 	load := &shipment.Shipment{
 		ID: pulid.MustNew("shp_"), BusinessUnitID: bu, OrganizationID: org,
 		ServiceTypeID: service.ID, ShipmentTypeID: kind.ID, CustomerID: buyer.ID,
-		FormulaTemplateID: tariff.ID, Status: shipment.StatusNew,
+		FormulaTemplateID: tariff.ID, Status: shipmentvocab.StatusNew,
 		ProNumber: "PRO" + org.String()[4:12], BOL: "BOL" + org.String()[4:12],
 	}
 	if err := shipmentdb.Shipments.Create(ctx, s.admin, load); err != nil {

@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -483,7 +484,7 @@ func (s *Service) acceptSourceTender(ctx context.Context, transfer *editransfer.
 				return err
 			}
 			if source.TenderStatus != nil &&
-				*source.TenderStatus == shipment.TenderStatusAccepted {
+				*source.TenderStatus == shipmentvocab.TenderStatusAccepted {
 				return nil
 			}
 
@@ -491,7 +492,7 @@ func (s *Service) acceptSourceTender(ctx context.Context, transfer *editransfer.
 				txCtx,
 				source.ID,
 				sourceTenant,
-				shipment.TenderStatusAccepted,
+				shipmentvocab.TenderStatusAccepted,
 			); err != nil {
 				return err
 			}
@@ -591,7 +592,7 @@ func (s *Service) RejectTransfer(
 				OrgID: transfer.SourceOrganizationID,
 				BuID:  transfer.SourceBusinessUnitID,
 			},
-			shipment.TenderStatusRejected,
+			shipmentvocab.TenderStatusRejected,
 		); err != nil {
 			return err
 		}
@@ -656,7 +657,7 @@ func (s *Service) CancelTransfer(
 				OrgID: transfer.SourceOrganizationID,
 				BuID:  transfer.SourceBusinessUnitID,
 			},
-			shipment.TenderStatusCanceled,
+			shipmentvocab.TenderStatusCanceled,
 		); err != nil {
 			return err
 		}
@@ -728,7 +729,7 @@ func (s *Service) ExpireTransfer(
 			txCtx,
 			transfer.SourceShipmentID,
 			sourceTenant,
-			shipment.TenderStatusExpired,
+			shipmentvocab.TenderStatusExpired,
 		); err != nil {
 			return err
 		}

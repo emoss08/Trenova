@@ -18,7 +18,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionevidence"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionnotice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionpolicy"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -250,9 +250,9 @@ func detentionPolicyFromInput(
 	}
 
 	if len(input.StopTypes) > 0 {
-		entity.StopTypes = make([]shipment.StopType, 0, len(input.StopTypes))
+		entity.StopTypes = make([]shipmentvocab.StopType, 0, len(input.StopTypes))
 		for _, stopType := range input.StopTypes {
-			entity.StopTypes = append(entity.StopTypes, shipment.StopType(stopType))
+			entity.StopTypes = append(entity.StopTypes, shipmentvocab.StopType(stopType))
 		}
 	}
 
@@ -822,8 +822,8 @@ func detentionPreviewScenarioFromInput(
 		DepartedAt:       intPtrToInt64Ptr(input.DepartedAt),
 		AppointmentStart: intPtrToInt64Ptr(input.AppointmentStart),
 		AppointmentEnd:   intPtrToInt64Ptr(input.AppointmentEnd),
-		StopType:         shipment.StopType(input.StopType),
-		ScheduleType:     shipment.StopScheduleType(input.ScheduleType),
+		StopType:         shipmentvocab.StopType(input.StopType),
+		ScheduleType:     shipmentvocab.StopScheduleType(input.ScheduleType),
 		NoticeSentAt:     intPtrToInt64Ptr(input.NoticeSentAt),
 		DriverPayRate:    input.DriverPayRate,
 	}

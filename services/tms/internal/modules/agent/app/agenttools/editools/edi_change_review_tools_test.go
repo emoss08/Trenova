@@ -18,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -290,10 +291,10 @@ func TestReviewEDITransferChange_PreviewsTheShipmentStatusItWouldSet(t *testing.
 			Shipment: &shipment.Shipment{
 				ID:        shipmentID,
 				ProNumber: "PRO-31",
-				Status:    shipment.StatusInTransit,
+				Status:    shipmentvocab.StatusInTransit,
 				Version:   9,
 			},
-			NextStatus: shipment.StatusCompleted,
+			NextStatus: shipmentvocab.StatusCompleted,
 		},
 		guard: &agenttoolstest.WriteGuard{},
 	}

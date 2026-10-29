@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentcommentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
@@ -169,7 +170,7 @@ func TestNotifyDelay_EmailsTheCustomersContactsAndRecordsIt(t *testing.T) {
 
 	require.Len(t, f.comments.created, 1)
 	comment := f.comments.created[0]
-	assert.Equal(t, shipment.CommentTypeCustomerUpdate, comment.Type)
+	assert.Equal(t, shipmentvocab.CommentTypeCustomerUpdate, comment.Type)
 	assert.Equal(t, shipment.CommentOriginBoard, comment.Metadata[shipment.CommentMetadataOrigin])
 	assert.Equal(t, SourceDelayNotice, comment.Metadata[metadataSource])
 	assert.Equal(t, f.actor.UserID.String(), comment.Metadata[metadataSentBy])
@@ -185,7 +186,7 @@ func TestNotifyDelay_SendsNothingWhenTheCustomerWasJustTold(t *testing.T) {
 	f := newFixture("ops@cargill.example")
 	f.comments.existing = []*shipment.ShipmentComment{{
 		CreatedAt: testNow - 300,
-		Type:      shipment.CommentTypeCustomerUpdate,
+		Type:      shipmentvocab.CommentTypeCustomerUpdate,
 		Metadata:  map[string]any{"source": "agent", "tool": SourceAgentEmail},
 	}}
 

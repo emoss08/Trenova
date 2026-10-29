@@ -17,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/documentshipmentdraft"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/commodity"
@@ -214,15 +215,15 @@ func rateConfirmationDraft() *documentshipmentdraft.DocumentShipmentDraft {
 }
 
 func stopAt(
-	stopType shipment.StopType,
+	stopType shipmentvocab.StopType,
 	seq int64,
 	loc *location.Location,
 	at time.Time,
 	appointment bool,
 ) *shipment.Stop {
-	scheduleType := shipment.StopScheduleTypeOpen
+	scheduleType := shipmentvocab.StopScheduleTypeOpen
 	if appointment {
-		scheduleType = shipment.StopScheduleTypeAppointment
+		scheduleType = shipmentvocab.StopScheduleTypeAppointment
 	}
 	return &shipment.Stop{
 		Type:                 stopType,
@@ -250,12 +251,12 @@ func confirmedShipment() *shipment.Shipment {
 			{
 				Sequence: 0,
 				Stops: []*shipment.Stop{
-					stopAt(shipment.StopTypeDelivery, 1, &location.Location{
+					stopAt(shipmentvocab.StopTypeDelivery, 1, &location.Location{
 						Name: "Contoso Grocery DC", AddressLine1: "9 Market Street",
 						City: "Tulsa", PostalCode: "74103-2201",
 						State: &usstate.UsState{Abbreviation: "OK"},
 					}, time.Date(2026, time.March, 18, 9, 0, 0, 0, chicago), false),
-					stopAt(shipment.StopTypePickup, 0, &location.Location{
+					stopAt(shipmentvocab.StopTypePickup, 0, &location.Location{
 						Name: "Northwind Foods", AddressLine1: "100 Industrial Pkwy",
 						City: "Dallas", PostalCode: "75201",
 						State:    &usstate.UsState{Abbreviation: "TX"},
@@ -393,7 +394,7 @@ func TestCaptureShipmentDraft_MissedAndUnconfirmedFields(t *testing.T) {
 	shp := confirmedShipment()
 	shp.BOL = ""
 	shp.Moves[0].Stops = append(shp.Moves[0].Stops, stopAt(
-		shipment.StopTypeDelivery, 2,
+		shipmentvocab.StopTypeDelivery, 2,
 		&location.Location{Name: "Second Drop", City: "Wichita"},
 		time.Date(2026, time.March, 19, 9, 0, 0, 0, time.UTC), false,
 	))

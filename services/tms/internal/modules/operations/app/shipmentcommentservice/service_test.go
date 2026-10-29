@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentcommentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
@@ -241,7 +242,7 @@ func TestCreateSystem_CreatesTenantScopedCommentWithoutUser(t *testing.T) {
 	repo.EXPECT().
 		Create(mock.Anything, mock.MatchedBy(func(comment *shipment.ShipmentComment) bool {
 			return comment.UserID.IsNil() &&
-				comment.Source == shipment.CommentSourceSystem &&
+				comment.Source == shipmentvocab.CommentSourceSystem &&
 				comment.OrganizationID == testutil.TestOrgID &&
 				comment.BusinessUnitID == testutil.TestBuID &&
 				comment.ShipmentID == shipmentID &&
@@ -296,7 +297,7 @@ func TestCreateSystem_CreatesTenantScopedCommentWithoutUser(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, created)
 	assert.True(t, created.UserID.IsNil())
-	assert.Equal(t, shipment.CommentSourceSystem, created.Source)
+	assert.Equal(t, shipmentvocab.CommentSourceSystem, created.Source)
 	assert.Equal(t, "auto-delay", created.Metadata["source"])
 }
 

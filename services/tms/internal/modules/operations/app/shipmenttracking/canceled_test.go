@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -13,7 +13,7 @@ func TestBuild_SaysWhoCanceledAShipmentWhenAndWhy(t *testing.T) {
 	t.Parallel()
 
 	sp, _ := inTransitShipment()
-	sp.Status = shipment.StatusCanceled
+	sp.Status = shipmentvocab.StatusCanceled
 	sp.CanceledAt = ptr(now - 600)
 	sp.CancelReason = "  Range pulled the load by phone "
 	sp.CanceledBy = &tenant.User{Name: "Admin"}

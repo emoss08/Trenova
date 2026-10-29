@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/chargeallocation"
 	shipmentdomain "github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -21,7 +22,7 @@ import (
 // repository resolves once the charge has an id.
 func ChargeAllocationsFromInput(
 	inputs []*gqlmodel.ChargeAllocationInput,
-	kind shipmentdomain.ChargeAllocationKind,
+	kind shipmentvocab.ChargeAllocationKind,
 	path string,
 	authCtx *authctx.AuthContext,
 	chargeIndex *int,
@@ -84,7 +85,7 @@ func ChargeAllocationsFromInput(
 			}
 			row.Amount = decimal.NewNullDecimal(amount)
 		}
-		if kind == shipmentdomain.ChargeAllocationKindAccessorial && chargeIndex != nil {
+		if kind == shipmentvocab.ChargeAllocationKindAccessorial && chargeIndex != nil {
 			index := *chargeIndex
 			row.AdditionalChargeIndex = &index
 		}

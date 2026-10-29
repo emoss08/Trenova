@@ -22,6 +22,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/app/trackingeventservice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/checkcall"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/trackingevent"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/checkcallports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchcontrolports"
@@ -90,7 +91,7 @@ func newCheckCallHarness(t *testing.T) (context.Context, *checkCallHarness) {
 			BOL:          "BOL-CHECKCALL",
 			ProNumber:    "PRO-CHECKCALL",
 			ShipmentID:   pulid.MustNew("shp_"),
-			MoveStatuses: []shipment.MoveStatus{shipment.MoveStatusAssigned},
+			MoveStatuses: []shipmentvocab.MoveStatus{shipmentvocab.MoveStatusAssigned},
 		},
 	)
 	move := graph.Moves[0]
@@ -235,7 +236,7 @@ func TestCheckCallIntegrationCarrierPostSettlesTheStop(t *testing.T) {
 	stop := move.ActiveStopsBySequence()[0]
 	require.NotNil(t, stop.ActualArrival)
 	assert.Equal(t, arrivedAt, *stop.ActualArrival)
-	assert.Equal(t, shipment.MoveStatusInTransit, move.Status)
+	assert.Equal(t, shipmentvocab.MoveStatusInTransit, move.Status)
 
 	type trackingEventRow struct {
 		Source       string

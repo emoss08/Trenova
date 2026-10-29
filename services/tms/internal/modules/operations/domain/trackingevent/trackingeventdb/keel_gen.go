@@ -8,7 +8,6 @@ import (
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/keel/schema"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/trackingevent"
 	"github.com/emoss08/trenova/pkg/keelkinds"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -32,7 +31,7 @@ var trackingEventsTable = schema.Table{
 		{Name: "stop_id", Quoted: `"stop_id"`, Field: "StopID", Kind: schema.KindString, Flags: 0, Label: `Stop ID`, JSON: `stopId`},
 		{Name: "source", Quoted: `"source"`, Field: "Source", Kind: schema.KindString, Flags: 0, Label: `Source`, JSON: `source`, Enum: enumSource[:]},
 		{Name: "source_key", Quoted: `"source_key"`, Field: "SourceKey", Kind: schema.KindString, Flags: 0, Label: `Source Key`, JSON: `sourceKey`},
-		{Name: "kind", Quoted: `"kind"`, Field: "Kind", Kind: schema.KindString, Flags: 0, Label: `Kind`, JSON: `kind`, Enum: enumShipmentVisitKind[:]},
+		{Name: "kind", Quoted: `"kind"`, Field: "Kind", Kind: schema.KindString, Flags: 0, Label: `Kind`, JSON: `kind`, Enum: enumShipmentvocabVisitKind[:]},
 		{Name: "match_method", Quoted: `"match_method"`, Field: "MatchMethod", Kind: schema.KindString, Flags: 0, Label: `Match Method`, JSON: `matchMethod`, Enum: enumMatchMethod[:]},
 		{Name: "event_at", Quoted: `"event_at"`, Field: "EventAt", Kind: schema.KindInt64, Flags: 0, Label: `Event At`, JSON: `eventAt`},
 		{Name: "received_at", Quoted: `"received_at"`, Field: "ReceivedAt", Kind: schema.KindInt64, Flags: 0, Label: `Received At`, JSON: `receivedAt`},
@@ -77,7 +76,7 @@ type TrackingEventsTable struct {
 	StopID         keelkinds.PulidIDCol
 	Source         SourceCol
 	SourceKey      keel.StringCol
-	Kind           shipmentdb.VisitKindCol
+	Kind           keelkinds.ShipmentvocabVisitKindCol
 	MatchMethod    MatchMethodCol
 	EventAt        keel.Int64Col
 	ReceivedAt     keel.Int64Col
@@ -103,7 +102,7 @@ var TrackingEvents = &TrackingEventsTable{
 	StopID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &trackingEventsRef, Index: 5}}},
 	Source:         SourceCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &trackingEventsRef, Index: 6}}},
 	SourceKey:      keel.StringCol{Col: keel.Col{Ref: &trackingEventsRef, Index: 7}},
-	Kind:           shipmentdb.VisitKindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &trackingEventsRef, Index: 8}}},
+	Kind:           keelkinds.ShipmentvocabVisitKindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &trackingEventsRef, Index: 8}}},
 	MatchMethod:    MatchMethodCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &trackingEventsRef, Index: 9}}},
 	EventAt:        keel.Int64Col{Col: keel.Col{Ref: &trackingEventsRef, Index: 10}},
 	ReceivedAt:     keel.Int64Col{Col: keel.Col{Ref: &trackingEventsRef, Index: 11}},
@@ -130,7 +129,7 @@ func BuildTrackingEvents(r *keel.Ref) *TrackingEventsTable {
 		StopID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
 		Source:         SourceCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
 		SourceKey:      keel.StringCol{Col: keel.Col{Ref: r, Index: 7}},
-		Kind:           shipmentdb.VisitKindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 8}}},
+		Kind:           keelkinds.ShipmentvocabVisitKindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 8}}},
 		MatchMethod:    MatchMethodCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 9}}},
 		EventAt:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 10}},
 		ReceivedAt:     keel.Int64Col{Col: keel.Col{Ref: r, Index: 11}},
@@ -297,7 +296,7 @@ var enumOutcome = [...]schema.EnumValue{
 	{Value: `Refused`, Label: `Refused`},
 }
 
-var enumShipmentVisitKind = [...]schema.EnumValue{
+var enumShipmentvocabVisitKind = [...]schema.EnumValue{
 	{Value: `Arrival`, Label: `Visit Arrival`},
 	{Value: `Departure`, Label: `Visit Departure`},
 }

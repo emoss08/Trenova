@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/deskcase"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -25,7 +25,7 @@ func item(t *testing.T, checklist *deskcase.Checklist, key deskcase.ItemKey) *de
 
 func readyShipment() *deskcase.ShipmentFacts {
 	return &deskcase.ShipmentFacts{
-		Status:      shipment.StatusCompleted,
+		Status:      shipmentvocab.StatusCompleted,
 		DeliveredAt: ptr(now - 3600),
 		PODCode:     "POD",
 		Requirements: []deskcase.Requirement{
@@ -46,7 +46,12 @@ func TestReadyToBill_AllClearOffersToMarkReady(t *testing.T) {
 	assert.True(t, got.Ready)
 	assert.Equal(t, deskcase.StepMarkReady, got.Next)
 	for _, entry := range got.Items {
-		assert.Contains(t, []deskcase.ItemState{deskcase.ItemDone, deskcase.ItemNotNeeded}, entry.State, entry.Key)
+		assert.Contains(
+			t,
+			[]deskcase.ItemState{deskcase.ItemDone, deskcase.ItemNotNeeded},
+			entry.State,
+			entry.Key,
+		)
 	}
 }
 
@@ -78,7 +83,11 @@ func TestReadyToBill_PODNotRequiredButOnFileCounts(t *testing.T) {
 
 	facts := readyShipment()
 	facts.Requirements = nil
-	assert.Equal(t, deskcase.ItemNotNeeded, item(t, deskcase.ReadyToBill(facts), deskcase.ItemPOD).State)
+	assert.Equal(
+		t,
+		deskcase.ItemNotNeeded,
+		item(t, deskcase.ReadyToBill(facts), deskcase.ItemPOD).State,
+	)
 
 	facts.PODOnFile = true
 	assert.Equal(t, deskcase.ItemDone, item(t, deskcase.ReadyToBill(facts), deskcase.ItemPOD).State)
@@ -88,7 +97,7 @@ func TestReadyToBill_BeforeDeliveryItemsWaitOnTheWorld(t *testing.T) {
 	t.Parallel()
 
 	facts := readyShipment()
-	facts.Status = shipment.StatusInTransit
+	facts.Status = shipmentvocab.StatusInTransit
 	facts.DeliveredAt = nil
 	facts.Requirements[0].Satisfied = false
 	facts.CustomerNotifiedAt = nil
@@ -147,7 +156,11 @@ func TestReadyToBill_Accessorials(t *testing.T) {
 
 	facts := readyShipment()
 	facts.DetentionAccruing = 1
-	assert.Equal(t, deskcase.ItemPending, item(t, deskcase.ReadyToBill(facts), deskcase.ItemAccessorials).State)
+	assert.Equal(
+		t,
+		deskcase.ItemPending,
+		item(t, deskcase.ReadyToBill(facts), deskcase.ItemAccessorials).State,
+	)
 
 	facts.DetentionUnapproved = 2
 	accessorials := item(t, deskcase.ReadyToBill(facts), deskcase.ItemAccessorials)

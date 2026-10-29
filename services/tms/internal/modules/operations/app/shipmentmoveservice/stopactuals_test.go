@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentmoveports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -16,19 +17,19 @@ import (
 func stopActualMoveForTest() (*shipment.ShipmentMove, *shipment.Stop, *shipment.Stop) {
 	origin := &shipment.Stop{
 		ID:       pulid.MustNew("stp_"),
-		Type:     shipment.StopTypePickup,
-		Status:   shipment.StopStatusNew,
+		Type:     shipmentvocab.StopTypePickup,
+		Status:   shipmentvocab.StopStatusNew,
 		Sequence: 0,
 	}
 	destination := &shipment.Stop{
 		ID:       pulid.MustNew("stp_"),
-		Type:     shipment.StopTypeDelivery,
-		Status:   shipment.StopStatusNew,
+		Type:     shipmentvocab.StopTypeDelivery,
+		Status:   shipmentvocab.StopStatusNew,
 		Sequence: 1,
 	}
 	move := &shipment.ShipmentMove{
 		ID:     pulid.MustNew("sm_"),
-		Status: shipment.MoveStatusAssigned,
+		Status: shipmentvocab.MoveStatusAssigned,
 		Stops:  []*shipment.Stop{origin, destination},
 	}
 	return move, origin, destination
@@ -50,7 +51,7 @@ func TestApplyStopActual_NilOccurredAtStampsNow(t *testing.T) {
 	require.NotNil(t, stop.ActualArrival)
 	assert.GreaterOrEqual(t, *stop.ActualArrival, before)
 	assert.LessOrEqual(t, *stop.ActualArrival, after)
-	assert.Equal(t, shipment.StopStatusInTransit, stop.Status)
+	assert.Equal(t, shipmentvocab.StopStatusInTransit, stop.Status)
 }
 
 func TestApplyStopActual_BackdatedArriveStampsOccurredAt(t *testing.T) {
@@ -76,7 +77,7 @@ func TestApplyStopActual_BackdatedDepartStampsOccurredAt(t *testing.T) {
 	move, origin, _ := stopActualMoveForTest()
 	arrivedAt := timeutils.NowUnix() - 7200
 	origin.ActualArrival = &arrivedAt
-	origin.Status = shipment.StopStatusInTransit
+	origin.Status = shipmentvocab.StopStatusInTransit
 	occurredAt := arrivedAt + 1800
 	stop, err := applyStopActual(move, &shipmentmoveports.RecordStopActualRequest{
 		MoveID:     move.ID,
@@ -88,7 +89,7 @@ func TestApplyStopActual_BackdatedDepartStampsOccurredAt(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, stop.ActualDeparture)
 	assert.Equal(t, occurredAt, *stop.ActualDeparture)
-	assert.Equal(t, shipment.StopStatusCompleted, stop.Status)
+	assert.Equal(t, shipmentvocab.StopStatusCompleted, stop.Status)
 }
 
 func TestApplyStopActual_ArriveBeforePriorDepartureRejected(t *testing.T) {
@@ -99,7 +100,7 @@ func TestApplyStopActual_ArriveBeforePriorDepartureRejected(t *testing.T) {
 	departedAt := timeutils.NowUnix() - 3600
 	origin.ActualArrival = &arrivedAt
 	origin.ActualDeparture = &departedAt
-	origin.Status = shipment.StopStatusCompleted
+	origin.Status = shipmentvocab.StopStatusCompleted
 	occurredAt := departedAt - 600
 
 	stop, err := applyStopActual(move, &shipmentmoveports.RecordStopActualRequest{
@@ -121,7 +122,7 @@ func TestApplyStopActual_DepartBeforeArrivalRejected(t *testing.T) {
 	move, origin, _ := stopActualMoveForTest()
 	arrivedAt := timeutils.NowUnix() - 3600
 	origin.ActualArrival = &arrivedAt
-	origin.Status = shipment.StopStatusInTransit
+	origin.Status = shipmentvocab.StopStatusInTransit
 	occurredAt := arrivedAt - 600
 
 	stop, err := applyStopActual(move, &shipmentmoveports.RecordStopActualRequest{

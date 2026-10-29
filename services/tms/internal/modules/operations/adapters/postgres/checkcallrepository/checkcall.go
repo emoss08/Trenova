@@ -9,8 +9,8 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/checkcall"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/checkcall/checkcalldb"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/trackingevent/trackingeventdb"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/checkcallports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier/carrierdb"
@@ -240,7 +240,7 @@ func listMonitoredRows(ctx context.Context, db *keel.DB, limit int) ([]monitored
 
 	rows, err := keel.Into[monitoredMoveRow](ctx, db, sm.
 		Join(sp, sp.ID.EqCol(sm.ShipmentID)).
-		Join(ca, ca.ShipmentMoveID.EqCol(sm.ID), ca.Status.Ne(shipment.CarrierAssignmentStatusCanceled)).
+		Join(ca, ca.ShipmentMoveID.EqCol(sm.ID), ca.Status.Ne(shipmentvocab.CarrierAssignmentStatusCanceled)).
 		LeftJoin(car, car.ID.EqCol(ca.CarrierID)).
 		LeftJoin(cus, cus.ID.EqCol(sp.CustomerID)).
 		Pick(
@@ -254,8 +254,8 @@ func listMonitoredRows(ctx context.Context, db *keel.DB, limit int) ([]monitored
 			ca.ConfirmedAt,
 		).
 		Where(
-			sm.Status.Eq(shipment.MoveStatusInTransit),
-			sm.CoverageType.Eq(shipment.MoveCoverageTypeCarrier),
+			sm.Status.Eq(shipmentvocab.MoveStatusInTransit),
+			sm.CoverageType.Eq(shipmentvocab.MoveCoverageTypeCarrier),
 		).
 		Order(sm.ID.Asc()).
 		Limit(limit))

@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentcoverage"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentstate"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentmoveports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -16,7 +17,7 @@ import (
 type moveStatusRequest struct {
 	tenantInfo pagination.TenantInfo
 	moveIDs    []pulid.ID
-	status     shipment.MoveStatus
+	status     shipmentvocab.MoveStatus
 	// forUpdate locks each move for the write; a preview reads without it.
 	forUpdate bool
 }
@@ -26,7 +27,7 @@ type moveStatusRequest struct {
 // in the order their moves were asked for.
 type moveStatusPlan struct {
 	moves       []*shipment.ShipmentMove
-	previous    map[pulid.ID]shipment.MoveStatus
+	previous    map[pulid.ID]shipmentvocab.MoveStatus
 	shipmentIDs []pulid.ID
 }
 
@@ -90,7 +91,7 @@ func (s *service) planMoveStatus(
 ) (*moveStatusPlan, error) {
 	plan := &moveStatusPlan{
 		moves:       make([]*shipment.ShipmentMove, 0, len(req.moveIDs)),
-		previous:    make(map[pulid.ID]shipment.MoveStatus, len(req.moveIDs)),
+		previous:    make(map[pulid.ID]shipmentvocab.MoveStatus, len(req.moveIDs)),
 		shipmentIDs: make([]pulid.ID, 0, len(req.moveIDs)),
 	}
 	seenTractors := make(map[pulid.ID]pulid.ID, len(req.moveIDs))

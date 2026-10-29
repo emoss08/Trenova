@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
@@ -30,7 +31,7 @@ func TestPreviewCancel_IsTheCancellationCancelMakes(t *testing.T) {
 		OrganizationID: orgID,
 		BusinessUnitID: buID,
 		ProNumber:      "SHP-3001",
-		Status:         shipment.StatusAssigned,
+		Status:         shipmentvocab.StatusAssigned,
 	}
 	repo := shipmentportsmock.NewMockShipmentRepository(t)
 	repo.EXPECT().GetByID(mock.Anything, mock.Anything).
@@ -92,7 +93,7 @@ func TestPreviewCancel_IsTheCancellationCancelMakes(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, cancelled)
 
-	assert.Equal(t, shipment.StatusAssigned, preview.Before.Status)
+	assert.Equal(t, shipmentvocab.StatusAssigned, preview.Before.Status)
 	assert.Equal(t, saved.Status, preview.After.Status)
 	assert.Equal(t, saved.CanceledByID, preview.After.CanceledByID)
 	assert.Equal(t, saved.CancelReason, preview.After.CancelReason)

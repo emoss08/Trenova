@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/trackingevent"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentmoveports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/trackingeventports"
@@ -78,9 +79,9 @@ func TestShipmentMoveHandler_UpdateStatus_Success(t *testing.T) {
 		UpdateStatus(mock.Anything, mock.MatchedBy(func(req *shipmentmoveports.UpdateMoveStatusRequest) bool {
 			return req.MoveID == moveID &&
 				req.TenantInfo.OrgID == testutil.TestOrgID &&
-				req.Status == shipment.MoveStatusInTransit
+				req.Status == shipmentvocab.MoveStatusInTransit
 		})).
-		Return(&shipment.ShipmentMove{ID: moveID, Status: shipment.MoveStatusInTransit}, nil).
+		Return(&shipment.ShipmentMove{ID: moveID, Status: shipmentvocab.MoveStatusInTransit}, nil).
 		Once()
 
 	handler := setupShipmentMoveHandler(t, service)
@@ -140,7 +141,7 @@ func TestShipmentMoveHandler_RecordStopActual_Success(t *testing.T) {
 			},
 		)).
 		Return(&trackingeventports.StopEventResult{
-			Move:    &shipment.ShipmentMove{ID: moveID, Status: shipment.MoveStatusInTransit},
+			Move:    &shipment.ShipmentMove{ID: moveID, Status: shipmentvocab.MoveStatusInTransit},
 			Outcome: trackingevent.OutcomeApplied,
 		}, nil).
 		Once()
@@ -164,7 +165,7 @@ func TestShipmentMoveHandler_RecordStopActual_Success(t *testing.T) {
 	var resp shipment.ShipmentMove
 	require.NoError(t, ginCtx.ResponseJSON(&resp))
 	require.Equal(t, moveID, resp.ID)
-	require.Equal(t, shipment.MoveStatusInTransit, resp.Status)
+	require.Equal(t, shipmentvocab.MoveStatusInTransit, resp.Status)
 }
 
 func TestShipmentMoveHandler_RecordStopActual_UsesTheIdempotencyKey(t *testing.T) {
@@ -182,7 +183,7 @@ func TestShipmentMoveHandler_RecordStopActual_UsesTheIdempotencyKey(t *testing.T
 			},
 		)).
 		Return(&trackingeventports.StopEventResult{
-			Move:     &shipment.ShipmentMove{ID: moveID, Status: shipment.MoveStatusCompleted},
+			Move:     &shipment.ShipmentMove{ID: moveID, Status: shipmentvocab.MoveStatusCompleted},
 			Outcome:  trackingevent.OutcomeApplied,
 			Replayed: true,
 		}, nil).

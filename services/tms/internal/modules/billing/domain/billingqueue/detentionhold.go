@@ -4,7 +4,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 )
@@ -14,7 +14,7 @@ import (
 type DetentionHold struct {
 	OccurrenceID   pulid.ID                    `json:"occurrenceId"`
 	StopID         pulid.ID                    `json:"stopId"`
-	StopType       shipment.StopType           `json:"stopType"`
+	StopType       shipmentvocab.StopType      `json:"stopType"`
 	LocationName   string                      `json:"locationName"`
 	ClockStartAt   int64                       `json:"clockStartAt"`
 	BillableAmount decimal.Decimal             `json:"billableAmount"`

@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/quickfilter"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/modeprofile"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/modeprofile/modeprofiledb"
@@ -72,17 +73,17 @@ func shipmentStop(
 	q := st.Join(sm, sm.ID.EqCol(st.ShipmentMoveID)).
 		Where(
 			sm.ShipmentID.EqCol(sp.ID),
-			sm.Status.Ne(shipment.MoveStatusCanceled),
-			st.Status.Ne(shipment.StopStatusCanceled),
+			sm.Status.Ne(shipmentvocab.MoveStatusCanceled),
+			st.Status.Ne(shipmentvocab.StopStatusCanceled),
 		)
 
 	if pick == pickFirstPickup {
-		return q.Where(st.Type.In(shipment.PickupStopTypes()...)).
+		return q.Where(st.Type.In(shipmentvocab.PickupStopTypes()...)).
 			Order(sm.Sequence.Asc(), st.Sequence.Asc()).
 			Limit(1)
 	}
 
-	return q.Where(st.Type.In(shipment.DeliveryStopTypes()...)).
+	return q.Where(st.Type.In(shipmentvocab.DeliveryStopTypes()...)).
 		Order(sm.Sequence.Desc(), st.Sequence.Desc()).
 		Limit(1)
 }
@@ -91,15 +92,15 @@ func BillingTransferCandidateCondition() keel.Pred {
 	sp := shipmentdb.Shipments
 
 	return keel.And(
-		sp.Status.In(shipment.BillingTransferCandidateStatuses()...),
+		sp.Status.In(shipmentvocab.BillingTransferCandidateStatuses()...),
 		sp.BillingTransferStatus.In(
-			shipment.BillingTransferNone,
-			shipment.BillingTransferSentBackToOps,
+			shipmentvocab.BillingTransferNone,
+			shipmentvocab.BillingTransferSentBackToOps,
 		),
 	)
 }
 
-func StageCondition(stage shipment.Stage) keel.Pred {
+func StageCondition(stage shipmentvocab.Stage) keel.Pred {
 	return shipmentdb.Shipments.StageRank.Eq(stage.Rank())
 }
 
@@ -146,11 +147,11 @@ func QuickFilterCondition(
 
 	switch spec.Filter {
 	case quickfilter.QuickFilterLate:
-		return StageCondition(shipment.StageLate), nil
+		return StageCondition(shipmentvocab.StageLate), nil
 	case quickfilter.QuickFilterUncovered:
-		return StageCondition(shipment.StageNeedsCoverage), nil
+		return StageCondition(shipmentvocab.StageNeedsCoverage), nil
 	case quickfilter.QuickFilterMoving:
-		return StageCondition(shipment.StageMoving), nil
+		return StageCondition(shipmentvocab.StageMoving), nil
 	case quickfilter.QuickFilterDeliveringToday:
 		day := LocalDayOf(basis.Now, basis.Location)
 		return deliveryWithin(day.Start, day.End), nil
@@ -193,7 +194,7 @@ func deliveryWithin(start, end int64) keel.Pred {
 	).Pick(DeliveryAt(st))
 
 	return keel.And(
-		sp.Status.Ne(shipment.StatusCanceled),
+		sp.Status.Ne(shipmentvocab.StatusCanceled),
 		keel.Int8Range(keel.Int64(start), keel.Int64(end)).
 			Covers(keel.Int64Of(keel.Scalar(delivery))),
 	)
@@ -215,7 +216,7 @@ func pickupWindowCondition(now int64, spec quickfilter.QuickFilterSpec) keel.Pre
 	}
 
 	return keel.And(
-		StageCondition(shipment.StageNeedsCoverage),
+		StageCondition(shipmentvocab.StageNeedsCoverage),
 		keel.Int8Range(keel.Int64Ptr(lower), keel.Int64Ptr(upper)).
 			Covers(keel.Int64Of(keel.Scalar(pickup))),
 	)
@@ -256,7 +257,7 @@ func lowMarginCondition(margin *shipmentports.ShipmentMarginBasis) keel.Pred {
 		RoundTo(2)
 
 	miles := sm.
-		Where(sm.ShipmentID.EqCol(sp.ID), sm.Status.Ne(shipment.MoveStatusCanceled)).
+		Where(sm.ShipmentID.EqCol(sp.ID), sm.Status.Ne(shipmentvocab.MoveStatusCanceled)).
 		Having(
 			keel.Float64Of(sm.Distance.Sum()).Coalesce(0).Gt(0),
 			keel.Or(
@@ -300,8 +301,8 @@ func DwellingStops(
 
 	return st.Join(sm, sm.ID.EqCol(st.ShipmentMoveID)).Where(
 		sm.ShipmentID.EqCol(sp.ID),
-		sm.Status.Ne(shipment.MoveStatusCanceled),
-		st.Status.Ne(shipment.StopStatusCanceled),
+		sm.Status.Ne(shipmentvocab.MoveStatusCanceled),
+		st.Status.Ne(shipmentvocab.StopStatusCanceled),
 		st.ActualArrival.Coalesce(0).Gt(0),
 		st.ActualDeparture.Coalesce(0).Eq(0),
 		st.CountDetentionOverride.Coalesce(true),

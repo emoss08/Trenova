@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/trackingevent"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentmoveports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/trackingeventports"
@@ -79,20 +80,20 @@ func newStopActuals214Fixture(t *testing.T) *stopActuals214Fixture {
 	}
 	fixture.origin = &shipment.Stop{
 		ID:       pulid.MustNew("stp_"),
-		Type:     shipment.StopTypePickup,
-		Status:   shipment.StopStatusNew,
+		Type:     shipmentvocab.StopTypePickup,
+		Status:   shipmentvocab.StopStatusNew,
 		Sequence: 0,
 	}
 	fixture.middle = &shipment.Stop{
 		ID:       pulid.MustNew("stp_"),
-		Type:     shipment.StopTypeDelivery,
-		Status:   shipment.StopStatusNew,
+		Type:     shipmentvocab.StopTypeDelivery,
+		Status:   shipmentvocab.StopStatusNew,
 		Sequence: 1,
 	}
 	fixture.final = &shipment.Stop{
 		ID:       pulid.MustNew("stp_"),
-		Type:     shipment.StopTypeDelivery,
-		Status:   shipment.StopStatusNew,
+		Type:     shipmentvocab.StopTypeDelivery,
+		Status:   shipmentvocab.StopStatusNew,
 		Sequence: 2,
 	}
 	fixture.service = &Service{
@@ -112,7 +113,7 @@ func newStopActuals214Fixture(t *testing.T) *stopActuals214Fixture {
 func (f *stopActuals214Fixture) move() *shipment.ShipmentMove {
 	return &shipment.ShipmentMove{
 		ID:     f.moveID,
-		Status: shipment.MoveStatusAssigned,
+		Status: shipmentvocab.MoveStatusAssigned,
 		Stops:  []*shipment.Stop{f.origin, f.middle, f.final},
 	}
 }
@@ -188,7 +189,7 @@ func TestRecordTenderedShipmentStatus_X3ArrivesAtFirstOriginStop(t *testing.T) {
 	require.Empty(t, warnings)
 	require.Len(t, fixture.recorded, 1)
 	recorded := fixture.recorded[0]
-	require.Equal(t, shipment.VisitArrival, recorded.Kind)
+	require.Equal(t, shipmentvocab.VisitArrival, recorded.Kind)
 	require.Equal(t, fixture.origin.ID, recorded.StopID)
 	require.Equal(t, fixture.moveID, recorded.MoveID)
 	require.Equal(t, fixture.tenantInfo, recorded.TenantInfo)
@@ -215,7 +216,7 @@ func TestRecordTenderedShipmentStatus_AFDepartsOriginStop(t *testing.T) {
 	require.Empty(t, warnings)
 	require.Len(t, fixture.recorded, 1)
 	recorded := fixture.recorded[0]
-	require.Equal(t, shipment.VisitDeparture, recorded.Kind)
+	require.Equal(t, shipmentvocab.VisitDeparture, recorded.Kind)
 	require.Equal(t, fixture.origin.ID, recorded.StopID)
 	require.Positive(t, recorded.EventAt)
 }
@@ -235,7 +236,7 @@ func TestRecordTenderedShipmentStatus_X1ArrivesAtTheNextDeliveryStop(t *testing.
 	require.NoError(t, err)
 	require.Empty(t, warnings)
 	require.Len(t, fixture.recorded, 1)
-	require.Equal(t, shipment.VisitArrival, fixture.recorded[0].Kind)
+	require.Equal(t, shipmentvocab.VisitArrival, fixture.recorded[0].Kind)
 	require.Equal(t, fixture.middle.ID, fixture.recorded[0].StopID)
 }
 
@@ -254,9 +255,9 @@ func TestRecordTenderedShipmentStatus_D1ArrivesThenDepartsWhenArrivalMissing(t *
 	require.NoError(t, err)
 	require.Empty(t, warnings)
 	require.Len(t, fixture.recorded, 2)
-	require.Equal(t, shipment.VisitArrival, fixture.recorded[0].Kind)
+	require.Equal(t, shipmentvocab.VisitArrival, fixture.recorded[0].Kind)
 	require.Equal(t, trackingevent.MatchInferred, fixture.recorded[0].MatchMethod)
-	require.Equal(t, shipment.VisitDeparture, fixture.recorded[1].Kind)
+	require.Equal(t, shipmentvocab.VisitDeparture, fixture.recorded[1].Kind)
 	require.Equal(t, fixture.middle.ID, fixture.recorded[0].StopID)
 	require.Equal(t, fixture.middle.ID, fixture.recorded[1].StopID)
 	require.Equal(t, fixture.recorded[1].SourceKey+":arrival", fixture.recorded[0].SourceKey)
@@ -269,7 +270,7 @@ func TestRecordTenderedShipmentStatus_D1OnlyDepartsWhenAlreadyArrived(t *testing
 	fixture := newStopActuals214Fixture(t)
 	arrivedAt := int64(1767780000)
 	fixture.middle.ActualArrival = &arrivedAt
-	fixture.middle.Status = shipment.StopStatusInTransit
+	fixture.middle.Status = shipmentvocab.StopStatusInTransit
 	fixture.expectMoveLoad()
 	fixture.expectRecordStopActual(1)
 
@@ -281,7 +282,7 @@ func TestRecordTenderedShipmentStatus_D1OnlyDepartsWhenAlreadyArrived(t *testing
 	require.NoError(t, err)
 	require.Empty(t, warnings)
 	require.Len(t, fixture.recorded, 1)
-	require.Equal(t, shipment.VisitDeparture, fixture.recorded[0].Kind)
+	require.Equal(t, shipmentvocab.VisitDeparture, fixture.recorded[0].Kind)
 	require.Equal(t, fixture.middle.ID, fixture.recorded[0].StopID)
 }
 

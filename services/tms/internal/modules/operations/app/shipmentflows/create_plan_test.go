@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentcommercial"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentservicetest"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/rating/ratingtest"
 	"github.com/emoss08/trenova/internal/testutil/mocks/accessorialchargeportsmock"
@@ -79,7 +80,7 @@ func TestPreviewCreate_PricesAndValidatesWithoutSaving(t *testing.T) {
 
 	assert.Same(t, entity, plan.Shipment)
 	assert.True(t, plan.Shipment.ID.IsNil())
-	assert.Equal(t, shipment.StatusNew, plan.Shipment.Status)
+	assert.Equal(t, shipmentvocab.StatusNew, plan.Shipment.Status)
 	require.True(t, plan.Shipment.FreightChargeAmount.Valid)
 	assert.True(t, decimal.NewFromInt(1_250).Equal(plan.Shipment.FreightChargeAmount.Decimal))
 	require.NotNil(t, plan.Rating)
@@ -175,6 +176,6 @@ func TestPreviewCreate_ZeroAndFlagNamesTheUnratedShipment(t *testing.T) {
 
 	require.NoError(t, err)
 	require.Len(t, plan.Advisories, 1)
-	assert.Equal(t, shipment.RateCoverageRuleKey, plan.Advisories[0].RuleKey)
+	assert.Equal(t, shipmentvocab.RateCoverageRuleKey, plan.Advisories[0].RuleKey)
 	assert.Contains(t, plan.Advisories[0].Error(), "priced at zero")
 }

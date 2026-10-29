@@ -25,6 +25,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionpolicy/detentionpolicydb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer/customerdb"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location"
@@ -519,7 +520,7 @@ func (s *DetentionSeed) policyDefs(refs *detentionRefs) []detentionPolicyDef {
 				Status:                    detentionpolicy.PolicyStatusActive,
 				Priority:                  15,
 				CustomerID:                &glblID,
-				StopTypes:                 []shipment.StopType{shipment.StopTypePickup},
+				StopTypes:                 []shipmentvocab.StopType{shipmentvocab.StopTypePickup},
 				AppointmentStopsOnly:      true,
 				ClockStartBasis:           detentionpolicy.ClockStartBasisAppointment,
 				LateArrivalRule:           detentionpolicy.LateArrivalRuleForfeit,
@@ -831,8 +832,8 @@ type detentionNoticeDef struct {
 
 type detentionStopDef struct {
 	location        string
-	stopType        shipment.StopType
-	scheduleType    shipment.StopScheduleType
+	stopType        shipmentvocab.StopType
+	scheduleType    shipmentvocab.StopScheduleType
 	apptStartAgo    int64
 	apptWindow      int64
 	arrivalOffset   int64
@@ -852,8 +853,8 @@ type detentionShipmentDef struct {
 	customer   string
 	service    string
 	shipType   string
-	status     shipment.Status
-	moveStatus shipment.MoveStatus
+	status     shipmentvocab.Status
+	moveStatus shipmentvocab.MoveStatus
 	revenue    float64
 	pieces     int64
 	weight     int64
@@ -868,21 +869,21 @@ func detentionShipmentDefs() []detentionShipmentDef {
 	return []detentionShipmentDef{
 		{
 			pro: detentionFirstPro, bol: "BOL-2026-0201", customer: "ACME",
-			service: "STD", shipType: "FTL", status: shipment.StatusInTransit,
-			moveStatus: shipment.MoveStatusInTransit,
+			service: "STD", shipType: "FTL", status: shipmentvocab.StatusInTransit,
+			moveStatus: shipmentvocab.MoveStatusInTransit,
 			revenue:    2850, pieces: 24, weight: 39000,
 			workerKey: driverpayfixtures.PayWorkerJane, tractor: "TRC-003", trailer: "TRL-001",
 			stops: []detentionStopDef{
 				{
-					location: "TERM-LA", stopType: shipment.StopTypePickup,
-					scheduleType: shipment.StopScheduleTypeAppointment,
+					location: "TERM-LA", stopType: shipmentvocab.StopTypePickup,
+					scheduleType: shipmentvocab.StopScheduleTypeAppointment,
 					apptStartAgo: 26 * 60, apptWindow: 120, arrivalOffset: 10, dwell: 55,
 					arrivalSource:   detentionevidence.EvidenceSourceGeofence,
 					departureSource: detentionevidence.EvidenceSourceGeofence,
 				},
 				{
-					location: "DC-CHI", stopType: shipment.StopTypeDelivery,
-					scheduleType: shipment.StopScheduleTypeAppointment,
+					location: "DC-CHI", stopType: shipmentvocab.StopTypeDelivery,
+					scheduleType: shipmentvocab.StopScheduleTypeAppointment,
 					apptStartAgo: 240, apptWindow: 120, arrivalOffset: 15, dwell: 0,
 					arrivalSource: detentionevidence.EvidenceSourceTelematics,
 					notice: &detentionNoticeDef{
@@ -894,21 +895,21 @@ func detentionShipmentDefs() []detentionShipmentDef {
 		},
 		{
 			pro: "SEED-DET-002", bol: "BOL-2026-0202", customer: "FRSH",
-			service: "TEMP", shipType: "REEF", status: shipment.StatusDelayed,
-			moveStatus: shipment.MoveStatusInTransit,
+			service: "TEMP", shipType: "REEF", status: shipmentvocab.StatusDelayed,
+			moveStatus: shipmentvocab.MoveStatusInTransit,
 			revenue:    3300, pieces: 20, weight: 36000,
 			workerKey: driverpayfixtures.PayWorkerSarah, tractor: "TRC-002", trailer: "TRL-002",
 			stops: []detentionStopDef{
 				{
-					location: "WH-DAL", stopType: shipment.StopTypePickup,
-					scheduleType: shipment.StopScheduleTypeAppointment,
+					location: "WH-DAL", stopType: shipmentvocab.StopTypePickup,
+					scheduleType: shipmentvocab.StopScheduleTypeAppointment,
 					apptStartAgo: 30 * 60, apptWindow: 120, arrivalOffset: 5, dwell: 50,
 					arrivalSource:   detentionevidence.EvidenceSourceDriverApp,
 					departureSource: detentionevidence.EvidenceSourceDriverApp,
 				},
 				{
-					location: "COLD-PHX", stopType: shipment.StopTypeDelivery,
-					scheduleType: shipment.StopScheduleTypeAppointment,
+					location: "COLD-PHX", stopType: shipmentvocab.StopTypeDelivery,
+					scheduleType: shipmentvocab.StopScheduleTypeAppointment,
 					apptStartAgo: 300, apptWindow: 60, arrivalOffset: 20, dwell: 0,
 					arrivalSource: detentionevidence.EvidenceSourceGeofence,
 				},
@@ -916,22 +917,22 @@ func detentionShipmentDefs() []detentionShipmentDef {
 		},
 		{
 			pro: "SEED-DET-003", bol: "BOL-2026-0203", customer: "PEAK",
-			service: "STD", shipType: "FTL", status: shipment.StatusCompleted,
-			moveStatus: shipment.MoveStatusCompleted,
+			service: "STD", shipType: "FTL", status: shipmentvocab.StatusCompleted,
+			moveStatus: shipmentvocab.MoveStatusCompleted,
 			revenue:    3150, pieces: 26, weight: 41000,
 			workerKey: driverpayfixtures.PayWorkerSarah, tractor: "TRC-001", trailer: "TRL-003",
 			stops: []detentionStopDef{
 				{
-					location: "DC-CHI", stopType: shipment.StopTypePickup,
-					scheduleType: shipment.StopScheduleTypeAppointment,
+					location: "DC-CHI", stopType: shipmentvocab.StopTypePickup,
+					scheduleType: shipmentvocab.StopScheduleTypeAppointment,
 					apptStartAgo: 4 * 24 * 60, apptWindow: 120, arrivalOffset: 0, dwell: 200,
 					arrivalSource:   detentionevidence.EvidenceSourceTelematics,
 					departureSource: detentionevidence.EvidenceSourceTelematics,
 					document:        "Signed BOL captured at the dock office with in and out times",
 				},
 				{
-					location: "WH-DAL", stopType: shipment.StopTypeDelivery,
-					scheduleType: shipment.StopScheduleTypeAppointment,
+					location: "WH-DAL", stopType: shipmentvocab.StopTypeDelivery,
+					scheduleType: shipmentvocab.StopScheduleTypeAppointment,
 					apptStartAgo: 3 * 24 * 60, apptWindow: 120, arrivalOffset: 20, dwell: 480,
 					arrivalSource:   detentionevidence.EvidenceSourceGeofence,
 					departureSource: detentionevidence.EvidenceSourceGeofence,
@@ -946,21 +947,21 @@ func detentionShipmentDefs() []detentionShipmentDef {
 		},
 		{
 			pro: "SEED-DET-004", bol: "BOL-2026-0204", customer: "ACME",
-			service: "STD", shipType: "FTL", status: shipment.StatusReadyToInvoice,
-			moveStatus: shipment.MoveStatusCompleted,
+			service: "STD", shipType: "FTL", status: shipmentvocab.StatusReadyToInvoice,
+			moveStatus: shipmentvocab.MoveStatusCompleted,
 			revenue:    4200, pieces: 30, weight: 43000,
 			workerKey: driverpayfixtures.PayWorkerJane, tractor: "TRC-003", trailer: "TRL-004",
 			stops: []detentionStopDef{
 				{
-					location: "TERM-LA", stopType: shipment.StopTypePickup,
-					scheduleType: shipment.StopScheduleTypeAppointment,
+					location: "TERM-LA", stopType: shipmentvocab.StopTypePickup,
+					scheduleType: shipmentvocab.StopScheduleTypeAppointment,
 					apptStartAgo: 9 * 24 * 60, apptWindow: 120, arrivalOffset: -10, dwell: 55,
 					arrivalSource:   detentionevidence.EvidenceSourceGeofence,
 					departureSource: detentionevidence.EvidenceSourceGeofence,
 				},
 				{
-					location: "CUST-DEN", stopType: shipment.StopTypeDelivery,
-					scheduleType: shipment.StopScheduleTypeAppointment,
+					location: "CUST-DEN", stopType: shipmentvocab.StopTypeDelivery,
+					scheduleType: shipmentvocab.StopScheduleTypeAppointment,
 					apptStartAgo: 8 * 24 * 60, apptWindow: 120, arrivalOffset: 5, dwell: 840,
 					arrivalSource:   detentionevidence.EvidenceSourceTelematics,
 					departureSource: detentionevidence.EvidenceSourceTelematics,
@@ -975,21 +976,21 @@ func detentionShipmentDefs() []detentionShipmentDef {
 		},
 		{
 			pro: "SEED-DET-005", bol: "BOL-2026-0205", customer: "GLBL",
-			service: "STD", shipType: "DRAY", status: shipment.StatusCompleted,
-			moveStatus: shipment.MoveStatusCompleted,
+			service: "STD", shipType: "DRAY", status: shipmentvocab.StatusCompleted,
+			moveStatus: shipmentvocab.MoveStatusCompleted,
 			revenue:    1950, pieces: 18, weight: 34000,
 			workerKey: driverpayfixtures.PayWorkerMike, tractor: "TRC-101", trailer: "TRL-005",
 			stops: []detentionStopDef{
 				{
-					location: "TERM-LA", stopType: shipment.StopTypePickup,
-					scheduleType: shipment.StopScheduleTypeAppointment,
+					location: "TERM-LA", stopType: shipmentvocab.StopTypePickup,
+					scheduleType: shipmentvocab.StopScheduleTypeAppointment,
 					apptStartAgo: 6 * 24 * 60, apptWindow: 60, arrivalOffset: 150, dwell: 300,
 					arrivalSource:   detentionevidence.EvidenceSourceTelematics,
 					departureSource: detentionevidence.EvidenceSourceTelematics,
 				},
 				{
-					location: "CUST-DEN", stopType: shipment.StopTypeDelivery,
-					scheduleType: shipment.StopScheduleTypeAppointment,
+					location: "CUST-DEN", stopType: shipmentvocab.StopTypeDelivery,
+					scheduleType: shipmentvocab.StopScheduleTypeAppointment,
 					apptStartAgo: 5 * 24 * 60, apptWindow: 120, arrivalOffset: 10, dwell: 100,
 					arrivalSource:   detentionevidence.EvidenceSourceDriverApp,
 					departureSource: detentionevidence.EvidenceSourceDriverApp,
@@ -998,21 +999,21 @@ func detentionShipmentDefs() []detentionShipmentDef {
 		},
 		{
 			pro: "SEED-DET-006", bol: "BOL-2026-0206", customer: "SUNB",
-			service: "WHG", shipType: "PART", status: shipment.StatusReadyToInvoice,
-			moveStatus: shipment.MoveStatusCompleted,
+			service: "WHG", shipType: "PART", status: shipmentvocab.StatusReadyToInvoice,
+			moveStatus: shipmentvocab.MoveStatusCompleted,
 			revenue:    3600, pieces: 16, weight: 32000,
 			workerKey: driverpayfixtures.PayWorkerSarah, tractor: "TRC-002", trailer: "TRL-001",
 			stops: []detentionStopDef{
 				{
-					location: "WH-DAL", stopType: shipment.StopTypePickup,
-					scheduleType: shipment.StopScheduleTypeAppointment,
+					location: "WH-DAL", stopType: shipmentvocab.StopTypePickup,
+					scheduleType: shipmentvocab.StopScheduleTypeAppointment,
 					apptStartAgo: 14 * 24 * 60, apptWindow: 120, arrivalOffset: 0, dwell: 70,
 					arrivalSource:   detentionevidence.EvidenceSourceDriverApp,
 					departureSource: detentionevidence.EvidenceSourceDriverApp,
 				},
 				{
-					location: "DC-CHI", stopType: shipment.StopTypeDelivery,
-					scheduleType: shipment.StopScheduleTypeAppointment,
+					location: "DC-CHI", stopType: shipmentvocab.StopTypeDelivery,
+					scheduleType: shipmentvocab.StopScheduleTypeAppointment,
 					apptStartAgo: 13 * 24 * 60, apptWindow: 120, arrivalOffset: 30, dwell: 1800,
 					arrivalSource:   detentionevidence.EvidenceSourceGeofence,
 					departureSource: detentionevidence.EvidenceSourceGeofence,
@@ -1027,21 +1028,21 @@ func detentionShipmentDefs() []detentionShipmentDef {
 		},
 		{
 			pro: "SEED-DET-007", bol: "BOL-2026-0207", customer: "RNGE",
-			service: "STD", shipType: "FTL", status: shipment.StatusCompleted,
-			moveStatus: shipment.MoveStatusCompleted,
+			service: "STD", shipType: "FTL", status: shipmentvocab.StatusCompleted,
+			moveStatus: shipmentvocab.MoveStatusCompleted,
 			revenue:    2450, pieces: 22, weight: 37000,
 			workerKey: driverpayfixtures.PayWorkerJane, tractor: "TRC-004", trailer: "TRL-002",
 			stops: []detentionStopDef{
 				{
-					location: "DC-CHI", stopType: shipment.StopTypePickup,
-					scheduleType: shipment.StopScheduleTypeOpen,
+					location: "DC-CHI", stopType: shipmentvocab.StopTypePickup,
+					scheduleType: shipmentvocab.StopScheduleTypeOpen,
 					apptStartAgo: 11 * 24 * 60, apptWindow: 240, arrivalOffset: 30, dwell: 65,
 					arrivalSource:   detentionevidence.EvidenceSourceManual,
 					departureSource: detentionevidence.EvidenceSourceManual,
 				},
 				{
-					location: "CUST-DEN", stopType: shipment.StopTypeDelivery,
-					scheduleType: shipment.StopScheduleTypeOpen,
+					location: "CUST-DEN", stopType: shipmentvocab.StopTypeDelivery,
+					scheduleType: shipmentvocab.StopScheduleTypeOpen,
 					apptStartAgo: 10 * 24 * 60, apptWindow: 240, arrivalOffset: 45, dwell: 240,
 					arrivalSource:   detentionevidence.EvidenceSourceManual,
 					departureSource: detentionevidence.EvidenceSourceManual,
@@ -1050,21 +1051,21 @@ func detentionShipmentDefs() []detentionShipmentDef {
 		},
 		{
 			pro: "SEED-DET-008", bol: "BOL-2026-0208", customer: "FRSH",
-			service: "TEMP", shipType: "REEF", status: shipment.StatusReadyToInvoice,
-			moveStatus: shipment.MoveStatusCompleted,
+			service: "TEMP", shipType: "REEF", status: shipmentvocab.StatusReadyToInvoice,
+			moveStatus: shipmentvocab.MoveStatusCompleted,
 			revenue:    5100, pieces: 28, weight: 42000,
 			workerKey: driverpayfixtures.PayWorkerSarah, tractor: "TRC-002", trailer: "TRL-003",
 			stops: []detentionStopDef{
 				{
-					location: "WH-DAL", stopType: shipment.StopTypePickup,
-					scheduleType: shipment.StopScheduleTypeAppointment,
+					location: "WH-DAL", stopType: shipmentvocab.StopTypePickup,
+					scheduleType: shipmentvocab.StopScheduleTypeAppointment,
 					apptStartAgo: 20 * 24 * 60, apptWindow: 120, arrivalOffset: 15, dwell: 80,
 					arrivalSource:   detentionevidence.EvidenceSourceGeofence,
 					departureSource: detentionevidence.EvidenceSourceGeofence,
 				},
 				{
-					location: "COLD-PHX", stopType: shipment.StopTypeDelivery,
-					scheduleType: shipment.StopScheduleTypeAppointment,
+					location: "COLD-PHX", stopType: shipmentvocab.StopTypeDelivery,
+					scheduleType: shipmentvocab.StopScheduleTypeAppointment,
 					apptStartAgo: 19 * 24 * 60, apptWindow: 60, arrivalOffset: 5, dwell: 2400,
 					arrivalSource:   detentionevidence.EvidenceSourceGeofence,
 					departureSource: detentionevidence.EvidenceSourceGeofence,
@@ -1079,21 +1080,21 @@ func detentionShipmentDefs() []detentionShipmentDef {
 		},
 		{
 			pro: "SEED-DET-009", bol: "BOL-2026-0209", customer: "PEAK",
-			service: "STD", shipType: "FTL", status: shipment.StatusCompleted,
-			moveStatus: shipment.MoveStatusCompleted,
+			service: "STD", shipType: "FTL", status: shipmentvocab.StatusCompleted,
+			moveStatus: shipmentvocab.MoveStatusCompleted,
 			revenue:    2700, pieces: 20, weight: 35000,
 			workerKey: driverpayfixtures.PayWorkerJane, tractor: "TRC-003", trailer: "TRL-004",
 			stops: []detentionStopDef{
 				{
-					location: "DC-CHI", stopType: shipment.StopTypePickup,
-					scheduleType: shipment.StopScheduleTypeAppointment,
+					location: "DC-CHI", stopType: shipmentvocab.StopTypePickup,
+					scheduleType: shipmentvocab.StopScheduleTypeAppointment,
 					apptStartAgo: 7 * 24 * 60, apptWindow: 120, arrivalOffset: 0, dwell: 60,
 					arrivalSource:   detentionevidence.EvidenceSourceDriverApp,
 					departureSource: detentionevidence.EvidenceSourceDriverApp,
 				},
 				{
-					location: "WH-DAL", stopType: shipment.StopTypeDelivery,
-					scheduleType: shipment.StopScheduleTypeAppointment,
+					location: "WH-DAL", stopType: shipmentvocab.StopTypeDelivery,
+					scheduleType: shipmentvocab.StopScheduleTypeAppointment,
 					apptStartAgo: 6 * 24 * 60, apptWindow: 120, arrivalOffset: 10, dwell: 300,
 					arrivalSource:   detentionevidence.EvidenceSourceTelematics,
 					departureSource: detentionevidence.EvidenceSourceTelematics,
@@ -1109,21 +1110,21 @@ func detentionShipmentDefs() []detentionShipmentDef {
 		},
 		{
 			pro: "SEED-DET-010", bol: "BOL-2026-0210", customer: "ACME",
-			service: "STD", shipType: "FTL", status: shipment.StatusCompleted,
-			moveStatus: shipment.MoveStatusCompleted,
+			service: "STD", shipType: "FTL", status: shipmentvocab.StatusCompleted,
+			moveStatus: shipmentvocab.MoveStatusCompleted,
 			revenue:    2200, pieces: 18, weight: 31000,
 			workerKey: driverpayfixtures.PayWorkerJohn, tractor: "TRC-001", trailer: "TRL-005",
 			stops: []detentionStopDef{
 				{
-					location: "TERM-LA", stopType: shipment.StopTypePickup,
-					scheduleType: shipment.StopScheduleTypeAppointment,
+					location: "TERM-LA", stopType: shipmentvocab.StopTypePickup,
+					scheduleType: shipmentvocab.StopScheduleTypeAppointment,
 					apptStartAgo: 3 * 24 * 60, apptWindow: 120, arrivalOffset: 5, dwell: 45,
 					arrivalSource:   detentionevidence.EvidenceSourceGeofence,
 					departureSource: detentionevidence.EvidenceSourceGeofence,
 				},
 				{
-					location: "DC-CHI", stopType: shipment.StopTypeDelivery,
-					scheduleType: shipment.StopScheduleTypeAppointment,
+					location: "DC-CHI", stopType: shipmentvocab.StopTypeDelivery,
+					scheduleType: shipmentvocab.StopScheduleTypeAppointment,
 					apptStartAgo: 2 * 24 * 60, apptWindow: 120, arrivalOffset: 0, dwell: 120,
 					arrivalSource:   detentionevidence.EvidenceSourceGeofence,
 					departureSource: detentionevidence.EvidenceSourceGeofence,
@@ -1133,21 +1134,21 @@ func detentionShipmentDefs() []detentionShipmentDef {
 		},
 		{
 			pro: "SEED-DET-011", bol: "BOL-2026-0211", customer: "GLBL",
-			service: "STD", shipType: "FTL", status: shipment.StatusReadyToInvoice,
-			moveStatus: shipment.MoveStatusCompleted,
+			service: "STD", shipType: "FTL", status: shipmentvocab.StatusReadyToInvoice,
+			moveStatus: shipmentvocab.MoveStatusCompleted,
 			revenue:    3050, pieces: 24, weight: 38000,
 			workerKey: driverpayfixtures.PayWorkerMike, tractor: "TRC-101", trailer: "TRL-002",
 			stops: []detentionStopDef{
 				{
-					location: "CUST-DEN", stopType: shipment.StopTypePickup,
-					scheduleType: shipment.StopScheduleTypeAppointment,
+					location: "CUST-DEN", stopType: shipmentvocab.StopTypePickup,
+					scheduleType: shipmentvocab.StopScheduleTypeAppointment,
 					apptStartAgo: 16 * 24 * 60, apptWindow: 120, arrivalOffset: 10, dwell: 75,
 					arrivalSource:   detentionevidence.EvidenceSourceDriverApp,
 					departureSource: detentionevidence.EvidenceSourceDriverApp,
 				},
 				{
-					location: "WH-DAL", stopType: shipment.StopTypeDelivery,
-					scheduleType: shipment.StopScheduleTypeAppointment,
+					location: "WH-DAL", stopType: shipmentvocab.StopTypeDelivery,
+					scheduleType: shipmentvocab.StopScheduleTypeAppointment,
 					apptStartAgo: 15 * 24 * 60, apptWindow: 120, arrivalOffset: 20, dwell: 420,
 					arrivalSource:   detentionevidence.EvidenceSourceTelematics,
 					departureSource: detentionevidence.EvidenceSourceTelematics,
@@ -1242,8 +1243,8 @@ func (s *DetentionSeed) createDetentionShipment(
 		),
 		FreightChargeAmount: decimal.NullDecimal{Decimal: revenue, Valid: true},
 		TotalChargeAmount:   decimal.NullDecimal{Decimal: revenue, Valid: true},
-		EntryMethod:         shipment.EntryMethodManual,
-		FreightTerms:        shipment.FreightTermsPrepaid,
+		EntryMethod:         shipmentvocab.EntryMethodManual,
+		FreightTerms:        shipmentvocab.FreightTermsPrepaid,
 		FreightLines:        []shipment.FreightLine{},
 		OtherChargeAmount:   decimal.NewNullDecimal(decimal.RequireFromString("0")),
 	}
@@ -1278,7 +1279,7 @@ func (s *DetentionSeed) createDetentionShipment(
 		Status:         def.moveStatus,
 		Loaded:         true,
 		Sequence:       0,
-		CoverageType:   shipment.MoveCoverageTypeDriver,
+		CoverageType:   shipmentvocab.MoveCoverageTypeDriver,
 	}
 	if err := shipmentdb.ShipmentMoves.Create(ctx, db, move); err != nil {
 		return 0, fmt.Errorf("insert shipment move: %w", err)
@@ -1327,7 +1328,7 @@ func (s *DetentionSeed) buildStop(
 		LocationID:           loc.ID,
 		Type:                 def.stopType,
 		ScheduleType:         def.scheduleType,
-		Status:               shipment.StopStatusInTransit,
+		Status:               shipmentvocab.StopStatusInTransit,
 		Sequence:             sequence,
 		ScheduledWindowStart: apptStart,
 		ScheduledWindowEnd:   new(apptEnd),
@@ -1335,7 +1336,7 @@ func (s *DetentionSeed) buildStop(
 	}
 
 	if def.dwell > 0 {
-		stop.Status = shipment.StopStatusCompleted
+		stop.Status = shipmentvocab.StopStatusCompleted
 		stop.ActualDeparture = new(arrival + def.dwell*detentionMinute)
 	}
 
@@ -1363,9 +1364,9 @@ func (s *DetentionSeed) createAssignment(
 		return fmt.Errorf("trailer %s not found", def.trailer)
 	}
 
-	status := shipment.AssignmentStatusCompleted
-	if def.moveStatus != shipment.MoveStatusCompleted {
-		status = shipment.AssignmentStatusInProgress
+	status := shipmentvocab.AssignmentStatusCompleted
+	if def.moveStatus != shipmentvocab.MoveStatusCompleted {
+		status = shipmentvocab.AssignmentStatusInProgress
 	}
 
 	assignment := &shipment.Assignment{
@@ -1377,7 +1378,7 @@ func (s *DetentionSeed) createAssignment(
 		TractorID:       &tractorID,
 		TrailerID:       &trailerID,
 		Status:          status,
-		AckStatus:       shipment.AssignmentAckPending,
+		AckStatus:       shipmentvocab.AssignmentAckPending,
 	}
 	if err := shipmentdb.Assignments.Create(ctx, db, assignment); err != nil {
 		return fmt.Errorf("insert assignment: %w", err)

@@ -2,6 +2,7 @@ package shipmentrating
 
 import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -100,7 +101,7 @@ func agreementChargesEdited(original, updated []*shipment.AdditionalCharge) bool
 	}
 
 	for _, charge := range original {
-		if charge == nil || charge.Owner() != shipment.SystemOwnerAgreement {
+		if charge == nil || charge.Owner() != shipmentvocab.SystemOwnerAgreement {
 			continue
 		}
 

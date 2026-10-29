@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/commodity"
@@ -88,7 +89,7 @@ func TestBuildInvoicePDFDataMapsShipmentStopsToShipperAndConsignee(t *testing.T)
 			{
 				Stops: []*shipment.Stop{
 					{
-						Type:     shipment.StopTypeDelivery,
+						Type:     shipmentvocab.StopTypeDelivery,
 						Sequence: 2,
 						Location: &location.Location{
 							Name:         "Consignee DC",
@@ -99,7 +100,7 @@ func TestBuildInvoicePDFDataMapsShipmentStopsToShipperAndConsignee(t *testing.T)
 						},
 					},
 					{
-						Type:     shipment.StopTypeDelivery,
+						Type:     shipmentvocab.StopTypeDelivery,
 						Sequence: 3,
 						Location: &location.Location{
 							Name:         "Final Delivery",
@@ -110,7 +111,7 @@ func TestBuildInvoicePDFDataMapsShipmentStopsToShipperAndConsignee(t *testing.T)
 						},
 					},
 					{
-						Type:     shipment.StopTypePickup,
+						Type:     shipmentvocab.StopTypePickup,
 						Sequence: 1,
 						Location: &location.Location{
 							Name:         "Shipper Plant",
@@ -151,7 +152,7 @@ func TestShipmentStopSelectionHelpers(t *testing.T) {
 			{
 				Stops: []*shipment.Stop{
 					{
-						Type:     shipment.StopTypeDelivery,
+						Type:     shipmentvocab.StopTypeDelivery,
 						Sequence: 4,
 						Location: &location.Location{
 							Name:       "Final Delivery",
@@ -160,7 +161,7 @@ func TestShipmentStopSelectionHelpers(t *testing.T) {
 						},
 					},
 					{
-						Type:     shipment.StopTypePickup,
+						Type:     shipmentvocab.StopTypePickup,
 						Sequence: 2,
 						Location: &location.Location{
 							Name:       "First Pickup",
@@ -169,7 +170,7 @@ func TestShipmentStopSelectionHelpers(t *testing.T) {
 						},
 					},
 					{
-						Type:     shipment.StopTypeDelivery,
+						Type:     shipmentvocab.StopTypeDelivery,
 						Sequence: 3,
 						Location: &location.Location{
 							Name:       "First Delivery",
@@ -178,7 +179,7 @@ func TestShipmentStopSelectionHelpers(t *testing.T) {
 						},
 					},
 					{
-						Type:     shipment.StopTypePickup,
+						Type:     shipmentvocab.StopTypePickup,
 						Sequence: 5,
 						Location: &location.Location{Name: "Later Pickup"},
 					},
@@ -415,7 +416,7 @@ func testInvoicePDFDeliveryProfile() *DeliveryProfile {
 				{
 					Stops: []*shipment.Stop{
 						{
-							Type:     shipment.StopTypePickup,
+							Type:     shipmentvocab.StopTypePickup,
 							Sequence: 1,
 							Location: &location.Location{
 								Name:         "Origin DC",
@@ -426,7 +427,7 @@ func testInvoicePDFDeliveryProfile() *DeliveryProfile {
 							},
 						},
 						{
-							Type:     shipment.StopTypeDelivery,
+							Type:     shipmentvocab.StopTypeDelivery,
 							Sequence: 2,
 							Location: &location.Location{
 								Name:         "Destination DC",

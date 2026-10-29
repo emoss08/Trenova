@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
 	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/ediportsmock"
@@ -40,7 +40,7 @@ func TestPreviewResolve_IsTheResolutionResolveSaves(t *testing.T) {
 		Type:               servicefailure.TypeLateDelivery,
 		Source:             servicefailure.SourceDetected,
 		Status:             servicefailure.StatusReviewed,
-		StopType:           shipment.StopTypeDelivery,
+		StopType:           shipmentvocab.StopTypeDelivery,
 		ScheduledCutoff:    1_000,
 		ActualArrival:      1_301,
 		GracePeriodMinutes: 5,

@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmenteffects"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/chargeallocation"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentbillingports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentinvalidationports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
@@ -149,7 +150,7 @@ func (s *Service) AutoMarkReadyToInvoiceIfEligible(
 
 	if !readiness.ShouldAutoMarkReadyToInvoice ||
 		!readiness.CanMarkReadyToInvoice ||
-		readiness.ShipmentStatus != shipment.StatusCompleted {
+		readiness.ShipmentStatus != shipmentvocab.StatusCompleted {
 		s.l.Info("shipment not eligible for auto-mark ready to invoice",
 			zap.String("shipmentId", shipmentID.String()),
 			zap.String("shipmentStatus", string(readiness.ShipmentStatus)),
@@ -208,9 +209,9 @@ func (s *Service) markReadyToInvoice(
 	}
 
 	switch entity.Status { //nolint:exhaustive // only the billing lifecycle statuses decide this
-	case shipment.StatusReadyToInvoice, shipment.StatusInvoiced:
+	case shipmentvocab.StatusReadyToInvoice, shipmentvocab.StatusInvoiced:
 		return entity, false, nil
-	case shipment.StatusCompleted:
+	case shipmentvocab.StatusCompleted:
 	default:
 		return nil, false, errortypes.NewValidationError(
 			"status",
@@ -220,7 +221,7 @@ func (s *Service) markReadyToInvoice(
 	}
 
 	previousEntity := *entity
-	entity.Status = shipment.StatusReadyToInvoice
+	entity.Status = shipmentvocab.StatusReadyToInvoice
 	now := timeutils.NowUnix()
 	entity.MarkedReadyToBillAt = &now
 

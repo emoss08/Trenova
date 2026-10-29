@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/shopspring/decimal"
@@ -26,7 +27,7 @@ func TestBuildDuplicatedShipmentGraph_ResetsOperationalState(t *testing.T) {
 	require.Len(t, graph.Commodities, 2)
 
 	firstCopy := graph.Shipments[0]
-	assert.Equal(t, shipment.StatusNew, firstCopy.Status)
+	assert.Equal(t, shipmentvocab.StatusNew, firstCopy.Status)
 	assert.Equal(t, "PRO-1", firstCopy.ProNumber)
 	assert.Equal(t, source.FormulaTemplateID, firstCopy.FormulaTemplateID)
 	assert.Equal(t, source.ServiceTypeID, firstCopy.ServiceTypeID)
@@ -45,11 +46,11 @@ func TestBuildDuplicatedShipmentGraph_ResetsOperationalState(t *testing.T) {
 	assert.NotEqual(t, source.Commodities[0].ID, firstCopy.Commodities[0].ID)
 
 	firstMove := firstCopy.Moves[0]
-	assert.Equal(t, shipment.MoveStatusNew, firstMove.Status)
+	assert.Equal(t, shipmentvocab.MoveStatusNew, firstMove.Status)
 	assert.NotEqual(t, source.Moves[0].ID, firstMove.ID)
 
 	firstStop := firstMove.Stops[0]
-	assert.Equal(t, shipment.StopStatusNew, firstStop.Status)
+	assert.Equal(t, shipmentvocab.StopStatusNew, firstStop.Status)
 	assert.Nil(t, firstStop.ActualArrival)
 	assert.Nil(t, firstStop.ActualDeparture)
 	assert.NotEqual(t, source.Moves[0].Stops[0].ID, firstStop.ID)
@@ -118,7 +119,7 @@ func duplicateSourceFixture() *shipment.Shipment {
 		FormulaTemplateID:  pulid.MustNew("fmt_"),
 		OwnerID:            pulid.MustNew("usr_"),
 		CanceledByID:       pulid.MustNew("usr_"),
-		Status:             shipment.StatusAssigned,
+		Status:             shipmentvocab.StatusAssigned,
 		BOL:                "ORIGINAL-BOL",
 		ActualShipDate:     &actualShipDate,
 		ActualDeliveryDate: &actualDeliveryDate,
@@ -156,7 +157,7 @@ func duplicateSourceFixture() *shipment.Shipment {
 				BusinessUnitID: pulid.MustNew("bu_"),
 				OrganizationID: pulid.MustNew("org_"),
 				ShipmentID:     pulid.MustNew("shp_"),
-				Status:         shipment.MoveStatusAssigned,
+				Status:         shipmentvocab.MoveStatusAssigned,
 				Loaded:         true,
 				Sequence:       0,
 				Distance:       &distance,
@@ -167,9 +168,9 @@ func duplicateSourceFixture() *shipment.Shipment {
 						OrganizationID:       pulid.MustNew("org_"),
 						ShipmentMoveID:       pulid.MustNew("sm_"),
 						LocationID:           pulid.MustNew("loc_"),
-						Status:               shipment.StopStatusCompleted,
-						Type:                 shipment.StopTypePickup,
-						ScheduleType:         shipment.StopScheduleTypeOpen,
+						Status:               shipmentvocab.StopStatusCompleted,
+						Type:                 shipmentvocab.StopTypePickup,
+						ScheduleType:         shipmentvocab.StopScheduleTypeOpen,
 						Sequence:             0,
 						Pieces:               &pieces,
 						Weight:               &weight,
@@ -184,9 +185,9 @@ func duplicateSourceFixture() *shipment.Shipment {
 						OrganizationID:       pulid.MustNew("org_"),
 						ShipmentMoveID:       pulid.MustNew("sm_"),
 						LocationID:           pulid.MustNew("loc_"),
-						Status:               shipment.StopStatusInTransit,
-						Type:                 shipment.StopTypeDelivery,
-						ScheduleType:         shipment.StopScheduleTypeOpen,
+						Status:               shipmentvocab.StopStatusInTransit,
+						Type:                 shipmentvocab.StopTypeDelivery,
+						ScheduleType:         shipmentvocab.StopScheduleTypeOpen,
 						Sequence:             1,
 						ScheduledWindowStart: 200,
 						ScheduledWindowEnd:   new(int64(210)),

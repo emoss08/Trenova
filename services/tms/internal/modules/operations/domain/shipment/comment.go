@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -17,13 +18,6 @@ import (
 var (
 	_ pagination.CursorEntity        = (*ShipmentComment)(nil)
 	_ domaintypes.PostgresSearchable = (*ShipmentComment)(nil)
-)
-
-const (
-	MaxCommentLength      = 5000
-	MaxCommentMentions    = 20
-	MaxCommentAttachments = 10
-	MaxPinnedComments     = 25
 )
 
 const CommentAttachmentResourceType = "shipment_comment"
@@ -54,35 +48,35 @@ func CustomerEmailTools() []string {
 type ShipmentComment struct {
 	keel.Table `keel:"shipment_comments"`
 
-	ID                     pulid.ID             `json:"id"                              keel:"id,pk,autoid:shc_"`
-	BusinessUnitID         pulid.ID             `json:"businessUnitId"                  keel:"business_unit_id,pk,tenant"`
-	OrganizationID         pulid.ID             `json:"organizationId"                  keel:"organization_id,pk,tenant"`
-	ShipmentID             pulid.ID             `json:"shipmentId"                      keel:"shipment_id,pk"`
-	UserID                 pulid.ID             `json:"userId"                          keel:"user_id,nullzero"`
-	ParentCommentID        *pulid.ID            `json:"parentCommentId"                 keel:"parent_comment_id"`
-	Comment                string               `json:"comment"                         keel:"comment"`
-	Body                   map[string]any       `json:"body,omitempty"                  keel:"body,jsonb,nullzero"`
-	Type                   CommentType          `json:"type"                            keel:"type"`
-	Visibility             CommentVisibility    `json:"visibility"                      keel:"visibility"`
-	Priority               CommentPriority      `json:"priority"                        keel:"priority"`
-	Source                 CommentSource        `json:"source"                          keel:"source"`
-	Metadata               map[string]any       `json:"metadata,omitempty"              keel:"metadata,jsonb"`
-	EditedAt               *int64               `json:"editedAt"                        keel:"edited_at"`
-	PinnedAt               *int64               `json:"pinnedAt"                        keel:"pinned_at"`
-	PinnedByID             *pulid.ID            `json:"pinnedById"                      keel:"pinned_by_id"`
-	ResolvedAt             *int64               `json:"resolvedAt"                      keel:"resolved_at"`
-	ResolvedByID           *pulid.ID            `json:"resolvedById"                    keel:"resolved_by_id"`
-	RequiresAcknowledgment bool                 `json:"requiresAcknowledgment"          keel:"requires_acknowledgment"`
-	DeletedAt              *int64               `json:"deletedAt"                       keel:"deleted_at"`
-	DeletedByID            *pulid.ID            `json:"deletedById"                     keel:"deleted_by_id"`
-	SearchVector           string               `json:"-"                               keel:"search_vector,tsvector,readonly,noselect"`
-	ReplyCount             int64                `json:"replyCount"                      keel:"reply_count,computed"`
-	Version                int64                `json:"version"                         keel:"version,version"`
-	CreatedAt              int64                `json:"createdAt"                       keel:"created_at,autocreate"`
-	UpdatedAt              int64                `json:"updatedAt"                       keel:"updated_at,autoupdate"`
-	MentionedUserIDs       []pulid.ID           `json:"mentionedUserIds,omitempty"`
-	AttachmentDocumentIDs  []pulid.ID           `json:"attachmentDocumentIds,omitempty"`
-	Attachments            []*CommentAttachment `json:"attachments,omitempty"`
+	ID                     pulid.ID                        `json:"id"                              keel:"id,pk,autoid:shc_"`
+	BusinessUnitID         pulid.ID                        `json:"businessUnitId"                  keel:"business_unit_id,pk,tenant"`
+	OrganizationID         pulid.ID                        `json:"organizationId"                  keel:"organization_id,pk,tenant"`
+	ShipmentID             pulid.ID                        `json:"shipmentId"                      keel:"shipment_id,pk"`
+	UserID                 pulid.ID                        `json:"userId"                          keel:"user_id,nullzero"`
+	ParentCommentID        *pulid.ID                       `json:"parentCommentId"                 keel:"parent_comment_id"`
+	Comment                string                          `json:"comment"                         keel:"comment"`
+	Body                   map[string]any                  `json:"body,omitempty"                  keel:"body,jsonb,nullzero"`
+	Type                   shipmentvocab.CommentType       `json:"type"                            keel:"type"`
+	Visibility             shipmentvocab.CommentVisibility `json:"visibility"                      keel:"visibility"`
+	Priority               shipmentvocab.CommentPriority   `json:"priority"                        keel:"priority"`
+	Source                 shipmentvocab.CommentSource     `json:"source"                          keel:"source"`
+	Metadata               map[string]any                  `json:"metadata,omitempty"              keel:"metadata,jsonb"`
+	EditedAt               *int64                          `json:"editedAt"                        keel:"edited_at"`
+	PinnedAt               *int64                          `json:"pinnedAt"                        keel:"pinned_at"`
+	PinnedByID             *pulid.ID                       `json:"pinnedById"                      keel:"pinned_by_id"`
+	ResolvedAt             *int64                          `json:"resolvedAt"                      keel:"resolved_at"`
+	ResolvedByID           *pulid.ID                       `json:"resolvedById"                    keel:"resolved_by_id"`
+	RequiresAcknowledgment bool                            `json:"requiresAcknowledgment"          keel:"requires_acknowledgment"`
+	DeletedAt              *int64                          `json:"deletedAt"                       keel:"deleted_at"`
+	DeletedByID            *pulid.ID                       `json:"deletedById"                     keel:"deleted_by_id"`
+	SearchVector           string                          `json:"-"                               keel:"search_vector,tsvector,readonly,noselect"`
+	ReplyCount             int64                           `json:"replyCount"                      keel:"reply_count,computed"`
+	Version                int64                           `json:"version"                         keel:"version,version"`
+	CreatedAt              int64                           `json:"createdAt"                       keel:"created_at,autocreate"`
+	UpdatedAt              int64                           `json:"updatedAt"                       keel:"updated_at,autoupdate"`
+	MentionedUserIDs       []pulid.ID                      `json:"mentionedUserIds,omitempty"`
+	AttachmentDocumentIDs  []pulid.ID                      `json:"attachmentDocumentIds,omitempty"`
+	Attachments            []*CommentAttachment            `json:"attachments,omitempty"`
 
 	User            *tenant.User                     `json:"user,omitempty"            keel:"belongs:user_id"`
 	PinnedBy        *tenant.User                     `json:"pinnedBy,omitempty"        keel:"belongs:pinned_by_id"`
@@ -158,30 +152,30 @@ func (c *ShipmentComment) Validate(multiErr *errortypes.MultiError) {
 		validation.Field(
 			&c.UserID,
 			validation.When(
-				c.Source != CommentSourceSystem,
+				c.Source != shipmentvocab.CommentSourceSystem,
 				validation.Required.Error("User ID is required"),
 			),
 		),
 		validation.Field(
 			&c.Comment,
 			validation.Required.Error("Comment is required"),
-			validation.Length(1, MaxCommentLength).
+			validation.Length(1, shipmentvocab.MaxCommentLength).
 				Error("Comment must be between 1 and 5000 characters"),
 		),
 		validation.Field(
 			&c.Source,
 			validation.In(
-				CommentSourceUser,
-				CommentSourceSystem,
-				CommentSourceIntegration,
-				CommentSourceAI,
+				shipmentvocab.CommentSourceUser,
+				shipmentvocab.CommentSourceSystem,
+				shipmentvocab.CommentSourceIntegration,
+				shipmentvocab.CommentSourceAI,
 			).Error("Source must be a valid comment source"),
 		),
 		validation.Field(
 			&c.MentionedUserIDs,
 			validation.By(func(value any) error {
 				ids, _ := value.([]pulid.ID)
-				if len(ids) > MaxCommentMentions {
+				if len(ids) > shipmentvocab.MaxCommentMentions {
 					return errors.New("mention count must be 20 or fewer")
 				}
 				return nil
@@ -191,7 +185,7 @@ func (c *ShipmentComment) Validate(multiErr *errortypes.MultiError) {
 			&c.AttachmentDocumentIDs,
 			validation.By(func(value any) error {
 				ids, _ := value.([]pulid.ID)
-				if len(ids) > MaxCommentAttachments {
+				if len(ids) > shipmentvocab.MaxCommentAttachments {
 					return errors.New("attachment count must be 10 or fewer")
 				}
 				return nil
@@ -202,22 +196,22 @@ func (c *ShipmentComment) Validate(multiErr *errortypes.MultiError) {
 
 func (c *ShipmentComment) applyDefaults() {
 	if c.Source == "" {
-		c.Source = CommentSourceUser
+		c.Source = shipmentvocab.CommentSourceUser
 	}
 }
 
 func (c *ShipmentComment) BeforeCreate(ctx context.Context) error {
 	if c.Type == "" {
-		c.Type = CommentTypeInternal
+		c.Type = shipmentvocab.CommentTypeInternal
 	}
 	if c.Visibility == "" {
-		c.Visibility = CommentVisibilityInternal
+		c.Visibility = shipmentvocab.CommentVisibilityInternal
 	}
 	if c.Priority == "" {
-		c.Priority = CommentPriorityNormal
+		c.Priority = shipmentvocab.CommentPriorityNormal
 	}
 	if c.Source == "" {
-		c.Source = CommentSourceUser
+		c.Source = shipmentvocab.CommentSourceUser
 	}
 	c.applyDefaults()
 
@@ -234,14 +228,14 @@ func (c *ShipmentComment) WrittenOutside() bool {
 	}
 
 	switch c.Source {
-	case CommentSourceIntegration:
+	case shipmentvocab.CommentSourceIntegration:
 		return true
-	case CommentSourceAI:
+	case shipmentvocab.CommentSourceAI:
 		return c.metadataFlag(CommentMetadataTainted)
-	case CommentSourceUser, CommentSourceSystem:
+	case shipmentvocab.CommentSourceUser, shipmentvocab.CommentSourceSystem:
 	}
 
-	if c.Type == CommentTypeDriverUpdate {
+	if c.Type == shipmentvocab.CommentTypeDriverUpdate {
 		return true
 	}
 

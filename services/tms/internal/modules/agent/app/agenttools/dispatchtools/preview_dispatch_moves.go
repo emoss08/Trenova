@@ -12,7 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -150,13 +150,13 @@ func (t *UpdateMoveStatusTool) Preview(
 	return toolpreview.Build(summary, changes...), nil
 }
 
-func moveStatusConsequences(status shipment.MoveStatus, moved []string) string {
+func moveStatusConsequences(status shipmentvocab.MoveStatus, moved []string) string {
 	out := ""
 	if len(moved) > 0 {
 		out = ", which moves " + strings.Join(moved, " and ")
 	}
 	out += "."
-	if status == shipment.MoveStatusCompleted {
+	if status == shipmentvocab.MoveStatusCompleted {
 		out += " Completing a move releases its tractor and trailer for their next move."
 	}
 

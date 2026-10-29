@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/stopeta"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchcontrolports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/stopetaports"
@@ -84,7 +84,7 @@ func attentionStop(
 			ComputedAt:       1_800_000_000,
 		},
 		ProNumber:    "PRO-7",
-		StopType:     shipment.StopTypeDelivery,
+		StopType:     shipmentvocab.StopTypeDelivery,
 		LocationName: "Houston DC",
 		City:         "Houston",
 		StateCode:    "TX",

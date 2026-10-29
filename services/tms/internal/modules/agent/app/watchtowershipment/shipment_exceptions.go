@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchcontrolports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -65,12 +65,15 @@ func (e shipmentExceptions) policy(
 	return control.ExceptionPolicy(), nil
 }
 
-func pickupTypes() []shipment.StopType {
-	return []shipment.StopType{shipment.StopTypePickup, shipment.StopTypeSplitPickup}
+func pickupTypes() []shipmentvocab.StopType {
+	return []shipmentvocab.StopType{shipmentvocab.StopTypePickup, shipmentvocab.StopTypeSplitPickup}
 }
 
-func deliveryTypes() []shipment.StopType {
-	return []shipment.StopType{shipment.StopTypeDelivery, shipment.StopTypeSplitDelivery}
+func deliveryTypes() []shipmentvocab.StopType {
+	return []shipmentvocab.StopType{
+		shipmentvocab.StopTypeDelivery,
+		shipmentvocab.StopTypeSplitDelivery,
+	}
 }
 
 func (e shipmentExceptions) missedStops(

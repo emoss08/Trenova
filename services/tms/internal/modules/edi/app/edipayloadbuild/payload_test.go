@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentevent"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
@@ -53,8 +54,8 @@ func TestBuildTenderPayload(t *testing.T) {
 				Stops: []*shipment.Stop{
 					{
 						LocationID:           pulid.MustNew("loc_"),
-						Type:                 shipment.StopTypePickup,
-						ScheduleType:         shipment.StopScheduleTypeOpen,
+						Type:                 shipmentvocab.StopTypePickup,
+						ScheduleType:         shipmentvocab.StopScheduleTypeOpen,
 						Sequence:             0,
 						ScheduledWindowStart: 123,
 						Location: &location.Location{
@@ -226,7 +227,7 @@ func TestBuildShipmentEventStatusPayload(t *testing.T) {
 					{
 						ID:                   stopID,
 						LocationID:           pulid.MustNew("loc_"),
-						Type:                 shipment.StopTypeDelivery,
+						Type:                 shipmentvocab.StopTypeDelivery,
 						Sequence:             2,
 						ScheduledWindowStart: 1715814000,
 						ScheduledWindowEnd:   new(int64(1715817600)),
@@ -271,7 +272,7 @@ func TestBuildShipmentEventStatusPayload(t *testing.T) {
 	require.Equal(t, "Late pickup", payload.ShipmentStatus.ReasonDescription)
 	require.Equal(t, int64(1715817600), payload.ShipmentStatus.EventDate)
 	require.Equal(t, stopID, payload.ShipmentStatus.StopID)
-	require.Equal(t, string(shipment.StopTypeDelivery), payload.ShipmentStatus.StopType)
+	require.Equal(t, string(shipmentvocab.StopTypeDelivery), payload.ShipmentStatus.StopType)
 	require.Equal(t, int64(2), payload.ShipmentStatus.StopSequence)
 	require.Equal(t, "Dallas Terminal", payload.ShipmentStatus.LocationName)
 	require.Equal(t, "DAL", payload.ShipmentStatus.LocationCode)
@@ -312,7 +313,7 @@ func TestBuildShipmentEventStatusPayload_PreservesDelayedMappingToA3(t *testing.
 		ShipmentID: pulid.MustNew("shp_"),
 		Type:       shipmentevent.TypeStatusChanged,
 		Metadata: map[string]any{
-			"newStatus": string(shipment.StatusDelayed),
+			"newStatus": string(shipmentvocab.StatusDelayed),
 		},
 	}, nil)
 

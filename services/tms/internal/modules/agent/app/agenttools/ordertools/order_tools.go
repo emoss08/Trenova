@@ -19,7 +19,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/orderservice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/order"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/orderports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/toolschema"
@@ -825,7 +825,7 @@ func NewCancelOrderTool(orders orderKeeper) agenttoolports.AgentTool {
 }
 
 type legStatusView struct {
-	Status shipment.Status `json:"status"`
+	Status shipmentvocab.Status `json:"status"`
 }
 
 func renderCancelOrder(
@@ -837,7 +837,7 @@ func renderCancelOrder(
 		change, err := toolpreview.Changed(
 			shipmentpreview.ShipmentRecord(leg),
 			&legStatusView{Status: leg.Status},
-			&legStatusView{Status: shipment.StatusCanceled},
+			&legStatusView{Status: shipmentvocab.StatusCanceled},
 		)
 		if err != nil {
 			return nil, err

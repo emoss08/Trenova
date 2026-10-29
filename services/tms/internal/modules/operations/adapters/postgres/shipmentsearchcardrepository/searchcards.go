@@ -8,8 +8,8 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmentpredicate"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
 	"github.com/emoss08/trenova/shared/sliceutils"
@@ -42,19 +42,19 @@ const (
 	seatSourceWorkerID = "worker_id"
 )
 
-var liveShipmentStatuses = []shipment.Status{
-	shipment.StatusNew,
-	shipment.StatusPartiallyAssigned,
-	shipment.StatusAssigned,
-	shipment.StatusInTransit,
-	shipment.StatusDelayed,
-	shipment.StatusPartiallyCompleted,
+var liveShipmentStatuses = []shipmentvocab.Status{
+	shipmentvocab.StatusNew,
+	shipmentvocab.StatusPartiallyAssigned,
+	shipmentvocab.StatusAssigned,
+	shipmentvocab.StatusInTransit,
+	shipmentvocab.StatusDelayed,
+	shipmentvocab.StatusPartiallyCompleted,
 }
 
-var openMoveStatuses = []shipment.MoveStatus{
-	shipment.MoveStatusNew,
-	shipment.MoveStatusAssigned,
-	shipment.MoveStatusInTransit,
+var openMoveStatuses = []shipmentvocab.MoveStatus{
+	shipmentvocab.MoveStatusNew,
+	shipmentvocab.MoveStatusAssigned,
+	shipmentvocab.MoveStatusInTransit,
 }
 
 func (r *searchCardReader) ListSearchCards(
@@ -80,11 +80,11 @@ func (r *searchCardReader) ListSearchCards(
 				Join(seat, seat.ID.EqCol(asg.PrimaryWorkerID)).
 				Where(
 					sm.ShipmentID.EqCol(sp.ID),
-					sm.Status.Ne(shipment.MoveStatusCanceled),
+					sm.Status.Ne(shipmentvocab.MoveStatusCanceled),
 					asg.ArchivedAt.IsNull(),
-					asg.Status.Ne(shipment.AssignmentStatusCanceled),
+					asg.Status.Ne(shipmentvocab.AssignmentStatusCanceled),
 				).
-				Order(keel.Asc(sm.Status.Eq(shipment.MoveStatusCompleted)), sm.Sequence.Asc()).
+				Order(keel.Asc(sm.Status.Eq(shipmentvocab.MoveStatusCompleted)), sm.Sequence.Asc()).
 				Limit(1).
 				Pick(asg.PrimaryWorkerID)
 
@@ -160,7 +160,7 @@ func (r *searchCardReader) customerLinks(
 		Pick(sp.ID, sp.CustomerID, keel.Text("")).
 		Where(
 			sp.CustomerID.In(req.CustomerIDs...),
-			sp.Status.Ne(shipment.StatusCanceled),
+			sp.Status.Ne(shipmentvocab.StatusCanceled),
 		).
 		Order(keel.Desc(sp.Status.In(liveShipmentStatuses...)), sp.UpdatedAt.Desc()).
 		Limit(req.CustomerLimit))
@@ -194,14 +194,14 @@ func (r *searchCardReader) workerLinks(
 		Pick(sp.ID, keel.Text(""), workerID).
 		Where(
 			asg.ArchivedAt.IsNull(),
-			asg.Status.Ne(shipment.AssignmentStatusCanceled),
+			asg.Status.Ne(shipmentvocab.AssignmentStatusCanceled),
 			sm.Status.In(openMoveStatuses...),
 			sp.Status.In(liveShipmentStatuses...),
 			workerID.In(keel.Strings(req.WorkerIDs)),
 		).
 		Order(
 			workerID.Asc(),
-			keel.Desc(sm.Status.Eq(shipment.MoveStatusInTransit)),
+			keel.Desc(sm.Status.Eq(shipmentvocab.MoveStatusInTransit)),
 			sm.Sequence.Asc(),
 			sp.UpdatedAt.Desc(),
 		))

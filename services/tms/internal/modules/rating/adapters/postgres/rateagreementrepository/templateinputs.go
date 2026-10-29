@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement/rateagreementdb"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/rateagreementports"
@@ -136,7 +137,7 @@ func shipmentInputsQuery(
 
 	return sp.Where(
 		sp.FormulaTemplateID.Eq(req.TemplateID),
-		sp.Status.NotIn(shipment.StatusInvoiced, shipment.StatusCanceled),
+		sp.Status.NotIn(shipmentvocab.StatusInvoiced, shipmentvocab.StatusCanceled),
 	).
 		Group(sp.TariffInputs).
 		Pick(sp.TariffInputs, keel.Min(sp.ID), keel.Min(sp.ProNumber), keel.Count()).

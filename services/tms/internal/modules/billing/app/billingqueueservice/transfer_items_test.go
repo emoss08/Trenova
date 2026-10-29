@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
@@ -75,15 +76,15 @@ func transferFixture(t *testing.T) (*shipment.Shipment, pulid.ID, pagination.Ten
 		BusinessUnitID:      tenantInfo.BuID,
 		CustomerID:          pulid.MustNew("cus_"),
 		OrderID:             pulid.MustNew("ord_"),
-		Status:              shipment.StatusReadyToInvoice,
+		Status:              shipmentvocab.StatusReadyToInvoice,
 		FreightChargeAmount: decimal.NewNullDecimal(decimal.NewFromInt(1000)),
 		AdditionalCharges:   []*shipment.AdditionalCharge{charge},
 		ChargeAllocations: []*shipment.ChargeAllocation{{
 			ID:                 pulid.MustNew("chal_"),
-			ChargeKind:         shipment.ChargeAllocationKindAccessorial,
+			ChargeKind:         shipmentvocab.ChargeAllocationKindAccessorial,
 			AdditionalChargeID: &chargeID,
 			BillToCustomerID:   amd,
-			Method:             shipment.ChargeAllocationMethodPercent,
+			Method:             shipmentvocab.ChargeAllocationMethodPercent,
 			Percent:            decimal.NewNullDecimal(decimal.NewFromInt(100)),
 		}},
 	}
@@ -269,7 +270,7 @@ func TestTransferToBillingItemsRequiresAReadyToInvoiceShipment(t *testing.T) {
 	t.Parallel()
 
 	shp, _, tenantInfo := transferFixture(t)
-	shp.Status = shipment.StatusCompleted
+	shp.Status = shipmentvocab.StatusCompleted
 
 	shipmentRepo := shipmentportsmock.NewMockShipmentRepository(t)
 	shipmentRepo.EXPECT().GetByID(mock.Anything, mock.Anything).Return(shp, nil).Once()
@@ -327,9 +328,9 @@ func TestTransferToBillingItemsSkipsAPayerWhoOwesNothing(t *testing.T) {
 	shp.ChargeAllocations = append(shp.ChargeAllocations, &shipment.ChargeAllocation{
 		ID:               pulid.MustNew("chal_"),
 		ShipmentID:       &shipmentID,
-		ChargeKind:       shipment.ChargeAllocationKindFreight,
+		ChargeKind:       shipmentvocab.ChargeAllocationKindFreight,
 		BillToCustomerID: amd,
-		Method:           shipment.ChargeAllocationMethodPercent,
+		Method:           shipmentvocab.ChargeAllocationMethodPercent,
 		Percent:          decimal.NewNullDecimal(decimal.NewFromInt(100)),
 	})
 

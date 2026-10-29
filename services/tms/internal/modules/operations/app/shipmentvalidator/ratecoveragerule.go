@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratequote"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -14,7 +15,7 @@ import (
 )
 
 const (
-	rateCoverageRuleKey       = shipment.RateCoverageRuleKey
+	rateCoverageRuleKey       = shipmentvocab.RateCoverageRuleKey
 	rateCoverageField         = "formulaTemplateId"
 	rateCoverageAdvisoryField = "freightChargeAmount"
 )

@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -16,7 +17,7 @@ type LockEDITenderShipmentRequest struct {
 type SetEDIShipmentTenderStatusRequest struct {
 	ShipmentID pulid.ID
 	TenantInfo pagination.TenantInfo
-	Status     shipment.TenderStatus
+	Status     shipmentvocab.TenderStatus
 }
 
 type EDIShipmentTenderRepository interface {

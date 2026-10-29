@@ -7,8 +7,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/billing/app/invoiceediservice"
-
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/fiscalperiodrepository"
@@ -16,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/billingqueuerepository"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/invoicerepository"
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoicecreationservice"
+	"github.com/emoss08/trenova/internal/modules/billing/app/invoiceediservice"
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoicevalidation"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/accountingcontrolrepository"
@@ -26,6 +25,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/app/orderderivation"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/order"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/orderports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
@@ -161,7 +161,7 @@ func TestGroupedInvoiceFromOrderEndToEnd(t *testing.T) {
 			leg.ID,
 			ord.ID,
 			customerID,
-			shipment.StatusReadyToInvoice,
+			shipmentvocab.StatusReadyToInvoice,
 			freights[leg.ID],
 		)
 	}
@@ -179,7 +179,7 @@ func TestGroupedInvoiceFromOrderEndToEnd(t *testing.T) {
 				BusinessUnitID:      org.BusinessUnitID,
 				CustomerID:          customerID,
 				OrderID:             orderID,
-				Status:              shipment.StatusReadyToInvoice,
+				Status:              shipmentvocab.StatusReadyToInvoice,
 				ProNumber:           proNumber,
 				FreightChargeAmount: decimal.NewNullDecimal(freight),
 				TotalChargeAmount:   decimal.NewNullDecimal(freight),
@@ -193,14 +193,14 @@ func TestGroupedInvoiceFromOrderEndToEnd(t *testing.T) {
 	invoicedLegs := make(map[pulid.ID]bool)
 	shipmentRepo.EXPECT().
 		UpdateDerivedState(mock.Anything, mock.MatchedBy(func(entity *shipment.Shipment) bool {
-			return entity != nil && entity.Status == shipment.StatusInvoiced &&
+			return entity != nil && entity.Status == shipmentvocab.StatusInvoiced &&
 				entity.BilledAt != nil
 		})).
 		RunAndReturn(func(runCtx context.Context, entity *shipment.Shipment) (*shipment.Shipment, error) {
 			invoicedLegs[entity.ID] = true
 			_, dbErr := keel.Exec(runCtx, db,
 				"UPDATE shipments SET status = $1 WHERE id = $2",
-				string(shipment.StatusInvoiced), entity.ID.String())
+				string(shipmentvocab.StatusInvoiced), entity.ID.String())
 			return entity, dbErr
 		})
 
@@ -419,9 +419,9 @@ func runPartialOrderScenario(
 	})
 	require.NoError(t, err)
 
-	legStates := map[pulid.ID]shipment.Status{
-		p.readyLeg.ID: shipment.StatusReadyToInvoice,
-		p.lateLeg.ID:  shipment.StatusInTransit,
+	legStates := map[pulid.ID]shipmentvocab.Status{
+		p.readyLeg.ID: shipmentvocab.StatusReadyToInvoice,
+		p.lateLeg.ID:  shipmentvocab.StatusInTransit,
 	}
 	legFreights := map[pulid.ID]decimal.Decimal{
 		p.readyLeg.ID: decimal.NewFromInt(100),
@@ -457,10 +457,10 @@ func runPartialOrderScenario(
 	// The late leg delivers; the ready leg was settled by billing (simulated here since
 	// the first invoice is left in Draft).
 	_, err = db.Pool().Exec(ctx, "UPDATE shipments SET status = $1 WHERE id = $2",
-		string(shipment.StatusInvoiced), p.readyLeg.ID)
+		string(shipmentvocab.StatusInvoiced), p.readyLeg.ID)
 	require.NoError(t, err)
 	_, err = db.Pool().Exec(ctx, "UPDATE shipments SET status = $1 WHERE id = $2",
-		string(shipment.StatusReadyToInvoice), p.lateLeg.ID)
+		string(shipmentvocab.StatusReadyToInvoice), p.lateLeg.ID)
 	require.NoError(t, err)
 
 	// Second pass through the single-shipment entry point: the invoice carries the
@@ -489,7 +489,7 @@ func setLeg(
 	ctx context.Context,
 	db *keel.DB,
 	legID, orderID, customerID pulid.ID,
-	status shipment.Status,
+	status shipmentvocab.Status,
 	freight decimal.Decimal,
 ) {
 	t.Helper()

@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/chargeallocation"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -21,27 +22,27 @@ func splitEverything(shp *shipment.Shipment, payer pulid.ID, percent string) {
 	other := pulid.MustNew("cus_")
 	remainder := decimal.NewFromInt(100).Sub(dec(percent))
 
-	row := func(kind shipment.ChargeAllocationKind, chargeID *pulid.ID, who pulid.ID, pct decimal.Decimal, seq int16) *shipment.ChargeAllocation {
+	row := func(kind shipmentvocab.ChargeAllocationKind, chargeID *pulid.ID, who pulid.ID, pct decimal.Decimal, seq int16) *shipment.ChargeAllocation {
 		return &shipment.ChargeAllocation{
 			ID:                 pulid.MustNew("chal_"),
 			ChargeKind:         kind,
 			AdditionalChargeID: chargeID,
 			BillToCustomerID:   who,
-			Method:             shipment.ChargeAllocationMethodPercent,
+			Method:             shipmentvocab.ChargeAllocationMethodPercent,
 			Percent:            decimal.NewNullDecimal(pct),
 			Sequence:           seq,
 		}
 	}
 
 	shp.ChargeAllocations = append(shp.ChargeAllocations,
-		row(shipment.ChargeAllocationKindFreight, nil, payer, dec(percent), 0),
-		row(shipment.ChargeAllocationKindFreight, nil, other, remainder, 1),
+		row(shipmentvocab.ChargeAllocationKindFreight, nil, payer, dec(percent), 0),
+		row(shipmentvocab.ChargeAllocationKindFreight, nil, other, remainder, 1),
 	)
 	for _, charge := range shp.AdditionalCharges {
 		id := charge.ID
 		shp.ChargeAllocations = append(shp.ChargeAllocations,
-			row(shipment.ChargeAllocationKindAccessorial, &id, payer, dec(percent), 0),
-			row(shipment.ChargeAllocationKindAccessorial, &id, other, remainder, 1),
+			row(shipmentvocab.ChargeAllocationKindAccessorial, &id, payer, dec(percent), 0),
+			row(shipmentvocab.ChargeAllocationKindAccessorial, &id, other, remainder, 1),
 		)
 	}
 }
@@ -189,7 +190,7 @@ func TestForOrderChargeShare(t *testing.T) {
 	whole := invoicelines.ForOrderChargeShare(
 		billingqueue.BillTypeInvoice,
 		chargeallocation.AllocatedCharge{
-			Kind:          shipment.ChargeAllocationKindOrderCharge,
+			Kind:          shipmentvocab.ChargeAllocationKindOrderCharge,
 			OrderChargeID: chargeID,
 			Description:   "Customs brokerage",
 			ChargeTotal:   dec("250"),
@@ -209,7 +210,7 @@ func TestForOrderChargeShare(t *testing.T) {
 	partial := invoicelines.ForOrderChargeShare(
 		billingqueue.BillTypeCreditMemo,
 		chargeallocation.AllocatedCharge{
-			Kind:          shipment.ChargeAllocationKindOrderCharge,
+			Kind:          shipmentvocab.ChargeAllocationKindOrderCharge,
 			OrderChargeID: chargeID,
 			AllocationID:  allocationID,
 			Description:   "Customs brokerage",

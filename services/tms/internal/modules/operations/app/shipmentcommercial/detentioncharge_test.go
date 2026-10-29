@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionpolicy"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -50,7 +51,7 @@ func TestReconcileDetentionOccurrenceCharges_KeepsOneChargeAcrossSaves(t *testin
 	generated := entity.AdditionalCharges[1]
 	require.True(t, generated.IsSystemGenerated)
 	require.True(t, generated.IsDetention)
-	require.Equal(t, shipment.SystemOwnerDetention, generated.Owner())
+	require.Equal(t, shipmentvocab.SystemOwnerDetention, generated.Owner())
 	require.Equal(t, []pulid.ID{occurrence.ID}, generated.DetentionOccurrenceIDs)
 	require.True(t, generated.Amount.Equal(decimal.NewFromInt(150)))
 

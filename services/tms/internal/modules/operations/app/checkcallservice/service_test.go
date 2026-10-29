@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/checkcall"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/trackingevent"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/carrierassignmentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/checkcallports"
@@ -346,8 +347,8 @@ func newHarness(t *testing.T) *harness {
 	}
 	pickup := &shipment.Stop{
 		ID:       pulid.MustNew("stp_"),
-		Type:     shipment.StopTypePickup,
-		Status:   shipment.StopStatusNew,
+		Type:     shipmentvocab.StopTypePickup,
+		Status:   shipmentvocab.StopStatusNew,
 		Sequence: 0,
 		Location: &location.Location{
 			Name:  "Shipper DC",
@@ -357,15 +358,15 @@ func newHarness(t *testing.T) *harness {
 	}
 	delivery := &shipment.Stop{
 		ID:       pulid.MustNew("stp_"),
-		Type:     shipment.StopTypeDelivery,
-		Status:   shipment.StopStatusNew,
+		Type:     shipmentvocab.StopTypeDelivery,
+		Status:   shipmentvocab.StopStatusNew,
 		Sequence: 1,
 	}
 	move := &shipment.ShipmentMove{
 		ID:           pulid.MustNew("smv_"),
 		ShipmentID:   pulid.MustNew("shp_"),
-		Status:       shipment.MoveStatusInTransit,
-		CoverageType: shipment.MoveCoverageTypeCarrier,
+		Status:       shipmentvocab.MoveStatusInTransit,
+		CoverageType: shipmentvocab.MoveCoverageTypeCarrier,
 		Stops:        []*shipment.Stop{pickup, delivery},
 	}
 	carrierID := pulid.MustNew("car_")
@@ -376,7 +377,7 @@ func newHarness(t *testing.T) *harness {
 		moves:      &fakeMoves{move: move},
 		assignments: &fakeAssignments{assignment: &shipment.CarrierAssignment{
 			CarrierID: carrierID,
-			Status:    shipment.CarrierAssignmentStatusConfirmed,
+			Status:    shipmentvocab.CarrierAssignmentStatusConfirmed,
 		}},
 		tracking:  &fakeTracking{outcome: trackingevent.OutcomeApplied},
 		templates: &fakeTemplates{},
@@ -619,8 +620,8 @@ func TestIssueLink_RefusesLoadsItCannotTrack(t *testing.T) {
 	t.Parallel()
 
 	for name, setup := range map[string]func(*harness){
-		"own fleet":  func(h *harness) { h.move.CoverageType = shipment.MoveCoverageTypeDriver },
-		"completed":  func(h *harness) { h.move.Status = shipment.MoveStatusCompleted },
+		"own fleet":  func(h *harness) { h.move.CoverageType = shipmentvocab.MoveCoverageTypeDriver },
+		"completed":  func(h *harness) { h.move.Status = shipmentvocab.MoveStatusCompleted },
 		"no carrier": func(h *harness) { h.assignments.assignment = nil },
 		"no public url": func(h *harness) {
 			h.svc.appConfig = &appconfig.Config{}
@@ -717,7 +718,7 @@ func TestPostByToken_RecordsACarrierArrival(t *testing.T) {
 	require.Len(t, h.tracking.observed, 1)
 	observed := h.tracking.observed[0]
 	assert.Equal(t, trackingevent.SourceCarrier, observed.Source)
-	assert.Equal(t, shipment.VisitArrival, observed.Kind)
+	assert.Equal(t, shipmentvocab.VisitArrival, observed.Kind)
 	assert.Equal(t, trackingevent.MatchDirect, observed.MatchMethod)
 	assert.Equal(t, testNow, observed.EventAt, "a time ahead of the server is read as now")
 	assert.Equal(t, "ctl:"+issued.Link.ID.String()+":tap-1", observed.SourceKey)
@@ -760,7 +761,7 @@ func TestPostByToken_EveryDeadLinkGetsTheSameAnswer(t *testing.T) {
 		"carrier replaced": func(h *harness, _ *checkcallports.IssuedTrackingLink) string {
 			h.assignments.assignment = &shipment.CarrierAssignment{
 				CarrierID: pulid.MustNew("car_"),
-				Status:    shipment.CarrierAssignmentStatusConfirmed,
+				Status:    shipmentvocab.CarrierAssignmentStatusConfirmed,
 			}
 			return ""
 		},
@@ -791,7 +792,7 @@ func TestPostByToken_AFinishedLoadIsReadOnly(t *testing.T) {
 
 	h := newHarness(t)
 	token := tokenOf(t, h.issue(t, ""))
-	h.move.Status = shipment.MoveStatusCompleted
+	h.move.Status = shipmentvocab.MoveStatusCompleted
 
 	view, err := h.svc.PreviewByToken(t.Context(), token)
 	require.NoError(t, err)
@@ -902,7 +903,7 @@ func TestLog_RefusesACanceledLoad(t *testing.T) {
 	t.Parallel()
 
 	h := newHarness(t)
-	h.move.Status = shipment.MoveStatusCanceled
+	h.move.Status = shipmentvocab.MoveStatusCanceled
 
 	_, err := h.svc.Log(t.Context(), &checkcallports.LogCheckCallRequest{
 		TenantInfo: h.tenant,

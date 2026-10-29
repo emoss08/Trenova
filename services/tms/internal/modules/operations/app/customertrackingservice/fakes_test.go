@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/customertracking"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/stopeta"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/customertrackingports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
@@ -416,7 +417,7 @@ func at(offset int64) *int64 {
 }
 
 type stopSpec struct {
-	stopType  shipment.StopType
+	stopType  shipmentvocab.StopType
 	city      string
 	state     string
 	arrival   *int64
@@ -424,7 +425,7 @@ type stopSpec struct {
 }
 
 // addShipment stores a one-move shipment for a new customer and returns both.
-func (h *harness) addShipment(status shipment.Status, stops ...stopSpec) *shipment.Shipment {
+func (h *harness) addShipment(status shipmentvocab.Status, stops ...stopSpec) *shipment.Shipment {
 	customerID := pulid.MustNew("cus_")
 	h.customers.rows[customerID] = &customer.Customer{
 		ID:   customerID,

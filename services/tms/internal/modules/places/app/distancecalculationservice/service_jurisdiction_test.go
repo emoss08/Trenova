@@ -1,22 +1,23 @@
 package distancecalculationservice
 
 import (
-	"github.com/emoss08/trenova/internal/testutil/mocks/distancecontrolportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/distanceoverrideportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/storedmileageportsmock"
 	"context"
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/places/domain/distancecalculation"
 	"github.com/emoss08/trenova/internal/modules/places/domain/distancecontrol"
 	"github.com/emoss08/trenova/internal/modules/places/domain/distanceoverride"
 	"github.com/emoss08/trenova/internal/modules/places/domain/distanceprofile"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/places/domain/storedmileage"
-	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
-	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/testutil/mocks/distancecontrolportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/distanceoverrideportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/storedmileageportsmock"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pcmiler"
@@ -129,7 +130,7 @@ func TestApplyMoveDistanceBuildsJurisdictionRows(t *testing.T) {
 			assert.InDelta(t, 120.4, first.Distance, 0.001)
 			assert.Equal(t, "Miles", first.DistanceUnits)
 			assert.Equal(t, tt.loaded, first.Loaded)
-			assert.Equal(t, shipment.JurisdictionMileSourceRouteCalculation, first.Source)
+			assert.Equal(t, shipmentvocab.JurisdictionMileSourceRouteCalculation, first.Source)
 			assert.Equal(t, "PCMiler", first.Provider)
 			assert.Equal(t, "Current", first.DataVersion)
 			assert.Equal(t, profileID, first.DistanceProfileID)
@@ -570,7 +571,12 @@ func TestDistanceOverrideSumsLegsOfAMultiStopRoute(t *testing.T) {
 		wantSeen bool
 	}{
 		{name: "every leg has an override", route: []pulid.ID{a, b, c}, want: 2160, wantSeen: true},
-		{name: "a repeated stop adds nothing", route: []pulid.ID{a, b, b, c}, want: 2160, wantSeen: true},
+		{
+			name:     "a repeated stop adds nothing",
+			route:    []pulid.ID{a, b, b, c},
+			want:     2160,
+			wantSeen: true,
+		},
 		{name: "a leg without one", route: []pulid.ID{a, c, b}},
 		{name: "two stops never split", route: []pulid.ID{a, c}},
 	}

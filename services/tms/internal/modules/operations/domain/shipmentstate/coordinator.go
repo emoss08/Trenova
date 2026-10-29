@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -105,14 +106,14 @@ func (c *Coordinator) prepare( //nolint:gocognit // legacy workflow
 			originalMove = originalMoves[move.ID]
 		}
 		if move.Assignment == nil &&
-			move.Status != shipment.MoveStatusNew &&
+			move.Status != shipmentvocab.MoveStatusNew &&
 			originalMove != nil &&
 			originalMove.Assignment != nil {
 			move.Assignment = originalMove.Assignment
 		}
 
 		if move.CarrierAssignment == nil &&
-			move.Status != shipment.MoveStatusNew &&
+			move.Status != shipmentvocab.MoveStatusNew &&
 			originalMove != nil &&
 			originalMove.CarrierAssignment != nil {
 			move.CarrierAssignment = originalMove.CarrierAssignment
@@ -165,12 +166,12 @@ func (c *Coordinator) resolveStopStatus(
 	stop *shipment.Stop,
 	path string,
 	multiErr *errortypes.MultiError,
-) shipment.StopStatus {
+) shipmentvocab.StopStatus {
 	requested := stop.Status
 	current := defaultStopStatus(original)
 	statusField := path + ".status"
 
-	if original != nil && original.IsCanceled() && requested != shipment.StopStatusCanceled {
+	if original != nil && original.IsCanceled() && requested != shipmentvocab.StopStatusCanceled {
 		multiErr.Add(
 			statusField,
 			errortypes.ErrInvalidOperation,
@@ -179,8 +180,8 @@ func (c *Coordinator) resolveStopStatus(
 		return original.Status
 	}
 
-	if requested == shipment.StopStatusCanceled {
-		if !isAllowedStopStatusTransition(current, shipment.StopStatusCanceled) {
+	if requested == shipmentvocab.StopStatusCanceled {
+		if !isAllowedStopStatusTransition(current, shipmentvocab.StopStatusCanceled) {
 			multiErr.Add(
 				statusField,
 				errortypes.ErrInvalidOperation,
@@ -189,7 +190,7 @@ func (c *Coordinator) resolveStopStatus(
 			return current
 		}
 
-		return shipment.StopStatusCanceled
+		return shipmentvocab.StopStatusCanceled
 	}
 
 	if original != nil && original.IsCanceled() {
@@ -201,20 +202,20 @@ func (c *Coordinator) resolveStopStatus(
 			return original.Status
 		}
 
-		return shipment.StopStatusCompleted
+		return shipmentvocab.StopStatusCompleted
 	}
 
 	return stopStatusFromActuals(stop)
 }
 
-func stopStatusFromActuals(stop *shipment.Stop) shipment.StopStatus {
+func stopStatusFromActuals(stop *shipment.Stop) shipmentvocab.StopStatus {
 	switch {
 	case stop.ActualArrival != nil && stop.ActualDeparture != nil:
-		return shipment.StopStatusCompleted
+		return shipmentvocab.StopStatusCompleted
 	case stop.ActualArrival != nil || stop.ActualDeparture != nil:
-		return shipment.StopStatusInTransit
+		return shipmentvocab.StopStatusInTransit
 	default:
-		return shipment.StopStatusNew
+		return shipmentvocab.StopStatusNew
 	}
 }
 
@@ -223,11 +224,11 @@ func (c *Coordinator) resolveMoveStatus(
 	move *shipment.ShipmentMove,
 	field string,
 	multiErr *errortypes.MultiError,
-) shipment.MoveStatus {
+) shipmentvocab.MoveStatus {
 	requested := move.Status
 	current := defaultMoveStatus(original)
 
-	if original != nil && original.IsCanceled() && requested != shipment.MoveStatusCanceled {
+	if original != nil && original.IsCanceled() && requested != shipmentvocab.MoveStatusCanceled {
 		multiErr.Add(
 			field,
 			errortypes.ErrInvalidOperation,
@@ -236,8 +237,8 @@ func (c *Coordinator) resolveMoveStatus(
 		return original.Status
 	}
 
-	if requested == shipment.MoveStatusCanceled {
-		if !isAllowedMoveStatusTransition(current, shipment.MoveStatusCanceled) {
+	if requested == shipmentvocab.MoveStatusCanceled {
+		if !isAllowedMoveStatusTransition(current, shipmentvocab.MoveStatusCanceled) {
 			multiErr.Add(
 				field,
 				errortypes.ErrInvalidOperation,
@@ -246,7 +247,7 @@ func (c *Coordinator) resolveMoveStatus(
 			return current
 		}
 
-		return shipment.MoveStatusCanceled
+		return shipmentvocab.MoveStatusCanceled
 	}
 
 	if original != nil && original.IsCanceled() {
@@ -255,7 +256,7 @@ func (c *Coordinator) resolveMoveStatus(
 
 	derived := deriveMoveStatus(move)
 	if original != nil && original.IsCompleted() {
-		if derived != shipment.MoveStatusCompleted {
+		if derived != shipmentvocab.MoveStatusCompleted {
 			multiErr.Add(
 				field,
 				errortypes.ErrInvalidOperation,
@@ -263,11 +264,11 @@ func (c *Coordinator) resolveMoveStatus(
 			)
 		}
 
-		return shipment.MoveStatusCompleted
+		return shipmentvocab.MoveStatusCompleted
 	}
 
-	if derived == shipment.MoveStatusAssigned &&
-		!isAllowedMoveStatusTransition(current, shipment.MoveStatusAssigned) {
+	if derived == shipmentvocab.MoveStatusAssigned &&
+		!isAllowedMoveStatusTransition(current, shipmentvocab.MoveStatusAssigned) {
 		multiErr.Add(
 			field,
 			errortypes.ErrInvalidOperation,
@@ -276,19 +277,19 @@ func (c *Coordinator) resolveMoveStatus(
 		return current
 	}
 
-	if derived == shipment.MoveStatusNew &&
-		current == shipment.MoveStatusAssigned &&
-		requested == shipment.MoveStatusNew &&
+	if derived == shipmentvocab.MoveStatusNew &&
+		current == shipmentvocab.MoveStatusAssigned &&
+		requested == shipmentvocab.MoveStatusNew &&
 		!move.HasCoverage() {
-		return shipment.MoveStatusNew
+		return shipmentvocab.MoveStatusNew
 	}
 
-	if derived == shipment.MoveStatusNew && current == shipment.MoveStatusAssigned {
-		return shipment.MoveStatusAssigned
+	if derived == shipmentvocab.MoveStatusNew && current == shipmentvocab.MoveStatusAssigned {
+		return shipmentvocab.MoveStatusAssigned
 	}
 
-	if derived == shipment.MoveStatusNew && requested == shipment.MoveStatusAssigned {
-		if !isAllowedMoveStatusTransition(current, shipment.MoveStatusAssigned) {
+	if derived == shipmentvocab.MoveStatusNew && requested == shipmentvocab.MoveStatusAssigned {
+		if !isAllowedMoveStatusTransition(current, shipmentvocab.MoveStatusAssigned) {
 			multiErr.Add(
 				field,
 				errortypes.ErrInvalidOperation,
@@ -297,7 +298,7 @@ func (c *Coordinator) resolveMoveStatus(
 			return current
 		}
 
-		return shipment.MoveStatusAssigned
+		return shipmentvocab.MoveStatusAssigned
 	}
 
 	return derived
@@ -308,13 +309,13 @@ func (c *Coordinator) resolveShipmentStatus(
 	entity *shipment.Shipment,
 	delayThresholdMinutes int16,
 	multiErr *errortypes.MultiError,
-) shipment.Status {
+) shipmentvocab.Status {
 	requested := entity.Status
 	current := defaultShipmentStatus(original)
 	derived := deriveShipmentStatus(entity, c.now(), delayThresholdMinutes)
 
-	if original != nil && original.StatusEquals(shipment.StatusCanceled) &&
-		requested != shipment.StatusCanceled {
+	if original != nil && original.StatusEquals(shipmentvocab.StatusCanceled) &&
+		requested != shipmentvocab.StatusCanceled {
 		multiErr.Add(
 			"status",
 			errortypes.ErrInvalidOperation,
@@ -323,8 +324,8 @@ func (c *Coordinator) resolveShipmentStatus(
 		return original.Status
 	}
 
-	if original != nil && original.StatusEquals(shipment.StatusInvoiced) &&
-		requested != shipment.StatusInvoiced {
+	if original != nil && original.StatusEquals(shipmentvocab.StatusInvoiced) &&
+		requested != shipmentvocab.StatusInvoiced {
 		multiErr.Add(
 			"status",
 			errortypes.ErrInvalidOperation,
@@ -335,8 +336,8 @@ func (c *Coordinator) resolveShipmentStatus(
 
 	//nolint:exhaustive // only actionable enum states require explicit handling here
 	switch requested {
-	case shipment.StatusCanceled:
-		if !isAllowedShipmentStatusTransition(current, shipment.StatusCanceled) {
+	case shipmentvocab.StatusCanceled:
+		if !isAllowedShipmentStatusTransition(current, shipmentvocab.StatusCanceled) {
 			multiErr.Add(
 				"status",
 				errortypes.ErrInvalidOperation,
@@ -345,9 +346,9 @@ func (c *Coordinator) resolveShipmentStatus(
 			return derived
 		}
 
-		return shipment.StatusCanceled
-	case shipment.StatusReadyToInvoice, shipment.StatusInvoiced:
-		if derived != shipment.StatusCompleted &&
+		return shipmentvocab.StatusCanceled
+	case shipmentvocab.StatusReadyToInvoice, shipmentvocab.StatusInvoiced:
+		if derived != shipmentvocab.StatusCompleted &&
 			(original == nil || !allowsBillingContinuation(original.Status)) {
 			multiErr.Add(
 				"status",
@@ -520,7 +521,7 @@ func lastActiveStopBySequence(move *shipment.ShipmentMove) *shipment.Stop {
 	return candidate
 }
 
-func deriveMoveStatus(move *shipment.ShipmentMove) shipment.MoveStatus {
+func deriveMoveStatus(move *shipment.ShipmentMove) shipmentvocab.MoveStatus {
 	allCompleted := true
 	anyInTransit := false
 	originCompleted := false
@@ -548,13 +549,13 @@ func deriveMoveStatus(move *shipment.ShipmentMove) shipment.MoveStatus {
 
 	switch {
 	case hasActiveStop && allCompleted:
-		return shipment.MoveStatusCompleted
+		return shipmentvocab.MoveStatusCompleted
 	case originCompleted || anyInTransit:
-		return shipment.MoveStatusInTransit
+		return shipmentvocab.MoveStatusInTransit
 	case move != nil && move.HasCoverage():
-		return shipment.MoveStatusAssigned
+		return shipmentvocab.MoveStatusAssigned
 	default:
-		return shipment.MoveStatusNew
+		return shipmentvocab.MoveStatusNew
 	}
 }
 
@@ -562,9 +563,9 @@ func deriveShipmentStatus(
 	entity *shipment.Shipment,
 	currentTime int64,
 	delayThresholdMinutes int16,
-) shipment.Status {
+) shipmentvocab.Status {
 	if len(entity.Moves) == 0 {
-		return shipment.StatusNew
+		return shipmentvocab.StatusNew
 	}
 
 	totalMoves := 0
@@ -602,68 +603,68 @@ func deriveShipmentStatus(
 	}
 
 	if totalMoves == 0 {
-		return shipment.StatusNew
+		return shipmentvocab.StatusNew
 	}
 
 	switch {
 	case completed == totalMoves:
-		return shipment.StatusCompleted
+		return shipmentvocab.StatusCompleted
 	case delayed:
-		return shipment.StatusDelayed
+		return shipmentvocab.StatusDelayed
 	case completed > 0:
-		return shipment.StatusPartiallyCompleted
+		return shipmentvocab.StatusPartiallyCompleted
 	case inTransit > 0:
-		return shipment.StatusInTransit
+		return shipmentvocab.StatusInTransit
 	case assigned == totalMoves:
-		return shipment.StatusAssigned
+		return shipmentvocab.StatusAssigned
 	case assigned > 0:
-		return shipment.StatusPartiallyAssigned
+		return shipmentvocab.StatusPartiallyAssigned
 	default:
-		return shipment.StatusNew
+		return shipmentvocab.StatusNew
 	}
 }
 
-func defaultStopStatus(original *shipment.Stop) shipment.StopStatus {
+func defaultStopStatus(original *shipment.Stop) shipmentvocab.StopStatus {
 	if original != nil && original.Status != "" {
 		return original.Status
 	}
 
-	return shipment.StopStatusNew
+	return shipmentvocab.StopStatusNew
 }
 
-func defaultMoveStatus(original *shipment.ShipmentMove) shipment.MoveStatus {
+func defaultMoveStatus(original *shipment.ShipmentMove) shipmentvocab.MoveStatus {
 	if original != nil && original.Status != "" {
 		return original.Status
 	}
 
-	return shipment.MoveStatusNew
+	return shipmentvocab.MoveStatusNew
 }
 
-func defaultShipmentStatus(original *shipment.Shipment) shipment.Status {
+func defaultShipmentStatus(original *shipment.Shipment) shipmentvocab.Status {
 	if original != nil && original.Status != "" {
 		return original.Status
 	}
 
-	return shipment.StatusNew
+	return shipmentvocab.StatusNew
 }
 
-func allowsBillingContinuation(status shipment.Status) bool {
+func allowsBillingContinuation(status shipmentvocab.Status) bool {
 	//nolint:exhaustive // only actionable enum states require explicit handling here
 	switch status {
-	case shipment.StatusReadyToInvoice, shipment.StatusInvoiced:
+	case shipmentvocab.StatusReadyToInvoice, shipmentvocab.StatusInvoiced:
 		return true
 	default:
 		return false
 	}
 }
 
-func preservesShipmentStatusOnRefresh(status shipment.Status) bool {
+func preservesShipmentStatusOnRefresh(status shipmentvocab.Status) bool {
 	//nolint:exhaustive // only billing and terminal statuses are preserved during refresh
 	switch status {
-	case shipment.StatusCanceled,
-		shipment.StatusReadyToInvoice,
-		shipment.StatusCompleted,
-		shipment.StatusInvoiced:
+	case shipmentvocab.StatusCanceled,
+		shipmentvocab.StatusReadyToInvoice,
+		shipmentvocab.StatusCompleted,
+		shipmentvocab.StatusInvoiced:
 		return true
 	default:
 		return false

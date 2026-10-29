@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/shipmentcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentmoveports"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/mocks/assignmentportsmock"
@@ -40,7 +41,7 @@ func TestPreviewUpdateStatus_ProjectsTheMovesAndTheirShipment(t *testing.T) {
 		Return(&shipment.ShipmentMove{
 			ID:         moveID,
 			ShipmentID: shipmentID,
-			Status:     shipment.MoveStatusAssigned,
+			Status:     shipmentvocab.MoveStatusAssigned,
 			Version:    4,
 		}, nil).
 		Once()
@@ -54,9 +55,9 @@ func TestPreviewUpdateStatus_ProjectsTheMovesAndTheirShipment(t *testing.T) {
 			OrganizationID: tenantInfo.OrgID,
 			BusinessUnitID: tenantInfo.BuID,
 			ProNumber:      "S-1001",
-			Status:         shipment.StatusAssigned,
+			Status:         shipmentvocab.StatusAssigned,
 			Moves: []*shipment.ShipmentMove{
-				{ID: moveID, ShipmentID: shipmentID, Status: shipment.MoveStatusAssigned},
+				{ID: moveID, ShipmentID: shipmentID, Status: shipmentvocab.MoveStatusAssigned},
 			},
 		}, nil).
 		Once()
@@ -82,19 +83,19 @@ func TestPreviewUpdateStatus_ProjectsTheMovesAndTheirShipment(t *testing.T) {
 		&shipmentmoveports.BulkUpdateMoveStatusRequest{
 			TenantInfo: tenantInfo,
 			MoveIDs:    []pulid.ID{moveID},
-			Status:     shipment.MoveStatusInTransit,
+			Status:     shipmentvocab.MoveStatusInTransit,
 		},
 	)
 	require.NoError(t, err)
 
 	require.Len(t, plan.MovesBefore, 1)
 	require.Len(t, plan.MovesAfter, 1)
-	assert.Equal(t, shipment.MoveStatusAssigned, plan.MovesBefore[0].Status)
-	assert.Equal(t, shipment.MoveStatusInTransit, plan.MovesAfter[0].Status)
+	assert.Equal(t, shipmentvocab.MoveStatusAssigned, plan.MovesBefore[0].Status)
+	assert.Equal(t, shipmentvocab.MoveStatusInTransit, plan.MovesAfter[0].Status)
 	assert.Equal(t, int64(4), plan.MovesBefore[0].Version)
 	require.Len(t, plan.ShipmentsAfter, 1)
-	assert.Equal(t, shipment.StatusAssigned, plan.ShipmentsBefore[0].Status)
-	assert.Equal(t, shipment.StatusInTransit, plan.ShipmentsAfter[0].Status)
+	assert.Equal(t, shipmentvocab.StatusAssigned, plan.ShipmentsBefore[0].Status)
+	assert.Equal(t, shipmentvocab.StatusInTransit, plan.ShipmentsAfter[0].Status)
 }
 
 // A move is never moved backwards: the preview refuses the transition the
@@ -110,7 +111,7 @@ func TestPreviewUpdateStatus_RefusesWhatTheWriteRefuses(t *testing.T) {
 		GetByID(mock.Anything, mock.MatchedBy(func(req *shipmentmoveports.GetMoveByIDRequest) bool {
 			return req.MoveID == moveID
 		})).
-		Return(&shipment.ShipmentMove{ID: moveID, Status: shipment.MoveStatusCompleted}, nil).
+		Return(&shipment.ShipmentMove{ID: moveID, Status: shipmentvocab.MoveStatusCompleted}, nil).
 		Twice()
 
 	svc := &service{
@@ -126,13 +127,13 @@ func TestPreviewUpdateStatus_RefusesWhatTheWriteRefuses(t *testing.T) {
 		&shipmentmoveports.BulkUpdateMoveStatusRequest{
 			TenantInfo: tenantInfo,
 			MoveIDs:    []pulid.ID{moveID},
-			Status:     shipment.MoveStatusInTransit,
+			Status:     shipmentvocab.MoveStatusInTransit,
 		},
 	)
 	_, writeErr := svc.UpdateStatus(t.Context(), &shipmentmoveports.UpdateMoveStatusRequest{
 		TenantInfo: tenantInfo,
 		MoveID:     moveID,
-		Status:     shipment.MoveStatusInTransit,
+		Status:     shipmentvocab.MoveStatusInTransit,
 	})
 
 	require.Error(t, previewErr)
@@ -153,7 +154,7 @@ func TestPreviewUpdateStatus_RefusesARepeatedMove(t *testing.T) {
 			BuID:  pulid.MustNew("bu_"),
 		},
 		MoveIDs: []pulid.ID{moveID, moveID},
-		Status:  shipment.MoveStatusCompleted,
+		Status:  shipmentvocab.MoveStatusCompleted,
 	})
 	require.Error(t, err)
 	assert.True(t, errortypes.IsBusinessError(err))

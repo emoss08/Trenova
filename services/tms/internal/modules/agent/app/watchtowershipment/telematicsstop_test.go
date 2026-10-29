@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/watchtowershipment"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/telematics"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/telematicsports"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -28,7 +28,7 @@ func stopReview(
 			OccurredAt:        occurredAt,
 			AddressName:       "Acme DC",
 			StopOutcome:       telematics.StopOutcomeRefused,
-			StopVisit:         shipment.VisitDeparture,
+			StopVisit:         shipmentvocab.VisitDeparture,
 			ShipmentMoveID:    moveID,
 			StopID:            stopID,
 			StopOutcomeReason: reason,
@@ -68,7 +68,7 @@ func TestTelematicsStopVisitSourceID_FallsBackToTheLocation(t *testing.T) {
 	event := &telematics.TelematicsEvent{
 		ShipmentMoveID: moveID,
 		LocationID:     locationID,
-		StopVisit:      shipment.VisitArrival,
+		StopVisit:      shipmentvocab.VisitArrival,
 	}
 	assert.Equal(t, moveID.String()+":"+locationID.String()+":Arrival",
 		watchtowershipment.TelematicsStopVisitSourceID(event))

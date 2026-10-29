@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/app/tendercreate"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentevent"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenteventports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
@@ -203,7 +204,7 @@ func tenderableMove() *shipment.ShipmentMove {
 	return &shipment.ShipmentMove{
 		ID:         pulid.MustNew("smv_"),
 		ShipmentID: pulid.MustNew("shp_"),
-		Status:     shipment.MoveStatusNew,
+		Status:     shipmentvocab.MoveStatusNew,
 	}
 }
 
@@ -262,7 +263,7 @@ func warnedCarrier(name string) *carrier.Carrier {
 func spotLine(carrierID pulid.ID) tendercreate.SpotTenderLine {
 	return tendercreate.SpotTenderLine{
 		CarrierID:  carrierID,
-		RateMethod: shipment.CarrierRateMethodFlat,
+		RateMethod: shipmentvocab.CarrierRateMethodFlat,
 		Rate:       decimal.NewFromInt(1500),
 		Channel:    tender.ChannelEmail,
 	}
@@ -273,7 +274,7 @@ func guideEntry(carrierID pulid.ID, rank int16) *tender.RoutingGuideEntry {
 		ID:              pulid.MustNew("rge_"),
 		CarrierID:       carrierID,
 		Rank:            rank,
-		RateMethod:      shipment.CarrierRateMethodFlat,
+		RateMethod:      shipmentvocab.CarrierRateMethodFlat,
 		Rate:            decimal.NewFromInt(1200),
 		OfferTTLSeconds: tender.DefaultOfferTTLSeconds,
 		Channel:         tender.ChannelEmail,

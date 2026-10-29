@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentevent"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentstate"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/mocks/editenderportsmock"
@@ -29,10 +30,10 @@ func TestService_ApplyTransferChange_CancelsLinkedShipment(t *testing.T) {
 	fixture := newTransferChangeApplyFixture(t, edisync.TransferChangeDirectionSourceToTarget)
 	change := fixture.pendingChange(
 		edisync.TransferChangeTypeShipmentCancel214,
-		shipment.StatusCanceled,
+		shipmentvocab.StatusCanceled,
 	)
 	change.Payload["cancellationReason"] = "Customer canceled"
-	fixture.target.Status = shipment.StatusInTransit
+	fixture.target.Status = shipmentvocab.StatusInTransit
 
 	fixture.expectLoadPendingChange(change)
 	fixture.expectLoadLink(3)
@@ -70,7 +71,7 @@ func TestService_RejectTransferChange_DoesNotCancelLinkedShipment(t *testing.T) 
 	fixture := newTransferChangeApplyFixture(t, edisync.TransferChangeDirectionSourceToTarget)
 	change := fixture.pendingChange(
 		edisync.TransferChangeTypeShipmentCancel214,
-		shipment.StatusCanceled,
+		shipmentvocab.StatusCanceled,
 	)
 
 	fixture.expectLoadPendingChange(change)
@@ -98,10 +99,10 @@ func TestService_ApplyTransferChange_StatusRegressionAppliesLinkedShipmentStatus
 	fixture := newTransferChangeApplyFixture(t, edisync.TransferChangeDirectionTargetToSource)
 	change := fixture.pendingChange(
 		edisync.TransferChangeTypeShipmentStatus214,
-		shipment.StatusInTransit,
+		shipmentvocab.StatusInTransit,
 	)
-	fixture.source.Status = shipment.StatusNew
-	fixture.target.Status = shipment.StatusInTransit
+	fixture.source.Status = shipmentvocab.StatusNew
+	fixture.target.Status = shipmentvocab.StatusInTransit
 
 	fixture.expectLoadPendingChange(change)
 	fixture.expectLoadLink(3)
@@ -111,10 +112,10 @@ func TestService_ApplyTransferChange_StatusRegressionAppliesLinkedShipmentStatus
 			return req.TenantInfo.OrgID == fixture.link.SourceOrganizationID &&
 				req.TenantInfo.BuID == fixture.link.BusinessUnitID &&
 				req.ShipmentID == fixture.link.SourceShipmentID &&
-				req.Status == shipment.StatusInTransit &&
+				req.Status == shipmentvocab.StatusInTransit &&
 				req.Version == fixture.source.Version
 		})).
-		Return(fixture.statusUpdatedSource(shipment.StatusInTransit), nil).
+		Return(fixture.statusUpdatedSource(shipmentvocab.StatusInTransit), nil).
 		Once()
 	fixture.expectInsertMirroredEvent(shipmentevent.TypeStatusChanged)
 	fixture.expectUpdateReviewedChange(edisync.TransferChangeStatusApplied)
@@ -137,15 +138,15 @@ func TestService_ApplyTransferChange_LifecycleAppliesActualsThroughCoordinator(t
 
 	fixture := newTransferChangeApplyFixture(t, edisync.TransferChangeDirectionTargetToSource)
 	fixture.installLifecycleStops()
-	fixture.source.Status = shipment.StatusNew
-	fixture.target.Status = shipment.StatusInTransit
+	fixture.source.Status = shipmentvocab.StatusNew
+	fixture.target.Status = shipmentvocab.StatusInTransit
 	arrival := int64(1_000)
 	departure := int64(1_100)
 	fixture.target.Moves[0].Stops[0].ActualArrival = &arrival
 	fixture.target.Moves[0].Stops[0].ActualDeparture = &departure
 	change := fixture.pendingChange(
 		edisync.TransferChangeTypeShipmentLifecycle214,
-		shipment.StatusInTransit,
+		shipmentvocab.StatusInTransit,
 	)
 
 	fixture.expectLoadPendingChange(change)
@@ -154,9 +155,9 @@ func TestService_ApplyTransferChange_LifecycleAppliesActualsThroughCoordinator(t
 	fixture.shipmentRepo.EXPECT().
 		UpdateOperationalLifecycle(mock.Anything, mock.MatchedBy(func(entity *shipment.Shipment) bool {
 			return entity.ID == fixture.link.SourceShipmentID &&
-				entity.Status == shipment.StatusInTransit &&
-				entity.Moves[0].Status == shipment.MoveStatusInTransit &&
-				entity.Moves[0].Stops[0].Status == shipment.StopStatusCompleted &&
+				entity.Status == shipmentvocab.StatusInTransit &&
+				entity.Moves[0].Status == shipmentvocab.MoveStatusInTransit &&
+				entity.Moves[0].Stops[0].Status == shipmentvocab.StopStatusCompleted &&
 				entity.Moves[0].Stops[0].ActualArrival != nil &&
 				*entity.Moves[0].Stops[0].ActualArrival == arrival &&
 				entity.ActualShipDate != nil &&
@@ -223,7 +224,7 @@ func newTransferChangeApplyFixture(
 			OrganizationID: sourceOrgID,
 			BusinessUnitID: buID,
 			ProNumber:      "SOURCE-1",
-			Status:         shipment.StatusCanceled,
+			Status:         shipmentvocab.StatusCanceled,
 			Version:        3,
 		},
 		target: &shipment.Shipment{
@@ -231,7 +232,7 @@ func newTransferChangeApplyFixture(
 			OrganizationID: targetOrgID,
 			BusinessUnitID: buID,
 			ProNumber:      "TARGET-1",
-			Status:         shipment.StatusNew,
+			Status:         shipmentvocab.StatusNew,
 			Version:        5,
 		},
 		actor: &permissionports.RequestActor{
@@ -264,7 +265,7 @@ func newTransferChangeApplyFixture(
 
 func (f *transferChangeApplyFixture) pendingChange(
 	changeType string,
-	nextStatus shipment.Status,
+	nextStatus shipmentvocab.Status,
 ) *edisync.TransferChange {
 	return &edisync.TransferChange{
 		ID:             pulid.MustNew("editc_"),
@@ -367,13 +368,13 @@ func (f *transferChangeApplyFixture) expectUpdateReviewedChange(
 
 func (f *transferChangeApplyFixture) canceledTarget() *shipment.Shipment {
 	updated := *f.target
-	updated.Status = shipment.StatusCanceled
+	updated.Status = shipmentvocab.StatusCanceled
 	updated.CancelReason = "Customer canceled"
 	return &updated
 }
 
 func (f *transferChangeApplyFixture) statusUpdatedSource(
-	status shipment.Status,
+	status shipmentvocab.Status,
 ) *shipment.Shipment {
 	updated := *f.source
 	updated.Status = status
@@ -396,11 +397,11 @@ func transferLifecycleMove(entity *shipment.Shipment) *shipment.ShipmentMove {
 		OrganizationID: entity.OrganizationID,
 		BusinessUnitID: entity.BusinessUnitID,
 		ShipmentID:     entity.ID,
-		Status:         shipment.MoveStatusNew,
+		Status:         shipmentvocab.MoveStatusNew,
 		Sequence:       0,
 		Stops: []*shipment.Stop{
-			transferLifecycleStop(entity, moveID, shipment.StopTypePickup, 0),
-			transferLifecycleStop(entity, moveID, shipment.StopTypeDelivery, 1),
+			transferLifecycleStop(entity, moveID, shipmentvocab.StopTypePickup, 0),
+			transferLifecycleStop(entity, moveID, shipmentvocab.StopTypeDelivery, 1),
 		},
 	}
 }
@@ -408,7 +409,7 @@ func transferLifecycleMove(entity *shipment.Shipment) *shipment.ShipmentMove {
 func transferLifecycleStop(
 	entity *shipment.Shipment,
 	moveID pulid.ID,
-	stopType shipment.StopType,
+	stopType shipmentvocab.StopType,
 	sequence int64,
 ) *shipment.Stop {
 	return &shipment.Stop{
@@ -417,7 +418,7 @@ func transferLifecycleStop(
 		BusinessUnitID:       entity.BusinessUnitID,
 		ShipmentMoveID:       moveID,
 		LocationID:           pulid.MustNew("loc_"),
-		Status:               shipment.StopStatusNew,
+		Status:               shipmentvocab.StopStatusNew,
 		Type:                 stopType,
 		Sequence:             sequence,
 		ScheduledWindowStart: 500 + sequence,

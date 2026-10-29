@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmenthold"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentcommentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
@@ -227,10 +228,10 @@ func TestSearchShipments_EachRowSaysWhatItCarries(t *testing.T) {
 
 func heldShipments() ([]*shipment.Shipment, *fakeActiveHolds) {
 	held := &shipment.Shipment{
-		ID: pulid.MustNew("shp_"), ProNumber: "S-1", Status: shipment.StatusAssigned,
+		ID: pulid.MustNew("shp_"), ProNumber: "S-1", Status: shipmentvocab.StatusAssigned,
 	}
 	free := &shipment.Shipment{
-		ID: pulid.MustNew("shp_"), ProNumber: "S-2", Status: shipment.StatusAssigned,
+		ID: pulid.MustNew("shp_"), ProNumber: "S-2", Status: shipmentvocab.StatusAssigned,
 	}
 	holds := &fakeActiveHolds{holds: []*shipmenthold.ShipmentHold{{
 		ID:            pulid.MustNew("shh_"),
@@ -295,7 +296,7 @@ func TestShipmentList_ListsOnlyHeldLoads(t *testing.T) {
 	require.NotNil(t, repo.captured.ShipmentOptions.ActiveHold)
 	assert.True(t, *repo.captured.ShipmentOptions.ActiveHold)
 	assert.Equal(t, []string{"CREDIT_HOLD"}, repo.captured.ShipmentOptions.HoldReasonCodes)
-	assert.Equal(t, []shipment.Status{shipment.StatusAssigned},
+	assert.Equal(t, []shipmentvocab.Status{shipmentvocab.StatusAssigned},
 		repo.captured.ShipmentOptions.Statuses)
 
 	outcome, ok := result.(querytool.SearchOutcome)

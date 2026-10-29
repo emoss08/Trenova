@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentbillingports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentdistanceports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
@@ -41,7 +42,7 @@ type MoveStatusObserver interface {
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 		move *shipment.ShipmentMove,
-		previous shipment.MoveStatus,
+		previous shipmentvocab.MoveStatus,
 	) error
 }
 
@@ -91,15 +92,15 @@ type ContractRateApplication struct {
 }
 
 type ContractRateCharge struct {
-	AccessorialChargeID pulid.ID             `json:"accessorialChargeId"`
-	Code                string               `json:"code"`
-	Description         string               `json:"description,omitempty"`
-	Owner               shipment.SystemOwner `json:"owner"`
-	Label               string               `json:"label,omitempty"`
-	Amount              decimal.Decimal      `json:"amount"`
-	Quantity            decimal.NullDecimal  `json:"quantity"`
-	Rate                decimal.NullDecimal  `json:"rate"`
-	RateUnit            string               `json:"rateUnit,omitempty"`
+	AccessorialChargeID pulid.ID                  `json:"accessorialChargeId"`
+	Code                string                    `json:"code"`
+	Description         string                    `json:"description,omitempty"`
+	Owner               shipmentvocab.SystemOwner `json:"owner"`
+	Label               string                    `json:"label,omitempty"`
+	Amount              decimal.Decimal           `json:"amount"`
+	Quantity            decimal.NullDecimal       `json:"quantity"`
+	Rate                decimal.NullDecimal       `json:"rate"`
+	RateUnit            string                    `json:"rateUnit,omitempty"`
 }
 
 type ShipmentRatingOutcome struct {

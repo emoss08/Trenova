@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/orderports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
@@ -97,7 +98,7 @@ func (m *shipmentStatusMarker) MarkDelayedForServiceFailure(
 
 	previous := *params.shipment
 	candidate := *params.shipment
-	candidate.Status = shipment.StatusDelayed
+	candidate.Status = shipmentvocab.StatusDelayed
 	updated, err := m.shipmentRepo.UpdateDerivedState(ctx, &candidate)
 	if err != nil {
 		return nil, err

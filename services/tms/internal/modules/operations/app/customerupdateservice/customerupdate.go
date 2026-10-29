@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentcommentports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -51,7 +52,7 @@ func AlreadyTold(
 		Cursor:     pagination.CursorInfo{Limit: recentPageSize},
 		ShipmentID: shipmentID,
 		Filters: shipmentcommentports.ShipmentCommentListFilters{
-			Types: []shipment.CommentType{shipment.CommentTypeCustomerUpdate},
+			Types: []shipmentvocab.CommentType{shipmentvocab.CommentTypeCustomerUpdate},
 		},
 	})
 	if err != nil {
@@ -172,9 +173,9 @@ func Comment(p *CommentParams) *shipmentcommentports.CreateSystemShipmentComment
 			p.Subject,
 			p.Body,
 		),
-		Type:       shipment.CommentTypeCustomerUpdate,
-		Visibility: shipment.CommentVisibilityOperations,
-		Priority:   shipment.CommentPriorityNormal,
+		Type:       shipmentvocab.CommentTypeCustomerUpdate,
+		Visibility: shipmentvocab.CommentVisibilityOperations,
+		Priority:   shipmentvocab.CommentPriorityNormal,
 		Metadata:   metadata,
 	}
 }

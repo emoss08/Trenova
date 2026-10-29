@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location"
 	"github.com/emoss08/trenova/internal/modules/places/domain/locationcategory"
@@ -243,8 +244,8 @@ func TestSampleDataCreatesTheDocumentedSet(t *testing.T) {
 		require.Len(t, s.Moves, 1)
 		require.Len(t, s.Moves[0].Stops, 2)
 		pickup, delivery := s.Moves[0].Stops[0], s.Moves[0].Stops[1]
-		assert.Equal(t, shipment.StopTypePickup, pickup.Type)
-		assert.Equal(t, shipment.StopTypeDelivery, delivery.Type)
+		assert.Equal(t, shipmentvocab.StopTypePickup, pickup.Type)
+		assert.Equal(t, shipmentvocab.StopTypeDelivery, delivery.Type)
 		assert.Less(t, pickup.ScheduledWindowStart, delivery.ScheduledWindowStart)
 		assert.Greater(t, pickup.ScheduledWindowStart, h.loader.now().Unix())
 		for _, stop := range s.Moves[0].Stops {

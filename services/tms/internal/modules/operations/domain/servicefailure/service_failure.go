@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -24,40 +25,40 @@ var (
 type ServiceFailure struct {
 	keel.Table `keel:"service_failures"`
 
-	ID                    pulid.ID          `json:"id"                    keel:"id,pk,autoid:sf_"`
-	BusinessUnitID        pulid.ID          `json:"businessUnitId"        keel:"business_unit_id,pk,tenant"`
-	OrganizationID        pulid.ID          `json:"organizationId"        keel:"organization_id,pk,tenant"`
-	ShipmentID            pulid.ID          `json:"shipmentId"            keel:"shipment_id"`
-	ShipmentMoveID        pulid.ID          `json:"shipmentMoveId"        keel:"shipment_move_id"`
-	StopID                pulid.ID          `json:"stopId"                keel:"stop_id"`
-	ReasonCodeID          *pulid.ID         `json:"reasonCodeId"          keel:"reason_code_id"`
-	Number                string            `json:"number"                keel:"number"`
-	Type                  Type              `json:"type"                  keel:"type"`
-	Source                Source            `json:"source"                keel:"source"`
-	Status                Status            `json:"status"                keel:"status"`
-	StopType              shipment.StopType `json:"stopType"              keel:"stop_type"`
-	ScheduledCutoff       int64             `json:"scheduledCutoff"       keel:"scheduled_cutoff"`
-	ActualArrival         int64             `json:"actualArrival"         keel:"actual_arrival"`
-	GracePeriodMinutes    int               `json:"gracePeriodMinutes"    keel:"grace_period_minutes"`
-	LateMinutes           int64             `json:"lateMinutes"           keel:"late_minutes"`
-	Notes                 string            `json:"notes"                 keel:"notes,nullzero"`
-	InternalNotes         string            `json:"internalNotes"         keel:"internal_notes,nullzero"`
-	X12StatusCodeOverride string            `json:"x12StatusCodeOverride" keel:"x12_status_code_override,nullzero"`
-	X12ReasonCodeOverride string            `json:"x12ReasonCodeOverride" keel:"x12_reason_code_override,nullzero"`
-	X12ExceptionCode      string            `json:"x12ExceptionCode"      keel:"x12_exception_code,nullzero"`
-	DetectedAt            int64             `json:"detectedAt"            keel:"detected_at"`
-	ReviewedAt            *int64            `json:"reviewedAt"            keel:"reviewed_at"`
-	ReviewedByID          *pulid.ID         `json:"reviewedById"          keel:"reviewed_by_id"`
-	ResolvedAt            *int64            `json:"resolvedAt"            keel:"resolved_at"`
-	ResolvedByID          *pulid.ID         `json:"resolvedById"          keel:"resolved_by_id"`
-	VoidedAt              *int64            `json:"voidedAt"              keel:"voided_at"`
-	VoidedByID            *pulid.ID         `json:"voidedById"            keel:"voided_by_id"`
-	VoidReason            string            `json:"voidReason"            keel:"void_reason,nullzero"`
-	CreatedByID           *pulid.ID         `json:"createdById"           keel:"created_by_id"`
-	Version               int64             `json:"version"               keel:"version,version"`
-	CreatedAt             int64             `json:"createdAt"             keel:"created_at,autocreate"`
-	UpdatedAt             int64             `json:"updatedAt"             keel:"updated_at,autoupdate"`
-	SearchVector          string            `json:"-"                     keel:"search_vector,tsvector,readonly,noselect"`
+	ID                    pulid.ID               `json:"id"                    keel:"id,pk,autoid:sf_"`
+	BusinessUnitID        pulid.ID               `json:"businessUnitId"        keel:"business_unit_id,pk,tenant"`
+	OrganizationID        pulid.ID               `json:"organizationId"        keel:"organization_id,pk,tenant"`
+	ShipmentID            pulid.ID               `json:"shipmentId"            keel:"shipment_id"`
+	ShipmentMoveID        pulid.ID               `json:"shipmentMoveId"        keel:"shipment_move_id"`
+	StopID                pulid.ID               `json:"stopId"                keel:"stop_id"`
+	ReasonCodeID          *pulid.ID              `json:"reasonCodeId"          keel:"reason_code_id"`
+	Number                string                 `json:"number"                keel:"number"`
+	Type                  Type                   `json:"type"                  keel:"type"`
+	Source                Source                 `json:"source"                keel:"source"`
+	Status                Status                 `json:"status"                keel:"status"`
+	StopType              shipmentvocab.StopType `json:"stopType"              keel:"stop_type"`
+	ScheduledCutoff       int64                  `json:"scheduledCutoff"       keel:"scheduled_cutoff"`
+	ActualArrival         int64                  `json:"actualArrival"         keel:"actual_arrival"`
+	GracePeriodMinutes    int                    `json:"gracePeriodMinutes"    keel:"grace_period_minutes"`
+	LateMinutes           int64                  `json:"lateMinutes"           keel:"late_minutes"`
+	Notes                 string                 `json:"notes"                 keel:"notes,nullzero"`
+	InternalNotes         string                 `json:"internalNotes"         keel:"internal_notes,nullzero"`
+	X12StatusCodeOverride string                 `json:"x12StatusCodeOverride" keel:"x12_status_code_override,nullzero"`
+	X12ReasonCodeOverride string                 `json:"x12ReasonCodeOverride" keel:"x12_reason_code_override,nullzero"`
+	X12ExceptionCode      string                 `json:"x12ExceptionCode"      keel:"x12_exception_code,nullzero"`
+	DetectedAt            int64                  `json:"detectedAt"            keel:"detected_at"`
+	ReviewedAt            *int64                 `json:"reviewedAt"            keel:"reviewed_at"`
+	ReviewedByID          *pulid.ID              `json:"reviewedById"          keel:"reviewed_by_id"`
+	ResolvedAt            *int64                 `json:"resolvedAt"            keel:"resolved_at"`
+	ResolvedByID          *pulid.ID              `json:"resolvedById"          keel:"resolved_by_id"`
+	VoidedAt              *int64                 `json:"voidedAt"              keel:"voided_at"`
+	VoidedByID            *pulid.ID              `json:"voidedById"            keel:"voided_by_id"`
+	VoidReason            string                 `json:"voidReason"            keel:"void_reason,nullzero"`
+	CreatedByID           *pulid.ID              `json:"createdById"           keel:"created_by_id"`
+	Version               int64                  `json:"version"               keel:"version,version"`
+	CreatedAt             int64                  `json:"createdAt"             keel:"created_at,autocreate"`
+	UpdatedAt             int64                  `json:"updatedAt"             keel:"updated_at,autoupdate"`
+	SearchVector          string                 `json:"-"                     keel:"search_vector,tsvector,readonly,noselect"`
 
 	ReasonCode   *ReasonCode            `json:"reasonCode,omitempty"   keel:"belongs:reason_code_id"`
 	Shipment     *shipment.Shipment     `json:"shipment,omitempty"     keel:"belongs:shipment_id"`
@@ -125,10 +126,10 @@ func (sf *ServiceFailure) Validate(multiErr *errortypes.MultiError) {
 		validation.Field(&sf.StopType,
 			validation.Required.Error("Stop type is required"),
 			validation.In(
-				shipment.StopTypePickup,
-				shipment.StopTypeDelivery,
-				shipment.StopTypeSplitPickup,
-				shipment.StopTypeSplitDelivery,
+				shipmentvocab.StopTypePickup,
+				shipmentvocab.StopTypeDelivery,
+				shipmentvocab.StopTypeSplitPickup,
+				shipmentvocab.StopTypeSplitDelivery,
 			).Error("Stop type is invalid"),
 		),
 		validation.Field(&sf.ScheduledCutoff,

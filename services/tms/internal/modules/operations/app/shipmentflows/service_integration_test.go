@@ -22,6 +22,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentservicetest"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentvalidator"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/operationstest"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/tariffports"
@@ -1225,28 +1226,28 @@ func makeIntegrationShipment(
 		CustomerID:        fixture.Customer.ID,
 		EnteredByID:       userID,
 		FormulaTemplateID: fixture.FormulaTemplate.ID,
-		Status:            shipment.StatusNew,
+		Status:            shipmentvocab.StatusNew,
 		BOL:               "BOL-INTEGRATION",
 		Moves: []*shipment.ShipmentMove{
 			{
-				Status:   shipment.MoveStatusNew,
+				Status:   shipmentvocab.MoveStatusNew,
 				Loaded:   true,
 				Sequence: 0,
 				Stops: []*shipment.Stop{
 					{
 						LocationID:           origin.ID,
-						Status:               shipment.StopStatusNew,
-						Type:                 shipment.StopTypePickup,
-						ScheduleType:         shipment.StopScheduleTypeOpen,
+						Status:               shipmentvocab.StopStatusNew,
+						Type:                 shipmentvocab.StopTypePickup,
+						ScheduleType:         shipmentvocab.StopScheduleTypeOpen,
 						Sequence:             0,
 						ScheduledWindowStart: 1_700_000_000,
 						ScheduledWindowEnd:   int64PtrForIntegration(1_700_003_600),
 					},
 					{
 						LocationID:           destination.ID,
-						Status:               shipment.StopStatusNew,
-						Type:                 shipment.StopTypeDelivery,
-						ScheduleType:         shipment.StopScheduleTypeOpen,
+						Status:               shipmentvocab.StopStatusNew,
+						Type:                 shipmentvocab.StopTypeDelivery,
+						ScheduleType:         shipmentvocab.StopScheduleTypeOpen,
 						Sequence:             1,
 						ScheduledWindowStart: 1_700_007_200,
 						ScheduledWindowEnd:   int64PtrForIntegration(1_700_010_800),

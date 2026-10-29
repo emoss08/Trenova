@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/rateconfirmationtemplate"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/shared/timeutils"
 )
@@ -95,22 +96,22 @@ func stopRows(stops []*shipment.Stop) []rateconfirmationtemplate.RateConfirmatio
 	return rows
 }
 
-func stopTypeLabel(stopType shipment.StopType) string {
+func stopTypeLabel(stopType shipmentvocab.StopType) string {
 	switch stopType {
-	case shipment.StopTypePickup, shipment.StopTypeSplitPickup:
+	case shipmentvocab.StopTypePickup, shipmentvocab.StopTypeSplitPickup:
 		return "Pickup"
-	case shipment.StopTypeDelivery, shipment.StopTypeSplitDelivery:
+	case shipmentvocab.StopTypeDelivery, shipmentvocab.StopTypeSplitDelivery:
 		return "Delivery"
 	default:
 		return string(stopType)
 	}
 }
 
-func rateMethodLabel(method shipment.CarrierRateMethod) string {
+func rateMethodLabel(method shipmentvocab.CarrierRateMethod) string {
 	switch method {
-	case shipment.CarrierRateMethodPerMile:
+	case shipmentvocab.CarrierRateMethodPerMile:
 		return "Per mile"
-	case shipment.CarrierRateMethodFlat:
+	case shipmentvocab.CarrierRateMethodFlat:
 		return "Flat"
 	default:
 		return string(method)
@@ -119,9 +120,9 @@ func rateMethodLabel(method shipment.CarrierRateMethod) string {
 
 func baseRateLabel(assignment *shipment.CarrierAssignment) string {
 	switch assignment.RateMethod {
-	case shipment.CarrierRateMethodPerMile:
+	case shipmentvocab.CarrierRateMethodPerMile:
 		return assignment.BaseRate.StringFixed(2) + "/mi"
-	case shipment.CarrierRateMethodFlat:
+	case shipmentvocab.CarrierRateMethodFlat:
 		return assignment.BaseRate.StringFixed(2) + " flat"
 	default:
 		return assignment.BaseRate.StringFixed(2)

@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/domain/editransfer"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -122,9 +123,9 @@ func (s *Service) BuildTargetShipment(
 		CustomerID:          customerID,
 		EnteredByID:         approverID,
 		FormulaTemplateID:   TenderedTemplate(&payload, formulaTemplateID),
-		Status:              shipment.StatusNew,
-		TenderStatus:        new(shipment.TenderStatusAccepted),
-		EntryMethod:         shipment.EntryMethodEDI,
+		Status:              shipmentvocab.StatusNew,
+		TenderStatus:        new(shipmentvocab.TenderStatusAccepted),
+		EntryMethod:         shipmentvocab.EntryMethodEDI,
 		BOL:                 payload.BOL,
 		ExternalReference:   externalShipmentReference(payload.RatingDetail),
 		Pieces:              payload.Pieces,
@@ -143,7 +144,7 @@ func (s *Service) BuildTargetShipment(
 		targetMove := &shipment.ShipmentMove{
 			BusinessUnitID: businessUnitID,
 			OrganizationID: transfer.TargetOrganizationID,
-			Status:         shipment.MoveStatusNew,
+			Status:         shipmentvocab.MoveStatusNew,
 			Loaded:         move.Loaded,
 			Sequence:       move.Sequence,
 			Distance:       move.Distance,
@@ -163,9 +164,9 @@ func (s *Service) BuildTargetShipment(
 				BusinessUnitID:       businessUnitID,
 				OrganizationID:       transfer.TargetOrganizationID,
 				LocationID:           locationID,
-				Status:               shipment.StopStatusNew,
-				Type:                 shipment.StopType(stop.Type),
-				ScheduleType:         shipment.StopScheduleType(stop.ScheduleType),
+				Status:               shipmentvocab.StopStatusNew,
+				Type:                 shipmentvocab.StopType(stop.Type),
+				ScheduleType:         shipmentvocab.StopScheduleType(stop.ScheduleType),
 				Sequence:             stop.Sequence,
 				Pieces:               stop.Pieces,
 				Weight:               stop.Weight,

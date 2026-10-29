@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/fuelpurchase"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/fuelpurchase/fuelpurchasedb"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/ifta"
@@ -565,16 +566,17 @@ func (fs *fuelSeeder) buildRoutes() {
 	byTractor := make(map[pulid.ID][]driverMove)
 
 	for _, rec := range g.Shipments {
-		if rec.Status == shipment.StatusCanceled {
+		if rec.Status == shipmentvocab.StatusCanceled {
 			continue
 		}
 		for _, mv := range rec.Moves {
-			if mv.Miles <= 0 || len(mv.Cities) < 2 || mv.Status == shipment.MoveStatusCanceled {
+			if mv.Miles <= 0 || len(mv.Cities) < 2 ||
+				mv.Status == shipmentvocab.MoveStatusCanceled {
 				continue
 			}
 			legs := fuelRoute(mv.Cities)
 			order, byState := fs.stateMiles(legs, mv.Miles)
-			completed := mv.Status == shipment.MoveStatusCompleted && mv.CompletedAt > 0
+			completed := mv.Status == shipmentvocab.MoveStatusCompleted && mv.CompletedAt > 0
 			route := &fuelRouteMove{completedAt: mv.CompletedAt}
 			if mv.Crew != nil {
 				route.tractorID = mv.Crew.TractorID
@@ -596,9 +598,9 @@ func (fs *fuelSeeder) buildRoutes() {
 					JurisdictionCode: j.Code,
 					Sequence:         seq,
 					Distance:         miles,
-					DistanceUnits:    shipment.JurisdictionDistanceUnitsMiles,
+					DistanceUnits:    shipmentvocab.JurisdictionDistanceUnitsMiles,
 					Loaded:           true,
-					Source:           shipment.JurisdictionMileSourceRouteCalculation,
+					Source:           shipmentvocab.JurisdictionMileSourceRouteCalculation,
 					CalculatedAt:     calculated,
 					Version:          1,
 				}

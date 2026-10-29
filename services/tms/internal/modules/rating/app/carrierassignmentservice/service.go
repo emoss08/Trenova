@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentvalidator"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentstate"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/assignmentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/carrierassignmentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenteventports"
@@ -317,8 +318,8 @@ func (s *Service) ConfirmAssignment(
 	if err != nil {
 		return err
 	}
-	if entity.Status != shipment.CarrierAssignmentStatusPending {
-		if entity.Status == shipment.CarrierAssignmentStatusConfirmed {
+	if entity.Status != shipmentvocab.CarrierAssignmentStatusPending {
+		if entity.Status == shipmentvocab.CarrierAssignmentStatusConfirmed {
 			return nil
 		}
 		return errortypes.NewBusinessError(
@@ -328,7 +329,7 @@ func (s *Service) ConfirmAssignment(
 
 	previous := *entity
 	now := timeutils.NowUnix()
-	entity.Status = shipment.CarrierAssignmentStatusConfirmed
+	entity.Status = shipmentvocab.CarrierAssignmentStatusConfirmed
 	entity.ConfirmedAt = &now
 	updated, err := s.repo.Update(ctx, entity)
 	if err != nil {
@@ -491,7 +492,7 @@ func (s *Service) buildAssignment(
 		BusinessUnitID:        req.TenantInfo.BuID,
 		ShipmentMoveID:        req.ShipmentMoveID,
 		CarrierID:             req.CarrierID,
-		Status:                shipment.CarrierAssignmentStatusPending,
+		Status:                shipmentvocab.CarrierAssignmentStatusPending,
 		RateMethod:            req.RateMethod,
 		BaseRate:              req.BaseRate,
 		FuelSurcharge:         req.FuelSurcharge,
@@ -590,8 +591,8 @@ func (s *Service) reaccrueMove(
 	}
 }
 
-func validatePerMileDistance(rateMethod shipment.CarrierRateMethod, distance *float64) error {
-	if rateMethod != shipment.CarrierRateMethodPerMile {
+func validatePerMileDistance(rateMethod shipmentvocab.CarrierRateMethod, distance *float64) error {
+	if rateMethod != shipmentvocab.CarrierRateMethodPerMile {
 		return nil
 	}
 	if distance == nil || *distance <= 0 {

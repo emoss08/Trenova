@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/order"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -48,7 +48,7 @@ type ShipmentAttachRef struct {
 	ID         pulid.ID
 	OrderID    pulid.ID
 	CustomerID pulid.ID
-	Status     shipment.Status
+	Status     shipmentvocab.Status
 }
 
 type MarkOrderChargesInvoicedRequest struct {
@@ -123,7 +123,7 @@ type OrderRepository interface {
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 		orderID pulid.ID,
-	) ([]shipment.Status, error)
+	) ([]shipmentvocab.Status, error)
 	// AttachShipments points the given legs at the order. Canceled and Invoiced legs
 	// are never attached (the WHERE clause excludes them); the caller compares the
 	// affected count against the requested count.

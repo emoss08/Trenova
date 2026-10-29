@@ -3,6 +3,7 @@ package shipment
 import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/decimalutils"
@@ -11,68 +12,29 @@ import (
 	"github.com/shopspring/decimal"
 )
 
-type ChargeAllocationKind string
-
-const (
-	ChargeAllocationKindFreight     = ChargeAllocationKind("Freight")
-	ChargeAllocationKindAccessorial = ChargeAllocationKind("Accessorial")
-	ChargeAllocationKindOrderCharge = ChargeAllocationKind("OrderCharge")
-)
-
-func (k ChargeAllocationKind) IsValid() bool {
-	switch k {
-	case ChargeAllocationKindFreight,
-		ChargeAllocationKindAccessorial,
-		ChargeAllocationKindOrderCharge:
-		return true
-	default:
-		return false
-	}
-}
-
-type ChargeAllocationMethod string
-
-const (
-	ChargeAllocationMethodPercent = ChargeAllocationMethod("Percent")
-	ChargeAllocationMethodAmount  = ChargeAllocationMethod("Amount")
-)
-
-func ChargeAllocationMethodValues() []ChargeAllocationMethod {
-	return []ChargeAllocationMethod{ChargeAllocationMethodPercent, ChargeAllocationMethodAmount}
-}
-
-func (m ChargeAllocationMethod) IsValid() bool {
-	switch m {
-	case ChargeAllocationMethodPercent, ChargeAllocationMethodAmount:
-		return true
-	default:
-		return false
-	}
-}
-
 // ChargeAllocation gives one payer a share of one charge. A charge with no
 // allocations belongs entirely to the shipment's payer, so rows exist only
 // where billing departs from that default.
 type ChargeAllocation struct {
 	keel.Table `keel:"charge_allocations"`
 
-	ID                 pulid.ID               `json:"id"                 keel:"id,pk,autoid:chal_"`
-	BusinessUnitID     pulid.ID               `json:"businessUnitId"     keel:"business_unit_id,pk,tenant"`
-	OrganizationID     pulid.ID               `json:"organizationId"     keel:"organization_id,pk,tenant"`
-	ShipmentID         *pulid.ID              `json:"shipmentId"         keel:"shipment_id"`
-	AdditionalChargeID *pulid.ID              `json:"additionalChargeId" keel:"additional_charge_id"`
-	OrderChargeID      *pulid.ID              `json:"orderChargeId"      keel:"order_charge_id"`
-	ChargeKind         ChargeAllocationKind   `json:"chargeKind"         keel:"charge_kind"`
-	BillToCustomerID   pulid.ID               `json:"billToCustomerId"   keel:"bill_to_customer_id"`
-	Method             ChargeAllocationMethod `json:"method"             keel:"method"`
-	Percent            decimal.NullDecimal    `json:"percent"            keel:"percent"`
-	Amount             decimal.NullDecimal    `json:"amount"             keel:"amount"`
-	Sequence           int16                  `json:"sequence"           keel:"sequence"`
-	InvoiceID          pulid.ID               `json:"invoiceId"          keel:"invoice_id,nullzero"`
-	InvoicedAt         *int64                 `json:"invoicedAt"         keel:"invoiced_at"`
-	Version            int64                  `json:"version"            keel:"version,version"`
-	CreatedAt          int64                  `json:"createdAt"          keel:"created_at,autocreate"`
-	UpdatedAt          int64                  `json:"updatedAt"          keel:"updated_at,autoupdate"`
+	ID                 pulid.ID                             `json:"id"                 keel:"id,pk,autoid:chal_"`
+	BusinessUnitID     pulid.ID                             `json:"businessUnitId"     keel:"business_unit_id,pk,tenant"`
+	OrganizationID     pulid.ID                             `json:"organizationId"     keel:"organization_id,pk,tenant"`
+	ShipmentID         *pulid.ID                            `json:"shipmentId"         keel:"shipment_id"`
+	AdditionalChargeID *pulid.ID                            `json:"additionalChargeId" keel:"additional_charge_id"`
+	OrderChargeID      *pulid.ID                            `json:"orderChargeId"      keel:"order_charge_id"`
+	ChargeKind         shipmentvocab.ChargeAllocationKind   `json:"chargeKind"         keel:"charge_kind"`
+	BillToCustomerID   pulid.ID                             `json:"billToCustomerId"   keel:"bill_to_customer_id"`
+	Method             shipmentvocab.ChargeAllocationMethod `json:"method"             keel:"method"`
+	Percent            decimal.NullDecimal                  `json:"percent"            keel:"percent"`
+	Amount             decimal.NullDecimal                  `json:"amount"             keel:"amount"`
+	Sequence           int16                                `json:"sequence"           keel:"sequence"`
+	InvoiceID          pulid.ID                             `json:"invoiceId"          keel:"invoice_id,nullzero"`
+	InvoicedAt         *int64                               `json:"invoicedAt"         keel:"invoiced_at"`
+	Version            int64                                `json:"version"            keel:"version,version"`
+	CreatedAt          int64                                `json:"createdAt"          keel:"created_at,autocreate"`
+	UpdatedAt          int64                                `json:"updatedAt"          keel:"updated_at,autoupdate"`
 
 	// AdditionalChargeIndex points at a charge in the same payload that has no
 	// id yet, so a new charge and its split can arrive in one save.
@@ -126,7 +88,7 @@ func (a *ChargeAllocation) Validate(multiErr *errortypes.MultiError) {
 	))
 
 	switch a.Method {
-	case ChargeAllocationMethodPercent:
+	case shipmentvocab.ChargeAllocationMethodPercent:
 		switch {
 		case !a.Percent.Valid:
 			multiErr.Add("percent", errortypes.ErrRequired, "Percent is required")
@@ -145,7 +107,7 @@ func (a *ChargeAllocation) Validate(multiErr *errortypes.MultiError) {
 				"A percent allocation cannot carry an amount",
 			)
 		}
-	case ChargeAllocationMethodAmount:
+	case shipmentvocab.ChargeAllocationMethodAmount:
 		switch {
 		case !a.Amount.Valid:
 			multiErr.Add("amount", errortypes.ErrRequired, "Amount is required")
@@ -162,7 +124,7 @@ func (a *ChargeAllocation) Validate(multiErr *errortypes.MultiError) {
 	}
 
 	switch a.ChargeKind {
-	case ChargeAllocationKindFreight:
+	case shipmentvocab.ChargeAllocationKindFreight:
 		if a.AdditionalChargeID != nil || a.OrderChargeID != nil {
 			multiErr.Add(
 				"chargeKind",
@@ -170,7 +132,7 @@ func (a *ChargeAllocation) Validate(multiErr *errortypes.MultiError) {
 				"A freight allocation targets only the shipment",
 			)
 		}
-	case ChargeAllocationKindAccessorial:
+	case shipmentvocab.ChargeAllocationKindAccessorial:
 		if a.OrderChargeID != nil {
 			multiErr.Add(
 				"chargeKind",
@@ -186,7 +148,7 @@ func (a *ChargeAllocation) Validate(multiErr *errortypes.MultiError) {
 				"An accessorial allocation must name its charge",
 			)
 		}
-	case ChargeAllocationKindOrderCharge:
+	case shipmentvocab.ChargeAllocationKindOrderCharge:
 		if a.OrderChargeID == nil || a.OrderChargeID.IsNil() {
 			multiErr.Add(
 				"orderChargeId",
@@ -211,11 +173,11 @@ func (a *ChargeAllocation) TargetID() pulid.ID {
 		return pulid.Nil
 	}
 	switch a.ChargeKind {
-	case ChargeAllocationKindFreight:
+	case shipmentvocab.ChargeAllocationKindFreight:
 		return pulid.ConvertFromPtr(a.ShipmentID)
-	case ChargeAllocationKindAccessorial:
+	case shipmentvocab.ChargeAllocationKindAccessorial:
 		return pulid.ConvertFromPtr(a.AdditionalChargeID)
-	case ChargeAllocationKindOrderCharge:
+	case shipmentvocab.ChargeAllocationKindOrderCharge:
 		return pulid.ConvertFromPtr(a.OrderChargeID)
 	default:
 		return pulid.Nil

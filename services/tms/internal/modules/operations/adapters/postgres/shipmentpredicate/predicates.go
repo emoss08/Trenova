@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmenthold/shipmentholddb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -19,7 +20,7 @@ func OptionPredicates(opts *shipmentports.ShipmentOptions) []keel.Pred {
 	preds := make([]keel.Pred, 0, 8)
 
 	if opts.Status != "" {
-		preds = append(preds, sp.Status.Eq(shipment.Status(opts.Status)))
+		preds = append(preds, sp.Status.Eq(shipmentvocab.Status(opts.Status)))
 	}
 	if len(opts.IDs) > 0 {
 		preds = append(preds, sp.ID.In(opts.IDs...))
@@ -151,8 +152,8 @@ func latePredicate(at int64) keel.Pred {
 	late := sm.Join(st, st.ShipmentMoveID.EqCol(sm.ID)).
 		Pick(sm.ShipmentID).
 		Where(
-			sm.Status.NotIn(shipment.MoveStatusCompleted, shipment.MoveStatusCanceled),
-			st.Status.In(shipment.StopStatusNew, shipment.StopStatusInTransit),
+			sm.Status.NotIn(shipmentvocab.MoveStatusCompleted, shipmentvocab.MoveStatusCanceled),
+			st.Status.In(shipmentvocab.StopStatusNew, shipmentvocab.StopStatusInTransit),
 			st.ScheduledWindowStart.Gt(0),
 			st.ScheduledWindowStart.Lt(at),
 			st.ActualArrival.Coalesce(0).Lte(0),
@@ -176,9 +177,9 @@ func liveAssignmentPredicate(match keel.Pred) keel.Pred {
 	a := m.Assignment()
 
 	return m.Any(
-		m.Status.Ne(shipment.MoveStatusCanceled),
+		m.Status.Ne(shipmentvocab.MoveStatusCanceled),
 		a.ArchivedAt.IsNull(),
-		a.Status.Ne(shipment.AssignmentStatusCanceled),
+		a.Status.Ne(shipmentvocab.AssignmentStatusCanceled),
 		match,
 	)
 }
@@ -188,8 +189,8 @@ func assignedCarrierPredicate(carrierIDs []pulid.ID) keel.Pred {
 	ca := m.CarrierAssignment()
 
 	return m.Any(
-		m.Status.Ne(shipment.MoveStatusCanceled),
-		ca.Status.Ne(shipment.CarrierAssignmentStatusCanceled),
+		m.Status.Ne(shipmentvocab.MoveStatusCanceled),
+		ca.Status.Ne(shipmentvocab.CarrierAssignmentStatusCanceled),
 		ca.CarrierID.In(carrierIDs...),
 	)
 }
@@ -199,8 +200,8 @@ func stopLocationPredicate(locationIDs []pulid.ID) keel.Pred {
 	st := m.Stops()
 
 	return m.Any(
-		m.Status.Ne(shipment.MoveStatusCanceled),
-		st.Any(st.Status.Ne(shipment.StopStatusCanceled), st.LocationID.In(locationIDs...)),
+		m.Status.Ne(shipmentvocab.MoveStatusCanceled),
+		st.Any(st.Status.Ne(shipmentvocab.StopStatusCanceled), st.LocationID.In(locationIDs...)),
 	)
 }
 
@@ -209,7 +210,7 @@ func activityWindowPredicate(opts *shipmentports.ShipmentOptions) keel.Pred {
 	st := m.Stops()
 
 	return m.Any(
-		m.Status.Ne(shipment.MoveStatusCanceled),
+		m.Status.Ne(shipmentvocab.MoveStatusCanceled),
 		st.Any(
 			st.ScheduledWindowStart.Gt(0),
 			st.ScheduledWindowStart.Lte(opts.ActivityWindowEnd),
@@ -225,9 +226,9 @@ func UnassignedPredicate() keel.Pred {
 	a := m.Assignment()
 
 	return m.None(
-		m.Status.Ne(shipment.MoveStatusCanceled),
+		m.Status.Ne(shipmentvocab.MoveStatusCanceled),
 		a.ArchivedAt.IsNull(),
-		a.Status.Ne(shipment.AssignmentStatusCanceled),
+		a.Status.Ne(shipmentvocab.AssignmentStatusCanceled),
 	)
 }
 

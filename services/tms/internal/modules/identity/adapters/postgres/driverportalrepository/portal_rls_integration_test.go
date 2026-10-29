@@ -9,6 +9,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/portalaccessports"
@@ -85,7 +86,7 @@ func TestDriverPortal_UnderRowLevelSecurityReadsOnlyTheDriversOwnRecords(t *test
 				BOL:          "BOL-" + code,
 				ProNumber:    "PRO-" + code,
 				ShipmentID:   pulid.MustNew("shp_"),
-				MoveStatuses: []shipment.MoveStatus{shipment.MoveStatusAssigned},
+				MoveStatuses: []shipmentvocab.MoveStatus{shipmentvocab.MoveStatusAssigned},
 			},
 		)
 		err := shipmentdb.Assignments.Create(data.Ctx(ctx), admin, &shipment.Assignment{
@@ -94,7 +95,7 @@ func TestDriverPortal_UnderRowLevelSecurityReadsOnlyTheDriversOwnRecords(t *test
 			OrganizationID:  tenant.OrgID,
 			ShipmentMoveID:  graph.Moves[0].ID,
 			PrimaryWorkerID: &driver.ID,
-			Status:          shipment.AssignmentStatusNew,
+			Status:          shipmentvocab.AssignmentStatusNew,
 		})
 		require.NoError(t, err)
 		return graph

@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/assignmentports"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location/locationdb"
 	"github.com/emoss08/trenova/pkg/dberror"
@@ -24,9 +25,9 @@ import (
 
 var assignmentErrors = dberror.Mapping{Entity: "Assignment"}
 
-var activeMoveStatuses = []shipment.MoveStatus{
-	shipment.MoveStatusInTransit,
-	shipment.MoveStatusAssigned,
+var activeMoveStatuses = []shipmentvocab.MoveStatus{
+	shipmentvocab.MoveStatusInTransit,
+	shipmentvocab.MoveStatusAssigned,
 }
 
 type Params struct {
@@ -232,7 +233,7 @@ func (r *repository) findActiveAssignment(
 		entity, err := a.Join(sm, sm.ID.EqCol(a.ShipmentMoveID)).
 			Where(a.ArchivedAt.IsNull(), subject, sm.Status.In(activeMoveStatuses...)).
 			Order(
-				keel.Desc(sm.Status.Eq(shipment.MoveStatusInTransit)),
+				keel.Desc(sm.Status.Eq(shipmentvocab.MoveStatusInTransit)),
 				sm.CreatedAt.Desc(),
 			).
 			First(ctx, r.db.Keel(ctx))
@@ -253,7 +254,7 @@ func (r *repository) findInProgressAssignment(
 			Where(
 				a.ArchivedAt.IsNull(),
 				column.Eq(equipmentID),
-				sm.Status.Eq(shipment.MoveStatusInTransit),
+				sm.Status.Eq(shipmentvocab.MoveStatusInTransit),
 				keel.When(!excludeMoveID.IsNil(), a.ShipmentMoveID.Ne(excludeMoveID)),
 			).
 			First(ctx, r.db.Keel(ctx))
@@ -406,8 +407,8 @@ func actualTimelineEvents(column keelkinds.PulidIDCol, resourceID pulid.ID) *kee
 			Where(
 				a.ArchivedAt.IsNull(),
 				column.Eq(resourceID),
-				sm.Status.Ne(shipment.MoveStatusCanceled),
-				st.Status.Ne(shipment.StopStatusCanceled),
+				sm.Status.Ne(shipmentvocab.MoveStatusCanceled),
+				st.Status.Ne(shipmentvocab.StopStatusCanceled),
 				at(st).IsNotNull(),
 			)
 	}
@@ -480,7 +481,7 @@ func (r *repository) Unassign(
 		n, err := unassignable(entity).Update(
 			ctx,
 			r.db.Keel(ctx),
-			a.Status.To(shipment.AssignmentStatusCanceled),
+			a.Status.To(shipmentvocab.AssignmentStatusCanceled),
 			a.ArchivedAt.To(now),
 		)
 		if err != nil {

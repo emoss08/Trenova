@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/domain/editransfer/editransferdb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -92,10 +93,10 @@ func SeedInternalTender(t *testing.T) *InternalTender {
 			BOL:          "BOL-TENDER",
 			ProNumber:    "PRO-TENDER",
 			ShipmentID:   pulid.MustNew("shp_"),
-			MoveStatuses: []shipment.MoveStatus{shipment.MoveStatusNew},
+			MoveStatuses: []shipmentvocab.MoveStatus{shipmentvocab.MoveStatusNew},
 		},
 	).Shipment
-	tender.SetSourceTenderStatus(t, shipment.TenderStatusTendered)
+	tender.SetSourceTenderStatus(t, shipmentvocab.TenderStatusTendered)
 
 	tender.SourcePartner = internalPartner(t, tender.Source, admin, "RCVC", targetOrg.ID)
 	tender.TargetPartner = internalPartner(
@@ -109,7 +110,7 @@ func SeedInternalTender(t *testing.T) *InternalTender {
 	return tender
 }
 
-func (it *InternalTender) SetSourceTenderStatus(t *testing.T, status shipment.TenderStatus) {
+func (it *InternalTender) SetSourceTenderStatus(t *testing.T, status shipmentvocab.TenderStatus) {
 	t.Helper()
 
 	sp := shipmentdb.Shipments
@@ -119,7 +120,7 @@ func (it *InternalTender) SetSourceTenderStatus(t *testing.T, status shipment.Te
 	require.EqualValues(t, 1, n)
 }
 
-func (it *InternalTender) SourceTenderStatus(t *testing.T) *shipment.TenderStatus {
+func (it *InternalTender) SourceTenderStatus(t *testing.T) *shipmentvocab.TenderStatus {
 	t.Helper()
 
 	stored, err := shipmentdb.Shipments.Get(it.Source.Ctx, it.Admin, it.SourceShipment.ID)

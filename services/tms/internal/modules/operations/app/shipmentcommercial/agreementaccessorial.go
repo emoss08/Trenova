@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentrating"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreementmatch"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/fuelsurchargeports"
@@ -129,7 +130,7 @@ func reconcileAgreementCharges(
 			continue
 		}
 
-		if charge.Owner() != shipment.SystemOwnerAgreement {
+		if charge.Owner() != shipmentvocab.SystemOwnerAgreement {
 			filtered = append(filtered, charge)
 			continue
 		}
@@ -186,7 +187,7 @@ func (p *ratingPass) dropBilledAgreementCharges(entity *shipment.Shipment) {
 	}
 	kept := entity.AdditionalCharges[:0]
 	for _, charge := range entity.AdditionalCharges {
-		if charge != nil && charge.Owner() == shipment.SystemOwnerAgreement &&
+		if charge != nil && charge.Owner() == shipmentvocab.SystemOwnerAgreement &&
 			p.skips(charge.AccessorialChargeID, skipSourceAgreement) {
 			continue
 		}
@@ -202,7 +203,7 @@ func removeAgreementCharges(entity *shipment.Shipment) {
 		if charge == nil {
 			continue
 		}
-		if charge.Owner() == shipment.SystemOwnerAgreement {
+		if charge.Owner() == shipmentvocab.SystemOwnerAgreement {
 			continue
 		}
 		filtered = append(filtered, charge)

@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionpolicy"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
@@ -52,7 +52,7 @@ func TestDetentionPolicyToModel_PopulatedLists(t *testing.T) {
 		RateSource:          detentionpolicy.RateSourceTiers,
 		AccessorialChargeID: pulid.MustNew("acc_"),
 		Currency:            "USD",
-		StopTypes:           []shipment.StopType{shipment.StopTypeDelivery},
+		StopTypes:           []shipmentvocab.StopType{shipmentvocab.StopTypeDelivery},
 		Tiers: []*detentionpolicy.DetentionPolicyTier{
 			nil,
 			{

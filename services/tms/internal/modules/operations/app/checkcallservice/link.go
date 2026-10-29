@@ -17,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/checkcall"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/checkcallports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
@@ -294,7 +295,7 @@ func (s *Service) trackableAssignment(
 		}
 		return nil, err
 	}
-	if assignment == nil || assignment.Status == shipment.CarrierAssignmentStatusCanceled {
+	if assignment == nil || assignment.Status == shipmentvocab.CarrierAssignmentStatusCanceled {
 		return nil, errortypes.NewBusinessError(
 			"Assign a carrier to this load before sending a tracking link",
 		)

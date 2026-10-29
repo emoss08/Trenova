@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 )
 
 const CoverageNone = "needs a driver"
@@ -25,7 +26,7 @@ func routeOf(item *shipment.Shipment) shipmentRoute {
 	crews := make([]string, 0, len(item.Moves))
 	moves, open := 0, 0
 	for _, move := range item.Moves {
-		if move == nil || move.Status == shipment.MoveStatusCanceled {
+		if move == nil || move.Status == shipmentvocab.MoveStatusCanceled {
 			continue
 		}
 		moves++
@@ -35,7 +36,7 @@ func routeOf(item *shipment.Shipment) shipmentRoute {
 			open++
 		}
 		for _, stop := range move.Stops {
-			if stop == nil || stop.Status == shipment.StopStatusCanceled {
+			if stop == nil || stop.Status == shipmentvocab.StopStatusCanceled {
 				continue
 			}
 			if first == nil && isPickup(stop.Type) {
@@ -78,12 +79,13 @@ func moveCrew(move *shipment.ShipmentMove) string {
 	return ""
 }
 
-func isPickup(stopType shipment.StopType) bool {
-	return stopType == shipment.StopTypePickup || stopType == shipment.StopTypeSplitPickup
+func isPickup(stopType shipmentvocab.StopType) bool {
+	return stopType == shipmentvocab.StopTypePickup || stopType == shipmentvocab.StopTypeSplitPickup
 }
 
-func isDelivery(stopType shipment.StopType) bool {
-	return stopType == shipment.StopTypeDelivery || stopType == shipment.StopTypeSplitDelivery
+func isDelivery(stopType shipmentvocab.StopType) bool {
+	return stopType == shipmentvocab.StopTypeDelivery ||
+		stopType == shipmentvocab.StopTypeSplitDelivery
 }
 
 func stopLine(stop *shipment.Stop) string {

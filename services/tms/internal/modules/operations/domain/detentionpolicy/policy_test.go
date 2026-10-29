@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionpolicy"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -86,7 +86,7 @@ func TestPolicy_SpecificityScoring(t *testing.T) {
 				p.CommodityIDs = []pulid.ID{pulid.MustNew("cmd_")}
 				p.ServiceTypeIDs = []pulid.ID{pulid.MustNew("svt_")}
 				p.ShipmentTypeIDs = []pulid.ID{pulid.MustNew("spt_")}
-				p.StopTypes = []shipment.StopType{shipment.StopTypeDelivery}
+				p.StopTypes = []shipmentvocab.StopType{shipmentvocab.StopTypeDelivery}
 			},
 			63,
 		},
@@ -118,8 +118,8 @@ func TestPolicy_Matches(t *testing.T) {
 		ShipmentTypeID: pulid.MustNew("spt_"),
 		ServiceTypeID:  pulid.MustNew("svt_"),
 		CommodityIDs:   []pulid.ID{commodityID},
-		StopType:       shipment.StopTypeDelivery,
-		ScheduleType:   shipment.StopScheduleTypeAppointment,
+		StopType:       shipmentvocab.StopTypeDelivery,
+		ScheduleType:   shipmentvocab.StopScheduleTypeAppointment,
 		Timestamp:      1000,
 	}
 
@@ -173,10 +173,13 @@ func TestPolicy_Matches(t *testing.T) {
 	t.Run("stop type scope filters by leg", func(t *testing.T) {
 		t.Parallel()
 		p := validPolicy()
-		p.StopTypes = []shipment.StopType{shipment.StopTypePickup}
+		p.StopTypes = []shipmentvocab.StopType{shipmentvocab.StopTypePickup}
 		assert.False(t, p.Matches(base))
 
-		p.StopTypes = []shipment.StopType{shipment.StopTypePickup, shipment.StopTypeDelivery}
+		p.StopTypes = []shipmentvocab.StopType{
+			shipmentvocab.StopTypePickup,
+			shipmentvocab.StopTypeDelivery,
+		}
 		assert.True(t, p.Matches(base))
 	})
 
@@ -186,7 +189,7 @@ func TestPolicy_Matches(t *testing.T) {
 		p.AppointmentStopsOnly = true
 
 		open := base
-		open.ScheduleType = shipment.StopScheduleTypeOpen
+		open.ScheduleType = shipmentvocab.StopScheduleTypeOpen
 
 		assert.False(t, p.Matches(open))
 		assert.True(t, p.Matches(base))
@@ -215,13 +218,13 @@ func TestPolicy_FreeMinutesForStopType(t *testing.T) {
 	p.PickupFreeMinutes = new(int32(60))
 	p.DeliveryFreeMinutes = new(int32(180))
 
-	assert.Equal(t, int32(60), p.FreeMinutesForStopType(shipment.StopTypePickup))
-	assert.Equal(t, int32(60), p.FreeMinutesForStopType(shipment.StopTypeSplitPickup))
-	assert.Equal(t, int32(180), p.FreeMinutesForStopType(shipment.StopTypeDelivery))
-	assert.Equal(t, int32(180), p.FreeMinutesForStopType(shipment.StopTypeSplitDelivery))
+	assert.Equal(t, int32(60), p.FreeMinutesForStopType(shipmentvocab.StopTypePickup))
+	assert.Equal(t, int32(60), p.FreeMinutesForStopType(shipmentvocab.StopTypeSplitPickup))
+	assert.Equal(t, int32(180), p.FreeMinutesForStopType(shipmentvocab.StopTypeDelivery))
+	assert.Equal(t, int32(180), p.FreeMinutesForStopType(shipmentvocab.StopTypeSplitDelivery))
 
 	p.PickupFreeMinutes = nil
-	assert.Equal(t, int32(120), p.FreeMinutesForStopType(shipment.StopTypePickup),
+	assert.Equal(t, int32(120), p.FreeMinutesForStopType(shipmentvocab.StopTypePickup),
 		"an absent override falls back to the general allowance")
 }
 

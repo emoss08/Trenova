@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/shipmentcontrol"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	internaltestutil "github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
@@ -58,7 +59,7 @@ func TestCancelIntegration_CancelsLiveWorkAndKeepsCompletedStops(t *testing.T) {
 	departed := arrived + 1800
 	_, err = keel.Exec(ctx, db,
 		"UPDATE stops SET status = $1, actual_arrival = $2, actual_departure = $3 WHERE id = $4",
-		string(shipment.StopStatusCompleted), arrived, departed, origin.ID.String())
+		string(shipmentvocab.StopStatusCompleted), arrived, departed, origin.ID.String())
 	require.NoError(t, err)
 
 	assignment := &shipment.Assignment{
@@ -66,7 +67,7 @@ func TestCancelIntegration_CancelsLiveWorkAndKeepsCompletedStops(t *testing.T) {
 		OrganizationID: tenantInfo.OrgID,
 		BusinessUnitID: tenantInfo.BuID,
 		ShipmentMoveID: move.ID,
-		Status:         shipment.AssignmentStatusNew,
+		Status:         shipmentvocab.AssignmentStatusNew,
 	}
 	require.NoError(t, shipmentdb.Assignments.Create(ctx, db, assignment))
 
@@ -78,14 +79,18 @@ func TestCancelIntegration_CancelsLiveWorkAndKeepsCompletedStops(t *testing.T) {
 	require.NoError(t, err)
 
 	canceled := mustGetExpandedShipment(t, shipmentRepo, created.ID, tenantInfo)
-	assert.Equal(t, shipment.StatusCanceled, canceled.Status)
-	assert.Equal(t, shipment.MoveStatusCanceled, canceled.Moves[0].Status)
-	assert.Equal(t, shipment.StopStatusCompleted, canceled.Moves[0].Stops[0].Status)
+	assert.Equal(t, shipmentvocab.StatusCanceled, canceled.Status)
+	assert.Equal(t, shipmentvocab.MoveStatusCanceled, canceled.Moves[0].Status)
+	assert.Equal(t, shipmentvocab.StopStatusCompleted, canceled.Moves[0].Stops[0].Status)
 	require.NotNil(t, canceled.Moves[0].Stops[0].ActualDeparture)
 	for _, stop := range canceled.Moves[0].Stops[1:] {
-		assert.Equal(t, shipment.StopStatusCanceled, stop.Status)
+		assert.Equal(t, shipmentvocab.StopStatusCanceled, stop.Status)
 	}
-	assert.Equal(t, shipment.AssignmentStatusCanceled, mustAssignmentStatus(t, db, assignment.ID))
+	assert.Equal(
+		t,
+		shipmentvocab.AssignmentStatusCanceled,
+		mustAssignmentStatus(t, db, assignment.ID),
+	)
 
 	_, err = svc.lifecycle.Uncancel(ctx, &shipmentports.UncancelShipmentRequest{
 		TenantInfo: tenantInfo,
@@ -95,13 +100,13 @@ func TestCancelIntegration_CancelsLiveWorkAndKeepsCompletedStops(t *testing.T) {
 
 	restored := mustGetExpandedShipment(t, shipmentRepo, created.ID, tenantInfo)
 	assert.Nil(t, restored.CanceledAt)
-	assert.Equal(t, shipment.StatusInTransit, restored.Status)
-	assert.Equal(t, shipment.MoveStatusInTransit, restored.Moves[0].Status)
-	assert.Equal(t, shipment.StopStatusCompleted, restored.Moves[0].Stops[0].Status)
+	assert.Equal(t, shipmentvocab.StatusInTransit, restored.Status)
+	assert.Equal(t, shipmentvocab.MoveStatusInTransit, restored.Moves[0].Status)
+	assert.Equal(t, shipmentvocab.StopStatusCompleted, restored.Moves[0].Stops[0].Status)
 	for _, stop := range restored.Moves[0].Stops[1:] {
-		assert.Equal(t, shipment.StopStatusNew, stop.Status)
+		assert.Equal(t, shipmentvocab.StopStatusNew, stop.Status)
 	}
-	assert.Equal(t, shipment.AssignmentStatusNew, mustAssignmentStatus(t, db, assignment.ID))
+	assert.Equal(t, shipmentvocab.AssignmentStatusNew, mustAssignmentStatus(t, db, assignment.ID))
 }
 
 func TestCancelIntegration_RefusesInvoicedShipment(t *testing.T) {
@@ -134,7 +139,7 @@ func TestCancelIntegration_RefusesInvoicedShipment(t *testing.T) {
 
 	_, err = keel.Exec(ctx, db,
 		"UPDATE shipments SET status = $1 WHERE id = $2",
-		string(shipment.StatusInvoiced), created.ID.String())
+		string(shipmentvocab.StatusInvoiced), created.ID.String())
 	require.NoError(t, err)
 
 	_, err = svc.lifecycle.Cancel(ctx, &shipmentports.CancelShipmentRequest{
@@ -145,7 +150,7 @@ func TestCancelIntegration_RefusesInvoicedShipment(t *testing.T) {
 	require.ErrorAs(t, err, &conflict)
 
 	persisted := mustGetExpandedShipment(t, shipmentRepo, created.ID, tenantInfo)
-	assert.Equal(t, shipment.StatusInvoiced, persisted.Status)
+	assert.Equal(t, shipmentvocab.StatusInvoiced, persisted.Status)
 }
 
 func TestCancelIntegration_RepositoryRefusesStaleVersion(t *testing.T) {
@@ -186,7 +191,7 @@ func TestCancelIntegration_RepositoryRefusesStaleVersion(t *testing.T) {
 	require.Error(t, err)
 
 	persisted := mustGetExpandedShipment(t, shipmentRepo, created.ID, tenantInfo)
-	assert.NotEqual(t, shipment.StatusCanceled, persisted.Status)
+	assert.NotEqual(t, shipmentvocab.StatusCanceled, persisted.Status)
 }
 
 func mustGetExpandedShipment(
@@ -210,12 +215,12 @@ func mustGetExpandedShipment(
 	return entity
 }
 
-func mustAssignmentStatus(t *testing.T, db *keel.DB, id pulid.ID) shipment.AssignmentStatus {
+func mustAssignmentStatus(t *testing.T, db *keel.DB, id pulid.ID) shipmentvocab.AssignmentStatus {
 	t.Helper()
 
 	status, err := keel.QueryValue[string](t.Context(), db,
 		"SELECT status FROM assignments WHERE id = $1", id.String())
 	require.NoError(t, err)
 
-	return shipment.AssignmentStatus(status)
+	return shipmentvocab.AssignmentStatus(status)
 }

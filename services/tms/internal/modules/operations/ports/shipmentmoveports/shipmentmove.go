@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/movesplit"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -26,9 +27,9 @@ type GetMovesByShipmentIDRequest struct {
 }
 
 type UpdateMoveStatusRequest struct {
-	TenantInfo pagination.TenantInfo `json:"-"`
-	MoveID     pulid.ID              `json:"moveId"`
-	Status     shipment.MoveStatus   `json:"status"`
+	TenantInfo pagination.TenantInfo    `json:"-"`
+	MoveID     pulid.ID                 `json:"moveId"`
+	Status     shipmentvocab.MoveStatus `json:"status"`
 }
 
 func (r *UpdateMoveStatusRequest) Validate() *errortypes.MultiError {
@@ -49,11 +50,11 @@ func (r *UpdateMoveStatusRequest) Validate() *errortypes.MultiError {
 			&r.Status,
 			validation.Required.Error("Status is required"),
 			validation.In(
-				shipment.MoveStatusNew,
-				shipment.MoveStatusAssigned,
-				shipment.MoveStatusInTransit,
-				shipment.MoveStatusCompleted,
-				shipment.MoveStatusCanceled,
+				shipmentvocab.MoveStatusNew,
+				shipmentvocab.MoveStatusAssigned,
+				shipmentvocab.MoveStatusInTransit,
+				shipmentvocab.MoveStatusCompleted,
+				shipmentvocab.MoveStatusCanceled,
 			).Error("Status must be a valid move status"),
 		),
 	))
@@ -169,9 +170,9 @@ func (r *RecordStopActualRequest) validateDeparture(multiErr *errortypes.MultiEr
 }
 
 type BulkUpdateMoveStatusRequest struct {
-	TenantInfo pagination.TenantInfo `json:"-"`
-	MoveIDs    []pulid.ID            `json:"moveIds"`
-	Status     shipment.MoveStatus   `json:"status"`
+	TenantInfo pagination.TenantInfo    `json:"-"`
+	MoveIDs    []pulid.ID               `json:"moveIds"`
+	Status     shipmentvocab.MoveStatus `json:"status"`
 }
 
 func (r *BulkUpdateMoveStatusRequest) Validate() *errortypes.MultiError {
@@ -196,11 +197,11 @@ func (r *BulkUpdateMoveStatusRequest) Validate() *errortypes.MultiError {
 			&r.Status,
 			validation.Required.Error("Status is required"),
 			validation.In(
-				shipment.MoveStatusNew,
-				shipment.MoveStatusAssigned,
-				shipment.MoveStatusInTransit,
-				shipment.MoveStatusCompleted,
-				shipment.MoveStatusCanceled,
+				shipmentvocab.MoveStatusNew,
+				shipmentvocab.MoveStatusAssigned,
+				shipmentvocab.MoveStatusInTransit,
+				shipmentvocab.MoveStatusCompleted,
+				shipmentvocab.MoveStatusCanceled,
 			).Error("Status must be a valid move status"),
 		),
 	))

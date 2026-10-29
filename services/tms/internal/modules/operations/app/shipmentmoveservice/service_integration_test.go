@@ -17,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentcommercial"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentstate"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentmoveports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/rating/ratingtest"
@@ -62,18 +63,18 @@ func TestUpdateStatusIntegrationRecomputesShipmentStatus(t *testing.T) {
 			BOL:          "BOL-UPD-001",
 			ProNumber:    "PRO-UPD-001",
 			ShipmentID:   pulid.MustNew("shp_"),
-			MoveStatuses: []shipment.MoveStatus{shipment.MoveStatusNew},
+			MoveStatuses: []shipmentvocab.MoveStatus{shipmentvocab.MoveStatusNew},
 		},
 	)
 
 	updated, err := svc.UpdateStatus(ctx, &shipmentmoveports.UpdateMoveStatusRequest{
 		TenantInfo: tenantInfo,
 		MoveID:     graph.Moves[0].ID,
-		Status:     shipment.MoveStatusAssigned,
+		Status:     shipmentvocab.MoveStatusAssigned,
 	})
 	require.NoError(t, err)
 	require.NotNil(t, updated)
-	assert.Equal(t, shipment.MoveStatusAssigned, updated.Status)
+	assert.Equal(t, shipmentvocab.MoveStatusAssigned, updated.Status)
 
 	persisted, err := shipmentRepo.GetByID(ctx, &shipmentports.GetShipmentByIDRequest{
 		ID:         graph.Shipment.ID,
@@ -83,9 +84,9 @@ func TestUpdateStatusIntegrationRecomputesShipmentStatus(t *testing.T) {
 		},
 	})
 	require.NoError(t, err)
-	assert.Equal(t, shipment.StatusAssigned, persisted.Status)
+	assert.Equal(t, shipmentvocab.StatusAssigned, persisted.Status)
 	require.Len(t, persisted.Moves, 1)
-	assert.Equal(t, shipment.MoveStatusAssigned, persisted.Moves[0].Status)
+	assert.Equal(t, shipmentvocab.MoveStatusAssigned, persisted.Moves[0].Status)
 }
 
 func TestBulkUpdateStatusIntegrationRollsBackOnInvalidMove(t *testing.T) {
@@ -105,9 +106,9 @@ func TestBulkUpdateStatusIntegrationRollsBackOnInvalidMove(t *testing.T) {
 			BOL:        "BOL-BULK-001",
 			ProNumber:  "PRO-BULK-001",
 			ShipmentID: pulid.MustNew("shp_"),
-			MoveStatuses: []shipment.MoveStatus{
-				shipment.MoveStatusNew,
-				shipment.MoveStatusCompleted,
+			MoveStatuses: []shipmentvocab.MoveStatus{
+				shipmentvocab.MoveStatusNew,
+				shipmentvocab.MoveStatusCompleted,
 			},
 		},
 	)
@@ -115,7 +116,7 @@ func TestBulkUpdateStatusIntegrationRollsBackOnInvalidMove(t *testing.T) {
 	updated, err := svc.BulkUpdateStatus(ctx, &shipmentmoveports.BulkUpdateMoveStatusRequest{
 		TenantInfo: tenantInfo,
 		MoveIDs:    []pulid.ID{graph.Moves[0].ID, graph.Moves[1].ID},
-		Status:     shipment.MoveStatusAssigned,
+		Status:     shipmentvocab.MoveStatusAssigned,
 	})
 	require.Nil(t, updated)
 	require.Error(t, err)
@@ -131,8 +132,8 @@ func TestBulkUpdateStatusIntegrationRollsBackOnInvalidMove(t *testing.T) {
 	)
 	require.NoError(t, err)
 	require.Len(t, persistedMoves, 2)
-	assert.Equal(t, shipment.MoveStatusNew, persistedMoves[0].Status)
-	assert.Equal(t, shipment.MoveStatusCompleted, persistedMoves[1].Status)
+	assert.Equal(t, shipmentvocab.MoveStatusNew, persistedMoves[0].Status)
+	assert.Equal(t, shipmentvocab.MoveStatusCompleted, persistedMoves[1].Status)
 }
 
 func TestSplitMoveIntegrationPersistsTwoLegHandoff(t *testing.T) {
@@ -160,7 +161,7 @@ func TestSplitMoveIntegrationPersistsTwoLegHandoff(t *testing.T) {
 			BOL:          "BOL-SPLIT-001",
 			ProNumber:    "PRO-SPLIT-001",
 			ShipmentID:   pulid.MustNew("shp_"),
-			MoveStatuses: []shipment.MoveStatus{shipment.MoveStatusNew},
+			MoveStatuses: []shipmentvocab.MoveStatus{shipmentvocab.MoveStatusNew},
 		},
 	)
 	newDestination := testutil.MustCreateLocation(
@@ -203,7 +204,7 @@ func TestSplitMoveIntegrationPersistsTwoLegHandoff(t *testing.T) {
 	})
 	require.NoError(t, err)
 	require.Len(t, persisted.Moves, 2)
-	assert.Equal(t, shipment.StatusNew, persisted.Status)
+	assert.Equal(t, shipmentvocab.StatusNew, persisted.Status)
 
 	originalMove := persisted.Moves[0]
 	newMove := persisted.Moves[1]
@@ -211,17 +212,17 @@ func TestSplitMoveIntegrationPersistsTwoLegHandoff(t *testing.T) {
 	assert.Equal(t, graph.Moves[0].ID, originalMove.ID)
 	assert.Equal(t, int64(0), originalMove.Sequence)
 	require.Len(t, originalMove.Stops, 2)
-	assert.Equal(t, shipment.StopTypePickup, originalMove.Stops[0].Type)
-	assert.Equal(t, shipment.StopTypeSplitDelivery, originalMove.Stops[1].Type)
+	assert.Equal(t, shipmentvocab.StopTypePickup, originalMove.Stops[0].Type)
+	assert.Equal(t, shipmentvocab.StopTypeSplitDelivery, originalMove.Stops[1].Type)
 	assert.Equal(t, originalDelivery.LocationID, originalMove.Stops[1].LocationID)
 
 	assert.NotEqual(t, graph.Moves[0].ID, newMove.ID)
 	assert.Equal(t, int64(1), newMove.Sequence)
 	assert.Nil(t, newMove.Assignment)
 	require.Len(t, newMove.Stops, 2)
-	assert.Equal(t, shipment.StopTypeSplitPickup, newMove.Stops[0].Type)
+	assert.Equal(t, shipmentvocab.StopTypeSplitPickup, newMove.Stops[0].Type)
 	assert.Equal(t, originalDelivery.LocationID, newMove.Stops[0].LocationID)
-	assert.Equal(t, shipment.StopTypeDelivery, newMove.Stops[1].Type)
+	assert.Equal(t, shipmentvocab.StopTypeDelivery, newMove.Stops[1].Type)
 	assert.Equal(t, newDestination.ID, newMove.Stops[1].LocationID)
 }
 
@@ -245,7 +246,7 @@ func TestRecordStopActualIntegrationPersistsBackdatedActuals(t *testing.T) {
 			BOL:          "BOL-ACT-001",
 			ProNumber:    "PRO-ACT-001",
 			ShipmentID:   pulid.MustNew("shp_"),
-			MoveStatuses: []shipment.MoveStatus{shipment.MoveStatusAssigned},
+			MoveStatuses: []shipmentvocab.MoveStatus{shipmentvocab.MoveStatusAssigned},
 		},
 	)
 	moveID := graph.Moves[0].ID
@@ -261,7 +262,7 @@ func TestRecordStopActualIntegrationPersistsBackdatedActuals(t *testing.T) {
 	})
 	require.NoError(t, err)
 	require.NotNil(t, updated)
-	assert.Equal(t, shipment.MoveStatusInTransit, updated.Status)
+	assert.Equal(t, shipmentvocab.MoveStatusInTransit, updated.Status)
 
 	departedAt := arrivedAt + 1_800
 	updated, err = svc.RecordStopActual(ctx, &shipmentmoveports.RecordStopActualRequest{
@@ -296,7 +297,7 @@ func TestRecordStopActualIntegrationPersistsBackdatedActuals(t *testing.T) {
 	require.NotNil(t, persistedStop.ActualDeparture)
 	assert.Equal(t, arrivedAt, *persistedStop.ActualArrival)
 	assert.Equal(t, departedAt, *persistedStop.ActualDeparture)
-	assert.Equal(t, shipment.StopStatusCompleted, persistedStop.Status)
+	assert.Equal(t, shipmentvocab.StopStatusCompleted, persistedStop.Status)
 }
 
 func newIntegrationService(

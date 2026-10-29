@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -12,20 +13,20 @@ func TestIsDelayedEligibleShipmentStatus(t *testing.T) {
 
 	tests := []struct {
 		name   string
-		status shipment.Status
+		status shipmentvocab.Status
 		want   bool
 	}{
-		{name: "new is eligible", status: shipment.StatusNew, want: true},
-		{name: "in transit is eligible", status: shipment.StatusInTransit, want: true},
-		{name: "delayed is not eligible", status: shipment.StatusDelayed, want: false},
+		{name: "new is eligible", status: shipmentvocab.StatusNew, want: true},
+		{name: "in transit is eligible", status: shipmentvocab.StatusInTransit, want: true},
+		{name: "delayed is not eligible", status: shipmentvocab.StatusDelayed, want: false},
 		{
 			name:   "ready to invoice is not eligible",
-			status: shipment.StatusReadyToInvoice,
+			status: shipmentvocab.StatusReadyToInvoice,
 			want:   false,
 		},
-		{name: "completed is not eligible", status: shipment.StatusCompleted, want: false},
-		{name: "invoiced is not eligible", status: shipment.StatusInvoiced, want: false},
-		{name: "canceled is not eligible", status: shipment.StatusCanceled, want: false},
+		{name: "completed is not eligible", status: shipmentvocab.StatusCompleted, want: false},
+		{name: "invoiced is not eligible", status: shipmentvocab.StatusInvoiced, want: false},
+		{name: "canceled is not eligible", status: shipmentvocab.StatusCanceled, want: false},
 	}
 
 	for _, tt := range tests {
@@ -41,7 +42,7 @@ func TestIsStopOverdue_UsesCurrentTimeAndScheduledCutoff(t *testing.T) {
 	t.Parallel()
 
 	stop := &shipment.Stop{
-		Status:               shipment.StopStatusInTransit,
+		Status:               shipmentvocab.StopStatusInTransit,
 		ScheduledWindowStart: 100,
 		ScheduledWindowEnd:   new(int64(200)),
 	}
@@ -55,7 +56,7 @@ func TestIsStopOverdue_FallsBackToScheduledStart(t *testing.T) {
 	t.Parallel()
 
 	stop := &shipment.Stop{
-		Status:               shipment.StopStatusInTransit,
+		Status:               shipmentvocab.StopStatusInTransit,
 		ScheduledWindowStart: 100,
 	}
 

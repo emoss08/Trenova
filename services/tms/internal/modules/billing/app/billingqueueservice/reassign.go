@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/app/allocationcheck"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/chargeallocation"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -145,8 +146,8 @@ func validateReassignRequest(
 		multiErr.Add("itemId", errortypes.ErrRequired, "Billing queue item is required")
 	}
 	switch req.ChargeKind {
-	case shipment.ChargeAllocationKindFreight:
-	case shipment.ChargeAllocationKindAccessorial:
+	case shipmentvocab.ChargeAllocationKindFreight:
+	case shipmentvocab.ChargeAllocationKindAccessorial:
 		if req.AdditionalChargeID.IsNil() {
 			multiErr.Add(
 				"additionalChargeId",
@@ -262,7 +263,7 @@ func reassignTarget(
 	shp *shipment.Shipment,
 	req *billingqueueports.ReassignChargeRequest,
 ) (target *shipment.AdditionalCharge, description string, err error) {
-	if req.ChargeKind == shipment.ChargeAllocationKindFreight {
+	if req.ChargeKind == shipmentvocab.ChargeAllocationKindFreight {
 		return nil, "Freight", nil
 	}
 	for _, charge := range shp.AdditionalCharges {
@@ -293,7 +294,7 @@ func targetsCharge(
 	if allocation.ChargeKind != req.ChargeKind {
 		return false
 	}
-	if req.ChargeKind == shipment.ChargeAllocationKindFreight {
+	if req.ChargeKind == shipmentvocab.ChargeAllocationKindFreight {
 		return true
 	}
 
@@ -334,7 +335,7 @@ func reassignRows(
 			Amount:           input.Amount,
 			Sequence:         int16(i), //nolint:gosec // bounded by the request's row count
 		}
-		if req.ChargeKind == shipment.ChargeAllocationKindAccessorial {
+		if req.ChargeKind == shipmentvocab.ChargeAllocationKindAccessorial {
 			chargeID := req.AdditionalChargeID
 			row.AdditionalChargeID = &chargeID
 		}

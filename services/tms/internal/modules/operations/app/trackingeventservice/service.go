@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/trackingevent"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentmoveports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
@@ -234,7 +235,7 @@ func reportedEvents(
 	move *shipment.ShipmentMove,
 	in reportedEventInput,
 ) []*trackingevent.TrackingEvent {
-	build := func(kind shipment.VisitKind, key string, at int64) *trackingevent.TrackingEvent {
+	build := func(kind shipmentvocab.VisitKind, key string, at int64) *trackingevent.TrackingEvent {
 		return &trackingevent.TrackingEvent{
 			ID:             trackingevent.NewID(),
 			OrganizationID: params.TenantInfo.OrgID,
@@ -262,7 +263,7 @@ func reportedEvents(
 	}
 	if params.DepartedAt != nil {
 		reports = append(reports, build(
-			shipment.VisitDeparture,
+			shipmentvocab.VisitDeparture,
 			stringutils.TruncateRunes(
 				strings.TrimSpace(in.sourceKey),
 				trackingevent.MaxSourceKeyLength-len(departureKeySuffix),
@@ -426,7 +427,7 @@ func (s *Service) projectionOptions(
 		return trackingevent.Options{}, err
 	}
 	switch {
-	case entity.StatusEquals(shipment.StatusInvoiced):
+	case entity.StatusEquals(shipmentvocab.StatusInvoiced):
 		return trackingevent.Options{LockedReason: reasonInvoiced}, nil
 	case !entity.BillingTransferStatus.IsOutsideBillingQueue():
 		return trackingevent.Options{LockedReason: reasonBillingQueue}, nil
@@ -491,11 +492,11 @@ func replayed(
 	}
 }
 
-func visitForAction(action shipmentmoveports.StopActualAction) shipment.VisitKind {
+func visitForAction(action shipmentmoveports.StopActualAction) shipmentvocab.VisitKind {
 	if action == shipmentmoveports.StopActualActionDepart {
-		return shipment.VisitDeparture
+		return shipmentvocab.VisitDeparture
 	}
-	return shipment.VisitArrival
+	return shipmentvocab.VisitArrival
 }
 
 func validateEntity(entity *trackingevent.TrackingEvent) *errortypes.MultiError {

@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentcommercial"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentstate"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/assignmentports"
 	"github.com/emoss08/trenova/internal/modules/rating/ratingtest"
 	"github.com/emoss08/trenova/internal/testutil/capabilitytest"
@@ -40,8 +41,8 @@ func brokerageOnlyService(
 			ShipmentID:     pulid.MustNew("shp_"),
 			OrganizationID: tenantInfo.OrgID,
 			BusinessUnitID: tenantInfo.BuID,
-			Status:         shipment.MoveStatusNew,
-			CoverageType:   shipment.MoveCoverageTypeUnassigned,
+			Status:         shipmentvocab.MoveStatusNew,
+			CoverageType:   shipmentvocab.MoveCoverageTypeUnassigned,
 		}, nil).
 		Once()
 

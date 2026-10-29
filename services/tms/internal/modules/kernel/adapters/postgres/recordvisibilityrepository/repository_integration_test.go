@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
 	"github.com/emoss08/trenova/internal/testutil"
@@ -36,16 +37,30 @@ func TestVisibleIDs_AppliesTheRequestsReadScope(t *testing.T) {
 		UserID: data.User.ID,
 	}
 	fixture := testutil.SeedShipmentIntegrationFixture(t, ctx, admin, data, tenant)
-	owned := testutil.CreateShipmentGraph(t, ctx, admin, fixture, tenant, testutil.ShipmentGraphParams{
-		BOL:        "BOL-OWNED",
-		ProNumber:  "PRO-OWNED",
-		ShipmentID: pulid.MustNew("shp_"),
-	}).Shipment
-	others := testutil.CreateShipmentGraph(t, ctx, admin, fixture, tenant, testutil.ShipmentGraphParams{
-		BOL:        "BOL-OTHER",
-		ProNumber:  "PRO-OTHER",
-		ShipmentID: pulid.MustNew("shp_"),
-	}).Shipment
+	owned := testutil.CreateShipmentGraph(
+		t,
+		ctx,
+		admin,
+		fixture,
+		tenant,
+		testutil.ShipmentGraphParams{
+			BOL:        "BOL-OWNED",
+			ProNumber:  "PRO-OWNED",
+			ShipmentID: pulid.MustNew("shp_"),
+		},
+	).Shipment
+	others := testutil.CreateShipmentGraph(
+		t,
+		ctx,
+		admin,
+		fixture,
+		tenant,
+		testutil.ShipmentGraphParams{
+			BOL:        "BOL-OTHER",
+			ProNumber:  "PRO-OTHER",
+			ShipmentID: pulid.MustNew("shp_"),
+		},
+	).Shipment
 	sh := shipmentdb.Shipments
 	_, err := sh.Where(sh.ID.Eq(owned.ID)).
 		Update(data.Ctx(ctx), admin, sh.OwnerID.To(data.User.ID))
@@ -56,7 +71,11 @@ func TestVisibleIDs_AppliesTheRequestsReadScope(t *testing.T) {
 		Sources: crossref.VisibleRecordSources(),
 	})
 	ids := []pulid.ID{owned.ID, others.ID, pulid.MustNew("shp_")}
-	request := &kernelports.ListVisibleRecordsRequest{TenantInfo: tenant, Kind: "shipment", IDs: ids}
+	request := &kernelports.ListVisibleRecordsRequest{
+		TenantInfo: tenant,
+		Kind:       "shipment",
+		IDs:        ids,
+	}
 
 	ownScope := readscope.With(
 		dbscope.WithTenant(t.Context(), tenant.DBTenant()),
@@ -111,10 +130,14 @@ func TestVisibleIDs_AKindThePersonCannotReadIsLeftToTheCaller(t *testing.T) {
 			AddressLine1:   "1 Depot Road",
 			City:           "Springfield",
 			PostalCode:     "62701",
-			Email:          strings.ToLower(first) + "-" + pulid.MustNew("e").String() + "@example.com",
-			PhoneNumber:    "555-0100",
-			Gender:         worker.GenderMale,
-			CanBeAssigned:  true,
+			Email: strings.ToLower(
+				first,
+			) + "-" + pulid.MustNew("e").
+				String() +
+				"@example.com",
+			PhoneNumber:   "555-0100",
+			Gender:        worker.GenderMale,
+			CanBeAssigned: true,
 		}
 		require.NoError(t, workerdb.Workers.Create(data.Ctx(ctx), admin, entity))
 		return entity
@@ -124,12 +147,19 @@ func TestVisibleIDs_AKindThePersonCannotReadIsLeftToTheCaller(t *testing.T) {
 
 	fixture := testutil.SeedShipmentIntegrationFixture(t, ctx, admin, data, tenant)
 	newShipment := func(code string) *testutil.ShipmentGraph {
-		return testutil.CreateShipmentGraph(t, ctx, admin, fixture, tenant, testutil.ShipmentGraphParams{
-			BOL:          "BOL-" + code,
-			ProNumber:    "PRO-" + code,
-			ShipmentID:   pulid.MustNew("shp_"),
-			MoveStatuses: []shipment.MoveStatus{shipment.MoveStatusAssigned},
-		})
+		return testutil.CreateShipmentGraph(
+			t,
+			ctx,
+			admin,
+			fixture,
+			tenant,
+			testutil.ShipmentGraphParams{
+				BOL:          "BOL-" + code,
+				ProNumber:    "PRO-" + code,
+				ShipmentID:   pulid.MustNew("shp_"),
+				MoveStatuses: []shipmentvocab.MoveStatus{shipmentvocab.MoveStatusAssigned},
+			},
+		)
 	}
 	driven := newShipment("DRIVEN")
 	unassigned := newShipment("OTHER")
@@ -139,7 +169,7 @@ func TestVisibleIDs_AKindThePersonCannotReadIsLeftToTheCaller(t *testing.T) {
 		OrganizationID:  tenant.OrgID,
 		ShipmentMoveID:  driven.Moves[0].ID,
 		PrimaryWorkerID: &me.ID,
-		Status:          shipment.AssignmentStatusNew,
+		Status:          shipmentvocab.AssignmentStatusNew,
 	})
 	require.NoError(t, err)
 

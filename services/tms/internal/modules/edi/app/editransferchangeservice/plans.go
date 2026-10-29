@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edisync"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
@@ -27,7 +28,7 @@ func (s *Service) CheckTransferChangeReview(
 
 type TransferChangeEffect struct {
 	Shipment   *shipment.Shipment
-	NextStatus shipment.Status
+	NextStatus shipmentvocab.Status
 }
 
 func (s *Service) PlanTransferChangeEffect(

@@ -4,18 +4,18 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 )
 
 func ClassifyCommentVisibility(params agenttoolports.ToolExecuteParams) agenttoolports.CallPolicy {
-	switch shipment.CommentVisibility(toolparams.OptionalString(params.Params, "visibility")) {
-	case shipment.CommentVisibilityCustomer:
+	switch shipmentvocab.CommentVisibility(toolparams.OptionalString(params.Params, "visibility")) {
+	case shipmentvocab.CommentVisibilityCustomer:
 		return agenttoolports.CallPolicy{Egress: agent.EgressCustomerVisible}
-	case shipment.CommentVisibilityDriver:
+	case shipmentvocab.CommentVisibilityDriver:
 		return agenttoolports.CallPolicy{Egress: agent.EgressDriverVisible}
-	case shipment.CommentVisibilityInternal,
-		shipment.CommentVisibilityOperations,
-		shipment.CommentVisibilityAccounting:
+	case shipmentvocab.CommentVisibilityInternal,
+		shipmentvocab.CommentVisibilityOperations,
+		shipmentvocab.CommentVisibilityAccounting:
 		return agenttoolports.CallPolicy{Egress: agent.EgressInternal}
 	default:
 		return agenttoolports.CallPolicy{Egress: agent.EgressInternal}

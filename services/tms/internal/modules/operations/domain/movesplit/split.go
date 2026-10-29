@@ -2,6 +2,7 @@ package movesplit
 
 import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -22,15 +23,15 @@ type MoveSplit struct {
 
 func PlanMoveSplit(original *shipment.ShipmentMove, spec *MoveSplitSpec) *MoveSplit {
 	relay := *original.Stops[1]
-	relay.Type = shipment.StopTypeSplitDelivery
-	relay.Status = shipment.StopStatusNew
+	relay.Type = shipmentvocab.StopTypeSplitDelivery
+	relay.Status = shipmentvocab.StopStatusNew
 
 	newMove := &shipment.ShipmentMove{
 		ID:             pulid.MustNew("sm_"),
 		BusinessUnitID: original.BusinessUnitID,
 		OrganizationID: original.OrganizationID,
 		ShipmentID:     original.ShipmentID,
-		Status:         shipment.MoveStatusNew,
+		Status:         shipmentvocab.MoveStatusNew,
 		Loaded:         true,
 		Sequence:       original.Sequence + 1,
 		Distance:       original.Distance,
@@ -42,8 +43,8 @@ func PlanMoveSplit(original *shipment.ShipmentMove, spec *MoveSplitSpec) *MoveSp
 			OrganizationID:       original.OrganizationID,
 			ShipmentMoveID:       newMove.ID,
 			LocationID:           relay.LocationID,
-			Status:               shipment.StopStatusNew,
-			Type:                 shipment.StopTypeSplitPickup,
+			Status:               shipmentvocab.StopStatusNew,
+			Type:                 shipmentvocab.StopTypeSplitPickup,
 			Sequence:             0,
 			Pieces:               spec.Pieces,
 			Weight:               spec.Weight,
@@ -56,8 +57,8 @@ func PlanMoveSplit(original *shipment.ShipmentMove, spec *MoveSplitSpec) *MoveSp
 			OrganizationID:       original.OrganizationID,
 			ShipmentMoveID:       newMove.ID,
 			LocationID:           spec.NewDeliveryLocationID,
-			Status:               shipment.StopStatusNew,
-			Type:                 shipment.StopTypeDelivery,
+			Status:               shipmentvocab.StopStatusNew,
+			Type:                 shipmentvocab.StopTypeDelivery,
 			Sequence:             1,
 			Pieces:               spec.Pieces,
 			Weight:               spec.Weight,

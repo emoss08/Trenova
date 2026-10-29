@@ -6,7 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/trackingevent"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentmoveports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/trackingeventports"
@@ -122,7 +122,7 @@ func (h *Handler) updateStatus(c *gin.Context) {
 		&shipmentmoveports.UpdateMoveStatusRequest{
 			TenantInfo: pagination.FromAuth(authCtx),
 			MoveID:     moveID,
-			Status:     shipment.MoveStatus(body.Status),
+			Status:     shipmentvocab.MoveStatus(body.Status),
 		},
 	)
 	if err != nil {
@@ -159,7 +159,7 @@ func (h *Handler) bulkUpdateStatus(c *gin.Context) {
 		&shipmentmoveports.BulkUpdateMoveStatusRequest{
 			TenantInfo: pagination.FromAuth(authCtx),
 			MoveIDs:    body.MoveIDs,
-			Status:     shipment.MoveStatus(body.Status),
+			Status:     shipmentvocab.MoveStatus(body.Status),
 		},
 	)
 	if err != nil {

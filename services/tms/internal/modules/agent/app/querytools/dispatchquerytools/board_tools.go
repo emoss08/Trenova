@@ -11,7 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/app/dispatchconsoleservice"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchboardports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -412,7 +412,7 @@ func (l *lateTally) add(row *boardMoveRow) {
 	case lateToDeliver:
 		l.deliver++
 	}
-	if row.ShipmentStatus == string(shipment.StatusDelayed) &&
+	if row.ShipmentStatus == string(shipmentvocab.StatusDelayed) &&
 		!slices.Contains(l.delayed, row.ProNumber) {
 		l.delayed = append(l.delayed, row.ProNumber)
 	}

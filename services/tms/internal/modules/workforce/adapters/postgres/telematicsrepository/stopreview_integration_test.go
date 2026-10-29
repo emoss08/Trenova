@@ -7,15 +7,14 @@ import (
 	"testing"
 
 	"github.com/emoss08/keel"
-
-	"github.com/emoss08/trenova/internal/testutil/seededtest"
-
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/workforce/adapters/postgres/telematicsrepository"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/telematics"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/telematicsports"
+	"github.com/emoss08/trenova/internal/testutil/seededtest"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -76,7 +75,7 @@ func setupStopReview(t *testing.T) *stopReviewFixture {
 
 func (f *stopReviewFixture) insertMove(
 	t *testing.T,
-	status shipment.MoveStatus,
+	status shipmentvocab.MoveStatus,
 	arrivals ...bool,
 ) (*shipment.ShipmentMove, []*shipment.Stop) {
 	t.Helper()
@@ -100,15 +99,15 @@ func (f *stopReviewFixture) insertMove(
 			OrganizationID:       f.tenantInfo.OrgID,
 			ShipmentMoveID:       move.ID,
 			LocationID:           f.locationID,
-			Status:               shipment.StopStatusNew,
-			Type:                 shipment.StopTypePickup,
+			Status:               shipmentvocab.StopStatusNew,
+			Type:                 shipmentvocab.StopTypePickup,
 			Sequence:             int64(i),
 			ScheduledWindowStart: 1_700_000_000,
 		}
 		if arrived {
 			at := int64(1_700_000_100)
 			stop.ActualArrival = &at
-			stop.Status = shipment.StopStatusInTransit
+			stop.Status = shipmentvocab.StopStatusInTransit
 		}
 		stops = append(stops, stop)
 	}
@@ -151,14 +150,14 @@ func (f *stopReviewFixture) insertOutcome(
 func TestListOpenStopReviews_Integration(t *testing.T) {
 	f := setupStopReview(t)
 
-	move, stops := f.insertMove(t, shipment.MoveStatusInTransit, false, true)
+	move, stops := f.insertMove(t, shipmentvocab.MoveStatusInTransit, false, true)
 	unarrived, arrived := stops[0], stops[1]
-	finished, _ := f.insertMove(t, shipment.MoveStatusCompleted)
+	finished, _ := f.insertMove(t, shipmentvocab.MoveStatusCompleted)
 
 	refused := func(stopID pulid.ID) telematics.StopVisitResult {
 		return telematics.StopVisitResult{
 			Outcome: telematics.StopOutcomeRefused,
-			Visit:   shipment.VisitArrival,
+			Visit:   shipmentvocab.VisitArrival,
 			MoveID:  move.ID,
 			StopID:  stopID,
 			Reason:  "Complete the earlier stops on this load first",
@@ -167,7 +166,7 @@ func TestListOpenStopReviews_Integration(t *testing.T) {
 	unmatched := func(moveID pulid.ID) telematics.StopVisitResult {
 		return telematics.StopVisitResult{
 			Outcome: telematics.StopOutcomeUnmatched,
-			Visit:   shipment.VisitDeparture,
+			Visit:   shipmentvocab.VisitDeparture,
 			MoveID:  moveID,
 			Reason:  "Not a stop on the load",
 		}
@@ -180,7 +179,7 @@ func TestListOpenStopReviews_Integration(t *testing.T) {
 	f.insertOutcome(t, 1_000, refused(unarrived.ID))
 	f.insertOutcome(t, 2_000_000_100, telematics.StopVisitResult{
 		Outcome: telematics.StopOutcomeRecorded,
-		Visit:   shipment.VisitArrival,
+		Visit:   shipmentvocab.VisitArrival,
 		MoveID:  move.ID,
 		StopID:  unarrived.ID,
 	})
@@ -197,7 +196,7 @@ func TestListOpenStopReviews_Integration(t *testing.T) {
 	assert.Equal(t, openUnmatched.ID, reviews[1].Event.ID)
 	assert.Equal(t, f.shipmentID, reviews[0].ShipmentID)
 	assert.Equal(t, telematics.StopOutcomeRefused, reviews[0].Event.StopOutcome)
-	assert.Equal(t, shipment.VisitArrival, reviews[0].Event.StopVisit)
+	assert.Equal(t, shipmentvocab.VisitArrival, reviews[0].Event.StopVisit)
 	assert.Equal(t, unarrived.ID, reviews[0].Event.StopID)
 	assert.Equal(
 		t,
@@ -223,7 +222,7 @@ func TestStopOutcomeCheck_RefusesAReviewWithoutAReason_Integration(t *testing.T)
 	require.NoError(t, err)
 
 	event.StopOutcome = telematics.StopOutcomeUnmatched
-	event.StopVisit = shipment.VisitArrival
+	event.StopVisit = shipmentvocab.VisitArrival
 	event.ShipmentMoveID = pulid.MustNew("sm_")
 	require.Error(t, f.repo.RecordStopOutcome(f.ctx, event))
 }

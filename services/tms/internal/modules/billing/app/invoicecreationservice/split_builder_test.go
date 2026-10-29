@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/chargeallocation"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/order"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -128,7 +129,7 @@ func TestBuildInvoiceEntityBillsTheOrderChargeShare(t *testing.T) {
 		PayerID: params.Customer.ID,
 		Charges: []chargeallocation.AllocatedCharge{
 			{
-				Kind:          shipment.ChargeAllocationKindOrderCharge,
+				Kind:          shipmentvocab.ChargeAllocationKindOrderCharge,
 				OrderChargeID: pulid.MustNew("ordchg_"),
 				AllocationID:  pulid.MustNew("chal_"),
 				Description:   "Customs brokerage",
@@ -176,10 +177,10 @@ func TestOrderChargeShareFor(t *testing.T) {
 			Amount:      decimal.NewFromInt(80),
 			Allocations: []*shipment.ChargeAllocation{{
 				ID:               pulid.MustNew("chal_"),
-				ChargeKind:       shipment.ChargeAllocationKindOrderCharge,
+				ChargeKind:       shipmentvocab.ChargeAllocationKindOrderCharge,
 				OrderChargeID:    &fuelID,
 				BillToCustomerID: other,
-				Method:           shipment.ChargeAllocationMethodPercent,
+				Method:           shipmentvocab.ChargeAllocationMethodPercent,
 				Percent:          decimal.NewNullDecimal(decimal.NewFromInt(100)),
 			}},
 		},
@@ -237,10 +238,10 @@ func TestOrderChargeShareFor(t *testing.T) {
 			Amount:      decimal.NewFromInt(80),
 			Allocations: []*shipment.ChargeAllocation{{
 				ID:               pulid.MustNew("chal_"),
-				ChargeKind:       shipment.ChargeAllocationKindOrderCharge,
+				ChargeKind:       shipmentvocab.ChargeAllocationKindOrderCharge,
 				OrderChargeID:    &fuelID,
 				BillToCustomerID: other,
-				Method:           shipment.ChargeAllocationMethodAmount,
+				Method:           shipmentvocab.ChargeAllocationMethodAmount,
 				Amount:           decimal.NewNullDecimal(decimal.NewFromInt(79)),
 			}},
 		}

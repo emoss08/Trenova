@@ -12,7 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/protectedfield"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/permtest"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -201,7 +201,7 @@ func tomorrowsPickups() *TomorrowsPickupsCard {
 			Origin:           "TERM-LA",
 			Destination:      "DC-CHI",
 			Driver:           "M. Alvarez",
-			ShipmentStatus:   shipment.StatusAssigned,
+			ShipmentStatus:   shipmentvocab.StatusAssigned,
 			HasPrimaryWorker: true,
 		}},
 	)

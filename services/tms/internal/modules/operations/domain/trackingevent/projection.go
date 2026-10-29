@@ -5,6 +5,7 @@ import (
 	"slices"
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -48,14 +49,14 @@ func (b bounds) admits(at int64) bool {
 	return (b.lower == nil || at >= *b.lower) && (b.upper == nil || at <= *b.upper)
 }
 
-func (b bounds) refusal(at int64, kind shipment.VisitKind) string {
+func (b bounds) refusal(at int64, kind shipmentvocab.VisitKind) string {
 	if b.lower != nil && at < *b.lower {
-		if kind == shipment.VisitArrival {
+		if kind == shipmentvocab.VisitArrival {
 			return reasonBeforePrevious
 		}
 		return reasonBeforeArrival
 	}
-	if kind == shipment.VisitArrival {
+	if kind == shipmentvocab.VisitArrival {
 		return reasonAfterDeparture
 	}
 	return reasonAfterNext
@@ -67,7 +68,7 @@ func Project(move *shipment.ShipmentMove, events []*TrackingEvent, opts Options)
 	grouped := groupByStop(stops, events, projection.Verdicts)
 
 	frozen := opts.LockedReason
-	if move.Status == shipment.MoveStatusCanceled {
+	if move.Status == shipmentvocab.MoveStatusCanceled {
 		frozen = reasonCanceled
 	}
 
@@ -79,8 +80,8 @@ func Project(move *shipment.ShipmentMove, events []*TrackingEvent, opts Options)
 		arrivalBounds := bounds{lower: previousDeparture, upper: stop.ActualDeparture}
 		arrival := settle(&settleInput{
 			current:    stop.ActualArrival,
-			candidates: visits[shipment.VisitArrival],
-			kind:       shipment.VisitArrival,
+			candidates: visits[shipmentvocab.VisitArrival],
+			kind:       shipmentvocab.VisitArrival,
 			frozen:     frozen,
 			waitReason: waitReason(earlierOpen, reasonWaitEarlier),
 			bounds:     arrivalBounds,
@@ -92,8 +93,8 @@ func Project(move *shipment.ShipmentMove, events []*TrackingEvent, opts Options)
 		}
 		departure := settle(&settleInput{
 			current:    stop.ActualDeparture,
-			candidates: visits[shipment.VisitDeparture],
-			kind:       shipment.VisitDeparture,
+			candidates: visits[shipmentvocab.VisitDeparture],
+			kind:       shipmentvocab.VisitDeparture,
 			frozen:     frozen,
 			waitReason: waitReason(arrival == nil, reasonWaitArrival),
 			bounds:     bounds{lower: arrival, upper: nextArrival},
@@ -124,13 +125,13 @@ func groupByStop(
 	stops []*shipment.Stop,
 	events []*TrackingEvent,
 	verdicts map[pulid.ID]Verdict,
-) map[pulid.ID]map[shipment.VisitKind][]*TrackingEvent {
+) map[pulid.ID]map[shipmentvocab.VisitKind][]*TrackingEvent {
 	active := make(map[pulid.ID]struct{}, len(stops))
 	for _, stop := range stops {
 		active[stop.ID] = struct{}{}
 	}
 
-	grouped := make(map[pulid.ID]map[shipment.VisitKind][]*TrackingEvent, len(stops))
+	grouped := make(map[pulid.ID]map[shipmentvocab.VisitKind][]*TrackingEvent, len(stops))
 	for _, event := range events {
 		if event == nil {
 			continue
@@ -141,7 +142,7 @@ func groupByStop(
 		}
 		byKind, ok := grouped[event.StopID]
 		if !ok {
-			byKind = make(map[shipment.VisitKind][]*TrackingEvent, 2)
+			byKind = make(map[shipmentvocab.VisitKind][]*TrackingEvent, 2)
 			grouped[event.StopID] = byKind
 		}
 		byKind[event.Kind] = append(byKind[event.Kind], event)
@@ -171,7 +172,7 @@ func compareCandidates(a, b *TrackingEvent) int {
 type settleInput struct {
 	current    *int64
 	candidates []*TrackingEvent
-	kind       shipment.VisitKind
+	kind       shipmentvocab.VisitKind
 	frozen     string
 	waitReason string
 	bounds     bounds

@@ -6,7 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	shipmentdomain "github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentbillingports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -140,7 +140,7 @@ func TestShipmentBillingReadinessToModel_MapsWarningContext(t *testing.T) {
 
 	model := ReadinessToModel(&shipmentbillingports.ShipmentBillingReadiness{
 		ShipmentID:     "shp_1",
-		ShipmentStatus: shipmentdomain.StatusCompleted,
+		ShipmentStatus: shipmentvocab.StatusCompleted,
 		Policy: shipmentbillingports.ShipmentBillingReadinessPolicy{
 			ShipmentBillingRequirementEnforcement: tenant.EnforcementLevelWarn,
 			RateValidationEnforcement:             tenant.EnforcementLevelWarn,

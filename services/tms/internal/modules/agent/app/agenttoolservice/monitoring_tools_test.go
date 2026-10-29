@@ -22,6 +22,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentcommentports"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/drivernotificationservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/email"
@@ -261,7 +262,7 @@ func TestEmailCustomer_WritesToTheCustomersContactsAndRecordsIt(t *testing.T) {
 	assert.Equal(t, "S12345", context.ShipmentProNumber)
 
 	require.NotNil(t, comments.Created)
-	assert.Equal(t, shipment.CommentTypeCustomerUpdate, comments.Created.Type)
+	assert.Equal(t, shipmentvocab.CommentTypeCustomerUpdate, comments.Created.Type)
 	assert.Contains(t, comments.Created.Comment, "ops@acme.example")
 	assert.Contains(t, comments.Created.Comment, "we now expect 3:30 PM")
 }
@@ -481,7 +482,7 @@ func TestEmailCustomer_WillNotTellTheSameCustomerTwiceWithinTheHour(t *testing.T
 	tool, mailer, _, comments, _ := agenttoolstest.CustomerEmailFixture()
 	comments.Existing = []*shipment.ShipmentComment{{
 		CreatedAt: timeutils.NowUnix() - 600,
-		Type:      shipment.CommentTypeCustomerUpdate,
+		Type:      shipmentvocab.CommentTypeCustomerUpdate,
 		Metadata:  map[string]any{"source": "agent", "tool": "customer_send_email"},
 	}}
 
@@ -507,7 +508,7 @@ func TestEmailCustomer_ATypedCommentDoesNotSilenceTheDesk(t *testing.T) {
 	tool, mailer, _, comments, _ := agenttoolstest.CustomerEmailFixture()
 	comments.Existing = []*shipment.ShipmentComment{{
 		CreatedAt: timeutils.NowUnix() - 60,
-		Type:      shipment.CommentTypeCustomerUpdate,
+		Type:      shipmentvocab.CommentTypeCustomerUpdate,
 		Metadata:  map[string]any{"source": "user"},
 	}}
 

@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentwrite"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	internaltestutil "github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/idempotency"
@@ -85,7 +86,7 @@ func TestCreateIntegration_IdempotencyKeyBooksOneShipment(t *testing.T) {
 		FormulaTemplateID: created.FormulaTemplateID,
 		ProNumber:         "PRO-RACE-IDEMPOTENT",
 		IdempotencyKey:    key,
-		Status:            shipment.StatusNew,
+		Status:            shipmentvocab.StatusNew,
 	})
 	require.Error(t, err, "the unique index holds when the lookup is raced")
 	assert.True(t, shipmentwrite.IsIdempotencyKeyConflict(err))
@@ -106,7 +107,7 @@ func TestCreateIntegration_IdempotencyKeyBooksOneShipment(t *testing.T) {
 			PrincipalType:  "user",
 			PrincipalID:    data.User.ID,
 		}, "create-shipment-2"),
-		Status: shipment.StatusNew,
+		Status: shipmentvocab.StatusNew,
 	})
 	require.NoError(t, err, "another key books another shipment")
 }

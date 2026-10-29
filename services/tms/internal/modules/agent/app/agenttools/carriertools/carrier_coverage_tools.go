@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/carrierassignmentports"
 	"github.com/emoss08/trenova/internal/modules/rating/app/carrierassignmentservice"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -381,7 +382,7 @@ func (t *CancelCarrierAssignmentTool) tierLimit(
 
 	plan, err := t.carriers.PreviewCancel(ctx, request)
 	if err != nil || plan.CanceledBefore == nil ||
-		plan.CanceledBefore.Status == shipment.CarrierAssignmentStatusConfirmed {
+		plan.CanceledBefore.Status == shipmentvocab.CarrierAssignmentStatusConfirmed {
 		return agent.TierPropose
 	}
 
@@ -453,12 +454,11 @@ func (t *CancelCarrierAssignmentTool) Target(
 }
 
 // carrierRateMethodArg refuses anything but the two ways a carrier is paid.
-func carrierRateMethodArg(params map[string]any) (shipment.CarrierRateMethod, error) {
-	raw := toolparams.OptionalString(params, fieldRateMethod)
-	method := shipment.CarrierRateMethod(raw)
-	if method != shipment.CarrierRateMethodFlat && method != shipment.CarrierRateMethodPerMile {
+func carrierRateMethodArg(params map[string]any) (shipmentvocab.CarrierRateMethod, error) {
+	method := shipmentvocab.CarrierRateMethod(toolparams.OptionalString(params, fieldRateMethod))
+	if !method.IsValid() {
 		return "", fmt.Errorf(
-			"parameter %q must be exactly Flat or PerMile, not %q", fieldRateMethod, raw,
+			"parameter %q must be exactly Flat or PerMile, not %q", fieldRateMethod, method,
 		)
 	}
 

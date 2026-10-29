@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/shipmentcontrol"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/tariffports"
@@ -92,17 +93,17 @@ func (f *relationFixture) shipmentFromInput(templateID pulid.ID) *shipment.Shipm
 		CustomerID:        f.customerID,
 		TractorTypeID:     f.tractorTypeID,
 		Moves: []*shipment.ShipmentMove{{
-			Status: shipment.MoveStatusNew,
+			Status: shipmentvocab.MoveStatusNew,
 			Stops: []*shipment.Stop{
 				{
-					Status:               shipment.StopStatusNew,
-					Type:                 shipment.StopTypePickup,
+					Status:               shipmentvocab.StopStatusNew,
+					Type:                 shipmentvocab.StopTypePickup,
 					LocationID:           f.fresnoID,
 					ScheduledWindowStart: f.pickupAt,
 				},
 				{
-					Status:               shipment.StopStatusNew,
-					Type:                 shipment.StopTypeDelivery,
+					Status:               shipmentvocab.StopStatusNew,
+					Type:                 shipmentvocab.StopTypeDelivery,
 					LocationID:           f.dallasID,
 					Sequence:             1,
 					ScheduledWindowStart: f.pickupAt + int64(48*time.Hour/time.Second),

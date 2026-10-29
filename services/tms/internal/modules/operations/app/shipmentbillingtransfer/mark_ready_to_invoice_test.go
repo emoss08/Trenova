@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentservicetest"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentevent"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenteventports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
@@ -73,7 +74,7 @@ func (f *markReadyFixture) completed() *shipment.Shipment {
 	entity.OrganizationID = f.tenantInfo.OrgID
 	entity.BusinessUnitID = f.tenantInfo.BuID
 	entity.OrderID = pulid.MustNew("ord_")
-	entity.Status = shipment.StatusCompleted
+	entity.Status = shipmentvocab.StatusCompleted
 	entity.Version = 7
 	entity.AdditionalCharges = []*shipment.AdditionalCharge{}
 	entity.ChargeAllocations = []*shipment.ChargeAllocation{}
@@ -85,7 +86,7 @@ func (f *markReadyFixture) expectSave(entity *shipment.Shipment) {
 	f.repo.EXPECT().
 		MarkReadyToInvoice(mock.Anything, mock.MatchedBy(func(saved *shipment.Shipment) bool {
 			return saved.ID == entity.ID &&
-				saved.Status == shipment.StatusReadyToInvoice &&
+				saved.Status == shipmentvocab.StatusReadyToInvoice &&
 				saved.MarkedReadyToBillAt != nil
 		})).
 		RunAndReturn(func(_ context.Context, saved *shipment.Shipment) (*shipment.Shipment, error) {
@@ -122,7 +123,7 @@ func TestMarkReadyToInvoice_SavesTheLoadedShipmentAndLeavesTheOrderToItsEvent(t 
 	require.NoError(t, err)
 	assert.True(t, marked)
 	assert.Same(t, entity, updated, "the caller's loaded shipment is the one saved")
-	assert.Equal(t, shipment.StatusReadyToInvoice, updated.Status)
+	assert.Equal(t, shipmentvocab.StatusReadyToInvoice, updated.Status)
 	assert.NotNil(t, updated.AdditionalCharges, "the loaded details survive the save")
 
 	require.NotNil(t, recorded)
@@ -184,7 +185,7 @@ func TestMarkReadyToInvoice_AFailedSaveLeavesTheLoadedShipmentAsItWas(t *testing
 
 	require.Error(t, err)
 	assert.False(t, marked)
-	assert.Equal(t, shipment.StatusCompleted, entity.Status)
+	assert.Equal(t, shipmentvocab.StatusCompleted, entity.Status)
 	assert.Nil(t, entity.MarkedReadyToBillAt)
 	assert.Equal(t, int64(7), entity.Version)
 	f.events.AssertNotCalled(t, "Record", mock.Anything, mock.Anything)
@@ -220,7 +221,7 @@ func TestMarkReadyToInvoice_ReloadsAShipmentThatDoesNotMatchTheRequest(t *testin
 	assert.Same(t, requested, updated)
 	assert.Equal(
 		t,
-		shipment.StatusCompleted,
+		shipmentvocab.StatusCompleted,
 		foreign.Status,
 		"another tenant's copy is never written",
 	)
@@ -231,7 +232,7 @@ func TestMarkReadyToInvoice_LeavesAShipmentAlreadyPastCompletedAlone(t *testing.
 
 	f := newMarkReadyFixture(t)
 	entity := f.completed()
-	entity.Status = shipment.StatusReadyToInvoice
+	entity.Status = shipmentvocab.StatusReadyToInvoice
 
 	updated, marked, err := f.svc.markReadyToInvoice(t.Context(), &markReadyToInvoiceParams{
 		ShipmentID:        entity.ID,

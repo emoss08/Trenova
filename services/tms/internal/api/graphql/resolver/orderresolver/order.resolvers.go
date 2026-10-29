@@ -24,6 +24,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/app/orderservice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/order"
 	shipmentdomain "github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/orderports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -156,7 +157,7 @@ func (r *MutationResolver) AddOrderCharge(ctx context.Context, orderID string, d
 	if allocations != nil {
 		rows, err = shipmentmapping.ChargeAllocationsFromInput(
 			allocations,
-			shipmentdomain.ChargeAllocationKindOrderCharge,
+			shipmentvocab.ChargeAllocationKindOrderCharge,
 			"allocations",
 			authCtx,
 			nil,
@@ -202,7 +203,7 @@ func (r *MutationResolver) UpdateOrderCharge(ctx context.Context, input gqlmodel
 	if input.Allocations != nil {
 		rows, err = shipmentmapping.ChargeAllocationsFromInput(
 			input.Allocations,
-			shipmentdomain.ChargeAllocationKindOrderCharge,
+			shipmentvocab.ChargeAllocationKindOrderCharge,
 			"allocations",
 			authCtx,
 			nil,
@@ -243,7 +244,7 @@ func (r *MutationResolver) SetOrderChargeAllocations(ctx context.Context, input 
 	}
 	rows, err := shipmentmapping.ChargeAllocationsFromInput(
 		input.Allocations,
-		shipmentdomain.ChargeAllocationKindOrderCharge,
+		shipmentvocab.ChargeAllocationKindOrderCharge,
 		"allocations",
 		authCtx,
 		nil,

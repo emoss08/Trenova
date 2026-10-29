@@ -7,8 +7,8 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/stopeta"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/stopeta/stopetadb"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/stopetaports"
@@ -232,7 +232,7 @@ func (r *repository) attentionRows(
 
 type stopMetaRow struct {
 	StopID       pulid.ID
-	StopType     shipment.StopType
+	StopType     shipmentvocab.StopType
 	ProNumber    string
 	OwnerID      pulid.ID
 	LocationName string
@@ -316,7 +316,7 @@ type tenantRow struct {
 
 func (r *repository) ListActiveTenants(
 	ctx context.Context,
-	statuses []shipment.Status,
+	statuses []shipmentvocab.Status,
 ) ([]pagination.TenantInfo, error) {
 	ctx = dbscope.WithSystem(ctx, "list organizations with shipments whose arrivals are projected")
 

@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/quickfilter"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -24,7 +25,7 @@ type ShipmentOptions struct {
 	IncludeCommodities      bool   `form:"-"                       json:"-"                       query:"-"`
 
 	IDs              []pulid.ID                    `form:"-" json:"-" query:"-"`
-	Statuses         []shipment.Status             `form:"-" json:"-" query:"-"`
+	Statuses         []shipmentvocab.Status        `form:"-" json:"-" query:"-"`
 	CustomerIDs      []pulid.ID                    `form:"-" json:"-" query:"-"`
 	StopLocationIDs  []pulid.ID                    `form:"-" json:"-" query:"-"`
 	PartyGroups      []ShipmentPartyGroup          `form:"-" json:"-" query:"-"`
@@ -140,19 +141,19 @@ func (r *CancelShipmentRequest) Validate() *errortypes.MultiError {
 
 type MoveStatusRestore struct {
 	MoveID pulid.ID
-	Status shipment.MoveStatus
+	Status shipmentvocab.MoveStatus
 }
 
 type StopStatusRestore struct {
 	StopID pulid.ID
-	Status shipment.StopStatus
+	Status shipmentvocab.StopStatus
 }
 
 type UncancelShipmentRequest struct {
 	TenantInfo      pagination.TenantInfo `json:"-"`
 	ShipmentID      pulid.ID              `json:"shipmentId"`
 	ExpectedVersion int64                 `json:"-"`
-	RestoredStatus  shipment.Status       `json:"-"`
+	RestoredStatus  shipmentvocab.Status  `json:"-"`
 	MoveStatuses    []MoveStatusRestore   `json:"-"`
 	StopStatuses    []StopStatusRestore   `json:"-"`
 }
@@ -523,7 +524,7 @@ type PreviousRateSummary struct {
 
 type ListBillingTransferCandidateIDsQuery struct {
 	Filter *pagination.QueryOptions `json:"filter"`
-	Status shipment.Status          `json:"status"`
+	Status shipmentvocab.Status     `json:"status"`
 	Limit  int                      `json:"limit"`
 	// RecentFirst orders by last change rather than age, so a scan bounded to
 	// a window reaches the shipments that just became billable before the ones
@@ -590,7 +591,7 @@ type ListRatedByFormulaTemplateRequest struct {
 type UpdateShipmentStatusRequest struct {
 	TenantInfo pagination.TenantInfo `json:"-"`
 	ShipmentID pulid.ID              `json:"shipmentId"`
-	Status     shipment.Status       `json:"status"`
+	Status     shipmentvocab.Status  `json:"status"`
 	Version    int64                 `json:"version"`
 }
 

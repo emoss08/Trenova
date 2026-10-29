@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/operations/app/detentionengine"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionpolicy"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -50,8 +50,8 @@ func matchInput() detentionpolicy.MatchInput {
 		LocationID:     resolveLocationID,
 		ShipmentTypeID: pulid.MustNew("spt_"),
 		ServiceTypeID:  pulid.MustNew("svt_"),
-		StopType:       shipment.StopTypeDelivery,
-		ScheduleType:   shipment.StopScheduleTypeAppointment,
+		StopType:       shipmentvocab.StopTypeDelivery,
+		ScheduleType:   shipmentvocab.StopScheduleTypeAppointment,
 		Timestamp:      5000,
 	}
 }
@@ -233,7 +233,7 @@ func TestResolvePolicy_VerdictsExplainEveryCandidate(t *testing.T) {
 	})
 
 	in := matchInput()
-	in.ScheduleType = shipment.StopScheduleTypeOpen
+	in.ScheduleType = shipmentvocab.StopScheduleTypeOpen
 
 	res := detentionengine.ResolvePolicy(
 		[]*detentionpolicy.DetentionPolicy{winner, wrongCustomer, inactive, appointmentOnly},

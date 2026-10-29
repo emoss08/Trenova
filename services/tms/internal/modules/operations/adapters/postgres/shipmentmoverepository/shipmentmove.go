@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/movesplit"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentmoveports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -227,7 +228,7 @@ func (r *repository) hydrateActiveAssignments(
 	ca := shipmentdb.CarrierAssignments
 	carrierAssignments, err := ca.Where(
 		ca.ShipmentMoveID.In(moveIDs...),
-		ca.Status.Ne(shipment.CarrierAssignmentStatusCanceled),
+		ca.Status.Ne(shipmentvocab.CarrierAssignmentStatusCanceled),
 	).
 		Load(ca.Carrier(), ca.Accessorials()).
 		All(ctx, r.db.Keel(ctx))
@@ -518,7 +519,7 @@ func (r *repository) updateMove(
 		move.CoverageType = existingMove.CoverageType
 	}
 	if move.CoverageType == "" {
-		move.CoverageType = shipment.MoveCoverageTypeUnassigned
+		move.CoverageType = shipmentvocab.MoveCoverageTypeUnassigned
 	}
 	move.Version = existingMove.Version
 
@@ -654,7 +655,7 @@ func (r *repository) updateStop(
 	existingStop *shipment.Stop,
 ) error {
 	if stop.ScheduleType == "" {
-		stop.ScheduleType = shipment.StopScheduleTypeOpen
+		stop.ScheduleType = shipmentvocab.StopScheduleTypeOpen
 	}
 	stop.Version = existingStop.Version
 

@@ -19,8 +19,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/trailer/trailerdb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate/usstatedb"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer/customerdb"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location/locationdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
@@ -118,7 +118,7 @@ func organizationItems(w agentprofileports.FactsWindow, reads *organizationReads
 	integ := integrationdb.Integrations
 	ac := accountingconnectiondb.AccountingConnections
 	ep := edidb.EDIPartners
-	live := sp.Status.Ne(shipment.StatusCanceled)
+	live := sp.Status.Ne(shipmentvocab.StatusCanceled)
 
 	pickupName := keel.ConcatWS(
 		", ",
@@ -131,14 +131,14 @@ func organizationItems(w agentprofileports.FactsWindow, reads *organizationReads
 		keel.IntoValue(sp.
 			Pick(
 				keel.Count(),
-				keel.Count().Filter(sp.Status.Eq(shipment.StatusCanceled)),
+				keel.Count().Filter(sp.Status.Eq(shipmentvocab.StatusCanceled)),
 				sp.CustomerID.CountDistinct().Filter(live),
 			).
 			Where(inWindow(w)), &reads.volume),
 		keel.IntoValue(sm.
 			Pick(
 				keel.Count(),
-				keel.Count().Filter(sm.CoverageType.Eq(shipment.MoveCoverageTypeCarrier)),
+				keel.Count().Filter(sm.CoverageType.Eq(shipmentvocab.MoveCoverageTypeCarrier)),
 			).
 			Join(sp, sp.ID.EqCol(sm.ShipmentID)).
 			Where(live, inWindow(w)), &reads.moves),
@@ -153,7 +153,7 @@ func organizationItems(w agentprofileports.FactsWindow, reads *organizationReads
 			Shipments: []keel.Pred{
 				sp.CreatedAt.Gte(w.Start),
 				sp.CreatedAt.Lt(w.End),
-				sp.Status.Ne(shipment.StatusCanceled),
+				sp.Status.Ne(shipmentvocab.StatusCanceled),
 			},
 			Limit: agentprofileports.TopRows,
 		}), &out.TopLanes),
@@ -164,7 +164,7 @@ func organizationItems(w agentprofileports.FactsWindow, reads *organizationReads
 			LeftJoin(ust, ust.ID.EqCol(loc.StateID)).
 			Group(loc.ID, loc.Name, loc.City, ust.Abbreviation).
 			Pick(pickupName, sp.ID.CountDistinct()).
-			Where(stp.Type.In(shipment.PickupStopTypes()...), live, inWindow(w)).
+			Where(stp.Type.In(shipmentvocab.PickupStopTypes()...), live, inWindow(w)).
 			Order(keel.Desc(sp.ID.CountDistinct()), keel.Asc(pickupName)).
 			Limit(agentprofileports.TopRows), &out.TopPickupLocations),
 		keel.IntoValue(wrk.
@@ -360,7 +360,7 @@ func userItems(req *agentprofileports.UserFactsRequest, reads *userReads) []keel
 			Pick(cus.Name, keel.Count()).
 			Where(
 				keel.Or(sp.OwnerID.Eq(req.UserID), sp.EnteredByID.Eq(req.UserID)),
-				sp.Status.Ne(shipment.StatusCanceled),
+				sp.Status.Ne(shipmentvocab.StatusCanceled),
 				inWindow(w),
 			).
 			Order(countDesc(), cus.Name.Asc()).

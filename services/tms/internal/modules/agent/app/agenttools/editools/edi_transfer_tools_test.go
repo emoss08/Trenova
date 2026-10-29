@@ -19,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -89,8 +90,8 @@ func (f *fakeTransfers) PlanApproveTransfer(
 	plan.Shipment = &shipment.Shipment{
 		BOL:         transfer.TenderPayload.BOL,
 		CustomerID:  pulid.MustNew("cus_"),
-		Status:      shipment.StatusNew,
-		EntryMethod: shipment.EntryMethodEDI,
+		Status:      shipmentvocab.StatusNew,
+		EntryMethod: shipmentvocab.EntryMethodEDI,
 	}
 
 	return plan, nil

@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/seeds/fixtures/fixturetest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -25,7 +26,7 @@ func artifactRefs(t *testing.T) *artifactSeedRefs {
 		shipments = append(shipments, &shipment.Shipment{
 			ID:        pulid.MustNew("shp_"),
 			ProNumber: "S0000" + string(rune('1'+i)),
-			Status:    shipment.StatusInTransit,
+			Status:    shipmentvocab.StatusInTransit,
 		})
 	}
 

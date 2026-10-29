@@ -22,6 +22,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/commodity"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -141,7 +142,7 @@ func previewInvoicePDFDeliveryProfile() *invoiceDeliveryProfile {
 				{
 					Stops: []*shipment.Stop{
 						{
-							Type:     shipment.StopTypePickup,
+							Type:     shipmentvocab.StopTypePickup,
 							Sequence: 1,
 							Location: &location.Location{
 								Name:         "Dallas Warehouse",
@@ -152,7 +153,7 @@ func previewInvoicePDFDeliveryProfile() *invoiceDeliveryProfile {
 							},
 						},
 						{
-							Type:     shipment.StopTypeDelivery,
+							Type:     shipmentvocab.StopTypeDelivery,
 							Sequence: 2,
 							Location: &location.Location{
 								Name:         "Chicago Distribution Center",

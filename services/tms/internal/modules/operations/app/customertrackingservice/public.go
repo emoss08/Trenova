@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/customertracking"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/stopeta"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/customertrackingports"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -279,24 +280,27 @@ func publicStatus(
 	etas map[pulid.ID]*stopeta.StopETA,
 ) customertrackingports.PublicStatus {
 	switch sh.Status {
-	case shipment.StatusCanceled:
+	case shipmentvocab.StatusCanceled:
 		return customertrackingports.PublicStatusCanceled
-	case shipment.StatusCompleted, shipment.StatusReadyToInvoice, shipment.StatusInvoiced:
+	case shipmentvocab.StatusCompleted,
+		shipmentvocab.StatusReadyToInvoice,
+		shipmentvocab.StatusInvoiced:
 		return customertrackingports.PublicStatusDelivered
-	case shipment.StatusDelayed:
+	case shipmentvocab.StatusDelayed:
 		return customertrackingports.PublicStatusDelayed
-	case shipment.StatusNew,
-		shipment.StatusPartiallyAssigned,
-		shipment.StatusAssigned,
-		shipment.StatusInTransit,
-		shipment.StatusPartiallyCompleted:
+	case shipmentvocab.StatusNew,
+		shipmentvocab.StatusPartiallyAssigned,
+		shipmentvocab.StatusAssigned,
+		shipmentvocab.StatusInTransit,
+		shipmentvocab.StatusPartiallyCompleted:
 	}
 	for _, eta := range etas {
 		if eta.NeedsAttention() {
 			return customertrackingports.PublicStatusDelayed
 		}
 	}
-	if sh.Status == shipment.StatusInTransit || sh.Status == shipment.StatusPartiallyCompleted {
+	if sh.Status == shipmentvocab.StatusInTransit ||
+		sh.Status == shipmentvocab.StatusPartiallyCompleted {
 		return customertrackingports.PublicStatusInTransit
 	}
 	return customertrackingports.PublicStatusPlanned

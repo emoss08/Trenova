@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/portalinvitation"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -34,10 +35,10 @@ type ActivatePortalAccessRequest struct {
 }
 
 type ListWorkerLoadsRequest struct {
-	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
-	WorkerID   pulid.ID              `json:"workerId"`
-	Statuses   []shipment.MoveStatus `json:"statuses"`
-	Limit      int                   `json:"limit"`
+	TenantInfo pagination.TenantInfo      `json:"tenantInfo"`
+	WorkerID   pulid.ID                   `json:"workerId"`
+	Statuses   []shipmentvocab.MoveStatus `json:"statuses"`
+	Limit      int                        `json:"limit"`
 }
 
 type PortalAccessRepository interface {
@@ -101,7 +102,7 @@ type PortalAccessRepository interface {
 		tenantInfo pagination.TenantInfo,
 		workerID pulid.ID,
 		assignmentID pulid.ID,
-		ack shipment.AssignmentAck,
+		ack shipmentvocab.AssignmentAck,
 		reason string,
 	) (*shipment.Assignment, error)
 	WorkerAssignedToShipment(

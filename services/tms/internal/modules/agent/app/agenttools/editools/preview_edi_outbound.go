@@ -12,7 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/app/edioutbound"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/editransfer"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/pkg/errortypes"
 )
 
@@ -50,7 +50,7 @@ func (t *SendEDILoadTenderTool) Preview(
 	})
 
 	tendered := *plan.SourceShipment
-	status := shipment.TenderStatusTendered
+	status := shipmentvocab.TenderStatusTendered
 	tendered.TenderStatus = &status
 	marked, err := toolpreview.Changed(toolpreview.Record{
 		Resource: permission.ResourceShipment,

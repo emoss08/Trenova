@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate/usstatedb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier/carrierdb"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
@@ -135,7 +136,7 @@ func loadOpenLane(
 	ship *shipment.Shipment,
 ) (*triagefixtures.Lane, error) {
 	type laneStop struct {
-		Type        shipment.StopType
+		Type        shipmentvocab.StopType
 		City        string
 		State       string
 		WindowStart int64
@@ -172,14 +173,14 @@ func loadOpenLane(
 	for _, row := range rows {
 		place := row.City + ", " + row.State
 		switch row.Type {
-		case shipment.StopTypePickup, shipment.StopTypeSplitPickup:
+		case shipmentvocab.StopTypePickup, shipmentvocab.StopTypeSplitPickup:
 			if lane.Origin == "" {
 				lane.Origin = place
 				lane.OriginCity = row.City
 				lane.OriginState = row.State
 				lane.PickupAt = row.WindowStart
 			}
-		case shipment.StopTypeDelivery, shipment.StopTypeSplitDelivery:
+		case shipmentvocab.StopTypeDelivery, shipmentvocab.StopTypeSplitDelivery:
 			lane.Destination = place
 			lane.DestinationCity = row.City
 			lane.DestinationState = row.State

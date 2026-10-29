@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/ports/triageworkports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentcommentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/triagelookupports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -215,7 +216,7 @@ func TestCreateLoadBuildsShipment(t *testing.T) {
 	require.Len(t, entity.Moves, 1)
 	stops := entity.Moves[0].Stops
 	require.Len(t, stops, 2)
-	assert.Equal(t, shipment.StopTypePickup, stops[0].Type)
+	assert.Equal(t, shipmentvocab.StopTypePickup, stops[0].Type)
 	require.NotNil(t, stops[0].ScheduledWindowEnd)
 	assert.Equal(t, int64(6*60*60), *stops[0].ScheduledWindowEnd-stops[0].ScheduledWindowStart)
 	assert.Nil(t, stops[1].ScheduledWindowEnd)

@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/chargeallocation"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentbillingports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
@@ -44,7 +45,7 @@ func (s *Service) ValidateBillingReadinessForStatusChange(
 	ctx context.Context,
 	entity *shipment.Shipment,
 ) *errortypes.MultiError {
-	if entity.Status != shipment.StatusReadyToInvoice ||
+	if entity.Status != shipmentvocab.StatusReadyToInvoice ||
 		s.customerRepo == nil ||
 		s.documentRepo == nil ||
 		s.billingRepo == nil {

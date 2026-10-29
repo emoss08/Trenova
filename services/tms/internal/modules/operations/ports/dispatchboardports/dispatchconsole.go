@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/trailer"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -28,7 +28,7 @@ type DispatchBoardFilter struct {
 	FleetCodeIDs   []pulid.ID
 	CustomerIDs    []pulid.ID
 	ServiceTypeIDs []pulid.ID
-	MoveStatuses   []shipment.MoveStatus
+	MoveStatuses   []shipmentvocab.MoveStatus
 	WorkerIDs      []pulid.ID
 	MoveIDs        []pulid.ID
 	Query          string
@@ -47,27 +47,27 @@ type DispatchBoardFilter struct {
 }
 
 type BoardMove struct {
-	MoveID                pulid.ID            `json:"moveId"`
-	ShipmentID            pulid.ID            `json:"shipmentId"`
-	ProNumber             string              `json:"proNumber"`
-	BOL                   string              `json:"bol"`
-	MoveStatus            shipment.MoveStatus `json:"moveStatus"`
-	ShipmentStatus        shipment.Status     `json:"shipmentStatus"`
-	Sequence              int64               `json:"sequence"`
-	MoveCount             int                 `json:"moveCount"`
-	Loaded                bool                `json:"loaded"`
-	Distance              *float64            `json:"distance"`
-	CustomerID            pulid.ID            `json:"customerId"`
-	CustomerName          string              `json:"customerName"`
-	ServiceTypeID         pulid.ID            `json:"serviceTypeId"`
-	ServiceTypeCode       string              `json:"serviceTypeCode"`
-	RequiredTractorTypeID pulid.ID            `json:"requiredTractorTypeId"`
-	RequiredTrailerTypeID pulid.ID            `json:"requiredTrailerTypeId"`
-	TemperatureMin        *int16              `json:"temperatureMin"`
-	TemperatureMax        *int16              `json:"temperatureMax"`
-	HasHazmat             bool                `json:"hasHazmat"`
-	HasActiveHold         bool                `json:"hasActiveHold"`
-	Revenue               *float64            `json:"revenue"`
+	MoveID                pulid.ID                 `json:"moveId"`
+	ShipmentID            pulid.ID                 `json:"shipmentId"`
+	ProNumber             string                   `json:"proNumber"`
+	BOL                   string                   `json:"bol"`
+	MoveStatus            shipmentvocab.MoveStatus `json:"moveStatus"`
+	ShipmentStatus        shipmentvocab.Status     `json:"shipmentStatus"`
+	Sequence              int64                    `json:"sequence"`
+	MoveCount             int                      `json:"moveCount"`
+	Loaded                bool                     `json:"loaded"`
+	Distance              *float64                 `json:"distance"`
+	CustomerID            pulid.ID                 `json:"customerId"`
+	CustomerName          string                   `json:"customerName"`
+	ServiceTypeID         pulid.ID                 `json:"serviceTypeId"`
+	ServiceTypeCode       string                   `json:"serviceTypeCode"`
+	RequiredTractorTypeID pulid.ID                 `json:"requiredTractorTypeId"`
+	RequiredTrailerTypeID pulid.ID                 `json:"requiredTrailerTypeId"`
+	TemperatureMin        *int16                   `json:"temperatureMin"`
+	TemperatureMax        *int16                   `json:"temperatureMax"`
+	HasHazmat             bool                     `json:"hasHazmat"`
+	HasActiveHold         bool                     `json:"hasActiveHold"`
+	Revenue               *float64                 `json:"revenue"`
 
 	OriginStopID       pulid.ID `json:"originStopId"`
 	OriginLocationID   pulid.ID `json:"originLocationId"`
@@ -91,15 +91,15 @@ type BoardMove struct {
 	DestinationWindowEnd    *int64   `json:"destinationWindowEnd"`
 	DestinationActualArrive *int64   `json:"destinationActualArrival"`
 
-	AssignmentID          pulid.ID               `json:"assignmentId"`
-	AssignedWorkerID      pulid.ID               `json:"assignedWorkerId"`
-	AssignedWorkerName    string                 `json:"assignedWorkerName"`
-	AssignedTractorID     pulid.ID               `json:"assignedTractorId"`
-	AssignedTractorCode   string                 `json:"assignedTractorCode"`
-	AssignedTrailerID     pulid.ID               `json:"assignedTrailerId"`
-	AssignedTrailerCode   string                 `json:"assignedTrailerCode"`
-	AssignmentAckStatus   shipment.AssignmentAck `json:"assignmentAckStatus"`
-	PreviousMoveTrailerID pulid.ID               `json:"previousMoveTrailerId"`
+	AssignmentID          pulid.ID                    `json:"assignmentId"`
+	AssignedWorkerID      pulid.ID                    `json:"assignedWorkerId"`
+	AssignedWorkerName    string                      `json:"assignedWorkerName"`
+	AssignedTractorID     pulid.ID                    `json:"assignedTractorId"`
+	AssignedTractorCode   string                      `json:"assignedTractorCode"`
+	AssignedTrailerID     pulid.ID                    `json:"assignedTrailerId"`
+	AssignedTrailerCode   string                      `json:"assignedTrailerCode"`
+	AssignmentAckStatus   shipmentvocab.AssignmentAck `json:"assignmentAckStatus"`
+	PreviousMoveTrailerID pulid.ID                    `json:"previousMoveTrailerId"`
 
 	CoverageType        string   `json:"coverageType"`
 	CarrierAssignmentID pulid.ID `json:"carrierAssignmentId"`
@@ -133,19 +133,19 @@ type BoardDriver struct {
 }
 
 type WorkerCommitment struct {
-	WorkerID       pulid.ID            `json:"workerId"`
-	MoveID         pulid.ID            `json:"moveId"`
-	ShipmentID     pulid.ID            `json:"shipmentId"`
-	ProNumber      string              `json:"proNumber"`
-	MoveStatus     shipment.MoveStatus `json:"moveStatus"`
-	WindowStart    int64               `json:"windowStart"`
-	WindowEnd      int64               `json:"windowEnd"`
-	DestinationID  pulid.ID            `json:"destinationLocationId"`
-	DestinationCty string              `json:"destinationCity"`
-	DestinationSt  string              `json:"destinationState"`
-	DestLatitude   *float64            `json:"destinationLatitude"`
-	DestLongitude  *float64            `json:"destinationLongitude"`
-	TrailerID      pulid.ID            `json:"trailerId"`
+	WorkerID       pulid.ID                 `json:"workerId"`
+	MoveID         pulid.ID                 `json:"moveId"`
+	ShipmentID     pulid.ID                 `json:"shipmentId"`
+	ProNumber      string                   `json:"proNumber"`
+	MoveStatus     shipmentvocab.MoveStatus `json:"moveStatus"`
+	WindowStart    int64                    `json:"windowStart"`
+	WindowEnd      int64                    `json:"windowEnd"`
+	DestinationID  pulid.ID                 `json:"destinationLocationId"`
+	DestinationCty string                   `json:"destinationCity"`
+	DestinationSt  string                   `json:"destinationState"`
+	DestLatitude   *float64                 `json:"destinationLatitude"`
+	DestLongitude  *float64                 `json:"destinationLongitude"`
+	TrailerID      pulid.ID                 `json:"trailerId"`
 }
 
 type WorkerTimeOff struct {

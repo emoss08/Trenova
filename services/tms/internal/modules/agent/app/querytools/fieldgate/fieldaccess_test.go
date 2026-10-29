@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -29,7 +29,7 @@ func nestedPeopleRecord(fixture *nestedPeopleFixture) map[string]any {
 	fixture.orgID = pulid.MustNew(tenant.OrganizationIDPrefix).String()
 	fixture.buID = pulid.MustNew(tenant.BusinessUnitIDPrefix).String()
 	fixture.userID = pulid.MustNew(tenant.UserIDPrefix).String()
-	fixture.carrierID = pulid.MustNew(shipment.CarrierAssignmentIDPrefix).String()
+	fixture.carrierID = pulid.MustNew(shipmentvocab.CarrierAssignmentIDPrefix).String()
 
 	return map[string]any{
 		"id":   pulid.MustNew("tr_").String(),
@@ -196,7 +196,7 @@ func TestNestedRules_ComeFromTheDomainsPrefixes(t *testing.T) {
 		tenant.OrganizationIDPrefix,
 		tenant.BusinessUnitIDPrefix,
 		agent.SubjectWorker.IDPrefix(),
-		shipment.CarrierAssignmentIDPrefix,
+		shipmentvocab.CarrierAssignmentIDPrefix,
 	} {
 		assert.True(t, prefixes[prefix], "%s has no rule", prefix)
 	}

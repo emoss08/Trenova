@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentbillingports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
@@ -101,11 +102,11 @@ func TestPlanBillingTransfers_DecidesEachShipmentInRequestOrder(t *testing.T) {
 	t.Parallel()
 
 	f := newPlanFixture(t)
-	clean := f.newShipment("PRO-1", shipment.StatusReadyToInvoice)
-	completed := f.newShipment("PRO-2", shipment.StatusCompleted)
-	missingPOD := f.newShipment("PRO-3", shipment.StatusReadyToInvoice)
-	queued := f.newShipment("PRO-4", shipment.StatusReadyToInvoice)
-	queued.BillingTransferStatus = shipment.BillingTransferInReview
+	clean := f.newShipment("PRO-1", shipmentvocab.StatusReadyToInvoice)
+	completed := f.newShipment("PRO-2", shipmentvocab.StatusCompleted)
+	missingPOD := f.newShipment("PRO-3", shipmentvocab.StatusReadyToInvoice)
+	queued := f.newShipment("PRO-4", shipmentvocab.StatusReadyToInvoice)
+	queued.BillingTransferStatus = shipmentvocab.BillingTransferInReview
 	gone := pulid.MustNew("shp_")
 
 	f.expectSources(
@@ -172,7 +173,7 @@ func TestPlanBillingTransfers_ReturnsAShipmentToOperationsWhenThePolicySaysSo(t 
 	t.Parallel()
 
 	f := newPlanFixture(t)
-	missingPOD := f.newShipment("PRO-9", shipment.StatusReadyToInvoice)
+	missingPOD := f.newShipment("PRO-9", shipmentvocab.StatusReadyToInvoice)
 	control := manualBillingControl()
 	control.ShipmentBillingRequirementEnforcement = tenant.EnforcementLevelRequireReview
 	control.BillingExceptionDisposition = billingcontrol.BillingExceptionDispositionReturnToOperations
@@ -208,7 +209,7 @@ func TestPlanBillingTransfers_AgreesWithTheTransfer(t *testing.T) {
 	t.Parallel()
 
 	f := newPlanFixture(t)
-	missingPOD := f.newShipment("PRO-5", shipment.StatusReadyToInvoice)
+	missingPOD := f.newShipment("PRO-5", shipmentvocab.StatusReadyToInvoice)
 	f.expectSources([]*shipment.Shipment{missingPOD}, manualBillingControl(), nil)
 
 	plan, err := f.svc.transfer.PlanBillingTransfers(
@@ -271,14 +272,14 @@ func TestListBillingTransferCandidates_PlansOnlyThePage(t *testing.T) {
 	t.Parallel()
 
 	f := newPlanFixture(t)
-	first := f.newShipment("PRO-1", shipment.StatusReadyToInvoice)
-	second := f.newShipment("PRO-2", shipment.StatusReadyToInvoice)
-	third := f.newShipment("PRO-3", shipment.StatusReadyToInvoice)
+	first := f.newShipment("PRO-1", shipmentvocab.StatusReadyToInvoice)
+	second := f.newShipment("PRO-2", shipmentvocab.StatusReadyToInvoice)
+	third := f.newShipment("PRO-3", shipmentvocab.StatusReadyToInvoice)
 
 	f.repo.EXPECT().
 		ListBillingTransferCandidateIDs(mock.Anything, mock.MatchedBy(
 			func(req *shipmentports.ListBillingTransferCandidateIDsQuery) bool {
-				return req.Status == shipment.StatusReadyToInvoice && req.Limit == 4
+				return req.Status == shipmentvocab.StatusReadyToInvoice && req.Limit == 4
 			},
 		)).
 		Return(&shipmentports.BillingTransferCandidateIDsResult{
@@ -299,7 +300,7 @@ func TestListBillingTransferCandidates_PlansOnlyThePage(t *testing.T) {
 				TenantInfo: f.tenant(),
 				Pagination: pagination.Info{Limit: 2, Offset: 1},
 			},
-			Status: shipment.StatusReadyToInvoice,
+			Status: shipmentvocab.StatusReadyToInvoice,
 		},
 	)
 
@@ -355,7 +356,7 @@ func TestListBillingTransferCandidates_RefusesAStatusTheDialogDoesNotOffer(t *te
 		t.Context(),
 		&shipmentbillingports.ListBillingTransferCandidatesRequest{
 			Filter: &pagination.QueryOptions{TenantInfo: f.tenant()},
-			Status: shipment.StatusInTransit,
+			Status: shipmentvocab.StatusInTransit,
 		},
 	)
 	require.Error(t, err)
@@ -366,9 +367,9 @@ func TestPlanBillingTransfers_NamesTheCurrencyEachShipmentIsBilledIn(t *testing.
 
 	f := newPlanFixture(t)
 	f.profile.BillingCurrency = "CAD"
-	clean := f.newShipment("PRO-1", shipment.StatusReadyToInvoice)
-	queued := f.newShipment("PRO-2", shipment.StatusReadyToInvoice)
-	queued.BillingTransferStatus = shipment.BillingTransferInReview
+	clean := f.newShipment("PRO-1", shipmentvocab.StatusReadyToInvoice)
+	queued := f.newShipment("PRO-2", shipmentvocab.StatusReadyToInvoice)
+	queued.BillingTransferStatus = shipmentvocab.BillingTransferInReview
 	queued.CustomerID = pulid.MustNew("cus_")
 
 	f.repo.EXPECT().

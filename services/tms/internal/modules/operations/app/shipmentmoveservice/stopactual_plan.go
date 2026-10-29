@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentstate"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentmoveports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/jsonutils"
@@ -12,8 +13,8 @@ import (
 
 type stopActualPlan struct {
 	stop           *shipment.Stop
-	previousStatus shipment.MoveStatus
-	targetStatus   shipment.MoveStatus
+	previousStatus shipmentvocab.MoveStatus
+	targetStatus   shipmentvocab.MoveStatus
 }
 
 func (s *service) PreviewStopActual(
@@ -66,7 +67,7 @@ func (s *service) planStopActual(
 	plan.stop = stop
 
 	plan.targetStatus = deriveMoveStatusFromStops(move)
-	if plan.targetStatus == shipment.MoveStatusInTransit &&
+	if plan.targetStatus == shipmentvocab.MoveStatusInTransit &&
 		plan.previousStatus != plan.targetStatus {
 		if err = s.ensureEquipmentAvailableForProgress(
 			ctx,

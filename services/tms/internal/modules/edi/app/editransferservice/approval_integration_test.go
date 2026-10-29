@@ -32,6 +32,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentserviceports"
 	"github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
@@ -64,9 +65,9 @@ func (r *receivingShipments) Create(
 		ShipmentTypeID:    fixture.ShipmentType.ID,
 		CustomerID:        fixture.Customer.ID,
 		FormulaTemplateID: fixture.FormulaTemplate.ID,
-		Status:            shipment.StatusNew,
-		TenderStatus:      new(shipment.TenderStatusAccepted),
-		EntryMethod:       shipment.EntryMethodEDI,
+		Status:            shipmentvocab.StatusNew,
+		TenderStatus:      new(shipmentvocab.TenderStatusAccepted),
+		EntryMethod:       shipmentvocab.EntryMethodEDI,
 		ProNumber:         "PRO-RECEIVED",
 		BOL:               r.tender.SourceShipment.BOL,
 	}
@@ -191,7 +192,7 @@ func TestProcessLoadTenderApproval_AcceptsTheSourceTenderUnderRowLevelSecurity(t
 	require.NotNil(t, status)
 	assert.Equal(
 		t,
-		shipment.TenderStatusAccepted,
+		shipmentvocab.TenderStatusAccepted,
 		*status,
 		"the receiving organization's approval accepts the sending organization's tender",
 	)
@@ -227,7 +228,7 @@ func TestProcessLoadTenderApproval_ARetryAcceptsASourceTenderTheFirstRunLeftTend
 ) {
 	h := newApprovalHarness(t)
 	first := h.approve(t)
-	h.tender.SetSourceTenderStatus(t, shipment.TenderStatusTendered)
+	h.tender.SetSourceTenderStatus(t, shipmentvocab.TenderStatusTendered)
 
 	retried := h.approve(t)
 
@@ -235,7 +236,7 @@ func TestProcessLoadTenderApproval_ARetryAcceptsASourceTenderTheFirstRunLeftTend
 	assert.Len(t, h.shipments.created, 1, "a retry never creates a second receiving shipment")
 	status := h.tender.SourceTenderStatus(t)
 	require.NotNil(t, status)
-	assert.Equal(t, shipment.TenderStatusAccepted, *status)
+	assert.Equal(t, shipmentvocab.TenderStatusAccepted, *status)
 
 	again := h.approve(t)
 	assert.Equal(t, first.TargetShipmentID, again.TargetShipmentID)
@@ -250,7 +251,7 @@ func TestSetShipmentTenderStatus_FailsWhenTheScopeCannotSeeTheShipment(t *testin
 		editenderports.SetEDIShipmentTenderStatusRequest{
 			ShipmentID: h.tender.SourceShipment.ID,
 			TenantInfo: h.tender.Source.Info,
-			Status:     shipment.TenderStatusAccepted,
+			Status:     shipmentvocab.TenderStatusAccepted,
 		},
 	)
 
@@ -263,5 +264,5 @@ func TestSetShipmentTenderStatus_FailsWhenTheScopeCannotSeeTheShipment(t *testin
 	)
 	status := h.tender.SourceTenderStatus(t)
 	require.NotNil(t, status)
-	assert.Equal(t, shipment.TenderStatusTendered, *status)
+	assert.Equal(t, shipmentvocab.TenderStatusTendered, *status)
 }

@@ -7,6 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/operations/app/dispatchconsoleservice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentcapacityports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carriercapacity"
@@ -38,7 +39,7 @@ func firstUncoveredMove(sp *shipment.Shipment) *shipment.ShipmentMove {
 		return cmp.Compare(a.Sequence, b.Sequence)
 	})
 	for _, move := range moves {
-		if move != nil && move.CoverageType == shipment.MoveCoverageTypeUnassigned {
+		if move != nil && move.CoverageType == shipmentvocab.MoveCoverageTypeUnassigned {
 			return move
 		}
 	}

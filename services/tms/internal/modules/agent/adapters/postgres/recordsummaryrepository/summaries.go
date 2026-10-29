@@ -20,8 +20,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/trailer/trailerdb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate/usstatedb"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/stopeta/stopetadb"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier/carrierdb"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer/customerdb"
@@ -167,7 +167,7 @@ func stopsQuery(ids []pulid.ID) projection {
 			stp.ScheduledWindowStart, stp.ScheduledWindowEnd, stp.ActualArrival,
 			eta.EstimatedArrival, text(loc.City), text(st.Abbreviation),
 		).
-		Where(sm.ShipmentID.In(ids...), stp.Status.Ne(shipment.StopStatusCanceled))
+		Where(sm.ShipmentID.In(ids...), stp.Status.Ne(shipmentvocab.StopStatusCanceled))
 }
 
 func invoicesQuery(ids []pulid.ID) projection {
@@ -299,8 +299,8 @@ func (r *Repository) shipments(
 }
 
 func pickup(stop *stopRow) bool {
-	return stop.Type == string(shipment.StopTypePickup) ||
-		stop.Type == string(shipment.StopTypeSplitPickup)
+	return stop.Type == string(shipmentvocab.StopTypePickup) ||
+		stop.Type == string(shipmentvocab.StopTypeSplitPickup)
 }
 
 func place(stop *stopRow) string {
@@ -343,7 +343,7 @@ func lateness(route []stopRow, now int64) (board.RowMeasure, bool) {
 	}
 	for idx := range route {
 		stop := &route[idx]
-		if stop.Status == string(shipment.StopStatusCompleted) {
+		if stop.Status == string(shipmentvocab.StopStatusCompleted) {
 			continue
 		}
 		due := windowEnd(stop)

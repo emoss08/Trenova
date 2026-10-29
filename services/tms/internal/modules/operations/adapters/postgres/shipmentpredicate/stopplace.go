@@ -5,6 +5,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate/usstatedb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location/locationdb"
 )
 
@@ -37,7 +38,7 @@ func FirstPickupPlace() StopPlace {
 		query: st.Join(sm, sm.ID.EqCol(st.ShipmentMoveID)).
 			Where(
 				sm.ShipmentID.EqCol(shipmentdb.Shipments.ID),
-				st.Type.In(shipment.PickupStopTypes()...),
+				st.Type.In(shipmentvocab.PickupStopTypes()...),
 			).
 			Order(sm.Sequence.Asc(), st.Sequence.Asc()).
 			Limit(1).
@@ -56,7 +57,7 @@ func LastDeliveryPlace() StopPlace {
 		query: st.Join(sm, sm.ID.EqCol(st.ShipmentMoveID)).
 			Where(
 				sm.ShipmentID.EqCol(shipmentdb.Shipments.ID),
-				st.Type.In(shipment.DeliveryStopTypes()...),
+				st.Type.In(shipmentvocab.DeliveryStopTypes()...),
 			).
 			Order(sm.Sequence.Desc(), st.Sequence.Desc()).
 			Limit(1).

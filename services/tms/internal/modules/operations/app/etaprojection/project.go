@@ -4,6 +4,7 @@ import (
 	"math"
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/stopeta"
 	"github.com/emoss08/trenova/internal/modules/places/ports/routeestimateports"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/hosprojection"
@@ -229,7 +230,7 @@ func (p *Plan) judge(row *stopeta.StopETA, stop *shipment.Stop) {
 }
 
 func (p *Plan) markDelayed(row *stopeta.StopETA) bool {
-	if p.in.Shipment.Status != shipment.StatusDelayed || row.Arrived ||
+	if p.in.Shipment.Status != shipmentvocab.StatusDelayed || row.Arrived ||
 		row.Verdict != stopeta.VerdictUnknown {
 		return false
 	}
@@ -242,7 +243,7 @@ func (p *Plan) startHOS(c *cursor, move *shipment.ShipmentMove) {
 	switch {
 	case board == nil:
 		c.hosNote = hosNoteNone
-	case board.CoverageType == string(shipment.MoveCoverageTypeCarrier) ||
+	case board.CoverageType == string(shipmentvocab.MoveCoverageTypeCarrier) ||
 		board.AssignedCarrierID.IsNotNil():
 		c.hosNote = hosNoteCarrier
 	case board.AssignedWorkerID.IsNil():

@@ -40,6 +40,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure/servicefailuredb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender/tenderdb"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
@@ -124,7 +125,7 @@ func (w *operationsWorld) shipment(
 			BOL:          "BOL" + label + tenant.Actor.OrganizationID.String()[4:10],
 			ProNumber:    "PRO" + label + tenant.Actor.OrganizationID.String()[4:10],
 			ShipmentID:   pulid.MustNew("shp_"),
-			MoveStatuses: []shipment.MoveStatus{shipment.MoveStatusNew},
+			MoveStatuses: []shipmentvocab.MoveStatus{shipmentvocab.MoveStatusNew},
 		})
 }
 
@@ -350,14 +351,14 @@ func (w *operationsWorld) writeTender(
 		{
 			ID: pulid.MustNew("tof_"), BusinessUnitID: bu, OrganizationID: org,
 			TenderID: row.ID, CarrierID: hauler.ID, Rank: 1,
-			RateMethod: shipment.CarrierRateMethodFlat, Rate: decimal.NewFromInt(900),
+			RateMethod: shipmentvocab.CarrierRateMethodFlat, Rate: decimal.NewFromInt(900),
 			OfferTTLSeconds: 900, Channel: tender.ChannelEmail,
 			Status: tender.OfferStatusDeclined, DeclineReason: "No trucks in the lane",
 		},
 		{
 			ID: pulid.MustNew("tof_"), BusinessUnitID: bu, OrganizationID: org,
 			TenderID: row.ID, CarrierID: hauler.ID, Rank: 2,
-			RateMethod: shipment.CarrierRateMethodFlat, Rate: decimal.NewFromInt(950),
+			RateMethod: shipmentvocab.CarrierRateMethodFlat, Rate: decimal.NewFromInt(950),
 			OfferTTLSeconds: 900, Channel: tender.ChannelEmail, Status: tender.OfferStatusSent,
 		},
 	}
@@ -685,7 +686,7 @@ func TestConvertedLists_OperationsUnpagedListsReadTheTenantsRowsUnderRowLevelSec
 		second := &shipment.ShipmentMove{
 			ID: pulid.MustNew("sm_"), BusinessUnitID: actor.BusinessUnitID,
 			OrganizationID: actor.OrganizationID, ShipmentID: graph.Shipment.ID,
-			Status: shipment.MoveStatusNew, Loaded: true, Sequence: 1,
+			Status: shipmentvocab.MoveStatusNew, Loaded: true, Sequence: 1,
 		}
 		require.NoError(t, world.insert(ours, second))
 		first, err := world.writeTender(ours, env.mine, graph.Shipment.ID, graph.Moves[0].ID, "T1")

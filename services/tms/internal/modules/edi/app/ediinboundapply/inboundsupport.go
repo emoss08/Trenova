@@ -8,8 +8,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edipayload"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/editenderchange"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/editransfer"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentevent"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -52,10 +52,10 @@ func (s *Service) ApplyExternalTenderResponse(
 		BuID:   recipient.BusinessUnitID,
 		UserID: req.ActorID,
 	}
-	tenderStatus := shipment.TenderStatusAccepted
+	tenderStatus := shipmentvocab.TenderStatusAccepted
 	comment := "EDI load tender accepted by trading partner."
 	if !req.Accepted {
-		tenderStatus = shipment.TenderStatusRejected
+		tenderStatus = shipmentvocab.TenderStatusRejected
 		reason := stringutils.FirstNonEmpty(req.RejectionReason, req.ReasonCode)
 		comment = "EDI load tender rejected by trading partner."
 		if reason != "" {

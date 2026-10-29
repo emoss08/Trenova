@@ -14,7 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/app/tendercancel"
 	"github.com/emoss08/trenova/internal/modules/operations/app/tendernegotiation"
 	"github.com/emoss08/trenova/internal/modules/operations/app/tenderresponse"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
@@ -51,7 +51,7 @@ func newFakeTenderManager(status tender.Status, offers ...tender.OfferStatus) *f
 				Name: []string{"Ridgeline", "Blue Mesa", "Crestway"}[idx%3],
 			},
 			Rank:           int16(idx + 1),
-			RateMethod:     shipment.CarrierRateMethodFlat,
+			RateMethod:     shipmentvocab.CarrierRateMethodFlat,
 			Rate:           decimal.NewFromInt(int64(1500 + 100*idx)),
 			Channel:        tender.ChannelEmail,
 			RecipientEmail: "dispatch" + string(rune('a'+idx)) + "@carrier.test",

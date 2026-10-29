@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentrating"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/carrierassignmentports"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreementmatch"
@@ -27,7 +28,7 @@ import (
 // buySideResult is what a carrier's contract said this move is worth, in the
 // shape the assignment request already takes.
 type buySideResult struct {
-	RateMethod    shipment.CarrierRateMethod
+	RateMethod    shipmentvocab.CarrierRateMethod
 	BaseRate      decimal.Decimal
 	FuelSurcharge decimal.Decimal
 	Accessorials  []carrierassignmentports.CarrierAccessorialInput
@@ -70,7 +71,7 @@ func (s *Service) buySideRating(
 	}
 
 	result := &buySideResult{
-		RateMethod:   shipment.CarrierRateMethodFlat,
+		RateMethod:   shipmentvocab.CarrierRateMethodFlat,
 		BaseRate:     rated.Amount,
 		RateQuoteID:  quoteIDOf(rated),
 		Accessorials: []carrierassignmentports.CarrierAccessorialInput{},

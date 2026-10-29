@@ -8,8 +8,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentevent"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -89,7 +89,7 @@ func missedStop(cutoff int64) *watchtowerports.MissedStop {
 		ShipmentID:   pulid.MustNew("shp_"),
 		ProNumber:    "PRO-7",
 		OwnerID:      pulid.MustNew("usr_"),
-		StopType:     shipment.StopTypePickup,
+		StopType:     shipmentvocab.StopTypePickup,
 		Cutoff:       cutoff,
 		LocationName: "Acme DC",
 		City:         "Reno",
@@ -115,7 +115,7 @@ func TestMissedPickupSource_AsksForPickupsPastTheGrace(t *testing.T) {
 	assert.Equal(t, exceptionNow-15*60, reader.stopRequests[0].ClosedBefore)
 	assert.Equal(
 		t,
-		[]shipment.StopType{shipment.StopTypePickup, shipment.StopTypeSplitPickup},
+		[]shipmentvocab.StopType{shipmentvocab.StopTypePickup, shipmentvocab.StopTypeSplitPickup},
 		reader.stopRequests[0].StopTypes,
 	)
 
@@ -136,7 +136,7 @@ func TestMissedDeliverySource_GoesCriticalLongPastTheGrace(t *testing.T) {
 	t.Parallel()
 
 	stop := missedStop(exceptionNow - 5*3600)
-	stop.StopType = shipment.StopTypeDelivery
+	stop.StopType = shipmentvocab.StopTypeDelivery
 	reader := &fakeExceptionReader{stops: []*watchtowerports.MissedStop{stop}}
 	source := withClock(NewMissedDeliverySource(exceptionParams(reader, nil)))
 
@@ -144,7 +144,10 @@ func TestMissedDeliverySource_GoesCriticalLongPastTheGrace(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(
 		t,
-		[]shipment.StopType{shipment.StopTypeDelivery, shipment.StopTypeSplitDelivery},
+		[]shipmentvocab.StopType{
+			shipmentvocab.StopTypeDelivery,
+			shipmentvocab.StopTypeSplitDelivery,
+		},
 		reader.stopRequests[0].StopTypes,
 	)
 	assert.Equal(

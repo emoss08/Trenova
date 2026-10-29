@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/chargeallocation"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentrating"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/accessorialchargeports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -67,17 +68,17 @@ func ForShipmentShare(
 
 	for _, charge := range share.Charges {
 		switch charge.Kind {
-		case shipment.ChargeAllocationKindFreight:
+		case shipmentvocab.ChargeAllocationKindFreight:
 			freightLines := freightLines(billType, shp, charge, lineNumber)
 			lines = append(lines, freightLines...)
 			lineNumber += len(freightLines)
 			continue
-		case shipment.ChargeAllocationKindAccessorial:
+		case shipmentvocab.ChargeAllocationKindAccessorial:
 			if charge.Charge == nil {
 				continue
 			}
 			lines = append(lines, accessorialLine(billType, shp, charge, freight, lineNumber))
-		case shipment.ChargeAllocationKindOrderCharge:
+		case shipmentvocab.ChargeAllocationKindOrderCharge:
 			continue
 		}
 		lineNumber++

@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -56,7 +57,7 @@ type allocationArg struct {
 func ReadAllocations(
 	params map[string]any,
 	tenant pagination.TenantInfo,
-	kind shipment.ChargeAllocationKind,
+	kind shipmentvocab.ChargeAllocationKind,
 	current []*shipment.ChargeAllocation,
 ) ([]*shipment.ChargeAllocation, error) {
 	if _, given := params[ParamAllocations]; !given {
@@ -99,7 +100,7 @@ func allocationRow(
 	index int,
 	arg allocationArg,
 	tenant pagination.TenantInfo,
-	kind shipment.ChargeAllocationKind,
+	kind shipmentvocab.ChargeAllocationKind,
 ) (*shipment.ChargeAllocation, error) {
 	path := fmt.Sprintf("%s[%d]", ParamAllocations, index)
 	payer, err := pulid.Parse(strings.TrimSpace(arg.BillToCustomerID))
@@ -133,13 +134,13 @@ func allocationRow(
 		return nil, fmt.Errorf("%s: %w", path, err)
 	}
 	switch method {
-	case shipment.ChargeAllocationMethodPercent:
+	case shipmentvocab.ChargeAllocationMethodPercent:
 		if !hasPercent || hasAmount {
 			return nil, fmt.Errorf("%s gives a percent and no amount when method is Percent",
 				path)
 		}
 		row.Percent = decimal.NewNullDecimal(percent)
-	case shipment.ChargeAllocationMethodAmount:
+	case shipmentvocab.ChargeAllocationMethodAmount:
 		if !hasAmount || hasPercent {
 			return nil, fmt.Errorf("%s gives an amount and no percent when method is Amount",
 				path)

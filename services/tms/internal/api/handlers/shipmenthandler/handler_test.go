@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/customertrackingports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentbillingports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentcommentports"
@@ -489,7 +490,7 @@ func TestShipmentHandler_List_Success(t *testing.T) {
 			return req.Filter.TenantInfo.OrgID == testutil.TestOrgID &&
 				req.Filter.TenantInfo.BuID == testutil.TestBuID &&
 				req.ShipmentOptions.ExpandShipmentDetails &&
-				req.ShipmentOptions.Status == string(shipment.StatusAssigned)
+				req.ShipmentOptions.Status == string(shipmentvocab.StatusAssigned)
 		})).
 		Return(&pagination.CursorListResult[*shipment.Shipment]{
 			Items:       []*shipment.Shipment{{ID: pulid.MustNew("shp_")}},
@@ -730,7 +731,7 @@ func TestShipmentHandler_GetBillingReadiness_Success(t *testing.T) {
 		}).
 		Return(&shipmentbillingports.ShipmentBillingReadiness{
 			ShipmentID:            shipmentID.String(),
-			ShipmentStatus:        shipment.StatusCompleted,
+			ShipmentStatus:        shipmentvocab.StatusCompleted,
 			CanMarkReadyToInvoice: true,
 		}, nil).
 		Once()
@@ -1231,7 +1232,7 @@ func TestShipmentHandler_Cancel_Success(t *testing.T) {
 			assert.Equal(t, "customer request", req.CancelReason)
 			assert.Equal(t, "shp_01ARZ3NDEKTSV4RRFFQ69G5FAV", req.ShipmentID.String())
 			assert.NotNil(t, actor)
-			return &shipment.Shipment{ID: req.ShipmentID, Status: shipment.StatusCanceled}, nil
+			return &shipment.Shipment{ID: req.ShipmentID, Status: shipmentvocab.StatusCanceled}, nil
 		})
 
 	handler := setupShipmentHandler(t, service)
@@ -1292,7 +1293,7 @@ func TestShipmentHandler_Uncancel_Success(t *testing.T) {
 			assert.Equal(t, testutil.TestBuID, req.TenantInfo.BuID)
 			assert.Equal(t, "shp_01ARZ3NDEKTSV4RRFFQ69G5FAV", req.ShipmentID.String())
 			assert.NotNil(t, actor)
-			return &shipment.Shipment{ID: req.ShipmentID, Status: shipment.StatusNew}, nil
+			return &shipment.Shipment{ID: req.ShipmentID, Status: shipmentvocab.StatusNew}, nil
 		})
 
 	handler := setupShipmentHandler(t, service)

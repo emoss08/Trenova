@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentservicetest"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentstate"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/assignmentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	internaltestutil "github.com/emoss08/trenova/internal/testutil"
@@ -50,10 +51,10 @@ func TestStateCoordinator_PrepareForCreate_DerivesStatusesAndTimestamps(t *testi
 	multiErr := coordinator.PrepareForCreateWithDelayThreshold(entity, 30)
 
 	require.Nil(t, multiErr)
-	assert.Equal(t, shipment.StopStatusCompleted, entity.Moves[0].Stops[0].Status)
-	assert.Equal(t, shipment.StopStatusCompleted, entity.Moves[0].Stops[1].Status)
-	assert.Equal(t, shipment.MoveStatusCompleted, entity.Moves[0].Status)
-	assert.Equal(t, shipment.StatusCompleted, entity.Status)
+	assert.Equal(t, shipmentvocab.StopStatusCompleted, entity.Moves[0].Stops[0].Status)
+	assert.Equal(t, shipmentvocab.StopStatusCompleted, entity.Moves[0].Stops[1].Status)
+	assert.Equal(t, shipmentvocab.MoveStatusCompleted, entity.Moves[0].Status)
+	assert.Equal(t, shipmentvocab.StatusCompleted, entity.Status)
 	require.NotNil(t, entity.ActualShipDate)
 	require.NotNil(t, entity.ActualDeliveryDate)
 	assert.Equal(t, actualPickupDeparture, *entity.ActualShipDate)
@@ -73,8 +74,8 @@ func TestStateCoordinator_PrepareForCreate_PreservesAssignedStatusesWithoutOpera
 	multiErr := coordinator.PrepareForCreateWithDelayThreshold(entity, 30)
 
 	require.Nil(t, multiErr)
-	assert.Equal(t, shipment.MoveStatusAssigned, entity.Moves[0].Status)
-	assert.Equal(t, shipment.StatusAssigned, entity.Status)
+	assert.Equal(t, shipmentvocab.MoveStatusAssigned, entity.Moves[0].Status)
+	assert.Equal(t, shipmentvocab.StatusAssigned, entity.Status)
 }
 
 func TestStateCoordinator_PrepareForCreate_DerivesPartiallyAssignedShipment(t *testing.T) {
@@ -92,9 +93,9 @@ func TestStateCoordinator_PrepareForCreate_DerivesPartiallyAssignedShipment(t *t
 	multiErr := coordinator.PrepareForCreateWithDelayThreshold(entity, 30)
 
 	require.Nil(t, multiErr)
-	assert.Equal(t, shipment.MoveStatusAssigned, entity.Moves[0].Status)
-	assert.Equal(t, shipment.MoveStatusNew, entity.Moves[1].Status)
-	assert.Equal(t, shipment.StatusPartiallyAssigned, entity.Status)
+	assert.Equal(t, shipmentvocab.MoveStatusAssigned, entity.Moves[0].Status)
+	assert.Equal(t, shipmentvocab.MoveStatusNew, entity.Moves[1].Status)
+	assert.Equal(t, shipmentvocab.StatusPartiallyAssigned, entity.Status)
 }
 
 func TestStateCoordinator_PrepareForCreate_DerivesDelayedShipment(t *testing.T) {
@@ -109,9 +110,9 @@ func TestStateCoordinator_PrepareForCreate_DerivesDelayedShipment(t *testing.T) 
 	multiErr := coordinator.PrepareForCreateWithDelayThreshold(entity, 1)
 
 	require.Nil(t, multiErr)
-	assert.Equal(t, shipment.StopStatusInTransit, entity.Moves[0].Stops[0].Status)
-	assert.Equal(t, shipment.MoveStatusInTransit, entity.Moves[0].Status)
-	assert.Equal(t, shipment.StatusDelayed, entity.Status)
+	assert.Equal(t, shipmentvocab.StopStatusInTransit, entity.Moves[0].Stops[0].Status)
+	assert.Equal(t, shipmentvocab.MoveStatusInTransit, entity.Moves[0].Status)
+	assert.Equal(t, shipmentvocab.StatusDelayed, entity.Status)
 }
 
 func TestStateCoordinator_PrepareForUpdate_AllowsCompletedStopTimestampCorrection(t *testing.T) {
@@ -129,9 +130,9 @@ func TestStateCoordinator_PrepareForUpdate_AllowsCompletedStopTimestampCorrectio
 	multiErr := coordinator.PrepareForUpdateWithDelayThreshold(original, entity, 30)
 
 	require.Nil(t, multiErr)
-	assert.Equal(t, shipment.StopStatusCompleted, entity.Moves[0].Stops[0].Status)
-	assert.Equal(t, shipment.MoveStatusCompleted, entity.Moves[0].Status)
-	assert.Equal(t, shipment.StatusCompleted, entity.Status)
+	assert.Equal(t, shipmentvocab.StopStatusCompleted, entity.Moves[0].Stops[0].Status)
+	assert.Equal(t, shipmentvocab.MoveStatusCompleted, entity.Moves[0].Status)
+	assert.Equal(t, shipmentvocab.StatusCompleted, entity.Status)
 	assert.Equal(t, correctedDeparture, *entity.ActualShipDate)
 }
 
@@ -173,8 +174,8 @@ func TestStateCoordinator_PrepareForUpdate_RejectsCompletedStopTimestampRemoval(
 
 			require.NotNil(t, multiErr)
 			shipmentservicetest.AssertErrorField(t, multiErr, tt.expectedField)
-			assert.Equal(t, shipment.StopStatusCompleted, entity.Moves[0].Stops[0].Status)
-			assert.Equal(t, shipment.MoveStatusCompleted, entity.Moves[0].Status)
+			assert.Equal(t, shipmentvocab.StopStatusCompleted, entity.Moves[0].Stops[0].Status)
+			assert.Equal(t, shipmentvocab.MoveStatusCompleted, entity.Moves[0].Status)
 		})
 	}
 }
@@ -192,8 +193,8 @@ func TestStateCoordinator_PrepareForUpdate_RejectsCompletedMoveReopenByOmittedSt
 
 	require.NotNil(t, multiErr)
 	shipmentservicetest.AssertErrorField(t, multiErr, "moves[0].status")
-	assert.Equal(t, shipment.MoveStatusCompleted, entity.Moves[0].Status)
-	assert.Equal(t, shipment.StatusCompleted, entity.Status)
+	assert.Equal(t, shipmentvocab.MoveStatusCompleted, entity.Moves[0].Status)
+	assert.Equal(t, shipmentvocab.StatusCompleted, entity.Status)
 }
 
 func TestStateCoordinator_RefreshShipmentState_PreservesBillingAndTerminalStatuses(t *testing.T) {
@@ -201,38 +202,38 @@ func TestStateCoordinator_RefreshShipmentState_PreservesBillingAndTerminalStatus
 
 	tests := []struct {
 		name           string
-		status         shipment.Status
-		expectedStatus shipment.Status
+		status         shipmentvocab.Status
+		expectedStatus shipmentvocab.Status
 	}{
 		{
 			name:           "ready to invoice",
-			status:         shipment.StatusReadyToInvoice,
-			expectedStatus: shipment.StatusReadyToInvoice,
+			status:         shipmentvocab.StatusReadyToInvoice,
+			expectedStatus: shipmentvocab.StatusReadyToInvoice,
 		},
 		{
 			name:           "invoiced",
-			status:         shipment.StatusInvoiced,
-			expectedStatus: shipment.StatusInvoiced,
+			status:         shipmentvocab.StatusInvoiced,
+			expectedStatus: shipmentvocab.StatusInvoiced,
 		},
 		{
 			name:           "canceled",
-			status:         shipment.StatusCanceled,
-			expectedStatus: shipment.StatusCanceled,
+			status:         shipmentvocab.StatusCanceled,
+			expectedStatus: shipmentvocab.StatusCanceled,
 		},
 		{
 			name:           "completed",
-			status:         shipment.StatusCompleted,
-			expectedStatus: shipment.StatusCompleted,
+			status:         shipmentvocab.StatusCompleted,
+			expectedStatus: shipmentvocab.StatusCompleted,
 		},
 		{
 			name:           "active in transit",
-			status:         shipment.StatusInTransit,
-			expectedStatus: shipment.StatusDelayed,
+			status:         shipmentvocab.StatusInTransit,
+			expectedStatus: shipmentvocab.StatusDelayed,
 		},
 		{
 			name:           "partially completed active",
-			status:         shipment.StatusPartiallyCompleted,
-			expectedStatus: shipment.StatusDelayed,
+			status:         shipmentvocab.StatusPartiallyCompleted,
+			expectedStatus: shipmentvocab.StatusDelayed,
 		},
 	}
 
@@ -258,12 +259,12 @@ func TestStateCoordinator_RefreshShipmentState_UsesSequenceOrderForTimestamps(t 
 	entity := shipmentservicetest.ValidShipment()
 	entity.Moves = []*shipment.ShipmentMove{
 		{
-			Status:   shipment.MoveStatusCompleted,
+			Status:   shipmentvocab.MoveStatusCompleted,
 			Sequence: 10,
 			Stops: []*shipment.Stop{
-				completedStopForCoordinator(shipment.StopTypePickup, 0, 300, 310),
+				completedStopForCoordinator(shipmentvocab.StopTypePickup, 0, 300, 310),
 				completedStopForCoordinator(
-					shipment.StopTypeDelivery,
+					shipmentvocab.StopTypeDelivery,
 					1,
 					actualDeliveryDate,
 					410,
@@ -271,11 +272,11 @@ func TestStateCoordinator_RefreshShipmentState_UsesSequenceOrderForTimestamps(t 
 			},
 		},
 		{
-			Status:   shipment.MoveStatusCompleted,
+			Status:   shipmentvocab.MoveStatusCompleted,
 			Sequence: 0,
 			Stops: []*shipment.Stop{
-				completedStopForCoordinator(shipment.StopTypeDelivery, 1, 200, 210),
-				completedStopForCoordinator(shipment.StopTypePickup, 0, 100, actualShipDate),
+				completedStopForCoordinator(shipmentvocab.StopTypeDelivery, 1, 200, 210),
+				completedStopForCoordinator(shipmentvocab.StopTypePickup, 0, 100, actualShipDate),
 			},
 		},
 	}
@@ -300,7 +301,7 @@ func TestServiceUpdate_RejectsReadyToInvoiceBeforeCompletion(t *testing.T) {
 	entity := shipmentservicetest.ValidShipment()
 	entity.ID = original.ID
 	entity.Version = original.Version
-	entity.Status = shipment.StatusReadyToInvoice
+	entity.Status = shipmentvocab.StatusReadyToInvoice
 
 	repo := shipmentportsmock.NewMockShipmentRepository(t)
 	repo.EXPECT().
@@ -369,10 +370,10 @@ func TestServiceUpdate_DerivesAuthoritativeStatusesBeforePersist(t *testing.T) {
 	original.Moves[0].Stops[1].Version = 1
 
 	entity := shipmentservicetest.CloneShipment(original)
-	entity.Status = shipment.StatusNew
-	entity.Moves[0].Status = shipment.MoveStatusNew
-	entity.Moves[0].Stops[0].Status = shipment.StopStatusNew
-	entity.Moves[0].Stops[1].Status = shipment.StopStatusNew
+	entity.Status = shipmentvocab.StatusNew
+	entity.Moves[0].Status = shipmentvocab.MoveStatusNew
+	entity.Moves[0].Stops[0].Status = shipmentvocab.StopStatusNew
+	entity.Moves[0].Stops[1].Status = shipmentvocab.StopStatusNew
 	entity.Moves[0].Stops[0].ActualArrival = &actualPickupArrival
 	entity.Moves[0].Stops[0].ActualDeparture = &actualPickupDeparture
 	entity.Moves[0].Stops[1].ActualArrival = &actualDeliveryArrival
@@ -394,10 +395,10 @@ func TestServiceUpdate_DerivesAuthoritativeStatusesBeforePersist(t *testing.T) {
 			_ context.Context,
 			entity *shipment.Shipment,
 		) (*shipment.Shipment, error) {
-			assert.Equal(t, shipment.StopStatusCompleted, entity.Moves[0].Stops[0].Status)
-			assert.Equal(t, shipment.StopStatusCompleted, entity.Moves[0].Stops[1].Status)
-			assert.Equal(t, shipment.MoveStatusCompleted, entity.Moves[0].Status)
-			assert.Equal(t, shipment.StatusCompleted, entity.Status)
+			assert.Equal(t, shipmentvocab.StopStatusCompleted, entity.Moves[0].Stops[0].Status)
+			assert.Equal(t, shipmentvocab.StopStatusCompleted, entity.Moves[0].Stops[1].Status)
+			assert.Equal(t, shipmentvocab.MoveStatusCompleted, entity.Moves[0].Status)
+			assert.Equal(t, shipmentvocab.StatusCompleted, entity.Status)
 			require.NotNil(t, entity.ActualShipDate)
 			require.NotNil(t, entity.ActualDeliveryDate)
 			assert.Equal(t, actualPickupDeparture, *entity.ActualShipDate)
@@ -453,7 +454,7 @@ func TestServiceUpdate_DerivesAuthoritativeStatusesBeforePersist(t *testing.T) {
 
 	require.NoError(t, err)
 	require.NotNil(t, updated)
-	assert.Equal(t, shipment.StatusCompleted, updated.Status)
+	assert.Equal(t, shipmentvocab.StatusCompleted, updated.Status)
 }
 
 func TestServiceUpdate_AdvancesContinuityWhenMoveBecomesCompleted(t *testing.T) {
@@ -487,9 +488,9 @@ func TestServiceUpdate_AdvancesContinuityWhenMoveBecomesCompleted(t *testing.T) 
 		PrimaryWorkerID: pulid.Must("wrk_"),
 		TractorID:       &tractorID,
 		TrailerID:       &trailerID,
-		Status:          shipment.AssignmentStatusNew,
+		Status:          shipmentvocab.AssignmentStatusNew,
 	}
-	original.Moves[0].Status = shipment.MoveStatusAssigned
+	original.Moves[0].Status = shipmentvocab.MoveStatusAssigned
 
 	entity := shipmentservicetest.CloneShipment(original)
 	entity.Moves[0].Assignment = nil
@@ -506,7 +507,7 @@ func TestServiceUpdate_AdvancesContinuityWhenMoveBecomesCompleted(t *testing.T) 
 	repo.EXPECT().
 		Update(mock.Anything, mock.AnythingOfType("*shipment.Shipment")).
 		RunAndReturn(func(_ context.Context, entity *shipment.Shipment) (*shipment.Shipment, error) {
-			require.Equal(t, shipment.MoveStatusCompleted, entity.Moves[0].Status)
+			require.Equal(t, shipmentvocab.MoveStatusCompleted, entity.Moves[0].Status)
 			return entity, nil
 		}).
 		Once()
@@ -586,7 +587,7 @@ func TestServiceUpdate_AdvancesContinuityWhenMoveBecomesCompleted(t *testing.T) 
 
 	require.NoError(t, err)
 	require.NotNil(t, updated)
-	assert.Equal(t, shipment.StatusCompleted, updated.Status)
+	assert.Equal(t, shipmentvocab.StatusCompleted, updated.Status)
 }
 
 func TestServiceUpdate_RejectsMoveTransitionToInTransitWhenEquipmentActiveElsewhere(t *testing.T) {
@@ -615,9 +616,9 @@ func TestServiceUpdate_RejectsMoveTransitionToInTransitWhenEquipmentActiveElsewh
 		PrimaryWorkerID: pulid.Must("wrk_"),
 		TractorID:       &tractorID,
 		TrailerID:       &trailerID,
-		Status:          shipment.AssignmentStatusNew,
+		Status:          shipmentvocab.AssignmentStatusNew,
 	}
-	original.Moves[0].Status = shipment.MoveStatusAssigned
+	original.Moves[0].Status = shipmentvocab.MoveStatusAssigned
 
 	entity := shipmentservicetest.CloneShipment(original)
 	entity.Moves[0].Stops[0].ActualArrival = &actualPickupArrival
@@ -718,9 +719,9 @@ func TestServiceUpdate_RejectsActualArrivalWhenTractorAndWorkerOverlapPersistedW
 		PrimaryWorkerID: &workerID,
 		TractorID:       &tractorID,
 		TrailerID:       &trailerID,
-		Status:          shipment.AssignmentStatusNew,
+		Status:          shipmentvocab.AssignmentStatusNew,
 	}
-	original.Moves[0].Status = shipment.MoveStatusAssigned
+	original.Moves[0].Status = shipmentvocab.MoveStatusAssigned
 
 	entity := shipmentservicetest.CloneShipment(original)
 	entity.Moves[0].Assignment = nil
@@ -856,9 +857,9 @@ func TestServiceUpdate_RejectsTwoMovesGoingInTransitWithSameTrailerInPayload(t *
 			PrimaryWorkerID: pulid.Must("wrk_"),
 			TractorID:       &tractorID,
 			TrailerID:       &trailerID,
-			Status:          shipment.AssignmentStatusNew,
+			Status:          shipmentvocab.AssignmentStatusNew,
 		}
-		move.Status = shipment.MoveStatusAssigned
+		move.Status = shipmentvocab.MoveStatusAssigned
 	}
 
 	entity := shipmentservicetest.CloneShipment(original)
@@ -955,12 +956,12 @@ func TestServiceUpdate_PreservesAssignedStateWhenPayloadSendsNew(t *testing.T) {
 	original.Moves[0].Stops[1].ID = pulid.MustNew("stp_")
 	original.Moves[0].Stops[1].ShipmentMoveID = original.Moves[0].ID
 	original.Moves[0].Assignment = &shipment.Assignment{ID: pulid.MustNew("asn_")}
-	original.Moves[0].Status = shipment.MoveStatusAssigned
-	original.Status = shipment.StatusAssigned
+	original.Moves[0].Status = shipmentvocab.MoveStatusAssigned
+	original.Status = shipmentvocab.StatusAssigned
 
 	entity := shipmentservicetest.CloneShipment(original)
-	entity.Status = shipment.StatusNew
-	entity.Moves[0].Status = shipment.MoveStatusNew
+	entity.Status = shipmentvocab.StatusNew
+	entity.Moves[0].Status = shipmentvocab.MoveStatusNew
 	entity.Moves[0].Assignment = nil
 	entity.BOL = "BOL-UPDATED"
 
@@ -982,8 +983,8 @@ func TestServiceUpdate_PreservesAssignedStateWhenPayloadSendsNew(t *testing.T) {
 		) (*shipment.Shipment, error) {
 			require.NotNil(t, entity.Moves[0].Assignment)
 			assert.Equal(t, original.Moves[0].Assignment.ID, entity.Moves[0].Assignment.ID)
-			assert.Equal(t, shipment.MoveStatusAssigned, entity.Moves[0].Status)
-			assert.Equal(t, shipment.StatusAssigned, entity.Status)
+			assert.Equal(t, shipmentvocab.MoveStatusAssigned, entity.Moves[0].Status)
+			assert.Equal(t, shipmentvocab.StatusAssigned, entity.Status)
 			return entity, nil
 		}).
 		Once()
@@ -1035,7 +1036,7 @@ func TestServiceUpdate_PreservesAssignedStateWhenPayloadSendsNew(t *testing.T) {
 
 	require.NoError(t, err)
 	require.NotNil(t, updated)
-	assert.Equal(t, shipment.StatusAssigned, updated.Status)
+	assert.Equal(t, shipmentvocab.StatusAssigned, updated.Status)
 }
 
 func TestServiceUpdate_RejectsDirectInvoiceFromCompleted(t *testing.T) {
@@ -1044,13 +1045,13 @@ func TestServiceUpdate_RejectsDirectInvoiceFromCompleted(t *testing.T) {
 	original := shipmentservicetest.ValidShipment()
 	original.ID = pulid.MustNew("shp_")
 	original.Version = 1
-	original.Status = shipment.StatusCompleted
-	original.Moves[0].Status = shipment.MoveStatusCompleted
-	original.Moves[0].Stops[0].Status = shipment.StopStatusCompleted
-	original.Moves[0].Stops[1].Status = shipment.StopStatusCompleted
+	original.Status = shipmentvocab.StatusCompleted
+	original.Moves[0].Status = shipmentvocab.MoveStatusCompleted
+	original.Moves[0].Stops[0].Status = shipmentvocab.StopStatusCompleted
+	original.Moves[0].Stops[1].Status = shipmentvocab.StopStatusCompleted
 
 	entity := shipmentservicetest.CloneShipment(original)
-	entity.Status = shipment.StatusInvoiced
+	entity.Status = shipmentvocab.StatusInvoiced
 
 	repo := shipmentportsmock.NewMockShipmentRepository(t)
 	repo.EXPECT().
@@ -1099,18 +1100,18 @@ func completedShipmentForCoordinator() *shipment.Shipment {
 	entity := shipmentservicetest.ValidShipment()
 	entity.ID = pulid.MustNew("shp_")
 	entity.Version = 1
-	entity.Status = shipment.StatusCompleted
+	entity.Status = shipmentvocab.StatusCompleted
 
 	move := entity.Moves[0]
 	move.ID = pulid.MustNew("sm_")
 	move.ShipmentID = entity.ID
-	move.Status = shipment.MoveStatusCompleted
+	move.Status = shipmentvocab.MoveStatusCompleted
 	move.Version = 1
 
 	for stopIndex, stop := range move.Stops {
 		stop.ID = pulid.MustNew("stp_")
 		stop.ShipmentMoveID = move.ID
-		stop.Status = shipment.StopStatusCompleted
+		stop.Status = shipmentvocab.StopStatusCompleted
 		stop.Version = 1
 		arrival := int64(100 + stopIndex*100)
 		departure := arrival + 10
@@ -1123,22 +1124,22 @@ func completedShipmentForCoordinator() *shipment.Shipment {
 	return entity
 }
 
-func shipmentWithOverdueStopForRefresh(status shipment.Status) *shipment.Shipment {
+func shipmentWithOverdueStopForRefresh(status shipmentvocab.Status) *shipment.Shipment {
 	entity := shipmentservicetest.ValidShipment()
 	entity.Status = status
-	entity.Moves[0].Status = shipment.MoveStatusInTransit
-	entity.Moves[0].Stops[0].Status = shipment.StopStatusInTransit
+	entity.Moves[0].Status = shipmentvocab.MoveStatusInTransit
+	entity.Moves[0].Stops[0].Status = shipmentvocab.StopStatusInTransit
 	entity.Moves[0].Stops[0].ScheduledWindowEnd = new(int64(100))
 
-	if status != shipment.StatusPartiallyCompleted {
+	if status != shipmentvocab.StatusPartiallyCompleted {
 		return entity
 	}
 
 	completedMove := shipmentservicetest.ValidMove()
-	completedMove.Status = shipment.MoveStatusCompleted
+	completedMove.Status = shipmentvocab.MoveStatusCompleted
 	completedMove.Sequence = 0
 	for _, stop := range completedMove.Stops {
-		stop.Status = shipment.StopStatusCompleted
+		stop.Status = shipmentvocab.StopStatusCompleted
 		stop.ActualArrival = new(int64(10))
 		stop.ActualDeparture = new(int64(20))
 	}
@@ -1150,13 +1151,13 @@ func shipmentWithOverdueStopForRefresh(status shipment.Status) *shipment.Shipmen
 }
 
 func completedStopForCoordinator(
-	stopType shipment.StopType,
+	stopType shipmentvocab.StopType,
 	sequence int64,
 	actualArrival int64,
 	actualDeparture int64,
 ) *shipment.Stop {
 	stop := shipmentservicetest.MakeStop(stopType, sequence, 1, 2)
-	stop.Status = shipment.StopStatusCompleted
+	stop.Status = shipmentvocab.StopStatusCompleted
 	stop.ActualArrival = &actualArrival
 	stop.ActualDeparture = &actualDeparture
 	return stop

@@ -9,6 +9,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/chargeallocation"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/chargeallocationports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
@@ -192,7 +193,7 @@ func PreviewForResolution(entity *shipment.Shipment) *shipment.Shipment {
 			continue
 		}
 		copied := *allocation
-		if copied.ChargeKind == shipment.ChargeAllocationKindAccessorial &&
+		if copied.ChargeKind == shipmentvocab.ChargeAllocationKindAccessorial &&
 			copied.AdditionalChargeIndex != nil {
 			idx := *copied.AdditionalChargeIndex
 			if idx >= 0 && idx < len(preview.AdditionalCharges) &&

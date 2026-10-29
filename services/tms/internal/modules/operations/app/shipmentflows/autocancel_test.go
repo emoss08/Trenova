@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/testutil/mocks/realtimeportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
@@ -122,7 +123,7 @@ func TestServiceAutoCancelShipments_PublishesBulkInvalidation(t *testing.T) {
 			ID:             pulid.MustNew("shp_"),
 			OrganizationID: orgID,
 			BusinessUnitID: buID,
-			Status:         shipment.StatusCanceled,
+			Status:         shipmentvocab.StatusCanceled,
 		}}, nil).
 		Once()
 

@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/sequenceconfig"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/chargeallocation"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
 	"github.com/emoss08/trenova/internal/seeds/volume/ledgervolume"
@@ -377,10 +378,10 @@ func (g *billingPhase) bilSendBackComment(
 		ShipmentID:     entity.ShipmentID,
 		UserID:         userID,
 		Comment:        text,
-		Type:           shipment.CommentTypeBilling,
-		Visibility:     shipment.CommentVisibilityOperations,
-		Priority:       shipment.CommentPriorityHigh,
-		Source:         shipment.CommentSourceSystem,
+		Type:           shipmentvocab.CommentTypeBilling,
+		Visibility:     shipmentvocab.CommentVisibilityOperations,
+		Priority:       shipmentvocab.CommentPriorityHigh,
+		Source:         shipmentvocab.CommentSourceSystem,
 		Metadata:       map[string]any{},
 		Version:        1,
 		CreatedAt:      at,

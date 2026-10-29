@@ -13,7 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/domain/editenderchange"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -77,7 +77,7 @@ func (s *Service) RecordInboundFreightInvoice(
 		// assignment's TotalCost at match time, so only Flat rates are stamped.
 		entity.ShipmentID = req.AcceptedOffer.Tender.ShipmentID
 		entity.CarrierID = req.AcceptedOffer.CarrierID
-		if req.AcceptedOffer.RateMethod == shipment.CarrierRateMethodFlat {
+		if req.AcceptedOffer.RateMethod == shipmentvocab.CarrierRateMethodFlat {
 			entity.ExpectedAmount = decimal.NullDecimal{
 				Decimal: req.AcceptedOffer.Rate,
 				Valid:   true,

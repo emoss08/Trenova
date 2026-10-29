@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/commentbody"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -189,7 +189,7 @@ func TestValidateCommentBody_RejectsExcessiveDepth(t *testing.T) {
 func TestValidateCommentBody_RejectsOverlongText(t *testing.T) {
 	t.Parallel()
 
-	body := doc(paragraph(textNode(strings.Repeat("a", shipment.MaxCommentLength+1))))
+	body := doc(paragraph(textNode(strings.Repeat("a", shipmentvocab.MaxCommentLength+1))))
 	require.NotNil(t, validateBody(body))
 }
 

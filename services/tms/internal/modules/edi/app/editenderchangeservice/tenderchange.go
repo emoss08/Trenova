@@ -21,6 +21,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -456,7 +457,7 @@ func applyTenderPayloadToShipment(
 		edi.MappingEntityTypeFormulaTemplate,
 		payload.FormulaTemplateID,
 	))
-	target.TenderStatus = new(shipment.TenderStatusAccepted)
+	target.TenderStatus = new(shipmentvocab.TenderStatusAccepted)
 	target.BOL = payload.BOL
 	target.Pieces = payload.Pieces
 	target.Weight = payload.Weight
@@ -489,7 +490,7 @@ func mappedTenderMoves(
 			BusinessUnitID: target.BusinessUnitID,
 			OrganizationID: target.OrganizationID,
 			ShipmentID:     target.ID,
-			Status:         shipment.MoveStatusNew,
+			Status:         shipmentvocab.MoveStatusNew,
 			Loaded:         move.Loaded,
 			Sequence:       move.Sequence,
 			Distance:       move.Distance,
@@ -536,9 +537,9 @@ func mappedTenderStops(
 				edi.MappingEntityTypeLocation,
 				stop.LocationID,
 			),
-			Status:               shipment.StopStatusNew,
-			Type:                 shipment.StopType(stop.Type),
-			ScheduleType:         shipment.StopScheduleType(stop.ScheduleType),
+			Status:               shipmentvocab.StopStatusNew,
+			Type:                 shipmentvocab.StopType(stop.Type),
+			ScheduleType:         shipmentvocab.StopScheduleType(stop.ScheduleType),
 			Sequence:             stop.Sequence,
 			Pieces:               stop.Pieces,
 			Weight:               stop.Weight,

@@ -6,7 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detentioncollectability"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionevidence"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -18,7 +18,7 @@ func strongOccurrence() *detention.DetentionOccurrence {
 		ArrivedAt:          new(int64(1000)),
 		DepartedAt:         new(int64(20000)),
 		AppointmentStart:   new(int64(900)),
-		ScheduleType:       shipment.StopScheduleTypeAppointment,
+		ScheduleType:       shipmentvocab.StopScheduleTypeAppointment,
 		NotificationStatus: detention.NotificationStatusSent,
 	}
 }
@@ -250,7 +250,7 @@ func TestAssessCollectability_BackfilledAppointmentScoresLower(t *testing.T) {
 	t.Parallel()
 
 	occurrence := strongOccurrence()
-	occurrence.ScheduleType = shipment.StopScheduleTypeOpen
+	occurrence.ScheduleType = shipmentvocab.StopScheduleTypeOpen
 
 	assessment := detentioncollectability.AssessCollectability(
 		occurrence, strongEvidence(occurrence.ID),

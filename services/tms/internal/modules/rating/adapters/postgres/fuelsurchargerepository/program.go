@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/fuelsurcharge"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/fuelsurcharge/fuelsurchargedb"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/fuelsurchargeports"
@@ -272,7 +273,7 @@ func fallbackShipmentsQuery(limit int) *keel.Query[*shipment.AdditionalCharge] {
 			ac.IsSystemGenerated.IsTrue(),
 			ac.FuelSurchargeProgramID.IsNotNull(),
 			ac.FuelSurchargeDetail.Text(usedFallbackDetailPath).Eq("true"),
-			sp.Status.NotIn(shipment.StatusInvoiced, shipment.StatusCanceled),
+			sp.Status.NotIn(shipmentvocab.StatusInvoiced, shipmentvocab.StatusCanceled),
 		).
 		Limit(limit)
 }

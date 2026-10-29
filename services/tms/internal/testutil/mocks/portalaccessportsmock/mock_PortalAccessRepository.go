@@ -5,6 +5,7 @@
 package portalaccessportsmock
 
 import (
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/portalinvitation"
@@ -941,7 +942,7 @@ func (_c *MockPortalAccessRepository_RevokePortalAccess_Call) RunAndReturn(run f
 }
 
 // UpdateAssignmentAck provides a mock function for the type MockPortalAccessRepository
-func (_mock *MockPortalAccessRepository) UpdateAssignmentAck(ctx context.Context, tenantInfo pagination.TenantInfo, workerID pulid.ID, assignmentID pulid.ID, ack shipment.AssignmentAck, reason string) (*shipment.Assignment, error) {
+func (_mock *MockPortalAccessRepository) UpdateAssignmentAck(ctx context.Context, tenantInfo pagination.TenantInfo, workerID pulid.ID, assignmentID pulid.ID, ack shipmentvocab.AssignmentAck, reason string) (*shipment.Assignment, error) {
 	ret := _mock.Called(ctx, tenantInfo, workerID, assignmentID, ack, reason)
 
 	if len(ret) == 0 {
@@ -950,17 +951,17 @@ func (_mock *MockPortalAccessRepository) UpdateAssignmentAck(ctx context.Context
 
 	var r0 *shipment.Assignment
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.TenantInfo, pulid.ID, pulid.ID, shipment.AssignmentAck, string) (*shipment.Assignment, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.TenantInfo, pulid.ID, pulid.ID, shipmentvocab.AssignmentAck, string) (*shipment.Assignment, error)); ok {
 		return returnFunc(ctx, tenantInfo, workerID, assignmentID, ack, reason)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.TenantInfo, pulid.ID, pulid.ID, shipment.AssignmentAck, string) *shipment.Assignment); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.TenantInfo, pulid.ID, pulid.ID, shipmentvocab.AssignmentAck, string) *shipment.Assignment); ok {
 		r0 = returnFunc(ctx, tenantInfo, workerID, assignmentID, ack, reason)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*shipment.Assignment)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, pagination.TenantInfo, pulid.ID, pulid.ID, shipment.AssignmentAck, string) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, pagination.TenantInfo, pulid.ID, pulid.ID, shipmentvocab.AssignmentAck, string) error); ok {
 		r1 = returnFunc(ctx, tenantInfo, workerID, assignmentID, ack, reason)
 	} else {
 		r1 = ret.Error(1)
@@ -978,13 +979,13 @@ type MockPortalAccessRepository_UpdateAssignmentAck_Call struct {
 //   - tenantInfo pagination.TenantInfo
 //   - workerID pulid.ID
 //   - assignmentID pulid.ID
-//   - ack shipment.AssignmentAck
+//   - ack shipmentvocab.AssignmentAck
 //   - reason string
 func (_e *MockPortalAccessRepository_Expecter) UpdateAssignmentAck(ctx any, tenantInfo any, workerID any, assignmentID any, ack any, reason any) *MockPortalAccessRepository_UpdateAssignmentAck_Call {
 	return &MockPortalAccessRepository_UpdateAssignmentAck_Call{Call: _e.mock.On("UpdateAssignmentAck", ctx, tenantInfo, workerID, assignmentID, ack, reason)}
 }
 
-func (_c *MockPortalAccessRepository_UpdateAssignmentAck_Call) Run(run func(ctx context.Context, tenantInfo pagination.TenantInfo, workerID pulid.ID, assignmentID pulid.ID, ack shipment.AssignmentAck, reason string)) *MockPortalAccessRepository_UpdateAssignmentAck_Call {
+func (_c *MockPortalAccessRepository_UpdateAssignmentAck_Call) Run(run func(ctx context.Context, tenantInfo pagination.TenantInfo, workerID pulid.ID, assignmentID pulid.ID, ack shipmentvocab.AssignmentAck, reason string)) *MockPortalAccessRepository_UpdateAssignmentAck_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -1002,9 +1003,9 @@ func (_c *MockPortalAccessRepository_UpdateAssignmentAck_Call) Run(run func(ctx 
 		if args[3] != nil {
 			arg3 = args[3].(pulid.ID)
 		}
-		var arg4 shipment.AssignmentAck
+		var arg4 shipmentvocab.AssignmentAck
 		if args[4] != nil {
-			arg4 = args[4].(shipment.AssignmentAck)
+			arg4 = args[4].(shipmentvocab.AssignmentAck)
 		}
 		var arg5 string
 		if args[5] != nil {
@@ -1027,7 +1028,7 @@ func (_c *MockPortalAccessRepository_UpdateAssignmentAck_Call) Return(assignment
 	return _c
 }
 
-func (_c *MockPortalAccessRepository_UpdateAssignmentAck_Call) RunAndReturn(run func(ctx context.Context, tenantInfo pagination.TenantInfo, workerID pulid.ID, assignmentID pulid.ID, ack shipment.AssignmentAck, reason string) (*shipment.Assignment, error)) *MockPortalAccessRepository_UpdateAssignmentAck_Call {
+func (_c *MockPortalAccessRepository_UpdateAssignmentAck_Call) RunAndReturn(run func(ctx context.Context, tenantInfo pagination.TenantInfo, workerID pulid.ID, assignmentID pulid.ID, ack shipmentvocab.AssignmentAck, reason string) (*shipment.Assignment, error)) *MockPortalAccessRepository_UpdateAssignmentAck_Call {
 	_c.Call.Return(run)
 	return _c
 }

@@ -28,6 +28,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/chargeallocation"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/chargeallocationports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/orderports"
@@ -401,7 +402,7 @@ func (s *Service) TransferToBillingItems(
 		return nil, err
 	}
 
-	if shp.Status != shipment.StatusReadyToInvoice {
+	if shp.Status != shipmentvocab.StatusReadyToInvoice {
 		return nil, errortypes.NewValidationError(
 			"shipmentId",
 			errortypes.ErrInvalidOperation,

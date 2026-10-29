@@ -97,7 +97,7 @@ Shape: an fx `Params{DB *postgres.Connection; Logger}`, an unexported `repositor
   GiST index's predicate names stays inline with `keel.DynConst`.
 - **Partial and expression indexes under generic plans.** A prepared statement settles on a plan
   without its parameters' values, so a predicate reaches a partial index only through a constant.
-  keel writes a declared constant of an enum column into the statement (`s.Status.Eq(shipment.StatusNew)`
+  keel writes a declared constant of an enum column into the statement (`s.Status.Eq(shipmentvocab.StatusNew)`
   is `status = 'New'`); a fixed constant of a plain string column takes `keel.DynConst`. A lookup an
   index on `lower(code)` serves compares `t.Code.Lower().Eq(strings.ToLower(v))`, never `t.Code.Eq(v)`.
   Pin a hot path with `keeltest.UsesIndex` in `schemalint/index_plans_integration_test.go`.
