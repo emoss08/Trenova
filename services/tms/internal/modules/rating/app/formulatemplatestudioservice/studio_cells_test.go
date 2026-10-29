@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplatetest"
+	"github.com/emoss08/trenova/internal/modules/rating/ratingtest/formulatemplatetest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/rules"
 	"github.com/stretchr/testify/assert"

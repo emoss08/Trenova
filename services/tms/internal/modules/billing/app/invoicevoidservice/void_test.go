@@ -5,8 +5,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoiceaction"
-	"github.com/emoss08/trenova/internal/modules/billing/app/invoiceservicetest"
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoicevalidation"
+	"github.com/emoss08/trenova/internal/modules/billing/billingtest/invoiceservicetest"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment"

@@ -4,7 +4,7 @@ package peopleresolver
 
 import (
 	model "github.com/emoss08/trenova/internal/api/graphql/gqlexec/internal/e2e/model"
-	"github.com/emoss08/trenova/internal/api/graphql/gqlexec/internal/e2e/resolver/resolvercore"
+	resolvercore "github.com/emoss08/trenova/internal/api/graphql/gqlexec/internal/e2e/resolver/resolvercore"
 )
 
 type Deps struct {

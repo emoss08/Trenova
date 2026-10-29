@@ -375,6 +375,7 @@ components:
   billing-test:
     in:
       - internal/modules/billing/billingtest
+      - internal/modules/billing/billingtest/**
   settlement-domain:
     in:
       - internal/modules/settlement/domain
@@ -3608,6 +3609,7 @@ deps:
   pkg:
     mayDependOn:
       - pkg
+      - accounting-domain # TODO(build-arch): pkg imports a module (rule 7); move the shared type into pkg or invert (1 imports)
       - agent-domain # TODO(build-arch): pkg imports a module (rule 7); move the shared type into pkg or invert (1 imports)
       - agent-ports # TODO(build-arch): pkg imports a module (rule 7); move the shared type into pkg or invert (1 imports)
       - api # TODO(build-arch): pkg imports a module (rule 7); move the shared type into pkg or invert (3 imports)
