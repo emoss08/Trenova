@@ -1,4 +1,4 @@
-package invoicetools
+package invoiceadjustmenttools
 
 import (
 	"context"
@@ -202,11 +202,11 @@ func TestSubmitInvoiceAdjustment_OneAdjustmentPreviewsItsFigures(t *testing.T) {
 	tool := NewSubmitInvoiceAdjustmentTool(adjuster)
 	invoiceID := pulid.MustNew("inv_")
 	params := agenttoolstest.ExecuteParams(map[string]any{
-		paramAdjustments: []any{map[string]any{
+		toolparams.ParamAdjustments: []any{map[string]any{
 			toolparams.ParamInvoiceID: invoiceID.String(),
 			paramAdjustmentKind:       string(invoiceadjustment.KindCreditOnly),
 			toolparams.ParamReason:    "Detention was billed twice",
-			paramAdjustmentLines: []any{map[string]any{
+			toolparams.ParamAdjustmentLines: []any{map[string]any{
 				paramInvoiceLineID: pulid.MustNew("invl_").String(),
 				paramCreditAmount:  "125.00",
 			}},
@@ -262,7 +262,7 @@ func TestSubmitInvoiceAdjustment_ManyGoAsOneBatch(t *testing.T) {
 			toolparams.ParamReason:    "Small balance write-off",
 		})
 	}
-	params := agenttoolstest.ExecuteParams(map[string]any{paramAdjustments: items})
+	params := agenttoolstest.ExecuteParams(map[string]any{toolparams.ParamAdjustments: items})
 	params.ProposalID = pulid.MustNew("ap_")
 	params.IdempotencyKey = params.ProposalID.String()
 
@@ -288,7 +288,7 @@ func TestSubmitInvoiceAdjustment_PreviewErrorsRefuseIt(t *testing.T) {
 	adjuster := &fakeAdjuster{figures: figures}
 	tool := NewSubmitInvoiceAdjustmentTool(adjuster)
 	params := agenttoolstest.ExecuteParams(map[string]any{
-		paramAdjustments: []any{map[string]any{
+		toolparams.ParamAdjustments: []any{map[string]any{
 			toolparams.ParamInvoiceID: pulid.MustNew("inv_").String(),
 			paramAdjustmentKind:       string(invoiceadjustment.KindCreditOnly),
 			toolparams.ParamReason:    "Wrong rate",
@@ -309,7 +309,7 @@ func TestSubmitInvoiceAdjustment_TakesADraftOrAdjustmentsNotBoth(t *testing.T) {
 	tool := NewSubmitInvoiceAdjustmentTool(&fakeAdjuster{figures: adjustmentFigures(false)})
 	both := agenttoolstest.ExecuteParams(map[string]any{
 		ParamDraftAdjustmentID: pulid.MustNew("iadj_").String(),
-		paramAdjustments: []any{map[string]any{
+		toolparams.ParamAdjustments: []any{map[string]any{
 			toolparams.ParamInvoiceID: pulid.MustNew("inv_").String(),
 			paramAdjustmentKind:       string(invoiceadjustment.KindCreditOnly),
 			toolparams.ParamReason:    "x",

@@ -1,4 +1,4 @@
-package invoicetools
+package invoicelifecycletools
 
 import (
 	"fmt"
@@ -195,29 +195,32 @@ func renderVoid(
 	reversal, err := toolpreview.Create(
 		toolpreview.Record{
 			Resource: permission.ResourceInvoice,
-			Label:    adjustmentLabel(figures.Kind, plan.Before.Number),
+			Label:    invoicepreview.AdjustmentLabel(figures.Kind, plan.Before.Number),
 		},
-		&adjustmentView{
+		&invoicepreview.AdjustmentView{
 			InvoiceID: plan.Before.ID,
 			Kind:      string(figures.Kind),
 			Reason:    plan.After.VoidReason,
-			Status:    string(outcomeStatus(figures)),
+			Status:    string(invoicepreview.OutcomeStatus(figures)),
 		},
-		toolpreview.WithRefs(adjustmentRefs),
+		toolpreview.WithRefs(invoicepreview.AdjustmentRefs),
 	)
 	if err != nil {
 		return nil, err
 	}
-	adjustmentMoney(reversal, figures, plan.Before.CurrencyCode)
+	invoicepreview.AdjustmentMoney(reversal, figures, plan.Before.CurrencyCode)
 
 	preview := toolpreview.Build(fmt.Sprintf(
 		"Would void posted %s through a full reversal crediting %s, which %s; the invoice "+
 			"voids when it executes and %s.%s",
-		label, figures.CreditTotalAmount.Abs().StringFixed(2), outcomeSentence(figures),
-		disposition, figureWarnings(figures),
+		label,
+		figures.CreditTotalAmount.Abs().StringFixed(2),
+		invoicepreview.OutcomeSentence(figures),
+		disposition,
+		invoicepreview.FigureWarnings(figures),
 	), reversal, invoiceChange)
 	preview.Partial = true
-	if refusal := figuresRefusal(
+	if refusal := invoicepreview.FiguresRefusal(
 		[]*invoiceadjustmentports.InvoiceAdjustmentPreview{figures},
 	); refusal != nil {
 		return changepreview.WarnWouldFail(preview, refusal), nil

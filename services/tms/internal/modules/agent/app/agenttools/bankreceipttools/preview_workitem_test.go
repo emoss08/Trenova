@@ -1,4 +1,4 @@
-package invoicetools
+package bankreceipttools
 
 import (
 	"testing"

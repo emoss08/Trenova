@@ -3,6 +3,7 @@ package agenttoolservice
 import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/accountingtools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/alerttools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/bankreceipttools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/billingtools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/carriertools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/dashboardtools"
@@ -16,6 +17,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/findingtools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/inboundtools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/insighttools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/invoiceadjustmenttools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/invoicedisputetools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/invoicelifecycletools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/invoiceruntools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/invoicetools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/locationtools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/memorytools"
@@ -383,7 +388,7 @@ func provideDismissInsightTool(insights *insightservice.Service) agenttoolports.
 }
 
 func provideMatchBankReceiptTool(receipts *bankreceiptservice.Service) agenttoolports.AgentTool {
-	return invoicetools.NewMatchBankReceiptTool(receipts)
+	return bankreceipttools.NewMatchBankReceiptTool(receipts)
 }
 
 func providePostCustomerPaymentTool(
@@ -391,13 +396,13 @@ func providePostCustomerPaymentTool(
 	receipts *bankreceiptservice.Service,
 	permissions permissionports.PermissionEngine,
 ) agenttoolports.AgentTool {
-	return invoicetools.NewPostCustomerPaymentTool(payments, receipts, permissions)
+	return bankreceipttools.NewPostCustomerPaymentTool(payments, receipts, permissions)
 }
 
 func provideResolveBankReceiptWorkItemTool(
 	items *bankreceiptworkitemservice.Service,
 ) agenttoolports.AgentTool {
-	return invoicetools.NewResolveBankReceiptWorkItemTool(items)
+	return bankreceipttools.NewResolveBankReceiptWorkItemTool(items)
 }
 
 func provideEscalateDetentionTool(detention *detentionservice.Service) agenttoolports.AgentTool {
@@ -585,19 +590,19 @@ func provideApplyEDIConnectionDraftTool(
 func provideOpenInvoiceDisputeTool(
 	disputes invoiceports.InvoiceDisputeService,
 ) agenttoolports.AgentTool {
-	return invoicetools.NewOpenInvoiceDisputeTool(disputes)
+	return invoicedisputetools.NewOpenInvoiceDisputeTool(disputes)
 }
 
 func provideResolveInvoiceDisputeTool(
 	disputes invoiceports.InvoiceDisputeService,
 ) agenttoolports.AgentTool {
-	return invoicetools.NewResolveInvoiceDisputeTool(disputes)
+	return invoicedisputetools.NewResolveInvoiceDisputeTool(disputes)
 }
 
 func provideWithdrawInvoiceDisputeTool(
 	disputes invoiceports.InvoiceDisputeService,
 ) agenttoolports.AgentTool {
-	return invoicetools.NewWithdrawInvoiceDisputeTool(disputes)
+	return invoicedisputetools.NewWithdrawInvoiceDisputeTool(disputes)
 }
 
 func provideApplyCustomerPaymentTool(
@@ -627,47 +632,47 @@ func provideUnapplyCreditMemoTool(
 func provideSaveInvoiceAdjustmentDraftTool(
 	adjustments invoiceadjustmentports.InvoiceAdjustmentService,
 ) agenttoolports.AgentTool {
-	return invoicetools.NewSaveInvoiceAdjustmentDraftTool(adjustments)
+	return invoiceadjustmenttools.NewSaveInvoiceAdjustmentDraftTool(adjustments)
 }
 
 func provideSubmitInvoiceAdjustmentTool(
 	adjustments invoiceadjustmentports.InvoiceAdjustmentService,
 ) agenttoolports.AgentTool {
-	return invoicetools.NewSubmitInvoiceAdjustmentTool(adjustments)
+	return invoiceadjustmenttools.NewSubmitInvoiceAdjustmentTool(adjustments)
 }
 
 func provideApproveInvoiceAdjustmentTool(
 	adjustments invoiceadjustmentports.InvoiceAdjustmentService,
 ) agenttoolports.AgentTool {
-	return invoicetools.NewApproveInvoiceAdjustmentTool(adjustments)
+	return invoiceadjustmenttools.NewApproveInvoiceAdjustmentTool(adjustments)
 }
 
 func provideRejectInvoiceAdjustmentTool(
 	adjustments invoiceadjustmentports.InvoiceAdjustmentService,
 ) agenttoolports.AgentTool {
-	return invoicetools.NewRejectInvoiceAdjustmentTool(adjustments)
+	return invoiceadjustmenttools.NewRejectInvoiceAdjustmentTool(adjustments)
 }
 
 func provideBuildInvoiceRunTool(runs *invoicerunservice.Service) agenttoolports.AgentTool {
-	return invoicetools.NewBuildInvoiceRunTool(runs)
+	return invoiceruntools.NewBuildInvoiceRunTool(runs)
 }
 
 func provideAdjustInvoiceRunMembershipTool(
 	runs *invoicerunservice.Service,
 ) agenttoolports.AgentTool {
-	return invoicetools.NewAdjustInvoiceRunMembershipTool(runs)
+	return invoiceruntools.NewAdjustInvoiceRunMembershipTool(runs)
 }
 
 func provideCommitInvoiceRunTool(runs *invoicerunservice.Service) agenttoolports.AgentTool {
-	return invoicetools.NewCommitInvoiceRunTool(runs)
+	return invoiceruntools.NewCommitInvoiceRunTool(runs)
 }
 
 func provideCancelInvoiceRunTool(runs *invoicerunservice.Service) agenttoolports.AgentTool {
-	return invoicetools.NewCancelInvoiceRunTool(runs)
+	return invoiceruntools.NewCancelInvoiceRunTool(runs)
 }
 
 func provideBillStatementNowTool(runs *invoicerunservice.Service) agenttoolports.AgentTool {
-	return invoicetools.NewBillStatementNowTool(runs)
+	return invoiceruntools.NewBillStatementNowTool(runs)
 }
 
 func provideAssessLateChargesTool(
@@ -681,25 +686,25 @@ func provideShareInvoiceTool(shares *invoiceshareservice.Service) agenttoolports
 }
 
 func provideUpdateInvoiceDraftTool(invoices *invoiceservice.Service) agenttoolports.AgentTool {
-	return invoicetools.NewUpdateInvoiceDraftTool(invoices)
+	return invoicelifecycletools.NewUpdateInvoiceDraftTool(invoices)
 }
 
 func provideGenerateInvoicePDFTool(invoices *invoiceservice.Service) agenttoolports.AgentTool {
-	return invoicetools.NewGenerateInvoicePDFTool(invoices)
+	return invoicelifecycletools.NewGenerateInvoicePDFTool(invoices)
 }
 
 func provideCreateInvoiceTool(invoices *invoiceservice.Service) agenttoolports.AgentTool {
-	return invoicetools.NewCreateInvoiceTool(invoices)
+	return invoicelifecycletools.NewCreateInvoiceTool(invoices)
 }
 
 func provideCreateInvoiceMemoTool(invoices *invoiceservice.Service) agenttoolports.AgentTool {
-	return invoicetools.NewCreateInvoiceMemoTool(invoices)
+	return invoicelifecycletools.NewCreateInvoiceMemoTool(invoices)
 }
 
 func provideVoidInvoiceTool(invoices *invoiceservice.Service) agenttoolports.AgentTool {
-	return invoicetools.NewVoidInvoiceTool(invoices)
+	return invoicelifecycletools.NewVoidInvoiceTool(invoices)
 }
 
 func provideSendInvoiceEDITool(invoices *invoiceservice.Service) agenttoolports.AgentTool {
-	return invoicetools.NewSendInvoiceEDITool(invoices)
+	return invoicelifecycletools.NewSendInvoiceEDITool(invoices)
 }

@@ -1,13 +1,13 @@
-package invoicetools
+package invoiceadjustmenttools
 
 import (
 	"context"
 	"errors"
 	"fmt"
-	"sort"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/invoicepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
@@ -28,13 +28,9 @@ const ParamAdjustmentID = "adjustmentId"
 
 const ParamDraftAdjustmentID = "draftAdjustmentId"
 
-const paramAdjustments = "adjustments"
-
 const paramAdjustmentKind = "kind"
 
 const paramRebillStrategy = "rebillStrategy"
-
-const paramAdjustmentLines = "lines"
 
 const paramInvoiceLineID = "invoiceLineId"
 
@@ -45,8 +41,6 @@ const paramCreditQuantity = "creditQuantity"
 const paramRebillAmount = "rebillAmount"
 
 const paramRebillQuantity = "rebillQuantity"
-
-const paramLineDescription = "description"
 
 const paramSupportingDocumentIDs = "supportingDocumentIds"
 
@@ -192,7 +186,7 @@ func adjustmentLinesProperty() map[string]any {
 					"The line's corrected amount on the reissued invoice, for a Manual rebill.", 0),
 				paramRebillQuantity: toolparams.StringProperty(
 					"The line's corrected quantity on the reissued invoice.", 0),
-				paramLineDescription: toolparams.StringProperty(
+				toolparams.ParamLineDescription: toolparams.StringProperty(
 					"The line's wording on the credit memo, when it should differ.",
 					maxAdjustmentLineTextChars),
 			},
@@ -225,16 +219,19 @@ func optionalPositiveDecimal(fields map[string]any, key string) (decimal.Decimal
 func readAdjustmentLines(
 	fields map[string]any,
 ) ([]*invoiceadjustmentports.InvoiceAdjustmentLineInput, error) {
-	raw, ok := fields[paramAdjustmentLines]
+	raw, ok := fields[toolparams.ParamAdjustmentLines]
 	if !ok || raw == nil {
 		return nil, nil
 	}
 	entries, ok := raw.([]any)
 	if !ok {
-		return nil, fmt.Errorf("%s must be a list of {invoiceLineId, ...}", paramAdjustmentLines)
+		return nil, fmt.Errorf(
+			"%s must be a list of {invoiceLineId, ...}",
+			toolparams.ParamAdjustmentLines,
+		)
 	}
 	if len(entries) > maxAdjustmentLines {
-		return nil, fmt.Errorf("%s lists %d lines; at most %d", paramAdjustmentLines,
+		return nil, fmt.Errorf("%s lists %d lines; at most %d", toolparams.ParamAdjustmentLines,
 			len(entries), maxAdjustmentLines)
 	}
 
@@ -243,7 +240,7 @@ func readAdjustmentLines(
 	for idx, entry := range entries {
 		line, lineErr := readAdjustmentLine(entry, seen)
 		if lineErr != nil {
-			return nil, fmt.Errorf("%s[%d]: %w", paramAdjustmentLines, idx, lineErr)
+			return nil, fmt.Errorf("%s[%d]: %w", toolparams.ParamAdjustmentLines, idx, lineErr)
 		}
 		lines = append(lines, line)
 	}
@@ -283,7 +280,7 @@ func readAdjustmentLine(
 			return nil, err
 		}
 	}
-	if line.Description, err = toolparams.BoundedText(fields, paramLineDescription,
+	if line.Description, err = toolparams.BoundedText(fields, toolparams.ParamLineDescription,
 		maxAdjustmentLineTextChars); err != nil {
 		return nil, err
 	}
@@ -324,34 +321,6 @@ func adjustmentKey(params *agenttoolports.ToolExecuteParams) string {
 	return adjustmentKeyPrefix + key
 }
 
-func figuresRefusal(figures []*invoiceadjustmentports.InvoiceAdjustmentPreview) error {
-	multiErr := errortypes.NewMultiError()
-	for idx, preview := range figures {
-		if preview == nil || len(preview.Errors) == 0 {
-			continue
-		}
-		fields := make([]string, 0, len(preview.Errors))
-		for field := range preview.Errors {
-			fields = append(fields, field)
-		}
-		sort.Strings(fields)
-		for _, field := range fields {
-			for _, message := range preview.Errors[field] {
-				path := field
-				if len(figures) > 1 {
-					path = fmt.Sprintf("%s[%d].%s", paramAdjustments, idx, field)
-				}
-				multiErr.Add(path, errortypes.ErrInvalid, message)
-			}
-		}
-	}
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
-}
-
 type adjustmentSubmission struct {
 	draftID pulid.ID
 	items   []*invoiceadjustmentports.InvoiceAdjustmentRequest
@@ -366,7 +335,7 @@ type submissionPlan struct {
 func NewSubmitInvoiceAdjustmentTool(adjustments invoiceAdjuster) agenttoolports.AgentTool {
 	return toolspec.NewReportingReceivableTool(&toolspec.ReceivableSpec{
 		Name:        "invoice_submit_adjustment",
-		Recipe:      []string{toolInvoiceGet, "invoice_submit_adjustment"},
+		Recipe:      []string{toolparams.ToolInvoiceGet, "invoice_submit_adjustment"},
 		SearchTerms: []string{"credit and rebill", "rebill"},
 		Description: "Propose crediting, rebilling, reversing or writing off posted invoices. " +
 			"Give adjustments, one per invoice and up to 25 at once, or draftAdjustmentId to " +
@@ -386,7 +355,7 @@ func NewSubmitInvoiceAdjustmentTool(adjustments invoiceAdjuster) agenttoolports.
 			"it for an approver.",
 		Properties: map[string]any{
 			ParamDraftAdjustmentID: adjustmentIDProperty("draft"),
-			paramAdjustments: map[string]any{
+			toolparams.ParamAdjustments: map[string]any{
 				toolschema.KeyType: toolschema.TypeArray,
 				toolschema.KeyDescription: "The adjustments to submit, one per invoice. Leave " +
 					"out when submitting a draft.",
@@ -404,8 +373,8 @@ func NewSubmitInvoiceAdjustmentTool(adjustments invoiceAdjuster) agenttoolports.
 						toolparams.ParamReason: toolparams.StringProperty(
 							"Why, as the customer or the biller would say it.",
 							maxAdjustmentReasonChars),
-						paramAdjustmentLines:       adjustmentLinesProperty(),
-						paramSupportingDocumentIDs: supportingDocumentsProperty(),
+						toolparams.ParamAdjustmentLines: adjustmentLinesProperty(),
+						paramSupportingDocumentIDs:      supportingDocumentsProperty(),
 					},
 					toolschema.KeyRequired: []string{
 						toolparams.ParamInvoiceID, paramAdjustmentKind, toolparams.ParamReason,
@@ -455,7 +424,7 @@ func targetSubmittedInvoice(params map[string]any) (agenttoolports.ToolTarget, b
 	); ok {
 		return target, true
 	}
-	items, _ := params[paramAdjustments].([]any)
+	items, _ := params[toolparams.ParamAdjustments].([]any)
 	if len(items) != 1 {
 		return agenttoolports.ToolTarget{}, false
 	}
@@ -472,7 +441,7 @@ func submissionRequest(params *agenttoolports.ToolExecuteParams) (*adjustmentSub
 	if err != nil {
 		return nil, fmt.Errorf("parameter %q is not a valid id: %w", ParamDraftAdjustmentID, err)
 	}
-	raw, hasItems := params.Params[paramAdjustments]
+	raw, hasItems := params.Params[toolparams.ParamAdjustments]
 	switch {
 	case hasDraft && hasItems:
 		return nil, errDraftAndAdjustments
@@ -487,11 +456,11 @@ func submissionRequest(params *agenttoolports.ToolExecuteParams) (*adjustmentSub
 
 	entries, ok := raw.([]any)
 	if !ok || len(entries) == 0 {
-		return nil, fmt.Errorf("%s must be a non-empty list", paramAdjustments)
+		return nil, fmt.Errorf("%s must be a non-empty list", toolparams.ParamAdjustments)
 	}
 	if len(entries) > maxAdjustmentsPerSubmission {
 		return nil, fmt.Errorf("%s lists %d adjustments; at most %d go at once, so split it",
-			paramAdjustments, len(entries), maxAdjustmentsPerSubmission)
+			toolparams.ParamAdjustments, len(entries), maxAdjustmentsPerSubmission)
 	}
 
 	tenant := toolparams.TenantFrom(*params)
@@ -499,7 +468,7 @@ func submissionRequest(params *agenttoolports.ToolExecuteParams) (*adjustmentSub
 	for idx, entry := range entries {
 		item, itemErr := readAdjustmentRequest(entry)
 		if itemErr != nil {
-			return nil, fmt.Errorf("%s[%d]: %w", paramAdjustments, idx, itemErr)
+			return nil, fmt.Errorf("%s[%d]: %w", toolparams.ParamAdjustments, idx, itemErr)
 		}
 		item.TenantInfo = tenant
 		item.IdempotencyKey = submission.key
@@ -575,7 +544,7 @@ func planSubmission(
 		return nil, err
 	}
 
-	if err = figuresRefusal(plan.figures); err != nil {
+	if err = invoicepreview.FiguresRefusal(plan.figures); err != nil {
 		return nil, err
 	}
 
@@ -731,8 +700,8 @@ func NewSaveInvoiceAdjustmentDraftTool(adjustments invoiceAdjuster) agenttoolpor
 				"Why, as the customer or the biller would say it.",
 				maxAdjustmentReasonChars,
 			),
-			paramAdjustmentLines:       adjustmentLinesProperty(),
-			paramSupportingDocumentIDs: supportingDocumentsProperty(),
+			toolparams.ParamAdjustmentLines: adjustmentLinesProperty(),
+			paramSupportingDocumentIDs:      supportingDocumentsProperty(),
 		},
 		Required: []string{paramAdjustmentKind},
 		Target:   toolparams.TargetInvoice,
@@ -962,7 +931,7 @@ func newDecisionTool(
 					return nil, err
 				}
 				if req.approve {
-					if refusal := figuresRefusal([]*invoiceadjustmentports.InvoiceAdjustmentPreview{
+					if refusal := invoicepreview.FiguresRefusal([]*invoiceadjustmentports.InvoiceAdjustmentPreview{
 						plan.Figures,
 					}); refusal != nil {
 						return nil, refusal

@@ -1,4 +1,4 @@
-package invoicetools
+package invoicedisputetools
 
 import (
 	"context"
@@ -99,7 +99,7 @@ func disputeIDProperty() map[string]any {
 func NewOpenInvoiceDisputeTool(disputes invoiceDisputer) agenttoolports.AgentTool {
 	return toolspec.NewReceivableTool(&toolspec.ReceivableSpec{
 		Name:   "invoice_open_dispute",
-		Recipe: []string{toolInvoiceGet, "invoice_open_dispute"},
+		Recipe: []string{toolparams.ToolInvoiceGet, "invoice_open_dispute"},
 		Description: "Open a dispute on a posted invoice the customer is withholding payment on. " +
 			"The invoice is marked Disputed until the case is resolved or withdrawn. The disputed " +
 			"amount cannot exceed the open balance, and an invoice holds one open case at a time. " +

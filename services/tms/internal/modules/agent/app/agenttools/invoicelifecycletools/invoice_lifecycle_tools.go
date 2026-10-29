@@ -1,4 +1,4 @@
-package invoicetools
+package invoicelifecycletools
 
 import (
 	"context"
@@ -657,7 +657,7 @@ func NewCreateInvoiceMemoTool(invoices invoiceMemoRaiser) agenttoolports.AgentTo
 				"Why the memo is raised; the customer sees it.",
 				maxInvoiceReasonChars,
 			),
-			paramAdjustmentLines: map[string]any{
+			toolparams.ParamAdjustmentLines: map[string]any{
 				toolschema.KeyType:        toolschema.TypeArray,
 				toolschema.KeyDescription: "The memo's lines, each a positive amount.",
 				toolschema.KeyMinItems:    1,
@@ -665,8 +665,10 @@ func NewCreateInvoiceMemoTool(invoices invoiceMemoRaiser) agenttoolports.AgentTo
 				toolschema.KeyItems: map[string]any{
 					toolschema.KeyType: toolschema.TypeObject,
 					toolschema.KeyProperties: map[string]any{
-						paramLineDescription: toolparams.StringProperty("What the line is for.",
-							maxMemoLineTextChars),
+						toolparams.ParamLineDescription: toolparams.StringProperty(
+							"What the line is for.",
+							maxMemoLineTextChars,
+						),
 						toolparams.ParamAmount: toolparams.StringProperty(
 							"The line's unit amount in major units, "+
 								"such as 125.00.",
@@ -679,7 +681,7 @@ func NewCreateInvoiceMemoTool(invoices invoiceMemoRaiser) agenttoolports.AgentTo
 						),
 					},
 					toolschema.KeyRequired: []string{
-						paramLineDescription,
+						toolparams.ParamLineDescription,
 						toolparams.ParamAmount,
 					},
 					toolschema.KeyAdditionalProperties: false,
@@ -699,7 +701,7 @@ func NewCreateInvoiceMemoTool(invoices invoiceMemoRaiser) agenttoolports.AgentTo
 			toolparams.ParamCustomerID,
 			toolparams.ParamBillType,
 			toolparams.ParamReason,
-			paramAdjustmentLines,
+			toolparams.ParamAdjustmentLines,
 		},
 	}, toolspec.ReceivablePlan[*invoiceports.CreateMemoRequest, *invoice.Invoice]{
 		Request: memoRequest,
@@ -788,19 +790,23 @@ func memoRequest(
 }
 
 func memoLines(params map[string]any) ([]*invoiceports.CreateMemoLineInput, error) {
-	entries, err := readObjects(params, paramAdjustmentLines, maxMemoLineCount)
+	entries, err := toolparams.ReadObjects(
+		params,
+		toolparams.ParamAdjustmentLines,
+		maxMemoLineCount,
+	)
 	if err != nil {
 		return nil, err
 	}
 	if len(entries) == 0 {
-		return nil, fmt.Errorf("%s needs at least one line", paramAdjustmentLines)
+		return nil, fmt.Errorf("%s needs at least one line", toolparams.ParamAdjustmentLines)
 	}
 
 	lines := make([]*invoiceports.CreateMemoLineInput, 0, len(entries))
 	for idx, fields := range entries {
 		line, lineErr := memoLine(fields)
 		if lineErr != nil {
-			return nil, fmt.Errorf("%s[%d]: %w", paramAdjustmentLines, idx, lineErr)
+			return nil, fmt.Errorf("%s[%d]: %w", toolparams.ParamAdjustmentLines, idx, lineErr)
 		}
 		lines = append(lines, line)
 	}
@@ -811,7 +817,7 @@ func memoLines(params map[string]any) ([]*invoiceports.CreateMemoLineInput, erro
 func memoLine(fields map[string]any) (*invoiceports.CreateMemoLineInput, error) {
 	description, err := toolparams.RequireBoundedText(
 		fields,
-		paramLineDescription,
+		toolparams.ParamLineDescription,
 		maxMemoLineTextChars,
 	)
 	if err != nil {

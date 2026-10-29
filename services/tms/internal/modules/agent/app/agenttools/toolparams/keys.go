@@ -87,3 +87,11 @@ const SearchTermIFTA = "ifta"
 const ParamCurrencyCode = "currencyCode"
 
 const SchemaItems = "items"
+
+const ParamAdjustments = "adjustments"
+
+const ParamAdjustmentLines = "lines"
+
+const ParamLineDescription = "description"
+
+const ToolInvoiceGet = "invoice_get"

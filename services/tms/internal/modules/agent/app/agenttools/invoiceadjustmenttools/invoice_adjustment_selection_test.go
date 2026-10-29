@@ -1,4 +1,4 @@
-package invoicetools
+package invoiceadjustmenttools
 
 import (
 	"testing"
@@ -104,7 +104,7 @@ func TestSubmitInvoiceAdjustment_ARefusalForBothSelectionsShowsBothCalls(t *test
 		t.Context(),
 		agenttoolstest.ExecuteParams(map[string]any{
 			ParamDraftAdjustmentID: pulid.MustNew("iadj_").String(),
-			paramAdjustments: []any{map[string]any{
+			toolparams.ParamAdjustments: []any{map[string]any{
 				toolparams.ParamInvoiceID: pulid.MustNew("inv_").String(),
 				paramAdjustmentKind:       string(invoiceadjustment.KindCreditOnly),
 				toolparams.ParamReason:    "x",

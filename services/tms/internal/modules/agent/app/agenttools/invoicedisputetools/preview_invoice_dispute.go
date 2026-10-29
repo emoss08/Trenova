@@ -1,4 +1,4 @@
-package invoicetools
+package invoicedisputetools
 
 import (
 	"fmt"

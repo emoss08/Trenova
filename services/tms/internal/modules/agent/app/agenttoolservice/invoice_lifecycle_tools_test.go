@@ -7,7 +7,10 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/invoicetools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/invoiceadjustmenttools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/invoicedisputetools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/invoicelifecycletools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/invoiceruntools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/receivabletools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
@@ -233,7 +236,7 @@ func TestUpdateInvoiceDraft_PreviewsTheChangeAndProposesNewRecipients(t *testing
 			AttachmentsAfter: []pulid.ID{docID},
 		},
 	}
-	tool := invoicetools.NewUpdateInvoiceDraftTool(fake)
+	tool := invoicelifecycletools.NewUpdateInvoiceDraftTool(fake)
 	params := agenttoolstest.ExecuteParams(map[string]any{
 		toolparams.ParamInvoiceID: before.ID.String(),
 		"memo":                    "Detention approved by the shipper",
@@ -285,14 +288,14 @@ func TestUpdateInvoiceDraft_PreviewsTheChangeAndProposesNewRecipients(t *testing
 func TestUpdateInvoiceDraft_RefusesACallThatChangesNothing(t *testing.T) {
 	t.Parallel()
 
-	tool := invoicetools.NewUpdateInvoiceDraftTool(&fakeInvoiceLifecycle{})
+	tool := invoicelifecycletools.NewUpdateInvoiceDraftTool(&fakeInvoiceLifecycle{})
 	err := tool.(agenttoolports.ToolValidator).Validate(
 		t.Context(),
 		agenttoolstest.ExecuteParams(map[string]any{
 			toolparams.ParamInvoiceID: pulid.MustNew("inv_").String(),
 		}),
 	)
-	require.ErrorIs(t, err, invoicetools.ErrNothingToUpdate)
+	require.ErrorIs(t, err, invoicelifecycletools.ErrNothingToUpdate)
 
 	err = tool.(agenttoolports.ToolValidator).Validate(
 		t.Context(),
@@ -312,7 +315,7 @@ func TestGenerateInvoicePDF_RendersButRefusesWhenItWouldEmailTheCustomer(t *test
 		guard:   &agenttoolstest.WriteGuard{},
 		pdfPlan: &invoiceports.InvoicePDFGenerationPlan{Invoice: inv},
 	}
-	tool := invoicetools.NewGenerateInvoicePDFTool(fake)
+	tool := invoicelifecycletools.NewGenerateInvoicePDFTool(fake)
 	params := agenttoolstest.ExecuteParams(
 		map[string]any{toolparams.ParamInvoiceID: inv.ID.String()},
 	)
@@ -333,11 +336,11 @@ func TestGenerateInvoicePDF_RendersButRefusesWhenItWouldEmailTheCustomer(t *test
 	fake.pdfPlan.AutoSends = true
 	fake.generated = nil
 	err := tool.(agenttoolports.ToolValidator).Validate(t.Context(), params)
-	require.ErrorIs(t, err, invoicetools.ErrPDFWouldSend)
+	require.ErrorIs(t, err, invoicelifecycletools.ErrPDFWouldSend)
 	preview, err = tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 	require.NoError(t, err)
 	agenttoolstest.RequireWarning(t, preview, agentpreview.PreviewWarningWouldFail)
-	require.ErrorIs(t, tool.Execute(t.Context(), params), invoicetools.ErrPDFWouldSend)
+	require.ErrorIs(t, tool.Execute(t.Context(), params), invoicelifecycletools.ErrPDFWouldSend)
 	assert.Nil(t, fake.generated)
 }
 
@@ -355,11 +358,11 @@ func TestCreateInvoice_PreviewsEachDraftAndOnlyAPersonCreatesThem(t *testing.T) 
 			PrimaryIndex: 1,
 		},
 	}
-	tool := invoicetools.NewCreateInvoiceTool(fake)
+	tool := invoicelifecycletools.NewCreateInvoiceTool(fake)
 	shipmentID := pulid.MustNew("shp_")
 	params := agenttoolstest.ExecuteParams(map[string]any{
-		toolparams.ParamShipmentIDs:    []any{shipmentID.String()},
-		invoicetools.ParamOffCycleNote: "Customer asked for this load on its own",
+		toolparams.ParamShipmentIDs:             []any{shipmentID.String()},
+		invoicelifecycletools.ParamOffCycleNote: "Customer asked for this load on its own",
 	})
 
 	preview := agenttoolstest.PreviewWithoutWrites(
@@ -403,7 +406,7 @@ func TestCreateInvoice_PreviewsEachDraftAndOnlyAPersonCreatesThem(t *testing.T) 
 
 	both := agenttoolstest.ExecuteParams(map[string]any{})
 	err = tool.(agenttoolports.ToolValidator).Validate(t.Context(), both)
-	require.ErrorIs(t, err, invoicetools.ErrOrderOrShipments)
+	require.ErrorIs(t, err, invoicelifecycletools.ErrOrderOrShipments)
 }
 
 func TestCreateInvoiceMemo_PreviewsTheMemoAndNeverPostsIt(t *testing.T) {
@@ -415,7 +418,7 @@ func TestCreateInvoiceMemo_PreviewsTheMemoAndNeverPostsIt(t *testing.T) {
 	memo.TotalAmount = decimal.RequireFromString("-75.50")
 	memo.TotalAmountMinor = -7550
 	fake := &fakeInvoiceLifecycle{guard: &agenttoolstest.WriteGuard{}, memoPlan: memo}
-	tool := invoicetools.NewCreateInvoiceMemoTool(fake)
+	tool := invoicelifecycletools.NewCreateInvoiceMemoTool(fake)
 	customerID := pulid.MustNew("cus_")
 	params := agenttoolstest.ExecuteParams(map[string]any{
 		toolparams.ParamCustomerID: customerID.String(),
@@ -489,11 +492,11 @@ func TestVoidInvoice_PreviewsADraftVoidAndAPostedReversal(t *testing.T) {
 			Before: before, After: &after,
 		},
 	}
-	tool := invoicetools.NewVoidInvoiceTool(fake)
+	tool := invoicelifecycletools.NewVoidInvoiceTool(fake)
 	params := agenttoolstest.ExecuteParams(map[string]any{
-		toolparams.ParamInvoiceID:         before.ID.String(),
-		toolparams.ParamReason:            "Billed the wrong customer",
-		invoicetools.ParamVoidDisposition: string(invoice.VoidDispositionRebill),
+		toolparams.ParamInvoiceID:                  before.ID.String(),
+		toolparams.ParamReason:                     "Billed the wrong customer",
+		invoicelifecycletools.ParamVoidDisposition: string(invoice.VoidDispositionRebill),
 	})
 
 	preview := agenttoolstest.PreviewWithoutWrites(
@@ -562,7 +565,7 @@ func TestSendInvoiceEDI_PreviewsThePartnerAndOnlyAPersonSends(t *testing.T) {
 			},
 		},
 	}
-	tool := invoicetools.NewSendInvoiceEDITool(fake)
+	tool := invoicelifecycletools.NewSendInvoiceEDITool(fake)
 	params := agenttoolstest.ExecuteParams(
 		map[string]any{toolparams.ParamInvoiceID: inv.ID.String()},
 	)
@@ -606,12 +609,12 @@ func TestReceivableTools_PinTheRecordTheyChange(t *testing.T) {
 		resource permission.Resource
 	}{
 		{
-			invoicetools.NewResolveInvoiceDisputeTool(nil),
+			invoicedisputetools.NewResolveInvoiceDisputeTool(nil),
 			toolparams.ParamDisputeID,
 			permission.ResourceInvoiceDispute,
 		},
 		{
-			invoicetools.NewWithdrawInvoiceDisputeTool(nil),
+			invoicedisputetools.NewWithdrawInvoiceDisputeTool(nil),
 			toolparams.ParamDisputeID,
 			permission.ResourceInvoiceDispute,
 		},
@@ -631,42 +634,42 @@ func TestReceivableTools_PinTheRecordTheyChange(t *testing.T) {
 			agenttoolports.RecordCreditMemoApplication,
 		},
 		{
-			invoicetools.NewApproveInvoiceAdjustmentTool(nil),
-			invoicetools.ParamAdjustmentID,
+			invoiceadjustmenttools.NewApproveInvoiceAdjustmentTool(nil),
+			invoiceadjustmenttools.ParamAdjustmentID,
 			agenttoolports.RecordInvoiceAdjustment,
 		},
 		{
-			invoicetools.NewRejectInvoiceAdjustmentTool(nil),
-			invoicetools.ParamAdjustmentID,
+			invoiceadjustmenttools.NewRejectInvoiceAdjustmentTool(nil),
+			invoiceadjustmenttools.ParamAdjustmentID,
 			agenttoolports.RecordInvoiceAdjustment,
 		},
 		{
-			invoicetools.NewSubmitInvoiceAdjustmentTool(nil),
-			invoicetools.ParamDraftAdjustmentID,
+			invoiceadjustmenttools.NewSubmitInvoiceAdjustmentTool(nil),
+			invoiceadjustmenttools.ParamDraftAdjustmentID,
 			agenttoolports.RecordInvoiceAdjustment,
 		},
 		{
-			invoicetools.NewCommitInvoiceRunTool(nil),
-			invoicetools.ParamInvoiceRunID,
+			invoiceruntools.NewCommitInvoiceRunTool(nil),
+			invoiceruntools.ParamInvoiceRunID,
 			permission.ResourceInvoiceRun,
 		},
 		{
-			invoicetools.NewCancelInvoiceRunTool(nil),
-			invoicetools.ParamInvoiceRunID,
+			invoiceruntools.NewCancelInvoiceRunTool(nil),
+			invoiceruntools.ParamInvoiceRunID,
 			permission.ResourceInvoiceRun,
 		},
 		{
-			invoicetools.NewUpdateInvoiceDraftTool(nil),
+			invoicelifecycletools.NewUpdateInvoiceDraftTool(nil),
 			toolparams.ParamInvoiceID,
 			permission.ResourceInvoice,
 		},
 		{
-			invoicetools.NewVoidInvoiceTool(nil),
+			invoicelifecycletools.NewVoidInvoiceTool(nil),
 			toolparams.ParamInvoiceID,
 			permission.ResourceInvoice,
 		},
 		{
-			invoicetools.NewSendInvoiceEDITool(nil),
+			invoicelifecycletools.NewSendInvoiceEDITool(nil),
 			toolparams.ParamInvoiceID,
 			permission.ResourceInvoice,
 		},
